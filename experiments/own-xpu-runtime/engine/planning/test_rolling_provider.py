@@ -9,15 +9,15 @@ from rolling_provider.coordinator import RollingCoordinator
 from rolling_provider.arbiter import Parent, PROVIDER
 
 
-def fixture(count, *, maximum=18, eos=(96,), wire=500, provider_stage=0):
+def fixture(count, *, maximum=18, eos=(96,), wire=500, provider_stage=0, speculative_depth=2):
     prompt = [3, 5, 8, 11]
     c = RollingCoordinator(stages=count, request=sha256(b'rolling').digest(), epoch=1,
         prompt=prompt, max_new=maximum, vocab=97, eos_token_ids=eos, context=128,
-        initial_sequences=[wire]*count, provider_stage=provider_stage)
-    return c, [Worker(i, count, 1, prompt, wire) for i in range(count)]
+        initial_sequences=[wire]*count, provider_stage=provider_stage, speculative_depth=speculative_depth)
+    return c, [Worker(i, count, 1, prompt, wire, speculative_depth) for i in range(count)]
 
 
-def run(c, workers, *, random_seed=0, miss_first=(), miss_second=(), fresh_disagreement=False,
+def run(c, workers, *, random_seed=0, miss_first=(), miss_second=(), miss_third=(), fresh_disagreement=False,
         stop_during_provider=False, corrupt_provider=False, stop_at_tick=None, stop_when=None):
     rng = random.Random(random_seed)
     queue = []
@@ -58,6 +58,8 @@ def run(c, workers, *, random_seed=0, miss_first=(), miss_second=(), fresh_disag
                         second = target(first, p+1)
                         disagreements.append((issued.row_id, issued.proposal.token, first))
                     guesses = (first, second)
+                    if c.speculative_depth == 3:
+                        guesses += ((target(second, p+2)+int(p in miss_third)) % 97,)
                 result = dict(provider_serial=serial+int(corrupt_provider), restored_position=command.row.position,
                     physical=job.target_physical, committed=job.target_committed,
                     pending_rows=job.pending_rows, guesses=guesses)

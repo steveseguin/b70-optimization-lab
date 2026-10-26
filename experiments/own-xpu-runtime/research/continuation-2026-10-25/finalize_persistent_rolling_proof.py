@@ -23,8 +23,8 @@ def full_row(row,prompt_length,request):
                 request=request,before=row['before'].hex(),after=row['after'].hex())
 
 
-def audit_provider(batches,native,reference,replay,prompt_length,att,request,*,epoch,policy):
-    contexts=replay['providers'];pairs=reference['canonical_pairs'];depths={r['seed_position']:r for r in reference['depth2_rows']}
+def audit_provider(batches,native,reference,replay,prompt_length,att,request,*,epoch,policy,speculative_depth=2):
+    contexts=replay['providers'];pairs=reference['canonical_pairs'];depths={r['seed_position']:r for r in reference['depth3_rows' if speculative_depth==3 else 'depth2_rows']}
     need(len(batches)==len(native)==len(contexts)==len(pairs)==att['provider_trace_records'] and att['provider_trace_omitted']==0,
          'complete controller/native canonical provider cohort')
     observed=[];pending=[]
@@ -39,7 +39,7 @@ def audit_provider(batches,native,reference,replay,prompt_length,att,request,*,e
              'provider actual seed/parent/prefix/command differs')
         need(batch['parent_hidden_sha256']==want['hidden_sha256'] and batch['guesses']==guesses
              and batch['available_depth']==len(guesses) and (guesses[0] if head else -1)==want['proposal']
-             and batch['restored'] is True and batch['speculative_target_use'] is True,'actual d1/d2 or raw hidden identity differs')
+             and batch['restored'] is True and batch['speculative_target_use'] is True,'actual recursive guesses or raw hidden identity differs')
         need((batch['target_physical'],batch['target_committed'],batch['pending_depth'],batch['pending_target_rows'],
               batch['accepted_seed_sequence'],batch['original_seed_tentative'])
              ==(context['physical'],context['committed'],len(context['pending']),context['pending'],seed['accept_sequence'],seed['tentative']),
@@ -154,6 +154,8 @@ def main():
     need(terminal['plan_sha256']==identity(run/'plan.json')['sha256'] and terminal['lifecycle_result_sha256']==identity(run/'result.json')['sha256']
          and all(terminal.get(k)==v for k,v in original.items() if k not in ('schema','mode','diagnostic_only')), 'persistent terminal wrapper/source differs')
     policy=validate_identity(plan,suite,terminal,recursive);enabled=policy=='qualification'
+    depth=plan.get('speculative_depth',2)
+    need(type(depth)is int and depth in (2,3),'supported speculative depth')
     need(identity(suite_path)['sha256']==plan['suite_sha256']==plan['pins'][str(suite_path)]
          and identity(Path(plan['config']))['sha256']==plan['config_sha256'],'admitted runtime inputs/config changed')
     source_pins=[]
@@ -209,7 +211,7 @@ def main():
         batches=lines(request_run/'provider-batches.jsonl')
         replay=audit_controller(lines(request_run/'commands.jsonl'),lines(request_run/'final-records.jsonl'),batches,row['prompt_tokens'],outputs,
             request,len(stages),metadata['stream_bytes'],plan['vocab'],plan['context'],epoch=epoch,
-            initial_sequences=record['initial_sequences'],check_policy=policy,max_new=row['max_new'],**({'provider_stage':provider_stage} if provider_stage else {}))
+            initial_sequences=record['initial_sequences'],check_policy=policy,max_new=row['max_new'],**({'speculative_depth':depth} if depth==3 else {}),**({'provider_stage':provider_stage} if provider_stage else {}))
         need([s['last_sequence'] for s in replay['states']]==record['final_sequences'],'request ending global sequences differ')
         need(replay['actual_proposal_rows']>0,'actual proposals must be consumed in each qualification request')
         need([e for e in lines(request_run/'schedule.jsonl') if e['event'] not in ('native-reply','issued-proposal')]==driver['events'],
@@ -222,7 +224,7 @@ def main():
         draft_set=dict(schema='ownrt.draft-state-set.v1',dump=str(draft_dump),input_identity=recursive['canonical_draft_input_identity'])
         save(request_out/'draft-state-set.json',draft_set)
         candidate=dict(schema='ownrt.pipeline-state-set.v7',mode='persistent-rolling',controller_mode='persistent-rolling',
-            actual_proposals_only=True,provider_stage=provider_stage,verification_policy=policy,layer_count=plan['boundaries'][-1],
+            actual_proposals_only=True,provider_stage=provider_stage,speculative_depth=depth,verification_policy=policy,layer_count=plan['boundaries'][-1],
             require_byte_verified_restores=enabled,require_provider_byte_verified_restores=enabled,provider_borrow_mode='pending-target',
             require_provider_survival_checks=enabled,required_provider_pending_depths=[],draft_input_identity=draft_set['input_identity'],
             ring_request_sha256=request,ring_epoch=epoch,input_identity=dict(model_sha256=plan['model_identity_sha256'],
@@ -233,7 +235,7 @@ def main():
             number=stage['id'];native=Path(stage['native_output']);local=request_out/f'stage{number}';local.mkdir()
             dump=native/dump_name;retain_bundle(dump,local/dump_name,raw_bundles)
             for f in ('launch-plan.json','pipeline-stage.json','ring-checkpoint-layout.json','ring.jsonl','ring-reset.json','reset.json',
-                      dump_name+'.ring-state.json','ring-draft-batches.jsonl','ring-final-peer.json','ring-provider-survival.jsonl'):
+                      dump_name+'.ring-state.json','ring-draft-batches.jsonl','ring-final-peer.json','ring-seed-peer.json','ring-provider-survival.jsonl'):
                 if (native/f).is_file():shutil.copyfile(native/f,local/f)
             item=dict(id=number,begin=stage['begin'],end=stage['end'],dump=str(dump),plan=str(local/'launch-plan.json'),
                 metadata=str(local/'pipeline-stage.json'),quiescence=str(native/(dump_name+'.ring-state.json')))
@@ -241,14 +243,14 @@ def main():
             need(len(native_rows)==len(replay['sent'][number]) and all(r['tentative'] is e['tentative'] for r,e in zip(native_rows,replay['sent'][number])),
                  'actual native original row flags differ')
             need(all(r['fixture']==max(0,r['position']-len(row['prompt_tokens'])+2) for r in native_rows),'native prompt/head mask differs')
-            audits.append(dict(stage=number,**audit_native(native_rows,replay['sent'][number],replay['created'],input_rows,att,stage['final'])))
+            audits.append(dict(stage=number,**audit_native(native_rows,replay['sent'][number],replay['created'],input_rows,att,stage['final'],speculative_depth=depth)))
             if number==provider_stage:
                 item.update(draft_state_set=str(request_out/'draft-state-set.json'),provider_survival=str(native/'ring-provider-survival.jsonl'))
                 retain_bundle(draft_dump,local/draft_dump.name,raw_bundles)
                 provider=audit_provider(batches,lines(native/'ring-draft-batches.jsonl'),recursive,replay,len(row['prompt_tokens']),att,request,
-                                        epoch=epoch,policy=policy)
-                pending={str(d):sum(len(v['pending'])==d for v in replay['providers']) for d in (0,1,2)}
-                need(att['provider_pending_borrows']=={k:pending[k] for k in ('1','2')} and att['provider_quiescent_borrows']==pending['0'],
+                                        epoch=epoch,policy=policy,speculative_depth=depth)
+                pending={str(d):sum(len(v['pending'])==d for v in replay['providers']) for d in range(depth+1)}
+                need(att['provider_pending_borrows']=={k:pending[k] for k in map(str,range(1,depth+1))} and att['provider_quiescent_borrows']==pending['0'],
                      'native actual borrow depth counts differ')
                 survival_records=lines(native/'ring-provider-survival.jsonl')
                 survival_result=bind_survival(survival_records,replay,batches,recursive,len(row['prompt_tokens']),request) if enabled else None
@@ -256,6 +258,10 @@ def main():
                 peer=read(native/'ring-final-peer.json');stat=Path(plan['final_shared']).stat()
                 need(peer['readonly'] is True and peer['path']==plan['final_shared'] and (peer['device'],peer['inode'],peer['bytes'])==
                      (stat.st_dev,stat.st_ino,stat.st_size),'per-request final owner mapping provenance differs')
+                if provider_stage:
+                    seed_path=Path(plan['output'])/'stage0/shared.bin';seed_stat=seed_path.stat();seed_peer=read(native/'ring-seed-peer.json')
+                    need(seed_peer['readonly'] is True and seed_peer['path']==str(seed_path)
+                         and (seed_peer['device'],seed_peer['inode'],seed_peer['bytes'])==(seed_stat.st_dev,seed_stat.st_ino,seed_stat.st_size),'readonly stage0 seed mapping provenance differs')
             candidate['stages'].append(item)
         save(request_out/'candidate-state-set.json',candidate)
         target_state=compare.load_set(request_out/'candidate-state-set.json');draft_state=draft_compare.load_set(request_out/'draft-state-set.json')

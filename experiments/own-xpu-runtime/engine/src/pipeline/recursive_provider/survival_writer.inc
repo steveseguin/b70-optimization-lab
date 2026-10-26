@@ -1,7 +1,7 @@
 // Included inside the ring Dispatcher; one success record per exact suffix abort.
 void write_survival(const Request& request,const ownrt::ring_next::Row& oldest,const ownrt::ring_next::Resolution& resolved,const mtp36::DraftRuntime::SurvivalSnapshot& before,const mtp36::DraftRuntime::SurvivalSnapshot& after,const std::vector<ownrt::ring_next::Row>& pending){
  namespace v=ownrt::provider_survival;require(provider&&provider_sequence&&e.a.pipeline_ring_verify_provider_survival&&survival_records<128,"bounded provider survival receipt owner");
- require(pending.size()==resolved.discarded.size()&&!pending.empty()&&pending.size()<=2&&pending.front()==oldest,"provider survival suffix identity");
+ require(pending.size()==resolved.discarded.size()&&!pending.empty()&&pending.size()<=size_t(context.depth)&&pending.front()==oldest,"provider survival suffix identity");
  size_t compared=0;for(const auto& allocation:before.allocations)compared+=allocation.bytes;
  const auto captured=provider_at_capture.at(oldest.id);const bool advanced=before.current_host.position>captured.position&&provider_sequence->serial()>captured.serial;
  std::ostringstream out;out<<"{\"schema\":\"ownrt.provider-abort-survival.v1\",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"abort_sequence\":"<<request.sequence<<",\"oldest\":"<<v::row_json(oldest)<<",\"discarded_row_ids\":[";

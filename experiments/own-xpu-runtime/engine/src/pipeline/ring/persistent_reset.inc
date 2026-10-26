@@ -24,9 +24,9 @@ void write_request_stage_metadata(){
  for(size_t i=0;i<e.a.pipeline_boundaries.size();++i)o<<(i?",":"")<<e.a.pipeline_boundaries[i];
  o<<"],\"mode\":\"persistent-rolling\",\"speculation_enabled\":true,\"inactive_alternate_banks\":[";bool comma=false;
  for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}
- o<<"],\"ring_capacity\":2,\"depth\":2,\"ring_epoch\":"<<context.epoch<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)
+ o<<"],\"ring_capacity\":"<<context.depth<<",\"depth\":"<<context.depth<<",\"ring_epoch\":"<<context.epoch<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)
   <<",\"provider_borrow_mode\":\"pending-target\",\"verification_policy\":"<<ownrt::quote(e.a.pipeline_ring_check_policy)<<",\"persistent_requests\":true}";
- save(e.a.output/"pipeline-stage.json",o.str());
+ if(context.depth==3){auto text=o.str();text.pop_back();text+=",\"ring_depth\":3}";save(e.a.output/"pipeline-stage.json",text);}else save(e.a.output/"pipeline-stage.json",o.str());
 }
 Reply persistent_reset(const Request& request){
  namespace wire=ownrt::ring_next::wire;namespace reset=ownrt::ring_next::reset;

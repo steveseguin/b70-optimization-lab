@@ -1,0 +1,303 @@
+--- a/experiments/own-xpu-runtime/engine/tools/ring_wire.py
++++ b/experiments/own-xpu-runtime/engine/tools/ring_wire.py
+@@ -65,15 +65,17 @@
+     need(raw == ROW_META.pack(*expected), 'published row/owner/ticket/lineage/payload SHA mismatch')
+ 
+ 
+-def resolution_ack(raw, command, pending, *, physical, committed, verify_restore):
++def resolution_ack(raw, command, pending, *, physical, committed, verify_restore, depth=2):
++    need(type(depth)is int and depth in (2,3),'explicit supported resolution depth')
+     need(len(raw) == ACK_META.size, 'exact resolution ACK extent')
+     fields = ACK_META.unpack(raw)
+     magic, version, size, flags, epoch, identity, discard0, discard1 = fields[:8]
+     owner, sequence, ticket, actual_physical, actual_committed, count, remaining, error, reserved = fields[8:]
+-    need((magic, version, size) == (0x5241434b, 1, ACK_META.size)
+-         and flags in (0, 1) and reserved == bytes(48), 'ACK header/reserved flags')
++    discard2=struct.unpack('<Q',reserved[:8])[0] if depth==3 else 0
++    need((magic, version, size) == (0x5241434b, 2 if depth==3 else 1, ACK_META.size)
++         and flags in (0, 1) and (reserved[8:]==bytes(40) if depth==3 else reserved==bytes(48)), 'ACK header/reserved flags')
+     need(error == 0, 'native sticky error')
+-    need(command.op in (ring.ACCEPT, ring.ABORT_SUFFIX) and pending, 'resolution requires pending ROW')
++    need(command.op in (ring.ACCEPT, ring.ABORT_SUFFIX) and 0<len(pending)<=depth, 'resolution requires pending ROW')
+     original = pending[0]
+     need(original.sequence == command.row_ticket and original.row == command.row
+          and original.tentative == command.tentative, 'resolution exact original ROW')
+@@ -81,8 +83,8 @@
+          (command.row.epoch, command.row.identity, command.stage, command.sequence, command.row_ticket),
+          'ACK epoch/global row/owner/wire ticket')
+     discarded = tuple(c.row.identity for c in pending) if command.op == ring.ABORT_SUFFIX else ()
+-    need(len(discarded) <= 2 and count == len(discarded)
+-         and (discard0, discard1) == (discarded+(0, 0))[:2], 'ACK exact discarded suffix')
++    need(len(discarded) <= depth and count == len(discarded)
++         and (discard0, discard1, discard2) == (discarded+(0, 0, 0))[:3], 'ACK exact discarded suffix')
+     if command.op == ring.ACCEPT:
+         expected = (physical, committed+1, len(pending)-1)
+         need(flags == 0, 'ACCEPT cannot attest restore')
+--- a/experiments/own-xpu-runtime/engine/tools/ring_live_wire.py
++++ b/experiments/own-xpu-runtime/engine/tools/ring_live_wire.py
+@@ -36,6 +36,10 @@
+     serial: int
+     op: int = STEP
+     stage: int = 0
++    depth: int = 2
++
++    def __post_init__(self):
++        need(type(self.depth)is int and self.depth in (2,3),'explicit provider depth2 or3')
+ 
+ 
+ def final_record(shared, row_command, commit_command, output_token, *, stages, stream_bytes, vocab):
+@@ -79,21 +83,30 @@
+     return wire.row_metadata(control, final=False, stream_bytes=stream_bytes)[0]
+ 
+ 
++def proposal_size(depth=2):
++    need(type(depth)is int and depth in (2,3),'explicit provider wire depth2 or3')
++    return 224 if depth==3 else PROPOSAL.size
++
++
+ def decode_proposal(raw, command, *, vocab, context):
+-    need(len(raw) == PROPOSAL.size, 'complete provider proposal metadata')
+-    fields = PROPOSAL.unpack(raw)
++    depth=command.depth;size=proposal_size(depth)
++    need(len(raw) == size, 'complete provider proposal metadata')
++    fields = PROPOSAL.unpack(raw[:PROPOSAL.size])
++    third=struct.unpack('<i',raw[192:196])[0] if depth==3 else -1
++    need(depth==2 or raw[196:]==bytes(28),'depth3 proposal reserved tail')
+     seed, parent = command.seed.row, command.parent
+     head = seed.fixture > 0
+-    expected_depth = (2 if seed.position < context else 1) if head else 0
+-    expected = (0x44525032, 1, 192, 2+int(head), seed.epoch, command.sequence,
++    expected_depth = min(depth,context-seed.position+1) if head else 0
++    need(0<=expected_depth<=depth,'provider context availability')
++    expected = (0x44525032, 2 if depth==3 else 1, size, 2+int(head), seed.epoch, command.sequence,
+                 seed.identity, seed.parent, parent.commit_sequence, command.serial,
+-                seed.position, seed.position, 2, expected_depth)
++                seed.position, seed.position, depth, expected_depth)
+     need(fields[:14] == expected, 'provider batch owner/seed/parent/commit/serial/depth identity')
+-    guesses = fields[14:16]
++    guesses = fields[14:16]+((third,) if depth==3 else ())
+     need(fields[16:18] == (0, 1), 'provider sticky failure or missing canonical restoration')
+     need(fields[18:] == (seed.request, seed.after, sha256(parent.handoff.hidden).digest()),
+          'provider request/prefix/hidden provenance')
+-    need(all(0 <= guesses[i] < vocab if i < expected_depth else guesses[i] == -1 for i in range(2)),
++    need(all(0 <= guesses[i] < vocab if i < expected_depth else guesses[i] == -1 for i in range(depth)),
+          'provider guess vocabulary/availability')
+     return dict(epoch=seed.epoch, sequence=command.sequence, seed_row=seed.identity,
+                 parent_row=seed.parent, final_commit=parent.commit_sequence, provider_serial=command.serial,
+--- a/experiments/own-xpu-runtime/engine/tools/pending_ring_live_wire.py
++++ b/experiments/own-xpu-runtime/engine/tools/pending_ring_live_wire.py
+@@ -28,7 +28,7 @@
+          'accepted seed differs from independent verified parent')
+     need(command.target_committed == seed.row.position+1
+          and command.target_physical == command.target_committed+len(command.pending_rows)
+-         and len(command.pending_rows) <= 2 and len(set(command.pending_rows)) == len(command.pending_rows),
++         and len(command.pending_rows) <= command.depth and len(set(command.pending_rows)) == len(command.pending_rows),
+          'pending target physical/logical extent')
+     # Preserve the original ROW flag even after that row was verified/accepted.
+     control = ring.Command(0, ring.ACCEPT, command.sequence, seed.row, seed.tentative, seed.sequence)
+--- a/experiments/own-xpu-runtime/engine/tools/pending_ring_live_driver.py
++++ b/experiments/own-xpu-runtime/engine/tools/pending_ring_live_driver.py
+@@ -79,6 +79,7 @@
+ 
+     def issue_provider(self, command):
+         self.guard.check()
++        base.require(command.depth==self.plan.get('speculative_depth',2),'provider command/plan depth differs')
+         base.require(isinstance(command, pending_codec.PendingProviderCommand) and self.spec['first']
+                      and self.command_pending is None and not self.transmit and not self.received,
+                      'exclusive pending provider wire owner')
+@@ -97,7 +98,7 @@
+         self.sequence = command.sequence
+         self.command_pending = command
+         self.transmit = base.REQUEST.pack(codec.STEP, command.seed.row.token, command.seed.row.position,
+-                                          int(command.seed.row.fixture > 0), 2, command.sequence, 0, 0)
++                                          int(command.seed.row.fixture > 0), command.depth, command.sequence, 0, 0)
+ 
+ 
+ def drive(stages, plan, guard, output):
+--- a/experiments/own-xpu-runtime/engine/tools/ring_live_driver.py
++++ b/experiments/own-xpu-runtime/engine/tools/ring_live_driver.py
+@@ -142,6 +142,7 @@
+ 
+     def issue_provider(self, command):
+         self.guard.check()
++        base.require(command.depth==self.plan.get('speculative_depth',2),'provider command/plan depth differs')
+         base.require(self.spec['first'] and self.command_pending is None and not self.transmit and not self.received
+                      and not self.pending_rows and self.physical == self.committed == command.seed.row.position+1,
+                      'provider requires locally accepted seed and quiescent target')
+@@ -155,7 +156,7 @@
+         self.sequence = command.sequence
+         self.command_pending = command
+         self.transmit = base.REQUEST.pack(codec.STEP, command.seed.row.token, command.seed.row.position,
+-                                          int(command.seed.row.fixture > 0), 2, command.sequence, 0, 0)
++                                          int(command.seed.row.fixture > 0), command.depth, command.sequence, 0, 0)
+ 
+     def read_ready(self):
+         if not isinstance(self.command_pending, codec.ProviderCommand):
+@@ -172,9 +173,9 @@
+         reply = base.REPLY.unpack(self.received)
+         command = self.command_pending
+         base.require(not self.transmit and reply[0] == reply[2] == 0
+-                     and reply[3] == 192 and reply[4] == command.sequence and reply[5:8] == (0, 0, 0),
++                     and reply[3] == codec.proposal_size(command.depth) and reply[4] == command.sequence and reply[5:8] == (0, 0, 0),
+                      'provider error/extent/wire owner identity')
+-        result = codec.decode_proposal(bytes(self.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192]), command,
++        result = codec.decode_proposal(bytes(self.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)]), command,
+                                        vocab=self.plan['vocab'], context=self.plan['context'])
+         base.require(reply[1] == (result['guesses'][0] if result['guesses'] else -1), 'provider reply token differs from batch')
+         self.provider_serial = command.serial
+--- a/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py
++++ b/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py
+@@ -18,6 +18,8 @@
+     base.require(not any(k in config for k in ('recursive_reference','scripted_proposal_tokens',
+         'force_miss_positions','expected_outputs','pending_cases')), 'rolling config accepts no reference/oracle inputs')
+     base.require(config.get('persistent_requests') is True,'explicit persistent request opt-in')
++    speculative_depth=config.get('speculative_depth',2)
++    base.require(type(speculative_depth)is int and speculative_depth in (2,3),'speculative_depth requires integer2 or3')
+     recursive_flat_copy=config.get('recursive_flat_copy',False)
+     base.require(type(recursive_flat_copy) is bool,'recursive_flat_copy requires boolean opt-in')
+     capture_overlap=config.get('capture_ready_overlap',False)
+@@ -68,7 +70,7 @@
+     final_shared = str(Path(plan['output'])/f"stage{len(plan['stages'])-1}/shared.bin")
+     for stage in plan['stages']:
+         base.require(not any(flag in stage['argv'] for flag in ('--pipeline-ring-recursive-flat-copy',
+-            '--pipeline-provider-stage','--pipeline-ring-seed-shared')),
++            '--pipeline-provider-stage','--pipeline-ring-seed-shared','--pipeline-ring-depth')),
+             'provider options must be selected by config, not inherited adapter flags')
+         base.require(not any(f in stage['argv'] for f in ('--pipeline-wavefront','--pipeline-live-draft',
+             '--pipeline-ring','--draft-mtp')), 'rolling must not inherit another controller')
+@@ -79,6 +81,7 @@
+             '--pipeline-ring-persistent-requests','--pipeline-ring-check-policy',policy]
+         base.require('--oracle' not in stage['argv'] or base.option(stage['argv'],'--oracle')=='',
+                      'persistent runtime accepts no oracle file')
++        if speculative_depth==3:stage['argv'] += ['--pipeline-ring-depth','3']
+         if verify:stage['argv'].append('--pipeline-ring-verify-restore')
+         if provider_stage:stage['argv'] += ['--pipeline-provider-stage',str(provider_stage)]
+         if stage['id'] == provider_stage:
+@@ -115,10 +118,10 @@
+     count=config.get('suite_prompt_count')
+     rows=suite_tools.validate_suite(json.loads(raw),plan,count)
+     base.require(plan['prompt_tokens']==rows[0]['prompt_tokens'],'first prompt/config identity')
+-    # Each canonical input can have two discarded hypotheses and one accepted
+-    # execution: <=3N ROW + N ACCEPT + <=2N ABORT. Provider trace is separate.
++    # DepthD: <=(D+1)N ROW + N ACCEPT + DN ABORT, i.e. (2D+2)N.
++    # Default depth2 keeps6N; opt-in depth3 requires8N. Provider trace is separate.
+     trace_budgets=[dict(id=row['id'],input_positions=len(row['prompt_tokens'])+row['max_new']-1,
+-        target_commands=6*(len(row['prompt_tokens'])+row['max_new']-1),
++        target_commands=(2*speculative_depth+2)*(len(row['prompt_tokens'])+row['max_new']-1),
+         provider_commands=len(row['prompt_tokens'])+row['max_new']-2) for row in rows]
+     trace_required=max(row['target_commands'] for row in trace_budgets)
+     explicit_trace='ring_trace_limit' in config
+@@ -145,6 +148,7 @@
+         suite_prompt_count=count,dump_each=dump_each,admitted_max_new=config['admitted_max_new'],
+         limits='One fixed-policy loaded worker set; runtime prompts contain no expected answers. Cold native reset/state and measured-policy parity require independent qualification. No portable/service or speed certification.')
+     plan['pins'][str(suite_path)]=config['suite_sha256']
++    if speculative_depth==3:plan['speculative_depth']=3
+     if provider_stage:plan['provider_stage']=provider_stage
+     if recursive_flat_copy:plan['recursive_flat_copy']=True
+     if capture_overlap:plan['capture_ready_overlap']=True
+--- a/experiments/own-xpu-runtime/engine/tools/ring_driver.py
++++ b/experiments/own-xpu-runtime/engine/tools/ring_driver.py
+@@ -138,7 +138,7 @@
+             base.require(reply[1] == 0 and reply[3] == 0, 'target-only resolution has no token/stream')
+             ack = wire.resolution_ack(bytes(self.shared[wire.ACK_OFFSET:wire.ACK_OFFSET+wire.ACK_META.size]),
+                                       command, self.pending_rows, physical=self.physical,
+-                                      committed=self.committed, verify_restore=self.plan['verify_restore'])
++                                      committed=self.committed, verify_restore=self.plan['verify_restore'],depth=self.plan.get('speculative_depth',2))
+             self.physical, self.committed = ack.physical, ack.committed
+             if command.op == ring.ACCEPT:
+                 self.pending_rows.pop(0)
+--- a/experiments/own-xpu-runtime/engine/planning/rolling_provider/transport.py
++++ b/experiments/own-xpu-runtime/engine/planning/rolling_provider/transport.py
+@@ -64,7 +64,7 @@
+         prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'], vocab=plan['vocab'],
+         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
+         initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False),
+-        provider_stage=plan.get('provider_stage',0))
++        provider_stage=plan.get('provider_stage',0),speculative_depth=plan.get('speculative_depth',2))
+     for stage in stages:
+         stage.start_async()
+     sockets = {s.sock:s for s in stages}
+@@ -108,7 +108,7 @@
+                     base.require(seed_owner.accepted_row is not None and seed_owner.accepted_row.row == job.seed,
+                                  'provider consumes actual locally ACCEPTed original ROW')
+                     transported = pending.pending_codec.PendingProviderCommand(command.sequence,
+-                        seed_owner.accepted_row, parent_record, job.serial, stage=command.stage, accepted_sequence=seed_owner.accepted_sequence,
++                        seed_owner.accepted_row, parent_record, job.serial, stage=command.stage, depth=plan.get('speculative_depth',2), accepted_sequence=seed_owner.accepted_sequence,
+                         target_physical=job.target_physical, target_committed=job.target_committed,
+                         pending_rows=job.pending_rows)
+                     provider_wire[command.sequence] = (command, transported)
+@@ -173,7 +173,7 @@
+                     continue
+                 command,reply,result = complete
+                 if command.op == PROVIDER:
+-                    proposal_bytes = bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192])
++                    proposal_bytes = bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)])
+                     reply_bytes = stage.received.last
+                     base.require(len(reply_bytes) == base.REPLY.size and base.REPLY.unpack(reply_bytes) == reply,
+                                  'exact retired provider transport reply')
+@@ -184,7 +184,7 @@
+                         committed=result['target_committed'], pending_rows=result['pending_target_rows'],
+                         guesses=tuple(result['guesses']))
+                     provider_pairs += 1
+-                    result = dict(result, speculative_target_use=True, mode='rolling-depth2',
++                    result = dict(result, speculative_target_use=True, mode='rolling-depth3' if command.depth==3 else 'rolling-depth2',
+                         proposal_hex=proposal_bytes.hex(),proposal_sha256=sha256(proposal_bytes).hexdigest(),
+                         reply_hex=reply_bytes.hex(),reply_sha256=sha256(reply_bytes).hexdigest())
+                     journal('completed',command,reply_hex=reply_bytes.hex(),
+--- a/experiments/own-xpu-runtime/engine/planning/rolling_provider/capture_ready.py
++++ b/experiments/own-xpu-runtime/engine/planning/rolling_provider/capture_ready.py
+@@ -40,6 +40,7 @@
+         command = stage.command_pending
+         base.require(isinstance(command, pending.pending_codec.PendingProviderCommand),
+                      'capture-ready only for owned provider command')
++        base.require(command.depth==stage.plan.get('speculative_depth',2),'capture provider command/plan depth differs')
+         wanted = CAPTURE.size if self.header is not None else base.REPLY.size
+         try:
+             piece = stage.sock.recv(wanted-len(stage.received))
+@@ -68,9 +69,9 @@
+             self.header = bytes(stage.received)
+             stage.received.clear()
+             return None
+-        base.require(reply[0] == 0 and reply[3] == 192 and self.captured_sequence == command.sequence,
++        base.require(reply[0] == 0 and reply[3] == codec.proposal_size(command.depth) and self.captured_sequence == command.sequence,
+                      'provider completion requires prior matching capture event')
+-        result = codec.decode_proposal(bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192]),
++        result = codec.decode_proposal(bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)]),
+             command, vocab=stage.plan['vocab'], context=stage.plan['context'])
+         base.require(reply[1] == (result['guesses'][0] if result['guesses'] else -1),
+                      'provider reply token differs from batch')
+--- a/experiments/own-xpu-runtime/engine/planning/rolling_provider/remote.py
++++ b/experiments/own-xpu-runtime/engine/planning/rolling_provider/remote.py
+@@ -13,7 +13,7 @@
+     base.require(len(raw)==256, 'complete independent stage0 seed journal')
+     fields=SEED_HEADER.unpack(raw[:32]);seed=command.seed
+     base.require(fields[:5]==(0x52534331,1,256,0,command.accepted_sequence)
+-        and fields[6]==seed.row.position+1 and fields[6]<=fields[5]<=fields[6]+2,
++        and fields[6]==seed.row.position+1 and fields[6]<=fields[5]<=fields[6]+command.depth,
+         'stage0 seed journal owner/frontier/ACCEPT identity')
+     expected=list(wire.ROW_META.unpack(wire.row_metadata(seed,final=False,stream_bytes=stream_bytes)[0]))
+     expected[14]=seed.sequence
+@@ -24,6 +24,7 @@
+ 
+ def issue(stage, command, seed_owner):
+     stage.guard.check()
++    base.require(command.depth==stage.plan.get('speculative_depth',2),'remote provider command/plan depth differs')
+     base.require(0 < command.stage == stage.spec['id'] == stage.plan['provider_stage'] < len(stage.plan['stages'])-1,
+                  'explicit nonfinal remote provider owner')
+     base.require(stage.command_pending is None and not stage.transmit and not stage.received,
+@@ -45,7 +46,7 @@
+             (command.target_physical,command.target_committed,command.pending_rows)
+         and command.target_committed in (seed.row.position,seed.row.position+1)
+         and command.target_physical == command.target_committed+len(command.pending_rows)
+-        and len(command.pending_rows) <= 2 and len(set(command.pending_rows)) == len(command.pending_rows),
++        and len(command.pending_rows) <= command.depth and len(set(command.pending_rows)) == len(command.pending_rows),
+         'remote provider borrows only completed tentative target suffix')
+     # Validate the actual stage-zero ROW, then bind its immutable ticket and
+     # the remote transport owner. Their independent wire counters are unordered.
+@@ -61,5 +62,5 @@
+     stage.sequence=command.sequence
+     stage.command_pending=command
+     stage.transmit=base.REQUEST.pack(codec.STEP,seed.row.token,seed.row.position,
+-        int(seed.row.fixture > 0),2,command.sequence,command.stage,0)
++        int(seed.row.fixture > 0),command.depth,command.sequence,command.stage,0)
+     return dict(seed_journal_hex=journal.hex(),seed_journal_sha256=sha256(journal).hexdigest())

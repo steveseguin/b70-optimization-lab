@@ -64,7 +64,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
         prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'], vocab=plan['vocab'],
         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
         initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False),
-        provider_stage=plan.get('provider_stage',0))
+        provider_stage=plan.get('provider_stage',0),speculative_depth=plan.get('speculative_depth',2))
     for stage in stages:
         stage.start_async()
     sockets = {s.sock:s for s in stages}
@@ -108,7 +108,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                     base.require(seed_owner.accepted_row is not None and seed_owner.accepted_row.row == job.seed,
                                  'provider consumes actual locally ACCEPTed original ROW')
                     transported = pending.pending_codec.PendingProviderCommand(command.sequence,
-                        seed_owner.accepted_row, parent_record, job.serial, stage=command.stage, accepted_sequence=seed_owner.accepted_sequence,
+                        seed_owner.accepted_row, parent_record, job.serial, stage=command.stage, depth=plan.get('speculative_depth',2), accepted_sequence=seed_owner.accepted_sequence,
                         target_physical=job.target_physical, target_committed=job.target_committed,
                         pending_rows=job.pending_rows)
                     provider_wire[command.sequence] = (command, transported)
@@ -173,7 +173,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                     continue
                 command,reply,result = complete
                 if command.op == PROVIDER:
-                    proposal_bytes = bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192])
+                    proposal_bytes = bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)])
                     reply_bytes = stage.received.last
                     base.require(len(reply_bytes) == base.REPLY.size and base.REPLY.unpack(reply_bytes) == reply,
                                  'exact retired provider transport reply')
@@ -184,7 +184,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                         committed=result['target_committed'], pending_rows=result['pending_target_rows'],
                         guesses=tuple(result['guesses']))
                     provider_pairs += 1
-                    result = dict(result, speculative_target_use=True, mode='rolling-depth2',
+                    result = dict(result, speculative_target_use=True, mode='rolling-depth3' if command.depth==3 else 'rolling-depth2',
                         proposal_hex=proposal_bytes.hex(),proposal_sha256=sha256(proposal_bytes).hexdigest(),
                         reply_hex=reply_bytes.hex(),reply_sha256=sha256(reply_bytes).hexdigest())
                     journal('completed',command,reply_hex=reply_bytes.hex(),

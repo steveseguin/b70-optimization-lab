@@ -107,7 +107,7 @@ def validate_suite(plan,suite,terminal,baseline):
         config_sha256=plan['config_sha256'],mode=plan['mode'],check_policy=plan['check_policy'])
     need(hashlib.sha256(__import__('json').dumps(ident,sort_keys=True,separators=(',',':')).encode()).hexdigest()==plan['request_sha256'],
          'process request identity differs')
-    required=max(6*(len(r['prompt_tokens'])+r['max_new']-1) for r in suite['prompts'])
+    required=max((2*plan.get('speculative_depth',2)+2)*(len(r['prompt_tokens'])+r['max_new']-1) for r in suite['prompts'])
     limit=plan.get('ring_trace_limit')
     need(type(limit) is int and required<=limit<=100000,'explicit complete bounded native trace budget required')
     for stage in plan['stages']:
@@ -125,6 +125,8 @@ def audit_provider(batches,native,replay,records,prompt_length,att,request,epoch
          'complete actual provider traces required')
     pairs=[]
     for position,(batch,row,ctx) in enumerate(zip(batches,native,contexts),1):
+        if ctx.get('provider_stage',0):
+            need(row['seed_accept_sequence']==ctx['seed']['accept_sequence'] and row['seed_journal_sha256']==ctx['seed_journal_sha256'],'suite native/controller seed journal differs')
         seed,parent=ctx['seed'],ctx['parent'];head=position>=prompt_length-1;hidden=parent_records[parent['id']]['hidden_sha256'];guesses=batch['guesses']
         need(batch['epoch']==epoch and batch['request_sha256']==request and batch['parent_hidden_sha256']==hidden
              and batch['restored'] is True and batch['speculative_target_use'] is True,'provider independently retained parent hidden identity')
@@ -140,8 +142,8 @@ def audit_provider(batches,native,replay,records,prompt_length,att,request,epoch
     need(att['provider_commands']==att['provider_position']==att['provider_serial']==len(pairs)
          and att['provider_snapshot_captures']==att['provider_snapshot_restores']==heads
          and att['provider_byteverified_restore_count']==0,'provider operation conservation differs')
-    pending={str(d):sum(len(v['pending'])==d for v in contexts) for d in (0,1,2)}
-    need(att['provider_pending_borrows']=={k:pending[k] for k in ('1','2')} and att['provider_quiescent_borrows']==pending['0'],
+    pending={str(d):sum(len(v['pending'])==d for v in contexts) for d in range(att['depth']+1)}
+    need(att['provider_pending_borrows']=={k:pending[k] for k in map(str,range(1,att['depth']+1))} and att['provider_quiescent_borrows']==pending['0'],
          'actual provider borrow histogram differs')
     return dict(passed=True,pairs=len(pairs),recursive_pairs=heads,pair_sequence_sha256=token_hash(pairs),pending_borrows=pending,
                 reference_recursive_predictions_compared=False,scope='Native and controller raw actual-provider agreement; no independent long-cohort recursive prediction reference.')
@@ -154,19 +156,22 @@ def distribution(values):
     return dict(count=len(vals),total=sum(vals),minimum=vals[0],median=statistics.median(vals),p95=vals[math.ceil(.95*len(vals))-1],maximum=vals[-1])
 
 
-def work_breakdown(commands,replay,native_provider,prompt_length):
+def work_breakdown(commands,replay,native_provider,prompt_length,speculative_depth=2):
+    max_depth=speculative_depth
+    counts=lambda: {str(d):0 for d in range(1,max_depth+1)}
     issued={};stage={};native_ms={k:[] for k in ('canonical_ms','capture_ms','recursive_ms','restore_ms')}
     origin={e['row']['id']:e['proposal'] for e in commands if e['event']=='issued' and e['op']==24 and e['stage']==0}
     for e in commands:
         key=e['stage'],e['sequence']
         if e['event']=='issued':issued[key]=e;continue
+        if e['event']=='parent-captured':continue # Nonterminal progress is not a second completion.
         need(key in issued,'timing completion without issued command');start=issued[key]
         if e['row']['position']<prompt_length:continue # Rows producing outputs after first, including discarded decode work.
-        owner=stage.setdefault(str(e['stage']),dict(ops={},accepted_by_proposal_depth={'1':0,'2':0},discarded_by_proposal_depth={'1':0,'2':0},rollback_suffix_lengths={'1':0,'2':0}))
+        owner=stage.setdefault(str(e['stage']),dict(ops={},accepted_by_proposal_depth=counts(),discarded_by_proposal_depth=counts(),rollback_suffix_lengths=counts()))
         op=owner['ops'].setdefault(str(e['op']),[]);reply=base.REPLY.unpack(bytes.fromhex(e['reply_hex']));op.append(reply[8])
         if e['op']==25 and start['proposal'] is not None:owner['accepted_by_proposal_depth'][str(start['proposal']['depth'])]+=1
     for abort in replay['all_aborts']:
-        owner=stage.setdefault(str(abort['stage']),dict(ops={},accepted_by_proposal_depth={'1':0,'2':0},discarded_by_proposal_depth={'1':0,'2':0},rollback_suffix_lengths={'1':0,'2':0}))
+        owner=stage.setdefault(str(abort['stage']),dict(ops={},accepted_by_proposal_depth=counts(),discarded_by_proposal_depth=counts(),rollback_suffix_lengths=counts()))
         owner['rollback_suffix_lengths'][str(len(abort['discarded']))]+=1
         for row in abort['discarded']:
             p=origin[row['id']];need(p is not None,'discarded row lacks actual proposal origin');owner['discarded_by_proposal_depth'][str(p['depth'])]+=1
@@ -226,6 +231,7 @@ def load_planner_transition(path,trusted_sha256):
 
 def validate_prerequisite_closure(plan,prior,transition=None):
     """Match native/build and complete pinned execution closure, not geometry alone."""
+    need(prior.get('provider_stage',0)==plan.get('provider_stage',0),'same-build gate provider role differs')
     need(all(prior[k]==plan[k] for k in ('model_identity_sha256','draft_model_sha256','draft_experts','context','vocab','activation_dtype','boundaries','eos_token_ids')),
          'suite differs from persistent model/geometry qualification')
     def closure(p):

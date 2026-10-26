@@ -40,6 +40,7 @@ class Reader:
         command = stage.command_pending
         base.require(isinstance(command, pending.pending_codec.PendingProviderCommand),
                      'capture-ready only for owned provider command')
+        base.require(command.depth==stage.plan.get('speculative_depth',2),'capture provider command/plan depth differs')
         wanted = CAPTURE.size if self.header is not None else base.REPLY.size
         try:
             piece = stage.sock.recv(wanted-len(stage.received))
@@ -68,9 +69,9 @@ class Reader:
             self.header = bytes(stage.received)
             stage.received.clear()
             return None
-        base.require(reply[0] == 0 and reply[3] == 192 and self.captured_sequence == command.sequence,
+        base.require(reply[0] == 0 and reply[3] == codec.proposal_size(command.depth) and self.captured_sequence == command.sequence,
                      'provider completion requires prior matching capture event')
-        result = codec.decode_proposal(bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192]),
+        result = codec.decode_proposal(bytes(stage.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)]),
             command, vocab=stage.plan['vocab'], context=stage.plan['context'])
         base.require(reply[1] == (result['guesses'][0] if result['guesses'] else -1),
                      'provider reply token differs from batch')

@@ -36,13 +36,16 @@ class Publisher:
             issued=c.proposals.issued[length]
             first=(issued.proposal.token+1)%97;second=target(first,length)
             self.disagreements.append((issued.row_id,issued.proposal.token,first))
-        return [ProposalBatch(c.request,c.epoch,self.ticket,length,c.proposals.hashes[length],(first,second),length-1,True)]
+        tokens=(first,second)
+        if c.speculative_depth==3:tokens+=((target(second,length+1)+int(length+2 in self.misses))%97,)
+        return [ProposalBatch(c.request,c.epoch,self.ticket,length,c.proposals.hashes[length],tokens,length-1,True)]
 
 
 class Worker:
-    def __init__(self,index,count,epoch,prompt,sequence=0):
+    def __init__(self,index,count,epoch,prompt,sequence=0,speculative_depth=2):
         self.index,self.count,self.epoch,self.prompt,self.sequence=index,count,epoch,list(prompt),sequence
-        self.ring=Ring(first=index==0,final=index==count-1,context=128,vocab=97)
+        self.speculative_depth=speculative_depth
+        self.ring=Ring(capacity=speculative_depth,first=index==0,final=index==count-1,context=128,vocab=97)
         self.tickets={};self.outputs={};self.accept_positions=[];self.reset_count=0
     def execute(self,command):
         assert command.stage==self.index and command.sequence==self.sequence+1
@@ -50,7 +53,7 @@ class Worker:
         if command.op==RESET:
             assert not self.ring.pending and self.ring.physical['position']==self.ring.committed
             self.epoch=command.reset.epoch;self.prompt=list(command.reset.prompt)
-            self.ring=Ring(first=self.index==0,final=self.index==self.count-1,context=128,vocab=97)
+            self.ring=Ring(capacity=self.speculative_depth,first=self.index==0,final=self.index==self.count-1,context=128,vocab=97)
             self.tickets={};self.outputs={};self.reset_count+=1
             return Ack(self.epoch,self.index,self.sequence,0,0,0,0,0)
         row=command.row
@@ -102,11 +105,11 @@ def run(c,workers,seed=0,stop_when=None):
     return dict(peak_slots=peak_slots,peak_global=peak_global,stopped=stopped)
 
 
-def fixture(count=4,publisher=None,prompt=None,maximum=12,eos=(96,),seed=0,wire=0):
+def fixture(count=4,publisher=None,prompt=None,maximum=12,eos=(96,),seed=0,wire=0,speculative_depth=2):
     prompt=prompt or [3,5,8,11]
     c=Coordinator(stages=count,request=sha256(b'fixture').digest(),epoch=1,prompt=prompt,max_new=maximum,
-                  vocab=97,eos_token_ids=eos,proposal_callback=publisher,context=128,initial_sequences=[wire]*count)
-    workers=[Worker(i,count,1,prompt,wire) for i in range(count)]
+                  vocab=97,eos_token_ids=eos,proposal_callback=publisher,context=128,initial_sequences=[wire]*count,speculative_depth=speculative_depth)
+    workers=[Worker(i,count,1,prompt,wire,speculative_depth) for i in range(count)]
     return c,workers
 
 

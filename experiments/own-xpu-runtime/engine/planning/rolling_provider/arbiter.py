@@ -32,10 +32,12 @@ class Job:
 
 
 class Arbiter:
-    def __init__(self, *, stages, request, epoch, last_input_position, vocab, capture_ready_overlap=False, provider_stage=0):
+    def __init__(self, *, stages, request, epoch, last_input_position, vocab, capture_ready_overlap=False, provider_stage=0, speculative_depth=2):
         need(stages >= 2 and isinstance(request, bytes) and len(request) == 32
              and epoch >= 0 and last_input_position >= 0 and vocab > 0, 'rolling scope')
         need(type(provider_stage) is int and 0 <= provider_stage < stages-1, 'provider must be a nonfinal owner')
+        need(type(speculative_depth) is int and speculative_depth in (2, 3), 'supported speculative depth')
+        self.speculative_depth = speculative_depth
         self.provider_stage = provider_stage
         self.stages, self.request, self.epoch = stages, request, epoch
         self.last_input_position = last_input_position
@@ -100,7 +102,7 @@ class Arbiter:
         seed, parent = self.local_seed, self.parent.row
         return (seed.position == self.next_seed and seed.parent == parent.identity and seed.before == parent.after
                 and (committed == seed.position+1 if self.provider_stage == 0 else committed in (seed.position, seed.position+1))
-                and physical == committed+len(pending) and len(pending) <= 2)
+                and physical == committed+len(pending) and len(pending) <= self.speculative_depth)
 
     def reserve(self, reserve_auxiliary, *, stage_busy, pending, physical, committed, phase=None):
         need(self.can_reserve(stage_busy=stage_busy, pending=pending, physical=physical, committed=committed, phase=phase),
@@ -123,7 +125,7 @@ class Arbiter:
                  (job.command.sequence, job.serial, job.seed.position), 'provider wire/serial/canonical position')
             need((physical, committed, tuple(pending_rows)) ==
                  (job.target_physical, job.target_committed, job.pending_rows), 'provider changed borrowed target state')
-            need(isinstance(guesses, tuple) and (1 <= len(guesses) <= 2 if job.seed.fixture else not guesses),
+            need(isinstance(guesses, tuple) and (1 <= len(guesses) <= self.speculative_depth if job.seed.fixture else not guesses),
                  'head-aware bounded provider publication')
             need(all(type(t) is int and 0 <= t < self.vocab for t in guesses), 'provider vocabulary bound')
             release_auxiliary(job.command)

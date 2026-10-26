@@ -20,7 +20,7 @@ inline ring_next::Row seed_row(const SeedRecord& r,const ring_next::wire::Contex
  auto c=provider;c.stage=0;auto m=r.row;const int ticket=m.publication_ticket;m.publication_ticket=0;
  w::Command accept{w::accept_op,m.token,m.position,m.fixture,ticket,int(r.published_sequence),0,0};
  const auto row=w::resolution(m,accept,c);
- need(r.committed==row.position+1&&r.physical>=r.committed&&r.physical-r.committed<=2,"seed journal accepted target frontier");
+ need(r.committed==row.position+1&&r.physical>=r.committed&&r.physical-r.committed<=provider.depth,"seed journal accepted target frontier");
  return row;
 }
 inline uint64_t seed_published(const uint8_t* shared){auto* p=reinterpret_cast<const uint64_t*>(shared+seed_record_offset+offsetof(SeedRecord,published_sequence));return __atomic_load_n(p,__ATOMIC_ACQUIRE);}

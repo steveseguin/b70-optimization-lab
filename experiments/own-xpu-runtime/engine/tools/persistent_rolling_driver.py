@@ -18,6 +18,8 @@ def make_plan(config_path):
     base.require(not any(k in config for k in ('recursive_reference','scripted_proposal_tokens',
         'force_miss_positions','expected_outputs','pending_cases')), 'rolling config accepts no reference/oracle inputs')
     base.require(config.get('persistent_requests') is True,'explicit persistent request opt-in')
+    speculative_depth=config.get('speculative_depth',2)
+    base.require(type(speculative_depth)is int and speculative_depth in (2,3),'speculative_depth requires integer2 or3')
     recursive_flat_copy=config.get('recursive_flat_copy',False)
     base.require(type(recursive_flat_copy) is bool,'recursive_flat_copy requires boolean opt-in')
     capture_overlap=config.get('capture_ready_overlap',False)
@@ -68,7 +70,7 @@ def make_plan(config_path):
     final_shared = str(Path(plan['output'])/f"stage{len(plan['stages'])-1}/shared.bin")
     for stage in plan['stages']:
         base.require(not any(flag in stage['argv'] for flag in ('--pipeline-ring-recursive-flat-copy',
-            '--pipeline-provider-stage','--pipeline-ring-seed-shared')),
+            '--pipeline-provider-stage','--pipeline-ring-seed-shared','--pipeline-ring-depth')),
             'provider options must be selected by config, not inherited adapter flags')
         base.require(not any(f in stage['argv'] for f in ('--pipeline-wavefront','--pipeline-live-draft',
             '--pipeline-ring','--draft-mtp')), 'rolling must not inherit another controller')
@@ -79,6 +81,7 @@ def make_plan(config_path):
             '--pipeline-ring-persistent-requests','--pipeline-ring-check-policy',policy]
         base.require('--oracle' not in stage['argv'] or base.option(stage['argv'],'--oracle')=='',
                      'persistent runtime accepts no oracle file')
+        if speculative_depth==3:stage['argv'] += ['--pipeline-ring-depth','3']
         if verify:stage['argv'].append('--pipeline-ring-verify-restore')
         if provider_stage:stage['argv'] += ['--pipeline-provider-stage',str(provider_stage)]
         if stage['id'] == provider_stage:
@@ -115,10 +118,10 @@ def make_plan(config_path):
     count=config.get('suite_prompt_count')
     rows=suite_tools.validate_suite(json.loads(raw),plan,count)
     base.require(plan['prompt_tokens']==rows[0]['prompt_tokens'],'first prompt/config identity')
-    # Each canonical input can have two discarded hypotheses and one accepted
-    # execution: <=3N ROW + N ACCEPT + <=2N ABORT. Provider trace is separate.
+    # DepthD: <=(D+1)N ROW + N ACCEPT + DN ABORT, i.e. (2D+2)N.
+    # Default depth2 keeps6N; opt-in depth3 requires8N. Provider trace is separate.
     trace_budgets=[dict(id=row['id'],input_positions=len(row['prompt_tokens'])+row['max_new']-1,
-        target_commands=6*(len(row['prompt_tokens'])+row['max_new']-1),
+        target_commands=(2*speculative_depth+2)*(len(row['prompt_tokens'])+row['max_new']-1),
         provider_commands=len(row['prompt_tokens'])+row['max_new']-2) for row in rows]
     trace_required=max(row['target_commands'] for row in trace_budgets)
     explicit_trace='ring_trace_limit' in config
@@ -145,6 +148,7 @@ def make_plan(config_path):
         suite_prompt_count=count,dump_each=dump_each,admitted_max_new=config['admitted_max_new'],
         limits='One fixed-policy loaded worker set; runtime prompts contain no expected answers. Cold native reset/state and measured-policy parity require independent qualification. No portable/service or speed certification.')
     plan['pins'][str(suite_path)]=config['suite_sha256']
+    if speculative_depth==3:plan['speculative_depth']=3
     if provider_stage:plan['provider_stage']=provider_stage
     if recursive_flat_copy:plan['recursive_flat_copy']=True
     if capture_overlap:plan['capture_ready_overlap']=True

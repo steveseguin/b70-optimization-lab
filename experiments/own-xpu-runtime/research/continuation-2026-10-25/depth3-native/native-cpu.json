@@ -1,0 +1,83 @@
+{
+  "patch": "/dev/shm/ownrt-depth3-next/native-depth3.patch",
+  "patch_sha256": "05e099815188c830e677237fc184774384703f2952bc8f64937b9b43e7615be0",
+  "files": [
+    {
+      "path": "experiments/own-xpu-runtime/engine/planning/checkpoint_fixture.hpp",
+      "before_sha256": "9c81ecb9838b07f3656621b73c2f01764b7494ebf2cfd6a48b1b760c0fedd495",
+      "after_sha256": "5831702b6c201a4bbe430e762c74c7fb7caa930c7e70df8f869106a1a2ad3f06"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/planning/test_recursive_provider_native.cpp",
+      "before_sha256": "ec2b6b9b82de9b6046df265a5c22c756d9e92afe6aebb50171d24ab080229811",
+      "after_sha256": "a086bc6d10c21eb34263d20862aa1b8ce694d3567c5a56090db0372c167a08c8"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/planning/test_ring_depth3.cpp",
+      "before_sha256": null,
+      "after_sha256": "58b8e0b7ccea879a24ba32e9067b3fa24c2637ff3d9ee3ec5ee9ffe46239aea0"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp",
+      "before_sha256": "4b68974185f0696dcb2db2f8d392dcbaa35ac69e18e974907ca26706ebe6ea71",
+      "after_sha256": "439c0ffbca4bc1a02f85d54686ae370b92ca356a2069d25421fe3e9e6592ded4"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp",
+      "before_sha256": "2eea16d2b0f525f0e75c75ea19fdd117f8f0cbe0060a487f861d073183950906",
+      "after_sha256": "9216682a4f4b8bbbf232bded807120b41d6a450370e9f949cf82831ae2377114"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/admission.hpp",
+      "before_sha256": "472460bbeac7295f50e4ce41be3c06384ca55258d040cc59eaa5c8db6aff7e95",
+      "after_sha256": "0151718cf097e6ba139e90a86f3cc18463e10df1695adf8aba392718363a9847"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/batch.hpp",
+      "before_sha256": "352e01f249ccc779e6406e9cfbe9d8dc7b7f4e44795f759482e220e8b2c750e7",
+      "after_sha256": "fb4de9399409b4db651cf4ab56201f0c787a5349d99fef59a2868bb20d16d21d"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/seed_peer.hpp",
+      "before_sha256": "2b1a4e5ad50905f54ee9d2900ec7e8677f5724cfe445f2f14e75d42f6f155822",
+      "after_sha256": "418855282ced95d6f7fa8425efa2f7a092c958414db400b7c280310e41ebf7d9"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/recursive_provider/survival_writer.inc",
+      "before_sha256": "0048191d85f335a781c3522f88d5bbf234cfc592826acd531be1738e92278226",
+      "after_sha256": "c39a28a911981d1cddaef4944ca2906b39d950c6dfeb8c45f44cc6e8eb966d1c"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp",
+      "before_sha256": "ee97572de6ae4148f5dbfb226389ed498d220ade2b3ace70a4de63c144442020",
+      "after_sha256": "0a6528e500ea30423f893e8318791a943709993ed8d91572735282c1c40e7c77"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp",
+      "before_sha256": "e0e91e0ae91c28c6e4f6269d11edd5e9c69e34c90426c6be69873c625c062e49",
+      "after_sha256": "016aa5a908d930cc0c0b0bf9ef53bc127888ffb0678e0dd79665170fe8b3cf74"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc",
+      "before_sha256": "eacbc473fa86426924efc368dc07a00e78982e8899eef367d7498ee33272ff88",
+      "after_sha256": "e69d6fcbb2bc8d178d29c2a9b289084c47501bd525c99cbd354d0dd58fe9b9fd"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/ring/stage_ring.hpp",
+      "before_sha256": "deba29cbba6409575f64ef727f72a1f0937161deb938656e46a38c4aa4ad11ad",
+      "after_sha256": "10068c806b694b3ba23d772bd481a1dab75d564d5ce90e508a8d5cada2f0b152"
+    },
+    {
+      "path": "experiments/own-xpu-runtime/engine/src/pipeline/ring/wire.hpp",
+      "before_sha256": "9f5c3688af51d6092ec7018c6e85d2918b5443e326f789e3598f881a61a48eea",
+      "after_sha256": "5b7257c73ce58aa99eca6d2a65dbabf3f7c61b5dcab64ca6c3a286eed2276c5d"
+    }
+  ],
+  "tests": [
+    "ledger.log",
+    "native-depth2.log",
+    "native-depth3.log",
+    "native-depth3-remote.log"
+  ],
+  "scope": "Host ledger exact1/2/3 suffixes, accept-no-rewind, cancel suffix drain, reset and strict ABI; actual recursive member two hypothetical steps and canonical71device+2pinned restoration with3 target slots, provider0 and2, flatcopy; synthetic arithmetic only."
+}

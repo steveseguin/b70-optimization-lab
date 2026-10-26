@@ -17,11 +17,14 @@ def raw(value,size):
     return bytes.fromhex(value)
 
 
-def audit_controller(commands,records,batches,prompt,outputs,request,stages,stream_bytes,vocab,context,*,epoch,initial_sequences,check_policy,max_new,provider_stage=0):
+def audit_controller(commands,records,batches,prompt,outputs,request,stages,stream_bytes,vocab,context,*,epoch,initial_sequences,check_policy,max_new,provider_stage=0,speculative_depth=2):
     need(type(epoch)is int and 0<epoch<2**64 and check_policy in ('qualification','measured'), 'explicit persistent epoch and fixed policy')
     need(len(initial_sequences)==stages and all(type(n)is int and 0<n<2**31 for n in initial_sequences), 'exact per-owner post-reset wire sequences')
     need(type(max_new)is int and len(outputs)<=max_new<=512, 'admitted persistent output bound')
     need(type(provider_stage)is int and 0<=provider_stage<stages-1,'explicit nonfinal provider owner')
+    need(type(speculative_depth)is int and speculative_depth in (2,3),'supported speculative depth')
+    version=1 if speculative_depth==2 else 2
+    proposal_bytes=192 if speculative_depth==2 else 224
     verify=check_policy=='qualification'
     initial=hashlib.sha256(b'ownrt.ring-request.v1\0'+bytes.fromhex(request)+struct.pack('<Q',epoch)).digest()
     inputs=prompt+outputs[:-1];truth=list(prompt);created={};origin={};sent=[[] for _ in range(stages)]
@@ -100,7 +103,7 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
                 need(event['tentative'] is (r['position']>=len(truth)),'ROW tentative flag differs from verified input frontier')
                 parent=s['pending'][-1] if s['pending'] else s['accepted']
                 need(r['position']==s['physical'] and r['parent']==(parent['id'] if parent else 0)
-                     and event['row_ticket']==seq and len(s['pending'])<(1 if final else 2),'ROW cursor/parent/capacity')
+                     and event['row_ticket']==seq and len(s['pending'])<(1 if final else speculative_depth),'ROW cursor/parent/capacity')
                 need(not s['pending'] or event['tentative'] and all(p['tentative'] for p in s['pending']),'ROW bypassed unaccepted verified input')
                 need(not final or not event['tentative'],'final stage speculated')
                 if not event['tentative']:need(r['position']<len(truth) and r['token']==truth[r['position']],'unverified ROW promoted to truth')
@@ -150,14 +153,14 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
             if op==27 and provider_stage:
                 journal=raw(event['seed_journal_hex'],256)
                 need(sha(journal)==event['seed_journal_sha256'],'seed journal raw SHA differs')
-                magic,version,size,seed_owner,accepted,physical,committed=struct.unpack('<4IQ2i',journal[:32])
-                need((magic,version,size,seed_owner,accepted)==(0x52534331,1,256,0,event['accepted_seed_sequence'])
-                     and accepted>event['row_ticket'] and committed==r['position']+1 and committed<=physical<=committed+2,'seed journal owned ACCEPT/frontier binding')
+                magic,journal_version,size,seed_owner,accepted,physical,committed=struct.unpack('<4IQ2i',journal[:32])
+                need((magic,journal_version,size,seed_owner,accepted)==(0x52534331,1,256,0,event['accepted_seed_sequence'])
+                     and accepted>event['row_ticket'] and committed==r['position']+1 and committed<=physical<=committed+speculative_depth,'seed journal owned ACCEPT/frontier binding')
                 seed_meta=list(expected);seed_meta[10]=0;seed_meta[14]=event['row_ticket']
                 need(journal[32:]==wire.ROW_META.pack(*seed_meta),'seed journal original stage0 row differs')
             packet=base.REQUEST.unpack(raw(event['request_hex'],base.REQUEST.size))
             need(packet==(op,r['token'],r['position'],int(r['fixture']>0) if op==27 else r['fixture'],
-                          2 if op==27 else int(event['tentative']) if op==24 else event['row_ticket'],seq,owner,int(final)),
+                          speculative_depth if op==27 else int(event['tentative']) if op==24 else event['row_ticket'],seq,owner,int(final)),
                  'issued raw request differs')
             s['last_sequence']=seq;s['busy']=event
             if op!=27:sent[owner].append(dict(op=op,sequence=seq,row=r['id'],position=r['position'],
@@ -172,12 +175,15 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
             b=event['provider'];need(batch_index<len(batches) and b==batches[batch_index],'provider witness/batch chronology');batch_index+=1
             need(b['proposal_hex']==event['metadata_hex'] and b['reply_hex']==event['reply_hex'] and b['proposal_sha256']==sha(bytes.fromhex(b['proposal_hex']))
                  and b['reply_sha256']==sha(bytes.fromhex(b['reply_hex'])),'provider raw witness hashes')
-            ctx=issued['context'];parent=ctx['parent'];head=r['fixture']>0;depth=(2 if r['position']<context else 1) if head else 0
+            ctx=issued['context'];parent=ctx['parent'];head=r['fixture']>0;depth=min(speculative_depth,context-r['position']+1) if head else 0
             guesses=b['guesses'];need(len(guesses)==depth and all(type(t)is int and 0<=t<vocab for t in guesses),'actual provider bounded guesses')
-            expected=(0x44525032,1,192,2+int(head),epoch,seq,r['id'],r['parent'],parent['accept_sequence'],provider_position+1,
-                      r['position'],r['position'],2,depth,*(guesses+[-1]*2)[:2],0,1,
+            expected=(0x44525032,version,proposal_bytes,2+int(head),epoch,seq,r['id'],r['parent'],parent['accept_sequence'],provider_position+1,
+                      r['position'],r['position'],speculative_depth,depth,*(guesses+[-1]*2)[:2],0,1,
                       bytes.fromhex(request),bytes.fromhex(r['after']),bytes.fromhex(issued['parent_hidden_sha256']))
-            need(codec.PROPOSAL.unpack(raw(event['metadata_hex'],192))==expected and reply[3]==192 and reply[1]==(guesses[0] if guesses else -1),
+            payload=raw(event['metadata_hex'],proposal_bytes)
+            if speculative_depth==3:
+                need(payload[192:]==struct.pack('<i',guesses[2] if depth==3 else -1)+bytes(28),'third proposal and reserved bytes')
+            need(codec.PROPOSAL.unpack(payload[:192])==expected and reply[3]==proposal_bytes and reply[1]==(guesses[0] if guesses else -1),
                  'raw provider owner/seed/parent/restore/proposal identity')
             for key,value in dict(epoch=epoch,sequence=seq,seed_row=r['id'],parent_row=r['parent'],final_commit=parent['accept_sequence'],
                 provider_serial=r['position'],seed_position=r['position'],restored_position=r['position'],available_depth=depth,
@@ -202,9 +208,9 @@ def audit_controller(commands,records,batches,prompt,outputs,request,stages,stre
             else:
                 need(reply[1]==reply[3]==0 and ack['token'] is None and ack['stream_bytes']==0 and ack['stream_sha256'] is None,'resolution stale output')
                 discarded=[p['id'] for p in s['pending']] if op==26 else []
-                expected=(0x5241434b,1,128,int(op==26 and verify),epoch,r['id'],*(discarded+[0,0])[:2],owner,seq,event['row_ticket'],
+                expected=(0x5241434b,version,128,int(op==26 and verify),epoch,r['id'],*(discarded+[0,0])[:2],owner,seq,event['row_ticket'],
                     s['committed'] if op==26 else s['physical'],s['committed'] if op==26 else s['committed']+1,
-                    len(discarded),0 if op==26 else len(s['pending'])-1,0,bytes(48))
+                    len(discarded),0 if op==26 else len(s['pending'])-1,0,(struct.pack('<Q',discarded[2] if len(discarded)==3 else 0)+bytes(40)) if speculative_depth==3 else bytes(48))
                 need(wire.ACK_META.unpack(raw(event['metadata_hex'],128))==expected and ack['discarded']==discarded,'raw resolution/byteverify ACK differs')
                 if op==25:
                     row=s['pending'].pop(0);row['accept_sequence']=seq;s['accepted']=row;s['committed']+=1

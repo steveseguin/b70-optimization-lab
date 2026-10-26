@@ -79,6 +79,7 @@ class PendingStage(live.LiveStage):
 
     def issue_provider(self, command):
         self.guard.check()
+        base.require(command.depth==self.plan.get('speculative_depth',2),'provider command/plan depth differs')
         base.require(isinstance(command, pending_codec.PendingProviderCommand) and self.spec['first']
                      and self.command_pending is None and not self.transmit and not self.received,
                      'exclusive pending provider wire owner')
@@ -97,7 +98,7 @@ class PendingStage(live.LiveStage):
         self.sequence = command.sequence
         self.command_pending = command
         self.transmit = base.REQUEST.pack(codec.STEP, command.seed.row.token, command.seed.row.position,
-                                          int(command.seed.row.fixture > 0), 2, command.sequence, 0, 0)
+                                          int(command.seed.row.fixture > 0), command.depth, command.sequence, 0, 0)
 
 
 def drive(stages, plan, guard, output):

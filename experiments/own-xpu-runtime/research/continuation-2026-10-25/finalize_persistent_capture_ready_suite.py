@@ -11,9 +11,21 @@ from persistent_capture_ready_trace_audit import audit_controller
 def capture_plan(plan):
     frozen.need(plan.get('capture_ready_overlap') is True and plan['check_policy']=='measured',
                 'explicit measured capture-ready policy required')
+    depth=plan.get('speculative_depth',2)
+    frozen.need(type(depth)is int and depth in (2,3),'supported speculative depth')
+    for stage in plan['stages']:
+        argv=stage['argv'];flag='--pipeline-ring-depth'
+        frozen.need(argv.count(flag)==int(depth==3),'native depth flag count')
+        if depth==3:frozen.need(argv[argv.index(flag)+1]=='3','native depth value')
+    provider=plan.get('provider_stage',0)
+    frozen.need(type(provider)is int and 0<=provider<len(plan['stages'])-1,'suite capture provider role')
     flag='--pipeline-ring-parent-capture-ack'
-    frozen.need([s['argv'].count(flag) for s in plan['stages']]==[1]+[0]*(len(plan['stages'])-1),
-                'capture-ready first-owner native flag required')
+    frozen.need([s['argv'].count(flag) for s in plan['stages']]==[int(i==provider) for i in range(len(plan['stages']))],
+                'capture-ready provider-owner native flag required')
+    for stage in plan['stages']:
+        argv=stage['argv'];role_flag='--pipeline-provider-stage'
+        frozen.need(argv.count(role_flag)==int(provider>0),'suite exact provider role flag count')
+        if provider:frozen.need(argv[argv.index(role_flag)+1]==str(provider),'suite native provider role differs')
     frozen.need(any(p.endswith('/rolling_provider/capture_ready.py') for p in plan['pins']),
                 'capture-ready source pin required')
 

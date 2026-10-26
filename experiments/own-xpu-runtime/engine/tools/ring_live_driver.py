@@ -142,6 +142,7 @@ class LiveStage(target.RingStage):
 
     def issue_provider(self, command):
         self.guard.check()
+        base.require(command.depth==self.plan.get('speculative_depth',2),'provider command/plan depth differs')
         base.require(self.spec['first'] and self.command_pending is None and not self.transmit and not self.received
                      and not self.pending_rows and self.physical == self.committed == command.seed.row.position+1,
                      'provider requires locally accepted seed and quiescent target')
@@ -155,7 +156,7 @@ class LiveStage(target.RingStage):
         self.sequence = command.sequence
         self.command_pending = command
         self.transmit = base.REQUEST.pack(codec.STEP, command.seed.row.token, command.seed.row.position,
-                                          int(command.seed.row.fixture > 0), 2, command.sequence, 0, 0)
+                                          int(command.seed.row.fixture > 0), command.depth, command.sequence, 0, 0)
 
     def read_ready(self):
         if not isinstance(self.command_pending, codec.ProviderCommand):
@@ -172,9 +173,9 @@ class LiveStage(target.RingStage):
         reply = base.REPLY.unpack(self.received)
         command = self.command_pending
         base.require(not self.transmit and reply[0] == reply[2] == 0
-                     and reply[3] == 192 and reply[4] == command.sequence and reply[5:8] == (0, 0, 0),
+                     and reply[3] == codec.proposal_size(command.depth) and reply[4] == command.sequence and reply[5:8] == (0, 0, 0),
                      'provider error/extent/wire owner identity')
-        result = codec.decode_proposal(bytes(self.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+192]), command,
+        result = codec.decode_proposal(bytes(self.shared[codec.PROPOSAL_OFFSET:codec.PROPOSAL_OFFSET+codec.proposal_size(command.depth)]), command,
                                        vocab=self.plan['vocab'], context=self.plan['context'])
         base.require(reply[1] == (result['guesses'][0] if result['guesses'] else -1), 'provider reply token differs from batch')
         self.provider_serial = command.serial

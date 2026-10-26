@@ -17,7 +17,7 @@ class RollingCoordinator(core.Coordinator):
         need(kwargs.get('proposal_callback') is None, 'rolling proposals belong only to native completion')
         super().__init__(**kwargs)
         self.provider = Arbiter(stages=len(self.stages), request=self.request, epoch=self.epoch,
-            last_input_position=self.limit-1, vocab=self.vocab, capture_ready_overlap=capture_ready_overlap, provider_stage=provider_stage)
+            last_input_position=self.limit-1, vocab=self.vocab, capture_ready_overlap=capture_ready_overlap, provider_stage=provider_stage, speculative_depth=self.speculative_depth)
         self.auxiliary_commands = []
         self.provider_jobs = {}
         self.cancelled_provider_incomplete = False
@@ -62,17 +62,17 @@ class RollingCoordinator(core.Coordinator):
         for index in reversed(range(len(self.stages))):
             stage = self.stages[index]
             final = index == len(self.stages)-1
-            if stage.busy is not None or len(stage.pending) >= (1 if final else 2):
+            if stage.busy is not None or len(stage.pending) >= (1 if final else self.speculative_depth):
                 continue
             if any(not p.command.tentative for p in stage.pending):
                 continue
             position = stage.physical
-            if position >= self.limit or position >= self.frontier+3:
+            if position >= self.limit or position >= self.frontier+self.live_capacity:
                 continue
             if self.stop_reason is not None and position >= self.cut:
                 continue
             work = self.rows.get(position)
-            if work is None and index == 0 and self.stop_reason is None and self._live_count() < 3:
+            if work is None and index == 0 and self.stop_reason is None and self._live_count() < self.live_capacity:
                 parent = self.rows.get(position-1)
                 if parent is not None:
                     proposal = self.proposals.choose(position, parent.row.after)

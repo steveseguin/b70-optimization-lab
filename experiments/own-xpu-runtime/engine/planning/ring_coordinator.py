@@ -96,7 +96,7 @@ class Stage:
 
 class Coordinator:
     def __init__(self, *, stages, request, epoch, prompt, max_new, vocab, eos_token_ids,
-                 proposal_callback=None, context=4096, initial_sequences=None, stream_bytes=16):
+                 proposal_callback=None, context=4096, initial_sequences=None, stream_bytes=16, speculative_depth=2):
         need(type(stages)is int and stages>=2,'at least two stage owners')
         need(type(context)is int and context>=1,'context bound')
         need(type(max_new)is int and 1<=max_new<=512 and len(prompt)+max_new-1<=context,'request capacity')
@@ -107,6 +107,9 @@ class Coordinator:
             need(len(initial_sequences)==stages and all(type(s)is int and 0<=s<2**31-100000 for s in initial_sequences),'initial wire sequences')
             for stage,value in zip(self.stages,initial_sequences):stage.sequence=value
         need(type(stream_bytes)is int and 0<stream_bytes<=65536 and stream_bytes%4==0,'negotiated F32 stream extent')
+        need(type(speculative_depth)is int and speculative_depth in (2,3),'supported speculative depth')
+        self.speculative_depth=speculative_depth
+        self.live_capacity=speculative_depth+1
         self.stream_bytes=stream_bytes
         self.context,self.vocab,self.eos=context,vocab,frozenset(eos_token_ids)
         self.proposal_callback=proposal_callback
@@ -114,7 +117,7 @@ class Coordinator:
         self._request(request,epoch,prompt,max_new)
 
     def _request(self,request,epoch,prompt,max_new):
-        self.proposals=Proposals(request=request,epoch=epoch,prompt=prompt,vocab=self.vocab)
+        self.proposals=Proposals(request=request,epoch=epoch,prompt=prompt,vocab=self.vocab,speculative_depth=self.speculative_depth)
         self.request,self.epoch,self.prompt,self.max_new=request,epoch,tuple(prompt),max_new
         self.limit=len(prompt)+max_new-1
         self.frontier=0;self.rows={};self.emitted=[]
@@ -124,7 +127,7 @@ class Coordinator:
         return sum(not w.cancelled and len(w.accepted)<len(self.stages) for w in self.rows.values())
 
     def _new_row(self,position,token,verified,proposal=None):
-        need(position not in self.rows and self._live_count()<3 and position<self.frontier+3,'three global positions')
+        need(position not in self.rows and self._live_count()<self.live_capacity and position<self.frontier+self.live_capacity,'bounded global positions')
         parent=self.rows.get(position-1)
         need(position==0 or parent is not None,'global parent row exists')
         before=self.proposals.hashes[0] if position==0 else parent.row.after
@@ -141,11 +144,11 @@ class Coordinator:
         return self.rows[position]
 
     def _ensure_known(self):
-        end=min(self.limit,self.frontier+3,len(self.proposals.verified))
+        end=min(self.limit,self.frontier+self.live_capacity,len(self.proposals.verified))
         if self.stop_reason is not None:end=min(end,self.cut)
         for position in range(self.frontier,end):
             if position not in self.rows:
-                if self._live_count()>=3:break
+                if self._live_count()>=self.live_capacity:break
                 self._new_row(position,self.proposals.verified[position],True)
 
     def publish(self,batch):
@@ -192,13 +195,13 @@ class Coordinator:
         for index in reversed(range(len(self.stages))):
             stage=self.stages[index];final=index==len(self.stages)-1
             if stage.busy is not None:continue
-            capacity=1 if final else 2
+            capacity=1 if final else self.speculative_depth
             if len(stage.pending)>=capacity or any(not p.command.tentative for p in stage.pending):continue
             position=stage.physical
-            if position>=self.limit or position>=self.frontier+3:continue
+            if position>=self.limit or position>=self.frontier+self.live_capacity:continue
             if self.stop_reason is not None and position>=self.cut:continue
             work=self.rows.get(position)
-            if work is None and index==0 and self.stop_reason is None and self._live_count()<3:
+            if work is None and index==0 and self.stop_reason is None and self._live_count()<self.live_capacity:
                 parent=self.rows.get(position-1)
                 if parent is not None:
                     proposal=self.proposals.choose(position,parent.row.after)
@@ -369,10 +372,10 @@ class Coordinator:
         self.reset_pending=ResetSpec(epoch,request,tuple(prompt),max_new)
 
     def invariants(self):
-        need(self._live_count()<=3,'bounded global live rows')
+        need(self._live_count()<=self.live_capacity,'bounded global live rows')
         for index,stage in enumerate(self.stages):
             need(stage.physical==stage.committed+len(stage.pending),'physical/logical pending extent')
-            need(len(stage.pending)<=(1 if index==len(self.stages)-1 else 2),'bounded stage slots')
+            need(len(stage.pending)<=(1 if index==len(self.stages)-1 else self.speculative_depth),'bounded stage slots')
             for offset,pending in enumerate(stage.pending):
                 need(pending.command.row.position==stage.committed+offset,'contiguous unresolved stage suffix')
                 if index==len(self.stages)-1:need(not pending.command.tentative,'final stage cannot speculate')

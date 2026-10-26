@@ -28,7 +28,7 @@ def seed_metadata(command, *, accepted_row, accepted_sequence, stream_bytes):
          'accepted seed differs from independent verified parent')
     need(command.target_committed == seed.row.position+1
          and command.target_physical == command.target_committed+len(command.pending_rows)
-         and len(command.pending_rows) <= 2 and len(set(command.pending_rows)) == len(command.pending_rows),
+         and len(command.pending_rows) <= command.depth and len(set(command.pending_rows)) == len(command.pending_rows),
          'pending target physical/logical extent')
     # Preserve the original ROW flag even after that row was verified/accepted.
     control = ring.Command(0, ring.ACCEPT, command.sequence, seed.row, seed.tentative, seed.sequence)

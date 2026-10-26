@@ -19,7 +19,8 @@ def read(path):return json.loads(Path(path).read_text())
 def lines(path):return [json.loads(row) for row in Path(path).read_text().splitlines()]
 
 
-def audit_native(rows, sent, created, inputs, attestation, final):
+def audit_native(rows, sent, created, inputs, attestation, final, speculative_depth=2):
+    need(type(speculative_depth)is int and speculative_depth in (2,3),'supported speculative depth')
     need(len(rows)==len(sent),'native/controller command count differs')
     physical=committed=accepted_id=0;pending=[];accepted=[];discarded=[];peak=0
     totals=dict(rows=0,tentative_rows=0,commits=0,abort_count=0,discarded_rows=0,accepted_tentative_rows=0)
@@ -38,7 +39,7 @@ def audit_native(rows, sent, created, inputs, attestation, final):
                  'later row bypassed unaccepted verified row')
             need(not native['discarded'],'ROW reported a discard')
             pending.append(native);physical+=1;peak=max(peak,len(pending))
-            need(len(pending)<=(1 if final else 2),'native pending capacity exceeded')
+            need(len(pending)<=(1 if final else speculative_depth),'native pending capacity exceeded')
             totals['rows']+=1;totals['tentative_rows']+=int(native['tentative'])
         elif op==25:
             need(pending and native['row_id']==pending[0]['row_id'] and native['tentative'] is pending[0]['tentative'],

@@ -143,6 +143,15 @@ def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, ha
     return att, receipt
 
 
+def speculative_depth(spec):
+    depth=spec.get('speculative_depth',2)
+    require(type(depth)is int and depth in (2,3),'explicit bounded speculative depth')
+    require(depth==2 or (spec['schema']=='ownrt.pipeline-state-set.v7'
+            and spec['mode']=='persistent-rolling' and spec.get('verification_policy')=='measured'),
+            'depth3 requires explicit persistent measured full-state qualification')
+    return depth
+
+
 def provider_owner(spec,metadata,stage):
     provider=spec.get('provider_stage',0)
     require(type(provider)is int and 0<=provider<len(spec['stages'])-1,'explicit nonfinal state-set provider role')
@@ -161,14 +170,15 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     require(0 < att_path.stat().st_size <= 1024 * 1024, 'ring attestation size bound')
     raw, receipt = source(att_path)
     att = json.loads(raw, object_pairs_hook=BUNDLE.pairs)
+    depth=speculative_depth(spec)
     persistent = spec['schema'] == 'ownrt.pipeline-state-set.v7'
     pending = spec['mode'] in ('verified-ring-pending-provider','persistent-rolling')
     live = spec['mode'] == 'verified-ring-live' or pending
-    require(att['schema'] == ('ownrt.ring-state.persistent.v1' if persistent else 'ownrt.ring-state.pending-provider.v1' if pending else 'ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
+    require(att['schema'] == (('ownrt.ring-state.persistent.v2' if depth==3 else 'ownrt.ring-state.persistent.v1') if persistent else 'ownrt.ring-state.pending-provider.v1' if pending else 'ownrt.ring-state.live.v1' if live else 'ownrt.ring-state.v1')
             and att['mode'] == spec['mode'], 'unsupported ring attestation schema/mode')
     if persistent:
         from persistent_ring_policy import validate_policy
-        validate_policy(att,policy=spec['verification_policy'],first=metadata['first'],provider=provider_owner(spec,metadata,stage))
+        validate_policy(att,policy=spec['verification_policy'],first=metadata['first'],provider=provider_owner(spec,metadata,stage),depth=depth)
     marker = re.fullmatch(r'state-(0|[1-9][0-9]*)', dump.name)
     require(marker is not None and type(att['dump_marker']) is int and att['dump_marker'] == int(marker[1]), 'ring dump marker differs')
     require(type(att['stage_id']) is int and att['stage_id'] == stage['id'], 'ring stage identity differs')
@@ -180,7 +190,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
                 'snapshot_captures','snapshot_releases','byteverified_restore_count','saved_bytes',
                 'target_mutable_checkpoint_bytes','bank_parity','max_pending','trace_records','trace_omitted'):
         require(type(att[key]) is int and 0 <= att[key] <= 2**64-1, 'ring bounded nonnegative integer required: '+key)
-    require(att['ring_capacity'] == att['depth'] == 2, 'ring depth/capacity must be explicit two')
+    require(att['ring_capacity'] == att['depth'] == depth, 'ring depth/capacity differs from explicit manifest')
     require(att['pending_tickets'] == att['active_slots'] == att['sticky_error'] == 0, 'ring is not quiescent/error-free')
     position = identity['position']
     require(position <= 2**31-1 and att['actual_position'] == att['committed_position'] == att['commits'] == position,
@@ -192,9 +202,9 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             == att['accepted_tentative_rows'] + att['discarded_rows']
             and att['accepted_tentative_rows'] <= att['commits'], 'ring capture/release/row conservation differs')
     require((att['abort_count'] == att['discarded_rows'] == 0) or
-            (0 < att['abort_count'] <= att['discarded_rows'] <= 2*att['abort_count']), 'ring suffix abort/discard accounting differs')
+            (0 < att['abort_count'] <= att['discarded_rows'] <= depth*att['abort_count']), 'ring suffix abort/discard accounting differs')
     require(att['trace_records'] + att['trace_omitted'] == att['rows'] + att['commits'] + att['abort_count']
-            and (att['max_pending'] == 0 if att['rows'] == 0 else 1 <= att['max_pending'] <= (1 if metadata['final'] else 2)),
+            and (att['max_pending'] == 0 if att['rows'] == 0 else 1 <= att['max_pending'] <= (1 if metadata['final'] else depth)),
             'ring trace/maximum pending accounting differs')
     require(type(att['restore_verification_enabled']) is bool and type(att['all_aborts_byte_verified']) is bool
             and att['byteverified_restore_count'] <= att['abort_count']
@@ -216,10 +226,10 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     layout_raw, layout_source = source(layout_path)
     require(layout_source['sha256'] == att['checkpoint_layout_sha256'], 'ring checkpoint layout SHA differs')
     layout = json.loads(layout_raw, object_pairs_hook=BUNDLE.pairs)
-    require(layout['schema'] == ('ownrt.ring-checkpoint-layout.live.v1' if live else 'ownrt.ring-checkpoint-layout.v1')
+    require(layout['schema'] == (('ownrt.ring-checkpoint-layout.live.v2' if depth==3 else 'ownrt.ring-checkpoint-layout.live.v1') if live else 'ownrt.ring-checkpoint-layout.v1')
             and layout['complete_target_owned_mutable_allocations'] is True
             and layout['provider_present'] is (live and provider_owner(spec,metadata,stage))
-            and type(layout['ring_capacity']) is int and layout['ring_capacity'] == 2
+            and type(layout['ring_capacity']) is int and layout['ring_capacity'] == depth
             and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring complete target-only layout required')
     allocations, labels = set(), set()
     inventory_keys = ('allocations','excluded_private_runtime_allocations','checkpoint_private_allocations')
@@ -239,9 +249,9 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     require({r['label'] for r in layout['excluded_private_runtime_allocations']} <= legacy,
             'ring unregistered private-state exclusion')
     private = layout['checkpoint_private_allocations']
-    require({r['label'] for r in private} == {f'card0:ring:{i}:{kind}' for i in (0,1) for kind in ('image','capture','restore')}
+    require({r['label'] for r in private} == {f'card0:ring:{i}:{kind}' for i in range(depth) for kind in ('image','capture','restore')}
             and all(r['bytes'] == size for r in private if r['label'].endswith(':image'))
-            and sum(r['bytes'] for r in private) <= 512*1024**2, 'ring two-slot private inventory differs')
+            and sum(r['bytes'] for r in private) <= 512*1024**2, 'ring configured private slot inventory differs')
     require(att['bank_parity'] == (position % 2 if stage['id'] == 0 else 0), 'ring canonical bank parity differs')
     inactive = metadata['inactive_alternate_banks']
     require(isinstance(att['inactive_alternate_banks'],list) and len(att['inactive_alternate_banks']) == len(inactive)
@@ -268,6 +278,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
 
 
 def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout, *, pending=False):
+    depth=speculative_depth(spec)
     persistent = spec['schema'] == 'ownrt.pipeline-state-set.v7'
     require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
             == spec['provider_borrow_mode'] == ('pending-target' if pending else 'quiescent-target'),
@@ -341,6 +352,7 @@ def load_set(path):
     wavefront = spec['schema'] == 'ownrt.pipeline-state-set.v2' and mode == 'verified-wavefront'
     rolling_ring = spec['schema'] == 'ownrt.pipeline-state-set.v6' and mode == 'verified-ring-pending-provider'
     persistent_ring = spec['schema'] == 'ownrt.pipeline-state-set.v7' and mode == 'persistent-rolling'
+    depth=speculative_depth(spec)
     pending_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v5' and mode == 'verified-ring-pending-provider') or rolling_ring or persistent_ring
     live_ring = (spec['schema'] == 'ownrt.pipeline-state-set.v4' and mode == 'verified-ring-live') or pending_ring
     ring = (spec['schema'] == 'ownrt.pipeline-state-set.v3' and mode == 'verified-ring') or live_ring
@@ -369,7 +381,7 @@ def load_set(path):
         depths=spec.get('required_provider_pending_depths')
         require((persistent_ring or spec.get('require_provider_survival_checks') is True
                  and spec.get('require_byte_verified_restores') is True)
-                and isinstance(depths,list) and (bool(depths) or rolling_ring or persistent_ring) and all(type(d)is int and d in (1,2) for d in depths)
+                and isinstance(depths,list) and (bool(depths) or rolling_ring or persistent_ring) and all(type(d)is int and 1<=d<=depth for d in depths)
                 and len(depths)==len(set(depths)), 'explicit pending provider survival and target restore proof required')
     if wavefront or ring:
         require(type(spec.get('require_byte_verified_restores')) is bool,
@@ -401,10 +413,11 @@ def load_set(path):
         metadata_raw, metadata_source = source(metadata_path)
         metadata = json.loads(metadata_raw, object_pairs_hook=BUNDLE.pairs)
         if ring:
+            require((depth==2 and metadata.get('ring_depth',2)==2) or (depth==3 and type(metadata.get('ring_depth'))is int and metadata['ring_depth']==3),'native ring depth metadata differs')
             require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == mode
                     and metadata['speculation_enabled'] is True
-                    and type(metadata['ring_capacity']) is int and metadata['ring_capacity'] == 2
-                    and type(metadata['depth']) is int and metadata['depth'] == 2
+                    and type(metadata['ring_capacity']) is int and metadata['ring_capacity'] == depth
+                    and type(metadata['depth']) is int and metadata['depth'] == depth
                     and metadata['ring_request_sha256'] == spec['ring_request_sha256']
                     and type(metadata['ring_epoch']) is int and metadata['ring_epoch'] == spec['ring_epoch'],
                     'engine ring/speculation metadata required')

@@ -138,7 +138,7 @@ class RingStage(lifecycle.AsyncStage):
             base.require(reply[1] == 0 and reply[3] == 0, 'target-only resolution has no token/stream')
             ack = wire.resolution_ack(bytes(self.shared[wire.ACK_OFFSET:wire.ACK_OFFSET+wire.ACK_META.size]),
                                       command, self.pending_rows, physical=self.physical,
-                                      committed=self.committed, verify_restore=self.plan['verify_restore'])
+                                      committed=self.committed, verify_restore=self.plan['verify_restore'],depth=self.plan.get('speculative_depth',2))
             self.physical, self.committed = ack.physical, ack.committed
             if command.op == ring.ACCEPT:
                 self.pending_rows.pop(0)

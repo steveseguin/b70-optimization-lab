@@ -51,11 +51,13 @@ class Issued:
 
 
 class Proposals:
-    def __init__(self, *, request, epoch, prompt, vocab, max_batches=4):
+    def __init__(self, *, request, epoch, prompt, vocab, max_batches=4, speculative_depth=2):
         need(isinstance(request, bytes) and len(request) == 32, 'request identity')
         need(type(epoch) is int and epoch >= 0 and prompt and type(vocab) is int and vocab > 0,
              'request geometry')
         need(type(max_batches) is int and 1 <= max_batches <= 8, 'bounded publication cache')
+        need(type(speculative_depth) is int and speculative_depth in (2, 3), 'supported speculative depth')
+        self.speculative_depth = speculative_depth
         self.request, self.epoch, self.vocab = request, epoch, vocab
         self.verified = []
         self.hashes = [hashlib.sha256(b'ownrt.ring-request.v1\0' + request + struct.pack('<Q', epoch)).digest()]
@@ -84,9 +86,9 @@ class Proposals:
         need(batch.seed_digest == self.hashes[batch.seed_length], 'wrong verified seed prefix')
         need(batch.restored is True and batch.restored_position == batch.seed_length - 1,
              'recursive branch was not restored to canonical seed')
-        need(type(batch.tokens) is tuple and 1 <= len(batch.tokens) <= 2
+        need(type(batch.tokens) is tuple and 1 <= len(batch.tokens) <= self.speculative_depth
              and all(type(t) is int and 0 <= t < self.vocab for t in batch.tokens),
-             'bounded depth-two proposal tokens')
+             'bounded proposal tokens')
         self.last_batch_ticket = batch.ticket
         self.batches.append(batch)
         self.batches = self.batches[-self.max_batches:]

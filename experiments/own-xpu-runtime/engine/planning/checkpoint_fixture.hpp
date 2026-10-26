@@ -6,7 +6,7 @@
 #undef main
 #include <cassert>
 struct FixtureOwner {
- struct Options {bool pipeline_wavefront=true,mtp=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false,pipeline_ring_persistent_requests=false,pipeline_ring_recursive_flat_copy=false;int prefill_rows=0,pipeline_stage=0,pipeline_provider_stage=0;fs::path output;bool pipeline_enabled()const{return true;}bool pipeline_provider()const{return pipeline_stage==pipeline_provider_stage;}bool pipeline_first()const{return pipeline_stage==0;}} a;
+ struct Options {bool pipeline_wavefront=true,mtp=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false,pipeline_ring_persistent_requests=false,pipeline_ring_recursive_flat_copy=false;int prefill_rows=0,pipeline_stage=0,pipeline_provider_stage=0,pipeline_ring_depth=2;fs::path output;bool pipeline_enabled()const{return true;}bool pipeline_provider()const{return pipeline_stage==pipeline_provider_stage;}bool pipeline_first()const{return pipeline_stage==0;}} a;
  struct Buffer {Allocation id;};
  std::unique_ptr<ownrt::Device> device=std::make_unique<ownrt::Device>(std::make_unique<Host>());
  bool resident=true,poisoned=false,progress_pending=false,prepare_async=false;

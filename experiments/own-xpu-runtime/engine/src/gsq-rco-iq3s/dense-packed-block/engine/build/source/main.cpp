@@ -154,7 +154,7 @@ struct Options {
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
-  std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0;
+  std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0,pipeline_ring_depth=2;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
   bool pipeline_ring_pending_provider=false,pipeline_ring_verify_provider_survival=false;
   bool pipeline_ring_parent_capture_ack=false;
@@ -224,6 +224,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--pipeline-ring-recursive-verify-restore")a.pipeline_ring_recursive_verify=true;
     else if(k=="--pipeline-ring-final-shared")a.pipeline_ring_final_shared=value();
     else if(k=="--pipeline-ring-seed-shared")a.pipeline_ring_seed_shared=value();
+    else if(k=="--pipeline-ring-depth")a.pipeline_ring_depth=std::stoi(value());
     else if(k=="--pipeline-provider-stage")a.pipeline_provider_stage=std::stoi(value());
     else if(k=="--pipeline-ring")a.pipeline_ring=true;
     else if(k=="--pipeline-ring-verify-restore")a.pipeline_ring_verify=true;
@@ -354,6 +355,8 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  require(a.pipeline_ring_depth==2||a.pipeline_ring_depth==3,"ring depth must be2 or3");
+  require(a.pipeline_ring_depth==2||(a.pipeline_ring_live_draft&&a.pipeline_ring_persistent_requests),"depth3 requires persistent ring-live mode");
   require(a.pipeline_provider_stage>=0,"provider stage must be nonnegative");
   require(!a.pipeline_provider_stage||(a.pipeline_enabled()&&a.pipeline_ring_live_draft&&a.pipeline_ring_persistent_requests),"remote provider requires persistent ring-live mode");
   require(!a.pipeline_live_draft||(size_t(a.pipeline_provider_stage)+2)<a.pipeline_boundaries.size(),"provider must be a nonfinal pipeline stage");

@@ -13,7 +13,7 @@ def seed_journal(seed_owner, command, stream_bytes):
     base.require(len(raw)==256, 'complete independent stage0 seed journal')
     fields=SEED_HEADER.unpack(raw[:32]);seed=command.seed
     base.require(fields[:5]==(0x52534331,1,256,0,command.accepted_sequence)
-        and fields[6]==seed.row.position+1 and fields[6]<=fields[5]<=fields[6]+2,
+        and fields[6]==seed.row.position+1 and fields[6]<=fields[5]<=fields[6]+command.depth,
         'stage0 seed journal owner/frontier/ACCEPT identity')
     expected=list(wire.ROW_META.unpack(wire.row_metadata(seed,final=False,stream_bytes=stream_bytes)[0]))
     expected[14]=seed.sequence
@@ -24,6 +24,7 @@ def seed_journal(seed_owner, command, stream_bytes):
 
 def issue(stage, command, seed_owner):
     stage.guard.check()
+    base.require(command.depth==stage.plan.get('speculative_depth',2),'remote provider command/plan depth differs')
     base.require(0 < command.stage == stage.spec['id'] == stage.plan['provider_stage'] < len(stage.plan['stages'])-1,
                  'explicit nonfinal remote provider owner')
     base.require(stage.command_pending is None and not stage.transmit and not stage.received,
@@ -45,7 +46,7 @@ def issue(stage, command, seed_owner):
             (command.target_physical,command.target_committed,command.pending_rows)
         and command.target_committed in (seed.row.position,seed.row.position+1)
         and command.target_physical == command.target_committed+len(command.pending_rows)
-        and len(command.pending_rows) <= 2 and len(set(command.pending_rows)) == len(command.pending_rows),
+        and len(command.pending_rows) <= command.depth and len(set(command.pending_rows)) == len(command.pending_rows),
         'remote provider borrows only completed tentative target suffix')
     # Validate the actual stage-zero ROW, then bind its immutable ticket and
     # the remote transport owner. Their independent wire counters are unordered.
@@ -61,5 +62,5 @@ def issue(stage, command, seed_owner):
     stage.sequence=command.sequence
     stage.command_pending=command
     stage.transmit=base.REQUEST.pack(codec.STEP,seed.row.token,seed.row.position,
-        int(seed.row.fixture > 0),2,command.sequence,command.stage,0)
+        int(seed.row.fixture > 0),command.depth,command.sequence,command.stage,0)
     return dict(seed_journal_hex=journal.hex(),seed_journal_sha256=sha256(journal).hexdigest())

@@ -8,6 +8,12 @@ original_validate=frozen.validate_identity
 
 def validate(plan,suite,terminal,reference):
     frozen.need(plan.get('capture_ready_overlap') is True,'explicit capture-ready true required')
+    depth=plan.get('speculative_depth',2)
+    frozen.need(type(depth)is int and depth in (2,3),'supported speculative depth')
+    for stage in plan['stages']:
+        argv=stage['argv'];flag='--pipeline-ring-depth'
+        frozen.need(argv.count(flag)==int(depth==3),'native depth flag count')
+        if depth==3:frozen.need(argv[argv.index(flag)+1]=='3','native depth value')
     provider=plan.get('provider_stage',0)
     frozen.need(type(provider)is int and 0<=provider<len(plan['stages'])-1,'capture provider role')
     flag='--pipeline-ring-parent-capture-ack'

@@ -65,15 +65,17 @@ def validate_publication(raw, submitted, sequence, payload, *, final, stream_byt
     need(raw == ROW_META.pack(*expected), 'published row/owner/ticket/lineage/payload SHA mismatch')
 
 
-def resolution_ack(raw, command, pending, *, physical, committed, verify_restore):
+def resolution_ack(raw, command, pending, *, physical, committed, verify_restore, depth=2):
+    need(type(depth)is int and depth in (2,3),'explicit supported resolution depth')
     need(len(raw) == ACK_META.size, 'exact resolution ACK extent')
     fields = ACK_META.unpack(raw)
     magic, version, size, flags, epoch, identity, discard0, discard1 = fields[:8]
     owner, sequence, ticket, actual_physical, actual_committed, count, remaining, error, reserved = fields[8:]
-    need((magic, version, size) == (0x5241434b, 1, ACK_META.size)
-         and flags in (0, 1) and reserved == bytes(48), 'ACK header/reserved flags')
+    discard2=struct.unpack('<Q',reserved[:8])[0] if depth==3 else 0
+    need((magic, version, size) == (0x5241434b, 2 if depth==3 else 1, ACK_META.size)
+         and flags in (0, 1) and (reserved[8:]==bytes(40) if depth==3 else reserved==bytes(48)), 'ACK header/reserved flags')
     need(error == 0, 'native sticky error')
-    need(command.op in (ring.ACCEPT, ring.ABORT_SUFFIX) and pending, 'resolution requires pending ROW')
+    need(command.op in (ring.ACCEPT, ring.ABORT_SUFFIX) and 0<len(pending)<=depth, 'resolution requires pending ROW')
     original = pending[0]
     need(original.sequence == command.row_ticket and original.row == command.row
          and original.tentative == command.tentative, 'resolution exact original ROW')
@@ -81,8 +83,8 @@ def resolution_ack(raw, command, pending, *, physical, committed, verify_restore
          (command.row.epoch, command.row.identity, command.stage, command.sequence, command.row_ticket),
          'ACK epoch/global row/owner/wire ticket')
     discarded = tuple(c.row.identity for c in pending) if command.op == ring.ABORT_SUFFIX else ()
-    need(len(discarded) <= 2 and count == len(discarded)
-         and (discard0, discard1) == (discarded+(0, 0))[:2], 'ACK exact discarded suffix')
+    need(len(discarded) <= depth and count == len(discarded)
+         and (discard0, discard1, discard2) == (discarded+(0, 0, 0))[:3], 'ACK exact discarded suffix')
     if command.op == ring.ACCEPT:
         expected = (physical, committed+1, len(pending)-1)
         need(flags == 0, 'ACCEPT cannot attest restore')

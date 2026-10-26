@@ -36,6 +36,10 @@ class ProviderCommand:
     serial: int
     op: int = STEP
     stage: int = 0
+    depth: int = 2
+
+    def __post_init__(self):
+        need(type(self.depth)is int and self.depth in (2,3),'explicit provider depth2 or3')
 
 
 def final_record(shared, row_command, commit_command, output_token, *, stages, stream_bytes, vocab):
@@ -79,21 +83,30 @@ def seed_metadata(command, *, stream_bytes):
     return wire.row_metadata(control, final=False, stream_bytes=stream_bytes)[0]
 
 
+def proposal_size(depth=2):
+    need(type(depth)is int and depth in (2,3),'explicit provider wire depth2 or3')
+    return 224 if depth==3 else PROPOSAL.size
+
+
 def decode_proposal(raw, command, *, vocab, context):
-    need(len(raw) == PROPOSAL.size, 'complete provider proposal metadata')
-    fields = PROPOSAL.unpack(raw)
+    depth=command.depth;size=proposal_size(depth)
+    need(len(raw) == size, 'complete provider proposal metadata')
+    fields = PROPOSAL.unpack(raw[:PROPOSAL.size])
+    third=struct.unpack('<i',raw[192:196])[0] if depth==3 else -1
+    need(depth==2 or raw[196:]==bytes(28),'depth3 proposal reserved tail')
     seed, parent = command.seed.row, command.parent
     head = seed.fixture > 0
-    expected_depth = (2 if seed.position < context else 1) if head else 0
-    expected = (0x44525032, 1, 192, 2+int(head), seed.epoch, command.sequence,
+    expected_depth = min(depth,context-seed.position+1) if head else 0
+    need(0<=expected_depth<=depth,'provider context availability')
+    expected = (0x44525032, 2 if depth==3 else 1, size, 2+int(head), seed.epoch, command.sequence,
                 seed.identity, seed.parent, parent.commit_sequence, command.serial,
-                seed.position, seed.position, 2, expected_depth)
+                seed.position, seed.position, depth, expected_depth)
     need(fields[:14] == expected, 'provider batch owner/seed/parent/commit/serial/depth identity')
-    guesses = fields[14:16]
+    guesses = fields[14:16]+((third,) if depth==3 else ())
     need(fields[16:18] == (0, 1), 'provider sticky failure or missing canonical restoration')
     need(fields[18:] == (seed.request, seed.after, sha256(parent.handoff.hidden).digest()),
          'provider request/prefix/hidden provenance')
-    need(all(0 <= guesses[i] < vocab if i < expected_depth else guesses[i] == -1 for i in range(2)),
+    need(all(0 <= guesses[i] < vocab if i < expected_depth else guesses[i] == -1 for i in range(depth)),
          'provider guess vocabulary/availability')
     return dict(epoch=seed.epoch, sequence=command.sequence, seed_row=seed.identity,
                 parent_row=seed.parent, final_commit=parent.commit_sequence, provider_serial=command.serial,

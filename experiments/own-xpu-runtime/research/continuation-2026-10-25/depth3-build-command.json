@@ -1,0 +1,17 @@
+{
+  "utc": "2026-10-26T01:42:06.720792+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-depth3-build-20261026",
+    "--property=Restart=no",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations",
+    "/usr/bin/python3",
+    "experiments/own-xpu-runtime/engine/build.py",
+    "/dev/shm/engine-build-depth3-20261026",
+    "--jobs",
+    "4"
+  ],
+  "device_execution_requested": false
+}

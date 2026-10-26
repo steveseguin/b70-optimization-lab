@@ -1,5 +1,5 @@
 #pragma once
-// Opt-in two-slot ring ledger; default wavefront and legacy paths are separate.
+// Opt-in bounded two/three-slot ring ledger; default wavefront and legacy paths are separate.
 #include <array>
 #include <algorithm>
 #include <cstdint>
@@ -36,7 +36,7 @@ struct Resolution {int physical=0,committed=0,pending=0;std::vector<uint64_t> di
 // No result/slot is borrowed after ACCEPT/ABORT/reset returns.
 template<class Backend> class StageRing {
  Backend& backend;bool final_,partitioned_,poisoned_=false;
- int context_,vocab_,committed_=0,last_fixture_=0,last_sequence_=0,last_output_=-1;
+ int capacity_,context_,vocab_,committed_=0,last_fixture_=0,last_sequence_=0,last_output_=-1;
  uint64_t epoch_,last_id_=0,accepted_id_=0;
  Digest request_,accepted_prefix_;std::optional<Row> accepted_row_;
  struct Pending {Row row;int slot=-1;typename Backend::Result result;};
@@ -48,9 +48,9 @@ template<class Backend> class StageRing {
  Resolution receipt(std::vector<uint64_t> discarded={})const{return {backend.position(),committed_,int(pending_.size()),std::move(discarded)};}
 public:
  uint64_t rows=0,tentative_rows=0,commits=0,accepted_tentative_rows=0,abort_count=0,discarded_rows=0;size_t max_pending=0;
- StageRing(Backend& b,bool final_stage,bool explicit_partition,int context,int vocab,uint64_t epoch,Digest request,Digest initial_prefix,int starting_sequence=0)
-  :backend(b),final_(final_stage),partitioned_(explicit_partition),context_(context),vocab_(vocab),last_sequence_(starting_sequence),epoch_(epoch),request_(request),accepted_prefix_(initial_prefix){
-  need(context>0&&vocab>0&&starting_sequence>=0&&backend.position()==0,"ring geometry/cold admission");
+ StageRing(Backend& b,bool final_stage,bool explicit_partition,int context,int vocab,uint64_t epoch,Digest request,Digest initial_prefix,int starting_sequence=0,int capacity=2)
+  :backend(b),final_(final_stage),partitioned_(explicit_partition),capacity_(capacity),context_(context),vocab_(vocab),last_sequence_(starting_sequence),epoch_(epoch),request_(request),accepted_prefix_(initial_prefix){
+  need((capacity==2||capacity==3)&&context>0&&vocab>0&&starting_sequence>=0&&backend.position()==0,"ring geometry/cold admission");
   need(backend.retention_disabled(),"ring requires retain_steps none");healthy();
  }
  int committed()const{return committed_;}int physical()const{return backend.position();}size_t pending()const{return pending_.size();}
@@ -64,13 +64,13 @@ public:
   const int prior_fixture=pending_.empty()?last_fixture_:pending_.back().row.fixture;
   need(row.parent==parent&&row.before==prefix&&row.after==extend(prefix,uint32_t(row.position),uint32_t(row.token)),"ring causal parent/prefix mismatch");
   need(row.fixture>=0&&(prior_fixture?row.fixture==prior_fixture+1:(row.fixture==0||row.fixture==1)),"ring fixture sequence");
-  need(pending_.size()<2,"ring two completed-row capacity");
+  need(pending_.size()<size_t(capacity_),"ring configured completed-row capacity");
   need(pending_.empty()||(row.tentative&&std::all_of(pending_.begin(),pending_.end(),[](const auto& p){return p.row.tentative;})),"ring unresolved verified predecessor");
   need(!final_||(!row.tentative&&pending_.empty()),"ring final stage must verify each input");
   if(final_&&last_output_>=0)need(row.token==last_output_,"ring final input differs from committed target output");
   mutate(row.ticket,[&]{
    const int slot=row.tentative?backend.capture(row): -1;
-   need(!row.tentative||(slot>=0&&slot<2),"ring checkpoint slot bound");
+   need(!row.tentative||(slot>=0&&slot<capacity_),"ring checkpoint slot bound");
    if(slot>=0)for(const auto& p:pending_)need(p.slot!=slot,"ring checkpoint overwrite");
    auto result=backend.execute(row);
    need(backend.position()==row.position+1&&!backend.error(),"ring physical row completion");
