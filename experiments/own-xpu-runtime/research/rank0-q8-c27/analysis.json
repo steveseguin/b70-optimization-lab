@@ -1,0 +1,19 @@
+{
+  "site": "gemv:Q8_0:attention",
+  "shape": [2560, 6144],
+  "calls_per_half": 23,
+  "baseline_layout": "OWNRT_DENSE_RAW=1 raw Q8_0, R1U2, workgroup 128",
+  "baseline_profile_us_per_half": 856.6,
+  "baseline_us_per_call": 37.2434782609,
+  "weights_per_call": 15728640,
+  "raw_read_bytes_per_call": 16711680,
+  "raw_read_bytes_per_half": 384368640,
+  "baseline_effective_raw_GBps": 448.69,
+  "raw_us_per_call_at_600_GBps": 27.8528,
+  "max_us_per_call_for_100us_half_win": 32.8956953642,
+  "required_raw_GBps_for_100us_half_win": 507.88,
+  "variant": "512-column tile-pair physical layout: one 16-byte code load and one 4-byte scale-pair load per lane per two tiles; R1U2 and workgroup 128 unchanged",
+  "arithmetic": "same tile/lane sequence, scale*code then *input then sum; same adjacent-pair reduction; no route/status code touched",
+  "candidate_binary_sha256": "6af80ae8cc8c81d50ad59f02a7d5af6a5a291969fdfdbed98626b0e4fd3268ee",
+  "baseline_binary_sha256": "221cfa5a4964a759247777a62ed61dfdc976a9fc43bd3fa23d7d885a028dda3a"
+}

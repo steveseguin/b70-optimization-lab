@@ -1,0 +1,121 @@
+--- a/src/stage2/packet194-expert-diet-engine/dense_raw.hpp
++++ b/src/stage2/packet194-expert-diet-engine/dense_raw.hpp
+@@ -16,8 +16,10 @@
+ //  D [K/128] at 13K/16   pair p: the fp16 d of block 2p, then of block 2p+1, at 13K/16+4p.
+ // Decoding forms, per column, the byte (q << 2) as int8, so float(int8) = 4q exactly, and
+ //   value = s4*float(4q), s4 = (half(d)*0.25f)*float(signed8(sc)).
+-// Q8_0 row (K % 256 == 0): C [K] the int8 codes in GGUF order, then D [K/16]: block b's fp16 d at K+2b;
+-//   value = half(d)*float(signed8(code)).
++// Q8_0 row (K % 512 == 0): C [K] in 512-column pairs, then D [K/16]. For pair p and lane l, C holds
++//   16 bytes at 512p+16l: first the lane's 8 codes from tile 2p, then its 8 codes from tile 2p+1.
++//   D holds one u32 at K+32p+4(l/4): fp16 d for the lane's block in tile 2p, then tile 2p+1.
++//   value = half(d)*float(signed8(code)). Odd 256-column tails retain the original code-then-D layout.
+ //
+ // Values. The expanded loader stores code = int8(q) and the scale word S = half(d)*float(signed8(sc)) (Q6_K; an
+ // 11-bit significand times an integer of magnitude <= 128: exact, s1_lanes.hpp) or S = half(d) (Q8_0), and the
+@@ -108,16 +110,31 @@
+ }
+ // ---- Q8_0 ------------------------------------------------------------------------------------------------------
+ struct Q8Words {uint32_t lo,hi,d;};
++struct Q8PairWords {uint32_t lo0,hi0,lo1,hi1,d;};
+ inline Q8Words q8_load(const uint8_t* row,uint32_t k,uint32_t b,uint32_t l){
+- const uint32_t tile=256u*b+8u*l;Q8Words w;
++ const bool paired=(k%512u)==0;const uint32_t tile=paired?512u*(b/2u)+16u*l+8u*(b%2u):256u*b+8u*l;
++ const uint32_t scale=paired?k+32u*(b/2u)+4u*(l/4u)+2u*(b%2u):k+2u*(8u*b+l/4u);Q8Words w;
+ #if defined(__SYCL_DEVICE_ONLY__)
+  sycl::vec<uint32_t,2> c;c.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(row+tile)));
+  w.lo=c[0];w.hi=c[1];
+ #else
+  w.lo=load32(row+tile);w.hi=load32(row+tile+4u);
+ #endif
+- w.d=load16(row+k+2u*(8u*b+l/4u));return w;
++ w.d=load16(row+scale);return w;
+ }
++inline Q8PairWords q8_load_pair(const uint8_t* row,uint32_t k,uint32_t p,uint32_t l){
++ const uint32_t tile=512u*p+16u*l;Q8PairWords w;
++#if defined(__SYCL_DEVICE_ONLY__)
++ sycl::vec<uint32_t,4> c;c.load(0,sycl::address_space_cast<sycl::access::address_space::global_space,sycl::access::decorated::no>(reinterpret_cast<const uint32_t*>(row+tile)));
++ w.lo0=c[0];w.hi0=c[1];w.lo1=c[2];w.hi1=c[3];
++#else
++ w.lo0=load32(row+tile);w.hi0=load32(row+tile+4u);w.lo1=load32(row+tile+8u);w.hi1=load32(row+tile+12u);
++#endif
++ w.d=load32(row+k+32u*p+4u*(l/4u));return w;
++}
++inline Q8Words q8_pair_word(const Q8PairWords& w,unsigned o){
++ return {o?w.lo1:w.lo0,o?w.hi1:w.hi0,o?(w.d>>16):(w.d&0xffffu)};
++}
+ inline void q8_values(const Q8Words& w,float (&v)[8]){
+  const float scale=half_value(w.d);
+  #pragma unroll
+@@ -129,7 +146,11 @@
+ }
+ // ---- host: GGUF rows -> raw rows; per-element proof against the expanded rows -----------------------------------
+ inline void repack_row(Type t,size_t k,const uint8_t* src,uint8_t* dst){
+- if(t==Type::Q8_0){const size_t nb=k/32;for(size_t b=0;b<nb;++b){std::memcpy(dst+32*b,src+34*b+2,32);dst[k+2*b]=src[34*b];dst[k+2*b+1]=src[34*b+1];}return;}
++ if(t==Type::Q8_0){const size_t nb=k/32;
++  if(k%512==0){for(size_t b=0;b<nb;++b){const size_t tile=b/8,g=b%8,p=tile/2,o=tile%2;
++    for(unsigned l=4*g;l<4*g+4;++l)std::memcpy(dst+512*p+16*l+8*o,src+34*b+2+8*(l%4),8);
++    dst[k+32*p+4*g+2*o]=src[34*b];dst[k+32*p+4*g+2*o+1]=src[34*b+1];}return;}
++  for(size_t b=0;b<nb;++b){std::memcpy(dst+32*b,src+34*b+2,32);dst[k+2*b]=src[34*b];dst[k+2*b+1]=src[34*b+1];}return;}
+  static constexpr unsigned high_bit[8]{6,14,2,10,4,12,0,8};
+  const size_t nb=k/256;std::memset(dst,0,nb*210);
+  for(size_t b=0;b<nb;++b){const uint8_t* s=src+210*b;const size_t p=b/2,o=b%2;
+@@ -154,7 +175,7 @@
+  for(size_t r=0;r<rows;++r){const uint8_t* w=raw+r*rb;const uint8_t* e=expanded+r*expanded_rb;
+   for(uint32_t tile=0;tile<k;tile+=8){const uint32_t b=tile/256,l=(tile%256)/8;float v[8],u[8];
+    if(t==Type::Q6_K){decode8<Type::Q6_K>(w,uint32_t(k),b,l,v);q6_pair_values(q6_load_pair(w,uint32_t(k),b/2,l),b%2,u);}
+-   else {decode8<Type::Q8_0>(w,uint32_t(k),b,l,v);q8_values(q8_load(w,uint32_t(k),b,l),u);}
++   else {decode8<Type::Q8_0>(w,uint32_t(k),b,l,v);q8_values(k%512==0?q8_pair_word(q8_load_pair(w,uint32_t(k),b/2,l),b%2):q8_load(w,uint32_t(k),b,l),u);}
+    const float scale=iq3::bits_float(iq3::u32(e+k+4*(tile/group)));
+    for(unsigned j=0;j<8;++j){const uint32_t want=std::bit_cast<uint32_t>(scale*float(iq3::signed8(e[tile+j])));
+     bad+=(want!=std::bit_cast<uint32_t>(v[j]))||(want!=std::bit_cast<uint32_t>(u[j]));}}}
+--- a/src/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp
++++ b/src/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp
+@@ -55,20 +55,36 @@
+       for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}}
+   }
+  } else {
+-  #pragma unroll 1
+-  for(uint32_t base=0;base<K;base+=256*U){
+-   denseraw::Q8Words words[U][R];
+-   #pragma unroll
+-   for(unsigned u=0;u<U;++u)if(base+256*u<K){
++  if constexpr(U==2 && K%512==0) {
++   #pragma unroll 1
++   for(uint32_t base=0;base<K;base+=512){
++    denseraw::Q8PairWords words[R];
++    #pragma unroll
++    for(unsigned r=0;r<R;++r)words[r]=denseraw::q8_load_pair(wr[r],K,base/512,lane);
++    #pragma unroll
++    for(unsigned o=0;o<2;++o){
++     float xs[8];load8(x+base+256*o+lane*8,xs);
++     #pragma unroll
++     for(unsigned r=0;r<R;++r){float v[8];denseraw::q8_values(denseraw::q8_pair_word(words[r],o),v);
++      #pragma unroll
++      for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}
++   }
++  } else {
++   #pragma unroll 1
++   for(uint32_t base=0;base<K;base+=256*U){
++    denseraw::Q8Words words[U][R];
+     #pragma unroll
+-    for(unsigned r=0;r<R;++r)words[u][r]=denseraw::q8_load(wr[r],K,base/256+u,lane);}
+-   #pragma unroll
+-   for(unsigned u=0;u<U;++u)if(base+256*u<K){
+-    float xs[8];load8(x+base+256*u+lane*8,xs);
++    for(unsigned u=0;u<U;++u)if(base+256*u<K){
++     #pragma unroll
++     for(unsigned r=0;r<R;++r)words[u][r]=denseraw::q8_load(wr[r],K,base/256+u,lane);}
+     #pragma unroll
+-    for(unsigned r=0;r<R;++r){float v[8];denseraw::q8_values(words[u][r],v);
++    for(unsigned u=0;u<U;++u)if(base+256*u<K){
++     float xs[8];load8(x+base+256*u+lane*8,xs);
+      #pragma unroll
+-     for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}
++     for(unsigned r=0;r<R;++r){float v[8];denseraw::q8_values(words[u][r],v);
++      #pragma unroll
++      for(unsigned j=0;j<8;++j){const float product=v[j]*xs[j];A[r]=A[r]+product;}}}
++   }
+   }
+  }
+  #pragma unroll

@@ -1,0 +1,49 @@
+{
+  "site": "gemv:Q8_0:attention",
+  "variant": "q8-pair16",
+  "decision": "drop",
+  "reason": "No material decode-half improvement; the >=0.1 ms/half target was not met.",
+  "patch": "q8-pair16.patch",
+  "candidate_binary_sha256": "6af80ae8cc8c81d50ad59f02a7d5af6a5a291969fdfdbed98626b0e4fd3268ee",
+  "baseline_binary_sha256": "221cfa5a4964a759247777a62ed61dfdc976a9fc43bd3fa23d7d885a028dda3a",
+  "cpu": {
+    "device": "AMD Ryzen Threadripper PRO 5955WX 16-Cores (OpenCL CPU)",
+    "gpu_access": "blocked by nodri.so",
+    "decoded_values": 454656,
+    "single_and_pair_decode_mismatches": 0,
+    "output_values": 592,
+    "sentinel_values": 512,
+    "output_or_sentinel_mismatches": 0,
+    "status": "ALL PASSED",
+    "evidence": "cpu-test.out"
+  },
+  "gpu": {
+    "pci": "0000:27:00.0",
+    "render_node": "/dev/dri/renderD131",
+    "lock": "/dev/shm/card27q8.lock",
+    "method": "three interleaved unprofiled A/B pairs, 4096-row prompt, 256-row chunks, 48 decode halves per run",
+    "reference_run_medians_ms": [10.795218520797789, 10.731889517046511, 10.731928516179323],
+    "candidate_run_medians_ms": [10.731430491432548, 10.739863035269082, 10.726496926508844],
+    "reference_median_of_medians_ms": 10.731928516179323,
+    "candidate_median_of_medians_ms": 10.731430491432548,
+    "median_of_medians_delta_ms": -0.0004980247467756271,
+    "reference_pooled_median_ms": 10.74713800335303,
+    "candidate_pooled_median_ms": 10.733785515185446,
+    "paired_deltas_ms": [-0.06378802936524153, 0.00797351822257042, -0.005431589670479298],
+    "median_paired_delta_ms": -0.005431589670479298,
+    "required_win_ms": 0.1,
+    "fault_status": "no kernel fault/reset/hang/timeout lines in guarded checks before and after every run",
+    "bitwise": {
+      "pair": ["ab-a1", "ab-b1"],
+      "target_compared": 1029,
+      "target_differ_count": 0,
+      "target_only_one_side": 0,
+      "other_fields_differ": 0,
+      "draft_compared": 71,
+      "draft_differ_count": 0,
+      "draft_only_one_side": 0,
+      "draft_tokens_equal": true
+    }
+  },
+  "prior_attempt": "The first reference load was host-OOM-killed with three other engines present. It made no kernel fault and was not rerun until Main released a memory slot; it is excluded from timing."
+}
