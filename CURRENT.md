@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**October 26, ~10:00 EDT — SC117 service restored at the owner's request.**
+- The fault-guard baseline was re-recorded after a fresh check showed only the two reviewed card-27 lines.
+- Engine `1d72818cfe8c` is ready; gates passed.
+- Next: the merged three-patch build is being checked on card 27, using engine-path runs only.
+
 **October 26, 09:10 EDT — SC117 service is DOWN, waiting on the owner. A lab-card fault tripped its guard; lab results are recorded.**
 - **08:50:29:** spare card 27 logged a copy-engine page fault and engine reset during a lab microbenchmark that aborted
   with GPU work still in flight. `sc117-lan`, on cards 23/47 with engine `1d72818cfe8c`, stopped itself cleanly, by
