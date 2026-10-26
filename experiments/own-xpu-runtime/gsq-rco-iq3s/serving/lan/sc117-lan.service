@@ -17,7 +17,7 @@ Environment=SC117_CONTEXT=32768
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/1ccb7712cc7a.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/bd476fb8af0e.json
 Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -40,6 +40,9 @@ Environment=OWNRT_DRAFT_KERNELS=qsa_attention,attention_output,fuse_attention_co
 # One expert status check per layer over the gate/up/down statuses (sets the error exactly when a separate check would):
 # two fewer launches per layer. Suite 46.53 -> 46.85 tok/s, outputs identical.
 Environment=OWNRT_MERGE_CHECKS=1
+# Exact O(n) QSA select (scores in a register tree, radix threshold, chunked compaction; same ids as the all-pairs
+# rank). Card-27 rank-1 lab 2026-10-26: 30K prefill + decode bitwise on 1,079 buffers; decode half at 30K 20.52 -> 18.35 ms.
+Environment=OWNRT_SELECT_TOPK=1
 Restart=no
 KillMode=process
 KillSignal=SIGTERM
