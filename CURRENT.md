@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**October 26, 05:35 EDT — SC117 service at 64K now runs engine `a523650a434e`: 48.29 tok/s, exact.**
+- The speculative snapshot and rollback copies move 16-byte words instead of bytes: snapshot 0.294 → 0.196 ms per
+  guess, rollback 0.288 → 0.206 ms.
+- Suite: all ids, text hashes and MTP hits identical; 47.97 → 48.29 tok/s, faster on 12/12 prompts.
+- Gates: zero differences against the 64K oracle and against the 4096 oracle; prefill 13/13; continuation passed.
+- 10.7K test at 64K:
+  - output ids identical to the 32K engine;
+  - decode 45.7-45.9 tok/s;
+  - prompt read 107 s, against 102 s on 23/25, because rank 0 now prefills 24 layers plus the draft.
+- Lab: 60K batched prefill equals token-by-token on all 1,032 rank-1 buffers (card 27).
+- Two lab agents share card 27 under `flock /dev/shm/card27.lock`:
+  - exact weight-reuse dense prefill kernels;
+  - exact faster QSA decode attention (2,051-slot budget, about 1.4 ms per card per token past 2K tokens).
+
 **October 26, 05:10 EDT — SC117 service: 64K context live, exact; ctxkeeper inside the service (keeper model id).**
 - `sc117-lan` runs engine `90244b48a1c9` with a 65,536-token context at split 24/24. At 23/25, rank 1's F32 KV
   would pass the 30 GiB card cap.
