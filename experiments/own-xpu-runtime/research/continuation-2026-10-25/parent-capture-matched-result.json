@@ -1,0 +1,28 @@
+{
+  "schema": "ownrt.matched-performance-comparison.v1",
+  "baseline": {
+    "path": "/dev/shm/sc117-persistent-balanced-suite-proof-20261025/summary.json",
+    "sha256": "84db266029ce23a700388021c9b4b1fb739208d379fb61fed1c6a7659c41bd39",
+    "median_tps": 41.398996823171146
+  },
+  "candidate": {
+    "path": "/dev/shm/sc117-parent-capture-suite-proof-20261025/summary.json",
+    "sha256": "f1362189d46ffc444d902d1a39491005970dcb8154eef799852ab0418fe35120",
+    "median_tps": 44.96792398417218
+  },
+  "speedup": 1.0862080590079297,
+  "percent_gain": 8.620805900792972,
+  "same_boundaries": [
+    0,
+    8,
+    21,
+    34,
+    48
+  ],
+  "same_cold_suite": true,
+  "changed_behavior": "Opt-in owned-parent capture acknowledgement permits final ROW during draft work; math unchanged",
+  "outputs_exact": 5965,
+  "final_target_buffers_exact": 2065,
+  "independent_cpu_disagreements_unresolved": 6,
+  "scope": "Matched four-GPU controller timing; experimental scheduling improvement, not two-card service observer equivalence. One full cohort per variant."
+}

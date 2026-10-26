@@ -1,11 +1,16 @@
 # Current Workspace State
 
-**Active focus — performance work, October 25.** The opt-in parent-capture
-four-card overlap change is running its measured two-request 32-token state gate.
-If it passes, the full twelve-prompt timing suite follows directly. The balanced
-placement baseline finished exact at **41.399 tok/s**, versus prior 41.573: no gain.
-Raw GPU proofs remain protected in tmpfs. Publication/portable side work is paused;
-necessary bookkeeping is delegated. The focus reviewer checks every 15 minutes.
+**Active focus — performance work, October 25.** Parent-capture overlap passed
+the full twelve-prompt suite: **44.968 tok/s** versus balanced **41.399 tok/s**, an
+**8.62% gain** under the same observer. All 5,965 output IDs and final 2,065 target
+buffers match; all four workers exited zero. Its preceding measured two-request
+gate matched 32 output IDs, 2,065 target buffers and 73 draft allocations per
+request. This remains experimental, with no new-build debug-policy qualification.
+The main agent is starting the next copy-kernel experiment. Raw GPU proofs remain
+protected in tmpfs; [compact result](experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-proof/RESULT.md)
+retains the measured outcome without claiming a durable raw archive.
+Publication/portable side work stays paused; necessary bookkeeping is delegated.
+The focus reviewer checks every 15 minutes.
 
 **October 25, continuation — quad overlap and portable deployment; no draft training.**
 The owner approved the next work and explicitly excluded draft-model training.

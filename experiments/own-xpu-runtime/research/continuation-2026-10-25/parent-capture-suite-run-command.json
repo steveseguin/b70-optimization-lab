@@ -1,0 +1,24 @@
+{
+  "utc": "2026-10-26T00:19:08.184725+00:00",
+  "argv": [
+    "systemd-run",
+    "--user",
+    "--unit=sc117-parent-capture-suite-20261025",
+    "--property=Restart=no",
+    "--property=KillMode=process",
+    "--property=SendSIGKILL=no",
+    "--property=TimeoutStopSec=infinity",
+    "--property=Nice=19",
+    "--working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime",
+    "/usr/bin/python3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "--run",
+    "--plan",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-plan.json",
+    "--admission",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/parent-capture-suite-admission.json",
+    "--unit",
+    "sc117-parent-capture-suite-20261025.service"
+  ],
+  "purpose": "Full12 capture overlap A/B after same-build measured state gate"
+}
