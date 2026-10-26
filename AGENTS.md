@@ -38,6 +38,20 @@ the existing draft weights. Do not install or initiate a training pipeline.
 These come directly from the owner and override anything else in this file,
 any older note, and any recipe.
 
+### Optimization focus discipline (owner, 2026-10-25)
+
+Keep kernel/performance work on the main path: measure the bottleneck, reuse
+existing harnesses, run one meaningful correctness gate then full fair timing.
+Do not let serial archival, repeated reviews/proof scaffolding, publication or
+extracted builds displace speed tests; recheck only for changed risk or unresolved
+failure. Delegate necessary routine records/reviews to GPT-6.1-Sol without blocking
+optimization, retain terse results, and close small levers quickly when material
+ones remain. Keep a 15-minute performance_focus monitor during active work.
+Read actual planner floors and use fresh exclusive output paths before planning;
+never invent a cause for an unexplained loading stop. Reusable abstractions must
+serve concrete optimization/onboarding needs. No training or power/memory changes.
+Memory: `/home/steve/identified-mistakes/2026-10-25-sc117-focus-discipline.md`.
+
 ### 1. The job is optimizing, not hosting (2026-10-03)
 
 The focus of this lab is making models faster without losing quality. A server

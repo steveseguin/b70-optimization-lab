@@ -1,0 +1,957 @@
+{
+  "schema": "ownrt.persistent-rolling-proof.v1",
+  "passed": true,
+  "source_run": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a",
+  "check_policy": "measured",
+  "requests": 2,
+  "output_tokens": 64,
+  "request_summaries": [
+    {
+      "passed": true,
+      "directory": "request-00-cold-repeat-1",
+      "id": "cold-repeat-1",
+      "epoch": 1,
+      "request_sha256": "4ac587fa0d3bbfe34d0151207ec113c90e54598039492a92b24377fadea6dede",
+      "target_state_exact": true,
+      "draft_state_exact": true,
+      "target_buffer_count": 2065,
+      "draft_allocation_count": 73,
+      "output_tokens": 32,
+      "input_rows": 118,
+      "check_policy": "measured",
+      "reset_audit": {
+        "passed": true,
+        "epoch": 1,
+        "request_sha256": "4ac587fa0d3bbfe34d0151207ec113c90e54598039492a92b24377fadea6dede",
+        "inventories": [
+          "818dd3ec3fbe249cb9c283479a74d28b97aae82b135cac2657e4f617f89559aa",
+          "07840633d829608f6f4adb3239bdf4b8aa25591650569ca399f7884e8d8f754f",
+          "73de0a8652de4ab83c108042b3cb511339bf7b03393a933c108a2eec92364a82",
+          "be2684a63315121b60b4c50b46cd8d9f16bdbffadeaac8b28f65a5d823961c2c"
+        ],
+        "post_sequences": [
+          373,
+          255,
+          250,
+          238
+        ],
+        "cached_tokens": 0,
+        "cold_state_byte_verified": false,
+        "scope": "Native reset operations/cold host metadata and all-owner barrier; full cold allocation bytes were not individually read back."
+      },
+      "provider_audit": {
+        "passed": true,
+        "pairs": 117,
+        "depth2_pairs": 32,
+        "pending_borrows": [
+          [
+            88,
+            1
+          ],
+          [
+            89,
+            1
+          ],
+          [
+            91,
+            1
+          ],
+          [
+            92,
+            1
+          ],
+          [
+            93,
+            1
+          ],
+          [
+            95,
+            1
+          ],
+          [
+            96,
+            1
+          ],
+          [
+            97,
+            1
+          ],
+          [
+            98,
+            1
+          ],
+          [
+            99,
+            1
+          ],
+          [
+            100,
+            1
+          ],
+          [
+            101,
+            1
+          ],
+          [
+            102,
+            1
+          ],
+          [
+            103,
+            1
+          ],
+          [
+            104,
+            1
+          ],
+          [
+            105,
+            1
+          ],
+          [
+            106,
+            1
+          ],
+          [
+            108,
+            1
+          ],
+          [
+            109,
+            1
+          ],
+          [
+            110,
+            1
+          ],
+          [
+            111,
+            1
+          ],
+          [
+            113,
+            1
+          ],
+          [
+            114,
+            1
+          ]
+        ],
+        "pair_sequence_sha256": "e83e418b189598df0852656a71abab9ae33826e99bfcfd96f46790bdd60d7fe3"
+      },
+      "native_command_audits": [
+        {
+          "stage": 0,
+          "passed": true,
+          "commands": 254,
+          "accepted_input_rows": 118,
+          "peak_pending": 2,
+          "counters": {
+            "rows": 129,
+            "tentative_rows": 35,
+            "commits": 118,
+            "abort_count": 7,
+            "discarded_rows": 11,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 264,
+              "position": 87,
+              "row_ids": [
+                88,
+                89
+              ]
+            },
+            {
+              "sequence": 276,
+              "position": 90,
+              "row_ids": [
+                93,
+                94
+              ]
+            },
+            {
+              "sequence": 290,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 331,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 349,
+              "position": 112,
+              "row_ids": [
+                119,
+                120
+              ]
+            },
+            {
+              "sequence": 360,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 366,
+              "position": 116,
+              "row_ids": [
+                126,
+                127
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 1,
+          "passed": true,
+          "commands": 253,
+          "accepted_input_rows": 118,
+          "peak_pending": 2,
+          "counters": {
+            "rows": 128,
+            "tentative_rows": 34,
+            "commits": 118,
+            "abort_count": 7,
+            "discarded_rows": 10,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 177,
+              "position": 87,
+              "row_ids": [
+                88
+              ]
+            },
+            {
+              "sequence": 186,
+              "position": 90,
+              "row_ids": [
+                93,
+                94
+              ]
+            },
+            {
+              "sequence": 196,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 224,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 237,
+              "position": 112,
+              "row_ids": [
+                119,
+                120
+              ]
+            },
+            {
+              "sequence": 245,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 250,
+              "position": 116,
+              "row_ids": [
+                126,
+                127
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 2,
+          "passed": true,
+          "commands": 248,
+          "accepted_input_rows": 118,
+          "peak_pending": 2,
+          "counters": {
+            "rows": 124,
+            "tentative_rows": 30,
+            "commits": 118,
+            "abort_count": 6,
+            "discarded_rows": 6,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 183,
+              "position": 90,
+              "row_ids": [
+                93
+              ]
+            },
+            {
+              "sequence": 193,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 221,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 233,
+              "position": 112,
+              "row_ids": [
+                119
+              ]
+            },
+            {
+              "sequence": 241,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 245,
+              "position": 116,
+              "row_ids": [
+                126
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 3,
+          "passed": true,
+          "commands": 236,
+          "accepted_input_rows": 118,
+          "peak_pending": 1,
+          "counters": {
+            "rows": 118,
+            "tentative_rows": 0,
+            "commits": 118,
+            "abort_count": 0,
+            "discarded_rows": 0,
+            "accepted_tentative_rows": 0
+          },
+          "suffix_restores": []
+        }
+      ],
+      "pending_borrows": {
+        "0": 94,
+        "1": 23,
+        "2": 0
+      },
+      "provider_survival_evidence": "not-collected",
+      "provider_survival_checks": 0,
+      "provider_survival_advanced_checks": 0,
+      "survival_audit": null,
+      "actual_proposal_rows": 35,
+      "observed_miss_depths": [
+        1,
+        2
+      ],
+      "qualified_reference_parity": true,
+      "timing": {
+        "numerator": 31,
+        "denominator_seconds": 1.2496919250115752,
+        "first_timestamp": 814898.338386104,
+        "last_timestamp": 814899.588078029,
+        "observer": "controller committed-output observation",
+        "window": "first through last output, excludes RESET and DUMP",
+        "certified": false
+      },
+      "raw_bundles": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+          "bytes": 84391348,
+          "sha256": "bbe1f3cc6a750e0df0e86c6e6687e9f62366147f2a30b3d04cc7e881f79ca8b9",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage0/state-2000000000",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000.draft/state.bundle",
+          "bytes": 27451714,
+          "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage0/state-2000000000.draft",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage1/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+          "bytes": 99564388,
+          "sha256": "31938d0e55a81997bd8fe22f81811efe59cf2a68b4d6927684b4056ac0271584",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage1/state-2000000000",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage2/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+          "bytes": 99564388,
+          "sha256": "71b7b604b250c59b7a70fc9a67aafc839b61772ce3fd982eb80435054852bf44",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage2/state-2000000000",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage3/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+          "bytes": 120704844,
+          "sha256": "eafccee4b5c2fa705349c1ccdc9c87e991a78fe3304e6fc0c597dbaa113ebc41",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage3/state-2000000000",
+          "retention": "external raw; durable archive pending"
+        }
+      ]
+    },
+    {
+      "passed": true,
+      "directory": "request-01-cold-repeat-2",
+      "id": "cold-repeat-2",
+      "epoch": 2,
+      "request_sha256": "d66eaed92b74a2b3369557d8e55aa5defa81bc095fd35a8021f3896fa7d00324",
+      "target_state_exact": true,
+      "draft_state_exact": true,
+      "target_buffer_count": 2065,
+      "draft_allocation_count": 73,
+      "output_tokens": 32,
+      "input_rows": 118,
+      "check_policy": "measured",
+      "reset_audit": {
+        "passed": true,
+        "epoch": 2,
+        "request_sha256": "d66eaed92b74a2b3369557d8e55aa5defa81bc095fd35a8021f3896fa7d00324",
+        "inventories": [
+          "818dd3ec3fbe249cb9c283479a74d28b97aae82b135cac2657e4f617f89559aa",
+          "07840633d829608f6f4adb3239bdf4b8aa25591650569ca399f7884e8d8f754f",
+          "73de0a8652de4ab83c108042b3cb511339bf7b03393a933c108a2eec92364a82",
+          "be2684a63315121b60b4c50b46cd8d9f16bdbffadeaac8b28f65a5d823961c2c"
+        ],
+        "post_sequences": [
+          746,
+          511,
+          502,
+          476
+        ],
+        "cached_tokens": 0,
+        "cold_state_byte_verified": false,
+        "scope": "Native reset operations/cold host metadata and all-owner barrier; full cold allocation bytes were not individually read back."
+      },
+      "provider_audit": {
+        "passed": true,
+        "pairs": 117,
+        "depth2_pairs": 32,
+        "pending_borrows": [
+          [
+            88,
+            1
+          ],
+          [
+            89,
+            1
+          ],
+          [
+            91,
+            1
+          ],
+          [
+            92,
+            1
+          ],
+          [
+            93,
+            1
+          ],
+          [
+            95,
+            1
+          ],
+          [
+            96,
+            1
+          ],
+          [
+            97,
+            1
+          ],
+          [
+            98,
+            1
+          ],
+          [
+            99,
+            1
+          ],
+          [
+            100,
+            1
+          ],
+          [
+            101,
+            1
+          ],
+          [
+            102,
+            1
+          ],
+          [
+            103,
+            1
+          ],
+          [
+            104,
+            1
+          ],
+          [
+            105,
+            1
+          ],
+          [
+            106,
+            1
+          ],
+          [
+            108,
+            1
+          ],
+          [
+            109,
+            1
+          ],
+          [
+            110,
+            1
+          ],
+          [
+            111,
+            1
+          ],
+          [
+            113,
+            1
+          ],
+          [
+            114,
+            1
+          ]
+        ],
+        "pair_sequence_sha256": "e83e418b189598df0852656a71abab9ae33826e99bfcfd96f46790bdd60d7fe3"
+      },
+      "native_command_audits": [
+        {
+          "stage": 0,
+          "passed": true,
+          "commands": 254,
+          "accepted_input_rows": 118,
+          "peak_pending": 2,
+          "counters": {
+            "rows": 129,
+            "tentative_rows": 35,
+            "commits": 118,
+            "abort_count": 7,
+            "discarded_rows": 11,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 637,
+              "position": 87,
+              "row_ids": [
+                88,
+                89
+              ]
+            },
+            {
+              "sequence": 649,
+              "position": 90,
+              "row_ids": [
+                93,
+                94
+              ]
+            },
+            {
+              "sequence": 663,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 704,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 722,
+              "position": 112,
+              "row_ids": [
+                119,
+                120
+              ]
+            },
+            {
+              "sequence": 733,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 739,
+              "position": 116,
+              "row_ids": [
+                126,
+                127
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 1,
+          "passed": true,
+          "commands": 254,
+          "accepted_input_rows": 118,
+          "peak_pending": 2,
+          "counters": {
+            "rows": 129,
+            "tentative_rows": 35,
+            "commits": 118,
+            "abort_count": 7,
+            "discarded_rows": 11,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 433,
+              "position": 87,
+              "row_ids": [
+                88,
+                89
+              ]
+            },
+            {
+              "sequence": 442,
+              "position": 90,
+              "row_ids": [
+                93,
+                94
+              ]
+            },
+            {
+              "sequence": 452,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 480,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 493,
+              "position": 112,
+              "row_ids": [
+                119,
+                120
+              ]
+            },
+            {
+              "sequence": 501,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 506,
+              "position": 116,
+              "row_ids": [
+                126,
+                127
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 2,
+          "passed": true,
+          "commands": 250,
+          "accepted_input_rows": 118,
+          "peak_pending": 1,
+          "counters": {
+            "rows": 125,
+            "tentative_rows": 31,
+            "commits": 118,
+            "abort_count": 7,
+            "discarded_rows": 7,
+            "accepted_tentative_rows": 24
+          },
+          "suffix_restores": [
+            {
+              "sequence": 427,
+              "position": 87,
+              "row_ids": [
+                88
+              ]
+            },
+            {
+              "sequence": 435,
+              "position": 90,
+              "row_ids": [
+                93
+              ]
+            },
+            {
+              "sequence": 445,
+              "position": 94,
+              "row_ids": [
+                99
+              ]
+            },
+            {
+              "sequence": 473,
+              "position": 107,
+              "row_ids": [
+                113
+              ]
+            },
+            {
+              "sequence": 485,
+              "position": 112,
+              "row_ids": [
+                119
+              ]
+            },
+            {
+              "sequence": 493,
+              "position": 115,
+              "row_ids": [
+                124
+              ]
+            },
+            {
+              "sequence": 497,
+              "position": 116,
+              "row_ids": [
+                126
+              ]
+            }
+          ]
+        },
+        {
+          "stage": 3,
+          "passed": true,
+          "commands": 236,
+          "accepted_input_rows": 118,
+          "peak_pending": 1,
+          "counters": {
+            "rows": 118,
+            "tentative_rows": 0,
+            "commits": 118,
+            "abort_count": 0,
+            "discarded_rows": 0,
+            "accepted_tentative_rows": 0
+          },
+          "suffix_restores": []
+        }
+      ],
+      "pending_borrows": {
+        "0": 94,
+        "1": 23,
+        "2": 0
+      },
+      "provider_survival_evidence": "not-collected",
+      "provider_survival_checks": 0,
+      "provider_survival_advanced_checks": 0,
+      "survival_audit": null,
+      "actual_proposal_rows": 35,
+      "observed_miss_depths": [
+        1,
+        2
+      ],
+      "qualified_reference_parity": true,
+      "timing": {
+        "numerator": 31,
+        "denominator_seconds": 0.6945743589894846,
+        "first_timestamp": 814902.538714833,
+        "last_timestamp": 814903.233289192,
+        "observer": "controller committed-output observation",
+        "window": "first through last output, excludes RESET and DUMP",
+        "certified": false
+      },
+      "raw_bundles": [
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+          "bytes": 84391348,
+          "sha256": "bbe1f3cc6a750e0df0e86c6e6687e9f62366147f2a30b3d04cc7e881f79ca8b9",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage0/state-2000000001",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-01-cold-repeat-2/state-2000000001.draft/state.bundle",
+          "bytes": 27451714,
+          "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage0/state-2000000001.draft",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage1/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+          "bytes": 99564388,
+          "sha256": "31938d0e55a81997bd8fe22f81811efe59cf2a68b4d6927684b4056ac0271584",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage1/state-2000000001",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage2/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+          "bytes": 99564388,
+          "sha256": "71b7b604b250c59b7a70fc9a67aafc839b61772ce3fd982eb80435054852bf44",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage2/state-2000000001",
+          "retention": "external raw; durable archive pending"
+        },
+        {
+          "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage3/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+          "bytes": 120704844,
+          "sha256": "eafccee4b5c2fa705349c1ccdc9c87e991a78fe3304e6fc0c597dbaa113ebc41",
+          "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage3/state-2000000001",
+          "retention": "external raw; durable archive pending"
+        }
+      ]
+    }
+  ],
+  "all_requests_full_state_parity": true,
+  "target_state_exact": true,
+  "draft_state_exact": true,
+  "output_tokens_exact": true,
+  "provenance_passed": true,
+  "all_cold_resets_checked": true,
+  "cold_state_byte_verified": false,
+  "mandatory_restore_checks_passed": true,
+  "byte_verification_enabled": false,
+  "provider_survival_checks_enabled": false,
+  "actual_provider": true,
+  "actual_proposals_consumed": true,
+  "scripted_oracle_assisted": false,
+  "scripted_tentative_inputs": false,
+  "speed_claim": false,
+  "early_eos_qualified": false,
+  "cancellation_qualified": false,
+  "qualified_reference_parity": true,
+  "qualified_reference": {
+    "path": "/dev/shm/sc117-persistent-balanced-qualified-proof-20261025/summary.json",
+    "bytes": 32712,
+    "sha256": "5952a05e65d95aea76f44a99e33bf82748fab4864d08dd21e67c1b12417c211d"
+  },
+  "raw_bundles": [
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+      "bytes": 84391348,
+      "sha256": "bbe1f3cc6a750e0df0e86c6e6687e9f62366147f2a30b3d04cc7e881f79ca8b9",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage0/state-2000000000",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-00-cold-repeat-1/state-2000000000.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage0/state-2000000000.draft",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage1/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+      "bytes": 99564388,
+      "sha256": "31938d0e55a81997bd8fe22f81811efe59cf2a68b4d6927684b4056ac0271584",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage1/state-2000000000",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage2/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+      "bytes": 99564388,
+      "sha256": "71b7b604b250c59b7a70fc9a67aafc839b61772ce3fd982eb80435054852bf44",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage2/state-2000000000",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage3/native/requests/request-00-cold-repeat-1/state-2000000000/state.bundle",
+      "bytes": 120704844,
+      "sha256": "eafccee4b5c2fa705349c1ccdc9c87e991a78fe3304e6fc0c597dbaa113ebc41",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-00-cold-repeat-1/stage3/state-2000000000",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+      "bytes": 84391348,
+      "sha256": "bbe1f3cc6a750e0df0e86c6e6687e9f62366147f2a30b3d04cc7e881f79ca8b9",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage0/state-2000000001",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage0/native/requests/request-01-cold-repeat-2/state-2000000001.draft/state.bundle",
+      "bytes": 27451714,
+      "sha256": "9ca22c792fbf64c0a1ecd83dc89adb4f369a6367e5de4402b1b0a41c72969d0e",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage0/state-2000000001.draft",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage1/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+      "bytes": 99564388,
+      "sha256": "31938d0e55a81997bd8fe22f81811efe59cf2a68b4d6927684b4056ac0271584",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage1/state-2000000001",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage2/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+      "bytes": 99564388,
+      "sha256": "71b7b604b250c59b7a70fc9a67aafc839b61772ce3fd982eb80435054852bf44",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage2/state-2000000001",
+      "retention": "external raw; durable archive pending"
+    },
+    {
+      "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/stage3/native/requests/request-01-cold-repeat-2/state-2000000001/state.bundle",
+      "bytes": 120704844,
+      "sha256": "eafccee4b5c2fa705349c1ccdc9c87e991a78fe3304e6fc0c597dbaa113ebc41",
+      "retained_metadata": "/dev/shm/sc117-persistent-balanced-measured-proof-20261025/request-01-cold-repeat-2/stage3/state-2000000001",
+      "retention": "external raw; durable archive pending"
+    }
+  ],
+  "raw_bytes": 863353364,
+  "original_plan": {
+    "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/plan.json",
+    "bytes": 27130,
+    "sha256": "2d6b35edc166bace0b2e60a4d601099764926303bd42ece8b7778bd999fb6cf4"
+  },
+  "original_result": {
+    "path": "/dev/shm/sc117-ring-20261025/persistent-rolling-balanced-measured-a/persistent-rolling-result.json",
+    "bytes": 34303,
+    "sha256": "6337ec77517178b8925cb8ce5a42759813d6ccaf87bfd60a71a05e30a00a7e82"
+  },
+  "finalizer": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/continuation-2026-10-25/finalize_persistent_rolling_proof.py",
+    "bytes": 28334,
+    "sha256": "5d2dbd6294bb73d0a672d61e50cdcf37b45f4514acc54fa31f58897295e5cd6e"
+  },
+  "comparator": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/compare_pipeline_state.py",
+    "bytes": 40803,
+    "sha256": "76b5d22bf78b99b7e0007474db8fbd02d2b0159470b3a251a3a84b3a37b8bbb1"
+  },
+  "scope": "Two matched full-cap requests with native cold reset, epoch/global wire continuity and exact target/draft state against accepted baseline. Measured policy omits per-operation byte diagnostics honestly; mandatory copy/host/causal checks remain. Cold allocations were not all individually read back. No certified speed, portable deployment or full12-prompt state qualification."
+}

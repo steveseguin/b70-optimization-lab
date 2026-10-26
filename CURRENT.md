@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**Active focus — performance work, October 25.** The opt-in parent-capture
+four-card overlap change is running its measured two-request 32-token state gate.
+If it passes, the full twelve-prompt timing suite follows directly. The balanced
+placement baseline finished exact at **41.399 tok/s**, versus prior 41.573: no gain.
+Raw GPU proofs remain protected in tmpfs. Publication/portable side work is paused;
+necessary bookkeeping is delegated. The focus reviewer checks every 15 minutes.
+
 **October 25, continuation — quad overlap and portable deployment; no draft training.**
 The owner approved the next work and explicitly excluded draft-model training.
 The two-card service drained cleanly once at 14:59 EDT after 45 requests. Four-card
@@ -71,9 +78,21 @@ are durable and restore-tested; public metadata retains the exact hashes.
 The next placement (`0,8,21,34,48`) stopped cooperatively during first-card
 loading, before requests. The secondary channel-close error hid the original
 guard reason. Reviewed diagnostics now retain the first failure and rejected
-observation, with unchanged safety checks. A distinct qualification attempt
-(`persistent-rolling-balanced-qualified-b`) is loading on all four cards. The
-failed run and original source pins are preserved durably. The 27 GB root reserve
+observation, with unchanged safety checks. Balanced qualification B passed both cold requests: each matches 32 output
+tokens, 2,065 target buffers and 73 draft allocations; all four workers exited zero.
+Measured-policy parity also passed both 32-token requests with the same
+8/13/13/14-layer placement (cuts `0,8,21,34,48`) and native binary `02a47c059444`.
+The [balanced full suite](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-balanced-suite-proof/RESULT.md)
+passed all 5,965 output IDs and final 2,065 target buffers, with median decode
+**41.399 tok/s**: placement alone gave no gain against the prior 41.573 tok/s suite.
+The opt-in parent-capture build has completed and awaits one measured two-request
+32-token full-state gate, then the full twelve-prompt timing suite. Raw balanced
+GPU proofs remain protected in tmpfs. The standalone predecoded kernel candidate
+measured 1.286× kernel speedup with bitwise agreement; it is not integrated into
+the loader and makes no output-throughput claim. The concise
+[qualification record](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-balanced-qualified-proof/RESULT.md)
+is retained; it makes no speed claim. The failed run and original source pins
+are preserved durably. The 27 GB root reserve
 remains enforced after verified consolidation of redundant tool downloads.
 No new fault, training or arithmetic change. See the
 [complete rolling suite result](experiments/own-xpu-runtime/research/continuation-2026-10-25/persistent-rolling-suite-proof/RESULT.md).
