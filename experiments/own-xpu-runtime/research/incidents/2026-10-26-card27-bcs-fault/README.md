@@ -50,3 +50,10 @@ To restore the service:
 3. Start the service once on the last served engine: `bash engine/tools/service-cycle.sh 1d72818cfe8c restore`.
 
 All lab GPU work is halted until then. `engine/src` is unchanged, so the 1d72818cfe8c receipt still matches.
+
+## Restore (owner request, 2026-10-26: "please restart things")
+
+A fresh `observe.py` snapshot (`observe-restore.json`) still showed only the two card-27 lines beyond the baseline, and
+no GPU holders. The baseline was re-recorded from that snapshot; the previous file is in
+`host-before-stop.previous.json`. The service then started once on engine 1d72818cfe8c: ready, F32 oracle zero
+differences, prefill gate 13/13.

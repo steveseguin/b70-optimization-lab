@@ -1,47 +1,47 @@
 {
-  "utc": "2026-10-24T05:11:48.997233+00:00",
+  "utc": "2026-10-26T13:41:37.517975+00:00",
   "metadata_only": true,
   "device_api_calls": 0,
   "device_opens": 0,
   "service_changes": 0,
   "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
-  "root_free_bytes": 27525943296,
+  "root_free_bytes": 28241702912,
   "memory": {
     "MemTotal": 126326632448,
-    "MemAvailable": 97247674368,
+    "MemAvailable": 105458847744,
     "SwapTotal": 0,
     "SwapFree": 0
   },
   "units": {
     "qwen38-27b-fp8": {
       "Restart": "no",
-      "TimeoutStopUSec": "infinity",
-      "MainPID": "3483937",
-      "KillMode": "process",
-      "SendSIGKILL": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
       "Id": "qwen38-27b-fp8.service",
-      "ActiveState": "active",
-      "SubState": "running"
+      "ActiveState": "inactive",
+      "SubState": "dead"
     },
     "qwen38-27b-fp8-tp1-test": {
       "Restart": "no",
-      "TimeoutStopUSec": "infinity",
-      "MainPID": "3485229",
-      "KillMode": "process",
-      "SendSIGKILL": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
       "Id": "qwen38-27b-fp8-tp1-test.service",
-      "ActiveState": "active",
-      "SubState": "running"
+      "ActiveState": "inactive",
+      "SubState": "dead"
     },
     "qwen38-27b-vision": {
       "Restart": "no",
-      "TimeoutStopUSec": "infinity",
-      "MainPID": "3487303",
-      "KillMode": "process",
-      "SendSIGKILL": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
       "Id": "qwen38-27b-vision.service",
-      "ActiveState": "active",
-      "SubState": "running"
+      "ActiveState": "inactive",
+      "SubState": "dead"
     }
   },
   "drm": {
@@ -88,59 +88,8 @@
   },
   "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
   "inventory": {
-    "passed": false,
-    "holders": [
-      {
-        "pid": 3484037,
-        "fd": "3",
-        "node": "renderD130"
-      },
-      {
-        "pid": 3484575,
-        "fd": "7",
-        "node": "renderD130"
-      },
-      {
-        "pid": 3484575,
-        "fd": "12",
-        "node": "renderD130"
-      },
-      {
-        "pid": 3485328,
-        "fd": "3",
-        "node": "renderD129"
-      },
-      {
-        "pid": 3485927,
-        "fd": "7",
-        "node": "renderD129"
-      },
-      {
-        "pid": 3485927,
-        "fd": "12",
-        "node": "renderD129"
-      },
-      {
-        "pid": 3487303,
-        "fd": "3",
-        "node": "renderD131"
-      },
-      {
-        "pid": 3487303,
-        "fd": "6",
-        "node": "renderD128"
-      },
-      {
-        "pid": 3487303,
-        "fd": "8",
-        "node": "renderD131"
-      },
-      {
-        "pid": 3487303,
-        "fd": "11",
-        "node": "renderD128"
-      }
-    ],
+    "passed": true,
+    "holders": [],
     "errors": [],
     "nodes": {
       "226:0": "card0",
@@ -161,32 +110,12 @@
     "metadata_only": true,
     "device_opens": 0
   },
-  "holders": {
-    "3484037": {
-      "start_ticks": 63411040,
-      "state": "S"
-    },
-    "3484575": {
-      "start_ticks": 63415843,
-      "state": "S"
-    },
-    "3485328": {
-      "start_ticks": 63435322,
-      "state": "S"
-    },
-    "3485927": {
-      "start_ticks": 63440067,
-      "state": "S"
-    },
-    "3487303": {
-      "start_ticks": 63453537,
-      "state": "S"
-    }
-  },
+  "holders": {},
+  "identity_races": [],
   "kernel": {
-    "journal_sha256": "c6fc684a63722f80dcec4f3e84a491b35141152453a4acac0d10c3bdffa404b7",
-    "rows": 3664,
-    "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=20fd968;b=2cba7160054a4ffeb4c4e252eb956f5f;m=b849f6e247;t=65ead6cbe56ac;x=db7e8267ae64026c",
+    "journal_sha256": "b1a469235876e8ed8010abd0fdc82173f3bdd50f5c0a0a8a1f8bff3974b94a41",
+    "rows": 3693,
+    "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=2107b61;b=2cba7160054a4ffeb4c4e252eb956f5f;m=c8c7214eb7;t=65ebde9e8c31b;x=88851ae266fb5e7a",
     "faults": [
       {
         "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
@@ -243,10 +172,18 @@
       {
         "message": "xe 0000:23:00.0: [drm] Check your /sys/class/drm/card3/device/devcoredump/data",
         "timestamp": "785791754628"
+      },
+      {
+        "message": "xe 0000:27:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "861736940615"
+      },
+      {
+        "message": "xe 0000:27:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+        "timestamp": "861736940910"
       }
     ]
   },
-  "known_fault_baseline_matches": true,
+  "known_fault_baseline_matches": false,
   "queue": {
     "A": {
       "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
@@ -263,26 +200,10 @@
   },
   "endpoints": {
     "18130": {
-      "num_requests_running": [
-        0.0
-      ],
-      "num_requests_waiting": [
-        0.0
-      ]
+      "unavailable": "URLError"
     },
     "18131": {
-      "num_requests_running": [
-        0.0
-      ],
-      "num_requests_waiting": [
-        0.0
-      ]
+      "unavailable": "URLError"
     }
-  },
-  "fault_baseline_review": {
-    "utc": "2026-10-25T17:32:48.919071+00:00",
-    "receipt": "experiments/own-xpu-runtime/research/review-2026-10-25/incident-owner-review.json",
-    "original_snapshot": "experiments/own-xpu-runtime/research/review-2026-10-25/host-baseline-before-review.json",
-    "scope": "Only kernel fault baseline reviewed; original snapshot fields remain historical."
   }
 }
