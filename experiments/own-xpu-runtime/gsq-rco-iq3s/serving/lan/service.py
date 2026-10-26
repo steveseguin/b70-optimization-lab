@@ -7,7 +7,7 @@ On a GPU/kernel fault, a lost rank or a foreign holder on the target cards it
 stops intake, sends the single cooperative stop, waits for physical drain and
 exits. It never retries, restarts, resets a device or kills a rank.
 """
-import argparse, hashlib, http.server, importlib.util, ipaddress, json, os, resource, shutil, signal, socket, subprocess
+import argparse, collections, hashlib, http.server, importlib.util, ipaddress, json, os, resource, shutil, signal, socket, subprocess
 import re, sys, threading, time, traceback
 from datetime import datetime, timezone
 from pathlib import Path
@@ -236,6 +236,13 @@ SESSION_READBACK = os.environ.get('SC117_SESSION_READBACK', '0') == '1'  # APPLY
 # 36 GDN states/histories, PLE history and bundle metadata), for admission before the real size is known.
 SESSION_TOKEN_BYTES = 64 * 1024
 SESSION_FIXED_BYTES = 160 * 1024**2
+# Disk copies of parked sessions (SessionArchive): they outlive reboots and RAM eviction. Default off.
+SESSION_ARCHIVE = os.environ.get('SC117_SESSION_ARCHIVE')
+SESSION_ARCHIVE_BUDGET = int(float(os.environ.get('SC117_SESSION_ARCHIVE_GB', '200')) * 1024**3)
+SESSION_ARCHIVE_FLOOR = 64 * 1024**3      # free bytes the archive leaves on its filesystem
+# One canary session per engine build (session_compat_gate), beside the store, never evicted by it; the newest kept.
+CANARY_DIR = SESSION_DIR.parent / (SESSION_DIR.name + '-canaries')
+CANARY_KEEP = 4
 # Opt-in second model id <MODEL_ID>-keeper: ctxkeeper's long-context policy in process (keeper.py; SC117_KEEPER_LIB,
 # SC117_KEEPER_DIR). Default off: the service, its model list and every request path are unchanged.
 KEEPER = os.environ.get('SC117_KEEPER', '0') == '1'
@@ -265,6 +272,173 @@ def session_floors(control, evidence):
     return [(control, ROOT_ONGOING), (evidence, EXTERNAL_FLOOR + META_RESERVE + DUMP_BYTES)]
 
 
+class SessionArchive:
+    """Disk copies of parked sessions (SC117_SESSION_ARCHIVE). They outlive reboots and RAM eviction.
+
+    Each copy is a directory <id>.<build16> written file by file, with COMPLETE (the sha256 of manifest.json) written
+    last. The archive filesystem gets no renames or locks (the RAID is ntfs-3g); a directory without a valid COMPLETE is
+    a partial copy and is removed at prepare. Copies run on one background thread, a chunk at a time, only while the
+    engine is idle (busy() false), under the RAM session's shared lock so the store cannot delete it mid-copy. A prompt
+    that extends an archived session longer than anything in RAM copies it back into the RAM store first; the ranks
+    verify every byte at VERIFY as for any parked session. Bounded by a byte budget (LRU by COMPLETE's mtime) and a
+    free-space floor."""
+    COMPLETE = 'COMPLETE'
+
+    def __init__(self, root, budget, ops, busy=lambda: False, floor=SESSION_ARCHIVE_FLOOR, chunk=8 << 20):
+        self.root, self.budget, self.ops, self.busy, self.floor, self.chunk = Path(root), budget, ops, busy, floor, chunk
+        self.index = {}              # directory name -> dict(path, id, tokens, pending, identity, bytes, used)
+        self.queue = collections.deque()
+        self.cv = threading.Condition()
+        self.stats = dict(archived=0, recalled=0, failed=0, evicted=0, skipped=0)
+        self.thread = None
+
+    @staticmethod
+    def name(m):
+        return f"{m['id']}.{m['identity']['binary_sha256'][:16]}"
+
+    def prepare(self):
+        self.root.mkdir(mode=0o700, parents=True, exist_ok=True)
+        for d in sorted(self.root.iterdir()):
+            if not d.is_dir():
+                continue
+            try:
+                raw = (d / 'manifest.json').read_bytes()
+                require(hashlib.sha256(raw).hexdigest() == (d / self.COMPLETE).read_text().strip(), 'archive manifest digest')
+                m = json.loads(raw)
+                require(self.name(m) == d.name, 'archive directory name')
+            except Exception:
+                shutil.rmtree(d, ignore_errors=True)  # partial or broken copy
+                continue
+            self.index[d.name] = dict(path=d, id=m['id'], tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
+                                      bytes=m['bytes'], used=(d / self.COMPLETE).stat().st_mtime)
+        self.thread = threading.Thread(target=self.run, daemon=True)
+        self.thread.start()
+
+    def used_bytes(self):
+        return sum(e['bytes'] for e in self.index.values())
+
+    def match(self, prompt, usable, min_tokens=1):
+        best = None
+        for e in self.index.values():
+            h, n = e['tokens'], len(e['tokens'])
+            if n >= min_tokens and usable(e['identity']) and len(prompt) >= n + 2 and prompt[n] == e['pending'] and prompt[:n] == h:
+                if best is None or n > len(best['tokens']):
+                    best = e
+        return best
+
+    def submit(self, path, m):
+        with self.cv:
+            self.queue.append((Path(path), m))
+            self.cv.notify()
+
+    def run(self):
+        while True:
+            with self.cv:
+                while not self.queue:
+                    self.cv.wait()
+                path, m = self.queue.popleft()
+            try:
+                self.archive(path, m)
+            except Exception as error:
+                self.stats['failed'] += 1
+                print(json.dumps(dict(session_archive_error=repr(error)[:300], id=m.get('id'))), flush=True)
+
+    def drop(self, name):
+        e = self.index.pop(name, None)
+        if e is not None:
+            shutil.rmtree(e['path'], ignore_errors=True)
+
+    def evict_one(self):
+        if not self.index:
+            return False
+        name = min(self.index, key=lambda k: self.index[k]['used'])
+        self.drop(name)
+        self.stats['evicted'] += 1
+        return True
+
+    def _copy_file(self, src, dst, idle):
+        with open(src, 'rb') as fi, open(dst, 'xb') as fo:
+            while True:
+                while idle and self.busy():
+                    time.sleep(0.5)
+                b = fi.read(self.chunk)
+                if not b:
+                    break
+                fo.write(b)
+            fo.flush()
+            os.fsync(fo.fileno())
+            try:
+                os.posix_fadvise(fo.fileno(), 0, 0, os.POSIX_FADV_DONTNEED)  # do not keep GBs of copies in page cache
+            except (AttributeError, OSError):
+                pass
+
+    def _copy_tree(self, src, dst, idle, last=None):
+        dst.mkdir(mode=0o700)
+        files = sorted(f for f in src.rglob('*') if f.is_file() and f.name != last)
+        for f in files:
+            target = dst / f.relative_to(src)
+            target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            self._copy_file(f, target, idle)
+        if last is not None:
+            self._copy_file(src / last, dst / last, idle)
+
+    def archive(self, path, m):
+        name = self.name(m)
+        if name in self.index:
+            os.utime(self.index[name]['path'] / self.COMPLETE)
+            self.index[name]['used'] = time.time()
+            return
+        lock = getattr(self.ops, 'SessionLock', None)
+        ctx = lock(path.parent, path.name, False) if lock is not None else None
+        try:
+            if ctx is not None:
+                ctx.__enter__()
+        except Exception:
+            self.stats['skipped'] += 1  # being replaced or deleted: nothing stable to copy
+            return
+        try:
+            if not (path / 'manifest.json').exists():
+                self.stats['skipped'] += 1
+                return
+            raw = (path / 'manifest.json').read_bytes()
+            if json.loads(raw).get('id') != m['id']:
+                self.stats['skipped'] += 1
+                return
+            while self.index and self.used_bytes() + m['bytes'] > self.budget and self.evict_one():
+                pass
+            if self.used_bytes() + m['bytes'] > self.budget or shutil.disk_usage(self.root).free - m['bytes'] < self.floor:
+                self.stats['skipped'] += 1
+                return
+            dst = self.root / name
+            shutil.rmtree(dst, ignore_errors=True)
+            self._copy_tree(path, dst, idle=True, last='manifest.json')
+            (dst / self.COMPLETE).write_text(hashlib.sha256(raw).hexdigest() + '\n')
+            self.index[name] = dict(path=dst, id=m['id'], tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
+                                    bytes=m['bytes'], used=time.time())
+            self.stats['archived'] += 1
+        finally:
+            if ctx is not None:
+                ctx.__exit__(None, None, None)
+
+    def copy_out(self, cold, staging):
+        """Copy an archived session (without COMPLETE) into `staging` on the RAM store; manifest.json last."""
+        shutil.rmtree(staging, ignore_errors=True)
+        src = cold['path']
+        files = sorted(f for f in src.rglob('*') if f.is_file() and f.name not in (self.COMPLETE, 'manifest.json'))
+        staging.mkdir(mode=0o700)
+        for f in files:
+            target = staging / f.relative_to(src)
+            target.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+            shutil.copyfile(f, target)
+        shutil.copyfile(src / 'manifest.json', staging / 'manifest.json')
+        os.utime(src / self.COMPLETE)
+        cold['used'] = time.time()
+
+    def status(self):
+        return dict(directory=str(self.root), sessions=len(self.index), bytes=self.used_bytes(), budget_bytes=self.budget,
+                    queued=len(self.queue), **self.stats)
+
+
 class Sessions:
     """Parked conversations (policy only; the adapter owns the two-rank protocol, files, manifest and locks).
 
@@ -284,6 +458,23 @@ class Sessions:
         self.events = []             # last decisions (request summaries)
         self.stats = dict(parked=0, restored=0, park_skipped=0, park_refused=0, restore_refused=0, evicted=0)
         self.pinned = set()          # ids LRU eviction skips (SC117_KEEPER: the head checkpoints of active conversations)
+        self.accepted = set()        # other engine builds gated as state-identical to this one (session_compat_gate)
+        self.archive = None          # SessionArchive when SC117_SESSION_ARCHIVE is set
+
+    def near(self, saved, identity):
+        near = getattr(self.ops, 'identity_near', None)
+        return near is not None and saved != identity and near(saved, identity)
+
+    def usable(self, saved, identity):
+        """A session restores here when its identity is this engine's, or differs only in an accepted engine build."""
+        return saved == identity or (self.near(saved, identity) and saved.get('binary_sha256') in self.accepted)
+
+    def settle(self, identity):
+        """After session_compat_gate: drop parked sessions of other builds that were not accepted."""
+        for sid, e in list(self.index.items()):
+            if not self.usable(e['identity'], identity) and sid not in self.pinned and self.ops.session_delete(e['path']):
+                del self.index[sid]
+                self.note('purged', id=sid, reason='engine build not accepted')
 
     def pin(self, sid):
         """Keep a parked session out of LRU eviction (it still counts toward the budget). False if it is not parked."""
@@ -310,7 +501,7 @@ class Sessions:
                 shutil.rmtree(p, ignore_errors=True)
         self.index = {}
         for path, m, error in self.ops.session_list(self.root):
-            if m is None or (identity is not None and m['identity'] != identity):
+            if m is None or (identity is not None and m['identity'] != identity and not self.near(m['identity'], identity)):
                 if self.ops.session_delete(path):
                     self.note('purged', id=path.name, reason=error or 'identity')
                 continue
@@ -325,10 +516,53 @@ class Sessions:
         best = None
         for e in self.index.values():
             h, n = e['tokens'], len(e['tokens'])
-            if e['identity'] == identity and len(prompt) >= n + 2 and prompt[n] == e['pending'] and prompt[:n] == h:
+            if self.usable(e['identity'], identity) and len(prompt) >= n + 2 and prompt[n] == e['pending'] and prompt[:n] == h:
                 if best is None or n > len(best['tokens']):
                     best = e
+        if self.archive is not None:  # a longer copy on disk (evicted from RAM, or from before a reboot) comes back first
+            cold = self.archive.match(prompt, lambda saved: self.usable(saved, identity), min_tokens=len(best['tokens']) + 1 if best else 1)
+            if cold is not None:
+                warm = self.recall(cold)
+                if warm is not None:
+                    best = warm
         return best
+
+    def recall(self, cold):
+        """Copy an archived session back into the RAM store (staging directory, then one rename). Returns its index
+        entry, or None when it does not fit; the ranks verify every byte at VERIFY as for any parked session."""
+        sid = cold['id']
+        if sid in self.index:
+            return self.index[sid] if self.index[sid]['identity'] == cold['identity'] else None
+        while (self.used_bytes() + cold['bytes'] > self.budget or self.floor_ok(cold['bytes'])) and self.evict_one():
+            pass
+        reason = self.floor_ok(cold['bytes']) or (None if self.used_bytes() + cold['bytes'] <= self.budget else 'budget')
+        if reason:
+            self.note('recall-skipped', id=sid, reason=reason)
+            return None
+        staging = self.root / f'.{sid}.staging'
+        lock = getattr(self.ops, 'SessionLock', None)
+        try:
+            r0 = time.monotonic()
+            ctx = lock(self.root, sid, True) if lock is not None else None
+            if ctx is not None:
+                ctx.__enter__()
+            try:
+                self.archive.copy_out(cold, staging)
+                os.rename(staging, self.root / sid)
+            finally:
+                if ctx is not None:
+                    ctx.__exit__(None, None, None)
+        except (OSError, self.ops.SessionRefused) as error:
+            shutil.rmtree(staging, ignore_errors=True)
+            self.archive.stats['failed'] += 1
+            self.note('recall-failed', id=sid, reason=repr(error))
+            return None
+        e = dict(path=self.root / sid, tokens=cold['tokens'], pending=cold['pending'], identity=cold['identity'],
+                 bytes=cold['bytes'], used=time.time(), recalled=True)
+        self.index[sid] = e
+        self.archive.stats['recalled'] += 1
+        self.note('recalled', id=sid, tokens=len(cold['tokens']), ms=round((time.monotonic() - r0) * 1000))
+        return e
 
     def evict_one(self, keep=None):
         for sid, e in sorted(self.index.items(), key=lambda kv: kv[1]['used']):
@@ -392,18 +626,25 @@ class Sessions:
             pass
         self.stats['parked'] += 1
         self.note('parked', id=m['id'], tokens=len(tokens), bytes=m['bytes'])
+        if self.archive is not None:
+            self.archive.submit(self.root / m['id'], m)
         return m['id']
 
     def restore(self, t, entry, destination):
         """The adapter's two-rank restore. A refusal about the stored session itself (not a lock) drops that session."""
         try:
-            r = self.ops.session_restore(t, entry['path'], destination, readback=self.readback)
+            if self.accepted:
+                r = self.ops.session_restore(t, entry['path'], destination, readback=self.readback, accepted=tuple(sorted(self.accepted)))
+            else:
+                r = self.ops.session_restore(t, entry['path'], destination, readback=self.readback)
         except self.ops.SessionRefused as error:
             self.stats['restore_refused'] += 1
             self.note('restore-refused', id=entry['path'].name, reason=str(error), engine=error.engine)
             if 'locked' not in str(error) and self.ops.session_delete(entry['path']):
                 self.index.pop(entry['path'].name, None)
                 self.pinned.discard(entry['path'].name)
+                if entry.get('recalled') and self.archive is not None and 'identity' not in str(error):
+                    self.archive.drop(SessionArchive.name(dict(id=entry['path'].name, identity=entry['identity'])))
             raise
         entry['used'] = time.time()
         self.stats['restored'] += 1
@@ -447,6 +688,9 @@ class Engine:
             self.session_identity = A.session_identity(t)
             self.sessions = Sessions(SESSION_DIR, SESSION_BUDGET, A, floors=session_floors(self.control, self.evidence))
             self.sessions.prepare(self.session_identity)
+            if SESSION_ARCHIVE:
+                self.sessions.archive = SessionArchive(SESSION_ARCHIVE, SESSION_ARCHIVE_BUDGET, A, busy=self.lock.locked)
+                self.sessions.archive.prepare()
         return plan
 
     def storage_ok(self):
@@ -811,6 +1055,84 @@ def continuation_gate(engine, prompt):
         cases.append(row)
     engine.convo = None
     return dict(passed=passed, binary_sha256=engine.t.plan['binary_sha256'], cases=cases, utc=utc())
+
+
+def session_compat_gate(engine, prompt):
+    """Cross-build session gate (sessions on), run at every start. Parks this build's canary once: the fixed self-test
+    prompt's turn 1, under CANARY_DIR/<build16> (and its archive copy). Then for each other build's canary whose
+    identity equals this engine's but for the build, it restores that canary through the store (VERIFY with the compat
+    line), continues it with a fixed turn 2, and runs the same turn 2 fresh after a RESET. Tokens, MTP guesses and the
+    full target state on both ranks (every buffer except the spare recurrent banks) must be identical, as in
+    continuation_gate. A build that passes is accepted: its parked sessions restore here. Others' sessions are purged."""
+    s, live = engine.sessions, engine.session_identity
+    build = live['binary_sha256']
+    CANARY_DIR.mkdir(mode=0o700, parents=True, exist_ok=True)
+    archive = Path(SESSION_ARCHIVE + '-canaries') if SESSION_ARCHIVE else None
+    if archive is not None:  # canaries from before a reboot come back from disk
+        archive.mkdir(mode=0o700, parents=True, exist_ok=True)
+        for d in archive.iterdir():
+            if d.is_dir() and not (CANARY_DIR / d.name).exists() and (d / SessionArchive.COMPLETE).exists():
+                shutil.copytree(d, CANARY_DIR / d.name)
+                (CANARY_DIR / d.name / SessionArchive.COMPLETE).unlink()
+    suffix = list(prompt)[:24]
+    first, _ = engine.generate(prompt, 16, 'compat-canary-turn1', force_reset=True)
+    own = CANARY_DIR / build[:16]
+    if not any(m is not None for _, m, _ in (A.session_list(own) if own.is_dir() else [])):
+        shutil.rmtree(own, ignore_errors=True)
+        own.mkdir(mode=0o700)
+        A.session_save(engine.t, own, list(prompt) + first[:-1], first[-1])
+        if archive is not None:
+            shutil.rmtree(archive / own.name, ignore_errors=True)
+            shutil.copytree(own, archive / own.name)
+            (archive / own.name / SessionArchive.COMPLETE).write_text('canary\n')
+    builds = sorted((d for d in CANARY_DIR.iterdir() if d.is_dir() and d != own), key=lambda d: d.stat().st_mtime, reverse=True)
+    for old in builds[CANARY_KEEP:]:
+        shutil.rmtree(old, ignore_errors=True)
+    results = []
+    for d in builds[:CANARY_KEEP]:
+        for path, m, error in A.session_list(d):
+            if m is None or not A.identity_near(m['identity'], live) or m['identity']['binary_sha256'] == build:
+                continue
+            other, sid = m['identity']['binary_sha256'], m['id']
+            held = [e for e in s.index.values() if e['identity'].get('binary_sha256') == other]
+            if s.archive is not None:
+                held += [e for e in s.archive.index.values() if e['identity'].get('binary_sha256') == other]
+            if not held:  # nothing of that build is parked: no gate needed
+                continue
+            turn2 = list(m['tokens']) + [m['pending_token']] + suffix
+            prior = s.index.get(sid)
+            s.index[sid] = dict(path=path, tokens=m['tokens'], pending=m['pending_token'], identity=m['identity'],
+                                bytes=m['bytes'], used=time.time())
+            s.pinned.add(sid)
+            s.accepted.add(other)
+            row = dict(build=other, canary=str(path), prompt_tokens=len(turn2), passed=False)
+            try:
+                engine.generate(list(prompt)[:8], 4, 'compat-canary-other', force_reset=True, parkable=False)
+                cont, summary_c = engine.generate(turn2, 32, 'compat-canary-continued', continue_ok=True, parkable=False)
+                guesses_c = engine.last_result.get('guess_sequence')
+                state_c = engine.dump_buffers()
+                fresh, summary_f = engine.generate(turn2, 32, 'compat-canary-fresh', force_reset=True)
+                guesses_f = engine.last_result.get('guess_sequence')
+                state_f = engine.dump_buffers()
+                differ = {r: sorted(k for k in state_f[r] if not k.startswith('alternate-') and state_f[r][k] != state_c[r].get(k))
+                          for r in state_f}
+                restored = (summary_c.get('session') or {}).get('restored')
+                row.update(continued_from=summary_c['continued_from'], restored=restored, tokens_equal=cont == fresh,
+                           guesses_equal=guesses_c == guesses_f, state_differences=differ)
+                row['passed'] = (restored is not None and summary_c['continued_from'] == len(m['tokens']) and cont == fresh
+                                 and guesses_c == guesses_f and not any(differ.values()))
+            finally:
+                s.pinned.discard(sid)
+                if prior is not None:
+                    s.index[sid] = prior
+                else:
+                    s.index.pop(sid, None)
+                if not row['passed']:
+                    s.accepted.discard(other)
+            results.append(row)
+    engine.convo = None
+    s.settle(live)
+    return dict(passed=all(r['passed'] for r in results), binary_sha256=build, accepted=sorted(s.accepted), results=results, utc=utc())
 
 
 def prefill_gate(engine, rows):
@@ -1368,6 +1690,16 @@ def main():
                     save(cmarker, continuation_gate(engine, st['prompt_tokens']))
                 engine.continuation = bool(json.loads(cmarker.read_text())['passed'])
                 status['continuation'] = engine.continuation
+            if engine.sessions is not None and engine.continuation and mode == 'f32':
+                # Every start: parked sessions of earlier builds are accepted only after this build restores and continues
+                # their canary exactly (tokens, guesses, full state); the rest are purged.
+                state.detail = 'session compatibility gate: earlier builds\' canaries restored and continued vs fresh'
+                with engine.lock:
+                    compat = session_compat_gate(engine, st['prompt_tokens'])
+                (P / 'evidence' / f"session-compat-{engine.t.plan['binary_sha256'][:16]}.json").write_text(json.dumps(compat, indent=1) + '\n')
+                status['session_compat'] = dict(accepted=compat['accepted'], results=[dict(build=r['build'], passed=r['passed']) for r in compat['results']])
+            elif engine.sessions is not None:
+                engine.sessions.settle(engine.session_identity)
             (control / 'run.json').write_text(json.dumps(status, indent=2) + '\n')
         require(all(monitor.contacts), 'both rank contacts must be observed on their target cards')
         save(control / 'selftest-result.json', dict(passed=True, tokens=tokens, runs=rows))

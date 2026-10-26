@@ -19,7 +19,7 @@ Environment=SC117_CONTEXT=65536
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/a523650a434e.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/8ed9f5cb695e.json
 Environment=SC117_PREFILL_ROWS=32
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -58,6 +58,10 @@ Environment=SC117_SESSION_READBACK=1
 # 64K sessions (2026-10-26): a parked 65536-token conversation is about 4.2 GB over both ranks; VERIFY holds it in
 # rank anonymous memory, inside the 8 GiB aggregate bound (about 0.7 GB used besides rank 0's lookup copy).
 Environment=SC117_SESSION_MAX_TOKENS=65536
+# Disk copies of parked sessions on the RAID (ntfs-3g; no renames or locks there): they outlive reboots and RAM eviction
+# and come back to RAM when a prompt extends them. Copies run only while the engine is idle.
+Environment=SC117_SESSION_ARCHIVE=/mnt/raid-models/sc117-session-archive
+Environment=SC117_SESSION_ARCHIVE_GB=200
 # Keeper model (lab 2026-10-26, opt-in): a second model id sc117-qwen3.8-flash-next-iq3s-ownrt-keeper runs ctxkeeper's
 # long-context policy in process (keeper.py): bounded view, NOTES, archive, hidden recall; a pinned head checkpoint per
 # conversation is restored after each cut. Requests for the plain model id are unchanged. Needs SC117_SESSIONS=1 for

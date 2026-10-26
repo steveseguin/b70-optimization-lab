@@ -513,15 +513,30 @@ def session_save(t,root,tokens,pending):
             shutil.rmtree(staging,ignore_errors=True);raise
     finally:lock.__exit__(None,None,None)
 
-def session_restore(t,path,destination,readback=False):
+# Identity fields that name the engine build. A session saved by another build is restorable only when every other
+# field matches and the service has gated that build as state-identical (service.py session_compat_gate).
+BUILD_IDENTITY_KEYS=('binary_sha256','build_receipt_sha256')
+
+def identity_near(saved,live):
+    """True when two session identities differ at most in the engine build."""
+    strip=lambda d:{k:v for k,v in d.items() if k not in BUILD_IDENTITY_KEYS}
+    return type(saved) is dict and strip(saved)==strip(live)
+
+def session_restore(t,path,destination,readback=False,accepted=()):
     """Restore a parked session into both ranks: inspect (shared lock held throughout), RESET into `destination`, VERIFY
     both, APPLY both only if both verified, then the shared map exactly as redirect() leaves it (reverse_ready and the
     reverse slot; everything else zero). Returns dict(position, pending_token, tokens, id, ...). The next request must
-    run the native continuation with start = position. Raises SessionRefused with engine 'untouched'/'fresh'/'partial'."""
+    run the native continuation with start = position. Raises SessionRefused with engine 'untouched'/'fresh'/'partial'.
+    accepted: engine binaries (sha256) gated as state-identical to this one; a session saved by one of them is restored
+    with VERIFY's compat line, which lets only identity.binary_sha256 differ on the ranks."""
     path=Path(path);sid=path.name
     with SessionLock(path.parent,sid,False):
         m=session_inspect(path,lock=False)
-        if m['identity']!=session_identity(t):raise SessionRefused('session identity differs from this engine')
+        live=session_identity(t);foreign=None
+        if m['identity']!=live:
+            if not(identity_near(m['identity'],live) and m['identity']['binary_sha256'] in set(accepted)):
+                raise SessionRefused('session identity differs from this engine')
+            foreign=m['identity']['binary_sha256']
         N=m['position']
         if not 1<=N<t.plan['context']:raise SessionRefused('session position outside this engine context')
         row=(path/'reverse.bin').read_bytes()
@@ -529,7 +544,8 @@ def session_restore(t,path,destination,readback=False):
         if any(t.pending):raise SessionRefused('a rank is busy')
         reset(t,destination)  # op 11 on both ranks, fresh shared map: from here on the engine is at a fresh request
         tag='sc117.'+m['tokens_sha256'];started=time.monotonic()
-        v=_checkpoint_ops(t,VERIFY_OP,{r:dict(position=N,token=m['pending_token'],metadata=[str(path/m['ranks'][str(r)]['directory']),tag]) for r in (0,1)})
+        compat=[] if foreign is None else ['compat '+foreign]
+        v=_checkpoint_ops(t,VERIFY_OP,{r:dict(position=N,token=m['pending_token'],metadata=[str(path/m['ranks'][str(r)]['directory']),tag]+compat) for r in (0,1)})
         if _refusals(v):raise SessionRefused('verify refused: '+json.dumps(_refusals(v)),engine='fresh')
         verify_ms=(time.monotonic()-started)*1000;started=time.monotonic()
         a=_checkpoint_ops(t,APPLY_OP,{r:dict(position=N,fixture=1 if readback else 0) for r in (0,1)})
@@ -539,7 +555,8 @@ def session_restore(t,path,destination,readback=False):
         t.mapping[SESSION_REVERSE:SESSION_REVERSE+SESSION_SLOT]=row;struct.pack_into('<I',t.mapping,SESSION_READY,N)
         os.utime(path)  # LRU recency
         return dict(id=sid,position=N,pending_token=m['pending_token'],tokens=m['tokens'],verify_ms=verify_ms,apply_ms=apply_ms,
-                    held_bytes=sum(x['bytes'] for x in v.values()),uploaded_bytes=sum(x['bytes'] for x in a.values()),readback=readback)
+                    held_bytes=sum(x['bytes'] for x in v.values()),uploaded_bytes=sum(x['bytes'] for x in a.values()),readback=readback,
+                    foreign_binary=foreign)
 
 def session_delete(path):
     """Remove a parked session under its exclusive lock. False if another holder has it locked."""

@@ -994,9 +994,149 @@ class SessionIntegrationTests(unittest.TestCase):
         e2 = S.Sessions(root, 10**10, A6, meminfo=lambda: 10**15, ram=False)
         e2.prepare(e.session_identity)
         self.assertEqual(list(e2.index), [A6.session_id(h)])
-        e2.prepare(dict(e.session_identity, binary_sha256='0' * 64))  # another engine: its sessions are purged
+        other = dict(e.session_identity, binary_sha256='0' * 64)
+        e2.prepare(other)  # another build: kept until the compat gate, but not restorable meanwhile
+        self.assertEqual(list(e2.index), [A6.session_id(h)])
+        self.assertIsNone(e2.match(h + [9, 1, 2], other))
+        e2.settle(other)  # not accepted: purged
         self.assertEqual(e2.index, {})
         self.assertEqual(sorted(p.name for p in root.iterdir()), [])
+        e3 = S.Sessions(root, 10**10, A6, meminfo=lambda: 10**15, ram=False)
+        e3.prepare(dict(e.session_identity, context=8192))  # any other identity field: purged at prepare
+        self.assertEqual(e3.index, {})
+
+
+class SessionCompatTests(unittest.TestCase):
+    """Cross-build session restore (VERIFY compat line, store acceptance, compat gate) and the disk archive."""
+
+    def setUp(self):
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(shutil.rmtree, self.tmp)
+
+    def rig(self):
+        t = FakeRanks(self.tmp)
+
+        class NC:
+            def __init__(self, tr, draft, overlap, dumps, prefill=None, start=0):
+                self.start = start
+
+            def run(self, prompt, count, eos):
+                tokens = [7, 8, 9]
+                t.live(list(prompt) + tokens[:-1], tokens[-1])
+                return dict(tokens=tokens, stats=dict(guesses=0, hits=0, misses=0))
+        saved = {k: getattr(S.A, k, None) for k in ('reset', 'redirect', 'NativeController')}
+        old_a, old_canary = S.A, S.CANARY_DIR
+        S.A = A6
+        A6.NativeController = NC
+        S.CANARY_DIR = self.tmp / 'canaries'
+
+        def undo():
+            S.A, S.CANARY_DIR = old_a, old_canary
+            del A6.NativeController
+        self.addCleanup(undo)
+        e = S.Engine(self.tmp, self.tmp, type('M', (), {'check': lambda self: None})())
+        e.t = t
+        e.continuation = True
+        e.session_identity = A6.session_identity(t)
+        e.dump_buffers = lambda: {f'rank{r}': {'state.bin': hashlib.sha256(t.state[r]['payload']).hexdigest()} for r in (0, 1)}
+        e.sessions = S.Sessions(self.tmp / 'sessions', 10**10, A6, meminfo=lambda: 10**15, ram=False)
+        e.sessions.prepare(e.session_identity)
+        return e, t
+
+    def rebuild(self, e, t, build):
+        """The same service on another engine build: new identity, a fresh store object over the same directory."""
+        t.plan['binary_sha256'], t.plan['build_receipt_sha256'] = build * 64, build.upper() * 64
+        e.session_identity = A6.session_identity(t)
+        e.sessions = S.Sessions(self.tmp / 'sessions', 10**10, A6, meminfo=lambda: 10**15, ram=False)
+        e.sessions.prepare(e.session_identity)
+        e.convo = None
+
+    def test_adapter_restores_a_gated_build_with_the_compat_line_only(self):
+        e, t = self.rig()
+        root = self.tmp / 'sessions'
+        h = list(range(500, 800))
+        t.live(h, 5)
+        m = A6.session_save(t, root, h, 5)
+        t.plan['binary_sha256'] = 'c' * 64
+        with self.assertRaises(A6.SessionRefused):
+            A6.session_restore(t, root / m['id'], t.out / 'req-a')
+        r = A6.session_restore(t, root / m['id'], t.out / 'req-b', accepted=('b' * 64,))
+        self.assertEqual((r['position'], r['foreign_binary']), (300, 'b' * 64))
+        lines = [sorted((t.out / f'rank{x}').glob('checkpoint-*.txt'))[-1].read_text().split('\n') for x in (0, 1)]
+        self.assertTrue(all(l[2] == 'compat ' + 'b' * 64 for l in lines))
+        t.plan['context'] = 8192  # any other identity field still refuses
+        with self.assertRaises(A6.SessionRefused):
+            A6.session_restore(t, root / m['id'], t.out / 'req-c', accepted=('b' * 64,))
+
+    def test_compat_gate_accepts_an_exact_earlier_build_and_its_sessions_restore(self):
+        e, t = self.rig()
+        st = list(range(100, 187))
+        with e.lock:
+            first = S.session_compat_gate(e, st)  # build b: parks its canary, nothing to compare
+        self.assertEqual((first['results'], first['accepted']), ([], []))
+        conv_a, conv_b = list(range(1000, 1300)), list(range(2000, 2010))
+        e.generate(conv_a, 3, 'client', continue_ok=True)
+        e.generate(conv_b, 3, 'client', continue_ok=True)  # parks conv_a under build b
+        self.rebuild(e, t, 'c')
+        h = conv_a + [7, 8]
+        self.assertIsNone(e.sessions.match(h + [9, 1, 2], e.session_identity))
+        with e.lock:
+            gate = S.session_compat_gate(e, st)
+        self.assertTrue(gate['passed'])
+        self.assertEqual(gate['accepted'], ['b' * 64])
+        self.assertEqual(gate['results'][0]['continued_from'], len(st) + 2)
+        _, s3 = e.generate(h + [9, 1, 2], 3, 'client', continue_ok=True)
+        self.assertEqual(s3['continued_from'], 302)
+        self.assertEqual(sorted((S.CANARY_DIR).iterdir())[0].name in ('b' * 16, 'c' * 16), True)
+
+    def test_compat_gate_rejects_a_build_whose_continuation_differs_and_purges_its_sessions(self):
+        e, t = self.rig()
+        st = list(range(100, 187))
+        with e.lock:
+            S.session_compat_gate(e, st)
+        e.generate(list(range(1000, 1300)), 3, 'client', continue_ok=True)
+        e.generate(list(range(2000, 2010)), 3, 'client', continue_ok=True)
+        self.rebuild(e, t, 'c')
+        calls = []
+        e.dump_buffers = lambda: (calls.append(1), {'rank0': {'state.bin': str(len(calls))}, 'rank1': {}})[1]  # continued != fresh
+        with e.lock:
+            gate = S.session_compat_gate(e, st)
+        self.assertFalse(gate['passed'])
+        self.assertEqual(gate['accepted'], [])
+        self.assertEqual(e.sessions.index, {})  # build b's parked session purged
+
+    def test_archive_copies_parked_sessions_and_recalls_them_after_eviction(self):
+        e, t = self.rig()
+        busy = [False]
+        e.sessions.archive = S.SessionArchive(self.tmp / 'archive', 10**10, A6, busy=lambda: busy[0], floor=0)
+        e.sessions.archive.prepare()
+        conv_a = list(range(1000, 1300))
+        e.generate(conv_a, 3, 'client', continue_ok=True)
+        busy[0] = True  # a request is running: the copy waits
+        e.generate(list(range(2000, 2010)), 3, 'client', continue_ok=True)  # parks conv_a, queues its copy
+        h = conv_a + [7, 8]
+        sid = A6.session_id(h)
+        time.sleep(1.0)
+        self.assertEqual(e.sessions.archive.stats['archived'], 0)
+        busy[0] = False
+        for _ in range(100):
+            if e.sessions.archive.stats['archived']:
+                break
+            time.sleep(0.05)
+        name = f"{sid}.{'b' * 16}"
+        self.assertTrue((self.tmp / 'archive' / name / 'COMPLETE').exists())
+        # RAM copy gone (eviction, or a reboot): the archive brings it back for the extending prompt
+        A6.session_delete(self.tmp / 'sessions' / sid)
+        e.sessions.index.pop(sid)
+        _, s3 = e.generate(h + [9, 1, 2], 3, 'client', continue_ok=True)
+        self.assertEqual(s3['continued_from'], 302)
+        self.assertEqual(e.sessions.archive.stats['recalled'], 1)
+        # a new process finds the archive; a partial copy (no COMPLETE) is removed
+        (self.tmp / 'archive' / 'x.partial').mkdir()
+        a2 = S.SessionArchive(self.tmp / 'archive', 10**10, A6, floor=0)
+        a2.prepare()
+        self.assertEqual(list(a2.index), [name])
+        self.assertFalse((self.tmp / 'archive' / 'x.partial').exists())
 
 
 # ---------------------------------------------------------------- keeper model (SC117_KEEPER=1), CPU only

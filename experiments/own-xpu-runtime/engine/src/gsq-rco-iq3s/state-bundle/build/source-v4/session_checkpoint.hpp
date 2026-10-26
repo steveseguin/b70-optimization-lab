@@ -207,15 +207,28 @@ static void supported(const Engine& e) {
   "checkpoint ops: unsupported engine path (pipeline, TP, streaming/legacy, V3, async prepare or split head)");
 }
 // ------------------------------------------------------------------ request file, header, bundle reader
-struct Target {fs::path dir;std::string tag;};
+struct Target {fs::path dir;std::string tag;std::set<std::string> compat;};
 static Target read_request(const fs::path& metadata) {
  std::ifstream in(metadata);refuse_unless(bool(in),"checkpoint request file missing: "+metadata.string());
  std::string dir,tag,extra;refuse_unless(bool(std::getline(in,dir))&&!dir.empty(),"checkpoint request: directory line");
  if(!std::getline(in,tag))tag.clear();
- while(std::getline(in,extra))refuse_unless(extra.empty(),"checkpoint request: at most two lines");
+ // Optional third line, VERIFY only: "compat <sha256>[,<sha256>...]", engine binaries whose checkpoints the coordinator
+ // has gated as state-identical to this binary (service canary: a restored foreign checkpoint, continued, equals the
+ // fresh read in tokens, guesses and full state). Only identity.binary_sha256 may then differ; every other identity
+ // field and the live coverage must still match exactly.
+ std::set<std::string> compat;
+ if(std::getline(in,extra)&&!extra.empty()){
+  refuse_unless(extra.rfind("compat ",0)==0,"checkpoint request: third line must be 'compat <sha256,...>'");
+  std::string list=extra.substr(7);size_t start=0;
+  for(;;){const size_t comma=list.find(',',start);const std::string item=list.substr(start,comma==std::string::npos?std::string::npos:comma-start);
+   refuse_unless(item.size()==64&&item.find_first_not_of("0123456789abcdef")==std::string::npos,"checkpoint request: compat sha256");
+   compat.insert(item);if(comma==std::string::npos)break;start=comma+1;}
+  refuse_unless(compat.size()<=16,"checkpoint request: at most 16 compat binaries");
+ }
+ while(std::getline(in,extra))refuse_unless(extra.empty(),"checkpoint request: at most three lines");
  const fs::path p(dir);refuse_unless(p.is_absolute()&&p==p.lexically_normal()&&!p.filename().empty()&&p.has_parent_path(),"checkpoint request: normalized absolute directory "+dir);
  refuse_unless(tag.size()<=256&&tag.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_.:-")==std::string::npos,"checkpoint request: tag characters");
- return {p,tag};
+ return {p,tag,std::move(compat)};
 }
 using Header=std::map<std::string,std::string>;
 static Header parse_header(const std::vector<uint8_t>& bytes) {
@@ -286,7 +299,7 @@ static Reply stage(Engine& e,mtp36::DraftRuntime* draft,const Request& r,const f
  const auto started=std::chrono::steady_clock::now();
  try {
   supported(e);refuse_unless(r.speculative==0&&(r.fixture&~1)==0,"checkpoint stage flags");
-  const auto target=read_request(metadata);
+  const auto target=read_request(metadata);refuse_unless(target.compat.empty(),"checkpoint stage: compat line is VERIFY only");
   e.drain();require(!e.poisoned&&!e.integer(0,"error"),"checkpoint stage over a poisoned engine or sticky device error (never saved)");
   const int64_t N=r.position;refuse_unless(N>=1&&N<e.p.g.context,"checkpoint stage position outside [1, context)");
   const int64_t device_position=int64_t(uint32_t(e.integer(0,"position")));
@@ -361,7 +374,10 @@ static Reply verify(Engine& e,mtp36::DraftRuntime* draft,const Request& r,const 
   refuse_unless(integer_field(header,"rank")==e.a.rank,"checkpoint verify: saved by rank "+field(header,"rank"));
   refuse_unless(field(header,"prefix_tag")==target.tag,"checkpoint verify: prefix tag differs (checkpoint '"+field(header,"prefix_tag")+"', request '"+target.tag+"')");
   const auto live=identity(e,draft);std::set<std::string> keys;
-  for(const auto& [k,v]:live){keys.insert(k);const auto& saved=field(header,k);refuse_unless(saved==v,"checkpoint verify: "+k+" differs (checkpoint "+saved+", engine "+v+")");}
+  std::string foreign;
+  for(const auto& [k,v]:live){keys.insert(k);const auto& saved=field(header,k);
+   if(k=="identity.binary_sha256"&&saved!=v&&target.compat.count(saved)){foreign=saved;continue;}  // gated compatible binary
+   refuse_unless(saved==v,"checkpoint verify: "+k+" differs (checkpoint "+saved+", engine "+v+")");}
   for(const auto& [k,v]:header)if(k.starts_with("identity."))refuse_unless(keys.count(k),"checkpoint verify: unknown identity field "+k);
   const int64_t N=integer_field(header,"position"),pending=integer_field(header,"pending"),D=integer_field(header,"draft_position");
   refuse_unless(N==r.position,"checkpoint verify: checkpoint position "+std::to_string(N)+" != requested "+std::to_string(r.position));
@@ -384,7 +400,7 @@ static Reply verify(Engine& e,mtp36::DraftRuntime* draft,const Request& r,const 
   save(e.a.output/("checkpoint-verify-"+std::to_string(r.sequence)+".json"),"{\"schema\":\"ownrt.session-checkpoint.verify.v1\",\"directory\":"+ownrt::quote(target.dir.string())+
    ",\"position\":"+std::to_string(N)+",\"pending\":"+std::to_string(pending)+",\"draft_position\":"+std::to_string(D)+",\"held_bytes\":"+std::to_string(bytes)+
    ",\"held_blobs\":"+std::to_string(held.blobs.size())+",\"bundle_bytes\":"+std::to_string(bundle.bytes)+",\"seal_sha256\":"+ownrt::quote(gsq_bundle::digest(bundle.seal))+
-   ",\"identity_fields\":"+std::to_string(live.size())+",\"verify_seconds\":"+std::to_string(held.verify_seconds)+"}");
+   ",\"identity_fields\":"+std::to_string(live.size())+",\"foreign_binary_sha256\":"+(foreign.empty()?std::string("null"):ownrt::quote(foreign))+",\"verify_seconds\":"+std::to_string(held.verify_seconds)+"}");
   Reply reply{};reply.sequence=r.sequence;reply.rank=e.a.rank;reply.token=int32_t(pending);reply.bytes=clamp_bytes(bytes);reply.reserved[0]=int32_t(held.blobs.size());reply.busy_ms=held.verify_seconds*1000;
   return reply;
  }catch(const Refusal& refusal){held.clear();return refusal_reply(e,r,refusal.what());}
