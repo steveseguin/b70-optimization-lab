@@ -6,6 +6,7 @@
 #include "stage2/packet194-expert-diet-engine/p33_candidates.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/p33_dense_v2.hpp"
+#include "stage2/packet194-expert-diet-engine/p33_dense_raw.hpp"
 #endif
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
 #ifndef OWN_RT_HOST_ONLY
@@ -133,8 +134,53 @@ template<iq3::Type T,unsigned K,unsigned R,unsigned U> struct DenseV2 final:ownr
  }
 };
 inline bool v2_aligned(ownrt::Device& d,ownrt::Allocation a,uintptr_t n){return reinterpret_cast<uintptr_t>(d.arena.row(a).pointer)%n==0;}
+// OWNRT_DENSE_RAW=1 (lab 2026-10-26, default off): raw-size Q6_K / Q8_0 rows (dense_raw.hpp), p33_dense_raw.hpp kernels.
+template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> struct DenseRaw final:ownrt::SyclOperation {
+ uint32_t rows=0,rb=0,tokens=1;
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  const uint32_t groups=(rows+R-1)/R;const size_t global=(size_t(groups)*tokens*32+127)/128*128;
+  const raw::RowsKernel<T,K,R,U,G> kernel{static_cast<const uint8_t*>(p[0]),static_cast<const float*>(p[1]),static_cast<float*>(p[2]),rows,rb,groups,tokens};
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
+ }
+};
+template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
+ DenseRaw<T,K,R,U,G> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
+}
+template<iq3::Type T,unsigned K> integrated::Launch raw_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& ms,unsigned v){
+ const auto& m=ms.at(0);
+ if(ms.size()!=1||v!=6||m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows)||!m.rows||m.rows>UINT32_MAX||!m.tokens||m.columns!=K)
+  throw std::invalid_argument("p33 raw: dense F32 split-1 rows only");
+ if constexpr(!((T==iq3::Type::Q6_K&&K==2560)||(T==iq3::Type::Q8_0&&K==6144)))throw std::invalid_argument("p33 raw: uncompiled shape");
+ else {
+  const size_t rb=denseraw::row_bytes(T,K);
+  if(d.arena.row(m.w).bytes<size_t(m.rows)*rb||rb%4||!v2_aligned(d,m.w,4)||!v2_aligned(d,m.x,16)||!v2_aligned(d,m.y,4))throw std::invalid_argument("p33 raw: weight extent/alignment");
+  if(m.tokens>1&&reuse2::enabled()) {
+   // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i, config_count = the raw row kernel).
+   const unsigned c=reuse2::config("P33",reuse2::config_count,reuse2::default_p33(uint32_t(m.rows),K));
+   if(c<reuse2::config_count){std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};auto e=reuse2::issue<raw::Reuse2Raw<T>,REUSE2_CONFIGS>(d,c,ids,uint32_t(m.rows),K,m.tokens,uint32_t(rb));return {e,e,1};}
+  }
+  // Defaults measured on card 27 (research/dense-raw/RESULT.md): Q6_K 1 row x 1 block pair, Q8_0 1 row x 2 tiles, 128 GRF.
+  const unsigned rug=raw::config(T,T==iq3::Type::Q6_K?111u:121u);ownrt::Event e{};
+  switch(rug){
+   case 111:e=raw_rows<T,K,1,1,128>(d,m,uint32_t(rb));break;
+   case 121:e=raw_rows<T,K,1,2,128>(d,m,uint32_t(rb));break;
+   case 141:e=raw_rows<T,K,1,4,128>(d,m,uint32_t(rb));break;
+   case 211:e=raw_rows<T,K,2,1,128>(d,m,uint32_t(rb));break;
+   case 221:e=raw_rows<T,K,2,2,128>(d,m,uint32_t(rb));break;
+   case 411:e=raw_rows<T,K,4,1,128>(d,m,uint32_t(rb));break;
+   case 412:e=raw_rows<T,K,4,1,256>(d,m,uint32_t(rb));break;
+   case 811:e=raw_rows<T,K,8,1,128>(d,m,uint32_t(rb));break;
+   default:throw std::invalid_argument("OWNRT_DENSE_RAW_Q6/Q8: 111, 121, 141, 211, 221, 411, 412 or 811");
+  }
+  return {e,e,1};
+ }
+}
 #endif
 template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d,const std::vector<integrated::Matrix>& m,unsigned v){
+#ifndef OWN_RT_HOST_ONLY
+ if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m.at(0).raw)return raw_issue<T,K>(d,m,v);
+#endif
+ if(m.at(0).raw)throw std::invalid_argument("p33 raw rows: device Q6_K/Q8_0 only");
 #ifndef OWN_RT_HOST_ONLY
  if constexpr(T==iq3::Type::Q8_0&&K==6144) if(v2::enabled()&&m.size()==1&&v==6&&m[0].activation==iq3::Type::F32&&m[0].output_type==iq3::Type::F32&&m[0].tokens==1&&m[0].count==1&&
    m[0].experts==1&&!m[0].routes&&!m[0].status&&m[0].rows<=UINT32_MAX&&v2_aligned(d,m[0].w,16)&&v2_aligned(d,m[0].x,16)) {

@@ -5,6 +5,7 @@
 #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
 #include "stage2/packet194-expert-diet-engine/p28/dense.hpp"
 #include "stage2/packet194-expert-diet-engine/p28/expert.hpp"
+#include "stage2/packet194-expert-diet-engine/dense_raw.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #endif
@@ -30,7 +31,7 @@ void validate(ownrt::Device& d,const std::vector<Matrix>& ms,const std::string& 
   const bool f32=!routed&&a.activation==Type::F32&&a.output_type==Type::F32;
   if(m.type!=a.type||m.rows!=a.rows||m.columns!=a.columns||m.count!=a.count||m.tokens!=a.tokens||m.experts!=a.experts||m.routes!=a.routes||m.x!=a.x||(m.span&&m.span!=m.rows)||m.activation!=a.activation||m.output_type!=a.output_type||m.fp32||!(f32||(m.activation==Type::BF16&&m.output_type==Type::BF16)))throw std::invalid_argument("p28 matrix identity");
   const size_t ab=f32?4:2;
-  extent(m.w,size_t(m.experts)*m.rows*integrated::arithmetic::row_bytes(m.type,m.columns,v),false);
+  extent(m.w,size_t(m.experts)*m.rows*(m.raw?denseraw::row_bytes(m.type,m.columns):integrated::arithmetic::row_bytes(m.type,m.columns,v)),false);
   extent(m.x,size_t(shared?1:m.count)*m.tokens*m.columns*ab,false);extent(m.y,size_t(m.count)*m.tokens*m.rows*ab,true);
   if(routed){extent(m.routes,m.count*sizeof(iq3::Route),false);extent(m.status,m.count*4,true);}
  }

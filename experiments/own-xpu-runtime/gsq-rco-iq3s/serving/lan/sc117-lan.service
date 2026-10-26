@@ -19,7 +19,7 @@ Environment=SC117_CONTEXT=65536
 # to 30% decode (49.5 -> 40 tok/s under USB write load, 2026-10-25). About 6 MB per run; per-request dirs are pruned.
 Environment=SC117_EVIDENCE_PARENT=/dev/shm/sc117-lan-evidence
 Environment=SC117_ADAPTER=adapter6.py
-Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/5e44953236cc.json
+Environment=SC117_ENGINE_RECEIPT=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/receipts/0efa50e4c5ee.json
 Environment=SC117_PREFILL_ROWS=256
 Environment=SC117_DISPATCH=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json
 # Draft-only head prefix (first 91392 token ids; target head unchanged). Suite 2026-10-25: full 38.17 tok/s (hits 4568),
@@ -67,6 +67,9 @@ Environment=OWNRT_PREFILL_REUSE2=1
 Environment=OWNRT_EXPERTS_V2=1
 Environment=OWNRT_DENSE_DECODE_V2=1
 Environment=OWNRT_PREFILL_EXPERTS=1
+# Raw-size dense Q6_K/Q8_0 weights (2026-10-26, research/dense-raw): head, qkv, gdn.z, qgate and attention decode
+# raw GGUF blocks to the identical values; every element is checked against the expanded rows at load.
+Environment=OWNRT_DENSE_RAW=1
 # Engine sessions (2026-10-26): a conversation of >= 256 tokens is parked (rank ops 17-19, both ranks + the draft's
 # reverse row, sealed manifest) before a RESET would evict it, and restored when a later prompt extends it.
 Environment=SC117_SESSIONS=1

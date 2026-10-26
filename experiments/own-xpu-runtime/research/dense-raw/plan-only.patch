@@ -1,0 +1,11 @@
+--- a/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp	2026-10-26 03:33:34.941710355 -0400
++++ b/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp	2026-10-26 10:47:32.454595794 -0400
+@@ -338,6 +338,8 @@
+   weights=std::make_unique<Weights>(a);auto full_plan=plan(*weights,one_card);
+   auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
+   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
++  // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
++  if(const char* only=std::getenv("OWNRT_PLAN_ONLY");only&&only[0]=='1'){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
+   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
+    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
+    // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each

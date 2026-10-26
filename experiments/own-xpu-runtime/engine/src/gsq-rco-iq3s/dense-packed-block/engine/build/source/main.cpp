@@ -27,6 +27,7 @@
 #include "stage2/packet194-expert-diet-engine/p25_bridge.hpp"
 #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
 #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
+#include "stage2/packet194-expert-diet-engine/dense_raw.hpp"
 #include <unordered_map>
 #include <unordered_set>
 #include <cstring>
@@ -440,6 +441,8 @@ static Options parse(int argc, char **argv) {
     // GSQ: rank 0 (with the draft) holds layers 0..split-1, rank 1 the rest; stage boundaries only copy activations.
     require(a.mini||(a.target_split>=20&&a.target_split<=24&&a.draft_rank==0),"GSQ split 20..24 with the rank-0 draft required");
   }
+  // OWNRT_DENSE_RAW=1 (lab 2026-10-26): raw-size p33 dense rows; the raw kernels take F32 activations only.
+  if(denseraw::enabled())require(a.gsq_packed&&!a.mini&&a.f32_activations&&a.memory=="resident","OWNRT_DENSE_RAW=1 requires real GSQ resident mode with --activations f32");
   return a;
 }
 struct Weights {
@@ -621,6 +624,14 @@ static bool p188_k3_storage(const Options& a){
 #include "gsq-rco-iq3s/qkv-q6-p33/engine/build/source/policy.hpp"
 #include "gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/policy.hpp"
 #include "gsq-rco-iq3s/dense-q6-p33/build/source/policy.hpp"
+// OWNRT_DENSE_RAW=1 (lab 2026-10-26, default off): the p33 dense weights (GSQ head, QKV/dense Q6_K sites, attention Q8_0
+// sites) are stored as raw-size rows (dense_raw.hpp) and read by the p33 raw kernels; every value and output unchanged.
+static bool dense_raw_weight(const Weights& w,const Options& a,const std::string& name){
+  if(!denseraw::enabled()||!a.gsq_packed||a.mini)return false;
+  if(!(name=="output.weight"||combined_weight(w,a,name)||dense_q6_weight(w,a,name)))return false;
+  const auto& t=w.directory.at(name);const auto type=flash::grid_type(t.grid);
+  return t.shape.size()==2&&((type==iq3::Type::Q6_K&&t.shape[1]==2560)||(type==iq3::Type::Q8_0&&t.shape[1]==6144));
+}
 #include "gsq-rco-iq3s/dense-packed-block/engine/build/source/policy.hpp"
 static flash::Plan gsq_build_plan(Weights &w, const Options &a) {
   auto g =
@@ -1230,6 +1241,15 @@ public:
   bool dense_metadata()const {auto i=sealed_selection.choices.find("dense_scales");return i!=sealed_selection.choices.end()&&i->second=="metadata";}
   p183::Census dense_census;size_t dense_census_tensors=0;
   void write_dense_census(){save(a.output/"dense-scales-census.json","{\"schema\":\"packet183.dense-scales-census.v1\",\"passed\":"+std::string(dense_census.nonfinite||dense_census.mismatch?"false":"true")+",\"rank\":"+std::to_string(a.rank)+",\"tensors\":"+std::to_string(dense_census_tensors)+",\"rows\":"+std::to_string(dense_census.rows)+",\"blocks\":"+std::to_string(dense_census.blocks)+",\"groups\":"+std::to_string(dense_census.groups)+",\"nonfinite_d\":"+std::to_string(dense_census.nonfinite)+",\"word_mismatches\":"+std::to_string(dense_census.mismatch)+"}");}
+  // OWNRT_DENSE_RAW: (card, weight) pairs stored as raw-size rows, and the load-time per-element proof.
+  std::set<std::pair<int,std::string>> raw_weights;
+  struct RawTensor {std::string name;size_t rows,columns,expanded_bytes,raw_bytes;};
+  struct RawCensus {std::vector<RawTensor> tensors;uint64_t checked=0,mismatches=0;} raw_census;
+  void write_raw_census(){std::ostringstream o;size_t before=0,after=0;o<<"{\"schema\":\"ownrt.dense-raw.v1\",\"rank\":"<<a.rank<<",\"verify\":"<<(denseraw::verify()?"true":"false")
+    <<",\"checked_elements\":"<<raw_census.checked<<",\"mismatches\":"<<raw_census.mismatches<<",\"tensors\":[";
+    for(size_t i=0;i<raw_census.tensors.size();++i){const auto& r=raw_census.tensors[i];before+=r.expanded_bytes;after+=r.raw_bytes;
+      o<<(i?",":"")<<"{\"name\":"<<ownrt::quote(r.name)<<",\"rows\":"<<r.rows<<",\"columns\":"<<r.columns<<",\"expanded_bytes\":"<<r.expanded_bytes<<",\"raw_bytes\":"<<r.raw_bytes<<"}";}
+    o<<"],\"expanded_bytes\":"<<before<<",\"raw_bytes\":"<<after<<",\"saved_bytes\":"<<before-after<<"}";save(a.output/"dense-raw.json",o.str());}
   bool packed_weight(const std::string& name)const {
     if(a.gsq_packed)return false;
     if(name=="output.weight"&&head_choice()=="head-transpose")return true;
@@ -1282,6 +1302,9 @@ public:
       require(!head_split&&!packed&&!planes&&!halfcache&&!hccache&&arithmetic::is_expanded(v)&&t.shape.size()==2,"TP row slice: expanded dense rows only");
       first_row=slice.first;load_rows=slice.second;expanded_bytes=load_rows*arithmetic::row_bytes(type,t.shape[1],v);
     }
+    const bool raw=dense_raw_weight(w,a,name);
+    if(raw){require(!head_split&&!packed&&!planes&&!halfcache&&!hccache&&arithmetic::is_expanded(v)&&head_choice()=="production","OWNRT_DENSE_RAW: expanded dense rows only");
+      expanded_bytes=load_rows*denseraw::row_bytes(type,t.shape[1]);raw_weights.insert({c,name});}
     auto id = allocate(c, "weight:" + name, expanded_bytes, Category::weights,
                        Lifetime::process);
     weights[c][name] = id;
@@ -1315,6 +1338,8 @@ public:
       return;
     }
     if(!packed&&arithmetic::is_expanded(v)) {
+      const bool raw_layout=raw;
+      if(raw_layout){raw_census.tensors.push_back({name,load_rows,size_t(t.shape[1]),load_rows*arithmetic::row_bytes(type,t.shape[1],v),load_rows*denseraw::row_bytes(type,t.shape[1])});}
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
@@ -1323,9 +1348,18 @@ public:
         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
         if(type==iq3::Type::Q6_K&&!hccache){auto census=p183::census_q6(expanded.data(),nr,t.shape[1]);p183::census_add(dense_census,census); // packet183-s1
           if(census.nonfinite||census.mismatch){write_dense_census();require(false,"p183 dense-scales census refused: "+name);}}
+        if(raw_layout) {
+          // Same GGUF rows, rearranged (dense_raw.hpp); with OWNRT_DENSE_RAW_VERIFY (default) every decoded value is
+          // checked bit for bit against the expanded row the default build uploads.
+          auto rows=denseraw::repack(type,raw.data(),raw.size(),t.shape[1]);
+          if(denseraw::verify()){const auto bad=denseraw::check_rows(type,rows.data(),expanded.data(),nr,t.shape[1],er);raw_census.checked+=uint64_t(nr)*t.shape[1];raw_census.mismatches+=bad;
+            if(bad){write_raw_census();require(false,"OWNRT_DENSE_RAW decode differs from the expanded rows: "+name);}}
+          upload(c,id,row*denseraw::row_bytes(type,t.shape[1]),rows.data(),rows.size());
+        } else
         upload(c,id,row*er,expanded.data(),expanded.size());
       }
       if(type==iq3::Type::Q6_K&&!hccache){++dense_census_tensors;write_dense_census();} // packet183-s1
+      if(raw_layout)write_raw_census();
       return;
     }
     for (size_t off = 0; off < t.bytes; off += 4 * 1024 * 1024) {
@@ -1619,7 +1653,7 @@ public:
     int c=l.card;bool routed=l.op!="gemv";
     const auto& t=w.directory.at(l.weights[projection]);
     if(routed && a.memory=="layer-streaming")load_selected(c,t.name);else load(c,t.name);
-    Matrix m{};m.type=flash::grid_type(t.grid);m.w=weights[c].at(t.name);
+    Matrix m{};m.type=flash::grid_type(t.grid);m.w=weights[c].at(t.name);m.raw=raw_weights.count({c,t.name})>0;
     if(a.f32_activations){m.activation=m.output_type=iq3::Type::F32;}
     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
@@ -2063,12 +2097,15 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
       auto v=l.op=="gemv"?dispatch(l,t):2;
       stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
       if(a.gsq_packed&&gsq_integration::control_names.contains(n))stored[n]=count(t.shape)*4;
+      const bool raw_stored=dense_raw_weight(w,a,n)&&l.op=="gemv"&&arithmetic::is_expanded(v);
+      if(raw_stored)stored[n]=size_t(t.shape[0])*denseraw::row_bytes(flash::grid_type(t.grid),t.shape[1]);
       if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored[n]=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
       if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)
         << ",\"card\":" << (l.op == "lookup" ? -1 : l.card)
         << ",\"bytes\":" << t.bytes << ",\"stored_bytes\":" << stored[n]
         << ",\"component\":" << ownrt::quote(t.component);
+      if(raw_stored)o << ",\"layout\":\"raw\"";
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up")
         o << ",\"variant\":" << ownrt::quote(arithmetic::name(dispatch(l,t)));
       o << "}";

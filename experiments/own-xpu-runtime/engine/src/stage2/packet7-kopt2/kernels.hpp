@@ -9,6 +9,8 @@ struct Matrix : kopt::Matrix {
   // [tokens][rows]; each row keeps the single-token arithmetic. Routed matrices express tokens through count.
   uint32_t tokens=1;
   ownrt::Allocation routes=0,status=0,workspace=0;
+  // OWNRT_DENSE_RAW (lab 2026-10-26): w holds raw-size Q6_K/Q8_0 rows (dense_raw.hpp) instead of variant-6 expanded rows.
+  bool raw=false;
 };
 // Both passes are owned events. Timing MUST include first through last, with gap.
 struct Launch {ownrt::Event first,last;unsigned passes;};
