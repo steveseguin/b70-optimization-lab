@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**October 26, 02:20 EDT — SC117 LAN service now serves a 32K context, exact; tool calls for Pi live.**
+- `sc117-lan` (cards 23/47) runs engine `1ccb7712cc7a` with `SC117_CONTEXT=32768`.
+  - Suite: all 5,965 tokens and MTP hits identical to the 4K baseline, 48.21 tok/s.
+  - Gates: F32 oracle zero differences at 4096; 32K self-test equal to this binary's 4K pin; 32K prefill and
+    continuation gates passed; 32K state oracle pinned.
+- End to end:
+  - a 10,547-token prompt reads in 105 s (about 100 tok/s) and recalls a fact planted near its start;
+  - a continued turn takes 1.4 s and equals a fresh 107 s re-read token for token;
+  - decode runs at 42.9 tok/s at 10.5K context.
+- The chat API accepts OpenAI tool calls (the model's XML format), keeps past thinking, takes `reasoning_effort` and
+  bodies up to 64 MiB (for Pi + ctxkeeper).
+- The native context is 262,144, but F32 KV on two cards caps out near 42K (rank 1). Beyond 32K needs the RoPE table
+  plus memory on cards 27/43.
+- Lab: [card-27 rank-1 results](experiments/own-xpu-runtime/research/context-32k/card27-rank1-lab.json).
+  Plan: [production plan](experiments/own-xpu-runtime/engine/planning/production-long-context-sessions.md).
+- Next:
+  1. prompt-reading speed (the production bottleneck);
+  2. exact faster QSA select at long context;
+  3. engine sessions (save, restore, append);
+  4. ctxkeeper inside the service.
+
 **October 26, 00:20 EDT — SC117 LAN service is back on two cards, 48.32 tok/s, exact.**
 - `sc117-lan` serves on 23/47 with engine `092da687b5d7`, the fastest exact setup. The four-card best is 44.97 tok/s,
   slower on all 12 prompts.
