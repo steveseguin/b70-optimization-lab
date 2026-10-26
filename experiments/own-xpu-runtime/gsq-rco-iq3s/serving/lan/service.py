@@ -627,7 +627,7 @@ def make_handler(state, engine, chat, key):
                 return self.error(404, 'only /v1/chat/completions is served')
             try:
                 n = int(self.headers.get('Content-Length', '0'))
-                require(0 < n <= 4 * 1024**2, 'body size')
+                require(0 < n <= 64 * 1024**2, 'body size')  # agents resend whole histories
                 body = json.loads(self.rfile.read(n))
                 req = CHAT.parse(body, chat)
             except CHAT.RequestError as e:

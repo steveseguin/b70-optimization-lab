@@ -53,9 +53,10 @@ class Chat:
         if self.render([{'role': 'user', 'content': probe}], False) != single(probe):
             raise RuntimeError('multi-message renderer disagrees with pinned renderer')
 
-    def render(self, messages, thinking, tools=None):
+    def render(self, messages, thinking, tools=None, effort=None):
+        extra = {} if effort is None else {'reasoning_effort': effort}
         return self.template.render(messages=messages, add_generation_prompt=True,
-                                    enable_thinking=bool(thinking), tools=tools or None)
+                                    enable_thinking=bool(thinking), tools=tools or None, **extra)
 
     def encode(self, text):
         return self.tok.encode(text, add_special_tokens=False).ids
@@ -129,6 +130,10 @@ def parse(body, chat):
         if not isinstance(m, dict) or m.get('role') not in ROLES:
             raise RequestError('each message needs role system, user or assistant')
         item = {'role': m['role'], 'content': _text(m.get('content'))}
+        if m['role'] == 'assistant' and m.get('reasoning_content') is not None:
+            # Past thinking is part of the template's rendering of an assistant turn; dropping it would make the
+            # history differ from what the engine generated (and miss the continuation of a thinking conversation).
+            item['reasoning_content'] = _text(m['reasoning_content'])
         if m.get('tool_calls'):
             if m['role'] != 'assistant':
                 raise RequestError('only assistant messages can carry tool_calls')
@@ -146,6 +151,12 @@ def parse(body, chat):
     thinking = kwargs.get('enable_thinking', False)
     if not isinstance(thinking, bool):
         raise RequestError('enable_thinking must be boolean')
+    # reasoning_effort (top level, as OpenAI clients send it, or in chat_template_kwargs) goes to the template, which
+    # adds effort instructions to the system block when thinking is on; medium adds none, so a thinking-on and a
+    # thinking-off request then share their opening tokens. Unset keeps the template default.
+    effort = body.get('reasoning_effort', kwargs.get('reasoning_effort'))
+    if effort is not None and effort not in ('low', 'medium', 'high', 'xhigh'):
+        raise RequestError('reasoning_effort must be low, medium, high or xhigh')
     stop = body.get('stop')
     if stop is None:
         stop = []
@@ -153,7 +164,7 @@ def parse(body, chat):
         stop = [stop]
     if not isinstance(stop, list) or len(stop) > 4 or not all(isinstance(s, str) and s for s in stop):
         raise RequestError('stop must be a string or up to 4 non-empty strings')
-    rendered = chat.render(clean, thinking, tools)
+    rendered = chat.render(clean, thinking, tools, effort)
     ids = chat.encode(rendered)
     room = CONTEXT - len(ids)
     if room < 1:

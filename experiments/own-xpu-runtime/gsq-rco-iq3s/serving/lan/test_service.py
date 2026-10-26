@@ -125,6 +125,24 @@ class ToolTests(unittest.TestCase):
         self.assertEqual(full['choices'][0]['message']['content'], out)
         self.assertNotIn('tool_calls', full['choices'][0]['message'])
 
+    def test_thinking_history_and_effort(self):
+        hist = [{'role': 'user', 'content': 'Q'}, {'role': 'assistant', 'content': 'A', 'reasoning_content': 'think it over'},
+                {'role': 'user', 'content': 'Q2'}]
+        on = C.parse({'messages': hist, 'tools': TOOLS, 'chat_template_kwargs': {'enable_thinking': True}}, CHAT)
+        text = CHAT.tok.decode(on['prompt_ids'], skip_special_tokens=False)
+        self.assertIn('<|im_start|>assistant\n<think>\nthink it over\n</think>\n\nA<|im_end|>', text)
+        self.assertIn('Reasoning effort is set to xhigh', text)  # template default with thinking on
+        med = C.parse({'messages': hist, 'tools': TOOLS, 'reasoning_effort': 'medium',
+                       'chat_template_kwargs': {'enable_thinking': True}}, CHAT)
+        off = C.parse({'messages': hist, 'tools': TOOLS, 'reasoning_effort': 'medium'}, CHAT)
+        tm = CHAT.tok.decode(med['prompt_ids'], skip_special_tokens=False)
+        to = CHAT.tok.decode(off['prompt_ids'], skip_special_tokens=False)
+        self.assertNotIn('Reasoning effort', tm)
+        cut = '<|im_start|>assistant\n<think>\n'
+        self.assertEqual(tm[:tm.rindex(cut)], to[:to.rindex(cut)])  # same opening and history; only the generation prompt differs
+        with self.assertRaises(C.RequestError):
+            C.parse({'messages': hist, 'reasoning_effort': 'max'}, CHAT)
+
     def test_streamer_holds_call_markup(self):
         req = C.parse({'messages': [{'role': 'user', 'content': 'Find it'}], 'tools': TOOLS, 'stream': True}, CHAT)
         out = 'Checking.<tool_call>\n<function=recall>\n<parameter=query>\nsky\n</parameter>\n</function>\n</tool_call>'
