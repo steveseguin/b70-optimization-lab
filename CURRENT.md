@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 26, 08:15 EDT — SC117 service on engine `1d72818cfe8c`: exact faster QSA select; suite 49.38 tok/s.**
+- `OWNRT_SELECT_FAST=1`: rank-1 select 76.4 → 19.2 µs per layer at a 4K prompt (90.7 → 27.4 at 30K), same ids.
+- Gates passed; the session compat gate accepted the three earlier builds. Suite exact 49.38 tok/s.
+- 10.7K test: decode 50.2 tok/s, prompt read 71 s, ids identical.
+- Lab agents on card 27: exact decode expert GEMVs (plus the generic kernels' per-item guard), and exact
+  expert-grouped prefill.
+
 **October 26, 07:10 EDT — SC117 service on engine `718a59eff64f`: faster exact attention and prefill; sessions survive engine upgrades.**
 - **Decode** (exact QSA attention, `OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1`):
   - one work-group per KV head and tile for all 12 query heads;
