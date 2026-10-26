@@ -1,5 +1,36 @@
 # Current Workspace State
 
+**October 26, 05:10 EDT — SC117 service: 64K context live, exact; ctxkeeper inside the service (keeper model id).**
+- `sc117-lan` runs engine `90244b48a1c9` with a 65,536-token context at split 24/24. At 23/25, rank 1's F32 KV
+  would pass the 30 GiB card cap.
+- Gates:
+  - New on every start: the F32 state at 65536 equals the 4096-context oracle on both ranks. The 24 context-sized
+    buffers per rank hold the oracle's bytes as prefix with zero tails, with zero differences.
+  - Prefill 13/13; continuation passed.
+- Suite: all 5,965 output ids, 12/12 text hashes and MTP hits (4533/5954) are identical. Speed is 47.97 tok/s
+  (48.58 at 32K on 23/25): the 24/24 split makes card 1 the bottleneck.
+- Engine changes:
+  - limits raised to 65536;
+  - `rope-65536.bf16` under its own name, with its first 32768 positions equal to `rope.bf16`; generator in
+    `research/context-64k/make_rope.py`;
+  - one row of snapshot backup for single-row KV.
+- Lab (card 27, rank 1 at split 24): 4096 vs 65536 is bitwise. A 60K batched prompt ran without fault at 10.1 ms
+  per row; the decode half at 60K is 18.58 ms.
+  [Record](experiments/own-xpu-runtime/research/context-64k/card27-rank1-lab.json).
+- **Keeper model** (`sc117-qwen3.8-flash-next-iq3s-ownrt-keeper`, `SC117_KEEPER=1`), from `serving/lan/keeper.py`:
+  - ctxkeeper's bounded view, NOTES, archive and server-side recall run in process;
+  - a pinned head checkpoint is restored after every cut, so a cut re-reads only the notes and recent turns;
+  - engine faults halt the service.
+  - CPU tests: 57/57 at 4K, 32K and 64K; ctxkeeper's own tests 171/171. The device test is next.
+  - Pi config: `serving/lan/pi/`.
+- Sessions park conversations up to 65,536 tokens.
+- The earlier B6 engine (`d859730cbb29`) moved RESET zeroing to the device: RESET 218 → 23 ms, session restore
+  411 → 213 ms.
+- Next:
+  1. Vectorized speculative snapshot copies (30.5 MB per guess, about 106 GB/s byte copies on card 1's path).
+  2. Exact weight-reuse dense prefill kernels (a lab agent on card 27): prompt reading is about 10 ms per row,
+     37% of it in dense GEMVs.
+
 **October 26, 04:10 EDT — SC117 service: engine sessions live, exact O(n) QSA select; ctxkeeper-in-service in progress.**
 - `sc117-lan` runs engine `9d89dca01ece` (32K context, `OWNRT_SELECT_TOPK=1`, `SC117_SESSIONS=1`).
   Gates: 32K F32 oracle zero differences, prefill 13/13, continuation passed. Suite identical at 48.61 tok/s.
