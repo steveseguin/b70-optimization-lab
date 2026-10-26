@@ -1,0 +1,472 @@
+{
+ "date": "2026-10-26",
+ "task": "rank-1 decode next 2: HC BF16 GEMVs and IQ3_XXS/IQ3_S/IQ2_S gate+up, exact",
+ "engine": {
+  "canonical": "engine/src == live service ef3a2665ffe5 (b16, decode-next)",
+  "reference_binary": "/dev/shm/engine-build-svc-b16-dnext-20261026/sc117-engine",
+  "reference_sha256_prefix": "ef3a2665ffe542ef",
+  "final_lab_binary": "/dev/shm/engine-build-lab-dn2-final/sc117-engine",
+  "final_lab_sha256_prefix": "d2bc8008eb8d46cd",
+  "final_source": "canonical + decode-next2.patch + profile-defer-lab.patch (full build, no object reuse)",
+  "variant_binary": "/dev/shm/engine-build-lab-dn2-v5/sc117-engine (all variants; neg/lab-all-variants.patch)"
+ },
+ "identity": {
+  "card": "0000:27:00.0 renderD131 under flock /dev/shm/card27.lock",
+  "driver": "tp_rank1_driver.py run --steps 48 --prompt 4096|300 --batched --rows 256 --cache",
+  "split": 23,
+  "context": 65536,
+  "env_live": "OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1 OWNRT_PREFILL_REUSE2=1 OWNRT_SELECT_TOPK=1 OWNRT_SELECT_FAST=1 OWNRT_RESET_DEVICE_ZERO=1 OWNRT_EXPERTS_V2=1 OWNRT_DENSE_DECODE_V2=1 OWNRT_PREFILL_EXPERTS=1 OWNRT_DENSE_RAW=1 OWNRT_QSA_RAW_RING=1 OWNRT_PREFILL_SHADOW_PACK=1 OWNRT_DECODE_NEXT=1",
+  "env_new": "OWNRT_DECODE_NEXT2=1 (= xxs,hcgate,bf16split)",
+  "median": "halves 3..48 of fixture 1"
+ },
+ "switches": {
+  "OWNRT_DECODE_NEXT2": {
+   "default": "off",
+   "one": "xxs,hcgate,bf16split",
+   "tokens": {
+    "xxs": "routed IQ3_XXS gate/up block sites: dn2::xxs_packed<4> (packed logical lanes, 32-lane subgroups, 4 rows each, grid in work-group memory)",
+    "hcgate": "dense BF16 K<=1024 rows>=2048 (HC gate): dense_v2::bf16_multi<2,4>",
+    "bf16split": "dense BF16 1024<K<8192 (router+shared gate, GDN a+b, QSA iq+ik): dense_v2::bf16_split<10,4>"
+   }
+  }
+ },
+ "summary": {
+  "prompt4096": {
+   "ref": [
+    12.958,
+    12.957,
+    12.961
+   ],
+   "new": [
+    12.578,
+    12.585,
+    12.592
+   ],
+   "delta_ms": -0.374,
+   "delta_pct": -2.9
+  },
+  "prompt300": {
+   "ref": 12.815,
+   "new": 12.426,
+   "delta_ms": -0.389
+  },
+  "default_off": 12.977,
+  "profile_span_us": [
+   12598,
+   12225
+  ]
+ },
+ "final_sequence": {
+  "F-ref-1": {
+   "driver_median_ms": 12.958,
+   "half_completion_median_ms": 12.906,
+   "enqueue_loop_median_ms": 3.73,
+   "kfaults": 0
+  },
+  "F-new-1": {
+   "driver_median_ms": 12.578,
+   "half_completion_median_ms": 12.524,
+   "enqueue_loop_median_ms": 3.75,
+   "kfaults": 0
+  },
+  "F-ref-2": {
+   "driver_median_ms": 12.957,
+   "half_completion_median_ms": 12.904,
+   "enqueue_loop_median_ms": 3.75,
+   "kfaults": 0
+  },
+  "F-new-2": {
+   "driver_median_ms": 12.585,
+   "half_completion_median_ms": 12.535,
+   "enqueue_loop_median_ms": 3.41,
+   "kfaults": 0
+  },
+  "F-ref-3": {
+   "driver_median_ms": 12.961,
+   "half_completion_median_ms": 12.911,
+   "enqueue_loop_median_ms": 3.68,
+   "kfaults": 0
+  },
+  "F-new-3": {
+   "driver_median_ms": 12.592,
+   "half_completion_median_ms": 12.532,
+   "enqueue_loop_median_ms": 3.37,
+   "kfaults": 0
+  },
+  "F-ref-p300": {
+   "driver_median_ms": 12.815,
+   "half_completion_median_ms": 12.752,
+   "enqueue_loop_median_ms": 3.4,
+   "kfaults": 0
+  },
+  "F-new-p300": {
+   "driver_median_ms": 12.426,
+   "half_completion_median_ms": 12.371,
+   "enqueue_loop_median_ms": 3.71,
+   "kfaults": 0
+  },
+  "F-off-1": {
+   "driver_median_ms": 12.977,
+   "half_completion_median_ms": 12.921,
+   "enqueue_loop_median_ms": 3.74,
+   "kfaults": 0
+  }
+ },
+ "exactness": {
+  "compares": {
+   "F-ref-1 vs F-new-1": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-2 vs F-new-2": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-3 vs F-new-3": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-p300 vs F-new-p300": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "F-ref-1 vs F-off-1": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   },
+   "a0-prof vs F-prof": {
+    "compared": 1079,
+    "differ_count": 0,
+    "only_one_side": 0,
+    "other_fields_differ": {}
+   }
+  },
+  "tokens_identical": true,
+  "all_ab_and_screen_arms_differ_count": 0,
+  "cpu_device_tests": "cputest/test_final.out + test_final_asan.out PASS (xxs gate+up vs BlockRowsOperation<4> replica incl. invalid/short routes and status; bf16_multi<2,4> vs <4,4>; bf16_split<10,4> vs bf16_multi<1,8>); test_dn2.cpp all variants PASS"
+ },
+ "ab_driver_median_ms": {
+  "e1-ref": {
+   "driver_median_ms": [
+    12.996,
+    12.973
+   ],
+   "exact_vs_ref": true
+  },
+  "e1-x5": {
+   "driver_median_ms": [
+    12.661,
+    12.618
+   ],
+   "exact_vs_ref": true
+  },
+  "e1-x4": {
+   "driver_median_ms": [
+    12.659,
+    12.674
+   ],
+   "exact_vs_ref": true
+  },
+  "e1-x5g": {
+   "driver_median_ms": [
+    12.607,
+    12.604
+   ],
+   "exact_vs_ref": true
+  },
+  "e2-ref": {
+   "driver_median_ms": [
+    12.959,
+    12.983
+   ],
+   "exact_vs_ref": true
+  },
+  "e2-B": {
+   "driver_median_ms": [
+    12.618,
+    12.606
+   ],
+   "exact_vs_ref": true
+  },
+  "e2-Bp": {
+   "driver_median_ms": [
+    12.668,
+    12.683
+   ],
+   "exact_vs_ref": true
+  },
+  "e2-Bs": {
+   "driver_median_ms": [
+    12.602,
+    12.594
+   ],
+   "exact_vs_ref": true
+  },
+  "e2-Bh": {
+   "driver_median_ms": [
+    12.739,
+    12.739
+   ],
+   "exact_vs_ref": true
+  },
+  "e3-B": {
+   "driver_median_ms": [
+    12.596,
+    12.6
+   ],
+   "exact_vs_ref": true
+  },
+  "e3-noG": {
+   "driver_median_ms": [
+    12.635,
+    12.629
+   ],
+   "exact_vs_ref": true
+  },
+  "e3-noR": {
+   "driver_median_ms": [
+    12.622,
+    12.619
+   ],
+   "exact_vs_ref": true
+  },
+  "e3-Bs3": {
+   "driver_median_ms": [
+    12.594,
+    12.6
+   ],
+   "exact_vs_ref": true
+  }
+ },
+ "ab_arm_names": {
+  "x5": "xxs packed SG32 + SLM grid",
+  "x4": "xxs packed SG32 + global grid",
+  "x5g": "x5 + hcgate R2 + bf16split U10 (1024<K<8192)",
+  "B": "xxs(5) + hcgate + bf16split",
+  "Bp": "B + xxspair (gate+up one launch)",
+  "Bs": "B + IQ3_S block rows SLM grid + IQ2_S 32-bit codebook halves",
+  "Bh": "B + HC low split lazy U20 GRF256",
+  "noG": "B without hcgate",
+  "noR": "B without bf16split",
+  "Bs3": "B + IQ3_S block rows SLM grid"
+ },
+ "profile_screens": {
+  "a0-prof": {
+   "config": "reference (canonical + profiling defer)",
+   "span_us": 12598.2,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 549.0,
+    "routed_gemv:IQ3_XXS:expsup": 524.8,
+    "routed_gemv:IQ3_S:expsgate": 293.2,
+    "routed_gemv:IQ3_S:expsup": 278.0,
+    "routed_gemv:IQ2_S:expsgate": 229.4,
+    "routed_gemv:IQ2_S:expsup": 213.9,
+    "gemv:BF16:hc.a.low": 400.2,
+    "gemv:BF16:hc.f.low": 430.7,
+    "gemv:BF16:hc.a.gate": 407.9,
+    "gemv:BF16:hc.f.gate": 435.4,
+    "gemv:BF16:router": 200.8,
+    "gemv:BF16:gdn.a": 74.7,
+    "gemv:BF16:qsa.iq": 62.7
+   }
+  },
+  "p1": {
+   "config": "hclow split U8; hcgate packed; xxs 1 (packed SG16, global grid); sgrid 1 (IQ3_S/IQ2_S block rows, SLM grid)",
+   "span_us": 12698.9,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 485.1,
+    "routed_gemv:IQ3_XXS:expsup": 465.0,
+    "routed_gemv:IQ3_S:expsgate": 287.5,
+    "routed_gemv:IQ3_S:expsup": 268.6,
+    "routed_gemv:IQ2_S:expsgate": 252.0,
+    "routed_gemv:IQ2_S:expsup": 217.0,
+    "gemv:BF16:hc.a.low": 443.7,
+    "gemv:BF16:hc.f.low": 465.2,
+    "gemv:BF16:hc.a.gate": 471.8,
+    "gemv:BF16:hc.f.gate": 488.8,
+    "gemv:BF16:router": 205.5,
+    "gemv:BF16:gdn.a": 77.8,
+    "gemv:BF16:qsa.iq": 66.4
+   }
+  },
+  "p2": {
+   "config": "hclow split U10 (all K>1024); hcgate R2; xxs 2 (packed SG16, SLM grid)",
+   "span_us": 12416.5,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 485.1,
+    "routed_gemv:IQ3_XXS:expsup": 458.5,
+    "routed_gemv:IQ3_S:expsgate": 291.5,
+    "routed_gemv:IQ3_S:expsup": 277.9,
+    "routed_gemv:IQ2_S:expsgate": 228.6,
+    "routed_gemv:IQ2_S:expsup": 213.9,
+    "gemv:BF16:hc.a.low": 403.5,
+    "gemv:BF16:hc.f.low": 429.1,
+    "gemv:BF16:hc.a.gate": 401.3,
+    "gemv:BF16:hc.f.gate": 425.0,
+    "gemv:BF16:router": 188.4,
+    "gemv:BF16:gdn.a": 57.0,
+    "gemv:BF16:qsa.iq": 59.6
+   }
+  },
+  "p3": {
+   "config": "hclow split U4; hcgate R8; xxs 3 (original mapping, SLM grid)",
+   "span_us": 12598.1,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 522.7,
+    "routed_gemv:IQ3_XXS:expsup": 493.0,
+    "routed_gemv:IQ3_S:expsgate": 292.3,
+    "routed_gemv:IQ3_S:expsup": 277.6,
+    "routed_gemv:IQ2_S:expsgate": 228.6,
+    "routed_gemv:IQ2_S:expsup": 213.9,
+    "gemv:BF16:hc.a.low": 422.0,
+    "gemv:BF16:hc.f.low": 450.0,
+    "gemv:BF16:hc.a.gate": 417.3,
+    "gemv:BF16:hc.f.gate": 441.2,
+    "gemv:BF16:router": 196.2,
+    "gemv:BF16:gdn.a": 66.1,
+    "gemv:BF16:qsa.iq": 61.6
+   }
+  },
+  "q1": {
+   "config": "hclow lazy U20 GRF128; UR10 for 1024<K<8192; hcgate R2; xxs 4 (packed SG32, global grid); S 2 (packed SG16, global)",
+   "span_us": 12505.8,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 395.6,
+    "routed_gemv:IQ3_XXS:expsup": 374.2,
+    "routed_gemv:IQ3_S:expsgate": 366.3,
+    "routed_gemv:IQ3_S:expsup": 345.9,
+    "routed_gemv:IQ2_S:expsgate": 284.2,
+    "routed_gemv:IQ2_S:expsup": 260.9,
+    "gemv:BF16:hc.a.low": 402.1,
+    "gemv:BF16:hc.f.low": 433.1,
+    "gemv:BF16:hc.a.gate": 396.0,
+    "gemv:BF16:hc.f.gate": 422.2,
+    "gemv:BF16:router": 194.4,
+    "gemv:BF16:gdn.a": 60.8,
+    "gemv:BF16:qsa.iq": 60.7
+   }
+  },
+  "q2": {
+   "config": "hclow lazy U40 GRF256; hcgate R2; xxs 5 (packed SG32, SLM grid); S 4 (packed SG32, global)",
+   "span_us": 12645.4,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 377.3,
+    "routed_gemv:IQ3_XXS:expsup": 352.9,
+    "routed_gemv:IQ3_S:expsgate": 351.2,
+    "routed_gemv:IQ3_S:expsup": 340.1,
+    "routed_gemv:IQ2_S:expsgate": 282.9,
+    "routed_gemv:IQ2_S:expsup": 272.9,
+    "gemv:BF16:hc.a.low": 411.3,
+    "gemv:BF16:hc.f.low": 441.6,
+    "gemv:BF16:hc.a.gate": 400.1,
+    "gemv:BF16:hc.f.gate": 422.9,
+    "gemv:BF16:router": 205.5,
+    "gemv:BF16:gdn.a": 78.5,
+    "gemv:BF16:qsa.iq": 64.5
+   }
+  },
+  "q3": {
+   "config": "hclow lazy U20 GRF256; hcgate packed; xxs 1; S 3 (packed SG16, SLM)",
+   "span_us": 13135.8,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 486.3,
+    "routed_gemv:IQ3_XXS:expsup": 465.8,
+    "routed_gemv:IQ3_S:expsgate": 371.4,
+    "routed_gemv:IQ3_S:expsup": 338.6,
+    "routed_gemv:IQ2_S:expsgate": 387.9,
+    "routed_gemv:IQ2_S:expsup": 328.6,
+    "gemv:BF16:hc.a.low": 393.0,
+    "gemv:BF16:hc.f.low": 428.7,
+    "gemv:BF16:hc.a.gate": 471.1,
+    "gemv:BF16:hc.f.gate": 494.1,
+    "gemv:BF16:router": 204.5,
+    "gemv:BF16:gdn.a": 77.8,
+    "gemv:BF16:qsa.iq": 64.8
+   }
+  },
+  "q4": {
+   "config": "hclow lazy U40 GRF128; hcgate packed; xxs 2; S 5 (packed SG32, SLM)",
+   "span_us": 12861,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 485.3,
+    "routed_gemv:IQ3_XXS:expsup": 457.7,
+    "routed_gemv:IQ3_S:expsgate": 337.9,
+    "routed_gemv:IQ3_S:expsup": 319.9,
+    "routed_gemv:IQ2_S:expsgate": 314.4,
+    "routed_gemv:IQ2_S:expsup": 282.8,
+    "gemv:BF16:hc.a.low": 403.2,
+    "gemv:BF16:hc.f.low": 430.3,
+    "gemv:BF16:hc.a.gate": 477.2,
+    "gemv:BF16:hc.f.gate": 495.7,
+    "gemv:BF16:router": 204.0,
+    "gemv:BF16:gdn.a": 78.3,
+    "gemv:BF16:qsa.iq": 64.9
+   }
+  },
+  "pq1": {
+   "config": "xxs 5 + xxspair (gate+up one launch); hcgate R2; UR10; hclow lazy U20 GRF256; S3 1 (SLM grid), S2 6 (global, 32-bit codebook halves)",
+   "span_us": 12403.8,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 807.4,
+    "routed_gemv:IQ3_XXS:expsup": 0.0,
+    "routed_gemv:IQ3_S:expsgate": 286.5,
+    "routed_gemv:IQ3_S:expsup": 268.6,
+    "routed_gemv:IQ2_S:expsgate": 228.2,
+    "routed_gemv:IQ2_S:expsup": 213.7,
+    "gemv:BF16:hc.a.low": 397.1,
+    "gemv:BF16:hc.f.low": 429.3,
+    "gemv:BF16:hc.a.gate": 401.4,
+    "gemv:BF16:hc.f.gate": 422.5,
+    "gemv:BF16:router": 193.8,
+    "gemv:BF16:gdn.a": 60.3,
+    "gemv:BF16:qsa.iq": 61.1
+   }
+  },
+  "F-prof": {
+   "config": "final: OWNRT_DECODE_NEXT2=1 (xxs, hcgate, bf16split)",
+   "span_us": 12224.7,
+   "sites": {
+    "routed_gemv:IQ3_XXS:expsgate": 374.2,
+    "routed_gemv:IQ3_XXS:expsup": 346.6,
+    "routed_gemv:IQ3_S:expsgate": 292.8,
+    "routed_gemv:IQ3_S:expsup": 277.9,
+    "routed_gemv:IQ2_S:expsgate": 229.2,
+    "routed_gemv:IQ2_S:expsup": 214.0,
+    "gemv:BF16:hc.a.low": 404.5,
+    "gemv:BF16:hc.f.low": 437.5,
+    "gemv:BF16:hc.a.gate": 400.8,
+    "gemv:BF16:hc.f.gate": 426.5,
+    "gemv:BF16:router": 194.4,
+    "gemv:BF16:gdn.a": 61.5,
+    "gemv:BF16:qsa.iq": 60.3
+   }
+  }
+ },
+ "negatives": {
+  "hclow": "split SG16 U4/U8/U10 +20..+44/0 us; lazy U20/U40 (GRF128/256) -7..+11 us profile, U20 GRF256 +0.13 ms e2e",
+  "hcgate": "packed lanes +55..+65 us; R8 +6..+9 us",
+  "sgroups": "IQ3_S/IQ2_S packed lanes +40..+160 us; SLM grid IQ3_S -15 / IQ2_S +25 us, e2e within noise; IQ2_S 32-bit codebook 0",
+  "xxspair": "gate+up in one launch: profile 807 vs 730 us, e2e +0.06 ms",
+  "xxs_sg16": "packed 16-lane subgroups: 1074 -> ~945 us (SG32: 730)"
+ },
+ "faults": {
+  "kfaults_total": 0,
+  "pre_check_hits": 0,
+  "standalone_device_microbenchmarks": 0
+ },
+ "files": {
+  "patch": "research/decode-next2/decode-next2.patch",
+  "negatives": "research/decode-next2/neg/lab-all-variants.patch",
+  "cputest": "research/decode-next2/cputest/"
+ }
+}

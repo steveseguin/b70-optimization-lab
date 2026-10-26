@@ -86,5 +86,55 @@ template<unsigned R,unsigned U> inline void bf16_multi(const std::array<Mat,4>& 
  const Mat d=m[j];
  bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
 }
+// OWNRT_DECODE_NEXT2 bf16split (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
+// Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
+// order and the ragged tail, so each logical lane's sum is unchanged. Tree: levels 1..8 by the same xor butterfly inside
+// each subgroup (lower + upper at every node), then node(0..15) + node(16..31) through work-group memory. Matrices are
+// partitioned in rows (first_sub counts rows here). Every item reaches the barrier.
+template<unsigned U,unsigned WGR> inline void bf16_split(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it,float* xch){
+ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgl=unsigned(sg.get_group_linear_id());
+ const unsigned slot=sgl/2,half=sgl%2;const uint32_t ridx=uint32_t(it.get_group_linear_id())*WGR+slot;
+ unsigned j=0;
+ for(unsigned t=1;t<count;++t)if(ridx>=m[t].first_sub)j=t;
+ const Mat d=m[j];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
+ float A=0.f;
+ if(live){
+  const uint32_t k=d.k;const uint8_t* W=d.w+size_t(row)*d.rb;const float* x=d.x;
+  uint32_t base=(half*16u+lane)*8u;
+  for(;base+(U-1)*256u+8u<=k;base+=U*256u){
+   float wide[U][8];
+   #pragma unroll
+   for(unsigned u=0;u<U;++u){const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
+    #pragma unroll
+    for(unsigned e=0;e<4;++e){wide[u][e]=a0[e];wide[u][e+4]=a1[e];}}
+   sycl::vec<uint16_t,8> w[U];
+   #pragma unroll
+   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+u*256u)*2u);
+   #pragma unroll
+   for(unsigned u=0;u<U;++u){
+    #pragma unroll
+    for(unsigned e=0;e<8;++e){const float product=bf16f(w[u][e])*wide[u][e];A=A+product;}}
+  }
+  for(;base+8u<=k;base+=256u){
+   float wide[8];
+   {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
+    #pragma unroll
+    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}}
+   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base)*2u);
+   #pragma unroll
+   for(unsigned e=0;e<8;++e){const float product=bf16f(w[e])*wide[e];A=A+product;}
+  }
+  if(base<k){
+   const uint16_t* wr=reinterpret_cast<const uint16_t*>(W);float values[8],wide[8];
+   for(unsigned e=0;base+e<k;++e){values[e]=bf16f(wr[base+e]);wide[e]=x[base+e];}
+   for(unsigned e=0;base+e<k;++e){const float product=values[e]*wide[e];A=A+product;}
+  }
+ }
+ #pragma unroll
+ for(unsigned lv=0;lv<4;++lv){const float o=sycl::permute_group_by_xor(sg,A,1u<<lv);A=((lane>>lv)&1u)?o+A:A+o;}
+ if(half==1&&lane==0)xch[slot]=A;
+ sycl::group_barrier(it.get_group());
+ if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
+}
 inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
 }

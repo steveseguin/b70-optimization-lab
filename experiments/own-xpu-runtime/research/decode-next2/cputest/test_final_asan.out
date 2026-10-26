@@ -1,0 +1,21 @@
+==== DeviceSanitizer: ASAN
+device: AMD Ryzen Threadripper PRO 5955WX 16-Cores     
+  IQ3_XXS blk.30 gate xxs_packed<4> (10 slots, 1 invalid, 1 short) outputs    6432 mismatches 0 ok
+    status ok (invalid slot 1)
+    reference NaN outputs 979 (expected 979)
+  IQ3_XXS blk.30 up xxs_packed<4> (10 slots, 1 invalid, 1 short) outputs    6432 mismatches 0 ok
+    status ok (invalid slot 1)
+    reference NaN outputs 979 (expected 979)
+  HC gate blk.30 bf16_multi<2,4> mat0 (10240x320)            outputs   10256 mismatches 0 ok
+  synthetic small K 96 bf16_multi<2,4> mat0 (2051x96)        outputs    2067 mismatches 0 ok
+  router+shared gate blk.30 bf16_split<10,4> mat0 (512x2560) outputs     528 mismatches 0 ok
+  router+shared gate blk.30 bf16_split<10,4> mat1 (1x2560)   outputs      17 mismatches 0 ok
+  GDN a+b blk.30 bf16_split<10,4> mat0 (48x2560)             outputs      64 mismatches 0 ok
+  GDN a+b blk.30 bf16_split<10,4> mat1 (48x2560)             outputs      64 mismatches 0 ok
+  synthetic K 2600 bf16_split<10,4> mat0 (37x2600)           outputs      53 mismatches 0 ok
+  synthetic K 2600 bf16_split<10,4> mat1 (5x2600)            outputs      21 mismatches 0 ok
+PASS
+
+real	1m39.812s
+user	2m33.457s
+sys	0m1.459s

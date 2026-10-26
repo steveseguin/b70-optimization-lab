@@ -1,0 +1,192 @@
+{
+ "a0-prof": {
+  "config": "reference (canonical + profiling defer)",
+  "span_us": 12598.2,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 549.0,
+   "routed_gemv:IQ3_XXS:expsup": 524.8,
+   "routed_gemv:IQ3_S:expsgate": 293.2,
+   "routed_gemv:IQ3_S:expsup": 278.0,
+   "routed_gemv:IQ2_S:expsgate": 229.4,
+   "routed_gemv:IQ2_S:expsup": 213.9,
+   "gemv:BF16:hc.a.low": 400.2,
+   "gemv:BF16:hc.f.low": 430.7,
+   "gemv:BF16:hc.a.gate": 407.9,
+   "gemv:BF16:hc.f.gate": 435.4,
+   "gemv:BF16:router": 200.8,
+   "gemv:BF16:gdn.a": 74.7,
+   "gemv:BF16:qsa.iq": 62.7
+  }
+ },
+ "p1": {
+  "config": "hclow split U8; hcgate packed; xxs 1 (packed SG16, global grid); sgrid 1 (IQ3_S/IQ2_S block rows, SLM grid)",
+  "span_us": 12698.9,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 485.1,
+   "routed_gemv:IQ3_XXS:expsup": 465.0,
+   "routed_gemv:IQ3_S:expsgate": 287.5,
+   "routed_gemv:IQ3_S:expsup": 268.6,
+   "routed_gemv:IQ2_S:expsgate": 252.0,
+   "routed_gemv:IQ2_S:expsup": 217.0,
+   "gemv:BF16:hc.a.low": 443.7,
+   "gemv:BF16:hc.f.low": 465.2,
+   "gemv:BF16:hc.a.gate": 471.8,
+   "gemv:BF16:hc.f.gate": 488.8,
+   "gemv:BF16:router": 205.5,
+   "gemv:BF16:gdn.a": 77.8,
+   "gemv:BF16:qsa.iq": 66.4
+  }
+ },
+ "p2": {
+  "config": "hclow split U10 (all K>1024); hcgate R2; xxs 2 (packed SG16, SLM grid)",
+  "span_us": 12416.5,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 485.1,
+   "routed_gemv:IQ3_XXS:expsup": 458.5,
+   "routed_gemv:IQ3_S:expsgate": 291.5,
+   "routed_gemv:IQ3_S:expsup": 277.9,
+   "routed_gemv:IQ2_S:expsgate": 228.6,
+   "routed_gemv:IQ2_S:expsup": 213.9,
+   "gemv:BF16:hc.a.low": 403.5,
+   "gemv:BF16:hc.f.low": 429.1,
+   "gemv:BF16:hc.a.gate": 401.3,
+   "gemv:BF16:hc.f.gate": 425.0,
+   "gemv:BF16:router": 188.4,
+   "gemv:BF16:gdn.a": 57.0,
+   "gemv:BF16:qsa.iq": 59.6
+  }
+ },
+ "p3": {
+  "config": "hclow split U4; hcgate R8; xxs 3 (original mapping, SLM grid)",
+  "span_us": 12598.1,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 522.7,
+   "routed_gemv:IQ3_XXS:expsup": 493.0,
+   "routed_gemv:IQ3_S:expsgate": 292.3,
+   "routed_gemv:IQ3_S:expsup": 277.6,
+   "routed_gemv:IQ2_S:expsgate": 228.6,
+   "routed_gemv:IQ2_S:expsup": 213.9,
+   "gemv:BF16:hc.a.low": 422.0,
+   "gemv:BF16:hc.f.low": 450.0,
+   "gemv:BF16:hc.a.gate": 417.3,
+   "gemv:BF16:hc.f.gate": 441.2,
+   "gemv:BF16:router": 196.2,
+   "gemv:BF16:gdn.a": 66.1,
+   "gemv:BF16:qsa.iq": 61.6
+  }
+ },
+ "q1": {
+  "config": "hclow lazy U20 GRF128; UR10 for 1024<K<8192; hcgate R2; xxs 4 (packed SG32, global grid); S 2 (packed SG16, global)",
+  "span_us": 12505.8,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 395.6,
+   "routed_gemv:IQ3_XXS:expsup": 374.2,
+   "routed_gemv:IQ3_S:expsgate": 366.3,
+   "routed_gemv:IQ3_S:expsup": 345.9,
+   "routed_gemv:IQ2_S:expsgate": 284.2,
+   "routed_gemv:IQ2_S:expsup": 260.9,
+   "gemv:BF16:hc.a.low": 402.1,
+   "gemv:BF16:hc.f.low": 433.1,
+   "gemv:BF16:hc.a.gate": 396.0,
+   "gemv:BF16:hc.f.gate": 422.2,
+   "gemv:BF16:router": 194.4,
+   "gemv:BF16:gdn.a": 60.8,
+   "gemv:BF16:qsa.iq": 60.7
+  }
+ },
+ "q2": {
+  "config": "hclow lazy U40 GRF256; hcgate R2; xxs 5 (packed SG32, SLM grid); S 4 (packed SG32, global)",
+  "span_us": 12645.4,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 377.3,
+   "routed_gemv:IQ3_XXS:expsup": 352.9,
+   "routed_gemv:IQ3_S:expsgate": 351.2,
+   "routed_gemv:IQ3_S:expsup": 340.1,
+   "routed_gemv:IQ2_S:expsgate": 282.9,
+   "routed_gemv:IQ2_S:expsup": 272.9,
+   "gemv:BF16:hc.a.low": 411.3,
+   "gemv:BF16:hc.f.low": 441.6,
+   "gemv:BF16:hc.a.gate": 400.1,
+   "gemv:BF16:hc.f.gate": 422.9,
+   "gemv:BF16:router": 205.5,
+   "gemv:BF16:gdn.a": 78.5,
+   "gemv:BF16:qsa.iq": 64.5
+  }
+ },
+ "q3": {
+  "config": "hclow lazy U20 GRF256; hcgate packed; xxs 1; S 3 (packed SG16, SLM)",
+  "span_us": 13135.8,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 486.3,
+   "routed_gemv:IQ3_XXS:expsup": 465.8,
+   "routed_gemv:IQ3_S:expsgate": 371.4,
+   "routed_gemv:IQ3_S:expsup": 338.6,
+   "routed_gemv:IQ2_S:expsgate": 387.9,
+   "routed_gemv:IQ2_S:expsup": 328.6,
+   "gemv:BF16:hc.a.low": 393.0,
+   "gemv:BF16:hc.f.low": 428.7,
+   "gemv:BF16:hc.a.gate": 471.1,
+   "gemv:BF16:hc.f.gate": 494.1,
+   "gemv:BF16:router": 204.5,
+   "gemv:BF16:gdn.a": 77.8,
+   "gemv:BF16:qsa.iq": 64.8
+  }
+ },
+ "q4": {
+  "config": "hclow lazy U40 GRF128; hcgate packed; xxs 2; S 5 (packed SG32, SLM)",
+  "span_us": 12861,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 485.3,
+   "routed_gemv:IQ3_XXS:expsup": 457.7,
+   "routed_gemv:IQ3_S:expsgate": 337.9,
+   "routed_gemv:IQ3_S:expsup": 319.9,
+   "routed_gemv:IQ2_S:expsgate": 314.4,
+   "routed_gemv:IQ2_S:expsup": 282.8,
+   "gemv:BF16:hc.a.low": 403.2,
+   "gemv:BF16:hc.f.low": 430.3,
+   "gemv:BF16:hc.a.gate": 477.2,
+   "gemv:BF16:hc.f.gate": 495.7,
+   "gemv:BF16:router": 204.0,
+   "gemv:BF16:gdn.a": 78.3,
+   "gemv:BF16:qsa.iq": 64.9
+  }
+ },
+ "pq1": {
+  "config": "xxs 5 + xxspair (gate+up one launch); hcgate R2; UR10; hclow lazy U20 GRF256; S3 1 (SLM grid), S2 6 (global, 32-bit codebook halves)",
+  "span_us": 12403.8,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 807.4,
+   "routed_gemv:IQ3_XXS:expsup": 0.0,
+   "routed_gemv:IQ3_S:expsgate": 286.5,
+   "routed_gemv:IQ3_S:expsup": 268.6,
+   "routed_gemv:IQ2_S:expsgate": 228.2,
+   "routed_gemv:IQ2_S:expsup": 213.7,
+   "gemv:BF16:hc.a.low": 397.1,
+   "gemv:BF16:hc.f.low": 429.3,
+   "gemv:BF16:hc.a.gate": 401.4,
+   "gemv:BF16:hc.f.gate": 422.5,
+   "gemv:BF16:router": 193.8,
+   "gemv:BF16:gdn.a": 60.3,
+   "gemv:BF16:qsa.iq": 61.1
+  }
+ },
+ "F-prof": {
+  "config": "final: OWNRT_DECODE_NEXT2=1 (xxs, hcgate, bf16split)",
+  "span_us": 12224.7,
+  "sites": {
+   "routed_gemv:IQ3_XXS:expsgate": 374.2,
+   "routed_gemv:IQ3_XXS:expsup": 346.6,
+   "routed_gemv:IQ3_S:expsgate": 292.8,
+   "routed_gemv:IQ3_S:expsup": 277.9,
+   "routed_gemv:IQ2_S:expsgate": 229.2,
+   "routed_gemv:IQ2_S:expsup": 214.0,
+   "gemv:BF16:hc.a.low": 404.5,
+   "gemv:BF16:hc.f.low": 437.5,
+   "gemv:BF16:hc.a.gate": 400.8,
+   "gemv:BF16:hc.f.gate": 426.5,
+   "gemv:BF16:router": 194.4,
+   "gemv:BF16:gdn.a": 61.5,
+   "gemv:BF16:qsa.iq": 60.3
+  }
+ }
+}

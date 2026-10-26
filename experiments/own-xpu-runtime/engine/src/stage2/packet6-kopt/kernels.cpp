@@ -9,6 +9,7 @@
 #include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #include "stage2/packet194-expert-diet-engine/decode_next.hpp"
+#include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet6-kopt/dense_v2.hpp"
 #include <algorithm>
@@ -151,6 +152,31 @@ struct Multiply:ownrt::SyclOperation {
         ok=ok&&!d.routed&&!d.diagnostic&&!d.row_major&&d.count==1&&d.experts==1&&d.span==d.rows&&d.activation==Type::F32&&d.output==Type::F32&&
           d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
         maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
+      if(ok){
+        // OWNRT_DECODE_NEXT2 hcgate / bf16split (lab 2026-10-26): the same rows with bf16_rows' per-row arithmetic.
+        //  hcgate: small K (HC gate, 10240 x 320): 2 rows per subgroup instead of 4 (rank-1 profile, 50 sites:
+        //   843 -> ~820 us; end to end -0.03 ms per half; 8 rows per subgroup and packed lanes were slower).
+        //  bf16split: 1024 < K < 8192 (router + shared gate, GDN a+b, QSA iq+ik): two 16-lane subgroups per row
+        //   (bf16_split<10,4>; router 201 -> ~191 us, GDN a+b 75 -> ~59 us; end to end -0.02 ms per half). HC low
+        //   (K 10240) split, with 4..40 chunks in flight, was neutral to slower and keeps bf16_multi<1,8>.
+        const bool small_k=maxk<=1024&&maxrows>=2048;
+        if(small_k&&decode_next2::enabled("hcgate")){
+          std::array<dense_v2::Mat,4> m2{};uint32_t s2=0;
+          for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),s2};s2+=(uint32_t(d.rows)+1)/2;}
+          const size_t global=(size_t(s2)*32+127)/128*128;
+          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
+            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<2,4>(m2,count,it);}));});
+        }
+        if(!small_k&&maxk<8192&&decode_next2::enabled("bf16split")){
+          // Matrices partitioned in rows; WGR rows (2*WGR subgroups) per work-group.
+          std::array<dense_v2::Mat,4> m2{};uint32_t total=0;
+          for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),total};total+=uint32_t(d.rows);}
+          constexpr unsigned WGR=4;const size_t global=size_t((total+WGR-1)/WGR)*WGR*32;
+          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32))](sycl::handler& h){
+            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{
+              float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());dense_v2::bf16_split<10,WGR>(m2,count,it,xch);}));});
+        }
+      }
       if(ok){const bool small_k=maxk<=1024&&maxrows>=2048;const uint32_t R=small_k?4:1;
         for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),subs};subs+=(uint32_t(d.rows)+R-1)/R;}
         const size_t global=(size_t(subs)*32+127)/128*128;

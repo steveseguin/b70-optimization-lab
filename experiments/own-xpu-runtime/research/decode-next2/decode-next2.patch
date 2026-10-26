@@ -1,0 +1,237 @@
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp b/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
+--- a/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
++++ b/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
+@@ -2,6 +2,10 @@
+ // Candidate only. Frozen generic control remains unchanged.
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp"
++#include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/dn2_kernels.hpp"
++#endif
+ namespace iq3block {
+ using gsqn::Shape;using gsqn::Bound;
+ // Identical scalar decoder multiplication order; only block half conversion
+@@ -76,6 +80,21 @@
+   }));});
+  }
+ };
++// OWNRT_DECODE_NEXT2 xxs (lab 2026-10-26): BlockRowsOperation<4>'s rows with packed logical lanes (dn2::xxs_packed:
++// one grid word, sign code and scale factor per four lanes, grid in work-group memory; each lane's values, products,
++// add order and the tree unchanged), four rows per 32-lane subgroup, four subgroups per work-group.
++// Rank-1 profile, 18 sites: 1074 -> 730 us; end to end -0.34 ms per half (16-lane subgroups: 1074 -> ~945 us).
++class XxsDn2Kernel;
++struct XxsDn2Operation final:ownrt::SyclOperation {
++ Shape s{};
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
++  const dn2::XxsView v{static_cast<const uint8_t*>(p[0]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4]),
++   uint32_t(s.rows),uint32_t(s.columns),uint32_t(s.row_bytes),uint32_t(s.count),uint32_t(s.experts)};
++  constexpr unsigned WGSG=4;const uint32_t total=((v.rows+3)/4)*v.count,groups=(total+WGSG-1)/WGSG;
++  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsDn2Kernel>(sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{dn2::xxs_packed<WGSG>(v,it);}));});
++ }
++};
+ inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+ #endif
+ template<bool F> class BlockKernel;
+@@ -119,6 +138,7 @@
+  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
+  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};
+ #ifndef OWN_RT_HOST_ONLY
++ if(shape.f32&&!shape.row_major&&block_rows()&&decode_next2::enabled("xxs")&&shape.columns%256==0){XxsDn2Operation op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+  if(shape.f32&&!shape.row_major&&block_rows()){BlockRowsOperation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+ #endif
+  if(shape.f32){BlockOperation<true> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet194-expert-diet-engine/decode_next2.hpp b/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
+--- a/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
++++ b/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
+@@ -0,0 +1,24 @@
++#pragma once
++// OWNRT_DECODE_NEXT2 (lab 2026-10-26, default off): exact decode-step changes after OWNRT_DECODE_NEXT. "1" enables
++// xxs,hcgate,bf16split; otherwise a comma list of tokens:
++//  xxs        routed IQ3_XXS gate/up at the block sites: packed logical lanes in 32-lane subgroups (work-item t of a row
++//             owns lanes 4t..4t+3: one grid word, sign code and scale factor for four lanes), grid in work-group memory
++//             (dn2_kernels.hpp, block.hpp).
++//  hcgate     dense BF16 decode rows with K <= 1024 and >= 2048 rows (HC gate): 2 rows per subgroup instead of 4
++//             (dense_v2::bf16_multi<2,4>).
++//  bf16split  dense BF16 decode rows with 1024 < K < 8192 (router + shared gate, GDN a+b, QSA iq+ik): a row's 32
++//             logical lanes over two 16-lane subgroups, the last tree level through work-group memory
++//             (dense_v2::bf16_split<10,4>). HC low (K 10240) keeps bf16_multi<1,8>.
++// Each output keeps its float operation sequence; see research/decode-next2/RESULT.md.
++#include <cstdlib>
++#include <string>
++namespace decode_next2 {
++inline const std::string& list() {
++  static const std::string v=[]{const char* e=std::getenv("OWNRT_DECODE_NEXT2");const std::string s=e?e:"";return s=="1"?std::string("xxs,hcgate,bf16split"):s;}();
++  return v;
++}
++inline bool enabled(const char* token) {
++  const auto& v=list();if(v.empty()||v=="0")return false;
++  return (","+v+",").find(std::string(",")+token+",")!=std::string::npos;
++}
++}
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp b/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
+--- a/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
++++ b/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
+@@ -0,0 +1,59 @@
++#pragma once
++// OWNRT_DECODE_NEXT2 device bodies (lab 2026-10-26), standalone so the CPU-device tests run the same code as the engine.
++#include <sycl/sycl.hpp>
++#include <bit>
++#include <cstdint>
++#include "stage2/packet2/kernels/math.hpp"
++#include "stage2/packet6-kopt/reference.hpp"
++namespace dn2 {
++using iq3::Type;
++// Plain view of one routed IQ3_XXS block launch (gsqn::Bound restated): weights, F32 input per slot, F32 output per slot.
++struct XxsView {const uint8_t* w;const float* x;float* y;const iq3::Route* routes;uint32_t* status;uint32_t rows,columns,row_bytes,count,experts;};
++// xxs: iq3block::BlockRowsOperation<4> (lane l of a row: column 256*block+32*group+l, blocks then groups in order,
++// value (((d*(0.5f+float(word>>28)))*0.5f)*float(mag))*float(sign), product then add, 32-lane adjacent-pair tree) with
++// packed logical lanes. In a 32-lane subgroup, set = lane/8 takes one row (four rows per subgroup, as the original) and
++// item t = lane%8 owns logical lanes 4t..4t+3, i.e. columns 32*group+4t..+3 of each block. Per group the four lanes
++// share the grid index byte b[2+8*group+t] (one grid word holds their four magnitude bytes), the sign code (lane/8 =
++// t/2) and the factor (d*(0.5f+float(word>>28)))*0.5f, computed once with the same operations; each lane's value is
++// then (factor*float(mag))*float(sign) and its product and add run in the original order. Tree: ((l0+l1)+(l2+l3)) in
++// registers (the first two adjacent-pair levels), then three adjacent-pair levels over the items. The 256-word grid is
++// read from a work-group copy (the same words). Inactive rows store NaN, the status word as the original. Same
++// work-item count as the original (eight per row).
++template<unsigned WGSG> inline void xxs_packed(const XxsView v,sycl::nd_item<1> it){
++ constexpr unsigned SG=32,RPS=SG/8;
++ uint32_t* grid=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[256]>(it.get_group());
++ for(unsigned li=unsigned(it.get_local_linear_id());li<256;li+=SG*WGSG)grid[li]=iq3::iq3_grid[li];
++ sycl::group_barrier(it.get_group());
++ const uint32_t blocks=(v.rows+RPS-1)/RPS,total=blocks*v.count;
++ const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
++ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++ const uint32_t slot=logical/blocks,row=(logical%blocks)*RPS+set;
++ const iq3::Route r=v.routes[slot];const bool valid=iq3::valid_route(r,v.experts,v.rows,v.rows);
++ const bool live=valid&&row<v.rows&&row<r.row_count;
++ const float* x=v.x+size_t(slot)*v.columns;
++ const uint8_t* w=live?v.w+(size_t(r.expert_id)*v.rows+r.row_begin+row)*v.row_bytes:v.w;
++ float acc[4]={0.f,0.f,0.f,0.f};
++ if(live){
++  const uint32_t nblocks=v.columns/256;const unsigned cshift=7*(t/2),sbase=4*(t%2);
++  for(uint32_t block=0;block<nblocks;++block){
++   const uint8_t* packed=w+block*98u;const float d=iq3::half(iq3::u16(packed));
++   #pragma unroll
++   for(unsigned group=0;group<8;++group){
++    const auto*half_words=reinterpret_cast<const uint16_t*>(packed+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16;
++    const uint32_t code=(word>>cshift)&127,mask=code|((std::popcount(code)%2)<<7);
++    const float scale=(d*(0.5f+float(word>>28)))*0.5f;
++    const uint32_t entry=grid[packed[2+group*8+t]];
++    const sycl::vec<float,4> xv=*reinterpret_cast<const sycl::vec<float,4>*>(x+block*256u+group*32u+4u*t);
++    #pragma unroll
++    for(unsigned j=0;j<4;++j){const uint32_t mag=(entry>>(8*j))&255;const int sign=(mask>>(sbase+j))&1?-1:1;
++     const float weight=(scale*float(mag))*float(sign);const float product=weight*xv[j];acc[j]=acc[j]+product;}
++   }
++  }
++ }
++ const float a01=acc[0]+acc[1],a23=acc[2]+acc[3];float sum=a01+a23;
++ #pragma unroll
++ for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
++ if(t==0&&row<v.rows)v.y[size_t(slot)*v.rows+row]=live?sum:iq3::bits_float(0x7fc00000);
++ if(lane==0&&logical%blocks==0&&v.status)v.status[slot]=!valid;
++}
++}
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet6-kopt/dense_v2.hpp b/src/stage2/packet6-kopt/dense_v2.hpp
+--- a/src/stage2/packet6-kopt/dense_v2.hpp
++++ b/src/stage2/packet6-kopt/dense_v2.hpp
+@@ -86,5 +86,55 @@
+  const Mat d=m[j];
+  bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
+ }
++// OWNRT_DECODE_NEXT2 bf16split (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
++// Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
++// order and the ragged tail, so each logical lane's sum is unchanged. Tree: levels 1..8 by the same xor butterfly inside
++// each subgroup (lower + upper at every node), then node(0..15) + node(16..31) through work-group memory. Matrices are
++// partitioned in rows (first_sub counts rows here). Every item reaches the barrier.
++template<unsigned U,unsigned WGR> inline void bf16_split(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it,float* xch){
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgl=unsigned(sg.get_group_linear_id());
++ const unsigned slot=sgl/2,half=sgl%2;const uint32_t ridx=uint32_t(it.get_group_linear_id())*WGR+slot;
++ unsigned j=0;
++ for(unsigned t=1;t<count;++t)if(ridx>=m[t].first_sub)j=t;
++ const Mat d=m[j];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
++ float A=0.f;
++ if(live){
++  const uint32_t k=d.k;const uint8_t* W=d.w+size_t(row)*d.rb;const float* x=d.x;
++  uint32_t base=(half*16u+lane)*8u;
++  for(;base+(U-1)*256u+8u<=k;base+=U*256u){
++   float wide[U][8];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[u][e]=a0[e];wide[u][e+4]=a1[e];}}
++   sycl::vec<uint16_t,8> w[U];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+u*256u)*2u);
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const float product=bf16f(w[u][e])*wide[u][e];A=A+product;}}
++  }
++  for(;base+8u<=k;base+=256u){
++   float wide[8];
++   {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}}
++   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base)*2u);
++   #pragma unroll
++   for(unsigned e=0;e<8;++e){const float product=bf16f(w[e])*wide[e];A=A+product;}
++  }
++  if(base<k){
++   const uint16_t* wr=reinterpret_cast<const uint16_t*>(W);float values[8],wide[8];
++   for(unsigned e=0;base+e<k;++e){values[e]=bf16f(wr[base+e]);wide[e]=x[base+e];}
++   for(unsigned e=0;base+e<k;++e){const float product=values[e]*wide[e];A=A+product;}
++  }
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<4;++lv){const float o=sycl::permute_group_by_xor(sg,A,1u<<lv);A=((lane>>lv)&1u)?o+A:A+o;}
++ if(half==1&&lane==0)xch[slot]=A;
++ sycl::group_barrier(it.get_group());
++ if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
++}
+ inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
+ }
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet6-kopt/kernels.cpp b/src/stage2/packet6-kopt/kernels.cpp
+--- a/src/stage2/packet6-kopt/kernels.cpp
++++ b/src/stage2/packet6-kopt/kernels.cpp
+@@ -9,6 +9,7 @@
+ #include "stage2/packet194-expert-diet-engine/detmath.hpp"
+ #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #include "stage2/packet194-expert-diet-engine/decode_next.hpp"
++#include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet6-kopt/dense_v2.hpp"
+ #include <algorithm>
+@@ -151,6 +152,31 @@
+         ok=ok&&!d.routed&&!d.diagnostic&&!d.row_major&&d.count==1&&d.experts==1&&d.span==d.rows&&d.activation==Type::F32&&d.output==Type::F32&&
+           d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
+         maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
++      if(ok){
++        // OWNRT_DECODE_NEXT2 hcgate / bf16split (lab 2026-10-26): the same rows with bf16_rows' per-row arithmetic.
++        //  hcgate: small K (HC gate, 10240 x 320): 2 rows per subgroup instead of 4 (rank-1 profile, 50 sites:
++        //   843 -> ~820 us; end to end -0.03 ms per half; 8 rows per subgroup and packed lanes were slower).
++        //  bf16split: 1024 < K < 8192 (router + shared gate, GDN a+b, QSA iq+ik): two 16-lane subgroups per row
++        //   (bf16_split<10,4>; router 201 -> ~191 us, GDN a+b 75 -> ~59 us; end to end -0.02 ms per half). HC low
++        //   (K 10240) split, with 4..40 chunks in flight, was neutral to slower and keeps bf16_multi<1,8>.
++        const bool small_k=maxk<=1024&&maxrows>=2048;
++        if(small_k&&decode_next2::enabled("hcgate")){
++          std::array<dense_v2::Mat,4> m2{};uint32_t s2=0;
++          for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),s2};s2+=(uint32_t(d.rows)+1)/2;}
++          const size_t global=(size_t(s2)*32+127)/128*128;
++          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<2,4>(m2,count,it);}));});
++        }
++        if(!small_k&&maxk<8192&&decode_next2::enabled("bf16split")){
++          // Matrices partitioned in rows; WGR rows (2*WGR subgroups) per work-group.
++          std::array<dense_v2::Mat,4> m2{};uint32_t total=0;
++          for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),total};total+=uint32_t(d.rows);}
++          constexpr unsigned WGR=4;const size_t global=size_t((total+WGR-1)/WGR)*WGR*32;
++          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{
++              float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());dense_v2::bf16_split<10,WGR>(m2,count,it,xch);}));});
++        }
++      }
+       if(ok){const bool small_k=maxk<=1024&&maxrows>=2048;const uint32_t R=small_k?4:1;
+         for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),subs};subs+=(uint32_t(d.rows)+R-1)/R;}
+         const size_t global=(size_t(subs)*32+127)/128*128;

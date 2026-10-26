@@ -1,0 +1,709 @@
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp b/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+--- a/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
++++ b/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+@@ -39,6 +39,10 @@
+ std::unordered_set<const flash::Launch*> gsq_follower;
+ std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_mix_partner;
+ std::unordered_set<const flash::Launch*> gsq_mix_follower;
++// OWNRT_DECODE_NEXT2 xxspair: IQ3_XXS block gate site -> its up site, issued as one decode launch at the gate site; the
++// up site issues nothing in decode (view_row < 0). Batched prefill and row replays run both unfused.
++std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_xp_partner;
++std::unordered_set<const flash::Launch*> gsq_xp_follower;
+ bool gsq_fusion_ready=false;
+ bool gsq_kopt_site(const flash::Launch& l) const {
+   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
+@@ -82,11 +86,21 @@
+     if(written)continue;
+     gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
+   }
+-  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+"}");
++  if(decode_next2::enabled("xxspair")&&a.f32_activations)for(size_t i=0;i+1<p.launches.size();++i) {
++    const auto& gate=p.launches[i];const auto& up=p.launches[i+1];
++    if(gate.op!="routed_gemv"||!ends(gate.label,".expsgate"))continue;
++    const std::string prefix=gate.label.substr(0,gate.label.size()-8);
++    if(up.op!="routed_gemv"||up.label!=prefix+"expsup"||up.card!=gate.card||up.inputs!=gate.inputs||up.shape!=gate.shape||gate.shape!=std::vector<int>({10,640,2560}))continue;
++    const auto tg=unsigned(flash::grid_type(w.directory.at(gate.weights.at(0)).grid)),tu=unsigned(flash::grid_type(w.directory.at(up.weights.at(0)).grid));
++    if(tg!=18||tu!=18||!iq3_block_site(w,a,gate)||!iq3_block_site(w,a,up))continue;
++    gsq_xp_partner[&gate]=&up;gsq_xp_follower.insert(&up);
++  }
++  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+",\"xxs_pair\":"+std::to_string(gsq_xp_partner.size())+"}");
+ }
+ void gsq_linear(const flash::Launch& l) {
+   if(!gsq_fusion_ready)gsq_prepare_fusion();
+   if(gsq_follower.count(&l))return; // written by its fused sibling's launch
++  if(gsq_xp_follower.count(&l)&&dev(l.card).view_row<0)return; // up site: written by the gate site's pair launch
+   auto it=matrices.find(&l);
+   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
+ #ifndef OWN_RT_HOST_ONLY
+@@ -98,6 +112,13 @@
+     std::vector<iq3::kopt::Matrix> pair{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0},{n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0}};
+     finish(l.card,iq3::kopt::fused_gemv(dev(l.card),pair,32));return;
+   }
++  if(auto xp=gsq_xp_partner.find(&l);xp!=gsq_xp_partner.end()&&dev(l.card).view_row<0) {
++    const int c=l.card;const auto& up=*xp->second;
++    auto other=matrices.find(&up);if(other==matrices.end())other=matrices.emplace(&up,std::vector<Matrix>{matrix(up)}).first;
++    const auto& g=it->second.at(0);const auto& u=other->second.at(0);
++    require(g.tokens==1&&u.tokens==1&&g.x==u.x&&g.routes==u.routes&&g.type==u.type&&g.activation==iq3::Type::F32&&g.output_type==iq3::Type::F32,"paired gate/up matrices");
++    finish(c,iq3block::submit_pair(dev(c),g,u,l.label,l.weights.at(0),up.label,up.weights.at(0)),true);return;
++  }
+   if(auto mixed=gsq_mix_partner.find(&l);mixed!=gsq_mix_partner.end()) {
+     const auto& m=it->second.at(0);const auto& mix=*mixed->second;const int c=l.card;
+     require(m.tokens==1&&m.rows==size_t(mix.shape[1])*4,"fused gate+mix matrix");
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp b/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
+--- a/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
++++ b/src/gsq-rco-iq3s/expert-iq3xxs-block/engine/build/source/block.hpp
+@@ -2,6 +2,10 @@
+ // Candidate only. Frozen generic control remains unchanged.
+ #include "gsq-rco-iq3s/integration/build/private/additive/packed.hpp"
+ #include "gsq-rco-iq3s/expert-iq3xxs-block/selection.hpp"
++#include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/dn2_kernels.hpp"
++#endif
+ namespace iq3block {
+ using gsqn::Shape;using gsqn::Bound;
+ // Identical scalar decoder multiplication order; only block half conversion
+@@ -76,6 +80,45 @@
+   }));});
+  }
+ };
++// OWNRT_DECODE_NEXT2 xxs (lab 2026-10-26; bodies in dn2_kernels.hpp). MODE 1|2: packed logical lanes (work-item t of a
++// row owns lanes 4t..4t+3: one grid word, code and scale factor for four lanes; each lane's value, product, add order
++// and the tree unchanged), 16-lane subgroups, two rows each; MODE 2 reads the grid from a work-group copy. MODE 3: this
++// file's BlockRowsOperation<4> with the grid from a work-group copy (four subgroups per work-group). Same thread count.
++template<int MODE> class XxsDn2Kernel;
++template<int MODE> struct XxsDn2Operation final:ownrt::SyclOperation {
++ Shape s{};
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
++  const dn2::XxsView v{static_cast<const uint8_t*>(p[0]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4]),
++   uint32_t(s.rows),uint32_t(s.columns),uint32_t(s.row_bytes),uint32_t(s.count),uint32_t(s.experts)};
++  constexpr unsigned WGSG=4;
++  if constexpr(MODE==3){
++   const uint32_t blocks=(v.rows+3)/4,total=blocks*v.count,groups=(total+WGSG-1)/WGSG;
++   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsDn2Kernel<MODE>>(sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{dn2::xxs_rows_tab<WGSG>(v,it);}));});
++  } else if constexpr(MODE==4||MODE==5){
++   const uint32_t blocks=(v.rows+3)/4,total=blocks*v.count,groups=(total+WGSG-1)/WGSG;
++   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsDn2Kernel<MODE>>(sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{dn2::xxs_packed<MODE-3,WGSG,32>(v,it);}));});
++  } else {
++   const uint32_t blocks=(v.rows+1)/2,total=blocks*v.count,groups=(total+WGSG-1)/WGSG;
++   return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsDn2Kernel<MODE>>(sycl::nd_range<1>(size_t(groups)*16*WGSG,16*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(16)]]{dn2::xxs_packed<MODE,WGSG>(v,it);}));});
++  }
++ }
++};
++// OWNRT_DECODE_NEXT2 xxspair (lab 2026-10-26): a gate site and its up site (same input and routes) in one decode launch;
++// subgroups split between the two matrices, every row with xxs_packed's work (32-lane subgroups, work-group grid copy:
++// MODE 2), each matrix's own output and status. Launch count per expert layer 2 -> 1, work per row unchanged.
++class XxsPairKernel;
++struct XxsPairOperation final:ownrt::SyclOperation {
++ Shape s{};
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
++  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
++  const uint32_t rows=uint32_t(s.rows),cols=uint32_t(s.columns),rb=uint32_t(s.row_bytes),count=uint32_t(s.count),experts=uint32_t(s.experts);
++  const dn2::XxsView g{static_cast<const uint8_t*>(p[0]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4]),rows,cols,rb,count,experts};
++  const dn2::XxsView u{static_cast<const uint8_t*>(p[5]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[6]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[7]),rows,cols,rb,count,experts};
++  constexpr unsigned WGSG=4,SG=32;const uint32_t total=2*((rows+3)/4)*count,groups=(total+WGSG-1)/WGSG;
++  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsPairKernel>(sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{dn2::xxs_packed_pair<2,WGSG,SG>(g,u,it);}));});
++ }
++};
+ inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+ #endif
+ template<bool F> class BlockKernel;
+@@ -119,9 +162,29 @@
+  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
+  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};
+ #ifndef OWN_RT_HOST_ONLY
++ if(shape.f32&&!shape.row_major&&block_rows()&&decode_next2::enabled("xxs")){
++  static const int mode=decode_next2::variant("OWNRT_DN2_XXS",1);
++  if(mode==2){XxsDn2Operation<2> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  if(mode==3){XxsDn2Operation<3> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  if(mode==4){XxsDn2Operation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  if(mode==5){XxsDn2Operation<5> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
++  XxsDn2Operation<1> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+  if(shape.f32&&!shape.row_major&&block_rows()){BlockRowsOperation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+ #endif
+  if(shape.f32){BlockOperation<true> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
+  BlockOperation<> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};
+ }
++#ifndef OWN_RT_HOST_ONLY
++// Decode issue of a gate site and its up site (both selected IQ3 block sites, same input and routes): XxsPairOperation.
++inline integrated::Launch submit_pair(ownrt::Device&d,const integrated::Matrix&g,const integrated::Matrix&u,std::string_view gl,std::string_view gw,std::string_view ul,std::string_view uw){
++ require(selected(gl,gw)&&selected(ul,uw),"IQ3 block pair site identity");
++ for(const auto*m:{&g,&u})require(unsigned(m->type)==18&&m->rows==640&&m->columns==2560&&m->count==10&&m->tokens==1&&m->experts==512&&m->span==640&&m->routes&&m->status&&m->activation==iq3::Type::F32&&m->output_type==iq3::Type::F32&&!m->fp32,"IQ3 block pair geometry");
++ require(g.x==u.x&&g.routes==u.routes,"IQ3 block pair shares input and routes");
++ const auto sg=gsqn::validate(d,g,gsqn::InputMode::per_slot,gsqn::Storage::packed_direct);gsqn::validate(d,u,gsqn::InputMode::per_slot,gsqn::Storage::packed_direct);
++ require(sg.f32&&!sg.row_major,"IQ3 block pair F32 decode");
++ std::array<ownrt::Allocation,8>ids{g.w,g.x,g.y,g.routes,g.status,u.w,u.y,u.status};
++ for(size_t i=0;i<ids.size();++i)for(size_t j=0;j<i;++j)require(ids[i]!=ids[j],"IQ3 block pair distinct allocations");
++ XxsPairOperation op;op.s=sg;auto e=d.compute(op,ids,{});return {e,e,1};
++}
++#endif
+ } // namespace iq3block
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet194-expert-diet-engine/decode_next2.hpp b/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
+--- a/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
++++ b/src/stage2/packet194-expert-diet-engine/decode_next2.hpp
+@@ -0,0 +1,25 @@
++#pragma once
++// OWNRT_DECODE_NEXT2 (lab 2026-10-26, default off): exact decode-step changes after OWNRT_DECODE_NEXT. A comma list of
++// tokens (variants through OWNRT_DN2_* numbers):
++//  hclow   dense BF16 decode rows with K > 1024 (HC low+inject, router, ...): kopt's 32 logical lanes of a row split over
++//          two 16-lane subgroups of one work-group (the same per-lane chunk loop; tree levels 1..8 in each subgroup,
++//          the last level lower + upper through work-group memory). OWNRT_DN2_HCLOW_U: chunks loaded per step (8).
++//  hcgate  dense BF16 decode rows with K <= 1024 (HC gate): OWNRT_DN2_HCGATE=1 packed logical lanes (work-item t owns
++//          lanes 4t..4t+3, 16-lane subgroups, two rows each); 2|8: dense_v2 with 2|8 rows per subgroup.
++//  xxs     routed IQ3_XXS gate/up (block kernel): OWNRT_DN2_XXS=1 packed logical lanes (one grid word for four lanes),
++//          2 the same with the grid in work-group memory, 3 the unchanged lane mapping with the grid in work-group memory.
++//  sgrid   routed IQ3_S / IQ2_S rows (kopt block rows): grid in work-group memory.
++// Each output keeps its float operation sequence; see research/decode-next2/RESULT.md.
++#include <cstdlib>
++#include <string>
++namespace decode_next2 {
++inline const std::string& list() {
++  static const std::string v=[]{const char* e=std::getenv("OWNRT_DECODE_NEXT2");return std::string(e?e:"");}();
++  return v;
++}
++inline bool enabled(const char* token) {
++  const auto& v=list();if(v.empty()||v=="0")return false;
++  return (","+v+",").find(std::string(",")+token+",")!=std::string::npos;
++}
++inline int variant(const char* name,int fallback) {const char* e=std::getenv(name);return e?std::atoi(e):fallback;}
++}
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp b/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
+--- a/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
++++ b/src/stage2/packet194-expert-diet-engine/dn2_kernels.hpp
+@@ -0,0 +1,213 @@
++#pragma once
++// OWNRT_DECODE_NEXT2 device bodies (lab 2026-10-26), standalone so the CPU-device tests run the same code as the engine.
++#include <sycl/sycl.hpp>
++#include <bit>
++#include <cstdint>
++#include "stage2/packet2/kernels/math.hpp"
++#include "stage2/packet6-kopt/reference.hpp"
++namespace dn2 {
++using iq3::Type;
++// Plain view of one routed IQ3_XXS block launch (gsqn::Bound restated): weights, F32 input per slot, F32 output per slot.
++struct XxsView {const uint8_t* w;const float* x;float* y;const iq3::Route* routes;uint32_t* status;uint32_t rows,columns,row_bytes,count,experts;};
++// xxs MODE 1|2: packed logical lanes (see decode_next2.hpp). One 16-lane subgroup = two rows (set = lane/8); item t owns
++// logical lanes 4t..4t+3 of block_lane_sum's mapping. WGSG subgroups per work-group. MODE 2: grid from a work-group copy
++// (every item reaches the barrier before any return).
++template<int MODE,unsigned WGSG,unsigned SG> inline const uint32_t* xxs_grid(sycl::nd_item<1> it){
++ if constexpr(MODE==2){uint32_t* tab=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[256]>(it.get_group());
++  for(unsigned li=unsigned(it.get_local_linear_id());li<256;li+=SG*WGSG)tab[li]=iq3::iq3_grid[li];
++  sycl::group_barrier(it.get_group());return tab;}
++ else return iq3::iq3_grid;
++}
++// Rows of one matrix for subgroup index `logical` within it (two rows per 16 lanes, four per 32).
++template<unsigned SG> inline void xxs_packed_rows(const XxsView v,uint32_t logical,const uint32_t* grid,sycl::nd_item<1> it){
++ constexpr unsigned RPS=SG/8;
++ const uint32_t blocks=(v.rows+RPS-1)/RPS,total=blocks*v.count;
++ const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
++ if(logical>=total)return;
++ const uint32_t slot=logical/blocks,row=(logical%blocks)*RPS+set;
++ const iq3::Route r=v.routes[slot];const bool valid=iq3::valid_route(r,v.experts,v.rows,v.rows);
++ const bool live=valid&&row<v.rows&&row<r.row_count;
++ const float* x=v.x+size_t(slot)*v.columns;
++ const uint8_t* w=live?v.w+(size_t(r.expert_id)*v.rows+r.row_begin+row)*v.row_bytes:v.w;
++ float acc[4]={0.f,0.f,0.f,0.f};
++ if(live){
++  const uint32_t nblocks=v.columns/256;const unsigned cshift=7*(t/2),sbase=4*(t%2);
++  for(uint32_t block=0;block<nblocks;++block){
++   const uint8_t* packed=w+block*98u;const float d=iq3::half(iq3::u16(packed));
++   #pragma unroll
++   for(unsigned group=0;group<8;++group){
++    const auto*half_words=reinterpret_cast<const uint16_t*>(packed+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16;
++    const uint32_t code=(word>>cshift)&127,mask=code|((std::popcount(code)%2)<<7);
++    const float scale=(d*(0.5f+float(word>>28)))*0.5f;
++    const uint32_t entry=grid[packed[2+group*8+t]];
++    const sycl::vec<float,4> xv=*reinterpret_cast<const sycl::vec<float,4>*>(x+block*256u+group*32u+4u*t);
++    #pragma unroll
++    for(unsigned j=0;j<4;++j){const uint32_t mag=(entry>>(8*j))&255;const int sign=(mask>>(sbase+j))&1?-1:1;
++     const float weight=(scale*float(mag))*float(sign);const float product=weight*xv[j];acc[j]=acc[j]+product;}
++   }
++  }
++ }
++ const float a01=acc[0]+acc[1],a23=acc[2]+acc[3];float sum=a01+a23;
++ #pragma unroll
++ for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
++ if(t==0&&row<v.rows)v.y[size_t(slot)*v.rows+row]=live?sum:iq3::bits_float(0x7fc00000);
++ if(lane==0&&logical%blocks==0&&v.status)v.status[slot]=!valid;
++}
++template<int MODE,unsigned WGSG,unsigned SG=16> inline void xxs_packed(const XxsView v,sycl::nd_item<1> it){
++ const uint32_t* grid=xxs_grid<MODE,WGSG,SG>(it);
++ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(it.get_sub_group().get_group_linear_id());
++ xxs_packed_rows<SG>(v,logical,grid,it);
++}
++// xxspair: the gate and up matrices of one expert layer (same input and routes) in one launch: subgroups [0, total_g)
++// take gate rows, the rest up rows, each with xxs_packed's unchanged per-row work.
++template<int MODE,unsigned WGSG,unsigned SG> inline void xxs_packed_pair(const XxsView g,const XxsView u,sycl::nd_item<1> it){
++ const uint32_t* grid=xxs_grid<MODE,WGSG,SG>(it);
++ constexpr unsigned RPS=SG/8;const uint32_t total_g=((g.rows+RPS-1)/RPS)*g.count;
++ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(it.get_sub_group().get_group_linear_id());
++ const bool second=logical>=total_g;
++ xxs_packed_rows<SG>(second?u:g,second?logical-total_g:logical,grid,it);
++}
++// iq3block::block_element_words with the grid from a pointer (the same index byte and word).
++inline float xxs_element_tab(const uint8_t*b,float d,unsigned group,unsigned lane,const uint32_t* grid){
++ const auto*half_words=reinterpret_cast<const uint16_t*>(b+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16,code=(word>>(7*(lane/8)))&127;
++ const auto mask=code|((std::popcount(code)%2)<<7);
++ const int sign=(mask>>(lane%8))&1?-1:1;
++ const uint32_t index=(uint32_t(reinterpret_cast<const uint16_t*>(b+2+group*8)[lane/8])>>(8*((lane/4)%2)))&255;
++ const auto mag=(grid[index]>>(8*(lane%4)))&255;
++ return (((d*(0.5f+float(word>>28)))*0.5f)*float(mag))*float(sign);
++}
++// xxs MODE 3: iq3block::BlockRowsOperation<4>'s body with the grid from a work-group copy; WGSG 32-lane subgroups per
++// work-group (the original runs one per work-group).
++template<unsigned WGSG> inline void xxs_rows_tab(const XxsView v,sycl::nd_item<1> it){
++ constexpr unsigned R=4;
++ const uint32_t blocks=(v.rows+R-1)/R,total=blocks*v.count;
++ uint32_t* tab=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[256]>(it.get_group());
++ for(unsigned li=unsigned(it.get_local_linear_id());li<256;li+=32*WGSG)tab[li]=iq3::iq3_grid[li];
++ sycl::group_barrier(it.get_group());
++ const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++ const unsigned slot=unsigned(logical/blocks);const size_t first=size_t(logical%blocks)*R;
++ const auto r=v.routes[slot];const bool valid=iq3::valid_route(r,v.experts,v.rows,v.rows);
++ const float* x=v.x+size_t(slot)*v.columns;float acc[R];
++ #pragma unroll
++ for(unsigned i=0;i<R;++i)acc[i]=0;
++ const uint8_t* rows[R];bool live[R];
++ #pragma unroll
++ for(unsigned i=0;i<R;++i){const size_t row=first+i;live[i]=valid&&row<v.rows&&row<r.row_count;rows[i]=live[i]?v.w+(size_t(r.expert_id)*v.rows+r.row_begin+row)*v.row_bytes:v.w;}
++ const uint32_t nblocks=v.columns/256;
++ for(uint32_t block=0;block<nblocks;++block){
++  #pragma unroll
++  for(unsigned i=0;i<R;++i){if(!live[i])continue;
++   const auto*packed=rows[i]+block*98u;const float d=iq3::half(iq3::u16(packed));
++   #pragma unroll
++   for(unsigned group=0;group<8;++group){const uint32_t k=block*256u+group*32u+lane;const float weight=xxs_element_tab(packed,d,group,lane,tab);const float product=weight*x[k];acc[i]=acc[i]+product;}}
++ }
++ #pragma unroll
++ for(unsigned i=0;i<R;++i){float sum=acc[i];
++  for(unsigned width=1;width<32;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%32);if(lane%(2*width)==0)sum=sum+rhs;}
++  const size_t row=first+i;
++  if(lane==0&&row<v.rows)v.y[size_t(slot)*v.rows+row]=valid&&row<r.row_count?sum:iq3::bits_float(0x7fc00000);}
++ if(lane==0&&first==0&&v.status)v.status[slot]=!valid;
++}
++// sgrid: kopt decode8<T> for IQ2_S / IQ3_S with the codebook from a work-group copy (IQ2_S: the 64-bit word as its two
++// 32-bit halves, low word at 2*ix: the same bytes without 64-bit shifts). Values identical to decode8<T>.
++template<Type T> inline void decode8_tab(const uint8_t* row,uint32_t k,float* v,const uint32_t* tab) {
++  using iq3::kopt::half_scale;using iq3::u16;
++  if constexpr(T==Type::IQ2_S) {
++    auto b=row+(k/256)*82;unsigned i=k%256,q=i/8;
++    unsigned ix=b[2+q]|(((b[66+q/4]>>(2*(q%4)))&3)<<8);
++    const uint32_t lo=tab[2*ix],hi=tab[2*ix+1];unsigned signs=b[34+q];
++    unsigned sc=(b[74+i/32]>>(4*((i/16)%2)))&15;
++    float scale=(half_scale(u16(b))*(0.5f+float(sc)))*0.25f;
++    for(unsigned j=0;j<8;++j)v[j]=(scale*float(((j<4?lo:hi)>>(8*(j%4)))&255u))*float((signs>>j)&1?-1:1);
++  } else {
++    static_assert(T==Type::IQ3_S);
++    auto b=row+(k/256)*110;unsigned i=k%256,q=i/4;
++    unsigned signs=b[74+i/8],sc=(b[106+i/64]>>(4*((i/32)%2)))&15;
++    float scale=half_scale(u16(b))*float(1+2*sc);
++    for(unsigned g=0;g<2;++g) {
++      unsigned qi=q+g,ix=b[2+qi]|(((b[66+qi/8]>>(qi%8))&1)<<8);
++      uint32_t grid=tab[ix];
++      for(unsigned j=0;j<4;++j)v[g*4+j]=(scale*float((grid>>(8*j))&255))*float((signs>>(g*4+j))&1?-1:1);
++    }
++  }
++}
++// Fill the work-group codebook copy (n items); returns the table. Every item must call it (it holds a barrier).
++template<Type T,unsigned N> inline const uint32_t* grid_tab(sycl::nd_item<1> it){
++  if constexpr(T==Type::IQ2_S){uint32_t* t=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[2048]>(it.get_group());
++    for(unsigned li=unsigned(it.get_local_linear_id());li<2048;li+=N)t[li]=uint32_t(iq3::iq2_s_grid[li/2]>>(32*(li%2)));
++    sycl::group_barrier(it.get_group());return t;}
++  else {uint32_t* t=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[512]>(it.get_group());
++    for(unsigned li=unsigned(it.get_local_linear_id());li<512;li+=N)t[li]=iq3::iq3_s_grid[li];
++    sycl::group_barrier(it.get_group());return t;}
++}
++// sgrid packed (lab 2026-10-26): routed IQ3_S / IQ2_S rows (kopt MultiplyBlockRows' mapping: lane L owns columns
++// 8L+256c) with packed logical lanes: in an SG-lane subgroup, set = lane/8 takes one row and item t = lane%8 owns lanes
++// 4t..4t+3 = columns 256c+32t..+31 of each chunk. Each lane's eight values are decode8<T>'s (the same bytes, codebook
++// words, scale expression and sign factors; scales shared by lanes computed once), product then add, chunks in order;
++// ((l0+l1)+(l2+l3)) in registers, then three adjacent-pair levels. Requires K % 256 == 0. TAB: codebook from a
++// work-group copy. Same work-item count as MultiplyBlockRows<4> at SG 32.
++struct SView {const uint8_t* w;const float* x;float* y;const iq3::Route* routes;uint32_t* status;uint32_t rows,span,k,rb,count,experts;bool routed;};
++template<Type T,unsigned SG,bool TAB,unsigned WGSG> inline void s_packed(const SView v,sycl::nd_item<1> it){
++ constexpr unsigned SETS=SG/8;
++ const uint32_t blocks=(v.span+SETS-1)/SETS,total=blocks*v.count;
++ const uint32_t* tab=nullptr;
++ if constexpr(TAB)tab=grid_tab<T,SG*WGSG>(it);
++ const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
++ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
++ const uint32_t slot=logical/blocks,row=(logical%blocks)*SETS+set;
++ iq3::Route r{0,0,v.rows};if(v.routed)r=v.routes[slot];
++ const bool valid=iq3::valid_route(r,v.experts,v.rows,v.span);
++ if(v.routed&&logical%blocks==0&&lane==0)v.status[slot]=valid?0:1;
++ const bool live=valid&&row<v.span&&row<r.row_count;
++ const float* x=v.x+size_t(slot)*v.k;
++ const uint8_t* w=live?v.w+(size_t(r.expert_id)*v.rows+r.row_begin+row)*v.rb:v.w;
++ using iq3::kopt::half_scale;using iq3::u16;
++ float acc[4]={0.f,0.f,0.f,0.f};
++ if(live){
++  for(uint32_t c=0;c*256u<v.k;++c){
++   float xv[32];
++   {const sycl::vec<float,4>*xp=reinterpret_cast<const sycl::vec<float,4>*>(x+c*256u+32u*t);
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const auto q=xp[e];xv[4*e]=q[0];xv[4*e+1]=q[1];xv[4*e+2]=q[2];xv[4*e+3]=q[3];}}
++   if constexpr(T==Type::IQ3_S){
++    const uint8_t* b=w+c*110u;
++    const unsigned sc=(b[106+t/2]>>(4*(t%2)))&15;const float scale=half_scale(u16(b))*float(1+2*sc);
++    const unsigned qh=b[66+t];
++    #pragma unroll
++    for(unsigned j=0;j<4;++j){
++     const unsigned signs=b[74+4*t+j];
++     #pragma unroll
++     for(unsigned g=0;g<2;++g){
++      const unsigned qi=8*t+2*j+g,ix=b[2+qi]|(((qh>>(2*j+g))&1)<<8);
++      const uint32_t grid=TAB?tab[ix]:iq3::iq3_s_grid[ix];
++      #pragma unroll
++      for(unsigned jj=0;jj<4;++jj){const float value=(scale*float((grid>>(8*jj))&255))*float((signs>>(g*4+jj))&1?-1:1);
++       const float product=value*xv[8*j+4*g+jj];acc[j]=acc[j]+product;}
++     }
++    }
++   } else {
++    static_assert(T==Type::IQ2_S);
++    const uint8_t* b=w+c*82u;
++    const unsigned scb=b[74+t];const float d=half_scale(u16(b));
++    const float scale0=(d*(0.5f+float(scb&15)))*0.25f,scale1=(d*(0.5f+float((scb>>4)&15)))*0.25f;
++    const unsigned qh=b[66+t];
++    #pragma unroll
++    for(unsigned j=0;j<4;++j){
++     const unsigned q=4*t+j,ix=b[2+q]|(((qh>>(2*j))&3)<<8),signs=b[34+q];
++     uint32_t lo,hi;
++     if constexpr(TAB){lo=tab[2*ix];hi=tab[2*ix+1];}else{const uint64_t g64=iq3::iq2_s_grid[ix];lo=uint32_t(g64);hi=uint32_t(g64>>32);}
++     const float scale=j<2?scale0:scale1;
++     #pragma unroll
++     for(unsigned jj=0;jj<8;++jj){const float value=(scale*float(((jj<4?lo:hi)>>(8*(jj%4)))&255u))*float((signs>>jj)&1?-1:1);
++      const float product=value*xv[8*j+jj];acc[j]=acc[j]+product;}
++    }
++   }
++  }
++ }
++ const float a01=acc[0]+acc[1],a23=acc[2]+acc[3];float sum=a01+a23;
++ #pragma unroll
++ for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
++ if(t==0&&row<v.span)v.y[size_t(slot)*v.span+row]=live?sum:iq3::bits_float(0x7fc00000);
++}
++}
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet6-kopt/dense_v2.hpp b/src/stage2/packet6-kopt/dense_v2.hpp
+--- a/src/stage2/packet6-kopt/dense_v2.hpp
++++ b/src/stage2/packet6-kopt/dense_v2.hpp
+@@ -13,6 +13,7 @@
+ // aligned BF16 (rb % 16 == 0, base aligned), x 16-byte aligned: Multiply's aligned F32 branch is taken for every
+ // chunk there, so its ragged-chunk path is the only other one and is reproduced.
+ #include <sycl/sycl.hpp>
++#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
+ #include <array>
+ #include <cstdint>
+ #include <cstdlib>
+@@ -86,5 +87,145 @@
+  const Mat d=m[j];
+  bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
+ }
++// OWNRT_DECODE_NEXT2 hclow (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
++// Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
++// order and the ragged tail, so each logical lane's sum is unchanged. Tree: levels 1..8 by the same xor butterfly inside
++// each subgroup (lower + upper at every node), then node(0..15) + node(16..31) through work-group memory. Matrices are
++// partitioned in rows (first_sub counts rows here). Every item reaches the barrier.
++template<unsigned U,unsigned WGR> inline void bf16_split(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it,float* xch){
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgl=unsigned(sg.get_group_linear_id());
++ const unsigned slot=sgl/2,half=sgl%2;const uint32_t ridx=uint32_t(it.get_group_linear_id())*WGR+slot;
++ unsigned j=0;
++ for(unsigned t=1;t<count;++t)if(ridx>=m[t].first_sub)j=t;
++ const Mat d=m[j];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
++ float A=0.f;
++ if(live){
++  const uint32_t k=d.k;const uint8_t* W=d.w+size_t(row)*d.rb;const float* x=d.x;
++  uint32_t base=(half*16u+lane)*8u;
++  for(;base+(U-1)*256u+8u<=k;base+=U*256u){
++   float wide[U][8];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[u][e]=a0[e];wide[u][e+4]=a1[e];}}
++   sycl::vec<uint16_t,8> w[U];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+u*256u)*2u);
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const float product=bf16f(w[u][e])*wide[u][e];A=A+product;}}
++  }
++  for(;base+8u<=k;base+=256u){
++   float wide[8];
++   {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}}
++   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base)*2u);
++   #pragma unroll
++   for(unsigned e=0;e<8;++e){const float product=bf16f(w[e])*wide[e];A=A+product;}
++  }
++  if(base<k){
++   const uint16_t* wr=reinterpret_cast<const uint16_t*>(W);float values[8],wide[8];
++   for(unsigned e=0;base+e<k;++e){values[e]=bf16f(wr[base+e]);wide[e]=x[base+e];}
++   for(unsigned e=0;base+e<k;++e){const float product=values[e]*wide[e];A=A+product;}
++  }
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<4;++lv){const float o=sycl::permute_group_by_xor(sg,A,1u<<lv);A=((lane>>lv)&1u)?o+A:A+o;}
++ if(half==1&&lane==0)xch[slot]=A;
++ sycl::group_barrier(it.get_group());
++ if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
++}
++// bf16_split with the weight loads of U chunks issued first and each chunk's input loaded at its use (fewer registers,
++// so U can cover 20..40 chunks: fewer dependent memory round trips per lane). Products and adds in the same order.
++template<unsigned U,unsigned WGR> inline void bf16_split_lazy(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it,float* xch){
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgl=unsigned(sg.get_group_linear_id());
++ const unsigned slot=sgl/2,half=sgl%2;const uint32_t ridx=uint32_t(it.get_group_linear_id())*WGR+slot;
++ unsigned j=0;
++ for(unsigned t=1;t<count;++t)if(ridx>=m[t].first_sub)j=t;
++ const Mat d=m[j];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
++ float A=0.f;
++ if(live){
++  const uint32_t k=d.k;const uint8_t* W=d.w+size_t(row)*d.rb;const float* x=d.x;
++  uint32_t base=(half*16u+lane)*8u;
++  for(;base+(U-1)*256u+8u<=k;base+=U*256u){
++   sycl::vec<uint16_t,8> w[U];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+u*256u)*2u);
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){
++    const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
++    float wide[8];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const float product=bf16f(w[u][e])*wide[e];A=A+product;}}
++  }
++  for(;base+8u<=k;base+=256u){
++   float wide[8];
++   {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}}
++   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base)*2u);
++   #pragma unroll
++   for(unsigned e=0;e<8;++e){const float product=bf16f(w[e])*wide[e];A=A+product;}
++  }
++  if(base<k){
++   const uint16_t* wr=reinterpret_cast<const uint16_t*>(W);float values[8],wide[8];
++   for(unsigned e=0;base+e<k;++e){values[e]=bf16f(wr[base+e]);wide[e]=x[base+e];}
++   for(unsigned e=0;base+e<k;++e){const float product=values[e]*wide[e];A=A+product;}
++  }
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<4;++lv){const float o=sycl::permute_group_by_xor(sg,A,1u<<lv);A=((lane>>lv)&1u)?o+A:A+o;}
++ if(half==1&&lane==0)xch[slot]=A;
++ sycl::group_barrier(it.get_group());
++ if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
++}
++// Kernel object for bf16_split_lazy (16-lane subgroups; GRF 256 requests the large register file).
++template<unsigned U,unsigned WGR,unsigned GRF> struct SplitLazy {
++ std::array<Mat,4> m;unsigned count;
++ void operator()(sycl::nd_item<1> it) const {float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());bf16_split_lazy<U,WGR>(m,count,it,xch);}
++ auto get(sycl::ext::oneapi::experimental::properties_tag) const {
++#ifndef REUSE2_TEST_NO_GRF
++  if constexpr(GRF==256)return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<16>,sycl::ext::intel::experimental::grf_size<256>};
++  else
++#endif
++  return sycl::ext::oneapi::experimental::properties{sycl::ext::oneapi::experimental::sub_group_size<16>};
++ }
++};
++// OWNRT_DECODE_NEXT2 hcgate=1 (lab 2026-10-26): packed logical lanes for K % 32 == 0. In a 16-lane subgroup, set s = lane/8
++// takes one row and item t = lane%8 owns logical lanes 4t..4t+3, i.e. columns 256i+32t .. +31 of every chunk i (each
++// logical lane's 8 columns, product then add, chunks in order: bf16_rows' sequence). Tree: ((l0+l1)+(l2+l3)) in
++// registers, then three adjacent-pair levels over the items. Rows are partitioned per matrix in row units.
++inline void bf16_packed(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it){
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
++ const uint32_t gsub=uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/16)+uint32_t(sg.get_group_linear_id());
++ const uint32_t ridx=gsub*2u+set;
++ unsigned j=0;
++ for(unsigned c=1;c<count;++c)if(ridx>=m[c].first_sub)j=c;
++ const Mat d=m[j];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
++ float acc[4]={0.f,0.f,0.f,0.f};
++ if(live){
++  const uint8_t* W=d.w+size_t(row)*d.rb;
++  for(uint32_t base=32u*t;base<d.k;base+=256u){
++   sycl::vec<uint16_t,8> w[4];float xv[32];
++   #pragma unroll
++   for(unsigned q=0;q<4;++q)w[q]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+8u*q)*2u);
++   {const sycl::vec<float,4>*xp=reinterpret_cast<const sycl::vec<float,4>*>(d.x+base);
++    #pragma unroll
++    for(unsigned c=0;c<8;++c){const auto v=xp[c];xv[4*c]=v[0];xv[4*c+1]=v[1];xv[4*c+2]=v[2];xv[4*c+3]=v[3];}}
++   #pragma unroll
++   for(unsigned q=0;q<4;++q){
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const float product=bf16f(w[q][e])*xv[8*q+e];acc[q]=acc[q]+product;}}
++  }
++ }
++ const float a01=acc[0]+acc[1],a23=acc[2]+acc[3];float sum=a01+a23;
++ #pragma unroll
++ for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%16);if(t%(2*width)==0)sum=sum+rhs;}
++ if(t==0&&live)d.y[row]=sum;
++}
+ inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
+ }
+diff -ruN '--exclude=__pycache__' '--exclude=rank.hpp' a/src/stage2/packet6-kopt/kernels.cpp b/src/stage2/packet6-kopt/kernels.cpp
+--- a/src/stage2/packet6-kopt/kernels.cpp
++++ b/src/stage2/packet6-kopt/kernels.cpp
+@@ -9,6 +9,8 @@
+ #include "stage2/packet194-expert-diet-engine/detmath.hpp"
+ #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #include "stage2/packet194-expert-diet-engine/decode_next.hpp"
++#include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
++#include "stage2/packet194-expert-diet-engine/dn2_kernels.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet6-kopt/dense_v2.hpp"
+ #include <algorithm>
+@@ -151,6 +153,45 @@
+         ok=ok&&!d.routed&&!d.diagnostic&&!d.row_major&&d.count==1&&d.experts==1&&d.span==d.rows&&d.activation==Type::F32&&d.output==Type::F32&&
+           d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
+         maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
++      if(ok&&decode_next2::enabled(maxk<=1024&&maxrows>=2048?"hcgate":"hclow")){
++        // OWNRT_DECODE_NEXT2 hclow / hcgate (lab 2026-10-26): the same rows with the per-row arithmetic of bf16_rows (see
++        // dense_v2.hpp); matrices partitioned in row units.
++        const bool small_k=maxk<=1024&&maxrows>=2048;std::array<dense_v2::Mat,4> m2{};uint32_t total=0;bool k32=true;
++        for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),total};total+=uint32_t(d.rows);k32=k32&&d.k%32==0;}
++        static const int gate=decode_next2::variant("OWNRT_DN2_HCGATE",1),U=decode_next2::variant("OWNRT_DN2_HCLOW_U",8);
++        // K >= 8192 (HC low + inject): OWNRT_DN2_HCLOW_U = 4|8|10 (bf16_split), 20|40 (bf16_split_lazy; OWNRT_DN2_GRF=256
++        // for the large register file); other large-K matrices (router, gdn.a/b, qsa.iq/ik): OWNRT_DN2_HCLOW_UR = 10
++        // (bf16_split U10) or 0 (unchanged bf16_multi<1,8>).
++        static const int UR=decode_next2::variant("OWNRT_DN2_HCLOW_UR",0),GRF=decode_next2::variant("OWNRT_DN2_GRF",128);
++        const int Ueff=maxk>=8192?U:UR;
++        if(!small_k&&(Ueff==20||Ueff==40)){
++          constexpr unsigned WGR=4;const size_t global=size_t((total+WGR-1)/WGR)*WGR*32;const auto range=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32));
++          if(Ueff==20&&GRF!=256)return ownrt::prepared_submit(q,[=](sycl::handler& h){h.parallel_for(range,packet26::checked(dense_v2::SplitLazy<20,WGR,128>{m2,count}));});
++          if(Ueff==20)return ownrt::prepared_submit(q,[=](sycl::handler& h){h.parallel_for(range,packet26::checked(dense_v2::SplitLazy<20,WGR,256>{m2,count}));});
++          if(GRF!=256)return ownrt::prepared_submit(q,[=](sycl::handler& h){h.parallel_for(range,packet26::checked(dense_v2::SplitLazy<40,WGR,128>{m2,count}));});
++          return ownrt::prepared_submit(q,[=](sycl::handler& h){h.parallel_for(range,packet26::checked(dense_v2::SplitLazy<40,WGR,256>{m2,count}));});
++        }
++        if(!small_k&&Ueff!=0){
++          constexpr unsigned WGR=4;const size_t global=size_t((total+WGR-1)/WGR)*WGR*32;
++#define DN2_SPLIT(UU) return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32))](sycl::handler& h){ \
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{ \
++              float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());dense_v2::bf16_split<UU,WGR>(m2,count,it,xch);}));})
++          if(Ueff==4)DN2_SPLIT(4);
++          if(Ueff==10)DN2_SPLIT(10);
++          DN2_SPLIT(8);
++#undef DN2_SPLIT
++        }
++        if(small_k&&gate==1&&k32){const size_t global=size_t((total+7)/8)*64;
++          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(64))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{dense_v2::bf16_packed(m2,count,it);}));});}
++        if(small_k&&(gate==2||gate==8)){std::array<dense_v2::Mat,4> m3=m2;uint32_t subs=0;const uint32_t R=uint32_t(gate);
++          for(unsigned j=0;j<count;++j){m3[j].first_sub=subs;subs+=(m3[j].rows+R-1)/R;}
++          const size_t global=(size_t(subs)*32+127)/128*128;
++          if(gate==2)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<2,4>(m3,count,it);}));});
++          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<8,4>(m3,count,it);}));});}
++      }
+       if(ok){const bool small_k=maxk<=1024&&maxrows>=2048;const uint32_t R=small_k?4:1;
+         for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),subs};subs+=(uint32_t(d.rows)+R-1)/R;}
+         const size_t global=(size_t(subs)*32+127)/128*128;
+@@ -488,6 +529,90 @@
+     throw std::invalid_argument("kopt block rows: decode8 formats only");
+   }
+ };
++// OWNRT_DECODE_NEXT2 sgrid (lab 2026-10-26): MultiplyBlockRows<R> for IQ3_S / IQ2_S with the codebook read from a
++// work-group copy (dn2::decode8_tab: the same words, so decode8's values are unchanged); everything else as
++// MultiplyBlockRows.
++template<unsigned R,bool SLM=true> struct MultiplyBlockRowsTab:ownrt::SyclOperation {
++  static constexpr unsigned Subgroups=4;
++  Descriptor desc{};
++  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
++    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt block-rows capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    const size_t blocks=(d.span+R-1)/R,total=blocks*d.count,groups=(total+Subgroups-1)/Subgroups;
++    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
++      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
++        // SLM=false: the global codebook read as 32-bit words (IQ2_S: its 64-bit words as low/high halves, little-endian).
++        const uint32_t* tab;
++        if constexpr(SLM)tab=dn2::grid_tab<T,SG*Subgroups>(it);
++        else if constexpr(T==Type::IQ2_S)tab=reinterpret_cast<const uint32_t*>(iq2_s_grid);
++        else tab=iq3_s_grid;
++        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
++        const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
++        const size_t slot=logical/blocks,first=(logical%blocks)*R;
++        Route r{0,0,uint32_t(d.rows)};if(d.routed)r=static_cast<const Route*>(pointers[d.r])[slot];
++        const bool valid=valid_route(r,d.experts,d.rows,d.span);
++        if(d.routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;
++        const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;const uint8_t* w=static_cast<const uint8_t*>(pointers[d.w]);
++        float acc[R];const uint8_t* rows[R];bool live[R];
++        #pragma unroll
++        for(unsigned i=0;i<R;++i){acc[i]=0;const size_t row=first+i;live[i]=valid&&row<d.span&&row<r.row_count;
++          rows[i]=live[i]?w+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb:w;}
++        const uint32_t k32=uint32_t(d.k);uint32_t k=lane*8u;
++        for(;k+8u<=k32;k+=SG*8u) {
++          float input[8];
++          #pragma unroll
++          for(unsigned j=0;j<8;++j)input[j]=x[k+j];
++          #pragma unroll
++          for(unsigned i=0;i<R;++i) {
++            if(!live[i])continue;float values[8];dn2::decode8_tab<T>(rows[i],k,values,tab);
++            #pragma unroll
++            for(unsigned j=0;j<8;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
++          }
++        }
++        if(k<k32) {
++          float input[8];for(unsigned j=0;k+j<k32;++j)input[j]=x[k+j];
++          #pragma unroll
++          for(unsigned i=0;i<R;++i) {
++            if(!live[i])continue;float values[8];for(uint32_t j=0;k+j<k32;++j)values[j]=element(T,rows[i],k+j);
++            for(unsigned j=0;k+j<k32;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
++          }
++        }
++        #pragma unroll
++        for(unsigned i=0;i<R;++i) {
++          float sum=acc[i];
++          for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
++          const size_t row=first+i;
++          if(lane==0&&row<d.span)static_cast<float*>(pointers[d.y])[slot*d.span+row]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
++        }
++      }));
++    });
++  }
++  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++    if(desc.type==Type::IQ2_S)return run<Type::IQ2_S,32>(q,p,deps);
++    if(desc.type==Type::IQ3_S)return run<Type::IQ3_S,32>(q,p,deps);
++    throw std::invalid_argument("kopt block rows tab: IQ2_S / IQ3_S only");
++  }
++};
++// OWNRT_DECODE_NEXT2 sgrid variants 2..5: dn2::s_packed (dn2_kernels.hpp) for routed IQ3_S / IQ2_S decode rows.
++struct SPacked:ownrt::SyclOperation {
++  Descriptor desc{};int variant=2;
++  template<Type T,unsigned SG,bool TAB> sycl::event run(sycl::queue& q,std::span<void* const> p) const {
++    auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt s packed capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    constexpr unsigned WGSG=4,SETS=SG/8;
++    const dn2::SView v{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),d.routed?static_cast<const iq3::Route*>(pointers[d.r]):nullptr,d.routed?static_cast<uint32_t*>(pointers[d.status]):nullptr,
++      uint32_t(d.rows),uint32_t(d.span),uint32_t(d.k),uint32_t(d.rb),d.count,d.experts,d.routed};
++    const uint32_t blocks=(v.span+SETS-1)/SETS,total=blocks*v.count,groups=(total+WGSG-1)/WGSG;
++    return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
++      h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {dn2::s_packed<T,SG,TAB,WGSG>(v,it);}));});
++  }
++  template<Type T> sycl::event pick(sycl::queue& q,std::span<void* const> p) const {
++    switch(variant){case 2:return run<T,16,false>(q,p);case 3:return run<T,16,true>(q,p);case 4:return run<T,32,false>(q,p);default:return run<T,32,true>(q,p);}
++  }
++  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++    if(desc.type==Type::IQ2_S)return pick<Type::IQ2_S>(q,p);
++    if(desc.type==Type::IQ3_S)return pick<Type::IQ3_S>(q,p);
++    throw std::invalid_argument("kopt s packed: IQ2_S / IQ3_S only");
++  }
++};
+ // OWNRT_EXPERTS_V2 (lab 2026-10-26): routed IQ4_NL rows with packed logical lanes (F32, decode slots). Work-item t of a
+ // row owns the four logical lanes 4t..4t+3 of Multiply's mapping (lane l: columns l*8+256*i), i.e. IQ4_NL block 8i+t of
+ // every 256-column chunk: its 18 bytes are read once as 5 aligned words, its scale converted once. Each logical lane
+@@ -809,6 +934,15 @@
+     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+     // OWNRT_SMALLK_ROWS=1|2: rows per subgroup for K <= 640 (same per-row arithmetic); default 4.
+     static const int small_k=[]{const char* e=std::getenv("OWNRT_SMALLK_ROWS");return e?std::atoi(e):4;}();
++    if((t==Type::IQ2_S||t==Type::IQ3_S)&&k>640&&decode_next2::enabled("sgrid")){
++      // OWNRT_DN2_S3 / OWNRT_DN2_S2 (IQ3_S / IQ2_S): 1 MultiplyBlockRows<4> with the codebook in work-group memory;
++      // 2|3 packed logical lanes, 16-lane subgroups (3: work-group codebook); 4|5 the same with 32-lane subgroups; 0 off.
++      static const int v3=decode_next2::variant("OWNRT_DN2_S3",1),v2=decode_next2::variant("OWNRT_DN2_S2",1);
++      const int v=t==Type::IQ3_S?v3:v2;
++      if(v==1){MultiplyBlockRowsTab<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
++      if(v==6){MultiplyBlockRowsTab<4,false> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
++      if(v>=2&&v<=5&&k%256==0){SPacked pk;pk.desc=op.desc[0];pk.variant=v;return d.compute(pk,ids,{});}
++    }
+     if(k<=640&&small_k==2){MultiplyBlockRows<2> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+     if(k<=640&&small_k==1){MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});}
+     MultiplyBlockRows<4> block;block.desc=op.desc[0];return d.compute(block,ids,{});
