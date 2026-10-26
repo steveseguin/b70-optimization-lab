@@ -6,6 +6,15 @@
 // Exact speculative rollback. Only the private backup is cleared at a request
 // boundary; no model allocation is canonicalized, hidden or reset before hashing.
 namespace pipeline {
+// 16 bytes per lane: one vector move when the chunk is whole and both ends are 16-byte aligned, else the original
+// byte loop. Same bytes either way (a copy); only the access width changes.
+inline void move16(uint8_t* dst,const uint8_t* src,size_t off,size_t bytes){
+#ifndef OWN_RT_HOST_ONLY
+ if(off+16<=bytes&&((reinterpret_cast<uintptr_t>(dst+off)|reinterpret_cast<uintptr_t>(src+off))&15)==0){
+  *reinterpret_cast<sycl::uint4*>(dst+off)=*reinterpret_cast<const sycl::uint4*>(src+off);return;}
+#endif
+ for(size_t j=0;j<16&&off+j<bytes;++j)dst[off+j]=src[off+j];
+}
 // Scatter/gather transport only: all component copies are admitted by the
 // unchanged CopyEngine guard before this operation can be submitted. Sources
 // and destinations remain owner-bound allocations. No model arithmetic changes.
@@ -27,7 +36,7 @@ struct SnapshotBatch final:ownrt::SyclOperation {
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<2>(rows,columns)](sycl::handler& h){
    h.parallel_for(p35_range0,packet26::checked([=](sycl::id<2> id){
     const auto item=values[id[0]];size_t off=id[1]*16;
-    for(size_t j=0;j<16&&off+j<item.bytes;++j)item.dst[off+j]=item.src[off+j];
+    move16(item.dst,item.src,off,item.bytes);
    }));
   });
  }
@@ -50,7 +59,7 @@ struct SnapshotFlat final:ownrt::SyclOperation {
   while(lo<hi){size_t mid=(lo+hi)/2;if(rows[mid].end_tile<=tile_id)lo=mid+1;else hi=mid;}
   auto row=rows[lo];size_t start=lo?rows[lo-1].end_tile:0;
   size_t off=(tile_id-start)*tile+lane*16;
-  for(size_t j=0;j<16&&off+j<row.bytes;++j)row.dst[off+j]=row.src[off+j];
+  move16(row.dst,row.src,off,row.bytes);
  }
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const> p)const override {
@@ -119,7 +128,7 @@ struct SnapshotStatic final:ownrt::SyclOperation {
   size_t off=(tile_id-start)*SnapshotFlat::tile+lane*16;
   auto source=row.source+(row.divisor==4?size_t(position>>2):size_t(position))*row.stride;
   auto dst=restore?source:row.backup;auto src=restore?row.backup:source;
-  for(size_t j=0;j<16&&off+j<row.bytes;++j)dst[off+j]=src[off+j];
+  move16(dst,src,off,row.bytes);
  }
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const> p)const override{
