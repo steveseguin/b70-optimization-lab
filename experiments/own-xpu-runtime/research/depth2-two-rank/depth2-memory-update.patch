@@ -1,0 +1,25 @@
+--- a/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
++++ b/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+@@ -301,9 +301,12 @@
+   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
+   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
+   prepare_commands();
++ const size_t cache_bytes=size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2;
+  if(ownrt::draft_depth2::enabled()){
++  size_t cache_mutable=0;for(const auto& [name,slot]:buffers)if(ends(name,".keys")||ends(name,".values")||ends(name,".raw")||ends(name,".pooled"))cache_mutable+=e.dev(0).arena.row(slot.id).bytes;
++  require(cache_mutable==cache_bytes,"draft mutable cache differs from context geometry");
+   for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
+-  require(probe_bytes<=32ull*1024*1024,"production depth2 draft backup exceeds 32 MiB reserve");
++  require(probe_bytes>=cache_mutable&&probe_bytes-cache_mutable<=64ull*1024*1024,"production depth2 non-cache draft workspace exceeds 64 MiB");
+   probe_backup=e.allocate(0,"draft:depth2-backup",probe_bytes,Category::runtime_overhead,Lifetime::process);allocated+=probe_bytes;
+  }
+   if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
+@@ -315,7 +318,7 @@
+    probe_trace.open(probe_output/"draft-depth-probe.jsonl");require(bool(probe_trace),"depth probe trace open");
+    save(e.a.output/"draft-depth-probe-config.json","{\"schema\":\"ownrt.draft-depth.config.v1\",\"depth\":"+std::to_string(depth_probe)+",\"backup_bytes\":"+std::to_string(probe_bytes)+",\"diagnostic_only\":true,\"discards_proposals\":true}");
+   }
+-  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
++  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(cache_bytes)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
+  }
+  void admit_position(int restored_extent=0) {
+   require(position>=0&&position<p.g.context,"draft capacity position admission");

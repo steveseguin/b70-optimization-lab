@@ -1,0 +1,142 @@
+--- a/src/stage2/packet194-expert-diet-engine/native_controller.hpp
++++ b/src/stage2/packet194-expert-diet-engine/native_controller.hpp
+@@ -190,13 +190,12 @@
+      half_start(0,guess,p+1,true);Reply r0first=b.wait(0);
+      Reply result=b.wait(1);double stamp=clock_now();b.call(1,accept);
+      Reply next{};double next_stamp=0;Reply r0second{};bool dependent=false;
+-     auto start_dependent=[&](){b.handover();b.start(1,half,guess,p+1,fixture(p+1),2);b.start(0,half,second_guess,p+2,fixture(p+2),2);next=b.wait(1);next_stamp=clock_now();r0second=b.wait(0);dependent=true;};
+-     if(!c.dumps&&!r0first.reserved[0])start_dependent();
++     auto start_dependent=[&](){b.handover();b.start(1,half,guess,p+1,fixture(p+1),0);b.start(0,half,second_guess,p+2,fixture(p+2),2);next=b.wait(1);next_stamp=clock_now();r0second=b.wait(0);dependent=true;};
+      require(result.token>=0&&result.token<c.vocab,"depth2 first target token bounds");
+      out.tokens.push_back(result.token);out.rows.push_back({result.token,stamp});if(out.rows.size()==1)out.prompt_ms=(stamp-out.start)*1000;
+      const bool first_hit=guess==result.token;(first_hit?out.hits:out.misses)++;out.guesses.push_back({p+1,guess,result.token,first_hit,(clock_now()-cycle)*1000});
+      if(!out.draft_rows.empty()){auto& dr=out.draft_rows.back();dr.actual=result.token;dr.hit=first_hit;dr.completed=stamp;if(out.draft_rows.size()>1&&!out.rows.empty()){auto& prev=out.draft_rows[out.draft_rows.size()-2];prev.cycle_ms=(stamp-prev.completed)*1000;}}
+-     auto rollback_suffix=[&](){if(dependent){b.call(0,rollback,second_guess,p+2,fixture(p+2),2);b.call(1,rollback,guess,p+1,fixture(p+1),2);}};
++     auto rollback_suffix=[&](){if(dependent)b.call(0,rollback,second_guess,p+2,fixture(p+2),2);};
+      auto rollback_first=[&](bool redo){b.call(0,rollback,redo?result.token:guess,p+1,fixture(p+1),redo?1:0);};
+      auto correct=[&](int confirmed,int position){half_start(0,confirmed,position);b.wait(0);b.call(0,accept);b.handover();};
+      auto next_draft=[&](int confirmed,int position){b.start(0,draft,confirmed,position,int(position+1>=length),1);pending_draft_sequence=b.seq;issued_draft_at=b.sent[0];b.wait(0);draft_pending=true;};
+@@ -210,13 +209,13 @@
+       if(emit)emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);next_draft(result.token,p+1);if(c.dumps)b.call(0,dump,0,p+1);continue;
+      }
+      require(!r0first.reserved[0],"depth2 cancelled d1 cannot be accepted");b.call(0,accept);b.call(0,draft,0,p+2,0,3);
+-     if(c.dumps){b.call(0,dump,0,p+1);start_dependent();}
++     if(c.dumps)b.call(0,dump,0,p+1);start_dependent();
+      require(next.token>=0&&next.token<c.vocab,"depth2 dependent target token bounds");out.tokens.push_back(next.token);out.rows.push_back({next.token,next_stamp});
+      const bool second_hit=second_guess==next.token;(second_hit?out.hits:out.misses)++;out.guesses.push_back({p+2,second_guess,next.token,second_hit,(clock_now()-cycle)*1000});
+      const bool terminal=std::find(c.eos.begin(),c.eos.end(),next.token)!=c.eos.end()||int(out.tokens.size())>=c.count;
+-     if(terminal){b.call(0,rollback,second_guess,p+2,fixture(p+2),2);b.call(1,accept,0,p+1,fixture(p+1),2);if(emit){emit(out.tokens.size()-1,out.tokens[out.tokens.size()-2],out.rows[out.rows.size()-2].stamp);emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);}break;}
+-     if(second_hit){require(!r0second.reserved[0]&&!next.reserved[0],"depth2 cancelled d2 cannot be accepted");b.call(0,accept,0,p+2,fixture(p+2),2);b.call(1,accept,0,p+1,fixture(p+1),2);}
+-     else {double redo=clock_now();b.call(0,rollback,second_guess,p+2,fixture(p+2),2);b.call(1,accept,0,p+1,fixture(p+1),2);correct(next.token,p+2);out.redo_ms+=(clock_now()-redo)*1000;}
++     if(terminal){b.call(0,rollback,second_guess,p+2,fixture(p+2),2);b.call(1,accept);if(emit){emit(out.tokens.size()-1,out.tokens[out.tokens.size()-2],out.rows[out.rows.size()-2].stamp);emit(out.tokens.size(),out.tokens.back(),out.rows.back().stamp);}break;}
++     if(second_hit){require(!r0second.reserved[0]&&!next.reserved[0],"depth2 cancelled d2 cannot be accepted");b.call(0,accept,0,p+2,fixture(p+2),2);b.call(1,accept);}
++     else {double redo=clock_now();b.call(0,rollback,second_guess,p+2,fixture(p+2),2);b.call(1,accept);correct(next.token,p+2);out.redo_ms+=(clock_now()-redo)*1000;}
+      next_draft(next.token,p+2);finish_cycle(p+2);++p;continue;
+     }
+    }
+--- a/src/stage2/packet194-expert-diet-engine/p105_runtime.hpp
++++ b/src/stage2/packet194-expert-diet-engine/p105_runtime.hpp
+@@ -53,13 +53,11 @@
+   timings<<"{\"leg\":\"hidden-export\",\"placement\":\""<<(bcs?"bcs":"compute")<<"\",\"bytes\":5120,\"host_dependency_wait_us\":"<<Engine::ms(export_started)*1000<<",\"prefix_submitted_before_publication\":true,\"backend\":"<<ownrt::quote(e.dev(0).identity())<<"}\n";
+   require(bool(timings),"p105 export timing write");export_event=0;
+  }
+- template<class Cancel,class Abandoned> void service_impl(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel,Abandoned abandoned){
++ template<class Cancel> void service(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
+   const auto p150_service_start=std::chrono::steady_clock::now();
+   require(e.a.rank==0&&seq&&fixture>0,"p105 suffix ownership");
+   auto check=[&]{cancel();require(!load(box.abort),"p105 peer failed");};
+-  p150::measure("head_hidden_wait",pos,false,[&]{require(p56x::wait([&]{return load(box.request)==seq||abandoned();},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 hidden timeout");check();});
+-  if(abandoned())return;
+-  require(box.request==seq,"p105 missing hidden export");
++  p150::measure("head_hidden_wait",pos,false,[&]{require(p56x::wait([&]{return load(box.request)==seq;},check,std::chrono::steady_clock::now()+std::chrono::seconds(e.a.seconds)),"p105 hidden timeout");check();});
+   p150::measure("head_zero_wait",pos,true,[&]{if(e.sealed_selection.choices.at("probe")=="split"){require(load(box.request)==seq,"p150 satisfied wait");check();}});
+   require(box.position==pos&&box.fixture==fixture&&load(box.reply)<seq,"p105 stale position/duplicate service");
+   e.drain(); // local speculative half has completed; no model-state writes below.
+@@ -72,8 +70,6 @@
+   std::memcpy(&box.best,e.dev(0).arena.row(staging).pointer,16);check();publish(box.reply,seq);
+   p150::record("head_service_total",pos,false,p150_service_start);
+  }
+- template<class Cancel> void service(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){service_impl(box,seq,pos,fixture,cancel,[]{return false;});}
+- template<class Cancel,class Abandoned> void service_speculative(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel,Abandoned abandoned){service_impl(box,seq,pos,fixture,cancel,abandoned);}
+  template<class Cancel> void merge_target(Mailbox& box,uint32_t seq,int pos,int fixture,Cancel cancel){
+   require(e.a.rank==1&&load(box.request)==seq&&box.position==pos&&box.fixture==fixture,"p105 merge ownership");
+   // Pack uses the unchanged prefix argmax and its sticky finite flag.
+--- a/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
++++ b/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+@@ -301,9 +301,12 @@
+   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
+   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
+   prepare_commands();
++ const size_t cache_bytes=size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2;
+  if(ownrt::draft_depth2::enabled()){
++  size_t cache_mutable=0;for(const auto& [name,slot]:buffers)if(ends(name,".keys")||ends(name,".values")||ends(name,".raw")||ends(name,".pooled"))cache_mutable+=e.dev(0).arena.row(slot.id).bytes;
++  require(cache_mutable==cache_bytes,"draft mutable cache differs from context geometry");
+   for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
+-  require(probe_bytes<=32ull*1024*1024,"production depth2 draft backup exceeds 32 MiB reserve");
++  require(probe_bytes>=cache_mutable&&probe_bytes-cache_mutable<=64ull*1024*1024,"production depth2 non-cache draft workspace exceeds 64 MiB");
+   probe_backup=e.allocate(0,"draft:depth2-backup",probe_bytes,Category::runtime_overhead,Lifetime::process);allocated+=probe_bytes;
+  }
+   if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
+@@ -315,7 +318,7 @@
+    probe_trace.open(probe_output/"draft-depth-probe.jsonl");require(bool(probe_trace),"depth probe trace open");
+    save(e.a.output/"draft-depth-probe-config.json","{\"schema\":\"ownrt.draft-depth.config.v1\",\"depth\":"+std::to_string(depth_probe)+",\"backup_bytes\":"+std::to_string(probe_bytes)+",\"diagnostic_only\":true,\"discards_proposals\":true}");
+   }
+-  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(size_t(p.g.context)*(2*p.g.kvh*p.g.ad+p.g.id)*2+size_t((p.g.context+3)/4)*p.g.id*2)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
++  save(e.a.output/"draft-memory.json","{\"device_allocation_bytes\":"+std::to_string(allocated)+",\"cache_bytes\":"+std::to_string(cache_bytes)+",\"head_weight_shared\":"+(!q4_head()&&e.a.memory=="resident"&&e.weights[0].count("output.weight")&&!e.packed_weight("output.weight")?"true":"false")+"}");
+  }
+  void admit_position(int restored_extent=0) {
+   require(position>=0&&position<p.g.context,"draft capacity position admission");
+--- a/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp
++++ b/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp
+@@ -392,7 +392,7 @@
+  }
+ #endif
+  explicit SpeculativeImage(Engine& owner,unsigned index=0):e(owner),slot(index) {
+-  if(e.a.rank!=0&&!(ownrt::draft_depth2::enabled()&&e.a.rank==1&&!e.a.pipeline_enabled()))return;
++  if(e.a.rank!=0)return;
+   std::set<std::string> outputs{"token","position","token_history"},kv;
+   std::set<Allocation> represented;
+   for(const auto& site:e.p.launches){outputs.insert(site.outputs.begin(),site.outputs.end());if(site.op=="qsa_append_pool")kv.insert(site.outputs.begin(),site.outputs.end());}
+--- a/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -129,7 +129,7 @@
+  if(!prepared_inputs&&!staged)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+  require(!prepared_inputs||e.a.rank==1,"prepared half inputs rank ownership");
+  require(request.token>=0&&request.token<e.p.g.vocab,"half token bound");
+- require(request.speculative>=0&&request.speculative<=2&&(e.a.rank==0||!request.speculative||(ownrt::draft_depth2::enabled()&&request.speculative==2)),"invalid speculative rank/depth");
++ require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
+  require(!e.a.pipeline_enabled()||!request.speculative,"general pipeline is target-only");
+  e.verify_configuration();e.guard();
+  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
+@@ -281,7 +281,7 @@
+  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
+ }
+ static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
+- require((e.a.rank==0||(ownrt::draft_depth2::enabled()&&e.a.rank==1))&&c.pending&&c.speculative,"rollback outside target speculation");
++ require(e.a.rank==0&&c.pending&&c.speculative,"rollback outside rank0 speculation");
+  e.drain();require(!e.integer(0,"error"),"sticky error cannot be rolled back");
+  if(c.swapped)e.swap_state_banks();image.restore(redo,position,token);c={};
+ }
+@@ -575,11 +575,11 @@
+     else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
+     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
+    }
+-   else if(r.op==pipeline::accept){Candidate* candidate=&c;SpeculativeImage* selected_image=&image;if(r.speculative==2){require(ownrt::draft_depth2::enabled(),"depth2 accept admission");if(a.rank==0){candidate=&c2;selected_image=suffix_image.get();}}else require(!r.speculative,"accept depth flag");require(candidate->pending&&!candidate->cancelled,"accept without completed candidate");publish(*engine,*candidate);if(candidate->speculative)selected_image->accept();if(candidate->fixture>0)++accepted;v3_accepted(*engine,v3state,*candidate);*candidate={};}
++   else if(r.op==pipeline::accept){Candidate* candidate=&c;SpeculativeImage* selected_image=&image;if(r.speculative==2){require(ownrt::draft_depth2::enabled()&&a.rank==0,"depth2 accept admission");candidate=&c2;selected_image=suffix_image.get();}else require(!r.speculative,"accept depth flag");require(candidate->pending&&!candidate->cancelled,"accept without completed candidate");publish(*engine,*candidate);if(candidate->speculative)selected_image->accept();if(candidate->fixture>0)++accepted;v3_accepted(*engine,v3state,*candidate);*candidate={};}
+    else if(r.op==v3::boundary_op){response=v3_boundary_step(*engine,v3state,r,static_cast<uint8_t*>(mapping),c);}
+    else if(r.op==rollback){
+     bool redo=r.speculative==1;require(r.speculative==0||redo||r.speculative==2,"rollback mode");Candidate* candidate=&c;SpeculativeImage* selected_image=&image;
+-    if(r.speculative==2){require(ownrt::draft_depth2::enabled(),"depth2 rollback admission");if(a.rank==0){candidate=&c2;selected_image=suffix_image.get();}require(candidate->pending&&candidate->speculative&&candidate->position==r.position&&candidate->fixture==r.fixture,"depth2 rollback identity");}
++    if(r.speculative==2){require(ownrt::draft_depth2::enabled()&&a.rank==0,"depth2 rollback admission");candidate=&c2;selected_image=suffix_image.get();require(candidate->pending&&candidate->speculative&&candidate->position==r.position&&candidate->fixture==r.fixture,"depth2 rollback identity");}
+     if(redo){auto& v=verification(static_cast<uint8_t*>(mapping));
+      require(c.pending&&c.speculative&&r.position==c.position&&r.fixture==c.fixture&&r.token>=0&&r.token<engine->p.g.vocab,"redo identity");
+      require(__atomic_load_n(&v.position_plus_one,__ATOMIC_ACQUIRE)==uint32_t(r.position)&&v.token==r.token,"redo requires verified target token (verified "+std::to_string(v.position_plus_one)+"/"+std::to_string(v.token)+", redo "+std::to_string(r.position)+"/"+std::to_string(r.token)+")");}
+@@ -651,7 +651,7 @@
+       backend.prefill=prefill_base;backend.prefill_rows=a.prefill_rows;backend.prefill_stream=a.prefill_rows?engine->stream_bytes():0;
+       backend.split_replay=engine->sealed_selection.choices.at("probe")=="split";
+       backend.correction_probe=engine->sealed_selection.choices.at("probe")=="xchg";
+-      if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0){auto stop=[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");};if(req.speculative==2)head_runtime->service_speculative(head_box,uint32_t(req.sequence),req.position,req.fixture,stop,[&]{return native38::load(mailbox.reply_sequence)==uint32_t(req.sequence);});else head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,stop);}};
++      if(head_runtime)backend.before_remote_wait=[&](const Request& req){if(req.op==half&&req.fixture>0)head_runtime->service(head_box,uint32_t(req.sequence),req.position,req.fixture,[&]{cancel();require(!native38::load(mailbox.abort),"p105 native peer failed");});};
+        native38::ConfirmedStream stream;native38::EmitConfirmed emit;
+        if(a.token_stream){
+         stream.begin(engine->a.output/"confirmed-tokens.jsonl",r.sequence,cfg.count,cfg.vocab);

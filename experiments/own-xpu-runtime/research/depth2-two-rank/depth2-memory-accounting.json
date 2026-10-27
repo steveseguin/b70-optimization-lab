@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.depth2-memory-accounting.v1",
+  "passed": true,
+  "basis": "parent-supplied B20 rank1 owned-byte measurements plus source-proved zero additional rank1 allocations; not a new GPU measurement",
+  "rank1_protocol": "dependent d1 is submitted only after target verification, as an ordinary confirmed half; no rank1 Candidate snapshot or suffix image",
+  "raw_ring": "rank1 SpeculativeImage constructor returns before inventory/allocation; canonical raw-ring and checkpoint paths are untouched",
+  "contexts": [
+    {
+      "context": 65536,
+      "depth1_owned_bytes": 32123721324,
+      "depth2_rank1_additional_bytes": 0,
+      "depth2_rank1_total_bytes": 32123721324,
+      "arena_cap_bytes": 32212254720,
+      "headroom_bytes": 88533396,
+      "fits": true
+    },
+    {
+      "context": 32768,
+      "depth1_owned_bytes": 31154837100,
+      "depth2_rank1_additional_bytes": 0,
+      "depth2_rank1_total_bytes": 31154837100,
+      "arena_cap_bytes": 32212254720,
+      "headroom_bytes": 1057417620,
+      "fits": true
+    }
+  ],
+  "rank0_draft_backup": {
+    "context": 65536,
+    "cache_bytes": 155189248,
+    "cache_mib": 148,
+    "noncache_workspace_bound_bytes": 67108864,
+    "maximum_admitted_backup_bytes": 222298112,
+    "allocation": "exact summed mutable_ids bytes after cache geometry equality and non-cache workspace bound checks",
+    "depth1_inert": "backup allocation remains inside OWNRT_DRAFT_DEPTH2 enabled branch; depth1 draft-memory JSON is unchanged and depth1 differential cases pass"
+  }
+}

@@ -11,6 +11,11 @@
   OOMed during load before device contact. Completed lab state dumps were removed after comparison to satisfy the
   service's memory admission; JSON logs and comparison receipts were retained.
   [GDN result](experiments/own-xpu-runtime/research/rank0-gdn-c43/RESULT.md).
+**Depth-2 evaluation closed:** the reviewed two-rank implementation passed 64K oracle/prefill/continuation/session gates
+and all 12 outputs matched depth 1, but its reduced overlap made the suite 59.84 tok/s versus 66.18 (−9.58%). The
+schedule and all experimental switches were removed from canonical source; B19 is restored. Research evidence:
+[depth2-two-rank](experiments/own-xpu-runtime/research/depth2-two-rank/RESULT.md).
+
 
 **October 26, 18:00 EDT — B18 measured 65.67 tok/s exact; hosting stopped for four-card optimization.**
 - Engine `728c70b3eec6`: rank-0 raw draft head, BF16 draft QSA attention, packed FP8 draft experts and four-stream

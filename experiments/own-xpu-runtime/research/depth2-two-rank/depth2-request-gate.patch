@@ -1,0 +1,31 @@
+--- a/src/stage2/packet194-expert-diet-engine/native_controller.hpp
++++ b/src/stage2/packet194-expert-diet-engine/native_controller.hpp
+@@ -112,7 +112,7 @@
+ };
+ using EmitConfirmed=std::function<void(size_t,int,double)>;
+ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
+- if(ownrt::draft_depth2::enabled())require(c.mode==3&&c.draft_rank==0&&c.overlap==1&&!b.correction_probe&&!b.split_replay,"production depth2 requires the ordinary overlapped rank0-draft controller");
++ const bool depth2=ownrt::draft_depth2::enabled()&&c.mode==3&&c.draft_rank==0&&c.overlap==1&&!b.correction_probe&&!b.split_replay;
+  Result out;out.start=clock_now();std::vector<int> history;bool draft_pending=false;double issued_draft_at=0;uint32_t pending_draft_sequence=0;size_t script_index=0;int length=int(c.prompt.size());
+  auto fixture=[&](int p){return std::max(0,p-length+2);};
+  auto half_start=[&](int rank,int token,int p,bool spec=false){b.start(rank,half,token,p,fixture(p),spec);};
+@@ -183,7 +183,7 @@
+   if(known&&c.overlap){half_start(0,c.prompt[p+1],p+1);pending=true;}
+   else if(more&&!known){
+    if(c.mode==1)guess=ngram(history);else if(c.mode==2){if(script_index<c.script.size())guess=c.script[script_index];++script_index;}else if(c.mode==3)guess=draft_guess;
+-   if(ownrt::draft_depth2::enabled()&&c.count-int(out.tokens.size())>=2&&guess>=0&&guess<c.vocab&&p+2<c.prompt.size()+c.count&&p+2<INT_MAX){
++   if(depth2&&c.count-int(out.tokens.size())>=2&&guess>=0&&guess<c.vocab&&p+2<c.prompt.size()+c.count&&p+2<INT_MAX){
+     Reply second_draft=b.call(0,draft,guess,p+1,1,2);const int second_guess=second_draft.token;
+     if(second_guess>=0&&second_guess<c.vocab){
+      out.guess_sequence.push_back(guess);out.guess_sequence.push_back(second_guess);out.guesses_count+=2;
+--- a/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -657,7 +657,7 @@
+         stream.begin(engine->a.output/"confirmed-tokens.jsonl",r.sequence,cfg.count,cfg.vocab);
+         emit=[&](size_t index,int token,double stamp){stream.token(index,token,stamp);};
+        }
+-      require(!ownrt::draft_depth2::enabled()||!engine->v3_active,"production depth2 is not admitted for the V3 controller");
++      require(!(ownrt::draft_depth2::enabled()&&engine->v3_active&&cfg.mode==3&&cfg.draft_rank==0&&cfg.overlap==1),"production depth2 is not admitted for the V3 controller");
+        auto result=engine->v3_active?native38::run_v3(backend,cfg,emit):native38::run(backend,cfg,emit); // packet186
+       save(a.shared.parent_path()/"native-result.json",native38::json(result,backend,cfg));
+        // End seals the list, not overall request success: normal rank replies remain required.
