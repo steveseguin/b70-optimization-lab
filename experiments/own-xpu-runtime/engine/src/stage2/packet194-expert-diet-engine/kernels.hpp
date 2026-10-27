@@ -81,7 +81,7 @@ inline void validate(Shape s){
 }
 // Validate allocation extents before submission; no device read is needed.
 inline std::array<size_t,19> required_bytes(Shape s) {
- std::array<size_t,19> n{};n.fill(4);n[15]=4;n[16]=rope_constants::bytes*((s.flags&f32_activations_flag)?2:1);
+ std::array<size_t,19> n{};n.fill(4);n[15]=4;n[16]=size_t(s.capacity)*128*((s.flags&f32_activations_flag)?2:1);
  size_t T=s.tokens,W=s.width,H=s.heads,C=s.capacity,S=s.budget+3;
  auto b=[&](int slot,size_t values){n[slot]=values*((s.flags&f32_activations_flag)?4:2);};
  auto f=[&](int slot,size_t values){n[slot]=values*4;};

@@ -1454,12 +1454,14 @@ public:
       slab.push_back(allocate(c, "bounded-copy", 4 * 1024 * 1024,
                               Category::pinned_slab, Lifetime::transfer,
                               Memory::pinned));
-      ropes.push_back(allocate(c,"rope-v2",rope_constants::bytes,Category::weights,Lifetime::process));
-      upload(c,ropes[c],0,rope_bytes.data(),rope_bytes.size());
+      const size_t rope_bytes_used=size_t(p.g.context)*128;
+      ropes.push_back(allocate(c,"rope-v2",rope_bytes_used,Category::weights,Lifetime::process));
+      upload(c,ropes[c],0,rope_bytes.data(),rope_bytes_used);
       if(a.f32_activations){
         // Same authority as rope.bf16 (glibc powf/cosf/sinf, f32(pos*powf(1e7f,-2j/64))), without BF16 rounding.
-        static const std::vector<float> table=[]{std::vector<float> t(size_t(rope_constants::positions)*64);
-          for(int pos=0;pos<rope_constants::positions;++pos)for(int j=0;j<32;++j){
+        // Only positions below the admitted context are reachable; 262K retains the complete table.
+        static const std::vector<float> table=[this]{std::vector<float> t(size_t(p.g.context)*64);
+          for(int pos=0;pos<p.g.context;++pos)for(int j=0;j<32;++j){
             const float exponent=-float(2*j)/64.f;const float angle=float(pos)*::powf(1e7f,exponent);
             t[(size_t(pos)*32+j)*2]=::cosf(angle);t[(size_t(pos)*32+j)*2+1]=::sinf(angle);}
           return t;}();

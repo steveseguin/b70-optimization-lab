@@ -6,18 +6,20 @@
   `a33579eccb92` adds context bounds and the checked 262K RoPE table. [Baseline](experiments/own-xpu-runtime/research/quad-262k/BASELINE.md).
 - Verified-wavefront matched serial committed state across 2,065 sources; six forced aborts restored byte-exactly.
   Real depth-one MTP also matched all 2,065 target and 73 independent draft sources. Actual sustained warm decode was
-  **49.55 tok/s (depth two)** and **51.26 tok/s (depth three)**, below two-card B24 at 66.19. PP4 is not promoted;
+  **49.55 tok/s (depth two)** and **51.26 tok/s (depth three)**, below the current two-card service at 66.21. PP4 is not promoted;
   rank-local exact kernel work continues. [Overlap verdict](experiments/own-xpu-runtime/research/quad-262k/OVERLAP.md).
 
 
-**October 27 — SC117 service on B24 `fffa34a38b87`: 66.19 tok/s exact; 12.4K prompt 9.3% faster.**
-- Multi-token `OWNRT_GDN_PREP=1` prepares normalized Q/K and gate values once per token while retaining serial
-  recurrence and arithmetic. Rank-0 4K prefill 12.06 → 10.49 s (−13.1%); whole 4K prompt 17.18 → 15.58 s.
-- All startup gates passed. Every suite output and MTP statistic matches B19; decode 66.21 → 66.19 (noise).
-  The 12.4K prompt took 52.45 → 47.58 s (−9.3%), needle found, continued equals fresh; decode 62.36 tok/s.
-- Cards 23+47 host B24. Attention/combine, HC-low, and long-context K/V fetch variants were exact non-wins and are not
-  integrated. Grouping two/four GDN state rows was also exact but cost about 30 µs/half; direct-global IQ4_NL down was
-  neutral. [GDN prefill](experiments/own-xpu-runtime/research/gdn-prefill-c23/RESULT.md),
+**October 27 — SC117 service on B25 `6280724f7c75`: 66.21 tok/s exact; native 262K rechecked.**
+- BF16/F32 RoPE device tables and their binding checks now scale to `--context`; the full 262K source table remains
+  hash-checked. This preserves B24's 64K memory footprint and all reachable values. Both context oracles passed with
+  zero differences; prefill 13/13, continuation and prior-build session compatibility passed. Native 262K four-stage
+  output also matched and all four stages exited 0. [Result](experiments/own-xpu-runtime/research/rope-context/RESULT.md).
+- The cold 12-prompt suite matched all 5,965 text hashes with zero cached tokens; median **66.208671 tok/s**.
+  Multi-token `OWNRT_GDN_PREP=1` retains the earlier 4K prefill gain (12.06 → 10.49 s) and 12.4K prompt gain
+  (52.45 → 47.58 s). Cards 23+47 host B25. [Suite](experiments/own-xpu-runtime/research/rope-context/suite-6280724f7c75.json).
+- Attention/combine, HC-low, and long-context K/V fetch variants were exact non-wins. Grouping two/four GDN state rows
+  cost about 30 µs/half; direct-global IQ4_NL down was neutral. Neither is integrated.
   [GDN state rows](experiments/own-xpu-runtime/research/rank0-gdn-state4/RESULT.md),
   [IQ4_NL down](experiments/own-xpu-runtime/research/rank0-iq4-direct/RESULT.md).
 **Bulk replay rejected:** a 256-row draft-replay batching attempt completed its rows but failed the following request
