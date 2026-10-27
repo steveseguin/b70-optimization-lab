@@ -1,0 +1,48 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp b/dev/shm/ownrt-lab-gdn4/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp
+index b38bc0484..8c3c77de6 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp
++++ b/dev/shm/ownrt-lab-gdn4/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp
+@@ -3,6 +3,7 @@
+ #include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
+ #endif
+ #include "stage2/packet194-expert-diet-engine/round2_submit.hpp"
++#include <cstdlib>
+ #include "stage2/packet194-expert-diet-engine/mock_order.hpp"
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+@@ -23,8 +24,8 @@ inline float lane_tree(sycl::sub_group sg,float v){
+  for(unsigned stride=1;stride<32;stride*=2){float right=sycl::select_from_group(sg,v,sycl::id<1>((lane+stride)%32));if(lane%(2*stride)==0)v=v+right;}
+  return sycl::select_from_group(sg,v,sycl::id<1>(0));
+ }
+-template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it){
+- auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),g=it.get_group_linear_id();
++template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it,int group=-1){
++ auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),g=group<0?int(it.get_group_linear_id()):group;
+  Team t{it,nullptr};int blocked=lane==0?int(!a.i(18)[0]||t.error(a)):0;
+  if(sycl::select_from_group(sg,blocked,sycl::id<1>(0)))return;
+  int pos=a.i(17)[0];if(pos<0||pos>s.capacity-s.tokens){if(g==0&&lane==0)t.fail(a);return;}
+@@ -50,6 +51,15 @@ template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* pre
+   sycl::group_barrier(sg,sycl::memory_scope::device);
+  }
+ }
++template<bool Prepared> inline void gdn_device4(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it,int count){
++ const int first=int(it.get_group_linear_id())*4;
++ for(int u=0;u<4&&first+u<count;++u)gdn_device<Prepared>(s,a,prepared,it,first+u);
++}
++template<bool Prepared> inline void gdn_device2(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it,int count){
++ const int first=int(it.get_group_linear_id())*2;
++ for(int u=0;u<2&&first+u<count;++u)gdn_device<Prepared>(s,a,prepared,it,first+u);
++}
++inline int gdn_state_rows(){static const int rows=[]{const char* e=std::getenv("OWNRT_GDN_STATE_ROWS");return e?std::atoi(e):0;}();return rows;}
+ inline void gdn_prep_device(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it){
+  auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),group=it.get_group_linear_id(),r=group/16,key=group%16;
+  Team t{it,nullptr};int blocked=lane==0?int(!a.i(18)[0]||t.error(a)):0;
+@@ -79,7 +89,7 @@ template<ng::Op Code,int Stage> struct Kernel final:ownrt::SyclOperation {
+   a.f32=(s.flags&ng::f32_activations_flag)!=0; // as ng::group(): F32 exact-mode buffers are read and written as F32
+   if constexpr(Code==ng::gdn){
+    if constexpr(Stage==1)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(shape.tokens)*16*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_prep_device(shape,a,global,it);}));});
+-   else if(gdn_prep(s))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<true>(shape,a,global,it);}));});
++   else if(gdn_prep(s))return gdn_state_rows()==2?ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t((count+1)/2)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device2<true>(shape,a,global,it,count);}));}):gdn_state_rows()==4?ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t((count+3)/4)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device4<true>(shape,a,global,it,count);}));}):ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<true>(shape,a,global,it);}));});
+    else return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<false>(shape,a,global,it);}));});
+   }
+   else return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){sycl::local_accessor<float,1> x(local,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{group<Code,Stage>(shape,a,int(it.get_group_linear_id()),global,Team{it,x.get_multi_ptr<sycl::access::decorated::no>().get()});}));});
