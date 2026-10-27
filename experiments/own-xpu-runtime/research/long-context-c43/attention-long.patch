@@ -1,0 +1,99 @@
+--- a/stage2/packet194-expert-diet-engine/p49_qsa_kernel.hpp
++++ b/stage2/packet194-expert-diet-engine/p49_qsa_kernel.hpp
+@@ -367,6 +367,84 @@
+   if(valid==32)values.template operator()<true>();else values.template operator()<false>();
+  }));});
+ }
++// OWNRT_ATTN_LONG=1 (long-context lab, default off): F32 tiles_heads with one global K and V fetch per
++// selected element and tile. All 16 subgroups retain the incumbent's product count. Scores use (dq, tile eighth):
++// four lanes hold adjacent 16-dimension subtrees for each of eight slots and twelve heads; two xor levels join
++// them as ((Q0+Q1)+(Q2+Q3)). Values use (dimension, slot half): each lane holds 16 V values, evaluates each head's
++// balanced 16-leaf tree, and the paired subgroups add lower+upper at the original 32-leaf root. Q and the upper
++// value roots use local memory. P/W, max/exp/denominator, products, signed-zero behavior and partial slots are
++// unchanged. The larger long-context K/V working set, rather than short-context launch overhead, is the target.
++inline sycl::event tiles_heads_long(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
++ const int C=splits(s);
++ return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*2*C*512,512)](sycl::handler& handler){
++ sycl::local_accessor<float,1>P(4*12*32,handler);sycl::local_accessor<float,1>W(12*32,handler);
++ sycl::local_accessor<float,1>QL(12*256,handler);sycl::local_accessor<float,1>R(12*256,handler);
++ handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++  const int G=int(it.get_group_linear_id()),c=G%C,kv=(G/C)%2,r=G/(C*2),S=s.budget+3,start=c*32;
++  const int lid=int(it.get_local_linear_id());auto sg=it.get_sub_group();
++  const int lane=int(sg.get_local_linear_id()),sub=int(sg.get_group_linear_id());
++  const int dq=sub&3,tq=sub>>2,slot=tq*8+(lane>>2),part=lane&3,d=(sub&7)*32+lane,half=sub>>3;
++  const float*K=static_cast<const float*>(a.p[2]);const float*V=static_cast<const float*>(a.p[3]);const float*Q=static_cast<const float*>(a.p[0]);
++  const int rawid=start+lane<S?a.i(4)[r*S+start+lane]:0;
++  for(int i=lid;i<12*256;i+=512)QL[i]=Q[r*24*256+kv*12*256+i];
++  const int n=counts[r];
++  if(n<=0||blocked_wg(it,a)||start>=n)return;
++  const int valid=sycl::min(32,n-start),myid=lane<valid?rawid:0;
++  it.barrier(sycl::access::fence_space::local_space);
++  float kk[16];
++  const int kid=slot<valid?a.i(4)[r*S+start+slot]:0;
++  const float*krow=K+(kid*2+kv)*256+64*dq+16*part;
++  #pragma unroll
++  for(int e=0;e<16;++e)kk[e]=slot<valid?krow[e]:0.f;
++  #pragma unroll
++  for(int hl=0;hl<12;++hl){
++   float st[4],res;
++   #pragma unroll
++   for(int e=0;e<16;++e){
++    float cur=kk[e]*QL[hl*256+64*dq+16*part+e];int k=0;
++    #pragma unroll
++    for(;k<4;++k){if(((e>>k)&1)==0)break;cur=st[k]+cur;}
++    if(k<4)st[k]=cur;else res=cur;}
++   #pragma unroll
++   for(int z=1;z<4;z*=2){const float o=sycl::permute_group_by_xor(sg,res,z);res=(lane&z)?o+res:res+o;}
++   if(part==0)P[(dq*12+hl)*32+slot]=res;
++  }
++  it.barrier(sycl::access::fence_space::local_space);
++  if(sub<12){
++   const int h=kv*12+sub;
++   const float x=lane<valid?((P[(0*12+sub)*32+lane]+P[(1*12+sub)*32+lane])+(P[(2*12+sub)*32+lane]+P[(3*12+sub)*32+lane]))/detmath::sqrt(256.f):-INFINITY;
++   const float m=first_max(-INFINITY,sg_first_max(sg,x));
++   const float w=lane<valid?detmath::exp(x-m):0.f;
++   const float den=lane_tree(sg,w);
++   float*p=partial+size_t((r*24+h)*C+c)*258;
++   if(lane==0){p[256]=m;p[257]=den;}
++   W[sub*32+lane]=w;
++  }
++  it.barrier(sycl::access::fence_space::local_space);
++  const float*vcol=V+kv*256+d;float vv[16];
++  #pragma unroll
++  for(int t=0;t<16;++t){const int j=half*16+t,id=sycl::select_from_group(sg,myid,j);vv[t]=j<valid?vcol[id*512]:0.f;}
++  float roots[12];
++  #pragma unroll
++  for(int hl=0;hl<12;++hl){
++   const float wr=W[hl*32+lane];float acc[4],root;
++   #pragma unroll
++   for(int t=0;t<16;++t){
++    const int j=half*16+t;const float wj=sycl::select_from_group(sg,wr,j);float leaf=j<valid?wj*vv[t]:0.f;int k=0;
++    #pragma unroll
++    for(;k<4;++k){if(((t>>k)&1)==0)break;leaf=acc[k]+leaf;}
++    if(k<4)acc[k]=leaf;else root=leaf;}
++   roots[hl]=root;
++   if(half)R[hl*256+d]=root;
++  }
++  it.barrier(sycl::access::fence_space::local_space);
++  if(!half){
++   #pragma unroll
++   for(int hl=0;hl<12;++hl)partial[size_t((r*24+kv*12+hl)*C+c)*258+d]=roots[hl]+R[hl*256+d];
++  }
++ }));});
++}
++inline bool tiles_long_on(){static const bool on=[]{const char*e=std::getenv("OWNRT_ATTN_LONG");return e&&e[0]=='1';}();return on;}
+ // OWNRT_DRAFT_ATTN=1 (lab 2026-10-26, default off): tiles_heads<false> + combine_blocked<false> for BF16 QSA attention.
+ inline bool bf16_attention_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_ATTN");return e&&e[0]=='1';}();return on;}
+ inline bool tiles_heads_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_HEADS");return e&&e[0]=='1';}();return on;}
+--- a/stage2/packet194-expert-diet-engine/p49_qsa_submit.cpp
++++ b/stage2/packet194-expert-diet-engine/p49_qsa_submit.cpp
+@@ -30,7 +30,8 @@
+   if constexpr(Stage==0)return p47::admit_fast_on()?p47::admit_fast(q,s,a,counts,deps):p47::admit(q,s,a,counts,deps);
+   // Lab 2026-10-26 (default off, exact): OWNRT_ATTN_HEADS=1 query heads in parallel per (row, KV head, tile);
+   // OWNRT_ATTN_COMBINE2=1 blocked combine; OWNRT_ATTN_GUARD=1 the incumbent kernels with the guard read once per group.
+-  if constexpr(Stage==1){if(a.f32&&p47::tiles_heads_on())return p47::tiles_heads(q,s,a,counts,partial,deps);
++  if constexpr(Stage==1){if(a.f32&&p47::tiles_long_on()&&ng::launch_extent(s)>8192)return p47::tiles_heads_long(q,s,a,counts,partial,deps);
++   if(a.f32&&p47::tiles_heads_on())return p47::tiles_heads(q,s,a,counts,partial,deps);
+   if(!a.f32&&p47::bf16_attention_on())return p47::tiles_heads<false>(q,s,a,counts,partial,deps);
+   if(p47::attention_guard_once()&&!p47::tiles_wide_on()&&!p47::tiles_pipelined_on()&&!p47::attention_gqa())return a.f32?p47::tiles<true,true,true>(q,s,a,counts,partial,deps):p47::tiles<true,false,true>(q,s,a,counts,partial,deps);
+   if(p47::tiles_wide_on()&&!p47::tiles_pipelined_on()&&!p47::attention_gqa())return a.f32?p47::tiles<true,true>(q,s,a,counts,partial,deps):p47::tiles<true,false,true>(q,s,a,counts,partial,deps);

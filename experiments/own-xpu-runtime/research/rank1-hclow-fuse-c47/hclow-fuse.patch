@@ -1,0 +1,186 @@
+--- a/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
++++ b/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+@@ -39,6 +39,8 @@
+ std::unordered_set<const flash::Launch*> gsq_follower;
+ std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_mix_partner;
+ std::unordered_set<const flash::Launch*> gsq_mix_follower;
++std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_low_act_partner;
++std::unordered_set<const flash::Launch*> gsq_low_act_follower;
+ bool gsq_fusion_ready=false;
+ bool gsq_kopt_site(const flash::Launch& l) const {
+   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
+@@ -55,6 +57,14 @@
+   static const std::array<std::pair<const char*,const char*>,5> pairs{{{".hc.a.low",".hc.a.inject"},{".hc.f.low",".hc.f.inject"},{".gdn.a",".gdn.b"},{".qsa.iq",".qsa.ik"},{"router","shared_gate"}}};
+   // Keyed by label and card: under --tp-replicate every label exists once per card, and pairs never cross cards.
+   std::map<std::string,const flash::Launch*> by_label;for(const auto& l:p.launches)by_label[l.label+"@"+std::to_string(l.card)]=&l;
++  static const bool low_act_enabled=[]{const char* e=std::getenv("OWNRT_HCLOW_FUSE");return e&&e[0]=='1';}();
++  if(low_act_enabled&&a.f32_activations)for(size_t i=0;i+1<p.launches.size();++i){
++    const auto& low=p.launches[i];const auto& act=p.launches[i+1];
++    if(!(ends(low.label,".hc.a.low")||ends(low.label,".hc.f.low"))||!gsq_kopt_site(low))continue;
++    if(flash::grid_type(w.directory.at(low.weights.at(0)).grid)!=iq3::Type::BF16)continue;
++    if(act.label!=low.label.substr(0,low.label.size()-3)+"act"||act.card!=low.card||act.op!="silu_div4"||act.inputs.empty()||act.inputs[0]!=low.outputs.at(0)||act.outputs.size()!=1)continue;
++    gsq_low_act_partner[&low]=&act;gsq_low_act_follower.insert(&act);
++  }
+   for(size_t i=0;i<p.launches.size();++i) {
+     const auto& first=p.launches[i];if(!first.label.starts_with("blk."))continue;
+     for(const auto& [x,y]:pairs) {
+@@ -82,7 +92,7 @@
+     if(written)continue;
+     gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
+   }
+-  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+"}");
++  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+",\"low_act\":"+std::to_string(gsq_low_act_partner.size())+"}");
+ }
+ void gsq_linear(const flash::Launch& l) {
+   if(!gsq_fusion_ready)gsq_prepare_fusion();
+@@ -90,13 +100,20 @@
+   auto it=matrices.find(&l);
+   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
+ #ifndef OWN_RT_HOST_ONLY
++  auto activated=gsq_low_act_partner.find(&l);const bool fuse_low_act=activated!=gsq_low_act_partner.end()&&dev(l.card).view_row<0;
+   if(auto partner=gsq_partner.find(&l);partner!=gsq_partner.end()) {
+     auto other=matrices.find(partner->second);
+     if(other==matrices.end())other=matrices.emplace(partner->second,std::vector<Matrix>{matrix(*partner->second)}).first;
+-    const auto& m=it->second.at(0);const auto& n=other->second.at(0);
++    const auto& m=it->second.at(0);const auto& n=other->second.at(0);const int c=l.card;
+     require(m.tokens==1&&n.tokens==1&&m.x==n.x&&m.type==n.type,"fused sibling matrices");
+     std::vector<iq3::kopt::Matrix> pair{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0},{n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0}};
+-    finish(l.card,iq3::kopt::fused_gemv(dev(l.card),pair,32));return;
++    if(fuse_low_act)finish(c,iq3::kopt::fused_gemv_silu_div4(dev(c),pair,32,buffers[c].at(activated->second->outputs[0]).id,buffers[c].at("error").id,buffers[c].at("active").id,buffers[c].at("position").id,uint32_t(p.g.context)));
++    else finish(c,iq3::kopt::fused_gemv(dev(c),pair,32));return;
++  }
++  if(fuse_low_act){
++    const auto& m=it->second.at(0);const int c=l.card;require(m.tokens==1,"HC-low activation token-one");
++    std::vector<iq3::kopt::Matrix> single{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0}};
++    finish(c,iq3::kopt::fused_gemv_silu_div4(dev(c),single,32,buffers[c].at(activated->second->outputs[0]).id,buffers[c].at("error").id,buffers[c].at("active").id,buffers[c].at("position").id,uint32_t(p.g.context)));return;
+   }
+   if(auto mixed=gsq_mix_partner.find(&l);mixed!=gsq_mix_partner.end()) {
+     const auto& m=it->second.at(0);const auto& mix=*mixed->second;const int c=l.card;
+--- a/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -1860,7 +1860,7 @@
+   }
+ #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
+   void execute_site(const flash::Launch& l) {int c=l.card;
+-    if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
++    if(a.gsq_packed&&dev(c).view_row<0&&(gsq_mix_follower.count(&l)||gsq_low_act_follower.count(&l))) { /* written by the fused HC decode launch */ } else
+     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
+     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
+     else if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }
+--- a/engine/src/stage2/packet6-kopt/dense_v2.hpp
++++ b/engine/src/stage2/packet6-kopt/dense_v2.hpp
+@@ -16,9 +16,25 @@
+ #include <array>
+ #include <cstdint>
+ #include <cstdlib>
++#include "stage2/packet194-expert-diet-engine/detmath.hpp"
+ namespace iq3::kopt::dense_v2 {
++struct LowAct {
++ float* out=nullptr;
++ int32_t* error=nullptr;
++ const int32_t* position=nullptr;
++ const int32_t* active=nullptr;
++ uint32_t capacity=0;
++};
++inline void low_act(const LowAct& e,uint32_t row,float low) {
++ if(!e.out)return;
++ auto error=sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*e.error);
++ if(!*e.active||error.load())return;
++ const int32_t pos=*e.position;
++ if(pos<0||uint32_t(pos)>=e.capacity){error.store(1);return;}
++ e.out[row]=detmath::silu_div4(low);
++}
+ inline float bf16f(uint16_t v){return sycl::bit_cast<float>(uint32_t(v)<<16);}
+-template<unsigned R,unsigned U> inline void bf16_rows(const uint8_t* W,const float* x,float* y,uint32_t rows,uint32_t k,uint32_t rb,sycl::nd_item<1> it,uint32_t sgid){
++template<unsigned R,unsigned U> inline void bf16_rows(const uint8_t* W,const float* x,float* y,uint32_t rows,uint32_t k,uint32_t rb,sycl::nd_item<1> it,uint32_t sgid,const LowAct& epilogue={}){
+  static_assert(R==1||R==2||R==4||R==8||R==16||R==32);
+  constexpr unsigned LR=R==1?0:R==2?1:R==4?2:R==8?3:R==16?4:5;
+  auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+@@ -73,18 +89,18 @@
+  #pragma unroll
+  for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
+  const uint32_t row=row0+(lane&(R-1));
+- if(lane<R&&row<rows)y[row]=A[0];
++ if(lane<R&&row<rows){y[row]=A[0];if constexpr(R==1)low_act(epilogue,row,A[0]);}
+ }
+ // Up to four dense matrices in one launch (kopt fused siblings): subgroups are partitioned by first_sub, and every
+-// matrix's rows run bf16_rows unchanged.
+-struct Mat {const uint8_t* w;const float* x;float* y;uint32_t rows,k,rb,first_sub;};
++// matrix's rows run bf16_rows unchanged. The optional HC-low epilogue belongs only to matrix zero.
++struct Mat {const uint8_t* w;const float* x;float* y;uint32_t rows,k,rb,first_sub;LowAct act{};};
+ template<unsigned R,unsigned U> inline void bf16_multi(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it){
+  // Subgroup index from the group id and the subgroup id (both uniform), so per-matrix selection and row bases are
+  // subgroup-uniform values.
+  const uint32_t gsub=uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(it.get_sub_group().get_group_linear_id());unsigned j=0;
+  for(unsigned t=1;t<count;++t)if(gsub>=m[t].first_sub)j=t;
+  const Mat d=m[j];
+- bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
++ bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub,j==0?d.act:LowAct{});
+ }
+ // OWNRT_DECODE_NEXT2 bf16split (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
+ // Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
+--- a/engine/src/stage2/packet6-kopt/kernels.cpp
++++ b/engine/src/stage2/packet6-kopt/kernels.cpp
+@@ -137,13 +137,14 @@
+ }
+ struct Multiply:ownrt::SyclOperation {
+   std::array<Descriptor,4> desc{};unsigned matrices=0,subgroup=16;size_t groups=0,local_stride=16;
++  unsigned low_act=0,error=0,active=0,position=0;uint32_t capacity=0;
+   template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     // Several independent matrices of one type share a launch (sibling fusion): work-groups are partitioned by each
+     // descriptor's first_group, and every row runs the unchanged single-matrix code with its own descriptor.
+     if(matrices<1||matrices>desc.size())throw std::invalid_argument("kopt matrix count");
+     for(unsigned j=1;j<matrices;++j)if(desc[j].type!=desc[0].type||desc[j].activation!=desc[0].activation||desc[j].output!=desc[0].output||desc[j].routed)throw std::invalid_argument("kopt fused matrices must share type/activation/output and be dense");
+     auto descriptors=desc;const unsigned count=matrices;auto ng=groups,stride=local_stride;
+-    std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    std::array<void*,16> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+     if constexpr(T==Type::BF16&&SG==32)if(dense_v2::enabled()){
+       // OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): dense BF16 rows, F32 in/out, R rows per subgroup with the
+       // same per-row lane chunks, order and tree (dense_v2.hpp). Anything else keeps this kernel.
+@@ -153,6 +154,15 @@
+           d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
+         maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
+       if(ok){
++        if(low_act){
++          if(count>2||descriptors[0].rows!=320||descriptors[0].k!=10240||(count==2&&(descriptors[1].rows!=4||descriptors[1].k!=10240)))throw std::invalid_argument("kopt HC-low activation identity");
++          std::array<dense_v2::Mat,4> fused{};uint32_t subgroups=0;
++          for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];fused[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),subgroups};subgroups+=uint32_t(d.rows);}
++          fused[0].act=dense_v2::LowAct{static_cast<float*>(pointers[low_act]),static_cast<int32_t*>(pointers[error]),static_cast<const int32_t*>(pointers[position]),static_cast<const int32_t*>(pointers[active]),capacity};
++          const size_t global=(size_t(subgroups)*32+127)/128*128;
++          return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<1,8>(fused,count,it);}));});
++        }
+         // OWNRT_DECODE_NEXT2 hcgate / bf16split (lab 2026-10-26): the same rows with bf16_rows' per-row arithmetic.
+         //  hcgate: small K (HC gate, 10240 x 320): 2 rows per subgroup instead of 4 (rank-1 profile, 50 sites:
+         //   843 -> ~820 us; end to end -0.03 ms per half; 8 rows per subgroup and packed lanes were slower).
+@@ -859,6 +869,19 @@
+   }
+   return finish(d,op,ids);
+ }
++ownrt::Event fused_gemv_silu_div4(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg,ownrt::Allocation act,ownrt::Allocation error,ownrt::Allocation active,ownrt::Allocation position,uint32_t capacity) {
++  if(matrices.empty()||matrices.size()>2||sg!=32||!capacity)throw std::invalid_argument("kopt HC-low activation shape");
++  Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
++  for(size_t i=0;i<matrices.size();++i){
++    if(matrices[i].type!=Type::BF16||matrices[i].activation!=Type::F32||matrices[i].output_type!=Type::F32||matrices[i].fp32)throw std::invalid_argument("kopt HC-low activation types");
++    op.desc[i]=bind_matrix(d,op,ids,matrices[i],1,1,matrices[i].rows);
++  }
++  op.low_act=ids.size();ids.push_back(act);check(d,act,matrices[0].rows*4);
++  op.error=ids.size();ids.push_back(error);check(d,error,4);
++  op.active=ids.size();ids.push_back(active);check(d,active,4);
++  op.position=ids.size();ids.push_back(position);check(d,position,4);op.capacity=capacity;
++  return finish(d,op,ids);
++}
+ ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
+   if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");
+   Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
+--- a/engine/src/stage2/packet6-kopt/kernels.hpp
++++ b/engine/src/stage2/packet6-kopt/kernels.hpp
+@@ -23,6 +23,8 @@
+ ownrt::Event slot_select(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,uint32_t,uint32_t,uint32_t,bool by_slot=false);
+ // Independent inputs only: this does not fuse across real activation dependencies.
+ ownrt::Event fused_gemv(ownrt::Device&,const std::vector<Matrix>&,unsigned=16);
++// Token-one BF16 HC low (optionally paired with inject) plus its exact silu_div4 epilogue.
++ownrt::Event fused_gemv_silu_div4(ownrt::Device&,const std::vector<Matrix>&,unsigned,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,uint32_t);
+ // Populated only inside a coordinator-authorized submit; never enumerates.
+ std::string device_properties();
+ }

@@ -1,0 +1,70 @@
+{
+  "schema": "ownrt.long-context-c43.analysis.v1",
+  "baseline": {
+    "binary": "/dev/shm/engine-build-svc-b19-gdnprep-20261026/sc117-engine",
+    "binary_sha256": "51f32b2655cc0a9d514081362ea6b3ceaa8b0d004df94fbbd83eb7fa76e3ae0a",
+    "source_identity": "all 248 receipt source hashes match the isolated copy before the two-file candidate edit",
+    "rank": 1,
+    "target_split": 23,
+    "qsa_layers": 7,
+    "state_buffers": 1079,
+    "kv": "full F32; no compression or approximation"
+  },
+  "historical_measured_profile": {
+    "pre_b19_60k": {
+      "source": "research/context-64k/card27-rank1-lab.json",
+      "decode_half_ms_at_60000": 18.582983990199864,
+      "decode_half_ms_at_300": 16.234415932558477,
+      "note": "old split24 build before the exact attention and selector restructures; not a B19 profile"
+    },
+    "b13_selector_per_qsa_layer_us": {
+      "source": "research/qsa-select-2/RESULT.md rank-1 OWNRT_DECODE_PROFILE=3",
+      "at_4096": {"scores": 5.0, "topk_order": 14.2, "total": 19.2},
+      "at_30000": {"scores": 10.8, "topk_order": 16.6, "total": 27.4}
+    },
+    "attention_per_qsa_layer_us_at_4096": {
+      "source": "research/qsa-attention/RESULT.md rank-1 OWNRT_DECODE_PROFILE=3",
+      "admit": 3.6,
+      "tiles": 32.3,
+      "combine": 7.9,
+      "total": 43.8,
+      "note": "selected count is already the full 2051 at 4096; tiles geometry stays at 65 tiles for longer contexts"
+    }
+  },
+  "context_dependent_work": {
+    "selection_pooled_bytes_per_layer_at_30000": 3840000,
+    "selection_pooled_bytes_per_layer_at_60000": 7680000,
+    "selected_ids": 2051,
+    "unique_selected_K_bytes_per_layer": 4200448,
+    "unique_selected_V_bytes_per_layer": 4200448,
+    "attention_scratch": "unchanged 258 floats per (row, head, tile); selection ids/order unchanged"
+  },
+  "candidate": {
+    "switch": "OWNRT_ATTN_LONG=1, F32 and launch extent >8192 only",
+    "incumbent_fetch_model": "tiles_heads loads each K element four times (four head groups of three) and each V element twice (two head halves of six)",
+    "candidate_fetch_model": "each K/V element is loaded once per tile and reused for all 12 query heads; all 16 subgroups retain the incumbent product count",
+    "incumbent_KV_fetch_bytes_per_layer": 25202688,
+    "candidate_KV_fetch_bytes_per_layer": 8400896,
+    "eliminated_fetch_bytes_per_layer": 16801792,
+    "eliminated_fetch_bytes_per_split23_half": 117612544,
+    "arithmetic": "identical products; score ((16+16)+(16+16)) subtrees within each 64-leaf dq tree; value lower16+upper16 at the original 32-leaf root; unchanged max/exp/denominator and partial layout",
+    "short_context": "dispatch falls back to B19 tiles_heads at extent <=8192; report separately from 30K/60K"
+  },
+  "cpu": {
+    "reference_build": "/dev/shm/ownrt-lab-r1-c43long/build-ref/sc117-engine",
+    "candidate_build": "/dev/shm/ownrt-lab-r1-c43long/build-candidate/sc117-engine",
+    "attention_oracle": "108 cases; zero score/value bit differences; negative control detected",
+    "raw_ring_oracle": "76 launches, 4977 positions; keys/values/pooled exact after every launch; all 512 newest rows exact; corruption control detected",
+    "microbenchmark": "bench_long compiled without device contact"
+  },
+  "gpu": {
+    "released": false,
+    "required_gates": [
+      "explicit Main release for LongContextCard43 on card43",
+      "MemAvailable >= 35 GiB before every run",
+      "one rank engine; no service; card43 lock and kernel-fault/DRI checks",
+      "30K and/or 60K interleaved A/B; 1079 buffers and tokens exact",
+      "raw-ring wrap and cross-context continued-decode comparison"
+    ]
+  }
+}
