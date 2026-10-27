@@ -7,6 +7,9 @@
   The 12.4K prompt took 52.45 → 47.58 s (−9.3%), needle found, continued equals fresh; decode 62.36 tok/s.
 - Cards 23+47 host B24. Attention/combine, HC-low, and long-context K/V fetch variants were exact non-wins and are not
   integrated. [GDN prefill result](experiments/own-xpu-runtime/research/gdn-prefill-c23/RESULT.md).
+**Bulk replay rejected:** a 256-row draft-replay batching attempt completed its rows but failed the following request
+transition. It was removed without a speed claim; B24 is restored. [Result](experiments/own-xpu-runtime/research/bulk-replay/RESULT.md).
+
 
 **October 27 — B19 paused for three-way optimization.**
 - Owner priority is maximum experiment throughput. `sc117-lan` is stopped cleanly; B19 (`51f32b2655cc`, 66.21
