@@ -3,8 +3,10 @@
 **October 27 — B19 paused for three-way optimization.**
 - Owner priority is maximum experiment throughput. `sc117-lan` is stopped cleanly; B19 (`51f32b2655cc`, 66.21
   tok/s exact) remains the last validated service build and restore point.
-- Three lanes: multi-token GDN prefill preparation on card 23, raw-Q8 attention/combine epilogue on card 27, and
-  BF16 HC-low activation epilogue on card 47. Card 43 is free. No more than three rank engines may be resident.
+- Three active GPU lanes: multi-token GDN prefill preparation on card 23, raw-Q8 attention/combine epilogue on card
+  27, and BF16 HC-low activation epilogue on card 47. Card 43 is preparing a lossless 30K–64K attention/KV lane and
+  starts only when a memory slot frees. Decode remains primary; prompt processing and long context are explicit goals.
+  KV stays at full service precision. No more than three rank engines may be resident.
 
 **October 26 — SC117 service on B19 `51f32b2655cc`: 66.21 tok/s exact.**
 - `OWNRT_GDN_PREP=1`: token-one producer/consumer GDN schedule. Suite 65.67 → 66.21 tok/s (+0.82% over B18,
