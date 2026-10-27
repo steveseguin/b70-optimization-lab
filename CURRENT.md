@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 27 — SC117 service on B24 `fffa34a38b87`: 66.19 tok/s exact; 12.4K prompt 9.3% faster.**
+- Multi-token `OWNRT_GDN_PREP=1` prepares normalized Q/K and gate values once per token while retaining serial
+  recurrence and arithmetic. Rank-0 4K prefill 12.06 → 10.49 s (−13.1%); whole 4K prompt 17.18 → 15.58 s.
+- All startup gates passed. Every suite output and MTP statistic matches B19; decode 66.21 → 66.19 (noise).
+  The 12.4K prompt took 52.45 → 47.58 s (−9.3%), needle found, continued equals fresh; decode 62.36 tok/s.
+- Cards 23+47 host B24. Attention/combine, HC-low, and long-context K/V fetch variants were exact non-wins and are not
+  integrated. [GDN prefill result](experiments/own-xpu-runtime/research/gdn-prefill-c23/RESULT.md).
+
 **October 27 — B19 paused for three-way optimization.**
 - Owner priority is maximum experiment throughput. `sc117-lan` is stopped cleanly; B19 (`51f32b2655cc`, 66.21
   tok/s exact) remains the last validated service build and restore point.
