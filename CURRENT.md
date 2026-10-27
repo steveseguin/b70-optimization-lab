@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 27 — Native 262K quad run passed; decode and prompt optimization active.**
+- Four stages `[0,12,24,36,48]` on cards `23/27/43/47` completed with identical output tokens and zero faults.
+  Device totals at 262K: **16.60, 17.00, 17.96 and 18.78 GB**, all below the 30 GiB cap. Canonical engine
+  `a33579eccb92` adds context bounds and the checked 262K RoPE table.
+- The 4K and 64K baselines also matched the matched two-stage output and complete committed target state. B24 remains
+  the validated two-card restore point (`fffa34a38b87`, 66.19 tok/s exact). No quad speed claim yet; profiling is next.
+  [Baseline](experiments/own-xpu-runtime/research/quad-262k/BASELINE.md).
+
+
 **October 27 — SC117 service on B24 `fffa34a38b87`: 66.19 tok/s exact; 12.4K prompt 9.3% faster.**
 - Multi-token `OWNRT_GDN_PREP=1` prepares normalized Q/K and gate values once per token while retaining serial
   recurrence and arithmetic. Rank-0 4K prefill 12.06 → 10.49 s (−13.1%); whole 4K prompt 17.18 → 15.58 s.
