@@ -1,0 +1,125 @@
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+@@ -39,6 +39,8 @@
+ std::unordered_set<const flash::Launch*> gsq_follower;
+ std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_mix_partner;
+ std::unordered_set<const flash::Launch*> gsq_mix_follower;
++std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_attention_partner;
++std::unordered_set<const flash::Launch*> gsq_attention_follower;
+ bool gsq_fusion_ready=false;
+ bool gsq_kopt_site(const flash::Launch& l) const {
+   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
+@@ -82,7 +84,18 @@
+     if(written)continue;
+     gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
+   }
+-  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+"}");
++  // Raw token-one Q8 attention + attn.combine: adjacent sites only, so no intervening writer can change the ABI.
++  // Batched prefill and serial M=2 retain both original launches (execute_site/gsq_linear_matrix view guards).
++  if(a.f32_activations)for(size_t i=0;i<p.launches.size();++i){
++    const auto& attention=p.launches[i];if(!ends(attention.label,".attention")||!attention_q8_site(w,a,attention)||attention.outputs.size()!=1)continue;
++    const std::string prefix=attention.label.substr(0,attention.label.size()-10);
++    auto found=by_label.find(prefix+".attn.combine@"+std::to_string(attention.card));if(found==by_label.end())continue;
++    const auto& combine=*found->second;const size_t j=size_t(&combine-p.launches.data());
++    if(j!=i+1||combine.op!="hc_combine"||combine.card!=attention.card||combine.inputs.size()<3||combine.outputs.size()!=1)continue;
++    if(combine.inputs.at(0)!="streams"||combine.inputs.at(1)!=attention.outputs.at(0)||combine.inputs.at(2)!=prefix+".hc.a.inject"||combine.outputs.at(0)!="streams")continue;
++    gsq_attention_partner[&attention]=&combine;gsq_attention_follower.insert(&combine);
++  }
++  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+",\"attention_combine\":"+std::to_string(gsq_attention_partner.size())+"}");
+ }
+ void gsq_linear(const flash::Launch& l) {
+   if(!gsq_fusion_ready)gsq_prepare_fusion();
+@@ -118,7 +131,11 @@
+   if(iq3_block_site(w,a,l)){require(((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
+   if(dense_q6_site(w,a,l)){dense_q6_matrix(m,l,variant(l),dev(c).arena.row(m.w).bytes);finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==(l.row_count?size_t(l.row_count):10240)&&m.columns==2560&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(m.raw?2100:3380):(m.raw?21504000:34611200)),"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+-  if(attention_q8_site(w,a,l)){require(m.type==iq3::Type::Q8_0&&m.rows==(l.row_count?size_t(l.row_count):2560)&&m.columns==6144&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(m.raw?6528:7296):(m.raw?16711680:18677760)),"attention Q8 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
++  if(attention_q8_site(w,a,l)){require(m.type==iq3::Type::Q8_0&&m.rows==(l.row_count?size_t(l.row_count):2560)&&m.columns==6144&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(m.raw?6528:7296):(m.raw?16711680:18677760)),"attention Q8 variant6 only");
++#ifndef OWN_RT_HOST_ONLY
++   if(auto fused=gsq_attention_partner.find(&l);fused!=gsq_attention_partner.end()&&m.tokens==1&&m.raw&&dev(c).view_row<0){const auto& combine=*fused->second;auto id=[&](const std::string& name){return buffers[c].at(name).id;};finish(c,p33::attention_combine(dev(c),m,id(combine.inputs.at(0)),id(combine.inputs.at(2)),id("error"),id("active")),true);return;}
++#endif
++   finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
+   if(l.weights[0]=="output.weight"&&!a.mini) {
+     require(m.type==iq3::Type::Q6_K&&variant(l)==6,"GSQ expanded head dispatch");
+     finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -1860,7 +1860,7 @@
+   }
+ #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
+   void execute_site(const flash::Launch& l) {int c=l.card;
+-    if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
++    if(a.gsq_packed&&dev(c).view_row<0&&(gsq_mix_follower.count(&l)||gsq_attention_follower.count(&l))) { /* written by its fused producer launch */ } else
+     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
+     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
+     else if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }
+--- a/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp
++++ b/stage2/packet194-expert-diet-engine/p33_dense_raw.hpp
+@@ -20,8 +20,9 @@
+  #pragma unroll
+  for(unsigned j=0;j<4;++j){out[j]=a0[j];out[j+4]=a1[j];}
+ }
++struct AttentionEpilogue { float* streams; };
+ template<iq3::Type T,unsigned K,unsigned R,unsigned U>
+-inline void dense_rows(const uint8_t* W,const float* X,float* Y,uint32_t rows,uint32_t rb,uint32_t groups,uint32_t tokens,sycl::nd_item<1> it){
++inline void dense_rows(const uint8_t* W,const float* X,float* Y,uint32_t rows,uint32_t rb,uint32_t groups,uint32_t tokens,sycl::nd_item<1> it,const AttentionEpilogue* epilogue=nullptr,const float* factors=nullptr){
+  static_assert((T==iq3::Type::Q6_K||T==iq3::Type::Q8_0)&&K%256==0&&(R==1||R==2||R==4||R==8)&&U>=1);
+  constexpr unsigned LR=R==1?0:R==2?1:R==4?2:3;
+  auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+@@ -80,6 +81,7 @@
+  for(unsigned lv=LR;lv<5;++lv){const float o=sycl::permute_group_by_xor(sg,A[0],1u<<lv);A[0]=((lane>>lv)&1u)?o+A[0]:A[0]+o;}
+  const uint32_t row=row0+(lane&(R-1));
+  if(lane<R&&row<rows)y[row]=A[0];
++ if constexpr(R==1)if(epilogue&&lane<4&&row<rows){const size_t j=size_t(lane)*rows+row;epilogue->streams[j]=epilogue->streams[j]+A[0]*factors[lane];}
+ }
+ // BF16 activations and outputs (OWNRT_DRAFT_HEAD_RAW=1: the rank-0 draft head prefix, lab 2026-10-26, default off).
+ // Each output keeps Kernel<0,Q6_K,K,1,false> on the expanded rows (dense_lane<Q6_K,K,false>, begin 0): lane l walks the
+--- a/stage2/packet194-expert-diet-engine/p33_submit.cpp
++++ b/stage2/packet194-expert-diet-engine/p33_submit.cpp
+@@ -143,9 +143,36 @@
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){h.parallel_for(p35_range0,p28::checked(packet26::checked(kernel)));});
+  }
+ };
++// Token-one raw Q8 attention output plus the F32 attn.combine epilogue. The GEMV remains R1/U2/GRF128;
++// four injection factors are computed once per 128-lane work-group. Attention is stored even when the HC guard is off.
++struct DenseRawAttention final:ownrt::SyclOperation {
++ uint32_t rows=0,rb=0;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
++  const uint8_t* w=static_cast<const uint8_t*>(p[0]);const float* x=static_cast<const float*>(p[1]);float* y=static_cast<float*>(p[2]);
++ float* streams=static_cast<float*>(p[3]);const float* inject=static_cast<const float*>(p[4]);uint32_t* error=static_cast<uint32_t*>(p[5]);const uint32_t* active=static_cast<const uint32_t*>(p[6]);
++  const uint32_t n=rows,b=rb,groups=rows;const size_t global=(size_t(groups)*32+127)/128*128;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(global,128)](sycl::handler& h){
++   sycl::local_accessor<float,1> factor(4,h);
++   h.parallel_for(p35_range0,p28::checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    const unsigned local=it.get_local_linear_id();const bool enabled=*active&&!sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>(*error).load();
++    if(local<4&&enabled)factor[local]=2.f*ng::sigmoid(inject[local]/4.f);
++    it.barrier(sycl::access::fence_space::local_space);
++    raw::AttentionEpilogue epilogue{streams};
++    raw::dense_rows<iq3::Type::Q8_0,6144,1,2>(w,x,y,n,b,groups,1,it,enabled?&epilogue:nullptr,factor.get_pointer());
++   })));
++  });
++ }
++};
+ template<iq3::Type T,unsigned K,unsigned R,unsigned U,unsigned G> ownrt::Event raw_rows(ownrt::Device& d,const integrated::Matrix& m,uint32_t rb){
+  DenseRaw<T,K,R,U,G> op;op.rows=uint32_t(m.rows);op.rb=rb;op.tokens=m.tokens;std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};return d.compute(op,ids,{});
+ }
++integrated::Launch attention_combine(ownrt::Device& d,const integrated::Matrix& m,ownrt::Allocation streams,ownrt::Allocation inject,ownrt::Allocation error,ownrt::Allocation active){
++ if(!m.raw||m.type!=iq3::Type::Q8_0||m.rows!=2560||m.columns!=6144||m.tokens!=1||m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.routes||m.status||m.count!=1||m.experts!=1||(m.span&&m.span!=m.rows))throw std::invalid_argument("p33 raw attention combine: token-one F32 Q8 only");
++ const size_t rb=denseraw::row_bytes(m.type,m.columns);
++ if(d.arena.row(m.w).bytes<m.rows*rb||d.arena.row(m.x).bytes<m.columns*4||d.arena.row(m.y).bytes<m.rows*4||d.arena.row(streams).bytes<m.rows*16||d.arena.row(inject).bytes<16||d.arena.row(error).bytes<4||d.arena.row(active).bytes<4)throw std::invalid_argument("p33 raw attention combine: allocation extent");
++ if(!v2_aligned(d,m.w,4)||!v2_aligned(d,m.x,16)||!v2_aligned(d,m.y,4)||!v2_aligned(d,streams,4)||!v2_aligned(d,inject,4)||!v2_aligned(d,error,4)||!v2_aligned(d,active,4))throw std::invalid_argument("p33 raw attention combine: allocation alignment");
++ DenseRawAttention op;op.rows=uint32_t(m.rows);op.rb=uint32_t(rb);std::array<ownrt::Allocation,7> ids{m.w,m.x,m.y,streams,inject,error,active};auto e=d.compute(op,ids,{});return {e,e,1};
++}
+ // OWNRT_DRAFT_HEAD_RAW=1 (default off): the rank-0 draft head prefix, raw Q6_K rows with BF16 activations and outputs.
+ template<unsigned K,unsigned R,unsigned U> struct DenseRawBF16 final:ownrt::SyclOperation {
+  uint32_t rows=0,rb=0;
+--- a/stage2/packet194-expert-diet-engine/p33_submit.hpp
++++ b/stage2/packet194-expert-diet-engine/p33_submit.hpp
+@@ -3,4 +3,7 @@
+ #include "stage2/packet194-expert-diet-engine/p28/submit.hpp"
+ namespace p33 {
+ integrated::Launch submit(ownrt::Device&,const std::vector<integrated::Matrix>&,const std::string&,bool,unsigned);
++#ifndef OWN_RT_HOST_ONLY
++integrated::Launch attention_combine(ownrt::Device&,const integrated::Matrix&,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation);
++#endif
+ }
