@@ -18,3 +18,10 @@ The GPU microbenchmark on card 43 rejected the variant before a full-model run:
 All three were slower despite reduced fetch traffic. Exactness was 0 failures over 23 cases per variant and no kernel
 faults occurred. The lever is closed negatively; no full-model speed claim or integration followed. `analysis.json`
 contains the fetch model and `attention-long.patch` retains the experiment.
+## Matched unprofiled decode baseline
+
+Follow-up runs on the same card and B19 binary found no multi-millisecond decode bottleneck: 12.473 ms/half at 4096
+positions versus 12.531 ms at 30000, only +0.057 ms. Device timestamp modes added about 3.9 ms per half and could drop
+retired events, so their apparent slowdown and zero site timings were artifacts. Wall-site comparison showed only +44 us
+for QSA select at 30K. The existing 2051-slot cap already keeps long-context attention nearly flat. Further long-context
+work should target the 30K prompt's roughly 127-second processing cost, not this nonexistent decode regression.
