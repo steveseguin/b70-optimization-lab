@@ -1,0 +1,27 @@
+--- a/engine/planning/rolling_provider/dedicated_transport.py
++++ b/engine/planning/rolling_provider/dedicated_transport.py
+@@ -19,6 +19,14 @@
+ MAGIC, VERSION, PROPOSAL_OFFSET = 0x50525631, 1, 4096
+ CAPTURE_OFFSET = 768
+ HEADER = struct.Struct('<8IQ32s56s')
++
++
++def start_targets(stages, prefill_result):
++    for stage in stages:
++        stage.start_async()
++        # RingStage.start_async initializes cold counters; restore only the
++        # completed authenticated prefix before synthesizing the first ROW ACK.
++        stage.physical = stage.committed = prefill_result['prefill_positions']
+ 
+ 
+ class Provider:
+@@ -196,8 +204,7 @@
+     if bulk_mode:
+         from . import dedicated_prefill
+         prefill_result=dedicated_prefill.run(stages,provider,model,plan,output,stop_requested=stop_requested)
+-    for stage in stages:
+-        stage.start_async()
++    start_targets(stages, prefill_result)
+     provider.start_async()
+     owners = stages+[provider]
+     sockets = {s.sock:s for s in owners}

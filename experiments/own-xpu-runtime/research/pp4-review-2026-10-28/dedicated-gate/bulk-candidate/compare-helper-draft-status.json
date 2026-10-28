@@ -1,0 +1,15 @@
+{
+  "status": "review-ready-not-applied",
+  "patch_sha256": "d1a2b39c194d0947d46c3e335ff98a10f32ddcab786eb466c93c32c8343d122e",
+  "tests": "25 pass:19 existing strict +6 bulk source/suffix cases; actual native trace/record hashes and terminal ACK checked",
+  "constraints": [
+    "Default per-token strict checks unchanged",
+    "Bulk opt-in ingests actual native pairs and chunk ACK/source records; no synthetic commands/ROW/ACCEPT",
+    "Only target trace conservation adds2*authenticated bulk count; omissions remain zero",
+    "Exact full ordered pair hash and sealed state/terminal checks retained",
+    "Sequential only; no bulk reset/overlap qualification",
+    "CPU tests are not actual model/state parity"
+  ],
+  "command": "nice -n19 taskset -c8-15 env OWNRT_COMPARE_OVERLAY=/dev/shm/dedicated-bulk-compare-overlay-20261028 OWNRT_BULK_PLANNING=/dev/shm/dedicated-bulk-python-overlay-20261028/engine/planning python research/pp4-review-2026-10-28/dedicated-gate/bulk-candidate/test_compare_bulk.py",
+  "portable": "Without environment overrides tests target installed canonical helpers/planning; fixture paths derive from repository test location."
+}

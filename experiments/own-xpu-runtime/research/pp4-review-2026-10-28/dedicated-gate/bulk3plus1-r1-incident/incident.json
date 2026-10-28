@@ -1,0 +1,12 @@
+{
+  "cause": "Inherited RingStage.start_async resets transport physical/committed to0 after authenticated1675-prefix adoption; model stays1675. Native firstROW sequence8 correctly physical1676 committed1675 pending1. Transport synthesized1/0/1; strict coordinator rejected.",
+  "native_arithmetic_failure": false,
+  "outputs": 0,
+  "chunks": 7,
+  "prefill_positions": 1675,
+  "cleanup": "All4 exited1 cooperatively/livepids empty; coordinator reports passive postflight clean and health4PASS.",
+  "fix": "Restore transport physical/committed from authenticated prefix AFTER start_async as existing PP4 transport does. No validation weakened.",
+  "regression": "30 dedicated planning tests PASS; actual inherited start_async reset reproduced, authenticated7chunk1675 adoption and recorded native firstROW seq8 tested, then CPU-shaped ACCEPT (not a fabricated native incident receipt).",
+  "test": "engine/planning/test_dedicated_bulk_seam.py",
+  "prefix_only_evidence": "All1675 actual no-head native pairs and7 chunk ACK/source records pass ingestion and exactly match original reference prefix; no outputs/fullstate qualification from failed r1."
+}

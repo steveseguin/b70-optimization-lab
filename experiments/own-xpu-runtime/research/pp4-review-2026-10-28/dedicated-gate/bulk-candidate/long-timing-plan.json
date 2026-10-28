@@ -1,0 +1,72 @@
+{
+  "schema": "ownrt.initial-cold-long-timing-plan.v1",
+  "device_execution_requested": false,
+  "conditions": "One first inference request per topology, no warmup or cached prompt state. Dedicated uses initial native cold state; existing PP4 service performs its normal validated cold RESET before first HTTP request. Request elapsed excludes load/reset. Reset kernels may warm differently; no identical-runtime-cost assertion.",
+  "build_receipt": "/dev/shm/engine-build-dedicated-bulk-20261028-r1/build-receipt.json",
+  "build_receipt_sha256": "114f7d50870fa7a1fe23e8fdbce2b02599997658013e65310e469bee00471424",
+  "prompt_tokens": 121854,
+  "max_new": 8,
+  "prompt_i32_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+  "historical_output_ids": [
+    27775,
+    383,
+    279,
+    3766,
+    26622,
+    1528,
+    11,
+    1532
+  ],
+  "historical_source": {
+    "request_plan": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000002/request-plan.json",
+    "sha256": "0424353f2e2a4e6de03935aa8ee7bccbee44aa3f2346511144490431672fca0a",
+    "result": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000002/driver-result.json",
+    "result_sha256": "41743a9d0aa0b248fd7fe5e426bbdb1ad0eb150f4dd6fa043b7bde9def81987c"
+  },
+  "plans": {
+    "dedicated": {
+      "config": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/dedicated-config.json",
+      "plan": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/dedicated-plan.json",
+      "plan_sha256": "2c4fb6d0a5b3bfc4211fe4d0f4e5cfcd679a6c2d3215f55903a651af7969b201",
+      "output": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/dedicated-output",
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "bdfs": [
+        "0000:23:00.0",
+        "0000:27:00.0",
+        "0000:47:00.0"
+      ]
+    },
+    "pp4": {
+      "config": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/pp4-config.json",
+      "plan": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/pp4-plan.json",
+      "plan_sha256": "e0ecec93240a58763e4a2a3b5c702581f4d7c328f747ea897fdc3fbec2ff1913",
+      "output": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/pp4-output",
+      "boundaries": [
+        0,
+        8,
+        21,
+        34,
+        48
+      ],
+      "bdfs": [
+        "0000:23:00.0",
+        "0000:27:00.0",
+        "0000:43:00.0",
+        "0000:47:00.0"
+      ]
+    }
+  },
+  "comparison": "Exact prompt/output IDs, zero cold-state reuse, same binary/model/core flags/policy/rows; topology and sequential dedicated vs pipelined PP4 are explicit treatments. Historical warmed524.273s is not the control. PP4 planner has tiny planning inputs because its existing service separately admits caller prompts and bounded trace omissions; this is explicit existing service behavior, not a fabricated full scalar trace.",
+  "recursive_snapshot_copy": {
+    "dedicated": "existing per-extent copy; no flat-copy flag",
+    "pp4": "qualified flat copy enabled",
+    "scope": "Explicit implementation difference, not a topology-only comparison. Dedicated planner exposure is a separate unqualified lever."
+  },
+  "execution": "Dedicated: dedicated_provider_driver.execute via its CLI/admission. PP4: existing PP4 HTTP service first request only, use preserved long-body JSON. Its tiny suite is planning-only and MUST NOT execute as inference; actual request body has121854prompt/8cap. Existing cold RESET is allowed, no new reset implementation. Coordinator owns fresh admissions/start/one shutdown and all-owner cleanup.",
+  "limitations": "Requires completed bulk full-state/seam gate on this binary before timing; no dedicated reset/overlap claim; one sample each, no suite/score/independent-reference claim."
+}

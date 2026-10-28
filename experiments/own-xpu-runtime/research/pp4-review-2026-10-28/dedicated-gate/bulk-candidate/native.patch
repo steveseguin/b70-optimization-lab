@@ -1,0 +1,331 @@
+--- a/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -161,6 +161,8 @@
+   std::string provider_bdf;std::vector<std::string> provider_target_bdfs;
+   fs::path provider_seed_shared,provider_final_shared,provider_replay;
+   std::string provider_replay_sha256;
++  fs::path provider_prefill_prompt,provider_prefill_seed_shared,provider_prefill_final_shared;
++  std::string provider_prefill_prompt_sha256;int provider_prefill_rows=0;
+   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
+   std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0,pipeline_ring_depth=2;
+   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
+@@ -234,6 +236,11 @@
+     }
+     else if(k=="--provider-seed-shared")a.provider_seed_shared=value();
+     else if(k=="--provider-final-shared")a.provider_final_shared=value();
++    else if(k=="--provider-prefill-prompt")a.provider_prefill_prompt=value();
++    else if(k=="--provider-prefill-prompt-sha256")a.provider_prefill_prompt_sha256=value();
++    else if(k=="--provider-prefill-seed-shared")a.provider_prefill_seed_shared=value();
++    else if(k=="--provider-prefill-final-shared")a.provider_prefill_final_shared=value();
++    else if(k=="--provider-prefill-rows")a.provider_prefill_rows=std::stoi(value());
+     else if(k=="--provider-replay")a.provider_replay=value();
+     else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
+     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
+@@ -349,6 +356,7 @@
+       throw std::runtime_error("unknown option " + k);
+   }
+   if(a.provider_only){
++    require(!a.prefill_rows,"provider-only uses provider-prefill-rows alias");a.prefill_rows=a.provider_prefill_rows;
+     require(!a.pipeline_enabled()&&a.pipeline_boundaries.empty()&&!a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&!a.pipeline_external_provider,
+             "provider-only cannot impersonate a target stage");
+     a.pipeline_live_draft=a.pipeline_draft_partition=a.pipeline_ring_live_draft=a.pipeline_ring_persistent_requests=true;
+@@ -371,6 +379,12 @@
+           "bounded generation/context/deadline");
+   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
+   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
++  const bool dedicated_bulk=!a.provider_prefill_prompt.empty();
++  require(!dedicated_bulk||(a.provider_prefill_prompt.is_absolute()&&a.provider_prefill_prompt_sha256.size()==64&&a.prefill_rows>0&&a.prefill_rows<=256&&(a.provider_only||a.pipeline_external_provider)),"explicit dedicated bulk prompt/role/rows");
++  require(dedicated_bulk||(!a.provider_prefill_rows&&a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()&&a.provider_prefill_prompt_sha256.empty()),"bulk arguments require prompt");
++  require(!a.provider_prefill_rows||a.provider_only,"provider-prefill-rows role");
++  require(!dedicated_bulk||!a.provider_only||(a.provider_prefill_seed_shared.is_absolute()&&a.provider_prefill_final_shared.is_absolute()),"provider bulk readonly peer paths");
++  require(!dedicated_bulk||a.provider_only||(a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()),"target bulk owns local map only");
+   require(!a.prefill_rows||(a.f32_activations&&a.gsq_packed&&a.memory=="resident"),"batched prefill: F32 exact GSQ resident engine only");
+   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
+   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
+@@ -385,7 +399,7 @@
+   require(a.rank>=-1 && a.rank<=1,"rank range");
+   if(a.provider_only){
+     require(a.rank==0&&a.cards==1&&a.gsq_packed&&a.f32_activations&&a.memory=="resident"&&a.mtp&&a.draft_rank==0&&
+-       !a.mini&&!a.legacy&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1&&
++       !a.mini&&!a.legacy&&!a.tp_replicate&&(!a.prefill_rows||dedicated_bulk)&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1&&
+        a.draft_fault=="none"&&a.pipeline_provider_stage==0,"provider-only supported runtime identity");
+     require(a.channel>=0&&a.stop_fd>=0&&!a.shared.empty(),"provider-only IPC arguments");
+     require(a.provider_target_bdfs.size()>=2&&a.provider_target_bdfs.size()<=6&&!a.provider_bdf.empty(),"provider-only device topology");
+@@ -459,7 +473,7 @@
+    require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
+            "pipeline stages initially require one-card resident GSQ F32 path");
+    require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_provider()&&a.draft_rank==0))&&!a.tp_replicate&&
+-           (!a.prefill_rows||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_ring_live_draft))&&
++           (!a.prefill_rows||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&((a.pipeline_ring_pending_provider&&a.pipeline_ring_live_draft)||(a.pipeline_external_provider&&dedicated_bulk))))&&
+            !a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
+            "pipeline unsupported MTP/TP/prefill/canary/cancel mode");
+    if(a.pipeline_live_draft){
+--- a/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -560,9 +560,10 @@
+     require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture==0||r.fixture==1)&&!r.speculative,"prefill command");
+     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
+     const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
+-    if(a.rank==0)engine->prefill_chunk(r.position,h.tokens,r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
++    std::vector<int> owned_tokens;if(a.rank==0)owned_tokens.assign(h.tokens,h.tokens+r.token);
++    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
+     else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
+-    if(a.pipeline_ring)ring_dispatcher->prefill_complete(r,a.rank==0?h.tokens:nullptr);
++    if(a.pipeline_ring){ring_dispatcher->prefill_complete(r,a.rank==0?owned_tokens.data():nullptr);ring_dispatcher->external_prefill_publish(r,a.rank==0?owned_tokens.data():nullptr,prefill_base);}
+     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
+    }
+    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;v3_accepted(*engine,v3state,c);c={};}
+--- a/src/pipeline/provider_only/owner.hpp
++++ b/src/pipeline/provider_only/owner.hpp
+@@ -30,7 +30,7 @@
+  ring_next::wire::Context context_;
+  std::optional<recursive_provider_next::Sequence> sequence_;
+  int last_command_=0,last_final_commit_=0;
+- bool failed_=false;
++ bool failed_=false,bulk_closed_=false,bulk_used_=false;
+ public:
+  static constexpr const char* role="dedicated-mtp";
+  Owner(Draft& runtime,Topology topology,ring_next::wire::Context context)
+@@ -51,7 +51,7 @@
+      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify,Captured on_captured){
+   ring_next::need(!failed_&&command>last_command_,"dedicated MTP stale/failed command");
+   try{
+-   boundary();
++   boundary();bulk_closed_=true;
+    recursive_provider::validate_final_record(final,context_,hidden);
+    ring_next::need(final.hidden.commit_sequence>last_final_commit_,"dedicated MTP stale final commit");
+    const auto row=recursive_provider::seed_row(seed,context_);
+@@ -71,13 +71,31 @@
+      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify){
+   return run(command,seed,final,hidden,verify,[](const auto&,uint64_t){});
+  }
++ // Authenticated no-head prefix; rows are canonical prompt identities, not
++ // invented accepted target tickets. The caller owns/validates both raw records.
++ template<class Prompt,class Witness,class Trace> void prefill(int command,const Prompt& prompt,const Witness& w,Trace trace){
++  ring_next::need(!failed_&&command>last_command_,"dedicated bulk stale/failed command");
++  try{
++   boundary();ring_next::need(!bulk_closed_&&serial()==w.seed.start&&w.seed.count>0&&w.hidden.size()==size_t(w.seed.count)*context_.stream_bytes,"dedicated bulk cold contiguous prefix");
++   std::vector<ring_next::Row> rows;auto proposed=*sequence_;
++   for(uint32_t i=0;i<w.seed.count;++i){int p=int(w.seed.start+i+1);ring_next::Row row;
++    row.epoch=context_.epoch;row.request=context_.request;row.id=p+1;row.parent=p;row.position=p;row.token=prompt.token(p);row.fixture=0;row.tentative=false;row.before=prompt.prefix(p);row.after=prompt.prefix(p+1);
++    proposed.prefill(row,prompt.token(p-1));rows.push_back(row);
++   }
++   last_command_=command;bulk_used_=true;
++   for(size_t i=0;i<rows.size();++i){const auto& row=rows[i];const auto* hidden=w.hidden.data()+i*context_.stream_bytes;
++    ring_next::need(draft.live_step(row.token,row.position,false,hidden,context_.stream_bytes)==-1,"dedicated bulk must not execute a head");
++    sequence_->prefill(row,prompt.token(row.position-1));trace(row,hidden,size_t(context_.stream_bytes));
++   }boundary();
++  }catch(...){failed_=true;throw;}
++ }
+  // OP9 is only a no-head canonical prefix replay, authenticated by the same
+  // independent source journals. Recursive proposals still use run()/Sequence.
+  void canonical(int command,const recursive_provider::SeedRecord& seed,
+      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden){
+   ring_next::need(!failed_&&command>last_command_,"dedicated MTP stale/failed command");
+   try{
+-   boundary();recursive_provider::validate_final_record(final,context_,hidden);
++   boundary();bulk_closed_=true;recursive_provider::validate_final_record(final,context_,hidden);
+    const auto row=recursive_provider::seed_row(seed,context_);
+    ring_next::need(!row.fixture&&final.hidden.commit_sequence>last_final_commit_&&
+      row.parent==final.row.id&&row.before==final.row.after&&row.position==final.row.position+1,
+@@ -98,7 +116,7 @@
+   ring_next::need(!failed_&&command>last_command_&&epoch==context_.epoch+1&&
+        request!=context_.request,"dedicated MTP reset identity/command");
+   try{
+-   boundary();draft.live_reset_admission();
++   boundary();ring_next::need(!bulk_used_,"dedicated bulk reset not qualified");draft.live_reset_admission();
+    draft.reset_request(destination);zero_private(draft);
+    draft.recursive_reset_after_owner_zero();
+    context_.epoch=epoch;context_.request=request;
+--- a/src/pipeline/provider_only/peers.hpp
++++ b/src/pipeline/provider_only/peers.hpp
+@@ -22,6 +22,7 @@
+  }
+  ~ReadOnlyMap(){if(bytes_)::munmap(const_cast<uint8_t*>(bytes_),size_t(initial_.st_size));if(fd_>=0)::close(fd_);}
+  ReadOnlyMap(const ReadOnlyMap&)=delete;ReadOnlyMap&operator=(const ReadOnlyMap&)=delete;
++ size_t size()const{return size_t(initial_.st_size);}
+  const uint8_t* data()const{return bytes_;}
+  bool same_inode(const ReadOnlyMap& other)const{return initial_.st_dev==other.initial_.st_dev&&initial_.st_ino==other.initial_.st_ino;}
+  void identity(bool immutable=false)const{
+--- /dev/null
++++ b/src/pipeline/provider_only/prefill.hpp
+@@ -0,0 +1,77 @@
++#pragma once
++// Separate authenticated OP15 publication; never an accepted ROW/SeedRecord.
++#include "pipeline/provider_only/peers.hpp"
++#include "gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp"
++namespace ownrt::provider_only::bulk {
++constexpr uint32_t magic=0x314b4843,ack_magic=0x314b4143,version=1;
++constexpr int op=28;constexpr size_t record_offset=1536,ack_offset=1024;
++struct Record {
++ uint32_t magic_=magic,version_=version,bytes=1280,published_sequence=0;
++ uint32_t role=0,stage=0,stages=0,parity=0,start=0,count=0,rows=0,stream_bytes=0;
++ uint32_t opcode=15,command_sequence=0,lookahead=UINT32_MAX,reserved=0;
++ uint64_t epoch=0;ring_next::Digest request{},prompt_sha{},before{},after{},raw_sha{};
++ std::array<uint8_t,24> zero{};std::array<int32_t,256> tokens{};
++};
++struct Ack {
++ uint32_t magic_=ack_magic,version_=version,bytes=256,sequence=0;
++ uint32_t start=0,count=0,parity=0,rows=0,stream_bytes=0,stages=0,seed_sequence=0,final_sequence=0,next_seed=0,flags=1,reserved0=0,reserved1=0;
++ uint64_t epoch=0,serial=0;ring_next::Digest request{},prompt_sha{},seed_sha{},final_sha{},raw_sha{};
++ std::array<uint8_t,16> zero{};
++};
++static_assert(sizeof(Record)==1280&&sizeof(Ack)==256);
++static_assert(record_offset+2*sizeof(Record)==4096&&ack_offset+sizeof(Ack)<=record_offset);
++inline ring_next::Digest digest_bytes(const void* p,size_t bytes){return ring_next::wire::digest(std::span<const uint8_t>(static_cast<const uint8_t*>(p),bytes));}
++inline std::string hex(const ring_next::Digest& d){constexpr char h[]="0123456789abcdef";std::string s;for(auto b:d){s+=h[b>>4];s+=h[b&15];}return s;}
++inline ring_next::Digest parse_sha(const std::string& text){
++ ring_next::need(text.size()==64,"bulk prompt SHA extent");ring_next::Digest out{};
++ for(size_t i=0;i<64;++i){char c=text[i];int n=c>='0'&&c<='9'?c-'0':c>='a'&&c<='f'?c-'a'+10:-1;ring_next::need(n>=0,"bulk prompt SHA lowercase");out[i/2]|=uint8_t(n<<(i%2?0:4));}return out;
++}
++class Prompt {
++ ReadOnlyMap map_;std::vector<int32_t> tokens_;std::vector<ring_next::Digest> prefixes_;
++ static size_t extent(const std::filesystem::path& path){struct stat st{};ring_next::need(!::lstat(path.c_str(),&st)&&S_ISREG(st.st_mode)&&st.st_size>=12&&st.st_size<=262144*4&&st.st_size%4==0,"bulk prompt regular LEi32 extent");return size_t(st.st_size);}
++public:
++ ring_next::Digest sha{};
++ Prompt(const std::filesystem::path& path,const std::string& expected,const ring_next::wire::Context& context)
++ :map_(path,extent(path)){
++  const size_t n=map_.size();map_.identity(true);sha=digest_bytes(map_.data(),n);ring_next::need(sha==parse_sha(expected),"bulk immutable prompt SHA");tokens_.resize(n/4);
++  prefixes_.push_back(ring_next::request_prefix(context.request,context.epoch));
++  for(size_t i=0;i<tokens_.size();++i){uint32_t t=0;for(int b=0;b<4;++b)t|=uint32_t(map_.data()[4*i+b])<<(8*b);ring_next::need(t<uint32_t(context.vocab),"bulk prompt vocabulary");tokens_[i]=int32_t(t);prefixes_.push_back(ring_next::extend(prefixes_.back(),uint32_t(i),t));}map_.identity(true);
++ }
++ void stable()const{map_.identity(true);}
++ size_t size()const{return tokens_.size();}
++ int token(size_t p)const{ring_next::need(p<tokens_.size(),"bulk immutable lookahead bound");return tokens_[p];}
++ const ring_next::Digest& prefix(size_t p)const{ring_next::need(p<prefixes_.size(),"bulk prefix bound");return prefixes_[p];}
++};
++inline void validate(const Record& r,int role,const ring_next::wire::Context& c,const Prompt& prompt,int rows){
++ ring_next::need(r.magic_==magic&&r.version_==version&&r.bytes==sizeof r&&r.published_sequence>0&&r.published_sequence==r.command_sequence&&r.role==uint32_t(role)&&r.stage==uint32_t(role==1?0:c.stages-1)&&r.stages==uint32_t(c.stages)&&r.parity<2&&r.count>0&&r.count<=r.rows&&r.rows==uint32_t(rows)&&rows>0&&rows<=256&&r.stream_bytes==uint32_t(c.stream_bytes)&&r.opcode==15&&!r.reserved&&r.zero==std::array<uint8_t,24>{}&&r.epoch==c.epoch&&r.request==c.request&&r.prompt_sha==prompt.sha,"bulk actual chunk metadata");
++ ring_next::need(size_t(r.start)+r.count<=prompt.size()-2&&r.start%r.rows==0&&r.parity==(r.start/r.rows)%2&&r.count==std::min(size_t(r.rows),prompt.size()-2-r.start)&&r.before==prompt.prefix(r.start)&&r.after==prompt.prefix(r.start+r.count),"bulk full no-head prefix extent");
++ ring_next::need(role!=1||r.raw_sha==ring_next::Digest{},"bulk seed has no raw payload claim");
++ for(size_t i=0;i<256;++i)ring_next::need(r.tokens[i]==(role==1&&i<r.count?prompt.token(r.start+i):0),"bulk actual copied token/padding");
++ ring_next::need(r.lookahead==(role==1?uint32_t(prompt.token(r.start+r.count)):UINT32_MAX),"bulk immutable lookahead");
++}
++inline Record make(const ring_next::wire::Context& c,const Prompt& prompt,int rows,int sequence,int start,int count,int parity,int role,const int* tokens,const uint8_t* raw){
++ Record r;r.published_sequence=r.command_sequence=sequence;r.role=role;r.stage=role==1?0:c.stages-1;r.stages=c.stages;r.parity=parity;r.start=start;r.count=count;r.rows=rows;r.stream_bytes=c.stream_bytes;r.epoch=c.epoch;r.request=c.request;r.prompt_sha=prompt.sha;r.before=prompt.prefix(start);r.after=prompt.prefix(start+count);r.raw_sha=role==1?ring_next::Digest{}:digest_bytes(raw,size_t(count)*c.stream_bytes);
++ if(role==1){ring_next::need(tokens,"bulk actual target tokens");std::copy_n(tokens,count,r.tokens.begin());r.lookahead=prompt.token(start+count);}validate(r,role,c,prompt,rows);return r;
++}
++inline void publish(uint8_t* map,const Record& r){
++ auto* dest=reinterpret_cast<Record*>(map+record_offset+r.parity*sizeof(Record));__atomic_store_n(&dest->published_sequence,0,__ATOMIC_RELEASE);Record copy=r;copy.published_sequence=0;std::memcpy(dest,&copy,sizeof copy);__atomic_store_n(&dest->published_sequence,r.published_sequence,__ATOMIC_RELEASE);
++}
++struct Witness {Record seed,final;std::vector<uint8_t> hidden;};
++class Peers {
++ ReadOnlyMap seed_,final_;int rows_,stream_;
++public:
++ Peers(const std::filesystem::path& seed,const std::filesystem::path& final,int rows,int stream)
++ :seed_(seed,::pipeline::prefill::bytes(rows,stream)),final_(final,::pipeline::prefill::bytes(rows,stream)),rows_(rows),stream_(stream){ring_next::need(rows>0&&rows<=256&&stream>0&&!seed_.same_inode(final_),"bulk readonly distinct bounded peers");}
++ Witness capture(const ring_next::wire::Context& c,const Prompt& prompt,int start,int count,int parity){
++  ring_next::need(parity>=0&&parity<2&&count>0&&count<=rows_,"bulk command extent");prompt.stable();seed_.identity();final_.identity();Witness w;
++  for(const auto* bytes:{seed_.data(),final_.data()}){const auto& h=*reinterpret_cast<const ::pipeline::prefill::Header*>(bytes);ring_next::need(h.magic==::pipeline::prefill::magic&&h.version==::pipeline::prefill::version&&h.rows==uint32_t(rows_)&&h.stream_bytes==uint32_t(stream_),"bulk peer header geometry");}
++  const auto* a=reinterpret_cast<const Record*>(seed_.data()+record_offset+parity*sizeof(Record));const auto* b=reinterpret_cast<const Record*>(final_.data()+record_offset+parity*sizeof(Record));auto as=__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE),bs=__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE);ring_next::need(as&&bs,"bulk actual publication absent");
++  std::memcpy(&w.seed,a,sizeof w.seed);std::memcpy(&w.final,b,sizeof w.final);validate(w.seed,1,c,prompt,rows_);validate(w.final,2,c,prompt,rows_);
++  ring_next::need(w.seed.start==uint32_t(start)&&w.seed.count==uint32_t(count)&&w.seed.parity==uint32_t(parity)&&w.final.start==w.seed.start&&w.final.count==w.seed.count&&w.final.parity==w.seed.parity,"bulk seed/final command pairing");
++  const auto* raw=final_.data()+4096+size_t(2+parity)*rows_*stream_;w.hidden.assign(raw,raw+size_t(count)*stream_);
++  ring_next::need(w.final.raw_sha==digest_bytes(w.hidden.data(),w.hidden.size()),"bulk actual owned raw SHA");
++  ring_next::need(as==__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE)&&bs==__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE)&&as==w.seed.published_sequence&&bs==w.final.published_sequence,"bulk publication changed while copying");
++  seed_.identity();final_.identity();prompt.stable();return w;
++ }
++};
++} // namespace ownrt::provider_only::bulk
+--- a/src/pipeline/provider_only/runtime.hpp
++++ b/src/pipeline/provider_only/runtime.hpp
+@@ -1,5 +1,5 @@
+ #pragma once
+-#include "pipeline/provider_only/peers.hpp"
++#include "pipeline/provider_only/prefill.hpp"
+ #include "pipeline/recursive_provider/capture_ready.hpp"
+ namespace ownrt::provider_only {
+ inline ring_next::Digest request_digest(const std::string& text){
+@@ -18,6 +18,13 @@
+  ring_next::wire::context(context);
+  Owner<Draft> owner(draft,{options.provider_target_bdfs,options.provider_bdf},context);
+  LivePeers peers(options.provider_seed_shared,options.provider_final_shared);
++ std::unique_ptr<bulk::Prompt> prompt;std::unique_ptr<bulk::Peers> bulk_peers;std::ofstream bulk_trace,bulk_chunks;
++ if(!options.provider_prefill_prompt.empty()){
++  prompt=std::make_unique<bulk::Prompt>(options.provider_prefill_prompt,options.provider_prefill_prompt_sha256,context);
++  bulk_peers=std::make_unique<bulk::Peers>(options.provider_prefill_seed_shared,options.provider_prefill_final_shared,options.prefill_rows,context.stream_bytes);
++  bulk_chunks.open(options.output/"provider-prefill-chunks.jsonl");ring_next::need(bool(bulk_chunks),"bulk native chunk trace open");
++  bulk_trace.open(options.output/"provider-prefill-pairs.jsonl");ring_next::need(bool(bulk_trace),"bulk native pair trace open");
++ }
+  wire::Header header;header.stream_bytes=context.stream_bytes;header.target_stages=context.stages;
+  header.depth=context.depth;header.request=context.request;std::memcpy(shared,&header,sizeof header);
+  wire::Reply ready;ready.bytes=context.stream_bytes;::pipeline::transfer(options.channel,&ready,sizeof ready,true,options.seconds);
+@@ -25,7 +32,16 @@
+  for(;;){
+   wire::Request request;::pipeline::transfer(options.channel,&request,sizeof request,false,options.seconds);
+   wire::command(request,++sequence);wire::Reply reply;reply.sequence=sequence;
+-  if(request.op==wire::canonical_op||request.op==wire::batch_op){
++  if(request.op==bulk::op){
++   ring_next::need(prompt&&bulk_peers&&!request.depth,"bulk explicit native ownership admission");
++   auto witness=bulk_peers->capture(context,*prompt,request.position,request.token,request.fixture);
++   owner.prefill(sequence,*prompt,witness,[&](const auto& row,const uint8_t* hidden,size_t bytes){
++    bulk_trace<<"{\"position\":"<<row.position<<",\"token\":"<<row.token<<",\"head\":false,\"provider_serial\":"<<row.position<<",\"hidden_bytes\":"<<bytes<<",\"hidden_sha256\":\""<<bulk::hex(bulk::digest_bytes(hidden,bytes))<<"\",\"command_sequence\":"<<sequence<<"}\n";ring_next::need(bool(bulk_trace),"bulk native pair trace write");
++   });bulk_trace.flush();ring_next::need(bool(bulk_trace),"bulk native pair trace flush");
++   bulk::Ack ack;ack.sequence=sequence;ack.start=request.position;ack.count=request.token;ack.parity=request.fixture;ack.rows=options.prefill_rows;ack.stream_bytes=context.stream_bytes;ack.stages=context.stages;ack.seed_sequence=witness.seed.published_sequence;ack.final_sequence=witness.final.published_sequence;ack.next_seed=owner.serial()+1;ack.epoch=context.epoch;ack.serial=owner.serial();ack.request=context.request;ack.prompt_sha=prompt->sha;ack.seed_sha=bulk::digest_bytes(&witness.seed,sizeof witness.seed);ack.final_sha=bulk::digest_bytes(&witness.final,sizeof witness.final);ack.raw_sha=witness.final.raw_sha;
++   bulk_chunks<<"{\"epoch\":"<<ack.epoch<<",\"request\":\""<<bulk::hex(ack.request)<<"\",\"sequence\":"<<sequence<<",\"start\":"<<ack.start<<",\"count\":"<<ack.count<<",\"serial\":"<<ack.serial<<",\"prompt_sha256\":\""<<bulk::hex(ack.prompt_sha)<<"\",\"seed_record_sha256\":\""<<bulk::hex(ack.seed_sha)<<"\",\"final_record_sha256\":\""<<bulk::hex(ack.final_sha)<<"\",\"raw_sha256\":\""<<bulk::hex(ack.raw_sha)<<"\"}\n";bulk_chunks.flush();ring_next::need(bool(bulk_chunks),"bulk native chunk trace flush");
++   std::memcpy(shared+bulk::ack_offset,&ack,sizeof ack);reply.bytes=sizeof ack;
++  }else if(request.op==wire::canonical_op||request.op==wire::batch_op){
+    ring_next::need(request.depth==(request.op==wire::batch_op?context.depth:0),"provider requested depth");
+    auto witness=peers.capture(context);auto row=recursive_provider::seed_row(witness.seed,context);
+    ring_next::need(request.token==row.token&&request.position==row.position&&request.fixture==row.fixture,
+--- a/src/pipeline/provider_only/wire.hpp
++++ b/src/pipeline/provider_only/wire.hpp
+@@ -27,7 +27,7 @@
+ inline void command(const Request& request,int next){
+  ring_next::need(request.role==magic&&request.version_==version&&request.sequence==next&&next>0,
+    "dedicated MTP command role/version/sequence");
+- ring_next::need(request.op==canonical_op||request.op==batch_op||request.op==reset_op||
++ ring_next::need(request.op==28||request.op==canonical_op||request.op==batch_op||request.op==reset_op||
+    request.op==dump_op||request.op==finish_op,"dedicated MTP operation refused");
+ }
+ } // namespace ownrt::provider_only::wire
+--- a/src/pipeline/ring/dispatcher.hpp
++++ b/src/pipeline/ring/dispatcher.hpp
+@@ -1,5 +1,6 @@
+ #pragma once
+ #include "wire.hpp"
++#include "pipeline/provider_only/prefill.hpp"
+ #include "checkpoint_ring.hpp"
+ #include "engine_backend.hpp"
+ #include "reset_descriptor.hpp"
+@@ -22,6 +23,7 @@
+  // value: the shared prefill header is single-buffered and reused by OP15.
+  struct PrefillReplay {int start;std::vector<int> tokens;size_t consumed=0;};
+  std::vector<PrefillReplay> prefill_replay;
++ std::unique_ptr<ownrt::provider_only::bulk::Prompt> bulk_prompt;
+  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
+  ownrt::ring_next::Row prefill_row(const Request& r){
+   namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
+@@ -48,18 +50,30 @@
+   require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_provider())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
+   if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);if(owner.a.pipeline_provider_stage)seed_peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_seed_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");if(owner.a.pipeline_ring_pending_provider){survival_trace.open(e.a.output/"ring-provider-survival.jsonl");require(bool(survival_trace),"provider survival trace open");}}
+   checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
++  if(owner.a.pipeline_external_provider&&owner.a.prefill_rows)bulk_prompt=std::make_unique<ownrt::provider_only::bulk::Prompt>(owner.a.provider_prefill_prompt,owner.a.provider_prefill_prompt_sha256,context);
+   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
+  }
+  bool handles_command(int op)const{return (e.a.pipeline_ring_persistent_requests&&op==11)||handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}
+  static bool handles(int op){return op==24||op==25||op==26;}
+  void prefill_complete(const Request& r,const int* tokens){
+   require(e.a.prefill_rows&&e.a.pipeline_ring_persistent_requests&&r.op==15&&r.token>0&&r.token<=e.a.prefill_rows,"ring prefill completion admission");
+-  if(e.a.pipeline_first()){
++  if(e.a.pipeline_first()&&!e.a.pipeline_external_provider){
+    require(tokens&&prefill_replay.size()<2,"ring prefill bounded token ownership");
+    if(!prefill_replay.empty()){const auto& previous=prefill_replay.back();require(r.position==previous.start+int(previous.tokens.size()),"ring prefill replay chunk continuity");}
+   }
+   ring.prefill(r.token,prefill_row(r));
+-  if(e.a.pipeline_first())prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
++  if(e.a.pipeline_first()&&!e.a.pipeline_external_provider)prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
++ }
++ void external_prefill_publish(const Request& r,const int* tokens,uint8_t* map){
++  if(!e.a.pipeline_external_provider)return;
++  namespace bulk=ownrt::provider_only::bulk;
++  require(map&&!e.a.provider_prefill_prompt.empty(),"external bulk explicit source map/prompt");
++  require(bool(bulk_prompt),"external bulk prompt owner");const auto& prompt=*bulk_prompt;prompt.stable();
++  const auto row=prefill_row(r);require(row.after==prompt.prefix(size_t(r.position)+r.token),"external target actual committed prefix");
++  if(!e.a.pipeline_first()&&!e.a.pipeline_final())return;
++  const int role=e.a.pipeline_first()?1:2;const size_t S=e.stream_bytes(),R=e.a.prefill_rows;
++  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S):pipeline::prefill::reverse(map,r.fixture,R,S);
++  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw);bulk::publish(map,record);
+  }
+  void draft_prefill(const Request& r){
+   require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");

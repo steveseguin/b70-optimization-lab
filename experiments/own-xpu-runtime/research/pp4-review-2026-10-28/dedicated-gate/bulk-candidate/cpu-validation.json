@@ -1,0 +1,23 @@
+{
+  "schema": "ownrt.dedicated-bulk-native-cpu.v1",
+  "passed": true,
+  "device_execution_requested": false,
+  "actual_engine_build": false,
+  "patch_sha256": "f544bdd4ac2598e8e82b0fad1ea160c0df3a914101b4af771bfafc6b74c6f078",
+  "compile": "taskset -c8-15 nice -n19 g++ -std=c++20 -O0 -I /dev/shm/dedicated-bulk-native-candidate/after/src -I engine/src -I engine/planning TEST.cpp -lcrypto -o FRESH",
+  "tests": {
+    "test_bulk_owner.cpp": "109791464e8f70b6b84f8ab1aa7b3fd0c8866ee25f1c4b51e483e62cc27306be",
+    "test_bulk_wire.cpp": "18b7f4feb47d177613049c95b7feb4359f8e63e0f61ba026b7cb4b625904f43c"
+  },
+  "scope": "Actual Owner/Sequence, read-only map/hash captures and actual run_loop control with synthetic CPU arithmetic;8 malformed wire cases+8 metadata mutations,3chunk partialtail/parityreuse,sourceoverwrite aftercopy,partialfailurepoison,real OP27seam/depth3byteverifiedrestore,ACK/nativepair traces/dump/FINISH; unchanged existing capture/fixture wire tests.",
+  "apply_check": "git apply --check PASS against current canonical engine (including coordinator131072 edits); no patch applied",
+  "fixture": {
+    "ack-3.bin": "cf28b13965ca7787b94a6235dc022fe84f56c04df2f6c6a3ff8ff051ff3227a5",
+    "final-record-3.bin": "447d190066e60b82afc9256e694a0aaaa6184d570decc383b1947968e039b4b0",
+    "prompt": "a5cfbb1f40639cb3bcf2cb1e05d9bce0f15b615c60815511a615b384ba095f3b",
+    "provider-prefill-chunks.jsonl": "43d08f0c05104709090f3046b4485b4aa266c47f35769343f6cd5767a7f48f39",
+    "provider-prefill-pairs.jsonl": "3922166c68a14b9937ed73d6df116715ee5bdec7bd6b0207cd57ede194756ea8",
+    "reply-3.bin": "5cdf769719b5580d78a6e6bb8c20d2667473c5c644372ffae78fd7a012a9f51e",
+    "seed-record-3.bin": "da0a05ca6938368add748960ce1ea3ed8a1a3c5c5112d101fcce9640c4cc1d4c"
+  }
+}

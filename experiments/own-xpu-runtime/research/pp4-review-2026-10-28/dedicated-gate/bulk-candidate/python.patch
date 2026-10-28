@@ -1,0 +1,618 @@
+--- /dev/null
++++ b/engine/planning/rolling_provider/dedicated_prefill.py
+@@ -0,0 +1,223 @@
++"""Sequential authenticated OP15/OP28 dedicated prefix replay; no ROW/ACCEPT journal synthesis."""
++from dataclasses import dataclass
++from hashlib import sha256
++import json
++import os
++from pathlib import Path
++import select
++import stat
++import struct
++import time
++from . import prefill
++
++RECORD = struct.Struct('<16IQ32s32s32s32s32s24s')
++TOKENS = struct.Struct('<256i')
++ACK = struct.Struct('<16I2Q32s32s32s32s32s16s')
++RECORD_BYTES, RECORD_OFFSET, ACK_OFFSET = 1280, 1536, 1024
++CHUNK_MAGIC, ACK_MAGIC, OP = 0x314B4843, 0x314B4143, 28
++
++
++def need(value,message):
++    if not value:raise ValueError(message)
++
++def prompt_source(plan):
++    path=Path(plan['dedicated_prefill_prompt'])
++    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
++    try:
++        before=os.fstat(fd)
++        need(stat.S_ISREG(before.st_mode) and before.st_nlink==1 and before.st_size==4*len(plan['prompt_tokens'])
++             and before.st_size<=4*262144,'bounded immutable prompt file')
++        raw=b''
++        while len(raw)<before.st_size:
++            part=os.read(fd,before.st_size-len(raw));need(part,'prompt file truncated');raw+=part
++        after=os.fstat(fd)
++        signature=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++        need(signature(before)==signature(after)==signature(os.stat(path,follow_symlinks=False)), 'prompt source changed')
++        need(raw==struct.pack(f'<{len(plan["prompt_tokens"])}i',*plan['prompt_tokens'])
++             and sha256(raw).hexdigest()==plan['dedicated_prefill_prompt_sha256'],'actual immutable prompt IDs/hash')
++        return raw,dict(path=str(path),sha256=sha256(raw).hexdigest(),device=before.st_dev,inode=before.st_ino,bytes=len(raw))
++    finally:os.close(fd)
++
++
++def chunk_record(raw,*,role,stage,stages,start,count,rows,stream,parity,sequence,epoch,request,prompt_sha,
++                 before,after,prompt,raw_sha):
++    need(len(raw)==RECORD_BYTES and role in (1,2) and stages in (2,3)
++         and stage==(0 if role==1 else stages-1) and 0<count<=rows<=256
++         and start>=0 and start%rows==0 and parity==(start//rows)%2,'complete bounded1280 target chunk record')
++    v=RECORD.unpack(raw[:RECORD.size]);tokens=TOKENS.unpack(raw[RECORD.size:])
++    expected=(CHUNK_MAGIC,1,RECORD_BYTES,sequence,role,stage,stages,parity,start,count,rows,stream,15,sequence,
++              prompt[start+count] if role==1 else 0xffffffff,0,epoch,request,prompt_sha,before,after,
++              bytes(32) if role==1 else raw_sha,bytes(24))
++    need(v==expected and 0<sequence<2**31 and 0<count<=rows<=256 and start+count<len(prompt),
++         'actual target chunk publication/source identity')
++    expected_tokens=tuple(prompt[start:start+count])+tuple([0]*(256-count)) if role==1 else tuple([0]*256)
++    need(tokens==expected_tokens,'actual consumed chunk tokens/zero tail')
++    return sha256(raw).digest()
++
++
++def chunk_ack(raw,*,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,epoch,
++              request,prompt_sha,seed_sha,final_sha,raw_sha):
++    need(0<count<=rows<=256 and start>=0 and start%rows==0 and parity==(start//rows)%2,'bounded native chunk ACK geometry')
++    expected=(ACK_MAGIC,1,256,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,
++              start+count+1,1,0,0,epoch,start+count,request,prompt_sha,seed_sha,final_sha,raw_sha,bytes(16))
++    need(len(raw)==ACK.size and ACK.unpack(raw)==expected,'actual dedicated chunk ACK/canonical serial/source binding')
++    return start+count
++
++
++@dataclass(frozen=True)
++class Adoption:
++    count:int
++    epoch:int
++    request:bytes
++    prompt_sha:bytes
++    target_sequences:tuple
++    provider_sequence:int
++    provider_serial:int
++    chunks:int
++    last_ack:bytes
++
++
++def replay(provider,*,start,count,parity,rows,stages,seed_sequence,final_sequence,request,prompt_sha,
++           seed_sha,final_sha,raw_sha,epoch):
++    from .dedicated_transport import MAGIC,VERSION,base
++    provider.guard.check()
++    need(provider.command_pending is None and not provider.transmit and not provider.received
++         and not getattr(provider,'prefill_bulk_busy',False) and provider.provider_serial==start,
++         'exclusive contiguous dedicated chunk replay')
++    provider.prefill_bulk_busy=True
++    provider.sequence+=1;provider.owner.sequence=provider.sequence
++    need(0<provider.sequence<2**31,'dedicated chunk sequence bound')
++    provider.sock.settimeout(.2)
++    command=base.REQUEST.pack(OP,count,start,parity,0,provider.sequence,MAGIC,VERSION)
++    view=memoryview(command)
++    while view:
++        provider.guard.check();_,ready,_=select.select([],[provider.sock],[],.2)
++        if ready:
++            n=provider.sock.send(view);need(n>0,'dedicated chunk channel closed');view=view[n:]
++    reply=provider._blocking_reply()
++    provider._reply(reply,sequence=provider.sequence,token=-1,size=ACK.size)
++    raw=bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])
++    serial=chunk_ack(raw,sequence=provider.sequence,start=start,count=count,parity=parity,rows=rows,stream=provider.stream_bytes,
++        stages=stages,seed_sequence=seed_sequence,final_sequence=final_sequence,epoch=epoch,request=request,
++        prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
++    need(bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])==raw,'provider chunk ACK changed while copying')
++    provider.provider_serial=serial;provider.prefill_bulk_busy=False
++    return command,reply,raw
++
++
++def run(stages,provider,model,plan,output,*,stop_requested=None):
++    from .transport import pending,ring,base
++    need(plan.get('dedicated_bulk_prefill') is True and not plan.get('prefill_pipeline')
++         and not plan.get('persistent_reset'),'dedicated bulk sequential explicit opt-in, no reset')
++    rows=plan['prefill_rows'];bulk=len(model.prompt)-2
++    need(rows==256 and bulk>=rows and len(stages)in (2,3) and model.frontier==0 and not model.rows
++         and provider.provider_serial==provider.sequence==0,'cold bounded dedicated prefix')
++    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 for s in stages),
++         'uniform fresh target prefill geometry')
++    _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
++    began=time.monotonic();target_wall=[0.]*len(stages);replay_wall=0.;chunks=0;last_ack=None
++    with (Path(output)/'dedicated-prefill.jsonl').open('x') as journal:
++        for start in range(0,bulk,rows):
++            provider.guard.check()
++            need(stop_requested is None or not stop_requested(), 'dedicated prefix interrupted; partial adoption/reset/retry refused')
++            count=min(rows,bulk-start);parity=(start//rows)%2;replies=[]
++            stages[0].prefill[16:16+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
++            position=start+count-1
++            row=ring.Row(model.epoch,position+1,position,position,model.prompt[position],0,model.request,
++                         model.proposals.hashes[position],model.proposals.hashes[position+1])
++            for index,stage in enumerate(stages):
++                if index:
++                    kind='forward' if index==1 else 'reverse'
++                    prefill.region(stage.prefill,'forward',parity,rows,stream,count)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count)
++                metadata=prefill.verified_metadata(pending.wire,row,index,index==len(stages)-1)
++                stage.shared[pending.wire.ROW_OFFSET:pending.wire.ROW_OFFSET+len(metadata)]=metadata
++                t=time.monotonic();reply=stage.command(15,count,start,parity);target_wall[index]+=time.monotonic()-t
++                need(reply[3]==count*stream,'actual target chunk completion extent');replies.append(base.REPLY.pack(*reply).hex())
++            offset=RECORD_OFFSET+parity*RECORD_BYTES
++            seed_raw=bytes(stages[0].prefill[offset:offset+RECORD_BYTES]);final_raw=bytes(stages[-1].prefill[offset:offset+RECORD_BYTES])
++            hidden=prefill.region(stages[-1].prefill,'reverse',parity,rows,stream,count);raw_sha=sha256(hidden).digest();del hidden
++            common=dict(stages=len(stages),start=start,count=count,rows=rows,stream=stream,parity=parity,
++                epoch=model.epoch,request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],
++                after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha)
++            seed_sha=chunk_record(seed_raw,role=1,stage=0,sequence=stages[0].sequence,**common)
++            final_sha=chunk_record(final_raw,role=2,stage=len(stages)-1,sequence=stages[-1].sequence,**common)
++            t=time.monotonic();command,reply,last_ack=replay(provider,start=start,count=count,parity=parity,rows=rows,
++                stages=len(stages),seed_sequence=stages[0].sequence,final_sequence=stages[-1].sequence,
++                request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch)
++            replay_wall+=time.monotonic()-t
++            need(seed_raw==bytes(stages[0].prefill[offset:offset+RECORD_BYTES]) and final_raw==bytes(stages[-1].prefill[offset:offset+RECORD_BYTES]),'source chunk publication changed before ACK')
++            journal.write(json.dumps(dict(event='authenticated-prefill-chunk',start=start,count=count,parity=parity,
++                target_sequences=[s.sequence for s in stages],target_reply_hex=replies,seed_record_hex=seed_raw.hex(),
++                final_record_hex=final_raw.hex(),provider_command_hex=command.hex(),provider_reply_hex=reply.hex(),
++                provider_ack_hex=last_ack.hex(),monotonic_s=time.monotonic()))+'\n');journal.flush();chunks+=1
++    receipt=Adoption(bulk,model.epoch,model.request,prompt_sha,tuple(s.sequence for s in stages),provider.sequence,
++                     provider.provider_serial,chunks,last_ack)
++    model.adopt_prefill(bulk,native=receipt)
++    for stage in stages:stage.physical=stage.committed=bulk
++    return dict(prefill_positions=bulk,prefill_chunks=chunks,prefill_draft_replay=bulk,prefill_source=source,
++        prefill_timing=dict(schema='dedicated-sequential-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
++            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,
++            scope='sequential host wall durations; no overlap/speed claim'))
++
++
++def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256):
++    """Read actual prefix records/ACKs/native pairs, never invent ROW/ACCEPT events.
++
++    This is source ingestion, not sealed-state or reference parity. A qualifier
++    must still compare these actual native hidden hashes and terminal state.
++    """
++    from .dedicated_transport import base,MAGIC,VERSION
++    def read_lines(path):
++        fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
++        try:
++            before=os.fstat(fd)
++            need(stat.S_ISREG(before.st_mode) and before.st_nlink==1 and 0<before.st_size<=128*1024**2,'bounded actual prefix trace')
++            raw=b''
++            while len(raw)<before.st_size:
++                part=os.read(fd,min(1024**2,before.st_size-len(raw)));need(part,'prefix trace truncated');raw+=part
++            stamp=lambda s:(s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++            need(stamp(before)==stamp(os.fstat(fd))==stamp(os.stat(path,follow_symlinks=False)),'prefix trace changed')
++            def unique(pairs):
++                value={}
++                for key,item in pairs:need(key not in value,'duplicate prefix JSON key');value[key]=item
++                return value
++            return [json.loads(line,object_pairs_hook=unique) for line in raw.splitlines()],dict(path=str(path),sha256=sha256(raw).hexdigest(),bytes=len(raw))
++        finally:os.close(fd)
++    journal,js=read_lines(journal_path);actual_pairs,ps=read_lines(pairs_path);native_chunks,cs=read_lines(chunks_path)
++    need(type(rows)is int and 1<=rows<=256,'bounded prefix evidence rows')
++    bulk=len(model.prompt)-2;count_chunks=(bulk+rows-1)//rows;stream=model.stream_bytes;stages=len(model.stages)
++    need(1<=rows<=256 and len(journal)==len(native_chunks)==count_chunks and len(actual_pairs)==bulk,'complete actual native prefix trace inventory')
++    prompt_sha=sha256(struct.pack(f'<{len(model.prompt)}i',*model.prompt)).digest()
++    for index,(j,n) in enumerate(zip(journal,native_chunks)):
++        start=index*rows;count=min(rows,bulk-start);parity=index%2;sequence=index+1
++        need(j['event']=='authenticated-prefill-chunk' and (j['start'],j['count'],j['parity'])==(start,count,parity)
++             and j['target_sequences']==[sequence]*stages,'actual sequential chunk schedule')
++        seed,final=bytes.fromhex(j['seed_record_hex']),bytes.fromhex(j['final_record_hex'])
++        raw_sha=RECORD.unpack(final[:RECORD.size])[-2]
++        common=dict(stages=stages,start=start,count=count,rows=rows,stream=stream,parity=parity,epoch=model.epoch,
++            request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],after=model.proposals.hashes[start+count],
++            prompt=model.prompt,raw_sha=raw_sha)
++        seed_sha=chunk_record(seed,role=1,stage=0,sequence=sequence,**common)
++        final_sha=chunk_record(final,role=2,stage=stages-1,sequence=sequence,**common)
++        need(base.REQUEST.unpack(bytes.fromhex(j['provider_command_hex']))==(28,count,start,parity,0,sequence,MAGIC,VERSION), 'actual OP28 command frame')
++        need(base.REPLY.unpack(bytes.fromhex(j['provider_reply_hex']))==(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.),'actual OP28 completion frame')
++        chunk_ack(bytes.fromhex(j['provider_ack_hex']),sequence=sequence,start=start,count=count,parity=parity,rows=rows,
++            stream=stream,stages=stages,seed_sequence=sequence,final_sequence=sequence,epoch=model.epoch,
++            request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
++        need(len(j['target_reply_hex'])==stages,'all actual target chunk replies')
++        for stage,reply in enumerate(j['target_reply_hex']):
++            v=base.REPLY.unpack(bytes.fromhex(reply))
++            need(v[0]==v[2]==0 and v[3:8]==(count*stream,sequence,0 if stage==0 else 1,stage,int(stage==stages-1)), 'actual target OP15 source reply binding')
++        expected=dict(epoch=model.epoch,request=model.request.hex(),sequence=sequence,start=start,count=count,serial=start+count,
++            prompt_sha256=prompt_sha.hex(),seed_record_sha256=seed_sha.hex(),final_record_sha256=final_sha.hex(),raw_sha256=raw_sha.hex())
++        need(n==expected and all(type(n[k])is type(v) for k,v in expected.items()),'native chunk receipt differs from actual source/ACK')
++    keys={'position','token','head','provider_serial','hidden_bytes','hidden_sha256','command_sequence'}
++    for position,row in enumerate(actual_pairs,1):
++        hidden=row.get('hidden_sha256')
++        need(set(row)==keys and all(type(row[k])is int for k in ('position','token','provider_serial','hidden_bytes','command_sequence')) and row['position']==position
++             and row['token']==model.prompt[position] and row['head'] is False and row['provider_serial']==position
++             and row['hidden_bytes']==stream and row['command_sequence']==(position-1)//rows+1
++             and type(hidden)is str and len(hidden)==64 and hidden==hidden.lower()
++             and len(bytes.fromhex(hidden))==32,'actual contiguous no-head canonical prefix pair')
++    return dict(actual_native_pairs=actual_pairs,actual_native_chunks=native_chunks,
++        sources=[js,ps,cs],positions=bulk,scope='Actual native trace ingestion only; no synthetic per-row acceptance and no sealed-state/reference parity assertion.')
+--- a/engine/planning/rolling_provider/dedicated.py
++++ b/engine/planning/rolling_provider/dedicated.py
+@@ -90,8 +90,28 @@
+         self.provider_sequence = provider_sequence
+         self.provider_busy = None
+ 
+-    def adopt_prefill(self, count):
+-        raise ValueError('dedicated prefill requires authenticated native target/provider adoption')
++    def adopt_prefill(self, count, *, native=None):
++        from .dedicated_prefill import Adoption, ACK, ACK_MAGIC
++        from hashlib import sha256
++        import struct
++        need(type(native) is Adoption, 'dedicated prefill requires authenticated native target/provider adoption')
++        chunks=(count+255)//256
++        prompt_sha=sha256(struct.pack(f'<{len(self.prompt)}i',*self.prompt)).digest()
++        need(count==len(self.prompt)-2 and count>=256 and native.count==count
++             and native.epoch==self.epoch and native.request==self.request and native.prompt_sha==prompt_sha
++             and native.target_sequences==(chunks,)*len(self.stages)
++             and native.provider_sequence==native.chunks==chunks and native.provider_serial==count
++             and self.provider_busy is None and self.provider_sequence==0 and self.provider.serial==0,
++             'dedicated complete native prefix receipt')
++        need(len(native.last_ack)==ACK.size,'dedicated terminal prefix ACK extent')
++        a=ACK.unpack(native.last_ack)
++        need(a[0:4]==(ACK_MAGIC,1,256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%2)
++             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,0,0)
++             and a[16:20]==(self.epoch,count,self.request,prompt_sha) and a[-1]==bytes(16),
++             'dedicated terminal actual chunk ACK binding')
++        for stage,sequence in zip(self.stages,native.target_sequences):stage.sequence=sequence
++        self.provider_sequence=native.provider_sequence
++        super().adopt_prefill(count)
+ 
+     def _poll_proposals(self):
+         if self.stop_reason is not None or not self.provider.can_reserve_dedicated(
+--- a/engine/planning/rolling_provider/dedicated_transport.py
++++ b/engine/planning/rolling_provider/dedicated_transport.py
+@@ -72,7 +72,8 @@
+         return base.REPLY.unpack(raw)
+ 
+     def start_async(self):
+-        base.require(self.stream_bytes is not None and self.command_pending is None, 'dedicated ready before drive')
++        base.require(self.stream_bytes is not None and self.command_pending is None
++                     and not getattr(self,'prefill_bulk_busy',False), 'dedicated ready before drive')
+         self.sock.setblocking(False)
+ 
+     def issue(self, command, job, seed_owner, parent):
+@@ -180,8 +181,9 @@
+                  'explicit dedicated rolling proposal mode')
+     base.require(not any(k in plan for k in ('recursive_reference', 'scripted_proposal_tokens',
+         'force_miss_positions', 'expected_outputs')), 'dedicated accepts no oracle inputs')
+-    base.require(not plan.get('prefill_rows') and not plan.get('prefill_chunk_size') and not plan.get('prefill_pipeline')
+-                 and not plan.get('persistent_reset'), 'dedicated first gate is per-token without reset')
++    bulk_mode=plan.get('dedicated_bulk_prefill',False)
++    base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
++                 and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
+     base.require(len(stages) in (2, 3) and provider.stream_bytes is not None
+                  and all(s.stream_bytes == provider.stream_bytes for s in stages), 'dedicated admitted geometry')
+     base.require(epoch == 0 and epoch == plan.get('epoch', 0), 'dedicated initial epoch only')
+@@ -190,6 +192,10 @@
+         vocab=plan['vocab'], eos_token_ids=plan['eos_token_ids'], stream_bytes=provider.stream_bytes,
+         initial_sequences=[s.sequence for s in stages], provider_sequence=provider.sequence,
+         speculative_depth=plan.get('speculative_depth', 2))
++    prefill_result=dict(prefill_positions=0,prefill_draft_replay=0)
++    if bulk_mode:
++        from . import dedicated_prefill
++        prefill_result=dedicated_prefill.run(stages,provider,model,plan,output,stop_requested=stop_requested)
+     for stage in stages:
+         stage.start_async()
+     provider.start_async()
+@@ -197,7 +203,7 @@
+     sockets = {s.sock:s for s in owners}
+     output = Path(output)
+     parent_record = None
+-    issued, rejected, event_index, emitted, peak_busy, provider_pairs = {}, [], 0, 0, 0, 0
++    issued, rejected, event_index, emitted, peak_busy, provider_pairs = {}, [], 0, 0, 0, prefill_result['prefill_draft_replay']
+     started = time.monotonic()
+     emitted_elapsed = []
+     with (output/'schedule.jsonl').open('x') as trace, (output/'tokens.jsonl').open('x') as tokens, \
+@@ -314,7 +320,7 @@
+     return dict(schema='ownrt.dedicated-socket-result.v1', output_ids=model.emitted,
+         input_position=model.frontier, provider_pairs=provider_pairs, provider_serial=model.provider.serial,
+         emitted_elapsed_seconds=emitted_elapsed,
+-        prefill_positions=0, prefill_draft_replay=0, actual_provider=True, scripted_oracle_assisted=False,
++        **prefill_result, actual_provider=True, scripted_oracle_assisted=False,
+         speed_claim=False, cancelled=cancelled, cancelled_provider_incomplete=model.cancelled_provider_incomplete,
+         issued_proposals=list(issued.values()), rejected_proposals=rejected,
+         peak_commands_inflight=peak_busy, scheduler_wall_seconds=time.monotonic()-started, events=model.events,
+--- a/engine/tools/dedicated_provider_driver.py
++++ b/engine/tools/dedicated_provider_driver.py
+@@ -17,9 +17,12 @@
+     path = Path(path).resolve()
+     config = json.loads(path.read_text())
+     base.require(config.get('dedicated_provider') is True, 'explicit separate-provider opt-in')
+-    base.require(not config.get('prefill_rows', 0) and not config.get('prefill_pipeline', False)
+-                 and not config.get('persistent_reset', False),
+-                 'dedicated bulk prefill is not yet qualified')
++    bulk=config.get('dedicated_bulk_prefill',False)
++    base.require(type(bulk) is bool and not config.get('prefill_pipeline',False)
++                 and not config.get('persistent_reset',False),'dedicated sequential bulk/no reset admission')
++    rows=config.get('prefill_rows',256 if bulk else 0)
++    base.require(type(rows) is int and (rows==256 if bulk else rows==0),
++                 'explicit dedicated bulk256 or per-token0 rows')
+     capture = config.get('dedicated_capture_ready', False)
+     base.require(type(capture) is bool, 'dedicated_capture_ready Boolean required')
+     plan = base.make_plan(path)
+@@ -40,6 +43,7 @@
+     receipt = json.loads(Path(config['build_receipt']).read_text())
+     required = {'pipeline/provider_only/'+name for name in
+                 ('bootstrap.inc', 'owner.hpp', 'runtime.hpp', 'wire.hpp', 'peers.hpp')}
++    if bulk:required.add('pipeline/provider_only/prefill.hpp')
+     base.require(required <= set(receipt['sources']), 'compiled dedicated provider capability')
+     adapter = json.loads(Path(config['adapter_plan']).read_text())
+     draft = adapter['rank_argv'][0]
+@@ -55,6 +59,16 @@
+                     vocab=plan['vocab'], eos=eos, depth=depth, boundaries=config['boundaries'],
+                     target_bdfs=bdfs, provider_bdf=provider_bdf, check_policy=policy,
+                     config_sha256=base.digest(path), mode='dedicated-mtp')
++    prompt_path=None
++    if bulk:
++        from rolling_provider import dedicated_prefill
++        base.require(len(plan['prompt_tokens'])-2>=rows,'dedicated prefix must contain at least one bulk chunk')
++        prompt_path=Path(config['dedicated_prefill_prompt']).resolve()
++        base.require(str(prompt_path)==config['dedicated_prefill_prompt'], 'canonical absolute immutable prompt path')
++        prompt_sha=config['dedicated_prefill_prompt_sha256']
++        dedicated_prefill.prompt_source(dict(plan,dedicated_prefill_prompt=str(prompt_path),
++                                           dedicated_prefill_prompt_sha256=prompt_sha))
++        identity.update(dedicated_bulk_prefill=True,prefill_rows=rows,prompt_i32_sha256=prompt_sha)
+     request = sha256(base.canonical(identity)).hexdigest()
+     output = Path(plan['output'])
+     provider = deepcopy(plan['stages'][0])
+@@ -70,6 +84,11 @@
+         '--provider-final-shared', str(output/f"stage{len(bdfs)-1}/shared.bin"),
+         '--pipeline-ring-request-sha256', request, '--pipeline-ring-depth', str(depth),
+         '--pipeline-ring-check-policy', policy, '--draft-mtp']
++    if bulk:
++        provider['argv'] += ['--provider-prefill-rows',str(rows),
++            '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha,
++            '--provider-prefill-seed-shared',str(output/'stage0/prefill.bin'),
++            '--provider-prefill-final-shared',str(output/f'stage{len(bdfs)-1}/prefill.bin')]
+     if capture:
+         provider['argv'].append('--provider-capture-ready')
+     if full:
+@@ -87,6 +106,9 @@
+             '--pipeline-ring-persistent-requests', '--pipeline-ring-check-policy', policy,
+             '--pipeline-ring-request-sha256', request, '--pipeline-ring-depth', str(depth),
+             '--pipeline-ring-trace-limit', str(trace)]
++        if bulk:
++            stage['argv'] += ['--prefill-rows',str(rows),'--prefill-shared',str(output/f"stage{stage['id']}/prefill.bin"),
++                '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha]
+         if full:
+             stage['argv'].append('--pipeline-ring-verify-restore')
+     for stage in plan['stages']+[provider]:
+@@ -96,10 +118,15 @@
+                      'runtime must not consume expected outputs')
+     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
+                 epoch=0, request_sha256=request, dedicated_capture_ready=capture, eos_token_ids=eos, speculative_depth=depth,
+-                rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=0,
++                rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=rows,
+                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
+                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,
+                 limits='Experimental independent provider; per-token prompt only. No archived replay or reset claim.')
++    if bulk:
++        plan.update(dedicated_bulk_prefill=True,dedicated_prefill_prompt=str(prompt_path),
++                    dedicated_prefill_prompt_sha256=prompt_sha,prefill_stream_bytes=base.PREFILL_STREAM_BYTES,
++                    limits='Experimental authenticated sequential dedicated prefix replay; no overlapped-bulk/reset/speed claim.')
++        plan['pins'][str(prompt_path)]=prompt_sha
+     # Pin the actual transitive Python controller stack, without model or credential discovery.
+     from rolling_provider import dedicated_transport
+     modules = (dedicated_transport, dedicated_transport.pending, dedicated_transport.codec,
+--- /dev/null
++++ b/engine/planning/test_dedicated_prefill.py
+@@ -0,0 +1,160 @@
++"""CPU wire-shaped dedicated bulk tests; no native/model/device qualification."""
++from dataclasses import replace
++from hashlib import sha256
++import json
++from pathlib import Path
++import socket
++import struct
++from tempfile import TemporaryDirectory
++import threading
++from types import SimpleNamespace as NS
++import unittest
++from rolling_provider import dedicated_prefill as P,prefill
++from rolling_provider.dedicated import DedicatedCoordinator
++from rolling_provider.dedicated_transport import Provider,MAGIC,VERSION,base
++
++class Guard:
++    def check(self):pass
++
++def model(stages=2,prompt=None):
++    return DedicatedCoordinator(stages=stages,request=sha256(b'bulk-wire').digest(),epoch=0,
++        prompt=prompt or [i%90 for i in range(520)],max_new=4,context=1024,vocab=97,eos_token_ids=[96],
++        stream_bytes=32,speculative_depth=3)
++
++def record(m,role,start,count,sequence,stream=32,raw_sha=bytes(32)):
++    rows=256;parity=(start//rows)%2;prompt=m.prompt
++    fields=(P.CHUNK_MAGIC,1,1280,sequence,role,0 if role==1 else len(m.stages)-1,len(m.stages),parity,start,count,rows,
++        stream,15,sequence,prompt[start+count] if role==1 else 0xffffffff,0,m.epoch,m.request,
++        sha256(struct.pack(f'<{len(prompt)}i',*prompt)).digest(),m.proposals.hashes[start],m.proposals.hashes[start+count],
++        bytes(32) if role==1 else raw_sha,bytes(24))
++    tokens=tuple(prompt[start:start+count])+tuple([0]*(256-count)) if role==1 else tuple([0]*256)
++    return P.RECORD.pack(*fields)+P.TOKENS.pack(*tokens)
++
++def ack(m,start,count,sequence,seed,final,raw_sha):
++    return P.ACK.pack(P.ACK_MAGIC,1,256,sequence,start,count,(start//256)%2,256,32,len(m.stages),sequence,sequence,
++        start+count+1,1,0,0,m.epoch,start+count,m.request,sha256(struct.pack(f'<{len(m.prompt)}i',*m.prompt)).digest(),
++        sha256(seed).digest(),sha256(final).digest(),raw_sha,bytes(16))
++
++class BulkTests(unittest.TestCase):
++    def test_record_every_source_field_and_token_tail_bound(self):
++        m=model();raw=record(m,1,512,6,3)
++        args=dict(role=1,stage=0,stages=2,start=512,count=6,rows=256,stream=32,parity=0,sequence=3,
++            epoch=0,request=m.request,prompt_sha=sha256(struct.pack('<520i',*m.prompt)).digest(),before=m.proposals.hashes[512],
++            after=m.proposals.hashes[518],prompt=m.prompt,raw_sha=bytes(32))
++        self.assertEqual(P.chunk_record(raw,**args),sha256(raw).digest())
++        # Every actual metadata field, including zero reserves and publication sequence, is bound.
++        for i in range(23):
++            values=list(P.RECORD.unpack(raw[:256]));v=values[i];values[i]=(v+1 if type(v)is int else bytes([v[0]^1])+v[1:])
++            corrupt=P.RECORD.pack(*values)+raw[256:]
++            with self.assertRaises(ValueError):P.chunk_record(corrupt,**args)
++        corrupt=bytearray(raw);corrupt[-1]=1
++        with self.assertRaises(ValueError):P.chunk_record(bytes(corrupt),**args)
++    def test_prompt_hash_and_path_identity(self):
++        with TemporaryDirectory() as td:
++            m=model();path=Path(td)/'prompt.i32';raw=struct.pack('<520i',*m.prompt);path.write_bytes(raw)
++            plan=dict(prompt_tokens=m.prompt,dedicated_prefill_prompt=str(path),dedicated_prefill_prompt_sha256=sha256(raw).hexdigest())
++            self.assertEqual(P.prompt_source(plan)[0],raw)
++            path.write_bytes(raw[:-4])
++            with self.assertRaises(ValueError):P.prompt_source(plan)
++    def run_prefix(self,bad_ack=False):
++        m=model();client,server=socket.socketpair();self.addCleanup(client.close);self.addCleanup(server.close)
++        owner=NS(sock=client,shared=bytearray(base.SHARED),guard=Guard(),plan={},sequence=0)
++        provider=Provider(owner);provider.stream_bytes=32
++        stages=[];server_errors=[]
++        class Target:
++            def __init__(self,index):
++                self.index=index;self.prefill_rows=256;self.stream_bytes=32;self.sequence=0;self.shared=bytearray(base.SHARED)
++                self.prefill=bytearray(prefill.map_bytes(256,32));self.physical=self.committed=0
++            def command(self,op,count,start,parity):
++                self.sequence+=1
++                if self.index==0:
++                    data=bytes([start//256+1])*(count*32)
++                    prefill.region(self.prefill,'forward',parity,256,32,count)[:]=data
++                    raw=record(m,1,start,count,self.sequence)
++                else:
++                    data=bytes(prefill.region(self.prefill,'forward',parity,256,32,count))
++                    prefill.region(self.prefill,'reverse',parity,256,32,count)[:]=data
++                    raw=record(m,2,start,count,self.sequence,raw_sha=sha256(data).digest())
++                off=P.RECORD_OFFSET+parity*1280;self.prefill[off:off+1280]=raw
++                return (0,-1,0,count*32,self.sequence,0 if self.index==0 else 1,self.index,int(self.index==1),0.,0.,0.,0.)
++        stages=[Target(0),Target(1)]
++        def server_loop():
++            try:
++                for sequence,start,count in ((1,0,256),(2,256,256),(3,512,6)):
++                    raw=b''
++                    while len(raw)<32:raw+=server.recv(32-len(raw))
++                    self.assertEqual(base.REQUEST.unpack(raw),(28,count,start,(start//256)%2,0,sequence,MAGIC,VERSION))
++                    off=P.RECORD_OFFSET+((start//256)%2)*1280;seed=bytes(stages[0].prefill[off:off+1280]);final=bytes(stages[1].prefill[off:off+1280])
++                    data=bytes(prefill.region(stages[-1].prefill,'reverse',(start//256)%2,256,32,count))
++                    a=ack(m,start,count,sequence,seed,final,sha256(data).digest())
++                    if bad_ack:a=bytes([a[0]^1])+a[1:]
++                    provider.shared[1024:1280]=a
++                    reply=base.REPLY.pack(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.)
++                    server.sendall(reply[:5]);server.sendall(reply[5:])
++                    if bad_ack:return
++            except BaseException as error:server_errors.append(error)
++        thread=threading.Thread(target=server_loop);thread.start()
++        with TemporaryDirectory() as td:
++            path=Path(td)/'prompt.i32';raw=struct.pack('<520i',*m.prompt);path.write_bytes(raw)
++            plan=dict(dedicated_bulk_prefill=True,prefill_rows=256,prompt_tokens=m.prompt,
++                dedicated_prefill_prompt=str(path),dedicated_prefill_prompt_sha256=sha256(raw).hexdigest())
++            if bad_ack:
++                with self.assertRaisesRegex(ValueError,'ACK'):P.run(stages,provider,m,plan,td)
++                self.assertEqual(m.frontier,0);self.assertFalse(m.rows);self.assertTrue(provider.prefill_bulk_busy)
++            else:
++                result=P.run(stages,provider,m,plan,td)
++                self.assertEqual(result['prefill_positions'],518);self.assertEqual(result['prefill_chunks'],3)
++                self.assertEqual((m.frontier,m.provider.serial,m.provider.next_seed,m.provider_sequence),(518,518,519,3))
++                self.assertEqual([s.sequence for s in m.stages],[3,3]);self.assertFalse(m.provider_jobs)
++                log=[json.loads(x) for x in (Path(td)/'dedicated-prefill.jsonl').read_text().splitlines()]
++                self.assertEqual([x['count'] for x in log],[256,256,6]);self.assertEqual(len(bytes.fromhex(log[-1]['provider_ack_hex'])),256)
++                # Native-shaped CPU trace fixture for strict ingestion; not model proof.
++                native_chunks=[];native_pairs=[]
++                for entry in log:
++                    a=P.ACK.unpack(bytes.fromhex(entry['provider_ack_hex']))
++                    native_chunks.append(dict(epoch=a[16],request=a[18].hex(),sequence=a[3],start=a[4],count=a[5],serial=a[17],
++                        prompt_sha256=a[19].hex(),seed_record_sha256=a[20].hex(),final_record_sha256=a[21].hex(),raw_sha256=a[22].hex()))
++                for position in range(1,519):
++                    sequence=(position-1)//256+1
++                    native_pairs.append(dict(position=position,token=m.prompt[position],head=False,provider_serial=position,
++                        hidden_bytes=32,hidden_sha256=sha256(bytes([sequence])*32).hexdigest(),command_sequence=sequence))
++                pairpath=Path(td)/'native-pairs.jsonl';chunkpath=Path(td)/'native-chunks.jsonl'
++                pairpath.write_text(''.join(json.dumps(x)+'\n' for x in native_pairs));chunkpath.write_text(''.join(json.dumps(x)+'\n' for x in native_chunks))
++                proof=P.prefix_evidence(Path(td)/'dedicated-prefill.jsonl',pairpath,chunkpath,m)
++                self.assertEqual(proof['actual_native_pairs'],native_pairs)
++                for key,value in (('head',True),('token',96),('command_sequence',2),('provider_serial',True)):
++                    bad=[dict(x) for x in native_pairs];bad[0][key]=value
++                    pairpath.write_text(''.join(json.dumps(x)+'\n' for x in bad))
++                    with self.assertRaisesRegex(ValueError,'canonical prefix pair'):P.prefix_evidence(Path(td)/'dedicated-prefill.jsonl',pairpath,chunkpath,m)
++                pairpath.write_text(''.join(json.dumps(x)+'\n' for x in native_pairs))
++                native_chunks[0]['raw_sha256']='0'*64;chunkpath.write_text(''.join(json.dumps(x)+'\n' for x in native_chunks))
++                with self.assertRaisesRegex(ValueError,'native chunk receipt'):P.prefix_evidence(Path(td)/'dedicated-prefill.jsonl',pairpath,chunkpath,m)
++                # First real seam command remains positionbulk, next actual seedbulk+1.
++                commands=m.commands();self.assertTrue(commands);self.assertEqual(commands[0].row.position,518)
++        thread.join(2);self.assertFalse(thread.is_alive());self.assertFalse(server_errors,server_errors)
++    def test_two_parities_partial_tail_and_two_row_seam(self):self.run_prefix()
++    def test_bad_actual_ack_never_adopts_or_reuses_owner(self):self.run_prefix(True)
++    def test_actual_native_emitted_terminal_wire(self):
++        # Files emitted by the actual C++ run_loop CPU test, not Python fixtures.
++        root=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bulk-candidate/native-wire-fixture')
++        f=json.loads((root/'fixture.json').read_text());prompt=f['prompt_tokens']
++        self.assertEqual((root/'prompt').read_bytes(),struct.pack(f'<{len(prompt)}i',*prompt))
++        self.assertEqual(sha256((root/'prompt').read_bytes()).hexdigest(),f['prompt_sha256'])
++        m=DedicatedCoordinator(stages=f['stages'],request=bytes.fromhex(f['request']),epoch=f['epoch'],prompt=prompt,
++            max_new=4,context=64,vocab=f['vocab'],eos_token_ids=[127],stream_bytes=f['stream_bytes'],speculative_depth=3)
++        raw_ack=(root/'ack-3.bin').read_bytes();raw_sha=P.ACK.unpack(raw_ack)[-2]
++        common=dict(stages=f['stages'],start=f['start'],count=f['count'],rows=f['rows'],stream=f['stream_bytes'],
++            parity=f['parity'],epoch=f['epoch'],request=m.request,prompt_sha=bytes.fromhex(f['prompt_sha256']),
++            before=m.proposals.hashes[f['start']],after=m.proposals.hashes[f['start']+f['count']],prompt=prompt,raw_sha=raw_sha)
++        seed=P.chunk_record((root/'seed-record-3.bin').read_bytes(),role=1,stage=0,sequence=3,**common)
++        final=P.chunk_record((root/'final-record-3.bin').read_bytes(),role=2,stage=2,sequence=3,**common)
++        self.assertEqual(P.chunk_ack(raw_ack,sequence=3,start=8,count=1,parity=0,rows=4,stream=16,stages=3,
++            seed_sequence=3,final_sequence=3,epoch=0,request=m.request,prompt_sha=bytes.fromhex(f['prompt_sha256']),
++            seed_sha=seed,final_sha=final,raw_sha=raw_sha),9)
++        self.assertEqual(base.REPLY.unpack((root/'reply-3.bin').read_bytes()),(0,-1,0,256,3,-1,MAGIC,VERSION,0.,0.,0.,0.))
++
++    def test_adoption_without_native_receipt_refused(self):
++        m=model()
++        with self.assertRaisesRegex(ValueError,'authenticated'):m.adopt_prefill(518)
++
++if __name__=='__main__':unittest.main()
+--- /dev/null
++++ b/engine/tools/test_dedicated_bulk_plan.py
+@@ -0,0 +1,58 @@
++"""Pure Python planner contract with mocked base planner; no compiled/device admission."""
++from copy import deepcopy
++from hashlib import sha256
++import json
++from pathlib import Path
++import struct
++from tempfile import TemporaryDirectory
++import unittest
++from unittest.mock import patch
++import dedicated_provider_driver as driver
++
++class BulkPlanTests(unittest.TestCase):
++    def fixture(self,root):
++        prompt=[i%90 for i in range(520)];raw=struct.pack('<520i',*prompt);tokens=root/'prompt.i32';tokens.write_bytes(raw)
++        manifest=root/'manifest';manifest.write_bytes(b'pinned real-shaped manifest fixture')
++        adapter=root/'adapter.json';adapter.write_text(json.dumps(dict(rank_argv=[['native','--draft-mtp','--draft-fault','none',
++            '--draft-head','full','--draft-manifest',str(manifest),'--draft-model','/draft','--draft-experts','fp8']])))
++        required={'pipeline/provider_only/'+x:'test-source' for x in ('bootstrap.inc','owner.hpp','runtime.hpp','wire.hpp','peers.hpp','prefill.hpp')}
++        receipt=root/'receipt.json';receipt.write_text(json.dumps(dict(sources=required)))
++        config=root/'config.json';c=dict(dedicated_provider=True,dedicated_bulk_prefill=True,build_receipt=str(receipt),
++            adapter_plan=str(adapter),provider_bdf='0000:43:00.0',eos_token_ids=[96],trusted_draft_manifest_sha256=sha256(manifest.read_bytes()).hexdigest(),
++            boundaries=[0,25,48],dedicated_prefill_prompt=str(tokens),dedicated_prefill_prompt_sha256=sha256(raw).hexdigest())
++        config.write_text(json.dumps(c))
++        out=root/'output'
++        stage=lambda i,bdf:dict(id=i,bdf=bdf,first=i==0,final=i==1,begin=0 if i==0 else 25,end=25 if i==0 else 48,
++            packed_weight_bytes=1,native_output=str(out/f'stage{i}/native'),argv=['native','--rank',str(i),
++            '--shared',str(out/f'stage{i}/shared.bin'),'--output',str(out/f'stage{i}/native'),
++            '--pipeline-boundaries','0,25,48','--pipeline-stage',str(i)],environment={})
++        plan=dict(stages=[stage(0,'0000:23:00.0'),stage(1,'0000:47:00.0')],model_identity_sha256='model',prompt_tokens=prompt,
++            context=1024,max_new=4,vocab=97,eos=96,output=str(out),pins={})
++        return config,c,plan,receipt
++    def test_real_provider_alias_no_target_map_and_prompt_pins(self):
++        with TemporaryDirectory() as td:
++            config,c,plan,receipt=self.fixture(Path(td))
++            with patch.object(driver.base,'make_plan',side_effect=lambda _:deepcopy(plan)):
++                p=driver.make_plan(config)
++            self.assertEqual(p['prefill_rows'],256);self.assertTrue(p['dedicated_bulk_prefill'])
++            self.assertIn('--provider-prefill-rows',p['provider']['argv'])
++            self.assertNotIn('--prefill-rows',p['provider']['argv']);self.assertNotIn('--prefill-shared',p['provider']['argv'])
++            for stage in p['stages']:self.assertIn('--prefill-rows',stage['argv'])
++            self.assertEqual(p['pins'][c['dedicated_prefill_prompt']],c['dedicated_prefill_prompt_sha256'])
++    def test_compiled_capability_and_immutable_prompt_required(self):
++        with TemporaryDirectory() as td:
++            config,c,plan,receipt=self.fixture(Path(td))
++            with patch.object(driver.base,'make_plan',side_effect=lambda _:deepcopy(plan)):
++                r=json.loads(receipt.read_text());r['sources'].pop('pipeline/provider_only/prefill.hpp');receipt.write_text(json.dumps(r))
++                with self.assertRaisesRegex(ValueError,'capability'):driver.make_plan(config)
++                r['sources']['pipeline/provider_only/prefill.hpp']='test-source';receipt.write_text(json.dumps(r))
++                Path(c['dedicated_prefill_prompt']).write_bytes(b'wrong')
++                with self.assertRaisesRegex(ValueError,'prompt'):driver.make_plan(config)
++    def test_overlap_and_reset_explicitly_refused(self):
++        with TemporaryDirectory() as td:
++            config,c,plan,receipt=self.fixture(Path(td))
++            for flag in ('prefill_pipeline','persistent_reset'):
++                bad=dict(c,**{flag:True});config.write_text(json.dumps(bad))
++                with self.assertRaisesRegex(ValueError,'sequential'):driver.make_plan(config)
++
++if __name__=='__main__':unittest.main()

@@ -1,0 +1,27 @@
+{
+  "status": "isolated sequential prototype; no nativebuild/GPU/canonical edits",
+  "tests": {
+    "planning": 29,
+    "tools": 5,
+    "result": "passed",
+    "execution": "nice19 cores8-15",
+    "scope": "CPU socket/wire/adoption/planner, existing23 per-token tests plus2 lifecycle; actual native terminal wire fixture independently decoded; complete ingestion uses explicitly CPU wire-shaped fixtures with adversarial corruption"
+  },
+  "actual_native_fixture_check": {
+    "result": "passed",
+    "scope": "Actual native run_loop emitted1280 seed/final record +256 ACK+64reply; independently bound immutable prompt IDs and Python prefix hash, not a model/device test",
+    "source": "native-wire-fixture/fixture.json"
+  },
+  "wire": {
+    "target_record": "<16IQ32s32s32s32s32s24s +256i,1280B@1536+parity1280",
+    "provider_request": "<8i>(28,count,start,parity,0,provider_sequence,0x50525631,1)",
+    "provider_ack": "<16I2Q32s32s32s32s32s16s,256B@1024; socket Reply64 only"
+  },
+  "limits": [
+    "sequential256-row chunks only",
+    "no persistent reset or overlapping bulk",
+    "no promotion/speed/reference quality claim",
+    "actual chunk/native-prefix trace ingestion does not replace sealed-state/reference parity gate"
+  ],
+  "patch_sha256": "4eb38bb2c5bcdaad96ddd8957adce6ff0a7bb699716e70dd2eacf6b913e99f91"
+}

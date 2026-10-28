@@ -1,5 +1,6 @@
 #pragma once
 #include "wire.hpp"
+#include "pipeline/provider_only/prefill.hpp"
 #include "checkpoint_ring.hpp"
 #include "engine_backend.hpp"
 #include "reset_descriptor.hpp"
@@ -22,6 +23,7 @@ class Dispatcher {
  // value: the shared prefill header is single-buffered and reused by OP15.
  struct PrefillReplay {int start;std::vector<int> tokens;size_t consumed=0;};
  std::vector<PrefillReplay> prefill_replay;
+ std::unique_ptr<ownrt::provider_only::bulk::Prompt> bulk_prompt;
  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
  ownrt::ring_next::Row prefill_row(const Request& r){
   namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
@@ -48,18 +50,30 @@ public:
   require(bool(provider)==bool(owner.a.pipeline_ring_live_draft&&owner.a.pipeline_provider())&&partition.enabled==bool(provider),"ring exact provider/partition ownership");
   if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);if(owner.a.pipeline_provider_stage)seed_peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_seed_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");if(owner.a.pipeline_ring_pending_provider){survival_trace.open(e.a.output/"ring-provider-survival.jsonl");require(bool(survival_trace),"provider survival trace open");}}
   checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
+  if(owner.a.pipeline_external_provider&&owner.a.prefill_rows)bulk_prompt=std::make_unique<ownrt::provider_only::bulk::Prompt>(owner.a.provider_prefill_prompt,owner.a.provider_prefill_prompt_sha256,context);
   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
  }
  bool handles_command(int op)const{return (e.a.pipeline_ring_persistent_requests&&op==11)||handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}
  static bool handles(int op){return op==24||op==25||op==26;}
  void prefill_complete(const Request& r,const int* tokens){
   require(e.a.prefill_rows&&e.a.pipeline_ring_persistent_requests&&r.op==15&&r.token>0&&r.token<=e.a.prefill_rows,"ring prefill completion admission");
-  if(e.a.pipeline_first()){
+  if(e.a.pipeline_first()&&!e.a.pipeline_external_provider){
    require(tokens&&prefill_replay.size()<2,"ring prefill bounded token ownership");
    if(!prefill_replay.empty()){const auto& previous=prefill_replay.back();require(r.position==previous.start+int(previous.tokens.size()),"ring prefill replay chunk continuity");}
   }
   ring.prefill(r.token,prefill_row(r));
-  if(e.a.pipeline_first())prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
+  if(e.a.pipeline_first()&&!e.a.pipeline_external_provider)prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
+ }
+ void external_prefill_publish(const Request& r,const int* tokens,uint8_t* map){
+  if(!e.a.pipeline_external_provider)return;
+  namespace bulk=ownrt::provider_only::bulk;
+  require(map&&!e.a.provider_prefill_prompt.empty(),"external bulk explicit source map/prompt");
+  require(bool(bulk_prompt),"external bulk prompt owner");const auto& prompt=*bulk_prompt;prompt.stable();
+  const auto row=prefill_row(r);require(row.after==prompt.prefix(size_t(r.position)+r.token),"external target actual committed prefix");
+  if(!e.a.pipeline_first()&&!e.a.pipeline_final())return;
+  const int role=e.a.pipeline_first()?1:2;const size_t S=e.stream_bytes(),R=e.a.prefill_rows;
+  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S):pipeline::prefill::reverse(map,r.fixture,R,S);
+  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw);bulk::publish(map,record);
  }
  void draft_prefill(const Request& r){
   require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");

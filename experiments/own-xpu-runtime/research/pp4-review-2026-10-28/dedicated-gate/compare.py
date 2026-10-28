@@ -84,8 +84,11 @@ def capture_event(issued,event,completed,serial,target_stages):
          and timestamps==sorted(timestamps),'capture actual command timestamps/order')
     need(issued['provider_serial']==serial,'capture issued independent provider serial')
 
-def canonical_pairs(commands, position, *, capture_ready=False,target_stages=None):
+def canonical_pairs(commands, position, *, capture_ready=False,target_stages=None, prefix=None):
     need(type(capture_ready)is bool,'explicit capture-ready boolean')
+    bulk=0 if prefix is None else prefix['positions']
+    offset=0 if prefix is None else len(prefix['actual_native_chunks'])
+    need(type(bulk)is int and 0<=bulk<position-1,'bounded actual native prefix')
     issued={};completed={};captured={};active=None;phase=0
     for command in commands:
         if command.get('owner')!='provider':
@@ -103,11 +106,12 @@ def canonical_pairs(commands, position, *, capture_ready=False,target_stages=Non
                  'provider completion requires exact ordered capture policy')
             completed[sequence]=command;active=None;phase=0
         else:raise ValueError('unknown provider command event')
-    need(active is None and set(issued)==set(completed) and len(issued)==position-1,
+    need(active is None and set(issued)==set(completed) and len(issued)==position-1-bulk,
          'complete actual provider pair command coverage')
     need(set(captured)==set(issued) if capture_ready else not captured,'exact capture event coverage')
-    pairs=[]
-    for serial,sequence in enumerate(sorted(issued),1):
+    need(prefix is None or sorted(issued)==list(range(offset+1,offset+1+len(issued))), 'actual prefix/suffix independent sequence seam')
+    pairs=[] if prefix is None else [dict(position=r['position'],token=r['token'],hidden_bytes=r['hidden_bytes'],hidden_sha256=r['hidden_sha256']) for r in prefix['actual_native_pairs']]
+    for serial,sequence in enumerate(sorted(issued),bulk+1):
         command=issued[sequence];result=completed[sequence]['provider'];row=command['row']
         if capture_ready:capture_event(command,captured[sequence],completed[sequence],serial,target_stages)
         wire=struct.unpack('<8i',bytes.fromhex(command['request_hex']))
@@ -131,6 +135,27 @@ def canonical_pairs(commands, position, *, capture_ready=False,target_stages=Non
               0x50525631,1,0.,0.,0.,0.),'actual successful dedicated completion reply')
         pairs.append(dict(position=serial,token=row['token'],hidden_bytes=40960,hidden_sha256=hidden))
     return pairs
+
+def plan_pairs(plan,commands,position):
+    """Explicit bulk opt-in; ingest original native rows, never synthesize commands."""
+    enabled=plan.get('dedicated_bulk_prefill',False)
+    need(type(enabled)is bool,'explicit bulk comparison boolean')
+    prefix=None
+    if enabled:
+        sys.path.insert(0,str(ENGINE/'planning'))
+        from rolling_provider.dedicated import DedicatedCoordinator
+        from rolling_provider.dedicated_prefill import prefix_evidence
+        need(plan.get('persistent_reset',False) is False,'bulk reset not qualified')
+        model=DedicatedCoordinator(stages=len(plan['stages']),request=bytes.fromhex(plan['request_sha256']),
+            epoch=plan.get('epoch',0),prompt=plan['prompt_tokens'],max_new=plan['max_new'],context=plan['context'],
+            vocab=plan['vocab'],eos_token_ids=plan['eos_token_ids'],stream_bytes=40960,
+            initial_sequences=[0]*len(plan['stages']),provider_sequence=0,speculative_depth=plan['speculative_depth'])
+        output=Path(plan['output']);native=Path(plan['provider']['native_output'])
+        prefix=prefix_evidence(output/'dedicated-prefill.jsonl',native/'provider-prefill-pairs.jsonl',
+            native/'provider-prefill-chunks.jsonl',model,rows=plan['prefill_rows'])
+    pairs=canonical_pairs(commands,position,capture_ready=plan.get('dedicated_capture_ready',False),
+        target_stages=len(plan['stages']),prefix=prefix)
+    return pairs,prefix
 
 def target_candidate(spec,identity):
     canonical={};sources=[];excluded=[];cursor=0;history=None
@@ -164,7 +189,7 @@ def target_candidate(spec,identity):
              and att['byteverified_restore_count']==att['abort_count']
              and att['restore_verification_enabled'] is True and att['all_aborts_byte_verified'] is True
              and att['trace_omitted']==0
-             and att['trace_records']==att['rows']+att['commits']+att['abort_count'],
+             and att['trace_records']+2*spec.get('authenticated_bulk',0)==att['rows']+att['commits']+att['abort_count'],
              'native target full scalar trace and restore conservation')
         need(hashes['position.bin']==T.sha(struct.pack('<I',position)) and hashes['error.bin']==T.sha(bytes(4)),
              'sealed target position/error')
@@ -231,10 +256,10 @@ def run(path):
     need(result['input_position']==identity['position'],'actual candidate target frontier')
     need(plan['model_identity_sha256']==identity['model_sha256'],'actual model identity')
     raw,cs=trace_source(Path(spec['commands']));commands=[json.loads(line,object_pairs_hook=T.BUNDLE.pairs) for line in raw.splitlines()]
-    pairs=canonical_pairs(commands,identity['position'],capture_ready=plan.get('dedicated_capture_ready',False),target_stages=len(spec['stages']));refpairs,rpairsource=read(reference/'canonical-pairs.json')
+    pairs,prefix=plan_pairs(plan,commands,identity['position']);refpairs,rpairsource=read(reference/'canonical-pairs.json')
     pairhash=T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())
     need(pairs==refpairs['pairs'] and pairhash==refpairs['sha256'],'actual ordered hidden/token input pair parity')
-    candidate=target_candidate(dict(spec,request_sha256=plan['request_sha256']),identity)
+    candidate=target_candidate(dict(spec,request_sha256=plan['request_sha256'],authenticated_bulk=0 if prefix is None else prefix['positions']),identity)
     target=T.compare(reference_target,candidate)
     refdraft=D.load_set(reference/'draft-set.json');draft=D.load_set(spec['draft_set'])
     need(draft['input_identity']['pair_sequence_sha256']==pairhash==refdraft['input_identity']['pair_sequence_sha256'], 'draft manifests bind actual verified pairs')
@@ -249,7 +274,7 @@ def run(path):
     return dict(schema='ownrt.dedicated-state-parity.v1',passed=target['passed'] and draft_result['passed'],
         scope='Cross-partition target2065 and separate-provider draft73 sealed byte/layout parity; actual ordered input hidden/token pairs and output IDs equal; native scalar target restore checks and clean terminal receipts. Not independent model correctness or performance proof.',
         target=target,draft=draft_result,pair_sequence_sha256=pairhash,
-        sources=[spec_receipt,ps,rs,rps,rrs,cs,rpairsource]+receipts,helper_sha256=T.sha(Path(__file__).read_bytes()))
+        sources=[spec_receipt,ps,rs,rps,rrs,cs,rpairsource]+([] if prefix is None else prefix['sources'])+receipts,helper_sha256=T.sha(Path(__file__).read_bytes()))
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('manifest',type=Path);parser.add_argument('--out',type=Path,required=True);args=parser.parse_args()

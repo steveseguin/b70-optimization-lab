@@ -99,7 +99,10 @@ def execute(plan, admission, unit):
             guard_failure_evidence_error=guard.failure_evidence_error)
         terminal = dict(schema='ownrt.dedicated-provider-terminal.v1', passed=failure is None,
             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
-            mode='dedicated-provider-per-token', diagnostic_only=True, speed_claim=False,
+            mode=('dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else 'dedicated-provider-per-token'),
+            diagnostic_only=True, speed_claim=False,
+            bulk_reset_qualified=False, bulk_overlap_qualified=False,
+            prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',
             wall_seconds=time.monotonic()-start, **failure_details)
         receipt = dict(result)
         receipt.update(terminal)

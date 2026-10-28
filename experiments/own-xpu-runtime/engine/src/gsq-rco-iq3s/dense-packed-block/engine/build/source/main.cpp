@@ -161,6 +161,8 @@ struct Options {
   std::string provider_bdf;std::vector<std::string> provider_target_bdfs;
   fs::path provider_seed_shared,provider_final_shared,provider_replay;
   std::string provider_replay_sha256;
+  fs::path provider_prefill_prompt,provider_prefill_seed_shared,provider_prefill_final_shared;
+  std::string provider_prefill_prompt_sha256;int provider_prefill_rows=0;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0,pipeline_ring_depth=2;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
@@ -234,6 +236,11 @@ static Options parse(int argc, char **argv) {
     }
     else if(k=="--provider-seed-shared")a.provider_seed_shared=value();
     else if(k=="--provider-final-shared")a.provider_final_shared=value();
+    else if(k=="--provider-prefill-prompt")a.provider_prefill_prompt=value();
+    else if(k=="--provider-prefill-prompt-sha256")a.provider_prefill_prompt_sha256=value();
+    else if(k=="--provider-prefill-seed-shared")a.provider_prefill_seed_shared=value();
+    else if(k=="--provider-prefill-final-shared")a.provider_prefill_final_shared=value();
+    else if(k=="--provider-prefill-rows")a.provider_prefill_rows=std::stoi(value());
     else if(k=="--provider-replay")a.provider_replay=value();
     else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
@@ -349,6 +356,7 @@ static Options parse(int argc, char **argv) {
       throw std::runtime_error("unknown option " + k);
   }
   if(a.provider_only){
+    require(!a.prefill_rows,"provider-only uses provider-prefill-rows alias");a.prefill_rows=a.provider_prefill_rows;
     require(!a.pipeline_enabled()&&a.pipeline_boundaries.empty()&&!a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&!a.pipeline_external_provider,
             "provider-only cannot impersonate a target stage");
     a.pipeline_live_draft=a.pipeline_draft_partition=a.pipeline_ring_live_draft=a.pipeline_ring_persistent_requests=true;
@@ -371,6 +379,12 @@ static Options parse(int argc, char **argv) {
           "bounded generation/context/deadline");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
+  const bool dedicated_bulk=!a.provider_prefill_prompt.empty();
+  require(!dedicated_bulk||(a.provider_prefill_prompt.is_absolute()&&a.provider_prefill_prompt_sha256.size()==64&&a.prefill_rows>0&&a.prefill_rows<=256&&(a.provider_only||a.pipeline_external_provider)),"explicit dedicated bulk prompt/role/rows");
+  require(dedicated_bulk||(!a.provider_prefill_rows&&a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()&&a.provider_prefill_prompt_sha256.empty()),"bulk arguments require prompt");
+  require(!a.provider_prefill_rows||a.provider_only,"provider-prefill-rows role");
+  require(!dedicated_bulk||!a.provider_only||(a.provider_prefill_seed_shared.is_absolute()&&a.provider_prefill_final_shared.is_absolute()),"provider bulk readonly peer paths");
+  require(!dedicated_bulk||a.provider_only||(a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()),"target bulk owns local map only");
   require(!a.prefill_rows||(a.f32_activations&&a.gsq_packed&&a.memory=="resident"),"batched prefill: F32 exact GSQ resident engine only");
   require(a.nongemv=="core" || a.nongemv=="parallel", "nongemv mode");
   require(a.gemv=="frozen" || a.gemv=="r5", "gemv mode");
@@ -385,7 +399,7 @@ static Options parse(int argc, char **argv) {
   require(a.rank>=-1 && a.rank<=1,"rank range");
   if(a.provider_only){
     require(a.rank==0&&a.cards==1&&a.gsq_packed&&a.f32_activations&&a.memory=="resident"&&a.mtp&&a.draft_rank==0&&
-       !a.mini&&!a.legacy&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1&&
+       !a.mini&&!a.legacy&&!a.tp_replicate&&(!a.prefill_rows||dedicated_bulk)&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1&&
        a.draft_fault=="none"&&a.pipeline_provider_stage==0,"provider-only supported runtime identity");
     require(a.channel>=0&&a.stop_fd>=0&&!a.shared.empty(),"provider-only IPC arguments");
     require(a.provider_target_bdfs.size()>=2&&a.provider_target_bdfs.size()<=6&&!a.provider_bdf.empty(),"provider-only device topology");
@@ -459,7 +473,7 @@ static Options parse(int argc, char **argv) {
    require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
            "pipeline stages initially require one-card resident GSQ F32 path");
    require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_provider()&&a.draft_rank==0))&&!a.tp_replicate&&
-           (!a.prefill_rows||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_ring_live_draft))&&
+           (!a.prefill_rows||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&((a.pipeline_ring_pending_provider&&a.pipeline_ring_live_draft)||(a.pipeline_external_provider&&dedicated_bulk))))&&
            !a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
            "pipeline unsupported MTP/TP/prefill/canary/cancel mode");
    if(a.pipeline_live_draft){

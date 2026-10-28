@@ -21,6 +21,14 @@ CAPTURE_OFFSET = 768
 HEADER = struct.Struct('<8IQ32s56s')
 
 
+def start_targets(stages, prefill_result):
+    for stage in stages:
+        stage.start_async()
+        # RingStage.start_async initializes cold counters; restore only the
+        # completed authenticated prefix before synthesizing the first ROW ACK.
+        stage.physical = stage.committed = prefill_result['prefill_positions']
+
+
 class Provider:
     """Adapt an already launched base.Stage's socket/private mmap, not its codec."""
     def __init__(self, owner):
@@ -72,7 +80,8 @@ class Provider:
         return base.REPLY.unpack(raw)
 
     def start_async(self):
-        base.require(self.stream_bytes is not None and self.command_pending is None, 'dedicated ready before drive')
+        base.require(self.stream_bytes is not None and self.command_pending is None
+                     and not getattr(self,'prefill_bulk_busy',False), 'dedicated ready before drive')
         self.sock.setblocking(False)
 
     def issue(self, command, job, seed_owner, parent):
@@ -180,25 +189,31 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
                  'explicit dedicated rolling proposal mode')
     base.require(not any(k in plan for k in ('recursive_reference', 'scripted_proposal_tokens',
         'force_miss_positions', 'expected_outputs')), 'dedicated accepts no oracle inputs')
-    base.require(not plan.get('prefill_rows') and not plan.get('prefill_chunk_size') and not plan.get('prefill_pipeline')
-                 and not plan.get('persistent_reset'), 'dedicated first gate is per-token without reset')
+    bulk_mode=plan.get('dedicated_bulk_prefill',False)
+    base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
+                 and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
     base.require(len(stages) in (2, 3) and provider.stream_bytes is not None
                  and all(s.stream_bytes == provider.stream_bytes for s in stages), 'dedicated admitted geometry')
     base.require(epoch == 0 and epoch == plan.get('epoch', 0), 'dedicated initial epoch only')
+    # Request elapsed includes authenticated bulk work, as in the colocated
+    # transport. Per-token intervals still use the same monotonic commit times.
+    started = time.monotonic()
     model = DedicatedCoordinator(stages=len(stages), request=bytes.fromhex(plan['request_sha256']),
         epoch=epoch, prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'],
         vocab=plan['vocab'], eos_token_ids=plan['eos_token_ids'], stream_bytes=provider.stream_bytes,
         initial_sequences=[s.sequence for s in stages], provider_sequence=provider.sequence,
         speculative_depth=plan.get('speculative_depth', 2))
-    for stage in stages:
-        stage.start_async()
+    prefill_result=dict(prefill_positions=0,prefill_draft_replay=0)
+    if bulk_mode:
+        from . import dedicated_prefill
+        prefill_result=dedicated_prefill.run(stages,provider,model,plan,output,stop_requested=stop_requested)
+    start_targets(stages, prefill_result)
     provider.start_async()
     owners = stages+[provider]
     sockets = {s.sock:s for s in owners}
     output = Path(output)
     parent_record = None
-    issued, rejected, event_index, emitted, peak_busy, provider_pairs = {}, [], 0, 0, 0, 0
-    started = time.monotonic()
+    issued, rejected, event_index, emitted, peak_busy, provider_pairs = {}, [], 0, 0, 0, prefill_result['prefill_draft_replay']
     emitted_elapsed = []
     with (output/'schedule.jsonl').open('x') as trace, (output/'tokens.jsonl').open('x') as tokens, \
          (output/'provider-batches.jsonl').open('x') as batches, \
@@ -314,7 +329,7 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
     return dict(schema='ownrt.dedicated-socket-result.v1', output_ids=model.emitted,
         input_position=model.frontier, provider_pairs=provider_pairs, provider_serial=model.provider.serial,
         emitted_elapsed_seconds=emitted_elapsed,
-        prefill_positions=0, prefill_draft_replay=0, actual_provider=True, scripted_oracle_assisted=False,
+        **prefill_result, actual_provider=True, scripted_oracle_assisted=False,
         speed_claim=False, cancelled=cancelled, cancelled_provider_incomplete=model.cancelled_provider_incomplete,
         issued_proposals=list(issued.values()), rejected_proposals=rejected,
         peak_commands_inflight=peak_busy, scheduler_wall_seconds=time.monotonic()-started, events=model.events,

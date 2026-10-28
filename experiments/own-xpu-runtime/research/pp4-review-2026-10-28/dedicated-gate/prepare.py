@@ -11,7 +11,7 @@ def prepare(plan_path,reference,destination):
     plan,_=C.read(plan_path);output=Path(plan['output'])
     result,_=C.driver_result(output/'driver-result.json')
     raw,_=C.trace_source(output/'commands.jsonl')
-    pairs=C.canonical_pairs([json.loads(line) for line in raw.splitlines()],result['input_position'],capture_ready=plan.get('dedicated_capture_ready',False),target_stages=len(plan['stages']))
+    pairs,prefix=C.plan_pairs(plan,[json.loads(line,object_pairs_hook=C.T.BUNDLE.pairs) for line in raw.splitlines()],result['input_position'])
     pairhash=C.T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())
     reference_draft,_=C.read(reference/'draft-set.json')
     identity=dict(reference_draft['input_identity'],pair_sequence_sha256=pairhash,position=result['input_position']-1,context=plan['context'])

@@ -137,10 +137,10 @@ def run(path):
          and tokenhash(result['output_ids'])==identity['output_token_sha256']
          and plan['model_identity_sha256']==identity['model_sha256'],'actual sealed input identity differs')
     raw,cs=C.trace_source(spec['commands']);commands=[json.loads(line,object_pairs_hook=T.BUNDLE.pairs) for line in raw.splitlines()]
-    pairs=C.canonical_pairs(commands,1708,capture_ready=plan.get('dedicated_capture_ready',False),target_stages=2)
+    pairs,prefix=C.plan_pairs(plan,commands,1708)
     refpairs,rpair=C.read(reference/'canonical-pairs.json');pairhash=T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())
     need(len(pairs)==1707 and pairs==refpairs['pairs'] and pairhash==refpairs['sha256'],'actual1707 canonical pairs differ')
-    ct=C.target_candidate(dict(spec,request_sha256=plan['request_sha256']),identity)
+    ct=C.target_candidate(dict(spec,request_sha256=plan['request_sha256'],authenticated_bulk=0 if prefix is None else prefix['positions']),identity)
     need(rt['first_stage_host_history']==ct['first_stage_host_history'],'target host history differs')
     rd=D.load_set(reference/'draft-set.json');cd=D.load_set(spec['draft_set'])
     draft_identity(rd['input_identity'],cd['input_identity'],pairhash,candidate_context=candidate_context)
@@ -163,7 +163,7 @@ def run(path):
         scope=f'Explicit262K-to{candidate_context//1024}K first-dimension capacity equivalence; original full hashes/layouts/seals preserved, no fake same-context hashes. Not independent model correctness or speed proof.',
         reference_context=262144,candidate_context=candidate_context,input_position=1708,outputs=32,canonical_pairs=1707,
         pair_sequence_sha256=pairhash,target=targets,draft=drafts,
-        sources=[ws,ss,ps,rs,rps,rrs,cs,rpair]+rt['sources']+ct['sources']+rd['sources']+cd['sources']+receipts,
+        sources=[ws,ss,ps,rs,rps,rrs,cs,rpair]+([] if prefix is None else prefix['sources'])+rt['sources']+ct['sources']+rd['sources']+cd['sources']+receipts,
         helper_sha256=T.sha(Path(__file__).read_bytes()),sealed_reader_sha256=T.sha(T.READER_PATH.read_bytes()))
 
 if __name__=='__main__':

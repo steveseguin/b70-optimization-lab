@@ -27,7 +27,7 @@ static_assert(sizeof(Reset)==64);
 inline void command(const Request& request,int next){
  ring_next::need(request.role==magic&&request.version_==version&&request.sequence==next&&next>0,
    "dedicated MTP command role/version/sequence");
- ring_next::need(request.op==canonical_op||request.op==batch_op||request.op==reset_op||
+ ring_next::need(request.op==28||request.op==canonical_op||request.op==batch_op||request.op==reset_op||
    request.op==dump_op||request.op==finish_op,"dedicated MTP operation refused");
 }
 } // namespace ownrt::provider_only::wire

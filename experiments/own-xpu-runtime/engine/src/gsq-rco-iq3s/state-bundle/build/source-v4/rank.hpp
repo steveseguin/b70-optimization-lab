@@ -560,9 +560,10 @@ static int run_rank(const Options& a) {
     require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture==0||r.fixture==1)&&!r.speculative,"prefill command");
     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
     const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
-    if(a.rank==0)engine->prefill_chunk(r.position,h.tokens,r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
+    std::vector<int> owned_tokens;if(a.rank==0)owned_tokens.assign(h.tokens,h.tokens+r.token);
+    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
     else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
-    if(a.pipeline_ring)ring_dispatcher->prefill_complete(r,a.rank==0?h.tokens:nullptr);
+    if(a.pipeline_ring){ring_dispatcher->prefill_complete(r,a.rank==0?owned_tokens.data():nullptr);ring_dispatcher->external_prefill_publish(r,a.rank==0?owned_tokens.data():nullptr,prefill_base);}
     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
    }
    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;v3_accepted(*engine,v3state,c);c={};}

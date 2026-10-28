@@ -22,6 +22,7 @@ public:
  }
  ~ReadOnlyMap(){if(bytes_)::munmap(const_cast<uint8_t*>(bytes_),size_t(initial_.st_size));if(fd_>=0)::close(fd_);}
  ReadOnlyMap(const ReadOnlyMap&)=delete;ReadOnlyMap&operator=(const ReadOnlyMap&)=delete;
+ size_t size()const{return size_t(initial_.st_size);}
  const uint8_t* data()const{return bytes_;}
  bool same_inode(const ReadOnlyMap& other)const{return initial_.st_dev==other.initial_.st_dev&&initial_.st_ino==other.initial_.st_ino;}
  void identity(bool immutable=false)const{

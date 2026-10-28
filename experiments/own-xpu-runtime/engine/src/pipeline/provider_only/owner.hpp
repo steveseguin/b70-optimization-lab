@@ -30,7 +30,7 @@ template<class Draft> class Owner {
  ring_next::wire::Context context_;
  std::optional<recursive_provider_next::Sequence> sequence_;
  int last_command_=0,last_final_commit_=0;
- bool failed_=false;
+ bool failed_=false,bulk_closed_=false,bulk_used_=false;
 public:
  static constexpr const char* role="dedicated-mtp";
  Owner(Draft& runtime,Topology topology,ring_next::wire::Context context)
@@ -51,7 +51,7 @@ public:
      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify,Captured on_captured){
   ring_next::need(!failed_&&command>last_command_,"dedicated MTP stale/failed command");
   try{
-   boundary();
+   boundary();bulk_closed_=true;
    recursive_provider::validate_final_record(final,context_,hidden);
    ring_next::need(final.hidden.commit_sequence>last_final_commit_,"dedicated MTP stale final commit");
    const auto row=recursive_provider::seed_row(seed,context_);
@@ -71,13 +71,31 @@ public:
      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify){
   return run(command,seed,final,hidden,verify,[](const auto&,uint64_t){});
  }
+ // Authenticated no-head prefix; rows are canonical prompt identities, not
+ // invented accepted target tickets. The caller owns/validates both raw records.
+ template<class Prompt,class Witness,class Trace> void prefill(int command,const Prompt& prompt,const Witness& w,Trace trace){
+  ring_next::need(!failed_&&command>last_command_,"dedicated bulk stale/failed command");
+  try{
+   boundary();ring_next::need(!bulk_closed_&&serial()==w.seed.start&&w.seed.count>0&&w.hidden.size()==size_t(w.seed.count)*context_.stream_bytes,"dedicated bulk cold contiguous prefix");
+   std::vector<ring_next::Row> rows;auto proposed=*sequence_;
+   for(uint32_t i=0;i<w.seed.count;++i){int p=int(w.seed.start+i+1);ring_next::Row row;
+    row.epoch=context_.epoch;row.request=context_.request;row.id=p+1;row.parent=p;row.position=p;row.token=prompt.token(p);row.fixture=0;row.tentative=false;row.before=prompt.prefix(p);row.after=prompt.prefix(p+1);
+    proposed.prefill(row,prompt.token(p-1));rows.push_back(row);
+   }
+   last_command_=command;bulk_used_=true;
+   for(size_t i=0;i<rows.size();++i){const auto& row=rows[i];const auto* hidden=w.hidden.data()+i*context_.stream_bytes;
+    ring_next::need(draft.live_step(row.token,row.position,false,hidden,context_.stream_bytes)==-1,"dedicated bulk must not execute a head");
+    sequence_->prefill(row,prompt.token(row.position-1));trace(row,hidden,size_t(context_.stream_bytes));
+   }boundary();
+  }catch(...){failed_=true;throw;}
+ }
  // OP9 is only a no-head canonical prefix replay, authenticated by the same
  // independent source journals. Recursive proposals still use run()/Sequence.
  void canonical(int command,const recursive_provider::SeedRecord& seed,
      const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden){
   ring_next::need(!failed_&&command>last_command_,"dedicated MTP stale/failed command");
   try{
-   boundary();recursive_provider::validate_final_record(final,context_,hidden);
+   boundary();bulk_closed_=true;recursive_provider::validate_final_record(final,context_,hidden);
    const auto row=recursive_provider::seed_row(seed,context_);
    ring_next::need(!row.fixture&&final.hidden.commit_sequence>last_final_commit_&&
      row.parent==final.row.id&&row.before==final.row.after&&row.position==final.row.position+1,
@@ -98,7 +116,7 @@ public:
   ring_next::need(!failed_&&command>last_command_&&epoch==context_.epoch+1&&
        request!=context_.request,"dedicated MTP reset identity/command");
   try{
-   boundary();draft.live_reset_admission();
+   boundary();ring_next::need(!bulk_used_,"dedicated bulk reset not qualified");draft.live_reset_admission();
    draft.reset_request(destination);zero_private(draft);
    draft.recursive_reset_after_owner_zero();
    context_.epoch=epoch;context_.request=request;

@@ -1,0 +1,51 @@
+{
+  "schema": "ownrt.dedicated-bulk-offline-gate-plan.v1",
+  "status": "waiting-owner-drained-message-no-bundle-restore-authorized-yet",
+  "run": "/dev/shm/sc117-dedicated-bulk-3plus1-gate-20261028-r2",
+  "plan_sha256": "1ab67967897e174fcddf693a6032c53953f5d9724db22f61daf6fa60729ac2a8",
+  "binary": "29471eb0bab9",
+  "reference_request": "/dev/shm/pp4-overlap-gate-20261028/output/request-00-serial",
+  "helpers": {
+    "research/pp4-review-2026-10-28/dedicated-gate/prepare.py": "95bec00064268efb72baaf92b9183d663cc85b32221a8bebd16fcf0ba98450ed",
+    "research/pp4-review-2026-10-28/dedicated-gate/compare.py": "49e19dc48a6bf0edf5dfae68654e36b01ab86100d4538f38bbb8891e4d7fdfd9",
+    "research/pp4-review-2026-10-28/dedicated-gate/compare_context.py": "a63b730d58292317d49519558c40a890a74180a20ad829da0f1d12efd71f7da0"
+  },
+  "cpu_affinity": "nice19 CPU8-15",
+  "sequence": [
+    "Wait for coordinator owners-drained message and clean terminalall4rc0 before comparison/restoration.",
+    "Coordinator restores only necessary original serial reference bundles; do not reconstruct or replace manifests/seals.",
+    "nice -n19 taskset -c8-15 python research/pp4-review-2026-10-28/dedicated-gate/prepare.py --plan /dev/shm/sc117-dedicated-bulk-3plus1-gate-20261028-r2/plan-r2.json --reference-request /dev/shm/pp4-overlap-gate-20261028/output/request-00-serial --out /dev/shm/dedicated-bulk-comparison-r2",
+    "nice -n19 taskset -c8-15 python research/pp4-review-2026-10-28/dedicated-gate/compare.py /dev/shm/dedicated-bulk-comparison-r2/inputs.json --out /dev/shm/dedicated-bulk-comparison-r2/proof.json"
+  ],
+  "required": {
+    "target_sources": 2065,
+    "draft_sources": 73,
+    "actual_pairs": 1707,
+    "output_tokens": 32,
+    "clean_FINISH_owners": 4,
+    "trace_omissions": 0
+  },
+  "proof_constraints": [
+    "Use actual provider-prefill-pairs.jsonl + provider-prefill-chunks.jsonl and host dedicated-prefill.jsonl raw1280 source records/raw256 ACKs/actualReply64.",
+    "Concatenate actual no-head prefix pairs with strictly validated actual OP27 suffix, checking native serial and independent chunk sequence seam; exact full pair sequence hash must match original reference.",
+    "No fabricated per-row ROW/ACCEPT/native counters. Actual native target ring.prefill increments rows andcommits; scopedtrace equation accounts2*authenticated prefix count, omitted0.",
+    "Full sealed2065 target and73 draft state/layout hashes plus outputIDs remain strict; all4real FINISH receipts teardown idle/noholders required."
+  ],
+  "compact_retention": {
+    "destination": "research/pp4-review-2026-10-28/dedicated-gate/bulk3plus1-gate-r2-evidence",
+    "gzip_mtime": 0,
+    "root_files": [
+      "config.json",
+      "plan.json",
+      "admission.json",
+      "baseline.json",
+      "output/terminal.json",
+      "output/driver-result.json",
+      "output/dedicated-prefill.jsonl",
+      "output/stageprovider/native/provider-prefill-pairs.jsonl",
+      "output/stageprovider/native/provider-prefill-chunks.jsonl"
+    ],
+    "other": "Retain comparison proof/manifests/helpers and each owner receipt/census/launch-plan/native metadata, ring-state attestation, state-seal/index/layout metadata. Gzip bounded command/schedule traces if useful. Hashsource+bytes+relative destination manifest. No state.bundle copy/scan/archive until coordinator separately authorizes.",
+    "status": "No retention claims until actual successful read/hash; keep original fail evidence if format error. No model retry."
+  }
+}

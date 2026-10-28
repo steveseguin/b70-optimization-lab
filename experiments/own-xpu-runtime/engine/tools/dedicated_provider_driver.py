@@ -17,9 +17,12 @@ def make_plan(path):
     path = Path(path).resolve()
     config = json.loads(path.read_text())
     base.require(config.get('dedicated_provider') is True, 'explicit separate-provider opt-in')
-    base.require(not config.get('prefill_rows', 0) and not config.get('prefill_pipeline', False)
-                 and not config.get('persistent_reset', False),
-                 'dedicated bulk prefill is not yet qualified')
+    bulk=config.get('dedicated_bulk_prefill',False)
+    base.require(type(bulk) is bool and not config.get('prefill_pipeline',False)
+                 and not config.get('persistent_reset',False),'dedicated sequential bulk/no reset admission')
+    rows=config.get('prefill_rows',256 if bulk else 0)
+    base.require(type(rows) is int and (rows==256 if bulk else rows==0),
+                 'explicit dedicated bulk256 or per-token0 rows')
     capture = config.get('dedicated_capture_ready', False)
     base.require(type(capture) is bool, 'dedicated_capture_ready Boolean required')
     plan = base.make_plan(path)
@@ -40,6 +43,7 @@ def make_plan(path):
     receipt = json.loads(Path(config['build_receipt']).read_text())
     required = {'pipeline/provider_only/'+name for name in
                 ('bootstrap.inc', 'owner.hpp', 'runtime.hpp', 'wire.hpp', 'peers.hpp')}
+    if bulk:required.add('pipeline/provider_only/prefill.hpp')
     base.require(required <= set(receipt['sources']), 'compiled dedicated provider capability')
     adapter = json.loads(Path(config['adapter_plan']).read_text())
     draft = adapter['rank_argv'][0]
@@ -55,6 +59,16 @@ def make_plan(path):
                     vocab=plan['vocab'], eos=eos, depth=depth, boundaries=config['boundaries'],
                     target_bdfs=bdfs, provider_bdf=provider_bdf, check_policy=policy,
                     config_sha256=base.digest(path), mode='dedicated-mtp')
+    prompt_path=None
+    if bulk:
+        from rolling_provider import dedicated_prefill
+        base.require(len(plan['prompt_tokens'])-2>=rows,'dedicated prefix must contain at least one bulk chunk')
+        prompt_path=Path(config['dedicated_prefill_prompt']).resolve()
+        base.require(str(prompt_path)==config['dedicated_prefill_prompt'], 'canonical absolute immutable prompt path')
+        prompt_sha=config['dedicated_prefill_prompt_sha256']
+        dedicated_prefill.prompt_source(dict(plan,dedicated_prefill_prompt=str(prompt_path),
+                                           dedicated_prefill_prompt_sha256=prompt_sha))
+        identity.update(dedicated_bulk_prefill=True,prefill_rows=rows,prompt_i32_sha256=prompt_sha)
     request = sha256(base.canonical(identity)).hexdigest()
     output = Path(plan['output'])
     provider = deepcopy(plan['stages'][0])
@@ -70,6 +84,11 @@ def make_plan(path):
         '--provider-final-shared', str(output/f"stage{len(bdfs)-1}/shared.bin"),
         '--pipeline-ring-request-sha256', request, '--pipeline-ring-depth', str(depth),
         '--pipeline-ring-check-policy', policy, '--draft-mtp']
+    if bulk:
+        provider['argv'] += ['--provider-prefill-rows',str(rows),
+            '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha,
+            '--provider-prefill-seed-shared',str(output/'stage0/prefill.bin'),
+            '--provider-prefill-final-shared',str(output/f'stage{len(bdfs)-1}/prefill.bin')]
     if capture:
         provider['argv'].append('--provider-capture-ready')
     if full:
@@ -87,6 +106,9 @@ def make_plan(path):
             '--pipeline-ring-persistent-requests', '--pipeline-ring-check-policy', policy,
             '--pipeline-ring-request-sha256', request, '--pipeline-ring-depth', str(depth),
             '--pipeline-ring-trace-limit', str(trace)]
+        if bulk:
+            stage['argv'] += ['--prefill-rows',str(rows),'--prefill-shared',str(output/f"stage{stage['id']}/prefill.bin"),
+                '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha]
         if full:
             stage['argv'].append('--pipeline-ring-verify-restore')
     for stage in plan['stages']+[provider]:
@@ -96,10 +118,15 @@ def make_plan(path):
                      'runtime must not consume expected outputs')
     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
                 epoch=0, request_sha256=request, dedicated_capture_ready=capture, eos_token_ids=eos, speculative_depth=depth,
-                rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=0,
+                rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=rows,
                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,
                 limits='Experimental independent provider; per-token prompt only. No archived replay or reset claim.')
+    if bulk:
+        plan.update(dedicated_bulk_prefill=True,dedicated_prefill_prompt=str(prompt_path),
+                    dedicated_prefill_prompt_sha256=prompt_sha,prefill_stream_bytes=base.PREFILL_STREAM_BYTES,
+                    limits='Experimental authenticated sequential dedicated prefix replay; no overlapped-bulk/reset/speed claim.')
+        plan['pins'][str(prompt_path)]=prompt_sha
     # Pin the actual transitive Python controller stack, without model or credential discovery.
     from rolling_provider import dedicated_transport
     modules = (dedicated_transport, dedicated_transport.pending, dedicated_transport.codec,
