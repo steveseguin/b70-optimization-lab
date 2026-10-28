@@ -201,6 +201,24 @@
   },
   "weight_revisions": [
     {
+      "id": "sc117-flash-next-iq3s",
+      "label": "SC117 GSQ-RCO abliterated IQ3_S — separate mixed quantized model",
+      "role": "Separate SC117 mixed-quantized target; no official FP8 or Unsloth quality/performance equivalence claim",
+      "repository": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+      "revision": "eec4e10a2c29b440a2ae85591fa11569ce752963",
+      "quantized_artifacts": [
+        {
+          "id": "sc117-iq3s-eec4e10a",
+          "label": "SC117 IQ3_S mixed GSQ-RCO export",
+          "quantization": "IQ3_S mixed GSQ-RCO",
+          "quantization_origin": "export",
+          "repository": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+          "revision": "eec4e10a2c29b440a2ae85591fa11569ce752963",
+          "evidence": "repro/sc117-iq3s-b70-research-draft-20261028/model-downloads.json"
+        }
+      ]
+    },
+    {
       "id": "qwen38-flash-next",
       "label": "Qwen3.8 Flash-Next",
       "role": "base post-trained weights",
@@ -2528,6 +2546,47 @@
     }
   ],
   "packets": [
+    {
+      "id": "sc117-iq3s-b70-research-draft-20261028",
+      "label": "SC117 IQ3_S · dedicated draft · three or four B70 cards",
+      "revision": "sc117-flash-next-iq3s",
+      "artifact_id": "sc117-iq3s-eec4e10a",
+      "quantization": "IQ3_S mixed GSQ-RCO",
+      "runtime": "Own Xe/SYCL runtime; F32 target arithmetic; full16-bit KV; separate official FP8 draft",
+      "cards": 4,
+      "status": "candidate",
+      "evidence_level": "Research candidate; scoped saved-continuation CPU agreement, clean-host replay and certified headline pending",
+      "coverage": [
+        "Frozen-source AOT build recipe",
+        "Later3+1 full12 paired research screen",
+        "2+1 A/B/A correctness gate; full suite not run",
+        "Separate long-input placement screen"
+      ],
+      "manifest": "packages/sc117-iq3s-b70-research-draft-20261028/package.json",
+      "guide": "repro/sc117-iq3s-b70-research-draft-20261028/README.md",
+      "evidence": "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md",
+      "limitations": "Three-card2+1 is a separate alternative, not a measured full-suite scaling curve. Frozen sourceba563d4 retains historical disagreements; later9599b0 qualification does not certify the recipe/new build. Dedicated portable controller/observer incomplete; no featured metric.",
+      "grades": {
+        "capability": {
+          "grade": "C",
+          "scope": "Expert research recipe; frozen source and later native observations have separate identities.",
+          "basis": "Later9599b0 matches5965 CPU-qualified saved continuation IDs in each3+1 depth arm and1536 IDs in2+1 A/B/A correctness gate; frozen recipe predates those binaries. Strict benchmark and portable dedicated clean-host adapter remain pending.",
+          "reviewed_at": "2026-10-28",
+          "evidence": [
+            "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md"
+          ]
+        },
+        "evidence": {
+          "grade": "C",
+          "scope": "Expert research recipe; frozen source and later native observations have separate identities.",
+          "basis": "Later9599b0 matches5965 CPU-qualified saved continuation IDs in each3+1 depth arm and1536 IDs in2+1 A/B/A correctness gate; frozen recipe predates those binaries. Strict benchmark and portable dedicated clean-host adapter remain pending.",
+          "reviewed_at": "2026-10-28",
+          "evidence": [
+            "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md"
+          ]
+        }
+      }
+    },
     {
       "id": "qwen38-flash-next-fp8-tp4-mtp1-placement-b70-32tps-20260906",
       "label": "Qwen3.8 Flash-Next FP8 · TP4+EP4 graph + lossless MTP1 + never-routed experts host-placed",
