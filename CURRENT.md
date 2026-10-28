@@ -224,11 +224,16 @@ The immutable lookup-view four-file native candidate is applied and its32-token
 2+1/128K gate passed all four whole states, three censuses and outputs. Same-binary
 3+1/262K copy control then completed512 outputs/full2065target+73draft state,
 122,364pairs and476chunk hashes, clean owners/postflight; request261.499367s,
-coordinator-to-ready144.456698s. After final admission refusal and verified r6 intermediate cleanup (658,824,244 bytes),
-the view arm is now active at `/dev/shm/sc117-lookup-view-3plus1-262k-long512-20261028-r1`,
-invocation `723f63c502d342959f71224738bdceec`. Fresh baseline-r2 available memory
-104,029,220,864 bytes passed the unchanged96GiB floor plus64MiB reserve.
-No view memory/performance win is claimed before completion.
+coordinator-to-ready144.456698s. The matched view arm completed cleanly and passed all five whole bundles,
+2065target/73draft sources,122,364pairs,476chunks and512IDs. READY fell
+144.457→75.691s, but request time rose261.499→352.909s (**34.956% more**),
+TTFT250.734→342.522s and lifecycle446.275→468.379s. This is an opt-in
+memory/startup tradeoff and request-speed loss, not promoted. Archive reuse and
+verified map cleanup completed. No pagefault observation was captured before exit,
+so cause is unassigned. Sparse bounded staging/prefetch and application-level
+whole-table reads before READY are separate UNTESTED hypotheses; no global memory
+settings/advice changes. GPUs are idle; prefix178 quality diagnostic is being prepared.
+[Matched lookup evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/view-long-r1-evidence/matched-result.json).
 [Copy control evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/copy-long-r1-evidence/index.json).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 

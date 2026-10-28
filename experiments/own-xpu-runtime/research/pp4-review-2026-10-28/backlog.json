@@ -518,12 +518,25 @@
     },
     {
       "id": "immutable-lookup-view-qualified-gate-copy-control",
-      "status": "native-applied-shortgate-qualified-copylong-complete-viewarm-notlaunched",
+      "status": "qualified-matched-view-startup-win-request-loss-optin-not-promoted",
       "evidence": [
         "lookup-view-candidate/gate-r1-evidence/index.json",
-        "lookup-view-candidate/copy-long-r1-evidence/index.json"
+        "lookup-view-candidate/copy-long-r1-evidence/index.json",
+        "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ],
-      "finding": "32gate fullstates/censuses/IDs exact; samebinary3+1copylong512fullproof passes. Viewarm memoryadmissionrefused, freshadmissionpending; no measuredviewbenefit."
+      "finding": "Allfullstates/pairs/512outputs exact. READY144.457\u219275.691s; request261.499\u2192352.909s, lifecycle446.275\u2192468.379s. Optinmemory/startuptradeoff, speedlossnotpromoted. No pagefaultmeasurement/causeattribution.",
+      "next_hypotheses": [
+        {
+          "idea": "Bounded sparse chunk staging/prefetch for exactlookup entries",
+          "status": "untested",
+          "firsttest": "Measure actual perphase lookup access/latency/faultcounters on one authorizedsamebinaryrun beforetreatment, then fixedbounded staging with byteexact values and retainedlifetimeguards."
+        },
+        {
+          "idea": "Whole-table application-level read before READY",
+          "status": "untested",
+          "firsttest": "Explicitstartup-only bounded read touch with honestREADY/load-to-output clocks and actualmemorybudget; evaluatewhether merelyshiftswork. No globalmemoryadvice/settings/cachechanges."
+        }
+      ]
     }
   ],
   "next_priority_queue": [

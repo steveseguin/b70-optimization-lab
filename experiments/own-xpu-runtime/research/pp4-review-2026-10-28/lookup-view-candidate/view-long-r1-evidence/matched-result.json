@@ -1,0 +1,35 @@
+{
+  "status": "qualified-optin-memory-startup-tradeoff-request-speed-loss-not-promoted",
+  "copy": {
+    "request_seconds": 261.499366844,
+    "ttft_seconds": 250.733841305,
+    "ready_seconds": 144.456698365,
+    "lifecycle_seconds": 446.275366692
+  },
+  "view": {
+    "request_seconds": 352.908721019,
+    "ttft_seconds": 342.522222682,
+    "ready_seconds": 75.691451922,
+    "lifecycle_seconds": 468.378682139
+  },
+  "request_time_increase_percent": 34.955860611903944,
+  "ready_time_reduction_percent": 47.60267071122604,
+  "lifecycle_time_increase_percent": 4.952842369687582,
+  "exactness": "Full5bundles/2065target73draft/122364pairs476nativechunks/512IDs exact,clean4ownerFINISH/passivepostflight.",
+  "proof_sha256": "1b0fa92965ba9e52442ba875318422997c35827680c1582ee31b9ca75887b06f",
+  "scope": "Singlematchedfirstcold121854/5123+1/262Kcopyvsview,samebinary. READYcoordinatorstart\u2192allownersready; requestexcludesload/dump; lifecycleincludesload/request/dump/shutdown. Memory/startupoptin, no speedpromotion or independentCPUqualityclaim.",
+  "cause_unknown": "No perprocesspagefault observation captured beforeexit; do not attribute the requestloss to faults/I/O/cache.",
+  "new_hypotheses": [
+    {
+      "idea": "Bounded sparse chunk staging/prefetch for exactlookup entries",
+      "status": "untested",
+      "firsttest": "Measure actual perphase lookup access/latency/faultcounters on one authorizedsamebinaryrun beforetreatment, then fixedbounded staging with byteexact values and retainedlifetimeguards."
+    },
+    {
+      "idea": "Whole-table application-level read before READY",
+      "status": "untested",
+      "firsttest": "Explicitstartup-only bounded read touch with honestREADY/load-to-output clocks and actualmemorybudget; evaluatewhether merelyshiftswork. No globalmemoryadvice/settings/cachechanges."
+    }
+  ],
+  "archive_reuse": "Receipt final deleted_only_proven_files true; allstatepayloads previouslyproven exact, mapsfulltarcompare."
+}
