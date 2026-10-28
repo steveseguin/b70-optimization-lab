@@ -1,0 +1,148 @@
+{
+  "decision": "defer-no-attributed-material-device-idle-budget",
+  "scope": "metadata/source only; no GPU or implementation",
+  "measurements": {
+    "longcontrol": {
+      "base": "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-output",
+      "stages": {
+        "stage0": {
+          "rows": 703,
+          "decode_rows": 702,
+          "median": {
+            "half_completion_ms": 8.496189999999999,
+            "enqueue_loop_ms": 3.1949199999999998,
+            "wait_ms": 5.007385,
+            "prepare_ms": 0.11741599999999999,
+            "p76_retirement_ms": 0.145815,
+            "launches_issued": 643.0,
+            "host_waits": 7.0
+          },
+          "device_timestamps_available": false
+        },
+        "stage1": {
+          "rows": 616,
+          "decode_rows": 615,
+          "median": {
+            "half_completion_ms": 7.75897,
+            "enqueue_loop_ms": 2.66141,
+            "wait_ms": 4.93536,
+            "prepare_ms": 5e-05,
+            "p76_retirement_ms": 0.13866,
+            "launches_issued": 594,
+            "host_waits": 3
+          },
+          "device_timestamps_available": false
+        },
+        "stage2": {
+          "rows": 513,
+          "decode_rows": 512,
+          "median": {
+            "half_completion_ms": 8.50799,
+            "enqueue_loop_ms": 2.69706,
+            "wait_ms": 5.83494,
+            "prepare_ms": 5e-05,
+            "p76_retirement_ms": 0.13217849999999998,
+            "launches_issued": 566.0,
+            "host_waits": 5.0
+          },
+          "device_timestamps_available": false
+        }
+      },
+      "token_rates": {
+        "control-output": {
+          "tokens": 512,
+          "first_to_last_seconds": 10.532797473017126,
+          "intertoken_rate_tps": 48.515126328886275,
+          "first_emitted_elapsed_s": 250.84163720393553,
+          "last_emitted_elapsed_s": 261.37443467695266
+        }
+      }
+    },
+    "coldA64K_ABA": {
+      "base": "/dev/shm/sc117-dedicated-reset-aba64k-20261028-r1/output",
+      "stages": {
+        "stage0": {
+          "rows": 710,
+          "decode_rows": 709,
+          "median": {
+            "half_completion_ms": 7.85035,
+            "enqueue_loop_ms": 2.8433,
+            "wait_ms": 4.73992,
+            "prepare_ms": 0.105368,
+            "p76_retirement_ms": 0.12241,
+            "launches_issued": 643,
+            "host_waits": 7
+          },
+          "device_timestamps_available": false
+        },
+        "stage1": {
+          "rows": 617,
+          "decode_rows": 616,
+          "median": {
+            "half_completion_ms": 7.166925,
+            "enqueue_loop_ms": 2.450815,
+            "wait_ms": 4.58622,
+            "prepare_ms": 5e-05,
+            "p76_retirement_ms": 0.104782,
+            "launches_issued": 594.0,
+            "host_waits": 3.0
+          },
+          "device_timestamps_available": false
+        },
+        "stage2": {
+          "rows": 513,
+          "decode_rows": 512,
+          "median": {
+            "half_completion_ms": 7.89034,
+            "enqueue_loop_ms": 2.498015,
+            "wait_ms": 5.37146,
+            "prepare_ms": 5e-05,
+            "p76_retirement_ms": 0.115446,
+            "launches_issued": 566.0,
+            "host_waits": 5.0
+          },
+          "device_timestamps_available": false
+        }
+      },
+      "token_rates": {
+        "request-00": {
+          "tokens": 512,
+          "first_to_last_seconds": 8.07504292507656,
+          "intertoken_rate_tps": 63.28139735494412,
+          "first_emitted_elapsed_s": 0.737155222799629,
+          "last_emitted_elapsed_s": 8.812198147876188
+        },
+        "request-01": {
+          "tokens": 512,
+          "first_to_last_seconds": 8.480842106975615,
+          "intertoken_rate_tps": 60.25345048927336,
+          "first_emitted_elapsed_s": 0.5225979858078063,
+          "last_emitted_elapsed_s": 9.003440092783421
+        },
+        "request-02": {
+          "tokens": 512,
+          "first_to_last_seconds": 8.212513086851686,
+          "intertoken_rate_tps": 62.22212306950426,
+          "first_emitted_elapsed_s": 0.5617873361334205,
+          "last_emitted_elapsed_s": 8.774300422985107
+        }
+      }
+    }
+  },
+  "limits": [
+    "enqueue_loop_ms is elapsed host loop minus explicit wait time, not CPU cycles or unhidden device idle",
+    "retirement may be inside enqueue/wait scopes; do not add to enqueue",
+    "cold ABA stage timings are final retained request state; cannot attribute to cold request00 uniquely",
+    "prefill and decode timing files separate; fixture0 excluded",
+    "provider timings empty; no command-submission attribution for fourth card"
+  ],
+  "existing_profile": {
+    "environment": "OWNRT_DECODE_PROFILE=2",
+    "args": "--timing token",
+    "output": "decode-device-profile.jsonl",
+    "mode3": "per-pass detail",
+    "exclusion": "--tp-replicate refuses profiler after 2026-10-25 fault",
+    "causality_limit": "device gaps alone do not prove late submission",
+    "smallest_missing_instrumentation": "Device::issue submit begin/end/dependency-ready, correlated calibrated event submit/start/end"
+  }
+}

@@ -381,8 +381,11 @@
     },
     {
       "id": "executable-native-command-graph",
-      "status": "CPU-source-and-existing-profile-screened-unmeasured",
+      "status": "CURRENT339b75-screened-defer-no-attributed-material-gap",
       "evidence": "submission-graph-screen.txt",
+      "current_screen": ["current-command-replay-screen.txt", "current-command-replay-screen.json"],
+      "current_result": "Actual longcontrol/ABA retained decode enqueue medians 2.45–3.20ms overlap GPU work; waits are not CPU overhead. No device timestamps or submission-caused critical-gap budget; cold-A request00 native timing attribution unavailable. Defer graph implementation; fixed-depth suite remains active priority.",
+      "reopen_gate": "Existing OWNRT_DECODE_PROFILE=2 with --timing token measures device busy/gaps on non-TP-replicate stages; submission causality additionally needs correlated Device::issue submit/dependency-ready timestamps. Only material exposed gaps justify one exact same-device same-bank layer A/B; no GPU test run.",
       "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4\u20134.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest."
     },
     {
