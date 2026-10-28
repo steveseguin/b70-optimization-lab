@@ -1,0 +1,58 @@
+{
+  "schema": "ownrt.pp4-baseline-long-review.v1",
+  "source": "/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output/requests/request-000002",
+  "scope": "measured baseline; no long-prompt target-only or full-state qualification",
+  "prompt_output_match_run9": true,
+  "cached_tokens": 0,
+  "process_reused": true,
+  "prompt_state_reused": false,
+  "timing": {
+    "first_token_seconds": 845.5543474990409,
+    "full_response_seconds": 846.9368887949968,
+    "committed_output_span_seconds": 1.3563410849310458,
+    "decode_intervals": 7,
+    "decode_tokens_per_second": 5.160943716717,
+    "full_response_tokens_per_second": 0.009445804174833174,
+    "definition": "Decode=(output_count-1)/(last_commit-first_commit); full response includes prompt and final draft/drain, excludes reset and dump."
+  },
+  "prefill_timing": {
+    "schema": "rolling-prefill-host-wall-v1",
+    "total_wall_s": 845.0413438710384,
+    "target_wall_s": 671.9649616088718,
+    "target_command_wall_s": [
+      125.0261984866811,
+      177.09753539552912,
+      173.95176043000538,
+      194.5191421478521
+    ],
+    "draft_replay_wall_s": 172.71879866544623,
+    "other_wall_s": 0.3575835967203602
+  },
+  "identity": {
+    "boundaries": [
+      0,
+      8,
+      21,
+      34,
+      48
+    ],
+    "bdfs": null,
+    "context": 262144,
+    "speculative_depth": 3,
+    "check_policy": "measured",
+    "prefill_rows": 256,
+    "capture_ready_overlap": true,
+    "recursive_flat_copy": true,
+    "verify_restore": false,
+    "verify_recursive_restore": false,
+    "verify_provider_survival": false
+  },
+  "source_pins": {
+    "/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output/requests/request-000002/result.json": "5865638a3db2ef7ff593cbf12b4b94fdd19912cafeab0047866c132311e6fafd",
+    "/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output/requests/request-000002/driver-result.json": "27ec29f83ba097d8fe2b9c3fbd6d3da7c655cf7e9e0d7942e4b65997eb13c3e6",
+    "/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output/plan.json": "31236f4fc44781698e7716ce3f771e19bd36fa152152ee0ce12f094574946736",
+    "/dev/shm/engine-build-pp4-review-20261028/build-receipt.json": "3d7ab3af4fd64f4ae456eda5a97e3474c1527a431e94adecf65bc73ecd5e1812",
+    "/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output/terminal.json": "9dcedfd49d4c58992176f3f1def783037b357ff97fcb6d12e20305847f535350"
+  },
+  "comparison_limit": "TTFT run9 1034.914s versus current845.554s is descriptive, not causal speedup: this process completed seam first and retained JIT/kernel warmness. No prompt/KV reuse."
+}

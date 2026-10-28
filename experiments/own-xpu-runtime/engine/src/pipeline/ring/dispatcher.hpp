@@ -18,7 +18,10 @@ class Dispatcher {
  struct ProviderCapture {int position=0;uint64_t serial=0;};std::map<uint64_t,ProviderCapture> provider_at_capture;
  std::array<uint64_t,4> provider_borrows_by_depth{};std::ofstream survival_trace;uint64_t survival_records=0,survival_rows=0,survival_advanced_records=0;
  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
- int prefill_start=0;std::vector<int> prefill_tokens;
+ // At most two target chunks may lead canonical draft replay. Own tokens by
+ // value: the shared prefill header is single-buffered and reused by OP15.
+ struct PrefillReplay {int start;std::vector<int> tokens;size_t consumed=0;};
+ std::vector<PrefillReplay> prefill_replay;
  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
  ownrt::ring_next::Row prefill_row(const Request& r){
   namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
@@ -51,13 +54,19 @@ public:
  static bool handles(int op){return op==24||op==25||op==26;}
  void prefill_complete(const Request& r,const int* tokens){
   require(e.a.prefill_rows&&e.a.pipeline_ring_persistent_requests&&r.op==15&&r.token>0&&r.token<=e.a.prefill_rows,"ring prefill completion admission");
+  if(e.a.pipeline_first()){
+   require(tokens&&prefill_replay.size()<2,"ring prefill bounded token ownership");
+   if(!prefill_replay.empty()){const auto& previous=prefill_replay.back();require(r.position==previous.start+int(previous.tokens.size()),"ring prefill replay chunk continuity");}
+  }
   ring.prefill(r.token,prefill_row(r));
-  if(e.a.pipeline_first()){require(tokens,"ring prefill prompt token ownership");prefill_start=r.position;prefill_tokens.assign(tokens,tokens+r.token);}
+  if(e.a.pipeline_first())prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
  }
  void draft_prefill(const Request& r){
-  const int index=r.position-prefill_start;const auto row=prefill_row(r);
-  require(index>0&&index<=int(prefill_tokens.size())&&provider->live_position()==r.position,"ring prefill DRAFT canonical token/position");
-  provider_sequence->prefill(row,prefill_tokens[index-1]);++provider_borrows_by_depth[0];
+  require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");
+  auto& chunk=prefill_replay.front();const auto row=prefill_row(r);
+  require(row.token==r.token&&row.position==r.position&&chunk.consumed<chunk.tokens.size()&&r.position==chunk.start+int(chunk.consumed)+1&&provider->live_position()==r.position,"ring prefill DRAFT canonical token/position");
+  provider_sequence->prefill(row,chunk.tokens[chunk.consumed]);++provider_borrows_by_depth[0];
+  if(++chunk.consumed==chunk.tokens.size())prefill_replay.erase(prefill_replay.begin());
  }
  Reply execute(const Request& r){
   namespace wire=ownrt::ring_next::wire;if(r.op==11)return persistent_reset(r);if(r.op==wire::batch_op)return draft_batch(r);require(handles(r.op),"ring dispatcher only owns admitted commands");

@@ -1,24 +1,29 @@
 # Current Workspace State
 
-**October 28 — SC117 PP4 review: bounded service running; baseline long request in progress.**
-- Both earlier service paths were initially stopped; older B25/B26 hosting statements below are historical.
-  The coordinator started one PP4 service at 02:55 UTC, engine `4e3104efbc5f`, under
-  `/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output`. The short seam screen completed and the long baseline is now running on that process.
-  The coordinator owns all device and service actions; no automatic restart or request retry is authorized.
-- The seam screen passed native reset accounting: provider serial **878 = 797 quiescent + 81 pending borrows**;
-  latest coordinator guard is clean. This is screening only, without full-state equality or byte-verified restores.
-  Native accepted tentative rows are **81**; HTTP `mtp.hits=116` is issued-minus-explicit-rejected bookkeeping
-  and overcounts acceptance. [Compact evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/seam-screen/scope-and-mtp-audit.json).
-- Goal: faster exact single-conversation inference in our reusable Intel Xe engine, including prompt reading
-  and native long context; retain model, quantization, topology and tuning identities separately. No training.
-- Earlier `run-9` completed a cold **121,854-token** prompt with eight outputs inside a 262,144-token allocation.
-  First token took 1,034.9 s; draft replay reported 163.223 s. Native prefill timing logs were empty, so exact
-  target-prefill time is unknown. This was not full-262K or target-only long-prompt qualification.
-  Its request passed, but shutdown failed (stage 0 exit 1; other stages 0); cause remains unestablished here.
-- Next: bounded seam gate, then the same retained long prompt on the same process with separate prefill/replay
-  timing retained by the new Python `prefill.py` counters. Internal parity/repeats do not resolve the six independent-reference disagreements.
-  [Read-only audit](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/run9-audit.json).
-  Original long-request input is preserved at `/dev/shm/pp4-review-original-current-20261028.txt`.
+**October 28 — SC117 PP4 baseline complete; bounded two-chunk prefill GPU gate passed.**
+- Measured candidate now loading under `sc117-pp4-262k-lan.service`, engine `0fcc08b71c6e`,
+  output `/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output`; sequence is the same cold seam, then pinned long request.
+- The cold 121,854-token baseline completed in **846.937 s**, matching all eight prior output tokens exactly.
+  Target prefill took **671.965 s** and draft replay **172.719 s**. Runtime kernels were warmed by a separate
+  772-token cold request; no prompt/KV cache was reused. This is a diagnostic context measurement, not a certified decode record.
+  [Baseline](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-long/summary.json).
+- The earlier stage-0 shutdown accounting defect is fixed: reset conservation and clean FINISH both passed.
+  All four baseline stages exited 0; postflight found no holders and no new kernel fault. Both HTTP services are stopped.
+- The bounded serial/overlap gate on binary `0fcc08b71c6e` passed **2,065 target sources and 73 draft sources**;
+  both 32-token outputs and actual canonical input pairs match. This qualifies the tested prefill overlap/seam,
+  not full-262K context or agreement with an independent model reference.
+- The original comparer rejected its OP27-only trace equation. An explicit hash-bound OP9-prefix provenance
+  extension re-compared the same sealed dumps successfully, without another model run or altered counters.
+  The original failed root result and graceful abort exits (all 1) are retained; postflight has no holders or new faults.
+  [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/gate/target-comparison-prefill.json.gz).
+  Next: measured candidate long timing on one admitted process, followed by the separately labeled capacity diagnostic.
+- HTTP MTP accounting previously overstated accepted proposals (81 accepted, not 116, in the seam screen).
+  The candidate corrects this and separates rejected guesses from unverified discarded descendants.
+- A separate capacity diagnostic is prepared at **262,136 prompt + 8 output tokens**; it has not run.
+  [Inputs and review](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/).
+- North star: faster exact single-conversation inference, prompt reading and native long context in our reusable
+  Intel Xe engine. Keep model, quantization, topology and tuning identities separate; no training.
+  Internal parity does not resolve the six independent-reference disagreements. Long target-only fidelity remains open.
 
 **October 27 — Native 262K quad foundation passed; overlap schedulers rejected for speed.**
 - Four stages `[0,12,24,36,48]` on cards `23/27/43/47` completed with identical output tokens and zero faults.

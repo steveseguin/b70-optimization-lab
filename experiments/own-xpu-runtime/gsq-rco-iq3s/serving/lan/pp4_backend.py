@@ -32,6 +32,27 @@ CONTEXT = 262144
 PREFILL_ROWS = 256
 
 
+def mtp_accounting(result):
+    """Count proposals accepted by the final stage, including terminal drain.
+
+    Explicit wrong guesses and discarded unverified descendants are distinct.
+    Use the complete in-memory coordinator events, not bounded schedule.jsonl.
+    """
+    issued_rows = [row['row'] for row in result['issued_proposals']]
+    rejected_rows = [row['row'] for row in result['rejected_proposals']]
+    issued, rejected = set(issued_rows), set(rejected_rows)
+    committed = {event['row'] for event in result['events']
+                 if event['event'] in ('final-record-held', 'final-record-terminal')}
+    accepted = issued & committed
+    base.require(len(issued) == len(issued_rows) and len(rejected) == len(rejected_rows)
+                 and rejected <= issued and not accepted & rejected,
+                 'MTP proposal accounting identity/disjointness')
+    discarded = issued - accepted - rejected
+    return dict(guesses=len(issued), hits=len(accepted), misses=len(rejected),
+                unverified_discarded=len(discarded),
+                accounting='issued=accepted+explicit_rejected+unverified_discarded')
+
+
 def token_sha(tokens):
     return hashlib.sha256(b''.join(struct.pack('<I', token) for token in tokens)).hexdigest()
 
@@ -53,6 +74,8 @@ def make_plan(config_path):
                  'depth-three capture-ready rolling service required')
     base.require(int(os.environ.get('SC117_CONTEXT', '4096')) == CONTEXT,
                  'SC117_CONTEXT=262144 required for the PP4 endpoint')
+    prefill_pipeline = config.get('prefill_pipeline', False)
+    base.require(type(prefill_pipeline) is bool, 'PP4 prefill_pipeline must be boolean')
     plan = rolling_driver.make_plan(config_path)
     base.require(len(plan['stages']) == 4 and plan.get('speculative_depth') == 3 and
                  plan.get('capture_ready_overlap') is True and plan.get('use_proposals') is True,
@@ -66,6 +89,7 @@ def make_plan(config_path):
     plan.update(schema='ownrt.pp4-lan-service-plan.v1', pp4_http_service=True,
                 service_mode='cold-serial-http-depth3', cold_reset_every_request=True,
                 request_source='caller', continuation=False, sessions=False, prefill_rows=PREFILL_ROWS,
+                prefill_pipeline=prefill_pipeline,
                 full_trace_required=plan['check_policy'] == 'qualification',
                 trace_retention='full' if plan['check_policy'] == 'qualification' else 'bounded-prefix-with-omission-counters',
                 limits='Caller prompts only; one cold depth-three request at a time; max_new is bounded by this plan.')
@@ -304,11 +328,10 @@ class Engine:
         base.save(result_path, result)
         compact = {key: value for key, value in result.items()
                    if key not in ('events', 'issued_proposals', 'rejected_proposals')}
-        guesses = len(result.get('issued_proposals', []))
-        misses = len(result.get('rejected_proposals', []))
+        mtp = mtp_accounting(result)
         summary = dict(request=number, label=label, mode='live-mtp-depth3', streamed=on_token is not None,
                        prompt_tokens=len(prompt), output_tokens=len(outputs), max_new=max_new,
-                       mtp=dict(guesses=guesses, hits=max(0, guesses - misses), misses=misses),
+                       mtp=mtp,
                        provider_pairs=result['provider_pairs'], reset_ms=reset_ms,
                        continued_from=0, prefill_rows=self.prefill_rows, wall_s=time.monotonic() - started)
         record = dict(schema='ownrt.pp4-lan-rolling-request-result.v1', passed=True,

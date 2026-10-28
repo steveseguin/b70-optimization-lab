@@ -1,0 +1,61 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_backend.py
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_backend.py
+@@ -30,6 +30,27 @@
+ EOS = [248044, 248046]
+ CONTEXT = 262144
+ PREFILL_ROWS = 256
++
++
++def mtp_accounting(result):
++    """Count proposals accepted by the final stage, including terminal drain.
++
++    Explicit wrong guesses and discarded unverified descendants are distinct.
++    Use the complete in-memory coordinator events, not bounded schedule.jsonl.
++    """
++    issued_rows = [row['row'] for row in result['issued_proposals']]
++    rejected_rows = [row['row'] for row in result['rejected_proposals']]
++    issued, rejected = set(issued_rows), set(rejected_rows)
++    committed = {event['row'] for event in result['events']
++                 if event['event'] in ('final-record-held', 'final-record-terminal')}
++    accepted = issued & committed
++    base.require(len(issued) == len(issued_rows) and len(rejected) == len(rejected_rows)
++                 and rejected <= issued and not accepted & rejected,
++                 'MTP proposal accounting identity/disjointness')
++    discarded = issued - accepted - rejected
++    return dict(guesses=len(issued), hits=len(accepted), misses=len(rejected),
++                unverified_discarded=len(discarded),
++                accounting='issued=accepted+explicit_rejected+unverified_discarded')
+ 
+ 
+ def token_sha(tokens):
+@@ -304,11 +325,10 @@
+         base.save(result_path, result)
+         compact = {key: value for key, value in result.items()
+                    if key not in ('events', 'issued_proposals', 'rejected_proposals')}
+-        guesses = len(result.get('issued_proposals', []))
+-        misses = len(result.get('rejected_proposals', []))
++        mtp = mtp_accounting(result)
+         summary = dict(request=number, label=label, mode='live-mtp-depth3', streamed=on_token is not None,
+                        prompt_tokens=len(prompt), output_tokens=len(outputs), max_new=max_new,
+-                       mtp=dict(guesses=guesses, hits=max(0, guesses - misses), misses=misses),
++                       mtp=mtp,
+                        provider_pairs=result['provider_pairs'], reset_ms=reset_ms,
+                        continued_from=0, prefill_rows=self.prefill_rows, wall_s=time.monotonic() - started)
+         record = dict(schema='ownrt.pp4-lan-rolling-request-result.v1', passed=True,
+--- /dev/null
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/test_pp4_mtp_accounting.py
+@@ -0,0 +1,14 @@
++"""CPU-only accounting test using minimal structure retained from the real seam."""
++import json
++from pathlib import Path
++import unittest
++import pp4_backend as backend
++
++
++class MtpAccountingTests(unittest.TestCase):
++    def test_real_seam_committed_proposals_not_issued_minus_rejected(self):
++        fixture = Path(__file__).resolve().parents[3] / 'research/pp4-review-2026-10-28/seam-screen/mtp-structural-fixture.json'
++        result = backend.mtp_accounting(json.loads(fixture.read_text()))
++        self.assertEqual((result['guesses'], result['hits'], result['misses'],
++                          result['unverified_discarded']), (142, 81, 26, 35))
++        self.assertEqual(result['guesses'], result['hits'] + result['misses'] + result['unverified_discarded'])

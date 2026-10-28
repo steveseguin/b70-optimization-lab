@@ -9,6 +9,8 @@ std::string allocation_identity(){
 }
 void reset_owner_state(){
  require(e.a.pipeline_ring_persistent_requests&&reset_spec.has_value(),"ring reset owner callback admission");
+ require(prefill_replay.empty(),"ring reset retains unreplayed prefill chunk");
+ prefill_replay.clear();
  Candidate empty;const auto& d=*reset_spec;
  pipeline::request_reset(e,empty,provider,{},accepted_output_rows,std::pair<fs::path,std::string>{d.destination,d.oracle});
  // Existing backing allocations stay live; logical cache contents become cold.
@@ -34,6 +36,7 @@ Reply persistent_reset(const Request& request){
  require(!reset_spec&&!e.poisoned&&!e.progress_pending&&!e.progress_callback&&!e.preparing_commands&&!e.draft_timing&&!e.correction_exchange&&!e.head_export&&!e.head_publish&&!e.head_merge&&!e.prepare_async&&!e.dev(0).before_compute&&!e.dev(0).after_compute,"ring reset queued owner refusal");
  const auto metadata=original_output/("reset-"+std::to_string(request.sequence)+".json");
  const auto d=reset::load(metadata,original_output,context.epoch,e.a.pipeline_ring_request_sha256,context.stage,request.sequence,e.a.oracle.string());
+ require(prefill_replay.empty(),"ring reset retains unreplayed prefill chunk");
  ring.boundary();checkpoints.boundary();require(provider_at_capture.empty(),"ring reset retains capture provenance");
  if(provider){provider->recursive_idle();require(!provider->recursive_active&&!provider_sequence->poisoned()&&provider->recursive_healthy()&&provider->live_position()==std::max(0,ring.committed()-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring reset canonical provider frontier");peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
  attest(); // seal the old request once, before its state or output path changes

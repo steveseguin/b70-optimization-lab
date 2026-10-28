@@ -162,6 +162,128 @@ def provider_owner(spec,metadata,stage):
     return stage['id']==provider
 
 
+def prefill_provenance(path, stage, dump, metadata, identity, spec, att):
+    """Opt-in OP15/OP9 trace scope; original manifests retain exact old checks.
+
+    Controller hashes bind supplied hidden bytes. Native draft rows independently
+    bind every executed canonical token/position; sealed draft parity checks its
+    resulting state. Native rows do not themselves attest hidden-byte hashes.
+    """
+    evidence = spec.get('prefill_provenance')
+    if evidence is None:
+        require('prefill_trace' not in stage, 'prefill trace requires explicit provenance')
+        return 0, []
+    require(spec['schema'] == 'ownrt.pipeline-state-set.v7' and
+            spec['verification_policy'] == 'qualification' and
+            isinstance(evidence, dict) and set(evidence) == {
+                'schema','selected_plan','canonical_pairs','native_draft_rows',
+                'native_provider_batches','provider_attestation'} and
+            evidence['schema'] == 'ownrt.prefill-trace-provenance.v1',
+            'explicit qualification prefill provenance required')
+    receipts = []
+    def read(ref, expected=None):
+        require(isinstance(ref,dict) and set(ref)=={'path','sha256'} and
+                BUNDLE.hexhash(ref['sha256']), 'prefill evidence path/hash required')
+        file = path.parent/ref['path']
+        require(not file.is_symlink() and file.is_file() and file.stat().st_size <= 32*1024**2,
+                'prefill evidence regular bounded file required')
+        if expected is not None:
+            require(file.resolve()==expected.resolve(), 'prefill evidence native path differs')
+        raw, receipt = source(file)
+        require(receipt['sha256']==ref['sha256'], 'prefill evidence SHA differs')
+        receipts.append(receipt)
+        return raw
+    plan = json.loads(read(evidence['selected_plan']), object_pairs_hook=BUNDLE.pairs)
+    require(plan.get('check_policy')=='qualification' and plan.get('dump_each') is True and
+            plan.get('epoch')==spec['ring_epoch'] and
+            plan.get('request_sha256')==spec['ring_request_sha256'] and
+            plan.get('model_identity_sha256')==identity['model_sha256'] and
+            plan.get('draft_model_sha256')==spec['draft_input_identity']['draft_model_sha256'] and
+            plan.get('provider_stage',0)==0 and len(plan.get('stages',[]))==4 and
+            type(plan.get('prefill_rows')) is int and 1<=plan['prefill_rows']<=256 and
+            type(plan.get('prefill_pipeline')) is bool and
+            type(plan.get('vocab')) is int and plan['vocab']>0,
+            'prefill selected request plan identity/policy differs')
+    prompt = plan.get('prompt_tokens')
+    require(isinstance(prompt,list) and all(type(t)is int and 0<=t<plan['vocab'] for t in prompt) and
+            sha(b''.join(struct.pack('<I',t) for t in prompt))==identity['prompt_token_sha256'],
+            'prefill request prompt hash/vocabulary differs')
+    bulk = len(prompt)-2
+    require(bulk>=plan['prefill_rows'] and bulk>0, 'prefill replay must be actually enabled')
+    pair_doc = json.loads(read(evidence['canonical_pairs']), object_pairs_hook=BUNDLE.pairs)
+    pairs = pair_doc.get('pairs')
+    require(set(pair_doc)=={'pairs','sha256'} and isinstance(pairs,list) and
+            len(pairs)==identity['position']-1 and
+            [r.get('position') for r in pairs]==list(range(1,identity['position'])) and
+            all(set(r)=={'position','token','hidden_bytes','hidden_sha256'} and
+                type(r['token'])is int and 0<=r['token']<plan['vocab'] and
+                r['hidden_bytes']==metadata['stream_bytes'] and BUNDLE.hexhash(r['hidden_sha256']) for r in pairs),
+            'complete ordered canonical prefill pair inventory required')
+    require(sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())==pair_doc['sha256']
+            ==spec['draft_input_identity']['pair_sequence_sha256'], 'prefill canonical pair SHA differs')
+    provider_ref = evidence['provider_attestation']
+    provider_path = path.parent/provider_ref['path']
+    provider_att = json.loads(read(provider_ref), object_pairs_hook=BUNDLE.pairs)
+    require(provider_att['ring_request_sha256']==spec['ring_request_sha256'] and
+            provider_att['ring_epoch']==spec['ring_epoch'] and provider_att['stage_id']==0 and
+            provider_att['provider_commands']==provider_att['provider_serial']==len(pairs) and
+            provider_att['provider_trace_omitted']==0 and provider_att['provider_present'] is True,
+            'prefill provider attestation identity/counters differ')
+    require(provider_path.name==dump.name+'.ring-state.json', 'prefill provider dump marker differs')
+    native_dir = provider_path.parent
+    require(native_dir.parent.resolve()==(Path(plan['stages'][0]['native_output'])/'requests').resolve() and
+            dump.parent.parent.resolve()==(Path(plan['stages'][stage['id']]['native_output'])/'requests').resolve(),
+            'prefill selected plan native owner path differs')
+    rows = [json.loads(line,object_pairs_hook=BUNDLE.pairs)
+            for line in read(evidence['native_draft_rows'],native_dir/'draft-rows.jsonl').splitlines()]
+    require(len(rows)==len(pairs), 'native canonical draft trace completeness differs')
+    for index,(row,actual) in enumerate(zip(rows,pairs)):
+        require(set(row) <= {'draft_position','confirmed_token','guess','head','wall_ms','nonblocking'} and
+                {'draft_position','confirmed_token','guess','head','wall_ms'}<=set(row) and
+                type(row['draft_position'])is int and type(row['confirmed_token'])is int and
+                row['draft_position']==index and row['confirmed_token']==actual['token'] and
+                type(row['head'])is bool and type(row['guess'])is int and
+                type(row['wall_ms'])in (int,float) and math.isfinite(row['wall_ms']) and row['wall_ms']>=0,
+                'native canonical draft token/position trace differs')
+        if index<bulk:
+            require(row['head'] is False and row['guess']==-1 and row['confirmed_token']==prompt[index+1],
+                    'native OP9 prefill prefix differs')
+    batches = [json.loads(line,object_pairs_hook=BUNDLE.pairs) for line in
+               read(evidence['native_provider_batches'],native_dir/'ring-draft-batches.jsonl').splitlines()]
+    require(len(batches)==provider_att['provider_trace_records']==len(pairs)-bulk,
+            'native provider batch/prefill trace partition differs')
+    previous = 0
+    for index,row in enumerate(batches,bulk):
+        actual=pairs[index]
+        require(row['provider_serial']==row['seed_position']==actual['position'] and
+                row['confirmed_token']==actual['token'] and row['hidden_sha256']==actual['hidden_sha256'] and
+                type(row['sequence'])is int and row['sequence']>previous,
+                'native provider batch actual pair/sequence differs')
+        require(row['restored_position']==actual['position'] and
+                type(row['snapshot_bytes'])is int and row['snapshot_bytes']>=0 and
+                row['mutable_bytes_verified'] is (row['snapshot_bytes']>0),
+                'native provider batch restore verification differs')
+        previous=row['sequence']
+    captured=sum(row['snapshot_bytes']>0 for row in batches)
+    require(captured==provider_att['provider_snapshot_captures']==provider_att['provider_snapshot_restores']
+            ==provider_att['provider_byteverified_restore_count'],
+            'native provider batch snapshot conservation differs')
+    trace = [json.loads(line,object_pairs_hook=BUNDLE.pairs) for line in
+             read(stage.get('prefill_trace'),dump.parent/'ring.jsonl').splitlines()]
+    require(att['trace_omitted']==0 and len(trace)==att['trace_records'] and
+            all(r.get('op') in (24,25,26) and type(r.get('position'))is int and
+                r['position']>=bulk for r in trace), 'prefill target trace scope differs')
+    for op,count in ((24,att['rows']-bulk),(25,att['commits']-bulk),(26,att['abort_count'])):
+        require(sum(r['op']==op for r in trace)==count, 'prefill target native trace operation count differs')
+    require(all(type(r.get('sequence'))is int and r['sequence']>0 for r in trace) and
+            all(a['sequence']<b['sequence'] for a,b in zip(trace,trace[1:])),
+            'prefill target native trace sequence differs')
+    if stage['id']==0:
+        require(provider_att==att and provider_path.resolve()==dump.with_name(dump.name+'.ring-state.json').resolve(),
+                'prefill provider attestation must be exact current dump sibling')
+    return bulk, receipts
+
+
 def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes, lengths, spec):
     declared = path.parent / stage['quiescence']
     require(not declared.is_symlink(), 'ring attestation symlink refused')
@@ -203,7 +325,8 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
             and att['accepted_tentative_rows'] <= att['commits'], 'ring capture/release/row conservation differs')
     require((att['abort_count'] == att['discarded_rows'] == 0) or
             (0 < att['abort_count'] <= att['discarded_rows'] <= depth*att['abort_count']), 'ring suffix abort/discard accounting differs')
-    require(att['trace_records'] + att['trace_omitted'] == att['rows'] + att['commits'] + att['abort_count']
+    prefill, prefill_sources = prefill_provenance(path,stage,dump,metadata,identity,spec,att)
+    require(att['trace_records'] + att['trace_omitted'] + 2*prefill == att['rows'] + att['commits'] + att['abort_count']
             and (att['max_pending'] == 0 if att['rows'] == 0 else 1 <= att['max_pending'] <= (1 if metadata['final'] else depth)),
             'ring trace/maximum pending accounting differs')
     require(type(att['restore_verification_enabled']) is bool and type(att['all_aborts_byte_verified']) is bool
@@ -282,7 +405,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
         else:
             from compare_provider_survival import validate_survival
         provider_sources += validate_survival(path,stage,dump,spec,layout,metadata,att)
-    return att, receipt, layout_source, provider_sources
+    return att, receipt, layout_source, provider_sources + prefill_sources
 
 
 def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout, *, pending=False):
@@ -311,7 +434,8 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
             and att['provider_all_restores_byte_verified'] is ((att['provider_restore_verification_enabled'] or not persistent)
                                                               and verified == restores),
             'provider capture/restore verification accounting differs')
-    require(att['provider_trace_records'] + att['provider_trace_omitted'] == att['provider_commands'],
+    prefill = prefill_provenance(path,stage,dump,metadata,identity,spec,att)[0] if provider_owner(spec,metadata,stage) else 0
+    require(att['provider_trace_records'] + att['provider_trace_omitted'] + prefill == att['provider_commands'],
             'provider trace command accounting differs')
     canonical, private = layout['independent_draft_allocations'], layout['provider_private_allocations']
     if not provider_owner(spec,metadata,stage):

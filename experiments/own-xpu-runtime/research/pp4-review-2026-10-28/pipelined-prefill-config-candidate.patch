@@ -1,0 +1,79 @@
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_backend.py
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_backend.py
+@@ -53,6 +53,8 @@
+                  'depth-three capture-ready rolling service required')
+     base.require(int(os.environ.get('SC117_CONTEXT', '4096')) == CONTEXT,
+                  'SC117_CONTEXT=262144 required for the PP4 endpoint')
++    prefill_pipeline = config.get('prefill_pipeline', False)
++    base.require(type(prefill_pipeline) is bool, 'PP4 prefill_pipeline must be boolean')
+     plan = rolling_driver.make_plan(config_path)
+     base.require(len(plan['stages']) == 4 and plan.get('speculative_depth') == 3 and
+                  plan.get('capture_ready_overlap') is True and plan.get('use_proposals') is True,
+@@ -66,6 +68,7 @@
+     plan.update(schema='ownrt.pp4-lan-service-plan.v1', pp4_http_service=True,
+                 service_mode='cold-serial-http-depth3', cold_reset_every_request=True,
+                 request_source='caller', continuation=False, sessions=False, prefill_rows=PREFILL_ROWS,
++                prefill_pipeline=prefill_pipeline,
+                 full_trace_required=plan['check_policy'] == 'qualification',
+                 trace_retention='full' if plan['check_policy'] == 'qualification' else 'bounded-prefix-with-omission-counters',
+                 limits='Caller prompts only; one cold depth-three request at a time; max_new is bounded by this plan.')
+--- a/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/test_pp4_backend.py
++++ b/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/test_pp4_backend.py
+@@ -156,24 +156,40 @@
+ 
+ 
+ class PlanTests(unittest.TestCase):
++    def config(self):
++        return dict(pp4_http_service=True,bdfs=list(backend.BDFS),
++            boundaries=backend.BOUNDARIES,context=backend.CONTEXT,vocab=backend.VOCAB,
++            eos_token_ids=backend.EOS,speculative_depth=3,capture_ready_overlap=True)
++
+     def test_pp4_enables_per_stage_native_prefill_maps(self):
+-        with tempfile.TemporaryDirectory() as tmp:
+-            config=Path(tmp)/'config.json'
+-            config.write_text(json.dumps(dict(pp4_http_service=True,bdfs=list(backend.BDFS),
+-                boundaries=backend.BOUNDARIES,context=backend.CONTEXT,vocab=backend.VOCAB,
+-                eos_token_ids=backend.EOS,speculative_depth=3,capture_ready_overlap=True)))
+-            plan=dict(stages=[dict(id=i,argv=[]) for i in range(4)],output=str(Path(tmp)/'run'),
+-                speculative_depth=3,capture_ready_overlap=True,use_proposals=True,pins={},
+-                check_policy='measured',coordinator_trace_limit=10000)
+-            with mock.patch.dict(os.environ,{'SC117_CONTEXT':str(backend.CONTEXT)}), \
+-                 mock.patch.object(backend.rolling_driver,'make_plan',return_value=plan):
+-                result=backend.make_plan(config)
+-            self.assertEqual(result['prefill_rows'],256)
+-            self.assertEqual(result['prefill_stream_bytes'],backend.base.PREFILL_STREAM_BYTES)
+-            for stage in result['stages']:
+-                self.assertEqual(backend.base.option(stage['argv'],'--prefill-rows'),'256')
+-                self.assertEqual(backend.base.option(stage['argv'],'--prefill-shared'),
+-                    str(Path(result['output'])/f"stage{stage['id']}"/'prefill.bin'))
++        for option in ({}, {'prefill_pipeline': False}, {'prefill_pipeline': True}):
++            with self.subTest(option=option), tempfile.TemporaryDirectory() as tmp:
++                config=Path(tmp)/'config.json'
++                config.write_text(json.dumps(dict(self.config(), **option)))
++                plan=dict(stages=[dict(id=i,argv=[]) for i in range(4)],output=str(Path(tmp)/'run'),
++                    speculative_depth=3,capture_ready_overlap=True,use_proposals=True,pins={},
++                    check_policy='measured',coordinator_trace_limit=10000)
++                with mock.patch.dict(os.environ,{'SC117_CONTEXT':str(backend.CONTEXT)}), \
++                     mock.patch.object(backend.rolling_driver,'make_plan',return_value=plan):
++                    result=backend.make_plan(config)
++                self.assertIs(result['prefill_pipeline'], option.get('prefill_pipeline', False))
++                self.assertEqual(result['prefill_rows'],256)
++                self.assertEqual(result['prefill_stream_bytes'],backend.base.PREFILL_STREAM_BYTES)
++                for stage in result['stages']:
++                    self.assertEqual(backend.base.option(stage['argv'],'--prefill-rows'),'256')
++                    self.assertEqual(backend.base.option(stage['argv'],'--prefill-shared'),
++                        str(Path(result['output'])/f"stage{stage['id']}"/'prefill.bin'))
++
++    def test_pp4_rejects_nonboolean_pipeline_before_native_planning(self):
++        for value in (None, 0, 1, 'false', [], {}):
++            with self.subTest(value=value), tempfile.TemporaryDirectory() as tmp:
++                config=Path(tmp)/'config.json'
++                config.write_text(json.dumps(dict(self.config(), prefill_pipeline=value)))
++                with mock.patch.dict(os.environ,{'SC117_CONTEXT':str(backend.CONTEXT)}), \
++                     mock.patch.object(backend.rolling_driver,'make_plan') as planner:
++                    with self.assertRaisesRegex(ValueError, 'prefill_pipeline must be boolean'):
++                        backend.make_plan(config)
++                    planner.assert_not_called()
+ 
+ if __name__ == '__main__':
+     unittest.main()
