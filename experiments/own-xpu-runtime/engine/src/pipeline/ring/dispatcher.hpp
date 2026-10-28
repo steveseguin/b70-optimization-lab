@@ -30,7 +30,7 @@ class Dispatcher {
   return {meta.epoch,meta.id,meta.parent,r.sequence,meta.position,meta.token,meta.fixture,false,meta.request,meta.before,meta.after};
  }
  void final_hidden(const ownrt::ring_next::Row& row,int commit_sequence,int next_token,Reply& reply){
-  if(!e.a.pipeline_live_draft)return;
+  if(!e.a.pipeline_live_draft&&!e.a.pipeline_external_provider)return;
   require(e.a.pipeline_final()&&reverse_ready(shared).position_plus_one==uint32_t(row.position+1),"ring final raw hidden ownership");
   ownrt::live_draft::Handoff h;h.bytes=int32_t(e.stream_bytes());h.position=row.position;h.final_stage=e.a.pipeline_stage;h.stages=int32_t(e.a.pipeline_boundaries.size()-1);
   h.row_ticket=row.ticket;h.commit_sequence=commit_sequence;h.input_token=row.token;h.head=row.fixture>0;h.next_token=h.head?next_token:-1;
@@ -77,7 +77,7 @@ public:
   Reply reply{};reply.sequence=r.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=context.stage==context.stages-1;
   if(r.op==wire::row_op){
    const auto bytes=e.a.pipeline_first()?std::span<uint8_t>{}:area(slot_bytes,context.stream_bytes);std::vector<uint8_t> owned(bytes.begin(),bytes.end());
-   const auto row=wire::row(meta,command,context,owned);require(!e.a.pipeline_ring_live_draft||e.a.pipeline_ring_pending_provider||!row.tentative,"quiescent ring-live refuses tentative target rows");if(e.a.pipeline_ring_live_draft&&e.a.pipeline_final())ownrt::recursive_provider::invalidate(shared);backend.stage_input(std::move(owned));const ProviderCapture captured{provider?provider->live_position():0,provider_sequence?provider_sequence->serial():0};const auto& completed=ring.execute(row);
+   const auto row=wire::row(meta,command,context,owned);require(!e.a.pipeline_ring_live_draft||e.a.pipeline_ring_pending_provider||!row.tentative,"quiescent ring-live refuses tentative target rows");if((e.a.pipeline_ring_live_draft||e.a.pipeline_external_provider)&&e.a.pipeline_final())ownrt::recursive_provider::invalidate(shared);backend.stage_input(std::move(owned));const ProviderCapture captured{provider?provider->live_position():0,provider_sequence?provider_sequence->serial():0};const auto& completed=ring.execute(row);
    if(provider&&e.a.pipeline_ring_pending_provider&&row.tentative)require(provider_at_capture.emplace(row.id,captured).second,"duplicate target snapshot provider identity");
    reply.token=completed.token;reply.bytes=int32_t(completed.stream.size());
    require(completed.stream.empty()||completed.stream.size()==size_t(context.stream_bytes),"ring complete native stream result");
@@ -92,14 +92,14 @@ public:
    if(survival){auto after=provider->verify_survival(*survival,*provider_sequence);write_survival(r,row,resolved,*survival,after,survival_pending);}
    if(provider&&e.a.pipeline_ring_pending_provider){if(r.op==wire::accept_op)provider_at_capture.erase(row.id);else for(auto id:resolved.discarded)provider_at_capture.erase(id);}
    discarded=resolved.discarded;if(r.op==wire::accept_op&&row.fixture>0)++accepted_output_rows;
-   if(r.op==wire::accept_op&&e.a.pipeline_first()&&e.a.pipeline_provider_stage){
+   if(r.op==wire::accept_op&&e.a.pipeline_first()&&(e.a.pipeline_provider_stage||e.a.pipeline_external_provider)){
     ownrt::recursive_provider::SeedRecord accepted;accepted.published_sequence=r.sequence;accepted.physical=ring.physical();accepted.committed=ring.committed();accepted.row=meta;accepted.row.publication_ticket=row.ticket;
     require(ownrt::recursive_provider::seed_row(accepted,context)==row,"stage0 accepted seed publication identity");ownrt::recursive_provider::publish_seed(shared,accepted);
    }
    const auto acknowledgment=wire::acknowledgment(context,r.sequence,row,resolved,checkpoints.byte_checks()>prior_checks);
    wire::write(area(wire::ack_offset,sizeof acknowledgment),acknowledgment);
    if(r.op==wire::accept_op&&e.a.pipeline_final()){
-    if(e.a.pipeline_ring_live_draft){Reply ignored{};final_hidden(row,r.sequence,next_token,ignored);ownrt::recursive_provider::FinalRecord record;record.stage=context.stage;record.published_sequence=r.sequence;record.row=meta;record.row.publication_ticket=row.ticket;std::memcpy(&record.hidden,area(ownrt::live_draft::header_offset,sizeof(record.hidden)).data(),sizeof(record.hidden));ownrt::recursive_provider::validate_final_record(record,context,area(ownrt::live_draft::hidden_offset,context.stream_bytes));ownrt::recursive_provider::publish(shared,record);}
+    if(e.a.pipeline_ring_live_draft||e.a.pipeline_external_provider){Reply ignored{};final_hidden(row,r.sequence,next_token,ignored);ownrt::recursive_provider::FinalRecord record;record.stage=context.stage;record.published_sequence=r.sequence;record.row=meta;record.row.publication_ticket=row.ticket;std::memcpy(&record.hidden,area(ownrt::live_draft::header_offset,sizeof(record.hidden)).data(),sizeof(record.hidden));ownrt::recursive_provider::validate_final_record(record,context,area(ownrt::live_draft::hidden_offset,context.stream_bytes));ownrt::recursive_provider::publish(shared,record);}
     else final_hidden(row,r.sequence,next_token,reply);
    }
   }

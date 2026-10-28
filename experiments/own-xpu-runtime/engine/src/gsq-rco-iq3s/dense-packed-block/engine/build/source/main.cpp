@@ -156,9 +156,15 @@ struct Options {
   // --tp-replicate (2026-10-25, TP development): one rank process on two cards of one shared context, every launch
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
+  // Explicit draft-only process, distinct from every target pipeline stage.
+  bool provider_only=false;
+  std::string provider_bdf;std::vector<std::string> provider_target_bdfs;
+  fs::path provider_seed_shared,provider_final_shared,provider_replay;
+  std::string provider_replay_sha256;
   // Opt-in target-only contiguous pipeline. Legacy rank remains an internal first/other role.
   std::vector<int> pipeline_boundaries;int pipeline_stage=-1,pipeline_provider_stage=0,pipeline_ring_depth=2;
   bool pipeline_wavefront=false,pipeline_wavefront_verify=false,pipeline_live_draft=false,pipeline_draft_partition=false,pipeline_persistent_requests=false;int pipeline_wavefront_trace_limit=4096;
+  bool pipeline_external_provider=false; // Target owns no draft; dedicated process consumes published journals.
   bool pipeline_ring_pending_provider=false,pipeline_ring_verify_provider_survival=false;
   bool pipeline_ring_parent_capture_ack=false;
   bool pipeline_ring_recursive_flat_copy=false;
@@ -167,7 +173,7 @@ struct Options {
   bool pipeline_ring=false,pipeline_ring_verify=false;std::string pipeline_ring_request_sha256;int pipeline_ring_trace_limit=4096;
   bool pipeline_enabled()const{return pipeline_stage>=0;}
   bool pipeline_first()const{return pipeline_enabled()?pipeline_stage==0:rank==0;}
-  bool pipeline_provider()const{return pipeline_enabled()?pipeline_stage==pipeline_provider_stage:rank==0;}
+  bool pipeline_provider()const{return provider_only||(pipeline_enabled()?pipeline_stage==pipeline_provider_stage:rank==0);}
   bool pipeline_final()const{return pipeline_enabled()?size_t(pipeline_stage+2)==pipeline_boundaries.size():rank==1;}
   bool gsq_packed=false,attention_q8_p33=false,qkv_q6_p33=false,expert_iq3xxs_block=false,dense_q6_p33=false,dense_packed_block=false;
   // Evidence/notification only. Defaults preserve the executed engine behavior.
@@ -217,9 +223,22 @@ static Options parse(int argc, char **argv) {
     else if(k=="--attention-q8-p33") a.attention_q8_p33=true;
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
+    else if(k=="--provider-only")a.provider_only=true;
+    else if(k=="--provider-bdf")a.provider_bdf=value();
+    else if(k=="--provider-target-bdfs"){
+      require(a.provider_target_bdfs.empty(),"duplicate provider target topology");
+      auto text=value();require(!text.empty()&&text.back()!=',',"provider target BDF list");
+      std::istringstream input(text);std::string bdf;
+      while(std::getline(input,bdf,',')){require(!bdf.empty(),"empty provider target BDF");a.provider_target_bdfs.push_back(bdf);}
+    }
+    else if(k=="--provider-seed-shared")a.provider_seed_shared=value();
+    else if(k=="--provider-final-shared")a.provider_final_shared=value();
+    else if(k=="--provider-replay")a.provider_replay=value();
+    else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
     else if(k=="--pipeline-ring-check-policy")a.pipeline_ring_check_policy=value();
     else if(k=="--pipeline-ring-pending-provider")a.pipeline_ring_pending_provider=true;
+    else if(k=="--pipeline-external-provider")a.pipeline_external_provider=true;
     else if(k=="--pipeline-ring-parent-capture-ack")a.pipeline_ring_parent_capture_ack=true;
     else if(k=="--pipeline-ring-recursive-flat-copy")a.pipeline_ring_recursive_flat_copy=true;
     else if(k=="--pipeline-ring-verify-provider-survival")a.pipeline_ring_verify_provider_survival=true;
@@ -328,6 +347,11 @@ static Options parse(int argc, char **argv) {
     else
       throw std::runtime_error("unknown option " + k);
   }
+  if(a.provider_only){
+    require(!a.pipeline_enabled()&&a.pipeline_boundaries.empty()&&!a.pipeline_ring&&!a.pipeline_wavefront&&!a.pipeline_persistent_requests&&!a.pipeline_external_provider,
+            "provider-only cannot impersonate a target stage");
+    a.pipeline_live_draft=a.pipeline_draft_partition=a.pipeline_ring_live_draft=a.pipeline_ring_persistent_requests=true;
+  }
   if(a.pipeline_ring_live_draft){a.pipeline_live_draft=true;a.pipeline_draft_partition=true;}
   if (a.canary && !seconds_supplied) a.seconds = 600;
   require(a.cancel_launch>=-1,"cancel launch bound");
@@ -341,7 +365,7 @@ static Options parse(int argc, char **argv) {
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
-  require(a.tokens > 0 && a.tokens <= (a.pipeline_enabled() ? 512 : 128) && a.context >= 8 &&
+  require(a.tokens > 0 && a.tokens <= ((a.pipeline_enabled()||a.provider_only) ? 512 : 128) && a.context >= 8 &&
               a.context <= 262144 && a.seconds > 0 && a.seconds <= 172800,
           "bounded generation/context/deadline");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
@@ -358,8 +382,33 @@ static Options parse(int argc, char **argv) {
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
+  if(a.provider_only){
+    require(a.rank==0&&a.cards==1&&a.gsq_packed&&a.f32_activations&&a.memory=="resident"&&a.mtp&&a.draft_rank==0&&
+       !a.mini&&!a.legacy&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1&&
+       a.draft_fault=="none"&&a.pipeline_provider_stage==0,"provider-only supported runtime identity");
+    require(a.channel>=0&&a.stop_fd>=0&&!a.shared.empty(),"provider-only IPC arguments");
+    require(a.provider_target_bdfs.size()>=2&&a.provider_target_bdfs.size()<=6&&!a.provider_bdf.empty(),"provider-only device topology");
+    std::set<std::string> bdfs{a.provider_bdf};
+    for(const auto& bdf:a.provider_target_bdfs)require(bdfs.insert(bdf).second,"provider-only device overlap");
+    require(a.pipeline_ring_depth==2||a.pipeline_ring_depth==3,"provider-only recursive depth");
+    require(a.pipeline_ring_request_sha256.size()==64&&std::all_of(a.pipeline_ring_request_sha256.begin(),a.pipeline_ring_request_sha256.end(),
+       [](char c){return(c>='0'&&c<='9')||(c>='a'&&c<='f');}),"provider-only request SHA256");
+    require(a.pipeline_ring_final_shared.empty()&&a.pipeline_ring_seed_shared.empty(),"provider-only uses explicit peer paths");
+    require(!a.pipeline_ring_verify&&!a.pipeline_ring_pending_provider&&!a.pipeline_ring_verify_provider_survival&&
+       !a.pipeline_ring_parent_capture_ack,"provider-only has no target borrow flags");
+    require(a.pipeline_ring_check_policy=="qualification"||a.pipeline_ring_check_policy=="measured","provider-only fixed check policy");
+    require(a.pipeline_ring_recursive_verify==(a.pipeline_ring_check_policy=="qualification"),"provider-only restore check policy");
+    const bool replay=!a.provider_replay.empty();
+    require(replay?(a.provider_replay.is_absolute()&&a.provider_replay_sha256.size()==64&&a.provider_seed_shared.empty()&&a.provider_final_shared.empty()):
+       (a.provider_replay_sha256.empty()&&a.provider_seed_shared.is_absolute()&&a.provider_final_shared.is_absolute()&&a.provider_seed_shared!=a.provider_final_shared),
+       "provider-only requires exclusive authenticated replay or live peers");
+    require(!a.context||a.context>=32,"provider-only context bound");
+  }else{
+    require(a.provider_bdf.empty()&&a.provider_target_bdfs.empty()&&a.provider_seed_shared.empty()&&a.provider_final_shared.empty()&&
+      a.provider_replay.empty()&&a.provider_replay_sha256.empty(),"provider-only options require explicit role");
   require(a.pipeline_ring_depth==2||a.pipeline_ring_depth==3,"ring depth must be2 or3");
-  require(a.pipeline_ring_depth==2||(a.pipeline_ring_live_draft&&a.pipeline_ring_persistent_requests),"depth3 requires persistent ring-live mode");
+  require(a.pipeline_ring_depth==2||((a.pipeline_ring_live_draft||a.pipeline_external_provider)&&a.pipeline_ring_persistent_requests),"depth3 requires persistent ring provider mode");
+  require(!a.pipeline_external_provider||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&!a.pipeline_ring_live_draft&&!a.pipeline_live_draft&&!a.pipeline_draft_partition&&!a.pipeline_ring_pending_provider&&!a.mtp&&a.pipeline_provider_stage==0),"external provider target role");
   require(a.pipeline_provider_stage>=0,"provider stage must be nonnegative");
   require(!a.pipeline_provider_stage||(a.pipeline_enabled()&&a.pipeline_ring_live_draft&&a.pipeline_ring_persistent_requests),"remote provider requires persistent ring-live mode");
   require(!a.pipeline_live_draft||(size_t(a.pipeline_provider_stage)+2)<a.pipeline_boundaries.size(),"provider must be a nonfinal pipeline stage");
@@ -371,11 +420,11 @@ static Options parse(int argc, char **argv) {
   require(a.pipeline_ring_check_policy.empty()||a.pipeline_ring_persistent_requests,"ring check policy requires explicit persistent mode");
   if(a.pipeline_ring_persistent_requests){
    require(a.context>=32,"persistent ring requires context at least32");
-   require(a.pipeline_ring_pending_provider&&!a.pipeline_persistent_requests,"persistent ring requires exclusive pending-provider mode");
+   require((a.pipeline_ring_pending_provider||a.pipeline_external_provider)&&!a.pipeline_persistent_requests,"persistent ring requires explicit provider ownership mode");
    if(a.pipeline_ring_check_policy.empty())a.pipeline_ring_check_policy="qualification";
    require(a.pipeline_ring_check_policy=="qualification"||a.pipeline_ring_check_policy=="measured","ring fixed check policy");
    const bool full=a.pipeline_ring_check_policy=="qualification";
-   require(a.pipeline_ring_verify==full&&a.pipeline_ring_recursive_verify==(full&&a.pipeline_provider())&&a.pipeline_ring_verify_provider_survival==(full&&a.pipeline_provider()),"ring diagnostic flags must match fixed process policy");
+   require(a.pipeline_ring_verify==full&&a.pipeline_ring_recursive_verify==(full&&a.pipeline_ring_live_draft&&a.pipeline_provider())&&a.pipeline_ring_verify_provider_survival==(full&&a.pipeline_ring_live_draft&&a.pipeline_provider()),"ring diagnostic flags must match fixed process policy");
    require(a.pipeline_ring_trace_limit>0,"persistent ring retains bounded trace");
   }else{
    require(a.pipeline_ring_verify_provider_survival==(a.pipeline_ring_pending_provider&&a.pipeline_provider()),"pending-provider provider stage requires explicit survival verification");
@@ -416,6 +465,7 @@ static Options parse(int argc, char **argv) {
     require(!std::getenv("OWNRT_DRAFT_DEPTH_PROBE")&&!std::getenv("OWNRT_DRAFT_DEPTH_VERIFY"),"live draft refuses diagnostic recursive probe environment");
    }
   }
+  } // provider-only versus target process admission
 #ifdef OWN_RT_HOST_ONLY
   require(!a.authorized, "host binary cannot authorize device execution");
   // CPU full-model execution is an explicit packet18 gate.
@@ -2177,6 +2227,7 @@ static void record_host_memory(const fs::path& output,const char* phase) {
 #include "stage2/packet194-expert-diet-engine/p105_runtime.hpp"
 #include "gsq-rco-iq3s/state-bundle/bundle.hpp"
 #include "gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp"
+#include "pipeline/provider_only/bootstrap.inc"
 
 // SPEED6_SCRATCH_POLICY_BEGIN
 // Scope the footprint reduction to the previously refused split23/dr1 arm.
@@ -2184,6 +2235,11 @@ static void record_host_memory(const fs::path& output,const char* phase) {
 // Unknown writers fail closed, rather than silently using an understated ledger.
 static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  constexpr size_t legacy=256ull*1024*1024, bounded=8ull*1024*1024;
+ if(a.provider_only){
+  require(p.launches.empty()&&p.g.context==a.context,"provider-only shell cannot own target launches");
+  for(const auto& b:p.buffers)require(b.name=="error"||b.name=="active"||b.name=="position"||b.name=="token","provider-only shell control inventory");
+  return bounded; // Shared operator support only; DraftRuntime owns its own scratch.
+ }
  // GSQ resident ranks use the same plan-derived bound (the writer union below must fit 8 MiB); binding-time extent
  // guards in every scratch-using kernel stay on, so a short scratch refuses instead of writing out of bounds.
  const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536||a.context==262144)&&a.memory=="resident";
@@ -2257,6 +2313,7 @@ int main(int argc, char **argv) {
     std::signal(SIGINT, stop);
     require(!a.canary,"use W0p two-rank concurrency canary");
     if(!a.draft_capture.empty())return run_draft_capture(a);
+    if(a.provider_only)return run_provider_only(a);
     if(a.rank>=0)return run_rank(a);
     w = std::make_unique<Weights>(a);
     auto p = plan(*w, a);

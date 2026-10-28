@@ -198,7 +198,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
   if(ready?ready->layer_end:ends(l.label,".ffn.combine")) {
    int layer=ready?ready->layer:std::stoi(l.label.substr(4));
-   if((!e.a.pipeline_enabled()&&e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47))||(e.a.pipeline_live_draft&&e.a.pipeline_final()&&layer==e.a.pipeline_boundaries.back()-1)){
+   if((!e.a.pipeline_enabled()&&e.a.rank==1&&e.a.draft_rank==0&&layer==(e.a.mini?3:47))||((e.a.pipeline_live_draft||e.a.pipeline_external_provider)&&e.a.pipeline_final()&&layer==e.a.pipeline_boundaries.back()-1)){
     auto bytes=e.readback(0,e.buffers[0].at("streams").id,e.stream_bytes());
     std::memcpy(shared+reverse_offset,bytes.data(),bytes.size());
     __atomic_store_n(&reverse_ready(shared).position_plus_one,uint32_t(request.position+1),__ATOMIC_RELEASE);
