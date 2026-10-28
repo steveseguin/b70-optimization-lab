@@ -1,0 +1,62 @@
+{
+  "schema": "ownrt.prefill-width-source-screen.v1",
+  "tested": false,
+  "native_admission": false,
+  "source_binary_prefix": "962046",
+  "cap_bytes": 32212254720,
+  "basis_root": "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1",
+  "baseline_rows": 256,
+  "target_device_bytes": [
+    23930431836,
+    23790980912,
+    23854264320
+  ],
+  "provider_device_bytes": 3746249732,
+  "prefill_device_bytes": [
+    288677952,
+    68366400,
+    68366400
+  ],
+  "fixed_prefill_bytes_per_target": 64,
+  "projection_assumptions": [
+    "same topology and context; all prefill allocations except64B count scale linearly",
+    "no new kernel workspace; unchanged checkpoint scratch exclusion",
+    "provider device unchanged is source inference, not actual native allocation admission"
+  ],
+  "projections": [
+    {
+      "rows": 512,
+      "target_device_bytes": [
+        24219109724,
+        23859347248,
+        23922630656
+      ],
+      "margins_to_cap_bytes": [
+        7993144996,
+        8352907472,
+        8289624064
+      ],
+      "proposed_header_bytes": 16384,
+      "host_shared_map_bytes_each": 167788544,
+      "host_shared_map_bytes_three": 503365632,
+      "provider_owned_raw_host_bytes": 20971520
+    },
+    {
+      "rows": 1024,
+      "target_device_bytes": [
+        24796465500,
+        23996079920,
+        24059363328
+      ],
+      "margins_to_cap_bytes": [
+        7415789220,
+        8216174800,
+        8152891392
+      ],
+      "proposed_header_bytes": 32768,
+      "host_shared_map_bytes_each": 335577088,
+      "host_shared_map_bytes_three": 1006731264,
+      "provider_owned_raw_host_bytes": 41943040
+    }
+  ]
+}

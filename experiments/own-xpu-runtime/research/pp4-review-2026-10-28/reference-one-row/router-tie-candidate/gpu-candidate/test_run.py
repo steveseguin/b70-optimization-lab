@@ -1,9 +1,25 @@
+from unittest.mock import patch
 import hashlib,importlib.util,json,subprocess,tarfile,tempfile,unittest
 from pathlib import Path
 from types import SimpleNamespace
 spec=importlib.util.spec_from_file_location('gpu_route_candidate',Path(__file__).with_name('run.py'));M=importlib.util.module_from_spec(spec);spec.loader.exec_module(M)
 sha=lambda p:hashlib.sha256(p.read_bytes()).hexdigest()
 class Tests(unittest.TestCase):
+ def test_phase_b_strict_default_and_explicit_false(self):
+  self.assertTrue(M.phase_b_enabled({}));self.assertFalse(M.phase_b_enabled({'phase_b_generation':False}))
+  for value in (0,1,None,'false'):
+   with self.assertRaises(Exception):M.phase_b_enabled({'phase_b_generation':value})
+ def test_phase_a_only_does_not_call_suite_but_requires_actual_archive_proof(self):
+  with tempfile.TemporaryDirectory()as tmp:
+   out=Path(tmp);native=out/'native';native.mkdir();archive=out/'archive';archive.write_bytes(b'a')
+   ref=out/'ref';ref.mkdir();(ref/'archive.json').write_text(json.dumps({'archive':str(archive)}));(ref/'output-result.json.gz').write_bytes(M.gzip.compress(json.dumps({'records':[]}).encode()))
+   transport=SimpleNamespace(out=native,check=lambda:None)
+   plan={'output':str(out),'phase_b_generation':False,'evidence_floor_bytes':0,'evidence_forecast_bytes':0,'reference_archive_stat':list(M.H.reader.identity(archive.stat()))}
+   with patch.object(M,'REFERENCE',ref),patch.object(M.H,'install_sequence_audit'),patch.object(M.H,'cold',return_value={}),patch.object(M.H,'cases',return_value=[]),patch.object(M,'suite',side_effect=AssertionError('fresh generation forbidden')),patch.object(M,'compare_archive',return_value={'passed':True})as compare:
+    result=M.request(None,transport,plan,0);self.assertTrue(result['phase_B_skipped']);self.assertEqual(result['phase_B_records'],[]);compare.assert_called_once()
+   (out/'cold-initial.json').unlink();(out/'phase-a-diagnostic-parity.json').unlink()
+   with patch.object(M,'REFERENCE',ref),patch.object(M.H,'install_sequence_audit'),patch.object(M.H,'cold',return_value={}),patch.object(M.H,'cases',return_value=[]),patch.object(M,'compare_archive',side_effect=ValueError('bad actual state')):
+    with self.assertRaisesRegex(ValueError,'bad actual state'):M.request(None,transport,plan,0)
  def test_frozen_complete_inputs(self):self.assertEqual(len(M.suite()),12);self.assertEqual(len(M.H.cases()),7)
  def test_no_registration_no_planning(self):
   with self.assertRaises((KeyError,FileNotFoundError)):M.registration({})

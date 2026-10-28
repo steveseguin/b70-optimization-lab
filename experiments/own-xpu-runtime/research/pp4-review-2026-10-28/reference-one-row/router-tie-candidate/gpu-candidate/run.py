@@ -33,9 +33,14 @@ def registration(config):
  BASE.require(actual.get('source_sha256')==sources and actual.get('mode_counts',{}).get('off',0)>0 and actual.get('mode_counts',{}).get('on',0)>0,'actual gate binds exact sources and both modes')
  return path,reg,gate
 
+def phase_b_enabled(config):
+ value=config.get("phase_b_generation",True)
+ BASE.require(type(value)is bool,"phase_b_generation strict boolean")
+ return value
+
 def make_plan(config):
  config=Path(config).resolve();cfg=json.loads(config.read_text());regpath,reg,gate=registration(cfg)
- registered=H.cases();tasks=suite()
+ registered=H.cases();enabled=phase_b_enabled(cfg);tasks=suite()if enabled else []
  BASE.require(cfg['boundaries']==[0,23,48]and cfg['context']==4096 and cfg['max_new']==512 and cfg['prompt_tokens']==registered[0]['prompt'],'fixed target-only candidate request envelope')
  BASE.require(cfg.get('live_draft')is False and cfg.get('use_proposals')is False,'no draft or speculative proposals')
  p=C.base.make_plan(config);out=Path(p['output'])
@@ -51,7 +56,7 @@ def make_plan(config):
  BASE.require(hashlib.sha256(proof['admit_position_function'].encode()).hexdigest()==proof['admit_position_function_sha256']and proof['allowed_inventory_fields']==['launch_extent','alternate_launch_extent'],'same narrow cold inventory authority')
  archive=json.loads((REFERENCE/'archive.json').read_text());BASE.require(archive['full_tar_bytes_compared']and archive['actual_payload_sha256_matches_all_seals']and archive['removal_completed'],'verified diagnostic archive authority')
  ref=json.loads(gzip.decompress((REFERENCE/'output-result.json.gz').read_bytes()));BASE.require(ref['passed']and len(ref['records'])==7,'completed seven diagnostic references')
- p.update(schema='ownrt.gpu-route-seven-plus-twelve.v1',requests=19,phase_A_requests=7,phase_B_requests=12,binary_sha256=reg['binary_sha256'],native_launch_max_new=128,native_request_max_new=512,mode='target-only-none',live_draft=False,use_proposals=False,expected_output_ids=None,eos_token_ids=[248044,248046],diagnostic_only=True,speed_claim=False,gpu_route_tie_sort=True,reference_host_diagnostic=False,evidence_forecast_bytes=5*1024**3,reference_archive_stat=list(H.reader.identity(Path(archive['archive']).stat())),reference_archive_receipt_sha256=BASE.digest(REFERENCE/'archive.json'),limits='PhaseA seven fixed-prefix outputs/layers/fullstate vs host diagnostic. PhaseB all12 frozen genuine prompts, naturalEOS max512, cold reset each, actual tokens saved for later independentCPU teacher forcing. No runtime output oracle; no free-running CPU fidelity claim until later independent comparison.')
+ p.update(schema='ownrt.gpu-route-seven-plus-twelve.v1',requests=19 if enabled else 7,phase_A_requests=7,phase_B_requests=12 if enabled else 0,phase_b_generation=enabled,binary_sha256=reg['binary_sha256'],native_launch_max_new=128,native_request_max_new=512,mode='target-only-none',live_draft=False,use_proposals=False,expected_output_ids=None,eos_token_ids=[248044,248046],diagnostic_only=True,speed_claim=False,gpu_route_tie_sort=True,reference_host_diagnostic=False,evidence_forecast_bytes=5*1024**3,reference_archive_stat=list(H.reader.identity(Path(archive['archive']).stat())),reference_archive_receipt_sha256=BASE.digest(REFERENCE/'archive.json'),limits='PhaseA seven fixed-prefix outputs/layers/fullstate vs host diagnostic. Optional PhaseB all12 frozen genuine prompts, naturalEOS max512, cold reset each; phase_b_generation=false skips all generation after required PhaseA parity. No runtime output oracle; no free-running CPU fidelity claim until later independent comparison.')
  for path in [Path(__file__).resolve(),Path(H.__file__).resolve(),H.REG,H.CACHE_PROOF,H.READER,MATRIX,regpath,gate,REFERENCE/'archive.json',REFERENCE/'output-result.json.gz',main,rank]:p['pins'][str(path)]=BASE.digest(path)
  for name,digest in reg['gated_sources'].items():p['pins'][name]=digest
  for row in registered:
@@ -142,12 +147,13 @@ def request(a,t,plan,began):
   BASE.save(Path(plan['output'])/'phase-a-diagnostic-parity.json',dict(passed=False,error=repr(error),actual_records=len(records),phase_B_started=False));raise
  BASE.save(Path(plan['output'])/'phase-a-diagnostic-parity.json',proof)
  generated=[]
- for i,row in enumerate(suite()):
+ BASE.require(proof.get("passed")is True,"PhaseA full archive parity required before optional PhaseB/finish")
+ for i,row in enumerate(suite()if phase_b_enabled(plan)else []):
   maintenance=reset_cold(t.out/f'phase-b-{i:02d}');prompt=row['prompt']
   result=run_native(a,t,prompt,512,plan['eos_token_ids']);validate_generation(result,prompt,plan['eos_token_ids'])
   record=dict(id=row['id'],prompt_tokens=prompt,prompt_source=row['path'],prompt_source_sha256=row['sha256'],actual_output_ids=result['tokens'],max_new=512,eos_token_ids=plan['eos_token_ids'],cached_tokens=0,prompt_state_reused=False,cold_reset=maintenance,result=result,independent_cpu_teacherforce='pending actual generated-token continuation check; no runtime expected tokens')
   BASE.save(Path(plan['output'])/f'phase-b-{i:02d}.json',record);generated.append(record)
- return dict(schema='ownrt.gpu-route-seven-plus-twelve-result.v1',phase_A_records=records,phase_A_full_diagnostic_parity=proof,phase_B_records=generated,cold_resets=resets,phase_B_independent_cpu_fidelity='pending',limits='One owner lifetime; no restart/retry. PhaseA compares actual frozen historical outputs/state; PhaseB actual fresh greedy generation, all12 fixed prompts. No runtime oracle or quality claim for generated continuations before independentCPU check.')
+ return dict(schema='ownrt.gpu-route-seven-plus-twelve-result.v1',phase_A_records=records,phase_A_full_diagnostic_parity=proof,phase_B_records=generated,phase_B_skipped=not phase_b_enabled(plan),cold_resets=resets,phase_B_independent_cpu_fidelity='pending'if phase_b_enabled(plan)else 'not run',limits='One owner lifetime; no restart/retry. PhaseA compares actual frozen historical outputs/state; PhaseB fresh greedy generation for all12 fixed prompts when enabled; otherwise explicitly skipped. No runtime oracle or quality claim for generated continuations before independentCPU check.')
 
 def main():
  ap=argparse.ArgumentParser();ap.add_argument('--config',type=Path);ap.add_argument('--plan',type=Path,required=True);ap.add_argument('--run',action='store_true');ap.add_argument('--admission',type=Path);ap.add_argument('--unit');x=ap.parse_args()
