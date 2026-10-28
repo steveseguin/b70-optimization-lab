@@ -1,0 +1,20 @@
+--- fresh-twelve-cpu/exact-logits-twelve.cpp
++++ fresh-changed-cpu/exact-logits-changed.cpp
+@@ -64,7 +64,7 @@
+     return 0;
+ }
+ int main(int argc,char**argv){
+-    if(argc!=5){fprintf(stderr,"usage: %s MODEL TWELVE_INPUT_PATHS.txt OUT_DIR THREADS\n",argv[0]);return 2;}
++    if(argc!=5){fprintf(stderr,"usage: %s MODEL TWO_CHANGED_INPUT_PATHS.txt OUT_DIR THREADS\n",argv[0]);return 2;}
+     std::vector<std::string> inputs;std::ifstream manifest(argv[2]);std::string path;
+     if(!manifest){fprintf(stderr,"missing suite input list\n");return 2;}
+     while(std::getline(manifest,path)){
+@@ -72,7 +72,7 @@
+            std::find(inputs.begin(),inputs.end(),path)!=inputs.end())return 2;
+         inputs.push_back(path);
+     }
+-    if(inputs.size()!=12||atoi(argv[4])!=8)return 2;
++    if(inputs.size()!=2||atoi(argv[4])!=8)return 2;
+     const std::string root=argv[3];
+     if(!std::filesystem::is_directory(root))return 2;
+     llama_backend_init();
