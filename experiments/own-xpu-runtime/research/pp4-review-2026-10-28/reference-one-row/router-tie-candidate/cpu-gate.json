@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.router-tie-diagnostic.cpu-gate.v1",
+  "passed": true,
+  "scope": "CPU-only pure helper and actual production host route; full engine translation/build and actual diagnostic hook not yet run",
+  "environment": "nice19 CPU8-15",
+  "compiler": "g++ -std=c++20 -O2 -fno-fast-math -ffp-contract=off; production route test adds -DOWN_RT_HOST_ONLY",
+  "tests": [
+    {
+      "source": "test_helper.cpp",
+      "cases": 10,
+      "result": "PASS actual native and CPU layer3 vectors match saved ggml IDs; validation-before-upload, finite/raw-tie/route/host identity, callback failure refusal"
+    },
+    {
+      "source": "test_native48.cpp",
+      "vectors": 48,
+      "result": "PASS all actual host original IDs match native; one changed layer, one changed slot"
+    }
+  ],
+  "sources": {
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/router_tie_diagnostic.hpp": "1115824f2ce5bd7fe1e4d856fb3572d2d3a2a561183e20b36c17938f722daa58",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "be9b9eef7bf30e9abde73b0b88c6c039feffcdc4d205dd78ecbfe6399452df4f",
+    "experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/test_helper.cpp": "dd48dd1f4fbffb898047f9ee635c8c9d2183814ad222b3d67b85cd0f9a379f00",
+    "experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/test_native48.cpp": "a812a96e76fc7f0a9497b6d3049c5d041602ca36e42bd6f280d9dd586f7f685c"
+  },
+  "fixture_receipt": {
+    "path": "/dev/shm/sc117-reference-prefix178-20261028-r1/router-lastrow-extract/receipt.json",
+    "sha256": "10c65ded10a52d5d3b156eea7b0384c18c24ba7aeffd30286618a8566976d9c6"
+  },
+  "binaries": {
+    "/dev/shm/sc117-router-tie-helper-test": "4ecd41b1f2b1ede1f05e7b99df51bbdd5d546d9287448798c8ece1d14ab2d93d",
+    "/dev/shm/sc117-router-tie-native48-test": "00512444f70b128d21c04d9f39c74b6fb3c25b48e0fb125e2806e40a314289a1"
+  },
+  "limitations": [
+    "std::sort equal-key ordering is registered implementation/toolchain specific, not universal model definition",
+    "No 244-token causal result, final quality pass, or performance claim"
+  ]
+}

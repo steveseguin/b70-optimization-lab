@@ -1,0 +1,9 @@
+General reference tie diagnostic, default OFF.
+
+OWNRT_ROUTER_TIE_DIAGNOSTIC=1 enables only admitted target scalar HALF execution at context4096/max-new1/F32. No draft, ring, bulk, provider, TP, speculative or unknown geometry. Exactly one fused route or standalone gather hook per actual owned route layer is required before HALF work. All owned layers and input positions are treated alike; no expert/token/prompt-specific override.
+
+The hook reads actual scores, selected IDs, normalized weights, and both route tables after route/gather completion. The existing production host route must reproduce original native IDs. The registered std::sort probability comparator proposes the reference equal-key ordering; every changed slot must have identical raw score words. Native normalized weight bytes stay unchanged. IDs and both route tables are uploaded and read back; failures poison the request. Journal includes every hook, unchanged weight hashes and exact changed raw words.
+
+CPU gates: 10 meaningful helper cases plus all48 real sealed native row177 vectors, including exact production host route. Original IDs matched native all48; only one layer/one slot changed. No engine hook GPU execution or 244-token causality result yet. The full translation/build is root-owned.
+
+Run test_helper with the committed completed-comparison-r1/actual-layer3-router-replay.tar.gz fixture extracted to a temporary directory. Run test_native48 with native48-fixture.tar.gz extracted to a temporary directory. Compile C++20/O2/fno-fast-math/ffp-contract=off; the production-route test also requires OWN_RT_HOST_ONLY. Use nice19 CPU8-15.

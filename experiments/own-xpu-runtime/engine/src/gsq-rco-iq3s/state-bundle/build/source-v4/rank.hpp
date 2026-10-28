@@ -4,6 +4,8 @@
 #include "pipeline/checkpoint.hpp"
 #include "gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp"
 #include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
+#include "stage2/packet194-expert-diet-engine/router_tie_diagnostic.hpp"
+#include "stage2/packet194-expert-diet-engine/specialised.hpp"
 #include <poll.h>
 #include <functional>
 #include <sys/mman.h>
@@ -137,6 +139,45 @@ static l4raw::Bytes l4_history_read(Engine& e,const char*name,size_t bytes) {
  // Copy engine forces completed readback and avoids mutating kernel-I/O control staging.
  return e.readback(0,slot.id,bytes,true);
 }
+// General equal-raw-score reference tie diagnostic. Default absent has no IO/work.
+static bool router_tie_enabled(){static const bool on=[](){const char*p=std::getenv("OWNRT_ROUTER_TIE_DIAGNOSTIC");if(!p)return false;require(std::string(p)=="1","router tie env must be1 or absent");return true;}();return on;}
+static void router_tie_admission(Engine&e,const Request&r){
+ if(!router_tie_enabled())return;
+ require(!e.a.pipeline_enabled()&&!e.a.pipeline_live_draft&&!e.a.pipeline_external_provider&&!e.a.pipeline_ring&&!e.a.provider_only&&!e.a.mtp&&!e.a.tp_replicate&&!e.a.mini&&!e.a.prefill_rows&&e.a.draft_capture.empty()&&e.a.f32_activations&&e.a.tokens==1&&e.p.g.context==4096&&e.p.g.h==2560&&e.p.g.mid==640&&e.p.g.experts==512&&e.p.g.top==10&&!e.v3_active&&!e.kio_active&&!e.prepare_async&&!e.split_head()&&e.prepared_path&&r.op==half&&!r.speculative,"router tie target-only scalar diagnostic admission");
+ std::map<std::string,int> hooks,routes;
+ for(const auto&l:e.p.launches){
+  if(l.op=="route"){
+   require(l.label.starts_with("blk.")&&ends(l.label,".route")&&(l.outputs.size()==2||l.outputs.size()==4),"router tie admitted route schedule");
+   const auto prefix=l.label.substr(0,l.label.size()-5);++routes[prefix];if(l.outputs.size()==4)++hooks[prefix];
+  }else if(l.op=="expert_gather"){
+   require(l.label.starts_with("blk.")&&ends(l.label,".gather"),"router tie admitted gather schedule");++hooks[l.label.substr(0,l.label.size()-6)];
+  }
+ }
+ require(!routes.empty()&&hooks.size()==routes.size(),"router tie nonempty complete hook coverage");
+ for(const auto&[prefix,count]:routes)require(count==1&&hooks[prefix]==1,"router tie exactly one hook per route layer");
+}
+static void router_tie_after_gather(Engine&e,const flash::Launch&l,const Request&r){
+ if(!router_tie_enabled())return;
+ const bool fused=l.op=="route"&&l.outputs.size()==4;
+ if(l.op=="route")require(l.outputs.size()==2||fused,"router tie unknown route output geometry");
+ if(!fused&&l.op!="expert_gather")return;
+ require(l.label.starts_with("blk.")&&ends(l.label,fused?".route":".gather"),"router tie known route/gather label");
+ const auto prefix=l.label.substr(0,l.label.size()-(fused?5:6));
+ if(fused)require(l.inputs.size()==1&&l.inputs[0]==prefix+"router"&&l.outputs==std::vector<std::string>{prefix+"ids",prefix+"prob",prefix+"routes",prefix+"routes.down"},"router tie fused route bindings");
+ else require(l.inputs.size()==2&&l.outputs.size()==3&&l.inputs[0]==prefix+"ids"&&l.outputs[0]==prefix+"routes"&&l.outputs[1]==prefix+"routes.down"&&l.outputs[2]==prefix+"expert_input","router tie gather buffer authority");
+ e.drain();
+ auto get=[&](const std::string&name,size_t bytes,flash::Scalar type){const auto&s=e.buffers[0].at(name);require(s.type==type&&s.n*flash::scalar_bytes(s.type)==bytes,"router tie exact allocation type/extent");return e.readback(0,s.id,bytes,true);};
+ auto scores=get(prefix+"router",2048,flash::Scalar::f32),ids=get(prefix+"ids",40,flash::Scalar::u32),weights=get(prefix+"prob",40,flash::Scalar::f32),routes=get(prefix+"routes",120,flash::Scalar::u32),down=get(prefix+"routes.down",120,flash::Scalar::u32);
+ routertie::Scores x{},prob{};routertie::IDs old{};routertie::Weights w{};routertie::Routes a{},b{};std::memcpy(x.data(),scores.data(),2048);std::memcpy(old.data(),ids.data(),40);std::memcpy(w.data(),weights.data(),40);std::memcpy(a.data(),routes.data(),120);std::memcpy(b.data(),down.data(),120);
+ // Same production host route implementation as the pinned replay, never a new softmax.
+ std::vector<float>input(2560),expert(25600),hostweights(10),scratch;routertie::IDs host{};routertie::Routes hr{},hd{};int32_t error=0,pos=r.position,active=1;ng::Shape shape;shape.op=ng::route_gather;shape.width=512;shape.extra=10;shape.heads=4;shape.flags=ng::f32_activations_flag;shape.capacity=4096;ng::Args args;args.f32=true;args.p[0]=x.data();args.p[1]=input.data();args.p[2]=host.data();args.p[3]=hostweights.data();args.p[4]=expert.data();args.p[5]=hr.data();args.p[6]=hd.data();args.p[15]=&error;args.p[17]=&pos;args.p[18]=&active;scratch.resize(specialised::scratch_floats(shape));
+ auto run=[&]<int ST>(){for(size_t i=0;i<specialised::work_items(shape,ST);++i)specialised::body<ng::route_gather,ST>(shape,args,i,scratch.data(),specialised::HostGuard{});};run.template operator()<0>();run.template operator()<1>();run.template operator()<2>();run.template operator()<3>();run.template operator()<4>();require(!error,"router tie host route error");std::copy_n(scratch.data()+2*((512+31)/32)+512,512,prob.begin());
+ auto decision=routertie::prepare(x,prob,host,old,w,a,b);
+ const std::array<std::string,3>names={prefix+"ids",prefix+"routes",prefix+"routes.down"};routertie::publish(decision,[&](int which,const void*p,size_t n){e.upload(0,e.buffers[0].at(names[which]).id,0,p,n);});e.drain();
+ auto newids=get(prefix+"ids",40,flash::Scalar::u32),newroutes=get(prefix+"routes",120,flash::Scalar::u32),newdown=get(prefix+"routes.down",120,flash::Scalar::u32),newweights=get(prefix+"prob",40,flash::Scalar::f32);
+ require(std::memcmp(newids.data(),decision.ids.data(),40)==0&&std::memcmp(newroutes.data(),decision.routes.data(),120)==0&&std::memcmp(newdown.data(),decision.down.data(),120)==0&&weights==newweights,"router tie verified upload/unchanged weights");
+ std::ofstream journal(e.a.output/"router-tie-diagnostic.jsonl",std::ios::app);require(bool(journal),"router tie journal open");journal<<"{\"schema\":\"ownrt.router-tie-diagnostic.v1\",\"position\":"<<r.position<<",\"sequence\":"<<r.sequence<<",\"layer\":"<<prefix.substr(4,prefix.size()-5)<<",\"changed_slots\":"<<decision.changed<<",\"old_ids\":[";for(int i=0;i<10;++i)journal<<(i?",":"")<<old[i];journal<<"],\"new_ids\":[";for(int i=0;i<10;++i)journal<<(i?",":"")<<decision.ids[i];journal<<"],\"changed_raw_words\":[";bool comma=false;for(int i=0;i<10;++i)if(old[i]!=decision.ids[i]){journal<<(comma?",":"")<<"{\"slot\":"<<i<<",\"old_word\":"<<std::bit_cast<uint32_t>(x[old[i]])<<",\"new_word\":"<<std::bit_cast<uint32_t>(x[decision.ids[i]])<<"}";comma=true;}journal<<"],\"logits_sha256\":"<<ownrt::quote(hash(scores))<<",\"weights_before_sha256\":"<<ownrt::quote(hash(weights))<<",\"weights_after_sha256\":"<<ownrt::quote(hash(newweights))<<",\"old_routes_sha256\":"<<ownrt::quote(hash(routes))<<",\"new_routes_sha256\":"<<ownrt::quote(hash(newroutes))<<",\"old_down_sha256\":"<<ownrt::quote(hash(down))<<",\"new_down_sha256\":"<<ownrt::quote(hash(newdown))<<",\"verified_upload\":true}\n";journal.flush();require(bool(journal),"router tie journal write");
+}
 static l4probe::History* l4_prepared_history(Engine& e) {
  if(!l4probe::enabled())return nullptr;
  if(e.a.rank!=0)return nullptr;
@@ -181,6 +222,7 @@ static void l4_capture_prepared(Engine& e,const flash::Launch& l,const Request& 
  history->append(request.position,scratch,controls,metadata.str());
 }
 static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
+ router_tie_admission(e,request);
  const auto p150_half_begin=std::chrono::steady_clock::now();
  require(!candidate.pending,"half before resolving prior candidate");
  require(request.position>=0&&request.position<e.p.g.context,"half position bound");
@@ -255,6 +297,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
    l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
   e.enqueue(l,e.logical);
+  router_tie_after_gather(e,l,request);
   if(l4_history&&l.label=="blk.4.gdn.recurrence"&&l4probe::enabled())
    l4_capture_prepared(e,l,request,e.issue_sites.at(size_t(&l-e.p.launches.data())).l4_prepared_invocation);
   if(l4_history&&l.label=="blk.4.gdn.recurrence")
