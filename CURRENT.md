@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28 — Dedicated bulk full gate passed; fair long timing active.**
+**October 28 — Dedicated cold long request complete; PP4 cold control loading.**
 Matched cold64K 1677/512 measured dedicated2+1 **50.605 /51.289 tok/s** versus native
 2GPU **68.272 /67.654 tok/s** (first99/all511 intervals): dedicated all511 rate is
 **24.19% lower**. All512 IDs match and both lifecycles are clean; cuts25/depth3 versus
@@ -8,11 +8,15 @@ cuts23/depth1 are explicit treatment differences. [Evidence](experiments/own-xpu
 The128K short state gate passed (proof `e476c64…`); long128K remains unqualified.
 Dedicated bulk3+1 passed sealed **2065 target/73 draft sources,1707 actual pairs and32
 outputs**, all4owners exited0 (proof `d99f6b6…`, commit `f21da9db8`, binary `29471eb0bab9`).
-Verified state archives released RAM. The first-inference121854/8 dedicated long run is
-active: unit `sc117-dedicated-bulk-long-20261028-r1`, process start07:15:46UTC,
-prefix start07:18:15UTC. Fair PP4 control follows; no bulk timing result yet. Both use
-current common binary, with explicit dedicated flat-copyfalse versus PP4true and PP4
-first-request reset differences. Native HCnorm probe passed10240 bitexact/error0 with
+Verified state archives released RAM. The first-inference121854/8 dedicated long request completed cleanly: **1027.579s**
+request wall, **1007.883s** sequential prefix; all8 IDs match and all4owners exited0,
+postflight clean/noholders. Target command work was290.182/257.685/251.354s and
+provider replay204.521s. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bulk3plus1-long-r1-evidence/summary.json).
+PP4r5 first-inference control is loading, unit `sc117-pp4-cold-long-control-20261028-r1`;
+no inference request yet and no speed win claim. Dedicated archive full-compare/checksum
+passed before bundle cleanup; fresh PP4 startupRAM104170205184B passed103079215104B floor. The common binary is
+unchanged; dedicated flat-copyfalse versus PP4true and PP4 first-request reset remain
+explicit treatment differences. Native HCnorm probe passed10240 bitexact/error0 with
 clean postflight. The next projection differs at221/320 hostF64-versus-native values;
 causality remains unresolved. CPU observer r2
 now preserves original/OFF/ON all logits exactly; the native-vs-CPU layer0 maximum
@@ -48,7 +52,7 @@ remain unresolved. Combined-owner discoveries remain in the broader queue.
 - Actual device censuses:29,661,143,540 /30,141,558,944 bytes for targets,3,205,184,516 for draft.
   The checked checkpoint admission fix retains existing256MiB-per-slot/4096-row bounds and complete reserve
   under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed.
-- The64K measurements and128K short gate completed cleanly. Dedicated121854/8 timing is active; PP4 first-inference control follows. No resident service.
+- The64K measurements and128K short gate completed cleanly. Dedicated121854/8 timing completed; PP4 first-inference control follows. No resident service.
 - A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
   makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
   screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.

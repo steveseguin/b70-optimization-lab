@@ -1,0 +1,73 @@
+PP4 first-inference cold control — prepared CPU only, 2026-10-28
+
+Use fresh r5 PP4 plan (not r4 service plan):
+/dev/shm/sc117-initial-cold-long-plans-20261028-r5/pp4-plan.json
+SHA256 1e07f79d9d26204e148da8a5ddf34d9370507ece57ed7aac722f9dbad4c69251
+Config beside it. R4 is untouched. Changes: seconds2400->3600 and fresh output/cache
+paths, with corresponding config/request/source pin hashes. Binary29471eb0bab9,
+model/draft/core environment/topology are unchanged. Suite path remains r4's tiny
+planning-only file; DO NOT execute that suite as model inference.
+
+Why r5: pp4_service requires lifetime_hours<=seconds/3600-0.5. R4 permits only600s
+from before model load, risking cancellation during long prefill. R5 --lifetime-hours0.5
+allows1800s, inside native3600s. Default lifetime47 refuses these bounded plans.
+Floors: startupRAM103079215104B, runningRAM8589934592B, root27000000000B,
+evidence2147483648B. Grace120s. Fresh baseline/admission remain coordinator-owned;
+wait for dedicated terminal and passive fault/holder match before any launch.
+
+Admission: ownrt.pipeline-admission.v1, owner_authorized true, exact r5 plan SHA,
+fresh baseline absolute path+SHA and future expires_utc. Validate current plan pins
+against make_plan; no automatic replan, retry, restart, cache/power/memory changes.
+
+One transient user unit, no resident launcher (pp4_start.py would regenerate plans):
+systemd-run --user --unit=sc117-pp4-cold-long-control-20261028-r1 \
+ --property=Restart=no --property=KillMode=process --property=SendSIGKILL=no \
+ --property=TimeoutStopSec=infinity --property=LimitAS=infinity --property=LimitCORE=0 \
+ --property=Nice=19 --property='CPUAffinity=0-3 16-19' \
+ --working-directory=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan \
+ --setenv=SC117_PP4_SERVICE=1 --setenv=SC117_CONTEXT=262144 \
+ /usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_service.py \
+ --run --config /dev/shm/sc117-initial-cold-long-plans-20261028-r5/pp4-config.json \
+ --plan /dev/shm/sc117-initial-cold-long-plans-20261028-r5/pp4-plan.json \
+ --admission FRESH_ADMISSION_ABSOLUTE_PATH --unit sc117-pp4-cold-long-control-20261028-r1.service \
+ --bind 192.168.2.44 --port 18161 --lifetime-hours 0.5
+The command above is instructions only; no launch performed.
+
+Read /health until status ready (authenticated if key exists), never a warmup
+completion request. Then send exactly one preserved long-body.json.gz request.
+Client example Python (run only after coordinator admission/ready):
+  import gzip,json,urllib.request
+  from pathlib import Path
+  body=gzip.decompress(Path('research/pp4-review-2026-10-28/inputs/long-body.json.gz').read_bytes())
+  headers={'Content-Type':'application/json'}
+  key=Path('/home/steve/.config/sc117-lan/api_key')
+  if key.exists(): headers['Authorization']='Bearer '+key.read_text().strip()
+  request=urllib.request.Request('http://127.0.0.1:18161/v1/chat/completions',data=body,headers=headers)
+  with urllib.request.urlopen(request,timeout=1700) as response: raw=response.read()
+  Path('/dev/shm/sc117-initial-cold-long-plans-20261028-r5/client-response.json').write_bytes(raw)
+Do not print key or put it on command line. A timeout/fault halts new requests;
+no retry or server cycling. HTTP health checks are not inference requests.
+
+First request must be request-000001:121854 prompt, max8/output8, cached0,
+process_reused false/prompt_state_reused false. Verify prompt token SHA
+624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0 and output IDs
+[27775,383,279,3766,26622,1528,11,1532]. Expected IDs are offline comparison only.
+Server output/requests/request-000001/result.json timing.first_token_seconds and
+full_response_seconds are canonical: excludes reset/load/dump, includes prefix and
+final provider drain. driver-result.json prefill_timing retains target/replay breakdown;
+tokens.jsonl committed_monotonic_s validates actual output timing. Compare dedicated
+scheduler_wall_seconds/emitted_elapsed_seconds after its timer fix, not HTTP clientwall.
+Document first-request coldRESET asymmetry and dedicated flatcopyfalse vs PP4true;
+the historical warmed524.273s is context only, not this control. One sample each.
+
+After complete request and drained provider, send one cooperative SIGTERM to the
+unit main process, or systemctl --user stop the exact transient unit. Existing
+KillMode=process/SendSIGKILL=no permits native FINISH/idle teardown. Wait for terminal
+passed/all4returncodes0/live[] and passive postflight matching baseline/noholders;
+retain first request/result/response/timestamps/plan+sourceidentity/postflight. No restart.
+
+Queue review: current15 ideas plus discoveries already cover the material topology,
+expert routing/decoding, verifier, QSA, draft, batching, context ownership, migration,
+command-graph and rollback traffic levers. No additional independent large lever
+was identified from this narrow read. Do full fair timing, then existing bounded
+stage-pipeline overlay; do not replace that work with a generic new research queue.
