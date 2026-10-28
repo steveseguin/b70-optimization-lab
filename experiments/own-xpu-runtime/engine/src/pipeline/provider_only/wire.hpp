@@ -4,7 +4,7 @@
 #include <cstdint>
 namespace ownrt::provider_only::wire {
 constexpr int32_t magic=0x50525631,version=1;
-constexpr size_t shared_bytes=4*65536+4096+64,proposal_offset=4096,reset_offset=512;
+constexpr size_t shared_bytes=4*65536+4096+64,proposal_offset=4096,reset_offset=512,capture_offset=768;
 constexpr int canonical_op=9,batch_op=27,reset_op=11,dump_op=4,finish_op=5;
 struct Request {int32_t op=0,token=0,position=0,fixture=0,depth=0,sequence=0,role=magic,version_=version;};
 struct Reply {int32_t status=0,token=-1,error=0,bytes=0,sequence=0,rank=-1,role=magic,version_=version;double busy_ms=0,gpu_ms=0,redo_ms=0,reserved_ms=0;};

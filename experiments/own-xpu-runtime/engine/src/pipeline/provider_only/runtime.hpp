@@ -1,5 +1,6 @@
 #pragma once
 #include "pipeline/provider_only/peers.hpp"
+#include "pipeline/recursive_provider/capture_ready.hpp"
 namespace ownrt::provider_only {
 inline ring_next::Digest request_digest(const std::string& text){
  ring_next::need(text.size()==64,"provider request digest extent");ring_next::Digest out{};
@@ -31,7 +32,17 @@ void run_loop(Engine& engine,Draft& draft,const Options& options,uint8_t* shared
       "provider command/source identity");
    if(request.op==wire::canonical_op)owner.canonical(sequence,witness.seed,witness.final,witness.hidden);
    else{
-    auto proposal=owner.run(sequence,witness.seed,witness.final,witness.hidden,options.pipeline_ring_recursive_verify);
+    auto proposal=owner.run(sequence,witness.seed,witness.final,witness.hidden,options.pipeline_ring_recursive_verify,
+      [&](const auto& admitted,uint64_t serial){
+       if(!options.provider_capture_ready)return;
+       const auto captured=recursive_provider::captured(context,admitted,witness.final,sequence,serial);
+       static_assert(wire::reset_offset+sizeof(wire::Reset)<=wire::capture_offset&&
+         wire::capture_offset+sizeof(captured)<=wire::proposal_offset);
+       std::memcpy(shared+wire::capture_offset,&captured,sizeof captured);
+       wire::Reply event;event.status=recursive_provider::capture_ready_status;
+       event.bytes=sizeof captured;event.sequence=sequence;
+       ::pipeline::transfer(options.channel,&event,sizeof event,true,options.seconds);
+      });
     if(context.depth==3){ring_next::wire::ProposalMetaV2 full;full.base=proposal;full.guess2=(owner.last_result().guesses.size()<3?-1:owner.last_result().guesses[2]);
       std::memcpy(shared+wire::proposal_offset,&full,sizeof full);reply.bytes=sizeof full;
     }else{std::memcpy(shared+wire::proposal_offset,&proposal,sizeof proposal);reply.bytes=sizeof proposal;}

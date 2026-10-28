@@ -20,6 +20,8 @@ def make_plan(path):
     base.require(not config.get('prefill_rows', 0) and not config.get('prefill_pipeline', False)
                  and not config.get('persistent_reset', False),
                  'dedicated bulk prefill is not yet qualified')
+    capture = config.get('dedicated_capture_ready', False)
+    base.require(type(capture) is bool, 'dedicated_capture_ready Boolean required')
     plan = base.make_plan(path)
     base.require(len(plan['stages']) in (2, 3), 'two/three target stages required')
     bdfs = [s['bdf'] for s in plan['stages']]
@@ -68,6 +70,8 @@ def make_plan(path):
         '--provider-final-shared', str(output/f"stage{len(bdfs)-1}/shared.bin"),
         '--pipeline-ring-request-sha256', request, '--pipeline-ring-depth', str(depth),
         '--pipeline-ring-check-policy', policy, '--draft-mtp']
+    if capture:
+        provider['argv'].append('--provider-capture-ready')
     if full:
         provider['argv'].append('--pipeline-ring-recursive-verify-restore')
     for flag in ('--draft-fault', '--draft-manifest', '--draft-model', '--draft-experts'):
@@ -91,7 +95,7 @@ def make_plan(path):
         base.require('--oracle' not in stage['argv'] or base.option(stage['argv'], '--oracle') == '',
                      'runtime must not consume expected outputs')
     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
-                epoch=0, request_sha256=request, eos_token_ids=eos, speculative_depth=depth,
+                epoch=0, request_sha256=request, dedicated_capture_ready=capture, eos_token_ids=eos, speculative_depth=depth,
                 rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=0,
                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,

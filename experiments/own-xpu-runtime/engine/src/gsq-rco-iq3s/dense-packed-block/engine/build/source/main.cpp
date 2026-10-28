@@ -157,7 +157,7 @@ struct Options {
   // replicated on both cards with identical arithmetic (rank 1 only; no split yet).
   bool tp_replicate=false;
   // Explicit draft-only process, distinct from every target pipeline stage.
-  bool provider_only=false;
+  bool provider_only=false,provider_capture_ready=false;
   std::string provider_bdf;std::vector<std::string> provider_target_bdfs;
   fs::path provider_seed_shared,provider_final_shared,provider_replay;
   std::string provider_replay_sha256;
@@ -224,6 +224,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--gsq-packed") a.gsq_packed=true;
     else if(k=="--tp-replicate") a.tp_replicate=true;
     else if(k=="--provider-only")a.provider_only=true;
+    else if(k=="--provider-capture-ready")a.provider_capture_ready=true;
     else if(k=="--provider-bdf")a.provider_bdf=value();
     else if(k=="--provider-target-bdfs"){
       require(a.provider_target_bdfs.empty(),"duplicate provider target topology");
@@ -399,12 +400,13 @@ static Options parse(int argc, char **argv) {
     require(a.pipeline_ring_check_policy=="qualification"||a.pipeline_ring_check_policy=="measured","provider-only fixed check policy");
     require(a.pipeline_ring_recursive_verify==(a.pipeline_ring_check_policy=="qualification"),"provider-only restore check policy");
     const bool replay=!a.provider_replay.empty();
+    require(!a.provider_capture_ready||!replay,"provider capture-ready requires live source peers");
     require(replay?(a.provider_replay.is_absolute()&&a.provider_replay_sha256.size()==64&&a.provider_seed_shared.empty()&&a.provider_final_shared.empty()):
        (a.provider_replay_sha256.empty()&&a.provider_seed_shared.is_absolute()&&a.provider_final_shared.is_absolute()&&a.provider_seed_shared!=a.provider_final_shared),
        "provider-only requires exclusive authenticated replay or live peers");
     require(!a.context||a.context>=32,"provider-only context bound");
   }else{
-    require(a.provider_bdf.empty()&&a.provider_target_bdfs.empty()&&a.provider_seed_shared.empty()&&a.provider_final_shared.empty()&&
+    require(!a.provider_capture_ready&&a.provider_bdf.empty()&&a.provider_target_bdfs.empty()&&a.provider_seed_shared.empty()&&a.provider_final_shared.empty()&&
       a.provider_replay.empty()&&a.provider_replay_sha256.empty(),"provider-only options require explicit role");
   require(a.pipeline_ring_depth==2||a.pipeline_ring_depth==3,"ring depth must be2 or3");
   require(a.pipeline_ring_depth==2||((a.pipeline_ring_live_draft||a.pipeline_external_provider)&&a.pipeline_ring_persistent_requests),"depth3 requires persistent ring provider mode");

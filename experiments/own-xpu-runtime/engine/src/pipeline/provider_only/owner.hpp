@@ -47,8 +47,8 @@ public:
   ring_next::need(draft.recursive_healthy()&&!draft.recursive_active&&
     uint64_t(draft.live_position())==serial(),"dedicated MTP canonical boundary");
  }
- ring_next::wire::ProposalMeta run(int command,const recursive_provider::SeedRecord& seed,
-     const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify){
+ template<class Captured> ring_next::wire::ProposalMeta run(int command,const recursive_provider::SeedRecord& seed,
+     const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify,Captured on_captured){
   ring_next::need(!failed_&&command>last_command_,"dedicated MTP stale/failed command");
   try{
    boundary();
@@ -61,10 +61,15 @@ public:
    const recursive_provider_next::ExpectedPair expected{row,final.hidden,serial()+1};
    sequence_->admit(input,expected); // refuse before any canonical arithmetic
    last_command_=command;
+   on_captured(row,serial()+1); // owned source bytes + admitted lineage; no arithmetic yet
    auto result=draft.live_recursive_depth2(*sequence_,input,expected,verify);
    last_final_commit_=final.hidden.commit_sequence;boundary();
    return result;
   }catch(...){failed_=true;throw;} // no automatic reset/retry/recovery copies
+ }
+ ring_next::wire::ProposalMeta run(int command,const recursive_provider::SeedRecord& seed,
+     const recursive_provider::FinalRecord& final,const std::vector<uint8_t>& hidden,bool verify){
+  return run(command,seed,final,hidden,verify,[](const auto&,uint64_t){});
  }
  // OP9 is only a no-head canonical prefix replay, authenticated by the same
  // independent source journals. Recursive proposals still use run()/Sequence.

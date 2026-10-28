@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28, 04:56 UTC — Three target GPUs plus a separate existing-MTP draft owner passed parity.**
+**October 28 — Initial 3+1 passed parity but lost the matched speed test; testing early capture.**
 - The per-token 3+1 gate on targets 23/27/47 and draft 43 matched all **2,065 target sources, 73 draft
   sources, 1,707 canonical hidden/token input pairs, and 32 output tokens** against the prior four-target
   reference. All four owners exited 0, no holders remain, and postflight matches the fault baseline.
@@ -8,11 +8,17 @@
 - Native binary `42835855ee91`, run `/dev/shm/sc117-dedicated-3plus1-20261028-r3/output`.
   Two earlier Python transport refusals were fixed with actual incident and native request-loop regressions;
   their evidence remains recorded. The native arithmetic was unchanged. No speed claim from this gate.
-- Active: `sc117-dedicated-3plus1-measured512-20261028` uses all four cards for the bounded timing run;
-  output `/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output`.
-- Matched 512-output-cap diagnostic, same 1,677-token cold prompt and 262K allocation,
-  comparing 3+1 against four targets with colocated draft. Both use the same binary, kernel flags and
-  measured check policy. Full realistic suite and dedicated bulk prefill/reset remain unqualified.
+- Matched 512-token decode: 3+1 **42.17 / 43.20 tok/s** versus PP4 **51.81 / 52.16 tok/s**
+  (first 99 / all 511 intervals). Every output ID matches, both cold requests finished cleanly. Initial
+  3+1 is a measured loss, not a promotion. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched512-initial/retention.json).
+- Active: `sc117-dedicated-capture-gate-20261028-r1` uses all four cards for one full state gate of
+  opt-in early capture acknowledgment. Binary `8ff218d09413`, output
+  `/dev/shm/sc117-dedicated-capture-gate-20261028-r1/output`. The candidate releases only the final
+  input lease after validated private capture; provider busy and commit locks stay held through restoration.
+  CPU protocol/ownership tests pass. Native parity and speed remain pending; no unchanged control rerun.
+- Dedicated bulk prefill, persistent reset, 2+1 runtime execution and the full realistic suite remain
+  unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
+  the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.
 - The complete [optimization backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json)
   includes the 2+1 64K CPU plan, small exact kernel screens, and expert-parallel, verifier, draft and
   submission-cost screens. No resident service is scheduled. Independent-reference disagreements remain open.

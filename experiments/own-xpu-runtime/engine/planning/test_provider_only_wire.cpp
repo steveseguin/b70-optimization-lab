@@ -28,7 +28,7 @@ struct LoopOptions {
  std::string pipeline_ring_request_sha256=std::string(64,'0'),provider_bdf="d",provider_replay;
  std::vector<std::string> provider_target_bdfs{"a","b","c"};
  int pipeline_ring_depth=3,channel=-1,seconds=1;
- bool pipeline_ring_recursive_verify=true;
+ bool pipeline_ring_recursive_verify=true,provider_capture_ready=false;
  std::filesystem::path provider_seed_shared,provider_final_shared,output;
 };
 // Taking the concrete address instantiates every live runtime adapter branch.
@@ -48,8 +48,8 @@ Witness later_witness(const Input& in,const Row& previous){
  p.payload_sha=ring_next::wire::digest({});p.before=previous.id?previous.before:ring_next::request_prefix(row.request,row.epoch);p.after=row.before;
  return out;
 }
-void runtime_roundtrip(const std::filesystem::path& root,bool normalize_fixture){
- namespace w=provider_only::wire;LoopOptions options;options.output=root;
+void runtime_roundtrip(const std::filesystem::path& root,bool normalize_fixture,bool capture=false){
+ namespace w=provider_only::wire;LoopOptions options;options.output=root;options.provider_capture_ready=capture;
  options.provider_seed_shared=root/"loop-seed";options.provider_final_shared=root/"loop-final";
  LoopEngine engine;LoopRuntime runtime;runtime.limit=5;
  std::vector<uint8_t> shared(w::shared_bytes),seed(w::shared_bytes),final(w::shared_bytes);
@@ -69,6 +69,18 @@ void runtime_roundtrip(const std::filesystem::path& root,bool normalize_fixture)
  size_t received=0;std::vector<w::Reply> replies;std::vector<ring_next::wire::ProposalMetaV2> proposals;
  pipeline::transport=[&](void* bytes,size_t size,bool send){
   if(send){assert(size==sizeof(w::Reply));w::Reply reply;std::memcpy(&reply,bytes,size);replies.push_back(reply);
+   if(reply.status==recursive_provider::capture_ready_status){
+    assert(capture&&reply.bytes==128&&reply.sequence>0&&reply.sequence<=5);
+    assert(runtime.canonical_calls==reply.sequence-1); // after admit, before arithmetic
+    recursive_provider::CaptureReady ready;std::memcpy(&ready,shared.data()+w::capture_offset,sizeof ready);
+    const auto& source=witnesses[reply.sequence-1];auto context=fixture.context;context.stages=3;
+    const auto expected=recursive_provider::captured(context,recursive_provider::seed_row(source.seed,context),source.final,reply.sequence,reply.sequence);
+    assert(!std::memcmp(&ready,&expected,sizeof ready));
+    // Simulate final/seed live shared slots being overwritten after capture.
+    // The complete transaction must continue solely from its owned snapshots.
+    std::fill(seed.begin(),seed.end(),0);std::fill(final.begin(),final.end(),0);
+    write(options.provider_seed_shared,seed);write(options.provider_final_shared,final);
+   }
    if(reply.bytes==sizeof(ring_next::wire::ProposalMetaV2)){ring_next::wire::ProposalMetaV2 proposal;std::memcpy(&proposal,shared.data()+w::proposal_offset,sizeof proposal);proposals.push_back(proposal);}return;}
   assert(size==sizeof(w::Request)&&received<requests.size());
   if(received<witnesses.size()){const auto& source=witnesses[received];
@@ -79,13 +91,19 @@ void runtime_roundtrip(const std::filesystem::path& root,bool normalize_fixture)
   }
   std::memcpy(bytes,&requests[received++],size);
  };
- if(normalize_fixture){refusal([&]{provider_only::run_loop(engine,runtime,options,shared.data());});assert(runtime.canonical_calls==2&&replies.size()==3);}
+ if(normalize_fixture){refusal([&]{provider_only::run_loop(engine,runtime,options,shared.data());});assert(runtime.canonical_calls==2&&replies.size()==size_t(capture?5:3));}
  else{
   provider_only::run_loop(engine,runtime,options,shared.data());
-  assert(received==7&&replies.size()==8&&proposals.size()==5&&runtime.position()==5&&runtime.canonical_calls==5);
+  assert(received==7&&replies.size()==size_t(capture?13:8)&&proposals.size()==5&&runtime.position()==5&&runtime.canonical_calls==5);
   assert(runtime.captures==2&&runtime.restores==2&&runtime.recursive_calls==3); // depths3,2,1
-  for(size_t i=0;i<replies.size();++i){const auto& reply=replies[i];assert(reply.rank==-1&&reply.role==w::magic&&reply.version_==1&&reply.sequence==int(i)&&!reply.status&&!reply.error);}
-  assert(replies[0].bytes==16&&replies[6].bytes==0&&replies[7].bytes==0&&replies[7].token==-1);
+  for(const auto& reply:replies){assert(reply.rank==-1&&reply.role==w::magic&&reply.version_==1&&!reply.error);}
+  assert(replies[0].bytes==16&&replies[0].sequence==0&&!replies[0].status);
+  for(int i=1;i<=5;++i){
+   const auto& done=replies[capture?2*i:i];assert(done.sequence==i&&!done.status&&done.bytes==224);
+   if(capture){const auto& ack=replies[2*i-1];assert(ack.sequence==i&&ack.status==2&&ack.token==-1&&ack.bytes==128);}
+  }
+  const auto& dump=replies[replies.size()-2];const auto& finish=replies.back();
+  assert(dump.sequence==6&&!dump.status&&dump.bytes==0&&finish.sequence==7&&!finish.status&&finish.bytes==0&&finish.token==-1);
   for(int i=0;i<5;++i){const auto& proposal=proposals[i];assert(proposal.base.provider_serial==uint64_t(i+1)&&proposal.base.restored_position==i+1);
    assert(proposal.base.available_depth==(i<2?0:5-i)&&proposal.base.flags==uint32_t(i<2?2:3));
    assert((i==2||proposal.guess2==-1));if(i==2)assert(proposal.guess2>=0);
@@ -93,6 +111,27 @@ void runtime_roundtrip(const std::filesystem::path& root,bool normalize_fixture)
   assert(runtime.dumps==std::vector<std::filesystem::path>({root/"provider-dump-6",root/"provider-finish-7"}));
  }
  pipeline::transport={};
+}
+void canonical_no_capture(const std::filesystem::path& root){
+ namespace w=provider_only::wire;LoopOptions options;options.output=root;options.provider_capture_ready=true;
+ options.provider_seed_shared=root/"canonical-seed";options.provider_final_shared=root/"canonical-final";
+ Fixture fixture;auto source=witness(fixture,3,false);std::vector<uint8_t> seed(w::shared_bytes),final(w::shared_bytes),shared(w::shared_bytes);
+ std::memcpy(seed.data()+recursive_provider::seed_record_offset,&source.seed,sizeof source.seed);
+ std::memcpy(final.data()+recursive_provider::final_record_offset,&source.final,sizeof source.final);
+ std::memcpy(final.data()+live_draft::hidden_offset,source.hidden.data(),source.hidden.size());
+ auto write=[](const auto& path,const auto& bytes){std::ofstream file(path,std::ios::binary);file.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());};
+ write(options.provider_seed_shared,seed);write(options.provider_final_shared,final);
+ LoopEngine engine;LoopRuntime runtime;int sent=0,received=0;
+ pipeline::transport=[&](void* bytes,size_t size,bool send){
+  if(send){assert(size==sizeof(w::Reply));w::Reply reply;std::memcpy(&reply,bytes,size);
+   assert(!reply.status&&reply.sequence==sent&&reply.bytes==(sent==0?16:0));++sent;return;}
+  assert(size==sizeof(w::Request));w::Request request;request.sequence=++received;
+  if(received==1){request.op=w::canonical_op;request.token=source.seed.row.token;request.position=1;}
+  else{assert(received==2);request.op=w::finish_op;}
+  std::memcpy(bytes,&request,size);
+ };
+ provider_only::run_loop(engine,runtime,options,shared.data());pipeline::transport={};
+ assert(sent==3&&received==2&&runtime.canonical_calls==1&&!runtime.captures&&runtime.dumps.size()==1);
 }
 int main(){
  namespace w=ownrt::provider_only::wire;
@@ -109,7 +148,15 @@ int main(){
  request.version_=2;refusal([&]{w::command(request,1);});request.version_=1;
  refusal([&]{w::command(request,2);});request.op=15;refusal([&]{w::command(request,1);});
  char pattern[]="/dev/shm/provider-peer-test-XXXXXX";auto root=std::filesystem::path(::mkdtemp(pattern));assert(!root.empty());
+ canonical_no_capture(root);
  runtime_roundtrip(root,false);runtime_roundtrip(root,true);
+ runtime_roundtrip(root,false,true);runtime_roundtrip(root,true,true);
+ {Fixture fixture;LoopRuntime runtime;auto context=fixture.context;context.stages=3;
+ provider_only::Owner<LoopRuntime> owner(runtime,{{"a","b","c"},"d"},context);auto source=witness(fixture,3);
+ int callbacks=0;refusal([&]{owner.run(1,source.seed,source.final,source.hidden,true,[&](const auto&,uint64_t){++callbacks;throw std::runtime_error("capture channel failed");});});
+ assert(callbacks==1&&owner.failed()&&!runtime.canonical_calls);
+ refusal([&]{owner.run(2,source.seed,source.final,source.hidden,true);});assert(!runtime.canonical_calls);}
+
  Fixture fixture;auto input=witness(fixture,3);auto context=fixture.context;context.stages=3;
  std::vector<uint8_t> seed(w::shared_bytes),final(w::shared_bytes);
  std::memcpy(seed.data()+recursive_provider::seed_record_offset,&input.seed,sizeof input.seed);
@@ -125,5 +172,5 @@ int main(){
  refusal([&]{provider_only::LivePeers peers(root/"symlink",root/"final");});
  {provider_only::LivePeers peers(root/"seed",root/"final");std::filesystem::rename(root/"seed",root/"old");write("seed",seed);refusal([&]{peers.capture(context);});}
  std::filesystem::remove_all(root);
- std::cout<<"PASS actual run_loop later fixture2/3/4 accepted-tentative with independent pending target rows, canonical head mask, depth3/2/1 rollback, dump+FINISH ACK; role admission and readonly source inode refusal\n";
+ std::cout<<"PASS optional capture ACK before arithmetic, oneACK per command, owned source overwrite survival, callback failure poison; actual run_loop later fixture2/3/4 accepted-tentative with independent pending target rows, canonical head mask, depth3/2/1 rollback, dump+FINISH ACK; role admission and readonly source inode refusal\n";
 }

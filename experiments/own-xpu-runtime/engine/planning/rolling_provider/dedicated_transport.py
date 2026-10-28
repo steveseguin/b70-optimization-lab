@@ -14,9 +14,10 @@ from types import SimpleNamespace
 from .transport import Stage, ReplyBuffer, base, codec, pending, ring, row_identity
 from .dedicated import DedicatedCoordinator, ProviderCommand
 from .arbiter import Parent
-from . import remote
+from . import remote, capture_ready
 
 MAGIC, VERSION, PROPOSAL_OFFSET = 0x50525631, 1, 4096
+CAPTURE_OFFSET = 768
 HEADER = struct.Struct('<8IQ32s56s')
 
 
@@ -32,6 +33,7 @@ class Provider:
         self.stream_bytes = None
         self.provider_serial = 0
         self.transport_command = None
+        self.captured_sequence = None
 
     def _reply(self, raw, *, sequence, token, size):
         base.require(len(raw) == base.REPLY.size, 'complete dedicated reply')
@@ -124,6 +126,23 @@ class Provider:
         if len(self.received) < base.REPLY.size:
             return None
         command, wire = self.command_pending, self.transport_command
+        header = bytes(self.received)
+        reply = base.REPLY.unpack(header)
+        if reply[0] == capture_ready.STATUS:
+            base.require(self.plan.get('dedicated_capture_ready', False) is True
+                and self.captured_sequence is None
+                and reply == (2,-1,0,128,command.sequence,-1,MAGIC,VERSION,0.,0.,0.,0.),
+                'dedicated duplicate/unexpected/malformed capture reply')
+            raw = bytes(self.shared[CAPTURE_OFFSET:CAPTURE_OFFSET+capture_ready.CAPTURE.size])
+            capture_ready.decode(raw, wire)
+            base.require(bytes(self.shared[CAPTURE_OFFSET:CAPTURE_OFFSET+capture_ready.CAPTURE.size]) == raw,
+                         'dedicated capture publication changed while copying')
+            self.captured_sequence = command.sequence
+            self.received.clear()
+            return capture_ready.Captured(command, header, raw)
+        base.require(not self.plan.get('dedicated_capture_ready', False)
+                     or self.captured_sequence == command.sequence,
+                     'dedicated completion requires prior matching capture ACK')
         size = codec.proposal_size(wire.depth)
         raw = bytes(self.shared[PROPOSAL_OFFSET:PROPOSAL_OFFSET+size])
         result = codec.decode_proposal(raw, wire, vocab=self.plan['vocab'], context=self.plan['context'])
@@ -133,6 +152,7 @@ class Provider:
         result.update(owner='provider', proposal_hex=raw.hex(), proposal_sha256=sha256(raw).hexdigest(),
                       reply_hex=bytes(self.received).hex(), speculative_target_use=True)
         self.command_pending = self.transport_command = None
+        self.captured_sequence = None
         self.received.clear()
         return command, reply, result
 
@@ -185,7 +205,7 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
          (output/'final-records.jsonl').open('x') as records, (output/'commands.jsonl').open('x') as commands:
         def log(event, command, **details):
             identity = dict(owner='provider') if type(command) is ProviderCommand else dict(stage=command.stage)
-            commands.write(json.dumps(dict(event=event, sequence=command.sequence, op=command.op,
+            commands.write(json.dumps(dict(event=event, monotonic_s=time.monotonic(), sequence=command.sequence, op=command.op,
                 row=row_identity(command.row), **identity, **details))+'\n'); commands.flush()
         def flush():
             nonlocal event_index, emitted
@@ -237,11 +257,19 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
                 complete = owner.read_ready()
                 if complete is None:
                     continue
+                if isinstance(complete, capture_ready.Captured):
+                    base.require(owner is provider, 'dedicated capture event provider ownership')
+                    model.capture_provider(complete.command)
+                    log('parent-captured', complete.command, reply_hex=complete.header.hex(),
+                        metadata_hex=complete.identity.hex())
+                    flush()
+                    continue
                 command, reply, result = complete
                 if owner is provider:
                     # Native has completed capture and restored its private state;
                     # release source leases only now (there is no early capture ACK).
-                    model.capture_provider(command)
+                    if not plan.get('dedicated_capture_ready', False):
+                        model.capture_provider(command)
                     model.complete_provider(command, provider_serial=result['provider_serial'],
                         restored_position=result['restored_position'], guesses=tuple(result['guesses']))
                     provider_pairs += 1
