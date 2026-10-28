@@ -1,0 +1,47 @@
+Reference implementation and scope
+==================================
+reference_sort.hpp is an indexed, bounded, iterative adaptation of algorithm
+control flow in the registered GCC 13 libstdc++ headers. It deliberately retains
+the implementation-specific ordering of equivalent elements, including median
+pivot selection, partition swaps, child selection in heaps, and final insertion.
+
+Registered reference compiler:
+  g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0
+Registered headers:
+  /usr/include/c++/13/bits/stl_algo.h
+  /usr/include/c++/13/bits/stl_heap.h
+Exact hashes appear in cpu-gate.json and device-build.json.
+
+The real ggml CPU reference initializes expert indices in ascending order and
+sorts them using score[a] > score[b]. Its ops.cpp is also hashed in those records.
+Equal-key order is not specified by C++, is not a universal model semantic, and
+may change with another standard library or library version. A compiler/library
+change requires a new compatibility gate and policy decision. NaNs/infinities
+are refused; signed zeros compare equivalent. Probabilities are never altered.
+
+The adaptation follows these upstream operations:
+  std::__move_median_to_first, std::__unguarded_partition_pivot,
+  std::__unguarded_partition, std::__introsort_loop, std::__partial_sort,
+  std::__make_heap, std::__adjust_heap, std::__push_heap, std::__sort_heap,
+  std::__insertion_sort, std::__unguarded_linear_insert,
+  std::__final_insertion_sort; insertion threshold = 16.
+The recursive right call / left tail loop is represented by at most 18 frames.
+
+Upstream notices
+================
+The referenced libstdc++ headers are part of the GNU ISO C++ Library and carry:
+  Copyright (C) Free Software Foundation, Inc.
+  SPDX-License-Identifier: GPL-3.0-or-later WITH GCC-exception-3.1
+They are distributed under the GNU General Public License version 3 or later,
+with the GCC Runtime Library Exception version 3.1. Preserve that attribution
+and licensing when copying this adaptation into another distribution. The
+installed complete notices and license texts are available in the pinned GCC
+source/package; this research record does not replace those notices.
+
+Device scope
+============
+No recursive std::sort device support is assumed. The candidate helper contains
+no STL calls, recursion, dynamic allocation, or exceptions. The host oracle in
+device_probe.cpp still calls the actual registered libstdc++ std::sort. icpx's
+header trace in device-build.json confirms the same GCC 13 headers were selected.
+Offline AOT compilation alone is not device correctness or performance evidence.

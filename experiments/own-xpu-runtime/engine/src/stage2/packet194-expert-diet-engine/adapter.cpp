@@ -1,3 +1,4 @@
+#include "reference_sort_workspace.hpp"
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
@@ -393,6 +394,106 @@ template<int N,int Top,bool MERGE> struct RouteFast2 final:ownrt::SyclOperation 
    }));});
  }
 };
+template<int N,int Top,bool MERGE> struct RouteReferenceTie2 final:ownrt::SyclOperation {
+ static_assert(N%32==0&&(N/32)*Top%32==0,"route geometry");
+ Spec spec;explicit RouteReferenceTie2(Spec s):spec(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override {
+  if(!spec.f32_activations||(spec.no!=2&&spec.no!=4))throw std::invalid_argument("reference tie route requires F32 and known output geometry");
+  Bound b{spec,{}};std::copy(p.begin(),p.end(),b.p.begin());const int rows=spec.tokens;
+  constexpr int C=(N/32)*Top;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(rows)*N,N)](sycl::handler& h){
+   sycl::local_accessor<int,1> selected(Top,h),reference_indices(N,h);
+   sycl::local_accessor<router_reference_sort::Frame,1> reference_frames(router_reference_sort::maximum_depth,h);
+   sycl::local_accessor<float,1> ex(N,h),prob(N,h),sums(N/16,h);sycl::local_accessor<uint32_t,1> flags(2+(MERGE?2*C:0),h);
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    const int r=int(it.get_group_linear_id()),j=int(it.get_local_linear_id());const RowBound rb{b,r,b.s};auto g=it.get_group();
+    uint32_t* bad=flags.get_multi_ptr<sycl::access::decorated::no>().get();
+    if(j==0){bad[0]=0;bad[1]=(!*rb.active()||rb.failed())?1u:0u;}
+    it.barrier(sycl::access::fence_space::local_space);
+    if(bad[1])return; // uniform across the work-group
+    const float x=rb.in(0).get(j);if(!std::isfinite(x))sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::work_group,sycl::access::address_space::local_space>(bad[0]).store(1);
+    it.barrier(sycl::access::fence_space::local_space);
+    if(bad[0]){if(j==0)rb.fail();return;}
+    const float maximum=sycl::reduce_over_group(g,x,sycl::maximum<float>());
+    ex[j]=detmath::exp(x-maximum);it.barrier(sycl::access::fence_space::local_space);
+    constexpr int chunks=(N+15)/16;
+    if(j<chunks)sums[j]=subtree<16>(N,j*16,[&](int i){return ex[i];});
+    it.barrier(sycl::access::fence_space::local_space);
+    const float den=subtree<256>(chunks,0,[&](int i){return sums[i];});
+    prob[j]=ex[j]/den;it.barrier(sycl::access::fence_space::local_space);
+    auto put=[&](int rank,int index){selected[rank]=index;const float v=prob[index];rb.out(0).put(rank,index);rb.out(1).put(rank,v);
+     if(rb.s.no>=4)for(int k=0;k<3;++k){rb.out(2).put(rank*3+k,k==0?index:k==1?0:rb.s.g.mid);rb.out(3).put(rank*3+k,k==0?index:k==1?0:rb.s.g.h);}};
+    if constexpr(!MERGE){
+     bool taken=false;
+     for(int rank=0;rank<Top;++rank){
+      const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);
+      const uint32_t top=sycl::reduce_over_group(g,taken?0u:bits+1u,sycl::maximum<uint32_t>());
+      const int index=sycl::reduce_over_group(g,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
+      if(j==index)taken=true;
+      if(j==0)put(rank,index);
+     }
+    } else {
+     uint32_t* cbits=bad+2;uint32_t* cidx=cbits+C;
+     auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sgi=int(sg.get_group_linear_id());
+     const uint32_t bits=sycl::bit_cast<uint32_t>(prob[j]);bool taken=false;
+     for(int k=0;k<Top;++k){
+      const uint32_t top=sycl::reduce_over_group(sg,taken?0u:bits+1u,sycl::maximum<uint32_t>());
+      const int index=sycl::reduce_over_group(sg,(!taken&&bits+1u==top)?j:N,sycl::minimum<int>());
+      if(j==index){taken=true;cbits[sgi*Top+k]=bits;cidx[sgi*Top+k]=uint32_t(j);}
+     }
+     it.barrier(sycl::access::fence_space::local_space);
+     if(sgi==0){
+      constexpr int PER=C/32;uint32_t cb[PER],ci[PER];bool tk[PER];
+      #pragma unroll
+      for(int c=0;c<PER;++c){cb[c]=cbits[lane+32*c];ci[c]=cidx[lane+32*c];tk[c]=false;}
+      for(int rank=0;rank<Top;++rank){
+       uint32_t best=0;
+       #pragma unroll
+       for(int c=0;c<PER;++c)best=std::max(best,tk[c]?0u:cb[c]+1u);
+       const uint32_t top=sycl::reduce_over_group(sg,best,sycl::maximum<uint32_t>());
+       uint32_t mi=uint32_t(N);
+       #pragma unroll
+       for(int c=0;c<PER;++c)if(!tk[c]&&cb[c]+1u==top)mi=std::min(mi,ci[c]);
+       const uint32_t index=sycl::reduce_over_group(sg,mi,sycl::minimum<uint32_t>());
+       #pragma unroll
+       for(int c=0;c<PER;++c)if(ci[c]==index)tk[c]=true;
+       if(lane==0)put(rank,int(index));
+      }
+     }
+    }
+
+    // Only selected ties can affect the reference top-ten permutation.
+    it.barrier(sycl::access::fence_space::local_space);
+    bool internal=false;
+    if(j==0)for(int k=1;k<Top;++k)internal|=prob[selected[k-1]]==prob[selected[k]];
+    const int cutoff=selected[Top-1];
+    const bool tied=sycl::any_of_group(g,internal||(j!=cutoff&&prob[j]==prob[cutoff]));
+    if(tied){
+     if(j==0){
+      int* order=reference_indices.get_multi_ptr<sycl::access::decorated::no>().get();
+      auto* stack=reference_frames.get_multi_ptr<sycl::access::decorated::no>().get();
+      const float* probability=prob.get_multi_ptr<sycl::access::decorated::no>().get();
+      bool valid=router_reference_sort::sort_indices_workspace(probability,order,N,stack);
+      // Complete all checks before changing IDs or fused route descriptors.
+      for(int rank=0;valid&&rank<Top;++rank){
+       const int old=selected[rank],next=order[rank];
+       valid=next>=0&&next<N&&prob[old]==prob[next];
+       for(int previous=0;valid&&previous<rank;++previous)valid=order[previous]!=next;
+       if(valid&&old!=next)valid=sycl::bit_cast<uint32_t>(rb.in(0).get(old))==sycl::bit_cast<uint32_t>(rb.in(0).get(next));
+      }
+      if(!valid){bad[0]=1;rb.fail();}
+      else for(int rank=0;rank<Top;++rank){
+       rb.out(0).put(rank,order[rank]);
+       if(rb.s.no>=4){rb.out(2).put(rank*3,order[rank]);rb.out(3).put(rank*3,order[rank]);}
+      }
+     }
+     it.barrier(sycl::access::fence_space::local_space);
+     if(bad[0])return;
+    }
+    if(j==0){float sum=subtree<32>(Top,0,[&](int i){return rb.out(1).get(i);});for(int i=0;i<Top;++i)rb.out(1).put(i,rb.out(1).get(i)/sum);}
+   }));});
+ }
+};
 // HC combine and expert gather, F32 mode, without the generic accessor: each item handles four consecutive elements with
 // the SimpleNew expression unchanged (stream + branch*(2*sigmoid(inject/4)); exact copies for the gather), and routes and
 // validity exactly as before (an invalid id sets the sticky error, as the second gather phase did). Rows of a prefill
@@ -494,6 +595,10 @@ struct ArgmaxFast final:ownrt::SyclOperation {
  }
 };
 inline bool argmax_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ARGMAX_FAST");return !e||e[0]!='0';}();return on;}
+inline bool reference_route_tie_sort(){static const bool on=[]{
+ const char* e=std::getenv("OWNRT_REFERENCE_ROUTE_TIE_SORT");if(!e||std::string(e)=="0")return false;
+ if(std::string(e)=="1")return true;throw std::invalid_argument("OWNRT_REFERENCE_ROUTE_TIE_SORT must be 0 or 1");
+ }();return on;}
 inline bool route_fast(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_FAST");return !e||e[0]!='0';}();return on;}
 inline bool route_group(){static const bool on=[]{const char* e=std::getenv("OWNRT_ROUTE_GROUP");return e&&e[0]=='1';}();return on;}
 #endif
@@ -535,6 +640,13 @@ struct Glue final:ownrt::SyclOperation {
 }
 Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::Allocation> bindings,ownrt::Allocation control,ownrt::Allocation score,ownrt::Allocation probability,std::span<const ownrt::Event> deps){
  if(bindings.size()!=size_t(s.ni+s.no+s.nw+5)||bindings.size()>31)throw std::invalid_argument("adapter binding count");
+#ifndef OWN_RT_HOST_ONLY
+ if(s.op==Op::route&&reference_route_tie_sort()){
+  if(s.special!=Special::normal||(s.implementation!=1&&s.implementation!=11)||s.sizes[0]!=512||s.site.shape[1]!=10||!s.f32_activations||(s.no!=2&&s.no!=4)||s.tokens<1||!route_fast()||(!experts_v2::enabled("route")&&!experts_v2::enabled("guard")))
+   throw std::invalid_argument("reference tie sort unsupported route treatment");
+ }
+#endif
+
  if(s.f32_activations){
   // Exact mode: no BF16 activation buffer may reach a kernel, and only F32-capable implementations run.
   for(int j=0;j<s.ni+s.no;++j)if(s.types[j]==Scalar::bf16)throw std::invalid_argument("BF16 activation buffer in exact F32 mode");
@@ -562,6 +674,12 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  if(s.implementation&&s.special==Special::normal){switch(s.op){
  case Op::route:if(s.sizes[0]==512&&s.site.shape[1]==10){
 #ifndef OWN_RT_HOST_ONLY
+  if(reference_route_tie_sort()){
+   if(!route_fast())throw std::invalid_argument("reference tie sort requires RouteFast2");
+   if(experts_v2::enabled("route")){RouteReferenceTie2<512,10,true> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   if(experts_v2::enabled("guard")){RouteReferenceTie2<512,10,false> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
+   throw std::invalid_argument("reference tie sort requires RouteFast2 treatment");
+  }
   if(route_fast()&&experts_v2::enabled("route")){RouteFast2<512,10,true> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
   if(route_fast()&&experts_v2::enabled("guard")){RouteFast2<512,10,false> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
   if(route_fast()){RouteFast<512,10> op(s);auto e=d.compute(op,bindings,deps);return {e,e,1};}
