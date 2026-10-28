@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.equal16-comparator-preparation.v1",
+  "status": "source and bounded CPU guards ready; full candidate comparison not run",
+  "tests": {
+    "passed": true,
+    "count": 6,
+    "wall_s": 0.476,
+    "tool_chunk": "444ae0"
+  },
+  "control_metadata_checks": {
+    "passed": true,
+    "tool_chunk": "6fe47d",
+    "coverage": "actual clean terminal, all owner receipts/censuses, retained native seals, completed full-byte archive authority; archive stat only, no HDD reread"
+  },
+  "sources": {
+    "compare_reference_long.py": "b7b286ce4eb08dcb4f35dc2926dd0bf01c9c93a1e58f911aa9c8963fb73711c4",
+    "test_compare_reference_long.py": "edd010755773bf3f1b76a9fc9d90bd69e5f58c043f7dc90bd82d20a1d04f21c1"
+  },
+  "registration_sha256": "8337309c09899db2ef9fd440d7bda5b2c85aa24aede16193391445df30daad1b",
+  "invocation": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/compare_reference_long.py",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/reference-policy-long512-registration.json",
+    "--archive",
+    "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/archive.json",
+    "--out",
+    "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/equal16-full-proof-r1.json"
+  ],
+  "scope": "Complete canonical2065 target and73 draft cross-topology equality, actual512IDs/122364pairs/nativechunks, same262K/binary/reference-policy/actors. Full candidate payload read once, original verified archive authority reused. Only after root releases both completed runs."
+}

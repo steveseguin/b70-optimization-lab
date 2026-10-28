@@ -1,0 +1,75 @@
+{
+  "schema": "ownrt.equal16-matched-long512.v1",
+  "status": "mixed-long-workload-win-decode-loss-not-default",
+  "identity": {
+    "native": "339b75",
+    "routing": "reference",
+    "prompt_tokens": 121854,
+    "output_tokens": 512,
+    "reserved_context": 262144,
+    "targets": 3,
+    "dedicated_draft": 1,
+    "control_cuts": [
+      0,
+      17,
+      33,
+      48
+    ],
+    "equal16_cuts": [
+      0,
+      16,
+      32,
+      48
+    ],
+    "config_differences": {
+      "boundaries": [
+        [
+          0,
+          17,
+          33,
+          48
+        ],
+        [
+          0,
+          16,
+          32,
+          48
+        ]
+      ],
+      "output": [
+        "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-output",
+        "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/equal16-output"
+      ]
+    }
+  },
+  "control": {
+    "ttft_s": 250.84163720393553,
+    "request_s": 261.38151908502914,
+    "first99_tps": 52.4150424602773,
+    "all511_tps": 48.515126328886275,
+    "lifecycle_s": 482.72893932578154
+  },
+  "equal16": {
+    "ttft_s": 236.20906309294514,
+    "request_s": 248.71683319285512,
+    "first99_tps": 44.58586209375073,
+    "all511_tps": 40.875749870288466,
+    "lifecycle_s": 468.58200415805914
+  },
+  "request_time_reduction_percent": 4.845287431378853,
+  "ttft_reduction_percent": 5.833391247998443,
+  "all511_decode_rate_reduction_percent": 15.746380637680147,
+  "proof": {
+    "passed": true,
+    "canonical_targets": 2065,
+    "canonical_draft": 73,
+    "canonical_pairs": 122364,
+    "outputs": 512,
+    "pair_sequence_sha256": "046dcd02c80153096103d4cfef6bb937055f25a0927c8bec77ee2a60958c2ad3",
+    "exclusion_scope": "Existing measured_target policy: inactive alternate banks and nonfinal head scratch excluded from cross-topology canonical comparison; EVERY candidate byte still read against its own entry/full seals.",
+    "scope": "Same262K reference-route policy and binary, contiguous cuts17/16/15 to16/16/16 only. Complete canonical target/draft state and actual outputs/pairs/chunks. First-inference screen, not independent CPU model validation or suite promotion."
+  },
+  "lifecycle": "all four owners exited0 in both runs; passive postflights clean",
+  "retention": "Candidate archive receipt confirms full byte comparison, all seals matched, raw bundles removed. Existing control-r1-evidence/archive.json.gz remains the control archive authority. No archived multiGB payload reread.",
+  "limits": "One matched first-inference long512 screen; decode slower. Not realistic-suite, default promotion or independent CPU proof; canonical measured_target scope excludes inactive alternate banks and nonfinal head scratch, not all physical bytes equal across layouts."
+}

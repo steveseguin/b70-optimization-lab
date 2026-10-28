@@ -2,10 +2,10 @@
 
 **October 28 — AOT 3+1/262K long512 screen fastest; 12 saved greedy continuations agree with CPU.**
 
-Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
-**261.330404s**, versus369.931021s for AOT2+1/128K (**29.3570% less request time**).
-All512 outputs and full registered cross-context state/pairs matched; details and
-long512 table appear below. Broader production fidelity and default promotion remain unqualified.
+Latest matched 121,854/512 screen: equal16 three-target plus draft layout at
+262K completed in **248.716833s**, versus261.381519s for the prior cuts on the
+same binary (**4.8453% less request time**). Canonical state and outputs matched;
+decode was slower. This is a long-prompt tradeoff, not a universal promotion.
 
 The opt-in GPU reference tie-sort candidate completed the seven historical
 prefixes plus 12 fresh realistic generations in one owner lifetime. All 14 final
@@ -39,14 +39,23 @@ before RAM-backed files were removed. This is short-gate compatibility, not
 an independent long-prompt or full realistic-suite fidelity claim.
 Proofs: `reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/index.json`.
 
-The matched long512 control is active: 121,854 prompt tokens, max512, 3+1,
-262K reservation, cuts0/17/33/48, reference target routing ON, binary339b75.
-Unit `sc117-reference-route-long512-control-20261028-r1`, invocation
-`733d7d0ee74248d9bc7fe2bf92cfbb9a`; output under
-`/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-output`.
-The equal16 layout is planned and unlaunched. Shared native/Python source pins
-stay frozen through these runs. Registration:
-`equal16-topology-screen/reference-policy-long512-registration.json`.
+The matched reference-policy long512 equal16 screen completed cleanly. Cuts
+0/16/32/48 reduced request time to **248.716833s** from261.381519s (**4.8453% less**)
+and TTFT to236.209063s from250.841637s. Decode slowed: all511 rate40.875750tok/s
+versus48.515126tok/s. Both used121,854/512 input/output,262K reservation,
+3 targets plus draft, binary339b75 and reference routing; only cuts/output paths differ.
+The canonical measured_target gate passed2,065 target sources,73 draft sources,
+122,364 pairs and all512 outputs. This scope excludes inactive alternate banks
+and nonfinal head scratch; it does not claim all physical bytes equal across layouts.
+All owners exited0 and passive postflights were clean. Candidate full-state archive
+was byte-verified before raw bundles were removed; the control archive receipt
+remains authoritative. This is a mixed long-workload win with slower decode,
+not full-suite/default promotion or independent CPU proof. Evidence:
+`equal16-topology-screen/equal16-r1-evidence/index.json`.
+Shared native/Python pins remain frozen. A short existing-profiler diagnostic
+is active for the next prefill decision, unit `sc117-reference-prefill-profile-20261028-r1`,
+invocation `0a35869462d64c5d82bc0696b31fa798`. Registration:
+`reference-one-row/router-tie-candidate/planner-policy/prefill-profile-planned-r1/registration.json`.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns
