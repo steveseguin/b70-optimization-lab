@@ -1,0 +1,7 @@
+Equal16 target-layout CPU screen; no GPU/plan/launch.
+
+Incumbent cuts0/17/33/48 to candidate0/16/32/48 moves GDN layers16 and32 right byone target. Four QSA layers remain on each target, so full262K KV capacity allocations do not move. Exact actual named layer allocations are in screen.json, grouped weights/KV/recurrent/workspace, plus real ring saved/image and capture/restore table deltas. S0 legacy speculative image/table allocations conservatively remain at the larger incumbent extents. Projected device upper bounds22,694,517,420 /23,919,108,144 /24,962,051,504 B; margins9.518/8.293/7.250GB to30GiB. Dedicated provider stays3,746,249,732B. This is an accounting fit projection, not native runtime admission or unmeasured driver-shadow assurance.
+
+The retained native prefill-timings.jsonl files are empty. Only stage command aggregates exist; per-layer cost cannot be inferred from equal layer counts. Timing redistribution is conditional on unknown moved-layer cost. No speed prediction.
+
+Candidate-config.json.gz is a source-only long512 config based on exact preserved121854 prompt IDs, copy lookup, four slots and bounded scheduler; target cuts alone change, with explicit new binary receipt/output identity. No plan exists. Extract into a fresh exclusive root only after quality work, validate actual source pins and CPU allocation admission, qualify1677/32 fullstate/canonicalpairs first, then fair long timing. Incumbent remains default. Startup floor remains103079215104B and other floors are recorded unchanged in screen.json.

@@ -1,0 +1,2010 @@
+{
+  "schema": "ownrt.equal16-topology-cpu-screen.v1",
+  "status": "fits-conservative-retained-census-projection-not-native-admission",
+  "incumbent_boundaries": [
+    0,
+    17,
+    33,
+    48
+  ],
+  "candidate_boundaries": [
+    0,
+    16,
+    32,
+    48
+  ],
+  "context": 262144,
+  "targets": [
+    {
+      "stage": 0,
+      "incumbent_bytes": 23930431836,
+      "candidate_upper_bound_bytes": 22694517420,
+      "candidate_margin_to_30GiB": 9517737300,
+      "fits_projection": true,
+      "incumbent_by_category": {
+        "KV": 4966055936,
+        "recurrent-state": 85721104,
+        "runtime-overhead": 559846156,
+        "weights": 17997488512,
+        "workspace": 321320128
+      },
+      "candidate_by_category_upper_bound": {
+        "KV": 4966055936,
+        "recurrent-state": 79183888,
+        "runtime-overhead": 525147448,
+        "weights": 16803478016,
+        "workspace": 320652132
+      },
+      "qsa_layers": 4
+    },
+    {
+      "stage": 1,
+      "incumbent_bytes": 23790980912,
+      "candidate_upper_bound_bytes": 23919108144,
+      "candidate_margin_to_30GiB": 8293146576,
+      "fits_projection": true,
+      "incumbent_by_category": {
+        "KV": 4966055936,
+        "recurrent-state": 39223296,
+        "runtime-overhead": 213334372,
+        "weights": 18472303616,
+        "workspace": 100063692
+      },
+      "candidate_by_category_upper_bound": {
+        "KV": 4966055936,
+        "recurrent-state": 42491904,
+        "runtime-overhead": 236215396,
+        "weights": 18574281216,
+        "workspace": 100063692
+      },
+      "qsa_layers": 4
+    },
+    {
+      "stage": 2,
+      "incumbent_bytes": 23854264320,
+      "candidate_upper_bound_bytes": 24962051504,
+      "candidate_margin_to_30GiB": 7250203216,
+      "fits_projection": true,
+      "incumbent_by_category": {
+        "KV": 4966055936,
+        "recurrent-state": 35954688,
+        "runtime-overhead": 204781840,
+        "weights": 18546988160,
+        "workspace": 100483696
+      },
+      "candidate_by_category_upper_bound": {
+        "KV": 4966055936,
+        "recurrent-state": 39223296,
+        "runtime-overhead": 216599524,
+        "weights": 19639021056,
+        "workspace": 101151692
+      },
+      "qsa_layers": 4
+    }
+  ],
+  "provider_device_bytes_unchanged": 3746249732,
+  "provider_separate": true,
+  "sources": {
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage0/native/census.json": "7ab88140cb1e2ad048ee53f3594aa59ae2961a7ca62b7fe37fb796f270601c5c",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage0/native/ring-checkpoint-layout.json": "c5e851026a957e4fd8d79f4290802935e2470e7d6f496a1e85a3f4d68e8da055",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage1/native/census.json": "928dc6e6ac9f565c3619d8ede61fe6f4812005a55a4a948e0bb0cb721aa2ac64",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage1/native/ring-checkpoint-layout.json": "f0eefdd147cd55fdbc636c255a2718d79ac1b9ea32ce4311b679b0158e179617",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage2/native/census.json": "483874ff8216dea6c7bd26ba713744ee45b70d129ad101499a24460c6e9e98a2",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stage2/native/ring-checkpoint-layout.json": "2e1e682b497e42d5ff91160019b0987b6cc6ea197e59c2bde38521e09cd008aa",
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1/output/stageprovider/native/census.json": "60c758e4715f2c67f25805eb997b3ce532c05a69a471e7ae4a12541f9eb4bd68"
+  },
+  "moves": [
+    {
+      "layer": 16,
+      "kind": "GDN",
+      "from": 0,
+      "to": 1,
+      "device_named_bytes": 1204484316,
+      "by_category": {
+        "recurrent-state": 6537216,
+        "runtime-overhead": 3268608,
+        "weights": 1194010496,
+        "workspace": 667996
+      },
+      "named_allocation_count": 70,
+      "ring_slot_saved_bytes": 10473820,
+      "ring_table_items": 45,
+      "ring_depth": 3,
+      "ring_image_delta_bytes": 31421460,
+      "ring_capture_restore_tables_delta_bytes": 8640,
+      "allocations": [
+        {
+          "id": 1337,
+          "label": "card0:blk.16.attention",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 1339,
+          "label": "card0:blk.16.expert_input",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 102400,
+          "live": true
+        },
+        {
+          "id": 1341,
+          "label": "card0:blk.16.expsact",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 1343,
+          "label": "card0:blk.16.expsdown",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 102400,
+          "live": true
+        },
+        {
+          "id": 1345,
+          "label": "card0:blk.16.expsdown.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 1347,
+          "label": "card0:blk.16.expsgate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 1349,
+          "label": "card0:blk.16.expsgate.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 1351,
+          "label": "card0:blk.16.expsup",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 1353,
+          "label": "card0:blk.16.expsup.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 1355,
+          "label": "card0:blk.16.gdn.a",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 1357,
+          "label": "card0:blk.16.gdn.b",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 1359,
+          "label": "card0:blk.16.gdn.conv",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1361,
+          "label": "card0:blk.16.gdn.gated",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 1363,
+          "label": "card0:blk.16.gdn.history",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 122880,
+          "live": true
+        },
+        {
+          "id": 1365,
+          "label": "card0:blk.16.gdn.qkv",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1367,
+          "label": "card0:blk.16.gdn.state",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 3145728,
+          "live": true
+        },
+        {
+          "id": 1369,
+          "label": "card0:blk.16.gdn.y",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 1371,
+          "label": "card0:blk.16.gdn.z",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 1373,
+          "label": "card0:blk.16.hc.a.act",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 1375,
+          "label": "card0:blk.16.hc.a.gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1377,
+          "label": "card0:blk.16.hc.a.inject",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 16,
+          "live": true
+        },
+        {
+          "id": 1379,
+          "label": "card0:blk.16.hc.a.low",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 1381,
+          "label": "card0:blk.16.hc.a.mix",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 1383,
+          "label": "card0:blk.16.hc.a.norm",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1385,
+          "label": "card0:blk.16.hc.f.act",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 1387,
+          "label": "card0:blk.16.hc.f.gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1389,
+          "label": "card0:blk.16.hc.f.inject",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 16,
+          "live": true
+        },
+        {
+          "id": 1391,
+          "label": "card0:blk.16.hc.f.low",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 1393,
+          "label": "card0:blk.16.hc.f.mix",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 1395,
+          "label": "card0:blk.16.hc.f.norm",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 1397,
+          "label": "card0:blk.16.ids",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 1399,
+          "label": "card0:blk.16.moe",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 1401,
+          "label": "card0:blk.16.prob",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 1403,
+          "label": "card0:blk.16.router",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2048,
+          "live": true
+        },
+        {
+          "id": 1405,
+          "label": "card0:blk.16.routes",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 120,
+          "live": true
+        },
+        {
+          "id": 1407,
+          "label": "card0:blk.16.routes.down",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 120,
+          "live": true
+        },
+        {
+          "id": 1409,
+          "label": "card0:blk.16.shared_gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 4,
+          "live": true
+        },
+        {
+          "id": 1411,
+          "label": "card0:blk.16.shexpact",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 1413,
+          "label": "card0:blk.16.shexpdown",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 1415,
+          "label": "card0:blk.16.shexpgate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 1417,
+          "label": "card0:blk.16.shexpup",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 7441,
+          "label": "card0:weight:blk.16.hc_attn_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 7443,
+          "label": "card0:weight:blk.16.hc_attn_down.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7446,
+          "label": "card0:weight:blk.16.hc_attn_up.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7449,
+          "label": "card0:weight:blk.16.hc_attn_inject.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 81920,
+          "live": true
+        },
+        {
+          "id": 7451,
+          "label": "card0:weight:blk.16.attn_qkv.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 21504000,
+          "live": true
+        },
+        {
+          "id": 7461,
+          "label": "card0:weight:blk.16.attn_gate.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 8355840,
+          "live": true
+        },
+        {
+          "id": 7464,
+          "label": "card0:weight:blk.16.ssm_alpha.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 245760,
+          "live": true
+        },
+        {
+          "id": 7466,
+          "label": "card0:weight:blk.16.ssm_beta.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 245760,
+          "live": true
+        },
+        {
+          "id": 7468,
+          "label": "card0:weight:blk.16.ssm_conv1d.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 163840,
+          "live": true
+        },
+        {
+          "id": 7470,
+          "label": "card0:weight:blk.16.ssm_a",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 7472,
+          "label": "card0:weight:blk.16.ssm_dt.bias",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 7474,
+          "label": "card0:weight:blk.16.ssm_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 512,
+          "live": true
+        },
+        {
+          "id": 7476,
+          "label": "card0:weight:blk.16.ssm_out.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 16711680,
+          "live": true
+        },
+        {
+          "id": 7482,
+          "label": "card0:weight:blk.16.hc_ffn_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 7484,
+          "label": "card0:weight:blk.16.hc_ffn_down.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7487,
+          "label": "card0:weight:blk.16.hc_ffn_up.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7490,
+          "label": "card0:weight:blk.16.hc_ffn_inject.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 81920,
+          "live": true
+        },
+        {
+          "id": 7492,
+          "label": "card0:weight:blk.16.ffn_gate_inp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 2621440,
+          "live": true
+        },
+        {
+          "id": 7494,
+          "label": "card0:weight:blk.16.ffn_gate_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 321126400,
+          "live": true
+        },
+        {
+          "id": 7572,
+          "label": "card0:weight:blk.16.ffn_up_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 321126400,
+          "live": true
+        },
+        {
+          "id": 7650,
+          "label": "card0:weight:blk.16.ffn_down_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 471859200,
+          "live": true
+        },
+        {
+          "id": 7764,
+          "label": "card0:weight:blk.16.ffn_gate_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 921600,
+          "live": true
+        },
+        {
+          "id": 7766,
+          "label": "card0:weight:blk.16.ffn_up_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 921600,
+          "live": true
+        },
+        {
+          "id": 7768,
+          "label": "card0:weight:blk.16.ffn_down_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 1740800,
+          "live": true
+        },
+        {
+          "id": 7770,
+          "label": "card0:weight:blk.16.ffn_gate_inp_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 5120,
+          "live": true
+        },
+        {
+          "id": 7872,
+          "label": "card0:alternate:blk.16.gdn.history",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 122880,
+          "live": true
+        },
+        {
+          "id": 7873,
+          "label": "card0:speculative-reserve:blk.16.gdn.history",
+          "category": "runtime-overhead",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 122880,
+          "live": true
+        },
+        {
+          "id": 7876,
+          "label": "card0:alternate:blk.16.gdn.state",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 3145728,
+          "live": true
+        },
+        {
+          "id": 7877,
+          "label": "card0:speculative-reserve:blk.16.gdn.state",
+          "category": "runtime-overhead",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 3145728,
+          "live": true
+        }
+      ],
+      "checkpoint_rows": [
+        {
+          "id": 1337,
+          "label": "card0:blk.16.attention",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1339,
+          "label": "card0:blk.16.expert_input",
+          "bytes": 102400,
+          "saved_bytes": 102400,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1341,
+          "label": "card0:blk.16.expsact",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1343,
+          "label": "card0:blk.16.expsdown",
+          "bytes": 102400,
+          "saved_bytes": 102400,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1345,
+          "label": "card0:blk.16.expsdown.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1347,
+          "label": "card0:blk.16.expsgate",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1349,
+          "label": "card0:blk.16.expsgate.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1351,
+          "label": "card0:blk.16.expsup",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1353,
+          "label": "card0:blk.16.expsup.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1355,
+          "label": "card0:blk.16.gdn.a",
+          "bytes": 192,
+          "saved_bytes": 192,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1357,
+          "label": "card0:blk.16.gdn.b",
+          "bytes": 192,
+          "saved_bytes": 192,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1359,
+          "label": "card0:blk.16.gdn.conv",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1361,
+          "label": "card0:blk.16.gdn.gated",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1363,
+          "label": "card0:blk.16.gdn.history",
+          "bytes": 122880,
+          "saved_bytes": 122880,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1365,
+          "label": "card0:blk.16.gdn.qkv",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1367,
+          "label": "card0:blk.16.gdn.state",
+          "bytes": 3145728,
+          "saved_bytes": 3145728,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1369,
+          "label": "card0:blk.16.gdn.y",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1371,
+          "label": "card0:blk.16.gdn.z",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1373,
+          "label": "card0:blk.16.hc.a.act",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1375,
+          "label": "card0:blk.16.hc.a.gate",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1377,
+          "label": "card0:blk.16.hc.a.inject",
+          "bytes": 16,
+          "saved_bytes": 16,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1379,
+          "label": "card0:blk.16.hc.a.low",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1381,
+          "label": "card0:blk.16.hc.a.mix",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1383,
+          "label": "card0:blk.16.hc.a.norm",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1385,
+          "label": "card0:blk.16.hc.f.act",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1387,
+          "label": "card0:blk.16.hc.f.gate",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1389,
+          "label": "card0:blk.16.hc.f.inject",
+          "bytes": 16,
+          "saved_bytes": 16,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1391,
+          "label": "card0:blk.16.hc.f.low",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1393,
+          "label": "card0:blk.16.hc.f.mix",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1395,
+          "label": "card0:blk.16.hc.f.norm",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1397,
+          "label": "card0:blk.16.ids",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1399,
+          "label": "card0:blk.16.moe",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1401,
+          "label": "card0:blk.16.prob",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1403,
+          "label": "card0:blk.16.router",
+          "bytes": 2048,
+          "saved_bytes": 2048,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1405,
+          "label": "card0:blk.16.routes",
+          "bytes": 120,
+          "saved_bytes": 120,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1407,
+          "label": "card0:blk.16.routes.down",
+          "bytes": 120,
+          "saved_bytes": 120,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1409,
+          "label": "card0:blk.16.shared_gate",
+          "bytes": 4,
+          "saved_bytes": 4,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1411,
+          "label": "card0:blk.16.shexpact",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1413,
+          "label": "card0:blk.16.shexpdown",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1415,
+          "label": "card0:blk.16.shexpgate",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 1417,
+          "label": "card0:blk.16.shexpup",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 7872,
+          "label": "card0:alternate:blk.16.gdn.history",
+          "bytes": 122880,
+          "saved_bytes": 122880,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 7873,
+          "label": "card0:speculative-reserve:blk.16.gdn.history",
+          "bytes": 122880,
+          "saved_bytes": 122880,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 7876,
+          "label": "card0:alternate:blk.16.gdn.state",
+          "bytes": 3145728,
+          "saved_bytes": 3145728,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 7877,
+          "label": "card0:speculative-reserve:blk.16.gdn.state",
+          "bytes": 3145728,
+          "saved_bytes": 3145728,
+          "checkpoint": "full-allocation"
+        }
+      ]
+    },
+    {
+      "layer": 32,
+      "kind": "GDN",
+      "from": 1,
+      "to": 2,
+      "device_named_bytes": 1095969500,
+      "by_category": {
+        "recurrent-state": 3268608,
+        "weights": 1092032896,
+        "workspace": 667996
+      },
+      "named_allocation_count": 66,
+      "ring_slot_saved_bytes": 3936604,
+      "ring_table_items": 41,
+      "ring_depth": 3,
+      "ring_image_delta_bytes": 11809812,
+      "ring_capture_restore_tables_delta_bytes": 7872,
+      "allocations": [
+        {
+          "id": 2499,
+          "label": "card0:blk.32.attention",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 2501,
+          "label": "card0:blk.32.expert_input",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 102400,
+          "live": true
+        },
+        {
+          "id": 2503,
+          "label": "card0:blk.32.expsact",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 2505,
+          "label": "card0:blk.32.expsdown",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 102400,
+          "live": true
+        },
+        {
+          "id": 2507,
+          "label": "card0:blk.32.expsdown.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 2509,
+          "label": "card0:blk.32.expsgate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 2511,
+          "label": "card0:blk.32.expsgate.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 2513,
+          "label": "card0:blk.32.expsup",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 25600,
+          "live": true
+        },
+        {
+          "id": 2515,
+          "label": "card0:blk.32.expsup.status",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 2517,
+          "label": "card0:blk.32.gdn.a",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 2519,
+          "label": "card0:blk.32.gdn.b",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 2521,
+          "label": "card0:blk.32.gdn.conv",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2523,
+          "label": "card0:blk.32.gdn.gated",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 2525,
+          "label": "card0:blk.32.gdn.history",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 122880,
+          "live": true
+        },
+        {
+          "id": 2527,
+          "label": "card0:blk.32.gdn.qkv",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2529,
+          "label": "card0:blk.32.gdn.state",
+          "category": "recurrent-state",
+          "lifetime": "request",
+          "memory": "device",
+          "bytes": 3145728,
+          "live": true
+        },
+        {
+          "id": 2531,
+          "label": "card0:blk.32.gdn.y",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 2533,
+          "label": "card0:blk.32.gdn.z",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 24576,
+          "live": true
+        },
+        {
+          "id": 2535,
+          "label": "card0:blk.32.hc.a.act",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 2537,
+          "label": "card0:blk.32.hc.a.gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2539,
+          "label": "card0:blk.32.hc.a.inject",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 16,
+          "live": true
+        },
+        {
+          "id": 2541,
+          "label": "card0:blk.32.hc.a.low",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 2543,
+          "label": "card0:blk.32.hc.a.mix",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 2545,
+          "label": "card0:blk.32.hc.a.norm",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2547,
+          "label": "card0:blk.32.hc.f.act",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 2549,
+          "label": "card0:blk.32.hc.f.gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2551,
+          "label": "card0:blk.32.hc.f.inject",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 16,
+          "live": true
+        },
+        {
+          "id": 2553,
+          "label": "card0:blk.32.hc.f.low",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 1280,
+          "live": true
+        },
+        {
+          "id": 2555,
+          "label": "card0:blk.32.hc.f.mix",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 2557,
+          "label": "card0:blk.32.hc.f.norm",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 2559,
+          "label": "card0:blk.32.ids",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 2561,
+          "label": "card0:blk.32.moe",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 2563,
+          "label": "card0:blk.32.prob",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 40,
+          "live": true
+        },
+        {
+          "id": 2565,
+          "label": "card0:blk.32.router",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2048,
+          "live": true
+        },
+        {
+          "id": 2567,
+          "label": "card0:blk.32.routes",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 120,
+          "live": true
+        },
+        {
+          "id": 2569,
+          "label": "card0:blk.32.routes.down",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 120,
+          "live": true
+        },
+        {
+          "id": 2571,
+          "label": "card0:blk.32.shared_gate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 4,
+          "live": true
+        },
+        {
+          "id": 2573,
+          "label": "card0:blk.32.shexpact",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 2575,
+          "label": "card0:blk.32.shexpdown",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 10240,
+          "live": true
+        },
+        {
+          "id": 2577,
+          "label": "card0:blk.32.shexpgate",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 2579,
+          "label": "card0:blk.32.shexpup",
+          "category": "workspace",
+          "lifetime": "transaction",
+          "memory": "device",
+          "bytes": 2560,
+          "live": true
+        },
+        {
+          "id": 7417,
+          "label": "card0:weight:blk.32.hc_attn_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 7419,
+          "label": "card0:weight:blk.32.hc_attn_down.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7422,
+          "label": "card0:weight:blk.32.hc_attn_up.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7425,
+          "label": "card0:weight:blk.32.hc_attn_inject.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 81920,
+          "live": true
+        },
+        {
+          "id": 7427,
+          "label": "card0:weight:blk.32.attn_qkv.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 21504000,
+          "live": true
+        },
+        {
+          "id": 7437,
+          "label": "card0:weight:blk.32.attn_gate.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 10813440,
+          "live": true
+        },
+        {
+          "id": 7441,
+          "label": "card0:weight:blk.32.ssm_alpha.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 245760,
+          "live": true
+        },
+        {
+          "id": 7443,
+          "label": "card0:weight:blk.32.ssm_beta.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 245760,
+          "live": true
+        },
+        {
+          "id": 7445,
+          "label": "card0:weight:blk.32.ssm_conv1d.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 163840,
+          "live": true
+        },
+        {
+          "id": 7447,
+          "label": "card0:weight:blk.32.ssm_a",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 7449,
+          "label": "card0:weight:blk.32.ssm_dt.bias",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 192,
+          "live": true
+        },
+        {
+          "id": 7451,
+          "label": "card0:weight:blk.32.ssm_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 512,
+          "live": true
+        },
+        {
+          "id": 7453,
+          "label": "card0:weight:blk.32.ssm_out.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 16711680,
+          "live": true
+        },
+        {
+          "id": 7459,
+          "label": "card0:weight:blk.32.hc_ffn_norm.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 40960,
+          "live": true
+        },
+        {
+          "id": 7461,
+          "label": "card0:weight:blk.32.hc_ffn_down.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7464,
+          "label": "card0:weight:blk.32.hc_ffn_up.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 6553600,
+          "live": true
+        },
+        {
+          "id": 7467,
+          "label": "card0:weight:blk.32.hc_ffn_inject.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 81920,
+          "live": true
+        },
+        {
+          "id": 7469,
+          "label": "card0:weight:blk.32.ffn_gate_inp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 2621440,
+          "live": true
+        },
+        {
+          "id": 7471,
+          "label": "card0:weight:blk.32.ffn_gate_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 268697600,
+          "live": true
+        },
+        {
+          "id": 7537,
+          "label": "card0:weight:blk.32.ffn_up_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 268697600,
+          "live": true
+        },
+        {
+          "id": 7603,
+          "label": "card0:weight:blk.32.ffn_down_exps.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 471859200,
+          "live": true
+        },
+        {
+          "id": 7717,
+          "label": "card0:weight:blk.32.ffn_gate_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 1344000,
+          "live": true
+        },
+        {
+          "id": 7719,
+          "label": "card0:weight:blk.32.ffn_up_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 921600,
+          "live": true
+        },
+        {
+          "id": 7721,
+          "label": "card0:weight:blk.32.ffn_down_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 1740800,
+          "live": true
+        },
+        {
+          "id": 7723,
+          "label": "card0:weight:blk.32.ffn_gate_inp_shexp.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 5120,
+          "live": true
+        }
+      ],
+      "checkpoint_rows": [
+        {
+          "id": 2499,
+          "label": "card0:blk.32.attention",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2501,
+          "label": "card0:blk.32.expert_input",
+          "bytes": 102400,
+          "saved_bytes": 102400,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2503,
+          "label": "card0:blk.32.expsact",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2505,
+          "label": "card0:blk.32.expsdown",
+          "bytes": 102400,
+          "saved_bytes": 102400,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2507,
+          "label": "card0:blk.32.expsdown.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2509,
+          "label": "card0:blk.32.expsgate",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2511,
+          "label": "card0:blk.32.expsgate.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2513,
+          "label": "card0:blk.32.expsup",
+          "bytes": 25600,
+          "saved_bytes": 25600,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2515,
+          "label": "card0:blk.32.expsup.status",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2517,
+          "label": "card0:blk.32.gdn.a",
+          "bytes": 192,
+          "saved_bytes": 192,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2519,
+          "label": "card0:blk.32.gdn.b",
+          "bytes": 192,
+          "saved_bytes": 192,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2521,
+          "label": "card0:blk.32.gdn.conv",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2523,
+          "label": "card0:blk.32.gdn.gated",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2525,
+          "label": "card0:blk.32.gdn.history",
+          "bytes": 122880,
+          "saved_bytes": 122880,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2527,
+          "label": "card0:blk.32.gdn.qkv",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2529,
+          "label": "card0:blk.32.gdn.state",
+          "bytes": 3145728,
+          "saved_bytes": 3145728,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2531,
+          "label": "card0:blk.32.gdn.y",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2533,
+          "label": "card0:blk.32.gdn.z",
+          "bytes": 24576,
+          "saved_bytes": 24576,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2535,
+          "label": "card0:blk.32.hc.a.act",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2537,
+          "label": "card0:blk.32.hc.a.gate",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2539,
+          "label": "card0:blk.32.hc.a.inject",
+          "bytes": 16,
+          "saved_bytes": 16,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2541,
+          "label": "card0:blk.32.hc.a.low",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2543,
+          "label": "card0:blk.32.hc.a.mix",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2545,
+          "label": "card0:blk.32.hc.a.norm",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2547,
+          "label": "card0:blk.32.hc.f.act",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2549,
+          "label": "card0:blk.32.hc.f.gate",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2551,
+          "label": "card0:blk.32.hc.f.inject",
+          "bytes": 16,
+          "saved_bytes": 16,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2553,
+          "label": "card0:blk.32.hc.f.low",
+          "bytes": 1280,
+          "saved_bytes": 1280,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2555,
+          "label": "card0:blk.32.hc.f.mix",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2557,
+          "label": "card0:blk.32.hc.f.norm",
+          "bytes": 40960,
+          "saved_bytes": 40960,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2559,
+          "label": "card0:blk.32.ids",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2561,
+          "label": "card0:blk.32.moe",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2563,
+          "label": "card0:blk.32.prob",
+          "bytes": 40,
+          "saved_bytes": 40,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2565,
+          "label": "card0:blk.32.router",
+          "bytes": 2048,
+          "saved_bytes": 2048,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2567,
+          "label": "card0:blk.32.routes",
+          "bytes": 120,
+          "saved_bytes": 120,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2569,
+          "label": "card0:blk.32.routes.down",
+          "bytes": 120,
+          "saved_bytes": 120,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2571,
+          "label": "card0:blk.32.shared_gate",
+          "bytes": 4,
+          "saved_bytes": 4,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2573,
+          "label": "card0:blk.32.shexpact",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2575,
+          "label": "card0:blk.32.shexpdown",
+          "bytes": 10240,
+          "saved_bytes": 10240,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2577,
+          "label": "card0:blk.32.shexpgate",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        },
+        {
+          "id": 2579,
+          "label": "card0:blk.32.shexpup",
+          "bytes": 2560,
+          "saved_bytes": 2560,
+          "checkpoint": "full-allocation"
+        }
+      ]
+    }
+  ],
+  "arithmetic": "Move exact actual named allocations and full GDN ring saved/table extents. Each moved table item32B, depth3, capture+restore. All full context QSA caches stay on same owner; 4QSA perstage. S0 legacy speculative-private image/tables conservatively retained unchanged, so actual admitted allocation may be smaller. No native PLAN_ONLY/new launch performed.",
+  "unmeasured": [
+    "Candidate exact runtime allocation/census remains unmeasured; driver/library shadows not included by original census.",
+    "No per-layer native prefill timings retained: three native prefill-timings.jsonl files are empty. Command aggregates alone cannot predict moved layer cost.",
+    "Compiler/source binary differs from old copy timing; new same-source correctness/timing required."
+  ],
+  "timing": {
+    "evidence": "lookup-view-candidate/long-pipeline-component-summary.json",
+    "incumbent_target_command_seconds": [
+      248.36160810210276,
+      218.53976512828376,
+      211.58488707826473,
+      171.54135024931747
+    ],
+    "provider_command_seconds": 171.5414,
+    "conditional_model": [
+      "T0_new=T0-cost(layer16)",
+      "T1_new=T1+cost(layer16)-cost(layer32)",
+      "T2_new=T2+cost(layer32)"
+    ],
+    "claim": "No estimated per-layer costs or endpoint speed prediction. Stage0 includes embedding/PLE; final stage includes head. Shape-specific QSA/GDN and different physical cards matter."
+  },
+  "prepared_config": "candidate-config.json.gz",
+  "config_scope": "Source-only executable config after extraction; no plan/launch/admission. Default OFF router tie env must remain absent; no diagnostic environment inherited. Qualification should first use same-source1677/32 full-state gate with fresh output/config/prompt authority before long512.",
+  "config_changes": {
+    "boundaries": [
+      0,
+      16,
+      32,
+      48
+    ],
+    "build_receipt": "/dev/shm/engine-build-router-tie-diagnostic-20261028-r2/build-receipt.json",
+    "output": "/dev/shm/sc117-equal16-3plus1-262k-long512-20261028-r1/output"
+  },
+  "floors": {
+    "memory_start_bytes": 103079215104,
+    "memory_floor_bytes": 8589934592,
+    "root_floor_bytes": 27000000000,
+    "evidence_floor_bytes": 2147483648
+  },
+  "next": "After current quality diagnostic drains, actual CPU per-layer source cost screen or bounded admitted qualification; do not bypass full state/canonical pair proof when boundaries change. Incumbent remains default."
+}
