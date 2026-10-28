@@ -1,5 +1,10 @@
 # Current Workspace State
 
+Owner requested finalization and neural.download recipe publication. No new GPU
+work is planned; remaining ideas stay in the retained backlog. The task-specific
+performance-focus monitor was stopped gracefully; unrelated processes were left
+unchanged. Publication is being completed by the coordinator.
+
 **October 28 — AOT 3+1/262K long512 screen fastest; 12 saved greedy continuations agree with CPU.**
 
 Latest matched 121,854/512 screen: equal16 three-target plus draft layout at
