@@ -503,7 +503,7 @@ static int run_rank(const Options& a) {
   }
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
-  else if(a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}
+  else if(a.rank==0&&!a.mini){if(std::getenv("OWNRT_LOOKUP_VIEW"))weights->map_lookups();else {const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}}
   else if(a.pipeline_live_draft&&a.pipeline_provider()&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups(true);}
 #endif
   save(a.output/"lookup-residency.json",weights->residency);
@@ -527,7 +527,7 @@ static int run_rank(const Options& a) {
   // Opt-in session checkpoint (ops 17-19, session_checkpoint.hpp): VERIFY only directly after the request reset,
   // APPLY only directly after a successful VERIFY. Any other command consumes both flags and drops held bytes.
   session::Held checkpoint_held;bool checkpoint_after_reset=false,checkpoint_after_verify=false;
-  auto execute=[&](const Request& r)->Reply {
+  auto execute_body=[&](const Request& r)->Reply {
    if(a.rank==1)engine->reply_report.before(r.op);
    auto received=std::chrono::steady_clock::now();
    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
@@ -690,6 +690,9 @@ static int run_rank(const Options& a) {
    if(a.pipeline_enabled()){response.reserved[0]=a.pipeline_stage;response.reserved[1]=a.pipeline_final();}
    return response;
   };
+  auto execute=[&](const Request& r)->Reply {
+   weights->verify_lookup_views();auto reply=execute_body(r);weights->verify_lookup_views();return reply;
+  };
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
    if(a.pipeline_enabled()){
     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
@@ -700,7 +703,7 @@ static int run_rank(const Options& a) {
     else if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||(a.pipeline_persistent_requests&&r.op==11&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
     else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
    }
-   if(r.op==finish){if(a.pipeline_ring)ring_dispatcher->attest();if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/"draft-final-state-sealed");break;}
+   if(r.op==finish){weights->verify_lookup_views();if(a.pipeline_ring)ring_dispatcher->attest();if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/"draft-final-state-sealed");weights->verify_lookup_views();break;}
    Reply response{};
    if(r.op==10){
     require(!c.pending,"native entry unresolved candidate");

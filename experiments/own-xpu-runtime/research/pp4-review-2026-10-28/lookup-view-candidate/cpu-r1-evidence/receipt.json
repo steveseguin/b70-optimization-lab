@@ -1,0 +1,79 @@
+{
+  "status": "passed",
+  "device_calls": 0,
+  "model_payload_reads": false,
+  "compile_argv": [
+    "/usr/bin/g++",
+    "-std=c++20",
+    "-O2",
+    "-g0",
+    "-DOWN_RT_HOST_ONLY",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/overlay/engine/src",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/test_lookup_view.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/overlay/engine/src/stage2/packet2/loader/gguf.cpp",
+    "-Wl,--gc-sections",
+    "-o",
+    "/dev/shm/sc117-lookup-view-cpu-20261028-r1/fixture"
+  ],
+  "sources": {
+    "test_lookup_view.cpp": "a0a508525d49d0adcdf316316bb0dbffdcd1970eb5294e152ee1a835996deda9",
+    "run_cpu.r1-base-refusal.py": "62f7d0da597d517417734085bb9041827d86b9ef17d7e68c2966f10c559d417c",
+    "run_cpu.py": "8887a1373c805fa2feed8f7acd9f4ae6befe41fa47bfa369260e9510eeb7e4a0",
+    "candidate.patch": "24aad7d28f78a47f2560ad2e871bac5c0bfb4ddee0fdc8acbc02a48b4a2b57d6",
+    "weights_methods.inc": "8656e431cade3bbc62c21e6ec1bb1c298bf1bf1935905d2bb63de4c16c437efd",
+    "overlay/engine/src/stage2/packet2/loader/gguf.cpp": "1e922f7fd24428c6aeaea7abdd4d61632e9d50daa2787aa2d569f6f2c5474c4b",
+    "overlay/engine/src/stage2/packet2/loader/gguf.hpp": "b542cda324515e171ab599122be52a32ce16e7d51095397e2c62826e016f6b89",
+    "overlay/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3a55730f2d8f7f4308f44c52bddc724e451e26111d932e5f57539cdb431ea847",
+    "overlay/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "6a0626228caef53452aa4a48e2875f50a93df4fc26f21f971c4ed662a120a0b8"
+  },
+  "native_pins": {
+    "status": "UNAPPLIED source-only; uncompiled/untested pending release",
+    "files": {
+      "stage2/packet2/loader/gguf.hpp": {
+        "base_sha256": "206da24e95e6d06bb0aa8007cdc177cfa3a96939ae8cbbab593ce78f89e32031",
+        "candidate_sha256": "b542cda324515e171ab599122be52a32ce16e7d51095397e2c62826e016f6b89"
+      },
+      "stage2/packet2/loader/gguf.cpp": {
+        "base_sha256": "f7c20e530d21991799573c2ea35f0addcbde1648ea22b29043daf4d32c664415",
+        "candidate_sha256": "1e922f7fd24428c6aeaea7abdd4d61632e9d50daa2787aa2d569f6f2c5474c4b"
+      },
+      "gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": {
+        "base_sha256": "ee86cc49c8f42c0c3467b1fb61e9500a2300eb727af3de72aa22bfdfd4abb84b",
+        "candidate_sha256": "6a0626228caef53452aa4a48e2875f50a93df4fc26f21f971c4ed662a120a0b8"
+      },
+      "gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": {
+        "base_sha256": "ba4fc7046294f1f22cd725a2a282b47a0c14460602428292046ff1336961f7e0",
+        "candidate_sha256": "3a55730f2d8f7f4308f44c52bddc724e451e26111d932e5f57539cdb431ea847"
+      }
+    },
+    "prepared_fixture_sources": {
+      "test_lookup_view.cpp": "a0a508525d49d0adcdf316316bb0dbffdcd1970eb5294e152ee1a835996deda9",
+      "weights_methods.inc": "8656e431cade3bbc62c21e6ec1bb1c298bf1bf1935905d2bb63de4c16c437efd",
+      "run_cpu.py": "62f7d0da597d517417734085bb9041827d86b9ef17d7e68c2966f10c559d417c"
+    }
+  },
+  "current_noncompiled_main_rank_drift": {
+    "gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": {
+      "registered_base_sha256": "ee86cc49c8f42c0c3467b1fb61e9500a2300eb727af3de72aa22bfdfd4abb84b",
+      "current_sha256": "71a82956df00a3297117b21e7ceaf986e67c0592190c7aa48252d6753e6da72b"
+    },
+    "gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": {
+      "registered_base_sha256": "ba4fc7046294f1f22cd725a2a282b47a0c14460602428292046ff1336961f7e0",
+      "current_sha256": "8dcc8c69f26f66d1fef2d8f025813abac809be426f66dc49ea258d482eeb4771"
+    }
+  },
+  "scope": "Original frozen candidate only; current main/rank are NOT compiled or integration-qualified",
+  "compile_rc": 0,
+  "compile_seconds": 5.247355484985746,
+  "binary_sha256": "06c4fcbfff8e3d777c8061a7e4c210d7b1bce87377e5cb3e7308ef91d05f071b",
+  "run_rc": 0
+}

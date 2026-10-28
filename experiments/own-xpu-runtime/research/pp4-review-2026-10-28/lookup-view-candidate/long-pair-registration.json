@@ -1,0 +1,30 @@
+{
+  "schema": "ownrt.lookup-storage-long-pair.v1",
+  "roots": [
+    "/dev/shm/sc117-lookup-copy-3plus1-262k-long512-20261028-r1",
+    "/dev/shm/sc117-lookup-view-3plus1-262k-long512-20261028-r1"
+  ],
+  "order": [
+    "copy",
+    "view"
+  ],
+  "full_gate": "/dev/shm/sc117-lookup-view-2plus1-128k-gate-20261028-r1/comparison-r1.json",
+  "full_gate_sha256": "4d5cbf874e8c9b41142f1ae636dde55f3673e28ae5bbffc5d90809cd1ef76908",
+  "build_receipt": "/dev/shm/engine-build-lookup-view-20261028-r1/build-receipt.json",
+  "build_receipt_sha256": "29d2bd15ad1fa21be04ffa71affdc92ba4532452c49235f95dd095d5c7640995",
+  "prior_qualified_3plus1": "/dev/shm/sc117-aot-bmg-3plus1-262k-long512-20261028-r1",
+  "prompt_tokens": 121854,
+  "maximum": 512,
+  "context": 262144,
+  "policy": "measured",
+  "same_binary": true,
+  "treatment": "Only first target host lookup backing: existing anonymous copy versus authenticated read-only mappings.",
+  "metrics": [
+    "coordinator start to all owners READY",
+    "request TTFT and wall",
+    "first99 and all511 decode intervals",
+    "process RssAnon/RssFile and faults"
+  ],
+  "fairness": "One fresh process set/private runtime caches per mode, no warmup or prompt/KV reuse, no heavy CPU during measured request, no cache drops or host settings changes. OS file cache uncontrolled; cold process does not mean cold storage.",
+  "failure_policy": "Single registered run each; fault halts further launches, no automatic retry or restart chain. Independent CPU fidelity remains unresolved."
+}

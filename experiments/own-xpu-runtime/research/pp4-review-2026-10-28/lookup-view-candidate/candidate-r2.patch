@@ -1,0 +1,111 @@
+--- a/engine/src/stage2/packet2/loader/gguf.hpp
++++ b/engine/src/stage2/packet2/loader/gguf.hpp
+@@ -31,6 +31,7 @@
+   Slice(const Slice&)=delete; Slice& operator=(const Slice&)=delete;
+   const uint8_t* data() const {return static_cast<const uint8_t*>(mapping_)+delta_;}
+   size_t size() const {return size_;}
++  void verify_backing() const; // Metadata identity of independently admitted held file; no payload read.
+ };
+ struct Shard {
+   std::shared_ptr<File> file;
+--- a/engine/src/stage2/packet2/loader/gguf.cpp
++++ b/engine/src/stage2/packet2/loader/gguf.cpp
+@@ -37,6 +37,7 @@
+ }
+ struct File {
+   int fd=-1; uint64_t bytes=0;
++  mutable bool authenticated=false; mutable ShardIdentity admitted;
+   explicit File(const std::filesystem::path& path) {
+     fd=open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)throw std::runtime_error("open read-only failed");
+     struct stat st{};
+@@ -49,7 +50,10 @@
+     require(uint64_t(s.st_size)==e.bytes && uint64_t(s.st_dev)==e.dev && uint64_t(s.st_ino)==e.ino &&
+       uint64_t(s.st_mtim.tv_sec)*1000000000ULL+uint64_t(s.st_mtim.tv_nsec)==e.mtime_ns &&
+       uint64_t(s.st_ctim.tv_sec)*1000000000ULL+uint64_t(s.st_ctim.tv_nsec)==e.ctime_ns,"held shard identity differs");
+-  }
++    if(authenticated)require(admitted.basename==e.basename && admitted.bytes==e.bytes && admitted.dev==e.dev && admitted.ino==e.ino && admitted.mtime_ns==e.mtime_ns && admitted.ctime_ns==e.ctime_ns,"held shard admission changed");
++    else {admitted=e;authenticated=true;}
++  }
++  void verify_held() const {require(authenticated,"lookup view requires independently authenticated backing file");verify(admitted);}
+   ~File() {if(fd>=0)close(fd);}
+ };
+ uint64_t Meta::integer() const {
+@@ -148,6 +152,7 @@
+   mapping_=mmap(nullptr,length_,PROT_READ,MAP_PRIVATE,file_->fd,off_t(start));
+   if(mapping_==MAP_FAILED){mapping_=nullptr;throw std::runtime_error("mmap failed");}
+ }
++void Slice::verify_backing() const {require(bool(file_) && mapping_,"lookup view lifetime");file_->verify_held();}
+ Slice::~Slice(){if(mapping_)munmap(mapping_,length_);}
+ Slice::Slice(Slice&& s) noexcept:file_(std::move(s.file_)),mapping_(std::exchange(s.mapping_,nullptr)),length_(s.length_),delta_(s.delta_),size_(s.size_){}
+ Slice& Slice::operator=(Slice&& s) noexcept {if(this!=&s){if(mapping_)munmap(mapping_,length_);file_=std::move(s.file_);mapping_=std::exchange(s.mapping_,nullptr);length_=s.length_;delta_=s.delta_;size_=s.size_;}return *this;}
+--- a/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -515,6 +515,7 @@
+   }
+   // OWNRT_DENSE_RAW=1 (lab 2026-10-26): raw-size p33 dense rows; the raw kernels take F32 activations only.
+   if(denseraw::enabled())require(a.gsq_packed&&!a.mini&&a.f32_activations&&a.memory=="resident","OWNRT_DENSE_RAW=1 requires real GSQ resident mode with --activations f32");
++  if(const char* view=std::getenv("OWNRT_LOOKUP_VIEW"))require(std::string(view)=="1"&&a.gsq_packed&&!a.mini&&a.pipeline_enabled()&&a.pipeline_first()&&a.memory=="resident","OWNRT_LOOKUP_VIEW=1 requires first target resident GSQ pipeline role");
+   return a;
+ }
+ struct Weights {
+@@ -540,6 +541,21 @@
+     }
+     double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
+     std::ostringstream o;o<<"{\"enabled\":true,\"method\":"<<ownrt::quote(embedding_only?"anonymous copy of embedding table only":"anonymous copy of embedding and PLE lookup tables")<<",\"bytes\":"<<bytes<<",\"tables\":"<<lookup_copies.size()<<",\"elapsed_ms\":"<<elapsed<<"}";residency=o.str();
++  }
++  bool lookup_view_mode=false;
++  void verify_lookup_views() const {
++    if(lookup_view_mode)for(const auto& [name,slice]:lookup_mappings)slice->verify_backing();
++  }
++  void map_lookups() {
++    require(!mini&&model&&lookup_copies.empty()&&lookup_mappings.empty(),"cold authenticated lookup view owner");
++    const auto start=std::chrono::steady_clock::now();uint64_t bytes=0;
++    for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
++      auto slice=std::make_unique<iq3::Slice>(model->slice(name,0,t.bytes));slice->verify_backing();
++      bytes+=t.bytes;lookup_mappings.emplace(name,std::move(slice));
++    }
++    require(lookup_mappings.size()==2,"exact first-target embedding/PLE views");lookup_view_mode=true;verify_lookup_views();
++    const auto elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
++    std::ostringstream o;o<<"{\"enabled\":true,\"method\":\"authenticated readonly held tensor views; no advice/prefault\",\"file_backed\":true,\"guaranteed_resident\":false,\"guaranteed_pinned\":false,\"anonymous_table_bytes\":0,\"mapped_tensor_bytes\":"<<bytes<<",\"tables\":"<<lookup_mappings.size()<<",\"elapsed_ms\":"<<elapsed<<",\"identity_guard\":\"held admitted dev/ino/size/mtime/ctime before and after command result\"}";residency=o.str();
+   }
+   void warm_lookups() {
+     if(mini)return;
+--- a/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -503,7 +503,7 @@
+   }
+ #ifndef OWN_RT_HOST_ONLY
+   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();
+-  else if(a.rank==0&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}
++  else if(a.rank==0&&!a.mini){if(std::getenv("OWNRT_LOOKUP_VIEW"))weights->map_lookups();else {const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups();}}
+   else if(a.pipeline_live_draft&&a.pipeline_provider()&&!a.mini){const char* v=std::getenv("OWNRT_LOOKUP_COPY");if(!v||std::string(v)!="0")weights->copy_lookups(true);}
+ #endif
+   save(a.output/"lookup-residency.json",weights->residency);
+@@ -527,7 +527,7 @@
+   // Opt-in session checkpoint (ops 17-19, session_checkpoint.hpp): VERIFY only directly after the request reset,
+   // APPLY only directly after a successful VERIFY. Any other command consumes both flags and drops held bytes.
+   session::Held checkpoint_held;bool checkpoint_after_reset=false,checkpoint_after_verify=false;
+-  auto execute=[&](const Request& r)->Reply {
++  auto execute_body=[&](const Request& r)->Reply {
+    if(a.rank==1)engine->reply_report.before(r.op);
+    auto received=std::chrono::steady_clock::now();
+    Reply response{};response.sequence=r.sequence;response.rank=a.rank;
+@@ -690,6 +690,9 @@
+    if(a.pipeline_enabled()){response.reserved[0]=a.pipeline_stage;response.reserved[1]=a.pipeline_final();}
+    return response;
+   };
++  auto execute=[&](const Request& r)->Reply {
++   weights->verify_lookup_views();auto reply=execute_body(r);weights->verify_lookup_views();return reply;
++  };
+   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+    if(a.pipeline_enabled()){
+     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
+@@ -700,7 +703,7 @@
+     else if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||(a.pipeline_persistent_requests&&r.op==11&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
+     else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
+    }
+-   if(r.op==finish){if(a.pipeline_ring)ring_dispatcher->attest();if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/"draft-final-state-sealed");break;}
++   if(r.op==finish){weights->verify_lookup_views();if(a.pipeline_ring)ring_dispatcher->attest();if(a.pipeline_wavefront){wave_checkpoint->attest(*wave_ledger);save(a.output/"wavefront-trace-summary.json","{\"records\":"+std::to_string(wave_trace_rows)+",\"omitted\":"+std::to_string(wave_trace_omitted)+"}");}if(a.rank==1)engine->reply_report.flush();require(!c.pending,"finish with unresolved candidate");require(!v3state.ready,"finish with a pending V3 boundary");image.boundary();if(provider)provider->flush_depth_probe();if(provider&&a.finish_dump)provider->dump_all_state(engine->a.output/"draft-final-state");if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/"draft-final-state-sealed");weights->verify_lookup_views();break;}
+    Reply response{};
+    if(r.op==10){
+     require(!c.pending,"native entry unresolved candidate");

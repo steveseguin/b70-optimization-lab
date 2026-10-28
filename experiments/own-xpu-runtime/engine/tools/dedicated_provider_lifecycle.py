@@ -55,6 +55,7 @@ def execute(plan, admission, unit):
         signal.signal(sig, lambda *_:guard.signal_stop.set())
     stages, provider, result, failure = [], None, {}, None
     start = time.monotonic()
+    phases = dict(clock='time.monotonic seconds', coordinator_start=start, target_ready=[])
     try:
         guard.thread.start()
         for spec in targets:
@@ -62,6 +63,7 @@ def execute(plan, admission, unit):
             stage = bridge.Stage(spec, plan, guard)
             stages.append(stage)
             stage.receive(ready=True)
+            phases['target_ready'].append(dict(owner=spec['id'], monotonic_s=time.monotonic()))
         guard.check()
         # base.Stage registers every Popen immediately in guard.tracked_processes,
         # before identity capture or launch.json can fail. Cleanup uses that list,
@@ -70,10 +72,13 @@ def execute(plan, admission, unit):
         provider = bridge.Provider(owner)
         provider.receive_ready(target_stages=len(stages), depth=plan.get('speculative_depth', 2),
                                request=bytes.fromhex(plan['request_sha256']), epoch=plan.get('epoch', 0))
+        phases['all_owners_ready'] = time.monotonic()
         base.require(all(s.stream_bytes == provider.stream_bytes for s in stages),
                      'target/provider source boundary shape mismatch')
         guard.validate_or_stop(guard.obs.observe(), phase='main-after-ready')
+        phases['request_start'] = time.monotonic()
         result = bridge.drive(stages, provider, plan, guard, output)
+        phases['request_end'] = time.monotonic()
         # Target control protocol has no finish ACK; provider protocol does.
         for stage in stages:
             stage.command(4, position=2147483647)
@@ -111,6 +116,7 @@ def execute(plan, admission, unit):
         failure_details = {} if failure is None else dict(guard_failure=guard.failed,
             caught_error=caught_failure, guard_first_failure=guard.first_failure,
             guard_failure_evidence_error=guard.failure_evidence_error)
+        phases['lifecycle_end'] = time.monotonic()
         terminal = dict(schema='ownrt.dedicated-provider-terminal.v1', passed=failure is None,
             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
             mode=execution_mode(plan),
@@ -119,7 +125,7 @@ def execute(plan, admission, unit):
             diagnostic_only=True, speed_claim=False,
             bulk_reset_qualified=False, bulk_overlap_qualified=False,
             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',
-            wall_seconds=time.monotonic()-start, **failure_details)
+            wall_seconds=phases['lifecycle_end']-start, lifecycle_phases=phases, **failure_details)
         receipt = dict(result)
         receipt.update(terminal)
         receipt['schema'] = 'ownrt.dedicated-provider-driver-result.v1'

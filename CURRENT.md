@@ -7,10 +7,25 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live: the prepared-input quality diagnostic is running once on cards 23/47 after
-its AOT build and CPU tests passed. The isolated lookup-view candidate passed CPU
-tests and remains unapplied. Completed 3+1 state/map archives were fully verified
-before cleanup. The broader realistic-task/reset matrix is registered in
+Live: the same-binary copy control has emitted all 512 tokens in about 261.5s
+and is finishing state dumps/teardown. The mapped-mode 3+1/262K arm is next,
+after full comparison and memory admission. No compilation or heavy CPU work
+during measured requests. Current native build is `8fce0053`.
+
+Host lookup mapping passed the full 1,677/32 correctness gate: all outputs,
+four complete state bundles (8.319 GB), and three native censuses match the
+qualified control. Stage 0 after-load anonymous RSS is about 153 MiB, compared
+with about 27 GiB in the earlier copy observation. This is host RAM, not a VRAM
+or long-throughput claim. See `lookup-view-candidate/` in the October 28 research lane.
+
+Quality: missing precision flags at the final device link explain the standalone
+replay mismatch exactly. A separate precise-link full-model test still returned
+6343 versus the CPU's 16568, with essentially unchanged layer errors; it was not
+promoted. The now-qualified recurrent replay identifies material input differences
+at positions 177–180. The next 178-token-prefix CPU/native diagnostic is prepared
+but unexecuted. Six independent-reference disagreements remain unresolved.
+
+The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
 
 Earlier eight-output screens (different generation cap):
@@ -205,6 +220,16 @@ standalone y/prepared/final state; ocloc differs by
 exit1 both had clean postflight/no holders. This identifies a replay build-treatment
 cause, not a full-model CPU fidelity fix. Full relink candidate work is separate.
 [Link-precision evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/link-precision-r1/index.json).
+The immutable lookup-view four-file native candidate is applied and its32-token
+2+1/128K gate passed all four whole states, three censuses and outputs. Same-binary
+3+1/262K copy control then completed512 outputs/full2065target+73draft state,
+122,364pairs and476chunk hashes, clean owners/postflight; request261.499367s,
+coordinator-to-ready144.456698s. After final admission refusal and verified r6 intermediate cleanup (658,824,244 bytes),
+the view arm is now active at `/dev/shm/sc117-lookup-view-3plus1-262k-long512-20261028-r1`,
+invocation `723f63c502d342959f71224738bdceec`. Fresh baseline-r2 available memory
+104,029,220,864 bytes passed the unchanged96GiB floor plus64MiB reserve.
+No view memory/performance win is claimed before completion.
+[Copy control evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/copy-long-r1-evidence/index.json).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

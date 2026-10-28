@@ -1,0 +1,57 @@
+{
+  "scope": "Python os.fstat elapsed includes Python object/instrumentation overhead, not native guard benchmark or cold filesystem claim; observed identity stable",
+  "payload_reads": 0,
+  "payload_hashes": 0,
+  "cache_advice_or_settings_changes": false,
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "nice": 19,
+  "source_plan": "/dev/shm/sc117-dedicated-bounded-count-2plus1-128k-long512-20261028-r1/output/plan.json",
+  "source_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json",
+  "backings": [
+    {
+      "samples": 1000,
+      "median_us": 10.419,
+      "p95_us": 11.512,
+      "total_us": 10504.932,
+      "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "identity": {
+        "dev": 2050,
+        "ino": 2778523,
+        "size": 55063448064,
+        "mtime_ns": 1792814866970869300,
+        "ctime_ns": 1792814960708461300
+      }
+    },
+    {
+      "samples": 1000,
+      "median_us": 10.369,
+      "p95_us": 11.201,
+      "total_us": 10449.96,
+      "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00002-of-00002.gguf",
+      "identity": {
+        "dev": 2050,
+        "ino": 2778524,
+        "size": 28800138432,
+        "mtime_ns": 1792815392152874700,
+        "ctime_ns": 1792815445694827300
+      }
+    }
+  ],
+  "four_fstat_command_groups": {
+    "samples": 500,
+    "median_us": 44.1225,
+    "p95_us": 48.1,
+    "total_us": 22253.881
+  },
+  "wall_seconds": 0.02231228700838983,
+  "loop": "500 command groups; each pre/post checks both2held FDs (1000samples perFD); no warmup"
+}

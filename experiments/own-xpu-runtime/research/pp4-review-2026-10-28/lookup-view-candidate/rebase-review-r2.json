@@ -1,0 +1,87 @@
+{
+  "status": "UNAPPLIED source-only clean rebase; no new compile/GPU",
+  "dryrun_rc": 0,
+  "original_tested_method_identity": {
+    "void copy_lookups(": {
+      "unchanged": true,
+      "sha256": "c6d4607178310243f4b5808ee055a203e5bd55fadfc382d7926254915391821d"
+    },
+    "void verify_lookup_views(": {
+      "unchanged": true,
+      "sha256": "601c0748f6c8b3e2a11a27afeea84fb0397de82672cece58695872d26b61d7fc"
+    },
+    "void map_lookups(": {
+      "unchanged": true,
+      "sha256": "b54ff0b7e6a41e6a900b3b112d0c20f3cb7165abd6a134b93ddc30bcab3f064c"
+    },
+    "std::vector<uint8_t> read(": {
+      "unchanged": true,
+      "sha256": "2649728fe78e76cdf497a9647cbe520198a10c9e83b1cb6c237b67cdbd1f113c"
+    },
+    "std::vector<float> lookup_floats(": {
+      "unchanged": true,
+      "sha256": "c21863a93ae360bcac0b1fae9370d30d264ff4c862d082057929ed72ab5bbfd0"
+    }
+  },
+  "native_loader_candidate_byte_identical_to_cpu_pass": true,
+  "preserved_original_cpu_receipt_sha256": "15829fedd1797bbfed4aea61e2e3473fb1538dd842eb551218a26cd5fd849263",
+  "r2_full_engine_integration_qualified": false,
+  "canonical_sources_changed": false,
+  "fstat_micro": {
+    "scope": "Python os.fstat elapsed includes Python object/instrumentation overhead, not native guard benchmark or cold filesystem claim; observed identity stable",
+    "payload_reads": 0,
+    "payload_hashes": 0,
+    "cache_advice_or_settings_changes": false,
+    "cpu_affinity": [
+      8,
+      9,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15
+    ],
+    "nice": 19,
+    "source_plan": "/dev/shm/sc117-dedicated-bounded-count-2plus1-128k-long512-20261028-r1/output/plan.json",
+    "source_metadata": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json",
+    "backings": [
+      {
+        "samples": 1000,
+        "median_us": 10.419,
+        "p95_us": 11.512,
+        "total_us": 10504.932,
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+        "identity": {
+          "dev": 2050,
+          "ino": 2778523,
+          "size": 55063448064,
+          "mtime_ns": 1792814866970869300,
+          "ctime_ns": 1792814960708461300
+        }
+      },
+      {
+        "samples": 1000,
+        "median_us": 10.369,
+        "p95_us": 11.201,
+        "total_us": 10449.96,
+        "path": "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00002-of-00002.gguf",
+        "identity": {
+          "dev": 2050,
+          "ino": 2778524,
+          "size": 28800138432,
+          "mtime_ns": 1792815392152874700,
+          "ctime_ns": 1792815445694827300
+        }
+      }
+    ],
+    "four_fstat_command_groups": {
+      "samples": 500,
+      "median_us": 44.1225,
+      "p95_us": 48.1,
+      "total_us": 22253.881
+    },
+    "wall_seconds": 0.02231228700838983,
+    "loop": "500 command groups; each pre/post checks both2held FDs (1000samples perFD); no warmup"
+  }
+}

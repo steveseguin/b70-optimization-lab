@@ -31,6 +31,7 @@ class Slice {
   Slice(const Slice&)=delete; Slice& operator=(const Slice&)=delete;
   const uint8_t* data() const {return static_cast<const uint8_t*>(mapping_)+delta_;}
   size_t size() const {return size_;}
+  void verify_backing() const; // Metadata identity of independently admitted held file; no payload read.
 };
 struct Shard {
   std::shared_ptr<File> file;

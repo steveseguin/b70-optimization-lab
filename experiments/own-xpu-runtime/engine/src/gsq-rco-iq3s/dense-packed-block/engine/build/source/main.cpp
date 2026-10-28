@@ -515,6 +515,7 @@ static Options parse(int argc, char **argv) {
   }
   // OWNRT_DENSE_RAW=1 (lab 2026-10-26): raw-size p33 dense rows; the raw kernels take F32 activations only.
   if(denseraw::enabled())require(a.gsq_packed&&!a.mini&&a.f32_activations&&a.memory=="resident","OWNRT_DENSE_RAW=1 requires real GSQ resident mode with --activations f32");
+  if(const char* view=std::getenv("OWNRT_LOOKUP_VIEW"))require(std::string(view)=="1"&&a.gsq_packed&&!a.mini&&a.pipeline_enabled()&&a.pipeline_first()&&a.memory=="resident","OWNRT_LOOKUP_VIEW=1 requires first target resident GSQ pipeline role");
   return a;
 }
 struct Weights {
@@ -540,6 +541,21 @@ struct Weights {
     }
     double elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
     std::ostringstream o;o<<"{\"enabled\":true,\"method\":"<<ownrt::quote(embedding_only?"anonymous copy of embedding table only":"anonymous copy of embedding and PLE lookup tables")<<",\"bytes\":"<<bytes<<",\"tables\":"<<lookup_copies.size()<<",\"elapsed_ms\":"<<elapsed<<"}";residency=o.str();
+  }
+  bool lookup_view_mode=false;
+  void verify_lookup_views() const {
+    if(lookup_view_mode)for(const auto& [name,slice]:lookup_mappings)slice->verify_backing();
+  }
+  void map_lookups() {
+    require(!mini&&model&&lookup_copies.empty()&&lookup_mappings.empty(),"cold authenticated lookup view owner");
+    const auto start=std::chrono::steady_clock::now();uint64_t bytes=0;
+    for(const auto& [name,t]:directory)if(t.component=="embedding"||t.component=="ple_lookup") {
+      auto slice=std::make_unique<iq3::Slice>(model->slice(name,0,t.bytes));slice->verify_backing();
+      bytes+=t.bytes;lookup_mappings.emplace(name,std::move(slice));
+    }
+    require(lookup_mappings.size()==2,"exact first-target embedding/PLE views");lookup_view_mode=true;verify_lookup_views();
+    const auto elapsed=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();
+    std::ostringstream o;o<<"{\"enabled\":true,\"method\":\"authenticated readonly held tensor views; no advice/prefault\",\"file_backed\":true,\"guaranteed_resident\":false,\"guaranteed_pinned\":false,\"anonymous_table_bytes\":0,\"mapped_tensor_bytes\":"<<bytes<<",\"tables\":"<<lookup_mappings.size()<<",\"elapsed_ms\":"<<elapsed<<",\"identity_guard\":\"held admitted dev/ino/size/mtime/ctime before and after command result\"}";residency=o.str();
   }
   void warm_lookups() {
     if(mini)return;

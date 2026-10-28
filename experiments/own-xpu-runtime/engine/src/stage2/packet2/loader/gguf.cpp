@@ -37,6 +37,7 @@ bool utf8(const std::string& s) {
 }
 struct File {
   int fd=-1; uint64_t bytes=0;
+  mutable bool authenticated=false; mutable ShardIdentity admitted;
   explicit File(const std::filesystem::path& path) {
     fd=open(path.c_str(),O_RDONLY|O_CLOEXEC|O_NOFOLLOW);if(fd<0)throw std::runtime_error("open read-only failed");
     struct stat st{};
@@ -49,7 +50,10 @@ struct File {
     require(uint64_t(s.st_size)==e.bytes && uint64_t(s.st_dev)==e.dev && uint64_t(s.st_ino)==e.ino &&
       uint64_t(s.st_mtim.tv_sec)*1000000000ULL+uint64_t(s.st_mtim.tv_nsec)==e.mtime_ns &&
       uint64_t(s.st_ctim.tv_sec)*1000000000ULL+uint64_t(s.st_ctim.tv_nsec)==e.ctime_ns,"held shard identity differs");
+    if(authenticated)require(admitted.basename==e.basename && admitted.bytes==e.bytes && admitted.dev==e.dev && admitted.ino==e.ino && admitted.mtime_ns==e.mtime_ns && admitted.ctime_ns==e.ctime_ns,"held shard admission changed");
+    else {admitted=e;authenticated=true;}
   }
+  void verify_held() const {require(authenticated,"lookup view requires independently authenticated backing file");verify(admitted);}
   ~File() {if(fd>=0)close(fd);}
 };
 uint64_t Meta::integer() const {
@@ -148,6 +152,7 @@ Slice::Slice(std::shared_ptr<File> f,uint64_t off,size_t bytes):file_(std::move(
   mapping_=mmap(nullptr,length_,PROT_READ,MAP_PRIVATE,file_->fd,off_t(start));
   if(mapping_==MAP_FAILED){mapping_=nullptr;throw std::runtime_error("mmap failed");}
 }
+void Slice::verify_backing() const {require(bool(file_) && mapping_,"lookup view lifetime");file_->verify_held();}
 Slice::~Slice(){if(mapping_)munmap(mapping_,length_);}
 Slice::Slice(Slice&& s) noexcept:file_(std::move(s.file_)),mapping_(std::exchange(s.mapping_,nullptr)),length_(s.length_),delta_(s.delta_),size_(s.size_){}
 Slice& Slice::operator=(Slice&& s) noexcept {if(this!=&s){if(mapping_)munmap(mapping_,length_);file_=std::move(s.file_);mapping_=std::exchange(s.mapping_,nullptr);length_=s.length_;delta_=s.delta_;size_=s.size_;}return *this;}
