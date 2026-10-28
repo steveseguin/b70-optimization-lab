@@ -92,10 +92,14 @@ depth3 108.825501s (+14.1359%); full decode50.7637 versus58.5681tok/s.
 This first matched pair closes fixeddepth2 promotion; retain depth3 and do not
 repeat the losing candidate. No universal speed claim. Pair evidence:
 `dedicated-depth2-gate/full12-r2-paired-summary.json`.
-The2+1 A/B/A64K gate is active on build9599/cuts0/25/48, cards23/47+draft43,
-unit `sc117-dedicated-two-plus-one-aba64k-20261028-r2`, invocation
-`8de672504d044c4393d2a8af77adc43b`; clean baseline103,295,234,048B available.
-Full12 follows only after the gate passes. Some old uncompressed command/result
+The2+1 A/B/A64K gate passed on build9599/cuts0/25/48, cards23/47+draft43.
+All1536 actual output IDs match the two unique saved CPU-qualified prompts;
+both cold resets and repeatedA compare4,111,334,626 full physical bytes,
+including2065 canonical target/39 actual inactive/73 provider sources. All3
+owners exited0, passive postflight clean/no holders. Full12 2+1 was NOT run;
+no suite speed or crosslayout physical-equality claim. Evidence:
+`dedicated-depth2-gate/two-plus-one-aba64k-r2-evidence/index.json`.
+Some old uncompressed command/result
 duplicates were released after exact retained-gzip verification; use indexed
 compressed evidence and existing summaries, not removed raw paths. Evidence: `dedicated-depth2-gate/full12-depth3-r2-evidence/index.json`. Fix evidence: `bulk-bank-parity-fix/retention-index.json`.
 The earlier A/B/A gate remains limited
