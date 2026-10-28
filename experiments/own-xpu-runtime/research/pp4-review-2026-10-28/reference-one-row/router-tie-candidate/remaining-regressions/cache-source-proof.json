@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.remaining-seven.retained-launch-cache.v1",
+  "allowed_inventory_fields": [
+    "launch_extent",
+    "alternate_launch_extent"
+  ],
+  "scope": "Cold model-state bytes verified; prepared launch extents retained and rebound before each HALF. Complete identical host state is not claimed.",
+  "admit_position_function_sha256": "6395e8b34de2dfcadb6a34b899d93c21eef3d0c81a63acbfb4205a6a1ed6267e",
+  "admit_position_function": "  void admit_position(int position) {\n    require(position>=0&&position<p.g.context,\"capacity position admission\");\n    const int bound=std::min(p.g.context,((position+32)/32)*32);\n    if(context_extent==bound)return;\n    drain();context_extent=bound;++capacity_reprepares;\n    if(!resident)return; // streaming prepares each site with the current bound\n    for(size_t i=0;i<p.launches.size();++i) {\n      const auto& l=p.launches[i];\n      if(l.op!=\"qsa_select\"&&l.op!=\"qsa_attention\")continue;\n      prepared[&l]=prepare_site(l);\n      if(!prepared_path)continue;\n      auto& site=issue_sites.at(i);site.commands.clear();\n      preparing_commands=true;auto& d=dev(l.card);d.begin_capture(site.commands);\n      try {execute_site(l);d.end_capture();preparing_commands=false;}\n      catch(...){d.end_capture();preparing_commands=false;throw;}\n    }\n  }",
+  "half_callsite": " e.admit_position(request.position);",
+  "source_files": {
+    "engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "70819127644a423b5b440c90b3214902d335f8f8badbb144bd0e3d7761f12fd5",
+    "engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3302e0a87401dae4ea2093438a849b6d877d64908940eeba30ed3a1e830075bb",
+    "engine/src/stage2/packet194-expert-diet-engine/request_reset.hpp": "43fa3ffc9da0ea0d9b5965b5806fa3e81c1d1fc77e788eecd657aef77de12871",
+    "engine/src/stage2/packet194-expert-diet-engine/request_state_inventory.hpp": "1a8899b858326112d701ad1ce365b13900426c5edeca3ebc6913132294e00d55"
+  },
+  "next_position_zero_bound": 32,
+  "no_other_inventory_exclusions": true
+}
