@@ -1,4 +1,4 @@
-#include "reference_sort_workspace.hpp"
+#include "reference_sort_addressed.hpp"
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
@@ -470,10 +470,10 @@ template<int N,int Top,bool MERGE> struct RouteReferenceTie2 final:ownrt::SyclOp
     const bool tied=sycl::any_of_group(g,internal||(j!=cutoff&&prob[j]==prob[cutoff]));
     if(tied){
      if(j==0){
-      int* order=reference_indices.get_multi_ptr<sycl::access::decorated::no>().get();
-      auto* stack=reference_frames.get_multi_ptr<sycl::access::decorated::no>().get();
-      const float* probability=prob.get_multi_ptr<sycl::access::decorated::no>().get();
-      bool valid=router_reference_sort::sort_indices_workspace(probability,order,N,stack);
+      auto order=reference_indices.get_multi_ptr<sycl::access::decorated::yes>().get();
+      auto stack=reference_frames.get_multi_ptr<sycl::access::decorated::yes>().get();
+      auto probability=prob.get_multi_ptr<sycl::access::decorated::yes>().get();
+      bool valid=router_reference_sort_addressed::sort_indices_workspace(probability,order,N,stack);
       // Complete all checks before changing IDs or fused route descriptors.
       for(int rank=0;valid&&rank<Top;++rank){
        const int old=selected[rank],next=order[rank];
