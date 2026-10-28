@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**October 28 — SC117 PP4 review: bounded service running; baseline long request in progress.**
+- Both earlier service paths were initially stopped; older B25/B26 hosting statements below are historical.
+  The coordinator started one PP4 service at 02:55 UTC, engine `4e3104efbc5f`, under
+  `/dev/shm/sc117-pp4-262k-lan/control-nk1uqo7t/output`. The short seam screen completed and the long baseline is now running on that process.
+  The coordinator owns all device and service actions; no automatic restart or request retry is authorized.
+- The seam screen passed native reset accounting: provider serial **878 = 797 quiescent + 81 pending borrows**;
+  latest coordinator guard is clean. This is screening only, without full-state equality or byte-verified restores.
+  Native accepted tentative rows are **81**; HTTP `mtp.hits=116` is issued-minus-explicit-rejected bookkeeping
+  and overcounts acceptance. [Compact evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/seam-screen/scope-and-mtp-audit.json).
+- Goal: faster exact single-conversation inference in our reusable Intel Xe engine, including prompt reading
+  and native long context; retain model, quantization, topology and tuning identities separately. No training.
+- Earlier `run-9` completed a cold **121,854-token** prompt with eight outputs inside a 262,144-token allocation.
+  First token took 1,034.9 s; draft replay reported 163.223 s. Native prefill timing logs were empty, so exact
+  target-prefill time is unknown. This was not full-262K or target-only long-prompt qualification.
+  Its request passed, but shutdown failed (stage 0 exit 1; other stages 0); cause remains unestablished here.
+- Next: bounded seam gate, then the same retained long prompt on the same process with separate prefill/replay
+  timing retained by the new Python `prefill.py` counters. Internal parity/repeats do not resolve the six independent-reference disagreements.
+  [Read-only audit](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/run9-audit.json).
+  Original long-request input is preserved at `/dev/shm/pp4-review-original-current-20261028.txt`.
+
 **October 27 — Native 262K quad foundation passed; overlap schedulers rejected for speed.**
 - Four stages `[0,12,24,36,48]` on cards `23/27/43/47` completed with identical output tokens and zero faults.
   Device totals at 262K: **16.60, 17.00, 17.96 and 18.78 GB**, all below the 30 GiB cap. Canonical engine

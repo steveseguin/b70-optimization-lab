@@ -1,0 +1,66 @@
+{
+  "schema": "ownrt.pp4-readonly-review.v1",
+  "source": "/dev/shm/sc117-pp4-262k-lan/run-9",
+  "request": {
+    "passed": true,
+    "prompt_tokens": 121854,
+    "prompt_token_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+    "output_token_sha256": "84d6d8f4d3a427264d95600a2bc4bedd48c13ff0b2a455998224d51505b14de4",
+    "cached_tokens": 0,
+    "check_policy": "measured",
+    "timing": {
+      "first_token_seconds": 1034.9135180671,
+      "full_response_seconds": 1036.206183450995,
+      "committed_output_span_seconds": 1.2669175959890708,
+      "decode_intervals": 7,
+      "decode_tokens_per_second": 5.52522123156334,
+      "full_response_tokens_per_second": 0.007720471203285713,
+      "definition": "Decode=(output_count-1)/(last_commit-first_commit); full response includes prompt and final draft/drain, excludes reset and dump."
+    }
+  },
+  "shutdown": {
+    "passed": false,
+    "error": null,
+    "cooperative_cancellation": false,
+    "live_pids": [],
+    "returncodes": {
+      "0": 1,
+      "1": 0,
+      "2": 0,
+      "3": 0
+    },
+    "requests": 1,
+    "wall_s": 1268.8476672590477
+  },
+  "draft_prefill": {
+    "rows": 121852,
+    "sum_reported_wall_ms": 163223.48441,
+    "median_reported_wall_ms": 1.29229,
+    "first_row_wall_ms": 4397.69
+  },
+  "target_prefill": {
+    "exact_seconds": null,
+    "reason": "All root and request prefill-timings.jsonl files are empty; exact target duration cannot be recovered from these files."
+  },
+  "source_current": {
+    "path": "/home/steve/llm-optimizations/CURRENT.md",
+    "sha256": "37ee6f517a45119f1cef4494c001066423e5310fe99d140274efb3ee001386a3",
+    "rendered_tokens_match": true,
+    "rendered_token_count": 121854
+  },
+  "pins": {
+    "/dev/shm/sc117-pp4-262k-lan/run-9/requests/request-000001/result.json": "9c34dce3d34aa6533d940d1a5c215b0d7f76f231e810768e7d9ba10390b005a3",
+    "/dev/shm/sc117-pp4-262k-lan/run-9/requests/request-000001/driver-result.json": "72561b77e6a78215547d1c1bc29e96952bf7b742549186a048000fbfd87d6ef6",
+    "/dev/shm/sc117-pp4-262k-lan/run-9/requests/request-000001/request-plan.json": "ebe9deb9e645d2815a80c63737b1d884897e24ae20384834b67466c286a45a94",
+    "/dev/shm/sc117-pp4-262k-lan/run-9/incident.json": "4f4cea24d436c3779817efcc38784b27a6d55ed93776f77064ccbe9fa831f006",
+    "/dev/shm/sc117-pp4-262k-lan/run-9/stage0/native/requests/request-000001/draft-rows.jsonl": "b0d52e4bbfaeb9e96a4ad0c672e9b46a5b8c6d3f2fb198a88fe5d7bfd6f926d6"
+  },
+  "limitations": [
+    "121854 prompt tokens within 262144 allocation; not full-context exercise.",
+    "Eight output tokens; no stable decode benchmark or speedup extrapolation.",
+    "No target-only same-long-prompt oracle; six independent reference disagreements unresolved.",
+    "Sum of per-row draft timings is measured component work, not an exclusive wall-time partition.",
+    "Request passed; enclosing process lifecycle failed with stage0 exit1, other stages0. Shutdown cause not established by these receipts."
+  ],
+  "prompt_tokens_recomputed_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0"
+}

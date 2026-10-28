@@ -1,0 +1,45 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+index cca2b23a3..f9c3c53a1 100644
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+@@ -18,7 +18,14 @@ class Dispatcher {
+  struct ProviderCapture {int position=0;uint64_t serial=0;};std::map<uint64_t,ProviderCapture> provider_at_capture;
+  std::array<uint64_t,4> provider_borrows_by_depth{};std::ofstream survival_trace;uint64_t survival_records=0,survival_rows=0,survival_advanced_records=0;
+  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
++ int prefill_start=0;std::vector<int> prefill_tokens;
+  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
++ ownrt::ring_next::Row prefill_row(const Request& r){
++  namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
++  wire::Command command{wire::row_op,meta.token,meta.position,meta.fixture,0,r.sequence,r.reserved[0],r.reserved[1]};wire::base(meta,command,context);
++  require(meta.flags==0&&meta.source==-1&&meta.source_ticket==0&&meta.payload_bytes==0&&meta.payload_sha==wire::digest({}),"ring prefill verified row ownership");
++  return {meta.epoch,meta.id,meta.parent,r.sequence,meta.position,meta.token,meta.fixture,false,meta.request,meta.before,meta.after};
++ }
+  void final_hidden(const ownrt::ring_next::Row& row,int commit_sequence,int next_token,Reply& reply){
+   if(!e.a.pipeline_live_draft)return;
+   require(e.a.pipeline_final()&&reverse_ready(shared).position_plus_one==uint32_t(row.position+1),"ring final raw hidden ownership");
+@@ -31,7 +38,7 @@ public:
+  Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,mtp36::DraftRuntime* draft=nullptr)
+   :e(owner),shared(mapping),mapped_bytes(mapping_bytes),verify(full_byte_verify),
+    context{epoch,request,owner.a.pipeline_stage,int(owner.a.pipeline_boundaries.size()-1),int(owner.stream_bytes()),owner.p.g.vocab,owner.a.pipeline_ring_depth},
+-   original_output(owner.a.output),checkpoints(owner,full_byte_verify,partition),backend(owner,legacy,checkpoints,mapping,[this]{reset_owner_state();}),provider(draft),
++   original_output(owner.a.output),checkpoints(owner,full_byte_verify,partition,draft),backend(owner,legacy,checkpoints,mapping,[this]{reset_owner_state();}),provider(draft),
+    ring(backend,owner.a.pipeline_final(),partition.enabled,owner.p.g.context,owner.p.g.vocab,epoch,request,ownrt::ring_next::request_prefix(request,epoch),0,owner.a.pipeline_ring_depth){
+   require(shared&&mapped_bytes==shared_bytes&&owner.a.pipeline_enabled(),"ring dispatcher mapping/mode");ownrt::ring_next::wire::context(context);legacy.boundary();
+   require(owner.a.pipeline_ring&&!owner.a.pipeline_wavefront,"ring exclusive owner");
+@@ -42,6 +49,16 @@ public:
+  }
+  bool handles_command(int op)const{return (e.a.pipeline_ring_persistent_requests&&op==11)||handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}
+  static bool handles(int op){return op==24||op==25||op==26;}
++ void prefill_complete(const Request& r,const int* tokens){
++  require(e.a.prefill_rows&&e.a.pipeline_ring_persistent_requests&&r.op==15&&r.token>0&&r.token<=e.a.prefill_rows,"ring prefill completion admission");
++  ring.prefill(r.token,prefill_row(r));
++  if(e.a.pipeline_first()){require(tokens,"ring prefill prompt token ownership");prefill_start=r.position;prefill_tokens.assign(tokens,tokens+r.token);}
++ }
++ void draft_prefill(const Request& r){
++  const int index=r.position-prefill_start;const auto row=prefill_row(r);
++  require(index>0&&index<=int(prefill_tokens.size())&&provider->live_position()==r.position,"ring prefill DRAFT canonical token/position");
++  provider_sequence->prefill(row,prefill_tokens[index-1]);++provider_borrows_by_depth[0];
++ }
+  Reply execute(const Request& r){
+   namespace wire=ownrt::ring_next::wire;if(r.op==11)return persistent_reset(r);if(r.op==wire::batch_op)return draft_batch(r);require(handles(r.op),"ring dispatcher only owns admitted commands");
+   const auto started=std::chrono::steady_clock::now();const double gpu_before=e.gemv_ms+e.nongemv_ms;

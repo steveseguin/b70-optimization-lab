@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.prefill-pipeline-candidate.validation.v1",
+  "status": "CPU-only candidate; device parity and timing untested",
+  "patch_sha256": "3ff7af4c468c90d62bafa331a228868ec3837daa3aba19dd9cd7311989d53a3a",
+  "base_sources_sha256": {
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/prefill.py": "bbfade879231af4b5abe2a2ce589290686a3b024f8f703b7ad77285cb4e12ad0",
+    "experiments/own-xpu-runtime/engine/tools/test_rolling_prefill.py": "9f466a4ebb5895218099196e541ded0b9f4028237f9689a34e8ba4cb8057a6e3",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp": "791267252eec31167d55ef0a394f1cfac3d46862c524a8dc9c47bab26b84ed0a",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc": "e69d6fcbb2bc8d178d29c2a9b289084c47501bd525c99cbd354d0dd58fe9b9fd"
+  },
+  "canonical_sources_unchanged": true,
+  "python_tests": 9,
+  "native_control_test": "PASS; eight malformed cases rejected; extracted methods with stubbed engine/ring/provider",
+  "plan_flag": "prefill_pipeline",
+  "default": false,
+  "temporary_sources": "/dev/shm/pp4-prefill-candidate/after",
+  "native_test_scope": "Control bookkeeping only; no GPU arithmetic, memory or scratch validation",
+  "timing_schema": "rolling-prefill-host-wave-wall-v2"
+}

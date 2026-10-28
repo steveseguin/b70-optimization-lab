@@ -1,0 +1,338 @@
+--- a/experiments/own-xpu-runtime/engine/planning/rolling_provider/prefill.py
++++ b/experiments/own-xpu-runtime/engine/planning/rolling_provider/prefill.py
+@@ -1,6 +1,7 @@
+ """Verified prompt prefill for the existing native op15/op9 ring owners."""
+ import struct
+ import time
++from concurrent.futures import ThreadPoolExecutor
+ 
+ 
+ OP = 15
+@@ -29,6 +30,8 @@
+ 
+ 
+ def run(stages, model, plan, base, pending, ring):
++    pipeline = plan.get('prefill_pipeline', False)
++    base.require(type(pipeline) is bool, 'prefill pipeline boolean')
+     rows = plan.get('prefill_rows', 0)
+     base.require(type(rows) is int and 0 <= rows <= 256, 'prefill rows integer bound 0..256')
+     # Diagnostic host wall seconds, not kernel/device timings. Target and draft
+@@ -48,6 +51,8 @@
+         return empty
+     base.require(all(s.prefill_rows == rows and s.stream_bytes == stages[0].stream_bytes
+                      for s in stages), 'uniform native prefill maps')
++    if pipeline:
++        return run_pipeline(stages, model, rows, bulk, base, pending, ring)
+     began = time.perf_counter()
+     model.adopt_prefill(bulk)
+     stream = stages[0].stream_bytes
+@@ -98,3 +103,105 @@
+                               timing['draft_replay_wall_s'])
+     return dict(prefill_positions=bulk, prefill_chunks=chunks, prefill_draft_replay=drafts,
+                 prefill_timing=timing)
++
++
++def run_pipeline(stages, model, rows, bulk, base, pending, ring):
++    """Two-chunk waves; requires native bounded prefill replay ownership.
++
++    Host work durations overlap: never subtract them from total wall. Phase
++    walls are disjoint (target-only, mixed target/draft, draft-only); their
++    residual is orchestration/adoption/finalization. No device timing claim.
++    """
++    timing = dict(schema='rolling-prefill-host-wave-wall-v2', total_wall_s=0.0,
++                  target_command_work_wall_s=[0.0]*4, target_work_wall_s=0.0,
++                  draft_replay_work_wall_s=0.0, target_only_phase_wall_s=0.0,
++                  mixed_phase_wall_s=0.0, draft_only_phase_wall_s=0.0,
++                  other_wall_s=0.0)
++    began = time.perf_counter()
++    model.adopt_prefill(bulk)
++    stream = stages[0].stream_bytes
++
++    def target(index, start):
++        work_began = time.perf_counter()
++        count, parity = min(rows, bulk-start), (start//rows) % 2
++        stage = stages[index]
++        if index == 0:
++            stage.prefill[16:16+4*count] = struct.pack(f'<{count}i', *model.prompt[start:start+count])
++        else:
++            kind = 'forward' if index == 1 else 'reverse'
++            region(stage.prefill, 'forward', parity, rows, stream, count)[:] = \
++                region(stages[index-1].prefill, kind, parity, rows, stream, count)
++        metadata = verified_metadata(pending.wire, model.rows[start+count-1].row,
++                                     index, index == 3)
++        stage.shared[pending.wire.ROW_OFFSET:pending.wire.ROW_OFFSET+len(metadata)] = metadata
++        command_began = time.perf_counter()
++        reply = stage.command(OP, count, start, parity)
++        command_wall = time.perf_counter()-command_began
++        base.require(reply[3] == count*stream, 'native prefill reply extent')
++        return index, command_wall, time.perf_counter()-work_began
++
++    def replay(start):
++        work_began = time.perf_counter()
++        count, parity = min(rows, bulk-start), (start//rows) % 2
++        final_reverse = region(stages[-1].prefill, 'reverse', parity, rows, stream, count)
++        provider = stages[0]
++        for position in range(start+1, start+count+1):
++            hidden = final_reverse[(position-1-start)*stream:(position-start)*stream]
++            provider.shared[REVERSE_OFFSET:REVERSE_OFFSET+stream] = hidden
++            provider.shared[REVERSE_READY_OFFSET:REVERSE_READY_OFFSET+4] = struct.pack('<I', position)
++            if position < bulk:
++                row = model.rows[position].row
++            else:
++                parent = model.rows[bulk-1].row
++                row = ring.Row(model.epoch, bulk+1, parent.identity, bulk, model.prompt[bulk], 0,
++                               model.request, parent.after, model.proposals.hashes[bulk+1])
++            metadata = verified_metadata(pending.wire, row, 0, False)
++            provider.shared[pending.wire.ROW_OFFSET:pending.wire.ROW_OFFSET+len(metadata)] = metadata
++            provider.command(DRAFT, model.prompt[position], position, 0)
++        return count, time.perf_counter()-work_began
++
++    chunks = drafts = 0
++    # A phase barrier owns every stage until its command and all shared-memory
++    # reads/writes complete. On error the context joins both workers before
++    # propagating; no subsequent phase is submitted and nothing is retried.
++    with ThreadPoolExecutor(max_workers=2) as pool:
++        def phase(targets=(), draft=None):
++            phase_began = time.perf_counter()
++            futures = [pool.submit(target, index, start) for index, start in targets]
++            draft_future = None if draft is None else pool.submit(replay, draft)
++            for future in futures:
++                index, command_wall, work_wall = future.result()
++                timing['target_command_work_wall_s'][index] += command_wall
++                timing['target_work_wall_s'] += work_wall
++            count = 0
++            if draft_future is not None:
++                count, wall = draft_future.result()
++                timing['draft_replay_work_wall_s'] += wall
++            key = ('mixed_phase_wall_s' if targets and draft is not None else
++                   'target_only_phase_wall_s' if targets else 'draft_only_phase_wall_s')
++            timing[key] += time.perf_counter()-phase_began
++            return count
++
++        for a in range(0, bulk, 2*rows):
++            b = a+rows
++            phase(((0, a),))
++            if b < bulk:
++                phase(((1, a), (0, b)))
++                phase(((2, a), (1, b)))
++                phase(((3, a), (2, b)))
++                drafts += phase(((3, b),), a)
++                drafts += phase(draft=b)
++                chunks += 2
++            else:
++                for index in (1, 2, 3):
++                    phase(((index, a),))
++                drafts += phase(draft=a)
++                chunks += 1
++    base.require(drafts == bulk, 'canonical prefill DRAFT replay extent')
++    for stage in stages:
++        stage.physical = stage.committed = bulk
++    timing['total_wall_s'] = time.perf_counter()-began
++    timing['other_wall_s'] = timing['total_wall_s']-sum(timing[key] for key in
++        ('target_only_phase_wall_s', 'mixed_phase_wall_s', 'draft_only_phase_wall_s'))
++    return dict(prefill_positions=bulk, prefill_chunks=chunks,
++                prefill_draft_replay=drafts, prefill_timing=timing)
+--- a/experiments/own-xpu-runtime/engine/tools/test_rolling_prefill.py
++++ b/experiments/own-xpu-runtime/engine/tools/test_rolling_prefill.py
+@@ -1,6 +1,8 @@
+ """CPU-only native prefill relay and rolling seam tests; no device/process."""
+ from hashlib import sha256
+ import struct
++import threading
++import time
+ import unittest
+ from unittest.mock import patch
+ 
+@@ -58,9 +60,10 @@
+         return (0, -1, 0, 0, sequence, 0, 0, 0, 0, 0, 0, 0)
+ 
+ 
+-def exercise(prompt, rows=2):
++def exercise(prompt, rows=2, pipeline=False):
+     stream = 16
+-    plan = dict(prefill_rows=rows, provider_stage=0, speculative_depth=3)
++    plan = dict(prefill_rows=rows, provider_stage=0, speculative_depth=3,
++                prefill_pipeline=pipeline)
+     model = bridge.RollingCoordinator(stages=4, request=sha256(b'prefill-test').digest(), epoch=1,
+         prompt=prompt, max_new=4, context=128, vocab=1000, eos_token_ids=[999],
+         stream_bytes=stream, speculative_depth=3)
+@@ -115,6 +118,122 @@
+         self.assertEqual(timing['total_wall_s'], 32.5)
+         self.assertEqual(timing['other_wall_s'], 0.0)
+ 
++    def test_pipeline_adverse_two_chunk_waves_match_serial_and_seam(self):
++        # Five chunks including a partial tail: parity is reused across waves.
++        prompt = list(range(3, 14))
++        serial, serial_model, serial_stages = exercise(prompt)
++        original = Stage.command
++        barriers = {(wave, phase): threading.Barrier(2) for wave in (0, 1)
++                    for phase in (2, 3, 4, 5)}
++        locks = [threading.Lock() for _ in range(4)]
++        replay_queue = []
++        next_draft = [1]
++        overlapped = set()
++
++        def delayed(stage, op, token, position, fixture):
++            self.assertTrue(locks[stage.index].acquire(False), 'same-stage command overlap')
++            try:
++                metadata = bytes(stage.shared[pending.wire.ROW_OFFSET:
++                                              pending.wire.ROW_OFFSET+224])
++                mapped = bytes(stage.prefill)
++                reverse = bytes(stage.shared[prefill.REVERSE_OFFSET:
++                                             prefill.REVERSE_OFFSET+stage.stream_bytes])
++                if op == prefill.OP:
++                    wave, offset = divmod(position, 4)
++                    phase = stage.index+1+offset//2
++                    if phase > 1 and wave < 2:
++                        barriers[(wave, phase)].wait(timeout=3)
++                        overlapped.add((wave, phase))
++                elif (position-1) % 4 == 0 and position <= 8:
++                    barriers[((position-1)//4, 5)].wait(timeout=3)
++                # Read shared inputs late, after the peer had a chance to run.
++                time.sleep(0.001*(4-stage.index))
++                self.assertEqual(bytes(stage.prefill), mapped)
++                self.assertEqual(bytes(stage.shared[pending.wire.ROW_OFFSET:
++                                                    pending.wire.ROW_OFFSET+224]), metadata)
++                self.assertEqual(bytes(stage.shared[prefill.REVERSE_OFFSET:
++                                                    prefill.REVERSE_OFFSET+stage.stream_bytes]), reverse)
++                if stage.index == 0:
++                    if op == prefill.OP:
++                        self.assertLess(len(replay_queue), 2)
++                        tokens = struct.unpack(f'<{token}i', mapped[16:16+4*token])
++                        self.assertEqual(tokens, tuple(prompt[position:position+token]))
++                        replay_queue.append([position, tokens, 0])
++                    else:
++                        self.assertEqual(position, next_draft[0])
++                        start, tokens, consumed = replay_queue[0]
++                        self.assertEqual(position, start+consumed+1)
++                        self.assertEqual(tokens[consumed], prompt[position-1])
++                        replay_queue[0][2] += 1
++                        if replay_queue[0][2] == len(tokens):
++                            replay_queue.pop(0)
++                        next_draft[0] += 1
++                return original(stage, op, token, position, fixture)
++            finally:
++                locks[stage.index].release()
++
++        with patch.object(Stage, 'command', delayed):
++            result, model, stages = exercise(prompt, pipeline=True)
++        self.assertEqual(len(overlapped), 8)
++        self.assertFalse(replay_queue)
++        self.assertEqual(stages[0].streams, serial_stages[0].streams)
++        for actual, expected in zip(stages, serial_stages):
++            for op in (prefill.OP, prefill.DRAFT):
++                self.assertEqual([c[:4] for c in actual.calls if c[0] == op],
++                                 [c[:4] for c in expected.calls if c[0] == op])
++            self.assertEqual((actual.physical, actual.committed), (9, 9))
++        self.assertEqual(model.commands(), serial_model.commands())
++        self.assertEqual((model.frontier, model.next_id, model.provider.serial),
++                         (serial_model.frontier, serial_model.next_id, serial_model.provider.serial))
++        timing = result['prefill_timing']
++        self.assertEqual(timing['schema'], 'rolling-prefill-host-wave-wall-v2')
++        phases = sum(timing[k] for k in ('target_only_phase_wall_s',
++                     'mixed_phase_wall_s', 'draft_only_phase_wall_s', 'other_wall_s'))
++        self.assertAlmostEqual(phases, timing['total_wall_s'])
++        self.assertGreaterEqual(timing['other_wall_s'], 0)
++        self.assertTrue(all(t > 0 for t in timing['target_command_work_wall_s']))
++
++    def test_pipeline_single_chunk_odd_wave_and_rows_one(self):
++        for rows, length in ((1, 3), (1, 7), (2, 4), (2, 8), (3, 10)):
++            prompt = list(range(3, 3+length))
++            expected, baseline, serial_stages = exercise(prompt, rows=rows)
++            actual, model, stages = exercise(prompt, rows=rows, pipeline=True)
++            for key in ('prefill_positions', 'prefill_chunks', 'prefill_draft_replay'):
++                self.assertEqual(actual[key], expected[key])
++            self.assertEqual(stages[0].streams, serial_stages[0].streams)
++            self.assertEqual(model.commands(), baseline.commands())
++
++    def test_pipeline_failure_joins_peer_without_later_phase_or_retry(self):
++        original = Stage.command
++        entered, failed, finished = threading.Event(), threading.Event(), threading.Event()
++        calls = []
++
++        def fail(stage, op, token, position, fixture):
++            calls.append((stage.index, op, position))
++            if op == prefill.OP and stage.index == 0 and position == 2:
++                entered.set()
++                self.assertTrue(failed.wait(3))
++                time.sleep(0.01)
++                reply = original(stage, op, token, position, fixture)
++                finished.set()
++                return reply
++            if op == prefill.OP and stage.index == 1 and position == 0:
++                self.assertTrue(entered.wait(3))
++                failed.set()
++                raise RuntimeError('injected target failure')
++            return original(stage, op, token, position, fixture)
++
++        with patch.object(Stage, 'command', fail):
++            with self.assertRaisesRegex(RuntimeError, 'injected target failure'):
++                exercise(list(range(3, 14)), pipeline=True)
++        self.assertTrue(finished.is_set(), 'peer must finish before error escapes')
++        self.assertEqual(sorted(calls), [(0, prefill.OP, 0), (0, prefill.OP, 2),
++                                         (1, prefill.OP, 0)])
++
++    def test_pipeline_plan_flag_requires_boolean(self):
++        with self.assertRaisesRegex(ValueError, 'prefill pipeline boolean'):
++            exercise([3, 5, 8], pipeline=1)
++
+     def test_exact_region_extents_do_not_touch_inactive_or_partial_tail(self):
+         mapping = bytearray([0xA5]) * prefill.map_bytes(4, 8)
+         source = bytes(range(16))
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+@@ -18,7 +18,10 @@
+  struct ProviderCapture {int position=0;uint64_t serial=0;};std::map<uint64_t,ProviderCapture> provider_at_capture;
+  std::array<uint64_t,4> provider_borrows_by_depth{};std::ofstream survival_trace;uint64_t survival_records=0,survival_rows=0,survival_advanced_records=0;
+  ownrt::ring_next::StageRing<EngineBackend> ring;std::ofstream trace;uint64_t trace_rows=0,trace_omitted=0;
+- int prefill_start=0;std::vector<int> prefill_tokens;
++ // At most two target chunks may lead canonical draft replay. Own tokens by
++ // value: the shared prefill header is single-buffered and reused by OP15.
++ struct PrefillReplay {int start;std::vector<int> tokens;size_t consumed=0;};
++ std::vector<PrefillReplay> prefill_replay;
+  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
+  ownrt::ring_next::Row prefill_row(const Request& r){
+   namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
+@@ -51,13 +54,19 @@
+  static bool handles(int op){return op==24||op==25||op==26;}
+  void prefill_complete(const Request& r,const int* tokens){
+   require(e.a.prefill_rows&&e.a.pipeline_ring_persistent_requests&&r.op==15&&r.token>0&&r.token<=e.a.prefill_rows,"ring prefill completion admission");
++  if(e.a.pipeline_first()){
++   require(tokens&&prefill_replay.size()<2,"ring prefill bounded token ownership");
++   if(!prefill_replay.empty()){const auto& previous=prefill_replay.back();require(r.position==previous.start+int(previous.tokens.size()),"ring prefill replay chunk continuity");}
++  }
+   ring.prefill(r.token,prefill_row(r));
+-  if(e.a.pipeline_first()){require(tokens,"ring prefill prompt token ownership");prefill_start=r.position;prefill_tokens.assign(tokens,tokens+r.token);}
++  if(e.a.pipeline_first())prefill_replay.push_back({r.position,std::vector<int>(tokens,tokens+r.token),0});
+  }
+  void draft_prefill(const Request& r){
+-  const int index=r.position-prefill_start;const auto row=prefill_row(r);
+-  require(index>0&&index<=int(prefill_tokens.size())&&provider->live_position()==r.position,"ring prefill DRAFT canonical token/position");
+-  provider_sequence->prefill(row,prefill_tokens[index-1]);++provider_borrows_by_depth[0];
++  require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");
++  auto& chunk=prefill_replay.front();const auto row=prefill_row(r);
++  require(row.token==r.token&&row.position==r.position&&chunk.consumed<chunk.tokens.size()&&r.position==chunk.start+int(chunk.consumed)+1&&provider->live_position()==r.position,"ring prefill DRAFT canonical token/position");
++  provider_sequence->prefill(row,chunk.tokens[chunk.consumed]);++provider_borrows_by_depth[0];
++  if(++chunk.consumed==chunk.tokens.size())prefill_replay.erase(prefill_replay.begin());
+  }
+  Reply execute(const Request& r){
+   namespace wire=ownrt::ring_next::wire;if(r.op==11)return persistent_reset(r);if(r.op==wire::batch_op)return draft_batch(r);require(handles(r.op),"ring dispatcher only owns admitted commands");
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc
+@@ -9,6 +9,8 @@
+ }
+ void reset_owner_state(){
+  require(e.a.pipeline_ring_persistent_requests&&reset_spec.has_value(),"ring reset owner callback admission");
++ require(prefill_replay.empty(),"ring reset retains unreplayed prefill chunk");
++ prefill_replay.clear();
+  Candidate empty;const auto& d=*reset_spec;
+  pipeline::request_reset(e,empty,provider,{},accepted_output_rows,std::pair<fs::path,std::string>{d.destination,d.oracle});
+  // Existing backing allocations stay live; logical cache contents become cold.
+@@ -34,6 +36,7 @@
+  require(!reset_spec&&!e.poisoned&&!e.progress_pending&&!e.progress_callback&&!e.preparing_commands&&!e.draft_timing&&!e.correction_exchange&&!e.head_export&&!e.head_publish&&!e.head_merge&&!e.prepare_async&&!e.dev(0).before_compute&&!e.dev(0).after_compute,"ring reset queued owner refusal");
+  const auto metadata=original_output/("reset-"+std::to_string(request.sequence)+".json");
+  const auto d=reset::load(metadata,original_output,context.epoch,e.a.pipeline_ring_request_sha256,context.stage,request.sequence,e.a.oracle.string());
++ require(prefill_replay.empty(),"ring reset retains unreplayed prefill chunk");
+  ring.boundary();checkpoints.boundary();require(provider_at_capture.empty(),"ring reset retains capture provenance");
+  if(provider){provider->recursive_idle();require(!provider->recursive_active&&!provider_sequence->poisoned()&&provider->recursive_healthy()&&provider->live_position()==std::max(0,ring.committed()-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring reset canonical provider frontier");peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
+  attest(); // seal the old request once, before its state or output path changes

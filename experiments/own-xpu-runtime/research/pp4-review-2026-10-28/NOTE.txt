@@ -1,0 +1,9 @@
+Run-9 CPU evidence audit
+
+Cold request: 121854 prompt tokens, 8 outputs, TTFT 1034.914 s; not full262K. Draft prefill replay: 121852 rows, sum reported wall 163.22348441 s (first row 4.39769 s). All prefill timing files are empty, so exact target prefill cannot be separated. Do not assign remaining TTFT to target kernels by subtraction: overhead and scheduling overlap are not separately measured. First per-stage decode half incurs approximately 3.9 s; later halves are milliseconds.
+
+Request receipt passes, but run lifecycle fails: stage0 exit1, other stages0, no live PIDs. Preserve incident evidence; cause is not established here. Internal repeats and short-state parity do not establish target-only long-input fidelity or resolve six independent-reference disagreements. No speedup extrapolation.
+
+Next: use a bounded seam gate, retain target-prefill chunk/replay timing in the new candidate, then measure the same long prompt on the same resident process. Run one exactness gate then fair timing. Keep publication bookkeeping off the optimization critical path.
+
+Bounded health preflight: experiments/ltx25-b70/scripts/check-four-card-health.py <fresh-receipt.json>, with a known torch-XPU Python. Previously used in the Oct26 SC117 card27 incident; each card once, copy/fp32/bf16/repeat plus journal check. This audit did not run it.
