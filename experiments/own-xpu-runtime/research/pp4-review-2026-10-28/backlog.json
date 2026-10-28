@@ -131,7 +131,7 @@
         "expert-parallel-screen.txt"
       ],
       "first_test": "replay actual route histograms and tensor sizes through a load/communication budget; compare against measured target work674.7s and the current full prefill522.3s (overlapping work must not be added to wall time).",
-      "next_step": "Use new3+1 actual timings plus long peropcost/archived transfer evidence for CPU PP×EP ownerconflict simulation. Naive pureEP3 predicts515.8s before communication vs current437.3targetphase/522.3wholewall; hybrid remainsopen.",
+      "next_step": "Use new3+1 actual timings plus long peropcost/archived transfer evidence for CPU PP\u00d7EP ownerconflict simulation. Naive pureEP3 predicts515.8s before communication vs current437.3targetphase/522.3wholewall; hybrid remainsopen.",
       "blocker": null,
       "already_tested_scope": "CPU replay384archived256rowroutegroups; actual expertweights50.292GB; purelayer-serialEP3 conditional timing model using DIFFERENT4096rankexpertshare36.74%, not an EP measurement. NoGPUimplementationtested.",
       "discovery_open": true,
@@ -168,7 +168,7 @@
           "id": "grouped-IQ4NL-packed-logical4",
           "status": "exact-kernel-win-small-integration-deprioritized",
           "evidence": "../prefill-iq4-packed/RESULT.md",
-          "result": "8.34% hot/6.63% cold tile-kernel gain; historical family9.3% target share gives only conditional small budget (~0.6–0.8%), not measured endpoint gain.",
+          "result": "8.34% hot/6.63% cold tile-kernel gain; historical family9.3% target share gives only conditional small budget (~0.6\u20130.8%), not measured endpoint gain.",
           "scope": "One IQ4_NL grouped T4 packed logical lane treatment only; other formats/materialization discovery remains open"
         },
         {
@@ -211,23 +211,26 @@
           "id": "select-long-CM32-CM64",
           "status": "exact-kernel-win-small-integration-deprioritized",
           "evidence": "../select-long/RESULT.md",
-          "result": "36cases×2variants exact;45,696actualStage1calls at121852 rows; endpoint extrapolation3.027s/671.965s0.45%; preserve optionalpatch",
+          "result": "36cases\u00d72variants exact;45,696actualStage1calls at121852 rows; endpoint extrapolation3.027s/671.965s0.45%; preserve optionalpatch",
           "scope": "Stage1cached integer selection only; QSA KV layouts/attention kernels remain open"
         }
       ]
     },
     {
       "id": 6,
-      "idea": "MEDIUM: PP2xTP2 or row-partitioned dense projections.",
-      "status": "new-treatment-needed-prior-related-negatives",
+      "idea": "HIGH / OWNER NEXT: Within-layer tensor parallelism or row-sharded projections; compare against PP and PP x TP hybrids.",
+      "status": "owner-prioritized-next-source-and-communication-screen-no-new-GPU-test",
       "evidence": [
-        "docs/sc117-engine-review.md TP gathers break-even"
+        "docs/sc117-engine-review.md TP gathers break-even",
+        "within-layer-parallelism-next.txt"
       ],
-      "first_test": "measured whole producer/transfer/consumer budget on actual tensor sizes. Stop if collective round trips dominate. GRIMOIRE's historical TP retained full weights; copying that alone would not improve capacity.",
-      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "first_test": "Use existing timing to select a material operator, then measure exact output-row shards including full producer/real transfer/gather/consumer critical path. Preserve reduction and routing order; do not assume K-axis all-reduce is lossless.",
+      "next_step": "Start with within-layer-parallelism-next.txt; reuse existing shard/cost audits, then one exactness gate and matched full timing if the measured communication budget permits a material gain.",
       "blocker": null,
       "already_tested_scope": "Related control/negative only; new proposed treatment untested",
-      "discovery_open": true
+      "discovery_open": true,
+      "owner_priority_date": "2026-10-28",
+      "motivation": "Owner follow-up to reported DGX Spark cluster decode scaling; hardware/software settings of that report are unknown and are not comparison evidence."
     },
     {
       "id": 7,
@@ -259,7 +262,7 @@
         "dedicated-depth2-gate/two-plus-one-aba64k-r2-evidence/index.json"
       ],
       "first_test": "trace-driven upper bound using actual accepted prefixes, then a fixed held-out policy. Stop if even the oracle cannot beat incumbent. This is not simply raising depth, and historical collocated provider moves already lost. Sources: Strata MULTI_GPU.md; local Laguna conditional-tree negative and existing PP4 capture-ready path. No new trained tree heads.",
-      "next_step": "Close fixeddepth2 promotion: same9599 full12 pair both5965outputs/all11cold/4owner0/passiveclean; depth2 all12tasks slower12.1–16.75%,124.208971s vs108.825501s(+14.1359%); decode50.7637 vs58.5681tps. Firstpair negative only, no universalclaim/no repeatloser. Retain depth3; Historicalcut25 2+1 ABA64Kr2 passed:1536 CPU-lineage IDs,4111334626 full physical cold/repeatedA bytes,2065canonical+39inactive+73provider,3owner0/passiveclean. Full12 2+1 NOT RUN; no suite speed claim. Adaptive requested-depth protocol remains separate/unimplemented.",
+      "next_step": "Close fixeddepth2 promotion: same9599 full12 pair both5965outputs/all11cold/4owner0/passiveclean; depth2 all12tasks slower12.1\u201316.75%,124.208971s vs108.825501s(+14.1359%); decode50.7637 vs58.5681tps. Firstpair negative only, no universalclaim/no repeatloser. Retain depth3; Historicalcut25 2+1 ABA64Kr2 passed:1536 CPU-lineage IDs,4111334626 full physical cold/repeatedA bytes,2065canonical+39inactive+73provider,3owner0/passiveclean. Full12 2+1 NOT RUN; no suite speed claim. Adaptive requested-depth protocol remains separate/unimplemented.",
       "blocker": null,
       "already_tested_scope": "Measured2+1 capacity3:604stage0 vs511finaldecodeROWs;92rejected busy1.275891775s+1unusedcap.375accepted depth2/3 ROWs. Optimistic removeallrejectedwork bound58.82tok/s vs51.29actual, not prediction. Native runtime and codec currently fixeddepth2/3.",
       "discovery_open": true
@@ -420,9 +423,9 @@
         "current-command-replay-screen.txt",
         "current-command-replay-screen.json"
       ],
-      "current_result": "Actual longcontrol/ABA retained decode enqueue medians 2.45–3.20ms overlap GPU work; waits are not CPU overhead. No device timestamps or submission-caused critical-gap budget; cold-A request00 native timing attribution unavailable. Defer graph implementation; fixed-depth suite remains active priority.",
+      "current_result": "Actual longcontrol/ABA retained decode enqueue medians 2.45\u20133.20ms overlap GPU work; waits are not CPU overhead. No device timestamps or submission-caused critical-gap budget; cold-A request00 native timing attribution unavailable. Defer graph implementation; fixed-depth suite remains active priority.",
       "reopen_gate": "Existing OWNRT_DECODE_PROFILE=2 with --timing token measures device busy/gaps on non-TP-replicate stages; submission causality additionally needs correlated Device::issue submit/dependency-ready timestamps. Only material exposed gaps justify one exact same-device same-bank layer A/B; no GPU test run.",
-      "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4–4.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest.",
+      "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4\u20134.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest.",
       "dedicated_timeline": "dedicated-timeline-screen.txt; host in-flight occupancy and extra physical ROWs do not establish GPU idle caused by submission."
     },
     {
@@ -604,7 +607,7 @@
         "lookup-view-candidate/cpu-r1-evidence/receipt.json",
         "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ],
-      "finding": "CPU embedding was already host resident; whole-head offload remains lower priority. Immutable lookup view avoids29.138GB anonymous copy and passes full native state/census/output gates. Matched long READY144.457→75.691s but request261.499→352.909s; opt-in memory/startup tradeoff, not speed promotion. No measured paging cause."
+      "finding": "CPU embedding was already host resident; whole-head offload remains lower priority. Immutable lookup view avoids29.138GB anonymous copy and passes full native state/census/output gates. Matched long READY144.457\u219275.691s but request261.499\u2192352.909s; opt-in memory/startup tradeoff, not speed promotion. No measured paging cause."
     },
     {
       "id": "actual-L4-prepared-input-capture-r3",
@@ -650,7 +653,7 @@
         "lookup-view-candidate/copy-long-r1-evidence/index.json",
         "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ],
-      "finding": "Allfullstates/pairs/512outputs exact. READY144.457→75.691s; request261.499→352.909s, lifecycle446.275→468.379s. Optinmemory/startuptradeoff, speedlossnotpromoted. No pagefaultmeasurement/causeattribution.",
+      "finding": "Allfullstates/pairs/512outputs exact. READY144.457\u219275.691s; request261.499\u2192352.909s, lifecycle446.275\u2192468.379s. Optinmemory/startuptradeoff, speedlossnotpromoted. No pagefaultmeasurement/causeattribution.",
       "next_hypotheses": [
         {
           "idea": "Bounded sparse chunk staging/prefetch for exactlookup entries",
@@ -676,7 +679,7 @@
         "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json",
         "reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/index.json"
       ],
-      "finding": "Full244-token actual diagnostic returns16568 matchingCPU, oldnative6343. Exactlyone slot changes position177/layer3 expert62→477 equalrawF32word3231393608 among11712 verifiedroute records; nativeweights unchanged. Final logitRMS1.38935e-6/max7.62939e-6, notbitwise. Bothowners0/postflightclean. Otherfiveoriginaldisagreements untested; defaultnotpromoted. Later seven-case one-owner run matches allsix fixed savedCPU first tokens plus repeated244; six cold resets and430521248 repeated-A bytes pass. Not free-running or bitwise CPU fidelity.",
+      "finding": "Full244-token actual diagnostic returns16568 matchingCPU, oldnative6343. Exactlyone slot changes position177/layer3 expert62\u2192477 equalrawF32word3231393608 among11712 verifiedroute records; nativeweights unchanged. Final logitRMS1.38935e-6/max7.62939e-6, notbitwise. Bothowners0/postflightclean. Otherfiveoriginaldisagreements untested; defaultnotpromoted. Later seven-case one-owner run matches allsix fixed savedCPU first tokens plus repeated244; six cold resets and430521248 repeated-A bytes pass. Not free-running or bitwise CPU fidelity.",
       "next_step": "Generic962046 independent CPU checks passed5965/5965 (10 authenticated identical-input reuses +2 fresh contexts). Addressed7f264143 seven-state gate passed; next MTP compatibility; broader/default promotion remains unqualified.",
       "device_sort_subexperiment": {
         "status": "CPU-and-standalone-AOT-device-exact-runtime-unmodified",
@@ -711,6 +714,34 @@
     }
   ],
   "next_priority_queue": [
+    {
+      "priority": 1,
+      "action": "Investigate within-layer parallelism / PP x TP and expert-parallel hybrids. Measure complete compute-plus-communication cost with unchanged arithmetic before framework integration. Owner explicitly selected this next; no new GPU test yet.",
+      "idea_id": 6,
+      "evidence": "within-layer-parallelism-next.txt"
+    },
+    {
+      "priority": 2,
+      "action": "Complete same9599 depth3/64K two-target-plus-draft full12 timing when needed as topology control; A/B/A passed, full12 unrun. Three-target-plus-draft full12 already CPU-qualified.",
+      "evidence": "dedicated-depth2-gate/two-plus-one-aba64k-r2-evidence/index.json"
+    },
+    {
+      "priority": 3,
+      "action": "Consider moving only first3+1 boundary, keeping finalcut33, if actual per-layer critical-path data justify it; equal16 improved long-request time but slowed decode.",
+      "evidence": "dedicated-timeline-screen.txt"
+    },
+    {
+      "priority": 4,
+      "action": "Measure checkpoint capture/restore cost before smaller reverse-undo write sets; timing candidate remains unapplied.",
+      "evidence": "ring-checkpoint-timing-candidate/REVIEW.txt"
+    },
+    {
+      "priority": 5,
+      "action": "Keep near-capacity3+1 and remaining context/quality coverage separate from actual121854-token screens. Reuse retained controls and references; no inferred context curve.",
+      "evidence": "realistic-matrix-registration.json"
+    }
+  ],
+  "previous_priority_queue_before_owner_parallelism_followup": [
     {
       "priority": 1,
       "action": "Generic GPU962046 saved twelve greedy continuations passed independent CPU5965/5965,4941 historical exact-input reuse+1024 fresh2contexts. Addressed7f264143 seven-state qualification passed (PhaseB skipped, generic twelve-case CPU authority retained); next MTP compatibility; no default promotion.",

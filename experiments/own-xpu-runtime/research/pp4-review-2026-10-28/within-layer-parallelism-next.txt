@@ -1,0 +1,66 @@
+Next optimization: within-layer parallelism and hybrid layouts
+Owner priority, 2026-10-28. Planning only; no new GPU run or speed claim.
+
+Motivation
+A reader reported improved decode scaling on their DGX Spark cluster. Treat
+that as a useful research lead, not a matched benchmark or proof of which
+parallelism/interconnect their setup uses. Our pipeline result is not a general
+multi-GPU limit. The owner asked to explore this next.
+
+Primary question
+Can two B70s cooperate on a material part of each target layer fast enough to
+beat the current layer pipeline, while keeping the chosen quantized target's
+output and required state exactly unchanged? Compare pipeline, within-layer
+and hybrid layouts. Keep dedicated-draft placement as a separate variable.
+
+First work
+1. Reuse the current native stage timing and existing row/head-shard audits.
+   Choose a material operator family; do not start by rebuilding a broad TP
+   framework or optimizing the already-small final-head budget.
+2. Screen output-row sharding of dense or routed-expert projections. Each
+   output row keeps its complete dot-product/reduction order; concatenate rows
+   in canonical order. Preserve expert identity, routing, tie rules and combine
+   order. Input/K-axis sharding and all-reduce can change floating-point order
+   and must not be assumed lossless.
+3. Use the existing bounded kernel/transport harnesses to compare full work on
+   one GPU against concurrent halves on two, including the real producer,
+   upload/transfer, synchronization, gather and consumer. Measure actual B70
+   links; neither nominal PCIe bandwidth nor another machine's fabric is an
+   observed result. Report single-token decode separately from batched prefill.
+4. Require one meaningful exactness gate, then matched full timing. Include
+   full output/status/guard checks for the operator; before model integration,
+   cover cold reset, rollback and saved-state authority. No partial/headline
+   claim from kernel-only savings or changed reduction arithmetic.
+5. Advance only if measured saved compute exceeds all added critical-path
+   costs by enough to matter at model level. Otherwise record the negative
+   and move to the next material family or a PP x TP / PP x expert-parallel
+   layout. Keep stage occupancy separate from actual GPU utilization.
+
+Fair comparison
+Same model/revision/quant, reference routing policy, arithmetic and F32 KV,
+actual prompt tokens, context reservation, output budget, MTP depth, cache
+policy, measured observer and CPU/process placement. Use the same binary when
+it supports both arms; otherwise record the exact source delta. Reuse the
+registered twelve-prompt suite and long-input fixture after qualification.
+Report decode, TTFT, full request time, startup/reset overhead and memory
+separately. Do not infer speedup from the earlier two-card depth1 versus
+three-card depth3 comparison, which changed several variables together.
+
+Existing evidence to reuse
+- backlog.json idea6: PP2xTP2 / row-partitioned projections (promoted here).
+- moe-output-shard-cost-screen.txt: down-only ideal saving about18.7us/call
+  before transport is small; all routed families need a broader measured budget.
+- qsa-kv-head-shard-feasibility.txt: two KV-group split preserves independent
+  head arithmetic conditionally; likely capacity-oriented, not yet a speed win.
+- exact-head-row-shard-feasibility.txt: previously low materiality.
+- expert-parallel-screen.txt: conditional pure-EP negative; hybrid remains open.
+- dedicated-timeline-screen.txt: host in-flight time and extra physical rows;
+  does not isolate communication or host submission as the bottleneck.
+
+Operating constraints remain unchanged: no power/memory settings, reboot,
+driver reset, training or restart chains. Do not replay a known faulting TP
+experiment as the control. Review its retained incident before any new device
+probe. Use fresh admitted outputs and existing fault-halt discipline.
+
+This priority records the next optimization session. The completed publication
+and image are preserved; no model service is being started by this note.

@@ -1,9 +1,14 @@
 # Current Workspace State
 
-Owner requested finalization and neural.download recipe publication. No new GPU
-work is planned; remaining ideas stay in the retained backlog. The task-specific
-performance-focus monitor was stopped gracefully; unrelated processes were left
-unchanged. Publication is being completed by the coordinator.
+Owner next priority (October 28): investigate within-layer parallelism and
+hybrid pipeline/tensor or expert layouts to improve multi-GPU decode scaling.
+Start with measured compute-plus-communication costs and exact row-shard gates;
+do not generalize our current pipeline result to all multi-GPU inference.
+[Next experiment](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/within-layer-parallelism-next.txt)
+and the existing backlog idea6 now lead the queue. This is planning only: no new
+GPU work has started. Experiment owners are drained and the performance-focus
+monitor is stopped. Recipe/results and the explanatory image/notes are pushed;
+subsequent site refreshes are handled by the publication workflow.
 
 **October 28 — AOT 3+1/262K long512 screen fastest; 12 saved greedy continuations agree with CPU.**
 
