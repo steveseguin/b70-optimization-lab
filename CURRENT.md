@@ -7,16 +7,20 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live: the first general router tie-order diagnostic stopped on a software
-binding check before diagnostic reads/uploads: the hook omitted Builder-added
-`active`/`error` inputs. Both owners exited 1, no live PIDs remain, and passive
-postflight matches the clean baseline. The original `--max-new 1` was correct;
-the options-default suspicion was superseded. Exact binding validation is now
-fixed and passes real planner fixtures for unfused/fused paths plus malformed
-binding refusals. The r2 AOT build is running; no second GPU run has launched.
-This default-OFF, target-only diagnostic uses actual native scores, preserves
-selected weight bytes, permits changes only between identical raw score words,
-and has no runtime CPU oracle. Causality and independent quality remain open.
+Live: the corrected general router tie-order diagnostic is running at
+`/dev/shm/sc117-router-tie-target244-20261028-r2` (invocation
+`c535e05621e14699b15508b8f436f18d`, binary `42458c9016fc`, plan `071ec32b54bd`).
+Startup memory admission and the fault baseline were clean. This default-OFF,
+target-only 244-token/one-output diagnostic preserves selected weight bytes and
+permits changes only between identical actual score words, without a runtime
+CPU oracle. Causality and independent quality remain open.
+
+The first attempt stopped on a software binding check before diagnostic
+reads/uploads: the hook omitted Builder-added `active`/`error` inputs. Both
+owners exited 1, no live PIDs remained, and passive postflight was clean. Exact
+binding validation now passes real planner unfused/fused fixtures and malformed
+binding refusals. The original `--max-new 1` was correct; the options-default
+suspicion was superseded. Runtime sources and helpers are frozen during r2.
 
 Host lookup mapping completed with exact full state and outputs but lost speed:
 copy request 261.499s versus mapped 352.909s; READY improved 144.457s to 75.691s.

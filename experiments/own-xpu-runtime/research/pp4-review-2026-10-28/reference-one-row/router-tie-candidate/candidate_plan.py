@@ -16,7 +16,9 @@ def make_plan(config):
  BASE.require(cfg['boundaries']==[0,23,48] and cfg['context']==4096 and cfg['max_new']==1 and cfg['prompt_tokens']==tokens,'fixed target-only geometry/input')
  BASE.require(cfg.get('live_draft') is False and cfg.get('use_proposals') is False,'no draft/proposals')
  receipt=json.loads(Path(cfg['build_receipt']).read_text())
- registration=json.loads(REGISTRATION.read_text());CURRENT=registration['binary_sha256']
+ registration_path=Path(cfg.get('build_registration',str(REGISTRATION))).resolve()
+ BASE.require(registration_path.parent==HERE and registration_path.name.startswith('build-registration') and registration_path.suffix=='.json','local explicit registration record')
+ registration=json.loads(registration_path.read_text());CURRENT=registration['binary_sha256']
  BASE.require(BASE.digest(cfg['build_receipt'])==registration['receipt_sha256'],'registered exact build receipt')
  BASE.require(type(cfg.get('reference_tie_diagnostic')) is bool,'explicit diagnostic ON/OFF')
  BASE.require(receipt['binary_sha256']==CURRENT,'explicit pinned router tie candidate')
@@ -38,7 +40,7 @@ def make_plan(config):
     execution_ready=True,old_reference_binary_sha256=identity['current_binary_sha256'],
     binary_identity_changed=True,limits='General reference tie-order diagnostic target-only244/1 at4096/F32/cut23. Historical df2c observation is a separate binary identity; no runtime oracle or quality claim.')
  spec=importlib.util.spec_from_file_location('router_adapter_plan_deps',C.ADAPTER);adapter=importlib.util.module_from_spec(spec);spec.loader.exec_module(adapter)
- for path in (Path(__file__).resolve(),Path(R.__file__).resolve(),Path(C.__file__).resolve(),R.INPUT,R.IDENTITY,REGISTRATION,Path(cfg['build_receipt']),Path(adapter.PARENT),Path(adapter.ENV_SOURCE),C.ADAPTER):p['pins'][str(path)]=BASE.digest(path)
+ for path in (Path(__file__).resolve(),Path(R.__file__).resolve(),Path(C.__file__).resolve(),R.INPUT,R.IDENTITY,registration_path,Path(cfg['build_receipt']),Path(adapter.PARENT),Path(adapter.ENV_SOURCE),C.ADAPTER):p['pins'][str(path)]=BASE.digest(path)
  for name,digest in adapter.source_pins().items():
   path=Path(name) if Path(name).is_absolute() else adapter.ROOT/name
   BASE.require(BASE.digest(path)==digest,'adapter dependency identity');p['pins'][str(path)]=digest
