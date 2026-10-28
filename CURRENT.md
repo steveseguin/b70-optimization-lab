@@ -52,10 +52,25 @@ was byte-verified before raw bundles were removed; the control archive receipt
 remains authoritative. This is a mixed long-workload win with slower decode,
 not full-suite/default promotion or independent CPU proof. Evidence:
 `equal16-topology-screen/equal16-r1-evidence/index.json`.
-Shared native/Python pins remain frozen. A short existing-profiler diagnostic
-is active for the next prefill decision, unit `sc117-reference-prefill-profile-20261028-r1`,
-invocation `0a35869462d64c5d82bc0696b31fa798`. Registration:
-`reference-one-row/router-tie-candidate/planner-policy/prefill-profile-planned-r1/registration.json`.
+Existing-profiler diagnostic
+`sc117-reference-prefill-profile-20261028-r1` completed cleanly: four rc0,
+no live owners, full2065target/73draft state parity,1707actual pairs and32IDs
+match PP4 serial. Seven stage0 chunks were retained; five full256 chunks after
+first total2469.11ms of diagnostic site time. Routed IQ2_S/IQ4_NL/IQ3_XXS/Q2_0
+account for43.33%; lookup is excluded and per-site drains preclude a speed claim.
+The subsequent eight-case expert512 screen passed64 exact output/status gates
+but improved weighted bucket+tile time only7.89% (hot and cold), below the
+registered10% integration threshold. Defer the larger pipeline rewrite; retain
+the operator result and closed small IQ4 candidate. This is not endpoint timing.
+Expert evidence: `prefill-512-expert-screen/run-r1-evidence/index.json`. Profile evidence:
+`reference-one-row/router-tie-candidate/planner-policy/prefill-profile-r1-evidence/index.json`.
+
+The opt-in dedicated all-owner reset build e60f7427 is running its first actual
+A→B→A gate at64K context (three targets plus draft, bulk prefill, measured checks,
+full cold and repeated-A byte proof). Short-prefix and global-counter assumptions
+were fixed before launch; Python CPU gates pass. This is not yet qualified.
+Unit `sc117-dedicated-reset-aba64k-20261028-r1`, invocation
+`4252fdb67ecb4485bd2ceea325440ef6`; source pins stay frozen through this run.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns

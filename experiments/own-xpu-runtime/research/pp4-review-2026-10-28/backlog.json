@@ -124,17 +124,20 @@
     {
       "id": 3,
       "idea": "Exact expert register-decode reuse and remaining-cost optimization (no F32 weight materialization on current xgroup path).",
-      "status": "existing-register-decode-IQ4-small-screen-closed-wider512-candidate-source-only",
+      "status": "512-operator-exact-7.89percent-threshold-miss-integration-closed",
       "evidence": [
         "expert-path-next-screen.txt",
         "prefill-width512-screen.txt",
         "../prefill-experts/RESULT.md",
         "../decode-experts/RESULT.md",
-        "../prefill-iq4-packed/RESULT.md"
+        "../prefill-iq4-packed/RESULT.md",
+        "prefill-profile-next-lever.txt",
+        "reference-one-row/router-tie-candidate/planner-policy/prefill-profile-r1-evidence/index.json",
+        "prefill-512-expert-screen/run-r1-evidence/index.json"
       ],
       "first_test": "Reuse actual production route/shape expert harness for actual512-row T4 operators; include bucket+tile costs and all output/status bitwise equality. Coordinate existing idea9 width512 screen; do not duplicate transport-only batching or old losing tile/decode sweeps.",
-      "next_step": "Prioritize shared actual512 operator candidate under idea9 after current MTP quality gates; current critical-owner per-format expert cost remains unmeasured. See expert-path-next-screen.txt and prefill-width512-screen.txt.",
-      "blocker": "No current3+1 critical-owner per-format profile; native rows>256 refused and stateful continuation/wire admission still required. Materialization-removal premise does not apply to xgroup.",
+      "next_step": "Close unchangedT4 wider512 integration:8actual historical-route cases passed64output/status gates but weighted routed gains7.892480%cold/7.893969%hot miss registered>10%both. No Engine/wire work or endpoint claim; pursue a different material mechanism.",
+      "blocker": "Registered materiality threshold missed; actual512 operator parity does not qualify recurrence/wire/fullstate or realistic/currentstage0 routes.",
       "already_tested_scope": "Current xgroup paths already decode directly into register multiply; no intermediate F32 weight write/read materialization exists there. IQ4NL packed treatment screened as small; generic idea remains open.",
       "discovery_open": true,
       "subexperiments": [
@@ -142,8 +145,14 @@
           "id": "grouped-IQ4NL-packed-logical4",
           "status": "exact-kernel-win-small-integration-deprioritized",
           "evidence": "../prefill-iq4-packed/RESULT.md",
-          "result": "8.34% hot/6.63% cold tile-kernel gain; historical family9.3% target share gives only conditional small budget (~0.6\u20130.8%), not measured endpoint gain.",
+          "result": "8.34% hot/6.63% cold tile-kernel gain; historical family9.3% target share gives only conditional small budget (~0.6–0.8%), not measured endpoint gain.",
           "scope": "One IQ4_NL grouped T4 packed logical lane treatment only; other formats/materialization discovery remains open"
+        },
+        {
+          "id": "512-vs-two-consecutive256-actual-expert-screen",
+          "status": "exact-threshold-miss-integration-closed",
+          "evidence": "prefill-512-expert-screen/closeout.md",
+          "result": "8cases/4formats/2layers per family;64 fulloutput/status gates pass. Weighted bucket+tile span reduction cold7.892480%,hot7.893969%;>10%both required. Historical native routes from synthetic rank1 stream, actual admitted weights, synthetic activations. All owners0/passiveclean; case7 initial floorrefusal unlaunched, archived completedroutefile then clean finalcase."
         }
       ]
     },
@@ -232,12 +241,13 @@
       "status": "two-chunk-control-tested-winner;wider-waves-new",
       "evidence": [
         "candidate-long/matched-result.json",
-        "gate/target-comparison-prefill.json.gz"
+        "gate/target-comparison-prefill.json.gz",
+        "prefill-512-expert-screen/run-r1-evidence/index.json"
       ],
       "first_test": "four-chunk schedule respecting stage0 target/draft exclusion and replay-before-reverse-slot-overwrite; nine chunks with partial tail/reset, then full long timing. See next-lever.txt. This remains a useful low-cost control option, but must compete with larger architecture proposals above.",
-      "next_step": "Original two-chunk PP4 control completed; separate dedicated4slot implementation now qualified and matched long wins retained. Wider operator rows/PP4 waves remain distinct untested treatments; do not relabel slot-only results as larger operator rows.",
+      "next_step": "Slot-only results remain distinct from operator rows. The actual512 expert-only screen is closed for integration at7.892480%cold/7.893969%hot weighted gain below>10%both; wider PP4 waves/1024 remain separate untested treatments. No row-cap increase or endpoint claim.",
       "blocker": null,
-      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "already_tested_scope": "Original two-chunk PP4/four-slot lanes retained. Separate512-vs-paired256 standalone expert gate passes64 output/status checks across8cases; measured gain misses registered integration threshold, so engine/wire integration closed for this treatment.",
       "discovery_open": true
     },
     {
@@ -597,8 +607,9 @@
       "next_hypotheses": [
         {
           "idea": "Bounded sparse chunk staging/prefetch for exactlookup entries",
-          "status": "untested",
-          "firsttest": "Measure actual perphase lookup access/latency/faultcounters on one authorizedsamebinaryrun beforetreatment, then fixedbounded staging with byteexact values and retainedlifetimeguards."
+          "status": "CPU-fixture-39936-F32-bitexact-integration-and-speed-untested",
+          "evidence": "lookup-sparse-candidate/index.json",
+          "firsttest": "CPU actual-loader/extracted-Weights fixture passed39936 F32 exact values plus partial/duplicate/miss/eviction/capacity/backing-mutation gates. Engine/history integration and speed remain untested; obtain actual lookup cost before integrating the bounded256-row owner."
         },
         {
           "idea": "Whole-table application-level read before READY",

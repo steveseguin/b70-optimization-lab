@@ -1,0 +1,52 @@
+{
+  "schema": "ownrt.prefill512-screen-closeout.v1",
+  "verdict": "threshold-miss-close512-integration-no-promotion",
+  "weighted_routed_family_reduction_percent": {
+    "cold": 7.892480049936507,
+    "hot": 7.893969255503476
+  },
+  "threshold_percent": 10,
+  "threshold_requires": "strictly above10 in both hot and cold, plus all exact gates/lifecycle",
+  "supports_integration_review": false,
+  "exactness": {
+    "cases": 8,
+    "gates_per_case": 8,
+    "total_full_output_status_gates": 64,
+    "tails": [
+      512,
+      257,
+      511
+    ],
+    "malformed_routes": true,
+    "all_passed": true
+  },
+  "identity": {
+    "binary_sha256": "ce6be8eba6bf0c951873ede12dca34f837db8808f531f3398876e7eb279aea6c",
+    "card_bdf": "0000:43:00.0",
+    "model": "SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+    "weights": "actual admitted tensor bytes, four formats/two layers each",
+    "routes": "actual historical rank1 native capture from synthetic driver inputs/layers24-47; not current reference-policy stage0",
+    "activations": "fixed synthetic",
+    "tiles": "T4/S4/GRF128 RW2IQ2_S,RW1others GDIV4/RLOOP4",
+    "timing": "existing interleaved hot/cold per-process operator event span firstBucket-start through finalTiles-end;4 baselinekernels vs2 candidatekernels"
+  },
+  "lifecycle": {
+    "coordinator_reported_all_eight_units_rc0": true,
+    "passive_final_postflight_clean_noholders": true,
+    "new_GPU_faults": false,
+    "units_receipt": "units.json"
+  },
+  "preflight_floor_refusal": {
+    "case_index": 7,
+    "case_id": "Q2_0-l36-down",
+    "initial_case_launched": false,
+    "source": "case6-postflight.json.gz",
+    "MemAvailable_bytes": 103069515776,
+    "required_floor_bytes": 103079215104,
+    "deficit_bytes": 9699328,
+    "resolution": "Completed historical routefile35,632,128B fully byte-verified into archive, then original removed; staged pinned route slices retained. New case7 baseline admitted final case. No GPU fault or failed-GPU retry.",
+    "archive_receipt": "route-archive.json.gz"
+  },
+  "limits": "Operator support-only exactness/timing; historical synthetic-input routes and synthetic activations. No engine/wire change, endpoint performance claim, default promotion or 1024-row verdict. Current-profile family weights are prioritization only; no end-to-end forecast.",
+  "next_step": "Close this512 expert-only integration lever at registered threshold; retain wider discovery and revisit only for new material route/profile/mechanism evidence."
+}

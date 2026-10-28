@@ -1,0 +1,926 @@
+{
+  "schema": "ownrt.prefill512-operator-registration.v1",
+  "status": "completed-exact-threshold-miss-integration-closed",
+  "route_source": "/dev/shm/ownrt-lab-experts/routes-4096.bin",
+  "route_source_bytes": 35632128,
+  "route_historical_sha256_not_reread": "73b1cdfc51bc74b8a485a75dcae6276371ad36d942f052d3879451a132efa7ea",
+  "model": "SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a (historical mixed per-tensor quant)",
+  "arithmetic": "unchanged existing xgroup Bucket+Tiles; T4 S4 GRF128, RW2 IQ2_S and RW1 other families; GDIV4 RLOOP4",
+  "cases": [
+    {
+      "id": "IQ2_S-l24-gate",
+      "family": "IQ2_S",
+      "type": 22,
+      "profile_weight_percent": 17.4,
+      "tensor": "blk.24.ffn_gate_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 27119791360,
+      "tensor_bytes": 268697600,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "route_label": "blk.24.expsgate",
+      "routes": "inputs/IQ2_S-l24-gate.routes.bin",
+      "routes_sha256": "f20ed5a9ae99b4ac689cc6eb10fbcffabe92f46d511e407b4f4d22f88945cbfb",
+      "source_records": [
+        {
+          "offset": 27,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 278403,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 556779,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 835155,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1113531,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1391907,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1670283,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1948659,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2227035,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2505411,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2783787,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3062163,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3340539,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3618915,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3897291,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4175667,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1662,
+      "whole512_T4_tiles": 1473,
+      "T4_tile_reduction_percent": 11.371841155234652,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "4f57833f78f9645124d264328766ed61b881bb0355a951ea3066fdc3e2544677",
+        "4557475382226ecee2e4200333d0d13ee223ce2894f083391202c8bcdcf69db1"
+      ]
+    },
+    {
+      "id": "IQ2_S-l26-up",
+      "family": "IQ2_S",
+      "type": 22,
+      "profile_weight_percent": 17.4,
+      "tensor": "blk.26.ffn_up_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 29760402432,
+      "tensor_bytes": 268697600,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "route_label": "blk.26.expsup",
+      "routes": "inputs/IQ2_S-l26-up.routes.bin",
+      "routes_sha256": "44b2e893b366d4007abba4701ac269cd09cceb91ae512acbe21ddc8349d45bcf",
+      "source_records": [
+        {
+          "offset": 27090,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 305466,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 583842,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 862218,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1140594,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1418970,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1697346,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1975722,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2254098,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2532474,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2810850,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3089226,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3367602,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3645978,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3924354,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4202730,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1655,
+      "whole512_T4_tiles": 1477,
+      "T4_tile_reduction_percent": 10.75528700906344,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "79cb4368f77bd379115f2d2d7079ffe5021f072cb679a35e106d79e80264b7c5",
+        "c321e2db95891473f9b4854d25af29c576038f64fa080f6a3167224ef27ed3ec"
+      ]
+    },
+    {
+      "id": "IQ3_XXS-l30-gate",
+      "family": "IQ3_XXS",
+      "type": 18,
+      "profile_weight_percent": 9.82,
+      "tensor": "blk.30.ffn_gate_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 34163303552,
+      "tensor_bytes": 321126400,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "route_label": "blk.30.expsgate",
+      "routes": "inputs/IQ3_XXS-l30-gate.routes.bin",
+      "routes_sha256": "4abe36e8582ebfd07497d9a4a93b90ee2ded99ecd3b119f719ae37826f848c97",
+      "source_records": [
+        {
+          "offset": 69621,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 347997,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 626373,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 904749,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1183125,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1461501,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1739877,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2018253,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2296629,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2575005,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2853381,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3131757,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3410133,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3688509,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3966885,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4245261,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1662,
+      "whole512_T4_tiles": 1471,
+      "T4_tile_reduction_percent": 11.492178098676298,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "b00619f26a61f247906822d86112b62e334c12c98122e4fa9b8b15ccd0f1ea16",
+        "2bd87b2ed5de31dcd31a4472c29e1115cbdf3ea53cd72a20d22869044be27ee0"
+      ]
+    },
+    {
+      "id": "IQ3_XXS-l31-up",
+      "family": "IQ3_XXS",
+      "type": 18,
+      "profile_weight_percent": 9.82,
+      "tensor": "blk.31.ffn_up_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 35696695296,
+      "tensor_bytes": 321126400,
+      "dimensions": [
+        2560,
+        640,
+        512
+      ],
+      "route_label": "blk.31.expsup",
+      "routes": "inputs/IQ3_XXS-l31-up.routes.bin",
+      "routes_sha256": "16cae2a6d41ae79d4e1c569940be7b7346d14c4fc63e9425eea52073e4e6975c",
+      "source_records": [
+        {
+          "offset": 85085,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 363461,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 641837,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 920213,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1198589,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1476965,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1755341,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2033717,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2312093,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2590469,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2868845,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3147221,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3425597,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3703973,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3982349,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4260725,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1653,
+      "whole512_T4_tiles": 1474,
+      "T4_tile_reduction_percent": 10.82879612825166,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "e2e089639497dd028b44dcb3cae9eab549d00e73c40af304f21c61d469befe67",
+        "b4acf299901a3a88b14128cec812be580534788f166d1b39733239e9845d364f"
+      ]
+    },
+    {
+      "id": "IQ4_NL-l24-down",
+      "family": "IQ4_NL",
+      "type": 20,
+      "profile_weight_percent": 11.17,
+      "tensor": "blk.24.ffn_down_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 26646191360,
+      "tensor_bytes": 471859200,
+      "dimensions": [
+        640,
+        2560,
+        512
+      ],
+      "route_label": "blk.24.expsdown",
+      "routes": "inputs/IQ4_NL-l24-down.routes.bin",
+      "routes_sha256": "c1bf555e661ee3bdab3b60440e7beb93630367926fae290138d0318b98c6af97",
+      "source_records": [
+        {
+          "offset": 7759,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 286135,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 564511,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 842887,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1121263,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1399639,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1678015,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1956391,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2234767,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2513143,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2791519,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3069895,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3348271,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3626647,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3905023,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4183399,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1662,
+      "whole512_T4_tiles": 1473,
+      "T4_tile_reduction_percent": 11.371841155234652,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "ce4eea4819bb6df195de88e508fbc402dd7818deb5319cad6bbe070da1b48a47",
+        "4fa7339320c2f70f329ee9947bfd3fd2397d7c2ccf65dce0a878ef756fa8a677"
+      ]
+    },
+    {
+      "id": "IQ4_NL-l25-down",
+      "family": "IQ4_NL",
+      "type": 20,
+      "profile_weight_percent": 11.17,
+      "tensor": "blk.25.ffn_down_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 27740044416,
+      "tensor_bytes": 471859200,
+      "dimensions": [
+        640,
+        2560,
+        512
+      ],
+      "route_label": "blk.25.expsdown",
+      "routes": "inputs/IQ4_NL-l25-down.routes.bin",
+      "routes_sha256": "84f850bdc278686611cc2ff31088100874288835bda97f3692ce76a1312b4cd1",
+      "source_records": [
+        {
+          "offset": 19358,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 297734,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 576110,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 854486,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1132862,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1411238,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1689614,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1967990,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2246366,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2524742,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2803118,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3081494,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3359870,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3638246,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3916622,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4194998,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1666,
+      "whole512_T4_tiles": 1460,
+      "T4_tile_reduction_percent": 12.364945978391361,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "41c64aec5c1a0afba1473bc1e2b604b650030741099ef61c2dae285095547db8",
+        "1ec3774778a11849e952ced213e8724e77d23b0ccbb3859b5c7224812fe7cea2"
+      ]
+    },
+    {
+      "id": "Q2_0-l30-down",
+      "family": "Q2_0",
+      "type": 42,
+      "profile_weight_percent": 4.94,
+      "tensor": "blk.30.ffn_down_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 33925633152,
+      "tensor_bytes": 235929600,
+      "dimensions": [
+        640,
+        2560,
+        512
+      ],
+      "route_label": "blk.30.expsdown",
+      "routes": "inputs/Q2_0-l30-down.routes.bin",
+      "routes_sha256": "c3e348a859c9942bcea9794f69d6666c2dba8dc27ce6379c6b5bd7365a90f98d",
+      "source_records": [
+        {
+          "offset": 77353,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 355729,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 634105,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 912481,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1190857,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1469233,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1747609,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2025985,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2304361,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2582737,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2861113,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3139489,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3417865,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3696241,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3974617,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4252993,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1662,
+      "whole512_T4_tiles": 1471,
+      "T4_tile_reduction_percent": 11.492178098676298,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "2cdcb9746211e78a2200482d4b023e65b7070df9899db151a3fc9a6b6cd8c94d",
+        "08d17aa65f076ae866ae1bb7f0bac9ebd5e0e4497744e7aa22bdcfee7e826bee"
+      ]
+    },
+    {
+      "id": "Q2_0-l36-down",
+      "family": "Q2_0",
+      "type": 42,
+      "profile_weight_percent": 4.94,
+      "tensor": "blk.36.ffn_down_exps.weight",
+      "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "tensor_offset": 40721618560,
+      "tensor_bytes": 235929600,
+      "dimensions": [
+        640,
+        2560,
+        512
+      ],
+      "route_label": "blk.36.expsdown",
+      "routes": "inputs/Q2_0-l36-down.routes.bin",
+      "routes_sha256": "d0da1d9e67994099404e91b7c34ce96e3d5bc01909f1d79b3a13e1efaede2a88",
+      "source_records": [
+        {
+          "offset": 146947,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 425323,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 703699,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 982075,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1260451,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1538827,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 1817203,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2095579,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2373955,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2652331,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 2930707,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3209083,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3487459,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 3765835,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4044211,
+          "rows": 32,
+          "bytes": 3840
+        },
+        {
+          "offset": 4322587,
+          "rows": 32,
+          "bytes": 3840
+        }
+      ],
+      "paired256_T4_tiles": 1634,
+      "whole512_T4_tiles": 1472,
+      "T4_tile_reduction_percent": 9.914320685434518,
+      "scope": "Historical actual native routes from synthetic rank1 driver stream; layers24-47, not current reference-policy stage0. Actual model tensor bytes to be read only in root-authorized later run.",
+      "paired256_route_sha256": [
+        "f115af127bc7cee799c82f94281e367e105a2fd9a1d0daf87eb2a893fb04c9ec",
+        "34b929297cd0ee2e6185ffb1aa230e42095a5964f89aaaaa199861bd158a3bbe"
+      ]
+    }
+  ],
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/prefill-experts/evidence/cputest/test_experts.cpp": "e5eb8c5aca2c340469ee8661af99f2b50bef12b368b384ba1e46fb28fd481bcb",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/prefill-iq4-packed/bench/harness.hpp": "6e3770a621c2dc6e4b739f9603d2452d8666fb88c4ab7d67a444ccbacd6a935d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/prefill_experts.hpp": "bf7e707f4c331c918e64a6da5ccaae49252c3ff8d2703aca9fbb368391669e82",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_experts_policies.hpp": "17cc680a02f3243ea3378864d358433d7644af9d87a6337ea9858bb8eff3bf80",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet2/loader/gguf.cpp": "1e922f7fd24428c6aeaea7abdd4d61632e9d50daa2787aa2d569f6f2c5474c4b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet2/loader/gguf.hpp": "b542cda324515e171ab599122be52a32ce16e7d51095397e2c62826e016f6b89",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet2/kernels/math.hpp": "e84d78c1afb064568f7f96b2164ae51401590f3f7aaf1594e40210f1aef7c0eb",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/reference.hpp": "df21e078387b81e57e8783f038bd6fc8a5dccd44087aeb8be4e71b3427e44470",
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/additive/device_formats.hpp": "7eec690cb6bf9fc06b2b029cb4e4e5fb092cfafe324cd26a759562e3ada8ef31",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/prefill_reuse2.hpp": "418614f6b05d70bb1c3199a3a1c4ca7d6ccd8a6c0388d41c0336abd5b960a554"
+  },
+  "gate": "All output F32 words and every status equal512 vs paired256, for512/257/511 rows plus separately labeled invalid/partial routes. Actual IDs never remapped/repeated.",
+  "timing": "Existing interleaved hot/cold harness adapted to event spans covering all bucket+tile kernels (four baseline versus two candidate); no endpoint claim.",
+  "threshold": "For each cache condition, average within family across its two layers, then sum(profile_weight*(1-candidate/control))/43.33; >10% reduction and all gates pass supports next integration decision. No end-to-end extrapolation.",
+  "prepared_sources": {
+    "fixture_policies.inc": "b17c83cfb029d1b88e6fa188c95e5ed913dad0016f2d2c1eec8d4a8b8a604ef3",
+    "build.sh": "d78db6f5684b9a58ec9bf1f4b163e07edd41bf133607075959561fdfb4e5b9e3",
+    "screen.cpp": "c1fda9599113693020ab19ee0286cea7a5db34ed1407752ce1441ca8839b5a92",
+    "closeout.md": "509e5b5ffcf1b95db3caa98cdd0b749727442e1c3100b660164573ecb4d07fd1",
+    "harness_span.hpp": "7c9bb33b81c9b630f5392a1fd885fdbd1e3d0fc1f4807af562e006e5b21b540a",
+    "REVIEW.txt": "7a4e2b9a6eadc6a58388c18112b4e568fe3721196a7f42d2c98317dee803dd2d",
+    "harness-span.patch": "c2356c7975706ed6fb2834a65c662c36995daf906431e9a486f59f3e8e16f221",
+    "analyze.py": "1bfd2f76ff8faff904d2f37c37cdd54d6744be6c7d9aba87378097cdbf79d66a",
+    "prepare.py": "3c0d947f39efa8d4b30fa73c7a0dd59211e79cedb527530935d3fcdc65b69abc"
+  },
+  "CPU_validation": {
+    "route_inputs_sha_and_lengths": true,
+    "actual_two_adjacent256_groups_differ": true,
+    "all_four_formats_and_two_layers_per_family": true,
+    "shell_syntax": true,
+    "compilation": true,
+    "GPU": false,
+    "model_payload_reads": false
+  },
+  "compiled_receipt": "build-r2-evidence/receipt.json",
+  "completed_evidence": "run-r1-evidence/index.json",
+  "completed_closeout": "closeout.md",
+  "preparation": {
+    "device_calls": 0,
+    "model_payload_reads": 0
+  },
+  "execution": {
+    "root_owned_gpu_cases": 8,
+    "actual_admitted_tensor_reads": true,
+    "output_status_gates": 64,
+    "all_passed": true,
+    "decision": "threshold-miss-integration-closed"
+  }
+}

@@ -1,0 +1,96 @@
+Completed root-owned GPU screen:8cases/64exact gates pass; weighted routed-family
+reduction7.892480%cold/7.893969%hot misses>10%both. This512 integration is closed.
+See closeout.md and run-r1-evidence/index.json. Preparation/build handoff below
+is retained as historical design, not a request to launch another run.
+
+Prepared operator512 screen; CPU-COMPILED / GPU-UNRUN, 2026-10-28.
+
+CPU preparation and root-authorized compile only. No GPU, model tensor reads
+or engine/wire changes. CPU compile r1 failed on const event wait (retained);
+r2 passed with the static wait_and_throw fix. Root coordinates GPU launches
+and postflights. Exact compiler/flags/source/binary hashes:build-r2-evidence/receipt.json.
+
+Reuse and scope
+screen.cpp includes fixture_policies.inc, the exact prefix of original
+prefill-experts/evidence/cputest/test_experts.cpp through Case, reusing format
+policies and existing kernel headers without instantiating the old sweep main. New code changes only route input, actual model tensor read and
+512 versus paired256 orchestration. No Bucket/Tiles source or T/RW sweep.
+Kernels: T4 S4 GRF128; IQ2_S RW2, all others RW1; GDIV4 RLOOP4 are mandatory
+launch environment (clear conflicting XGROUP/override settings). Actual model
+weights loaded via actual authenticated iq3::Model/Slice using pinned placement
+and shard-auth, before any timed operator. Full admitted tensor bytes copied
+once into shared USM, source guard before/after copy and before final success.
+No hand-created quant weights. Fixed seeded activations are synthetic.
+
+Eight cases: two actual captured layers per four format families; gate/up
+represented for IQ2_S and IQ3_XXS, down for IQ4_NL/Q2_0. Exact per-tensor
+names, placement, shape, shard/offset/bytes and route offsets are registered.
+These routes are actual historical native output from SYNTHETIC rank1 driver
+inputs, layers24-47. They are not realistic text or current reference-policy
+stage0 captures. Eight32-row records make one256 slice; the next eight make
+the adjacent256. prepare.py checked both groups differ, retained all original
+IDs/order and exact original full row extents. No repeating first256, expert
+ID remapping or treatment-specific inputs. This is a historical-route operator
+support test, not model fidelity or endpoint performance evidence.
+
+Prepared route files total491520 bytes. CPU integer T4 tile census predicts
+9.91–12.36% fewer tiles across these eight cases; this is NOT a speed estimate.
+Every format exists. No missing capture instrumentation: existing
+OWNRT_PREFILL_ROUTE_DUMP can collect representative current routes later if
+this initial operator screen warrants it.
+
+Gate, then timing
+For every case and512/257/511 token tails: all F32 output words and every
+status must match one whole chunk against paired<=256 chunks. Also checks
+host valid-route status and exact canonical NaN words for invalid/partial
+slots, through a separately labeled malformed-route pass. Partial mutation
+changes only three slots; original route records stay frozen. Slots around
+the256 seam are tested. This compares unchanged registered arithmetic paths;
+it does not independently requalify the old kernel or whole engine.
+
+Scratch and admission:5120 route slots, 20480B Bucket local keys, 512-workitem
+bucket. Explicit local-memory and workgroup device admission precede launch.
+Each comparison variant has its own fixed order/tile/count/output/status
+scratch; paired256 reuses its scratch serially in an in-order queue. Both
+halves use exact slices of the same weights/inputs/routes; slot-relative
+indices target the corresponding output slice. No physical slot is duplicated.
+Approx largest owned device/USM data:471859200 weight bytes +13107200 inputs
+for down +2*52428800 outputs +small route/scratch +268435456 harness junk,
+under0.9GB before runtime/compiler/loader overhead. Root must still apply its
+actual available-memory/floor and card ownership admission.
+
+harness_span.hpp is the existing prefill-iq4-packed/bench/harness.hpp with a
+small Batch event-span adapter and per-variant output pointer. No extra output
+copy in timed dispatch. Each sample spans first Bucket start to final Tiles
+end, including device queue gaps: FOUR kernels for paired256, TWO for512.
+It includes bucket work; unlike the old tile-only harness it does not report
+only the last tile event. Existing interleaving:3 rounds x4 cold and4 hot per
+variant; clock warmup1.5seconds. Cold is only the existing per-process256MiB
+GPU junk fill, not host cache manipulation. Each variant's pre-timing output
+comparison remains active; a mismatch already throws in the all-word gate.
+Retain all stdout and raw registration. Cold/hot are operator diagnostics,
+not endpoint speed or JIT/startup measures.
+
+Decision
+Analyze each family's median candidate/control ratio across its two layers,
+then weighted reduction=sum(weight*(1-ratio))/43.33 with weights17.40 IQ2_S,
+9.82 IQ3_XXS,11.17 IQ4_NL,4.94 Q2_0 from current stage0 diagnostic. Require
+>10% weighted reduction in BOTH cold and hot conditions plus every gate and
+clean lifecycle. These weights guide prioritization across historical support
+cases; they do not make the routes current or forecast end-to-end gain.
+Otherwise close/deprioritize512 before engine/wire integration. A win permits
+reviewing the already registered recurrent continuation/allocation/wire work;
+it does not authorize a row cap increase or default promotion.
+
+Root execution handoff (not executed here)
+Verify registration source pins and staged route SHAs; choose fresh output,
+read actual floors and hold exclusive card. Reuse the compiled r2 binary after source/binary receipt verification; flags
+mirror the retained actual bench.
+Run each case once in the registered order, using the same binary and card,
+with explicit GDIV4/RLOOP4 and unchanged compiler/runtime/device identity.
+CLI:screen MODEL_DIR PINNED_PLACEMENT PINNED_SHARD_AUTH TENSOR ROUTE_FILE CASE_ID.
+Use root's existing systemd campaign, pre/postflight and fault-halt handling;
+no wrapper/retry/restart policy is introduced here. Record compiler version,
+binary hash, model/admission pins, env, device UUID/BDF and receipt per case.
+Review compiler warnings and async errors before any timing verdict; abort all
+remaining cases on any gate, process or device fault. No automatic repeats.

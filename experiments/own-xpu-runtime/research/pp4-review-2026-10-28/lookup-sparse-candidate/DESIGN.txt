@@ -1,0 +1,94 @@
+Sparse packed-row CPU prototype, 2026-10-28; isolated and default OFF.
+
+Status: actual loader/Weights fixture passes; no canonical integration, real
+model payload read, GPU work, speed claim or default change. Retain incumbent.
+Header sparse_rows.hpp is the isolated candidate; not a new cache framework.
+
+Minimal owner
+SparseRows owns a fixed16-byte Entry array and one contiguous packed-byte
+allocation. Constructor's total_bound includes sizeof(SparseRows), index and
+payload; owned_bytes() reports their exact requested bytes. Allocator internal
+metadata, existing loader mappings and existing Weights::read return vectors
+are outside that owned-byte count, not represented as zero physical RSS.
+No extra dynamic staging scratch, hash map, growth or dual replacement cache.
+Callers supply a bounded span of actual IDs, indexed(table,row); IDs are sorted
+and deduplicated in place. Each table ordinal must be assigned in admitted
+(shard file order, tensor data offset) order; row order then equals file-offset
+order within that tensor. Adjacent selected rows coalesce up to4MiB, with no
+gap reads. The two actual tables are on separate admitted shards; the CPU
+fixture reuses two synthetic shards. Table numbering is placement, not math.
+
+Every stage replaces/evicts the previous chunk, verifies backing before and
+after reads, and publishes only after its final check. Overlarge submitted key
+lists, payload/index exhaustion and unknown IDs explicitly refuse without
+publication. Capacity refusal is a configuration/fixture error: integration
+must use a fixed admitted chunk size or choose unstaged backing, never silently
+retry a failed command. Reads spanning any missing row fall back entirely to
+exact admitted backing. Hits and misses retain bounded vector<byte> output;
+gsq::element stays unchanged. Backing identity checks still bracket the owner
+command result, including staged hits. No pointer into replaceable staged
+storage escapes; Weights::read returns owned bytes before replacement.
+
+Concrete integration design (not yet implemented/qualified)
+1. Add explicit OWNRT_LOOKUP_SPARSE=1 in the existing rank.hpp first-target
+lookup placement branch around line544. Default remains fullcopy. Refuse
+combined VIEW/SPARSE flags; provider's embedding-only copy stays unchanged.
+Use existing map_lookups() only as authenticated held backing authority; no
+advice, prefault, warming or global memory changes. Add SparseRows owner to
+Weights, and route only its two lookup table reads through SparseRows::read
+before existing mapped fallback; keep exact bounds and read accounting.
+2. Begin with fixed256 actual input rows per chunk, NOT the wholeprompt.
+Each input needs at most17 keys (one token +16 PLE):4352 raw keys; worst
+packed bytes256*2800=716800 and index4352*16=69632. A1MiB owner covers both
+plus object. Key generation workspace is an additional fixed4352*sizeof(Key)
+=69632 requested bytes, explicitly charged separately; no unbounded prompt
+set. Existing return-vector allocation and mapped authority remain accounted
+by their existing owner. The prototype tests an8192-byte owner, not1MiB timing.
+3. At rank0 bulk OP15/OP28 chunk admission, generate keys from that chunk's
+actual input tokens using a LOCAL copy of Engine history0/history1, existing
+lookup_input arithmetic and admitted PLE metadata. Advance only that local
+history through actual rows; never mutate Engine history for staging. Existing
+main.cpp lookup_input handles unsigned64 wrap/XOR, signed64 modulo and EOS
+old0 reset; reuse/extract that code rather than reimplementing a second hash.
+Keep actual prepare_token/lookup_floats execution and F32 decode order intact.
+For canonical/generation/rejected/pending speculative rows outside the chunk,
+use exact backing miss; do not predict accepted history or bound accesses by
+512 outputs. Replacement/reset cannot change immutable row contents; clear
+staging at an independent request boundary, retain no prompt/KV/response state.
+The header deliberately does not generate token hashes: EOS/rollback selection
+must get its own integration gate when touching actual Engine orchestration.
+4. Stage before the corresponding CPU lookup loop and hold owner until all
+read copies complete. One actor owns staging; no concurrent replacement/read
+without serialization. Preserve rank.hpp execute command pre/post
+verify_lookup_views and finish guards (around lines732/744). Add timing/read
+counts and passive per-process fault counters around actual row gathering;
+charge staging to READY/request end-to-end as appropriate. A mapped virtual
+backing is not an anonymous fullcopy or a residency guarantee.
+5. Actual long-prompt materiality is conditional: screen counted91.34MB packed
+versus29.14GB fullcopy, but~914k tiny PLE reads may touch gigabytes of pages.
+Wholeprompt128MiB ownership would require additional bounded ID-generation
+storage or streaming dedup and a separate upfront latency test. Chunk staging
+can repeat immutable weights between chunks, so reduced RAM is not a speed
+prediction. This simple owner is worth one integrated gate only if lookup
+profiling identifies material cost; otherwise close without framework growth.
+
+CPU gate
+run_cpu.py reuses lookup-view-candidate/test_lookup_view.cpp fixture definitions,
+its exact extracted Weights methods and CURRENT actual gguf loader; no fixture
+model asset or device dependency. Added distinct quant nibbles per row to catch
+wrong-row staging.39936 F32 values compare bit-exact through actual gsq::element
+(IQ4_XS256-column synthetic rows and IQ4_NL160-column rows); production embedding
+is2560 columns and is NOT integration-qualified by this smaller fixture.
+Tests: byte and F32 equality for all96 rows/table with hits+cold misses;
+partial spanning reads both wholly staged and mixed misses; duplicate collapse;
+adjacent coalescing5 rows→2 reads; replacement eviction exact fallback; unknown
+ID/table, bounds, key-count and packed-cap refusal; clear; backing mutation
+before read/result and during staging rejects before new publication.
+No performance conclusion from fixture elapsed time.
+
+Reproduce once with a fresh output path:
+nice -n19 taskset -c8-15 python3 <this-directory>/run_cpu.py /dev/shm/<fresh-path>
+Retained cpu-r1 receipt/stdout/stderr bind sources and flags. Binary and tiny
+synthetic GGUFs remain untracked in/dev/shm/sc117-sparse-lookup-cpu-20261028-r1.
+Next gate only after actual integration:1677/32 target2065/draft73/pairs state
+against copied baseline, then matched long timing including READY/request/RSS.

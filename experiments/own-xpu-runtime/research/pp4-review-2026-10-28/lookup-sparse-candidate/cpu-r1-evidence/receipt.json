@@ -1,0 +1,52 @@
+{
+  "schema": "ownrt.sparse-lookup-cpu-fixture.v1",
+  "compile_argv": [
+    "g++",
+    "-std=c++20",
+    "-O1",
+    "-g0",
+    "-DOWN_RT_HOST_ONLY",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-sparse-candidate/test_sparse.cpp",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet2/loader/gguf.cpp",
+    "-Wl,--gc-sections",
+    "-o",
+    "/dev/shm/sc117-sparse-lookup-cpu-20261028-r1/fixture"
+  ],
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-sparse-candidate/sparse_rows.hpp": "2c6fae6414404feff5899f7159cf5653d44a6d9f7d1c0c913e3b242b126b0118",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-sparse-candidate/test_sparse.cpp": "2b6b2a246d6ebc43e665f0ef558e4305ba229698fe5ac23c49a01537d1c5bc22",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-sparse-candidate/run_cpu.py": "c344ad6749509a2b28f179bb66bc1a29bbc00aa669fc1d721e2125b683441bd7",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/test_lookup_view.cpp": "a0a508525d49d0adcdf316316bb0dbffdcd1970eb5294e152ee1a835996deda9",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/weights_methods.inc": "8656e431cade3bbc62c21e6ec1bb1c298bf1bf1935905d2bb63de4c16c437efd",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet2/loader/gguf.cpp": "1e922f7fd24428c6aeaea7abdd4d61632e9d50daa2787aa2d569f6f2c5474c4b",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet2/loader/gguf.hpp": "b542cda324515e171ab599122be52a32ce16e7d51095397e2c62826e016f6b89",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/additive/device_formats.hpp": "7eec690cb6bf9fc06b2b029cb4e4e5fb092cfafe324cd26a759562e3ada8ef31"
+  },
+  "model_payload_reads": false,
+  "device_calls": 0,
+  "nice": 19,
+  "affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "compile_rc": 0,
+  "compile_seconds": 4.281373946927488,
+  "run_rc": 0,
+  "run_seconds": 0.005126198986545205,
+  "passed": true,
+  "binary_sha256": "bcd8658b37e1e32a7fb56ede6ff5ad3e7fc6d5454c3f40a56d9b08b3eec1a0fc"
+}
