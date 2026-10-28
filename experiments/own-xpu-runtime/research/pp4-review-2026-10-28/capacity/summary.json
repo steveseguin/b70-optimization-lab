@@ -1,0 +1,193 @@
+{
+  "scope": "Near-capacity diagnostic, not independent-reference, full-state long-prompt qualification or certified performance record",
+  "passed": true,
+  "prompt_tokens": 262136,
+  "output_tokens": 8,
+  "cached_tokens": 0,
+  "timing": {
+    "first_token_seconds": 1154.0486895950744,
+    "full_response_seconds": 1157.6351593020372,
+    "committed_output_span_seconds": 3.5308431449811906,
+    "decode_intervals": 7,
+    "decode_tokens_per_second": 1.9825293032203757,
+    "full_response_tokens_per_second": 0.006910640140563258,
+    "definition": "Decode=(output_count-1)/(last_commit-first_commit); full response includes prompt and final draft/drain, excludes reset and dump."
+  },
+  "prefill_timing": {
+    "schema": "rolling-prefill-host-wave-wall-v2",
+    "total_wall_s": 1152.9880636860617,
+    "target_command_work_wall_s": [
+      276.1373582377564,
+      391.38684359716717,
+      385.2435929309577,
+      433.6026778444648
+    ],
+    "target_work_wall_s": 1489.5888306556735,
+    "draft_replay_work_wall_s": 374.40646226203535,
+    "target_only_phase_wall_s": 747.8123832722194,
+    "mixed_phase_wall_s": 217.81784575700294,
+    "draft_only_phase_wall_s": 186.34799926076084,
+    "other_wall_s": 1.0098353960784152
+  },
+  "provider_conservation": {
+    "serial": 262142,
+    "quiescent": 262139,
+    "pending": 3
+  },
+  "all_stage_committed_position": 262143,
+  "all_stage_pending_slots_errors_zero": true,
+  "clean_terminal": true,
+  "postflight_no_holders_fault_baseline_matches": true,
+  "pins": [
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000003/result.json",
+      "file": "request-result.json.gz",
+      "raw_sha256": "584f9d9eeeeb55aa97b13a29522c8a7b2268afeaece6c7f18ab4128710c79e87",
+      "gzip_sha256": "2c63a73608ef367a7567b366b3a0c1143d8dfcc1d87a19f857f05955498a71b9"
+    },
+    {
+      "source": "/dev/shm/pp4-overlap-near262k-response-20261028.json",
+      "file": "http-response.json.gz",
+      "raw_sha256": "e4702ca115852d942240be312b68c8e49a46431b5d56df0c249b35623019cdcb",
+      "gzip_sha256": "69956839cae424a44e5ada6d6c69fb6e27c1e4ca0154baba6006c6844db57d1b"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/terminal.json",
+      "file": "terminal.json.gz",
+      "raw_sha256": "fa917ff4a2957277bcb45110fdbea6487aac381e6a94bbad05717bcd42320e8e",
+      "gzip_sha256": "66fdb4b837ab152369e882a026c7854ceb79524901fdd6288813190c78441b1e"
+    },
+    {
+      "source": "/dev/shm/pp4-overlap-postflight-20261028.json",
+      "file": "postflight.json.gz",
+      "raw_sha256": "5a5a70eae202113ba2cb93a3e2d4123f20f22c3ed6ebd650832d2284f3b8005d",
+      "gzip_sha256": "9b0dd13bc6b2c4f024bb7b57537a43fb2b67ceb8f17c0fbcd51fc50a0938d04f"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/ring-quiescence.json",
+      "file": "stage0-ring-quiescence.json.gz",
+      "raw_sha256": "9dd755cffb64073e28a434adc24eb23fb2b9c57a56e4978a1b5a2dd73e7a397f",
+      "gzip_sha256": "bc4a294d03909b04698d0b7113cc0a5c252734b98823d50408af2c74b3a19d3c"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/ring-reset.json",
+      "file": "stage0-ring-reset.json.gz",
+      "raw_sha256": "9ce785ef202eb3c6c4b47b4b366917036741e22461015262a680f2186e35b036",
+      "gzip_sha256": "046980db57463dca984fe7b78a0b054047d8ec79dd47e29d1f98a38b8285fce6"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/reset.json",
+      "file": "stage0-reset.json.gz",
+      "raw_sha256": "650bbd105208030e8f05ca527915b243e38a96618695afb5c9df919b3a162ba4",
+      "gzip_sha256": "ea9f983c6abcebae0494b29885395bde9e397c8545e64f1fd00da5e662c9503b"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/pipeline-stage.json",
+      "file": "stage0-pipeline-stage.json.gz",
+      "raw_sha256": "32d1d1ddb4c81b3918706aebec11bf588c2df9aeb6d46371304615eb3838f607",
+      "gzip_sha256": "4d8b84930f6a6c7e9a03ecb6b28be3e6741e9043ae5cc15f904fdaaf4ebec74f"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/ring-checkpoint-layout.json",
+      "file": "stage0-ring-checkpoint-layout.json.gz",
+      "raw_sha256": "30fbbefed1873bcfe4baab803e0124a049cd01373c4c35f26569a29aef655e4d",
+      "gzip_sha256": "5a0bab9bdf97ec349853def4339022f1843835a88a9b8a2e53451991cd6624a1"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000003/ring-final-peer.json",
+      "file": "stage0-ring-final-peer.json.gz",
+      "raw_sha256": "4627354f9892db2dbcef3827e431a49439f3ccf1f146d43549657dc055889711",
+      "gzip_sha256": "616b135efb87d9a57a35f0bcb1325929abb5325dbc53ba78e85f903d3cb02342"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000003/ring-quiescence.json",
+      "file": "stage1-ring-quiescence.json.gz",
+      "raw_sha256": "064685110ee87d335ece60d86f062452a4fa8d049599d9e55b3a62919ea4e818",
+      "gzip_sha256": "ddacde0ea05e5f398f2ed420c01fcf896e3796d3e2b937dfb9bf028f97b40a50"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000003/ring-reset.json",
+      "file": "stage1-ring-reset.json.gz",
+      "raw_sha256": "6cf2c7e485ebc501b25dcfb06138cbaeb1256dccec54e618ed2683bdf142d21a",
+      "gzip_sha256": "8ac87a5beb03cd2b466f1bea81a0bd027547e9dad7cdd779595fb48aeb20b6f0"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000003/reset.json",
+      "file": "stage1-reset.json.gz",
+      "raw_sha256": "1fbe743953360af6e1d766fe3db008ae2de1c112824fe9a17e1a6c784102edca",
+      "gzip_sha256": "f215ca5e500545b62a3c42a36f0f8c2bcf518c2554a3786319ef99b6ca54d6b7"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000003/pipeline-stage.json",
+      "file": "stage1-pipeline-stage.json.gz",
+      "raw_sha256": "b055180cb69ddaa4874e7e2670c142efab4bccae0e984ca373f7899d7536240d",
+      "gzip_sha256": "6aceea040853a002c37af24f770f76607c8e8fe2b7384e9ad0dbe9707185c1da"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000003/ring-checkpoint-layout.json",
+      "file": "stage1-ring-checkpoint-layout.json.gz",
+      "raw_sha256": "d1be8be17313adc19dee33a572e1cf88a95635dcfb111807ac184f247252116e",
+      "gzip_sha256": "6ad3e49ba34f40880bf3bd2e0f06b23e2dd393e28c7381e5ba3383d7ab4aea16"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000003/ring-quiescence.json",
+      "file": "stage2-ring-quiescence.json.gz",
+      "raw_sha256": "18bee8a196e15b64b3cfa5b43b22cfce9eff8d255b40e5e8ecf0f0c48fa557a6",
+      "gzip_sha256": "a245b00b5b8a06300909c5336afa5d7eeac391acfd8ef1aaa9123e292cd5a19c"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000003/ring-reset.json",
+      "file": "stage2-ring-reset.json.gz",
+      "raw_sha256": "b3934e75bdac8223e5178b57054ade65b0c3f6ed1c9bfcbe74710f3683e74e5a",
+      "gzip_sha256": "9f34f705795e36c2c5813b38b7122c81c73c7a4063058f72b5fd4151d0d6ab8d"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000003/reset.json",
+      "file": "stage2-reset.json.gz",
+      "raw_sha256": "1fbe743953360af6e1d766fe3db008ae2de1c112824fe9a17e1a6c784102edca",
+      "gzip_sha256": "f215ca5e500545b62a3c42a36f0f8c2bcf518c2554a3786319ef99b6ca54d6b7"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000003/pipeline-stage.json",
+      "file": "stage2-pipeline-stage.json.gz",
+      "raw_sha256": "a5d8a0a14014177140dc52039308cc99cbc740d79dcea0cffb72305122aeab4c",
+      "gzip_sha256": "e2a718d406be0f74673254ab2b6bf7c4deaa0c31c61b7941e7f46e314abf00bf"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000003/ring-checkpoint-layout.json",
+      "file": "stage2-ring-checkpoint-layout.json.gz",
+      "raw_sha256": "e49962627da46f9d831620b9a7125031f060c1dba1b991ce51bc5453294805c4",
+      "gzip_sha256": "a0e6effc2fadbb1e34c6cc5e64f32bbba68d0d713052a8ecf650ebbf878fc0b0"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000003/ring-quiescence.json",
+      "file": "stage3-ring-quiescence.json.gz",
+      "raw_sha256": "77f254c7c4b8fa18e666bd82c1380fea1a922228248770cbc475e90b2ad5d745",
+      "gzip_sha256": "bbfe28ef2fb8373113c149517444ccad9fc0c69189a6336ddfdd707d7f469043"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000003/ring-reset.json",
+      "file": "stage3-ring-reset.json.gz",
+      "raw_sha256": "348239c467fab21539c75e64469ba34452110126babe5f5e7ed5d10947107573",
+      "gzip_sha256": "f664c814e62bef1d14e04f8fd73d351c028f9528efe2cd593b1a5ddc8cf82882"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000003/reset.json",
+      "file": "stage3-reset.json.gz",
+      "raw_sha256": "cb8cd9c59bf7b38e113cfe0a39e606b7c353ee194df2ccc7659a59a78698c973",
+      "gzip_sha256": "5d8b42575ca954b99ca32805815dbdfe4967158aa2f6830846e5494499ff91b5"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000003/pipeline-stage.json",
+      "file": "stage3-pipeline-stage.json.gz",
+      "raw_sha256": "f4610b153808a24655a79bbd6f5995dc96da2a28d912ef30952243f4748c8eab",
+      "gzip_sha256": "554968d09c9051035e50a206dccd41ab391295e84511336f613ce98afd0e62ab"
+    },
+    {
+      "source": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000003/ring-checkpoint-layout.json",
+      "file": "stage3-ring-checkpoint-layout.json.gz",
+      "raw_sha256": "9ff9563d296ce62864f0488895acad9960c5ba540344042a2b426954aa781ec3",
+      "gzip_sha256": "9b4c3224721f3174d4e1a012822ee5c3db7ca339a2c177067bd8dbdf2d258986"
+    }
+  ]
+}

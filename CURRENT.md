@@ -1,42 +1,31 @@
 # Current Workspace State
 
-**October 28 — SC117 PP4 baseline complete; bounded two-chunk prefill GPU gate passed.**
-- Measured candidate is active under `sc117-pp4-262k-lan.service`, engine `0fcc08b71c6e`,
-  output `/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output`. Cold seam and pinned long requests completed;
-  near-capacity request 3 is in flight on that same process.
-- The cold 121,854-token baseline completed in **846.937 s**, matching all eight prior output tokens exactly.
-  Target prefill took **671.965 s** and draft replay **172.719 s**. Runtime kernels were warmed by a separate
-  772-token cold request; no prompt/KV cache was reused. This is a diagnostic context measurement, not a certified decode record.
-  [Baseline](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-long/summary.json).
-- The earlier stage-0 shutdown accounting defect is fixed: reset conservation and clean FINISH both passed.
-  All four baseline stages exited 0; postflight found no holders and no new kernel fault. The two-card primary remains stopped; the measured PP4 service is active as stated above.
-- The bounded serial/overlap gate on binary `0fcc08b71c6e` passed **2,065 target sources and 73 draft sources**;
-  both 32-token outputs and actual canonical input pairs match. This qualifies the tested prefill overlap/seam,
-  not full-262K context or agreement with an independent model reference.
-- The original comparer rejected its OP27-only trace equation. An explicit hash-bound OP9-prefix provenance
-  extension re-compared the same sealed dumps successfully, without another model run or altered counters.
-  The original failed root result and graceful abort exits (all 1) are retained; postflight has no holders or new faults.
+**October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**
+- Two-chunk prefill overlap reduced the matched cold 121,854-token full response **846.937 → 524.273 s**
+  (**38.10% less time**, 1.615×). Prompt/output hashes and all eight output ids match; zero cached tokens.
+  Each process first ran the same cold 772-token warmup. This is one warmed-runtime sample per configuration,
+  not a certified score. [Matched result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/candidate-long/matched-result.json).
+- The bounded serial/overlap GPU gate matched **2,065 target sources, 73 draft sources**, both 32-token outputs
+  and actual canonical input pairs. The original trace-format refusal remains preserved; a scoped hash-bound
+  OP9-prefix comparator extension verified the same sealed dumps without another model run or altered counters.
   [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/gate/target-comparison-prefill.json.gz).
-  Candidate service `control-_uc2cmys` (binary `0fcc08b71c6e`) remains active after the cold 772-token warmup and
-  completed matched long request. Native kernel flags, precision and nonpath environment match
-  baseline; only prefill overlap/FIFO support and accounting differ.
-  [Identity diff](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-candidate-identity.json).
-- The matched cold 121,854-token request is **846.937 → 524.273 s** full response (**38.10% less time**, 1.615×);
-  prefill wall **845.041 → 522.318 s**. All eight output ids and prompt/output hashes match, with zero cached tokens.
-  This is one warmed-runtime sample per configuration, not a certified score or independent-reference qualification.
-  [Matched result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/candidate-long/matched-result.json).
-  Near-capacity request 3 is in flight on the same candidate service; final lifecycle acceptance is still pending.
-- HTTP MTP accounting previously overstated accepted proposals (81 accepted, not 116, in the seam screen).
-  The candidate corrects this and separates rejected guesses from unverified discarded descendants.
-- The separate capacity diagnostic at **262,136 prompt + 8 output tokens** is running as request 3.
-  [Inputs and review](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/).
-- New owner direction: explore three target cards plus a dedicated existing draft, two targets plus draft at
-  admitted shorter context, and broader architecture/kernel options. The current 262K target weight+KV floor
-  already exceeds two-card capacity; remote-KV ideas require new exact storage/transfer ownership.
-  [Ranked broader experiment queue](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/IDEAS.txt).
-- North star: faster exact single-conversation inference, prompt reading and native long context in our reusable
-  Intel Xe engine. Keep model, quantization, topology and tuning identities separate; no training.
-  Internal parity does not resolve the six independent-reference disagreements. Long target-only fidelity remains open.
+- Request 3 completed **262,136 prompt + 8 output tokens**, with zero cached tokens, in **1,157.635 s**.
+  Provider serial **262,142 = 262,139 quiescent + 3 pending borrows**; all four stages committed position 262,143
+  with no pending tickets, slots or sticky errors. This is a capacity diagnostic, not long target-only/full-state
+  qualification or meaningful sustained decode timing.
+  [Capacity evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/capacity/summary.json).
+- Candidate engine `0fcc08b71c6e`, run `/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output`, stopped cleanly
+  after all three requests: all four exits 0, no live PIDs. Postflight has no holders and matches the fault baseline.
+  Both HTTP services are stopped. Native kernel flags/precision/core identities matched the baseline;
+  [exact identity audit](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-candidate-identity.json).
+- Owner direction: broaden architecture and kernel experiments. Next is CPU feasibility for **three target GPUs
+  plus one dedicated existing draft**, alongside a material target-prefill kernel option. Two targets plus draft
+  are a shorter-context option; current 262K target weight+KV alone exceeds two-card capacity.
+  [Ranked broader queue](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/IDEAS.txt),
+  [topology evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/topology-options.json).
+- North star remains faster exact single-conversation inference, prompt reading and native long context in our
+  reusable Intel Xe engine, with model/quantization/topology/tuning identities separate. No training or host-setting
+  changes. Internal parity does not resolve the **six independent-reference disagreements**.
 
 **October 27 — Native 262K quad foundation passed; overlap schedulers rejected for speed.**
 - Four stages `[0,12,24,36,48]` on cards `23/27/43/47` completed with identical output tokens and zero faults.

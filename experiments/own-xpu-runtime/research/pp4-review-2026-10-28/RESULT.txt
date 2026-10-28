@@ -1,0 +1,65 @@
+SC117 PP4 review and continuation — 2026-10-28
+
+Outcome
+The matched121,854-token request improved846.937 ->524.273s (38.10% less
+latency,1.615x speed ratio), with identical prompt/output hashes and eight
+output tokens, cached_tokens=0. Each configuration used a separate resident
+process warmed by the same772-token cold request. This is one matched sample
+per configuration, not a certified decode result. Prefill845.041 ->522.318s.
+
+The same candidate process then completed262,136 prompt+8 output tokens in
+1157.635s (19.294min), zero cached tokens. This exercises the262,144 total-token
+capacity with real depth3 MTP and1024 prefill chunks including a partial tail.
+It does not establish sustained decode performance or independent model fidelity.
+All four stages exited0 on one graceful shutdown; terminal passed, no live
+PIDs, passive postflight no holders and no new fault relative to boot baseline.
+The PP4 endpoint and two-card primary are stopped; no automatic restoration.
+
+Review findings and fixes
+- Kimi's previous121K request completed but failed stage0 FINISH accounting;
+  preserve it as a failed lifecycle, not a successful262K qualification.
+- Repeated13-token Hello requests never entered256-row batched prefill. The
+  new GPU gate used1677 prompt tokens, seven chunks/partial tail, serial versus
+  pipelined execution. All2065 target and73 draft state sources matched, as did
+  actual canonical hidden/token pairs and both32-token outputs.
+- The trace comparer originally assumed every canonical row used ordinary ring
+  target/OP27 traces. Added an explicit hash-bound OP9/OP15 provenance extension,
+  retaining strict old manifests and the failed original comparison evidence.
+  The same sealed dumps then passed offline, without a duplicate GPU run.
+- PP4 launch helper created the native output too early. Fresh unique control
+  roots now keep the native output absent until exclusive engine creation.
+- MTP counters called unverified discarded descendants hits. They now report
+  accepted, explicitly rejected and unverified discarded separately; seam had
+  81 accepted rather than the old116 claimed hits.
+- The performance change schedules two prompt chunks across different cards,
+  overlapping target stages and draft replay. Native bounded token ownership
+  FIFO preserves canonical ancestry and reset semantics. Kernels/math unchanged.
+
+Mechanism and limits
+Candidate long target-command work remains125.58/177.81/174.39/195.43s versus
+baseline125.03/177.10/173.95/194.52s; the saving is overlapping formerly serial
+work. Work durations overlap and must not be summed as elapsed time. The old
+cold R3 run1036s includes different first-use costs and is not the fair control.
+The six known independent-reference disagreements remain unresolved. Internal
+state parity and target-verified MTP do not close that separate fidelity issue.
+No training, power/memory settings, driver resets or restart/retry loops used.
+
+Artifacts
+baseline-long/summary.json; candidate-long/matched-result.json;
+baseline-candidate-identity.json; gate/; capacity/; exact gzipped inputs/.
+Large sealed gate state bundles were compressed and verified against originals
+before removing only those redundant dump directories; restore instructions and
+archive SHA are in gate/state-bundles-archive.json. No source/evidence erased.
+Candidate binary0fcc08b71c6ea83cf99f0910ca9d8c50125757ee894d96e70759a77e6551b837.
+Native output:/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output.
+
+Next direction (owner request)
+IDEAS.txt ranks15 broader experiments and names their first test/stop criterion.
+Evaluate true3target+1draft placement first, with a shorter-context2+1 option.
+Current262K target weights+KV floor69.613GB cannot fit two30GiB target cards.
+Other serious options include EP, PP2xTP2, remote full-value KV storage, cheaper
+draft-only computation and multi-row verifier/long-context kernel work. These
+are untested hypotheses; external Strata/B70 sources have exactness and hardware
+limits recorded. Do not automatically spend the next campaign on minor PP4
+schedule changes. North star remains faster exact single-conversation inference,
+prompt reading and useful native long context in the reusable owned Xe engine.
