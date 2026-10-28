@@ -1,0 +1,20 @@
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x000075d924b108d7 in __GI___wait4 (pid=873156, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+#0  0x000075d924b108d7 in __GI___wait4 (pid=873156, stat_loc=0x0, options=0, usage=0x0) at ../sysdeps/unix/sysv/linux/wait4.c:30
+30	in ../sysdeps/unix/sysv/linux/wait4.c
+#1  0x000064e7ea89a963 in ggml_print_backtrace ()
+#2  0x000064e7ea89ab07 in ggml_abort ()
+#3  0x000064e7ea8b6fa7 in ggml_backend_tensor_get ()
+#4  0x000064e7ea6113cc in capture_layer(ggml_tensor*, bool, void*) ()
+#5  0x000064e7ea612f4a in capture_both(ggml_tensor*, bool, void*) ()
+#6  0x000064e7ea608f34 in main ()
+[Inferior 1 (process 873155) detached]
+/dev/shm/llref/ggml/src/ggml-backend.cpp:493: GGML_ASSERT(buf != NULL && "tensor buffer not set") failed
+warning: 30	../sysdeps/unix/sysv/linux/wait4.c: No such file or directory

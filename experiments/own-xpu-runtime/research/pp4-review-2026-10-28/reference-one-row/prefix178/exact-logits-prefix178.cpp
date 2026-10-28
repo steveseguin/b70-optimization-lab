@@ -15,6 +15,8 @@
 #include <vector>
 #include <algorithm>
 #include <set>
+#include <filesystem>
+#include <iterator>
 static std::vector<long> ints(const std::string& s, const std::string& key) {
     std::vector<long> v; auto p = s.find("\"" + key + "\""); if (p == std::string::npos) return v;
     p = s.find('[', p); auto q = s.find(']', p); std::stringstream ss(s.substr(p + 1, q - p - 1)); std::string x;
@@ -77,9 +79,17 @@ int main(int argc, char** argv) {
     CombinedCapture capture; capture.layers.out=out;capture.routers.out=out;capture.routers.position=177;
     const bool capture_enabled=getenv("EXACT_CAPTURE_LAYERS") && std::string(getenv("EXACT_CAPTURE_LAYERS"))=="1";
     auto cp = llama_context_default_params();
-    if(capture_enabled){cp.cb_eval=capture_both;cp.cb_eval_user_data=&capture;}
+    
     cp.n_ctx = 4096; cp.n_batch = 512; cp.n_ubatch = 512; cp.n_seq_max = 1; cp.n_threads = threads; cp.n_threads_batch = threads;
     { const char* kv=getenv("EXACT_KV"); ggml_type t=(kv&&std::string(kv)=="bf16")?GGML_TYPE_BF16:GGML_TYPE_F32; cp.type_k=t; cp.type_v=t; fprintf(stderr,"kv type %s\n", t==GGML_TYPE_BF16?"bf16":"f32"); } cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.no_perf = true;
+    const bool two_contexts=getenv("EXACT_NEUTRALITY_TWO_CONTEXTS") && std::string(getenv("EXACT_NEUTRALITY_TWO_CONTEXTS"))=="1";
+    if(two_contexts && (!capture_enabled || toks.size()!=178 || full!=std::set<long>{177} || score_from!=178)){fprintf(stderr,"strict178 two-context input/options required\n");return 2;}
+    const std::string root_out=out;
+    for(int phase=0;phase<(two_contexts?2:1);++phase){
+    const bool observing=capture_enabled && (!two_contexts || phase==1);
+    if(two_contexts){out=root_out+(phase==0?"/off":"/on");if(!std::filesystem::create_directory(out)){fprintf(stderr,"fresh phase output required\n");return 2;}}
+    capture=CombinedCapture{};capture.layers.out=out;capture.routers.out=out;capture.routers.position=177;
+    cp.cb_eval=observing?capture_both:nullptr;cp.cb_eval_user_data=observing?&capture:nullptr;
     llama_context* ctx = llama_init_from_model(model, cp); if (!ctx) { fprintf(stderr, "context failed\n"); return 1; }
     const int nv = llama_vocab_n_tokens(llama_model_get_vocab(model));
     const int n = (int) toks.size(); if (n < 2 || n > 4096) { fprintf(stderr, "bad token count\n"); return 2; }
@@ -112,7 +122,16 @@ int main(int argc, char** argv) {
         }
         fflush(rows);
     }
-    fclose(rows); llama_batch_free(batch); llama_free(ctx); llama_model_free(model); llama_backend_free();
-    if(capture_enabled && (capture.layers.failed || capture.layers.seen.size()!=48 || capture.routers.failed || capture.routers.seen.size()!=192)){fprintf(stderr,"incomplete layer capture %zu/48\n",capture.layers.seen.size());return 3;}
+    fclose(rows); llama_batch_free(batch); llama_free(ctx);
+    if(observing && (capture.layers.failed || capture.layers.seen.size()!=48 || capture.routers.failed || capture.routers.seen.size()!=192)){fprintf(stderr,"incomplete layer capture %zu/48\n",capture.layers.seen.size());return 3;}
+    }
+    if(two_contexts){
+      auto read=[](const std::string&p){std::ifstream f(p,std::ios::binary);return std::vector<char>(std::istreambuf_iterator<char>(f),{});};
+      auto off=read(root_out+"/off/logits-177.f32"),on=read(root_out+"/on/logits-177.f32");
+      bool equal=off.size()==248320*4 && off==on;
+      std::ofstream proof(root_out+"/neutrality.json");proof<<"{\"schema\":\"ownrt.prefix178.two-context-neutrality.v1\",\"tokens\":178,\"position\":177,\"logit_words\":248320,\"single_model_load\":true,\"independent_contexts\":true,\"full_logits_bitwise_equal\":"<<(equal?"true":"false")<<"}\n";
+      if(!equal||!proof){fprintf(stderr,"full178 logits neutrality failed; retain both contexts\n");return 4;}
+    }
+    llama_model_free(model); llama_backend_free();
     return 0;
 }
