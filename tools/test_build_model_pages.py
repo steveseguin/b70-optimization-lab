@@ -96,7 +96,7 @@ class HumanPages(unittest.TestCase):
         self.assertEqual({r['package_id'] for r in rank['deployments']},
                          {r['id'] for r in catalog['packages']})
         for r in rank['families'] + rank['deployments']:
-            if r.get('family_id') == 'minimax-h3' or r.get('package_id') in ('qwen38-flash-next-iq3xxs-ownrt-tp1-b70', 'qwen38-flash-next-iq3xxs-ownrt-tp2-b70'):
+            if r.get('score_status', '').startswith('Not scored'):
                 self.assertTrue(all(r[k] is None for k in ('score', 'popularity', 'recency_capability', 'optimization')))
                 self.assertIn('Not scored', r['score_status'])
                 continue

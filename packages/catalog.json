@@ -12794,6 +12794,126 @@
           }
         ]
       }
+    },
+    {
+      "manifest": "packages/sc117-iq3s-b70-research-draft-20261028/package.json",
+      "format": "b70-model-package-v1",
+      "id": "sc117-iq3s-b70-research-draft-20261028",
+      "name": "SC117 Flash-Next IQ3_S — dedicated draft, three or four B70 cards",
+      "status": "candidate",
+      "audience": "expert",
+      "guide": "repro/sc117-iq3s-b70-research-draft-20261028/README.md",
+      "engine_page": "own-runtime.html",
+      "clean_host_tested": false,
+      "certification": {
+        "classification": "candidate-portable-repro",
+        "publication_status": "draft"
+      },
+      "library": {
+        "model_family": "SC117 Qwen3.8 Flash-Next IQ3_S",
+        "publisher": "SC117 (GSQ-RCO quantized weights)",
+        "variant": "GSQ-RCO abliterated IQ3_S; 2+1 / 3+1 dedicated official FP8 draft",
+        "summary": "Expert native research recipe for two or three target cards plus one dedicated draft card. Frozen source, authenticated model downloads, AOT build and retained long-input observations; latest realistic-suite results are linked separately. Dedicated portable controller/observer and clean-host replay remain incomplete.",
+        "public_summary": "Build the research runtime for three or four B70 cards. Source and model files are pinned; the latest dedicated-draft launcher still needs expert adaptation.",
+        "public_caveat": "Later binary9599b0: both depth3/depth2 arms match all5965/5965 CPU-qualified saved output IDs; depth3 is faster on all12 tasks in one matched pair. Two targets plus one draft passed a1536-output A/B/A correctness gate, not a speed benchmark. Frozen recipe sourceba563d4 predates these binaries and retains six historical CPU-reference disagreements; clean-host replay and certified benchmarking remain pending.",
+        "quantization": "IQ3_S mixed GSQ-RCO",
+        "runtime_label": "Own Xe/SYCL runtime; BMG-G31 AOT",
+        "operating_systems": [
+          "Linux"
+        ],
+        "delivery": [
+          "native"
+        ],
+        "modalities": [
+          "text"
+        ],
+        "use_cases": [
+          "general",
+          "coding",
+          "inference research"
+        ],
+        "tags": [
+          "SC117",
+          "IQ3_S",
+          "quantized compressed version",
+          "dedicated MTP",
+          "three cards",
+          "four cards",
+          "research recipe",
+          "lab replay"
+        ],
+        "published_at": "2026-10-28",
+        "featured_metric": null,
+        "benchmark_status": "Strict certified headline and context sweep pending. Latest9599b0 saved-continuation CPU qualification and2+1 gate are separate from the older frozen-source recipe; see latest research results."
+      },
+      "hardware": {
+        "accelerator": "Intel Arc Pro B70 32 GiB",
+        "cards": 4,
+        "host_ram_min_bytes": 103079215104,
+        "model_weight_bytes": 83863586496,
+        "note": "Primary 3 target + 1 draft profile: cuts0/17/33/48, reserved context262144. Separate 2 target + 1 draft alternative uses3 cards, cuts0/25/48, reserved context131072. Do not combine profiles. Measured host has128GiB installed;96GiB available at admission,8GiB running floor; exact recipe policies apply."
+      },
+      "model": {
+        "repository": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+        "hfId": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+        "revision": "eec4e10a2c29b440a2ae85591fa11569ce752963",
+        "manifest": "repro/sc117-iq3s-b70-research-draft-20261028/model-downloads.json"
+      },
+      "runtime": {
+        "kind": "native",
+        "engine": "Own Xe runtime; exact packed row decode, F32 target activations/recurrent arithmetic",
+        "source_commit": "ba563d432dc616e11232fc90eec54338cc358b18",
+        "build_entrypoint": "experiments/own-xpu-runtime/engine/build.py",
+        "build_guide": "repro/sc117-iq3s-b70-research-draft-20261028/SETUP.md",
+        "compiler": "Intel oneAPI compiler2026.0; published AOT build instructions, new-binding build/device qualification pending",
+        "kv_cache": "16-bit",
+        "note": "Frozen recipe source and later RESULTS observations have separate identities. Existing official FP8 draft; no training, prompt/KV/response reuse, resident endpoint or portable dedicated launcher. The source exporter reads immutable Git objects."
+      },
+      "project_patches": {
+        "required": false,
+        "items": [],
+        "note": "Own runtime source exported by immutable commit and source inventory; no external runtime patch base."
+      },
+      "commands": {
+        "benchmark": "python3 -c \"import sys; sys.exit('Dedicated-provider portable adapter is incomplete. Follow the expert recipe; no GPU launcher or resident service is shipped.')\"",
+        "health": "python3 -B repro/sc117-iq3s-b70-research-draft-20261028/recipe.py verify",
+        "launch": "python3 -c \"import sys; sys.exit('Dedicated-provider portable adapter is incomplete. Follow the expert recipe; no GPU launcher or resident service is shipped.')\"",
+        "preflight": "python3 -B repro/sc117-iq3s-b70-research-draft-20261028/recipe.py verify",
+        "stop": "python3 -c \"import sys; sys.exit('Dedicated-provider portable adapter is incomplete. Follow the expert recipe; no GPU launcher or resident service is shipped.')\""
+      },
+      "dependencies": [
+        "repro/sc117-iq3s-b70-research-draft-20261028",
+        "experiments/own-xpu-runtime/engine"
+      ],
+      "evidence": [
+        "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md",
+        "repro/sc117-iq3s-b70-research-draft-20261028/measurements.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/source-audit.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/publication-manifest.json",
+        "repro/sc117-iq3s-b70-research-draft-20261028/validation.json"
+      ],
+      "contributors": [
+        {
+          "id": "b70-optimization-lab",
+          "name": "neural.download lab",
+          "kind": "lab",
+          "status": "integrated",
+          "contribution": "Model-specific native Xe runtime, exact state comparisons, dedicated-provider research, source export and draft recipe.",
+          "validated_effect": "Retained lab observations and internal parity only; no isolated matched speedup credit or certified clean-host deployment claim. See exact revision and quality scope in RESULTS.md and the frozen recipe.",
+          "evidence": "repro/sc117-iq3s-b70-research-draft-20261028/measurements.json",
+          "profile": "https://github.com/steveseguin/b70-optimization-lab"
+        }
+      ],
+      "missing": [
+        "Portable dedicated-provider adapter and observer with current local admission; existing lab driver is not a clean-host launcher.",
+        "Validated version-locked toolchain/runtime installation and actual shared-library closure on a clean supported host.",
+        "New-binding native compilation, short full-state replay, realistic cold suite and long timing of this packaged flow.",
+        "Independent CPU-reference fidelity; six historical disagreements are not resolved by the pinned measured source.",
+        "Publicly obtainable or regenerable complete canonical target/draft reference state bundles.",
+        "Public binary/build-log release asset verification and clean-host certification."
+      ],
+      "results_guide": "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md",
+      "results_summary": "Later binary9599b0: both depth3/depth2 arms match all5965/5965 CPU-qualified saved output IDs; depth3 is faster on all12 tasks in one matched pair. Two targets plus one draft passed a1536-output A/B/A correctness gate, not a speed benchmark. Frozen recipe sourceba563d4 predates these binaries and retains six historical CPU-reference disagreements; clean-host replay and certified benchmarking remain pending."
     }
   ]
 }

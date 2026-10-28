@@ -39,6 +39,7 @@ evidence and remaining gates):
 
 | Family | Deployment packet |
 | --- | --- |
+| SC117 Flash-Next IQ3_S (separate mixed quantized model) | [Three/four-B70 dedicated-draft research recipe](sc117-iq3s-b70-research-draft-20261028/); expert candidate, portable dedicated launcher and certification pending |
 | Flash-Next UD-IQ3_XXS (separate quantized model) | [Own Xe runtime, one B70](qwen38-flash-next-iq3xxs-ownrt-tp1-b70/) and [two B70 cards](qwen38-flash-next-iq3xxs-ownrt-tp2-b70/); full-512/prefill lab observations, quality promotion pending |
 | Flash-Next FP8 | [Exact-GDN MTP1 four-B70 record replay](qwen38-flash-next-fp8-tp4-mtp1-exactgdn-b70-47tps-20260913/) |
 | Flash-Next FP8 | [MTP0 W13/N64 four-B70 retained recipe](qwen38-flash-next-fp8-tp4-mtp0-w13n64-b70-34tps-20260908/) |

@@ -728,12 +728,12 @@ def page(pkg, all_pkgs, family=None):
 
   {measured_html}
   <div class="actions">
-    <a class="button" href="{GITHUB}{esc(pkg.get('guide', ''))}">Open the full guide</a>
+{('<a class="button secondary" href="' + GITHUB + esc(pkg['results_guide']) + '">Latest research results</a>' + chr(10)) if pkg.get('results_guide') else ''}    <a class="button" href="{GITHUB}{esc(pkg.get('guide', ''))}">Open the full guide</a>
     <button type="button" class="copy-md" data-copy-markdown="../{esc(pkg.get('guide', ''))}" aria-label="Copy the guide Markdown" aria-live="polite">Copy Markdown</button>
     <a class="button secondary" href="{ISSUE}{esc(name.replace(' ', '%20'))}">Submit an improvement</a>
   </div>
 
-  <dl class="facts">{facts_html}</dl>
+{('<p class="scope">' + esc(pkg['results_summary']) + '</p>' + chr(10) + chr(10)) if pkg.get('results_summary') else ''}  <dl class="facts">{facts_html}</dl>
 {missing_html}
 {limitations_html}
 {prefill_section}
@@ -745,7 +745,7 @@ def page(pkg, all_pkgs, family=None):
   <div class="related">
     <h2>Keep going</h2>
     <div class="related-grid">
-      {family_related}
+{("      " + family_related) if family_related else ""}
 {("      " + engine_related + "\n") if engine_related else ""}{("      " + related_html) if related_html else ""}
       <a href="../learn.html"><b>Learn</b><span>What sets these numbers</span></a>
       <a href="../guides.html"><b>Recipes</b><span>Every package, filterable</span></a>
