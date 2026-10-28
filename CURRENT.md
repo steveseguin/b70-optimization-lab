@@ -1,12 +1,16 @@
 # Current Workspace State
 
-**October 28, 04:38 UTC — Testing three target GPUs plus a separate existing-MTP draft owner.**
-- All four cards are reserved for one bounded correctness run: targets 23/27/47, draft 43.
-  Unit `sc117-dedicated-3plus1-gate-20261028-r2`; output `/dev/shm/sc117-dedicated-3plus1-20261028-r2/output`.
+**October 28, 04:46 UTC — Testing the corrected dedicated-provider transport.**
+- The bounded correctness run used targets 23/27/47 and draft 43.
+  Unit `sc117-dedicated-3plus1-gate-20261028-r3`; output `/dev/shm/sc117-dedicated-3plus1-20261028-r3/output`.
   This is a new experimental role, not a service restore. No resident server is scheduled afterward.
 - The native build and CPU ownership/transport tests pass. The first GPU gate uses the saved 1,677-token
   prompt and 32-output cap, full restore checks, per-token prefill, and unchanged target arithmetic.
-  GPU correctness and performance remain unproven until actual results and clean shutdown are checked.
+  GPU correctness and performance remain unproven. The second attempt rejected a boolean-normalized
+  fixture field where native requires the original integer; all four processes exited cooperatively.
+  The field is fixed; expanded real native request-loop CPU tests cover multi-position fixtures,
+  accepted speculative journals, shortened depth and FINISH. All four cards passed the health probe;
+  the corrected r3 qualification is now loading with the same native binary.
 - First attempt stopped cooperatively at the first speculative acceptance: the new Python transport
   incorrectly rejected the retained tentative ROW flag. The fix authenticates the actual native acceptance
   journal and passes the raw-incident regression. All 1,676 prior canonical pairs matched the reference;

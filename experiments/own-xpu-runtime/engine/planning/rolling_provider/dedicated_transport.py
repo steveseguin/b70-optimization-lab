@@ -101,7 +101,7 @@ class Provider:
         self.sequence = self.owner.sequence = command.sequence
         self.command_pending = command
         row = command.row
-        self.transmit = base.REQUEST.pack(27, row.token, row.position, int(row.fixture > 0),
+        self.transmit = base.REQUEST.pack(27, row.token, row.position, row.fixture,
             self.transport_command.depth, command.sequence, MAGIC, VERSION)
 
     def write_ready(self):

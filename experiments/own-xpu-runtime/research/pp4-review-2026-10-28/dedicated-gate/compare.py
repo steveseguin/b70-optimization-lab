@@ -53,7 +53,7 @@ def canonical_pairs(commands, position):
     for serial,sequence in enumerate(sorted(issued),1):
         command=issued[sequence];result=completed[sequence]['provider'];row=command['row']
         wire=struct.unpack('<8i',bytes.fromhex(command['request_hex']))
-        need(wire==(27,row['token'],serial,int(row['fixture']>0),3,sequence,0x50525631,1),
+        need(wire==(27,row['token'],serial,row['fixture'],3,sequence,0x50525631,1),
              'actual dedicated request token/position/role/depth')
         hidden=command['parent_hidden_sha256']
         need(result['provider_serial']==result['seed_position']==result['restored_position']==serial

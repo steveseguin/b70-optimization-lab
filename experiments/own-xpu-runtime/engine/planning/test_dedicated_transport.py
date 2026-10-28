@@ -95,6 +95,9 @@ class WireTests(unittest.TestCase):
         seed.accepted_row=original;seed.accepted_sequence=3358
         seed.shared[remote.SEED_OFFSET:remote.SEED_OFFSET+256]=raw
         self.provider.issue(command,job,seed,parent)
+        self.provider.write_ready()
+        self.assertEqual(base.REQUEST.unpack(self.server.recv(32)),
+                         (27,27775,1677,2,3,1,MAGIC,VERSION))
         self.assertTrue(self.provider.transport_command.seed.tentative)
         self.assertEqual(self.provider.transport_command.seed.sequence,3355)
         self.assertEqual(bytes(seed.shared[remote.SEED_OFFSET:remote.SEED_OFFSET+256]),raw)
@@ -108,6 +111,27 @@ class WireTests(unittest.TestCase):
         seed.shared[remote.SEED_OFFSET:remote.SEED_OFFSET+256]=bytes(256)
         with self.assertRaisesRegex(ValueError,'journal owner/frontier/ACCEPT'):self.provider.issue(command,job,seed,parent)
         self.assertEqual(self.provider.sequence,0)
+    def test_fixture_integer_roundtrip_preserved(self):
+        for depth in (2,3):
+            for fixture in (0,1,2,3,32,512):
+                with self.subTest(depth=depth,fixture=fixture):
+                    # Fresh source/socket; request fixture stays exact. Only
+                    # proposal head flag/availability converts it to Boolean.
+                    self.setUp();self.plan['speculative_depth']=depth
+                    self.shared[:128]=HEADER.pack(MAGIC,VERSION,128,0,64,3,depth,0,0,self.request,bytes(56))
+                    self.ready();command,job,seed,parent=self.job(fixture)
+                    self.provider.issue(command,job,seed,parent);self.provider.write_ready()
+                    self.assertEqual(base.REQUEST.unpack(self.server.recv(32)),
+                                     (27,11,3,fixture,depth,1,MAGIC,VERSION))
+                    head=int(fixture>0);raw=self.proposal(command,parent,head)
+                    if depth==2:
+                        fields=list(codec.PROPOSAL.unpack(raw[:192]))
+                        fields[1]=1;fields[2]=192;fields[12]=2;fields[13]=2 if head else 0
+                        raw=codec.PROPOSAL.pack(*fields)
+                    self.shared[PROPOSAL_OFFSET:PROPOSAL_OFFSET+len(raw)]=raw
+                    self.server.sendall(base.REPLY.pack(0,12 if head else -1,0,len(raw),1,-1,MAGIC,VERSION,0,0,0,0))
+                    result=self.provider.read_ready()[2]
+                    self.assertEqual(result['guesses'],[12,13,14][:depth] if head else [])
     def test_reset_refused(self):
         with self.assertRaisesRegex(ValueError,'dump/finish'):self.provider.control(11)
 if __name__=='__main__':unittest.main()

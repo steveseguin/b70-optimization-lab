@@ -12,21 +12,27 @@ import prepare
 spec=importlib.util.spec_from_file_location('dedicated_compare',Path(__file__).with_name('compare.py'))
 C=importlib.util.module_from_spec(spec);spec.loader.exec_module(C)
 
-def commands():
+def commands(fixture=1):
     hidden='ab'*32;request='cd'*32;prefix='ef'*32
-    row=dict(token=11,position=1,fixture=1,epoch=0,id=3,parent=2,request=request,after=prefix)
+    row=dict(token=11,position=1,fixture=fixture,epoch=0,id=3,parent=2,request=request,after=prefix)
     proposal=struct.pack('<4I6Q8i32s32s32s',0x44525032,2,224,3,0,1,3,2,7,1,1,1,3,3,21,22,0,1,
         bytes.fromhex(request),bytes.fromhex(prefix),bytes.fromhex(hidden))+struct.pack('<i',23)+bytes(28)
     result=dict(provider_serial=1,seed_position=1,restored_position=1,parent_hidden_sha256=hidden,restored=True,
         proposal_hex=proposal.hex(),proposal_sha256=C.sha256(proposal).hexdigest(),final_commit=7,available_depth=3,
         guesses=[21,22,23],reply_hex=struct.pack('<8i4d',0,21,0,224,1,-1,0x50525631,1,0.,0.,0.,0.).hex())
     return [dict(owner='provider',event='issued',sequence=1,row=row,
-        request_hex=struct.pack('<8i',27,11,1,1,3,1,0x50525631,1).hex(),parent_hidden_sha256=hidden),
+        request_hex=struct.pack('<8i',27,11,1,fixture,3,1,0x50525631,1).hex(),parent_hidden_sha256=hidden),
         dict(owner='provider',event='completed',sequence=1,provider=result)]
 
 class PairProof(unittest.TestCase):
     def test_actual_native_pair(self):
         self.assertEqual(C.canonical_pairs(commands(),2),[dict(position=1,token=11,hidden_bytes=40960,hidden_sha256='ab'*32)])
+    def test_fixture_ordinal_preserved(self):
+        for fixture in (2,17,32):
+            self.assertEqual(C.canonical_pairs(commands(fixture),2)[0]['token'],11)
+    def test_fixture_bool_normalization_refused(self):
+        rows=commands(2);rows[0]['request_hex']=struct.pack('<8i',27,11,1,1,3,1,0x50525631,1).hex()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
     def test_missing_completion(self):
         with self.assertRaises(ValueError):C.canonical_pairs(commands()[:1],2)
     def test_hidden_mutation(self):
