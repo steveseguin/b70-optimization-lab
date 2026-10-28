@@ -30,12 +30,23 @@ Addressed evidence: `reference-one-row/router-tie-candidate/gpu-candidate/addres
 CPU evidence: `reference-one-row/fresh-changed-cpu/completed-r1-evidence/index.json`.
 Evidence: `reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/`.
 
-The new reference-policy MTP compatibility gate is active in
-`/dev/shm/sc117-reference-route-pp4-gate-20261028-r1` (PP4 serial/pipeline,
-one owner lifetime; invocation `1e4e9e8ee5734dd2bf4ceb2afa589baf`). Native
-build339b75 uses scoped adapter source025f; target/draft state comparison follows clean
-FINISH. Dedicated comparison is planned but unlaunched. Neither is qualified
-yet. Registration: `reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/index.json`.
+The new reference-policy MTP gates passed: PP4 serial/pipeline parity and
+PP4 versus dedicated 3+1 each matched 2,065 target sources, 73 draft sources,
+1,707 canonical pairs and all 32 outputs. All owners exited0 and passive
+postflights were clean. Native build339b75 uses scoped adapter source025f;
+BF16 draft routing remains unchanged. Full payload archives were byte-verified
+before RAM-backed files were removed. This is short-gate compatibility, not
+an independent long-prompt or full realistic-suite fidelity claim.
+Proofs: `reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/index.json`.
+
+The matched long512 control is active: 121,854 prompt tokens, max512, 3+1,
+262K reservation, cuts0/17/33/48, reference target routing ON, binary339b75.
+Unit `sc117-reference-route-long512-control-20261028-r1`, invocation
+`733d7d0ee74248d9bc7fe2bf92cfbb9a`; output under
+`/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-output`.
+The equal16 layout is planned and unlaunched. Shared native/Python source pins
+stay frozen through these runs. Registration:
+`equal16-topology-screen/reference-policy-long512-registration.json`.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns

@@ -1,0 +1,18 @@
+Pending archive plan; DO NOT RUN until root releases clean gate proof.
+Root /dev/shm/sc117-reference-route-pp4-gate-20261028-r1.
+Reuse /dev/shm/archive-router-seven-r1.py sealed stream+full byte compare workflow, with THIS root/archive destination and guard substitutions only. Before archive require output/result.json passed,errorNone,all four stageIDs rc0,live[] plus target-comparison.json/draft-comparison.json passed, both provenance manifests and all5 serial dump seals/payloads. Actual lifecycle writes result after FINISH; it returnsNone. Preserve source helper snapshot.
+
+Authoritative serial restore members (derive native parent from each target-set.json stage.dump, not guessed request ID):
+output/stage0/native/requests/request-00-serial/state-2000000000/state.bundle
+output/stage0/native/requests/request-00-serial/state-2000000000.draft/state.bundle
+output/stage1/native/requests/request-00-serial/state-2000000000/state.bundle
+output/stage2/native/requests/request-00-serial/state-2000000000/state.bundle
+output/stage3/native/requests/request-00-serial/state-2000000000/state.bundle
+Confirm these against completed manifest before freezing list. Pipeline analogous request-01-pipeline/state-2000000001(.draft). Any terminal marker2147483647 bundles must be inventoried explicitly after clean exit, not silently omitted or assumed absent.
+
+Bounded command after approved helper adaptation:
+nice -n19 taskset -c8-15 python /dev/shm/archive-reference-route-pp4-gate-r1.py
+Destination /mnt/raid-models/ownrt-experiment-archives/2026-10-28/reference-route-pp4-gate-r1-state-bundles.tar.zst (exclusive).
+Freeze exact existing regular state.bundle list and stable stat/size/index/stateJSON/seal hashes; tar/zstd-1-T2 only listed payloads; one full tar stream compare every byte+sealSHA against original and verify archiveSHA before unlink. Only precisely compared payload files removed. Keep all directories,seals,stateJSON,index,launchplans,traces,manifests,canonical-pairs,selected-plans,reset receipts. Receipt includes exact member restore paths/bytes/SHA,proof hashes,deleted flags. No hostmaps or unrelated cleanup. Do not hash/re-read already verified historical archives.
+
+Oracle handoff: after clean FINISH prefill_gate attaches authenticated target-set.prefill-provenance.json in each request folder, matching dedicated compare.py requirement. No rename-only workaround. Original target-set.json and full provenance inputs remain retained.

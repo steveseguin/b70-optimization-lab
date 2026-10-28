@@ -1,0 +1,45 @@
+{
+  "schema": "ownrt.equal16-matched-registration.v1",
+  "status": "planned-unlaunched",
+  "binary_sha256": "339b75c1aed260742fb6954149fa0eb791b4721fd4e4627ec7e7c7f554356761",
+  "precondition": "same-policy PP4/dedicated short full-state gate passes, fresh passive admission and floors before each stage",
+  "cases": [
+    {
+      "name": "control",
+      "plan": "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-plan.json",
+      "plan_sha256": "d65e239d1b40d8382600014fda0c249c382c8979158104d666b53ec28a04adb8",
+      "config": "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-config.json",
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "context": 262144,
+      "max_new": 512,
+      "prompt_tokens": 121854,
+      "model_identity_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+      "reference_route_tie_sort": true
+    },
+    {
+      "name": "equal16",
+      "plan": "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/equal16-plan.json",
+      "plan_sha256": "0f53d4b6374142c9418a022dfa4c2f8276b8c1b783be7699d36c6b54467b7844",
+      "config": "/dev/shm/sc117-reference-route-long512-plans-20261028-r1/equal16-config.json",
+      "boundaries": [
+        0,
+        16,
+        32,
+        48
+      ],
+      "context": 262144,
+      "max_new": 512,
+      "prompt_tokens": 121854,
+      "model_identity_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+      "reference_route_tie_sort": true
+    }
+  ],
+  "treatment": "contiguous layer cuts only; same cards/context/target/draft/prompt/max512/native/math/policy/pipeline256/4slots",
+  "comparison": "actual outputs and canonical pairs plus full final target/draft states after each clean FINISH; report actual request/TTFT/decode event span; no claim on failed parity",
+  "scope": "one first-inference long prompt per layout, no warmup, no restart/retry, not realistic-suite promotion or LocalMax record"
+}
