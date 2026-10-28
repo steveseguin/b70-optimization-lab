@@ -131,6 +131,13 @@
     v3_store_end=v3_first+(layers=="0-26"?3-mini:layers=="0-25"?2-mini:0);
     v3_end=v3_first+(mode=="rank0-k3"?3-mini:2-mini); // execution set [v3_first, v3_end); U views keep the V3 set
     v3_skip_half.assign(p.launches.size(),0);v3_sites.clear();v3_store_sites.clear();
+    if(a.pipeline_enabled()){
+      // The general pipeline owns explicit disjoint layer ranges. It does not
+      // use the legacy two-rank duplicated island or its separate boundary op.
+      require(!v3_extended&&!v3_active&&!kio_active&&!prepare_async&&export_copy&&!expert_diet,
+              "general pipeline requires neutral legacy V3 boundary selection");
+      return;
+    }
     for(size_t i=0;i<p.launches.size();++i){const auto& l=p.launches[i];if(!l.label.starts_with("blk."))continue;
       const int layer=std::stoi(l.label.substr(4));const bool stored=layer>=v3_first&&layer<v3_store_end,moved=layer>=v3_first&&layer<v3_end;
       if(a.rank==0&&layer>=v3_first){require(v3_extended&&stored,"rank 0 holds a moved layer without the V3 layout");v3_skip_half[i]=1;v3_store_sites.push_back(i);if(moved)v3_sites.push_back(i);}

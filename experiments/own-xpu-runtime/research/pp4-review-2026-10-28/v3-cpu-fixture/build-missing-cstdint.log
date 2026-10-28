@@ -1,0 +1,44 @@
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:15:14: error: ‘uint8_t’ was not declared in this scope
+   15 |  std::vector<uint8_t>v3_skip_half;std::vector<size_t>v3_sites,v3_store_sites;std::set<std::string>v3_private;
+      |              ^~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:8:1: note: ‘uint8_t’ is defined in header ‘<cstdint>’; did you forget to ‘#include <cstdint>’?
+    7 | #include <iostream>
+  +++ |+#include <cstdint>
+    8 | static void require(bool p,const std::string&m){if(!p)throw std::runtime_error(m);}
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:15:21: error: template argument 1 is invalid
+   15 |  std::vector<uint8_t>v3_skip_half;std::vector<size_t>v3_sites,v3_store_sites;std::set<std::string>v3_private;
+      |                     ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:15:21: error: template argument 2 is invalid
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:15:7: error: ‘<expression error>’ in namespace ‘std’ does not name a type
+   15 |  std::vector<uint8_t>v3_skip_half;std::vector<size_t>v3_sites,v3_store_sites;std::set<std::string>v3_private;
+      |       ^~~~~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp: In member function ‘void Fixture::refresh_v3()’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:40:5: error: ‘v3_skip_half’ was not declared in this scope
+   40 |     v3_skip_half.assign(p.launches.size(),0);v3_sites.clear();v3_store_sites.clear();
+      |     ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp: In function ‘void neutral(int, int, int)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:59:84: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   59 | static void neutral(int rank,int first,int end){auto f=make(true,rank,first,end);f.v3_skip_half.assign(200,1);f.v3_sites={123};f.v3_store_sites={456};f.refresh_v3();require(f.v3_skip_half.size()==f.p.launches.size(),"skip shape");require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"pipeline layer skipped");require(f.v3_sites.empty()&&f.v3_store_sites.empty()&&!f.checks,"legacy island in pipeline");++count;}
+      |                                                                                    ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:59:176: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   59 | static void neutral(int rank,int first,int end){auto f=make(true,rank,first,end);f.v3_skip_half.assign(200,1);f.v3_sites={123};f.v3_store_sites={456};f.refresh_v3();require(f.v3_skip_half.size()==f.p.launches.size(),"skip shape");require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"pipeline layer skipped");require(f.v3_sites.empty()&&f.v3_store_sites.empty()&&!f.checks,"legacy island in pipeline");++count;}
+      |                                                                                                                                                                                ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:59:253: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   59 | static void neutral(int rank,int first,int end){auto f=make(true,rank,first,end);f.v3_skip_half.assign(200,1);f.v3_sites={123};f.v3_store_sites={456};f.refresh_v3();require(f.v3_skip_half.size()==f.p.launches.size(),"skip shape");require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"pipeline layer skipped");require(f.v3_sites.empty()&&f.v3_store_sites.empty()&&!f.checks,"legacy island in pipeline");++count;}
+      |                                                                                                                                                                                                                                                             ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:59:276: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   59 | static void neutral(int rank,int first,int end){auto f=make(true,rank,first,end);f.v3_skip_half.assign(200,1);f.v3_sites={123};f.v3_store_sites={456};f.refresh_v3();require(f.v3_skip_half.size()==f.p.launches.size(),"skip shape");require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"pipeline layer skipped");require(f.v3_sites.empty()&&f.v3_store_sites.empty()&&!f.checks,"legacy island in pipeline");++count;}
+      |                                                                                                                                                                                                                                                                                    ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp: In function ‘int main()’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:70:67: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   70 |  {auto f=make(false,1,24,48);f.refresh_v3();require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"legacy rank1 skipped");++count;}
+      |                                                                   ^~~~~~~~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp:70:90: error: ‘struct Fixture’ has no member named ‘v3_skip_half’
+   70 |  {auto f=make(false,1,24,48);f.refresh_v3();require(std::all_of(f.v3_skip_half.begin(),f.v3_skip_half.end(),[](auto v){return v==0;}),"legacy rank1 skipped");++count;}
+      |                                                                                          ^~~~~~~~~~~~
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/run.py", line 54, in <module>
+    subprocess.run(['g++','-std=c++20','-O0','-Wall','-Wextra','-Werror',str(r/'fixture.cpp'),'-o','/tmp/test_refresh_v3_pipeline'],check=True)
+  File "/usr/lib/python3.12/subprocess.py", line 571, in run
+    raise CalledProcessError(retcode, process.args,
+subprocess.CalledProcessError: Command '['g++', '-std=c++20', '-O0', '-Wall', '-Wextra', '-Werror', '/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/v3-cpu-fixture/fixture.cpp', '-o', '/tmp/test_refresh_v3_pipeline']' returned non-zero exit status 1.

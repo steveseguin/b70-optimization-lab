@@ -1,0 +1,17 @@
+{
+  "scope": "CPU exact extracted helper compilation only; not actual CheckpointRing construction, native build or runtime fit",
+  "result": "passed",
+  "compiler": "g++ -std=c++20 -O0 -Wall -Wextra -Werror",
+  "execution": "nice -n 19 taskset -c 8-15",
+  "git_apply_check": "passed",
+  "cases": [
+    "exact depth3 cut25 reserve676809048",
+    "exact depth2 cut25 reserve451148432",
+    "30GiB exact fit and one-byte-over refusal",
+    "derived maximum806092800",
+    "zero/oversize/SIZE_MAX slot and rows",
+    "invalid depth and SIZE_MAX",
+    "owned above30GiB",
+    "per-item subtraction underflow refusal"
+  ]
+}

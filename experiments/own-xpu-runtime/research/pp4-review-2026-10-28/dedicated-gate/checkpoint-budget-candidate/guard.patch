@@ -1,0 +1,37 @@
+--- a/engine/src/pipeline/ring/checkpoint_ring.hpp
++++ b/engine/src/pipeline/ring/checkpoint_ring.hpp
+@@ -3,6 +3,15 @@
+ // pipeline/operator_state.hpp. Slots share one inventory and frozen census.
+ namespace mtp36 {class DraftRuntime;}
+ namespace pipeline::ring_next {
++// Pure checked geometry; the Engine allocator independently retains its per-allocation cap.
++inline size_t checkpoint_ring_reserve(size_t bytes,size_t rows,size_t depth,size_t owned){
++ constexpr size_t slot_limit=256ull*1024*1024,row_limit=4096,device_limit=30ull*1024*1024*1024;
++ require(bytes&&bytes<=slot_limit&&rows&&rows<=row_limit&&(depth==2||depth==3),"ring backup geometry bound");
++ const size_t reserve=depth*(bytes+2*rows*sizeof(SnapshotFlat::Item));
++ require(reserve<=depth*(slot_limit+2*row_limit*sizeof(SnapshotFlat::Item)),"ring derived total backup/table reserve");
++ require(owned<=device_limit&&reserve<=device_limit-owned,"ring complete reserve exceeds per-card arena admission");
++ return reserve;
++}
+ template<class Owner> class CheckpointRingFor {
+  Owner& e;bool verify;
+  struct Item {Allocation id;size_t bytes,offset;std::string label;CheckpointQsa qsa{};bool sparse=false;};
+@@ -92,10 +101,16 @@
+   }
+   std::set<Allocation> scope;for(const auto& item:items)scope.insert(item.id);const auto qsa=checkpoint_qsa(e.p,e.buffers[0],e.dev(0).arena,scope);
+   for(auto& item:items){const auto sparse=qsa.find(item.id);item.sparse=sparse!=qsa.end();if(item.sparse)item.qsa=sparse->second;const size_t saved=item.sparse?item.qsa.row_bytes*size_t(item.qsa.pooled?1:slots.size()):item.bytes;
+-   require(saved&&bytes_<=256ull*1024*1024-saved,"ring sparse aggregate per-slot backup bound");item.offset=bytes_;bytes_+=saved;table_rows+=item.sparse?size_t(item.qsa.pooled?1:slots.size())*((item.qsa.row_bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit):(saved+SnapshotBatch::limit-1)/SnapshotBatch::limit;
++   require(saved&&saved<=256ull*1024*1024&&bytes_<=256ull*1024*1024-saved,"ring sparse aggregate per-slot backup bound");item.offset=bytes_;bytes_+=saved;table_rows+=item.sparse?size_t(item.qsa.pooled?1:slots.size())*((item.qsa.row_bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit):(saved+SnapshotBatch::limit-1)/SnapshotBatch::limit;
+   }
+   require(bytes_&&table_rows&&table_rows<=4096,"ring target snapshot census");
+-  require(slots.size()*(bytes_+2*table_rows*sizeof(SnapshotFlat::Item))<=512ull*1024*1024,"ring total backup/table reserve");
++  const size_t reserve=checkpoint_ring_reserve(bytes_,table_rows,slots.size(),0);
++  constexpr size_t device_limit=30ull*1024*1024*1024;
++  size_t owned=0;for(const auto& [id,where]:e.allocations){
++   require(where.first==0&&where.second<=device_limit&&owned<=device_limit-where.second,"ring device ownership sum bound");owned+=where.second;
++  }
++  if constexpr(requires{e.owned_bytes.at(0);})require(owned==e.owned_bytes.at(0),"ring device ownership accounting");
++  require(reserve<=device_limit-owned,"ring complete reserve exceeds per-card arena admission");
+   // Allocate EVERY slot before preparing/freezing. No snapshot ever includes
+   // another slot's private image, descriptors or mutable host bookkeeping.
+   for(size_t i=0;i<slots.size();++i){auto& s=slots[i];const auto label="ring:"+std::to_string(i);

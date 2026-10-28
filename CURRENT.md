@@ -15,11 +15,22 @@
   32 output IDs**; every native owner exited 0. Validated capture acknowledgments release only the final
   input lease; provider busy and commit locks remain held through restoration. Binary `8ff218d09413`.
   [Proof receipt](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/capture-candidate/gate-r1-proof-receipt.json).
-- Active: `sc117-dedicated-capture512-20261028-r1` uses all four cards for the same cold 1,677-token
-  prompt and 512-output cap. Saved initial3+1 and PP4 controls are retained; exact compiler argv/source
-  transition and current-binary full parity are checked. No speed claim until this run finishes.
-- The next 2+1 64K plan passes native allocation planning, but a newly identified 512-MiB ring snapshot
-  ceiling needs exact accounting before device execution. CPU allocation planning alone did not check it.
+- Early-capture matched decode completed cleanly: **48.87 / 49.58 tok/s** (first99/all511 intervals),
+  up from **42.17 / 43.20**, still below PP4 **51.81 / 52.16**. All512 output IDs match.
+  [Measured evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/capture-candidate/measured512-r1-evidence/index.json).
+  Actual logs show final target ROW issuance during504/511 provider windows; host overlap is not GPU duration.
+- The first2+1 launch stopped in initialization: an old two-rank V3-layout guard rejected layer24
+  assigned to the first general pipeline stage. No inference ran; passive postflight has no holders or new faults.
+  [Incident](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/2plus1-r1-incident/index.json).
+  The general pipeline now requires neutral legacy V3 settings and retains every explicitly owned layer;
+  the old two-rank guard remains active for its own path. An exact-method20-case CPU regression passes.
+- Active: `sc117-dedicated-2plus1-layout64k-20261028-r1`, binary `df2c19c87fe6`, runs the2+1
+  full32-output gate on targets23/47,draft43, context65536,depth3. The earlier initialization point passed.
+  The prior checkpoint admission fix remains: existing256MiB-per-slot/4096-row bounds and complete reserve
+  under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed. Card27 remains empty.
+- A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
+  makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
+  screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.
 - Dedicated bulk prefill, persistent reset, 2+1 runtime execution and the full realistic suite remain
   unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
   the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.
