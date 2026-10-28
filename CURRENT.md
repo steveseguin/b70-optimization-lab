@@ -1,91 +1,63 @@
 # Current Workspace State
 
-**October 28 — 2+1 at128K full gate passed; three-card long timing active.**
-Matched cold64K 1677/512 measured dedicated2+1 **50.605 /51.289 tok/s** versus native
-2GPU **68.272 /67.654 tok/s** (first99/all511 intervals): dedicated all511 rate is
-**24.19% lower**. All512 IDs match and both lifecycles are clean; cuts25/depth3 versus
-cuts23/depth1 are explicit treatment differences. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched64k-2plus1-vs-native/).
-The128K short state gate passed (proof `e476c64…`); long128K remains unqualified.
-Dedicated bulk3+1 passed sealed **2065 target/73 draft sources,1707 actual pairs and32
-outputs**, all4owners exited0 (proof `d99f6b6…`, commit `f21da9db8`, binary `29471eb0bab9`).
-Verified state archives released RAM. The first-inference121854/8 dedicated long request completed cleanly: **1027.579s**
-request wall, **1007.883s** sequential prefix; all8 IDs match and all4owners exited0,
-postflight clean/noholders. Target command work was290.182/257.685/251.354s and
-provider replay204.521s. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bulk3plus1-long-r1-evidence/summary.json).
-PP4r5 completed cleanly in **714.815s**, TTFT713.434s, versus dedicated1027.579s:
-**30.44% less request time**, ratio1.4375. Both matched121854 prompt and8outputs,
-zero cached state; all owners exited0 and postflight is clean. This is a single first-
-inference screen, not headline/suite throughput or independent CPU quality proof.
-[Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pp4-cold-long-r5-evidence/matched-screen.json).
-Cuts, shared/independent draft, flatcopyfalse/true, per-tokenOP9/bulkOP28 and existing
-PP4 coldRESET remain explicit differences. Dedicated stage-pipeline full gate passed **2065/73 sources,1707 actual pairs and32
-outputs**, all4rc0, clean postflight; proof `3a2b4489…`, native29471eb0bab9 unchanged.
-Actual host schedule retained2chunk leases and completed7chunks on each of4actors;
-this proves host scheduling overlap, not a speedup. [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-gate-r1-evidence/summary.json).
-The3+1 stage-pipeline first-inference121854/8 run completed in **605.388s**, prefix
-585.686s, exact8 IDs and all4rc0/clean postflight. This is **41.09% less request time**
-than sequential dedicated1027.579s and **15.31% less** than PP4714.815s (ratios1.6974/1.1808).
-Target work291.218/258.393/251.820s and replay203.104s remain similar to sequential;
-actual command overlap accounts for the changed schedule, with no GPU-duration claim.
-[Three-way screen](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-long-r1-evidence/matched-three-way.json).
-This is one first-inference prompt/eight-output screen, not a suite/localmax record or
-independent CPU correctness result. PP4 cuts/flatcopy/OP9/reset differences remain explicit.
-Verified5bundle archive released16.369GB. Reviewed2target extension applied;10socket+6planner
-CPU tests passed. The2+1 at128K bulk/pipeline full gate passed **2065/73 sources,1707 pairs,32outputs**,
-all3rc0/clean postflight (proof `3efb44b3…`):2017+69 exact sources plus48+4 registered
-capacity arrays with full128K-prefix equality and zero262K extra tails.
-[Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-2plus1-128k-gate-r1-evidence/summary.json).
-Actual target censuses31837258292/32097362144B leave374996428/114892576B under30GiB;
-provider3385539588B. Each target is12288B above projection, cause unassigned.
-Verified candidate/reference archives released bundles. First-inference121854/8 on3cards
-at128K is active at `/dev/shm/sc117-dedicated-pipeline-2plus1-128k-long-20261028-r1`,
-plan `f1727498…`, clean startupRAM103769600000B passed96GiB floor. No long result yet.
-Native HCnorm probe passed10240 bitexact/error0 with
-clean postflight. The next projection differs at221/320 hostF64-versus-native values;
-causality remains unresolved. CPU observer r2
-now preserves original/OFF/ON all logits exactly; the native-vs-CPU layer0 maximum
-difference is8.94e-8 and final difference0.1355. Six independent CPU disagreements
-remain unresolved. Combined-owner discoveries remain in the broader queue.
-- The per-token 3+1 gate on targets 23/27/47 and draft 43 matched all **2,065 target sources, 73 draft
-  sources, 1,707 canonical hidden/token input pairs, and 32 output tokens** against the prior four-target
-  reference. All four owners exited 0, no holders remain, and postflight matches the fault baseline.
-  [Gate receipt](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/r3-comparison-receipt.json).
-- Native binary `42835855ee91`, run `/dev/shm/sc117-dedicated-3plus1-20261028-r3/output`.
-  Two earlier Python transport refusals were fixed with actual incident and native request-loop regressions;
-  their evidence remains recorded. The native arithmetic was unchanged. No speed claim from this gate.
-- Matched 512-token decode: 3+1 **42.17 / 43.20 tok/s** versus PP4 **51.81 / 52.16 tok/s**
-  (first 99 / all 511 intervals). Every output ID matches, both cold requests finished cleanly. Initial
-  3+1 is a measured loss, not a promotion. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched512-initial/retention.json).
-- Early capture passed all **2,065 target sources, 73 draft sources, 1,707 canonical input pairs and
-  32 output IDs**; every native owner exited 0. Validated capture acknowledgments release only the final
-  input lease; provider busy and commit locks remain held through restoration. Binary `8ff218d09413`.
-  [Proof receipt](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/capture-candidate/gate-r1-proof-receipt.json).
-- Early-capture matched decode completed cleanly: **48.87 / 49.58 tok/s** (first99/all511 intervals),
-  up from **42.17 / 43.20**, still below PP4 **51.81 / 52.16**. All512 output IDs match.
-  [Measured evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/capture-candidate/measured512-r1-evidence/index.json).
-  Actual logs show final target ROW issuance during504/511 provider windows; host overlap is not GPU duration.
-- The first2+1 launch stopped in initialization: an old two-rank V3-layout guard rejected layer24
-  assigned to the first general pipeline stage. No inference ran; passive postflight has no holders or new faults.
-  [Incident](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/2plus1-r1-incident/index.json).
-  The general pipeline now requires neutral legacy V3 settings and retains every explicitly owned layer;
-  the old two-rank guard remains active for its own path. An exact-method20-case CPU regression passes.
-- The2+1 full32-output gate passed on targets23/47,draft43, context65536,depth3, binary `df2c19c87fe6`.
-  All2065target/73draft sources match:2017+69 exact layouts/hashes,48+4 context arrays with full64K-prefix
-  equality and zero262K extra tails. All1707canonical pairs and32output IDs match; all3owners exited0.
-  Proof `/dev/shm/dedicated-2plus1-comparison-r1/proof.json`, SHA `ae74e5ade58c9a2fd70c1bb1a34b5eb27b9ad585e0b91ef5e854e4076c3897db`.
-- Actual device censuses:29,661,143,540 /30,141,558,944 bytes for targets,3,205,184,516 for draft.
-  The checked checkpoint admission fix retains existing256MiB-per-slot/4096-row bounds and complete reserve
-  under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed.
-- The64K measurements and128K short gate completed cleanly. Dedicated and PP4 first-inference121854/8 timing completed; stage-pipeline long timing completed;2+1 pipeline gate follows. No resident service.
-- A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
-  makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
-  screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.
-- Sequential and stage-pipelined dedicated bulk passed full qualification; persistent reset, long128K and the full realistic suite remain
-  unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
-  the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.
-- The complete [optimization backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json)
-  includes the 2+1 64K CPU plan, small exact kernel screens, and expert-parallel, verifier, draft and
-  submission-cost screens. No resident service is scheduled. Independent-reference disagreements remain open.
+**October 28 — Three-card cold long screen fastest; independent quality investigation remains open.**
+
+The 2+1 stage pipeline at reserved context 128K completed a first-inference request with
+121,854 prompt tokens and eight outputs in **559.908 s**, including **544.444 s** of
+prefix work. All eight IDs matched the controls, all three owners exited 0, and passive
+postflight was clean. Targets 23/47 and draft 43 leave card 27 free.
+
+| Implementation | Reserved context | Request time |
+| --- | --- | ---: |
+| 2 targets + dedicated draft, stage pipeline | 128K | **559.908 s** |
+| 3 targets + dedicated draft, stage pipeline | 262K | 605.388 s |
+| PP4, colocated draft and two-chunk waves | 262K | 714.815 s |
+| 3 targets + dedicated draft, sequential prefix | 262K | 1027.579 s |
+
+The three-card result used 7.51% less time than the four-card dedicated pipeline and
+21.67% less than PP4. These are single first-inference prompt/eight-output screens,
+not sustained-decode, realistic-suite, localmax record or independent CPU correctness
+results. Context reservation, cuts, card count and PP4's OP9/flat-copy/reset versus
+dedicated OP28/no-flat-copy/no-reset remain explicit differences. Native binary
+`29471eb0bab9` was common. [Four-way evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-2plus1-128k-long-r1-evidence/matched-four-way.json).
+
+The 2+1 pipeline's short full-state gate passed **2,065 target sources, 73 draft
+sources, 1,707 actual hidden/token pairs and 32 outputs**. This included 2,017 + 69
+exact sources and 48 + 4 registered context arrays: the full 128K prefixes matched,
+and the extra 262K tails were zero. All three owners exited 0. The separate long
+121,854/8 timing then completed as above; the full realistic suite remains unrun.
+[Gate proof](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-2plus1-128k-gate-r1-evidence/summary.json).
+
+Actual target allocations were 31,837,258,292 / 32,097,362,144 bytes, leaving
+374,996,428 / 114,892,576 bytes under the unchanged 30 GiB cap; draft owned
+3,385,539,588 bytes. Each target exceeded the projection by 12,288 bytes, cause
+unassigned. Completed state archives were fully compared and checksummed before
+exact bundle cleanup. No long request or resident service is active.
+
+Sustained decode remains a separate negative result: at 64K, 2+1 measured
+50.605 / 51.289 tok/s versus the native two-GPU incumbent's 68.272 / 67.654
+(first 99 / all 511 intervals), with all 512 IDs exact. Cuts 25/depth 3 versus
+cuts 23/depth 1 are explicit treatments. Early-capture 3+1 reached 49.58 tok/s,
+still below PP4's 52.16. [Decode evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched64k-2plus1-vs-native/manifest.json).
+
+The native target-only 244-token all-48-layer capture completed with token 6343,
+both owners exited 0 and postflight was clean. On those captured position-243
+router logits, captured IDs/routes match the production host route in all 48 layers;
+real ggml selects identical IDs in all 48, with no cutoff ties. Selected weights
+differ by at most 3 ULP (2.98e-8) between GPU and host. This closes neither earlier
+history nor final-output causality. [Same-input replay](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-replay/native-input-r1/result.json).
+
+The CPU router observer completed with all 248,320 logits bitwise equal to the
+original reference and all 240 intermediate arrays valid. CPU-input routing also
+matches on identical inputs. Actual expert sets first differ at layer 25 because
+the incoming logits differ; the earlier material increase is bracketed inside
+layer 4 before its router. The originating operator or inherited-state difference
+remains unknown. [Quality findings and next test](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-observer/RESULT.txt).
+All six independent-reference disagreements remain open. HC norm passed 10,240
+bitexact values; the following projection differs at 221/320 host-F64 versus
+native values, with causality unresolved. Four-slot
+scheduler source implementation is in progress; no build or GPU test yet. Persistent
+reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**
 - Two-chunk prefill overlap reduced the matched cold 121,854-token full response **846.937 → 524.273 s**

@@ -1,0 +1,53 @@
+{
+  "schema": "ownrt.four-way-first-inference-long-screen.v1",
+  "prompt_tokens": 121854,
+  "output_ids": [
+    27775,
+    383,
+    279,
+    3766,
+    26622,
+    1528,
+    11,
+    1532
+  ],
+  "prompt_i32_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+  "request_seconds": {
+    "two_target_pipeline_128k": 559.9075318810064,
+    "three_target_pipeline": 605.3878414800856,
+    "PP4": 714.8151691760868,
+    "three_target_sequential": 1027.578849336016
+  },
+  "time_reduction_percent": {
+    "three_target_pipeline": 7.512590521786235,
+    "PP4": 21.671005873256806,
+    "three_target_sequential": 45.51196414340386
+  },
+  "baseline_over_two_target_time_ratio": {
+    "three_target_pipeline": 1.0812282511119082,
+    "PP4": 1.2766664645047172,
+    "three_target_sequential": 1.8352652729708248
+  },
+  "prefix_timing": {
+    "schema": "dedicated-stage-pipeline-prefill-host-wall-v1",
+    "total_wall_s": 544.4437340550357,
+    "target_command_work_wall_s": [
+      400.6035338838119,
+      359.36880592198577
+    ],
+    "draft_replay_work_wall_s": 202.82509809860494,
+    "peak_unfinished_chunks": 2,
+    "scope": "host work durations overlap; full native OP28 ACK releases parity; no GPU duration/speed claim"
+  },
+  "prefix_positions": 121852,
+  "chunks": 476,
+  "clean_owners": {
+    "0": 0,
+    "1": 0,
+    "provider": 0
+  },
+  "quality_proof": "pipeline-2plus1-128k-gate-r1-evidence/summary.json",
+  "scope": "Fastest of these four single first-inference121854/8 screens, using3cards23/47+draft43 and leavingcard27free. Exact8 outputs and clean native lifecycle. No suite/localmax record, sustaineddecode or independentCPU quality claim.",
+  "conditions": "Two-target reservedcontext128K vs otherthree262K;2targetcuts25 vs3target17/33 vsPP4cuts8/21/34. Same native29471eb0; PP4 flatcopytrue,OP9 and initialcoldRESET versus dedicatedfalse,OP28/noreset. Topology/context/scheduler differences explicit, no isolated causal attribution.",
+  "next": "Root archive, then planned244token target-only all48router diagnostic; no longrequestcurrentlyactive."
+}

@@ -1,0 +1,22 @@
+Native-input router replay, October 28, 2026
+
+Replayed the actual 512 router logits captured at position 243 in each of the
+48 layers through the existing production host route and real ggml graph.
+The replay executable and source hashes match the retained synthetic fixtures.
+Every captured input hash matches its fully verified native state extraction.
+
+All 48 captured GPU expert-ID arrays and both route tables match the host
+implementation exactly. Host and ggml choose identical ordered expert IDs in
+all 48 layers; none has a probability tie across the tenth/eleventh cutoff.
+Thus the synthetic equal-key sorting difference is not exercised by these
+captured native inputs. Earlier positions remain unobserved by this test.
+
+Selected GPU/host weights differ in 47 layers, by at most 3 ULP or
+2.9802322387695312e-8. This is a measured arithmetic difference, not an
+explanation of the final-token disagreement. Full-model CPU inputs differ
+from these native inputs; the separate CPU observer compares that chain.
+
+result.json retains every layer's checks and vector hashes. All 528 original
+vector/log files are in vectors-and-logs.tar.gz; archive.json records hashes
+and the complete member comparison performed before removing loose copies.
+No runtime source or arithmetic changed for this diagnostic.
