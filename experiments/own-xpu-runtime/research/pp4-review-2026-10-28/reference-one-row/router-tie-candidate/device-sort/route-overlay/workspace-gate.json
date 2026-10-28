@@ -1,0 +1,51 @@
+{
+  "schema": "ownrt.reference-sort-workspace-cpu-gate.v1",
+  "result": {
+    "passed": true,
+    "cases": 12512,
+    "gpu_executed": false,
+    "index_and_frame_canaries": true
+  },
+  "returncode": 0,
+  "stderr_bytes": 0,
+  "sanitizers": [
+    "address",
+    "undefined"
+  ],
+  "command_record": "Reconstructed executed command",
+  "compile_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "g++-13",
+    "-O1",
+    "-g",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_workspace.cpp",
+    "-o",
+    "/dev/shm/sc117-reference-route-overlay-20261028-r2/test-workspace"
+  ],
+  "run_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/dev/shm/sc117-reference-route-overlay-20261028-r2/test-workspace",
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/inputs/input.f32"
+  ],
+  "sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/reference_sort.hpp": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/reference_sort_workspace.hpp": "a6fddc466da941bf867265bf0ae87afcfbb2f70924a732173c5414086ac78b43",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_workspace.cpp": "201ca33f9b32f3b41711cbd0b742529b5144f92c8f6aae6aafe2f2ed3cd7f5d3",
+    "/dev/shm/sc117-reference-route-overlay-20261028-r2/test-workspace": "7260632284574c49763ef2daa00e874c9c8693cbd13e2127d53566736a12527e"
+  }
+}

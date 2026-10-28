@@ -1,0 +1,69 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:2:
+In file included from /dev/shm/sc117-reference-route-overlay-20261028-r3/adapter.cpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p30_submit.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/performance.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet9-kopt4/kernels.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet8-kopt3/kernels.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet7-kopt2/kernels.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet7-kopt2/reference.hpp:3:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/reference.hpp:117:10: warning: 4 enumeration values not handled in switch: 'Q4_K', 'Q5_K', 'IQ4_XS'... [-Wswitch]
+  117 |   switch(t) {
+      |          ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:2:
+In file included from /dev/shm/sc117-reference-route-overlay-20261028-r3/adapter.cpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p30_submit.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/performance.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet9-kopt4/kernels.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet8-kopt3/kernels.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet7-kopt2/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet7-kopt2/reference.hpp:36:10: warning: 4 enumeration values not handled in switch: 'Q4_K', 'Q5_K', 'IQ4_XS'... [-Wswitch]
+   36 |   switch(t){CASE(F32);CASE(F16);CASE(BF16);CASE(Q8_0);CASE(Q6_K);CASE(Q3_K);CASE(IQ3_XXS);CASE(IQ2_S);CASE(IQ3_S);CASE(IQ4_NL);}
+      |          ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:2:
+In file included from /dev/shm/sc117-reference-route-overlay-20261028-r3/adapter.cpp:6:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/p30_submit.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/round2_submit.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/performance.hpp:4:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet9-kopt4/kernels.hpp:3:
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet8-kopt3/kernels.hpp:4:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet8-kopt3/reference.hpp:25:9: warning: 4 enumeration values not handled in switch: 'Q4_K', 'Q5_K', 'IQ4_XS'... [-Wswitch]
+   25 |  switch(t){CASE(F32);CASE(F16);CASE(BF16);CASE(Q8_0);CASE(Q6_K);CASE(Q3_K);CASE(IQ3_XXS);CASE(IQ2_S);CASE(IQ3_S);CASE(IQ4_NL);}
+      |         ^
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:2:
+In file included from /dev/shm/sc117-reference-route-overlay-20261028-r3/adapter.cpp:2:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernel_guard.hpp:7:16: error: static assertion failed due to requirement 'sizeof((lambda at /dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:48)) <= 1024': device kernel capture exceeds 1024 bytes
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ^~~~~~~~~~~~~~~
+/dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:40: note: in instantiation of function template specialization 'packet26::checked<(lambda at /dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:48)>' requested here
+   83 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:51:126: note: in instantiation of member function 'packet18::(anonymous namespace)::RouteReferenceCapture2<512, 10, false>::submit' requested here
+   51 |   if(variant==3){packet18::RouteReferenceCapture2<512,10,Merge> operation(spec,reinterpret_cast<float*>(captured));operation.submit(q,binding_span,{}).wait_and_throw();}
+      |                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:63:24: note: in instantiation of function template specialization 'Harness::run<false>' requested here
+   63 |  const auto original=h.run<Merge>(input,outputs,rows,0);
+      |                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:103:78: note: in instantiation of function template specialization 'gate<false>' requested here
+  103 |  for(int outputs:{2,4}){changed+=gate<true>(h,input,output,outputs);changed+=gate<false>(h,input,output,outputs);}
+      |                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernel_guard.hpp:7:25: note: expression evaluates to '1032 <= 1024'
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ~~~~~~~~~^~~~~~
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernel_guard.hpp:7:16: error: static assertion failed due to requirement 'sizeof((lambda at /dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:48)) <= 1024': device kernel capture exceeds 1024 bytes
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ^~~~~~~~~~~~~~~
+/dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:40: note: in instantiation of function template specialization 'packet26::checked<(lambda at /dev/shm/sc117-reference-route-overlay-20261028-r3/route-capture-classes.inc:83:48)>' requested here
+   83 |    h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+      |                                        ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:51:126: note: in instantiation of member function 'packet18::(anonymous namespace)::RouteReferenceCapture2<512, 10, true>::submit' requested here
+   51 |   if(variant==3){packet18::RouteReferenceCapture2<512,10,Merge> operation(spec,reinterpret_cast<float*>(captured));operation.submit(q,binding_span,{}).wait_and_throw();}
+      |                                                                                                                              ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp:106:16: note: in instantiation of function template specialization 'Harness::run<true>' requested here
+  106 |   auto value=h.run<true>(input,4,rows,treatment,mode?1:0,mode?1:0);
+      |                ^
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernel_guard.hpp:7:25: note: expression evaluates to '1032 <= 1024'
+    7 |  static_assert(sizeof(F)<=1024,"device kernel capture exceeds 1024 bytes");
+      |                ~~~~~~~~~^~~~~~
+3 warnings and 2 errors generated.

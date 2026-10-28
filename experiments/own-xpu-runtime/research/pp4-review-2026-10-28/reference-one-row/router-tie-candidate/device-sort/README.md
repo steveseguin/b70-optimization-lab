@@ -1,6 +1,6 @@
 # Bounded registered-reference tie sort
 
-Research candidate only; canonical runtime and its default routing are untouched.
+Research candidate; canonical installation is owned separately by the coordinator.
 The goal is to recover the CPU reference's complete 512-expert permutation on
 ties without a per-layer host round trip. A selected-tie-only RouteFast2 integration
 is a later step. Changing the ordinary non-tie route or the probabilities is not
@@ -81,3 +81,33 @@ later if needed. The current helper's frames remain private; no SLM performance
 claim or integration is present. The registered reference's tie policy is specific
 to this libstdc++ build, as explained in `PROVENANCE.txt`. The proposed integration,
 including a cheaper exact selected-tie detector, is in `integration-design.md`.
+
+## Actual RouteFast2 overlay gate
+
+`prepare_route_overlay.py` creates a pinned, default-off source overlay. It
+preserves the original `RouteFast2` class exactly, adds `RouteReferenceTie2`, and
+selects it only with `OWNRT_REFERENCE_ROUTE_TIE_SORT=1`. Unsupported enabled route
+treatments refuse early. The bounded local-workspace helper passed another
+12,512 ASan+UBSan comparisons with index and frame canaries.
+
+The coordinator ran `route_probe.cpp` once on card27. The probe includes the
+complete pinned adapter source and checks both MERGE modes, two/four output
+geometries and 64-row batches (48 authenticated native rows plus 16 adversaries).
+All 512 native probability words per row and all selected weight words stayed
+exact; selected IDs matched `std::sort` of the captured native probabilities.
+There were 276 changed slots across the four matrix cells, zero mismatches,
+and passing inactive/error, nonfinite and distinct-raw/equal-probability refusal
+checks. Capture instrumentation was independently neutral for both versions.
+Explicit device allocation was 282,704 bytes; the unit exited zero with clean
+passive postflight.
+
+`route-result.json` binds the actual gate to all three proposed installed source
+paths and their hashes. `route-overlay/` preserves the exact patch, input manifest,
+compile/link identity and failed unlaunched first capture compile. That first
+instrumentation exceeded the 1024-byte kernel capture guard; the passing version
+uses the existing unused scratch binding for its probability output. The passing
+probe matches production's precise per-source compile and bare final device link.
+
+The candidate author did not modify canonical runtime or launch a GPU. The
+coordinator owns installation and the matched model gate. No runtime throughput
+claim follows from either isolated correctness probe.

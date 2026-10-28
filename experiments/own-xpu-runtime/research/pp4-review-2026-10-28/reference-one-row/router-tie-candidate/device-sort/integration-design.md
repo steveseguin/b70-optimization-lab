@@ -1,9 +1,11 @@
-# Proposed RouteFast2 integration — source plan only
+# RouteFast2 integration design and gate status
 
-Do not edit the canonical runtime until the coordinator releases its pinned
-seven-case historical regression. This proposal is not an implemented patch.
-The CPU and card27 probe establish compatibility of the bounded sorting helper
-on tested inputs; they do not measure integration cost or prove model quality.
+The coordinator released the pinned seven-case historical regression, and this
+design was implemented as an isolated, default-off adapter overlay. The actual
+RouteFast2 gate passed on card27: both MERGE modes, both output geometries, 64
+rows, unchanged native probabilities/weights and successful refusal/guard checks.
+See `route-result.json` and `route-overlay/adapter.patch`; the coordinator owns
+canonical installation and the model gate. No integration speed claim is made.
 
 ## Preserve the native arithmetic and ordinary selection
 
@@ -37,9 +39,10 @@ already-computed, unchanged local `prob` array. Sorting only the tied IDs or the
 160 subgroup candidates is insufficient: the registered introsort's permutation
 depends on partitions and other equal-score groups throughout the full array.
 
-Use a bounded local index array (2048 bytes) and a new explicit caller-provided
-18-frame workspace (216 bytes). The current helper's stack is private; exposing
-the frame buffer requires its own small host/device compatibility gate. Other
+Use a bounded local index array (2048 bytes) and an explicit caller-provided
+18-frame workspace (216 bytes). `reference_sort_workspace.hpp` passed a separate
+12,512-case ASan+UBSan gate with frame/index canaries and the actual route device
+gate. Other
 work items wait at uniform barriers. Do not allocate a private 512-index array
 per work item in the production route, and do not add any host readback or
 device-to-host decision. A serial lane sorting local memory is only a candidate;
@@ -62,7 +65,8 @@ or configuration choice so an unselected lane has the original kernel unchanged.
 Current merged RouteFast2 explicit local storage is 5512 bytes (two 512-float
 arrays, 32 float sums, 322 uint32 flags). A simple implementation adds 2048 index
 bytes, 216 frame bytes, 40 selected-ID bytes and about eight control bytes:
-roughly 7824 bytes before compiler padding. Do not alias the exp float buffer as
+7816 bytes in the implemented version (the original error flags are reused),
+before compiler padding. Do not alias the exp float buffer as
 an int workspace merely to save memory; make ownership and types explicit.
 
 ## Meaningful next gate and timing

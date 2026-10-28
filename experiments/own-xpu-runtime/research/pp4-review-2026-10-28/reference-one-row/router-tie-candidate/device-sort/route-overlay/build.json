@@ -1,0 +1,70 @@
+{
+  "schema": "ownrt.reference-route-probe-build.v1",
+  "gpu_executed": false,
+  "source_sha256": "f9e87731595abc566381e7215a7d715e98aee6b9ebe391b5de0c8f6114886d43",
+  "commands": [
+    {
+      "name": "compile",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=gnu++20",
+        "-O2",
+        "-g0",
+        "-DP56X_SLEEP20=0",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fsycl",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=deprecated-this-capture",
+        "-fsycl-targets=intel_gpu_bmg_g31",
+        "-I",
+        "/dev/shm/sc117-reference-route-overlay-20261028-r4",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+        "-MMD",
+        "-MF",
+        "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.d",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp",
+        "-o",
+        "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.o"
+      ],
+      "returncode": 0,
+      "wall_s": 16.143433718010783
+    },
+    {
+      "name": "link",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-fsycl",
+        "-Wl,--gc-sections",
+        "-fsycl-targets=intel_gpu_bmg_g31",
+        "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.o",
+        "-lcrypto",
+        "-lze_loader",
+        "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib:/usr/lib/x86_64-linux-gnu",
+        "-o",
+        "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe"
+      ],
+      "returncode": 0,
+      "wall_s": 14.344281091936864
+    }
+  ]
+}

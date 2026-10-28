@@ -1,0 +1,283 @@
+{
+  "schema": "ownrt.reference-route-device-gate.v1",
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp": "282a0a90791464e8e001c54a29c8a0f73c637c62b86ae253f8c619bc520f6dc1",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/reference_sort.hpp": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/reference_sort_workspace.hpp": "a6fddc466da941bf867265bf0ae87afcfbb2f70924a732173c5414086ac78b43"
+  },
+  "mode_counts": {
+    "off": 4,
+    "on": 4
+  },
+  "mode_counts_scope": "Four paired original/candidate class matrix cells: MERGE true/false, output count2/4, each64rows. Capture and refusal kernels are additional; env dispatch is reserved for model gate.",
+  "route_kernel_result": {
+    "passed": true,
+    "rows": 64,
+    "merge_modes": 2,
+    "output_geometries": 2,
+    "changed_slots_all_modes": 276,
+    "native_probabilities_exact": true,
+    "native_weights_exact": true,
+    "capture_neutral": true,
+    "distinct_raw_probability_tie_refused": true,
+    "inactive_and_error_guards": true,
+    "explicit_device_bytes": 282704,
+    "speed_claim": false
+  },
+  "build": {
+    "schema": "ownrt.reference-route-probe-build.v1",
+    "gpu_executed": false,
+    "source_sha256": "f9e87731595abc566381e7215a7d715e98aee6b9ebe391b5de0c8f6114886d43",
+    "commands": [
+      {
+        "name": "compile",
+        "argv": [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15",
+          "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+          "-std=gnu++20",
+          "-O2",
+          "-g0",
+          "-DP56X_SLEEP20=0",
+          "-Werror=return-type",
+          "-fno-fast-math",
+          "-ffp-contract=off",
+          "-ffunction-sections",
+          "-fdata-sections",
+          "-fsycl",
+          "-fdenormal-fp-math=ieee",
+          "-foffload-fp32-prec-div",
+          "-foffload-fp32-prec-sqrt",
+          "-Werror=deprecated-this-capture",
+          "-fsycl-targets=intel_gpu_bmg_g31",
+          "-I",
+          "/dev/shm/sc117-reference-route-overlay-20261028-r4",
+          "-I",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+          "-MMD",
+          "-MF",
+          "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.d",
+          "-c",
+          "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp",
+          "-o",
+          "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.o"
+        ],
+        "returncode": 0,
+        "wall_s": 16.143433718010783
+      },
+      {
+        "name": "link",
+        "argv": [
+          "nice",
+          "-n",
+          "19",
+          "taskset",
+          "-c",
+          "8-15",
+          "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+          "-fsycl",
+          "-Wl,--gc-sections",
+          "-fsycl-targets=intel_gpu_bmg_g31",
+          "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.o",
+          "-lcrypto",
+          "-lze_loader",
+          "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib:/usr/lib/x86_64-linux-gnu",
+          "-o",
+          "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe"
+        ],
+        "returncode": 0,
+        "wall_s": 14.344281091936864
+      }
+    ]
+  },
+  "probe_binary_sha256": "4a27c54ab21734c058ff7010b4336ce5c17b902097a216f6992b99d186df1aa3",
+  "probe_source_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/route_probe.cpp",
+  "probe_source_sha256": "f9e87731595abc566381e7215a7d715e98aee6b9ebe391b5de0c8f6114886d43",
+  "canonical_original_sha256": "1c3d27e4fc3abfcd0f9ef47c26d701b5b304eaf6446e69034cfdd5ef0b8ded4e",
+  "invocation_id": "7b7b349464594810a6de8d0b4d32e5f3",
+  "unit_returncode": 0,
+  "unit_result": "success",
+  "coordinator_launched": true,
+  "canonical_edited_by_candidate_author": false,
+  "artifacts": {
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/build.json": {
+      "bytes": 2087,
+      "sha256": "88be98d10594907bd2db1d2287206a7f2d5fb85e2d54d2b41fff544256db67ae"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe": {
+      "bytes": 4717552,
+      "sha256": "4a27c54ab21734c058ff7010b4336ce5c17b902097a216f6992b99d186df1aa3"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe.o": {
+      "bytes": 2325808,
+      "sha256": "f9e314f772999be9814f78193da5437bdb20ea223fd812d61fc11d2d01dad343"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/inputs/input.f32": {
+      "bytes": 131072,
+      "sha256": "da17de33bc4448e465e632157df31631de72f4dfc1ce5f06ad1ddb5be72405f8"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/inputs/manifest.json": {
+      "bytes": 15629,
+      "sha256": "00c0d94d8f17d71840fb12aeec28740175914d79feb478fa1074ebd82ec6a8d0"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/adapter.cpp": {
+      "bytes": 61012,
+      "sha256": "282a0a90791464e8e001c54a29c8a0f73c637c62b86ae253f8c619bc520f6dc1"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/reference_sort.hpp": {
+      "bytes": 5555,
+      "sha256": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/reference_sort_workspace.hpp": {
+      "bytes": 1557,
+      "sha256": "a6fddc466da941bf867265bf0ae87afcfbb2f70924a732173c5414086ac78b43"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-capture-classes.inc": {
+      "bytes": 10308,
+      "sha256": "10e5ae72a96577d252ee5a37333ab9155b6dfed3866bfd028a9cfac3b5f2402f"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/result.json": {
+      "bytes": 307,
+      "sha256": "9c0b0fe8ba878bced362e33e81297c00829a5517fb457a324e932a23de0ea44f"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/postflight-card27-r1.json": {
+      "bytes": 6603,
+      "sha256": "a623d67db089b7ca4148de4252227d516d52ebcf50cc8bf6885315744f9c0888"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/launch-card27-r1.json": {
+      "bytes": 2025,
+      "sha256": "900af7f98219733940eee2be385a055f4d2bbdd880582957e0cc4a87f9c18544"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/baseline-card27-r1.json": {
+      "bytes": 6603,
+      "sha256": "e3640755216a979ae448c69bf7d8f13113fea3fc45e7b78ee0cbbbb9502a24fc"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/stdout.log": {
+      "bytes": 46,
+      "sha256": "67e4b2fe1294e47773a9fda53e9c670aeef8846a8c9f412ef25044515e689f2c"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs4-native-probabilities.f32": {
+      "bytes": 131072,
+      "sha256": "43ba8f55f1d25586decea06f856dfec77823d9c7d4a39e513ddc8c06cd32aeae"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs4-treatment.bin": {
+      "bytes": 20480,
+      "sha256": "11f3adeeca6f9c078e79578b5d33bf729716476951f41b60cb5a360522c0a0c3"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs4-original.bin": {
+      "bytes": 20480,
+      "sha256": "017052c84149472b0d01f0bdfafb3bc4bdf1fb4675aa70fbebd38e79f04bb942"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs4-native-probabilities.f32": {
+      "bytes": 131072,
+      "sha256": "43ba8f55f1d25586decea06f856dfec77823d9c7d4a39e513ddc8c06cd32aeae"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs4-treatment.bin": {
+      "bytes": 20480,
+      "sha256": "11f3adeeca6f9c078e79578b5d33bf729716476951f41b60cb5a360522c0a0c3"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs4-original.bin": {
+      "bytes": 20480,
+      "sha256": "017052c84149472b0d01f0bdfafb3bc4bdf1fb4675aa70fbebd38e79f04bb942"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs2-native-probabilities.f32": {
+      "bytes": 131072,
+      "sha256": "43ba8f55f1d25586decea06f856dfec77823d9c7d4a39e513ddc8c06cd32aeae"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs2-treatment.bin": {
+      "bytes": 5120,
+      "sha256": "3b1d730189596e186fc4e114e544627ab9c237f52d56a46e4129de75678b57f4"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/guard-outputs2-original.bin": {
+      "bytes": 5120,
+      "sha256": "c0476bbb31dcecafb299b69f2da056ffb5a6897d90e2ce97a8502f168dcfdeff"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs2-native-probabilities.f32": {
+      "bytes": 131072,
+      "sha256": "43ba8f55f1d25586decea06f856dfec77823d9c7d4a39e513ddc8c06cd32aeae"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs2-treatment.bin": {
+      "bytes": 5120,
+      "sha256": "3b1d730189596e186fc4e114e544627ab9c237f52d56a46e4129de75678b57f4"
+    },
+    "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1/merge-outputs2-original.bin": {
+      "bytes": 5120,
+      "sha256": "c0476bbb31dcecafb299b69f2da056ffb5a6897d90e2ce97a8502f168dcfdeff"
+    }
+  },
+  "launch": {
+    "argv": [
+      "systemd-run",
+      "--user",
+      "--unit",
+      "sc117-reference-route-gate-card27-20261028-r1",
+      "--property=Restart=no",
+      "--property=KillMode=process",
+      "--property=SendSIGKILL=no",
+      "--property=TimeoutStopSec=infinity",
+      "--property=Nice=19",
+      "--property=LimitAS=infinity",
+      "--property=LimitCORE=0",
+      "--property=StandardOutput=append:/dev/shm/sc117-reference-route-overlay-20261028-r4/stdout.log",
+      "--property=StandardError=append:/dev/shm/sc117-reference-route-overlay-20261028-r4/stderr.log",
+      "/usr/bin/flock",
+      "-n",
+      "/dev/shm/card27.lock",
+      "/usr/bin/taskset",
+      "-c",
+      "0-3,16-19",
+      "/usr/bin/env",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "NEOReadDebugKeys=1",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER=1",
+      "ZE_AFFINITY_MASK=0",
+      "ONEAPI_DEVICE_SELECTOR=level_zero:0",
+      "FilterBdfPath=0000:27:00.0",
+      "OWNRT_REFERENCE_ROUTE_PROBE=1",
+      "SYCL_CACHE_DIR=/dev/shm/sc117-reference-route-overlay-20261028-r4/cache/sycl",
+      "NEO_CACHE_DIR=/dev/shm/sc117-reference-route-overlay-20261028-r4/cache/neo",
+      "XDG_CACHE_HOME=/dev/shm/sc117-reference-route-overlay-20261028-r4/cache/xdg",
+      "/dev/shm/sc117-reference-route-overlay-20261028-r4/route-probe",
+      "/dev/shm/sc117-reference-route-overlay-20261028-r4/inputs/input.f32",
+      "/dev/shm/sc117-reference-route-overlay-20261028-r4/device-card27-r1"
+    ],
+    "utc": "2026-10-28T15:26:43.877392+00:00",
+    "baseline_sha256": "e3640755216a979ae448c69bf7d8f13113fea3fc45e7b78ee0cbbbb9502a24fc",
+    "memory_available": 103253348352,
+    "explicit_device_bytes": 282704
+  },
+  "postflight": {
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 103169183744,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "holders": {},
+    "kernel_journal_sha256": "b88d51048b69fa495344152e3ca387ced17309fcf88a7bc1e8a9eae3af3dbc89"
+  },
+  "baseline": {
+    "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 103253348352,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "holders": {},
+    "kernel_journal_sha256": "4bdebbea4dd5644b57f8a31f2879230b61e95fc99b0366e0f0e8bb124d8f67fb"
+  },
+  "passive_clean": false
+}
