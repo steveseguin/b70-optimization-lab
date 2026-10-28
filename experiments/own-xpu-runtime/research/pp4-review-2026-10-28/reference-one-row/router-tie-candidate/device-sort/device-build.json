@@ -1,0 +1,75 @@
+{
+  "argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-std=c++20",
+    "-O2",
+    "-g0",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-fsycl",
+    "-fsycl-targets=intel_gpu_bmg_g31",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/device_probe.cpp",
+    "-o",
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/probe"
+  ],
+  "returncode": 0,
+  "wall_s": 4.900772726978175,
+  "gpu_executed": false,
+  "schema": "ownrt.reference-sort-device-build.v1",
+  "sources_and_tools": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/reference_sort.hpp": {
+      "bytes": 5555,
+      "sha256": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_sort.cpp": {
+      "bytes": 8552,
+      "sha256": "2b445b61b764e5bcae9212916adaf0a92c233311bcf6957c8786ef9f8748cb8f"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/device_probe.cpp": {
+      "bytes": 5305,
+      "sha256": "a0e2bb2eaca696ff151f2d50a3f700e21b9361c4e689bd9699780779c1e956f0"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/prepare_probe.py": {
+      "bytes": 4977,
+      "sha256": "e00022419fe3259fd3067ba85bdfde6bb4984808b4ac160234c5efcff1c1753d"
+    },
+    "/usr/include/c++/13/bits/stl_algo.h": {
+      "bytes": 217485,
+      "sha256": "5d171b391df65fc178718d793f121c997942d0bdc4e713110bba08464c81b6bc"
+    },
+    "/usr/include/c++/13/bits/stl_heap.h": {
+      "bytes": 20798,
+      "sha256": "c9dec118983f11abe6da7adbb66c47a7efcffabfd320134cb12cc6f509d54026"
+    },
+    "/usr/bin/g++-13": {
+      "bytes": 1027128,
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+    },
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": {
+      "bytes": 2100664,
+      "sha256": "9fe05a4aef59abce8d8f0631964dd0f12932345d0d38fc9e9d6f6af844e94b33"
+    },
+    "/dev/shm/llref/ggml/src/ggml-cpu/ops.cpp": {
+      "bytes": 428472,
+      "sha256": "b2118192bc11186812bdc1fb52246f4ee34402cc59a221ee7d42722cebec8ce8"
+    }
+  },
+  "host_standard_library_headers": [
+    "/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_algo.h",
+    "/usr/lib/gcc/x86_64-linux-gnu/13/../../../../include/c++/13/bits/stl_heap.h"
+  ],
+  "compiler_version": "Intel(R) oneAPI DPC++/C++ Compiler 2026.0.0 (2026.0.0.20260331)\nTarget: x86_64-unknown-linux-gnu\nThread model: posix\nInstalledDir: /opt/intel/oneapi/compiler/2026.0/bin/compiler\nConfiguration file: /opt/intel/oneapi/compiler/2026.0/bin/compiler/../icpx.cfg\n",
+  "binary_sha256": "75a22d193ccbde6dc925e2083f25e852b9bd12b87e2e540d41e06a071df4c75d",
+  "input_manifest_sha256": "ee5dbc702e31068c4f5b10d64575bc60f1a124cabf3589a7f5923b21221d4717",
+  "input_sha256": "8d99be62dfc6890785b425d3e6b85d7ff702e3b66a8b3b9fe80764d01664c3f9",
+  "input_bytes": 1048576,
+  "explicit_device_bytes": 2103296,
+  "compiler_private_storage_excluded_from_explicit_bytes": true
+}

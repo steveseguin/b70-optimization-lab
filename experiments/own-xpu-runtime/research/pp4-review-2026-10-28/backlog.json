@@ -36,13 +36,40 @@
         "dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json",
         "reference-one-row/l4-localization/native-r1-evidence/index.json",
         "dedicated-gate/bounded-count-2plus1-128k-long512-r1-evidence/summary.json",
-        "aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json"
+        "aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json",
+        "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json",
+        "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ],
       "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
-      "next_step": "AOT3+1/262K fullcrosscontextpasseddd8cec... request261.330404s vsAOT2+1/128K369.931021s,29.35699%less;512IDs/122364pairs/476chunkhashes exact,clean4owner. Qualityscratchprobe sourceapply/build next; mmaplookupunapplied. Fullsuite/reset/independentCPUquality remain open.",
-      "blocker": "All registered AOTlong timings completed. Persistent reset/full realistic suite unqualified; six independentCPUdisagreements unresolved. Same-input actualdevice/host replay agrees but actualnative row0 differs; prepared scratchbinding diagnostic build completed, capture pending.",
-      "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; no long128K qualification.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; no matched PP4cold control yet.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; long121Kcapacitypending.2+1pipeline128K firstcold121854/8 completed559.907532s/prefix544.443734s,exact8/all3exit0/cleanpostflight.7.5126%less time vs3+1pipeline,21.6710%vsPP4,45.5120%vs3+1sequential;3cards/card27free,context128vs262K explicit; nosustaineddecodeclaim.",
-      "discovery_open": true
+      "next_step": "Qualify the remaining five historical independent-reference disagreements under the general default-OFF tie diagnostic, then decide fidelity treatment. Dedicated persistent reset and the full 12-task realistic matrix remain unqualified. Keep mapped lookup opt-in: its matched long request was slower.",
+      "blocker": "All registered AOT long timings and copy/view comparisons are complete. The general tie diagnostic explains one original244-token mismatch; five historical disagreement positions remain untested and full logits are not bitwise CPU-identical. Persistent reset/full realistic suite remain unqualified.",
+      "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; later long128K qualification is recorded below.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; subsequent matched PP4cold control is recorded next.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; subsequent long121K capacity result follows.2+1pipeline128K firstcold121854/8 completed559.907532s/prefix544.443734s,exact8/all3exit0/cleanpostflight.7.5126%less time vs3+1pipeline,21.6710%vsPP4,45.5120%vs3+1sequential;3cards/card27free,context128vs262K explicit; nosustaineddecodeclaim.",
+      "discovery_open": true,
+      "next_topology_treatment": {
+        "status": "new-unmeasured-default-incumbent-unchanged",
+        "incumbent_boundaries": [
+          0,
+          17,
+          33,
+          48
+        ],
+        "candidate_boundaries": [
+          0,
+          16,
+          32,
+          48
+        ],
+        "evidence": "lookup-view-candidate/long-pipeline-component-summary.json",
+        "measured_incumbent_copy_stage_command_seconds": [
+          248.3616,
+          218.5398,
+          211.5849
+        ],
+        "measured_incumbent_draft_command_seconds": 171.5414,
+        "hypothesis": "Equal16-layer target slices may reduce stage0 imbalance. Layer counts do not establish equal QSA/other work, read/head overhead or performance.",
+        "first_test": "Bounded CPU actual allocation fit and per-layer command-cost screen first; if worthwhile, same-source full state/output gate then matched long timing. No equivalent equal16 candidate found in current topology options/allocation screen/IDEAS/backlog.",
+        "limits": "Source-only candidate, no capacity or speed prediction; current fastest layout remains default."
+      }
     },
     {
       "id": 2,
@@ -287,7 +314,7 @@
       "first_test": "CPU actualwire/nativeowner >=9chunks partialtail/wrap/cancellation; then samecontextstrictstate+pairgate andactualunchangedVRAMcensusbeforefairlong.",
       "limitation": "3+1 single matched long-prefill win;2+1 fullstate nowqualified but long512 performance pending. Full realistic suite/reset/independentCPUquality remain open.",
       "already_tested_scope": "3+1 262K full2065target/73draft/1707pairs/32outputs, clean4FINISH and unchanged four device censuses. Same-binary first-cold121854/8 slots4 request429.236658s versus slots2 605.903149s:29.157546%less,1.411583ratio; exact8, both clean. Target hostmaps83894272B vs41947136B.",
-      "next_step": "Four-slot2+1matchedlong512 fullpayload equality verified. Bounded_live_count full512/state gate passed and committedc860c87cd. AOTfullshortstate gate passed, long512 active; source frozen during timing."
+      "next_step": "Four-slot2+1 matched long512, bounded_live_count fullstate, and AOT2+1/3+1 long512 tradeoff are completed. Next useful work is the registered realistic suite after dedicated reset qualification; preserve current four-slot winner and exact source identity."
     }
   ],
   "new_idea_intake": [],
@@ -418,11 +445,12 @@
       "id": "native-input-router-all48-replay",
       "status": "completed-same-input-ranking-screen-no-causal-resolution",
       "evidence": [
-        "reference-one-row/router-replay/native-input-r1/result.json"
+        "reference-one-row/router-replay/native-input-r1/result.json",
+        "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json"
       ],
       "finding": "Captured IDs/routes equal productionhost all48layers; same-input actualggml IDs identicalall48, no cutoffties. GPU/host selectedweights max3ULP/2.98e-8.",
-      "scope": "Captured native position243routerlogits only; no earlier-history or final-output cause conclusion; six independentCPU disagreements unresolved.",
-      "current_quality_scope": "Later same-input nativeGPU/host recurrence replays match bitwise, both differ actualmodel row0. Origin remains unresolved; prepared scratchbinding capture unapplied."
+      "scope": "Historical position243 last-row router screen only: no cutoff tie there. Later prefix178 history localization and full244 causal tie diagnostic explain one original disagreement; five remaining positions are untested.",
+      "current_quality_scope": "Prepared capture and same-object link localization are complete. The general equal-score tie diagnostic fixed the original244-token output through one earlier position177/layer3 change; no bitwise CPU fidelity or default promotion."
     },
     {
       "id": "phase-exclusive-prefill-workspace-borrowing",
@@ -474,13 +502,14 @@
     },
     {
       "id": "CPU-embedding-whole-head-capacity-and-mmap-table-intake",
-      "status": "lookup-view-isolated-CPU-pass-full-native-unqualified",
+      "status": "lookup-view-full-gate-and-long-match-completed-startup-win-request-loss",
       "evidence": [
         "capacity-embedding-whole-head-intake.txt",
         "immutable-lookup-view-intake.txt",
-        "lookup-view-candidate/cpu-r1-evidence/receipt.json"
+        "lookup-view-candidate/cpu-r1-evidence/receipt.json",
+        "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ],
-      "finding": "CPU embedding is already host resident; moving the whole output head could free about0.487GiB and remains lower priority. Immutable lookup views could avoid a29.138GB anonymous copy. Isolated CPU fixture passed39936 synthetic values and lifetime/mutation checks; no full-model capacity or speed claim yet."
+      "finding": "CPU embedding was already host resident; whole-head offload remains lower priority. Immutable lookup view avoids29.138GB anonymous copy and passes full native state/census/output gates. Matched long READY144.457\u219275.691s but request261.499\u2192352.909s; opt-in memory/startup tradeoff, not speed promotion. No measured paging cause."
     },
     {
       "id": "actual-L4-prepared-input-capture-r3",
@@ -501,19 +530,21 @@
     },
     {
       "id": "lookup-view-full-native-gate",
-      "status": "passed-full32-state-output-census-long-timing-in-progress",
-      "finding": "Avoided29.138GB anonymous lookup copy. Actual after-load stage0 RssAnon156524KiB. All32 outputs/four full bundles/threecensuses exact; independent CPU fidelity unchanged.",
+      "status": "full-native-gate-and-matched-long-completed-optin-request-loss",
+      "finding": "Full32 native gate and matched512 long state/pairs/censuses/outputs pass. READY improves but long request loses speed; mapped mode remains opt-in, not promoted for speed. See matched evidence.",
       "evidence": [
-        "lookup-view-candidate/long-pair-registration.json"
+        "lookup-view-candidate/long-pair-registration.json",
+        "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
       ]
     },
     {
       "id": "precise-link-full-model-negative",
       "status": "partial-localization-not-quality-fix",
-      "finding": "Same-object linkflags explain standalone replay mismatch; fullmodel candidate still6343 vsCPU16568. Current kernel/link default not promoted. ActualCPU/native prepared histories show larger differences at177\u2013180; targetedprefix178 prepared.",
+      "finding": "Historical precise-link full-model treatment still returned6343 versusCPU16568 and was not promoted. Prefix178 localization is now completed; later general equal-score tie treatment causally returns16568 through one earlier route change. Link treatment remains a negative experiment, not the quality fix.",
       "evidence": [
         "reference-one-row/link-precision-candidate/candidate-r1-evidence/RESULT.txt",
-        "reference-one-row/l4-localization/native-history/replay/crossed-input-screen.json"
+        "reference-one-row/l4-localization/native-history/replay/crossed-input-screen.json",
+        "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json"
       ]
     },
     {
@@ -546,7 +577,16 @@
         "reference-one-row/prefix178/completed-comparison-r1/index.json",
         "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json"
       ],
-      "finding": "Full244-token actual diagnostic returns16568 matchingCPU, oldnative6343. Exactlyone slot changes position177/layer3 expert62\u2192477 equalrawF32word3231393608 among11712 verifiedroute records; nativeweights unchanged. Final logitRMS1.38935e-6/max7.62939e-6, notbitwise. Bothowners0/postflightclean. Otherfiveoriginaldisagreements untested; defaultnotpromoted."
+      "finding": "Full244-token actual diagnostic returns16568 matchingCPU, oldnative6343. Exactlyone slot changes position177/layer3 expert62\u2192477 equalrawF32word3231393608 among11712 verifiedroute records; nativeweights unchanged. Final logitRMS1.38935e-6/max7.62939e-6, notbitwise. Bothowners0/postflightclean. Otherfiveoriginaldisagreements untested; defaultnotpromoted.",
+      "next_step": "Evaluate remaining five historical disagreement positions before any default promotion. GPU-sort integration is a separate future treatment requiring its own model gate.",
+      "device_sort_subexperiment": {
+        "status": "CPU-and-standalone-AOT-device-exact-runtime-unmodified",
+        "evidence": [
+          "reference-one-row/router-tie-candidate/device-sort/device-result.json",
+          "reference-one-row/router-tie-candidate/device-sort/integration-design.md"
+        ],
+        "finding": "Agent reports CPU optimized/sanitized permutations and card27 AOT microprobe: all262144 indices match CPU std::sort, zero canary/status errors, input unchanged. No runtime integration, endpoint speed, or additional model fidelity claim."
+      }
     }
   ],
   "next_priority_queue": [
@@ -558,7 +598,7 @@
     {
       "priority": 2,
       "action": "Lookupcopy/view matchedpair completed: fullstate/pairs/512IDs exact, READYbetter/requestslower; notpromoted. Stage0commanddurationdelta91.786953s tracksTTFTdelta91.788381s, causeunassigned; sparse staging/appread hypotheses untested.",
-      "evidence": "reference-one-row/prefix178/SOURCE-PREP.txt"
+      "evidence": "lookup-view-candidate/view-long-r1-evidence/matched-result.json"
     },
     {
       "priority": 3,

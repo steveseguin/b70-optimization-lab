@@ -1,0 +1,150 @@
+{
+  "schema": "ownrt.reference-sort-cpu-gate.v1",
+  "working_directory": "/home/steve/llm-optimizations",
+  "compiler_version": "g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0",
+  "sources_and_tools": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/reference_sort.hpp": {
+      "bytes": 5555,
+      "sha256": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_sort.cpp": {
+      "bytes": 8552,
+      "sha256": "2b445b61b764e5bcae9212916adaf0a92c233311bcf6957c8786ef9f8748cb8f"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/device_probe.cpp": {
+      "bytes": 5305,
+      "sha256": "a0e2bb2eaca696ff151f2d50a3f700e21b9361c4e689bd9699780779c1e956f0"
+    },
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/prepare_probe.py": {
+      "bytes": 4977,
+      "sha256": "e00022419fe3259fd3067ba85bdfde6bb4984808b4ac160234c5efcff1c1753d"
+    },
+    "/usr/include/c++/13/bits/stl_algo.h": {
+      "bytes": 217485,
+      "sha256": "5d171b391df65fc178718d793f121c997942d0bdc4e713110bba08464c81b6bc"
+    },
+    "/usr/include/c++/13/bits/stl_heap.h": {
+      "bytes": 20798,
+      "sha256": "c9dec118983f11abe6da7adbb66c47a7efcffabfd320134cb12cc6f509d54026"
+    },
+    "/usr/bin/g++-13": {
+      "bytes": 1027128,
+      "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+    },
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx": {
+      "bytes": 2100664,
+      "sha256": "9fe05a4aef59abce8d8f0631964dd0f12932345d0d38fc9e9d6f6af844e94b33"
+    },
+    "/dev/shm/llref/ggml/src/ggml-cpu/ops.cpp": {
+      "bytes": 428472,
+      "sha256": "b2118192bc11186812bdc1fb52246f4ee34402cc59a221ee7d42722cebec8ce8"
+    }
+  },
+  "variants": [
+    {
+      "binary": "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort",
+      "binary_sha256": "e131678955e521a33610720740ed3ff536d92861cd0eb5a67b3f1d85920dca48",
+      "compile_argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "g++-13",
+        "-O2",
+        "-g",
+        "-std=c++20",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I",
+        "experiments/own-xpu-runtime/engine/src",
+        "experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_sort.cpp",
+        "-o",
+        "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort"
+      ],
+      "compile_returncode": 0,
+      "run_argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-lastrow-extract",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-layer3-same-input-r1/native-replay",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-layer3-same-input-r1/cpu-replay",
+        "/dev/shm/sc117-reference-prefix178-cpu-20261028-r1/model/on"
+      ],
+      "run_returncode": 0,
+      "result": {
+        "passed": true,
+        "full_permutation_cases": 30302,
+        "forced_depth_cases": 2000,
+        "actual_cases": 148,
+        "natural_heap_fallbacks": 2489,
+        "maximum_pending_frames": 17,
+        "invalid_input_cases": 6,
+        "gpu_executed": false
+      },
+      "stderr_bytes": 0
+    },
+    {
+      "binary": "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort-sanitized",
+      "binary_sha256": "f7e171e419be79840cd5ac32407cff7a36efbc927ebdc17d5c5cf6fe359473ae",
+      "compile_argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "g++-13",
+        "-O1",
+        "-fsanitize=address,undefined",
+        "-fno-omit-frame-pointer",
+        "-g",
+        "-std=c++20",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-DOWN_RT_HOST_ONLY",
+        "-I",
+        "experiments/own-xpu-runtime/engine/src",
+        "experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/test_sort.cpp",
+        "-o",
+        "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort-sanitized"
+      ],
+      "compile_returncode": 0,
+      "run_argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/dev/shm/sc117-reference-tie-sort-cpu-20261028-r1/test-sort-sanitized",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-lastrow-extract",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-layer3-same-input-r1/native-replay",
+        "/dev/shm/sc117-reference-prefix178-20261028-r1/router-layer3-same-input-r1/cpu-replay",
+        "/dev/shm/sc117-reference-prefix178-cpu-20261028-r1/model/on"
+      ],
+      "run_returncode": 0,
+      "result": {
+        "passed": true,
+        "full_permutation_cases": 30302,
+        "forced_depth_cases": 2000,
+        "actual_cases": 148,
+        "natural_heap_fallbacks": 2489,
+        "maximum_pending_frames": 17,
+        "invalid_input_cases": 6,
+        "gpu_executed": false
+      },
+      "stderr_bytes": 0
+    }
+  ],
+  "command_records": "Reconstructed from executed commands; option ordering may differ.",
+  "gpu_executed": false,
+  "speed_claim": false
+}
