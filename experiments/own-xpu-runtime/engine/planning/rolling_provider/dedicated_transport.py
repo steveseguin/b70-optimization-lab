@@ -14,6 +14,7 @@ from types import SimpleNamespace
 from .transport import Stage, ReplyBuffer, base, codec, pending, ring, row_identity
 from .dedicated import DedicatedCoordinator, ProviderCommand
 from .arbiter import Parent
+from . import remote
 
 MAGIC, VERSION, PROPOSAL_OFFSET = 0x50525631, 1, 4096
 HEADER = struct.Struct('<8IQ32s56s')
@@ -79,9 +80,14 @@ class Provider:
         base.require(command.sequence == self.sequence+1 and job.command is command
                      and job.serial == self.provider_serial+1, 'dedicated command/serial sequence')
         seed = seed_owner.accepted_row
-        base.require(seed is not None and seed.row == job.seed and not seed.tentative
+        base.require(seed is not None and seed.row == job.seed
                      and seed.stage == 0 and seed.op == ring.ROW and seed_owner.accepted_sequence > seed.sequence,
                      'dedicated actual original accepted seed lease')
+        # ACCEPT verifies a proposal without rewriting its immutable original
+        # ROW flag. Authenticate native publication, not a normalized host flag.
+        remote.seed_journal(seed_owner, SimpleNamespace(seed=seed,
+            accepted_sequence=seed_owner.accepted_sequence,
+            depth=self.plan.get('speculative_depth', 2)), self.stream_bytes)
         base.require(parent is not None and parent.row == job.parent.row
                      and parent.row_ticket == job.parent.final_row_ticket
                      and parent.commit_sequence == job.parent.final_commit_sequence

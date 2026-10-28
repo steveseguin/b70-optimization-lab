@@ -1,12 +1,16 @@
 # Current Workspace State
 
-**October 28, 04:30 UTC — Testing three target GPUs plus a separate existing-MTP draft owner.**
+**October 28, 04:38 UTC — Testing three target GPUs plus a separate existing-MTP draft owner.**
 - All four cards are reserved for one bounded correctness run: targets 23/27/47, draft 43.
-  Unit `sc117-dedicated-3plus1-gate-20261028-r1`; output `/dev/shm/sc117-dedicated-3plus1-20261028-r1/output`.
+  Unit `sc117-dedicated-3plus1-gate-20261028-r2`; output `/dev/shm/sc117-dedicated-3plus1-20261028-r2/output`.
   This is a new experimental role, not a service restore. No resident server is scheduled afterward.
 - The native build and CPU ownership/transport tests pass. The first GPU gate uses the saved 1,677-token
   prompt and 32-output cap, full restore checks, per-token prefill, and unchanged target arithmetic.
   GPU correctness and performance remain unproven until actual results and clean shutdown are checked.
+- First attempt stopped cooperatively at the first speculative acceptance: the new Python transport
+  incorrectly rejected the retained tentative ROW flag. The fix authenticates the actual native acceptance
+  journal and passes the raw-incident regression. All 1,676 prior canonical pairs matched the reference;
+  four-card health and passive postflight passed with no new faults. The corrected run uses a fresh output.
 - The full optimization backlog is tracked in
   [backlog.json](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
   Separate selection/IQ4 kernel screens were exact small wins; no endpoint gain is claimed or integrated.
