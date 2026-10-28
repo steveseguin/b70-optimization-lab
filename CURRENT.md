@@ -7,20 +7,19 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live GPUs are idle after the corrected router tie diagnostic completed cleanly:
-both owners exited 0 and passive postflight matches the fault baseline. The
-244-token case now returns **16568**, matching the independent CPU, versus the
-old native 6343. Exactly one slot changed across 11,712 checked route records:
-position 177/layer 3, expert 62→477, with identical raw F32 word 3231393608 and
-unchanged selected weight bytes. Final logit RMS is 1.38935e-6/max7.62939e-6,
-versus roughly 0.06336/0.426 before treatment; it is still not bitwise CPU parity.
+The general default-OFF tie diagnostic now matches the saved CPU first token
+at all six historical disagreement prefixes, plus a repeated 244-token request.
+All seven cases ran in one owner lifetime; six strict cold resets passed,
+repeated 244 final state matched all 430,521,248 bytes, both owners exited 0, and
+passive postflight was clean. This is fixed-prefix first-output evidence, not
+free-running generation, the realistic suite, or bitwise CPU fidelity. Default
+routing is not promoted; GPU-sort integration is a separate pending treatment.
 
-This explains one of the six original disagreements through the general,
-default-OFF diagnostic. The other five remain untested; default behavior is not
-promoted. Full 2,110 native state sources and 48 layer captures were retained.
-See `reference-one-row/router-tie-candidate/r2-causal-evidence/index.json` in the
-October 28 research lane. The first run's software binding failure and corrected
-planner/control-input fixture are preserved separately.
+The original 244 case is causally explained by exactly one equal-word change:
+position 177/layer 3 expert 62→477, preserving native selected weights. It returns
+16568 instead of 6343; final logit RMS1.38935e-6/max7.62939e-6. Full per-case state
+and source metadata remain recoverable; compact seven-case evidence is in
+`reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json`.
 
 Host lookup mapping completed with exact full state and outputs but lost speed:
 copy request 261.499s versus mapped 352.909s; READY improved 144.457s to 75.691s.
@@ -28,11 +27,11 @@ The mapped mode is an opt-in host-memory/startup tradeoff, not promoted for spee
 Stage 0 command time increased 91.787s, tracking the TTFT difference; page faults
 were not captured, so the cause remains unassigned.
 
-Quality lineage: the neutral 178-token CPU/native captures localized the first
-selected-expert divergence to layer 3. Same-input replay showed the native/host
-lower-ID tie rule versus real ggml ordering on equal scores; the full 244-token
-causal diagnostic above confirms that treatment fixes this case. Other inputs
-and a general fidelity policy still require qualification.
+Quality lineage: neutral 178-token CPU/native captures localized the first
+selected-expert divergence to layer 3. Same-input replay and the full 244 causal
+diagnostic established the equal-score tie treatment. The later seven-case run
+covers all six fixed historical prefixes, while broad independent fidelity and
+a production-compatible device implementation remain unqualified.
 
 The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
@@ -127,7 +126,7 @@ postflight. Partial/source evidence remains under the r1 path; the corrected bui
 with no automatic retry. The corrected L4 history r2 completion is recorded below.
 
 The two-target four-slot128K gate r2 completed all32 outputs at position1708,
-all three owners exited0, and passive postflight is baseline-clean with no holders.
+all three owners exited 0, and passive postflight is baseline-clean with no holders.
 All three device censuses are byte-identical to the prior two-slot128K gate.
 Full registered cross-context state comparison passed **2,065 target sources,
 73 draft sources,1,707 actual pairs and32 outputs**, proof `3930ddaaae34`.
