@@ -7,23 +7,28 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live: the same-binary copy control has emitted all 512 tokens in about 261.5s
-and is finishing state dumps/teardown. The mapped-mode 3+1/262K arm is next,
-after full comparison and memory admission. No compilation or heavy CPU work
-during measured requests. Current native build is `8fce0053`.
+Live: the general router tie-order diagnostic is running at
+`/dev/shm/sc117-router-tie-target244-20261028-r1` (invocation
+`c1243da6a1ed40f488e3f622fa87b627`, binary `b04bcadd487e`). This target-only
+244-token prefix and one output test uses actual native scores, preserves selected weight
+bytes, and permits changes only between identical raw score words. It has no
+runtime CPU oracle. It is a quality diagnostic, not a performance run; the
+causal result is pending. The treatment defaults OFF.
 
-Host lookup mapping passed the full 1,677/32 correctness gate: all outputs,
-four complete state bundles (8.319 GB), and three native censuses match the
-qualified control. Stage 0 after-load anonymous RSS is about 153 MiB, compared
-with about 27 GiB in the earlier copy observation. This is host RAM, not a VRAM
-or long-throughput claim. See `lookup-view-candidate/` in the October 28 research lane.
+Host lookup mapping completed with exact full state and outputs but lost speed:
+copy request 261.499s versus mapped 352.909s; READY improved 144.457s to 75.691s.
+The mapped mode is an opt-in host-memory/startup tradeoff, not promoted for speed.
+Stage 0 command time increased 91.787s, tracking the TTFT difference; page faults
+were not captured, so the cause remains unassigned.
 
-Quality: missing precision flags at the final device link explain the standalone
-replay mismatch exactly. A separate precise-link full-model test still returned
-6343 versus the CPU's 16568, with essentially unchanged layer errors; it was not
-promoted. The now-qualified recurrent replay identifies material input differences
-at positions 177–180. The next 178-token-prefix CPU/native diagnostic is prepared
-but unexecuted. Six independent-reference disagreements remain unresolved.
+Quality: the new 178-token CPU OFF/ON captures are bitwise neutral and both CPU
+and native return 2972. Layer 3 has the first selected-expert disagreement. On the
+same actual native score vector, the existing host/native rule selects 62 while
+real ggml selects 477 at an exact raw-score cutoff tie. The general diagnostic
+above tests causality without an expert-specific override. This does not yet
+resolve the original 244-token mismatch or six independent-reference disagreements.
+See `reference-one-row/prefix178/FINDING-prefix178.txt` and
+`reference-one-row/router-tie-candidate/` in the October 28 research lane.
 
 The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
