@@ -1,0 +1,62 @@
+--- a/experiments/own-xpu-runtime/engine/build.py
++++ b/experiments/own-xpu-runtime/engine/build.py
+@@ -25,10 +25,11 @@
+     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+ 
+ 
+-def compile_command(manifest, unit, out, include=None, compiler=None):
++def compile_command(manifest, unit, out, include=None, compiler=None, aot_target=None):
+     obj = out / unit['object']
+     overlays = ['-I', str(include)] if include is not None else []
+-    return [compiler or manifest['compiler'], *unit['flags'], *overlays, '-I', str(SRC),
++    target_flags = ['-fsycl-targets='+aot_target] if aot_target else []
++    return [compiler or manifest['compiler'], *unit['flags'], *target_flags, *overlays, '-I', str(SRC),
+             '-MMD', '-MF', str(obj.with_suffix('.d')), '-c', str(SRC/unit['source']), '-o', str(obj)]
+ 
+ 
+@@ -54,12 +55,19 @@
+     include = args.generated_include.absolute() if args.generated_include is not None else None
+     overlay = validate_overlay(include, args.profile_sha256, args.deployment_sha256) if include else None
+     m = json.loads((ENGINE/'build-manifest.json').read_text())
++    aot_target = getattr(args, 'aot_target', None)
++    if aot_target:
++        require(aot_target.startswith('intel_gpu_') and all(c.isalnum() or c=='_' for c in aot_target),
++                'one explicit Intel GPU AOT target required')
++        require(not any(flag.startswith('-fsycl-targets=') for unit in m['translation_units'] for flag in unit['flags'])
++                and not any(flag.startswith('-fsycl-targets=') for flag in m['link']['flags']),
++                'manifest already supplies a SYCL target')
+     out = args.out.resolve(); out.mkdir(parents=True, exist_ok=True); (out/'tmp').mkdir(exist_ok=True)
+     receipt_path = out/'build-receipt.json'
+     env = dict(os.environ, TMPDIR=str(out/'tmp'))
+ 
+     def compile_tu(unit):
+-        cmd = compile_command(m, unit, out, include, args.compiler)
++        cmd = compile_command(m, unit, out, include, args.compiler, aot_target)
+         start = time.time(); result = subprocess.run(cmd, env=env, capture_output=True, text=True)
+         return unit['object'], cmd, result.returncode, round(time.time()-start, 1), result.stderr[-6000:]
+ 
+@@ -74,6 +82,7 @@
+     binary = out/args.name
+     link = [args.compiler or m['link']['compiler'],
+             *[x for x in m['link']['flags'] if x.startswith('-fsycl') or x.startswith('-Wl,--gc')],
++            *(['-fsycl-targets='+aot_target] if aot_target else []),
+             *[str(out/u['object']) for u in m['translation_units']],
+             *[x for x in m['link']['flags'] if not (x.startswith('-fsycl') or x.startswith('-Wl,--gc'))],
+             '-o', str(binary)]
+@@ -96,6 +105,8 @@
+         runtime_assets={str(runtime): sha(runtime)}, generated_authority=overlay,
+         generated_dependencies={str(p): sha(p) for p in sorted(generated)},
+         build_script_sha256=sha(__file__), build_manifest_sha256=sha(ENGINE/'build-manifest.json'))
++    if aot_target:
++        receipt['aot_target'] = aot_target
+     receipt_path.write_text(json.dumps(receipt, indent=1)+'\n')
+     print('binary', receipt['binary_sha256'])
+     return receipt
+@@ -107,6 +118,7 @@
+     parser.add_argument('--jobs', type=int, default=4)
+     parser.add_argument('--name', default='own-engine')
+     parser.add_argument('--compiler', help='explicit compiler path; recorded in every build command')
++    parser.add_argument('--aot-target', help='optional explicit Intel GPU target, e.g. intel_gpu_bmg_g31; applied at compile and link')
+     parser.add_argument('--generated-include', type=Path)
+     parser.add_argument('--profile-sha256')
+     parser.add_argument('--deployment-sha256')
