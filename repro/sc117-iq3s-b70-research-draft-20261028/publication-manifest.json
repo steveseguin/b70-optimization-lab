@@ -1,0 +1,87 @@
+{
+  "format": "neural.download.recipe-publication.v2",
+  "recipe_id": "sc117-iq3s-b70-research-draft-20261028",
+  "runtime_kind": "native-text-lab-replay",
+  "publication_status": "draft",
+  "guide": "repro/sc117-iq3s-b70-research-draft-20261028/README.md",
+  "repository": {
+    "url": "https://github.com/steveseguin/b70-optimization-lab",
+    "source_commit": "ba563d432dc616e11232fc90eec54338cc358b18",
+    "build_scripts": [
+      {
+        "path": "experiments/own-xpu-runtime/engine/build.py",
+        "sha256": "079ee007ff1d37fbd2fbbe915335c6a54a35116c7ee22113989734114886757d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/engine/deployment/prepare.py",
+        "sha256": "49f10ad6a42f7796613d553440c6c5503a721a250acedbf558a44123589323b6"
+      }
+    ],
+    "immutable_inputs": [
+      {
+        "path": "experiments/own-xpu-runtime/engine/build-manifest.json",
+        "sha256": "746a0672c716cc9487ab2816f17f46df0faebd22a7822fc12f8f355b73e0a54d"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/engine/profiles/sc117-iq3s/profile.json",
+        "sha256": "369ea09fc13015721df09a02841d5ef368d24455f25957d8fc2187e07a96999a"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/engine/profiles/sc117-iq3s/placement.tsv",
+        "sha256": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/engine/profiles/sc117-iq3s/draft-tensors.tsv",
+        "sha256": "bf44bc9586aa9548d88d943de52952d310916c6d07724c75769d150b15792e4c"
+      },
+      {
+        "path": "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/rope-262144.bf16",
+        "sha256": "e53a22a0792ef60aa6c5ebb7db7f30749b577f6cc355b661dd4ea31da5ee63bc"
+      }
+    ]
+  },
+  "release": {
+    "assets": [],
+    "remote_verified_at": null
+  },
+  "validation": {
+    "clean_source_build": false,
+    "runtime_smoke": false,
+    "quality_gate": false
+  },
+  "evidence": [
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/measurements.json",
+      "sha256": "09d2fe1254b5ebc9d4e39f82cc9598e3356dafa02e503c51d0bd2b367cb700ee"
+    },
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/source-audit.json",
+      "sha256": "83c006bf2cfdfa0708a48a99760e1e5bc8ced061625fec2f7e682fbef778eaa0"
+    },
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/source-inputs.json",
+      "sha256": "ae955836ddfb03797d637dcf7a93a55243d429b3a973d8b9622e1ec4d5eec58d"
+    },
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/upstream-check.json",
+      "sha256": "4670c1f7a26328a9ccaaa150f4dc4535f80e81257a6c1302b2715514801414ae"
+    },
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/workloads.json",
+      "sha256": "888037afc28794201d23b90646871cf15bfbbe7dd9e02e1b3058bad27e061d6c"
+    },
+    {
+      "path": "repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md",
+      "sha256": "b4c1d37363611eca4b5a1f561c68e0211011fa9c1887f3413d1397a973d7e70e"
+    }
+  ],
+  "missing": [
+    "Portable dedicated-provider adapter and observer with current local admission; existing lab driver is not a clean-host launcher.",
+    "Validated version-locked toolchain/runtime installation and actual shared-library closure on a clean supported host.",
+    "New-binding native compilation, short full-state replay, realistic cold suite and long timing of this packaged flow.",
+    "Independent CPU-reference fidelity; six historical disagreements are not resolved by the pinned measured source.",
+    "Publicly obtainable or regenerable complete canonical target/draft reference state bundles.",
+    "Public binary/build-log release asset verification and clean-host certification."
+  ],
+  "measurement_scope": "One first-cold121854-input/512-output screen per topology; reserved128K or262K, not full262K input. Internal GPU state/output parity; no independent-reference or production-quality certification."
+}

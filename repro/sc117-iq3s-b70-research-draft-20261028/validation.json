@@ -1,0 +1,64 @@
+{
+  "status": "draft-cpu-validation-passed",
+  "device_execution": false,
+  "checks": {
+    "helper_regressions": {
+      "tests": 4,
+      "passed": true
+    },
+    "exported_deployment_cpu_suite": {
+      "tests": 62,
+      "passed": true,
+      "source_commit": "ba563d432dc616e11232fc90eec54338cc358b18"
+    },
+    "source_export_and_rehash": {
+      "files": 430,
+      "bytes": 51327415,
+      "passed": true
+    },
+    "measured_native_source_match": {
+      "files": 256,
+      "passed": true
+    },
+    "workload_packed_hashes": {
+      "short_tokens": 1677,
+      "long_tokens": 121854,
+      "passed": true
+    },
+    "public_model_metadata": {
+      "shards": 30,
+      "size_and_sha256_match": true,
+      "representative_head_status": 200,
+      "full_payload_downloaded": false
+    },
+    "document_links": {
+      "documents": 3,
+      "new_broken": 0
+    },
+    "manifest_paths": {
+      "paths": 6841,
+      "missing": 0
+    },
+    "publication_manifest": {
+      "local": true,
+      "remote_mode": true,
+      "classification": "draft-only; no asset or runtime certification"
+    },
+    "guide_catalog": {
+      "guides": 46,
+      "passed": true
+    },
+    "publication_validator_regressions": {
+      "tests": 28,
+      "passed": true
+    },
+    "source_corruption_and_existing_output_refused": true,
+    "generated_download_shell_syntax": true,
+    "repository_hygiene": {
+      "errors": 0,
+      "large_artifact_warnings": 0
+    }
+  },
+  "scope": "Offline/source and upstream metadata validation only. The existing CPU suite includes host-only C++ fixtures. No clean-host install, model download, full-engine build, GPU execution, throughput or independent-reference qualification.",
+  "full_engine_build_executed": false
+}

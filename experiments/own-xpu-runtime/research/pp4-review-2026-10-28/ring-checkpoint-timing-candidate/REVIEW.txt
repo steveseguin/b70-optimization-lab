@@ -46,11 +46,13 @@ recorded. On failure no valid attestation is emitted; this is not a recovery
 or retry change. Default timing overhead is only conditional bookkeeping;
 there is no claim of zero machine-code overhead.
 
-After root review/application, reuse existing CPU actual checkpoint fixture
-with the flag ON and OFF. Verify enabled counters/calls are present and reset,
-OFF is null, and existing exact checkpoint bytes remain identical. Then the
-planned2+1 A/B/A correctness gate can carry this diagnostic without a separate
-model load: keep unchanged full cold/repeatedA/CPU-output gates and cleanFINISH.
+Keep this patch unapplied until the current fixed-depth and2+1 topology
+comparisons finish on binary9599. Applying it now would break their same-binary
+identity or require an unnecessary repeated control. Afterwards, following root
+review/application, reuse the existing CPU actual checkpoint fixture with the
+flag ON and OFF. Verify enabled counters/calls are present and reset,
+OFF is null, and existing exact checkpoint bytes remain identical. Then a fresh
+2+1 A/B/A diagnostic gate can reuse the existing harness: keep unchanged full cold/repeatedA/CPU-output gates and cleanFINISH.
 Use per-request capture+restore totals as an optimistic upper bound on savings,
 then their measured flatcopy share to decide whether reverse-undo write-set
 work deserves implementation. Do not label sums device time or infer savings

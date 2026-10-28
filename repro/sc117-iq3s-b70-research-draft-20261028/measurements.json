@@ -1,0 +1,87 @@
+{
+  "source_commit": "ba563d432dc616e11232fc90eec54338cc358b18",
+  "scope": "Single cold first-inference 121854-token input / 512-output screen per configuration; request excludes startup/shutdown. No full262K input, realistic-suite, multiuser, independent-reference or record claim.",
+  "two_plus_one": {
+    "status": "full-long512-output-and-whole-state-pass",
+    "proof_sha256": "bc57e1084fd898808880fc4bf6266406b9595ef3352709b38f65dd7868b0fc26",
+    "reference_timing": {
+      "ttft_s": 489.92049688403495,
+      "last_event_s": 501.4078523389762,
+      "request_wall_s": 501.4155829959782,
+      "lifecycle_wall_s": 707.0201391960727,
+      "all_intervals": 511,
+      "all_intervals_s": 11.48735545494128,
+      "all_intervals_tps": 44.483693571107665,
+      "event100_s": 492.08616471197456,
+      "first99_s": 2.1656678279396147,
+      "first99_tps": 45.71338167505918
+    },
+    "AOT_timing": {
+      "ttft_s": 358.5578503391007,
+      "last_event_s": 369.92298871208914,
+      "request_wall_s": 369.93102123308927,
+      "lifecycle_wall_s": 567.4071511219954,
+      "all_intervals": 511,
+      "all_intervals_s": 11.36513837298844,
+      "all_intervals_tps": 44.96205705814329,
+      "event100_s": 360.61226850305684,
+      "first99_s": 2.054418163956143,
+      "first99_tps": 48.18882627544439
+    },
+    "request_time_reduction_percent": 26.222671616478966,
+    "ttft_reduction_percent": 26.813053828206744,
+    "first_chunk_target_seconds": {
+      "JIT": [
+        47.2138,
+        40.6623,
+        33.3354
+      ],
+      "AOT": [
+        0.75098,
+        0.66332,
+        0.40611
+      ]
+    },
+    "exactness": "All512outputs/all4entirebundles/stateJSON/3censuses exact; all3owners0/cleanpostflight. Sourcebuildidentity retained inside actualcomparisonproof.",
+    "scope": "Main result is cold first-inference TTFT reduction; all511decode44.48369→44.96206tok/s is small single-sample variation, not established sustained1%gain. One121854/512screen, notsuite or independentCPUquality.",
+    "archive_reuse": {
+      "receipt_sha256": "29252c751f7b52b25a0e7aca9e1c6bad38cd51c485b507162427d5ee301f0a33",
+      "same_four_bundles_reused_verified_bounded_baseline": true,
+      "new_maps": 2,
+      "new_archive_bytes": 117105221,
+      "full_tar_compare": true
+    }
+  },
+  "three_plus_one": {
+    "status": "full-crosscontext-long512-passed",
+    "two_target_128k": {
+      "request_seconds": 369.931021233,
+      "ttft_seconds": 358.557850339,
+      "all511_tokens_per_second": 44.962057058
+    },
+    "three_target_262k": {
+      "request_seconds": 261.33040372,
+      "ttft_seconds": 250.741550215,
+      "all511_tokens_per_second": 48.29586974
+    },
+    "request_time_reduction_percent": 29.356991244213127,
+    "ttft_reduction_percent": 30.069429527777636,
+    "decode_rate_delta_percent": 7.4147245480771895,
+    "proof_sha256": "dd8cec7756802b2f32082af5a3fae17b4b891fa97ed8de05129c1f66ce2ae3d6",
+    "actual_candidate_streamed_bytes": 16369466936,
+    "bundles": 5,
+    "target_sources": 2065,
+    "draft_sources": 73,
+    "registered_prefix_zero_tail_arrays": 52,
+    "outputs512_exact": true,
+    "actual_pairs_exact": 122364,
+    "native_hidden_chunk_hashes_exact": 476,
+    "scope": "One first-cold121854/512 topology+reservedcontext tradeoff:3targets/262K/4cards versus2targets/128K/3cards. Not isolated cause, realistic suite, record or independentCPUquality proof. All4candidateowners0/postflightclean.",
+    "archive": {
+      "status": "completed-verified-precise-cleanup",
+      "receipt_sha256": "790589b0cbd7a7fb45471f66ab0a88fa98fdc29eaab13c7a5bee8bc9522facf0",
+      "receipt": "archive.json.gz"
+    },
+    "archive_receipt_sha256": "790589b0cbd7a7fb45471f66ab0a88fa98fdc29eaab13c7a5bee8bc9522facf0"
+  }
+}
