@@ -1,0 +1,32 @@
+{
+  "schema": "dedicated-stage-pipeline-canonical-cpu-v1",
+  "device_execution": false,
+  "tests": {
+    "passed": true,
+    "planner": {
+      "cases": 5,
+      "reported_by": "/root",
+      "scope": "Canonical applied planner tests passed as reported by root before socket fixture fix; not rerun here."
+    },
+    "socket_scheduler": {
+      "cases": 6,
+      "seconds": 0.397,
+      "reported_by": "/root/review_prefill",
+      "scope": "Canonical package, corrected test fixture; single rerun, taskset8-15 nice19."
+    }
+  },
+  "historical_overlay": {
+    "receipt": "cpu-result.json",
+    "unaltered": true,
+    "original_test": "test_pipeline.original-overlay.py.gz",
+    "decompressed_sha256": "8faf1e5c670cd6af5856967f51cedb40628e6b1378dc917ae1f7ea910da0135c"
+  },
+  "fix_scope": "Test-only event ordering: full fragmented target reply and completion log precede wakeup of provider ACK peer. Runtime unchanged by fix.",
+  "files": {
+    "test_pipeline.py": "c03e4db7f8c3592c38f4dedeba136919214040d5fdd1c093f63c4f28e638e706",
+    "test_pipeline_plan.py": "8e25c2c245d335bd1de8d6eafbc48430a23380d11f65c5577e2ffe059dd8fd79",
+    "test-event-order-fix.patch": "e07f3a979d4afb8648ebd9060d537cf91643a6c67b32e36aebe27da2d5db4e5f",
+    "canonical-socket-test-result.json": "f017e137a5af16c4be3bfe16fb2ae2cabaa021824172abf4c64375cfff232a94",
+    "test_pipeline.original-overlay.py.gz": "8a252358694278fbdb013033c20d7fe5c35e3e8d5a36b2397f9607fb8b8af2dc"
+  }
+}

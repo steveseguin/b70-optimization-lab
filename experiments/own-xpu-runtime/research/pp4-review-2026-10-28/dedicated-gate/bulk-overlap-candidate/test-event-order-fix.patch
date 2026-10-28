@@ -1,0 +1,15 @@
+--- a/test_pipeline.py
++++ b/test_pipeline.py
+@@ -63,9 +63,11 @@
+                     if i in (0,2):
+                         raw=record(m,1 if i==0 else 2,start,count,seq,raw_sha=sha256(data).digest())
+                         off=P.RECORD_OFFSET+parity*1280;stages[i].prefill[off:off+1280]=raw
+-                    if i==2 and k==1:second_final.set()
+                     send(sock,base.REPLY.pack(0,-1,0,count*32,seq,0 if i==0 else 1,i,int(i==2),0.,0.,0.,0.))
+                     with lock:operations.append((i,k,'complete'))
++                    # Release provider0 only after the real fragmented reply is
++                    # sent AND its completion observation is recorded.
++                    if i==2 and k==1:second_final.set()
+             except BaseException as e:
+                 if not guard.failed:errors.append(e);guard.fail(str(e))
+         for i in range(3):

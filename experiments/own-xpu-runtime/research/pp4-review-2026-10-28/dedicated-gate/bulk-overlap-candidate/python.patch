@@ -1,0 +1,237 @@
+--- a/engine/planning/rolling_provider/dedicated_prefill.py
++++ b/engine/planning/rolling_provider/dedicated_prefill.py
+@@ -115,6 +115,11 @@
+     need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 for s in stages),
+          'uniform fresh target prefill geometry')
+     _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
++    pipeline=plan.get('dedicated_prefill_pipeline',False)
++    need(type(pipeline)is bool,'dedicated prefill pipeline flag must be boolean')
++    if pipeline:
++        from . import dedicated_prefill_pipeline
++        return dedicated_prefill_pipeline.run(stages,provider,model,plan,output,source=source,stop_requested=stop_requested)
+     began=time.monotonic();target_wall=[0.]*len(stages);replay_wall=0.;chunks=0;last_ack=None
+     with (Path(output)/'dedicated-prefill.jsonl').open('x') as journal:
+         for start in range(0,bulk,rows):
+@@ -154,7 +159,7 @@
+                      provider.provider_serial,chunks,last_ack)
+     model.adopt_prefill(bulk,native=receipt)
+     for stage in stages:stage.physical=stage.committed=bulk
+-    return dict(prefill_positions=bulk,prefill_chunks=chunks,prefill_draft_replay=bulk,prefill_source=source,
++    return dict(prefill_schedule='sequential',prefill_positions=bulk,prefill_chunks=chunks,prefill_draft_replay=bulk,prefill_source=source,
+         prefill_timing=dict(schema='dedicated-sequential-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
+             target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,
+             scope='sequential host wall durations; no overlap/speed claim'))
+--- /dev/null
++++ b/engine/planning/rolling_provider/dedicated_prefill_pipeline.py
+@@ -0,0 +1,111 @@
++"""Bounded target-stage/OP28 pipeline. Native arithmetic and wire are unchanged."""
++from concurrent.futures import ThreadPoolExecutor,wait,FIRST_COMPLETED
++from hashlib import sha256
++import json
++from pathlib import Path
++import struct
++import time
++from . import dedicated_prefill as P,prefill
++from .transport import pending,ring,base
++
++
++def run(stages,provider,model,plan,output,*,source,stop_requested=None):
++    P.need(len(stages)==3 and plan.get('dedicated_prefill_pipeline') is True,
++           'explicit three-target dedicated prefix pipeline')
++    rows=plan['prefill_rows'];bulk=len(model.prompt)-2;stream=provider.stream_bytes
++    prompt_sha=bytes.fromhex(source['sha256']);total=(bulk+rows-1)//rows
++    began=time.monotonic();next_chunk=[0]*4;completed=[set() for _ in range(4)]
++    busy={};leases={};snapshots={};target_wall=[0.]*3;replay_wall=0.;last_ack=None;peak=0
++
++    def target(index,k):
++        stage=stages[index];start=k*rows;count=min(rows,bulk-start);parity=k%2
++        if index==0:
++            stage.prefill[16:16+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
++        else:
++            kind='forward' if index==1 else 'reverse'
++            prefill.region(stage.prefill,'forward',parity,rows,stream,count)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count)
++        position=start+count-1
++        row=ring.Row(model.epoch,position+1,position,position,model.prompt[position],0,model.request,
++                     model.proposals.hashes[position],model.proposals.hashes[position+1])
++        metadata=prefill.verified_metadata(pending.wire,row,index,index==2)
++        stage.shared[pending.wire.ROW_OFFSET:pending.wire.ROW_OFFSET+len(metadata)]=metadata
++        t=time.monotonic();reply=stage.command(15,count,start,parity);end=time.monotonic()
++        P.need(reply[3]==count*stream,'actual target chunk completion extent')
++        off=P.RECORD_OFFSET+parity*P.RECORD_BYTES
++        return dict(sequence=stage.sequence,reply=base.REPLY.pack(*reply).hex(),began=t,end=end,
++                    record=bytes(stage.prefill[off:off+P.RECORD_BYTES]) if index in (0,2) else None)
++
++    def replay(k):
++        start=k*rows;count=min(rows,bulk-start);parity=k%2;parts=snapshots[k]
++        seed,final=parts[0]['record'],parts[2]['record'];sequences=[p['sequence'] for p in parts]
++        off=P.RECORD_OFFSET+parity*P.RECORD_BYTES
++        raw_sha=sha256(prefill.region(stages[2].prefill,'reverse',parity,rows,stream,count)).digest()
++        common=dict(stages=3,start=start,count=count,rows=rows,stream=stream,parity=parity,
++            epoch=model.epoch,request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],
++            after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha)
++        seed_sha=P.chunk_record(seed,role=1,stage=0,sequence=sequences[0],**common)
++        final_sha=P.chunk_record(final,role=2,stage=2,sequence=sequences[2],**common)
++        P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
++               final==bytes(stages[2].prefill[off:off+P.RECORD_BYTES]),'source publication changed before replay')
++        t=time.monotonic()
++        command,reply,ack=P.replay(provider,start=start,count=count,parity=parity,rows=rows,stages=3,
++            seed_sequence=sequences[0],final_sequence=sequences[2],request=model.request,prompt_sha=prompt_sha,
++            seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch)
++        # This check belongs inside the worker, before its Future releases parity.
++        P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
++               final==bytes(stages[2].prefill[off:off+P.RECORD_BYTES]),'source chunk publication changed before ACK')
++        return dict(event='authenticated-prefill-chunk',start=start,count=count,parity=parity,
++            target_sequences=sequences,target_reply_hex=[p['reply'] for p in parts],seed_record_hex=seed.hex(),
++            final_record_hex=final.hex(),provider_command_hex=command.hex(),provider_reply_hex=reply.hex(),
++            provider_ack_hex=ack.hex(),monotonic_s=time.monotonic()),t
++
++    with (Path(output)/'dedicated-prefill.jsonl').open('x') as journal, \
++         (Path(output)/'dedicated-prefill-pipeline.jsonl').open('x') as schedule, \
++         ThreadPoolExecutor(max_workers=4,thread_name_prefix='dedicated-prefill') as pool:
++        def event(actor,k,kind,**fields):
++            schedule.write(json.dumps(dict(actor=actor,chunk=k,event=kind,monotonic_s=time.monotonic(),**fields))+'\n');schedule.flush()
++        try:
++            while len(completed[3])<total:
++                provider.guard.check()
++                P.need(stop_requested is None or not stop_requested(),'dedicated prefix interrupted; adoption/reset/retry refused')
++                # Observe every currently completed failure before admitting more work.
++                ready=[a for a,f in busy.items() if f.done()]
++                results={a:busy[a].result() for a in ready}
++                for actor,result in results.items():
++                    k=next_chunk[actor]-1;del busy[actor];completed[actor].add(k)
++                    if actor<3:
++                        snapshots[k][actor]=result;target_wall[actor]+=result['end']-result['began']
++                        event(actor,k,'completed',command_began=result['began'],command_end=result['end'])
++                    else:
++                        entry,t=result;last_ack=bytes.fromhex(entry['provider_ack_hex']);replay_wall+=entry['monotonic_s']-t
++                        journal.write(json.dumps(entry)+'\n');journal.flush()
++                        P.need(leases.get(k%2)==k,'full ACK releases actual parity owner')
++                        del leases[k%2];del snapshots[k]
++                        event(actor,k,'completed',command_began=t,command_end=entry['monotonic_s'])
++                if len(completed[3])==total:break
++                for actor in (3,2,1,0):
++                    k=next_chunk[actor]
++                    if actor in busy or k==total:continue
++                    if actor and k not in completed[actor-1]:continue
++                    if actor==0:
++                        if len(leases)==2 or k%2 in leases:continue
++                        leases[k%2]=k;snapshots[k]=[None]*3;peak=max(peak,len(leases))
++                    event(actor,k,'issued')
++                    busy[actor]=pool.submit(replay,k) if actor==3 else pool.submit(target,actor,k)
++                    next_chunk[actor]+=1
++                P.need(busy,'prefix pipeline dependency deadlock')
++                wait(tuple(busy.values()),timeout=.1,return_when=FIRST_COMPLETED)
++        except BaseException as error:
++            # Cooperative Guard cancellation stops other socket workers; executor
++            # joins them before outer lifecycle can close their maps. No adoption.
++            provider.guard.fail('dedicated prefill pipeline: '+str(error))
++            raise
++    P.need(not busy and not leases and all(len(x)==total for x in completed),'all target/provider ACKs before adoption')
++    receipt=P.Adoption(bulk,model.epoch,model.request,prompt_sha,tuple(s.sequence for s in stages),provider.sequence,
++                       provider.provider_serial,total,last_ack)
++    model.adopt_prefill(bulk,native=receipt)
++    for stage in stages:stage.physical=stage.committed=bulk
++    return dict(prefill_schedule='target-stage-pipeline',prefill_positions=bulk,prefill_chunks=total,prefill_draft_replay=bulk,prefill_source=source,
++        prefill_timing=dict(schema='dedicated-stage-pipeline-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
++            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,peak_unfinished_chunks=peak,
++            scope='host work durations overlap; full native OP28 ACK releases parity; no GPU duration/speed claim'))
+--- a/engine/planning/rolling_provider/dedicated_transport.py
++++ b/engine/planning/rolling_provider/dedicated_transport.py
+@@ -192,6 +192,9 @@
+     bulk_mode=plan.get('dedicated_bulk_prefill',False)
+     base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
+                  and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
++    pipeline=plan.get('dedicated_prefill_pipeline',False)
++    base.require(type(pipeline)is bool and (not pipeline or (bulk_mode and len(stages)==3)),
++                 'dedicated prefix pipeline transport admission')
+     base.require(len(stages) in (2, 3) and provider.stream_bytes is not None
+                  and all(s.stream_bytes == provider.stream_bytes for s in stages), 'dedicated admitted geometry')
+     base.require(epoch == 0 and epoch == plan.get('epoch', 0), 'dedicated initial epoch only')
+--- a/engine/tools/dedicated_provider_driver.py
++++ b/engine/tools/dedicated_provider_driver.py
+@@ -20,6 +20,9 @@
+     bulk=config.get('dedicated_bulk_prefill',False)
+     base.require(type(bulk) is bool and not config.get('prefill_pipeline',False)
+                  and not config.get('persistent_reset',False),'dedicated sequential bulk/no reset admission')
++    pipeline=config.get('dedicated_prefill_pipeline',False)
++    base.require(type(pipeline) is bool and (not pipeline or bulk),
++                 'dedicated_prefill_pipeline Boolean requires authenticated bulk')
+     rows=config.get('prefill_rows',256 if bulk else 0)
+     base.require(type(rows) is int and (rows==256 if bulk else rows==0),
+                  'explicit dedicated bulk256 or per-token0 rows')
+@@ -27,6 +30,7 @@
+     base.require(type(capture) is bool, 'dedicated_capture_ready Boolean required')
+     plan = base.make_plan(path)
+     base.require(len(plan['stages']) in (2, 3), 'two/three target stages required')
++    base.require(not pipeline or len(plan['stages'])==3, 'dedicated prefill pipeline requires three target stages')
+     bdfs = [s['bdf'] for s in plan['stages']]
+     provider_bdf = config['provider_bdf']
+     base.require(all(re.fullmatch(r'0000:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]', x)
+@@ -69,6 +73,7 @@
+         dedicated_prefill.prompt_source(dict(plan,dedicated_prefill_prompt=str(prompt_path),
+                                            dedicated_prefill_prompt_sha256=prompt_sha))
+         identity.update(dedicated_bulk_prefill=True,prefill_rows=rows,prompt_i32_sha256=prompt_sha)
++    if pipeline:identity['dedicated_prefill_pipeline']=True
+     request = sha256(base.canonical(identity)).hexdigest()
+     output = Path(plan['output'])
+     provider = deepcopy(plan['stages'][0])
+@@ -117,7 +122,8 @@
+         base.require('--oracle' not in stage['argv'] or base.option(stage['argv'], '--oracle') == '',
+                      'runtime must not consume expected outputs')
+     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
+-                epoch=0, request_sha256=request, dedicated_capture_ready=capture, eos_token_ids=eos, speculative_depth=depth,
++                epoch=0, request_sha256=request, dedicated_capture_ready=capture,
++                dedicated_prefill_pipeline=pipeline, eos_token_ids=eos, speculative_depth=depth,
+                 rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=rows,
+                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
+                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,
+@@ -126,6 +132,8 @@
+         plan.update(dedicated_bulk_prefill=True,dedicated_prefill_prompt=str(prompt_path),
+                     dedicated_prefill_prompt_sha256=prompt_sha,prefill_stream_bytes=base.PREFILL_STREAM_BYTES,
+                     limits='Experimental authenticated sequential dedicated prefix replay; no overlapped-bulk/reset/speed claim.')
++        if pipeline:
++            plan['limits']='Experimental two-chunk target-stage/dedicated replay pipeline; full OP28 ACK leases; no reset/speed claim.'
+         plan['pins'][str(prompt_path)]=prompt_sha
+     # Pin the actual transitive Python controller stack, without model or credential discovery.
+     from rolling_provider import dedicated_transport
+@@ -139,6 +147,9 @@
+               'ring_live_driver.py', 'pending_ring_live_driver.py', 'pending_provider_wire.py')
+               if (base.HERE/name).exists()}
+     files |= {Path(__file__).resolve(), manifest}
++    if pipeline:
++        from rolling_provider import dedicated_prefill_pipeline
++        files.add(Path(dedicated_prefill_pipeline.__file__).resolve())
+     for source in files:
+         plan['pins'][str(source)] = base.digest(source)
+     return plan
+--- a/engine/tools/dedicated_provider_lifecycle.py
++++ b/engine/tools/dedicated_provider_lifecycle.py
+@@ -15,7 +15,18 @@
+ from rolling_provider import dedicated_transport as bridge
+ 
+ 
++def execution_mode(plan):
++    pipeline=plan.get('dedicated_prefill_pipeline',False)
++    base.require(type(pipeline)is bool and (not pipeline or
++        (plan.get('dedicated_bulk_prefill') is True and len(plan['stages'])==3)),
++        'dedicated prefix pipeline lifecycle admission')
++    return ('dedicated-provider-stage-pipeline-bulk' if pipeline else
++        'dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else
++        'dedicated-provider-per-token')
++
++
+ def execute(plan, admission, unit):
++    execution_mode(plan)  # Reject malformed scheduling mode before any owner launch.
+     base.require(admission.get('schema') == 'ownrt.pipeline-admission.v1'
+                  and admission.get('owner_authorized') is True, 'explicit admission required')
+     base.require(datetime.fromisoformat(admission['expires_utc']) > datetime.now(timezone.utc),
+@@ -99,7 +110,8 @@
+             guard_failure_evidence_error=guard.failure_evidence_error)
+         terminal = dict(schema='ownrt.dedicated-provider-terminal.v1', passed=failure is None,
+             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
+-            mode=('dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else 'dedicated-provider-per-token'),
++            mode=execution_mode(plan),
++            prefill_overlap_requested=plan.get('dedicated_prefill_pipeline',False),
+             diagnostic_only=True, speed_claim=False,
+             bulk_reset_qualified=False, bulk_overlap_qualified=False,
+             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',

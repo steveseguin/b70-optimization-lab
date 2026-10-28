@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28 — Dedicated cold long request complete; PP4 cold control loading.**
+**October 28 — Stage-pipeline full gate passed; matched long timing active.**
 Matched cold64K 1677/512 measured dedicated2+1 **50.605 /51.289 tok/s** versus native
 2GPU **68.272 /67.654 tok/s** (first99/all511 intervals): dedicated all511 rate is
 **24.19% lower**. All512 IDs match and both lifecycles are clean; cuts25/depth3 versus
@@ -12,11 +12,21 @@ Verified state archives released RAM. The first-inference121854/8 dedicated long
 request wall, **1007.883s** sequential prefix; all8 IDs match and all4owners exited0,
 postflight clean/noholders. Target command work was290.182/257.685/251.354s and
 provider replay204.521s. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bulk3plus1-long-r1-evidence/summary.json).
-PP4r5 first-inference control is loading, unit `sc117-pp4-cold-long-control-20261028-r1`;
-no inference request yet and no speed win claim. Dedicated archive full-compare/checksum
-passed before bundle cleanup; fresh PP4 startupRAM104170205184B passed103079215104B floor. The common binary is
-unchanged; dedicated flat-copyfalse versus PP4true and PP4 first-request reset remain
-explicit treatment differences. Native HCnorm probe passed10240 bitexact/error0 with
+PP4r5 completed cleanly in **714.815s**, TTFT713.434s, versus dedicated1027.579s:
+**30.44% less request time**, ratio1.4375. Both matched121854 prompt and8outputs,
+zero cached state; all owners exited0 and postflight is clean. This is a single first-
+inference screen, not headline/suite throughput or independent CPU quality proof.
+[Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pp4-cold-long-r5-evidence/matched-screen.json).
+Cuts, shared/independent draft, flatcopyfalse/true, per-tokenOP9/bulkOP28 and existing
+PP4 coldRESET remain explicit differences. Dedicated stage-pipeline full gate passed **2065/73 sources,1707 actual pairs and32
+outputs**, all4rc0, clean postflight; proof `3a2b4489…`, native29471eb0bab9 unchanged.
+Actual host schedule retained2chunk leases and completed7chunks on each of4actors;
+this proves host scheduling overlap, not a speedup. [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-gate-r1-evidence/summary.json).
+Verified candidate/reference archive comparisons released bundles. First-inference121854/8
+long timing is active at `/dev/shm/sc117-dedicated-pipeline-long-20261028-r1`, plan
+`3718e60c…`, unit `sc117-dedicated-pipeline-long-20261028-r1.service`. Fresh clean
+baselineRAM104008916992B passed startup floor; no timing result yet.
+Native HCnorm probe passed10240 bitexact/error0 with
 clean postflight. The next projection differs at221/320 hostF64-versus-native values;
 causality remains unresolved. CPU observer r2
 now preserves original/OFF/ON all logits exactly; the native-vs-CPU layer0 maximum
@@ -52,11 +62,11 @@ remain unresolved. Combined-owner discoveries remain in the broader queue.
 - Actual device censuses:29,661,143,540 /30,141,558,944 bytes for targets,3,205,184,516 for draft.
   The checked checkpoint admission fix retains existing256MiB-per-slot/4096-row bounds and complete reserve
   under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed.
-- The64K measurements and128K short gate completed cleanly. Dedicated121854/8 timing completed; PP4 first-inference control follows. No resident service.
+- The64K measurements and128K short gate completed cleanly. Dedicated and PP4 first-inference121854/8 timing completed; stage-pipeline gate passed; long timing follows. No resident service.
 - A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
   makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
   screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.
-- Sequential dedicated bulk passed full qualification; overlapped bulk, persistent reset, long128K and the full realistic suite remain
+- Sequential and stage-pipelined dedicated bulk passed full qualification; persistent reset, long128K and the full realistic suite remain
   unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
   the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.
 - The complete [optimization backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json)

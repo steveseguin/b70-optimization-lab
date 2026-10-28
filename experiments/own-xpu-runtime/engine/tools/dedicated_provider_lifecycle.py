@@ -15,7 +15,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]/'planning'))
 from rolling_provider import dedicated_transport as bridge
 
 
+def execution_mode(plan):
+    pipeline=plan.get('dedicated_prefill_pipeline',False)
+    base.require(type(pipeline)is bool and (not pipeline or
+        (plan.get('dedicated_bulk_prefill') is True and len(plan['stages'])==3)),
+        'dedicated prefix pipeline lifecycle admission')
+    return ('dedicated-provider-stage-pipeline-bulk' if pipeline else
+        'dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else
+        'dedicated-provider-per-token')
+
+
 def execute(plan, admission, unit):
+    execution_mode(plan)  # Reject malformed scheduling mode before any owner launch.
     base.require(admission.get('schema') == 'ownrt.pipeline-admission.v1'
                  and admission.get('owner_authorized') is True, 'explicit admission required')
     base.require(datetime.fromisoformat(admission['expires_utc']) > datetime.now(timezone.utc),
@@ -99,7 +110,8 @@ def execute(plan, admission, unit):
             guard_failure_evidence_error=guard.failure_evidence_error)
         terminal = dict(schema='ownrt.dedicated-provider-terminal.v1', passed=failure is None,
             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
-            mode=('dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else 'dedicated-provider-per-token'),
+            mode=execution_mode(plan),
+            prefill_overlap_requested=plan.get('dedicated_prefill_pipeline',False),
             diagnostic_only=True, speed_claim=False,
             bulk_reset_qualified=False, bulk_overlap_qualified=False,
             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',

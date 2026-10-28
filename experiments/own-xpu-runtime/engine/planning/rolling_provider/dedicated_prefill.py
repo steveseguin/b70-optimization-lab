@@ -115,6 +115,11 @@ def run(stages,provider,model,plan,output,*,stop_requested=None):
     need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 for s in stages),
          'uniform fresh target prefill geometry')
     _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
+    pipeline=plan.get('dedicated_prefill_pipeline',False)
+    need(type(pipeline)is bool,'dedicated prefill pipeline flag must be boolean')
+    if pipeline:
+        from . import dedicated_prefill_pipeline
+        return dedicated_prefill_pipeline.run(stages,provider,model,plan,output,source=source,stop_requested=stop_requested)
     began=time.monotonic();target_wall=[0.]*len(stages);replay_wall=0.;chunks=0;last_ack=None
     with (Path(output)/'dedicated-prefill.jsonl').open('x') as journal:
         for start in range(0,bulk,rows):
@@ -154,7 +159,7 @@ def run(stages,provider,model,plan,output,*,stop_requested=None):
                      provider.provider_serial,chunks,last_ack)
     model.adopt_prefill(bulk,native=receipt)
     for stage in stages:stage.physical=stage.committed=bulk
-    return dict(prefill_positions=bulk,prefill_chunks=chunks,prefill_draft_replay=bulk,prefill_source=source,
+    return dict(prefill_schedule='sequential',prefill_positions=bulk,prefill_chunks=chunks,prefill_draft_replay=bulk,prefill_source=source,
         prefill_timing=dict(schema='dedicated-sequential-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
             target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,
             scope='sequential host wall durations; no overlap/speed claim'))

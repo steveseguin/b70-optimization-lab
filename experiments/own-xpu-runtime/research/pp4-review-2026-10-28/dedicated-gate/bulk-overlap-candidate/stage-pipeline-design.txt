@@ -1,0 +1,32 @@
+Target-stage plus dedicated replay pipeline: isolated design extension2026-10-28.
+No canonical source/pin changes, GPU/model execution or production integration. Simpler two-worker baseline remains in design.txt/prototype.py.
+
+Reuse existing prefill.run_pipeline stage actor shape. Three targets plus OP28 provider are four logical actors; provider is an actual separate actor, not a fabricated target stage. Two targets plus provider has three actors. Each target actor retains exact existing target() operation: copy upstream forward/reverse parity, write existing last-prefix ROW_META, run native OP15, snapshot actual reply/record. Provider actor retains real blocking OP28 replay/fullACK/source checks. No state math/reset/ACK format changes.
+
+First adaptation can literally use existing two-chunk waves:
+phase target0(a);
+phase target1(a)+target0(b);
+phase target2(a)+target1(b);
+phase provider(a)+target2(b);
+phase provider(b).
+This meets all existing fullACK leases. However the final provider(b) bubble can legally overlap target0(c) because fullACK(a) has already released parity(a). A continuous two-chunk dependency loop avoids repeatedly draining the whole wave.
+
+Bounded continuous schedule:
+- One logical FIFO actor per target and one provider; at most one active future/socket owner per actor. Each actor must consume chunk indices0,1,... in order, so native command sequence and canonical frontier are exact.
+- Admit target0(k) only when fewer than TWO globally unfinished chunks exist and parity(k) is unleased. Admission leases that parity across every target map until provider(k) FULL ACK. Captured-but-unfinished provider work still counts as unfinished.
+- Target i(k) may start only after target i-1(k) completed with exact extent/source snapshot; its own previous command is complete. Copy input then, never before readiness. Provider(k) may start only after final target(k) completed, all actual source records/rawSHA are validated, and previous provider fullACK/serial matches start.
+- Resolve completed futures and validate records before admitting new jobs. FullACK(k) releases parity k ONLY after existing source-still-stable checks and native ACK verification, then journal the immutable record/ACK bytes. Target0(k+2) may then run while provider(k+1) or later stages of k+1 are active.
+- Ready-job priority downstream→upstream bounds queue growth and frees leases promptly. This priority is a host implementation choice, not a causal requirement.
+- All completion snapshots are immutable values: actual per-owner sequence tuple, source1280 bytes, before/after prefix, rawSHA, nativeReply64/ACK256. Never reread mutable Stage.sequence after another chunk advances it. Current Python prefix_evidence exact per-chunk sequence remains k+1 because each actor has one ordered OP15 per chunk; the live actor may already be ahead when old receipt is journaled.
+- Main dependency loop alone writes journal and adoption state. Callback workers own one native actor at a time. Existing Guard check/stop semantics apply inside each blocking command; first failure stops new submission, fails Guard once, joins every active future before map cleanup, never retries/adopts partial prefix.
+
+Why two parity regions suffice without earlyACK:
+Chunk k+2 cannot be admitted until provider k fullACK; therefore no map region or record for k can be overwritten while provider might read it. Every intermediate consumer of k already completed before provider k even started. The single-buffer stage0 header is irrelevant after native-owned token copy and does not replace the per-parity1280 seed record. Target scalar ROW_META is per owner and only rewritten after that actor's previous OP15 completes; OP28 never reads scalar ROW_META. Final raw parity remains stable through existing native capture/fullrawSHA check and fullACK validation. Native owned Witness is bounded to one256-row chunk; host retains at most two small metadata jobs. No additional raw staging maps or third parity.
+
+CPU lease simulator stage_pipeline_sim.py encodes these dependencies, exact per-owner sequences/frontiers, producer publication readiness, fullACK-only parity release, globalwindow2 and end-only adoption. test_stage_pipeline_sim.py covers2/3targets,1/2/7chunks/partialtail, simultaneous target1(a)+target0(b), provider bottleneck with no capture-based release, and failures on every actor: no later issue, drain existing actors, no adoption. Eight tests pass including earlier simpler worker prototype. This is control/lease simulation, not actual transport, byte-level native parity or GPU execution.
+
+Actual component screen is in stage-pipeline-component-screen.json. Source is FAILED bulk-r1 gate's actual7OP15 replies/chunk and1675 native no-head row wall records, not a full qualification. Warm full chunk mean actor seconds .492669/.431632/.424976/.323869. For six post-firstchunk components: serial9.337671s; existing pair-wave analogue6.183833s; continuous2parity simulation5.207117s. The44.2% component reduction is optimistic algebra, not measured throughput. Cold first-chunk JIT dominates: all recorded components171.251985→166.222455s. Host copies/SHA/metadata/queue overhead and changed compilation contention omitted. No assertion that this beats PP4.
+
+Future implementation proposal, only after root authorizes: opt-in strictbool dedicated_prefill_pipeline(defaultfalse), separate from existing four-target prefill_pipeline. Preserve sequential baseline unchanged. Extract current target/replay bodies into explicit immutable-job callbacks; reuse ThreadPoolExecutor/future phase mechanics from prefill.run_pipeline, with actor-ready deque and globaltwolease admission rather than a new generic scheduler framework. No native patch required. New timings should record actual per-actor issue/completion monotonic intervals and disjoint phase wall; component work overlaps and must not be subtracted from total.
+
+First gate must be >5chunks with partialtail, sameprompt/outputcap/model/context/nativepolicy: all actual input hidden/token pairs,2065target/73draft sources, real seam+depth3miss/rollback and clean FINISH. Preserve serial baseline and compare full fair long-prompt timing only after that gate. Root has authorized design/prototype only at this point.

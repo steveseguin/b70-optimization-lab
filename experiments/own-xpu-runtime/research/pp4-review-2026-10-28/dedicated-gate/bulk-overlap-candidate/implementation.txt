@@ -1,0 +1,70 @@
+Isolated Python target-stage pipeline candidate, 2026-10-28
+
+python.patch changes only Python controller/planner/lifecycle files and adds
+ dedicated_prefill_pipeline.py. No canonical files, native sources, model owners
+or GPU execution were changed. Sequential remains default. New config/request
+plan key dedicated_prefill_pipeline must be bool, defaultFalse; true requires
+ dedicated_bulk_prefill=true and exactly3targetstages. The planner binds an
+explicit scheduling bit into request identity, source-pins the new scheduler,
+and preserves native OP28 capability/prompt pins. Lifecycle rejects invalid
+mode before any owner creation and reports dedicated-provider-stage-pipeline-bulk;
+terminal prefill_overlap_requested records intent while bulk_overlap_qualified
+staysFalse. Result prefill_schedule distinguishes sequential/target-stage-pipeline;
+timing schema differs and records peak unfinishedchunks plus overlapping work.
+
+Workers execute existing Stage.command OP15 and Provider replay OP28. Main owns
+actor FIFO cursors and leases, globally at most two unfinished chunks, at most one
+worker per socket. It observes completed failures before further issue. A chunk
+owns its parity on every target from stage0 admission until FULL provider ACK and
+source record stability validation. Stage0 token header is not a provider source;
+provider consumes authenticated1280 chunk records and native-owned raw copy.
+Each target completion snapshots its actual sequence, Reply64 and relevant source
+record: later stages must not read current Stage.sequence for an older chunk.
+Provider is FIFO/contiguous and sole writer of its transport serial/sequence.
+No capture-only ACK, new native framing, fake accepted ROWs or reset support.
+Guard failure stops new issue and cooperatively drains workers before map closure.
+Adoption happens only after every target and provider chunk completes; existing
+post-start_async frontier restoration remains required and unchanged.
+
+Existing dedicated-prefill.jsonl event schema/order remains unchanged. Existing
+strict prefix_evidence ingests candidate logs without accounting exceptions.
+Separate dedicated-prefill-pipeline.jsonl contains host actor scheduling intervals;
+work durations overlap and must not be subtracted from total wall. These are host
+observations, not GPU duration or speed evidence.
+
+Portable CPU check (pin-verifies base then applies patch in temporary copy):
+ taskset -c 8-15 nice -n 19 python3 run_pipeline_tests.py
+11 tests PASS, 2026-10-28:6socket/scheduler tests0.387s and5planner tests0.020s (the latter include3existing baseline cases). Real inherited Stage.command and Provider replay
+use four fragmented socketpair peer loops; target arithmetic is deterministic CPU
+fixture data. Seven chunks/1675 rows with139-row partialtail. Forced final target
+chunk1 completion before provider0 ACK proves opposite-parity progress. Stage0
+must remain at sequence2 while provider0 retains parity0. Malformed native-shaped
+ACK and overwritten source publication refuse adoption/frontier remains0. Exact
+ROW_META, actual reply/request fields and unchanged strict prefix journal checked.
+Sequential omittedflag path and invalid bool/two-target opt-in refusal checked.
+These tests do not prove native model state, GPU concurrency or performance.
+
+Next required gate after parent applies/reviews: same1677prompt/32outputs with full
+actual native prefix-pairs + chunk receipts, canonical seam/rollback, target2065/
+draft73 sealed comparison, clean FINISH/postflight. Then fair long timing against
+same sequential dedicated topology/context, on one guarded load as authorized.
+
+Cancellation/error drain argument:
+- Main checks Guard and stop_requested every wait iteration (at most0.1s host
+  poll), before any subsequent issue. A stop request becomes Guard.fail inside
+  the exception handler, triggering existing cooperative native stop pipes.
+- Worker command receives use the existing guarded finite socket wait loops;
+  Guard failure cancels them. Executor context joins every submitted worker
+  before the function propagates, hence outer lifecycle cannot unmap sources
+  while a worker still reads/writes them. This adds no retry or process kill.
+- Leases are removed ONLY after the provider Future successfully returns the
+  fully validated ACK and stable source records. Failure leaves the lease and
+  provider busy state reserved; no finally block recycles parity. Prefix model
+  adoption is after the all-target/all-provider inventory check, never partial.
+- Completed worker exceptions are collected before new jobs are submitted in
+  each scheduler turn. Physical peers may finish concurrently with cancellation;
+  that does not authorize adoption/retry. Existing outer lifecycle owns final
+  child drain and incident evidence; failure remains a failed request.
+- CPU cancellation test interrupts with OP28 actually pending and other socket
+  workers active, asserts zero logical frontier, no thirdchunk parityreuse,
+  and verifies every peer/worker joins. It is not proof of SYCL cancellation.
