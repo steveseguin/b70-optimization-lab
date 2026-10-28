@@ -1,0 +1,63 @@
+{
+  "schema": "ownrt.actual-speculation-work-audit.v1",
+  "source": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output",
+  "outputs": 512,
+  "decode_intervals": 511,
+  "span_seconds": 9.963238500989974,
+  "stages": [
+    {
+      "stage": 0,
+      "decode_rows": 604,
+      "native_half_completion_ms": 6960.1114,
+      "reply_busy_ms": 8548.723529,
+      "native_speculative_flag_count": 0
+    },
+    {
+      "stage": 1,
+      "decode_rows": 511,
+      "native_half_completion_ms": 5918.5438,
+      "reply_busy_ms": 6012.844298,
+      "native_speculative_flag_count": 0
+    }
+  ],
+  "issued_depths": [
+    {
+      "depth": 1,
+      "issued": 62,
+      "explicit_rejected": 18,
+      "accepted": 44,
+      "unaccepted_nonrejected": 0
+    },
+    {
+      "depth": 2,
+      "issued": 426,
+      "explicit_rejected": 66,
+      "accepted": 360,
+      "unaccepted_nonrejected": 0
+    },
+    {
+      "depth": 3,
+      "issued": 24,
+      "explicit_rejected": 8,
+      "accepted": 15,
+      "unaccepted_nonrejected": 1
+    }
+  ],
+  "provider_completed": 511,
+  "capture_ack_count": 511,
+  "native_head_availability": {
+    "3": 511
+  },
+  "explicit_rejected_decode_rows": 92,
+  "explicit_rejected_reply_busy_ms": 1275.891775,
+  "all_unaccepted_decode_rows": 93,
+  "all_unaccepted_reply_busy_ms": 1290.535352,
+  "optimistic_remove_all_rejected_work_seconds": 1.275891775,
+  "optimistic_rate_if_all_rejected_busy_were_serial_critical": 58.82118167003039,
+  "scope": "Native busy work sums are not disjoint critical-path durations; bound assumes every rejected stage0 ROW disappears without losing useful overlap. A depth1 policy may lose useful deeper hits. Native speculative=false on ring ROWs does not identify accepted guesses.",
+  "source_hashes": {
+    "driver-result.json": "ef15c35601fb881d7a3b203002c174185259a8bca49ee100ff42f0ee757a8e0b",
+    "commands.jsonl": "d12c3ade48610231f72f7a16ed48b90795b0df43882fa58cab96ae3e87aca860",
+    "tokens.jsonl": "cbbed3c275a675189ec95c0baafc147c36276e59af2465bcf97d9bb799cb6269"
+  }
+}

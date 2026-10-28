@@ -1,0 +1,34 @@
+Target ring snapshot traffic — October 28, 2026
+CPU allocation/source review only. No GPU, builds, source edits, or allocation exclusions.
+
+Actual bytes
+Source: /dev/shm/sc117-dedicated-3plus1-20261028-r3/output/stage0/native/ring-checkpoint-layout.json. Slot reserve is 161,346,704 bytes. Full non-QSA allocations account for 161,289,360; sparse QSA suffix rows account for only 57,344.
+- GDN states: 39 allocations × 3,145,728 = 122,683,392 bytes (76.04% of the slot).
+- Convolution histories: 39 allocations, 4,792,320 bytes (2.97%).
+- Other full allocations: 33,813,648 bytes (20.96%), including two 8,388,608-byte scratch buffers and 1,966,080-byte layer snapshots.
+There are 13 recurrent layers with three physical banks each. Capturing just one proven written bank per layer would reduce recurrent payload from 127,475,712 to 42,491,904 bytes, saving 84,983,808 bytes (52.67% of the whole slot). This is an estimated legal write-set opportunity, not an implemented or validated exclusion.
+
+Capture frequency correction
+StageRing::execute calls backend.capture only for tentative rows. Verified rows use slot -1, and the final stage refuses tentative inputs. Therefore the slot is not copied on EVERY ROW. Use actual tentative-row/capture counts when estimating whole-request savings. The root observed stage-0 ROW mean 9.90 ms versus about 8.16 ms half compute; this gap is not isolated checkpoint time. No separate native checkpoint capture timing was found in the focused timing/source review. Current capture calls idle, inventory, metadata save, descriptor preparation, and synchronous copy; optional full-byte verification additionally hashes allocations. Do not attribute all 1.74 ms to bulk copies.
+
+Prior work already completed
+research/2026-10-26-snapshot-trim.md removed never-touched prefill shadows: capture 66 MB to about 30 MB, 0.573 to 0.287 ms, suite 47.97 to 48.32 tokens/s (+0.72%). Current ring code already excludes card0:prefill:*. Earlier banked speculation and sparse QSA snapshots are also enabled. Do not repeat these changes. That note suggests excluding gemv scratch only by weakening the full-state gate; that is NOT acceptable for this task. The candidate below preserves every current allocation and byte contract.
+
+Concrete new mechanism: per-row undo images plus reverse suffix restoration
+Current ring snapshots every full recurrent bank before each tentative row, then abort_suffix restores only the oldest slot. That full image is necessary for its present direct-jump restore: later rows can write banks untouched by the oldest row.
+
+Instead, retain preimages of exactly the physical allocations the upcoming row will overwrite. Ordinary bindings read buffers[c][name] and direct state outputs to state_spares[name]; swap_state_banks rotates labels after execution, while rotate_spare_bank can select the third physical bank. A write-set must therefore derive physical allocation IDs from the actual prepared command bindings and bank identity, never from a static label such as "alternate" or "reserve".
+
+On abort, restore EACH pending row's undo image in reverse execution order, ending with the rejected oldest row. Only then release the images. This restores every overwritten physical bank to its original bytes, including inactive banks, without excluding them from full-state parity. All other scratch/transient allocations can remain fully captured in the first implementation. Keep current sparse QSA suffix handling initially; optimizing its tiny payload is immaterial.
+
+Important transaction detail: today's restore verifies every allocation against the complete pre-row SHA. With partial images, that full verification is valid only after newer rows have been undone first. Reverse restoration provides this ordering, but metadata/bank aliases, QSA extents, and host bookkeeping must be restored to the same row boundary before each check. Accepting earlier rows releases their undo images normally; remaining suffix images still describe the correct committed boundary. Do not skip byte verification or redefine compared state to force a pass.
+
+Expected cost and risks
+Saving 85 MB per capture is material enough to screen, unlike another tiny QSA reduction. It saves roughly 170 MB of physical memory read+write traffic per capture. No measured copy bandwidth is available here, so no latency or endpoint saving is claimed. Reverse restore can issue up to three smaller copies on a miss rather than one full copy; descriptor/host overhead may offset gains, and repeated writes to common scratch must be restored in exact reverse order. A failed or partially executed row must poison the owner; incomplete write-set recovery cannot become a retry policy.
+
+Smallest falsifying gate
+CPU fixture: extend existing real StageRing/CheckpointRing fixtures to write distinct sentinels into all three physical banks. Cover pending depths one/two/three, repeated bank reuse, spare rotation, accepting a prefix then rejecting the suffix, corrected replay, reset, and a 31/32 extent transition. Compare every allocation byte, inactive bank, metadata field, and output against the current full-snapshot reference after every operation. Preserve the current 2,065-source target-state comparison.
+
+Then an assigned native single-stage test must capture actual prepared command write IDs and prove untouched-bank hashes stay unchanged during one ROW for every bank pair. Any unexpected writer falsifies the proposed write-set. Only after that gate should capture/restore phases receive isolated wall/device timing and one complete acceptance/miss workload comparison. Stop if the whole-cycle saving is below a material threshold. No broader rollback abstraction is proposed.
+
+Decision: retain as a new, unimplemented discovery. The 52.67% slot-payload opportunity is supported by actual layout bytes; legality of one-bank writes and whole-request speed still require the stated gates.

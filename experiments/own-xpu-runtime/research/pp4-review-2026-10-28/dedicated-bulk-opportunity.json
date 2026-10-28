@@ -1,0 +1,51 @@
+{
+  "schema": "ownrt.dedicated-bulk-opportunity-screen.v1",
+  "scope": "Retained actual121854-prompt PP4 single warmed long diagnostic; no dedicated bulk measurement or three-stage projection",
+  "source": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/candidate-long/matched-result.json",
+  "source_sha256": "72fea3afdb2c0c800be13d55e6de1b661e93289cf4497cb02957df654a3a9b51",
+  "actual": {
+    "prompt_tokens": 121854,
+    "replayed_prefix": 121852,
+    "chunks": 476,
+    "prefill_wall_s": 522.3179874189664,
+    "full_response_s": 524.2727841499727,
+    "target_host_command_work_sum_s": 674.7107655849541,
+    "target_per_stage_command_work_s": [
+      125.58091153413989,
+      177.81411767052487,
+      174.39288944553118,
+      195.42639262787998
+    ],
+    "target_active_union_s": 437.279223476653,
+    "mixed_target_and_draft_phase_s": 98.11098103469703,
+    "draft_replay_host_command_work_s": 169.74827238090802,
+    "exposed_draft_only_s": 84.6581631138688,
+    "other_s": 0.3806008284445852
+  },
+  "conditional_current_PP4_timeline_opportunity": {
+    "condition": "Hold measured four-target work/active timeline unchanged; perfectly hide only already-exposed draft-only phases using separate queue with zero new overhead",
+    "ideal_prefill_s": 437.6598243050976,
+    "maximum_savings_under_condition_s": 84.6581631138688,
+    "prefill_time_reduction_percent": 16.208165361527563,
+    "prefill_rate_ratio": 1.1934337090416887,
+    "scope": "conditional opportunity accounting, not a universal lower bound or prediction for three target stages; target and draft work sums overlap and cannot be added"
+  },
+  "descriptive_current4stage_mean_chunk_service": {
+    "target_stage_s": [
+      0.26382544439945355,
+      0.37355907073639677,
+      0.36637161648220834,
+      0.4105596483778991
+    ],
+    "draft_replay_s": 0.3566140176069496,
+    "warning": "Aggregate observed means only; final chunk shorter and latency/bursts differ; no inference about unmeasured3stage allocation"
+  },
+  "source_stream": {
+    "raw_hidden_bytes_per_full256_chunk": 10485760,
+    "raw_hidden_prefix_bytes": 4991057920,
+    "warning": "Transport demand accounting only; existing colocated replay already consumes raw hidden host chunks, so this is not asserted additional bandwidth"
+  },
+  "decision": "Material enough to qualify a bounded dedicated chunk handoff/replay experiment: approximately84.66s of exposed replay exists in retained PP4 wall; depth3 decode remains behind incumbent controls, so no decode promotion. First largest unknown is actual3stage OP15/replay overlap throughput including authenticated capture/copy/parity lifetimes, not byte-capacity feasibility.",
+  "smallest_falsifying_test": "After native CPU protocol gate, run two adjacent actual256-row chunks with real stage0 token-source and final raw-hidden source receipts, dedicated no-head replay, strict final target/draft/canonical-pair parity versus sequential execution; measure actual target active union, replay command duration, transport/capture and exposed replay. If replay cannot remain bounded behind next target chunk or authentication/lifetimes require substantial serialization, stop before a long run. If passed and material headroom remains, one full identical121854/8 warmed measurement on same loaded process.",
+  "design": "dedicated-provider-plan.txt: authenticated distinct chunk publication, bounded10MiB owned capture, readonly real stage0/final maps, prompt lookahead authority, provider ACK serial before rolling adoption; ordinary accepted-seed journals are not bulk receipts"
+}

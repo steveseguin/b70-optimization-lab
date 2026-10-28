@@ -1,0 +1,85 @@
+{
+  "scope": "CPU-only owner-requested hypotheses; no implementation/device work",
+  "discoveries": [
+    {
+      "id": "combined-attention-and-draft-owner",
+      "status": "new-owner-hypothesis-CPU-budget-only-unimplemented",
+      "idea": "Place existing draft plus a target-attention owner on the same third GPU, with two target GPUs and fourth GPU free.",
+      "evidence": [
+        "attention-owner-capacity-screen.json",
+        "attention-owner-capacity-screen.txt",
+        "dedicated-bulk-opportunity.json"
+      ],
+      "capacity_budget": {
+        "attention_owner_projection_bytes": 15086000964,
+        "actual_full262K_draft_census_bytes": 3746249732,
+        "arithmetic_sum_bytes": 18832250696,
+        "margin_to30GiB_before_unknowns_bytes": 13380004024,
+        "scope": "Sum of separate-owner projection and actual separate draft census; combined transport/runtime duplication and allocator fit unmeasured."
+      },
+      "hypothesis": "May use mostly-empty dedicated draft card more effectively than requiring an exclusive fourth attention GPU, preserving full target context caches remotely.",
+      "largest_unknowns": [
+        "shared GPU queue contention and priority between12dependent attention RPCs per target token and draft work",
+        "per-layer transaction/rollback ownership so one target cannot erase another committed attention state",
+        "combined capture/copy/transport/runtime buffers and actual30GiB admission"
+      ],
+      "small_falsifying_test": "One actual QSA-layer authenticated replay interleaved with existing real draft steps on same owner/queue, preserve exact attention state/output and draft proposals; measure tail latency and backpressure against isolated runs before implementing12layer protocol. No GPU or implementation yet.",
+      "limitation": "No actual combined fit, speed, or lossless-quality result; approximate7ms draft cost is workload-dependent and not a new measurement."
+    },
+    {
+      "id": "stateless-target-head-on-draft-owner",
+      "status": "new-owner-hypothesis-actual-byte-census-unimplemented",
+      "idea": "Move stateless full target output head to existing draft GPU; possibly replace draft prefix-head allocation only after authority/format equivalence is verified.",
+      "evidence": [
+        "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage1/native/census.json",
+        "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/census.json"
+      ],
+      "actual_census_bytes": {
+        "target_output_weight": 521472000,
+        "draft_shared_head_host": 191923200,
+        "conditional_provider_net_extra_weight": 329548800,
+        "conditional_target_weight_freed": 521472000,
+        "scope": "Exact live device label byte counts; replacement/reuse of different formats not established, scratch and transport not included."
+      },
+      "largest_unknowns": [
+        "actual target full-head cost and strict ordered norm/input/argmax/logits semantics",
+        "target head authority/quantization/layout versus draft prefix head compatibility",
+        "shared GPU queue and MTP contention plus RPC lifetime/latency"
+      ],
+      "small_falsifying_test": "One authenticated correctly normalized target hidden row through real full-head implementation on draft owner, compare exact target logits+argmax with incumbent and measure end-to-end RPC cost. Only then consider replacing prefix storage or routing target outputs.",
+      "limitation": "Could improve tight target128K capacity; no fit or endpoint performance claim and no assumed reuse/arithmetic equivalence."
+    }
+  ],
+  "actual_head_source_receipts": [
+    {
+      "source": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage1/native/census.json",
+      "sha256": "81e743b92f7cc3112fd36044181ba9c66c6fe29d563ef080f8284c78f9c7f498",
+      "allocation": [
+        {
+          "id": 10025,
+          "label": "card0:weight:output.weight",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 521472000,
+          "live": true
+        }
+      ]
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/census.json",
+      "sha256": "166e660fd8a5a6000869c0d2c5a943ed7ae1753ed76907c2bc9a04bec3d64a7d",
+      "allocation": [
+        {
+          "id": 2540,
+          "label": "card0:draft:shared-head-host",
+          "category": "weights",
+          "lifetime": "process",
+          "memory": "device",
+          "bytes": 191923200,
+          "live": true
+        }
+      ]
+    }
+  ]
+}

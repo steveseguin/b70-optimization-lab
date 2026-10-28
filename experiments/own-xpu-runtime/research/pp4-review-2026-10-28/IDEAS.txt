@@ -1,15 +1,16 @@
 Broader SC117 experiment queue — owner steering, 2026-10-28
 
-Campaign status (2026-10-28): two-chunk prefill, near-capacity and lifecycle
-checks passed; services from those runs stopped cleanly. Real per-token 3+1
-passed full parity (2065 target sources, 73 draft sources, 1707 pairs, 32 outputs).
-Initial matched 512-output decode was a loss: 3+1 first99/all511 intervals
-42.17/43.20 tok/s versus PP4 51.81/52.16, one sample each with exact output IDs.
-The early-capture gate has clean all-four shutdown and awaits strict parity;
-its measured candidate is next. A capture-enabled 2+1 at64K qualification plan
-is CPU-ready;128K remains parser-refused and262K exceeds current two-target
-memory. backlog.json carries current evidence. Ranked first-test suggestions
-below remain historical hypotheses where later evidence supersedes them.
+Campaign status (2026-10-28): PP4 overlap/capacity/lifecycle and per-token
+3+1/2+1 full-state gates passed. Early capture improved 3+1 decode to49.58 tok/s,
+still below PP4 52.16. At64K, matched512 all511 intervals measured dedicated2+1
+51.2885 versus native2GPU 67.6543 tok/s (24.19% lower); all512 IDs exact and both
+lifecycles clean. Native control uses split23/depth1; dedicated uses split25/depth3.
+A128K SHORT state gate is active; long128K remains unqualified. Dedicated bulk
+patches are isolated, not canonical or GPU-qualified. CPU observer ON failed
+all-logit equivalence; six independent CPU disagreements remain unresolved.
+Combined attention/draft owner and stateless head relocation are new hypotheses
+recorded in combined-owner-discoveries.json. Ranked suggestions below retain
+historical hypotheses where later evidence supersedes them.
 
 Purpose: faster exact single-conversation inference and useful native long
 context in the owned Intel Xe engine. Explore architecture changes alongside
@@ -18,27 +19,22 @@ sample, and a sustained decode result. No draft training or host-setting changes
 These are research hypotheses, not installed features or performance promises.
 
 DECISION NOW
-Finish strict early-capture parity, then one matched 512-output-cap candidate
-measurement against saved controls. Keep load/prompt and decode timing separate;
-do not rerun unchanged controls. Next evaluate the CPU-ready 2+1 at64K gate with
-explicit cross-context prefix/zero-tail state checks before timing. Dedicated
-bulk prefill is a separate future gate. The completed PP4 two-chunk control is
-121,854-token full response 846.94 -> 524.27 s, identical eight outputs, no cached
-tokens;262,136 prompt +8 output capacity and clean lifecycle also passed. Continue
-material architecture/kernel discovery without a broad restart/sweep campaign.
+Complete the bounded128K short gate; do not infer long-context qualification.
+Review dedicated bulk's authenticated prefix/seam prototype, then qualify before
+long timing. Its conditional PP4 exposed-replay opportunity is16.2% of prefill
+wall time, not a measured dedicated-topology speedup. Keep saved decode losses
+visible and pursue combined-owner capacity ideas with small falsifying tests.
+No unchanged control reruns or broad restart/sweep campaign.
 
 TOPOLOGY MATRIX
 Layout                 Main question / current status
 4 target, shared draft Current 262K control; prefill overlap measured.
-3 target + 1 draft     Real role implemented; full per-token parity passed.
-                      Initial sustained decode lost to PP4. Early capture now
-                      seeks safe overlap; gate clean, strict parity pending.
-                      Dedicated bulk prefill/reset are not yet qualified.
-2 target + 1 draft     Capture-enabled64K native CPU plans pass; runtime gate is
-                      next after current measurement. Actual owned targets
-                      28.897/29.937GB exclude retained/driver peak.128K parser
-                      refuses;262K target weights+KV alone69.613GB exceed the
-                      two-card64.425GB cap before scratch/state.
+3 target + 1 draft     Full per-token/capture parity;49.58 tok/s sustained decode
+                      remains below PP4 52.16. Bulk/reset unqualified.
+2 target + 1 draft     Full64K parity and512 matched timing complete;51.29 vs
+                      native2GPU67.65 tok/s. Actual target censuses29.661/30.142GB,
+                      draft3.205GB.128K SHORT gate active; no long128K claim.
+                      Two-target262K remains capacity blocked.
 2 target + draft + KV  Ambitious capacity variant: fourth card owns full-value
                       KV pages. Test actual QSA gather/copy volume first; remote
                       page traffic can erase the memory advantage.

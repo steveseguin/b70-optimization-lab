@@ -1,0 +1,52 @@
+{
+  "schema": "ownrt.initial-cold-long-matched-screen.v1",
+  "prompt_tokens": 121854,
+  "output_ids": [
+    27775,
+    383,
+    279,
+    3766,
+    26622,
+    1528,
+    11,
+    1532
+  ],
+  "prompt_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+  "binary": "29471eb0bab9",
+  "dedicated_request_seconds": 1027.578849336016,
+  "PP4_request_seconds": 714.8151691760868,
+  "PP4_first_token_seconds": 713.4344351800391,
+  "dedicated_over_PP4_time_ratio": 1.4375448278754748,
+  "PP4_time_reduction_percent": 30.436951905153137,
+  "PP4_prefix_timing": {
+    "schema": "rolling-prefill-host-wave-wall-v2",
+    "total_wall_s": 691.2345969669987,
+    "target_command_work_wall_s": [
+      171.1473979742732,
+      217.6674503920367,
+      214.20638210652396,
+      235.16132301813923
+    ],
+    "target_work_wall_s": 839.6965225536842,
+    "draft_replay_work_wall_s": 173.55966880370397,
+    "target_only_phase_wall_s": 504.22997370315716,
+    "mixed_phase_wall_s": 102.47482949029654,
+    "draft_only_phase_wall_s": 84.13349145231768,
+    "other_wall_s": 0.3963023212272674
+  },
+  "dedicated_prefix_timing": {
+    "schema": "dedicated-sequential-prefill-host-wall-v1",
+    "total_wall_s": 1007.8825367310783,
+    "target_command_work_wall_s": [
+      290.18234335503075,
+      257.6847502505407,
+      251.35443572641816
+    ],
+    "draft_replay_work_wall_s": 204.52132348821033,
+    "scope": "sequential host wall durations; no overlap/speed claim"
+  },
+  "clean_lifecycles": true,
+  "conditions": "One first-inference121854/8 sample each. Same binary/model/precision, fresh private caches; dedicated cuts17/33 independent draft43 sequential OP28, PP4 cuts8/21/34 colocateddraft23 six-phase pipelined OP9. Dedicated flatcopyfalse/PP4true; PP4 existing first coldRESET excluded from server metric, dedicated noreset. Clientwall not comparison metric.",
+  "conclusion": "PP4 completed this matched screen sooner; no topology-only causal attribution, headline/suite throughput or independent CPU quality claim.",
+  "next": "Reviewed dedicated stage-pipeline scheduler CPU tests then full state/pair gate before any timing."
+}

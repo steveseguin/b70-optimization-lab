@@ -1,0 +1,42 @@
+{
+  "schema": "ownrt.2plus1-128k-capacity-screen.v1",
+  "status": "CPU projection only; 128K admission and runtime allocation unvalidated",
+  "cut": [
+    0,
+    25,
+    48
+  ],
+  "context": 131072,
+  "cap_bytes": 32212254720,
+  "baseline_context": 65536,
+  "baseline_conservative_bytes": [
+    29800132328,
+    30216990880
+  ],
+  "cache_bytes_per_position_per_target": 28416,
+  "context_delta_bytes_per_target": 1862270976,
+  "projected_conservative_bytes": [
+    31662403304,
+    32079261856
+  ],
+  "margin_bytes": [
+    549851416,
+    132992864
+  ],
+  "rope_plan_budget_bytes_per_target": 100663296,
+  "rope_actual_prefix_bytes_at128k": 50331648,
+  "wrong_scratch_fallback_increment_bytes": 260046848,
+  "gpu_work": false,
+  "canonical_edits": false,
+  "parent_reported_actual64k_initial_census_bytes": {
+    "target0": 29661143540,
+    "target1": 30141558944,
+    "provider": 3205184516,
+    "scope": "initial census includes ring; not final runtime peak",
+    "source": "parent runtime report 2026-10-28"
+  },
+  "actual64k_initial_plus_cache_and_rope_delta_projection_128k": [
+    31548580340,
+    32028995744
+  ]
+}

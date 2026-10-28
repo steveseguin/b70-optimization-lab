@@ -1,0 +1,73 @@
+{
+  "schema": "ownrt.dedicated-capture512-bundle-archive.v1",
+  "archive": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-capture512-r1-state-bundles.tar.zst",
+  "sha256": "9af5470972c4b303a10442efb3fb4793f6ea371e8ba27c7586e37d8683ae51fa",
+  "bytes": 306628819,
+  "paths_relative_to": "/dev/shm/sc117-dedicated-capture512-20261028-r1",
+  "directories": [
+    "output/stage0/native/state-2147483647",
+    "output/stage1/native/state-2147483647",
+    "output/stage2/native/state-2147483647",
+    "output/stageprovider/native/provider-dump-2188",
+    "output/stageprovider/native/provider-finish-2189"
+  ],
+  "source_bundle_bytes": [
+    {
+      "path": "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+      "bytes": 5063394056
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+      "bytes": 5015951364
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage2/native/state-2147483647/state.bundle",
+      "bytes": 5013102760
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stageprovider/native/provider-dump-2188/state.bundle",
+      "bytes": 638509378
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stageprovider/native/provider-finish-2189/state.bundle",
+      "bytes": 638509378
+    }
+  ],
+  "full_tar_compare_passed": true,
+  "commands": [
+    [
+      "tar",
+      "-cf",
+      "-",
+      "-C",
+      "/dev/shm/sc117-dedicated-capture512-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-capture512-archive-control-r1/candidate-dirs.txt"
+    ],
+    [
+      "zstd",
+      "-T4",
+      "-3",
+      "-c"
+    ],
+    [
+      "tar",
+      "--use-compress-program=zstd -d",
+      "-df",
+      "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-capture512-r1-state-bundles.tar.zst",
+      "-C",
+      "/dev/shm/sc117-dedicated-capture512-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-capture512-archive-control-r1/candidate-dirs.txt"
+    ]
+  ],
+  "elapsed_seconds": 23.256611144985072,
+  "deleted_bundle_files": [
+    "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stage2/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stageprovider/native/provider-dump-2188/state.bundle",
+    "/dev/shm/sc117-dedicated-capture512-20261028-r1/output/stageprovider/native/provider-finish-2189/state.bundle"
+  ],
+  "deleted_bundle_bytes": 16369466936
+}

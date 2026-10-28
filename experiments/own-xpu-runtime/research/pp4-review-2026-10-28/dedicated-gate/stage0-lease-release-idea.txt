@@ -1,0 +1,86 @@
+Stage0 seed lease after capture ACK: CPU-only audit, 2026-10-28
+Decision recommendation: do not implement for the current3+1 decode schedule.
+Native ownership permits earlier release, but the remaining steady dependency
+is target verification, not that source pointer. Actual observed opportunity
+for the required JOINT commit release is only1.024ms in511 output intervals.
+Reconsider only if another measured regime has materially more final completions
+inside provider work. No canonical/runtime/device modifications performed.
+
+Exact native ownership:
+LivePeers.capture owns SeedRecord, FinalRecord and full raw hidden vector.
+Owner.run copies Input/ExpectedPair, checks boundary+native final/seed ancestry
+and Sequence.admit, then emits capture ACK before arithmetic. The CPU actual
+run_loop test overwrites BOTH source maps at ACK and still passes canonical
+state/recursive restore. The provider shell has no target layers/state banks;
+its recursive restore touches provider-private allocations only. Therefore the
+old seed journal does not need to remain published after ACK for native math.
+Independent provider_busy must still prevent the next provider command until
+current canonical+recursive+restore completion. No canonical serial speculation.
+
+Why removing the stage0 ACCEPT hold alone yields no steady work:
+- DedicatedArbiter.row_allowed ALREADY allows tentative stage0 ROW during the
+  separate provider job; only non-tentative rows beyond held seed are blocked.
+- RollingCoordinator._accepts explicitly blocks stage0 and final ACCEPT for an
+  active provider job, in addition to Arbiter.accept_allowed.
+- More fundamentally, ring_coordinator.complete invokes _verified ONLY after
+  final ACCEPT. _verified appends verified output and marks the next Work
+  verified. A final ROW result alone does not verify the next stage0 seed.
+- For current provider seed p, stage0 has already ACCEPTed p by admission, and
+  final p-1 is already ACCEPTed. Future p+1 is unverified until final p ACCEPT.
+  Work.verified is a separate mandatory ACCEPT condition. Releasing only the
+  stage0 source hold while retaining final ACCEPT hold cannot make p+1 eligible.
+  Never ACCEPT a speculative row merely to free a slot or predict target truth.
+
+Actual capture512 event evidence (stage0-lease-audit.json):
+All511 steady ACKs have stage0 committed=seed+1 and last final ACCEPT=seed-1.
+Stage0 pending at ACK:0 in148,1 in194,2 in169 windows; stage0 already busy ROW
+in232, idle in279. Thus it is not accurate to call all windows capacity-full.
+No new stage0 command is issued between ACK and provider completion. Existing
+in-flight stage0 ROW can finish; exact log finds just1 completion during the
+provider job (seed+2, finishing an older proposal horizon). Future tentative ROW
+eligibility also depends on actual available prefix-bound proposals, which the
+new provider batch does not publish until restored completion. Current data
+cannot blame the old source-pointer lease for missing future proposals.
+
+To obtain even a theoretical new stage0 ACCEPT, release final ACCEPT too.
+Only1/511 final ROWs finishes before provider completion: provider seq1678,
+seed/final-row position1678, remaining host interval1.024013967ms. In the other
+510 windows, target computation has not returned a result early enough for an
+ACCEPT. The1.024ms is a fixed-schedule optimistic residual, not a GPU-duration or
+predicted speedup. Final ACCEPT+stage0 ACCEPT+host dispatch consume part of it;
+future proposal readiness remains required. This bound is not a general claim
+about different models/contexts/topologies or a future changed schedule.
+
+Necessary semantics if a future regime justifies joint early commit:
+1. Keep immutable current job/captured status separate from bounded NEXT seed
+   and NEXT final-parent leases. Existing Arbiter.local_accepted refuses job
+   active, final_committed refuses job active/unconsumed parent, and
+   complete_dedicated clears local_seed/parent. Removing only guards would drop
+   or misbind the next authenticated seed/parent. Need one explicit queued pair,
+   advanced only after current serial completion; never two provider jobs.
+2. A newly accepted final p publishes the raw parent needed for provider p+1.
+   Do NOT let final ROW p+1 overwrite that uncaptured new FinalRecord/hidden
+   while provider p is still busy. Old job ACK releases only its old parent;
+   it does not capture the queued new parent. Global parent_captured=True must
+   not accidentally grant the next parent permission. Native next job must
+   still read actual source journals, not a controller-invented replacement.
+3. Similarly retain queued seed p+1 publication until its own capture ACK.
+   Known prompt rows could otherwise ACCEPT farther and overwrite it even
+   though decode happens to limit verification naturally. Bound queue to1.
+4. Target mismatch rollback may discard unverified suffixes while the current
+   independent provider restores. Only truth-verified rows may commit. Preserve
+   cuts, immutable job prefix, and reject/censor stale returned proposals by
+   the existing actual-prefix rules; do not publish new speculative truth.
+5. Provider failure after ACK poisons request; target progress may already have
+   streamed another verified token. Halt/retain fault, no retry/recovery rewind.
+   Cancellation/normal cap must drain current provider and explicitly consume
+   or account queued leases; FINISH must refuse unresolved provider work.
+6. Tests must cover queued same/cross-prefix parents, overwrite refusal until
+   each NEXT capture, raw fixture ordinals, target rollback while provider busy,
+   callback/compute failure, cap/cancel and final serial equality. Existing full
+   target2065/draft73/pair/head/guess verification must remain intact.
+
+Root was sent the concrete zero-stage0-only /1.024ms-joint findings. This closes
+an attractive but low-yield lever for current3+1 evidence;2+1 gate/timing remains
+the next authorized material experiment. No new proof scaffolding or GPU run is
+requested for this audit.

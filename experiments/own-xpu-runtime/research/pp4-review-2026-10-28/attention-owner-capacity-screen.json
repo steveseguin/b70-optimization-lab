@@ -1,0 +1,1138 @@
+{
+  "schema": "ownrt.attention-owner-per-device-projection.v1",
+  "scope": "CPU projection using actual native plans and live retained allocation census; no runtime fit or performance claim",
+  "actual_3stage_checkpoint_geometry_validation": [
+    {
+      "stage": 0,
+      "slot_bytes": 161346704,
+      "table_bytes": 26528,
+      "exact_match": true
+    },
+    {
+      "stage": 1,
+      "slot_bytes": 71043468,
+      "table_bytes": 23072,
+      "exact_match": true
+    },
+    {
+      "stage": 2,
+      "slot_bytes": 68194864,
+      "table_bytes": 21952,
+      "exact_match": true
+    }
+  ],
+  "current_2plus1_no_offload": {
+    "2": [
+      {
+        "begin": 0,
+        "end": 25,
+        "packed_and_other_weight_bytes": 26934047872,
+        "base_device_bytes_before_ring_legacy": 34608571656,
+        "removed_QSA_bytes": 0,
+        "removed_allocations": [],
+        "ring_slot_bytes": 225498248,
+        "ring_table_rows": 1187,
+        "ring_two_tables_per_slot_bytes": 75968,
+        "ring_total_bytes": 451148432,
+        "legacy_image_and_tables_budget_bytes": 226546824,
+        "projected_device_bytes": 35286266912,
+        "projected_margin_bytes": -3074012192,
+        "current_per_slot_256MiB_pass": true,
+        "current_aggregate_512MiB_pass": true,
+        "current_table_rows4096_pass": true
+      },
+      {
+        "begin": 25,
+        "end": 48,
+        "packed_and_other_weight_bytes": 27982069120,
+        "base_device_bytes_before_ring_legacy": 35524217768,
+        "removed_QSA_bytes": 0,
+        "removed_allocations": [],
+        "ring_slot_bytes": 93123112,
+        "ring_table_rows": 1020,
+        "ring_two_tables_per_slot_bytes": 65280,
+        "ring_total_bytes": 186376784,
+        "legacy_image_and_tables_budget_bytes": 0,
+        "projected_device_bytes": 35710594552,
+        "projected_margin_bytes": -3498339832,
+        "current_per_slot_256MiB_pass": true,
+        "current_aggregate_512MiB_pass": true,
+        "current_table_rows4096_pass": true
+      }
+    ],
+    "3": [
+      {
+        "begin": 0,
+        "end": 25,
+        "packed_and_other_weight_bytes": 26934047872,
+        "base_device_bytes_before_ring_legacy": 34608571656,
+        "removed_QSA_bytes": 0,
+        "removed_allocations": [],
+        "ring_slot_bytes": 225525896,
+        "ring_table_rows": 1205,
+        "ring_two_tables_per_slot_bytes": 77120,
+        "ring_total_bytes": 676809048,
+        "legacy_image_and_tables_budget_bytes": 226574472,
+        "projected_device_bytes": 35511955176,
+        "projected_margin_bytes": -3299700456,
+        "current_per_slot_256MiB_pass": true,
+        "current_aggregate_512MiB_pass": false,
+        "current_table_rows4096_pass": true
+      },
+      {
+        "begin": 25,
+        "end": 48,
+        "packed_and_other_weight_bytes": 27982069120,
+        "base_device_bytes_before_ring_legacy": 35524217768,
+        "removed_QSA_bytes": 0,
+        "removed_allocations": [],
+        "ring_slot_bytes": 93150760,
+        "ring_table_rows": 1038,
+        "ring_two_tables_per_slot_bytes": 66432,
+        "ring_total_bytes": 279651576,
+        "legacy_image_and_tables_budget_bytes": 0,
+        "projected_device_bytes": 35803869344,
+        "projected_margin_bytes": -3591614624,
+        "current_per_slot_256MiB_pass": true,
+        "current_aggregate_512MiB_pass": true,
+        "current_table_rows4096_pass": true
+      }
+    ]
+  },
+  "best_balanced_attention_owner": {
+    "2": {
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "depth": 2,
+      "targets": [
+        {
+          "begin": 0,
+          "end": 25,
+          "packed_and_other_weight_bytes": 26934047872,
+          "base_device_bytes_before_ring_legacy": 27157748672,
+          "removed_QSA_bytes": 7451027784,
+          "removed_allocations": [
+            {
+              "label": "card0:attention-scores:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:attention-probabilities:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:blk.3.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.3.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.3.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.3.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.3.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.3.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.3.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.3.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.3.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.7.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.7.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.7.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.7.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.7.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.7.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.7.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.7.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.7.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.11.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.11.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.11.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.11.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.11.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.11.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.11.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.11.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.11.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.15.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.15.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.15.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.15.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.15.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.15.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.15.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.15.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.15.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.19.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.19.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.19.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.19.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.19.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.19.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.19.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.19.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.19.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.23.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.23.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.23.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.23.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.23.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.23.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.23.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.23.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.23.qsa.values",
+              "bytes": 536870912
+            }
+          ],
+          "ring_slot_bytes": 223700800,
+          "ring_table_rows": 1114,
+          "ring_two_tables_per_slot_bytes": 71296,
+          "ring_total_bytes": 447544192,
+          "legacy_image_and_tables_budget_bytes": 224749376,
+          "projected_device_bytes": 27830042240,
+          "projected_margin_bytes": 4382212480,
+          "current_per_slot_256MiB_pass": true,
+          "current_aggregate_512MiB_pass": true,
+          "current_table_rows4096_pass": true
+        },
+        {
+          "begin": 25,
+          "end": 48,
+          "packed_and_other_weight_bytes": 27982069120,
+          "base_device_bytes_before_ring_legacy": 28073394784,
+          "removed_QSA_bytes": 7451027784,
+          "removed_allocations": [
+            {
+              "label": "card0:attention-scores:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:attention-probabilities:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:blk.27.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.27.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.27.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.27.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.27.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.27.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.27.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.27.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.27.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.31.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.31.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.31.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.31.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.31.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.31.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.31.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.31.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.31.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.35.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.35.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.35.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.35.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.35.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.35.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.35.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.35.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.35.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.39.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.39.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.39.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.39.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.39.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.39.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.39.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.39.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.39.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.43.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.43.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.43.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.43.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.43.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.43.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.43.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.43.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.43.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.47.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.47.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.47.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.47.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.47.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.47.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.47.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.47.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.47.qsa.values",
+              "bytes": 536870912
+            }
+          ],
+          "ring_slot_bytes": 91325664,
+          "ring_table_rows": 947,
+          "ring_two_tables_per_slot_bytes": 60608,
+          "ring_total_bytes": 182772544,
+          "legacy_image_and_tables_budget_bytes": 0,
+          "projected_device_bytes": 28256167328,
+          "projected_margin_bytes": 3956087392,
+          "current_per_slot_256MiB_pass": true,
+          "current_aggregate_512MiB_pass": true,
+          "current_table_rows4096_pass": true
+        }
+      ],
+      "peak_projected_bytes": 28256167328,
+      "capacity_projection_fits": true,
+      "current_ring_guards_pass": true
+    },
+    "3": {
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "depth": 3,
+      "targets": [
+        {
+          "begin": 0,
+          "end": 25,
+          "packed_and_other_weight_bytes": 26934047872,
+          "base_device_bytes_before_ring_legacy": 27157748672,
+          "removed_QSA_bytes": 7451027784,
+          "removed_allocations": [
+            {
+              "label": "card0:attention-scores:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:attention-probabilities:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:blk.3.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.3.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.3.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.3.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.3.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.3.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.3.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.3.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.3.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.7.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.7.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.7.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.7.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.7.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.7.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.7.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.7.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.7.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.11.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.11.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.11.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.11.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.11.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.11.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.11.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.11.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.11.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.15.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.15.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.15.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.15.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.15.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.15.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.15.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.15.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.15.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.19.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.19.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.19.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.19.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.19.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.19.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.19.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.19.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.19.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.23.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.23.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.23.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.23.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.23.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.23.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.23.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.23.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.23.qsa.values",
+              "bytes": 536870912
+            }
+          ],
+          "ring_slot_bytes": 223700800,
+          "ring_table_rows": 1114,
+          "ring_two_tables_per_slot_bytes": 71296,
+          "ring_total_bytes": 671316288,
+          "legacy_image_and_tables_budget_bytes": 224749376,
+          "projected_device_bytes": 28053814336,
+          "projected_margin_bytes": 4158440384,
+          "current_per_slot_256MiB_pass": true,
+          "current_aggregate_512MiB_pass": false,
+          "current_table_rows4096_pass": true
+        },
+        {
+          "begin": 25,
+          "end": 48,
+          "packed_and_other_weight_bytes": 27982069120,
+          "base_device_bytes_before_ring_legacy": 28073394784,
+          "removed_QSA_bytes": 7451027784,
+          "removed_allocations": [
+            {
+              "label": "card0:attention-scores:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:attention-probabilities:0",
+              "bytes": 787584
+            },
+            {
+              "label": "card0:blk.27.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.27.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.27.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.27.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.27.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.27.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.27.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.27.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.27.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.31.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.31.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.31.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.31.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.31.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.31.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.31.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.31.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.31.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.35.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.35.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.35.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.35.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.35.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.35.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.35.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.35.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.35.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.39.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.39.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.39.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.39.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.39.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.39.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.39.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.39.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.39.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.43.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.43.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.43.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.43.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.43.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.43.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.43.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.43.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.43.qsa.values",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.47.qsa.gate",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.47.qsa.ids",
+              "bytes": 8204
+            },
+            {
+              "label": "card0:blk.47.qsa.iqn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.47.qsa.keys",
+              "bytes": 536870912
+            },
+            {
+              "label": "card0:blk.47.qsa.kn",
+              "bytes": 2048
+            },
+            {
+              "label": "card0:blk.47.qsa.pooled",
+              "bytes": 33554432
+            },
+            {
+              "label": "card0:blk.47.qsa.q",
+              "bytes": 24576
+            },
+            {
+              "label": "card0:blk.47.qsa.raw",
+              "bytes": 134217728
+            },
+            {
+              "label": "card0:blk.47.qsa.values",
+              "bytes": 536870912
+            }
+          ],
+          "ring_slot_bytes": 91325664,
+          "ring_table_rows": 947,
+          "ring_two_tables_per_slot_bytes": 60608,
+          "ring_total_bytes": 274158816,
+          "legacy_image_and_tables_budget_bytes": 0,
+          "projected_device_bytes": 28347553600,
+          "projected_margin_bytes": 3864701120,
+          "current_per_slot_256MiB_pass": true,
+          "current_aggregate_512MiB_pass": true,
+          "current_table_rows4096_pass": true
+        }
+      ],
+      "peak_projected_bytes": 28347553600,
+      "capacity_projection_fits": true,
+      "current_ring_guards_pass": false
+    }
+  },
+  "remote_owner": {
+    "cache_bytes": 14898167808,
+    "per_layer_input_intermediate_output_bytes": 1702032,
+    "norm_weight_duplicate_budget_bytes": 36864,
+    "rope_bytes": 100663296,
+    "attention_score_probability_bytes": 1575168,
+    "operator_scratch_budget_bytes": 8388608,
+    "device_transport_bytes": 409600,
+    "base_device_bytes": 15010943388,
+    "snapshot_versions_budget": 6,
+    "snapshot_storage_upper_bytes": 75057576,
+    "projected_total_bytes": 15086000964,
+    "projected_margin_bytes": 17126253756
+  },
+  "per_target_transport_bytes": 204800,
+  "sources": [
+    {
+      "path": "/dev/shm/sc117-dedicated-3plus1-20261028-r3/output/stage0/native/census.json",
+      "sha256": "e241dbcb0b599d2d11e7ee7df517df5327fdcdd960084bdc5c2f0bc15248c77a"
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-3plus1-20261028-r3/output/stage1/native/census.json",
+      "sha256": "e10673a597c40f6200e2bd0a3563597155c9b960f5ef05b96f7cbc51a61f28c5"
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-3plus1-20261028-r3/output/stage2/native/census.json",
+      "sha256": "8300b48fc7c4fb83aab009eb3d21e47957da549cb23c3c647e5898bfe4580bd5"
+    }
+  ],
+  "limitations": [
+    "Target base sums use actual per-layer allocation census, preserving all packedweights/projections/GDN/host-lookup roles. First-stage temporal alternate+reserve banks re-created from executed conv/gdn producers.",
+    "Legacy first-stage image/table budget is conservative ring-slot superset plus1MiB metadata, not measured constructor demand. Driver/library shadow bytes remain unknown.",
+    "Remote cache/scratch removal is explicit enumerated ownership, not current implemented native feature. Norm weights remain on targets; owner adds small duplicate readonly norms. Transport buffers and snapshot copies are charged.",
+    "Remote six-version storage is an upper budget, not a correct global rollback protocol: layer/transaction partitioning is required to avoid reverting another target canonical update.",
+    "Native two-target262K plan currently refuses30GiB before device initialization; no guards were bypassed. Offloaded projections do not authorize launches."
+  ]
+}

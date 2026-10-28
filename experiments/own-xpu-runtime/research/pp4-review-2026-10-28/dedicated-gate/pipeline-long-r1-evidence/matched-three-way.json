@@ -1,0 +1,54 @@
+{
+  "schema": "ownrt.three-way-first-inference-long-screen.v1",
+  "prompt_tokens": 121854,
+  "output_ids": [
+    27775,
+    383,
+    279,
+    3766,
+    26622,
+    1528,
+    11,
+    1532
+  ],
+  "prompt_i32_sha256": "624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+  "binary": "29471eb0bab9",
+  "pipeline_source_version": "965b3120a",
+  "request_seconds": {
+    "dedicated_sequential": 1027.578849336016,
+    "PP4": 714.8151691760868,
+    "dedicated_stage_pipeline": 605.3878414800856
+  },
+  "pipeline_time_reduction_percent": {
+    "vs_sequential": 41.0859962842496,
+    "vs_PP4": 15.308478668986522
+  },
+  "baseline_over_pipeline_time_ratio": {
+    "sequential": 1.6973893080239841,
+    "PP4": 1.1807557406975124
+  },
+  "pipeline_prefix_timing": {
+    "schema": "dedicated-stage-pipeline-prefill-host-wall-v1",
+    "total_wall_s": 585.6860596510815,
+    "target_command_work_wall_s": [
+      291.21768362878356,
+      258.39332643465605,
+      251.81960547808558
+    ],
+    "draft_replay_work_wall_s": 203.10377076722216,
+    "peak_unfinished_chunks": 2,
+    "scope": "host work durations overlap; full native OP28 ACK releases parity; no GPU duration/speed claim"
+  },
+  "actual_prefix_positions": 121852,
+  "actual_chunks": 476,
+  "clean_returncodes": {
+    "0": 0,
+    "1": 0,
+    "2": 0,
+    "provider": 0
+  },
+  "quality_proof": "pipeline-gate-r1-evidence/summary.json",
+  "scope": "One first-inference121854/8 sample per implementation, exact output IDs and clean lifecycle. Not suite/localmax record or independent CPU model quality proof.",
+  "conditions": "Sequential and pipeline dedicated share3targetcuts17/33, separateprovider43,OP28/flatcopyfalse; changed scheduler only. PP4cuts8/21/34,colocatedprovider23,per-tokenOP9,flatcopytrue,firstcoldRESET before request; no topology-only attribution. All common binary and fresh private caches.",
+  "next": "After verified archive cleanup, apply reviewed2target extension and actual128K bulk/pipeline full gate before timing."
+}

@@ -1,0 +1,18 @@
+Idea8 subexperiment: separate requested proposal depth from target ring capacity.
+CPU audit2026-10-28; actual measured2+1 capacity3/context65536,512 exactsavedoutputs,cleanfinish.
+Evidence:2plus1-measured-speculation-audit.json and audit_speculation.py(actualsourcehashes bound).
+
+511decode intervals took9.963238501s(51.28854438tok/s). Stage0 executed604decodeROWs versusstage1 511:92explicit rejectedrows+1unusedatcap. Actual issued ordinal1:62(44accepted,18rejected);ordinal2:426(360accepted,66rejected);ordinal3:24(15accepted,8rejected,1unused). Counts refer to issued proposal depth ordinal, not mutually independent probabilities. Native ring timings mark speculative=false even for proposed ROWs; acceptance derived from exactrowID+actualACCEPT/rejected records. All511decodeprovider completions actually returned3heads and emitted511captureACKs.
+
+Rejectedstage0 ROW replybusy sum1.275891775s; all93unaccepted1.290535352s. Removing all92rejectedbusy while preserving every useful overlap would give58.82118tok/s. This is a deliberately optimistic work-removal bound, not measuredcriticalpath or predicteddepth1gain. Existing deeperacceptedrows375maylose usefuloverlap atdepth1. Native actualhalfcompletion sums6.9601114s(stage0)/5.9185438s(stage1),replybusy8.548723529/6.012844298s(includecommand bookkeeping). No unsupportedPythonoverhead claim.
+
+Concrete current-code blocker to Python-onlytrue1head:
+engine/src/pipeline/provider_only/runtime.hpp:29 request.depth mustequalcontext.depth; response224Bselectedbycapacity3.
+provider_only/owner.hpp run uses fixedSequence(context.depth),notpercommanddepth.
+recursive_provider/batch.hpp stampsrequested_depth=context_.depth.
+engine/tools/ring_live_wire.py proposal_size only2/3 and decodeexpectsavailable=min(capacity,remaining).
+Therefore nativeOwner/Sequence directdepth1tests do not establishcapacity3/request1wireoperation. Truncating Python publication tofirstguess wouldleave3nativeheadarithmetics and is a different treatment; do notlabelittrue1head.
+
+Smallest truthful nextpatch (requiresrootcoordinationafterpinnedcontrol): explicitrequested_proposal_depth(defaultcapacity,strictint1..capacity) inplan; retainnativeREADYdepth3/checkpointcapacity3/targetring3. NativeproviderOwner usesboundedpercommandrequesteddepth1whilecontext/snapshotsremaincapacity3; wiremetadata separatelyidentifiesrequested1andcapacity-boundframe224B. Pythoncodec validatesexactrequested1,available1,unusedguess1/guess2==-1,reservedzero; noheadprefillavailable0. Schedulerpublishesatmostoneandrefusesoverreturn. Strictdefaultcapacity3unchanged. Qualification requiresoneactualnativeheadtrace,fullcanonicalpair/restoredstate/outputparity,miss/rollback+cap/partialcontext+FINISHCPUcoverage,thenoneGPUfullgateandmatched512timing. Do notimplementunusedabstractionornewcap1nativegeometry.
+
+Decision: upperboundmaterial; true1headcandidatependingnative+wireownershipapproval. No canonicalpatch fabricated because existingprotocoldoesnotsupportit. Awaitcolocateddepth1controlbeforenextdeviceallocation.

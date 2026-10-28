@@ -1,0 +1,31 @@
+Capture512 exact host-overlap evidence (2026-10-28)
+Source /dev/shm/sc117-dedicated-capture512-20261028-r1/output; all4 exit0 and
+passive postflight clean. Full512 IDs match prior dedicated and matched PP4.
+Script analyze_capture_overlap.py; seven CPU schema/interval tests pass.
+Result capture512-host-overlap.json retains511 individual windows + source SHA.
+All2187 canonical provider pairs and capture ACKs source-authenticated before
+classification. Steady domain rawfixture>1, matching measured-critical-path.txt.
+
+Of511 steady provider windows,504 issued final target ROW between validated
+parent-captured ACK and provider-completed log events. All504 are exactly the
+SAME seed row as the provider job, zero unrelated rows. Zero stage0 commands and
+zero final ACCEPT issued in these windows. Only1 final ROW completed before
+provider completion. Old completion-only trace had zero final ROW issuance in
+511 provider windows (event order only, no old wall-clock wait estimates).
+
+Host provider issue->ACK: sum0.254265s, mean0.497584ms, median0.421702ms.
+Host ACK->provider completion: sum3.695479s, mean7.231857ms, median7.223794ms.
+Host provider issue->completion: sum3.949745s, mean7.729441ms.
+Union intersection of final ROW host-inflight intervals with provider postACK
+windows: sum2.542493s, mean4.975524ms/window incl7zeros, median6.306790ms,
+p957.579772ms. Final ROW full host interval mean8.799327ms, median8.752326ms.
+
+These are recorded controller monotonic timestamps. Issued means queued for
+socket send, ACK means received+validated, completed means reply decoded.
+Intervals include IPC, host dispatch/readback and native work. They establish
+that intended host scheduling overlap occurred, not GPU overlap/duration,
+ready-input wait, GPU utilization or causally saved2.542s of decode. Do not
+subtract this overlap directly from total runtime. Root comparative timing
+remains comparison-r2.json; its actual timings/identity are unchanged from
+comparison.json, only stale lease explanation corrected conditionally on the
+explicit dedicated_capture_ready plan flag (six helper tests pass).

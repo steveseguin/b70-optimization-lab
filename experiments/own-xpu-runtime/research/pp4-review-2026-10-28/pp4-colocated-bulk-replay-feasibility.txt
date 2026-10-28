@@ -1,0 +1,82 @@
+PP4 colocated authenticated native chunk replay — source-only backlog, 2026-10-28
+
+Status: feasible bounded extension, not implemented or benchmarked. Next action
+remains the already reviewed dedicated stage-pipeline gate. Wait for actual PP4
+control replay/native component metrics before prioritizing this separate idea.
+Dedicated long121852-prefix figures (204.52s replay,799.22s target,cold) describe a
+different topology/owner and cannot estimate PP4 roundtrip savings.
+
+Current actual path:
+- engine/planning/rolling_provider/prefill.py copies each final_reverse hidden
+  row into stage0 reverse slot, writes reverse_ready + verified canonical ROW_META,
+  then calls provider.command(OP9,confirmed,position,fixture0), one roundtrip/row.
+- engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp OP9 runs
+  provider->run(...,headfalse), then Dispatcher::draft_prefill(r).
+- pipeline/ring/dispatcher.hpp draft_prefill authenticates copied native OP15
+  token queue, expected position and provider.live_position, then advances
+  provider_sequence->prefill(row,parent_token), increments depth0 borrow count,
+  and consumes exactly one token. prefill_complete owns at most two token chunks.
+- There is NO colocated native draft-chunk arithmetic entry point today. Target
+  OP15/ring.prefill is a target-prefix function, not a draft replay implementation.
+  Dedicated provider_only::Owner::prefill IS the reusable native loop pattern:
+  prevalidate copied Sequence, then per row live_step(headfalse) followed by actual
+  Sequence.prefill and actual hidden/pair trace. Do not call recursive depth2/3.
+
+Smallest explicit design, no generic framework:
+- New opt-in colocated-only chunk command (opcode allocation must be checked;
+  dedicated OP28 currently belongs only to dedicated runtime, not ring dispatcher).
+  Preserve current OP9 default and existing OP15 native model arithmetic.
+- Reuse provider_only/prefill.hpp Prompt, Record, immutable pinned prompt SHA,
+  readonly map ownership and Witness capture semantics. Enable actual OP15 record
+  publication for colocated bulk via a NARROW separate flag. Do NOT set
+  pipeline_external_provider: it suppresses colocated prefill_replay ownership
+  and changes target/provider admission semantics.
+- Stage0 already owns consumed token vectors from actual OP15 completions. Bind
+  chunk start/count/parity, real seed/final OP15 command sequences, roles/stages,
+  epoch/request, prompt SHA, before/after prefix, lookahead, full source-record
+  hashes and raw final F32 hidden SHA. Native-check immutable prompt tokens against
+  the real stage0 queue before any arithmetic. Final publisher must record raw
+  final reverse chunk SHA. Current colocated target maps have room for records,
+  but publish is currently gated on pipeline_external_provider and must be adapted.
+- Readonly final-map peer plus stage0 own-map source validation; copy bounded
+  <=256*stream hidden bytes into native-owned Witness before use. Do not pass a
+  mutable host reverse-slot pointer into a chunk loop. Existing map/header
+  identity/inode/geometry/publication-before-after checks remain mandatory.
+- Reuse actual mtp36::DraftRuntime::live_step for every row. Its partitioned borrow
+  saves/restores target engine bindings; legacy optional run() catches errors and
+  returns-1, while live_step deliberately fails closed. A new chunk must poison
+  on arithmetic failure and forbid retry/reset of partial advancement.
+- Prevalidate every no-head Row on a copied real Sequence, then for each completed
+  arithmetic row advance the actual Sequence and depth0 counter exactly once.
+  Keep provider_pending_borrows conservation equal actual serial; never increment
+  provider_commands by chunk count. Consume native prefill_replay only for actual
+  successful rows, and fail the owner on partial chunk failure. No forged ROW
+  tickets, accepted SeedRecord, target commits or OP27 trace entries.
+- Stage0 target OP15 and draft replay share ONE owner/socket/GPU: scheduler must
+  serialize both commands. Keep max2 unfinished chunks and both parity sources
+  leased until full replay ACK. No early-capture ACK needed for first version.
+  ACK can reuse bounded source-bound bulk fields but reply must have actual
+  colocated rank/stage identity (not dedicated rank-1); audit metadata slot1024
+  against colocated live/proposal/reset/capture regions before choosing it.
+
+Exact seam and bookkeeping:
+For chunk targets [start,start+count), replay confirmed prompt[p] at positions
+p=start+1..start+count with hidden from target[p-1], headfalse, correct parent
+prompt[p-1]. Immutable prompt supplies cross-chunk/partial-tail lookahead. Replay
+only bulk=len(prompt)-2 positions; final next_seed=bulk+1. Leave the existing two
+scalar target seam rows and first recursive head path intact. No target ledger
+adoption before full target+draft completion; preserve post-start_async restoration.
+Quiescence/FINISH still require empty queued chunks, provider position/serial equal
+canonical frontier, depth0+pending borrows==serial, capture/restore conservation.
+Persistent reset must refuse unreplayed/failed chunks and clear only healthy state;
+initial experiment should make no reset qualification claim.
+
+Minimal meaningful follow-up gate if component timing justifies work:
+CPU actual native dispatcher+Sequence/DraftRuntime callback tests for >=7chunks,
+partialtail, bad token/lookahead/role/SHA/sequence/parity, source overwrite after
+owned copy, repeated command, partial failure poison, byte-verified depth3rollback
+at seam, pending-borrow totals and clean FINISH. Then one1677prompt32output PP4
+full-state2065target/73draft gate, actual native per-row hiddenSHA+confirmedtoken
+pair parity, authenticated source/ACK journal, full counts (no waived trace scope).
+Only after fullpass run fair matching PP4 long timing; chunk transport removes
+roundtrip/control overhead but retains every draft arithmetic row. No speed claim.

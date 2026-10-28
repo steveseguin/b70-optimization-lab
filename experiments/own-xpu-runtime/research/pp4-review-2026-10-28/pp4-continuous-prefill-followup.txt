@@ -1,0 +1,5 @@
+Continuous PP4 prefill is a distinct followup, not the dedicated stage-pipeline candidate.
+Current PP4 uses a fixed two-chunk/six-phase wave with max2workers: draft(a) overlaps onlytarget3(b), then draft(b) runs alone.
+Potential change: continuous max2parity leases, one shared stage0 command actor for target0 ANDcolocated draft, full replay releases parity. Preserve target/draft FIFO and actual wire sequence; remove only unnecessary phase/inter-wave barriers.
+Use upcoming actual PP4 phase metrics to bound opportunity; no simulation speed claim or source/experiment now.
+Future matched comparison must explicitly label PP4 per-tokenOP9 replay versus dedicated bulkOP28, not attribute all timing difference to GPU placement.
