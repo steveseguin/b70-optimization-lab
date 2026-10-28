@@ -18,6 +18,23 @@ std::vector<const flash::Launch*> prefill_sites;
 Allocation prefill_positions=0,prefill_tokens=0;
 Allocation xg_order=0,xg_tiles=0,xg_count=0;size_t xg_capacity=0;
 uint64_t prefill_chunks=0,prefill_rows_done=0;
+// Request-local ring accounting: native recurrence chunks publish once into the
+// spare bank, while scalar/replayed rows swap per row. No model state is changed.
+unsigned prefill_bank_parity_bias=0;
+void prefill_finish_banks(int rows,bool native,bool replayed) {
+  require(rows>0&&rows<=a.prefill_rows,"prefill bank completion rows");
+  require(!(native&&replayed),"prefill recurrent sites must all be native or all replayed");
+  if(state_spares.empty())return;
+  const unsigned swaps=native?1u:unsigned(rows%2);
+  for(unsigned r=0;r<swaps;++r)swap_state_banks();
+  // Bulk admission excludes pending speculative rows. This bias is fixed
+  // throughout scalar speculation/rollback and cleared only by owner reset.
+  if(a.pipeline_ring)prefill_bank_parity_bias^=swaps^unsigned(rows%2);
+}
+unsigned ring_expected_bank_parity(int position) const {
+  require(position>=0&&prefill_bank_parity_bias<=1,"ring bank accounting bounds");
+  return a.pipeline_first()?(unsigned(position%2)^prefill_bank_parity_bias):0u;
+}
 static std::string prefill_role(const std::string& name) {
   if(!name.starts_with("blk."))return name;
   auto dot=name.find('.',4);require(dot!=std::string::npos,"layer buffer name");return "blk.*"+name.substr(dot);
@@ -365,11 +382,10 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
   drain();
   require(!integer(0,"error"),"sticky rank error in batched prefill");
-  // The position after M single-row steps; banks end where M swaps leave them.
+  // Logical position follows M rows; physical bank publication depends on the recurrence path.
   const uint32_t next=uint32_t(P0+M);put(0,"position",&next,4);
   // Replayed recurrences alternate banks per row (M single-row swaps); native ones leave every row in the spare bank.
-  require(!(banks_native&&banks_replayed),"prefill recurrent sites must all be native or all replayed");
-  if(!state_spares.empty())for(int r=0;r<(banks_native?1:M%2);++r)swap_state_banks();
+  prefill_finish_banks(M,banks_native,banks_replayed);
   if(rows_out){auto raw=readback(0,prefill_shadow("streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
   ++prefill_chunks;prefill_rows_done+=size_t(M);
 #ifndef OWN_RT_HOST_ONLY

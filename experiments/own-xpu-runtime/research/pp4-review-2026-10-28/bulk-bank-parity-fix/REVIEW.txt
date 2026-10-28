@@ -1,0 +1,5 @@
+Native bulk recurrence publishes into spare once per chunk; even chunks therefore differ from scalar position parity. The Engine now accounts that request-local difference only for ring mode. Dispatcher still checks exact expected physical parity and records bias/expected values. Common owner reset clears the bias; redirects preserve it. Scalar checkpoints cannot overlap bulk admission, so their rollback preserves this request-local invariant.
+
+Wavefront prefill is refused by parser main.cpp persistent-ring admission; its scalar parity check is unchanged. Session checkpoint supported() refuses pipeline-enabled engines; non-ring execution never updates the new bias. Arithmetic, kernel selection, bank publication and checkpoint bytes are unchanged.
+
+Actual Host fixture passed eight chunk sequences, independent bank-allocation/content checks, three speculative scalar swaps with full checked snapshot restore, deliberate parity mismatch, and actual cold resets. Native fullmodel qualification remains root responsibility. Preexisting CPU harness compile/link/library setup failures are retained, not native failures.

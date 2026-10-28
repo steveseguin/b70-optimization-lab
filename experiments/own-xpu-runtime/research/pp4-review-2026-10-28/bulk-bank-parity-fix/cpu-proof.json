@@ -1,0 +1,126 @@
+{
+  "schema": "ownrt.bulk-bank-parity-cpu-regression.v1",
+  "passed": true,
+  "scope": "Actual Host Engine bank publication and checked scalar rollback/reset; no model arithmetic, GPU execution or performance claim.",
+  "compile_argv": [
+    "/opt/intel/oneapi/compiler/latest/bin/icpx",
+    "-std=c++20",
+    "-O1",
+    "-fsycl",
+    "-DOWN_RT_HOST_ONLY",
+    "-DP56X_SLEEP20=0",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I",
+    "experiments/own-xpu-runtime/engine/src",
+    "experiments/own-xpu-runtime/engine/planning/test_prefill_bank_parity.cpp",
+    "experiments/own-xpu-runtime/engine/planning/persistent_ring_host_stubs.cpp",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_retire.cpp",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/host_wait_mode.cpp",
+    "-Wl,--gc-sections",
+    "-lcrypto",
+    "-pthread",
+    "-o",
+    "/dev/shm/test-prefill-bank-parity-20261028-r3"
+  ],
+  "compile_prefix": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15"
+  ],
+  "compile_exit_code": 0,
+  "run_argv": [
+    "env",
+    "LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/lib",
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/dev/shm/test-prefill-bank-parity-20261028-r3",
+    "/dev/shm/test-prefill-bank-parity-20261028-r3-output"
+  ],
+  "run_exit_code": 0,
+  "source_sha256": {
+    "experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp": "3c04f26040f1b7b02efb0699494b7c20f0d1d13348087b663b9200c534c0fee5",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp": "2aa4ba4032aaa2b185ecf621a8f6eccb837886d991075e7884c3a4348246cdd5",
+    "experiments/own-xpu-runtime/engine/src/pipeline/ring/persistent_reset.inc": "8e5aed18257432cab5fed87078b7e346b7977874c5246a30aadcb8343c2d6c5a",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/request_reset.hpp": "a3b5f07aee4548d4a6c9d59a42f37acb92984b9f7f2af7b698505f6a291adbd6",
+    "experiments/own-xpu-runtime/engine/planning/test_prefill_bank_parity.cpp": "5e18a75fcbb795ea2f8b8f2759ba1b39ea18037ecd795dad87e012b049817a9e",
+    "experiments/own-xpu-runtime/engine/planning/checkpoint_fixture.hpp": "8ab02e065fab360bca4d59dba66879b1948a6d81c3d1f780b8d32cded01b0ded",
+    "experiments/own-xpu-runtime/engine/planning/persistent_ring_host_stubs.cpp": "aa1372ec7f78a1775b2d230aa2e66fbc1b290e0f0f2540e1ff31662867c76c41",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner.cpp": "422491e64e8c05130af281ba573235c19240897d114522b35a32db90bb9e95c4",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_retire.cpp": "87bada800c6b877505c3bc5c2c036423b1248c31d54206fec6f98a2eae87eeb7",
+    "experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/host_wait_mode.cpp": "53b1ff4db6f0404336a9765164037db58fe8d5243f12c61baf9a00ac757f8a25"
+  },
+  "binary_sha256": "c9af972b6c1d506e9c3b9153f9a456436b9a317ed2993c70fa711c3c39aaa174",
+  "cases": 8,
+  "regression": [
+    "88-row native even prefix reproducing failing code-review geometry",
+    "65 native odd",
+    "256 native full",
+    "256+3 native partialtail",
+    "256 replayed",
+    "3 replayed",
+    "88native+65replayed mixed chunks",
+    "256+256+88 native"
+  ],
+  "checks": [
+    "independent expected active/spare allocation identity and actual buffer values",
+    "3 scalar state publications and exact native checked snapshot restore",
+    "incorrect physical parity still rejected by expected-parity comparison",
+    "actual request_reset zeros accounting and both bank buffers, retains allocations",
+    "zero/over-cap/mixed native-replayed chunk refusal"
+  ],
+  "prior_cpu_harness_failures": [
+    {
+      "attempt": "g++ r1",
+      "result": "Preexisting unguarded dense_decode_v2.hpp includes sycl/sycl.hpp; g++ default includes cannot compile current full-main fixture."
+    },
+    {
+      "attempt": "icpx r2",
+      "result": "Missing historical persistent_ring_host_stubs and owner_retire/host_wait_mode linkage; CPU linker failure, not native execution."
+    },
+    {
+      "attempt": "r3 first run",
+      "result": "libsycl.so.9 missing from shell library search path; process did not enter test. Run with compiler lib path passed."
+    }
+  ],
+  "logs": [
+    {
+      "path": "/dev/shm/test-prefill-bank-parity-20261028-r2.build.log",
+      "sha256": "621db550e3e24b3e5f3ed126c25c5fd3e89ccd0c81387cec7a12d575eff45a43",
+      "retained": "test-prefill-bank-parity-20261028-r2.build.log.gz",
+      "retained_sha256": "52e19b4900cef0dd3d4c5167492247bdda1f91a371f33a8e763921420176a118"
+    },
+    {
+      "path": "/dev/shm/test-prefill-bank-parity-20261028-r2.run.log",
+      "sha256": "980107282d6d4a6d360174128ed4b1406ade169a72b1e33ca46daf974b883a6c",
+      "retained": "test-prefill-bank-parity-20261028-r2.run.log.gz",
+      "retained_sha256": "bfa480d88efa7e1d5cd752e427dec6199dc54e7b035424419eb19818a27f29cf"
+    },
+    {
+      "path": "/dev/shm/test-prefill-bank-parity-20261028-r3.build.log",
+      "sha256": "1dfe4594ba8fbd23c9b8abc7ca4a9257ec186b705660cd910b5eb82d0f2eb1d1",
+      "retained": "test-prefill-bank-parity-20261028-r3.build.log.gz",
+      "retained_sha256": "9d7d8469c8a26592620b2a45106a78d1897289b40bd68dc8d3c069304415a8c9"
+    },
+    {
+      "path": "/dev/shm/test-prefill-bank-parity-20261028-r3.run.log",
+      "sha256": "61b88ecc0baa95b984a20437244618659295e60961cf715e7010a45fad36c6b7",
+      "retained": "test-prefill-bank-parity-20261028-r3.run.log.gz",
+      "retained_sha256": "0c1c8ef25185e622b633481fd3af8c305309ed42afb1c5e99dbfd3f4929be615"
+    },
+    {
+      "path": "/dev/shm/test-prefill-bank-parity-20261028-r3.run2.log",
+      "sha256": "d943be6c0aaa8cc13570d33107346bf9dc5cfd24f05ba8656c1abdf8eee7bdd7",
+      "retained": "test-prefill-bank-parity-20261028-r3.run2.log.gz",
+      "retained_sha256": "ed6409118e27ed690aafe4177b85c93a4ab9f484bf2a0e5a454685cd04014b15"
+    }
+  ]
+}

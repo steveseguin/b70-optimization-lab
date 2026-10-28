@@ -61,6 +61,7 @@ static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* pr
   if(e.buffers[card].count("token_history")){int64_t history[2]={e.p.g.eos,e.p.g.eos};
    e.put(card,"token_history",history,sizeof history);e.put(card,"ple_metadata",e.metadata.data(),e.metadata.size()*8);}
  }
+ e.prefill_bank_parity_bias=0;
  e.history0=e.history1=e.p.g.eos;e.lookup_ids.clear();
  for(auto& selected:e.selected)selected.clear();
  std::fill(e.fp32_sources.begin(),e.fp32_sources.end(),0);std::fill(e.fp32_extents.begin(),e.fp32_extents.end(),0);

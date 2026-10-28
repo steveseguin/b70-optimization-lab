@@ -71,7 +71,7 @@ Reply persistent_reset(const Request& request){
  reopen(trace,"ring.jsonl");if(provider){reopen(draft_trace,"ring-draft-batches.jsonl");reopen(survival_trace,"ring-provider-survival.jsonl");}
  for(const auto* name:{"launch-plan.json","ring-checkpoint-layout.json"}){require(fs::is_regular_file(original_output/name),"ring reset immutable sidecar missing");fs::copy_file(original_output/name,e.a.output/name,fs::copy_options::none);}
  write_request_stage_metadata();
- ring.boundary();checkpoints.boundary();require(!ring.physical()&&!ring.committed()&&!ring.pending()&&!e.integer(0,"error")&&!e.bank_parity&&e.context_extent==32&&e.alternate_context_extent==32,"ring reset cold target boundary");
+ ring.boundary();checkpoints.boundary();require(!ring.physical()&&!ring.committed()&&!ring.pending()&&!e.integer(0,"error")&&!e.bank_parity&&!e.prefill_bank_parity_bias&&e.context_extent==32&&e.alternate_context_extent==32,"ring reset cold target boundary");
  require(!provider||(provider->live_position()==0&&provider->live_extent()==32&&!provider_sequence->serial()&&!provider->recursive_captures&&!provider->recursive_restores&&!provider->recursive_verified_restores&&!provider->recursive_active),"ring reset cold provider boundary");
  const auto inventory_after=allocation_identity();require(inventory_after==inventory_before,"ring reset final allocation identity");
  const auto metadata_sha=hash(std::vector<uint8_t>(d.raw.begin(),d.raw.end()));

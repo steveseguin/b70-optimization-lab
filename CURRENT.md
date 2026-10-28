@@ -79,8 +79,13 @@ matched depth3. All4 owners exited0 and passive postflight was clean. It changes
 both proposal depth and ring capacity. The depth3 full12 arm failed resetting before request04: stage0 reported
 `ring canonical bank parity`; the other owners stopped cooperatively, all4 exited1,
 and passive postflight is clean/no holders. Requests00–03 match saved CPU-qualified
-prompts/outputs, but full12 is unqualified. No further launches; depth2 and2+1
-plans remain unlaunched pending a fix. The earlier A/B/A gate remains limited
+prompts/outputs, but full12 is unqualified. The old depth2 and2+1
+r1 plans remain invalid. The parity-bias fix passed CPU regression; native build
+9599b0bf is running fresh full12 depth3 r2, unit
+`sc117-dedicated-depth3-full12-64k-20261028-r2`, invocation
+`cbc849acb54a401b8d0996b553e3adb8`. Depth2 r2 remains planned; full12 is
+still unqualified. Fix evidence: `bulk-bank-parity-fix/retention-index.json`.
+The earlier A/B/A gate remains limited
 to its tested inputs. Incident: `dedicated-depth2-gate/full12-depth3-r1-incident/index.json`.
 
 The original 244 case is causally explained by exactly one equal-word change:
