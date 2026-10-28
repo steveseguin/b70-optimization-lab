@@ -1,0 +1,58 @@
+{
+  "unequal_rows": 221,
+  "max_abs": 3.0517578125e-05,
+  "rms": 3.916987835338378e-06,
+  "rows": 320,
+  "columns": 10240,
+  "type": "BF16",
+  "native_host_subgroup": 32,
+  "device_route": "OWNRT_DENSE_DECODE_V2=1 => dense_v2::bf16_multi<1,8>, k10240 excludes NEXT2 smaller-k split",
+  "device_bytes": 6595840,
+  "gpu_launched": false,
+  "binary": "/dev/shm/sc117-hc-down-same-input-20261028-r1/device-probe",
+  "source_sha256": {
+    "research/pp4-review-2026-10-28/reference-one-row/hc-down/same-input.cpp": "3e9b685f4512e662d45d8d9be5fa895ec3e6b3f5892b8b7f140b48270d01e7bc",
+    "research/pp4-review-2026-10-28/reference-one-row/hc-down/device.cpp": "4caf118caa316168442ef63d603bea4163a4447fa4ceaa4bd2b1a704413925c6",
+    "engine/src/stage2/packet6-kopt/reference.hpp": "df21e078387b81e57e8783f038bd6fc8a5dccd44087aeb8be4e71b3427e44470",
+    "engine/src/stage2/packet6-kopt/dense_v2.hpp": "3b4bca75362954bdc5d1f6051fa2ff8c7dff55080990ab77cfa2dc3c17d7f7f7"
+  },
+  "output_sha256": {
+    "native-host.f32": "9b762b7aaf586a62213383dc71a61a40abf8bb2f9c089b44befc35763095fd97",
+    "ggml-f64.f32": "f7ab60556cd5d39c643da9586ca0a02805495c1106b3974044ac550e55faa2c5"
+  },
+  "cpu_binary_sha256": "c264261cfb5e617cdb114770a8c5fffe08a24c9fd4087789827b259b089e5f58",
+  "actual_native_specialised_compile": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-std=gnu++20",
+    "-O2",
+    "-g0",
+    "-DP56X_SLEEP20=0",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fsycl",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-Werror=deprecated-this-capture",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "-MMD",
+    "-MF",
+    "/dev/shm/engine-build-dedicated-layout-20261028-r1/15.d",
+    "-c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp",
+    "-o",
+    "/dev/shm/engine-build-dedicated-layout-20261028-r1/15.o"
+  ],
+  "device_binary_sha256": "40b786efb56e8910429ac6513aef2fec327ea5f97b00e93b5dd67d802579f015",
+  "device_compile_numeric_flags": [
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt"
+  ]
+}

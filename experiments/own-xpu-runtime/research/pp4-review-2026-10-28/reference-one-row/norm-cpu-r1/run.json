@@ -1,0 +1,26 @@
+{
+  "argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/dev/shm/sc117-reference-norm-cpu-20261028-r1/exact-logits-norm",
+    "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/input.json",
+    "/dev/shm/sc117-reference-norm-cpu-20261028-r1/on",
+    "8"
+  ],
+  "binary_sha256": "8216e4ad2c1f46caefd907acc1583c2c49d7d7b21dc46c8d144ac461b3803d8e",
+  "source_sha256": "b7bde3003ce84407ce80868fde7f4f2319ad80069ff4558d37249174b3654d7e",
+  "environment": {
+    "GGML_CPU_EXACT_F64": "1",
+    "EXACT_KV": "f32",
+    "OMP_NUM_THREADS": "8",
+    "EXACT_CAPTURE_NORM": "1"
+  },
+  "started": 1793170601.0282907,
+  "returncode": 0,
+  "finished": 1793170784.8893147
+}

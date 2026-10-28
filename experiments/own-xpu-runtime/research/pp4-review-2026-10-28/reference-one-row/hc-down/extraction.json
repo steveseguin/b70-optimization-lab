@@ -1,0 +1,61 @@
+{
+  "tensor": {
+    "type": "BF16",
+    "type_id": 30,
+    "dimensions": [
+      10240,
+      320
+    ],
+    "shape": [
+      320,
+      10240
+    ],
+    "elements": 3276800,
+    "data_offset": 2022958080,
+    "bytes": 6553600,
+    "file_offset": 2033982464,
+    "reserved_span_bytes": 6553600,
+    "payload_extent_validated": true,
+    "shard": "Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf"
+  },
+  "shard_stat_verified": [
+    55063448064,
+    2050,
+    2778523,
+    1792814866970869300,
+    1792814960708461300
+  ],
+  "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+  "header_bytes_read": 11024355,
+  "payload_sha256": "0cf47e5bf283e8974c8d24bb3dfc1aef536b7d0daff9ac69f9ae8f214e6aed6a",
+  "payload_path": "/dev/shm/sc117-hc-down-same-input-20261028-r1/weight.bf16",
+  "input_sha256": "2305f48576e297a0c9d1b5185fa637754ef305a487c2640de2bb8802f81165bb",
+  "input_path": "/dev/shm/sc117-hc-down-same-input-20261028-r1/input.f32",
+  "model_manifest_sha256": "dfec2707adc2459d625f1dfe0add5607e8b2d7e36453f7aed32de5b292348fde",
+  "actual_native_compile_commands_specialised": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-std=gnu++20",
+    "-O2",
+    "-g0",
+    "-DP56X_SLEEP20=0",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fsycl",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-Werror=deprecated-this-capture",
+    "-I",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "-MMD",
+    "-MF",
+    "/dev/shm/engine-build-dedicated-layout-20261028-r1/15.d",
+    "-c",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp",
+    "-o",
+    "/dev/shm/engine-build-dedicated-layout-20261028-r1/15.o"
+  ]
+}

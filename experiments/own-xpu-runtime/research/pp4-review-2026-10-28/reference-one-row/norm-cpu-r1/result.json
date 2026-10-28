@@ -1,0 +1,24 @@
+{
+  "observer_full_logits_bitwise_equal": true,
+  "norm_capture_bytes_each": 40960,
+  "ggml_replay_equals_captured": true,
+  "production_native_host_equals_ggml": true,
+  "unequal_floats": 0,
+  "scope": "Same exact first attention HC norm input/gain at consumed position243; HOST_ONLY native execution, no device equivalence claim.",
+  "source_sha256": {
+    "research/pp4-review-2026-10-28/reference-one-row/exact-logits-norm.cpp": "b7bde3003ce84407ce80868fde7f4f2319ad80069ff4558d37249174b3654d7e",
+    "research/pp4-review-2026-10-28/reference-one-row/norm-same-input.cpp": "bc7d936afc117835da586886b5ac32866fc46aeb19536b916538ec2464d54afe",
+    "engine/src/stage2/packet194-expert-diet-engine/specialised.hpp": "fb613d21b5efe0f55601cb0e4151b7e97589d911994e91ad8f714261019aaa0d",
+    "engine/src/stage2/packet194-expert-diet-engine/kernels.hpp": "df445007fe55a8d10291b9d28fe538372ab219b4bee9d02c530bee8165cd4882",
+    "engine/src/stage2/packet17-detmath/detmath.hpp": "d84dc360ac8c0ab4e93e3c104dd88bd86e64bbbca8558e19151c3e333fbbf434"
+  },
+  "replay_binary_sha256": "fc24826e2be73a943b684d025c5bce3898a1219e83b739a22e555620e16e3571",
+  "replay_compile": "g++-13 -O3 -std=c++20 -ffp-contract=off -DOWN_RT_HOST_ONLY -Iengine/src; linked existing libggml/libggml-cpu/libggml-base archives; nice19 cores8-15",
+  "replay_argv": [
+    "/dev/shm/sc117-reference-norm-cpu-20261028-r1/norm-same-input",
+    "/dev/shm/sc117-reference-norm-cpu-20261028-r1/on",
+    "/dev/shm/sc117-reference-norm-cpu-20261028-r1/replay"
+  ],
+  "cpu_and_native_mean_all_streams": 5.174203579372261e-06,
+  "cpu_and_native_inverse_all_streams": 402.4477844238281
+}

@@ -1,6 +1,23 @@
 # Current Workspace State
 
-**October 28 — Early-capture 3+1 passed exact parity; matched speed test running.**
+**October 28 — Dedicated bulk full gate passed; fair long timing active.**
+Matched cold64K 1677/512 measured dedicated2+1 **50.605 /51.289 tok/s** versus native
+2GPU **68.272 /67.654 tok/s** (first99/all511 intervals): dedicated all511 rate is
+**24.19% lower**. All512 IDs match and both lifecycles are clean; cuts25/depth3 versus
+cuts23/depth1 are explicit treatment differences. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched64k-2plus1-vs-native/).
+The128K short state gate passed (proof `e476c64…`); long128K remains unqualified.
+Dedicated bulk3+1 passed sealed **2065 target/73 draft sources,1707 actual pairs and32
+outputs**, all4owners exited0 (proof `d99f6b6…`, commit `f21da9db8`, binary `29471eb0bab9`).
+Verified state archives released RAM. The first-inference121854/8 dedicated long run is
+active: unit `sc117-dedicated-bulk-long-20261028-r1`, process start07:15:46UTC,
+prefix start07:18:15UTC. Fair PP4 control follows; no bulk timing result yet. Both use
+current common binary, with explicit dedicated flat-copyfalse versus PP4true and PP4
+first-request reset differences. Native HCnorm probe passed10240 bitexact/error0 with
+clean postflight. The next projection differs at221/320 hostF64-versus-native values;
+causality remains unresolved. CPU observer r2
+now preserves original/OFF/ON all logits exactly; the native-vs-CPU layer0 maximum
+difference is8.94e-8 and final difference0.1355. Six independent CPU disagreements
+remain unresolved. Combined-owner discoveries remain in the broader queue.
 - The per-token 3+1 gate on targets 23/27/47 and draft 43 matched all **2,065 target sources, 73 draft
   sources, 1,707 canonical hidden/token input pairs, and 32 output tokens** against the prior four-target
   reference. All four owners exited 0, no holders remain, and postflight matches the fault baseline.
@@ -24,14 +41,18 @@
   [Incident](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/2plus1-r1-incident/index.json).
   The general pipeline now requires neutral legacy V3 settings and retains every explicitly owned layer;
   the old two-rank guard remains active for its own path. An exact-method20-case CPU regression passes.
-- Active: `sc117-dedicated-2plus1-layout64k-20261028-r1`, binary `df2c19c87fe6`, runs the2+1
-  full32-output gate on targets23/47,draft43, context65536,depth3. The earlier initialization point passed.
-  The prior checkpoint admission fix remains: existing256MiB-per-slot/4096-row bounds and complete reserve
-  under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed. Card27 remains empty.
+- The2+1 full32-output gate passed on targets23/47,draft43, context65536,depth3, binary `df2c19c87fe6`.
+  All2065target/73draft sources match:2017+69 exact layouts/hashes,48+4 context arrays with full64K-prefix
+  equality and zero262K extra tails. All1707canonical pairs and32output IDs match; all3owners exited0.
+  Proof `/dev/shm/dedicated-2plus1-comparison-r1/proof.json`, SHA `ae74e5ade58c9a2fd70c1bb1a34b5eb27b9ad585e0b91ef5e854e4076c3897db`.
+- Actual device censuses:29,661,143,540 /30,141,558,944 bytes for targets,3,205,184,516 for draft.
+  The checked checkpoint admission fix retains existing256MiB-per-slot/4096-row bounds and complete reserve
+  under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed.
+- The64K measurements and128K short gate completed cleanly. Dedicated121854/8 timing is active; PP4 first-inference control follows. No resident service.
 - A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
   makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
   screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.
-- Dedicated bulk prefill, persistent reset, 2+1 runtime execution and the full realistic suite remain
+- Sequential dedicated bulk passed full qualification; overlapped bulk, persistent reset, long128K and the full realistic suite remain
   unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
   the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.
 - The complete [optimization backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json)
