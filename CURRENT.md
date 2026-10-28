@@ -7,20 +7,20 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live: the corrected general router tie-order diagnostic is running at
-`/dev/shm/sc117-router-tie-target244-20261028-r2` (invocation
-`c535e05621e14699b15508b8f436f18d`, binary `42458c9016fc`, plan `071ec32b54bd`).
-Startup memory admission and the fault baseline were clean. This default-OFF,
-target-only 244-token/one-output diagnostic preserves selected weight bytes and
-permits changes only between identical actual score words, without a runtime
-CPU oracle. Causality and independent quality remain open.
+Live GPUs are idle after the corrected router tie diagnostic completed cleanly:
+both owners exited 0 and passive postflight matches the fault baseline. The
+244-token case now returns **16568**, matching the independent CPU, versus the
+old native 6343. Exactly one slot changed across 11,712 checked route records:
+position 177/layer 3, expert 62→477, with identical raw F32 word 3231393608 and
+unchanged selected weight bytes. Final logit RMS is 1.38935e-6/max7.62939e-6,
+versus roughly 0.06336/0.426 before treatment; it is still not bitwise CPU parity.
 
-The first attempt stopped on a software binding check before diagnostic
-reads/uploads: the hook omitted Builder-added `active`/`error` inputs. Both
-owners exited 1, no live PIDs remained, and passive postflight was clean. Exact
-binding validation now passes real planner unfused/fused fixtures and malformed
-binding refusals. The original `--max-new 1` was correct; the options-default
-suspicion was superseded. Runtime sources and helpers are frozen during r2.
+This explains one of the six original disagreements through the general,
+default-OFF diagnostic. The other five remain untested; default behavior is not
+promoted. Full 2,110 native state sources and 48 layer captures were retained.
+See `reference-one-row/router-tie-candidate/r2-causal-evidence/index.json` in the
+October 28 research lane. The first run's software binding failure and corrected
+planner/control-input fixture are preserved separately.
 
 Host lookup mapping completed with exact full state and outputs but lost speed:
 copy request 261.499s versus mapped 352.909s; READY improved 144.457s to 75.691s.
@@ -28,14 +28,11 @@ The mapped mode is an opt-in host-memory/startup tradeoff, not promoted for spee
 Stage 0 command time increased 91.787s, tracking the TTFT difference; page faults
 were not captured, so the cause remains unassigned.
 
-Quality: the new 178-token CPU OFF/ON captures are bitwise neutral and both CPU
-and native return 2972. Layer 3 has the first selected-expert disagreement. On the
-same actual native score vector, the existing host/native rule selects 62 while
-real ggml selects 477 at an exact raw-score cutoff tie. The general diagnostic
-above tests causality without an expert-specific override. This does not yet
-resolve the original 244-token mismatch or six independent-reference disagreements.
-See `reference-one-row/prefix178/FINDING-prefix178.txt` and
-`reference-one-row/router-tie-candidate/` in the October 28 research lane.
+Quality lineage: the neutral 178-token CPU/native captures localized the first
+selected-expert divergence to layer 3. Same-input replay showed the native/host
+lower-ID tie rule versus real ggml ordering on equal scores; the full 244-token
+causal diagnostic above confirms that treatment fixes this case. Other inputs
+and a general fidelity policy still require qualification.
 
 The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
@@ -249,7 +246,7 @@ settings/advice changes. GPUs are idle; prefix178 quality diagnostic is being pr
 [Copy control evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/copy-long-r1-evidence/index.json).
 Prefix178 completed cleanly; new CPU OFF/ON logits are bitwise equal and native/
 CPU both emit2972. Layer output RMS rises3.47e-9→8.77e-5 at layer3, where selected
-expert62(native) differs from477(CPU). Replaying the SAME actual native router
+expert 62(native) differs from477(CPU). Replaying the SAME actual native router
 vector exposes a real cutoff tie:62and477 both -4.848545074462891; productionhost/
 native picks62, realggml picks477. On CPU's vector477 is~9.54e-7higher and both
 pick477. This is actual same-input tie-semantics evidence, not yet proof of the244
