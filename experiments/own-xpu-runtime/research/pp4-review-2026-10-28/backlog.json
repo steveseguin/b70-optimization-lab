@@ -249,12 +249,16 @@
     {
       "id": 13,
       "idea": "EXPLORATORY: Native-format expert tiering/prefetch for capacity.",
-      "status": "new-unmeasured",
-      "evidence": [],
+      "status": "CPU-optimistic-static-cache-screened-capacity-only",
+      "evidence": [
+        "expert-tiering-screen.json",
+        "expert-tiering-screen.txt",
+        "screen_expert_tiering.py"
+      ],
       "first_test": "actual route locality and miss-byte census. Large prefill often touches nearly every expert, so reject a cache design with no locality. For the resident four-card target this is a capacity idea, not assumed speed. Sources: https://github.com/doopeworld/GRIMOIRE/blob/main/FLASH-NEXT-TIERED.md and https://github.com/vllm-project/vllm/issues/63666 (RFC, not a B70 result).",
-      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "next_step": "Keep all-resident baseline for speed. Reopen tiering against concrete capacity deficit with held-out route locality, transient staging fit, actual exact transfers and complete model gate. Static-cache result does not reject adaptive or remote execution.",
       "blocker": null,
-      "already_tested_scope": "No test claimed",
+      "already_tested_scope": "Archived production routes: layers24..47,4096tokens each,384groups256rows,mean440.065experts/group. Hindsight-optimal fixed410/512cache frees5.282GB across observed24layers but moves44.925GB compressed expertweights over4096tokens. No GPU, cache-policy, long-context locality or allocation-fit claim.",
       "discovery_open": true
     },
     {

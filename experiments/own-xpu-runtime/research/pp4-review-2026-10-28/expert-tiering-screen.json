@@ -1,0 +1,2060 @@
+{
+  "schema": "ownrt.static-expert-tiering-cpu-screen.v1",
+  "source": "/dev/shm/ownrt-lab-experts/routes-4096.bin",
+  "source_sha256": "73b1cdfc51bc74b8a485a75dcae6276371ad36d942f052d3879451a132efa7ea",
+  "allocation_authority": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/expert-parallel-screen.json",
+  "allocation_authority_sha256": "b4157bb34269732dc3fed95f0cba4d00a3d256661cde054203cbc188db9871d2",
+  "layers": [
+    24,
+    25,
+    26,
+    27,
+    28,
+    29,
+    30,
+    31,
+    32,
+    33,
+    34,
+    35,
+    36,
+    37,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    44,
+    45,
+    46,
+    47
+  ],
+  "tokens_per_layer": 4096,
+  "chunk_rows": 256,
+  "distinct_experts_per_chunk_mean": 440.0651041666667,
+  "policy": "Hindsight-optimal fixed per-layer cache; each missing expert transferred once per chunk and discarded afterward. No live policy or GPU implementation.",
+  "limits": [
+    "Uses archived 4096-token layers24..47, not measured121K locality.",
+    "Assumes all gate/up/down bytes move together and ignores metadata, staging, latency and transfer/compute overlap.",
+    "Transfer sensitivity is not a throughput prediction or a measured bandwidth.",
+    "Cache capacity alone does not establish whole-engine VRAM fit; transient expert buffers and all other allocations remain required.",
+    "This optimistic fixed-cache screen does not reject adaptive caches, remote expert execution, or other route distributions."
+  ],
+  "aggregate": [
+    {
+      "capacity": 128,
+      "observed_24_layers_freed_weight_bytes": 19886899200,
+      "observed_24_layers_4096_tokens_transfer_bytes": 258470246400,
+      "observed_missing_expert_chunk_pairs": 119833,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 15378474836100.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 1922.3093545125,
+        "16": 961.15467725625,
+        "32": 480.577338628125,
+        "64": 240.2886693140625
+      }
+    },
+    {
+      "capacity": 256,
+      "observed_24_layers_freed_weight_bytes": 13257932800,
+      "observed_24_layers_4096_tokens_transfer_bytes": 154268313600,
+      "observed_missing_expert_chunk_pairs": 71564,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 9178663353900.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 1147.3329192375,
+        "16": 573.66645961875,
+        "32": 286.833229809375,
+        "64": 143.4166149046875
+      }
+    },
+    {
+      "capacity": 384,
+      "observed_24_layers_freed_weight_bytes": 6628966400,
+      "observed_24_layers_4096_tokens_transfer_bytes": 61319065600,
+      "observed_missing_expert_chunk_pairs": 28505,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 3648364639400.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 456.045579925,
+        "16": 228.0227899625,
+        "32": 114.01139498125,
+        "64": 57.005697490625
+      }
+    },
+    {
+      "capacity": 410,
+      "observed_24_layers_freed_weight_bytes": 5282457600,
+      "observed_24_layers_4096_tokens_transfer_bytes": 44925388800,
+      "observed_missing_expert_chunk_pairs": 20902,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 2672972888700.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 334.1216110875,
+        "16": 167.06080554375,
+        "32": 83.530402771875,
+        "64": 41.7652013859375
+      }
+    },
+    {
+      "capacity": 448,
+      "observed_24_layers_freed_weight_bytes": 3314483200,
+      "observed_24_layers_4096_tokens_transfer_bytes": 23323212800,
+      "observed_missing_expert_chunk_pairs": 10867,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 1387685608450.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 173.46070105625,
+        "16": 86.730350528125,
+        "32": 43.3651752640625,
+        "64": 21.68258763203125
+      }
+    },
+    {
+      "capacity": 480,
+      "observed_24_layers_freed_weight_bytes": 1657241600,
+      "observed_24_layers_4096_tokens_transfer_bytes": 8607564800,
+      "observed_missing_expert_chunk_pairs": 4015,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 512133293950.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 64.01666174375,
+        "16": 32.008330871875,
+        "32": 16.0041654359375,
+        "64": 8.00208271796875
+      }
+    },
+    {
+      "capacity": 512,
+      "observed_24_layers_freed_weight_bytes": 0,
+      "observed_24_layers_4096_tokens_transfer_bytes": 0,
+      "observed_missing_expert_chunk_pairs": 0,
+      "conditional_48_layers_121852_tokens_transfer_bytes": 0.0,
+      "conditional_transfer_seconds_at_aggregate_GBps": {
+        "8": 0.0,
+        "16": 0.0,
+        "32": 0.0,
+        "64": 0.0
+      }
+    }
+  ],
+  "per_layer": [
+    {
+      "layer": 24,
+      "expert_bytes": 1971200,
+      "distinct_per_chunk": [
+        458,
+        456,
+        465,
+        454,
+        459,
+        472,
+        476,
+        458,
+        464,
+        461,
+        457,
+        456,
+        457,
+        465,
+        464,
+        460
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 252313600,
+          "freed_weight_bytes": 756940800,
+          "missing_expert_chunk_pairs": 5334,
+          "maximum_missing_experts_in_chunk": 348,
+          "transfer_bytes": 10514380800
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 504627200,
+          "freed_weight_bytes": 504627200,
+          "missing_expert_chunk_pairs": 3286,
+          "maximum_missing_experts_in_chunk": 220,
+          "transfer_bytes": 6477363200
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 756940800,
+          "freed_weight_bytes": 252313600,
+          "missing_expert_chunk_pairs": 1338,
+          "maximum_missing_experts_in_chunk": 95,
+          "transfer_bytes": 2637465600
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 808192000,
+          "freed_weight_bytes": 201062400,
+          "missing_expert_chunk_pairs": 974,
+          "maximum_missing_experts_in_chunk": 73,
+          "transfer_bytes": 1919948800
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 883097600,
+          "freed_weight_bytes": 126156800,
+          "missing_expert_chunk_pairs": 483,
+          "maximum_missing_experts_in_chunk": 38,
+          "transfer_bytes": 952089600
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 946176000,
+          "freed_weight_bytes": 63078400,
+          "missing_expert_chunk_pairs": 132,
+          "maximum_missing_experts_in_chunk": 14,
+          "transfer_bytes": 260198400
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1009254400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 25,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        455,
+        469,
+        469,
+        458,
+        464,
+        464,
+        468,
+        464,
+        465,
+        470,
+        460,
+        459,
+        470,
+        471,
+        458,
+        450
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5366,
+          "maximum_missing_experts_in_chunk": 343,
+          "transfer_bytes": 12500633600
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3318,
+          "maximum_missing_experts_in_chunk": 215,
+          "transfer_bytes": 7729612800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1351,
+          "maximum_missing_experts_in_chunk": 92,
+          "transfer_bytes": 3147289600
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 977,
+          "maximum_missing_experts_in_chunk": 66,
+          "transfer_bytes": 2276019200
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 479,
+          "maximum_missing_experts_in_chunk": 36,
+          "transfer_bytes": 1115878400
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 158,
+          "maximum_missing_experts_in_chunk": 15,
+          "transfer_bytes": 368076800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 26,
+      "expert_bytes": 1971200,
+      "distinct_per_chunk": [
+        435,
+        437,
+        456,
+        451,
+        453,
+        455,
+        448,
+        443,
+        451,
+        448,
+        451,
+        438,
+        454,
+        454,
+        436,
+        450
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 252313600,
+          "freed_weight_bytes": 756940800,
+          "missing_expert_chunk_pairs": 5112,
+          "maximum_missing_experts_in_chunk": 328,
+          "transfer_bytes": 10076774400
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 504627200,
+          "freed_weight_bytes": 504627200,
+          "missing_expert_chunk_pairs": 3084,
+          "maximum_missing_experts_in_chunk": 200,
+          "transfer_bytes": 6079180800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 756940800,
+          "freed_weight_bytes": 252313600,
+          "missing_expert_chunk_pairs": 1256,
+          "maximum_missing_experts_in_chunk": 90,
+          "transfer_bytes": 2475827200
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 808192000,
+          "freed_weight_bytes": 201062400,
+          "missing_expert_chunk_pairs": 925,
+          "maximum_missing_experts_in_chunk": 69,
+          "transfer_bytes": 1823360000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 883097600,
+          "freed_weight_bytes": 126156800,
+          "missing_expert_chunk_pairs": 490,
+          "maximum_missing_experts_in_chunk": 42,
+          "transfer_bytes": 965888000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 946176000,
+          "freed_weight_bytes": 63078400,
+          "missing_expert_chunk_pairs": 188,
+          "maximum_missing_experts_in_chunk": 21,
+          "transfer_bytes": 370585600
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1009254400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 27,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        455,
+        453,
+        450,
+        461,
+        459,
+        465,
+        457,
+        462,
+        448,
+        468,
+        459,
+        454,
+        456,
+        471,
+        463,
+        458
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5291,
+          "maximum_missing_experts_in_chunk": 343,
+          "transfer_bytes": 12325913600
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3243,
+          "maximum_missing_experts_in_chunk": 215,
+          "transfer_bytes": 7554892800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1330,
+          "maximum_missing_experts_in_chunk": 92,
+          "transfer_bytes": 3098368000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 976,
+          "maximum_missing_experts_in_chunk": 68,
+          "transfer_bytes": 2273689600
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 513,
+          "maximum_missing_experts_in_chunk": 39,
+          "transfer_bytes": 1195084800
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 183,
+          "maximum_missing_experts_in_chunk": 17,
+          "transfer_bytes": 426316800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 28,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        458,
+        456,
+        454,
+        456,
+        449,
+        462,
+        462,
+        461,
+        458,
+        465,
+        463,
+        453,
+        457,
+        457,
+        451,
+        460
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5274,
+          "maximum_missing_experts_in_chunk": 337,
+          "transfer_bytes": 12286310400
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3243,
+          "maximum_missing_experts_in_chunk": 210,
+          "transfer_bytes": 7554892800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1370,
+          "maximum_missing_experts_in_chunk": 94,
+          "transfer_bytes": 3191552000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 1027,
+          "maximum_missing_experts_in_chunk": 73,
+          "transfer_bytes": 2392499200
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 547,
+          "maximum_missing_experts_in_chunk": 42,
+          "transfer_bytes": 1274291200
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 196,
+          "maximum_missing_experts_in_chunk": 19,
+          "transfer_bytes": 456601600
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 29,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        458,
+        456,
+        477,
+        461,
+        466,
+        467,
+        451,
+        465,
+        459,
+        462,
+        467,
+        471,
+        461,
+        453,
+        449,
+        451
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5326,
+          "maximum_missing_experts_in_chunk": 349,
+          "transfer_bytes": 12407449600
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3281,
+          "maximum_missing_experts_in_chunk": 221,
+          "transfer_bytes": 7643417600
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1408,
+          "maximum_missing_experts_in_chunk": 101,
+          "transfer_bytes": 3280076800
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 1057,
+          "maximum_missing_experts_in_chunk": 77,
+          "transfer_bytes": 2462387200
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 574,
+          "maximum_missing_experts_in_chunk": 44,
+          "transfer_bytes": 1337190400
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 230,
+          "maximum_missing_experts_in_chunk": 18,
+          "transfer_bytes": 535808000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 30,
+      "expert_bytes": 1715200,
+      "distinct_per_chunk": [
+        445,
+        456,
+        449,
+        462,
+        444,
+        460,
+        453,
+        453,
+        456,
+        464,
+        456,
+        459,
+        451,
+        458,
+        464,
+        454
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 219545600,
+          "freed_weight_bytes": 658636800,
+          "missing_expert_chunk_pairs": 5236,
+          "maximum_missing_experts_in_chunk": 336,
+          "transfer_bytes": 8980787200
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 439091200,
+          "freed_weight_bytes": 439091200,
+          "missing_expert_chunk_pairs": 3199,
+          "maximum_missing_experts_in_chunk": 209,
+          "transfer_bytes": 5486924800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 658636800,
+          "freed_weight_bytes": 219545600,
+          "missing_expert_chunk_pairs": 1340,
+          "maximum_missing_experts_in_chunk": 92,
+          "transfer_bytes": 2298368000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 703232000,
+          "freed_weight_bytes": 174950400,
+          "missing_expert_chunk_pairs": 1002,
+          "maximum_missing_experts_in_chunk": 71,
+          "transfer_bytes": 1718630400
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 768409600,
+          "freed_weight_bytes": 109772800,
+          "missing_expert_chunk_pairs": 534,
+          "maximum_missing_experts_in_chunk": 39,
+          "transfer_bytes": 915916800
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 823296000,
+          "freed_weight_bytes": 54886400,
+          "missing_expert_chunk_pairs": 199,
+          "maximum_missing_experts_in_chunk": 16,
+          "transfer_bytes": 341324800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 878182400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 31,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        413,
+        404,
+        430,
+        404,
+        404,
+        416,
+        396,
+        382,
+        408,
+        390,
+        403,
+        413,
+        404,
+        405,
+        395,
+        399
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 4418,
+          "maximum_missing_experts_in_chunk": 302,
+          "transfer_bytes": 9613568000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 2488,
+          "maximum_missing_experts_in_chunk": 178,
+          "transfer_bytes": 5413888000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 920,
+          "maximum_missing_experts_in_chunk": 68,
+          "transfer_bytes": 2001920000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 664,
+          "maximum_missing_experts_in_chunk": 52,
+          "transfer_bytes": 1444864000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 337,
+          "maximum_missing_experts_in_chunk": 27,
+          "transfer_bytes": 733312000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 122,
+          "maximum_missing_experts_in_chunk": 13,
+          "transfer_bytes": 265472000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 32,
+      "expert_bytes": 1971200,
+      "distinct_per_chunk": [
+        435,
+        444,
+        448,
+        432,
+        442,
+        434,
+        431,
+        430,
+        435,
+        426,
+        432,
+        417,
+        433,
+        435,
+        430,
+        423
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 252313600,
+          "freed_weight_bytes": 756940800,
+          "missing_expert_chunk_pairs": 4879,
+          "maximum_missing_experts_in_chunk": 320,
+          "transfer_bytes": 9617484800
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 504627200,
+          "freed_weight_bytes": 504627200,
+          "missing_expert_chunk_pairs": 2865,
+          "maximum_missing_experts_in_chunk": 194,
+          "transfer_bytes": 5647488000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 756940800,
+          "freed_weight_bytes": 252313600,
+          "missing_expert_chunk_pairs": 1119,
+          "maximum_missing_experts_in_chunk": 82,
+          "transfer_bytes": 2205772800
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 808192000,
+          "freed_weight_bytes": 201062400,
+          "missing_expert_chunk_pairs": 815,
+          "maximum_missing_experts_in_chunk": 61,
+          "transfer_bytes": 1606528000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 883097600,
+          "freed_weight_bytes": 126156800,
+          "missing_expert_chunk_pairs": 416,
+          "maximum_missing_experts_in_chunk": 31,
+          "transfer_bytes": 820019200
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 946176000,
+          "freed_weight_bytes": 63078400,
+          "missing_expert_chunk_pairs": 152,
+          "maximum_missing_experts_in_chunk": 16,
+          "transfer_bytes": 299622400
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1009254400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 33,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        488,
+        486,
+        472,
+        473,
+        481,
+        475,
+        469,
+        480,
+        470,
+        486,
+        467,
+        473,
+        492,
+        477,
+        480,
+        476
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 5597,
+          "maximum_missing_experts_in_chunk": 364,
+          "transfer_bytes": 12179072000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 3549,
+          "maximum_missing_experts_in_chunk": 236,
+          "transfer_bytes": 7722624000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 1581,
+          "maximum_missing_experts_in_chunk": 109,
+          "transfer_bytes": 3440256000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 1213,
+          "maximum_missing_experts_in_chunk": 85,
+          "transfer_bytes": 2639488000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 693,
+          "maximum_missing_experts_in_chunk": 52,
+          "transfer_bytes": 1507968000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 289,
+          "maximum_missing_experts_in_chunk": 24,
+          "transfer_bytes": 628864000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 34,
+      "expert_bytes": 1971200,
+      "distinct_per_chunk": [
+        483,
+        489,
+        484,
+        471,
+        473,
+        485,
+        481,
+        483,
+        476,
+        481,
+        478,
+        481,
+        475,
+        465,
+        480,
+        468
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 252313600,
+          "freed_weight_bytes": 756940800,
+          "missing_expert_chunk_pairs": 5605,
+          "maximum_missing_experts_in_chunk": 361,
+          "transfer_bytes": 11048576000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 504627200,
+          "freed_weight_bytes": 504627200,
+          "missing_expert_chunk_pairs": 3557,
+          "maximum_missing_experts_in_chunk": 233,
+          "transfer_bytes": 7011558400
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 756940800,
+          "freed_weight_bytes": 252313600,
+          "missing_expert_chunk_pairs": 1581,
+          "maximum_missing_experts_in_chunk": 107,
+          "transfer_bytes": 3116467200
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 808192000,
+          "freed_weight_bytes": 201062400,
+          "missing_expert_chunk_pairs": 1212,
+          "maximum_missing_experts_in_chunk": 82,
+          "transfer_bytes": 2389094400
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 883097600,
+          "freed_weight_bytes": 126156800,
+          "missing_expert_chunk_pairs": 696,
+          "maximum_missing_experts_in_chunk": 50,
+          "transfer_bytes": 1371955200
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 946176000,
+          "freed_weight_bytes": 63078400,
+          "missing_expert_chunk_pairs": 299,
+          "maximum_missing_experts_in_chunk": 24,
+          "transfer_bytes": 589388800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1009254400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 35,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        465,
+        469,
+        458,
+        468,
+        457,
+        469,
+        468,
+        467,
+        455,
+        468,
+        448,
+        471,
+        463,
+        460,
+        469,
+        463
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5370,
+          "maximum_missing_experts_in_chunk": 343,
+          "transfer_bytes": 12509952000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3322,
+          "maximum_missing_experts_in_chunk": 215,
+          "transfer_bytes": 7738931200
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1418,
+          "maximum_missing_experts_in_chunk": 96,
+          "transfer_bytes": 3303372800
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 1060,
+          "maximum_missing_experts_in_chunk": 76,
+          "transfer_bytes": 2469376000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 585,
+          "maximum_missing_experts_in_chunk": 44,
+          "transfer_bytes": 1362816000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 238,
+          "maximum_missing_experts_in_chunk": 21,
+          "transfer_bytes": 554444800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 36,
+      "expert_bytes": 1510400,
+      "distinct_per_chunk": [
+        375,
+        380,
+        388,
+        392,
+        397,
+        361,
+        381,
+        371,
+        365,
+        391,
+        370,
+        387,
+        390,
+        385,
+        396,
+        378
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 193331200,
+          "freed_weight_bytes": 579993600,
+          "missing_expert_chunk_pairs": 4059,
+          "maximum_missing_experts_in_chunk": 269,
+          "transfer_bytes": 6130713600
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 386662400,
+          "freed_weight_bytes": 386662400,
+          "missing_expert_chunk_pairs": 2219,
+          "maximum_missing_experts_in_chunk": 154,
+          "transfer_bytes": 3351577600
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 579993600,
+          "freed_weight_bytes": 193331200,
+          "missing_expert_chunk_pairs": 815,
+          "maximum_missing_experts_in_chunk": 58,
+          "transfer_bytes": 1230976000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 619264000,
+          "freed_weight_bytes": 154060800,
+          "missing_expert_chunk_pairs": 586,
+          "maximum_missing_experts_in_chunk": 44,
+          "transfer_bytes": 885094400
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 676659200,
+          "freed_weight_bytes": 96665600,
+          "missing_expert_chunk_pairs": 289,
+          "maximum_missing_experts_in_chunk": 23,
+          "transfer_bytes": 436505600
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 724992000,
+          "freed_weight_bytes": 48332800,
+          "missing_expert_chunk_pairs": 100,
+          "maximum_missing_experts_in_chunk": 12,
+          "transfer_bytes": 151040000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 773324800,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 37,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        470,
+        476,
+        480,
+        466,
+        471,
+        470,
+        477,
+        483,
+        468,
+        462,
+        468,
+        470,
+        480,
+        465,
+        478,
+        466
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 5502,
+          "maximum_missing_experts_in_chunk": 355,
+          "transfer_bytes": 11972352000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 3454,
+          "maximum_missing_experts_in_chunk": 227,
+          "transfer_bytes": 7515904000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 1490,
+          "maximum_missing_experts_in_chunk": 102,
+          "transfer_bytes": 3242240000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 1126,
+          "maximum_missing_experts_in_chunk": 79,
+          "transfer_bytes": 2450176000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 621,
+          "maximum_missing_experts_in_chunk": 45,
+          "transfer_bytes": 1351296000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 245,
+          "maximum_missing_experts_in_chunk": 20,
+          "transfer_bytes": 533120000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 38,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        470,
+        472,
+        475,
+        473,
+        476,
+        471,
+        468,
+        483,
+        471,
+        460,
+        477,
+        468,
+        470,
+        470,
+        482,
+        472
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 5510,
+          "maximum_missing_experts_in_chunk": 355,
+          "transfer_bytes": 11989760000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 3462,
+          "maximum_missing_experts_in_chunk": 227,
+          "transfer_bytes": 7533312000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 1503,
+          "maximum_missing_experts_in_chunk": 104,
+          "transfer_bytes": 3270528000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 1139,
+          "maximum_missing_experts_in_chunk": 79,
+          "transfer_bytes": 2478464000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 633,
+          "maximum_missing_experts_in_chunk": 45,
+          "transfer_bytes": 1377408000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 254,
+          "maximum_missing_experts_in_chunk": 24,
+          "transfer_bytes": 552704000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 39,
+      "expert_bytes": 1971200,
+      "distinct_per_chunk": [
+        441,
+        423,
+        431,
+        431,
+        444,
+        424,
+        426,
+        437,
+        425,
+        434,
+        417,
+        416,
+        423,
+        431,
+        436,
+        436
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 252313600,
+          "freed_weight_bytes": 756940800,
+          "missing_expert_chunk_pairs": 4827,
+          "maximum_missing_experts_in_chunk": 316,
+          "transfer_bytes": 9514982400
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 504627200,
+          "freed_weight_bytes": 504627200,
+          "missing_expert_chunk_pairs": 2809,
+          "maximum_missing_experts_in_chunk": 189,
+          "transfer_bytes": 5537100800
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 756940800,
+          "freed_weight_bytes": 252313600,
+          "missing_expert_chunk_pairs": 1073,
+          "maximum_missing_experts_in_chunk": 83,
+          "transfer_bytes": 2115097600
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 808192000,
+          "freed_weight_bytes": 201062400,
+          "missing_expert_chunk_pairs": 773,
+          "maximum_missing_experts_in_chunk": 60,
+          "transfer_bytes": 1523737600
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 883097600,
+          "freed_weight_bytes": 126156800,
+          "missing_expert_chunk_pairs": 392,
+          "maximum_missing_experts_in_chunk": 32,
+          "transfer_bytes": 772710400
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 946176000,
+          "freed_weight_bytes": 63078400,
+          "missing_expert_chunk_pairs": 148,
+          "maximum_missing_experts_in_chunk": 14,
+          "transfer_bytes": 291737600
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1009254400,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 40,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        462,
+        458,
+        460,
+        464,
+        448,
+        439,
+        443,
+        466,
+        442,
+        442,
+        429,
+        444,
+        445,
+        432,
+        438,
+        439
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 5103,
+          "maximum_missing_experts_in_chunk": 338,
+          "transfer_bytes": 11887948800
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 3067,
+          "maximum_missing_experts_in_chunk": 210,
+          "transfer_bytes": 7144883200
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 1234,
+          "maximum_missing_experts_in_chunk": 98,
+          "transfer_bytes": 2874726400
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 919,
+          "maximum_missing_experts_in_chunk": 74,
+          "transfer_bytes": 2140902400
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 490,
+          "maximum_missing_experts_in_chunk": 44,
+          "transfer_bytes": 1141504000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 196,
+          "maximum_missing_experts_in_chunk": 22,
+          "transfer_bytes": 456601600
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 41,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        471,
+        466,
+        457,
+        463,
+        455,
+        445,
+        444,
+        445,
+        431,
+        441,
+        465,
+        436,
+        442,
+        426,
+        440,
+        439
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 5118,
+          "maximum_missing_experts_in_chunk": 343,
+          "transfer_bytes": 11136768000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 3085,
+          "maximum_missing_experts_in_chunk": 217,
+          "transfer_bytes": 6712960000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 1233,
+          "maximum_missing_experts_in_chunk": 97,
+          "transfer_bytes": 2683008000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 900,
+          "maximum_missing_experts_in_chunk": 74,
+          "transfer_bytes": 1958400000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 468,
+          "maximum_missing_experts_in_chunk": 42,
+          "transfer_bytes": 1018368000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 171,
+          "maximum_missing_experts_in_chunk": 17,
+          "transfer_bytes": 372096000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 42,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        456,
+        463,
+        445,
+        456,
+        433,
+        423,
+        446,
+        445,
+        429,
+        429,
+        449,
+        435,
+        428,
+        418,
+        429,
+        424
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 4960,
+          "maximum_missing_experts_in_chunk": 335,
+          "transfer_bytes": 10792960000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 2947,
+          "maximum_missing_experts_in_chunk": 208,
+          "transfer_bytes": 6412672000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 1136,
+          "maximum_missing_experts_in_chunk": 93,
+          "transfer_bytes": 2471936000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 820,
+          "maximum_missing_experts_in_chunk": 71,
+          "transfer_bytes": 1784320000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 411,
+          "maximum_missing_experts_in_chunk": 36,
+          "transfer_bytes": 894336000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 147,
+          "maximum_missing_experts_in_chunk": 14,
+          "transfer_bytes": 319872000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 43,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        447,
+        444,
+        418,
+        418,
+        414,
+        382,
+        421,
+        420,
+        392,
+        396,
+        411,
+        411,
+        406,
+        367,
+        421,
+        401
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 4521,
+          "maximum_missing_experts_in_chunk": 319,
+          "transfer_bytes": 9837696000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 2512,
+          "maximum_missing_experts_in_chunk": 192,
+          "transfer_bytes": 5466112000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 881,
+          "maximum_missing_experts_in_chunk": 76,
+          "transfer_bytes": 1917056000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 618,
+          "maximum_missing_experts_in_chunk": 60,
+          "transfer_bytes": 1344768000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 297,
+          "maximum_missing_experts_in_chunk": 29,
+          "transfer_bytes": 646272000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 94,
+          "maximum_missing_experts_in_chunk": 12,
+          "transfer_bytes": 204544000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 44,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        424,
+        421,
+        410,
+        423,
+        398,
+        393,
+        401,
+        399,
+        382,
+        388,
+        400,
+        414,
+        407,
+        378,
+        402,
+        389
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 4381,
+          "maximum_missing_experts_in_chunk": 296,
+          "transfer_bytes": 10205977600
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 2377,
+          "maximum_missing_experts_in_chunk": 171,
+          "transfer_bytes": 5537459200
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 678,
+          "maximum_missing_experts_in_chunk": 58,
+          "transfer_bytes": 1579468800
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 415,
+          "maximum_missing_experts_in_chunk": 39,
+          "transfer_bytes": 966784000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 111,
+          "maximum_missing_experts_in_chunk": 14,
+          "transfer_bytes": 258585600
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 13,
+          "maximum_missing_experts_in_chunk": 4,
+          "transfer_bytes": 30284800
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 45,
+      "expert_bytes": 2329600,
+      "distinct_per_chunk": [
+        437,
+        429,
+        412,
+        438,
+        420,
+        416,
+        422,
+        423,
+        407,
+        417,
+        430,
+        413,
+        409,
+        405,
+        432,
+        421
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 298188800,
+          "freed_weight_bytes": 894566400,
+          "missing_expert_chunk_pairs": 4683,
+          "maximum_missing_experts_in_chunk": 310,
+          "transfer_bytes": 10909516800
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 596377600,
+          "freed_weight_bytes": 596377600,
+          "missing_expert_chunk_pairs": 2674,
+          "maximum_missing_experts_in_chunk": 185,
+          "transfer_bytes": 6229350400
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 894566400,
+          "freed_weight_bytes": 298188800,
+          "missing_expert_chunk_pairs": 918,
+          "maximum_missing_experts_in_chunk": 74,
+          "transfer_bytes": 2138572800
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 955136000,
+          "freed_weight_bytes": 237619200,
+          "missing_expert_chunk_pairs": 630,
+          "maximum_missing_experts_in_chunk": 53,
+          "transfer_bytes": 1467648000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1043660800,
+          "freed_weight_bytes": 149094400,
+          "missing_expert_chunk_pairs": 284,
+          "maximum_missing_experts_in_chunk": 26,
+          "transfer_bytes": 661606400
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1118208000,
+          "freed_weight_bytes": 74547200,
+          "missing_expert_chunk_pairs": 81,
+          "maximum_missing_experts_in_chunk": 8,
+          "transfer_bytes": 188697600
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 46,
+      "expert_bytes": 2176000,
+      "distinct_per_chunk": [
+        449,
+        441,
+        425,
+        438,
+        421,
+        401,
+        400,
+        421,
+        399,
+        399,
+        420,
+        415,
+        392,
+        393,
+        412,
+        406
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 278528000,
+          "freed_weight_bytes": 835584000,
+          "missing_expert_chunk_pairs": 4584,
+          "maximum_missing_experts_in_chunk": 321,
+          "transfer_bytes": 9974784000
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 557056000,
+          "freed_weight_bytes": 557056000,
+          "missing_expert_chunk_pairs": 2623,
+          "maximum_missing_experts_in_chunk": 196,
+          "transfer_bytes": 5707648000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 835584000,
+          "freed_weight_bytes": 278528000,
+          "missing_expert_chunk_pairs": 987,
+          "maximum_missing_experts_in_chunk": 87,
+          "transfer_bytes": 2147712000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 892160000,
+          "freed_weight_bytes": 221952000,
+          "missing_expert_chunk_pairs": 720,
+          "maximum_missing_experts_in_chunk": 66,
+          "transfer_bytes": 1566720000
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 974848000,
+          "freed_weight_bytes": 139264000,
+          "missing_expert_chunk_pairs": 376,
+          "maximum_missing_experts_in_chunk": 45,
+          "transfer_bytes": 818176000
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1044480000,
+          "freed_weight_bytes": 69632000,
+          "missing_expert_chunk_pairs": 142,
+          "maximum_missing_experts_in_chunk": 22,
+          "transfer_bytes": 308992000
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1114112000,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    },
+    {
+      "layer": 47,
+      "expert_bytes": 2662400,
+      "distinct_per_chunk": [
+        410,
+        394,
+        379,
+        397,
+        371,
+        337,
+        353,
+        367,
+        331,
+        342,
+        364,
+        377,
+        349,
+        346,
+        362,
+        346
+      ],
+      "treatments": [
+        {
+          "capacity": 128,
+          "resident_weight_bytes": 340787200,
+          "freed_weight_bytes": 1022361600,
+          "missing_expert_chunk_pairs": 3777,
+          "maximum_missing_experts_in_chunk": 282,
+          "transfer_bytes": 10055884800
+        },
+        {
+          "capacity": 256,
+          "resident_weight_bytes": 681574400,
+          "freed_weight_bytes": 681574400,
+          "missing_expert_chunk_pairs": 1900,
+          "maximum_missing_experts_in_chunk": 160,
+          "transfer_bytes": 5058560000
+        },
+        {
+          "capacity": 384,
+          "resident_weight_bytes": 1022361600,
+          "freed_weight_bytes": 340787200,
+          "missing_expert_chunk_pairs": 545,
+          "maximum_missing_experts_in_chunk": 61,
+          "transfer_bytes": 1451008000
+        },
+        {
+          "capacity": 410,
+          "resident_weight_bytes": 1091584000,
+          "freed_weight_bytes": 271564800,
+          "missing_expert_chunk_pairs": 354,
+          "maximum_missing_experts_in_chunk": 41,
+          "transfer_bytes": 942489600
+        },
+        {
+          "capacity": 448,
+          "resident_weight_bytes": 1192755200,
+          "freed_weight_bytes": 170393600,
+          "missing_expert_chunk_pairs": 148,
+          "maximum_missing_experts_in_chunk": 22,
+          "transfer_bytes": 394035200
+        },
+        {
+          "capacity": 480,
+          "resident_weight_bytes": 1277952000,
+          "freed_weight_bytes": 85196800,
+          "missing_expert_chunk_pairs": 38,
+          "maximum_missing_experts_in_chunk": 7,
+          "transfer_bytes": 101171200
+        },
+        {
+          "capacity": 512,
+          "resident_weight_bytes": 1363148800,
+          "freed_weight_bytes": 0,
+          "missing_expert_chunk_pairs": 0,
+          "maximum_missing_experts_in_chunk": 0,
+          "transfer_bytes": 0
+        }
+      ]
+    }
+  ],
+  "next_step": "Keep resident experts for speed baseline. Consider tiering only against a concrete context capacity deficit, with held-out route locality, staging allocation fit and an actual exact transfer/compute gate."
+}

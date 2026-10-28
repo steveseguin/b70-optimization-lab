@@ -1,0 +1,23 @@
+Native-format expert tiering screen, 2026-10-28
+
+CPU replay of authenticated archived production routes, no GPU or settings changes.
+Layers24–47 each contain4096tokens, grouped into256row chunks. Chunks touch440.065
+of512experts on average. Per-layer expert bytes come from the retained native plans.
+
+The modeled fixed cache is deliberately optimistic: it chooses experts with the
+most chunk appearances using the entire trace in hindsight. Each absent expert
+is transferred only once per chunk, then discarded. That is an upper bound on
+this fixed policy's hit rate, not a deployable prediction or adaptive-cache bound.
+
+Retaining410of512experts per layer frees5.282GB across these24layers and requires
+44.925GB of compressed weight transfers over4096tokens. At384resident experts,
+6.629GB is freed and61.319GB transferred. Full residency transfers zero. The
+complete JSON includes every layer, exact byte counts, seven capacities, and
+explicitly conditional long-context/bandwidth sensitivities. No measured bandwidth,
+endpoint throughput, actual121K locality or whole-engine capacity fit is claimed.
+
+Decision: retain resident experts for the speed baseline. Tiering remains a
+capacity option, but even an optimistic fixed cache has substantial traffic on
+these prompt routes. A future test needs a specific memory deficit, held-out
+locality, transient staging allocation fit and actual unchanged-arithmetic transfer
+execution. This screen does not reject adaptive caches or remote expert execution.
