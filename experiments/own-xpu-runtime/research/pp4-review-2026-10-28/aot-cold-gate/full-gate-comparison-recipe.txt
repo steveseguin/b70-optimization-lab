@@ -1,0 +1,16 @@
+Prepared only; do not execute until root releases completed owners.
+From experiments/own-xpu-runtime:
+nice -n 19 taskset -c 8-15 python3 research/pp4-review-2026-10-28/aot-cold-gate/compare_full_gate.py /dev/shm/sc117-dedicated-four-slots-2plus1-128k-gate-20261028-r2 /dev/shm/sc117-aot-bmg-2plus1-128k-gate-20261028-r1 /dev/shm/sc117-aot-bmg-2plus1-128k-gate-20261028-r1/comparison-r1.json --archive-receipt research/pp4-review-2026-10-28/dedicated-gate/four-slots-2plus1-128k-gate-r2-archive.json
+
+No baseline extraction or HDD checksum reread. Reuses existing sealed()/roles()
+and request reconstruction. Requires32 actual ordered outputs, clean3owner native
+teardown, byte-exact3censuses, reconstructed semantic config equality except fresh
+output/prompt/buildreceipt paths, source256/runtimeassets equality, exact compile
+commands except builddirectory and addition -fsycl-targets=intel_gpu_bmg_g31.
+Actual native argv/env normalization permits only root/request/binary paths.
+All4 actual candidate bundles fully streamed per-entry and whole seal; require full
+bundleSHA/layout equality with baseline's previously archive-verified sealedmetadata.
+No inactive-bank/scratch exclusions. Every role is inspected before parity refusal;
+partial failure proof is saved exclusively and exits nonzero. If source/receipt or
+shape differs, retain failure; no automatic normalization/waiver/retry.
+Precise full-engine fair timing follows only actual full-gate pass, root-owned.

@@ -1,0 +1,413 @@
+{
+  "status": "small-JIT-AOT-gate-pass-full-build-next",
+  "cross_binary_buffers_exact": 9,
+  "cross_binary_bytes": 984576,
+  "first_scalar_call_seconds": {
+    "jit": 1.60623,
+    "aot": 0.00619091
+  },
+  "main_to_first_scalar_seconds": {
+    "jit": 1.69681,
+    "aot": 0.0903914
+  },
+  "metrics": {
+    "jit": {
+      "cold": [
+        {
+          "metric": "main_to_queue_ready_us",
+          "value": 84817.2
+        },
+        {
+          "metric": "main_to_fixture_device_ready_us",
+          "value": 90585.1
+        },
+        {
+          "metric": "main_to_first_scalar_complete_us",
+          "value": 1696810.0
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 1,
+          "value": 1606230.0
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 1,
+          "tile_tokens": 2,
+          "value": 459.232
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 1,
+          "tile_tokens": 2,
+          "value": 207.891
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 1,
+          "tile_tokens": 4,
+          "value": 25.147
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 1,
+          "tile_tokens": 4,
+          "value": 167.214
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 2,
+          "value": 223.049
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 2,
+          "tile_tokens": 2,
+          "value": 23.273
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 2,
+          "tile_tokens": 2,
+          "value": 131.126
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 2,
+          "tile_tokens": 4,
+          "value": 22.983
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 2,
+          "tile_tokens": 4,
+          "value": 146.305
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 3,
+          "value": 328.276
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 3,
+          "tile_tokens": 2,
+          "value": 24.636
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 3,
+          "tile_tokens": 2,
+          "value": 244.058
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 3,
+          "tile_tokens": 4,
+          "value": 20.879
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 3,
+          "tile_tokens": 4,
+          "value": 147.898
+        },
+        {
+          "metric": "main_to_work_complete_us",
+          "value": 1771270.0
+        }
+      ],
+      "warm": [
+        {
+          "width": 1,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 111.209,
+          "multirow_host_us_median": 127.099,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 1,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 99.176,
+          "multirow_host_us_median": 126.999,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 2,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 96.491,
+          "multirow_host_us_median": 59.212,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 2,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 97.213,
+          "multirow_host_us_median": 66.385,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 3,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 142.097,
+          "multirow_host_us_median": 108.164,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 3,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 143.128,
+          "multirow_host_us_median": 67.346,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        }
+      ]
+    },
+    "aot": {
+      "cold": [
+        {
+          "metric": "main_to_queue_ready_us",
+          "value": 79261.3
+        },
+        {
+          "metric": "main_to_fixture_device_ready_us",
+          "value": 84201.1
+        },
+        {
+          "metric": "main_to_first_scalar_complete_us",
+          "value": 90391.4
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 1,
+          "value": 6190.91
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 1,
+          "tile_tokens": 2,
+          "value": 374.834
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 1,
+          "tile_tokens": 2,
+          "value": 124.814
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 1,
+          "tile_tokens": 4,
+          "value": 18.084
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 1,
+          "tile_tokens": 4,
+          "value": 103.083
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 2,
+          "value": 130.255
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 2,
+          "tile_tokens": 2,
+          "value": 16.13
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 2,
+          "tile_tokens": 2,
+          "value": 78.938
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 2,
+          "tile_tokens": 4,
+          "value": 16.13
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 2,
+          "tile_tokens": 4,
+          "value": 87.374
+        },
+        {
+          "metric": "scalar_initial_callset_host_us",
+          "width": 3,
+          "value": 187.863
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 3,
+          "tile_tokens": 2,
+          "value": 15.409
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 3,
+          "tile_tokens": 2,
+          "value": 141.766
+        },
+        {
+          "metric": "guard_fill_host_us",
+          "width": 3,
+          "tile_tokens": 4,
+          "value": 15.169
+        },
+        {
+          "metric": "candidate_initial_call_host_us",
+          "width": 3,
+          "tile_tokens": 4,
+          "value": 88.126
+        },
+        {
+          "metric": "main_to_work_complete_us",
+          "value": 152352
+        }
+      ],
+      "warm": [
+        {
+          "width": 1,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 64.922,
+          "multirow_host_us_median": 73.688,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 1,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 64.802,
+          "multirow_host_us_median": 83.056,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 2,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 112.992,
+          "multirow_host_us_median": 68.198,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 2,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 112.902,
+          "multirow_host_us_median": 76.404,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 3,
+          "tile_tokens": 2,
+          "iterations": 51,
+          "serial_host_us_median": 137.849,
+          "multirow_host_us_median": 105.829,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        },
+        {
+          "width": 3,
+          "tile_tokens": 4,
+          "iterations": 51,
+          "serial_host_us_median": 138.641,
+          "multirow_host_us_median": 65.373,
+          "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+        }
+      ]
+    }
+  },
+  "scope": "Small dense kernel cold-start screen. Warm medians in actual stdout. Precise wholeprocess wall not captured because transientunitsGC; do not substitute journaltimestamps except explicitly approximate. No fullengine performance/correctness claim.",
+  "compile_affinity": "Scoped-affinity attempt affected agent parent then restored; correction receipt retained. No GPUtiming active/no hardwarechanges.",
+  "identity": [
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/cross-binary-output-comparison.json",
+      "sha256": "9e3e5403a632d49b015584a989a3c6e68b0e7216a630950e8e3884e6d97f2f19",
+      "retained": "cross-binary-output-comparison.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/compile-affinity-correction.json",
+      "sha256": "725c95f4386394cba38cfa5188cc9ab1ffb34f9d2396c71dec1ce10fe1c3ddb9",
+      "retained": "compile-affinity-correction.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/compile-result.json",
+      "sha256": "c1244e1847071117435038c035c500da8be87e094f2796b4c726766c5b8d857b",
+      "retained": "compile-result.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/compile-plan.json",
+      "sha256": "c69364f4efb737688abc05da245ddc36797a72a0a4118e4231bbd624285618e0",
+      "retained": "compile-plan.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-compile.stdout",
+      "sha256": "93681b4fb6c1ba11ed4e104f495d0b820c08085c17cdd74e90b6b3f70bab7444",
+      "retained": "aot-compile.stdout.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-compile.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retained": "jit-compile.stdout.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-compile.stderr",
+      "sha256": "ba6cb0a10f3dc716395b86c2fbcf28167f436a56e5616fa128af3a9320270207",
+      "retained": "aot-compile.stderr.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-compile.stderr",
+      "sha256": "ba6cb0a10f3dc716395b86c2fbcf28167f436a56e5616fa128af3a9320270207",
+      "retained": "jit-compile.stderr.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-run/postflight.json",
+      "sha256": "264b83eba61fba01384e4ebeb7d08e11b582c3256e5a5dac6ff167db28a9014e",
+      "retained": "jit-run/postflight.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-run/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retained": "jit-run/stderr.log.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-run/stdout.jsonl",
+      "sha256": "7c96f6ebb5ccf03df8cf3c8ab26c432ace71f0a685b7b4624aebb18c677bff91",
+      "retained": "jit-run/stdout.jsonl.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/jit-run/launch.json",
+      "sha256": "e2d5f93cde60b64c9c53399b0d99899134795f068eafa4b18bd10b2a43f0faaf",
+      "retained": "jit-run/launch.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-run/postflight.json",
+      "sha256": "00dee6ee09cba13f7461df86bf1ec1a4dc78e99c558f64e6231445f76c4dd424",
+      "retained": "aot-run/postflight.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-run/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retained": "aot-run/stderr.log.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-run/stdout.jsonl",
+      "sha256": "f7e27935bc4687b7a4a14561c47806c4c0e07659a9b59372f0ca4f09c4dca3b5",
+      "retained": "aot-run/stdout.jsonl.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-aot-cold-gate-20261028-r1/aot-run/launch.json",
+      "sha256": "e0db7fb8d565fe933b6679788e432e396c691cc24bf6699a9f3611148e7b8b0e",
+      "retained": "aot-run/launch.json.gz"
+    }
+  ]
+}

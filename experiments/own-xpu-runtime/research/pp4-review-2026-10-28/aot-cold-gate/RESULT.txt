@@ -1,0 +1,15 @@
+2026-10-28: explicit BMG AOT passed full state parity and a matched long first-inference screen.
+
+Same 121,854-token prompt, 512 generated tokens, context131072, two target owners (23/47, cuts0/25/48), dedicated existing-MTP owner43, depth3,256row prefill and four transport slots. Same bounded scheduler. Candidate f55fa2c78913 uses all256 original b73273ffecb2 native sources/runtime assets; compiler/link command treatment is only -fsycl-targets=intel_gpu_bmg_g31 plus outputdirectory. BMG-only image, no generic SPIR-V fallback. Both runs used fresh private runtime caches, no inference warmup, no prompt/KV reuse and no concurrent heavyCPU/compiler work.
+
+                         JIT baseline      AOT candidate
+Time to first token(s)     489.920497         358.557850
+Complete request(s)       501.415583         369.931021
+First99 intervals(tok/s)   45.713382          48.188826
+All511 intervals(tok/s)    44.483694          44.962057
+
+TTFT decreased26.8131%; request time26.2227%. One sample: do not infer a steady-decode improvement from the small all511 difference. First owner chunk costs changed47.214/40.662/33.335s to0.751/0.663/0.406s, supporting removal of first-use compilation cost. Weight loading and shutdown are outside request time. Precise whole-process timing was not captured for the preceding small kernel screen; its host main/call markers are labeled separately.
+
+Qualification: preceding1677/32 gate and full121854/512 run each passed all output IDs, all three census files, clean three-owner shutdown/noholders/passive postflight, and all four COMPLETE target/provider bundles byte-for-byte by fully streamed actual candidate payloads/native seals against retained verified baseline archives. No state exclusions. Long proof SHA bc57e1084fd898808880fc4bf6266406b9595ef3352709b38f65dd7868b0fc26. Full32 and long512 compact evidence is here. Proven-identical payload archives were reused; new host maps were archived and fully compared before exact cleanup.
+
+This is an internal-parity, single long-prompt first-inference result, not a realistic-suite score, independent CPU-quality resolution or public record. All six independent-reference disagreements remain open. Next: same AOT3+1/262K topology/context tradeoff with512 outputs, then prepared recurrent-input investigation and immutable host-lookup mapping feasibility.

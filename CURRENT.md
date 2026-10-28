@@ -122,9 +122,34 @@ independent quality remains unresolved.
 The small JIT/AOT dense gate passed nine exact buffers (984,576 bytes), both runs
 clean. First scalar call fell1.60623s→6.19091ms; main-to-first-scalar
 1.69681s→90.3914ms. Warm medians are retained separately. Precise wholeprocess
-wall was not captured after transient-unit GC, so none is claimed. Full AOT build
-is released next, with no fullengine speed/quality claim yet. The scoped compile
+wall was not captured after transient-unit GC, so none is claimed. Full AOT build completed with all256native source hashes unchanged and only the
+explicit BMG target flag added; root checked real receipt command equality. Its
+full32-output128K2+1 gate passed: all four entire bundles and stateJSON exact,
+32tokens, three exact censuses, three owners0 and clean postflight. Verified baseline
+payload archive was reused after full actual candidate streaming; only two hostmaps
+(117,102,637 bytes) required a new archive/tar comparison.
+The first-cold AOT121,854/512 long run passed all512 IDs, four entire bundles and
+stateJSON, three censuses and clean three-owner FINISH, proof `bc57e1084fd8`.
+Request time fell501.415583→369.931021s (**26.2227% less**),
+TTFT489.920497→358.557850s (**26.8131% less**). First target-chunk
+work fell47.2138/40.6623/33.3354s→0.75098/0.66332/0.40611s. The main result is cold
+TTFT; all511 decode44.48369→44.96206tok/s is a small single-sample difference,
+not an established sustained speed gain. Archive reuse/cleanup completed: all four identical bundles reuse the verified
+bounded baseline archive; two maps (117,105,221 archived bytes) were tar-compared.
+No independent quality resolution follows.
+The AOT3+1/262K long512 topology/context comparison is now active at
+`/dev/shm/sc117-aot-bmg-3plus1-262k-long512-20261028-r1`, invocation
+`70c18ecfdc0e4532a5d6bc2058f004a5`, plan `30325e6b…`. Startup available
+103,156,125,696 bytes passed the103,079,215,104-byte floor. No result is claimed
+before output and full registered cross-context state comparison.
+[AOT long evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/long512-r1-evidence/summary.json).
+Two completed intermediate
+sets (~207MB) were archived and exactly cleaned; binaries/receipts remain retained. The scoped compile
 CPU-affinity mistake and restoration receipt are retained; no hardware settings changed.
+Canonical L4 capture is committed as `7abe0d78d`. Same-input actual GPU replay
+matched host outputs bitwise in all three checks, while actual-model row0 still
+differs. Quality remains open; a source-only scratch-capture patch is queued and
+unapplied. This does not establish the originating cause.
 [AOT evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/actual-r1/summary.json).
 [Bounded-query result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-count-2plus1-128k-long512-r1-evidence/summary.json).
 [Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-2plus1-128k-long512-r1-evidence/matched-result.json).

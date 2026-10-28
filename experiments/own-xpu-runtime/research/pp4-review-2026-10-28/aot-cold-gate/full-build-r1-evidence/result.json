@@ -1,0 +1,20 @@
+{
+  "status": "CPU full-engine AOT build passed; full engine not executed or GPU qualified",
+  "binary": "/dev/shm/engine-build-aot-bmg-g31-20261028-r1/sc117-engine",
+  "binary_sha256": "f55fa2c78913ffce4f02c8869afcaf13c93682dd66fb8c7fdab09007249d05c2",
+  "binary_bytes": 51539984,
+  "receipt": "/dev/shm/engine-build-aot-bmg-g31-20261028-r1/build-receipt.json",
+  "receipt_sha256": "8a4cecba30c2b5ea56182d1fc993c99f4f4c9add985240f7fd85c9b0a29da051",
+  "native_source_count": 256,
+  "native_sources_identical_to_b732": true,
+  "compile_units": 40,
+  "all_rc_zero": true,
+  "treatment": "Only explicit intel_gpu_bmg_g31 at every compile and link; FP/GRF/subgroup/kernel source/linkordering unchanged",
+  "cpu_policy": "nice19 cores8-15 jobs4",
+  "limitations": [
+    "Hardware-specific BMG native images; no generic spir64 fallback in this treatment",
+    "Truthful research runner and research manifest identities replace stock build.py/manifest hash fields; stock canonical files were not changed",
+    "Requires full-engine correctness gate before any timing claim; tiny dense gate exactness does not qualify full runtime"
+  ],
+  "next": "Parent owns full-state/output correctness gate then matched cold-process full-engine timing; separate readiness/request/steady metrics"
+}
