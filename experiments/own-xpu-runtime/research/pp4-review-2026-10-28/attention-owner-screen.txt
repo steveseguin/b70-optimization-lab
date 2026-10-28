@@ -1,0 +1,31 @@
+Dedicated QSA attention/state owner — October 28, 2026
+CPU source and existing metadata review. Not implemented or validated as lossless. No GPU access, native edits, archive extraction, or new timing requests.
+
+Concrete placement
+Two targets retain all projections, experts, GDN, and other non-QSA work. The existing draft occupies one card. The fourth card owns all 12 layers' authoritative QSA keys, values, raw keys, pooled keys, exact selection, and attention. Each target sends a projected row, waits for that layer's attended result, then resumes its original output projection and following work. The owner executes the existing prepare/append/select/attention arithmetic; it does not approximate selection or compress state.
+
+Exact boundary payload from the actual stage3 native launch-plan.json, layer 35:
+Request: qgate 49,152 bytes; K 2,048; V 2,048; indexer query 2,048; indexer key 512. Total 55,808 bytes of F32 data.
+Reply: attention Y shaped [24, 256], 24,576 bytes.
+Both directions total 80,384 bytes per QSA layer and token. Sending normalized Q/gate/K/indexer query instead moves prepare back to the target but does not reduce this total. Position, active/error state, row ticket, epoch, payload hashes, and acknowledgments are additional metadata.
+
+Across 12 layers this is 964,608 bytes per token, 246,939,648 bytes per 256-row chunk, or 117,539,414,016 bytes for 121,852 rows (exact total in JSON). This is about 104.5 times smaller than the strict 100.81-MB selected-KV return bound from remote-kv-screen.json. Host staging can add a second physical transfer leg. No average selected-page locality is assumed.
+
+Capacity
+Removing every full target QSA K/V/raw/pooled allocation moves 14,898,167,808 bytes to the state owner. Remaining packed target weights total 54,714,708,480 bytes; two 30-GiB caps then leave 9,709,800,960 bytes in aggregate before all other allocations. This makes the capacity concept substantially more plausible than values-only offload. It is not actual fit: targets still need recurrent state, workspace, snapshots, rope, and staging; the owner needs attention scratch, versions, snapshots, and transport. Per-target weight imbalance and final head placement must be planned. A duplicate full local cache defeats the purpose and must not remain allocated.
+
+Existing kernel cost, with limits
+The old diagnostic /dev/shm/ownrt-lab-r0-c43/runs/diag-candidate/rank0/decode-device-profile.jsonl contains 47 warm rows after the initial JIT row. Five QSA layers have median aggregate times of 31.459 microseconds prepare, 16.353 append/pool, 95.311 select, and 216.565 attention. Scaling this service to 12 layers gives 863.251 microseconds per token, an estimate for that roughly 4K-context kernel regime only. The projected Q/K/V costs remain on the targets and are deliberately excluded. This is not a 121K/262K owner measurement: selection scans grow with context, kernel eligibility changes, and prefill batching differs.
+
+Payload alone at assumed effective aggregate bandwidths of 4/8/16/32 GB/s takes 0.241/0.121/0.060/0.030 ms per token. These are sensitivity calculations, not measured B70 bandwidth or total round-trip cost. Twelve dependent RPC boundaries add latency. Existing 40,960-byte copy round-trip data (28.2 microseconds in 2026-10-24-exact-multicard-design.md) is only a nearby-size reference; it is not the measured 55,808-byte request plus 24,576-byte reply protocol.
+
+Critical path
+Compared with bulk remote KV, this avoids transferring selected cache rows. Compared with the current target pipeline, it adds a shared serial resource and a wait at each QSA layer. Targets from different chunks can overlap non-QSA work while the owner serves requests, but one request cannot pass its attended result. A long-context owner bottleneck or unfavorable queue ordering could erase gains. Do not subtract QSA work from both targets and forget that it now executes on the fourth card. No current endpoint speed prediction is supported.
+
+New transaction ownership
+The owner must validate stage/layer identity, epoch, row ticket, causal parent, position, and input hashes. It owns K/V and pool updates for tentative rows, restores rejected suffixes, publishes only completed outputs, and rejects stale or duplicate requests. Target and remote checkpoints must form one acceptance/abort/reset transaction. Different target stages share the owner but retain per-layer increasing positions; requests cannot race scratch or overwrite a payload before acknowledgment. Preserve pooled-row versions and the partial four-row pool, plus sticky failure and fault-halt behavior. Existing target sparse snapshot code cannot simply keep treating remote allocations as local. No graph, scheduling abstraction, or automatic retry is proposed.
+
+Smallest future gate
+First calculate exact per-device allocations with all target QSA caches removed and bounded owner transport/snapshot storage added. Then, when assigned a card, replay one authenticated QSA layer's projected canonical inputs through the existing four operators on the new owner and compare every output and state byte with local execution. Cover pool boundaries, context tails, two interleaved target-layer streams, tentative suffix rejection, correction, reset, stale tickets, and duplicate payloads. Finally measure complete request-to-result wall time at the actual long-context shape; include host staging and both target waits. Only a material result warrants a multi-stage protocol implementation.
+
+Decision: keep idea 11 open as a concrete capacity and traffic candidate. Its payload advantage over remote cache copying is supported by actual shapes. Allocation fit, transaction correctness, and endpoint speed remain untested.

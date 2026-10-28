@@ -50,19 +50,66 @@ def driver_result(path):
          'dedicated driver clean completion')
     return value,receipt
 
-def canonical_pairs(commands, position):
-    issued={};completed={}
+def capture_event(issued,event,completed,serial,target_stages):
+    row=issued['row'];sequence=issued['sequence'];result=completed['provider']
+    need(target_stages in (2,3),'capture source target topology')
+    need(event['row']==row and event['op']==issued['op']==27,'capture exact issued source row')
+    native=bytes.fromhex(issued['parent_record_hex'])
+    need(len(native)==360,'capture actual complete final record')
+    header=struct.unpack('<4IQ',native[:24])
+    parent=struct.unpack('<4I3Q10i32s32s32s32s16s',native[24:248])
+    handoff=struct.unpack('<12i64s',native[248:])
+    need(header==(0x52464331,1,360,target_stages-1,result['final_commit'])
+         and parent[:4]==(0x52494e47,1,224,0)
+         and parent[4]==row['epoch'] and parent[5]==row['parent'] and parent[7]==serial-1
+         and parent[10:14]==(target_stages-1,1,-1,0) and parent[15:17]==(0,1)
+         and parent[17].hex()==row['request'] and parent[19].hex()==row['before']
+         and parent[20]==sha256(b'').digest() and parent[21]==bytes(16),
+         'capture actual final journal source identity')
+    need(handoff[:7]==(0x4d545031,1,40960,serial-1,target_stages-1,target_stages,parent[14])
+         and handoff[7]==header[4] and 0<handoff[6]<handoff[7]
+         and handoff[8]==parent[8] and handoff[10]==int(parent[9]>0) and handoff[11]==0
+         and handoff[9]==(row['token'] if handoff[10] else -1)
+         and handoff[12].decode('ascii')==issued['parent_hidden_sha256'],
+         'capture actual final handoff hidden/token/commit binding')
+    raw=bytes.fromhex(event['metadata_hex']);need(len(raw)==128,'capture exact metadata128')
+    ack=struct.unpack('<QII6Q32s32s',raw)
+    need(ack==(0x315950414352574f,1,128,row['epoch'],sequence,row['id'],row['parent'],
+         header[4],serial,bytes.fromhex(row['request']),sha256(native).digest()),
+         'capture ACK exact epoch/request/seed/parent/commit/serial/actual final record SHA')
+    reply=struct.unpack('<8i4d',bytes.fromhex(event['reply_hex']))
+    need(reply==(2,-1,0,128,sequence,-1,0x50525631,1,0.,0.,0.,0.),'capture dedicated raw nonterminal reply')
+    timestamps=[record['monotonic_s'] for record in (issued,event,completed)]
+    need(all(type(value)in(int,float) and math.isfinite(value) and value>=0 for value in timestamps)
+         and timestamps==sorted(timestamps),'capture actual command timestamps/order')
+    need(issued['provider_serial']==serial,'capture issued independent provider serial')
+
+def canonical_pairs(commands, position, *, capture_ready=False,target_stages=None):
+    need(type(capture_ready)is bool,'explicit capture-ready boolean')
+    issued={};completed={};captured={};active=None;phase=0
     for command in commands:
         if command.get('owner')!='provider':
             continue
         sequence=command['sequence'];event=command['event']
-        destination=issued if event=='issued' else completed if event=='completed' else None
-        need(destination is not None and sequence not in destination,'unique actual provider command event')
-        destination[sequence]=command
-    need(set(issued)==set(completed) and len(issued)==position-1,'complete actual provider pair command coverage')
+        if event=='issued':
+            need(active is None and sequence not in issued,'unique exclusive provider issue')
+            issued[sequence]=command;active=sequence;phase=1
+        elif event=='parent-captured':
+            need(capture_ready and active==sequence and phase==1 and sequence not in captured,
+                 'capture event requires exact opt-in outstanding provider command')
+            captured[sequence]=command;phase=2
+        elif event=='completed':
+            need(active==sequence and phase==(2 if capture_ready else 1) and sequence not in completed,
+                 'provider completion requires exact ordered capture policy')
+            completed[sequence]=command;active=None;phase=0
+        else:raise ValueError('unknown provider command event')
+    need(active is None and set(issued)==set(completed) and len(issued)==position-1,
+         'complete actual provider pair command coverage')
+    need(set(captured)==set(issued) if capture_ready else not captured,'exact capture event coverage')
     pairs=[]
     for serial,sequence in enumerate(sorted(issued),1):
         command=issued[sequence];result=completed[sequence]['provider'];row=command['row']
+        if capture_ready:capture_event(command,captured[sequence],completed[sequence],serial,target_stages)
         wire=struct.unpack('<8i',bytes.fromhex(command['request_hex']))
         need(wire==(27,row['token'],serial,row['fixture'],3,sequence,0x50525631,1),
              'actual dedicated request token/position/role/depth')
@@ -184,7 +231,7 @@ def run(path):
     need(result['input_position']==identity['position'],'actual candidate target frontier')
     need(plan['model_identity_sha256']==identity['model_sha256'],'actual model identity')
     raw,cs=trace_source(Path(spec['commands']));commands=[json.loads(line,object_pairs_hook=T.BUNDLE.pairs) for line in raw.splitlines()]
-    pairs=canonical_pairs(commands,identity['position']);refpairs,rpairsource=read(reference/'canonical-pairs.json')
+    pairs=canonical_pairs(commands,identity['position'],capture_ready=plan.get('dedicated_capture_ready',False),target_stages=len(spec['stages']));refpairs,rpairsource=read(reference/'canonical-pairs.json')
     pairhash=T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())
     need(pairs==refpairs['pairs'] and pairhash==refpairs['sha256'],'actual ordered hidden/token input pair parity')
     candidate=target_candidate(dict(spec,request_sha256=plan['request_sha256']),identity)
@@ -207,6 +254,6 @@ def run(path):
 if __name__=='__main__':
     parser=argparse.ArgumentParser(description=__doc__);parser.add_argument('manifest',type=Path);parser.add_argument('--out',type=Path,required=True);args=parser.parse_args()
     try:result=run(args.manifest)
-    except (ValueError,KeyError,OSError,TypeError) as error:result=dict(passed=False,input_error=str(error))
+    except (ValueError,KeyError,OSError,TypeError,struct.error,UnicodeError) as error:result=dict(passed=False,input_error=str(error))
     with args.out.open('x') as stream:json.dump(result,stream,indent=2);stream.write('\n')
     raise SystemExit(0 if result['passed'] else 1)

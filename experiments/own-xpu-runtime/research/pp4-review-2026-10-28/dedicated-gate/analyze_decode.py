@@ -36,7 +36,35 @@ def core(plan):
     return dict(flags=signatures[0],environment=envs[0])
 
 
-def analyze(dedicated_output,pp4_request):
+def previous_dedicated(plan,outputs,root,proof,proof_sha):
+    root=Path(root);old=read(root/'driver-result.json');old_plan=read(root/'plan.json')
+    need(old.get('schema')=='ownrt.dedicated-provider-driver-result.v1' and old.get('passed') is True
+         and not old.get('live_pids') and old.get('returncodes')
+         and all(v==0 for v in old['returncodes'].values()),'previous dedicated clean lifecycle required')
+    for key in ('prompt_tokens','context','max_new','vocab','eos_token_ids','speculative_depth',
+                'check_policy','model_identity_sha256','draft_model_sha256','activation_dtype'):
+        need(old_plan[key]==plan[key],'previous dedicated identity differs: '+key)
+    need(old['output_ids']==outputs and core(old_plan)==core(plan),'previous dedicated output/core mismatch')
+    from capture_transition import validate
+    transition=validate(old_plan,plan,proof,proof_sha)
+    rows=[json.loads(line) for line in (root/'tokens.jsonl').read_text().splitlines()]
+    elapsed=old.get('emitted_elapsed_seconds')
+    need(isinstance(elapsed,list) and len(elapsed)==len(outputs),'previous dedicated actual timing missing')
+    started=rows[0]['committed_monotonic_s']-elapsed[0]
+    need(all(abs(row['committed_monotonic_s']-started-e)<1e-6 for row,e in zip(rows,elapsed)),
+         'previous dedicated elapsed identity')
+    timing=timing_from_tokens(root/'tokens.jsonl',outputs,started,started+old['scheduler_wall_seconds'])
+    first100=None
+    if len(rows)>=100:
+        span=rows[99]['committed_monotonic_s']-rows[0]['committed_monotonic_s']
+        need(span>0,'positive previous dedicated first100 span required')
+        first100=dict(outputs=100,intervals=99,seconds=span,tokens_per_second=99/span)
+    return dict(first100=first100,all_output=dict(outputs=len(outputs),intervals=timing['decode_intervals'],
+        seconds=timing['committed_output_span_seconds'],tokens_per_second=timing['decode_tokens_per_second']),
+        capture_binary_transition=transition)
+
+
+def analyze(dedicated_output,pp4_request,*,capture_proof=None,capture_proof_sha256=None,previous_dedicated_output=None):
     droot,proot=Path(dedicated_output),Path(pp4_request)
     d=read(droot/'driver-result.json');p=read(proot/'result.json');pd=read(proot/'driver-result.json')
     dp=read(droot/'plan.json');pp=read(proot/'request-plan.json')
@@ -55,7 +83,14 @@ def analyze(dedicated_output,pp4_request):
     need(dp['max_new']==512 and dp['check_policy']=='measured','measured full512 output cap required')
     need(core(dp)==core(pp),'kernel flags/environment mismatch (only device and cache paths normalized)')
     binaries=lambda plan: sorted(value for key,value in plan['pins'].items() if key.endswith('/sc117-engine'))
-    need(len(binaries(dp))==1 and binaries(dp)==binaries(pp),'native binary identity differs')
+    transition=None
+    need(len(binaries(dp))==1 and len(binaries(pp))==1,'one native binary identity required')
+    if binaries(dp)!=binaries(pp):
+        need(capture_proof is not None,'native binary identity differs')
+        from capture_transition import validate
+        transition=validate(pp,dp,capture_proof,capture_proof_sha256)
+    else:
+        need(capture_proof is None and capture_proof_sha256 is None,'capture transition evidence only for changed binary')
     draft_owner=lambda plan: plan.get('provider') or plan['stages'][plan.get('provider_stage',0)]
     for flag in ('--draft-experts','--draft-model'):
         a=draft_owner(dp)['argv'];b=draft_owner(pp)['argv']
@@ -101,8 +136,13 @@ def analyze(dedicated_output,pp4_request):
         timing[name]=dict(first100=first100,all_output=dict(outputs=len(outputs),
             intervals=actual['decode_intervals'],seconds=actual['committed_output_span_seconds'],
             tokens_per_second=actual['decode_tokens_per_second']))
+    if previous_dedicated_output is not None:
+        need(capture_proof is not None,'previous dedicated comparison requires explicit capture proof')
+        timing['previous_dedicated']=previous_dedicated(dp,outputs,previous_dedicated_output,
+            capture_proof,capture_proof_sha256)
     return dict(schema='ownrt.matched-decode-diagnostic.v1',exact_prompt_and_output_ids=True,
         prompt_tokens=len(dp['prompt_tokens']),output_count=len(outputs),output_cap=512,
+        capture_binary_transition=transition,
         ended_on_eos=outputs[-1] in dp['eos_token_ids'],timing=timing,
         cold_input=dict(pp4_cached_tokens=0,dedicated='No cache field invented: fresh lifecycle, first ROW position0 and full canonical progression verified.'),
         normalization='Only target BDF/filter and fresh SYCL/NEO/XDG cache paths normalized. Core arithmetic flags and other environment compare exactly.',
@@ -116,7 +156,11 @@ if __name__=='__main__':
     parser.add_argument('--dedicated-output',type=Path,required=True)
     parser.add_argument('--pp4-request',type=Path,required=True)
     parser.add_argument('--output',type=Path)
-    args=parser.parse_args();result=analyze(args.dedicated_output,args.pp4_request)
+    parser.add_argument('--capture-proof',type=Path)
+    parser.add_argument('--capture-proof-sha256')
+    parser.add_argument('--previous-dedicated-output',type=Path)
+    args=parser.parse_args();result=analyze(args.dedicated_output,args.pp4_request,capture_proof=args.capture_proof,
+        capture_proof_sha256=args.capture_proof_sha256,previous_dedicated_output=args.previous_dedicated_output)
     text=json.dumps(result,indent=2)+'\n'
     if args.output:
         with args.output.open('x') as file:file.write(text)

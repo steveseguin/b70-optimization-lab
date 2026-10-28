@@ -1,0 +1,85 @@
+{
+  "schema": "ownrt.2plus1-capture64k-cpu-plan.v1",
+  "scope": "CPU plan-only; no device contact or runtime admission",
+  "plan": "/dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/plan.json",
+  "plan_sha256": "5f4871e3743dbc2581c4912dddc34c4bdf48c538cd0f3cd315acde97adcad308",
+  "config": "/dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/config.json",
+  "binary_sha256": "8ff218d09413fe49c4a572bd1b0a23966a6cc1f14e9792f0ea95b516fa0f4976",
+  "capture_ready": true,
+  "context": 65536,
+  "prompt_tokens": 1677,
+  "max_new": 32,
+  "check_policy": "qualification",
+  "rows": [
+    {
+      "role": 0,
+      "bdf": "0000:23:00.0",
+      "returncode": 0,
+      "device_contact": false,
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          2063364232
+        ],
+        "resident_weights_per_card": [
+          26833384576
+        ],
+        "streamed_peak_weight_bytes": 161838976,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "owned_bytes": 28896748808,
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/cpu-role-0/native/plan.json",
+      "native_plan_sha256": "23f67dddbfe978aff1bac63c608a44bd327e2b27469745e1f596f472d966853b",
+      "old_retained_census_projection_bytes": 29733737564,
+      "old_projection_margin_to_30GiB_bytes": 2478517156
+    },
+    {
+      "role": 1,
+      "bdf": "0000:47:00.0",
+      "returncode": 0,
+      "device_contact": false,
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          2055933480
+        ],
+        "resident_weights_per_card": [
+          27881405824
+        ],
+        "streamed_peak_weight_bytes": 534620160,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "owned_bytes": 29937339304,
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/cpu-role-1/native/plan.json",
+      "native_plan_sha256": "ffcab2b4e91cb15b5792092345ebd4f139207241794e4bf005fb0d74278fcc02",
+      "old_retained_census_projection_bytes": 30198669860,
+      "old_projection_margin_to_30GiB_bytes": 2013584860
+    },
+    {
+      "role": "provider",
+      "bdf": "0000:43:00.0",
+      "returncode": 0,
+      "device_contact": false,
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          121688472
+        ],
+        "resident_weights_per_card": [
+          0
+        ],
+        "streamed_peak_weight_bytes": 0,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "owned_bytes": 121688472,
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/cpu-role-provider/native/plan.json",
+      "native_plan_sha256": "98dcb83305d5fdb57316f09806b90a54913e6dabfbe132a3c8e3ccf249448668"
+    }
+  ],
+  "limits": "Native owned targets exclude retained checkpoint/driver peak. Provider121688472 shell is beforedraftalloc. Old retained census estimates are context-scaled screening, not native peak/admission.",
+  "command": "dedicated_provider_driver.py --plan /dev/shm/sc117-dedicated-2plus1-capture64k-20261028-r1/plan.json --run --admission <root-issued-admission.json> --unit <bounded-root-owned-unit>",
+  "execution_status": "Not authorized/launched by this CPU preparation. Root supplies admission and controlled unit after current measurement."
+}

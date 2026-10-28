@@ -1,0 +1,98 @@
+3+1 measured512 critical-path evidence, 2026-10-28 (read-only CPU analysis)
+Run: /dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output
+Actual sources: commands.jsonl, schedule.jsonl, driver-result.json,
+stage{0,1,2}/native/timings.jsonl, stageprovider/native/draft-rows.jsonl,
+plan.json. Existing capture_ready.hpp and arbiter.py examined for mechanism.
+No runtime, native, pinned-source or service changes. Fair PP4 control pending.
+
+Measured steady decode:
+512 output IDs, first-to-last511 intervals=11.828067253s =>43.20232tok/s;
+owner reports first100outputs99intervals=42.16668tok/s.
+Exclude fixture1 from per-command steady work: first final head operation took
+6197.9ms and first provider head compilation is also before first output.
+Do not mix these JIT costs with the first-to-last output interval.
+
+                                  stage0      stage1      final stage2
+Target layer partition              0..16      17..32      33..47
+Steady ROW count                       686         633          511
+Native ROW busy mean ms              9.900       8.896        8.562
+Native ROW busy work sum s           6.7914      5.6311       4.3753
+Half-completion mean ms             8.1566      7.4059       8.2567
+Half-completion work sum s          5.5954      4.6880       4.2192
+ACCEPT busy work sum s              0.0749      0.0641       0.0514
+ABORT busy work sum s               0.1454      0.0957       0.0000
+All steady native command work s    7.0118      5.7910       4.4267
+ROW native busy includes checkpoint/dispatcher work missing from half timings.
+Stage0/1 execute175/122 more steady ROWs than final; speculative discarded work
+and target snapshots are material. Native reply gpu_ms fields are zero in this
+mode, so these are host-native command wall measurements, NOT GPU kernel times.
+Do not sum overlapping stage work and label it total decode time.
+
+Provider evidence and the missing measurement:
+Canonical head live_step excluding first head:511 rows, sum0.98634292s,
+mean1.930221ms, median1.90523ms, max3.6748ms. This is ONLY canonical step work.
+Provider timings.jsonl and sites.jsonl are empty; reply timings are all zero.
+Recursive steps, private capture/restore and source validation durations are not
+logged by this dedicated runtime. No defensible total provider busy duration or
+GPU utilization can be inferred by multiplying canonical time by depth.
+
+Causal scheduling evidence (event order, not fabricated timestamps):
+In511 steady provider issued→completed command windows:
+- zero final ROW commands issued;
+- zero stage0 commands issued;
+-148 stage1 ACCEPT and3 stage1 ROW commands issued;
+-151 windows had any target command issued.
+The JSONL logs have no issue/completion wall timestamps. We cannot claim how
+many milliseconds each lease blocked a ready target or that all511 windows had
+ready final input. This is an observed structural serialization opportunity.
+
+Smallest concrete early-capture lever:
+LivePeers.capture already owns the full raw hidden vector and validated copies
+of both source journals before Owner.run invokes canonical arithmetic. Add an
+opt-in callback AFTER Owner.run has performed boundary, ancestry and
+Sequence.admit checks, BEFORE live_recursive_depth2. Callback publishes existing
+CaptureReady128 schema into dedicated private shared memory (e.g offset768,
+outside Header0..127, Reset512..575 and Proposal4096) and sends a nonterminal
+Reply status2/bytes128 with dedicated rank=-1/role/version/sequence intact.
+Bind epoch/request, independent command sequence, seed/parent, real final commit,
+provider serial and exact captured FinalRecord SHA. No controller-invented row.
+
+Transport receives status2 separately from ordinary64-byte completion, validates
+actual job/source digest, calls DedicatedCoordinator.capture_provider, clears
+only its ACK receive buffer, and keeps provider command busy until restored
+proposal completion. Reject duplicate/stale/wrong-role ACK; no retry. Ordinary
+completion must require the ACK already occurred in the opt-in mode. Default
+current framing stays unchanged for matched controls.
+
+Existing DedicatedArbiter already enables capture_ready_overlap=True:
+parent_captured releases final ROW, while inherited accept_allowed still refuses
+final ACCEPT during a provider job. Stage0 seed ACCEPT and new provider admission
+also remain locked until full completion. Thus ONE final ROW can compute while
+dedicated draft canonical+recursive+restore runs; its ACCEPT waits. Final ROW may
+invalidate the source record safely because provider owns the copied bytes.
+Never release the stage0 seed/target canonical ledger or issue second provider
+work at capture. This reuses actual existing lease semantics, no fake stage.
+
+Largest measured bound, NOT a speedup forecast:
+A final ROW costs8.562ms mean;511 such operations total4.3753s. That is a hard
+fixed-work cap on work this specific early-final-ROW overlap could hide, and it
+must ALSO fit the unknown provider post-capture busy tail and ready-input slots.
+Idealized unchanged-work arithmetic511/(11.8281-4.3753)=68.56tok/s is only an
+optimistic ceiling for this lever, not an expected result. Even that assumes
+all eligible work can move and ignores new scheduling effects. Actual available
+wait duration is unmeasured. Stage0's7.0118s command work is the largest observed
+fixed-work load lower bound (about72.88tok/s if fully occupied), independently
+showing that target work/rollback cannot be ignored.
+
+Priority relative to balance/draft kernels:
+17/16/15 is already fairly close in half latency; final head and stage0 checkpoint
+cost break simple equal-layer balancing. One/two layer moves may redistribute
+work but cannot remove the observed lease dependency. Current data does not
+establish whether stage balance or total provider math dominates42–43tok/s.
+Early capture is the concrete controllable dependency to test only AFTER fair
+PP4 control. Add real monotonic timestamps at provider issued/capture/completed
+and target issued/completed in that candidate's existing command log so the next
+run measures overlap directly. Do not rerun unchanged controls for profiling.
+One parity gate must retain exact tokens, actual pair hashes, target2065/draft73,
+full clean FINISH and depth3 rollback. Then fair measured512 timing decides it;
+no speed claim before those results and no broader architecture review needed.

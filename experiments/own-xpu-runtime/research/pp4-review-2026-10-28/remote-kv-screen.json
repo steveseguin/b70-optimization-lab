@@ -1,0 +1,59 @@
+{
+  "schema": "ownrt.remote-kv-cpu-screen.v1",
+  "scope": "Metadata/source only; no archive extraction, GPU, source edits, or measured bandwidth",
+  "sources": [
+    "topology-options.json",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/launch-plan.json",
+    "engine/src/stage2/packet194-expert-diet-engine/specialised.hpp",
+    "engine/src/stage2/packet194-expert-diet-engine/p49_qsa_kernel.hpp",
+    "engine/src/stage2/packet194-expert-diet-engine/qsa_ring.hpp"
+  ],
+  "measured_allocations": {
+    "context": 262144,
+    "qsa_layers": 12,
+    "per_layer_bytes": {
+      "keys": 536870912,
+      "values": 536870912,
+      "raw": 134217728,
+      "pooled": 33554432
+    },
+    "target_weights_plus_KV": 69612876288,
+    "two_target_cap": 64424509440,
+    "weights_plus_KV_excess_before_other_allocations": 5188366848
+  },
+  "strict_payload_bounds": {
+    "max_selected_slots_per_row": 2051,
+    "K_V_bytes_per_selected_slot": 4096,
+    "K_V_bytes_per_layer_row": 8400896,
+    "K_V_bytes_all_layers_row": 100810752,
+    "values_only_bytes_all_layers_row": 50405376,
+    "K_V_bytes_256row_chunk_no_dedup": 25807552512,
+    "K_V_unique_union_chunk_cap_bytes": 12884901888,
+    "pooled_scan_bytes_all_layers_row_at_capacity": 402653184,
+    "new_K_V_write_bytes_all_layers_row": 49152,
+    "new_raw_write_bytes_all_layers_row": 6144,
+    "new_pooled_write_bytes_all_layers_per_4rows": 6144,
+    "selected_ID_reply_bytes_all_layers_row": 98448
+  },
+  "aggregate_offload_options_bytes": {
+    "raw_plus_pooled": 2013265920,
+    "values_only": 6442450944,
+    "keys_plus_values": 12884901888
+  },
+  "sensitivity_not_measured": {
+    "selected_KV_all_layers_seconds_per_row_at_effective_GBps": {
+      "4": 0.025202688,
+      "8": 0.012601344,
+      "16": 0.006300672,
+      "32": 0.003150336
+    },
+    "values_only_all_layers_seconds_per_row_at_effective_GBps": {
+      "4": 0.012601344,
+      "8": 0.006300672,
+      "16": 0.003150336,
+      "32": 0.001575168
+    }
+  },
+  "trace_limit": "No long-request selected-ID/page payload inspected; no locality/hit-rate/average traffic claim. Per-row bound allows all slots distinct; chunk union bound assumes exact dedup and preserves per-row slot mapping.",
+  "verdict": "Raw/pooled-only offload insufficient for strict capacity gap; remote K/V or values can remove enough nominal bytes but actual target fit and transfer latency remain unmeasured; no speed claim."
+}

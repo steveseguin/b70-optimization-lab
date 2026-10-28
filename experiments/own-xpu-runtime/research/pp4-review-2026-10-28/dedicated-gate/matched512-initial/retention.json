@@ -1,0 +1,507 @@
+{
+  "schema": "ownrt.matched512-initial-retention.v1",
+  "status": "dedicated-initial-loss",
+  "comparison": {
+    "schema": "ownrt.matched-decode-diagnostic.v1",
+    "exact_prompt_and_output_ids": true,
+    "prompt_tokens": 1677,
+    "output_count": 512,
+    "output_cap": 512,
+    "ended_on_eos": false,
+    "timing": {
+      "dedicated": {
+        "first100": {
+          "outputs": 100,
+          "intervals": 99,
+          "seconds": 2.347825365024619,
+          "tokens_per_second": 42.166679632478505
+        },
+        "all_output": {
+          "outputs": 512,
+          "intervals": 511,
+          "seconds": 11.828067252994515,
+          "tokens_per_second": 43.20232452775664
+        }
+      },
+      "pp4": {
+        "first100": {
+          "outputs": 100,
+          "intervals": 99,
+          "seconds": 1.9108644110383466,
+          "tokens_per_second": 51.809013464332764
+        },
+        "all_output": {
+          "outputs": 512,
+          "intervals": 511,
+          "seconds": 9.796612070058472,
+          "tokens_per_second": 52.16088953463583
+        }
+      }
+    },
+    "cold_input": {
+      "pp4_cached_tokens": 0,
+      "dedicated": "No cache field invented: fresh lifecycle, first ROW position0 and full canonical progression verified."
+    },
+    "normalization": "Only target BDF/filter and fresh SYCL/NEO/XDG cache paths normalized. Core arithmetic flags and other environment compare exactly.",
+    "differences": [
+      "Dedicated3target+separateprovider versus PP4collocatedprovider; boundaries/device ownership differ.",
+      "Dedicated holds source leases until completion; PP4may use capture overlap/flat copy.",
+      "Dedicated fresh process versus PP4persistent cold reset. Load/JIT/warmup differ; no load/prompt timing included in decode intervals."
+    ],
+    "scope": "One prompt sustained decode diagnostic, not suite/localmax record, independent reference resolution or performance certification."
+  },
+  "cold_dedicated_first_native_row": {
+    "event": "issued",
+    "sequence": 1,
+    "op": 24,
+    "row": {
+      "epoch": 0,
+      "id": 1,
+      "parent": 0,
+      "position": 0,
+      "token": 248045,
+      "fixture": 0,
+      "request": "7f68f7580a98ddce71212eb3a41a2dd41aa36d049ef20221e826df62c1aefb8b",
+      "before": "e98c08408c886998af0ea4d79ca1b29386aa67283be5da28e006d05e22496718",
+      "after": "75aed14c0bd4f676e7ce69bb53b890e180ec4cb205679bcce438c3509e394e33"
+    },
+    "stage": 0,
+    "request_hex": "18000000edc80300000000000000000000000000010000000000000000000000"
+  },
+  "evidence": [
+    {
+      "source": "/dev/shm/engine-build-dedicated-provider-20261028-r2/build-receipt.json",
+      "retained": "external--engine-build-dedicated-provider-20261028-r2--build-receipt.json.gz",
+      "source_sha256": "20792a4c284f821f28fa70d017f68d8025131a9c7fb09863e09c29c852a4dab1",
+      "retained_sha256": "d2cce03e5f8eeee659b7bc5054f83506c2f2ad326e46e87e802d93fc631e5fec",
+      "source_bytes": 256266,
+      "compressed_bytes": 19399
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/comparison.json",
+      "retained": "comparison.json.gz",
+      "source_sha256": "310151a29ae49e994ec9830d0b0d432cd1ad4a5a87ed1ba35e350ad8632a1dc9",
+      "retained_sha256": "adc8d78e56824102abbb4875a52976b85db81b7fad799cb23d0dc65c6a435928",
+      "source_bytes": 1743,
+      "compressed_bytes": 809
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-config.json",
+      "retained": "dedicated-config.json.gz",
+      "source_sha256": "244d9d7dedb5adafb3e47a5b623e733824d7d2e288d545ca1b4bf1d62911cc23",
+      "retained_sha256": "1699d1fa8d43bfeffb31741bad79ef749f7fd8f01b641e735b1f6a0a1f08a281",
+      "source_bytes": 16847,
+      "compressed_bytes": 3612
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/admission.json",
+      "retained": "dedicated-output--admission.json.gz",
+      "source_sha256": "135d4a6ff433a38695576b853a21c5ff20287f04d2a67126143a5f60227bc2d0",
+      "retained_sha256": "99cfb8c0c04d164bca2895c81286bc2534acbcb4bdc54f876376efcbad7155cb",
+      "source_bytes": 390,
+      "compressed_bytes": 284
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/driver-result.json",
+      "retained": "dedicated-output--driver-result.json.gz",
+      "source_sha256": "3b316b0a8ca25d88b6767242e7bf9393e92996ba8df74e3063edae3215980edf",
+      "retained_sha256": "17970f93cdc9093e0a6b2ff258a29184cea713f1948cf7f7a55aa6b82c069d80",
+      "source_bytes": 5766176,
+      "compressed_bytes": 335060
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/plan.json",
+      "retained": "dedicated-output--plan.json.gz",
+      "source_sha256": "c6bc9e13e93025708b7739ad7d4cdc44fc5451e849e7b5851745f43d5f9fa680",
+      "retained_sha256": "08dc4582f8d2e8cd74b4d206359202ae651478f2245ef6a5a6a865f4ca97cb80",
+      "source_bytes": 42784,
+      "compressed_bytes": 7872
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage0/native/pipeline-stage.json",
+      "retained": "dedicated-output--stage0--native--pipeline-stage.json.gz",
+      "source_sha256": "b534920573bf705c5823952336fec9c721c9f3361425ad41f80ca150d5c14cae",
+      "retained_sha256": "d898b4a7b4cf5023a794c99f9365d4f05ba83af9a25c52532b2401c02e235923",
+      "source_bytes": 1082,
+      "compressed_bytes": 445
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage0/native/receipt.json",
+      "retained": "dedicated-output--stage0--native--receipt.json.gz",
+      "source_sha256": "45e556f2aa6c4a7fd62fc407e258c8a090768253243b6bfab820ae4684c51bc1",
+      "retained_sha256": "f181e1e45bfcc109515585efa50302ea7009a87935a39f1987a877888e52830b",
+      "source_bytes": 56740,
+      "compressed_bytes": 4637
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage0/native/ring-checkpoint-layout.json",
+      "retained": "dedicated-output--stage0--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "6f08aa927c594de4e2313412e1eeef592189d64cda91c16371e04aaf5c8c3fe9",
+      "retained_sha256": "4681f2e35138a811e3d8e0efa4258ab762180c3d36a5fd70fd8ecb6cf932812d",
+      "source_bytes": 88328,
+      "compressed_bytes": 6166
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage0/native/ring-quiescence.json",
+      "retained": "dedicated-output--stage0--native--ring-quiescence.json.gz",
+      "source_sha256": "9abc46b51ff4ee5998a5a71cb6827b556dd6954bd834a51975012b521bceea76",
+      "retained_sha256": "3b0e8b647116b1192f4a29a45d90d1ae1fc0962e3e545738e95607105a8a8fd2",
+      "source_bytes": 3730,
+      "compressed_bytes": 998
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage1/native/pipeline-stage.json",
+      "retained": "dedicated-output--stage1--native--pipeline-stage.json.gz",
+      "source_sha256": "784f72e515b45afbf49326ee6e656f1c50c3730c834a3eb9ca6064228e76ed67",
+      "retained_sha256": "fdedebf0860fe939f723cd1608eabd9dea899435e137f065211e7f4be53ee8ac",
+      "source_bytes": 561,
+      "compressed_bytes": 354
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage1/native/receipt.json",
+      "retained": "dedicated-output--stage1--native--receipt.json.gz",
+      "source_sha256": "d0b7993af77560ed7b4c7c16f492a2918dda241a653bba5af87d94d2cbbaf098",
+      "retained_sha256": "77541fb427bf5b0ff5448e807b79bf1ec23472cd9b986224e9fdca32c7c13850",
+      "source_bytes": 50110,
+      "compressed_bytes": 4238
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage1/native/ring-checkpoint-layout.json",
+      "retained": "dedicated-output--stage1--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "f153a2c4b7e5ed6a249000ce0c204ec5061532969e56121963629fd375a06861",
+      "retained_sha256": "f6578266a7aa27589e8e0038808f473c3564e89414cfd1de0c7b9aada6603aca",
+      "source_bytes": 75751,
+      "compressed_bytes": 5377
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage1/native/ring-quiescence.json",
+      "retained": "dedicated-output--stage1--native--ring-quiescence.json.gz",
+      "source_sha256": "a4c13e66c70153962347d81b30837c997f8dd730ff50fe440d91561e642f75c4",
+      "retained_sha256": "b7aa0d057b6150178409e0dc7ba8ebae9588db060e618852488b18591b52bb50",
+      "source_bytes": 1237,
+      "compressed_bytes": 624
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage2/native/pipeline-stage.json",
+      "retained": "dedicated-output--stage2--native--pipeline-stage.json.gz",
+      "source_sha256": "e5fa66bd0e813edfafe9e75091d35a66899261ec8f504f978895f4c36f7f7152",
+      "retained_sha256": "bb80f5d4dc58f274218f3b636396bb563c67f2eceda54ca5b98d389d8a659e5a",
+      "source_bytes": 560,
+      "compressed_bytes": 354
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage2/native/receipt.json",
+      "retained": "dedicated-output--stage2--native--receipt.json.gz",
+      "source_sha256": "801e0aa3ccdbd447cbf7a53ecae1995adfd90d2b7239cea01b05d292558965fb",
+      "retained_sha256": "8bccd39be926c426bbe358229df15059925bfd2136d9a5488a3531f57343c318",
+      "source_bytes": 47539,
+      "compressed_bytes": 4054
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage2/native/ring-checkpoint-layout.json",
+      "retained": "dedicated-output--stage2--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "54a921ce07af9fb5d3a1b1aee64f2dd679fbbe9dbbaeed6217c534ec4666c88a",
+      "retained_sha256": "aeb38d7e1d1fbe1cfc0befd1db32a9e02ee07f2db1b84c598a8fb7138c4c7171",
+      "source_bytes": 71957,
+      "compressed_bytes": 5120
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stage2/native/ring-quiescence.json",
+      "retained": "dedicated-output--stage2--native--ring-quiescence.json.gz",
+      "source_sha256": "30b003e3c7cd78eb2408a47d45ff93b8b3f60d892d79f2195b27f17e9b4f3d69",
+      "retained_sha256": "10c17b9ea65183246851ea14d8578d78bd14f30d455141c73fff66f97d959d69",
+      "source_bytes": 1214,
+      "compressed_bytes": 595
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/stageprovider/native/receipt.json",
+      "retained": "dedicated-output--stageprovider--native--receipt.json.gz",
+      "source_sha256": "fcb7c8b0da95a9ac003513b92d8c5655ec5e1aecec545b7e8809894c847975be",
+      "retained_sha256": "3db3beb34f5760b7847f1a6b099fb5017f99277edf4e2085780b19240f5e31c6",
+      "source_bytes": 6292,
+      "compressed_bytes": 1096
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/terminal.json",
+      "retained": "dedicated-output--terminal.json.gz",
+      "source_sha256": "f148d453d0a17a285613dcd5c483c052198eddd8705dad64cfc44d87dc2ec9d2",
+      "retained_sha256": "843c671345c1a38971da400671cbb239832761d14cafd2d93b0d68319da72df1",
+      "source_bytes": 334,
+      "compressed_bytes": 220
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/tokens.jsonl",
+      "retained": "dedicated-output--tokens.jsonl.gz",
+      "source_sha256": "088548e25732be92a24cce783a9d18997ca00f869c23f5cbbbac737d6399bc56",
+      "retained_sha256": "b5596354a525d1dd4a0ff4aca62e74139715e0ced4fb339cf0b3c501aac11c6f",
+      "source_bytes": 58274,
+      "compressed_bytes": 11838
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output/unit.json",
+      "retained": "dedicated-output--unit.json.gz",
+      "source_sha256": "1af6990b6f163494c168588d18084633d160dd13a387d965a5f56095c9c19e7d",
+      "retained_sha256": "401a3ca26faf537878ef2b62e1ad384b8835d62ac3365214feab4c218c49115c",
+      "source_bytes": 147,
+      "compressed_bytes": 137
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-plan-r3.json",
+      "retained": "dedicated-plan-r3.json.gz",
+      "source_sha256": "c6bc9e13e93025708b7739ad7d4cdc44fc5451e849e7b5851745f43d5f9fa680",
+      "retained_sha256": "08dc4582f8d2e8cd74b4d206359202ae651478f2245ef6a5a6a865f4ca97cb80",
+      "source_bytes": 42784,
+      "compressed_bytes": 7872
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-postflight.json",
+      "retained": "dedicated-postflight.json.gz",
+      "source_sha256": "890bfeddc221dbb29752fd3cf669436980f6bd285729abbe4bd2647425ee55b5",
+      "retained_sha256": "365ae276ed242fc22e086c65d517a942021238dcb1426d179cff2fedcc99d144",
+      "source_bytes": 6602,
+      "compressed_bytes": 1661
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-config-r4.json",
+      "retained": "pp4-config-r4.json.gz",
+      "source_sha256": "b4822a8b7cfdf3ff1dc68d0227570fbed12d65c2a6cf2f59806067ce3f025e6e",
+      "retained_sha256": "bce49c7280ed90e37355fbf494a7daf5108a99dc0b62fb2c80a12ea6c5476e59",
+      "source_bytes": 17122,
+      "compressed_bytes": 3717
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/admission.json",
+      "retained": "pp4-output--admission.json.gz",
+      "source_sha256": "6c3093205c81523a35900ccbf080ddfb0d69504316ef80fb1a69c2a5405b926e",
+      "retained_sha256": "7046600cb2856d63527af59b0ebaae98536df7552f403779ff3e991056279250",
+      "source_bytes": 384,
+      "compressed_bytes": 280
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/persistent-rolling-result.json",
+      "retained": "pp4-output--persistent-rolling-result.json.gz",
+      "source_sha256": "bb75b35c42640987000ae83fd0dea080fecc5ae823ab93c334181f5ea29d98d4",
+      "retained_sha256": "ef8bf69e79e1ff5abe0c9b686be132ddd6c5d5e6bccb6cdfbb183619acd48b11",
+      "source_bytes": 36771,
+      "compressed_bytes": 6444
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/plan.json",
+      "retained": "pp4-output--plan.json.gz",
+      "source_sha256": "5324b2a65e54ee63e1308aa573e5017e7477535c4fc187967803804b500fc6cf",
+      "retained_sha256": "5555b9b1459001ff210c9925eec7391714405801a080041e9cbd59bbbe34a72a",
+      "source_bytes": 44830,
+      "compressed_bytes": 8215
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/request-00-matched-decode512/driver-result.json",
+      "retained": "pp4-output--request-00-matched-decode512--driver-result.json.gz",
+      "source_sha256": "caf192c00ada45c4b3259e586f5cdb1556bbf9d462e6e0ed704af4cc6dba9ef3",
+      "retained_sha256": "39eaf0e469fae249b8b5c0b4f7d2ecfde54a37e6e1ff0d691a288db2453fc6b3",
+      "source_bytes": 7400418,
+      "compressed_bytes": 432522
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/request-00-matched-decode512/request-plan.json",
+      "retained": "pp4-output--request-00-matched-decode512--request-plan.json.gz",
+      "source_sha256": "180d2d8eecc3c1299c9c5a05f4213a9ecc220287f2c2f1689b98e978a7c38238",
+      "retained_sha256": "9b516605450cb628c88759c9532a512c6bd01606d6b83a8ef66a64708b30cb18",
+      "source_bytes": 44830,
+      "compressed_bytes": 8252
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/request-00-matched-decode512/result.json",
+      "retained": "pp4-output--request-00-matched-decode512--result.json.gz",
+      "source_sha256": "1ff9400bf5839e4395ce87363afeddd342e20e992b4360a824a03f1da1018f31",
+      "retained_sha256": "ce3dba0c492ac5ce6b5b54db6b002837f3e70076e120ea55fd03465b541ad1fe",
+      "source_bytes": 25271,
+      "compressed_bytes": 4802
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/request-00-matched-decode512/tokens.jsonl",
+      "retained": "pp4-output--request-00-matched-decode512--tokens.jsonl.gz",
+      "source_sha256": "dafe5c59a3aef6a697652e9b1ff4f7f3911d2dc0a3e8c64685b795642cf93cca",
+      "retained_sha256": "4e165ea8e6a85930b3cd47a90166e4e2a62abc91fd7dab399e558577a4239994",
+      "source_bytes": 37435,
+      "compressed_bytes": 6444
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/result.json",
+      "retained": "pp4-output--result.json.gz",
+      "source_sha256": "1f9cf310f078a1917455e0d3ffba6be342de45494d76b4a380d8c388ad290aff",
+      "retained_sha256": "a543a3e8d0278d09f73ea6da0f266d2e8efb0d5adc870538821c864f7c2f9691",
+      "source_bytes": 36382,
+      "compressed_bytes": 6305
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage0/native/pipeline-stage.json",
+      "retained": "pp4-output--stage0--native--pipeline-stage.json.gz",
+      "source_sha256": "5c15e34e67b8bf78ee0bd72c39cb8275a48ad55ecc35b60bdb7b671a47629153",
+      "retained_sha256": "8e57cd26188193aa986da483640fc09a63ec9141784ad40dc184cae3d6fe6999",
+      "source_bytes": 806,
+      "compressed_bytes": 417
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage0/native/receipt.json",
+      "retained": "pp4-output--stage0--native--receipt.json.gz",
+      "source_sha256": "969582d630dd4b37ecb373f0735bbeca1a557f99e2cc14e35c7316b4cffdf2bb",
+      "retained_sha256": "16ed837c54d095d4906705f5c1c6ae7b762b98014077051b922750e21fdeb1ea",
+      "source_bytes": 33124,
+      "compressed_bytes": 3243
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage0/native/ring-checkpoint-layout.json",
+      "retained": "pp4-output--stage0--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "111b959fcf601652a53aceaf4a621317d2027a209443615efac199f5830795e4",
+      "retained_sha256": "f2e847f2661fbadc57d882cf00299ecf12d7dee2c500a8f87a4d377145f73da2",
+      "source_bytes": 51029,
+      "compressed_bytes": 4486
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage0/native/ring-quiescence.json",
+      "retained": "pp4-output--stage0--native--ring-quiescence.json.gz",
+      "source_sha256": "efa86b9f9ec0be3f40c5aab0ba2295b4607595ee8477896ce72120958b720fbe",
+      "retained_sha256": "5a34bdae599295801e0020bcca8d5e88a0ab2df8a626599592d82e10ce317d68",
+      "source_bytes": 3488,
+      "compressed_bytes": 1054
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage1/native/pipeline-stage.json",
+      "retained": "pp4-output--stage1--native--pipeline-stage.json.gz",
+      "source_sha256": "8c4d0def9aeb1451c3d7d4734c7627211b41e0e749bd25938f1ec060b82d77e2",
+      "retained_sha256": "d83a965e4fccaadd9516cc55d01549ad1263ef406a2bdf236c1fc36dfaaa9862",
+      "source_bytes": 562,
+      "compressed_bytes": 360
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage1/native/receipt.json",
+      "retained": "pp4-output--stage1--native--receipt.json.gz",
+      "source_sha256": "b943e5bf051e7610461f1f434b9dff41b1fe4178ea2a4000c6af7ee1d0bdd6d8",
+      "retained_sha256": "fe9ed957736d5be76e78534636a1d308e254b59bde52b73dc3975a2064950fbf",
+      "source_bytes": 40829,
+      "compressed_bytes": 3498
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage1/native/ring-checkpoint-layout.json",
+      "retained": "pp4-output--stage1--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "3c813cc19650d8e0c67a37da40fa2a68d1915398fbf75e49ba5e7768597171a8",
+      "retained_sha256": "5a00fbcd70f734aba2aaf996f90c23c84c7ea3a1f71ff524dc81af366a4c3f58",
+      "source_bytes": 61854,
+      "compressed_bytes": 4534
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage1/native/ring-quiescence.json",
+      "retained": "pp4-output--stage1--native--ring-quiescence.json.gz",
+      "source_sha256": "7d440a162018ec7cdc7a909ad6d09be444df85cbfd14676cbca00205ed3744e4",
+      "retained_sha256": "213c2065006104d7d51f8a26ec34f9d00eb7fa4fc30b36b1e2d1fe0acc21bbcf",
+      "source_bytes": 2239,
+      "compressed_bytes": 805
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage2/native/pipeline-stage.json",
+      "retained": "pp4-output--stage2--native--pipeline-stage.json.gz",
+      "source_sha256": "2d54356cbbea3baaccd3488fccfe9e542b8da61c4a95ce83967afec79cc93895",
+      "retained_sha256": "435792a0965a894567555120fbe0a13d571e892bdab1fa16a5dba6cf6993f391",
+      "source_bytes": 563,
+      "compressed_bytes": 356
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage2/native/receipt.json",
+      "retained": "pp4-output--stage2--native--receipt.json.gz",
+      "source_sha256": "97af214ba472112f378ffebd802df0a4dcb1032cc2f42878960c2d18af03696d",
+      "retained_sha256": "d5adf2ac5c0b75f7db8751b06898f55a530d7c143d9ccbb0ee7d72024f4540bb",
+      "source_bytes": 40961,
+      "compressed_bytes": 3558
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage2/native/ring-checkpoint-layout.json",
+      "retained": "pp4-output--stage2--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "381fce012140840103b91c8450ace8cf2e0b1d45ec6a91a5d96cc3655b05c09b",
+      "retained_sha256": "c53b65f110944e49dff32b0327efac86bf47b45d20eb833d46a302ccbcc6fe9d",
+      "source_bytes": 61900,
+      "compressed_bytes": 4548
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage2/native/ring-quiescence.json",
+      "retained": "pp4-output--stage2--native--ring-quiescence.json.gz",
+      "source_sha256": "57f371ce4cde4c01dd22050172c476512494e990378119825ddf991bad303679",
+      "retained_sha256": "6b21a5cfe95966ba46c33a6ccd4fbb0e52c2cb2f25425eb95fe2cbb94033cb80",
+      "source_bytes": 2239,
+      "compressed_bytes": 802
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage3/native/pipeline-stage.json",
+      "retained": "pp4-output--stage3--native--pipeline-stage.json.gz",
+      "source_sha256": "9efcfc6276c12842a61b967a054e3e3a67619e43b77771a8334b819098508f7f",
+      "retained_sha256": "2c36c1dc0729b977945410fb0196361fa75858f8e8cca82b62e5eadd1359ed0a",
+      "source_bytes": 562,
+      "compressed_bytes": 357
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage3/native/receipt.json",
+      "retained": "pp4-output--stage3--native--receipt.json.gz",
+      "source_sha256": "af14e07c863889ea96ede6afad5c92347d2aadeea14f8e0cb47efb1eff2b282d",
+      "retained_sha256": "859f551766958e11ad7cc408efb0e8d527972fb58af22e6f262c04fb5998aba7",
+      "source_bytes": 44581,
+      "compressed_bytes": 3889
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage3/native/ring-checkpoint-layout.json",
+      "retained": "pp4-output--stage3--native--ring-checkpoint-layout.json.gz",
+      "source_sha256": "80f1b0b0a13ee08bf4c168983201d91efb9b0bfaa922c29462e5ff23e6e5ebe3",
+      "retained_sha256": "20365915151f62d2a603f3d632a62101a2ac0d12caf1ff4182c47a17213bfd0c",
+      "source_bytes": 67658,
+      "compressed_bytes": 4925
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/stage3/native/ring-quiescence.json",
+      "retained": "pp4-output--stage3--native--ring-quiescence.json.gz",
+      "source_sha256": "9f8d7a66726d10efdf436d14bed80ccd040185e3e299bdabf868dafa9bdfc811",
+      "retained_sha256": "0ee74fb787ba2853c83601e967dd504a2b8d162a453efbe64ccdc466afc8ed22",
+      "source_bytes": 2239,
+      "compressed_bytes": 800
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/suite-result.json",
+      "retained": "pp4-output--suite-result.json.gz",
+      "source_sha256": "a5188e73b1e5b2fc51c96763610a0c0f097c12be1051c2d1743186a66c55b7be",
+      "retained_sha256": "3149e860553f3bc776fb74acb38e8999e6df81aacac7816110986646adbd6ee6",
+      "source_bytes": 36184,
+      "compressed_bytes": 6209
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-output/unit.json",
+      "retained": "pp4-output--unit.json.gz",
+      "source_sha256": "0fbb97d61c257d57a609dd3f4071e8d0c163db263101562092aae0b02db5a963",
+      "retained_sha256": "98e71a3673ce4b97c31689fd3cec0321d761fc08d920d7d9945a6cf9cafcecca",
+      "source_bytes": 147,
+      "compressed_bytes": 138
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-plan-r4.json",
+      "retained": "pp4-plan-r4.json.gz",
+      "source_sha256": "5324b2a65e54ee63e1308aa573e5017e7477535c4fc187967803804b500fc6cf",
+      "retained_sha256": "5555b9b1459001ff210c9925eec7391714405801a080041e9cbd59bbbe34a72a",
+      "source_bytes": 44830,
+      "compressed_bytes": 8215
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-postflight.json",
+      "retained": "pp4-postflight.json.gz",
+      "source_sha256": "d1c81679cf13f80c9e25d9a9c872be94ca3806452b9fa638f325316d988db89a",
+      "retained_sha256": "75c8c5ea7480986e4d20fa284b8ed12bc1058a4301bfc0345f0cda1112de32da",
+      "source_bytes": 6602,
+      "compressed_bytes": 1664
+    },
+    {
+      "source": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-suite.json",
+      "retained": "pp4-suite.json.gz",
+      "source_sha256": "a5e0432a61015e0412aac29750d5e05654c56be2d6e68e760fa5e14fd95cee46",
+      "retained_sha256": "b11a99c2f93f8738f9425585d26609fe12b8eafd0ae10e68a57eb243f52e763e",
+      "source_bytes": 22571,
+      "compressed_bytes": 3233
+    }
+  ],
+  "limits": "One prompt single sample per topology, exact512 output IDs and clean lifecycle. Different topology/leases/loading/JIT, not a headline/localmax score or independent quality resolution. No unchanged-control rerun required.",
+  "next": "One early-capture candidate parity gate, then512-cap measured candidate using old controls only with exact allowed source transition and current-binary full parity proof."
+}

@@ -24,6 +24,54 @@ def commands(fixture=1):
         request_hex=struct.pack('<8i',27,11,1,fixture,3,1,0x50525631,1).hex(),parent_hidden_sha256=hidden),
         dict(owner='provider',event='completed',sequence=1,provider=result)]
 
+def capture_commands():
+    rows=commands(2);issued,completed=rows
+    row=issued['row'];row['before']='12'*32
+    parent=struct.pack('<4I3Q10i32s32s32s32s16s',0x52494e47,1,224,0,0,2,1,
+        0,7,0,2,1,-1,0,6,0,1,bytes.fromhex(row['request']),bytes.fromhex('34'*32),
+        bytes.fromhex(row['before']),C.sha256(b'').digest(),bytes(16))
+    handoff=struct.pack('<12i64s',0x4d545031,1,40960,0,2,3,6,7,7,-1,0,0,('ab'*32).encode())
+    native=struct.pack('<4IQ',0x52464331,1,360,2,7)+parent+handoff
+    issued.update(op=27,provider_serial=1,parent_record_hex=native.hex(),monotonic_s=1.)
+    completed['monotonic_s']=3.
+    metadata=struct.pack('<QII6Q32s32s',0x315950414352574f,1,128,0,1,3,2,7,1,
+        bytes.fromhex(row['request']),C.sha256(native).digest())
+    event=dict(owner='provider',event='parent-captured',sequence=1,op=27,row=copy.deepcopy(row),monotonic_s=2.,
+        metadata_hex=metadata.hex(),reply_hex=struct.pack('<8i4d',2,-1,0,128,1,-1,0x50525631,1,0.,0.,0.,0.).hex())
+    return [issued,event,completed]
+
+class CaptureProof(unittest.TestCase):
+    def test_exact_ack_and_source(self):
+        self.assertEqual(len(C.canonical_pairs(capture_commands(),2,capture_ready=True,target_stages=3)),1)
+    def test_default_refuses_ack(self):
+        with self.assertRaises(ValueError):C.canonical_pairs(capture_commands(),2)
+    def test_missing_duplicate_late_ack(self):
+        rows=capture_commands()
+        for bad in ([rows[0],rows[2]],rows[:2]+[rows[1],rows[2]],[rows[0],rows[2],rows[1]]):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):C.canonical_pairs(bad,2,capture_ready=True,target_stages=3)
+    def test_ack_identity_mutations(self):
+        for offset in (0,8,12,16,24,32,40,48,56,64,96):
+            rows=capture_commands();raw=bytearray.fromhex(rows[1]['metadata_hex']);raw[offset]^=1;rows[1]['metadata_hex']=raw.hex()
+            with self.subTest(offset=offset):
+                with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_source_mutation_rehashed_ack_refused(self):
+        rows=capture_commands();raw=bytearray.fromhex(rows[0]['parent_record_hex']);raw[12]=1
+        rows[0]['parent_record_hex']=raw.hex();ack=bytearray.fromhex(rows[1]['metadata_hex']);ack[96:]=C.sha256(raw).digest();rows[1]['metadata_hex']=ack.hex()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_nonterminal_reply_identity(self):
+        for offset in (0,4,8,12,16,20,24,28,32):
+            rows=capture_commands();raw=bytearray.fromhex(rows[1]['reply_hex']);raw[offset]^=1;rows[1]['reply_hex']=raw.hex()
+            with self.subTest(offset=offset):
+                with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_timestamp_order_and_unknown_events(self):
+        rows=capture_commands();rows[1]['monotonic_s']=4.
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+        rows=capture_commands();rows[1]['event']='ignored-ACK'
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_strict_policy_bool(self):
+        with self.assertRaises(ValueError):C.canonical_pairs(commands(),2,capture_ready=1)
+
 class PairProof(unittest.TestCase):
     def test_actual_native_pair(self):
         self.assertEqual(C.canonical_pairs(commands(),2),[dict(position=1,token=11,hidden_bytes=40960,hidden_sha256='ab'*32)])

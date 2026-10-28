@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28 — Initial 3+1 passed parity but lost the matched speed test; testing early capture.**
+**October 28 — Early-capture 3+1 passed exact parity; matched speed test running.**
 - The per-token 3+1 gate on targets 23/27/47 and draft 43 matched all **2,065 target sources, 73 draft
   sources, 1,707 canonical hidden/token input pairs, and 32 output tokens** against the prior four-target
   reference. All four owners exited 0, no holders remain, and postflight matches the fault baseline.
@@ -11,11 +11,15 @@
 - Matched 512-token decode: 3+1 **42.17 / 43.20 tok/s** versus PP4 **51.81 / 52.16 tok/s**
   (first 99 / all 511 intervals). Every output ID matches, both cold requests finished cleanly. Initial
   3+1 is a measured loss, not a promotion. [Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/matched512-initial/retention.json).
-- Active: `sc117-dedicated-capture-gate-20261028-r1` uses all four cards for one full state gate of
-  opt-in early capture acknowledgment. Binary `8ff218d09413`, output
-  `/dev/shm/sc117-dedicated-capture-gate-20261028-r1/output`. The candidate releases only the final
-  input lease after validated private capture; provider busy and commit locks stay held through restoration.
-  CPU protocol/ownership tests pass. Native parity and speed remain pending; no unchanged control rerun.
+- Early capture passed all **2,065 target sources, 73 draft sources, 1,707 canonical input pairs and
+  32 output IDs**; every native owner exited 0. Validated capture acknowledgments release only the final
+  input lease; provider busy and commit locks remain held through restoration. Binary `8ff218d09413`.
+  [Proof receipt](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/capture-candidate/gate-r1-proof-receipt.json).
+- Active: `sc117-dedicated-capture512-20261028-r1` uses all four cards for the same cold 1,677-token
+  prompt and 512-output cap. Saved initial3+1 and PP4 controls are retained; exact compiler argv/source
+  transition and current-binary full parity are checked. No speed claim until this run finishes.
+- The next 2+1 64K plan passes native allocation planning, but a newly identified 512-MiB ring snapshot
+  ceiling needs exact accounting before device execution. CPU allocation planning alone did not check it.
 - Dedicated bulk prefill, persistent reset, 2+1 runtime execution and the full realistic suite remain
   unqualified. Completed raw state archives are hash-verified on `/mnt/raid-models/ownrt-experiment-archives/2026-10-28`;
   the former `/dev/shm` archive names are symlinks. Admission floors and host settings are unchanged.

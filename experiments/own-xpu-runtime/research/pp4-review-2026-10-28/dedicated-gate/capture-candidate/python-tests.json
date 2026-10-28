@@ -1,0 +1,28 @@
+{
+  "scope": "CPU temporary overlay only; canonical source untouched. No native inference or performance proof.",
+  "overlay": "/dev/shm/dedicated-capture-python-overlay-20261028",
+  "cpu_affinity": "8-15",
+  "nice": 19,
+  "tests": 34,
+  "result": "PASS",
+  "planner_boolean_rejection_cases": 4,
+  "wire": "Reply64 ACK only, metadata128 in private mmap offset768. Ordinary Reply64 same sequence, no socket128payload.",
+  "sources": [
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/dedicated_transport.py",
+      "base_sha256": "e63e2766326eb58e3cc420b8e15d592250e52c1317457f5e133b137dbeff4dde",
+      "candidate_sha256": "8506d6fc9f5ceebbd2bffd14b7203b214288eefb817bda825c66cbac98a90bd8"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/dedicated_provider_driver.py",
+      "base_sha256": "d58376839b297e3cab49c513d702608e6b66222e04a5e9a4e8b1523d68f2b698",
+      "candidate_sha256": "5cee34d252d5f6ba16110e8c127af7cd1408bcfb1e3c27fd53c4cbddb0fc010a"
+    },
+    {
+      "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/test_dedicated_capture.py",
+      "base_sha256": null,
+      "candidate_sha256": "94843101d7c8dcdbdbe4a054d1f3dcaa9b22b0715232f5b7f8d815b489b6f11e"
+    }
+  ],
+  "limits": "Apply together with native.patch only after active control. Needs actual GPU parity and fair timing before promotion. Command monotonic timestamps are controller issue/completion/capture observations, not GPU kernel timers."
+}

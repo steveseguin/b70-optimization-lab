@@ -1,0 +1,24 @@
+{
+  "schema": "ownrt.capture-native-transition.v1",
+  "old_binary_sha256": "42835855ee910ee6e4fe965a40172add01447a994898a4e48254da95b4dafe07",
+  "native_patch_sha256": "a12954f38df13d0a06bc49b5412a41305cdd673fed0d6e60846ad24e0f8230e2",
+  "sources": {
+    "pipeline/provider_only/owner.hpp": {
+      "before": "e0bd0ab8586df774e8692a35b3f4ecc84a6608a9669bf98ce70bb09aac40ee0d",
+      "after": "5d3b6f2d619bc998c3e8c082166c0995210e19f1cecec91af462cfcd56580a3f"
+    },
+    "pipeline/provider_only/runtime.hpp": {
+      "before": "4678f56662471a90f149238a0357407e7212683b7b5999d28d7891808f3a8266",
+      "after": "62ea4c4ae578e1d7ea88cec90e3e713c6f778c2269fb23f6da776abcfe3ab40b"
+    },
+    "pipeline/provider_only/wire.hpp": {
+      "before": "a120896005f6c2de2b9dad201879a8722d8642fca5d719b0be1252cec009aab3",
+      "after": "81115c958c52ec16dc30f685f3f80b5962df820e9db022878dc0430bb54a0c75"
+    },
+    "gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": {
+      "before": "8e5e60cf50e590a7a9dfe41fa1c3b9f05e3049654feb22ded3e203ee1eb609f3",
+      "after": "97a4429ad4cf6f86e5ffbe299d2b1f39456bd67054ef4019acd08276b0d1f304"
+    }
+  },
+  "verification": "Reverse-applied exact native.patch to current candidate copies in temporary directory; reconstructed old compiled source bytes match r2 build receipt. Canonical untouched."
+}

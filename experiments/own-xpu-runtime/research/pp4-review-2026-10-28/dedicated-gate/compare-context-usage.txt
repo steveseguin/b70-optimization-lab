@@ -1,0 +1,15 @@
+Research-only cross-context helper: compare_context.py
+
+Input wrapper (all paths point to real unchanged manifests):
+{"schema":"ownrt.dedicated-cross-context-inputs.v1","reference_context":262144,"candidate_context":65536,"inputs":"/absolute/path/to/64k-dedicated-parity-inputs.json"}
+The nested inputs use existing ownrt.dedicated-parity-inputs.v1 shape (see compare.py), with reference_request pointing to retained PP4 serial request, actual64K two-target plan/result/commands, actual sealed draft_set, two native target dump/plan/metadata/quiescence entries, and all3 native FINISH receipts. Do not rewrite any source contexts/layouts/seals.
+
+Run offline after actual64K gate and root-controlled reference-byte availability:
+nice -n 19 taskset -c 8-15 python3 compare_context.py /absolute/wrapper.json --out /fresh/proof.json
+No inference or archive extraction occurs. Existing strict comparators remain unchanged. Missing archived bundle bytes cause input failure; this helper does not restore them.
+
+Required actual identity:1677 prompt,32 output IDs equal reference, position1708,1707 actual ordered hidden/token pairs, exact draft host/input identity, clean3process lifecycle and native target restore/quiescence checks. Reuses strict sealed reader plus existing target/draft loaders; verifies whole original payloads and seals before indexed comparisons. File versions remain bound across whole sealed reads and range reads.
+
+Exactly48 target QSA arrays (layers3,7,...47 × keys/values/raw/pooled) and4 draft BF16 arrays admit exact262144-to65536 first-dimension capacity change. Every smaller byte must equal larger prefix; every larger extra byte must be zero; both full array hashes are recomputed against their original seals. All other2017target/69draft sources compare exact hashes, complete layouts and roles. No synthesized equal full-array hash, padded file or transformed source manifest is emitted.
+
+CPU tests:7 small fixtures passed on cores8-15/nice19 (registered target/draft shapes, forbidden name/dtype/nonfirst-dimension/byteextent, exact prefix+zero tail, nonzero tail, prefix mismatch, bounds/ratio/originalhash). These test comparison primitives only; no actual64K candidate has been run through this helper yet. No GPU, bundle extraction or pinned runtime edits were performed.

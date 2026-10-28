@@ -1,0 +1,33 @@
+Remote full-value KV screen — October 28, 2026
+CPU source and allocation metadata only. No archives extracted, GPU access, native edits, or host setting changes.
+
+Actual representation and capacity floor
+At context 262,144 there are 12 QSA layers. Each layer stores F32 keys and values shaped [262144, 2, 256]: 512 MiB each. Raw indexer keys are [262144, 128], or 128 MiB; pooled indexer keys are [65536, 128], or 32 MiB. Sources: existing stage launch-plan.json files and topology-options.json.
+
+Target weights plus KV total 69,612,876,288 bytes, exceeding two 30-GiB target caps by 5,188,366,848 bytes BEFORE workspace, recurrent state, snapshots, and transport. A separate draft does not remove this target deficit.
+
+Offloading only raw and pooled indexer keys removes at most 2,013,265,920 bytes across all layers: insufficient. Offloading all values removes 6,442,450,944 bytes; both K and V remove 12,884,901,888 bytes. Those nominal savings exceed the weight-plus-KV deficit, but values alone leaves only about 1.25 GB aggregate headroom for every other target allocation. It is not an actual two-card fit result. A remote K/V owner would store about 12.89 GB before its workspace, versions, and transport. Per-target placement also matters; aggregate capacity is not sufficient proof.
+
+Source access rules
+specialised.hpp qsa_append_pool writes the new K/V row, writes raw indexer keys, and completes each four-row normalized pool. select_fast.hpp scores every causally available pooled key; it does not select pages without reading the pooled index. Top selection expands each chosen pool into its four original token IDs, then appends the incomplete tail. Budget 2,048 therefore yields at most 2,051 selected tokens.
+
+p49_qsa_kernel.hpp uses selected global IDs to read two K/V heads, each 256 F32 values, with 24 query heads sharing those KV heads. Transferring the payload once per selected token is sufficient storage traffic; counting it 24 times would confuse kernel reads with required link bytes. Preserve selected slot order, scores, ties, and reduction trees. A compact local gather requires an explicit global-ID-to-slot map; existing kernels index the full cache directly and cannot consume a compact cache unchanged.
+
+Raw history is a special case: qsa_ring.hpp already documents an exact 512-row raw ring, because only the previous open pool (at most three rows) is read. It is default-off and historically rank-1 scoped. Do not claim this memory optimization is new or enabled everywhere. Offloading raw history is unnecessary if that existing exact ring is separately qualified. Even eliminating all full raw storage is far short of the two-target deficit.
+
+Strict traffic bounds, not observed trace averages
+Each selected token needs 4,096 K+V bytes, or 2,048 bytes for values alone. At 2,051 slots, all 12 layers require at most 100,810,752 K+V bytes per decode row, or 50,405,376 bytes for values. New K/V writes add 49,152 bytes per row across all layers; raw writes add 6,144 bytes, and completed pooled writes add 6,144 bytes per four rows. These exclude metadata, versioning, and host staging.
+
+For a 256-row prefill chunk, fetching each query independently costs at most 25,807,552,512 K+V bytes. Exact union deduplication caps payload at the entire local context: 12,884,901,888 bytes across all layers at capacity. This bound does not assume good locality. The scratch union can be reused layer by layer, but one full-layer union is 1 GiB and affects local fit. Streaming smaller tiles lowers scratch but may refetch rows.
+
+Keeping selection local while moving pooled keys remotely would require scanning up to 402,653,184 pooled bytes per query across all layers, even before attention. A better raw/pooled remote design must execute exact selection remotely and send the query and ordered IDs; it is compute offload, not simple cache storage. Remote attention could also avoid bulk selected-KV returns, but then the fourth card owns the attention critical path and needs a distinct schedule/cost screen.
+
+At assumed effective aggregate bandwidths of 4/8/16/32 GB/s, maximum K/V return payload alone takes 25.20/12.60/6.30/3.15 ms per decode row; values alone takes half that. These are bandwidth sensitivities, not B70 measurements or additive endpoint predictions. Dependency latency, two host-staging legs, and overlap are unresolved. No long-request selected-ID/page payload was inspected, so no actual cache hit rate or average traffic is claimed.
+
+Exactness and duplicate residency
+A remote authoritative cache can replace full local K/V storage, with only selected rows or a bounded tile resident locally. This is full precision and need not change arithmetic. It requires new gather/remap bindings, explicit row versions for speculative writes, causal visibility, pooled-key consistency, and rollback/reset ownership. Keeping the original full local allocation and adding a remote copy solves no capacity problem. Never use approximate misses or stale rows. Existing sparse snapshot ownership must extend to the authoritative remote state.
+
+Smallest future test
+First establish actual per-target allocation fit with full local K/V removed and bounded staging included. Then replay authenticated selected IDs for one real QSA layer near 121K and 262K through exact gather/transfer/remap, comparing payload bytes and attention outputs against local execution. Cover repeated IDs, incomplete pools, speculative overwrite/abort, reset, and missing/stale version rejection. Measure complete query-to-consumer wall time, required pinned memory, and both staging legs if used. Without a retained long selected-ID trace, record that missing input rather than invent locality. No extra model run is proposed during the current gate.
+
+Decision: idea 10 remains open and blocked on memory architecture/remote ownership. Raw/pooled-only offload is insufficient; values or K/V offload has enough nominal capacity but no demonstrated fit or speed advantage.

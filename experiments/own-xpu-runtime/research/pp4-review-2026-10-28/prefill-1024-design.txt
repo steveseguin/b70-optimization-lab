@@ -1,0 +1,35 @@
+1,024-row prefill: concrete CPU design screen — October 28, 2026
+No native edits, build, GPU access, or archive work. A cap-only patch is unsafe; this note is the requested design/falsification alternative.
+
+Mechanism and arithmetic
+The actual route census gives T4 tile fill about 0.77 at 256 rows and 0.93 at 1,024. Larger chunks eliminate partially filled expert tiles without changing T4 or a single output's weight decode, multiply/add, or reduction order. The estimated 17% reduction in tile count applies across routed formats, unlike the small IQ4-only lever. Applying it to the older 37% expert cost share suggests about 6.4% of target work, not a measured endpoint win. Larger pipeline bubbles, allocation costs, and native operator changes may erase it.
+
+Hard blockers found in current sources
+- Python rolling_provider/prefill.py uses a 4,096-byte header and writes token IDs starting at byte 16. A 1,024-token payload extends to byte 4,112 and overlaps the first stream region. Changing only the rows limit corrupts the layout contract.
+- Native CLI, Python prefill, pipeline_driver.py, and compare_pipeline_state.py all cap rows at 256. Their protocol/mapping and identity checks must change together.
+- kernels.hpp ng::validate limits native operator tokens to 256. p28/submit.hpp separately caps its token path at 256. Raising transport limits does not raise all kernel limits safely.
+- qsa_ring.hpp proves its 512-row raw ring only for native append launches of at most 256 rows. A single append of 1,024 rows can overwrite open-pool input. Keep append launches bounded or separately redesign and prove the ring.
+- prefill_native_site leaves recurrent state in the spare bank. The chunk swaps all banks once at completion. Repeating four native GDN/conv groups naively reads the original active bank again; it is not equivalent to advancing 1,024 rows.
+- Per-row route temporary stride is 16 KiB. The allocation/admission check must account for a larger native token count; do not assume the existing scratch has room.
+
+Minimal conservative candidate shape
+Keep all generic/native operators at their existing <=256-row admission. Allocate 1,024-row shadow arrays and process dense/routed linear sites over all 1,024 rows. This is where the desired cross-row reuse occurs. Execute other native sites in bounded groups; keep QSA select at its current scratch-limited groups (32 at 262K) and attention at four rows. Preserve the original increasing positions, slot order, and causal state.
+
+For recurrent sites, an explicit continuation operation is required between native groups. One conservative implementation copies that layer's completed spare state/history into its active input before the next group. This adds device copy traffic but changes no arithmetic. An alias-based continuation is only safe after auditing first-row read/write hazards in both GDN and convolution; do not assume internal later-row behavior proves the entry path. Final bank parity and inactive-bank contents must match the reference comparator's logical/physical state contract. Four 256-row chunks swap four times, whereas one superchunk currently swaps once. This is a correctness gate, not just a metadata adjustment.
+
+Transport should use a versioned larger header, for example 8,192 bytes, with matching native/Python map offsets and strict size admission. Default 256-row layout remains unchanged. The option must be pinned into the plan and all workers, rather than an unrecorded environment-only override. The bounded two-chunk replay queue can retain 1,024 tokens per ticket, but continuity, strict consumption, parity ownership, and reset must be tested with the larger owned payload. No retries.
+
+Allocation screen
+Existing 256-row prefill-allocation.json reports:
+- Stage 0: 288,614,400 shadow bytes; a linear 4x estimate is 1,154,457,600, an increase of 865,843,200 bytes.
+- Stages 1–3: 68,302,848 packed shadow bytes each; estimated 273,211,392 at 1,024 rows, an increase of 204,908,544 each. Their unpacked 256-row size is 217,802,752 bytes.
+These are current PP4 allocation scaling estimates, not new 3+1 or 2+1 fits. The larger per-stage transport map is about 4 × 1024 × 40,960 = 167,772,160 bytes plus its header, versus 41,943,040 at 256 rows. Treat mapped host memory and device scratch separately. T4 bucket keys grow to 10,240 words = 40 KiB; confirm the actual local-memory admission limit and other kernel local allocations. Read actual new planner floors before any device work.
+
+Smallest falsification path
+1. CPU geometry admission: enumerate every affected linear/native path and its count, scratch, local-memory, row-view, and integer extent bounds. Verify larger header and stream regions never overlap. Reject the candidate if required memory cannot fit the actual topology.
+2. CPU regression: use existing test_rolling_prefill.py and test_rolling_ring_socket.py mock owners for a 1,024-row chunk plus a partial tail, two overlapping chunks, delayed stage 0/draft replay, strict ticket continuity, error joins, and reset. These tests prove transport ownership only.
+3. Native state gate: compare one 1,024-row superchunk with four 256-row reference chunks, including every recurrent bank, raw/pooled QSA rows, position/extent/parity, token history, streams, and canonical draft pairs. Cover starts around 3/4, 31/32, 255/256, and partial lengths 257, 511, 1,023, and 1,025. Existing prefill state comparators and persistent-reset/rollback gates are the reference; do not claim Python mock parity proves native math.
+4. Only after admission and state parity, one same-service long prefill timing against 256 rows. Compare wall time and target/draft work separately; larger chunk count changes overlap. Preserve any failure or negative result and stop if continuation copies or bubbles erase the gain.
+
+Decision
+This is implementable as a superchunk executor with bounded native groups, but it is not a tiny limit increase. The transport header and recurrent continuation/parity are the first correctness blockers. Coordinate the source set with the root before a build; do not disturb the current pinned 3+1 or 2+1 gate.

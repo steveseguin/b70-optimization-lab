@@ -1,0 +1,52 @@
+{
+  "schema": "ownrt.attention-owner-cpu-screen.v1",
+  "scope": "Source and existing metadata/profile only; no implementation, lossless validation, GPU, archive extraction, or timing request",
+  "topology": "2 target owners, existing separate draft owner, one authoritative QSA state/selection/attention owner",
+  "boundary_per_QSA_layer_F32_bytes": {
+    "request": {
+      "qgate": 49152,
+      "k": 2048,
+      "v": 2048,
+      "indexer_query": 2048,
+      "indexer_key": 512
+    },
+    "request_total": 55808,
+    "reply_attention_y": 24576,
+    "both_directions_total": 80384
+  },
+  "payload": {
+    "all12layers_per_token": 964608,
+    "all12layers_256row_chunk": 246939648,
+    "121852rows_12layers": 117539414016,
+    "excluding": "metadata, transport headers, host staging second legs, snapshots and retries (no retries proposed)"
+  },
+  "capacity": {
+    "remote_KV_state_bytes": 14898167808,
+    "target_weight_bytes_remaining_floor": 54714708480,
+    "two_30GiB_cap_bytes": 64424509440,
+    "aggregate_weight_only_headroom": 9709800960,
+    "warning": "Not actual target/remote allocation fit: scratch, snapshots, rope, recurrent banks, staging and per-target imbalance remain"
+  },
+  "existing_profile": {
+    "path": "/dev/shm/ownrt-lab-r0-c43/runs/diag-candidate/rank0/decode-device-profile.jsonl",
+    "samples": 47,
+    "position_filter": "position>4096, excluding initial cold JIT",
+    "QSA_layers_in_stage": 5,
+    "median_us_by_class_all5layers": {
+      "qsa_prepare": 31.459,
+      "qsa_append_pool": 16.353,
+      "qsa_select": 95.311,
+      "qsa_attention": 216.565
+    },
+    "estimated_12layer_us_scaled_short_context": 863.2511999999999,
+    "warning": "Old ~4K context diagnostic; not 121K/262K service, no remote-owner cost measured"
+  },
+  "payload_only_sensitivity_seconds_per_token": {
+    "4GBps": 0.000241152,
+    "8GBps": 0.000120576,
+    "16GBps": 6.0288e-05,
+    "32GBps": 3.0144e-05
+  },
+  "verdict": "Much smaller link payload than selected-KV returns; capacity plausible in aggregate. Critical path, current long-context owner service, exact transaction protocol and per-device fit unmeasured.",
+  "discovery_open": true
+}

@@ -43,4 +43,15 @@ class AnalyzeTests(unittest.TestCase):
             d,p=self.artifacts(tmp);r=json.loads((p/'result.json').read_text());r['output_ids'][0]=123
             (p/'result.json').write_text(json.dumps(r))
             with self.assertRaisesRegex(ValueError,'exact output IDs'):analyze(d,p)
+    def test_changed_binary_refused_by_default(self):
+        with TemporaryDirectory() as tmp:
+            d,p=self.artifacts(tmp);plan=json.loads((d/'plan.json').read_text())
+            plan['pins']['/build/sc117-engine']='new-binary'
+            (d/'plan.json').write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError,'native binary identity differs'):analyze(d,p)
+    def test_previous_control_requires_explicit_proof(self):
+        with TemporaryDirectory() as tmp:
+            d,p=self.artifacts(tmp)
+            with self.assertRaisesRegex(ValueError,'previous dedicated comparison requires explicit capture proof'):
+                analyze(d,p,previous_dedicated_output=d)
 if __name__=='__main__':unittest.main()
