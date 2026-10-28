@@ -1,0 +1,15 @@
+Fixed diagnostic prepared2026-10-28; no device work performed.
+
+Fresh plan: /dev/shm/sc117-reference-target244-4096-20261028-r1/plan.json
+SHA256 be27cf87db2c3bf8fc781a017ff6edf78815a6289ccb5685651f19594d94c70b
+CPU validation: bind_adapter.validate_plan checked all36 current pins, compiled-source receipt and binary. Output remains absent. Existing planner floors/admission/Guard, process registration and single clean FINISH are reused; no retry/reload chain.
+
+After current measured run exits, root must create normal fresh owning-unit admission for this exact plan. Launch only through that owning unit:
+python3 reference_one_row.py --plan <above> --run --admission <fresh-admission> --unit <owning-unit>
+Requires nice19; this file does not authorize an unguarded launch.
+
+Exact saved244token prefix, context4096 (historical CPU extent), target split23/25, F32, max_new1, retain_steps1. Actual OP10 request mode0/count1/overlap0/dumps0; Draft none; no oracle, draft or pipeline native options. Validates244 non-speculative HALF positions per rank, no speculative trace rows/guesses, all48 rank-owned end-of-layer captures40960 bytes each. The .bf16 filenames contain actual F32 stream bytes; reject20480-byte files. Records actual token alongside saved CPU16568 and historical6343. A mismatch is an independent-reference finding, not a runtime lifecycle failure; no throughput claim.
+
+Nine CPU tests PASS: existing512 behavior/defaults, actual imported native-controller OP10 framing/count/mode, two-owner FINISH/receipts, fixed4096 plan and capture extent. No GPU kernel or independent model accuracy proof from mocks.
+
+Research-only colocated_control.bind_adapter now reads context/max_new from plan (defaults65536/512), and execute optionally receives diagnostic request callback. Default512 request/validation/timing path unchanged. Any unrun old512 plan must be regenerated because colocated_control.py hash changed. Original prepared-plan.json preserved unchanged, with execution_ready:false; new wrapper plan owns the executable diagnostic.

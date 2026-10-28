@@ -1,0 +1,82 @@
+--- a/exact-logits.cpp
++++ b/exact-logits.cpp
+@@ -4,6 +4,7 @@
+ //   scores every position p >= score_from-1 (the prediction of token p+1); writes rows.jsonl and,
+ //   for positions listed in full_rows, the complete F32 logit row to logits-<p>.f32.
+ #include "llama.h"
++#include "ggml-backend.h"
+ #include <cmath>
+ #include <cstdlib>
+ #include <cstdio>
+@@ -23,6 +24,43 @@
+ static long scalar(const std::string& s, const std::string& key, long def) {
+     auto p = s.find("\"" + key + "\""); if (p == std::string::npos) return def; p = s.find(':', p); return std::stol(s.substr(p + 1));
+ }
++
++// Opt-in observer only: qwen4exp l_last is post-FFN four-stream residual.
++struct LayerCapture {
++    std::string out; int position=243, batch_start=0, batch_tokens=0;
++    std::set<int> seen; std::vector<int> output_positions; bool failed=false;
++};
++static bool capture_layer(ggml_tensor * t, bool ask, void * opaque) {
++    auto & c=*static_cast<LayerCapture *>(opaque);
++    int layer=-1, used=0;
++    const bool selected=std::sscanf(t->name,"l_last-%d%n",&layer,&used)==1 &&
++        t->name[used]=='\0' && layer>=0 && layer<48 &&
++        c.position>=c.batch_start && c.position<c.batch_start+c.batch_tokens;
++    if(ask)return selected;
++    if(!selected)return true;
++    int row=c.position-c.batch_start;
++    // qwen4exp crops layer47 before FFN to requested logit rows.
++    if(layer==47 && t->ne[2]!=c.batch_tokens){
++        auto it=std::find(c.output_positions.begin(),c.output_positions.end(),c.position);
++        if(t->ne[2]!=int64_t(c.output_positions.size()) || it==c.output_positions.end()){
++            c.failed=true;return true; // observer errors must never cancel model evaluation
++        }
++        row=int(it-c.output_positions.begin());
++    }
++    if(t->type!=GGML_TYPE_F32 || t->ne[0]!=2560 || t->ne[1]!=4 ||
++       row<0 || row>=t->ne[2] || (layer!=47 && t->ne[2]!=c.batch_tokens) || t->ne[3]!=1 || t->nb[0]!=4 ||
++       !c.seen.insert(layer).second){c.failed=true;return true;}
++    std::vector<float> values(4*2560);
++    for(int stream=0;stream<4;++stream)
++        ggml_backend_tensor_get(t, values.data()+stream*2560,
++            size_t(row)*t->nb[2]+size_t(stream)*t->nb[1],2560*sizeof(float));
++    char file[64];std::snprintf(file,sizeof file,"/layer-%02d.f32",layer);
++    std::ofstream f(c.out+file,std::ios::binary);
++    f.write(reinterpret_cast<const char*>(values.data()),values.size()*sizeof(float));
++    if(!f){c.failed=true;return true;}
++    return true;
++}
++
+ int main(int argc, char** argv) {
+     if (argc != 5) { fprintf(stderr, "usage: %s MODEL INPUT.json OUT_DIR THREADS\n", argv[0]); return 2; }
+     std::ifstream in(argv[2]); std::stringstream buf; buf << in.rdbuf(); std::string js = buf.str();
+@@ -32,7 +70,10 @@
+     llama_backend_init();
+     auto mp = llama_model_default_params(); mp.n_gpu_layers = 0;
+     llama_model* model = llama_model_load_from_file(argv[1], mp); if (!model) { fprintf(stderr, "load failed\n"); return 1; }
++    LayerCapture capture; capture.out=out;
++    const bool capture_enabled=getenv("EXACT_CAPTURE_LAYERS") && std::string(getenv("EXACT_CAPTURE_LAYERS"))=="1";
+     auto cp = llama_context_default_params();
++    if(capture_enabled){cp.cb_eval=capture_layer;cp.cb_eval_user_data=&capture;}
+     cp.n_ctx = 4096; cp.n_batch = 512; cp.n_ubatch = 512; cp.n_seq_max = 1; cp.n_threads = threads; cp.n_threads_batch = threads;
+     { const char* kv=getenv("EXACT_KV"); ggml_type t=(kv&&std::string(kv)=="bf16")?GGML_TYPE_BF16:GGML_TYPE_F32; cp.type_k=t; cp.type_v=t; fprintf(stderr,"kv type %s\n", t==GGML_TYPE_BF16?"bf16":"f32"); } cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.no_perf = true;
+     llama_context* ctx = llama_init_from_model(model, cp); if (!ctx) { fprintf(stderr, "context failed\n"); return 1; }
+@@ -46,6 +87,9 @@
+             int i = batch.n_tokens++; batch.token[i] = (llama_token) toks[p]; batch.pos[i] = p; batch.n_seq_id[i] = 1; batch.seq_id[i][0] = 0;
+             batch.logits[i] = (p >= score_from - 1 && p < n) ? 1 : 0;
+         }
++        capture.batch_start=start;capture.batch_tokens=end-start;
++        capture.output_positions.clear();
++        for(int p=start;p<end;++p)if(p>=score_from-1)capture.output_positions.push_back(p);
+         if (llama_decode(ctx, batch) != 0) { fprintf(stderr, "decode failed at %d\n", start); return 1; }
+         for (int p = start; p < end; ++p) {
+             if (p < score_from - 1) continue;
+@@ -64,5 +108,6 @@
+         fflush(rows);
+     }
+     fclose(rows); llama_batch_free(batch); llama_free(ctx); llama_model_free(model); llama_backend_free();
++    if(capture_enabled && (capture.failed || capture.seen.size()!=48)){fprintf(stderr,"incomplete layer capture %zu/48\n",capture.seen.size());return 3;}
+     return 0;
+ }

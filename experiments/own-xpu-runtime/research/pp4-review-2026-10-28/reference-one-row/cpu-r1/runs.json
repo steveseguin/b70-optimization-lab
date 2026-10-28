@@ -1,0 +1,80 @@
+[
+  {
+    "label": "original",
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "/dev/shm/llref/build/exact-logits",
+      "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/input.json",
+      "/dev/shm/sc117-reference-capture-cpu-20261028-r1/original",
+      "8"
+    ],
+    "binary_sha256": "71a28e2ca040f9c27c32dfa961257599f373539ea1662a5d52b360238b67f9c9",
+    "environment": {
+      "GGML_CPU_EXACT_F64": "1",
+      "EXACT_KV": "f32",
+      "OMP_NUM_THREADS": "8",
+      "EXACT_CAPTURE_LAYERS": "0"
+    },
+    "started": 1793168537.5632446,
+    "returncode": 0,
+    "finished": 1793168814.3346138
+  },
+  {
+    "label": "off",
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "/dev/shm/sc117-reference-capture-cpu-20261028-r1/exact-logits-capture",
+      "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/input.json",
+      "/dev/shm/sc117-reference-capture-cpu-20261028-r1/off",
+      "8"
+    ],
+    "binary_sha256": "f855676f43bddebe7147aa4e59adc635342b0248f8a29992d82c541cfe6ad56e",
+    "environment": {
+      "GGML_CPU_EXACT_F64": "1",
+      "EXACT_KV": "f32",
+      "OMP_NUM_THREADS": "8",
+      "EXACT_CAPTURE_LAYERS": "0"
+    },
+    "started": 1793168814.3443177,
+    "returncode": 0,
+    "finished": 1793168982.2012236
+  },
+  {
+    "label": "on",
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "/dev/shm/sc117-reference-capture-cpu-20261028-r1/exact-logits-capture",
+      "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-00001-of-00002.gguf",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/input.json",
+      "/dev/shm/sc117-reference-capture-cpu-20261028-r1/on",
+      "8"
+    ],
+    "binary_sha256": "f855676f43bddebe7147aa4e59adc635342b0248f8a29992d82c541cfe6ad56e",
+    "environment": {
+      "GGML_CPU_EXACT_F64": "1",
+      "EXACT_KV": "f32",
+      "OMP_NUM_THREADS": "8",
+      "EXACT_CAPTURE_LAYERS": "1"
+    },
+    "started": 1793168982.2100477,
+    "returncode": 3,
+    "finished": 1793169147.9361413
+  }
+]
