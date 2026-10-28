@@ -1,0 +1,36 @@
+{
+  "schema": "ownrt.reference-route-planner-policy-cpu.v1",
+  "passed": true,
+  "tests": 22,
+  "wall_s": 0.192,
+  "command": [
+    "python3",
+    "-B",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/planner-policy/test_policy.py",
+    "-v"
+  ],
+  "test_sha256": "656037e49b4939fdb13c1a33c50893678e36d8d7b51723bf21611091a9097575",
+  "source_sha256": {
+    "experiments/own-xpu-runtime/engine/tools/pipeline_driver.py": "0c96280d38d80b9d1fc9f0e563c06a3ccab7cada151978c892e3bb09785d8ae1",
+    "experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py": "4f9987da597486f9fa154a803b2aa162e7b0ffa33390acc6d2339bb929a2a4d7",
+    "experiments/own-xpu-runtime/engine/tools/dedicated_provider_driver.py": "1696a78f96572633a505f6a5b7c7ed7abb788af04263eb90883d57bfcaefba1e"
+  },
+  "log_sha256": "04e0d132c750ffb427bb60115dcf977767f20133f36d2b8d3509d34fa600414f",
+  "scope": "CPU planners only; no native process/device/observer. Existing planner fixtures use fake binary and mocked base plans for derived drivers.",
+  "coverage": [
+    "strict Boolean",
+    "default absent/false explicit owner flag0 despite parent env1",
+    "true every stage flag1",
+    "adapter contradiction on both rank templates",
+    "missing compiled capability rejected",
+    "copy lookup and draft flags preserved",
+    "dedicated 2+1 and3+1 all target/provider env flags",
+    "colocated all stage flags",
+    "effective policy binds request identity even with identical config",
+    "existing planning contracts"
+  ],
+  "limitations": [
+    "Includes inherited and imported existing test classes; 22 executions are not 22 new cases.",
+    "Does not qualify numerical behavior; PP4/dedicated exact state oracle required with current binary."
+  ]
+}

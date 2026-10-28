@@ -30,6 +30,13 @@ Addressed evidence: `reference-one-row/router-tie-candidate/gpu-candidate/addres
 CPU evidence: `reference-one-row/fresh-changed-cpu/completed-r1-evidence/index.json`.
 Evidence: `reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/`.
 
+The new reference-policy MTP compatibility gate is active in
+`/dev/shm/sc117-reference-route-pp4-gate-20261028-r1` (PP4 serial/pipeline,
+one owner lifetime; invocation `1e4e9e8ee5734dd2bf4ceb2afa589baf`). Native
+build339b75 uses scoped adapter source025f; target/draft state comparison follows clean
+FINISH. Dedicated comparison is planned but unlaunched. Neither is qualified
+yet. Registration: `reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/index.json`.
+
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns
 16568 instead of 6343; final logit RMS1.38935e-6/max7.62939e-6. Full per-case state
