@@ -1,0 +1,152 @@
+{
+  "source_adapter_plan": "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/plan.json",
+  "source_sha256": "8732e96385a9ec2398c636615dd16ee662e14a3609a3a5fa229f03cde3845490",
+  "plan": "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/plan-r2.json",
+  "ranks": [
+    {
+      "rank": 0,
+      "raw_ring_env": "1",
+      "actual_native_raw_buffers": [
+        {
+          "name": "blk.11.qsa.raw",
+          "shape": [
+            65536,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.15.qsa.raw",
+          "shape": [
+            65536,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.19.qsa.raw",
+          "shape": [
+            65536,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.3.qsa.raw",
+          "shape": [
+            65536,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.7.qsa.raw",
+          "shape": [
+            65536,
+            128
+          ],
+          "dtype": "F32"
+        }
+      ],
+      "environment_differences": {
+        "NEO_CACHE_DIR": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/0/neo",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage0/cache/neo"
+        ],
+        "OWNRT_EARLY_RANK1": [
+          null,
+          "0"
+        ],
+        "SYCL_CACHE_DIR": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/0/sycl",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage0/cache/sycl"
+        ],
+        "XDG_CACHE_HOME": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/0/xdg",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage0/cache/xdg"
+        ]
+      }
+    },
+    {
+      "rank": 1,
+      "raw_ring_env": "1",
+      "actual_native_raw_buffers": [
+        {
+          "name": "blk.23.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "shape": [
+            512,
+            128
+          ],
+          "dtype": "F32"
+        }
+      ],
+      "environment_differences": {
+        "NEO_CACHE_DIR": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/1/neo",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage1/cache/neo"
+        ],
+        "OWNRT_EARLY_RANK1": [
+          null,
+          "0"
+        ],
+        "SYCL_CACHE_DIR": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/1/sycl",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage1/cache/sycl"
+        ],
+        "XDG_CACHE_HOME": [
+          "/home/steve/own-xpu-runtime-results/sc117-lan/run-20261028T024501Z/ranks/cache/1/xdg",
+          "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/stage1/cache/xdg"
+        ]
+      }
+    }
+  ],
+  "conclusion": "All incumbent core flags retained; only cache paths and explicit EARLY_RANK1 disabled0 differ. Rank1 raw-ring shrink applied before PLAN_ONLY and included in tight arena margin; rank0 retains full raw extent."
+}

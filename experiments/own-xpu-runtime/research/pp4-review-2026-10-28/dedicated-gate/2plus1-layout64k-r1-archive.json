@@ -1,0 +1,89 @@
+{
+  "schema": "ownrt.dedicated-2plus1-archive.v1",
+  "archive": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-2plus1-layout64k-r1-state-bundles.tar.zst",
+  "sha256": "1ba2a33f64827a9eca88e6fad37a62896041840258adf6f891f9337f709d4d41",
+  "bytes": 296736974,
+  "paths_relative_to": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1",
+  "directories": [
+    "output/stage0/native/state-2147483647",
+    "output/stage1/native/state-2147483647",
+    "output/stageprovider/native/provider-dump-1708",
+    "output/stageprovider/native/provider-finish-1709"
+  ],
+  "source_bundle_bytes": [
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+      "bytes": 2004147968
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+      "bytes": 1934245024
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/provider-dump-1708/state.bundle",
+      "bytes": 172941634
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/provider-finish-1709/state.bundle",
+      "bytes": 172941634
+    }
+  ],
+  "full_tar_compare_passed": true,
+  "commands": [
+    [
+      "tar",
+      "-cf",
+      "-",
+      "-C",
+      "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-2plus1-archive-control-r1/candidate-dirs.txt"
+    ],
+    [
+      "zstd",
+      "-T4",
+      "-3",
+      "-c"
+    ],
+    [
+      "tar",
+      "--use-compress-program=zstd -d",
+      "-df",
+      "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-2plus1-layout64k-r1-state-bundles.tar.zst",
+      "-C",
+      "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-2plus1-archive-control-r1/candidate-dirs.txt"
+    ]
+  ],
+  "proof_sha256": "ae74e5ade58c9a2fd70c1bb1a34b5eb27b9ad585e0b91ef5e854e4076c3897db",
+  "deleted_bundle_files": [
+    "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/provider-dump-1708/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-layout64k-20261028-r1/output/stageprovider/native/provider-finish-1709/state.bundle"
+  ],
+  "reference_cleanup": {
+    "archive": "/dev/shm/pp4-overlap-gate-20261028/state-bundles.tar.zst",
+    "sha256": "1dcf766e5e6fd252a63e16253baaa8bdf71371dcace64c1280f7548329c5c145",
+    "full_selected_member_compare_passed": true,
+    "deleted_members": [
+      "output/stage0/native/requests/request-00-serial/state-2000000000/state.bundle",
+      "output/stage0/native/requests/request-00-serial/state-2000000000.draft/state.bundle",
+      "output/stage1/native/requests/request-00-serial/state-2000000000/state.bundle",
+      "output/stage2/native/requests/request-00-serial/state-2000000000/state.bundle",
+      "output/stage3/native/requests/request-00-serial/state-2000000000/state.bundle"
+    ],
+    "deleted_bytes": 15708118282,
+    "command": [
+      "tar",
+      "--use-compress-program=zstd -d",
+      "-df",
+      "/dev/shm/pp4-overlap-gate-20261028/state-bundles.tar.zst",
+      "-C",
+      "/dev/shm/pp4-overlap-gate-20261028",
+      "-T",
+      "/dev/shm/dedicated-2plus1-archive-control-r1/serial-bundles.txt"
+    ]
+  }
+}

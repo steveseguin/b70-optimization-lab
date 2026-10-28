@@ -1,0 +1,30 @@
+{
+  "scope": "CPU native PLAN_ONLY only; device_contact:false receipts; no runtime or physical fit claim",
+  "plan": "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/plan-r2.json",
+  "plan_sha256": "661d964d53f69ab9b6e5f22e658df7cd02ea65941eec79563d49c9d3a622ab43",
+  "config": "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/config.json",
+  "binary_sha256": "df2c19c87fe691a657e66a15a035b1d9721e1c01fc16ddd4be3873c7ec02a3e0",
+  "launch_max_new": 128,
+  "actual_native_request_count": 512,
+  "topology": {
+    "boundaries": [
+      0,
+      23,
+      48
+    ],
+    "bdfs": [
+      "0000:23:00.0",
+      "0000:47:00.0"
+    ],
+    "provider": "colocated target0",
+    "depth": 1,
+    "context": 65536,
+    "prompt_tokens": 1677
+  },
+  "tests": {
+    "count": 7,
+    "result": "passed",
+    "execution": "nice19 CPU8-15",
+    "scope": "mock child owners; actual pinned Transport and NativeController methods; fragmented READY, exact FINISH receipts, independent512 native request, argv cap128, strict timing and child registration failure"
+  }
+}

@@ -1,0 +1,5 @@
+Offline only, after both measured owners finish and registered32-output cross-context proof passes:
+
+nice -n 19 taskset -c 8-15 python research/pp4-review-2026-10-28/dedicated-gate/analyze_2plus1_control.py --dedicated-output ACTUAL_2PLUS1_MEASURED_OUTPUT --control-output ACTUAL_NATIVE_CONTROL_OUTPUT --quality-proof ACTUAL_CROSS_CONTEXT_PROOF_JSON --quality-proof-sha256 EXACT_PROOF_SHA256 --quality-plan ACTUAL_2PLUS1_32_OUTPUT_QUALIFICATION_PLAN --output FRESH_COMPARISON_JSON
+
+Quality proof is an explicit hash-bound prerequisite, never silently inferred from a passed field or replaced by output equality. Helper rechecks actual quality plan/result hashes against proof.sources and same candidate identity. It does not reread giant state payloads or repeat state qualification. First99 covers100 outputs; secondary all511 covers512. Rawring/controller/depth/cuts/GPU-count differences remain explicit. No unmatched66.21suite comparison.

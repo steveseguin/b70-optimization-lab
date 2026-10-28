@@ -1,0 +1,142 @@
+import copy
+import importlib.util
+from pathlib import Path
+import struct
+import unittest
+import sys
+import tempfile
+import json
+sys.path.insert(0,str(Path(__file__).parent))
+import prepare
+
+spec=importlib.util.spec_from_file_location('dedicated_compare',Path(__file__).with_name('compare.py'))
+C=importlib.util.module_from_spec(spec);spec.loader.exec_module(C)
+
+def commands(fixture=1):
+    hidden='ab'*32;request='cd'*32;prefix='ef'*32
+    row=dict(token=11,position=1,fixture=fixture,epoch=0,id=3,parent=2,request=request,after=prefix)
+    proposal=struct.pack('<4I6Q8i32s32s32s',0x44525032,2,224,3,0,1,3,2,7,1,1,1,3,3,21,22,0,1,
+        bytes.fromhex(request),bytes.fromhex(prefix),bytes.fromhex(hidden))+struct.pack('<i',23)+bytes(28)
+    result=dict(provider_serial=1,seed_position=1,restored_position=1,parent_hidden_sha256=hidden,restored=True,
+        proposal_hex=proposal.hex(),proposal_sha256=C.sha256(proposal).hexdigest(),final_commit=7,available_depth=3,
+        guesses=[21,22,23],reply_hex=struct.pack('<8i4d',0,21,0,224,1,-1,0x50525631,1,0.,0.,0.,0.).hex())
+    return [dict(owner='provider',event='issued',sequence=1,row=row,
+        request_hex=struct.pack('<8i',27,11,1,fixture,3,1,0x50525631,1).hex(),parent_hidden_sha256=hidden),
+        dict(owner='provider',event='completed',sequence=1,provider=result)]
+
+def capture_commands():
+    rows=commands(2);issued,completed=rows
+    row=issued['row'];row['before']='12'*32
+    parent=struct.pack('<4I3Q10i32s32s32s32s16s',0x52494e47,1,224,0,0,2,1,
+        0,7,0,2,1,-1,0,6,0,1,bytes.fromhex(row['request']),bytes.fromhex('34'*32),
+        bytes.fromhex(row['before']),C.sha256(b'').digest(),bytes(16))
+    handoff=struct.pack('<12i64s',0x4d545031,1,40960,0,2,3,6,7,7,-1,0,0,('ab'*32).encode())
+    native=struct.pack('<4IQ',0x52464331,1,360,2,7)+parent+handoff
+    issued.update(op=27,provider_serial=1,parent_record_hex=native.hex(),monotonic_s=1.)
+    completed['monotonic_s']=3.
+    metadata=struct.pack('<QII6Q32s32s',0x315950414352574f,1,128,0,1,3,2,7,1,
+        bytes.fromhex(row['request']),C.sha256(native).digest())
+    event=dict(owner='provider',event='parent-captured',sequence=1,op=27,row=copy.deepcopy(row),monotonic_s=2.,
+        metadata_hex=metadata.hex(),reply_hex=struct.pack('<8i4d',2,-1,0,128,1,-1,0x50525631,1,0.,0.,0.,0.).hex())
+    return [issued,event,completed]
+
+class CaptureProof(unittest.TestCase):
+    def test_exact_ack_and_source(self):
+        self.assertEqual(len(C.canonical_pairs(capture_commands(),2,capture_ready=True,target_stages=3)),1)
+    def test_default_refuses_ack(self):
+        with self.assertRaises(ValueError):C.canonical_pairs(capture_commands(),2)
+    def test_missing_duplicate_late_ack(self):
+        rows=capture_commands()
+        for bad in ([rows[0],rows[2]],rows[:2]+[rows[1],rows[2]],[rows[0],rows[2],rows[1]]):
+            with self.subTest(bad=bad):
+                with self.assertRaises(ValueError):C.canonical_pairs(bad,2,capture_ready=True,target_stages=3)
+    def test_ack_identity_mutations(self):
+        for offset in (0,8,12,16,24,32,40,48,56,64,96):
+            rows=capture_commands();raw=bytearray.fromhex(rows[1]['metadata_hex']);raw[offset]^=1;rows[1]['metadata_hex']=raw.hex()
+            with self.subTest(offset=offset):
+                with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_source_mutation_rehashed_ack_refused(self):
+        rows=capture_commands();raw=bytearray.fromhex(rows[0]['parent_record_hex']);raw[12]=1
+        rows[0]['parent_record_hex']=raw.hex();ack=bytearray.fromhex(rows[1]['metadata_hex']);ack[96:]=C.sha256(raw).digest();rows[1]['metadata_hex']=ack.hex()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_nonterminal_reply_identity(self):
+        for offset in (0,4,8,12,16,20,24,28,32):
+            rows=capture_commands();raw=bytearray.fromhex(rows[1]['reply_hex']);raw[offset]^=1;rows[1]['reply_hex']=raw.hex()
+            with self.subTest(offset=offset):
+                with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_timestamp_order_and_unknown_events(self):
+        rows=capture_commands();rows[1]['monotonic_s']=4.
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+        rows=capture_commands();rows[1]['event']='ignored-ACK'
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2,capture_ready=True,target_stages=3)
+    def test_strict_policy_bool(self):
+        with self.assertRaises(ValueError):C.canonical_pairs(commands(),2,capture_ready=1)
+
+class PairProof(unittest.TestCase):
+    def test_actual_native_pair(self):
+        self.assertEqual(C.canonical_pairs(commands(),2),[dict(position=1,token=11,hidden_bytes=40960,hidden_sha256='ab'*32)])
+    def test_fixture_ordinal_preserved(self):
+        for fixture in (2,17,32):
+            self.assertEqual(C.canonical_pairs(commands(fixture),2)[0]['token'],11)
+    def test_fixture_bool_normalization_refused(self):
+        rows=commands(2);rows[0]['request_hex']=struct.pack('<8i',27,11,1,1,3,1,0x50525631,1).hex()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
+    def test_missing_completion(self):
+        with self.assertRaises(ValueError):C.canonical_pairs(commands()[:1],2)
+    def test_hidden_mutation(self):
+        rows=commands();rows[0]['parent_hidden_sha256']='00'*32
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
+    def test_native_serial_mutation(self):
+        rows=commands();raw=bytearray.fromhex(rows[1]['provider']['proposal_hex']);raw[56]=2
+        rows[1]['provider']['proposal_hex']=raw.hex();rows[1]['provider']['proposal_sha256']=C.sha256(raw).hexdigest()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
+    def test_reply_failure(self):
+        rows=commands();raw=bytearray.fromhex(rows[1]['provider']['reply_hex']);raw[0]=1;rows[1]['provider']['reply_hex']=raw.hex()
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
+    def test_duplicate_command(self):
+        rows=commands();rows.append(copy.deepcopy(rows[0]))
+        with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
+
+class DriverResultScope(unittest.TestCase):
+    def test_large_scheduled_result_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'driver-result.json'
+            payload=dict(schema='ownrt.dedicated-provider-driver-result.v1',passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'provider':0},events='x'*(1024**2))
+            path.write_text(json.dumps(payload))
+            self.assertTrue(C.driver_result(path)[0]['passed'])
+            with self.assertRaises(ValueError):C.read(path)
+            payload['schema']='arbitrary-large-metadata';path.write_text(json.dumps(payload))
+            with self.assertRaises(ValueError):C.driver_result(path)
+    def test_owner_exit_failure(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'driver-result.json'
+            payload=dict(schema='ownrt.dedicated-provider-driver-result.v1',passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'provider':1})
+            path.write_text(json.dumps(payload))
+            with self.assertRaises(ValueError):C.driver_result(path)
+
+class ManifestPaths(unittest.TestCase):
+    def test_actual_retained_paths_and_identity(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root=Path(folder);output=root/'output';output.mkdir();reference=root/'reference';reference.mkdir()
+            rows=commands();(output/'commands.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
+            (output/'driver-result.json').write_text(json.dumps(dict(schema='ownrt.dedicated-provider-driver-result.v1',input_position=2,output_ids=[21],passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'2':0,'provider':0})))
+            stages=[]
+            for i,(begin,end) in enumerate(((0,17),(17,33),(33,48))):
+                native=output/f'stage{i}'/'native';native.mkdir(parents=True)
+                (native/'receipt.json').write_text('{"passed":true}')
+                stages.append(dict(id=i,begin=begin,end=end,native_output=str(native)))
+            provider=output/'stageprovider'/'native';provider.mkdir(parents=True)
+            (provider/'provider-dump-2').mkdir();(provider/'receipt.json').write_text('{"passed":true}')
+            identity=dict(model_sha256='11'*32,draft_model_sha256='22'*32,pair_sequence_sha256='33'*32,position=1,arithmetic='F32-target/BF16-draft')
+            (reference/'draft-set.json').write_text(json.dumps(dict(input_identity=identity)))
+            plan=root/'plan.json';plan.write_text(json.dumps(dict(context=65536,output=str(output),stages=stages,provider=dict(native_output=str(provider)),model_identity_sha256='11'*32,draft_model_sha256='22'*32)))
+            result=prepare.prepare(plan,reference,root/'comparison');manifest=json.loads(result.read_text())
+            self.assertTrue(manifest['stages'][0]['dump'].endswith('stage0/native/state-2147483647'))
+            draft=json.loads(Path(manifest['draft_set']).read_text())
+            self.assertEqual(draft['dump'],str(provider/'provider-dump-2'))
+            self.assertEqual(draft['input_identity']['context'],65536)
+            self.assertEqual(len(manifest['process_receipts']),4)
+            self.assertNotEqual(draft['input_identity']['pair_sequence_sha256'],identity['pair_sequence_sha256'])
+            with self.assertRaises(FileExistsError):prepare.prepare(plan,reference,root/'comparison')
+
+if __name__=='__main__':unittest.main()

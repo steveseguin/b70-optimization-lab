@@ -33,6 +33,15 @@ class AnalyzeTests(unittest.TestCase):
             self.assertEqual(r['timing']['dedicated']['first100']['intervals'],99)
             self.assertAlmostEqual(r['timing']['dedicated']['first100']['tokens_per_second'],10)
             self.assertEqual(r['output_cap'],512);self.assertTrue(r['ended_on_eos'])
+    def test_capture_explanation_matches_explicit_policy(self):
+        with TemporaryDirectory() as tmp:
+            d,p=self.artifacts(tmp)
+            self.assertIn('holds final source-buffer',analyze(d,p)['differences'][1])
+            plan=json.loads((d/'plan.json').read_text());plan['dedicated_capture_ready']=True
+            (d/'plan.json').write_text(json.dumps(plan))
+            self.assertIn('capture ACK releases the final ROW lease',analyze(d,p)['differences'][1])
+            plan['dedicated_capture_ready']=1;(d/'plan.json').write_text(json.dumps(plan))
+            with self.assertRaisesRegex(ValueError,'capture policy must be boolean'):analyze(d,p)
     def test_missing_actual_commit_timing_rejected(self):
         with TemporaryDirectory() as tmp:
             d,p=self.artifacts(tmp);rows=[json.loads(l) for l in (p/'tokens.jsonl').read_text().splitlines()]

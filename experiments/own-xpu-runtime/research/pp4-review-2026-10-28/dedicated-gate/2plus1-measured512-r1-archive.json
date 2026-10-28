@@ -1,0 +1,66 @@
+{
+  "schema": "ownrt.dedicated-2plus1-archive.v1",
+  "archive": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-2plus1-measured512-r1-state-bundles.tar.zst",
+  "sha256": "079e4645aaddb2526ac7672893815d3a0c1cbd4764da598d1c9309e3bb1d31aa",
+  "bytes": 324502234,
+  "paths_relative_to": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1",
+  "directories": [
+    "output/stage0/native/state-2147483647",
+    "output/stage1/native/state-2147483647",
+    "output/stageprovider/native/provider-dump-2188",
+    "output/stageprovider/native/provider-finish-2189"
+  ],
+  "source_bundle_bytes": [
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+      "bytes": 2004147968
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+      "bytes": 1934245024
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stageprovider/native/provider-dump-2188/state.bundle",
+      "bytes": 172941634
+    },
+    {
+      "path": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stageprovider/native/provider-finish-2189/state.bundle",
+      "bytes": 172941634
+    }
+  ],
+  "full_tar_compare_passed": true,
+  "commands": [
+    [
+      "tar",
+      "-cf",
+      "-",
+      "-C",
+      "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-2plus1-measured-archive-control-r1/candidate-dirs.txt"
+    ],
+    [
+      "zstd",
+      "-T4",
+      "-3",
+      "-c"
+    ],
+    [
+      "tar",
+      "--use-compress-program=zstd -d",
+      "-df",
+      "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-2plus1-measured512-r1-state-bundles.tar.zst",
+      "-C",
+      "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1",
+      "-T",
+      "/dev/shm/dedicated-2plus1-measured-archive-control-r1/candidate-dirs.txt"
+    ]
+  ],
+  "timing_receipt_sha256": "38be1a3cc57b8c04fbb0fd274951364f974ed8ff461e07f3410285c59eb78592",
+  "deleted_bundle_files": [
+    "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stage0/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stage1/native/state-2147483647/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stageprovider/native/provider-dump-2188/state.bundle",
+    "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/stageprovider/native/provider-finish-2189/state.bundle"
+  ]
+}

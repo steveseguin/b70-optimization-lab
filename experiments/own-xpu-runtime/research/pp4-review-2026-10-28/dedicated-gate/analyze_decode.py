@@ -140,6 +140,10 @@ def analyze(dedicated_output,pp4_request,*,capture_proof=None,capture_proof_sha2
         need(capture_proof is not None,'previous dedicated comparison requires explicit capture proof')
         timing['previous_dedicated']=previous_dedicated(dp,outputs,previous_dedicated_output,
             capture_proof,capture_proof_sha256)
+    capture_ready=dp.get('dedicated_capture_ready',False)
+    need(type(capture_ready)is bool,'dedicated capture policy must be boolean')
+    lease_difference=('Dedicated capture ACK releases the final ROW lease after the owned source copy; final ACCEPT and stage0 seed leases remain held until provider completion.'
+                      if capture_ready else 'Dedicated holds final source-buffer and stage0 seed leases until provider completion; PP4 may use capture overlap/flat copy.')
     return dict(schema='ownrt.matched-decode-diagnostic.v1',exact_prompt_and_output_ids=True,
         prompt_tokens=len(dp['prompt_tokens']),output_count=len(outputs),output_cap=512,
         capture_binary_transition=transition,
@@ -147,7 +151,7 @@ def analyze(dedicated_output,pp4_request,*,capture_proof=None,capture_proof_sha2
         cold_input=dict(pp4_cached_tokens=0,dedicated='No cache field invented: fresh lifecycle, first ROW position0 and full canonical progression verified.'),
         normalization='Only target BDF/filter and fresh SYCL/NEO/XDG cache paths normalized. Core arithmetic flags and other environment compare exactly.',
         differences=['Dedicated3target+separateprovider versus PP4collocatedprovider; boundaries/device ownership differ.',
-        'Dedicated holds source leases until completion; PP4may use capture overlap/flat copy.',
+        lease_difference,
         'Dedicated fresh process versus PP4persistent cold reset. Load/JIT/warmup differ; no load/prompt timing included in decode intervals.'],
         scope='One prompt sustained decode diagnostic, not suite/localmax record, independent reference resolution or performance certification.')
 
