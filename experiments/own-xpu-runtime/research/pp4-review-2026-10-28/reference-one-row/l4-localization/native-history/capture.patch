@@ -1,0 +1,132 @@
+--- a/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -2,6 +2,7 @@
+ #pragma once
+ #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
+ #include "pipeline/checkpoint.hpp"
++#include "gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp"
+ #include <poll.h>
+ #include <functional>
+ #include <sys/mman.h>
+@@ -118,6 +119,23 @@
+   std::ofstream f(dest/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());require(bool(f),"fixture write");
+  }
+ }
++// One-shot bounded diagnostic; absent env leaves the ordinary ROW path unchanged.
++static l4raw::Recorder* l4_raw_history(Engine& e) {
++ static const bool enabled=[](){const char* p=std::getenv("OWNRT_L4_RAW_HISTORY");if(!p)return false;require(std::string(p)=="1","OWNRT_L4_RAW_HISTORY must be1 or absent");return true;}();
++ if(!enabled||e.a.rank!=0)return nullptr;
++ require(!e.a.pipeline_enabled()&&!e.a.pipeline_live_draft&&!e.a.pipeline_external_provider&&!e.a.tp_replicate&&
++   !e.a.mini&&e.a.f32_activations&&e.a.target_split==23&&e.p.g.context==4096&&e.p.g.h==2560,
++   "L4 raw history requires fixed4096/F32 target-only legacy23/25 roles");
++ static Engine* owner=&e;require(owner==&e,"L4 history engine lifetime");
++ static l4raw::Recorder recorder(e.a.output/"l4-raw-history",[](const l4raw::Bytes&b){return hash(b);});
++ return &recorder;
++}
++static l4raw::Bytes l4_history_read(Engine& e,const char*name,size_t bytes) {
++ const auto& slot=e.buffers[0].at(name);
++ require(slot.type==flash::Scalar::f32&&slot.n*flash::scalar_bytes(slot.type)==bytes,"L4 history field dtype/extent");
++ // Copy engine forces completed readback and avoids mutating kernel-I/O control staging.
++ return e.readback(0,slot.id,bytes,true);
++}
+ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
+  const auto p150_half_begin=std::chrono::steady_clock::now();
+  require(!candidate.pending,"half before resolving prior candidate");
+@@ -131,6 +149,8 @@
+  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
+  require(!e.a.pipeline_enabled()||!request.speculative,"general pipeline is target-only");
+  e.verify_configuration();e.guard();
++ auto* l4_history=l4_raw_history(e);
++ if(l4_history)l4_history->begin(request.position,request.sequence,request.token,request.fixture,request.speculative,e.bank_parity);
+  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
+  // Snapshot the prior launch extents before admitting a speculative bucket.
+  if(request.speculative)p150::measure("snapshot",request.position,false,[&]{image.begin(shared,staged?request.position:-1);});
+@@ -188,7 +208,11 @@
+   if(decode_profile)e.drain();
+   if(decode_profile_mode>=2){std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}device_sites.push_back({key,{}});}
+   const auto site_start=std::chrono::steady_clock::now();
++  if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
++   l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
+   e.enqueue(l,e.logical);
++  if(l4_history&&l.label=="blk.4.gdn.recurrence")
++   l4_history->capture({l4_history_read(e,"blk.4.gdn.conv",40960),l4_history_read(e,"blk.4.gdn.a",192),l4_history_read(e,"blk.4.gdn.b",192),l4_history_read(e,"blk.4.gdn.y",24576)});
+   if(decode_profile){e.drain();
+    // Linear sites by weight format and role (label without its layer number), other sites by op.
+    std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}
+@@ -277,6 +301,7 @@
+  };
+  if(e.a.rank==1)e.reply_report.schedule(std::move(report));else report();
+  if(e.a.rank==0)p150::record("half_total",request.position,false,p150_half_begin);
++ if(l4_history){require(!candidate.cancelled,"L4 history refuses cancelled row");l4_history->finish_row();}
+  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
+ }
+ static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
+--- /dev/null
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp
+@@ -0,0 +1,66 @@
++#pragma once
++// Diagnostic sidecar only. No graph/device allocation or command ABI.
++#include <array>
++#include <cstdint>
++#include <utility>
++#include <filesystem>
++#include <fstream>
++#include <functional>
++#include <stdexcept>
++#include <string>
++#include <vector>
++#include <algorithm>
++#include <iterator>
++namespace l4raw {
++constexpr int rows=244;
++constexpr std::array<size_t,4> extents={40960,192,192,24576};
++constexpr std::array<const char*,4> fields={"conv","alpha","beta","y"};
++constexpr size_t row_bytes=65920,total_bytes=row_bytes*rows;
++using Bytes=std::vector<uint8_t>;
++using Digest=std::function<std::string(const Bytes&)>;
++inline void check(bool ok,const char*why){if(!ok)throw std::runtime_error(std::string("L4 raw history: ")+why);}
++class Recorder {
++ std::filesystem::path dir;Digest digest;std::ofstream payload,index;
++ int next=0,last_sequence=-1,sequence=0,token=0,fixture=0,parity=0;
++ bool pending=false,captured=false,initial=false,sealed=false;
++ static Bytes bytes(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);check(bool(f),"open sealed input");return Bytes(std::istreambuf_iterator<char>(f),{});}
++ std::string sha(const Bytes&b){auto h=digest(b);check(h.size()==64&&std::all_of(h.begin(),h.end(),[](char c){return(c>='0'&&c<='9')||(c>='a'&&c<='f');}),"digest format");return h;}
++public:
++ explicit Recorder(std::filesystem::path path,Digest hash):dir(std::move(path)),digest(std::move(hash)){
++  check(std::filesystem::create_directory(dir),"fresh exclusive output required");
++  payload.open(dir/"history.bin",std::ios::binary);index.open(dir/"rows.jsonl");check(bool(payload)&&bool(index),"open outputs");
++ }
++ void begin(int position,int seq,int tok,int fix,bool speculative,int bank_parity){
++  check(!sealed&&!pending&&position==next&&position>=0&&position<rows,"strict row position/lifetime");
++  check(!speculative&&fix==(position==rows-1?1:0),"target-only original fixture schedule");
++  check(seq>last_sequence&&tok>=0&&(bank_parity==0||bank_parity==1),"row identity");
++  sequence=seq;token=tok;fixture=fix;parity=bank_parity;pending=true;captured=false;
++ }
++ void initial_zero(const Bytes&state,const Bytes&history){
++  check(pending&&next==0&&!initial,"initial identity once before row0 convolution");
++  check(state.size()==3145728&&history.size()==122880,"initial extents");
++  check(std::all_of(state.begin(),state.end(),[](uint8_t x){return x==0;})&&std::all_of(history.begin(),history.end(),[](uint8_t x){return x==0;}),"cold positive-zero initial state/history required");
++  std::ofstream f(dir/"initial.json");f<<"{\"schema\":\"ownrt.l4-raw-initial.v1\",\"before_position\":0,\"bank_parity\":"<<parity<<",\"positive_zero\":true,\"state_bytes\":"<<state.size()<<",\"state_sha256\":\""<<sha(state)<<"\",\"history_bytes\":"<<history.size()<<",\"history_sha256\":\""<<sha(history)<<"\"}\n";
++  f.flush();check(bool(f),"initial metadata write");initial=true;
++ }
++ void capture(const std::array<Bytes,4>&values){
++  check(pending&&!captured&&initial,"capture ordering");
++  // Validate every extent BEFORE appending any row bytes.
++  for(size_t i=0;i<4;++i)check(values[i].size()==extents[i],"field extent");
++  index<<"{\"position\":"<<next<<",\"sequence\":"<<sequence<<",\"token\":"<<token<<",\"fixture\":"<<fixture<<",\"bank_parity_before_swap\":"<<parity<<",\"fields\":{";
++  size_t offset=size_t(next)*row_bytes;
++  for(size_t i=0;i<4;++i){payload.write(reinterpret_cast<const char*>(values[i].data()),values[i].size());index<<(i?",":"")<<"\""<<fields[i]<<"\":{\"offset\":"<<offset<<",\"bytes\":"<<values[i].size()<<",\"sha256\":\""<<sha(values[i])<<"\"}";offset+=values[i].size();}
++  index<<"}}\n";payload.flush();index.flush();check(bool(payload)&&bool(index),"row write");captured=true;
++ }
++ void finish_row(){
++  check(pending&&captured,"row must contain exactly one completed capture");
++  last_sequence=sequence;pending=false;++next;
++  if(next!=rows)return;
++  payload.close();index.close();check(bool(payload)&&bool(index),"output close");
++  auto data=bytes(dir/"history.bin"),idx=bytes(dir/"rows.jsonl"),init=bytes(dir/"initial.json");check(data.size()==total_bytes,"complete bounded payload");
++  std::ofstream seal(dir/"seal.json");seal<<"{\"schema\":\"ownrt.l4-raw-history.v1\",\"rows\":"<<rows<<",\"row_bytes\":"<<row_bytes<<",\"payload_bytes\":"<<data.size()<<",\"payload_sha256\":\""<<sha(data)<<"\",\"index_sha256\":\""<<sha(idx)<<"\",\"initial_sha256\":\""<<sha(init)<<"\",\"scope\":\"captured rows only; require successful owner termination and full final source-state neutrality separately\"}\n";
++  seal.flush();check(bool(seal),"seal write");sealed=true;
++ }
++ bool complete()const{return sealed;}
++};
++} // namespace l4raw

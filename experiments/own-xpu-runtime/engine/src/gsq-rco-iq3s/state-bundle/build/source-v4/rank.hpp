@@ -2,6 +2,7 @@
 #pragma once
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
 #include "pipeline/checkpoint.hpp"
+#include "gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp"
 #include <poll.h>
 #include <functional>
 #include <sys/mman.h>
@@ -118,6 +119,23 @@ static void publish(Engine& e,const Candidate& c) {
   std::ofstream f(dest/name,std::ios::binary);f.write(reinterpret_cast<const char*>(bytes.data()),bytes.size());require(bool(f),"fixture write");
  }
 }
+// One-shot bounded diagnostic; absent env leaves the ordinary ROW path unchanged.
+static l4raw::Recorder* l4_raw_history(Engine& e) {
+ static const bool enabled=[](){const char* p=std::getenv("OWNRT_L4_RAW_HISTORY");if(!p)return false;require(std::string(p)=="1","OWNRT_L4_RAW_HISTORY must be1 or absent");return true;}();
+ if(!enabled||e.a.rank!=0)return nullptr;
+ require(!e.a.pipeline_enabled()&&!e.a.pipeline_live_draft&&!e.a.pipeline_external_provider&&!e.a.tp_replicate&&
+   !e.a.mini&&e.a.f32_activations&&e.a.target_split==23&&e.p.g.context==4096&&e.p.g.h==2560,
+   "L4 raw history requires fixed4096/F32 target-only legacy23/25 roles");
+ static Engine* owner=&e;require(owner==&e,"L4 history engine lifetime");
+ static l4raw::Recorder recorder(e.a.output/"l4-raw-history",[](const l4raw::Bytes&b){return hash(b);});
+ return &recorder;
+}
+static l4raw::Bytes l4_history_read(Engine& e,const char*name,size_t bytes) {
+ const auto& slot=e.buffers[0].at(name);
+ require(slot.type==flash::Scalar::f32&&slot.n*flash::scalar_bytes(slot.type)==bytes,"L4 history field dtype/extent");
+ // Copy engine forces completed readback and avoids mutating kernel-I/O control staging.
+ return e.readback(0,slot.id,bytes,true);
+}
 static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
  const auto p150_half_begin=std::chrono::steady_clock::now();
  require(!candidate.pending,"half before resolving prior candidate");
@@ -131,6 +149,8 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
  require(!e.a.pipeline_enabled()||!request.speculative,"general pipeline is target-only");
  e.verify_configuration();e.guard();
+ auto* l4_history=l4_raw_history(e);
+ if(l4_history)l4_history->begin(request.position,request.sequence,request.token,request.fixture,request.speculative,e.bank_parity);
  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
  // Snapshot the prior launch extents before admitting a speculative bucket.
  if(request.speculative)p150::measure("snapshot",request.position,false,[&]{image.begin(shared,staged?request.position:-1);});
@@ -188,7 +208,11 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(decode_profile)e.drain();
   if(decode_profile_mode>=2){std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}device_sites.push_back({key,{}});}
   const auto site_start=std::chrono::steady_clock::now();
+  if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
+   l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
   e.enqueue(l,e.logical);
+  if(l4_history&&l.label=="blk.4.gdn.recurrence")
+   l4_history->capture({l4_history_read(e,"blk.4.gdn.conv",40960),l4_history_read(e,"blk.4.gdn.a",192),l4_history_read(e,"blk.4.gdn.b",192),l4_history_read(e,"blk.4.gdn.y",24576)});
   if(decode_profile){e.drain();
    // Linear sites by weight format and role (label without its layer number), other sites by op.
    std::string key=l.op;if(l.op=="gemv"||l.op=="routed_gemv"){auto role=l.label;if(role.starts_with("blk.")){auto dot=role.find('.',4);if(dot!=std::string::npos)role=role.substr(dot+1);}key+=":"+e.w.directory.at(l.weights.at(0)).grid+":"+role;}
@@ -277,6 +301,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  };
  if(e.a.rank==1)e.reply_report.schedule(std::move(report));else report();
  if(e.a.rank==0)p150::record("half_total",request.position,false,p150_half_begin);
+ if(l4_history){require(!candidate.cancelled,"L4 history refuses cancelled row");l4_history->finish_row();}
  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
 }
 static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {

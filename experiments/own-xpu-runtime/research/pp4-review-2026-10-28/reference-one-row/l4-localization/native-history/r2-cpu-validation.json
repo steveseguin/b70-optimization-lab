@@ -1,0 +1,33 @@
+{
+  "status": "pass",
+  "scope": "standalone recorder and extracted actual wire method; not whole Engine or GPU",
+  "prior_failed_build": "wire-fixture-build-r2.log",
+  "fixed_wire_compile": {
+    "compiler": "g++-13",
+    "flags": [
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-Iengine/src",
+      "-lcrypto"
+    ],
+    "affinity": "8-15",
+    "nice": 19,
+    "exit_code": 0
+  },
+  "wire_run_exit_code": 0,
+  "python_tests": {
+    "count": 3,
+    "seconds": 0.077,
+    "exit_code": 0
+  },
+  "files": {
+    "research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/wire-fixture.cpp": "416c7705e165d8f1143e7e306e12ed0a6a2b6792503351bc921af981b17a60a5",
+    "research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/make_wire_fixture.py": "2cec0949f7211bf2ed8801221eb5d04a125d2ed0dc66c065ef084c79b5a35f2d",
+    "research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/fixture.cpp": "5197eadc110301ccf48e7ba4e9becbe05ebcafa0763ab7ca894392a46fc109cf",
+    "research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/validate.py": "baa635f79c1e29fa238c1eea8eab269cbd6fe63751ef81a94f725134c563caae",
+    "research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/test_history.py": "905b0f28f955ce9647248cefd6875456ddc7baa948b1e7abe7263818ea9ff7e9",
+    "engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp": "826fb3d1b1a912b389fa15ba5c950aef278c778ccb18ba938cf70157a65d33cb"
+  }
+}

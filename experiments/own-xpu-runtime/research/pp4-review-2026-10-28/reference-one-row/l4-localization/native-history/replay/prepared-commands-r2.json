@@ -1,0 +1,60 @@
+{
+  "status": "prepared_not_executed",
+  "build_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-O2",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-DOWN_RT_HOST_ONLY",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "-I/dev/shm/llref/ggml/include",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/replay.cpp",
+    "-Wl,--start-group",
+    "/dev/shm/llref/build/src/libllama.a",
+    "/dev/shm/llref/build/ggml/src/libggml-cpu.a",
+    "/dev/shm/llref/build/ggml/src/libggml.a",
+    "/dev/shm/llref/build/ggml/src/libggml-base.a",
+    "-Wl,--end-group",
+    "-fopenmp=libgomp",
+    "-ldl",
+    "-lpthread",
+    "-lm",
+    "-o",
+    "/dev/shm/sc117-l4-native-raw-replay-20261028-r2/replay"
+  ],
+  "archives_expected": {
+    "/dev/shm/llref/build/src/libllama.a": "fb1ff332f83a36d725d1a7828a265d42cdfe980cf3d1345cb5c27aac7ec9aa1f",
+    "/dev/shm/llref/build/ggml/src/libggml-cpu.a": "2260d6d024f59a3b57b69086d4c44b9fae53c70c65d9eb07480ce2723e88f796",
+    "/dev/shm/llref/build/ggml/src/libggml.a": "bd35f4a55b35ee5a4c530b57e641524693c85dee174f6350df3beb6b2ea80b99",
+    "/dev/shm/llref/build/ggml/src/libggml-base.a": "63fefcc9431000b0ca5ae57d9f75b48291b4bb8eedb9a67ce54770428a0b4019"
+  },
+  "output_root": "/dev/shm/sc117-l4-native-raw-replay-20261028-r2",
+  "run_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/dev/shm/sc117-l4-native-raw-replay-20261028-r2/replay",
+    "/dev/shm/sc117-l4-history-target244-20261028-r2/output/native/rank0/l4-raw-history/history.bin",
+    "/dev/shm/sc117-l4-native-replay-20261028-r1/controls.f32",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on",
+    "/dev/shm/sc117-l4-native-raw-replay-20261028-r2/output"
+  ],
+  "required_before_execution": [
+    "root clean capture completion and CPU release",
+    "validate.py full sidecar verification against exact244 input tokens",
+    "both owners exit0 and source-neutrality pass",
+    "all existing archive and control/CPU input hashes match retained identities",
+    "fresh output directory"
+  ]
+}

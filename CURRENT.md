@@ -87,7 +87,7 @@ always use sequence0; the recorder's monotonic-sequence requirement was wrong.
 The recorder is fixed and its actual-wire CPU fixture passes. Both owners exited1;
 all four bounded health checks passed with no new faults, no live PIDs and clean
 postflight. Partial/source evidence remains under the r1 path; the corrected build completed,
-with no automatic retry. The corrected L4 history r2 launch is recorded below after completed performance work.
+with no automatic retry. The corrected L4 history r2 completion is recorded below.
 
 The two-target four-slot128K gate r2 completed all32 outputs at position1708,
 all three owners exited0, and passive postflight is baseline-clean with no holders.
@@ -115,10 +115,17 @@ were byte-identical before exclusions,2,065 target/73 draft sources and
 identity-format refusals remain retained. Archive/deep tar comparison completed
 before exact six-file cleanup released8,486,985,252 bytes. The prepared3+1 plan
 remains unlaunched; six independent-reference disagreements remain open.
-The corrected L4 history diagnostic r2 is now active, unit
-`sc117-l4-history-target244-20261028-r2.service`, invocation
-`2e3f66b191b843ecbaeb4e2b62ec15bd`; startup available103,203,848,192 bytes passed
-the103,079,215,104-byte floor. This is diagnostic work, not performance timing.
+The corrected L4 history diagnostic r2 completed token6343 and244 rows
+(16,084,480 bytes), plus6,892,960 selected L4 bytes; both owners0, both neutrality
+reports true and baseline-clean postflight. Same-input causal analysis follows;
+independent quality remains unresolved.
+The small JIT/AOT dense gate passed nine exact buffers (984,576 bytes), both runs
+clean. First scalar call fell1.60623s→6.19091ms; main-to-first-scalar
+1.69681s→90.3914ms. Warm medians are retained separately. Precise wholeprocess
+wall was not captured after transient-unit GC, so none is claimed. Full AOT build
+is released next, with no fullengine speed/quality claim yet. The scoped compile
+CPU-affinity mistake and restoration receipt are retained; no hardware settings changed.
+[AOT evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/actual-r1/summary.json).
 [Bounded-query result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-count-2plus1-128k-long512-r1-evidence/summary.json).
 [Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-2plus1-128k-long512-r1-evidence/matched-result.json).
 [Completed-request evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/four-slots-2plus1-128k-gate-r2-evidence/summary.json).

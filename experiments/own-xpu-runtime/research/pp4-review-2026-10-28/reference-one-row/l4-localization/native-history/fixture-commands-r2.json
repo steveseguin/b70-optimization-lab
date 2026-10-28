@@ -1,0 +1,57 @@
+[
+  {
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "g++-13",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/fixture.cpp",
+      "-lcrypto",
+      "-o",
+      "/dev/shm/sc117-l4-history-recorder-cpu-20261028-r2/fixture"
+    ],
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "/dev/shm/sc117-l4-history-recorder-cpu-20261028-r2/fixture",
+      "/dev/shm/sc117-l4-history-recorder-cpu-20261028-r2/fixture-output"
+    ],
+    "returncode": 0
+  },
+  {
+    "argv": [
+      "nice",
+      "-n",
+      "19",
+      "taskset",
+      "-c",
+      "8-15",
+      "g++-13",
+      "-O2",
+      "-std=c++20",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+      "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/wire-fixture.cpp",
+      "-lcrypto",
+      "-o",
+      "/dev/shm/sc117-l4-history-recorder-cpu-20261028-r2/wire-fixture"
+    ],
+    "returncode": 1
+  }
+]
