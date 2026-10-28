@@ -146,6 +146,7 @@ static void router_tie_admission(Engine&e,const Request&r){
  require(!e.a.pipeline_enabled()&&!e.a.pipeline_live_draft&&!e.a.pipeline_external_provider&&!e.a.pipeline_ring&&!e.a.provider_only&&!e.a.mtp&&!e.a.tp_replicate&&!e.a.mini&&!e.a.prefill_rows&&e.a.draft_capture.empty()&&e.a.f32_activations&&e.a.tokens==1&&e.p.g.context==4096&&e.p.g.h==2560&&e.p.g.mid==640&&e.p.g.experts==512&&e.p.g.top==10&&!e.v3_active&&!e.kio_active&&!e.prepare_async&&!e.split_head()&&e.prepared_path&&r.op==half&&!r.speculative,"router tie target-only scalar diagnostic admission");
  std::map<std::string,int> hooks,routes;
  for(const auto&l:e.p.launches){
+  (void)routertie::site(l); // reject bad bindings before the first HALF operation
   if(l.op=="route"){
    require(l.label.starts_with("blk.")&&ends(l.label,".route")&&(l.outputs.size()==2||l.outputs.size()==4),"router tie admitted route schedule");
    const auto prefix=l.label.substr(0,l.label.size()-5);++routes[prefix];if(l.outputs.size()==4)++hooks[prefix];
@@ -158,13 +159,7 @@ static void router_tie_admission(Engine&e,const Request&r){
 }
 static void router_tie_after_gather(Engine&e,const flash::Launch&l,const Request&r){
  if(!router_tie_enabled())return;
- const bool fused=l.op=="route"&&l.outputs.size()==4;
- if(l.op=="route")require(l.outputs.size()==2||fused,"router tie unknown route output geometry");
- if(!fused&&l.op!="expert_gather")return;
- require(l.label.starts_with("blk.")&&ends(l.label,fused?".route":".gather"),"router tie known route/gather label");
- const auto prefix=l.label.substr(0,l.label.size()-(fused?5:6));
- if(fused)require(l.inputs.size()==1&&l.inputs[0]==prefix+"router"&&l.outputs==std::vector<std::string>{prefix+"ids",prefix+"prob",prefix+"routes",prefix+"routes.down"},"router tie fused route bindings");
- else require(l.inputs.size()==2&&l.outputs.size()==3&&l.inputs[0]==prefix+"ids"&&l.outputs[0]==prefix+"routes"&&l.outputs[1]==prefix+"routes.down"&&l.outputs[2]==prefix+"expert_input","router tie gather buffer authority");
+ const auto prefix=routertie::site(l);if(prefix.empty())return;
  e.drain();
  auto get=[&](const std::string&name,size_t bytes,flash::Scalar type){const auto&s=e.buffers[0].at(name);require(s.type==type&&s.n*flash::scalar_bytes(s.type)==bytes,"router tie exact allocation type/extent");return e.readback(0,s.id,bytes,true);};
  auto scores=get(prefix+"router",2048,flash::Scalar::f32),ids=get(prefix+"ids",40,flash::Scalar::u32),weights=get(prefix+"prob",40,flash::Scalar::f32),routes=get(prefix+"routes",120,flash::Scalar::u32),down=get(prefix+"routes.down",120,flash::Scalar::u32);

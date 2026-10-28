@@ -8,8 +8,28 @@
 #include <numeric>
 #include <stdexcept>
 #include <vector>
+#include <string>
 namespace routertie {
 inline void need(bool b,const char*s){if(!b)throw std::runtime_error(s);}
+// Validate the actual post-Builder controls and exact native route ownership.
+// Called both during pre-HALF admission and immediately before diagnostic IO.
+template<class Launch> inline std::string site(const Launch&l){
+ const bool fused=l.op=="route"&&l.outputs.size()==4;
+ if(l.op=="route")need(l.outputs.size()==2||fused,"router tie unknown route output geometry");
+ if(l.op!="route"&&l.op!="expert_gather")return {};
+ const std::string suffix=l.op=="route"?".route":".gather";
+ need(l.label.starts_with("blk.")&&l.label.ends_with(suffix),"router tie known route/gather label");
+ const auto prefix=l.label.substr(0,l.label.size()-suffix.size())+".";
+ if(l.op=="route"){
+  need(l.inputs==std::vector<std::string>{prefix+"router","active","error"},"router tie actual route inputs");
+  const auto expected=fused?std::vector<std::string>{prefix+"ids",prefix+"prob",prefix+"routes",prefix+"routes.down"}:std::vector<std::string>{prefix+"ids",prefix+"prob"};
+  need(l.outputs==expected,"router tie actual route outputs");
+  if(!fused)return {};
+ }else{
+  need(l.inputs==std::vector<std::string>{prefix+"ids",prefix+"hc.f.mix","active","error"}&&l.outputs==std::vector<std::string>{prefix+"routes",prefix+"routes.down",prefix+"expert_input"},"router tie gather buffer authority");
+ }
+ return prefix;
+}
 using Scores=std::array<float,512>;using IDs=std::array<int32_t,10>;using Routes=std::array<int32_t,30>;using Weights=std::array<float,10>;
 struct Decision{IDs ids;Routes routes,down;int changed=0;};
 inline Decision prepare(const Scores& logits,const Scores& probabilities,const IDs& host_old,const IDs& actual,const Weights& weights,const Routes& routes,const Routes& down){
