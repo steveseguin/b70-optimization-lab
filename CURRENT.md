@@ -7,13 +7,18 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-The general default-OFF tie diagnostic now matches the saved CPU first token
-at all six historical disagreement prefixes, plus a repeated 244-token request.
-All seven cases ran in one owner lifetime; six strict cold resets passed,
-repeated 244 final state matched all 430,521,248 bytes, both owners exited 0, and
-passive postflight was clean. This is fixed-prefix first-output evidence, not
-free-running generation, the realistic suite, or bitwise CPU fidelity. Default
-routing is not promoted; GPU-sort integration is a separate pending treatment.
+The opt-in GPU reference tie-sort candidate completed the seven historical
+prefixes plus 12 fresh realistic generations in one owner lifetime. All 14 final
+state payloads (3,013,648,736 bytes), canonical sources, 48 layers per historical
+case, and outputs match the host diagnostic exactly. All 18 strict cold resets
+passed, both owners exited 0, and passive postflight was clean.
+
+The 12 fresh prompts emitted 5,965 actual greedy/EOS tokens. Ten complete inputs
+(prompt plus generated continuation) match historical inputs; technical-guide
+and bug-report-synthesis first differ at output indices 175 and 456. Independent
+CPU validation is pending: ten authenticated prior-row reuses plus two new CPU
+checks. This is not yet a free-running CPU fidelity pass or default promotion.
+Evidence: `reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/`.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns
@@ -27,11 +32,11 @@ The mapped mode is an opt-in host-memory/startup tradeoff, not promoted for spee
 Stage 0 command time increased 91.787s, tracking the TTFT difference; page faults
 were not captured, so the cause remains unassigned.
 
-Quality lineage: neutral 178-token CPU/native captures localized the first
-selected-expert divergence to layer 3. Same-input replay and the full 244 causal
-diagnostic established the equal-score tie treatment. The later seven-case run
-covers all six fixed historical prefixes, while broad independent fidelity and
-a production-compatible device implementation remain unqualified.
+Quality lineage: neutral 178-token captures and same-input replay exposed an
+actual equal-score tie discrepancy; the general host treatment fixed all six
+historical first-token cases. The GPU implementation now matches that treatment
+on all seven retained states. Independent checking of new continuations and
+broader production fidelity remain pending.
 
 The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.

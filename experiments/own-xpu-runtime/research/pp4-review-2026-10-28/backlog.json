@@ -39,11 +39,12 @@
         "aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json",
         "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json",
         "lookup-view-candidate/view-long-r1-evidence/matched-result.json",
-        "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json"
+        "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json",
+        "reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/index.json"
       ],
       "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
-      "next_step": "Qualify proposed GPU reference-sort implementation against all retained per-case diagnostic final states, then wider independent fidelity/free-running checks. Dedicated reset/full12-task matrix remain open; mapping stays opt-in startup/memory tradeoff with request loss.",
-      "blocker": "All six fixed historical disagreement prefixes now match savedCPU first tokens under general default-OFF tie diagnostic; repeated244 fullstate and six strict cold resets pass. Free-running generation, realistic suite, bitwise CPU logits and default promotion remain unqualified; dedicated-provider bulk reset still unimplemented.",
+      "next_step": "Finish independentCPU teacher-forcing on all actual generated continuations before a production fidelity decision. After quality gate, equal16 layout remains CPU-fit-projected and unmeasured; actual allocation/state/timing gate needed. Dedicated-provider reset remains separate.",
+      "blocker": "GPU reference tie-sort candidate matches host diagnostic across all seven fixed historical states/outputs/layers; twelve fresh prompts emitted5965 tokens. IndependentCPU continuation checks pending (ten authenticated historical row reuses and two fresh checks). Dedicated bulk-provider reset/full realistic performance matrix still unqualified; target-only resets do not qualify that provider path.",
       "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; later long128K qualification is recorded below.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; subsequent matched PP4cold control is recorded next.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; subsequent long121K capacity result follows.2+1pipeline128K firstcold121854/8 completed559.907532s/prefix544.443734s,exact8/all3exit0/cleanpostflight.7.5126%less time vs3+1pipeline,21.6710%vsPP4,45.5120%vs3+1sequential;3cards/card27free,context128vs262K explicit; nosustaineddecodeclaim.",
       "discovery_open": true,
       "next_topology_treatment": {
@@ -576,15 +577,16 @@
     },
     {
       "id": "actual-prefix178-layer3-cutoff-tie",
-      "status": "default-OFF-diagnostic-all-six-fixed-historical-prefixes-match",
+      "status": "GPU-candidate-seven-fullstates-match-hostdiag-twelve-generated-CPUcheck-pending",
       "evidence": [
         "reference-one-row/prefix178/FINDING-prefix178.txt",
         "reference-one-row/prefix178/completed-comparison-r1/index.json",
         "reference-one-row/router-tie-candidate/r2-causal-evidence/index.json",
-        "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json"
+        "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json",
+        "reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/index.json"
       ],
       "finding": "Full244-token actual diagnostic returns16568 matchingCPU, oldnative6343. Exactlyone slot changes position177/layer3 expert62\u2192477 equalrawF32word3231393608 among11712 verifiedroute records; nativeweights unchanged. Final logitRMS1.38935e-6/max7.62939e-6, notbitwise. Bothowners0/postflightclean. Otherfiveoriginaldisagreements untested; defaultnotpromoted. Later seven-case one-owner run matches allsix fixed savedCPU first tokens plus repeated244; six cold resets and430521248 repeated-A bytes pass. Not free-running or bitwise CPU fidelity.",
-      "next_step": "GPU-sort integration requires same-case full-state parity to retained diagnostic states before broader/free-running fidelity and any promotion.",
+      "next_step": "Complete authenticated independentCPU checks of all5965 actual generated tokens; no production/defaultpromotion before fidelity gate.",
       "device_sort_subexperiment": {
         "status": "CPU-and-standalone-AOT-device-exact-runtime-unmodified",
         "evidence": [
@@ -592,14 +594,24 @@
           "reference-one-row/router-tie-candidate/device-sort/integration-design.md"
         ],
         "finding": "Agent reports CPU optimized/sanitized permutations and card27 AOT microprobe: all262144 indices match CPU std::sort, zero canary/status errors, input unchanged. No runtime integration, endpoint speed, or additional model fidelity claim."
+      },
+      "gpu_model_gate": {
+        "passed": true,
+        "historical_cases": 7,
+        "full_final_payloads": 14,
+        "actual_bytes_compared": 3013648736,
+        "fresh_generation_tasks": 12,
+        "actual_generated_tokens": 5965,
+        "cold_resets": 18,
+        "CPU_fidelity": "pending"
       }
     }
   ],
   "next_priority_queue": [
     {
       "priority": 1,
-      "action": "Allsix fixed historical prefixes plus repeated244 now match under default-OFF host tie diagnostic. Qualify GPU-sort treatment against retained per-case final states, then broader free-running/independent fidelity before promotion.",
-      "evidence": "reference-one-row/router-tie-candidate/historical-seven-r1-evidence/index.json"
+      "action": "GPU tie-sort candidate passed seven full-state/layer/output comparisons and generated5965 tokens across all12 original prompts. IndependentCPU checks pending; preserve actual continuations for authenticated prior-row reuse/new two-case checks before promotion.",
+      "evidence": "reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/index.json"
     },
     {
       "priority": 2,
