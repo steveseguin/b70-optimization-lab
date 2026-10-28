@@ -14,7 +14,7 @@ def prepare(plan_path,reference,destination):
     pairs=C.canonical_pairs([json.loads(line) for line in raw.splitlines()],result['input_position'],capture_ready=plan.get('dedicated_capture_ready',False),target_stages=len(plan['stages']))
     pairhash=C.T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())
     reference_draft,_=C.read(reference/'draft-set.json')
-    identity=dict(reference_draft['input_identity'],pair_sequence_sha256=pairhash,position=result['input_position']-1)
+    identity=dict(reference_draft['input_identity'],pair_sequence_sha256=pairhash,position=result['input_position']-1,context=plan['context'])
     C.need(identity['draft_model_sha256']==plan['draft_model_sha256'] and identity['model_sha256']==plan['model_identity_sha256'],'actual model identity')
     provider=Path(plan['provider']['native_output'])
     dumps=list(provider.glob('provider-dump-*'));C.need(len(dumps)==1,'one actual retained provider DUMP')

@@ -1,0 +1,1646 @@
+{
+  "schema": "ownrt.128k-native-plan-screen.v1",
+  "passed": true,
+  "device_contact": false,
+  "binary_sha256": "8d94ed16156ea7c3103431762e2424fe92aca1c3cbeee34ae2e6f34e775ec086",
+  "plan": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/plan.json",
+  "plan_sha256": "6c0a2a02c6767a6a133728a00c2bc33a9327af5c2a3e94d131d0dffa19146472",
+  "roles": [
+    {
+      "role": 0,
+      "returncode": 0,
+      "plan_only": {
+        "device_contact": false
+      },
+      "argv": [
+        "ionice",
+        "-c",
+        "3",
+        "/dev/shm/engine-build-dedicated-128k-20261028-r1/sc117-engine",
+        "--gsq-packed",
+        "--rank",
+        "0",
+        "--channel",
+        "4",
+        "--stop-fd",
+        "5",
+        "--shared",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-0/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-0/native",
+        "--memory",
+        "resident",
+        "--context",
+        "131072",
+        "--seconds",
+        "1800",
+        "--native-nice",
+        "19",
+        "--timing",
+        "token",
+        "--max-new",
+        "32",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "0",
+        "--target-split",
+        "23",
+        "--host-path",
+        "prepared",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+        "--authorized-device-window",
+        "--attention-q8-p33",
+        "--qkv-q6-p33",
+        "--expert-iq3xxs-block",
+        "--dense-q6-p33",
+        "--dense-packed-block",
+        "--recurrent-f32",
+        "--reset-dump",
+        "none",
+        "--finish-dump",
+        "none",
+        "--token-stream",
+        "jsonl",
+        "--activations",
+        "f32",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+        "--pipeline-boundaries",
+        "0,25,48",
+        "--pipeline-stage",
+        "0",
+        "--pipeline-ring",
+        "--pipeline-external-provider",
+        "--pipeline-ring-persistent-requests",
+        "--pipeline-ring-check-policy",
+        "qualification",
+        "--pipeline-ring-request-sha256",
+        "e445a327646c4840c3081625e89825c251225a2be9fbc170dd28f0d66f0f9f92",
+        "--pipeline-ring-depth",
+        "3",
+        "--pipeline-ring-trace-limit",
+        "100000",
+        "--pipeline-ring-verify-restore"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "OMP_NUM_THREADS": "2",
+        "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+        "HOME": "/home/steve",
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:23:00.0",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "SYCL_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage0/cache/sycl",
+        "NEO_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage0/cache/neo",
+        "XDG_CACHE_HOME": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage0/cache/xdg",
+        "OWNRT_DRAFT_PREFIX_ROWS": "91392",
+        "OWNRT_MISS": "banks-batch",
+        "OWNRT_SNAPSHOT_HOST": "static",
+        "OWNRT_DRAFT_KERNELS": "qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation",
+        "OWNRT_MERGE_CHECKS": "1",
+        "OWNRT_SELECT_TOPK": "1",
+        "OWNRT_RESET_DEVICE_ZERO": "1",
+        "OWNRT_ATTN_HEADS": "1",
+        "OWNRT_ATTN_COMBINE2": "1",
+        "OWNRT_PREFILL_REUSE2": "1",
+        "OWNRT_SELECT_FAST": "1",
+        "OWNRT_EXPERTS_V2": "1",
+        "OWNRT_DENSE_DECODE_V2": "1",
+        "OWNRT_PREFILL_EXPERTS": "1",
+        "OWNRT_DENSE_RAW": "1",
+        "OWNRT_QSA_RAW_RING": "1",
+        "OWNRT_PREFILL_SHADOW_PACK": "1",
+        "OWNRT_DRAFT_HEAD_RAW": "1",
+        "OWNRT_DRAFT_ATTN": "1",
+        "OWNRT_DRAFT_EXPERTS_V2": "1",
+        "OWNRT_DRAFT_MERGE": "1",
+        "OWNRT_GDN_PREP": "1",
+        "OWNRT_DECODE_NEXT": "1",
+        "OWNRT_DECODE_NEXT2": "1",
+        "OWNRT_EARLY_RANK1": "0",
+        "OWNRT_PLAN_ONLY": "1"
+      },
+      "log_sha256": "f246060de7066c1c69dfdac53c064b038eb033d51bd1c460397a57e5ea523eda"
+    },
+    {
+      "role": 1,
+      "returncode": 0,
+      "plan_only": {
+        "device_contact": false
+      },
+      "argv": [
+        "ionice",
+        "-c",
+        "3",
+        "/dev/shm/engine-build-dedicated-128k-20261028-r1/sc117-engine",
+        "--gsq-packed",
+        "--rank",
+        "1",
+        "--channel",
+        "4",
+        "--stop-fd",
+        "5",
+        "--shared",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-1/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-1/native",
+        "--memory",
+        "resident",
+        "--context",
+        "131072",
+        "--seconds",
+        "1800",
+        "--native-nice",
+        "19",
+        "--timing",
+        "token",
+        "--max-new",
+        "32",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "0",
+        "--target-split",
+        "23",
+        "--host-path",
+        "prepared",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+        "--authorized-device-window",
+        "--attention-q8-p33",
+        "--qkv-q6-p33",
+        "--expert-iq3xxs-block",
+        "--dense-q6-p33",
+        "--dense-packed-block",
+        "--recurrent-f32",
+        "--reset-dump",
+        "none",
+        "--finish-dump",
+        "none",
+        "--token-stream",
+        "jsonl",
+        "--activations",
+        "f32",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+        "--pipeline-boundaries",
+        "0,25,48",
+        "--pipeline-stage",
+        "1",
+        "--pipeline-ring",
+        "--pipeline-external-provider",
+        "--pipeline-ring-persistent-requests",
+        "--pipeline-ring-check-policy",
+        "qualification",
+        "--pipeline-ring-request-sha256",
+        "e445a327646c4840c3081625e89825c251225a2be9fbc170dd28f0d66f0f9f92",
+        "--pipeline-ring-depth",
+        "3",
+        "--pipeline-ring-trace-limit",
+        "100000",
+        "--pipeline-ring-verify-restore"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "OMP_NUM_THREADS": "2",
+        "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+        "HOME": "/home/steve",
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:47:00.0",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "SYCL_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage1/cache/sycl",
+        "NEO_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage1/cache/neo",
+        "XDG_CACHE_HOME": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage1/cache/xdg",
+        "OWNRT_DRAFT_PREFIX_ROWS": "91392",
+        "OWNRT_MISS": "banks-batch",
+        "OWNRT_SNAPSHOT_HOST": "static",
+        "OWNRT_DRAFT_KERNELS": "qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation",
+        "OWNRT_MERGE_CHECKS": "1",
+        "OWNRT_SELECT_TOPK": "1",
+        "OWNRT_RESET_DEVICE_ZERO": "1",
+        "OWNRT_ATTN_HEADS": "1",
+        "OWNRT_ATTN_COMBINE2": "1",
+        "OWNRT_PREFILL_REUSE2": "1",
+        "OWNRT_SELECT_FAST": "1",
+        "OWNRT_EXPERTS_V2": "1",
+        "OWNRT_DENSE_DECODE_V2": "1",
+        "OWNRT_PREFILL_EXPERTS": "1",
+        "OWNRT_DENSE_RAW": "1",
+        "OWNRT_QSA_RAW_RING": "1",
+        "OWNRT_PREFILL_SHADOW_PACK": "1",
+        "OWNRT_DRAFT_HEAD_RAW": "1",
+        "OWNRT_DRAFT_ATTN": "1",
+        "OWNRT_DRAFT_EXPERTS_V2": "1",
+        "OWNRT_DRAFT_MERGE": "1",
+        "OWNRT_GDN_PREP": "1",
+        "OWNRT_DECODE_NEXT": "1",
+        "OWNRT_DECODE_NEXT2": "1",
+        "OWNRT_EARLY_RANK1": "0",
+        "OWNRT_PLAN_ONLY": "1"
+      },
+      "log_sha256": "35f986fb35da1f1fad6e7e8b0239ca50d0b1f391bff5089a04ca791d12c1a9e2"
+    },
+    {
+      "role": "provider",
+      "returncode": 0,
+      "plan_only": {
+        "role": "dedicated-mtp",
+        "device_contact": false
+      },
+      "argv": [
+        "ionice",
+        "-c",
+        "3",
+        "/dev/shm/engine-build-dedicated-128k-20261028-r1/sc117-engine",
+        "--gsq-packed",
+        "--rank",
+        "0",
+        "--channel",
+        "4",
+        "--stop-fd",
+        "5",
+        "--shared",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-provider/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-role-provider/native",
+        "--memory",
+        "resident",
+        "--context",
+        "131072",
+        "--seconds",
+        "1800",
+        "--native-nice",
+        "19",
+        "--timing",
+        "token",
+        "--max-new",
+        "32",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "0",
+        "--target-split",
+        "23",
+        "--host-path",
+        "prepared",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+        "--authorized-device-window",
+        "--attention-q8-p33",
+        "--qkv-q6-p33",
+        "--expert-iq3xxs-block",
+        "--dense-q6-p33",
+        "--dense-packed-block",
+        "--recurrent-f32",
+        "--reset-dump",
+        "none",
+        "--finish-dump",
+        "none",
+        "--token-stream",
+        "jsonl",
+        "--activations",
+        "f32",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+        "--provider-only",
+        "--provider-bdf",
+        "0000:43:00.0",
+        "--provider-target-bdfs",
+        "0000:23:00.0,0000:47:00.0",
+        "--provider-seed-shared",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage0/shared.bin",
+        "--provider-final-shared",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage1/shared.bin",
+        "--pipeline-ring-request-sha256",
+        "e445a327646c4840c3081625e89825c251225a2be9fbc170dd28f0d66f0f9f92",
+        "--pipeline-ring-depth",
+        "3",
+        "--pipeline-ring-check-policy",
+        "qualification",
+        "--draft-mtp",
+        "--provider-capture-ready",
+        "--pipeline-ring-recursive-verify-restore",
+        "--draft-fault",
+        "none",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+        "--draft-model",
+        "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+        "--draft-experts",
+        "fp8"
+      ],
+      "environment": {
+        "PATH": "/usr/bin:/bin",
+        "OMP_NUM_THREADS": "2",
+        "LD_LIBRARY_PATH": "/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+        "HOME": "/home/steve",
+        "NEOReadDebugKeys": "1",
+        "FilterBdfPath": "0000:43:00.0",
+        "ZE_ENABLE_PCI_ID_DEVICE_ORDER": "1",
+        "ZE_AFFINITY_MASK": "0",
+        "ONEAPI_DEVICE_SELECTOR": "level_zero:0",
+        "SYCL_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stageprovider/cache/sycl",
+        "NEO_CACHE_DIR": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stageprovider/cache/neo",
+        "XDG_CACHE_HOME": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stageprovider/cache/xdg",
+        "OWNRT_DRAFT_PREFIX_ROWS": "91392",
+        "OWNRT_MISS": "banks-batch",
+        "OWNRT_SNAPSHOT_HOST": "static",
+        "OWNRT_DRAFT_KERNELS": "qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation",
+        "OWNRT_MERGE_CHECKS": "1",
+        "OWNRT_SELECT_TOPK": "1",
+        "OWNRT_RESET_DEVICE_ZERO": "1",
+        "OWNRT_ATTN_HEADS": "1",
+        "OWNRT_ATTN_COMBINE2": "1",
+        "OWNRT_PREFILL_REUSE2": "1",
+        "OWNRT_SELECT_FAST": "1",
+        "OWNRT_EXPERTS_V2": "1",
+        "OWNRT_DENSE_DECODE_V2": "1",
+        "OWNRT_PREFILL_EXPERTS": "1",
+        "OWNRT_DENSE_RAW": "1",
+        "OWNRT_QSA_RAW_RING": "1",
+        "OWNRT_PREFILL_SHADOW_PACK": "1",
+        "OWNRT_DRAFT_HEAD_RAW": "1",
+        "OWNRT_DRAFT_ATTN": "1",
+        "OWNRT_DRAFT_EXPERTS_V2": "1",
+        "OWNRT_DRAFT_MERGE": "1",
+        "OWNRT_GDN_PREP": "1",
+        "OWNRT_DECODE_NEXT": "1",
+        "OWNRT_DECODE_NEXT2": "1",
+        "OWNRT_EARLY_RANK1": "0",
+        "OWNRT_PLAN_ONLY": "1"
+      },
+      "log_sha256": "03cfde103d1e2d3538726b8295e8e93f5b29a341541cbc854eb9e71e1a608ac7"
+    }
+  ],
+  "target_capacity_deltas": [
+    {
+      "stage": 0,
+      "base_planned_owned_bytes_64k": 28896748808,
+      "base_planned_owned_bytes_128k": 30759019784,
+      "changes": [
+        {
+          "name": "blk.11.qsa.keys",
+          "before": {
+            "name": "blk.11.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.11.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.11.qsa.pooled",
+          "before": {
+            "name": "blk.11.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.11.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.11.qsa.raw",
+          "before": {
+            "name": "blk.11.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.11.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.11.qsa.values",
+          "before": {
+            "name": "blk.11.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.11.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.15.qsa.keys",
+          "before": {
+            "name": "blk.15.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.15.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.15.qsa.pooled",
+          "before": {
+            "name": "blk.15.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.15.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.15.qsa.raw",
+          "before": {
+            "name": "blk.15.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.15.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.15.qsa.values",
+          "before": {
+            "name": "blk.15.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.15.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.19.qsa.keys",
+          "before": {
+            "name": "blk.19.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.19.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.19.qsa.pooled",
+          "before": {
+            "name": "blk.19.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.19.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.19.qsa.raw",
+          "before": {
+            "name": "blk.19.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.19.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.19.qsa.values",
+          "before": {
+            "name": "blk.19.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.19.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.23.qsa.keys",
+          "before": {
+            "name": "blk.23.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.23.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.23.qsa.pooled",
+          "before": {
+            "name": "blk.23.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.23.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.23.qsa.raw",
+          "before": {
+            "name": "blk.23.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.23.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.23.qsa.values",
+          "before": {
+            "name": "blk.23.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.23.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.3.qsa.keys",
+          "before": {
+            "name": "blk.3.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.3.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.3.qsa.pooled",
+          "before": {
+            "name": "blk.3.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.3.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.3.qsa.raw",
+          "before": {
+            "name": "blk.3.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.3.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.3.qsa.values",
+          "before": {
+            "name": "blk.3.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.3.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.7.qsa.keys",
+          "before": {
+            "name": "blk.7.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.7.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.7.qsa.pooled",
+          "before": {
+            "name": "blk.7.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.7.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.7.qsa.raw",
+          "before": {
+            "name": "blk.7.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.7.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.7.qsa.values",
+          "before": {
+            "name": "blk.7.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.7.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        }
+      ],
+      "actual_initial_64k_census_bytes": 29661143540,
+      "projected_128k_initial_bytes": 31548580340,
+      "projected_margin_to_30GiB_bytes": 663674380
+    },
+    {
+      "stage": 1,
+      "base_planned_owned_bytes_64k": 29937339304,
+      "base_planned_owned_bytes_128k": 31799610280,
+      "changes": [
+        {
+          "name": "blk.27.qsa.keys",
+          "before": {
+            "name": "blk.27.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.27.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.27.qsa.pooled",
+          "before": {
+            "name": "blk.27.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.27.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.27.qsa.raw",
+          "before": {
+            "name": "blk.27.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.27.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.27.qsa.values",
+          "before": {
+            "name": "blk.27.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.27.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.31.qsa.keys",
+          "before": {
+            "name": "blk.31.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.31.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.31.qsa.pooled",
+          "before": {
+            "name": "blk.31.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.31.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.31.qsa.raw",
+          "before": {
+            "name": "blk.31.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.31.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.31.qsa.values",
+          "before": {
+            "name": "blk.31.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.31.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.35.qsa.keys",
+          "before": {
+            "name": "blk.35.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.35.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.35.qsa.pooled",
+          "before": {
+            "name": "blk.35.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.35.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.35.qsa.raw",
+          "before": {
+            "name": "blk.35.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.35.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.35.qsa.values",
+          "before": {
+            "name": "blk.35.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.35.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.39.qsa.keys",
+          "before": {
+            "name": "blk.39.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.39.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.39.qsa.pooled",
+          "before": {
+            "name": "blk.39.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.39.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.39.qsa.raw",
+          "before": {
+            "name": "blk.39.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.39.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.39.qsa.values",
+          "before": {
+            "name": "blk.39.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.39.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.43.qsa.keys",
+          "before": {
+            "name": "blk.43.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.43.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.43.qsa.pooled",
+          "before": {
+            "name": "blk.43.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.43.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.43.qsa.raw",
+          "before": {
+            "name": "blk.43.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.43.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.43.qsa.values",
+          "before": {
+            "name": "blk.43.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.43.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.47.qsa.keys",
+          "before": {
+            "name": "blk.47.qsa.keys",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.47.qsa.keys",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        },
+        {
+          "name": "blk.47.qsa.pooled",
+          "before": {
+            "name": "blk.47.qsa.pooled",
+            "bytes": 8388608,
+            "dtype": "F32",
+            "shape": [
+              16384,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.47.qsa.pooled",
+            "bytes": 16777216,
+            "dtype": "F32",
+            "shape": [
+              32768,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.47.qsa.raw",
+          "before": {
+            "name": "blk.47.qsa.raw",
+            "bytes": 33554432,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              128
+            ]
+          },
+          "after": {
+            "name": "blk.47.qsa.raw",
+            "bytes": 67108864,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              128
+            ]
+          }
+        },
+        {
+          "name": "blk.47.qsa.values",
+          "before": {
+            "name": "blk.47.qsa.values",
+            "bytes": 134217728,
+            "dtype": "F32",
+            "shape": [
+              65536,
+              2,
+              256
+            ]
+          },
+          "after": {
+            "name": "blk.47.qsa.values",
+            "bytes": 268435456,
+            "dtype": "F32",
+            "shape": [
+              131072,
+              2,
+              256
+            ]
+          }
+        }
+      ],
+      "actual_initial_64k_census_bytes": 30141558944,
+      "projected_128k_initial_bytes": 32028995744,
+      "projected_margin_to_30GiB_bytes": 183258976
+    }
+  ],
+  "legacy_refusals": [
+    {
+      "target_split": 23,
+      "returncode": 1,
+      "log": "23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144\n",
+      "argv": [
+        "ionice",
+        "-c",
+        "3",
+        "/dev/shm/engine-build-dedicated-128k-20261028-r1/sc117-engine",
+        "--gsq-packed",
+        "--rank",
+        "0",
+        "--channel",
+        "0",
+        "--stop-fd",
+        "0",
+        "--shared",
+        "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/transport/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-legacy-refusal-23-r2/native",
+        "--memory",
+        "resident",
+        "--context",
+        "131072",
+        "--seconds",
+        "1800",
+        "--native-nice",
+        "19",
+        "--timing",
+        "token",
+        "--max-new",
+        "128",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "0",
+        "--target-split",
+        "23",
+        "--host-path",
+        "prepared",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+        "--authorized-device-window",
+        "--attention-q8-p33",
+        "--qkv-q6-p33",
+        "--expert-iq3xxs-block",
+        "--dense-q6-p33",
+        "--dense-packed-block",
+        "--recurrent-f32",
+        "--reset-dump",
+        "none",
+        "--finish-dump",
+        "none",
+        "--token-stream",
+        "jsonl",
+        "--activations",
+        "f32",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+        "--draft-mtp",
+        "--draft-fault",
+        "none",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+        "--draft-model",
+        "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+        "--draft-experts",
+        "fp8"
+      ],
+      "device_contact": false,
+      "scope": "parser context refusal before run_rank or provider bootstrap"
+    },
+    {
+      "target_split": 24,
+      "returncode": 1,
+      "log": "24/24 rank0 draft admitted at context4096/32768/65536/262144\n",
+      "argv": [
+        "ionice",
+        "-c",
+        "3",
+        "/dev/shm/engine-build-dedicated-128k-20261028-r1/sc117-engine",
+        "--gsq-packed",
+        "--rank",
+        "0",
+        "--channel",
+        "0",
+        "--stop-fd",
+        "0",
+        "--shared",
+        "/dev/shm/sc117-colocated2-native-depth1-64k512-20261028-r1/output/transport/shared.bin",
+        "--cards",
+        "1",
+        "--card",
+        "0",
+        "--output",
+        "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/cpu-legacy-refusal-24-r2/native",
+        "--memory",
+        "resident",
+        "--context",
+        "131072",
+        "--seconds",
+        "1800",
+        "--native-nice",
+        "19",
+        "--timing",
+        "token",
+        "--max-new",
+        "128",
+        "--retain-steps",
+        "none",
+        "--draft-rank",
+        "0",
+        "--target-split",
+        "24",
+        "--host-path",
+        "prepared",
+        "--plan",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+        "--identity",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/loader/shard-auth.tsv",
+        "--model-dir",
+        "/mnt/usb-models/llm-models/SC117-Qwen3.8-Flash-Next-GSQ-RCO-abliterated-IQ3_S-eec4e10a",
+        "--authorized-device-window",
+        "--attention-q8-p33",
+        "--qkv-q6-p33",
+        "--expert-iq3xxs-block",
+        "--dense-q6-p33",
+        "--dense-packed-block",
+        "--recurrent-f32",
+        "--reset-dump",
+        "none",
+        "--finish-dump",
+        "none",
+        "--token-stream",
+        "jsonl",
+        "--activations",
+        "f32",
+        "--dispatch",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/dispatch-f32-select-gdn2.json",
+        "--draft-mtp",
+        "--draft-fault",
+        "none",
+        "--draft-manifest",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/mtp/draft-manifest.tsv",
+        "--draft-model",
+        "/mnt/fast-ai/llm-models/Qwen3.8-Flash-Next-FP8",
+        "--draft-experts",
+        "fp8"
+      ],
+      "device_contact": false,
+      "scope": "parser context refusal before run_rank or provider bootstrap"
+    }
+  ],
+  "limits": "Actual native plans and writer-union admission pass; retained128K allocation numbers remain projections from initial64K census, not runtime fit or peak. All device caps and arithmetic unchanged. Original two-predicate screen missed global role-aware split/context admission; corrected before build. First negative-test setup accidentally replaced ionice; its unknown -c refusal is not capacity evidence."
+}

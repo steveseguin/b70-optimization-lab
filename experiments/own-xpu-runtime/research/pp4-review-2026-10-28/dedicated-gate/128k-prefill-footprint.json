@@ -1,0 +1,221 @@
+{
+  "prior_actual_native_validation": [
+    {
+      "stage": 0,
+      "passed": true,
+      "actual": {
+        "rows": 256,
+        "roles": 61,
+        "buffers": 331,
+        "sites": 306,
+        "shadow_bytes": 288614400
+      },
+      "allocation_source": "/dev/shm/pp4-overlap-gate-20261028/output/stage0/native/prefill-allocation.json",
+      "allocation_sha256": "c9c0aa7918928c8e818f5ae5727723155c6e17a4fe305412db25ae14c53d8a35",
+      "launch_sha256": "db7c1c673448ae04b42c47d8e574a4c210f393de01b51e9e68ad1994c1ee2b95"
+    },
+    {
+      "stage": 1,
+      "passed": true,
+      "actual": {
+        "rows": 256,
+        "roles": 51,
+        "buffers": 520,
+        "sites": 476,
+        "shadow_bytes": 68302848,
+        "packed_slots": 12,
+        "unpacked_bytes": 217802752
+      },
+      "allocation_source": "/dev/shm/pp4-overlap-gate-20261028/output/stage1/native/prefill-allocation.json",
+      "allocation_sha256": "a48ad3e07ac926b202b884a3386597e26f98b90d713243a766518abd08e1c4dc",
+      "launch_sha256": "4fcc60f580dd71799e56480be5926c39f35c323c535fb4dd5f49d433bc51a891"
+    },
+    {
+      "stage": 2,
+      "passed": true,
+      "actual": {
+        "rows": 256,
+        "roles": 51,
+        "buffers": 520,
+        "sites": 476,
+        "shadow_bytes": 68302848,
+        "packed_slots": 12,
+        "unpacked_bytes": 217802752
+      },
+      "allocation_source": "/dev/shm/pp4-overlap-gate-20261028/output/stage2/native/prefill-allocation.json",
+      "allocation_sha256": "a48ad3e07ac926b202b884a3386597e26f98b90d713243a766518abd08e1c4dc",
+      "launch_sha256": "0986a2a51a5ecabbe26f255e7aae99ee9892ea063721602a1638d56f2668fcec"
+    },
+    {
+      "stage": 3,
+      "passed": true,
+      "actual": {
+        "rows": 256,
+        "roles": 51,
+        "buffers": 563,
+        "sites": 514,
+        "shadow_bytes": 68302848,
+        "packed_slots": 12,
+        "unpacked_bytes": 217802752
+      },
+      "allocation_source": "/dev/shm/pp4-overlap-gate-20261028/output/stage3/native/prefill-allocation.json",
+      "allocation_sha256": "9462d45e9f78814af4f8148f78a7d490b59b734b7ff24f25dfabe2658fabc655",
+      "launch_sha256": "7035f82f9c31bc09978de5ba2e9ef4de07dd4fa310dd8ea49d508a381e63a0b3"
+    }
+  ],
+  "schema": "ownrt.dedicated-128k-prefill-source-footprint.v1",
+  "device_work": false,
+  "rows": 256,
+  "results": [
+    {
+      "rank": 0,
+      "rows": 256,
+      "sites": 926,
+      "roles": 61,
+      "role_buffers": 1010,
+      "packed_slots": null,
+      "shadow_bytes": 288614400,
+      "unpacked_bytes": 288614400,
+      "xgroup_and_position_token_bytes": 51264,
+      "added_device_bytes": 288665664,
+      "slots": [],
+      "source": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage0/native/launch-plan.json",
+      "source_sha256": "0bf9c44dbfdbcee6f3b7788bf43b519dd1f252a2cdcb3b1c25c818fd74e5221d",
+      "current_actual_census_bytes": 31548580340,
+      "projected_with_prefill_bytes": 31837246004,
+      "remaining_30GiB_bytes": 375008716
+    },
+    {
+      "rank": 1,
+      "rows": 256,
+      "sites": 842,
+      "roles": 51,
+      "role_buffers": 922,
+      "packed_slots": 12,
+      "shadow_bytes": 68302848,
+      "unpacked_bytes": 217802752,
+      "xgroup_and_position_token_bytes": 51264,
+      "added_device_bytes": 68354112,
+      "slots": [
+        {
+          "bytes": 26214400,
+          "roles": [
+            "blk.*.expert_input",
+            "blk.*.expsdown",
+            "blk.*.qsa.qgate",
+            "blk.*.gdn.conv",
+            "blk.*.hc.a.norm",
+            "blk.*.hc.f.norm"
+          ]
+        },
+        {
+          "bytes": 10485760,
+          "roles": [
+            "blk.*.gdn.qkv",
+            "blk.*.hc.a.gate",
+            "blk.*.hc.f.gate",
+            "blk.*.expsact",
+            "blk.*.qsa.ids",
+            "blk.*.shexpup",
+            "blk.*.qsa.k"
+          ]
+        },
+        {
+          "bytes": 10485760,
+          "roles": [
+            "streams"
+          ]
+        },
+        {
+          "bytes": 6553600,
+          "roles": [
+            "blk.*.expsgate",
+            "blk.*.gdn.gated",
+            "blk.*.qsa.q",
+            "blk.*.hc.a.mix",
+            "blk.*.shexpdown",
+            "blk.*.shexpgate"
+          ]
+        },
+        {
+          "bytes": 6553600,
+          "roles": [
+            "blk.*.expsup",
+            "blk.*.gdn.y",
+            "blk.*.qsa.y",
+            "blk.*.shexpact",
+            "blk.*.qsa.iq"
+          ]
+        },
+        {
+          "bytes": 6291456,
+          "roles": [
+            "blk.*.gdn.z",
+            "blk.*.qsa.gate",
+            "blk.*.attention",
+            "blk.*.hc.f.mix",
+            "blk.*.moe"
+          ]
+        },
+        {
+          "bytes": 524288,
+          "roles": [
+            "blk.*.qsa.iqn",
+            "blk.*.router",
+            "blk.*.hc.a.act",
+            "blk.*.hc.f.act",
+            "blk.*.gdn.b",
+            "blk.*.routes.down"
+          ]
+        },
+        {
+          "bytes": 524288,
+          "roles": [
+            "blk.*.qsa.kn",
+            "blk.*.hc.a.low",
+            "blk.*.hc.f.low",
+            "blk.*.expsgate.status",
+            "blk.*.ids"
+          ]
+        },
+        {
+          "bytes": 524288,
+          "roles": [
+            "blk.*.qsa.v",
+            "blk.*.expsup.status"
+          ]
+        },
+        {
+          "bytes": 131072,
+          "roles": [
+            "blk.*.qsa.ik",
+            "blk.*.gdn.a",
+            "blk.*.routes",
+            "blk.*.expsdown.status",
+            "blk.*.shared_gate"
+          ]
+        },
+        {
+          "bytes": 10240,
+          "roles": [
+            "blk.*.prob",
+            "blk.*.hc.a.inject"
+          ]
+        },
+        {
+          "bytes": 4096,
+          "roles": [
+            "blk.*.hc.f.inject"
+          ]
+        }
+      ],
+      "source": "/dev/shm/sc117-dedicated-2plus1-128k-gate-20261028-r1/output/stage1/native/launch-plan.json",
+      "source_sha256": "d0bce32cb6a338a53b42efdb7dde3dea82c8cfdc4dc91b32a70176637b07a773",
+      "current_actual_census_bytes": 32028995744,
+      "projected_with_prefill_bytes": 32097349856,
+      "remaining_30GiB_bytes": 114904864
+    }
+  ],
+  "scope": "Source-exact transcription of prefill_allocate live-role packing for neutral-V3 general pipeline plans, rank1 packing enabled, xgroup enabled/top8. Not actual native allocation execution; excludes dynamic driver/JIT or future extra device allocation. Provider owns only10MiB host rawcopy, no target shadows.",
+  "source_sha256": "f6a02f587ccd9fe94f37f75b97fbb586245344170d5a17fc7aa45451ce81ca2f"
+}

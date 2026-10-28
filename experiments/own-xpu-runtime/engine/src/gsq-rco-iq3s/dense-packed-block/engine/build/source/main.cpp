@@ -361,8 +361,8 @@ static Options parse(int argc, char **argv) {
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
   require(a.target_split==0||a.target_split==23||a.target_split==24||(a.gsq_packed&&a.target_split>=20&&a.target_split<=24),"target split must be0 (placement default),23 or24 (GSQ: 20..24)");
-  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&(a.context==32768||a.context==65536||a.context==262144)),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144");
-  require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096||a.context==32768||a.context==65536||a.context==262144,"24/24 rank0 draft admitted at context4096/32768/65536/262144");
+  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&(a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072))),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144");
+  require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096||a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072),"24/24 rank0 draft admitted at context4096/32768/65536/262144");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
@@ -492,7 +492,7 @@ static Options parse(int argc, char **argv) {
     // 32768 (the RoPE table's extent) with the rank-0 draft, as main.cpp admits for the 23/25 split; QSA bounds come
     // from capacity or the launch extent and attention keeps its 2051-slot budget, so only allocations grow
     // (card 27 rank-1 lab 2026-10-26: 4096 vs 32768 bitwise on 1,079 buffers; 8K batched == token-by-token).
-    require(a.mini||a.context==4096||((a.context==32768||a.context==65536||a.context==262144)&&a.draft_rank==0),"GSQ real context 4096, 32768, 65536 or 262144 (rank-0 draft)");
+    require(a.mini||a.context==4096||((a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072))&&a.draft_rank==0),"GSQ real context 4096, 32768, 65536 or 262144; pipeline/provider additionally 131072 (rank-0 draft)");
     // GSQ: rank 0 (with the draft) holds layers 0..split-1, rank 1 the rest; stage boundaries only copy activations.
     require(a.mini||(a.target_split>=20&&a.target_split<=24&&a.draft_rank==0),"GSQ split 20..24 with the rank-0 draft required");
   }
@@ -2244,7 +2244,7 @@ static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  }
  // GSQ resident ranks use the same plan-derived bound (the writer union below must fit 8 MiB); binding-time extent
  // guards in every scratch-using kernel stay on, so a short scratch refuses instead of writing out of bounds.
- const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536||a.context==262144)&&a.memory=="resident";
+ const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536||a.context==262144||(a.pipeline_enabled()&&a.context==131072))&&a.memory=="resident";
  if(!gsq&&(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
     (!a.mini&&a.context!=4096)))return legacy;
  require((a.mini||p.g.h==2560)&&p.g.context==a.context&&

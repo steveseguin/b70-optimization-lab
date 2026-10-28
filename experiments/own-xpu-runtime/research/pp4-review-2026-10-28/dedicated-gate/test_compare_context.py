@@ -4,9 +4,17 @@ from hashlib import sha256
 from pathlib import Path
 from tempfile import TemporaryDirectory
 import unittest
-from compare_context import capacity_layout,prefix_zero,TARGET,DRAFT,shape
+import math
+from compare_context import capacity_layout,prefix_zero,TARGET,DRAFT,shape,draft_identity
 
 class ContextTests(unittest.TestCase):
+    def test_only_actual_context_difference_allowed(self):
+        a=dict(context=262144,pair_sequence_sha256='actual',position=1707,arithmetic='exact')
+        b=dict(a,context=65536)
+        draft_identity(a,b,'actual')
+        for changed in (dict(b,context=262144),dict(b,position=1706),dict(b,arithmetic='other'),dict(b,extra=True)):
+            with self.assertRaises(ValueError):draft_identity(a,changed,'actual')
+        with self.assertRaises(ValueError):draft_identity(a,b,'fabricated')
     def layout(self,draft=False):
         width=2 if draft else 4;dtype='BF16' if draft else 'f32'
         kind='keys';name=next(n for n,k in (DRAFT if draft else TARGET).items() if k==kind)
@@ -17,6 +25,27 @@ class ContextTests(unittest.TestCase):
     def test_only_registered_exact_target_and_draft_shapes(self):
         for draft in (False,True):capacity_layout(*self.layout(draft),draft=draft)
         self.assertEqual(len(TARGET),48);self.assertEqual(len(DRAFT),4)
+    def test_128k_layout_requires_explicit_matching_capacity(self):
+        for draft,registry in ((False,TARGET),(True,DRAFT)):
+            width,dtype=(2,'BF16') if draft else (4,'f32')
+            for name,kind in registry.items():
+                rows=[dict(dtype=dtype,shape=shape(kind,c),bytes=math.prod(shape(kind,c))*width)
+                      for c in (262144,131072)]
+                capacity_layout(name,*rows,draft=draft,candidate_context=131072)
+                with self.assertRaises(ValueError):capacity_layout(name,*rows,draft=draft)
+        a=dict(context=262144,pair_sequence_sha256='actual')
+        b=dict(a,context=131072)
+        draft_identity(a,b,'actual',candidate_context=131072)
+        with self.assertRaises(ValueError):draft_identity(a,b,'actual')
+    def test_128k_ratio_still_checks_all_prefix_and_extra_tail(self):
+        with TemporaryDirectory() as tmp:
+            args=self.ranges(tmp,big=b'ABCD'+bytes(4))
+            proof=prefix_zero(*args,ratio=2)
+            self.assertEqual(proof['verified_zero_extra_bytes'],4)
+            for ratio in (4,True,1,8):
+                with self.assertRaises(ValueError):prefix_zero(*args,ratio=ratio)
+            with self.assertRaisesRegex(ValueError,'nonzero reference'):
+                prefix_zero(*self.ranges(tmp,big=b'ABCD'+bytes(3)+b'X'),ratio=2)
     def test_unregistered_name_refused(self):
         _,a,b=self.layout()
         with self.assertRaisesRegex(ValueError,'unregistered'):capacity_layout('blk.0.other.bin',a,b)

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Explicit sealed262K-to64K capacity equivalence; no device/archive operations."""
+"""Explicit sealed262K-to64K/128K capacity equivalence; no device/archive operations."""
 import argparse
 from hashlib import sha256
 import json
@@ -17,11 +17,12 @@ DRAFT={f'card0:draft:blk.0.qsa.{kind}':kind for kind in ('keys','values','raw','
 def shape(kind,context):
     return [context,2,256] if kind in ('keys','values') else [context//4,128] if kind=='pooled' else [context,128]
 
-def capacity_layout(name,large,small,*,draft=False):
+def capacity_layout(name,large,small,*,draft=False,candidate_context=65536):
+    need(type(candidate_context) is int and candidate_context in (65536,131072),'supported candidate capacity required')
     registry=DRAFT if draft else TARGET
     need(name in registry,'unregistered context-dependent source')
     kind=registry[name];dtype='BF16' if draft else 'f32';width=2 if draft else 4
-    for row,context in ((large,262144),(small,65536)):
+    for row,context in ((large,262144),(small,candidate_context)):
         need(row['dtype']==dtype and row['shape']==shape(kind,context)
              and row['bytes']==math.prod(row['shape'])*width,'registered context shape/dtype/byte bounds differ')
     need({k:v for k,v in large.items() if k not in ('bytes','shape')}==
@@ -34,11 +35,12 @@ def index(directory,key):
     need(len(found)==1,'exact indexed source required')
     row=found[0];return int(row[1]),int(row[2]),row[3],receipt
 
-def prefix_zero(large_path,large_offset,large_size,large_sha,small_path,small_offset,small_size,small_sha):
+def prefix_zero(large_path,large_offset,large_size,large_sha,small_path,small_offset,small_size,small_sha,*,ratio=4):
     """Rehash both actual full extents; no replacement hash or padded fake file."""
     need(type(large_offset)is int and type(small_offset)is int and min(large_offset,small_offset)>=0
          and type(large_size)is int and type(small_size)is int and small_size>0
-         and large_size==small_size*4,'exact4x bounded prefix extents required')
+         and type(ratio) is int and ratio in (2,4)
+         and large_size==small_size*ratio,'exact declared2x/4x bounded prefix extents required')
     fds=[]
     try:
         stamps=[]
@@ -49,7 +51,7 @@ def prefix_zero(large_path,large_offset,large_size,large_sha,small_path,small_of
         big,small=sha256(),sha256();left=small_size
         while left:
             count=min(65536,left);a=os.read(fds[0],count);b=os.read(fds[1],count)
-            need(len(a)==len(b)==count,'prefix truncated');need(a==b,'full64K-capacity prefix mismatch')
+            need(len(a)==len(b)==count,'prefix truncated');need(a==b,'full candidate-capacity prefix mismatch')
             big.update(a);small.update(b);left-=count
         left=large_size-small_size
         while left:
@@ -65,25 +67,25 @@ def prefix_zero(large_path,large_offset,large_size,large_sha,small_path,small_of
     finally:
         for fd in fds:os.close(fd)
 
-def array_proof(name,large,small,large_dump,small_dump,*,draft=False):
+def array_proof(name,large,small,large_dump,small_dump,*,draft=False,candidate_context=65536):
     layout=lambda row:row['layout'] if draft else {k:row[k] for k in ('bytes','dtype','shape','role')}
-    capacity_layout(name,layout(large),layout(small),draft=draft)
+    capacity_layout(name,layout(large),layout(small),draft=draft,candidate_context=candidate_context)
     key=T.BUNDLE.logical_name(name) if draft else name
     a,an,ah,ai=index(large_dump,key);b,bn,bh,bi=index(small_dump,key)
     need((an,ah)==(layout(large)['bytes'],large['sha256']) and
          (bn,bh)==(layout(small)['bytes'],small['sha256']),'indexed bytes/hash differ from sealed canonical source')
-    proof=prefix_zero(Path(large_dump)/'state.bundle',a,an,ah,Path(small_dump)/'state.bundle',b,bn,bh)
+    proof=prefix_zero(Path(large_dump)/'state.bundle',a,an,ah,Path(small_dump)/'state.bundle',b,bn,bh,ratio=262144//candidate_context)
     return dict(source_key=name,reference_layout=layout(large),candidate_layout=layout(small),
                 reference_dump=str(large_dump),candidate_dump=str(small_dump),indices=[ai,bi],**proof)
 
-def compare_maps(reference,candidate,large_dump,small_dump,*,draft=False):
+def compare_maps(reference,candidate,large_dump,small_dump,*,draft=False,candidate_context=65536):
     registry=DRAFT if draft else TARGET;a=reference['canonical'];b=candidate['canonical']
     need(set(a)==set(b),'cross-context source inventory differs')
     need(registry.keys()<=a.keys(),'registered context arrays missing')
     proofs=[];exact=[]
     for name in sorted(a):
         if name in registry:
-            proofs.append(array_proof(name,a[name],b[name],large_dump(name),small_dump(name),draft=draft))
+            proofs.append(array_proof(name,a[name],b[name],large_dump(name),small_dump(name),draft=draft,candidate_context=candidate_context))
         else:
             fields=('layout','sha256') if draft else ('sha256','bytes','dtype','shape','role')
             need(all(a[name][k]==b[name][k] for k in fields),'unregistered source shape/hash differs: '+name)
@@ -97,15 +99,27 @@ def target_dump(spec,name):
     layer=int(T.LAYER.match(name)[1]);owners=[s for s in spec['stages'] if s['begin']<=layer<s['end']]
     need(len(owners)==1,'unique context-array target owner');return Path(owners[0]['dump'])
 
+def draft_identity(reference,candidate,pairhash,*,candidate_context=65536):
+    need(type(candidate_context) is int and candidate_context in (65536,131072),'supported candidate capacity required')
+    need(type(reference.get('context')) is int and type(candidate.get('context')) is int
+         and reference['context']==262144 and candidate['context']==candidate_context,
+         'actual draft contexts must match declared capacities')
+    need({k:v for k,v in reference.items() if k!='context'}==
+         {k:v for k,v in candidate.items() if k!='context'}
+         and reference['pair_sequence_sha256']==pairhash,
+         'actual draft input/pair identity differs beyond declared context')
+
 def run(path):
     wrapper,ws=C.read(path)
     need(wrapper['schema']=='ownrt.dedicated-cross-context-inputs.v1' and
-         wrapper['reference_context']==262144 and wrapper['candidate_context']==65536,
+         wrapper['reference_context']==262144 and type(wrapper['candidate_context']) is int
+         and wrapper['candidate_context'] in (65536,131072),
          'explicit supported cross-context opt-in required')
+    candidate_context=wrapper['candidate_context']
     spec,ss=C.read(wrapper['inputs']);need(spec['schema']=='ownrt.dedicated-parity-inputs.v1','dedicated parity inputs required')
     reference=Path(spec['reference_request']);plan,ps=C.read(spec['plan']);result,rs=C.driver_result(spec['result'])
     refplan,rps=C.read(reference/'selected-request-plan.json');refresult,rrs=C.read(reference/'result.json')
-    need(refplan['context']==262144 and plan['context']==65536 and len(plan['stages'])==2,
+    need(refplan['context']==262144 and plan['context']==candidate_context and len(plan['stages'])==2,
          'actual contexts/two-target topology differ')
     need(len(plan['prompt_tokens'])==1677 and plan['max_new']==32 and len(result['output_ids'])==32
          and plan['prompt_tokens']==refplan['prompt_tokens'] and result['output_ids']==refresult['output_ids']
@@ -129,10 +143,10 @@ def run(path):
     ct=C.target_candidate(dict(spec,request_sha256=plan['request_sha256']),identity)
     need(rt['first_stage_host_history']==ct['first_stage_host_history'],'target host history differs')
     rd=D.load_set(reference/'draft-set.json');cd=D.load_set(spec['draft_set'])
-    need(rd['input_identity']==cd['input_identity'] and rd['host']==cd['host']
-         and rd['input_identity']['pair_sequence_sha256']==pairhash,'actual draft input/host/pair identity differs')
-    targets=compare_maps(rt,ct,lambda n:rt['canonical'][n]['dump'],lambda n:target_dump(spec,n))
-    drafts=compare_maps(rd,cd,lambda n:draft_dump(reference/'draft-set.json'),lambda n:draft_dump(spec['draft_set']),draft=True)
+    draft_identity(rd['input_identity'],cd['input_identity'],pairhash,candidate_context=candidate_context)
+    need(rd['host']==cd['host'],'actual draft host identity differs')
+    targets=compare_maps(rt,ct,lambda n:rt['canonical'][n]['dump'],lambda n:target_dump(spec,n),candidate_context=candidate_context)
+    drafts=compare_maps(rd,cd,lambda n:draft_dump(reference/'draft-set.json'),lambda n:draft_dump(spec['draft_set']),draft=True,candidate_context=candidate_context)
     need(len(targets['exact_source_keys'])==2017 and len(drafts['exact_source_keys'])==69,'complete exact2017/69 inventory required')
     need(len(set(spec['process_receipts']))==len(spec['process_receipts'])==3,'allthree native process receipts required')
     receipts=[]
@@ -146,8 +160,8 @@ def run(path):
     for name,before in snapshots.items():
         need(before==T.BUNDLE.identity(os.stat(name,follow_symlinks=False)),'sealed source changed during context comparison')
     return dict(schema='ownrt.dedicated-cross-context-proof.v1',passed=True,
-        scope='Explicit262K-to64K first-dimension capacity equivalence; original full hashes/layouts/seals preserved, no fake same-context hashes. Not independent model correctness or speed proof.',
-        reference_context=262144,candidate_context=65536,input_position=1708,outputs=32,canonical_pairs=1707,
+        scope=f'Explicit262K-to{candidate_context//1024}K first-dimension capacity equivalence; original full hashes/layouts/seals preserved, no fake same-context hashes. Not independent model correctness or speed proof.',
+        reference_context=262144,candidate_context=candidate_context,input_position=1708,outputs=32,canonical_pairs=1707,
         pair_sequence_sha256=pairhash,target=targets,draft=drafts,
         sources=[ws,ss,ps,rs,rps,rrs,cs,rpair]+rt['sources']+ct['sources']+rd['sources']+cd['sources']+receipts,
         helper_sha256=T.sha(Path(__file__).read_bytes()),sealed_reader_sha256=T.sha(T.READER_PATH.read_bytes()))
