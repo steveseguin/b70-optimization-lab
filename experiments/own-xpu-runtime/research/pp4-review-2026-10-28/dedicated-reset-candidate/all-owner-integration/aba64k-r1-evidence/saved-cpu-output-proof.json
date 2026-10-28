@@ -1,0 +1,40 @@
+{
+  "schema": "ownrt.dedicated-reset-saved-cpu-output-comparison.v1",
+  "passed": true,
+  "comparisons": [
+    {
+      "index": 0,
+      "id": "architecture-tradeoff",
+      "prompt_sha256": "34dd4e5960ccf54c57c9c0b5098e085345e5b4465fa0205d42d6bfe0d090acc9",
+      "output_ids_i32_sha256": "9486725b9c2d53e40fa9140091a37bbe9311525f984aaa6e2c17a30eabb071c2",
+      "output_tokens": 512,
+      "exact_saved_prompt_and_output": true
+    },
+    {
+      "index": 1,
+      "id": "benchmark-analysis",
+      "prompt_sha256": "d70cb66e221dd4011f665061f75f2cb8e298c6cedf8b323d581665dd899a53ee",
+      "output_ids_i32_sha256": "392367c281b75b06479e9a726476abb14875d3002dcf49876cb59a9609176ac0",
+      "output_tokens": 512,
+      "exact_saved_prompt_and_output": true
+    },
+    {
+      "index": 2,
+      "id": "architecture-tradeoff",
+      "prompt_sha256": "34dd4e5960ccf54c57c9c0b5098e085345e5b4465fa0205d42d6bfe0d090acc9",
+      "output_ids_i32_sha256": "9486725b9c2d53e40fa9140091a37bbe9311525f984aaa6e2c17a30eabb071c2",
+      "output_tokens": 512,
+      "exact_saved_prompt_and_output": true
+    }
+  ],
+  "unique_prompts": 2,
+  "actual_output_tokens_compared": 1536,
+  "unique_CPU_qualified_saved_output_tokens": 1024,
+  "reference_source": "/dev/shm/sc117-gpu-route-seven-plus-twelve-20261028-r1/output/result.json",
+  "reference_source_sha256": "43270e7fe0e73988cef11d730b71d6dcaf5591fb998405b50dc04cc331ca050a",
+  "reference_gpu_binary_prefix": "962046",
+  "CPU_authority": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/fresh-changed-cpu/completed-r1-evidence/index.json",
+  "CPU_authority_sha256": "baebd6e72f4fd408f82d6be627adce2353948da04a112cbaa1a618fce010957a",
+  "CPU_authority_total_saved_tokens": 5965,
+  "scope": "All three actual A/B/A512 outputs exactly match two unique saved generic962046 continuations on identical prompt bytes, independently CPU-qualified by existing mixed CPU authority. Not three new CPU runs, twelve prompt coverage, bitwise CPU states, or blanket certification of binary e60."
+}

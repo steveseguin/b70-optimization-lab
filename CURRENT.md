@@ -65,12 +65,17 @@ the operator result and closed small IQ4 candidate. This is not endpoint timing.
 Expert evidence: `prefill-512-expert-screen/run-r1-evidence/index.json`. Profile evidence:
 `reference-one-row/router-tie-candidate/planner-policy/prefill-profile-r1-evidence/index.json`.
 
-The opt-in dedicated all-owner reset build e60f7427 is running its first actual
-A→B→A gate at64K context (three targets plus draft, bulk prefill, measured checks,
-full cold and repeated-A byte proof). Short-prefix and global-counter assumptions
-were fixed before launch; Python CPU gates pass. This is not yet qualified.
-Unit `sc117-dedicated-reset-aba64k-20261028-r1`, invocation
-`4252fdb67ecb4485bd2ceea325440ef6`; source pins stay frozen through this run.
+The dedicated all-owner A→B→A reset gate passed at64K on build e60f7427.
+Each cold transition and repeated-A comparison checked4,091,763,958 payload bytes,
+including2,065 canonical target sources,27 inactive banks and73 draft sources.
+A repeated all512 IDs exactly; both distinct inputs match the saved CPU-qualified
+continuations. All4 owners exited0; passive postflight is clean. This qualifies
+this reset path/capacity, not a full-suite speed result. Full byte-verified archive and compact evidence are retained under
+`dedicated-reset-candidate/all-owner-integration/aba64k-r1-evidence`.
+Fixed depth2 with the same build/cuts/context is active, unit
+`sc117-dedicated-reset-depth2-aba64k-20261028-r1`, invocation
+`8cd9a0a670754eceb85f96e67e4bfc25`. It changes both proposal depth and ring
+capacity; full-state/output gate precedes the prepared twelve-prompt timing pair.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns

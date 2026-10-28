@@ -1,0 +1,112 @@
+{
+  "schema": "ownrt.dedicated-reset-aba64k-closeout.v1",
+  "passed": true,
+  "scope": "3+1 fixed depth3 context65536 cuts0/17/33/48 reference-target route policy/unchanged BF16 draft; two unique realistic prompts in A/B/A,512 outputs each. Bounded all-owner reset/repeat proof, not12-case suite timing, default promotion, bitwise CPU states or depth2 qualification.",
+  "binary": "/dev/shm/engine-build-dedicated-reset-20261028-r1/sc117-engine",
+  "binary_sha256": "e60f7427d5737bee1e4e521ffbad1c77f4ea687fbb86bd542f05fb495eb9e378",
+  "terminal": {
+    "passed": true,
+    "returncodes": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "provider": 0
+    },
+    "requests": 3,
+    "live_pids": []
+  },
+  "state_proof": {
+    "target_canonical_sources": 2065,
+    "inactive_bank_sources": 27,
+    "provider_canonical_sources": 73,
+    "cold_request01_bytes": 4091763958,
+    "cold_request02_bytes": 4091763958,
+    "repeated_A_full_bytes": 4091763958,
+    "physical_scope": "Every full physical cold/repeated payload byte compared; inactive banks retained. Cold launch-cache extents authenticated, not omitted. Duplicate cold payloads removed only by controller full-byte comparison+alias receipts."
+  },
+  "saved_CPU_output_comparison": "saved-cpu-output-proof.json",
+  "actual_outputs_compared": 1536,
+  "unique_prompts": 2,
+  "unique_CPU_qualified_saved_outputs": 1024,
+  "postflight": "clean known-fault baseline, noholders; pre-archive native process inventory empty",
+  "archive": {
+    "path": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/dedicated-reset-aba64k-r1/state-bundles.tar.zst",
+    "bytes": 425740277,
+    "sha256": "1b4f2e85e2fbc065c123f8d8a1ba3895b19749f9779dabd77024c7434cb7b2ba",
+    "members": 15,
+    "full_bytes_and_seals_verified": true,
+    "raw_freed_bytes": 12794116776,
+    "removed_exact_inventory": true,
+    "receipt": "run/state-archive.json.gz",
+    "reference_roles": {
+      "startup-cold": [
+        {
+          "member": "output/stage0/native/state-2147483647/state.bundle",
+          "bytes": 1338852104,
+          "sha256": "4c6e404ae528da56bcfe76d4e9658f9a8a326ecef562d771c8e308e13d3e289c"
+        },
+        {
+          "member": "output/stage1/native/state-2147483647/state.bundle",
+          "bytes": 1291409412,
+          "sha256": "d4532e66a8876603d0a6da1a1ca3219e971da40282870f4cf1ea6733772de6b8"
+        },
+        {
+          "member": "output/stage2/native/state-2147483647/state.bundle",
+          "bytes": 1288560808,
+          "sha256": "a0189dc987f573e4c20bd79e600aff105e0f5a40ec3c5022e6dd0ef789860832"
+        },
+        {
+          "member": "output/stageprovider/native/provider-dump-1/state.bundle",
+          "bytes": 172941634,
+          "sha256": "976329a9e43bcb00af3fb8d4e1bee5b8fd116be65195708341caed3905d52b36"
+        }
+      ],
+      "first-A": [
+        {
+          "member": "output/stage0/native/state-2147483646/state.bundle",
+          "bytes": 1338852104,
+          "sha256": "e3d7f015dd54e0a6aac9ea1d9e1882283b6c18cb1f852d699254b7d84afbd02a"
+        },
+        {
+          "member": "output/stage1/native/state-2147483646/state.bundle",
+          "bytes": 1291409412,
+          "sha256": "c0cab0ba341c3a749ddba1022c1a97e0f59fbba40a4dd6d5a730623ee619fcff"
+        },
+        {
+          "member": "output/stage2/native/state-2147483646/state.bundle",
+          "bytes": 1288560808,
+          "sha256": "b595c4874ae18e3de92e82e69fd4abc6e1ac16e6f678839d3615739f7268675d"
+        },
+        {
+          "member": "output/stageprovider/native/provider-dump-515/state.bundle",
+          "bytes": 172941634,
+          "sha256": "a7846cedc11460d9f9ea7bad2ca668e90944477869762bb696e7184390e3d393"
+        }
+      ],
+      "final-A": [
+        {
+          "member": "output/stage0/native/requests/request-02/state-2147483646/state.bundle",
+          "bytes": 1338852104,
+          "sha256": "e3d7f015dd54e0a6aac9ea1d9e1882283b6c18cb1f852d699254b7d84afbd02a"
+        },
+        {
+          "member": "output/stage1/native/requests/request-02/state-2147483646/state.bundle",
+          "bytes": 1291409412,
+          "sha256": "c0cab0ba341c3a749ddba1022c1a97e0f59fbba40a4dd6d5a730623ee619fcff"
+        },
+        {
+          "member": "output/stage2/native/requests/request-02/state-2147483646/state.bundle",
+          "bytes": 1288560808,
+          "sha256": "b595c4874ae18e3de92e82e69fd4abc6e1ac16e6f678839d3615739f7268675d"
+        },
+        {
+          "member": "output/stageprovider/native/request-2/provider-dump-1546/state.bundle",
+          "bytes": 172941634,
+          "sha256": "a7846cedc11460d9f9ea7bad2ca668e90944477869762bb696e7184390e3d393"
+        }
+      ]
+    }
+  },
+  "transport_maps": "retained unchanged; no additional completed-map cleanup needed after12.79GB state release",
+  "next_step": "Existing full12-task cold/reset suite and matched fixed depth2/3 screen; preserve first-A/final-A archive references and exact native/source policy identity."
+}

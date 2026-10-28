@@ -1,0 +1,164 @@
+Dedicated fixed depth2 versus depth3: configuration-only material screen
+Source audit2026-10-28; no GPU, compilation, planner execution or model/tensor reads.
+
+Decision
+Worth one controlled screen after the active all-owner reset gate qualifies.
+Use existing fixed capacity/depth2 instead of depth3, same reset-capable binary,
+3targets+dedicated draft and cuts0/17/33/48. No new requested-depth protocol,
+engine/wire change, adaptive policy or training is necessary for this question.
+This is a different, cheaper question than backlog8's capacity3/request1 gap.
+It changes BOTH ring capacity and requested native proposal depth; do not call
+it depth2 requests inside capacity3 or claim isolated head-compute savings.
+No speed/correctness result is claimed here. Backlog left unchanged.
+
+Actual supported selectors and constraints
+engine/tools/dedicated_provider_driver.py42–43 accepts config speculative_depth
+as exact int in(2,3), default3. It stamps depth into request identity and emits
+--pipeline-ring-depth on provider and target argv (around97/119). Two or three
+target stages are accepted; provider must be a different physical card.
+Current native main.cpp421/438 accepts2/3; depth3 requires persistent ring
+provider mode439. Both geometries exist in one binary, not separate builds.
+Current ring_live_wire.py39–42/86–109 accepts2/3, proposal metadata192B for2,
+224B for3, and validates matching capacity/available guesses/reserved words.
+Provider runtime.hpp56 requires request.depth==context.depth for BATCH,0 for
+non-head/control. Owner constructs fixed Sequence(context.depth). Changing the
+whole fixed context to2 already meets this contract. Truncating Python guesses
+while retaining context3 would still execute3 native heads and is not this arm.
+
+Concrete existing source witnesses:
+- engine/planning/test_dedicated_provider.py64: hit/miss combinations for
+  two/three target stages at depth2 AND3, actual scheduler fixtures.
+- test_dedicated_transport.py115: depth2/3 with fixture0/1/2/3/32/512, matching
+  requested wire depth and192/224B response, not a new protocol.
+- rolling_provider/dedicated_transport.py66–75,101–116,155: capacity witnessed
+  in READY, issue, and proposal reads; no depth3-only admission.
+- rolling_provider/coordinator.py91: pending speculation bounded by configured
+  speculative_depth; final target still one pending slot.
+- dedicated_provider_suite_plan.py22: reset policy hash includes depth along
+  with F32/check policy/context/prefill rows/slots/reference-route flag.
+  Therefore a depth2 arm needs its own freshly prepared immutable authority,
+  request/hash/plan/admission/output, not reuse depth3's authority directory.
+- Suite planner requires exactly12 runtime-only prompts and max_new512, with
+  dedicated_request_indices either all12 or[0,1,0]. Its short fixture cannot
+  simply be changed to32 outputs: use the existing single-request driver for
+  the registered1677/32 state gate. Existing suite Cold then verifies resets
+  on real suite transitions (target2065/provider73, all physical cold bytes).
+
+What previous measurements actually say
+Sources:dedicated-gate/2plus1-measured-speculation-audit.json,
+adaptive-depth-subexperiment8.txt; matched64k-2plus1-vs-native/
+comparison-r2.json.gz and control-result.json.gz.
+
+Historical1677input/512output,64K, SAME df2c19... binary, dedicated2+1 cuts25
+and capacity3:511 decode intervals9.963238501s =51.288544tok/s. Stage0 executed
+604 decode ROWs versus final stage511. Of512 issued speculative ROWs,419 were
+accepted,92 explicitly rejected,1 unused at cap. These are issued-row counts,
+not512 provider commands and not independent hit probabilities.
+Issued ordinal1:62 =44accepted+18rejected.
+Issued ordinal2:426 =360accepted+66rejected.
+Issued ordinal3:24 =15accepted+8rejected+1cap-unused.
+Overall419/512=81.83594% accepted proposals;92/512=17.96875% explicit rejects.
+Stage0 excess93/604=15.39735% executed rows. Acceptance by issued ordinal:
+44/62=70.96774%,360/426=84.50704%,15/24=62.5%; these condition on scheduling,
+so they do not predict a depth2 experiment or independent depth probabilities.
+All511 decode provider completions returned availability3; all511 captureACKs
+were emitted. Most third-head arithmetic availability did not become issued
+ordinal3 ROWs; actual critical-path saving remains unmeasured.
+
+Rejected stage0 reply-busy sum1.275891775s; all93unaccepted1.290535352s.
+Optimistically removing every rejected busy duration as serial critical work,
+without losing useful overlap, bounds58.82118tok/s (~14.69% rate increase).
+This is NOT measured head-cost or a depth2 forecast. Deeper accepted ordinals
+2/3 total375, including15 at ordinal3, so reducing depth can lose useful overlap.
+Provider native head arithmetic and target rejected ROW time must be separated.
+
+Historical colocated two-target native depth1 control:432hits/511guesses
+=84.54012%,79misses=15.45988%; first99/all511 rates68.27235/67.65429tok/s.
+Dedicated first99/all51150.60506/51.28854 was24.19025% slower over all511.
+All512 outputs matched, but cuts23 versus25,2cards versus3, colocated native
+controller versus host dedicated scheduler, ring representation and depth all
+differ. It does NOT prove depth1/2 beats3 on current3+1, and the old binary/
+arithmetic/request is not the current reference-policy reset suite identity.
+No same-layout dedicated depth2 GPU comparison was found in these retained
+records; source/CPU depth2 support is not an actual device performance result.
+
+Why this before another large integration
+The completed512 expert operator screen passed64gates but weighted gains
+7.892480%cold/7.893969%hot missed its>10% integration threshold; that lever is
+closed. Fixed depth2 uses existing machinery and could reduce real proposal/
+rejected work, with no new wire/continuation surface. It is worth measuring,
+not claiming a gain from the old bound. Closed head-row sharding need not be
+reopened for this configuration-only question. No assumption is made that old
+2+1 timing transfers to3+1; current route/acceptance/lifecycle evidence decides.
+
+Minimal preregistration using existing harnesses
+1. Wait for root's active all-owner reset qualification, retaining its exact
+binary/build receipt and Python pins. Current ABA64K config is3+1 cuts17/33,
+context65536,depth3,prefill256,4slots,capture-ready+bulk stage pipeline,
+reference target tie-sort, measured check policy and unchanged BF16 draft.
+Choose that same geometry for both depth arms; do not simultaneously change
+cuts to equal16, context, lookup placement, rows, slots or reference routing.
+Use fresh exclusive paths; read actual planner floors/payload bounds. Preserve
+normal root monitor/fault-halt rules. No host setting changes or retry chains.
+
+2. One meaningful cross-depth short gate with existing single-request
+engine/tools/dedicated_provider_driver.py and dedicated-gate/compare.py:
+1677 fixed input/32 outputs,3+1,same context/cuts/binary/arithmetic, depth2 arm
+versus an exactly matched depth3 state oracle. Reuse a matched completed oracle
+if it has the identical reset-capable binary/identity; otherwise one controlled
+matched control is necessary. Require actual2-head wire availability192B and
+READYcapacity2, owner commands/terminals, exact32 IDs, actual canonical pairs,
+2065target/73draft canonical sources, seals, quiescence and clean postflight.
+Gate must retain its predeclared physical/canonical scope. Depth changes ring/
+snapshot geometry and transient head scratch: inventory differences are not
+permission to silently drop bytes or call output-only agreement full-state.
+If existing comparator cannot express a legitimate registered layout mapping,
+record that precise proof gap and stop this arm before a suite speed claim.
+No repeated unchanged short gates or new proof framework.
+
+3. After that gate passes, clone the existing runtime-only12prompt suite for
+each depth with separate prepared authorities. Keep all original12 prompts,
+order, hashes,512cap/greedyEOS, unchanged target/draft precision and full natural
+completion. No selected easy subset, speculative output oracle input or prompt/
+KV/response reuse. Use dedicated_provider_suite_plan.py --prepare-authority,
+then actual plan/admission and --run with dedicated_request_indices=list(range(12)).
+Existing dedicated_reset_suite Cold verifies real startup/reset full-byte
+states per arm/request; depth3 reset success alone does not qualify depth2.
+No hardcoded old depth3 payload bounds: keep conservative bounds only if actual
+new depth2 planner/launch census fits; do not invent reduced memory floors.
+Provider reset/cold proof and all owner epochs must remain active.
+
+4. Compare every actual output/EOS ID and input hash across depth arms. Bind
+saved independent CPU proof only where SAME complete prompt/continuation and
+quant/reference identity match. Generic962046's retained5965-token CPU proof
+is not blanket fidelity for another binary or changed continuations; reference
+compatibility gates plus exact saved IDs are required, and changed/uncovered
+continuations need actual independent CPU checking before any fidelity claim.
+Reuse existing validators/pinned CPU receipts rather than new blanket CPU work.
+Read existing fresh-changed-cpu/completed-r1-evidence and GPU model proof lineage.
+
+5. Report class medians then median across classes for first99 intervals after
+TTFT, all-interval/full-natural512-cap rates, p10/mean/TTFT/request/lifecycle,
+actual event counts/endpoints, cached_tokens0/no reuse, emitted EOS/length,
+accepted/issued/rejected/unused ROWs by ordinal, provider availability, target
+executed/committed work and busy durations. Count native availability separately
+from proposals actually issued/accepted. Include actual2/3 BDFs/topology: this
+screen is3target+1draft for BOTH arms, not the old2+1/native comparison.
+
+The first complete12prompt arm pair is a useful measured screen; do not treat
+one process per arm as a final speed verdict. If material, use preregistered
+controlled fresh owner lifetimes for matching repeats (e.g. arm order3,2,2,3,
+each suite prompt cold once within its owner lifetime), using existing suite
+harness/reset checks. No automatic retries or fault-triggered process cycling.
+A tiny/unstable gain closes quickly; do not impose the costly512integration's
+10% threshold on this already-implemented configuration lever. A candidate
+needs a consistent material suite benefit with exact quality/reset/repeat
+identity, not a favorable single prompt or optimistic old work-removal bound.
+
+True gaps remaining
+Fixed depth2 has no new native/wire feature gap. Actual reset+full model state
+qualification at depth2, matched current3+1 timing and same-output CPU lineage
+are still needed. Cross-capacity physical scratch mapping may need precise
+review if the existing short comparator refuses; this is a correctness scope
+gap, not grounds to weaken it. Per-request adaptive depth or capacity3/request1
+remains a separate unimplemented protocol question and is deliberately deferred.
