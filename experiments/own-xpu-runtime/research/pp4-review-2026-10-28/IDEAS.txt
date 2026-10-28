@@ -1,0 +1,191 @@
+Broader SC117 experiment queue — owner steering, 2026-10-28
+
+Purpose: faster exact single-conversation inference and useful native long
+context in the owned Intel Xe engine. Explore architecture changes alongside
+kernel work. Do not equate a long-context capacity result, an eight-token decode
+sample, and a sustained decode result. No draft training or host-setting changes.
+These are research hypotheses, not installed features or performance promises.
+
+DECISION NOW
+Finish the active 262K capacity/lifecycle check. Keep the measured two-chunk
+prefill result as the control: 121,854-token full response 846.94 -> 524.27 s,
+identical eight outputs and no cached tokens. Next evaluate dedicated-provider
+placement and expert-parallel feasibility before automatically doing another
+small PP4 scheduler refinement. Run one bounded correctness gate and then full
+matched timing for a selected treatment; avoid a broad restart/sweep campaign.
+
+TOPOLOGY MATRIX
+Layout                 Main question / current status
+4 target, shared draft Current 262K control; prefill overlap measured.
+3 target + 1 draft     First architecture candidate. Removes stage0 contention
+                      but packs more target layers per card. Aggregate target
+                      memory floor fits three cards; per-card planner still
+                      required. NOT implemented by current provider_stage flag.
+2 target + 1 draft     First assess at64K, then128K if admitted. Frees one card
+                      relative to PP4 and draft memory on target owners. Cannot
+                      retain262K current representation: target weights+KV alone
+                      69.613GB > two-card64.425GB cap, before scratch/state.
+2 target + draft + KV  Ambitious capacity variant: fourth card owns full-value
+                      KV pages. Test actual QSA gather/copy volume first; remote
+                      page traffic can erase the memory advantage.
+PP2 x TP2              Four target cards in two tensor-parallel pairs. Fewer
+                      pipeline boundaries but more collectives; use measured
+                      PCIe transfer cost, never assume interconnect is free.
+EP3 + draft / EP4      Experts compute where resident; move activations/results
+                      rather than weights. Target reductions and route identity
+                      must remain unchanged. Implementation/repartition needed.
+Two independent pairs Throughput/availability alternative for multiple users;
+                      not an answer to one conversation's latency or262K fit.
+
+RANKED EXPERIMENTS
+1. HIGH: Real dedicated existing-MTP owner (3+1;2+1 at shorter context).
+   Mechanism: separate draft compute/state from all target stages, overlap where
+   dependencies permit, and rebalance target layers by memory and measured work.
+   First experiment: CPU allocation/critical-path study, then standalone draft
+   canonical-hidden replay against the existing73-source oracle. Add an explicit
+   provider role and odd target-stage support; do not fake an empty target stage.
+   Gate: partial prefill seam, accepted/rejected branches, next-request reset and
+   clean FINISH, then matched long-prefill and meaningful sustained-decode cases.
+   Stop if placement fails or slower target+transfer exceeds removed contention.
+   Sources: topology-options.json; external-ideas-strata.txt items3/4.
+
+2. HIGH: Expert-parallel prefill, including3 target expert owners+draft.
+   Mechanism: distribute routed experts across cards; execute local weights and
+   return ordered contributions, rather than run every layer as a PP chain.
+   First experiment: replay actual route histograms and tensor sizes through a
+   load/communication budget; compare against measured target work674.7s and the
+   current full prefill522.3s (overlapping work must not be added to wall time).
+   Gate: exact selected-expert outputs/reduction order, skewed routing and tails,
+   then one endpoint timing. Stop on communication-dominated or imbalanced cases.
+   Sources: https://github.com/Niko1221/Strata/pull/1798 and /pull/2205 (open,
+   unmerged at inspection); their INT8-KV/IQ3_XXS results are not our control.
+
+3. HIGH: Remove compressed-expert materialization traffic with unchanged math.
+   Mechanism: fuse weight decode/use or reuse decoded tiles across prompt rows.
+   First experiment: profile each actual per-tensor expert format (including
+   IQ3_XXS gate/up and IQ4_NL down), dequantization, write/read and multiply costs; screen one expensive production shape before whole-engine integration.
+   Preserve FP rounding boundaries and order. Strata's q8_1-activation/s8-DPAS
+   implementation changes outputs: it supplies an idea, not an exact drop-in.
+   Source: https://github.com/Niko1221/Strata/blob/main/docs/INTEL_INT8_EXPERTS.md
+
+4. HIGH: Multi-row verifier kernels, reuse unpacked weights across proposals.
+   Mechanism: make verified rows2/3/4/8 cheaper than repeated single-row kernels.
+   First experiment: actual routed and dense shapes at those widths, checking
+   bitwise intermediates before timing. Measure accepted tokens per whole cycle,
+   not just raw draft depth. Stop if preparation or low occupancy removes gains.
+   Source: https://github.com/ggml-org/llama.cpp/pull/29864; its implementation
+   changes accumulation order, excludes original IQ/MoE paths and has a reported
+   MoE prompt regression (#31068). Reuse layout ideas, not arithmetic blindly.
+
+5. HIGH: Full-precision selected-KV layout and native-QSA attention work.
+   Mechanism: gather model-selected pages efficiently, improve long-KV occupancy,
+   and keep only needed tiles in fast storage without changing selected indices.
+   First experiment: measure bytes/latency by actual attention shape at64K/121K/
+   near262K; test one layout/load change with identical selection, ties and sums.
+   Existing attention/combine fusion was an exact loss; don't repeat that flag.
+   Sources: vllm-xpu-kernels, intel/sycl-tla, GRIMOIRE FLASH-NEXT-TIERED.md;
+   links and caveats are in external-ideas-b70.txt. Quest-style approximate
+   selection is a separate quality tradeoff, not this experiment.
+
+6. MEDIUM: PP2xTP2 or row-partitioned dense projections.
+   Mechanism: parallelize a costly projection while reducing PP chain length.
+   Output-row partition+all-gather may preserve per-row math more naturally than
+   a new partial-sum all-reduce, but still needs an exact gate and weight sharding.
+   First experiment: measured whole producer/transfer/consumer budget on actual
+   tensor sizes. Stop if collective round trips dominate. GRIMOIRE's historical
+   TP retained full weights; copying that alone would not improve capacity.
+   Source: GRIMOIRE HANDOFF-2026-08-27-PP-TP-COMPLETE.md; local cross-model
+   lessons in docs/research-workflow-playbook.md.
+
+7. MEDIUM: Cheaper draft only: quantized projections/head, vocabulary shortlist.
+   Mechanism: reduce proposal cost while retaining the unchanged target verifier.
+   First experiment: replay recorded canonical inputs, measure acceptance and
+   draft cost jointly; never substitute draft argmax for target verification.
+   Unlike target quantization, changed proposals can preserve final greedy
+   target outputs. Require full transaction/reset/rollback parity and endpoint
+   output equality; no training. Stop if extra rejections outweigh draft savings.
+   Local transfer source: Laguna W8A16 draft projection and Qwen INT4-MTP lanes;
+   community lead: SergiioB/intel-arc-pro-b70-inference-cookbook.
+
+8. MEDIUM: Adaptive depth / speculative next-window overlap.
+   Mechanism: choose work from acceptance/cost, or overlap a predicted next window
+   with later target stages; track branch-owned state and roll back misses.
+   First experiment: trace-driven upper bound using actual accepted prefixes,
+   then a fixed held-out policy. Stop if even the oracle cannot beat incumbent.
+   This is not simply raising depth, and historical collocated provider moves
+   already lost. Sources: Strata MULTI_GPU.md; local Laguna conditional-tree
+   negative and existing PP4 capture-ready path. No new trained tree heads.
+
+9. MEDIUM: Wider prefill waves and measured chunk sizes.
+   Mechanism: amortize pipeline fill/drain over more than two chunks.
+   First experiment: four-chunk schedule respecting stage0 target/draft exclusion
+   and replay-before-reverse-slot-overwrite; nine chunks with partial tail/reset,
+   then full long timing. See next-lever.txt. This remains a useful low-cost
+   control option, but must compete with larger architecture proposals above.
+
+10. EXPLORATORY:2 target + draft + full-value remote-KV owner.
+    Mechanism: spend the fourth card on context bytes rather than target layers.
+    This requires remote full-value KV storage plus bounded target-side staging;
+    retaining a full local duplicate would not recover target capacity. Include
+    raw/pooled QSA state, exact selected indices and immutable committed pages.
+    First experiment: replay exact selected-page access trace and measure required
+    transfer volume; model memory residency without changing host memory settings.
+    Stop if traffic/latency or required simultaneous residency cannot fit. Use
+    exact miss handling and page-version ownership; no approximate eviction.
+
+11. EXPLORATORY: Separate attention owners from expert owners.
+    Mechanism: attention/KV-heavy tasks and MoE weight-heavy tasks use different
+    cards; batches of prompt tokens provide overlap across those resources.
+    First experiment: offline route+activation traffic model versus EP/PP; only
+    implement if it improves a measured critical path after transfers. This can
+    hurt single-token latency, even if it helps prefill/concurrency.
+
+12. EXPLORATORY: Phase-specific topology and state migration.
+    Mechanism: use a broad prefill placement then a lower-latency decode placement.
+    First experiment: count full KV/recurrent-state bytes and one-time migration
+    cost, then calculate break-even generated length. Stop for short answers if
+    migration exceeds the entire decode saving. Weight duplication/residency must
+    be planned; don't launch two full engines and hope memory is sufficient.
+
+13. EXPLORATORY: Native-format expert tiering/prefetch for capacity.
+    Mechanism: retain exact packed weights on another card/host and fetch exact
+    missing experts, with predictions changing transfer order only.
+    First experiment: actual route locality and miss-byte census. Large prefill
+    often touches nearly every expert, so reject a cache design with no locality.
+    For the resident four-card target this is a capacity idea, not assumed speed.
+    Sources: https://github.com/doopeworld/GRIMOIRE/blob/main/FLASH-NEXT-TIERED.md
+    and https://github.com/vllm-project/vllm/issues/63666 (RFC, not a B70 result).
+
+14. EXPLORATORY: Branch-owned recurrent-state deltas / compact rollback.
+    Mechanism: save exactly the touched state and replay verified transitions,
+    reducing snapshot traffic and memory reserved by speculative depth.
+    First experiment: allocation/write-set census against current sparse
+    checkpoints, then forced-miss/reset/state oracle. Current sparse checkpoint
+    work is already enabled; a new idea must remove further measured bytes.
+    Source: GRIMOIRE FAST-MTP-RESTORE-2026-09-04.md. Its historical handoff is
+    incomplete evidence, not an implementation we can promote unchanged.
+
+15. SEPARATE QUALITY QUESTION: KV quantization, approximate attention or target
+    activation quantization. These may unlock capacity or XMX performance but
+    change the target computation. Keep them on the idea list with that cost
+    explicit; do not run/promote them under the current full-precision exact lane.
+    First step would be a separately defined acceptable-quality experiment,
+    including long-context retrieval and task correctness, not only throughput.
+
+EXPERIMENT SELECTION
+Choose by expected absolute end-to-end saving or useful context fit, cost of the
+smallest falsifying test, and exactness risk. Each next implementation must cite
+its measured bottleneck and stop criterion. Keep an architecture option and a
+kernel option in the shortlist; do not allow repeated minor-lever reviews to
+consume the experiment budget. Lower-context topology and sustained decode
+measurements must not be compared to the262K eight-output capacity diagnostic.
+
+PUBLIC INTAKE
+Primary-source research and revision pins: external-ideas-strata.txt and
+external-ideas-b70.txt. Actual lab fork/default/nondefault branch audit:
+public-fork-audit.json and public-fork-findings.txt. Large historical branch
+ahead counts are not evidence of new community kernels. Existing community
+intake and negative results remain part of the search, not discarded history.
+
+All new layouts above remain untested here. Local full-state scheduling parity
+also does not resolve the six independent model-reference disagreements.

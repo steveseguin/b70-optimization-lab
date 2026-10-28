@@ -1,0 +1,62 @@
+External architecture leads, checked 2026-10-28. PRIMARY sources only.
+CPU/network research only; no external runtime installed, weights downloaded, GPU requests or host settings changed. Source reports are not lab measurements. Preserve our unchanged target arithmetic, 16-bit KV and exact gates.
+
+IDENTITY / REVISION DISAMBIGUATION
+Niko1221/Strata is the relevant CUDA-origin engine with an actual SYCL Intel/B70 port. GitHub API says fork=false; current main pinned here at 5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d.
+https://github.com/Niko1221/Strata/tree/5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d
+maxfridbe/Strata_B70 is an actual GitHub fork of Niko1221/Strata. Its historical intel-arc-0.1.40 branch resolves to 3f372817a25f0c942b067ca563606cd5f5b726e8; current default branch is main. Original B70 PR #423 is closed, NOT marked merged in GitHub API; do not infer that the whole historical fork landed unchanged just because upstream now supports Intel.
+https://github.com/Niko1221/Strata/pull/423
+https://github.com/maxfridbe/Strata_B70/tree/3f372817a25f0c942b067ca563606cd5f5b726e8
+hotschmoe/Strata is another actual fork of Niko1221/Strata; distinguish its experimental expert-parallel integrations from upstream defaults.
+https://github.com/hotschmoe/Strata
+ro99/strata is a DIFFERENT repository (GitHub API fork=false), C++20/CUDA tiered MoE runtime, not the Intel port. Pin observed main 015b075079c51a7aec670ee24924f920f5e7bb2b. README advertises checkpoint-driven precision/routing, predictors restricted to reordering, fail-closed exact mode, and supported model families including kimi-k3. No B70 demonstration found in this focused review. Useful ownership/prefetch design input, not Intel speed evidence.
+https://github.com/ro99/strata/tree/015b075079c51a7aec670ee24924f920f5e7bb2b
+
+1. FUSED COMPRESSED EXPERT READS: LARGE POTENTIAL, CURRENT IMPLEMENTATION FAILS OUR EXACTNESS BAR
+Primary behavior/kernel guide:
+https://github.com/Niko1221/Strata/blob/5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d/docs/INTEL_INT8_EXPERTS.md
+Code:
+https://github.com/Niko1221/Strata/blob/5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d/sycl/src/prefill/esimd_moe.dp.cpp
+Demonstrated by authors: ESIMD register decode to s8 DPAS avoids an FP16 expert intermediate (2.1 MB compressed read vs 9.8 MB materialized FP16 expert). Uses q8_1 activation quantization; grouped expert launches; per-device/driver/format/shape crossover timing. Explicit quality classification: DIFFERENT OUTPUT BITS, not exact against FP16. Reported teacher-forced top-1 agreement99.7%, mean KL0.0002 over6002positions; integer dot exactness is conditional on already-quantized activations and is NOT whole-model losslessness. Edge notes include unaligned-block overreads and compiler indexing faults: implementation details matter.
+Our hypothesis/test: first use existing operator harness to measure dequantize writes/reads vs multiplication for actual IQ3_S expert shapes. Prototype compressed register decode while retaining our FP32 arithmetic/order, then run full operator bitwise invariance census before an endpoint gate. Do not adopt q8_1 activation conversion as a speed default. If exact fused math cannot be achieved, close this implementation rather than relabel near-lossless as lossless.
+
+2. TWO-CARD EXPERT PARALLEL: LOCAL COMPUTE INSTEAD OF REMOTE WEIGHT STAGING
+https://github.com/Niko1221/Strata/pull/1798
+https://github.com/Niko1221/Strata/pull/2205
+API checked: BOTH PRs open/unmerged. Head SHAs #1798=68c5ad51a9b62a072a646db397682bb629abbf39; #2205=4805fa9a15dded5b9aee0a343e7470787c3e4325.
+#2205 author reports two B70s executing their own routed experts during prefill, removing host GGUF reads; measured hot prompt improvements12-50%, larger cold-pagecache improvements. The report uses IQ3_XXS and INT8 KV, so its throughput cannot compare to our IQ3_S/16-bit-KV lane. Its cache-drop experiment is evidence, not authorization to reproduce host cache changes here. Combiner/copy time grows; benefit is not free.
+Our test: CPU derive per-layer expert load and output-transfer bytes from our routing traces, compare EP2/EP3 target placement against PP4. Preserve selected-expert output order and identical reduction order; plan memory before any launch. Potentially combine EP within a target partition with a separate existing MTP provider. This is a separate architecture lever, not a small PP4 tweak.
+
+3. PIPELINED PROMPT CHUNKS AND VERIFY WINDOWS
+https://github.com/Niko1221/Strata/blob/5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d/docs/MULTI_GPU.md
+Demonstrated/documented: calibrated prompt chunk choice via --prefill-pipe; --pipeline-windows2 starts next verify window before prior final stage finishes, restoring first-stage state if full-accept/bonus-token prediction fails. Draft goes on stage0 with pipeline enabled. Reports gains on AMD and selected NVIDIA mixed-GPU systems; page is NVIDIA/AMD oriented, NOT proof of B70 gains. Their stated token equivalence allows CPU rounding; our gate remains stricter. Costs include a second window and recurrent-state backups.
+Our test: finish current two-chunk prefill parity/timing first. Then use existing measured stage timing to choose chunk size/inflight depth from bottleneck, keeping FIFO hidden ancestry and partial-tail semantics. For decode, only reopen next-window overlap if measured critical path and acceptance predict gain; require exact state rollback, actual accepted counts and canonical hidden-pair parity, including miss/terminal/context-bound paths.
+
+4. DRAFT OVERLAP / DEDICATED 3+1 OR 2+1 IS A HYPOTHESIS, NOT A FOUND STRATA B70 RESULT
+Upstream Intel history reports commit graph work overlapped with draft execution on a separate queue (46.5->49.8tok/s in its historical table), not a dedicated extra GPU.
+https://github.com/Niko1221/Strata/blob/5e8a4cca7d690ac60ca37eb09e7d0e010099ad6d/docs/INTEL.md
+Primary parallel-drafter work:
+https://arxiv.org/abs/2605.08151v2
+https://github.com/sgl-project/sglang/pull/22272
+SPECTRE describes remote draft/target overlap, threshold selection and speculative-priority scheduling; PR22272 is closed, so do not call it a merged SGLang default. Its experiments are other model/hardware deployments, not our B70 engine. Draft prompt compression is part of that system, not needed or proposed here.
+Our runnable first test: replay existing per-stage target/provider timings through a CPU discrete-event schedule for PP3+one existing-MTP GPU and PP2+one existing-MTP GPU. Include hidden-transfer+publication latency, rollback cost, actual accepted prefix lengths, target repartition weight/KV memory and full 262K context. A dedicated GPU helps only if avoiding draft contention exceeds the slower target chain. Need ownership/peer protocol extension and planner fit before GPU gate; no new draft training. A same-weights provider moved across devices must pass actual pair and terminal sealed-state parity. No source located here demonstrates Strata 3+1/2+1 B70 superiority.
+
+5. LONG-CONTEXT AND NEGATIVE RESULTS ARE IMPORTANT FILTERS
+Historical B70 maintainer packet:
+https://github.com/maxfridbe/Strata_B70/blob/3f372817a25f0c942b067ca563606cd5f5b726e8/docs/INTEL_PERFORMANCE.md
+Reports 128K/256K tests, but many configurations use INT8/K8V4/Q4 KV or different model packs. They are capacity evidence for those exact modes, not our 16-bit exact quality baseline. It also records failed/slower DPAS decode and XMX prompt attention experiments; do not assume tensor units beat vector kernels at low row counts.
+Our test: bucket current attention/GEMM shapes by prompt length and rows/expert, time actual shapes under the same arithmetic and KV; preserve failed candidate evidence. Prefer measured crossover selection to architecture-name guesses, but never let a speed-based selector silently choose different arithmetic.
+
+6. OTHER PRIMARY ENGINE INPUTS
+https://github.com/labscommunity/pipeline-sharded-inference-paper
+Intel/OpenVINO pipeline-shard research includes a reproduction directory and stateful speculative work. Useful partition/amortization methodology, not a drop-in runtime or proof for SC117/B70.
+https://github.com/labscommunity/cascadia
+Intel-focused distributed runtime; relevant topology/transport reading. No matched SC117 exact benchmark established here.
+https://github.com/rizagp/arcinferzero
+Original arcinfer URL redirects here. Intel integrated-GPU Level Zero/OpenCL kernel and MTP work; platform mismatch to B70 means use concrete code ideas only.
+
+PRIORITY FOR OUR NEXT LEVERS
+A) Complete current isolated prompt overlap gate/timing, already concrete and exactness-aware.
+B) CPU placement/timing model for dedicated existing-MTP 3+1 and2+1, alongside EP2/EP3 transport cost; reject non-fitting/slower models early.
+C) Actual-shape dequantize/materialization census, then exact compressed-read kernel work if it is a material bottleneck.
+No external performance number above is a certified lab result or a reason to weaken quality, KV or host-stability rules.

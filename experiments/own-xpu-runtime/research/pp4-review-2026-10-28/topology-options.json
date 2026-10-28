@@ -1,0 +1,130 @@
+{
+  "scope": "Read-only topology feasibility; no plans executed, no predicted throughput claim",
+  "actual_current_262k": {
+    "stages": [
+      {
+        "stage": 0,
+        "layers": [
+          0,
+          8
+        ],
+        "device_bytes": 15731319924,
+        "categories_bytes": {
+          "workspace": 333047970,
+          "weights": 11929905408,
+          "recurrent-state": 39960592,
+          "KV": 3103784960,
+          "runtime-overhead": 324620994
+        },
+        "census_path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/census.json",
+        "census_sha256": "a94efc2d16dbbb4f1b3eb5dcf3f65bcc297b5babf2c9cc26b4549b06a9d34a24"
+      },
+      {
+        "stage": 1,
+        "layers": [
+          8,
+          21
+        ],
+        "device_bytes": 17817098864,
+        "categories_bytes": {
+          "workspace": 98073900,
+          "weights": 13774112512,
+          "recurrent-state": 32686080,
+          "KV": 3724541952,
+          "runtime-overhead": 187684420
+        },
+        "census_path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/census.json",
+        "census_sha256": "85364ec5a1357fd6c9876768613991ae438e5cf782a719408135031748ec011d"
+      },
+      {
+        "stage": 2,
+        "layers": [
+          21,
+          34
+        ],
+        "device_bytes": 19185708144,
+        "categories_bytes": {
+          "workspace": 98073900,
+          "weights": 15142721792,
+          "recurrent-state": 32686080,
+          "KV": 3724541952,
+          "runtime-overhead": 187684420
+        },
+        "census_path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/census.json",
+        "census_sha256": "fb068a036389f9b8b42bbd591e853d404e2266c596d92adaca91764d4cd6e53e"
+      },
+      {
+        "stage": 3,
+        "layers": [
+          34,
+          48
+        ],
+        "device_bytes": 22647581776,
+        "categories_bytes": {
+          "workspace": 99815700,
+          "weights": 17356059904,
+          "recurrent-state": 32686080,
+          "KV": 4966055936,
+          "runtime-overhead": 192964156
+        },
+        "census_path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/census.json",
+        "census_sha256": "aec5562046fb3727f26fdf00d70f233db73391cbca11c13f490b9d82d5c0bbc4"
+      }
+    ],
+    "draft": {
+      "device_allocation_bytes": 3741543020,
+      "cache_bytes": 620756992,
+      "head_weight_shared": false
+    },
+    "packed_target_weight_bytes": 54714708480,
+    "target_KV_bytes": 14898167808,
+    "target_weights_plus_KV_floor_bytes": 69612876288,
+    "two_card_30GiB_total_cap_bytes": 64424509440,
+    "host_lookup_copy_bytes": 29137853440
+  },
+  "options": [
+    {
+      "option": "3 target GPUs +1 dedicated draft",
+      "status": "engineering candidate, untested",
+      "feasibility": "Target weight+KV aggregate below3\u00d730GiB, but exact stage planner/admission still required; per-layer KV placement and final head matter.",
+      "required_changes": [
+        "Separate provider role from target-stage index and stage-busy ownership; dedicated process/device runtime with no target layer range.",
+        "Support odd3 target stages in rolling transport/admission/comparators and HTTP prefill; do not use zero-layer fake stage.",
+        "Give provider owned shared handoffs, canonical draft token/hidden pair stream, reset/error/EOS/drain, full-state dump and memory admission.",
+        "Keep target embedding lookup accessible to draft without accidentally duplicating29.138GB host lookup copy; standalone draft loader must pin same tensors/arithmetic."
+      ],
+      "first_experiment": "CPU3-stage placement with measured per-layer costs and actual fullprecision262K memory floor; then standalone draft canonical replay parity against existing73-source state before one bounded3+1 seam.",
+      "tradeoff": "Removes draft contention but makes target stages longer than4-target layout; speculative decode may benefit while prefill target bottleneck can worsen. No speed prediction."
+    },
+    {
+      "option": "2 target GPUs +1 dedicated draft",
+      "status": "262K infeasible under current representation; shorter context engineering candidate",
+      "feasibility": "Packed target weights plus actual targetKV alone exceed2\u00d730GiB by5188366848 bytes. Offloading draft does not remove targetKV.",
+      "first_experiment": "CPU admission at64K/current two-card split with draft excluded; only proceed if exact peak fits. Then compare to66.21tok/s two-card baseline under same identity.",
+      "required_changes": [
+        "Dedicated provider role/loader/transport as above; generalize provider rank topology independent of target topology."
+      ],
+      "tradeoff": "Can free current draft3.742GB from target card, but does not promise262K. Spare fourth card could serve separate work only after admission."
+    },
+    {
+      "option": "4 target GPUs, relocate collocated draft",
+      "status": "already tested negative under earlier engine",
+      "evidence": "Stage2 provider42.628253tok/s; short-first43.265879; stage0 parent capture44.967924. All5965 outputs/final2065 target sources match; do not rerun identical relocation.",
+      "limits": "Earlier slower engine identity; collocated relocation is not dedicated draft evidence."
+    },
+    {
+      "option": "Broader material lever: target prefill weight/expert reuse or3+1 with cross-chunk queue",
+      "status": "hypothesis grounded in measurement",
+      "evidence": "Current candidate target command work~674.711s versus draft work169.748s for121854prompt; stage3target work195.426s highest. Overlap already reduces total522.318s.",
+      "first_experiment": "Profile existing target prefill sites on one bounded representative long-context window, choose material expert/dense/QSA reuse lever, one exactness gate then fair total timing. Maintain fullprecision KV and exact arithmetic."
+    }
+  ],
+  "sources": [
+    "experiments/own-xpu-runtime/engine/tools/pipeline_driver.py",
+    "experiments/own-xpu-runtime/engine/tools/persistent_rolling_driver.py",
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/transport.py",
+    "experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py",
+    "experiments/own-xpu-runtime/research/continuation-2026-10-25/provider-relocation-results/RESULT.md"
+  ],
+  "operational_note": "Wait for current capacity request; no new requests or competing GPU work initiated."
+}

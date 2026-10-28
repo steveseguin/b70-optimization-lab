@@ -1,0 +1,17 @@
+Public fork findings — saved October28 audit, no new network execution
+
+All six public main branches have zero commits ahead of public upstream. Nondefault branches were also inspected in the saved audit; its top-level scope sentence is stale and narrower than the actual branch inventory. No private-fork or branches-beyond-first100 absence claim.
+
+Not new: bosd and dominick253 both retain identical codex/qwen36-quark-int8-tracking-* heads a84d08e6/0cb52e69, reporting352/355 ahead. Their identical heads, branch names and historical lab Qwen3.6 harness/result commit summaries identify shared historical lab-tracking history, not352 new independent contributor optimizations. Local Git lacks these object IDs, so this is a classification from saved metadata, not a patch-equivalence proof. Do not bulk reread that history.
+
+Concrete contributor deltas: bosd contrib/bosd-trx50-2xb70-results is1 ahead; its mixed B60/B70 and batched-throughput prose is already ingested under community/field-reports/bosd/trx50-2xb70 (PR16/17, with later followups). The separate b60split-concurrency branch is0 ahead. Reusable leads: balance stages with measured service times rather than card count (mixed49B decode13.4tok/s bottlenecked onB60), and investigate exact batched decode/weight reuse for aggregate throughput. The50-parallel382.7generation/601.5combined figures are synthetic llama-batched-bench, not50 real requests, no raw outputs, no SC117 speed claim. Neither is a new missing kernel patch.
+
+bosd build-freshness report supplies an older external-runtime regression window b9455/8e6fff84→dee2a84, not a completed bisect. Useful only if a corresponding native copy/placement issue arises; no reason to switch our runtime or change host stack now.
+
+dominick253 three repro branches carry the same recipe concept (79355b42 twice, c795f53f once),1 ahead each, changing only community/dominick253-qwen36-35b-llamacpp-sycl README/STATUS. This is historical intake, already locally maintainer-corrected and B70-tested: actual Q8_K_XL, MTP off faster,512000 total context with2slots means256000 each, only34649prompt tested. Do not treat old Q4_K_M/512K perrequest prose as a new capacity breakthrough. No new native kernel lead.
+
+Other contributor branches including ColdFusion MTP, uniform-decode alias and Qwen3.6 recipes are0 ahead. ColdFusion local intake is a distinct fine-tuned27B with community-only measurements and stack-dependent acceptance, not an admissible SC117 draft/model replacement. Source rule and no-training direction remain unchanged.
+
+Actionable conclusion: no unconsumed fork kernel patch identified by this audit. Reuse already-ingested measured-load balancing and real concurrency/weight-reuse ideas in our own engine, under its exactness gates. Dedicated draft remains our architecture experiment; these forks do not supply its proof or implementation.
+
+Local sources: public-fork-audit.json; community/field-reports/bosd/trx50-2xb70/{README,b60-vs-b70,batched-decode-throughput,sycl-build-and-layer-split}.md; community/dominick253-qwen36-35b-llamacpp-sycl/{README,STATUS}.md; community/dominick253-qwen38-27b-coldfusion-mtp-llamacpp-sycl/STATUS.md.

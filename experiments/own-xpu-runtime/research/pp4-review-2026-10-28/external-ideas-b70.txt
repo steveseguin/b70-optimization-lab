@@ -1,0 +1,203 @@
+B70 external optimization ideas: primary-source scan, hypotheses only
+
+No external performance figure below is our measurement or transferable to
+SC117. No software installed, weights downloaded, device requests issued or
+live/pinned sources changed. Current timing/state gate goes first. Preserve
+full 16-bit KV and existing target arithmetic; do not train a draft. External
+projects are research inputs, not a replacement base for our own runtime.
+
+1. B70 small-batch XMX/ESIMD kernels for speculative verification.
+Primary: https://github.com/ggml-org/llama.cpp/pull/29864
+Regression: https://github.com/ggml-org/llama.cpp/issues/31068
+Merged commit: d81d0d8fb95e52a66992bcfc212b1891b4d2f94a.
+Concrete idea: unpack each weight once across several activation columns;
+int8 DPAS, 2D loads, batch-dependent dispatch and fused gate/up epilogues.
+Relevant to 2-8-row target verification and short prompts, rather than simply
+increasing draft depth. B70 is actually tested by the author. Important limits:
+IQ formats and MoE MUL_MAT_ID were not the original target. Author reports
+floating-summation changes and eventual greedy divergence. A separate B70 MoE
+report finds large-prompt regression. Read kernel layout/dispatch, do not port
+arithmetic blindly. Minimal gate: existing real production shapes at M=1/2/3/
+4/8, exact intermediate/state comparison, then matching verification timing.
+
+2. Full-precision attention: split-KV occupancy plus Intel matrix paths.
+Primary: https://github.com/vllm-project/vllm-xpu-kernels
+Primary: https://github.com/intel/sycl-tla/blob/main/CHANGELOG-SYCL.md
+Primary: https://arxiv.org/abs/2205.14135
+Concrete idea: separately tune small-query long-KV work distribution and large
+prefill tiling. Intel's kernel library includes Xe2/GDN/flash attention; SYCL-TLA
+has Xe copy/MMA and grouped-GEMM primitives. Use 16-bit KV while examining
+coalesced loads, prefetch and subgroup work distribution. Mathematical exact
+attention does not guarantee identical FP reduction order: a split/combine
+rewrite must pass our bitwise oracle. Native QSA selection is not generic dense
+attention; preserve its exact selected indices and order. Local attention-plus-
+combine epilogue already lost despite exactness: research/rank0-attention-fuse-
+c27/RESULT.md. Minimal gate: isolate long-context attention shape and keep the
+existing reduction order before attempting fusion or repartitioning.
+
+3. Group expert slots by expert, then specialize tile occupancy by shape.
+Primary: https://github.com/alpha2beta/vllm.xpu
+Primary: https://github.com/sybil-solutions/exl3xpu
+Concrete idea: single grouped expert projection launches, multi-row vectors,
+decode/GEMM crossover dispatch and expert-route bucketing. The alpha2beta work
+is on XMX-less Arc140V, not B70, so its no-DPAS choice should not carry across;
+its routing/launch structure is the useful part. EXL3 is a different weight
+format, not an SC117 speed comparison. Its repo distinguishes bit-identical
+weight reconstruction from non-identical end-to-end logits, and its optional
+INT8 prefill is lossy. Local exact xgroup already won and is enabled:
+research/prefill-experts/RESULT.md. Next useful question is tile occupancy for
+actual SC117 routed shapes, not rediscovering grouping. Gate partial-route and
+ragged-K cases against existing exact grouped outputs before full timing.
+
+4. Hybrid parallel topology rather than another pure-PP scheduler alone.
+Primary: https://github.com/vllm-project/vllm/blob/main/docs/getting_started/installation/gpu.xpu.inc.md
+Primary: https://docs.vllm.ai/en/stable/api/vllm/config/parallel/
+Primary: https://vllm.ai/blog/2026-05-14-elastic-expert-parallelism
+Concrete options: two PP stages each with TP2; independent attention workers
+with shared expert ownership; or two independent two-card replicas for multiple
+users. Upstream documents XPU TP, beta PP and XCCL P2P configuration; its EP
+architecture separates attention/DP from expert groups. This does NOT establish
+that every EP collective/backend works well on B70. PCIe collective latency and
+exported-buffer host accounting can dominate a single stream. Redistribution
+also changes reductions unless deliberately preserved. First gate: CPU placement
+and measured transfer-budget estimate with actual tensor/route sizes, then one
+correctness-and-timing comparison. Treat concurrency throughput separately from
+single-request latency; no cache reuse required.
+
+5. Adaptive speculation with existing draft weights and a fixed verifier.
+Primary: https://nvidia.github.io/TensorRT-LLM/llm-api/reference/EagleDecodingConfig.html
+Primary: https://github.com/labscommunity/cascadia
+Concrete idea: select speculative depth using current acceptance and measured
+cost, or move proposal work to an otherwise idle owner while preserving hidden
+parent capture. TensorRT distinguishes greedy argmax verification from sampled
+rejection schemes; Cascadia provides an inspectable distributed-speculation
+engine, but states TP is plumbing only. Neither is a B70/SC117 plug-in. Keep our
+existing MTP weights and exact target verification; tree heads requiring training
+are outside scope. N-gram/history and prompt-lookup acceleration are excluded
+from the cold final suite. Local depth2 two-rank work lost on scheduling; PP4
+capture-ready already exists. Gate only a materially different cost/ownership
+policy, with exact accept/abort/provider-state comparison and unchanged prompts.
+
+6. Expert/KV residency and prefetch without changing stored values.
+Primary: https://github.com/vllm-project/vllm/issues/63666
+This is an RFC, not a proven deployable B70 implementation. It proposes using
+an existing next-layer router on available hidden state to predict expert loads
+without training, then overlapping transfers; actual routing must still decide
+which experts compute, with a correct miss fallback. Its analysis says larger
+prefill chunks touch nearly all experts, limiting expert caching for prefill.
+For our already-resident four-card target, expert offload is unlikely to help
+speed. More relevant extensions are more users, larger models or full-precision
+KV residency. Preserve original weight/KV bytes and avoid memory-setting changes.
+Gate actual route locality and transfer volume first; reject if avoided transfer
+cannot exceed added prediction/copy cost. No new offload system just on promise.
+
+7. Quantized-KV kernels: useful layout research, excluded current lane.
+Primary: https://github.com/intel/llm-scaler/issues/739
+Primary: https://community.intel.com/t5/Blogs/Tech-Innovation/Data-Center/Enhancing-long-context-high-concurrency-LLM-serving-on-a-32-GB/post/1751209
+The Xe2 issue proposes native INT8 per-token/head KV support with register-local
+dequantization; Intel's TurboQuant article describes tiled split-KV decode.
+Useful transport/kernel ideas: combine conversion with loads, minimize temporary
+buffers, and avoid an unfused dequantization pass. Quantized KV itself changes
+values; FP8/INT8/TurboQuant are not lossless substitutes for our BF16/FP16 cache.
+Owner rules prohibit silently adopting them. Record as a separate hypothetical
+quality tradeoff, not an optimization to run now. The exact current-lane version
+is 16-bit layout/prefetch improvement from item2, not new cache quantization.
+
+8. Sparse attention: distinguish model-defined selection from approximation.
+Primary: https://github.com/mit-han-lab/Quest
+Paper: https://arxiv.org/abs/2406.10774
+Quest tracks per-page key min/max, estimates relevance from the query, then
+loads a fixed top-K page budget. It explicitly approximates dense attention;
+accuracy results do not establish identical outputs. Do not graft that page
+selection onto dense or native-QSA attention as an exact speedup. Transferable
+idea: compact metadata, tile-gather and resident selected pages after the model's
+unchanged selection has already produced exact indices. Gate equality of selected
+indices, ordering, ties and arithmetic, then compare loaded bytes and timing.
+This offers a broader long-context avenue than changing PP wave size, while
+retaining the native model rather than inventing a new sparse one.
+
+9. Other models/forks as kernel stress cases, not equal-quality substitutes.
+Primary: https://github.com/Torchit1/llama.cpp
+Primary: https://github.com/Torchit1/llama.cpp/blob/arc-b580/docs/bonsai-arc-b580.md
+Primary: https://github.com/Torchit1
+Torchit1 exposes Arc B580 SYCL/XMX prompt work, GDN work and a Bonsai ternary
+route. B580 is related Intel discrete hardware; scheduling/SLM/register choices
+still require B70 validation. Ternary models are separately trained/quantized
+models, not SC117 compressed without loss. Inspect its prompt/GDN kernel layout
+against our generic runtime interfaces; retain our original arithmetic and
+formats. Its recipe includes quantized KV and draft modes that do not transfer
+to our cold full-precision lane. Local GDN_PREP already won and is enabled:
+research/gdn-prefill-c23/RESULT.md. Prioritize a new shape/layout mechanism,
+not re-testing that same preparation switch. No model download authorized here.
+
+10. B70-specific tuning rules rather than blind generic Triton defaults.
+Primary paper: https://arxiv.org/abs/2605.26118
+Xe-Forge evaluates Intel Arc Pro B70 and highlights valid warp counts, GRF modes
+and SLM sizing as necessary kernel-search constraints. Its reported comparisons
+are against its own PyTorch/attention baselines, not our custom kernel. Useful
+idea: make production shape identities drive a small valid tile/register search,
+with exactness first, one fair timing pass and explicit negative records. This
+is kernel tuning, not draft/model training. Start from a measured expensive site
+on our current lane; do not build another general optimizer framework or launch
+an unconstrained sweep while the current run is active.
+
+Community sources and boundaries
+- https://github.com/SergiioB/intel-arc-pro-b70-inference-cookbook
+  Read its current decision/patch matrix, not its repository-title speed claims.
+  Its README says later matched tests did not reproduce a historical MoE MTP
+  result; default two-card deployment is independent servers. Its EXL3 route
+  uses FP8 KV and therefore has a different quality/run identity from ours.
+- https://github.com/intel/llm-scaler is the Intel-maintained B60/B70 stack;
+  inspect fixes and kernels without treating moving image tags as an oracle.
+- GRIMOIRE primary repository confirmed: https://github.com/doopeworld/GRIMOIRE
+  Revision pinned by git ls-remote HEAD:
+  c0aefd0334d016fbbd2b1adbc0be729bd6e247fe
+  The three documents below are at repository ROOT, not docs/. They describe
+  historical states; do not assume every old experiment is the current default.
+
+  A. Native-format expert tiering and separate prefill/decode placement.
+  https://github.com/doopeworld/GRIMOIRE/blob/c0aefd0334d016fbbd2b1adbc0be729bd6e247fe/FLASH-NEXT-TIERED.md
+  Concrete design: pointer-addressed native NVFP4 expert blocks in GPU or pinned
+  host storage, CPU execution of cold experts during decode alongside GPU hot
+  experts, and streamed expert staging for prefill. It explicitly avoids a second
+  MXFP4 quantization of existing NVFP4 weights. Useful for one/two-card capacity
+  and larger contexts, not obviously faster than our fully resident quad lane.
+  It also describes executing native QSA block selections through masked XMX
+  attention instead of sparse gathers: directly relevant to exact selected-KV
+  layout research. Caveats: native NVFP4 is not our SC117 quant; CPU/GPU sums and
+  BF16 staging can change arithmetic; same text on one 6K prompt is not bitwise
+  state parity. Its projected speeds are estimates, not local evidence. Minimal
+  gate: exact unchanged route/index selection and dequant bytes, then one selected
+  attention/expert operator state test before considering a capacity experiment.
+
+  B. Output-row TP as a different hybrid topology building block.
+  https://github.com/doopeworld/GRIMOIRE/blob/c0aefd0334d016fbbd2b1adbc0be729bd6e247fe/HANDOFF-2026-08-27-PP-TP-COMPLETE.md
+  The documented two-process TP splits projection OUTPUT rows then all-gathers,
+  rather than splitting the dot-product reduction. Potentially preserve each
+  output's original reduction order while combining TP within PP stages; useful
+  contrast to reduction-heavy TP. But this historical version retains FULL
+  weights in both processes and replicates MoE/batched-prefill work. It is not
+  memory-sharded TP or an established quad speedup. Correctness there is a short
+  prompt with a few matching tokens, not our full-state gate. First assess actual
+  packed-weight replication and gather traffic before coding; then exact-state
+  test a production projection. Prefix-cache work in this document is outside
+  our cold-response benchmark scope.
+
+  C. MTP restoration scope must include canonical state, not just fast drafts.
+  https://github.com/doopeworld/GRIMOIRE/blob/c0aefd0334d016fbbd2b1adbc0be729bd6e247fe/FAST-MTP-RESTORE-2026-09-04.md
+  Concrete lesson: revert compact/zero draft-KV experiments unless exact replay
+  state survives transitions; keep checkpoint synchronization tied to verified
+  execution. The historical restoration names an unchanged mtp_draft function
+  and disables a graph path after device loss. Its fast recipe excludes the
+  later EXACT_VERIFY flag and reports coherent output; the restoration itself
+  was not rebuilt or GPU-tested before handoff. Those facts do NOT prove target
+  verification is absent, but they also cannot establish our exactness standard.
+  Transfer only a source-audited bounded snapshot/restore mechanism preserving
+  every native mutable allocation. Local bulk replay already failed a following
+  request transition: research/bulk-replay/RESULT.md. Reproduce that seam first;
+  never replace it with a coherence test or disable our verifier for speed.
+
+Highest-value intake shortlist: small-batch XMX data reuse with unchanged math;
+full-precision selected-KV layout/attention occupancy; actual-shape expert tile
+specialization; hybrid topology/concurrency. All remain hypotheses until local
+matched correctness and timing. External exactness labels are not our gate.

@@ -1,0 +1,11 @@
+Topology shortlist (read-only; untested options are hypotheses)
+
+1. 3 target + dedicated draft is the useful native262K architecture candidate. Actual packed target weights plus targetKV floor: 69612876288 bytes, below three30GiB cards but requires per-stage admission. New standalone provider owner and odd-target-stage plumbing needed; current provider_stage only relocates draft onto another existing target stage. First CPU placement, then canonical standalone draft73-source replay parity, then one bounded3+1 seam. More target layers per card can offset draft offload; do not predict speed.
+
+2. 2 target + draft cannot fit262K: the target weight+KV floor already exceeds64.424509440GB. At64K it may fit and free draft3.741543020GB; run planner before device test.
+
+3. Do not rediscover prior collocated stage2 relocation losses42.63/43.27 vs44.97tok/s; they were not dedicated draft trials.
+
+4. Larger current prefill lever is target work (~674.7s vs169.7s draft work; overlapping durations). Stage3 has highest command work195.4s. Profile bounded target sites and test exact reuse improvements; retain fullprecision KV.
+
+Source paths and exact current per-stage census hashes are in topology-options.json. No GPU/requests/builds performed.
