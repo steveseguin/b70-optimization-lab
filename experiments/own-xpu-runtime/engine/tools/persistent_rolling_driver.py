@@ -65,7 +65,10 @@ def make_plan(config_path):
     identity = dict(model=plan['model_identity_sha256'],draft_manifest=expected,
         draft_experts=base.option(draft,'--draft-experts'),prompt=plan['prompt_tokens'],
         context=plan['context'],max_new=plan['max_new'],vocab=plan['vocab'],eos=eos,
-        config_sha256=base.digest(config_path),mode='persistent-rolling',check_policy=policy)
+        config_sha256=base.digest(config_path),mode='persistent-rolling',check_policy=policy,
+        reference_route_tie_sort=plan.get('reference_route_tie_sort',False),
+        reference_route_scope=plan.get('reference_route_scope','f32-target-only'),
+        draft_route_policy=plan.get('draft_route_policy','unchanged-bf16'))
     request = sha256(json.dumps(identity,sort_keys=True,separators=(',',':')).encode()).hexdigest()
     final_shared = str(Path(plan['output'])/f"stage{len(plan['stages'])-1}/shared.bin")
     for stage in plan['stages']:

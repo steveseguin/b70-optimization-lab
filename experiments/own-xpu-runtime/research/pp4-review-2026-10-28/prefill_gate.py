@@ -9,6 +9,7 @@ import sys
 ROOT = Path(__file__).resolve().parents[4]
 LAN = ROOT/'experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan'
 TOOLS = ROOT/'experiments/own-xpu-runtime/engine/tools'
+ATTACH = Path(__file__).with_name('attach_prefill_provenance.py').resolve()
 MODES = [{'epoch': 1, 'prefill_pipeline': False}, {'epoch': 2, 'prefill_pipeline': True}]
 
 
@@ -68,13 +69,39 @@ def make_plan(config):
     plan = B.make_plan(config)
     plan.update(prefill_gate_modes=MODES, prefill_pipeline=False)
     plan['pins'][str(Path(__file__).resolve())] = B.base.digest(Path(__file__).resolve())
+    plan['pins'][str(ATTACH)] = B.base.digest(ATTACH)
     return plan
+
+
+def compare_completed(plan, base, manifests):
+    # wavefront_driver.execute returns None; its final result is written only
+    # after FINISH, process joins and the final passive guard check.
+    output = Path(plan['output'])
+    terminal = json.loads((output/'result.json').read_text())
+    expected = {str(stage['id']) for stage in plan['stages']}
+    base.require(terminal.get('passed') is True and terminal.get('error') is None
+        and terminal.get('live_pids') == []
+        and set(terminal.get('returncodes', {})) == expected
+        and all(type(code) is int and code == 0 for code in terminal['returncodes'].values()),
+        'completed clean lifecycle required before provenance or comparison')
+    base.require(len(manifests) == 2, 'both serial/pipeline manifests required')
+    import attach_prefill_provenance
+    import compare_pipeline_state as target_compare
+    import compare_draft_state as draft_compare
+    completed = [attach_prefill_provenance.attach(p) for p in manifests]
+    target = target_compare.compare(*(target_compare.load_set(p) for p in completed))
+    draft = draft_compare.compare(*(draft_compare.load_set(p.parent/'draft-set.json') for p in manifests))
+    base.save(output/'target-comparison.json', target)
+    base.save(output/'draft-comparison.json', draft)
+    base.require(target['passed'] and draft['passed'], 'serial/pipeline sealed state parity failed')
+    return dict(target=target, draft=draft)
 
 
 def execute(plan, admission, unit):
     B, _ = dependencies()
     bridge, base = B.bridge, B.base
     pairs = []
+    manifests = []
     class Stage(bridge.Stage):
         def command(self, op, token=0, position=0, fixture=0, **kwargs):
             item = None
@@ -106,7 +133,6 @@ def execute(plan, admission, unit):
 
     def run(stages, run_plan, guard, output):
         result = B.rolling.run(stages, run_plan, guard, output, drive=drive)
-        manifests = []
         for index, record in enumerate(result['requests']):
             folder = output/f"request-{index:02d}-{record['id']}"
             actual = json.loads((folder/'canonical-pairs.json').read_text())
@@ -138,16 +164,10 @@ def execute(plan, admission, unit):
             manifest = folder/'target-set.json'
             base.save(manifest, target)
             manifests.append(manifest)
-        import compare_pipeline_state as target_compare
-        import compare_draft_state as draft_compare
-        target = target_compare.compare(*(target_compare.load_set(p) for p in manifests))
-        draft = draft_compare.compare(*(draft_compare.load_set(p.parent/'draft-set.json') for p in manifests))
-        base.save(output/'target-comparison.json', target)
-        base.save(output/'draft-comparison.json', draft)
-        base.require(target['passed'] and draft['passed'], 'serial/pipeline sealed state parity failed')
         return result
     B.rolling_driver.live.target.lifecycle.execute(plan, admission, unit, stage_type=Stage,
                                                    driver=run, scripted_proposals=False)
+    return compare_completed(plan, base, manifests)
 
 
 def main():

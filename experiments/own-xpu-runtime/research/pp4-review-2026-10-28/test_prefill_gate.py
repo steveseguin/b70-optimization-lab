@@ -9,6 +9,38 @@ import prefill_gate as gate
 
 
 class GateTests(unittest.TestCase):
+    def test_failed_lifecycle_never_enters_comparison(self):
+        lifecycle = SimpleNamespace(execute=mock.Mock(side_effect=ValueError('native finish failed')))
+        backend = SimpleNamespace(base=SimpleNamespace(), bridge=SimpleNamespace(Stage=object),
+            rolling_driver=SimpleNamespace(live=SimpleNamespace(target=SimpleNamespace(lifecycle=lifecycle))))
+        with mock.patch.object(gate, 'dependencies', return_value=(backend, None)), mock.patch.object(gate, 'compare_completed') as compare:
+            with self.assertRaisesRegex(ValueError, 'native finish failed'):
+                gate.execute({}, {}, 'mock.service')
+            compare.assert_not_called()
+
+    def test_comparison_requires_clean_final_lifecycle_before_attach(self):
+        with tempfile.TemporaryDirectory() as folder:
+            output = Path(folder)
+            plan = dict(output=str(output), stages=[dict(id=0), dict(id=1)])
+            def require(value, message):
+                if not value: raise ValueError(message)
+            base = SimpleNamespace(require=require, save=lambda p,v: Path(p).write_text(json.dumps(v)))
+            manifests = [output/'serial.json', output/'pipeline.json']
+            events = []
+            attach = SimpleNamespace(attach=lambda p: events.append(('attach', p)) or p)
+            comparator = SimpleNamespace(load_set=lambda p: events.append(('load', p)) or {}, compare=lambda *sets: dict(passed=True))
+            with mock.patch.dict('sys.modules', attach_prefill_provenance=attach, compare_pipeline_state=comparator, compare_draft_state=comparator):
+                good = dict(passed=True, error=None, live_pids=[], returncodes={'0':0,'1':0})
+                for bad in [dict(good, passed=False), dict(good, error='failure'), dict(good, live_pids=[9]), dict(good, returncodes={'0':0}), dict(good, returncodes={'0':0,'1':1})]:
+                    (output/'result.json').write_text(json.dumps(bad))
+                    with self.assertRaises(ValueError): gate.compare_completed(plan, base, manifests)
+                    self.assertEqual(events, [])
+                (output/'result.json').write_text(json.dumps(good))
+                gate.compare_completed(plan, base, manifests)
+                self.assertEqual([x[0] for x in events[:2]], ['attach','attach'])
+                self.assertTrue((output/'target-comparison.json').exists())
+                self.assertTrue((output/'draft-comparison.json').exists())
+
     def test_modes_are_explicit_and_request_plan_is_retained(self):
         original = dict(epoch=1, other='retained')
         self.assertFalse(gate.selected_plan(original, 1)['prefill_pipeline'])
@@ -97,15 +129,18 @@ class GateTests(unittest.TestCase):
         def lifecycle(plan, admission, unit, **kwargs):
             self.assertFalse(kwargs['scripted_proposals'])
             self.assertTrue(issubclass(kwargs['stage_type'], bridge.Stage))
-            return kwargs['driver']([kwargs['stage_type']()], plan, None, output)
+            result = kwargs['driver']([kwargs['stage_type']()], plan, None, output)
+            save(output/'result.json', dict(result, passed=True, error=None, live_pids=[], returncodes={str(x['id']):0 for x in plan['stages']}))
+            return None
         backend = SimpleNamespace(base=base, bridge=bridge,
             rolling=SimpleNamespace(run=suite_run),
             rolling_driver=SimpleNamespace(live=SimpleNamespace(target=SimpleNamespace(
                 lifecycle=SimpleNamespace(execute=lifecycle)))))
         with tempfile.TemporaryDirectory() as folder:
             output = Path(folder)
+            plan['output'] = str(output)
             with mock.patch.object(gate, 'dependencies', return_value=(backend, None)), \
-                 mock.patch.dict('sys.modules', compare_pipeline_state=comparator, compare_draft_state=comparator):
+                 mock.patch.dict('sys.modules', compare_pipeline_state=comparator, compare_draft_state=comparator, attach_prefill_provenance=SimpleNamespace(attach=lambda p:p)):
                 gate.execute(plan, {}, 'mock.service')
             self.assertTrue((output/'target-comparison.json').exists())
             self.assertTrue((output/'draft-comparison.json').exists())

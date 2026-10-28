@@ -84,6 +84,8 @@ def make_plan(config_path):
     config_path = Path(config_path).resolve()
     config = json.loads(config_path.read_text())
     require(config.get('schema') == 'ownrt.pipeline-driver-config.v1', 'config schema')
+    reference_route_tie_sort = config.get('reference_route_tie_sort', False)
+    require(type(reference_route_tie_sort) is bool, 'reference_route_tie_sort must be Boolean')
     adapter_path = Path(config['adapter_plan']).resolve()
     adapter = json.loads(adapter_path.read_text())
     require(adapter.get('schema') == 'ownrt.gsq.rank-adapter-plan.v1', 'recorded adapter plan required')
@@ -93,6 +95,10 @@ def make_plan(config_path):
     binary = Path(receipt['binary']).resolve()
     require(digest(binary) == receipt['binary_sha256'], 'binary differs from build receipt')
     sources = receipt.get('sources', {})
+    if reference_route_tie_sort:
+        require({'stage2/packet194-expert-diet-engine/adapter.cpp',
+                 'stage2/packet194-expert-diet-engine/reference_sort_addressed.hpp'} <= set(sources),
+                'compiled reference route policy capability required')
     require('pipeline/layout.hpp' in sources, 'build receipt lacks pipeline-stage implementation')
     source_root = HERE.parent / 'src'
     for name, expected in sources.items():
@@ -136,6 +142,10 @@ def make_plan(config_path):
         argv = replace_options(argv, {'--rank': 0 if first else 1, '--channel': '<channel-fd>', '--stop-fd': '<stop-fd>', '--shared': output / f'stage{i}/shared.bin', '--output': output / f'stage{i}/native', '--cards': 1, '--card': 0, '--context': context, '--max-new': maximum, '--seconds': config['seconds'], '--target-split': config.get('target_split', option(template, '--target-split')), '--pipeline-boundaries': ','.join(map(str, cuts)), '--pipeline-stage': i, '--activations': 'f32', '--finish-dump': 'none', '--reset-dump': 'none'}, removes)
         require('--gsq-packed' in argv and '--authorized-device-window' in argv and option(argv, '--memory') == 'resident', 'resident native launch required')
         environment = dict(adapter['environment'][0 if first else 1])
+        route_flag = '1' if reference_route_tie_sort else '0'
+        require(environment.get('OWNRT_REFERENCE_ROUTE_TIE_SORT', route_flag) == route_flag,
+                'adapter reference route flag contradicts explicit config policy')
+        environment['OWNRT_REFERENCE_ROUTE_TIE_SORT'] = route_flag
         environment.update(NEOReadDebugKeys='1', FilterBdfPath=bdf, ZE_ENABLE_PCI_ID_DEVICE_ORDER='1', ZE_AFFINITY_MASK='0', ONEAPI_DEVICE_SELECTOR='level_zero:0', OWNRT_DRAFT_DEPTH_PROBE='0', OWNRT_DRAFT_DEPTH_VERIFY='0', OWNRT_EARLY_RANK1='0')
         require('OWNRT_DECODE_PROFILE' not in environment, 'diagnostic timings refused')
         require(environment.get('OWNRT_GSQ_FUSE_NORM') != '1', 'cross-layer norm fusion refused')
@@ -149,7 +159,7 @@ def make_plan(config_path):
             if flag in argv:
                 path = Path(option(argv, flag)).resolve()
                 pins[str(path)] = digest(path)
-    return dict(schema='ownrt.pipeline-driver-plan.v1', config=str(config_path), pins=pins, output=str(output), boundaries=cuts, stages=stages, prompt_tokens=tokens, context=context, max_new=maximum, vocab=vocab, eos=eos, seconds=config['seconds'], grace_seconds=config['grace_seconds'], memory_start_bytes=config['memory_start_bytes'], memory_floor_bytes=config['memory_floor_bytes'], root_floor_bytes=config['root_floor_bytes'], evidence_floor_bytes=config['evidence_floor_bytes'], observer=str(observe_path), model_identity_sha256=digest(auth_path), activation_dtype='F32', mode='target-only', device_execution_requested=False, limits='No speculative overlap or speedup claim. Packed weights exclude host lookups and runtime allocations; native arena cap remains enforced.')
+    return dict(schema='ownrt.pipeline-driver-plan.v1', config=str(config_path), pins=pins, output=str(output), boundaries=cuts, stages=stages, prompt_tokens=tokens, context=context, max_new=maximum, vocab=vocab, eos=eos, seconds=config['seconds'], grace_seconds=config['grace_seconds'], memory_start_bytes=config['memory_start_bytes'], memory_floor_bytes=config['memory_floor_bytes'], root_floor_bytes=config['root_floor_bytes'], evidence_floor_bytes=config['evidence_floor_bytes'], observer=str(observe_path), model_identity_sha256=digest(auth_path), activation_dtype='F32', mode='target-only', reference_route_tie_sort=reference_route_tie_sort, reference_route_scope='f32-target-only', draft_route_policy='unchanged-bf16', device_execution_requested=False, limits='No speculative overlap or speedup claim. Packed weights exclude host lookups and runtime allocations; native arena cap remains enforced.')
 
 
 class Guard:

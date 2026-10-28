@@ -65,7 +65,10 @@ def make_plan(path):
                     prompt=plan['prompt_tokens'], context=plan['context'], max_new=plan['max_new'],
                     vocab=plan['vocab'], eos=eos, depth=depth, boundaries=config['boundaries'],
                     target_bdfs=bdfs, provider_bdf=provider_bdf, check_policy=policy,
-                    config_sha256=base.digest(path), mode='dedicated-mtp')
+                    config_sha256=base.digest(path), mode='dedicated-mtp',
+                    reference_route_tie_sort=plan.get('reference_route_tie_sort', False),
+                    reference_route_scope=plan.get('reference_route_scope', 'f32-target-only'),
+                    draft_route_policy=plan.get('draft_route_policy', 'unchanged-bf16'))
     prompt_path=None
     if bulk:
         from rolling_provider import dedicated_prefill
