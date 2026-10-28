@@ -1,6 +1,17 @@
 # Current Workspace State
 
-**October 28 — Four-slot matched long-prefill win; independent quality investigation remains open.**
+**October 28 — AOT 3+1/262K long512 screen fastest; independent quality remains open.**
+
+Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
+**261.330404s**, versus369.931021s for AOT2+1/128K (**29.3570% less request time**).
+All512 outputs and full registered cross-context state/pairs matched; details and
+long512 table appear below. Independent CPU quality remains unresolved.
+
+Live: all four GPUs are idle. The prepared-input quality diagnostic is building with
+the qualified AOT target; the isolated lookup-view candidate passed CPU tests and
+remains unapplied. Completed3+1 state/map archives were fully verified before cleanup.
+
+Earlier eight-output screens (different generation cap):
 
 The 2+1 stage pipeline at reserved context 128K completed a first-inference request with
 121,854 prompt tokens and eight outputs in **559.908 s**, including **544.444 s** of
@@ -32,7 +43,7 @@ Actual target allocations were 31,837,258,292 / 32,097,362,144 bytes, leaving
 374,996,428 / 114,892,576 bytes under the unchanged 30 GiB cap; draft owned
 3,385,539,588 bytes. Each target exceeded the projection by 12,288 bytes, cause
 unassigned. Completed state archives were fully compared and checksummed before
-exact bundle cleanup. The four-slot long request below is active; no resident service is scheduled.
+exact bundle cleanup. The matched long requests completed cleanly; no resident service is scheduled.
 
 Sustained decode remains a separate negative result: at 64K, 2+1 measured
 50.605 / 51.289 tok/s versus the native two-GPU incumbent's 68.272 / 67.654
@@ -137,11 +148,24 @@ TTFT; all511 decode44.48369→44.96206tok/s is a small single-sample difference,
 not an established sustained speed gain. Archive reuse/cleanup completed: all four identical bundles reuse the verified
 bounded baseline archive; two maps (117,105,221 archived bytes) were tar-compared.
 No independent quality resolution follows.
-The AOT3+1/262K long512 topology/context comparison is now active at
-`/dev/shm/sc117-aot-bmg-3plus1-262k-long512-20261028-r1`, invocation
-`70c18ecfdc0e4532a5d6bc2058f004a5`, plan `30325e6b…`. Startup available
-103,156,125,696 bytes passed the103,079,215,104-byte floor. No result is claimed
-before output and full registered cross-context state comparison.
+The AOT3+1/262K long512 comparison completed: **261.330404s request,
+250.741550s TTFT,48.29587tok/s over511 intervals**, all512 IDs exact and clean four-owner
+FINISH/postflight. Versus AOT2+1/128K369.931021s/358.557850s/44.96206tok/s,
+request time is **29.3570% less**, TTFT **30.0694% less**.
+
+| AOT long512 configuration | Request seconds | TTFT seconds | All511 tok/s |
+| --- | ---: | ---: | ---: |
+| 3targets + draft,262K,four cards | 261.330404 | 250.741550 | 48.29587 |
+| 2targets + draft,128K,three cards | 369.931021 | 358.557850 | 44.96206 |
+
+Full cross-context proof `dd8cec775680` streamed16,369,466,936 actual bytes from
+five bundles:2065target/73draft,52registered128Kprefix/zero262Ktails,512IDs,
+122,364actual pairs and476native hiddenchunk hashes exact. This is an honest
+one-prompt topology/context tradeoff, not a single-variable cause or suite/record.
+Archive/tar comparison and precise cleanup completed. Prepared quality scratch
+probe build completed; root is preparing capture; standard build.py --aot-target preserves all40defaultcommands.
+The mmap lookup candidate remains separate and unapplied; no GPU request is live.
+[3+1 evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json).
 [AOT long evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/long512-r1-evidence/summary.json).
 Two completed intermediate
 sets (~207MB) were archived and exactly cleaned; binaries/receipts remain retained. The scoped compile

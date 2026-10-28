@@ -1,0 +1,77 @@
+{
+  "status": "CPU-plan-prepared-not-launched",
+  "root": "/dev/shm/sc117-dedicated-bounded-count-3plus1-262k-long512-20261028-r1",
+  "config_sha256": "f0eddec8c1b7ea645c0bc927ce0cd4ab3fb19a3d6d9fa9dae3190eca25ddf60a",
+  "plan_sha256": "c485256121956070976bc5fae0a442b520b21896cc34cd55ec7e40ed54d412b3",
+  "binary_sha256": "b73273ffecb23835612be36df78064c72ca5a3db4cc48cb31bf442e78f95bab5",
+  "differences_vs_qualified_3plus1_long8": {
+    "max_new": {
+      "old": 8,
+      "new": 512
+    },
+    "output": {
+      "old": "/dev/shm/sc117-dedicated-four-slots-long-20261028-r1/output",
+      "new": "/dev/shm/sc117-dedicated-bounded-count-3plus1-262k-long512-20261028-r1/output"
+    },
+    "admitted_max_new": {
+      "old": 8,
+      "new": 512
+    },
+    "build_receipt": {
+      "old": "/dev/shm/engine-build-dedicated-four-slots-20261028-r1/build-receipt.json",
+      "new": "/dev/shm/engine-build-l4-history-20261028-r2/build-receipt.json"
+    },
+    "dedicated_prefill_prompt": {
+      "old": "/dev/shm/sc117-dedicated-four-slots-long-20261028-r1/prompt.i32",
+      "new": "/dev/shm/sc117-dedicated-bounded-count-3plus1-262k-long512-20261028-r1/prompt.i32"
+    }
+  },
+  "differences_vs_active_bounded_2plus1_long512": {
+    "context": {
+      "active": 131072,
+      "planned": 262144
+    },
+    "bdfs": {
+      "active": [
+        "0000:23:00.0",
+        "0000:47:00.0"
+      ],
+      "planned": [
+        "0000:23:00.0",
+        "0000:27:00.0",
+        "0000:47:00.0"
+      ]
+    },
+    "output": {
+      "active": "/dev/shm/sc117-dedicated-bounded-count-2plus1-128k-long512-20261028-r1/output",
+      "planned": "/dev/shm/sc117-dedicated-bounded-count-3plus1-262k-long512-20261028-r1/output"
+    },
+    "boundaries": {
+      "active": [
+        0,
+        25,
+        48
+      ],
+      "planned": [
+        0,
+        17,
+        33,
+        48
+      ]
+    },
+    "dedicated_prefill_prompt": {
+      "active": "/dev/shm/sc117-dedicated-bounded-count-2plus1-128k-long512-20261028-r1/prompt.i32",
+      "planned": "/dev/shm/sc117-dedicated-bounded-count-3plus1-262k-long512-20261028-r1/prompt.i32"
+    }
+  },
+  "scope": "Sameprompt/topology-context tradeoff, not single causal variable. Three targetcards/context262K vs2targetcards/context128K; same4slots,b732native and current bounded scheduler. Fresh private output/cache paths. No admission/actual fit or inference performed.",
+  "floors": {
+    "seconds": 2400,
+    "grace_seconds": 120,
+    "memory_start_bytes": 103079215104,
+    "memory_floor_bytes": 8589934592,
+    "root_floor_bytes": 27000000000,
+    "evidence_floor_bytes": 2147483648
+  },
+  "next_priority": "Parent owns L4history then topology or AOT based on current timing. No launch authorization exercised."
+}
