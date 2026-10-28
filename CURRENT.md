@@ -81,7 +81,49 @@ y bitwise; native production stage1 on the same supplied244-row inputs differed
 by RMS1.43e-10 at row243, versus2.20e-7 across the actual different histories.
 This does not support stage1 recurrence alone as the material source; upstream
 raw normalization/gate preparation and inherited history remain untested. Next is
-the proposed bounded raw244-row conv/alpha/beta capture; no model/GPU is active.
+the bounded raw244-row conv/alpha/beta capture. Its r1 diagnostic stopped on
+row1 with recorder “row identity”. Source confirmed local rank0 HALF commands
+always use sequence0; the recorder's monotonic-sequence requirement was wrong.
+The recorder is fixed and its actual-wire CPU fixture passes. Both owners exited1;
+all four bounded health checks passed with no new faults, no live PIDs and clean
+postflight. Partial/source evidence remains under the r1 path; the corrected build completed,
+with no automatic retry. The corrected L4 history r2 launch is recorded below after completed performance work.
+
+The two-target four-slot128K gate r2 completed all32 outputs at position1708,
+all three owners exited0, and passive postflight is baseline-clean with no holders.
+All three device censuses are byte-identical to the prior two-slot128K gate.
+Full registered cross-context state comparison passed **2,065 target sources,
+73 draft sources,1,707 actual pairs and32 outputs**, proof `3930ddaaae34`.
+Gate archive/reference cleanup completed; receipt is
+`four-slots-2plus1-128k-gate-r2-archive.json`. The matched three-card128K long512 pair completed121,854 prompt/512 outputs,
+all512 IDs exact, all three owners0 in both runs and clean postflight. Four slots
+used581.485s request/490.185s TTFT versus two slots650.798s/559.331s:
+**10.6505% less request time and12.3624% less TTFT**. Decode rates were
+5.7160/5.5973 versus5.5495/5.5871tok/s (first99/all511). This is one first-cold
+long-context diagnostic, not a suite, record or independent quality result.
+Censuses and all four state index/JSON/seal metadata sets are byte-identical;
+all four payloads (8,319,196,708 bytes) were fully byte-equal against the candidate
+archive before exact cleanup. Compact verification/cleanup receipt is retained.
+The bounded `_live_count` query candidate completed the full121,854/512 request:
+all512 IDs and three censuses match, all owners0 and clean no-holder postflight.
+Request time fell581.485→501.416s (**13.7698% less**); TTFT was essentially stable
+490.185→489.920s. Decode rates rose5.7160→45.7134tok/s (first99) and
+5.5973→44.4837tok/s (all511;7.9473×), with span91.2934→11.4874s.
+Full-state comparison now passed, proof `5e94ff80d19f`: all four entire bundles
+were byte-identical before exclusions,2,065 target/73 draft sources and
+8,319,196,708 bytes actually streamed, with three exact censuses. Earlier strict
+identity-format refusals remain retained. Archive/deep tar comparison completed
+before exact six-file cleanup released8,486,985,252 bytes. The prepared3+1 plan
+remains unlaunched; six independent-reference disagreements remain open.
+The corrected L4 history diagnostic r2 is now active, unit
+`sc117-l4-history-target244-20261028-r2.service`, invocation
+`2e3f66b191b843ecbaeb4e2b62ec15bd`; startup available103,203,848,192 bytes passed
+the103,079,215,104-byte floor. This is diagnostic work, not performance timing.
+[Bounded-query result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-count-2plus1-128k-long512-r1-evidence/summary.json).
+[Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-2plus1-128k-long512-r1-evidence/matched-result.json).
+[Completed-request evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/four-slots-2plus1-128k-gate-r2-evidence/summary.json).
+Completed four-slot-gate host maps were fully archived/tar-compared before precise
+251,682,816-byte release (`four-slots-gate-r1-host-map-archive.json`).
 [Same-input result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/recurrence-replay/RESULT.txt).
 [Boundary findings](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/BOUNDARY-RESULT.txt).
 [Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json).
@@ -90,6 +132,12 @@ cases bitwise with zero guard errors. Warm51-iteration host medians include queu
 wait: width2/tile2 serial110.758→66.935us; width3/tile4 138.039→65.363us.
 Width1 was slower. These are isolated kernel results, not integrated verifier or
 decode throughput. [Microgate](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/verifier-dense-gate/actual-r1/summary.json).
+Prior completed L4/dense evidence is committed as `0840dede9`. Vocabulary-row
+head sharding is low priority: roughly8% stage head cost suggests only a few-percent
+overall ceiling before transport. MoE output-row sharding source/micro-feasibility
+is the next separate review; neither has measured endpoint evidence.
+MoE output-row host-bounce microtest was exact but slower:160.872 versus78.107us;
+this variant is closed negative, with no endpoint claim.
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

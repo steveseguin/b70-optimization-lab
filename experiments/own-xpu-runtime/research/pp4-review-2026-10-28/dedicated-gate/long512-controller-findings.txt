@@ -1,0 +1,22 @@
+Long121854/512 controller attribution (2026-10-28; CPU/log-only)
+
+Finding: a concrete O(prefix length) controller hotspot exists. RollingCoordinator.adopt_prefill retains Work for every prefix position (engine/planning/rolling_provider/coordinator.py:35). Base Coordinator._live_count (ring_coordinator.py:126) scans ALL rows, including fully accepted history; commands() invokes it through invariants, admission, and _new_row. Actual CPU-only scheduler profile with saved prompts and real shared prefix adoption: ten polls (one real initial ROW reservation then nine busy polls), 14 live-count calls, 1,705,964 generator iterations, 0.552s cumulative long versus23,486 iterations/0.008s short. This is instrumentation-inflated CPU evidence, NOT predicted request speedup. Full source/runtime untouched. See profile_prefix_scheduler.py and long512-prefix-cpu-profile.json.
+
+Actual measured log evidence, fixture>1 only (ms medians):
+                        long121854  short1677
+stage0 ROW host             33.632     14.195
+stage1 ROW host             42.469     11.950
+stage0 ACCEPT host          16.849      0.418
+stage1 ACCEPT host          25.745      0.535
+stage0 ACCEPT native busy    0.453      0.136
+stage1 ACCEPT native busy    0.360      0.092
+provider OP27 host          42.241      7.106
+stage0 half_step native     14.686     11.504
+stage1 half_step native     19.577     11.538
+Host issue->completed includes socket scheduling/controller handling; it is not device time. Concurrent intervals cannot be summed as critical path. Native provider replies deliberately carry zero timing, so provider compute cannot be isolated from these logs. Native target timing growth is real, but it does not explain the much larger host ACCEPT inflation. Detailed exact counts, source hashes and aggregate times retained in long512-existing-command-attribution.json.
+
+Long stage0 issued596 tentative rows, actual native accepted397/discarded199,114 aborts; short512/accepted419/discarded93,92 aborts. Explicit rejected proposals114/92 are miss events, not all discarded guesses. Long stage0 executed710 decode ROWs versus604 short; final511 in both. Different prompts/context/build/policy means this is attribution comparison, not a fair speed treatment.
+
+Smallest next candidate after source-pin release: make live-count enumerate bounded unresolved positions (frontier..frontier+live_capacity) or maintain an exact unresolved set, while preserving historical rows for lineage/audits. Need differential CPU tests vs old full scan through canonical prefix, tentative rows, ACCEPT order, multirow abort, stop/reset, adopted prefix and source failure; assert actual prefix rows remain accepted and no unfinished work exists below frontier. Other O(history) loops (_cancel_suffix and _drained dictionary filtering) remain at miss boundaries and should be measured in a replay before claiming all controller overhead removed. No source edit proposed during matched control.
+
+Residual native profiling gate only after controller fix: same input/plan, production per-op profile or host enqueue-family counters for long decode. Existing timings cannot localize GDN/MoE/QSA/indexer operators; attention selection caps2051 and does not justify naive context-linear attribution.

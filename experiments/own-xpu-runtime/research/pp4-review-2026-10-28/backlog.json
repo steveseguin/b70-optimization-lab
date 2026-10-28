@@ -7,7 +7,7 @@
     {
       "id": 1,
       "idea": "HIGH: Real dedicated existing-MTP owner (3+1;2+1 at shorter context).",
-      "status": "four-slot-matched-cold-long-win-qualified-short-state",
+      "status": "bounded-live-count-long512-fullstate-qualified-win",
       "evidence": [
         "topology-options.json",
         "topology-allocation-screen.json",
@@ -34,10 +34,11 @@
         "dedicated-gate/four-slots-gate-r1-evidence/summary.json",
         "dedicated-gate/four-slots-long-r1-evidence/summary.json",
         "dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json",
-        "reference-one-row/l4-localization/native-r1-evidence/index.json"
+        "reference-one-row/l4-localization/native-r1-evidence/index.json",
+        "dedicated-gate/bounded-count-2plus1-128k-long512-r1-evidence/summary.json"
       ],
       "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
-      "next_step": "Matched four-slot long win completed. Same-input244-row recurrence screen shows row243RMS1.43e-10 versus actual different-history2.20e-7; no cause established. Proposed bounded raw conv/alpha/beta history capture next; no model/GPU active. Full suite/reset/independentCPUquality remain open.",
+      "next_step": "Fullstate passed5e94ff80... all4wholebundles byte-identical before exclusions,2065/73sources/8319196708streamedbytes,512outputs/3censuses exact/clean. Archive deepcompared sixfiles released8486985252B. L4historyr2 diagnostic active;3+1prepared/unlaunched.",
       "blocker": "Four-slot long timing pending; persistent reset and full realistic suite unqualified; six independent CPU disagreements unresolved. Latest CPU observer all248320 logits bitwise original, all240 intermediates valid; first differing expert sets layer25 reflect differing incoming logits, earlier material increase bracketed inside layer4.",
       "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; no long128K qualification.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; no matched PP4cold control yet.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; long121Kcapacitypending.2+1pipeline128K firstcold121854/8 completed559.907532s/prefix544.443734s,exact8/all3exit0/cleanpostflight.7.5126%less time vs3+1pipeline,21.6710%vsPP4,45.5120%vs3+1sequential;3cards/card27free,context128vs262K explicit; nosustaineddecodeclaim.",
       "discovery_open": true
@@ -87,13 +88,14 @@
     {
       "id": 4,
       "idea": "HIGH: Multi-row verifier kernels, reuse unpacked weights across proposals.",
-      "status": "dense-microgate-six-cases-bitexact-integration-unqualified",
+      "status": "dense-width2-integration-deferred-pending-materiality-bound",
       "evidence": [
         "verifier-batch-screen.txt",
-        "verifier-dense-gate/actual-r1/summary.json"
+        "verifier-dense-gate/actual-r1/summary.json",
+        "verifier-width2-implementation-plan.txt"
       ],
       "first_test": "actual routed and dense shapes at those widths, checking bitwise intermediates before timing. Measure accepted tokens per whole cycle, not just raw draft depth. Stop if preparation or low occupancy removes gains.",
-      "next_step": "Assess integration on actual verifier dense boundary, preserve transactional/state semantics; width2/3 microkernel gains and width1 regressions are not endpoint speed claims.",
+      "next_step": "Defer dense-only width2 integration pending actual body-cost bound. With432/511 acceptance=.8454, ideal2x requires>30.92% body fraction before checkpoint/lost overlap; qualifiedQ5 fraction is far lower. Historical broad44.15% fraction yields only~8% optimistic pre-overhead, not a speed claim. Exact source-bound note pending review_prefill.",
       "blocker": null,
       "already_tested_scope": "CPUsource/actualprompt-route screen only: width2/3/4expertdecode reuse3.46/6.26/8.82%; existingring is single-row snapshots. No newbatchedverifier kernel/state/device test.",
       "discovery_open": true
@@ -267,10 +269,14 @@
     },
     {
       "id": "dedicated-four-authenticated-transport-slots",
-      "status": "source-only-feasible-needs-versioned-map-and-gate",
+      "status": "qualified-matched-2plus1-128k-long512-win",
       "idea": "Four retained256row transport slots allow up tofourunfinished dedicatedpipeline chunks without largeroperatorrows orGPUshadows.",
       "evidence": [
-        "dedicated-four-transport-slots-plan.txt"
+        "dedicated-four-transport-slots-plan.txt",
+        "dedicated-gate/four-slots-gate-r1-evidence/summary.json",
+        "dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json",
+        "dedicated-gate/four-slots-2plus1-128k-gate-r2-evidence/summary.json",
+        "dedicated-gate/two-slots-control-2plus1-128k-long512-r1-evidence/matched-result.json"
       ],
       "constraints": [
         "Default2unchanged; versioned8192targetheader/four1280records/eightstreamregions, immutablegeometryadmission.",
@@ -278,7 +284,9 @@
         "Existingdedicatedexternalnativepath hasnoextra2chunkleadbound beyondcurrenttransportcontracts; do not enableforcolocatedpath."
       ],
       "first_test": "CPU actualwire/nativeowner >=9chunks partialtail/wrap/cancellation; then samecontextstrictstate+pairgate andactualunchangedVRAMcensusbeforefairlong.",
-      "limitation": "No implementation/build/model/GPU; hostmemorydelta40MiB+4KiBper targetprojected, GPUallocationunchangedbydesign notmeasured; no performanceclaim."
+      "limitation": "3+1 single matched long-prefill win;2+1 fullstate nowqualified but long512 performance pending. Full realistic suite/reset/independentCPUquality remain open.",
+      "already_tested_scope": "3+1 262K full2065target/73draft/1707pairs/32outputs, clean4FINISH and unchanged four device censuses. Same-binary first-cold121854/8 slots4 request429.236658s versus slots2 605.903149s:29.157546%less,1.411583ratio; exact8, both clean. Target hostmaps83894272B vs41947136B.",
+      "next_step": "Applied bounded_live_count query fix; next fullfour-slotlong512 output/finalstate comparison. Slots4vs2 request10.6505%less/TTFT12.3624%less,512exact/clean; All4payloads8319196708B fully byte-equal against candidate archive; exact cleanup receipt retained. Bounded-live-count candidate prepared, not yet launched."
     }
   ],
   "new_idea_intake": [],
@@ -328,7 +336,8 @@
       "evidence": [
         "attention-owner-capacity-screen.json",
         "attention-owner-capacity-screen.txt",
-        "dedicated-bulk-opportunity.json"
+        "dedicated-bulk-opportunity.json",
+        "qsa-whole-operator-owner-feasibility.txt"
       ],
       "capacity_budget": {
         "attention_owner_projection_bytes": 15086000964,
@@ -344,7 +353,16 @@
         "combined capture/copy/transport/runtime buffers and actual30GiB admission"
       ],
       "small_falsifying_test": "One actual QSA-layer authenticated replay interleaved with existing real draft steps on same owner/queue, preserve exact attention state/output and draft proposals; measure tail latency and backpressure against isolated runs before implementing12layer protocol. No GPU or implementation yet.",
-      "limitation": "No actual combined fit, speed, or lossless-quality result; approximate7ms draft cost is workload-dependent and not a new measurement."
+      "limitation": "No actual combined fit, speed, or lossless-quality result; approximate7ms draft cost is workload-dependent and not a new measurement.",
+      "current_source_audit": "review_prefill separately screens complete attention-head/KV ownership on otherwise idleGPU27; provisional/unmeasured subvariant of existing attention ownership, not a new tested result.",
+      "whole_qsa_indexer_owner_variant": {
+        "status": "source-bound-unmeasured",
+        "helper_cache_gib_before_overhead": 13.875,
+        "transport_bytes_per_layer": 80384,
+        "roundtrips_per_token": 12,
+        "capacity_limit": "Half-KV-only offload does not establish262K fit: indexer raw/pool allocations also grow with context. CompleteQSA+indexer ownership must account for caches, scratch, transport and retained state.",
+        "scope": "Source/capacity screen only; no actual runtime fit or speed claim."
+      }
     },
     {
       "id": "stateless-target-head-on-draft-owner",
@@ -435,6 +453,21 @@
       "evidence": [
         "external-new-intake-2026-10-28.json"
       ]
+    },
+    {
+      "id": "vocabulary-row-sharded-target-head-idle-helper",
+      "status": "profile-bound-closed-low-priority-no-GPU-test",
+      "idea": "Keep two-target incumbent; place disjoint final target output-head vocabulary rows on an otherwise idle helper GPU, rather than a draft or whole target stage.",
+      "motivation": "Observed stage-head cost roughly8% bounds whole-request benefit to a few percent before transport; stage rank imbalance alone is not head-specific opportunity.",
+      "exactness_constraints": "Preserve identical quantized per-row arithmetic, normalization/input identity and deterministic global argmax/tie rule across row shards. No target arithmetic or precision approximation.",
+      "first_test": "Deferred: reopen only if a larger actual head fraction or capacity requirement justifies exact per-row/argmax microgate. No GPUtest performed.",
+      "scope": "Distinct from moving the entire stateless head to the existing draft owner; no capacity/throughput claim. review_prefill investigating."
+    },
+    {
+      "id": "moe-output-row-host-bounce-micro",
+      "status": "closed-negative-exact",
+      "result": "Bitexact but160.872us versus78.107us; host-bounce variant slower.",
+      "scope": "Bounded microtest, not endpoint; review_prefill retained exact source/results."
     }
   ]
 }

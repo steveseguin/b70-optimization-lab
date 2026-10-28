@@ -1,0 +1,101 @@
+{
+  "scope": "CPU-only real scheduler; direct shared adoption is not native authentication; cProfile overhead included; not predicted GPU speedup",
+  "runs": [
+    {
+      "plan": "/dev/shm/sc117-dedicated-four-slots-2plus1-128k-long512-20261028-r1/output/plan.json",
+      "plan_sha256": "1062760a4751e6e1642c9e78be16ac71df1c3fcd1afb8c3587a27b5bc8a3cbd5",
+      "prompt_rows": 121854,
+      "modes": {
+        "original": {
+          "seconds": 0.5537448480026796,
+          "profile": "         5118318 function calls in 0.554 seconds\n\n   Ordered by: cumulative time\n   List reduced from 33 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       10    0.000    0.000    0.554    0.055 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:152(commands)\n       10    0.000    0.000    0.554    0.055 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:272(commands)\n       14    0.000    0.000    0.553    0.040 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:126(_live_count)\n       14    0.095    0.007    0.553    0.040 {built-in method builtins.sum}\n  1705964    0.311    0.000    0.458    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:127(<genexpr>)\n       10    0.000    0.000    0.395    0.039 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:374(invariants)\n       10    0.000    0.000    0.159    0.016 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:146(_ensure_known)\n  3412038    0.147    0.000    0.147    0.000 {built-in method builtins.len}\n        2    0.000    0.000    0.079    0.040 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:129(_new_row)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:86(_row_commands)\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:16(append_prefix)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:66(_accepts)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/dedicated.py:118(_poll_proposals)\n        1    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:172(_reserve)\n        2    0.000    0.000    0.000    0.000 {built-in method _hashlib.openssl_sha256}\n       10    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n       11    0.000    0.000    0.000    0.000 {built-in method builtins.any}\n\n\n",
+          "counts": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": "[Command(stage=0, op=24, sequence=1, row=Row(epoch=0, identity=121853, parent=121852, position=121852, token=248069, fixture=0, request=b'\\x8c=\\x06\\x1e\\x9dK\\xff|`\\x82\\xab\\xc4\\xf9\\xbd\\xab\\xd8\\xa1q\\xa4Gm\\xd8\\x9b\\x87\\xd8P\\xe1\\xb6j\\xc1L\\xd3', before=b'\\xf8r\\xdb%\\x1d\\x86\\xe4\\xb4\\x85\\xfe*\\xf6L\\xcfc\\x949\\x9a>>\\x81h\\xa1\\xdc?(\\x9fn\\xe5\\x8b\\xf22', after=b'4\\xec`\\x93\\x8c\\xb8\\xa9D:P\\x10\\x0e\\x02\\xdf?\\xf3\\x0f+\\xa6\\x10\\x11\\x11\\x8d6\\x93\\x18\\x83\\xe7K\\xc9\\x89\\xa7'), tentative=False, row_ticket=0, source=None, reset=None)]",
+          "events": "[{'event': 'prefill-adopted', 'positions': 121852, 'next_seed': 121853, 'provider_serial': 121852}, {'event': 'row-created', 'epoch': 0, 'row': 121853, 'parent': 121852, 'position': 121852, 'token': 248069, 'verified': True}, {'event': 'row-created', 'epoch': 0, 'row': 121854, 'parent': 121853, 'position': 121853, 'token': 271, 'verified': True}, {'event': 'send', 'op': 24, 'stage': 0, 'sequence': 1, 'row': 121853, 'position': 121852, 'phase': None}]",
+          "frontier": 121852,
+          "retained_rows": 121854
+        },
+        "candidate": {
+          "seconds": 0.0003287979634478688,
+          "profile": "         632 function calls in 0.000 seconds\n\n   Ordered by: cumulative time\n   List reduced from 33 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:152(commands)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:272(commands)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:146(_ensure_known)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:374(invariants)\n       14    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-live-count-candidate/ring_coordinator.py:126(_live_count)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:86(_row_commands)\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:129(_new_row)\n       14    0.000    0.000    0.000    0.000 {built-in method builtins.sum}\n       36    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-live-count-candidate/ring_coordinator.py:134(<genexpr>)\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:16(append_prefix)\n       24    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n      182    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n        1    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:172(_reserve)\n       79    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:66(_accepts)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/dedicated.py:118(_poll_proposals)\n        2    0.000    0.000    0.000    0.000 {built-in method _hashlib.openssl_sha256}\n\n\n",
+          "counts": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": "[Command(stage=0, op=24, sequence=1, row=Row(epoch=0, identity=121853, parent=121852, position=121852, token=248069, fixture=0, request=b'\\x8c=\\x06\\x1e\\x9dK\\xff|`\\x82\\xab\\xc4\\xf9\\xbd\\xab\\xd8\\xa1q\\xa4Gm\\xd8\\x9b\\x87\\xd8P\\xe1\\xb6j\\xc1L\\xd3', before=b'\\xf8r\\xdb%\\x1d\\x86\\xe4\\xb4\\x85\\xfe*\\xf6L\\xcfc\\x949\\x9a>>\\x81h\\xa1\\xdc?(\\x9fn\\xe5\\x8b\\xf22', after=b'4\\xec`\\x93\\x8c\\xb8\\xa9D:P\\x10\\x0e\\x02\\xdf?\\xf3\\x0f+\\xa6\\x10\\x11\\x11\\x8d6\\x93\\x18\\x83\\xe7K\\xc9\\x89\\xa7'), tentative=False, row_ticket=0, source=None, reset=None)]",
+          "events": "[{'event': 'prefill-adopted', 'positions': 121852, 'next_seed': 121853, 'provider_serial': 121852}, {'event': 'row-created', 'epoch': 0, 'row': 121853, 'parent': 121852, 'position': 121852, 'token': 248069, 'verified': True}, {'event': 'row-created', 'epoch': 0, 'row': 121854, 'parent': 121853, 'position': 121853, 'token': 271, 'verified': True}, {'event': 'send', 'op': 24, 'stage': 0, 'sequence': 1, 'row': 121853, 'position': 121852, 'phase': None}]",
+          "frontier": 121852,
+          "retained_rows": 121854
+        }
+      },
+      "identical_commands_events_state": true
+    },
+    {
+      "plan": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output/plan.json",
+      "plan_sha256": "b053f886afec5cef2c22f6713c3c8881e749ed9cad6c071115b9471722bf9f3e",
+      "prompt_rows": 1677,
+      "modes": {
+        "original": {
+          "seconds": 0.007914857007563114,
+          "profile": "         70884 function calls in 0.008 seconds\n\n   Ordered by: cumulative time\n   List reduced from 33 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       10    0.000    0.000    0.008    0.001 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:152(commands)\n       10    0.000    0.000    0.008    0.001 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:272(commands)\n       14    0.000    0.000    0.008    0.001 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:126(_live_count)\n       14    0.001    0.000    0.008    0.001 {built-in method builtins.sum}\n    23486    0.004    0.000    0.006    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:127(<genexpr>)\n       10    0.000    0.000    0.005    0.001 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:374(invariants)\n       10    0.000    0.000    0.002    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:146(_ensure_known)\n    47082    0.002    0.000    0.002    0.000 {built-in method builtins.len}\n        2    0.000    0.000    0.001    0.001 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:129(_new_row)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:86(_row_commands)\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:16(append_prefix)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:66(_accepts)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/dedicated.py:118(_poll_proposals)\n        1    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:172(_reserve)\n       75    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:11(need)\n       11    0.000    0.000    0.000    0.000 {built-in method builtins.any}\n       23    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}\n\n\n",
+          "counts": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": "[Command(stage=0, op=24, sequence=1, row=Row(epoch=0, identity=1676, parent=1675, position=1675, token=248069, fixture=0, request=b'\\x125\\xa5\\x1b\\xfc\\xaf\\xe23\\xb2\\xc3G%P\\xbf\\x13Qj\\x9a\\xc5a\\xc2q\\xdfk\\xd9\\xe6\\x99\\x10\\x87\"\\x88F', before=b'\\xdb\\xaa\\xa4\\xb0\\x8b\\xe5\\xd7\\x81Z0\\x12@\\x13Y\\n\\xcb*>2\\x8a\\x9aU\\\\\\x1d`\\x16)\\t\\xbb\\xc5U[', after=b'\\x11{*\\xa4#\\x9b\\x00\\x8f\\xa2+\\x91\\xfa\\xe2\\xac\\xba\\xf1/\\xc8\"\\xb0\\x85K\\xf3\\xe9\\xdb\\xef\\xef\\x99\\xff:\\x0e\\xf9'), tentative=False, row_ticket=0, source=None, reset=None)]",
+          "events": "[{'event': 'prefill-adopted', 'positions': 1675, 'next_seed': 1676, 'provider_serial': 1675}, {'event': 'row-created', 'epoch': 0, 'row': 1676, 'parent': 1675, 'position': 1675, 'token': 248069, 'verified': True}, {'event': 'row-created', 'epoch': 0, 'row': 1677, 'parent': 1676, 'position': 1676, 'token': 271, 'verified': True}, {'event': 'send', 'op': 24, 'stage': 0, 'sequence': 1, 'row': 1676, 'position': 1675, 'phase': None}]",
+          "frontier": 1675,
+          "retained_rows": 1677
+        },
+        "candidate": {
+          "seconds": 0.00027449592016637325,
+          "profile": "         632 function calls in 0.000 seconds\n\n   Ordered by: cumulative time\n   List reduced from 33 to 18 due to restriction <18>\n\n   ncalls  tottime  percall  cumtime  percall filename:lineno(function)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:152(commands)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:272(commands)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:374(invariants)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:146(_ensure_known)\n       14    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-live-count-candidate/ring_coordinator.py:126(_live_count)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:86(_row_commands)\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_coordinator.py:129(_new_row)\n       14    0.000    0.000    0.000    0.000 {built-in method builtins.sum}\n       36    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-live-count-candidate/ring_coordinator.py:134(<genexpr>)\n       24    0.000    0.000    0.000    0.000 {built-in method builtins.min}\n      182    0.000    0.000    0.000    0.000 {built-in method builtins.len}\n        2    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:16(append_prefix)\n       79    0.000    0.000    0.000    0.000 {method 'get' of 'dict' objects}\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/coordinator.py:66(_accepts)\n       10    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/rolling_provider/dedicated.py:118(_poll_proposals)\n        1    0.000    0.000    0.000    0.000 {method 'disable' of '_lsprof.Profiler' objects}\n       75    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/planning/ring_contract.py:11(need)\n       42    0.000    0.000    0.000    0.000 /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/bounded-live-count-candidate/ring_coordinator.py:132(<genexpr>)\n\n\n",
+          "counts": [
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0,
+            0
+          ],
+          "commands": "[Command(stage=0, op=24, sequence=1, row=Row(epoch=0, identity=1676, parent=1675, position=1675, token=248069, fixture=0, request=b'\\x125\\xa5\\x1b\\xfc\\xaf\\xe23\\xb2\\xc3G%P\\xbf\\x13Qj\\x9a\\xc5a\\xc2q\\xdfk\\xd9\\xe6\\x99\\x10\\x87\"\\x88F', before=b'\\xdb\\xaa\\xa4\\xb0\\x8b\\xe5\\xd7\\x81Z0\\x12@\\x13Y\\n\\xcb*>2\\x8a\\x9aU\\\\\\x1d`\\x16)\\t\\xbb\\xc5U[', after=b'\\x11{*\\xa4#\\x9b\\x00\\x8f\\xa2+\\x91\\xfa\\xe2\\xac\\xba\\xf1/\\xc8\"\\xb0\\x85K\\xf3\\xe9\\xdb\\xef\\xef\\x99\\xff:\\x0e\\xf9'), tentative=False, row_ticket=0, source=None, reset=None)]",
+          "events": "[{'event': 'prefill-adopted', 'positions': 1675, 'next_seed': 1676, 'provider_serial': 1675}, {'event': 'row-created', 'epoch': 0, 'row': 1676, 'parent': 1675, 'position': 1675, 'token': 248069, 'verified': True}, {'event': 'row-created', 'epoch': 0, 'row': 1677, 'parent': 1676, 'position': 1676, 'token': 271, 'verified': True}, {'event': 'send', 'op': 24, 'stage': 0, 'sequence': 1, 'row': 1676, 'position': 1675, 'phase': None}]",
+          "frontier": 1675,
+          "retained_rows": 1677
+        }
+      },
+      "identical_commands_events_state": true
+    }
+  ]
+}

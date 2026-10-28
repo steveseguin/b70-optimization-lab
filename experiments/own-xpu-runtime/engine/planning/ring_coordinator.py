@@ -124,7 +124,16 @@ class Coordinator:
         self.phase=None;self.cut=None;self.stop_reason=None;self.done=False
 
     def _live_count(self):
-        return sum(not w.cancelled and len(w.accepted)<len(self.stages) for w in self.rows.values())
+        # Every position below all owners' committed frontiers has ACCEPTed on
+        # every stage. Keep that history for lineage, but do not rescan it.
+        # _ensure_known/_row_commands admit only positions below frontier plus
+        # live_capacity. Abort drains before readmission; reset retains the old
+        # frontier until every owner ACKs, then _request replaces the ledger.
+        begin = min(stage.committed for stage in self.stages)
+        end = self.frontier + self.live_capacity
+        return sum(not work.cancelled and len(work.accepted)<len(self.stages)
+                   for position in range(begin, end)
+                   if (work := self.rows.get(position)) is not None)
 
     def _new_row(self,position,token,verified,proposal=None):
         need(position not in self.rows and self._live_count()<self.live_capacity and position<self.frontier+self.live_capacity,'bounded global positions')

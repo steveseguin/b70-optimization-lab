@@ -1,0 +1,239 @@
+{
+  "scope": "Existing fixture>1 decode logs; host issue-to-completed intervals overlap and are not additive critical path; native Reply.busy_ms is host dispatcher time, not device profiling; provider deliberately zeroes native timing",
+  "runs": {
+    "long128k": {
+      "path": "/dev/shm/sc117-dedicated-four-slots-2plus1-128k-long512-20261028-r1/output",
+      "prompt_rows": 121854,
+      "issued_proposals": 596,
+      "explicit_rejected_proposals": 114,
+      "host": {
+        "0:op24": {
+          "count": 710,
+          "issue_to_completed_sum_ms": 22281.221118057147,
+          "issue_to_completed_median_ms": 33.63234200514853,
+          "native_busy_sum_ms": 12651.880912,
+          "native_busy_median_ms": 17.742653500000003
+        },
+        "0:op25": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 8721.411863574758,
+          "issue_to_completed_median_ms": 16.84935693629086,
+          "native_busy_sum_ms": 218.239294,
+          "native_busy_median_ms": 0.453113
+        },
+        "provider:op27": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 21080.850815866143,
+          "issue_to_completed_median_ms": 42.24130802322179,
+          "native_busy_sum_ms": 0.0,
+          "native_busy_median_ms": 0.0
+        },
+        "1:op24": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 22776.153418351896,
+          "issue_to_completed_median_ms": 42.468691943213344,
+          "native_busy_sum_ms": 10160.681377,
+          "native_busy_median_ms": 20.000926
+        },
+        "1:op25": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 14664.969650679268,
+          "issue_to_completed_median_ms": 25.745366932824254,
+          "native_busy_sum_ms": 183.973343,
+          "native_busy_median_ms": 0.359777
+        },
+        "0:op26": {
+          "count": 114,
+          "issue_to_completed_sum_ms": 1917.5085425376892,
+          "issue_to_completed_median_ms": 15.991410531569272,
+          "native_busy_sum_ms": 396.199258,
+          "native_busy_median_ms": 3.3644119999999997
+        }
+      },
+      "native": {
+        "stage0": {
+          "count": 710,
+          "half_completion_ms": {
+            "sum": 10518.9513,
+            "median": 14.68585
+          },
+          "prepare_ms": {
+            "sum": 125.289418,
+            "median": 0.159159
+          },
+          "enqueue_loop_ms": {
+            "sum": 3877.94796,
+            "median": 5.29651
+          },
+          "wait_ms": {
+            "sum": 6123.76334,
+            "median": 8.436060000000001
+          },
+          "launch_extent": {
+            "sum": 86706880,
+            "median": 122112.0
+          },
+          "attestation": {
+            "rows": 122564,
+            "tentative_rows": 596,
+            "accepted_tentative_rows": 397,
+            "discarded_rows": 199,
+            "abort_count": 114
+          }
+        },
+        "stage1": {
+          "count": 511,
+          "half_completion_ms": {
+            "sum": 9935.2721,
+            "median": 19.5771
+          },
+          "prepare_ms": {
+            "sum": 0.08191,
+            "median": 0.000141
+          },
+          "enqueue_loop_ms": {
+            "sum": 2474.78839,
+            "median": 4.78134
+          },
+          "wait_ms": {
+            "sum": 7450.32741,
+            "median": 14.5117
+          },
+          "launch_extent": {
+            "sum": 62406144,
+            "median": 122112
+          },
+          "attestation": {
+            "rows": 122365,
+            "tentative_rows": 0,
+            "accepted_tentative_rows": 0,
+            "discarded_rows": 0,
+            "abort_count": 0
+          }
+        }
+      },
+      "source_sha256": {
+        "commands.jsonl": "4e43c5f129213bd091173318bfe772d56b72a63477d878e22c99291c3e986605",
+        "driver-result.json": "e1f6d7de340f348523d632f8b2b65cb29c3832a597ff6bde98b13a2933180223",
+        "plan.json": "1062760a4751e6e1642c9e78be16ac71df1c3fcd1afb8c3587a27b5bc8a3cbd5"
+      }
+    },
+    "short64k": {
+      "path": "/dev/shm/sc117-dedicated-2plus1-64k512-20261028-r1/output",
+      "prompt_rows": 1677,
+      "issued_proposals": 512,
+      "explicit_rejected_proposals": 92,
+      "host": {
+        "0:op24": {
+          "count": 604,
+          "issue_to_completed_sum_ms": 8899.348922073841,
+          "issue_to_completed_median_ms": 14.194878516718745,
+          "native_busy_sum_ms": 8548.723529,
+          "native_busy_median_ms": 13.797746499999999
+        },
+        "0:op25": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 215.09160636924207,
+          "issue_to_completed_median_ms": 0.41766499634832144,
+          "native_busy_sum_ms": 69.513794,
+          "native_busy_median_ms": 0.135635
+        },
+        "provider:op27": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 3752.773442887701,
+          "issue_to_completed_median_ms": 7.105572032742202,
+          "native_busy_sum_ms": 0.0,
+          "native_busy_median_ms": 0.0
+        },
+        "1:op24": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 6155.302329920232,
+          "issue_to_completed_median_ms": 11.949651059694588,
+          "native_busy_sum_ms": 6012.844298,
+          "native_busy_median_ms": 11.679142
+        },
+        "1:op25": {
+          "count": 511,
+          "issue_to_completed_sum_ms": 277.90554449893534,
+          "issue_to_completed_median_ms": 0.5352970911189914,
+          "native_busy_sum_ms": 49.250775,
+          "native_busy_median_ms": 0.092444
+        },
+        "0:op26": {
+          "count": 92,
+          "issue_to_completed_sum_ms": 233.29477198421955,
+          "issue_to_completed_median_ms": 2.4239378981292248,
+          "native_busy_sum_ms": 197.412334,
+          "native_busy_median_ms": 2.1049629999999997
+        }
+      },
+      "native": {
+        "stage0": {
+          "count": 604,
+          "half_completion_ms": {
+            "sum": 6960.1114,
+            "median": 11.50375
+          },
+          "prepare_ms": {
+            "sum": 77.384388,
+            "median": 0.11567250000000001
+          },
+          "enqueue_loop_ms": {
+            "sum": 2686.63354,
+            "median": 4.135669999999999
+          },
+          "wait_ms": {
+            "sum": 4065.91439,
+            "median": 7.023820000000001
+          },
+          "launch_extent": {
+            "sum": 1175360,
+            "median": 1952.0
+          },
+          "attestation": {
+            "rows": 2281,
+            "tentative_rows": 512,
+            "accepted_tentative_rows": 419,
+            "discarded_rows": 93,
+            "abort_count": 92
+          }
+        },
+        "stage1": {
+          "count": 511,
+          "half_completion_ms": {
+            "sum": 5918.5438,
+            "median": 11.5377
+          },
+          "prepare_ms": {
+            "sum": 0.028118,
+            "median": 5e-05
+          },
+          "enqueue_loop_ms": {
+            "sum": 2008.19972,
+            "median": 3.72786
+          },
+          "wait_ms": {
+            "sum": 3902.3203,
+            "median": 7.80609
+          },
+          "launch_extent": {
+            "sum": 995680,
+            "median": 1952
+          },
+          "attestation": {
+            "rows": 2188,
+            "tentative_rows": 0,
+            "accepted_tentative_rows": 0,
+            "discarded_rows": 0,
+            "abort_count": 0
+          }
+        }
+      },
+      "source_sha256": {
+        "commands.jsonl": "d12c3ade48610231f72f7a16ed48b90795b0df43882fa58cab96ae3e87aca860",
+        "driver-result.json": "ef15c35601fb881d7a3b203002c174185259a8bca49ee100ff42f0ee757a8e0b",
+        "plan.json": "b053f886afec5cef2c22f6713c3c8881e749ed9cad6c071115b9471722bf9f3e"
+      }
+    }
+  }
+}
