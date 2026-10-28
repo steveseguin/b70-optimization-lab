@@ -1,0 +1,28 @@
+{
+  "argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-O2",
+    "-std=gnu++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/device.cpp",
+    "-Wl,--gc-sections",
+    "-o",
+    "/dev/shm/sc117-l4-raw-device-prepared-20261028-r2/replay"
+  ],
+  "returncode": 0,
+  "r1_not_run_reason": "Initial compiled probe lacked production offload precise-div/sqrt flags; preserved and replaced before any execution."
+}

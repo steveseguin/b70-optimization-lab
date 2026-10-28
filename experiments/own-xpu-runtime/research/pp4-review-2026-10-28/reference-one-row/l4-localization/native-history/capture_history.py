@@ -13,6 +13,7 @@ GATE=HERE.parents[2]/'dedicated-gate'
 sys.path.insert(0,str(GATE))
 import current_plan as P
 import validate
+import validate_prepared
 R=P.R
 C,BASE=R.C,R.BASE
 READER=Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/state-bundle/reader.py')
@@ -77,22 +78,36 @@ def compare_metadata(actual,baseline):
 def make_plan(config):
     p=P.make_plan(config)
     cfg=json.loads(Path(config).read_text());p['neutrality_baselines']=cfg['neutrality_baselines']
+    enabled=cfg.get('prepared_history',False);assert type(enabled)is bool
+    p['prepared_history']=enabled
+    if enabled:
+        control=Path(cfg['prepared_control_reference']).resolve();assert control.is_file() and control.stat().st_size==384
+        p['prepared_control_reference']=str(control);p['pins'][str(control)]=BASE.digest(control)
     assert set(p['neutrality_baselines'])=={'0','1'}
     for path in p['neutrality_baselines'].values():
         for name in ('state-index.tsv','state.json','state-seal.txt','provenance.json'):
             file=Path(path)/name;p['pins'][str(file.resolve())]=BASE.digest(file)
     for stage in p['stages']:
-        assert 'OWNRT_L4_RAW_HISTORY' not in stage['environment']
-        if stage['id']==0:stage['environment']['OWNRT_L4_RAW_HISTORY']='1'
+        assert 'OWNRT_L4_RAW_HISTORY' not in stage['environment'] and 'OWNRT_L4_PREP_HISTORY' not in stage['environment']
+        if stage['id']==0:
+            stage['environment']['OWNRT_L4_RAW_HISTORY']='1'
+            if enabled:stage['environment']['OWNRT_L4_PREP_HISTORY']='1'
     p.update(schema='ownrt.reference-l4-raw-history-plan.v1',router_layers=[4],dump_sequence=244,
         prune_verified_full_bundles=True,router_dump_transient_budget_bytes=1024**3,limits='Fixed244/1 target-only plus one DUMP4 per rank after request; selected L4 fields only retained after full sealed verification. Not a timing run.')
-    for path in (Path(__file__).resolve(),Path(P.__file__).resolve(),Path(validate.__file__).resolve(),READER):p['pins'][str(path)]=BASE.digest(path)
+    for path in (Path(__file__).resolve(),Path(P.__file__).resolve(),Path(validate.__file__).resolve(),Path(validate_prepared.__file__).resolve(),READER):p['pins'][str(path)]=BASE.digest(path)
     return p
 
 def request(a,transport,plan,began):
     assert [s['environment'].get('OWNRT_L4_RAW_HISTORY') for s in plan['stages']]==['1',None]
     result=R.request(a,transport,plan,began)
     history=validate.verify(Path(plan['stages'][0]['native_output'])/'l4-raw-history',plan['prompt_tokens'])
+    prepared=None;prepared_failure=None
+    if plan['prepared_history']:
+        assert [s['environment'].get('OWNRT_L4_PREP_HISTORY')for s in plan['stages']]==['1',None]
+        native=Path(plan['stages'][0]['native_output'])
+        try:prepared=validate_prepared.verify(native/'l4-prepared-history',native/'l4-prepared-attempts.jsonl',plan['prepared_control_reference'])
+        except Exception as error:prepared_failure=dict(type=type(error).__name__,message=str(error))
+        BASE.save(Path(plan['output'])/'prepared-validation.json',dict(passed=prepared_failure is None,result=prepared,error=prepared_failure))
     assert result['actual_output_ids'] and len(result['actual_output_ids'])==1
     assert not any(transport.pending),'DUMP only after both committed/idle'
     # Budget is a transient-output forecast, not a new storage floor.
@@ -111,6 +126,7 @@ def request(a,transport,plan,began):
     comparisons={str(owner['id']):compare_metadata(root.parent/'full-source-metadata'/f'rank{owner["id"]}',Path(plan['neutrality_baselines'][str(owner['id'])])) for owner in plan['stages']}
     BASE.save(root.parent/'source-neutrality.json',comparisons)
     assert all(x['equal'] for x in comparisons.values()),'full source metadata differs; preserve both full dumps'
+    assert prepared_failure is None,'prepared sidecar rejected; preserve failure report and both full dumps'
     # Only newly-created complete sealed full dumps are pruned AFTER all requested extracts verify.
     # On ANY failure above full dumps remain available for incident handling.
     if plan['prune_verified_full_bundles']:
@@ -119,7 +135,7 @@ def request(a,transport,plan,began):
             assert set(p.name for p in directory.iterdir())==reader.FILES
             for name in sorted(reader.FILES):(directory/name).unlink()
             directory.rmdir()
-    result.update(l4_raw_history=history,source_neutrality=comparisons,full_source_metadata=str(root.parent/'full-source-metadata'),l4_captures=records,l4_capture_bytes=sum(x['bytes'] for x in records),
+    result.update(l4_raw_history=history,l4_prepared_history=prepared,source_neutrality=comparisons,full_source_metadata=str(root.parent/'full-source-metadata'),l4_captures=records,l4_capture_bytes=sum(x['bytes'] for x in records),
         quality_scope='L4 post-row intermediates plus active/spare recurrent buffers retained. Neither bank is asserted to be pre-row243; CPU initial state is pre-whole-batch, not pre-row243.')
     return result
 

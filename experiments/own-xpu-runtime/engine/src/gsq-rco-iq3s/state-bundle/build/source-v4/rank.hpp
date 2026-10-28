@@ -3,6 +3,7 @@
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
 #include "pipeline/checkpoint.hpp"
 #include "gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp"
+#include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
 #include <poll.h>
 #include <functional>
 #include <sys/mman.h>
@@ -136,6 +137,49 @@ static l4raw::Bytes l4_history_read(Engine& e,const char*name,size_t bytes) {
  // Copy engine forces completed readback and avoids mutating kernel-I/O control staging.
  return e.readback(0,slot.id,bytes,true);
 }
+static l4probe::History* l4_prepared_history(Engine& e) {
+ if(!l4probe::enabled())return nullptr;
+ if(e.a.rank!=0)return nullptr;
+ require(l4_raw_history(e)!=nullptr,"prepared probe requires scoped raw recorder");
+ static Engine* owner=&e;require(owner==&e,"prepared probe engine lifetime");
+ static l4probe::History history(e.a.output/"l4-prepared-history",[](const l4probe::Bytes&b){return hash(b);});return &history;
+}
+static void l4_capture_prepared(Engine& e,const flash::Launch& l,const Request& request,const l4probe::Context& context) {
+ auto* history=l4_prepared_history(e);require(history&&e.prepared_path&&l.card==0,"prepared L4 path");
+ const auto site=size_t(&l-e.p.launches.data());const auto& commands=e.issue_sites.at(site).commands;
+ // Preserve actual observations BEFORE enforcing the expected replay geometry/path.
+ std::ofstream attempts(e.a.output/"l4-prepared-attempts.jsonl",std::ios::app);
+ attempts<<"{\"position\":"<<request.position<<",\"site\":"<<site<<",\"observed_calls\":[";
+ for(size_t j=0;j<context.calls.size();++j){const auto&v=context.calls[j];attempts<<(j?",":"")<<"{\"stage\":"<<v.stage<<",\"prepared\":"<<(v.prepared?"true":"false")<<",\"shape\":[";for(size_t k=0;k<v.shape.size();++k)attempts<<(k?",":"")<<v.shape[k];attempts<<"],\"pointers\":[";for(size_t k=0;k<v.pointers.size();++k)attempts<<(k?",":"")<<v.pointers[k];attempts<<"]}";}
+ attempts<<"],\"commands\":[";for(size_t j=0;j<commands.size();++j){const auto&cmd=commands[j];attempts<<(j?",":"")<<"{\"queue\":"<<cmd.queue<<",\"ids\":[";for(size_t k=0;k<cmd.ids.size();++k)attempts<<(k?",":"")<<cmd.ids[k];attempts<<"],\"pointers\":[";for(size_t k=0;k<cmd.pointers.size();++k)attempts<<(k?",":"")<<reinterpret_cast<uintptr_t>(cmd.pointers[k]);attempts<<"]}";}attempts<<"]}\n";attempts.flush();require(bool(attempts),"prepared attempt metadata write");
+ require(commands.size()==2,"actual L4 producer/consumer count");
+ std::vector<std::vector<void*>> pointers;for(const auto&cmd:commands)pointers.push_back(cmd.pointers);l4probe::validate(context,pointers);
+ require(context.calls[0].shape[0]==int(ng::gdn),"actual GDN operation");
+ require(commands[0].ids==commands[1].ids&&commands[0].queue==0&&commands[1].queue==0,"producer/consumer allocation and queue identity");
+ const auto& cmd=commands[0];require(cmd.ids.size()==20,"actual binding count");
+ std::array<size_t,20> offsets{};std::ostringstream metadata;
+ const auto& prepared=e.prepared.at(&l);
+ metadata<<"{\"site\":"<<site<<",\"implementation\":"<<prepared.spec.implementation<<",\"bank_parity\":"<<e.bank_parity<<",\"actual_stages\":[";
+ for(size_t j=0;j<2;++j){const auto&v=context.calls[j];metadata<<(j?",":"")<<"{\"kernel\":\"round2::Kernel<gdn,"<<v.stage<<">\",\"stage\":"<<v.stage<<",\"prepared\":"<<(v.prepared?"true":"false")<<",\"shape\":[";for(size_t k=0;k<v.shape.size();++k)metadata<<(k?",":"")<<v.shape[k];metadata<<"]}";}
+ metadata<<"],\"bindings\":[";
+ for(size_t k=0;k<20;++k){
+  const bool read_slot=k==3||k==4||k==15||k==17||k==18||k==19;
+  metadata<<(k?",":"")<<"{\"slot\":"<<k<<",\"allocation\":"<<cmd.ids[k]<<",\"pointer\":"<<reinterpret_cast<uintptr_t>(cmd.pointers[k])<<",\"read_slot\":"<<(read_slot?"true":"false");
+  if(!cmd.ids[k]||!cmd.pointers[k]){require(!read_slot,"unbound read slot");metadata<<",\"binding\":\"unbound\"}";continue;}
+  const auto&row=e.dev(0).arena.row(cmd.ids[k]);const auto pointer=reinterpret_cast<uintptr_t>(cmd.pointers[k]),base=reinterpret_cast<uintptr_t>(row.pointer);
+  metadata<<",\"binding\":\""<<(k>=8&&k<=14?"shared-unused-fallback":"bound")<<"\",\"label\":"<<ownrt::quote(row.label)<<",\"live\":"<<(row.live?"true":"false")<<",\"memory_kind\":"<<int(row.memory)<<",\"base\":"<<base<<",\"allocation_bytes\":"<<row.bytes;
+  if(read_slot){require(row.live&&row.memory==ownrt::Memory::device,"live device read binding");offsets[k]=l4probe::offset(pointer,base,row.bytes,0);metadata<<",\"offset\":"<<offsets[k];}
+  else if(pointer>=base&&pointer-base<=row.bytes)metadata<<",\"offset\":"<<(pointer-base);
+  else metadata<<",\"offset\":null";
+  metadata<<"}";
+ }
+ metadata<<"]}";
+ auto read=[&](size_t slot,size_t bytes){const auto&row=e.dev(0).arena.row(cmd.ids[slot]);l4probe::offset(reinterpret_cast<uintptr_t>(cmd.pointers[slot]),reinterpret_cast<uintptr_t>(row.pointer),row.bytes,bytes);return e.readback_range(0,cmd.ids[slot],offsets[slot],bytes);};
+ // Read exactly the actual producer/consumer scratch binding, never an assumed arena prefix.
+ const auto scratch=read(19,4192*4);std::array<l4probe::Bytes,5>controls={read(3,192),read(4,192),read(15,4),read(17,4),read(18,4)};
+ int32_t error,position,active;std::memcpy(&error,controls[2].data(),4);std::memcpy(&position,controls[3].data(),4);std::memcpy(&active,controls[4].data(),4);require(error==0&&position==request.position&&active==1,"actual invocation control words");
+ history->append(request.position,scratch,controls,metadata.str());
+}
 static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
  const auto p150_half_begin=std::chrono::steady_clock::now();
  require(!candidate.pending,"half before resolving prior candidate");
@@ -211,6 +255,8 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
    l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
   e.enqueue(l,e.logical);
+  if(l4_history&&l.label=="blk.4.gdn.recurrence"&&l4probe::enabled())
+   l4_capture_prepared(e,l,request,e.issue_sites.at(size_t(&l-e.p.launches.data())).l4_prepared_invocation);
   if(l4_history&&l.label=="blk.4.gdn.recurrence")
    l4_history->capture({l4_history_read(e,"blk.4.gdn.conv",40960),l4_history_read(e,"blk.4.gdn.a",192),l4_history_read(e,"blk.4.gdn.b",192),l4_history_read(e,"blk.4.gdn.y",24576)});
   if(decode_profile){e.drain();
@@ -302,6 +348,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(e.a.rank==1)e.reply_report.schedule(std::move(report));else report();
  if(e.a.rank==0)p150::record("half_total",request.position,false,p150_half_begin);
  if(l4_history){require(!candidate.cancelled,"L4 history refuses cancelled row");l4_history->finish_row();}
+ if(auto*history=l4_prepared_history(e))history->finish_row(request.position);
  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
 }
 static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {

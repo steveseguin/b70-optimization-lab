@@ -1,0 +1,159 @@
+--- a/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -1,4 +1,5 @@
+ #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
+ #include "stage2/packet194-expert-diet-engine/p100_down.hpp"
+ #include "stage2/packet194-expert-diet-engine/reply_first.hpp"
+ #include "stage2/packet194-expert-diet-engine/host_spin.hpp"
+@@ -1038,6 +1039,7 @@
+ 
+   struct IssueSite {
+     std::vector<ownrt::PreparedCompute> commands;
++    l4probe::Context l4_prepared_invocation; // diagnostic only, empty by default
+     int card=0, layer=-1, cls=0, family=0;
+     bool copy=false, layer_end=false, prefill_skip=false;
+     Allocation fp32_source=0;size_t fp32_extent=0;
+@@ -2031,7 +2033,11 @@
+       set_class(l.label);site.cls=current_cls;
+       site.fp32_source=fp32_sources[l.card];site.fp32_extent=fp32_extents[l.card];
+       preparing_commands=true;auto& d=dev(l.card);d.begin_capture(site.commands);
+-      try {execute_site(l);d.end_capture();preparing_commands=false;}
++      try {
++        if(l4probe::enabled()&&l.label=="blk.4.gdn.recurrence") {l4probe::Scope observing(site.l4_prepared_invocation);execute_site(l);}
++        else execute_site(l);
++        d.end_capture();preparing_commands=false;
++      }
+       catch(...){d.end_capture();preparing_commands=false;throw;}
+       site.cls=current_cls;
+     }
+--- a/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -3,6 +3,7 @@
+ #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
+ #include "pipeline/checkpoint.hpp"
+ #include "gsq-rco-iq3s/state-bundle/build/source-v4/l4_raw_history.hpp"
++#include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
+ #include <poll.h>
+ #include <functional>
+ #include <sys/mman.h>
+@@ -135,6 +136,49 @@
+  require(slot.type==flash::Scalar::f32&&slot.n*flash::scalar_bytes(slot.type)==bytes,"L4 history field dtype/extent");
+  // Copy engine forces completed readback and avoids mutating kernel-I/O control staging.
+  return e.readback(0,slot.id,bytes,true);
++}
++static l4probe::History* l4_prepared_history(Engine& e) {
++ if(!l4probe::enabled())return nullptr;
++ if(e.a.rank!=0)return nullptr;
++ require(l4_raw_history(e)!=nullptr,"prepared probe requires scoped raw recorder");
++ static Engine* owner=&e;require(owner==&e,"prepared probe engine lifetime");
++ static l4probe::History history(e.a.output/"l4-prepared-history",[](const l4probe::Bytes&b){return hash(b);});return &history;
++}
++static void l4_capture_prepared(Engine& e,const flash::Launch& l,const Request& request,const l4probe::Context& context) {
++ auto* history=l4_prepared_history(e);require(history&&e.prepared_path&&l.card==0,"prepared L4 path");
++ const auto site=size_t(&l-e.p.launches.data());const auto& commands=e.issue_sites.at(site).commands;
++ // Preserve actual observations BEFORE enforcing the expected replay geometry/path.
++ std::ofstream attempts(e.a.output/"l4-prepared-attempts.jsonl",std::ios::app);
++ attempts<<"{\"position\":"<<request.position<<",\"site\":"<<site<<",\"observed_calls\":[";
++ for(size_t j=0;j<context.calls.size();++j){const auto&v=context.calls[j];attempts<<(j?",":"")<<"{\"stage\":"<<v.stage<<",\"prepared\":"<<(v.prepared?"true":"false")<<",\"shape\":[";for(size_t k=0;k<v.shape.size();++k)attempts<<(k?",":"")<<v.shape[k];attempts<<"],\"pointers\":[";for(size_t k=0;k<v.pointers.size();++k)attempts<<(k?",":"")<<v.pointers[k];attempts<<"]}";}
++ attempts<<"],\"commands\":[";for(size_t j=0;j<commands.size();++j){const auto&cmd=commands[j];attempts<<(j?",":"")<<"{\"queue\":"<<cmd.queue<<",\"ids\":[";for(size_t k=0;k<cmd.ids.size();++k)attempts<<(k?",":"")<<cmd.ids[k];attempts<<"],\"pointers\":[";for(size_t k=0;k<cmd.pointers.size();++k)attempts<<(k?",":"")<<reinterpret_cast<uintptr_t>(cmd.pointers[k]);attempts<<"]}";}attempts<<"]}\n";attempts.flush();require(bool(attempts),"prepared attempt metadata write");
++ require(commands.size()==2,"actual L4 producer/consumer count");
++ std::vector<std::vector<void*>> pointers;for(const auto&cmd:commands)pointers.push_back(cmd.pointers);l4probe::validate(context,pointers);
++ require(context.calls[0].shape[0]==int(ng::gdn),"actual GDN operation");
++ require(commands[0].ids==commands[1].ids&&commands[0].queue==0&&commands[1].queue==0,"producer/consumer allocation and queue identity");
++ const auto& cmd=commands[0];require(cmd.ids.size()==20,"actual binding count");
++ std::array<size_t,20> offsets{};std::ostringstream metadata;
++ const auto& prepared=e.prepared.at(&l);
++ metadata<<"{\"site\":"<<site<<",\"implementation\":"<<prepared.spec.implementation<<",\"bank_parity\":"<<e.bank_parity<<",\"actual_stages\":[";
++ for(size_t j=0;j<2;++j){const auto&v=context.calls[j];metadata<<(j?",":"")<<"{\"kernel\":\"round2::Kernel<gdn,"<<v.stage<<">\",\"stage\":"<<v.stage<<",\"prepared\":"<<(v.prepared?"true":"false")<<",\"shape\":[";for(size_t k=0;k<v.shape.size();++k)metadata<<(k?",":"")<<v.shape[k];metadata<<"]}";}
++ metadata<<"],\"bindings\":[";
++ for(size_t k=0;k<20;++k){
++  const bool read_slot=k==3||k==4||k==15||k==17||k==18||k==19;
++  metadata<<(k?",":"")<<"{\"slot\":"<<k<<",\"allocation\":"<<cmd.ids[k]<<",\"pointer\":"<<reinterpret_cast<uintptr_t>(cmd.pointers[k])<<",\"read_slot\":"<<(read_slot?"true":"false");
++  if(!cmd.ids[k]||!cmd.pointers[k]){require(!read_slot,"unbound read slot");metadata<<",\"binding\":\"unbound\"}";continue;}
++  const auto&row=e.dev(0).arena.row(cmd.ids[k]);const auto pointer=reinterpret_cast<uintptr_t>(cmd.pointers[k]),base=reinterpret_cast<uintptr_t>(row.pointer);
++  metadata<<",\"binding\":\""<<(k>=8&&k<=14?"shared-unused-fallback":"bound")<<"\",\"label\":"<<ownrt::quote(row.label)<<",\"live\":"<<(row.live?"true":"false")<<",\"memory_kind\":"<<int(row.memory)<<",\"base\":"<<base<<",\"allocation_bytes\":"<<row.bytes;
++  if(read_slot){require(row.live&&row.memory==ownrt::Memory::device,"live device read binding");offsets[k]=l4probe::offset(pointer,base,row.bytes,0);metadata<<",\"offset\":"<<offsets[k];}
++  else if(pointer>=base&&pointer-base<=row.bytes)metadata<<",\"offset\":"<<(pointer-base);
++  else metadata<<",\"offset\":null";
++  metadata<<"}";
++ }
++ metadata<<"]}";
++ auto read=[&](size_t slot,size_t bytes){const auto&row=e.dev(0).arena.row(cmd.ids[slot]);l4probe::offset(reinterpret_cast<uintptr_t>(cmd.pointers[slot]),reinterpret_cast<uintptr_t>(row.pointer),row.bytes,bytes);return e.readback_range(0,cmd.ids[slot],offsets[slot],bytes);};
++ // Read exactly the actual producer/consumer scratch binding, never an assumed arena prefix.
++ const auto scratch=read(19,4192*4);std::array<l4probe::Bytes,5>controls={read(3,192),read(4,192),read(15,4),read(17,4),read(18,4)};
++ int32_t error,position,active;std::memcpy(&error,controls[2].data(),4);std::memcpy(&position,controls[3].data(),4);std::memcpy(&active,controls[4].data(),4);require(error==0&&position==request.position&&active==1,"actual invocation control words");
++ history->append(request.position,scratch,controls,metadata.str());
+ }
+ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
+  const auto p150_half_begin=std::chrono::steady_clock::now();
+@@ -211,6 +255,8 @@
+   if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
+    l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
+   e.enqueue(l,e.logical);
++  if(l4_history&&l.label=="blk.4.gdn.recurrence"&&l4probe::enabled())
++   l4_capture_prepared(e,l,request,e.issue_sites.at(size_t(&l-e.p.launches.data())).l4_prepared_invocation);
+   if(l4_history&&l.label=="blk.4.gdn.recurrence")
+    l4_history->capture({l4_history_read(e,"blk.4.gdn.conv",40960),l4_history_read(e,"blk.4.gdn.a",192),l4_history_read(e,"blk.4.gdn.b",192),l4_history_read(e,"blk.4.gdn.y",24576)});
+   if(decode_profile){e.drain();
+@@ -302,6 +348,7 @@
+  if(e.a.rank==1)e.reply_report.schedule(std::move(report));else report();
+  if(e.a.rank==0)p150::record("half_total",request.position,false,p150_half_begin);
+  if(l4_history){require(!candidate.cancelled,"L4 history refuses cancelled row");l4_history->finish_row();}
++ if(auto*history=l4_prepared_history(e))history->finish_row(request.position);
+  return {0,token,error,int32_t(bytes),request.sequence,e.a.rank,{int32_t(candidate.cancelled),int32_t(issued)},Engine::ms(start),e.gemv_ms+e.nongemv_ms-gpu,0,0};
+ }
+ static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
+--- a/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp
++++ b/engine/src/stage2/packet194-expert-diet-engine/round2_submit.cpp
+@@ -3,6 +3,7 @@
+ #include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
+ #endif
+ #include "stage2/packet194-expert-diet-engine/round2_submit.hpp"
++#include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
+ #include "stage2/packet194-expert-diet-engine/mock_order.hpp"
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+@@ -78,6 +79,7 @@
+   ng::Args a;std::copy_n(p.begin(),19,a.p.begin());auto shape=s;float* global=static_cast<float*>(p[19]);int count=round2::groups(s),local=round2::local_floats(s);
+   a.f32=(s.flags&ng::f32_activations_flag)!=0; // as ng::group(): F32 exact-mode buffers are read and written as F32
+   if constexpr(Code==ng::gdn){
++   l4probe::observe(Stage,s,p,Stage==1||gdn_prep(s));
+    if constexpr(Stage==1)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(shape.tokens)*16*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_prep_device(shape,a,global,it);}));});
+    else if(gdn_prep(s))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<true>(shape,a,global,it);}));});
+    else return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<false>(shape,a,global,it);}));});
+--- /dev/null
++++ b/engine/src/stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp
+@@ -0,0 +1,32 @@
++#pragma once
++// Narrow host observer for the opt-in L4 diagnostic. Never used in device math.
++#include <array>
++#include <vector>
++#include <cstdint>
++#include <cstdlib>
++#include <stdexcept>
++#include <string>
++#include <filesystem>
++#include <fstream>
++#include <functional>
++#include <iterator>
++namespace l4probe {
++inline void check(bool ok,const char*why){if(!ok)throw std::runtime_error(std::string("L4 prepared probe: ")+why);}
++inline bool enabled(){const char*v=std::getenv("OWNRT_L4_PREP_HISTORY");if(!v)return false;check(std::string(v)=="0"||std::string(v)=="1","option");if(*v=='0')return false;const char*r=std::getenv("OWNRT_L4_RAW_HISTORY");check(r&&std::string(r)=="1","raw history required");return true;}
++struct Invocation {int stage;bool prepared;std::array<int,9>shape;std::vector<uintptr_t>pointers;};
++struct Context {std::vector<Invocation>calls;};
++inline thread_local Context* active=nullptr;
++struct Scope {explicit Scope(Context&c){check(!active,"nested observer");active=&c;}~Scope(){active=nullptr;}};
++template<class Shape,class P>inline void observe(int stage,const Shape&s,const P&p,bool prepared){if(!active)return;Invocation v{stage,prepared,{s.op,s.tokens,s.width,s.heads,s.extra,s.flags,s.capacity,s.budget,s.extent},{}};for(auto x:p)v.pointers.push_back(reinterpret_cast<uintptr_t>(x));active->calls.push_back(std::move(v));}
++inline void validate(const Context&c,const std::vector<std::vector<void*>>&p){check(c.calls.size()==2&&p.size()==2,"exact two actual submissions");for(size_t j=0;j<2;++j){const auto&v=c.calls[j];check(v.stage==(j?0:1)&&v.prepared,"prepared producer then consumer");check(v.shape[1]==1&&v.shape[5]==94&&v.shape[6]==4096,"actual shape/flags");check(v.shape==c.calls[0].shape&&v.pointers.size()==20&&p[j].size()==20,"shape/pointer extents");for(size_t k=0;k<20;++k)check(v.pointers[k]==reinterpret_cast<uintptr_t>(p[j][k]),"actual/prepared pointer identity");}}
++inline size_t offset(uintptr_t pointer,uintptr_t base,size_t extent,size_t bytes){check(pointer>=base&&pointer-base<=extent&&bytes<=extent-(pointer-base)&&pointer%4==0,"allocation pointer bounds/alignment");return pointer-base;}
++using Bytes=std::vector<uint8_t>;
++class History {
++ std::filesystem::path dir;std::function<std::string(const Bytes&)>sha;std::ofstream payload,index;int next=0;bool pending=false;
++ static Bytes read(const std::filesystem::path&p){std::ifstream f(p,std::ios::binary);check(bool(f),"sealed read");return Bytes(std::istreambuf_iterator<char>(f),{});}
++public:
++ History(std::filesystem::path p,std::function<std::string(const Bytes&)>h):dir(std::move(p)),sha(std::move(h)){check(std::filesystem::create_directory(dir),"fresh output");payload.open(dir/"prepared.bin",std::ios::binary);index.open(dir/"rows.jsonl");check(bool(payload)&&bool(index),"open");}
++ void append(int position,const Bytes&scratch,const std::array<Bytes,5>&controls,const std::string&metadata){check(!pending&&position==next&&next<244&&scratch.size()==4192*4,"row/extent");const size_t sizes[5]={192,192,4,4,4};for(int i=0;i<5;++i)check(controls[i].size()==sizes[i],"control extent");payload.write((const char*)scratch.data(),scratch.size());for(auto&b:controls)payload.write((const char*)b.data(),b.size());index<<"{\"position\":"<<position<<",\"offset\":"<<size_t(next)*17164<<",\"scratch_sha256\":\""<<sha(scratch)<<"\",\"controls_sha256\":[";for(int i=0;i<5;++i)index<<(i?",":"")<<"\""<<sha(controls[i])<<"\"";index<<"],\"invocation\":"<<metadata<<"}\n";payload.flush();index.flush();check(bool(payload)&&bool(index),"write");++next;pending=true;}
++ void finish_row(int position){check(pending&&next==position+1,"completed row");pending=false;if(next!=244)return;payload.close();index.close();auto p=read(dir/"prepared.bin"),i=read(dir/"rows.jsonl");check(p.size()==244*17164,"complete payload");std::ofstream f(dir/"seal.json");f<<"{\"schema\":\"ownrt.l4-prepared-history.v1\",\"rows\":244,\"row_bytes\":17164,\"payload_bytes\":"<<p.size()<<",\"payload_sha256\":\""<<sha(p)<<"\",\"index_sha256\":\""<<sha(i)<<"\"}\n";f.flush();check(bool(f),"seal");}
++};
++}

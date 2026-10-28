@@ -1,4 +1,5 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+#include "stage2/packet194-expert-diet-engine/l4_prepared_probe.hpp"
 #include "stage2/packet194-expert-diet-engine/p100_down.hpp"
 #include "stage2/packet194-expert-diet-engine/reply_first.hpp"
 #include "stage2/packet194-expert-diet-engine/host_spin.hpp"
@@ -1038,6 +1039,7 @@ public:
 
   struct IssueSite {
     std::vector<ownrt::PreparedCompute> commands;
+    l4probe::Context l4_prepared_invocation; // diagnostic only, empty by default
     int card=0, layer=-1, cls=0, family=0;
     bool copy=false, layer_end=false, prefill_skip=false;
     Allocation fp32_source=0;size_t fp32_extent=0;
@@ -2031,7 +2033,11 @@ public:
       set_class(l.label);site.cls=current_cls;
       site.fp32_source=fp32_sources[l.card];site.fp32_extent=fp32_extents[l.card];
       preparing_commands=true;auto& d=dev(l.card);d.begin_capture(site.commands);
-      try {execute_site(l);d.end_capture();preparing_commands=false;}
+      try {
+        if(l4probe::enabled()&&l.label=="blk.4.gdn.recurrence") {l4probe::Scope observing(site.l4_prepared_invocation);execute_site(l);}
+        else execute_site(l);
+        d.end_capture();preparing_commands=false;
+      }
       catch(...){d.end_capture();preparing_commands=false;throw;}
       site.cls=current_cls;
     }

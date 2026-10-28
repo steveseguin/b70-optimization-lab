@@ -7,9 +7,11 @@ Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 All512 outputs and full registered cross-context state/pairs matched; details and
 long512 table appear below. Independent CPU quality remains unresolved.
 
-Live: all four GPUs are idle. The prepared-input quality diagnostic is building with
-the qualified AOT target; the isolated lookup-view candidate passed CPU tests and
-remains unapplied. Completed3+1 state/map archives were fully verified before cleanup.
+Live: the prepared-input quality diagnostic is running once on cards 23/47 after
+its AOT build and CPU tests passed. The isolated lookup-view candidate passed CPU
+tests and remains unapplied. Completed 3+1 state/map archives were fully verified
+before cleanup. The broader realistic-task/reset matrix is registered in
+`experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
 
 Earlier eight-output screens (different generation cap):
 
@@ -163,7 +165,9 @@ five bundles:2065target/73draft,52registered128Kprefix/zero262Ktails,512IDs,
 122,364actual pairs and476native hiddenchunk hashes exact. This is an honest
 one-prompt topology/context tradeoff, not a single-variable cause or suite/record.
 Archive/tar comparison and precise cleanup completed. Prepared quality scratch
-probe build completed; root is preparing capture; standard build.py --aot-target preserves all40defaultcommands.
+probe capture r3 completed cleanly:244raw/prepared rows, token6343, both owners0
+and clean postflight. Internal comparison first diverges in normalization; no
+independent quality pass is implied. GPUs are idle; standard build.py --aot-target preserves all40defaultcommands.
 The mmap lookup candidate remains separate and unapplied; no GPU request is live.
 [3+1 evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json).
 [AOT long evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/aot-cold-gate/long512-r1-evidence/summary.json).

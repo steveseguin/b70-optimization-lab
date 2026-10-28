@@ -7,7 +7,7 @@ assert GATE.is_dir() and (GATE/'colocated_control.py').is_file()
 sys.path.insert(0,str(GATE))
 import reference_one_row as R
 C,BASE=R.C,R.BASE
-CURRENT='b73273ffecb23835612be36df78064c72ca5a3db4cc48cb31bf442e78f95bab5'
+CURRENT='d0c333550717a97b730de121878fc869313a843f8d5daed84d73b218957faea0'
 
 def make_plan(config):
  config=Path(config).resolve();cfg=json.loads(config.read_text());identity=json.loads(R.IDENTITY.read_text());tokens=json.loads(R.INPUT.read_text())['tokens']

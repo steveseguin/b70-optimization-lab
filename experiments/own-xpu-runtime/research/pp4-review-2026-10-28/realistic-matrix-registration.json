@@ -1,0 +1,141 @@
+{
+  "status": "source-only-proposed-matrix-no-launch",
+  "purpose": "BestAOT3+1/262K versusAOT2+1/128K actualworkload coverage, not headline from singleprompt. Independent6CPUfidelity disagreements unresolved.",
+  "identity": "SamepinnedAOTnative/currentbounded scheduler/model/draft/quant/coreenv/4slots/depth3/greedyEOS; explicit differences3vs2targets,cuts17/33vs25,reserved262Kvs128K,4vs3cards. Preserve actualprivatecaches/processage, no promptcache/reuse, no warmup disguisedascold.",
+  "matrix": [
+    {
+      "priority": 1,
+      "case": "short-realistic-decode",
+      "inputs": [
+        {
+          "id": "architecture-tradeoff",
+          "tokens": 67,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/architecture-tradeoff/prompt-token-ids.json",
+          "sha256": "e10f0f55da27c2e4619e5d851b329391b3b78d54cd1503d14aee321cbfb66727",
+          "max_new": 512
+        },
+        {
+          "id": "benchmark-analysis",
+          "tokens": 65,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/benchmark-analysis/prompt-token-ids.json",
+          "sha256": "b5b61e72b877a7ec68c599aa81bc360dc0ce5cb9254817ee19d34646da898a5c",
+          "max_new": 512
+        },
+        {
+          "id": "bug-report-synthesis",
+          "tokens": 71,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/bug-report-synthesis/prompt-token-ids.json",
+          "sha256": "68b21b695f4fd5da085f3e9627b4429083985e0d740de185b1751097b87fa32a",
+          "max_new": 512
+        },
+        {
+          "id": "code-review",
+          "tokens": 90,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/code-review/prompt-token-ids.json",
+          "sha256": "da7eb8132fe167c3ea45d1ed4cb7221c6da1fe68c6fc32ba66c8be6721e476ba",
+          "max_new": 512
+        },
+        {
+          "id": "customer-email",
+          "tokens": 77,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/customer-email/prompt-token-ids.json",
+          "sha256": "07815858cc54cdfcb46b3e06ced7b234fd3ea167a400b50d7d49882d26a0e021",
+          "max_new": 512
+        },
+        {
+          "id": "decision-memo",
+          "tokens": 60,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/decision-memo/prompt-token-ids.json",
+          "sha256": "bf7cb6f5b27d11ced4ca6128bfdf178b0e5b0607745d055cbb2ff9ae5c770ef3",
+          "max_new": 512
+        },
+        {
+          "id": "incident-retrospective",
+          "tokens": 87,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/incident-retrospective/prompt-token-ids.json",
+          "sha256": "5a7a876f8d858f426cb36b2ba5d3166613a48c8e3118ce7e007fb47b04dff154",
+          "max_new": 512
+        },
+        {
+          "id": "performance-hypotheses",
+          "tokens": 64,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/performance-hypotheses/prompt-token-ids.json",
+          "sha256": "c12a3b1ec97e0c459f3af4411199b9d17f7da19484c245c26c914df89b19235b",
+          "max_new": 512
+        },
+        {
+          "id": "release-plan",
+          "tokens": 68,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/release-plan/prompt-token-ids.json",
+          "sha256": "5a3d47d37c1b046e18d909257fa10111c4c3b89ea6c564b106b3bafefd30a7ec",
+          "max_new": 512
+        },
+        {
+          "id": "risk-register",
+          "tokens": 61,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/risk-register/prompt-token-ids.json",
+          "sha256": "f2f3621d4c505005c9a14702fc8f12e41a9acf052629185b0fb6965d5390c470",
+          "max_new": 512
+        },
+        {
+          "id": "sql-debugging",
+          "tokens": 83,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/sql-debugging/prompt-token-ids.json",
+          "sha256": "77b1bcc8f1a8bf36d621be7ff43ae7691f9c41ee8babd0ce657302ecae880318",
+          "max_new": 512
+        },
+        {
+          "id": "technical-guide",
+          "tokens": 69,
+          "path": "experiments/own-xpu-runtime/research/review-2026-10-25/depth-suite-a/technical-guide/prompt-token-ids.json",
+          "sha256": "f315035fb0f57631365bb5897b9b6c903dcb3875647939ba0ba9edca5c048d9c",
+          "max_new": 512
+        }
+      ],
+      "execution": "All12 original taskprompts in fixed manifest order, naturalEOS up to512, no omissions/shortenedinputs. Same ordered list on both configurations after dedicatedresetqualification. Report perprompt rates/lengths andmedian, exactalloutputs. Existing older67\u201390token prompts are genuine suite, unlike1677seam; do not substitute historicaloutputoracle into runtime."
+    },
+    {
+      "priority": 2,
+      "case": "medium-prefill",
+      "input": "Historical12.4Kdocument body referenced inCURRENT; original exact rendered tokenIDs/HTTPbody not yet located inthisbounded audit.",
+      "gap": "Recover original storedclient body+renderer/tokenSHA before registration. Do not silently replace with convenient truncated121Kprefix. Untilrecovered, mediumcoverage isblocked notpassed.",
+      "max_new": 512
+    },
+    {
+      "priority": 0,
+      "case": "long-prefill+decode",
+      "input": "Existing121854LEi32promptSHA624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+      "execution": "Alreadycompleted matchedfirstcold512cases,3+1request261.330404s vs2+1369.931021s withfullcrosscontextstate/pairs. Reuse actualproof; no unchanged rerunneeded."
+    },
+    {
+      "priority": 1,
+      "case": "independent-requests-reset",
+      "inputs": "Stored1677seam then firsttwo originalsuite tasks then1677seam again, actualdistinctrequestepoch/identity; followedby complete12suite oncequalified.",
+      "execution": "Onecontinuouslyloadedownerset pertopology; allownerresetbarrier, byteverifiedcoldtarget/draftstate, unchangedallocinventory, publicationinvalidated, serial/frontier0, thennewrequest. A\u2192B\u2192A output/state equality distinguishes reset from promptreuse.",
+      "gap": "Dedicatedtransport explicitlyrefusespersistent_reset andlifecycleone request; provider-onlyOP11+bulkprefixheader/promptauthority reset notqualified. Existingpersistent_rolling_suite reset validatescolocated provider-stage, cannotpassdedicatedownerasfakestage. Implementminimaldedicatedresetadapter onlywhenassigned; no freshserverchain substitute."
+    },
+    {
+      "priority": 3,
+      "case": "near-capacity",
+      "input": "inputs/near262k-body.json.gz / near262k-input.json;262136prompt+8naturaloutputs, pinnedrenderer/tokenSHA43d79fc1fe21310c4fc245a834cc0102ec44f81843710f452280d4d39f2165d8",
+      "execution": "3+1onlycapacitydiagnostic;2+1reserved128Kmustreject beforedispatch, notclaimcomparable262Kfit. For commonnear128Kcase, prepareseparategenuine-sourceinputwithsamecorpus/renderer/questionandfixedcutrule,131064+8, freezebeforeanytiming; existing121854longcase alreadytests93%capacity.",
+      "gap": "Needregistered131064body+exacttokenIDs; noexistingbodyasserted. Near262Kdoesnotprovequality ordecodeperformance."
+    }
+  ],
+  "existing_harnesses": {
+    "single_request": "engine/tools/dedicated_provider_driver.py + dedicated_provider_lifecycle.py; configs/planactualsamecheckedfactory. Freshoutputandactualfloor96GiB; noautomaticretry.",
+    "suite_reference": "engine/tools/persistent_rolling_suite.py runtime-onlyschema ownrt.persistent-rolling-inputs.v1,64maxrequests; target/provider-stage reset assumptions requirededicatedadapter.",
+    "older_reference": "engine/tools/persistent_live_suite.py carriesexpected_output_ids; donotfeedoracleanswersintoruntime, useofflinecomparisononly.",
+    "state": "aot-cold-gate/compare_full_gate.py samecontext32 and dedicated-gate/long-cross-context/compare_long.py qualifiedlong512crosscontext; reuse scopedinputcountsupport ratherthanfakefixedcounts."
+  },
+  "metrics": "Separate load\u2192ready,requeststart\u2192firsttoken,requestwall,prefixphase,99/span99 and(N-1)/(last-first),actualEOS/outputcount,resetwall. Sameprocesslaterrequests labeledloaded-runtimecoldstate, NOTfirstprocesscold. Noaveragingratesacrosstopologies.",
+  "plausible_untested_external_entries": [
+    "Expertparallel/hybrid remainsunscreenedbeyondCPUroutebudget; naivepureEPnegative, genuinehybridneedsownertrafficbound.",
+    "CompleteQSA/indexerowner onidlecard:13.875GiBcachebeforeoverhead,12RPC/token; actualoperatorfit/roundtripunmeasured.",
+    "Exactexpertrefillphaseworkspace separatefromfutureKVtaildrop-inrejection.",
+    "Boundedfileorderload/DMApipeline readiness-only; establishactualI/Ocriticalpathfirst.",
+    "Nativecommandgraph source-only; mustpreserveFIFO/rollbackandprovehostlaunchfraction.",
+    "Draftonlycheaperhead/projection oradaptivedepth with exacttargetverification; avoidrepeatingpriorQ4/80128negatives."
+  ],
+  "priority_queue": "Do not replaycompletedlongtofillmatrix. HighestROIremainingcoverage: qualifieddedicatedreset thenall12shortsuite; recoveredoriginalmediumcase;capacitydiagnosticseparate. Qualitypreparedscratchprobe remainsparallelcauseinvestigation andnotresolvedbyinternalparity."
+}

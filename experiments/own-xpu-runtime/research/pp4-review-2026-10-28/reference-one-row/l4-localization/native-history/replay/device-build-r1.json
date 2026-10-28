@@ -1,0 +1,25 @@
+{
+  "argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-O2",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-fsycl",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/device.cpp",
+    "-Wl,--gc-sections",
+    "-o",
+    "/dev/shm/sc117-l4-raw-device-prepared-20261028-r1/replay"
+  ],
+  "returncode": 0
+}
