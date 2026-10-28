@@ -1,0 +1,381 @@
+{
+  "schema": "ownrt.target-mixed-quantization.v1",
+  "model": "SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF",
+  "revision": "eec4e10a2c29b440a2ae85591fa11569ce752963",
+  "label": "IQ3_S mixed GSQ-RCO",
+  "scope": "Target only, all stored tensor elements including embeddings/PLE; excludes separate official FP8 draft, runtime conversion, activations and KV.",
+  "source": "experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/new-census.json",
+  "source_sha256": "b47eae82a10854f47f23acc96e44d920a8b04ea1511f100aa1395418c41ca8a1",
+  "crosscheck": "experiments/own-xpu-runtime/gsq-rco-iq3s/loader/placement.tsv",
+  "crosscheck_sha256": "a9ab0302d85f208717748c70be9d09d0a494e07f494a0e67b39dac6cc9468253",
+  "model_payload_reads": 0,
+  "tensor_count": 1224,
+  "total_parameters": 176943899520,
+  "encoded_tensor_payload_bytes": 83852561920,
+  "gguf_container_bytes": 83863586496,
+  "gguf_structural_and_alignment_bytes": 11024576,
+  "effective_payload_bits_per_parameter": 3.791147912868152,
+  "effective_container_bits_per_parameter": 3.7916463567717806,
+  "groups": {
+    "2-bit": {
+      "tensors": 49,
+      "parameters": 41104179200,
+      "payload_bytes": 12871270400,
+      "parameter_percent": 23.230062924748637,
+      "payload_byte_percent": 15.34988330145465,
+      "effective_stored_bits_per_parameter": 2.5051020408163267
+    },
+    "3-bit": {
+      "tensors": 54,
+      "parameters": 45298483200,
+      "payload_bytes": 18127257600,
+      "parameter_percent": 25.60047750890666,
+      "payload_byte_percent": 21.618012836977375,
+      "effective_stored_bits_per_parameter": 3.201388888888889
+    },
+    "4-bit": {
+      "tensors": 128,
+      "parameters": 86839377920,
+      "payload_bytes": 48764861440,
+      "parameter_percent": 49.07735059279878,
+      "payload_byte_percent": 58.15548186413718,
+      "effective_stored_bits_per_parameter": 4.492419232659561
+    },
+    "5-bit": {
+      "tensors": 31,
+      "parameters": 441712640,
+      "payload_bytes": 303677440,
+      "parameter_percent": 0.2496342858941419,
+      "payload_byte_percent": 0.3621564243794067,
+      "effective_stored_bits_per_parameter": 5.5
+    },
+    "6-bit": {
+      "tensors": 89,
+      "parameters": 1660026880,
+      "payload_bytes": 1361740800,
+      "parameter_percent": 0.938165647136293,
+      "payload_byte_percent": 1.6239704176232284,
+      "effective_stored_bits_per_parameter": 6.5625
+    },
+    "8-bit": {
+      "tensors": 96,
+      "parameters": 833617920,
+      "payload_bytes": 885719040,
+      "parameter_percent": 0.4711198986014073,
+      "payload_byte_percent": 1.0562814298327883,
+      "effective_stored_bits_per_parameter": 8.5
+    },
+    "float": {
+      "tensors": 777,
+      "parameters": 766501760,
+      "payload_bytes": 1538035200,
+      "parameter_percent": 0.43318914191408003,
+      "payload_byte_percent": 1.8342137255953743,
+      "effective_stored_bits_per_parameter": 16.052515782873087
+    }
+  },
+  "individual_types": {
+    "BF16": {
+      "tensors": 484,
+      "parameters": 763944960,
+      "payload_bytes": 1527889920,
+      "parameter_percent": 0.43174416415167294,
+      "payload_byte_percent": 1.822114775047293,
+      "effective_stored_bits_per_parameter": 16.0
+    },
+    "F16": {
+      "tensors": 1,
+      "parameters": 40960,
+      "payload_bytes": 81920,
+      "parameter_percent": 2.3148579923418202e-05,
+      "payload_byte_percent": 9.769528577809732e-05,
+      "effective_stored_bits_per_parameter": 16.0
+    },
+    "F32": {
+      "tensors": 292,
+      "parameters": 2515840,
+      "payload_bytes": 10063360,
+      "parameter_percent": 0.0014218291824837025,
+      "payload_byte_percent": 0.012001255262303142,
+      "effective_stored_bits_per_parameter": 32.0
+    },
+    "IQ2_S": {
+      "tensors": 40,
+      "parameters": 33554432000,
+      "payload_bytes": 10747904000,
+      "parameter_percent": 18.963316673264195,
+      "payload_byte_percent": 12.817621494086367,
+      "effective_stored_bits_per_parameter": 2.5625
+    },
+    "IQ3_S": {
+      "tensors": 20,
+      "parameters": 16777216000,
+      "payload_bytes": 7208960000,
+      "parameter_percent": 9.481658336632098,
+      "payload_byte_percent": 8.597185148472564,
+      "effective_stored_bits_per_parameter": 3.4375
+    },
+    "IQ3_XXS": {
+      "tensors": 34,
+      "parameters": 28521267200,
+      "payload_bytes": 10918297600,
+      "parameter_percent": 16.118819172274566,
+      "payload_byte_percent": 13.02082768850481,
+      "effective_stored_bits_per_parameter": 3.0625
+    },
+    "IQ4_NL": {
+      "tensors": 40,
+      "parameters": 83915816960,
+      "payload_bytes": 47202647040,
+      "parameter_percent": 47.42509755218489,
+      "payload_byte_percent": 56.29243276434887,
+      "effective_stored_bits_per_parameter": 4.5
+    },
+    "IQ4_XS": {
+      "tensors": 45,
+      "parameters": 2633236480,
+      "payload_bytes": 1398906880,
+      "parameter_percent": 1.4881759061167095,
+      "payload_byte_percent": 1.6682935475896787,
+      "effective_stored_bits_per_parameter": 4.25
+    },
+    "Q2_0": {
+      "tensors": 9,
+      "parameters": 7549747200,
+      "payload_bytes": 2123366400,
+      "parameter_percent": 4.266746251484443,
+      "payload_byte_percent": 2.532261807368282,
+      "effective_stored_bits_per_parameter": 2.25
+    },
+    "Q4_K": {
+      "tensors": 43,
+      "parameters": 290324480,
+      "payload_bytes": 163307520,
+      "parameter_percent": 0.16407713449718822,
+      "payload_byte_percent": 0.194755552198637,
+      "effective_stored_bits_per_parameter": 4.5
+    },
+    "Q5_K": {
+      "tensors": 31,
+      "parameters": 441712640,
+      "payload_bytes": 303677440,
+      "parameter_percent": 0.2496342858941419,
+      "payload_byte_percent": 0.3621564243794067,
+      "effective_stored_bits_per_parameter": 5.5
+    },
+    "Q6_K": {
+      "tensors": 89,
+      "parameters": 1660026880,
+      "payload_bytes": 1361740800,
+      "parameter_percent": 0.938165647136293,
+      "payload_byte_percent": 1.6239704176232284,
+      "effective_stored_bits_per_parameter": 6.5625
+    },
+    "Q8_0": {
+      "tensors": 96,
+      "parameters": 833617920,
+      "payload_bytes": 885719040,
+      "parameter_percent": 0.4711198986014073,
+      "payload_byte_percent": 1.0562814298327883,
+      "effective_stored_bits_per_parameter": 8.5
+    }
+  },
+  "retained_header_authority": [
+    {
+      "header_sha256": "41c670ed87057835346d3f85b70d9dd044d77b2fb89691c428c78ca25738fd36",
+      "header_bytes_read": 11024355,
+      "tensor_count": 1223,
+      "data_start": 11024384
+    },
+    {
+      "header_sha256": "49f992d94de7d687ab0042f54d72fbabb4fec16e6860181f1b5bd91e46c89a96",
+      "header_bytes_read": 173,
+      "tensor_count": 1,
+      "data_start": 192
+    }
+  ],
+  "definitions": [
+    "Parameter denominator is sum(product(dimensions)) over all1224 stored target tensors, not tensor count or active MoE parameters.",
+    "Nominal bit families group format names; actual stored bpw includes block scales and format metadata.",
+    "Percent by encoded bytes uses tensor payload, not container total, CPU RAM, VRAM or traffic.",
+    "Q2_0 id42 is retained custom2-bit format:64 elements per18 bytes; see metadata/census.py.",
+    "Q5_K is present and must not be omitted from a nominal2/3/4/6/8/float summary."
+  ],
+  "excluding_PLE_table_view": {
+    "scope": "All target tensors except exactly per_layer_token_embd.weight; other embeddings, experts and float tensors remain. Not active parameters per token.",
+    "removed_tensor": {
+      "name": "per_layer_token_embd.weight",
+      "type": "IQ4_NL",
+      "parameters": 51200245760,
+      "payload_bytes": 28800138240
+    },
+    "tensor_count": 1223,
+    "total_parameters": 125743653760,
+    "encoded_tensor_payload_bytes": 55052423680,
+    "effective_payload_bits_per_parameter": 3.502517831083581,
+    "groups": {
+      "2-bit": {
+        "tensors": 49,
+        "parameters": 41104179200,
+        "payload_bytes": 12871270400,
+        "parameter_percent": 32.68886975278553,
+        "payload_byte_percent": 23.380024964597528,
+        "effective_stored_bits_per_parameter": 2.5051020408163267
+      },
+      "3-bit": {
+        "tensors": 54,
+        "parameters": 45298483200,
+        "payload_bytes": 18127257600,
+        "parameter_percent": 36.0244687071514,
+        "payload_byte_percent": 32.92726530146474,
+        "effective_stored_bits_per_parameter": 3.201388888888889
+      },
+      "4-bit": {
+        "tensors": 127,
+        "parameters": 35639132160,
+        "payload_bytes": 19964723200,
+        "parameter_percent": 28.342688552714122,
+        "payload_byte_percent": 36.2649305252168,
+        "effective_stored_bits_per_parameter": 4.481528475018848
+      },
+      "5-bit": {
+        "tensors": 31,
+        "parameters": 441712640,
+        "payload_bytes": 303677440,
+        "parameter_percent": 0.35128026488165565,
+        "payload_byte_percent": 0.5516150238274123,
+        "effective_stored_bits_per_parameter": 5.5
+      },
+      "6-bit": {
+        "tensors": 89,
+        "parameters": 1660026880,
+        "payload_bytes": 1361740800,
+        "parameter_percent": 1.320167523657617,
+        "payload_byte_percent": 2.473534694703563,
+        "effective_stored_bits_per_parameter": 6.5625
+      },
+      "8-bit": {
+        "tensors": 96,
+        "parameters": 833617920,
+        "payload_bytes": 885719040,
+        "parameter_percent": 0.6629502921802166,
+        "payload_byte_percent": 1.608864752528185,
+        "effective_stored_bits_per_parameter": 8.5
+      },
+      "float": {
+        "tensors": 777,
+        "parameters": 766501760,
+        "payload_bytes": 1538035200,
+        "parameter_percent": 0.6095749066294668,
+        "payload_byte_percent": 2.7937647376617734,
+        "effective_stored_bits_per_parameter": 16.052515782873087
+      }
+    },
+    "individual_types": {
+      "BF16": {
+        "tensors": 484,
+        "parameters": 763944960,
+        "payload_bytes": 1527889920,
+        "parameter_percent": 0.6075415634558383,
+        "payload_byte_percent": 2.7753363391974823,
+        "effective_stored_bits_per_parameter": 16.0
+      },
+      "F16": {
+        "tensors": 1,
+        "parameters": 40960,
+        "payload_bytes": 81920,
+        "parameter_percent": 3.2574208538729196e-05,
+        "payload_byte_percent": 0.00014880362121052397,
+        "effective_stored_bits_per_parameter": 16.0
+      },
+      "F32": {
+        "tensors": 292,
+        "parameters": 2515840,
+        "payload_bytes": 10063360,
+        "parameter_percent": 0.0020007689650897572,
+        "payload_byte_percent": 0.018279594843080303,
+        "effective_stored_bits_per_parameter": 32.0
+      },
+      "IQ2_S": {
+        "tensors": 40,
+        "parameters": 33554432000,
+        "payload_bytes": 10747904000,
+        "parameter_percent": 26.684791634926956,
+        "payload_byte_percent": 19.523035102820746,
+        "effective_stored_bits_per_parameter": 2.5625
+      },
+      "IQ3_S": {
+        "tensors": 20,
+        "parameters": 16777216000,
+        "payload_bytes": 7208960000,
+        "parameter_percent": 13.342395817463478,
+        "payload_byte_percent": 13.09471866652611,
+        "effective_stored_bits_per_parameter": 3.4375
+      },
+      "IQ3_XXS": {
+        "tensors": 34,
+        "parameters": 28521267200,
+        "payload_bytes": 10918297600,
+        "parameter_percent": 22.682072889687916,
+        "payload_byte_percent": 19.832546634938637,
+        "effective_stored_bits_per_parameter": 3.0625
+      },
+      "IQ4_NL": {
+        "tensors": 39,
+        "parameters": 32715571200,
+        "payload_bytes": 18402508800,
+        "parameter_percent": 26.017671844053787,
+        "payload_byte_percent": 33.4272454687321,
+        "effective_stored_bits_per_parameter": 4.5
+      },
+      "IQ4_XS": {
+        "tensors": 45,
+        "parameters": 2633236480,
+        "payload_bytes": 1398906880,
+        "parameter_percent": 2.094130718537823,
+        "payload_byte_percent": 2.5410450376015126,
+        "effective_stored_bits_per_parameter": 4.25
+      },
+      "Q2_0": {
+        "tensors": 9,
+        "parameters": 7549747200,
+        "payload_bytes": 2123366400,
+        "parameter_percent": 6.004078117858566,
+        "payload_byte_percent": 3.8569898617767815,
+        "effective_stored_bits_per_parameter": 2.25
+      },
+      "Q4_K": {
+        "tensors": 43,
+        "parameters": 290324480,
+        "payload_bytes": 163307520,
+        "parameter_percent": 0.23088599012251257,
+        "payload_byte_percent": 0.29664001888317953,
+        "effective_stored_bits_per_parameter": 4.5
+      },
+      "Q5_K": {
+        "tensors": 31,
+        "parameters": 441712640,
+        "payload_bytes": 303677440,
+        "parameter_percent": 0.35128026488165565,
+        "payload_byte_percent": 0.5516150238274123,
+        "effective_stored_bits_per_parameter": 5.5
+      },
+      "Q6_K": {
+        "tensors": 89,
+        "parameters": 1660026880,
+        "payload_bytes": 1361740800,
+        "parameter_percent": 1.320167523657617,
+        "payload_byte_percent": 2.473534694703563,
+        "effective_stored_bits_per_parameter": 6.5625
+      },
+      "Q8_0": {
+        "tensors": 96,
+        "parameters": 833617920,
+        "payload_bytes": 885719040,
+        "parameter_percent": 0.6629502921802166,
+        "payload_byte_percent": 1.608864752528185,
+        "effective_stored_bits_per_parameter": 8.5
+      }
+    }
+  }
+}

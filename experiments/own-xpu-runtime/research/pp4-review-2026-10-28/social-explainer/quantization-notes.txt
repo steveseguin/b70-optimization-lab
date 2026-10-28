@@ -1,0 +1,56 @@
+SC117 IQ3_S mixed storage — exact retained metadata census (2026-10-28)
+Target only; separate official FP8 draft excluded. No model payload reads or GPU work.
+
+All 1,224 stored target tensors: 176,943,899,520 elements (176.9439B).
+Encoded payload 83,852,561,920B =83.8526GB /78.0938GiB.
+Effective stored payload 3.79114791 bits/element, including block scales and format metadata.
+Two GGUF containers 83,863,586,496B; difference 11,024,576B is metadata/alignment, not extra weight precision.
+
+Image-ready headline: “IQ3_S is mixed precision:49.08%4-bit,25.60%3-bit,23.23%2-bit by stored weight elements;2.09% other.”
+Other includes5-bit0.25%,6-bit0.94%,8-bit0.47%,float0.43%. Percentages rounded independently.
+This is not active parameters/token, tensor-count share, runtime compute precision or KV compression. The51.20024576B-element PLE table alone is nominal4-bitIQ4_NL; do not confuse total stored elements with active MoE size.
+
+Family | parameters% | encoded-payload% | effective storedbpw
+2-bit | 23.230063 | 15.349883 | 2.505102
+3-bit | 25.600478 | 21.618013 | 3.201389
+4-bit | 49.077351 | 58.155482 | 4.492419
+5-bit | 0.249634 | 0.362156 | 5.500000
+6-bit | 0.938166 | 1.623970 | 6.562500
+8-bit | 0.471120 | 1.056281 | 8.500000
+float | 0.433189 | 1.834214 | 16.052516
+
+Individual format | elements | payloadbytes | parameters% | payload% | storedbpw
+BF16 | 763944960 | 1527889920 | 0.431744 | 1.822115 | 16.000000
+F16 | 40960 | 81920 | 0.000023 | 0.000098 | 16.000000
+F32 | 2515840 | 10063360 | 0.001422 | 0.012001 | 32.000000
+IQ2_S | 33554432000 | 10747904000 | 18.963317 | 12.817621 | 2.562500
+IQ3_S | 16777216000 | 7208960000 | 9.481658 | 8.597185 | 3.437500
+IQ3_XXS | 28521267200 | 10918297600 | 16.118819 | 13.020828 | 3.062500
+IQ4_NL | 83915816960 | 47202647040 | 47.425098 | 56.292433 | 4.500000
+IQ4_XS | 2633236480 | 1398906880 | 1.488176 | 1.668294 | 4.250000
+Q2_0 | 7549747200 | 2123366400 | 4.266746 | 2.532262 | 2.250000
+Q4_K | 290324480 | 163307520 | 0.164077 | 0.194756 | 4.500000
+Q5_K | 441712640 | 303677440 | 0.249634 | 0.362156 | 5.500000
+Q6_K | 1660026880 | 1361740800 | 0.938166 | 1.623970 | 6.562500
+Q8_0 | 833617920 | 885719040 | 0.471120 | 1.056281 | 8.500000
+
+Reproduce from repository root:
+python3 experiments/own-xpu-runtime/research/pp4-review-2026-10-28/social-explainer/quantization-summary.py
+Script verifies authenticated census SHA pinned by loader/generate_bound.py and crosschecks every tensor dimension/type/byte length against placement.tsv. It reads only retained JSON/TSV.
+Format reference: experiments/own-xpu-runtime/gsq-rco-iq3s/metadata/census.py and engine/src/gsq-rco-iq3s/integration/build/private/additive/device_formats.hpp.
+2-bit includesQ2_0(2.25storedbpw) andIQ2_S(2.5625);3-bit includesIQ3_XXS(3.0625) andIQ3_S(3.4375).4-bit includesIQ4_NL(4.5),IQ4_XS(4.25),Q4_K(4.5).Q5_K: 5.5, Q6_K: 6.5625, Q8_0: 8.5. Float includesBF16/F16/F32. Nominal format label is not literal storedbpw.
+
+Separate view: excluding only per_layer_token_embd.weight
+Removed tensor: IQ4_NL,51,200,245,760 elements and28,800,138,240 encoded payload bytes.
+Original all-stored totals and image percentages above remain unchanged.
+Remaining 1223 tensors: 125,743,653,760 elements; 55,052,423,680 payload bytes; 3.50251783 stored bits/element.
+Family | remaining parameters% | remaining payload%
+2-bit | 32.688870 | 23.380025
+3-bit | 36.024469 | 32.927265
+4-bit | 28.342689 | 36.264931
+5-bit | 0.351280 | 0.551615
+6-bit | 1.320168 | 2.473535
+8-bit | 0.662950 | 1.608865
+float | 0.609575 | 2.793765
+The PLE table alone is28.936993% of all stored elements, all in the nominal4-bit family; its size makes the full inventory49.08%4-bit. Removing only that table exposes the separate remaining distribution, not a change in quantization or a claim about active MoE size. IQ3_S is the publisher mixed-quant recipe label, not a promise every tensor or most stored elements are3-bit.
+Reproducibility: second script execution matched quantization-summary.json byte-for-byte; both views crosscheck original metadata and exact subtraction.
