@@ -1,0 +1,41 @@
+{
+  "schema": "ownrt.gpu-route-initial-cold-archive-reuse.v1",
+  "passed": true,
+  "reference_archive": "/mnt/raid-models/ownrt-experiment-archives/sc117-router-tie-historical-seven-20261028-r1/state-bundles.tar.zst",
+  "reference_verified_archive_sha256": "4c2cc4581d0b9c580828e16c95267301a7c68f10b5b7b8c331cb30e2b3c25f03",
+  "reference_archive_rehashed": false,
+  "all_source_maps_and_bundle_SHA_equal": true,
+  "actual_full_byte_archive_comparison": true,
+  "removed": [
+    {
+      "path": "/dev/shm/sc117-gpu-route-seven-plus-twelve-20261028-r1/output/native/rank0/state-2147483647/state.bundle",
+      "bytes": 231011260,
+      "sha256": "e84461fced3efd226ab671f8e437d356c2d5a55d188158d1a01f3a921397f364",
+      "identity": [
+        29,
+        1126594,
+        231011260,
+        1793202004526941404,
+        1793202004531790496
+      ],
+      "archive_member": "output/native/rank0/state-2147483647/state.bundle"
+    },
+    {
+      "path": "/dev/shm/sc117-gpu-route-seven-plus-twelve-20261028-r1/output/native/rank1/state-2147483647/state.bundle",
+      "bytes": 199509988,
+      "sha256": "5bbc78f867738259bae4fbd9dd165df4a9edd365c60968bd5810d22a40e68311",
+      "identity": [
+        29,
+        1126600,
+        199509988,
+        1793202005224943745,
+        1793202005226406056
+      ],
+      "archive_member": "output/native/rank1/state-2147483647/state.bundle"
+    }
+  ],
+  "freed_bytes": 430521248,
+  "scope": "Exactlytwo completed initialcold payloads reuse old verified archive after actual wholepayload comparison. Allmetadata andallphase-b/result/CPUreference inputs unchanged.",
+  "removal_completed": true,
+  "removed_files_absent": true
+}
