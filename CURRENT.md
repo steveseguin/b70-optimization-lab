@@ -21,7 +21,12 @@ historical rows from ten fully identical inputs plus 1,024 tokens in two fresh
 CPU contexts (one model load, 879.270s, rc0, clean postflight). This establishes
 agreement for these 12 saved greedy continuations, not bitwise CPU equality,
 all prompts, 12 new CPU runs or default promotion. Generic GPU binary962046 is
-qualified here; the addressed variant still needs its seven-case state gate.
+qualified here. Addressed binary7f264143 passed all seven historical outputs,
+48 layers per case and14 whole final states (3,013,648,736 bytes) against the
+host diagnostic; both owners exited0 and passive postflight was clean. Its
+PhaseB was explicitly skipped: the12-case CPU proof belongs to generic962046,
+with addressed compatibility established by this seven-state gate.
+Addressed evidence: `reference-one-row/router-tie-candidate/gpu-candidate/addressed-seven-r1-evidence/index.json`.
 CPU evidence: `reference-one-row/fresh-changed-cpu/completed-r1-evidence/index.json`.
 Evidence: `reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/`.
 
