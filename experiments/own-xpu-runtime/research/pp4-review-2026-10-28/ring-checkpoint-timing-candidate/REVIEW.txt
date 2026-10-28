@@ -1,0 +1,57 @@
+PREPARED ONLY: candidate.patch and overlay are unapplied, unbuilt, unrun.
+Canonical source pins are untouched. git apply --check passes against the
+recorded sources.json hashes. No model/archive payload reads or GPU actions.
+
+Purpose and scopes
+Stage0 ROW reply busy minus native half is an enclosing0.80/0.83s budget on
+retained512-output cases, not isolated checkpoint time. This candidate adds
+six steady_clock wall sums inside the existing CheckpointRingFor owner:
+- capture_total_ms includes idle/guard/inventory/slot selection/position read,
+  host metadata and output preservation, optional hashes, prepare and flatcopy.
+- capture_prepare_ms includes existing descriptor construction/upload/drain.
+- capture_flat_copy_ms includes existing inventory/submit/completion drain.
+- restore_total_ms includes existing idle/guard/inventory, metadata/bank/extent
+  restore, descriptor preparation, flatcopy, output restore and optional hashes.
+- restore_prepare_ms and restore_flat_copy_ms are nested scopes as above.
+Never add prepare/copy scopes to totals; subtract their sum only to describe
+remaining enclosing host work, not GPU time or a proven removable cost.
+Capture/restore call counts reuse existing successful-operation counters.
+Constructor preparation and cold-reset reconstruction are not timed. The six
+sums clear at existing reset_after_owner_zero, alongside those counters.
+Attestation emits checkpoint_wall_timing under each request's ring receipt.
+Flag OFF emits null and performs no clock reads. Flag ON is diagnostic only;
+full12 fair timing must use OFF, with matched binary/source identity.
+
+Selection and planner compatibility
+OWNRT_RING_CHECKPOINT_WALL_TIMING=1 enables only a first-target checkpoint
+owner (a.pipeline_first()); absent or0 disables it. Other values refuse.
+There is no generic planner diagnostic allowlist to extend: pipeline_driver
+copies the pinned adapter environment, with a specific DECODE_PROFILE refusal.
+Use the existing prefill-profile registration pattern: a fresh adapter-plan
+copy sets this flag in environment[0], leaves environment[1] absent, and a fresh
+config points to that adapter before immutable authority/plan generation.
+The dedicated provider inherits environment[0] but never constructs a target
+CheckpointRingFor, so it performs no sampling. Record this inherited inert
+flag honestly, as the existing prefill diagnostic did. Avoid manual edits to
+a generated plan; regenerated plan identity must still match. No planner or
+native parser edits are required. Existing model/route/reset policy is unchanged.
+
+Behavior preservation
+Only host stack clock scopes and six doubles are added. No callback hooks,
+new drains, device queries, SYCL event timing, compute, device/arena allocation, state copy,
+restore ordering or source exclusions. The original prepare/copy calls stay
+in their same order with their same arguments and fences. Timing scope nesting
+is documented in the emitted object itself; full-byte verification mode is
+recorded. On failure no valid attestation is emitted; this is not a recovery
+or retry change. Default timing overhead is only conditional bookkeeping;
+there is no claim of zero machine-code overhead.
+
+After root review/application, reuse existing CPU actual checkpoint fixture
+with the flag ON and OFF. Verify enabled counters/calls are present and reset,
+OFF is null, and existing exact checkpoint bytes remain identical. Then the
+planned2+1 A/B/A correctness gate can carry this diagnostic without a separate
+model load: keep unchanged full cold/repeatedA/CPU-output gates and cleanFINISH.
+Use per-request capture+restore totals as an optimistic upper bound on savings,
+then their measured flatcopy share to decide whether reverse-undo write-set
+work deserves implementation. Do not label sums device time or infer savings
+from85MB/capture alone. No write-set/reverse-undo implementation is included.

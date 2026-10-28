@@ -81,10 +81,23 @@ both proposal depth and ring capacity. The depth3 full12 arm failed resetting be
 and passive postflight is clean/no holders. Requests00–03 match saved CPU-qualified
 prompts/outputs, but full12 is unqualified. The old depth2 and2+1
 r1 plans remain invalid. The parity-bias fix passed CPU regression; native build
-9599b0bf is running fresh full12 depth3 r2, unit
+9599b0bf completed fresh full12 depth3 r2, unit
 `sc117-dedicated-depth3-full12-64k-20261028-r2`, invocation
-`cbc849acb54a401b8d0996b553e3adb8`. Depth2 r2 remains planned; full12 is
-still unqualified. Fix evidence: `bulk-bank-parity-fix/retention-index.json`.
+`cbc849acb54a401b8d0996b553e3adb8`. All12 prompts/5965 outputs match saved CPU-qualified continuations; all11 cold
+barriers passed and4 owners exited0/passiveclean. Request total108.825501s;
+5953 full decode intervals/101.642321s=58.5681tok/s. Owner lifetime553.225s
+includes separate loading/reset/lifecycle. Depth2 r2 also passed all5965 outputs/11 cold barriers/4owner0/passiveclean,
+but all12 requests were slower (12.1–16.75%):124.208971s total versus
+depth3 108.825501s (+14.1359%); full decode50.7637 versus58.5681tok/s.
+This first matched pair closes fixeddepth2 promotion; retain depth3 and do not
+repeat the losing candidate. No universal speed claim. Pair evidence:
+`dedicated-depth2-gate/full12-r2-paired-summary.json`.
+The2+1 A/B/A64K gate is active on build9599/cuts0/25/48, cards23/47+draft43,
+unit `sc117-dedicated-two-plus-one-aba64k-20261028-r2`, invocation
+`8de672504d044c4393d2a8af77adc43b`; clean baseline103,295,234,048B available.
+Full12 follows only after the gate passes. Some old uncompressed command/result
+duplicates were released after exact retained-gzip verification; use indexed
+compressed evidence and existing summaries, not removed raw paths. Evidence: `dedicated-depth2-gate/full12-depth3-r2-evidence/index.json`. Fix evidence: `bulk-bank-parity-fix/retention-index.json`.
 The earlier A/B/A gate remains limited
 to its tested inputs. Incident: `dedicated-depth2-gate/full12-depth3-r1-incident/index.json`.
 

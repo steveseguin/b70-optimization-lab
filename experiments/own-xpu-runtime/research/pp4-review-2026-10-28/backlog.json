@@ -96,7 +96,30 @@
           "passive_postflight_clean": true,
           "archive_full_verified_raw_removed": true
         },
-        "next_step": "Keep default unchanged; use existing-profiler prefill diagnostic to choose the next material lever. Full realistic suite and dedicated reset qualification remain open."
+        "next_step": "Depth3 full12 reset/output gate passed on9599; matcheddepth2 running, then2+1. Retain equal16 as longprompt tradeoff; no defaultpromotion.",
+        "single_boundary_followup": {
+          "status": "new-source-and-timeline-hypothesis-unmeasured",
+          "candidates": [
+            [
+              0,
+              16,
+              33,
+              48
+            ],
+            [
+              0,
+              15,
+              33,
+              48
+            ]
+          ],
+          "reason": "Existing equal16 moves both boundaries and slows decode. Hold final boundary33 while moving only the first boundary: actual stage0 executes708/777 rows for511 outputs with host-command in-flight occupancy85/83percent on two observed tasks (not GPU utilization). Test whether transferring first-stage layers to the middle owner helps without the final-owner change. Layer-specific cost and memory fit must be measured; no speed forecast.",
+          "evidence": [
+            "dedicated-timeline-screen.txt",
+            "equal16-topology-screen/equal16-r1-evidence/index.json"
+          ],
+          "gate": "Existing planner allocation census and exact canonical state/output gate, then matched samebinary/context timing. Reuse existing harness; keep allprecision andnooracle rules. After current fixeddepth/topology pair."
+        }
       }
     },
     {
@@ -222,7 +245,7 @@
     {
       "id": 8,
       "idea": "MEDIUM: Adaptive depth / speculative next-window overlap.",
-      "status": "fixed-depth-full12-r1-reset-failed-parityfix-cpu-pass-r2-depth3-active",
+      "status": "fixed-depth2-full12-first-pair-negative-closed-requested-depth-protocol-unimplemented",
       "evidence": [
         "provider-relocation negative",
         "depth2-two-rank negative",
@@ -230,10 +253,12 @@
         "dedicated-gate/adaptive-depth-subexperiment8.txt",
         "dedicated-depth2-gate/depth2-aba64k-r1-evidence/index.json",
         "dedicated-depth2-gate/full12-depth3-r1-incident/index.json",
-        "bulk-bank-parity-fix/retention-index.json"
+        "bulk-bank-parity-fix/retention-index.json",
+        "dedicated-depth2-gate/full12-depth3-r2-evidence/index.json",
+        "dedicated-depth2-gate/full12-r2-paired-summary.json"
       ],
       "first_test": "trace-driven upper bound using actual accepted prefixes, then a fixed held-out policy. Stop if even the oracle cannot beat incumbent. This is not simply raising depth, and historical collocated provider moves already lost. Sources: Strata MULTI_GPU.md; local Laguna conditional-tree negative and existing PP4 capture-ready path. No new trained tree heads.",
-      "next_step": "Concrete bulk-bank parity bias fix CPU regression passed; build9599b0bf fresh depth3 full12 r2 active, depth2 r2 planned. Require complete12 outputs/cold barriers/native parity/clean terminal before fair timing claim. Failedr1 retained; no automatic retry. Old2+1 plan invalid pending fresh fix identity. Requested-depth protocol remains separate/unimplemented.",
+      "next_step": "Close fixeddepth2 promotion: same9599 full12 pair both5965outputs/all11cold/4owner0/passiveclean; depth2 all12tasks slower12.1–16.75%,124.208971s vs108.825501s(+14.1359%); decode50.7637 vs58.5681tps. Firstpair negative only, no universalclaim/no repeatloser. Retain depth3; historicalcut25 2+1 ABA64Kr2 nowactive on9599; full12 only after gate passes. Adaptive requested-depth protocol remains separate/unimplemented.",
       "blocker": null,
       "already_tested_scope": "Measured2+1 capacity3:604stage0 vs511finaldecodeROWs;92rejected busy1.275891775s+1unusedcap.375accepted depth2/3 ROWs. Optimistic removeallrejectedwork bound58.82tok/s vs51.29actual, not prediction. Native runtime and codec currently fixeddepth2/3.",
       "discovery_open": true
@@ -396,14 +421,22 @@
       ],
       "current_result": "Actual longcontrol/ABA retained decode enqueue medians 2.45–3.20ms overlap GPU work; waits are not CPU overhead. No device timestamps or submission-caused critical-gap budget; cold-A request00 native timing attribution unavailable. Defer graph implementation; fixed-depth suite remains active priority.",
       "reopen_gate": "Existing OWNRT_DECODE_PROFILE=2 with --timing token measures device busy/gaps on non-TP-replicate stages; submission causality additionally needs correlated Device::issue submit/dependency-ready timestamps. Only material exposed gaps justify one exact same-device same-bank layer A/B; no GPU test run.",
-      "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4–4.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest."
+      "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4–4.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest.",
+      "dedicated_timeline": "dedicated-timeline-screen.txt; host in-flight occupancy and extra physical ROWs do not establish GPU idle caused by submission."
     },
     {
       "id": "ring-one-row-write-set-reverse-undo",
       "status": "CPU-byte-census-and-source-screened-unimplemented",
       "evidence": "snapshot-traffic-screen.txt",
       "hypothesis": "Actual3+1stage0slot161346704B contains127475712Bthree-bankrecurrence; captureonlyactualupcomingwrittenbank+reverseundoallpendingrows couldsave84983808B/capture52.67%, preservinginactivebankbytes. Captureonlytentativerows, notallROWs. Noisolatedcheckpointtimingorendpointclaim; existingprefill-shadowtrim/sparseQSAalreadyenabled.",
-      "next_gate": "RealCPUringfixture fullphysicalbyteparity acrossdepth1/2/3/spare rotation/acceptprefix-abortsuffix/reset; then actualprepared-write-IDnativeproof beforetiming. Neverexcludeallocationsorweaken2065sourcecontract."
+      "next_gate": "RealCPUringfixture fullphysicalbyteparity acrossdepth1/2/3/spare rotation/acceptprefix-abortsuffix/reset; then actualprepared-write-IDnativeproof beforetiming. Neverexcludeallocationsorweaken2065sourcecontract.",
+      "current_timeline": "dedicated-timeline-screen.txt",
+      "timing_candidate": {
+        "status": "unapplied-unbuilt-unrun",
+        "path": "ring-checkpoint-timing-candidate/REVIEW.txt",
+        "reason": "ROW-reply-minus-half is an enclosing0.799/0.828s budget on two tasks, not isolated snapshot cost. Optional scoped wall counters will measure capture/prepare/flatcopy before authorizing a write-set rewrite.",
+        "sequence": "Finish same9599 fixeddepth and2+1 topology timing first; keep canonical source pins frozen."
+      }
     },
     {
       "id": "general-pipeline-128k-separated-draft-capacity",

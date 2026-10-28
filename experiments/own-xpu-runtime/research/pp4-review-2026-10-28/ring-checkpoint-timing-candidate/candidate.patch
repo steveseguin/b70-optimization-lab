@@ -1,0 +1,81 @@
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/checkpoint_ring.hpp
+@@ -30,6 +30,17 @@
+  };
+  std::vector<Slot> slots;
+  uint64_t captures_=0,restores_=0,byte_checks_=0,releases_=0;
++ // Optional host wall attribution only. Nested prepare/copy scopes belong to
++ // capture/restore totals; they must never be added to those totals.
++ bool wall_timing_=false;
++ struct WallTotals {double capture_ms=0,capture_prepare_ms=0,capture_flat_copy_ms=0,
++                           restore_ms=0,restore_prepare_ms=0,restore_flat_copy_ms=0;} wall_;
++ struct WallScope {
++  double* total;std::chrono::steady_clock::time_point start;
++  explicit WallScope(double* value):total(value),start(value?std::chrono::steady_clock::now():std::chrono::steady_clock::time_point{}){}
++  ~WallScope(){if(total)*total+=std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-start).count();}
++ };
++ double* timed(double& total){return wall_timing_?&total:nullptr;}
+  void idle(){
+   e.drain();require(!e.poisoned&&!e.integer(0,"error"),"ring snapshot sticky failure");
+   require(!e.progress_pending&&!e.progress_callback&&!e.correction_exchange&&!e.reply_report.pending()&&!e.dev(0).before_compute&&!e.dev(0).after_compute,
+@@ -79,6 +90,10 @@
+ public:
+  CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):CheckpointRingFor(owner,full_byte_verification,partition,static_cast<const mtp36::DraftRuntime*>(nullptr)){}
+  template<class Draft> CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition,const Draft* provider):e(owner),verify(full_byte_verification){
++  if(const char* flag=std::getenv("OWNRT_RING_CHECKPOINT_WALL_TIMING")){
++   require(std::string(flag)=="0"||std::string(flag)=="1","ring checkpoint wall timing flag");
++   wall_timing_=e.a.pipeline_first()&&std::string(flag)=="1";
++  }
+   require(owner.a.pipeline_ring_depth==2||owner.a.pipeline_ring_depth==3,"ring configured snapshot capacity");slots.resize(size_t(owner.a.pipeline_ring_depth));
+   idle();require(e.resident&&e.a.pipeline_enabled()&&(!e.a.prefill_rows||e.a.pipeline_ring_persistent_requests),"ring resident verified-prefill/scalar owner");
+   require(!e.a.mtp||partition.enabled,"ring provider needs independent state partition");
+@@ -120,9 +135,12 @@
+   for(auto& s:slots){prepare(s,false,0);prepare(s,true,0);}allocation_count=e.allocations.size();inventory();
+  }
+  bool active(int index)const{require(index>=0&&size_t(index)<slots.size(),"ring slot index");return slots[size_t(index)].active;}
+- int capture(uint8_t* shared){idle();inventory();require(shared,"ring output mapping");int index=-1;for(int i=0;i<int(slots.size());++i)if(!slots[size_t(i)].active){index=i;break;}require(index>=0,"ring checkpoint full");
+-  auto& slot=slots[size_t(index)];slot.position=e.integer(0,"position");require(slot.position>=0&&slot.position<e.p.g.context,"ring capture position");save_metadata(slot);slot.shared=shared;std::memcpy(slot.output.data(),shared,slot.output.size());if(verify)for(const auto& item:items)slot.before_sha[item.id]=checkpoint_allocation_sha(e,item.id,item.bytes);prepare(slot,false,slot.position);copy(slot,false);slot.active=true;++captures_;return index;}
+- void restore(int index){idle();inventory();require(active(index),"ring restore inactive slot");auto& slot=slots[size_t(index)];restore_metadata(slot);prepare(slot,true,slot.position);copy(slot,true);require(slot.shared,"ring saved output mapping");std::memcpy(slot.shared,slot.output.data(),slot.output.size());
++ int capture(uint8_t* shared){WallScope total(timed(wall_.capture_ms));idle();inventory();require(shared,"ring output mapping");int index=-1;for(int i=0;i<int(slots.size());++i)if(!slots[size_t(i)].active){index=i;break;}require(index>=0,"ring checkpoint full");
++  auto& slot=slots[size_t(index)];slot.position=e.integer(0,"position");require(slot.position>=0&&slot.position<e.p.g.context,"ring capture position");save_metadata(slot);slot.shared=shared;std::memcpy(slot.output.data(),shared,slot.output.size());if(verify)for(const auto& item:items)slot.before_sha[item.id]=checkpoint_allocation_sha(e,item.id,item.bytes);{WallScope phase(timed(wall_.capture_prepare_ms));prepare(slot,false,slot.position);}
++  {WallScope phase(timed(wall_.capture_flat_copy_ms));copy(slot,false);}slot.active=true;++captures_;return index;}
++ void restore(int index){WallScope total(timed(wall_.restore_ms));idle();inventory();require(active(index),"ring restore inactive slot");auto& slot=slots[size_t(index)];restore_metadata(slot);
++  {WallScope phase(timed(wall_.restore_prepare_ms));prepare(slot,true,slot.position);}
++  {WallScope phase(timed(wall_.restore_flat_copy_ms));copy(slot,true);}require(slot.shared,"ring saved output mapping");std::memcpy(slot.shared,slot.output.data(),slot.output.size());
+   if(verify){for(const auto& item:items)require(checkpoint_allocation_sha(e,item.id,item.bytes)==slot.before_sha.at(item.id),"ring full target allocation restore differs: "+item.label);
+    require(std::equal(slot.output.begin(),slot.output.end(),slot.shared),"ring output restore differs");++byte_checks_;}
+   require(!e.integer(0,"error"),"ring restore sticky error");++restores_;
+@@ -130,7 +148,7 @@
+  void release(int index){idle();inventory();require(active(index),"ring double slot release");slots[size_t(index)].active=false;slots[size_t(index)].shared=nullptr;++releases_;}
+  void reset_after_owner_zero(){idle();inventory();for(const auto& s:slots)require(!s.active,"ring reset pending slot");require(e.integer(0,"position")==0&&e.bank_parity==0,"ring cold reset position/banks");
+   e.admit_position(0);if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
+-  for(auto& s:slots){prepare(s,false,0);prepare(s,true,0);s.shared=nullptr;s.output.fill(0);s.metadata={};s.position=0;s.before_sha.clear();}inventory();captures_=restores_=byte_checks_=releases_=0;
++  for(auto& s:slots){prepare(s,false,0);prepare(s,true,0);s.shared=nullptr;s.output.fill(0);s.metadata={};s.position=0;s.before_sha.clear();}inventory();captures_=restores_=byte_checks_=releases_=0;wall_={};
+  }
+  void write_layout(const fs::path& path,bool live=false){
+   inventory();require(live||(independent.empty()&&independent_private.empty()),"target-only ring layout requires absent provider");
+@@ -144,6 +162,13 @@
+  }
+  void borrow_boundary(size_t pending){idle();inventory();size_t active=0;for(const auto& slot:slots)active+=slot.active?1:0;require(pending<=slots.size()&&active==pending,"provider borrow target checkpoint count");}
+  void boundary(){idle();inventory();for(const auto& slot:slots)require(!slot.active,"ring active slot at boundary");}
++ std::string wall_timing_json()const{
++  if(!wall_timing_)return "null";
++  std::ostringstream out;out<<"{\"schema\":\"ownrt.ring-checkpoint-wall-timing.v1\",\"clock\":\"steady_clock\",\"units\":\"milliseconds\",\"diagnostic_only\":true,\"capture_calls\":"<<captures_<<",\"restore_calls\":"<<restores_
++   <<",\"capture_total_ms\":"<<wall_.capture_ms<<",\"capture_prepare_ms\":"<<wall_.capture_prepare_ms<<",\"capture_flat_copy_ms\":"<<wall_.capture_flat_copy_ms
++   <<",\"restore_total_ms\":"<<wall_.restore_ms<<",\"restore_prepare_ms\":"<<wall_.restore_prepare_ms<<",\"restore_flat_copy_ms\":"<<wall_.restore_flat_copy_ms
++   <<",\"full_byte_verification\":"<<(verify?"true":"false")<<",\"scope\":\"Completed request-local host scopes; prepare and flat-copy are nested within their capture/restore total. Prepare includes descriptor upload and its existing drain; flat-copy includes inventory, submit and existing completion drain. Totals also include guards, metadata and optional full-byte verification. No GPU timestamps; do not sum overlapping scopes.\"}";return out.str();
++ }
+  uint64_t releases()const{return releases_;}
+  size_t slot_bytes()const{return bytes_;}uint64_t captures()const{return captures_;}uint64_t restores()const{return restores_;}uint64_t byte_checks()const{return byte_checks_;}
+ };
+--- a/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
++++ b/experiments/own-xpu-runtime/engine/src/pipeline/ring/dispatcher.hpp
+@@ -194,7 +194,7 @@
+   const auto layout=file_hash(e.a.output/"ring-checkpoint-layout.json",1024*1024);
+   std::string seal;if(dump_marker>=0)seal=file_hash(e.a.output/("state-"+std::to_string(dump_marker))/"state-seal.txt",4096);
+   std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(e.a.pipeline_ring_persistent_requests?(context.depth==3?"ownrt.ring-state.persistent.v2":"ownrt.ring-state.persistent.v1"):e.a.pipeline_ring_pending_provider?"ownrt.ring-state.pending-provider.v1":(e.a.pipeline_ring_live_draft?"ownrt.ring-state.live.v1":"ownrt.ring-state.v1"))<<",\"mode\":"<<ownrt::quote(e.a.pipeline_ring_persistent_requests?"persistent-rolling":e.a.pipeline_ring_pending_provider?"verified-ring-pending-provider":(e.a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring"))<<",\"stage_id\":"<<context.stage<<",\"ring_request_sha256\":"<<ownrt::quote(e.a.pipeline_ring_request_sha256)<<",\"ring_epoch\":"<<context.epoch<<",\"ring_capacity\":"<<context.depth<<",\"depth\":"<<context.depth<<",\"dump_marker\":"<<dump_marker<<",\"state_seal_sha256\":"<<ownrt::quote(seal)<<",\"checkpoint_layout_sha256\":"<<ownrt::quote(layout)
+-   <<",\"actual_position\":"<<position<<",\"committed_position\":"<<ring.committed()<<",\"pending_tickets\":0,\"active_slots\":0,\"sticky_error\":0,\"rows\":"<<ring.rows<<",\"tentative_rows\":"<<ring.tentative_rows<<",\"commits\":"<<ring.commits<<",\"accepted_tentative_rows\":"<<ring.accepted_tentative_rows<<",\"abort_count\":"<<ring.abort_count<<",\"discarded_rows\":"<<ring.discarded_rows<<",\"snapshot_captures\":"<<checkpoints.captures()<<",\"snapshot_releases\":"<<checkpoints.releases()<<",\"byteverified_restore_count\":"<<checkpoints.byte_checks()<<",\"saved_bytes\":"<<checkpoints.captures()*checkpoints.slot_bytes()<<",\"target_mutable_checkpoint_bytes\":"<<checkpoints.slot_bytes()
++   <<",\"actual_position\":"<<position<<",\"committed_position\":"<<ring.committed()<<",\"pending_tickets\":0,\"active_slots\":0,\"sticky_error\":0,\"rows\":"<<ring.rows<<",\"tentative_rows\":"<<ring.tentative_rows<<",\"commits\":"<<ring.commits<<",\"accepted_tentative_rows\":"<<ring.accepted_tentative_rows<<",\"abort_count\":"<<ring.abort_count<<",\"discarded_rows\":"<<ring.discarded_rows<<",\"snapshot_captures\":"<<checkpoints.captures()<<",\"snapshot_releases\":"<<checkpoints.releases()<<",\"byteverified_restore_count\":"<<checkpoints.byte_checks()<<",\"saved_bytes\":"<<checkpoints.captures()*checkpoints.slot_bytes()<<",\"target_mutable_checkpoint_bytes\":"<<checkpoints.slot_bytes()<<",\"checkpoint_wall_timing\":"<<checkpoints.wall_timing_json()
+    <<",\"restore_verification_enabled\":"<<(verify?"true":"false")<<",\"all_aborts_byte_verified\":"<<((!e.a.pipeline_ring_persistent_requests||verify)&&checkpoints.byte_checks()==ring.abort_count?"true":"false")<<",\"max_pending\":"<<ring.max_pending<<",\"trace_records\":"<<trace_rows<<",\"trace_omitted\":"<<trace_omitted<<",\"bank_parity\":"<<e.bank_parity<<",\"prefill_bank_parity_bias\":"<<e.prefill_bank_parity_bias<<",\"expected_bank_parity\":"<<e.ring_expected_bank_parity(position)<<",\"inactive_alternate_banks\":[";
+   bool comma=false;for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"],\"canonical_bank_mapping\":{";comma=false;
+   for(const auto& [name,id]:e.state_spares){o<<(comma?",":"")<<ownrt::quote(name)<<":{\"active_allocation\":"<<e.buffers[0].at(name).id<<",\"inactive_allocation\":"<<id<<"}";comma=true;}o<<"}";
