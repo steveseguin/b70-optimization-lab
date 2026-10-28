@@ -1,0 +1,17 @@
+Same-input L4 recurrence screen: completed, CPU only
+
+The unchanged pinned ggml_gated_delta_net operator, supplied the captured 244-row CPU normalized q/k/v, log-decay gate, sigmoid beta and zero initial state, reproduced the actual captured row-243 recurrent output BITWISE (6,144 floats). No model load, library rebuild, GPU, or engine arithmetic edit. Build uses icpx2026, -O2, -fno-fast-math, -ffp-contract=off, IEEE denormals, nice19 cores8–15; existing reference archives verified unchanged. Exact command, source/input/library/binary identities retained.
+
+The production specialised::body<ng::gdn,1> consumes prepared scratch directly, so no replacement recurrence was written. The adapter supplies normalized q divided by sqrt128 BEFORE its native dot product, unchanged normalized k, detmath::exp(captured log-decay), already-sigmoid beta, and the same v/initial state. This matches its prepared boundary contract. It deliberately bypasses native raw q/k normalization and raw alpha/beta gate preparation; no values are renormalized or fit to force output agreement. Full-model non-mini packed-head flag selects head%16, matching real ggml's captured16-head q/k broadcast. CPU reference applies its own source-defined q scale AFTER the dot product. These different arithmetic placements are retained.
+
+Compared on identical supplied histories:
+- Complete 244-row output: RMS 1.16261997e-10, max 7.45058060e-9.
+- Position243 output: RMS 1.43233401e-10, max 3.72529030e-9.
+- Final full 786,432-float recurrent state: RMS 9.92631342e-10, max 1.19209290e-7.
+- First output differences occur at position0; state is still bitwise equal there. First state differences occur at position1. Largest per-row output RMS is1.65556649e-10 (position226).
+
+Both actual ggml and native stage1 were also executed one row at a time. Each path reproduces its own full244-row outputs AND final state bitwise. Per-row state/output differences are retained in per-row.jsonl; complete per-row outputs and both complete final states are in full-output-state-r1.tar.gz. This avoids retaining 244 large state snapshots. Archive members were compared by full bytes against originals and checksummed.
+
+The observed actual GPU-versus-reference row243 y difference on their DIFFERENT histories was RMS2.20004500e-7, approximately1,536 times this same-input stage1 difference. Therefore this supplied-boundary test does not support native stage1 recurrence arithmetic alone as the material source of that observed discrepancy. It does not exclude upstream q/k normalization, gate generation, prior-token input/history differences, another input case, or actual device arithmetic. It is not a quality-resolution or final-logit causality claim. The reference-versus-native token discrepancy remains unresolved.
+
+Next useful boundary is the raw-to-prepared recurrence inputs on identical supplied data, or the inherited prior-token input sequence. Current captures contain all CPU normalized inputs but only final-row raw qkv/alpha/beta, so they cannot certify identical raw normalization/gate preparation over all preceding244 rows. Do not infer such history from post-row native banks or expand to another model load without coordination.

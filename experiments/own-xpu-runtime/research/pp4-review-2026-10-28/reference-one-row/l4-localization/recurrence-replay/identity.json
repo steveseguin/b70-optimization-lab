@@ -1,0 +1,26 @@
+{
+  "sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/recurrence-replay/replay.cpp": "d2f0eb747ca1d5bfb8dcfe3fe3f14c75843d6735ec378b00fffaefbc2cd086a3",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised.hpp": "fb613d21b5efe0f55601cb0e4151b7e97589d911994e91ad8f714261019aaa0d",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/kernels.hpp": "df445007fe55a8d10291b9d28fe538372ab219b4bee9d02c530bee8165cd4882",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp": "1c3d27e4fc3abfcd0f9ef47c26d701b5b304eaf6446e69034cfdd5ef0b8ded4e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/detmath.hpp": "423e21eb8b33310721206f1a8a1cf698d9fbce0e1a1aa1c6a712124c78e20c6e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet17-detmath/detmath.hpp": "d84dc360ac8c0ab4e93e3c104dd88bd86e64bbbca8558e19151c3e333fbbf434",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "ee86cc49c8f42c0c3467b1fb61e9500a2300eb727af3de72aa22bfdfd4abb84b",
+    "/dev/shm/llref/ggml/src/ggml-cpu/ops.cpp": "b2118192bc11186812bdc1fb52246f4ee34402cc59a221ee7d42722cebec8ce8",
+    "/dev/shm/llref/src/models/delta-net-base.cpp": "5e3b318953f854b3825dd7cfe4b483ca7935cd5f6680438a3ece4be9b4d5428f"
+  },
+  "inputs": {
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/q_conv_predelta-4.f32": "55ed0d22524ddd6d5984c25e8febc94054cda042beeb4ffe63d7a85d5f9f27a0",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/k_conv_predelta-4.f32": "883af93a26598c44d404c0d3447c76084dfbaa57a6d1702e118c335f39e20a6f",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/v_conv_predelta-4.f32": "df5b276d4010ec2c4c38ef186fa9b646c4c68898ed6b1e9376a652c7030c6270",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/gate-4.f32": "d3688a19271cfcc9d3e0d404934238ef11d05aae8d1dad68797aae784515a024",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/beta_sigmoid-4.f32": "7fb6b607652a7f58a590cb17f1fcc2925c047eb5cc0d3ae80cb9dfcf25c13c43",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/state_predelta-4.f32": "bbd05cf6097ac9b1f89ea29d2542c1b7b67ee46848393895f5a9e43fa1f621e5",
+    "/dev/shm/sc117-l4-observer-model-20261028-r1/on/recurrent-output.f32": "b7a129476c865dd7b041973871fedc90b1944baf168582fc5ca10802084e80c6"
+  },
+  "native_shape_flags": 94,
+  "flag_derivation": "adapter gdn stored decay2, main !mini packed-head4, F32 gain8 (192-byte48-elementssm_dt), F32 recurrent16 (3145728-byte state), F32activation64; stage1 uses packed-head flag and F32args, remaining bits govern bypassed stage0.",
+  "reference_commit": "Reported23b0202a; old checkout git metadata unavailable; exact archives pinned in build.json.",
+  "scope": "Host invocation of unchanged native stage1 with explicit prepared boundary adapter. Not raw normalization/gate-prep or actual GPU execution."
+}

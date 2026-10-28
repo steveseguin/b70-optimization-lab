@@ -1,0 +1,87 @@
+{
+  "schema": "dense-gate-compile-receipt-v1",
+  "status": "compiled-not-device-executed",
+  "compiler": "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+  "flags": [
+    "-std=gnu++20",
+    "-O2",
+    "-g0",
+    "-DP56X_SLEEP20=0",
+    "-Werror=return-type",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-fsycl",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-Wl,--gc-sections",
+    "-lze_loader"
+  ],
+  "cpu_affinity": "8-15",
+  "nice": 19,
+  "attempts": [
+    {
+      "revision": "r1",
+      "exit_code": 0,
+      "binary": "/dev/shm/sc117-verifier-dense-gate-20261028-r1/dense-gate-r1",
+      "binary_sha256": "a4194da236e2a9dbc710544377e64018e5d4d3c73932c391abc809755311abd7",
+      "log_sha256": "5d9b96cf5213da712c9b5a8817a861e48d92c86462297badf7e9a91232c25e32"
+    },
+    {
+      "revision": "r2",
+      "exit_code": 0,
+      "binary": "/dev/shm/sc117-verifier-dense-gate-20261028-r1/dense-gate-r2",
+      "binary_sha256": "38bf7c1a23de89abbdbee755b4e04e9ca6c03cb4f2465ec93431e6ea925870f7",
+      "log_sha256": "5d9b96cf5213da712c9b5a8817a861e48d92c86462297badf7e9a91232c25e32"
+    }
+  ],
+  "gate_source_sha256": "87f5fb8dfdace70ba822fbb8fc9a17ccb08838a22e2fbb72f4c571ef68a81f05",
+  "registration_sha256": "cbe7292d55b777ccb8846dc18093f1a21007d25f8079b485990140840889bcee",
+  "fixture_receipt_sha256": "07f28c9aa5db5a5082ea808826d5beec5e45d7a3b485ecfe746ab353efe658af",
+  "weight_authority": {
+    "manifest_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/manifest.json",
+    "manifest_sha256": "7fdb23b0fa99b1bd0b6ef3468d1fe581925d86581294cf473cdcf42deb796616",
+    "entry": {
+      "layer": 1,
+      "label": "blk.1.gdn.qkv",
+      "weight": "blk.1.attn_qkv.weight",
+      "type_id": 13,
+      "rows": 10240,
+      "columns": 2560,
+      "fixtures": {
+        "input": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.hc.a.mix.bin",
+          "bytes": 5120,
+          "sha256": "0f6c1321485816a195d2818e70aad16bca9eb2bc011bc20dc77b528fb5e9c1b9"
+        },
+        "expected": {
+          "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.gdn.qkv.bin",
+          "bytes": 20480,
+          "sha256": "85b6dd610ff00ff2a0caba147efb1ec24570695fb34c49cf621d1d7643414c9d"
+        }
+      },
+      "packed_weights": {
+        "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/fixtures/blk.1.attn_qkv.weight.bin",
+        "bytes": 18022400,
+        "sha256": "45014df1968838a460302a49ac12dd1ffae22f47a9fb92452783fa7bc4d295c3"
+      },
+      "shard_identity": [
+        2050,
+        2778523,
+        55063448064,
+        1792814866970869300,
+        1792814960708461300
+      ]
+    },
+    "scope": "Only packed weight and shard identity used. Historical BF16 input/expected NOT used by F32 gate."
+  },
+  "fixture_weights_sha256": "45014df1968838a460302a49ac12dd1ffae22f47a9fb92452783fa7bc4d295c3",
+  "fixture_inputs_sha256": "f03372c7c11eac062c141315329b20e411e84f5df45f9159499a8f6a924d649b",
+  "explicit_device_usm_bytes": 18299136,
+  "unmeasured": "driver/JIT/runtime overhead",
+  "source_change": "r2 only adds actual PCI-address equality before allocations; no arithmetic changes",
+  "initial_metadata_path_refusal": "Initial authority lookup under engine/src had no matching manifest; corrected to runtime/gsq-rco-iq3s before receipt creation. No extraction or compile failure.",
+  "authority_weight_and_shard_identity_exact_match": true
+}

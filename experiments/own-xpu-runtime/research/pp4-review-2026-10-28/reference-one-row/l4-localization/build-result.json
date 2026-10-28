@@ -1,0 +1,18 @@
+{
+  "status": "Mock and real scheduler fixtures PASS; standalone observer linked; model not yet launched",
+  "binary": "/dev/shm/sc117-l4-observer-cpu-20261028-r1/exact-logits-l4",
+  "binary_sha256": "e4614a6d8c866c95e44fab749369a89a77700f21cd054024fad58be80eb65826",
+  "compiled_sources": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/exact-logits-l4.cpp": "00a7537a96b4fbfe5fb65cb553005c4e17b1b8a4c838bcfbc86e281d37b5d65f",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/scheduler-fixture.cpp": "ab612d4ce642856e2a94013ff0dbe14b4712048d1ae87caa484929cf3e097da2",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/fixture.cpp": "86e2decad82eee9df97a6e410a3842ea2575eb664f0dcadcdde38f527abfb884"
+  },
+  "observer_header_sha256": "06d4938fef291c7afa4c2111c9719abbdb0692dfe4b62d49c7f5cc715ce97788",
+  "static_archives": {
+    "/dev/shm/llref/build/src/libllama.a": "fb1ff332f83a36d725d1a7828a265d42cdfe980cf3d1345cb5c27aac7ec9aa1f",
+    "/dev/shm/llref/build/ggml/src/libggml-cpu.a": "2260d6d024f59a3b57b69086d4c44b9fae53c70c65d9eb07480ce2723e88f796",
+    "/dev/shm/llref/build/ggml/src/libggml.a": "bd35f4a55b35ee5a4c530b57e641524693c85dee174f6350df3beb6b2ea80b99",
+    "/dev/shm/llref/build/ggml/src/libggml-base.a": "63fefcc9431000b0ca5ae57d9f75b48291b4bb8eedb9a67ce54770428a0b4019"
+  },
+  "fix": "Original compile incorrectly used SIGMOID/SILU as graph op enum values; actual ggml uses UNARY plus ggml_get_unary_op. Preserved failing source/log; corrected only observer validation, no graph math."
+}

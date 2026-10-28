@@ -1,0 +1,149 @@
+{
+  "status": "six-microcases-bitexact-guards-zero",
+  "correctness": [
+    {
+      "width": 1,
+      "tile_tokens": 2,
+      "outputs": 10240,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0
+      ]
+    },
+    {
+      "width": 1,
+      "tile_tokens": 4,
+      "outputs": 10240,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0
+      ]
+    },
+    {
+      "width": 2,
+      "tile_tokens": 2,
+      "outputs": 20480,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0,
+        0
+      ]
+    },
+    {
+      "width": 2,
+      "tile_tokens": 4,
+      "outputs": 20480,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0,
+        0
+      ]
+    },
+    {
+      "width": 3,
+      "tile_tokens": 2,
+      "outputs": 30720,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "width": 3,
+      "tile_tokens": 4,
+      "outputs": 30720,
+      "bit_differences": 0,
+      "guard_errors": 0,
+      "per_row_bit_differences": [
+        0,
+        0,
+        0
+      ]
+    }
+  ],
+  "timings": [
+    {
+      "width": 1,
+      "tile_tokens": 2,
+      "iterations": 51,
+      "serial_host_us_median": 62.397,
+      "multirow_host_us_median": 71.083,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    },
+    {
+      "width": 1,
+      "tile_tokens": 4,
+      "iterations": 51,
+      "serial_host_us_median": 62.417,
+      "multirow_host_us_median": 80.251,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    },
+    {
+      "width": 2,
+      "tile_tokens": 2,
+      "iterations": 51,
+      "serial_host_us_median": 110.758,
+      "multirow_host_us_median": 66.935,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    },
+    {
+      "width": 2,
+      "tile_tokens": 4,
+      "iterations": 51,
+      "serial_host_us_median": 110.648,
+      "multirow_host_us_median": 74.951,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    },
+    {
+      "width": 3,
+      "tile_tokens": 2,
+      "iterations": 51,
+      "serial_host_us_median": 137.799,
+      "multirow_host_us_median": 105.809,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    },
+    {
+      "width": 3,
+      "tile_tokens": 4,
+      "iterations": 51,
+      "serial_host_us_median": 138.039,
+      "multirow_host_us_median": 65.363,
+      "scope": "warm stateless kernel calls plus queue wait; not decode throughput"
+    }
+  ],
+  "scope": "Warm stateless dense kernel calls plus queue wait;51iterations each. No integrated verifier/state/end-to-end decode speed claim. Width1 regressions retained. Passive postflight coordinator-owned.",
+  "identity": [
+    {
+      "source": "/dev/shm/sc117-verifier-dense-c27-20261028-r1/launch.json",
+      "sha256": "ab7e1defd0cc5b363c2f929e83e945deadaf0148d5832fb83b70dcfb2f7b362d",
+      "retained": "launch.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-verifier-dense-c27-20261028-r1/baseline.json",
+      "sha256": "c38f44bcf7eec34dee9d67a8491271834280944c4f3523c4a4bfe78efe0b9f77",
+      "retained": "baseline.json.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-verifier-dense-c27-20261028-r1/stdout.jsonl",
+      "sha256": "f4f6da7b40f92e9734b1bb37f17a49f41c9eb12e80f15539df4621131efcfeee",
+      "retained": "stdout.jsonl.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-verifier-dense-c27-20261028-r1/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "retained": "stderr.log.gz"
+    },
+    {
+      "source": "/dev/shm/sc117-verifier-dense-c27-20261028-r1/postflight.json",
+      "sha256": "991e08472a52673c63aabad39395ba8083ec2bc2e58c51b76e9a93254fc8e4c2",
+      "retained": "postflight.json.gz"
+    }
+  ]
+}

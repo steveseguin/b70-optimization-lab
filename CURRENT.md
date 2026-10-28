@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28 — Three-card cold long screen fastest; independent quality investigation remains open.**
+**October 28 — Four-slot matched long-prefill win; independent quality investigation remains open.**
 
 The 2+1 stage pipeline at reserved context 128K completed a first-inference request with
 121,854 prompt tokens and eight outputs in **559.908 s**, including **544.444 s** of
@@ -66,9 +66,30 @@ with baseline-clean postflight and no holders. Config differences are only slots
 output and same-content prompt paths; both used fresh private runtime caches and
 no warmup/reuse. This is one long-prefill screen, not sustained decode, a realistic
 suite, record or independent CPU correctness. Lifecycle loading/shutdown is excluded.
-No GPU request is active; control archiving is coordinator-owned. L4 CPU localization
-is now authorized; the native L4 plan is prepared but unlaunched.
+Matched win is committed as `63dda7514`. The L4 CPU observer passed both fixtures
+and one ON run: all248,320 logits retain the original SHA (`9dae…`), with23 arrays
+valid and zero initial state. This adds observation evidence, not quality resolution.
+[CPU result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/RESULT.json).
+The native L4 target-only244-token capture completed with token6343, both owners0,
+clean postflight and no holders. Its24 selected fields (6,892,960 bytes) were fully
+sealed; HC FFN mix is byte-identical to the prior router capture. Twelve-boundary
+comparison localizes RMS differences of1.3063e-8 after convolution,2.2000e-7 at
+recurrent y, and1.39963e-5 after normalization/gating. Small y and RMS denominators
+0.001–0.0033 allow amplification; differing inputs/history prevent a causal claim.
+Same-input/history CPU recurrence replay completed: pinned ggml reproduced captured
+y bitwise; native production stage1 on the same supplied244-row inputs differed
+by RMS1.43e-10 at row243, versus2.20e-7 across the actual different histories.
+This does not support stage1 recurrence alone as the material source; upstream
+raw normalization/gate preparation and inherited history remain untested. Next is
+the proposed bounded raw244-row conv/alpha/beta capture; no model/GPU is active.
+[Same-input result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/recurrence-replay/RESULT.txt).
+[Boundary findings](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/BOUNDARY-RESULT.txt).
 [Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json).
+A bounded dense verifier microgate on card27 passed all six width1/2/3 and tile2/4
+cases bitwise with zero guard errors. Warm51-iteration host medians include queue
+wait: width2/tile2 serial110.758→66.935us; width3/tile4 138.039→65.363us.
+Width1 was slower. These are isolated kernel results, not integrated verifier or
+decode throughput. [Microgate](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/verifier-dense-gate/actual-r1/summary.json).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

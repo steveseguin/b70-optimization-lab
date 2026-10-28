@@ -37,6 +37,8 @@ int main(int argc,char**argv){try{
  unsigned iters=0;if(argc==4){std::string s=argv[3];size_t used=0;auto n=std::stoul(s,&used);need(used==s.size()&&n<=1000,"bounded timing iterations");iters=unsigned(n);}
  auto wh=read(argv[1],WB),xb=read(argv[2],3*K*4);std::vector<float> xh(3*K);std::memcpy(xh.data(),xb.data(),xb.size());for(float v:xh)need(std::isfinite(v),"finite actual input rows");
  sycl::queue q{sycl::gpu_selector_v,sycl::property_list{sycl::property::queue::in_order(),sycl::property::queue::enable_profiling()}};
+ auto device=q.get_device();need(device.has(sycl::aspect::ext_intel_pci_address),"PCI-address capability required");
+ need(device.get_info<sycl::ext::intel::info::device::pci_address>()==std::string(std::getenv("FilterBdfPath")),"selected physical BDF differs from requested BDF");
  auto*w=sycl::malloc_device<uint8_t>(WB,q);auto*x=sycl::malloc_device<float>(3*K,q);auto*ref=sycl::malloc_device<float>(3*R,q);auto*storage=sycl::malloc_device<uint32_t>(3*R+64,q);need(w&&x&&ref&&storage,"bounded device allocation");float*y=reinterpret_cast<float*>(storage+32);
  q.memcpy(w,wh.data(),WB);q.memcpy(x,xh.data(),3*K*4);q.wait_and_throw();need(gsqn::v2::fits<13>(w,R,K,RB),"actual scalar V2 dispatch geometry/alignment");
  for(unsigned width:{1u,2u,3u}){

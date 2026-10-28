@@ -1,6 +1,6 @@
 {
   "schema": "verifier-dense-width123-preparation-v1",
-  "status": "source-only-uncompiled-unrun",
+  "status": "bounded-fixture-extracted-compiled-no-device-execution",
   "site": "blk.1.gdn.qkv",
   "tensor": "blk.1.attn_qkv.weight",
   "type": "Q5_K",
@@ -53,10 +53,16 @@
     "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/prefill-reuse/evidence/cputest/test_reuse2.cpp": "40e77732a117bfd18abd14e2396ae4d186140cc22fa03406a8c23a26e7632f8d"
   },
   "harness_pins": {
-    "gate.cpp": "3f068135cce8d46a361541ec6297e2827618c0556ac5f768194dc246f717e449",
+    "gate.cpp": "87f5fb8dfdace70ba822fbb8fc9a17ccb08838a22e2fbb72f4c571ef68a81f05",
     "prepare_fixture.py": "e61d548be8967fcc4cce423099cb6de8d511b8f59ed6c33e3bce133fdd25214a",
     "verify_fixture.py": "6ff91bd6d3679073442d90eebf928d4068cae14b36577273456c99812114fdce",
     "input-sources.json": "d074696de2c03e9bb08d22106f8116016b011dee6e7d60556bb14d5458ee5043"
   },
-  "execution": "No compilation, extraction of model tensor, kernel run or timing performed. Root must coordinate admission/BDF/fresh outputs and unchanged source checks before any future execution."
+  "execution": "Bounded tensor extraction and standalone compilation only; no device execution. See compile-receipt.json.",
+  "weight_authority": {
+    "path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/dense-packed-block/micro/operating/manifest.json",
+    "sha256": "7fdb23b0fa99b1bd0b6ef3468d1fe581925d86581294cf473cdcf42deb796616",
+    "tensor_sha256": "45014df1968838a460302a49ac12dd1ffae22f47a9fb92452783fa7bc4d295c3",
+    "bytes": 18022400
+  }
 }

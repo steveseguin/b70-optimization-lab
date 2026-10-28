@@ -1,0 +1,19 @@
+L4 committed-row mapping, prepared before native completion
+
+Native launch-plan.json gives actual dependency order, buffers F32. CPU observer emits logical ggml ne[0]-fastest order using every stride; projected row buffers are contiguous channel vectors. HC flattened order is [4 streams,2560]; GDN qkv is q[2048],k[2048],v[6144]; z/recurrent/gated are [48 heads,128]. There is no transpose to guess for these paired row outputs.
+
+Native field                 CPU capture
+hc.a.norm / hc.a.mix          hc_norm-4-1 / hc_mixed-4-1
+ gdn.qkv                     linear_attn_qkv_mixed-4
+ gdn.z / gdn.a / gdn.b        z-4 / alpha-4 / beta-4 (RAW projected alpha/beta)
+ gdn.conv                    conv_output_silu-4 (NOT conv_output_raw)
+ gdn.y                       recurrent-output (norm-4 RMS_NORM source)
+ gdn.gated                   final_output-4
+attention                    linear_attn_out-4
+hc.f.norm / hc.f.mix          hc_norm-4-2 / hc_mixed-4-2
+
+Source anchors: native kernels.hpp conv branch accumulates four taps and writes silu(acc); p42_tiny.hpp conv does the same. specialised.hpp gdn stage1 writes y[(row*48+head)*128+value], matching CPU ne[128,48,T,1]. gated_norm multiplies RMS-normalized y by gain and sigmoid(z), corresponding to qwen4exp build_norm_gated -> final_output reshape. Native launch plan establishes that gdn.a/b are projections, not transformed decay/sigmoid beta. No beta_sigmoid/gate history is directly equated to raw native a/b.
+
+CPU q/k history has [128,16,244,1], v [128,48,244,1]. Native scratch uses normalized q scaled by1/sqrt128; CPU q_conv_predelta is unit-normalized and the recurrence applies its attention scale internally. Future recurrence replay must preserve the actual placement/order of that scale and the exact head mapping (native selected flags decide h/3 versus h%16). This is not an instruction to rescale saved operator outputs to force agreement.
+
+CPU full244 history and initial zero state/history support later same-input replay; native DUMP contains post-row active/spare buffers only. Neither bank is labeled pre243 without ownership/sequence proof, and no CPU initial/post-native state comparison is performed. Native HC low/gate/act/inject are retained but CPU counterparts were not separately captured; do not substitute unrelated fields. compare-native.py is prepared only and must wait for root clean completion confirmation. It records exact numerical differences without tolerances or causal claims.

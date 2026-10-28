@@ -1,0 +1,10 @@
+In file included from /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/scheduler-fixture.cpp:15:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/l4-capture.hpp: In function ‘bool capture_l4(ggml_tensor*, bool, void*)’:
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/l4-capture.hpp:59:48: error: ‘GGML_OP_SIGMOID’ was not declared in this scope; did you mean ‘GGML_OP_SUM’?
+   59 |  if(name=="beta_sigmoid-4")valid=valid&&t->op==GGML_OP_SIGMOID;
+      |                                                ^~~~~~~~~~~~~~~
+      |                                                GGML_OP_SUM
+/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/l4-capture.hpp:61:52: error: ‘GGML_OP_SILU’ was not declared in this scope; did you mean ‘GGML_OP_SIN’?
+   61 |  if(name=="conv_output_silu-4")valid=valid&&t->op==GGML_OP_SILU;
+      |                                                    ^~~~~~~~~~~~
+      |                                                    GGML_OP_SIN

@@ -1,0 +1,22 @@
+Actual L4 localization, committed position 243
+
+CPU observer passed full-logit identity and all 23 capture extents. Native capture completed clean with token 6343; its selected fields were fully sealed and their hashes checked before comparison. All comparisons below use actual different CPU/native histories and inputs. They localize boundaries, not same-input arithmetic causes.
+
+Boundary                 RMS absolute difference
+attention HC mix         2.91191588e-7
+qkv projection           3.44097624e-7
+alpha / beta projection  3.17315510e-7 / 3.80906758e-7
+post-SiLU convolution    1.30629577e-8
+recurrent output y       2.20004500e-7
+normalized/gated output  1.39963440e-5
+attention projection     2.17959235e-5
+FFN HC norm              1.21300610e-4
+FFN HC mix/router input  5.88588114e-5
+
+The first large absolute increase is between recurrent y and normalized/gated output. However, y itself has RMS 0.00137963877, so its relative discrepancy is already 1.59465293e-4; convolution's relative discrepancy is 2.37391948e-7. Per-head RMS-normalization denominators sqrt(mean(y^2)+1e-6) range from 0.00100157645 to 0.00330683942. Thus the normalization has substantial gain on incoming recurrent errors. These observations do not establish that normalization arithmetic originated the error, and do not distinguish inherited recurrent-state drift from current-token update arithmetic.
+
+Source guards: native gdn.conv includes SiLU, compared against CPU conv_output_silu. Native gdn.a/b are raw alpha/beta projections. CPU recurrent-output is the checked RMS_NORM source, before gain and sigmoid(z); final_output matches native gated output. Actual models/models.h uses SCALE(RMS_NORM(eps/128)) for normalized q/k. A generic ggml L2-normalization implementation is not this graph and is not evidence of a cause. The CPU and native initial/post-row state buffers were not compared as equivalent.
+
+Minimal causal next test: use the saved 244-row normalized q/k/v, gate, sigmoid beta and zero pre-whole-batch state to replay the REAL reference recurrence, then feed exactly the same supplied sequence/state to the native arithmetic path with explicit source-backed scaling/head mapping. Compare y at each position, especially 243, before normalization. A tiny same-input gated-normalization check on the actual captured y/z and exact model gain can separately determine whether it reproduces the observed output once inputs are fixed. Do not treat small ULP differences, different-input drift, or a synthetic tie fixture as a causal explanation of the final token flip.
+
+No additional model, GPU, native edit or build was used for this comparison. Detailed metrics, source field pairs and capture hashes are in native-comparison-r1.json; mapping rules are in FIELD-MAPPING.txt.
