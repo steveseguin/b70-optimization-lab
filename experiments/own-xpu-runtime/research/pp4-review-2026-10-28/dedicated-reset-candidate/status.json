@@ -1,0 +1,19 @@
+{
+  "status": "isolated-descriptor-prerequisite-cpu-pass-not-integrated",
+  "canonical_changes": false,
+  "tested_runtime_reset": false,
+  "blocking_guard": "Owner::reset refuses bulk_used_; preserve it",
+  "next": "Descriptor CPU prerequisite passes. Startup immutable-suite authority, all-owner reset transaction, native prompt/publication rebinding and cold/allocation receipts still required; no broad integration scheduled.",
+  "sources": [
+    "engine/src/pipeline/provider_only/owner.hpp",
+    "engine/src/pipeline/provider_only/runtime.hpp",
+    "engine/src/pipeline/provider_only/prefill.hpp",
+    "engine/src/pipeline/ring/persistent_reset.inc",
+    "engine/tools/persistent_rolling_suite.py",
+    "engine/planning/rolling_provider/dedicated_transport.py"
+  ],
+  "audit": "AUDIT-CURRENT.txt",
+  "prerequisite": "authority-prerequisite/candidate.patch",
+  "compiled": true,
+  "cpu_tests_executed": true
+}
