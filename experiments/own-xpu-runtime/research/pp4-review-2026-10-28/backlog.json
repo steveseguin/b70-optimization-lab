@@ -605,6 +605,18 @@
         "cold_resets": 18,
         "CPU_fidelity": "passed5965/5965 saved generated tokens;10 reused identical fullinputs+2 freshcontexts"
       }
+    },
+    {
+      "id": "three-target-zero-draft-greedy-control",
+      "status": "source-feasible-short-control; matching-bulk-prefill-admission-gap",
+      "evidence": [
+        "target-only-topology-screen.txt",
+        "target-only-topology-screen.json"
+      ],
+      "hypothesis": "Measure genuine 3+0 greedy inference at 262K versus 3+1; optionally 2+0 versus 2+1 at identical 128K. Speculative gains are not assumed.",
+      "finding": "Existing generic pipeline planner/native controller can run genuine 3+0 with scalar prefill, but matching long OP15 currently refuses execution without a real provider. Historical overlapped prefill leaves only 0.894% conditional headroom if target command work stays unchanged; no decode prediction.",
+      "next_step": "Gate genuine 3+0 against matching 3+1 on 1677 prompt tokens / 32 outputs: all actual outputs and target canonical state, owner terminals, census and quiescence. Then fair short timing. Long 121854/512 requires real target-only OP15 admission first, with matching source/binary/tie policy/cuts/context/precision/lookup/prefill geometry. Root owns launches.",
+      "prior_related_scope": "The prior two-GPU colocated depth1 versus 2+1 depth3 comparison includes draft work on both sides and does not establish 3+0. Two-rank target-only quality diagnostics did not time three-target greedy inference. The 3+1/262K versus 2+1/128K long result also did not isolate draft removal."
     }
   ],
   "next_priority_queue": [

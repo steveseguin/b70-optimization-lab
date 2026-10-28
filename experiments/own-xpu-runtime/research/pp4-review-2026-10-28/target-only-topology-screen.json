@@ -1,0 +1,69 @@
+{
+  "schema": "ownrt.target-only-topology-screen.v1",
+  "status": "source-feasible-short-control; matching-bulk-prefill-admission-gap",
+  "hypothesis": "Measure genuine3target/no-draft greedy control at262K versus3+1; optional2target/no-draft versus2+1 at identical128K. Speculative gains are not assumed.",
+  "canonical_changes": false,
+  "gpu_run": false,
+  "primary": {
+    "targets": 3,
+    "draft_owners": 0,
+    "context": 262144,
+    "cuts": [
+      0,
+      17,
+      33,
+      48
+    ]
+  },
+  "optional": {
+    "targets": 2,
+    "draft_owners": 0,
+    "context": 131072,
+    "cuts": [
+      0,
+      25,
+      48
+    ]
+  },
+  "existing_path": {
+    "planner": "engine/tools/pipeline_driver.py:make_plan",
+    "execution": "engine/tools/pipeline_driver.py:run",
+    "native": "engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp general pipeline target-only command admission",
+    "arithmetic": "F32 GSQ resident; sequential native HALF/ACCEPT across arbitrary contiguous target count; no provider process/proposal/OP9/OP27 required",
+    "limitations": [
+      "base planner strips native batched-prefill flags",
+      "plain general pipeline native parser and command admission reject OP15",
+      "live_wavefront requires real draft; wavefront_driver requires scripted proposals, so neither is this control",
+      "single EOS config; full naturalEOS multi-task comparison needs existing two-EOS semantics preserved"
+    ]
+  },
+  "conditional_retained_prefill": {
+    "source": "aot-cold-gate/3plus1-262k-long512-r1-evidence/output/driver-result.json.gz",
+    "source_sha256": "f7d54b409277589025f18ad47e3033cbc8a24bce793fdeb50582e7866e3ab611",
+    "reserved_context": 262144,
+    "prompt_tokens": 121854,
+    "prefill_positions": 121852,
+    "chunks": 476,
+    "target_command_work_wall_s": [
+      248.32700313767418,
+      218.42257483582944,
+      211.69498186116107
+    ],
+    "draft_command_work_wall_s": 171.55449873313773,
+    "prefill_elapsed_s": 250.56585957098287,
+    "max_serial_target_work_s": 248.32700313767418,
+    "elapsed_minus_max_target_work_s": 2.2388564333086833,
+    "conditional_prefill_headroom_percent": 0.8935201456184166,
+    "scope": "Only if retained target command durations and scheduling remain fixed: removing overlapped draft alone cannot reduce elapsed below max exclusive target-owner work. Not GPU time, not predicted3+0 duration, and no endpoint/decode bound. Host contention, target checkpoint policy and work count may change."
+  },
+  "sources": {
+    "engine/tools/pipeline_driver.py": "ee6559a5c4a3dedbd75e2a95f385542a2ed2256f297b958669b7936568b4de7e",
+    "engine/tools/live_wavefront_driver.py": "511b1d625a3549789dda8d78d3bbacfe39a840baba5c0f174c4a3e48e51a9b41",
+    "engine/tools/wavefront_driver.py": "14711539751029c4e6eef2e8bac9a6ebeec006ab738986a3d27cdcd2fee57e6e",
+    "engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3302e0a87401dae4ea2093438a849b6d877d64908940eeba30ed3a1e830075bb",
+    "engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "70819127644a423b5b440c90b3214902d335f8f8badbb144bd0e3d7761f12fd5"
+  },
+  "gate": "Fresh fixed1677/32 genuine3+0 vs matching3+1 target canonical sources and every output ID, actual owner terminal/census/quiescence. No draft-state comparison for3+0; retain all target canonical sources/inactive-bank contract and actual source maps. Then same121854/512 long control only with real target-only OP15 admission (no fake external provider), matching source/binary/tie policy/cuts/context/precision/lookup/prefill geometry/cache evidence. One meaningful gate then fair timing, root owns all launches.",
+  "prior_related_scope": "Existing2GPU colocated depth1 versus2+1 depth3 is a different3GPU-vs2GPU draft-placement/depth comparison, not3+0. Existing two-rank target-only quality diagnostics establish outputs but do not time3target greedy.3+1 vs2+1 long context comparison is also not a no-draft control.",
+  "memory": "Same target cuts/context should not add target weights/KV; deleting independent draft process frees its card/host weights. Actual target census/cap/admission still required; this does not make2target262K fit."
+}
