@@ -1,0 +1,87 @@
+{
+  "scope": "One matched first-cold121854prompt/8output diagnostic, not realistic suite/localmax record/sustained decode/independent CPU quality proof.",
+  "candidate_request_seconds": 429.236657625,
+  "control_request_seconds": 605.903149422,
+  "request_time_reduction_percent": 29.15754637775535,
+  "control_over_candidate_request_ratio": 1.4115829546677336,
+  "candidate_prefix_seconds": 409.611896913,
+  "control_prefix_seconds": 586.399711832,
+  "metric_definition": "scheduler_wall_seconds includes prefix and decode, excludes owner loading and final dump/shutdown; lifecycle time is not compared.",
+  "candidate_slots": 4,
+  "control_slots": 2,
+  "binary_sha256": "03e4fdaf7188f63a8194526ef859a8d5426dc2c98a237c1f8eee95e79d423978",
+  "config_differences": {
+    "dedicated_prefill_prompt": {
+      "candidate": "/dev/shm/sc117-dedicated-four-slots-long-20261028-r1/prompt.i32",
+      "control": "/dev/shm/sc117-dedicated-two-slots-control-long-20261028-r1/prompt.i32"
+    },
+    "output": {
+      "candidate": "/dev/shm/sc117-dedicated-four-slots-long-20261028-r1/output",
+      "control": "/dev/shm/sc117-dedicated-two-slots-control-long-20261028-r1/output"
+    },
+    "dedicated_prefill_slots": {
+      "candidate": 4,
+      "control": 2
+    }
+  },
+  "prompt_identity": "same121854 LEi32 prompt SHA624062b1d9ffc3b3f759c890a6806768aac40fe567b5080b030c2607133977d0",
+  "expected_output_ids": [
+    27775,
+    383,
+    279,
+    3766,
+    26622,
+    1528,
+    11,
+    1532
+  ],
+  "outputs_exact": true,
+  "census_identity": [
+    {
+      "owner": "stage0",
+      "byte_identical": true,
+      "sha256": "7ab88140cb1e2ad048ee53f3594aa59ae2961a7ca62b7fe37fb796f270601c5c"
+    },
+    {
+      "owner": "stage1",
+      "byte_identical": true,
+      "sha256": "928dc6e6ac9f565c3619d8ede61fe6f4812005a55a4a948e0bb0cb721aa2ac64"
+    },
+    {
+      "owner": "stage2",
+      "byte_identical": true,
+      "sha256": "483874ff8216dea6c7bd26ba713744ee45b70d129ad101499a24460c6e9e98a2"
+    },
+    {
+      "owner": "stageprovider",
+      "byte_identical": true,
+      "sha256": "60c758e4715f2c67f25805eb997b3ce532c05a69a471e7ae4a12541f9eb4bd68"
+    }
+  ],
+  "cold_conditions": "Fresh independent processes/private SYCL NEO XDG caches per owner; no warmup, cache reuse or concurrent CPU/GPU measurement work (coordinator attestation).",
+  "control_terminal": {
+    "schema": "ownrt.dedicated-provider-terminal.v1",
+    "passed": true,
+    "error": null,
+    "live_pids": [],
+    "returncodes": {
+      "0": 0,
+      "1": 0,
+      "2": 0,
+      "provider": 0
+    },
+    "requests": 1,
+    "mode": "dedicated-provider-stage-pipeline-bulk",
+    "prefill_overlap_requested": true,
+    "prefill_transport_slots": 2,
+    "diagnostic_only": true,
+    "speed_claim": false,
+    "bulk_reset_qualified": false,
+    "bulk_overlap_qualified": false,
+    "prefix_evidence_policy": "actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events",
+    "wall_seconds": 818.3724416919285
+  },
+  "postflight": "Both runs clean with no holders; completed state/transport archives fully compared before exact file release.",
+  "quality_gate": "../four-slots-gate-r1-evidence/summary.json",
+  "input_position": 121861
+}

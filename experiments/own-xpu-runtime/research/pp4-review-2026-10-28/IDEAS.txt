@@ -1,16 +1,18 @@
 Broader SC117 experiment queue — owner steering, 2026-10-28
 
-Campaign status (2026-10-28): PP4 overlap/capacity/lifecycle and per-token
-3+1/2+1 full-state gates passed. Early capture improved 3+1 decode to49.58 tok/s,
-still below PP4 52.16. At64K, matched512 all511 intervals measured dedicated2+1
-51.2885 versus native2GPU 67.6543 tok/s (24.19% lower); all512 IDs exact and both
-lifecycles clean. Native control uses split23/depth1; dedicated uses split25/depth3.
-A128K SHORT state gate is active; long128K remains unqualified. Dedicated bulk
-patches are isolated, not canonical or GPU-qualified. CPU observer ON failed
-all-logit equivalence; six independent CPU disagreements remain unresolved.
-Combined attention/draft owner and stateless head relocation are new hypotheses
-recorded in combined-owner-discoveries.json. Ranked suggestions below retain
-historical hypotheses where later evidence supersedes them.
+Campaign status (2026-10-28): Dedicated bulk and stage-pipeline execution are
+canonical and full-state qualified. The two-target128K short gate and first-cold
+121854/8 long screen completed cleanly (559.908s); the full realistic suite is
+still unrun. Three-target four-slot short parity passed2065/73/1707/32, followed
+by a clean429.237s request (409.612s prefix). Its matched new-binary two-slot
+control is active since09:49UTC; no matched four-slot win claim yet.
+Saved sustained-decode losses remain: dedicated2+1 at64K measured51.2885 versus
+native2GPU67.6543tok/s, all512IDs exact, with split25/depth3 versus23/depth1.
+CPU observer now matches all248320 original logits bitwise and all240 intermediate
+arrays; six independent CPU disagreements remain unresolved. L4 localization
+preparation is untested. Combined attention/draft ownership and stateless head
+relocation remain hypotheses in combined-owner-discoveries.json. Historical
+ranked hypotheses below are retained where subsequent evidence supersedes them.
 
 Purpose: faster exact single-conversation inference and useful native long
 context in the owned Intel Xe engine. Explore architecture changes alongside
@@ -19,21 +21,22 @@ sample, and a sustained decode result. No draft training or host-setting changes
 These are research hypotheses, not installed features or performance promises.
 
 DECISION NOW
-Complete the bounded128K short gate; do not infer long-context qualification.
-Review dedicated bulk's authenticated prefix/seam prototype, then qualify before
-long timing. Its conditional PP4 exposed-replay opportunity is16.2% of prefill
-wall time, not a measured dedicated-topology speedup. Keep saved decode losses
-visible and pursue combined-owner capacity ideas with small falsifying tests.
-No unchanged control reruns or broad restart/sweep campaign.
+Finish the active matched new-binary two-slot cold control before assessing the
+four-slot429.237s candidate. Keep runtime pins frozen during timing. Preserve
+short sealed-state qualification, long eight-output timing and realistic-suite
+qualification as separate scopes. Continue the untested L4 causal localization
+preparation and bounded capacity ideas afterward; no quality resolution claimed.
 
 TOPOLOGY MATRIX
 Layout                 Main question / current status
-4 target, shared draft Current 262K control; prefill overlap measured.
-3 target + 1 draft     Full per-token/capture parity;49.58 tok/s sustained decode
-                      remains below PP4 52.16. Bulk/reset unqualified.
-2 target + 1 draft     Full64K parity and512 matched timing complete;51.29 vs
-                      native2GPU67.65 tok/s. Actual target censuses29.661/30.142GB,
-                      draft3.205GB.128K SHORT gate active; no long128K claim.
+4 target, shared draft Cold121854/8 control714.815s; earlier capacity/lifecycle passed.
+3 target + 1 draft     Two-slot pipeline605.388s; four-slot429.237s candidate,
+                      same-new-binary two-slot control active. Full short parity
+                      passed; persistent reset/full realistic suite remain open.
+2 target + 1 draft     Full128K registered-prefix state gate passed; cold121854/8
+                      screen559.908s on3cards leaves27free. Target native owned
+                      bytes31,837,258,292/32,097,362,144, draft3,385,539,588.
+                      Sustained64K decode51.29 vs native2GPU67.65tok/s (negative).
                       Two-target262K remains capacity blocked.
 2 target + draft + KV  Ambitious capacity variant: fourth card owns full-value
                       KV pages. Test actual QSA gather/copy volume first; remote

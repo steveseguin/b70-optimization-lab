@@ -1,0 +1,8 @@
+Bounded primary-source intake,2026-10-28. Two new hypotheses; no runtime work.
+Pinned Strata46c152a1 and MachXe3cd5087; exact URLs and falsifying tests in external-new-intake-2026-10-28.json.
+
+1. Phase-exclusive prefill workspace borrowing. External engines share prefill scratch/cache capacity. Our new variant is explicit lifetime arenas, potentially exact expert refill or provably unused KV-tail borrowing, to create workspace headroom without KV quantization. Future-KV variant is our inference. First reject on CPU read/write/overread lifetime proof; then byte-restoration operator gate before wider-chunk/model work. Current114.9MB target margin makes this potentially material, not demonstrated fit.
+
+2. Bounded file-order load/read/copy pipeline. Strata documents this separately from token throughput. First use retained load traces to see whether I/O/copy, compile or device initialization dominates; then one exact tensor-bank transfer screen with fixed host-buffer bound. This could improve readiness/load-to-first-token only: our559.908s request metric excludes load. No parallel full-model loading until actual memory forecast.
+
+Existing EP/verifier/KV-layout/draft/snapshot/commandgraph ideas were filtered, not rediscovered. No driver/runtime/environment installation or host settings changes proposed. No external throughput transferred to SC117.

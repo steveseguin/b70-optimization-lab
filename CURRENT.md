@@ -58,14 +58,17 @@ bitexact values; the following projection differs at 221/320 host-F64 versus
 native values, with causality unresolved.
 
 The four-slot 3+1 / 262K short gate passed **2,065 target sources, 73 draft sources,
-1,707 actual pairs and 32 outputs**, all four exits 0 and clean postflight. Binary
-`03e4fdaf7188`, proof `b80b636da70f`. All four device censuses are byte-identical to
-the prior two-slot gate; target host maps doubled to 83,894,272 bytes. Actual schedule
-reached four unfinished chunks and completed all seven chunks on every actor.
-The first-inference four-slot 121,854/8 timing is active in
-`sc117-dedicated-four-slots-long-20261028-r1.service`, with output under the same
-name in `/dev/shm`. The registered new-binary two-slot control follows. No speed
-claim follows from the gate. [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/four-slots-gate-r1-evidence/summary.json).
+1,707 actual pairs and 32 outputs**. Matched first-cold 121,854/8 requests on the
+same new binary then measured **429.237 s with four slots versus 605.903 s with two**:
+**29.157% less request time, 1.412× ratio**. Prefix time was409.612 versus586.400s.
+All eight IDs and four device censuses match; both runs exited all four owners0,
+with baseline-clean postflight and no holders. Config differences are only slots,
+output and same-content prompt paths; both used fresh private runtime caches and
+no warmup/reuse. This is one long-prefill screen, not sustained decode, a realistic
+suite, record or independent CPU correctness. Lifecycle loading/shutdown is excluded.
+No GPU request is active; control archiving is coordinator-owned. L4 CPU localization
+is now authorized; the native L4 plan is prepared but unlaunched.
+[Matched evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

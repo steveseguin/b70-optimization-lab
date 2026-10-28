@@ -1,0 +1,60 @@
+Fixed2/3-row target verifier via prefill — source-only go/no-go,2026-10-28
+
+Decision: NO-GO for calling OP15 as a verifier; conditional GO for a distinct
+width2 transaction prototype AFTER the existing small-width dense-kernel gate.
+This is backlog4 (multirow verification), not8 (requested draft depth). Read
+verifier-batch-screen.txt and dedicated-gate/adaptive-depth-subexperiment8.txt.
+The latter's measured92rejected first-target rows/1.276s busy is a different work
+bound, not evidence that batching wins. Default2GPU~67.65tok/s remains incumbent.
+
+Existing useful machinery and missing actual outputs:
+* prefill_engine.hpp:25-33,290-374 already executes fixed rows layer-major, reuses
+  dense/routed weights, preserves causal QSA row bounds and recurrent row order.
+  However prefill_runs skips final.*,logits,argmax. It emits raw per-row streams,
+  not each row's final norm/full target logits/argmax. Existing OP15 fixture is a
+  transport slot, NOT per-row head identity. A verifier needs canonical full heads
+  for EVERY supplied input, retaining all ordered target argmax values and final
+  hidden bytes. Raw hidden hashes or draft guesses cannot substitute for heads.
+* ring/stage_ring.hpp:58-85 captures one checkpoint BEFORE one tentative row;
+  final stage expressly refuses tentative inputs and checks each input against
+  the last committed target output. prefill() instead requires no pending row,
+  fixture0, and commits ALL rows immediately. Reusing it would accept unverified
+  proposals and cannot roll back an accepted prefix. New explicit batch operation
+  and deferred ledger/publication are required; do not weaken existing ROW guards.
+* prefill_chunk leaves final recurrent banks, scalar position and last-row state.
+  It lacks intermediate-prefix recurrent/history/control images. Per-row raw
+  outputs alone cannot restore state after accepting row0 but rejecting row1.
+  CheckpointRing::prepare(:45-49) saves complete recurrent/control items plus
+  a positional QSA suffix of depth2/3; this is useful START-of-block backup, not
+  proof that intermediate images exist. Do not touch draft-private partition.
+
+Smallest concrete alternative to synthesizing every intermediate checkpoint:
+Use width2 first, one start checkpoint on each target and deferred publication.
+Batch body2rows, then run existing EXACT full target head on each stored stream
+row in order (scalar heads first; batch head is a later kernel treatment). First
+input must be canonically confirmed; compare proposed input[i+1] with actual
+head[i], stop acceptance at first mismatch, retain the verified correction token.
+If all inputs match, finalize the block and canonical last-row scalar state.
+If only a prefix matches, restore START checkpoint, replay that accepted input
+prefix through existing scalar ROW/ACCEPT paths, then publish the correction/next
+seed at the ordinary boundary. This avoids fabricating intermediate checkpoints
+but pays repair replay on misses. Never publish block outputs/SeedRecord/FinalRecord
+before resolution. Need explicit per-row IDs/fixtures/prefixes and block command
+identity; last head/hidden/token-history/parity/extent must match scalar endpoint.
+Here width counts target INPUT rows: a canonical seed plus one guess is width2.
+Two/three proposed tokens may require3/4inputs unless the prior target head has
+already verified the first input; do not hide that extra row or capacity need.
+A width3 version is separate; ring capacity counts real transactional rows. Respect context/max_new/EOS tails; fixed2 may shorten to1.
+
+Native falsifier, before full model or timing:
+Take one actual target stage with existing checkpoint/Engine callbacks. Compare
+width2 vs two serial production rows: every per-row raw stream, full head/logits/
+argmax, terminal state and start restore. Cases: all match, first-proposal mismatch,
+nonempty accepted-prefix repair (later mismatch at width3), QSA3→4 and31→32 boundaries, recurrent
+parity, correction, EOS/request cap, context tail, poisoned head/body failure,
+cancellation, dump/FINISH and independent draft state. Require original full
+state/QSA suffix bytes after restore; only then wider integration and gate.
+Dense reuse2 bitwise small-width screen remains the prerequisite. Prior route
+trace width2/3 expert reuse3.46/6.26% is weak; qualitative leverage is fewer dense
+weight reads/launches, with real head/checkpoint/repair cost included. No speed,
+precision change, training, new runtime code or device work from this audit.

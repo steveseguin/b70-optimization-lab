@@ -1,0 +1,66 @@
+Future-KV workspace borrowing: source-only screen,2026-10-28
+
+Decision: reject as a drop-in capacity fix. A narrowly scoped per-chunk K/V-tail
+lease looks semantically plausible, but current allocation/view/checkpoint code
+provides no proven safe alias lifetime, and headroom shrinks as the prompt grows.
+No fit or speed claim; no code, build, tests, model or GPU work performed.
+Read external-new-intake-2026-10-28.{txt,json}; external expert-cache sharing is
+separate evidence, not proof that our future-KV alias is valid.
+
+Actual access bounds (paths relative to engine/src):
+* stage2/packet3/step/plan.hpp:190-205 allocates full keys/values, raw and pooled
+  buffers; qsa_append_pool is their writer, select reads pooled, attention reads
+  selected K/V. dense-packed-block/.../prefill_engine.hpp:25-27 explicitly keeps
+  all these persistent buffers OUT of prefill shadows; prefill_allocate:35-98
+  allocates shadows independently for the entire prefill lifetime.
+* stage2/packet194-expert-diet-engine/kernels.hpp:191-207 writes K/V rows
+  [P,P+M), writes raw rows (or their512-row ring addresses), completes pooled
+  groups and reads at most3 prior raw rows. round2.hpp:12-17 skips pooled b>=
+  floor((P+r+1)/4) BEFORE pooled loads. p49_qsa_kernel.hpp:25-43 admits attention
+  IDs<=P+r; vector K/V loads at117/130 and312ff stay within the selected complete
+  row. Rounded32-row launch extents do not themselves authorize future-KV reads.
+  These inspected paths support excluding K/V rows>=P+M from current arithmetic;
+  they are not an audit of every possible kernel/configuration/diagnostic.
+* qsa_ring.hpp:1-12 already discards never-read-again RAW rows exactly. Its
+ 512-row circular allocation has no large future tail: do not lend it. Pooled
+  entries still needed by later selection are live; do not treat pooling as free.
+
+Unresolved ownership/lifetime blockers:
+1. Reserve through the END of every in-flight chunk, not its first position.
+   A lease must end after the last GPU event/readback, zero/restore original
+   bytes, and drain BEFORE any append into that range, dump, reset, checkpoint
+   capture or decoder start. Only one native command/owner runs, but4host slots
+   do not create4independent device arenas. Never borrow recurrent/spare banks.
+2. owner_api.hpp:156-157 RowView only names target Allocation,stride,alternate;
+   it has no arbitrary byte-base offset. Existing shadow redirection operates
+   whole allocation IDs. A safe aligned suballocation alias needs explicit arena
+   extent/accounting/non-owning lifetime support; a pointer cast is insufficient.
+   Block vector paths require16-byte alignment (block.hpp:137); a K/V row is2048B
+   here, preserving16-byte alignment, but all borrower kernel bounds/alignment
+   and allocator ownership still need proof. No suitable non-owning arena alias was established by this screen.
+3. strict_snapshot.hpp:463-481 saves future QSA suffixes on relevant legacy paths;
+   ring/checkpoint_ring.hpp:48,103-104 independently owns positional backup rows.
+   “Unread now” is not “outside checkpoint/seal state.” Borrow only with all
+   snapshots idle and restore the original exact bytes; do not waive sealed-state
+   hashes or zero-tail checks, assume unknown bytes are zero, or enlarge snapshots
+   to hide scratch writes. Cancellation must also restore or fail the owner.
+4. Capacity is not stable: K/V tail bytes per allocation are
+   (context-(P+M))*2048 for this512-F32-element row. Near121854tokens/128K there
+   is only about18MiB per K or V tail, while even1024stream rows need40MiB.
+   Larger packed roles need their own contiguous extent. Borrowing across caches
+   requires a new segmented allocator/kernel binding; no demonstrated late-prompt
+   fit follows from abundant early-prompt tail space.
+
+Smallest falsification, before any wider-prefill change: enumerate one existing
+shadow role and one same-owner K/V tail, exact byte/row bounds and16-byte alignment
+for a256-row chunk, with snapshots idle. CPU access-range/lifetime instrumentation
+must cover every active kernel implementation and reject the lease as soon as the
+append frontier reaches it. Only if that passes, a tiny real operator experiment:
+nonzero canaries in proposed future tail, byte-identical restored allocation and
+unchanged live prefix through append, partialtail, checkpoint/rollback, cancellation
+and dump; then advance into formerly borrowed rows. No full-model gate before this.
+
+Exact expert-refill workspace is a different hypothesis: lend selected packed
+expert bytes only during a phase that cannot execute them, refill byte-identically
+before any expert access, and account for transfer cost. This screen neither
+approves nor rejects that separate phase-lifetime/I/O design.

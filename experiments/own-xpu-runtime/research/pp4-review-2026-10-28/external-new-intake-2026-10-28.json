@@ -1,0 +1,44 @@
+{
+  "schema": "ownrt.external-bounded-intake.v1",
+  "date": "2026-10-28",
+  "scope": "CPU/network primary-source review only; no install/build/GPU/model or settings changes. Existing external-ideas-strata.txt/external-ideas-b70.txt and15idea ledger read first. Two distinct untested ideas retained, not a main-path blocker.",
+  "pins": {
+    "Niko1221/Strata": "46c152a1310f77cd2f0ce2c7cd213962df14fe83",
+    "Red-Weasel/machx-inference-engine": "e3cd5087b4ed4357b3aa4db291e4de5c3cec10b6",
+    "riceharvest/llama.cpp default HEAD": "a0e6dc7384edb8f5d927155e1d26c10b4a310e6d"
+  },
+  "ideas": [
+    {
+      "id": "phase-exclusive-prefill-workspace-borrowing",
+      "status": "new-capacity-hypothesis-not-implemented",
+      "primary_urls": [
+        "https://github.com/Niko1221/Strata/blob/46c152a1310f77cd2f0ce2c7cd213962df14fe83/docs/INTEL.md",
+        "https://github.com/Red-Weasel/machx-inference-engine/blob/e3cd5087b4ed4357b3aa4db291e4de5c3cec10b6/README.md"
+      ],
+      "external_fact": "Both document temporary prefill/cache capacity sharing. Strata lends expert-cache slots; MachX describes an elastic block reused between prefill scratch and decode expert cache.",
+      "new_local_inference": "Use explicit phase-exclusive arenas to avoid permanently adding prefill workspace to the tight two-target128K footprint. Candidate alternatives: lend exact packed expert blocks with byte-identical refill before decode, or borrow provably unread/unwritten future KV tail and restore zero bytes before use. Future-KV borrowing is OUR inference, not claimed external implementation.",
+      "why_new": "Different from permanent expert tiering/remoteKV, quantization or larger chunks alone: change lifetime overlap of exact storage, not values or arithmetic. May make wider chunks fit with current114.9MB final-target margin; no fit/speed claim.",
+      "cheapest_falsifying_test": "CPU allocation-lifetime audit first: enumerate exact workspace bytes and borrowers, prove every native read/write including vector overreads stays outside borrowed ranges. Reject if no large exclusive extent or refill traffic dominates. Then one tiny real arena-borrow/refill operator test, all bytes restored and exact sealedstate through prompt->decode/context growth; only afterward changed-chunk gate.",
+      "constraints": "Full16bit KV/FP32 recurrent state and original packed weights retained. Never overwrite live KV, checkpoint banks, or expert bytes still in use; fullACK/parity leases and arena accounting unchanged. No cache drops/settings changes."
+    },
+    {
+      "id": "bounded-file-order-load-and-DMA-pipeline",
+      "status": "new-cold-start-hypothesis-not-throughput-win",
+      "primary_urls": [
+        "https://github.com/Niko1221/Strata/blob/46c152a1310f77cd2f0ce2c7cd213962df14fe83/docs/INTEL.md"
+      ],
+      "external_fact": "Strata documents file-order batched expert reads overlapped with copies as a separate load-time improvement.",
+      "new_local_inference": "Pipeline reads/repacking/copies using a small fixed host-buffer budget and actual file order; preserve perowner device admission and final packed bytes. Prefer internal bounded transfer pipeline before concurrent full owner loads, which can raise transient RAM.",
+      "why_new": "Startup wall time is distinct from existing kernel/expert-tiering/prompt pipeline ideas. Current first-inference request metrics exclude load, so any gain belongs to service readiness/end-user load-to-first-token, not559.908s request throughput.",
+      "cheapest_falsifying_test": "First inspect retained readiness/load traces and existing loader to establish disk/read/copy/compile critical path. If I/O/copy is material, bound buffer memory and screen one actual tensor bank bytehash/transfer ordering; no whole-model parallel-loader rewrite before that. Reject if compile/kernel warmup dominates.",
+      "constraints": "No readahead/pagecache/sysctl changes, cache flushing, model arithmetic or artifact changes. Fresh exclusive output, one controlled load and same final byte inventory; sourcegate if repacking changes."
+    }
+  ],
+  "not_new": [
+    "Strata EP/grouped int8 experts: alreadyqueued; activationquant path is not exact target substitute.",
+    "B70 XMX multicolumn PR29864 and Vulkan matvec/FA split: already verifier/kernel/KV-layout intake; no new ledger entry.",
+    "MachX tiled/splitK attention or FP16 recurrent cache: changed arithmetic/state, not adopted as exact.",
+    "Adaptive speculation/draft vocabulary/remoteKV/snapshots/commandgraphs: alreadytracked."
+  ],
+  "no_performance_claim": true
+}

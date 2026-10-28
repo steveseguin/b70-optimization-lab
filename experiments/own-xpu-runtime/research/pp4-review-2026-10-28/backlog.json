@@ -7,7 +7,7 @@
     {
       "id": 1,
       "idea": "HIGH: Real dedicated existing-MTP owner (3+1;2+1 at shorter context).",
-      "status": "two-target128k-stage-pipeline-full-qualified-first-cold-long-active",
+      "status": "four-slot-matched-cold-long-win-qualified-short-state",
       "evidence": [
         "topology-options.json",
         "topology-allocation-screen.json",
@@ -28,12 +28,17 @@
         "dedicated-gate/pp4-cold-long-r5-evidence/matched-screen.json",
         "dedicated-gate/pipeline-gate-r1-evidence/summary.json",
         "dedicated-gate/pipeline-long-r1-evidence/matched-three-way.json",
-        "dedicated-gate/pipeline-2plus1-128k-gate-r1-evidence/summary.json"
+        "dedicated-gate/pipeline-2plus1-128k-gate-r1-evidence/summary.json",
+        "dedicated-gate/pipeline-2plus1-128k-long-r1-evidence/matched-four-way.json",
+        "dedicated-gate/four-slots-gate-r1-evidence/index.json",
+        "dedicated-gate/four-slots-gate-r1-evidence/summary.json",
+        "dedicated-gate/four-slots-long-r1-evidence/summary.json",
+        "dedicated-gate/two-slots-control-long-r1-evidence/matched-result.json"
       ],
       "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
-      "next_step": "Complete active3card128K first-inference121854/8 planf1727498..., compare exact outputs/cleanlifecycle and retained matched firstcold results with context/topology/implementation differences explicit. Source/runtime frozen, no concurrent compile/modelwork.",
-      "blocker": "Bulk gate active, reset/full realistic suite unqualified; two-target262K capacity blocked. CPU observer r2 original/OFF/ON logits match exactly, but six independent CPU disagreements remain unresolved (layer0 max8.94e-8; final0.1355).",
-      "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; no long128K qualification.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; no matched PP4cold control yet.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; long121Kcapacitypending.",
+      "next_step": "Matched same-binary control completed: slots4 request429.236658s vs slots2 605.903149s, 29.15755% less request time,1.41158x ratio; exact8/census same/all4rc0/clean. Highest-priority completed long-prefill scheduler win; full realistic suite/persistent reset/independent CPU correctness remain open. L4 CPU observer now authorized; native L4 plan prepared, not launched.",
+      "blocker": "Four-slot long timing pending; persistent reset and full realistic suite unqualified; six independent CPU disagreements unresolved. Latest CPU observer all248320 logits bitwise original, all240 intermediates valid; first differing expert sets layer25 reflect differing incoming logits, earlier material increase bracketed inside layer4.",
+      "already_tested_scope": "3+1 capture full2065/73/1707/32 parity. Matched512: earlycapture48.8701/49.5786tok/s vsinitial42.1667/43.2023 andPP451.8090/52.1609(first99/all511); exact512 outputs, clean lifecycle.2+1 at64K/depth3 now full2065/73(52fullprefix+zero-tail) parity,1707pairs,32outputs,all3exit0. InitialV3legacyguard incident fixed withscope-specific20caseCPUregression. Matched cold64K 1677/512: dedicated2+1 first99/all511 50.6051/51.2885 tok/s versus native2GPU split23/depth1 68.2724/67.6543; all512 IDs exact, both clean. Dedicated all511 rate24.19% lower; placement/depth differ explicitly.128K short state gate passed proof e476c64...; no long128K qualification.Sequentialbulk3+1 full2065/73/1707/32 gate passed d99f6b6..., all4exit0, commitf21da9db8. NativeHCnorm10240bitexact; projection221/320hostF64-vs-native differences unresolved.Initial-cold121854/8 dedicated long completed1027.578849s(request)/1007.882537s(prefix),8IDs exact,all4exit0,cleanpostflight; no matched PP4cold control yet.Matched first-inference121854/8:PP4714.815169s vsdedicated1027.578849s,PP4time30.43695%less/ratio1.4375448; exact8/cached0/clean. Explicitcuts/flatcopy/OP9vsOP28/reset differences; singlepromptscreenonly.Stage-pipeline gate passed2065/73/1707/32proof3a2b4489...,all4rc0,cleanpostflight. Actualschedule7chunksperactor,peak2leases; no timingwinclaim.Stage-pipeline3+1 firstcold121854/8 completed605.387841s/prefix585.686060s,exact8/all4exit0/cleanpostflight. Time41.086%less vsseq1027.579s,15.3085%less vsPP4714.815s; onepromptscreen, notsuite/record/independentquality.2+1pipeline128K short fullgate passed3efb44b3...:2065/73sources(2017+69exact,48+4full128prefix/zero262tails),1707pairs/32outputs,all3exit0/cleanpostflight. Actualtighttargetmargins375/115MB; long121Kcapacitypending.2+1pipeline128K firstcold121854/8 completed559.907532s/prefix544.443734s,exact8/all3exit0/cleanpostflight.7.5126%less time vs3+1pipeline,21.6710%vsPP4,45.5120%vs3+1sequential;3cards/card27free,context128vs262K explicit; nosustaineddecodeclaim.",
       "discovery_open": true
     },
     {
@@ -257,6 +262,21 @@
       ],
       "first_test": "Inspect measured PP4 replay component scope first; if material, native actual dispatcher ownership/counter/partialfailure tests then1677prompt32output fullstate+actualpairs gate.",
       "limitation": "No implementation/build/device work; next main action remains dedicated stage-pipeline gate."
+    },
+    {
+      "id": "dedicated-four-authenticated-transport-slots",
+      "status": "source-only-feasible-needs-versioned-map-and-gate",
+      "idea": "Four retained256row transport slots allow up tofourunfinished dedicatedpipeline chunks without largeroperatorrows orGPUshadows.",
+      "evidence": [
+        "dedicated-four-transport-slots-plan.txt"
+      ],
+      "constraints": [
+        "Default2unchanged; versioned8192targetheader/four1280records/eightstreamregions, immutablegeometryadmission.",
+        "Keeptransport slot separatefrom recurrentbankparity/internalreusecycle; onecommand/socket andfullproviderACKrelease.",
+        "Existingdedicatedexternalnativepath hasnoextra2chunkleadbound beyondcurrenttransportcontracts; do not enableforcolocatedpath."
+      ],
+      "first_test": "CPU actualwire/nativeowner >=9chunks partialtail/wrap/cancellation; then samecontextstrictstate+pairgate andactualunchangedVRAMcensusbeforefairlong.",
+      "limitation": "No implementation/build/model/GPU; hostmemorydelta40MiB+4KiBper targetprojected, GPUallocationunchangedbydesign notmeasured; no performanceclaim."
     }
   ],
   "new_idea_intake": [],
@@ -371,6 +391,48 @@
       ],
       "first_test": "Use upcoming actual PP4 phase metrics to bound exposed barrier/replay cost; then one changed-scheduler state/pair gate before matched long timing.",
       "limitation": "No simulation or speedup claim; no source changes or experiment during current control."
+    },
+    {
+      "id": "native-input-router-all48-replay",
+      "status": "completed-same-input-ranking-screen-no-causal-resolution",
+      "evidence": [
+        "reference-one-row/router-replay/native-input-r1/result.json"
+      ],
+      "finding": "Captured IDs/routes equal productionhost all48layers; same-input actualggml IDs identicalall48, no cutoffties. GPU/host selectedweights max3ULP/2.98e-8.",
+      "scope": "Captured native position243routerlogits only; no earlier-history or final-output cause conclusion; six independentCPU disagreements unresolved."
+    },
+    {
+      "id": "phase-exclusive-prefill-workspace-borrowing",
+      "status": "source-screen-rejects-drop-in-future-KV-fix-ownership-unproven",
+      "primary_urls": [
+        "https://github.com/Niko1221/Strata/blob/46c152a1310f77cd2f0ce2c7cd213962df14fe83/docs/INTEL.md",
+        "https://github.com/Red-Weasel/machx-inference-engine/blob/e3cd5087b4ed4357b3aa4db291e4de5c3cec10b6/README.md"
+      ],
+      "external_fact": "Both document temporary prefill/cache capacity sharing. Strata lends expert-cache slots; MachX describes an elastic block reused between prefill scratch and decode expert cache.",
+      "new_local_inference": "Use explicit phase-exclusive arenas to avoid permanently adding prefill workspace to the tight two-target128K footprint. Candidate alternatives: lend exact packed expert blocks with byte-identical refill before decode, or borrow provably unread/unwritten future KV tail and restore zero bytes before use. Future-KV borrowing is OUR inference, not claimed external implementation.",
+      "why_new": "Different from permanent expert tiering/remoteKV, quantization or larger chunks alone: change lifetime overlap of exact storage, not values or arithmetic. May make wider chunks fit with current114.9MB final-target margin; no fit/speed claim.",
+      "cheapest_falsifying_test": "Before any operator/device test, identify one concrete256-row shadow role and same-owner tail, prove all bounds/alignment/lifetimes, idle snapshots, byte-exact restoration and cancellation. Exact expert-block refill remains a separate untested phase/I/O hypothesis; this screen does not reject it.",
+      "constraints": "Full16bit KV/FP32 recurrent state and original packed weights retained. Never overwrite live KV, checkpoint banks, or expert bytes still in use; fullACK/parity leases and arena accounting unchanged. No cache drops/settings changes.",
+      "evidence": [
+        "external-new-intake-2026-10-28.json",
+        "phase-exclusive-workspace-source-screen.txt"
+      ],
+      "source_screen": "Future-tail reads appear avoidable in inspected paths, but no safe non-owning alias lifetime exists in current allocation/checkpoint code. Near121854/128K each K or V tail is about18MiB versus40MiB for1024stream rows; current tail is too small for that role. Four host slots do not create independent device arenas. No fit or speed claim."
+    },
+    {
+      "id": "bounded-file-order-load-and-DMA-pipeline",
+      "status": "new-cold-start-hypothesis-not-throughput-win",
+      "primary_urls": [
+        "https://github.com/Niko1221/Strata/blob/46c152a1310f77cd2f0ce2c7cd213962df14fe83/docs/INTEL.md"
+      ],
+      "external_fact": "Strata documents file-order batched expert reads overlapped with copies as a separate load-time improvement.",
+      "new_local_inference": "Pipeline reads/repacking/copies using a small fixed host-buffer budget and actual file order; preserve perowner device admission and final packed bytes. Prefer internal bounded transfer pipeline before concurrent full owner loads, which can raise transient RAM.",
+      "why_new": "Startup wall time is distinct from existing kernel/expert-tiering/prompt pipeline ideas. Current first-inference request metrics exclude load, so any gain belongs to service readiness/end-user load-to-first-token, not559.908s request throughput.",
+      "cheapest_falsifying_test": "First inspect retained readiness/load traces and existing loader to establish disk/read/copy/compile critical path. If I/O/copy is material, bound buffer memory and screen one actual tensor bank bytehash/transfer ordering; no whole-model parallel-loader rewrite before that. Reject if compile/kernel warmup dominates.",
+      "constraints": "No readahead/pagecache/sysctl changes, cache flushing, model arithmetic or artifact changes. Fresh exclusive output, one controlled load and same final byte inventory; sourcegate if repacking changes.",
+      "evidence": [
+        "external-new-intake-2026-10-28.json"
+      ]
     }
   ]
 }
