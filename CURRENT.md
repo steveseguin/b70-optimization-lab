@@ -1,11 +1,11 @@
 # Current Workspace State
 
-**October 28 — AOT 3+1/262K long512 screen fastest; independent quality remains open.**
+**October 28 — AOT 3+1/262K long512 screen fastest; 12 saved greedy continuations agree with CPU.**
 
 Latest full121,854/512 AOT screen: three targets plus draft at262K completed in
 **261.330404s**, versus369.931021s for AOT2+1/128K (**29.3570% less request time**).
 All512 outputs and full registered cross-context state/pairs matched; details and
-long512 table appear below. Independent CPU quality remains unresolved.
+long512 table appear below. Broader production fidelity and default promotion remain unqualified.
 
 The opt-in GPU reference tie-sort candidate completed the seven historical
 prefixes plus 12 fresh realistic generations in one owner lifetime. All 14 final
@@ -16,8 +16,13 @@ passed, both owners exited 0, and passive postflight was clean.
 The 12 fresh prompts emitted 5,965 actual greedy/EOS tokens. Ten complete inputs
 (prompt plus generated continuation) match historical inputs; technical-guide
 and bug-report-synthesis first differ at output indices 175 and 456. Independent
-CPU validation is pending: ten authenticated prior-row reuses plus two new CPU
-checks. This is not yet a free-running CPU fidelity pass or default promotion.
+CPU validation passed all **5,965/5,965** generated tokens: 4,941 authenticated
+historical rows from ten fully identical inputs plus 1,024 tokens in two fresh
+CPU contexts (one model load, 879.270s, rc0, clean postflight). This establishes
+agreement for these 12 saved greedy continuations, not bitwise CPU equality,
+all prompts, 12 new CPU runs or default promotion. Generic GPU binary962046 is
+qualified here; the addressed variant still needs its seven-case state gate.
+CPU evidence: `reference-one-row/fresh-changed-cpu/completed-r1-evidence/index.json`.
 Evidence: `reference-one-row/router-tie-candidate/gpu-candidate/model-r1-evidence/`.
 
 The original 244 case is causally explained by exactly one equal-word change:
@@ -35,8 +40,8 @@ were not captured, so the cause remains unassigned.
 Quality lineage: neutral 178-token captures and same-input replay exposed an
 actual equal-score tie discrepancy; the general host treatment fixed all six
 historical first-token cases. The GPU implementation now matches that treatment
-on all seven retained states. Independent checking of new continuations and
-broader production fidelity remain pending.
+on all seven retained states. Independent checking of all 12 saved continuations passed as above; broader
+production fidelity remains unqualified.
 
 The realistic-task/reset matrix is in
 `experiments/own-xpu-runtime/research/pp4-review-2026-10-28/realistic-matrix-registration.json`.
