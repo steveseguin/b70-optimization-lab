@@ -111,3 +111,17 @@ probe matches production's precise per-source compile and bare final device link
 The candidate author did not modify canonical runtime or launch a GPU. The
 coordinator owns installation and the matched model gate. No runtime throughput
 claim follows from either isolated correctness probe.
+
+The separate `route_timing.cpp` is compiled offline with the same native policy;
+`route-timing-build.json` records its identity. It keeps the gated source frozen,
+uses a profile-enabled queue equally for both versions, and measures 32 alternating
+pairs after four warmup pairs. Cases are an authenticated native row verified to
+have no selected ties and an all-equal stress row, each at one and 64 rows. Gates
+and final state/canary checks surround timing. Event duration is a kernel-only
+measurement, not endpoint throughput. The coordinator owns its device launch.
+
+After canonical promotion, regenerate the overlay by materializing the original
+adapter from `ce92fd3f4^` to a temporary path and passing that path as the optional
+second argument to `prepare_route_overlay.py`. Its SHA must match the pinned
+original `1c3d27e4fc3abfcd0f9ef47c26d701b5b304eaf6446e69034cfdd5ef0b8ded4e`;
+there is no need to revert canonical runtime to reproduce the source overlay.

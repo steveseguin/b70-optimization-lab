@@ -47,8 +47,9 @@ def replace_one(text, old, new):
 
 def main():
     output = pathlib.Path(sys.argv[1]); output.mkdir()
-    original = BASE.read_text()
-    assert hashlib.sha256(BASE.read_bytes()).hexdigest() == BASE_SHA
+    base = pathlib.Path(sys.argv[2]) if len(sys.argv)>2 else BASE
+    original = base.read_text()
+    assert hashlib.sha256(base.read_bytes()).hexdigest() == BASE_SHA
     start = original.index('template<int N,int Top,bool MERGE> struct RouteFast2 ')
     end = original.index('// HC combine and expert gather', start)
     reference = original[start:end]
