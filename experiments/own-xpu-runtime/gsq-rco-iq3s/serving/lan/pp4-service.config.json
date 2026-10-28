@@ -1,0 +1,57 @@
+{
+  "schema": "ownrt.pipeline-driver-config.v1",
+  "pp4_http_service": true,
+  "adapter_plan": "/home/steve/own-xpu-runtime-results/sc117-lan/current/plan.json",
+  "build_receipt": "/dev/shm/engine-build-pp4-review-20261028/build-receipt.json",
+  "boundaries": [
+    0,
+    8,
+    21,
+    34,
+    48
+  ],
+  "bdfs": [
+    "0000:23:00.0",
+    "0000:27:00.0",
+    "0000:43:00.0",
+    "0000:47:00.0"
+  ],
+  "output": "/dev/shm/sc117-pp4-262k-lan/run-9",
+  "prompt_tokens": [
+    248044
+  ],
+  "context": 262144,
+  "max_new": 512,
+  "admitted_max_new": 512,
+  "vocab": 248320,
+  "eos": 248044,
+  "eos_token_ids": [
+    248044,
+    248046
+  ],
+  "seconds": 172800,
+  "grace_seconds": 120,
+  "memory_start_bytes": 100000000000,
+  "memory_floor_bytes": 8589934592,
+  "root_floor_bytes": 27000000000,
+  "evidence_floor_bytes": 2147483648,
+  "rolling_depth2": true,
+  "speculative_depth": 3,
+  "live_draft": true,
+  "use_proposals": true,
+  "persistent_requests": true,
+  "capture_ready_overlap": true,
+  "recursive_flat_copy": true,
+  "provider_stage": 0,
+  "check_policy": "measured",
+  "measured_policy_admitted": true,
+  "verify_restore": false,
+  "verify_recursive_restore": false,
+  "verify_provider_survival": false,
+  "trusted_draft_manifest_sha256": "eb9d805e5b24b3918196b628eafb1fb9c40f9d3d835fb10b521e5b3950d2ecc9",
+  "suite": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4-service-planning-inputs.json",
+  "suite_sha256": "9135b175959b7c4ff5d5ea8c7dc3ee3cb4a68928769fe5988b43309d999ea09c",
+  "suite_prompt_count": 2,
+  "dump_each": false,
+  "ring_trace_limit": 100000
+}

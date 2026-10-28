@@ -10,12 +10,12 @@ P = Path(__file__).resolve().parent
 LANE = P.parents[1] if (P.parents[1] / 'coverage').is_dir() else Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')  # relocated (lab) copy
 EOS = (248044, 248046)  # <|endoftext|>, <|im_end|>
 THINK_END = 248069      # </think>
-# Engine context (prompt + output tokens). SC117_CONTEXT is read by this module and adapter6.py alike; the engine
-# admits 4096, 32768 and 65536 with the draft on rank 0 (main.cpp); its RoPE table (rope-65536.bf16) ends at 65536.
+# Engine context (prompt + output tokens). The two-rank service admits 4096, 32768 and 65536.
+# 262144 is confined to the separately opted-in PP4 service and its 262K native RoPE/placement authority.
 # 65536 needs the 24/24 split (SC117_TARGET_SPLIT=24): at 23/25 rank 1's KV would pass the 30 GiB plan cap.
 CONTEXT = int(os.environ.get('SC117_CONTEXT', '4096'))
-if CONTEXT not in (4096, 32768, 65536):
-    raise RuntimeError('SC117_CONTEXT must be 4096, 32768 or 65536')
+if CONTEXT not in (4096, 32768, 65536, 262144) or (CONTEXT == 262144 and os.environ.get('SC117_PP4_SERVICE') != '1'):
+    raise RuntimeError('SC117_CONTEXT must be 4096, 32768 or 65536 (262144 only with SC117_PP4_SERVICE=1)')
 DEFAULT_MAX_TOKENS = 512
 MODEL_ID = 'sc117-qwen3.8-flash-next-iq3s-ownrt'
 ROLES = ('system', 'user', 'assistant', 'tool')

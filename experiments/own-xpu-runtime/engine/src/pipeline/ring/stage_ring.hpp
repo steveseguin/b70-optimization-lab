@@ -80,6 +80,12 @@ public:
  }
  std::vector<Row> completed_tentative_rows()const{std::vector<Row> rows;for(const auto& p:pending_){need(p.row.tentative&&p.slot>=0,"provider borrow contains unresolved verified target row");rows.push_back(p.row);}return rows;}
  const Row& last_accepted()const{need(accepted_row_.has_value(),"ring has no accepted seed");return *accepted_row_;}
+ void prefill(int count,const Row& row){
+  healthy();sequence(row.ticket);need(count>0&&pending_.empty()&&!row.tentative&&row.fixture==0,"ring prefill requires verified prompt rows");
+  need(row.position==committed_+count-1&&backend.position()==row.position+1&&row.id==last_id_+uint64_t(count),"ring prefill contiguous physical/global history");
+  need(row.after==extend(row.before,uint32_t(row.position),uint32_t(row.token)),"ring prefill token prefix");
+  mutate(row.ticket,[&]{accepted_id_=last_id_=row.id;accepted_prefix_=row.after;accepted_row_=row;last_fixture_=0;committed_=backend.position();rows+=uint64_t(count);commits+=uint64_t(count);});
+ }
  const typename Backend::Result& oldest_result(const Row& row){return oldest(row).result;}
  Resolution accept(int command_sequence,const Row& row,int verified_token){
   healthy();sequence(command_sequence);auto& entry=oldest(row);

@@ -89,7 +89,7 @@ def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, ha
     for key in ('actual_position', 'committed_position', 'rows', 'tentative_rows', 'commits', 'aborts',
                 'snapshot_captures', 'snapshot_commits', 'snapshot_aborts', 'abort_count',
                 'byteverified_restore_count', 'abort_byte_checks', 'saved_bytes',
-                'full_mutable_checkpoint_bytes', 'bank_parity'):
+                'sparse_checkpoint_reserve_bytes', 'bank_parity'):
         require(type(att[key]) is int and 0 <= att[key] <= 2**64-1,
                 'wavefront bounded nonnegative integer required: ' + key)
     position = identity['position']
@@ -108,8 +108,8 @@ def wavefront_attestation(path, stage, dump, metadata, identity, seal_source, ha
             and att['snapshot_commits'] <= att['commits']
             and att['snapshot_aborts'] == att['aborts'] == att['abort_count'],
             'wavefront snapshot/ledger accounting differs')
-    require(0 < att['full_mutable_checkpoint_bytes'] <= 512 * 1024**2
-            and att['saved_bytes'] == att['full_mutable_checkpoint_bytes'] * att['snapshot_captures'],
+    require(0 < att['sparse_checkpoint_reserve_bytes'] <= 512 * 1024**2
+            and att['saved_bytes'] == att['sparse_checkpoint_reserve_bytes'] * att['snapshot_captures'],
             'wavefront saved-byte accounting differs')
     require(type(att['restore_verification_enabled']) is bool
             and type(att['all_aborts_byte_verified']) is bool
@@ -147,8 +147,8 @@ def speculative_depth(spec):
     depth=spec.get('speculative_depth',2)
     require(type(depth)is int and depth in (2,3),'explicit bounded speculative depth')
     require(depth==2 or (spec['schema']=='ownrt.pipeline-state-set.v7'
-            and spec['mode']=='persistent-rolling' and spec.get('verification_policy')=='measured'),
-            'depth3 requires explicit persistent measured full-state qualification')
+            and spec['mode']=='persistent-rolling' and spec['verification_policy'] in ('qualification','measured')),
+            'depth3 requires explicit persistent full-state qualification')
     return depth
 
 
@@ -226,11 +226,14 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
     layout_raw, layout_source = source(layout_path)
     require(layout_source['sha256'] == att['checkpoint_layout_sha256'], 'ring checkpoint layout SHA differs')
     layout = json.loads(layout_raw, object_pairs_hook=BUNDLE.pairs)
-    require(layout['schema'] == (('ownrt.ring-checkpoint-layout.live.v2' if depth==3 else 'ownrt.ring-checkpoint-layout.live.v1') if live else 'ownrt.ring-checkpoint-layout.v1')
-            and layout['complete_target_owned_mutable_allocations'] is True
+    require(layout['schema'] == (('ownrt.ring-checkpoint-layout.live.sparse.v2' if depth==3 else 'ownrt.ring-checkpoint-layout.live.sparse.v1') if live else 'ownrt.ring-checkpoint-layout.sparse.v1')
+            and layout['complete_target_owned_mutable_allocations'] is False
+            and layout['target_mutable_allocation_coverage'] == 'complete'
+            and layout['checkpoint_policy'] == 'full-non-qsa+sparse-positional-qsa-rows'
             and layout['provider_present'] is (live and provider_owner(spec,metadata,stage))
             and type(layout['ring_capacity']) is int and layout['ring_capacity'] == depth
-            and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring complete target-only layout required')
+            and type(layout['slot_reserve_bytes']) is int and layout['slot_reserve_bytes'] == size
+            and type(layout['slot_bytes']) is int and layout['slot_bytes'] == size, 'ring sparse target-only layout required')
     allocations, labels = set(), set()
     inventory_keys = ('allocations','excluded_private_runtime_allocations','checkpoint_private_allocations')
     if live:
@@ -240,11 +243,16 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
         for row in layout[key]:
             require(type(row['id']) is int and 0 < row['id'] <= 2**64-1 and row['id'] not in allocations
                     and isinstance(row['label'],str) and bool(row['label']) and row['label'] not in labels
-                    and type(row['bytes']) is int and 0 < row['bytes'] <= 256*1024**2,
+                    and type(row['bytes']) is int and 0 < row['bytes'] <= 2**63-1,
                     'ring layout overlapping/invalid allocation identity')
             allocations.add(row['id']);labels.add(row['label'])
-    require(layout['allocations'] and sum(row['bytes'] for row in layout['allocations']) == size,
-            'ring target allocation extent differs')
+    for row in layout['allocations']:
+        require(type(row.get('saved_bytes')) is int and 0 < row['saved_bytes'] <= row['bytes']
+                and row.get('checkpoint') in ('full-allocation','sparse-positional-row','sparse-positional-suffix-rows')
+                and (row['checkpoint'] == 'full-allocation') == (row['saved_bytes'] == row['bytes']),
+                'ring sparse allocation reserve rule differs')
+    require(layout['allocations'] and sum(row['saved_bytes'] for row in layout['allocations']) == size,
+            'ring target sparse reserve differs')
     legacy = {'card0:speculative-private-image','card0:speculative-copy-table','card0:speculative-static-copy-table'}
     require({r['label'] for r in layout['excluded_private_runtime_allocations']} <= legacy,
             'ring unregistered private-state exclusion')
@@ -280,6 +288,7 @@ def ring_attestation(path, stage, dump, metadata, identity, seal_source, hashes,
 def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout, *, pending=False):
     depth=speculative_depth(spec)
     persistent = spec['schema'] == 'ownrt.pipeline-state-set.v7'
+    require(metadata.get('ring_depth',depth) == depth, 'provider recursive reserve depth differs')
     require(att['provider_borrow_mode'] == metadata['provider_borrow_mode']
             == spec['provider_borrow_mode'] == ('pending-target' if pending else 'quiescent-target'),
             'live ring permits only quiescent target borrowing')
@@ -333,10 +342,12 @@ def live_ring_provider(path, stage, dump, metadata, identity, spec, att, layout,
     actual = {row['label']: dict(bytes=row['bytes'],memory=row.get('memory')) for row in canonical}
     require(actual == expected and len(canonical) == att['provider_canonical_allocation_count'],
             'live canonical allocation layout differs from sealed draft state')
+    require(all(type(row.get('saved_bytes')) is int and 0 < row['saved_bytes'] <= row['bytes'] for row in canonical),
+            'provider canonical sparse reserve extents differ')
     require(len(private) == 1 and private[0]['label'] == 'card0:draft:recursive-private-image'
             and private[0].get('memory') == 'device'
             and private[0]['bytes'] == att['provider_private_bytes']
-            == sum(row['bytes'] for row in canonical if row['memory'] == 'device')
+            == sum(row['saved_bytes'] for row in canonical if row['memory'] == 'device')
             and 0 < att['provider_private_bytes'] <= 32*1024**2, 'provider private backup inventory differs')
     require(expected['card0:draft:half-staging']['bytes'] == 4+metadata['stream_bytes']
             and {label for label,row in expected.items() if row['memory']=='pinned'}
@@ -413,7 +424,6 @@ def load_set(path):
         metadata_raw, metadata_source = source(metadata_path)
         metadata = json.loads(metadata_raw, object_pairs_hook=BUNDLE.pairs)
         if ring:
-            require((depth==2 and metadata.get('ring_depth',2)==2) or (depth==3 and type(metadata.get('ring_depth'))is int and metadata['ring_depth']==3),'native ring depth metadata differs')
             require(metadata['schema'] == 'ownrt.pipeline-stage.v1' and metadata['mode'] == mode
                     and metadata['speculation_enabled'] is True
                     and type(metadata['ring_capacity']) is int and metadata['ring_capacity'] == depth

@@ -131,7 +131,7 @@ class LaunchOwnershipTests(unittest.TestCase):
         self.addCleanup(self.cleanup_resources)
 
     def cleanup_resources(self):
-        for name in ('shared','file','sock','log'):
+        for name in ('shared','file','prefill','prefill_file','sock','log'):
             resource=getattr(self.stage,name,None)
             if resource is not None:resource.close()
         for fd in self.guard.stoppers:os.close(fd)
@@ -155,6 +155,19 @@ class LaunchOwnershipTests(unittest.TestCase):
             return proc
         with mock.patch.object(driver.subprocess,'Popen',side_effect=native_predevice_contract):
             self.stage.__init__(self.spec,dict(output=self.temp.name),self.guard)
+
+    def test_native_prefill_map_exists_with_versioned_header_before_launch(self):
+        self.spec['argv'] += ['--prefill-rows','2','--prefill-shared',str(Path(self.temp.name)/'stage0/prefill.bin')]
+        proc=mock.Mock(pid=1234)
+        self.guard.obs.process_identity.return_value={'start_ticks':100}
+        plan=dict(output=self.temp.name,prefill_rows=2,prefill_stream_bytes=driver.PREFILL_STREAM_BYTES)
+        with mock.patch.object(driver.subprocess,'Popen',return_value=proc) as popen:
+            self.stage.__init__(self.spec,plan,self.guard)
+        popen.assert_called_once()
+        path=Path(self.temp.name)/'stage0/prefill.bin'
+        self.assertEqual(path.stat().st_size,driver.PREFILL_HEADER+8*driver.PREFILL_STREAM_BYTES)
+        self.assertEqual(self.stage.prefill[:16],driver.struct.pack('<4I',driver.PREFILL_MAGIC,1,2,driver.PREFILL_STREAM_BYTES))
+        self.assertEqual(self.stage.prefill_rows,2)
         self.assertEqual(self.guard.tracked_processes,[(0,proc)])
 
     def test_old_shared_native_directory_refused_before_launch(self):

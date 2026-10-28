@@ -4,7 +4,7 @@ import json
 import math
 import struct
 
-from compare_pipeline_state import BUNDLE, require
+from compare_pipeline_state import BUNDLE, require, speculative_depth
 
 
 def digest(raw):return hashlib.sha256(raw).hexdigest()
@@ -34,9 +34,9 @@ def validate_payload(raw,spec,layout,metadata,abort_sequence):
     position=payload['position'];integer(position,'provider position',1,2**31-1)
     require(type(payload['provider_serial'])is int and payload['provider_serial']==position
             and position<spec['input_identity']['position'],'provider survival canonical position')
-    expected={r['label']:dict(r,role='canonical') for r in layout['independent_draft_allocations']}
+    expected={r['label']:{**{k:v for k,v in r.items() if k!='saved_bytes'},'role':'canonical'} for r in layout['independent_draft_allocations']}
     for r in layout['provider_private_allocations']:
-        require(r['label'] not in expected,'provider private/canonical overlap');expected[r['label']]=dict(r,role='recursive-image')
+        require(r['label'] not in expected,'provider private/canonical overlap');expected[r['label']]={**{k:v for k,v in r.items() if k!='saved_bytes'},'role':'recursive-image'}
     rows=payload['allocations'];require(isinstance(rows,list) and len(rows)==len(expected),'provider survival complete allocation inventory')
     seen=set()
     for row in rows:
@@ -83,9 +83,10 @@ def validate_payload(raw,spec,layout,metadata,abort_sequence):
             'provider Sequence retained seed differs')
     result=sequence['last_result'];fields(result,'position guesses byte_verified snapshot_bytes canonical_ms capture_ms recursive_ms restore_ms','provider last result')
     require(type(result['position'])is int and result['position']==position and isinstance(result['guesses'],list)
-            and len(result['guesses'])<=2 and all(type(t)is int and 0<=t<sequence['vocab'] for t in result['guesses'])
+            and len(result['guesses'])<=metadata.get('ring_depth',spec.get('speculative_depth',2))
+            and all(type(t)is int and 0<=t<sequence['vocab'] for t in result['guesses'])
             and type(result['byte_verified'])is bool and type(result['snapshot_bytes'])is int,'provider last result bounds')
-    if len(result['guesses'])==2:
+    if len(result['guesses'])>=2:
         require(result['byte_verified'] is True and result['snapshot_bytes']==private['bytes']
                 and host['saved']['position']==position and host['captures']>0,'provider recursive result/save identity')
     else:require(result['byte_verified'] is False and result['snapshot_bytes']==0,'provider censored result identity')
@@ -97,6 +98,7 @@ def validate_payload(raw,spec,layout,metadata,abort_sequence):
 
 
 def validate_records(records,spec,layout,metadata,att):
+    depth=speculative_depth(spec)
     require(isinstance(records,list) and 0<len(records)<=128 and len(records)==att['provider_survival_records'],
             'complete bounded provider survival receipt inventory')
     prior=0;discarded=0
@@ -115,7 +117,7 @@ def validate_records(records,spec,layout,metadata,att):
         payload=validate_payload(record['before_payload'],spec,layout,metadata,record['abort_sequence'])
         row_identity(record['oldest'],spec,payload['sequence']['vocab'])
         oldest=record['oldest'];captures=record['provider_at_capture'];ids=record['discarded_row_ids']
-        require(isinstance(captures,list) and isinstance(ids,list) and 1<=len(captures)==len(ids)<=2
+        require(isinstance(captures,list) and isinstance(ids,list) and 1<=len(captures)==len(ids)<=depth
                 and len(set(ids))==len(ids) and all(type(i)is int for i in ids),'provider suffix inventory')
         require(record['actual_position']==record['committed_position']==oldest['position']
                 and record['pending_tickets']==0 and oldest['tentative'] is True,'provider target abort frontier')

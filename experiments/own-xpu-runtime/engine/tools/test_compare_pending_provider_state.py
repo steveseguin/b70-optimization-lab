@@ -20,7 +20,7 @@ def payload(layout,meta,position,sequence):
     allocations=[]
     for role,key in [('canonical','independent_draft_allocations'),('recursive-image','provider_private_allocations')]:
         for allocation in layout[key]:
-            value=dict(allocation,role=role,sha256='f'*64)
+            value=dict(allocation,role=role,sha256='f'*64);value.pop('saved_bytes',None)
             if value['label']=='card0:draft:position':value['sha256']=digest(struct.pack('<i',position))
             allocations.append(value)
     private=layout['provider_private_allocations'][0]
@@ -91,6 +91,10 @@ class PendingComparisonTests(unittest.TestCase):
     def test_complete_pending_survival_and_all_target_state(self):
         result=COMPARE.compare(COMPARE.load_set(self.gold),COMPARE.load_set(self.path));self.assertTrue(result['passed'])
         self.assertTrue(any(Path(r['path']).name=='ring-provider-survival.jsonl' for r in result['candidate']['sources']))
+    def test_depth3_three_guess_survival_payload(self):
+        layout=json.loads((self.ap.parent/'ring-checkpoint-layout.json').read_text());meta=json.loads((self.path.parent/self.spec['stages'][0]['metadata']).read_text())
+        self.spec['speculative_depth']=3;meta['ring_depth']=3;state=payload(layout,meta,2,20);state['sequence']['last_result']['guesses']=[8,9,10]
+        survival.validate_payload(json.dumps(state),self.spec,layout,meta,20)
 
     def test_quiescent_v4_cannot_relabel_pending_provider(self):
         self.spec.update(schema='ownrt.pipeline-state-set.v4',mode='verified-ring-live');self.path.write_text(json.dumps(self.spec))

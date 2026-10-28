@@ -1,7 +1,7 @@
 // Included inside DraftRuntime. Qualification-only host captures; no device
 // allocations or provider computations occur around a target suffix restore.
 struct SurvivalAllocation {
- Allocation id{};std::string label,role;size_t bytes=0;Memory memory{};std::vector<uint8_t> data;
+ Allocation id{};std::string label,role,digest;size_t bytes=0;Memory memory{};
  bool operator==(const SurvivalAllocation&)const=default;
 };
 struct SurvivalSnapshot {
@@ -34,12 +34,12 @@ std::string survival_binding_digest()const{
 SurvivalSnapshot capture_survival(const ownrt::recursive_provider_next::Sequence& sequence){
  recursive_idle();require(recursive_healthy()&&!recursive_active,"provider survival capture needs completed canonical state");recursive_inventory();
  SurvivalSnapshot s;s.current_host=recursive_host_state();s.saved_host=recursive_host;s.saved_target=recursive_target;s.row_metadata=recursive_rows;s.saved_class=recursive_class;s.captures=recursive_captures;s.restores=recursive_restores;s.verified=recursive_verified_restores;s.bytes=recursive_bytes;s.allocated=allocated;s.image=recursive_image;s.active=recursive_active;s.sequence=sequence.survival_identity();s.descriptors=survival_binding_digest();
- size_t total=0;auto read=[&](Allocation id,const std::string& role){const auto& row=e.dev(0).arena.row(id);require(row.live&&row.bytes&&row.bytes<=80ull*1024*1024&&total<=80ull*1024*1024-row.bytes,"bounded provider survival capture");total+=row.bytes;SurvivalAllocation item{id,row.label,role,row.bytes,row.memory,{}};if(row.memory==Memory::pinned){auto* p=static_cast<const uint8_t*>(row.pointer);item.data.assign(p,p+row.bytes);}else {require(row.memory==Memory::device,"provider survival memory ownership");item.data=e.readback(0,id,row.bytes);}s.allocations.push_back(std::move(item));};
+ auto read=[&](Allocation id,const std::string& role){const auto& row=e.dev(0).arena.row(id);require(row.live&&row.bytes,"provider survival allocation");SurvivalAllocation item{id,row.label,role,{},row.bytes,row.memory};if(row.memory==Memory::pinned)item.digest=ownrt::provider_survival::sha(std::span<const uint8_t>(static_cast<const uint8_t*>(row.pointer),row.bytes));else {require(row.memory==Memory::device,"provider survival memory ownership");item.digest=pipeline::checkpoint_allocation_sha(e,id,row.bytes);}s.allocations.push_back(std::move(item));};
  for(const auto& item:recursive_rows)read(item.id,"canonical");read(recursive_image,"recursive-image");
- namespace v=ownrt::provider_survival;v::Identity rows;rows.integer(recursive_rows.size());for(const auto& row:recursive_rows){rows.integer(row.id);rows.integer(row.bytes);rows.integer(row.offset);rows.integer(uint64_t(row.memory));rows.text(row.label);rows.bytes(row.pinned_before);}
+ namespace v=ownrt::provider_survival;v::Identity rows;rows.integer(recursive_rows.size());for(const auto& row:recursive_rows){rows.integer(row.id);rows.integer(row.bytes);rows.integer(row.offset);rows.integer(uint64_t(row.memory));rows.text(row.label);rows.integer(row.sparse);rows.integer(row.qsa.row_bytes);rows.integer(row.qsa.pooled);rows.bytes(row.pinned_before);}
  std::ostringstream host;host<<"{\"current\":"<<survival_host_json(s.current_host)<<",\"saved\":"<<survival_host_json(s.saved_host)<<",\"saved_target_sha256\":"<<v::quote(survival_target_digest(s.saved_target))<<",\"saved_rows_sha256\":"<<v::quote(rows.digest())<<",\"saved_class\":"<<s.saved_class<<",\"captures\":"<<s.captures<<",\"restores\":"<<s.restores<<",\"verified_restores\":"<<s.verified<<",\"private_bytes\":"<<s.bytes<<",\"allocated_bytes\":"<<s.allocated<<",\"image_id\":"<<s.image<<",\"active\":"<<(s.active?"true":"false")<<"}";s.host=host.str();
  std::ostringstream payload;payload<<"{\"schema\":\"ownrt.provider-survival-state.v1\",\"position\":"<<position<<",\"provider_serial\":"<<sequence.serial()<<",\"allocations\":[";
- for(size_t i=0;i<s.allocations.size();++i){const auto& row=s.allocations[i];payload<<(i?",":"")<<"{\"id\":"<<row.id<<",\"label\":"<<v::quote(row.label)<<",\"bytes\":"<<row.bytes<<",\"memory\":"<<v::quote(row.memory==Memory::device?"device":"pinned")<<",\"role\":"<<v::quote(row.role)<<",\"sha256\":"<<v::quote(v::sha(row.data))<<"}";}
+ for(size_t i=0;i<s.allocations.size();++i){const auto& row=s.allocations[i];payload<<(i?",":"")<<"{\"id\":"<<row.id<<",\"label\":"<<v::quote(row.label)<<",\"bytes\":"<<row.bytes<<",\"memory\":"<<v::quote(row.memory==Memory::device?"device":"pinned")<<",\"role\":"<<v::quote(row.role)<<",\"sha256\":"<<v::quote(row.digest)<<"}";}
  payload<<"],\"host\":"<<s.host<<",\"sequence\":"<<s.sequence<<",\"prepared_bindings_sha256\":"<<v::quote(s.descriptors)<<",\"excluded_shared_counter_values\":[\"Engine timing/submission totals\",\"Device copy_counter values\"]}";s.payload=payload.str();return s;
 }
 SurvivalSnapshot verify_survival(const SurvivalSnapshot& before,const ownrt::recursive_provider_next::Sequence& sequence){

@@ -1,21 +1,23 @@
 #pragma once
 // Bounded two/three-slot target checkpoint transport, included after Engine, SnapshotFlat and
 // pipeline/operator_state.hpp. Slots share one inventory and frozen census.
+namespace mtp36 {class DraftRuntime;}
 namespace pipeline::ring_next {
 template<class Owner> class CheckpointRingFor {
  Owner& e;bool verify;
- struct Item {Allocation id;size_t bytes,offset;std::string label;};
- struct Independent {Allocation id;size_t bytes;Memory memory;std::string label;};
+ struct Item {Allocation id;size_t bytes,offset;std::string label;CheckpointQsa qsa{};bool sparse=false;};
+ struct Independent {Allocation id;size_t bytes,saved_bytes;Memory memory;std::string label;};
+ struct Extent {size_t item=0,source=0,backup=0,bytes=0;};
  std::vector<Item> items,excluded_private;std::vector<Independent> independent,independent_private;
- size_t bytes_=0,table_rows=0,tiles=0,allocation_count=0;
+ size_t bytes_=0,table_rows=0,allocation_count=0;
  struct Metadata {
   unsigned parity=0;int active=0,spare=1,extent=32,alternate=32;int64_t history0=0,history1=0;
   decltype(e.lookup_ids) lookup;decltype(e.selected) selected;decltype(e.loaded_layer) loaded;
   decltype(e.fp32_sources) sources;decltype(e.fp32_extents) extents;
  };
  struct Slot {
-  Allocation image=0,capture_table=0,restore_table=0;std::vector<Allocation> capture_ids,restore_ids;
-  bool active=false;Metadata metadata;std::array<uint8_t,65536> output{};uint8_t* shared=nullptr;
+  Allocation image=0,capture_table=0,restore_table=0;std::vector<Allocation> capture_ids,restore_ids;std::map<Allocation,std::string> before_sha;std::vector<Extent> extents;
+  int position=0;size_t rows=0,tiles=0;bool active=false;Metadata metadata;std::array<uint8_t,65536> output{};uint8_t* shared=nullptr;
  };
  std::vector<Slot> slots;
  uint64_t captures_=0,restores_=0,byte_checks_=0,releases_=0;
@@ -31,15 +33,19 @@ template<class Owner> class CheckpointRingFor {
   for(const auto& item:independent_private){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring provider-private allocation changed");}
   for(const auto& item:independent){const auto& r=e.dev(0).arena.row(item.id);require(r.live&&r.memory==item.memory&&r.bytes==item.bytes&&r.label==item.label,"ring independent draft allocation changed");}
  }
- void prepare(Slot& slot,bool reverse){
+ void prepare(Slot& slot,bool reverse,int position){
+  if(!reverse){slot.extents.clear();const int suffix=std::min(int(slots.size()),e.p.g.context-position);
+   for(size_t i=0;i<items.size();++i){const auto& item=items[i];if(!item.sparse)slot.extents.push_back({i,0,item.offset,item.bytes});
+    else for(int p=position;p<position+suffix;++p)if(!item.qsa.pooled||(p+1)%4==0)slot.extents.push_back({i,item.qsa.offset(p,e.p.g.context),item.offset+size_t(item.qsa.pooled?0:p-position)*item.qsa.row_bytes,item.qsa.row_bytes});
+   }
+  }
   ownrt::CopyEngine copy(e.dev(0));std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;
   e.dev(0).begin_capture(checked);
-  try{for(const auto& item:items)for(size_t offset=0;offset<item.bytes;offset+=SnapshotBatch::limit){const size_t n=std::min(item.bytes-offset,SnapshotBatch::limit);
-    if(reverse)copy.copy(item.id,offset,slot.image,item.offset+offset,n,{});
-    else copy.copy(slot.image,item.offset+offset,item.id,offset,n,{});
-    lengths.push_back(n);
+  try{for(const auto& extent:slot.extents){const auto& item=items[extent.item];
+    checkpoint_copy_extent(e,copy,reverse,slot.image,item.id,extent.source,extent.backup,extent.bytes);
+    for(size_t offset=0;offset<extent.bytes;offset+=SnapshotBatch::limit)lengths.push_back(std::min(SnapshotBatch::limit,extent.bytes-offset));require(checked.size()==lengths.size(),"ring chunk count");
    }e.dev(0).end_capture();}catch(...){e.dev(0).end_capture();throw;}
-  require(!checked.empty()&&checked.size()==lengths.size()&&checked.size()==table_rows,"ring checked descriptor count");
+  require(!checked.empty()&&checked.size()==lengths.size()&&checked.size()<=table_rows,"ring checked descriptor count "+std::to_string(checked.size())+"/"+std::to_string(lengths.size())+" capacity "+std::to_string(table_rows));
   auto& ids=reverse?slot.restore_ids:slot.capture_ids;const auto table=reverse?slot.restore_table:slot.capture_table;ids={table};
   std::vector<SnapshotFlat::Item> rows;size_t total=0;
   for(size_t i=0;i<checked.size();++i){const auto& command=checked[i];require(command.ids.size()==2&&command.pointers.size()==2,"ring checked copy ABI");
@@ -47,10 +53,9 @@ template<class Owner> class CheckpointRingFor {
    rows.push_back({static_cast<uint8_t*>(command.pointers[0]),static_cast<const uint8_t*>(command.pointers[1]),lengths[i],total});
    ids.insert(ids.end(),command.ids.begin(),command.ids.end());
   }
-  if(tiles)require(tiles==total,"ring slot copy geometry mismatch");else tiles=total;
-  e.upload(0,table,0,rows.data(),rows.size()*sizeof(rows[0]));e.drain();
+  slot.rows=rows.size();slot.tiles=total;e.upload(0,table,0,rows.data(),rows.size()*sizeof(rows[0]));e.drain();
  }
- void copy(Slot& slot,bool reverse){inventory();SnapshotFlat op;op.count=table_rows;op.tiles=tiles;e.tail=e.dev(0).compute(op,reverse?slot.restore_ids:slot.capture_ids,{});e.drain();}
+ void copy(Slot& slot,bool reverse){inventory();SnapshotFlat op;op.count=slot.rows;op.tiles=slot.tiles;e.tail=e.dev(0).compute(op,reverse?slot.restore_ids:slot.capture_ids,{});e.drain();}
  void save_metadata(Slot& slot){auto& m=slot.metadata;m.parity=e.bank_parity;m.active=e.active_bank;m.spare=e.spare_bank;m.extent=e.context_extent;m.alternate=e.alternate_context_extent;
   m.history0=e.history0;m.history1=e.history1;m.lookup=e.lookup_ids;m.selected=e.selected;m.loaded=e.loaded_layer;m.sources=e.fp32_sources;m.extents=e.fp32_extents;}
  void restore_metadata(const Slot& slot){const auto& m=slot.metadata;
@@ -63,25 +68,31 @@ template<class Owner> class CheckpointRingFor {
   for(auto id:e.fp32_sources)if(id)require(e.dev(0).arena.row(id).live,"ring restored cache references dead allocation");
  }
 public:
- CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):e(owner),verify(full_byte_verification){
+ CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition):CheckpointRingFor(owner,full_byte_verification,partition,static_cast<const mtp36::DraftRuntime*>(nullptr)){}
+ template<class Draft> CheckpointRingFor(Owner& owner,bool full_byte_verification,const OperatorStatePartition& partition,const Draft* provider):e(owner),verify(full_byte_verification){
   require(owner.a.pipeline_ring_depth==2||owner.a.pipeline_ring_depth==3,"ring configured snapshot capacity");slots.resize(size_t(owner.a.pipeline_ring_depth));
-  idle();require(e.resident&&e.a.pipeline_enabled()&&!e.a.prefill_rows,"ring resident scalar owner");
+  idle();require(e.resident&&e.a.pipeline_enabled()&&(!e.a.prefill_rows||e.a.pipeline_ring_persistent_requests),"ring resident verified-prefill/scalar owner");
   require(!e.a.mtp||partition.enabled,"ring provider needs independent state partition");
   std::set<Allocation> private_ids(partition.draft_private.begin(),partition.draft_private.end());
   std::set<Allocation> draft(partition.draft_device.begin(),partition.draft_device.end()),target(partition.target_device.begin(),partition.target_device.end());
   require(!partition.enabled||(!draft.empty()&&draft.size()==partition.draft_device.size()&&target.size()==partition.target_device.size()),"ring explicit complete ownership");
-  for(auto id:partition.draft_device){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!target.count(id),"ring draft device identity");independent.push_back({id,row.bytes,row.memory,row.label});}
+  for(auto id:partition.draft_device){const auto& row=e.dev(0).arena.row(id);require(e.allocations.count(id)&&row.live&&row.memory==Memory::device&&row.category!=Category::weights&&!target.count(id),"ring draft device identity");size_t saved=row.bytes;if(provider){const auto saved_row=std::find_if(provider->recursive_rows.begin(),provider->recursive_rows.end(),[&](const auto& item){return item.id==id;});require(saved_row!=provider->recursive_rows.end()&&saved_row->memory==Memory::device,"ring recursive canonical reserve metadata");saved=saved_row->sparse?saved_row->qsa.row_bytes*size_t(saved_row->qsa.pooled?1:slots.size()):saved_row->bytes;}independent.push_back({id,row.bytes,saved,row.memory,row.label});}
   require(private_ids.size()==partition.draft_private.size()&&private_ids.size()<=1,"ring provider-private census");
-  for(auto id:private_ids){const auto& row=e.dev(0).arena.row(id);require(partition.enabled&&e.allocations.count(id)&&!target.count(id)&&!draft.count(id)&&row.live&&row.memory==Memory::device&&row.category==Category::runtime_overhead&&row.label=="card0:draft:recursive-private-image","ring explicit provider-private image");independent_private.push_back({id,row.bytes,row.memory,row.label});}
+  for(auto id:private_ids){const auto& row=e.dev(0).arena.row(id);require(partition.enabled&&e.allocations.count(id)&&!target.count(id)&&!draft.count(id)&&row.live&&row.memory==Memory::device&&row.category==Category::runtime_overhead&&row.label=="card0:draft:recursive-private-image","ring explicit provider-private image");independent_private.push_back({id,row.bytes,row.bytes,row.memory,row.label});}
   std::set<Allocation> pinned;
-  for(auto id:partition.draft_pinned){const auto& row=e.dev(0).arena.row(id);require(pinned.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"ring draft pinned identity");independent.push_back({id,row.bytes,row.memory,row.label});}
+  for(auto id:partition.draft_pinned){const auto& row=e.dev(0).arena.row(id);require(pinned.insert(id).second&&!e.allocations.count(id)&&row.live&&row.memory==Memory::pinned,"ring draft pinned identity");independent.push_back({id,row.bytes,row.bytes,row.memory,row.label});}
   require(!partition.enabled||pinned.size()==2,"ring pinned provider inventory");
   for(const auto& [id,where]:e.allocations){const auto& row=e.dev(where.first).arena.row(id);require(where.first==0&&row.live&&row.memory==Memory::device,"ring owner census");if(row.category==Category::weights)continue;
    if(partition.enabled){require(target.count(id)+draft.count(id)+private_ids.count(id)==1,"ring overlapping/unassigned mutable allocation");if(draft.count(id)||private_ids.count(id))continue;}
    if(row.label=="card0:speculative-private-image"||row.label=="card0:speculative-copy-table"||row.label=="card0:speculative-static-copy-table"){require(row.category==Category::runtime_overhead,"ring legacy private identity");excluded_private.push_back({id,row.bytes,0,row.label});continue;}
    require(!row.label.starts_with("card0:wavefront-")&&!row.label.starts_with("card0:ring:"),"ring cannot coexist with another snapshot owner");
-   require(row.bytes>0&&row.bytes<=256ull*1024*1024&&bytes_<=256ull*1024*1024-row.bytes,"ring aggregate per-slot backup bound");
-   items.push_back({id,row.bytes,bytes_,row.label});bytes_+=row.bytes;table_rows+=(row.bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit;
+   if(row.label.starts_with("card0:prefill:"))continue; // row-local op15 scratch is never read by speculative decode.
+   require(row.bytes>0,"ring target allocation extent");
+   items.push_back({id,row.bytes,0,row.label});
+  }
+  std::set<Allocation> scope;for(const auto& item:items)scope.insert(item.id);const auto qsa=checkpoint_qsa(e.p,e.buffers[0],e.dev(0).arena,scope);
+  for(auto& item:items){const auto sparse=qsa.find(item.id);item.sparse=sparse!=qsa.end();if(item.sparse)item.qsa=sparse->second;const size_t saved=item.sparse?item.qsa.row_bytes*size_t(item.qsa.pooled?1:slots.size()):item.bytes;
+   require(saved&&bytes_<=256ull*1024*1024-saved,"ring sparse aggregate per-slot backup bound");item.offset=bytes_;bytes_+=saved;table_rows+=item.sparse?size_t(item.qsa.pooled?1:slots.size())*((item.qsa.row_bytes+SnapshotBatch::limit-1)/SnapshotBatch::limit):(saved+SnapshotBatch::limit-1)/SnapshotBatch::limit;
   }
   require(bytes_&&table_rows&&table_rows<=4096,"ring target snapshot census");
   require(slots.size()*(bytes_+2*table_rows*sizeof(SnapshotFlat::Item))<=512ull*1024*1024,"ring total backup/table reserve");
@@ -92,29 +103,29 @@ public:
    s.capture_table=e.allocate(0,label+":capture",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
    s.restore_table=e.allocate(0,label+":restore",table_rows*sizeof(SnapshotFlat::Item),Category::runtime_overhead,Lifetime::process);
   }
-  for(auto& s:slots){prepare(s,false);prepare(s,true);}allocation_count=e.allocations.size();inventory();
+  for(auto& s:slots){prepare(s,false,0);prepare(s,true,0);}allocation_count=e.allocations.size();inventory();
  }
  bool active(int index)const{require(index>=0&&size_t(index)<slots.size(),"ring slot index");return slots[size_t(index)].active;}
  int capture(uint8_t* shared){idle();inventory();require(shared,"ring output mapping");int index=-1;for(int i=0;i<int(slots.size());++i)if(!slots[size_t(i)].active){index=i;break;}require(index>=0,"ring checkpoint full");
-  auto& slot=slots[size_t(index)];save_metadata(slot);slot.shared=shared;std::memcpy(slot.output.data(),shared,slot.output.size());copy(slot,false);slot.active=true;++captures_;return index;}
- void restore(int index){idle();inventory();require(active(index),"ring restore inactive slot");auto& slot=slots[size_t(index)];restore_metadata(slot);copy(slot,true);require(slot.shared,"ring saved output mapping");std::memcpy(slot.shared,slot.output.data(),slot.output.size());
-  if(verify){const auto expected=e.readback(0,slot.image,bytes_);for(const auto& item:items){const auto actual=e.readback(0,item.id,item.bytes);require(std::equal(actual.begin(),actual.end(),expected.begin()+item.offset),"ring full target restore bytes differ");}
+  auto& slot=slots[size_t(index)];slot.position=e.integer(0,"position");require(slot.position>=0&&slot.position<e.p.g.context,"ring capture position");save_metadata(slot);slot.shared=shared;std::memcpy(slot.output.data(),shared,slot.output.size());if(verify)for(const auto& item:items)slot.before_sha[item.id]=checkpoint_allocation_sha(e,item.id,item.bytes);prepare(slot,false,slot.position);copy(slot,false);slot.active=true;++captures_;return index;}
+ void restore(int index){idle();inventory();require(active(index),"ring restore inactive slot");auto& slot=slots[size_t(index)];restore_metadata(slot);prepare(slot,true,slot.position);copy(slot,true);require(slot.shared,"ring saved output mapping");std::memcpy(slot.shared,slot.output.data(),slot.output.size());
+  if(verify){for(const auto& item:items)require(checkpoint_allocation_sha(e,item.id,item.bytes)==slot.before_sha.at(item.id),"ring full target allocation restore differs: "+item.label);
    require(std::equal(slot.output.begin(),slot.output.end(),slot.shared),"ring output restore differs");++byte_checks_;}
   require(!e.integer(0,"error"),"ring restore sticky error");++restores_;
  }
  void release(int index){idle();inventory();require(active(index),"ring double slot release");slots[size_t(index)].active=false;slots[size_t(index)].shared=nullptr;++releases_;}
  void reset_after_owner_zero(){idle();inventory();for(const auto& s:slots)require(!s.active,"ring reset pending slot");require(e.integer(0,"position")==0&&e.bank_parity==0,"ring cold reset position/banks");
   e.admit_position(0);if(e.a.pipeline_first()&&e.alternate_context_extent!=32){e.swap_state_banks();e.admit_position(0);e.swap_state_banks();}
-  for(auto& s:slots){prepare(s,false);prepare(s,true);s.shared=nullptr;s.output.fill(0);s.metadata={};}inventory();captures_=restores_=byte_checks_=releases_=0;
+  for(auto& s:slots){prepare(s,false,0);prepare(s,true,0);s.shared=nullptr;s.output.fill(0);s.metadata={};s.position=0;s.before_sha.clear();}inventory();captures_=restores_=byte_checks_=releases_=0;
  }
  void write_layout(const fs::path& path,bool live=false){
   inventory();require(live||(independent.empty()&&independent_private.empty()),"target-only ring layout requires absent provider");
-  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(live?(slots.size()==3?"ownrt.ring-checkpoint-layout.live.v2":"ownrt.ring-checkpoint-layout.live.v1"):"ownrt.ring-checkpoint-layout.v1")<<",\"complete_target_owned_mutable_allocations\":true,\"provider_present\":"<<(independent.empty()?"false":"true")<<",\"ring_capacity\":"<<slots.size()<<",\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
+  std::ostringstream o;o<<"{\"schema\":"<<ownrt::quote(live?(slots.size()==3?"ownrt.ring-checkpoint-layout.live.sparse.v2":"ownrt.ring-checkpoint-layout.live.sparse.v1"):"ownrt.ring-checkpoint-layout.sparse.v1")<<",\"complete_target_owned_mutable_allocations\":false,\"target_mutable_allocation_coverage\":\"complete\",\"checkpoint_policy\":\"full-non-qsa+sparse-positional-qsa-rows\",\"restore_verification\":\"full-allocation-streaming-sha256\",\"provider_present\":"<<(independent.empty()?"false":"true")<<",\"ring_capacity\":"<<slots.size()<<",\"slot_reserve_bytes\":"<<bytes_<<",\"slot_bytes\":"<<bytes_<<",\"allocations\":[";
   auto item_json=[&](Allocation id,const std::string& label,size_t bytes){o<<"{\"id\":"<<id<<",\"label\":"<<ownrt::quote(label)<<",\"bytes\":"<<bytes<<"}";};
-  for(size_t i=0;i<items.size();++i){if(i)o<<',';item_json(items[i].id,items[i].label,items[i].bytes);}o<<"],\"excluded_private_runtime_allocations\":[";
+  for(size_t i=0;i<items.size();++i){if(i)o<<',';const auto& item=items[i];const size_t saved=item.sparse?item.qsa.row_bytes*size_t(item.qsa.pooled?1:slots.size()):item.bytes;o<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"saved_bytes\":"<<saved<<",\"checkpoint\":"<<ownrt::quote(item.sparse?"sparse-positional-suffix-rows":"full-allocation")<<"}";}o<<"],\"excluded_private_runtime_allocations\":[";
   for(size_t i=0;i<excluded_private.size();++i){if(i)o<<',';const auto& item=excluded_private[i];o<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"reason\":\"inactive-legacy-snapshot\"}";}o<<"],\"checkpoint_private_allocations\":[";
   bool comma=false;for(const auto& slot:slots)for(auto id:{slot.image,slot.capture_table,slot.restore_table}){if(comma)o<<',';const auto& row=e.dev(0).arena.row(id);item_json(id,row.label,row.bytes);comma=true;}o<<"]";
-  if(live){auto emit=[&](const auto& rows){bool comma=false;for(const auto& item:rows){o<<(comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"memory\":"<<ownrt::quote(item.memory==Memory::pinned?"pinned":"device")<<"}";comma=true;}};o<<",\"independent_draft_allocations\":[";emit(independent);o<<"],\"provider_private_allocations\":[";emit(independent_private);o<<"]";}
+  if(live){auto emit=[&](const auto& rows){bool comma=false;for(const auto& item:rows){o<<(comma?",":"")<<"{\"id\":"<<item.id<<",\"label\":"<<ownrt::quote(item.label)<<",\"bytes\":"<<item.bytes<<",\"saved_bytes\":"<<item.saved_bytes<<",\"memory\":"<<ownrt::quote(item.memory==Memory::pinned?"pinned":"device")<<"}";comma=true;}};o<<",\"independent_draft_allocations\":[";emit(independent);o<<"],\"provider_private_allocations\":[";emit(independent_private);o<<"]";}
   o<<"}";save(path,o.str());
  }
  void borrow_boundary(size_t pending){idle();inventory();size_t active=0;for(const auto& slot:slots)active+=slot.active?1:0;require(pending<=slots.size()&&active==pending,"provider borrow target checkpoint count");}

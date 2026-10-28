@@ -7,7 +7,7 @@ import json
 import os
 import stat
 from compare_provider_survival import fields, integer, digest, row_identity, validate_payload
-from compare_pipeline_state import BUNDLE, require
+from compare_pipeline_state import BUNDLE, require, speculative_depth
 
 
 def survival_bytes(path):
@@ -29,6 +29,7 @@ def survival_bytes(path):
 
 
 def validate_records(records,spec,layout,metadata,att):
+    depth=speculative_depth(spec)
     require(isinstance(records,list) and 0<=len(records)<=128 and len(records)==att['provider_survival_records'],
             'complete bounded provider survival receipt inventory')
     prior=0;discarded=0;advanced_count=0
@@ -47,7 +48,7 @@ def validate_records(records,spec,layout,metadata,att):
         payload=validate_payload(record['before_payload'],spec,layout,metadata,record['abort_sequence'])
         row_identity(record['oldest'],spec,payload['sequence']['vocab'])
         oldest=record['oldest'];captures=record['provider_at_capture'];ids=record['discarded_row_ids']
-        require(isinstance(captures,list) and isinstance(ids,list) and 1<=len(captures)==len(ids)<=2
+        require(isinstance(captures,list) and isinstance(ids,list) and 1<=len(captures)==len(ids)<=depth
                 and len(set(ids))==len(ids) and all(type(i)is int for i in ids),'provider suffix inventory')
         require(record['actual_position']==record['committed_position']==oldest['position']
                 and record['pending_tickets']==0 and oldest['tentative'] is True,'provider target abort frontier')
@@ -79,15 +80,16 @@ def validate_records(records,spec,layout,metadata,att):
 
 
 def validate_survival(path,stage,dump,spec,layout,metadata,att):
+    depth=speculative_depth(spec)
     numeric=('provider_quiescent_borrows','provider_survival_records','provider_survival_discarded_rows',
              'provider_survival_advanced_records','provider_survival_bytes_verified','provider_survival_host_verified',
              'provider_survival_sequence_verified','provider_survival_private_verified','provider_survival_bindings_verified')
     for key in numeric:integer(att[key],key)
-    pending=att['provider_pending_borrows'];fields(pending,'1 2','pending depth counts')
+    pending=att['provider_pending_borrows'];fields(pending,' '.join(str(i) for i in range(1,depth+1)),'pending depth counts')
     for key,value in pending.items():integer(value,'pending depth '+key)
     require(type(att['provider_survival_verification_enabled'])is bool,'provider survival policy boolean required')
     if not metadata['first']:
-        require(not any(att[k] for k in numeric) and pending=={'1':0,'2':0}
+        require(not any(att[k] for k in numeric) and pending=={str(i):0 for i in range(1,depth+1)}
                 and att['provider_survival_receipt_sha256']=='' and att['provider_survival_verification_enabled'] is False
                 and 'provider_survival' not in stage,
                 'rolling nonfirst stage cannot own provider survival state')

@@ -422,7 +422,7 @@ static int run_rank(const Options& a) {
   if(a.pipeline_draft_partition&&provider)operator_partition=admit_operator_partition(*engine,before_provider,provider->live_mutable_inventory(),provider->live_pinned_inventory(),provider->live_private_recursive_inventory());
   if(a.pipeline_wavefront){
    wave_ledger.emplace(a.pipeline_final(),engine->p.g.context,engine->p.g.vocab);
-   wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{},operator_partition);
+   wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{},operator_partition,provider.get());
    wave_trace.open(a.output/"wavefront.jsonl");require(bool(wave_trace),"wavefront trace open");
   }
   if(a.pipeline_ring){
@@ -537,7 +537,9 @@ static int run_rank(const Options& a) {
      if(provider->begin(r.token,r.position,r.fixture!=0)){
       engine->progress_callback=[&,publish_draft](){if(provider->submitting())if(auto completed=provider->poll_result())publish_draft(completed->token,completed->wall_ms,completed->gpu_ms);};
      }else {engine->progress_callback={};publish_draft(-1,Engine::ms(before),0);}
-    }else {int token=provider->run(r.token,r.position,r.fixture!=0);publish_draft(token,Engine::ms(before),engine->gemv_ms+engine->nongemv_ms-gpu);}
+    }else {int token=provider->run(r.token,r.position,r.fixture!=0);publish_draft(token,Engine::ms(before),engine->gemv_ms+engine->nongemv_ms-gpu);
+     if(a.pipeline_ring)ring_dispatcher->draft_prefill(r);
+    }
     response.busy_ms=Engine::ms(before);response.gpu_ms=engine->gemv_ms+engine->nongemv_ms-gpu;
    }
    else if(r.op==half){
@@ -560,6 +562,7 @@ static int run_rank(const Options& a) {
     const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
     if(a.rank==0)engine->prefill_chunk(r.position,h.tokens,r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
     else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
+    if(a.pipeline_ring)ring_dispatcher->prefill_complete(r,a.rank==0?h.tokens:nullptr);
     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
    }
    else if(r.op==pipeline::accept){require(c.pending,"accept without candidate");publish(*engine,c);if(c.speculative)image.accept();if(c.fixture>0)++accepted;v3_accepted(*engine,v3state,c);c={};}
@@ -617,7 +620,10 @@ static int run_rank(const Options& a) {
   for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
    if(a.pipeline_enabled()){
     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
-    if(a.pipeline_ring)require(ring_dispatcher->handles_command(r.op)||((r.op==dump||r.op==finish)&&!r.speculative),"ring command admission");
+    if(a.pipeline_ring)require(ring_dispatcher->handles_command(r.op)||
+      (r.op==prefill::op&&a.prefill_rows&&!r.speculative)||
+      (r.op==draft&&a.prefill_rows&&a.pipeline_ring_live_draft&&a.pipeline_provider()&&!r.speculative)||
+      ((r.op==dump||r.op==finish)&&!r.speculative),"ring command admission");
     else if(a.pipeline_wavefront)require(r.op==ownrt::wavefront::row_op||r.op==ownrt::wavefront::commit_op||r.op==ownrt::wavefront::abort_op||(a.pipeline_live_draft&&a.pipeline_first()&&r.op==ownrt::live_draft::step_op&&!r.speculative)||(a.pipeline_persistent_requests&&r.op==11&&!r.speculative)||((r.op==dump||r.op==finish)&&!r.speculative),"wavefront command admission");
     else require((r.op==half||r.op==pipeline::accept||r.op==dump||r.op==finish)&&!r.speculative,"general pipeline target-only command");
    }

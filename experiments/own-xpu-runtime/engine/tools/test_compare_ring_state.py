@@ -22,10 +22,12 @@ def make_ring(root):
             for label,key in [('active','active_allocation'),('spare','inactive_allocation')]:
                 target.append(dict(id=row[key],label=name+':'+label,bytes=16))
         size=sum(r['bytes'] for r in target)
+        for row in target:row.update(saved_bytes=row['bytes'],checkpoint='full-allocation')
         private=[dict(id=100+3*i+j,label=f'card0:ring:{i}:{kind}',bytes=size if kind=='image' else 32)
                  for i in (0,1) for j,kind in enumerate(('image','capture','restore'))]
-        layout=dict(schema='ownrt.ring-checkpoint-layout.v1',complete_target_owned_mutable_allocations=True,
-                    provider_present=False,ring_capacity=2,slot_bytes=size,allocations=target,
+        layout=dict(schema='ownrt.ring-checkpoint-layout.sparse.v1',complete_target_owned_mutable_allocations=False,
+                    target_mutable_allocation_coverage='complete',checkpoint_policy='full-non-qsa+sparse-positional-qsa-rows',
+                    provider_present=False,ring_capacity=2,slot_reserve_bytes=size,slot_bytes=size,allocations=target,
                     excluded_private_runtime_allocations=[],checkpoint_private_allocations=private)
         layout_path=old.parent/'ring-checkpoint-layout.json';layout_path.write_text(json.dumps(layout))
         final=meta['final'];discarded=0 if final else 3;captures=0 if final else 4;aborts=0 if final else 2
@@ -80,8 +82,8 @@ class RingComparisonTests(unittest.TestCase):
         layout_path=self.att_path.parent/'ring-checkpoint-layout.json'
         original=json.loads(layout_path.read_text())
         variants=[]
-        for field,value in [('schema','unknown'),('provider_present',True),('complete_target_owned_mutable_allocations',False),
-                            ('ring_capacity',1),('slot_bytes',1),('checkpoint_private_allocations',[])]:
+        for field,value in [('schema','unknown'),('provider_present',True),('complete_target_owned_mutable_allocations',True),
+                            ('ring_capacity',1),('slot_bytes',1),('slot_reserve_bytes',1),('checkpoint_private_allocations',[])]:
             variants.append(dict(original,**{field:value}))
         duplicate=copy.deepcopy(original);duplicate['checkpoint_private_allocations'][0]['id']=original['allocations'][0]['id'];variants.append(duplicate)
         omit=copy.deepcopy(original);omit['excluded_private_runtime_allocations']=[dict(id=77,label='card0:real-state',bytes=4)];variants.append(omit)

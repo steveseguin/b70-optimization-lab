@@ -99,7 +99,7 @@ def make_plan(config_path):
          live.wire,base,live.target.lifecycle)]
     dependencies += [Path(__file__).resolve(),Path(suite_tools.__file__).resolve(),
         Path(suite_tools.evidence.__file__).resolve(),Path(suite_tools.evidence.live.__file__).resolve(),
-        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',folder/'remote.py',
+        Path(suite_tools.rolling.__file__).resolve(),folder/'__init__.py',folder/'coordinator.py',folder/'arbiter.py',folder/'capture_ready.py',folder/'remote.py',folder/'prefill.py',
         live.wire.PLANNING/'ring_coordinator.py',live.wire.PLANNING/'ring_contract.py',
         live.wire.PLANNING/'live_draft.py',live.target.lifecycle.SCHEDULE_PATH,manifest,
         base.ROOT/'experiments/own-xpu-runtime/ops/packet196-window/passive_device_holders.py',

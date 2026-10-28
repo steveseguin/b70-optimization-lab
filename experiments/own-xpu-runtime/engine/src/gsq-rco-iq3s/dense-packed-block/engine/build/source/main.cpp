@@ -407,7 +407,9 @@ static Options parse(int argc, char **argv) {
    require(a.rank==(a.pipeline_first()?0:1),"pipeline legacy rank role differs from stage identity");
    require(a.gsq_packed&&a.f32_activations&&a.cards==1&&a.memory=="resident"&&!a.mini,
            "pipeline stages initially require one-card resident GSQ F32 path");
-   require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_provider()&&a.draft_rank==0))&&!a.tp_replicate&&!a.prefill_rows&&!a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
+   require((!a.mtp||(a.pipeline_live_draft&&a.pipeline_provider()&&a.draft_rank==0))&&!a.tp_replicate&&
+           (!a.prefill_rows||(a.pipeline_ring&&a.pipeline_ring_persistent_requests&&a.pipeline_ring_pending_provider&&a.pipeline_ring_live_draft))&&
+           !a.pipeline_canary&&a.draft_capture.empty()&&a.cancel_launch==-1,
            "pipeline unsupported MTP/TP/prefill/canary/cancel mode");
    if(a.pipeline_live_draft){
     require(a.mtp==a.pipeline_provider()&&a.draft_rank==0&&a.draft_fault=="none","live draft belongs only to selected stage");
@@ -1201,20 +1203,23 @@ public:
   }
   // packet189: copy_engine=true forces the copy-engine readback (V3's record path) even when kernel_io=kernel;
   // the V3 boundary export (20,480 B) uses it under boundary_export=copy. Every other readback is unchanged.
-  std::vector<uint8_t> readback(int c, Allocation src, size_t n, bool copy_engine=false) {
-    if(!copy_engine&&kio_sync(c,src,0,n))return kio_readback(c,src,n); // packet188 kernel_io=kernel
+  std::vector<uint8_t> readback_range(int c, Allocation src, size_t offset, size_t n) {
     drain();
     auto started=std::chrono::steady_clock::now();
     std::vector<uint8_t> b(n);
     for (size_t i = 0; i < n; i += 4 * 1024 * 1024) {
       size_t k = std::min(n - i, size_t(4 * 1024 * 1024));
       ownrt::CopyEngine copy(dev(c));
-      wait(c, copy.copy(slab[c], 0, src, i, k, {}));
+      wait(c, copy.copy(slab[c], 0, src, offset + i, k, {}));
       retire_events(c);
       std::memcpy(b.data() + i, dev(c).arena.row(slab[c]).pointer, k);
     }
     transfer_ms+=ms(started);
     return b;
+  }
+  std::vector<uint8_t> readback(int c, Allocation src, size_t n, bool copy_engine=false) {
+    if(!copy_engine&&kio_sync(c,src,0,n))return kio_readback(c,src,n); // packet188 kernel_io=kernel
+    return readback_range(c,src,0,n);
   }
   void put(int c, const std::string &name, const void *b, size_t n) {
     auto s = buffers[c].at(name);

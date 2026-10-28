@@ -50,16 +50,29 @@ def drive(stages, plan, guard, output, *, stop_requested=None):
     event_index = emitted = peak_busy = 0
     provider_pairs = 0
     issued, rejected = {}, []
+    trace_limit = plan.get('coordinator_trace_limit')
+    base.require(trace_limit is None or type(trace_limit) is int and trace_limit >= 1,
+                 'coordinator trace limit requires a positive integer')
+    trace_rows = trace_omitted = 0
     started = time.monotonic()
     with (output/'schedule.jsonl').open('x') as trace, (output/'tokens.jsonl').open('x') as tokens, \
             (output/'provider-batches.jsonl').open('x') as batches, \
             (output/'final-records.jsonl').open('x') as records:
+        def write_trace(event):
+            nonlocal trace_rows, trace_omitted
+            if trace_limit is None or trace_rows < trace_limit - 1:
+                trace.write(json.dumps(event)+'\n')
+                trace_rows += 1
+            else:
+                trace_omitted += 1
+
         def flush_events():
             nonlocal event_index
             while event_index < len(model.events):
-                trace.write(json.dumps(model.events[event_index])+'\n')
+                write_trace(model.events[event_index])
                 event_index += 1
-            trace.flush()
+            if trace_limit is None:
+                trace.flush()
 
         while not model.done:
             guard.check()
@@ -92,7 +105,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None):
                             seed_length=proposal.seed_length,depth=proposal.depth,
                             parent_digest=proposal.parent_digest.hex(),after_digest=proposal.after_digest.hex())
                         issued[command.row.identity] = evidence
-                        trace.write(json.dumps(evidence)+'\n')
+                        write_trace(evidence)
                     stage.issue(command)
             flush_events()
             if model.done:
@@ -146,9 +159,9 @@ def drive(stages, plan, guard, output, *, stop_requested=None):
                     for event in model.events[before:]:
                         if event['event'] == 'freeze' and event['reason'] == 'miss':
                             rejected.append(issued[model.rows[event['cut']].row.identity])
-                    trace.write(json.dumps(dict(event='native-reply',op=command.op,stage=command.stage,
+                    write_trace(dict(event='native-reply',op=command.op,stage=command.stage,
                         sequence=command.sequence,row=command.row.identity,physical=result.physical,
-                        committed=result.committed,pending=result.pending,discarded=result.discarded))+'\n')
+                        committed=result.committed,pending=result.pending,discarded=result.discarded))
                 if model.provider.parent is None and model.provider.job is None:
                     parent_record = None
                 while emitted < len(model.emitted):
@@ -158,6 +171,10 @@ def drive(stages, plan, guard, output, *, stop_requested=None):
                 tokens.flush()
                 flush_events()
         flush_events()
+        if trace_limit is not None:
+            trace.write(json.dumps(dict(event='coordinator-trace-summary',
+                retained=trace_rows, omitted=trace_omitted))+'\n')
+            trace.flush()
     base.require(not provider_wire and model.provider.reset_allowed(), 'provider command and parent lease must drain')
     for stage in stages:
         base.require(stage.command_pending is None and not stage.transmit and not stage.received
@@ -172,4 +189,5 @@ def drive(stages, plan, guard, output, *, stop_requested=None):
         actual_provider=True,scripted_oracle_assisted=False,speed_claim=False,
         cancelled=cancelled,cancelled_provider_incomplete=model.cancelled_provider_incomplete,
         issued_proposals=list(issued.values()),rejected_proposals=rejected,
-        peak_commands_inflight=peak_busy,scheduler_wall_seconds=time.monotonic()-started,events=model.events)
+        peak_commands_inflight=peak_busy,scheduler_wall_seconds=time.monotonic()-started,events=model.events,
+        coordinator_trace=dict(limit=trace_limit,retained=trace_rows,omitted=trace_omitted,attempts=trace_rows+trace_omitted))

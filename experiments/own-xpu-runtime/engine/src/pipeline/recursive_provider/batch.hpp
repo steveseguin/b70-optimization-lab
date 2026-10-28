@@ -68,6 +68,14 @@ public:
   if(serial_)need(row.parent==last_seed_.id&&row.before==last_seed_.after&&h.input_token==last_seed_.token,"depth2 exact canonical ancestry");
   else need(row.position==1&&row.before==ring_next::extend(ring_next::request_prefix(context_.request,context_.epoch),0,uint32_t(h.input_token)),"depth2 first canonical parent prefix");
  }
+ void prefill(const Row& row,int parent_token){
+  need(!poisoned_&&serial_!=UINT64_MAX&&row.position==next_position_&&serial_+1==uint64_t(row.position),"depth2 prefill canonical sequence");
+  need(row.epoch==context_.epoch&&row.request==context_.request&&row.id>row.parent&&row.parent>0&&row.position>0&&row.token>=0&&row.token<context_.vocab&&row.fixture==0&&!row.tentative&&parent_token>=0&&parent_token<context_.vocab,"depth2 prefill request/seed identity");
+  need(row.after==ring_next::extend(row.before,uint32_t(row.position),uint32_t(row.token)),"depth2 prefill seed prefix");
+  if(serial_)need(row.parent==last_seed_.id&&row.before==last_seed_.after&&parent_token==last_seed_.token,"depth2 prefill exact canonical ancestry");
+  else need(row.position==1&&row.before==ring_next::extend(ring_next::request_prefix(context_.request,context_.epoch),0,uint32_t(parent_token)),"depth2 prefill first parent prefix");
+  last_seed_=row;++serial_;++next_position_;
+ }
  template<class Provider> ring_next::wire::ProposalMeta run(Provider& provider,const Input& input,const ExpectedPair& expected,bool verify){
   admit(input,expected);last_sequence_=input.sequence;
   try{

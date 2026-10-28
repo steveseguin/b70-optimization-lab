@@ -14,7 +14,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2]/'tools'))
 import pending_ring_live_driver as pending
 from .coordinator import RollingCoordinator
 from .arbiter import Parent, PROVIDER
-from . import capture_ready, remote
+from . import capture_ready, remote, prefill
 
 base, codec, ring = pending.base, pending.codec, pending.ring
 
@@ -65,19 +65,35 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
         eos_token_ids=plan['eos_token_ids'], stream_bytes=stages[0].stream_bytes,
         initial_sequences=[s.sequence for s in stages], capture_ready_overlap=plan.get('capture_ready_overlap',False),
         provider_stage=plan.get('provider_stage',0),speculative_depth=plan.get('speculative_depth',2))
-    for stage in stages:
+    prefill_result = prefill.run(stages, model, plan, base, pending, ring)
+    for stage, owner in zip(stages, model.stages):
+        owner.sequence = stage.sequence
         stage.start_async()
+        stage.provider_serial = prefill_result['prefill_draft_replay']
+        stage.physical = stage.committed = prefill_result['prefill_positions']
     sockets = {s.sock:s for s in stages}
     parent_record = None
     provider_wire = {}
     event_index = emitted = peak_busy = 0
-    provider_pairs = 0
+    provider_pairs = prefill_result['prefill_draft_replay']
     issued, rejected = {}, []
+    trace_limit = plan.get('coordinator_trace_limit')
+    base.require(trace_limit is None or type(trace_limit) is int and trace_limit >= 1,
+                 'coordinator trace limit requires a positive integer')
+    trace_rows = trace_omitted = 0
     started = time.monotonic()
     with (output/'schedule.jsonl').open('x') as trace, (output/'tokens.jsonl').open('x') as tokens, \
             (output/'provider-batches.jsonl').open('x') as batches, \
             (output/'final-records.jsonl').open('x') as records, \
             (output/'commands.jsonl').open('x') as commands_log:
+        def write_trace(event):
+            nonlocal trace_rows, trace_omitted
+            if trace_limit is None or trace_rows < trace_limit - 1:
+                trace.write(json.dumps(event)+'\n')
+                trace_rows += 1
+            else:
+                trace_omitted += 1
+
         def journal(event,command,**fields):
             commands_log.write(json.dumps(dict(schema='ownrt.rolling-command.v1',event=event,
                 **command_identity(command),**fields))+'\n')
@@ -86,9 +102,10 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
         def flush_events():
             nonlocal event_index
             while event_index < len(model.events):
-                trace.write(json.dumps(model.events[event_index])+'\n')
+                write_trace(model.events[event_index])
                 event_index += 1
-            trace.flush()
+            if trace_limit is None:
+                trace.flush()
 
         while not model.done:
             guard.check()
@@ -134,7 +151,7 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                             seed_length=proposal.seed_length,depth=proposal.depth,
                             parent_digest=proposal.parent_digest.hex(),after_digest=proposal.after_digest.hex())
                         issued[command.row.identity] = evidence
-                        trace.write(json.dumps(evidence)+'\n')
+                        write_trace(evidence)
                     stage.issue(command)
                     issued_command = command
                     source = command.source
@@ -218,9 +235,9 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                             pending=result.pending,discarded=list(result.discarded),token=result.token,
                             sticky_error=result.sticky_error,stream_bytes=0 if result.stream is None else len(result.stream),
                             stream_sha256=None if result.stream is None else sha256(result.stream).hexdigest()))
-                    trace.write(json.dumps(dict(event='native-reply',op=command.op,stage=command.stage,
+                    write_trace(dict(event='native-reply',op=command.op,stage=command.stage,
                         sequence=command.sequence,row=command.row.identity,physical=result.physical,
-                        committed=result.committed,pending=result.pending,discarded=result.discarded))+'\n')
+                        committed=result.committed,pending=result.pending,discarded=result.discarded))
                 if model.provider.parent is None and model.provider.job is None:
                     parent_record = None
                 while emitted < len(model.emitted):
@@ -230,6 +247,10 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                 tokens.flush()
                 flush_events()
         flush_events()
+        if trace_limit is not None:
+            trace.write(json.dumps(dict(event='coordinator-trace-summary',
+                retained=trace_rows, omitted=trace_omitted))+'\n')
+            trace.flush()
     base.require(not provider_wire and model.provider.reset_allowed(), 'provider command and parent lease must drain')
     for stage in stages:
         base.require(stage.command_pending is None and not stage.transmit and not stage.received
@@ -241,7 +262,9 @@ def drive(stages, plan, guard, output, *, stop_requested=None, epoch=0):
                  'completed request must contain every canonical provider pair')
     return dict(schema='ownrt.rolling-socket-result.v1',output_ids=model.emitted,
         input_position=model.frontier,provider_pairs=provider_pairs,provider_serial=model.provider.serial,
+        **prefill_result,
         actual_provider=True,scripted_oracle_assisted=False,speed_claim=False,
         cancelled=cancelled,cancelled_provider_incomplete=model.cancelled_provider_incomplete,
         issued_proposals=list(issued.values()),rejected_proposals=rejected,
-        peak_commands_inflight=peak_busy,scheduler_wall_seconds=time.monotonic()-started,events=model.events)
+        peak_commands_inflight=peak_busy,scheduler_wall_seconds=time.monotonic()-started,events=model.events,
+        coordinator_trace=dict(limit=trace_limit,retained=trace_rows,omitted=trace_omitted,attempts=trace_rows+trace_omitted))

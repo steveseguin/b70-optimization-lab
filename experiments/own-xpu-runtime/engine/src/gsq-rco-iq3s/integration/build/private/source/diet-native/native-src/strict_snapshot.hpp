@@ -558,3 +558,4 @@ public:
 #endif
 };
 }
+#include "pipeline/checkpoint_geometry.hpp"

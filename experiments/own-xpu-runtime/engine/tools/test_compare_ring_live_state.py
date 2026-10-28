@@ -37,10 +37,10 @@ def make_live(root):
         att_path=root/stage['quiescence'];att=json.loads(att_path.read_text())
         layout_path=att_path.parent/'ring-checkpoint-layout.json';layout=json.loads(layout_path.read_text())
         first=stage['id']==0
-        canonical=[dict(id=200+i,label=key,bytes=value['bytes'],memory=value['memory'])
+        canonical=[dict(id=200+i,label=key,bytes=value['bytes'],saved_bytes=value['bytes'],memory=value['memory'])
                    for i,(key,value) in enumerate(state['layouts'].items())] if first else []
         size=sum(row['bytes'] for row in canonical if row['memory']=='device')
-        layout.update(schema='ownrt.ring-checkpoint-layout.live.v1',provider_present=first,
+        layout.update(schema='ownrt.ring-checkpoint-layout.live.sparse.v1',provider_present=first,
                       independent_draft_allocations=canonical,
                       provider_private_allocations=[dict(id=300,label='card0:draft:recursive-private-image',bytes=size,memory='device')] if first else [])
         layout_path.write_text(json.dumps(layout))
@@ -73,6 +73,26 @@ class LiveRingTests(unittest.TestCase):
         self.assertTrue(result['passed'])
         self.assertTrue(any(Path(r['path']).name=='draft-set.json' for r in result['candidate']['sources']))
 
+    def test_sparse_private_reserve_uses_saved_bytes(self):
+        path=self.att_path.parent/'ring-checkpoint-layout.json';layout=json.loads(path.read_text())
+        for row in layout['independent_draft_allocations']:
+            if row['memory']=='device':row['saved_bytes']=1
+        reserve=sum(row['saved_bytes'] for row in layout['independent_draft_allocations'] if row['memory']=='device')
+        layout['provider_private_allocations'][0]['bytes']=reserve;path.write_text(json.dumps(layout))
+        self.att.update(provider_private_bytes=reserve,checkpoint_layout_sha256=digest(path.read_bytes()));self.att_path.write_text(json.dumps(self.att))
+        self.assertTrue(COMPARE.compare(COMPARE.load_set(self.reference),COMPARE.load_set(self.path))['passed'])
+
+    def test_262k_accounting_geometry(self):
+        target=3853756052+2*3783064464+3780215860
+        fixed=17752386
+        full_draft=fixed+2*268435456+67108864+16777216
+        depth2=fixed+2*(1024+1024+256)+256
+        depth3=fixed+3*(1024+1024+256)+256
+        self.assertGreater(target+full_draft,4*1024**3)
+        self.assertEqual(full_draft,638509378)
+        self.assertEqual(depth2,17757250)
+        self.assertEqual(depth3,17759554)
+        self.assertLess(depth3,full_draft)
     def test_live_mode_cannot_be_relabelled_as_old_ring(self):
         self.spec.update(schema='ownrt.pipeline-state-set.v3',mode='verified-ring')
         self.path.write_text(json.dumps(self.spec))

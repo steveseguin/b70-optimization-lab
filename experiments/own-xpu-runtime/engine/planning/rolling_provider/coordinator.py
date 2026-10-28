@@ -22,6 +22,32 @@ class RollingCoordinator(core.Coordinator):
         self.provider_jobs = {}
         self.cancelled_provider_incomplete = False
 
+    def adopt_prefill(self, count):
+        need(type(count) is int and 1 <= count <= len(self.prompt)-2,
+             'prefill leaves the canonical two-row rolling seam')
+        need(self.frontier == 0 and self.next_id == 0 and not self.rows and
+             all(s.physical == s.committed == 0 and not s.pending and s.busy is None for s in self.stages),
+             'prefill adoption requires cold rolling owners')
+        accepted = set(range(len(self.stages)))
+        parent = None
+        for position in range(count):
+            before = self.proposals.hashes[position]
+            need(before == (self.proposals.hashes[0] if parent is None else parent.after),
+                 'prefill canonical prefix')
+            row = core.Row(self.epoch, position+1, 0 if parent is None else parent.identity,
+                      position, self.prompt[position], 0, self.request, before,
+                      self.proposals.hashes[position+1])
+            self.rows[position] = core.Work(row, True, accepted=accepted.copy())
+            parent = row
+        self.next_id = self.frontier = count
+        for stage in self.stages:
+            stage.physical = stage.committed = count
+        self.provider.next_seed = count+1
+        self.provider.serial = count
+        self.events.append(dict(event='prefill-adopted', positions=count,
+                                next_seed=self.provider.next_seed,provider_serial=count))
+        self.invariants()
+
     def _cancel_only(self):
         return self.stop_reason in ('cancel', 'reset')
 

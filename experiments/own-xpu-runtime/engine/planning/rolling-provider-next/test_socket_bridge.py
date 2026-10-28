@@ -78,10 +78,11 @@ def worker(sock,shared,mappings,index,count,prompt,state,errors):
     finally:sock.close()
 
 
-def exercise(count, *, maximum=16, first_options=None, final_options=None, cancel=False, wire_seed=500):
+def exercise(count, *, maximum=16, first_options=None, final_options=None, cancel=False, wire_seed=500, trace_limit=None):
     prompt=[3,5,8,11]
     plan=dict(rolling_depth2_prototype=True,use_proposals=True,prompt_tokens=prompt,max_new=maximum,
         context=128,vocab=97,eos_token_ids=[96],request_sha256=sha256(b'rolling-wire').hexdigest(),verify_restore=True)
+    if trace_limit is not None:plan['coordinator_trace_limit']=trace_limit
     stages=[];threads=[];states=[];errors=[];mappings=[bytearray(base.SHARED) for _ in range(count)]
     guard=Guard()
     with tempfile.TemporaryDirectory() as temporary:
@@ -133,6 +134,23 @@ class SocketBridgeTests(unittest.TestCase):
                 model_events=[e for e in result['logged_events'] if e['event'] not in ('native-reply','issued-proposal')]
                 self.assertEqual(model_events,json.loads(json.dumps(result['events'])))
                 self.assertEqual(result['events'][-1]['event'],'drained')
+
+    def test_measured_trace_is_bounded_with_exact_omissions_and_same_schedule(self):
+        full,_=exercise(4,maximum=32)
+        limit=20
+        bounded,_=exercise(4,maximum=32,trace_limit=limit)
+        logged=bounded['logged_events']
+        self.assertLessEqual(len(logged),limit)
+        summary=logged[-1]
+        self.assertEqual(summary['event'],'coordinator-trace-summary')
+        self.assertEqual(summary['retained'],len(logged)-1)
+        self.assertEqual(summary['omitted'],bounded['coordinator_trace']['attempts']-summary['retained'])
+        self.assertGreater(summary['omitted'],0)
+        for key in ('output_ids','input_position','provider_serial','issued_proposals','rejected_proposals'):
+            self.assertEqual(bounded[key],full[key],key)
+        self.assertEqual(summary['retained'],bounded['coordinator_trace']['retained'])
+        self.assertEqual(summary['omitted'],bounded['coordinator_trace']['omitted'])
+        self.assertFalse(any(e['event']=='coordinator-trace-summary' for e in full['logged_events']))
 
     def test_cancel_while_fragmented_provider_reply_pending_drains_all_owners(self):
         for count in (2,4,6):

@@ -99,7 +99,7 @@ def make_wavefront(root, boundaries, spares=True):
                    commits=7,aborts=aborts,snapshot_captures=captures,snapshot_commits=captures-aborts,
                    snapshot_aborts=aborts,abort_count=aborts,byteverified_restore_count=aborts,
                    abort_byte_checks=aborts,restore_verification_enabled=True,all_aborts_byte_verified=True,
-                   saved_bytes=64*captures,full_mutable_checkpoint_bytes=64,bank_parity=1 if stage['id']==0 else 0,
+                   saved_bytes=64*captures,sparse_checkpoint_reserve_bytes=64,bank_parity=1 if stage['id']==0 else 0,
                    inactive_alternate_banks=meta['inactive_alternate_banks'],
                    canonical_bank_mapping={name:dict(active_allocation=10+2*i,inactive_allocation=11+2*i)
                                            for i,name in enumerate(meta['inactive_alternate_banks'])})

@@ -42,10 +42,10 @@ class Publisher:
 
 
 class Worker:
-    def __init__(self,index,count,epoch,prompt,sequence=0,speculative_depth=2):
+    def __init__(self,index,count,epoch,prompt,sequence=0,speculative_depth=2,context=128):
         self.index,self.count,self.epoch,self.prompt,self.sequence=index,count,epoch,list(prompt),sequence
         self.speculative_depth=speculative_depth
-        self.ring=Ring(capacity=speculative_depth,first=index==0,final=index==count-1,context=128,vocab=97)
+        self.ring=Ring(capacity=speculative_depth,first=index==0,final=index==count-1,context=context,vocab=97)
         self.tickets={};self.outputs={};self.accept_positions=[];self.reset_count=0
     def execute(self,command):
         assert command.stage==self.index and command.sequence==self.sequence+1

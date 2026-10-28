@@ -7,7 +7,7 @@ EMPTY_SHA=hashlib.sha256(b'').hexdigest()
 
 def validate_policy(att, *, policy, first, provider=None, depth=2):
     require(type(depth)is int and depth in (2,3),'bounded explicit persistent policy depth')
-    require(depth==2 or policy=='measured','depth3 debug survival qualification unsupported; measured full-state gate only')
+    require(depth==2 or policy in ('qualification','measured'),'depth3 requires explicit persistent full-state gate')
     require(policy in ('qualification','measured') and type(first)is bool,'explicit persistent fixed policy/owner required')
     require(att['schema']==('ownrt.ring-state.persistent.v2' if depth==3 else 'ownrt.ring-state.persistent.v1') and att['mode']=='persistent-rolling'
             and att['verification_policy']==policy,'persistent attestation policy identity differs')

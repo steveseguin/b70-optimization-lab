@@ -10,7 +10,7 @@ def make_depth3(root):
     for stage in spec['stages']:
         mp=root/stage['metadata'];m=json.loads(mp.read_text());m.update(ring_capacity=3,depth=3,ring_depth=3);mp.write_text(json.dumps(m))
         ap=root/stage['quiescence'];a=json.loads(ap.read_text());a.update(schema='ownrt.ring-state.persistent.v2',ring_capacity=3,depth=3)
-        lp=(root/stage['dump']).parent/'ring-checkpoint-layout.json';layout=json.loads(lp.read_text());layout.update(schema='ownrt.ring-checkpoint-layout.live.v2',ring_capacity=3)
+        lp=(root/stage['dump']).parent/'ring-checkpoint-layout.json';layout=json.loads(lp.read_text());layout.update(schema='ownrt.ring-checkpoint-layout.live.sparse.v2',ring_capacity=3)
         next_id=max(row['id'] for rows in layout.values() if isinstance(rows,list) for row in rows if isinstance(row,dict) and 'id' in row)+1
         for row in list(layout['checkpoint_private_allocations']):
             if 'ring:0:' in row['label']:

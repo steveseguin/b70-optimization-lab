@@ -1,0 +1,22 @@
+# Separate four-card 262K depth-three cold-request endpoint; never starts at boot.
+# Installed copy: ~/.config/systemd/user/sc117-pp4-262k-lan.service
+# Each start creates a fresh plan, passive baseline, admission and exclusive output.
+[Unit]
+Description=SC117 own-runtime PP4 262K depth-three LAN chat API (cards 23/27/43/47)
+
+[Service]
+Type=simple
+WorkingDirectory=/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan
+Environment=SC117_PP4_SERVICE=1
+Environment=SC117_CONTEXT=262144
+ExecStart=/usr/bin/python3 -B -u /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/pp4_start.py --unit sc117-pp4-262k-lan.service --bind 192.168.2.44 --port 18161
+# Active SIGTERM cooperatively stops native work and waits for physical drain.
+Restart=no
+KillMode=process
+KillSignal=SIGTERM
+SendSIGKILL=no
+TimeoutStopSec=infinity
+LimitAS=infinity
+LimitCORE=0
+Nice=19
+CPUAffinity=0-3 16-19

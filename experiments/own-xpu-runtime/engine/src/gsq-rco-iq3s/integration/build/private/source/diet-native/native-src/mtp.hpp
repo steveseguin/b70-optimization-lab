@@ -10,6 +10,7 @@
 #include <poll.h>
 // Included after Engine. All mutable allocations below are private to the draft.
 // The target Engine supplies one lifetime owner, uploads and immutable weights.
+namespace pipeline {template<class Owner> class StageCheckpointFor;}
 namespace mtp36 {
 struct Tensor {std::string name,file,dtype,sha;uint64_t offset,bytes,filebytes,dev,ino,mtime,ctime;unsigned rows,cols;};
 struct Store {
@@ -56,6 +57,7 @@ inline std::string official(const std::string& n){
 struct Weight {Allocation id{};iq3::Type type=iq3::Type::BF16;unsigned rows{},cols{},experts=1;bool int8=false,fp8=false,raw=false;};
 struct ProviderError:std::runtime_error{using std::runtime_error::runtime_error;};
 class DraftRuntime {
+ template<class Owner> friend class pipeline::StageCheckpointFor;
  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
  std::map<const flash::Launch*,Engine::Prepared> prepared;
  struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };

@@ -69,7 +69,7 @@ class Arbiter:
     def local_accepted(self, row):
         self.checked_row(row)
         need(not self.failed and self.job is None and row.position <= self.next_seed, 'local accepted frontier overshot provider')
-        if row.position:
+        if row.position >= self.next_seed:
             need(row.position == self.next_seed and self.local_seed is None, 'exact once locally accepted seed')
             self.local_seed = row
 

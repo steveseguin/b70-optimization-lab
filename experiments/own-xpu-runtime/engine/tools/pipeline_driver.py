@@ -26,6 +26,8 @@ SLOT = 65536
 SHARED = 4 * SLOT + 4096 + 64
 REQUEST = struct.Struct('<8i')
 REPLY = struct.Struct('<8i4d')
+PREFILL_MAGIC, PREFILL_VERSION, PREFILL_HEADER = 0x31465050, 1, 4096
+PREFILL_STREAM_BYTES = 4 * 2560 * 4
 
 
 def require(ok, message):
@@ -261,6 +263,19 @@ class Stage:
         self.file = (self.path / 'shared.bin').open('x+b')
         self.file.truncate(SHARED)
         self.shared = mmap.mmap(self.file.fileno(), SHARED)
+        self.prefill_rows = int(option(spec['argv'], '--prefill-rows')) if '--prefill-rows' in spec['argv'] else 0
+        self.prefill_file = self.prefill = None
+        if self.prefill_rows:
+            require(1 <= self.prefill_rows <= 256 and plan.get('prefill_rows') == self.prefill_rows and
+                    plan.get('prefill_stream_bytes') == PREFILL_STREAM_BYTES,
+                    'native prefill plan geometry')
+            prefill_path = Path(option(spec['argv'], '--prefill-shared'))
+            require(prefill_path == self.path / 'prefill.bin', 'native prefill map path identity')
+            self.prefill_file = prefill_path.open('x+b')
+            self.prefill_file.truncate(PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
+            self.prefill = mmap.mmap(self.prefill_file.fileno(), PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
+            self.prefill[:16] = struct.pack('<4I', PREFILL_MAGIC, PREFILL_VERSION,
+                                            self.prefill_rows, PREFILL_STREAM_BYTES)
         self.sock, child = socket.socketpair()
         self.sock.settimeout(0.2)
         read_stop, write_stop = os.pipe()
@@ -303,6 +318,8 @@ class Stage:
         require(r[5] == (0 if self.spec['first'] else 1) and r[6:8] == (self.spec['id'], int(self.spec['final'])), 'reply stage/final identity')
         if ready:
             require(0 < r[3] <= SLOT and r[3] % 4 == 0, 'F32 ready stream extent')
+            require(not getattr(self, 'prefill_rows', 0) or r[3] == PREFILL_STREAM_BYTES,
+                    'native prefill stream differs from map')
             self.stream_bytes = r[3]
         return r
 

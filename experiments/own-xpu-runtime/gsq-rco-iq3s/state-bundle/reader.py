@@ -1,7 +1,7 @@
 """Independently verify sealed raw state bytes and return the legacy logical map."""
 import hashlib,json,os,re,stat
 from pathlib import Path
-CAP=4*1024**3;META=1024**2;ROWS=4096  # full KV dumps at context 32768
+CAP=16*1024**3;META=1024**2;ROWS=4096  # full target+draft dumps through context 262144
 FILES={'state.bundle','state-index.tsv','state.json','state-seal.txt'}
 def require(v,msg):
  if not v:raise ValueError('state bundle: '+msg)

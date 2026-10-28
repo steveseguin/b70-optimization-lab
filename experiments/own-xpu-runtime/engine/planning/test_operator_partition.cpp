@@ -51,6 +51,6 @@ int main(int argc,char** argv){assert(argc==2);const fs::path root=argv[1];fs::c
  ownrt::wavefront::Ledger ledger(false,128,128);ledger.begin({1,3,0,1,true});ledger.abort(1,3,0,1);
  fs::create_directory(e.a.output/"state-9");fs::create_directory(e.a.output/"state-9.draft");save(e.a.output/"state-9"/"state-seal.txt","target fixture seal\n");save(e.a.output/"state-9.draft"/"state-seal.txt","draft fixture seal\n");
  cp.attest(ledger,e.a.output/"state-9.wavefront-state.json",9);std::ifstream receipt(e.a.output/"state-9.wavefront-state.json");std::string json((std::istreambuf_iterator<char>(receipt)),{});
- assert(json.find("ownrt.wavefront-state.partition.v1")!=std::string::npos&&json.find("target_mutable_checkpoint_bytes")!=std::string::npos&&json.find("full_mutable_checkpoint_bytes")==std::string::npos&&json.find("independent_draft_state_seal_sha256")!=std::string::npos);
+ assert(json.find("ownrt.wavefront-state.partition.v1")!=std::string::npos&&json.find("sparse_checkpoint_reserve_bytes")!=std::string::npos&&json.find("full_mutable_checkpoint_bytes")==std::string::npos&&json.find("target_mutable_checkpoint_bytes")==std::string::npos&&json.find("independent_draft_state_seal_sha256")!=std::string::npos);
  e.close();std::cout<<"PASS explicit provider census and disjoint ownership; target rollback preserves newer draft device+pinned state; reset reuploads zeroed checked tables; CPU only\n";
 }
