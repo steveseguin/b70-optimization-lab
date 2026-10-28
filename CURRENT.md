@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**October 28 — Stage-pipeline full gate passed; matched long timing active.**
+**October 28 — 2+1 at128K full gate passed; three-card long timing active.**
 Matched cold64K 1677/512 measured dedicated2+1 **50.605 /51.289 tok/s** versus native
 2GPU **68.272 /67.654 tok/s** (first99/all511 intervals): dedicated all511 rate is
 **24.19% lower**. All512 IDs match and both lifecycles are clean; cuts25/depth3 versus
@@ -22,10 +22,24 @@ PP4 coldRESET remain explicit differences. Dedicated stage-pipeline full gate pa
 outputs**, all4rc0, clean postflight; proof `3a2b4489…`, native29471eb0bab9 unchanged.
 Actual host schedule retained2chunk leases and completed7chunks on each of4actors;
 this proves host scheduling overlap, not a speedup. [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-gate-r1-evidence/summary.json).
-Verified candidate/reference archive comparisons released bundles. First-inference121854/8
-long timing is active at `/dev/shm/sc117-dedicated-pipeline-long-20261028-r1`, plan
-`3718e60c…`, unit `sc117-dedicated-pipeline-long-20261028-r1.service`. Fresh clean
-baselineRAM104008916992B passed startup floor; no timing result yet.
+The3+1 stage-pipeline first-inference121854/8 run completed in **605.388s**, prefix
+585.686s, exact8 IDs and all4rc0/clean postflight. This is **41.09% less request time**
+than sequential dedicated1027.579s and **15.31% less** than PP4714.815s (ratios1.6974/1.1808).
+Target work291.218/258.393/251.820s and replay203.104s remain similar to sequential;
+actual command overlap accounts for the changed schedule, with no GPU-duration claim.
+[Three-way screen](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-long-r1-evidence/matched-three-way.json).
+This is one first-inference prompt/eight-output screen, not a suite/localmax record or
+independent CPU correctness result. PP4 cuts/flatcopy/OP9/reset differences remain explicit.
+Verified5bundle archive released16.369GB. Reviewed2target extension applied;10socket+6planner
+CPU tests passed. The2+1 at128K bulk/pipeline full gate passed **2065/73 sources,1707 pairs,32outputs**,
+all3rc0/clean postflight (proof `3efb44b3…`):2017+69 exact sources plus48+4 registered
+capacity arrays with full128K-prefix equality and zero262K extra tails.
+[Evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/pipeline-2plus1-128k-gate-r1-evidence/summary.json).
+Actual target censuses31837258292/32097362144B leave374996428/114892576B under30GiB;
+provider3385539588B. Each target is12288B above projection, cause unassigned.
+Verified candidate/reference archives released bundles. First-inference121854/8 on3cards
+at128K is active at `/dev/shm/sc117-dedicated-pipeline-2plus1-128k-long-20261028-r1`,
+plan `f1727498…`, clean startupRAM103769600000B passed96GiB floor. No long result yet.
 Native HCnorm probe passed10240 bitexact/error0 with
 clean postflight. The next projection differs at221/320 hostF64-versus-native values;
 causality remains unresolved. CPU observer r2
@@ -62,7 +76,7 @@ remain unresolved. Combined-owner discoveries remain in the broader queue.
 - Actual device censuses:29,661,143,540 /30,141,558,944 bytes for targets,3,205,184,516 for draft.
   The checked checkpoint admission fix retains existing256MiB-per-slot/4096-row bounds and complete reserve
   under the unchanged30GiB device cap. No checkpoint coverage or arithmetic changed.
-- The64K measurements and128K short gate completed cleanly. Dedicated and PP4 first-inference121854/8 timing completed; stage-pipeline gate passed; long timing follows. No resident service.
+- The64K measurements and128K short gate completed cleanly. Dedicated and PP4 first-inference121854/8 timing completed; stage-pipeline long timing completed;2+1 pipeline gate follows. No resident service.
 - A weightless snapshot-copy screen passed exact restore and measured994→587µs capture. Its CPU build overlap
   makes host-wall timing contended, and reverse-suffix rollback can cost extra restores. This is a traffic-cost
   screen, not an endpoint improvement. Card27 is empty; no parallel GPU job during the2+1 gate.

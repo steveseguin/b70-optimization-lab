@@ -1,0 +1,54 @@
+Two-target authenticated bulk stage pipeline — isolated candidate,2026-10-28
+
+Base: canonical965b3120a after qualified three-target pipeline apply. Exact four
+source SHA256 pins in base-pins.json. This candidate does not overwrite or alter
+bulk-overlap-candidate historical/qualified three-target artifacts. No canonical
+runtime edits, native changes, allocation changes, builds, GPU or model launches.
+
+python.patch changes four Python files:
+- dedicated_prefill_pipeline.py derives targets,final_index,provider_actor and
+  actorcount from len(stages), admitting only2or3. All peractor vectors/snapshots,
+  native metadata final flag, seed/final source records, OP28 ACK expected stages
+  and source sequences follow actual target count. One pending command/socket,
+  two global unfinished chunks and fullACK parity release remain unchanged.
+- dedicated_provider_driver.py, dedicated_transport.py and lifecycle.py permit
+  the explicit existing dedicated_prefill_pipeline bool with authenticated bulk
+  and2or3targets. No other admission/policy/default behavior changes. Identity
+  already binds target boundaries/BDFs/context plus explicit pipeline flag.
+
+For2targets, stage1 copies stage0 FORWARD into its own FORWARD input region; its
+actual final result and source SHA are read from stage1 REVERSE. Provider remains
+separate actor/index2, native rank-1; it is not a target stage. No fake provider
+map, target ledger, accepted row or source metadata. Header stages=2 and final
+stage=1 are strictly checked by existing codec/native OP28. Native sequential
+bulk already admits2targets; no precision or native allocation changes needed.
+
+Portable CPU command (checks base pins, patches temporary package only):
+ taskset -c 8-15 nice -n 19 python3 run_pipeline_tests.py
+Actual result:10socket/scheduler testsPASS0.738s;6planner testsPASS0.017s (includes
+3existing baseline planner cases). Real inherited Stage.command/Provider.replay
+socket framing with deterministic CPU peer arithmetic, not native GPU proof.
+All original three-target regressions remain. New2target tests cover7chunks,
+1675prefix rows/139-row partialtail, exact ROW_META/Record1280/ACK256/native-shaped
+Reply64/Request32, native stages2/final1, retained parity until fullACK, forced
+oppositeparity final completion before provider0ACK, source overwrite refusal,
+malformedACK refusal, cancellation/drain, no partial model adoption. Existing
+strict prefix_evidence consumes the unmodified journal schema for both topologies.
+Planner test explicitly preserves actual131072context/depth3/restoration policy,
+real provider-prefill alias, no fake provider target-prefill map and lifecycle
+mode. It mocks base planner: it is not native capacity or model-state evidence.
+
+Cancellation/error semantics unchanged: main checks Guard/stop before issue;
+observed Future errors poison Guard before any further admission. Guard's existing
+stop pipes cancel socket waits; executor joins all submitted workers before outer
+lifecycle can close maps. Lease is never released on failure/capture-only signal;
+only fully validated OP28 completion plus stable source record checks remove it.
+Adoption requires every target/provider chunk complete; partial failure cannot
+retry/reset or adopt. Tests verify peers drain and model frontier remains0.
+
+UNQUALIFIED until real2+1at128K gate:1677prompt32outputs, actualprefix/recursive
+canonical hiddenSHA/token pairs, context131072 original metadata/seals, full2065
+ target/73draft cross-context comparison with bounded-prefix/zero-tail verification,
+clean all3FINISH/postflight. Only afterpass run exactsame121854prompt+8 long using
+unchanged full16bit KV/native cap and explicit2+1identity. No speed/fit/quality
+claim from CPU tests. Parent owns launch/admission and gates after current3+1long.

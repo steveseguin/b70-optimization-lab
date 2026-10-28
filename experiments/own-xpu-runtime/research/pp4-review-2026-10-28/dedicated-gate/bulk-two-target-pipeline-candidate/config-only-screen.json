@@ -1,0 +1,41 @@
+{
+  "schema": "ownrt.two-target-pipeline-config-only.v1",
+  "status": "config-only-no-plan-before-candidate-apply",
+  "config": "/dev/shm/sc117-dedicated-pipeline-2plus1-128k-gate-20261028-r1/config.json",
+  "config_sha256": "03f1f8c1163d73fddd836022432925ff7a807a333dcd4726912370dbccf1a07b",
+  "prompt_i32_sha256": "434f2a841121d10e9ad947745cecb8cfc007b08d5085fd68d5fc37068359c32c",
+  "context": 131072,
+  "prompt_tokens": 1677,
+  "max_new": 32,
+  "depth": 3,
+  "boundaries": [
+    0,
+    25,
+    48
+  ],
+  "bdfs": [
+    "0000:23:00.0",
+    "0000:47:00.0"
+  ],
+  "provider_bdf": "0000:43:00.0",
+  "startup_floor_bytes": 103079215104,
+  "receipt": "/dev/shm/engine-build-dedicated-bulk-20261028-r1/build-receipt.json",
+  "projection_source": "research/pp4-review-2026-10-28/dedicated-gate/128k-prefill-footprint.json",
+  "projection_sha256": "2a0e3ce1e5c08c8d8cff09b74f94117ee1d1a344c0e90e6a5e67e9500d1204e0",
+  "per_target_projection": [
+    {
+      "rank": 0,
+      "current_actual_census_bytes": 31548580340,
+      "projected_with_prefill_bytes": 31837246004,
+      "remaining_30GiB_bytes": 375008716
+    },
+    {
+      "rank": 1,
+      "current_actual_census_bytes": 32028995744,
+      "projected_with_prefill_bytes": 32097349856,
+      "remaining_30GiB_bytes": 114904864
+    }
+  ],
+  "limitation": "Prior per-token128K state gate passed; new bulk/pipeline device fit and actual model gate unqualified. Projection excludes driver/JIT future allocation and is not admission. Need current native PLAN_ONLY after apply before device launch. Reference bundles intentionally remain archived absent; restore only after coordinator drains gate.",
+  "review": "Read-only patch review found no concrete2target hazard. Stage1 copies stage0forward then publishesreverse; source Record/ACK stages2/final1, immutable sequence snapshots and fullACK parity leases follow actual targets. Prior3target path algebraically unchanged;16CPUcases are transport/planner evidence only."
+}

@@ -30,7 +30,7 @@ def make_plan(path):
     base.require(type(capture) is bool, 'dedicated_capture_ready Boolean required')
     plan = base.make_plan(path)
     base.require(len(plan['stages']) in (2, 3), 'two/three target stages required')
-    base.require(not pipeline or len(plan['stages'])==3, 'dedicated prefill pipeline requires three target stages')
+    base.require(not pipeline or len(plan['stages']) in (2,3), 'dedicated prefill pipeline requires two/three target stages')
     bdfs = [s['bdf'] for s in plan['stages']]
     provider_bdf = config['provider_bdf']
     base.require(all(re.fullmatch(r'0000:[0-9a-f]{2}:[0-9a-f]{2}\.[0-7]', x)

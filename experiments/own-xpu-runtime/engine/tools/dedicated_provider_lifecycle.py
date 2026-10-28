@@ -18,7 +18,7 @@ from rolling_provider import dedicated_transport as bridge
 def execution_mode(plan):
     pipeline=plan.get('dedicated_prefill_pipeline',False)
     base.require(type(pipeline)is bool and (not pipeline or
-        (plan.get('dedicated_bulk_prefill') is True and len(plan['stages'])==3)),
+        (plan.get('dedicated_bulk_prefill') is True and len(plan['stages']) in (2,3))),
         'dedicated prefix pipeline lifecycle admission')
     return ('dedicated-provider-stage-pipeline-bulk' if pipeline else
         'dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else

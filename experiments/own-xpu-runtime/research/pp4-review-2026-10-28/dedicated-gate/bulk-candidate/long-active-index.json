@@ -1,6 +1,6 @@
 {
   "schema": "ownrt.dedicated-long-active-index.v1",
-  "status": "dedicated-completed-PP4r5-loading-no-request-yet",
+  "status": "both-first-inference-requests-completed-clean",
   "unit": "sc117-dedicated-bulk-long-20261028-r1",
   "plan": "/dev/shm/sc117-initial-cold-long-plans-20261028-r4/dedicated-plan.json",
   "plan_sha256": "2c4fb6d0a5b3bfc4211fe4d0f4e5cfcd679a6c2d3215f55903a651af7969b201",
@@ -10,7 +10,7 @@
   "binary": "29471eb0bab9",
   "commit": "f21da9db8",
   "proof": "dedicated-gate/bulk3plus1-gate-r2-evidence/summary.json",
-  "next": "PP4r5 first-inference control after root archive; no matched speed claim yet.",
+  "next": "Wait measured three-card128K long; no compile/modelwork",
   "quality_probe": "HCnorm10240bitexact,error0,cleanpostflight; nextprojection221/320hostF64-vs-native differences, causalityunresolved.",
   "result": "dedicated-gate/bulk3plus1-long-r1-evidence/summary.json",
   "control": {
@@ -21,5 +21,42 @@
     "startup_floor_bytes": 103079215104
   },
   "archive": "dedicated-gate/bulk3plus1-long-r1-evidence/dedicated-archive.json.gz",
-  "measured_implementation_difference": "PP4 colocated per-tokenOP9 replay/fixed two-chunk six-phase schedule versus dedicated independent bulkOP28/sequential prefix; flatcopy/reset differences also retained. No causal topology-only attribution."
+  "measured_implementation_difference": "PP4 colocated per-tokenOP9 replay/fixed two-chunk six-phase schedule versus dedicated independent bulkOP28/sequential prefix; flatcopy/reset differences also retained. No causal topology-only attribution.",
+  "matched_result": "dedicated-gate/pp4-cold-long-r5-evidence/matched-screen.json",
+  "pipeline_gate": {
+    "root": "/dev/shm/sc117-dedicated-pipeline-gate-20261028-r1",
+    "plan_sha256": "419545899ab8fd9eeb9d922bbd7363146bea39d2a86e90ae7a9ca679534b7af2",
+    "unit": "sc117-dedicated-pipeline-gate-20261028-r1.service",
+    "invocation": "9481269a15104286b24aa3b1f1bfc25a",
+    "startup_ram_bytes": 103944466432,
+    "status": "passed-full-state-and-pair-gate",
+    "proof_sha256": "3a2b44891d7501496eb2f765d34d638e6129bd6e5605a5249c3e27c2c7d53d61"
+  },
+  "pipeline_long": {
+    "root": "/dev/shm/sc117-dedicated-pipeline-long-20261028-r1",
+    "plan_sha256": "3718e60c1b95fef53ed07e96fa431e3c960d138d1b45218d6806410ec665f4d1",
+    "status": "completed-clean",
+    "unit": "sc117-dedicated-pipeline-long-20261028-r1.service",
+    "invocation": "1ff18b784cc14ba78f8f11b7f7e5bbf2",
+    "startup_ram_bytes": 104008916992,
+    "matched_result": "dedicated-gate/pipeline-long-r1-evidence/matched-three-way.json"
+  },
+  "two_target_gate": {
+    "status": "passed-full-state-and-pair-gate",
+    "root": "/dev/shm/sc117-dedicated-pipeline-2plus1-128k-gate-20261028-r1",
+    "plan_sha256": "feee005999d51a64d806cc08dd4e793a41935d557fb74a59911db69c5af0a872",
+    "unit": "sc117-dedicated-pipeline-2plus1-128k-gate-20261028-r1.service",
+    "invocation": "a9785cbf813a4b9aac8d819da79d4b0a",
+    "startup_ram_bytes": 103863730176,
+    "proof_sha256": "3efb44b3b91f7c0ac797b75313cfbf8b3ab3adb141ba1d6d0b5bac6e6b4869a1"
+  },
+  "two_target_long": {
+    "status": "active",
+    "root": "/dev/shm/sc117-dedicated-pipeline-2plus1-128k-long-20261028-r1",
+    "plan_sha256": "f1727498064d633f206fc61716ce22c98cf3d21bc26e64d3740f31ceca768bd4",
+    "unit": "sc117-dedicated-pipeline-2plus1-128k-long-20261028-r1.service",
+    "invocation": "8b17acc09ce342cc9ae9048b81a455e8",
+    "startup_ram_bytes": 103769600000,
+    "startup_floor_bytes": 103079215104
+  }
 }
