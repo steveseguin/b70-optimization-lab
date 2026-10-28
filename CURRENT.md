@@ -235,6 +235,15 @@ whole-table reads before READY are separate UNTESTED hypotheses; no global memor
 settings/advice changes. GPUs are idle; prefix178 quality diagnostic is being prepared.
 [Matched lookup evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/view-long-r1-evidence/matched-result.json).
 [Copy control evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/lookup-view-candidate/copy-long-r1-evidence/index.json).
+Prefix178 completed cleanly; new CPU OFF/ON logits are bitwise equal and native/
+CPU both emit2972. Layer output RMS rises3.47e-9→8.77e-5 at layer3, where selected
+expert62(native) differs from477(CPU). Replaying the SAME actual native router
+vector exposes a real cutoff tie:62and477 both -4.848545074462891; productionhost/
+native picks62, realggml picks477. On CPU's vector477 is~9.54e-7higher and both
+pick477. This is actual same-input tie-semantics evidence, not yet proof of the244
+final-token cause or resolution of six disagreements. General reference-compatible
+treatment is being investigated; no arbitrary expert override.
+[Precise finding](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/prefix178/FINDING-prefix178.txt).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

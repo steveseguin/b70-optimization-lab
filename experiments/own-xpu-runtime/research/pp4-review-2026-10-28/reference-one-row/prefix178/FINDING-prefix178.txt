@@ -1,0 +1,7 @@
+Actual prefix178 / row177 finding (2026-10-28)
+
+New CPU OFF/ON full248320 logits are bitwise equal;48layer and240router arrays (192observed nodes plus inputs) authenticated. Native and CPU both emit2972, which does not prove full fidelity: every final logit differs, RMS0.0147631.
+
+Layer2 output RMS differs3.47130e-9; layer3 jumps to8.77324e-5. First expert-ID difference is layer3, last selected62(native) vs477(CPU). Existing pinned productionhost and realggml replay on the SAME ACTUAL native512logitvector disagree at its exact cutoff tie: both62and477=-4.848545074462891, host/native picks62, ggml picks477. CapturednativeIDs matchhost. On actualCPUvector477 is~9.54e-7higher and bothpick477. Selectedweight differences are retained separately. This is real same-input cutoff tie semantics evidence, unlike prior synthetic-only fixtures.
+
+This establishes a routing-semantic disagreement on one actual boundary. It does NOT yet prove that fixing general tie handling resolves the244token final-output discrepancy or allsix independent disagreements. No arbitrary477override is justified. Next is source-backed general reference-compatible treatment with unchanged non-tie ordering and actualroute/state/fullmodel validation.
