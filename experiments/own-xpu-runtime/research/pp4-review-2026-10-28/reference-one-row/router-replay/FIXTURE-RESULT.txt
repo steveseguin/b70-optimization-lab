@@ -1,0 +1,11 @@
+Tiny CPU router fixtures completed, 2026-10-28. No model/GPU/capture work.
+
+Both actual production specialised route stages and actual ggml softmax/topk/get_rows/renorm graph ran on SAME512float synthetic inputs, nice19/core8..15. Initial fixture-r1 preserved. Added shape-only metadata output, then fixture-r2 preserved binary/source identity, argv, logs and every vector. Both cases exit0; exit0 is successful execution, not independent-reference agreement.
+
+Zero logits: all512 probabilities bitwise identical1/512 and10selected weights bitwise identical0.1. Native IDs[0,1,2,3,4,5,6,7,8,9]; actual ggml/std::sort IDs[336,351,350,349,348,347,346,345,344,343]. Every selected slot and selected SET differ. This demonstrates real synthetic equal-probability tie behavior, independently of exp/normalization. It does not establish any actual model cutoff tie or explain the six reference disagreements.
+
+Distinct control logits[i]=i/64: both actual selected IDs exactly[511,510,509,508,507,506,505,504,503,502]; probabilities and selected weights are NOT bitwise identical. All vectors/logs retained without epsilon or blanket agreement claim. This checks harness index/normalization path outside ties. Need actual dumped512logits and actual output IDs/weights before causal attribution.
+
+Actual graph shapes recorded by graph-shapes.json: input/probs F32[512,1,1,1]; topk I32[10,1,1,1] with rowstride2048 (view of full512argsort, not assumed40-byte columnstride); get_rows weights F32[1,10,1,1], flattened/normalizedweights[10,1,1,1], sum/clamp[1,1,1,1]. One token makes contiguous first10indices correct despite viewstride. Three/sixteen-token future generalization must respect this stride. Probability cutoff diagnostic printed IDs use a separate value-then-lowerID analysis ordering solely to locate10th/11th value and tie. Actual CPU selected IDs are the saved ggml-ids.i32 and per-slot log rows; do not mistake lowerID diagnostic cutoff IDs for CPU std::sort tie selection.
+
+Current receipt helper Python planning and2 sealedextract fixtures were already passed; no new native planning or launches now. CPU work complete, no persistent process. Root retains later DUMP capture/model/HCdown GPU scheduling authority. No kernel/native source changes and no quality-resolution claim.

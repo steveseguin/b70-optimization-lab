@@ -1,0 +1,90 @@
+{
+  "cases": [
+    {
+      "case": "ties",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/dev/shm/sc117-router-fixture-cpu-20261028-r2/replay",
+        "--fixture-ties",
+        "/dev/shm/sc117-router-fixture-cpu-20261028-r2/ties"
+      ],
+      "returncode": 0,
+      "native_ids": [
+        0,
+        1,
+        2,
+        3,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9
+      ],
+      "ggml_ids": [
+        336,
+        351,
+        350,
+        349,
+        348,
+        347,
+        346,
+        345,
+        344,
+        343
+      ],
+      "probabilities_bitwise_equal": true,
+      "weights_bitwise_equal": true,
+      "synthetic_only": true
+    },
+    {
+      "case": "distinct",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/dev/shm/sc117-router-fixture-cpu-20261028-r2/replay",
+        "/dev/shm/sc117-router-fixture-cpu-20261028-r2/distinct.f32",
+        "/dev/shm/sc117-router-fixture-cpu-20261028-r2/distinct"
+      ],
+      "returncode": 0,
+      "native_ids": [
+        511,
+        510,
+        509,
+        508,
+        507,
+        506,
+        505,
+        504,
+        503,
+        502
+      ],
+      "ggml_ids": [
+        511,
+        510,
+        509,
+        508,
+        507,
+        506,
+        505,
+        504,
+        503,
+        502
+      ],
+      "probabilities_bitwise_equal": false,
+      "weights_bitwise_equal": false,
+      "synthetic_only": true
+    }
+  ],
+  "source_sha256": "99b2cfd82ef9f2070a1700a64d171f9e0c4d00a01f570fff581d0aa459ba735d",
+  "binary_sha256": "f8bb90a54550bdbccd2e8d9fa51d6e06ba0c484b8fa9fd931879658833c80554"
+}

@@ -1,3 +1,7 @@
+Actual device result (root executed one probe): see device-r1/result.json, journal.txt, launch.json, baseline.json and postflight.json. All 320 device outputs match the production host lane bitwise; 221 differ from the independent F64 reference, maximum 3.0517578125e-5. This closes the device-versus-host boundary for this single HC projection and input. It does not establish the cause of the 0.1001244-logit discrepancy or correctness of all kernels. No additional probe was launched.
+
+Historical preparation follows; its prospective command is now superseded by device-r1 evidence.
+
 Same-input first HC down projection, CPU result and prepared device gate.
 
 Actual model tensor is BF16, not the older Q8_0 packet60 path. extraction.json records shard-auth stat tuple verified before/after read, header SHA over11,024,355B, exact6,553,600B payload SHA, census data-relative/absolute offsets and captured norm input SHA. Tensor blk.0.hc_attn_down.weight is320x10240 BF16, absolute file offset2,033,982,464 in GGUF shard1. No full shard hash/model load performed; header+stat model admission remains the existing native identity contract. Raw tensor stays in /dev/shm/sc117-hc-down-same-input-20261028-r1/weight.bf16; durable checksum/offset recipe allows reproduction without tracking model weights.

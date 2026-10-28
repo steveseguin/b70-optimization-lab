@@ -1,0 +1,20 @@
+{
+  "status": "passed native host equality for this single HC projection",
+  "scope": "One captured input, blk.0.hc_attn_down.weight, BF16 320 x 10240; production dense_v2::bf16_multi<1,8>. No general kernel proof or logit-divergence causal claim.",
+  "invocation_id_reported_by_root": "ba99eb0a9cb941e8ae16ce689f04aec9",
+  "device_bytes": 6595840,
+  "comparisons_recomputed_from_retained_arrays": {
+    "native-host": {
+      "unequal": 0,
+      "max_abs": 0.0,
+      "bitwise_equal": true
+    },
+    "ggml-f64": {
+      "unequal": 221,
+      "max_abs": 3.0517578125e-05,
+      "bitwise_equal": false
+    }
+  },
+  "device_output_sha256": "9b762b7aaf586a62213383dc71a61a40abf8bb2f9c089b44befc35763095fd97",
+  "execution": "Root ran exactly one probe on card 27 after pipeline qualification drained and before timing. Exit 0; passive postflight retained. This agent launched no device work."
+}

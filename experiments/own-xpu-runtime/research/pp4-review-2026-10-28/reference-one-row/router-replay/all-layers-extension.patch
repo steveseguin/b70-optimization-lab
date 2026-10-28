@@ -1,0 +1,99 @@
+--- two-layer/capture_dump4.py
++++ all-layers/capture_dump4.py
+@@ -20,30 +20,50 @@
+ FIELDS={'hc.f.mix':10240,'router':2048,'ids':40,'prob':40,'routes':120,'routes.down':120}
+ def stamp(p):
+  s=p.stat(follow_symlinks=False);return (s.st_dev,s.st_ino,s.st_size,s.st_mtime_ns,s.st_ctime_ns)
++def extract_layers(directory,root,layers,check):
++    # Pin identities across the one whole-owner verification and every selected read.
++    before={p:stamp(p) for p in directory.iterdir()}
++    def unchanged():
++        assert set(directory.iterdir())==set(before),'sealed source inventory changed'
++        for p,identity in before.items():assert stamp(p)==identity,'sealed source changed during extraction'
++    check();verified=reader.read_state(directory)
++    unchanged()
++    table={}
++    for line in (directory/'state-index.tsv').read_text().splitlines()[1:]:
++        name,offset,length,digest=line.split('\t');table[name]=(int(offset),int(length),digest)
++    records=[]
++    with (directory/'state.bundle').open('rb') as f:
++        fs=os.fstat(f.fileno())
++        assert (fs.st_dev,fs.st_ino,fs.st_size,fs.st_mtime_ns,fs.st_ctime_ns)==before[directory/'state.bundle']
++        for layer in layers:
++            names={f'blk.{layer}.{k}.bin':n for k,n in FIELDS.items()}
++            dest=root/f'layer{layer}';assert not dest.exists();dest.mkdir()
++            for name,size in names.items():
++                check();unchanged();offset,length,digest=table[name]
++                assert length==size and verified[name]==digest
++                f.seek(offset);data=f.read(size)
++                assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
++                (dest/name).write_bytes(data)
++            unchanged()
++            for name in ('state-index.tsv','state.json','state-seal.txt'):shutil.copy2(directory/name,dest/name)
++            record=dict(layer=layer,source=str(directory),source_bundle_sha256=(directory/'state-seal.txt').read_text().splitlines()[2],source_seal_sha256=hashlib.sha256((directory/'state-seal.txt').read_bytes()).hexdigest(),
++                source_identities={p.name:list(identity) for p,identity in before.items()},
++                full_seal_verified=True,selected={name:table[name][2] for name in names},bytes=sum(names.values()),
++                scope='Position 243 committed row only; sequence 244 is the dump label. Earlier 244-token history is not captured. Actual output and independent routing comparison remain observations, not assumptions.')
++            BASE.save(dest/'extraction.json',record);records.append(record)
++    unchanged()
++    return records
++
+ def extract(directory,dest,layer,check):
+-    check();verified=reader.read_state(directory) # whole sealed bundle/index/state hashes, not selected-only waiver
+-    names={f'blk.{layer}.{k}.bin':n for k,n in FIELDS.items()}
+-    assert not dest.exists();dest.mkdir()
+-    index=directory/'state-index.tsv';bundle=directory/'state.bundle';before={p:stamp(p) for p in directory.iterdir()}
+-    table={}
+-    for line in index.read_text().splitlines()[1:]:
+-        name,offset,length,digest=line.split('\t');table[name]=(int(offset),int(length),digest)
+-    with bundle.open('rb') as f:
+-        for name,size in names.items():
+-            check();offset,length,digest=table[name];assert length==size and verified[name]==digest
+-            f.seek(offset);data=f.read(size);assert len(data)==size and hashlib.sha256(data).hexdigest()==digest
+-            (dest/name).write_bytes(data)
+-    for p,identity in before.items():assert stamp(p)==identity,'sealed source changed during extraction'
+-    for name in ('state-index.tsv','state.json','state-seal.txt'):shutil.copy2(directory/name,dest/name)
+-    record=dict(layer=layer,source=str(directory),source_bundle_sha256=(directory/'state-seal.txt').read_text().splitlines()[2],source_seal_sha256=hashlib.sha256((directory/'state-seal.txt').read_bytes()).hexdigest(),
+-        full_seal_verified=True,selected={name:table[name][2] for name in names},bytes=sum(names.values()),
+-        scope='Position243 committed row; sequence244 is dump label. No independent-reference comparison yet.')
+-    BASE.save(dest/'extraction.json',record)
+-    return record
++    # Compatibility for the original single-layer fixture/caller.
++    records=extract_layers(directory,dest.parent,[layer],check)
++    generated=dest.parent/f'layer{layer}'
++    if generated!=dest:generated.rename(dest)
++    return records[0]
+ 
+ def make_plan(config):
+     p=P.make_plan(config)
+-    p.update(schema='ownrt.reference-router-dump4-plan.v1',router_layers=[4,25],dump_sequence=244,
++    p.update(schema='ownrt.reference-router-dump4-plan.v1',router_layers=list(range(48)),dump_sequence=244,
+         prune_verified_full_bundles=True,router_dump_transient_budget_bytes=1024**3,limits='Fixed244/1 target-only plus one DUMP4 per rank after request; selected routers only retained after full sealed verification. Not a timing run.')
+     for path in (Path(__file__).resolve(),Path(P.__file__).resolve(),READER):p['pins'][str(path)]=BASE.digest(path)
+     return p
+@@ -59,10 +79,13 @@
+     for rank in (0,1):transport.call(rank,4,position=244)
+     assert sum((Path(stage['native_output'])/'state-244/state.bundle').stat().st_size for stage in plan['stages'])<=plan['router_dump_transient_budget_bytes'],'DUMP exceeds forecast; retain incident evidence'
+     records=[];root=Path(plan['output'])/'router-captures';root.mkdir()
+-    for layer in plan['router_layers']:
+-        owner=next(s for s in plan['stages'] if s['begin']<=layer<s['end'])
++    for owner in plan['stages']:
++        layers=[layer for layer in plan['router_layers'] if owner['begin']<=layer<owner['end']]
++        assert layers,'each owner must contribute selected layers'
+         directory=Path(owner['native_output'])/'state-244'
+-        records.append(extract(directory,root/f'layer{layer}',layer,transport.check))
++        records.extend(extract_layers(directory,root,layers,transport.check))
++    records.sort(key=lambda x:x['layer'])
++    assert [r['layer'] for r in records]==plan['router_layers']
+     # Only newly-created complete sealed full dumps are pruned AFTER all requested extracts verify.
+     # On ANY failure above full dumps remain available for incident handling.
+     if plan['prune_verified_full_bundles']:
+@@ -72,7 +95,7 @@
+             for name in sorted(reader.FILES):(directory/name).unlink()
+             directory.rmdir()
+     result.update(router_captures=records,router_capture_bytes=sum(x['bytes'] for x in records),
+-        quality_scope='Same-row router inputs/logits/IDs/weights retained; causal comparison not yet performed.')
++        quality_scope='All 48 same-row router inputs/logits/IDs/weights/routes retained. Earlier token history is not captured; actual output and causal comparison are not assumed.')
+     return result
+ 
+ def main():
