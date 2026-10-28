@@ -14,6 +14,8 @@ at your own risk.
 
 Current own-engine work: [SC117 results, reusable engine and four-card direction](docs/sc117-engine-review.md). Source is available; complete portable release and independent-reference fidelity remain pending.
 
+[SC117 reproduction draft — October 28](repro/sc117-iq3s-b70-research-draft-20261028/README.md) pins the measured AOT source, model downloads, 2+1/3+1 configurations and exact workloads. The latest dedicated-draft portable launcher and clean-host qualification remain pending.
+
 ## Who This Is For
 
 - Local AI users who want reproducible Intel Arc/B-series commands, patches and

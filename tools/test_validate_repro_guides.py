@@ -23,7 +23,7 @@ class ReproGuideValidationTest(unittest.TestCase):
         repo = Path(__file__).resolve().parents[1]
         errors, counts = MODULE.validate(repo)
         self.assertEqual(errors, [])
-        self.assertEqual(sum(counts.values()), 45)
+        self.assertEqual(sum(counts.values()), 46)
 
     def test_text_observations_reject_invalid_measurements(self):
         with tempfile.TemporaryDirectory() as raw:
