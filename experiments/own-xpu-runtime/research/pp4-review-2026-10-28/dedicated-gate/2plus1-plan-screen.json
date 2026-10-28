@@ -1,0 +1,157 @@
+{
+  "rows": [
+    {
+      "context": 65536,
+      "role": "0",
+      "bdf": "0000:23:00.0",
+      "returncode": 0,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-0/process.log",
+      "process_log_sha256": "92dc156479cd0464d0a2d8bdfa28adf81d08dd3bcbdf4297cd62e5c99ebb9c3a",
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          2063364232
+        ],
+        "resident_weights_per_card": [
+          26833384576
+        ],
+        "streamed_peak_weight_bytes": 161838976,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-0/native/plan.json",
+      "native_plan_sha256": "23f67dddbfe978aff1bac63c608a44bd327e2b27469745e1f596f472d966853b",
+      "owned_bytes": 28896748808,
+      "native_plan_only": {
+        "device_contact": false
+      },
+      "cap_bytes": 32212254720,
+      "owned_margin_before_unplanned_retained_bytes": 3315505912,
+      "prior_census_estimated_retained_total_bytes": 29733737564,
+      "prior_estimated_margin_bytes": 2478517156,
+      "estimate_minus_actual_owned_bytes": 836988756
+    },
+    {
+      "context": 65536,
+      "role": "1",
+      "bdf": "0000:47:00.0",
+      "returncode": 0,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-1/process.log",
+      "process_log_sha256": "e27336d9c856b14d3d022c595ef6590414a89a413219eb4d13d74c64ac4dcb9b",
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          2055933480
+        ],
+        "resident_weights_per_card": [
+          27881405824
+        ],
+        "streamed_peak_weight_bytes": 534620160,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-1/native/plan.json",
+      "native_plan_sha256": "ffcab2b4e91cb15b5792092345ebd4f139207241794e4bf005fb0d74278fcc02",
+      "owned_bytes": 29937339304,
+      "native_plan_only": {
+        "device_contact": false
+      },
+      "cap_bytes": 32212254720,
+      "owned_margin_before_unplanned_retained_bytes": 2274915416,
+      "prior_census_estimated_retained_total_bytes": 30198669860,
+      "prior_estimated_margin_bytes": 2013584860,
+      "estimate_minus_actual_owned_bytes": 261330556
+    },
+    {
+      "context": 65536,
+      "role": "provider",
+      "bdf": "0000:43:00.0",
+      "returncode": 0,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-provider/process.log",
+      "process_log_sha256": "03cfde103d1e2d3538726b8295e8e93f5b29a341541cbc854eb9e71e1a608ac7",
+      "memory_plan": {
+        "request_and_workspace_bytes_per_card": [
+          121688472
+        ],
+        "resident_weights_per_card": [
+          0
+        ],
+        "streamed_peak_weight_bytes": 0,
+        "pinned_bytes_per_card": 4194304,
+        "read_chunk_bytes": 4194304,
+        "driver_shadows_included": false
+      },
+      "native_plan": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/65536/role-provider/native/plan.json",
+      "native_plan_sha256": "98dcb83305d5fdb57316f09806b90a54913e6dabfbe132a3c8e3ccf249448668",
+      "owned_bytes": 121688472,
+      "native_plan_only": {
+        "role": "dedicated-mtp",
+        "device_contact": false
+      }
+    },
+    {
+      "context": 131072,
+      "role": "0",
+      "bdf": "0000:23:00.0",
+      "returncode": 1,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/131072/role-0/process.log",
+      "process_log_sha256": "535cc08222f8c13defd539ca4a5bbf16daad1a982c287a26bfea7b4b777b709b",
+      "refusal": "23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144\n"
+    },
+    {
+      "context": 131072,
+      "role": "1",
+      "bdf": "0000:47:00.0",
+      "returncode": 1,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/131072/role-1/process.log",
+      "process_log_sha256": "535cc08222f8c13defd539ca4a5bbf16daad1a982c287a26bfea7b4b777b709b",
+      "refusal": "23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144\n"
+    },
+    {
+      "context": 131072,
+      "role": "provider",
+      "bdf": "0000:43:00.0",
+      "returncode": 1,
+      "process_log": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028/131072/role-provider/process.log",
+      "process_log_sha256": "535cc08222f8c13defd539ca4a5bbf16daad1a982c287a26bfea7b4b777b709b",
+      "refusal": "23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144\n"
+    }
+  ],
+  "nice": 19,
+  "cpu_affinity": [
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15
+  ],
+  "source_config_sha256": "118b284bd4db6ae8b7c0464fb735c0da681c314c0e56cbdd4b95c5ad9631fea2",
+  "schema": "ownrt.dedicated-2plus1-cpu-memory-screen.v1",
+  "scope": "CPU native OWNRT_PLAN_ONLY only; no device contact or runtime admission, no GPU requests",
+  "boundaries": [
+    0,
+    25,
+    48
+  ],
+  "target_bdfs": [
+    "0000:23:00.0",
+    "0000:47:00.0"
+  ],
+  "provider_bdf": "0000:43:00.0",
+  "prompt_tokens": 1677,
+  "max_new": 32,
+  "build_binary_sha256": "42835855ee910ee6e4fe965a40172add01447a994898a4e48254da95b4dafe07",
+  "source_root": "/dev/shm/sc117-dedicated-2plus1-cpu-20261028",
+  "commands": "nice -n19 taskset -c8-15 python3 /dev/shm/sc117-dedicated-2plus1-cpu-20261028/run_cpu.py",
+  "script_sha256": "5a2ab1bbf8183b4f7b9141c20b3ece9572ad688f17686539fe352f2785c4168c",
+  "limitations": [
+    "Native owned sums include resident target weights plus planned request/workspace, not retained StageCheckpoint bank peaks, device driver shadows or unreported allocations. Streamed peak is not added to resident owned bytes.",
+    "Prior retained-total estimate scales old262K KV linearly and charges918768152 nonlayer reserve per stage; moved-layer checkpoint layouts may differ. It is independent screening, not a measured runtime census.",
+    "Provider plan121688472 is control-only shell before actual draft/recursive allocations; it is not full provider VRAM.",
+    "Both131072 native target and provider parsers refused before the plan-only receipt; no128K capacity/admission claimed. No source fix made."
+  ],
+  "next": "65536 two-target layout is a plausible candidate, not yet admitted: review actual retained checkpoint and provider allocation peak before one bounded2+1 gate after active3+1 finishes."
+}

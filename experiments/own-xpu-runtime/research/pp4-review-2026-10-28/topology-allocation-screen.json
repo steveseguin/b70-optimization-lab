@@ -1,0 +1,241 @@
+{
+  "schema": "ownrt.retained-census-topology-screen.v1",
+  "scope": "CPU screening from retained actual allocations, NOT exact runtime admission or speed prediction",
+  "sources": [
+    {
+      "path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/census.json",
+      "sha256": "a94efc2d16dbbb4f1b3eb5dcf3f65bcc297b5babf2c9cc26b4549b06a9d34a24"
+    },
+    {
+      "path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/census.json",
+      "sha256": "85364ec5a1357fd6c9876768613991ae438e5cf782a719408135031748ec011d"
+    },
+    {
+      "path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/census.json",
+      "sha256": "fb068a036389f9b8b42bbd591e853d404e2266c596d92adaca91764d4cd6e53e"
+    },
+    {
+      "path": "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/census.json",
+      "sha256": "aec5562046fb3727f26fdf00d70f233db73391cbca11c13f490b9d82d5c0bbc4"
+    }
+  ],
+  "layer_allocation_bytes_262K": [
+    1204924636,
+    931905884,
+    1100049116,
+    2322895336,
+    1104800476,
+    1100489436,
+    1100049116,
+    2427322856,
+    857108700,
+    1093529820,
+    858224860,
+    2324177896,
+    959380700,
+    850841820,
+    1200302300,
+    2323317736,
+    1197947100,
+    1281085660,
+    1198356700,
+    2328532456,
+    966512860,
+    1045156060,
+    1198809820,
+    2328271336,
+    1097789660,
+    1281508060,
+    1094999260,
+    2511260136,
+    1281981660,
+    1277808860,
+    962457820,
+    2437050856,
+    1095969500,
+    1194864860,
+    1089812700,
+    2515911656,
+    858496220,
+    1199065820,
+    1196871900,
+    2332039656,
+    1281290460,
+    1191680220,
+    1194836700,
+    2437742056,
+    1273600220,
+    1273981660,
+    1197345500,
+    2686138856
+  ],
+  "layer_KV_bytes_262K": [
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984,
+    0,
+    0,
+    0,
+    1241513984
+  ],
+  "observed_nonlayer_nondraft_bytes_by_stage": [
+    697340048,
+    377780256,
+    377780256,
+    918768152
+  ],
+  "charged_nonlayer_reserve_per_candidate_stage": 918768152,
+  "cases": [
+    {
+      "context": 65536,
+      "target_stages": 2,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 30198669860,
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "estimated_margin_bytes": 2013584860,
+      "screen_fits": true
+    },
+    {
+      "context": 65536,
+      "target_stages": 3,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 20581776904,
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "estimated_margin_bytes": 11630477816,
+      "screen_fits": true
+    },
+    {
+      "context": 131072,
+      "target_stages": 2,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 32060940836,
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "estimated_margin_bytes": 151313884,
+      "screen_fits": true
+    },
+    {
+      "context": 131072,
+      "target_stages": 3,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 21823290888,
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "estimated_margin_bytes": 10388963832,
+      "screen_fits": true
+    },
+    {
+      "context": 262144,
+      "target_stages": 2,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 35785482788,
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "estimated_margin_bytes": -3573228068,
+      "screen_fits": false
+    },
+    {
+      "context": 262144,
+      "target_stages": 3,
+      "cap_bytes": 32212254720,
+      "peak_estimated_bytes": 24306318856,
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "estimated_margin_bytes": 7905935864,
+      "screen_fits": true
+    }
+  ],
+  "limitations": [
+    "KV scaled linearly by context; actual layouts/prepared buffers/checkpoint peak must be rebuilt by planner before launch.",
+    "Moved layers may need additional first-stage bank/draft-independent operator state; no claim of exact new-layout peak.",
+    "No dedicated-provider implementation currently; weight-source/host lookup lifetime and stage-count restrictions remain.",
+    "All current262K target weights+KV floor already exceeds2\u00d730GiB, so2target262K inadmissible regardless this screen."
+  ],
+  "recommended_candidates": [
+    {
+      "layout": "3target+draft",
+      "context": 262144,
+      "boundaries": [
+        0,
+        17,
+        33,
+        48
+      ],
+      "next": "Exact placement/arena admission including moved-state banking and dedicated provider host/device peak; then bounded replay/state gate"
+    },
+    {
+      "layout": "2target+draft",
+      "context": 65536,
+      "boundaries": [
+        0,
+        25,
+        48
+      ],
+      "next": "Exact arena admission;128K estimated margin only151314884B so do not launch on estimate"
+    }
+  ]
+}

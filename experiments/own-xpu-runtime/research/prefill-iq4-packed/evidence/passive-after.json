@@ -1,0 +1,209 @@
+{
+  "utc": "2026-10-28T04:21:51.185368+00:00",
+  "metadata_only": true,
+  "device_api_calls": 0,
+  "device_opens": 0,
+  "service_changes": 0,
+  "boot": "2cba7160-054a-4ffe-b4c4-e252eb956f5f",
+  "root_free_bytes": 27880435712,
+  "memory": {
+    "MemTotal": 126326632448,
+    "MemAvailable": 102306172928,
+    "SwapTotal": 0,
+    "SwapFree": 0
+  },
+  "units": {
+    "qwen38-27b-fp8": {
+      "Restart": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "qwen38-27b-fp8.service",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "qwen38-27b-fp8-tp1-test": {
+      "Restart": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "qwen38-27b-fp8-tp1-test.service",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "qwen38-27b-vision": {
+      "Restart": "no",
+      "TimeoutStopUSec": "1min 30s",
+      "MainPID": "0",
+      "KillMode": "control-group",
+      "SendSIGKILL": "yes",
+      "Id": "qwen38-27b-vision.service",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    }
+  },
+  "drm": {
+    "renderD128": {
+      "bdf": "0000:43:00.0",
+      "dev": "226:128",
+      "driver": "xe"
+    },
+    "card3": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:3",
+      "driver": "xe"
+    },
+    "renderD130": {
+      "bdf": "0000:23:00.0",
+      "dev": "226:130",
+      "driver": "xe"
+    },
+    "renderD129": {
+      "bdf": "0000:47:00.0",
+      "dev": "226:129",
+      "driver": "xe"
+    },
+    "card4": {
+      "bdf": "0000:27:00.0",
+      "dev": "226:4",
+      "driver": "xe"
+    },
+    "card2": {
+      "bdf": "0000:47:00.0",
+      "dev": "226:2",
+      "driver": "xe"
+    },
+    "card0": {
+      "bdf": "0000:43:00.0",
+      "dev": "226:0",
+      "driver": "xe"
+    },
+    "renderD131": {
+      "bdf": "0000:27:00.0",
+      "dev": "226:131",
+      "driver": "xe"
+    }
+  },
+  "passive_helper_sha256": "2ace785d6b8f07579565f6822343c1dec3a14824b17d67cb4638f82fbb878ce4",
+  "inventory": {
+    "passed": true,
+    "holders": [],
+    "errors": [],
+    "nodes": {
+      "226:0": "card0",
+      "226:2": "card2",
+      "226:3": "card3",
+      "226:4": "card4",
+      "226:128": "renderD128",
+      "226:129": "renderD129",
+      "226:130": "renderD130",
+      "226:131": "renderD131"
+    },
+    "intel_devices": [
+      "/sys/devices/pci0000:20/0000:20:01.1/0000:21:00.0/0000:22:01.0/0000:23:00.0",
+      "/sys/devices/pci0000:20/0000:20:03.1/0000:25:00.0/0000:26:01.0/0000:27:00.0",
+      "/sys/devices/pci0000:40/0000:40:01.1/0000:41:00.0/0000:42:01.0/0000:43:00.0",
+      "/sys/devices/pci0000:40/0000:40:03.1/0000:45:00.0/0000:46:01.0/0000:47:00.0"
+    ],
+    "metadata_only": true,
+    "device_opens": 0
+  },
+  "holders": {},
+  "identity_races": [],
+  "kernel": {
+    "journal_sha256": "43b91d8ece277d77d24b85750fe651ccc564f4edaaf37f626b1cb897970c8c7d",
+    "rows": 5548,
+    "last_cursor": "s=e3d94d04f38747dcbe36a4ef06874902;i=211ddd1;b=2cba7160054a4ffeb4c4e252eb956f5f;m=e97655f616;t=65ede991d6a7b;x=8ff01f129ec74593",
+    "faults": [
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "42064105058"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=36, state=0x289",
+        "timestamp": "42064105299"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "785786710264"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6",
+        "timestamp": "785786710632"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x249",
+        "timestamp": "785786710949"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Tile0: GT0: Timedout job: seqno=216, lrc_seqno=216, guc_id=6, flags=0x20 in own-engine [4047949]",
+        "timestamp": "785786711440"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Xe device coredump has been created",
+        "timestamp": "785786750115"
+      },
+      {
+        "message": "xe 0000:47:00.0: [drm] Check your /sys/class/drm/card2/device/devcoredump/data",
+        "timestamp": "785786750462"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "785791708828"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine memory CAT error [18]: class=bcs, logical_mask: 0x1, guc_id=6",
+        "timestamp": "785791709037"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x249",
+        "timestamp": "785791709349"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Tile0: GT0: Timedout job: seqno=567, lrc_seqno=567, guc_id=6, flags=0x20 in own-engine [4047949]",
+        "timestamp": "785791709517"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Xe device coredump has been created",
+        "timestamp": "785791754268"
+      },
+      {
+        "message": "xe 0000:23:00.0: [drm] Check your /sys/class/drm/card3/device/devcoredump/data",
+        "timestamp": "785791754628"
+      },
+      {
+        "message": "xe 0000:27:00.0: [drm] Tile0: GT0: Fault response: Unsuccessful -ENOENT",
+        "timestamp": "861736940615"
+      },
+      {
+        "message": "xe 0000:27:00.0: [drm] Tile0: GT0: Engine reset: engine_class=bcs, logical_mask: 0x1, guc_id=6, state=0x289",
+        "timestamp": "861736940910"
+      }
+    ]
+  },
+  "known_fault_baseline_matches": true,
+  "queue": {
+    "A": {
+      "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:31:13.634788+00:00 after the 2026-10-23 packet195 chain window\n",
+      "STOP": null,
+      "queue": "",
+      "inflight": null
+    },
+    "B": {
+      "PAUSE": "owner pause 2026-10-19T12:02Z: inference server on the cards; no campaign jobs (coordinator)\n# re-armed by window driver 2026-10-23T07:42:03.395697+00:00 after the 2026-10-22 packet58-diet-micro window\n",
+      "STOP": null,
+      "queue": "",
+      "inflight": null
+    }
+  },
+  "endpoints": {
+    "18130": {
+      "unavailable": "URLError"
+    },
+    "18131": {
+      "unavailable": "URLError"
+    }
+  }
+}

@@ -1,0 +1,7817 @@
+{
+  "schema": "ownrt.expert-parallel-cpu-screen.v1",
+  "verdict": "pure-layer-serial-EP-not-supported-by-current-cost-share;hybrid-remains-unmeasured",
+  "measured_inputs": {
+    "route_dump": "/dev/shm/ownrt-lab-experts/routes-4096.bin",
+    "route_sha256": "73b1cdfc51bc74b8a485a75dcae6276371ad36d942f052d3879451a132efa7ea",
+    "route_layers": [
+      24,
+      25,
+      26,
+      27,
+      28,
+      29,
+      30,
+      31,
+      32,
+      33,
+      34,
+      35,
+      36,
+      37,
+      38,
+      39,
+      40,
+      41,
+      42,
+      43,
+      44,
+      45,
+      46,
+      47
+    ],
+    "route_tokens_per_layer": 4096,
+    "samples_256rows": 384,
+    "target_timing": {
+      "schema": "rolling-prefill-host-wave-wall-v2",
+      "total_wall_s": 522.3179874189664,
+      "target_command_work_wall_s": [
+        125.58091153413989,
+        177.81411767052487,
+        174.39288944553118,
+        195.42639262787998
+      ],
+      "target_work_wall_s": 674.7107655849541,
+      "draft_replay_work_wall_s": 169.74827238090802,
+      "target_only_phase_wall_s": 339.16824244195595,
+      "mixed_phase_wall_s": 98.11098103469703,
+      "draft_only_phase_wall_s": 84.6581631138688,
+      "other_wall_s": 0.3806008284445852
+    },
+    "old_profile": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/rank0-prefill-c27/analysis.json",
+    "routed_weight_bytes_total": 50292326400,
+    "routed_weight_bytes_per_layer": {
+      "0": 1114112000,
+      "1": 773324800,
+      "2": 1009254400,
+      "3": 1009254400,
+      "4": 1009254400,
+      "5": 1009254400,
+      "6": 1009254400,
+      "7": 1114112000,
+      "8": 773324800,
+      "9": 1009254400,
+      "10": 773324800,
+      "11": 1009254400,
+      "12": 878182400,
+      "13": 773324800,
+      "14": 1114112000,
+      "15": 1009254400,
+      "16": 1114112000,
+      "17": 1192755200,
+      "18": 1114112000,
+      "19": 1009254400,
+      "20": 878182400,
+      "21": 956825600,
+      "22": 1114112000,
+      "23": 1009254400,
+      "24": 1009254400,
+      "25": 1192755200,
+      "26": 1009254400,
+      "27": 1192755200,
+      "28": 1192755200,
+      "29": 1192755200,
+      "30": 878182400,
+      "31": 1114112000,
+      "32": 1009254400,
+      "33": 1114112000,
+      "34": 1009254400,
+      "35": 1192755200,
+      "36": 773324800,
+      "37": 1114112000,
+      "38": 1114112000,
+      "39": 1009254400,
+      "40": 1192755200,
+      "41": 1114112000,
+      "42": 1114112000,
+      "43": 1114112000,
+      "44": 1192755200,
+      "45": 1192755200,
+      "46": 1114112000,
+      "47": 1363148800
+    }
+  },
+  "route_replay_model": {
+    "owners": 3,
+    "assignment": "expert_id modulo3, static; attention source layer//16 capped2",
+    "T": 4,
+    "distinct_mean": 440.0651041666667,
+    "critical_tile_fraction_mean": 0.35902846161272933,
+    "critical_tile_fraction_max": 0.43558282208588955,
+    "critical_slot_fraction_mean": 0.36607767740885416,
+    "bytes_per_layer_position_dedup_mean": 88338.4375,
+    "estimated_121852rows_48layers_remote_bytes": 516682333740.0,
+    "traffic_definition": "remote input dedup per(token,owner) plus one full F32down output perremote top10slot, no partialsum reassociation; excludes metadata and staging secondleg",
+    "samples": [
+      {
+        "layer": 24,
+        "start_token": 0,
+        "distinct": 458,
+        "slots": [
+          772,
+          853,
+          935
+        ],
+        "tiles": [
+          260,
+          276,
+          297
+        ],
+        "tile_critical_fraction": 0.3565426170468187,
+        "remote_slots": 1707,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22620160,
+        "remote_bytes_slot": 34959360
+      },
+      {
+        "layer": 24,
+        "start_token": 256,
+        "distinct": 456,
+        "slots": [
+          717,
+          873,
+          970
+        ],
+        "tiles": [
+          246,
+          279,
+          304
+        ],
+        "tile_critical_fraction": 0.36670687575392036,
+        "remote_slots": 1687,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22476800,
+        "remote_bytes_slot": 34549760
+      },
+      {
+        "layer": 24,
+        "start_token": 512,
+        "distinct": 465,
+        "slots": [
+          776,
+          828,
+          956
+        ],
+        "tiles": [
+          257,
+          278,
+          310
+        ],
+        "tile_critical_fraction": 0.3668639053254438,
+        "remote_slots": 1732,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22845440,
+        "remote_bytes_slot": 35471360
+      },
+      {
+        "layer": 24,
+        "start_token": 768,
+        "distinct": 454,
+        "slots": [
+          759,
+          883,
+          918
+        ],
+        "tiles": [
+          255,
+          282,
+          295
+        ],
+        "tile_critical_fraction": 0.3545673076923077,
+        "remote_slots": 1677,
+        "dedup_remote_inputs": 492,
+        "remote_bytes_dedup": 22210560,
+        "remote_bytes_slot": 34344960
+      },
+      {
+        "layer": 24,
+        "start_token": 1024,
+        "distinct": 459,
+        "slots": [
+          765,
+          864,
+          931
+        ],
+        "tiles": [
+          250,
+          277,
+          296
+        ],
+        "tile_critical_fraction": 0.3596597812879708,
+        "remote_slots": 1696,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22517760,
+        "remote_bytes_slot": 34734080
+      },
+      {
+        "layer": 24,
+        "start_token": 1280,
+        "distinct": 472,
+        "slots": [
+          720,
+          901,
+          939
+        ],
+        "tiles": [
+          241,
+          289,
+          296
+        ],
+        "tile_critical_fraction": 0.3583535108958838,
+        "remote_slots": 1659,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22108160,
+        "remote_bytes_slot": 33976320
+      },
+      {
+        "layer": 24,
+        "start_token": 1536,
+        "distinct": 476,
+        "slots": [
+          734,
+          893,
+          933
+        ],
+        "tiles": [
+          246,
+          292,
+          296
+        ],
+        "tile_critical_fraction": 0.354916067146283,
+        "remote_slots": 1667,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22190080,
+        "remote_bytes_slot": 34140160
+      },
+      {
+        "layer": 24,
+        "start_token": 1792,
+        "distinct": 458,
+        "slots": [
+          746,
+          838,
+          976
+        ],
+        "tiles": [
+          244,
+          270,
+          315
+        ],
+        "tile_critical_fraction": 0.37997587454764775,
+        "remote_slots": 1722,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22784000,
+        "remote_bytes_slot": 35266560
+      },
+      {
+        "layer": 24,
+        "start_token": 2048,
+        "distinct": 464,
+        "slots": [
+          759,
+          865,
+          936
+        ],
+        "tiles": [
+          252,
+          278,
+          297
+        ],
+        "tile_critical_fraction": 0.3591293833131802,
+        "remote_slots": 1695,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22517760,
+        "remote_bytes_slot": 34713600
+      },
+      {
+        "layer": 24,
+        "start_token": 2304,
+        "distinct": 461,
+        "slots": [
+          779,
+          869,
+          912
+        ],
+        "tiles": [
+          260,
+          281,
+          296
+        ],
+        "tile_critical_fraction": 0.3536439665471924,
+        "remote_slots": 1691,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22497280,
+        "remote_bytes_slot": 34631680
+      },
+      {
+        "layer": 24,
+        "start_token": 2560,
+        "distinct": 457,
+        "slots": [
+          716,
+          878,
+          966
+        ],
+        "tiles": [
+          241,
+          284,
+          308
+        ],
+        "tile_critical_fraction": 0.3697478991596639,
+        "remote_slots": 1682,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22353920,
+        "remote_bytes_slot": 34447360
+      },
+      {
+        "layer": 24,
+        "start_token": 2816,
+        "distinct": 456,
+        "slots": [
+          769,
+          868,
+          923
+        ],
+        "tiles": [
+          243,
+          279,
+          294
+        ],
+        "tile_critical_fraction": 0.3602941176470588,
+        "remote_slots": 1692,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22476800,
+        "remote_bytes_slot": 34652160
+      },
+      {
+        "layer": 24,
+        "start_token": 3072,
+        "distinct": 457,
+        "slots": [
+          791,
+          833,
+          936
+        ],
+        "tiles": [
+          258,
+          274,
+          296
+        ],
+        "tile_critical_fraction": 0.357487922705314,
+        "remote_slots": 1727,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22845440,
+        "remote_bytes_slot": 35368960
+      },
+      {
+        "layer": 24,
+        "start_token": 3328,
+        "distinct": 465,
+        "slots": [
+          748,
+          876,
+          936
+        ],
+        "tiles": [
+          247,
+          281,
+          299
+        ],
+        "tile_critical_fraction": 0.3615477629987908,
+        "remote_slots": 1684,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22446080,
+        "remote_bytes_slot": 34488320
+      },
+      {
+        "layer": 24,
+        "start_token": 3584,
+        "distinct": 464,
+        "slots": [
+          743,
+          845,
+          972
+        ],
+        "tiles": [
+          250,
+          272,
+          304
+        ],
+        "tile_critical_fraction": 0.36803874092009686,
+        "remote_slots": 1715,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22722560,
+        "remote_bytes_slot": 35123200
+      },
+      {
+        "layer": 24,
+        "start_token": 3840,
+        "distinct": 460,
+        "slots": [
+          762,
+          864,
+          934
+        ],
+        "tiles": [
+          259,
+          280,
+          297
+        ],
+        "tile_critical_fraction": 0.35526315789473684,
+        "remote_slots": 1696,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22528000,
+        "remote_bytes_slot": 34734080
+      },
+      {
+        "layer": 25,
+        "start_token": 0,
+        "distinct": 455,
+        "slots": [
+          974,
+          753,
+          833
+        ],
+        "tiles": [
+          307,
+          251,
+          273
+        ],
+        "tile_critical_fraction": 0.3694344163658243,
+        "remote_slots": 1807,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23695360,
+        "remote_bytes_slot": 37007360
+      },
+      {
+        "layer": 25,
+        "start_token": 256,
+        "distinct": 469,
+        "slots": [
+          919,
+          772,
+          869
+        ],
+        "tiles": [
+          290,
+          255,
+          290
+        ],
+        "tile_critical_fraction": 0.3473053892215569,
+        "remote_slots": 1788,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23511040,
+        "remote_bytes_slot": 36618240
+      },
+      {
+        "layer": 25,
+        "start_token": 512,
+        "distinct": 469,
+        "slots": [
+          910,
+          827,
+          823
+        ],
+        "tiles": [
+          291,
+          274,
+          269
+        ],
+        "tile_critical_fraction": 0.3489208633093525,
+        "remote_slots": 1733,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22947840,
+        "remote_bytes_slot": 35491840
+      },
+      {
+        "layer": 25,
+        "start_token": 768,
+        "distinct": 458,
+        "slots": [
+          980,
+          781,
+          799
+        ],
+        "tiles": [
+          308,
+          266,
+          268
+        ],
+        "tile_critical_fraction": 0.3657957244655582,
+        "remote_slots": 1779,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 23326720,
+        "remote_bytes_slot": 36433920
+      },
+      {
+        "layer": 25,
+        "start_token": 1024,
+        "distinct": 464,
+        "slots": [
+          925,
+          757,
+          878
+        ],
+        "tiles": [
+          299,
+          251,
+          284
+        ],
+        "tile_critical_fraction": 0.35851318944844124,
+        "remote_slots": 1803,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23654400,
+        "remote_bytes_slot": 36925440
+      },
+      {
+        "layer": 25,
+        "start_token": 1280,
+        "distinct": 464,
+        "slots": [
+          884,
+          782,
+          894
+        ],
+        "tiles": [
+          282,
+          264,
+          287
+        ],
+        "tile_critical_fraction": 0.3445378151260504,
+        "remote_slots": 1778,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23418880,
+        "remote_bytes_slot": 36413440
+      },
+      {
+        "layer": 25,
+        "start_token": 1536,
+        "distinct": 468,
+        "slots": [
+          965,
+          790,
+          805
+        ],
+        "tiles": [
+          305,
+          267,
+          265
+        ],
+        "tile_critical_fraction": 0.3643966547192354,
+        "remote_slots": 1770,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23296000,
+        "remote_bytes_slot": 36249600
+      },
+      {
+        "layer": 25,
+        "start_token": 1792,
+        "distinct": 464,
+        "slots": [
+          938,
+          792,
+          830
+        ],
+        "tiles": [
+          302,
+          260,
+          266
+        ],
+        "tile_critical_fraction": 0.3647342995169082,
+        "remote_slots": 1768,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23265280,
+        "remote_bytes_slot": 36208640
+      },
+      {
+        "layer": 25,
+        "start_token": 2048,
+        "distinct": 465,
+        "slots": [
+          948,
+          774,
+          838
+        ],
+        "tiles": [
+          304,
+          264,
+          272
+        ],
+        "tile_critical_fraction": 0.3619047619047619,
+        "remote_slots": 1786,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23480320,
+        "remote_bytes_slot": 36577280
+      },
+      {
+        "layer": 25,
+        "start_token": 2304,
+        "distinct": 470,
+        "slots": [
+          896,
+          834,
+          830
+        ],
+        "tiles": [
+          292,
+          279,
+          278
+        ],
+        "tile_critical_fraction": 0.34393404004711425,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22835200,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 25,
+        "start_token": 2560,
+        "distinct": 460,
+        "slots": [
+          950,
+          806,
+          804
+        ],
+        "tiles": [
+          300,
+          270,
+          269
+        ],
+        "tile_critical_fraction": 0.3575685339690107,
+        "remote_slots": 1754,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23111680,
+        "remote_bytes_slot": 35921920
+      },
+      {
+        "layer": 25,
+        "start_token": 2816,
+        "distinct": 459,
+        "slots": [
+          954,
+          803,
+          803
+        ],
+        "tiles": [
+          299,
+          264,
+          262
+        ],
+        "tile_critical_fraction": 0.3624242424242424,
+        "remote_slots": 1757,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23193600,
+        "remote_bytes_slot": 35983360
+      },
+      {
+        "layer": 25,
+        "start_token": 3072,
+        "distinct": 470,
+        "slots": [
+          946,
+          780,
+          834
+        ],
+        "tiles": [
+          304,
+          261,
+          267
+        ],
+        "tile_critical_fraction": 0.36538461538461536,
+        "remote_slots": 1780,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23408640,
+        "remote_bytes_slot": 36454400
+      },
+      {
+        "layer": 25,
+        "start_token": 3328,
+        "distinct": 471,
+        "slots": [
+          939,
+          780,
+          841
+        ],
+        "tiles": [
+          309,
+          260,
+          278
+        ],
+        "tile_critical_fraction": 0.36481700118063753,
+        "remote_slots": 1780,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23429120,
+        "remote_bytes_slot": 36454400
+      },
+      {
+        "layer": 25,
+        "start_token": 3584,
+        "distinct": 458,
+        "slots": [
+          943,
+          790,
+          827
+        ],
+        "tiles": [
+          294,
+          262,
+          274
+        ],
+        "tile_critical_fraction": 0.3542168674698795,
+        "remote_slots": 1770,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23306240,
+        "remote_bytes_slot": 36249600
+      },
+      {
+        "layer": 25,
+        "start_token": 3840,
+        "distinct": 450,
+        "slots": [
+          869,
+          827,
+          864
+        ],
+        "tiles": [
+          277,
+          277,
+          279
+        ],
+        "tile_critical_fraction": 0.3349339735894358,
+        "remote_slots": 1733,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22927360,
+        "remote_bytes_slot": 35491840
+      },
+      {
+        "layer": 26,
+        "start_token": 0,
+        "distinct": 435,
+        "slots": [
+          903,
+          703,
+          954
+        ],
+        "tiles": [
+          292,
+          237,
+          302
+        ],
+        "tile_critical_fraction": 0.36341756919374246,
+        "remote_slots": 1857,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 24156160,
+        "remote_bytes_slot": 38031360
+      },
+      {
+        "layer": 26,
+        "start_token": 256,
+        "distinct": 437,
+        "slots": [
+          893,
+          730,
+          937
+        ],
+        "tiles": [
+          280,
+          242,
+          302
+        ],
+        "tile_critical_fraction": 0.36650485436893204,
+        "remote_slots": 1830,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23941120,
+        "remote_bytes_slot": 37478400
+      },
+      {
+        "layer": 26,
+        "start_token": 512,
+        "distinct": 456,
+        "slots": [
+          901,
+          730,
+          929
+        ],
+        "tiles": [
+          297,
+          248,
+          297
+        ],
+        "tile_critical_fraction": 0.3527315914489311,
+        "remote_slots": 1830,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23930880,
+        "remote_bytes_slot": 37478400
+      },
+      {
+        "layer": 26,
+        "start_token": 768,
+        "distinct": 451,
+        "slots": [
+          919,
+          660,
+          981
+        ],
+        "tiles": [
+          301,
+          235,
+          308
+        ],
+        "tile_critical_fraction": 0.36492890995260663,
+        "remote_slots": 1900,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 24668160,
+        "remote_bytes_slot": 38912000
+      },
+      {
+        "layer": 26,
+        "start_token": 1024,
+        "distinct": 453,
+        "slots": [
+          891,
+          729,
+          940
+        ],
+        "tiles": [
+          284,
+          246,
+          298
+        ],
+        "tile_critical_fraction": 0.35990338164251207,
+        "remote_slots": 1831,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23920640,
+        "remote_bytes_slot": 37498880
+      },
+      {
+        "layer": 26,
+        "start_token": 1280,
+        "distinct": 455,
+        "slots": [
+          894,
+          750,
+          916
+        ],
+        "tiles": [
+          293,
+          257,
+          293
+        ],
+        "tile_critical_fraction": 0.3475682087781732,
+        "remote_slots": 1810,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 23654400,
+        "remote_bytes_slot": 37068800
+      },
+      {
+        "layer": 26,
+        "start_token": 1536,
+        "distinct": 448,
+        "slots": [
+          903,
+          733,
+          924
+        ],
+        "tiles": [
+          289,
+          250,
+          297
+        ],
+        "tile_critical_fraction": 0.35526315789473684,
+        "remote_slots": 1827,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23900160,
+        "remote_bytes_slot": 37416960
+      },
+      {
+        "layer": 26,
+        "start_token": 1792,
+        "distinct": 443,
+        "slots": [
+          910,
+          693,
+          957
+        ],
+        "tiles": [
+          298,
+          239,
+          305
+        ],
+        "tile_critical_fraction": 0.36223277909738716,
+        "remote_slots": 1867,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 24279040,
+        "remote_bytes_slot": 38236160
+      },
+      {
+        "layer": 26,
+        "start_token": 2048,
+        "distinct": 451,
+        "slots": [
+          916,
+          679,
+          965
+        ],
+        "tiles": [
+          297,
+          232,
+          302
+        ],
+        "tile_critical_fraction": 0.36341756919374246,
+        "remote_slots": 1881,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 24463360,
+        "remote_bytes_slot": 38522880
+      },
+      {
+        "layer": 26,
+        "start_token": 2304,
+        "distinct": 448,
+        "slots": [
+          908,
+          714,
+          938
+        ],
+        "tiles": [
+          292,
+          244,
+          300
+        ],
+        "tile_critical_fraction": 0.3588516746411483,
+        "remote_slots": 1846,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24094720,
+        "remote_bytes_slot": 37806080
+      },
+      {
+        "layer": 26,
+        "start_token": 2560,
+        "distinct": 451,
+        "slots": [
+          867,
+          760,
+          933
+        ],
+        "tiles": [
+          291,
+          253,
+          294
+        ],
+        "tile_critical_fraction": 0.35083532219570407,
+        "remote_slots": 1800,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23613440,
+        "remote_bytes_slot": 36864000
+      },
+      {
+        "layer": 26,
+        "start_token": 2816,
+        "distinct": 438,
+        "slots": [
+          853,
+          700,
+          1007
+        ],
+        "tiles": [
+          278,
+          232,
+          316
+        ],
+        "tile_critical_fraction": 0.38256658595641646,
+        "remote_slots": 1860,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24238080,
+        "remote_bytes_slot": 38092800
+      },
+      {
+        "layer": 26,
+        "start_token": 3072,
+        "distinct": 454,
+        "slots": [
+          906,
+          729,
+          925
+        ],
+        "tiles": [
+          295,
+          252,
+          298
+        ],
+        "tile_critical_fraction": 0.3526627218934911,
+        "remote_slots": 1831,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23910400,
+        "remote_bytes_slot": 37498880
+      },
+      {
+        "layer": 26,
+        "start_token": 3328,
+        "distinct": 454,
+        "slots": [
+          901,
+          678,
+          981
+        ],
+        "tiles": [
+          290,
+          234,
+          312
+        ],
+        "tile_critical_fraction": 0.37320574162679426,
+        "remote_slots": 1882,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 24453120,
+        "remote_bytes_slot": 38543360
+      },
+      {
+        "layer": 26,
+        "start_token": 3584,
+        "distinct": 436,
+        "slots": [
+          913,
+          698,
+          949
+        ],
+        "tiles": [
+          291,
+          236,
+          297
+        ],
+        "tile_critical_fraction": 0.3604368932038835,
+        "remote_slots": 1862,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24258560,
+        "remote_bytes_slot": 38133760
+      },
+      {
+        "layer": 26,
+        "start_token": 3840,
+        "distinct": 450,
+        "slots": [
+          898,
+          720,
+          942
+        ],
+        "tiles": [
+          287,
+          245,
+          312
+        ],
+        "tile_critical_fraction": 0.3696682464454976,
+        "remote_slots": 1840,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 24023040,
+        "remote_bytes_slot": 37683200
+      },
+      {
+        "layer": 27,
+        "start_token": 0,
+        "distinct": 455,
+        "slots": [
+          855,
+          810,
+          895
+        ],
+        "tiles": [
+          277,
+          270,
+          293
+        ],
+        "tile_critical_fraction": 0.3488095238095238,
+        "remote_slots": 1750,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 23050240,
+        "remote_bytes_slot": 35840000
+      },
+      {
+        "layer": 27,
+        "start_token": 256,
+        "distinct": 453,
+        "slots": [
+          899,
+          800,
+          861
+        ],
+        "tiles": [
+          288,
+          265,
+          277
+        ],
+        "tile_critical_fraction": 0.3469879518072289,
+        "remote_slots": 1760,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23214080,
+        "remote_bytes_slot": 36044800
+      },
+      {
+        "layer": 27,
+        "start_token": 512,
+        "distinct": 450,
+        "slots": [
+          820,
+          870,
+          870
+        ],
+        "tiles": [
+          269,
+          278,
+          286
+        ],
+        "tile_critical_fraction": 0.3433373349339736,
+        "remote_slots": 1690,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22446080,
+        "remote_bytes_slot": 34611200
+      },
+      {
+        "layer": 27,
+        "start_token": 768,
+        "distinct": 461,
+        "slots": [
+          848,
+          820,
+          892
+        ],
+        "tiles": [
+          277,
+          271,
+          286
+        ],
+        "tile_critical_fraction": 0.34292565947242204,
+        "remote_slots": 1740,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22999040,
+        "remote_bytes_slot": 35635200
+      },
+      {
+        "layer": 27,
+        "start_token": 1024,
+        "distinct": 459,
+        "slots": [
+          849,
+          824,
+          887
+        ],
+        "tiles": [
+          271,
+          279,
+          284
+        ],
+        "tile_critical_fraction": 0.3405275779376499,
+        "remote_slots": 1736,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22906880,
+        "remote_bytes_slot": 35553280
+      },
+      {
+        "layer": 27,
+        "start_token": 1280,
+        "distinct": 465,
+        "slots": [
+          877,
+          793,
+          890
+        ],
+        "tiles": [
+          280,
+          263,
+          285
+        ],
+        "tile_critical_fraction": 0.3442028985507246,
+        "remote_slots": 1767,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23255040,
+        "remote_bytes_slot": 36188160
+      },
+      {
+        "layer": 27,
+        "start_token": 1536,
+        "distinct": 457,
+        "slots": [
+          876,
+          842,
+          842
+        ],
+        "tiles": [
+          285,
+          269,
+          276
+        ],
+        "tile_critical_fraction": 0.3433734939759036,
+        "remote_slots": 1718,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22784000,
+        "remote_bytes_slot": 35184640
+      },
+      {
+        "layer": 27,
+        "start_token": 1792,
+        "distinct": 462,
+        "slots": [
+          836,
+          794,
+          930
+        ],
+        "tiles": [
+          275,
+          262,
+          299
+        ],
+        "tile_critical_fraction": 0.3576555023923445,
+        "remote_slots": 1766,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23255040,
+        "remote_bytes_slot": 36167680
+      },
+      {
+        "layer": 27,
+        "start_token": 2048,
+        "distinct": 448,
+        "slots": [
+          882,
+          834,
+          844
+        ],
+        "tiles": [
+          279,
+          270,
+          276
+        ],
+        "tile_critical_fraction": 0.3381818181818182,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22824960,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 27,
+        "start_token": 2304,
+        "distinct": 468,
+        "slots": [
+          864,
+          834,
+          862
+        ],
+        "tiles": [
+          278,
+          275,
+          279
+        ],
+        "tile_critical_fraction": 0.33533653846153844,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22824960,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 27,
+        "start_token": 2560,
+        "distinct": 459,
+        "slots": [
+          837,
+          854,
+          869
+        ],
+        "tiles": [
+          269,
+          275,
+          276
+        ],
+        "tile_critical_fraction": 0.33658536585365856,
+        "remote_slots": 1706,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22650880,
+        "remote_bytes_slot": 34938880
+      },
+      {
+        "layer": 27,
+        "start_token": 2816,
+        "distinct": 454,
+        "slots": [
+          855,
+          800,
+          905
+        ],
+        "tiles": [
+          275,
+          272,
+          289
+        ],
+        "tile_critical_fraction": 0.3456937799043062,
+        "remote_slots": 1760,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23173120,
+        "remote_bytes_slot": 36044800
+      },
+      {
+        "layer": 27,
+        "start_token": 3072,
+        "distinct": 456,
+        "slots": [
+          888,
+          825,
+          847
+        ],
+        "tiles": [
+          277,
+          267,
+          274
+        ],
+        "tile_critical_fraction": 0.33863080684596575,
+        "remote_slots": 1735,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22927360,
+        "remote_bytes_slot": 35532800
+      },
+      {
+        "layer": 27,
+        "start_token": 3328,
+        "distinct": 471,
+        "slots": [
+          884,
+          833,
+          843
+        ],
+        "tiles": [
+          289,
+          269,
+          274
+        ],
+        "tile_critical_fraction": 0.3473557692307692,
+        "remote_slots": 1727,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22794240,
+        "remote_bytes_slot": 35368960
+      },
+      {
+        "layer": 27,
+        "start_token": 3584,
+        "distinct": 463,
+        "slots": [
+          871,
+          820,
+          869
+        ],
+        "tiles": [
+          290,
+          268,
+          276
+        ],
+        "tile_critical_fraction": 0.34772182254196643,
+        "remote_slots": 1740,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22999040,
+        "remote_bytes_slot": 35635200
+      },
+      {
+        "layer": 27,
+        "start_token": 3840,
+        "distinct": 458,
+        "slots": [
+          847,
+          813,
+          900
+        ],
+        "tiles": [
+          278,
+          276,
+          291
+        ],
+        "tile_critical_fraction": 0.34437869822485206,
+        "remote_slots": 1747,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23040000,
+        "remote_bytes_slot": 35778560
+      },
+      {
+        "layer": 28,
+        "start_token": 0,
+        "distinct": 458,
+        "slots": [
+          965,
+          782,
+          813
+        ],
+        "tiles": [
+          305,
+          261,
+          270
+        ],
+        "tile_critical_fraction": 0.36483253588516745,
+        "remote_slots": 1778,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23408640,
+        "remote_bytes_slot": 36413440
+      },
+      {
+        "layer": 28,
+        "start_token": 256,
+        "distinct": 456,
+        "slots": [
+          990,
+          782,
+          788
+        ],
+        "tiles": [
+          316,
+          255,
+          258
+        ],
+        "tile_critical_fraction": 0.38118214716525933,
+        "remote_slots": 1778,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23388160,
+        "remote_bytes_slot": 36413440
+      },
+      {
+        "layer": 28,
+        "start_token": 512,
+        "distinct": 454,
+        "slots": [
+          1002,
+          773,
+          785
+        ],
+        "tiles": [
+          313,
+          263,
+          261
+        ],
+        "tile_critical_fraction": 0.3739545997610514,
+        "remote_slots": 1787,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23470080,
+        "remote_bytes_slot": 36597760
+      },
+      {
+        "layer": 28,
+        "start_token": 768,
+        "distinct": 456,
+        "slots": [
+          941,
+          823,
+          796
+        ],
+        "tiles": [
+          304,
+          270,
+          266
+        ],
+        "tile_critical_fraction": 0.3619047619047619,
+        "remote_slots": 1737,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22968320,
+        "remote_bytes_slot": 35573760
+      },
+      {
+        "layer": 28,
+        "start_token": 1024,
+        "distinct": 449,
+        "slots": [
+          989,
+          795,
+          776
+        ],
+        "tiles": [
+          313,
+          265,
+          261
+        ],
+        "tile_critical_fraction": 0.3730631704410012,
+        "remote_slots": 1765,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23255040,
+        "remote_bytes_slot": 36147200
+      },
+      {
+        "layer": 28,
+        "start_token": 1280,
+        "distinct": 462,
+        "slots": [
+          985,
+          750,
+          825
+        ],
+        "tiles": [
+          306,
+          252,
+          274
+        ],
+        "tile_critical_fraction": 0.36778846153846156,
+        "remote_slots": 1810,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23736320,
+        "remote_bytes_slot": 37068800
+      },
+      {
+        "layer": 28,
+        "start_token": 1536,
+        "distinct": 462,
+        "slots": [
+          968,
+          776,
+          816
+        ],
+        "tiles": [
+          311,
+          254,
+          267
+        ],
+        "tile_critical_fraction": 0.3737980769230769,
+        "remote_slots": 1784,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23459840,
+        "remote_bytes_slot": 36536320
+      },
+      {
+        "layer": 28,
+        "start_token": 1792,
+        "distinct": 461,
+        "slots": [
+          1001,
+          745,
+          814
+        ],
+        "tiles": [
+          314,
+          258,
+          262
+        ],
+        "tile_critical_fraction": 0.3764988009592326,
+        "remote_slots": 1815,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23797760,
+        "remote_bytes_slot": 37171200
+      },
+      {
+        "layer": 28,
+        "start_token": 2048,
+        "distinct": 458,
+        "slots": [
+          1010,
+          723,
+          827
+        ],
+        "tiles": [
+          323,
+          246,
+          268
+        ],
+        "tile_critical_fraction": 0.3859020310633214,
+        "remote_slots": 1837,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 24012800,
+        "remote_bytes_slot": 37621760
+      },
+      {
+        "layer": 28,
+        "start_token": 2304,
+        "distinct": 465,
+        "slots": [
+          965,
+          778,
+          817
+        ],
+        "tiles": [
+          311,
+          259,
+          271
+        ],
+        "tile_critical_fraction": 0.3697978596908442,
+        "remote_slots": 1782,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23449600,
+        "remote_bytes_slot": 36495360
+      },
+      {
+        "layer": 28,
+        "start_token": 2560,
+        "distinct": 463,
+        "slots": [
+          979,
+          778,
+          803
+        ],
+        "tiles": [
+          307,
+          258,
+          275
+        ],
+        "tile_critical_fraction": 0.36547619047619045,
+        "remote_slots": 1782,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23449600,
+        "remote_bytes_slot": 36495360
+      },
+      {
+        "layer": 28,
+        "start_token": 2816,
+        "distinct": 453,
+        "slots": [
+          1012,
+          747,
+          801
+        ],
+        "tiles": [
+          323,
+          248,
+          266
+        ],
+        "tile_critical_fraction": 0.3859020310633214,
+        "remote_slots": 1813,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23746560,
+        "remote_bytes_slot": 37130240
+      },
+      {
+        "layer": 28,
+        "start_token": 3072,
+        "distinct": 457,
+        "slots": [
+          980,
+          777,
+          803
+        ],
+        "tiles": [
+          316,
+          261,
+          266
+        ],
+        "tile_critical_fraction": 0.3748517200474496,
+        "remote_slots": 1783,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 23480320,
+        "remote_bytes_slot": 36515840
+      },
+      {
+        "layer": 28,
+        "start_token": 3328,
+        "distinct": 457,
+        "slots": [
+          1049,
+          742,
+          769
+        ],
+        "tiles": [
+          328,
+          253,
+          258
+        ],
+        "tile_critical_fraction": 0.3909415971394517,
+        "remote_slots": 1818,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23828480,
+        "remote_bytes_slot": 37232640
+      },
+      {
+        "layer": 28,
+        "start_token": 3584,
+        "distinct": 451,
+        "slots": [
+          1047,
+          695,
+          818
+        ],
+        "tiles": [
+          326,
+          232,
+          265
+        ],
+        "tile_critical_fraction": 0.39611178614823817,
+        "remote_slots": 1865,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24289280,
+        "remote_bytes_slot": 38195200
+      },
+      {
+        "layer": 28,
+        "start_token": 3840,
+        "distinct": 460,
+        "slots": [
+          995,
+          761,
+          804
+        ],
+        "tiles": [
+          317,
+          254,
+          264
+        ],
+        "tile_critical_fraction": 0.37964071856287424,
+        "remote_slots": 1799,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23623680,
+        "remote_bytes_slot": 36843520
+      },
+      {
+        "layer": 29,
+        "start_token": 0,
+        "distinct": 458,
+        "slots": [
+          751,
+          970,
+          839
+        ],
+        "tiles": [
+          258,
+          309,
+          274
+        ],
+        "tile_critical_fraction": 0.36741973840665876,
+        "remote_slots": 1590,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 21442560,
+        "remote_bytes_slot": 32563200
+      },
+      {
+        "layer": 29,
+        "start_token": 256,
+        "distinct": 456,
+        "slots": [
+          758,
+          965,
+          837
+        ],
+        "tiles": [
+          258,
+          306,
+          274
+        ],
+        "tile_critical_fraction": 0.36515513126491644,
+        "remote_slots": 1595,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 21504000,
+        "remote_bytes_slot": 32665600
+      },
+      {
+        "layer": 29,
+        "start_token": 512,
+        "distinct": 477,
+        "slots": [
+          786,
+          921,
+          853
+        ],
+        "tiles": [
+          271,
+          298,
+          279
+        ],
+        "tile_critical_fraction": 0.35141509433962265,
+        "remote_slots": 1639,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 21975040,
+        "remote_bytes_slot": 33566720
+      },
+      {
+        "layer": 29,
+        "start_token": 768,
+        "distinct": 461,
+        "slots": [
+          767,
+          1021,
+          772
+        ],
+        "tiles": [
+          257,
+          317,
+          256
+        ],
+        "tile_critical_fraction": 0.3819277108433735,
+        "remote_slots": 1539,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 20899840,
+        "remote_bytes_slot": 31518720
+      },
+      {
+        "layer": 29,
+        "start_token": 1024,
+        "distinct": 466,
+        "slots": [
+          776,
+          1005,
+          779
+        ],
+        "tiles": [
+          268,
+          317,
+          258
+        ],
+        "tile_critical_fraction": 0.3760379596678529,
+        "remote_slots": 1555,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21043200,
+        "remote_bytes_slot": 31846400
+      },
+      {
+        "layer": 29,
+        "start_token": 1280,
+        "distinct": 467,
+        "slots": [
+          775,
+          993,
+          792
+        ],
+        "tiles": [
+          262,
+          313,
+          261
+        ],
+        "tile_critical_fraction": 0.37440191387559807,
+        "remote_slots": 1567,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21186560,
+        "remote_bytes_slot": 32092160
+      },
+      {
+        "layer": 29,
+        "start_token": 1536,
+        "distinct": 451,
+        "slots": [
+          747,
+          997,
+          816
+        ],
+        "tiles": [
+          253,
+          311,
+          266
+        ],
+        "tile_critical_fraction": 0.3746987951807229,
+        "remote_slots": 1563,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21125120,
+        "remote_bytes_slot": 32010240
+      },
+      {
+        "layer": 29,
+        "start_token": 1792,
+        "distinct": 465,
+        "slots": [
+          793,
+          977,
+          790
+        ],
+        "tiles": [
+          262,
+          309,
+          266
+        ],
+        "tile_critical_fraction": 0.36917562724014336,
+        "remote_slots": 1583,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21350400,
+        "remote_bytes_slot": 32419840
+      },
+      {
+        "layer": 29,
+        "start_token": 2048,
+        "distinct": 459,
+        "slots": [
+          757,
+          1008,
+          795
+        ],
+        "tiles": [
+          254,
+          322,
+          265
+        ],
+        "tile_critical_fraction": 0.38287752675386444,
+        "remote_slots": 1552,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 21002240,
+        "remote_bytes_slot": 31784960
+      },
+      {
+        "layer": 29,
+        "start_token": 2304,
+        "distinct": 462,
+        "slots": [
+          814,
+          949,
+          797
+        ],
+        "tiles": [
+          266,
+          303,
+          261
+        ],
+        "tile_critical_fraction": 0.3650602409638554,
+        "remote_slots": 1611,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21616640,
+        "remote_bytes_slot": 32993280
+      },
+      {
+        "layer": 29,
+        "start_token": 2560,
+        "distinct": 467,
+        "slots": [
+          818,
+          956,
+          786
+        ],
+        "tiles": [
+          265,
+          300,
+          257
+        ],
+        "tile_critical_fraction": 0.36496350364963503,
+        "remote_slots": 1604,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 21616640,
+        "remote_bytes_slot": 32849920
+      },
+      {
+        "layer": 29,
+        "start_token": 2816,
+        "distinct": 471,
+        "slots": [
+          812,
+          974,
+          774
+        ],
+        "tiles": [
+          272,
+          307,
+          261
+        ],
+        "tile_critical_fraction": 0.36547619047619045,
+        "remote_slots": 1586,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 21432320,
+        "remote_bytes_slot": 32481280
+      },
+      {
+        "layer": 29,
+        "start_token": 3072,
+        "distinct": 461,
+        "slots": [
+          769,
+          999,
+          792
+        ],
+        "tiles": [
+          255,
+          313,
+          269
+        ],
+        "tile_critical_fraction": 0.3739545997610514,
+        "remote_slots": 1561,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21114880,
+        "remote_bytes_slot": 31969280
+      },
+      {
+        "layer": 29,
+        "start_token": 3328,
+        "distinct": 453,
+        "slots": [
+          796,
+          958,
+          806
+        ],
+        "tiles": [
+          262,
+          303,
+          270
+        ],
+        "tile_critical_fraction": 0.362874251497006,
+        "remote_slots": 1602,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 21596160,
+        "remote_bytes_slot": 32808960
+      },
+      {
+        "layer": 29,
+        "start_token": 3584,
+        "distinct": 449,
+        "slots": [
+          750,
+          1015,
+          795
+        ],
+        "tiles": [
+          251,
+          316,
+          261
+        ],
+        "tile_critical_fraction": 0.38164251207729466,
+        "remote_slots": 1545,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 20940800,
+        "remote_bytes_slot": 31641600
+      },
+      {
+        "layer": 29,
+        "start_token": 3840,
+        "distinct": 451,
+        "slots": [
+          767,
+          1021,
+          772
+        ],
+        "tiles": [
+          251,
+          329,
+          260
+        ],
+        "tile_critical_fraction": 0.39166666666666666,
+        "remote_slots": 1539,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 20869120,
+        "remote_bytes_slot": 31518720
+      },
+      {
+        "layer": 30,
+        "start_token": 0,
+        "distinct": 445,
+        "slots": [
+          875,
+          719,
+          966
+        ],
+        "tiles": [
+          280,
+          243,
+          304
+        ],
+        "tile_critical_fraction": 0.3675937122128174,
+        "remote_slots": 1841,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24043520,
+        "remote_bytes_slot": 37703680
+      },
+      {
+        "layer": 30,
+        "start_token": 256,
+        "distinct": 456,
+        "slots": [
+          925,
+          678,
+          957
+        ],
+        "tiles": [
+          302,
+          232,
+          301
+        ],
+        "tile_critical_fraction": 0.36167664670658684,
+        "remote_slots": 1882,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24463360,
+        "remote_bytes_slot": 38543360
+      },
+      {
+        "layer": 30,
+        "start_token": 512,
+        "distinct": 449,
+        "slots": [
+          896,
+          685,
+          979
+        ],
+        "tiles": [
+          285,
+          228,
+          305
+        ],
+        "tile_critical_fraction": 0.37286063569682154,
+        "remote_slots": 1875,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 24381440,
+        "remote_bytes_slot": 38400000
+      },
+      {
+        "layer": 30,
+        "start_token": 768,
+        "distinct": 462,
+        "slots": [
+          916,
+          705,
+          939
+        ],
+        "tiles": [
+          299,
+          243,
+          298
+        ],
+        "tile_critical_fraction": 0.35595238095238096,
+        "remote_slots": 1855,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 24115200,
+        "remote_bytes_slot": 37990400
+      },
+      {
+        "layer": 30,
+        "start_token": 1024,
+        "distinct": 444,
+        "slots": [
+          917,
+          687,
+          956
+        ],
+        "tiles": [
+          298,
+          233,
+          297
+        ],
+        "tile_critical_fraction": 0.35990338164251207,
+        "remote_slots": 1873,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 24401920,
+        "remote_bytes_slot": 38359040
+      },
+      {
+        "layer": 30,
+        "start_token": 1280,
+        "distinct": 460,
+        "slots": [
+          906,
+          717,
+          937
+        ],
+        "tiles": [
+          294,
+          247,
+          297
+        ],
+        "tile_critical_fraction": 0.35441527446300713,
+        "remote_slots": 1843,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 24084480,
+        "remote_bytes_slot": 37744640
+      },
+      {
+        "layer": 30,
+        "start_token": 1536,
+        "distinct": 453,
+        "slots": [
+          882,
+          733,
+          945
+        ],
+        "tiles": [
+          287,
+          244,
+          299
+        ],
+        "tile_critical_fraction": 0.3602409638554217,
+        "remote_slots": 1827,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23900160,
+        "remote_bytes_slot": 37416960
+      },
+      {
+        "layer": 30,
+        "start_token": 1792,
+        "distinct": 453,
+        "slots": [
+          909,
+          725,
+          926
+        ],
+        "tiles": [
+          296,
+          242,
+          303
+        ],
+        "tile_critical_fraction": 0.36028537455410226,
+        "remote_slots": 1835,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23951360,
+        "remote_bytes_slot": 37580800
+      },
+      {
+        "layer": 30,
+        "start_token": 2048,
+        "distinct": 456,
+        "slots": [
+          947,
+          712,
+          901
+        ],
+        "tiles": [
+          302,
+          246,
+          290
+        ],
+        "tile_critical_fraction": 0.360381861575179,
+        "remote_slots": 1848,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 24094720,
+        "remote_bytes_slot": 37847040
+      },
+      {
+        "layer": 30,
+        "start_token": 2304,
+        "distinct": 464,
+        "slots": [
+          942,
+          716,
+          902
+        ],
+        "tiles": [
+          299,
+          250,
+          293
+        ],
+        "tile_critical_fraction": 0.35510688836104515,
+        "remote_slots": 1844,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24074240,
+        "remote_bytes_slot": 37765120
+      },
+      {
+        "layer": 30,
+        "start_token": 2560,
+        "distinct": 456,
+        "slots": [
+          911,
+          735,
+          914
+        ],
+        "tiles": [
+          290,
+          255,
+          286
+        ],
+        "tile_critical_fraction": 0.3489771359807461,
+        "remote_slots": 1825,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 23828480,
+        "remote_bytes_slot": 37376000
+      },
+      {
+        "layer": 30,
+        "start_token": 2816,
+        "distinct": 459,
+        "slots": [
+          923,
+          727,
+          910
+        ],
+        "tiles": [
+          295,
+          254,
+          288
+        ],
+        "tile_critical_fraction": 0.35244922341696533,
+        "remote_slots": 1833,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 23889920,
+        "remote_bytes_slot": 37539840
+      },
+      {
+        "layer": 30,
+        "start_token": 3072,
+        "distinct": 451,
+        "slots": [
+          933,
+          760,
+          867
+        ],
+        "tiles": [
+          296,
+          255,
+          283
+        ],
+        "tile_critical_fraction": 0.354916067146283,
+        "remote_slots": 1800,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 23562240,
+        "remote_bytes_slot": 36864000
+      },
+      {
+        "layer": 30,
+        "start_token": 3328,
+        "distinct": 458,
+        "slots": [
+          908,
+          746,
+          906
+        ],
+        "tiles": [
+          292,
+          250,
+          286
+        ],
+        "tile_critical_fraction": 0.3526570048309179,
+        "remote_slots": 1814,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23726080,
+        "remote_bytes_slot": 37150720
+      },
+      {
+        "layer": 30,
+        "start_token": 3584,
+        "distinct": 464,
+        "slots": [
+          891,
+          742,
+          927
+        ],
+        "tiles": [
+          287,
+          249,
+          300
+        ],
+        "tile_critical_fraction": 0.3588516746411483,
+        "remote_slots": 1818,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 23746560,
+        "remote_bytes_slot": 37232640
+      },
+      {
+        "layer": 30,
+        "start_token": 3840,
+        "distinct": 454,
+        "slots": [
+          916,
+          720,
+          924
+        ],
+        "tiles": [
+          289,
+          245,
+          301
+        ],
+        "tile_critical_fraction": 0.36047904191616764,
+        "remote_slots": 1840,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 24023040,
+        "remote_bytes_slot": 37683200
+      },
+      {
+        "layer": 31,
+        "start_token": 0,
+        "distinct": 413,
+        "slots": [
+          864,
+          916,
+          780
+        ],
+        "tiles": [
+          283,
+          286,
+          253
+        ],
+        "tile_critical_fraction": 0.34793187347931875,
+        "remote_slots": 1644,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22026240,
+        "remote_bytes_slot": 33669120
+      },
+      {
+        "layer": 31,
+        "start_token": 256,
+        "distinct": 404,
+        "slots": [
+          851,
+          914,
+          795
+        ],
+        "tiles": [
+          278,
+          293,
+          260
+        ],
+        "tile_critical_fraction": 0.3525872442839952,
+        "remote_slots": 1646,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21985280,
+        "remote_bytes_slot": 33710080
+      },
+      {
+        "layer": 31,
+        "start_token": 512,
+        "distinct": 430,
+        "slots": [
+          829,
+          943,
+          788
+        ],
+        "tiles": [
+          271,
+          303,
+          261
+        ],
+        "tile_critical_fraction": 0.362874251497006,
+        "remote_slots": 1617,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21678080,
+        "remote_bytes_slot": 33116160
+      },
+      {
+        "layer": 31,
+        "start_token": 768,
+        "distinct": 404,
+        "slots": [
+          916,
+          911,
+          733
+        ],
+        "tiles": [
+          294,
+          295,
+          246
+        ],
+        "tile_critical_fraction": 0.3532934131736527,
+        "remote_slots": 1649,
+        "dedup_remote_inputs": 493,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33771520
+      },
+      {
+        "layer": 31,
+        "start_token": 1024,
+        "distinct": 404,
+        "slots": [
+          899,
+          893,
+          768
+        ],
+        "tiles": [
+          284,
+          288,
+          258
+        ],
+        "tile_critical_fraction": 0.3469879518072289,
+        "remote_slots": 1667,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22251520,
+        "remote_bytes_slot": 34140160
+      },
+      {
+        "layer": 31,
+        "start_token": 1280,
+        "distinct": 416,
+        "slots": [
+          838,
+          938,
+          784
+        ],
+        "tiles": [
+          274,
+          295,
+          263
+        ],
+        "tile_critical_fraction": 0.3545673076923077,
+        "remote_slots": 1622,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21760000,
+        "remote_bytes_slot": 33218560
+      },
+      {
+        "layer": 31,
+        "start_token": 1536,
+        "distinct": 396,
+        "slots": [
+          873,
+          902,
+          785
+        ],
+        "tiles": [
+          281,
+          295,
+          258
+        ],
+        "tile_critical_fraction": 0.3537170263788969,
+        "remote_slots": 1658,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22087680,
+        "remote_bytes_slot": 33955840
+      },
+      {
+        "layer": 31,
+        "start_token": 1792,
+        "distinct": 382,
+        "slots": [
+          850,
+          919,
+          791
+        ],
+        "tiles": [
+          276,
+          291,
+          263
+        ],
+        "tile_critical_fraction": 0.3506024096385542,
+        "remote_slots": 1641,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33607680
+      },
+      {
+        "layer": 31,
+        "start_token": 2048,
+        "distinct": 408,
+        "slots": [
+          836,
+          941,
+          783
+        ],
+        "tiles": [
+          273,
+          296,
+          256
+        ],
+        "tile_critical_fraction": 0.35878787878787877,
+        "remote_slots": 1619,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21729280,
+        "remote_bytes_slot": 33157120
+      },
+      {
+        "layer": 31,
+        "start_token": 2304,
+        "distinct": 390,
+        "slots": [
+          835,
+          958,
+          767
+        ],
+        "tiles": [
+          268,
+          299,
+          250
+        ],
+        "tile_critical_fraction": 0.3659730722154223,
+        "remote_slots": 1602,
+        "dedup_remote_inputs": 496,
+        "remote_bytes_dedup": 21483520,
+        "remote_bytes_slot": 32808960
+      },
+      {
+        "layer": 31,
+        "start_token": 2560,
+        "distinct": 403,
+        "slots": [
+          856,
+          932,
+          772
+        ],
+        "tiles": [
+          282,
+          291,
+          261
+        ],
+        "tile_critical_fraction": 0.3489208633093525,
+        "remote_slots": 1628,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 21770240,
+        "remote_bytes_slot": 33341440
+      },
+      {
+        "layer": 31,
+        "start_token": 2816,
+        "distinct": 413,
+        "slots": [
+          874,
+          920,
+          766
+        ],
+        "tiles": [
+          283,
+          300,
+          252
+        ],
+        "tile_critical_fraction": 0.3592814371257485,
+        "remote_slots": 1640,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21913600,
+        "remote_bytes_slot": 33587200
+      },
+      {
+        "layer": 31,
+        "start_token": 3072,
+        "distinct": 404,
+        "slots": [
+          883,
+          860,
+          817
+        ],
+        "tiles": [
+          288,
+          283,
+          267
+        ],
+        "tile_critical_fraction": 0.3436754176610978,
+        "remote_slots": 1700,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22599680,
+        "remote_bytes_slot": 34816000
+      },
+      {
+        "layer": 31,
+        "start_token": 3328,
+        "distinct": 405,
+        "slots": [
+          862,
+          922,
+          776
+        ],
+        "tiles": [
+          283,
+          296,
+          253
+        ],
+        "tile_critical_fraction": 0.3557692307692308,
+        "remote_slots": 1638,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21893120,
+        "remote_bytes_slot": 33546240
+      },
+      {
+        "layer": 31,
+        "start_token": 3584,
+        "distinct": 395,
+        "slots": [
+          846,
+          900,
+          814
+        ],
+        "tiles": [
+          269,
+          288,
+          270
+        ],
+        "tile_critical_fraction": 0.3482466747279323,
+        "remote_slots": 1660,
+        "dedup_remote_inputs": 497,
+        "remote_bytes_dedup": 22087680,
+        "remote_bytes_slot": 33996800
+      },
+      {
+        "layer": 31,
+        "start_token": 3840,
+        "distinct": 399,
+        "slots": [
+          877,
+          920,
+          763
+        ],
+        "tiles": [
+          278,
+          300,
+          253
+        ],
+        "tile_critical_fraction": 0.36101083032490977,
+        "remote_slots": 1640,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 21964800,
+        "remote_bytes_slot": 33587200
+      },
+      {
+        "layer": 32,
+        "start_token": 0,
+        "distinct": 435,
+        "slots": [
+          1011,
+          791,
+          758
+        ],
+        "tiles": [
+          320,
+          263,
+          251
+        ],
+        "tile_critical_fraction": 0.38369304556354916,
+        "remote_slots": 1802,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23633920,
+        "remote_bytes_slot": 36904960
+      },
+      {
+        "layer": 32,
+        "start_token": 256,
+        "distinct": 444,
+        "slots": [
+          986,
+          801,
+          773
+        ],
+        "tiles": [
+          309,
+          272,
+          254
+        ],
+        "tile_critical_fraction": 0.37005988023952097,
+        "remote_slots": 1787,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23480320,
+        "remote_bytes_slot": 36597760
+      },
+      {
+        "layer": 32,
+        "start_token": 512,
+        "distinct": 448,
+        "slots": [
+          1000,
+          790,
+          770
+        ],
+        "tiles": [
+          312,
+          259,
+          259
+        ],
+        "tile_critical_fraction": 0.3759036144578313,
+        "remote_slots": 1790,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23531520,
+        "remote_bytes_slot": 36659200
+      },
+      {
+        "layer": 32,
+        "start_token": 768,
+        "distinct": 432,
+        "slots": [
+          1013,
+          788,
+          759
+        ],
+        "tiles": [
+          317,
+          261,
+          258
+        ],
+        "tile_critical_fraction": 0.3791866028708134,
+        "remote_slots": 1801,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23633920,
+        "remote_bytes_slot": 36884480
+      },
+      {
+        "layer": 32,
+        "start_token": 1024,
+        "distinct": 442,
+        "slots": [
+          975,
+          801,
+          784
+        ],
+        "tiles": [
+          311,
+          264,
+          264
+        ],
+        "tile_critical_fraction": 0.3706793802145411,
+        "remote_slots": 1776,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23367680,
+        "remote_bytes_slot": 36372480
+      },
+      {
+        "layer": 32,
+        "start_token": 1280,
+        "distinct": 434,
+        "slots": [
+          957,
+          793,
+          810
+        ],
+        "tiles": [
+          308,
+          261,
+          266
+        ],
+        "tile_critical_fraction": 0.3688622754491018,
+        "remote_slots": 1750,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 23142400,
+        "remote_bytes_slot": 35840000
+      },
+      {
+        "layer": 32,
+        "start_token": 1536,
+        "distinct": 431,
+        "slots": [
+          979,
+          828,
+          753
+        ],
+        "tiles": [
+          305,
+          275,
+          249
+        ],
+        "tile_critical_fraction": 0.36791314837153194,
+        "remote_slots": 1807,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23705600,
+        "remote_bytes_slot": 37007360
+      },
+      {
+        "layer": 32,
+        "start_token": 1792,
+        "distinct": 430,
+        "slots": [
+          1049,
+          699,
+          812
+        ],
+        "tiles": [
+          330,
+          244,
+          271
+        ],
+        "tile_critical_fraction": 0.3905325443786982,
+        "remote_slots": 1748,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23091200,
+        "remote_bytes_slot": 35799040
+      },
+      {
+        "layer": 32,
+        "start_token": 2048,
+        "distinct": 435,
+        "slots": [
+          1032,
+          750,
+          778
+        ],
+        "tiles": [
+          326,
+          249,
+          261
+        ],
+        "tile_critical_fraction": 0.38995215311004783,
+        "remote_slots": 1782,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23418880,
+        "remote_bytes_slot": 36495360
+      },
+      {
+        "layer": 32,
+        "start_token": 2304,
+        "distinct": 426,
+        "slots": [
+          1026,
+          766,
+          768
+        ],
+        "tiles": [
+          321,
+          253,
+          255
+        ],
+        "tile_critical_fraction": 0.38721351025331724,
+        "remote_slots": 1792,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 23572480,
+        "remote_bytes_slot": 36700160
+      },
+      {
+        "layer": 32,
+        "start_token": 2560,
+        "distinct": 432,
+        "slots": [
+          1004,
+          753,
+          803
+        ],
+        "tiles": [
+          322,
+          244,
+          261
+        ],
+        "tile_critical_fraction": 0.3893591293833132,
+        "remote_slots": 1757,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23193600,
+        "remote_bytes_slot": 35983360
+      },
+      {
+        "layer": 32,
+        "start_token": 2816,
+        "distinct": 417,
+        "slots": [
+          998,
+          760,
+          802
+        ],
+        "tiles": [
+          315,
+          250,
+          261
+        ],
+        "tile_critical_fraction": 0.3813559322033898,
+        "remote_slots": 1758,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23193600,
+        "remote_bytes_slot": 36003840
+      },
+      {
+        "layer": 32,
+        "start_token": 3072,
+        "distinct": 433,
+        "slots": [
+          975,
+          763,
+          822
+        ],
+        "tiles": [
+          314,
+          254,
+          267
+        ],
+        "tile_critical_fraction": 0.37604790419161677,
+        "remote_slots": 1738,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22999040,
+        "remote_bytes_slot": 35594240
+      },
+      {
+        "layer": 32,
+        "start_token": 3328,
+        "distinct": 435,
+        "slots": [
+          935,
+          807,
+          818
+        ],
+        "tiles": [
+          295,
+          261,
+          269
+        ],
+        "tile_critical_fraction": 0.3575757575757576,
+        "remote_slots": 1742,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23019520,
+        "remote_bytes_slot": 35676160
+      },
+      {
+        "layer": 32,
+        "start_token": 3584,
+        "distinct": 430,
+        "slots": [
+          984,
+          836,
+          740
+        ],
+        "tiles": [
+          304,
+          273,
+          255
+        ],
+        "tile_critical_fraction": 0.36538461538461536,
+        "remote_slots": 1820,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23787520,
+        "remote_bytes_slot": 37273600
+      },
+      {
+        "layer": 32,
+        "start_token": 3840,
+        "distinct": 423,
+        "slots": [
+          986,
+          789,
+          785
+        ],
+        "tiles": [
+          304,
+          266,
+          255
+        ],
+        "tile_critical_fraction": 0.36848484848484847,
+        "remote_slots": 1775,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23388160,
+        "remote_bytes_slot": 36352000
+      },
+      {
+        "layer": 33,
+        "start_token": 0,
+        "distinct": 488,
+        "slots": [
+          863,
+          885,
+          812
+        ],
+        "tiles": [
+          281,
+          284,
+          265
+        ],
+        "tile_critical_fraction": 0.3421686746987952,
+        "remote_slots": 1748,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23091200,
+        "remote_bytes_slot": 35799040
+      },
+      {
+        "layer": 33,
+        "start_token": 256,
+        "distinct": 486,
+        "slots": [
+          845,
+          883,
+          832
+        ],
+        "tiles": [
+          281,
+          291,
+          274
+        ],
+        "tile_critical_fraction": 0.34397163120567376,
+        "remote_slots": 1728,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22876160,
+        "remote_bytes_slot": 35389440
+      },
+      {
+        "layer": 33,
+        "start_token": 512,
+        "distinct": 472,
+        "slots": [
+          860,
+          846,
+          854
+        ],
+        "tiles": [
+          284,
+          276,
+          272
+        ],
+        "tile_critical_fraction": 0.34134615384615385,
+        "remote_slots": 1706,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22620160,
+        "remote_bytes_slot": 34938880
+      },
+      {
+        "layer": 33,
+        "start_token": 768,
+        "distinct": 473,
+        "slots": [
+          859,
+          888,
+          813
+        ],
+        "tiles": [
+          279,
+          294,
+          265
+        ],
+        "tile_critical_fraction": 0.35083532219570407,
+        "remote_slots": 1747,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23060480,
+        "remote_bytes_slot": 35778560
+      },
+      {
+        "layer": 33,
+        "start_token": 1024,
+        "distinct": 481,
+        "slots": [
+          859,
+          896,
+          805
+        ],
+        "tiles": [
+          282,
+          294,
+          269
+        ],
+        "tile_critical_fraction": 0.3479289940828402,
+        "remote_slots": 1755,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 23091200,
+        "remote_bytes_slot": 35942400
+      },
+      {
+        "layer": 33,
+        "start_token": 1280,
+        "distinct": 475,
+        "slots": [
+          884,
+          860,
+          816
+        ],
+        "tiles": [
+          283,
+          276,
+          263
+        ],
+        "tile_critical_fraction": 0.3442822384428224,
+        "remote_slots": 1744,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23040000,
+        "remote_bytes_slot": 35717120
+      },
+      {
+        "layer": 33,
+        "start_token": 1536,
+        "distinct": 469,
+        "slots": [
+          926,
+          885,
+          749
+        ],
+        "tiles": [
+          296,
+          281,
+          251
+        ],
+        "tile_critical_fraction": 0.357487922705314,
+        "remote_slots": 1811,
+        "dedup_remote_inputs": 511,
+        "remote_bytes_dedup": 23777280,
+        "remote_bytes_slot": 37089280
+      },
+      {
+        "layer": 33,
+        "start_token": 1792,
+        "distinct": 480,
+        "slots": [
+          871,
+          838,
+          851
+        ],
+        "tiles": [
+          281,
+          276,
+          280
+        ],
+        "tile_critical_fraction": 0.33572281959378736,
+        "remote_slots": 1709,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22681600,
+        "remote_bytes_slot": 35000320
+      },
+      {
+        "layer": 33,
+        "start_token": 2048,
+        "distinct": 470,
+        "slots": [
+          864,
+          866,
+          830
+        ],
+        "tiles": [
+          275,
+          281,
+          274
+        ],
+        "tile_critical_fraction": 0.3385542168674699,
+        "remote_slots": 1730,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22896640,
+        "remote_bytes_slot": 35430400
+      },
+      {
+        "layer": 33,
+        "start_token": 2304,
+        "distinct": 486,
+        "slots": [
+          833,
+          900,
+          827
+        ],
+        "tiles": [
+          275,
+          298,
+          281
+        ],
+        "tile_critical_fraction": 0.34894613583138173,
+        "remote_slots": 1733,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22927360,
+        "remote_bytes_slot": 35491840
+      },
+      {
+        "layer": 33,
+        "start_token": 2560,
+        "distinct": 467,
+        "slots": [
+          845,
+          902,
+          813
+        ],
+        "tiles": [
+          275,
+          285,
+          267
+        ],
+        "tile_critical_fraction": 0.34461910519951633,
+        "remote_slots": 1747,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23060480,
+        "remote_bytes_slot": 35778560
+      },
+      {
+        "layer": 33,
+        "start_token": 2816,
+        "distinct": 473,
+        "slots": [
+          891,
+          870,
+          799
+        ],
+        "tiles": [
+          288,
+          286,
+          259
+        ],
+        "tile_critical_fraction": 0.3457382953181273,
+        "remote_slots": 1761,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23214080,
+        "remote_bytes_slot": 36065280
+      },
+      {
+        "layer": 33,
+        "start_token": 3072,
+        "distinct": 492,
+        "slots": [
+          907,
+          837,
+          816
+        ],
+        "tiles": [
+          302,
+          279,
+          271
+        ],
+        "tile_critical_fraction": 0.3544600938967136,
+        "remote_slots": 1744,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 23009280,
+        "remote_bytes_slot": 35717120
+      },
+      {
+        "layer": 33,
+        "start_token": 3328,
+        "distinct": 477,
+        "slots": [
+          870,
+          831,
+          859
+        ],
+        "tiles": [
+          284,
+          275,
+          273
+        ],
+        "tile_critical_fraction": 0.34134615384615385,
+        "remote_slots": 1701,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22579200,
+        "remote_bytes_slot": 34836480
+      },
+      {
+        "layer": 33,
+        "start_token": 3584,
+        "distinct": 480,
+        "slots": [
+          856,
+          870,
+          834
+        ],
+        "tiles": [
+          279,
+          285,
+          276
+        ],
+        "tile_critical_fraction": 0.3392857142857143,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22824960,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 33,
+        "start_token": 3840,
+        "distinct": 476,
+        "slots": [
+          872,
+          877,
+          811
+        ],
+        "tiles": [
+          290,
+          289,
+          270
+        ],
+        "tile_critical_fraction": 0.3415783274440518,
+        "remote_slots": 1749,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 23009280,
+        "remote_bytes_slot": 35819520
+      },
+      {
+        "layer": 34,
+        "start_token": 0,
+        "distinct": 483,
+        "slots": [
+          890,
+          769,
+          901
+        ],
+        "tiles": [
+          286,
+          258,
+          295
+        ],
+        "tile_critical_fraction": 0.35160905840286055,
+        "remote_slots": 1659,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22190080,
+        "remote_bytes_slot": 33976320
+      },
+      {
+        "layer": 34,
+        "start_token": 256,
+        "distinct": 489,
+        "slots": [
+          859,
+          773,
+          928
+        ],
+        "tiles": [
+          280,
+          266,
+          300
+        ],
+        "tile_critical_fraction": 0.3546099290780142,
+        "remote_slots": 1632,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21831680,
+        "remote_bytes_slot": 33423360
+      },
+      {
+        "layer": 34,
+        "start_token": 512,
+        "distinct": 484,
+        "slots": [
+          835,
+          792,
+          933
+        ],
+        "tiles": [
+          274,
+          257,
+          297
+        ],
+        "tile_critical_fraction": 0.358695652173913,
+        "remote_slots": 1627,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21800960,
+        "remote_bytes_slot": 33320960
+      },
+      {
+        "layer": 34,
+        "start_token": 768,
+        "distinct": 471,
+        "slots": [
+          925,
+          744,
+          891
+        ],
+        "tiles": [
+          292,
+          246,
+          282
+        ],
+        "tile_critical_fraction": 0.35609756097560974,
+        "remote_slots": 1669,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22220800,
+        "remote_bytes_slot": 34181120
+      },
+      {
+        "layer": 34,
+        "start_token": 1024,
+        "distinct": 473,
+        "slots": [
+          910,
+          734,
+          916
+        ],
+        "tiles": [
+          296,
+          243,
+          304
+        ],
+        "tile_critical_fraction": 0.36061684460260973,
+        "remote_slots": 1644,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22016000,
+        "remote_bytes_slot": 33669120
+      },
+      {
+        "layer": 34,
+        "start_token": 1280,
+        "distinct": 485,
+        "slots": [
+          877,
+          808,
+          875
+        ],
+        "tiles": [
+          289,
+          269,
+          282
+        ],
+        "tile_critical_fraction": 0.34404761904761905,
+        "remote_slots": 1685,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22425600,
+        "remote_bytes_slot": 34508800
+      },
+      {
+        "layer": 34,
+        "start_token": 1536,
+        "distinct": 481,
+        "slots": [
+          848,
+          808,
+          904
+        ],
+        "tiles": [
+          278,
+          265,
+          290
+        ],
+        "tile_critical_fraction": 0.34813925570228094,
+        "remote_slots": 1656,
+        "dedup_remote_inputs": 497,
+        "remote_bytes_dedup": 22046720,
+        "remote_bytes_slot": 33914880
+      },
+      {
+        "layer": 34,
+        "start_token": 1792,
+        "distinct": 483,
+        "slots": [
+          923,
+          788,
+          849
+        ],
+        "tiles": [
+          299,
+          257,
+          284
+        ],
+        "tile_critical_fraction": 0.35595238095238096,
+        "remote_slots": 1711,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22691840,
+        "remote_bytes_slot": 35041280
+      },
+      {
+        "layer": 34,
+        "start_token": 2048,
+        "distinct": 476,
+        "slots": [
+          890,
+          798,
+          872
+        ],
+        "tiles": [
+          293,
+          267,
+          285
+        ],
+        "tile_critical_fraction": 0.3467455621301775,
+        "remote_slots": 1688,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22405120,
+        "remote_bytes_slot": 34570240
+      },
+      {
+        "layer": 34,
+        "start_token": 2304,
+        "distinct": 481,
+        "slots": [
+          942,
+          757,
+          861
+        ],
+        "tiles": [
+          302,
+          261,
+          279
+        ],
+        "tile_critical_fraction": 0.3586698337292161,
+        "remote_slots": 1699,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22548480,
+        "remote_bytes_slot": 34795520
+      },
+      {
+        "layer": 34,
+        "start_token": 2560,
+        "distinct": 478,
+        "slots": [
+          893,
+          768,
+          899
+        ],
+        "tiles": [
+          284,
+          252,
+          292
+        ],
+        "tile_critical_fraction": 0.3526570048309179,
+        "remote_slots": 1661,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22179840,
+        "remote_bytes_slot": 34017280
+      },
+      {
+        "layer": 34,
+        "start_token": 2816,
+        "distinct": 481,
+        "slots": [
+          867,
+          818,
+          875
+        ],
+        "tiles": [
+          284,
+          261,
+          280
+        ],
+        "tile_critical_fraction": 0.34424242424242424,
+        "remote_slots": 1685,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22446080,
+        "remote_bytes_slot": 34508800
+      },
+      {
+        "layer": 34,
+        "start_token": 3072,
+        "distinct": 475,
+        "slots": [
+          902,
+          807,
+          851
+        ],
+        "tiles": [
+          292,
+          265,
+          285
+        ],
+        "tile_critical_fraction": 0.34679334916864607,
+        "remote_slots": 1709,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22671360,
+        "remote_bytes_slot": 35000320
+      },
+      {
+        "layer": 34,
+        "start_token": 3328,
+        "distinct": 465,
+        "slots": [
+          882,
+          795,
+          883
+        ],
+        "tiles": [
+          289,
+          262,
+          286
+        ],
+        "tile_critical_fraction": 0.34528076463560337,
+        "remote_slots": 1677,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22282240,
+        "remote_bytes_slot": 34344960
+      },
+      {
+        "layer": 34,
+        "start_token": 3584,
+        "distinct": 480,
+        "slots": [
+          858,
+          786,
+          916
+        ],
+        "tiles": [
+          282,
+          261,
+          293
+        ],
+        "tile_critical_fraction": 0.35047846889952156,
+        "remote_slots": 1644,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22026240,
+        "remote_bytes_slot": 33669120
+      },
+      {
+        "layer": 34,
+        "start_token": 3840,
+        "distinct": 468,
+        "slots": [
+          888,
+          782,
+          890
+        ],
+        "tiles": [
+          291,
+          251,
+          291
+        ],
+        "tile_critical_fraction": 0.34933973589435774,
+        "remote_slots": 1670,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22282240,
+        "remote_bytes_slot": 34201600
+      },
+      {
+        "layer": 35,
+        "start_token": 0,
+        "distinct": 465,
+        "slots": [
+          782,
+          907,
+          871
+        ],
+        "tiles": [
+          264,
+          292,
+          281
+        ],
+        "tile_critical_fraction": 0.34886499402628435,
+        "remote_slots": 1689,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22487040,
+        "remote_bytes_slot": 34590720
+      },
+      {
+        "layer": 35,
+        "start_token": 256,
+        "distinct": 469,
+        "slots": [
+          810,
+          895,
+          855
+        ],
+        "tiles": [
+          270,
+          287,
+          286
+        ],
+        "tile_critical_fraction": 0.3404507710557533,
+        "remote_slots": 1705,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22599680,
+        "remote_bytes_slot": 34918400
+      },
+      {
+        "layer": 35,
+        "start_token": 512,
+        "distinct": 458,
+        "slots": [
+          761,
+          944,
+          855
+        ],
+        "tiles": [
+          260,
+          303,
+          283
+        ],
+        "tile_critical_fraction": 0.35815602836879434,
+        "remote_slots": 1705,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 22558720,
+        "remote_bytes_slot": 34918400
+      },
+      {
+        "layer": 35,
+        "start_token": 768,
+        "distinct": 468,
+        "slots": [
+          804,
+          933,
+          823
+        ],
+        "tiles": [
+          270,
+          295,
+          269
+        ],
+        "tile_critical_fraction": 0.3537170263788969,
+        "remote_slots": 1737,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22927360,
+        "remote_bytes_slot": 35573760
+      },
+      {
+        "layer": 35,
+        "start_token": 1024,
+        "distinct": 457,
+        "slots": [
+          794,
+          934,
+          832
+        ],
+        "tiles": [
+          272,
+          292,
+          270
+        ],
+        "tile_critical_fraction": 0.3501199040767386,
+        "remote_slots": 1728,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22845440,
+        "remote_bytes_slot": 35389440
+      },
+      {
+        "layer": 35,
+        "start_token": 1280,
+        "distinct": 469,
+        "slots": [
+          778,
+          907,
+          875
+        ],
+        "tiles": [
+          261,
+          295,
+          287
+        ],
+        "tile_critical_fraction": 0.3499406880189798,
+        "remote_slots": 1685,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22405120,
+        "remote_bytes_slot": 34508800
+      },
+      {
+        "layer": 35,
+        "start_token": 1536,
+        "distinct": 468,
+        "slots": [
+          798,
+          966,
+          796
+        ],
+        "tiles": [
+          274,
+          307,
+          265
+        ],
+        "tile_critical_fraction": 0.3628841607565012,
+        "remote_slots": 1764,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23224320,
+        "remote_bytes_slot": 36126720
+      },
+      {
+        "layer": 35,
+        "start_token": 1792,
+        "distinct": 467,
+        "slots": [
+          791,
+          924,
+          845
+        ],
+        "tiles": [
+          263,
+          299,
+          283
+        ],
+        "tile_critical_fraction": 0.35384615384615387,
+        "remote_slots": 1715,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22743040,
+        "remote_bytes_slot": 35123200
+      },
+      {
+        "layer": 35,
+        "start_token": 2048,
+        "distinct": 455,
+        "slots": [
+          788,
+          927,
+          845
+        ],
+        "tiles": [
+          266,
+          300,
+          279
+        ],
+        "tile_critical_fraction": 0.35502958579881655,
+        "remote_slots": 1715,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22671360,
+        "remote_bytes_slot": 35123200
+      },
+      {
+        "layer": 35,
+        "start_token": 2304,
+        "distinct": 468,
+        "slots": [
+          800,
+          898,
+          862
+        ],
+        "tiles": [
+          265,
+          295,
+          281
+        ],
+        "tile_critical_fraction": 0.3507728894173603,
+        "remote_slots": 1698,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22568960,
+        "remote_bytes_slot": 34775040
+      },
+      {
+        "layer": 35,
+        "start_token": 2560,
+        "distinct": 448,
+        "slots": [
+          791,
+          917,
+          852
+        ],
+        "tiles": [
+          261,
+          287,
+          274
+        ],
+        "tile_critical_fraction": 0.3491484184914842,
+        "remote_slots": 1708,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22630400,
+        "remote_bytes_slot": 34979840
+      },
+      {
+        "layer": 35,
+        "start_token": 2816,
+        "distinct": 471,
+        "slots": [
+          785,
+          949,
+          826
+        ],
+        "tiles": [
+          264,
+          303,
+          275
+        ],
+        "tile_critical_fraction": 0.35985748218527314,
+        "remote_slots": 1734,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22937600,
+        "remote_bytes_slot": 35512320
+      },
+      {
+        "layer": 35,
+        "start_token": 3072,
+        "distinct": 463,
+        "slots": [
+          794,
+          949,
+          817
+        ],
+        "tiles": [
+          267,
+          301,
+          269
+        ],
+        "tile_critical_fraction": 0.35961768219832735,
+        "remote_slots": 1743,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23029760,
+        "remote_bytes_slot": 35696640
+      },
+      {
+        "layer": 35,
+        "start_token": 3328,
+        "distinct": 460,
+        "slots": [
+          771,
+          959,
+          830
+        ],
+        "tiles": [
+          254,
+          307,
+          273
+        ],
+        "tile_critical_fraction": 0.36810551558752996,
+        "remote_slots": 1730,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 22937600,
+        "remote_bytes_slot": 35430400
+      },
+      {
+        "layer": 35,
+        "start_token": 3584,
+        "distinct": 469,
+        "slots": [
+          848,
+          904,
+          808
+        ],
+        "tiles": [
+          276,
+          286,
+          265
+        ],
+        "tile_critical_fraction": 0.34582829504232165,
+        "remote_slots": 1752,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23132160,
+        "remote_bytes_slot": 35880960
+      },
+      {
+        "layer": 35,
+        "start_token": 3840,
+        "distinct": 463,
+        "slots": [
+          819,
+          905,
+          836
+        ],
+        "tiles": [
+          266,
+          287,
+          273
+        ],
+        "tile_critical_fraction": 0.3474576271186441,
+        "remote_slots": 1724,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22835200,
+        "remote_bytes_slot": 35307520
+      },
+      {
+        "layer": 36,
+        "start_token": 0,
+        "distinct": 375,
+        "slots": [
+          859,
+          587,
+          1114
+        ],
+        "tiles": [
+          272,
+          207,
+          339
+        ],
+        "tile_critical_fraction": 0.41442542787286063,
+        "remote_slots": 1446,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 19957760,
+        "remote_bytes_slot": 29614080
+      },
+      {
+        "layer": 36,
+        "start_token": 256,
+        "distinct": 380,
+        "slots": [
+          872,
+          635,
+          1053
+        ],
+        "tiles": [
+          281,
+          211,
+          324
+        ],
+        "tile_critical_fraction": 0.39705882352941174,
+        "remote_slots": 1507,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 20643840,
+        "remote_bytes_slot": 30863360
+      },
+      {
+        "layer": 36,
+        "start_token": 512,
+        "distinct": 388,
+        "slots": [
+          859,
+          618,
+          1083
+        ],
+        "tiles": [
+          278,
+          220,
+          324
+        ],
+        "tile_critical_fraction": 0.39416058394160586,
+        "remote_slots": 1477,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 20326400,
+        "remote_bytes_slot": 30248960
+      },
+      {
+        "layer": 36,
+        "start_token": 768,
+        "distinct": 392,
+        "slots": [
+          844,
+          653,
+          1063
+        ],
+        "tiles": [
+          270,
+          225,
+          327
+        ],
+        "tile_critical_fraction": 0.3978102189781022,
+        "remote_slots": 1497,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 20510720,
+        "remote_bytes_slot": 30658560
+      },
+      {
+        "layer": 36,
+        "start_token": 1024,
+        "distinct": 397,
+        "slots": [
+          866,
+          582,
+          1112
+        ],
+        "tiles": [
+          279,
+          209,
+          346
+        ],
+        "tile_critical_fraction": 0.4148681055155875,
+        "remote_slots": 1448,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 20019200,
+        "remote_bytes_slot": 29655040
+      },
+      {
+        "layer": 36,
+        "start_token": 1280,
+        "distinct": 361,
+        "slots": [
+          847,
+          577,
+          1136
+        ],
+        "tiles": [
+          274,
+          210,
+          339
+        ],
+        "tile_critical_fraction": 0.41190765492102066,
+        "remote_slots": 1424,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 19783680,
+        "remote_bytes_slot": 29163520
+      },
+      {
+        "layer": 36,
+        "start_token": 1536,
+        "distinct": 381,
+        "slots": [
+          903,
+          573,
+          1084
+        ],
+        "tiles": [
+          290,
+          206,
+          331
+        ],
+        "tile_critical_fraction": 0.40024183796856105,
+        "remote_slots": 1476,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 20244480,
+        "remote_bytes_slot": 30228480
+      },
+      {
+        "layer": 36,
+        "start_token": 1792,
+        "distinct": 371,
+        "slots": [
+          842,
+          587,
+          1131
+        ],
+        "tiles": [
+          272,
+          210,
+          346
+        ],
+        "tile_critical_fraction": 0.4178743961352657,
+        "remote_slots": 1429,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 19824640,
+        "remote_bytes_slot": 29265920
+      },
+      {
+        "layer": 36,
+        "start_token": 2048,
+        "distinct": 365,
+        "slots": [
+          836,
+          553,
+          1171
+        ],
+        "tiles": [
+          263,
+          197,
+          355
+        ],
+        "tile_critical_fraction": 0.43558282208588955,
+        "remote_slots": 1389,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 19343360,
+        "remote_bytes_slot": 28446720
+      },
+      {
+        "layer": 36,
+        "start_token": 2304,
+        "distinct": 391,
+        "slots": [
+          877,
+          564,
+          1119
+        ],
+        "tiles": [
+          283,
+          214,
+          345
+        ],
+        "tile_critical_fraction": 0.40973871733966744,
+        "remote_slots": 1441,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 19947520,
+        "remote_bytes_slot": 29511680
+      },
+      {
+        "layer": 36,
+        "start_token": 2560,
+        "distinct": 370,
+        "slots": [
+          863,
+          580,
+          1117
+        ],
+        "tiles": [
+          286,
+          201,
+          337
+        ],
+        "tile_critical_fraction": 0.40898058252427183,
+        "remote_slots": 1443,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 19978240,
+        "remote_bytes_slot": 29552640
+      },
+      {
+        "layer": 36,
+        "start_token": 2816,
+        "distinct": 387,
+        "slots": [
+          821,
+          618,
+          1121
+        ],
+        "tiles": [
+          266,
+          218,
+          347
+        ],
+        "tile_critical_fraction": 0.4175691937424789,
+        "remote_slots": 1439,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 19947520,
+        "remote_bytes_slot": 29470720
+      },
+      {
+        "layer": 36,
+        "start_token": 3072,
+        "distinct": 390,
+        "slots": [
+          879,
+          614,
+          1067
+        ],
+        "tiles": [
+          279,
+          215,
+          327
+        ],
+        "tile_critical_fraction": 0.3982947624847747,
+        "remote_slots": 1493,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 20480000,
+        "remote_bytes_slot": 30576640
+      },
+      {
+        "layer": 36,
+        "start_token": 3328,
+        "distinct": 385,
+        "slots": [
+          863,
+          583,
+          1114
+        ],
+        "tiles": [
+          280,
+          205,
+          344
+        ],
+        "tile_critical_fraction": 0.4149577804583836,
+        "remote_slots": 1446,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 20008960,
+        "remote_bytes_slot": 29614080
+      },
+      {
+        "layer": 36,
+        "start_token": 3584,
+        "distinct": 396,
+        "slots": [
+          895,
+          601,
+          1064
+        ],
+        "tiles": [
+          282,
+          218,
+          329
+        ],
+        "tile_critical_fraction": 0.3968636911942099,
+        "remote_slots": 1496,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 20510720,
+        "remote_bytes_slot": 30638080
+      },
+      {
+        "layer": 36,
+        "start_token": 3840,
+        "distinct": 378,
+        "slots": [
+          840,
+          604,
+          1116
+        ],
+        "tiles": [
+          273,
+          212,
+          349
+        ],
+        "tile_critical_fraction": 0.4184652278177458,
+        "remote_slots": 1444,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 19998720,
+        "remote_bytes_slot": 29573120
+      },
+      {
+        "layer": 37,
+        "start_token": 0,
+        "distinct": 470,
+        "slots": [
+          852,
+          931,
+          777
+        ],
+        "tiles": [
+          274,
+          290,
+          256
+        ],
+        "tile_critical_fraction": 0.35365853658536583,
+        "remote_slots": 1783,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 23398400,
+        "remote_bytes_slot": 36515840
+      },
+      {
+        "layer": 37,
+        "start_token": 256,
+        "distinct": 476,
+        "slots": [
+          834,
+          867,
+          859
+        ],
+        "tiles": [
+          274,
+          285,
+          284
+        ],
+        "tile_critical_fraction": 0.33807829181494664,
+        "remote_slots": 1701,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22568960,
+        "remote_bytes_slot": 34836480
+      },
+      {
+        "layer": 37,
+        "start_token": 512,
+        "distinct": 480,
+        "slots": [
+          829,
+          862,
+          869
+        ],
+        "tiles": [
+          282,
+          291,
+          288
+        ],
+        "tile_critical_fraction": 0.33797909407665505,
+        "remote_slots": 1691,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 22415360,
+        "remote_bytes_slot": 34631680
+      },
+      {
+        "layer": 37,
+        "start_token": 768,
+        "distinct": 466,
+        "slots": [
+          902,
+          858,
+          800
+        ],
+        "tiles": [
+          286,
+          281,
+          268
+        ],
+        "tile_critical_fraction": 0.34251497005988024,
+        "remote_slots": 1760,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23193600,
+        "remote_bytes_slot": 36044800
+      },
+      {
+        "layer": 37,
+        "start_token": 1024,
+        "distinct": 471,
+        "slots": [
+          875,
+          863,
+          822
+        ],
+        "tiles": [
+          279,
+          281,
+          269
+        ],
+        "tile_critical_fraction": 0.33896260554885405,
+        "remote_slots": 1738,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22937600,
+        "remote_bytes_slot": 35594240
+      },
+      {
+        "layer": 37,
+        "start_token": 1280,
+        "distinct": 470,
+        "slots": [
+          884,
+          839,
+          837
+        ],
+        "tiles": [
+          280,
+          280,
+          272
+        ],
+        "tile_critical_fraction": 0.33653846153846156,
+        "remote_slots": 1723,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22804480,
+        "remote_bytes_slot": 35287040
+      },
+      {
+        "layer": 37,
+        "start_token": 1536,
+        "distinct": 477,
+        "slots": [
+          886,
+          806,
+          868
+        ],
+        "tiles": [
+          288,
+          270,
+          285
+        ],
+        "tile_critical_fraction": 0.3416370106761566,
+        "remote_slots": 1692,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22476800,
+        "remote_bytes_slot": 34652160
+      },
+      {
+        "layer": 37,
+        "start_token": 1792,
+        "distinct": 483,
+        "slots": [
+          882,
+          840,
+          838
+        ],
+        "tiles": [
+          284,
+          282,
+          274
+        ],
+        "tile_critical_fraction": 0.3380952380952381,
+        "remote_slots": 1722,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22814720,
+        "remote_bytes_slot": 35266560
+      },
+      {
+        "layer": 37,
+        "start_token": 2048,
+        "distinct": 468,
+        "slots": [
+          910,
+          859,
+          791
+        ],
+        "tiles": [
+          300,
+          277,
+          267
+        ],
+        "tile_critical_fraction": 0.35545023696682465,
+        "remote_slots": 1769,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23285760,
+        "remote_bytes_slot": 36229120
+      },
+      {
+        "layer": 37,
+        "start_token": 2304,
+        "distinct": 462,
+        "slots": [
+          885,
+          872,
+          803
+        ],
+        "tiles": [
+          289,
+          281,
+          258
+        ],
+        "tile_critical_fraction": 0.34903381642512077,
+        "remote_slots": 1757,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23203840,
+        "remote_bytes_slot": 35983360
+      },
+      {
+        "layer": 37,
+        "start_token": 2560,
+        "distinct": 468,
+        "slots": [
+          906,
+          840,
+          814
+        ],
+        "tiles": [
+          294,
+          281,
+          257
+        ],
+        "tile_critical_fraction": 0.35336538461538464,
+        "remote_slots": 1746,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23060480,
+        "remote_bytes_slot": 35758080
+      },
+      {
+        "layer": 37,
+        "start_token": 2816,
+        "distinct": 470,
+        "slots": [
+          842,
+          865,
+          853
+        ],
+        "tiles": [
+          277,
+          275,
+          282
+        ],
+        "tile_critical_fraction": 0.3381294964028777,
+        "remote_slots": 1707,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22640640,
+        "remote_bytes_slot": 34959360
+      },
+      {
+        "layer": 37,
+        "start_token": 3072,
+        "distinct": 480,
+        "slots": [
+          853,
+          859,
+          848
+        ],
+        "tiles": [
+          286,
+          281,
+          282
+        ],
+        "tile_critical_fraction": 0.336866902237927,
+        "remote_slots": 1712,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22712320,
+        "remote_bytes_slot": 35061760
+      },
+      {
+        "layer": 37,
+        "start_token": 3328,
+        "distinct": 465,
+        "slots": [
+          876,
+          856,
+          828
+        ],
+        "tiles": [
+          286,
+          284,
+          266
+        ],
+        "tile_critical_fraction": 0.34210526315789475,
+        "remote_slots": 1732,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22886400,
+        "remote_bytes_slot": 35471360
+      },
+      {
+        "layer": 37,
+        "start_token": 3584,
+        "distinct": 478,
+        "slots": [
+          842,
+          888,
+          830
+        ],
+        "tiles": [
+          270,
+          287,
+          270
+        ],
+        "tile_critical_fraction": 0.347037484885127,
+        "remote_slots": 1730,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22855680,
+        "remote_bytes_slot": 35430400
+      },
+      {
+        "layer": 37,
+        "start_token": 3840,
+        "distinct": 466,
+        "slots": [
+          840,
+          895,
+          825
+        ],
+        "tiles": [
+          272,
+          287,
+          270
+        ],
+        "tile_critical_fraction": 0.34620024125452353,
+        "remote_slots": 1735,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22937600,
+        "remote_bytes_slot": 35532800
+      },
+      {
+        "layer": 38,
+        "start_token": 0,
+        "distinct": 470,
+        "slots": [
+          950,
+          799,
+          811
+        ],
+        "tiles": [
+          300,
+          268,
+          263
+        ],
+        "tile_critical_fraction": 0.36101083032490977,
+        "remote_slots": 1749,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 23019520,
+        "remote_bytes_slot": 35819520
+      },
+      {
+        "layer": 38,
+        "start_token": 256,
+        "distinct": 472,
+        "slots": [
+          946,
+          727,
+          887
+        ],
+        "tiles": [
+          306,
+          244,
+          284
+        ],
+        "tile_critical_fraction": 0.3669064748201439,
+        "remote_slots": 1673,
+        "dedup_remote_inputs": 493,
+        "remote_bytes_dedup": 22179840,
+        "remote_bytes_slot": 34263040
+      },
+      {
+        "layer": 38,
+        "start_token": 512,
+        "distinct": 475,
+        "slots": [
+          994,
+          726,
+          840
+        ],
+        "tiles": [
+          318,
+          249,
+          276
+        ],
+        "tile_critical_fraction": 0.37722419928825623,
+        "remote_slots": 1720,
+        "dedup_remote_inputs": 489,
+        "remote_bytes_dedup": 22620160,
+        "remote_bytes_slot": 35225600
+      },
+      {
+        "layer": 38,
+        "start_token": 768,
+        "distinct": 473,
+        "slots": [
+          962,
+          760,
+          838
+        ],
+        "tiles": [
+          302,
+          261,
+          279
+        ],
+        "tile_critical_fraction": 0.3586698337292161,
+        "remote_slots": 1722,
+        "dedup_remote_inputs": 495,
+        "remote_bytes_dedup": 22702080,
+        "remote_bytes_slot": 35266560
+      },
+      {
+        "layer": 38,
+        "start_token": 1024,
+        "distinct": 476,
+        "slots": [
+          876,
+          760,
+          924
+        ],
+        "tiles": [
+          281,
+          259,
+          293
+        ],
+        "tile_critical_fraction": 0.3517406962785114,
+        "remote_slots": 1636,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21872640,
+        "remote_bytes_slot": 33505280
+      },
+      {
+        "layer": 38,
+        "start_token": 1280,
+        "distinct": 471,
+        "slots": [
+          892,
+          786,
+          882
+        ],
+        "tiles": [
+          288,
+          265,
+          286
+        ],
+        "tile_critical_fraction": 0.3432657926102503,
+        "remote_slots": 1678,
+        "dedup_remote_inputs": 492,
+        "remote_bytes_dedup": 22220800,
+        "remote_bytes_slot": 34365440
+      },
+      {
+        "layer": 38,
+        "start_token": 1536,
+        "distinct": 468,
+        "slots": [
+          924,
+          731,
+          905
+        ],
+        "tiles": [
+          288,
+          254,
+          294
+        ],
+        "tile_critical_fraction": 0.35167464114832536,
+        "remote_slots": 1655,
+        "dedup_remote_inputs": 495,
+        "remote_bytes_dedup": 22016000,
+        "remote_bytes_slot": 33894400
+      },
+      {
+        "layer": 38,
+        "start_token": 1792,
+        "distinct": 483,
+        "slots": [
+          874,
+          771,
+          915
+        ],
+        "tiles": [
+          281,
+          260,
+          299
+        ],
+        "tile_critical_fraction": 0.35595238095238096,
+        "remote_slots": 1645,
+        "dedup_remote_inputs": 496,
+        "remote_bytes_dedup": 21923840,
+        "remote_bytes_slot": 33689600
+      },
+      {
+        "layer": 38,
+        "start_token": 2048,
+        "distinct": 471,
+        "slots": [
+          890,
+          736,
+          934
+        ],
+        "tiles": [
+          290,
+          248,
+          300
+        ],
+        "tile_critical_fraction": 0.35799522673031026,
+        "remote_slots": 1626,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21770240,
+        "remote_bytes_slot": 33300480
+      },
+      {
+        "layer": 38,
+        "start_token": 2304,
+        "distinct": 460,
+        "slots": [
+          938,
+          741,
+          881
+        ],
+        "tiles": [
+          298,
+          241,
+          286
+        ],
+        "tile_critical_fraction": 0.3612121212121212,
+        "remote_slots": 1679,
+        "dedup_remote_inputs": 494,
+        "remote_bytes_dedup": 22251520,
+        "remote_bytes_slot": 34385920
+      },
+      {
+        "layer": 38,
+        "start_token": 2560,
+        "distinct": 477,
+        "slots": [
+          940,
+          782,
+          838
+        ],
+        "tiles": [
+          300,
+          265,
+          274
+        ],
+        "tile_critical_fraction": 0.3575685339690107,
+        "remote_slots": 1722,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22804480,
+        "remote_bytes_slot": 35266560
+      },
+      {
+        "layer": 38,
+        "start_token": 2816,
+        "distinct": 468,
+        "slots": [
+          931,
+          762,
+          867
+        ],
+        "tiles": [
+          297,
+          251,
+          277
+        ],
+        "tile_critical_fraction": 0.36,
+        "remote_slots": 1693,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22456320,
+        "remote_bytes_slot": 34672640
+      },
+      {
+        "layer": 38,
+        "start_token": 3072,
+        "distinct": 470,
+        "slots": [
+          870,
+          778,
+          912
+        ],
+        "tiles": [
+          281,
+          259,
+          287
+        ],
+        "tile_critical_fraction": 0.347037484885127,
+        "remote_slots": 1648,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 21985280,
+        "remote_bytes_slot": 33751040
+      },
+      {
+        "layer": 38,
+        "start_token": 3328,
+        "distinct": 470,
+        "slots": [
+          898,
+          757,
+          905
+        ],
+        "tiles": [
+          290,
+          257,
+          290
+        ],
+        "tile_critical_fraction": 0.34647550776583036,
+        "remote_slots": 1655,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22067200,
+        "remote_bytes_slot": 33894400
+      },
+      {
+        "layer": 38,
+        "start_token": 3584,
+        "distinct": 482,
+        "slots": [
+          881,
+          763,
+          916
+        ],
+        "tiles": [
+          288,
+          253,
+          290
+        ],
+        "tile_critical_fraction": 0.3489771359807461,
+        "remote_slots": 1644,
+        "dedup_remote_inputs": 494,
+        "remote_bytes_dedup": 21893120,
+        "remote_bytes_slot": 33669120
+      },
+      {
+        "layer": 38,
+        "start_token": 3840,
+        "distinct": 472,
+        "slots": [
+          902,
+          768,
+          890
+        ],
+        "tiles": [
+          289,
+          256,
+          285
+        ],
+        "tile_critical_fraction": 0.3481927710843373,
+        "remote_slots": 1670,
+        "dedup_remote_inputs": 497,
+        "remote_bytes_dedup": 22190080,
+        "remote_bytes_slot": 34201600
+      },
+      {
+        "layer": 39,
+        "start_token": 0,
+        "distinct": 441,
+        "slots": [
+          762,
+          827,
+          971
+        ],
+        "tiles": [
+          255,
+          280,
+          305
+        ],
+        "tile_critical_fraction": 0.3630952380952381,
+        "remote_slots": 1589,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21411840,
+        "remote_bytes_slot": 32542720
+      },
+      {
+        "layer": 39,
+        "start_token": 256,
+        "distinct": 423,
+        "slots": [
+          836,
+          792,
+          932
+        ],
+        "tiles": [
+          267,
+          265,
+          291
+        ],
+        "tile_critical_fraction": 0.353584447144593,
+        "remote_slots": 1628,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 21831680,
+        "remote_bytes_slot": 33341440
+      },
+      {
+        "layer": 39,
+        "start_token": 512,
+        "distinct": 431,
+        "slots": [
+          841,
+          761,
+          958
+        ],
+        "tiles": [
+          276,
+          258,
+          308
+        ],
+        "tile_critical_fraction": 0.3657957244655582,
+        "remote_slots": 1602,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21534720,
+        "remote_bytes_slot": 32808960
+      },
+      {
+        "layer": 39,
+        "start_token": 768,
+        "distinct": 431,
+        "slots": [
+          854,
+          788,
+          918
+        ],
+        "tiles": [
+          277,
+          266,
+          291
+        ],
+        "tile_critical_fraction": 0.3489208633093525,
+        "remote_slots": 1642,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21954560,
+        "remote_bytes_slot": 33628160
+      },
+      {
+        "layer": 39,
+        "start_token": 1024,
+        "distinct": 444,
+        "slots": [
+          806,
+          798,
+          956
+        ],
+        "tiles": [
+          273,
+          270,
+          306
+        ],
+        "tile_critical_fraction": 0.36042402826855124,
+        "remote_slots": 1604,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21575680,
+        "remote_bytes_slot": 32849920
+      },
+      {
+        "layer": 39,
+        "start_token": 1280,
+        "distinct": 424,
+        "slots": [
+          787,
+          802,
+          971
+        ],
+        "tiles": [
+          253,
+          265,
+          311
+        ],
+        "tile_critical_fraction": 0.3751507840772014,
+        "remote_slots": 1589,
+        "dedup_remote_inputs": 494,
+        "remote_bytes_dedup": 21329920,
+        "remote_bytes_slot": 32542720
+      },
+      {
+        "layer": 39,
+        "start_token": 1536,
+        "distinct": 426,
+        "slots": [
+          940,
+          735,
+          885
+        ],
+        "tiles": [
+          303,
+          256,
+          282
+        ],
+        "tile_critical_fraction": 0.36028537455410226,
+        "remote_slots": 1675,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22292480,
+        "remote_bytes_slot": 34304000
+      },
+      {
+        "layer": 39,
+        "start_token": 1792,
+        "distinct": 437,
+        "slots": [
+          837,
+          768,
+          955
+        ],
+        "tiles": [
+          272,
+          259,
+          304
+        ],
+        "tile_critical_fraction": 0.36407185628742517,
+        "remote_slots": 1605,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 21626880,
+        "remote_bytes_slot": 32870400
+      },
+      {
+        "layer": 39,
+        "start_token": 2048,
+        "distinct": 425,
+        "slots": [
+          885,
+          746,
+          929
+        ],
+        "tiles": [
+          281,
+          246,
+          301
+        ],
+        "tile_critical_fraction": 0.3635265700483092,
+        "remote_slots": 1631,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21831680,
+        "remote_bytes_slot": 33402880
+      },
+      {
+        "layer": 39,
+        "start_token": 2304,
+        "distinct": 434,
+        "slots": [
+          798,
+          774,
+          988
+        ],
+        "tiles": [
+          267,
+          255,
+          310
+        ],
+        "tile_critical_fraction": 0.37259615384615385,
+        "remote_slots": 1572,
+        "dedup_remote_inputs": 497,
+        "remote_bytes_dedup": 21186560,
+        "remote_bytes_slot": 32194560
+      },
+      {
+        "layer": 39,
+        "start_token": 2560,
+        "distinct": 417,
+        "slots": [
+          842,
+          808,
+          910
+        ],
+        "tiles": [
+          268,
+          266,
+          282
+        ],
+        "tile_critical_fraction": 0.34558823529411764,
+        "remote_slots": 1650,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22036480,
+        "remote_bytes_slot": 33792000
+      },
+      {
+        "layer": 39,
+        "start_token": 2816,
+        "distinct": 416,
+        "slots": [
+          855,
+          775,
+          930
+        ],
+        "tiles": [
+          267,
+          261,
+          291
+        ],
+        "tile_critical_fraction": 0.3553113553113553,
+        "remote_slots": 1630,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 21862400,
+        "remote_bytes_slot": 33382400
+      },
+      {
+        "layer": 39,
+        "start_token": 3072,
+        "distinct": 423,
+        "slots": [
+          866,
+          756,
+          938
+        ],
+        "tiles": [
+          275,
+          249,
+          297
+        ],
+        "tile_critical_fraction": 0.3617539585870889,
+        "remote_slots": 1622,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 21780480,
+        "remote_bytes_slot": 33218560
+      },
+      {
+        "layer": 39,
+        "start_token": 3328,
+        "distinct": 431,
+        "slots": [
+          796,
+          768,
+          996
+        ],
+        "tiles": [
+          259,
+          251,
+          310
+        ],
+        "tile_critical_fraction": 0.3780487804878049,
+        "remote_slots": 1564,
+        "dedup_remote_inputs": 497,
+        "remote_bytes_dedup": 21104640,
+        "remote_bytes_slot": 32030720
+      },
+      {
+        "layer": 39,
+        "start_token": 3584,
+        "distinct": 436,
+        "slots": [
+          873,
+          766,
+          921
+        ],
+        "tiles": [
+          283,
+          256,
+          293
+        ],
+        "tile_critical_fraction": 0.35216346153846156,
+        "remote_slots": 1639,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33566720
+      },
+      {
+        "layer": 39,
+        "start_token": 3840,
+        "distinct": 436,
+        "slots": [
+          835,
+          772,
+          953
+        ],
+        "tiles": [
+          279,
+          258,
+          308
+        ],
+        "tile_critical_fraction": 0.36449704142011835,
+        "remote_slots": 1607,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21596160,
+        "remote_bytes_slot": 32911360
+      },
+      {
+        "layer": 40,
+        "start_token": 0,
+        "distinct": 462,
+        "slots": [
+          818,
+          905,
+          837
+        ],
+        "tiles": [
+          266,
+          293,
+          272
+        ],
+        "tile_critical_fraction": 0.3525872442839952,
+        "remote_slots": 1723,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22845440,
+        "remote_bytes_slot": 35287040
+      },
+      {
+        "layer": 40,
+        "start_token": 256,
+        "distinct": 458,
+        "slots": [
+          809,
+          887,
+          864
+        ],
+        "tiles": [
+          265,
+          282,
+          283
+        ],
+        "tile_critical_fraction": 0.3409638554216867,
+        "remote_slots": 1696,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22558720,
+        "remote_bytes_slot": 34734080
+      },
+      {
+        "layer": 40,
+        "start_token": 512,
+        "distinct": 460,
+        "slots": [
+          742,
+          885,
+          933
+        ],
+        "tiles": [
+          249,
+          287,
+          295
+        ],
+        "tile_critical_fraction": 0.35499398315282793,
+        "remote_slots": 1627,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21790720,
+        "remote_bytes_slot": 33320960
+      },
+      {
+        "layer": 40,
+        "start_token": 768,
+        "distinct": 464,
+        "slots": [
+          762,
+          856,
+          942
+        ],
+        "tiles": [
+          255,
+          274,
+          301
+        ],
+        "tile_critical_fraction": 0.36265060240963853,
+        "remote_slots": 1618,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21698560,
+        "remote_bytes_slot": 33136640
+      },
+      {
+        "layer": 40,
+        "start_token": 1024,
+        "distinct": 448,
+        "slots": [
+          800,
+          878,
+          882
+        ],
+        "tiles": [
+          260,
+          285,
+          287
+        ],
+        "tile_critical_fraction": 0.3449519230769231,
+        "remote_slots": 1678,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22343680,
+        "remote_bytes_slot": 34365440
+      },
+      {
+        "layer": 40,
+        "start_token": 1280,
+        "distinct": 439,
+        "slots": [
+          740,
+          892,
+          928
+        ],
+        "tiles": [
+          244,
+          285,
+          298
+        ],
+        "tile_critical_fraction": 0.3603385731559855,
+        "remote_slots": 1632,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 21821440,
+        "remote_bytes_slot": 33423360
+      },
+      {
+        "layer": 40,
+        "start_token": 1536,
+        "distinct": 443,
+        "slots": [
+          718,
+          919,
+          923
+        ],
+        "tiles": [
+          237,
+          299,
+          295
+        ],
+        "tile_critical_fraction": 0.35980746089049337,
+        "remote_slots": 1637,
+        "dedup_remote_inputs": 495,
+        "remote_bytes_dedup": 21831680,
+        "remote_bytes_slot": 33525760
+      },
+      {
+        "layer": 40,
+        "start_token": 1792,
+        "distinct": 466,
+        "slots": [
+          756,
+          870,
+          934
+        ],
+        "tiles": [
+          268,
+          288,
+          299
+        ],
+        "tile_critical_fraction": 0.3497076023391813,
+        "remote_slots": 1626,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21800960,
+        "remote_bytes_slot": 33300480
+      },
+      {
+        "layer": 40,
+        "start_token": 2048,
+        "distinct": 442,
+        "slots": [
+          785,
+          878,
+          897
+        ],
+        "tiles": [
+          256,
+          284,
+          289
+        ],
+        "tile_critical_fraction": 0.3486127864897467,
+        "remote_slots": 1663,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22169600,
+        "remote_bytes_slot": 34058240
+      },
+      {
+        "layer": 40,
+        "start_token": 2304,
+        "distinct": 442,
+        "slots": [
+          741,
+          897,
+          922
+        ],
+        "tiles": [
+          248,
+          290,
+          296
+        ],
+        "tile_critical_fraction": 0.354916067146283,
+        "remote_slots": 1638,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 21954560,
+        "remote_bytes_slot": 33546240
+      },
+      {
+        "layer": 40,
+        "start_token": 2560,
+        "distinct": 429,
+        "slots": [
+          752,
+          894,
+          914
+        ],
+        "tiles": [
+          250,
+          280,
+          294
+        ],
+        "tile_critical_fraction": 0.3567961165048544,
+        "remote_slots": 1646,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22005760,
+        "remote_bytes_slot": 33710080
+      },
+      {
+        "layer": 40,
+        "start_token": 2816,
+        "distinct": 444,
+        "slots": [
+          714,
+          880,
+          966
+        ],
+        "tiles": [
+          241,
+          287,
+          306
+        ],
+        "tile_critical_fraction": 0.3669064748201439,
+        "remote_slots": 1594,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 21483520,
+        "remote_bytes_slot": 32645120
+      },
+      {
+        "layer": 40,
+        "start_token": 3072,
+        "distinct": 445,
+        "slots": [
+          755,
+          866,
+          939
+        ],
+        "tiles": [
+          254,
+          279,
+          304
+        ],
+        "tile_critical_fraction": 0.3632019115890084,
+        "remote_slots": 1621,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 21780480,
+        "remote_bytes_slot": 33198080
+      },
+      {
+        "layer": 40,
+        "start_token": 3328,
+        "distinct": 432,
+        "slots": [
+          732,
+          882,
+          946
+        ],
+        "tiles": [
+          241,
+          286,
+          300
+        ],
+        "tile_critical_fraction": 0.36275695284159615,
+        "remote_slots": 1614,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21667840,
+        "remote_bytes_slot": 33054720
+      },
+      {
+        "layer": 40,
+        "start_token": 3584,
+        "distinct": 438,
+        "slots": [
+          748,
+          884,
+          928
+        ],
+        "tiles": [
+          252,
+          282,
+          288
+        ],
+        "tile_critical_fraction": 0.35036496350364965,
+        "remote_slots": 1632,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 21841920,
+        "remote_bytes_slot": 33423360
+      },
+      {
+        "layer": 40,
+        "start_token": 3840,
+        "distinct": 439,
+        "slots": [
+          780,
+          899,
+          881
+        ],
+        "tiles": [
+          254,
+          289,
+          284
+        ],
+        "tile_critical_fraction": 0.34945586457073763,
+        "remote_slots": 1679,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22353920,
+        "remote_bytes_slot": 34385920
+      },
+      {
+        "layer": 41,
+        "start_token": 0,
+        "distinct": 471,
+        "slots": [
+          790,
+          877,
+          893
+        ],
+        "tiles": [
+          260,
+          285,
+          288
+        ],
+        "tile_critical_fraction": 0.3457382953181273,
+        "remote_slots": 1667,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22190080,
+        "remote_bytes_slot": 34140160
+      },
+      {
+        "layer": 41,
+        "start_token": 256,
+        "distinct": 466,
+        "slots": [
+          796,
+          839,
+          925
+        ],
+        "tiles": [
+          265,
+          278,
+          293
+        ],
+        "tile_critical_fraction": 0.35047846889952156,
+        "remote_slots": 1635,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21893120,
+        "remote_bytes_slot": 33484800
+      },
+      {
+        "layer": 41,
+        "start_token": 512,
+        "distinct": 457,
+        "slots": [
+          741,
+          895,
+          924
+        ],
+        "tiles": [
+          252,
+          281,
+          293
+        ],
+        "tile_critical_fraction": 0.35472154963680386,
+        "remote_slots": 1636,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21872640,
+        "remote_bytes_slot": 33505280
+      },
+      {
+        "layer": 41,
+        "start_token": 768,
+        "distinct": 463,
+        "slots": [
+          734,
+          909,
+          917
+        ],
+        "tiles": [
+          250,
+          287,
+          299
+        ],
+        "tile_critical_fraction": 0.3576555023923445,
+        "remote_slots": 1643,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21964800,
+        "remote_bytes_slot": 33648640
+      },
+      {
+        "layer": 41,
+        "start_token": 1024,
+        "distinct": 455,
+        "slots": [
+          725,
+          923,
+          912
+        ],
+        "tiles": [
+          245,
+          300,
+          294
+        ],
+        "tile_critical_fraction": 0.3575685339690107,
+        "remote_slots": 1648,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22026240,
+        "remote_bytes_slot": 33751040
+      },
+      {
+        "layer": 41,
+        "start_token": 1280,
+        "distinct": 445,
+        "slots": [
+          750,
+          932,
+          878
+        ],
+        "tiles": [
+          252,
+          298,
+          287
+        ],
+        "tile_critical_fraction": 0.35603345280764637,
+        "remote_slots": 1682,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22353920,
+        "remote_bytes_slot": 34447360
+      },
+      {
+        "layer": 41,
+        "start_token": 1536,
+        "distinct": 444,
+        "slots": [
+          750,
+          917,
+          893
+        ],
+        "tiles": [
+          256,
+          287,
+          289
+        ],
+        "tile_critical_fraction": 0.3473557692307692,
+        "remote_slots": 1667,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22190080,
+        "remote_bytes_slot": 34140160
+      },
+      {
+        "layer": 41,
+        "start_token": 1792,
+        "distinct": 445,
+        "slots": [
+          700,
+          931,
+          929
+        ],
+        "tiles": [
+          241,
+          290,
+          298
+        ],
+        "tile_critical_fraction": 0.3594692400482509,
+        "remote_slots": 1631,
+        "dedup_remote_inputs": 491,
+        "remote_bytes_dedup": 21729280,
+        "remote_bytes_slot": 33402880
+      },
+      {
+        "layer": 41,
+        "start_token": 2048,
+        "distinct": 431,
+        "slots": [
+          677,
+          935,
+          948
+        ],
+        "tiles": [
+          231,
+          289,
+          296
+        ],
+        "tile_critical_fraction": 0.3627450980392157,
+        "remote_slots": 1612,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21657600,
+        "remote_bytes_slot": 33013760
+      },
+      {
+        "layer": 41,
+        "start_token": 2304,
+        "distinct": 441,
+        "slots": [
+          678,
+          945,
+          937
+        ],
+        "tiles": [
+          232,
+          306,
+          298
+        ],
+        "tile_critical_fraction": 0.3660287081339713,
+        "remote_slots": 1623,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21760000,
+        "remote_bytes_slot": 33239040
+      },
+      {
+        "layer": 41,
+        "start_token": 2560,
+        "distinct": 465,
+        "slots": [
+          778,
+          922,
+          860
+        ],
+        "tiles": [
+          263,
+          298,
+          281
+        ],
+        "tile_critical_fraction": 0.35391923990498814,
+        "remote_slots": 1700,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22579200,
+        "remote_bytes_slot": 34816000
+      },
+      {
+        "layer": 41,
+        "start_token": 2816,
+        "distinct": 436,
+        "slots": [
+          703,
+          950,
+          907
+        ],
+        "tiles": [
+          233,
+          306,
+          296
+        ],
+        "tile_critical_fraction": 0.3664670658682635,
+        "remote_slots": 1653,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22046720,
+        "remote_bytes_slot": 33853440
+      },
+      {
+        "layer": 41,
+        "start_token": 3072,
+        "distinct": 442,
+        "slots": [
+          789,
+          850,
+          921
+        ],
+        "tiles": [
+          263,
+          274,
+          296
+        ],
+        "tile_critical_fraction": 0.3553421368547419,
+        "remote_slots": 1639,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 21964800,
+        "remote_bytes_slot": 33566720
+      },
+      {
+        "layer": 41,
+        "start_token": 3328,
+        "distinct": 426,
+        "slots": [
+          700,
+          943,
+          917
+        ],
+        "tiles": [
+          240,
+          292,
+          289
+        ],
+        "tile_critical_fraction": 0.3556638246041413,
+        "remote_slots": 1643,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33648640
+      },
+      {
+        "layer": 41,
+        "start_token": 3584,
+        "distinct": 440,
+        "slots": [
+          728,
+          941,
+          891
+        ],
+        "tiles": [
+          246,
+          302,
+          290
+        ],
+        "tile_critical_fraction": 0.360381861575179,
+        "remote_slots": 1669,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22210560,
+        "remote_bytes_slot": 34181120
+      },
+      {
+        "layer": 41,
+        "start_token": 3840,
+        "distinct": 439,
+        "slots": [
+          708,
+          1011,
+          841
+        ],
+        "tiles": [
+          238,
+          321,
+          278
+        ],
+        "tile_critical_fraction": 0.3835125448028674,
+        "remote_slots": 1719,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22712320,
+        "remote_bytes_slot": 35205120
+      },
+      {
+        "layer": 42,
+        "start_token": 0,
+        "distinct": 456,
+        "slots": [
+          760,
+          922,
+          878
+        ],
+        "tiles": [
+          256,
+          298,
+          278
+        ],
+        "tile_critical_fraction": 0.3581730769230769,
+        "remote_slots": 1682,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22353920,
+        "remote_bytes_slot": 34447360
+      },
+      {
+        "layer": 42,
+        "start_token": 256,
+        "distinct": 463,
+        "slots": [
+          813,
+          839,
+          908
+        ],
+        "tiles": [
+          267,
+          281,
+          290
+        ],
+        "tile_critical_fraction": 0.3460620525059666,
+        "remote_slots": 1652,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22056960,
+        "remote_bytes_slot": 33832960
+      },
+      {
+        "layer": 42,
+        "start_token": 512,
+        "distinct": 445,
+        "slots": [
+          770,
+          887,
+          903
+        ],
+        "tiles": [
+          249,
+          287,
+          284
+        ],
+        "tile_critical_fraction": 0.35,
+        "remote_slots": 1657,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 22067200,
+        "remote_bytes_slot": 33935360
+      },
+      {
+        "layer": 42,
+        "start_token": 768,
+        "distinct": 456,
+        "slots": [
+          741,
+          883,
+          936
+        ],
+        "tiles": [
+          256,
+          278,
+          299
+        ],
+        "tile_critical_fraction": 0.3589435774309724,
+        "remote_slots": 1624,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21749760,
+        "remote_bytes_slot": 33259520
+      },
+      {
+        "layer": 42,
+        "start_token": 1024,
+        "distinct": 433,
+        "slots": [
+          766,
+          848,
+          946
+        ],
+        "tiles": [
+          252,
+          272,
+          304
+        ],
+        "tile_critical_fraction": 0.3671497584541063,
+        "remote_slots": 1614,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 21637120,
+        "remote_bytes_slot": 33054720
+      },
+      {
+        "layer": 42,
+        "start_token": 1280,
+        "distinct": 423,
+        "slots": [
+          809,
+          866,
+          885
+        ],
+        "tiles": [
+          265,
+          280,
+          274
+        ],
+        "tile_critical_fraction": 0.3418803418803419,
+        "remote_slots": 1675,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22272000,
+        "remote_bytes_slot": 34304000
+      },
+      {
+        "layer": 42,
+        "start_token": 1536,
+        "distinct": 446,
+        "slots": [
+          802,
+          863,
+          895
+        ],
+        "tiles": [
+          260,
+          275,
+          294
+        ],
+        "tile_critical_fraction": 0.3546441495778046,
+        "remote_slots": 1665,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22241280,
+        "remote_bytes_slot": 34099200
+      },
+      {
+        "layer": 42,
+        "start_token": 1792,
+        "distinct": 445,
+        "slots": [
+          768,
+          778,
+          1014
+        ],
+        "tiles": [
+          262,
+          261,
+          313
+        ],
+        "tile_critical_fraction": 0.37440191387559807,
+        "remote_slots": 1546,
+        "dedup_remote_inputs": 493,
+        "remote_bytes_dedup": 20879360,
+        "remote_bytes_slot": 31662080
+      },
+      {
+        "layer": 42,
+        "start_token": 2048,
+        "distinct": 429,
+        "slots": [
+          752,
+          842,
+          966
+        ],
+        "tiles": [
+          246,
+          275,
+          306
+        ],
+        "tile_critical_fraction": 0.37001209189842804,
+        "remote_slots": 1594,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21473280,
+        "remote_bytes_slot": 32645120
+      },
+      {
+        "layer": 42,
+        "start_token": 2304,
+        "distinct": 429,
+        "slots": [
+          750,
+          857,
+          953
+        ],
+        "tiles": [
+          253,
+          275,
+          304
+        ],
+        "tile_critical_fraction": 0.36538461538461536,
+        "remote_slots": 1607,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 21596160,
+        "remote_bytes_slot": 32911360
+      },
+      {
+        "layer": 42,
+        "start_token": 2560,
+        "distinct": 449,
+        "slots": [
+          798,
+          828,
+          934
+        ],
+        "tiles": [
+          272,
+          264,
+          293
+        ],
+        "tile_critical_fraction": 0.353437876960193,
+        "remote_slots": 1626,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 21831680,
+        "remote_bytes_slot": 33300480
+      },
+      {
+        "layer": 42,
+        "start_token": 2816,
+        "distinct": 435,
+        "slots": [
+          785,
+          853,
+          922
+        ],
+        "tiles": [
+          267,
+          279,
+          294
+        ],
+        "tile_critical_fraction": 0.35,
+        "remote_slots": 1638,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33546240
+      },
+      {
+        "layer": 42,
+        "start_token": 3072,
+        "distinct": 428,
+        "slots": [
+          796,
+          842,
+          922
+        ],
+        "tiles": [
+          249,
+          277,
+          297
+        ],
+        "tile_critical_fraction": 0.36087484811664644,
+        "remote_slots": 1638,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 21934080,
+        "remote_bytes_slot": 33546240
+      },
+      {
+        "layer": 42,
+        "start_token": 3328,
+        "distinct": 418,
+        "slots": [
+          769,
+          859,
+          932
+        ],
+        "tiles": [
+          255,
+          274,
+          293
+        ],
+        "tile_critical_fraction": 0.3564476885644769,
+        "remote_slots": 1628,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 21821440,
+        "remote_bytes_slot": 33341440
+      },
+      {
+        "layer": 42,
+        "start_token": 3584,
+        "distinct": 429,
+        "slots": [
+          768,
+          859,
+          933
+        ],
+        "tiles": [
+          257,
+          277,
+          294
+        ],
+        "tile_critical_fraction": 0.35507246376811596,
+        "remote_slots": 1627,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21780480,
+        "remote_bytes_slot": 33320960
+      },
+      {
+        "layer": 42,
+        "start_token": 3840,
+        "distinct": 424,
+        "slots": [
+          783,
+          908,
+          869
+        ],
+        "tiles": [
+          260,
+          288,
+          277
+        ],
+        "tile_critical_fraction": 0.3490909090909091,
+        "remote_slots": 1691,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22476800,
+        "remote_bytes_slot": 34631680
+      },
+      {
+        "layer": 43,
+        "start_token": 0,
+        "distinct": 447,
+        "slots": [
+          888,
+          913,
+          759
+        ],
+        "tiles": [
+          283,
+          292,
+          256
+        ],
+        "tile_critical_fraction": 0.35138387484957884,
+        "remote_slots": 1801,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23644160,
+        "remote_bytes_slot": 36884480
+      },
+      {
+        "layer": 43,
+        "start_token": 256,
+        "distinct": 444,
+        "slots": [
+          885,
+          899,
+          776
+        ],
+        "tiles": [
+          289,
+          292,
+          256
+        ],
+        "tile_critical_fraction": 0.34886499402628435,
+        "remote_slots": 1784,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23439360,
+        "remote_bytes_slot": 36536320
+      },
+      {
+        "layer": 43,
+        "start_token": 512,
+        "distinct": 418,
+        "slots": [
+          932,
+          872,
+          756
+        ],
+        "tiles": [
+          297,
+          277,
+          251
+        ],
+        "tile_critical_fraction": 0.36,
+        "remote_slots": 1804,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23654400,
+        "remote_bytes_slot": 36945920
+      },
+      {
+        "layer": 43,
+        "start_token": 768,
+        "distinct": 418,
+        "slots": [
+          891,
+          907,
+          762
+        ],
+        "tiles": [
+          283,
+          290,
+          252
+        ],
+        "tile_critical_fraction": 0.3515151515151515,
+        "remote_slots": 1798,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23603200,
+        "remote_bytes_slot": 36823040
+      },
+      {
+        "layer": 43,
+        "start_token": 1024,
+        "distinct": 414,
+        "slots": [
+          865,
+          887,
+          808
+        ],
+        "tiles": [
+          281,
+          282,
+          263
+        ],
+        "tile_critical_fraction": 0.3414043583535109,
+        "remote_slots": 1752,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23132160,
+        "remote_bytes_slot": 35880960
+      },
+      {
+        "layer": 43,
+        "start_token": 1280,
+        "distinct": 382,
+        "slots": [
+          857,
+          954,
+          749
+        ],
+        "tiles": [
+          276,
+          300,
+          244
+        ],
+        "tile_critical_fraction": 0.36585365853658536,
+        "remote_slots": 1811,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23736320,
+        "remote_bytes_slot": 37089280
+      },
+      {
+        "layer": 43,
+        "start_token": 1536,
+        "distinct": 421,
+        "slots": [
+          886,
+          929,
+          745
+        ],
+        "tiles": [
+          287,
+          297,
+          255
+        ],
+        "tile_critical_fraction": 0.3539928486293206,
+        "remote_slots": 1815,
+        "dedup_remote_inputs": 510,
+        "remote_bytes_dedup": 23808000,
+        "remote_bytes_slot": 37171200
+      },
+      {
+        "layer": 43,
+        "start_token": 1792,
+        "distinct": 420,
+        "slots": [
+          887,
+          887,
+          786
+        ],
+        "tiles": [
+          287,
+          288,
+          261
+        ],
+        "tile_critical_fraction": 0.3444976076555024,
+        "remote_slots": 1774,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23326720,
+        "remote_bytes_slot": 36331520
+      },
+      {
+        "layer": 43,
+        "start_token": 2048,
+        "distinct": 392,
+        "slots": [
+          936,
+          922,
+          702
+        ],
+        "tiles": [
+          307,
+          277,
+          233
+        ],
+        "tile_critical_fraction": 0.37576499388004897,
+        "remote_slots": 1858,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 24217600,
+        "remote_bytes_slot": 38051840
+      },
+      {
+        "layer": 43,
+        "start_token": 2304,
+        "distinct": 396,
+        "slots": [
+          967,
+          868,
+          725
+        ],
+        "tiles": [
+          300,
+          273,
+          244
+        ],
+        "tile_critical_fraction": 0.3671970624235006,
+        "remote_slots": 1835,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23982080,
+        "remote_bytes_slot": 37580800
+      },
+      {
+        "layer": 43,
+        "start_token": 2560,
+        "distinct": 411,
+        "slots": [
+          930,
+          842,
+          788
+        ],
+        "tiles": [
+          298,
+          272,
+          255
+        ],
+        "tile_critical_fraction": 0.3612121212121212,
+        "remote_slots": 1772,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23306240,
+        "remote_bytes_slot": 36290560
+      },
+      {
+        "layer": 43,
+        "start_token": 2816,
+        "distinct": 411,
+        "slots": [
+          931,
+          927,
+          702
+        ],
+        "tiles": [
+          298,
+          290,
+          236
+        ],
+        "tile_critical_fraction": 0.3616504854368932,
+        "remote_slots": 1858,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 24207360,
+        "remote_bytes_slot": 38051840
+      },
+      {
+        "layer": 43,
+        "start_token": 3072,
+        "distinct": 406,
+        "slots": [
+          905,
+          912,
+          743
+        ],
+        "tiles": [
+          287,
+          289,
+          249
+        ],
+        "tile_critical_fraction": 0.3503030303030303,
+        "remote_slots": 1817,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23818240,
+        "remote_bytes_slot": 37212160
+      },
+      {
+        "layer": 43,
+        "start_token": 3328,
+        "distinct": 367,
+        "slots": [
+          892,
+          884,
+          784
+        ],
+        "tiles": [
+          282,
+          266,
+          248
+        ],
+        "tile_critical_fraction": 0.3542713567839196,
+        "remote_slots": 1776,
+        "dedup_remote_inputs": 511,
+        "remote_bytes_dedup": 23418880,
+        "remote_bytes_slot": 36372480
+      },
+      {
+        "layer": 43,
+        "start_token": 3584,
+        "distinct": 421,
+        "slots": [
+          893,
+          913,
+          754
+        ],
+        "tiles": [
+          289,
+          297,
+          253
+        ],
+        "tile_critical_fraction": 0.3539928486293206,
+        "remote_slots": 1806,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23695360,
+        "remote_bytes_slot": 36986880
+      },
+      {
+        "layer": 43,
+        "start_token": 3840,
+        "distinct": 401,
+        "slots": [
+          869,
+          906,
+          785
+        ],
+        "tiles": [
+          281,
+          283,
+          258
+        ],
+        "tile_critical_fraction": 0.3442822384428224,
+        "remote_slots": 1775,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23347200,
+        "remote_bytes_slot": 36352000
+      },
+      {
+        "layer": 44,
+        "start_token": 0,
+        "distinct": 424,
+        "slots": [
+          877,
+          900,
+          783
+        ],
+        "tiles": [
+          282,
+          281,
+          251
+        ],
+        "tile_critical_fraction": 0.3464373464373464,
+        "remote_slots": 1777,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 23388160,
+        "remote_bytes_slot": 36392960
+      },
+      {
+        "layer": 44,
+        "start_token": 256,
+        "distinct": 421,
+        "slots": [
+          870,
+          923,
+          767
+        ],
+        "tiles": [
+          286,
+          290,
+          245
+        ],
+        "tile_critical_fraction": 0.35322777101096225,
+        "remote_slots": 1793,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23521280,
+        "remote_bytes_slot": 36720640
+      },
+      {
+        "layer": 44,
+        "start_token": 512,
+        "distinct": 410,
+        "slots": [
+          865,
+          945,
+          750
+        ],
+        "tiles": [
+          275,
+          294,
+          243
+        ],
+        "tile_critical_fraction": 0.3620689655172414,
+        "remote_slots": 1810,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23695360,
+        "remote_bytes_slot": 37068800
+      },
+      {
+        "layer": 44,
+        "start_token": 768,
+        "distinct": 423,
+        "slots": [
+          842,
+          896,
+          822
+        ],
+        "tiles": [
+          275,
+          286,
+          267
+        ],
+        "tile_critical_fraction": 0.34541062801932365,
+        "remote_slots": 1738,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22937600,
+        "remote_bytes_slot": 35594240
+      },
+      {
+        "layer": 44,
+        "start_token": 1024,
+        "distinct": 398,
+        "slots": [
+          850,
+          917,
+          793
+        ],
+        "tiles": [
+          272,
+          281,
+          257
+        ],
+        "tile_critical_fraction": 0.3469135802469136,
+        "remote_slots": 1767,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23296000,
+        "remote_bytes_slot": 36188160
+      },
+      {
+        "layer": 44,
+        "start_token": 1280,
+        "distinct": 393,
+        "slots": [
+          860,
+          910,
+          790
+        ],
+        "tiles": [
+          273,
+          294,
+          247
+        ],
+        "tile_critical_fraction": 0.36117936117936117,
+        "remote_slots": 1770,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23296000,
+        "remote_bytes_slot": 36249600
+      },
+      {
+        "layer": 44,
+        "start_token": 1536,
+        "distinct": 401,
+        "slots": [
+          889,
+          924,
+          747
+        ],
+        "tiles": [
+          278,
+          289,
+          247
+        ],
+        "tile_critical_fraction": 0.35503685503685506,
+        "remote_slots": 1813,
+        "dedup_remote_inputs": 511,
+        "remote_bytes_dedup": 23797760,
+        "remote_bytes_slot": 37130240
+      },
+      {
+        "layer": 44,
+        "start_token": 1792,
+        "distinct": 399,
+        "slots": [
+          837,
+          890,
+          833
+        ],
+        "tiles": [
+          266,
+          278,
+          263
+        ],
+        "tile_critical_fraction": 0.3444857496902107,
+        "remote_slots": 1727,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22876160,
+        "remote_bytes_slot": 35368960
+      },
+      {
+        "layer": 44,
+        "start_token": 2048,
+        "distinct": 382,
+        "slots": [
+          878,
+          932,
+          750
+        ],
+        "tiles": [
+          281,
+          293,
+          241
+        ],
+        "tile_critical_fraction": 0.3595092024539877,
+        "remote_slots": 1810,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 23674880,
+        "remote_bytes_slot": 37068800
+      },
+      {
+        "layer": 44,
+        "start_token": 2304,
+        "distinct": 388,
+        "slots": [
+          802,
+          957,
+          801
+        ],
+        "tiles": [
+          263,
+          298,
+          253
+        ],
+        "tile_critical_fraction": 0.36609336609336607,
+        "remote_slots": 1759,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 23152640,
+        "remote_bytes_slot": 36024320
+      },
+      {
+        "layer": 44,
+        "start_token": 2560,
+        "distinct": 400,
+        "slots": [
+          834,
+          938,
+          788
+        ],
+        "tiles": [
+          266,
+          298,
+          249
+        ],
+        "tile_critical_fraction": 0.36654366543665434,
+        "remote_slots": 1772,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23326720,
+        "remote_bytes_slot": 36290560
+      },
+      {
+        "layer": 44,
+        "start_token": 2816,
+        "distinct": 414,
+        "slots": [
+          868,
+          900,
+          792
+        ],
+        "tiles": [
+          284,
+          288,
+          253
+        ],
+        "tile_critical_fraction": 0.3490909090909091,
+        "remote_slots": 1768,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23265280,
+        "remote_bytes_slot": 36208640
+      },
+      {
+        "layer": 44,
+        "start_token": 3072,
+        "distinct": 407,
+        "slots": [
+          839,
+          887,
+          834
+        ],
+        "tiles": [
+          265,
+          279,
+          264
+        ],
+        "tile_critical_fraction": 0.34529702970297027,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22824960,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 44,
+        "start_token": 3328,
+        "distinct": 378,
+        "slots": [
+          822,
+          982,
+          756
+        ],
+        "tiles": [
+          263,
+          298,
+          242
+        ],
+        "tile_critical_fraction": 0.3711083437110834,
+        "remote_slots": 1804,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23633920,
+        "remote_bytes_slot": 36945920
+      },
+      {
+        "layer": 44,
+        "start_token": 3584,
+        "distinct": 402,
+        "slots": [
+          837,
+          931,
+          792
+        ],
+        "tiles": [
+          264,
+          292,
+          258
+        ],
+        "tile_critical_fraction": 0.35872235872235875,
+        "remote_slots": 1768,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 23275520,
+        "remote_bytes_slot": 36208640
+      },
+      {
+        "layer": 44,
+        "start_token": 3840,
+        "distinct": 389,
+        "slots": [
+          852,
+          909,
+          799
+        ],
+        "tiles": [
+          270,
+          287,
+          249
+        ],
+        "tile_critical_fraction": 0.3560794044665012,
+        "remote_slots": 1761,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23214080,
+        "remote_bytes_slot": 36065280
+      },
+      {
+        "layer": 45,
+        "start_token": 0,
+        "distinct": 437,
+        "slots": [
+          819,
+          878,
+          863
+        ],
+        "tiles": [
+          258,
+          280,
+          272
+        ],
+        "tile_critical_fraction": 0.345679012345679,
+        "remote_slots": 1697,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22538240,
+        "remote_bytes_slot": 34754560
+      },
+      {
+        "layer": 45,
+        "start_token": 256,
+        "distinct": 429,
+        "slots": [
+          844,
+          843,
+          873
+        ],
+        "tiles": [
+          267,
+          276,
+          281
+        ],
+        "tile_critical_fraction": 0.34101941747572817,
+        "remote_slots": 1687,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22466560,
+        "remote_bytes_slot": 34549760
+      },
+      {
+        "layer": 45,
+        "start_token": 512,
+        "distinct": 412,
+        "slots": [
+          907,
+          855,
+          798
+        ],
+        "tiles": [
+          284,
+          269,
+          258
+        ],
+        "tile_critical_fraction": 0.35018495684340323,
+        "remote_slots": 1762,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 23203840,
+        "remote_bytes_slot": 36085760
+      },
+      {
+        "layer": 45,
+        "start_token": 768,
+        "distinct": 438,
+        "slots": [
+          845,
+          848,
+          867
+        ],
+        "tiles": [
+          272,
+          282,
+          279
+        ],
+        "tile_critical_fraction": 0.3385354141656663,
+        "remote_slots": 1693,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22507520,
+        "remote_bytes_slot": 34672640
+      },
+      {
+        "layer": 45,
+        "start_token": 1024,
+        "distinct": 420,
+        "slots": [
+          858,
+          924,
+          778
+        ],
+        "tiles": [
+          273,
+          293,
+          252
+        ],
+        "tile_critical_fraction": 0.3581907090464548,
+        "remote_slots": 1782,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 23449600,
+        "remote_bytes_slot": 36495360
+      },
+      {
+        "layer": 45,
+        "start_token": 1280,
+        "distinct": 416,
+        "slots": [
+          832,
+          863,
+          865
+        ],
+        "tiles": [
+          269,
+          281,
+          278
+        ],
+        "tile_critical_fraction": 0.3393719806763285,
+        "remote_slots": 1695,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22558720,
+        "remote_bytes_slot": 34713600
+      },
+      {
+        "layer": 45,
+        "start_token": 1536,
+        "distinct": 422,
+        "slots": [
+          806,
+          896,
+          858
+        ],
+        "tiles": [
+          262,
+          292,
+          274
+        ],
+        "tile_critical_fraction": 0.3526570048309179,
+        "remote_slots": 1702,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22620160,
+        "remote_bytes_slot": 34856960
+      },
+      {
+        "layer": 45,
+        "start_token": 1792,
+        "distinct": 423,
+        "slots": [
+          902,
+          821,
+          837
+        ],
+        "tiles": [
+          290,
+          262,
+          276
+        ],
+        "tile_critical_fraction": 0.3502415458937198,
+        "remote_slots": 1723,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22814720,
+        "remote_bytes_slot": 35287040
+      },
+      {
+        "layer": 45,
+        "start_token": 2048,
+        "distinct": 407,
+        "slots": [
+          873,
+          850,
+          837
+        ],
+        "tiles": [
+          279,
+          277,
+          269
+        ],
+        "tile_critical_fraction": 0.3381818181818182,
+        "remote_slots": 1723,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22824960,
+        "remote_bytes_slot": 35287040
+      },
+      {
+        "layer": 45,
+        "start_token": 2304,
+        "distinct": 417,
+        "slots": [
+          873,
+          853,
+          834
+        ],
+        "tiles": [
+          280,
+          271,
+          268
+        ],
+        "tile_critical_fraction": 0.3418803418803419,
+        "remote_slots": 1726,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22845440,
+        "remote_bytes_slot": 35348480
+      },
+      {
+        "layer": 45,
+        "start_token": 2560,
+        "distinct": 430,
+        "slots": [
+          867,
+          853,
+          840
+        ],
+        "tiles": [
+          280,
+          275,
+          273
+        ],
+        "tile_critical_fraction": 0.33816425120772947,
+        "remote_slots": 1720,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22794240,
+        "remote_bytes_slot": 35225600
+      },
+      {
+        "layer": 45,
+        "start_token": 2816,
+        "distinct": 413,
+        "slots": [
+          849,
+          890,
+          821
+        ],
+        "tiles": [
+          270,
+          280,
+          264
+        ],
+        "tile_critical_fraction": 0.343980343980344,
+        "remote_slots": 1739,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22947840,
+        "remote_bytes_slot": 35614720
+      },
+      {
+        "layer": 45,
+        "start_token": 3072,
+        "distinct": 409,
+        "slots": [
+          864,
+          859,
+          837
+        ],
+        "tiles": [
+          267,
+          284,
+          269
+        ],
+        "tile_critical_fraction": 0.3463414634146341,
+        "remote_slots": 1723,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22773760,
+        "remote_bytes_slot": 35287040
+      },
+      {
+        "layer": 45,
+        "start_token": 3328,
+        "distinct": 405,
+        "slots": [
+          900,
+          801,
+          859
+        ],
+        "tiles": [
+          288,
+          254,
+          273
+        ],
+        "tile_critical_fraction": 0.35337423312883437,
+        "remote_slots": 1701,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22599680,
+        "remote_bytes_slot": 34836480
+      },
+      {
+        "layer": 45,
+        "start_token": 3584,
+        "distinct": 432,
+        "slots": [
+          939,
+          808,
+          813
+        ],
+        "tiles": [
+          302,
+          267,
+          267
+        ],
+        "tile_critical_fraction": 0.361244019138756,
+        "remote_slots": 1747,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 23029760,
+        "remote_bytes_slot": 35778560
+      },
+      {
+        "layer": 45,
+        "start_token": 3840,
+        "distinct": 421,
+        "slots": [
+          894,
+          815,
+          851
+        ],
+        "tiles": [
+          297,
+          264,
+          274
+        ],
+        "tile_critical_fraction": 0.35568862275449104,
+        "remote_slots": 1709,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22620160,
+        "remote_bytes_slot": 35000320
+      },
+      {
+        "layer": 46,
+        "start_token": 0,
+        "distinct": 449,
+        "slots": [
+          887,
+          843,
+          830
+        ],
+        "tiles": [
+          287,
+          275,
+          272
+        ],
+        "tile_critical_fraction": 0.3441247002398082,
+        "remote_slots": 1730,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22865920,
+        "remote_bytes_slot": 35430400
+      },
+      {
+        "layer": 46,
+        "start_token": 256,
+        "distinct": 441,
+        "slots": [
+          912,
+          800,
+          848
+        ],
+        "tiles": [
+          291,
+          265,
+          272
+        ],
+        "tile_critical_fraction": 0.35144927536231885,
+        "remote_slots": 1712,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22681600,
+        "remote_bytes_slot": 35061760
+      },
+      {
+        "layer": 46,
+        "start_token": 512,
+        "distinct": 425,
+        "slots": [
+          851,
+          869,
+          840
+        ],
+        "tiles": [
+          279,
+          280,
+          277
+        ],
+        "tile_critical_fraction": 0.3349282296650718,
+        "remote_slots": 1720,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22763520,
+        "remote_bytes_slot": 35225600
+      },
+      {
+        "layer": 46,
+        "start_token": 768,
+        "distinct": 438,
+        "slots": [
+          878,
+          823,
+          859
+        ],
+        "tiles": [
+          283,
+          271,
+          276
+        ],
+        "tile_critical_fraction": 0.3409638554216867,
+        "remote_slots": 1701,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22558720,
+        "remote_bytes_slot": 34836480
+      },
+      {
+        "layer": 46,
+        "start_token": 1024,
+        "distinct": 421,
+        "slots": [
+          967,
+          734,
+          859
+        ],
+        "tiles": [
+          302,
+          247,
+          279
+        ],
+        "tile_critical_fraction": 0.3647342995169082,
+        "remote_slots": 1701,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22538240,
+        "remote_bytes_slot": 34836480
+      },
+      {
+        "layer": 46,
+        "start_token": 1280,
+        "distinct": 401,
+        "slots": [
+          900,
+          762,
+          898
+        ],
+        "tiles": [
+          287,
+          257,
+          292
+        ],
+        "tile_critical_fraction": 0.3492822966507177,
+        "remote_slots": 1662,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22179840,
+        "remote_bytes_slot": 34037760
+      },
+      {
+        "layer": 46,
+        "start_token": 1536,
+        "distinct": 400,
+        "slots": [
+          873,
+          766,
+          921
+        ],
+        "tiles": [
+          279,
+          250,
+          293
+        ],
+        "tile_critical_fraction": 0.3564476885644769,
+        "remote_slots": 1639,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21903360,
+        "remote_bytes_slot": 33566720
+      },
+      {
+        "layer": 46,
+        "start_token": 1792,
+        "distinct": 421,
+        "slots": [
+          913,
+          760,
+          887
+        ],
+        "tiles": [
+          294,
+          257,
+          285
+        ],
+        "tile_critical_fraction": 0.35167464114832536,
+        "remote_slots": 1673,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22272000,
+        "remote_bytes_slot": 34263040
+      },
+      {
+        "layer": 46,
+        "start_token": 2048,
+        "distinct": 399,
+        "slots": [
+          858,
+          827,
+          875
+        ],
+        "tiles": [
+          281,
+          267,
+          274
+        ],
+        "tile_critical_fraction": 0.3418491484184915,
+        "remote_slots": 1685,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22415360,
+        "remote_bytes_slot": 34508800
+      },
+      {
+        "layer": 46,
+        "start_token": 2304,
+        "distinct": 399,
+        "slots": [
+          931,
+          757,
+          872
+        ],
+        "tiles": [
+          295,
+          257,
+          280
+        ],
+        "tile_critical_fraction": 0.3545673076923077,
+        "remote_slots": 1688,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22425600,
+        "remote_bytes_slot": 34570240
+      },
+      {
+        "layer": 46,
+        "start_token": 2560,
+        "distinct": 420,
+        "slots": [
+          906,
+          783,
+          871
+        ],
+        "tiles": [
+          293,
+          270,
+          284
+        ],
+        "tile_critical_fraction": 0.345926800472255,
+        "remote_slots": 1689,
+        "dedup_remote_inputs": 495,
+        "remote_bytes_dedup": 22364160,
+        "remote_bytes_slot": 34590720
+      },
+      {
+        "layer": 46,
+        "start_token": 2816,
+        "distinct": 415,
+        "slots": [
+          871,
+          772,
+          917
+        ],
+        "tiles": [
+          278,
+          261,
+          290
+        ],
+        "tile_critical_fraction": 0.3498190591073583,
+        "remote_slots": 1643,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22016000,
+        "remote_bytes_slot": 33648640
+      },
+      {
+        "layer": 46,
+        "start_token": 3072,
+        "distinct": 392,
+        "slots": [
+          942,
+          767,
+          851
+        ],
+        "tiles": [
+          288,
+          259,
+          272
+        ],
+        "tile_critical_fraction": 0.3516483516483517,
+        "remote_slots": 1709,
+        "dedup_remote_inputs": 502,
+        "remote_bytes_dedup": 22640640,
+        "remote_bytes_slot": 35000320
+      },
+      {
+        "layer": 46,
+        "start_token": 3328,
+        "distinct": 393,
+        "slots": [
+          924,
+          779,
+          857
+        ],
+        "tiles": [
+          289,
+          256,
+          274
+        ],
+        "tile_critical_fraction": 0.3528693528693529,
+        "remote_slots": 1703,
+        "dedup_remote_inputs": 507,
+        "remote_bytes_dedup": 22630400,
+        "remote_bytes_slot": 34877440
+      },
+      {
+        "layer": 46,
+        "start_token": 3584,
+        "distinct": 412,
+        "slots": [
+          906,
+          790,
+          864
+        ],
+        "tiles": [
+          289,
+          261,
+          277
+        ],
+        "tile_critical_fraction": 0.34945586457073763,
+        "remote_slots": 1696,
+        "dedup_remote_inputs": 498,
+        "remote_bytes_dedup": 22466560,
+        "remote_bytes_slot": 34734080
+      },
+      {
+        "layer": 46,
+        "start_token": 3840,
+        "distinct": 406,
+        "slots": [
+          860,
+          811,
+          889
+        ],
+        "tiles": [
+          273,
+          264,
+          287
+        ],
+        "tile_critical_fraction": 0.3483009708737864,
+        "remote_slots": 1671,
+        "dedup_remote_inputs": 499,
+        "remote_bytes_dedup": 22220800,
+        "remote_bytes_slot": 34222080
+      },
+      {
+        "layer": 47,
+        "start_token": 0,
+        "distinct": 410,
+        "slots": [
+          906,
+          848,
+          806
+        ],
+        "tiles": [
+          288,
+          271,
+          273
+        ],
+        "tile_critical_fraction": 0.34615384615384615,
+        "remote_slots": 1754,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 23173120,
+        "remote_bytes_slot": 35921920
+      },
+      {
+        "layer": 47,
+        "start_token": 256,
+        "distinct": 394,
+        "slots": [
+          739,
+          973,
+          848
+        ],
+        "tiles": [
+          246,
+          297,
+          271
+        ],
+        "tile_critical_fraction": 0.36486486486486486,
+        "remote_slots": 1712,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 22650880,
+        "remote_bytes_slot": 35061760
+      },
+      {
+        "layer": 47,
+        "start_token": 512,
+        "distinct": 379,
+        "slots": [
+          728,
+          942,
+          890
+        ],
+        "tiles": [
+          239,
+          291,
+          282
+        ],
+        "tile_critical_fraction": 0.3583743842364532,
+        "remote_slots": 1670,
+        "dedup_remote_inputs": 501,
+        "remote_bytes_dedup": 22231040,
+        "remote_bytes_slot": 34201600
+      },
+      {
+        "layer": 47,
+        "start_token": 768,
+        "distinct": 397,
+        "slots": [
+          772,
+          934,
+          854
+        ],
+        "tiles": [
+          254,
+          299,
+          274
+        ],
+        "tile_critical_fraction": 0.3615477629987908,
+        "remote_slots": 1706,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22671360,
+        "remote_bytes_slot": 34938880
+      },
+      {
+        "layer": 47,
+        "start_token": 1024,
+        "distinct": 371,
+        "slots": [
+          764,
+          965,
+          831
+        ],
+        "tiles": [
+          244,
+          295,
+          272
+        ],
+        "tile_critical_fraction": 0.3637484586929716,
+        "remote_slots": 1729,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22906880,
+        "remote_bytes_slot": 35409920
+      },
+      {
+        "layer": 47,
+        "start_token": 1280,
+        "distinct": 337,
+        "slots": [
+          719,
+          988,
+          853
+        ],
+        "tiles": [
+          236,
+          297,
+          267
+        ],
+        "tile_critical_fraction": 0.37125,
+        "remote_slots": 1707,
+        "dedup_remote_inputs": 504,
+        "remote_bytes_dedup": 22640640,
+        "remote_bytes_slot": 34959360
+      },
+      {
+        "layer": 47,
+        "start_token": 1536,
+        "distinct": 353,
+        "slots": [
+          758,
+          954,
+          848
+        ],
+        "tiles": [
+          242,
+          293,
+          277
+        ],
+        "tile_critical_fraction": 0.3608374384236453,
+        "remote_slots": 1712,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22702080,
+        "remote_bytes_slot": 35061760
+      },
+      {
+        "layer": 47,
+        "start_token": 1792,
+        "distinct": 367,
+        "slots": [
+          771,
+          948,
+          841
+        ],
+        "tiles": [
+          253,
+          294,
+          265
+        ],
+        "tile_critical_fraction": 0.3620689655172414,
+        "remote_slots": 1719,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22773760,
+        "remote_bytes_slot": 35205120
+      },
+      {
+        "layer": 47,
+        "start_token": 2048,
+        "distinct": 331,
+        "slots": [
+          786,
+          966,
+          808
+        ],
+        "tiles": [
+          250,
+          294,
+          251
+        ],
+        "tile_critical_fraction": 0.36981132075471695,
+        "remote_slots": 1752,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 23121920,
+        "remote_bytes_slot": 35880960
+      },
+      {
+        "layer": 47,
+        "start_token": 2304,
+        "distinct": 342,
+        "slots": [
+          764,
+          931,
+          865
+        ],
+        "tiles": [
+          243,
+          280,
+          270
+        ],
+        "tile_critical_fraction": 0.3530895334174023,
+        "remote_slots": 1695,
+        "dedup_remote_inputs": 509,
+        "remote_bytes_dedup": 22568960,
+        "remote_bytes_slot": 34713600
+      },
+      {
+        "layer": 47,
+        "start_token": 2560,
+        "distinct": 364,
+        "slots": [
+          781,
+          906,
+          873
+        ],
+        "tiles": [
+          255,
+          283,
+          279
+        ],
+        "tile_critical_fraction": 0.3463892288861689,
+        "remote_slots": 1687,
+        "dedup_remote_inputs": 508,
+        "remote_bytes_dedup": 22476800,
+        "remote_bytes_slot": 34549760
+      },
+      {
+        "layer": 47,
+        "start_token": 2816,
+        "distinct": 377,
+        "slots": [
+          800,
+          889,
+          871
+        ],
+        "tiles": [
+          263,
+          280,
+          277
+        ],
+        "tile_critical_fraction": 0.34146341463414637,
+        "remote_slots": 1689,
+        "dedup_remote_inputs": 503,
+        "remote_bytes_dedup": 22446080,
+        "remote_bytes_slot": 34590720
+      },
+      {
+        "layer": 47,
+        "start_token": 3072,
+        "distinct": 349,
+        "slots": [
+          778,
+          932,
+          850
+        ],
+        "tiles": [
+          247,
+          290,
+          271
+        ],
+        "tile_critical_fraction": 0.3589108910891089,
+        "remote_slots": 1710,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22691840,
+        "remote_bytes_slot": 35020800
+      },
+      {
+        "layer": 47,
+        "start_token": 3328,
+        "distinct": 346,
+        "slots": [
+          738,
+          942,
+          880
+        ],
+        "tiles": [
+          244,
+          292,
+          273
+        ],
+        "tile_critical_fraction": 0.36093943139678614,
+        "remote_slots": 1680,
+        "dedup_remote_inputs": 505,
+        "remote_bytes_dedup": 22374400,
+        "remote_bytes_slot": 34406400
+      },
+      {
+        "layer": 47,
+        "start_token": 3584,
+        "distinct": 362,
+        "slots": [
+          712,
+          909,
+          939
+        ],
+        "tiles": [
+          236,
+          287,
+          291
+        ],
+        "tile_critical_fraction": 0.3574938574938575,
+        "remote_slots": 1621,
+        "dedup_remote_inputs": 500,
+        "remote_bytes_dedup": 21719040,
+        "remote_bytes_slot": 33198080
+      },
+      {
+        "layer": 47,
+        "start_token": 3840,
+        "distinct": 346,
+        "slots": [
+          751,
+          942,
+          867
+        ],
+        "tiles": [
+          241,
+          289,
+          273
+        ],
+        "tile_critical_fraction": 0.35990037359900373,
+        "remote_slots": 1693,
+        "dedup_remote_inputs": 506,
+        "remote_bytes_dedup": 22517760,
+        "remote_bytes_slot": 34672640
+      }
+    ]
+  },
+  "estimated_critical_path": {
+    "expert_fraction_from_other4096rank_profile": 0.36737235367372356,
+    "warning": "profile fraction from different context/rank; no long121K perop profile, NOT measured EP speed",
+    "pure_EP3_target_seconds_no_comm": 515.8330978039887,
+    "current_PP4_target_active_phase_seconds": 437.279223476653,
+    "current_PP4_total_wall_seconds": 522.3179874189664,
+    "expert_fraction_needed_to_beat_current_target_span_no_comm": 0.5490122411726303,
+    "traffic_seconds_sensitivity_effective_aggregate_GBps": {
+      "4": 129.170583435,
+      "8": 64.5852917175,
+      "16": 32.29264585875,
+      "32": 16.146322929375,
+      "64": 8.0731614646875
+    },
+    "sum_routed_weights_per_owner_bytes_ideal": 16764108800.0,
+    "weight_limit_note": "expert weights alone, before dense/KV/workspace/provider; actual ownership uneven / model allocations gate required"
+  },
+  "next_gate": "CPU combined EP+pipeline discrete-event schedule with per-op121K timings, exact owner allocations and existing transfer evidence; do not build pureEPengine from shortprofile alone",
+  "discovery_open": true
+}

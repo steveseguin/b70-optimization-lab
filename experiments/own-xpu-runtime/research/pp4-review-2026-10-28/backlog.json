@@ -1,0 +1,235 @@
+{
+  "schema": "ownrt.optimization-backlog.v1",
+  "owner_direction": "Test the full backlog, keep discovering and capturing ideas; maximize speed/context/lossless quality. Planning is not completion.",
+  "updated_utc_date": "2026-10-28",
+  "source": "IDEAS.txt",
+  "ideas": [
+    {
+      "id": 1,
+      "idea": "HIGH: Real dedicated existing-MTP owner (3+1;2+1 at shorter context).",
+      "status": "implemented-first-3plus1-native-gate-loading",
+      "evidence": [
+        "topology-options.json",
+        "topology-allocation-screen.json",
+        "dedicated-provider-plan.txt"
+      ],
+      "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
+      "next_step": "Finish the single active admitted3+1 gate; preserve parity/lifecycle result, then fair timing if it passes. Separate authenticated bulk-prefill support remains necessary for long-prompt comparison.",
+      "blocker": "GPU qualification pending;2target262K exceeds current memory floor. No dedicated bulk-prefill/reset qualification yet.",
+      "already_tested_scope": "Implemented real separate-owner native bootstrap/protocol and independent scheduler/transport/lifecycle; CPU native plan-only all4 pass after correcting nice19 invocation.15 Python CPU tests pass; actual GPU gate loading, no parity or performance result yet.",
+      "discovery_open": true
+    },
+    {
+      "id": 2,
+      "idea": "HIGH: Expert-parallel prefill, including3 target expert owners+draft.",
+      "status": "CPU-route-and-cost-screened-hybrid-open",
+      "evidence": [
+        "expert-parallel-screen.json",
+        "expert-parallel-screen.txt"
+      ],
+      "first_test": "replay actual route histograms and tensor sizes through a load/communication budget; compare against measured target work674.7s and the current full prefill522.3s (overlapping work must not be added to wall time).",
+      "next_step": "Use new3+1 actual timings plus long peropcost/archived transfer evidence for CPU PP\u00d7EP ownerconflict simulation. Naive pureEP3 predicts515.8s before communication vs current437.3targetphase/522.3wholewall; hybrid remainsopen.",
+      "blocker": null,
+      "already_tested_scope": "CPU replay384archived256rowroutegroups; actual expertweights50.292GB; purelayer-serialEP3 conditional timing model using DIFFERENT4096rankexpertshare36.74%, not an EP measurement. NoGPUimplementationtested.",
+      "discovery_open": true,
+      "subexperiments": [
+        {
+          "id": "pure-layer-serial-EP3-route-screen",
+          "status": "conditional-negative-not-architecture-rejection",
+          "evidence": "expert-parallel-screen.json",
+          "limitation": "Old4096rankexpertfraction may not describe121K; transferbandwidthassumedsensitivity only; no actual EP run"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "idea": "HIGH: Remove compressed-expert materialization traffic with unchanged math.",
+      "status": "new-unmeasured",
+      "evidence": [],
+      "first_test": "profile each actual per-tensor expert format (including IQ3_XXS gate/up and IQ4_NL down), dequantization, write/read and multiply costs; screen one expensive production shape before whole-engine integration. Preserve FP rounding boundaries and order. Strata's q8_1-activation/s8-DPAS implementation changes outputs: it supplies an idea, not an exact drop-in.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Current xgroup paths already decode directly into register multiply; no intermediate F32 weight write/read materialization exists there. IQ4NL packed treatment screened as small; generic idea remains open.",
+      "discovery_open": true,
+      "subexperiments": [
+        {
+          "id": "grouped-IQ4NL-packed-logical4",
+          "status": "exact-kernel-win-small-integration-deprioritized",
+          "evidence": "../prefill-iq4-packed/RESULT.md",
+          "result": "8.34% hot/6.63% cold kernel gain; family9.3% prior target =>~0.6\u20130.8% endpoint extrapolation; no model parity or integration",
+          "scope": "One IQ4_NL grouped T4 packed logical lane treatment only; other formats/materialization discovery remains open"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "idea": "HIGH: Multi-row verifier kernels, reuse unpacked weights across proposals.",
+      "status": "CPU-implementability-screened-dense-kernel-gate-next",
+      "evidence": [
+        "verifier-batch-screen.txt"
+      ],
+      "first_test": "actual routed and dense shapes at those widths, checking bitwise intermediates before timing. Measure accepted tokens per whole cycle, not just raw draft depth. Stop if preparation or low occupancy removes gains.",
+      "next_step": "Screen existingexactreuse2 densekernels at widths2/3/4 vssequential productionmatrices first; onlyifmaterial implement width2 perrowcheckpoint image construction and resolutiongate. No acceptance assumption.",
+      "blocker": null,
+      "already_tested_scope": "CPUsource/actualprompt-route screen only: width2/3/4expertdecode reuse3.46/6.26/8.82%; existingring is single-row snapshots. No newbatchedverifier kernel/state/device test.",
+      "discovery_open": true
+    },
+    {
+      "id": 5,
+      "idea": "HIGH: Full-precision selected-KV layout and native-QSA attention work.",
+      "status": "new-treatment-needed-prior-related-negatives",
+      "evidence": [
+        "CURRENT.md exact attention/combine nonwins"
+      ],
+      "first_test": "measure bytes/latency by actual attention shape at64K/121K/ near262K; test one layout/load change with identical selection, ties and sums. Existing attention/combine fusion was an exact loss; don't repeat that flag.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "discovery_open": true,
+      "subexperiments": [
+        {
+          "id": "select-long-CM32-CM64",
+          "status": "exact-kernel-win-small-integration-deprioritized",
+          "evidence": "../select-long/RESULT.md",
+          "result": "36cases\u00d72variants exact;45,696actualStage1calls at121852 rows; endpoint extrapolation3.027s/671.965s0.45%; preserve optionalpatch",
+          "scope": "Stage1cached integer selection only; QSA KV layouts/attention kernels remain open"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "idea": "MEDIUM: PP2xTP2 or row-partitioned dense projections.",
+      "status": "new-treatment-needed-prior-related-negatives",
+      "evidence": [
+        "docs/sc117-engine-review.md TP gathers break-even"
+      ],
+      "first_test": "measured whole producer/transfer/consumer budget on actual tensor sizes. Stop if collective round trips dominate. GRIMOIRE's historical TP retained full weights; copying that alone would not improve capacity.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "discovery_open": true
+    },
+    {
+      "id": 7,
+      "idea": "MEDIUM: Cheaper draft only: quantized projections/head, vocabulary shortlist.",
+      "status": "new-unmeasured",
+      "evidence": [],
+      "first_test": "replay recorded canonical inputs, measure acceptance and draft cost jointly; never substitute draft argmax for target verification. Unlike target quantization, changed proposals can preserve final greedy target outputs. Require full transaction/reset/rollback parity and endpoint output equality; no training. Stop if extra rejections outweigh draft savings. Local transfer source: Laguna W8A16 draft projection and Qwen INT4-MTP lanes; community lead: SergiioB/intel-arc-pro-b70-inference-cookbook.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    },
+    {
+      "id": 8,
+      "idea": "MEDIUM: Adaptive depth / speculative next-window overlap.",
+      "status": "new-treatment-needed-prior-related-negatives",
+      "evidence": [
+        "provider-relocation negative",
+        "depth2-two-rank negative"
+      ],
+      "first_test": "trace-driven upper bound using actual accepted prefixes, then a fixed held-out policy. Stop if even the oracle cannot beat incumbent. This is not simply raising depth, and historical collocated provider moves already lost. Sources: Strata MULTI_GPU.md; local Laguna conditional-tree negative and existing PP4 capture-ready path. No new trained tree heads.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "discovery_open": true
+    },
+    {
+      "id": 9,
+      "idea": "MEDIUM: Wider prefill waves and measured chunk sizes.",
+      "status": "two-chunk-control-tested-winner;wider-waves-new",
+      "evidence": [
+        "candidate-long/matched-result.json",
+        "gate/target-comparison-prefill.json.gz"
+      ],
+      "first_test": "four-chunk schedule respecting stage0 target/draft exclusion and replay-before-reverse-slot-overwrite; nine chunks with partial tail/reset, then full long timing. See next-lever.txt. This remains a useful low-cost control option, but must compete with larger architecture proposals above.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "discovery_open": true
+    },
+    {
+      "id": 10,
+      "idea": "EXPLORATORY:2 target + draft + full-value remote-KV owner.",
+      "status": "blocked-by-memory-architecture",
+      "evidence": [],
+      "first_test": "replay exact selected-page access trace and measure required transfer volume; model memory residency without changing host memory settings. Stop if traffic/latency or required simultaneous residency cannot fit. Use exact miss handling and page-version ownership; no approximate eviction.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": "2target262K exceeds local cap unless exact remoteKV storage removes local residency; remote-owner protocol not implemented",
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    },
+    {
+      "id": 11,
+      "idea": "EXPLORATORY: Separate attention owners from expert owners.",
+      "status": "new-unmeasured",
+      "evidence": [],
+      "first_test": "offline route+activation traffic model versus EP/PP; only implement if it improves a measured critical path after transfers. This can hurt single-token latency, even if it helps prefill/concurrency.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    },
+    {
+      "id": 12,
+      "idea": "EXPLORATORY: Phase-specific topology and state migration.",
+      "status": "new-unmeasured",
+      "evidence": [],
+      "first_test": "count full KV/recurrent-state bytes and one-time migration cost, then calculate break-even generated length. Stop for short answers if migration exceeds the entire decode saving. Weight duplication/residency must be planned; don't launch two full engines and hope memory is sufficient.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    },
+    {
+      "id": 13,
+      "idea": "EXPLORATORY: Native-format expert tiering/prefetch for capacity.",
+      "status": "new-unmeasured",
+      "evidence": [],
+      "first_test": "actual route locality and miss-byte census. Large prefill often touches nearly every expert, so reject a cache design with no locality. For the resident four-card target this is a capacity idea, not assumed speed. Sources: https://github.com/doopeworld/GRIMOIRE/blob/main/FLASH-NEXT-TIERED.md and https://github.com/vllm-project/vllm/issues/63666 (RFC, not a B70 result).",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    },
+    {
+      "id": 14,
+      "idea": "EXPLORATORY: Branch-owned recurrent-state deltas / compact rollback.",
+      "status": "new-treatment-needed-prior-related-negatives",
+      "evidence": [
+        "current sparse checkpoint already enabled"
+      ],
+      "first_test": "allocation/write-set census against current sparse checkpoints, then forced-miss/reset/state oracle. Current sparse checkpoint work is already enabled; a new idea must remove further measured bytes. Source: GRIMOIRE FAST-MTP-RESTORE-2026-09-04.md. Its historical handoff is incomplete evidence, not an implementation we can promote unchanged.",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": null,
+      "already_tested_scope": "Related control/negative only; new proposed treatment untested",
+      "discovery_open": true
+    },
+    {
+      "id": 15,
+      "idea": "SEPARATE QUALITY QUESTION: KV quantization, approximate attention or target",
+      "status": "quality-change-not-authorized",
+      "evidence": [],
+      "first_test": "Separately defined acceptable-quality experiment; owner authorization required",
+      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "blocker": "Current target lane lossless/fullprecision only; no lossy target or compressedKV experiment authorized",
+      "already_tested_scope": "No test claimed",
+      "discovery_open": true
+    }
+  ],
+  "new_idea_intake": [],
+  "rules": [
+    "No training or host power/memory changes",
+    "Keep blocked or unauthorized ideas visible; no silent removal",
+    "Use one meaningful exactness gate then fair timing",
+    "No GPU/service actions performed by this ledger task"
+  ],
+  "discoveries": [
+    {
+      "id": "prefill-rows1024-T4-occupancy",
+      "status": "CPU-intake-no-device-test",
+      "evidence": "next-prefill-kernel.txt",
+      "hypothesis": "Actual routecensus groupedT4 fill0.77 at256rows vs0.93 at1024;~17%fewerweight-rowdecodes implies~6.4% prior targetbudget ceiling if routedcost scales. Not measured speed. CLI currentlycaps256; stage0shadow288.6MB scales to1.154GB. Need allocation/SLM/nativeadmission safety screen first; do not repeat existingT8tile sweep."
+    }
+  ]
+}

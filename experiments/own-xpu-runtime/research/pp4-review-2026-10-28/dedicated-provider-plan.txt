@@ -1,0 +1,151 @@
+2026-10-28 IMPLEMENTED; first actual 3+1 gate LOADING (not yet qualified)
+Unit sc117-dedicated-3plus1-gate-20261028-r1; exclusive output /dev/shm/sc117-dedicated-3plus1-20261028-r1/output
+Native r2 binary SHA256 42835855ee910ee6e4fe965a40172add01447a994898a4e48254da95b4dafe07
+Build receipt /dev/shm/engine-build-dedicated-provider-20261028-r2/build-receipt.json SHA256 20792a4c284f821f28fa70d017f68d8025131a9c7fb09863e09c29c852a4dab1
+Final plan SHA256 dcb5752e6cd058e7c24e8a17146b458aa4799792a0dfc8802b9833682d1bf5c2
+Targets 0000:23:00.0 / 0000:27:00.0 / 0000:47:00.0, boundaries [0,17,33,48]; provider 0000:43:00.0.
+Gate input1677/max_new32/context262144; real separate provider role, no target stage or target ledger fabrication.
+Implementation: provider-only native Engine shell + existing DraftRuntime/Sequence, read-only actual seed/final peer journals; independent provider socket, sequence and busy queue. Target sockets retain existing ledgers. Source leases held until full provider completion. EOS/cancel/drain covered. Per-token prompt only; bulk prefill and persistent reset refused. All four children share existing passive Guard and cooperative stop accounting; no kill/retry.
+Python CPU tests:13 dedicated scheduler/transport +2 lifecycle PASS; prior rolling/arbiter regression total24 PASS before lifecycle addition. Native owner tests reused real Sequence with CPU synthetic arithmetic and passed. These are CPU tests, not native GPU arithmetic proof.
+CPU native plan-only first invocation omitted nice19: stage0 refused before device contact with exact error "native priority differs from declared --native-nice". Corrected nice19 invocation passed all four; no GPU launch/retry is implied by these plan-only runs.
+CPU native memory plans (decimal bytes; do not add streamed_peak to resident; exclude retained target snapshots/driver shadows and provider draft allocations):
+ role0: resident=17896825216, request/workspace=5142221968, owned sum=23039047184; plan SHA256 faf553777a547f0465b713b3ba07b34aa8b00096c7687d4cd19e589ae4f8a9a1
+ role1: resident=18371640320, request/workspace=5137639820, owned sum=23509280140; plan SHA256 14620f9b11fd98ebbeb1e250450b8ad63a6e013d04b744fcf653b22af9e43ed9
+ role2: resident=18446324864, request/workspace=5134791216, owned sum=23581116080; plan SHA256 dc43836bb049c0aed5c65872dfe193ae99a181bd4ae506fb88804b02311a3c19
+ roleprovider: resident=0, request/workspace=121688472, owned sum=121688472; plan SHA256 98dcb83305d5fdb57316f09806b90a54913e6dabfbe132a3c8e3ccf249448668
+Provider shell plan121688472 bytes/zero target resident weights is before real draft allocation, not total provider VRAM. Runtime census and state gates must determine feasibility. 2-target262K remains blocked by current memory floors; shorter-context2+1 remains untested.
+Next: let this one admitted3+1 gate finish; compare actual output IDs/canonical pairs and sealed target/draft state before timing. No speed or quality promotion from planning/loading. Independent-reference six disagreements unresolved.
+Source pins (current exact implementation files):
+engine/tools/dedicated_provider_driver.py d58376839b297e3cab49c513d702608e6b66222e04a5e9a4e8b1523d68f2b698
+engine/tools/dedicated_provider_lifecycle.py c274b601dbc1144981bd783a79678532bb182c39cd78add62a8f836fbd92e365
+engine/planning/rolling_provider/dedicated.py 3eced46e133890c83bf50c47a36c17c1e967c0d861ee68564be3addf841f4dc5
+engine/planning/rolling_provider/dedicated_transport.py 7d99ce0538e1fd087a5d66693d5a41aea60a5e768323d1fa8ad31682d8664b06
+
+Historical design/audit below; statements describing seams as unimplemented are historical, superseded by the implementation above.
+
+Dedicated existing-MTP GPU: actual source audit and minimal seams (2026-10-28)
+
+Implemented isolated transaction owner:
+engine/src/pipeline/provider_only/owner.hpp
+engine/planning/test_provider_only_owner.cpp
+No target StageRing, empty target partition, target-layer execution or training. Owner role is dedicated-mtp. Target BDF list and provider BDF are disjoint; Context.stage0 describes the independent target seed source, not a fictional process stage. Existing Sequence carries canonical ancestry and recursive restore semantics.
+
+API for native bootstrap:
+Owner<mtp36::DraftRuntime> owner(draft, {target_bdfs, provider_bdf}, target_wire_context);
+owner.run(provider_command_sequence, read_only_stage0_seed_snapshot, read_only_final_snapshot, owned_raw_hidden, verify);
+owner.boundary();
+owner.reset(command, next_epoch, next_request_digest, fresh_output, zero_private_callback);
+
+run validates original SeedRecord via seed_row(), original FinalRecord+raw SHA via validate_final_record(), cross-peer parent ancestry, then derives Input/ExpectedPair and invokes existing DraftRuntime::live_recursive_depth2. No separate model arithmetic. Any failure poisons this owner; no automatic reset or retry. reset first checks canonical boundary and live_reset_admission(), invokes existing reset_request() for canonical/pinned/host state, explicitly zeroes retained recursive backup through callback, invokes recursive_reset_after_owner_zero(), then replaces Sequence. Outer lifecycle must attest old state and complete the all-target reset barrier. It must retain/recheck allocation inventories and seal actual draft state; this transaction class does not invent lifecycle receipts.
+
+CPU tests reuse the existing recursive_provider fixture + REAL Sequence. They cover 2/3 target topology, depth3 snapshot/restore, source journal/SHA/epoch rejection before arithmetic, retained cold reset, replay rejection, no-head, capacity-shortened proposal, branch failure and refusal to reset a failed owner. Compile/run:
+g++ -std=c++20 -O1 -Isrc planning/test_provider_only_owner.cpp -lcrypto -o /dev/shm/test-provider-only-owner-20261028
+/dev/shm/test-provider-only-owner-20261028
+PASS. Synthetic CPU arithmetic only; no native-GPU arithmetic qualification.
+
+No existing standalone provider executable found. Current rank.hpp always constructs a target Engine plan and calls initialize() before DraftRuntime. It would be dishonest to add a zero-layer target stage and count it as a dedicated provider.
+
+Actual DraftRuntime dependencies for new provider-only Engine initialization:
+- e.p.g complete model/context geometry, e.w immutable directory/read access, actual selected kernels/draft selection in e.sealed_selection;
+- one real Device/arena, allocation registry, copy/upload/readback/range/compute/io_copy/drain/finish/guard and timing/control bookkeeping;
+- hash-bound e.ropes[0] with exact 262K table; no recomputation;
+- idle error control used by recursive_healthy(): e.integer(0,"error") requires a minimal owner error buffer;
+- flags/predicates must recognize explicit provider-only role for resident, gsq_packed, F32 source streams, draft_rank0, live-draft, partition, persistent and recursive depth. Do not claim this process owns target stage0;
+- source token_embd.weight immutable row reader: compute reads just the confirmed embedding row then BF16-converts by the existing path; no target PLE/history/token preparation;
+- output.weight unchanged Q6 head: constructor can allocate its own expanded shared-head-host fallback. Avoid target-head sharing/dense metadata alias optimizations in the standalone owner unless explicitly qualified. No Q4-head or vocabulary-prefix change;
+- own canonical, scratch, pinned transport and recursive backup inventories. All are provider-owned; target buffers/checkpoint rings are absent.
+
+Engine.initialize() currently creates target attention scratch/layer snapshots, target plan buffers, target weights and schedules. New provider_only_initialize() should initialize device/rope/error/idle bookkeeping only, then let the EXISTING DraftRuntime constructor load its own MTP tensors/head and prepare commands+recursive private image. Do not run target banks/prepare_plan/half_step/StageCheckpoint. Keep target process bootstrap unchanged by default.
+
+IPC reuse and necessary changes:
+Existing Peer uses read-only inode-pinned final map; SeedRecord is independently published by stage0 ACCEPT. Peer::capture_seed currently refuses context.stage==0 because it was written for a remote target-stage provider; dedicated owner needs an explicit role-aware readonly seed-peer helper, not a fake context.stage1. Retain before/after publication marker checks and inode lifetime. Existing op27 batch and ProposalMeta/V2 layouts can carry confirmed input and guesses, but provider process role, READY identity, global sequence and reset receipt must be distinct from target stage IDs. Controller publication must hold stage0 seed and final records stable until provider capture acknowledgement/completion.
+
+First GPU gate as requested: replay retained real canonical hidden artifacts (73 sources) on one standalone provider. Preserve original source target topology, source tickets/commits and authenticated hashes; compare same canonical draft outputs/terminal sealed state to retained source owner. This is replay qualification, not a 3+1 end-to-end speed result. Only after it passes wire target-only 2/3-stage cold serial ROW/ACCEPT feed to provider. Match unchanged target tokens, actual pair sequence and terminal target/draft state; then fair timing.
+
+Batched OP15 is explicitly later: final-record journal currently authenticates committed ROW/ACCEPT, not individual op15 chunk hidden rows. A dedicated batched replay needs an independent bounded chunk publication/receipt tying start,count,prompt tokens and per-row hidden hashes to final owner and cold epoch, with owned FIFO lifetimes. Do not reuse ordinary seed journals or assert OP9 already authenticated this cross-device path.
+
+Dedicated bulk-prefill extension: read-only design, 2026-10-28
+STATUS: NOT IMPLEMENTED; current first3+1 correctness run remains pinned.
+Decision from coordinator: measure sustained3+1 decode after correctness first.
+Only implement bulk if saved provider contention outweighs heavier target stages.
+No GPU or native-source mutation was performed for this design.
+
+Smallest practical reuse:
+- Keep exact Engine::prefill_chunk/target OP15 arithmetic, existing F32 prefill
+  shadows, checkpoint-owned shadow exclusion, and target StageRing::prefill.
+  Generalize only the current Python four-target guard to explicit2/3 targets.
+  Native rank0/other-rank output region convention remains unchanged.
+- MTP here has no qualified batched GEMM-prefill path: use existing
+  DraftRuntime::live_step(head=false) and real Sequence::prefill per raw row.
+  Target chunk batching is the initial performance lever. No precision change.
+- Existing Dispatcher::prefill_complete unconditionally queues stage0's local
+  prefill_replay FIFO even with provider=null; simply enabling external OP15
+  would hit its two-chunk limit and leave shutdown/reset borrow accounting
+  pending. Branch explicit external ownership: no colocated replay FIFO entry;
+  a separate bounded chunk-publication lease lasts until dedicated completion.
+  Never release/zero queues just to make FINISH pass.
+
+Minimal explicit source publication, not counterfeit accepted row journals:
+- OP15 commits a chunk in one command. Existing Handoff requires a real distinct
+  commit_sequence>row_ticket, so ordinary FinalRecord/SeedRecord cannot represent
+  each bulk row. Add a dedicated chunk record with source role, publication
+  sequence, epoch/request, start/count/parity, stream extent, exact prefix
+  before/after and digest. Stage0 publishes the exact consumed token copy;
+  final target publishes the SHA of actual final reverse rows after device
+  completion. Provider reads both maps readonly with existing inode/publication
+  checks, captures owned raw bytes and verifies the full final chunk SHA.
+- Reuse existing prefill map's header page without moving row regions: Header
+  consumes16+256*4=1040 bytes; two fixed1280-byte records fit at1536 and2816 and
+  end exactly4096. Each may use256 metadata bytes plus256 copied source tokens;
+  final-role unused token bytes must be zero. Exact fields/layout still require
+  CPU tests before adoption. Marker invalidate/write/release-publish follows
+  current native journal convention. Two parity slots carry explicit leases.
+- Pair position p consumes target hidden at p-1 and confirmed prompt[p]. Last
+  pair of every chunk needs the next token (and final bulk pair uses the seam
+  lookahead prompt[bulk]), which stage0 has not yet executed. Bind a fresh
+  immutable prompt-i32 file plus SHA to native provider startup; verify every
+  consumed stage0 token against it and take lookahead from it. This is explicit
+  authenticated no-head prefix replay, NOT a claim that lookahead was accepted
+  by a target. Do not reuse Owner::canonical's accepted-seed contract for this.
+- Add one explicit provider chunk-replay operation (32-byte role/version framing
+  retained), with count/start/parity and independent command sequence. Native
+  owner checks cold, contiguous prefix, no head, serial/start alignment, source
+  publication IDs and complete prefix before arithmetic. Build real non-
+  tentative prefix rows for Sequence::prefill; run existing live_step then
+  advance Sequence only after success. Any partial failure poisons owner; no
+  retries/reset recovery. ACK reports consumed count/provider serial and binds
+  actual source record SHA; traces record actual hidden/token pair hashes.
+
+Bounded allocation/scheduling:
+- Reuse target existing four-region prefill maps (40MiB+4KiB each at256rows,
+  40960bytes/stream) and target shadow allocations; no target plan on provider.
+  Provider opens stage0/final maps readonly; owns at most one captured raw
+  chunk256*40960=10MiB plus small token metadata. No provider target checkpoint.
+- Start sequential: complete all target stages for chunk k, replay provider k,
+  then allow parity reuse. Stage0 copies its single-buffer token header BEFORE
+  another OP15 can overwrite it. Generalize existing two-chunk wave only after
+  parity; dedicated device can overlap replay k with target chunk k+1 without
+  colocated stage0 contention. Retain final reverse parity until capture/full
+  completion ACK; never let k+2 overwrite k while provider reads it.
+- First rolling adoption only after every target committed bulk and provider
+  ACK serial=bulk, no pending chunk leases. Existing target seam remains two
+  canonical rows: next_seed=bulk+1; normal target rowbulk then publishes a real
+  final ACCEPT, enabling first OP27 for seedbulk+1. No fabricated per-row chunk
+  tickets or extra synthetic final-parent publication is needed. Root/direction
+  were sent these constraints; DedicatedCoordinator.adopt_prefill remains an
+  explicit refusal until this native+transport contract exists.
+
+Gate/performance order:
+1. Existing first3+1 target2065/draft73 correctness + clean FINISH, then sustained
+   fair decode timing. Close this architecture if decode fails to win materially.
+2. If justified: one same-load serial-prefix vs dedicated-bulk request pair,
+   >5chunks with partial last chunk (e.g existing1677-token prompt, bulk1675 at
+   rows256), same32 output tokens. Require actual ordered hidden/token pair
+   parity, same target2065/draft73 states and actual depth3 miss/rollback with
+   byte-verified restores at the two-row seam. Keep native full trace limits
+   sufficient for prompt+output; account OP15 separately using actual chunk
+   publication records, never invented trace counters.
+3. Only after gate passes: endpoint TTFT and sustained output timing on same
+   prompt/model/context/policy, followed by two-parity overlap if chunk timing
+   shows a material target/provider overlap opportunity. No training or host
+   power/memory-setting changes; no restart chains or automatic retry.
