@@ -34,8 +34,19 @@ Reply persistent_reset(const Request& request){
  namespace wire=ownrt::ring_next::wire;namespace reset=ownrt::ring_next::reset;
  require(e.a.pipeline_ring_persistent_requests&&request.op==11&&!request.token&&!request.position&&!request.fixture&&!request.speculative&&request.reserved[0]==context.stage&&request.reserved[1]==int(e.a.pipeline_final()),"ring reset command admission");
  require(!reset_spec&&!e.poisoned&&!e.progress_pending&&!e.progress_callback&&!e.preparing_commands&&!e.draft_timing&&!e.correction_exchange&&!e.head_export&&!e.head_publish&&!e.head_merge&&!e.prepare_async&&!e.dev(0).before_compute&&!e.dev(0).after_compute,"ring reset queued owner refusal");
+ bool dedicated_reset_complete=false;
+ struct DedicatedPoison {Engine* owner;bool& complete;~DedicatedPoison(){if(owner&&!complete)owner->poisoned=true;}};
+ DedicatedPoison poison{dedicated_suite?&e:nullptr,dedicated_reset_complete};
  const auto metadata=original_output/("reset-"+std::to_string(request.sequence)+".json");
- const auto d=reset::load(metadata,original_output,context.epoch,e.a.pipeline_ring_request_sha256,context.stage,request.sequence,e.a.oracle.string());
+ std::optional<ownrt::provider_only::suite::Prepared> prompt_transition;
+ const auto d=[&]{
+  if(dedicated_suite){
+   require(e.a.oracle.empty(),"dedicated target reset has no oracle");
+   prompt_transition.emplace(dedicated_suite->prepare(metadata,original_output,context,context.stage,request.sequence,true));
+   return prompt_transition->descriptor;
+  }
+  return reset::load(metadata,original_output,context.epoch,e.a.pipeline_ring_request_sha256,context.stage,request.sequence,e.a.oracle.string());
+ }();
  require(prefill_replay.empty(),"ring reset retains unreplayed prefill chunk");
  ring.boundary();checkpoints.boundary();require(provider_at_capture.empty(),"ring reset retains capture provenance");
  if(provider){provider->recursive_idle();require(!provider->recursive_active&&!provider_sequence->poisoned()&&provider->recursive_healthy()&&provider->live_position()==std::max(0,ring.committed()-1)&&provider_sequence->serial()==uint64_t(provider->live_position()),"ring reset canonical provider frontier");peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
@@ -47,6 +58,13 @@ Reply persistent_reset(const Request& request){
  context.epoch=d.next_epoch;context.request=reset::digest(d.next_request);e.a.pipeline_ring_request_sha256=d.next_request;
  if(provider){provider_sequence.emplace(context);peer->request_boundary();if(seed_peer)seed_peer->request_boundary();}
  require(e.a.output==d.destination&&allocation_identity()==inventory_before,"ring reset physical allocation identity");
+ if(prompt_transition){
+  require(bool(bulk_prompt)&&!dedicated_bulk_map.empty(),"dedicated target retained prompt/map");
+  bulk_prompt=prompt_transition->release_after_owner_reset(context);
+  // Every peer must already be quiescent. Invalidate only THIS owner's map:
+  // transport header, all4 slots, raw forward/reverse rows and bulk records.
+  std::fill(dedicated_bulk_map.begin(),dedicated_bulk_map.end(),uint8_t(0));
+ }
  std::memset(shared,0,mapped_bytes);accepted_output_rows=0;provider_at_capture.clear();provider_borrows_by_depth.fill(0);provider_borrows_while_target_pending=0;
  survival_records=survival_rows=survival_advanced_records=draft_trace_rows=draft_trace_omitted=trace_rows=trace_omitted=0;
  auto reopen=[&](std::ofstream& stream,const char* name){stream.close();stream.clear();stream.open(e.a.output/name);require(bool(stream),"ring reset trace open");};
@@ -73,6 +91,14 @@ Reply persistent_reset(const Request& request){
   <<",\"context_extent\":32,\"alternate_extent\":32,\"draft_context_extent\":"<<(provider?"32":"null")<<",\"pending_ticket\":false,\"sticky_error\":0,\"allocation_ids_preserved\":true"
   <<",\"allocation_inventory_before_sha256\":"<<ownrt::quote(inventory_before)<<",\"allocation_inventory_after_sha256\":"<<ownrt::quote(inventory_after)<<",\"provider_cold_host_sha256\":"<<ownrt::quote(provider_host_sha)<<",\"provider_cold_sequence_sha256\":"<<ownrt::quote(provider_sequence_sha)
   <<",\"cold_state_byte_verified\":false,\"counters_reset\":true,\"trace_reset\":true,\"shared_publication_invalidated\":true,\"check_policy\":"<<ownrt::quote(e.a.pipeline_ring_check_policy)<<"}";
+ if(prompt_transition){
+  auto text=out.str();text.pop_back();
+  text+=",\"dedicated_suite_sha256\":"+ownrt::quote(d.prompt.suite_sha)+
+   ",\"dedicated_prompt_sha256\":"+ownrt::quote(d.prompt.prompt_sha)+
+   ",\"dedicated_prompt_index\":"+std::to_string(d.prompt.index)+
+   ",\"dedicated_bulk_map_invalidated_bytes\":"+std::to_string(dedicated_bulk_map.size())+"}";
+  out.str(text);
+ }
  save(e.a.output/"ring-reset.json",out.str());
- Reply reply{};reply.sequence=request.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=e.a.pipeline_final();return reply;
+ Reply reply{};reply.sequence=request.sequence;reply.rank=e.a.rank;reply.reserved[0]=context.stage;reply.reserved[1]=e.a.pipeline_final();dedicated_reset_complete=true;return reply;
 }

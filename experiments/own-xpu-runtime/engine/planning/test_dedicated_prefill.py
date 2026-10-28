@@ -16,6 +16,7 @@ from rolling_provider.dedicated_transport import Provider,MAGIC,VERSION,base
 
 class Guard:
     def check(self):pass
+    def fail(self,reason):self.failed=reason
 
 def model(stages=2,prompt=None):
     return DedicatedCoordinator(stages=stages,request=sha256(b'bulk-wire').digest(),epoch=0,
@@ -37,6 +38,8 @@ def ack(m,start,count,sequence,seed,final,raw_sha):
         sha256(seed).digest(),sha256(final).digest(),raw_sha,bytes(16))
 
 class BulkTests(unittest.TestCase):
+    def test_suite_partial_pipeline_distinct_nonzero_sequences(self):self.run_prefix(suite=True)
+    def test_suite_partial_pipeline_stale_seed_ack_refused(self):self.run_prefix(suite=True,bad_ack=True)
     def test_request_clock_includes_model_setup_and_bulk(self):
         from rolling_provider import dedicated_transport as T
         clock=[99.]
@@ -84,19 +87,23 @@ class BulkTests(unittest.TestCase):
         with self.assertRaises(ValueError):P.chunk_record(bytes(corrupt),**args)
     def test_prompt_hash_and_path_identity(self):
         with TemporaryDirectory() as td:
-            m=model();path=Path(td)/'prompt.i32';raw=struct.pack('<520i',*m.prompt);path.write_bytes(raw)
+            m=model();path=Path(td)/'prompt.i32';raw=struct.pack(f'<{len(m.prompt)}i',*m.prompt);path.write_bytes(raw)
             plan=dict(prompt_tokens=m.prompt,dedicated_prefill_prompt=str(path),dedicated_prefill_prompt_sha256=sha256(raw).hexdigest())
             self.assertEqual(P.prompt_source(plan)[0],raw)
             path.write_bytes(raw[:-4])
             with self.assertRaises(ValueError):P.prompt_source(plan)
-    def run_prefix(self,bad_ack=False):
-        m=model();client,server=socket.socketpair();self.addCleanup(client.close);self.addCleanup(server.close)
-        owner=NS(sock=client,shared=bytearray(base.SHARED),guard=Guard(),plan={},sequence=0)
+    def run_prefix(self,bad_ack=False,suite=False):
+        m=model(prompt=[i%90 for i in range(67)])if suite else model()
+        starts=(7,19)if suite else(0,0);provider_start=31 if suite else 0
+        m.prefill_start_sequences=starts;m.prefill_start_provider_sequence=provider_start;m.provider_sequence=provider_start;m.dedicated_reset_suite=suite
+        for stage,seq in zip(m.stages,starts):stage.sequence=seq
+        client,server=socket.socketpair();self.addCleanup(client.close);self.addCleanup(server.close)
+        owner=NS(sock=client,shared=bytearray(base.SHARED),guard=Guard(),plan={},sequence=provider_start)
         provider=Provider(owner);provider.stream_bytes=32
         stages=[];server_errors=[]
         class Target:
             def __init__(self,index):
-                self.index=index;self.prefill_rows=256;self.stream_bytes=32;self.sequence=0;self.shared=bytearray(base.SHARED)
+                self.index=index;self.prefill_rows=256;self.stream_bytes=32;self.sequence=starts[index];self.shared=bytearray(base.SHARED)
                 self.prefill=bytearray(prefill.map_bytes(256,32));self.physical=self.committed=0
             def command(self,op,count,start,parity):
                 self.sequence+=1
@@ -113,14 +120,17 @@ class BulkTests(unittest.TestCase):
         stages=[Target(0),Target(1)]
         def server_loop():
             try:
-                for sequence,start,count in ((1,0,256),(2,256,256),(3,512,6)):
+                for sequence,start,count in ([(provider_start+1,0,65)]if suite else[(1,0,256),(2,256,256),(3,512,6)]):
                     raw=b''
                     while len(raw)<32:raw+=server.recv(32-len(raw))
                     self.assertEqual(base.REQUEST.unpack(raw),(28,count,start,(start//256)%2,0,sequence,MAGIC,VERSION))
                     off=P.RECORD_OFFSET+((start//256)%2)*1280;seed=bytes(stages[0].prefill[off:off+1280]);final=bytes(stages[1].prefill[off:off+1280])
                     data=bytes(prefill.region(stages[-1].prefill,'reverse',(start//256)%2,256,32,count))
                     a=ack(m,start,count,sequence,seed,final,sha256(data).digest())
-                    if bad_ack:a=bytes([a[0]^1])+a[1:]
+                    if suite:
+                        fields=list(P.ACK.unpack(a));fields[10:12]=[stages[0].sequence,stages[-1].sequence];a=P.ACK.pack(*fields)
+                    if bad_ack:
+                        fields=list(P.ACK.unpack(a));fields[10]-=1;a=P.ACK.pack(*fields)
                     provider.shared[1024:1280]=a
                     reply=base.REPLY.pack(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.)
                     server.sendall(reply[:5]);server.sendall(reply[5:])
@@ -128,14 +138,17 @@ class BulkTests(unittest.TestCase):
             except BaseException as error:server_errors.append(error)
         thread=threading.Thread(target=server_loop);thread.start()
         with TemporaryDirectory() as td:
-            path=Path(td)/'prompt.i32';raw=struct.pack('<520i',*m.prompt);path.write_bytes(raw)
+            path=Path(td)/'prompt.i32';raw=struct.pack(f'<{len(m.prompt)}i',*m.prompt);path.write_bytes(raw)
             plan=dict(dedicated_bulk_prefill=True,prefill_rows=256,prompt_tokens=m.prompt,
                 dedicated_prefill_prompt=str(path),dedicated_prefill_prompt_sha256=sha256(raw).hexdigest())
+            if suite:plan.update(dedicated_reset_protocol='ownrt.dedicated-reset-request.v2',dedicated_prefill_pipeline=True)
             if bad_ack:
                 with self.assertRaisesRegex(ValueError,'ACK'):P.run(stages,provider,m,plan,td)
                 self.assertEqual(m.frontier,0);self.assertFalse(m.rows);self.assertTrue(provider.prefill_bulk_busy)
             else:
                 result=P.run(stages,provider,m,plan,td)
+                if suite:
+                    self.assertEqual((m.frontier,m.provider_sequence), (65,32));self.assertEqual([v.sequence for v in m.stages],[8,20]);thread.join(1);self.assertFalse(thread.is_alive());self.assertFalse(server_errors);return
                 self.assertEqual(result['prefill_positions'],518);self.assertEqual(result['prefill_chunks'],3)
                 self.assertEqual((m.frontier,m.provider.serial,m.provider.next_seed,m.provider_sequence),(518,518,519,3))
                 self.assertEqual([s.sequence for s in m.stages],[3,3]);self.assertFalse(m.provider_jobs)

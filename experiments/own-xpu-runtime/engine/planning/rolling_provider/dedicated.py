@@ -77,7 +77,7 @@ class DedicatedArbiter(Arbiter):
 
 
 class DedicatedCoordinator(RollingCoordinator):
-    def __init__(self, *, provider_sequence=0, **kwargs):
+    def __init__(self, *, provider_sequence=0, dedicated_reset_suite=False, **kwargs):
         need(kwargs.get('stages') in (2, 3), 'dedicated provider supports two/three target owners')
         need(type(provider_sequence) is int and 0 <= provider_sequence < 2**31-100000,
              'bounded independent provider sequence')
@@ -87,6 +87,9 @@ class DedicatedCoordinator(RollingCoordinator):
         self.provider = DedicatedArbiter(stages=len(self.stages), request=self.request,
             epoch=self.epoch, last_input_position=self.limit-1, vocab=self.vocab,
             capture_ready_overlap=True, speculative_depth=self.speculative_depth)
+        self.prefill_start_sequences=tuple(s.sequence for s in self.stages)
+        self.prefill_start_provider_sequence=provider_sequence
+        self.dedicated_reset_suite=dedicated_reset_suite
         self.provider_sequence = provider_sequence
         self.provider_busy = None
 
@@ -99,16 +102,16 @@ class DedicatedCoordinator(RollingCoordinator):
         slots=native.slots;geometry(slots)
         chunks=(count+255)//256
         prompt_sha=sha256(struct.pack(f'<{len(self.prompt)}i',*self.prompt)).digest()
-        need(count==len(self.prompt)-2 and count>=256 and native.count==count
+        need(count==len(self.prompt)-2 and count>=(1 if self.dedicated_reset_suite else 256) and native.count==count
              and native.epoch==self.epoch and native.request==self.request and native.prompt_sha==prompt_sha
-             and native.target_sequences==(chunks,)*len(self.stages)
-             and native.provider_sequence==native.chunks==chunks and native.provider_serial==count
-             and self.provider_busy is None and self.provider_sequence==0 and self.provider.serial==0,
+             and native.target_sequences==tuple(s+chunks for s in self.prefill_start_sequences)
+             and native.provider_sequence==self.prefill_start_provider_sequence+chunks and native.chunks==chunks and native.provider_serial==count
+             and self.provider_busy is None and self.provider_sequence==self.prefill_start_provider_sequence and self.provider.serial==0,
              'dedicated complete native prefix receipt')
         need(len(native.last_ack)==ACK.size,'dedicated terminal prefix ACK extent')
         a=ACK.unpack(native.last_ack)
-        need(a[0:4]==(ACK_MAGIC,geometry(slots)[1],256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%slots)
-             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,slots if slots==4 else 0,0)
+        need(a[0:4]==(ACK_MAGIC,geometry(slots)[1],256,native.provider_sequence) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%slots)
+             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(native.target_sequences[0],native.target_sequences[-1],count+1,1,slots if slots==4 else 0,0)
              and a[16:20]==(self.epoch,count,self.request,prompt_sha) and a[-1]==bytes(16),
              'dedicated terminal actual chunk ACK binding')
         for stage,sequence in zip(self.stages,native.target_sequences):stage.sequence=sequence

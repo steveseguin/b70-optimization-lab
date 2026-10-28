@@ -72,7 +72,7 @@ def make_plan(path):
     prompt_path=None
     if bulk:
         from rolling_provider import dedicated_prefill
-        base.require(len(plan['prompt_tokens'])-2>=rows,'dedicated prefix must contain at least one bulk chunk')
+        base.require(len(plan['prompt_tokens'])-2>=(1 if config.get('dedicated_reset_protocol')=='ownrt.dedicated-reset-request.v2' else rows),'dedicated prefix must contain at least one bulk chunk')
         prompt_path=Path(config['dedicated_prefill_prompt']).resolve()
         base.require(str(prompt_path)==config['dedicated_prefill_prompt'], 'canonical absolute immutable prompt path')
         prompt_sha=config['dedicated_prefill_prompt_sha256']

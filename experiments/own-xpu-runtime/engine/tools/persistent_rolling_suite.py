@@ -89,7 +89,8 @@ def validate_receipt(receipt, descriptor, stage, policy, metadata_sha256):
             if provider else value==''),'reset cold provider host/Sequence identity')
 
 
-def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoch, request):
+def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoch, request,
+          dedicated=None, defer_rebind=False):
     base.require(plan.get('persistent_requests') is True and epoch==previous_epoch+1
         and all('--pipeline-ring-persistent-requests' in stage.spec['argv'] for stage in stages),
         'explicit native persistent reset capability and consecutive epoch')
@@ -113,6 +114,12 @@ def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoc
         descriptor=dict(schema=RESET_SCHEMA,stage_id=stage.spec['id'],global_sequence=sequence,
             previous_epoch=previous_epoch,next_epoch=epoch,previous_request_sha256=previous_request,
             next_request_sha256=request,destination=str(destination),oracle='')
+        if dedicated is not None:
+            base.require(plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2'
+                and defer_rebind, 'dedicated reset remains all-owner barrier')
+            descriptor.pop('stage_id')
+            descriptor.update(schema='ownrt.dedicated-reset-request.v2',role='target',
+                owner_index=stage.spec['id'],**dedicated)
         raw=(json.dumps(descriptor,sort_keys=True)+'\n').encode()
         base.require(len(raw)<=8192,'native reset descriptor byte bound')
         metadata.append((stage,path,destination,descriptor,raw))
@@ -143,7 +150,23 @@ def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoc
             receipt_path=destination/'ring-reset.json'
             receipt_raw=evidence.read_bounded(receipt_path,65536)
             receipt=json.loads(receipt_raw)
-            validate_receipt(receipt,descriptor,stage,plan['check_policy'],descriptor_sha)
+            if dedicated is None:
+                validate_receipt(receipt,descriptor,stage,plan['check_policy'],descriptor_sha)
+            else:
+                # Reuse all existing target physical/cold/allocation checks;
+                # external provider means NO target owns local draft state.
+                from types import SimpleNamespace
+                legacy={k:v for k,v in descriptor.items() if k not in
+                    ('role','owner_index','suite_sha256','prompt_sha256','prompt_index','prompt_tokens')}
+                legacy.update(schema=RESET_SCHEMA,stage_id=stage.spec['id'])
+                external=SimpleNamespace(spec=stage.spec,plan=dict(stage.plan,provider_stage=-1),
+                    committed=getattr(stage,'committed',0))
+                validate_receipt(receipt,legacy,external,plan['check_policy'],descriptor_sha)
+                base.require(receipt.get('dedicated_suite_sha256') == dedicated['suite_sha256']
+                    and receipt.get('dedicated_prompt_sha256') == dedicated['prompt_sha256']
+                    and receipt.get('dedicated_prompt_index') == dedicated['prompt_index']
+                    and receipt.get('dedicated_bulk_map_invalidated_bytes') == len(stage.prefill)
+                    and not any(stage.prefill[:]), 'target actual full bulk map invalidation/authority')
             record=dict(stage_id=stage.spec['id'],descriptor=descriptor,descriptor_path=str(path),
                 descriptor_sha256=descriptor_sha,receipt=receipt,receipt_path=str(receipt_path),
                 receipt_sha256=sha256(receipt_raw).hexdigest(),native_output=str(destination),reply_hex=bytes(raw).hex())
@@ -151,6 +174,7 @@ def reset(stages, plan, guard, output, *, previous_epoch, previous_request, epoc
             log.write(json.dumps(dict(event='completed',**record))+'\n');log.flush()
     # Only after every native owner attests cold state may Python replace its
     # target/provider ledgers. start_async does not reset the global sequence.
+    if defer_rebind:return receipts
     for stage in stages:
         base.require(len(stage.shared)==base.SHARED and not any(stage.shared[:]),
                      'native reset did not invalidate complete shared publication mapping')

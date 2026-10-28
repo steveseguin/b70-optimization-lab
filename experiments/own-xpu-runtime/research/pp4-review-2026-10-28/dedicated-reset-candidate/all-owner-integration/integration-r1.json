@@ -1,0 +1,37 @@
+{
+  "schema": "ownrt.dedicated-reset-integration.v1",
+  "status": "native-build-and-CPU-gates-pass-actual-ABA64K-active-unqualified",
+  "build_receipt": "/dev/shm/engine-build-dedicated-reset-20261028-r1/build-receipt.json",
+  "build_receipt_sha256": "46aa95e842c25ca4ec31d738932b7ae424939535ffe72775b9e124debe5475aa",
+  "binary_sha256": "e60f7427d5737bee1e4e521ffbad1c77f4ea687fbb86bd542f05fb495eb9e378",
+  "plan": "/dev/shm/sc117-dedicated-reset-aba64k-20261028-r1/plan.json",
+  "plan_sha256": "658ecc6cf54388dbbc451a2a7bc926caea344561b8ed445e76f2752a88e56417",
+  "unit": "sc117-dedicated-reset-aba64k-20261028-r1.service",
+  "invocation": "4252fdb67ecb4485bd2ceea325440ef6",
+  "review_findings_closed_before_GPU": [
+    "Cold full2092 target union includes27 alternate banks; canonical2065 counted separately, every bank checked in full source map/payload comparison",
+    "67-token runtime prompts require partial-only prefix under explicit suite capability; ordinary256 minimum retained",
+    "Cold DUMPs and RESET preserve global wire counters: adoption binds actual distinct starting counters plus chunk counts and lastACK absolute provider/seed/final sequences"
+  ],
+  "CPU_tests": [
+    {
+      "command": "python3 -B -m unittest test_suite_plan test_controller test_provider_reset -q",
+      "tests": 13,
+      "passed": true,
+      "scope": "isolated provider/controller with real sealed-byte fixture and alternate-only mutation refusal"
+    },
+    {
+      "command": "python3 -B -m unittest test_dedicated_prefill test_dedicated_capture test_dedicated_transport -q",
+      "tests": 26,
+      "passed": true,
+      "scope": "actual Python bulk pipeline/adoption with fake native target/socket provider including partial-only65rows nonzero distinct7/19/31 sequences and stale seedACK refusal"
+    },
+    {
+      "command": "python3 -B -m unittest test_dedicated_bulk_plan test_dedicated_provider_lifecycle -q",
+      "tests": 6,
+      "passed": true,
+      "scope": "planner/lifecycle CPU contracts including2/3/67token admission"
+    }
+  ],
+  "limits": "No GPU reset or full realistic-suite qualification yet. Explicit opt-in; default persistent provider refusal preserved. Native math unchanged. No performance headline from A-B-A reuse gate."
+}

@@ -1,6 +1,7 @@
 #pragma once
 #include "wire.hpp"
 #include "pipeline/provider_only/prefill.hpp"
+#include "pipeline/provider_only/request_suite.hpp"
 #include "checkpoint_ring.hpp"
 #include "engine_backend.hpp"
 #include "reset_descriptor.hpp"
@@ -24,6 +25,8 @@ class Dispatcher {
  struct PrefillReplay {int start;std::vector<int> tokens;size_t consumed=0;};
  std::vector<PrefillReplay> prefill_replay;
  std::unique_ptr<ownrt::provider_only::bulk::Prompt> bulk_prompt;
+ ownrt::provider_only::suite::Suite* dedicated_suite=nullptr;
+ std::span<uint8_t> dedicated_bulk_map;
  std::span<uint8_t> area(size_t offset,size_t bytes){require(offset<=mapped_bytes&&bytes<=mapped_bytes-offset,"ring shared metadata bound");return {shared+offset,bytes};}
  ownrt::ring_next::Row prefill_row(const Request& r){
   namespace wire=ownrt::ring_next::wire;const auto meta=wire::read<wire::RowMeta>(area(wire::row_offset,sizeof(wire::RowMeta)));
@@ -40,7 +43,7 @@ class Dispatcher {
   ownrt::live_draft::validate(h,context.stream_bytes,context.stages,context.vocab);std::memcpy(area(ownrt::live_draft::header_offset,sizeof h).data(),&h,sizeof h);reply.bytes=h.bytes;reply.token=h.next_token;
  }
 public:
- Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,mtp36::DraftRuntime* draft=nullptr)
+ Dispatcher(Engine& owner,SpeculativeImage& legacy,const OperatorStatePartition& partition,uint8_t* mapping,size_t mapping_bytes,bool full_byte_verify,uint64_t epoch,ownrt::ring_next::Digest request,mtp36::DraftRuntime* draft=nullptr,ownrt::provider_only::suite::Suite* reset_suite=nullptr,std::span<uint8_t> reset_bulk_map={})
   :e(owner),shared(mapping),mapped_bytes(mapping_bytes),verify(full_byte_verify),
    context{epoch,request,owner.a.pipeline_stage,int(owner.a.pipeline_boundaries.size()-1),int(owner.stream_bytes()),owner.p.g.vocab,owner.a.pipeline_ring_depth},
    original_output(owner.a.output),checkpoints(owner,full_byte_verify,partition,draft),backend(owner,legacy,checkpoints,mapping,[this]{reset_owner_state();}),provider(draft),
@@ -51,6 +54,13 @@ public:
   if(provider){require(provider->recursive_image&&provider->live_private_recursive_inventory()==partition.draft_private,"ring recursive private image census");peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_final_shared);if(owner.a.pipeline_provider_stage)seed_peer=std::make_unique<pipeline::recursive_provider::Peer>(owner.a.pipeline_ring_seed_shared);provider_sequence.emplace(context);draft_trace.open(e.a.output/"ring-draft-batches.jsonl");require(bool(draft_trace),"ring recursive trace open");if(owner.a.pipeline_ring_pending_provider){survival_trace.open(e.a.output/"ring-provider-survival.jsonl");require(bool(survival_trace),"provider survival trace open");}}
   checkpoints.write_layout(e.a.output/"ring-checkpoint-layout.json",owner.a.pipeline_ring_live_draft);
   if(owner.a.pipeline_external_provider&&owner.a.prefill_rows)bulk_prompt=std::make_unique<ownrt::provider_only::bulk::Prompt>(owner.a.provider_prefill_prompt,owner.a.provider_prefill_prompt_sha256,context);
+  if(reset_suite){
+   require(e.a.pipeline_external_provider&&e.a.pipeline_ring_persistent_requests&&
+    e.a.prefill_rows&&bulk_prompt&&!provider&&reset_bulk_map.data()&&
+    reset_bulk_map.size()==prefill::bytes(size_t(e.a.prefill_rows),e.stream_bytes(),e.a.prefill_slots),
+    "dedicated reset suite target/map ownership");
+   reset_suite->stable();dedicated_suite=reset_suite;dedicated_bulk_map=reset_bulk_map;
+  }else require(reset_bulk_map.empty(),"unadmitted reset bulk map");
   trace.open(e.a.output/"ring.jsonl");require(bool(trace),"ring trace open");
  }
  bool handles_command(int op)const{return (e.a.pipeline_ring_persistent_requests&&op==11)||handles(op)||(e.a.pipeline_ring_live_draft&&provider&&op==ownrt::ring_next::wire::batch_op);}

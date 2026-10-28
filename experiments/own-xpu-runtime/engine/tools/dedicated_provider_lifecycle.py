@@ -30,6 +30,11 @@ def execution_mode(plan):
 
 def execute(plan, admission, unit):
     execution_mode(plan)  # Reject malformed scheduling mode before any owner launch.
+    if plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2':
+        import dedicated_reset_suite,shutil
+        needed=dedicated_reset_suite.forecast(plan)
+        base.require(shutil.disk_usage('/dev/shm').free >= needed+plan['evidence_floor_bytes'],
+                     'full suite cold evidence forecast plus unchanged evidence floor')
     base.require(admission.get('schema') == 'ownrt.pipeline-admission.v1'
                  and admission.get('owner_authorized') is True, 'explicit admission required')
     base.require(datetime.fromisoformat(admission['expires_utc']) > datetime.now(timezone.utc),
@@ -77,11 +82,15 @@ def execute(plan, admission, unit):
                      'target/provider source boundary shape mismatch')
         guard.validate_or_stop(guard.obs.observe(), phase='main-after-ready')
         phases['request_start'] = time.monotonic()
-        result = bridge.drive(stages, provider, plan, guard, output)
+        if plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2':
+            import dedicated_reset_suite
+            result=dedicated_reset_suite.run(stages,provider,plan,guard,output,bridge)
+        else:
+            result = bridge.drive(stages, provider, plan, guard, output)
         phases['request_end'] = time.monotonic()
         # Target control protocol has no finish ACK; provider protocol does.
-        for stage in stages:
-            stage.command(4, position=2147483647)
+        for stage in ([] if result.get('final_target_dump_complete') else stages):
+            stage.command(4, position=2147483646 if plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2' else 2147483647)
         provider.control(4)
         guard.validate_or_stop(guard.obs.observe(), phase='main-before-finish')
         for stage in stages:
@@ -118,12 +127,12 @@ def execute(plan, admission, unit):
             guard_failure_evidence_error=guard.failure_evidence_error)
         phases['lifecycle_end'] = time.monotonic()
         terminal = dict(schema='ownrt.dedicated-provider-terminal.v1', passed=failure is None,
-            error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
+            error=failure, live_pids=alive, returncodes=codes, requests=result.get('requests',1) if result else 0,
             mode=execution_mode(plan),
             prefill_overlap_requested=plan.get('dedicated_prefill_pipeline',False),
             prefill_transport_slots=plan.get('dedicated_prefill_slots',2),
             diagnostic_only=True, speed_claim=False,
-            bulk_reset_qualified=False, bulk_overlap_qualified=False,
+            bulk_reset_qualified=result.get('bulk_reset_qualified',False), bulk_overlap_qualified=False,
             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',
             wall_seconds=phases['lifecycle_end']-start, lifecycle_phases=phases, **failure_details)
         receipt = dict(result)

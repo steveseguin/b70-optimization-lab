@@ -535,9 +535,12 @@ static int run_rank(const Options& a) {
    wave_checkpoint=std::make_unique<StageCheckpoint>(*engine,a.pipeline_wavefront_verify,provider?provider->live_pinned_inventory():std::vector<Allocation>{},operator_partition,provider.get());
    wave_trace.open(a.output/"wavefront.jsonl");require(bool(wave_trace),"wavefront trace open");
   }
+  std::unique_ptr<ownrt::provider_only::suite::Suite> dedicated_reset_suite;
   if(a.pipeline_ring){
    ownrt::ring_next::Digest request{};for(size_t i=0;i<request.size();++i)request[i]=uint8_t(std::stoul(a.pipeline_ring_request_sha256.substr(2*i,2),nullptr,16));
-   ring_dispatcher=std::make_unique<ring_next::Dispatcher>(*engine,image,operator_partition,static_cast<uint8_t*>(mapping),shared_bytes,a.pipeline_ring_verify,0,request,provider.get());
+   ownrt::ring_next::wire::Context reset_context{0,request,a.pipeline_stage,int(a.pipeline_boundaries.size()-1),int(engine->stream_bytes()),engine->p.g.vocab,a.pipeline_ring_depth};
+   dedicated_reset_suite=ownrt::provider_only::suite::Suite::startup(a,reset_context,engine->p.g.context);
+   ring_dispatcher=std::make_unique<ring_next::Dispatcher>(*engine,image,operator_partition,static_cast<uint8_t*>(mapping),shared_bytes,a.pipeline_ring_verify,0,request,provider.get(),dedicated_reset_suite.get(),dedicated_reset_suite?std::span<uint8_t>(prefill_base,prefill_map_bytes):std::span<uint8_t>{});
   }
 #ifndef OWN_RT_HOST_ONLY
   if(a.rank==0&&!a.gsq_packed)weights->warm_lookups();

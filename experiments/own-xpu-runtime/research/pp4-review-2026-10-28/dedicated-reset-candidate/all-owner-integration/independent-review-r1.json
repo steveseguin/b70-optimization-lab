@@ -1,0 +1,30 @@
+{
+  "schema": "ownrt.dedicated-reset-independent-review.v1",
+  "reviewer": "tie_sort",
+  "scope": "Read-only native overlay and pre-integration controller review; no GPU/build/canonical changes",
+  "source_sha256": {
+    "pipeline/provider_only/runtime.hpp": "d7a379f1899207a92a836577cef90ef847b2f67c28f48cdabef97075199dc16c",
+    "pipeline/provider_only/owner.hpp": "c718ff9d1dbfdd88f4f89bec25070770dd02d83ebb7b3ba71b25341c1f6770f5",
+    "pipeline/provider_only/reset_transaction.hpp": "002ffad18d2e743530cc04af1dd7de070944aa2738d9ca1d33e41238cac43c34",
+    "pipeline/provider_only/request_suite.hpp": "bd87231d091279271260072aa587e9e3713b51b2ed8c8d903edc0dee18102d77",
+    "pipeline/ring/persistent_reset.inc": "e1a6e446614e885a04edc4cba8b018a63ee4d9d2d954afa101ffad4f502ab2bb",
+    "pipeline/ring/dispatcher.hpp": "a05f5f82242db1ac417fecf9e41eb6adb47a1593ea3ce37795d3f167f39b5c6d",
+    "pipeline/ring/reset_descriptor.hpp": "e27f9647cd2760e5baf1bc7dd0c3e263afd8e675d593cc718677e845caf0c2a6"
+  },
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "blocking-before-post-reset-prefill",
+      "status": "reported-to-implementer",
+      "description": "Target persistent_reset zeroes all dedicated_bulk_map bytes, including prefill header. reset_all only checks zero then start_async; existing OP15 rank code and provider bulk peers both require valid geometry header. No existing prefill code republishes it.",
+      "repair": "After ALL owner ACKs and full cold-byte proof, restore exact base.prefill_geometry(plan) header on each retained target prefill map before first OP15; keep remaining bytes zero. Add reset-to-next-chunk fixture."
+    }
+  ],
+  "verified": [
+    "Provider final ACK follows native sealed baseline comparison of full canonical bytes/host metadata, private zero readback, allocation identity, prompt install and full shared invalidation.",
+    "Provider transaction callback failure poisons owner; target dedicated reset uses RAII poison. All-owner controller catch marks every actor poisoned before any next drive. Partial native context transition therefore requires halt, not rollback/retry.",
+    "Suite startup authenticates model auth bytes, immutable 12-prompt manifest, each prompt vocabulary/SHA, geometry and actual route env policy. Descriptor repeats selected prompt authority and current owner/sequence/epoch/request identity. Existing source/build pins remain separate required plan authority.",
+    "Target policy diagnostic flags are already tied to qualification/measured by Args; manifest policy binds check_policy plus route policy and geometry."
+  ],
+  "remaining": "Controller implementation and real cold-reader binding are owned by prefill_timing. Re-review only changed transition/geometry admission after implementation. Provider timing counters are still cumulative; host-wall timing is usable, per-request device phases require explicit counter boundary."
+}

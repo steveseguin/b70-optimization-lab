@@ -55,4 +55,23 @@ class BulkPlanTests(unittest.TestCase):
                 bad=dict(c,**{flag:True});config.write_text(json.dumps(bad))
                 with self.assertRaisesRegex(ValueError,'sequential'):driver.make_plan(config)
 
+    def test_partial_only_prefix_requires_explicit_suite(self):
+        with TemporaryDirectory() as td:
+            config,c,plan,receipt=self.fixture(Path(td))
+            for count in (2,3,67):
+                plan['prompt_tokens']=[i%90 for i in range(count)]
+                raw=struct.pack(f'<{count}i',*plan['prompt_tokens'])
+                Path(c['dedicated_prefill_prompt']).write_bytes(raw)
+                c['dedicated_prefill_prompt_sha256']=sha256(raw).hexdigest()
+                for suite in (False,True):
+                    cfg=dict(c)
+                    if suite:cfg['dedicated_reset_protocol']='ownrt.dedicated-reset-request.v2'
+                    config.write_text(json.dumps(cfg))
+                    with patch.object(driver.base,'make_plan',side_effect=lambda _:deepcopy(plan)):
+                        if suite and count>=3:
+                            actual=driver.make_plan(config)
+                            self.assertEqual(actual['prompt_tokens'],plan['prompt_tokens'])
+                        else:
+                            with self.assertRaisesRegex(ValueError,'dedicated prefix'):driver.make_plan(config)
+
 if __name__=='__main__':unittest.main()

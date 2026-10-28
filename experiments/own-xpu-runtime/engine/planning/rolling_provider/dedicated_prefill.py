@@ -114,9 +114,13 @@ def run(stages,provider,model,plan,output,*,stop_requested=None):
     rows=plan['prefill_rows'];bulk=len(model.prompt)-2
     slots=plan.get('dedicated_prefill_slots',2);prefill.geometry(slots)
     need(slots==2 or plan.get('dedicated_prefill_pipeline') is True,'four slots require dedicated pipeline')
-    need(rows==256 and bulk>=rows and len(stages)in (2,3) and model.frontier==0 and not model.rows
-         and provider.provider_serial==provider.sequence==0,'cold bounded dedicated prefix')
-    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 and getattr(s,'prefill_slots',2)==slots for s in stages),
+    suite=plan.get('dedicated_reset_protocol')=='ownrt.dedicated-reset-request.v2'
+    need(getattr(model,'dedicated_reset_suite',False)==suite,'suite prefix admission identity')
+    need(tuple(s.sequence for s in stages)==getattr(model,'prefill_start_sequences',(0,)*len(stages)) and provider.sequence==getattr(model,'prefill_start_provider_sequence',0),'current cold wire sequences')
+    need(suite or (provider.sequence==0 and all(s.sequence==0 for s in stages)),'ordinary cold wire sequences')
+    need(rows==256 and bulk>=(1 if suite else rows) and len(stages)in (2,3) and model.frontier==0 and not model.rows
+         and provider.provider_serial==0,'cold bounded dedicated prefix')
+    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and getattr(s,'prefill_slots',2)==slots for s in stages),
          'uniform fresh target prefill geometry')
     _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
     pipeline=plan.get('dedicated_prefill_pipeline',False)
@@ -198,25 +202,26 @@ def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256,slots=2
     need(1<=rows<=256 and len(journal)==len(native_chunks)==count_chunks and len(actual_pairs)==bulk,'complete actual native prefix trace inventory')
     prompt_sha=sha256(struct.pack(f'<{len(model.prompt)}i',*model.prompt)).digest()
     for index,(j,n) in enumerate(zip(journal,native_chunks)):
-        start=index*rows;count=min(rows,bulk-start);parity=index%slots;sequence=index+1
+        start=index*rows;count=min(rows,bulk-start);parity=index%slots;sequence=model.prefill_start_provider_sequence+index+1
+        target_sequences=[v+index+1 for v in model.prefill_start_sequences]
         need(j['event']=='authenticated-prefill-chunk' and (j['start'],j['count'],j['parity'])==(start,count,parity)
-             and j['target_sequences']==[sequence]*stages,'actual sequential chunk schedule')
+             and j['target_sequences']==target_sequences,'actual sequential chunk schedule')
         seed,final=bytes.fromhex(j['seed_record_hex']),bytes.fromhex(j['final_record_hex'])
         raw_sha=RECORD.unpack(final[:RECORD.size])[-2]
         common=dict(stages=stages,start=start,count=count,rows=rows,stream=stream,parity=parity,epoch=model.epoch,
             request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],after=model.proposals.hashes[start+count],
             prompt=model.prompt,raw_sha=raw_sha,slots=slots)
-        seed_sha=chunk_record(seed,role=1,stage=0,sequence=sequence,**common)
-        final_sha=chunk_record(final,role=2,stage=stages-1,sequence=sequence,**common)
+        seed_sha=chunk_record(seed,role=1,stage=0,sequence=target_sequences[0],**common)
+        final_sha=chunk_record(final,role=2,stage=stages-1,sequence=target_sequences[-1],**common)
         need(base.REQUEST.unpack(bytes.fromhex(j['provider_command_hex']))==(28,count,start,parity,0,sequence,MAGIC,VERSION), 'actual OP28 command frame')
         need(base.REPLY.unpack(bytes.fromhex(j['provider_reply_hex']))==(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.),'actual OP28 completion frame')
         chunk_ack(bytes.fromhex(j['provider_ack_hex']),sequence=sequence,start=start,count=count,parity=parity,rows=rows,
-            stream=stream,stages=stages,seed_sequence=sequence,final_sequence=sequence,epoch=model.epoch,
+            stream=stream,stages=stages,seed_sequence=target_sequences[0],final_sequence=target_sequences[-1],epoch=model.epoch,
             request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,slots=slots)
         need(len(j['target_reply_hex'])==stages,'all actual target chunk replies')
         for stage,reply in enumerate(j['target_reply_hex']):
             v=base.REPLY.unpack(bytes.fromhex(reply))
-            need(v[0]==v[2]==0 and v[3:8]==(count*stream,sequence,0 if stage==0 else 1,stage,int(stage==stages-1)), 'actual target OP15 source reply binding')
+            need(v[0]==v[2]==0 and v[3:8]==(count*stream,target_sequences[stage],0 if stage==0 else 1,stage,int(stage==stages-1)), 'actual target OP15 source reply binding')
         expected=dict(epoch=model.epoch,request=model.request.hex(),sequence=sequence,start=start,count=count,serial=start+count,
             prompt_sha256=prompt_sha.hex(),seed_record_sha256=seed_sha.hex(),final_record_sha256=final_sha.hex(),raw_sha256=raw_sha.hex())
         need(n==expected and all(type(n[k])is type(v) for k,v in expected.items()),'native chunk receipt differs from actual source/ACK')
@@ -225,7 +230,7 @@ def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256,slots=2
         hidden=row.get('hidden_sha256')
         need(set(row)==keys and all(type(row[k])is int for k in ('position','token','provider_serial','hidden_bytes','command_sequence')) and row['position']==position
              and row['token']==model.prompt[position] and row['head'] is False and row['provider_serial']==position
-             and row['hidden_bytes']==stream and row['command_sequence']==(position-1)//rows+1
+             and row['hidden_bytes']==stream and row['command_sequence']==model.prefill_start_provider_sequence+(position-1)//rows+1
              and type(hidden)is str and len(hidden)==64 and hidden==hidden.lower()
              and len(bytes.fromhex(hidden))==32,'actual contiguous no-head canonical prefix pair')
     return dict(actual_native_pairs=actual_pairs,actual_native_chunks=native_chunks,

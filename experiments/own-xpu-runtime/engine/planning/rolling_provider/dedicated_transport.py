@@ -165,8 +165,41 @@ class Provider:
         self.received.clear()
         return command, reply, result
 
-    def control(self, op):
-        base.require(op in (4, 5) and self.command_pending is None and not self.transmit
+    def reset_request(self, descriptor):
+        """Opt-in OP11, only for the suite-authenticated all-owner barrier."""
+        base.require(self.plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2'
+                     and not self.plan.get('dedicated_reset_poisoned'), 'dedicated reset capability/poison')
+        base.require(self.command_pending is None and not self.transmit and not self.received
+                     and not getattr(self,'prefill_bulk_busy',False), 'provider reset before publication write quiescence')
+        self.guard.check()
+        values = HEADER.unpack(bytes(self.shared[:HEADER.size]))
+        base.require(descriptor['schema'] == 'ownrt.dedicated-reset-request.v2'
+                     and descriptor['role'] == 'provider' and descriptor['owner_index'] == 0
+                     and descriptor['global_sequence'] == self.sequence+1
+                     and descriptor['previous_epoch'] == values[8]
+                     and descriptor['previous_request_sha256'] == values[9].hex()
+                     and descriptor['next_epoch'] == values[8]+1 and descriptor['oracle'] == '',
+                     'provider actual old Header/reset descriptor identity')
+        raw = struct.pack('<4IQ32s8s', MAGIC, VERSION, 64, self.sequence+1,
+                          descriptor['next_epoch'], bytes.fromhex(descriptor['next_request_sha256']), bytes(8))
+        self.shared[512:576] = raw
+        try:
+            reply = self.control(11, _reset=True)
+            expected = (MAGIC, VERSION, 128, 0, self.stream_bytes,
+                        len(self.plan['stages']), self.plan.get('speculative_depth',2), 0,
+                        descriptor['next_epoch'], bytes.fromhex(descriptor['next_request_sha256']), bytes(56))
+            base.require(HEADER.unpack(bytes(self.shared[:HEADER.size])) == expected
+                         and not any(self.shared[HEADER.size:]), 'provider reset Header/full publication invalidation')
+            self.provider_serial = 0
+            return reply
+        except BaseException:
+            self.plan['dedicated_reset_poisoned'] = True
+            raise
+
+    def control(self, op, *, _reset=False):
+        base.require((op in (4, 5) and not _reset or op == 11 and _reset
+                      and self.plan.get('dedicated_reset_protocol') == 'ownrt.dedicated-reset-request.v2')
+                     and self.command_pending is None and not self.transmit
                      and not self.received, 'dedicated only drained dump/finish controls')
         self.sock.settimeout(.2)
         self.sequence += 1
@@ -190,7 +223,8 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
     base.require(not any(k in plan for k in ('recursive_reference', 'scripted_proposal_tokens',
         'force_miss_positions', 'expected_outputs')), 'dedicated accepts no oracle inputs')
     bulk_mode=plan.get('dedicated_bulk_prefill',False)
-    base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
+    suite_mode=plan.get('dedicated_reset_protocol')=='ownrt.dedicated-reset-request.v2'
+    base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and (suite_mode or not plan.get('persistent_reset'))
                  and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
     slots=plan.get('dedicated_prefill_slots',2)
     base.require(type(slots)is int and slots in (2,4) and (slots==2 or (bulk_mode and plan.get('dedicated_prefill_pipeline') is True)),
@@ -200,7 +234,12 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
                  'dedicated prefix pipeline transport admission')
     base.require(len(stages) in (2, 3) and provider.stream_bytes is not None
                  and all(s.stream_bytes == provider.stream_bytes for s in stages), 'dedicated admitted geometry')
-    base.require(epoch == 0 and epoch == plan.get('epoch', 0), 'dedicated initial epoch only')
+    if suite_mode:
+        base.require(not plan.get('dedicated_reset_poisoned') and all(not getattr(s,'dedicated_reset_poisoned',False) for s in stages), 'dedicated suite poison')
+        from dedicated_reset_suite import admit_drive
+        admit_drive(stages,provider,plan,epoch)
+    else:
+        base.require(epoch == 0 and epoch == plan.get('epoch', 0), 'dedicated initial epoch only')
     # Request elapsed includes authenticated bulk work, as in the colocated
     # transport. Per-token intervals still use the same monotonic commit times.
     started = time.monotonic()
@@ -208,6 +247,7 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
         epoch=epoch, prompt=plan['prompt_tokens'], max_new=plan['max_new'], context=plan['context'],
         vocab=plan['vocab'], eos_token_ids=plan['eos_token_ids'], stream_bytes=provider.stream_bytes,
         initial_sequences=[s.sequence for s in stages], provider_sequence=provider.sequence,
+        dedicated_reset_suite=plan.get('dedicated_reset_protocol')=='ownrt.dedicated-reset-request.v2',
         speculative_depth=plan.get('speculative_depth', 2))
     prefill_result=dict(prefill_positions=0,prefill_draft_replay=0)
     if bulk_mode:

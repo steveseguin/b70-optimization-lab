@@ -1,5 +1,6 @@
 #pragma once
 #include "pipeline/provider_only/prefill.hpp"
+#include "pipeline/provider_only/reset_transaction.hpp"
 #include "pipeline/recursive_provider/capture_ready.hpp"
 namespace ownrt::provider_only {
 inline ring_next::Digest request_digest(const std::string& text){
@@ -25,6 +26,16 @@ void run_loop(Engine& engine,Draft& draft,const Options& options,uint8_t* shared
   bulk_chunks.open(options.output/"provider-prefill-chunks.jsonl");ring_next::need(bool(bulk_chunks),"bulk native chunk trace open");
   bulk_trace.open(options.output/"provider-prefill-pairs.jsonl");ring_next::need(bool(bulk_trace),"bulk native pair trace open");
  }
+ auto reset_suite=suite::Suite::startup(options,context,engine.p.g.context);
+ const auto cold_path=options.output/"provider-cold-baseline";
+ if(reset_suite){ring_next::need(prompt&&bulk_peers,"suite requires actual bulk provider");draft.live_dump(cold_path);}
+ auto allocation_identity=[&]{
+  std::ostringstream out;out<<engine.dev(0).generation()<<'\n';
+  auto item=[&](auto id,int card){const auto&r=engine.dev(card).arena.row(id);ring_next::need(r.live,"provider reset dead allocation");out<<id<<' '<<card<<' '<<r.bytes<<' '<<int(r.memory)<<' '<<int(r.category)<<' '<<uintptr_t(r.pointer)<<' '<<r.label<<'\n';};
+  for(const auto&[id,where]:engine.allocations)item(id,where.first);
+  for(auto id:draft.live_pinned_inventory())item(id,0);
+  const auto text=out.str();return bulk::hex(bulk::digest_bytes(text.data(),text.size()));
+ };
  wire::Header header;header.stream_bytes=context.stream_bytes;header.target_stages=context.stages;
  header.depth=context.depth;header.request=context.request;std::memcpy(shared,&header,sizeof header);
  wire::Reply ready;ready.bytes=context.stream_bytes;::pipeline::transfer(options.channel,&ready,sizeof ready,true,options.seconds);
@@ -70,6 +81,51 @@ void run_loop(Engine& engine,Draft& draft,const Options& options,uint8_t* shared
     wire::Reset reset;std::memcpy(&reset,shared+wire::reset_offset,sizeof reset);
     ring_next::need(reset.magic_==uint32_t(wire::magic)&&reset.version_==wire::version&&reset.bytes==sizeof reset&&
       reset.sequence==uint32_t(sequence)&&std::all_of(reset.zero.begin(),reset.zero.end(),[](auto n){return !n;}),"provider reset header");
+    if(reset_suite){
+     const auto metadata=options.output/("reset-"+std::to_string(sequence)+".json");
+     auto prepared=reset_suite->prepare(metadata,options.output,context,-1,sequence,true);
+     const auto& d=prepared.descriptor;
+     ring_next::need(reset.epoch==d.next_epoch&&reset.request==prepared.next.request,"provider wire/descriptor reset binding");
+     output=d.destination;ring_next::need(std::filesystem::create_directories(output),"provider suite fresh output");
+     std::string before,after;size_t canonical_bytes=0;
+     auto zero_private=[&](auto& runtime){
+      std::vector<uint8_t> zero(std::min(size_t(4*1024*1024),runtime.recursive_bytes));ring_next::need(!zero.empty(),"provider reset private extent");
+      for(size_t off=0;off<runtime.recursive_bytes;off+=zero.size())engine.upload(0,runtime.recursive_image,off,zero.data(),std::min(zero.size(),runtime.recursive_bytes-off));
+      engine.drain();
+      for(size_t off=0;off<runtime.recursive_bytes;off+=zero.size()){
+       const auto raw=engine.readback_range(0,runtime.recursive_image,off,std::min(zero.size(),runtime.recursive_bytes-off));
+       ring_next::need(std::all_of(raw.begin(),raw.end(),[](uint8_t b){return !b;}),"provider private reset bytes nonzero");
+      }
+     };
+     auto cold_check=[&]{
+      // Existing sealed Writer repeated-dump verification: checks EVERY owned
+      // canonical source and host metadata against the actual cold startup dump.
+      // It does not rewrite/rebaseline an existing seal.
+      draft.live_dump(cold_path);
+      canonical_bytes=0;for(auto id:draft.live_mutable_inventory())canonical_bytes+=engine.dev(0).arena.row(id).bytes;
+      for(auto id:draft.live_pinned_inventory())canonical_bytes+=engine.dev(0).arena.row(id).bytes;
+      return true;
+     };
+     auto seal_maintenance=[&](const BulkResetEvidence& evidence){
+      before=evidence.allocation_before;after=evidence.allocation_after;
+      auto reopen=[&](std::ofstream& stream,const char* name){stream.close();stream.clear();stream.open(output/name);ring_next::need(bool(stream),"provider reset bulk trace open");};
+      reopen(bulk_trace,"provider-prefill-pairs.jsonl");reopen(bulk_chunks,"provider-prefill-chunks.jsonl");
+      std::ofstream maintenance(output/"provider-reset-maintenance.json");
+      maintenance<<"{\"canonical_full_sealed_baseline_verified\":true,\"canonical_bytes\":"<<canonical_bytes<<",\"private_zero_bytes\":"<<draft.recursive_bytes<<",\"shared_invalidated_bytes\":"<<evidence.invalidated_bytes<<"}\n";
+      maintenance.flush();ring_next::need(bool(maintenance),"provider reset maintenance receipt write");
+     };
+     reset_bulk_owner(owner,prepared,prompt,std::span<uint8_t>(shared,wire::shared_bytes),zero_private,allocation_identity,cold_check,seal_maintenance,true);
+     context=prepared.next;std::memcpy(&header,shared,sizeof header);
+     ring_next::need(owner.bulk_reset_ready(),"provider reset receipt before bulk readiness");
+     std::ofstream receipt(output/"provider-reset.json");
+     receipt<<"{\"schema\":\"ownrt.dedicated-provider-reset.v1\",\"passed\":true,\"global_sequence\":"<<sequence
+      <<",\"next_epoch\":"<<context.epoch<<",\"next_request_sha256\":\""<<bulk::hex(context.request)
+      <<"\",\"prompt_sha256\":\""<<d.prompt.prompt_sha<<"\",\"suite_sha256\":\""<<d.prompt.suite_sha<<"\",\"prompt_index\":"<<d.prompt.index
+      <<",\"metadata_sha256\":\""<<bulk::hex(bulk::digest_bytes(d.raw.data(),d.raw.size()))<<"\",\"provider_serial\":0,\"bulk_closed\":false,\"bulk_used\":false"
+      <<",\"allocation_inventory_before_sha256\":\""<<before<<"\",\"allocation_inventory_after_sha256\":\""<<after
+      <<"\",\"canonical_full_sealed_baseline_verified\":true,\"canonical_bytes\":"<<canonical_bytes<<",\"private_zero_bytes\":"<<draft.recursive_bytes<<"}\n";
+     receipt.flush();ring_next::need(bool(receipt),"provider final reset receipt write");
+    }else{
     output=options.output/("request-"+std::to_string(reset.epoch));
     ring_next::need(std::filesystem::create_directory(output),"provider reset fresh output");
     owner.reset(sequence,reset.epoch,reset.request,output,[&](auto& runtime){
@@ -81,6 +137,7 @@ void run_loop(Engine& engine,Draft& draft,const Options& options,uint8_t* shared
     });
     context.epoch=reset.epoch;context.request=reset.request;header.epoch=context.epoch;header.request=context.request;
     std::memcpy(shared,&header,sizeof header);
+    }
    }else if(request.op==wire::dump_op){draft.live_dump(output/("provider-dump-"+std::to_string(sequence)));}
    else if(request.op==wire::finish_op){draft.live_dump(output/("provider-finish-"+std::to_string(sequence)));}
   }

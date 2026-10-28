@@ -1,0 +1,80 @@
+{
+  "schema": "ownrt.dedicated-all-owner-overlay.v2",
+  "canonical_changes": false,
+  "native_compiled": false,
+  "model_loaded": false,
+  "gpu_used": false,
+  "status": "controller/native overlay complete for review; native full build and actual all-owner gate unrun",
+  "provider_runtime_fixture": {
+    "passed": true,
+    "compile_exit_code": 0,
+    "run_exit_code": 0,
+    "compile_tool_chunks": [
+      "be5203",
+      "84ad10"
+    ],
+    "run_tool_chunk": "9bb121",
+    "binary": "/dev/shm/sc117-dedicated-runtime-fixture-20261028-r3",
+    "binary_sha256": "54eadec7244a9a73a4d0f92ba40ae10496b33664fee66f06bb950e1eaf1132ad",
+    "fixture_sha256": "444aa40314cc9e7af10f3957045f3d2b9c59965fc7ca39ed4ad6141aaade10a6",
+    "coverage": "actual provider run_loop/Owner/Suite/Prompt/OP11/header and trace rotation; synthetic 73-source engine; real sealed cold reader; changed policy and malformed route env refusals",
+    "not_covered": "native Engine compilation, target Dispatcher execution, GPU arithmetic, full-model all-owner A-B-A lifecycle"
+  },
+  "comparison_snapshot_bases": {
+    "engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "70819127644a423b5b440c90b3214902d335f8f8badbb144bd0e3d7761f12fd5",
+    "engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "3302e0a87401dae4ea2093438a849b6d877d64908940eeba30ed3a1e830075bb",
+    "engine/src/pipeline/provider_only/owner.hpp": "07dec1107057919a438690a8d594ac47e8486f92d8fdaa3945864cafb793ece0",
+    "engine/src/pipeline/provider_only/runtime.hpp": "b80def7903255c931193b781b2f1b2913bede8741f64293c8f3672703e806a15",
+    "engine/src/pipeline/ring/dispatcher.hpp": "3a55b79c15b882b599672d1b5500dc867d92f0a8613a63507b6e16199a5b1cee",
+    "engine/src/pipeline/ring/persistent_reset.inc": "555aedd9803b8b1b69eb4e56b1275876959487676c8e7cff46fd8bfa6bd42e65",
+    "engine/src/pipeline/ring/reset_descriptor.hpp": "95c1bad473c661ee46c5e5cde034185d77d1b7728f5b285d938f0c42761036d5",
+    "engine/planning/rolling_provider/dedicated_transport.py": "001dd6bbf05a7535f46933062363f37cf16ca57ea01007662b39e5162cf36887",
+    "engine/tools/dedicated_provider_lifecycle.py": "75c9993ee11435a3e5924f8fd99f272bf8f0860660229b0fc1b1f94b9f992b58",
+    "engine/tools/persistent_rolling_suite.py": "7885e43d3a17c419600787813ea91adc164b5555d8535b015ad4ec248d288c45"
+  },
+  "files": {
+    "overlay/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp": "d8ed118ce6fa0667a41f3f912eeba0987f23e74f68417da06d56a61a61458ecd",
+    "overlay/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp": "ef655362830c270fc47d27434e35de91f18b898b71435845dffe81f078a1f55e",
+    "overlay/pipeline/provider_only/owner.hpp": "c718ff9d1dbfdd88f4f89bec25070770dd02d83ebb7b3ba71b25341c1f6770f5",
+    "overlay/pipeline/provider_only/request_suite.hpp": "bd87231d091279271260072aa587e9e3713b51b2ed8c8d903edc0dee18102d77",
+    "overlay/pipeline/provider_only/reset_transaction.hpp": "002ffad18d2e743530cc04af1dd7de070944aa2738d9ca1d33e41238cac43c34",
+    "overlay/pipeline/provider_only/runtime.hpp": "d7a379f1899207a92a836577cef90ef847b2f67c28f48cdabef97075199dc16c",
+    "overlay/pipeline/ring/dispatcher.hpp": "a05f5f82242db1ac417fecf9e41eb6adb47a1593ea3ce37795d3f167f39b5c6d",
+    "overlay/pipeline/ring/persistent_reset.inc": "e1a6e446614e885a04edc4cba8b018a63ee4d9d2d954afa101ffad4f502ab2bb",
+    "overlay/pipeline/ring/reset_descriptor.hpp": "e27f9647cd2760e5baf1bc7dd0c3e263afd8e675d593cc718677e845caf0c2a6",
+    "overlay/planning/rolling_provider/dedicated_transport.py": "7911734c98b7849e66ceb88289f02f8df7329c79fbe107d69ef3305b59c351fe",
+    "overlay/tools/dedicated_provider_lifecycle.py": "00c35ec28186bccd0c9c2bb138217a584a375e8b6a067372ffabb370925b8c1f",
+    "overlay/tools/dedicated_provider_suite_plan.py": "149fbcb27813723c473cdd104c3945e46e04dfef5bdf435f959f6393d5868d06",
+    "overlay/tools/dedicated_reset_suite.py": "29a2b871333504fbb14c2fec44b353307ecf5be712f5ed6a55bef1bdb678a1d9",
+    "overlay/tools/persistent_rolling_suite.py": "f840f70b3117794f0804ddf1774c4645a1661f30f1e08fc113ec4f5192cf1771",
+    "overlay/tools/reset_all.py": "281bdb77b0a35429af9f6911aef85cc438a3e5e916bbb00bd4057b0576274795"
+  },
+  "patch_sha256": "4418324ce78c14d55f6d8f85abe2d4650ac35029ecb59b9907ff07b29d7f3338",
+  "application_warning": "main/rank current-canonical diff inspected: only reset hunks. Overlay remains isolated; source pins must be regenerated after reviewed integration, then actual full build and A-B-A gate.",
+  "controller_tests": {
+    "passed": true,
+    "count": 6,
+    "seconds": 0.071,
+    "tool_chunk": "ea110c",
+    "coverage": "actual sealed reader and full payload compare; real reset_all transaction with mocked owner ACK transport; first OP15 admission after all ACK/cold/header; partial failure poison and no publication; inventory negative checks",
+    "test_source_sha256": "6f63b7e7c1bf07fc65e2db694047623b022a985eff95b77529ab013b97c22f2a"
+  },
+  "suite_plan_revision": {
+    "closed_findings": [
+      "R2 dependency source pins",
+      "R3 exact native 3..context-512 bounds",
+      "R4 separate exclusive preparation and read-only plan regeneration, validated --run"
+    ],
+    "cpu_tests_passed": 13,
+    "suite_plan_tests": 4,
+    "test_source_sha256": "848a4f88f8933dbc934b770fbdba646d212b4f3d83d88ab34455ee4dfbf532ba",
+    "limitation": "Single planner and lifecycle mocked in suite entry tests; real admission/build/native/GPU gate remains unrun."
+  },
+  "cold_inactive_bank_fix": {
+    "canonical_python_applied": true,
+    "native_build_unchanged": true,
+    "count_contract": "2065 canonical plus exact native-declared inactive banks, all included in full source and byte proof",
+    "tests_passed": 13,
+    "test_controller_sha256": "83132b5fbebcd8c867eeeac71dbaf12f12532ac711d61557d911aacead815a53"
+  }
+}

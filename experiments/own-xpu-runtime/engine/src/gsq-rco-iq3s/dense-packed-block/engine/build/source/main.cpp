@@ -159,6 +159,7 @@ struct Options {
   bool tp_replicate=false;
   // Explicit draft-only process, distinct from every target pipeline stage.
   bool provider_only=false,provider_capture_ready=false;
+  fs::path dedicated_reset_suite;std::string dedicated_reset_suite_sha256;
   std::string provider_bdf;std::vector<std::string> provider_target_bdfs;
   fs::path provider_seed_shared,provider_final_shared,provider_replay;
   std::string provider_replay_sha256;
@@ -245,6 +246,8 @@ static Options parse(int argc, char **argv) {
     else if(k=="--prefill-slots")a.prefill_slots=std::stoi(value());
     else if(k=="--provider-replay")a.provider_replay=value();
     else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
+    else if(k=="--dedicated-reset-suite")a.dedicated_reset_suite=value();
+    else if(k=="--dedicated-reset-suite-sha256")a.dedicated_reset_suite_sha256=value();
     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
     else if(k=="--pipeline-ring-check-policy")a.pipeline_ring_check_policy=value();
     else if(k=="--pipeline-ring-pending-provider")a.pipeline_ring_pending_provider=true;
@@ -356,6 +359,13 @@ static Options parse(int argc, char **argv) {
       a.oracle = value();
     else
       throw std::runtime_error("unknown option " + k);
+  }
+  require(a.dedicated_reset_suite.empty()==a.dedicated_reset_suite_sha256.empty(),"dedicated reset suite path/SHA together");
+  if(!a.dedicated_reset_suite.empty()){
+   require(a.dedicated_reset_suite.is_absolute()&&a.dedicated_reset_suite==a.dedicated_reset_suite.lexically_normal()&&
+    a.dedicated_reset_suite_sha256.size()==64&&std::all_of(a.dedicated_reset_suite_sha256.begin(),a.dedicated_reset_suite_sha256.end(),[](char c){return(c>='0'&&c<='9')||(c>='a'&&c<='f');})&&
+    a.oracle.empty()&&a.f32_activations&&(a.provider_only||(a.pipeline_external_provider&&a.pipeline_ring_persistent_requests)),
+    "dedicated suite explicit role/exact/no-oracle admission");
   }
   if(a.provider_only){
     require(!a.prefill_rows,"provider-only uses provider-prefill-rows alias");a.prefill_rows=a.provider_prefill_rows;

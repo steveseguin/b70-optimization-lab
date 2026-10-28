@@ -1,0 +1,62 @@
+#define PROVIDER_OWNER_FIXTURE_ONLY
+#include "test_provider_only_owner.cpp"
+#include "gsq-rco-iq3s/state-bundle/bundle.hpp"
+#include <fstream>
+namespace pipeline {void transfer(int,void*,size_t,bool,int);}
+#include "pipeline/provider_only/runtime.hpp"
+namespace fs=std::filesystem;namespace po=ownrt::provider_only;namespace reset=ownrt::ring_next::reset;
+struct TestOptions {
+ fs::path output,auth,dedicated_reset_suite,provider_replay,provider_prefill_prompt,provider_prefill_seed_shared,provider_prefill_final_shared,provider_seed_shared,provider_final_shared,oracle;
+ std::string dedicated_reset_suite_sha256,provider_prefill_prompt_sha256,pipeline_ring_request_sha256,pipeline_ring_check_policy="qualification",provider_bdf="draft";
+ std::vector<std::string> provider_target_bdfs{"target0","target1"};int pipeline_ring_depth=3,prefill_rows=2,prefill_slots=2,channel=1,seconds=5;
+ bool f32_activations=true,pipeline_ring_recursive_verify=true,provider_capture_ready=false;
+};
+struct Row{bool live=true;size_t bytes=0;int memory=0,category=0;void*pointer=nullptr;std::string label;};
+struct NativeRuntime:Runtime {
+ bool fault=false;std::vector<uint8_t> backup=std::vector<uint8_t>(32,0);
+ size_t recursive_bytes=32;int recursive_image=73;
+ NativeRuntime(){for(auto&a:state.allocations)std::fill(a.begin(),a.end(),0);state.allocations[0][0]=1;}
+ int live_step(int t,int p,bool h,const void*data,size_t n){return canonical(t,p,h,std::vector<uint8_t>((const uint8_t*)data,(const uint8_t*)data+n));}
+ void reset_request(const fs::path& out){state.position=0;state.extent=32;state.pending=0;state.event=0;state.hidden.clear();for(auto&a:state.allocations)std::fill(a.begin(),a.end(),0);state.allocations[0][0]=1;if(fault)state.allocations[72][0]=1;std::ofstream(out/"draft-rows.jsonl");}
+ auto live_mutable_inventory()const{std::vector<int>ids;for(int i=0;i<71;++i)ids.push_back(i);return ids;}
+ auto live_pinned_inventory()const{return std::vector<int>{71,72};}
+ void live_dump(const fs::path& p){fs::create_directories(p);gsq_bundle::Writer writer(p);for(int i=0;i<73;++i){auto&a=state.allocations[i];writer.append("draft-row"+std::to_string(i)+".bin",a.data(),a.size());}writer.finish("{\"position\":"+std::to_string(state.position)+",\"extent\":"+std::to_string(state.extent)+"}");}
+};
+struct Engine {
+ NativeRuntime& d;struct{struct{int vocab=97,context=4096;}g;}p;
+ std::map<int,std::pair<int,int>>allocations;std::map<int,Row>rows;
+ struct Arena{Engine*e;const Row&row(int id)const{return e->rows.at(id);}};
+ struct Device{Arena arena;int generation()const{return 7;}}device;
+ explicit Engine(NativeRuntime&r):d(r),device{{this}}{for(int i=0;i<74;++i){auto&a=i==73?d.backup:d.state.allocations[i];rows[i]={true,a.size(),i>=71&&i<=72?1:0,2,a.data(),"draft-row"+std::to_string(i)};allocations[i]={0,0};}}
+ Device&dev(int){return device;}size_t stream_bytes()const{return 16;}void drain(){}
+ void upload(int,int id,size_t off,const void*p,size_t n){auto&r=rows.at(id);assert(off+n<=r.bytes);std::memcpy((uint8_t*)r.pointer+off,p,n);if(id==73)++d.private_zeroes;}
+ auto readback_range(int,int id,size_t off,size_t n){auto&r=rows.at(id);assert(off+n<=r.bytes);auto*b=(uint8_t*)r.pointer;return std::vector<uint8_t>(b+off,b+off+n);}
+};
+void write(const fs::path&p,const std::string&s){std::ofstream f(p,std::ios::binary);f.write(s.data(),s.size());assert(f);}
+std::string digest(const std::string&s){return po::bulk::hex(po::bulk::digest_bytes(s.data(),s.size()));}
+std::vector<po::wire::Request>incoming;std::vector<po::wire::Reply>outgoing;size_t cursor;uint8_t*active_shared;TestOptions*active_options;
+void pipeline::transfer(int,void*p,size_t n,bool sending,int){
+ if(sending){assert(n==sizeof(po::wire::Reply));po::wire::Reply r;std::memcpy(&r,p,n);outgoing.push_back(r);return;}
+ assert(n==sizeof(po::wire::Request)&&cursor<incoming.size());auto request=incoming[cursor++];
+ if(request.op==po::wire::reset_op){po::wire::Reset r;r.sequence=request.sequence;r.epoch=1;r.request=reset::digest(std::string(64,'b'));std::memcpy(active_shared+po::wire::reset_offset,&r,sizeof r);}
+ std::memcpy(p,&request,n);
+}
+int main(int argc,char**argv){assert(argc==2);fs::path root=fs::absolute(argv[1]);assert(fs::create_directory(root));
+ for(bool fault:{false,true}){
+  auto out=root/(fault?"bad":"good");fs::create_directory(out);TestOptions a;a.output=out;a.auth=out/"identity";write(a.auth,"actual model admission fixture\n");a.pipeline_ring_request_sha256=std::string(64,'a');
+  auto c=ring_next::wire::Context{0,reset::digest(a.pipeline_ring_request_sha256),0,2,16,97,3};
+  const std::string policy="ownrt.dedicated-reset-policy.v1\nF32\nqualification\n4096\n3\n2\n2\n";
+  std::string manifest="{\"schema\":\"ownrt.dedicated-prompt-suite.v1\",\"requests\":12,\"context\":4096,\"max_new\":512,\"model_identity_sha256\":\""+digest("actual model admission fixture\n")+"\",\"policy_sha256\":\""+digest(policy)+"\"";
+  for(int i=0;i<12;++i){std::string raw(12,0);int32_t words[]={1+i,2+i,3+i};std::memcpy(raw.data(),words,12);auto path=out/("prompt"+std::to_string(i));write(path,raw);auto key="prompt_"+std::to_string(i)+"_";manifest+=",\""+key+"path\":\""+path.string()+"\",\""+key+"tokens\":3,\""+key+"sha256\":\""+digest(raw)+"\"";if(i==0){a.provider_prefill_prompt=path;a.provider_prefill_prompt_sha256=digest(raw);}}
+  manifest+="}";a.dedicated_reset_suite=out/"suite";a.dedicated_reset_suite_sha256=digest(manifest);write(a.dedicated_reset_suite,manifest);
+  auto startup=po::suite::Suite::startup(a,c,4096);auto auth=startup->authority(1);
+  auto destination=out/"request-1";
+  write(out/"reset-1.json","{\"schema\":\"ownrt.dedicated-reset-request.v2\",\"role\":\"provider\",\"owner_index\":0,\"global_sequence\":1,\"previous_epoch\":0,\"next_epoch\":1,\"previous_request_sha256\":\""+a.pipeline_ring_request_sha256+"\",\"next_request_sha256\":\""+std::string(64,'b')+"\",\"destination\":\""+destination.string()+"\",\"oracle\":\"\",\"suite_sha256\":\""+auth.suite_sha+"\",\"prompt_sha256\":\""+auth.prompt_sha+"\",\"prompt_index\":1,\"prompt_tokens\":3}");
+  a.provider_seed_shared=out/"seed";a.provider_final_shared=out/"final";write(a.provider_seed_shared,std::string(po::wire::shared_bytes,0));write(a.provider_final_shared,std::string(po::wire::shared_bytes,0));
+  a.provider_prefill_seed_shared=out/"bulk-seed";a.provider_prefill_final_shared=out/"bulk-final";const size_t bytes=::pipeline::prefill::bytes(2,16,2);write(a.provider_prefill_seed_shared,std::string(bytes,0));write(a.provider_prefill_final_shared,std::string(bytes,0));
+  NativeRuntime draft;draft.fault=fault;Engine engine(draft);std::vector<uint8_t>shared(po::wire::shared_bytes,0xa5);active_shared=shared.data();active_options=&a;incoming={{11,0,0,0,0,1},{5,0,0,0,0,2}};outgoing.clear();cursor=0;
+  if(fault){refusal([&]{po::run_loop(engine,draft,a,shared.data());});assert(outgoing.size()==1&&!fs::exists(destination/"provider-reset.json"));}
+  else{po::run_loop(engine,draft,a,shared.data());assert(outgoing.size()==3&&outgoing[1].sequence==1&&outgoing[2].sequence==2);assert(fs::exists(destination/"provider-reset.json")&&fs::exists(destination/"provider-prefill-pairs.jsonl")&&fs::exists(destination/"provider-prefill-chunks.jsonl"));po::wire::Header h;std::memcpy(&h,shared.data(),sizeof h);assert(h.epoch==1&&h.request==reset::digest(std::string(64,'b')));}
+ }
+ std::cout<<"PASS actual provider run_loop/Owner/Prompt/descriptor/immutable startup/OP11/header+trace rotation and sealed cold-reader refusal; synthetic engine73 sources, no native Engine/GPU arithmetic\n";
+}

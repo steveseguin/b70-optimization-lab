@@ -40,6 +40,7 @@ public:
  const Topology& topology()const{return topology_;}
  uint64_t serial()const{return sequence_->serial();}
  bool failed()const{return failed_;}
+ bool bulk_reset_ready()const{return !failed_&&!bulk_used_&&!bulk_closed_&&serial()==0;}
  const recursive_provider_next::Result& last_result()const{return sequence_->last_result();}
  void boundary(){
   ring_next::need(!failed_&&!sequence_->poisoned(),"dedicated MTP failed owner");
@@ -106,6 +107,25 @@ public:
    auto result=draft.live_recursive_depth2(*sequence_,input,expected,false);
    ring_next::need(!result.available_depth&&result.guess0==-1,"dedicated MTP no-head completion");
    last_final_commit_=final.hidden.commit_sequence;boundary();
+  }catch(...){failed_=true;throw;}
+ }
+ // Isolated opt-in bulk reset component. The completion owns authenticated
+ // prompt installation, publication cleanup, cold/allocation receipts. It must
+ // finish before bulk eligibility returns; a partial failure poisons this owner.
+ template<class Path,class ZeroPrivate,class Complete> void reset_bulk_transaction(
+      int command,uint64_t epoch,ring_next::Digest request,const Path& destination,
+      ZeroPrivate zero_private,Complete complete,bool capability=false){
+  ring_next::need(capability&&!failed_&&command>last_command_&&
+    epoch==context_.epoch+1&&request!=context_.request,
+    "dedicated bulk reset identity/explicit capability");
+  try{
+   boundary();draft.live_reset_admission();
+   draft.reset_request(destination);zero_private(draft);
+   draft.recursive_reset_after_owner_zero();
+   context_.epoch=epoch;context_.request=request;
+   sequence_.emplace(context_);last_command_=command;last_final_commit_=0;
+   boundary();complete(context_);boundary();
+   bulk_used_=false;bulk_closed_=false;
   }catch(...){failed_=true;throw;}
  }
  // Outer lifecycle attests the old request, then barriers every target owner.

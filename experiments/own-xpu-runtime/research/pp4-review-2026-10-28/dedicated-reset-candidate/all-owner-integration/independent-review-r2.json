@@ -1,0 +1,44 @@
+{
+  "schema": "ownrt.dedicated-reset-independent-review.v2",
+  "reviewer": "tie_sort",
+  "scope": "Read-only controller/lifecycle review, no canonical edits/build/GPU",
+  "source_sha256": {
+    "tools/dedicated_reset_suite.py": "cca2d21ff193e0f1f4a51cac4aaf42079b8d43b051db71f52a82ad374b0e2dc2",
+    "tools/dedicated_provider_suite_plan.py": "c00d8c84459eb81cf6a2f46fa1203b9030a91088c26afc8230b99f1bfe8c9e9c",
+    "tools/dedicated_provider_lifecycle.py": "00c35ec28186bccd0c9c2bb138217a584a375e8b6a067372ffabb370925b8c1f",
+    "tools/reset_all.py": "281bdb77b0a35429af9f6911aef85cc438a3e5e916bbb00bd4057b0576274795",
+    "planning/rolling_provider/dedicated_transport.py": "7911734c98b7849e66ceb88289f02f8df7329c79fbe107d69ef3305b59c351fe"
+  },
+  "cpu_tests": {
+    "command": "python3 -B test_controller.py -v",
+    "tests": 6,
+    "passed": true,
+    "wall_s": 0.076,
+    "tool_chunk": "96b634"
+  },
+  "closed_findings": [
+    "R1 target bulk header now restored only after all ACKs and full cold proof; tail remains zero before next OP15.",
+    "A-B-A now includes actual provider73 source map and complete payload bytes, plus exact actual output IDs."
+  ],
+  "open_findings": [
+    {
+      "id": "R2",
+      "description": "Pin newly loaded sealed reader, persistent_live_suite and rolling_ring_driver code in suite plan; original dedicated planner does not pin these new dependencies."
+    },
+    {
+      "id": "R3",
+      "description": "Planner token bounds permit1/2 tokens and context-511; native suite requires3..context-512. Refuse during preparation/planning."
+    },
+    {
+      "id": "R4",
+      "description": "Suite planner mutates/fresh-refuses authority directory and cannot be replayed by existing run validation. Existing dedicated CLI calls only single planner; direct lifecycle.execute skips admission plan SHA and pinned-source verification. Need explicit validated suite run entry or pure planner after authority preparation."
+    }
+  ],
+  "positive_review": [
+    "Common request plan assigned to all actors after completed barrier; readiness transferred then consumed once before drive. Original specs retain native owner identity and guard retains original stage/provider set.",
+    "Failed partial transition sets process/provider poison and per-target poison; no next request drive follows caught lifecycle error. Header publication begins only after cold comparison returns verified2065+73 source counts/full bytes.",
+    "Monotonic wire sequences preserved through control dumps/resets and seeded into new coordinator. Existing post-drive sockets are returned to blocking timeout mode.",
+    "All requests share existing passive guard/deadline and only one finalFINISH; no restarts or new owners."
+  ],
+  "limitations": "CPU tests mock native transport ACKs and model; native provider fixture is separate. Actual A-B-A native gate pending; no model quality or speed claim. Canonical-pair helper needs per-request paths/starting-sequence adaptation, so it was not copied into this gate."
+}
