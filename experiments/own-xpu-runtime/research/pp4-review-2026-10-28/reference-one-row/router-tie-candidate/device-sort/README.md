@@ -31,11 +31,16 @@ paths. This establishes the tested CPU compatibility; it does not prove model
 quality generally or establish a speed improvement. The source fixture relies
 on GCC 13 internal helper names specifically to cover forced heap fallback.
 
-## Prepared device gate (launch owned by coordinator)
+## Completed device gate (launched by coordinator)
 
 Offline AOT compilation for `intel_gpu_bmg_g31` succeeded with oneAPI 2026.0.
 `device-build.json` records the exact compile command and binary/input hashes.
-The candidate author did not launch this executable or open a GPU.
+The candidate author did not launch this executable or open a GPU. The coordinator
+subsequently ran it once on physical card `0000:27:00.0`: all 262,144 indices
+matched, with zero invalid rows/canary errors and bitwise unchanged input. Unit
+exit status was zero; passive postflight found no holders or changed kernel
+journal hash. See `device-result.json`. An earlier passive admission refusal,
+before any device launch, is retained in that record.
 
 The probe has 512 independent work items, each with a private 512-index array and
 18-frame sort stack. It allocates exactly **2,103,296 explicit device bytes**:
@@ -52,7 +57,8 @@ native probability rows are host replays from captured native router scores,
 not new GPU probability captures. Synthetic cases include signed zero and
 subnormal keys; not all synthetic keys are normalized probabilities.
 
-After coordinator admission, the intended single invocation is:
+The coordinator used the following probe invocation (complete bounded unit,
+environment and command are in `device-result.json`):
 
 ```sh
 env FilterBdfPath=0000:27:00.0 OWNRT_REFERENCE_SORT_PROBE=1 \
@@ -68,9 +74,10 @@ load. Failure must not trigger automatic retries or host/device resets.
 
 ## Remaining decisions
 
-The private-array probe establishes device semantics only. Before runtime use,
+The private-array probe establishes the tested device semantics only. Before runtime use,
 measure the actual selected-tie RouteFast2 path; private storage could be costly.
 An explicit caller-provided frame buffer and local-memory indices are possible
 later if needed. The current helper's frames remain private; no SLM performance
 claim or integration is present. The registered reference's tie policy is specific
-to this libstdc++ build, as explained in `PROVENANCE.txt`.
+to this libstdc++ build, as explained in `PROVENANCE.txt`. The proposed integration,
+including a cheaper exact selected-tie detector, is in `integration-design.md`.

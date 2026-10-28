@@ -1,0 +1,131 @@
+{
+  "schema": "ownrt.reference-sort-device-gate.v1",
+  "result": {
+    "schema": "ownrt.reference-sort-device-probe.v1",
+    "passed": true,
+    "rows": 512,
+    "indices_per_row": 512,
+    "explicit_device_bytes": 2103296,
+    "unequal_indices": 0,
+    "invalid_rows": 0,
+    "canary_errors": 0,
+    "input_unchanged": true,
+    "private_indices": true,
+    "speed_claim": false
+  },
+  "launch": {
+    "argv": [
+      "systemd-run",
+      "--user",
+      "--unit",
+      "sc117-reference-tie-sort-device-card27-20261028-r1",
+      "--property=Restart=no",
+      "--property=KillMode=process",
+      "--property=SendSIGKILL=no",
+      "--property=TimeoutStopSec=infinity",
+      "--property=Nice=19",
+      "--property=LimitAS=infinity",
+      "--property=LimitCORE=0",
+      "--property=StandardOutput=append:/dev/shm/sc117-reference-tie-sort-device-20261028-r1/stdout.log",
+      "--property=StandardError=append:/dev/shm/sc117-reference-tie-sort-device-20261028-r1/stderr.log",
+      "/usr/bin/flock",
+      "-n",
+      "/dev/shm/card27.lock",
+      "/usr/bin/taskset",
+      "-c",
+      "0-3,16-19",
+      "/usr/bin/env",
+      "PATH=/usr/bin:/bin",
+      "OMP_NUM_THREADS=2",
+      "LD_LIBRARY_PATH=/opt/intel/oneapi/tcm/1.5/lib:/opt/intel/oneapi/umf/1.1/lib:/opt/intel/oneapi/tcm/1.5/env/../lib:/opt/intel/oneapi/tbb/2023.0/env/../lib/intel64/gcc4.8:/opt/intel/oneapi/pti/1.0/lib:/opt/intel/oneapi/mkl/2026.0/lib:/opt/intel/oneapi/dnnl/2026.0/lib:/opt/intel/oneapi/debugger/2026.0/opt/debugger/lib:/opt/intel/oneapi/compiler/2026.0/opt/compiler/lib:/opt/intel/oneapi/compiler/2026.0/lib",
+      "NEOReadDebugKeys=1",
+      "ZE_ENABLE_PCI_ID_DEVICE_ORDER=1",
+      "ZE_AFFINITY_MASK=0",
+      "ONEAPI_DEVICE_SELECTOR=level_zero:0",
+      "FilterBdfPath=0000:27:00.0",
+      "OWNRT_REFERENCE_SORT_PROBE=1",
+      "SYCL_CACHE_DIR=/dev/shm/sc117-reference-tie-sort-device-20261028-r1/cache/sycl",
+      "NEO_CACHE_DIR=/dev/shm/sc117-reference-tie-sort-device-20261028-r1/cache/neo",
+      "XDG_CACHE_HOME=/dev/shm/sc117-reference-tie-sort-device-20261028-r1/cache/xdg",
+      "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/probe",
+      "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/inputs/input.f32",
+      "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1"
+    ],
+    "utc": "2026-10-28T15:08:20.779978+00:00",
+    "baseline_sha256": "3380e242ff34e946d2936fc91501110c164c1b979bd27a369cb255796cee4aac",
+    "memory_available": 103377289216,
+    "explicit_device_bytes": 2103296
+  },
+  "prior_refusal": {
+    "launched": false,
+    "reason": "startup floor or root floor check refused before launch",
+    "memory": {
+      "MemTotal": 126326632448,
+      "MemAvailable": 103066435584,
+      "SwapTotal": 0,
+      "SwapFree": 0
+    },
+    "root_free_bytes": 27535462400,
+    "required_memory_bytes": 103079215104,
+    "required_root_bytes": 27000000000
+  },
+  "invocation_id": "173ba505fbd44772945130015a2171c0",
+  "unit_returncode": 0,
+  "unit_result": "success",
+  "coordinator_report": "Root launched and reported successful unit completion. Candidate author did not launch devices.",
+  "stdout": "bdf=0000:27:00.0 device=Intel(R) Arc(TM) Pro B70 Graphics explicit_device_bytes=2103296\n",
+  "stderr": "",
+  "artifacts": {
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/launch-card27-r1.json": {
+      "bytes": 2040,
+      "sha256": "3207bd9665bfc8462afedb22fbd55646a36b1c9b3aa81a887abd3d14d7bec401"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/postflight-card27-r1.json": {
+      "bytes": 6603,
+      "sha256": "7370a1ab8169388e2ef164d9faa43a6d98ae77ed87afbf50261a44fa919c14d5"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/baseline-card27-r1-after-archive.json": {
+      "bytes": 6603,
+      "sha256": "3380e242ff34e946d2936fc91501110c164c1b979bd27a369cb255796cee4aac"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/prelaunch-refusal-card27-r1.json": {
+      "bytes": 329,
+      "sha256": "e27b1c17add40849992194fe473a736eb41f244dc41f3a7a3df5d0d583a23dcb"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/stdout.log": {
+      "bytes": 88,
+      "sha256": "a55edb776dd0e4655bb37d131ad87dbd7b258f42ad23fc9bc699aee2859e60ef"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/stderr.log": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1/result.json": {
+      "bytes": 250,
+      "sha256": "5e426e4e1552096244b8488a5b60a22c2eaccef4c04fc11713672db4a719069b"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1/actual-with-canaries.i32": {
+      "bytes": 1052672,
+      "sha256": "dddda0aa5b373f5fa143ce2b09755d80ff34e7762497d190c8b906cd8d1bcd56"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1/expected.i32": {
+      "bytes": 1048576,
+      "sha256": "1d6e3862dafbf875265d03b0d41c9a56d9f70e0813f22768088a68641f7fdf6c"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1/readback-input.f32": {
+      "bytes": 1048576,
+      "sha256": "8d99be62dfc6890785b425d3e6b85d7ff702e3b66a8b3b9fe80764d01664c3f9"
+    },
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/device-card27-r1/status.i32": {
+      "bytes": 2048,
+      "sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad"
+    }
+  },
+  "passive_checks": {
+    "baseline_memory_available": 103377289216,
+    "post_memory_available": 103415840768,
+    "post_holders": {},
+    "kernel_journal_sha256_unchanged": false,
+    "boot_unchanged": true
+  }
+}
