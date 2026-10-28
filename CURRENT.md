@@ -198,6 +198,13 @@ overall ceiling before transport. MoE output-row sharding source/micro-feasibili
 is the next separate review; neither has measured endpoint evidence.
 MoE output-row host-bounce microtest was exact but slower:160.872 versus78.107us;
 this variant is closed negative, with no endpoint claim.
+A same-object link-precision screen reproduced the actual native244-row y/prepared
+bytes with bare linking. Precise linking instead reproduced the prior precise
+standalone y/prepared/final state; ocloc differs by
+`-ze-fp32-correctly-rounded-divide-sqrt`. Bare exit0 and expected-negative precise
+exit1 both had clean postflight/no holders. This identifies a replay build-treatment
+cause, not a full-model CPU fidelity fix. Full relink candidate work is separate.
+[Link-precision evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/link-precision-r1/index.json).
 Persistent reset, the realistic suite and broader backlog remain open. [Backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**

@@ -1,0 +1,46 @@
+{
+  "compile": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+    "-O2",
+    "-std=gnu++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fdenormal-fp-math=ieee",
+    "-foffload-fp32-prec-div",
+    "-foffload-fp32-prec-sqrt",
+    "-fsycl",
+    "-ffunction-sections",
+    "-fdata-sections",
+    "-I/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/l4-localization/native-history/replay/device.cpp",
+    "-fsycl-targets=intel_gpu_bmg_g31",
+    "-c",
+    "-o",
+    "/dev/shm/sc117-l4-link-precision-20261028-r1/same.o"
+  ],
+  "links": {
+    "bare": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fsycl",
+      "-Wl,--gc-sections",
+      "-fsycl-targets=intel_gpu_bmg_g31",
+      "/dev/shm/sc117-l4-link-precision-20261028-r1/same.o",
+      "-o",
+      "/dev/shm/sc117-l4-link-precision-20261028-r1/bare"
+    ],
+    "precise": [
+      "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+      "-fsycl",
+      "-Wl,--gc-sections",
+      "-fsycl-targets=intel_gpu_bmg_g31",
+      "-fno-fast-math",
+      "-ffp-contract=off",
+      "-fdenormal-fp-math=ieee",
+      "-foffload-fp32-prec-div",
+      "-foffload-fp32-prec-sqrt",
+      "/dev/shm/sc117-l4-link-precision-20261028-r1/same.o",
+      "-o",
+      "/dev/shm/sc117-l4-link-precision-20261028-r1/precise"
+    ]
+  }
+}

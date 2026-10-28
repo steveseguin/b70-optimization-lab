@@ -1,0 +1,8 @@
+CPU build/driver evidence only; neither binary has run on a device.
+One identical object: production precision flags plus AOT intel_gpu_bmg_g31.
+Bare production-style link omits precision flags. Precise link adds them.
+Actual driver ocloc command adds -ze-fp32-correctly-rounded-divide-sqrt only for precise link.
+This is a concrete code-generation difference, not a numerical or quality conclusion.
+Both probes use unchanged device.cpp and production-round2-prefix.hpp.
+Expected device allocation 26,470,640 bytes; no weights. Root owns GPU launch.
+Full-engine follow-up, ONLY if probe supports hypothesis: relink existing receipt objects with the same linker argv plus precision flags; research binary/new truthful receipt, no default build mutation. Retain actual changed state instead of applying observation-neutral gate. Compare target-only 244-prefix/1-output against pinned CPU token16568 and full logits where available.
