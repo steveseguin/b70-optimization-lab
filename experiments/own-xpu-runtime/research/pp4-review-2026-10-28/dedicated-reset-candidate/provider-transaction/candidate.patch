@@ -1,0 +1,76 @@
+--- a/engine/src/pipeline/provider_only/owner.hpp
++++ b/engine/src/pipeline/provider_only/owner.hpp
+@@ -108,6 +108,25 @@
+    last_final_commit_=final.hidden.commit_sequence;boundary();
+   }catch(...){failed_=true;throw;}
+  }
++ // Isolated opt-in bulk reset component. The completion owns authenticated
++ // prompt installation, publication cleanup, cold/allocation receipts. It must
++ // finish before bulk eligibility returns; a partial failure poisons this owner.
++ template<class Path,class ZeroPrivate,class Complete> void reset_bulk_transaction(
++      int command,uint64_t epoch,ring_next::Digest request,const Path& destination,
++      ZeroPrivate zero_private,Complete complete,bool capability=false){
++  ring_next::need(capability&&!failed_&&command>last_command_&&
++    epoch==context_.epoch+1&&request!=context_.request,
++    "dedicated bulk reset identity/explicit capability");
++  try{
++   boundary();draft.live_reset_admission();
++   draft.reset_request(destination);zero_private(draft);
++   draft.recursive_reset_after_owner_zero();
++   context_.epoch=epoch;context_.request=request;
++   sequence_.emplace(context_);last_command_=command;last_final_commit_=0;
++   boundary();complete(context_);boundary();
++   bulk_used_=false;bulk_closed_=false;
++  }catch(...){failed_=true;throw;}
++ }
+  // Outer lifecycle attests the old request, then barriers every target owner.
+  // This operation owns only draft canonical/pinned/private allocations. The
+  // zero_private callback must zero its retained recursive backup, never targets.
+--- /dev/null
++++ b/engine/src/pipeline/provider_only/reset_transaction.hpp
+@@ -0,0 +1,45 @@
++#pragma once
++#include "pipeline/provider_only/request_suite.hpp"
++namespace ownrt::provider_only {
++struct BulkResetEvidence {
++ int command=0;uint64_t epoch=0;ring_next::Digest request{},prompt_sha{};
++ std::string allocation_before,allocation_after;
++ size_t invalidated_bytes=0;
++};
++// Caller must have stopped all target publishers before invoking this component.
++// It owns only the provider map, never writes the read-only target peer maps.
++// Runtime integration must ACK only on return, and controller must wait ALL ACKs.
++// ColdCheck must compare actual device/host cold bytes, not return a constant.
++// Inventory must describe live allocation IDs/pointers/extents, not a count.
++// Receipt must durably seal that evidence or throw. No boolean cold assertion.
++template<class Draft,class ZeroPrivate,class Inventory,class ColdCheck,class Receipt>
++void reset_bulk_owner(Owner<Draft>& owner,suite::Prepared& prepared,
++ std::unique_ptr<bulk::Prompt>& prompt,std::span<uint8_t> shared,
++ ZeroPrivate zero_private,Inventory inventory,ColdCheck cold_check,Receipt receipt,
++ bool capability=false){
++ const auto& d=prepared.descriptor;const auto& next=prepared.next;
++ ring_next::need(capability&&d.stage==-1&&d.next_epoch==next.epoch&&
++  d.next_request==bulk::hex(next.request)&&shared.size()==wire::shared_bytes&&
++  prompt&&prepared.prompt,"provider transaction admission");
++ prompt->stable();prepared.prompt->stable();
++ // Keep original map pointer/extent; never remap/replace shared allocations.
++ const auto before=inventory();ring_next::need(!before.empty(),"provider allocation inventory absent");
++ owner.reset_bulk_transaction(d.sequence,next.epoch,next.request,d.destination,
++  zero_private,[&](const auto& actual){
++   ring_next::need(cold_check(),"provider reset actual cold bytes differ");
++   const auto after=inventory();ring_next::need(after==before,"provider reset physical allocation identity");
++   auto replacement=prepared.release_after_owner_reset(actual);
++   prompt=std::move(replacement);
++   // Quiescent all-owner barrier is mandatory: no peer may be reading this map.
++   // This clears Reset/Capture/Proposal/Ack and all reserved/unused publication
++   // bytes too. Header is published only after the receipt succeeds.
++   std::fill(shared.begin(),shared.end(),uint8_t(0));
++   BulkResetEvidence evidence{d.sequence,actual.epoch,actual.request,prompt->sha,before,after,shared.size()};
++   receipt(evidence);
++   wire::Header header;header.stream_bytes=actual.stream_bytes;
++   header.target_stages=actual.stages;header.depth=actual.depth;
++   header.epoch=actual.epoch;header.request=actual.request;
++   std::memcpy(shared.data(),&header,sizeof header);
++  },true);
++}
++} // namespace ownrt::provider_only

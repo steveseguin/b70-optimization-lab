@@ -1,0 +1,45 @@
+{
+  "schema": "ownrt.provider-reset-component.cpu.v1",
+  "passed": true,
+  "canonical_changes": false,
+  "model_loaded": false,
+  "gpu_used": false,
+  "build_exit_code": 0,
+  "test_exit_code": 0,
+  "cases": 7,
+  "build_tool_chunks": [
+    "fb9c8d",
+    "452ffc"
+  ],
+  "run_tool_chunk": "2fd4a4",
+  "prior_six_case_pass": {
+    "build_chunks": [
+      "1e838a",
+      "9ae945"
+    ],
+    "run_chunk": "fb7ae0"
+  },
+  "initial_compile_failure": {
+    "chunk": "f9f8d2",
+    "exit_code": 1,
+    "preserved": "test_transaction-r1-failed.cpp.txt"
+  },
+  "binary": "/dev/shm/sc117-provider-reset-component-20261028-r3",
+  "binary_sha256": "edceca05df3daced3bbdd0adcf698f1b6d676f77cfde63efe508a71a88f586b4",
+  "source_hashes": {
+    "engine/src/pipeline/provider_only/owner.hpp": "07dec1107057919a438690a8d594ac47e8486f92d8fdaa3945864cafb793ece0",
+    "engine/planning/test_provider_only_owner.cpp": "4c784ee8abedceca370dfc68ce92ac686cffce7b5994190b472780d3b6af06a6",
+    "engine/planning/test_recursive_provider.cpp": "4027d9da56d9d1ad1ae5c615857d8b3baa01da69b01da3451c513282b1ecbfcf",
+    "engine/src/pipeline/provider_only/wire.hpp": "55a322b34405953b5d784d2c796d97ba375bda8982f6025456e8f57586b7035b",
+    "engine/src/pipeline/provider_only/prefill.hpp": "3e3b1e99d9cd860cc4370013ae059bf5fc86e63810dfc25db38bb4b1aa621882"
+  },
+  "overlay_hashes": {
+    "overlay/pipeline/provider_only/owner.hpp": "130354b696eb4c360d31193e23fc8849723004382b867eb7e313b7c84c3a91c6",
+    "overlay/pipeline/provider_only/reset_transaction.hpp": "002ffad18d2e743530cc04af1dd7de070944aa2738d9ca1d33e41238cac43c34",
+    "test_transaction.cpp": "affe529556e35fae833ef6a46d6f4b6007041301302565447d537741127ae3fa",
+    "candidate.patch": "edea0227827f1d7bd05caaf7e90d19ea8959ad81f0d640c903a1782c9bd35ca0"
+  },
+  "actual_native_barrier_qualified": false,
+  "device_cold_bytes_qualified": false,
+  "status": "provider component only; all-owner integration blocked as documented"
+}
