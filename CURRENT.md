@@ -1,23 +1,21 @@
 # Current Workspace State
 
-**October 28, 04:46 UTC — Testing the corrected dedicated-provider transport.**
-- The bounded correctness run used targets 23/27/47 and draft 43.
-  Unit `sc117-dedicated-3plus1-gate-20261028-r3`; output `/dev/shm/sc117-dedicated-3plus1-20261028-r3/output`.
-  This is a new experimental role, not a service restore. No resident server is scheduled afterward.
-- The native build and CPU ownership/transport tests pass. The first GPU gate uses the saved 1,677-token
-  prompt and 32-output cap, full restore checks, per-token prefill, and unchanged target arithmetic.
-  GPU correctness and performance remain unproven. The second attempt rejected a boolean-normalized
-  fixture field where native requires the original integer; all four processes exited cooperatively.
-  The field is fixed; expanded real native request-loop CPU tests cover multi-position fixtures,
-  accepted speculative journals, shortened depth and FINISH. All four cards passed the health probe;
-  the corrected r3 qualification is now loading with the same native binary.
-- First attempt stopped cooperatively at the first speculative acceptance: the new Python transport
-  incorrectly rejected the retained tentative ROW flag. The fix authenticates the actual native acceptance
-  journal and passes the raw-incident regression. All 1,676 prior canonical pairs matched the reference;
-  four-card health and passive postflight passed with no new faults. The corrected run uses a fresh output.
-- The full optimization backlog is tracked in
-  [backlog.json](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json).
-  Separate selection/IQ4 kernel screens were exact small wins; no endpoint gain is claimed or integrated.
+**October 28, 04:56 UTC — Three target GPUs plus a separate existing-MTP draft owner passed parity.**
+- The per-token 3+1 gate on targets 23/27/47 and draft 43 matched all **2,065 target sources, 73 draft
+  sources, 1,707 canonical hidden/token input pairs, and 32 output tokens** against the prior four-target
+  reference. All four owners exited 0, no holders remain, and postflight matches the fault baseline.
+  [Gate receipt](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-gate/r3-comparison-receipt.json).
+- Native binary `42835855ee91`, run `/dev/shm/sc117-dedicated-3plus1-20261028-r3/output`.
+  Two earlier Python transport refusals were fixed with actual incident and native request-loop regressions;
+  their evidence remains recorded. The native arithmetic was unchanged. No speed claim from this gate.
+- Active: `sc117-dedicated-3plus1-measured512-20261028` uses all four cards for the bounded timing run;
+  output `/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-output`.
+- Matched 512-output-cap diagnostic, same 1,677-token cold prompt and 262K allocation,
+  comparing 3+1 against four targets with colocated draft. Both use the same binary, kernel flags and
+  measured check policy. Full realistic suite and dedicated bulk prefill/reset remain unqualified.
+- The complete [optimization backlog](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/backlog.json)
+  includes the 2+1 64K CPU plan, small exact kernel screens, and expert-parallel, verifier, draft and
+  submission-cost screens. No resident service is scheduled. Independent-reference disagreements remain open.
 
 **October 28 — SC117 PP4 latency improved; near-262K capacity and lifecycle checks completed. Services stopped.**
 - Two-chunk prefill overlap reduced the matched cold 121,854-token full response **846.937 → 524.273 s**

@@ -49,12 +49,29 @@ class PairProof(unittest.TestCase):
         rows=commands();rows.append(copy.deepcopy(rows[0]))
         with self.assertRaises(ValueError):C.canonical_pairs(rows,2)
 
+class DriverResultScope(unittest.TestCase):
+    def test_large_scheduled_result_only(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'driver-result.json'
+            payload=dict(schema='ownrt.dedicated-provider-driver-result.v1',passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'provider':0},events='x'*(1024**2))
+            path.write_text(json.dumps(payload))
+            self.assertTrue(C.driver_result(path)[0]['passed'])
+            with self.assertRaises(ValueError):C.read(path)
+            payload['schema']='arbitrary-large-metadata';path.write_text(json.dumps(payload))
+            with self.assertRaises(ValueError):C.driver_result(path)
+    def test_owner_exit_failure(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'driver-result.json'
+            payload=dict(schema='ownrt.dedicated-provider-driver-result.v1',passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'provider':1})
+            path.write_text(json.dumps(payload))
+            with self.assertRaises(ValueError):C.driver_result(path)
+
 class ManifestPaths(unittest.TestCase):
     def test_actual_retained_paths_and_identity(self):
         with tempfile.TemporaryDirectory() as folder:
             root=Path(folder);output=root/'output';output.mkdir();reference=root/'reference';reference.mkdir()
             rows=commands();(output/'commands.jsonl').write_text(''.join(json.dumps(row)+'\n' for row in rows))
-            (output/'driver-result.json').write_text(json.dumps(dict(input_position=2,output_ids=[21])))
+            (output/'driver-result.json').write_text(json.dumps(dict(schema='ownrt.dedicated-provider-driver-result.v1',input_position=2,output_ids=[21],passed=True,error=None,cancelled=False,live_pids=[],returncodes={'0':0,'1':0,'2':0,'provider':0})))
             stages=[]
             for i,(begin,end) in enumerate(((0,17),(17,33),(33,48))):
                 native=output/f'stage{i}'/'native';native.mkdir(parents=True)

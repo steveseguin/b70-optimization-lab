@@ -1,0 +1,28 @@
+{
+  "schema": "ownrt.matched-decode512-final-plans.v1",
+  "scope": "CPU planning only; no admission or execution",
+  "dedicated": {
+    "path": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-plan-r3.json",
+    "sha256": "c6bc9e13e93025708b7739ad7d4cdc44fc5451e849e7b5851745f43d5f9fa680"
+  },
+  "pp4": {
+    "path": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-plan-r4.json",
+    "sha256": "5324b2a65e54ee63e1308aa573e5017e7477535c4fc187967803804b500fc6cf",
+    "config": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-config-r4.json",
+    "config_sha256": "b4822a8b7cfdf3ff1dc68d0227570fbed12d65c2a6cf2f59806067ce3f025e6e"
+  },
+  "matched_operational_bounds": {
+    "seconds": 1800,
+    "memory_start_bytes": 103079215104,
+    "memory_floor_bytes": 8589934592,
+    "root_floor_bytes": 27000000000,
+    "evidence_floor_bytes": 2147483648,
+    "grace_seconds": 120
+  },
+  "prompt_tokens": 1677,
+  "context": 262144,
+  "output_cap": 512,
+  "check_policy": "measured",
+  "prior_plans_preserved": true,
+  "notes": "PP4r4 changes only lifetime and memory-start floor from originalPP4config; fresh config path also changes request identity and source pins. Dedicatedr3 unchanged. No claim from pending qualification comparison."
+}

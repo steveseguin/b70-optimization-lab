@@ -9,7 +9,7 @@ import compare as C
 
 def prepare(plan_path,reference,destination):
     plan,_=C.read(plan_path);output=Path(plan['output'])
-    result,_=C.read(output/'driver-result.json')
+    result,_=C.driver_result(output/'driver-result.json')
     raw,_=C.trace_source(output/'commands.jsonl')
     pairs=C.canonical_pairs([json.loads(line) for line in raw.splitlines()],result['input_position'])
     pairhash=C.T.sha(json.dumps(pairs,sort_keys=True,separators=(',',':')).encode())

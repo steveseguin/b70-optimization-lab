@@ -23,10 +23,10 @@ import compare_pipeline_state as T
 import compare_draft_state as D
 need=T.require
 
-def trace_source(path):
+def trace_source(path,limit=128*1024**2):
     path=Path(path);fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
     try:
-        before=os.fstat(fd);need(stat.S_ISREG(before.st_mode) and before.st_nlink==1 and 0<before.st_size<=128*1024**2,'bounded actual trace')
+        before=os.fstat(fd);need(stat.S_ISREG(before.st_mode) and before.st_nlink==1 and 0<before.st_size<=limit,'bounded actual trace')
         chunks=[];remaining=before.st_size
         while remaining:
             chunk=os.read(fd,min(1024**2,remaining));need(chunk,'trace truncated');chunks.append(chunk);remaining-=len(chunk)
@@ -38,6 +38,17 @@ def trace_source(path):
 def read(path):
     raw,receipt=D.small(Path(path))
     return json.loads(raw,object_pairs_hook=T.BUNDLE.pairs),receipt
+
+def driver_result(path):
+    raw,receipt=trace_source(path,limit=16*1024**2)
+    value=json.loads(raw,object_pairs_hook=T.BUNDLE.pairs)
+    need(value.get('schema')=='ownrt.dedicated-provider-driver-result.v1','explicit dedicated driver result schema')
+    need(value.get('passed') is True and not value.get('error') and value.get('cancelled') is False
+         and not value.get('live_pids') and isinstance(value['returncodes'],dict)
+         and set(value['returncodes']) in ({'0','1','provider'},{'0','1','2','provider'})
+         and all(type(code)is int and code==0 for code in value['returncodes'].values()),
+         'dedicated driver clean completion')
+    return value,receipt
 
 def canonical_pairs(commands, position):
     issued={};completed={}
@@ -163,7 +174,7 @@ def target_candidate(spec,identity):
 
 def run(path):
     spec,spec_receipt=read(path);need(spec['schema']=='ownrt.dedicated-parity-inputs.v1','explicit dedicated comparison schema')
-    reference=Path(spec['reference_request']);plan,ps=read(spec['plan']);result,rs=read(spec['result'])
+    reference=Path(spec['reference_request']);plan,ps=read(spec['plan']);result,rs=driver_result(spec['result'])
     refplan,rps=read(reference/'selected-request-plan.json');refresult,rrs=read(reference/'result.json')
     need(plan['prompt_tokens']==refplan['prompt_tokens'] and result['output_ids']==refresult['output_ids'], 'actual prompt/output token equality')
     reference_target=T.load_set(reference/'target-set.prefill-provenance.json')

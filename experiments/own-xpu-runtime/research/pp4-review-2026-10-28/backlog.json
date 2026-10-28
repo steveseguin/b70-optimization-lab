@@ -7,16 +7,19 @@
     {
       "id": 1,
       "idea": "HIGH: Real dedicated existing-MTP owner (3+1;2+1 at shorter context).",
-      "status": "implemented-first-3plus1-native-gate-loading",
+      "status": "qualified-per-token-3plus1",
       "evidence": [
         "topology-options.json",
         "topology-allocation-screen.json",
-        "dedicated-provider-plan.txt"
+        "dedicated-provider-plan.txt",
+        "dedicated-gate/r1-incident/incident.json",
+        "dedicated-gate/r2-incident/incident.json",
+        "dedicated-gate/r3-pass/retention.json"
       ],
       "first_test": "Actual three-target+dedicated-existing-MTP per-token qualification:1677 prompt/32 max_new/context262144; compare sealed target/draft state, outputs and canonical pairs before timing.",
-      "next_step": "Finish the single active admitted3+1 gate; preserve parity/lifecycle result, then fair timing if it passes. Separate authenticated bulk-prefill support remains necessary for long-prompt comparison.",
-      "blocker": "GPU qualification pending;2target262K exceeds current memory floor. No dedicated bulk-prefill/reset qualification yet.",
-      "already_tested_scope": "Implemented real separate-owner native bootstrap/protocol and independent scheduler/transport/lifecycle; CPU native plan-only all4 pass after correcting nice19 invocation.15 Python CPU tests pass; actual GPU gate loading, no parity or performance result yet.",
+      "next_step": "Run matched1677prompt/512output-cap measured3+1 versusPP4 sustained decode diagnostic after root admission. Then implement separately authenticated dedicated bulk-prefill gate for long prompts.",
+      "blocker": "Per-token3+1 qualified only; bulk-prefill/reset and2+1 runtime not qualified.2target262K remains memory blocked.",
+      "already_tested_scope": "r3 actual nativeGPU gate passed:2065target and73draft sealed sources,1707canonicalpairs and32actualoutputIDs exact;all4exit0/postflightclean. Prior r1/r2 failures retained; no speed result yet.",
       "discovery_open": true
     },
     {
@@ -112,12 +115,14 @@
     {
       "id": 7,
       "idea": "MEDIUM: Cheaper draft only: quantized projections/head, vocabulary shortlist.",
-      "status": "new-unmeasured",
-      "evidence": [],
+      "status": "CPU-cost-and-prior-negatives-screened-critical-path-data-needed",
+      "evidence": [
+        "draft-cost-screen.txt"
+      ],
       "first_test": "replay recorded canonical inputs, measure acceptance and draft cost jointly; never substitute draft argmax for target verification. Unlike target quantization, changed proposals can preserve final greedy target outputs. Require full transaction/reset/rollback parity and endpoint output equality; no training. Stop if extra rejections outweigh draft savings. Local transfer source: Laguna W8A16 draft projection and Qwen INT4-MTP lanes; community lead: SergiioB/intel-arc-pro-b70-inference-cookbook.",
-      "next_step": "Execute smallest falsifying test; record exact treatment, identity, quality and fair wall timing, then choose next lever",
+      "next_step": "Usecurrent3+1 providercriticalpath first; locate actualretainedcanonicalheadinputs/pairpayloads. Screennovelhead/projectiontreatmentagainstincumbent, then changed-draftquality+targetoracle/ownserialdraftrestoregate; do not repeatQ4/80128orclaimunchanged73draftoracle.",
       "blocker": null,
-      "already_tested_scope": "No test claimed",
+      "already_tested_scope": "PriorQ4draftheadnegative40.15vs40.60;prefix80128lostvs91392oldidentity. Currentprefix91392already; CLIshortlistunqualified. Existing47shortcontextprofilehead+argmax~367/1224us, headOFFcanonicalprefillnoheadbenefit. No newchanged-drafttreatmenttested.",
       "discovery_open": true
     },
     {
@@ -230,6 +235,12 @@
       "status": "CPU-intake-no-device-test",
       "evidence": "next-prefill-kernel.txt",
       "hypothesis": "Actual routecensus groupedT4 fill0.77 at256rows vs0.93 at1024;~17%fewerweight-rowdecodes implies~6.4% prior targetbudget ceiling if routedcost scales. Not measured speed. CLI currentlycaps256; stage0shadow288.6MB scales to1.154GB. Need allocation/SLM/nativeadmission safety screen first; do not repeat existingT8tile sweep."
+    },
+    {
+      "id": "executable-native-command-graph",
+      "status": "CPU-source-and-existing-profile-screened-unmeasured",
+      "evidence": "submission-graph-screen.txt",
+      "hypothesis": "PreparedCompute still hostsubmits eachkernel. Prior880launches3.4\u20134.2msenqueue sometimesbound; matchedshortprofile863launches4.93msenqueue butonly0.118msdevicegaps, so>5%endpointunproven. Screenstableone-layergraph preservingperkernelorder/parity/extent/lifetime/deadlines beforeengineintegration. NoGPUtest."
     }
   ]
 }

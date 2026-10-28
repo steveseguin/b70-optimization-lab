@@ -24,5 +24,7 @@ Cross-partition equality compares semantic canonical names, not physical slots.
 Scope: parity with prior baseline, not independent mathematical model correctness,
 not throughput evidence. GPU candidate and full dump path have not been validated
 by these CPU tests. Failed comparison must retain mismatch details and raw dumps.
-CPU: python3 test_compare.py (7 tests: real-format pair success, hidden/serial/reply
-mutation, missing/duplicate commands, actual DUMP path/manifests/fresh output).
+CPU: python3 test_compare.py (11 tests: real-format pair success, hidden/serial/reply
+mutation, raw fixture ordinals2/17/32 and bool-normalization refusal, missing/duplicate commands, actual DUMP path/manifests/fresh output; schema-specific large driver result and owner exit failure).
+
+Actual r3 comparison PASSED; r3-comparison-receipt.json binds full proof and source hashes.

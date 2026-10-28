@@ -1,0 +1,38 @@
+{
+  "schema": "ownrt.matched-decode512-cpu-plan.v1",
+  "scope": "CPU plans only, no admission or execution; non-headline sustained decode diagnostic after state gate",
+  "root": "/dev/shm/sc117-matched-decode512-plans-20261028",
+  "matching_fields": [
+    "prompt_tokens",
+    "max_new",
+    "context",
+    "vocab",
+    "eos_token_ids",
+    "speculative_depth",
+    "check_policy",
+    "model_identity_sha256",
+    "draft_model_sha256"
+  ],
+  "prompt_tokens": 1677,
+  "prompt_ids_sha256": "1c17501230d2a6716a4c2afb205de322ea9cc54506957c0340ffaa877d78994b",
+  "output_cap": 512,
+  "eos_policy": "Unchanged real EOS set;512 is cap, not forced output length.",
+  "cold_input": "Dedicated fresh process per-token prompt; PP4existing persistent suite one cold request with verified reset. No prefix-cache request reuse. Both bulk-prefill disabled.",
+  "build_binary_sha256": "42835855ee910ee6e4fe965a40172add01447a994898a4e48254da95b4dafe07",
+  "dedicated_plan_sha256": "53196fc2ab6f5ae03502b63db2478f3001e19633e3b77ed6af2416fae1f4afaa",
+  "pp4_plan_sha256": "15b658149a8063db15f561cc4d749830c164bd14919becff08734286688e6b76",
+  "differences": [
+    "3target[0,17,33,48]+dedicated43 versus4target[0,8,21,34,48]+collocatedprovider23",
+    "Dedicated completion-held source leases; PP4 existing capture_ready_overlap and recursive_flat_copy remain enabled as its current measured controller",
+    "Dedicated one fresh native lifecycle; PP4existing persistent suite reset before one request. Different loading/JIT/first-run work means measure and label warming/TTFT separately."
+  ],
+  "least_code_path": "Use existing dedicated_provider_driver --run for dedicated; existing persistent_rolling_driver --run for PP4. No new harness needed. Each requires its own root-issued bounded admission and controlled unit; no commands run here.",
+  "next": "After r2qualification passes, root chooses bounded serial measured launches, records actual output length/EOS, exact IDs and clean lifecycle, then compares sustained decode interval separately from prompt/load.",
+  "files": {
+    "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-config.json": "244d9d7dedb5adafb3e47a5b623e733824d7d2e288d545ca1b4bf1d62911cc23",
+    "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-plan.json": "53196fc2ab6f5ae03502b63db2478f3001e19633e3b77ed6af2416fae1f4afaa",
+    "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-config.json": "ce1d0a243c52f3f1493af381f516b69332b885787028cd817c5d44b841d56514",
+    "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-plan.json": "15b658149a8063db15f561cc4d749830c164bd14919becff08734286688e6b76",
+    "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-suite.json": "a5e0432a61015e0412aac29750d5e05654c56be2d6e68e760fa5e14fd95cee46"
+  }
+}

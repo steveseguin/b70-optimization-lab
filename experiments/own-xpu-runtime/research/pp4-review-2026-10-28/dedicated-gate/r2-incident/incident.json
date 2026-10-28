@@ -1,0 +1,122 @@
+{
+  "schema": "ownrt.dedicated-r2-incident.v1",
+  "status": "failed-not-qualified",
+  "cause": "Python request converted fixture to Boolean1; actual accepted seed fixture2. Native correctly refused provider command/source identity.",
+  "fix": "Preserve raw row.fixture in Request. Boolean conversion only for proposal head/availability. Full actual failed-row request assertion and fixtures0,1,2,3,32,512 at depth2/3 now pass.",
+  "cpu_regression": "27 dedicated/rolling/arbiter tests plus2 lifecycle pass. Independent actual native run_loop CPU fixture/depth/control tests also pass (review_prefill).",
+  "partial_native_canonical_rows": 1676,
+  "reference": "/dev/shm/pp4-overlap-gate-20261028/output/stage0/native/requests/request-00-serial/draft-rows.jsonl",
+  "reference_sha256": "1f9850cf627781178c20f1ff456102c0fb717fe258589688f2644e9087451d44",
+  "compared_fields": [
+    "draft_position",
+    "confirmed_token",
+    "guess",
+    "head"
+  ],
+  "prefix_equal": true,
+  "first_emitted_output": 27775,
+  "terminal": {
+    "schema": "ownrt.dedicated-provider-terminal.v1",
+    "passed": false,
+    "error": "ValueError('dedicated owner closed reply channel')",
+    "live_pids": [],
+    "returncodes": {
+      "0": 1,
+      "1": 1,
+      "2": 1,
+      "provider": 1
+    },
+    "requests": 0,
+    "mode": "dedicated-provider-per-token",
+    "diagnostic_only": true,
+    "speed_claim": false,
+    "wall_seconds": 324.3387261449825,
+    "guard_failure": "ValueError('dedicated owner closed reply channel')",
+    "caught_error": "ValueError('dedicated owner closed reply channel')",
+    "guard_first_failure": {
+      "schema": "ownrt.pipeline-guard-failure.v1",
+      "reason": "ValueError('dedicated owner closed reply channel')",
+      "exception_type": null,
+      "phase": null,
+      "utc": "2026-10-28T04:42:56.612995+00:00",
+      "monotonic_seconds": 1005284.481583214,
+      "rejected_observation": null
+    },
+    "guard_failure_evidence_error": null
+  },
+  "evidence": [
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/terminal.json",
+      "retained": "output--terminal.json.gz",
+      "source_bytes": 888,
+      "compressed_bytes": 410,
+      "source_sha256": "c7d777df0a83fb844224c93f78e96f8c114e3531195fb0c386470d636875f08e",
+      "retained_sha256": "e1628ef18d4c96db8db734d4c89b83cd8f49fcf950ad0d3e15567e28c9169562"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/driver-result.json",
+      "retained": "output--driver-result.json.gz",
+      "source_bytes": 1417,
+      "compressed_bytes": 516,
+      "source_sha256": "457f1c75e6a387bc348ad82a52b717b637b459e027f594cd683536a5d99a0ee3",
+      "retained_sha256": "60ee187659242885641a0fecd8d581a95f77d302f45b7f835cdd48f2bfb632c0"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/postflight.json",
+      "retained": "postflight.json.gz",
+      "source_bytes": 6603,
+      "compressed_bytes": 1663,
+      "source_sha256": "eb65c5ee4584cbdeabafb81caebfa25640c2d2405a09a25541af5e5ca526fb1b",
+      "retained_sha256": "f54458d758c804d2121ba438c15ac3d59465b035e4d22ade63bb3e57b7ee157b"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/commands.jsonl",
+      "retained": "output--commands.jsonl.gz",
+      "source_bytes": 15681240,
+      "compressed_bytes": 1030242,
+      "source_sha256": "3e941084b987389eb6e5967c7dbab76939f7eacbb89a290d2c9ab29f63a4ac55",
+      "retained_sha256": "e86e95db9c96ce4e93a5868a9b057b3a0f490eac79beb655e22510a16124d4aa"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/schedule.jsonl",
+      "retained": "output--schedule.jsonl.gz",
+      "source_bytes": 2597972,
+      "compressed_bytes": 160027,
+      "source_sha256": "34e118b9cdff4d5cd419ccd1db948cdad927d0f793f4c8da2bbbc49259e842cd",
+      "retained_sha256": "bbd4dd5334275b7e773bec89bcd3b189c00f8cfb5550d1f9c9d7d0d6b0d76657"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/provider-batches.jsonl",
+      "retained": "output--provider-batches.jsonl.gz",
+      "source_bytes": 2074416,
+      "compressed_bytes": 299678,
+      "source_sha256": "7eaed2d05fb6fe0ce7725fc2419adef64f96430e8c3e03d2197b6e71c4fa715e",
+      "retained_sha256": "1f28978cf8b9b1ccb2779c646214e5af084a24b4232ae67314c6a5601b710f32"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/tokens.jsonl",
+      "retained": "output--tokens.jsonl.gz",
+      "source_bytes": 114,
+      "compressed_bytes": 119,
+      "source_sha256": "81f583157e065f56bb6d58c99e244f0d4a070c786f3f2c151f6528a682eb348f",
+      "retained_sha256": "cac66d855bc3f1d564a3dc648abe0f7f855dee2f08b83d6b208024f87b6f0fd3"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/output/stageprovider/native/draft-rows.jsonl",
+      "retained": "output--stageprovider--native--draft-rows.jsonl.gz",
+      "source_bytes": 146617,
+      "compressed_bytes": 15415,
+      "source_sha256": "cd8a054a8251ee1a9883f9d879b2439e35f333ca5f6e495045309d5436ec96a0",
+      "retained_sha256": "30574c52cd01c2320fea51e31870fa8aca271274b20110e358cb39334ae09fb4"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r2/health-after-fixture-refusal.json",
+      "retained": "health-after-fixture-refusal.json.gz",
+      "source_bytes": 1571,
+      "compressed_bytes": 450,
+      "source_sha256": "2be903cfaa57e4116655fb6397e08c2806d6f9e8a64c0a0a8a0be04149e1eb7e",
+      "retained_sha256": "d4d309f088037923f396dbd002406402ea0ba823f0e1e15f443957229f247556"
+    }
+  ],
+  "limits": "Partial prompt/pair equality is not fullstate qualification or performance. r3 is a separate active same-binary attempt with corrected Python source; no result yet."
+}

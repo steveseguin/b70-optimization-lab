@@ -1,0 +1,129 @@
+{
+  "schema": "ownrt.dedicated-r1-incident.v1",
+  "status": "failed-not-qualified",
+  "cause": "Python incorrectly prohibited original tentative ROW after native ACCEPT. Native keeps original flag and separately authenticates ACCEPT/committed frontier.",
+  "regression": "Exact raw256B native seedjournal originalROW3355/ACCEPT3358 position1677 physical1680 committed1678 preserved; normalized flag/wrong ACCEPT/no journal rejected;26 CPU scheduler/transport/rolling regressions pass.",
+  "partial_native_canonical_rows": 1676,
+  "reference": "/dev/shm/pp4-overlap-gate-20261028/output/stage0/native/requests/request-00-serial/draft-rows.jsonl",
+  "reference_sha256": "1f9850cf627781178c20f1ff456102c0fb717fe258589688f2644e9087451d44",
+  "compared_fields": [
+    "draft_position",
+    "confirmed_token",
+    "guess",
+    "head"
+  ],
+  "prefix_equal": true,
+  "first_emitted_output": 27775,
+  "terminal": {
+    "schema": "ownrt.dedicated-provider-terminal.v1",
+    "passed": false,
+    "error": "ValueError('dedicated actual original accepted seed lease')",
+    "live_pids": [],
+    "returncodes": {
+      "0": 1,
+      "1": 1,
+      "2": 1,
+      "provider": 1
+    },
+    "requests": 0,
+    "mode": "dedicated-provider-per-token",
+    "diagnostic_only": true,
+    "speed_claim": false,
+    "wall_seconds": 365.2785265519051,
+    "guard_failure": "ValueError('dedicated actual original accepted seed lease')",
+    "caught_error": "ValueError('dedicated actual original accepted seed lease')",
+    "guard_first_failure": {
+      "schema": "ownrt.pipeline-guard-failure.v1",
+      "reason": "ValueError('dedicated actual original accepted seed lease')",
+      "exception_type": null,
+      "phase": null,
+      "utc": "2026-10-28T04:35:56.698037+00:00",
+      "monotonic_seconds": 1004864.566620346,
+      "rejected_observation": null
+    },
+    "guard_failure_evidence_error": null
+  },
+  "evidence": [
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/terminal.json",
+      "retained": "output--terminal.json.gz",
+      "source_bytes": 924,
+      "compressed_bytes": 415,
+      "source_sha256": "9df8e171934546e2823cb56fcac7cdec39723bedfb949d5fb381c8d125314397",
+      "retained_sha256": "aa3aa0db1b9667167b0652faf6e90c19771d20d52709c90579f070433d793905"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/driver-result.json",
+      "retained": "output--driver-result.json.gz",
+      "source_bytes": 1453,
+      "compressed_bytes": 520,
+      "source_sha256": "a1f559bbf6e5071fc65722a13515bf0b7bbbfe460c55cb18897fb94c0009dadd",
+      "retained_sha256": "ef867372e1489eab2bcf0bac3259d3269be43149712826a3a70ca733e822c2f5"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/postflight.json",
+      "retained": "postflight.json.gz",
+      "source_bytes": 6603,
+      "compressed_bytes": 1666,
+      "source_sha256": "b026d8f146bd7810b1d1abf583684cfc5f62fc898c73a24dd2deb84ceac6f74c",
+      "retained_sha256": "c5f97aa6b46c04c04bb6dfdb9ba4439a52fedd26442cc61f5641b9c26129aadb"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/health-after-seed-lease-refusal.json",
+      "retained": "health-after-seed-lease-refusal.json.gz",
+      "source_bytes": 1572,
+      "compressed_bytes": 447,
+      "source_sha256": "9bb20a7bed0722f71f1f0b88b7d12ca5b2de2a25f46f9b17e27f6f26d52e9689",
+      "retained_sha256": "ec4067b03aa5f61ea9549bd71aace044074fa3ef01815da2bfcc260f68d99e27"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/plan-final.json",
+      "retained": "plan-final.json.gz",
+      "source_bytes": 42572,
+      "compressed_bytes": 7881,
+      "source_sha256": "dcb5752e6cd058e7c24e8a17146b458aa4799792a0dfc8802b9833682d1bf5c2",
+      "retained_sha256": "e73afc18819b6c7dcde7cef0b7b987d8b858fc15625bcbdec70b49d8950a5ac9"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/commands.jsonl",
+      "retained": "output--commands.jsonl.gz",
+      "source_bytes": 15680927,
+      "compressed_bytes": 1030261,
+      "source_sha256": "d32e49536c960ee31e01e6fe10577f63aa11ad3ec23cf7039ed397c789c8b36c",
+      "retained_sha256": "5a78472eed0a4bcd604165d152dd99081bada06b1fad8df29a1fd3953b239405"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/schedule.jsonl",
+      "retained": "output--schedule.jsonl.gz",
+      "source_bytes": 2598048,
+      "compressed_bytes": 159635,
+      "source_sha256": "d1addbd243ee80034847753781ce09f73f13e969dd4e6d783c83fa7851fd908d",
+      "retained_sha256": "0a1460c3202b8476bc774f404fcfc62f388965b04a42a6c2e0e835503f511e76"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/provider-batches.jsonl",
+      "retained": "output--provider-batches.jsonl.gz",
+      "source_bytes": 2074416,
+      "compressed_bytes": 299580,
+      "source_sha256": "8c8562c1f757dc41b72b56f9e6f64f9145ea216836b55a32b17ff31fddfc2616",
+      "retained_sha256": "99bea7a21703a091380cf116c5d2e08dba95823b578a648c8bebac9e65e7ec35"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/tokens.jsonl",
+      "retained": "output--tokens.jsonl.gz",
+      "source_bytes": 114,
+      "compressed_bytes": 115,
+      "source_sha256": "1b5d3d3f4fb3725a2c9030e66a5b7d5fa2d847635efc449f4c3097f04ddd4379",
+      "retained_sha256": "ee8a53fc93564a49ed5aaa4146901f2c24c1d3669225926682cb06636ffcfc2f"
+    },
+    {
+      "source": "/dev/shm/sc117-dedicated-3plus1-20261028-r1/output/stageprovider/native/draft-rows.jsonl",
+      "retained": "output--stageprovider--native--draft-rows.jsonl.gz",
+      "source_bytes": 146622,
+      "compressed_bytes": 14989,
+      "source_sha256": "41da48e25601a61b263e52b704dcc761d595d91e77202486037ebca618337f38",
+      "retained_sha256": "4c5da85a41443c0f8e2a28708628df1beaaa27b3aa6134e51c747997c347ec8f"
+    }
+  ],
+  "limits": "1676 completed canonical pairs and first output27775 are partial evidence, not fullstate qualification or performance. All4 cooperative exit1, no live PIDs; root-owned postflight/health retained. r2 qualification is separate active attempt with samebinary/sourcefix."
+}

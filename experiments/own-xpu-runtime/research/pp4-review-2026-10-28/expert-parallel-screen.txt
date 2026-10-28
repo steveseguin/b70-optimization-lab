@@ -1,13 +1,26 @@
-CPU-only expert-parallel screen, 2026-10-28. No new model/device run.
+Expert-parallel prefill screen — October 28, 2026
+CPU replay only. No new model or GPU run. Details and input hashes are in expert-parallel-screen.json; screen_expert_parallel.py reproduces the calculation.
 
-Measured: current PP4 twochunkwave121852rowprefill total522.318s, target commandWORK674.711s, targetactivephases437.279s (targetonly339.168+mixed98.111), draftWORK169.748s. Do NOT add overlapping work as wall. The new3+1gate is not measured in this screen.
+Measured baseline
+The current PP4 two-chunk-wave run processes 121,852 prefill rows in 522.318 seconds. Target command work sums to 674.711 seconds. Target-active phases occupy 437.279 seconds: 339.168 seconds target-only plus 98.111 seconds mixed with draft replay. Draft work sums to 169.748 seconds. Overlapping work must not be added to wall time. The new 3+1 gate is not measured here.
 
-Actual archived routes:24layers24..47,4096positions/layer,384samples of256rows. Parsed by screen_expert_parallel.py; sourceSHA pinned inJSON. Replay fixedexpertIDmod3 gives meanmaxownerT4tilefraction0.3590 (ideal1/3), worst0.4356; mean distinctexperts440.1. This is actual route replay, not actual parallel execution. Native4stage plans sum expertweights50.292GB, ideal16.764GB/card across3 before dense/KV/scratch. No newallocationfit claim.
+Actual route and weight data
+The archived trace covers layers 24–47 and 4,096 positions per layer, producing 384 groups of 256 rows. Assigning expert IDs modulo three gives a mean maximum-owner T4 tile fraction of 0.3590, versus an ideal one third. Exact maxima are retained in JSON. Groups touch about 440 experts on average.
 
-Concrete treatment modeled: every layer's routedexpert work distributed3ways, eachowner runs wholegate/up/activation/down; layer's attention/dense/nonexpert work remainsserial, targetowner waits for all top10outputs. Preserve originalslotorder at combine; returning partial owner sums would reassociate arithmetic. This simple EP competes with current PP scheduling; it does not get pipeline and3wayexpert capacity free simultaneously.
+The four native stage plans contain 50.292 GB of expert weights in total. Perfect division across three owners would require 16.764 GB each before dense weights, KV, scratch, and provider allocations. This is not an allocation-fit result.
 
-Only available peropshare is old4096row rankprofile: experts4.720/12.848s=36.74% (DIFFERENT request/rank, do not call longprofile). Applying that share and actualrouteimbalance to674.711s gives pureEPtarget515.833s BEFORE communication and assuming no othercontention, versus current437.279s targetactivephases. Needs expertshare54.90% just to beat existingtargetspan under thismodel. Even perfectdraftoverlap gives bestwholeprefill~515.833s vs522.318s: only6.485s communication/slackbudget. This conditionally falsifies naive pureEP as material from availableprofile; does NOT falsify PP×EP/hybrid or actualdifferentlongshare.
+Treatment modeled
+Distribute each layer's entire gate/up/activation/down expert path across three owners. Leave attention, dense, and other non-expert work serial between layers. Return every routed slot's full down vector and combine in the original slot order. Returning owner partial sums would change floating-point association. This treatment consumes the same cards used by pipeline parallelism; it does not obtain both forms of parallelism for free.
 
-Communication arithmetic: deduplicated remote F32input once/token/owner plus fullF32downvector perremote top10slot; actualroute replay extrapolated48layers×121852positions totals516.682GB. F32streams2560 values; metadata excluded. Non-dedup slotinput+output would be larger. Existinghost staging may require secondPCIeleg; nopeerbandwidth/overlap value invented. At EFFECTIVE aggregate4/8/16/32/64GB/s this is129.17/64.59/32.29/16.15/8.07s, before latency; these are sensitivity assumptions, not measurements. Some mayoverlapcompute; bandwidthalone is not automatically additive wall.
+Conditional cost result
+The only available per-operation fraction comes from research/rank0-prefill-c27/analysis.json: experts cost 4.720 of 12.848 seconds, or 36.74%, on a different 4,096-row rank profile. Applying that fraction and the measured route imbalance to the long request's target work predicts 515.833 seconds before communication. This is an estimate, not an EP measurement.
 
-Decision: idea2 remainsopen, naive layer-serialEP3 treatment deprioritized pendinglongperopshare and transfer evidence. Next smallest CPUgate: model PP×EP ownerconflicts with current3+1timings aftergate, actualallocations, and archived transfer measurements. Do not implement pureEP from37%oldrankshare. 1024row SAME T4geometrydiscovery alreadyrecorded separately; no GPU/sourceedits.
+The model would need an expert fraction of 54.90% to beat the existing 437.279-second target-active span. Even with perfect draft overlap, its estimated 515.833-second target path leaves only 6.485 seconds beneath the current 522.318-second whole prefill time. Thus the available evidence does not support naive layer-serial EP as a material win. A different long-context cost share or a hybrid PP×EP schedule could change the result.
+
+Communication estimate
+Deduplicate remote F32 inputs once per token/owner, then return one complete F32 down vector per remote top-10 slot. Each vector has 2,560 values. Extrapolating the archived routes to 48 layers and 121,852 positions gives 516.682 GB, excluding metadata and any additional host-staging leg.
+
+At assumed effective aggregate bandwidths of 4, 8, 16, 32, and 64 GB/s, those bytes require 129.17, 64.59, 32.29, 16.15, and 8.07 seconds respectively, before latency. These are sensitivity calculations, not measured bandwidth. Transfers may overlap computation, so these times are not automatically additive wall costs.
+
+Decision
+Keep idea 2 open, but deprioritize this naive treatment. The next CPU gate should combine actual 3+1 timings, long-context operation costs, allocation limits, archived transfer measurements, and explicit PP×EP owner conflicts. The separate 1,024-row chunk hypothesis is already in the backlog.

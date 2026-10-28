@@ -1,0 +1,19 @@
+{
+  "schema": "ownrt.matched-decode512-refreshed-plans.v1",
+  "scope": "CPU plan refresh only, no admission/execution; prior plans preserved",
+  "reason": "Dedicated transport source hash changed. Both plans regenerated. Actual persistent_rolling_driver pins an enumerated reused rolling stack, not all rolling modules: dedicated transport is outside PP4 dependencies, so PP4 hash is unchanged.",
+  "plans": {
+    "dedicated": {
+      "path": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-plan-r3.json",
+      "sha256": "c6bc9e13e93025708b7739ad7d4cdc44fc5451e849e7b5851745f43d5f9fa680",
+      "source_config": "/dev/shm/sc117-matched-decode512-plans-20261028/dedicated-config.json"
+    },
+    "pp4": {
+      "path": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-plan-r3.json",
+      "sha256": "15b658149a8063db15f561cc4d749830c164bd14919becff08734286688e6b76",
+      "source_config": "/dev/shm/sc117-matched-decode512-plans-20261028/pp4-config.json"
+    }
+  },
+  "configuration": "Same original1677-token prompt, context262144, measured policy, real EOS set and512output cap; no bulk prefill.",
+  "prior_summary": "matched-decode512-plans.json"
+}

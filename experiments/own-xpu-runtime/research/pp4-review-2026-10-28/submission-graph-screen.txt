@@ -1,0 +1,32 @@
+Native submission and graph screen — October 28, 2026
+CPU review only. No device requests or canonical edits.
+
+Concrete implementation gap
+Engine.prepare_commands() retains PreparedCompute closures, allocation IDs, pointers, and argument bytes. Device::issue() still calls item.submit(), records an event, and runs callbacks for every kernel. This is prepared host replay, not an executable graph. Device::graph() registers allocation lifetimes and destruction; it does not execute a graph. The focused prior-result search found no native model graph A/B result, which is not a repository-wide absence claim.
+
+Existing measurements
+research/qsa-select-2/RESULT.md records about 880 launches per half and 3.4–4.2 ms of enqueue time; one busy-host, long-context condition became enqueue-bound. research/decode-experts/RESULT.md reports clean enqueue times of 3.3–3.5 ms. Contention above 4 ms added about 0.3–0.8 ms to wall time. An earlier claimed 1.4-ms local-accessor penalty disappeared on controlled repetition; it was host noise.
+
+Matched diagnostic files under /dev/shm/ownrt-lab-r0-c43/runs/diag-candidate/rank0/ provide 47 warm rows after excluding the first JIT row. Medians:
+- 863 launches and 4.92567 ms enqueue time.
+- 18.3812 ms half completion, 0.176181 ms recorded waits, and seven host waits.
+- 0.345449 ms event retirement and 0.112952 ms preparation.
+- Device span 10.2986 ms, summed kernel time 10.163964 ms, and reported internal gaps 0.118136 ms.
+These do not establish a 4.93-ms graph saving: enqueue overlaps device work. The roughly 8-ms wall/span difference is not attributable to enqueue without reconciling boundary copies, snapshots, driver scope, and profiling instrumentation.
+
+research/2026-10-24-exact-multicard-design.md reports a 28.2-microsecond host-waited round trip for 40,960-byte P2P copies and about 6.7 microseconds per cross-queue dependency submission. These are small-copy results, not bulk bandwidth measurements.
+
+Ownership boundaries that must remain
+main.cpp drains before command preparation, on owner-card changes, and before copy sites. admit_position drains and rebuilds QSA commands when the 32-position launch extent changes. Checked mode reads the error at each layer end; that diagnostic mode is not fair timing. drain waits outstanding tails, collects profile events, and retires events. The ordinary decode boundary drains commit before copying sticky error and the next token, then drains the readback.
+
+Ring execution also requires private uploaded stage input and drained ownership for checkpoint capture/restore. Cancellation, progress, provider borrowing, and publication must remain observable at their declared boundaries. These fences cannot simply be removed.
+
+Candidate and smallest gate
+Replay one stable, same-device, same-bank layer as an executable graph or command list, preserving every kernel and dependency. Begin with a layer or stateless dense/elementwise sequence, not cross-card execution. Graph identity must bind bank parity, QSA launch extent, head mode, role, allocation generation, and argument bindings. Reprepare, reset, or allocation changes invalidate it. Lifetime checks must reject unsupported transaction or transfer allocations.
+
+Preserve per-kernel deadline and fault accounting; many logical commands cannot be mislabeled as one bounded kernel. Do not silently bypass Device::issue guards or event retirement.
+
+First enumerate stable command identities on the CPU. When assigned a device, compare the same kernels and inputs through a graph and normal closures, checking output bits and measuring enqueue, device gaps, and complete boundary wall time. Use both an idle host and representative CPU load. An empty synthetic graph is insufficient. If the layer has no material wall improvement, stop before building a general engine graph abstraction. Full-stage accept/abort/reset parity is needed only after a material standalone result.
+
+Decision
+Record a new discovery rather than changing unrelated ideas 12 or 13. Graph replay may help enqueue-bound regimes, but existing matched short-context data does not establish a greater-than-5% endpoint gain. Current 3+1 timing and boundary traces should guide priority.

@@ -1,0 +1,37 @@
+Draft cost screen — October 28, 2026
+CPU review only. No GPU requests, downloads, training, or native source edits.
+
+Existing results
+Source: research/2026-10-25-decode-roofline.md.
+- Full 248,320-row draft head: 38.17 tokens/s and 4,568 MTP hits.
+- 122,880 rows: 39.22 tokens/s and 4,556 hits.
+- 91,392 rows: 39.42 tokens/s and 4,527 hits; this prefix was selected.
+- 80,128 rows: 39.13 tokens/s and 4,489 hits; reducing the prefix further lost performance.
+- The Q4 draft head also lost: 40.15 versus 40.60 tokens/s.
+These are older suite results. Hit counts lack denominators and are not acceptance probabilities for the current 3+1 layout. Do not repeat these treatments without a new mechanism.
+
+Source: research/rank0-lab/RESULT.md. The exact raw Q6 head reduced draft wall time from about 2.190 to 2.005 ms. All four existing raw-head, attention, FP8, and hidden-merge optimizations reduced it from 2.188 to 1.731 ms. These levers already exist.
+
+Qualification and current head scope
+main.cpp:365 requires a.draft_head == "full", with the message "draft shortlist head not qualified; use full". This restriction on the CLI mode is separate from the GSQ prefix option in mtp.hpp:82–89. OWNRT_DRAFT_PREFIX_ROWS accepts a positive multiple of 256, bounded by the vocabulary. The current PP4 draft-prefix.json reports 91,392 rows, not the full 248,320-row vocabulary. OWNRT_DRAFT_HEAD_Q4 already exists in mtp.hpp:77–81 and quantizes the draft head at load time; target verification remains unchanged.
+
+Measured cost
+Existing file: /dev/shm/ownrt-lab-r0-c43/runs/diag-candidate/rank0/draft-device-profile.jsonl.
+For positions 4,096–4,142, 47 samples have these median device times:
+- Entire draft span: 1,224.170 microseconds.
+- Logits: 328.229 microseconds; argmax: 38.646 microseconds.
+- Hidden projection: 51.458 microseconds; embedding projection: 35.209 microseconds.
+- QSA qgate projection: 120.833 microseconds.
+The head and argmax account for about 30% of this older, short-context, head-enabled device span. This is neither current recursive wall time nor a long-context profile.
+
+Canonical prefill replay disables the head. The captured loop in mtp.hpp skips head sites when head is false. A cheaper head therefore cannot improve the measured 169.748 seconds of long-request canonical draft replay. Quantizing common projections might affect replay, but intentionally changes draft state and needs a separate quality gate.
+
+Break-even and next test
+Let C be measured complete cycle wall time and A be committed tokens per cycle, including verification, corrections, rollback, and draft preparation. A candidate wins only if A_new / A_old > C_new / C_old. Head savings hidden behind target work may produce no endpoint gain. Existing hit counts and the current eight-output request do not establish a representative acceptance estimate.
+
+A new treatment must differ from the already tested Q4 head or shorter contiguous prefix. Possible screens include a noncontiguous shortlist or a different low-bit projection kernel. First locate actual retained canonical head inputs or confirmed-token/reverse-hidden payloads, then bind model revision, position, rope, and input hashes. Compare proposal agreement, known target matches, candidate latency, and shortlist construction cost. A terminal state bundle can supply one operator case; it is not a representative sequence. A hidden hash alone is not the raw input. research/continuation-2026-10-25/live-draft-legacy-prefix.json explicitly does not claim raw hidden equivalence. Previous target top-k lists have not been established as available.
+
+Quality and provenance gate
+Keep target weights, head, greedy selection, verification, and mismatch correction unchanged. Compare emitted tokens and all canonical target state against the target oracle. Changed draft proposals and state cannot claim the unchanged 73-allocation draft oracle. Instead compare each candidate against its own serial replay and check private backup restoration, aborts, pool boundaries, reset, and persistent request isolation. Preserve exact reverse-hidden input provenance and record all quantization or shortlist parameters.
+
+Decision: retain idea 7, close only the specific older Q4 and 80,128-row treatments. Wait for current 3+1 critical-path evidence before assigning GPU work.

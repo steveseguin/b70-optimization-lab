@@ -1,0 +1,24 @@
+{
+  "schema": "ownrt.dedicated-comparator-format-refusal.v1",
+  "run": "sc117-dedicated-3plus1-20261028-r3",
+  "classification": "CPU-only offline helper format refusal; native gate succeeded",
+  "initial_refusal": {
+    "reported_by": "coordinator before this task",
+    "operation": "prepare.py C.read(driver-result.json) -> compare_draft_state.small",
+    "error": "bounded regular metadata required",
+    "actual_bytes": 4012207,
+    "ordinary_metadata_bound_bytes": 1048576,
+    "output_created": false
+  },
+  "local_followup_refusal": {
+    "error": "dedicated driver clean completion",
+    "cause": "new reader initially iterated actual owner-to-returncode dictionary keys instead of values; corrected to exact owner-key set plus all-zero integer values",
+    "native_or_input_mutation": false
+  },
+  "fix": "Explicit schema-specific stable16MiB driver_result reader. Ordinary metadata remains1MiB. No GPU rerun; same original dumps and trace inputs.",
+  "actual_driver_result": {
+    "path": "/dev/shm/sc117-dedicated-3plus1-20261028-r3/output/driver-result.json",
+    "sha256": "ea27d0841c8b0609f089262e803ae8c66ef35102563658dbbbf28cb9b34fc3ee"
+  },
+  "comparison": "/dev/shm/dedicated-comparison-r3/inputs.json"
+}
