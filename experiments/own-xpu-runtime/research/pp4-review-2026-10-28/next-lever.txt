@@ -1,0 +1,27 @@
+Hypothesis only: evaluate four-chunk antidiagonal prefill scheduling after the
+current two-chunk run finishes and its exact-state gate is assessed. No speed
+promise: no four-chunk simulation, contention measurement or device gate yet.
+
+Baseline long-request host wall: target stage command totals 125.0/177.1/174.0/
+194.5 s; canonical draft replay 172.7 s; residual overhead 0.36 s. These locate
+work, not the future concurrent critical path. Existing preparation, expert
+batching, reuse and shadow packing are enabled.
+
+Potential lever: reduce repeated fill/drain bubbles with four chunks in flight.
+Keep increasing target positions per stage, canonical draft replay order, one
+command owner per stage, and exclusive target/draft work on stage0. Retain an
+owned, bounded FIFO of unreplayed chunk tokens; do not overwrite the single
+stage0 token header or shared metadata while a command owns them.
+
+Critical parity constraint: integrate draft replay into the antidiagonal
+schedule BEFORE stage3 overwrites a same-parity reverse buffer. Do not finish
+all target waves and defer all replay until afterward. Intermediate producer
+buffers likewise remain owned until downstream copies complete. Existing two
+parities may suffice only with these explicit consumption barriers.
+
+Minimal next gate, if current result warrants this lever: CPU adversarial
+ownership scheduling with at least nine chunks and a partial tail; then reuse
+the existing serial/candidate full-state gate for exact target/draft state,
+actual hidden/token replay pairs, continuation and cold-reset transition. Only
+after parity passes, measure the full matched long prompt. No implementation
+or live/pinned-source changes authorized by this note.

@@ -1,0 +1,73 @@
+{
+  "schema": "ownrt.pp4-matched-long-result.v1",
+  "scope": "One sample per configuration, separate resident processes each warmed by the same772-token cold request. Cold prompt/KV, warmed runtime kernels. Diagnostic timing, not certified score or independent-reference qualification.",
+  "prompt_tokens": 121854,
+  "output_tokens": 8,
+  "exact_matches": {
+    "prompt_tokens": true,
+    "prompt_token_sha256": true,
+    "output_ids": true,
+    "output_token_sha256": true
+  },
+  "cached_tokens": {
+    "baseline": 0,
+    "candidate": 0
+  },
+  "full_response": {
+    "units": "seconds",
+    "baseline": 846.9368887949968,
+    "candidate": 524.2727841499727,
+    "saved": 322.66410464502405,
+    "time_reduction_percent": 38.09777433405971,
+    "speed_ratio": 1.6154508004228638
+  },
+  "prefill_wall": {
+    "units": "seconds",
+    "baseline": 845.0413438710384,
+    "candidate": 522.3179874189664,
+    "saved": 322.72335645207204,
+    "time_reduction_percent": 38.19024463036483,
+    "speed_ratio": 1.6178675906736604
+  },
+  "candidate_prefill_timing": {
+    "schema": "rolling-prefill-host-wave-wall-v2",
+    "total_wall_s": 522.3179874189664,
+    "target_command_work_wall_s": [
+      125.58091153413989,
+      177.81411767052487,
+      174.39288944553118,
+      195.42639262787998
+    ],
+    "target_work_wall_s": 674.7107655849541,
+    "draft_replay_work_wall_s": 169.74827238090802,
+    "target_only_phase_wall_s": 339.16824244195595,
+    "mixed_phase_wall_s": 98.11098103469703,
+    "draft_only_phase_wall_s": 84.6581631138688,
+    "other_wall_s": 0.3806008284445852
+  },
+  "timing_limit": "Candidate target/draft work durations overlap; compare total/phase walls, never add overlapping work durations. Eight output tokens do not support decode speed claim.",
+  "identity_audit": "../baseline-candidate-identity.json",
+  "source_pins": {
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000002/result.json": "67a41bccc994bd71a0d3b396cac5291102861a14e36389300923d7f41028b8ec",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/config.json": "a7cc0c1bf7c8d154720debdf5d16e9e21e6b16f3167c4210cd8310c8bafc1a7b",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/plan.json": "ed42d852c3712fd63786167986a3a0e3522975bd6f8936528e7cc66a85bb78b2",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/run.json": "171b176bf35912e1f560190a5171027a66d907a5d042e4484ad22d4e30262c62",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/admission.json": "f5965ac2df3030e9dd45a89b642a727091593c994edab164c504c691e7de9e3b",
+    "/dev/shm/engine-build-pp4-overlap-20261028/build-receipt.json": "f05fcde0ff08945423f15423bd3e2fafc5dca33e5e6b516ad53e40e57b4c6bb9",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000001/reset.json": "650bbd105208030e8f05ca527915b243e38a96618695afb5c9df919b3a162ba4",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000001/ring-quiescence.json": "60828cf57872b73ee6e64b2b5d77901e5ec9815d55ce52acf4ba859ec8e01792",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage0/native/requests/request-000001/ring-reset.json": "d3514a4ef26347c7e4a67bafbd68e677f9c9dc2b5b60e8be772241e148752077",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000001/reset.json": "1fbe743953360af6e1d766fe3db008ae2de1c112824fe9a17e1a6c784102edca",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000001/ring-quiescence.json": "98779f4e2ff7e086a8442c51322598ae9b10975baffab788f363ea8b969263e3",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage1/native/requests/request-000001/ring-reset.json": "36a5e6741268317610a625df6e7a6b677fcf39389561ce6e429797d90fe2a525",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000001/reset.json": "1fbe743953360af6e1d766fe3db008ae2de1c112824fe9a17e1a6c784102edca",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000001/ring-quiescence.json": "2e8c1fb890a442c7c878146c71af5ffb6218cbcd74652c92b7515b501036b916",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage2/native/requests/request-000001/ring-reset.json": "a66d170c9261398dc3ca02d5e998c574fd811bf3ed6a0fdec739b24c3e05258b",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000001/reset.json": "cb8cd9c59bf7b38e113cfe0a39e606b7c353ee194df2ccc7659a59a78698c973",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000001/ring-quiescence.json": "9672f1a10ea19b0b9ec5c7fc334c9b1db1fb80c3b936416e4ea65708bf07a806",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/stage3/native/requests/request-000001/ring-reset.json": "692e6c72843d12aa3aa77ccc52b8dd59ce33c957ca7646d6f01e0bb99b1cde42",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000001/result.json": "3a0b7bd192d78ccbcdba8abbbeba667e99f0a17da5b4e86d83d861a3246345eb",
+    "/dev/shm/sc117-pp4-262k-lan/control-_uc2cmys/output/requests/request-000001/reset-commands.jsonl": "47550e37f2dd67ad6de7eaffbb4faab3ca0ccea18bad157e468312b2f578eb3b"
+  },
+  "lifecycle": "Request2 completed; same candidate process is running near262K request3. Final lifecycle acceptance pending."
+}

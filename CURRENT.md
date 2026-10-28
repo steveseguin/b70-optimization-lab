@@ -8,7 +8,7 @@
   772-token cold request; no prompt/KV cache was reused. This is a diagnostic context measurement, not a certified decode record.
   [Baseline](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-long/summary.json).
 - The earlier stage-0 shutdown accounting defect is fixed: reset conservation and clean FINISH both passed.
-  All four baseline stages exited 0; postflight found no holders and no new kernel fault. Both HTTP services are stopped.
+  All four baseline stages exited 0; postflight found no holders and no new kernel fault. The two-card primary remains stopped; the measured PP4 service is loading as stated above.
 - The bounded serial/overlap gate on binary `0fcc08b71c6e` passed **2,065 target sources and 73 draft sources**;
   both 32-token outputs and actual canonical input pairs match. This qualifies the tested prefill overlap/seam,
   not full-262K context or agreement with an independent model reference.
@@ -16,10 +16,18 @@
   extension re-compared the same sealed dumps successfully, without another model run or altered counters.
   The original failed root result and graceful abort exits (all 1) are retained; postflight has no holders or new faults.
   [Gate evidence](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/gate/target-comparison-prefill.json.gz).
-  Next: measured candidate long timing on one admitted process, followed by the separately labeled capacity diagnostic.
+  Candidate service `control-_uc2cmys` (binary `0fcc08b71c6e`) remains active after the cold 772-token warmup and
+  completed matched long request. Native kernel flags, precision and nonpath environment match
+  baseline; only prefill overlap/FIFO support and accounting differ.
+  [Identity diff](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/baseline-candidate-identity.json).
+- The matched cold 121,854-token request is **846.937 → 524.273 s** full response (**38.10% less time**, 1.615×);
+  prefill wall **845.041 → 522.318 s**. All eight output ids and prompt/output hashes match, with zero cached tokens.
+  This is one warmed-runtime sample per configuration, not a certified score or independent-reference qualification.
+  [Matched result](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/candidate-long/matched-result.json).
+  Near-capacity request 3 is in flight on the same candidate service; final lifecycle acceptance is still pending.
 - HTTP MTP accounting previously overstated accepted proposals (81 accepted, not 116, in the seam screen).
   The candidate corrects this and separates rejected guesses from unverified discarded descendants.
-- A separate capacity diagnostic is prepared at **262,136 prompt + 8 output tokens**; it has not run.
+- The separate capacity diagnostic at **262,136 prompt + 8 output tokens** is running as request 3.
   [Inputs and review](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/).
 - North star: faster exact single-conversation inference, prompt reading and native long context in our reusable
   Intel Xe engine. Keep model, quantization, topology and tuning identities separate; no training.
