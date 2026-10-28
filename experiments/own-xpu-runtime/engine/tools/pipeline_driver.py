@@ -127,7 +127,7 @@ def make_plan(config_path):
     require(cuts[-1] == max(t['layer'] for t in tensors) + 1, 'complete layer coverage')
     require(cuts[1] > max(t['layer'] for t in tensors if t['component'] == 'ple_lookup'), 'first stage must retain host PLE lookups')
     stages = []
-    removes = {'--draft-mtp', '--draft-fault', '--draft-manifest', '--draft-model', '--draft-head', '--draft-experts', '--draft-capture', '--prefill-rows', '--prefill-shared', '--tp-replicate'}
+    removes = {'--draft-mtp', '--draft-fault', '--draft-manifest', '--draft-model', '--draft-head', '--draft-experts', '--draft-capture', '--prefill-rows', '--prefill-shared', '--prefill-slots', '--tp-replicate'}
     for i, bdf in enumerate(bdfs):
         first, final = i == 0, i == len(bdfs) - 1
         argv = list(adapter['rank_argv'][0 if first else 1])
@@ -252,6 +252,14 @@ class Guard:
                 return
 
 
+def prefill_layout(rows,stream,slots=2):
+    require(type(slots)is int and slots in (2,4) and type(rows)is int and 1<=rows<=256
+            and (slots==2 or rows==256) and type(stream)is int and stream>0,
+            'bounded prefill host transport geometry')
+    if slots==2:return PREFILL_HEADER+4*rows*stream,struct.pack('<4I',PREFILL_MAGIC,1,rows,stream)
+    return 8192+8*rows*stream,struct.pack('<8I',PREFILL_MAGIC,2,rows,stream,8192,4,0,0)
+
+
 class Stage:
     def __init__(self, spec, plan, guard):
         self.spec, self.guard, self.sequence, self.plan = spec, guard, 0, plan
@@ -264,6 +272,9 @@ class Stage:
         self.file.truncate(SHARED)
         self.shared = mmap.mmap(self.file.fileno(), SHARED)
         self.prefill_rows = int(option(spec['argv'], '--prefill-rows')) if '--prefill-rows' in spec['argv'] else 0
+        self.prefill_slots=plan.get('dedicated_prefill_slots',2)
+        require(type(self.prefill_slots)is int and self.prefill_slots in (2,4), 'prefill transport slots2or4')
+        require(self.prefill_slots==2 or (plan.get('dedicated_bulk_prefill') is True and plan.get('dedicated_prefill_pipeline') is True), 'four slots require dedicated bulk pipeline')
         self.prefill_file = self.prefill = None
         if self.prefill_rows:
             require(1 <= self.prefill_rows <= 256 and plan.get('prefill_rows') == self.prefill_rows and
@@ -271,11 +282,13 @@ class Stage:
                     'native prefill plan geometry')
             prefill_path = Path(option(spec['argv'], '--prefill-shared'))
             require(prefill_path == self.path / 'prefill.bin', 'native prefill map path identity')
+            native_slots=int(option(spec['argv'],'--prefill-slots')) if '--prefill-slots' in spec['argv'] else 2
+            require(native_slots==self.prefill_slots,'native transport slot identity')
+            extent,header=prefill_layout(self.prefill_rows,PREFILL_STREAM_BYTES,self.prefill_slots)
             self.prefill_file = prefill_path.open('x+b')
-            self.prefill_file.truncate(PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
-            self.prefill = mmap.mmap(self.prefill_file.fileno(), PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
-            self.prefill[:16] = struct.pack('<4I', PREFILL_MAGIC, PREFILL_VERSION,
-                                            self.prefill_rows, PREFILL_STREAM_BYTES)
+            self.prefill_file.truncate(extent)
+            self.prefill = mmap.mmap(self.prefill_file.fileno(), extent)
+            self.prefill[:len(header)] = header
         self.sock, child = socket.socketpair()
         self.sock.settimeout(0.2)
         read_stop, write_stop = os.pipe()

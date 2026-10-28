@@ -1,0 +1,36 @@
+{
+  "schema": "dedicated-four-slot-transport-cpu-candidate-v1",
+  "default_slots": 2,
+  "opt_in_slots": 4,
+  "operator_rows": 256,
+  "device_execution": false,
+  "engine_build": false,
+  "host_cpp_fixture_build": true,
+  "native_allocation_code_modified": false,
+  "python": {
+    "passed": true,
+    "cases": 22,
+    "seconds": 1.172,
+    "socket_scheduler_cases": 15,
+    "contract_cases": 7,
+    "existing_planner_cases": 3
+  },
+  "native": {
+    "passed": true,
+    "compiler": "g++ -std=c++20 -O0 -lcrypto",
+    "binary": "/dev/shm/dedicated-four-slots-candidate/native-test-r2",
+    "binary_sha256": "0ebef0b41693791026be80cd5f812510921433d32ae3513b0b8c3a94f1d95c0d",
+    "scope": "actual run_loop/Owner/Sequence/readonly Peer CPU fixture; synthetic arithmetic, not Engine/GPU/model parity",
+    "cases": "Existing capture/fixture/provenance/V1bulk plus V2 10chunks/2305rows/twowraps/partialtail/fullACK/dumpFINISH and7malformed metadata/slot/extent refusals"
+  },
+  "restrictions": "No full engine build, GPU/model launch or native allocation changes. GPU state, actual memory census and speed remain unqualified.",
+  "files": {
+    "README.txt": "473f95d09f934f31b66a61c1358511d12b5bf3e5cdd9d339c51b383ade2cde64",
+    "implementation.patch": "4bd2277ab0f4724002406c4657672bdf49250d7a12bebd2969aff09dd2ffee07",
+    "initial-cpu-refusal.txt": "15593277738b4a53ca3c900493d4fd518d17072d963e62ec7ab75794368bb366",
+    "source-pins.json": "90bbe34580080e1a47afc760cf0c0b132effaa4e7938d41d4152960944905c96",
+    "test_contract.py": "58e616f42873240b0f86d6f49c0676655ecca7835f78b3019375f851742042a1",
+    "test_four_slots_native.cpp": "7bb5072911ab0a5685b2181a2faa14472040ba6fb2ab9a293cf30992560b7833",
+    "test_pipeline.py": "80d94d6a93db4569afb15d9bb67111d0b241d2a014177a57b87cb5b62e662ca9"
+  }
+}

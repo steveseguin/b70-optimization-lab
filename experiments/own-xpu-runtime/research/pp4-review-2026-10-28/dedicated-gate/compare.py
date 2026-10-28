@@ -152,7 +152,7 @@ def plan_pairs(plan,commands,position):
             initial_sequences=[0]*len(plan['stages']),provider_sequence=0,speculative_depth=plan['speculative_depth'])
         output=Path(plan['output']);native=Path(plan['provider']['native_output'])
         prefix=prefix_evidence(output/'dedicated-prefill.jsonl',native/'provider-prefill-pairs.jsonl',
-            native/'provider-prefill-chunks.jsonl',model,rows=plan['prefill_rows'])
+            native/'provider-prefill-chunks.jsonl',model,rows=plan['prefill_rows'],slots=plan.get('dedicated_prefill_slots',2))
     pairs=canonical_pairs(commands,position,capture_ready=plan.get('dedicated_capture_ready',False),
         target_stages=len(plan['stages']),prefix=prefix)
     return pairs,prefix

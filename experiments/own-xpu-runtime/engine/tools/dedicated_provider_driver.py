@@ -23,6 +23,9 @@ def make_plan(path):
     pipeline=config.get('dedicated_prefill_pipeline',False)
     base.require(type(pipeline) is bool and (not pipeline or bulk),
                  'dedicated_prefill_pipeline Boolean requires authenticated bulk')
+    slots=config.get('dedicated_prefill_slots',2)
+    base.require(type(slots)is int and slots in (2,4) and (slots==2 or (bulk and pipeline)),
+                 'four transport slots require explicit dedicated bulk pipeline')
     rows=config.get('prefill_rows',256 if bulk else 0)
     base.require(type(rows) is int and (rows==256 if bulk else rows==0),
                  'explicit dedicated bulk256 or per-token0 rows')
@@ -74,6 +77,7 @@ def make_plan(path):
                                            dedicated_prefill_prompt_sha256=prompt_sha))
         identity.update(dedicated_bulk_prefill=True,prefill_rows=rows,prompt_i32_sha256=prompt_sha)
     if pipeline:identity['dedicated_prefill_pipeline']=True
+    if slots==4:identity['dedicated_prefill_slots']=slots
     request = sha256(base.canonical(identity)).hexdigest()
     output = Path(plan['output'])
     provider = deepcopy(plan['stages'][0])
@@ -116,6 +120,8 @@ def make_plan(path):
                 '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha]
         if full:
             stage['argv'].append('--pipeline-ring-verify-restore')
+    if slots==4:
+        for stage in plan['stages']+[provider]:stage['argv']+=['--prefill-slots','4']
     for stage in plan['stages']+[provider]:
         for name in ('OWNRT_DRAFT_DEPTH_PROBE', 'OWNRT_DRAFT_DEPTH_VERIFY'):
             stage['environment'].pop(name, None)
@@ -123,7 +129,7 @@ def make_plan(path):
                      'runtime must not consume expected outputs')
     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
                 epoch=0, request_sha256=request, dedicated_capture_ready=capture,
-                dedicated_prefill_pipeline=pipeline, eos_token_ids=eos, speculative_depth=depth,
+                dedicated_prefill_pipeline=pipeline,dedicated_prefill_slots=slots, eos_token_ids=eos, speculative_depth=depth,
                 rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=rows,
                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,

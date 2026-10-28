@@ -14,17 +14,18 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
     P.need(targets in (2,3) and plan.get('dedicated_prefill_pipeline') is True,
            'explicit two/three-target dedicated prefix pipeline')
     rows=plan['prefill_rows'];bulk=len(model.prompt)-2;stream=provider.stream_bytes
+    slots=plan.get('dedicated_prefill_slots',2);prefill.geometry(slots)
     prompt_sha=bytes.fromhex(source['sha256']);total=(bulk+rows-1)//rows
     began=time.monotonic();next_chunk=[0]*actors;completed=[set() for _ in range(actors)]
     busy={};leases={};snapshots={};target_wall=[0.]*targets;replay_wall=0.;last_ack=None;peak=0
 
     def target(index,k):
-        stage=stages[index];start=k*rows;count=min(rows,bulk-start);parity=k%2
+        stage=stages[index];start=k*rows;count=min(rows,bulk-start);parity=k%slots
         if index==0:
-            stage.prefill[16:16+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
+            stage.prefill[prefill.geometry(slots)[2]:prefill.geometry(slots)[2]+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
         else:
             kind='forward' if index==1 else 'reverse'
-            prefill.region(stage.prefill,'forward',parity,rows,stream,count)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count)
+            prefill.region(stage.prefill,'forward',parity,rows,stream,count,slots=slots)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count,slots=slots)
         position=start+count-1
         row=ring.Row(model.epoch,position+1,position,position,model.prompt[position],0,model.request,
                      model.proposals.hashes[position],model.proposals.hashes[position+1])
@@ -37,13 +38,13 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
                     record=bytes(stage.prefill[off:off+P.RECORD_BYTES]) if index in (0,final_index) else None)
 
     def replay(k):
-        start=k*rows;count=min(rows,bulk-start);parity=k%2;parts=snapshots[k]
+        start=k*rows;count=min(rows,bulk-start);parity=k%slots;parts=snapshots[k]
         seed,final=parts[0]['record'],parts[final_index]['record'];sequences=[p['sequence'] for p in parts]
         off=P.RECORD_OFFSET+parity*P.RECORD_BYTES
-        raw_sha=sha256(prefill.region(stages[final_index].prefill,'reverse',parity,rows,stream,count)).digest()
+        raw_sha=sha256(prefill.region(stages[final_index].prefill,'reverse',parity,rows,stream,count,slots=slots)).digest()
         common=dict(stages=targets,start=start,count=count,rows=rows,stream=stream,parity=parity,
             epoch=model.epoch,request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],
-            after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha)
+            after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha,slots=slots)
         seed_sha=P.chunk_record(seed,role=1,stage=0,sequence=sequences[0],**common)
         final_sha=P.chunk_record(final,role=2,stage=final_index,sequence=sequences[final_index],**common)
         P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
@@ -51,7 +52,7 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
         t=time.monotonic()
         command,reply,ack=P.replay(provider,start=start,count=count,parity=parity,rows=rows,stages=targets,
             seed_sequence=sequences[0],final_sequence=sequences[final_index],request=model.request,prompt_sha=prompt_sha,
-            seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch)
+            seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch,slots=slots)
         # This check belongs inside the worker, before its Future releases parity.
         P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
                final==bytes(stages[final_index].prefill[off:off+P.RECORD_BYTES]),'source chunk publication changed before ACK')
@@ -80,8 +81,8 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
                     else:
                         entry,t=result;last_ack=bytes.fromhex(entry['provider_ack_hex']);replay_wall+=entry['monotonic_s']-t
                         journal.write(json.dumps(entry)+'\n');journal.flush()
-                        P.need(leases.get(k%2)==k,'full ACK releases actual parity owner')
-                        del leases[k%2];del snapshots[k]
+                        P.need(leases.get(k%slots)==k,'full ACK releases actual parity owner')
+                        del leases[k%slots];del snapshots[k]
                         event(actor,k,'completed',command_began=t,command_end=entry['monotonic_s'])
                 if len(completed[provider_actor])==total:break
                 for actor in reversed(range(actors)):
@@ -89,8 +90,8 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
                     if actor in busy or k==total:continue
                     if actor and k not in completed[actor-1]:continue
                     if actor==0:
-                        if len(leases)==2 or k%2 in leases:continue
-                        leases[k%2]=k;snapshots[k]=[None]*targets;peak=max(peak,len(leases))
+                        if len(leases)==slots or k%slots in leases:continue
+                        leases[k%slots]=k;snapshots[k]=[None]*targets;peak=max(peak,len(leases))
                     event(actor,k,'issued')
                     busy[actor]=pool.submit(replay,k) if actor==provider_actor else pool.submit(target,actor,k)
                     next_chunk[actor]+=1
@@ -103,10 +104,10 @@ def run(stages,provider,model,plan,output,*,source,stop_requested=None):
             raise
     P.need(not busy and not leases and all(len(x)==total for x in completed),'all target/provider ACKs before adoption')
     receipt=P.Adoption(bulk,model.epoch,model.request,prompt_sha,tuple(s.sequence for s in stages),provider.sequence,
-                       provider.provider_serial,total,last_ack)
+                       provider.provider_serial,total,last_ack,slots)
     model.adopt_prefill(bulk,native=receipt)
     for stage in stages:stage.physical=stage.committed=bulk
     return dict(prefill_schedule='target-stage-pipeline',prefill_positions=bulk,prefill_chunks=total,prefill_draft_replay=bulk,prefill_source=source,
         prefill_timing=dict(schema='dedicated-stage-pipeline-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
-            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,peak_unfinished_chunks=peak,
+            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,peak_unfinished_chunks=peak,transport_slots=slots,
             scope='host work durations overlap; full native OP28 ACK releases parity; no GPU duration/speed claim'))

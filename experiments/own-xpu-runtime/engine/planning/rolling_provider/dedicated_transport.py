@@ -192,6 +192,9 @@ def drive(stages, provider, plan, guard, output, *, stop_requested=None, epoch=0
     bulk_mode=plan.get('dedicated_bulk_prefill',False)
     base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
                  and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
+    slots=plan.get('dedicated_prefill_slots',2)
+    base.require(type(slots)is int and slots in (2,4) and (slots==2 or (bulk_mode and plan.get('dedicated_prefill_pipeline') is True)),
+                 'dedicated transport slots admission')
     pipeline=plan.get('dedicated_prefill_pipeline',False)
     base.require(type(pipeline)is bool and (not pipeline or (bulk_mode and len(stages) in (2,3))),
                  'dedicated prefix pipeline transport admission')

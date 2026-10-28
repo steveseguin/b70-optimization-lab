@@ -19,7 +19,7 @@ struct Ack {
  std::array<uint8_t,16> zero{};
 };
 static_assert(sizeof(Record)==1280&&sizeof(Ack)==256);
-static_assert(record_offset+2*sizeof(Record)==4096&&ack_offset+sizeof(Ack)<=record_offset);
+static_assert(record_offset+2*sizeof(Record)==4096&&record_offset+4*sizeof(Record)<=8192&&ack_offset+sizeof(Ack)<=record_offset);
 inline ring_next::Digest digest_bytes(const void* p,size_t bytes){return ring_next::wire::digest(std::span<const uint8_t>(static_cast<const uint8_t*>(p),bytes));}
 inline std::string hex(const ring_next::Digest& d){constexpr char h[]="0123456789abcdef";std::string s;for(auto b:d){s+=h[b>>4];s+=h[b&15];}return s;}
 inline ring_next::Digest parse_sha(const std::string& text){
@@ -42,33 +42,33 @@ public:
  int token(size_t p)const{ring_next::need(p<tokens_.size(),"bulk immutable lookahead bound");return tokens_[p];}
  const ring_next::Digest& prefix(size_t p)const{ring_next::need(p<prefixes_.size(),"bulk prefix bound");return prefixes_[p];}
 };
-inline void validate(const Record& r,int role,const ring_next::wire::Context& c,const Prompt& prompt,int rows){
- ring_next::need(r.magic_==magic&&r.version_==version&&r.bytes==sizeof r&&r.published_sequence>0&&r.published_sequence==r.command_sequence&&r.role==uint32_t(role)&&r.stage==uint32_t(role==1?0:c.stages-1)&&r.stages==uint32_t(c.stages)&&r.parity<2&&r.count>0&&r.count<=r.rows&&r.rows==uint32_t(rows)&&rows>0&&rows<=256&&r.stream_bytes==uint32_t(c.stream_bytes)&&r.opcode==15&&!r.reserved&&r.zero==std::array<uint8_t,24>{}&&r.epoch==c.epoch&&r.request==c.request&&r.prompt_sha==prompt.sha,"bulk actual chunk metadata");
- ring_next::need(size_t(r.start)+r.count<=prompt.size()-2&&r.start%r.rows==0&&r.parity==(r.start/r.rows)%2&&r.count==std::min(size_t(r.rows),prompt.size()-2-r.start)&&r.before==prompt.prefix(r.start)&&r.after==prompt.prefix(r.start+r.count),"bulk full no-head prefix extent");
+inline void validate(const Record& r,int role,const ring_next::wire::Context& c,const Prompt& prompt,int rows,int slots=2){
+ ring_next::need(r.magic_==magic&&r.version_==::pipeline::prefill::transport_version(slots)&&r.bytes==sizeof r&&r.published_sequence>0&&r.published_sequence==r.command_sequence&&r.role==uint32_t(role)&&r.stage==uint32_t(role==1?0:c.stages-1)&&r.stages==uint32_t(c.stages)&&::pipeline::prefill::valid_slots(slots)&&r.parity<uint32_t(slots)&&r.count>0&&r.count<=r.rows&&r.rows==uint32_t(rows)&&rows>0&&rows<=256&&(slots==2||rows==256)&&r.stream_bytes==uint32_t(c.stream_bytes)&&r.opcode==15&&r.reserved==uint32_t(slots==4?4:0)&&r.zero==std::array<uint8_t,24>{}&&r.epoch==c.epoch&&r.request==c.request&&r.prompt_sha==prompt.sha,"bulk actual chunk metadata");
+ ring_next::need(size_t(r.start)+r.count<=prompt.size()-2&&r.start%r.rows==0&&r.parity==(r.start/r.rows)%uint32_t(slots)&&r.count==std::min(size_t(r.rows),prompt.size()-2-r.start)&&r.before==prompt.prefix(r.start)&&r.after==prompt.prefix(r.start+r.count),"bulk full no-head prefix extent");
  ring_next::need(role!=1||r.raw_sha==ring_next::Digest{},"bulk seed has no raw payload claim");
  for(size_t i=0;i<256;++i)ring_next::need(r.tokens[i]==(role==1&&i<r.count?prompt.token(r.start+i):0),"bulk actual copied token/padding");
  ring_next::need(r.lookahead==(role==1?uint32_t(prompt.token(r.start+r.count)):UINT32_MAX),"bulk immutable lookahead");
 }
-inline Record make(const ring_next::wire::Context& c,const Prompt& prompt,int rows,int sequence,int start,int count,int parity,int role,const int* tokens,const uint8_t* raw){
- Record r;r.published_sequence=r.command_sequence=sequence;r.role=role;r.stage=role==1?0:c.stages-1;r.stages=c.stages;r.parity=parity;r.start=start;r.count=count;r.rows=rows;r.stream_bytes=c.stream_bytes;r.epoch=c.epoch;r.request=c.request;r.prompt_sha=prompt.sha;r.before=prompt.prefix(start);r.after=prompt.prefix(start+count);r.raw_sha=role==1?ring_next::Digest{}:digest_bytes(raw,size_t(count)*c.stream_bytes);
- if(role==1){ring_next::need(tokens,"bulk actual target tokens");std::copy_n(tokens,count,r.tokens.begin());r.lookahead=prompt.token(start+count);}validate(r,role,c,prompt,rows);return r;
+inline Record make(const ring_next::wire::Context& c,const Prompt& prompt,int rows,int sequence,int start,int count,int parity,int role,const int* tokens,const uint8_t* raw,int slots=2){
+ Record r;r.version_=::pipeline::prefill::transport_version(slots);r.reserved=slots==4?4:0;r.published_sequence=r.command_sequence=sequence;r.role=role;r.stage=role==1?0:c.stages-1;r.stages=c.stages;r.parity=parity;r.start=start;r.count=count;r.rows=rows;r.stream_bytes=c.stream_bytes;r.epoch=c.epoch;r.request=c.request;r.prompt_sha=prompt.sha;r.before=prompt.prefix(start);r.after=prompt.prefix(start+count);r.raw_sha=role==1?ring_next::Digest{}:digest_bytes(raw,size_t(count)*c.stream_bytes);
+ if(role==1){ring_next::need(tokens,"bulk actual target tokens");std::copy_n(tokens,count,r.tokens.begin());r.lookahead=prompt.token(start+count);}validate(r,role,c,prompt,rows,slots);return r;
 }
 inline void publish(uint8_t* map,const Record& r){
  auto* dest=reinterpret_cast<Record*>(map+record_offset+r.parity*sizeof(Record));__atomic_store_n(&dest->published_sequence,0,__ATOMIC_RELEASE);Record copy=r;copy.published_sequence=0;std::memcpy(dest,&copy,sizeof copy);__atomic_store_n(&dest->published_sequence,r.published_sequence,__ATOMIC_RELEASE);
 }
 struct Witness {Record seed,final;std::vector<uint8_t> hidden;};
 class Peers {
- ReadOnlyMap seed_,final_;int rows_,stream_;
+ ReadOnlyMap seed_,final_;int rows_,stream_,slots_;
 public:
- Peers(const std::filesystem::path& seed,const std::filesystem::path& final,int rows,int stream)
- :seed_(seed,::pipeline::prefill::bytes(rows,stream)),final_(final,::pipeline::prefill::bytes(rows,stream)),rows_(rows),stream_(stream){ring_next::need(rows>0&&rows<=256&&stream>0&&!seed_.same_inode(final_),"bulk readonly distinct bounded peers");}
+ Peers(const std::filesystem::path& seed,const std::filesystem::path& final,int rows,int stream,int slots=2)
+ :seed_(seed,::pipeline::prefill::bytes(rows,stream,slots)),final_(final,::pipeline::prefill::bytes(rows,stream,slots)),rows_(rows),stream_(stream),slots_(slots){ring_next::need(rows>0&&rows<=256&&::pipeline::prefill::valid_slots(slots)&&stream>0&&!seed_.same_inode(final_),"bulk readonly distinct bounded peers");}
  Witness capture(const ring_next::wire::Context& c,const Prompt& prompt,int start,int count,int parity){
-  ring_next::need(parity>=0&&parity<2&&count>0&&count<=rows_,"bulk command extent");prompt.stable();seed_.identity();final_.identity();Witness w;
-  for(const auto* bytes:{seed_.data(),final_.data()}){const auto& h=*reinterpret_cast<const ::pipeline::prefill::Header*>(bytes);ring_next::need(h.magic==::pipeline::prefill::magic&&h.version==::pipeline::prefill::version&&h.rows==uint32_t(rows_)&&h.stream_bytes==uint32_t(stream_),"bulk peer header geometry");}
+  ring_next::need(parity>=0&&parity<slots_&&count>0&&count<=rows_,"bulk command extent");prompt.stable();seed_.identity();final_.identity();Witness w;
+  for(const auto* bytes:{seed_.data(),final_.data()}){ring_next::need(::pipeline::prefill::valid_header(bytes,rows_,stream_,slots_),"bulk peer header geometry");}
   const auto* a=reinterpret_cast<const Record*>(seed_.data()+record_offset+parity*sizeof(Record));const auto* b=reinterpret_cast<const Record*>(final_.data()+record_offset+parity*sizeof(Record));auto as=__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE),bs=__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE);ring_next::need(as&&bs,"bulk actual publication absent");
-  std::memcpy(&w.seed,a,sizeof w.seed);std::memcpy(&w.final,b,sizeof w.final);validate(w.seed,1,c,prompt,rows_);validate(w.final,2,c,prompt,rows_);
+  std::memcpy(&w.seed,a,sizeof w.seed);std::memcpy(&w.final,b,sizeof w.final);validate(w.seed,1,c,prompt,rows_,slots_);validate(w.final,2,c,prompt,rows_,slots_);
   ring_next::need(w.seed.start==uint32_t(start)&&w.seed.count==uint32_t(count)&&w.seed.parity==uint32_t(parity)&&w.final.start==w.seed.start&&w.final.count==w.seed.count&&w.final.parity==w.seed.parity,"bulk seed/final command pairing");
-  const auto* raw=final_.data()+4096+size_t(2+parity)*rows_*stream_;w.hidden.assign(raw,raw+size_t(count)*stream_);
+  const auto* raw=final_.data()+::pipeline::prefill::header_size(slots_)+size_t(slots_+parity)*rows_*stream_;w.hidden.assign(raw,raw+size_t(count)*stream_);
   ring_next::need(w.final.raw_sha==digest_bytes(w.hidden.data(),w.hidden.size()),"bulk actual owned raw SHA");
   ring_next::need(as==__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE)&&bs==__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE)&&as==w.seed.published_sequence&&bs==w.final.published_sequence,"bulk publication changed while copying");
   seed_.identity();final_.identity();prompt.stable();return w;

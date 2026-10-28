@@ -1,0 +1,108 @@
+Dedicated four transport slots,256rows — source-only proposed experiment, 2026-10-28
+Status: no patch/build/model/GPU execution; default remains two slots. Next root
+action remains quality capture after active2+1long. Do not combine with1024rows.
+
+Reason to screen
+Actual3+1pipeline peak unfinishedchunks2 limits a four-actor pipeline. Recorded
+host work 801.43s target + 203.10s draft versus 585.686s wall implies overlapping host work,
+not GPU utilization or a device critical path. Cold JIT and heterogeneous stages
+preclude a headline speed projection. Four independently retained transport slots
+could keep more actors busy; timing must test that claim, not assume it.
+
+Exact affected contracts (engine/ paths):
+- src/gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp:16-22 hardcodes
+  header4096,bytes4096+4*rows*stream,forward(slot),reverse(2+slot),HeaderV1.
+- Same directory rank.hpp:395-403 creates/maps exact extent and validates header;
+  559-565 admits OP15fixture0or1, reads header tokens, selects host input/output
+  pointers and calls prefill_chunk. It does not pass slot into engine arithmetic.
+- src/pipeline/provider_only/prefill.hpp:11-23 Record1280 and Ack256; static_assert
+  1536+2*1280==4096. validate/capture require slot<2,slot=(start/rows)%2;
+  publish indexes records byslot, Peers maps exact prefill::bytes and reads raw
+  final payload at4096+(2+slot)*rows*stream. Header+source-record versions strict.
+- src/pipeline/provider_only/runtime.hpp: OP28 uses Request.fixture as slot and
+  emits fullACK with same slot and source-recordSHA; Owner.prefill itself only
+  requires cold contiguous canonical serial and owned count*stream hidden.
+- src/pipeline/ring/dispatcher.hpp: external_prefill_publish selects forward/
+  reverse byfixture and publishes real seed/final records. Dedicated target
+  prefill_complete deliberately skips legacy2-entry prefill_replay token queue
+  when pipeline_external_provider=true. Do not change legacycolocated admission.
+- tools/pipeline_driver.py:29,266-278 hardcodes header4096/version1/two forward+
+  two reverse regions, exact filetruncate/mmap and token header layout.
+- planning/rolling_provider/prefill.py:14-22 map_bytes/region offset4096 and
+  reversegroup2; dedicated_prefill.py validates %2 in records/ACK/parser,
+  calculates record offsets and writes tokens at16; dedicated_prefill_pipeline.py
+  uses k%2,leases<=2 forsource lifetime. Bothsequentialandpipeline codecs, actual
+  journal ingestion and dedicatedgate comparer must agree onversion/slots.
+- tools/dedicated_provider_driver.py must pin slotcount/version into planidentity,
+  validate explicitoptin, propagate exact native flags to everyowner, and preserve
+  fresh map paths/immutableprompt/sourcehash admission. Native Options parse must
+  admit slots4 only for dedicated authenticatedpipeline initially.
+
+Memory/ownership finding
+Slot count is HOST TRANSPORT storage, not temporal recurrent parity. Actual
+prefill_engine.hpp prefill_allocate sizes device shadows with M=a.prefill_rows
+(lines35-98); token/position arrays, rolepacks, routes and submission sites also
+scale byrows, not map slots. prefill_chunk(290-374) accepts raw host pointers,
+uploads exactly Mrows, uses ONE owner command/GPU shadow set, drains/readbacks
+before replying. It advances recurrent banks by actual row math (nativebank once
+or replayM%2). Keep this unchanged. One outstanding OP15 perowner means no extra
+GPUshadows/commands inthatowner andno newdeviceallocation is required by4slots.
+Do NOT replace recurrent bankparity or internalReuse2 chunk cycle with slot%4.
+Current 2-target 128K ~115MBVRAMmargin therefore should not be consumed by this
+transport-only design. This is source allocation reasoning, not runtime census.
+
+At stream 40960, rows 256: V1map=4096+4*256*40960=41,947,136B.
+ProposedV2map=8192+8*256*40960=83,894,272B; delta41,947,136B/target
+(40MiB+4KiB);3targets add125,841,408B host-backed / tmpfs memory,2add83,894,272B.
+Provider readonly peer maps alias existing backing (not another allocated copy);
+ownedWitness remains atmost256*40960=10,485,760B becauseproviderstillserial.
+Record snapshots add onlyboundedKiB. Include mapping/hostcopy/lock overhead in
+actualRAMadmission; no GPUUSMhostpinning introduced. Inspect actual census after
+implementation instead of relying only on projectedmargin.
+
+Narrow versioned layout proposal
+Keep V1/twoslots exactlyunchanged. Newexplicit transportslots4 uses V2header 8192,
+8streamregions: forward[0..3],reverse[0..3],each256*stream. HeaderV2should declare
+header_bytes/slots/rows/stream andreserve spacefor256tokens (e.gfixed32Bprefix,
+tokens32..1056). Retainrecordoffset1536;fouractual1280records end6656<8192.
+Reuse1024rowdesign's NEED forversionedheader/matchingmapgeometry only; noneofits
+largerrows/shadows/kernel/groupedrecurrence/QSAring modifications belong here.
+Version 2 Record1280canbind slots4 in formerlyreserved0 ONLYundernewversion;
+Version 2 Ack256canbind slots similarly in an explicit versioned field. Oldversion
+requires existingzero reserves. Keep privateproviderACKoffset1024/privateheader/
+capture/proposal layoutunchanged; expandedheader belongs TARGETprefillmap only.
+Native options must pin slots/header/version; do not trust mutablepeerheader to
+choose largerextents. Validate everypeer agrees with admittedgeometry; reject
+crossversion/mixedslots/overflow/wrongextent and unrecognizedreservedbits.
+
+Scheduling/authentication/no hiddenleadbound
+Global unfinished chunks <=4,one pending command per socket,FIFO for each actor,slot=chunkordinal%4.
+Lease begins before stage0issue andends only after providerfullACK+stable original
+seed/final records. Copy allsourcebytes/metadata into nativeWitness beforedraft
+arithmetic; keep promptSHA/lookahead/rawSHA/publicationsequence/fullrecordSHA.
+No early capture ACK release or new source ownership assumptions. Original target+provider
+sequences advanceonce/chunk; replay rows remainp=start+1..start+count,hidden[p-1],
+nohead,bulk=len(prompt)-2,nextseedbulk+1. Lastpartialchunk validatedexactly.
+
+Reviewed actualhiddenbound: dedicatedexternal target path skips colocated native
+prefill_replay.size()<2; StageRing.prefill requires emptytargettentativepending
+andcontiguous committedphysicalhistory, NOT target-draftdistance<=2. Dedicated
+Owner.boundary binds itsOWN live_position==serial, andOwner.prefill serial==start;
+itdoesnotcompare latesttargetposition toproviderposition. Readonlybulk peers
+capture per-slot publications, not latestscalarSeedRecord/FinalRecord. Thus no
+additional2chunkleadbound found outsideexplicitcurrenttransport%2 contracts.
+Still preserveallactorFIFO andwaitallACKs beforeseam/accepted-rowproposaljobs.
+A targetthatgets4chunksaheadmustnotoverwrite anunACKedslot or senddecodeearly.
+
+Minimal falsificationgate beforefairtiming
+1) CPUactualwire/map/nativeowner tests forslots0,1,2,3 thenwrap,>=9chunks+partial
+   tail; reject mixedgeometry/version,wrongslot,stalepublication/rawSHA,duplicate/
+   missingACK. Delayprovider0while3latertargetchunksadvance; prove noslot0reuse
+   untilfullACK. Reorderactors/cancel/partialfailure, noadoption,noretry,drainmaps.
+2) One1677prompt is only7chunks; use>=2307prompt for10chunks including a partialtail tocover
+   wraptwice anddepth3seamrollback, allactualpair/token/state/FINISH receipts.
+   Compare strictly tosamecontext/model/topology/default 2-slot reference; if reusing
+   existing1677reference firstgate coversslotwrapbutnotfullsecondwrap.
+3) Actualnativeallocationcensus mustconfirmunchangedVRAM andexpectedhostmaps;
+   onlythenfair121854prompt+8 coldlong, matchingtopology/context/math/policy.
+   Reportwallandhostactorintervals/workseparately. No speed claim until measured.

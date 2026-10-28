@@ -40,13 +40,14 @@ def prompt_source(plan):
 
 
 def chunk_record(raw,*,role,stage,stages,start,count,rows,stream,parity,sequence,epoch,request,prompt_sha,
-                 before,after,prompt,raw_sha):
+                 before,after,prompt,raw_sha,slots=2):
+    prefill.geometry(slots)
     need(len(raw)==RECORD_BYTES and role in (1,2) and stages in (2,3)
          and stage==(0 if role==1 else stages-1) and 0<count<=rows<=256
-         and start>=0 and start%rows==0 and parity==(start//rows)%2,'complete bounded1280 target chunk record')
+         and (slots==2 or rows==256) and start>=0 and start%rows==0 and parity==(start//rows)%slots,'complete bounded1280 target chunk record')
     v=RECORD.unpack(raw[:RECORD.size]);tokens=TOKENS.unpack(raw[RECORD.size:])
-    expected=(CHUNK_MAGIC,1,RECORD_BYTES,sequence,role,stage,stages,parity,start,count,rows,stream,15,sequence,
-              prompt[start+count] if role==1 else 0xffffffff,0,epoch,request,prompt_sha,before,after,
+    expected=(CHUNK_MAGIC,prefill.geometry(slots)[1],RECORD_BYTES,sequence,role,stage,stages,parity,start,count,rows,stream,15,sequence,
+              prompt[start+count] if role==1 else 0xffffffff,slots if slots==4 else 0,epoch,request,prompt_sha,before,after,
               bytes(32) if role==1 else raw_sha,bytes(24))
     need(v==expected and 0<sequence<2**31 and 0<count<=rows<=256 and start+count<len(prompt),
          'actual target chunk publication/source identity')
@@ -56,10 +57,10 @@ def chunk_record(raw,*,role,stage,stages,start,count,rows,stream,parity,sequence
 
 
 def chunk_ack(raw,*,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,epoch,
-              request,prompt_sha,seed_sha,final_sha,raw_sha):
-    need(0<count<=rows<=256 and start>=0 and start%rows==0 and parity==(start//rows)%2,'bounded native chunk ACK geometry')
-    expected=(ACK_MAGIC,1,256,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,
-              start+count+1,1,0,0,epoch,start+count,request,prompt_sha,seed_sha,final_sha,raw_sha,bytes(16))
+              request,prompt_sha,seed_sha,final_sha,raw_sha,slots=2):
+    need(0<count<=rows<=256 and (slots==2 or rows==256) and start>=0 and start%rows==0 and parity==(start//rows)%slots,'bounded native chunk ACK geometry')
+    expected=(ACK_MAGIC,prefill.geometry(slots)[1],256,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,
+              start+count+1,1,slots if slots==4 else 0,0,epoch,start+count,request,prompt_sha,seed_sha,final_sha,raw_sha,bytes(16))
     need(len(raw)==ACK.size and ACK.unpack(raw)==expected,'actual dedicated chunk ACK/canonical serial/source binding')
     return start+count
 
@@ -75,10 +76,11 @@ class Adoption:
     provider_serial:int
     chunks:int
     last_ack:bytes
+    slots:int=2
 
 
 def replay(provider,*,start,count,parity,rows,stages,seed_sequence,final_sequence,request,prompt_sha,
-           seed_sha,final_sha,raw_sha,epoch):
+           seed_sha,final_sha,raw_sha,epoch,slots=2):
     from .dedicated_transport import MAGIC,VERSION,base
     provider.guard.check()
     need(provider.command_pending is None and not provider.transmit and not provider.received
@@ -99,7 +101,7 @@ def replay(provider,*,start,count,parity,rows,stages,seed_sequence,final_sequenc
     raw=bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])
     serial=chunk_ack(raw,sequence=provider.sequence,start=start,count=count,parity=parity,rows=rows,stream=provider.stream_bytes,
         stages=stages,seed_sequence=seed_sequence,final_sequence=final_sequence,epoch=epoch,request=request,
-        prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
+        prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,slots=slots)
     need(bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])==raw,'provider chunk ACK changed while copying')
     provider.provider_serial=serial;provider.prefill_bulk_busy=False
     return command,reply,raw
@@ -110,9 +112,11 @@ def run(stages,provider,model,plan,output,*,stop_requested=None):
     need(plan.get('dedicated_bulk_prefill') is True and not plan.get('prefill_pipeline')
          and not plan.get('persistent_reset'),'dedicated bulk sequential explicit opt-in, no reset')
     rows=plan['prefill_rows'];bulk=len(model.prompt)-2
+    slots=plan.get('dedicated_prefill_slots',2);prefill.geometry(slots)
+    need(slots==2 or plan.get('dedicated_prefill_pipeline') is True,'four slots require dedicated pipeline')
     need(rows==256 and bulk>=rows and len(stages)in (2,3) and model.frontier==0 and not model.rows
          and provider.provider_serial==provider.sequence==0,'cold bounded dedicated prefix')
-    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 for s in stages),
+    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 and getattr(s,'prefill_slots',2)==slots for s in stages),
          'uniform fresh target prefill geometry')
     _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
     pipeline=plan.get('dedicated_prefill_pipeline',False)
@@ -165,7 +169,7 @@ def run(stages,provider,model,plan,output,*,stop_requested=None):
             scope='sequential host wall durations; no overlap/speed claim'))
 
 
-def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256):
+def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256,slots=2):
     """Read actual prefix records/ACKs/native pairs, never invent ROW/ACCEPT events.
 
     This is source ingestion, not sealed-state or reference parity. A qualifier
@@ -194,21 +198,21 @@ def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256):
     need(1<=rows<=256 and len(journal)==len(native_chunks)==count_chunks and len(actual_pairs)==bulk,'complete actual native prefix trace inventory')
     prompt_sha=sha256(struct.pack(f'<{len(model.prompt)}i',*model.prompt)).digest()
     for index,(j,n) in enumerate(zip(journal,native_chunks)):
-        start=index*rows;count=min(rows,bulk-start);parity=index%2;sequence=index+1
+        start=index*rows;count=min(rows,bulk-start);parity=index%slots;sequence=index+1
         need(j['event']=='authenticated-prefill-chunk' and (j['start'],j['count'],j['parity'])==(start,count,parity)
              and j['target_sequences']==[sequence]*stages,'actual sequential chunk schedule')
         seed,final=bytes.fromhex(j['seed_record_hex']),bytes.fromhex(j['final_record_hex'])
         raw_sha=RECORD.unpack(final[:RECORD.size])[-2]
         common=dict(stages=stages,start=start,count=count,rows=rows,stream=stream,parity=parity,epoch=model.epoch,
             request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],after=model.proposals.hashes[start+count],
-            prompt=model.prompt,raw_sha=raw_sha)
+            prompt=model.prompt,raw_sha=raw_sha,slots=slots)
         seed_sha=chunk_record(seed,role=1,stage=0,sequence=sequence,**common)
         final_sha=chunk_record(final,role=2,stage=stages-1,sequence=sequence,**common)
         need(base.REQUEST.unpack(bytes.fromhex(j['provider_command_hex']))==(28,count,start,parity,0,sequence,MAGIC,VERSION), 'actual OP28 command frame')
         need(base.REPLY.unpack(bytes.fromhex(j['provider_reply_hex']))==(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.),'actual OP28 completion frame')
         chunk_ack(bytes.fromhex(j['provider_ack_hex']),sequence=sequence,start=start,count=count,parity=parity,rows=rows,
             stream=stream,stages=stages,seed_sequence=sequence,final_sequence=sequence,epoch=model.epoch,
-            request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
+            request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,slots=slots)
         need(len(j['target_reply_hex'])==stages,'all actual target chunk replies')
         for stage,reply in enumerate(j['target_reply_hex']):
             v=base.REPLY.unpack(bytes.fromhex(reply))

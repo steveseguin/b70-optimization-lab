@@ -11,14 +11,22 @@ REVERSE_OFFSET = 2 * 65536 + 4096
 REVERSE_READY_OFFSET = 2 * 65536 + 192
 
 
-def map_bytes(rows, stream_bytes):
-    return HEADER_BYTES + 4 * rows * stream_bytes
+def geometry(slots=2):
+    if type(slots)is not int or slots not in (2,4):raise ValueError('prefill transport slots must be2or4')
+    return (4096,1,16) if slots==2 else (8192,2,32)
 
 
-def region(mapping, kind, index, rows, stream_bytes, count=None):
+def map_bytes(rows, stream_bytes, slots=2):
+    return geometry(slots)[0] + 2 * slots * rows * stream_bytes
+
+
+def region(mapping, kind, index, rows, stream_bytes, count=None, *, slots=2):
     count = rows if count is None else count
-    group = {'forward': 0, 'reverse': 2}[kind]
-    begin = HEADER_BYTES + (group + index) * rows * stream_bytes
+    header=geometry(slots)[0]
+    if not (type(index)is int and 0<=index<slots and 0<count<=rows):raise ValueError('bounded prefill transport region')
+    group = {'forward': 0, 'reverse': slots}[kind]
+    begin = header + (group + index) * rows * stream_bytes
+    if len(mapping)!=map_bytes(rows,stream_bytes,slots):raise ValueError('exact prefill map extent')
     return memoryview(mapping)[begin:begin + count * stream_bytes]
 
 

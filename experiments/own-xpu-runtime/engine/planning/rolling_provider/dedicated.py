@@ -92,9 +92,11 @@ class DedicatedCoordinator(RollingCoordinator):
 
     def adopt_prefill(self, count, *, native=None):
         from .dedicated_prefill import Adoption, ACK, ACK_MAGIC
+        from .prefill import geometry
         from hashlib import sha256
         import struct
         need(type(native) is Adoption, 'dedicated prefill requires authenticated native target/provider adoption')
+        slots=native.slots;geometry(slots)
         chunks=(count+255)//256
         prompt_sha=sha256(struct.pack(f'<{len(self.prompt)}i',*self.prompt)).digest()
         need(count==len(self.prompt)-2 and count>=256 and native.count==count
@@ -105,8 +107,8 @@ class DedicatedCoordinator(RollingCoordinator):
              'dedicated complete native prefix receipt')
         need(len(native.last_ack)==ACK.size,'dedicated terminal prefix ACK extent')
         a=ACK.unpack(native.last_ack)
-        need(a[0:4]==(ACK_MAGIC,1,256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%2)
-             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,0,0)
+        need(a[0:4]==(ACK_MAGIC,geometry(slots)[1],256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%slots)
+             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,slots if slots==4 else 0,0)
              and a[16:20]==(self.epoch,count,self.request,prompt_sha) and a[-1]==bytes(16),
              'dedicated terminal actual chunk ACK binding')
         for stage,sequence in zip(self.stages,native.target_sequences):stage.sequence=sequence

@@ -1,0 +1,564 @@
+--- a/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -186,7 +186,7 @@
+   bool f32_activations=false;
+   // Batched prefill: up to prefill_rows prompt rows per chunk (0 = off, the original token-by-token prefill).
+   // Rows travel through prefill_shared, a separate versioned map; the original shared map is unchanged.
+-  int prefill_rows=0; fs::path prefill_shared;
++  int prefill_rows=0,prefill_slots=2; fs::path prefill_shared;
+   RetainSteps retain_steps;
+   int cancel_launch=-1;
+   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
+@@ -241,6 +241,7 @@
+     else if(k=="--provider-prefill-seed-shared")a.provider_prefill_seed_shared=value();
+     else if(k=="--provider-prefill-final-shared")a.provider_prefill_final_shared=value();
+     else if(k=="--provider-prefill-rows")a.provider_prefill_rows=std::stoi(value());
++    else if(k=="--prefill-slots")a.prefill_slots=std::stoi(value());
+     else if(k=="--provider-replay")a.provider_replay=value();
+     else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
+     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
+@@ -380,6 +381,7 @@
+   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
+   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
+   const bool dedicated_bulk=!a.provider_prefill_prompt.empty();
++  require((a.prefill_slots==2||a.prefill_slots==4)&&(a.prefill_slots==2||(dedicated_bulk&&a.prefill_rows==256&&(a.provider_only||a.pipeline_external_provider))),"explicit dedicated four-slot256 transport only");
+   require(!dedicated_bulk||(a.provider_prefill_prompt.is_absolute()&&a.provider_prefill_prompt_sha256.size()==64&&a.prefill_rows>0&&a.prefill_rows<=256&&(a.provider_only||a.pipeline_external_provider)),"explicit dedicated bulk prompt/role/rows");
+   require(dedicated_bulk||(!a.provider_prefill_rows&&a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()&&a.provider_prefill_prompt_sha256.empty()),"bulk arguments require prompt");
+   require(!a.provider_prefill_rows||a.provider_only,"provider-prefill-rows role");
+--- a/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/prefill_wire.hpp
+@@ -17,7 +17,22 @@
+ constexpr int max_rows=256;            // header tokens fit the 4096-byte page (16 + 4*256 bytes); the row regions follow it
+ struct Header {uint32_t magic,version,rows,stream_bytes;int32_t tokens[max_rows];};
+ static_assert(sizeof(Header)<=header_bytes);
+-inline size_t bytes(size_t rows,size_t stream){return header_bytes+4*rows*stream;}
+-inline uint8_t* forward(uint8_t* base,int index,size_t rows,size_t stream){return base+header_bytes+size_t(index)*rows*stream;}
+-inline uint8_t* reverse(uint8_t* base,int index,size_t rows,size_t stream){return base+header_bytes+size_t(2+index)*rows*stream;}
++// V2 changes host transport capacity only; operator rows and device shadows are unchanged.
++struct HeaderV2 {uint32_t magic,version,rows,stream_bytes,header_bytes,slots,reserved0,reserved1;int32_t tokens[max_rows];};
++constexpr size_t header_bytes_v2=8192;
++static_assert(sizeof(HeaderV2)<1536);
++inline bool valid_slots(int slots){return slots==2||slots==4;}
++inline size_t header_size(int slots){return slots==4?header_bytes_v2:header_bytes;}
++inline uint32_t transport_version(int slots){return slots==4?2:version;}
++inline bool valid_header(const uint8_t* base,size_t rows,size_t stream,int slots){
++ if(!valid_slots(slots)||(slots==4&&rows!=256))return false;
++ const auto& h=*reinterpret_cast<const Header*>(base);
++ if(h.magic!=magic||h.version!=transport_version(slots)||h.rows!=rows||h.stream_bytes!=stream)return false;
++ if(slots==4){const auto& v=*reinterpret_cast<const HeaderV2*>(base);return v.header_bytes==header_bytes_v2&&v.slots==4&&!v.reserved0&&!v.reserved1;}
++ return true;
+ }
++inline const int32_t* tokens(const uint8_t* base,int slots){return slots==4?reinterpret_cast<const HeaderV2*>(base)->tokens:reinterpret_cast<const Header*>(base)->tokens;}
++inline size_t bytes(size_t rows,size_t stream,int slots=2){return header_size(slots)+2*size_t(slots)*rows*stream;}
++inline uint8_t* forward(uint8_t* base,int index,size_t rows,size_t stream,int slots=2){return base+header_size(slots)+size_t(index)*rows*stream;}
++inline uint8_t* reverse(uint8_t* base,int index,size_t rows,size_t stream,int slots=2){return base+header_size(slots)+size_t(slots+index)*rows*stream;}
++}
+--- a/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -395,12 +395,12 @@
+   if(a.prefill_rows) {
+    engine->prefill_allocate();
+    require(!a.prefill_shared.empty(),"batched prefill requires --prefill-shared");
+-   prefill_map_bytes=prefill::bytes(size_t(a.prefill_rows),engine->stream_bytes());
++   prefill_map_bytes=prefill::bytes(size_t(a.prefill_rows),engine->stream_bytes(),a.prefill_slots);
+    prefill_fd=::open(a.prefill_shared.c_str(),O_RDWR|O_NOFOLLOW);require(prefill_fd>=0,"prefill shared open");struct stat pst{};
+    require(!fstat(prefill_fd,&pst)&&size_t(pst.st_size)==prefill_map_bytes,"prefill shared extent");
+    prefill_map=mmap(nullptr,prefill_map_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,prefill_fd,0);require(prefill_map!=MAP_FAILED,"prefill shared mmap");
+-   prefill_base=static_cast<uint8_t*>(prefill_map);const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
+-   require(h.magic==prefill::magic&&h.version==prefill::version&&h.rows==uint32_t(a.prefill_rows)&&h.stream_bytes==engine->stream_bytes(),"prefill shared header");
++   prefill_base=static_cast<uint8_t*>(prefill_map);
++   require(prefill::valid_header(prefill_base,a.prefill_rows,engine->stream_bytes(),a.prefill_slots),"prefill shared header");
+   }
+   auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);
+   static_assert(sizeof(p105::Mailbox)<=slot_bytes);
+@@ -557,12 +557,12 @@
+     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
+    }
+    else if(r.op==prefill::op){
+-    require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture==0||r.fixture==1)&&!r.speculative,"prefill command");
++    require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture>=0&&r.fixture<a.prefill_slots)&&!r.speculative,"prefill command");
+     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
+-    const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
+-    std::vector<int> owned_tokens;if(a.rank==0)owned_tokens.assign(h.tokens,h.tokens+r.token);
+-    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
+-    else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
++    require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"prefill command header changed");
++    std::vector<int> owned_tokens;if(a.rank==0){const auto* tokens=prefill::tokens(prefill_base,a.prefill_slots);owned_tokens.assign(tokens,tokens+r.token);}
++    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots));
++    else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots),prefill::reverse(prefill_base,r.fixture,R,S,a.prefill_slots));
+     if(a.pipeline_ring){ring_dispatcher->prefill_complete(r,a.rank==0?owned_tokens.data():nullptr);ring_dispatcher->external_prefill_publish(r,a.rank==0?owned_tokens.data():nullptr,prefill_base);}
+     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
+    }
+--- a/engine/src/pipeline/provider_only/prefill.hpp
++++ b/engine/src/pipeline/provider_only/prefill.hpp
+@@ -19,7 +19,7 @@
+  std::array<uint8_t,16> zero{};
+ };
+ static_assert(sizeof(Record)==1280&&sizeof(Ack)==256);
+-static_assert(record_offset+2*sizeof(Record)==4096&&ack_offset+sizeof(Ack)<=record_offset);
++static_assert(record_offset+2*sizeof(Record)==4096&&record_offset+4*sizeof(Record)<=8192&&ack_offset+sizeof(Ack)<=record_offset);
+ inline ring_next::Digest digest_bytes(const void* p,size_t bytes){return ring_next::wire::digest(std::span<const uint8_t>(static_cast<const uint8_t*>(p),bytes));}
+ inline std::string hex(const ring_next::Digest& d){constexpr char h[]="0123456789abcdef";std::string s;for(auto b:d){s+=h[b>>4];s+=h[b&15];}return s;}
+ inline ring_next::Digest parse_sha(const std::string& text){
+@@ -42,33 +42,33 @@
+  int token(size_t p)const{ring_next::need(p<tokens_.size(),"bulk immutable lookahead bound");return tokens_[p];}
+  const ring_next::Digest& prefix(size_t p)const{ring_next::need(p<prefixes_.size(),"bulk prefix bound");return prefixes_[p];}
+ };
+-inline void validate(const Record& r,int role,const ring_next::wire::Context& c,const Prompt& prompt,int rows){
+- ring_next::need(r.magic_==magic&&r.version_==version&&r.bytes==sizeof r&&r.published_sequence>0&&r.published_sequence==r.command_sequence&&r.role==uint32_t(role)&&r.stage==uint32_t(role==1?0:c.stages-1)&&r.stages==uint32_t(c.stages)&&r.parity<2&&r.count>0&&r.count<=r.rows&&r.rows==uint32_t(rows)&&rows>0&&rows<=256&&r.stream_bytes==uint32_t(c.stream_bytes)&&r.opcode==15&&!r.reserved&&r.zero==std::array<uint8_t,24>{}&&r.epoch==c.epoch&&r.request==c.request&&r.prompt_sha==prompt.sha,"bulk actual chunk metadata");
+- ring_next::need(size_t(r.start)+r.count<=prompt.size()-2&&r.start%r.rows==0&&r.parity==(r.start/r.rows)%2&&r.count==std::min(size_t(r.rows),prompt.size()-2-r.start)&&r.before==prompt.prefix(r.start)&&r.after==prompt.prefix(r.start+r.count),"bulk full no-head prefix extent");
++inline void validate(const Record& r,int role,const ring_next::wire::Context& c,const Prompt& prompt,int rows,int slots=2){
++ ring_next::need(r.magic_==magic&&r.version_==::pipeline::prefill::transport_version(slots)&&r.bytes==sizeof r&&r.published_sequence>0&&r.published_sequence==r.command_sequence&&r.role==uint32_t(role)&&r.stage==uint32_t(role==1?0:c.stages-1)&&r.stages==uint32_t(c.stages)&&::pipeline::prefill::valid_slots(slots)&&r.parity<uint32_t(slots)&&r.count>0&&r.count<=r.rows&&r.rows==uint32_t(rows)&&rows>0&&rows<=256&&(slots==2||rows==256)&&r.stream_bytes==uint32_t(c.stream_bytes)&&r.opcode==15&&r.reserved==uint32_t(slots==4?4:0)&&r.zero==std::array<uint8_t,24>{}&&r.epoch==c.epoch&&r.request==c.request&&r.prompt_sha==prompt.sha,"bulk actual chunk metadata");
++ ring_next::need(size_t(r.start)+r.count<=prompt.size()-2&&r.start%r.rows==0&&r.parity==(r.start/r.rows)%uint32_t(slots)&&r.count==std::min(size_t(r.rows),prompt.size()-2-r.start)&&r.before==prompt.prefix(r.start)&&r.after==prompt.prefix(r.start+r.count),"bulk full no-head prefix extent");
+  ring_next::need(role!=1||r.raw_sha==ring_next::Digest{},"bulk seed has no raw payload claim");
+  for(size_t i=0;i<256;++i)ring_next::need(r.tokens[i]==(role==1&&i<r.count?prompt.token(r.start+i):0),"bulk actual copied token/padding");
+  ring_next::need(r.lookahead==(role==1?uint32_t(prompt.token(r.start+r.count)):UINT32_MAX),"bulk immutable lookahead");
+ }
+-inline Record make(const ring_next::wire::Context& c,const Prompt& prompt,int rows,int sequence,int start,int count,int parity,int role,const int* tokens,const uint8_t* raw){
+- Record r;r.published_sequence=r.command_sequence=sequence;r.role=role;r.stage=role==1?0:c.stages-1;r.stages=c.stages;r.parity=parity;r.start=start;r.count=count;r.rows=rows;r.stream_bytes=c.stream_bytes;r.epoch=c.epoch;r.request=c.request;r.prompt_sha=prompt.sha;r.before=prompt.prefix(start);r.after=prompt.prefix(start+count);r.raw_sha=role==1?ring_next::Digest{}:digest_bytes(raw,size_t(count)*c.stream_bytes);
+- if(role==1){ring_next::need(tokens,"bulk actual target tokens");std::copy_n(tokens,count,r.tokens.begin());r.lookahead=prompt.token(start+count);}validate(r,role,c,prompt,rows);return r;
++inline Record make(const ring_next::wire::Context& c,const Prompt& prompt,int rows,int sequence,int start,int count,int parity,int role,const int* tokens,const uint8_t* raw,int slots=2){
++ Record r;r.version_=::pipeline::prefill::transport_version(slots);r.reserved=slots==4?4:0;r.published_sequence=r.command_sequence=sequence;r.role=role;r.stage=role==1?0:c.stages-1;r.stages=c.stages;r.parity=parity;r.start=start;r.count=count;r.rows=rows;r.stream_bytes=c.stream_bytes;r.epoch=c.epoch;r.request=c.request;r.prompt_sha=prompt.sha;r.before=prompt.prefix(start);r.after=prompt.prefix(start+count);r.raw_sha=role==1?ring_next::Digest{}:digest_bytes(raw,size_t(count)*c.stream_bytes);
++ if(role==1){ring_next::need(tokens,"bulk actual target tokens");std::copy_n(tokens,count,r.tokens.begin());r.lookahead=prompt.token(start+count);}validate(r,role,c,prompt,rows,slots);return r;
+ }
+ inline void publish(uint8_t* map,const Record& r){
+  auto* dest=reinterpret_cast<Record*>(map+record_offset+r.parity*sizeof(Record));__atomic_store_n(&dest->published_sequence,0,__ATOMIC_RELEASE);Record copy=r;copy.published_sequence=0;std::memcpy(dest,&copy,sizeof copy);__atomic_store_n(&dest->published_sequence,r.published_sequence,__ATOMIC_RELEASE);
+ }
+ struct Witness {Record seed,final;std::vector<uint8_t> hidden;};
+ class Peers {
+- ReadOnlyMap seed_,final_;int rows_,stream_;
++ ReadOnlyMap seed_,final_;int rows_,stream_,slots_;
+ public:
+- Peers(const std::filesystem::path& seed,const std::filesystem::path& final,int rows,int stream)
+- :seed_(seed,::pipeline::prefill::bytes(rows,stream)),final_(final,::pipeline::prefill::bytes(rows,stream)),rows_(rows),stream_(stream){ring_next::need(rows>0&&rows<=256&&stream>0&&!seed_.same_inode(final_),"bulk readonly distinct bounded peers");}
++ Peers(const std::filesystem::path& seed,const std::filesystem::path& final,int rows,int stream,int slots=2)
++ :seed_(seed,::pipeline::prefill::bytes(rows,stream,slots)),final_(final,::pipeline::prefill::bytes(rows,stream,slots)),rows_(rows),stream_(stream),slots_(slots){ring_next::need(rows>0&&rows<=256&&::pipeline::prefill::valid_slots(slots)&&stream>0&&!seed_.same_inode(final_),"bulk readonly distinct bounded peers");}
+  Witness capture(const ring_next::wire::Context& c,const Prompt& prompt,int start,int count,int parity){
+-  ring_next::need(parity>=0&&parity<2&&count>0&&count<=rows_,"bulk command extent");prompt.stable();seed_.identity();final_.identity();Witness w;
+-  for(const auto* bytes:{seed_.data(),final_.data()}){const auto& h=*reinterpret_cast<const ::pipeline::prefill::Header*>(bytes);ring_next::need(h.magic==::pipeline::prefill::magic&&h.version==::pipeline::prefill::version&&h.rows==uint32_t(rows_)&&h.stream_bytes==uint32_t(stream_),"bulk peer header geometry");}
++  ring_next::need(parity>=0&&parity<slots_&&count>0&&count<=rows_,"bulk command extent");prompt.stable();seed_.identity();final_.identity();Witness w;
++  for(const auto* bytes:{seed_.data(),final_.data()}){ring_next::need(::pipeline::prefill::valid_header(bytes,rows_,stream_,slots_),"bulk peer header geometry");}
+   const auto* a=reinterpret_cast<const Record*>(seed_.data()+record_offset+parity*sizeof(Record));const auto* b=reinterpret_cast<const Record*>(final_.data()+record_offset+parity*sizeof(Record));auto as=__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE),bs=__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE);ring_next::need(as&&bs,"bulk actual publication absent");
+-  std::memcpy(&w.seed,a,sizeof w.seed);std::memcpy(&w.final,b,sizeof w.final);validate(w.seed,1,c,prompt,rows_);validate(w.final,2,c,prompt,rows_);
++  std::memcpy(&w.seed,a,sizeof w.seed);std::memcpy(&w.final,b,sizeof w.final);validate(w.seed,1,c,prompt,rows_,slots_);validate(w.final,2,c,prompt,rows_,slots_);
+   ring_next::need(w.seed.start==uint32_t(start)&&w.seed.count==uint32_t(count)&&w.seed.parity==uint32_t(parity)&&w.final.start==w.seed.start&&w.final.count==w.seed.count&&w.final.parity==w.seed.parity,"bulk seed/final command pairing");
+-  const auto* raw=final_.data()+4096+size_t(2+parity)*rows_*stream_;w.hidden.assign(raw,raw+size_t(count)*stream_);
++  const auto* raw=final_.data()+::pipeline::prefill::header_size(slots_)+size_t(slots_+parity)*rows_*stream_;w.hidden.assign(raw,raw+size_t(count)*stream_);
+   ring_next::need(w.final.raw_sha==digest_bytes(w.hidden.data(),w.hidden.size()),"bulk actual owned raw SHA");
+   ring_next::need(as==__atomic_load_n(&a->published_sequence,__ATOMIC_ACQUIRE)&&bs==__atomic_load_n(&b->published_sequence,__ATOMIC_ACQUIRE)&&as==w.seed.published_sequence&&bs==w.final.published_sequence,"bulk publication changed while copying");
+   seed_.identity();final_.identity();prompt.stable();return w;
+--- a/engine/src/pipeline/provider_only/runtime.hpp
++++ b/engine/src/pipeline/provider_only/runtime.hpp
+@@ -21,7 +21,7 @@
+  std::unique_ptr<bulk::Prompt> prompt;std::unique_ptr<bulk::Peers> bulk_peers;std::ofstream bulk_trace,bulk_chunks;
+  if(!options.provider_prefill_prompt.empty()){
+   prompt=std::make_unique<bulk::Prompt>(options.provider_prefill_prompt,options.provider_prefill_prompt_sha256,context);
+-  bulk_peers=std::make_unique<bulk::Peers>(options.provider_prefill_seed_shared,options.provider_prefill_final_shared,options.prefill_rows,context.stream_bytes);
++  bulk_peers=std::make_unique<bulk::Peers>(options.provider_prefill_seed_shared,options.provider_prefill_final_shared,options.prefill_rows,context.stream_bytes,options.prefill_slots);
+   bulk_chunks.open(options.output/"provider-prefill-chunks.jsonl");ring_next::need(bool(bulk_chunks),"bulk native chunk trace open");
+   bulk_trace.open(options.output/"provider-prefill-pairs.jsonl");ring_next::need(bool(bulk_trace),"bulk native pair trace open");
+  }
+@@ -38,7 +38,7 @@
+    owner.prefill(sequence,*prompt,witness,[&](const auto& row,const uint8_t* hidden,size_t bytes){
+     bulk_trace<<"{\"position\":"<<row.position<<",\"token\":"<<row.token<<",\"head\":false,\"provider_serial\":"<<row.position<<",\"hidden_bytes\":"<<bytes<<",\"hidden_sha256\":\""<<bulk::hex(bulk::digest_bytes(hidden,bytes))<<"\",\"command_sequence\":"<<sequence<<"}\n";ring_next::need(bool(bulk_trace),"bulk native pair trace write");
+    });bulk_trace.flush();ring_next::need(bool(bulk_trace),"bulk native pair trace flush");
+-   bulk::Ack ack;ack.sequence=sequence;ack.start=request.position;ack.count=request.token;ack.parity=request.fixture;ack.rows=options.prefill_rows;ack.stream_bytes=context.stream_bytes;ack.stages=context.stages;ack.seed_sequence=witness.seed.published_sequence;ack.final_sequence=witness.final.published_sequence;ack.next_seed=owner.serial()+1;ack.epoch=context.epoch;ack.serial=owner.serial();ack.request=context.request;ack.prompt_sha=prompt->sha;ack.seed_sha=bulk::digest_bytes(&witness.seed,sizeof witness.seed);ack.final_sha=bulk::digest_bytes(&witness.final,sizeof witness.final);ack.raw_sha=witness.final.raw_sha;
++   bulk::Ack ack;ack.version_=::pipeline::prefill::transport_version(options.prefill_slots);ack.reserved0=options.prefill_slots==4?4:0;ack.sequence=sequence;ack.start=request.position;ack.count=request.token;ack.parity=request.fixture;ack.rows=options.prefill_rows;ack.stream_bytes=context.stream_bytes;ack.stages=context.stages;ack.seed_sequence=witness.seed.published_sequence;ack.final_sequence=witness.final.published_sequence;ack.next_seed=owner.serial()+1;ack.epoch=context.epoch;ack.serial=owner.serial();ack.request=context.request;ack.prompt_sha=prompt->sha;ack.seed_sha=bulk::digest_bytes(&witness.seed,sizeof witness.seed);ack.final_sha=bulk::digest_bytes(&witness.final,sizeof witness.final);ack.raw_sha=witness.final.raw_sha;
+    bulk_chunks<<"{\"epoch\":"<<ack.epoch<<",\"request\":\""<<bulk::hex(ack.request)<<"\",\"sequence\":"<<sequence<<",\"start\":"<<ack.start<<",\"count\":"<<ack.count<<",\"serial\":"<<ack.serial<<",\"prompt_sha256\":\""<<bulk::hex(ack.prompt_sha)<<"\",\"seed_record_sha256\":\""<<bulk::hex(ack.seed_sha)<<"\",\"final_record_sha256\":\""<<bulk::hex(ack.final_sha)<<"\",\"raw_sha256\":\""<<bulk::hex(ack.raw_sha)<<"\"}\n";bulk_chunks.flush();ring_next::need(bool(bulk_chunks),"bulk native chunk trace flush");
+    std::memcpy(shared+bulk::ack_offset,&ack,sizeof ack);reply.bytes=sizeof ack;
+   }else if(request.op==wire::canonical_op||request.op==wire::batch_op){
+--- a/engine/src/pipeline/ring/dispatcher.hpp
++++ b/engine/src/pipeline/ring/dispatcher.hpp
+@@ -72,8 +72,8 @@
+   const auto row=prefill_row(r);require(row.after==prompt.prefix(size_t(r.position)+r.token),"external target actual committed prefix");
+   if(!e.a.pipeline_first()&&!e.a.pipeline_final())return;
+   const int role=e.a.pipeline_first()?1:2;const size_t S=e.stream_bytes(),R=e.a.prefill_rows;
+-  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S):pipeline::prefill::reverse(map,r.fixture,R,S);
+-  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw);bulk::publish(map,record);
++  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S,e.a.prefill_slots):pipeline::prefill::reverse(map,r.fixture,R,S,e.a.prefill_slots);
++  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw,e.a.prefill_slots);bulk::publish(map,record);
+  }
+  void draft_prefill(const Request& r){
+   require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");
+--- a/engine/tools/pipeline_driver.py
++++ b/engine/tools/pipeline_driver.py
+@@ -127,7 +127,7 @@
+     require(cuts[-1] == max(t['layer'] for t in tensors) + 1, 'complete layer coverage')
+     require(cuts[1] > max(t['layer'] for t in tensors if t['component'] == 'ple_lookup'), 'first stage must retain host PLE lookups')
+     stages = []
+-    removes = {'--draft-mtp', '--draft-fault', '--draft-manifest', '--draft-model', '--draft-head', '--draft-experts', '--draft-capture', '--prefill-rows', '--prefill-shared', '--tp-replicate'}
++    removes = {'--draft-mtp', '--draft-fault', '--draft-manifest', '--draft-model', '--draft-head', '--draft-experts', '--draft-capture', '--prefill-rows', '--prefill-shared', '--prefill-slots', '--tp-replicate'}
+     for i, bdf in enumerate(bdfs):
+         first, final = i == 0, i == len(bdfs) - 1
+         argv = list(adapter['rank_argv'][0 if first else 1])
+@@ -252,6 +252,14 @@
+                 return
+ 
+ 
++def prefill_layout(rows,stream,slots=2):
++    require(type(slots)is int and slots in (2,4) and type(rows)is int and 1<=rows<=256
++            and (slots==2 or rows==256) and type(stream)is int and stream>0,
++            'bounded prefill host transport geometry')
++    if slots==2:return PREFILL_HEADER+4*rows*stream,struct.pack('<4I',PREFILL_MAGIC,1,rows,stream)
++    return 8192+8*rows*stream,struct.pack('<8I',PREFILL_MAGIC,2,rows,stream,8192,4,0,0)
++
++
+ class Stage:
+     def __init__(self, spec, plan, guard):
+         self.spec, self.guard, self.sequence, self.plan = spec, guard, 0, plan
+@@ -264,6 +272,9 @@
+         self.file.truncate(SHARED)
+         self.shared = mmap.mmap(self.file.fileno(), SHARED)
+         self.prefill_rows = int(option(spec['argv'], '--prefill-rows')) if '--prefill-rows' in spec['argv'] else 0
++        self.prefill_slots=plan.get('dedicated_prefill_slots',2)
++        require(type(self.prefill_slots)is int and self.prefill_slots in (2,4), 'prefill transport slots2or4')
++        require(self.prefill_slots==2 or (plan.get('dedicated_bulk_prefill') is True and plan.get('dedicated_prefill_pipeline') is True), 'four slots require dedicated bulk pipeline')
+         self.prefill_file = self.prefill = None
+         if self.prefill_rows:
+             require(1 <= self.prefill_rows <= 256 and plan.get('prefill_rows') == self.prefill_rows and
+@@ -271,11 +282,13 @@
+                     'native prefill plan geometry')
+             prefill_path = Path(option(spec['argv'], '--prefill-shared'))
+             require(prefill_path == self.path / 'prefill.bin', 'native prefill map path identity')
++            native_slots=int(option(spec['argv'],'--prefill-slots')) if '--prefill-slots' in spec['argv'] else 2
++            require(native_slots==self.prefill_slots,'native transport slot identity')
++            extent,header=prefill_layout(self.prefill_rows,PREFILL_STREAM_BYTES,self.prefill_slots)
+             self.prefill_file = prefill_path.open('x+b')
+-            self.prefill_file.truncate(PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
+-            self.prefill = mmap.mmap(self.prefill_file.fileno(), PREFILL_HEADER + 4*self.prefill_rows*PREFILL_STREAM_BYTES)
+-            self.prefill[:16] = struct.pack('<4I', PREFILL_MAGIC, PREFILL_VERSION,
+-                                            self.prefill_rows, PREFILL_STREAM_BYTES)
++            self.prefill_file.truncate(extent)
++            self.prefill = mmap.mmap(self.prefill_file.fileno(), extent)
++            self.prefill[:len(header)] = header
+         self.sock, child = socket.socketpair()
+         self.sock.settimeout(0.2)
+         read_stop, write_stop = os.pipe()
+--- a/engine/tools/dedicated_provider_driver.py
++++ b/engine/tools/dedicated_provider_driver.py
+@@ -23,6 +23,9 @@
+     pipeline=config.get('dedicated_prefill_pipeline',False)
+     base.require(type(pipeline) is bool and (not pipeline or bulk),
+                  'dedicated_prefill_pipeline Boolean requires authenticated bulk')
++    slots=config.get('dedicated_prefill_slots',2)
++    base.require(type(slots)is int and slots in (2,4) and (slots==2 or (bulk and pipeline)),
++                 'four transport slots require explicit dedicated bulk pipeline')
+     rows=config.get('prefill_rows',256 if bulk else 0)
+     base.require(type(rows) is int and (rows==256 if bulk else rows==0),
+                  'explicit dedicated bulk256 or per-token0 rows')
+@@ -74,6 +77,7 @@
+                                            dedicated_prefill_prompt_sha256=prompt_sha))
+         identity.update(dedicated_bulk_prefill=True,prefill_rows=rows,prompt_i32_sha256=prompt_sha)
+     if pipeline:identity['dedicated_prefill_pipeline']=True
++    if slots==4:identity['dedicated_prefill_slots']=slots
+     request = sha256(base.canonical(identity)).hexdigest()
+     output = Path(plan['output'])
+     provider = deepcopy(plan['stages'][0])
+@@ -116,6 +120,8 @@
+                 '--provider-prefill-prompt',str(prompt_path),'--provider-prefill-prompt-sha256',prompt_sha]
+         if full:
+             stage['argv'].append('--pipeline-ring-verify-restore')
++    if slots==4:
++        for stage in plan['stages']+[provider]:stage['argv']+=['--prefill-slots','4']
+     for stage in plan['stages']+[provider]:
+         for name in ('OWNRT_DRAFT_DEPTH_PROBE', 'OWNRT_DRAFT_DEPTH_VERIFY'):
+             stage['environment'].pop(name, None)
+@@ -123,7 +129,7 @@
+                      'runtime must not consume expected outputs')
+     plan.update(schema='ownrt.dedicated-provider-plan.v1', mode='dedicated-mtp', provider=provider,
+                 epoch=0, request_sha256=request, dedicated_capture_ready=capture,
+-                dedicated_prefill_pipeline=pipeline, eos_token_ids=eos, speculative_depth=depth,
++                dedicated_prefill_pipeline=pipeline,dedicated_prefill_slots=slots, eos_token_ids=eos, speculative_depth=depth,
+                 rolling_depth2=True, use_proposals=True, check_policy=policy, prefill_rows=rows,
+                 prefill_pipeline=False, verify_restore=full, verify_recursive_restore=full,
+                 draft_model_sha256=manifest_sha, draft_training=False, speed_claim=False,
+--- a/engine/planning/rolling_provider/prefill.py
++++ b/engine/planning/rolling_provider/prefill.py
+@@ -11,14 +11,22 @@
+ REVERSE_READY_OFFSET = 2 * 65536 + 192
+ 
+ 
+-def map_bytes(rows, stream_bytes):
+-    return HEADER_BYTES + 4 * rows * stream_bytes
+-
+-
+-def region(mapping, kind, index, rows, stream_bytes, count=None):
++def geometry(slots=2):
++    if type(slots)is not int or slots not in (2,4):raise ValueError('prefill transport slots must be2or4')
++    return (4096,1,16) if slots==2 else (8192,2,32)
++
++
++def map_bytes(rows, stream_bytes, slots=2):
++    return geometry(slots)[0] + 2 * slots * rows * stream_bytes
++
++
++def region(mapping, kind, index, rows, stream_bytes, count=None, *, slots=2):
+     count = rows if count is None else count
+-    group = {'forward': 0, 'reverse': 2}[kind]
+-    begin = HEADER_BYTES + (group + index) * rows * stream_bytes
++    header=geometry(slots)[0]
++    if not (type(index)is int and 0<=index<slots and 0<count<=rows):raise ValueError('bounded prefill transport region')
++    group = {'forward': 0, 'reverse': slots}[kind]
++    begin = header + (group + index) * rows * stream_bytes
++    if len(mapping)!=map_bytes(rows,stream_bytes,slots):raise ValueError('exact prefill map extent')
+     return memoryview(mapping)[begin:begin + count * stream_bytes]
+ 
+ 
+--- a/engine/planning/rolling_provider/dedicated_prefill.py
++++ b/engine/planning/rolling_provider/dedicated_prefill.py
+@@ -40,13 +40,14 @@
+ 
+ 
+ def chunk_record(raw,*,role,stage,stages,start,count,rows,stream,parity,sequence,epoch,request,prompt_sha,
+-                 before,after,prompt,raw_sha):
++                 before,after,prompt,raw_sha,slots=2):
++    prefill.geometry(slots)
+     need(len(raw)==RECORD_BYTES and role in (1,2) and stages in (2,3)
+          and stage==(0 if role==1 else stages-1) and 0<count<=rows<=256
+-         and start>=0 and start%rows==0 and parity==(start//rows)%2,'complete bounded1280 target chunk record')
++         and (slots==2 or rows==256) and start>=0 and start%rows==0 and parity==(start//rows)%slots,'complete bounded1280 target chunk record')
+     v=RECORD.unpack(raw[:RECORD.size]);tokens=TOKENS.unpack(raw[RECORD.size:])
+-    expected=(CHUNK_MAGIC,1,RECORD_BYTES,sequence,role,stage,stages,parity,start,count,rows,stream,15,sequence,
+-              prompt[start+count] if role==1 else 0xffffffff,0,epoch,request,prompt_sha,before,after,
++    expected=(CHUNK_MAGIC,prefill.geometry(slots)[1],RECORD_BYTES,sequence,role,stage,stages,parity,start,count,rows,stream,15,sequence,
++              prompt[start+count] if role==1 else 0xffffffff,slots if slots==4 else 0,epoch,request,prompt_sha,before,after,
+               bytes(32) if role==1 else raw_sha,bytes(24))
+     need(v==expected and 0<sequence<2**31 and 0<count<=rows<=256 and start+count<len(prompt),
+          'actual target chunk publication/source identity')
+@@ -56,10 +57,10 @@
+ 
+ 
+ def chunk_ack(raw,*,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,epoch,
+-              request,prompt_sha,seed_sha,final_sha,raw_sha):
+-    need(0<count<=rows<=256 and start>=0 and start%rows==0 and parity==(start//rows)%2,'bounded native chunk ACK geometry')
+-    expected=(ACK_MAGIC,1,256,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,
+-              start+count+1,1,0,0,epoch,start+count,request,prompt_sha,seed_sha,final_sha,raw_sha,bytes(16))
++              request,prompt_sha,seed_sha,final_sha,raw_sha,slots=2):
++    need(0<count<=rows<=256 and (slots==2 or rows==256) and start>=0 and start%rows==0 and parity==(start//rows)%slots,'bounded native chunk ACK geometry')
++    expected=(ACK_MAGIC,prefill.geometry(slots)[1],256,sequence,start,count,parity,rows,stream,stages,seed_sequence,final_sequence,
++              start+count+1,1,slots if slots==4 else 0,0,epoch,start+count,request,prompt_sha,seed_sha,final_sha,raw_sha,bytes(16))
+     need(len(raw)==ACK.size and ACK.unpack(raw)==expected,'actual dedicated chunk ACK/canonical serial/source binding')
+     return start+count
+ 
+@@ -75,10 +76,11 @@
+     provider_serial:int
+     chunks:int
+     last_ack:bytes
++    slots:int=2
+ 
+ 
+ def replay(provider,*,start,count,parity,rows,stages,seed_sequence,final_sequence,request,prompt_sha,
+-           seed_sha,final_sha,raw_sha,epoch):
++           seed_sha,final_sha,raw_sha,epoch,slots=2):
+     from .dedicated_transport import MAGIC,VERSION,base
+     provider.guard.check()
+     need(provider.command_pending is None and not provider.transmit and not provider.received
+@@ -99,7 +101,7 @@
+     raw=bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])
+     serial=chunk_ack(raw,sequence=provider.sequence,start=start,count=count,parity=parity,rows=rows,stream=provider.stream_bytes,
+         stages=stages,seed_sequence=seed_sequence,final_sequence=final_sequence,epoch=epoch,request=request,
+-        prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
++        prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,slots=slots)
+     need(bytes(provider.shared[ACK_OFFSET:ACK_OFFSET+ACK.size])==raw,'provider chunk ACK changed while copying')
+     provider.provider_serial=serial;provider.prefill_bulk_busy=False
+     return command,reply,raw
+@@ -110,9 +112,11 @@
+     need(plan.get('dedicated_bulk_prefill') is True and not plan.get('prefill_pipeline')
+          and not plan.get('persistent_reset'),'dedicated bulk sequential explicit opt-in, no reset')
+     rows=plan['prefill_rows'];bulk=len(model.prompt)-2
++    slots=plan.get('dedicated_prefill_slots',2);prefill.geometry(slots)
++    need(slots==2 or plan.get('dedicated_prefill_pipeline') is True,'four slots require dedicated pipeline')
+     need(rows==256 and bulk>=rows and len(stages)in (2,3) and model.frontier==0 and not model.rows
+          and provider.provider_serial==provider.sequence==0,'cold bounded dedicated prefix')
+-    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 for s in stages),
++    need(all(s.prefill_rows==rows and s.stream_bytes==provider.stream_bytes and s.sequence==0 and getattr(s,'prefill_slots',2)==slots for s in stages),
+          'uniform fresh target prefill geometry')
+     _,source=prompt_source(plan);prompt_sha=bytes.fromhex(source['sha256']);stream=provider.stream_bytes
+     pipeline=plan.get('dedicated_prefill_pipeline',False)
+@@ -165,7 +169,7 @@
+             scope='sequential host wall durations; no overlap/speed claim'))
+ 
+ 
+-def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256):
++def prefix_evidence(journal_path,pairs_path,chunks_path,model,*,rows=256,slots=2):
+     """Read actual prefix records/ACKs/native pairs, never invent ROW/ACCEPT events.
+ 
+     This is source ingestion, not sealed-state or reference parity. A qualifier
+@@ -194,21 +198,21 @@
+     need(1<=rows<=256 and len(journal)==len(native_chunks)==count_chunks and len(actual_pairs)==bulk,'complete actual native prefix trace inventory')
+     prompt_sha=sha256(struct.pack(f'<{len(model.prompt)}i',*model.prompt)).digest()
+     for index,(j,n) in enumerate(zip(journal,native_chunks)):
+-        start=index*rows;count=min(rows,bulk-start);parity=index%2;sequence=index+1
++        start=index*rows;count=min(rows,bulk-start);parity=index%slots;sequence=index+1
+         need(j['event']=='authenticated-prefill-chunk' and (j['start'],j['count'],j['parity'])==(start,count,parity)
+              and j['target_sequences']==[sequence]*stages,'actual sequential chunk schedule')
+         seed,final=bytes.fromhex(j['seed_record_hex']),bytes.fromhex(j['final_record_hex'])
+         raw_sha=RECORD.unpack(final[:RECORD.size])[-2]
+         common=dict(stages=stages,start=start,count=count,rows=rows,stream=stream,parity=parity,epoch=model.epoch,
+             request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],after=model.proposals.hashes[start+count],
+-            prompt=model.prompt,raw_sha=raw_sha)
++            prompt=model.prompt,raw_sha=raw_sha,slots=slots)
+         seed_sha=chunk_record(seed,role=1,stage=0,sequence=sequence,**common)
+         final_sha=chunk_record(final,role=2,stage=stages-1,sequence=sequence,**common)
+         need(base.REQUEST.unpack(bytes.fromhex(j['provider_command_hex']))==(28,count,start,parity,0,sequence,MAGIC,VERSION), 'actual OP28 command frame')
+         need(base.REPLY.unpack(bytes.fromhex(j['provider_reply_hex']))==(0,-1,0,256,sequence,-1,MAGIC,VERSION,0.,0.,0.,0.),'actual OP28 completion frame')
+         chunk_ack(bytes.fromhex(j['provider_ack_hex']),sequence=sequence,start=start,count=count,parity=parity,rows=rows,
+             stream=stream,stages=stages,seed_sequence=sequence,final_sequence=sequence,epoch=model.epoch,
+-            request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha)
++            request=model.request,prompt_sha=prompt_sha,seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,slots=slots)
+         need(len(j['target_reply_hex'])==stages,'all actual target chunk replies')
+         for stage,reply in enumerate(j['target_reply_hex']):
+             v=base.REPLY.unpack(bytes.fromhex(reply))
+--- a/engine/planning/rolling_provider/dedicated_prefill_pipeline.py
++++ b/engine/planning/rolling_provider/dedicated_prefill_pipeline.py
+@@ -14,17 +14,18 @@
+     P.need(targets in (2,3) and plan.get('dedicated_prefill_pipeline') is True,
+            'explicit two/three-target dedicated prefix pipeline')
+     rows=plan['prefill_rows'];bulk=len(model.prompt)-2;stream=provider.stream_bytes
++    slots=plan.get('dedicated_prefill_slots',2);prefill.geometry(slots)
+     prompt_sha=bytes.fromhex(source['sha256']);total=(bulk+rows-1)//rows
+     began=time.monotonic();next_chunk=[0]*actors;completed=[set() for _ in range(actors)]
+     busy={};leases={};snapshots={};target_wall=[0.]*targets;replay_wall=0.;last_ack=None;peak=0
+ 
+     def target(index,k):
+-        stage=stages[index];start=k*rows;count=min(rows,bulk-start);parity=k%2
++        stage=stages[index];start=k*rows;count=min(rows,bulk-start);parity=k%slots
+         if index==0:
+-            stage.prefill[16:16+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
++            stage.prefill[prefill.geometry(slots)[2]:prefill.geometry(slots)[2]+4*count]=struct.pack(f'<{count}i',*model.prompt[start:start+count])
+         else:
+             kind='forward' if index==1 else 'reverse'
+-            prefill.region(stage.prefill,'forward',parity,rows,stream,count)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count)
++            prefill.region(stage.prefill,'forward',parity,rows,stream,count,slots=slots)[:]=prefill.region(stages[index-1].prefill,kind,parity,rows,stream,count,slots=slots)
+         position=start+count-1
+         row=ring.Row(model.epoch,position+1,position,position,model.prompt[position],0,model.request,
+                      model.proposals.hashes[position],model.proposals.hashes[position+1])
+@@ -37,13 +38,13 @@
+                     record=bytes(stage.prefill[off:off+P.RECORD_BYTES]) if index in (0,final_index) else None)
+ 
+     def replay(k):
+-        start=k*rows;count=min(rows,bulk-start);parity=k%2;parts=snapshots[k]
++        start=k*rows;count=min(rows,bulk-start);parity=k%slots;parts=snapshots[k]
+         seed,final=parts[0]['record'],parts[final_index]['record'];sequences=[p['sequence'] for p in parts]
+         off=P.RECORD_OFFSET+parity*P.RECORD_BYTES
+-        raw_sha=sha256(prefill.region(stages[final_index].prefill,'reverse',parity,rows,stream,count)).digest()
++        raw_sha=sha256(prefill.region(stages[final_index].prefill,'reverse',parity,rows,stream,count,slots=slots)).digest()
+         common=dict(stages=targets,start=start,count=count,rows=rows,stream=stream,parity=parity,
+             epoch=model.epoch,request=model.request,prompt_sha=prompt_sha,before=model.proposals.hashes[start],
+-            after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha)
++            after=model.proposals.hashes[start+count],prompt=model.prompt,raw_sha=raw_sha,slots=slots)
+         seed_sha=P.chunk_record(seed,role=1,stage=0,sequence=sequences[0],**common)
+         final_sha=P.chunk_record(final,role=2,stage=final_index,sequence=sequences[final_index],**common)
+         P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
+@@ -51,7 +52,7 @@
+         t=time.monotonic()
+         command,reply,ack=P.replay(provider,start=start,count=count,parity=parity,rows=rows,stages=targets,
+             seed_sequence=sequences[0],final_sequence=sequences[final_index],request=model.request,prompt_sha=prompt_sha,
+-            seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch)
++            seed_sha=seed_sha,final_sha=final_sha,raw_sha=raw_sha,epoch=model.epoch,slots=slots)
+         # This check belongs inside the worker, before its Future releases parity.
+         P.need(seed==bytes(stages[0].prefill[off:off+P.RECORD_BYTES]) and
+                final==bytes(stages[final_index].prefill[off:off+P.RECORD_BYTES]),'source chunk publication changed before ACK')
+@@ -80,8 +81,8 @@
+                     else:
+                         entry,t=result;last_ack=bytes.fromhex(entry['provider_ack_hex']);replay_wall+=entry['monotonic_s']-t
+                         journal.write(json.dumps(entry)+'\n');journal.flush()
+-                        P.need(leases.get(k%2)==k,'full ACK releases actual parity owner')
+-                        del leases[k%2];del snapshots[k]
++                        P.need(leases.get(k%slots)==k,'full ACK releases actual parity owner')
++                        del leases[k%slots];del snapshots[k]
+                         event(actor,k,'completed',command_began=t,command_end=entry['monotonic_s'])
+                 if len(completed[provider_actor])==total:break
+                 for actor in reversed(range(actors)):
+@@ -89,8 +90,8 @@
+                     if actor in busy or k==total:continue
+                     if actor and k not in completed[actor-1]:continue
+                     if actor==0:
+-                        if len(leases)==2 or k%2 in leases:continue
+-                        leases[k%2]=k;snapshots[k]=[None]*targets;peak=max(peak,len(leases))
++                        if len(leases)==slots or k%slots in leases:continue
++                        leases[k%slots]=k;snapshots[k]=[None]*targets;peak=max(peak,len(leases))
+                     event(actor,k,'issued')
+                     busy[actor]=pool.submit(replay,k) if actor==provider_actor else pool.submit(target,actor,k)
+                     next_chunk[actor]+=1
+@@ -103,10 +104,10 @@
+             raise
+     P.need(not busy and not leases and all(len(x)==total for x in completed),'all target/provider ACKs before adoption')
+     receipt=P.Adoption(bulk,model.epoch,model.request,prompt_sha,tuple(s.sequence for s in stages),provider.sequence,
+-                       provider.provider_serial,total,last_ack)
++                       provider.provider_serial,total,last_ack,slots)
+     model.adopt_prefill(bulk,native=receipt)
+     for stage in stages:stage.physical=stage.committed=bulk
+     return dict(prefill_schedule='target-stage-pipeline',prefill_positions=bulk,prefill_chunks=total,prefill_draft_replay=bulk,prefill_source=source,
+         prefill_timing=dict(schema='dedicated-stage-pipeline-prefill-host-wall-v1',total_wall_s=time.monotonic()-began,
+-            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,peak_unfinished_chunks=peak,
++            target_command_work_wall_s=target_wall,draft_replay_work_wall_s=replay_wall,peak_unfinished_chunks=peak,transport_slots=slots,
+             scope='host work durations overlap; full native OP28 ACK releases parity; no GPU duration/speed claim'))
+--- a/engine/planning/rolling_provider/dedicated_transport.py
++++ b/engine/planning/rolling_provider/dedicated_transport.py
+@@ -192,6 +192,9 @@
+     bulk_mode=plan.get('dedicated_bulk_prefill',False)
+     base.require(type(bulk_mode) is bool and not plan.get('prefill_pipeline') and not plan.get('persistent_reset')
+                  and (bulk_mode or not plan.get('prefill_rows')), 'dedicated sequential prefill/no reset admission')
++    slots=plan.get('dedicated_prefill_slots',2)
++    base.require(type(slots)is int and slots in (2,4) and (slots==2 or (bulk_mode and plan.get('dedicated_prefill_pipeline') is True)),
++                 'dedicated transport slots admission')
+     pipeline=plan.get('dedicated_prefill_pipeline',False)
+     base.require(type(pipeline)is bool and (not pipeline or (bulk_mode and len(stages) in (2,3))),
+                  'dedicated prefix pipeline transport admission')
+--- a/engine/tools/dedicated_provider_lifecycle.py
++++ b/engine/tools/dedicated_provider_lifecycle.py
+@@ -20,6 +20,9 @@
+     base.require(type(pipeline)is bool and (not pipeline or
+         (plan.get('dedicated_bulk_prefill') is True and len(plan['stages']) in (2,3))),
+         'dedicated prefix pipeline lifecycle admission')
++    slots=plan.get('dedicated_prefill_slots',2)
++    base.require(type(slots)is int and slots in (2,4) and (slots==2 or pipeline),
++                 'dedicated lifecycle transport slots admission')
+     return ('dedicated-provider-stage-pipeline-bulk' if pipeline else
+         'dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else
+         'dedicated-provider-per-token')
+@@ -112,6 +115,7 @@
+             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
+             mode=execution_mode(plan),
+             prefill_overlap_requested=plan.get('dedicated_prefill_pipeline',False),
++            prefill_transport_slots=plan.get('dedicated_prefill_slots',2),
+             diagnostic_only=True, speed_claim=False,
+             bulk_reset_qualified=False, bulk_overlap_qualified=False,
+             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',
+--- a/research/pp4-review-2026-10-28/dedicated-gate/compare.py
++++ b/research/pp4-review-2026-10-28/dedicated-gate/compare.py
+@@ -152,7 +152,7 @@
+             initial_sequences=[0]*len(plan['stages']),provider_sequence=0,speculative_depth=plan['speculative_depth'])
+         output=Path(plan['output']);native=Path(plan['provider']['native_output'])
+         prefix=prefix_evidence(output/'dedicated-prefill.jsonl',native/'provider-prefill-pairs.jsonl',
+-            native/'provider-prefill-chunks.jsonl',model,rows=plan['prefill_rows'])
++            native/'provider-prefill-chunks.jsonl',model,rows=plan['prefill_rows'],slots=plan.get('dedicated_prefill_slots',2))
+     pairs=canonical_pairs(commands,position,capture_ready=plan.get('dedicated_capture_ready',False),
+         target_stages=len(plan['stages']),prefix=prefix)
+     return pairs,prefix
+--- a/engine/planning/rolling_provider/dedicated.py
++++ b/engine/planning/rolling_provider/dedicated.py
+@@ -92,9 +92,11 @@
+ 
+     def adopt_prefill(self, count, *, native=None):
+         from .dedicated_prefill import Adoption, ACK, ACK_MAGIC
++        from .prefill import geometry
+         from hashlib import sha256
+         import struct
+         need(type(native) is Adoption, 'dedicated prefill requires authenticated native target/provider adoption')
++        slots=native.slots;geometry(slots)
+         chunks=(count+255)//256
+         prompt_sha=sha256(struct.pack(f'<{len(self.prompt)}i',*self.prompt)).digest()
+         need(count==len(self.prompt)-2 and count>=256 and native.count==count
+@@ -105,8 +107,8 @@
+              'dedicated complete native prefix receipt')
+         need(len(native.last_ack)==ACK.size,'dedicated terminal prefix ACK extent')
+         a=ACK.unpack(native.last_ack)
+-        need(a[0:4]==(ACK_MAGIC,1,256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%2)
+-             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,0,0)
++        need(a[0:4]==(ACK_MAGIC,geometry(slots)[1],256,chunks) and a[4:6]==((chunks-1)*256,count-(chunks-1)*256) and a[6]==((chunks-1)%slots)
++             and a[7:10]==(256,self.stream_bytes,len(self.stages)) and a[10:16]==(chunks,chunks,count+1,1,slots if slots==4 else 0,0)
+              and a[16:20]==(self.epoch,count,self.request,prompt_sha) and a[-1]==bytes(16),
+              'dedicated terminal actual chunk ACK binding')
+         for stage,sequence in zip(self.stages,native.target_sequences):stage.sequence=sequence

@@ -186,7 +186,7 @@ struct Options {
   bool f32_activations=false;
   // Batched prefill: up to prefill_rows prompt rows per chunk (0 = off, the original token-by-token prefill).
   // Rows travel through prefill_shared, a separate versioned map; the original shared map is unchanged.
-  int prefill_rows=0; fs::path prefill_shared;
+  int prefill_rows=0,prefill_slots=2; fs::path prefill_shared;
   RetainSteps retain_steps;
   int cancel_launch=-1;
   int draft_rank=0,target_split=0; bool mtp=false; fs::path draft_capture;
@@ -241,6 +241,7 @@ static Options parse(int argc, char **argv) {
     else if(k=="--provider-prefill-seed-shared")a.provider_prefill_seed_shared=value();
     else if(k=="--provider-prefill-final-shared")a.provider_prefill_final_shared=value();
     else if(k=="--provider-prefill-rows")a.provider_prefill_rows=std::stoi(value());
+    else if(k=="--prefill-slots")a.prefill_slots=std::stoi(value());
     else if(k=="--provider-replay")a.provider_replay=value();
     else if(k=="--provider-replay-sha256")a.provider_replay_sha256=value();
     else if(k=="--pipeline-ring-persistent-requests")a.pipeline_ring_persistent_requests=true;
@@ -380,6 +381,7 @@ static Options parse(int argc, char **argv) {
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
   const bool dedicated_bulk=!a.provider_prefill_prompt.empty();
+  require((a.prefill_slots==2||a.prefill_slots==4)&&(a.prefill_slots==2||(dedicated_bulk&&a.prefill_rows==256&&(a.provider_only||a.pipeline_external_provider))),"explicit dedicated four-slot256 transport only");
   require(!dedicated_bulk||(a.provider_prefill_prompt.is_absolute()&&a.provider_prefill_prompt_sha256.size()==64&&a.prefill_rows>0&&a.prefill_rows<=256&&(a.provider_only||a.pipeline_external_provider)),"explicit dedicated bulk prompt/role/rows");
   require(dedicated_bulk||(!a.provider_prefill_rows&&a.provider_prefill_seed_shared.empty()&&a.provider_prefill_final_shared.empty()&&a.provider_prefill_prompt_sha256.empty()),"bulk arguments require prompt");
   require(!a.provider_prefill_rows||a.provider_only,"provider-prefill-rows role");

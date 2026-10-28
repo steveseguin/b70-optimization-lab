@@ -20,6 +20,9 @@ def execution_mode(plan):
     base.require(type(pipeline)is bool and (not pipeline or
         (plan.get('dedicated_bulk_prefill') is True and len(plan['stages']) in (2,3))),
         'dedicated prefix pipeline lifecycle admission')
+    slots=plan.get('dedicated_prefill_slots',2)
+    base.require(type(slots)is int and slots in (2,4) and (slots==2 or pipeline),
+                 'dedicated lifecycle transport slots admission')
     return ('dedicated-provider-stage-pipeline-bulk' if pipeline else
         'dedicated-provider-sequential-bulk' if plan.get('dedicated_bulk_prefill',False) else
         'dedicated-provider-per-token')
@@ -112,6 +115,7 @@ def execute(plan, admission, unit):
             error=failure, live_pids=alive, returncodes=codes, requests=1 if result else 0,
             mode=execution_mode(plan),
             prefill_overlap_requested=plan.get('dedicated_prefill_pipeline',False),
+            prefill_transport_slots=plan.get('dedicated_prefill_slots',2),
             diagnostic_only=True, speed_claim=False,
             bulk_reset_qualified=False, bulk_overlap_qualified=False,
             prefix_evidence_policy='actual native OP15/OP28 records and pair traces; no synthetic scalar ROW/ACCEPT events',

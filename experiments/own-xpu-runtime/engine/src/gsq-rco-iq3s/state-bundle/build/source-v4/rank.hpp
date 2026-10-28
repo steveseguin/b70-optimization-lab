@@ -395,12 +395,12 @@ static int run_rank(const Options& a) {
   if(a.prefill_rows) {
    engine->prefill_allocate();
    require(!a.prefill_shared.empty(),"batched prefill requires --prefill-shared");
-   prefill_map_bytes=prefill::bytes(size_t(a.prefill_rows),engine->stream_bytes());
+   prefill_map_bytes=prefill::bytes(size_t(a.prefill_rows),engine->stream_bytes(),a.prefill_slots);
    prefill_fd=::open(a.prefill_shared.c_str(),O_RDWR|O_NOFOLLOW);require(prefill_fd>=0,"prefill shared open");struct stat pst{};
    require(!fstat(prefill_fd,&pst)&&size_t(pst.st_size)==prefill_map_bytes,"prefill shared extent");
    prefill_map=mmap(nullptr,prefill_map_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,prefill_fd,0);require(prefill_map!=MAP_FAILED,"prefill shared mmap");
-   prefill_base=static_cast<uint8_t*>(prefill_map);const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
-   require(h.magic==prefill::magic&&h.version==prefill::version&&h.rows==uint32_t(a.prefill_rows)&&h.stream_bytes==engine->stream_bytes(),"prefill shared header");
+   prefill_base=static_cast<uint8_t*>(prefill_map);
+   require(prefill::valid_header(prefill_base,a.prefill_rows,engine->stream_bytes(),a.prefill_slots),"prefill shared header");
   }
   auto& head_box=*reinterpret_cast<p105::Mailbox*>(static_cast<uint8_t*>(mapping)+reverse_offset);
   static_assert(sizeof(p105::Mailbox)<=slot_bytes);
@@ -557,12 +557,12 @@ static int run_rank(const Options& a) {
     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
    else if(r.op==prefill::op){
-    require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture==0||r.fixture==1)&&!r.speculative,"prefill command");
+    require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture>=0&&r.fixture<a.prefill_slots)&&!r.speculative,"prefill command");
     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
-    const auto& h=*reinterpret_cast<const prefill::Header*>(prefill_base);
-    std::vector<int> owned_tokens;if(a.rank==0)owned_tokens.assign(h.tokens,h.tokens+r.token);
-    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S));
-    else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S),prefill::reverse(prefill_base,r.fixture,R,S));
+    require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"prefill command header changed");
+    std::vector<int> owned_tokens;if(a.rank==0){const auto* tokens=prefill::tokens(prefill_base,a.prefill_slots);owned_tokens.assign(tokens,tokens+r.token);}
+    if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots));
+    else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots),prefill::reverse(prefill_base,r.fixture,R,S,a.prefill_slots));
     if(a.pipeline_ring){ring_dispatcher->prefill_complete(r,a.rank==0?owned_tokens.data():nullptr);ring_dispatcher->external_prefill_publish(r,a.rank==0?owned_tokens.data():nullptr,prefill_base);}
     response.busy_ms=Engine::ms(before);response.bytes=int32_t(size_t(r.token)*S);
    }

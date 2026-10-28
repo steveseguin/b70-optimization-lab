@@ -72,8 +72,8 @@ public:
   const auto row=prefill_row(r);require(row.after==prompt.prefix(size_t(r.position)+r.token),"external target actual committed prefix");
   if(!e.a.pipeline_first()&&!e.a.pipeline_final())return;
   const int role=e.a.pipeline_first()?1:2;const size_t S=e.stream_bytes(),R=e.a.prefill_rows;
-  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S):pipeline::prefill::reverse(map,r.fixture,R,S);
-  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw);bulk::publish(map,record);
+  const auto* raw=role==1?pipeline::prefill::forward(map,r.fixture,R,S,e.a.prefill_slots):pipeline::prefill::reverse(map,r.fixture,R,S,e.a.prefill_slots);
+  auto record=bulk::make(context,prompt,R,r.sequence,r.position,r.token,r.fixture,role,tokens,raw,e.a.prefill_slots);bulk::publish(map,record);
  }
  void draft_prefill(const Request& r){
   require(!prefill_replay.empty(),"ring prefill DRAFT replay ownership");
