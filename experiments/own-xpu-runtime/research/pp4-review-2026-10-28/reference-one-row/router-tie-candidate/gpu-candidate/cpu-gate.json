@@ -1,0 +1,25 @@
+{
+  "schema": "ownrt.gpu-route-candidate.cpu-gate.v1",
+  "passed": true,
+  "tests": 9,
+  "scope": "No GPU/model/native compile. Small actual-schema artifact fixtures, source inputs and mocked existing NativeController argument/sequence contract only.",
+  "cases": [
+    "all12 frozen suite prompts and all7 original historical cases authenticate",
+    "missing registration blocks planning",
+    "naturalEOS allowed; arbitrary short generation rejected",
+    "earlyEOS/missing actual HALF positions rejected",
+    "duplicate cold payload cleanup retains initial authority",
+    "bad source map refuses before any unlink",
+    "NativeController receives only actual prompt/count/EOS and target-only flags",
+    "one archive stream compares all14 selected actual payloads",
+    "source map or actual payload corruption rejected"
+  ],
+  "command": "nice -n 19 taskset -c 8-15 python3 test_run.py",
+  "sources": {
+    "run.py": "7c436d74444cd45500e4554991557256e7d2ce48c58b9955808ee7b7a7d8ca25",
+    "test_run.py": "f357566d77b6aec238adb69b08103f8abcb07fc6acea43eb74f3da238fdd58eb",
+    "README.txt": "1fca8e75b4e0e1eb9d49e35b1346dd61fc2a131f92331bb3c27704a360b3c99f"
+  },
+  "launch_ready": false,
+  "blocker": "Await actual both-mode route kernel gate, applied source identity and root-authored candidate build registration. Then root memory/device admission."
+}
