@@ -1,0 +1,59 @@
+Pending two-target / four-slot / 128K gate: exact existing-tool recipe
+
+Preparation only. Build receipt is pending; do not plan until it exists. Root owns
+admission, launch and all device work. Config is already fixed under:
+/dev/shm/sc117-dedicated-four-slots-2plus1-128k-gate-20261028-r1/config.json
+Receipt: /dev/shm/engine-build-l4-history-20261028-r1/build-receipt.json
+
+From /home/steve/llm-optimizations/experiments/own-xpu-runtime:
+nice -n 19 taskset -c 8-15 python3 engine/tools/dedicated_provider_driver.py --config /dev/shm/sc117-dedicated-four-slots-2plus1-128k-gate-20261028-r1/config.json --plan /dev/shm/sc117-dedicated-four-slots-2plus1-128k-gate-20261028-r1/plan.json
+
+Before root admission: require fresh absent output, source-valid receipt/plan,
+context131072, targets23/47 cuts[0,25,48], provider43,1677prompt/32outputs,
+slots4,both bulk/pipeline enabled. Actual config floors: startup103079215104B,
+running8589934592B, root27000000000B, evidence2147483648B; seconds1800/grace120.
+No invented admission: retain actual baseline/admission and controlled unit identity.
+
+ONLY AFTER every owner drains cleanly and before comparison, coordinator restores
+these FIVE exact reference members (currently absent), never the whole archive.
+Archive: /mnt/raid-models/ownrt-experiment-archives/2026-10-28/pp4-serial-overlap-gate.tar.zst
+SHA256: 1dcf766e5e6fd252a63e16253baaa8bdf71371dcace64c1280f7548329c5c145
+Extraction root: /dev/shm/pp4-overlap-gate-20261028
+Command (archive identity first; fail if destination members unexpectedly exist):
+nice -n 19 taskset -c 8-15 tar --zstd -xf /mnt/raid-models/ownrt-experiment-archives/2026-10-28/pp4-serial-overlap-gate.tar.zst -C /dev/shm/pp4-overlap-gate-20261028 \
+  'output/stage0/native/requests/request-00-serial/state-2000000000/state.bundle' \
+  'output/stage0/native/requests/request-00-serial/state-2000000000.draft/state.bundle' \
+  'output/stage1/native/requests/request-00-serial/state-2000000000/state.bundle' \
+  'output/stage2/native/requests/request-00-serial/state-2000000000/state.bundle' \
+  'output/stage3/native/requests/request-00-serial/state-2000000000/state.bundle'
+
+Reference request metadata remains:
+/dev/shm/pp4-overlap-gate-20261028/output/request-00-serial
+After candidate terminal all3rc0/noholders and passive postflight baseline match:
+nice -n 19 taskset -c 8-15 python3 research/pp4-review-2026-10-28/dedicated-gate/prepare.py --plan /dev/shm/sc117-dedicated-four-slots-2plus1-128k-gate-20261028-r1/plan.json --reference-request /dev/shm/pp4-overlap-gate-20261028/output/request-00-serial --out /dev/shm/dedicated-four-slots-2plus1-128k-comparison-r1
+Create the explicit cross-context wrapper after prepare.py succeeds (exclusive creation):
+nice -n 19 taskset -c 8-15 python3 - <<'WRAPPER'
+import json
+from pathlib import Path
+root = Path('/dev/shm/dedicated-four-slots-2plus1-128k-comparison-r1')
+with (root / 'context-inputs.json').open('x') as file:
+    json.dump({'schema': 'ownrt.dedicated-cross-context-inputs.v1',
+               'reference_context': 262144, 'candidate_context': 131072,
+               'inputs': str(root / 'inputs.json')}, file, indent=2)
+    file.write('\n')
+WRAPPER
+nice -n 19 taskset -c 8-15 python3 research/pp4-review-2026-10-28/dedicated-gate/compare_context.py /dev/shm/dedicated-four-slots-2plus1-128k-comparison-r1/context-inputs.json --out /dev/shm/dedicated-four-slots-2plus1-128k-comparison-r1/proof.json
+
+Require passed proof:2065target/73draft source inventory,2017+69exact plus48+4
+registered full128Kprefix matches and262Kextra tails zero,1707actual pairs,
+32exact outputs,inputposition1708. Existing helper authenticates actual slot4
+OP15/OP28 records/ACK/prefix traces and suffix; do not synthesize scalar ROWs.
+Retain proof/receipt hashes and selected metadata. Root archives candidate bundles
+and fully compares exact restored reference members before precise release.
+
+Post-run compare all3 census.json against corresponding stage0/stage1/stageprovider
+in /dev/shm/sc117-dedicated-pipeline-2plus1-128k-gate-20261028-r1/output.
+Report actual differences rather than requiring identity across a changed binary.
+Prior owned totals:31837258292/32097362144/provider3385539588B; unchanged30GiB
+cap margins374996428/114892576B. Four host slots enlarge transport maps, not proof
+of extra device allocation. Actual admission/initialization must establish fit.
