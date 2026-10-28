@@ -1,0 +1,60 @@
+--- gsq-rco-iq3s/service-speed/e-reference/exact-logits.cpp
++++ exact-logits-twelve.cpp
+@@ -23,15 +23,12 @@
+ static long scalar(const std::string& s, const std::string& key, long def) {
+     auto p = s.find("\"" + key + "\""); if (p == std::string::npos) return def; p = s.find(':', p); return std::stol(s.substr(p + 1));
+ }
+-int main(int argc, char** argv) {
+-    if (argc != 5) { fprintf(stderr, "usage: %s MODEL INPUT.json OUT_DIR THREADS\n", argv[0]); return 2; }
+-    std::ifstream in(argv[2]); std::stringstream buf; buf << in.rdbuf(); std::string js = buf.str();
++#include <filesystem>
++// Outer lifecycle extension only. Each call creates/frees its own ctx and batch.
++static int score_case(llama_model* model,const char* input,const std::string& out,int threads){
++    std::ifstream in(input); std::stringstream buf; buf << in.rdbuf(); std::string js = buf.str();
+     auto toks = ints(js, "tokens"); long score_from = scalar(js, "score_from", 1); auto fr = ints(js, "full_rows");
+     std::set<long> full(fr.begin(), fr.end());
+-    std::string out = argv[3]; int threads = atoi(argv[4]);
+-    llama_backend_init();
+-    auto mp = llama_model_default_params(); mp.n_gpu_layers = 0;
+-    llama_model* model = llama_model_load_from_file(argv[1], mp); if (!model) { fprintf(stderr, "load failed\n"); return 1; }
+     auto cp = llama_context_default_params();
+     cp.n_ctx = 4096; cp.n_batch = 512; cp.n_ubatch = 512; cp.n_seq_max = 1; cp.n_threads = threads; cp.n_threads_batch = threads;
+     { const char* kv=getenv("EXACT_KV"); ggml_type t=(kv&&std::string(kv)=="bf16")?GGML_TYPE_BF16:GGML_TYPE_F32; cp.type_k=t; cp.type_v=t; fprintf(stderr,"kv type %s\n", t==GGML_TYPE_BF16?"bf16":"f32"); } cp.flash_attn_type = LLAMA_FLASH_ATTN_TYPE_DISABLED; cp.no_perf = true;
+@@ -63,6 +60,36 @@
+         }
+         fflush(rows);
+     }
+-    fclose(rows); llama_batch_free(batch); llama_free(ctx); llama_model_free(model); llama_backend_free();
++    fclose(rows); llama_batch_free(batch); llama_free(ctx);
+     return 0;
+ }
++int main(int argc,char**argv){
++    if(argc!=5){fprintf(stderr,"usage: %s MODEL TWELVE_INPUT_PATHS.txt OUT_DIR THREADS\n",argv[0]);return 2;}
++    std::vector<std::string> inputs;std::ifstream manifest(argv[2]);std::string path;
++    if(!manifest){fprintf(stderr,"missing suite input list\n");return 2;}
++    while(std::getline(manifest,path)){
++        if(path.empty()||!std::filesystem::path(path).is_absolute()||
++           std::find(inputs.begin(),inputs.end(),path)!=inputs.end())return 2;
++        inputs.push_back(path);
++    }
++    if(inputs.size()!=12||atoi(argv[4])!=8)return 2;
++    const std::string root=argv[3];
++    if(!std::filesystem::is_directory(root))return 2;
++    llama_backend_init();
++    auto mp=llama_model_default_params();mp.n_gpu_layers=0;
++    llama_model* model=llama_model_load_from_file(argv[1],mp);
++    if(!model){fprintf(stderr,"load failed\n");return 1;}
++    int completed=0,rc=0;
++    for(size_t i=0;i<inputs.size();++i){
++        char suffix[32];std::snprintf(suffix,sizeof suffix,"/case-%02zu",i);
++        const std::string out=root+suffix;
++        if(!std::filesystem::create_directory(out)){rc=2;break;}
++        rc=score_case(model,inputs[i].c_str(),out,8);if(rc)break;
++        ++completed;
++    }
++    llama_model_free(model);llama_backend_free();
++    std::ofstream lifecycle(root+"/lifecycle.json");
++    lifecycle<<"{\"loaded_models\":1,\"completed_fresh_contexts\":"<<completed<<",\"returncode\":"<<rc<<"}\n";
++    if(!lifecycle)return 1;
++    return rc;
++}
