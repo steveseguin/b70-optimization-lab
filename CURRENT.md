@@ -72,10 +72,15 @@ A repeated all512 IDs exactly; both distinct inputs match the saved CPU-qualifie
 continuations. All4 owners exited0; passive postflight is clean. This qualifies
 this reset path/capacity, not a full-suite speed result. Full byte-verified archive and compact evidence are retained under
 `dedicated-reset-candidate/all-owner-integration/aba64k-r1-evidence`.
-Fixed depth2 with the same build/cuts/context is active, unit
-`sc117-dedicated-reset-depth2-aba64k-20261028-r1`, invocation
-`8cd9a0a670754eceb85f96e67e4bfc25`. It changes both proposal depth and ring
-capacity; full-state/output gate precedes the prepared twelve-prompt timing pair.
+Fixed depth2 passed the same64K A→B→A gate on the same build/cuts/context.
+The crossdepth comparison matched every first-A source/layout and all4,091,763,958
+physical payload bytes with zero exclusions/tolerance; all three512-token outputs
+matched depth3. All4 owners exited0 and passive postflight was clean. It changes
+both proposal depth and ring capacity. The depth3 twelve-prompt arm is active in unit
+`sc117-dedicated-depth3-full12-64k-20261028-r1`, invocation
+`e7380dc83111473ebbd158eb526d713d`; depth2 follows under the unchanged
+registration. This gate establishes correctness, not speed. Evidence:
+`dedicated-depth2-gate/closeout.txt`.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns
