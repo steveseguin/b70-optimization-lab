@@ -1,0 +1,73 @@
+{
+  "schema": "ownrt.reference-route-addressed-probe-build.v1",
+  "commands": [
+    {
+      "name": "compile",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-std=gnu++20",
+        "-O2",
+        "-g0",
+        "-DP56X_SLEEP20=0",
+        "-Werror=return-type",
+        "-fno-fast-math",
+        "-ffp-contract=off",
+        "-ffunction-sections",
+        "-fdata-sections",
+        "-fsycl",
+        "-fdenormal-fp-math=ieee",
+        "-foffload-fp32-prec-div",
+        "-foffload-fp32-prec-sqrt",
+        "-Werror=deprecated-this-capture",
+        "-fsycl-targets=intel_gpu_bmg_g31",
+        "-I",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1",
+        "-I",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1",
+        "-I",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src",
+        "-MMD",
+        "-MF",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1/route-timing.d",
+        "-c",
+        "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/address-space-candidate/route_probe_timing.cpp",
+        "-o",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1/route-timing.o"
+      ],
+      "returncode": 0,
+      "wall_s": 16.097516625071876
+    },
+    {
+      "name": "link",
+      "argv": [
+        "nice",
+        "-n",
+        "19",
+        "taskset",
+        "-c",
+        "8-15",
+        "/opt/intel/oneapi/compiler/2026.0/bin/icpx",
+        "-fsycl",
+        "-Wl,--gc-sections",
+        "-fsycl-targets=intel_gpu_bmg_g31",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1/route-timing.o",
+        "-lcrypto",
+        "-lze_loader",
+        "-Wl,-rpath,/opt/intel/oneapi/compiler/2026.0/lib:/usr/lib/x86_64-linux-gnu",
+        "-o",
+        "/dev/shm/sc117-reference-route-addressed-20261028-r1/route-timing"
+      ],
+      "returncode": 0,
+      "wall_s": 13.453709220979363
+    }
+  ],
+  "gpu_executed": false,
+  "source_sha256": "dea6871ae6e9ab31144351303c0d5fda1b9fb797e2b0e163b0616d3b4b275777",
+  "harness_prefix_sha256": "5dcaee668c48c59a1dcd5d3493c330acf531f450d9c62392193aeb26fcb45887"
+}

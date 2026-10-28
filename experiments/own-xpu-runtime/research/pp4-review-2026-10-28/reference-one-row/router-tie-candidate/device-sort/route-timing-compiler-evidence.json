@@ -1,0 +1,366 @@
+{
+  "schema": "ownrt.reference-route-aot-inspection.v1",
+  "binary_sha256": "53683ef42ef66041244ff5b68ccada47b88ad67ebaa3f1efb6e2d2e3bcbeb220",
+  "extract_argv": [
+    "/opt/intel/oneapi/compiler/2026.0/bin/compiler/clang-offload-extract",
+    "--stem=/dev/shm/sc117-reference-route-timing-20261028-r1/compiler-inspection/image",
+    "/dev/shm/sc117-reference-route-timing-20261028-r1/route-timing"
+  ],
+  "extraction_tool_sha256": "24563cd6e83e3a717ed3244c2aa38bc07f6155328508b5342975828f9cc00013",
+  "image_path": "/dev/shm/sc117-reference-route-timing-20261028-r1/compiler-inspection/image.1",
+  "image_sha256": "259bc38c64db13d8aa9e8583011ae6d1c0161ea63b75efd12177faae83e7c33c",
+  "ze_info_sha256": "20eb11de7a66a717e61af83138c9e5d7bdebd9c5d515c58c63d244f603e93205",
+  "kernels": [
+    {
+      "name": "_ZTSZZNK8packet1812_GLOBAL__N_118RouteReferenceTie2ILi512ELi10ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_",
+      "machine_code_bytes": 167488,
+      "machine_code_sha256": "d8da3e496bbb9a6f8f684a47f8b51031193d9e9c03fc123263de1286612b2b08",
+      "execution_env": {
+        "barrier_count": 1,
+        "grf_count": 128,
+        "has_4gb_buffers": true,
+        "has_global_atomics": true,
+        "has_no_stateless_write": true,
+        "indirect_stateless_count": 451,
+        "inline_data_payload_size": 32,
+        "offset_to_skip_per_thread_data_load": 128,
+        "simd_size": 32,
+        "slm_size": 4096,
+        "private_size": 32768,
+        "subgroup_independent_forward_progress": true,
+        "eu_thread_count": 8
+      },
+      "per_thread_memory_buffers": [
+        {
+          "type": "global",
+          "usage": "private_space",
+          "size": 1024,
+          "is_simt_thread": true
+        }
+      ],
+      "local_pointer_arguments": [
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 0,
+          "size": 8,
+          "arg_index": 1,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 8,
+          "size": 8,
+          "arg_index": 3,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 16,
+          "size": 8,
+          "arg_index": 5,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 24,
+          "size": 8,
+          "arg_index": 7,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 32,
+          "size": 8,
+          "arg_index": 9,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 40,
+          "size": 8,
+          "arg_index": 11,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 48,
+          "size": 8,
+          "arg_index": 13,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        }
+      ]
+    },
+    {
+      "name": "_ZTSZZNK8packet1812_GLOBAL__N_110RouteFast2ILi512ELi10ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_",
+      "machine_code_bytes": 56192,
+      "machine_code_sha256": "096f4226538495a4839196cc9e8c4aa738b9f7a243844e61cd9970e5a4581af2",
+      "execution_env": {
+        "barrier_count": 1,
+        "grf_count": 128,
+        "has_4gb_buffers": true,
+        "has_global_atomics": true,
+        "has_no_stateless_write": true,
+        "indirect_stateless_count": 262,
+        "inline_data_payload_size": 32,
+        "offset_to_skip_per_thread_data_load": 128,
+        "simd_size": 32,
+        "slm_size": 4096,
+        "private_size": 29696,
+        "subgroup_independent_forward_progress": true,
+        "eu_thread_count": 8
+      },
+      "per_thread_memory_buffers": [
+        {
+          "type": "global",
+          "usage": "private_space",
+          "size": 928,
+          "is_simt_thread": true
+        }
+      ],
+      "local_pointer_arguments": [
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 0,
+          "size": 8,
+          "arg_index": 1,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 8,
+          "size": 8,
+          "arg_index": 3,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 16,
+          "size": 8,
+          "arg_index": 5,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 24,
+          "size": 8,
+          "arg_index": 7,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        }
+      ]
+    },
+    {
+      "name": "_ZTSZZNK8packet1812_GLOBAL__N_118RouteReferenceTie2ILi512ELi10ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_",
+      "machine_code_bytes": 166976,
+      "machine_code_sha256": "ee705e56cda7ca8accd56df105bb84fe023aecaeec507c26f5077801d16c38c6",
+      "execution_env": {
+        "barrier_count": 1,
+        "grf_count": 128,
+        "has_4gb_buffers": true,
+        "has_global_atomics": true,
+        "has_no_stateless_write": true,
+        "indirect_stateless_count": 451,
+        "inline_data_payload_size": 32,
+        "offset_to_skip_per_thread_data_load": 128,
+        "simd_size": 32,
+        "slm_size": 4096,
+        "private_size": 32768,
+        "subgroup_independent_forward_progress": true,
+        "eu_thread_count": 8
+      },
+      "per_thread_memory_buffers": [
+        {
+          "type": "global",
+          "usage": "private_space",
+          "size": 1024,
+          "is_simt_thread": true
+        }
+      ],
+      "local_pointer_arguments": [
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 0,
+          "size": 8,
+          "arg_index": 1,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 8,
+          "size": 8,
+          "arg_index": 3,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 16,
+          "size": 8,
+          "arg_index": 5,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 24,
+          "size": 8,
+          "arg_index": 7,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 32,
+          "size": 8,
+          "arg_index": 9,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 40,
+          "size": 8,
+          "arg_index": 11,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 48,
+          "size": 8,
+          "arg_index": 13,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        }
+      ]
+    },
+    {
+      "name": "_ZTSZZNK8packet1812_GLOBAL__N_110RouteFast2ILi512ELi10ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_",
+      "machine_code_bytes": 56512,
+      "machine_code_sha256": "6fb73c02e1b8484bacb895f321323fb4b4894064ed18e7fd38e892f608b60a07",
+      "execution_env": {
+        "barrier_count": 1,
+        "grf_count": 128,
+        "has_4gb_buffers": true,
+        "has_global_atomics": true,
+        "has_no_stateless_write": true,
+        "indirect_stateless_count": 262,
+        "inline_data_payload_size": 32,
+        "offset_to_skip_per_thread_data_load": 128,
+        "simd_size": 32,
+        "slm_size": 4096,
+        "private_size": 29696,
+        "subgroup_independent_forward_progress": true,
+        "eu_thread_count": 8
+      },
+      "per_thread_memory_buffers": [
+        {
+          "type": "global",
+          "usage": "private_space",
+          "size": 928,
+          "is_simt_thread": true
+        }
+      ],
+      "local_pointer_arguments": [
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 0,
+          "size": 8,
+          "arg_index": 1,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 8,
+          "size": 8,
+          "arg_index": 3,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 16,
+          "size": 8,
+          "arg_index": 5,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        },
+        {
+          "arg_type": "arg_bypointer",
+          "offset": 24,
+          "size": 8,
+          "arg_index": 7,
+          "addrmode": "slm",
+          "addrspace": "local",
+          "access_type": "readwrite",
+          "slm_alignment": 4
+        }
+      ]
+    }
+  ],
+  "link_warnings": "Compilation from IR - skipping loading of FCL\nBuild succeeded.\nCompilation from IR - skipping loading of FCL\n\nwarning: Adding 322 occurrences of additional control flow due to presence of generic address space operations\nin function _ZTSZZNK8packet1812_GLOBAL__N_122RouteReferenceCapture2ILi512ELi10ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_ (Enable PrintVerboseGenericControlFlowLog flag to acquire detailed log. Requires debuginfo!)\n\nwarning: Adding 321 occurrences of additional control flow due to presence of generic address space operations\nin function _ZTSZZNK8packet1812_GLOBAL__N_118RouteReferenceTie2ILi512ELi10ELb1EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_ (Enable PrintVerboseGenericControlFlowLog flag to acquire detailed log. Requires debuginfo!)\n\nwarning: Adding 321 occurrences of additional control flow due to presence of generic address space operations\nin function _ZTSZZNK8packet1812_GLOBAL__N_118RouteReferenceTie2ILi512ELi10ELb0EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_ (Enable PrintVerboseGenericControlFlowLog flag to acquire detailed log. Requires debuginfo!)\n\nBuild succeeded.\nCompilation from IR - skipping loading of FCL\n\nwarning: kernel _ZTSZZNK8packet1812_GLOBAL__N_110RouteGroupILi512ELi10EE6submitERN4sycl3_V15queueESt4spanIKPvLm18446744073709551615EERKSt6vectorINS4_5eventESaISC_EEENKUlRNS4_7handlerEE_clESI_EUlNS4_7nd_itemILi1EEEE_  compiled SIMD32 allocated 128 regs and spilled around 10\n\nBuild succeeded.\n",
+  "source_dynamic_local_accessor_bytes": {
+    "MERGE_true_original": 5512,
+    "MERGE_true_candidate": 7816
+  },
+  "notes": [
+    "Static slm_size does not include the dynamically sized local-accessor arguments.",
+    "barrier_count is metadata for barrier resources, not a dynamic count of source barrier executions.",
+    "The metadata does not identify which resource causes the observed untied overhead.",
+    "No code compiled or GPU opened during this binary inspection."
+  ]
+}

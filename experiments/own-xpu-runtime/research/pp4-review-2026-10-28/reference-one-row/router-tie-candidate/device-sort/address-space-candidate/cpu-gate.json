@@ -1,0 +1,48 @@
+{
+  "schema": "ownrt.reference-sort-addressed-cpu-gate.v1",
+  "passed": true,
+  "result": {
+    "passed": true,
+    "cases": 12512,
+    "gpu_executed": false,
+    "index_and_frame_canaries": true
+  },
+  "returncode": 0,
+  "stderr_bytes": 0,
+  "compile_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "g++-13",
+    "-O1",
+    "-g",
+    "-std=c++20",
+    "-fno-fast-math",
+    "-ffp-contract=off",
+    "-fsanitize=address,undefined",
+    "-fno-omit-frame-pointer",
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/test-addressed.cpp",
+    "-o",
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/test-addressed"
+  ],
+  "run_argv": [
+    "nice",
+    "-n",
+    "19",
+    "taskset",
+    "-c",
+    "8-15",
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/test-addressed",
+    "/dev/shm/sc117-reference-tie-sort-device-20261028-r1/inputs/input.f32"
+  ],
+  "binary_sha256": "a2df7c9afecf3f7da2f16d61dd329fb5dad70eaebc4ac6e2ce96e04dab7fc5bd",
+  "source_sha256": {
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/test-addressed.cpp": "c801ea91f98dbb7d3ee162db247c90367b0fecf618cc80d257203574fde5aacb",
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/reference_sort.hpp": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c",
+    "/dev/shm/sc117-reference-route-addressed-20261028-r1/reference_sort_addressed.hpp": "5eeb624c44f4e881630a1c50bea91b43c61a3b43715d1e7c635beab1c9269710"
+  },
+  "gpu_executed": false
+}

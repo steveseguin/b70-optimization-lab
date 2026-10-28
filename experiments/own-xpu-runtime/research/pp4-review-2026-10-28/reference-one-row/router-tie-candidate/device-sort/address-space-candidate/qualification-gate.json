@@ -1,0 +1,32 @@
+{
+  "schema": "ownrt.reference-route-device-gate.v1",
+  "passed": true,
+  "source_sha256": {
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/adapter.cpp": "09de30d6253e51d905b60034c85116f6c593a89a1ae0e057f058c24c2e03bb4e",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/reference_sort_addressed.hpp": "5eeb624c44f4e881630a1c50bea91b43c61a3b43715d1e7c635beab1c9269710",
+    "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/reference_sort.hpp": "17815205b889ada9b104865eb47c7a0f4e602aae701d75c637b5ccc83cbd542c"
+  },
+  "mode_counts": {
+    "off": 4,
+    "on": 4
+  },
+  "route_kernel_result": {
+    "passed": true,
+    "rows": 64,
+    "merge_modes": 2,
+    "output_geometries": 2,
+    "native_probabilities_exact": true,
+    "native_weights_exact": true,
+    "capture_neutral": true,
+    "distinct_raw_probability_tie_refused": true,
+    "inactive_and_error_guards": true,
+    "full_gate_artifacts_bitwise_identical_to_r4": true
+  },
+  "receipt_path": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/reference-one-row/router-tie-candidate/device-sort/address-space-candidate/result.json",
+  "receipt_sha256": "8cb0944b78923770d244186b27b6ce36ce28fa7b4cc8c6f244ea4d121727230d",
+  "probe_source_sha256": "dea6871ae6e9ab31144351303c0d5fda1b9fb797e2b0e163b0616d3b4b275777",
+  "probe_binary_sha256": "b1c41a012405b459ee4ea4f192fe8b73d4f8bc5f1f7ac9c1cdcee4085a6128a0",
+  "unit_returncode": 0,
+  "scope": "Actual-route fixture gate; canonical addressed source not installed or model-qualified.",
+  "derivation": "The source-pinned combined probe executes full matrix and all refusal guards before producing its successful timing result. Twelve full gate artifacts are independently byte-compared with r4."
+}
