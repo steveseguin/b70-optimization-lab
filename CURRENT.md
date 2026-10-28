@@ -76,11 +76,12 @@ Fixed depth2 passed the same64K A→B→A gate on the same build/cuts/context.
 The crossdepth comparison matched every first-A source/layout and all4,091,763,958
 physical payload bytes with zero exclusions/tolerance; all three512-token outputs
 matched depth3. All4 owners exited0 and passive postflight was clean. It changes
-both proposal depth and ring capacity. The depth3 twelve-prompt arm is active in unit
-`sc117-dedicated-depth3-full12-64k-20261028-r1`, invocation
-`e7380dc83111473ebbd158eb526d713d`; depth2 follows under the unchanged
-registration. This gate establishes correctness, not speed. Evidence:
-`dedicated-depth2-gate/closeout.txt`.
+both proposal depth and ring capacity. The depth3 full12 arm failed resetting before request04: stage0 reported
+`ring canonical bank parity`; the other owners stopped cooperatively, all4 exited1,
+and passive postflight is clean/no holders. Requests00–03 match saved CPU-qualified
+prompts/outputs, but full12 is unqualified. No further launches; depth2 and2+1
+plans remain unlaunched pending a fix. The earlier A/B/A gate remains limited
+to its tested inputs. Incident: `dedicated-depth2-gate/full12-depth3-r1-incident/index.json`.
 
 The original 244 case is causally explained by exactly one equal-word change:
 position 177/layer 3 expert 62→477, preserving native selected weights. It returns
