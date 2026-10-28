@@ -1,0 +1,55 @@
+Create a polished, highly legible educational infographic for a Twitter/X post about a real custom Intel Arc Pro B70 inference engine. Portrait 3:4, high resolution, generous margins, professional editorial engineering illustration. Warm off-white background, dark navy text, teal target-GPU cards and orange draft-GPU cards, crisp straight arrows, tasteful small chip illustrations. Flat vector-like finish with subtle dimension, no photography. Strong typographic hierarchy, readable on phone when expanded. Six clearly separated concise panels. All text must be spelled exactly; do not invent numbers or claims. No generic AI art ornaments. The GPU count diagrams must be exact.
+
+HEADER:
+"INSIDE OUR CUSTOM B70 ENGINE"
+"SC117 Qwen Flash-Next • mixed IQ3_S weights • verified MTP drafting"
+
+PANEL 1, wide top, title "THE DRAFT GUESSES. THE TARGET DECIDES."
+Diagram small orange DRAFT chip proposes a row of three candidate tokens, arrows toward teal TARGET pipeline; show two check marks then one crossed token and a corrected token. Label: "Accept matching tokens. Correct a miss. Restore state and continue."
+Supporting line: "MTP depth 3 = up to 3 speculative guesses ahead."
+Small feature line: "Custom SYCL kernels • 256-row prompt chunks • pipelined GPU stages"
+
+PANEL 2, wide, title "WHAT DOES 2 + 1 MEAN?"
+Three clearly distinct rows using exact illustrated card counts:
+Row A: exactly TWO teal GPU cards connected, first has a small orange DRAFT badge sharing that card. Label: "2 GPUs total: target on both; draft shares GPU 1" and smaller "Earlier two-card configuration: MTP depth 1"
+Row B: exactly TWO teal TARGET GPU cards and ONE separate orange DRAFT GPU card. Label: "2 + 1 = 3 GPUs total • dedicated draft • depth 3"
+Row C: exactly THREE teal TARGET GPU cards and ONE separate orange DRAFT GPU card. Label: "3 + 1 = 4 GPUs total • dedicated draft • depth 3"
+Below: "Draft GPU allocation: about 3–4 GB in measured configurations; includes weights, state and scratch."
+
+MIDDLE TWO SIDE-BY-SIDE PANELS:
+PANEL 3 title "WHY MORE CARDS CAN DECODE SLOWER"
+Show a short sequential relay-arrow illustration.
+Text: "A token still traverses the target layers in order."
+Three short items: "More handoffs and synchronization", "Uneven stage work and idle gaps", "Speculation and rollback overhead"
+Closing line: "These are possible costs, not an isolated diagnosis. Extra cards help fit the model and overlap prompt chunks."
+
+PANEL 4 title "IS IQ3_S REALLY 3-BIT?"
+Color-coded horizontal stacked bar, portions 49.08%,25.60%,23.23%,2.09%.
+Legend exactly:
+"4-bit formats 49.08%"
+"3-bit formats 25.60%"
+"2-bit formats 23.23%"
+"Higher precision 2.09%"
+Below: "Share of stored target weight values, including lookup tables; draft excluded."
+Highlight: "~3.79 stored bits/value including block metadata"
+No suggestion that quantization is lossless versus unquantized weights.
+
+BOTTOM TWO PANELS:
+PANEL 5 title "TWO TERMS, TWO DIFFERENT THINGS"
+Bold "Abliterated" then "In this checkpoint: fewer refusals to user requests."
+Bold "Lossless inference" then "Draft guesses never bypass the target. Tested outputs match the quantized target reference."
+Small proof callout: "5,965 / 5,965 output IDs matched across 12 saved continuations."
+Smaller: "This does not mean quantization itself is lossless."
+
+PANEL 6 title "CONTEXT CAPACITY ≠ PROMPT LENGTH"
+"Measured long run: 121,854 input + 512 output tokens"
+"Reserved capacity: 262,144 positions"
+Small comparison table with header "3 + 1 layout | Request | Decode"
+Rows:
+"Cuts 17 / 33 | 261.4 s | 48.52 tok/s"
+"Cuts 16 / 32 | 248.7 s | 40.88 tok/s"
+Below: "More balanced layer counts helped prompt processing, but decode slowed. One matched long-input screen."
+Tiny metric note: "Decode uses all 511 first-to-last-token intervals."
+Footer spanning page: "Target activations, recurrent state and attention KV: F32"
+"neural.download • b70-optimization-lab • October 28, 2026"
+Keep the layout readable and uncluttered; prioritize clear figures and accurate text. All GPU diagrams must obey the specified counts. This is a factual explanation, no correction/apology narrative.

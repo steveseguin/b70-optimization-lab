@@ -13,11 +13,13 @@ binaries below. Later source is retained at
 with exact build identities in the evidence. The dedicated-provider controller
 still requires an expert local adapter; there is no portable one-command launcher.
 
+[Shareable engine diagram](assets/engine-explainer.png) · [How it works and exact quantization mix](EXPLAINER.md)
+
 ## Twelve cold prompts: keep depth 3
 
 Three target B70s plus one draft B70; cuts 0/17/33/48; 65,536-position reservation;
 256-row prefill; four transport slots; F32 target activations, unchanged BF16 draft
-routing and full 16-bit KV. Both arms use binary
+routing and F32 attention KV. Both arms use binary
 `9599b0bfc025bfdd2d862374bced20b0c14869527cadb3542b3f71fb71842d77`.
 These are short actual inputs, not 64K-token prompts. Exact inputs and flags are
 in the [paired summary](../../experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json).

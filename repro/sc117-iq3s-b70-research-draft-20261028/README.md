@@ -9,10 +9,12 @@ intentional; the missing gates are in [publication-manifest.json](publication-ma
 
 The model is **SC117 Qwen3.8 Flash Next GSQ-RCO IQ3_S mixed quantization**,
 with the existing official FP8 draft. This is the lab's own SYCL runtime.
-Target activations/recurrent arithmetic remain F32, with the existing full
-16-bit KV storage. No draft training, lower-precision KV or prompt/response reuse.
+Target activations, recurrent arithmetic and attention KV storage remain F32. No draft training, lower-precision KV or prompt/response reuse.
 
 ## Latest results and frozen recipe scope
+
+See the [shareable engine diagram](assets/engine-explainer.png) and
+[explanation with quantization ratios](EXPLAINER.md).
 
 Read the [October 28 results](RESULTS.md) for the twelve-prompt depth comparison,
 CPU-qualified outputs, three-card reset gate and long-prompt placement tradeoff.
