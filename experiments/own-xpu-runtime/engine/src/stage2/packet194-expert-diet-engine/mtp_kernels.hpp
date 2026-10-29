@@ -13,6 +13,8 @@ integrated::Launch norm_hidden(ownrt::Device&,ownrt::Allocation x,ownrt::Allocat
 integrated::Launch merge(ownrt::Device&,ownrt::Allocation hidden,ownrt::Allocation embedding,ownrt::Allocation streams,unsigned width);
 // OWNRT_DRAFT_HEAD_SPLIT (lab 2026-10-29, draft_head_split.hpp): one card's draft-head rows -> its Best record in
 // `words` (slot = card), with the logits of global rows [offset, offset + rows); card 0's merge of both records.
-integrated::Launch head_shard(ownrt::Device&,ownrt::Allocation logits,ownrt::Allocation words,ownrt::Allocation active,ownrt::Allocation error,unsigned rows,unsigned offset,unsigned slot);
-integrated::Launch head_merge(ownrt::Device&,ownrt::Allocation words,ownrt::Allocation token,ownrt::Allocation active,ownrt::Allocation error);
+// base: the records' first word in `words` (the draft's split words: 4; a target pair buffer: 0); f32: F32 logits
+// (OWNRT_TARGET_HEAD_SPLIT), else BF16.
+integrated::Launch head_shard(ownrt::Device&,ownrt::Allocation logits,ownrt::Allocation words,ownrt::Allocation active,ownrt::Allocation error,unsigned rows,unsigned offset,unsigned slot,unsigned base=4,bool f32=false);
+integrated::Launch head_merge(ownrt::Device&,ownrt::Allocation words,ownrt::Allocation token,ownrt::Allocation active,ownrt::Allocation error,unsigned base=4);
 }

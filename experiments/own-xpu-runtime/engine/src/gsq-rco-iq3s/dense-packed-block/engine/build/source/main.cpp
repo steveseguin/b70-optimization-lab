@@ -30,6 +30,7 @@
 #include "stage2/packet194-expert-diet-engine/expert_down.hpp"
 #include "stage2/packet194-expert-diet-engine/dense_raw.hpp"
 #include "stage2/packet194-expert-diet-engine/qsa_ring.hpp"
+#include "stage2/packet194-expert-diet-engine/mtp_kernels.hpp" // head_shard / head_merge (OWNRT_TARGET_HEAD_SPLIT)
 #include <unordered_map>
 #include <unordered_set>
 #include <cstring>
@@ -1680,7 +1681,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot" || l.op=="tp_xheads" || l.op=="tp_route_compact")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot" || l.op=="tp_xheads" || l.op=="tp_route_compact" || l.op=="tp_head_shard" || l.op=="tp_head_merge")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -2035,6 +2036,16 @@ public:
       ownrt::CopyEngine local(dev(c));
       auto own=local.copy(y.id,size_t(c)*half,buffers[c].at(l.inputs.at(0)).id,0,half,{});finish(c,{own,own,1},false);
       auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
+    } else if (l.op == "tp_head_shard") {
+      // OWNRT_TARGET_HEAD_SPLIT (rank.hpp): this card's compact logits rows (shape = {rows, first global row}) -> its
+      // Best record at slot `parameter` of the pair buffer (draft_head_split.hpp, ArgmaxFast's scan).
+      const auto& y=buffers[c].at(l.inputs.at(0));
+      require(!split_head()&&l.shape.size()==2&&l.shape[0]>0&&size_t(l.shape[0])<=y.n&&(l.parameter==0||l.parameter==1)&&(y.type==flash::Scalar::f32||y.type==flash::Scalar::bf16),"target head shard geometry");
+      finish(c,mtp36::head_shard(dev(c),y.id,buffers[c].at(l.outputs.at(0)).id,buffers[c].at("active").id,buffers[c].at("error").id,unsigned(l.shape[0]),unsigned(l.shape[1]),unsigned(l.parameter),0,y.type==flash::Scalar::f32),false);
+    } else if (l.op == "tp_head_merge") {
+      // Both records (the peer's from the direct exchange) -> next_token on this card; any record error fails as ArgmaxFast.
+      require(l.outputs.size()==2&&l.outputs[0]=="next_token"&&l.outputs[1]=="error","target head merge wiring");
+      finish(c,mtp36::head_merge(dev(c),buffers[c].at(l.inputs.at(0)).id,buffers[c].at("next_token").id,buffers[c].at("active").id,buffers[c].at("error").id,0),false);
     } else if (l.op == "tp_route_compact") {
       finish(c,iq3::kopt::route_compact(dev(c),buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter)));
     } else if (l.op == "tp_route_mask") {

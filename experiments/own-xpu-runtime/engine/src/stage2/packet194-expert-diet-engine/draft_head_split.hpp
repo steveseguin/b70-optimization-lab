@@ -10,6 +10,8 @@
 // over the whole prefix for finite logits. Any non-finite logit sets the record's error and the merge fails the draft
 // exactly like ArgmaxFast (sticky error, the guess is discarded); the never-read next_token word is then left as it was
 // (ArgmaxFast writes its fallback index there). Shared by the device kernels (mtp_kernels.cpp) and the CPU unit test.
+// OWNRT_TARGET_HEAD_SPLIT=1 (lab 2026-10-29, research/tp/target-head-split-2026-10-29) uses the same kernels for the
+// target head of a TP rank: F32 logits (T = float), records at `base` 0 of an 8-word pair buffer, merged on both cards.
 #include <algorithm>
 #include <bit>
 #include <cstdint>
@@ -21,15 +23,18 @@ inline constexpr unsigned ping_src=2,ping_sink=3,records=4,record_words=4,words=
 inline float bf16_value(uint16_t b){return std::bit_cast<float>(uint32_t(b)<<16);}
 inline uint32_t float_bits(float f){return std::bit_cast<uint32_t>(f);}
 inline float bits_value(uint32_t u){return std::bit_cast<float>(u);}
+// A logit as ArgmaxFast's View::get reads it: BF16 (uint16_t) widened, F32 as is.
+inline float logit_value(uint16_t b){return bf16_value(b);}
+inline float logit_value(float f){return f;}
 // Host twins (CPU unit test). shard(): the record a card writes; merge(): card 0's result. Returns false = fail.
-inline void shard(const uint16_t* logits,uint32_t rows,uint32_t offset,uint32_t* record){
+template<class T> inline void shard(const T* logits,uint32_t rows,uint32_t offset,uint32_t* record){
  int best[lanes];float value[lanes];bool finite=true;
  for(unsigned lane=0;lane<lanes;++lane){best[lane]=-1;value[lane]=0.f;
-  for(uint32_t j=lane;j<rows;j+=lanes){const float v=bf16_value(logits[j]);finite=finite&&std::isfinite(v);if(best[lane]<0||v>value[lane]){best[lane]=int(j);value[lane]=v;}}}
+  for(uint32_t j=lane;j<rows;j+=lanes){const float v=logit_value(logits[j]);finite=finite&&std::isfinite(v);if(best[lane]<0||v>value[lane]){best[lane]=int(j);value[lane]=v;}}}
  if(!finite){record[0]=0;record[1]=0;record[2]=1;record[3]=0;return;}
  float top=-INFINITY;for(unsigned lane=0;lane<lanes;++lane)if(best[lane]>=0)top=std::fmax(top,value[lane]);
  int index=INT_MAX;for(unsigned lane=0;lane<lanes;++lane)if(best[lane]>=0&&value[lane]==top)index=std::min(index,best[lane]);
- record[0]=float_bits(bf16_value(logits[index]));record[1]=offset+uint32_t(index);record[2]=0;record[3]=0;
+ record[0]=float_bits(logit_value(logits[index]));record[1]=offset+uint32_t(index);record[2]=0;record[3]=0;
 }
 inline bool merge(const uint32_t* r0,const uint32_t* r1,int32_t& token){
  if(r0[2]||r1[2])return false;
@@ -39,31 +44,34 @@ inline bool merge(const uint32_t* r0,const uint32_t* r1,int32_t& token){
 #ifndef OWN_RT_HOST_ONLY
 #include <sycl/sycl.hpp>
 namespace draft_split {
-// Device shard argmax: ArgmaxFast's body (same scan, same reductions) on this card's rows; writes the record.
-struct ShardKernel {
- const uint16_t* logits;uint32_t* words;const uint32_t* active;uint32_t* error;uint32_t rows,offset,slot;
+// Device shard argmax: ArgmaxFast's body (same scan, same reductions) on this card's rows; writes the record at
+// words[base + 4 slot] (the draft: base = records; a target pair buffer: base = 0).
+template<class T> struct ShardKernelT {
+ const T* logits;uint32_t* words;const uint32_t* active;uint32_t* error;uint32_t rows,offset,slot,base;
  void operator()(sycl::nd_item<1> it)const{
   using ref=sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
-  const int lane=int(it.get_local_linear_id());auto g=it.get_group();uint32_t* record=words+records+record_words*slot;
-  if(!*active)return; // uniform; the draft's active word is always 1
+  const int lane=int(it.get_local_linear_id());auto g=it.get_group();uint32_t* record=words+base+record_words*slot;
+  if(!*active)return; // uniform; the active word is always 1
   if(ref(*error).load()){if(lane==0){record[0]=0;record[1]=0;record[2]=1;record[3]=0;}return;} // never a stale record
   const int n=int(rows);int best=-1;float value=0.f;bool finite=true;
-  for(int j=lane;j<n;j+=int(lanes)){const float v=bf16_value(logits[j]);finite=finite&&sycl::isfinite(v);if(best<0||v>value){best=j;value=v;}}
+  for(int j=lane;j<n;j+=int(lanes)){const float v=logit_value(logits[j]);finite=finite&&sycl::isfinite(v);if(best<0||v>value){best=j;value=v;}}
   const bool all_finite=sycl::all_of_group(g,finite);
   if(all_finite){
    const float top=sycl::reduce_over_group(g,best<0?-INFINITY:value,sycl::maximum<float>());
    const int index=sycl::reduce_over_group(g,(best>=0&&value==top)?best:INT_MAX,sycl::minimum<int>());
-   if(lane==0){record[0]=float_bits(bf16_value(logits[index]));record[1]=offset+uint32_t(index);record[2]=0;record[3]=0;}
+   if(lane==0){record[0]=float_bits(logit_value(logits[index]));record[1]=offset+uint32_t(index);record[2]=0;record[3]=0;}
   }else if(lane==0){record[0]=0;record[1]=0;record[2]=1;record[3]=0;ref(*error).store(1u);}
  }
 };
-// Card 0: both records (the peer's arrived by the direct exchange, read here by a later kernel) -> next_token.
+using ShardKernel=ShardKernelT<uint16_t>;
+// Both records (the peer's arrived by the direct exchange, read here by a later kernel) at words[base .. base + 8)
+// -> next_token (the draft: card 0 only; a target head: both cards).
 struct MergeKernel {
- const uint32_t* words;int32_t* token;const uint32_t* active;uint32_t* error;
+ const uint32_t* words;int32_t* token;const uint32_t* active;uint32_t* error;uint32_t base;
  void operator()(sycl::id<1>)const{
   using ref=sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
   if(!*active||ref(*error).load())return; // as ArgmaxFast: a failed draft writes nothing
-  int32_t t=0;if(!merge(words+records,words+records+record_words,t)){ref(*error).store(1u);return;}
+  int32_t t=0;if(!merge(words+base,words+base+record_words,t)){ref(*error).store(1u);return;}
   *token=t;
  }
 };

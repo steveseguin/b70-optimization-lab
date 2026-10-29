@@ -612,6 +612,18 @@ static int run_rank(const Options& a) {
     if((cls=="gdn.conv"&&l.op=="conv")||(cls=="gdn.recurrence"&&l.op=="gdn")||(cls=="gdn.gated"&&l.op=="gdn_norm_gate"))return cls;
     return "";};
    require(!tp_threads()||direct||(roles.empty()&&!experts),"OWNRT_TP_THREADS needs OWNRT_TP_EXCHANGE=direct (no copy gathers cross threads)");
+   // OWNRT_TARGET_HEAD_SPLIT=1 (2026-10-29, research/tp/target-head-split-2026-10-29; needs OWNRT_TP_EXCHANGE=direct):
+   // the target head is split by contiguous vocabulary rows. Card 0 scores rows [0, r0), card 1 rows [r0, V), each
+   // from its own weight slice into the start of its logits buffer, with the unchanged row kernel (Launch::row_count).
+   // Each card's shard argmax (ArgmaxFast's scan, draft_head_split.hpp) writes a Best record into slot c of the pair
+   // buffer, one direct exchange gives both cards both records, and each card merges them into next_token (lowest
+   // global index on equal values; a non-finite logit fails the half as ArgmaxFast does). The dump reassembles the
+   // one-card logits (head_split_layout). The head runs only in decode halves: prompt rows and batched prefill skip
+   // the head sites by their labels (logits, argmax), unchanged.
+   const bool target_head=[]{const char* v=std::getenv("OWNRT_TARGET_HEAD_SPLIT");if(!v||std::string(v)=="0")return false;
+    require(std::string(v)=="1","OWNRT_TARGET_HEAD_SPLIT must be 0 or 1");return true;}();
+   require(!target_head||(direct&&!exchange_only&&a.f32_activations&&!a.mini&&a.gsq_packed),"OWNRT_TARGET_HEAD_SPLIT: OWNRT_TP_EXCHANGE=direct, F32 exact mode");
+   int head_vocab=0,head_rows0=0;
    for(const auto& l:p.launches){
     if(const auto cls=head_class(l);!cls.empty()){
      for(int c=0;c<2;++c){auto t=l;t.card=c;
@@ -654,6 +666,22 @@ static int run_rank(const Options& a) {
       for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xheads";g.label=l.label+".tp_xcompact";g.card=c;g.inputs={y+"#tp"};g.outputs={y};
        g.shape={top*H,exchange_slot,H,2*H,c*H};both.push_back(std::move(g));}
       ++exchange_slot;}
+    } else if(target_head&&l.op=="gemv"&&l.label=="logits"){
+     require(l.weights==std::vector<std::string>{"output.weight"}&&!l.inputs.empty()&&l.outputs==std::vector<std::string>{"logits"}&&l.shape.size()==3&&l.shape[0]==1,"target head split: one-row logits GEMV");
+     head_vocab=l.shape[1];head_rows0=(head_vocab/2+255)/256*256;
+     if(const char* v=std::getenv("OWNRT_TARGET_HEAD_SPLIT_ROWS"))head_rows0=std::atoi(v);
+     require(head_rows0>0&&head_rows0<head_vocab&&head_rows0%128==0,"OWNRT_TARGET_HEAD_SPLIT_ROWS: card 0's rows, a multiple of 128 inside the vocabulary");
+     for(int c=0;c<2;++c){auto t=l;t.card=c;t.row_begin=c?head_rows0:0;t.row_count=c?head_vocab-head_rows0:head_rows0;
+      layout("logits",c,{{t.row_begin,t.row_count}},1);both.push_back(std::move(t));}
+    } else if(target_head&&l.op=="argmax"){
+     require(head_vocab>0&&!l.inputs.empty()&&l.inputs[0]=="logits"&&l.outputs==std::vector<std::string>{"next_token","error"}&&l.shape==std::vector<int>{head_vocab},"target head split: argmax over the split logits");
+     add_buffer("error","argmax.pair#tp",{8});
+     for(int c=0;c<2;++c){flash::Launch m;m.op="tp_head_shard";m.label="argmax";m.card=c;m.inputs={"logits"};m.outputs={"argmax.pair#tp"};
+      m.shape={c?head_vocab-head_rows0:head_rows0,c?head_rows0:0};m.parameter=c;both.push_back(std::move(m));}
+     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label="argmax";g.card=c;g.inputs={"argmax.pair#tp"};g.outputs={"argmax.pair#tp"};
+      g.shape={8,exchange_slot};g.parameter=4;both.push_back(std::move(g));} // own record (slot c) to the peer's slot c
+     ++exchange_slot;
+     for(int c=0;c<2;++c){flash::Launch m;m.op="tp_head_merge";m.label="argmax";m.card=c;m.inputs={"argmax.pair#tp"};m.outputs={"next_token","error"};both.push_back(std::move(m));}
     } else if(exchange_only&&split_site(l)){ // full rows on both cards, then this card's half of y sent to the peer's y
      const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
      both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));
@@ -694,6 +722,8 @@ static int run_rank(const Options& a) {
     }
    }
    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
+   // A TP rank without the target head (rank 0) leaves the flag inert and says so.
+   if(target_head)save(a.output/"target-head-split.json","{\"schema\":\"ownrt.target-head-split.v1\",\"applied\":"+std::string(head_vocab?"true":"false")+",\"vocabulary\":"+std::to_string(head_vocab)+",\"card0_rows\":"+std::to_string(head_rows0)+",\"card1_rows\":"+std::to_string(head_vocab-head_rows0)+"}");
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
    write_tp_plan(a.output/"tp-plan.json",p,*weights,a); // per-card admission of the two-card plan (30 GiB per card)
    if(plan_only){save(a.output/"plan-only.json","{\"device_contact\":false,\"tp_plan\":true}");munmap(mapping,shared_bytes);::close(fd);return 0;}

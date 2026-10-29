@@ -130,22 +130,22 @@ struct Merge final:
 #endif
 };
 Launch merge(ownrt::Device& d,Allocation h,Allocation e,Allocation y,unsigned width){if(width!=16&&width!=2560)throw std::invalid_argument("draft merge width");extent(d,h,4*width*2);extent(d,e,width*2);extent(d,y,4*width*2);Merge op;op.width=width;std::array args{h,e,y};auto event=d.compute(op,args,{});return {event,event,1};}
-// OWNRT_DRAFT_HEAD_SPLIT (lab 2026-10-29): the shard argmax and merge of draft_head_split.hpp. Bindings: logits (BF16),
-// split words (u32[16]), active, error; merge: split words, next_token (i32), active, error.
-struct HeadShard final:
+// OWNRT_DRAFT_HEAD_SPLIT / OWNRT_TARGET_HEAD_SPLIT (lab 2026-10-29): the shard argmax and merge of draft_head_split.hpp.
+// Bindings: logits (BF16 or F32), record words (u32), active, error; merge: record words, next_token (i32), active, error.
+template<class T> struct HeadShard final:
 #ifdef OWN_RT_HOST_ONLY
  integrated::HostOperation
 #else
  ownrt::SyclOperation
 #endif
-{uint32_t rows=0,offset=0,slot=0;
+{uint32_t rows=0,offset=0,slot=0,base=0;
 #ifdef OWN_RT_HOST_ONLY
- void run(std::span<void*const> p)const override{auto* words=static_cast<uint32_t*>(p[1]);auto* error=static_cast<uint32_t*>(p[3]);uint32_t* record=words+draft_split::records+draft_split::record_words*slot;
+ void run(std::span<void*const> p)const override{auto* words=static_cast<uint32_t*>(p[1]);auto* error=static_cast<uint32_t*>(p[3]);uint32_t* record=words+base+draft_split::record_words*slot;
   if(!*static_cast<const uint32_t*>(p[2]))return;if(*error){record[0]=0;record[1]=0;record[2]=1;record[3]=0;return;}
-  draft_split::shard(static_cast<const uint16_t*>(p[0]),rows,offset,record);if(record[2])*error=1;}
+  draft_split::shard(static_cast<const T*>(p[0]),rows,offset,record);if(record[2])*error=1;}
 #else
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
-  const draft_split::ShardKernel k{static_cast<const uint16_t*>(p[0]),static_cast<uint32_t*>(p[1]),static_cast<const uint32_t*>(p[2]),static_cast<uint32_t*>(p[3]),rows,offset,slot};
+  const draft_split::ShardKernelT<T> k{static_cast<const T*>(p[0]),static_cast<uint32_t*>(p[1]),static_cast<const uint32_t*>(p[2]),static_cast<uint32_t*>(p[3]),rows,offset,slot,base};
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(draft_split::lanes,draft_split::lanes)](sycl::handler& h){h.parallel_for(p35_range0,checked(packet26::checked(k)));});}
 #endif
 };
@@ -155,23 +155,26 @@ struct HeadMerge final:
 #else
  ownrt::SyclOperation
 #endif
-{
+{uint32_t base=0;
 #ifdef OWN_RT_HOST_ONLY
  void run(std::span<void*const> p)const override{auto* error=static_cast<uint32_t*>(p[3]);if(!*static_cast<const uint32_t*>(p[2])||*error)return;
-  const auto* words=static_cast<const uint32_t*>(p[0]);int32_t t=0;if(!draft_split::merge(words+draft_split::records,words+draft_split::records+draft_split::record_words,t)){*error=1;return;}*static_cast<int32_t*>(p[1])=t;}
+  const auto* words=static_cast<const uint32_t*>(p[0]);int32_t t=0;if(!draft_split::merge(words+base,words+base+draft_split::record_words,t)){*error=1;return;}*static_cast<int32_t*>(p[1])=t;}
 #else
  sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
-  const draft_split::MergeKernel k{static_cast<const uint32_t*>(p[0]),static_cast<int32_t*>(p[1]),static_cast<const uint32_t*>(p[2]),static_cast<uint32_t*>(p[3])};
+  const draft_split::MergeKernel k{static_cast<const uint32_t*>(p[0]),static_cast<int32_t*>(p[1]),static_cast<const uint32_t*>(p[2]),static_cast<uint32_t*>(p[3]),base};
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(1)](sycl::handler& h){h.parallel_for(p35_range0,checked(packet26::checked(k)));});}
 #endif
 };
-Launch head_shard(ownrt::Device& d,Allocation logits,Allocation words,Allocation active,Allocation error,unsigned rows,unsigned offset,unsigned slot){
- if(!rows||slot>1||size_t(offset)+rows>size_t(INT_MAX))throw std::invalid_argument("draft head shard geometry");
- extent(d,logits,size_t(rows)*2);extent(d,words,draft_split::words*4);extent(d,active,4);extent(d,error,4);
- HeadShard op;op.rows=rows;op.offset=offset;op.slot=slot;std::array args{logits,words,active,error};auto event=d.compute(op,args,{});return {event,event,1};}
-Launch head_merge(ownrt::Device& d,Allocation words,Allocation token,Allocation active,Allocation error){
- extent(d,words,draft_split::words*4);extent(d,token,4);extent(d,active,4);extent(d,error,4);
- HeadMerge op;std::array args{words,token,active,error};auto event=d.compute(op,args,{});return {event,event,1};}
+Launch head_shard(ownrt::Device& d,Allocation logits,Allocation words,Allocation active,Allocation error,unsigned rows,unsigned offset,unsigned slot,unsigned base,bool f32){
+ if(!rows||slot>1||size_t(offset)+rows>size_t(INT_MAX))throw std::invalid_argument("head shard geometry");
+ extent(d,logits,size_t(rows)*(f32?4:2));extent(d,words,(size_t(base)+draft_split::record_words*(slot+1))*4);extent(d,active,4);extent(d,error,4);
+ std::array args{logits,words,active,error};ownrt::Event event{};
+ if(f32){HeadShard<float> op;op.rows=rows;op.offset=offset;op.slot=slot;op.base=base;event=d.compute(op,args,{});}
+ else {HeadShard<uint16_t> op;op.rows=rows;op.offset=offset;op.slot=slot;op.base=base;event=d.compute(op,args,{});}
+ return {event,event,1};}
+Launch head_merge(ownrt::Device& d,Allocation words,Allocation token,Allocation active,Allocation error,unsigned base){
+ extent(d,words,(size_t(base)+2*draft_split::record_words)*4);extent(d,token,4);extent(d,active,4);extent(d,error,4);
+ HeadMerge op;op.base=base;std::array args{words,token,active,error};auto event=d.compute(op,args,{});return {event,event,1};}
 }
 
 namespace mtp36 {
