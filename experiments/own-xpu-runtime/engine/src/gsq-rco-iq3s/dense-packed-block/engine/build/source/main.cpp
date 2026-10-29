@@ -1152,6 +1152,9 @@ public:
     for(size_t c=0;c<devices.size();++c)if(!(tp_worker_running&&c==1))retire_events(int(c));
   }
   bool tp_worker_running=false;
+  // OWNRT_TP_PERSISTENT_THREAD=1 (rank.hpp TpPersistent): card 1's submission thread, created once per TP process and
+  // parked between halves; stopped (bounded join) before the devices are shut down.
+  std::shared_ptr<void> tp_persistent;
   // OWNRT_SNAPSHOT_NOWAIT=1 (2026-10-29, opt-in, rank 0): no host wait between a half's speculative snapshot copy and its
   // first kernel. The snapshot copies and the bank rotation are issued without a drain (the static snapshot never touches
   // a recurrent bank), and the half's inputs (token, lookup rows) are staged in pinned memory and loaded by ordered,

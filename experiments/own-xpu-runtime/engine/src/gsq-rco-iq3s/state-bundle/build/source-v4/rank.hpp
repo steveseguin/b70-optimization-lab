@@ -16,6 +16,9 @@
 #include <atomic>
 #include <optional>
 #include <thread>
+#include <memory>
+#include <mutex>
+#include <condition_variable>
 // Wire ABI is little-endian, fixed-width on the admitted Linux x86_64 host.
 namespace pipeline {
 constexpr size_t slot_bytes=65536, reverse_offset=2*slot_bytes+4096, probe_offset=reverse_offset+slot_bytes, shared_bytes=probe_offset+slot_bytes+64;
@@ -235,22 +238,36 @@ inline bool tp_threads(){static const bool on=[]{const char* v=std::getenv("OWNR
 // launches only below `release`, which the half's thread raises to each card-0 launch index whose cancel check passed;
 // a cancel at index k stops both cards below k. Every twin pair is (card 0, card 1) adjacent in plan order and k is a
 // card-0 index, so each exchange pair runs on both cards or on neither and the exchange epochs stay aligned.
+// Host page faults of the calling thread (getrusage RUSAGE_THREAD), for the per-half attribution in timings.jsonl.
+struct ThreadFaults{long minor=0,major=0;};
+inline ThreadFaults thread_faults(){struct rusage r{};getrusage(RUSAGE_THREAD,&r);return {r.ru_minflt,r.ru_majflt};}
+// Lifetime counters of the card-1 submission threads of this process (tp-submit-thread.json at teardown).
+inline std::atomic<uint64_t> tp_card1_threads_created{0},tp_card1_jobs{0};
+// One half's card-1 issue loop, shared by both submission-thread forms: card-1 launches in plan order, each issued only
+// below `release`; once `stopped`, the loop ends at the first launch at or above the final release (a cancel at card-0
+// index k stops card 1 below k). The deadline counts from the start of the half's loop.
+inline void tp_issue_card1(Engine& e,int fixture,const std::atomic<size_t>& release,const std::atomic<bool>& stopped,ownrt::Event& last,uint64_t& issued){
+ const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
+ for(size_t i=0;i<e.p.launches.size();++i){
+  if(e.p.launches[i].card!=1||e.v3_skip_half[i])continue;const auto& site=e.issue_sites[i];if(fixture==0&&site.prefill_skip)continue;
+  while(i>=release.load(std::memory_order_acquire)){
+   if(stopped.load(std::memory_order_acquire)&&i>=release.load(std::memory_order_acquire))return;
+   if(std::chrono::steady_clock::now()>end)throw std::runtime_error("TP card-1 release deadline");
+   std::this_thread::yield();}
+  for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}
+}
 struct TpWorker {
  Engine& e;std::thread thread;std::atomic<bool> done{false},stopped{false};std::atomic<size_t> release;std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
+ // Attribution (diagnostic): from construction to the thread's first instruction; the thread's own faults over its body.
+ std::chrono::steady_clock::time_point created;double start_us=0;long minor=0,major=0;
  TpWorker(Engine& engine,int fixture,bool gated):e(engine),release(gated?0:SIZE_MAX){
-  e.tp_worker_running=true;
+  e.tp_worker_running=true;created=std::chrono::steady_clock::now();
   try{thread=std::thread([this,fixture]{
-   try{const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
-    for(size_t i=0;i<e.p.launches.size();++i){
-     if(e.p.launches[i].card!=1||e.v3_skip_half[i])continue;const auto& site=e.issue_sites[i];if(fixture==0&&site.prefill_skip)continue;
-     while(i>=release.load(std::memory_order_acquire)){
-      if(stopped.load(std::memory_order_acquire)&&i>=release.load(std::memory_order_acquire))goto stop;
-      if(std::chrono::steady_clock::now()>end)throw std::runtime_error("TP card-1 release deadline");
-      std::this_thread::yield();}
-     for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}
-    stop:;}
+   start_us=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-created).count();const auto f0=thread_faults();
+   try{tp_issue_card1(e,fixture,release,stopped,last,issued);}
    catch(...){error=std::current_exception();}
-   done.store(true,std::memory_order_release);});}
+   const auto f1=thread_faults();minor=f1.minor-f0.minor;major=f1.major-f0.major;
+   done.store(true,std::memory_order_release);});++tp_card1_threads_created;}
   catch(...){e.tp_worker_running=false;throw;}
  }
  void allow(size_t k){release.store(k,std::memory_order_release);}
@@ -260,12 +277,99 @@ struct TpWorker {
   while(!done.load(std::memory_order_acquire)){
    if(std::chrono::steady_clock::now()>end){thread.detach();throw std::runtime_error("TP card-1 submission thread deadline (card 1 left untouched)");}
    std::this_thread::yield();}
-  thread.join();e.tp_worker_running=false;
+  thread.join();e.tp_worker_running=false;++tp_card1_jobs;
   if(error)std::rethrow_exception(error);
   if(last){e.card_tails[1]=last;e.submitted+=issued;}
  }
  ~TpWorker(){if(thread.joinable()){try{finish();}catch(...){}}}
 };
+// OWNRT_TP_PERSISTENT_THREAD=1 (2026-10-29, opt-in; with OWNRT_TP_THREADS=1): card 1's submission thread is created once
+// per TP process, at its first threaded half, and parked between halves on a condition variable (no spinning while
+// parked; it wakes once a second to look for a stop). TpWorker created and joined a new std::thread in every half: a
+// fresh stack, TLS block and allocator state each time, and the TP halves' host page faults that one-card halves do
+// not have (research/tp/qsa-split-2026-10-29 RESULT section 6). Per half, begin() publishes a job (generation,
+// fixture, gated release) under the mutex; the thread runs tp_issue_card1, the same loop with the same release index,
+// stop bound and deadline as TpWorker, and publishes the job's completion; finish() waits for it with TpWorker's join
+// deadline. A deadline poisons the thread (card 1 is left untouched, as TpWorker's detach) and every later half is
+// refused. tp_persistent_stop (teardown, before the devices shut down) stops it with a bounded join.
+inline bool tp_persistent_thread(){static const bool on=[]{const char* v=std::getenv("OWNRT_TP_PERSISTENT_THREAD");return v&&v[0]=='1';}();return on;}
+struct TpPersistent {
+ Engine& e;
+ std::mutex m;std::condition_variable cv;uint64_t published=0;bool quit=false; // guarded by m (published written by the half's thread only)
+ std::atomic<uint64_t> completed{0};std::atomic<bool> exited{false};
+ // Job: written by the half's thread before publishing, results by the card-1 thread before completing.
+ int fixture=0;std::atomic<size_t> release{0};std::atomic<bool> stopped{false};std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
+ std::chrono::steady_clock::time_point published_at{};double start_us=0;long minor=0,major=0;
+ // Half's thread only.
+ bool active=false,poisoned=false;uint64_t jobs=0;long minor_total=0,major_total=0;double start_us_max=0;
+ std::thread thread;
+ explicit TpPersistent(Engine& engine):e(engine){thread=std::thread([this]{run();});++tp_card1_threads_created;}
+ void run(){
+  uint64_t seen=0;
+  for(;;){
+   int job_fixture=0;
+   {std::unique_lock<std::mutex> lock(m);
+    while(!quit&&published==seen)cv.wait_for(lock,std::chrono::seconds(1));
+    if(quit)break;
+    seen=published;job_fixture=fixture;start_us=std::chrono::duration<double,std::micro>(std::chrono::steady_clock::now()-published_at).count();}
+   const auto f0=thread_faults();
+   try{tp_issue_card1(e,job_fixture,release,stopped,last,issued);}
+   catch(...){error=std::current_exception();}
+   const auto f1=thread_faults();minor=f1.minor-f0.minor;major=f1.major-f0.major;
+   completed.store(seen,std::memory_order_release);
+  }
+  exited.store(true,std::memory_order_release);
+ }
+ void begin(int job_fixture,bool gated){
+  require(!poisoned,"OWNRT_TP_PERSISTENT_THREAD: card-1 submission thread poisoned by an earlier deadline");
+  require(!active&&!exited.load(std::memory_order_acquire)&&completed.load(std::memory_order_acquire)==published,"OWNRT_TP_PERSISTENT_THREAD: previous card-1 job unfinished");
+  fixture=job_fixture;release.store(gated?0:SIZE_MAX,std::memory_order_relaxed);stopped.store(false,std::memory_order_relaxed);
+  error=nullptr;last=0;issued=0;start_us=0;minor=major=0;
+  e.tp_worker_running=true;active=true;
+  {std::lock_guard<std::mutex> lock(m);published_at=std::chrono::steady_clock::now();++published;}
+  cv.notify_one();
+ }
+ void allow(size_t k){release.store(k,std::memory_order_release);}
+ void stop(size_t k){release.store(k,std::memory_order_release);stopped.store(true,std::memory_order_release);}
+ void finish(){
+  const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
+  while(completed.load(std::memory_order_acquire)!=published){
+   if(std::chrono::steady_clock::now()>end){poisoned=true;active=false;throw std::runtime_error("TP card-1 persistent submission thread deadline (card 1 left untouched)");}
+   std::this_thread::yield();}
+  active=false;e.tp_worker_running=false;++jobs;++tp_card1_jobs;minor_total+=minor;major_total+=major;start_us_max=std::max(start_us_max,start_us);
+  if(error)std::rethrow_exception(error);
+  if(last){e.card_tails[1]=last;e.submitted+=issued;}
+ }
+ // Bounded stop: the parked thread sees quit at once; a thread still inside a job (only after a deadline) is detached.
+ bool shutdown(std::chrono::seconds limit){
+  {std::lock_guard<std::mutex> lock(m);quit=true;}cv.notify_all();
+  if(!thread.joinable())return exited.load(std::memory_order_acquire);
+  const auto end=std::chrono::steady_clock::now()+limit;
+  while(!exited.load(std::memory_order_acquire)&&std::chrono::steady_clock::now()<end)std::this_thread::sleep_for(std::chrono::milliseconds(1));
+  if(exited.load(std::memory_order_acquire)){thread.join();return true;}
+  thread.detach();return false;
+ }
+ ~TpPersistent(){try{shutdown(std::chrono::seconds(10));}catch(...){}}
+};
+inline TpPersistent& tp_persistent(Engine& e){
+ if(!e.tp_persistent)e.tp_persistent=std::make_shared<TpPersistent>(e);
+ return *static_cast<TpPersistent*>(e.tp_persistent.get());
+}
+// Teardown (run_rank, before engine->shutdown()): stop the persistent thread and write tp-submit-thread.json (both forms,
+// whenever OWNRT_TP_THREADS ran a card-1 thread). Returns an error text, empty when clean.
+inline std::string tp_persistent_stop(Engine& e,const fs::path& output){
+ if(!e.tp_persistent&&!tp_card1_threads_created.load())return {};
+ std::string error;std::ostringstream o;
+ o<<"{\"schema\":\"ownrt.tp-submit-thread.v1\",\"persistent\":"<<(e.tp_persistent?"true":"false")<<",\"threads_created\":"<<tp_card1_threads_created.load()<<",\"jobs\":"<<tp_card1_jobs.load();
+ if(e.tp_persistent){auto& p=*static_cast<TpPersistent*>(e.tp_persistent.get());
+  const bool joined=p.shutdown(std::chrono::seconds(10));if(!joined)error="TP card-1 persistent submission thread did not stop within 10 s (detached)";
+  o<<",\"published\":"<<p.published<<",\"completed\":"<<p.completed.load()<<",\"poisoned\":"<<(p.poisoned?"true":"false")<<",\"joined\":"<<(joined?"true":"false")
+   <<",\"card1_minor_faults_total\":"<<p.minor_total<<",\"card1_major_faults_total\":"<<p.major_total<<",\"start_us_max\":"<<p.start_us_max;
+  if(joined)e.tp_persistent.reset();}
+ o<<",\"error\":"<<ownrt::quote(error)<<"}";
+ try{save(output/"tp-submit-thread.json",o.str());}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string("tp-submit-thread.json: ")+ex.what();}
+ return error;
+}
 static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
  router_tie_admission(e,request);
  const auto p150_half_begin=std::chrono::steady_clock::now();
@@ -347,9 +451,22 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  // A multi-pass legacy site may be cancelled before finish() sees its last
  // event. Record each actual submission so drain still covers its whole prefix.
  e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;if(decode_profile_mode>=2&&!device_sites.empty())device_sites.back().events.push_back(event);};
- const bool threaded=e.a.tp_replicate&&tp_threads();std::optional<TpWorker> worker;
+ // One half's card-1 submission: a per-half TpWorker, or a job of the persistent thread (OWNRT_TP_PERSISTENT_THREAD).
+ struct TpSubmit {
+  std::optional<TpWorker> fresh;TpPersistent* persistent=nullptr;
+  void allow(size_t k){if(persistent)persistent->allow(k);else fresh->allow(k);}
+  void stop(size_t k){if(persistent)persistent->stop(k);else fresh->stop(k);}
+  void finish(){if(persistent)persistent->finish();else fresh->finish();}
+  double start_us()const{return persistent?persistent->start_us:fresh->start_us;}
+  long minor()const{return persistent?persistent->minor:fresh->minor;}
+  long major()const{return persistent?persistent->major:fresh->major;}
+  ~TpSubmit(){if(persistent&&persistent->active){try{persistent->finish();}catch(...){}}} // a TpWorker finishes in its own destructor
+ };
+ const bool threaded=e.a.tp_replicate&&tp_threads();std::optional<TpSubmit> worker;
  if(threaded){require(e.prepared_path&&!staged&&!e.a.checked&&!e.attribution.enabled&&!e.correction_exchange&&!l4_history&&!decode_profile_mode&&!e.head_export,"OWNRT_TP_THREADS: prepared decode halves only");
-  worker.emplace(e,request.fixture,request.speculative);}
+  worker.emplace();
+  if(tp_persistent_thread()){auto& p=tp_persistent(e);p.begin(request.fixture,request.speculative);worker->persistent=&p;}
+  else worker->fresh.emplace(e,request.fixture,request.speculative);}
  size_t current=0; // the card-0 launch being issued (cancellation bound for card 1)
  try {for(auto& l:e.p.launches) {
   current=size_t(&l-e.p.launches.data());
@@ -394,6 +511,9 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  }catch(const CancelledLaunch&){candidate.cancelled=true;if(worker)worker->stop(current);}
  catch(...){e.dev(0).before_compute={};e.dev(0).after_compute={};if(worker)worker->stop(current);throw;}
  if(worker){if(!candidate.cancelled)worker->allow(SIZE_MAX);worker->finish();}
+ // Attribution of the card-1 submission thread (diagnostic): its start latency and its own faults over its loop.
+ const bool card1_threaded=bool(worker),card1_persistent=worker&&worker->persistent;
+ const double card1_start_us=worker?worker->start_us():0;const long card1_minor=worker?worker->minor():0,card1_major=worker?worker->major():0;
  e.dev(0).before_compute={};e.dev(0).after_compute={};
  if(cancel_at_boundary())candidate.cancelled=true;
  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
@@ -458,7 +578,12 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   <<",\"prepare_ms\":"<<prepare_ms<<",\"enqueue_loop_ms\":"<<enqueue_ms<<",\"wait_ms\":"<<report_wait_ms<<",\"host_waits\":"<<report_waits
   <<",\"process_major_faults\":"<<after.ru_majflt-before.ru_majflt<<",\"process_minor_faults\":"<<after.ru_minflt-before.ru_minflt<<",\"process_voluntary_context_switches\":"<<after.ru_nvcsw-before.ru_nvcsw<<",\"process_involuntary_context_switches\":"<<after.ru_nivcsw-before.ru_nivcsw
   <<",\"thread_voluntary_context_switches\":"<<thread_after.ru_nvcsw-thread_before.ru_nvcsw<<",\"thread_involuntary_context_switches\":"<<thread_after.ru_nivcsw-thread_before.ru_nivcsw
-  <<",\"parity_argument_checks\":"<<report_checks<<",\"enqueue_family_ms\":";
+  // Per-thread page faults (2026-10-29): this half's thread over the same window as the process counters, and card 1's
+  // submission thread over its issue loop (OWNRT_TP_THREADS only).
+  <<",\"thread_minor_faults\":"<<thread_after.ru_minflt-thread_before.ru_minflt<<",\"thread_major_faults\":"<<thread_after.ru_majflt-thread_before.ru_majflt;
+ if(card1_threaded)e.timings<<",\"card1_thread_persistent\":"<<(card1_persistent?"true":"false")<<",\"card1_thread_start_us\":"<<card1_start_us
+  <<",\"card1_thread_minor_faults\":"<<card1_minor<<",\"card1_thread_major_faults\":"<<card1_major;
+ e.timings<<",\"parity_argument_checks\":"<<report_checks<<",\"enqueue_family_ms\":";
  if(!e.class_timing)e.timings<<"null";else {e.timings<<'{';for(size_t j=0;j<e.families.size();++j)e.timings<<(j?",":"")<<ownrt::quote(e.families[j])<<':'<<report_families[j];e.timings<<'}';}e.timings<<"}\n";
  require(bool(e.timings)&&bool(e.site_timings),"p92 half receipt write failed");
  };
@@ -486,11 +611,18 @@ static void state_dump(Engine& e,int sequence) {
   // One-card extent: the card's own size, or larger for a buffer allocated compactly on each card (OWNRT_TP_QSA_SPLIT's
   // KV cache holds one of the two KV heads per card).
   size_t elements=b.size()/es;for(const auto& runs:split->second)for(const auto& [src,dst,n]:runs)elements=std::max(elements,dst+n);
-  std::vector<uint8_t> global(elements*es,0);std::vector<uint8_t> covered(elements,0);
+  std::vector<uint8_t> global(elements*es,0);
+  // Coverage by intervals (2026-10-29, O(runs)): the non-empty runs of both cards, sorted by their one-card start, must
+  // tile [0, elements) exactly: each starts where the previous one ended (earlier = overlap, later = an element not
+  // covered). The same condition as the element-by-element check it replaces (every element exactly once); that check
+  // built its message string per element (about 470 M per dump with OWNRT_TP_QSA_SPLIT's per-position KV runs).
+  std::vector<std::pair<size_t,size_t>> spans;
   for(int c=0;c<2;++c){const auto part=c?e.readback(1,other,b.size()):b;
-   for(const auto& [src,dst,n]:split->second[size_t(c)]){require((src+n)*es<=part.size()&&(dst+n)*es<=global.size(),"head layout extent: "+name);
-    std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);for(size_t k=dst;k<dst+n;++k){require(!covered[k],"head layout overlap: "+name);covered[k]=1;}}}
-  require(std::all_of(covered.begin(),covered.end(),[](uint8_t x){return x!=0;}),"head layout does not cover "+name);
+   for(const auto& [src,dst,n]:split->second[size_t(c)]){if((src+n)*es>part.size()||(dst+n)*es>global.size())require(false,"head layout extent: "+name);
+    std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);if(n)spans.emplace_back(dst,n);}}
+  std::sort(spans.begin(),spans.end());size_t cursor=0;
+  for(const auto& [dst,n]:spans){if(dst<cursor)require(false,"head layout overlap: "+name);if(dst>cursor)require(false,"head layout does not cover "+name);cursor=dst+n;}
+  if(cursor!=elements)require(false,"head layout does not cover "+name);
   return global;};
  for(auto& [name,s]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // TP-internal half buffers: not model state
   auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));
@@ -1103,6 +1235,8 @@ static int run_rank(const Options& a) {
  }
  // Failure receipt is durable before any teardown. Device owns all SYCL borrowers.
  if(engine)engine->progress_callback={};
+ // OWNRT_TP_PERSISTENT_THREAD: card 1's submission thread stops (bounded join) before any device is shut down.
+ if(engine){const auto stop_error=tp_persistent_stop(*engine,a.output);if(!stop_error.empty())error+=(error.empty()?"":"; ")+stop_error;}
  head_runtime.reset();
  provider.reset();
  if(engine){try{teardown=engine->shutdown();}catch(const std::exception& ex){error+=(error.empty()?"":"; ")+std::string(ex.what());}engine.reset();}
