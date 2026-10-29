@@ -4,13 +4,15 @@
 #   systemd-run --user --unit=tp-direct-<phase> --collect flock -n -E 75 /dev/shm/card23.lock \
 #     flock -n -E 75 /dev/shm/card47.lock taskset -c 0-3,16-19 bash run_arms.sh <phase> ARM...
 # ARM = name:steps:mode, mode one | one47 | rep | rep-threads | copy | direct | direct-threads | dense-direct | slot-direct |
-#   xonly-threads (exact diagnostic: no split, the same exchanges of identical rows).
+#   xonly-threads (exact diagnostic: no split, the same exchanges of identical rows) | heads-threads (Stage 2) |
+#   heads-alone-threads (Stage 2 head split with nothing else split).
 # Order per arm: coordination-marker check -> engine run (tp_rank1_driver.py) -> kernel-log check. Any xe/fault line,
 # nonzero exit or exchange timeout halts the phase; nothing is retried. Do not edit while it runs.
 set -u
 D=/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28
 ENGINE=/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine
-RUNS=/dev/shm/tp-direct-20261028/runs
+RUNS=${TP_RUNS:-/dev/shm/tp-direct-20261028/runs}   # Stage 2: TP_RUNS=/dev/shm/tp-heads-20261028/runs
+CACHE=$(dirname "$RUNS")/cache
 PHASE=$1; shift
 exec >>"$D/logs/$PHASE.log" 2>&1
 echo "=== phase $PHASE start $(date -Is) pid $$ affinity $(taskset -pc $$ | sed 's/.*: //')"
@@ -35,6 +37,8 @@ for arm in "$@"; do
     dense-direct) envs=(OWNRT_TP_EXCHANGE=direct) ;;
     slot-direct) tp=(--tp); envs+=(OWNRT_TP_EXCHANGE=direct) ;;
     rep-threads) tp=(--tp); envs=(OWNRT_TP_THREADS=1) ;;
+    heads-threads) envs+=(OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;  # Stage 2: + GDN head split
+    heads-alone-threads) tp=(--tp); envs=(OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;  # head split only
     xonly-threads) envs+=(OWNRT_TP_EXCHANGE=direct-replicated OWNRT_TP_THREADS=1) ;;  # exact; exchanges with no split
     *) halt "unknown mode $mode" ;;
   esac
@@ -42,7 +46,7 @@ for arm in "$@"; do
   echo "--- arm $name steps=$steps mode=$mode env=${envs[*]:-none} tp=${tp[*]:-none} at $(date -Is)"
   launch="$D/rank1-launch-c4096.json"; [ "$mode" = one47 ] && launch="$D/rank1-launch-c4096-card47.json"
   env "${envs[@]}" python3 -B "$ENGINE/tools/tp_rank1_driver.py" run --launch "$launch" --out "$out" \
-    --steps "$steps" --cache /dev/shm/tp-direct-20261028/cache "${tp[@]}"
+    --steps "$steps" --cache "$CACHE" "${tp[@]}"
   rc=$?; echo "arm $name rc=$rc after $(( $(date +%s) - t )) s"
   python3 "$D/klog_check.py" "$PHASE-after-$name" "$t" "$D/logs/kernel-log-$PHASE-after-$name.txt" || halt "kernel log after $name"
   [ "$rc" -eq 0 ] || { tail -30 "$out/rank1.log"; halt "arm $name rc=$rc"; }

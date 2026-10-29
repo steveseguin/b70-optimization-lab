@@ -1,0 +1,489 @@
+[
+ {
+  "arm": "t5-one",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": false,
+  "split": null,
+  "tp_env": {},
+  "steps": 16,
+  "load_s": 14.6,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 12.237,
+  "half_ms_min_3_on": 12.13,
+  "half_ms_max_3_on": 12.267,
+  "half_ms": [
+   59.011,
+   12.183,
+   12.13,
+   12.239,
+   12.216,
+   12.224,
+   12.235,
+   12.242,
+   12.228,
+   12.218,
+   12.251,
+   12.235,
+   12.253,
+   12.267,
+   12.258,
+   12.267
+  ],
+  "engine_half_ms_median_3_on": 12.176,
+  "enqueue_ms_median_3_on": 3.597,
+  "card0_launches_per_half": 938,
+  "speedup_vs_reference": 1.0
+ },
+ {
+  "arm": "t5-one2",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": false,
+  "split": null,
+  "tp_env": {},
+  "steps": 16,
+  "load_s": 14.5,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 12.286,
+  "half_ms_min_3_on": 12.232,
+  "half_ms_max_3_on": 12.396,
+  "half_ms": [
+   65.696,
+   12.173,
+   12.251,
+   12.292,
+   12.232,
+   12.396,
+   12.346,
+   12.258,
+   12.29,
+   12.287,
+   12.262,
+   12.361,
+   12.262,
+   12.338,
+   12.284,
+   12.27
+  ],
+  "engine_half_ms_median_3_on": 12.221,
+  "enqueue_ms_median_3_on": 4.627,
+  "card0_launches_per_half": 938,
+  "vs_reference": {
+   "reference": "t5-one",
+   "rc": 0,
+   "compared": 1079,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 0.996
+ },
+ {
+  "arm": "t5-thr",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "slot",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 26.5,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 11.348,
+  "half_ms_min_3_on": 11.248,
+  "half_ms_max_3_on": 11.45,
+  "half_ms": [
+   71.931,
+   11.383,
+   11.248,
+   11.333,
+   11.325,
+   11.45,
+   11.348,
+   11.441,
+   11.349,
+   11.32,
+   11.349,
+   11.354,
+   11.342,
+   11.364,
+   11.343,
+   11.366
+  ],
+  "engine_half_ms_median_3_on": 11.291,
+  "enqueue_ms_median_3_on": 6.154,
+  "card0_launches_per_half": 1021,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 6928,
+     "waits_that_polled": 6084,
+     "max_polls": 80250,
+     "poll_sum": 1364639
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 6928,
+     "waits_that_polled": 5519,
+     "max_polls": 199,
+     "poll_sum": 68240
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 1079,
+   "differ": 125,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t5-one",
+   "rc": 0,
+   "compared": 954,
+   "ignored": 125,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.0783
+ },
+ {
+  "arm": "t5-heads",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "slot",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.8,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.824,
+  "half_ms_min_3_on": 10.797,
+  "half_ms_max_3_on": 11.675,
+  "half_ms": [
+   72.277,
+   11.005,
+   10.864,
+   10.816,
+   10.797,
+   10.803,
+   10.813,
+   10.815,
+   10.817,
+   10.802,
+   10.848,
+   10.836,
+   10.832,
+   11.675,
+   10.974,
+   10.868
+  ],
+  "engine_half_ms_median_3_on": 10.769,
+  "enqueue_ms_median_3_on": 6.009,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 5938,
+     "max_polls": 87572,
+     "poll_sum": 1358983
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 5745,
+     "max_polls": 322,
+     "poll_sum": 74030
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 935,
+   "differ": 125,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t5-one",
+   "rc": 0,
+   "compared": 954,
+   "ignored": 125,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.1305
+ },
+ {
+  "arm": "t5-heads2",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "slot",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.8,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.824,
+  "half_ms_min_3_on": 10.705,
+  "half_ms_max_3_on": 12.18,
+  "half_ms": [
+   72.354,
+   11.156,
+   10.705,
+   10.813,
+   10.804,
+   10.789,
+   10.993,
+   10.848,
+   10.833,
+   10.8,
+   12.18,
+   10.834,
+   10.829,
+   10.82,
+   10.814,
+   10.843
+  ],
+  "engine_half_ms_median_3_on": 10.769,
+  "enqueue_ms_median_3_on": 6.35,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 6267,
+     "max_polls": 78478,
+     "poll_sum": 1368389
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 5099,
+     "max_polls": 692,
+     "poll_sum": 76154
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 935,
+   "differ": 125,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t5-one",
+   "rc": 0,
+   "compared": 954,
+   "ignored": 125,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.1305
+ },
+ {
+  "arm": "t5-halone",
+  "binary": "/dev/shm/engine-build-tp-heads-20261028-r5/sc117-engine",
+  "tp": true,
+  "split": null,
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 26.9,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 11.906,
+  "half_ms_min_3_on": 11.729,
+  "half_ms_max_3_on": 14.036,
+  "half_ms": [
+   74.254,
+   11.771,
+   11.729,
+   11.818,
+   11.801,
+   14.036,
+   11.949,
+   11.901,
+   11.985,
+   11.882,
+   12.034,
+   11.994,
+   11.911,
+   11.845,
+   12.132,
+   11.894
+  ],
+  "engine_half_ms_median_3_on": 11.84,
+  "enqueue_ms_median_3_on": 5.991,
+  "card0_launches_per_half": 956,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 288,
+     "waits_that_polled": 252,
+     "max_polls": 87948,
+     "poll_sum": 116558
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 288,
+     "waits_that_polled": 64,
+     "max_polls": 147,
+     "poll_sum": 954
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 935,
+   "differ": 0,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t5-one",
+   "rc": 0,
+   "compared": 1079,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.0278
+ }
+]

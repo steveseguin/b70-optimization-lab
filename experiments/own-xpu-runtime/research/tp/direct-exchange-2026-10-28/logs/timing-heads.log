@@ -1,0 +1,35 @@
+=== phase timing-heads start 2026-10-28T23:48:29-04:00 pid 990638 affinity 0-3,16-19
+[klog timing-heads-before-24h] since @1793159309: 12 lines, 0 xe/fault lines
+--- arm t5-one steps=16 mode=one env=none tp=none at 2026-10-28T23:48:29-04:00
+{"tp": false, "steps": 16, "load_s": 14.56295802583918, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.24
+arm t5-one rc=0 after 15 s
+[klog timing-heads-after-t5-one] since @1793245709: 0 lines, 0 xe/fault lines
+--- arm t5-thr steps=16 mode=direct-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 tp=--tp --split .attention,.gdn.qkv at 2026-10-28T23:48:44-04:00
+{"tp": true, "steps": 16, "load_s": 26.529087856877595, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 11.35
+arm t5-thr rc=0 after 28 s
+[klog timing-heads-after-t5-thr] since @1793245724: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":6084,"max_polls":80250,"poll_sum":1364639},{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":5519,"max_polls":199,"poll_sum":68240}]}
+{"buffers":1079,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exp
+--- arm t5-heads steps=16 mode=heads-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-28T23:49:12-04:00
+{"tp": true, "steps": 16, "load_s": 25.849818952847272, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.84
+arm t5-heads rc=0 after 28 s
+[klog timing-heads-after-t5-heads] since @1793245752: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":5938,"max_polls":87572,"poll_sum":1358983},{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":5745,"max_polls":322,"poll_sum":74030}]}
+{"buffers":935,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exps
+--- arm t5-halone steps=16 mode=heads-alone-threads env=OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp at 2026-10-28T23:49:40-04:00
+{"tp": true, "steps": 16, "load_s": 26.889660030137748, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 11.91
+arm t5-halone rc=0 after 29 s
+[klog timing-heads-after-t5-halone] since @1793245780: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":288,"waits_that_polled":252,"max_polls":87948,"poll_sum":116558},{"abort":0,"timeouts":0,"waits":288,"waits_that_polled":64,"max_polls":147,"poll_sum":954}]}
+{"buffers":935,"differ":[],"passed":true}
+--- arm t5-heads2 steps=16 mode=heads-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-28T23:50:09-04:00
+{"tp": true, "steps": 16, "load_s": 25.7936561468523, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.83
+arm t5-heads2 rc=0 after 28 s
+[klog timing-heads-after-t5-heads2] since @1793245809: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":6267,"max_polls":78478,"poll_sum":1368389},{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":5099,"max_polls":692,"poll_sum":76154}]}
+{"buffers":935,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exps
+--- arm t5-one2 steps=16 mode=one env=none tp=none at 2026-10-28T23:50:37-04:00
+{"tp": false, "steps": 16, "load_s": 14.528927450999618, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.29
+arm t5-one2 rc=0 after 15 s
+[klog timing-heads-after-t5-one2] since @1793245837: 0 lines, 0 xe/fault lines
+=== phase timing-heads done 2026-10-28T23:50:52-04:00
