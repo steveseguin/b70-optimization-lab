@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 29, about 11:10 — three rank-0 trims: four cards reach 75.97 tok/s exact at 64K (74.72 without them).**
+- Three new opt-in flags (engine `3eb140d95695`), each bitwise equal to one card (1029/1029 target, 71/71 draft):
+  - `OWNRT_SNAPSHOT_NOWAIT=1`: rank 0 no longer waits on the host between its speculative snapshot copy and the half.
+    Speculative half 9.63 → 9.41 ms.
+  - `OWNRT_DRAFT_GEMV_SPLIT=1`: the draft's largest plain GEMV (qsa.qgate) is split by rows across rank 0's two cards.
+    Draft 1.165 → 1.11 ms.
+  - `OWNRT_ROLLBACK_NOWAIT=1`: the miss rollback restores both cards at once and does not wait. Rollback 0.58 → 0.08 ms,
+    about 0.49 ms off each miss.
+- 12-prompt suite, four fresh servers (A/B/A/B), same binary: 75.97 against 74.72 tok/s (1.017×), faster on every prompt
+  in every pair. All 5,965 outputs equal B19 on all four servers. Kernel log clean. `sc117-lan` not touched.
+- Rank 1 sets the pace again. Recommended four-card flags: arm `tptsx`.
+  [Result](experiments/own-xpu-runtime/research/tp/rank0-trims-2026-10-29/RESULT.md).
+
 **October 29, about 08:00 — fresh-server repeat confirms both head splits: 74.44 vs 73.04 tok/s, exact.**
 - Four more servers (TP, both splits, TP, both splits), same binary `b7786ad42675`, 64K. Both splits win both pairs
   (+2.0%, +1.8%), and they are faster on every prompt in every pair (48 of 48). Servers of the same setup differ by about 1%.

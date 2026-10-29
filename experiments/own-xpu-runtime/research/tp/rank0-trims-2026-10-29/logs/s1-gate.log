@@ -1,0 +1,58 @@
+=== phase s1-gate binary 04d554479743 start 2026-10-29T08:34:30-04:00 pid 1374826 affinity 0-3,16-19 nofile 1048576
+[klog s1-gate-before-24h] since @1793190870: 11 lines, 0 xe/fault lines
+--- arm g-one-old rank=0 mode=one steps=16 prompt=1100 pattern=hmcn extra=rows=256,launch=b7786ad42675 MemAvailable=107099090944 shm_free=54061723648 at 2026-10-29T08:34:30-04:00
+{"steps": 16, "load_s": 67.24277201201767, "prompt_ms": 3791.2276268471032, "draft_replay_ms": 988.9430382754654, "rc": 0} median half ms 10.635 draft ms 1.338
+arm g-one-old rc=0 after 77 s
+[klog s1-gate-after-g-one-old] since @1793277270: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+--- arm g-one-new rank=0 mode=one steps=16 prompt=1100 pattern=hmcn extra=rows=256 MemAvailable=105378328576 shm_free=52175998976 at 2026-10-29T08:35:48-04:00
+{"steps": 16, "load_s": 69.5776483360678, "prompt_ms": 3785.908377962187, "draft_replay_ms": 986.1350008286536, "rc": 0} median half ms 10.637 draft ms 1.333
+arm g-one-new rc=0 after 80 s
+[klog s1-gate-after-g-one-new] since @1793277348: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+--- arm g-tps-old rank=0 mode=tps steps=16 prompt=1100 pattern=hmcn extra=rows=256,launch=b7786ad42675 MemAvailable=103493705728 shm_free=50290274304 at 2026-10-29T08:37:08-04:00
+{"steps": 16, "load_s": 75.87855481682345, "prompt_ms": 3328.543502604589, "draft_replay_ms": 969.5609419140965, "rc": 0} median half ms 9.312 draft ms 1.160
+arm g-tps-old rc=0 after 89 s
+[klog s1-gate-after-g-tps-old] since @1793277428: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":1015,"max_polls":61810,"poll_sum":134502},{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":935,"max_polls":208,"poll_sum":10652}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":76,"poll_sum":1048},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":6297,"poll_sum":72205}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm g-tps-new rank=0 mode=tps steps=16 prompt=1100 pattern=hmcn extra=rows=256 MemAvailable=100945494016 shm_free=48403398656 at 2026-10-29T08:38:37-04:00
+{"steps": 16, "load_s": 60.18919020402245, "prompt_ms": 3333.7150970473886, "draft_replay_ms": 974.164579063654, "rc": 0} median half ms 9.330 draft ms 1.167
+arm g-tps-new rc=0 after 74 s
+[klog s1-gate-after-g-tps-new] since @1793277517: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":1053,"max_polls":67364,"poll_sum":145828},{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":921,"max_polls":293,"poll_sum":11088}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":77,"poll_sum":1053},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":6301,"poll_sum":73447}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm g-tpsn rank=0 mode=tps steps=16 prompt=1100 pattern=hmcn extra=rows=256,nw MemAvailable=94985293824 shm_free=46514044928 at 2026-10-29T08:39:51-04:00
+{"steps": 16, "load_s": 65.12986745685339, "prompt_ms": 3346.4595556724817, "draft_replay_ms": 978.7279686424881, "rc": 0} median half ms 9.325 draft ms 1.168
+arm g-tpsn rc=0 after 79 s
+[klog s1-gate-after-g-tpsn] since @1793277591: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":973,"max_polls":62237,"poll_sum":131960},{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":952,"max_polls":320,"poll_sum":12297}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":78,"poll_sum":1108},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":6333,"poll_sum":73166}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm g-tpsn-x rank=0 mode=tps steps=16 prompt=1100 pattern=x extra=rows=256,nw MemAvailable=96960167936 shm_free=44603146240 at 2026-10-29T08:41:10-04:00
+{"steps": 16, "load_s": 61.27712009497918, "prompt_ms": 3343.329496914521, "draft_replay_ms": 974.4682291056961, "rc": 0} median half ms 9.313 draft ms 1.170
+arm g-tpsn-x rc=0 after 75 s
+[klog s1-gate-after-g-tpsn-x] since @1793277670: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":2026,"waits_that_polled":1264,"max_polls":60239,"poll_sum":135822},{"abort":0,"timeouts":0,"waits":2026,"waits_that_polled":1239,"max_polls":279,"poll_sum":14654}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":77,"poll_sum":1060},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":16,"max_polls":6227,"poll_sum":72837}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm g-onen rank=0 mode=one steps=16 prompt=1100 pattern=hmcn extra=rows=256,nw MemAvailable=95801421824 shm_free=42681135104 at 2026-10-29T08:42:25-04:00
+{"steps": 16, "load_s": 58.569143067114055, "prompt_ms": 3809.4360595569015, "draft_replay_ms": 993.8153016846627, "rc": 0} median half ms 10.601 draft ms 1.342
+arm g-onen rc=0 after 69 s
+[klog s1-gate-after-g-onen] since @1793277745: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+=== phase s1-gate done 2026-10-29T08:43:34-04:00

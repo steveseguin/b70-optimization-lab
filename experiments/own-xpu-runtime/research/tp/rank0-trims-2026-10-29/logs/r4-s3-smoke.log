@@ -1,0 +1,13 @@
+=== phase r4-s3-smoke binary 3eb140d95695 start 2026-10-29T09:47:07-04:00 pid 1387965 affinity 0-3,16-19 nofile 1048576
+[klog r4-s3-smoke-before-24h] since @1793195227: 12 lines, 0 xe/fault lines
+--- arm s4-nr rank=0 mode=tps steps=4 prompt=16 pattern=hmcn extra=rows=16,nw,rb MemAvailable=86034407424 shm_free=33082613760 at 2026-10-29T09:47:07-04:00
+{"steps": 4, "load_s": 65.56154739297926, "prompt_ms": 239.377019694075, "draft_replay_ms": 28.00664771348238, "rc": 0} median half ms 9.299 draft ms 1.157
+arm s4-nr rc=0 after 77 s
+[klog r4-s3-smoke-after-s4-nr] since @1793281627: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":254,"max_polls":105283,"poll_sum":168276},{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":216,"max_polls":69,"poll_sum":2079}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":62,"poll_sum":224},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":7080,"poll_sum":20186}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+=== phase r4-s3-smoke done 2026-10-29T09:48:24-04:00

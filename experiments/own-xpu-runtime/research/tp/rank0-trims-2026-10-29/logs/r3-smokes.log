@@ -1,0 +1,35 @@
+=== phase r3-smokes binary b187b9f0f41a start 2026-10-29T08:53:35-04:00 pid 1379928 affinity 0-3,16-19 nofile 1048576
+[klog r3-smokes-before-24h] since @1793192015: 11 lines, 0 xe/fault lines
+--- arm s3-nw rank=0 mode=tps steps=4 prompt=16 pattern=hmcn extra=rows=16,nw MemAvailable=86323744768 shm_free=33186127872 at 2026-10-29T08:53:35-04:00
+{"steps": 4, "load_s": 67.41115004615858, "prompt_ms": 190.77184982597828, "draft_replay_ms": 25.640423642471433, "rc": 0} median half ms 9.266 draft ms 1.155
+arm s3-nw rc=0 after 78 s
+[klog r3-smokes-after-s3-nw] since @1793278415: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":256,"max_polls":68396,"poll_sum":113310},{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":223,"max_polls":62,"poll_sum":2018}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":65,"poll_sum":234},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":7609,"poll_sum":20937}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm s3-gs rank=0 mode=tps steps=4 prompt=16 pattern=hmcn extra=rows=16,gs MemAvailable=84198772736 shm_free=31338692608 at 2026-10-29T08:54:53-04:00
+{"steps": 4, "load_s": 95.04921797313727, "prompt_ms": 178.68852731771767, "draft_replay_ms": 23.22533237747848, "rc": 0} median half ms 9.258 draft ms 1.110
+arm s3-gs rc=0 after 105 s
+[klog r3-smokes-after-s3-gs] since @1793278493: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":251,"max_polls":60860,"poll_sum":102996},{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":233,"max_polls":39,"poll_sum":2379}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":2,"max_polls":8,"poll_sum":13},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":6,"max_polls":9124,"poll_sum":24017}],"card1_error":0}
+{"runs":19,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":38,"waits_that_polled":4,"max_polls":68,"poll_sum":248},{"abort":0,"timeouts":0,"waits":38,"waits_that_polled":34,"max_polls":7286,"poll_sum":28509}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm s3-rb rank=0 mode=tps steps=4 prompt=16 pattern=hmcn extra=rows=16,rb MemAvailable=82335322112 shm_free=29491249152 at 2026-10-29T08:56:38-04:00
+{"steps": 4, "load_s": 107.85830386099406, "prompt_ms": 187.98191146925092, "draft_replay_ms": 22.756435442715883, "rc": 0} median half ms 9.529 draft ms 1.168
+arm s3-rb rc=0 after 118 s
+[klog r3-smokes-after-s3-rb] since @1793278598: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":258,"max_polls":63984,"poll_sum":106830},{"abort":0,"timeouts":0,"waits":384,"waits_that_polled":216,"max_polls":41,"poll_sum":2108}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":59,"poll_sum":226},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":6912,"poll_sum":20051}],"card1_error":0}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+=== phase r3-smokes done 2026-10-29T08:58:36-04:00
