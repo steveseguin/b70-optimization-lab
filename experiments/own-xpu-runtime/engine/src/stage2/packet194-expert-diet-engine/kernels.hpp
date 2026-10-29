@@ -48,6 +48,15 @@ struct Args {
 inline int gdn_key_heads(Shape s){return s.extra?s.extra:16;}
 inline int gdn_value_heads(Shape s){return s.extra?s.heads:48;}
 inline int gdn_qkv_width(Shape s){return (2*gdn_key_heads(s)+gdn_value_heads(s))*128;}
+// QSA head geometry (2026-10-29, exact two-card split by KV group, research/tp/qsa-split-2026-10-29). Without
+// qsa_group_flag a QSA shape has the model's full geometry: 24 query heads over 2 KV heads (query head h reads KV head
+// h/12), head dim 256, and its Shape and argument bytes are unchanged. With the flag (prepare, pool and attention only),
+// heads = this card's query heads (12 or 24) over heads/12 KV heads, in compact rows: qgate rows of heads*512 values,
+// q/gate/attention-output rows of heads*256, k/v rows and KV-cache rows of (heads/12)*256. Every head's arithmetic is
+// unchanged. The 4 index heads and the raw and pooled index keys are never split (the selection stays shared).
+constexpr int qsa_group_flag=256;
+inline int qsa_query_heads(Shape s){return (s.flags&qsa_group_flag)?s.heads:24;}
+inline int qsa_kv_heads(Shape s){return qsa_query_heads(s)/12;}
 inline float sigmoid(float x){return 1.f / (1.f + detmath::exp(-x));}
 inline float silu(float x){return x * sigmoid(x);}
 inline int groups(Shape s){
@@ -58,12 +67,12 @@ inline int groups(Shape s){
  case activation:case mix:case moe_combine:return (s.tokens*s.width+127)/128;
  case route_gather:return s.tokens;
  case gated_norm:return s.tokens*s.heads;
- case prepare:return s.tokens*30; // Q24 + K2 + index Q4
+ case prepare:return s.tokens*(qsa_query_heads(s)+qsa_kv_heads(s)+4); // Q24 + K2 + index Q4 (full geometry: 30)
  case pool:return append_pools(s)+1; // only newly completed pools, then KV/raw
  case select:return s.tokens;
- case attention_score:return s.tokens*24*launch_slots(s);
- case attention_softmax:return s.tokens*24;
- case attention_value:return s.tokens*24*256;
+ case attention_score:return s.tokens*qsa_query_heads(s)*launch_slots(s);
+ case attention_softmax:return s.tokens*qsa_query_heads(s);
+ case attention_value:return s.tokens*qsa_query_heads(s)*256;
  default:throw std::invalid_argument("unknown op");
  }
 }
@@ -78,7 +87,8 @@ inline int local_floats(Shape s){
 inline void validate(Shape s){
  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>262144||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
- if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag))throw std::invalid_argument("unknown shape flag");
+ if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag|qsa_group_flag))throw std::invalid_argument("unknown shape flag");
+ if((s.flags&qsa_group_flag)&&(!(s.op==prepare||s.op==pool||s.op==attention_score||s.op==attention_softmax||s.op==attention_value)||(s.heads!=12&&s.heads!=24)))throw std::invalid_argument("QSA KV-group geometry");
  if((s.flags&qsaring::flag)&&(s.op!=pool||s.capacity<=qsaring::rows))throw std::invalid_argument("QSA raw ring flag: pool with capacity above the ring only");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
@@ -103,10 +113,13 @@ inline std::array<size_t,19> required_bytes(Shape s) {
  case route_gather:b(0,T*W);b(1,T*2560);f(2,T*s.extra);n[3]=n[2];b(4,T*s.extra*2560);f(5,T*s.extra*3);n[6]=n[5];break;
  case moe_combine:b(0,T*s.extra*W);f(1,T*s.extra);b(2,T*W);b(3,T);n[4]=n[2];break;
  case gated_norm:b(0,T*H*128);n[1]=n[0];weight(2,128);n[3]=n[0];break;
- case prepare:b(0,T*24*512);b(1,T*512);b(2,T*512);weight(3,256);weight(4,256);weight(5,128);b(6,T*6144);n[7]=n[6];n[8]=n[1];n[9]=n[2];break;
- case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,size_t((s.flags&qsaring::flag)?qsaring::rows:C)*128);b(7,((C+3)/4)*128);break;
+ case prepare:{const size_t QH=qsa_query_heads(s),KVW=size_t(qsa_kv_heads(s))*256;
+  b(0,T*QH*512);b(1,T*KVW);b(2,T*512);weight(3,256);weight(4,256);weight(5,128);b(6,T*QH*256);n[7]=n[6];n[8]=n[1];n[9]=n[2];break;}
+ case pool:{const size_t KVW=size_t(qsa_kv_heads(s))*256;
+  b(0,T*KVW);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*KVW);n[5]=n[4];b(6,size_t((s.flags&qsaring::flag)?qsaring::rows:C)*128);b(7,((C+3)/4)*128);break;}
  case select:b(0,T*512);b(1,((C+3)/4)*128);f(2,T*S);break;
- case attention_score:case attention_softmax:case attention_value:b(0,T*6144);n[1]=n[0];b(2,C*512);n[3]=n[2];f(4,T*S);n[5]=n[0];f(6,T*24*S);n[7]=n[6];break;
+ case attention_score:case attention_softmax:case attention_value:{const size_t QH=qsa_query_heads(s),KVW=size_t(qsa_kv_heads(s))*256;
+  b(0,T*QH*256);n[1]=n[0];b(2,C*KVW);n[3]=n[2];f(4,T*S);n[5]=n[0];f(6,T*QH*S);n[7]=n[6];break;}
  }
  return n;
 }
@@ -192,13 +205,14 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   t.each(top,[&](int j){a.f(3)[r*top+j]=t.x[1024+j]/selected;});
   t.each(top*2560,[&](int j){a.put(4,r*top*2560+j,a.b(1,r*2560+j%2560));});
  }else if(s.op==prepare){
-  int r=group/30,h=group%30,position=pos+r;
-  if(h<24){norm_rope(t,[&](int k){return a.b(0,(r*24+h)*512+k);},[&](int k,float v){a.put(6,(r*24+h)*256+k,v);a.put(7,(r*24+h)*256+k,a.b(0,(r*24+h)*512+256+k));},a,3,256,position,s.flags);}
-  else if(h<26){h-=24;norm_rope(t,[&](int k){return a.b(1,(r*2+h)*256+k);},[&](int k,float v){a.put(8,(r*2+h)*256+k,v);},a,4,256,position,s.flags);}
-  else{h-=26;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
+  const int QH=qsa_query_heads(s),KH=qsa_kv_heads(s),G=QH+KH+4; // full geometry: 24 + 2 + 4 = 30
+  int r=group/G,h=group%G,position=pos+r;
+  if(h<QH){norm_rope(t,[&](int k){return a.b(0,(r*QH+h)*512+k);},[&](int k,float v){a.put(6,(r*QH+h)*256+k,v);a.put(7,(r*QH+h)*256+k,a.b(0,(r*QH+h)*512+256+k));},a,3,256,position,s.flags);}
+  else if(h<QH+KH){h-=QH;norm_rope(t,[&](int k){return a.b(1,(r*KH+h)*256+k);},[&](int k,float v){a.put(8,(r*KH+h)*256+k,v);},a,4,256,position,s.flags);}
+  else{h-=QH+KH;norm_rope(t,[&](int k){return a.b(2,(r*4+h)*128+k);},[&](int k,float v){a.put(9,(r*4+h)*128+k,v);},a,5,128,position,s.flags);}
  }else if(s.op==pool){
   int blocks=append_pools(s);
-  if(group==blocks){t.each(s.tokens*512,[&](int j){a.put(4,pos*512+j,a.b(0,j));a.put(5,pos*512+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
+  if(group==blocks){const int KVW=qsa_kv_heads(s)*256;t.each(s.tokens*KVW,[&](int j){a.put(4,pos*KVW+j,a.b(0,j));a.put(5,pos*KVW+j,a.b(1,j));});t.each(s.tokens*128,[&](int j){a.put(6,qsaring::row(pos+j/128,s.flags)*128+j%128,a.b(2,j));});}
   else if(pos/4+group<(pos+s.tokens)/4){
    group+=pos/4;
    auto pooled=[&](int k){float x=0;for(int j=0;j<4;++j){int r=group*4+j;x=x+(r<pos?a.b(6,qsaring::row(r,s.flags)*128+k):a.b(2,(r-pos)*128+k));}return a.rnd(x/4.f);};
@@ -218,26 +232,28 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
   t.each(n,[&](int b){int rank=0;for(int k=0;k<n;++k)rank+=t.x[k]>t.x[b]||(t.x[k]==t.x[b]&&k<b);if(rank<count)for(int j=0;j<4;++j)a.i(2)[r*slots+rank*4+j]=b*4+j;});
   t.each(position+1-n*4,[&](int j){a.i(2)[r*slots+count*4+j]=n*4+j;});
  }else if(s.op==attention_score){
-  int slots=s.budget+3,L=launch_slots(s),slot=group%L,h=(group/L)%24,r=group/(L*24),id=a.i(4)[r*slots+slot];
-  int offset=(r*24+h)*slots+slot;
+  const int QH=qsa_query_heads(s),KH=qsa_kv_heads(s);
+  int slots=s.budget+3,L=launch_slots(s),slot=group%L,h=(group/L)%QH,r=group/(L*QH),id=a.i(4)[r*slots+slot];
+  int offset=(r*QH+h)*slots+slot;
   if(id < -1||id>=s.capacity||id>pos+r){t.each(1,[&](int){t.fail(a);});return;}
   if(id<0){t.each(1,[&](int){a.f(6)[offset]=-INFINITY;});return;}
-  float score=tree(t,256,[&](int k){return a.b(2,(id*2+h/12)*256+k)*a.b(0,(r*24+h)*256+k);})/detmath::sqrt(float(256));t.barrier();t.each(1,[&](int){a.f(6)[offset]=score;});
+  float score=tree(t,256,[&](int k){return a.b(2,(id*KH+h/12)*256+k)*a.b(0,(r*QH+h)*256+k);})/detmath::sqrt(float(256));t.barrier();t.each(1,[&](int){a.f(6)[offset]=score;});
  }else if(s.op==attention_softmax){
-  int slots=s.budget+3,r=group/24,n=0;
+  int slots=s.budget+3,r=group/qsa_query_heads(s),n=0;
   while(n<slots&&a.i(4)[r*slots+n]!=-1){int id=a.i(4)[r*slots+n];
    if(id<0||id>=s.capacity||id>pos+r||n>=launch_slots(s)){t.each(1,[&](int){t.fail(a);});return;}++n;}
   if(!n)return;float m=-INFINITY;for(int k=0;k<n;++k)m=std::max(m,a.f(6)[group*slots+k]);
   t.each(n,[&](int k){float v=detmath::exp(a.f(6)[group*slots+k]-m);t.x[k]=v;a.f(7)[group*slots+k]=v;});t.barrier();float den=t.sum(n);t.barrier();
   t.each(n,[&](int k){a.f(7)[group*slots+k]=a.f(7)[group*slots+k]/den;});
  }else if(s.op==attention_value){
-  int k=group%256,h=(group/256)%24,r=group/(256*24),slots=s.budget+3,n=0;
+  const int QH=qsa_query_heads(s),KH=qsa_kv_heads(s);
+  int k=group%256,h=(group/256)%QH,r=group/(256*QH),slots=s.budget+3,n=0;
   while(n<slots&&a.i(4)[r*slots+n]!=-1)++n;
   // This consumer validates independently of the score kernel. Clamp before
   // address arithmetic even when called directly with poisoned selection IDs.
   auto safe_id=[&](int j){int id=a.i(4)[r*slots+j];if(id<0||id>=s.capacity||id>pos+r){t.fail(a);return 0;}return id;};
   if(n>launch_slots(s)){t.each(1,[&](int){t.fail(a);});return;}
-  if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*24+h)*slots+j]*a.b(3,(id*2+h/12)*256+k);});t.barrier();
+  if(!n)return;float value=tree(t,n,[&](int j){int id=safe_id(j);return a.f(7)[(r*QH+h)*slots+j]*a.b(3,(id*KH+h/12)*256+k);});t.barrier();
   t.each(1,[&](int){a.put(5,group,a.rnd(value)*sigmoid(a.b(1,group)));});
  }
 }

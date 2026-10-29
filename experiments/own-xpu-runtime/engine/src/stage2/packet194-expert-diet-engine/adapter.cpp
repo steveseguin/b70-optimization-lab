@@ -735,6 +735,15 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::qsa_attention:shape.op=ng::attention_score;for(int j=0;j<5;++j)in(j,j);out(5,0);a[6]=score;a[7]=probability;break;
  default:use_ng=false;
  }
+ // QSA split by KV group (2026-10-29, --tp-replicate OWNRT_TP_QSA_SPLIT=1): this card's query heads (s.g.qh) over its KV
+ // heads (s.g.kvh) in compact rows. The model geometry (24/2) leaves the flag off, so its Shape and argument bytes are
+ // unchanged. Only the parameterized kernels run a split shape: the generic prepare and pool, and p49 attention (whose
+ // own check admits only its parameterized F32 passes). The selection is never split.
+ if(use_ng&&s.g.h==2560&&(s.op==Op::qsa_prepare||s.op==Op::qsa_append_pool||s.op==Op::qsa_attention||s.op==Op::qsa_select)&&(s.g.qh!=24||s.g.kvh!=2)){
+  if(s.op==Op::qsa_select||s.g.kvh<1||s.g.kvh>2||s.g.qh!=12*s.g.kvh||s.g.ad!=256||s.g.ih!=4||s.g.id!=128||!s.f32_activations||
+     (s.op==Op::qsa_attention?s.implementation!=12:s.implementation!=0))
+   throw std::invalid_argument("QSA KV-group geometry: generic prepare/pool and p49 attention, F32 only");
+  shape.flags|=ng::qsa_group_flag;shape.heads=s.g.qh;}
  // OWNRT_QSA_RAW_RING=1: a raw binding allocated as the 512-row ring (rank 1 plan, rank.hpp) selects ring indexing.
  if(use_ng&&shape.op==ng::pool&&qsaring::enabled()&&shape.capacity>qsaring::rows&&d.arena.row(a[6]).bytes==size_t(qsaring::rows)*128*(s.f32_activations?4:2))shape.flags|=qsaring::flag;
  // Packet15's GDN/QSA geometry is fixed to the real model. Mini's synthetic

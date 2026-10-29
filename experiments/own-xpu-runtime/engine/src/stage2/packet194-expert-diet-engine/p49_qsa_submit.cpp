@@ -48,6 +48,12 @@ integrated::Launch attention(ownrt::Device&d,ng::Shape s,std::span<const ownrt::
  ng::validate(s);
  if(s.op!=ng::attention_score||s.tokens<1||s.tokens>4||a.size()!=19||s.budget!=2048) // rows: 2 (M=2 verify), up to 4 (grouped prefill rows)
   throw std::invalid_argument("packet49 split32 geometry/bindings");
+ // QSA KV-group split (ng::qsa_group_flag, 2026-10-29): only the parameterized F32 passes run it (admit/admit_fast,
+ // tiles_heads, combine_blocked); every other variant indexes the 24-head layout and is refused.
+#ifndef OWN_RT_HOST_ONLY
+ if((s.flags&ng::qsa_group_flag)&&!((s.flags&ng::f32_activations_flag)&&p47::tiles_heads_on()&&p47::combine_blocked_on()))
+  throw std::invalid_argument("packet49 QSA KV-group split: F32 with OWNRT_ATTN_HEADS=1 and OWNRT_ATTN_COMBINE2=1 only");
+#endif
  auto required=ng::required_bytes(s);required[16]=0;
  for(int j=0;j<19;++j){const auto&r=d.arena.row(a[j]);if(!r.live||r.memory!=ownrt::Memory::device||r.bytes<required[j])throw std::invalid_argument("packet49 attention extent/lifetime");}
  const auto&r=d.arena.row(scratch);

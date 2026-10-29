@@ -1,0 +1,51 @@
+{
+ "schema": "ownrt.qsa-split-projection.v1",
+ "date": "2026-10-29",
+ "cpu_only": true,
+ "rank": 1,
+ "qsa_layers": 7,
+ "note": "Rank 1 has 7 QSA layers at split 23 (23, 27, ..., 47); rank 0 has 5 (3, 7, 11, 15, 19).",
+ "rank1_qsa_us_per_half_replicated_today": 1082.0,
+ "splittable_us": {
+  "qsa.qgate": 385.8,
+  "qsa.k": 66.6,
+  "qsa.v": 64.2,
+  "qsa_prepare": 45.6,
+  "qsa_attention tiles+combine": 274.2
+ },
+ "replicated_us": {
+  "qsa.iq (iq+ik)": 60.3,
+  "qsa_select": 132.6,
+  "qsa_append_pool": 27.1,
+  "qsa_attention admit": 25.6
+ },
+ "qgate_bytes_per_layer": {
+  "Q6_K": 25804800,
+  "Q5_K": 21626880
+ },
+ "qgate_gbps": {
+  "Q6_K": 481.7,
+  "Q5_K": 366.7
+ },
+ "extra_exchanges": 7,
+ "exchange_us": 6.1,
+ "exchange_total_us": 42.7,
+ "projection_saving_us": {
+  "ideal_exact_halving": 375.5,
+  "central_4k_positions": 254.5,
+  "central_1100_positions": 222.9,
+  "low_qgate_only_5us_fixed": 132.7
+ },
+ "b19_rank0_per_layer_us_crosscheck": {
+  "qsa_attention": 42.23,
+  "qsa_prepare": 6.11,
+  "qsa_append_pool": 3.35,
+  "qsa_select": 19.15,
+  "gemv:Q5_K:qsa.qgate": 57.19,
+  "gemv:Q6_K:qsa.k": 9.57,
+  "gemv:Q6_K:qsa.v": 9.2,
+  "gemv:BF16:qsa.iq": 8.98
+ },
+ "threshold_us": 150,
+ "decision": "build"
+}

@@ -24,9 +24,11 @@ inline int count(ng::Shape s,ng::Args a,int row) {
   ++n;
  }return n;
 }
+// QSA KV-group split (ng::qsa_group_flag): QH query heads over QH/12 KV heads in compact rows; full geometry 24/2.
 inline float score(ng::Shape s,ng::Args a,int row,int head,int j) {
+ const int QH=ng::qsa_query_heads(s),KH=ng::qsa_kv_heads(s);
  int id=a.i(4)[row*(s.budget+3)+j];std::vector<float> products(256);
- for(int d=0;d<256;++d)products[d]=a.b(0,(row*24+head)*256+d)*a.b(2,(id*2+head/12)*256+d);
+ for(int d=0;d<256;++d)products[d]=a.b(0,(row*QH+head)*256+d)*a.b(2,(id*KH+head/12)*256+d);
  return adjacent(std::move(products))/detmath::sqrt(256.f);
 }
 inline void store(ng::Args a,int at,float value,float* pre_gate) {
@@ -41,14 +43,15 @@ inline void validate(ng::Shape s,ng::Args a) {
 inline void cpu_old(ng::Shape s,ng::Args a,float* pre_gate=nullptr) {
  validate(s,a);if(!a.i(18)[0]||a.i(15)[0])return;const int S=s.budget+3;
  for(int r=0;r<s.tokens;++r){int n=count(s,a,r);if(!n)continue;
-  for(int h=0;h<24;++h){std::vector<float> p(n);float maximum=-INFINITY;
-   for(int j=0;j<n;++j){p[j]=score(s,a,r,h,j);a.f(6)[(r*24+h)*S+j]=p[j];maximum=std::max(maximum,p[j]);}
-   for(int j=n;j<ng::launch_slots(s);++j)a.f(6)[(r*24+h)*S+j]=-INFINITY;
+  const int QH=ng::qsa_query_heads(s),KH=ng::qsa_kv_heads(s);
+  for(int h=0;h<QH;++h){std::vector<float> p(n);float maximum=-INFINITY;
+   for(int j=0;j<n;++j){p[j]=score(s,a,r,h,j);a.f(6)[(r*QH+h)*S+j]=p[j];maximum=std::max(maximum,p[j]);}
+   for(int j=n;j<ng::launch_slots(s);++j)a.f(6)[(r*QH+h)*S+j]=-INFINITY;
    for(float& x:p)x=detmath::exp(x-maximum);float den=adjacent(p);
-   for(int j=0;j<n;++j){p[j]=p[j]/den;a.f(7)[(r*24+h)*S+j]=p[j];}
+   for(int j=0;j<n;++j){p[j]=p[j]/den;a.f(7)[(r*QH+h)*S+j]=p[j];}
    for(int d=0;d<256;++d){std::vector<float> terms(n);
-    for(int j=0;j<n;++j)terms[j]=p[j]*a.b(3,(a.i(4)[r*S+j]*2+h/12)*256+d);
-    store(a,(r*24+h)*256+d,adjacent(std::move(terms)),pre_gate);
+    for(int j=0;j<n;++j)terms[j]=p[j]*a.b(3,(a.i(4)[r*S+j]*KH+h/12)*256+d);
+    store(a,(r*QH+h)*256+d,adjacent(std::move(terms)),pre_gate);
    }
   }
  }
@@ -58,14 +61,15 @@ inline void cpu_old(ng::Shape s,ng::Args a,float* pre_gate=nullptr) {
 inline void cpu_split(ng::Shape s,ng::Args a,float* pre_gate=nullptr) {
  validate(s,a);if(!a.i(18)[0]||a.i(15)[0])return;const int S=s.budget+3;
  for(int r=0;r<s.tokens;++r){int n=count(s,a,r);if(!n)continue;int splits=(n+31)/32;
-  for(int h=0;h<24;++h){std::vector<float> maxima(splits),sums(splits),values(splits*256);
+  const int QH=ng::qsa_query_heads(s),KH=ng::qsa_kv_heads(s);
+  for(int h=0;h<QH;++h){std::vector<float> maxima(splits),sums(splits),values(splits*256);
    for(int b=0;b<splits;++b){int end=std::min(n,(b+1)*32);std::vector<float> p(32,0.f);float maximum=-INFINITY;
     for(int j=b*32;j<end;++j){p[j-b*32]=score(s,a,r,h,j);maximum=std::max(maximum,p[j-b*32]);}
     maxima[b]=maximum;
     for(int j=b*32;j<end;++j)p[j-b*32]=detmath::exp(p[j-b*32]-maximum);
     sums[b]=adjacent(p);
     for(int d=0;d<256;++d){std::vector<float> terms(32,0.f);
-     for(int j=b*32;j<end;++j)terms[j-b*32]=p[j-b*32]*a.b(3,(a.i(4)[r*S+j]*2+h/12)*256+d);
+     for(int j=b*32;j<end;++j)terms[j-b*32]=p[j-b*32]*a.b(3,(a.i(4)[r*S+j]*KH+h/12)*256+d);
      values[b*256+d]=adjacent(std::move(terms));
     }
    }
@@ -75,7 +79,7 @@ inline void cpu_split(ng::Shape s,ng::Args a,float* pre_gate=nullptr) {
    float den=adjacent(std::move(den_terms));
    for(int d=0;d<256;++d){std::vector<float> terms(splits);
     for(int b=0;b<splits;++b)terms[b]=values[b*256+d]*factors[b];
-    store(a,(r*24+h)*256+d,adjacent(std::move(terms))/den,pre_gate);
+    store(a,(r*QH+h)*256+d,adjacent(std::move(terms))/den,pre_gate);
    }
   }
  }

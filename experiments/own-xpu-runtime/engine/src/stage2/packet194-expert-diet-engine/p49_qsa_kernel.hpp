@@ -11,7 +11,7 @@ namespace p47 {
 constexpr int tile=32, heads=24, dim=256;
 using Atomic=sycl::atomic_ref<int32_t,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
 inline int splits(ng::Shape s){return (ng::launch_slots(s)+31)/32;}
-inline size_t scratch_floats(ng::Shape s){return size_t(s.tokens)*24*splits(s)*258;}
+inline size_t scratch_floats(ng::Shape s){return size_t(s.tokens)*ng::qsa_query_heads(s)*splits(s)*258;}
 inline float bf(uint16_t v){return std::bit_cast<float>(uint32_t(v)<<16);}
 struct Team {
  sycl::nd_item<1> it;float* x;
@@ -217,13 +217,17 @@ inline float sg_first_max(sycl::sub_group sg,float v){const int lane=sg.get_loca
 // (rank-1 device profile).
 // F32=false (OWNRT_DRAFT_ATTN=1, lab 2026-10-26): BF16 activations (the rank-0 MTP draft); the output is combine<true>'s
 // put(bf(v)*sigmoid(gate)) instead of put(v*sigmoid(gate)); every other operation is the F32 kernel's.
-template<bool F32=true>
-inline sycl::event combine_blocked(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const float*partial,const std::vector<sycl::event>&deps){
+// QSA KV-group split (2026-10-29, ng::qsa_group_flag): KH = this card's KV heads (2 = the model, 1 = one KV group) and
+// QH = 12*KH query heads in compact rows; the dispatchers below select KH from the shape. Every head's arithmetic is
+// unchanged; with KH = 2 the kernels are the full-geometry kernels (the same constants).
+template<bool F32=true,int KH=2>
+inline sycl::event combine_blocked_kv(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const float*partial,const std::vector<sycl::event>&deps){
+ constexpr int QH=12*KH;
  const int C=splits(s);if(C>65)throw std::invalid_argument("combine_blocked tile count");
- return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*24*8*128,128)](sycl::handler& handler){
+ return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*QH*8*128,128)](sycl::handler& handler){
  sycl::local_accessor<float,1>fac(128,handler);sycl::local_accessor<float,1>part(8+4*32,handler);
  handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
-  const int g=int(it.get_group_linear_id()),blk=g%8,hh=g/8,r=hh/24,lid=int(it.get_local_linear_id());
+  const int g=int(it.get_group_linear_id()),blk=g%8,hh=g/8,r=hh/QH,lid=int(it.get_local_linear_id());
   auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sub=lid/32,dim=blk*32+lane;
   const float*p=partial+size_t(hh)*C*258;
   // Every global read is issued before the guard: tiles c < C of this head always exist in the scratch (values of
@@ -270,6 +274,10 @@ inline sycl::event combine_blocked(sycl::queue&q,ng::Shape s,ng::Args a,const in
   }
  }));});
 }
+template<bool F32=true>
+inline sycl::event combine_blocked(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,const float*partial,const std::vector<sycl::event>&deps){
+ return ng::qsa_kv_heads(s)==1?combine_blocked_kv<F32,1>(q,s,a,counts,partial,deps):combine_blocked_kv<F32,2>(q,s,a,counts,partial,deps);
+}
 inline bool combine_blocked_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_ATTN_COMBINE2");return e&&e[0]=='1';}();return on;}
 // Tiles, query heads in parallel: one 512-lane work-group (16 subgroups) per (row, KV head, tile), so the 12 query
 // heads that read the same 32 K and V rows share every load. Per-head arithmetic is tiles<true,true>'s:
@@ -287,13 +295,14 @@ inline bool combine_blocked_on(){static const bool on=[]{const char* e=std::gete
 // F32=false (OWNRT_DRAFT_ATTN=1, lab 2026-10-26): BF16 Q/K/V (the rank-0 MTP draft), each value widened exactly
 // (bf16 << 16) where it is loaded: the products and trees are tiles<true>'s BF16 ones, which differ from the F32
 // kernel's only in those loads.
-template<bool F32=true>
-inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+template<bool F32=true,int KH=2>
+inline sycl::event tiles_heads_kv(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+ constexpr int QH=12*KH;
  const int C=splits(s);
- return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*2*C*512,512)](sycl::handler& handler){
+ return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(s.tokens)*KH*C*512,512)](sycl::handler& handler){
  sycl::local_accessor<float,1>P(4*12*32,handler);sycl::local_accessor<float,1>W(12*32,handler);
  handler.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
-  const int G=int(it.get_group_linear_id()),c=G%C,kv=(G/C)%2,r=G/(C*2),S=s.budget+3,start=c*32;
+  const int G=int(it.get_group_linear_id()),c=G%C,kv=(G/C)%KH,r=G/(C*KH),S=s.budget+3,start=c*32;
   auto sg=it.get_sub_group();const int lane=int(sg.get_local_linear_id()),sub=int(sg.get_group_linear_id());
   const int dq=sub&3,hg=sub>>2,hh=sub>>3,d=(sub&7)*32+lane;
   using E=std::conditional_t<F32,float,uint16_t>;auto wide=[](E v){if constexpr(F32)return v;else return bf(v);};
@@ -301,7 +310,7 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   const int rawid=start+lane<S?a.i(4)[r*S+start+lane]:0;
   float qa[3][2];
   #pragma unroll
-  for(int hl=0;hl<3;++hl){const E*qp=Q+(r*24+kv*12+hg*3+hl)*256+64*dq+2*lane;qa[hl][0]=wide(qp[0]);qa[hl][1]=wide(qp[1]);}
+  for(int hl=0;hl<3;++hl){const E*qp=Q+(r*QH+kv*12+hg*3+hl)*256+64*dq+2*lane;qa[hl][0]=wide(qp[0]);qa[hl][1]=wide(qp[1]);}
   const int n=counts[r];
   if(n<=0||blocked_wg(it,a))return;
   if(start>=n)return;
@@ -309,7 +318,7 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
   const int myid=lane<valid?rawid:0;
   auto scores=[&]<bool Full>(){
    float st[3][6];float res[3];
-   const E*krow=K+(myid*2+kv)*256+64*dq;
+   const E*krow=K+(myid*KH+kv)*256+64*dq;
    #pragma unroll
    for(int ch=0;ch<8;++ch){
     sycl::vec<float,8> kk;
@@ -339,7 +348,7 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
    const float m=first_max(-INFINITY,sg_first_max(sg,x));
    const float w=lane<valid?detmath::exp(x-m):0.f;
    const float den=lane_tree(sg,w);
-   float*p=partial+size_t((r*24+h)*C+c)*258;
+   float*p=partial+size_t((r*QH+h)*C+c)*258;
    if(lane==0){p[256]=m;p[257]=den;}
    W[sub*32+lane]=w;
   }
@@ -354,7 +363,7 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
    for(int j=0;j<32;++j){
     const int id=sycl::select_from_group(sg,myid,j);
     float vv;
-    if constexpr(Full)vv=wide(vcol[id*512]);else vv=j<valid?wide(vcol[id*512]):0.f;
+    if constexpr(Full)vv=wide(vcol[id*(KH*256)]);else vv=j<valid?wide(vcol[id*(KH*256)]):0.f;
     #pragma unroll
     for(int hl=0;hl<6;++hl){const float wj=sycl::select_from_group(sg,wr[hl],j);float leaf;
      if constexpr(Full)leaf=wj*vv;else leaf=j<valid?wj*vv:0.f;
@@ -363,9 +372,13 @@ inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*co
      for(;k<5;++k){if(((j>>k)&1)==0)break;leaf=acc[hl][k]+leaf;}
      if(k<5)acc[hl][k]=leaf;else root[hl]=leaf;}}
    #pragma unroll
-   for(int hl=0;hl<6;++hl)partial[size_t((r*24+kv*12+hh*6+hl)*C+c)*258+d]=root[hl];};
+   for(int hl=0;hl<6;++hl)partial[size_t((r*QH+kv*12+hh*6+hl)*C+c)*258+d]=root[hl];};
   if(valid==32)values.template operator()<true>();else values.template operator()<false>();
  }));});
+}
+template<bool F32=true>
+inline sycl::event tiles_heads(sycl::queue&q,ng::Shape s,ng::Args a,const int*counts,float*partial,const std::vector<sycl::event>&deps){
+ return ng::qsa_kv_heads(s)==1?tiles_heads_kv<F32,1>(q,s,a,counts,partial,deps):tiles_heads_kv<F32,2>(q,s,a,counts,partial,deps);
 }
 // OWNRT_DRAFT_ATTN=1 (lab 2026-10-26, default off): tiles_heads<false> + combine_blocked<false> for BF16 QSA attention.
 inline bool bf16_attention_on(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_ATTN");return e&&e[0]=='1';}();return on;}

@@ -1953,7 +1953,9 @@ public:
   Prepared prepare_site(const flash::Launch& l) {int c=l.card;
       Spec s;
       s.g = p.g;
-      if(l.heads){require(l.key_heads>0&&l.heads%l.key_heads==0&&(l.op=="gdn"||l.op=="gdn_norm_gate"),"head-split launch geometry");s.g.vh=l.heads;s.g.kh=l.key_heads;} // OWNRT_TP_GDN=heads
+      if(l.heads&&(l.op=="qsa_prepare"||l.op=="qsa_append_pool"||l.op=="qsa_attention")){ // OWNRT_TP_QSA_SPLIT=1 (2026-10-29)
+        require(l.key_heads>=1&&l.key_heads<=p.g.kvh&&l.heads==l.key_heads*(p.g.qh/p.g.kvh),"QSA KV-group launch geometry");s.g.qh=l.heads;s.g.kvh=l.key_heads;}
+      else if(l.heads){require(l.key_heads>0&&l.heads%l.key_heads==0&&(l.op=="gdn"||l.op=="gdn_norm_gate"),"head-split launch geometry");s.g.vh=l.heads;s.g.kh=l.key_heads;} // OWNRT_TP_GDN=heads
       require(!l.slots||l.op=="silu_product"||l.op=="check_status","compact slots on a non-GEMV site");
       s.extent = (l.op=="qsa_select"||l.op=="qsa_attention")?std::min(p.g.context,context_extent):0;
       s.packed_heads = !a.mini;

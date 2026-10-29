@@ -483,7 +483,10 @@ static void state_dump(Engine& e,int sequence) {
  // allocation `other`); reassemble the one-card layout, every element exactly once.
  auto assemble=[&](const std::string& name,std::vector<uint8_t> b,Allocation other,size_t es)->std::vector<uint8_t>{
   auto split=e.head_split_layout.find(name);if(split==e.head_split_layout.end())return b;
-  std::vector<uint8_t> global(b.size(),0);std::vector<uint8_t> covered(b.size()/es,0);
+  // One-card extent: the card's own size, or larger for a buffer allocated compactly on each card (OWNRT_TP_QSA_SPLIT's
+  // KV cache holds one of the two KV heads per card).
+  size_t elements=b.size()/es;for(const auto& runs:split->second)for(const auto& [src,dst,n]:runs)elements=std::max(elements,dst+n);
+  std::vector<uint8_t> global(elements*es,0);std::vector<uint8_t> covered(elements,0);
   for(int c=0;c<2;++c){const auto part=c?e.readback(1,other,b.size()):b;
    for(const auto& [src,dst,n]:split->second[size_t(c)]){require((src+n)*es<=part.size()&&(dst+n)*es<=global.size(),"head layout extent: "+name);
     std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);for(size_t k=dst;k<dst+n;++k){require(!covered[k],"head layout overlap: "+name);covered[k]=1;}}}
@@ -645,8 +648,62 @@ static int run_rank(const Options& a) {
     require(std::string(v)=="1","OWNRT_TARGET_HEAD_SPLIT must be 0 or 1");return true;}();
    require(!target_head||(direct&&!exchange_only&&a.f32_activations&&!a.mini&&a.gsq_packed),"OWNRT_TARGET_HEAD_SPLIT: OWNRT_TP_EXCHANGE=direct, F32 exact mode");
    int head_vocab=0,head_rows0=0;
+   // OWNRT_TP_QSA_SPLIT=1 (2026-10-29, Stage 3, research/tp/qsa-split-2026-10-29; needs OWNRT_TP_EXCHANGE=direct and F32):
+   // every QSA block is split by KV group. Query head h reads KV head h/12, so card c owns KV head c and query heads
+   // [12c, 12c+12), and each head's arithmetic is unchanged. Per QSA layer and card:
+   // - the qgate GEMV computes rows [6144c, 6144c+6144) (12 heads x [256 q; 256 gate], one contiguous run), the k and v
+   //   GEMVs rows [256c, 256c+256); each loads only those weight rows and writes them compactly (TP row runs);
+   // - prepare, pool and attention run on 12 query heads over 1 KV head (Launch::heads/key_heads, ng::qsa_group_flag):
+   //   q, gate and kn are compact, and the KV cache (keys, values) holds only this card's KV head, so each card stores
+   //   half of it (the buffers are planned at [context][1][256]);
+   // - the indexer (iq, ik), its prepare part, the raw and pooled index keys and the selection stay replicated, so both
+   //   cards attend over the same selected token ids;
+   // - attention writes its 12 heads into qsa.y#tp, and one direct exchange (tp_xgather: rows [3072c, 3072c+3072))
+   //   assembles the 24-head qsa.y on both cards before the (row-split or replicated) output projection.
+   // The dump reassembles the one-card layout of every compact buffer, the KV cache included (head_split_layout).
+   const bool qsa_split=[]{const char* v=std::getenv("OWNRT_TP_QSA_SPLIT");if(!v||std::string(v)=="0")return false;
+    require(std::string(v)=="1","OWNRT_TP_QSA_SPLIT must be 0 or 1");return true;}();
+   const int QH=p.g.qh,KVH=p.g.kvh,AD=p.g.ad;
+   require(!qsa_split||(direct&&!exchange_only&&a.f32_activations&&!a.mini&&a.gsq_packed&&QH==24&&KVH==2&&AD==256&&p.g.ih==4&&p.g.id==128),
+           "OWNRT_TP_QSA_SPLIT: OWNRT_TP_EXCHANGE=direct, F32 exact mode, SC117 QSA geometry");
+   const int QHc=QH/2,KVc=KVH/2; // per card: 12 query heads, 1 KV head
+   auto qsa_class=[&](const flash::Launch& l)->std::string{
+    if(!qsa_split||!l.label.starts_with("blk."))return "";const auto dot=l.label.find('.',4);if(dot==std::string::npos)return "";
+    const std::string cls=l.label.substr(dot+1);
+    if((cls=="qsa.qgate"||cls=="qsa.k"||cls=="qsa.v")&&l.op=="gemv")return cls;
+    if((cls=="qsa.prepare"&&l.op=="qsa_prepare")||(cls=="qsa.pool"&&l.op=="qsa_append_pool")||(cls=="qsa.attention"&&l.op=="qsa_attention"))return cls;
+    return "";};
+   std::set<std::string> qsa_kv_halved;int qsa_layers=0;
    for(const auto& l:p.launches){
-    if(const auto cls=head_class(l);!cls.empty()){
+    if(const auto qcls=qsa_class(l);!qcls.empty()){
+     for(int c=0;c<2;++c){auto t=l;t.card=c;
+      if(qcls=="qsa.qgate"||qcls=="qsa.k"||qcls=="qsa.v"){
+       const int rows=qcls=="qsa.qgate"?2*QH*AD:KVH*AD,per=rows/2;
+       require(l.shape.size()==3&&l.shape[1]==rows&&l.outputs.size()==1,"QSA split GEMV rows: "+l.label);
+       t.row_runs={{c*per,per}};t.row_begin=0;t.row_count=per;layout(l.outputs[0],c,t.row_runs,1);
+      } else if(qcls=="qsa.prepare"){
+       require(l.outputs.size()==4&&l.inputs.size()>=3,"QSA split prepare wiring: "+l.label); // q, gate, kn, iqn (replicated)
+       t.heads=QHc;t.key_heads=KVc;
+       layout(l.outputs[0],c,{{c*QHc,QHc}},size_t(AD));layout(l.outputs[1],c,{{c*QHc,QHc}},size_t(AD));layout(l.outputs[2],c,{{c*KVc,KVc}},size_t(AD));
+      } else if(qcls=="qsa.pool"){
+       require(l.outputs.size()==4&&ends(l.outputs[0],".keys")&&ends(l.outputs[1],".values"),"QSA split pool wiring: "+l.label);
+       t.heads=QHc;t.key_heads=KVc;
+       for(int j=0;j<2;++j){const std::string& kv=l.outputs[size_t(j)];
+        if(qsa_kv_halved.insert(kv).second){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==kv;});
+         require(it!=p.buffers.end()&&it->shape==std::vector<int>({p.g.context,KVH,AD}),"QSA split KV buffer geometry: "+kv);it->shape={p.g.context,KVc,AD};}
+        std::vector<std::pair<int,int>> runs;runs.reserve(size_t(p.g.context));
+        for(int pos=0;pos<p.g.context;++pos)runs.push_back({pos*KVH+c*KVc,KVc}); // [position][KV head][256]: this card's head
+        layout(kv,c,runs,size_t(AD));}
+      } else { // qsa.attention: 12 heads into qsa.y#tp, then tp_xgather
+       require(l.outputs.size()==1,"QSA split attention wiring: "+l.label);
+       add_buffer(l.outputs[0],l.outputs[0]+"#tp",{QHc*AD});t.heads=QHc;t.key_heads=KVc;t.outputs[0]+="#tp";
+      }
+      both.push_back(std::move(t));}
+     if(qcls=="qsa.attention"){const std::string y=l.outputs[0];++qsa_layers;
+      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={y+"#tp"};g.outputs={y};
+       g.shape={QH*AD,exchange_slot};g.parameter=QH*AD/2;both.push_back(std::move(g));}
+      ++exchange_slot;}
+    } else if(const auto cls=head_class(l);!cls.empty()){
      for(int c=0;c<2;++c){auto t=l;t.card=c;
       if(cls=="gdn.qkv"||cls=="gdn.z"||cls=="gdn.a"||cls=="gdn.b"){
        const int rows=cls=="gdn.qkv"?(2*KH+VH)*D:cls=="gdn.z"?VH*D:VH;require(l.shape.size()==3&&l.shape[1]==rows,"head split GEMV rows: "+l.label);
@@ -744,6 +801,7 @@ static int run_rank(const Options& a) {
    }
    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
    // A TP rank without the target head (rank 0) leaves the flag inert and says so.
+   if(qsa_split)save(a.output/"qsa-split.json","{\"schema\":\"ownrt.qsa-split.v1\",\"layers\":"+std::to_string(qsa_layers)+",\"kv_buffers_halved\":"+std::to_string(qsa_kv_halved.size())+",\"query_heads_per_card\":"+std::to_string(QHc)+",\"kv_heads_per_card\":"+std::to_string(KVc)+"}");
    if(target_head)save(a.output/"target-head-split.json","{\"schema\":\"ownrt.target-head-split.v1\",\"applied\":"+std::string(head_vocab?"true":"false")+",\"vocabulary\":"+std::to_string(head_vocab)+",\"card0_rows\":"+std::to_string(head_rows0)+",\"card1_rows\":"+std::to_string(head_vocab-head_rows0)+"}");
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
    write_tp_plan(a.output/"tp-plan.json",p,*weights,a); // per-card admission of the two-card plan (30 GiB per card)
