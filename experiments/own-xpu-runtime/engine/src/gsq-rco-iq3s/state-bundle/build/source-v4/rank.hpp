@@ -12,6 +12,7 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <algorithm>
 #include <atomic>
 #include <optional>
 #include <thread>
@@ -437,7 +438,17 @@ static void state_dump(Engine& e,int sequence) {
  fs::path dir=e.a.output/("state-"+std::to_string(sequence));fs::create_directories(dir);gsq_bundle::Writer bundle(dir);
  // Full bytes of every plan allocation, including overwrite-only intermediates.
  for(auto& [name,s]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // TP-internal half buffers: not model state
-  auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));bundle.append(name+".bin",b.data(),b.size());
+  auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));
+  if(auto split=e.head_split_layout.find(name);split!=e.head_split_layout.end()){
+   // OWNRT_TP_GDN=heads: both cards hold compact halves; reassemble the one-card layout (every element exactly once).
+   const size_t es=flash::scalar_bytes(s.type);std::vector<uint8_t> global(b.size(),0);std::vector<uint8_t> covered(s.n,0);
+   for(int c=0;c<2;++c){const auto part=c?e.readback(1,e.buffers[1].at(name).id,b.size()):b;
+    for(const auto& [src,dst,n]:split->second[size_t(c)]){require((src+n)*es<=part.size()&&(dst+n)*es<=global.size(),"head layout extent: "+name);
+     std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);for(size_t k=dst;k<dst+n;++k){require(!covered[k],"head layout overlap: "+name);covered[k]=1;}}}
+   require(std::all_of(covered.begin(),covered.end(),[](uint8_t x){return x!=0;}),"head layout does not cover "+name);
+   b=std::move(global);
+  }
+  bundle.append(name+".bin",b.data(),b.size());
   o<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(b));comma=true;}
  for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
  o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";bundle.finish(o.str());
@@ -462,7 +473,7 @@ static void pipeline_cancel_check() {
 // --tp-replicate gate: every non-weight buffer of card 1 must equal card 0 bitwise after the same steps.
 static void tp_compare(Engine& e,const fs::path& path) {
  e.drain();std::ostringstream o;o<<"{\"buffers\":";size_t n=0;std::vector<std::string> differ;
- for(const auto& [name,slot]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // per-card halves differ by design
+ for(const auto& [name,slot]:e.buffers[0]){if(name.find("#tp")!=std::string::npos||e.head_split_layout.count(name))continue; // per-card halves differ by design
   auto other=e.buffers[1].find(name);if(other==e.buffers[1].end()){differ.push_back(name+" (missing on card 1)");continue;}
   const size_t bytes=slot.n*flash::scalar_bytes(slot.type);if(!bytes)continue;++n;
   if(e.readback(0,slot.id,bytes)!=e.readback(1,other->second.id,bytes))differ.push_back(name);}
@@ -499,6 +510,7 @@ static int run_rank(const Options& a) {
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
   // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
   if(const char* only=std::getenv("OWNRT_PLAN_ONLY");only&&only[0]=='1'){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
+  Engine::HeadLayout head_layout; // OWNRT_TP_GDN=heads: compact per-card buffers -> one-card layout
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
    // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each
@@ -526,9 +538,59 @@ static int run_rank(const Options& a) {
    const bool mask_routes=(tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot")&&!exchange_only,gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
    const int by_slot=tp_experts=="slot"?2:0; // carried in Launch::parameter bit 1
    int exchange_slot=0;
+   // OWNRT_TP_GDN=heads (2026-10-28, Stage 2; needs OWNRT_TP_EXCHANGE=direct): every GDN block is split by key group.
+   // The model maps value head h to key h%16 (adapter flags 4), so card c owns keys [8c, 8c+8) and the 24 value heads
+   // {h : h%16 in [8c, 8c+8)}, which makes each card a GDN of 8 key and 24 value heads with key = h'%8 and unchanged
+   // per-head arithmetic. Per card: the qkv/z/a/b GEMVs compute only those heads' rows (whole weight rows loaded as
+   // runs, compact output), conv runs on those 5120 channels, the recurrence and gated norm on those heads (compact
+   // state, history and outputs in the full-size buffers), and tp_xheads places the gated rows into the global gated
+   // vector on both cards before the (row-split or replicated) output projection. The dump reassembles the one-card
+   // layout of every compact buffer (Engine::head_split_layout), so the bitwise gate against one card is unchanged.
+   const bool gdn_heads=[]{const char* v=std::getenv("OWNRT_TP_GDN");return v&&std::string(v)=="heads";}();
+   {const char* v=std::getenv("OWNRT_TP_GDN");require(!v||std::string(v)=="heads","OWNRT_TP_GDN must be heads");}
+   const int KH=p.g.kh,VH=p.g.vh,D=p.g.d,HK=KH/2;
+   require(!gdn_heads||(direct&&!exchange_only&&KH==16&&VH==48&&D==128&&!a.prefill_rows&&a.f32_activations),
+           "OWNRT_TP_GDN=heads: OWNRT_TP_EXCHANGE=direct, SC117 GDN geometry, F32 decode only");
+   auto qkv_runs=[&](int c){std::vector<std::pair<int,int>> r{{HK*c*D,HK*D},{KH*D+HK*c*D,HK*D}};for(int u=0;u<VH/KH;++u)r.push_back({2*KH*D+(KH*u+HK*c)*D,HK*D});return r;};
+   auto value_runs=[&](int c,int per){std::vector<std::pair<int,int>> r;for(int u=0;u<VH/KH;++u)r.push_back({(KH*u+HK*c)*per,HK*per});return r;};
+   auto total=[](const std::vector<std::pair<int,int>>& r){int n=0;for(auto [f,k]:r)n+=k;return n;};
+   auto layout=[&](const std::string& name,int c,const std::vector<std::pair<int,int>>& runs,size_t per){ // compact -> one-card elements
+    auto& v=head_layout[name][size_t(c)];require(v.empty(),"head layout set twice: "+name);size_t at=0;
+    for(auto [first,rows]:runs){v.push_back({at*per,size_t(first)*per,size_t(rows)*per});at+=size_t(rows);}};
+   auto head_class=[&](const flash::Launch& l)->std::string{
+    if(!gdn_heads||!l.label.starts_with("blk."))return "";const auto dot=l.label.find('.',4);if(dot==std::string::npos)return "";
+    const std::string cls=l.label.substr(dot+1);
+    if((cls=="gdn.qkv"||cls=="gdn.z"||cls=="gdn.a"||cls=="gdn.b")&&l.op=="gemv")return cls;
+    if((cls=="gdn.conv"&&l.op=="conv")||(cls=="gdn.recurrence"&&l.op=="gdn")||(cls=="gdn.gated"&&l.op=="gdn_norm_gate"))return cls;
+    return "";};
    require(!tp_threads()||direct||(roles.empty()&&!experts),"OWNRT_TP_THREADS needs OWNRT_TP_EXCHANGE=direct (no copy gathers cross threads)");
    for(const auto& l:p.launches){
-    if(exchange_only&&split_site(l)){ // full rows on both cards, then this card's half of y sent to the peer's y
+    if(const auto cls=head_class(l);!cls.empty()){
+     for(int c=0;c<2;++c){auto t=l;t.card=c;
+      if(cls=="gdn.qkv"||cls=="gdn.z"||cls=="gdn.a"||cls=="gdn.b"){
+       const int rows=cls=="gdn.qkv"?(2*KH+VH)*D:cls=="gdn.z"?VH*D:VH;require(l.shape.size()==3&&l.shape[1]==rows,"head split GEMV rows: "+l.label);
+       t.row_runs=cls=="gdn.qkv"?qkv_runs(c):value_runs(c,cls=="gdn.z"?D:1);t.row_begin=0;t.row_count=total(t.row_runs);
+       layout(l.outputs.at(0),c,t.row_runs,1);
+      } else if(cls=="gdn.conv"){
+       require(!l.shape.empty()&&l.shape[0]==(2*KH+VH)*D&&l.outputs.size()==2,"head split conv geometry");
+       t.row_runs=qkv_runs(c);t.row_count=total(t.row_runs);t.shape[0]=t.row_count; // channels; conv1d rows follow them
+       layout(l.outputs[0],c,t.row_runs,1);layout(l.outputs[1],c,t.row_runs,size_t(3*(l.parameter?l.parameter:1)));
+      } else if(cls=="gdn.recurrence"){
+       require(l.outputs.size()==2&&l.weights.size()==2,"head split recurrence wiring");
+       t.row_runs=value_runs(c,1);t.row_count=total(t.row_runs);t.heads=VH/2;t.key_heads=HK; // ssm_a, ssm_dt.bias rows
+       layout(l.outputs[0],c,t.row_runs,size_t(D));layout(l.outputs[1],c,t.row_runs,size_t(D)*D);
+      } else { // gdn.gated: compact rows into gated#tp, then tp_xheads
+       const std::string y=l.outputs.at(0),part=y+"#tp";
+       if(halves.insert(part).second){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==y;});
+        require(it!=p.buffers.end(),"head split gated buffer");flash::Buffer b=*it;b.name=part;b.shape={VH/2*D};p.buffers.push_back(b);}
+       t.heads=VH/2;t.key_heads=HK;t.outputs.at(0)=part;
+      }
+      both.push_back(std::move(t));}
+     if(cls=="gdn.gated"){const std::string y=l.outputs.at(0);
+      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xheads";g.label=l.label+".tp_xheads";g.card=c;g.inputs={y+"#tp"};g.outputs={y};
+       g.shape={VH*D,exchange_slot,HK*D,KH*D,c*HK*D};both.push_back(std::move(g));}
+      ++exchange_slot;}
+    } else if(exchange_only&&split_site(l)){ // full rows on both cards, then this card's half of y sent to the peer's y
      const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
      both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));
      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={l.outputs.at(0)};g.outputs={l.outputs.at(0)};g.shape={R,exchange_slot};g.parameter=R/2;both.push_back(std::move(g));}
@@ -564,7 +626,7 @@ static int run_rank(const Options& a) {
    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
   }
-  engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
+  engine=std::make_unique<Engine>(*weights,a,p);engine->head_split_layout=std::move(head_layout);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
   // Exact F32 activation mode is admitted only on the paths that have F32 variants.
   if(a.f32_activations)require(!engine->v3_active&&!engine->kio_active&&!engine->prepare_async&&!engine->split_head()&&engine->sealed_selection.choices.at("probe")=="off"&&a.gsq_packed&&a.draft_rank==0,"exact F32 activations: unsupported optional path/selection");
   if(engine->split_head())head_runtime=std::make_unique<p105::Runtime>(*engine);

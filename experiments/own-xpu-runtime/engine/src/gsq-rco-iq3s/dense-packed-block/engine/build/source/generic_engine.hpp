@@ -13,21 +13,28 @@ void gsq_load(int c, const std::string& name) {
   }
   const bool control=gsq_control(name);
   const auto type=flash::grid_type(t.grid);
-  // TP row slice: whole rows [first, first+rows) of a row-major tensor (row bytes = bytes / rows).
-  const auto slice=tp_slice(c,name);require(!slice.second||(!control&&t.shape.size()==2&&t.bytes%size_t(t.shape[0])==0),"TP row slice: raw 2-D rows only");
-  const size_t row_bytes=t.shape.empty()?0:t.bytes/size_t(t.shape[0]),begin=slice.second?slice.first*row_bytes:0,total=slice.second?slice.second*row_bytes:t.bytes;
-  const size_t bytes=control?count(t.shape)*4:total;
+  // TP rows: whole rows of a row-major tensor (row bytes = bytes / rows), uploaded in run order. A row split
+  // (2026-10-25) has one run of a raw 2-D tensor; a head split (2026-10-28) may also slice control tensors (ssm_a,
+  // ssm_dt.bias, ssm_conv1d), whose F32 conversion is per element and so unchanged by the slice.
+  const auto runs=tp_runs(c,name);
+  require(runs.empty()||(!t.shape.empty()&&t.bytes%size_t(t.shape[0])==0&&(t.shape.size()==2||(control&&t.shape.size()==1))),"TP rows: row-major tensor rows only");
+  const size_t row_bytes=t.shape.empty()?0:t.bytes/size_t(t.shape[0]);
+  size_t total=t.bytes;if(!runs.empty()){total=0;for(auto [first,rows]:runs){require(first+rows<=size_t(t.shape[0]),"TP row run bound");total+=rows*row_bytes;}}
+  const size_t bytes=control?(runs.empty()?count(t.shape)*4:(count(t.shape)/size_t(t.shape[0]))*(total/row_bytes)*4):total;
   auto id=allocate(c,"weight:"+name,bytes,Category::weights,Lifetime::process);
   weights[c][name]=id;
-  for(size_t off=0;off<total;) {
-    guard();size_t n=std::min(size_t(4*1024*1024),total-off);
+  const std::vector<std::pair<size_t,size_t>> spans=runs.empty()?std::vector<std::pair<size_t,size_t>>{{0,t.bytes}}:[&]{std::vector<std::pair<size_t,size_t>> v;for(auto [first,rows]:runs)v.push_back({first*row_bytes,rows*row_bytes});return v;}();
+  size_t done=0; // destination offset in source bytes
+  for(auto [begin,length]:spans)for(size_t off=0;off<length;) {
+    guard();size_t n=std::min(size_t(4*1024*1024),length-off);
     auto raw=w.read(name,begin+off,n);
     if(control) {
       const auto source_width=gsq::controls::source_width(unsigned(type));
+      require((done+off)%source_width==0&&n%source_width==0,"control rows split on element boundaries");
       auto upload=gsq::controls::upload_f32(unsigned(type),raw);
-      this->upload(c,id,(off/source_width)*4,upload.data(),upload.size());
-    } else upload(c,id,off,raw.data(),raw.size());
-    off+=n;
+      this->upload(c,id,((done+off)/source_width)*4,upload.data(),upload.size());
+    } else upload(c,id,done+off,raw.data(),raw.size());
+    off+=n;if(off==length)done+=length;
   }
 }
 // Sibling fusion (single-row steps): two plan sites that read the same input and run on the kopt GEMV with one weight
@@ -114,7 +121,7 @@ void gsq_linear_matrix(const flash::Launch& l,const Matrix& m) {
   const int c=l.card;
   require(l.op=="gemv"||l.op=="routed_gemv","GSQ unfused linear operation");
   const auto dense_input=m.tokens>1?gsqn::InputMode::per_slot:gsqn::InputMode::shared;
-  if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==s->bytes,"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),dense_input),true);return;}
+  if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(s->bytes/s->rows):s->bytes),"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),dense_input,size_t(l.row_count)),true);return;}
   if(iq3_block_site(w,a,l)){require(((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot),true);return;}
   if(dense_q6_site(w,a,l)){dense_q6_matrix(m,l,variant(l),dev(c).arena.row(m.w).bytes);finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}
   if(qkv_q6_site(w,a,l)){require(m.type==iq3::Type::Q6_K&&m.rows==(l.row_count?size_t(l.row_count):10240)&&m.columns==2560&&variant(l)==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(m.raw?2100:3380):(m.raw?21504000:34611200)),"QKV Q6 variant6 only");finish(c,p33::submit(dev(c),{m},"p33.dense.segment",false,6),true);return;}

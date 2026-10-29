@@ -42,16 +42,22 @@ struct Args {
   void put_recurrent(int slot,size_t i,float x,int flags)const{if(flags&16)f(slot)[i]=x;else put(slot,i,x);}
   int32_t* i(int slot)const{return static_cast<int32_t*>(p[slot]);}
 };
+// GDN head geometry (2026-10-28, exact two-card head split). extra==0 is the model's full geometry: 16 key heads,
+// 48 value heads (qkv row = 10240 = 2*16*128 + 48*128). extra>0 gives a card's key heads (extra) and value heads
+// (heads): the same per-head arithmetic over a compact [q; k; v] row of (2*extra + heads)*128 values.
+inline int gdn_key_heads(Shape s){return s.extra?s.extra:16;}
+inline int gdn_value_heads(Shape s){return s.extra?s.heads:48;}
+inline int gdn_qkv_width(Shape s){return (2*gdn_key_heads(s)+gdn_value_heads(s))*128;}
 inline float sigmoid(float x){return 1.f / (1.f + detmath::exp(-x));}
 inline float silu(float x){return x * sigmoid(x);}
 inline int groups(Shape s){
  switch(s.op){
  case conv:return (s.width+127)/128;
- case gdn:return 48*128;
+ case gdn:return gdn_value_heads(s)*128;
  case norm:case combine_norm:return s.tokens*s.heads;
  case activation:case mix:case moe_combine:return (s.tokens*s.width+127)/128;
  case route_gather:return s.tokens;
- case gated_norm:return s.tokens*48;
+ case gated_norm:return s.tokens*s.heads;
  case prepare:return s.tokens*30; // Q24 + K2 + index Q4
  case pool:return append_pools(s)+1; // only newly completed pools, then KV/raw
  case select:return s.tokens;
@@ -76,6 +82,7 @@ inline void validate(Shape s){
  if((s.flags&qsaring::flag)&&(s.op!=pool||s.capacity<=qsaring::rows))throw std::invalid_argument("QSA raw ring flag: pool with capacity above the ring only");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
  if(s.op==conv&&s.extra!=0&&s.extra!=1&&s.extra!=3)throw std::invalid_argument("conv dilation");
+ if(s.op==gdn&&s.extra&&(s.extra>16||s.heads%s.extra))throw std::invalid_argument("GDN head geometry");
  if((s.op==norm||s.op==combine_norm)&&s.width>4096)throw std::invalid_argument("norm width");
  if(s.op==route_gather&&(s.width<1||s.width>512||s.extra<1||s.extra>s.width))throw std::invalid_argument("route geometry");
 }
@@ -88,14 +95,14 @@ inline std::array<size_t,19> required_bytes(Shape s) {
  auto weight=[&](int slot,size_t values){n[slot]=values*((s.flags&8)?4:2);};
  switch(s.op){
  case conv:b(0,T*W);n[1]=W*3*(s.extra?s.extra:1)*((s.flags&16)?4:2);weight(2,W*4);n[3]=n[0];n[4]=n[1];break;
- case gdn:b(0,T*10240);b(1,T*48);n[2]=n[1];n[3]=48*((s.flags&10)?4:2);weight(4,48);n[5]=48*128*128*((s.flags&16)?4:2);b(6,T*6144);n[7]=n[5];break;
+ case gdn:{const size_t V=gdn_value_heads(s);b(0,T*gdn_qkv_width(s));b(1,T*V);n[2]=n[1];n[3]=V*((s.flags&10)?4:2);weight(4,V);n[5]=V*128*128*((s.flags&16)?4:2);b(6,T*V*128);n[7]=n[5];break;}
  case norm:b(0,T*H*W);weight(1,H*W);n[2]=n[0];break;
  case activation:b(0,T*W);if(s.extra)n[1]=n[0];n[2]=n[0];break;
  case mix:b(0,T*4*W);n[1]=n[0];b(2,T*W);break;
  case combine_norm:b(0,T*H*W);b(1,T*W);b(2,T*H);weight(3,H*W);n[4]=n[5]=n[0];break;
  case route_gather:b(0,T*W);b(1,T*2560);f(2,T*s.extra);n[3]=n[2];b(4,T*s.extra*2560);f(5,T*s.extra*3);n[6]=n[5];break;
  case moe_combine:b(0,T*s.extra*W);f(1,T*s.extra);b(2,T*W);b(3,T);n[4]=n[2];break;
- case gated_norm:b(0,T*6144);n[1]=n[0];weight(2,128);n[3]=n[0];break;
+ case gated_norm:b(0,T*H*128);n[1]=n[0];weight(2,128);n[3]=n[0];break;
  case prepare:b(0,T*24*512);b(1,T*512);b(2,T*512);weight(3,256);weight(4,256);weight(5,128);b(6,T*6144);n[7]=n[6];n[8]=n[1];n[9]=n[2];break;
  case pool:b(0,T*512);n[1]=n[0];b(2,T*128);weight(3,128);b(4,C*512);n[5]=n[4];b(6,size_t((s.flags&qsaring::flag)?qsaring::rows:C)*128);b(7,((C+3)/4)*128);break;
  case select:b(0,T*512);b(1,((C+3)/4)*128);f(2,T*S);break;
@@ -135,20 +142,21 @@ template<class Team> void group(Shape s,Args a,int group,Team t){
  if(pos<0||pos>position_limit(s)-s.tokens){if(group==0)t.each(1,[&](int){t.fail(a);});return;}
  bool unit=s.flags&1;
  if(s.op==gdn){
-  int h=group/128,j=group%128,key=(s.flags&4)?h%16:h/3;
+  const int KH=gdn_key_heads(s),VH=gdn_value_heads(s),QKV=gdn_qkv_width(s);
+  int h=group/128,j=group%128,key=(s.flags&4)?h%KH:h/(VH/KH);
   for(int row=0;row<s.tokens;++row){
-   size_t qbase=size_t(row)*10240+key*128,kbase=qbase+2048;
+   size_t qbase=size_t(row)*QKV+key*128,kbase=qbase+KH*128;
    float qn=detmath::sqrt(dot128(t,[&](int k){float v=a.b(0,qbase+k);return v*v;})+1e-6f);t.barrier();
    float kn=detmath::sqrt(dot128(t,[&](int k){float v=a.b(0,kbase+k);return v*v;})+1e-6f);t.barrier();
-   float gate=a.b(1,row*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate;
+   float gate=a.b(1,row*VH+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate;
    float av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));float decay=detmath::exp(av*sp);
    int state=(h*128+j)*128;
    t.each(128,[&](int k){t.x[k]=(a.b(0,qbase+k)/qn)/detmath::sqrt(float(128));t.x[128+k]=a.b(0,kbase+k)/kn;t.x[256+k]=a.recurrent(row?7:5,state+k,s.flags)*decay;});t.barrier();
    float pred=dot128(t,[&](int k){return t.x[256+k]*t.x[128+k];});t.barrier();
-   float delta=(a.b(0,row*10240+4096+h*128+j)-pred)*sigmoid(a.b(2,row*48+h));
+   float delta=(a.b(0,size_t(row)*QKV+2*KH*128+h*128+j)-pred)*sigmoid(a.b(2,row*VH+h));
    t.each(128,[&](int k){t.x[256+k]=t.x[256+k]+delta*t.x[128+k];});t.barrier();
    float y=dot128(t,[&](int k){return t.x[256+k]*t.x[k];});t.barrier();
-   t.each(1,[&](int){a.put(6,(row*48+h)*128+j,y);});
+   t.each(1,[&](int){a.put(6,(row*VH+h)*128+j,y);});
    t.each(128,[&](int k){a.put_recurrent(7,state+k,t.x[256+k],s.flags);});t.barrier();
   }
  }else if(s.op==conv){

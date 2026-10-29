@@ -56,15 +56,16 @@ inline void gdn_host(ng::Shape s,ng::Args a){
 #ifdef OWN_RT_HOST_ONLY
  #pragma omp parallel for num_threads(2) schedule(static)
 #endif
- for(int g=0;g<6144;++g){int h=g/128,j=g%128,key=(s.flags&4)?h%16:h/3,state=g*128;
-  for(int r=0;r<s.tokens;++r){int qb=r*10240+key*128,kb=qb+2048;
+ const int KH=ng::gdn_key_heads(s),VH=ng::gdn_value_heads(s),QKV=ng::gdn_qkv_width(s);
+ for(int g=0;g<VH*128;++g){int h=g/128,j=g%128,key=(s.flags&4)?h%KH:h/(VH/KH),state=g*128;
+  for(int r=0;r<s.tokens;++r){int qb=r*QKV+key*128,kb=qb+KH*128;
    float qn=detmath::sqrt(specialised::dot128([&](int k){float v=a.b(0,qb+k);return v*v;})+1e-6f),kn=detmath::sqrt(specialised::dot128([&](int k){float v=a.b(0,kb+k);return v*v;})+1e-6f);
-   float gate=a.b(1,r*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
+   float gate=a.b(1,r*VH+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
    float decay=detmath::exp(av*sp),q[128],k[128],v[128];
    for(int x=0;x<128;++x){q[x]=(a.b(0,qb+x)/qn)/detmath::sqrt(float(128));k[x]=a.b(0,kb+x)/kn;v[x]=a.b(r?7:5,state+x)*decay;}
-   float pred=specialised::dot128([&](int x){return v[x]*k[x];}),delta=(a.b(0,r*10240+4096+h*128+j)-pred)*ng::sigmoid(a.b(2,r*48+h));
+   float pred=specialised::dot128([&](int x){return v[x]*k[x];}),delta=(a.b(0,r*QKV+2*KH*128+h*128+j)-pred)*ng::sigmoid(a.b(2,r*VH+h));
    for(int x=0;x<128;++x)v[x]=v[x]+delta*k[x];
-   float y=specialised::dot128([&](int x){return v[x]*q[x];});a.put(6,(r*48+h)*128+j,y);for(int x=0;x<128;++x)a.put(7,state+x,v[x]);
+   float y=specialised::dot128([&](int x){return v[x]*q[x];});a.put(6,(r*VH+h)*128+j,y);for(int x=0;x<128;++x)a.put(7,state+x,v[x]);
   }
  }
 }
@@ -73,9 +74,11 @@ inline void gdn_host(ng::Shape s,ng::Args a){
 // gates once; the incumbent 6144 independent state-row subgroups consume
 // those exact F32 values while retaining serial token recurrence.
 inline bool gdn_prep(ng::Shape s){static const bool on=[](){const char* e=std::getenv("OWNRT_GDN_PREP");return e&&e[0]=='1';}();return on&&s.op==ng::gdn;}
-inline constexpr size_t gdn_prep_floats=16*256+2*48;
+inline constexpr size_t gdn_prep_floats=16*256+2*48; // full geometry
+// Per token: q (key heads x 128), k (key heads x 128), then decay and beta per value head.
+inline size_t gdn_prep_floats_for(ng::Shape s){return size_t(ng::gdn_key_heads(s))*256+2*size_t(ng::gdn_value_heads(s));}
 inline int groups(ng::Shape s){return s.op==ng::select?s.tokens*((ng::launch_extent(s)+3)/4):ng::groups(s);}
-inline size_t scratch_floats(ng::Shape s){return s.op==ng::select?size_t(s.tokens)*((s.capacity+3)/4):gdn_prep(s)?size_t(s.tokens)*gdn_prep_floats:1;}
+inline size_t scratch_floats(ng::Shape s){return s.op==ng::select?size_t(s.tokens)*((s.capacity+3)/4):gdn_prep(s)?size_t(s.tokens)*gdn_prep_floats_for(s):1;}
 inline int local_floats(ng::Shape s){return s.op==ng::attention_softmax?s.budget+4:s.op==ng::attention_value?s.budget+3:256;}
 struct HostTeam:ng::HostTeam {};
 template<ng::Op Code,int Stage> inline void cpu_stage(ng::Shape s,ng::Args a,float* global){std::vector<float> local(round2::local_floats(s));for(int g=0;g<round2::groups(s);++g)group<Code,Stage>(s,a,g,global,ng::HostTeam{local.data()});}

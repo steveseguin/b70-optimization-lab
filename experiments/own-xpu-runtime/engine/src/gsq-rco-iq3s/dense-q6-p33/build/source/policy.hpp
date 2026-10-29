@@ -36,7 +36,8 @@ static bool dense_q6_site(const Weights&w,const Options&a,const flash::Launch&l)
  }return false;
 }
 template<class Matrix>static void dense_q6_matrix(const Matrix&m,const flash::Launch&l,unsigned variant,size_t bytes){
- require(m.type==iq3::Type::Q6_K&&(m.rows==6144||m.rows==12288)&&l.shape.size()==3&&m.rows==unsigned(l.shape[1])&&m.columns==2560&&variant==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&bytes==size_t(m.rows)*(m.raw?2100:3380),"dense Q6 variant6 exact matrix");
+ // l.row_count: a TP card's whole rows of the site (row split or head split), same per-row arithmetic.
+ require(m.type==iq3::Type::Q6_K&&l.shape.size()==3&&(l.shape[1]==6144||l.shape[1]==12288)&&m.rows==(l.row_count?unsigned(l.row_count):unsigned(l.shape[1]))&&m.columns==2560&&variant==6&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&!m.routes&&!m.status&&m.count==1&&m.experts==1&&(m.span==0||m.span==m.rows)&&bytes==size_t(m.rows)*(m.raw?2100:3380),"dense Q6 variant6 exact matrix");
 }
 static void dense_q6_admit(const Weights&w,const Options&a,const flash::Plan&p){
  if(!a.dense_q6_p33)return;

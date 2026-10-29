@@ -4,6 +4,7 @@
 #include <cstdint>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 // Host-only declarations: no SYCL runtime, discovery, allocation or readback.
@@ -45,6 +46,10 @@ struct Launch {
   int card = 0, parameter = 0, source_card = -1;
   std::uint64_t weight_bytes = 0, read_bytes = 0, write_bytes = 0;
   int row_begin = 0, row_count = 0; // tensor-parallel row split (2026-10-25): rows [row_begin, row_begin+row_count); 0 = all
+  // Head split (2026-10-28): this card's weight rows as ordered runs {first, count} (row_count = their sum), for every
+  // weight of the launch; and the GDN head geometry this launch runs with (0 = the model's).
+  std::vector<std::pair<int, int>> row_runs;
+  int heads = 0, key_heads = 0;
 };
 // CONTRACT v1:
 // ENTRY PRECONDITION: inputs_ready covers uploads to BOTH owners. Replicated

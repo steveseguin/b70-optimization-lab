@@ -1149,6 +1149,10 @@ public:
     for(size_t c=0;c<devices.size();++c)if(!(tp_worker_running&&c==1))retire_events(int(c));
   }
   bool tp_worker_running=false;
+  // OWNRT_TP_GDN=heads (rank.hpp): buffers each card holds in compact head order. Per buffer and card, runs of
+  // {compact element, one-card element, elements}; state_dump reassembles the one-card layout from both cards.
+  using HeadLayout=std::map<std::string,std::array<std::vector<std::array<size_t,3>>,2>>;
+  HeadLayout head_split_layout;
 
   std::ofstream argument_log;
   std::ofstream progress;
@@ -1381,10 +1385,27 @@ public:
     if(a.gsq_packed)return false;
     return !a.mini&&a.memory=="resident"&&sealed_selection.choices.at("hc_gate")=="hc-weightcache"&&name.starts_with("blk.")&&(name.ends_with(".hc_attn_up.weight")||name.ends_with(".hc_ffn_up.weight"));
   }
-  // Tensor-parallel row slice of a weight on card c (from its split launch), {first row, rows}; {0,0} = whole tensor.
-  std::pair<size_t,size_t> tp_slice(int c,const std::string& name) const {
-    for(const auto& l:p.launches)if(l.card==c&&l.row_count&&!l.weights.empty()&&l.weights[0]==name)return {size_t(l.row_begin),size_t(l.row_count)};
-    return {0,0};
+  // Tensor-parallel weight rows on card c, as ordered runs {first row, rows}; empty = the whole tensor. A row split
+  // (2026-10-25) gives one run for its weight; a head split (2026-10-28) gives Launch::row_runs for every weight of the
+  // launch (e.g. ssm_a and ssm_dt.bias of a recurrence). Rows are uploaded in run order, each row unchanged.
+  std::vector<std::pair<size_t,size_t>> tp_runs(int c,const std::string& name) const {
+    for(const auto& l:p.launches) {
+      if(l.card!=c||!l.row_count)continue;
+      if(!l.row_runs.empty()) {
+        if(std::find(l.weights.begin(),l.weights.end(),name)==l.weights.end())continue;
+        std::vector<std::pair<size_t,size_t>> runs;size_t total=0;
+        for(auto [first,rows]:l.row_runs){require(first>=0&&rows>0,"TP row run");runs.push_back({size_t(first),size_t(rows)});total+=size_t(rows);}
+        require(total==size_t(l.row_count),"TP row runs total");return runs;
+      }
+      if(!l.weights.empty()&&l.weights[0]==name)return {{size_t(l.row_begin),size_t(l.row_count)}};
+    }
+    return {};
+  }
+  // Source row of loaded row `row`, and the rows left in its run (no runs: first_row + row, the rest of the load).
+  static std::pair<size_t,size_t> tp_source(const std::vector<std::pair<size_t,size_t>>& runs,size_t first_row,size_t load_rows,size_t row) {
+    if(runs.empty())return {first_row+row,load_rows-row};
+    for(auto [first,rows]:runs){if(row<rows)return {first+row,rows-row};row-=rows;}
+    throw std::logic_error("TP row runs exhausted");
   }
   void load(int c, const std::string &name) {
     if (weights[c].count(name))
@@ -1406,9 +1427,11 @@ public:
     size_t load_rows=head_split?(a.rank==0?p105::suffix:p105::prefix):size_t(t.shape[0]);
     size_t first_row=head_split&&a.rank==0?p105::prefix:0;
     if(head_split)expanded_bytes=load_rows*3380;
-    if(const auto slice=tp_slice(c,name);slice.second) {
+    const auto runs=tp_runs(c,name);
+    if(!runs.empty()) {
       require(!head_split&&!packed&&!planes&&!halfcache&&!hccache&&arithmetic::is_expanded(v)&&t.shape.size()==2,"TP row slice: expanded dense rows only");
-      first_row=slice.first;load_rows=slice.second;expanded_bytes=load_rows*arithmetic::row_bytes(type,t.shape[1],v);
+      first_row=0;load_rows=0;for(auto [first,rows]:runs){require(first+rows<=size_t(t.shape[0]),"TP row run bound");load_rows+=rows;}
+      expanded_bytes=load_rows*arithmetic::row_bytes(type,t.shape[1],v);
     }
     const bool raw=dense_raw_weight(w,a,name);
     if(raw){require(!head_split&&!packed&&!planes&&!halfcache&&!hccache&&arithmetic::is_expanded(v)&&head_choice()=="production","OWNRT_DENSE_RAW: expanded dense rows only");
@@ -1451,8 +1474,9 @@ public:
       auto fmt=iq3::layout(type);size_t rb=t.shape[1]/fmt.elements*fmt.bytes;
       size_t er=hccache?p90::hc_stride:arithmetic::row_bytes(type,t.shape[1],v);
       size_t rows_per=std::max(size_t(1),size_t(4*1024*1024)/std::max(rb,er));
-      for(size_t row=0;row<load_rows;row+=rows_per){
-        auto nr=std::min(rows_per,load_rows-row);auto raw=w.read(name,(first_row+row)*rb,nr*rb);
+      for(size_t row=0,nr=0;row<load_rows;row+=nr){
+        const auto [source,left]=tp_source(runs,first_row,load_rows,row);
+        nr=std::min(rows_per,left);auto raw=w.read(name,source*rb,nr*rb);
         auto expanded=hccache?p90::hc_repack(raw.data(),raw.size()):iq3::expanded::expand(type,raw.data(),raw.size(),t.shape[1]);
         if(type==iq3::Type::Q6_K&&!hccache){auto census=p183::census_q6(expanded.data(),nr,t.shape[1]);p183::census_add(dense_census,census); // packet183-s1
           if(census.nonfinite||census.mismatch){write_dense_census();require(false,"p183 dense-scales census refused: "+name);}}
@@ -1643,7 +1667,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot" || l.op=="tp_xheads")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1863,6 +1887,7 @@ public:
   Prepared prepare_site(const flash::Launch& l) {int c=l.card;
       Spec s;
       s.g = p.g;
+      if(l.heads){require(l.key_heads>0&&l.heads%l.key_heads==0&&(l.op=="gdn"||l.op=="gdn_norm_gate"),"head-split launch geometry");s.g.vh=l.heads;s.g.kh=l.key_heads;} // OWNRT_TP_GDN=heads
       s.extent = (l.op=="qsa_select"||l.op=="qsa_attention")?std::min(p.g.context,context_extent):0;
       s.packed_heads = !a.mini;
       s.f32_activations = a.f32_activations;
@@ -1927,6 +1952,7 @@ public:
         auto &t = w.directory.at(name);
         s.grids[s.nw] = a.gsq_packed&&gsq_control(name)?iq3::Type::F32:flash::grid_type(t.grid);
         s.weight_elements[s.nw] = count(t.shape);
+        if(const auto runs=tp_runs(c,name);!runs.empty()){size_t rows=0;for(auto [first,n]:runs)rows+=n;s.weight_elements[s.nw]=count(t.shape)/size_t(t.shape.at(0))*rows;} // TP rows loaded
         ++s.nw;
         bindings.push_back(weights[c].at(name));
       }
@@ -2006,7 +2032,7 @@ public:
       require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert gather: F32 slot rows");
       auto remote=dev(c).peer_copy(dev(peer),buffers[c].at(l.inputs.at(0)).id,0,buffers[peer].at(l.outputs.at(0)).id,0,bytes);finish(c,{remote,remote,1},false);
       finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
-    } else if (l.op == "tp_xgather" || l.op == "tp_xslot") {
+    } else if (l.op == "tp_xgather" || l.op == "tp_xslot" || l.op == "tp_xheads") {
       // OWNRT_TP_EXCHANGE=direct (2026-10-28): one kernel per card replaces the copy gathers (Device::exchange). Bitwise.
       //  tp_xgather: this card's half rows (y#tp) into y at c*half here and on the peer.
       //  tp_xslot: this card's slots (s%2==c) of the routed output into the peer's staging y#tp; then the peer's slots
@@ -2014,7 +2040,13 @@ public:
       const int peer=1-c;require(xctl.size()==2,"direct exchange control words");
       const auto& y=buffers[c].at(l.outputs.at(0));ownrt::Device::ExchangeSpec s;
       s.slot=uint32_t(l.shape.at(1));s.cap=tp_exchange_cap;s.control=xctl[c];s.peer_control=xctl[peer];s.error=buffers[c].at("error").id;
-      if(l.op=="tp_xgather"){
+      if(l.op=="tp_xheads"){
+        // OWNRT_TP_GDN=heads: this card's compact head rows (runs of shape[2] values) into the global layout at
+        // shape[4] + run * shape[3], here and on the peer (shape = {global values, slot, run, run stride, card offset}).
+        require(l.shape.size()==5,"head exchange geometry");const size_t e=flash::scalar_bytes(y.type),offset=size_t(l.shape[4])*e;
+        s.mode=0;s.src=buffers[c].at(l.inputs.at(0)).id;s.bytes=buffers[c].at(l.inputs.at(0)).n*e;s.run=uint32_t(l.shape[2]);s.dst_stride=uint32_t(l.shape[3]);
+        s.local_dst=y.id;s.local_offset=offset;s.peer_dst=buffers[peer].at(l.outputs.at(0)).id;s.peer_offset=offset;
+      } else if(l.op=="tp_xgather"){
         const size_t half=size_t(l.parameter)*flash::scalar_bytes(y.type);
         s.mode=0;s.bytes=half;s.peer_dst=buffers[peer].at(l.outputs.at(0)).id;s.peer_offset=size_t(c)*half;
         if(l.inputs.at(0)==l.outputs.at(0)){s.src=y.id;s.src_offset=size_t(c)*half;} // direct-replicated: y already whole here

@@ -29,41 +29,44 @@ template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* pre
  Team t{it,nullptr};int blocked=lane==0?int(!a.i(18)[0]||t.error(a)):0;
  if(sycl::select_from_group(sg,blocked,sycl::id<1>(0)))return;
  int pos=a.i(17)[0];if(pos<0||pos>s.capacity-s.tokens){if(g==0&&lane==0)t.fail(a);return;}
- int h=g/128,j=g%128,key=(s.flags&4)?h%16:h/3,state=g*128;
- for(int r=0;r<s.tokens;++r){int qb=r*10240+key*128,kb=qb+2048;float q[4],k[4],v[4],decay,beta,pred=0.f;
+ // Head geometry: ng::gdn_key_heads/gdn_value_heads (full model 16/48; a head-split card 8/24, compact rows).
+ const int KH=ng::gdn_key_heads(s),VH=ng::gdn_value_heads(s),QKV=ng::gdn_qkv_width(s);const size_t P=gdn_prep_floats_for(s);
+ int h=g/128,j=g%128,key=(s.flags&4)?h%KH:h/(VH/KH),state=g*128;
+ for(int r=0;r<s.tokens;++r){int qb=r*QKV+key*128,kb=qb+KH*128;float q[4],k[4],v[4],decay,beta,pred=0.f;
   if constexpr(Prepared){
-   const float* prep=prepared+size_t(r)*gdn_prep_floats;
-   for(int z=0;z<4;++z){q[z]=prep[key*128+4*lane+z];k[z]=prep[2048+key*128+4*lane+z];}
-   decay=prep[4096+h];beta=prep[4144+h];
+   const float* prep=prepared+size_t(r)*P;
+   for(int z=0;z<4;++z){q[z]=prep[key*128+4*lane+z];k[z]=prep[KH*128+key*128+4*lane+z];}
+   decay=prep[2*KH*128+h];beta=prep[2*KH*128+VH+h];
   }else{
    float qs=0.f,ks=0.f;for(int z=0;z<4;++z){q[z]=a.b(0,qb+4*lane+z);k[z]=a.b(0,kb+4*lane+z);qs=qs+q[z]*q[z];ks=ks+k[z]*k[z];}
    float qn=detmath::sqrt(lane_tree(sg,qs)+1e-6f),kn=detmath::sqrt(lane_tree(sg,ks)+1e-6f);
-   float gate=a.b(1,r*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
-   decay=detmath::exp(av*sp);beta=ng::sigmoid(a.b(2,r*48+h));
+   float gate=a.b(1,r*VH+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
+   decay=detmath::exp(av*sp);beta=ng::sigmoid(a.b(2,r*VH+h));
    for(int z=0;z<4;++z){q[z]=(q[z]/qn)/detmath::sqrt(float(128));k[z]=k[z]/kn;}
   }
   for(int z=0;z<4;++z){v[z]=a.b(r?7:5,state+4*lane+z)*decay;pred=pred+v[z]*k[z];}
-  pred=lane_tree(sg,pred);float delta=(a.b(0,r*10240+4096+h*128+j)-pred)*beta,y=0.f;
+  pred=lane_tree(sg,pred);float delta=(a.b(0,r*QKV+2*KH*128+h*128+j)-pred)*beta,y=0.f;
   for(int z=0;z<4;++z){v[z]=v[z]+delta*k[z];y=y+v[z]*q[z];}
-  y=lane_tree(sg,y);if(lane==0)a.put(6,(r*48+h)*128+j,y);
+  y=lane_tree(sg,y);if(lane==0)a.put(6,(r*VH+h)*128+j,y);
   for(int z=0;z<4;++z)a.put(7,state+4*lane+z,v[z]);
   // Next token reads the rounded state, including when input/output alias.
   sycl::group_barrier(sg,sycl::memory_scope::device);
  }
 }
 inline void gdn_prep_device(ng::Shape s,ng::Args a,float* prepared,sycl::nd_item<1> it){
- auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),group=it.get_group_linear_id(),r=group/16,key=group%16;
+ const int KH=ng::gdn_key_heads(s),VH=ng::gdn_value_heads(s),QKV=ng::gdn_qkv_width(s);
+ auto sg=it.get_sub_group();int lane=sg.get_local_linear_id(),group=it.get_group_linear_id(),r=group/KH,key=group%KH;
  Team t{it,nullptr};int blocked=lane==0?int(!a.i(18)[0]||t.error(a)):0;
  if(sycl::select_from_group(sg,blocked,sycl::id<1>(0)))return;
  int pos=a.i(17)[0];if(pos<0||pos>s.capacity-s.tokens){if(group==0&&lane==0)t.fail(a);return;}
- prepared+=size_t(r)*gdn_prep_floats;
- int qb=r*10240+key*128,kb=qb+2048;float q[4],k[4],qs=0.f,ks=0.f;
+ prepared+=size_t(r)*gdn_prep_floats_for(s);
+ int qb=r*QKV+key*128,kb=qb+KH*128;float q[4],k[4],qs=0.f,ks=0.f;
  for(int z=0;z<4;++z){q[z]=a.b(0,qb+4*lane+z);k[z]=a.b(0,kb+4*lane+z);qs=qs+q[z]*q[z];ks=ks+k[z]*k[z];}
  float qn=detmath::sqrt(lane_tree(sg,qs)+1e-6f),kn=detmath::sqrt(lane_tree(sg,ks)+1e-6f);
- for(int z=0;z<4;++z){prepared[key*128+4*lane+z]=(q[z]/qn)/detmath::sqrt(float(128));prepared[2048+key*128+4*lane+z]=k[z]/kn;}
- for(int u=0;u<3;++u)if(lane==0){int h=(s.flags&4)?key+16*u:key*3+u;
-  float gate=a.b(1,r*48+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
-  prepared[4096+h]=detmath::exp(av*sp);prepared[4144+h]=ng::sigmoid(a.b(2,r*48+h));
+ for(int z=0;z<4;++z){prepared[key*128+4*lane+z]=(q[z]/qn)/detmath::sqrt(float(128));prepared[KH*128+key*128+4*lane+z]=k[z]/kn;}
+ for(int u=0;u<VH/KH;++u)if(lane==0){int h=(s.flags&4)?key+KH*u:key*(VH/KH)+u;
+  float gate=a.b(1,r*VH+h)+a.weight(4,h,s.flags),sp=gate<20.f?detmath::log(1.f+detmath::exp(gate)):gate,av=(s.flags&2)?a.f(3)[h]:-detmath::exp(a.weight(3,h,s.flags));
+  prepared[2*KH*128+h]=detmath::exp(av*sp);prepared[2*KH*128+VH+h]=ng::sigmoid(a.b(2,r*VH+h));
  }
 }
 #endif
@@ -80,7 +83,7 @@ template<ng::Op Code,int Stage> struct Kernel final:ownrt::SyclOperation {
   a.f32=(s.flags&ng::f32_activations_flag)!=0; // as ng::group(): F32 exact-mode buffers are read and written as F32
   if constexpr(Code==ng::gdn){
    l4probe::observe(Stage,s,p,Stage==1||gdn_prep(s));
-   if constexpr(Stage==1)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(shape.tokens)*16*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_prep_device(shape,a,global,it);}));});
+   if constexpr(Stage==1)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(shape.tokens)*ng::gdn_key_heads(shape)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_prep_device(shape,a,global,it);}));});
    else if(gdn_prep(s))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<true>(shape,a,global,it);}));});
    else return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(count)*32,32)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{gdn_device<false>(shape,a,global,it);}));});
   }

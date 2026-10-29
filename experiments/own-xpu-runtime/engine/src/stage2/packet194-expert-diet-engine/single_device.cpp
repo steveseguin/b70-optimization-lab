@@ -94,7 +94,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
   // peer's slots from local staging into the routed output (a fresh kernel's plain loads after the acquire fence).
   sycl::event submit_exchange(const Exchange& x) {
     using u32=std::uint32_t;namespace L=exchange_layout;constexpr u32 wg=256;
-    const u32 mode=x.mode,words=x.words,rows=x.rows,parity=x.parity,cap=x.cap;
+    const u32 mode=x.mode,words=x.words,rows=x.rows,parity=x.parity,cap=x.cap,run=x.run,stride=x.dst_stride;
     const u32 owned=mode?((x.top+1u-parity)/2u)*rows:words,other=mode?((x.top+parity)/2u)*rows:0u;
     const u32 groups=std::clamp<u32>((std::max(owned,other)+511u)/512u,2u,16u);
     const u32* src=static_cast<const u32*>(x.src);u32* local=static_cast<u32*>(x.local_dst);u32* remote=static_cast<u32*>(x.peer_dst);
@@ -106,7 +106,8 @@ class SyclDevice final : public Backend, public OrderedQueue {
         using dev_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
         using sys_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::system,sycl::access::address_space::global_space>;
         const u32 gid=u32(it.get_global_linear_id()),lid=u32(it.get_local_linear_id()),step=groups*wg;
-        if(mode==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i];if(local)local[i]=v;remote[i]=v;}}
+        if(mode==0u&&run==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i];if(local)local[i]=v;remote[i]=v;}}
+        else if(mode==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i],w=(i/run)*stride+i%run;if(local)local[w]=v;remote[w]=v;}}
         else for(u32 i=gid;i<owned;i+=step){const u32 w=(2u*(i/rows)+parity)*rows+i%rows;remote[w]=src[w];}
         sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());

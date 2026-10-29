@@ -125,12 +125,13 @@ template<unsigned T,unsigned R> struct DenseBlockRows final:ownrt::SyclOperation
 // block_element value decoded once per tile; every output keeps block_lane_sum's sequence and the subgroup tree.
 struct BlockElement {template<unsigned T> static float element(const uint8_t*b,float d,float dmin,unsigned group,unsigned lane){return block_element<T>(b,d,dmin,group,lane);}};
 #endif
-inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
+// tp_rows (2026-10-28): a TP card's whole rows of the site (head split), each row's arithmetic unchanged; 0 = all rows.
+inline const Site& policy(const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input,size_t tp_rows=0){
  const auto*s=selected(label,weight);require(s,"dense block exact census site");
- require(unsigned(m.type)==s->type&&m.rows==s->rows&&m.columns==2560&&m.span==m.rows,"dense block exact geometry/type/span");
+ require(tp_rows<s->rows&&unsigned(m.type)==s->type&&m.rows==(tp_rows?tp_rows:s->rows)&&m.columns==2560&&m.span==m.rows,"dense block exact geometry/type/span");
  require(m.count==1&&m.experts==1&&!m.routes&&!m.status&&(m.tokens==1?input==gsqn::InputMode::shared:input==gsqn::InputMode::per_slot),"dense block dense input: shared, or per-slot token rows");
  require(!m.fp32&&((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32)),"dense block activation/output both BF16 or both F32");
- require(gsq::row_bytes(s->type,m.columns)*m.rows==s->bytes,"dense block exact packed extent");return *s;
+ require(gsq::row_bytes(s->type,m.columns)*s->rows==s->bytes,"dense block exact packed extent");return *s;
 }
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
 #ifndef OWN_RT_HOST_ONLY
@@ -146,8 +147,8 @@ template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integ
 #endif
  if(s.f32){DenseBlockOperation<T,true>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
  DenseBlockOperation<T>op;op.s=s;auto e=d.compute(op,ids,{});return {e,e,1};}
-inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
- policy(m,label,weight,input);auto s=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
+inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input,size_t tp_rows=0){
+ policy(m,label,weight,input,tp_rows);auto s=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
  switch(unsigned(m.type)){case 12:return denseblock::issue<12>(d,m,s);case 13:return denseblock::issue<13>(d,m,s);case 23:return denseblock::issue<23>(d,m,s);}throw std::invalid_argument("dense block unsupported type");
 }
 } // namespace denseblock

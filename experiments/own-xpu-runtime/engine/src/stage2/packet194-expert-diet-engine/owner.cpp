@@ -378,8 +378,12 @@ Event Device::exchange(Device& peer,const ExchangeSpec& s) {
   };
   if(s.mode>1||!s.bytes||s.bytes%4||s.bytes/4>0xffffffffull||s.slot>=exchange_layout::slots||!s.cap)throw std::invalid_argument("exchange mode/extent/slot/cap");
   Backend::Exchange x;x.mode=s.mode;x.slot=s.slot;x.cap=s.cap;x.words=std::uint32_t(s.bytes/4);
-  x.src=row(arena,s.src,s.src_offset,s.bytes);x.peer_dst=row(peer.arena,s.peer_dst,s.peer_offset,s.bytes);
-  if(s.mode==0) {if(s.local_dst)x.local_dst=row(arena,s.local_dst,s.local_offset,s.bytes);if(s.select_src||s.select_dst)throw std::invalid_argument("exchange mode 0 selects nothing");}
+  // Destination extent: contiguous, or (runs - 1) strides plus one run.
+  if(s.run&&(s.mode!=0||!s.dst_stride||s.dst_stride<s.run||x.words%s.run))throw std::invalid_argument("exchange run geometry");
+  const std::size_t dst_bytes=s.run?(std::size_t(x.words/s.run-1)*s.dst_stride+s.run)*4:s.bytes;
+  x.run=s.run;x.dst_stride=s.dst_stride;
+  x.src=row(arena,s.src,s.src_offset,s.bytes);x.peer_dst=row(peer.arena,s.peer_dst,s.peer_offset,dst_bytes);
+  if(s.mode==0) {if(s.local_dst)x.local_dst=row(arena,s.local_dst,s.local_offset,dst_bytes);if(s.select_src||s.select_dst)throw std::invalid_argument("exchange mode 0 selects nothing");}
   else {
     if(!s.rows||!s.top||s.top>64||s.parity>1||s.src_offset||s.peer_offset||s.local_dst||std::size_t(s.rows)*s.top*4!=s.bytes)throw std::invalid_argument("exchange slot geometry");
     if(!s.select_src||s.select_dst!=s.src||s.select_src==s.src)throw std::invalid_argument("exchange slot select: staging in, routed output out");
@@ -393,7 +397,7 @@ Event Device::exchange(Device& peer,const ExchangeSpec& s) {
     PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;
     item.ids={s.src,s.peer_dst,s.control,s.peer_control,s.error};item.pointers={const_cast<void*>(x.src),x.peer_dst,x.control,x.peer_control,x.error};
     item.submit=backend_->prepare_exchange(x);
-    const std::size_t fields[]{s.src_offset,s.local_offset,s.peer_offset,s.bytes,s.mode,s.rows,s.top,s.parity,s.slot,s.cap};
+    const std::size_t fields[]{s.src_offset,s.local_offset,s.peer_offset,s.bytes,s.mode,s.rows,s.top,s.parity,s.slot,s.cap,s.run,s.dst_stride};
     item.argument_bytes.resize(sizeof(Allocation)*5+sizeof fields);auto* bytes=item.argument_bytes.data();
     std::memcpy(bytes,item.ids.data(),sizeof(Allocation)*5);std::memcpy(bytes+sizeof(Allocation)*5,fields,sizeof fields);
     capture_->push_back(std::move(item));return capture_->size();

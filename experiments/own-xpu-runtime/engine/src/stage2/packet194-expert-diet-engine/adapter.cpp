@@ -722,8 +722,12 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::silu_div4:case Op::silu_product:shape.op=ng::activation;shape.width=int(s.sizes[0]);shape.extra=s.op==Op::silu_product;in(0,0);if(shape.extra)in(1,1);out(2,0);break;
  case Op::hc_mix:shape.op=ng::mix;shape.width=s.site.shape[1];in(0,0);in(1,1);out(2,0);break;
  case Op::conv:shape.op=ng::conv;shape.width=s.site.shape[0];shape.extra=s.site.parameter;in(0,0);in(1,1);weight(2,0);out(3,0);out(4,1);break;
- case Op::gdn:shape.op=ng::gdn;shape.flags|=2|(s.packed_heads?4:0);in(0,0);in(1,1);in(2,2);weight(3,0);weight(4,1);in(5,3);out(6,0);out(7,1);break;
- case Op::gdn_norm_gate:shape.op=ng::gated_norm;shape.heads=48;in(0,0);in(1,1);weight(2,0);out(3,0);break;
+ case Op::gdn:shape.op=ng::gdn;shape.flags|=2|(s.packed_heads?4:0);
+  // Head split (2026-10-28, --tp-replicate OWNRT_TP_GDN=heads): this card's key/value heads in compact rows. The model
+  // geometry keeps extra=0 (16/48), so its Shape and argument bytes are unchanged.
+  if(s.g.kh!=16||s.g.vh!=48){shape.extra=s.g.kh;shape.heads=s.g.vh;}
+  in(0,0);in(1,1);in(2,2);weight(3,0);weight(4,1);in(5,3);out(6,0);out(7,1);break;
+ case Op::gdn_norm_gate:shape.op=ng::gated_norm;shape.heads=s.g.vh;in(0,0);in(1,1);weight(2,0);out(3,0);break;
  case Op::moe_combine:shape.op=ng::moe_combine;shape.width=s.site.shape[1];shape.extra=s.site.shape[0];in(0,0);in(1,1);in(2,2);in(3,3);out(4,0);break;
  case Op::qsa_prepare:shape.op=ng::prepare;for(int j=0;j<3;++j){in(j,j);weight(3+j,j);}for(int j=0;j<4;++j)out(6+j,j);break;
  case Op::qsa_append_pool:shape.op=ng::pool;for(int j=0;j<3;++j)in(j,j);weight(3,0);for(int j=0;j<4;++j)out(4+j,j);break;
@@ -740,6 +744,11 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  std::array<ownrt::Allocation,32> b{};std::copy(bindings.begin(),bindings.end(),b.begin());b[bindings.size()]=control;
  if(!use_ng&&!tiny_core&&s.special==Special::check_status&&s.tokens==1&&experts_v2::enabled("status")){StatusFast k(s);auto e=d.compute(k,bindings,deps);return {e,e,1};}
  if(!use_ng||tiny_core){Glue k(s,tiny_core?3:0);auto e=d.compute(k,std::span<const ownrt::Allocation>(b.data(),bindings.size()+1),deps);return {e,e,1};}
+ // A head-split shape runs only on the kernels parameterized by head geometry: round2 (2) or generic (0) GDN, the
+ // generic gated norm, and the generic conv (any width).
+ if(use_ng&&(shape.op==ng::gdn||shape.op==ng::gated_norm)&&(s.g.kh!=16||s.g.vh!=48)&&
+    !((shape.op==ng::gdn&&(s.implementation==2||s.implementation==0))||(shape.op==ng::gated_norm&&s.implementation==0)))
+  throw std::invalid_argument("head-split GDN geometry: round2/generic recurrence and generic gated norm only");
  // Validate before submitting anything, so a bad shape cannot strand a partial chain.
  ng::validate(shape);auto required=ng::required_bytes(shape);for(int j=0;j<19;++j)if(d.arena.row(a[j]).bytes<required[j])throw std::invalid_argument("adapter allocation too short at slot "+std::to_string(j));
  ownrt::Event first=0,last=0;uint32_t count=0;
