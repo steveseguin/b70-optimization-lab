@@ -272,6 +272,50 @@ transfer are the risky parts. Each is bitwise-gated by the rank-0 harness (`rese
 which runs non-speculative halves). Speculative rollback also needs a harness mode with forced misses, so that
 cancellation and restore are exercised.
 
+## Rank-0 TP, step 1: speculative halves on two cards (2026-10-29)
+
+Built (binary `edacb87846a8…`; Stage 2b layout on rank 0: GDN heads, rows, compact slots, direct exchange, two
+submission threads; the MTP draft on card 0):
+- **Admission** of `--tp-replicate` on rank 0.
+- **Recurrent banks per card.** `banks()`, `swap_state_banks` and `rotate_spare_bank` move both cards' banks together;
+  outputs bind each card's own spare.
+- **Speculative image per card.** The card-0 image keeps the host state, bank rotation and protocol. It forwards device
+  capture, restore and redo to a card-1 image, which has its own backup and static copy table.
+  - `RedoBankProof` counts only its card's writer and the compact head extent.
+  - The exchange control words are excluded: their epochs advance identically on both cards.
+- **Cancellation handshake.** A cancel is taken only before a card-0 launch. The card-1 thread issues only below the
+  last index whose cancel check passed. On a cancel at index k, both cards stop below k, so every (card 0, card 1)
+  exchange pair runs on both cards or on neither.
+- **Fixes on the way:**
+  - Under TP the draft's GPU time is not measured. The shared-context queues have no profiling, and the first TP smoke
+    stopped at the first draft with "profiling disabled".
+  - Reset fills and snapshot copies record their card's tail.
+- **Harness:** [tp_rank0_driver.py](tp_rank0_driver.py), a copy of the rank-0 lab harness with `--tp` and forced
+  speculation patterns:
+  - `h`: hit;
+  - `m`: completed miss, rolled back and redone;
+  - `c`: miss published before the half, so it cancels at its first launch;
+  - `x`: miss published by a timer 1–8 ms into the half, so it cancels mid-half or completes.
+  - Device builds refuse `--cancel-launch`.
+
+**Gates** (context 4096, decode from position 0; [evidence/rank0/](evidence/rank0/), [logs/](logs/)):
+
+| TP run | Pattern | Events | vs one card, same pattern | vs one card, no speculation |
+|---|---|---|---|---|
+| `r0s3-tp`, 3 halves | n | — | 1029/1029 target, 71/71 draft, tokens equal | (same run) |
+| `r0m-tp`, 8 halves | hmcn | 1 hit, 2 misses, 3 cancelled at first launch, 5 redos | 1029/1029, 71/71, tokens equal | 1029/1029, 71/71, tokens equal |
+| `r0x-tp`, 10 halves | x | 8 cancelled mid-half, 2 completed misses, 10 redos | 1029/1029, 71/71, tokens equal | 1029/1029, 71/71, tokens equal |
+
+- Card 1 equals card 0 on all 710 buffers both cards hold in full. 0 exchange timeouts. Kernel log clean after every arm.
+- **Speed (not yet the measurement of step 3)**, median of 3–10 halves from position 0:
+  - rank-0 half: 9.24–9.42 ms on two cards against 10.47–10.48 ms on one card;
+  - draft: 1.31 ms against 1.71 ms. The one-card process runs profiling queues, as the service's rank 0 does; the TP
+    process cannot.
+- Incidents: none on the device. Host-side refusals on the way:
+  - the harness drafted at position 0;
+  - draft GPU timing was requested without profiling queues;
+  - `--cancel-launch` is refused in device builds.
+
 ## Remaining stages
 
 - **Stage 3 (QSA two-KV-group split):** designed above, not built.

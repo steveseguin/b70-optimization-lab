@@ -1,0 +1,29 @@
+=== phase r0-smoke2 start 2026-10-29T00:32:56-04:00 pid 1000607 affinity 0-3,16-19 nofile 1048576
+[klog r0-smoke2-before-24h] since @1793161976: 12 lines, 0 xe/fault lines
+--- arm r0s2-one steps=3 mode=one pattern=n cancel=-1 env=none at 2026-10-29T00:32:56-04:00
+{"steps": 3, "load_s": 61.03521691192873, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 18.633 draft ms 4716.311
+arm r0s2-one rc=0 after 69 s
+[klog r0-smoke2-after-r0s2-one] since @1793248376: 0 lines, 0 xe/fault lines
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327]
+--- arm r0s2-tp steps=3 mode=tp pattern=n cancel=-1 env=OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads at 2026-10-29T00:34:05-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 302, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 225, in run
+    tok, ms, gpu = draft(p, True)  # the draft consumes confirmed positions in order: p (reverse row p-1, token p)
+                   ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 167, in draft
+    rep = call(parent, DRAFT, seq, position=position, token=token_at(position), fixture=int(head))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 65, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 58, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm r0s2-tp rc=1 after 76 s
+[klog r0-smoke2-after-r0s2-tp] since @1793248445: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 24946924100 weights 24653427968 dispatch r5
+profiling disabled
+HALT: arm r0s2-tp rc=1

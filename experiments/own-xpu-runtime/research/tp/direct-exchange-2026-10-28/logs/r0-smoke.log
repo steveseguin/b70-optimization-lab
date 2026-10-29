@@ -1,0 +1,24 @@
+=== phase r0-smoke start 2026-10-29T00:29:54-04:00 pid 1000126 affinity 0-3,16-19 nofile 1048576
+[klog r0-smoke-before-24h] since @1793161794: 12 lines, 0 xe/fault lines
+--- arm r0s-one steps=3 mode=one pattern=n cancel=-1 env=none at 2026-10-29T00:29:54-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 300, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 223, in run
+    tok, ms, gpu = draft(p, True)  # the draft consumes confirmed positions in order: p (reverse row p-1, token p)
+                   ^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 167, in draft
+    rep = call(parent, DRAFT, seq, position=position, token=token_at(position), fixture=int(head))
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 65, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/tp_rank0_driver.py", line 58, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm r0s-one rc=1 after 160 s
+[klog r0-smoke-after-r0s-one] since @1793248194: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 24946924100 weights 24653427968 dispatch r5
+draft command ownership/confirmation
+HALT: arm r0s-one rc=1

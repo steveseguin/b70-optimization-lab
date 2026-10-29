@@ -1,0 +1,68 @@
+{
+ "binary": "/dev/shm/engine-build-tp-rank0-20261029-r9/sc117-engine",
+ "tp": true,
+ "split": ".attention,.gdn.qkv",
+ "pattern": "hmcn",
+ "cancel_launch": -1,
+ "events": {
+  "hits": 1,
+  "misses": 2,
+  "cancelled": 3,
+  "redos": 5
+ },
+ "tp_env": {
+  "EnableDeferBacking": "0",
+  "NEOReadDebugKeys": "1",
+  "OWNRT_TP_EXCHANGE": "direct",
+  "OWNRT_TP_EXPERTS": "compact",
+  "OWNRT_TP_GDN": "heads",
+  "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+  "OWNRT_TP_THREADS": "1"
+ },
+ "prompt": 0,
+ "rows": 256,
+ "steps": 8,
+ "load_s": 60.40610456420109,
+ "prompt_ms": 0.0,
+ "prefill_ms": 0.0,
+ "draft_replay_ms": 0.0,
+ "half_ms": [
+  72.95224512927234,
+  9.177913889288902,
+  9.39924013800919,
+  9.454112965613604,
+  9.651332860812545,
+  9.237776976078749,
+  9.23009100370109,
+  9.341701865196228
+ ],
+ "draft_ms": [
+  11.230871081352234,
+  1.3198400847613811,
+  1.302656950429082,
+  1.3503669761121273,
+  1.3124961405992508,
+  1.3093699235469103,
+  1.3435338623821735
+ ],
+ "draft_gpu_ms": [
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "draft_tokens": [
+  12,
+  327,
+  62422,
+  220,
+  318,
+  7761,
+  748
+ ],
+ "prefill_draft_tokens": [],
+ "rc": 0
+}
