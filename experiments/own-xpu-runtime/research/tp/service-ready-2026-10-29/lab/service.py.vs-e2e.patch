@@ -1,0 +1,21 @@
+--- ../e2e-suite-2026-10-29/lab/service.py	2026-10-29 01:31:51.895376040 -0400
++++ lab/service.py	2026-10-29 02:37:45.857027824 -0400
+@@ -16,6 +16,9 @@
+ listener; the root-disk admission margin is 32 MiB above the unchanged 27 GB floor (control and rank output live on
+ /dev/shm); the F32 self-test must also equal the B19 record (engine 51f32b2655cc); the TP exchange/compare JSONs of
+ each request are copied to the control directory before retention removes the request directory.
++
++research/tp/service-ready-2026-10-29 (from the e2e-suite-2026-10-29 lab copy): transient unit names may also start with
++sc117-tp-svc- (fresh unit names for this suite). The adapter is lab/adapter6_tp.py of this folder (per-card teardown).
+ """
+ import argparse, collections, hashlib, http.server, importlib.util, ipaddress, json, os, resource, shutil, signal, socket, subprocess
+ import re, sys, threading, time, traceback
+@@ -47,7 +50,7 @@
+ QUEUE_LIMIT = 8
+ KEY_FILE = Path('/home/steve/.config/sc117-lan/api_key')
+ UNIT = os.environ['SC117_LAB_UNIT']
+-assert UNIT.startswith('sc117-tp-e2e-') and UNIT.endswith('.service'), UNIT
++assert UNIT.startswith(('sc117-tp-e2e-', 'sc117-tp-svc-')) and UNIT.endswith('.service'), UNIT
+ UNIT_PROPERTIES = {'Restart': 'no', 'SendSIGKILL': 'no', 'KillMode': 'process', 'TimeoutStopUSec': 'infinity', 'LimitAS': 'infinity'}
+ AFFINITY = [0, 1, 2, 3, 16, 17, 18, 19]
+ COORD = Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')

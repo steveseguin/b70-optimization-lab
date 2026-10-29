@@ -152,3 +152,60 @@ All 16 decode tokens are equal in the four rank-1 runs. Card 1 equals card 0 on 
 - End-to-end TTFT on a 3,490-token prompt against the two-card control is measured in section 4 (the same service
   launches).
 - Raw runs (sha256-verified) are in `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/svc-ready-step3-{gate-r3,trace-r4,gate-r5}`.
+
+## 4. The 12-prompt suite at 65536 with batched prompt reading: 73.18 vs 66.39 tok/s, outputs identical
+
+Run exactly as the e2e suite ([run_arm.sh](run_arm.sh), from the e2e copy): the lab service on 127.0.0.1:18171, one
+fresh transient unit per arm (`sc117-tp-svc-arm-{two,tp}-20261029`, `Restart=no`, `KillMode=process`, no SIGKILL,
+`LimitNOFILE=1048576`, nice 19, CPUs 0-3,16-19), all four card locks held by `sc117-tp-svc-locks-20261029`, one cold
+request per frozen prompt (512 cap, greedy), then one cold 3,490-token prompt ([ttft_probe.py](ttft_probe.py),
+[ttft-doc.txt](ttft-doc.txt), 64-token cap). The same binary `0702b5a9cd78` in both arms; flags from
+[arm_env.py](arm_env.py) (B19 set at 65536: ring, packing, `SC117_PREFILL_ROWS=256`, `OWNRT_NO_DRAFT_TIMING=1`,
+`NEOReadDebugKeys=1 EnableDeferBacking=0`; no sessions, keeper or continuation). The lab service and adapter are
+[lab/](lab/) (diffs to the e2e copies in `lab/*.vs-e2e.patch`). The `sc117-lan` unit was not touched.
+
+| Arm | Cards (rank 0 / rank 1) | Median tok/s | Mean | Range | MTP acceptance | Median TTFT (suite) | TTFT, 3,490-token prompt | Outputs |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| two: control | 23 / 47 | **66.39** | 66.67 | 64.25–70.09 | 4533/5954 = 0.7613 | 793 ms | **12,497 ms** | = B19, all 12 |
+| tp: exact TP2×PP2 | 23+27 / 43+47 | **73.18** | 73.48 | 70.40–77.16 | 0.7613 | 716 ms | **10,344 ms** | = B19, all 12 |
+
+- **Decode 1.102×** (every prompt 1.089–1.108×), against 1.110× at 32K with token-by-token prompts in the e2e suite.
+- **TTFT on the 3,490-token prompt: 1.21× faster** (10.34 against 12.50 s). Its 64 output ids and hash are equal in
+  both arms; `cached_tokens=0`.
+- The suite prompts are 60–90 tokens, below the bulk threshold (length − 2 ≥ 256 rows), so both arms read them token by
+  token. Their TTFT is 0.903×.
+- **Outputs:** all 5,965 token ids, hashes and per-prompt MTP guesses and hits are equal in both arms and equal the B19
+  receipt at 65536 (`f32-suite-51f32b2655cc-ctx65536-split23.json`). `cached_tokens=0` everywhere.
+- **Startup gates, each arm:**
+  - F32 self-tests equal the B19 record.
+  - The post-self-test state equals the pinned 4096 and 65536 oracles (the ring compared through its zero extension).
+  - The service's one-time batched-prefill gate passed 13/13: two scalar suite checks, and 11 cases of up to 581
+    tokens with 7-, 13- and 256-row chunks, comparing tokens, MTP guesses and every persistent state buffer, batched
+    against token by token.
+  - Warm batched reading, tp against two: 581 tokens in 1,853 against 2,324 ms; 514 tokens in 1,842 against 2,281 ms.
+- **TP:**
+  - Card 1 equals card 0 on 710 (rank 0) and 785 (rank 1) buffers at the last startup dump, with 0 exchange timeouts.
+    A timeout sets the sticky error and fails the request; all 40 requests completed.
+  - Card-0 census: 29,444,280,282 / 31,718,847,844 B (rank 1: 493 MB under the cap).
+- **Teardown:** both arms wrote `terminal.json` with `passed: true`. The TP arm's two-record rank teardowns pass the
+  step-1 check (the e2e arm C had written `incident.json` here).
+- Kernel log: clean before, after ready, after the suite and after each arm. The only line in the window is an
+  AppArmor audit of a snap.
+- Files: [results/summary.json](results/summary.json) ([compare.py](compare.py)); per arm `results/arm-*/` (suite,
+  TTFT probe, prefill gate, plan, monitor, requests, rank logs, journal, startup TP evidence). Raw run directories (449
+  files, 168,285,862 B, sha256-verified): `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/svc-ready-suite-20261029/`.
+
+## Next
+
+1. **Service switch (owner's call; the `sc117-lan` unit was not touched).** The lab service clears the three gaps at
+   65536 with batched prompt reading. Two things remain before the live unit can move to four cards:
+   - **Sessions, checkpoints and continuation are still refused under TP.** The B19 unit runs `SC117_SESSIONS=1` and
+     the keeper; these arms ran without them.
+   - The unit needs `EnableDeferBacking=0` and `LimitNOFILE=1048576`.
+2. **Decode: rank 0 now sets the pace** (half 9.36 ms + draft 1.32 ms on card 0 alone, against rank 1's 10.9 ms).
+   Splitting the draft head by vocabulary across rank 0's two cards (argmax per half, then one exchange of
+   value and index, lowest index on ties) is worth about 0.4–0.6 ms per position, then moving the split point.
+3. **Prompt reading:**
+   - The first batched chunk after load pays its captures (the service gate's first 258-token case took 9.4 s), so a
+     warm-up chunk belongs in startup.
+   - TP prefill issues both cards from one host thread. Per-card submission threads, as in decode, are the next lever.

@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 29, later — four-card TP at 64K with batched prompt reading: 73.18 vs 66.39 tok/s, outputs identical.**
+- The three gaps from the e2e suite are closed in the lab service, on engine `0702b5a9cd78`:
+  - TP ranks' per-card teardowns are accepted.
+  - The QSA raw ring is admitted under TP, with a per-card TP plan check: rank 1 plans 31.72 GB per card at 65536.
+  - Batched prompt reading runs TP-native on both cards. The one-card-prefill route would exceed rank 1's card 0 by
+    538 MB.
+- Rank gates at 65536 (1,100 prompt rows): rank 1 1079/1079 buffers, rank 0 1029/1029 + 71/71 draft, for TP against
+  one card and batched against token by token.
+- Suite at 65536 with 256-row prefill, same binary: 73.18 vs 66.39 tok/s (1.102×). All 5,965 ids equal B19.
+- TTFT on a 3,490-token prompt: 10.34 vs 12.50 s (1.21×), with equal output. Kernel log clean. `sc117-lan` not
+  touched. Sessions and continuation are still refused under TP.
+  [Result](experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/RESULT.md).
+
 **October 29 — four B70s decode SC117 at 73.53 tok/s exact (1.110× the two-card 66.25 on the same binary).**
 - Exact TP inside both pipeline ranks (cards 23+27 / 43+47), 12-prompt suite, 32K context, token-by-token prompt
   reading: 73.53 vs 66.25 tok/s median; every prompt +10.8–12.2%; all 5,965 output ids, hashes and MTP hits equal
