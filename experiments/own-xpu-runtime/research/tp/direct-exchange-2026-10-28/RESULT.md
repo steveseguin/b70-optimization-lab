@@ -50,6 +50,7 @@ Wait statistics land in `tp-exchange.json` at the dump.
 | Arm | Host threads | Half ms | vs one card | Host enqueue ms | Exact vs one card |
 |---|---:|---:|---:|---:|---|
 | one card (phase 1 / phase 3, each run twice) | 1 | **12.247 / 12.249**; 12.240 / 12.247 | 1.000 | 3.6 | reference; reruns 1079/1079 equal |
+| one card on 47:00.0 instead (phase 4, twice, bracketed by 23:00.0 at 12.242 / 12.229) | 1 | 12.260 / 12.261 | 0.999 | 3.5–3.9 | 1079/1079 |
 | replicated, two cards | 1 | 12.490 | 0.981 | 9.6 | 1079/1079 |
 | replicated, two cards | 2 | 12.438; 12.492 | 0.985; 0.980 | 5.6; 6.3 | 1079/1079 |
 | split + slots, **copy** gathers (Oct 25 path) | 1 | 12.640 | 0.969 | 11.5 | 954/954 (+125 masked) |
@@ -71,9 +72,9 @@ Wait statistics land in `tp-exchange.json` at the dump.
   synchronise on device flags; per-card threads bring it to 5.9–6.3 ms. Why direct + one thread enqueues 2 ms more than
   copy + one thread is not established (the devices wait on each other, so submissions likely hit idle queues).
 - **Waits:** 0 timeouts and 0 aborts in 74,476 waiting work-groups over the 13 exchange runs (both cards). Card 0
-  polls in 89–99% of its waits, card 1 in 11–74%: card 1 (47:00.0) arrives later. Replicated two-card arms are 0.2 ms slower than one card on
-  23:00.0, so part of the remaining gap is card 1 being slower or starting later (a one-card run on 47:00.0 is not yet
-  measured).
+  polls in 89–99% of its waits, card 1 in 11–74%: card 1 (47:00.0) usually arrives later (with one host thread it
+  is always submitted second; with two threads the split is 90% / 68–74%). Card 47 alone is only 0.15% slower than card 23 (12.26 vs 12.24 ms), so the 0.2–0.25 ms that the
+  replicated two-card arms lose against one card is a two-card process cost, not card speed.
 
 **Device safety.** Kernel log clean (0 xe/GuC/CAT/reset/fault lines) before every phase and after every arm. Host-side
 failures on the way, none on the device:
@@ -86,20 +87,28 @@ failures on the way, none on the device:
 
 ## Remaining stages
 
-- **Stage 2 (head-split GDN):** not started; see "Next" below.
+- **Stage 2 (head-split GDN):** designed, not built; see "Next" below.
 - **Stage 3 (QSA two-KV-group split):** not started.
 
 ## Next
 
-1. Head-split GDN (8 key + 24 value heads per card) needs the GDN kernels (conv, `round2` recurrence with
-   `OWNRT_GDN_PREP`, `packet18` norm-gate) to run with half the heads: `round2.hpp` hardcodes 16 key heads and 48 value
-   heads (`gdn_prep_floats=16*256+2*48`, `shape.tokens*16*32`). Each card would load its heads' rows of qkv (three row
-   ranges, permuted to `[q_c; k_c; v_c]`), z, a, b, conv1d and the per-head scalars, keep half the recurrent state and
-   conv history, and exchange the gated output (12 KB each way) before the already-split output projection. The
-   bitwise gate then has to reassemble the per-card state halves against the one-card dump.
+1. **Stage 2, head-split GDN: designed, not built (a multi-kernel change).** Findings from the source:
+   - SC117 runs the interleaved key mapping (`adapter.cpp`: `flags|=4` when `packed_heads`, so value head h reads key
+     h%16). A contiguous half of the value heads would need all 16 keys. Split by key instead: card c owns keys
+     [8c, 8c+8) and value heads {h : h%16 in [8c, 8c+8)} (three runs of 8). Each card is then exactly a GDN with
+     8 key and 24 value heads and key = h'%8, so every head's arithmetic is unchanged.
+   - The active kernels hardcode the full geometry: `round2_submit.cpp` (`10240`, `2048`, `4096`, `48`, 16-subgroup
+     prep, `gdn_prep_floats=16*256+2*48`), `kernels.hpp` `required_bytes` (`T*10240`, `48`, `6144`), conv width.
+     These need geometry from `ng::Shape`.
+   - Per card: permuted row loads (qkv as `[q_c; k_c; v_c]`, z, a, b, conv1d, `ssm_a`, `dt_bias`), half the
+     recurrent state and conv history, one exchange of the gated output (three 4 KB runs each way) before the
+     already-split output projection; 3 exchanges per layer in all.
+   - 10 of rank 1's 18 GDN layers use dense-block Q4_K/Q5_K qkv, which refuses row slices; those layers need
+     dense-block row lists or a replicated qkv.
+   - The bitwise gate must reassemble per-card state halves against the one-card dump.
 2. Compact 5-slot expert launches instead of masked 10-slot ones (masked slots are not free: about 47% of an expert
-   launch does not shrink, SIZING.md).
-3. Measure one card on 47:00.0 to separate card speed from two-card overhead.
+   launch does not shrink, SIZING.md). Smaller than Stage 2 and independent of it.
+3. Stage 3 (QSA two-KV-group split, 7 rank-1 layers) after Stage 2.
 
 ## Files
 
@@ -110,7 +119,7 @@ failures on the way, none on the device:
   words, drain guard, profiling guard), `gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp` (plan, `TpWorker`,
   `tp-exchange.json`).
 - Evidence: [results-stage1.json](results-stage1.json) (phase 1), [results-stage1-timing3.json](results-stage1-timing3.json)
-  (phase 3), [logs/](logs/) (phase logs and kernel-log checks), [analyze.py](analyze.py) (tables and comparisons).
+  (phase 3), [results-card47.json](results-card47.json) (phase 4, one card on each card), [logs/](logs/) (phase logs and kernel-log checks), [analyze.py](analyze.py) (tables and comparisons).
   Run directories (state dumps) stay in `/dev/shm/tp-direct-20261028/runs/`.
 - The live service receipt `57744505eabc` already did not match `engine/src` before this work (16 sources differ);
   the service unit was not touched.

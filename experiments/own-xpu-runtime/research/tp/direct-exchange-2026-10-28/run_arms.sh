@@ -3,7 +3,7 @@
 # Launched once, already holding both card locks:
 #   systemd-run --user --unit=tp-direct-<phase> --collect flock -n -E 75 /dev/shm/card23.lock \
 #     flock -n -E 75 /dev/shm/card47.lock taskset -c 0-3,16-19 bash run_arms.sh <phase> ARM...
-# ARM = name:steps:mode, mode one | rep | rep-threads | copy | direct | direct-threads | dense-direct | slot-direct |
+# ARM = name:steps:mode, mode one | one47 | rep | rep-threads | copy | direct | direct-threads | dense-direct | slot-direct |
 #   xonly-threads (exact diagnostic: no split, the same exchanges of identical rows).
 # Order per arm: coordination-marker check -> engine run (tp_rank1_driver.py) -> kernel-log check. Any xe/fault line,
 # nonzero exit or exchange timeout halts the phase; nothing is retried. Do not edit while it runs.
@@ -27,6 +27,7 @@ for arm in "$@"; do
   tp=(--tp --split .attention,.gdn.qkv); envs=(OWNRT_TP_EXPERTS=slot)
   case "$mode" in
     one) tp=(); envs=() ;;
+    one47) tp=(); envs=() ;;  # one card on 0000:47:00.0 instead of 23:00.0
     rep) tp=(--tp); envs=() ;;
     copy) envs+=(OWNRT_TP_EXCHANGE=copy) ;;
     direct) envs+=(OWNRT_TP_EXCHANGE=direct) ;;
@@ -39,7 +40,8 @@ for arm in "$@"; do
   esac
   t=$(date +%s)
   echo "--- arm $name steps=$steps mode=$mode env=${envs[*]:-none} tp=${tp[*]:-none} at $(date -Is)"
-  env "${envs[@]}" python3 -B "$ENGINE/tools/tp_rank1_driver.py" run --launch "$D/rank1-launch-c4096.json" --out "$out" \
+  launch="$D/rank1-launch-c4096.json"; [ "$mode" = one47 ] && launch="$D/rank1-launch-c4096-card47.json"
+  env "${envs[@]}" python3 -B "$ENGINE/tools/tp_rank1_driver.py" run --launch "$launch" --out "$out" \
     --steps "$steps" --cache /dev/shm/tp-direct-20261028/cache "${tp[@]}"
   rc=$?; echo "arm $name rc=$rc after $(( $(date +%s) - t )) s"
   python3 "$D/klog_check.py" "$PHASE-after-$name" "$t" "$D/logs/kernel-log-$PHASE-after-$name.txt" || halt "kernel log after $name"
