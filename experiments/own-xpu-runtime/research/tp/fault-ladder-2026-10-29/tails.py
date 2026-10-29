@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Tail halves and per-thread page faults of the suite servers (research/tp/persistent-thread-2026-10-29), CPU only.
-Each server's work directory (/dev/shm/tp-svc-pt-20261029/arm-<name>, or its RAID archive) keeps every request's per-half
+"""Tail halves and per-thread page faults of the suite servers (research/tp/fault-ladder-2026-10-29; copy of persistent-thread-2026-10-29/tails.py), CPU only.
+Each server's work directory (/dev/shm/tp-svc-fl-20261029/arm-<name>, or its RAID archive) keeps every request's per-half
 rows: the lab service copies req-*/rank*/timings.jsonl into control/run-*/tp-evidence/ before it releases a request
 directory, and the last request's rows stay in evidence/run-*/req-*/. Only the suite's own requests (label 'client' in
 requests.jsonl: the 12 prompts and the 3,490-token prompt) are used; startup-gate requests are not.

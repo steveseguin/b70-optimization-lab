@@ -1,0 +1,237 @@
+{
+ "schema": "ownrt.fault-ladder-summary.v1",
+ "binary": "5921bb96f630",
+ "previous_binary": "1c667aea0690",
+ "engine_commit_fix": "9d19335fa",
+ "flag": "OWNRT_TP_CARD_CONTEXT=1",
+ "owner": {
+  "library": "libsycl.so.9.0.0 (oneAPI DPC++ 2026.0.0.20260331)",
+  "function": "sycl::_V1::detail::KernelProgramCache::saveKernel (+0x26aec4, operator new of MProgramToFastKernelCacheKeyMap[program] vector<pair<string_view, ur_device_handle_t>>, 24 B per entry)",
+  "caller": "ProgramManager::getOrCreateKernel <- enqueueImpKernel <- queue_impl::submit_kernel_scheduler_bypass <- handler::finalize <- queue::submit_with_event_impl <- ownrt::BoundSyclSubmission <- ownrt::Device::issue (main thread and TpWorker card-1 thread)",
+  "mechanism": "MFastKernelCache.try_emplace(name, FastKernelSubcacheWrapper(subcache, ctx)): when the name exists the temporary wrapper is destroyed and erases every subcache entry of the context (the other card included) -> every two-card submission misses, takes the slow path and appends a never-trimmed 24-byte record"
+ },
+ "unit_test": {
+  "shared_bytes_per_submit": 40.37,
+  "per_card_bytes_per_submit": 0.06,
+  "one_queue_bytes_per_submit": 0.11,
+  "shared_ns": 8953,
+  "per_card_ns": 7490,
+  "failures": 0
+ },
+ "gates": {
+  "rank1": "8/8 compares 1079/1079 (c2-gate-r1)",
+  "rank0": "9/9 compares 1029/1029 + 71/71 (hmcn, x, m; c3-gate-r0)",
+  "smoke": "c1: rank1 1079/1079, rank0 1029/1029+71/71",
+  "flag_off_vs_previous": "bitwise both ranks",
+  "exchange_timeouts": 0,
+  "kernel_log": "clean"
+ },
+ "rank1_tbt_faults": {
+  "g-r1-tpqc-tbt": {
+   "faults_after_first_half": 921,
+   "bursts_over_150_after_first": 1,
+   "after_first_half_median": 0,
+   "after_first_half_max": 525,
+   "decode_sum": 13,
+   "prompt_enqueue_loop_ms_median": 4.8678,
+   "decode_enqueue_loop_ms_median": 5.1577
+  },
+  "g-r1-tpq-tbt": {
+   "faults_after_first_half": 14569,
+   "bursts_over_150_after_first": 14,
+   "after_first_half_median": 5,
+   "after_first_half_max": 1542,
+   "decode_sum": 79,
+   "prompt_enqueue_loop_ms_median": 6.8387,
+   "decode_enqueue_loop_ms_median": 6.9456
+  },
+  "g-r1-one-tbt": {
+   "faults_after_first_half": 2255,
+   "bursts_over_150_after_first": 1,
+   "after_first_half_median": 0,
+   "after_first_half_max": 2012,
+   "decode_sum": 0,
+   "prompt_enqueue_loop_ms_median": 3.7794,
+   "decode_enqueue_loop_ms_median": 3.7899
+  }
+ },
+ "suite": {
+  "pair_mean_tptsxq": 77.16771165144556,
+  "pair_mean_tptsxqc": 78.45858959583575,
+  "ratio": 1.0167282133519895,
+  "request_wall_ratio": 0.982801856999971,
+  "outputs_equal_b19": true,
+  "servers": {
+   "tptsxq-r1": {
+    "median": 77.182,
+    "request_wall_s_sum": 86.795
+   },
+   "tptsxqc-r1": {
+    "median": 78.623,
+    "request_wall_s_sum": 85.228
+   },
+   "tptsxq-r2": {
+    "median": 77.153,
+    "request_wall_s_sum": 86.908
+   },
+   "tptsxqc-r2": {
+    "median": 78.294,
+    "request_wall_s_sum": 85.488
+   }
+  },
+  "pairs": {
+   "tptsxqc-r1/tptsxq-r1": {
+    "per_prompt_median": 1.0175,
+    "range": [
+     1.013,
+     1.023
+    ],
+    "faster": 12,
+    "wall_median": 0.9832,
+    "wall_range": [
+     0.9748,
+     0.9864
+    ]
+   },
+   "tptsxqc-r2/tptsxq-r2": {
+    "per_prompt_median": 1.0166,
+    "range": [
+     1.0069,
+     1.0263
+    ],
+    "faster": 12,
+    "wall_median": 0.9834,
+    "wall_range": [
+     0.9755,
+     0.9925
+    ]
+   },
+   "tptsxqc-r1/tptsxq-r2": {
+    "per_prompt_median": 1.0186,
+    "range": [
+     1.0133,
+     1.0248
+    ],
+    "faster": 12,
+    "wall_median": 0.9804,
+    "wall_range": [
+     0.9765,
+     0.9871
+    ]
+   },
+   "tptsxqc-r2/tptsxq-r1": {
+    "per_prompt_median": 1.0161,
+    "range": [
+     1.0026,
+     1.0198
+    ],
+    "faster": 12,
+    "wall_median": 0.9847,
+    "wall_range": [
+     0.9761,
+     0.9925
+    ]
+   }
+  },
+  "tails": {
+   "tptsxq-r1": {
+    "rank0": {
+     "halves": 7473,
+     "faults": 81389,
+     "over_200": 6,
+     "median": 9.178,
+     "p90": 10.0619,
+     "p99": 11.1331,
+     "max": 31.087
+    },
+    "rank1": {
+     "halves": 6029,
+     "faults": 80675,
+     "over_200": 7,
+     "median": 10.3309,
+     "p90": 10.5289,
+     "p99": 11.7077,
+     "max": 33.209
+    }
+   },
+   "tptsxqc-r1": {
+    "rank0": {
+     "halves": 7473,
+     "faults": 0,
+     "over_200": 0,
+     "median": 9.2442,
+     "p90": 9.2828,
+     "p99": 9.4169,
+     "max": 12.245
+    },
+    "rank1": {
+     "halves": 6029,
+     "faults": 0,
+     "over_200": 0,
+     "median": 10.2735,
+     "p90": 10.4377,
+     "p99": 10.6609,
+     "max": 13.915
+    }
+   },
+   "tptsxq-r2": {
+    "rank0": {
+     "halves": 7473,
+     "faults": 83094,
+     "over_200": 5,
+     "median": 9.1734,
+     "p90": 10.2476,
+     "p99": 11.1884,
+     "max": 32.848
+    },
+    "rank1": {
+     "halves": 6029,
+     "faults": 74190,
+     "over_200": 8,
+     "median": 10.3125,
+     "p90": 10.5169,
+     "p99": 12.1465,
+     "max": 41.934
+    }
+   },
+   "tptsxqc-r2": {
+    "rank0": {
+     "halves": 7473,
+     "faults": 0,
+     "over_200": 0,
+     "median": 9.2568,
+     "p90": 9.2967,
+     "p99": 9.6141,
+     "max": 13.009
+    },
+    "rank1": {
+     "halves": 6029,
+     "faults": 0,
+     "over_200": 0,
+     "median": 10.2938,
+     "p90": 10.4721,
+     "p99": 10.9496,
+     "max": 13.864
+    }
+   }
+  },
+  "rss_growth_mb_while_serving": {
+   "tptsxq-r1": {
+    "rank0": 395.4,
+    "rank1": 345.5
+   },
+   "tptsxqc-r1": {
+    "rank0": 0.0,
+    "rank1": -128.0
+   },
+   "tptsxq-r2": {
+    "rank0": 315.8,
+    "rank1": 217.2
+   },
+   "tptsxqc-r2": {
+    "rank0": -128.0,
+    "rank1": 0.0
+   }
+  }
+ }
+}

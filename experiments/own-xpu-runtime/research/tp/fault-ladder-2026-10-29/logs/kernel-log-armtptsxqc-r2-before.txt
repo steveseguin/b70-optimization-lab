@@ -1,0 +1,4 @@
+# kernel-log check 'armtptsxqc-r2-before' at 2026-10-29T17:02:42-0400 (epoch 1793307762), since @1793304162; journalctl rc=0; 3 kernel lines, 0 xe/fault lines
+2026-10-29T16:30:27-04:00 steve-b70s kernel: audit: type=1400 audit(1793305827.396:389): apparmor="AUDIT" operation="userns_create" class="namespace" info="Userns create - transitioning profile" profile="unconfined" pid=1737978 comm="bwrap" requested="userns_create" target="unprivileged_userns" execpath="/usr/bin/bwrap"
+2026-10-29T16:30:27-04:00 steve-b70s kernel: audit: type=1400 audit(1793305827.397:390): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=1737979 comm="bwrap" capability=8  capname="setpcap"
+2026-10-29T16:30:27-04:00 steve-b70s kernel: audit: type=1400 audit(1793305827.397:391): apparmor="DENIED" operation="capable" class="cap" profile="unprivileged_userns" pid=1737979 comm="bwrap" capability=12  capname="net_admin"
