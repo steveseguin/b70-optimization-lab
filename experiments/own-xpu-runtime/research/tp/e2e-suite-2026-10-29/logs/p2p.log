@@ -1,0 +1,62 @@
+=== p2p pairs start 2026-10-29T01:28:36-04:00 pid 1027211 affinity 0-3,16-19
+[klog 23-27-before] since @1793248116: 0 lines, 0 xe/fault lines
+--- pair 23-27: A=0000:23:00.0 B=0000:27:00.0 ZE_AFFINITY_MASK=0,1
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:27:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 158.1 ns/iter, host-USM flag poll 1017.9 ns/iter; caps ping0 1264744 ping 126474 chain 126474 gate 392967
+[kernel-log calibration] since @1793251716: clean
+smoke 4096 B, 1 round trip: wall 586.7 us, mismatches A 0 B 0, timeouts A 0 B 0, rounds 1/1, spins A 74 B 98 -> OK
+[kernel-log smoke ping] since @1793251716: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/results/p2p-23-27-smoke.json rc=0
+smoke 23-27 rc=0
+[klog 23-27-after-smoke] since @1793251716: 0 lines, 0 xe/fault lines
+smoke gate: PASS {"A": "0000:23:00.0", "B": "0000:27:00.0", "name": "Intel(R) Arc(TM) Pro B70 Graphics", "driver": "1.15.38308+1", "peer_access_A_to_B": 1, "peer_access_B_to_A": 1, "peer_atomics_A_to_B": 0, "peer_atomics_B_to_A": 0, "enable_A_to_B": "ok", "enable_B_to_A": "ok"}
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:27:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 117.5 ns/iter, host-USM flag poll 1010.9 ns/iter; caps ping0 1701538 ping 170153 chain 170153 gate 395701
+[kernel-log calibration] since @1793251716: clean
+work calibration: 38.051 ns per loop iteration -> work=315 (~12.0 us per kernel)
+[kernel-log work calibration] since @1793251716: clean
+prescale chain 10240 B none   E=144: OK
+prescale chain 10240 B direct E=144: OK
+chain 10240 B: none 25.647 us/exchange, direct 27.221 us/exchange -> added 1.574 us (1440 exchanges per run, 3 pairs)
+[kernel-log chain10] since @1793251716: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/results/p2p-23-27-chain10.json rc=0
+chain10 23-27 rc=0
+[klog 23-27-after-chain10] since @1793251716: 0 lines, 0 xe/fault lines
+chain10 gate: PASS 8 runs {"exchanges_per_run": 1440, "pairs": 3, "none_us_per_exchange": 25.6472, "direct_us_per_exchange": 27.2207, "added_us_per_exchange": 1.57356}
+[klog 43-47-before] since @1793248117: 0 lines, 0 xe/fault lines
+--- pair 43-47: A=0000:43:00.0 B=0000:47:00.0 ZE_AFFINITY_MASK=2,3
+A 0000:43:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 241.7 ns/iter, host-USM flag poll 983.8 ns/iter; caps ping0 827420 ping 82742 chain 82742 gate 406586
+[kernel-log calibration] since @1793251717: clean
+smoke 4096 B, 1 round trip: wall 514.3 us, mismatches A 0 B 0, timeouts A 0 B 0, rounds 1/1, spins A 59 B 139 -> OK
+[kernel-log smoke ping] since @1793251717: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/results/p2p-43-47-smoke.json rc=0
+smoke 43-47 rc=0
+[klog 43-47-after-smoke] since @1793251717: 0 lines, 0 xe/fault lines
+smoke gate: PASS {"A": "0000:43:00.0", "B": "0000:47:00.0", "name": "Intel(R) Arc(TM) Pro B70 Graphics", "driver": "1.15.38308+1", "peer_access_A_to_B": 1, "peer_access_B_to_A": 1, "peer_atomics_A_to_B": 0, "peer_atomics_B_to_A": 0, "enable_A_to_B": "ok", "enable_B_to_A": "ok"}
+A 0000:43:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 116.3 ns/iter, host-USM flag poll 1019.3 ns/iter; caps ping0 1720413 ping 172041 chain 172041 gate 392426
+[kernel-log calibration] since @1793251717: clean
+work calibration: 37.572 ns per loop iteration -> work=319 (~12.0 us per kernel)
+[kernel-log work calibration] since @1793251717: clean
+prescale chain 10240 B none   E=144: OK
+prescale chain 10240 B direct E=144: OK
+chain 10240 B: none 25.918 us/exchange, direct 27.532 us/exchange -> added 1.614 us (1440 exchanges per run, 3 pairs)
+[kernel-log chain10] since @1793251717: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/results/p2p-43-47-chain10.json rc=0
+chain10 43-47 rc=0
+[klog 43-47-after-chain10] since @1793251717: 0 lines, 0 xe/fault lines
+chain10 gate: PASS 8 runs {"exchanges_per_run": 1440, "pairs": 3, "none_us_per_exchange": 25.9177, "direct_us_per_exchange": 27.5316, "added_us_per_exchange": 1.61395}
+=== p2p pairs done 2026-10-29T01:28:37-04:00

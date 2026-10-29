@@ -1,0 +1,208 @@
+--- /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan/service.py	2026-10-26 12:30:45.377635369 -0400
++++ service.py	2026-10-29 01:31:51.895376040 -0400
+@@ -6,6 +6,16 @@
+ On a GPU/kernel fault, a lost rank or a foreign holder on the target cards it
+ stops intake, sends the single cooperative stop, waits for physical drain and
+ exits. It never retries, restarts, resets a device or kills a rank.
++
++Lab copy for research/tp/e2e-suite-2026-10-29 (four-card TP2xPP2 suite), from serving/lan/service.py. Changes only:
++the unit name (SC117_LAB_UNIT, a fresh transient unit), the control parent (SC117_LAB_CONTROL_PARENT) and the gate
++evidence directory (SC117_LAB_EVIDENCE: copies of the pinned F32 state oracles; this binary's self-test record) are
++configurable; chat.py and selftest.json are read from serving/lan; each rank's cards come from the adapter's
++SC117_RANK_BDFS (a TP rank holds two cards; the monitor maps every target card to its rank and, only until both ranks
++are loaded, records instead of halting on a TP rank's enumeration-time open of the other rank's cards); --bind 127.0.0.1 opens one
++listener; the root-disk admission margin is 32 MiB above the unchanged 27 GB floor (control and rank output live on
++/dev/shm); the F32 self-test must also equal the B19 record (engine 51f32b2655cc); the TP exchange/compare JSONs of
++each request are copied to the control directory before retention removes the request directory.
+ """
+ import argparse, collections, hashlib, http.server, importlib.util, ipaddress, json, os, resource, shutil, signal, socket, subprocess
+ import re, sys, threading, time, traceback
+@@ -15,15 +25,17 @@
+ P = Path(__file__).resolve().parent
+ # A relocated copy (lab) reads the lane's shared inputs in place; at its repo location this is P.parents[1].
+ LANE = P.parents[1] if (P.parents[1] / 'operating').is_dir() else Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s')
+-CONTROL_PARENT = Path('/home/steve/own-xpu-runtime-results/sc117-lan')
++CONTROL_PARENT = Path(os.environ['SC117_LAB_CONTROL_PARENT'])
++EVID = Path(os.environ['SC117_LAB_EVIDENCE'])  # lab: gate evidence (oracle copies, this binary's self-test record)
++LAN_DIR = Path('/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/serving/lan')
++B19_SELFTEST = LAN_DIR / 'evidence/f32-selftest-51f32b2655cc0a9d.json'
+ # Rank output directories (per-token streams, RESET dumps). Must be a local filesystem: on the ntfs-3g USB mount a busy
+ # FUSE daemon stalls rank 0's per-token appends and decode drops from ~49.5 to ~40 tok/s (2026-10-25, 1 GiB dd test).
+ EVIDENCE_PARENT = Path(os.environ.get('SC117_EVIDENCE_PARENT', '/mnt/usb-models/own-xpu-runtime-results/sc117-lan'))
+-BDFS = ('0000:23:00.0', '0000:47:00.0')
+ LAN = ipaddress.ip_network('192.168.2.0/24')
+ ROOT_FLOOR = 27_000_000_000
+-ROOT_START = ROOT_FLOOR + 256 * 1024**2
+-ROOT_ONGOING = ROOT_FLOOR + 128 * 1024**2
++ROOT_START = ROOT_FLOOR + 32 * 1024**2      # lab: control and rank output on /dev/shm, nothing large on /
++ROOT_ONGOING = ROOT_FLOOR
+ EXTERNAL_FLOOR = 2 * 1024**3
+ DUMP_BYTES = (310_364_224 + 9_699_332) * (int(os.environ.get('SC117_CONTEXT', '4096')) // 4096)  # one RESET target + draft dump at 4096, scaled up as a bound
+ META_RESERVE = 64 * 1024**2
+@@ -34,7 +46,8 @@
+ INCONCLUSIVE_LIMIT = 10                       # consecutive unusable observations before halting
+ QUEUE_LIMIT = 8
+ KEY_FILE = Path('/home/steve/.config/sc117-lan/api_key')
+-UNIT = 'sc117-lan.service'
++UNIT = os.environ['SC117_LAB_UNIT']
++assert UNIT.startswith('sc117-tp-e2e-') and UNIT.endswith('.service'), UNIT
+ UNIT_PROPERTIES = {'Restart': 'no', 'SendSIGKILL': 'no', 'KillMode': 'process', 'TimeoutStopUSec': 'infinity', 'LimitAS': 'infinity'}
+ AFFINITY = [0, 1, 2, 3, 16, 17, 18, 19]
+ COORD = Path('/home/steve/own-xpu-runtime-results/coordination/chain-lanes-v1')
+@@ -55,7 +68,10 @@
+ B0_LAUNCH_B = LANE / 'recurrent-f32/operating/launch-b/evidence/device-b/review.json'
+ B0_LONGER_A = LANE / 'recurrent-f32/operating/longer-a/evidence/actual/external/prompt-00-none/request-result.json'
+ OBS = load(LANE / 'operating/observe.py', 'sc117_lan_observe')
+-CHAT = load(P / 'chat.py', 'sc117_lan_chat')
++CHAT = load(LAN_DIR / 'chat.py', 'sc117_lan_chat')
++RANK_BDFS = A.RANK_BDFS                         # lab: per-rank card tuples
++BDFS = tuple(b for r in RANK_BDFS for b in r)  # every target card
++CARD_RANK = {b: r for r, cards in enumerate(RANK_BDFS) for b in cards}
+ 
+ 
+ def utc():
+@@ -92,13 +108,14 @@
+         self.lock = threading.Lock()
+         self.first = None
+         self.identities = []
+-        self.contacts = [False, False]
++        self.contacts = {b: False for b in BDFS}
+         self.baseline = None
+         self.latest = None
+         self.samples = 0
+         self.inconclusive = 0
+         self.notes = []
+         self.wake = threading.Event()
++        self.startup = True  # lab: until both ranks reported ready (see validate)
+ 
+     def latch(self, error):
+         with self.lock:
+@@ -146,14 +163,22 @@
+         with self.lock:
+             identities = list(self.identities)
+         for h in s['inventory']['holders']:
+-            for rank, bdf in enumerate(BDFS):
++            for bdf in BDFS:
++                rank = CARD_RANK[bdf]
+                 if h['node'] in self.target[bdf]:
+                     key = (h['pid'], (s['holders'].get(str(h['pid'])) or {}).get('start_ticks'))
+                     if key not in identities and len(identities) < 2 and parent_pid(h['pid']) == os.getpid():
+                         continue  # our rank between Popen and registration
+                     require(key in identities, f"foreign holder {key} on target card {bdf}")
++                    if identities.index(key) != rank and self.startup and len(RANK_BDFS[identities.index(key)]) == 2:
++                        # lab: a TP rank's NEO opens every visible render node while it enumerates, before
++                        # ZE_AFFINITY_MASK drops the others; tolerated (recorded) only until both ranks are loaded.
++                        note = f'startup: rank {identities.index(key)} briefly held {bdf}'
++                        if note not in self.notes:
++                            self.notes.append(note)
++                        continue
+                     require(identities.index(key) == rank, f'rank contacted the wrong card {bdf}')
+-                    self.contacts[rank] = True
++                    self.contacts[bdf] = True
+             if (h['pid'], (s['holders'].get(str(h['pid'])) or {}).get('start_ticks')) in identities:
+                 require(any(h['node'] in n for n in self.target.values()), 'rank contacted a non-target card ' + h['node'])
+         vision = s['units'].get('qwen38-27b-vision', {}).get('MainPID')
+@@ -731,6 +756,9 @@
+             targets = [previous]
+         for path in targets:
+             if path.exists():
++                for f in sorted(path.glob('rank*/tp-*.json')):  # lab: TP exchange statistics / card-1 compare survive retention
++                    (self.control / 'tp-evidence').mkdir(exist_ok=True)
++                    shutil.copy2(f, self.control / 'tp-evidence' / f'{path.name}-{f.parent.name}-{f.name}')
+                 removed += sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
+                 shutil.rmtree(path)
+         return removed
+@@ -1613,7 +1641,7 @@
+     signal.signal(signal.SIGINT, on_signal)
+ 
+     handler = make_handler(state, engine, chat, key, keeper)
+-    servers = [Server((a.bind, a.port), handler), Server(('127.0.0.1', a.port), handler)]
++    servers = [Server((a.bind, a.port), handler)] + ([] if a.bind == '127.0.0.1' else [Server(('127.0.0.1', a.port), handler)])
+     for s in servers:
+         threading.Thread(target=s.serve_forever, daemon=True).start()
+     print(json.dumps(dict(listening=[f'http://{a.bind}:{a.port}', f'http://127.0.0.1:{a.port}'], control=str(control))), flush=True)
+@@ -1634,9 +1662,10 @@
+         require(not state.stop.is_set(), 'stopped before load')
+         state.detail = 'loading model on both cards'
+         engine.start()
+-        st = json.loads((P / 'selftest.json').read_text())
++        monitor.startup = False  # lab: both ranks loaded; every later hold must be on the rank's own cards
++        st = json.loads((LAN_DIR / 'selftest.json').read_text())
+         rows = []
+-        marker = P / 'evidence' / f"b0-{engine.t.plan['binary_sha256'][:16]}.json"
++        marker = EVID / f"b0-{engine.t.plan['binary_sha256'][:16]}.json"
+         mode = engine.activations()
+         status['activations'] = mode
+         save(control / 'run.json', status)
+@@ -1658,7 +1687,8 @@
+             # Exact mode differs from the BF16 engine by design. Gate: deterministic within the process, and equal to
+             # the pinned record of this binary's first F32 run (whose agreement with the exact reference is checked offline).
+             require(rows[0]['tokens'] == rows[1]['tokens'], 'F32 self-test not deterministic across RESET')
+-            record = P / 'evidence' / f"f32-selftest-{engine.t.plan['binary_sha256'][:16]}.json"
++            require(json.loads(B19_SELFTEST.read_text())['tokens'] == rows[0]['tokens'], 'F32 self-test differs from the B19 record (51f32b2655cc)')
++            record = EVID / f"f32-selftest-{engine.t.plan['binary_sha256'][:16]}.json"
+             if record.exists():
+                 require(json.loads(record.read_text())['tokens'] == rows[0]['tokens'], 'F32 self-test differs from this binary\'s pinned F32 record')
+             else:
+@@ -1688,31 +1718,30 @@
+             if ratio > 1:
+                 # Every startup at a larger context: the state must equal the 4096-context oracle, buffer by buffer,
+                 # with context-sized buffers holding the oracle's bytes as their prefix and zeros after it.
+-                base = json.loads((P / 'evidence' / 'f32-state-oracle.json').read_text())
++                base = json.loads((EVID / 'f32-state-oracle.json').read_text())
+                 seen = cross_context_state(base['state'], ring_view(f32_state, rings, 4096) if rings else f32_state, grown)
+                 differ = (split_differences(base['state'], seen, split) if split != 24 else
+                           {r: sorted(k for k in base['state'][r] if base['state'][r][k] != seen[r].get(k)) for r in base['state']})
+                 grew = {r: sum(seen[r][k] != f32_state[r][k] for k in f32_state[r]) for r in f32_state}
+-                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}-ctx{CHAT.CONTEXT}-vs4096{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
++                (EVID / f"f32-state-{engine.t.plan['binary_sha256'][:16]}-ctx{CHAT.CONTEXT}-vs4096{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
+                     dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=base['binary_sha256'], context=CHAT.CONTEXT,
+                          grown_prefix_buffers=grew, qsa_raw_rings=ring_counts, differences=differ, utc=utc()), indent=2) + '\n')
+                 require(not any(differ.values()), f"F32 state at context {CHAT.CONTEXT} differs from the 4096 oracle {base['binary_sha256'][:12]}: {differ}")
+             # Context-sized buffers (KV, pooled keys, attention scratch) change extent with the context, so each
+             # context has its own oracle; a new one is recorded once, after the self-test tokens above matched the
+             # binary's pinned record, and the 12-prompt suite must then reproduce the 4096-context outputs.
+-            oracle = P / 'evidence' / ('f32-state-oracle.json' if CHAT.CONTEXT == 4096 else f'f32-state-oracle-ctx{CHAT.CONTEXT}.json')
++            oracle = EVID / ('f32-state-oracle.json' if CHAT.CONTEXT == 4096 else f'f32-state-oracle-ctx{CHAT.CONTEXT}.json')
+             if rings:  # compare (and record) as linear buffers of this context
+                 f32_state = ring_view(f32_state, rings, CHAT.CONTEXT)
+             if oracle.exists():
+                 want = json.loads(oracle.read_text())
+                 differ = (split_differences(want['state'], f32_state, split) if split != 24 else
+                           {r: sorted(k for k in want['state'][r] if want['state'][r][k] != f32_state[r].get(k)) for r in want['state']})
+-                (P / 'evidence' / f"f32-state-{engine.t.plan['binary_sha256'][:16]}{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
++                (EVID / f"f32-state-{engine.t.plan['binary_sha256'][:16]}{'' if split == 24 else f'-split{split}'}.json").write_text(json.dumps(
+                     dict(binary_sha256=engine.t.plan['binary_sha256'], oracle_binary_sha256=want['binary_sha256'], differences=differ, utc=utc()), indent=2) + '\n')
+                 require(not any(differ.values()), f"F32 decode state differs from the oracle binary {want['binary_sha256'][:12]}: {differ}")
+-            else:
+-                save(oracle, dict(binary_sha256=engine.t.plan['binary_sha256'], selftest='selftest.json prompt, 32 tokens MTP, after RESET',
+-                                  state=f32_state, utc=utc()))
++            else:  # lab: never record a new oracle (a gate built from the arm under test would be blind)
++                raise RuntimeError(f'lab: pinned F32 state oracle {oracle} missing')
+         rows_wanted = getattr(A, 'PREFILL_ROWS', 0)
+         if rows_wanted and mode == 'f32':
+             # Kernel-choice overrides change the arithmetic path: each combination gets its own gate.
+@@ -1728,7 +1757,7 @@
+                 overrides += f'-ctx{CHAT.CONTEXT}'
+             if len(overrides) > 120:  # long switch lists: keep the file name bounded, the hash still keys the gate
+                 overrides = '-ov' + hashlib.sha256(overrides.encode()).hexdigest()[:16]
+-            marker = P / 'evidence' / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
++            marker = EVID / f"prefill-{engine.t.plan['binary_sha256'][:16]}-rows{rows_wanted}{overrides}.json"
+             if not marker.exists():
+                 state.detail = f'one-time batched-prefill gate ({rows_wanted} rows): tokens, guesses and persistent state vs token-by-token'
+                 gate = prefill_gate(engine, rows_wanted)
+@@ -1753,12 +1782,12 @@
+                 state.detail = 'session compatibility gate: earlier builds\' canaries restored and continued vs fresh'
+                 with engine.lock:
+                     compat = session_compat_gate(engine, st['prompt_tokens'])
+-                (P / 'evidence' / f"session-compat-{engine.t.plan['binary_sha256'][:16]}.json").write_text(json.dumps(compat, indent=1) + '\n')
++                (EVID / f"session-compat-{engine.t.plan['binary_sha256'][:16]}.json").write_text(json.dumps(compat, indent=1) + '\n')
+                 status['session_compat'] = dict(accepted=compat['accepted'], results=[dict(build=r['build'], passed=r['passed']) for r in compat['results']])
+             elif engine.sessions is not None:
+                 engine.sessions.settle(engine.session_identity)
+             (control / 'run.json').write_text(json.dumps(status, indent=2) + '\n')
+-        require(all(monitor.contacts), 'both rank contacts must be observed on their target cards')
++        require(all(monitor.contacts.values()), f'every target card must be observed held by its rank: {monitor.contacts}')
+         save(control / 'selftest-result.json', dict(passed=True, tokens=tokens, runs=rows))
+         summary = rows
+         if not state.stop.is_set():

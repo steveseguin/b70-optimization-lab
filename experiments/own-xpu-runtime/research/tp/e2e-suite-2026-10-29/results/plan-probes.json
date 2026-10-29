@@ -1,0 +1,45 @@
+{
+ "method": "OWNRT_PLAN_ONLY=1: rank 1 command of the lab adapter, exits after write_plan before device contact (rank.hpp); nice 19, CPUs 0-3,16-19; card locks held",
+ "archive": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29/tp-e2e-suite-20261029/probe",
+ "probes": [
+  {
+   "probe": "a-r1-32k",
+   "arm_env": "A",
+   "rank": 1,
+   "context": 32768,
+   "split": 23,
+   "qsa_raw_ring": "off (TP excludes it)",
+   "rank1_log": "card 0 owned_bytes 31345940076 weights 30061362432 dispatch r5",
+   "owned_bytes": 31345940076,
+   "cap_bytes": 32212254720,
+   "admitted": true,
+   "failure": null
+  },
+  {
+   "probe": "c-r1-32k",
+   "arm_env": "C",
+   "rank": 1,
+   "context": 32768,
+   "split": 23,
+   "qsa_raw_ring": "off (TP excludes it)",
+   "rank1_log": "card 0 owned_bytes 31345940076 weights 30061362432 dispatch r5",
+   "owned_bytes": 31345940076,
+   "cap_bytes": 32212254720,
+   "admitted": true,
+   "failure": null
+  },
+  {
+   "probe": "c-r1-64k",
+   "arm_env": "C",
+   "rank": 1,
+   "context": 65536,
+   "split": 23,
+   "qsa_raw_ring": "off (TP excludes it)",
+   "rank1_log": "card 0 owned_bytes 32432264812 weights 30061362432 dispatch r5",
+   "owned_bytes": 32432264812,
+   "cap_bytes": 32212254720,
+   "admitted": false,
+   "failure": "planned card exceeds 30 GiB"
+  }
+ ]
+}

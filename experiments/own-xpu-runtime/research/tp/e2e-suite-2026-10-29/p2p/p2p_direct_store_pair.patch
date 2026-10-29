@@ -1,0 +1,79 @@
+--- ../../../p2p/direct-store-2026-10-28/p2p_direct_store.cpp	2026-10-28 22:11:58.697101077 -0400
++++ p2p_direct_store_pair.cpp	2026-10-29 01:27:03.848185087 -0400
+@@ -495,18 +495,21 @@
+     return rc;
+   };
+ 
+-  // Select exactly cards 0000:23:00.0 (A) and 0000:47:00.0 (B); refuse anything else.
++  // 2026-10-29 pair copy (research/tp/e2e-suite-2026-10-29): select exactly P2P_BDF_A and P2P_BDF_B; refuse anything else.
++  const char* envA = std::getenv("P2P_BDF_A"); const char* envB = std::getenv("P2P_BDF_B");
++  if (!envA || !envB) { g_halt = "P2P_BDF_A and P2P_BDF_B required"; return finish(3); }
++  const std::string wantA = envA, wantB = envB;
+   std::vector<sycl::device> gpus = sycl::device::get_devices(sycl::info::device_type::gpu);
+   sycl::device dA, dB;
+   int found = 0;
+   for (auto& d : gpus) {
+     if (!d.has(sycl::aspect::ext_intel_pci_address)) continue;
+     auto bdf = d.get_info<sycl::ext::intel::info::device::pci_address>();
+-    if (bdf == "0000:23:00.0") { dA = d; ++found; }
+-    else if (bdf == "0000:47:00.0") { dB = d; ++found; }
++    if (bdf == wantA) { dA = d; ++found; }
++    else if (bdf == wantB) { dB = d; ++found; }
+     else { std::printf("refusing: unexpected visible GPU %s\n", bdf.c_str()); g_halt = "unexpected GPU visible: " + bdf; return finish(3); }
+   }
+-  if (found != 2 || gpus.size() != 2) { g_halt = "need exactly 23:00.0 and 47:00.0 visible"; return finish(3); }
++  if (found != 2 || gpus.size() != 2) { g_halt = "need exactly " + wantA + " and " + wantB + " visible"; return finish(3); }
+   const bool acc_ab = dA.ext_oneapi_can_access_peer(dB, sycl::ext::oneapi::peer_access::access_supported);
+   const bool acc_ba = dB.ext_oneapi_can_access_peer(dA, sycl::ext::oneapi::peer_access::access_supported);
+   const bool atom_ab = dA.ext_oneapi_can_access_peer(dB, sycl::ext::oneapi::peer_access::atomics_supported);
+@@ -600,7 +603,7 @@
+     if (!kernel_log_clean("smoke ping")) return finish(11);
+     return finish(p.ok ? 0 : 10);
+   }
+-  if (mode != "main") { g_halt = "unknown mode"; return finish(2); }
++  if (mode != "main" && mode != "chain10") { g_halt = "unknown mode"; return finish(2); }
+   {  // calibrate the emulated layer work on card A alone (no peer access): one producer launch, two loop lengths
+     auto timed = [&](u32 w) {
+       auto t0 = clk::now();
+@@ -619,8 +622,40 @@
+     if (!kernel_log_clean("work calibration")) return finish(11);
+   }
+ 
+-  const u32 sizes[4] = {4096, 10240, 40960, 163840};
+   u32 run_id = 0;
++  if (mode == "chain10") {  // 2026-10-29: 10 KB chain only (pre-scale 1 token, then tokens x reps timed none/direct)
++    j.arr("chain10");
++    for (u32 v : {V_NONE, V_DIRECT}) {
++      auto r = run_chain(A, B, hostflag, v, 10240, 1, ++run_id, caps);
++      chain_json(j, "prescale", r);
++      std::printf("prescale chain 10240 B %-6s E=%u: %s\n", vname(v), r.ex, r.ok ? "OK" : "FAIL");
++      if (!r.ok) ++bad;
++      if (!g_halt.empty()) break;
++    }
++    std::vector<double> tn, tv;
++    u32 ex = 0;
++    for (u32 r = 0; r < reps && !bad && g_halt.empty(); ++r) {
++      for (u32 v : {V_NONE, V_DIRECT}) {
++        auto res = run_chain(A, B, hostflag, v, 10240, tokens, ++run_id, caps);
++        chain_json(j, "timed", res);
++        if (!res.ok) ++bad;
++        ex = res.ex;
++        (v == V_NONE ? tn : tv).push_back(res.dev_s);
++      }
++    }
++    j.aclose();
++    if (ex && !tn.empty() && !tv.empty()) {
++      const double pn = median(tn) * 1e6 / ex, pv = median(tv) * 1e6 / ex;
++      std::printf("chain 10240 B: none %.3f us/exchange, direct %.3f us/exchange -> added %.3f us (%u exchanges per run, %zu pairs)\n",
++                  pn, pv, pv - pn, ex, tv.size());
++      j.open("chain10_summary").ku("exchanges_per_run", ex).ku("pairs", tv.size()).kv("none_us_per_exchange", pn)
++          .kv("direct_us_per_exchange", pv).kv("added_us_per_exchange", pv - pn).close();
++    }
++    if (!check_async()) return finish(13);
++    if (!kernel_log_clean("chain10")) return finish(11);
++    return finish(bad ? 10 : (g_halt.empty() ? 0 : 12));
++  }
++  const u32 sizes[4] = {4096, 10240, 40960, 163840};
+   // ---- phase 1: pre-scale (all sizes once, small) -- must be perfectly clean before scaling up
+   j.arr("prescale_ping");
+   for (u32 b : sizes) {
