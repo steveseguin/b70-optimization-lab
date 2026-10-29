@@ -13,7 +13,8 @@ START = '<!-- BEGIN GENERATED FEATURED PICKS -->'
 END = '<!-- END GENERATED FEATURED PICKS -->'
 PROFILE_DIR = 'data/profiles/2026-10-10/'
 SC117_SERVICE = 'experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json'
-SC117_TP_ARMS = 'experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/results/arm-{}/suite.json'
+SC117_TP_ARMS = 'experiments/own-xpu-runtime/research/tp/target-head-split-2026-10-29/results/{}/suite.json'
+SC117_TP_BEST = ['arm-tpts', 'repeat/arm-tpts-r1', 'repeat/arm-tpts-r2']
 
 
 def read(path):
@@ -301,17 +302,20 @@ def host_ram_gib(catalog, package_id):
 
 
 def render(catalog):
-    four, two = read(SC117_TP_ARMS.format('tp')), read(SC117_TP_ARMS.format('two'))
-    for arm in (four, two):
+    fours = [read(SC117_TP_ARMS.format(arm)) for arm in SC117_TP_BEST]
+    two = read(SC117_TP_ARMS.format('arm-two'))
+    for arm in fours + [two]:
         assert arm['prompts'] == 12 and all(row['cached_tokens'] == 0 for row in arm['rows'])
-    # Same binary on both arms; the banner shows the exact four-card result next to its two-card control.
-    assert [r['output_sha256'] for r in four['rows']] == [r['output_sha256'] for r in two['rows']]
-    rate, base = f"{four['median_decode_tok_s']:.2f}", f"{two['median_decode_tok_s']:.2f}"
+        # Same binary on every arm; outputs must match the two-card control exactly.
+        assert [r['output_sha256'] for r in arm['rows']] == [r['output_sha256'] for r in two['rows']]
+    rates = sorted(arm['median_decode_tok_s'] for arm in fours)
+    rate = f"{rates[0]:.2f}–{rates[-1]:.2f}"
+    base = f"{two['median_decode_tok_s']:.2f}"
     out = [START, '''<section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
     <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use a tested two-card recipe; our own engine also has a research layout with two target cards plus a draft card. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video; our own engine runs SC117 Flash-Next with a 262K context.</p>
-    <p class="research-links native-result-link"><span class="status research">Our own engine</span><a href="own-runtime.html#current-sc117">SC117 Flash-Next IQ3_S on four B70s: ''' + rate + ''' tok/s</a><span>Each layer split exactly across two cards; the same build on two cards: ''' + base + ''' tok/s, identical outputs. Lab observation, 12 cold prompts, 64K context. <a href="models/sc117-iq3s-b70-research-draft-20261028.html">Expert research recipe</a>; no installer yet.</span></p>
+    <p class="research-links native-result-link"><span class="status research">Our own engine</span><a href="own-runtime.html#current-sc117">SC117 Flash-Next IQ3_S on four B70s: ''' + rate + ''' tok/s</a><span>Each layer split exactly across two cards; the same build on two cards: ''' + base + ''' tok/s, identical outputs. Three fresh servers, 12 cold prompts, 64K context. <a href="models/sc117-iq3s-b70-research-draft-20261028.html">Expert research recipe</a>; no installer yet.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>''']
     for group_id, title, picks in groups(catalog):
