@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 29, about 08:00 — fresh-server repeat confirms both head splits: 74.44 vs 73.04 tok/s, exact.**
+- Four more servers (TP, both splits, TP, both splits), same binary `b7786ad42675`, 64K. Both splits win both pairs
+  (+2.0%, +1.8%), and they are faster on every prompt in every pair (48 of 48). Servers of the same setup differ by about 1%.
+- All 5,965 outputs equal B19 on all six servers.
+- Recommended four-card service flags: the TP set plus `OWNRT_TARGET_HEAD_SPLIT=1 OWNRT_DRAFT_HEAD_SPLIT=1` (arm `tpts`).
+  Moving `sc117-lan` to four cards is the owner's call. Sessions and continuation are still refused under TP.
+  [Result](experiments/own-xpu-runtime/research/tp/target-head-split-2026-10-29/RESULT.md) (section 6).
+
 **October 29, about 07:00 — both head splits: four cards reach 74.66 tok/s exact at 64K (two cards 66.42).**
 - New opt-in `OWNRT_TARGET_HEAD_SPLIT=1` (engine `b7786ad42675`): rank 1 splits the target head's vocabulary across its two
   cards. Each card scores half the rows, then the two best guesses are merged (lowest index wins ties).

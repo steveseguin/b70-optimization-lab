@@ -1,0 +1,245 @@
+{
+ "b19": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json",
+ "servers": {
+  "tp-r1": {
+   "median": 72.62395944304339,
+   "mean": 73.25475590810578,
+   "min": 70.39661960866205,
+   "max": 77.77873825760119,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  },
+  "tpts-r1": {
+   "median": 74.07273121449495,
+   "mean": 74.54332267434285,
+   "min": 71.79141622491332,
+   "max": 78.52482327722461,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  },
+  "tp-r2": {
+   "median": 73.45968134842964,
+   "mean": 73.4710463458852,
+   "min": 70.44796736168577,
+   "max": 77.5909377260416,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  },
+  "tpts-r2": {
+   "median": 74.80041530144953,
+   "mean": 75.05241564901303,
+   "min": 71.94257705535121,
+   "max": 78.92057153276141,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  },
+  "tp-r0": {
+   "median": 72.99437030618623,
+   "mean": 73.36764711356278,
+   "min": 70.57427450204618,
+   "max": 77.40886195135266,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  },
+  "tpts-r0": {
+   "median": 74.66185927737709,
+   "mean": 74.94535151858318,
+   "min": 72.04762081101666,
+   "max": 78.93789084607413,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965
+  }
+ },
+ "configurations": {
+  "tp": {
+   "repeat_servers": [
+    "tp-r1",
+    "tp-r2"
+   ],
+   "mean_of_repeat_medians": 73.04182039573652,
+   "all_servers": [
+    "tp-r0",
+    "tp-r1",
+    "tp-r2"
+   ],
+   "mean_of_all_medians": 73.02600369921976
+  },
+  "tpts": {
+   "repeat_servers": [
+    "tpts-r1",
+    "tpts-r2"
+   ],
+   "mean_of_repeat_medians": 74.43657325797224,
+   "all_servers": [
+    "tpts-r0",
+    "tpts-r1",
+    "tpts-r2"
+   ],
+   "mean_of_all_medians": 74.51166859777386
+  }
+ },
+ "pairs": {
+  "tpts-r1/tp-r1": {
+   "median_ratio": 1.0199489504918522,
+   "per_prompt_median": 1.018394807612172,
+   "per_prompt_range": [
+    1.0048744670212277,
+    1.0272821639347947
+   ],
+   "prompts_faster": 12,
+   "per_prompt": {
+    "incident-retrospective": 1.0127,
+    "code-review": 1.025,
+    "customer-email": 1.0192,
+    "sql-debugging": 1.0049,
+    "release-plan": 1.011,
+    "benchmark-analysis": 1.0107,
+    "architecture-tradeoff": 1.0255,
+    "bug-report-synthesis": 1.0215,
+    "technical-guide": 1.0166,
+    "risk-register": 1.0176,
+    "performance-hypotheses": 1.0273,
+    "decision-memo": 1.0198
+   }
+  },
+  "tpts-r2/tp-r2": {
+   "median_ratio": 1.0182512900738108,
+   "per_prompt_median": 1.0218914709739146,
+   "per_prompt_range": [
+    1.014684381649731,
+    1.0268509486494166
+   ],
+   "prompts_faster": 12,
+   "per_prompt": {
+    "incident-retrospective": 1.0147,
+    "code-review": 1.0185,
+    "customer-email": 1.0222,
+    "sql-debugging": 1.0171,
+    "release-plan": 1.0258,
+    "benchmark-analysis": 1.0246,
+    "architecture-tradeoff": 1.0196,
+    "bug-report-synthesis": 1.0244,
+    "technical-guide": 1.0269,
+    "risk-register": 1.022,
+    "performance-hypotheses": 1.0218,
+    "decision-memo": 1.0212
+   }
+  },
+  "tpts-r1/tp-r2": {
+   "median_ratio": 1.0083453923950136,
+   "per_prompt_median": 1.014070849641807,
+   "per_prompt_range": [
+    1.0057855507014481,
+    1.0220635364857846
+   ],
+   "prompts_faster": 12,
+   "per_prompt": {
+    "incident-retrospective": 1.0058,
+    "code-review": 1.0201,
+    "customer-email": 1.0143,
+    "sql-debugging": 1.0073,
+    "release-plan": 1.0131,
+    "benchmark-analysis": 1.0154,
+    "architecture-tradeoff": 1.0221,
+    "bug-report-synthesis": 1.0198,
+    "technical-guide": 1.0136,
+    "risk-register": 1.0138,
+    "performance-hypotheses": 1.0109,
+    "decision-memo": 1.0191
+   }
+  },
+  "tpts-r0/tp-r0": {
+   "median_ratio": 1.0228440763883067,
+   "per_prompt_median": 1.022841290454085,
+   "per_prompt_range": [
+    1.0035597205180757,
+    1.0332323484658543
+   ],
+   "prompts_faster": 12,
+   "per_prompt": {
+    "incident-retrospective": 1.0208,
+    "code-review": 1.0258,
+    "customer-email": 1.0254,
+    "sql-debugging": 1.0173,
+    "release-plan": 1.0266,
+    "benchmark-analysis": 1.0036,
+    "architecture-tradeoff": 1.0256,
+    "bug-report-synthesis": 1.0332,
+    "technical-guide": 1.0195,
+    "risk-register": 1.016,
+    "performance-hypotheses": 1.0249,
+    "decision-memo": 1.0205
+   }
+  }
+ },
+ "drift": {
+  "tp-r2/tp-r1": {
+   "median_ratio": 1.0115075232994104,
+   "per_prompt_median": 1.003154993271288,
+   "per_prompt_range": [
+    0.9953505498262099,
+    1.016204173769379
+   ]
+  },
+  "tp-r1/tp-r0": {
+   "median_ratio": 0.9949254872452616,
+   "per_prompt_median": 0.997287258145654,
+   "per_prompt_range": [
+    0.989753203080667,
+    1.0076305892436819
+   ]
+  },
+  "tp-r2/tp-r0": {
+   "median_ratio": 1.0063746154709137,
+   "per_prompt_median": 1.0023140084750644,
+   "per_prompt_range": [
+    0.9869644810375543,
+    1.0077153936352987
+   ]
+  },
+  "tpts-r2/tpts-r1": {
+   "median_ratio": 1.0098239132677234,
+   "per_prompt_median": 1.0084361386859158,
+   "per_prompt_range": [
+    0.997560334108946,
+    1.0130341368718274
+   ]
+  },
+  "tpts-r1/tpts-r0": {
+   "median_ratio": 0.9921093839801998,
+   "per_prompt_median": 0.9929040592527394,
+   "per_prompt_range": [
+    0.991464737348622,
+    1.002149814678988
+   ]
+  },
+  "tpts-r2/tpts-r0": {
+   "median_ratio": 1.0018557805205157,
+   "per_prompt_median": 1.0015590442966977,
+   "per_prompt_range": [
+    0.9923402830336696,
+    1.0077019956159787
+   ]
+  }
+ },
+ "repeat_mean_ratio_tpts_vs_tp": 1.0190952642565454,
+ "all_servers_identical": true
+}

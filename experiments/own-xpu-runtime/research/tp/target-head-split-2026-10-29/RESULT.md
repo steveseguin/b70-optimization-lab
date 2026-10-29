@@ -22,8 +22,10 @@ exactly?
 - With the target head split rank 0 sets the pace again, so the draft head split now pays off. Against TP alone, both
   splits are faster on every prompt (1.004–1.033×, median 1.023×). Against the target split alone they are
   1.007–1.027× (median 1.012×). Both splits give 1.124× two cards.
-- One server per arm is not a speed verdict: back-to-back drift here is up to about 3%. Every per-prompt ratio of the
-  combined arm is above 1, but a repeat on fresh servers should confirm it.
+- **Fresh-server repeat (section 6) confirms it.** Four more servers, alternating TP and both splits: both splits win
+  both pairs (+2.0% and +1.8%, faster on 12/12 prompts in each). The means are 74.44 against 73.04 tok/s (1.019×).
+  Servers of the same configuration differ by about 1%. **Recommendation: run the four-card service with
+  `OWNRT_TARGET_HEAD_SPLIT=1` and `OWNRT_DRAFT_HEAD_SPLIT=1`** (section 6).
 
 Binary `b7786ad42675…` (build r3, [receipt](../../../engine/receipts/b7786ad42675.json)), built from `engine/src` into
 `/dev/shm/engine-build-target-head-split-20261029-r3`. Context 65536, B19 flags ([arm_env.py](arm_env.py)), F32 target.
@@ -181,10 +183,66 @@ are equal across the arms. `cached_tokens=0` everywhere.
 Files: per arm `results/arm-*/`. Raw run directories (912 files, 335,278,304 B, sha256-verified):
 `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/target-head-split-suite-20261029/`.
 
+## 6. Fresh-server repeat: both head splits win both pairs (74.44 against 73.04 tok/s)
+
+Four more lab-service launches on binary `b7786ad42675`, in the order tp-r1, tpts-r1, tp-r2, tpts-r2. Each is its own
+fresh server, not a retry ([suite_repeat.sh](suite_repeat.sh), [run_arm_repeat.sh](run_arm_repeat.sh): run_arm.sh with
+fresh unit names `sc117-tp-svc-th-rep-arm-<name>-20261029` and lock holder `sc117-tp-svc-th-rep-locks-20261029`).
+Everything else is identical to section 5: context 65536, cards, B19 flags with `NEOReadDebugKeys=1
+EnableDeferBacking=0`, `LimitNOFILE=1048576`, 256-row batched prefill, the 12-prompt suite, then the 3,490-token prompt.
+The section-5 servers tp and tpts are counted as r0 ([repeat_compare.py](repeat_compare.py),
+[results/repeat/summary.json](results/repeat/summary.json)).
+
+| Server | Median tok/s | Mean | Range | TTFT, 3,490-token prompt | Its decode tok/s | Outputs |
+|---|---:|---:|---:|---:|---:|---|
+| tp-r0 (section 5) | 72.99 | 73.37 | 70.57–77.41 | 10,367 ms | 66.47 | = B19 |
+| tp-r1 | 72.62 | 73.25 | 70.40–77.78 | 10,349 ms | 66.73 | = B19 |
+| tpts-r1 | **74.07** | 74.54 | 71.79–78.52 | 10,354 ms | 68.16 | = B19 |
+| tp-r2 | 73.46 | 73.47 | 70.45–77.59 | 10,363 ms | 66.92 | = B19 |
+| tpts-r2 | **74.80** | 75.05 | 71.94–78.92 | 10,364 ms | 68.63 | = B19 |
+| tpts-r0 (section 5) | 74.66 | 74.95 | 72.05–78.94 | 10,370 ms | 68.58 | = B19 |
+
+**Pairs, both splits against TP** (per-prompt ratio, median and range; prompts faster):
+
+| Pair | Medians | Per prompt | Faster on |
+|---|---:|---|---:|
+| tpts-r1 / tp-r1 | 1.020 | 1.018 (1.005–1.027) | 12/12 |
+| tpts-r2 / tp-r2 | 1.018 | 1.022 (1.015–1.027) | 12/12 |
+| tpts-r1 / tp-r2 (the slower split server against the faster TP server) | 1.008 | 1.014 (1.006–1.022) | 12/12 |
+| tpts-r0 / tp-r0 (section 5) | 1.023 | 1.023 (1.004–1.033) | 12/12 |
+
+- **Pair means** (repeat servers): TP 73.04, both splits 74.44 tok/s, **1.019×**. Over all three servers of each: 73.03
+  against 74.51.
+- **Drift between servers of one configuration:**
+  - TP: r2/r1 1.012 on the medians (per prompt 0.995–1.016), r1/r0 0.995, r2/r0 1.006.
+  - Both splits: r2/r1 1.010 (per prompt 0.998–1.013), r1/r0 0.992, r2/r0 1.002.
+  - So the same configuration varies by about ±1% between servers. The split gain (about 2% within each pair) is larger
+    than that, and every one of the 48 paired prompt comparisons favours the splits.
+- **Outputs:** all 5,965 ids, hashes and MTP guesses and hits equal B19 on all six servers. `cached_tokens=0`
+  everywhere. The long prompt's output hash is the same on all six (`29426ae7332a…`).
+- **Gates:** startup self-tests, state oracles and 13/13 batched-prefill cases passed on every server. Teardowns clean.
+  The kernel log was clean before, after ready, after the suite and after each server.
+- Raw run directories (922 files, 337,233,838 B, sha256-verified):
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/target-head-split-repeat-20261029/`.
+
+**Recommendation for the four-card service configuration.** Use the section-5 TP arm's flags plus
+`OWNRT_TARGET_HEAD_SPLIT=1` and `OWNRT_DRAFT_HEAD_SPLIT=1`: arm `tpts` of [arm_env.py](arm_env.py), binary
+`b7786ad42675` or a later build with the same sources.
+- The TP keys: `OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_EXPERTS=compact OWNRT_TP_GDN=heads
+  OWNRT_TP_SPLIT=.attention,.gdn.qkv`.
+- `NEOReadDebugKeys=1 EnableDeferBacking=0`, `LimitNOFILE=1048576`, ranks on 23+27 / 43+47, split 23, context 65536,
+  256-row batched prefill.
+- Keep the default split points (draft 45,824 / 45,568 rows; target 124,160 / 124,160).
+- Both flags are exact (every gate bitwise against one card; every suite output equal B19). They are about 2% faster
+  than TP alone, about 12.1% faster than two cards (74.44 against the two-card 66.42 of section 5), and they lower
+  rank 1's memory by 260 MB per card.
+- Moving the live `sc117-lan` unit to four cards stays the owner's call. Sessions, checkpoints and continuation are
+  still refused under TP.
+
 ## Next
 
-1. **Confirm on fresh servers:** repeat tp against tpts, for example tp, tpts, tp, tpts. After that, put both flags in the
-   lab service's TP arm. The `sc117-lan` switch is the owner's call; sessions and continuation are still refused under TP.
+1. **Service:** put both flags in the four-card service configuration (section 6). The `sc117-lan` switch is the owner's
+   call; sessions and continuation are still refused under TP.
 2. **Rank 0 now sets the pace, by about 0.15 ms.** Next on rank 0, from the draft profile
    ([draft-split-2026-10-29](../draft-split-2026-10-29/RESULT.md), section 1): the draft's large GEMVs (qsa.qgate
    122 µs, attention output 83, experts 72 + 50, merges 52 + 36). Splitting them by rows across rank 0's two cards
@@ -201,6 +259,7 @@ Files: per arm `results/arm-*/`. Raw run directories (912 files, 335,278,304 B, 
   [plan_probe.py](plan_probe.py), [lab/](lab/) (the adapter passes the split keys to TP ranks), launch JSONs
   `rank{0,1}-launch-c65536-b7786ad42675.json`.
 - Suite: [run_arm.sh](run_arm.sh), [suite_chain.sh](suite_chain.sh), [suite_extra.sh](suite_extra.sh),
+  [suite_repeat.sh](suite_repeat.sh), [run_arm_repeat.sh](run_arm_repeat.sh), [repeat_compare.py](repeat_compare.py),
   [compare.py](compare.py) (ratios for every split arm), [trace_summary.py](trace_summary.py), [lab/](lab/).
 - Evidence: [evidence/](evidence/) (per run: summary, target state hashes for the gate runs, split, exchange and
   card-compare statistics; CPU plan probes), [results-gate.json](results-gate.json), [results-timing.json](results-timing.json),
