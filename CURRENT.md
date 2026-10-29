@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 29, about 05:00 — rank 0's draft head split across its two cards: exact, but no speed gain (73.26 vs 73.39 tok/s).**
+- New opt-in `OWNRT_DRAFT_HEAD_SPLIT=1` (engine `46891d491b08`): rank 0's MTP draft head is split by vocabulary rows
+  across its two TP cards, then the two best guesses are merged (lowest index wins ties). The draft drops from 1.32 to
+  1.16 ms. Bitwise equal to one card (1029/1029 target, 71/71 draft); the default path equals the previous binary.
+- 12-prompt suite at 64K, same binary: 73.26 tok/s with the split, 73.39 without, 66.37 on two cards. All outputs equal B19.
+- The trace shows rank 1's half (about 11.1 ms) sets the pace, not rank 0. So a faster draft cannot help. The flag stays
+  off. On one long prompt the split arm was 2.9% slower, with no known cause.
+- Moving the layer split to 24 only flips the imbalance, so it stays at 23. Next: split the target head on rank 1.
+  [Result](experiments/own-xpu-runtime/research/tp/draft-split-2026-10-29/RESULT.md).
+
 **October 29, later — four-card TP at 64K with batched prompt reading: 73.18 vs 66.39 tok/s, outputs identical.**
 - The three gaps from the e2e suite are closed in the lab service, on engine `0702b5a9cd78`:
   - TP ranks' per-card teardowns are accepted.

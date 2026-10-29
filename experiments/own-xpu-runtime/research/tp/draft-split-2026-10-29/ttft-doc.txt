@@ -1,0 +1,134 @@
+# Current Workspace State
+
+**October 26 — B19 GDN candidate built and independently reproduced; service gates pending.**
+- `OWNRT_GDN_PREP=1`, engine `51f32b2655cc`: card-43 interleaved median 10.875 → 10.673 ms per rank-0 half;
+  canonical card-47 reproduction 10.867 → 10.708. Every comparison matched all 1,029 target and 71 draft buffers and
+  all guesses; zero GPU faults. Independent code review found no defect.
+- Q6_K GDN qkv WG64 and IQ4_NL packed-down SG16 both stayed exact but were not material wins and are dropped.
+- Hosting remains stopped. Card 27 is finishing Q8 attention; cards 23 and 47 are free. B19's two-rank startup will
+  run when the remaining lab engine drains and the 98.8 GB admission floor can pass. At most three rank-0 lab engines
+  may be resident together; a fourth OOMed during load before device contact.
+  [GDN result](experiments/own-xpu-runtime/research/rank0-gdn-c43/RESULT.md).
+
+**October 26, 18:00 EDT — B18 measured 65.67 tok/s exact; hosting stopped for four-card optimization.**
+- Engine `728c70b3eec6`: rank-0 raw draft head, BF16 draft QSA attention, packed FP8 draft experts and four-stream
+  hidden merge. Every output id/hash and all MTP hits match B17.
+- Gates passed: 64K and 4096 oracles zero differences on both ranks; prefill 13/13; long/short continuation; prior-build
+  session compatibility. Suite 64.01 → 65.67 tok/s (+2.6%).
+- The owner authorized using all four cards and stopping hosting. `sc117-lan` is now stopped cleanly. Rank-0 lab lanes
+  own cards 23, 27, 43 and 47 independently; do not launch another job on a card without its lane owner's handoff.
+- Next: integrate only bitwise-exact interleaved winners. Active lanes: Q6_K GDN qkv (23), Q8_0 attention (27), GDN
+  recurrence (43), IQ4_NL expert down (47). The draft attention-output scheduling lever closed negatively: its corrected
+  form was bitwise exact but slower (11.12 vs 10.73 ms per rank-0 half), so it is not in B18.
+
+**October 26, 16:30 EDT — SC117 service on engine `96473c90783c`: 64.01 tok/s exact; decode at 10.7K 64.9 tok/s.**
+- `OWNRT_DECODE_NEXT2=1`: IQ3_XXS gate/up, four elements per item. Also HC gate and BF16 split rows.
+- Gates passed.
+- Suite since last night: 47.97 → 64.01 tok/s (+33%), every step bitwise exact.
+- Rank 0 now sets the pace. The next lever is a rank-0 profile; rank 0 cannot run in the lab driver.
+  [Result](experiments/own-xpu-runtime/research/decode-next2/RESULT.md).
+
+**October 26, 15:05 EDT — SC117 service on engine `ef3a2665ffe5`: 62.20 tok/s exact; decode at 10.7K 63.1 tok/s.**
+- `OWNRT_DECODE_NEXT=1`: packed Q8_0 shexpdown, Q6_K block rows, four-lane HC mix.
+- All gates passed.
+- Suite tonight: 47.97 → 62.20 tok/s (+29.7%), every step exact.
+- Lesson from the profile: fusions that reduce thread count win in the device profile but lose end to end. Accept a
+  lever only on interleaved end-to-end A/B runs.
+  [Result](experiments/own-xpu-runtime/research/decode-next/RESULT.md).
+
+**October 26, 12:50 EDT — SC117 service on engine `25b3f7542cad`, split 23/25 at 64K: 60.52 tok/s exact.**
+- Rank-1 storage lets the faster split hold 64K context:
+  - the `qsa.raw` ring;
+  - packed prefill shadows.
+- Rank 1 now uses 32.19 of 32.21 GB.
+- Gates passed. The service's oracle check zero-extends the rings.
+- Suite 58.62 → 60.52 tok/s; decode at 10.7K 61.6 tok/s; 10.7K prompt 48 s.
+- `OWNRT_DRAFT_HEAD_RAW` (rank 0, about −0.19 ms per draft step) is built but off until it has a device check.
+- Tonight's full progression, suite median at 64K: 47.97 → 60.52 tok/s (+26%), every step bitwise exact.
+  [split23](experiments/own-xpu-runtime/research/split23/RESULT.md).
+
+**October 26, 12:00 EDT — SC117 service on engine `0efa50e4c5ee`: 58.62 tok/s exact.**
+- Raw-size dense Q6_K/Q8_0 weights (`OWNRT_DENSE_RAW=1`): identical values; the load-time element check is on.
+- VRAM: rank 1 −611 MB, rank 0 −278 MB.
+- Suite 56.96 → 58.62 tok/s; decode at 10.7K 59.5 tok/s; 10.7K prompt 49 s.
+- Rank 0 (the draft plus 24 layers) is the decode bottleneck now: about 13.3 vs 12.1 ms per position before this
+  change.
+- Split 23 at 64K still misses rank 1's cap by about 145 MB (plan).
+- Next: rank-0 levers (raw draft head, draft chain) and finding the 145 MB for split 23.
+  [Result](experiments/own-xpu-runtime/research/dense-raw/RESULT.md).
+
+**October 26, 10:45 EDT — SC117 service on engine `5e44953236cc`: 56.96 tok/s exact (+15.4%), prompt reading 1.45× faster.**
+- Three merged exact lab wins:
+  - decode experts V2;
+  - dense decode GEMVs V2;
+  - expert-grouped prefill at 256-row chunks (`SC117_PREFILL_ROWS=256`).
+- Gates: 64K oracle and vs-4096 zero differences on both ranks; prefill 13/13 at 256 rows; continuation passed.
+- Suite exact: 49.38 → 56.96 tok/s. 10.7K test, ids identical: decode 57.9 tok/s; prompt read 71 → 49 s.
+- The first start refused cleanly: the service-path prefill caps were still 64. Fixed in `prefill_wire.hpp` and
+  `native_controller.hpp`. [Note](experiments/own-xpu-runtime/research/merge-b13/README.md).
+- Parked sessions from earlier builds were not carried over: the prefill-row change alters the session layout key.
+
+**October 26, ~10:00 EDT — SC117 service restored at the owner's request.**
+- The fault-guard baseline was re-recorded after a fresh check showed only the two reviewed card-27 lines.
+- Engine `1d72818cfe8c` is ready; gates passed.
+- Next: the merged three-patch build is being checked on card 27, using engine-path runs only.
+
+**October 26, 09:10 EDT — SC117 service is DOWN, waiting on the owner. A lab-card fault tripped its guard; lab results are recorded.**
+- **08:50:29:** spare card 27 logged a copy-engine page fault and engine reset during a lab microbenchmark that aborted
+  with GPU work still in flight. `sc117-lan`, on cards 23/47 with engine `1d72818cfe8c`, stopped itself cleanly, by
+  design.
+- **Probe:** one bounded four-card health probe passed, with no fault lines during it.
+- **Why the service is still down:** it refuses to start because the boot's fault list now has the two reviewed
+  card-27 lines beyond the recorded baseline. Re-recording that baseline was blocked as a safety-guard change, so it
+  is the owner's call.
+  - Steps to restore: [incident README](experiments/own-xpu-runtime/research/incidents/2026-10-26-card27-bcs-fault/README.md).
+    Check the fault list, re-record the baseline, then run `service-cycle.sh 1d72818cfe8c restore`.
+  - `engine/src` is unchanged, so that receipt still starts.
+- **All lab GPU work is halted.** A second fault on this boot goes to the owner.
+- **Lab results ready to gate after the restore** (rank 1 on card 27, bitwise exact against the reference build):
+  - Decode routed experts, `OWNRT_EXPERTS_V2=1`: rank-1 half 16.74 → 15.53 ms (−7.2%). It also reads the error flag
+    once per group in norms, gather and route.
+    [Result](experiments/own-xpu-runtime/research/decode-experts/RESULT.md).
+  - Dense decode GEMVs, `OWNRT_DENSE_DECODE_V2=1`: rank-1 half 16.54 → 15.11 ms (single runs). The 300/30K and M=2
+    gates were not run because of the stop.
+    [Result](experiments/own-xpu-runtime/research/dense-decode/RESULT.md).
+  - Expert-grouped prefill, `OWNRT_PREFILL_EXPERTS=1` at 256-row chunks: rank-1 4096-row prompt 26.7 → 18.0 s
+    (1.48×). Rank 0's memory at 256 rows is not checked yet.
+    [Result](experiments/own-xpu-runtime/research/prefill-experts/RESULT.md).
+
+**October 26, 08:15 EDT — SC117 service on engine `1d72818cfe8c`: exact faster QSA select; suite 49.38 tok/s.**
+- `OWNRT_SELECT_FAST=1`: rank-1 select 76.4 → 19.2 µs per layer at a 4K prompt (90.7 → 27.4 at 30K), same ids.
+- Gates passed; the session compat gate accepted the three earlier builds. Suite exact 49.38 tok/s.
+- 10.7K test: decode 50.2 tok/s, prompt read 71 s, ids identical.
+- Lab agents on card 27: exact decode expert GEMVs (plus the generic kernels' per-item guard), and exact
+  expert-grouped prefill.
+
+**October 26, 07:10 EDT — SC117 service on engine `718a59eff64f`: faster exact attention and prefill; sessions survive engine upgrades.**
+- **Decode** (exact QSA attention, `OWNRT_ATTN_HEADS=1 OWNRT_ATTN_COMBINE2=1`):
+  - one work-group per KV head and tile for all 12 query heads;
+  - the guard is read once per group (a per-lane device-scope atomic load had serialized the passes);
+  - rank-1 attention 1446 → 263 µs per token;
+  - at 10.7K context, decode is 45.9 → 49.2 tok/s; the suite is 49.02 tok/s.
+- **Prompt reading** (exact dense weight reuse, `OWNRT_PREFILL_REUSE2=1`):
+  - a 10.7K prompt now reads in 71.6 s, against 107.5 s at the start of the night;
+  - rank-1 dense prefill is 3.52 → 1.10 ms per row.
+- Every deploy passed the gates:
+  - F32 oracle at 64K and against the 4096 oracle, zero differences;
+  - prefill 13/13 (batched equals token-by-token, full state, both ranks);
+  - continuation passed;
+  - suite ids, text and MTP hits identical.
+- **Sessions across builds, verified on the device:**
+  - B10 and B11 each restored the previous builds' canaries and matched a fresh read (tokens, guesses, full state).
+  - A 2,139-token conversation parked by B9, held only in the RAID archive, was recalled and restored into B10.
+    It matched a fresh read token for token.
+- 53K-token test at 64K on `718a59eff64f`, with ids identical to `8ed9f5cb695e`:
+  - prompt read 544 → 363 s (about 147 tok/s);
+  - decode at 53K 47.1 → 50.3 tok/s;
+  - needle found; continued equals fresh.
+- Pi 1.2.0 runs end to end through the keeper model (see `serving/lan/README.md`).
+- Lab agents on card 27 (`flock /dev/shm/card27.lock`):
+  - exact expert-grouped prefill (routed experts are now about 3.3 ms of about 7.6 ms per prefill row);
+  - exact faster QSA select (about 76 µs per layer at 4K, 277 µs at 30K).
+
+**October 26, 06:05 EDT — SC117 service: keeper verified on the device; sessions archived to the RAID and kept across engine builds.**
+- `sc117-lan` runs engine `8ed9f5cb695e`: 64K context, split 24/24, keeper

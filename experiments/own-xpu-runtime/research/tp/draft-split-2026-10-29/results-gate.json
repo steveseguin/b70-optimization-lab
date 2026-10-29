@@ -1,0 +1,166 @@
+{
+ "g-one": {
+  "tp_env": {
+   "EnableDeferBacking": "0",
+   "NEOReadDebugKeys": "1"
+  },
+  "pattern": "hmcn",
+  "steps": 16,
+  "prompt": 1100,
+  "events": {
+   "hits": 4,
+   "misses": 4,
+   "cancelled": 4,
+   "redos": 8
+  },
+  "half_ms_median": 10.6361,
+  "draft_ms_median": 1.3399,
+  "stage0_ms": 11.976,
+  "draft_ms_p10_p90": [
+   1.3344,
+   1.3791
+  ]
+ },
+ "g-tps": {
+  "tp_env": {
+   "EnableDeferBacking": "0",
+   "NEOReadDebugKeys": "1",
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "compact",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "pattern": "hmcn",
+  "steps": 16,
+  "prompt": 1100,
+  "events": {
+   "hits": 4,
+   "misses": 4,
+   "cancelled": 4,
+   "redos": 8
+  },
+  "half_ms_median": 9.3199,
+  "draft_ms_median": 1.1591,
+  "stage0_ms": 10.479,
+  "draft_ms_p10_p90": [
+   1.1533,
+   1.164
+  ],
+  "head_split": {
+   "runs": 16,
+   "card0_rows": 45824,
+   "card1_rows": 45568,
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 32,
+     "waits_that_polled": 16,
+     "max_polls": 77,
+     "poll_sum": 1080
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 32,
+     "waits_that_polled": 16,
+     "max_polls": 6022,
+     "poll_sum": 73664
+    }
+   ],
+   "card1_error": 0
+  },
+  "target_exchange_timeouts": 0,
+  "split_rows": [
+   45824,
+   45568
+  ]
+ },
+ "g-tps-x": {
+  "tp_env": {
+   "EnableDeferBacking": "0",
+   "NEOReadDebugKeys": "1",
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "compact",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "pattern": "x",
+  "steps": 16,
+  "prompt": 1100,
+  "events": {
+   "hits": 0,
+   "misses": 3,
+   "cancelled": 13,
+   "redos": 16
+  },
+  "half_ms_median": 9.3307,
+  "draft_ms_median": 1.1714,
+  "stage0_ms": 10.5021,
+  "draft_ms_p10_p90": [
+   1.1624,
+   1.1765
+  ],
+  "head_split": {
+   "runs": 16,
+   "card0_rows": 45824,
+   "card1_rows": 45568,
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 32,
+     "waits_that_polled": 16,
+     "max_polls": 76,
+     "poll_sum": 1074
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 32,
+     "waits_that_polled": 16,
+     "max_polls": 6146,
+     "poll_sum": 73280
+    }
+   ],
+   "card1_error": 0
+  },
+  "target_exchange_timeouts": 0,
+  "split_rows": [
+   45824,
+   45568
+  ]
+ },
+ "g-tp": {
+  "tp_env": {
+   "EnableDeferBacking": "0",
+   "NEOReadDebugKeys": "1",
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "compact",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "pattern": "hmcn",
+  "steps": 16,
+  "prompt": 1100,
+  "events": {
+   "hits": 4,
+   "misses": 4,
+   "cancelled": 4,
+   "redos": 8
+  },
+  "half_ms_median": 9.3292,
+  "draft_ms_median": 1.3278,
+  "stage0_ms": 10.657,
+  "draft_ms_p10_p90": [
+   1.3232,
+   1.3313
+  ],
+  "target_exchange_timeouts": 0
+ }
+}
