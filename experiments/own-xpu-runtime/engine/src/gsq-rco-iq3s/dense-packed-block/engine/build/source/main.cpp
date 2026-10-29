@@ -409,6 +409,7 @@ static Options parse(int argc, char **argv) {
   // 2026-10-25 incident: the first --tp-replicate run with OWNRT_DECODE_PROFILE=2 (profiling queues in the shared
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
   require(!a.tp_replicate||!std::getenv("OWNRT_DECODE_PROFILE"),"--tp-replicate refuses OWNRT_DECODE_PROFILE (2026-10-25 copy-engine fault)");
+  require(!a.tp_replicate||a.timing=="token","--tp-replicate refuses profiling queues (--timing token only; 2026-10-25 copy-engine fault)");
   require(a.rank>=-1 && a.rank<=1,"rank range");
   if(a.provider_only){
     require(a.rank==0&&a.cards==1&&a.gsq_packed&&a.f32_activations&&a.memory=="resident"&&a.mtp&&a.draft_rank==0&&
@@ -1078,6 +1079,9 @@ public:
   std::vector<Pending> pending;
   ownrt::Event tail=0;int tail_card=0; // tail belongs to tail_card's Device (card switches drain first)
   std::array<ownrt::Event,2> card_tails{}; // --tp-replicate: each card's last submission (no drain on card switches)
+  // OWNRT_TP_EXCHANGE=direct (2026-10-28): per-card exchange control words (ownrt::exchange_layout), zeroed at load.
+  // Cap: polls per wait (about 0.5-0.7 s at the measured 115-160 ns per poll; the xe job timeout is 5 s).
+  std::vector<Allocation> xctl;static constexpr uint32_t tp_exchange_cap=1u<<22;
   int submission_card=-1;
   uint64_t host_waits=0;
   int64_t history0=0,history1=0;
@@ -1141,8 +1145,10 @@ public:
 #endif
     profiling_ms+=ms(profiling_start);
     pending.clear();attribution.events.clear();tail=0;tail_card=0;card_tails={};
-    for(size_t c=0;c<devices.size();++c)retire_events(int(c));
+    // OWNRT_TP_THREADS: while card 1's submission thread runs, this thread never touches card 1 (rank.hpp TpWorker).
+    for(size_t c=0;c<devices.size();++c)if(!(tp_worker_running&&c==1))retire_events(int(c));
   }
+  bool tp_worker_running=false;
 
   std::ofstream argument_log;
   std::ofstream progress;
@@ -1558,6 +1564,9 @@ public:
       const size_t rope_bytes_used=size_t(p.g.context)*128;
       ropes.push_back(allocate(c,"rope-v2",rope_bytes_used,Category::weights,Lifetime::process));
       upload(c,ropes[c],0,rope_bytes.data(),rope_bytes_used);
+      if(a.tp_replicate){ // after the slab: upload() stages through slab[c]
+        xctl.push_back(allocate(c,"tp-exchange-control",ownrt::exchange_layout::bytes,Category::scratch,Lifetime::transaction));
+        const std::vector<uint8_t> zero(ownrt::exchange_layout::bytes,0);upload(c,xctl.back(),0,zero.data(),zero.size());}
       if(a.f32_activations){
         // Same authority as rope.bf16 (glibc powf/cosf/sinf, f32(pos*powf(1e7f,-2j/64))), without BF16 rounding.
         // Only positions below the admitted context are reachable; 262K retains the complete table.
@@ -1634,7 +1643,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1997,6 +2006,26 @@ public:
       require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert gather: F32 slot rows");
       auto remote=dev(c).peer_copy(dev(peer),buffers[c].at(l.inputs.at(0)).id,0,buffers[peer].at(l.outputs.at(0)).id,0,bytes);finish(c,{remote,remote,1},false);
       finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
+    } else if (l.op == "tp_xgather" || l.op == "tp_xslot") {
+      // OWNRT_TP_EXCHANGE=direct (2026-10-28): one kernel per card replaces the copy gathers (Device::exchange). Bitwise.
+      //  tp_xgather: this card's half rows (y#tp) into y at c*half here and on the peer.
+      //  tp_xslot: this card's slots (s%2==c) of the routed output into the peer's staging y#tp; then the peer's slots
+      //  from local staging into y. Both cards hold every expert; RouteMask by slot leaves the other slots to the peer.
+      const int peer=1-c;require(xctl.size()==2,"direct exchange control words");
+      const auto& y=buffers[c].at(l.outputs.at(0));ownrt::Device::ExchangeSpec s;
+      s.slot=uint32_t(l.shape.at(1));s.cap=tp_exchange_cap;s.control=xctl[c];s.peer_control=xctl[peer];s.error=buffers[c].at("error").id;
+      if(l.op=="tp_xgather"){
+        const size_t half=size_t(l.parameter)*flash::scalar_bytes(y.type);
+        s.mode=0;s.bytes=half;s.peer_dst=buffers[peer].at(l.outputs.at(0)).id;s.peer_offset=size_t(c)*half;
+        if(l.inputs.at(0)==l.outputs.at(0)){s.src=y.id;s.src_offset=size_t(c)*half;} // direct-replicated: y already whole here
+        else {s.src=buffers[c].at(l.inputs.at(0)).id;s.local_dst=y.id;s.local_offset=size_t(c)*half;}
+      } else {
+        const size_t bytes=y.n*flash::scalar_bytes(y.type);
+        require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0&&(l.parameter&2)!=0&&(l.parameter&1)==c,"direct slot exchange: F32 slot rows, by slot, own parity");
+        s.mode=1;s.src=y.id;s.bytes=bytes;s.rows=uint32_t(bytes/(size_t(p.g.top)*4));s.top=uint32_t(p.g.top);s.parity=uint32_t(c);
+        s.peer_dst=buffers[peer].at(l.inputs.at(0)).id;s.select_src=buffers[c].at(l.inputs.at(0)).id;s.select_dst=y.id;
+      }
+      auto e=dev(c).exchange(dev(peer),s);finish(c,{e,e,1},false);
     } else if (l.op == "gemv" || l.op == "routed_gemv" || l.op=="expert_gate_up") {
       linear(l);
     } else {

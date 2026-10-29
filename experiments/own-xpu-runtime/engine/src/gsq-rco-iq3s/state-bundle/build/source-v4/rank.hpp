@@ -12,6 +12,9 @@
 #include <sys/socket.h>
 #include <fcntl.h>
 #include <cerrno>
+#include <atomic>
+#include <optional>
+#include <thread>
 // Wire ABI is little-endian, fixed-width on the admitted Linux x86_64 host.
 namespace pipeline {
 constexpr size_t slot_bytes=65536, reverse_offset=2*slot_bytes+4096, probe_offset=reverse_offset+slot_bytes, shared_bytes=probe_offset+slot_bytes+64;
@@ -216,6 +219,35 @@ static void l4_capture_prepared(Engine& e,const flash::Launch& l,const Request& 
  int32_t error,position,active;std::memcpy(&error,controls[2].data(),4);std::memcpy(&position,controls[3].data(),4);std::memcpy(&active,controls[4].data(),4);require(error==0&&position==request.position&&active==1,"actual invocation control words");
  history->append(request.position,scratch,controls,metadata.str());
 }
+// OWNRT_TP_THREADS=1 (2026-10-28; --tp-replicate with OWNRT_TP_EXCHANGE=direct or nothing split): card 1's prepared
+// sites are issued by their own host thread, walking the plan in the same order; the half's thread issues card 0's.
+// No host or device event crosses cards (direct exchanges synchronise on device flags), so the two submission streams
+// are independent. While the worker runs, the half's thread never touches card 1: drain() skips its retirement and
+// card 1's tail is published only after the join. The worker never waits on a device; its join has a deadline.
+inline bool tp_threads(){static const bool on=[]{const char* v=std::getenv("OWNRT_TP_THREADS");return v&&v[0]=='1';}();return on;}
+struct TpWorker {
+ Engine& e;std::thread thread;std::atomic<bool> done{false};std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
+ TpWorker(Engine& engine,int fixture):e(engine){
+  e.tp_worker_running=true;
+  try{thread=std::thread([this,fixture]{
+   try{for(size_t i=0;i<e.p.launches.size();++i){
+     if(e.p.launches[i].card!=1||e.v3_skip_half[i])continue;const auto& site=e.issue_sites[i];if(fixture==0&&site.prefill_skip)continue;
+     for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}}
+   catch(...){error=std::current_exception();}
+   done.store(true,std::memory_order_release);});}
+  catch(...){e.tp_worker_running=false;throw;}
+ }
+ void finish(){
+  const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
+  while(!done.load(std::memory_order_acquire)){
+   if(std::chrono::steady_clock::now()>end){thread.detach();throw std::runtime_error("TP card-1 submission thread deadline (card 1 left untouched)");}
+   std::this_thread::yield();}
+  thread.join();e.tp_worker_running=false;
+  if(error)std::rethrow_exception(error);
+  if(last){e.card_tails[1]=last;e.submitted+=issued;}
+ }
+ ~TpWorker(){if(thread.joinable()){try{finish();}catch(...){}}}
+};
 static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uint8_t* shared,SpeculativeImage& image,bool prepared_inputs=false,bool corrected=false) {
  router_tie_admission(e,request);
  const auto p150_half_begin=std::chrono::steady_clock::now();
@@ -279,8 +311,12 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  // A multi-pass legacy site may be cancelled before finish() sees its last
  // event. Record each actual submission so drain still covers its whole prefix.
  e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;if(decode_profile_mode>=2&&!device_sites.empty())device_sites.back().events.push_back(event);};
+ const bool threaded=e.a.tp_replicate&&tp_threads();std::optional<TpWorker> worker;
+ if(threaded){require(e.prepared_path&&!request.speculative&&!e.a.checked&&!e.attribution.enabled&&!e.correction_exchange&&!l4_history&&!decode_profile_mode&&!e.head_export&&!e.progress_callback,"OWNRT_TP_THREADS: prepared, plain decode halves only");
+  worker.emplace(e,request.fixture);}
  try {for(auto& l:e.p.launches) {
   if(e.v3_skip_half[size_t(&l-e.p.launches.data())])continue; // packet186: moved layers run in the boundary (rank 0) or not at all (rank 1, V3)
+  if(threaded&&l.card==1)continue; // issued by TpWorker
   if(cancel_at_boundary()){candidate.cancelled=true;break;}
   const auto* ready=e.prepared_path?&e.issue_sites[size_t(&l-e.p.launches.data())]:nullptr;
   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
@@ -314,7 +350,9 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
    if(e.a.retain_steps.contains(request.fixture)){ownrt::CopyEngine copy(e.dev(0));e.tail=copy.copy(e.snapshots[0],size_t(layer)*e.stream_bytes(),e.buffers[0].at("streams").id,0,e.stream_bytes(),{});captured.at(captured_count++)=layer;}
    if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
   }
- }}catch(const CancelledLaunch&){candidate.cancelled=true;}
+ }
+ if(worker)worker->finish();
+ }catch(const CancelledLaunch&){candidate.cancelled=true;}
  catch(...){e.dev(0).before_compute={};e.dev(0).after_compute={};throw;}
  e.dev(0).before_compute={};e.dev(0).after_compute={};
  if(cancel_at_boundary())candidate.cancelled=true;
@@ -430,6 +468,13 @@ static void tp_compare(Engine& e,const fs::path& path) {
   if(e.readback(0,slot.id,bytes)!=e.readback(1,other->second.id,bytes))differ.push_back(name);}
  o<<n<<",\"differ\":[";for(size_t i=0;i<differ.size();++i)o<<(i?",":"")<<ownrt::quote(differ[i]);o<<"],\"passed\":"<<(differ.empty()?"true":"false")<<"}";
  save(path,o.str());
+ if(e.xctl.size()==2){ // OWNRT_TP_EXCHANGE=direct: per-card wait statistics (ownrt::exchange_layout header words)
+  namespace L=ownrt::exchange_layout;std::ostringstream x;x<<"{\"cap_polls\":"<<Engine::tp_exchange_cap<<",\"cards\":[";
+  for(int c=0;c<2;++c){auto raw=e.readback(c,e.xctl[size_t(c)],L::header*4);std::vector<uint32_t> w(L::header);std::memcpy(w.data(),raw.data(),raw.size());
+   x<<(c?",":"")<<"{\"abort\":"<<w[L::abort]<<",\"timeouts\":"<<w[L::timeouts]<<",\"waits\":"<<w[L::waits]<<",\"waits_that_polled\":"<<w[L::spun]
+    <<",\"max_polls\":"<<w[L::max_spin]<<",\"poll_sum\":"<<w[L::spin_sum]<<"}";}
+  x<<"]}";save(path.parent_path()/"tp-exchange.json",x.str());
+ }
 }
 static int run_rank(const Options& a) {
  using namespace pipeline;
@@ -468,16 +513,34 @@ static int run_rank(const Options& a) {
    const std::string tp_experts=[]{const char* v=std::getenv("OWNRT_TP_EXPERTS");return std::string(v?v:"");}();
    // =slot: every card holds every expert (replicated weights); the 10 slots split by position (5/5), exact.
    const bool experts=tp_experts=="1"||tp_experts=="mask"||tp_experts=="gather"||tp_experts=="slot";
-   const bool mask_routes=tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot",gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
+   // OWNRT_TP_EXCHANGE=direct (2026-10-28): each gather above becomes one kernel per card that stores this card's rows
+   // into the peer's memory and waits for the peer's flag (tp_xgather; tp_xslot for experts by slot). =copy or unset:
+   // the copy gathers above. The exchange sites get consecutive flag slots (Launch::shape[1]).
+   // =direct-replicated: exact diagnostic. Nothing is split or masked (every card computes every row and slot), and the
+   // same direct exchanges then overwrite the peer's rows with identical values, so (direct-replicated - replicated)
+   // is the in-engine cost of the exchanges alone.
+   const std::string tp_exchange=[]{const char* v=std::getenv("OWNRT_TP_EXCHANGE");return std::string(v?v:"");}();
+   require(tp_exchange.empty()||tp_exchange=="copy"||tp_exchange=="direct"||tp_exchange=="direct-replicated","OWNRT_TP_EXCHANGE must be copy, direct or direct-replicated");
+   const bool exchange_only=tp_exchange=="direct-replicated",direct=tp_exchange=="direct"||exchange_only;
+   require(!direct||!experts||tp_experts=="slot","direct exchange: experts by slot only");
+   const bool mask_routes=(tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot")&&!exchange_only,gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
    const int by_slot=tp_experts=="slot"?2:0; // carried in Launch::parameter bit 1
+   int exchange_slot=0;
+   require(!tp_threads()||direct||(roles.empty()&&!experts),"OWNRT_TP_THREADS needs OWNRT_TP_EXCHANGE=direct (no copy gathers cross threads)");
    for(const auto& l:p.launches){
-    if(split_site(l)){
+    if(exchange_only&&split_site(l)){ // full rows on both cards, then this card's half of y sent to the peer's y
+     const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
+     both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));
+     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={l.outputs.at(0)};g.outputs={l.outputs.at(0)};g.shape={R,exchange_slot};g.parameter=R/2;both.push_back(std::move(g));}
+     ++exchange_slot;
+    } else if(split_site(l)){
      const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
      const std::string y=l.outputs.at(0),part=y+"#tp";
      if(halves.insert(part).second){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==y;});
       require(it!=p.buffers.end(),"TP split output buffer");flash::Buffer b=*it;b.name=part;b.shape={R/2};p.buffers.push_back(b);}
      for(int c=0;c<2;++c){auto t=l;t.card=c;t.row_begin=c*(R/2);t.row_count=R/2;t.outputs.at(0)=part;both.push_back(std::move(t));}
-     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_gather";g.label=l.label+".tp_gather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R};g.parameter=R/2;both.push_back(std::move(g));}
+     if(direct){for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R,exchange_slot};g.parameter=R/2;both.push_back(std::move(g));}++exchange_slot;}
+     else for(int c=0;c<2;++c){flash::Launch g;g.op="tp_gather";g.label=l.label+".tp_gather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R};g.parameter=R/2;both.push_back(std::move(g));}
     } else {both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
     // OWNRT_TP_EXPERTS=1: card c computes only the slots whose expert id has parity c (routes masked after the
     // gather), and takes the other slots' expsdown rows from the peer before the unchanged in-order moe_combine.
@@ -490,11 +553,15 @@ static int run_rank(const Options& a) {
      // Push, then wait, then select: each card pushes its routed output into the peer's y#tp (own queue, no cross
      // wait); card 1 then waits for card 0's latest work (its push), card 0 for card 1's (push and wait); each selects
      // its non-owned slots from y#tp. Only true data dependencies cross cards.
+     if(direct){for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xslot";g.label=l.label+".tp_xslot";g.card=c;g.inputs={part};g.outputs={y};g.shape={0,exchange_slot};g.parameter=c|by_slot;both.push_back(std::move(g));}++exchange_slot;}
+     else {
      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_push";g.label=l.label+".tp_push";g.card=c;g.inputs={y};g.outputs={part};both.push_back(std::move(g));}
      for(int c:{1,0}){flash::Launch g;g.op="tp_wait";g.label=l.label+".tp_wait";g.card=c;both.push_back(std::move(g));}
      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_select";g.label=l.label+".tp_select";g.card=c;g.inputs={part,ids};g.outputs={y};g.parameter=c|by_slot;both.push_back(std::move(g));}
+     }
     }
    }
+   require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
   }
   engine=std::make_unique<Engine>(*weights,a,p);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();

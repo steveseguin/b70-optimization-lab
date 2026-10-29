@@ -369,6 +369,38 @@ Event Device::peer_wait(Device& peer,int queue) {
   try {auto e=backend_->peer_wait(*peer.backend_);events_.push_back(e);remember(e,q);return e;}
   catch(const std::exception& e){fault_=e.what();throw;}
 }
+Event Device::exchange(Device& peer,const ExchangeSpec& s) {
+  admit();peer.admit();if(&peer==this)throw std::invalid_argument("exchange within one device");
+  auto row=[](const Arena& owner,Allocation id,std::size_t off,std::size_t n)->void* {
+    const auto& r=owner.row(id);
+    if(!n||!r.live||r.memory!=Memory::device||off>r.bytes||n>r.bytes-off)throw std::out_of_range("exchange extent/lifetime");
+    return static_cast<std::byte*>(r.pointer)+off;
+  };
+  if(s.mode>1||!s.bytes||s.bytes%4||s.bytes/4>0xffffffffull||s.slot>=exchange_layout::slots||!s.cap)throw std::invalid_argument("exchange mode/extent/slot/cap");
+  Backend::Exchange x;x.mode=s.mode;x.slot=s.slot;x.cap=s.cap;x.words=std::uint32_t(s.bytes/4);
+  x.src=row(arena,s.src,s.src_offset,s.bytes);x.peer_dst=row(peer.arena,s.peer_dst,s.peer_offset,s.bytes);
+  if(s.mode==0) {if(s.local_dst)x.local_dst=row(arena,s.local_dst,s.local_offset,s.bytes);if(s.select_src||s.select_dst)throw std::invalid_argument("exchange mode 0 selects nothing");}
+  else {
+    if(!s.rows||!s.top||s.top>64||s.parity>1||s.src_offset||s.peer_offset||s.local_dst||std::size_t(s.rows)*s.top*4!=s.bytes)throw std::invalid_argument("exchange slot geometry");
+    if(!s.select_src||s.select_dst!=s.src||s.select_src==s.src)throw std::invalid_argument("exchange slot select: staging in, routed output out");
+    x.select_src=row(arena,s.select_src,0,s.bytes);x.select_dst=row(arena,s.select_dst,0,s.bytes);x.rows=s.rows;x.top=s.top;x.parity=s.parity;
+  }
+  x.control=static_cast<std::uint32_t*>(row(arena,s.control,0,exchange_layout::bytes));
+  x.peer_control=static_cast<std::uint32_t*>(row(peer.arena,s.peer_control,0,exchange_layout::bytes));
+  x.error=static_cast<std::uint32_t*>(row(arena,s.error,0,4));
+  const int q=std::max(queue_of(arena.row(s.src)),0);
+  if(capture_) {
+    PreparedCompute item;item.owner=this;item.generation=generation_;item.queue=q;
+    item.ids={s.src,s.peer_dst,s.control,s.peer_control,s.error};item.pointers={const_cast<void*>(x.src),x.peer_dst,x.control,x.peer_control,x.error};
+    item.submit=backend_->prepare_exchange(x);
+    const std::size_t fields[]{s.src_offset,s.local_offset,s.peer_offset,s.bytes,s.mode,s.rows,s.top,s.parity,s.slot,s.cap};
+    item.argument_bytes.resize(sizeof(Allocation)*5+sizeof fields);auto* bytes=item.argument_bytes.data();
+    std::memcpy(bytes,item.ids.data(),sizeof(Allocation)*5);std::memcpy(bytes+sizeof(Allocation)*5,fields,sizeof fields);
+    capture_->push_back(std::move(item));return capture_->size();
+  }
+  try {auto e=backend_->exchange(x);events_.push_back(e);remember(e,q);return e;}
+  catch(const std::exception& e){fault_=e.what();throw;}
+}
 Event CopyEngine::copy(Allocation dst,std::size_t off,Allocation src,std::size_t soff,std::size_t n,std::span<const Event> deps) {
   owner_.admit(); owner_.validate(deps);
   // All copies are explicitly chained; pinned-slab reuse is bounded by caller waits.

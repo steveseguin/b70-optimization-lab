@@ -6,6 +6,8 @@
 #include <sycl/sycl.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 #include <level_zero/ze_api.h>
+#include <algorithm>
+#include <cstdint>
 #include <mutex>
 #include <set>
 #include <stdexcept>
@@ -82,6 +84,59 @@ class SyclDevice final : public Backend, public OrderedQueue {
     sycl::event dep;const bool has=other.last_native(dep);
     return record(queue_->submit([&](sycl::handler& h){if(has)h.depends_on(dep);h.single_task<class PeerWaitMarker>(packet26::checked([]{}));}));
   }
+  // Kernel-direct exchange (2026-10-28; qualified in research/p2p/direct-store-2026-10-28): no cross-queue event.
+  // Phase 1: plain stores of this card's rows into the peer's memory, then a system-scope release fence. Each work-group
+  // counts itself in this site's local counter; the count gives the execution epoch (both cards run every exchange site
+  // the same number of times, in plan order), and the last group stores the epoch into the peer's flag word for this
+  // site (a plain store between system-scope fences; the cards have no peer atomics). The waiting groups (the last one
+  // in mode 0, every group in mode 1) poll their own flag word with system-scope atomic loads, at most `cap` polls; a
+  // timeout sets the engine's sticky error and this card's abort word, and later waits skip. Mode 1 then copies the
+  // peer's slots from local staging into the routed output (a fresh kernel's plain loads after the acquire fence).
+  sycl::event submit_exchange(const Exchange& x) {
+    using u32=std::uint32_t;namespace L=exchange_layout;constexpr u32 wg=256;
+    const u32 mode=x.mode,words=x.words,rows=x.rows,parity=x.parity,cap=x.cap;
+    const u32 owned=mode?((x.top+1u-parity)/2u)*rows:words,other=mode?((x.top+parity)/2u)*rows:0u;
+    const u32 groups=std::clamp<u32>((std::max(owned,other)+511u)/512u,2u,16u);
+    const u32* src=static_cast<const u32*>(x.src);u32* local=static_cast<u32*>(x.local_dst);u32* remote=static_cast<u32*>(x.peer_dst);
+    const u32* staging=static_cast<const u32*>(x.select_src);u32* out=static_cast<u32*>(x.select_dst);
+    u32* ctl=x.control;u32* error=x.error;const u32 record_at=L::header+x.slot*L::stride;
+    u32* peer_flag=x.peer_control+record_at+L::flag;
+    return queue_->submit([&](sycl::handler& h){
+      h.parallel_for<class TpDirectExchange>(sycl::nd_range<1>(std::size_t(groups)*wg,wg),packet26::checked([=](sycl::nd_item<1> it){
+        using dev_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
+        using sys_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::system,sycl::access::address_space::global_space>;
+        const u32 gid=u32(it.get_global_linear_id()),lid=u32(it.get_local_linear_id()),step=groups*wg;
+        if(mode==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i];if(local)local[i]=v;remote[i]=v;}}
+        else for(u32 i=gid;i<owned;i+=step){const u32 w=(2u*(i/rows)+parity)*rows+i%rows;remote[w]=src[w];}
+        sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        if(lid==0u){
+          const u32 old=dev_ref(ctl[record_at+L::counter]).fetch_add(1u,sycl::memory_order::acq_rel);
+          const u32 epoch=old/groups+1u;const bool last=(old+1u)%groups==0u;
+          if(last){
+            sycl::atomic_fence(sycl::memory_order::acq_rel,sycl::memory_scope::system);
+            *reinterpret_cast<volatile u32*>(peer_flag)=epoch;
+            sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
+          }
+          if((mode==1u||last)&&dev_ref(ctl[L::abort]).load()==0u){
+            sys_ref flag(ctl[record_at+L::flag]);u32 polls=0,v=flag.load();
+            while(v<epoch&&polls<cap){++polls;v=flag.load();}
+            if(v<epoch){dev_ref(ctl[L::abort]).store(1u);dev_ref(ctl[L::timeouts]).fetch_add(1u);dev_ref(*error).store(1u);}
+            else sycl::atomic_fence(sycl::memory_order::acquire,sycl::memory_scope::system);
+            dev_ref(ctl[L::waits]).fetch_add(1u);
+            if(polls){dev_ref(ctl[L::spun]).fetch_add(1u);dev_ref(ctl[L::spin_sum]).fetch_add(polls);dev_ref(ctl[L::max_spin]).fetch_max(polls);}
+          }
+        }
+        if(mode==1u){
+          sycl::group_barrier(it.get_group());
+          sycl::atomic_fence(sycl::memory_order::acquire,sycl::memory_scope::system);
+          for(u32 i=gid;i<other;i+=step){const u32 w=(2u*(i/rows)+1u-parity)*rows+i%rows;out[w]=staging[w];}
+        }
+      }));
+    });
+  }
+  Event exchange(const Exchange& x) override {check_error();capacity();return record(submit_exchange(x));}
+  std::function<Event()> prepare_exchange(const Exchange& x) override {return [this,x]{check_error();capacity();return record(submit_exchange(x));};}
   explicit SyclDevice(std::size_t card,bool profiling):card_(card) {
     events_.reserve(65536);
     std::lock_guard lock(registry_mutex);

@@ -20,6 +20,12 @@
 // uploads follow the lab's 2026-10-04 EXTERNAL_HOST_PTR diagnosis, not runtime
 // source code. No graph execution, peer copy or compute overlap is assumed.
 namespace ownrt {
+// Direct-exchange control words (u32) per card: a header, then one 128-byte record per exchange site.
+namespace exchange_layout {
+inline constexpr std::uint32_t header=32, stride=32, counter=0, flag=16, slots=256;
+inline constexpr std::uint32_t abort=0, timeouts=1, waits=2, spun=3, max_spin=4, spin_sum=5;
+inline constexpr std::size_t bytes=std::size_t(header+stride*slots)*4;
+}
 using Event = std::uint64_t;
 using Allocation = std::uint64_t;
 using Deadline = std::chrono::steady_clock::time_point;
@@ -57,6 +63,18 @@ struct Backend {
   virtual Event peer_copy(void*, const void*, std::size_t, Backend& /*source*/) { throw std::logic_error("peer copy unsupported"); }
   virtual std::function<Event()> prepare_peer_copy(void* d, const void* s, std::size_t n, Backend& source) { return [this,d,s,n,&source]{return peer_copy(d,s,n,source);}; }
   virtual Event peer_wait(Backend& /*peer*/) { throw std::logic_error("peer wait unsupported"); }
+  // Kernel-direct exchange (2026-10-28, OWNRT_TP_EXCHANGE=direct; research/p2p/direct-store-2026-10-28). One kernel on
+  // this card stores this card's rows into the peer's memory (plain stores between system-scope release fences), raises
+  // the peer's flag for `slot`, then waits (bounded) for the peer's flag. Resolved pointers; see Device::exchange.
+  struct Exchange {
+    const void* src=nullptr;void* local_dst=nullptr;void* peer_dst=nullptr;std::uint32_t words=0; // mode 0: contiguous words
+    const void* select_src=nullptr;void* select_dst=nullptr;                                    // mode 1: slot rows
+    std::uint32_t mode=0,rows=0,top=0,parity=0,slot=0;
+    std::uint32_t* control=nullptr;std::uint32_t* peer_control=nullptr;std::uint32_t* error=nullptr;
+    std::uint32_t cap=0;
+  };
+  virtual Event exchange(const Exchange&) { throw std::logic_error("direct exchange unsupported"); }
+  virtual std::function<Event()> prepare_exchange(const Exchange& x) { return [this,x]{return exchange(x);}; }
   virtual bool complete(Event) = 0;
   virtual bool wait(Event, Deadline) = 0;
   virtual void synchronize() = 0; // only after all tracked events complete
@@ -208,6 +226,21 @@ class Device {
   // peer_push: copy this Device's allocation bytes into `dest`'s allocation, on this queue (ordered after this card's
   // own work only; the receiver orders its readers with peer_wait).
   Event peer_push(Device& dest, Allocation dst, std::size_t dst_offset, Allocation src, std::size_t src_offset, std::size_t bytes);
+  // exchange (2026-10-28, OWNRT_TP_EXCHANGE=direct): one kernel on this queue, no cross-queue event.
+  //  mode 0 (dense row halves): words of src -> local_dst+local_offset (optional) and peer_dst+peer_offset on `peer`.
+  //  mode 1 (expert slots): src holds top x rows F32 slot rows; the slots s with s%2==parity go to peer_dst (the peer's
+  //   staging copy, same layout); after the peer's flag, the other slots are copied from select_src (this card's staging)
+  //   into select_dst. Bitwise copies only.
+  //  control / peer_control: the two cards' exchange words (layout in single_device.cpp); slot: this site's flag pair.
+  //  A wait that exceeds `cap` polls sets *error=1 and this card's abort word (later waits skip); stores always happen.
+  struct ExchangeSpec {
+    Allocation src=0;std::size_t src_offset=0;Allocation local_dst=0;std::size_t local_offset=0;
+    Allocation peer_dst=0;std::size_t peer_offset=0;std::size_t bytes=0;
+    Allocation select_src=0,select_dst=0;
+    std::uint32_t mode=0,rows=0,top=0,parity=0,slot=0,cap=0;
+    Allocation control=0,peer_control=0,error=0;
+  };
+  Event exchange(Device& peer, const ExchangeSpec&);
   void invalidate_prepared() { if(in_flight())throw std::logic_error("invalidate while pending");generation_=next_handle(); }
   uint64_t generation() const noexcept {return generation_;}
   // Packet4 eager segments only: retire completed events, preserving allocations.

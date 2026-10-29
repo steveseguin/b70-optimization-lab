@@ -8,6 +8,9 @@ dumps the full state. Two runs with different card setups are compared with --co
   tp_rank1_driver.py run --launch RANK1-LAUNCH.json --out DIR [--binary PATH] [--tp] [--steps N]
   tp_rank1_driver.py compare DIR_A DIR_B
 
+OWNRT_TP_EXPERTS / OWNRT_TP_EXCHANGE / OWNRT_TP_THREADS are taken from the caller's environment and recorded in
+summary.json (tp_env) with the binary path.
+
 --tp runs the process on two cards (ZE_AFFINITY_MASK=0,3 in PCI order: 23:00.0 and 47:00.0) with --cards 2
 --tp-replicate. It needs the service stopped (the cards are the service's).
 """
@@ -153,7 +156,9 @@ def run(a):
             seq += 1
             parent.sendall(REQ.pack(FINISH, 0, 0, 0, 0, seq, 0, 0))  # the rank exits on finish without a reply
         proc.wait(timeout=600)
-        summary = dict(tp=a.tp, split=a.split, prompt=a.prompt, batched=a.batched, rows=a.rows, prompt_ms=prompt_ms, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
+        summary = dict(binary=next((x for x in argv if x.endswith('engine')), None),
+                       tp_env={k: v for k, v in sorted(full_env.items()) if k.startswith('OWNRT_TP_')},
+                       tp=a.tp, split=a.split, prompt=a.prompt, batched=a.batched, rows=a.rows, prompt_ms=prompt_ms, steps=a.steps, load_s=load_s, half_ms=times, tokens=tokens, rc=proc.returncode)
         (out / 'summary.json').write_text(json.dumps(summary, indent=1))
         print(json.dumps({k: summary[k] for k in ('tp', 'steps', 'load_s', 'tokens', 'rc')}),
               'median half ms %.2f' % sorted(times)[len(times) // 2])
