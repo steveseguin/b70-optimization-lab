@@ -1110,7 +1110,7 @@ public:
     if(preparing_commands)return;
     // --tp-replicate: the shared-context queues never profile (2026-10-25 copy-engine fault), so the draft's GPU time
     // is not measured there (its wall time still is).
-    if(profile_events||(draft_timing&&!a.tp_replicate))pending.push_back({l,gemv,current_cls});
+    if(profile_events||(draft_timing&&!a.tp_replicate&&!no_draft_timing()))pending.push_back({l,gemv,current_cls});
     if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
     tail=l.last; tail_card=c; if(c>=0&&c<2)card_tails[size_t(c)]=l.last; submitted+=l.passes;
   }
@@ -1151,6 +1151,9 @@ public:
     for(size_t c=0;c<devices.size();++c)if(!(tp_worker_running&&c==1))retire_events(int(c));
   }
   bool tp_worker_running=false;
+  // OWNRT_NO_DRAFT_TIMING=1 (2026-10-29, opt-in): a one-card rank 0 / MTP process without profiling queues, as under
+  // --tp-replicate. Profiling exists only to report the draft's GPU time; the arithmetic is unchanged.
+  static bool no_draft_timing(){static const bool on=[]{const char* v=std::getenv("OWNRT_NO_DRAFT_TIMING");return v&&v[0]=='1';}();return on;}
   // OWNRT_TP_GDN=heads (rank.hpp): buffers each card holds in compact head order. Per buffer and card, runs of
   // {compact element, one-card element, elements}; state_dump reassembles the one-card layout from both cards.
   using HeadLayout=std::map<std::string,std::array<std::vector<std::array<size_t,3>>,2>>;
@@ -1569,7 +1572,7 @@ public:
       auto group=ownrt::make_sycl_device_group({0,1},profile_events||std::getenv("OWNRT_DECODE_PROFILE"));
       for(auto& b:group)devices.push_back(std::make_unique<ownrt::Device>(std::move(b)));
     } else
-    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||a.rank==0||a.mtp||!a.draft_capture.empty()||std::getenv("OWNRT_DECODE_PROFILE"))));
+    devices.push_back(std::make_unique<ownrt::Device>(ownrt::make_sycl_device(a.card,profile_events||((a.rank==0||a.mtp)&&!no_draft_timing())||!a.draft_capture.empty()||std::getenv("OWNRT_DECODE_PROFILE"))));
     save(a.output/"device-contact.json","{\"device_contact\":true}");
 #endif
     if(a.argument_audit){argument_log.open(a.output/"argument-equivalence.jsonl");dev(0).argument_audit=&argument_log;dev(0).audit_prepare_each=a.audit_prepare_each;}
