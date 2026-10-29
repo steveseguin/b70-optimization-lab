@@ -4,7 +4,7 @@
 #   systemd-run --user --unit=tp-rank0-<phase> --collect -p LimitNOFILE=1048576 -E TP_RUNS=... \
 #     flock -n -E 75 /dev/shm/card23.lock flock -n -E 75 /dev/shm/card47.lock taskset -c 0-3,16-19 \
 #     bash run_rank0_arms.sh <phase> ARM...
-# ARM = name:steps:mode:pattern; mode one | tp (Stage 2b: GDN heads, rows, compact slots, direct
+# ARM = name:steps:mode:pattern; mode one | one-np (no profiling queues) | tp (Stage 2b: GDN heads, rows, compact slots, direct
 # exchange, two submission threads); pattern = tp_rank0_driver.py --pattern (n/h/m/c). Every arm: marker check,
 # driver run, kernel-log check. Any xe/fault line, nonzero exit or exchange timeout halts; nothing is retried.
 set -u
@@ -27,6 +27,7 @@ for arm in "$@"; do
   [ -e "$out" ] && halt "$out exists (fresh outputs only)"
   case "$mode" in
     one) tp=(); envs=() ;;
+    one-np) tp=(); envs=(OWNRT_NO_DRAFT_TIMING=1) ;;  # one card without profiling queues (as the TP process)
     tp) tp=(--tp --split .attention,.gdn.qkv); envs=(OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;
     *) halt "unknown mode $mode" ;;
   esac

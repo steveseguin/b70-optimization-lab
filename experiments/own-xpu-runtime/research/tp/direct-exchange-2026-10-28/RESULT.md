@@ -316,6 +316,49 @@ submission threads; the MTP draft on card 0):
   - draft GPU timing was requested without profiling queues;
   - `--cancel-launch` is refused in device builds.
 
+## Rank-0 TP, step 3: measurement near 4K positions (2026-10-29)
+
+The context is built by exact non-speculative decode halves from position 0 to 4095. Step 2 (batched prefill under TP)
+is not built yet. The final state after 4,096 positions is compared bitwise. Medians are over positions 3840–4095,
+binary `16ed1ff1a203…` ([results-rank0-long.json](results-rank0-long.json)).
+
+| Rank 0 | Half ms (two runs) | Draft ms | Exact vs one card |
+|---|---:|---:|---|
+| one card, profiling queues (as the service's rank 0) | 10.619 / 10.608 (run 1: 10.618) | 1.735 / 1.726 | reference |
+| one card, `OWNRT_NO_DRAFT_TIMING=1` (no profiling queues, as under TP) | **10.641 / 10.650** | **1.341 / 1.341** | 1029/1029, 71/71 |
+| **two cards, Stage 2b layout, two threads** | **9.391 / 9.397** | 1.335 / 1.335 | **1029/1029, 71/71, tokens equal** |
+
+- **Rank-0 half: 1.133× on two cards** (10.645 → 9.394 ms), against the 9.3–9.6 ms projected. 0 timeouts in 524,288
+  waits per card over the four TP runs (64 exchanges per half). Kernel log clean.
+- **Side finding:** rank 0's profiling queues exist only to report the draft's GPU time, and they cost the draft
+  0.39 ms (1.73 → 1.34 ms, −23%). The half is unchanged. `OWNRT_NO_DRAFT_TIMING=1` removes them on one card, with the
+  same 1029/1029 target and 71/71 draft state. That alone shortens today's stage 0 (half + draft) from 12.35 to
+  11.98 ms.
+- **Stage-0 time, half + draft, at 4K:** 12.35 ms today against 10.73 ms with TP. Rank 1 measured 10.74–10.84 ms with
+  TP near position 0. The four-card pipeline period would be about 10.8–11.0 ms against today's about 12.5 ms: about
+  1.14×. This is a projection; rank 1 at 4K and the controller are not measured.
+
+## Rank-0 TP, step 2 (batched prefill under TP): not built, needs a design choice
+
+The batched prefill engine (`prefill_engine.hpp`) is card-0-only. It walks the plan's card-0 launches with row
+shadows and views on `dev(0)`. In a TP plan, card 0's launches are the compact or split ones plus the exchanges, so it
+cannot run them alone. Three routes:
+1. **One-card prefill on card 0, then exact copies.** The plan also carries card 0's original launches, marked
+   prefill-only, and the TP launches are marked decode-only.
+   - Card 0 then holds the full weights of the split sites too: about +0.5 GB, so rank 1 at 64K reaches about
+     29.9 of its 30 GiB admission.
+   - After prefill, card 0's buffers and banks are copied to card 1, and the head-split GDN buffers and compact
+     slots are converted to each card's compact layout. The reverse happens before a new prompt follows decode.
+   - It also needs the bank proof and the snapshot to accept a prefill-only second writer on card 0.
+2. **TP-native batched prefill.**
+   - Both cards run their compact parts over M rows.
+   - Exchanges become strided over rows: the strided mode already covers `tp_xheads`; `tp_xgather` needs it too.
+   - Compact slots need M x 10 routes.
+   - The prefill engine needs per-card shadows and views.
+   - Fastest prompt reading, largest change.
+3. **Exact fallback:** each TP prefill row runs as a decode half. This is what step 3 used. The arithmetic is
+   identical, but prompts read at decode speed.
+
 ## Remaining stages
 
 - **Stage 3 (QSA two-KV-group split):** designed above, not built.

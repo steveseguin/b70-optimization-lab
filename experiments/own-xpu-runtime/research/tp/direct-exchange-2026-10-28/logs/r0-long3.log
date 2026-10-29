@@ -1,0 +1,30 @@
+=== phase r0-long3 start 2026-10-29T01:00:51-04:00 pid 1013147 affinity 0-3,16-19 nofile 1048576
+[klog r0-long3-before-24h] since @1793163651: 12 lines, 0 xe/fault lines
+--- arm r0P-np steps=4096 mode=one-np pattern=n cancel=-1 env=OWNRT_NO_DRAFT_TIMING=1 at 2026-10-29T01:00:51-04:00
+{"steps": 4096, "load_s": 53.216977326897904, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 10.626 draft ms 1.339
+arm r0P-np rc=0 after 105 s
+[klog r0-long3-after-r0P-np] since @1793250051: 0 lines, 0 xe/fault lines
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327, 62422, 220, 318, 7761]
+--- arm r0P-tp steps=4096 mode=tp pattern=n cancel=-1 env=OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads at 2026-10-29T01:02:36-04:00
+{"steps": 4096, "load_s": 59.37161603313871, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 9.372 draft ms 1.332
+arm r0P-tp rc=0 after 107 s
+[klog r0-long3-after-r0P-tp] since @1793250156: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":262144,"waits_that_polled":166450,"max_polls":137895,"poll_sum":3392024},{"abort":0,"timeouts":0,"waits":262144,"waits_that_polled":192239,"max_polls":142,"poll_sum":1852959}]}
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327, 62422, 220, 318, 7761]
+--- arm r0P-one steps=4096 mode=one pattern=n cancel=-1 env=none at 2026-10-29T01:04:23-04:00
+{"steps": 4096, "load_s": 53.24045913410373, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 10.603 draft ms 1.731
+arm r0P-one rc=0 after 107 s
+[klog r0-long3-after-r0P-one] since @1793250263: 0 lines, 0 xe/fault lines
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327, 62422, 220, 318, 7761]
+--- arm r0P-np2 steps=4096 mode=one-np pattern=n cancel=-1 env=OWNRT_NO_DRAFT_TIMING=1 at 2026-10-29T01:06:10-04:00
+{"steps": 4096, "load_s": 65.32869768701494, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 10.628 draft ms 1.336
+arm r0P-np2 rc=0 after 117 s
+[klog r0-long3-after-r0P-np2] since @1793250370: 0 lines, 0 xe/fault lines
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327, 62422, 220, 318, 7761]
+--- arm r0P-tp2 steps=4096 mode=tp pattern=n cancel=-1 env=OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads at 2026-10-29T01:08:07-04:00
+{"steps": 4096, "load_s": 59.37300219479948, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 9.375 draft ms 1.332
+arm r0P-tp2 rc=0 after 108 s
+[klog r0-long3-after-r0P-tp2] since @1793250487: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":262144,"waits_that_polled":164635,"max_polls":120975,"poll_sum":3268226},{"abort":0,"timeouts":0,"waits":262144,"waits_that_polled":193586,"max_polls":175,"poll_sum":1881575}]}
+events {'hits': 0, 'misses': 0, 'cancelled': 0, 'redos': 0} tokens [12, 327, 62422, 220, 318, 7761]
+=== phase r0-long3 done 2026-10-29T01:09:55-04:00
