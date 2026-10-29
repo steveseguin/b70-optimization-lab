@@ -524,7 +524,13 @@ static int run_rank(const Options& a) {
    // =gather (gather on unmasked routes; exact, measures the gather's cost).
    const std::string tp_experts=[]{const char* v=std::getenv("OWNRT_TP_EXPERTS");return std::string(v?v:"");}();
    // =slot: every card holds every expert (replicated weights); the 10 slots split by position (5/5), exact.
-   const bool experts=tp_experts=="1"||tp_experts=="mask"||tp_experts=="gather"||tp_experts=="slot";
+   // =compact (2026-10-28, Stage 2b; needs OWNRT_TP_EXCHANGE=direct): card c launches its expert GEMVs on its own slots
+   // c, c+2, ... only, as a dense compact launch (route_compact copies those routes; each slot keeps its kernel and
+   // arithmetic). Down writes compact rows to expsdown#tp, and one strided direct exchange places them at their
+   // canonical slot rows of expsdown on both cards before the unchanged combine. Routes are not masked; the dump
+   // reassembles the compact per-slot buffers (gate, up, act, statuses) in slot order.
+   const bool compact=tp_experts=="compact";
+   const bool experts=tp_experts=="1"||tp_experts=="mask"||tp_experts=="gather"||tp_experts=="slot"||compact;
    // OWNRT_TP_EXCHANGE=direct (2026-10-28): each gather above becomes one kernel per card that stores this card's rows
    // into the peer's memory and waits for the peer's flag (tp_xgather; tp_xslot for experts by slot). =copy or unset:
    // the copy gathers above. The exchange sites get consecutive flag slots (Launch::shape[1]).
@@ -534,7 +540,8 @@ static int run_rank(const Options& a) {
    const std::string tp_exchange=[]{const char* v=std::getenv("OWNRT_TP_EXCHANGE");return std::string(v?v:"");}();
    require(tp_exchange.empty()||tp_exchange=="copy"||tp_exchange=="direct"||tp_exchange=="direct-replicated","OWNRT_TP_EXCHANGE must be copy, direct or direct-replicated");
    const bool exchange_only=tp_exchange=="direct-replicated",direct=tp_exchange=="direct"||exchange_only;
-   require(!direct||!experts||tp_experts=="slot","direct exchange: experts by slot only");
+   require(!direct||!experts||tp_experts=="slot"||compact,"direct exchange: experts by slot or compact only");
+   require(!compact||(direct&&!exchange_only&&!a.prefill_rows),"OWNRT_TP_EXPERTS=compact: OWNRT_TP_EXCHANGE=direct, decode only");
    const bool mask_routes=(tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot")&&!exchange_only,gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
    const int by_slot=tp_experts=="slot"?2:0; // carried in Launch::parameter bit 1
    int exchange_slot=0;
@@ -557,6 +564,20 @@ static int run_rank(const Options& a) {
    auto layout=[&](const std::string& name,int c,const std::vector<std::pair<int,int>>& runs,size_t per){ // compact -> one-card elements
     auto& v=head_layout[name][size_t(c)];require(v.empty(),"head layout set twice: "+name);size_t at=0;
     for(auto [first,rows]:runs){v.push_back({at*per,size_t(first)*per,size_t(rows)*per});at+=size_t(rows);}};
+   const int top=p.g.top,max_slots=(top+1)/2;require(!compact||top%2==0,"compact slots: an even slot count");
+   auto slots_of=[&](int c){return (top-c+1)/2;};
+   auto slot_runs=[&](int c){std::vector<std::pair<int,int>> r;for(int s=c;s<top;s+=2)r.push_back({s,1});return r;};
+   auto compact_class=[&](const flash::Launch& l)->std::string{
+    if(!compact||!l.label.starts_with("blk."))return "";const auto dot=l.label.find('.',4);if(dot==std::string::npos)return "";
+    const std::string cls=l.label.substr(dot+1);
+    if((cls=="expsgate"||cls=="expsup"||cls=="expsdown")&&l.op=="routed_gemv")return cls;
+    if((cls=="expsact"&&l.op=="silu_product")||(cls=="expsdown.check"&&l.op=="check_status"))return cls;
+    return "";};
+   auto add_buffer=[&](const std::string& from,const std::string& name,std::vector<int> shape){
+    if(!halves.insert(name).second)return;auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==from;});
+    require(it!=p.buffers.end(),"TP buffer source "+from);flash::Buffer b=*it;b.name=name;b.shape=std::move(shape);p.buffers.push_back(b);};
+   auto per_slot=[&](const std::string& name){auto it=std::find_if(p.buffers.begin(),p.buffers.end(),[&](const flash::Buffer& b){return b.name==name;});
+    require(it!=p.buffers.end(),"TP per-slot buffer "+name);size_t n=1;for(int d:it->shape)n*=size_t(d);require(n%size_t(top)==0,"per-slot extent "+name);return n/size_t(top);};
    auto head_class=[&](const flash::Launch& l)->std::string{
     if(!gdn_heads||!l.label.starts_with("blk."))return "";const auto dot=l.label.find('.',4);if(dot==std::string::npos)return "";
     const std::string cls=l.label.substr(dot+1);
@@ -590,6 +611,22 @@ static int run_rank(const Options& a) {
       for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xheads";g.label=l.label+".tp_xheads";g.card=c;g.inputs={y+"#tp"};g.outputs={y};
        g.shape={VH*D,exchange_slot,HK*D,KH*D,c*HK*D};both.push_back(std::move(g));}
       ++exchange_slot;}
+    } else if(const auto ecls=compact_class(l);!ecls.empty()){
+     const std::string prefix=l.label.substr(0,l.label.size()-ecls.size());
+     for(int c=0;c<2;++c){auto t=l;t.card=c;t.slots=slots_of(c);
+      if(ecls=="expsgate"||ecls=="expsup"){
+       require(t.inputs.size()>=2&&t.inputs[1]==prefix+"routes"&&t.outputs.size()==2,"compact gate/up wiring: "+l.label);t.inputs[1]=prefix+"routes#tp";
+       layout(t.outputs[0],c,slot_runs(c),per_slot(t.outputs[0]));layout(t.outputs[1],c,slot_runs(c),1);
+      } else if(ecls=="expsdown"){
+       require(t.inputs.size()>=2&&t.inputs[1]==prefix+"routes.down"&&t.outputs.size()==2,"compact down wiring: "+l.label);t.inputs[1]=prefix+"routes.down#tp";
+       add_buffer(t.outputs[0],t.outputs[0]+"#tp",{max_slots,int(per_slot(t.outputs[0]))});
+       layout(t.outputs[1],c,slot_runs(c),1);t.outputs[0]+="#tp";
+      } else if(ecls=="expsact")layout(t.outputs.at(0),c,slot_runs(c),per_slot(t.outputs.at(0)));
+      both.push_back(std::move(t));}
+     if(ecls=="expsdown"){const std::string y=l.outputs.at(0);const int H=int(per_slot(y));
+      for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xheads";g.label=l.label+".tp_xcompact";g.card=c;g.inputs={y+"#tp"};g.outputs={y};
+       g.shape={top*H,exchange_slot,H,2*H,c*H};both.push_back(std::move(g));}
+      ++exchange_slot;}
     } else if(exchange_only&&split_site(l)){ // full rows on both cards, then this card's half of y sent to the peer's y
      const int R=l.shape.at(1);require(R>0&&R%2==0,"TP split needs an even row count");
      both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));
@@ -606,6 +643,12 @@ static int run_rank(const Options& a) {
     } else {both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
     // OWNRT_TP_EXPERTS=1: card c computes only the slots whose expert id has parity c (routes masked after the
     // gather), and takes the other slots' expsdown rows from the peer before the unchanged in-order moe_combine.
+    if(compact&&l.op=="expert_gather"){
+     require(l.outputs.size()>=2,"compact routes: expert_gather outputs");
+     add_buffer(l.outputs[0],l.outputs[0]+"#tp",{max_slots,3});add_buffer(l.outputs[1],l.outputs[1]+"#tp",{max_slots,3});
+     for(int c=0;c<2;++c){flash::Launch m;m.op="tp_route_compact";m.label=l.label+".tp_compact";m.card=c;
+      m.inputs={l.outputs[0],l.outputs[1]};m.outputs={l.outputs[0]+"#tp",l.outputs[1]+"#tp"};m.parameter=c;both.push_back(std::move(m));}
+    }
     if(mask_routes&&l.op=="expert_gather"&&l.outputs.size()>=2)for(int c=0;c<2;++c){flash::Launch m;m.op="tp_route_mask";m.label=l.label+".tp_mask";m.card=c;
      m.inputs={l.outputs[0],l.outputs[1]};m.outputs={l.outputs[0],l.outputs[1]};m.parameter=c|by_slot;both.push_back(std::move(m));}
     if(gather_rows&&l.op=="routed_gemv"&&ends(l.label,".expsdown")){

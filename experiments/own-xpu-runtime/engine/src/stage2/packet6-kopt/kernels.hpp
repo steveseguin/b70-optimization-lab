@@ -21,6 +21,8 @@ ownrt::Event gemv_mix(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ow
 // Tensor-parallel expert placement: mask the routes of experts another card owns; take those slots' rows from the peer.
 ownrt::Event route_mask(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,uint32_t,uint32_t,bool by_slot=false);
 ownrt::Event slot_select(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,uint32_t,uint32_t,uint32_t,bool by_slot=false);
+// Compact slots (OWNRT_TP_EXPERTS=compact): routes/routes_down of slots parity, parity+2, ... into compact arrays.
+ownrt::Event route_compact(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,uint32_t top,uint32_t parity);
 // Independent inputs only: this does not fuse across real activation dependencies.
 ownrt::Event fused_gemv(ownrt::Device&,const std::vector<Matrix>&,unsigned=16);
 // Populated only inside a coordinator-authorized submit; never enumerates.

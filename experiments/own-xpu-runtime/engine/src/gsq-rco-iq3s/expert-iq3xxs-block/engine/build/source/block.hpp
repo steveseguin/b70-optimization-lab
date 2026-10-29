@@ -131,9 +131,11 @@ template<bool F=false> struct BlockOperation final:
  }
 #endif
 };
-inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input){
+// compact (2026-10-28, OWNRT_TP_EXPERTS=compact): a TP card's own slots only (fewer than one token's ten); each slot's
+// rows keep the kernel, decode and reduction order.
+inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std::string_view label,std::string_view weight,gsqn::InputMode input,bool compact=false){
  require(selected(label,weight),"IQ3 block exact gate/up site identity");
- require(unsigned(m.type)==18&&m.rows==640&&m.columns==2560&&m.count%10==0&&m.count>=10&&m.count<=10*gsqn::max_tokens&&m.tokens==1&&m.experts==512&&m.span==640&&m.routes&&m.status,"IQ3 block exact routed geometry");
+ require(unsigned(m.type)==18&&m.rows==640&&m.columns==2560&&(compact?m.count>=1&&m.count<10:m.count%10==0&&m.count>=10)&&m.count<=10*gsqn::max_tokens&&m.tokens==1&&m.experts==512&&m.span==640&&m.routes&&m.status,"IQ3 block exact routed geometry");
  require(input==gsqn::InputMode::per_slot,"IQ3 block requires original gathered per-slot input");
  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};

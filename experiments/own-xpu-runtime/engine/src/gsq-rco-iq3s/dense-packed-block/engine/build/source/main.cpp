@@ -1667,7 +1667,7 @@ public:
   void prepare_plan() {
     if(a.memory!="resident")return;
     for(const auto& l:p.launches) {
-      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot" || l.op=="tp_xheads")continue;
+      if(l.op=="lookup" || l.op=="handoff" || l.op=="handoff_result" || l.op=="tp_gather" || l.op=="tp_route_mask" || l.op=="tp_expert_gather" || l.op=="tp_push" || l.op=="tp_wait" || l.op=="tp_select" || l.op=="tp_xgather" || l.op=="tp_xslot" || l.op=="tp_xheads" || l.op=="tp_route_compact")continue;
       if(l.op=="gemv" || l.op=="routed_gemv" || l.op=="expert_gate_up") {
         std::vector<Matrix> values{matrix(l)};
         if(l.op=="expert_gate_up")values.push_back(matrix(l,1));
@@ -1798,7 +1798,8 @@ public:
     m.workspace=workspace[c];
     if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=p105::prefix;}
     if(routed) {
-      m.count=p.g.top;m.experts=a.memory=="layer-streaming"?p.g.top:p.g.experts;
+      m.count=l.slots?size_t(l.slots):size_t(p.g.top);m.experts=a.memory=="layer-streaming"?p.g.top:p.g.experts; // l.slots: compact TP slots
+      require(!l.slots||(l.slots<p.g.top&&a.memory=="resident"),"compact slots: resident routed sites only");
       m.status=buffers[c].at(l.outputs[projection*2+1]).id;
       if(a.memory=="layer-streaming") {
         std::vector<iq3::Route> routes;
@@ -1888,6 +1889,7 @@ public:
       Spec s;
       s.g = p.g;
       if(l.heads){require(l.key_heads>0&&l.heads%l.key_heads==0&&(l.op=="gdn"||l.op=="gdn_norm_gate"),"head-split launch geometry");s.g.vh=l.heads;s.g.kh=l.key_heads;} // OWNRT_TP_GDN=heads
+      require(!l.slots||l.op=="silu_product"||l.op=="check_status","compact slots on a non-GEMV site");
       s.extent = (l.op=="qsa_select"||l.op=="qsa_attention")?std::min(p.g.context,context_extent):0;
       s.packed_heads = !a.mini;
       s.f32_activations = a.f32_activations;
@@ -1946,6 +1948,11 @@ public:
         s.types[k++] = b.type;
         bindings.push_back(b.id);
         ++s.no;
+      }
+      if(l.slots){ // OWNRT_TP_EXPERTS=compact: the element-wise activation and the status check cover this card's slots only
+        require(l.weights.empty(),"compact slot site without weights");int k=0;
+        for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
+          if(name!="error"&&name!="active"&&s.sizes[k]%size_t(p.g.top)==0)s.sizes[k]=s.sizes[k]/size_t(p.g.top)*size_t(l.slots);++k;}
       }
       for (auto &name : l.weights) {
         load(c, name);
@@ -2015,6 +2022,8 @@ public:
       ownrt::CopyEngine local(dev(c));
       auto own=local.copy(y.id,size_t(c)*half,buffers[c].at(l.inputs.at(0)).id,0,half,{});finish(c,{own,own,1},false);
       auto remote=dev(c).peer_copy(dev(peer),y.id,size_t(peer)*half,buffers[peer].at(l.inputs.at(0)).id,0,half);finish(c,{remote,remote,1},false);
+    } else if (l.op == "tp_route_compact") {
+      finish(c,iq3::kopt::route_compact(dev(c),buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter)));
     } else if (l.op == "tp_route_mask") {
       finish(c,iq3::kopt::route_mask(dev(c),buffers[c].at(l.outputs.at(0)).id,buffers[c].at(l.outputs.at(1)).id,uint32_t(p.g.top),uint32_t(l.parameter&1),(l.parameter&2)!=0));
     } else if (l.op == "tp_push") {

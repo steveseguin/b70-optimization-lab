@@ -50,6 +50,7 @@ struct Launch {
   // weight of the launch; and the GDN head geometry this launch runs with (0 = the model's).
   std::vector<std::pair<int, int>> row_runs;
   int heads = 0, key_heads = 0;
+  int slots = 0; // compact expert slots (2026-10-28): this card's routed slot count; 0 = the model's top
 };
 // CONTRACT v1:
 // ENTRY PRECONDITION: inputs_ready covers uploads to BOTH owners. Replicated

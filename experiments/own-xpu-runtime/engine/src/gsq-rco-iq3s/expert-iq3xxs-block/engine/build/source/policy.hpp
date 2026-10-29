@@ -43,7 +43,8 @@ static bool iq3_block_site(const Weights&w,const Options&a,const flash::Launch&l
   const auto&t=w.directory.at(weight);
   require(unsigned(flash::grid_type(t.grid))==18&&t.shape==std::vector<int>({512,640,2560})&&t.bytes==321126400,"IQ3 block exact packed tensor");
   const auto prefix=l.label.substr(0,l.label.rfind('.'));
-  require(l.inputs==std::vector<std::string>{prefix+".expert_input",prefix+".routes","active","error"}&&l.outputs==std::vector<std::string>{l.label,l.label+".status"},"IQ3 block unchanged gathered wiring");return true;
+  // l.slots (OWNRT_TP_EXPERTS=compact): the card's compact route copy of the same gather.
+  require(l.inputs==std::vector<std::string>{prefix+".expert_input",prefix+(l.slots?".routes#tp":".routes"),"active","error"}&&l.outputs==std::vector<std::string>{l.label,l.label+".status"},"IQ3 block unchanged gathered wiring");return true;
  }return false;
 }
 static void iq3_block_admit(const Weights&w,const Options&a,const flash::Plan&p){
