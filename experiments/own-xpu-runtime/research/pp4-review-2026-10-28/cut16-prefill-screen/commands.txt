@@ -1,0 +1,64 @@
+Cut 0/16/33/48 prefill screen, 2026-10-28 (EDT) / 2026-10-29 UTC. Commands actually run (all CPU/passive; no device step).
+
+# Coordination marker (created 2026-10-29T02:21:17Z, removed after the admission refusal; no owners were started)
+date -u +%Y-%m-%dT%H:%M:%SZ > /dev/shm/sc117-cut16-test.active
+
+# Fresh roots (mode 700)
+mkdir /dev/shm/sc117-gate-cut16-20261028-r1 /dev/shm/sc117-long512-cut16-20261028-r1 /dev/shm/sc117-long512-control-20261028-r1
+# Gate prompt restored from retained evidence (sha256 434f2a84..., same bytes the 0/17/33/48 gate used)
+zcat ../reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/dedicated-planning/prompt.i32.gz > /dev/shm/sc117-gate-cut16-20261028-r1/prompt.i32
+
+# Configs (python): copied the retained configs and changed only:
+#   gate    : boundaries [0,16,33,48], output .../gate-output, dedicated_prefill_prompt (same sha256, new path; old RAM copy gone)
+#   cut16   : boundaries [0,16,33,48], output /dev/shm/sc117-long512-cut16-20261028-r1/cut16-output
+#   control : output /dev/shm/sc117-long512-control-20261028-r1/control-output
+# Sources: mtp-gate-r1-evidence/completed-dedicated/dedicated-config.json.gz and
+#          /dev/shm/sc117-reference-route-long512-plans-20261028-r1/control-config.json (sha 47e732d6..., equals retained gz)
+
+# 1. Planner from the live tree REFUSES (source drift since binary 339b75):
+python3 -B engine/tools/dedicated_provider_driver.py --config CONFIG --plan PLAN
+#   ValueError: compiled source differs from current engine: gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+#   (9 of 260 compiled sources and 5 pinned Python controller files changed in 2dde9384f/db016d6db)
+
+# Planner snapshot of commit 7e396b490 (matches all 260 compiled sources of 339b75 AND every pin of the
+# retained equal16 control plan). gsq-rco-iq3s is a symlink to the live tree so observe.py resolves ROOT to
+# /home/steve/llm-optimizations (root-disk floor and helper paths unchanged).
+S=/dev/shm/sc117-snapshot-7e396b490-cut16-20261028-r1
+git archive 7e396b490 experiments/own-xpu-runtime/engine/src experiments/own-xpu-runtime/engine/tools experiments/own-xpu-runtime/engine/planning | tar -x -C $S
+ln -s /home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s $S/experiments/own-xpu-runtime/gsq-rco-iq3s
+cd $S/experiments/own-xpu-runtime/engine/tools
+nice -n 19 python3 -B dedicated_provider_driver.py --config /dev/shm/sc117-gate-cut16-20261028-r1/gate-config.json --plan /dev/shm/sc117-gate-cut16-20261028-r1/gate-plan.json
+nice -n 19 python3 -B dedicated_provider_driver.py --config /dev/shm/sc117-long512-cut16-20261028-r1/cut16-config.json --plan /dev/shm/sc117-long512-cut16-20261028-r1/cut16-plan.json
+nice -n 19 python3 -B dedicated_provider_driver.py --config /dev/shm/sc117-long512-control-20261028-r1/control-config.json --plan /dev/shm/sc117-long512-control-20261028-r1/control-plan.json
+
+# Passive admission observation (same observer the guard uses; metadata only)
+nice -n 19 python3 -B gsq-rco-iq3s/operating/observe.py --output /dev/shm/sc117-long512-cut16-20261028-r1/admission-check-baseline.json
+
+# Kernel log since start epoch 1793240477
+journalctl -k --since=@1793240477 --no-pager     # -> "-- No entries --"
+
+# PREPARED, NOT RUN (pattern of the equal16 runs, journal 2026-10-28 12:59/13:14). Each needs a fresh passive
+# baseline + ownrt.pipeline-admission.v1 file (owner_authorized, plan_sha256, baseline, baseline_sha256, expires_utc),
+# all four card locks held, MemAvailable >= 103079215104 B, and the previous arm's dumps archived/released.
+# systemd-run --user --unit=sc117-cut16-gate-20261028-r1 -p Restart=no -p KillMode=process -p SendSIGKILL=no -p Nice=19 \
+#   /usr/bin/taskset -c 0-3,16-19 /usr/bin/python3 -B -u $S/experiments/own-xpu-runtime/engine/tools/dedicated_provider_driver.py \
+#   --run --plan /dev/shm/sc117-gate-cut16-20261028-r1/gate-plan.json --admission /dev/shm/sc117-gate-cut16-20261028-r1/gate-admission.json \
+#   --unit sc117-cut16-gate-20261028-r1.service
+# (same for cut16-plan.json / control-plan.json with units sc117-long512-cut16-20261028-r1 / sc117-long512-control-20261028-r1)
+
+# ===== EXECUTED after coordinator "Go now" (2026-10-29 UTC) =====
+# 03:02Z authorized stale-build deletions (202 entries, 2.441 GB; stale-build-deletions.json.gz). 03:08:29Z marker taken over.
+systemd-run --user --unit=sc117-cut16-locks-20261028-r1 -p Restart=no /usr/bin/python3 -B /dev/shm/sc117-long512-cut16-20261028-r1/lock-holder.py   # flock all four; released via locks.release file 03:44:38Z
+# Before each launch: plan == make_plan(config) (snapshot), fresh observe.py baseline (MemAvailable >= floor), admission JSON (30 min expiry), journalctl -k check.
+S=/dev/shm/sc117-snapshot-7e396b490-cut16-20261028-r1/experiments/own-xpu-runtime/engine/tools
+systemd-run --user --unit=sc117-cut16-gate-20261028-r1 -p Restart=no -p KillMode=process -p SendSIGKILL=no -p Nice=19 /usr/bin/taskset -c 0-3,16-19 /usr/bin/python3 -B -u $S/dedicated_provider_driver.py --run --plan /dev/shm/sc117-gate-cut16-20261028-r1/gate-plan.json --admission /dev/shm/sc117-gate-cut16-20261028-r1/gate-admission.json --unit sc117-cut16-gate-20261028-r1.service
+cd /dev/shm/sc117-gate-cut16-20261028-r1 && nice -n19 taskset -c 8-15 python3 -B restore-pp4-serial-for-cut16-gate-r1.py
+cd $SNAPSHOT/research/pp4-review-2026-10-28/dedicated-gate && nice -n19 taskset -c 8-15 python3 -B prepare.py --plan /dev/shm/sc117-gate-cut16-20261028-r1/gate-plan.json --reference-request /dev/shm/sc117-reference-route-pp4-gate-20261028-r1/output/request-00-serial --out /dev/shm/sc117-gate-cut16-20261028-r1/comparison
+nice -n19 taskset -c 8-15 python3 -B compare.py /dev/shm/sc117-gate-cut16-20261028-r1/comparison/inputs.json --out /dev/shm/sc117-gate-cut16-20261028-r1/comparison/proof.json   # PASSED
+cd /dev/shm/sc117-gate-cut16-20261028-r1 && nice -n19 taskset -c 8-15 python3 -B release-pp4-serial-after-cut16-gate-r1.py
+nice -n19 taskset -c 8-15 python3 -B /dev/shm/archive-state-bundles-cut16-20261028-r1.py /dev/shm/sc117-gate-cut16-20261028-r1 gate-output /mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-gate-r1 /dev/shm/sc117-gate-cut16-20261028-r1/comparison/proof.json
+systemd-run --user --unit=sc117-long512-cut16-20261028-r1 -p Restart=no -p KillMode=process -p SendSIGKILL=no -p Nice=19 /usr/bin/taskset -c 0-3,16-19 /usr/bin/python3 -B -u $S/dedicated_provider_driver.py --run --plan /dev/shm/sc117-long512-cut16-20261028-r1/cut16-plan.json --admission /dev/shm/sc117-long512-cut16-20261028-r1/cut16-admission.json --unit sc117-long512-cut16-20261028-r1.service
+nice -n19 taskset -c 8-15 python3 -B /dev/shm/archive-state-bundles-cut16-20261028-r1.py /dev/shm/sc117-long512-cut16-20261028-r1 cut16-output /mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-long512-r1
+systemd-run --user --unit=sc117-long512-control-20261028-r1 -p Restart=no -p KillMode=process -p SendSIGKILL=no -p Nice=19 /usr/bin/taskset -c 0-3,16-19 /usr/bin/python3 -B -u $S/dedicated_provider_driver.py --run --plan /dev/shm/sc117-long512-control-20261028-r1/control-plan.json --admission /dev/shm/sc117-long512-control-20261028-r1/control-admission.json --unit sc117-long512-control-20261028-r1.service
+cd $SNAPSHOT/research/pp4-review-2026-10-28/cut16-prefill-screen && nice -n19 taskset -c 8-15 python3 -B compare_cut16_long.py /dev/shm/sc117-long512-cut16-20261028-r1/cut16-long512-registration.json --archive /dev/shm/sc117-long512-cut16-20261028-r1/archive.json --out /dev/shm/sc117-long512-control-20261028-r1/cut16-full-proof-r1.json   # PASSED
+nice -n19 taskset -c 8-15 python3 -B /dev/shm/archive-state-bundles-cut16-20261028-r1.py /dev/shm/sc117-long512-control-20261028-r1 control-output /mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-control-long512-r1 /dev/shm/sc117-long512-control-20261028-r1/cut16-full-proof-r1.json

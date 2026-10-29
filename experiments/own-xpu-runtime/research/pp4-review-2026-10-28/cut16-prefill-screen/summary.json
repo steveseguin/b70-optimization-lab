@@ -1,0 +1,220 @@
+{
+  "schema": "ownrt.cut16-prefill-screen.v1",
+  "status": "completed-gate-passed-long-pair-measured",
+  "utc": "2026-10-29T03:44:39Z",
+  "treatment": {
+    "candidate_cuts": [
+      0,
+      16,
+      33,
+      48
+    ],
+    "control_cuts": [
+      0,
+      17,
+      33,
+      48
+    ],
+    "binary_sha256": "339b75c1aed260742fb6954149fa0eb791b4721fd4e4627ec7e7c7f554356761",
+    "controller_source_commit": "7e396b490",
+    "context": 262144,
+    "prompt_tokens": 121854,
+    "max_new": 512,
+    "targets": [
+      "0000:23:00.0",
+      "0000:27:00.0",
+      "0000:47:00.0"
+    ],
+    "draft": "0000:43:00.0"
+  },
+  "plans": {
+    "gate": {
+      "path": "/dev/shm/sc117-gate-cut16-20261028-r1/gate-plan.json",
+      "sha256": "aaca610f1adceb57ba0990d2a1f95358634f8fa0bc5dca6789afa821715081d1"
+    },
+    "cut16": {
+      "path": "/dev/shm/sc117-long512-cut16-20261028-r1/cut16-plan.json",
+      "sha256": "7a3dd1908a2ee3b17069e2218c56580799bd4ff3a06045acd16df444904280f6"
+    },
+    "control": {
+      "path": "/dev/shm/sc117-long512-control-20261028-r1/control-plan.json",
+      "sha256": "141071b879d485e5ec05cb3a14d01ad5fb5bb844d275d7e1abe5394f71ce3b0c"
+    },
+    "equivalence": "After path normalisation the fresh control plan equals the retained equal16 control plan except the config digest and request_sha256 (both hash the new output path). Candidate adds only cuts, stage begin/end, --pipeline-boundaries and packed-weight totals. Gate plan likewise vs the retained 0/17/33/48 gate plan.",
+    "packed_weight_bytes": {
+      "control": [
+        17896743296,
+        18371640320,
+        18446324864
+      ],
+      "cut16": [
+        16702732800,
+        19565650816,
+        18446324864
+      ]
+    }
+  },
+  "floors": {
+    "memory_start_bytes": 103079215104,
+    "memory_floor_bytes": 8589934592,
+    "root_floor_bytes": 27000000000,
+    "evidence_floor_bytes": 2147483648
+  },
+  "admission_observation": {
+    "first": {
+      "utc": "2026-10-29T02:24:21Z",
+      "MemAvailable": 90249322496,
+      "deficit_bytes": 12829892608
+    },
+    "after_coordinator_release_and_deletions": {
+      "utc": "2026-10-29T03:02:43Z",
+      "MemAvailable": 99635081216,
+      "deficit_bytes": 3444133888,
+      "root_free_bytes": 27098427392,
+      "gpu_holders": [],
+      "known_fault_baseline_matches": true
+    },
+    "gate_baseline": {
+      "utc": "2026-10-29T03:09Z",
+      "MemAvailable": 109656522752
+    }
+  },
+  "ram_blocker": {
+    "remaining": "/dev/shm/tp-direct-20261028 (4.951 GB, TP agent, written 22:58 EDT) + engine-build-tp-direct-20261028-r1..r4 (0.06 GB each); not authorized to delete",
+    "coordinator_released": "12.85 GB state bundles of sc117-dedicated-two-plus-one-aba64k-20261028-r2 (receipt state-archive.json there)",
+    "deleted": {
+      "count": 202,
+      "bytes": 2441000000,
+      "record": "stale-build-deletions.json.gz"
+    },
+    "kept": [
+      "engine-build-svc-b19-gdnprep-20261026",
+      "engine-build-reference-route-mtp-20261028-r1",
+      "engine-build-svc-b26-sparse"
+    ],
+    "resolution": "coordinator moved tp-direct-20261028 and Oct-26 ownrt-lab-* runs to HDD; MemAvailable 109.66 GB at gate baseline"
+  },
+  "gate": {
+    "passed": true,
+    "canonical_targets": 2065,
+    "target_errors": 0,
+    "canonical_draft": 73,
+    "draft_compared_bytes": 638509378,
+    "pairs": 1707,
+    "outputs": 32,
+    "pair_sequence_sha256": "e78b54eecee9fd622f98adc44efaacf3b6d8ca28fb7a013687dda98eb9dd71f9",
+    "outputs_match_retained_0_17_33_48_gate": true,
+    "reference": "PP4 serial request (5 bundles, 15.71 GB) restored sha-verified from HDD archive, released after proof",
+    "wall_s": 339.6
+  },
+  "timing": {
+    "cut16": {
+      "ttft_s": 240.96311884489842,
+      "request_s": 252.3287339869421,
+      "first99_tps": 50.133817517039056,
+      "all511_tps": 44.988124498761024,
+      "lifecycle_s": 475.2099122791551
+    },
+    "fresh_control": {
+      "ttft_s": 250.75148465693928,
+      "request_s": 261.73923239903525,
+      "first99_tps": 48.98340906255644,
+      "all511_tps": 46.53312229585912,
+      "lifecycle_s": 483.6440378529951
+    },
+    "retained_control": {
+      "ttft_s": 250.84163720393553,
+      "request_s": 261.38151908502914,
+      "first99_tps": 52.4150424602773,
+      "all511_tps": 48.515126328886275,
+      "lifecycle_s": 482.72893932578154
+    },
+    "equal16_retained": {
+      "ttft_s": 236.20906309294514,
+      "request_s": 248.71683319285512,
+      "first99_tps": 44.58586209375073,
+      "all511_tps": 40.875749870288466
+    },
+    "cut16_vs_fresh_control_percent": {
+      "ttft_s": -3.9036123057985583,
+      "request_s": -3.5953717468485378,
+      "first99_tps": 2.3485675588921042,
+      "all511_tps": -3.320210896820874,
+      "lifecycle_s": -1.743870473681631
+    },
+    "decode_window_s": {
+      "cut16": 11.36561514204368,
+      "fresh_control": 10.987747742095962,
+      "retained_control": 10.539881881093606
+    },
+    "prefill_target_busy_s": {
+      "cut16": [
+        232.56632079556584,
+        237.98513421812095,
+        211.37099138321355
+      ],
+      "fresh_control": [
+        248.2876673534047,
+        218.41401570639573,
+        211.72374852350913
+      ]
+    }
+  },
+  "drift": {
+    "fresh_vs_retained_control_percent": {
+      "ttft_s": -0.03594002495006691,
+      "request_s": 0.13685486076379355,
+      "first99_tps": -6.547039240350744,
+      "all511_tps": -4.085332107745233,
+      "lifecycle_s": 0.18956777865682956
+    }
+  },
+  "verdict": "mixed-leaning-promote-for-long-prompts: TTFT -3.90% / request -3.60% vs same-session control (TTFT drift 0.04%); all511 -3.32% but control-to-control all511 drift is -4.09%, so decode change is within run noise; first99 +2.35%. Stage1 is now the prefill bottleneck (238.0 s vs stage0 232.6 s).",
+  "incidents": "none; kernel log from 03:08:29Z to 03:44:39Z empty; all owners rc0, passive postflights clean",
+  "card_locks": "held 03:08:42Z-03:44:38Z by unit sc117-cut16-locks-20261028-r1 (all four)",
+  "retained_control_reference": {
+    "ttft_s": 250.84163720393553,
+    "request_s": 261.38151908502914,
+    "all511_tps": 48.515126328886275
+  },
+  "nofile": "equal16 units inherited user-manager defaults (soft 1024 / hard 1048576); no LimitNOFILE set; keep matched",
+  "marker": "taken over 03:08:29Z, removed 03:44:39Z after all started processes exited",
+  "long_proof": {
+    "passed": true,
+    "canonical_targets": 2065,
+    "canonical_draft": 73,
+    "canonical_pairs": 122364,
+    "outputs": 512,
+    "bulk_hidden_payload_chunks": 476,
+    "pair_sequence_sha256": "046dcd02c80153096103d4cfef6bb937055f25a0927c8bec77ee2a60958c2ad3",
+    "streamed_control_payload_bytes": 16369466936,
+    "outputs_match_retained_control": true,
+    "proof": "control/cut16-full-proof-r1.json.gz",
+    "exclusion_scope": "Existing measured_target policy: inactive alternate banks and nonfinal head scratch excluded from cross-topology canonical comparison; EVERY candidate byte still read against its own entry/full seals."
+  },
+  "archives": {
+    "gate": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-gate-r1/state-bundles.tar.zst (0756e20a, 16.37 GB freed)",
+    "cut16": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-long512-r1/state-bundles.tar.zst (b615d5cd, 16.37 GB freed)",
+    "control": "/mnt/raid-models/ownrt-experiment-archives/2026-10-28/cut16-control-long512-r1/state-bundles.tar.zst (3358db75, 16.37 GB freed)"
+  },
+  "censuses_device_bytes": {
+    "cut16": [
+      22693846240,
+      25000745696,
+      23854264320,
+      3746249732
+    ],
+    "control": [
+      23930431836,
+      23790980912,
+      23854264320,
+      3746249732
+    ]
+  },
+  "units": [
+    "sc117-cut16-gate-20261028-r1",
+    "sc117-long512-cut16-20261028-r1",
+    "sc117-long512-control-20261028-r1"
+  ],
+  "unit_policy": "Restart=no KillMode=process SendSIGKILL=no Nice=19 taskset 0-3,16-19; NOFILE defaults soft1024/hard1048576 (as equal16)"
+}
