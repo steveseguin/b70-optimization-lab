@@ -14,7 +14,7 @@ END = '<!-- END GENERATED FEATURED PICKS -->'
 PROFILE_DIR = 'data/profiles/2026-10-10/'
 SC117_SERVICE = 'experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json'
 SC117_TP_TWO = 'experiments/own-xpu-runtime/research/tp/target-head-split-2026-10-29/results/arm-two/suite.json'
-SC117_TP_BEST = ['experiments/own-xpu-runtime/research/tp/rank0-trims-2026-10-29/results/suite/arm-tptsx-r1/suite.json', 'experiments/own-xpu-runtime/research/tp/rank0-trims-2026-10-29/results/suite/arm-tptsx-r2/suite.json']
+SC117_TP_BEST = ['experiments/own-xpu-runtime/research/tp/qsa-split-2026-10-29/results/suite/arm-tptsxq-r1/suite.json', 'experiments/own-xpu-runtime/research/tp/qsa-split-2026-10-29/results/suite/arm-tptsxq-r2/suite.json']
 
 
 def read(path):
