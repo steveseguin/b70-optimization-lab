@@ -1,0 +1,1429 @@
+{
+ "log": "/dev/shm/fault-ladder-20261029/runs-c2/g-r1-one-tbt/alloc-trace.1705067.log",
+ "events": 195,
+ "groups": [
+  {
+   "kind": "malloc",
+   "count": 47,
+   "total_bytes": 1997219840,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     262144,
+     7
+    ],
+    [
+     993280,
+     1
+    ],
+    [
+     3145728,
+     18
+    ],
+    [
+     8388608,
+     7
+    ],
+    [
+     134217728,
+     14
+    ]
+   ],
+   "first_ns": 1146560729532362,
+   "last_ns": 1146565089171841,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "Engine::readback_range(int, unsigned long, unsigned long, unsigned long) [sc117-engine+0x4cef87]",
+    "Engine::readback(int, unsigned long, unsigned long, bool) [sc117-engine+0x46d1b2]",
+    "pipeline::state_dump(Engine&, int) [sc117-engine+0x68b659]",
+    "run_rank(Options const&)::{lambda(pipeline::Request const&)#1}::operator()(pipeline::Request const&) const [sc117-engine+0x69c69d]",
+    "run_rank(Options const&) [sc117-engine+0x4439a0]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 15,
+   "total_bytes": 89172224,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     524288,
+     3
+    ],
+    [
+     696320,
+     1
+    ],
+    [
+     787584,
+     2
+    ],
+    [
+     1966080,
+     1
+    ],
+    [
+     6291456,
+     1
+    ],
+    [
+     6553600,
+     2
+    ],
+    [
+     8388608,
+     2
+    ],
+    [
+     10485760,
+     2
+    ],
+    [
+     26214400,
+     1
+    ]
+   ],
+   "first_ns": 1146565092192083,
+   "last_ns": 1146565154257263,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "Engine::readback_range(int, unsigned long, unsigned long, unsigned long) [sc117-engine+0x4cef87]",
+    "Engine::readback(int, unsigned long, unsigned long, bool) [sc117-engine+0x46d1b2]",
+    "pipeline::request_state_inventory(Engine&) [sc117-engine+0x68c97c]",
+    "run_rank(Options const&)::{lambda(pipeline::Request const&)#1}::operator()(pipeline::Request const&) const [sc117-engine+0x69cab8]",
+    "run_rank(Options const&) [sc117-engine+0x4439a0]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  },
+  {
+   "kind": "mmap-file",
+   "count": 2,
+   "total_bytes": 5439488,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     1245184,
+     1
+    ],
+    [
+     4194304,
+     1
+    ]
+   ],
+   "first_ns": 1146560522944065,
+   "last_ns": 1146565206200081,
+   "frames": [
+    "mmap [alloc_trace.so+0x1fbc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7934f6]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x793812]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x793b6b]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28d567]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28e0d0]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2947e2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295f6e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 1965425,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     1965425,
+     1
+    ]
+   ],
+   "first_ns": 1146560517473454,
+   "last_ns": 1146560517473454,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "operator new[](unsigned long, std::nothrow_t const&) [libstdc++.so.6.0.33+0xbb96c]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x708210]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x6e4ef8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28acba]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 1965424,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     1965424,
+     1
+    ]
+   ],
+   "first_ns": 1146560521529955,
+   "last_ns": 1146560521529955,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x287a96]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 1965424,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     1965424,
+     1
+    ]
+   ],
+   "first_ns": 1146560521789934,
+   "last_ns": 1146560521789934,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29d72d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x287a03]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 1245184,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     1245184,
+     1
+    ]
+   ],
+   "first_ns": 1146560522830051,
+   "last_ns": 1146560522830051,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28d419]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28e0d0]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2947e2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295f6e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&)::$_2::operator()() const [libsycl.so.9.0.0+0x268ad2]"
+   ]
+  },
+  {
+   "kind": "posix_memalign",
+   "count": 2,
+   "total_bytes": 776448,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     382016,
+     1
+    ],
+    [
+     394432,
+     1
+    ]
+   ],
+   "first_ns": 1146560519694833,
+   "last_ns": 1146560520056153,
+   "frames": [
+    "posix_memalign [alloc_trace.so+0x1ec3]",
+    "operator new(unsigned long, std::align_val_t) [libstdc++.so.6.0.33+0xbb9f5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x752c3d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 748731,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     748731,
+     1
+    ]
+   ],
+   "first_ns": 1146560518557653,
+   "last_ns": 1146560518557653,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zeGetRTASParallelOperationProcAddrTable [libze_intel_gpu.so.1.15.38308+0x1bb4a4]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e24d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 687360,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     687360,
+     1
+    ]
+   ],
+   "first_ns": 1146560518924163,
+   "last_ns": 1146560518924163,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82ef5e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8908be]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "posix_memalign",
+   "count": 1,
+   "total_bytes": 397664,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     397664,
+     1
+    ]
+   ],
+   "first_ns": 1146560520507492,
+   "last_ns": 1146560520507492,
+   "frames": [
+    "posix_memalign [alloc_trace.so+0x1ec3]",
+    "operator new(unsigned long, std::align_val_t) [libstdc++.so.6.0.33+0xbb9f5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x754424]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "posix_memalign",
+   "count": 1,
+   "total_bytes": 395040,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     395040,
+     1
+    ]
+   ],
+   "first_ns": 1146560520469791,
+   "last_ns": 1146560520469791,
+   "frames": [
+    "posix_memalign [alloc_trace.so+0x1ec3]",
+    "operator new(unsigned long, std::align_val_t) [libstdc++.so.6.0.33+0xbb9f5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881d68]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x753400]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]"
+   ]
+  },
+  {
+   "kind": "posix_memalign",
+   "count": 1,
+   "total_bytes": 395008,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     395008,
+     1
+    ]
+   ],
+   "first_ns": 1146560520431919,
+   "last_ns": 1146560520431919,
+   "frames": [
+    "posix_memalign [alloc_trace.so+0x1ec3]",
+    "operator new(unsigned long, std::align_val_t) [libstdc++.so.6.0.33+0xbb9f5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881d68]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7531e5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]"
+   ]
+  },
+  {
+   "kind": "posix_memalign",
+   "count": 1,
+   "total_bytes": 394944,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     394944,
+     1
+    ]
+   ],
+   "first_ns": 1146560520252933,
+   "last_ns": 1146560520252933,
+   "frames": [
+    "posix_memalign [alloc_trace.so+0x1ec3]",
+    "operator new(unsigned long, std::align_val_t) [libstdc++.so.6.0.33+0xbb9f5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881d68]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7527c2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 374366,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     374366,
+     1
+    ]
+   ],
+   "first_ns": 1146560518516346,
+   "last_ns": 1146560518516346,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zeGetRTASParallelOperationProcAddrTable [libze_intel_gpu.so.1.15.38308+0x1bb98d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e232]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 374336,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     374336,
+     1
+    ]
+   ],
+   "first_ns": 1146560518485969,
+   "last_ns": 1146560518485969,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zeGetRTASParallelOperationProcAddrTable [libze_intel_gpu.so.1.15.38308+0x1bb872]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e21c]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 374336,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     374336,
+     1
+    ]
+   ],
+   "first_ns": 1146560518739415,
+   "last_ns": 1146560518739415,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x89e4fa]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e267]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 374336,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     374336,
+     1
+    ]
+   ],
+   "first_ns": 1146560518793427,
+   "last_ns": 1146560518793427,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x89e2e6]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e275]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "mmap-file",
+   "count": 1,
+   "total_bytes": 327680,
+   "threads": [
+    1705096
+   ],
+   "sizes": [
+    [
+     327680,
+     1
+    ]
+   ],
+   "first_ns": 1146546729771297,
+   "last_ns": 1146546729771297,
+   "frames": [
+    "mmap [alloc_trace.so+0x1fbc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7934f6]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x717d0e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x791fa2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x86f39b]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x6855b2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x65aa94]",
+    "__pthread_once_slow [libc.so.6+0xa1fb2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x684eca]",
+    "std::error_code::default_error_condition() const [libstdc++.so.6.0.33+0xecdb3]",
+    "start_thread [libc.so.6+0x9cb83]",
+    "clone3 [libc.so.6+0x129ecb]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 297301,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     297301,
+     1
+    ]
+   ],
+   "first_ns": 1146560515749741,
+   "last_ns": 1146560515749741,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "IGC::IgcOclTranslationCtx<0ul>::Impl::GetSpecConstantsInfo(CIF::Builtins::Buffer<1ul>*, CIF::Builtins::Buffer<1ul>*, CIF::Builtins::Buffer<1ul>*) [libigc.so.2.34.4+1778234987+0xf7c6ad]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x282dad]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a5b5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]"
+   ]
+  },
+  {
+   "kind": "malloc",
+   "count": 1,
+   "total_bytes": 297300,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     297300,
+     1
+    ]
+   ],
+   "first_ns": 1146560515276000,
+   "last_ns": 1146560515276000,
+   "frames": [
+    "malloc [alloc_trace.so+0x1913]",
+    "operator new(unsigned long) [libstdc++.so.6.0.33+0xbb903]",
+    "ur_program_handle_t_::ur_program_handle_t_(ur_program_handle_t_::state, ur_context_handle_t_*, void const*, unsigned long, ur_program_handle_t_::CodeFormat) [libur_adapter_level_zero_v2.so.0.12.0+0xa233c]",
+    "ur::level_zero::urProgramCreateWithIL(ur_context_handle_t_*, void const*, unsigned long, ur_program_properties_t const*, ur_program_handle_t_**) [libur_adapter_level_zero_v2.so.0.12.0+0x9bc82]",
+    "urProgramCreateWithIL [libur_loader.so.0.12.0+0x55d040]",
+    "sycl::_V1::detail::ProgramManager::createURProgram(sycl::_V1::detail::RTDeviceBinaryImage const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range) [libsycl.so.9.0.0+0x25e775]",
+    "sycl::_V1::detail::ProgramManager::getOrCreateURProgram(sycl::_V1::detail::RTDeviceBinaryImage const&, std::vector<sycl::_V1::detail::RTDeviceBinaryImage const*, std::allocator<sycl::_V1::detail::RTDeviceBinaryImage const*> > const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<unsigned char, std::allocator<unsigned char> >) [libsycl.so.9.0.0+0x25f4d6]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&)::$_2::operator()() const [libsycl.so.9.0.0+0x268670]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&) [libsycl.so.9.0.0+0x267341]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::context_impl&, sycl::_V1::detail::device_impl&, std::basic_string_view<char, std::char_traits<char> >, sycl::_V1::detail::NDRDescT const&) [libsycl.so.9.0.0+0x2623e8]",
+    "sycl::_V1::detail::ProgramManager::getOrCreateKernel(sycl::_V1::detail::context_impl&, sycl::_V1::detail::device_impl&, sycl::_V1::detail::DeviceKernelInfo&, sycl::_V1::detail::NDRDescT const&) [libsycl.so.9.0.0+0x269dbc]",
+    "sycl::_V1::detail::enqueueImpKernel(sycl::_V1::detail::queue_impl&, sycl::_V1::detail::NDRDescT&, std::vector<sycl::_V1::detail::ArgDesc, std::allocator<sycl::_V1::detail::ArgDesc> >&, sycl::_V1::detail::kernel_bundle_impl*, sycl::_V1::detail::kernel_impl const*, sycl::_V1::detail::DeviceKernelInfo&, std::vector<ur_event_handle_t_*, std::allocator<ur_event_handle_t_*> >&, sycl::_V1::detail::event_impl*, std::function<void* (sycl::_V1::detail::AccessorImplHost*)> const&, ur_kernel_cache_config_t, bool, bool, unsigned long, sycl::_V1::detail::RTDeviceBinaryImage const*, void*) [libsycl.so.9.0.0+0x2e8098]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560517069093,
+   "last_ns": 1146560517069093,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "IGC::IgcOclTranslationCtx<0ul>::Impl::GetSpecConstantsInfo(CIF::Builtins::Buffer<1ul>*, CIF::Builtins::Buffer<1ul>*, CIF::Builtins::Buffer<1ul>*) [libigc.so.2.34.4+1778234987+0xf7c636]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x282dad]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a5b5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&)::$_2::operator()() const [libsycl.so.9.0.0+0x268ad2]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560518542525,
+   "last_ns": 1146560518542525,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e23e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560518727433,
+   "last_ns": 1146560518727433,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zeGetRTASParallelOperationProcAddrTable [libze_intel_gpu.so.1.15.38308+0x1bb457]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e24d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560518782015,
+   "last_ns": 1146560518782015,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x89e499]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e267]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560518870472,
+   "last_ns": 1146560518870472,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x89e241]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e275]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520225511,
+   "last_ns": 1146560520225511,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x752c94]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520418474,
+   "last_ns": 1146560520418474,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881db4]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7527c2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520457878,
+   "last_ns": 1146560520457878,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881db4]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x7531e5]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520493325,
+   "last_ns": 1146560520493325,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x881db4]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x753400]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520537208,
+   "last_ns": 1146560520537208,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75446d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x8909e3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520872669,
+   "last_ns": 1146560520872669,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x890dac]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560520884731,
+   "last_ns": 1146560520884731,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x89097b]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e2a8]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560521261971,
+   "last_ns": 1146560521261971,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x75e5fb]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28854d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560522718361,
+   "last_ns": 1146560522718361,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x287a42]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x289f71]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x82a6dc]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2904a3]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295655]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&)::$_2::operator()() const [libsycl.so.9.0.0+0x268ad2]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146560524881530,
+   "last_ns": 1146560524881530,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28d5f9]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28e0d0]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2947e2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x295f6e]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29956d]",
+    "zeDeviceGetPriorityLevels [libze_intel_gpu.so.1.15.38308+0x1d56c9]",
+    "ur::level_zero::urProgramBuildExp(ur_program_handle_t_*, unsigned int, ur_device_handle_t_**, unsigned int, char const*) [libur_adapter_level_zero_v2.so.0.12.0+0x9c28e]",
+    "urProgramBuildExp [libur_loader.so.0.12.0+0x56d15e]",
+    "sycl::_V1::detail::ProgramManager::build(sycl::_V1::detail::Managed<ur_program_handle_t_*>, sycl::_V1::detail::context_impl&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const&, std::vector<ur_device_handle_t_*, std::allocator<ur_device_handle_t_*> >&, std::vector<sycl::_V1::detail::Managed<ur_program_handle_t_*>, std::allocator<sycl::_V1::detail::Managed<ur_program_handle_t_*> > > const&, bool) [libsycl.so.9.0.0+0x26fe5e]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&)::$_2::operator()() const [libsycl.so.9.0.0+0x268ad2]",
+    "sycl::_V1::detail::ProgramManager::getBuiltURProgram(sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::RTDeviceBinaryImage const*> const&, sycl::_V1::detail::context_impl&, sycl::_V1::detail::devices_range, sycl::_V1::detail::ObjectWithDeps<sycl::_V1::detail::device_image_plain> const*, std::vector<unsigned char, std::allocator<unsigned char> > const&) [libsycl.so.9.0.0+0x267341]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 47,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     47
+    ]
+   ],
+   "first_ns": 1146561013770939,
+   "last_ns": 1146565091018004,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "pipeline::state_dump(Engine&, int) [sc117-engine+0x68b8bc]",
+    "run_rank(Options const&)::{lambda(pipeline::Request const&)#1}::operator()(pipeline::Request const&) const [sc117-engine+0x69c69d]",
+    "run_rank(Options const&) [sc117-engine+0x4439a0]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 15,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     15
+    ]
+   ],
+   "first_ns": 1146565092675342,
+   "last_ns": 1146565154553911,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "pipeline::request_state_inventory(Engine&) [sc117-engine+0x68cb90]",
+    "run_rank(Options const&)::{lambda(pipeline::Request const&)#1}::operator()(pipeline::Request const&) const [sc117-engine+0x69cab8]",
+    "run_rank(Options const&) [sc117-engine+0x4439a0]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 11,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     11
+    ]
+   ],
+   "first_ns": 1146565213037874,
+   "last_ns": 1146565220521263,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2853c2]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28cf86]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29b824]",
+    "ur_program_handle_t_::ur_release_program_resources(bool) [libur_adapter_level_zero_v2.so.0.12.0+0xa3605]",
+    "ur_program_handle_t_::~ur_program_handle_t_() [libur_adapter_level_zero_v2.so.0.12.0+0xa32c1]",
+    "ur::level_zero::urProgramRelease(ur_program_handle_t_*) [libur_adapter_level_zero_v2.so.0.12.0+0x9f522]",
+    "urProgramRelease [libur_loader.so.0.12.0+0x55da92]",
+    "sycl::_V1::detail::Managed<ur_program_handle_t_*>::~Managed() [libsycl.so.9.0.0+0xfe02d]",
+    "emhash8::HashMap<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult>, std::hash<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::equal_to<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::allocator<std::pair<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult> > >, emhash8::DefaultPolicy>::~HashMap() [libsycl.so.9.0.0+0x1e987f]",
+    "sycl::_V1::detail::context_impl::~context_impl() [libsycl.so.9.0.0+0x1e451c]",
+    "std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() [sc117-engine+0x4c8139]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 11,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     11
+    ]
+   ],
+   "first_ns": 1146565213057922,
+   "last_ns": 1146565220533626,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x2853d4]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28cf86]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29b824]",
+    "ur_program_handle_t_::ur_release_program_resources(bool) [libur_adapter_level_zero_v2.so.0.12.0+0xa3605]",
+    "ur_program_handle_t_::~ur_program_handle_t_() [libur_adapter_level_zero_v2.so.0.12.0+0xa32c1]",
+    "ur::level_zero::urProgramRelease(ur_program_handle_t_*) [libur_adapter_level_zero_v2.so.0.12.0+0x9f522]",
+    "urProgramRelease [libur_loader.so.0.12.0+0x55da92]",
+    "sycl::_V1::detail::Managed<ur_program_handle_t_*>::~Managed() [libsycl.so.9.0.0+0xfe02d]",
+    "emhash8::HashMap<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult>, std::hash<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::equal_to<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::allocator<std::pair<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult> > >, emhash8::DefaultPolicy>::~HashMap() [libsycl.so.9.0.0+0x1e987f]",
+    "sycl::_V1::detail::context_impl::~context_impl() [libsycl.so.9.0.0+0x1e451c]",
+    "std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() [sc117-engine+0x4c8139]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 7,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     7
+    ]
+   ],
+   "first_ns": 1146565213223283,
+   "last_ns": 1146565220552121,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "ur_program_handle_t_::~ur_program_handle_t_() [libur_adapter_level_zero_v2.so.0.12.0+0xa32d2]",
+    "ur::level_zero::urProgramRelease(ur_program_handle_t_*) [libur_adapter_level_zero_v2.so.0.12.0+0x9f522]",
+    "urProgramRelease [libur_loader.so.0.12.0+0x55da92]",
+    "sycl::_V1::detail::Managed<ur_program_handle_t_*>::~Managed() [libsycl.so.9.0.0+0xfe02d]",
+    "emhash8::HashMap<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult>, std::hash<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::equal_to<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::allocator<std::pair<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult> > >, emhash8::DefaultPolicy>::~HashMap() [libsycl.so.9.0.0+0x1e987f]",
+    "sycl::_V1::detail::context_impl::~context_impl() [libsycl.so.9.0.0+0x1e451c]",
+    "std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() [sc117-engine+0x4c8139]",
+    "ownrt::(anonymous namespace)::SyclDevice::close_context() [sc117-engine+0x9e7ec4]",
+    "ownrt::Device::shutdown(std::chrono::duration<long, std::ratio<1l, 1000l> >) [sc117-engine+0x9da159]",
+    "Engine::shutdown[abi:cxx11]() [sc117-engine+0x46d68c]",
+    "run_rank(Options const&) [sc117-engine+0x453501]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146565220213494,
+   "last_ns": 1146565220213494,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x28cc1d]",
+    "zetKernelGetProfileInfo [libze_intel_gpu.so.1.15.38308+0x29b824]",
+    "ur_program_handle_t_::ur_release_program_resources(bool) [libur_adapter_level_zero_v2.so.0.12.0+0xa3605]",
+    "ur_program_handle_t_::~ur_program_handle_t_() [libur_adapter_level_zero_v2.so.0.12.0+0xa32c1]",
+    "ur::level_zero::urProgramRelease(ur_program_handle_t_*) [libur_adapter_level_zero_v2.so.0.12.0+0x9f522]",
+    "urProgramRelease [libur_loader.so.0.12.0+0x55da92]",
+    "sycl::_V1::detail::Managed<ur_program_handle_t_*>::~Managed() [libsycl.so.9.0.0+0xfe02d]",
+    "emhash8::HashMap<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult>, std::hash<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::equal_to<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > > >, std::allocator<std::pair<std::pair<std::pair<std::vector<unsigned char, std::allocator<unsigned char> >, unsigned long>, std::set<ur_device_handle_t_*, std::less<ur_device_handle_t_*>, std::allocator<ur_device_handle_t_*> > >, std::shared_ptr<sycl::_V1::detail::KernelProgramCache::ProgramBuildResult> > >, emhash8::DefaultPolicy>::~HashMap() [libsycl.so.9.0.0+0x1e987f]",
+    "sycl::_V1::detail::context_impl::~context_impl() [libsycl.so.9.0.0+0x1e451c]",
+    "std::_Sp_counted_base<(__gnu_cxx::_Lock_policy)2>::_M_release_last_use_cold() [sc117-engine+0x4c8139]",
+    "ownrt::(anonymous namespace)::SyclDevice::close_context() [sc117-engine+0x9e7ec4]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146565223888036,
+   "last_ns": 1146565223888036,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "ownrt::(anonymous namespace)::SyclDevice::~SyclDevice() [sc117-engine+0x9e5e51]",
+    "ownrt::(anonymous namespace)::SyclDevice::~SyclDevice() [sc117-engine+0x9e60a8]",
+    "ownrt::Device::~Device() [sc117-engine+0x9d9279]",
+    "Engine::~Engine() [sc117-engine+0x5ad6af]",
+    "run_rank(Options const&) [sc117-engine+0x453626]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 2,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     2
+    ]
+   ],
+   "first_ns": 1146565229965389,
+   "last_ns": 1146565235324010,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cddd]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::default_delete<iq3::Model>::operator()(iq3::Model*) const [sc117-engine+0x59cbe5]",
+    "std::default_delete<Weights>::operator()(Weights*) const [sc117-engine+0x74130c]",
+    "run_rank(Options const&) [sc117-engine+0x453659]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146565231384319,
+   "last_ns": 1146565231384319,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cddd]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::_Rb_tree<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> >, std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta>, std::_Select1st<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >, std::less<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > >, std::allocator<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> > >::_M_erase(std::_Rb_tree_node<std::pair<std::__cxx11::basic_string<char, std::char_traits<char>, std::allocator<char> > const, iq3::Meta> >*) [sc117-engine+0x59cd74]",
+    "std::default_delete<iq3::Model>::operator()(iq3::Model*) const [sc117-engine+0x59cbe5]",
+    "std::default_delete<Weights>::operator()(Weights*) const [sc117-engine+0x74130c]",
+    "run_rank(Options const&) [sc117-engine+0x453659]",
+    "packet26_model_entry(int, char**) [sc117-engine+0x419517]",
+    "main [sc117-engine+0x46e2ce]",
+    "__libc_start_call_main [libc.so.6+0x2a1c9]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]"
+   ]
+  },
+  {
+   "kind": "free",
+   "count": 1,
+   "total_bytes": 0,
+   "threads": [
+    1705067
+   ],
+   "sizes": [
+    [
+     0,
+     1
+    ]
+   ],
+   "first_ns": 1146565237090984,
+   "last_ns": 1146565237090984,
+   "frames": [
+    "free [alloc_trace.so+0x1b9d]",
+    "__run_exit_handlers [libc.so.6+0x47a75]",
+    "__GI_exit [libc.so.6+0x47bbd]",
+    "__libc_start_call_main [libc.so.6+0x2a1d0]",
+    "__libc_start_main_impl [libc.so.6+0x2a28a]",
+    "_start [sc117-engine+0x4132d4]"
+   ]
+  }
+ ]
+}

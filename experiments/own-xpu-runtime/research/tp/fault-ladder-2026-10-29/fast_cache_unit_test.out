@@ -1,0 +1,8 @@
+shared context, two queues : 40.37 heap bytes / submission, 8953 ns / submission
+per-card contexts          : 0.06 heap bytes / submission, 7490 ns / submission
+one queue alone            : 0.11 heap bytes / submission, 7852 ns / submission
+pass: shared context grows the heap by a record per submission (the runtime defect reproduced)
+pass: per-card contexts: no per-submission growth
+pass: one queue alone: no per-submission growth
+pass: results equal in every form
+0 failures

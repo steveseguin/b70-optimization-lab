@@ -25,9 +25,24 @@ std::vector<sycl::device> cards() {
       for(const auto& d:p.get_devices(sycl::info::device_type::gpu)) out.push_back(d);
   return out;
 }
+// OWNRT_TP_CARD_CONTEXT=1 (2026-10-29, opt-in; research/tp/fault-ladder-2026-10-29): one SYCL context per card instead of
+// one shared by both. Each still holds BOTH devices and wraps the SAME native Level Zero context, so the native context,
+// the peer access between the cards and the context's device list (Level Zero v2 makes each device allocation resident on
+// the context's peer devices) are unchanged; only the SYCL/UR context objects differ, one per submitting card.
+// Why: libsycl 2026.0's fast kernel cache cannot hold one kernel for two devices of one context. On a miss,
+// KernelProgramCache::saveKernel appends {kernel name, device} (24 B) to MProgramToFastKernelCacheKeyMap[program], which
+// is never trimmed while the program lives, and, when the name is already cached in this context, destroys a temporary
+// FastKernelSubcacheWrapper whose destructor erases every subcache entry of this context, the other card's included. With
+// both cards submitting the same kernels, every submission missed, took the slow lookup and appended a record: one vector
+// per program per card, growing for the life of the process; each doubling's copy cost 0.4-24 MiB of host page faults
+// inside a half (the 30-50 ms TP tail halves). With a context per card each card's cache only ever sees its own device.
+// Cross-queue SYCL event dependencies (peer_copy / peer_wait) would cross contexts and are refused with this flag; the
+// direct exchange (OWNRT_TP_EXCHANGE=direct) synchronises on device flags and uses neither.
+inline bool tp_card_context(){static const bool on=[]{const char* v=std::getenv("OWNRT_TP_CARD_CONTEXT");return v&&v[0]=='1';}();return on;}
 struct SharedGroup {
   ze_context_handle_t native=nullptr;std::unique_ptr<sycl::context> context;std::vector<sycl::device> devices;
-  ~SharedGroup(){context.reset();if(native)zeContextDestroy(native);}
+  std::vector<std::unique_ptr<sycl::context>> card_contexts; // OWNRT_TP_CARD_CONTEXT: one per member, same native context
+  ~SharedGroup(){card_contexts.clear();context.reset();if(native)zeContextDestroy(native);}
 };
 class SyclDevice final : public Backend, public OrderedQueue {
   std::shared_ptr<SharedGroup> group_;
@@ -56,13 +71,14 @@ class SyclDevice final : public Backend, public OrderedQueue {
     std::lock_guard lock(registry_mutex);
     if(owned_cards.contains(card)) throw std::logic_error("card already has an owner");
     auto d=group_->devices.at(index);
-    label_="LevelZero:"+std::to_string(card)+":"+d.get_info<sycl::info::device::name>()+":shared-context";
+    const bool own=!group_->card_contexts.empty();
+    label_="LevelZero:"+std::to_string(card)+":"+d.get_info<sycl::info::device::name>()+(own?":shared-native-card-context":":shared-context");
     if(profiling) label_+=":driver="+d.get_info<sycl::info::device::driver_version>();
     auto handler=[this](sycl::exception_list errors) {
       std::lock_guard error_lock(error_mutex_);
       if(!error_ && errors.size()) error_=*errors.begin();
     };
-    context_=std::make_unique<sycl::context>(*group_->context);
+    context_=std::make_unique<sycl::context>(own?*group_->card_contexts.at(index):*group_->context);
     auto properties=profiling
       ? sycl::property_list{sycl::property::queue::in_order{},sycl::property::queue::enable_profiling{}}
       : sycl::property_list{sycl::property::queue::in_order{}};
@@ -75,12 +91,14 @@ class SyclDevice final : public Backend, public OrderedQueue {
   Event peer_copy(void* d,const void* s,std::size_t n,Backend& source) override {
     check_error();capacity();auto& src=dynamic_cast<SyclDevice&>(source);
     if(!shares(src)||&src==this)throw std::logic_error("peer copy needs two cards of one shared context");
+    if(!group_->card_contexts.empty())throw std::logic_error("OWNRT_TP_CARD_CONTEXT: peer copy would depend on another context's event (use OWNRT_TP_EXCHANGE=direct)");
     sycl::event dep;const bool has=src.last_native(dep);
     return record(queue_->submit([&](sycl::handler& h){if(has)h.depends_on(dep);h.memcpy(d,s,n);}));
   }
   Event peer_wait(Backend& peer) override {
     check_error();capacity();auto& other=dynamic_cast<SyclDevice&>(peer);
     if(!shares(other)||&other==this)throw std::logic_error("peer wait needs two cards of one shared context");
+    if(!group_->card_contexts.empty())throw std::logic_error("OWNRT_TP_CARD_CONTEXT: peer wait would depend on another context's event (use OWNRT_TP_EXCHANGE=direct)");
     sycl::event dep;const bool has=other.last_native(dep);
     return record(queue_->submit([&](sycl::handler& h){if(has)h.depends_on(dep);h.single_task<class PeerWaitMarker>(packet26::checked([]{}));}));
   }
@@ -240,6 +258,10 @@ std::vector<std::unique_ptr<Backend>> make_sycl_device_group(const std::vector<s
   ze_context_desc_t desc{};desc.stype=ZE_STRUCTURE_TYPE_CONTEXT_DESC;
   auto driver=sycl::get_native<sycl::backend::ext_oneapi_level_zero>(group->devices[0].get_platform());
   if(zeContextCreate(driver,&desc,&group->native)!=ZE_RESULT_SUCCESS)throw std::runtime_error("zeContextCreate failed; no fallback context");
+  if(tp_card_context()) {
+    for(size_t i=0;i<indices.size();++i)group->card_contexts.push_back(std::make_unique<sycl::context>(sycl::make_context<sycl::backend::ext_oneapi_level_zero>(
+      {group->native,group->devices,sycl::ext::oneapi::level_zero::ownership::keep},[](sycl::exception_list){})));
+  } else
   group->context=std::make_unique<sycl::context>(sycl::make_context<sycl::backend::ext_oneapi_level_zero>(
     {group->native,group->devices,sycl::ext::oneapi::level_zero::ownership::keep},[](sycl::exception_list){}));
   std::vector<std::unique_ptr<Backend>> out;
