@@ -1,0 +1,59 @@
+=== phase s3d-gate binary 0702b5a9cd78 start 2026-10-29T02:45:37-04:00 pid 1066827 affinity 0-3,16-19 nofile 1048576
+[klog s3d-gate-before-24h] since @1793169937: 11 lines, 0 xe/fault lines
+--- arm r1-tp-b rank=1 mode=tp steps=16 prompt=1100 pattern= extra=batched,rows=256 MemAvailable=109128626176 shm_free=56027959296 at 2026-10-29T02:45:37-04:00
+{"tp": true, "steps": 16, "load_s": 26.25409801211208, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 10.91
+arm r1-tp-b rc=0 after 38 s
+[klog s3d-gate-after-r1-tp-b] since @1793256337: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1428,"waits_that_polled":1066,"max_polls":75706,"poll_sum":151842},{"abort":0,"timeouts":0,"waits":1428,"waits_that_polled":784,"max_polls":353,"poll_sum":8185}]}
+{"buffers":785,"differ":[],"passed":true}
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+tp card 1 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+--- arm r1-one-b rank=1 mode=one steps=16 prompt=1100 pattern= extra=batched,rows=256 MemAvailable=107089989632 shm_free=53967310848 at 2026-10-29T02:46:15-04:00
+{"tp": false, "steps": 16, "load_s": 14.748867228161544, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 12.41
+arm r1-one-b rc=0 after 24 s
+[klog s3d-gate-after-r1-one-b] since @1793256375: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+--- arm r1-one-tbt rank=1 mode=one steps=16 prompt=1100 pattern= extra=prefill-alloc,rows=256 MemAvailable=104877903872 shm_free=51907395584 at 2026-10-29T02:46:39-04:00
+{"tp": false, "steps": 16, "load_s": 14.51572890416719, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 12.38
+arm r1-one-tbt rc=0 after 33 s
+[klog s3d-gate-after-r1-one-tbt] since @1793256399: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+--- arm r1-tp-tbt rank=1 mode=tp steps=16 prompt=1100 pattern= extra=prefill-alloc,rows=256 MemAvailable=103082938368 shm_free=49846472704 at 2026-10-29T02:47:12-04:00
+{"tp": true, "steps": 16, "load_s": 25.818600988946855, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 10.88
+arm r1-tp-tbt rc=0 after 46 s
+[klog s3d-gate-after-r1-tp-tbt] since @1793256432: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":75888,"waits_that_polled":51717,"max_polls":131459,"poll_sum":1300798},{"abort":0,"timeouts":0,"waits":75888,"waits_that_polled":51954,"max_polls":161,"poll_sum":470119}]}
+{"buffers":785,"differ":[],"passed":true}
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+tp card 1 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+--- arm r0-tp-b rank=0 mode=tp steps=16 prompt=1100 pattern=hmcn extra=rows=256 MemAvailable=100937162752 shm_free=47784808448 at 2026-10-29T02:47:58-04:00
+{"steps": 16, "load_s": 118.65245695295744, "prompt_ms": 3299.190678400919, "draft_replay_ms": 973.4476646408439, "rc": 0} median half ms 9.363 draft ms 1.324
+arm r0-tp-b rc=0 after 133 s
+[klog s3d-gate-after-r0-tp-b] since @1793256478: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":1253,"max_polls":54636,"poll_sum":131134},{"abort":0,"timeouts":0,"waits":1600,"waits_that_polled":813,"max_polls":210,"poll_sum":7457}]}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+--- arm r0-one-b rank=0 mode=one steps=16 prompt=1100 pattern=hmcn extra=rows=256 MemAvailable=99316162560 shm_free=45897945088 at 2026-10-29T02:50:11-04:00
+{"steps": 16, "load_s": 74.19672056217678, "prompt_ms": 3796.6063851490617, "draft_replay_ms": 983.8032142724842, "rc": 0} median half ms 10.628 draft ms 1.339
+arm r0-one-b rc=0 after 85 s
+[klog s3d-gate-after-r0-one-b] since @1793256611: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+--- arm r0-one-tbt rank=0 mode=one steps=16 prompt=1100 pattern=hmcn extra=tbt,rows=256 MemAvailable=97405329408 shm_free=44012224512 at 2026-10-29T02:51:36-04:00
+{"steps": 16, "load_s": 59.72645468101837, "prompt_ms": 12663.034982047975, "draft_replay_ms": 1001.7167967744172, "rc": 0} median half ms 10.589 draft ms 1.339
+arm r0-one-tbt rc=0 after 79 s
+[klog s3d-gate-after-r0-one-tbt] since @1793256696: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+--- arm r0-tp-tbt rank=0 mode=tp steps=16 prompt=1100 pattern=hmcn extra=tbt,rows=256 MemAvailable=95637610496 shm_free=42125668352 at 2026-10-29T02:52:55-04:00
+{"steps": 16, "load_s": 59.180576605023816, "prompt_ms": 11331.21398766525, "draft_replay_ms": 998.4024954028428, "rc": 0} median half ms 9.331 draft ms 1.320
+arm r0-tp-tbt rc=0 after 81 s
+[klog s3d-gate-after-r0-tp-tbt] since @1793256775: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":71680,"waits_that_polled":48550,"max_polls":135300,"poll_sum":1144276},{"abort":0,"timeouts":0,"waits":71680,"waits_that_polled":49390,"max_polls":133,"poll_sum":438585}]}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+=== phase s3d-gate done 2026-10-29T02:54:16-04:00

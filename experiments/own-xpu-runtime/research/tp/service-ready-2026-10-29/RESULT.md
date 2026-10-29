@@ -84,3 +84,71 @@ and rank 0's draft, as before):
 0 exchange timeouts or aborts (8,922 waits per card on rank 0). The kernel log was clean before each phase (24 h) and
 after every arm. There were no incidents. Raw run directories (208 files, 9,829,218,266 B) and probes (89 files)
 were sha256-verified and moved to `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/svc-ready-step2-{runs,probes}`.
+
+## 3. Batched prompt reading under TP: TP-native (route 2), not the one-card copy (route 1)
+
+**Why not route 1.** Route 1 reads the prompt on card 0 with the one-card prefill, which needs card 0 to hold the
+one-card rank (full weights of every split site) *and* its TP slices. On rank 1 at 65536 with split 23 that is the
+one-card plan 32,199,218,796 B plus card 0's slices 483,495,296 B plus 68 MB of packed prefill shadows: **538 MB over
+the 30 GiB cap** (the plan check and the runtime arena admission both refuse it). The one-card rank alone has 20 MB
+headroom (live B19 census 32,192,153,260 B). Stage 3 cannot help, because card 0 must still hold the whole KV cache for a
+one-card prefill. Fitting route 1 would need extra decode changes (for example the head on card 1 only) or split 24
+(about 3% slower decode). Route 2 keeps every card at the TP footprint and needs no state copy in either direction,
+so a prompt after decode (a continuation) needs no reverse step.
+
+**Change** (opt-in: only with `--tp-replicate` and `--prefill-rows`; one-card prefill unchanged and re-gated below):
+- `prefill_engine.hpp` is per card. The sites are the TP plan's launches on both cards. Each runs on its own card with
+  that card's shadows, row views, positions, tokens, banks and captured replays.
+  - Head-split and compact-slot buffers use their compact extent per card (`head_split_layout`) as the shadow row, as
+    their M-row writers and readers do.
+  - Rank 0's lookup rows are computed once and uploaded to both cards. Rank 1's input rows go to both cards. The output
+    rows come from card 0.
+- Multi-row TP sites:
+  - `tp_xgather` and `tp_xheads` become one strided direct exchange over the chunk's M rows. The per-row layouts are
+    uniform strides: row halves, runs of 1024 every 2048, compact expert slots of 2560 every 5120.
+  - Each exchange uses its own prefill flag slot (decode slot + 128). Before a pair, both cards are drained and the
+    slot's counter and flag are zeroed on both cards. The epoch is then 1 whatever the row count, and the decode epochs
+    are untouched. No peer store can reach a shadow the peer's earlier sites still use.
+  - `tp_route_compact` runs RouteCompact over the M × 10 routes. The new `SlotRowsCompact` kernel selects the same
+    slots' expert-input rows (a bitwise copy) for the compact gate/up launches, which read one input row per slot.
+- `rank.hpp` admits the prefill command under TP. `OWNRT_PREFILL_ERROR_TRACE=1` (diagnostic, default off) names the
+  first prefill site that sets a sticky error.
+- Binary `0702b5a9cd78…` (build r5; [receipt](../../../engine/receipts/0702b5a9cd78.json)). The rank-0 driver gained
+  `--token-prompt`, which makes the same draft calls as the batched path, in the same order.
+
+**Incident on the way (host-side, no device fault).** The first gate run (r3, `2fe1b9a57ada`) read the 1,100 rows
+token by token fine but stopped at the first 256-row chunk with "sticky rank error in batched prefill". The 16-row
+smoke had passed. The trace run ([evidence/step3-r3/](evidence/step3-r3/)) showed card 0's first exchange timing out
+at the 2^22-poll cap. A drain had run between card 0's and card 1's halves of an exchange pair: the chunk's periodic
+drain every 6,000 submissions, which 256-row chunks cross often. The host then waited on card 0 while card 0 waited on
+card 1's flag, and card 1's half was not yet issued. Fix (r5): no drain while a pair is open, and a check that card 1's
+half is the very next site. Both cards tore down clean, and the kernel log stayed clean throughout.
+
+**Gate** (binary r5, context 65536, cards 23:00.0 + 47:00.0, one card on 23:00.0; 1,100 prompt rows (256-row chunks:
+4 full and one of 76; the 512-row raw ring wraps twice), then 16 decode halves; rank 0 with hit/miss/cancel
+speculation `hmcn`; phase `s3d-gate`, [evidence/](evidence/), [results/step3-gate-timings.json](results/step3-gate-timings.json)):
+
+| Comparison (full dump, bitwise) | Rank 1 | Rank 0 |
+|---|---|---|
+| TP batched vs one card batched | 1079/1079 | 1029/1029 target, 71/71 draft, draft tokens equal |
+| TP batched vs TP token by token | 1079/1079 | 1029/1029, 71/71, equal |
+| one card batched vs one card token by token | 1079/1079 | 1029/1029, 71/71, equal |
+| TP token by token vs one card token by token | 1079/1079 | 1029/1029, 71/71, equal |
+
+All 16 decode tokens are equal in the four rank-1 runs. Card 1 equals card 0 on every buffer both hold in full (785 /
+710). 0 exchange timeouts or aborts. The kernel log was clean before the phase and after every arm.
+
+**Prompt reading, rank harness (1,100 rows; ms):**
+
+| | One card, token by token | One card, batched | TP, token by token | **TP, batched** |
+|---|---:|---:|---:|---:|
+| rank 1 | 13,630 | 4,281 | 12,177 | **3,627** (1.18× one card batched) |
+| rank 0 (prefill only; + ~980 ms draft replay in each) | 11,661 | 2,813 | 10,333 | **2,326** (1.21×) |
+
+- Card-0 census at 65536 with 256-row prefill: rank 1 TP 31,718,847,844 B (**493 MB headroom**; one card
+  32,192,153,260); rank 0 TP 29,444,280,282 B (one card 29,911,490,794).
+- Decode halves are unchanged by the prefill path: rank 1 10.88–10.91 ms on TP against 12.36–12.41 ms on one card;
+  rank 0 9.33–9.36 against 10.59–10.63.
+- End-to-end TTFT on a 3,490-token prompt against the two-card control is measured in section 4 (the same service
+  launches).
+- Raw runs (sha256-verified) are in `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/svc-ready-step3-{gate-r3,trace-r4,gate-r5}`.

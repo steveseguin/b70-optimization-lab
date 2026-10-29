@@ -871,7 +871,7 @@ static int run_rank(const Options& a) {
     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
    else if(r.op==prefill::op){
-    require(!a.tp_replicate,"--tp-replicate: batched prefill is not supported yet (one-card prefill + state transfer pending)");
+    // --tp-replicate (2026-10-29): TP-native batched prefill (prefill_engine.hpp), each card in its own layout.
     require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture>=0&&r.fixture<a.prefill_slots)&&!r.speculative,"prefill command");
     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
     require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"prefill command header changed");

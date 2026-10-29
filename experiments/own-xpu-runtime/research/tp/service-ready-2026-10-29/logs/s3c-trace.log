@@ -1,0 +1,22 @@
+=== phase s3c-trace binary caa05fc860c0 start 2026-10-29T02:42:36-04:00 pid 1065767 affinity 0-3,16-19 nofile 1048576
+[klog s3c-trace-before-24h] since @1793169756: 11 lines, 0 xe/fault lines
+--- arm r1-tp-b-trace rank=1 mode=tp steps=2 prompt=300 pattern= extra=batched,rows=256 MemAvailable=109440589824 shm_free=56089333760 at 2026-10-29T02:42:36-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/tp_rank1_driver.py", line 217, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/tp_rank1_driver.py", line 138, in run
+    call(parent, PREFILL, seq, position=first, token=n, fixture=chunk % 2)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/tp_rank1_driver.py", line 46, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/tp_rank1_driver.py", line 39, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm r1-tp-b-trace rc=1 after 34 s
+[klog s3c-trace-after-r1-tp-b-trace] since @1793256156: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+tp card 1 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+prefill error trace: card 0 error after site blk.23.attention.tp_xgather (tp_xgather, card 0, index 34) at P0 0 M 256; card 0 exchange abort 1 timeouts 1 waits 1 max_polls 4194304; card 1 exchange abort 0 timeouts 0 waits 0 max_polls 0
+HALT: arm r1-tp-b-trace rc=1

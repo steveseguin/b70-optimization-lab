@@ -33,7 +33,9 @@ Sequence, as the native controller's bulk path (non-speculative form):
   --prompt 0      no prefill and no --prefill-rows arguments.
 
 Lab copy for research/tp/service-ready-2026-10-29 (from research/tp/direct-exchange-2026-10-28): --pair picks the two
-cards of --tp (PCI-order indices, default 0,3).
+cards of --tp (PCI-order indices, default 0,3). --token-prompt reads the prompt rows token by token instead of in
+PREFILL chunks: HALF(q, fixture 0) + ACCEPT per row, each followed by the same draft call the batched path makes after
+that row (DRAFT q+1, head off, for q+1 < prompt). The draft calls are the batched path's, in the same order.
 """
 import argparse, json, mmap, os, socket, struct, subprocess, sys, time
 from pathlib import Path
@@ -178,7 +180,18 @@ def run(a):
 
         prefill_ms = replay_ms = 0.0
         prefill_tokens = []
-        for chunk, first in enumerate(range(0, a.prompt, a.rows)):
+        for q in (range(a.prompt) if a.token_prompt else ()):
+            seq += 1
+            s = time.monotonic()
+            call(parent, HALF, seq, position=q, token=token_at(q), fixture=0)
+            seq += 1
+            call(parent, ACCEPT, seq, position=q, token=token_at(q), fixture=0)
+            prefill_ms += (time.monotonic() - s) * 1000
+            if q + 1 < a.prompt:
+                tok, ms, _ = draft(q + 1, False)
+                prefill_tokens.append(tok)
+                replay_ms += ms
+        for chunk, first in enumerate(range(0, 0 if a.token_prompt else a.prompt, a.rows)):
             n = min(a.rows, a.prompt - first)
             struct.pack_into(f'<{n}i', pm, 16, *[token_at(first + r) for r in range(n)])
             seq += 1
@@ -249,7 +262,7 @@ def run(a):
         summary = dict(binary=next((x for x in argv if x.endswith('engine')), None),
                        tp=a.tp, pair=a.pair if a.tp else None, split=a.split, pattern=a.pattern, cancel_launch=a.cancel_launch, events=events,
                        tp_env={k: v for k, v in sorted(full_env.items()) if k.startswith('OWNRT_TP_') or k in ('NEOReadDebugKeys', 'EnableDeferBacking')},
-                       prompt=a.prompt, rows=a.rows, steps=a.steps, load_s=load_s, prompt_ms=prompt_ms, prefill_ms=prefill_ms, draft_replay_ms=replay_ms,
+                       prompt=a.prompt, token_prompt=a.token_prompt, rows=a.rows, steps=a.steps, load_s=load_s, prompt_ms=prompt_ms, prefill_ms=prefill_ms, draft_replay_ms=replay_ms,
                        half_ms=half_ms, draft_ms=draft_ms, draft_gpu_ms=draft_gpu, draft_tokens=draft_tokens,
                        prefill_draft_tokens=prefill_tokens, rc=proc.returncode)
         (out / 'summary.json').write_text(json.dumps(summary, indent=1))
@@ -307,6 +320,7 @@ if __name__ == '__main__':
     r.add_argument('--pattern', default='n', help='decode step kinds n/h/m/c, repeated')
     r.add_argument('--cancel-launch', type=int, default=-1)
     r.add_argument('--pair', default='0,3', help='ZE_AFFINITY_MASK of --tp (PCI-order indices: 0=23 1=27 2=43 3=47)')
+    r.add_argument('--token-prompt', action='store_true', help='read the prompt token by token (HALF fixture 0) instead of PREFILL chunks')
     c = sub.add_parser('compare')
     c.add_argument('a')
     c.add_argument('b')

@@ -11,13 +11,32 @@
 // - Each QSA select/attention row is prepared with the context extent that its single-row step admits.
 // The decode path is untouched: prepared commands are never redirected, and with prefill_rows == 0 nothing
 // here allocates or runs.
+//
+// --tp-replicate (2026-10-29, research/tp/service-ready-2026-10-29): TP-native batched prefill. The sites are the TP
+// plan's launches on both cards; each runs on its own card with that card's shadows, views, positions and tokens, so
+// each card keeps its own layout (replicated buffers whole, head-split and compact-slot buffers compact) and nothing is
+// copied between layouts. A compact buffer's shadow rows hold the card's compact extent (its writers emit compact rows
+// back to back, as the M-row kernels read them). The TP sites with peer stores run multi-row:
+// - tp_xgather / tp_xheads: one direct exchange per card over the chunk's M rows. The per-row layouts are uniform
+//   strides (row halves: runs of R/2 every R; heads: runs of 1024 every 2048; compact expert slots: runs of 2560 every
+//   5120), so one strided exchange covers all M rows. Each uses its own prefill flag slot (decode slot + 128), and both
+//   cards are drained and that slot's counter and flag words zeroed before the pair is issued: the epoch is then 1 on
+//   both cards whatever the row count, the decode slots' epochs are untouched, and no peer store can reach a shadow
+//   that the peer's earlier sites still use.
+// - tp_route_compact: RouteCompact over the M x top routes (this card's slots of every row, in order), and the same
+//   selection of the expert input rows (SlotRowsCompact) for the compact gate/up launches, which read one input row per
+//   slot. Each slot keeps its route, input row, kernel and arithmetic.
+// Without --tp-replicate every path below is the one-card path (card 0) unchanged.
 struct PrefillShadow {Allocation id=0;size_t row_bytes=0;};
-std::map<std::string,PrefillShadow> prefill_shadows;   // by role: "blk.*.<suffix>" for layer buffers
+std::array<std::map<std::string,PrefillShadow>,2> prefill_shadows;   // per card, by role: "blk.*.<suffix>" for layer buffers
 std::map<std::string,std::string> prefill_role_of;     // plan buffer name -> role
 std::vector<const flash::Launch*> prefill_sites;
-Allocation prefill_positions=0,prefill_tokens=0;
-Allocation xg_order=0,xg_tiles=0,xg_count=0;size_t xg_capacity=0;
+std::array<Allocation,2> prefill_positions{},prefill_tokens{};
+std::array<Allocation,2> xg_order{},xg_tiles{},xg_count{};size_t xg_capacity=0;
+std::array<Allocation,2> prefill_slot_x{};             // TP: this card's expert input rows (compact slots) of the chunk
 uint64_t prefill_chunks=0,prefill_rows_done=0;
+int prefill_cards() const {return a.tp_replicate?2:1;}
+static constexpr uint32_t prefill_exchange_slot_base=128;
 // Request-local ring accounting: native recurrence chunks publish once into the
 // spare bank, while scalar/replayed rows swap per row. No model state is changed.
 unsigned prefill_bank_parity_bias=0;
@@ -49,21 +68,32 @@ bool prefill_runs(const flash::Launch& l) const {
   if(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")return false;
   return l.op!="handoff"&&l.op!="handoff_result";
 }
+// Bytes of one shadow row of `name` on card c: the buffer's bytes, or under TP a head-split / compact-slot buffer's
+// compact extent on that card (Engine::head_split_layout), which its M-row writers and readers use as the row stride.
+size_t prefill_row_bytes(int c,const std::string& name) const {
+  const auto& s=buffers[size_t(c)].at(name);
+  if(a.tp_replicate)if(auto h=head_split_layout.find(name);h!=head_split_layout.end()){size_t n=0;for(const auto& r:h->second[size_t(c)])n+=r[2];require(n>0&&n<=s.n,"TP compact row extent: "+name);return n*flash::scalar_bytes(s.type);}
+  return s.n*flash::scalar_bytes(s.type);
+}
 void prefill_allocate() {
   if(!a.prefill_rows)return;
-  require(a.cards==1&&resident,"batched prefill: one resident card per rank");
-  const size_t M=size_t(a.prefill_rows);
-  std::map<std::string,size_t> role_bytes;
+  require((a.cards==1||(a.tp_replicate&&a.cards==2))&&resident,"batched prefill: one resident card per rank (or --tp-replicate)");
+  const size_t M=size_t(a.prefill_rows);const int C=prefill_cards();
+  std::array<std::map<std::string,size_t>,2> card_role_bytes;
   for(const auto& l:p.launches) {
     if(!prefill_runs(l))continue;
+    require(l.card>=0&&l.card<C,"prefill site card");
     prefill_sites.push_back(&l);
     std::vector<std::string> names(l.inputs.begin(),l.inputs.end());names.insert(names.end(),l.outputs.begin(),l.outputs.end());
     for(const auto& name:names) {
       if(name=="position"||name=="token"||prefill_persistent(name))continue;
-      const auto& slot=buffers[0].at(name);const size_t bytes=slot.n*flash::scalar_bytes(slot.type);
-      auto role=prefill_role(name);prefill_role_of[name]=role;role_bytes[role]=std::max(role_bytes[role],bytes);
+      const size_t bytes=prefill_row_bytes(l.card,name);
+      auto role=prefill_role(name);prefill_role_of[name]=role;auto& rb=card_role_bytes[size_t(l.card)][role];rb=std::max(rb,bytes);
     }
   }
+  std::ostringstream cards_json;
+  for(int c=0;c<C;++c){
+  const auto& role_bytes=card_role_bytes[size_t(c)];
   size_t total=0,unpacked=0;
   // OWNRT_PREFILL_SHADOW_PACK=1 (lab 2026-10-26, default off; rank 1 only): roles whose live ranges never overlap share
   // one allocation. A chunk runs prefill_sites in this order (every row of a site before the next site), and only
@@ -76,7 +106,7 @@ void prefill_allocate() {
   if(pack_env&&a.rank==1&&a.gsq_packed&&!a.mini) {
     using Segment=std::pair<size_t,size_t>;std::map<std::string,std::vector<Segment>> live;std::map<std::string,std::pair<size_t,size_t>> open;
     const size_t n=prefill_sites.size();
-    for(size_t i=0;i<n;++i){const auto& l=*prefill_sites[i];
+    for(size_t i=0;i<n;++i){const auto& l=*prefill_sites[i];if(l.card!=c)continue; // this card's sites (TP: a peer store lands after a drain)
       for(const auto& name:l.inputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
         if(it==open.end())open[r]={0,i};else it->second.second=i;}
       for(const auto& name:l.outputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
@@ -98,54 +128,65 @@ void prefill_allocate() {
   if(!slot_of.empty()) {
     std::vector<Allocation> ids;
     for(size_t k=0;k<slot_bytes.size();++k){const size_t bytes=slot_bytes[k]*M;
-      auto id=allocate(0,"prefill:pack"+std::to_string(k),bytes,Category::scratch,Lifetime::transaction);
+      auto id=allocate(c,"prefill:pack"+std::to_string(k),bytes,Category::scratch,Lifetime::transaction);
       std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)),0);
-      for(size_t off=0;off<bytes;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));
+      for(size_t off=0;off<bytes;off+=zero.size())upload(c,id,off,zero.data(),std::min(zero.size(),bytes-off));
       ids.push_back(id);total+=bytes;}
-    for(const auto& [role,bytes]:role_bytes){prefill_shadows[role]={ids.at(slot_of.at(role)),bytes};unpacked+=bytes*M;}
-    std::ostringstream o;o<<"{\"slots\":[";for(size_t k=0;k<slot_bytes.size();++k){o<<(k?",":"")<<"{\"bytes\":"<<slot_bytes[k]*M<<",\"roles\":[";bool c=false;
-      for(const auto& [r,slot]:slot_of)if(slot==k){o<<(c?",":"")<<ownrt::quote(r);c=true;}o<<"]}";}
-    o<<"]}";save(a.output/"prefill-shadow-pack.json",o.str());
+    for(const auto& [role,bytes]:role_bytes){prefill_shadows[size_t(c)][role]={ids.at(slot_of.at(role)),bytes};unpacked+=bytes*M;}
+    std::ostringstream o;o<<"{\"slots\":[";for(size_t k=0;k<slot_bytes.size();++k){o<<(k?",":"")<<"{\"bytes\":"<<slot_bytes[k]*M<<",\"roles\":[";bool comma=false;
+      for(const auto& [r,slot]:slot_of)if(slot==k){o<<(comma?",":"")<<ownrt::quote(r);comma=true;}o<<"]}";}
+    o<<"]}";save(a.output/(c?"prefill-shadow-pack-card1.json":"prefill-shadow-pack.json"),o.str());
   } else
   for(const auto& [role,bytes]:role_bytes) {
-    auto id=allocate(0,"prefill:"+role,bytes*M,Category::scratch,Lifetime::transaction);
+    auto id=allocate(c,"prefill:"+role,bytes*M,Category::scratch,Lifetime::transaction);
     std::vector<uint8_t> zero(std::min(bytes*M,size_t(4194304)),0);
-    for(size_t off=0;off<bytes*M;off+=zero.size())upload(0,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
-    prefill_shadows[role]={id,bytes};total+=bytes*M;unpacked+=bytes*M;
+    for(size_t off=0;off<bytes*M;off+=zero.size())upload(c,id,off,zero.data(),std::min(zero.size(),bytes*M-off));
+    prefill_shadows[size_t(c)][role]={id,bytes};total+=bytes*M;unpacked+=bytes*M;
   }
 #ifndef OWN_RT_HOST_ONLY
   if(xgroup::enabled()) { // expert-grouped routed sites: slot order, tile descriptors and tile count for top*M slots
     xg_capacity=size_t(p.g.top)*M;
-    xg_order=allocate(0,"prefill:xg-order",xg_capacity*4,Category::scratch,Lifetime::transaction);
-    xg_tiles=allocate(0,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
-    xg_count=allocate(0,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
+    xg_order[size_t(c)]=allocate(c,"prefill:xg-order",xg_capacity*4,Category::scratch,Lifetime::transaction);
+    xg_tiles[size_t(c)]=allocate(c,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
+    xg_count[size_t(c)]=allocate(c,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
   }
 #endif
-  prefill_positions=allocate(0,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
-  prefill_tokens=allocate(0,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
-  std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
-    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<(slot_of.empty()?std::string():",\"packed_slots\":"+std::to_string(slot_bytes.size())+",\"unpacked_bytes\":"+std::to_string(unpacked))<<"}";
-  save(a.output/"prefill-allocation.json",o.str());
+  prefill_positions[size_t(c)]=allocate(c,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
+  prefill_tokens[size_t(c)]=allocate(c,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
+  size_t slot_x=0;
+  if(a.tp_replicate){ // compact gate/up input rows: this card's slots of the M rows (largest expert input row)
+    for(const auto* l:prefill_sites)if(l->card==c&&l->op=="routed_gemv"&&l->slots&&!ends(l->inputs.at(0),".expsact"))slot_x=std::max(slot_x,size_t(l->slots)*prefill_row_bytes(c,l->inputs.at(0))/size_t(p.g.top));
+    if(slot_x){prefill_slot_x[size_t(c)]=allocate(c,"prefill:slot-x",slot_x*M,Category::scratch,Lifetime::transaction);total+=slot_x*M;}
+  }
+  cards_json<<(c?",":"")<<"{\"card\":"<<c<<",\"roles\":"<<role_bytes.size()<<",\"shadow_bytes\":"<<total<<",\"slot_x_bytes\":"<<slot_x*M
+    <<(slot_of.empty()?std::string():",\"packed_slots\":"+std::to_string(slot_bytes.size())+",\"unpacked_bytes\":"+std::to_string(unpacked))<<"}";
+  if(c==0){std::ostringstream o;o<<"{\"rows\":"<<M<<",\"roles\":"<<role_bytes.size()<<",\"buffers\":"<<prefill_role_of.size()
+    <<",\"sites\":"<<prefill_sites.size()<<",\"shadow_bytes\":"<<total<<(slot_of.empty()?std::string():",\"packed_slots\":"+std::to_string(slot_bytes.size())+",\"unpacked_bytes\":"+std::to_string(unpacked));
+    if(C==1){o<<"}";save(a.output/"prefill-allocation.json",o.str());}}
+  }
+  if(C==2){std::ostringstream o;o<<"{\"rows\":"<<M<<",\"buffers\":"<<prefill_role_of.size()<<",\"sites\":"<<prefill_sites.size()<<",\"tp\":true,\"cards\":["<<cards_json.str()<<"]}";
+    save(a.output/"prefill-allocation.json",o.str());}
 }
 // Captured row replays: the commands an unchanged site issues for one row, captured once under that row's views and
 // issued like the decode path's prepared sites. Keyed by site, row, QSA context extent (0 for other sites) and the
 // recurrent bank pair (active and spare of one banked buffer; all banks swap together). Dropped when the device
 // invalidates prepared commands.
 using PrefillKey=std::tuple<const flash::Launch*,int,int,Allocation,Allocation>;
-std::map<PrefillKey,std::vector<ownrt::PreparedCompute>> prefill_captured;
-uint64_t prefill_generation=0,prefill_captures=0;
+std::array<std::map<PrefillKey,std::vector<ownrt::PreparedCompute>>,2> prefill_captured; // per card
+std::array<uint64_t,2> prefill_generation{};uint64_t prefill_captures=0;
 const std::vector<ownrt::PreparedCompute>& prefill_commands(const flash::Launch& l,int row,int extent) {
-  if(dev(0).generation()!=prefill_generation){prefill_captured.clear();prefill_generation=dev(0).generation();}
-  Allocation active=0,spare=0;if(!state_spares.empty()){active=buffers[0].at(state_spares.begin()->first).id;spare=state_spares.begin()->second;}
+  const int c=l.card;auto& captured=prefill_captured.at(size_t(c));
+  if(dev(c).generation()!=prefill_generation[size_t(c)]){captured.clear();prefill_generation[size_t(c)]=dev(c).generation();}
+  Allocation active=0,spare=0;if(!spares(c).empty()){active=buffers[size_t(c)].at(spares(c).begin()->first).id;spare=spares(c).begin()->second;}
   const PrefillKey key{&l,row,extent,active,spare};
-  if(auto found=prefill_captured.find(key);found!=prefill_captured.end())return found->second;
-  auto& out=prefill_captured[key];const int saved_extent=context_extent;auto& d=dev(0);
+  if(auto found=captured.find(key);found!=captured.end())return found->second;
+  auto& out=captured[key];const int saved_extent=context_extent;auto& d=dev(c);
   d.view_row=row;preparing_commands=true;d.begin_capture(out);
   try {
-    if(extent){context_extent=extent;auto site=prepare_site(l);context_extent=saved_extent;site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{});}
+    if(extent){context_extent=extent;auto site=prepare_site(l);context_extent=saved_extent;site.submit(d,site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{});}
     else execute_site(l);
     d.end_capture();preparing_commands=false;d.view_row=-1;
-  } catch(...) {d.end_capture();preparing_commands=false;d.view_row=-1;context_extent=saved_extent;prefill_captured.erase(key);throw;}
+  } catch(...) {d.end_capture();preparing_commands=false;d.view_row=-1;context_extent=saved_extent;captured.erase(key);throw;}
   ++prefill_captures;return out;
 }
 // Native multi-row sites: one launch for all M rows with Spec.tokens=M on the M-row buffers. These generic and
@@ -169,12 +210,12 @@ bool prefill_native(const flash::Launch& l) const {
   return s.special==Special::normal&&(s.implementation<=1||s.implementation==11||(l.op=="gdn"&&s.implementation==2))&&!s.fused_combine_norm;
 }
 void prefill_native_site(const flash::Launch& l,int P0,int M) {
-  const int saved_extent=context_extent;
+  const int c=l.card;const int saved_extent=context_extent;
   if(l.op=="qsa_select")context_extent=std::min(p.g.context,((P0+M-1+32)/32)*32); // covers the chunk's last row
   auto site=prepare_site(l);context_extent=saved_extent;
   size_t k=0;
-  for(const auto& name:l.inputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
-  for(const auto& name:l.outputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(name);++k;}
+  for(const auto& name:l.inputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(c,name);++k;}
+  for(const auto& name:l.outputs){if(prefill_role_of.count(name))site.bindings.at(k)=prefill_shadow(c,name);++k;}
   if(l.op=="check_status") {
     // One status check over every row's slots: the sticky error is set exactly when some row's check would set it.
     require(!prefill_role_of.count("error"),"prefill status rows");
@@ -183,11 +224,11 @@ void prefill_native_site(const flash::Launch& l,int P0,int M) {
     site.spec.tokens=M;
     for(size_t j=0;j<l.inputs.size()+l.outputs.size();++j){
       const auto& name=j<l.inputs.size()?l.inputs[j]:l.outputs[j-l.inputs.size()];
-      if(prefill_role_of.count(name))site.spec.row_bytes[j]=uint32_t(prefill_row_bytes(name));
+      if(prefill_role_of.count(name))site.spec.row_bytes[j]=uint32_t(prefill_row_bytes(c,name));
     }
     site.spec.tmp_row_bytes=4096*4; // route's per-row temporary (2*32+2*512 floats) and gather's flags fit
   }
-  finish(0,site.submit(dev(0),site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);
+  finish(c,site.submit(dev(c),site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);
 }
 // QSA select rows per native launch: its specialised scratch holds tokens x ceil(context/4) floats in the 8 MiB
 // operator scratch (128 rows at context 65536). Longer chunks run the native select in groups of at most that many rows,
@@ -195,43 +236,48 @@ void prefill_native_site(const flash::Launch& l,int P0,int M) {
 // shadows are viewed at row g), with the extent its last row admits. Each row's arithmetic is its single-row select.
 int prefill_select_rows() const {return std::max(1,int(size_t(8)*1024*1024/(size_t(4)*((size_t(p.g.context)+3)/4))));}
 void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
-  auto& d=dev(0);const int saved_extent=context_extent;
+  const int c=l.card;auto& d=dev(c);const int saved_extent=context_extent;
   context_extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
   auto site=prepare_site(l);context_extent=saved_extent;
   std::vector<Allocation> viewed;size_t k=0;
   for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
-    if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(name));
-      if(!d.row_views.count(shadow)){d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}}
+    if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(c,name);site.bindings.at(k)=shadow;site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(c,name));
+      if(!d.row_views.count(shadow)){d.row_views[shadow]={shadow,prefill_row_bytes(c,name),false};viewed.push_back(shadow);}}
     ++k;}
   site.spec.tokens=rows;site.spec.tmp_row_bytes=4096*4;
   d.view_row=g;
-  try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
+  try {finish(c,site.submit(d,site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);}
   catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
   d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
 }
-Allocation prefill_shadow(const std::string& name) const {return prefill_shadows.at(prefill_role_of.at(name)).id;}
-size_t prefill_row_bytes(const std::string& name) const {const auto& s=buffers[0].at(name);return s.n*flash::scalar_bytes(s.type);}
-// Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row.
+Allocation prefill_shadow(int c,const std::string& name) const {return prefill_shadows[size_t(c)].at(prefill_role_of.at(name)).id;}
+// Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row. Under TP each
+// lookup's card-0 rows are computed once and uploaded to both cards (its card-1 twin reads the same row).
 void prefill_lookups(const int* tokens,int M) {
   for(int r=0;r<M;++r) {
-    for(const auto& l:p.launches)if(l.op=="lookup") {
+    for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0) {
       lookup_ids[l.label]=lookup_input(l,tokens[r]);
       auto values=lookup_floats(l);const size_t bytes=values.size()*4;
-      require(bytes==prefill_row_bytes(l.outputs[0]),"prefill lookup row extent");
-      upload(0,prefill_shadow(l.outputs[0]),size_t(r)*bytes,values.data(),bytes);
+      for(int c=0;c<prefill_cards();++c){
+        require(bytes==prefill_row_bytes(c,l.outputs[0]),"prefill lookup row extent");
+        upload(c,prefill_shadow(c,l.outputs[0]),size_t(r)*bytes,values.data(),bytes);}
     }
     history0=history1;history1=tokens[r];
   }
 }
 void prefill_linear(const flash::Launch& l,int M) {
+  const int c=l.card;
   auto it=matrices.find(&l);
   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
   Matrix m=it->second.at(0);
-  require(prefill_row_bytes(l.inputs[0])*size_t(M)<=dev(0).arena.row(prefill_shadow(l.inputs[0])).bytes,"prefill linear input extent");
-  m.x=prefill_shadow(l.inputs[0]);m.y=prefill_shadow(l.outputs[0]);
+  require(prefill_row_bytes(c,l.inputs[0])*size_t(M)<=dev(c).arena.row(prefill_shadow(c,l.inputs[0])).bytes,"prefill linear input extent");
+  m.x=prefill_shadow(c,l.inputs[0]);m.y=prefill_shadow(c,l.outputs[0]);
   if(l.op=="routed_gemv") {
-    require(m.count==unsigned(p.g.top)&&m.routes&&m.status,"prefill routed site");
-    m.routes=prefill_shadow(l.inputs[1]);m.status=prefill_shadow(l.outputs[1]);m.count=unsigned(p.g.top)*unsigned(M);
+    const unsigned slots=l.slots?unsigned(l.slots):unsigned(p.g.top); // TP compact slots: this card's slots of each row
+    require(m.count==slots&&m.routes&&m.status,"prefill routed site");
+    m.routes=prefill_shadow(c,l.inputs[1]);m.status=prefill_shadow(c,l.outputs[1]);m.count=slots*unsigned(M);
+    // Compact gate/up read one input row per slot: this card's slots' rows, selected at tp_route_compact.
+    if(l.slots&&!ends(l.inputs[0],".expsact")){require(prefill_slot_x[size_t(c)]!=0,"TP prefill compact expert input rows");m.x=prefill_slot_x[size_t(c)];}
   } else {require(m.count==1&&!m.routes,"prefill dense site");m.tokens=unsigned(M);}
   if(!(l.op=="routed_gemv"&&prefill_experts_site(l,m)))gsq_linear_matrix(l,m);
   // Diagnostic only (OWNRT_PREFILL_ROUTE_DUMP=<file>): after each routed site, drain and append its M*top routes
@@ -251,8 +297,9 @@ bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
 #ifdef OWN_RT_HOST_ONLY
   (void)l;(void)m;return false;
 #else
-  if(!xgroup::enabled()||!xg_order)return false;
+  if(!xgroup::enabled()||!xg_order[size_t(l.card)])return false;
   if(m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.tokens!=1||!m.routes||!m.status||!m.count||!m.experts)return false;
+  const size_t c=size_t(l.card);
   if((m.span&&m.span!=m.rows)||m.count>xg_capacity||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||m.columns%32)return false;
   const unsigned t=unsigned(m.type);int family=-1;
   if(dense_block_site(w,a,l))return false;
@@ -269,7 +316,7 @@ bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
   const unsigned index=xgroup::config(names[family],xgroup::config_count,xgroup::default_tile(family,t));
   if(index>=xgroup::config_count)return false;
   const uint32_t rb=uint32_t(m.columns/fmt.elements*fmt.bytes),n=m.count,span=uint32_t(m.rows),k=uint32_t(m.columns);
-  const std::array<Allocation,8> ids{m.w,m.x,m.y,m.routes,m.status,xg_order,xg_tiles,xg_count};
+  const std::array<Allocation,8> ids{m.w,m.x,m.y,m.routes,m.status,xg_order[c],xg_tiles[c],xg_count[c]};
   std::pair<ownrt::Event,ownrt::Event> e;
   using namespace xgroup;
   if(family==0)e=issue<S32<Iq3Words>,XGROUP_CONFIGS>(d,index,ids,n,m.experts,span,span,k,rb);
@@ -296,12 +343,54 @@ bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
 #endif
 }
 void prefill_set_views(bool on) {
-  auto& d=dev(0);d.row_views.clear();d.view_row=-1;
-  if(!on)return;
-  for(const auto& [name,role]:prefill_role_of)d.row_views[buffers[0].at(name).id]={prefill_shadows.at(role).id,prefill_row_bytes(name),false};
-  d.row_views[buffers[0].at("position").id]={prefill_positions,4,false};
-  if(buffers[0].count("token"))d.row_views[buffers[0].at("token").id]={prefill_tokens,4,false};
-  for(const auto& [name,spare]:state_spares){auto active=buffers[0].at(name).id;d.row_views[active]={spare,0,true};d.row_views[spare]={active,0,true};}
+  for(int c=0;c<prefill_cards();++c){
+  auto& d=dev(c);d.row_views.clear();d.view_row=-1;
+  if(!on)continue;
+  const auto& shadows=prefill_shadows[size_t(c)];const auto& bufs=buffers[size_t(c)];
+  for(const auto& [name,role]:prefill_role_of)if(shadows.count(role))d.row_views[bufs.at(name).id]={shadows.at(role).id,prefill_row_bytes(c,name),false};
+  d.row_views[bufs.at("position").id]={prefill_positions[size_t(c)],4,false};
+  if(bufs.count("token"))d.row_views[bufs.at("token").id]={prefill_tokens[size_t(c)],4,false};
+  for(const auto& [name,spare]:spares(c)){auto active=bufs.at(name).id;d.row_views[active]={spare,0,true};d.row_views[spare]={active,0,true};}
+  }
+}
+// TP: card c's tp_route_compact over the M rows (routes of slots c, c+2, ... of every row, in row order), and the same
+// slots' expert input rows for the compact gate/up launches. The input is the layer's expert_gather output.
+void prefill_route_compact(const flash::Launch& l,int M) {
+  const int c=l.card;require(a.tp_replicate&&l.inputs.size()==2&&l.outputs.size()==2&&l.parameter==c,"TP prefill route compact wiring");
+  const uint32_t top=uint32_t(p.g.top)*uint32_t(M);
+  finish(c,iq3::kopt::route_compact(dev(c),prefill_shadow(c,l.inputs[0]),prefill_shadow(c,l.inputs[1]),prefill_shadow(c,l.outputs[0]),prefill_shadow(c,l.outputs[1]),top,uint32_t(c)));
+  const std::string prefix=l.inputs[0].substr(0,l.inputs[0].size()-std::string("routes").size()),x=prefix+"expert_input";
+  require(ends(l.inputs[0],".routes")&&prefill_role_of.count(x),"TP prefill compact expert input: "+x);
+  const size_t row=prefill_row_bytes(c,x);require(row%(size_t(p.g.top)*4)==0,"TP prefill expert input rows");
+  require(dev(c).arena.row(prefill_slot_x[size_t(c)]).bytes>=size_t(M)*row/2,"TP prefill compact expert input extent");
+  finish(c,iq3::kopt::slot_rows_compact(dev(c),prefill_shadow(c,x),prefill_slot_x[size_t(c)],top,uint32_t(c),uint32_t(row/(size_t(p.g.top)*4))));
+}
+// TP: card c's tp_xgather / tp_xheads over the M rows, as one strided direct exchange into both cards' output shadows.
+// Called for card 0's site first: both cards are drained and the pair's prefill slot words zeroed on both cards. Card 0's
+// half then waits on device for card 1's flag, so nothing may drain until card 1's half is issued (prefill_exchange_open:
+// the chunk loop skips its periodic, profile and trace drains while it is set).
+int prefill_exchange_open=-1; // card 0's exchange slot whose card-1 half is not issued yet
+void prefill_exchange(const flash::Launch& l,int M) {
+  const int c=l.card,peer=1-c;require(a.tp_replicate&&xctl.size()==2&&l.shape.size()>=2,"TP prefill exchange");
+  const uint32_t slot=prefill_exchange_slot_base+uint32_t(l.shape.at(1));require(slot<ownrt::exchange_layout::slots,"TP prefill exchange slot");
+  namespace L=ownrt::exchange_layout;
+  require(c==0?prefill_exchange_open<0:prefill_exchange_open==int(slot),"TP prefill exchange pairing (card 0 then card 1, same slot)");
+  if(c==0){drain();const std::vector<uint8_t> zero(L::stride*4,0);
+    for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(slot)*L::stride)*4,zero.data(),zero.size());
+    drain();}
+  const auto& y=buffers[size_t(c)].at(l.outputs.at(0));const size_t e=flash::scalar_bytes(y.type),row_in=prefill_row_bytes(c,l.inputs.at(0)),row_out=prefill_row_bytes(c,l.outputs.at(0));
+  require(e==4&&row_in%4==0&&row_out%4==0,"TP prefill exchange rows");
+  ownrt::Device::ExchangeSpec x;x.slot=slot;x.cap=tp_exchange_cap;x.control=xctl[size_t(c)];x.peer_control=xctl[size_t(peer)];x.error=buffers[size_t(c)].at("error").id;
+  x.mode=0;x.src=prefill_shadow(c,l.inputs.at(0));x.bytes=row_in*size_t(M);x.local_dst=prefill_shadow(c,l.outputs.at(0));x.peer_dst=prefill_shadow(peer,l.outputs.at(0));
+  if(l.op=="tp_xheads"){ // shape {global values per row, slot, run, run stride, card offset}: uniform across rows
+    require(l.shape.size()==5&&l.shape[2]>0&&size_t(l.shape[0])*4==row_out&&row_in/4%size_t(l.shape[2])==0&&row_in/4/size_t(l.shape[2])*size_t(l.shape[3])*4==row_out,"TP prefill head exchange geometry"); // the run pattern continues across rows
+    x.run=uint32_t(l.shape[2]);x.dst_stride=uint32_t(l.shape[3]);x.local_offset=x.peer_offset=size_t(l.shape[4])*e;
+  } else { // tp_xgather: this card's half of each row (parameter values) at c*half of each R-value row
+    require(l.op=="tp_xgather"&&l.inputs.at(0)!=l.outputs.at(0)&&size_t(l.shape.at(0))*4==row_out&&size_t(l.parameter)*4==row_in&&row_out==2*row_in,"TP prefill row exchange geometry");
+    x.run=uint32_t(l.parameter);x.dst_stride=uint32_t(l.shape[0]);x.local_offset=x.peer_offset=size_t(c)*row_in;
+  }
+  auto ev=dev(c).exchange(dev(peer),x);finish(c,{ev,ev,1},false);
+  prefill_exchange_open=c==0?int(slot):-1;
 }
 // Run rows P0..P0+M-1. rows_in: rank 1's M input stream rows (nullptr on rank 0). rows_out: M output stream rows.
 void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t* rows_out) {
@@ -311,9 +400,11 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   require(integer(0,"position")==P0,"prefill position sequence");
   std::vector<int32_t> positions(M),ids(M);
   for(int r=0;r<M;++r){positions[r]=P0+r;ids[r]=tokens?tokens[r]:0;require(ids[r]>=0&&ids[r]<p.g.vocab,"prefill token bound");}
-  upload(0,prefill_positions,0,positions.data(),size_t(M)*4);upload(0,prefill_tokens,0,ids.data(),size_t(M)*4);
+  for(int c=0;c<prefill_cards();++c){
+    if(c)require(integer(c,"position")==P0,"prefill position sequence (card 1)");
+    upload(c,prefill_positions[size_t(c)],0,positions.data(),size_t(M)*4);upload(c,prefill_tokens[size_t(c)],0,ids.data(),size_t(M)*4);}
   const size_t stream=stream_bytes();
-  if(rows_in)upload(0,prefill_shadow("streams"),0,rows_in,size_t(M)*stream);
+  if(rows_in){for(int c=0;c<prefill_cards();++c)upload(c,prefill_shadow(c,"streams"),0,rows_in,size_t(M)*stream);}
   else prefill_lookups(tokens,M);
   uint64_t drained_at=submitted;
   bool banks_native=false,banks_replayed=false;
@@ -325,10 +416,15 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
     prefill_set_views(true);
     for(const auto* l:prefill_sites) {
       if(l->op=="lookup")continue; // rows were written by the host above
-      if(profile)drain();
+      // TP: an open exchange pair is closed by the very next site (card 1's half); no other site may come between.
+      require(prefill_exchange_open<0||((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->card==1),"TP prefill: card 1's exchange must follow card 0's");
+      if(profile&&prefill_exchange_open<0)drain();
       const auto site_start=std::chrono::steady_clock::now();
       bool banked_native=false;
       if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
+      else if(l->op=="tp_xgather"||l->op=="tp_xheads")prefill_exchange(*l,M);
+      else if(l->op=="tp_route_compact")prefill_route_compact(*l,M);
+      else if(l->op.starts_with("tp_"))throw std::invalid_argument("TP batched prefill: unsupported site "+l->op);
       else if(prefill_native(*l)){
         if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}
         else prefill_native_site(*l,P0,M);
@@ -342,15 +438,15 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
           const int rows=std::min(T,M-g),extent=std::min(p.g.context,((P0+g+rows-1+32)/32)*32);
           // Per-row bindings are the multi-row prefill shadows (as in prefill_native_site), each viewed at row g through
           // a temporary self-view; shared bindings (KV pools, controls) are unchanged.
-          auto& d=dev(0);const int saved_extent=context_extent;context_extent=extent;
+          const int c=l->card;auto& d=dev(c);const int saved_extent=context_extent;context_extent=extent;
           auto site=prepare_site(*l);context_extent=saved_extent;site.spec.tokens=rows;
           std::vector<Allocation> viewed;size_t k=0;
           for(const auto* names:{&l->inputs,&l->outputs})for(const auto& name:*names){
-            if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(name);site.bindings.at(k)=shadow;
-              require(!d.row_views.count(shadow),"prefill shadow already viewed");d.row_views[shadow]={shadow,prefill_row_bytes(name),false};viewed.push_back(shadow);}
+            if(prefill_role_of.count(name)){const Allocation shadow=prefill_shadow(c,name);site.bindings.at(k)=shadow;
+              require(!d.row_views.count(shadow),"prefill shadow already viewed");d.row_views[shadow]={shadow,prefill_row_bytes(c,name),false};viewed.push_back(shadow);}
             ++k;}
           d.view_row=g;
-          try {finish(0,site.submit(d,site.spec,site.bindings,controls[0],scores[0],probabilities[0],{}),false);}
+          try {finish(c,site.submit(d,site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);}
           catch(...){d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);throw;}
           d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
         }
@@ -360,20 +456,29 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
         for(int r=0;r<M;++r) {
           // Each row's QSA sites use the context extent its own single-row step admits.
           const int extent=qsa?std::min(p.g.context,((P0+r+32)/32)*32):0;
-          for(const auto& cmd:prefill_commands(*l,r,extent)){auto event=dev(0).issue(cmd);finish(0,{event,event,1},false);}
+          for(const auto& cmd:prefill_commands(*l,r,extent)){auto event=dev(l->card).issue(cmd);finish(l->card,{event,event,1},false);}
         }
       }
+      // Diagnostic only (OWNRT_PREFILL_ERROR_TRACE=1): drain after every site and read every card's sticky error word,
+      // so the first site that sets it is named (with the TP exchange words). Serializes the chunk; no arithmetic change.
+      static const bool error_trace=[]{const char* e=std::getenv("OWNRT_PREFILL_ERROR_TRACE");return e&&e[0]=='1';}();
+      if(error_trace&&prefill_exchange_open<0){drain();for(int c=0;c<prefill_cards();++c)if(integer(c,"error")){
+        std::ostringstream o;o<<"prefill error trace: card "<<c<<" error after site "<<l->label<<" ("<<l->op<<", card "<<l->card<<", index "<<size_t(l-p.launches.data())<<") at P0 "<<P0<<" M "<<M;
+        if(xctl.size()==2)for(int k=0;k<2;++k){auto raw=readback(k,xctl[size_t(k)],ownrt::exchange_layout::header*4);std::vector<uint32_t> w(ownrt::exchange_layout::header);std::memcpy(w.data(),raw.data(),raw.size());
+          o<<"; card "<<k<<" exchange abort "<<w[ownrt::exchange_layout::abort]<<" timeouts "<<w[ownrt::exchange_layout::timeouts]<<" waits "<<w[ownrt::exchange_layout::waits]<<" max_polls "<<w[ownrt::exchange_layout::max_spin];}
+        save(a.output/"prefill-error-trace.txt",o.str());throw std::runtime_error(o.str());}}
       if(banked_native)banks_native=true;else if(l->op=="gdn"||l->op=="conv")banks_replayed=true;
       // OWNRT_PREFILL_PROFILE_SHAPE=1 (diagnostic) also keys linear sites by their rows x columns.
       static const bool profile_shape=[]{const char* e=std::getenv("OWNRT_PREFILL_PROFILE_SHAPE");return e&&e[0]=='1';}();
-      if(profile){drain();std::string key=l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op;
+      if(profile&&prefill_exchange_open<0){drain();std::string key=l->op=="gemv"||l->op=="routed_gemv"?l->op+":"+w.directory.at(l->weights.at(0)).grid:l->op;
         if(profile_shape&&(l->op=="gemv"||l->op=="routed_gemv")&&l->shape.size()==3)key+=":"+std::to_string(l->shape[1])+"x"+std::to_string(l->shape[2]);
         auto& entry=spent[key];++entry.first;entry.second+=ms(site_start);}
       // Owner event ledger holds 16384 events; retire well before it fills.
-      if(submitted-drained_at>6000){drain();drained_at=submitted;}
+      if(submitted-drained_at>6000&&prefill_exchange_open<0){drain();drained_at=submitted;}
     }
+    require(prefill_exchange_open<0,"TP prefill: chunk ended inside an exchange pair");
     prefill_set_views(false);
-  } catch(...) {prefill_set_views(false);throw;}
+  } catch(...) {prefill_exchange_open=-1;prefill_set_views(false);throw;}
   if(profile){std::ofstream o(a.output/"prefill-profile.jsonl",std::ios::app);o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<
 #ifndef OWN_RT_HOST_ONLY
     (reuse2::enabled()?",\"chunk\":"+std::to_string(reuse2::chunk_counter()):std::string())<<
@@ -381,12 +486,12 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
     ",\"sites\":{";bool comma=false;
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
   drain();
-  require(!integer(0,"error"),"sticky rank error in batched prefill");
+  for(int c=0;c<prefill_cards();++c)require(!integer(c,"error"),"sticky rank error in batched prefill");
   // Logical position follows M rows; physical bank publication depends on the recurrence path.
-  const uint32_t next=uint32_t(P0+M);put(0,"position",&next,4);
+  const uint32_t next=uint32_t(P0+M);for(int c=0;c<prefill_cards();++c)put(c,"position",&next,4);
   // Replayed recurrences alternate banks per row (M single-row swaps); native ones leave every row in the spare bank.
   prefill_finish_banks(M,banks_native,banks_replayed);
-  if(rows_out){auto raw=readback(0,prefill_shadow("streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
+  if(rows_out){auto raw=readback(0,prefill_shadow(0,"streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
   ++prefill_chunks;prefill_rows_done+=size_t(M);
 #ifndef OWN_RT_HOST_ONLY
   ++reuse2::chunk_counter(); // OWNRT_PREFILL_REUSE2_CYCLE diagnostic: the next chunk's tile configuration

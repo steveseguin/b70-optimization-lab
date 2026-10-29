@@ -5,17 +5,19 @@
 #     flock -n -E 75 /dev/shm/card23.lock flock -n -E 75 /dev/shm/card47.lock taskset -c 0-3,16-19 bash run_phase.sh <phase> ARM...
 # ARM = name:rank:mode:steps:prompt:pattern:extra  rank 0|1; mode one | tp (Stage 2b layout: GDN heads, rows, compact
 # slots, direct exchange, two submission threads); prompt = rows read before decode (rank 1: token by token unless extra
-# has "batched"); pattern = rank-0 --pattern; extra = comma list (batched, rows=N, prefill-alloc).
+# has "batched"); pattern = rank-0 --pattern; extra = comma list (batched, rows=N, prefill-alloc; rank 0: tbt = prompt token
+# by token, otherwise PREFILL chunks).
 # Per arm: MemAvailable and /dev/shm floors, fresh output, driver run, kernel-log check, exchange-statistics check.
 # Any xe/fault line, nonzero exit, exchange timeout or card mismatch halts; nothing is retried. Do not edit while it runs.
 set -u
 D=/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29
 KL=/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/klog_check.py
 RUNS=${SR_RUNS:-/dev/shm/svc-ready-20261029/runs}
+BIN=${SR_BIN:-fc18c9b0fe6a}   # launch JSONs rank<r>-launch-c65536-<BIN>.json (make_launch.py)
 CACHE=$(dirname "$RUNS")/cache
 PHASE=$1; shift
 exec >>"$D/logs/$PHASE.log" 2>&1
-echo "=== phase $PHASE start $(date -Is) pid $$ affinity $(taskset -pc $$ | sed 's/.*: //') nofile $(ulimit -n)"
+echo "=== phase $PHASE binary $BIN start $(date -Is) pid $$ affinity $(taskset -pc $$ | sed 's/.*: //') nofile $(ulimit -n)"
 echo "started $PHASE" >"$D/logs/STATUS"
 halt() { echo "HALT: $1"; echo "HALT $PHASE: $1" >"$D/logs/STATUS"; exit 1; }
 T0=$(date +%s)
@@ -35,13 +37,13 @@ for arm in "$@"; do
     *) halt "unknown mode $mode" ;;
   esac
   more=()
-  for x in ${extra//,/ }; do case "$x" in batched) more+=(--batched) ;; prefill-alloc) more+=(--prefill-alloc) ;; rows=*) more+=(--rows "${x#rows=}") ;; "") ;; *) halt "unknown extra $x" ;; esac; done
+  for x in ${extra//,/ }; do case "$x" in batched) more+=(--batched) ;; tbt) more+=(--token-prompt) ;; prefill-alloc) more+=(--prefill-alloc) ;; rows=*) more+=(--rows "${x#rows=}") ;; "") ;; *) halt "unknown extra $x" ;; esac; done
   t=$(date +%s)
   if [ "$rank" = 1 ]; then
-    env "${envs[@]}" python3 -B "$D/tp_rank1_driver.py" run --launch "$D/rank1-launch-c65536.json" --out "$out" \
+    env "${envs[@]}" python3 -B "$D/tp_rank1_driver.py" run --launch "$D/rank1-launch-c65536-$BIN.json" --out "$out" \
       --steps "$steps" --prompt "$prompt" --cache "$CACHE" "${tp[@]}" "${more[@]}"
   else
-    env "${envs[@]}" python3 -B "$D/tp_rank0_driver.py" run --launch "$D/rank0-launch-c65536.json" --out "$out" \
+    env "${envs[@]}" python3 -B "$D/tp_rank0_driver.py" run --launch "$D/rank0-launch-c65536-$BIN.json" --out "$out" \
       --steps "$steps" --prompt "$prompt" --pattern "$pattern" --cache "$CACHE" "${tp[@]}" "${more[@]}"
   fi
   rc=$?; echo "arm $name rc=$rc after $(( $(date +%s) - t )) s"

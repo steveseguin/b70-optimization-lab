@@ -737,6 +737,18 @@ struct RouteCompact:ownrt::SyclOperation {
       const uint32_t k=uint32_t(i[0]),slot=2u*k+par;ca[k]=a[slot];cb[k]=b[slot];}));});
   }
 };
+// TP batched prefill (2026-10-29): this card's slot rows (slots parity, parity+2, ... of top) of a per-slot row buffer,
+// compact and in order, as RouteCompact does for routes: dst[k] = src[2k+parity], each row `words` 32-bit words, copied
+// bit for bit. With top = rows x slots per row, row r's slots stay together (top per row is even).
+struct SlotRowsCompact:ownrt::SyclOperation {
+  uint32_t top=0,parity=0,words=0;
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    const auto* a=static_cast<const uint32_t*>(p[0]);auto* b=static_cast<uint32_t*>(p[1]);
+    const uint32_t n=(top+1u-parity)/2u,par=parity,w=words;
+    return ownrt::prepared_submit(q,[=,range=sycl::range<1>(size_t(n)*w)](sycl::handler& h){h.parallel_for(range,packet26::checked([=](sycl::id<1> i){
+      const uint32_t at=uint32_t(i[0]),k=at/w,j=at-k*w;b[at]=a[(2u*k+par)*w+j];}));});
+  }
+};
 inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_KOPT_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
 Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocation>& ids,Matrix m,
                 uint32_t experts,uint32_t count,uint32_t span,ownrt::Allocation r=0,ownrt::Allocation status=0) {
@@ -799,6 +811,11 @@ ownrt::Event route_compact(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allo
   check(d,routes,size_t(top)*sizeof(Route));check(d,routes_down,size_t(top)*sizeof(Route));check(d,compact,size_t(n)*sizeof(Route));check(d,compact_down,size_t(n)*sizeof(Route));
   if(std::set<ownrt::Allocation>{routes,routes_down,compact,compact_down}.size()!=4)throw std::invalid_argument("route compact aliases");
   RouteCompact op;op.top=top;op.parity=parity;std::vector<ownrt::Allocation> ids{routes,routes_down,compact,compact_down};return d.compute(op,ids,{});
+}
+ownrt::Event slot_rows_compact(ownrt::Device& d,ownrt::Allocation rows,ownrt::Allocation compact,uint32_t top,uint32_t parity,uint32_t words) {
+  const uint32_t n=(top+1u-parity)/2u;if(!top||parity>1||!n||!words||uint64_t(top)*words>0xffffffffull)throw std::invalid_argument("slot rows compact geometry");
+  check(d,rows,size_t(top)*words*4);check(d,compact,size_t(n)*words*4);if(rows==compact)throw std::invalid_argument("slot rows compact aliases");
+  SlotRowsCompact op;op.top=top;op.parity=parity;op.words=words;std::vector<ownrt::Allocation> ids{rows,compact};return d.compute(op,ids,{});
 }
 ownrt::Event slot_select(ownrt::Device& d,ownrt::Allocation y,ownrt::Allocation peer,ownrt::Allocation expert_ids,uint32_t top,uint32_t rows,uint32_t parity,bool by_slot) {
   check(d,y,size_t(top)*rows*4);check(d,peer,size_t(top)*rows*4);check(d,expert_ids,size_t(top)*4);
