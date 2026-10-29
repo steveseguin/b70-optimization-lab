@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 29, about 15:30 — the TP page faults are not caused by thread creation; a persistent card-1 thread is exact but not faster.**
+- New opt-in `OWNRT_TP_PERSISTENT_THREAD=1` (engine `1c667aea0690`): card 1's submission thread is created once per process
+  instead of once per half. Every gate is bitwise equal (rank 1 1079/1079; rank 0 1029/1029 + 71/71 with hits, misses
+  and cancels). 12-prompt suite, four fresh servers: 76.87 against 77.04 tok/s (0.998×, no gain). All outputs equal B19.
+- New per-thread fault counters show where the faults are. Starting and ending threads causes none. The faults come from
+  a record kept for every submission on each card, which grows by doubling (up to 24 MiB per card) and is refaulted.
+  It happens only with two cards per process. On every server each rank has 4–12 such halves, the worst taking
+  29–50 ms. Finding that record is the next step.
+- Also in this build: the slow startup check is fixed. Lab servers are ready in 612–718 s instead of about 1,040 s.
+- Kernel log clean. `sc117-lan` not touched. Four-card flags stay at arm `tptsxq`.
+  [Result](experiments/own-xpu-runtime/research/tp/persistent-thread-2026-10-29/RESULT.md).
+
 **October 29, about 13:30 — QSA attention split across each rank's two cards: four cards reach 77.11 tok/s exact at 64K (76.18 without).**
 - New opt-in flag `OWNRT_TP_QSA_SPLIT=1` (engine `cb04951c3fb4`): on both four-card ranks, each card now computes half
   of every QSA attention block (one of its two key/value groups, 12 of the 24 heads) and keeps only half of its KV cache.

@@ -1,0 +1,223 @@
+{
+ "b19": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json",
+ "order": [
+  "tptsxq-r1",
+  "tptsxqp-r1",
+  "tptsxq-r2",
+  "tptsxqp-r2"
+ ],
+ "servers": {
+  "tptsxq-r1": {
+   "median": 77.00838035555705,
+   "mean": 77.59496448483358,
+   "min": 74.53035581637481,
+   "max": 82.01216919385477,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "per_prompt": {
+    "incident-retrospective": 77.20063751518916,
+    "code-review": 78.01027654241838,
+    "customer-email": 76.44484632285545,
+    "sql-debugging": 82.01216919385477,
+    "release-plan": 75.06194256589914,
+    "benchmark-analysis": 79.19085433143944,
+    "architecture-tradeoff": 81.9771653923085,
+    "bug-report-synthesis": 75.68679770609361,
+    "technical-guide": 77.98089565044201,
+    "risk-register": 76.2275095852028,
+    "performance-hypotheses": 76.81612319592496,
+    "decision-memo": 74.53035581637481
+   }
+  },
+  "tptsxqp-r1": {
+   "median": 77.34012014867818,
+   "mean": 77.2739630326753,
+   "min": 73.73180389114593,
+   "max": 81.37049393746003,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "per_prompt": {
+    "incident-retrospective": 77.71536404955751,
+    "code-review": 79.02170698664885,
+    "customer-email": 74.89594333954754,
+    "sql-debugging": 81.37049393746003,
+    "release-plan": 74.546799507295,
+    "benchmark-analysis": 78.65236216506403,
+    "architecture-tradeoff": 80.37108157989682,
+    "bug-report-synthesis": 76.4228642661541,
+    "technical-guide": 77.61970917254091,
+    "risk-register": 75.87889637197743,
+    "performance-hypotheses": 77.06053112481547,
+    "decision-memo": 73.73180389114593
+   }
+  },
+  "tptsxq-r2": {
+   "median": 77.06779580850318,
+   "mean": 77.20556868184758,
+   "min": 74.28809306759715,
+   "max": 81.55847879791551,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "per_prompt": {
+    "incident-retrospective": 76.83284242146489,
+    "code-review": 77.90810900824385,
+    "customer-email": 75.72146770978826,
+    "sql-debugging": 81.55847879791551,
+    "release-plan": 74.9429751154617,
+    "benchmark-analysis": 78.34008081869776,
+    "architecture-tradeoff": 80.34467006755696,
+    "bug-report-synthesis": 75.45529044325494,
+    "technical-guide": 77.9316981838339,
+    "risk-register": 75.84036935281466,
+    "performance-hypotheses": 77.30274919554145,
+    "decision-memo": 74.28809306759715
+   }
+  },
+  "tptsxqp-r2": {
+   "median": 76.40630370816484,
+   "mean": 76.78860027481772,
+   "min": 73.56421250764393,
+   "max": 79.84311566067046,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "per_prompt": {
+    "incident-retrospective": 76.30503834477382,
+    "code-review": 78.25905542283931,
+    "customer-email": 75.74980400615571,
+    "sql-debugging": 79.84311566067046,
+    "release-plan": 73.56421250764393,
+    "benchmark-analysis": 78.89513113882462,
+    "architecture-tradeoff": 79.78503558153511,
+    "bug-report-synthesis": 75.05304902885115,
+    "technical-guide": 78.00053163676749,
+    "risk-register": 76.50756907155586,
+    "performance-hypotheses": 75.7562521575232,
+    "decision-memo": 73.74440874067196
+   }
+  }
+ },
+ "configurations": {
+  "tptsxq": {
+   "servers": [
+    "tptsxq-r1",
+    "tptsxq-r2"
+   ],
+   "pair_mean_of_medians": 77.03808808203011
+  },
+  "tptsxqp": {
+   "servers": [
+    "tptsxqp-r1",
+    "tptsxqp-r2"
+   ],
+   "pair_mean_of_medians": 76.87321192842151
+  }
+ },
+ "pairs": {
+  "tptsxqp-r1/tptsxq-r1": {
+   "median_ratio": 1.0043078401544019,
+   "per_prompt_median": 0.9942841704751477,
+   "per_prompt_range": [
+    0.9797382942367847,
+    1.0129653487855603
+   ],
+   "prompts_faster": 4,
+   "per_prompt": {
+    "incident-retrospective": 1.0067,
+    "code-review": 1.013,
+    "customer-email": 0.9797,
+    "sql-debugging": 0.9922,
+    "release-plan": 0.9931,
+    "benchmark-analysis": 0.9932,
+    "architecture-tradeoff": 0.9804,
+    "bug-report-synthesis": 1.0097,
+    "technical-guide": 0.9954,
+    "risk-register": 0.9954,
+    "performance-hypotheses": 1.0032,
+    "decision-memo": 0.9893
+   }
+  },
+  "tptsxqp-r2/tptsxq-r2": {
+   "median_ratio": 0.9914167507530383,
+   "per_prompt_median": 0.9938998155275013,
+   "per_prompt_range": [
+    0.9789676908823256,
+    1.0087974218010114
+   ],
+   "prompts_faster": 5,
+   "per_prompt": {
+    "incident-retrospective": 0.9931,
+    "code-review": 1.0045,
+    "customer-email": 1.0004,
+    "sql-debugging": 0.979,
+    "release-plan": 0.9816,
+    "benchmark-analysis": 1.0071,
+    "architecture-tradeoff": 0.993,
+    "bug-report-synthesis": 0.9947,
+    "technical-guide": 1.0009,
+    "risk-register": 1.0088,
+    "performance-hypotheses": 0.98,
+    "decision-memo": 0.9927
+   }
+  },
+  "tptsxqp-r1/tptsxq-r2": {
+   "median_ratio": 1.0035335685589306,
+   "per_prompt_median": 0.999011909380646,
+   "per_prompt_range": [
+    0.9890978820774494,
+    1.014293736461851
+   ],
+   "prompts_faster": 6,
+   "per_prompt": {
+    "incident-retrospective": 1.0115,
+    "code-review": 1.0143,
+    "customer-email": 0.9891,
+    "sql-debugging": 0.9977,
+    "release-plan": 0.9947,
+    "benchmark-analysis": 1.004,
+    "architecture-tradeoff": 1.0003,
+    "bug-report-synthesis": 1.0128,
+    "technical-guide": 0.996,
+    "risk-register": 1.0005,
+    "performance-hypotheses": 0.9969,
+    "decision-memo": 0.9925
+   }
+  },
+  "tptsxqp-r2/tptsxq-r1": {
+   "median_ratio": 0.9921816736748345,
+   "per_prompt_median": 0.9901812980490742,
+   "per_prompt_range": [
+    0.9732592631096382,
+    1.0036739949642461
+   ],
+   "prompts_faster": 3,
+   "per_prompt": {
+    "incident-retrospective": 0.9884,
+    "code-review": 1.0032,
+    "customer-email": 0.9909,
+    "sql-debugging": 0.9736,
+    "release-plan": 0.98,
+    "benchmark-analysis": 0.9963,
+    "architecture-tradeoff": 0.9733,
+    "bug-report-synthesis": 0.9916,
+    "technical-guide": 1.0003,
+    "risk-register": 1.0037,
+    "performance-hypotheses": 0.9862,
+    "decision-memo": 0.9895
+   }
+  }
+ },
+ "pair_mean_ratio_tptsxqp_vs_tptsxq": 0.9978598098977607,
+ "all_servers_outputs_equal_b19": true
+}
