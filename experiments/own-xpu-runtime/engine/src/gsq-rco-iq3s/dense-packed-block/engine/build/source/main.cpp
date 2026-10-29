@@ -404,7 +404,7 @@ static Options parse(int argc, char **argv) {
   require(a.stage=="first-token" || a.stage=="decode", "stage");
   require(!a.output.empty(), "--output required");
   require((a.cards==1 && (a.memory=="layer-streaming" || (a.rank>=0 && a.memory=="resident"))) ||
-          (a.cards==2 && a.tp_replicate && a.rank==1 && a.memory=="resident" && a.gsq_packed), "single-device process required (two cards only with --tp-replicate on rank 1)");
+          (a.cards==2 && a.tp_replicate && (a.rank==1||a.rank==0) && a.memory=="resident" && a.gsq_packed), "single-device process required (two cards only with --tp-replicate on rank 0 or 1)");
   require(!a.tp_replicate||a.cards==2,"--tp-replicate needs --cards 2");
   // 2026-10-25 incident: the first --tp-replicate run with OWNRT_DECODE_PROFILE=2 (profiling queues in the shared
   // context) faulted both cards' copy engines during load (CAT error, -ENOENT). Refused until understood.
@@ -1108,7 +1108,9 @@ public:
   void finish(int c, Launch l, bool gemv) {
     // Submission only. Owner::compute appends the preceding owned event.
     if(preparing_commands)return;
-    if(profile_events||draft_timing)pending.push_back({l,gemv,current_cls});
+    // --tp-replicate: the shared-context queues never profile (2026-10-25 copy-engine fault), so the draft's GPU time
+    // is not measured there (its wall time still is).
+    if(profile_events||(draft_timing&&!a.tp_replicate))pending.push_back({l,gemv,current_cls});
     if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
     tail=l.last; tail_card=c; if(c>=0&&c<2)card_tails[size_t(c)]=l.last; submitted+=l.passes;
   }
@@ -1507,6 +1509,12 @@ public:
     }
   }
   std::map<std::string,Allocation> state_spares;
+  // --tp-replicate rank 0 (2026-10-29): card 1's recurrent banks, swapped and rotated together with card 0's.
+  std::map<std::string,Allocation> state_spares1,state_reserves1;
+  std::map<std::string,Allocation>& spares(int c){return c?state_spares1:state_spares;}
+  std::map<std::string,Allocation>& reserves(int c){return c?state_reserves1:state_reserves;}
+  // Device work submitted outside finish() (snapshots, reset fills) on card c: the drain must wait on its card.
+  void track(int c,ownrt::Event ev){tail=ev;tail_card=c;if(c>=0&&c<2)card_tails[size_t(c)]=ev;}
   int context_extent=32, alternate_context_extent=32;
   uint64_t capacity_reprepares=0;
   std::unordered_map<const flash::Launch*,Prepared> alternate_prepared;
@@ -1531,6 +1539,7 @@ public:
   void rotate_spare_bank() {
     require(miss_banks()&&!state_reserves.empty(),"third bank unavailable");drain();int extent=context_extent,reverse_extent=alternate_context_extent;save_bank_cache();
     for(auto& [name,id]:state_reserves)std::swap(state_spares.at(name),id);
+    for(auto& [name,id]:state_reserves1)std::swap(state_spares1.at(name),id);
     spare_bank=3-active_bank-spare_bank;load_bank_cache();
     // Launch metadata belongs to the logical pair, independent of physical
     // placement. Reprepare only a stale QSA context bucket, never model state.
@@ -1543,6 +1552,7 @@ public:
     drain();
     if(miss_banks())save_bank_cache();
     for(auto& [name,id]:state_spares)std::swap(buffers[0].at(name).id,id);
+    for(auto& [name,id]:state_spares1)std::swap(buffers[1].at(name).id,id);
     if(miss_banks()){std::swap(active_bank,spare_bank);load_bank_cache();}
     else {prepared.swap(alternate_prepared);std::swap(context_extent,alternate_context_extent);issue_sites.swap(alternate_issue_sites);}
     bank_parity^=1;fp32_sources[0]=0;fp32_extents[0]=0;
@@ -1943,7 +1953,7 @@ public:
       }
       for (auto &name : l.outputs) {
         auto b = buffers[c].at(name);
-        if(state_spares.count(name))b.id=state_spares.at(name);
+        if(spares(c).count(name))b.id=spares(c).at(name);
         s.sizes[k] = b.n;
         s.types[k++] = b.type;
         bindings.push_back(b.id);

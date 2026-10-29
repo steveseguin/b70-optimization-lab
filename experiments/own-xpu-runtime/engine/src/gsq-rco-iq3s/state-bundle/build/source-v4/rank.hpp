@@ -84,11 +84,16 @@ static void banks(Engine& e) {
   if(e.v3_skip_half.at(size_t(&l-e.p.launches.data())))continue; // packet186: layers 24-25 state lives outside the banks and the image
   require(l.outputs.size()==2,"temporal output count");auto name=l.outputs[1];
   require(std::find(l.inputs.begin(),l.inputs.end(),name)!=l.inputs.end(),"temporal input absent");
-  auto slot=e.buffers[0].at(name);require(!e.state_spares.count(name),"multiple state writers");
-  e.state_spares[name]=e.allocate(0,"alternate:"+name,slot.n*flash::scalar_bytes(slot.type),Category::recurrent,Lifetime::request);
-  if(e.miss_banks())e.state_reserves[name]=e.allocate(0,"speculative-reserve:"+name,slot.n*flash::scalar_bytes(slot.type),Category::runtime_overhead,Lifetime::process);
-  size_t bytes=slot.n*flash::scalar_bytes(slot.type);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)),0);
-  for(size_t off=0;off<bytes;off+=zero.size()){e.upload(0,e.state_spares[name],off,zero.data(),std::min(zero.size(),bytes-off));if(e.miss_banks())e.upload(0,e.state_reserves[name],off,zero.data(),std::min(zero.size(),bytes-off));}
+  // --tp-replicate (2026-10-29): every card banks its own copy (or compact heads) of the state; the twin writer on card
+  // 1 has the same output name, so names come from card 0's launches and each card allocates its own banks.
+  if(e.a.tp_replicate&&l.card!=0)continue;
+  for(int c=0;c<(e.a.tp_replicate?2:1);++c){
+   auto slot=e.buffers[size_t(c)].at(name);require(!e.spares(c).count(name),"multiple state writers");
+   e.spares(c)[name]=e.allocate(c,"alternate:"+name,slot.n*flash::scalar_bytes(slot.type),Category::recurrent,Lifetime::request);
+   if(e.miss_banks())e.reserves(c)[name]=e.allocate(c,"speculative-reserve:"+name,slot.n*flash::scalar_bytes(slot.type),Category::runtime_overhead,Lifetime::process);
+   size_t bytes=slot.n*flash::scalar_bytes(slot.type);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)),0);
+   for(size_t off=0;off<bytes;off+=zero.size()){e.upload(c,e.spares(c)[name],off,zero.data(),std::min(zero.size(),bytes-off));if(e.miss_banks())e.upload(c,e.reserves(c)[name],off,zero.data(),std::min(zero.size(),bytes-off));}
+  }
  }
  e.prepare_plan();e.prepare_commands();
  if(e.miss_banks()) {
@@ -226,18 +231,30 @@ static void l4_capture_prepared(Engine& e,const flash::Launch& l,const Request& 
 // are independent. While the worker runs, the half's thread never touches card 1: drain() skips its retirement and
 // card 1's tail is published only after the join. The worker never waits on a device; its join has a deadline.
 inline bool tp_threads(){static const bool on=[]{const char* v=std::getenv("OWNRT_TP_THREADS");return v&&v[0]=='1';}();return on;}
+// Speculative halves (rank 0, 2026-10-29) can be cancelled at a card-0 launch boundary. The worker then issues card-1
+// launches only below `release`, which the half's thread raises to each card-0 launch index whose cancel check passed;
+// a cancel at index k stops both cards below k. Every twin pair is (card 0, card 1) adjacent in plan order and k is a
+// card-0 index, so each exchange pair runs on both cards or on neither and the exchange epochs stay aligned.
 struct TpWorker {
- Engine& e;std::thread thread;std::atomic<bool> done{false};std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
- TpWorker(Engine& engine,int fixture):e(engine){
+ Engine& e;std::thread thread;std::atomic<bool> done{false},stopped{false};std::atomic<size_t> release;std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
+ TpWorker(Engine& engine,int fixture,bool gated):e(engine),release(gated?0:SIZE_MAX){
   e.tp_worker_running=true;
   try{thread=std::thread([this,fixture]{
-   try{for(size_t i=0;i<e.p.launches.size();++i){
+   try{const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
+    for(size_t i=0;i<e.p.launches.size();++i){
      if(e.p.launches[i].card!=1||e.v3_skip_half[i])continue;const auto& site=e.issue_sites[i];if(fixture==0&&site.prefill_skip)continue;
-     for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}}
+     while(i>=release.load(std::memory_order_acquire)){
+      if(stopped.load(std::memory_order_acquire)&&i>=release.load(std::memory_order_acquire))goto stop;
+      if(std::chrono::steady_clock::now()>end)throw std::runtime_error("TP card-1 release deadline");
+      std::this_thread::yield();}
+     for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}
+    stop:;}
    catch(...){error=std::current_exception();}
    done.store(true,std::memory_order_release);});}
   catch(...){e.tp_worker_running=false;throw;}
  }
+ void allow(size_t k){release.store(k,std::memory_order_release);}
+ void stop(size_t k){release.store(k,std::memory_order_release);stopped.store(true,std::memory_order_release);}
  void finish(){
   const auto end=std::chrono::steady_clock::now()+std::chrono::seconds(e.a.wait_seconds);
   while(!done.load(std::memory_order_acquire)){
@@ -313,12 +330,16 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  // event. Record each actual submission so drain still covers its whole prefix.
  e.dev(0).after_compute=[&](ownrt::Event event){e.tail=event;++issued;if(decode_profile_mode>=2&&!device_sites.empty())device_sites.back().events.push_back(event);};
  const bool threaded=e.a.tp_replicate&&tp_threads();std::optional<TpWorker> worker;
- if(threaded){require(e.prepared_path&&!request.speculative&&!e.a.checked&&!e.attribution.enabled&&!e.correction_exchange&&!l4_history&&!decode_profile_mode&&!e.head_export&&!e.progress_callback,"OWNRT_TP_THREADS: prepared, plain decode halves only");
-  worker.emplace(e,request.fixture);}
+ if(threaded){require(e.prepared_path&&!staged&&!e.a.checked&&!e.attribution.enabled&&!e.correction_exchange&&!l4_history&&!decode_profile_mode&&!e.head_export,"OWNRT_TP_THREADS: prepared decode halves only");
+  worker.emplace(e,request.fixture,request.speculative);}
+ size_t current=0; // the card-0 launch being issued (cancellation bound for card 1)
  try {for(auto& l:e.p.launches) {
+  current=size_t(&l-e.p.launches.data());
   if(e.v3_skip_half[size_t(&l-e.p.launches.data())])continue; // packet186: moved layers run in the boundary (rank 0) or not at all (rank 1, V3)
   if(threaded&&l.card==1)continue; // issued by TpWorker
-  if(cancel_at_boundary()){candidate.cancelled=true;break;}
+  // --tp-replicate: cancel only before a card-0 launch, never inside a (card 0, card 1) twin pair.
+  if(!(e.a.tp_replicate&&l.card==1)&&cancel_at_boundary()){candidate.cancelled=true;if(worker)worker->stop(current);break;}
+  if(worker)worker->allow(current);
   const auto* ready=e.prepared_path?&e.issue_sites[size_t(&l-e.p.launches.data())]:nullptr;
   if(request.fixture==0&&(ready?ready->prefill_skip:(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")))continue;
   if(e.progress_pending&&e.progress_callback)e.progress_callback();
@@ -352,9 +373,9 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
    if(!e.resident){e.release_layer(0);e.loaded_layer[0]=-1;}
   }
  }
- if(worker)worker->finish();
- }catch(const CancelledLaunch&){candidate.cancelled=true;}
- catch(...){e.dev(0).before_compute={};e.dev(0).after_compute={};throw;}
+ }catch(const CancelledLaunch&){candidate.cancelled=true;if(worker)worker->stop(current);}
+ catch(...){e.dev(0).before_compute={};e.dev(0).after_compute={};if(worker)worker->stop(current);throw;}
+ if(worker){if(!candidate.cancelled)worker->allow(SIZE_MAX);worker->finish();}
  e.dev(0).before_compute={};e.dev(0).after_compute={};
  if(cancel_at_boundary())candidate.cancelled=true;
  double enqueue_ms=Engine::ms(enqueue_start)-(e.wait_ms-enqueue_wait);
@@ -437,20 +458,23 @@ static void state_dump(Engine& e,int sequence) {
  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;
  fs::path dir=e.a.output/("state-"+std::to_string(sequence));fs::create_directories(dir);gsq_bundle::Writer bundle(dir);
  // Full bytes of every plan allocation, including overwrite-only intermediates.
+ // OWNRT_TP_GDN=heads / OWNRT_TP_EXPERTS=compact: both cards hold compact parts of `name` (card 1's copy in
+ // allocation `other`); reassemble the one-card layout, every element exactly once.
+ auto assemble=[&](const std::string& name,std::vector<uint8_t> b,Allocation other,size_t es)->std::vector<uint8_t>{
+  auto split=e.head_split_layout.find(name);if(split==e.head_split_layout.end())return b;
+  std::vector<uint8_t> global(b.size(),0);std::vector<uint8_t> covered(b.size()/es,0);
+  for(int c=0;c<2;++c){const auto part=c?e.readback(1,other,b.size()):b;
+   for(const auto& [src,dst,n]:split->second[size_t(c)]){require((src+n)*es<=part.size()&&(dst+n)*es<=global.size(),"head layout extent: "+name);
+    std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);for(size_t k=dst;k<dst+n;++k){require(!covered[k],"head layout overlap: "+name);covered[k]=1;}}}
+  require(std::all_of(covered.begin(),covered.end(),[](uint8_t x){return x!=0;}),"head layout does not cover "+name);
+  return global;};
  for(auto& [name,s]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // TP-internal half buffers: not model state
   auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));
-  if(auto split=e.head_split_layout.find(name);split!=e.head_split_layout.end()){
-   // OWNRT_TP_GDN=heads: both cards hold compact halves; reassemble the one-card layout (every element exactly once).
-   const size_t es=flash::scalar_bytes(s.type);std::vector<uint8_t> global(b.size(),0);std::vector<uint8_t> covered(s.n,0);
-   for(int c=0;c<2;++c){const auto part=c?e.readback(1,e.buffers[1].at(name).id,b.size()):b;
-    for(const auto& [src,dst,n]:split->second[size_t(c)]){require((src+n)*es<=part.size()&&(dst+n)*es<=global.size(),"head layout extent: "+name);
-     std::memcpy(global.data()+dst*es,part.data()+src*es,n*es);for(size_t k=dst;k<dst+n;++k){require(!covered[k],"head layout overlap: "+name);covered[k]=1;}}}
-   require(std::all_of(covered.begin(),covered.end(),[](uint8_t x){return x!=0;}),"head layout does not cover "+name);
-   b=std::move(global);
-  }
+  if(e.head_split_layout.count(name))b=assemble(name,std::move(b),e.buffers[1].at(name).id,flash::scalar_bytes(s.type));
   bundle.append(name+".bin",b.data(),b.size());
   o<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(b));comma=true;}
- for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
+ for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);
+  if(e.head_split_layout.count(name))b=assemble(name,std::move(b),e.state_spares1.at(name),flash::scalar_bytes(e.buffers[0].at(name).type));bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
  o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";bundle.finish(o.str());
 }
 } // namespace pipeline
@@ -541,7 +565,7 @@ static int run_rank(const Options& a) {
    require(tp_exchange.empty()||tp_exchange=="copy"||tp_exchange=="direct"||tp_exchange=="direct-replicated","OWNRT_TP_EXCHANGE must be copy, direct or direct-replicated");
    const bool exchange_only=tp_exchange=="direct-replicated",direct=tp_exchange=="direct"||exchange_only;
    require(!direct||!experts||tp_experts=="slot"||compact,"direct exchange: experts by slot or compact only");
-   require(!compact||(direct&&!exchange_only&&!a.prefill_rows),"OWNRT_TP_EXPERTS=compact: OWNRT_TP_EXCHANGE=direct, decode only");
+   require(!compact||(direct&&!exchange_only),"OWNRT_TP_EXPERTS=compact: OWNRT_TP_EXCHANGE=direct");
    const bool mask_routes=(tp_experts=="1"||tp_experts=="mask"||tp_experts=="slot")&&!exchange_only,gather_rows=tp_experts=="1"||tp_experts=="gather"||tp_experts=="slot";
    const int by_slot=tp_experts=="slot"?2:0; // carried in Launch::parameter bit 1
    int exchange_slot=0;
@@ -556,8 +580,8 @@ static int run_rank(const Options& a) {
    const bool gdn_heads=[]{const char* v=std::getenv("OWNRT_TP_GDN");return v&&std::string(v)=="heads";}();
    {const char* v=std::getenv("OWNRT_TP_GDN");require(!v||std::string(v)=="heads","OWNRT_TP_GDN must be heads");}
    const int KH=p.g.kh,VH=p.g.vh,D=p.g.d,HK=KH/2;
-   require(!gdn_heads||(direct&&!exchange_only&&KH==16&&VH==48&&D==128&&!a.prefill_rows&&a.f32_activations),
-           "OWNRT_TP_GDN=heads: OWNRT_TP_EXCHANGE=direct, SC117 GDN geometry, F32 decode only");
+   require(!gdn_heads||(direct&&!exchange_only&&KH==16&&VH==48&&D==128&&a.f32_activations),
+           "OWNRT_TP_GDN=heads: OWNRT_TP_EXCHANGE=direct, SC117 GDN geometry, F32 (prefill commands are refused under TP)");
    auto qkv_runs=[&](int c){std::vector<std::pair<int,int>> r{{HK*c*D,HK*D},{KH*D+HK*c*D,HK*D}};for(int u=0;u<VH/KH;++u)r.push_back({2*KH*D+(KH*u+HK*c)*D,HK*D});return r;};
    auto value_runs=[&](int c,int per){std::vector<std::pair<int,int>> r;for(int u=0;u<VH/KH;++u)r.push_back({(KH*u+HK*c)*per,HK*per});return r;};
    auto total=[](const std::vector<std::pair<int,int>>& r){int n=0;for(auto [f,k]:r)n+=k;return n;};
@@ -842,6 +866,7 @@ static int run_rank(const Options& a) {
     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
    else if(r.op==prefill::op){
+    require(!a.tp_replicate,"--tp-replicate: batched prefill is not supported yet (one-card prefill + state transfer pending)");
     require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture>=0&&r.fixture<a.prefill_slots)&&!r.speculative,"prefill command");
     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
     require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"prefill command header changed");
@@ -866,6 +891,7 @@ static int run_rank(const Options& a) {
    }
    else if(r.op==dump){require(!c.pending,"dump uncommitted state");image.boundary();if(provider)provider->flush_depth_probe();state_dump(*engine,r.position);if(a.pipeline_live_draft&&provider)provider->live_dump(engine->a.output/("state-"+std::to_string(r.position)+".draft"));if(a.pipeline_ring)ring_dispatcher->attest(engine->a.output/("state-"+std::to_string(r.position)+".ring-state.json"),r.position);if(a.pipeline_wavefront)wave_checkpoint->attest(*wave_ledger,engine->a.output/("state-"+std::to_string(r.position)+".wavefront-state.json"),r.position);if(engine->a.tp_replicate)tp_compare(*engine,a.output/"tp-replicate-compare.json");if(r.position==2147483647)request_state_inventory(*engine);}
    else if(r.op==11){image.boundary();v3state.reset();
+    if(engine->a.tp_replicate&&engine->a.reset_dump)tp_compare(*engine,a.output/"tp-replicate-compare.json"); // card 1 vs card 0, exchange statistics
     const auto metadata=a.output/("reset-"+std::to_string(r.sequence)+".txt");
     if(a.pipeline_persistent_requests){require(!r.token&&!r.position&&!r.fixture&&!r.speculative,"persistent reset zero payload");persistent_reset(*engine,c,provider.get(),*wave_checkpoint,*wave_ledger,live_draft_sequence,a.output,metadata,accepted,r.sequence,static_cast<uint8_t*>(mapping),shared_bytes,wave_trace,wave_trace_rows,wave_trace_omitted);wave_output=-1;}
     else request_reset(*engine,c,provider.get(),metadata,accepted);

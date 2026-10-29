@@ -46,11 +46,11 @@ static void request_reset(Engine& e,Candidate& candidate,mtp36::DraftRuntime* pr
 #endif
  if(device_zero)e.drain();
  for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
-  if(e.immutable_snapshot_tables.contains(id)){require(row.label=="card0:speculative-static-copy-table","immutable snapshot registration");continue;}
+  if(e.immutable_snapshot_tables.contains(id)){require(row.label=="card0:speculative-static-copy-table"||(e.a.tp_replicate&&row.label=="card1:speculative-static-copy-table"),"immutable snapshot registration");continue;}
   if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab)continue;
 #ifndef OWN_RT_HOST_ONLY
   if(device_zero&&row.memory==Memory::device){if(row.bytes){reset_zero::Fill op;op.bytes=row.bytes;std::array<Allocation,1> ids{id};
-    e.tail=e.dev(owner.first).compute(op,ids,{});}reset_bytes+=row.bytes;++reset_allocations;continue;}
+    e.track(owner.first,e.dev(owner.first).compute(op,ids,{}));}reset_bytes+=row.bytes;++reset_allocations;continue;}
 #endif
   for(size_t off=0;off<row.bytes;off+=zero.size())e.upload(owner.first,id,off,zero.data(),std::min(zero.size(),row.bytes-off));
   reset_bytes+=row.bytes;++reset_allocations;

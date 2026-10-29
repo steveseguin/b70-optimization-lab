@@ -200,10 +200,12 @@ struct SnapshotWriteSet {
 // A complete, non-speculative redo therefore replaces EVERY skipped byte.
 struct RedoBankProof {
  size_t bytes=0;std::string writer;
- static RedoBankProof derive(const flash::Plan& p,const std::string& name) {
+ // card: --tp-replicate twins write the same name on each card; only that card's writer counts. A head-split
+ // (compact) writer writes its card's heads or channels (Launch::heads, row_count) of the full-size buffer.
+ static RedoBankProof derive(const flash::Plan& p,const std::string& name,int card=0) {
   const flash::Buffer* buffer=nullptr;const flash::Launch* writer=nullptr;
   for(const auto& b:p.buffers)if(b.name==name){if(buffer)return {};buffer=&b;}
-  for(const auto& l:p.launches)if(std::find(l.outputs.begin(),l.outputs.end(),name)!=l.outputs.end()){
+  for(const auto& l:p.launches)if(l.card==card&&std::find(l.outputs.begin(),l.outputs.end(),name)!=l.outputs.end()){
    if(writer)return {};writer=&l;
   }
   // BF16 or F32 (recurrent-f32) state: the same full-row writers; bytes follow the buffer's type.
@@ -212,11 +214,12 @@ struct RedoBankProof {
   if(writer->op=="gdn"){
    if(writer->inputs.size()<4||writer->inputs[3]!=name||p.g.vh<=0||p.g.d<=0||
       writer->shape!=std::vector<int>{p.g.kh,p.g.vh,p.g.d}||buffer->shape!=std::vector<int>{p.g.vh,p.g.d,p.g.d})return {};
-   elements=size_t(p.g.vh)*p.g.d*p.g.d;
+   elements=size_t(writer->heads?writer->heads:p.g.vh)*p.g.d*p.g.d;
   }else if(writer->op=="conv"){
    int dilation=writer->parameter;
    if(writer->inputs.size()<2||writer->inputs[1]!=name||writer->shape.size()!=1||writer->shape[0]<=0||
-      (dilation!=1&&dilation!=3)||buffer->shape!=std::vector<int>{writer->shape[0],3*dilation})return {};
+      (dilation!=1&&dilation!=3)||buffer->shape.size()!=2||buffer->shape[1]!=3*dilation||
+      (writer->row_count?writer->shape[0]>buffer->shape[0]:buffer->shape[0]!=writer->shape[0]))return {};
    elements=size_t(writer->shape[0])*3*dilation;
   }else return {};
   return {elements*flash::scalar_bytes(buffer->type),writer->label};
@@ -225,6 +228,9 @@ struct RedoBankProof {
 // SPEED4_REDO_PROOF_END
 class SpeculativeImage {
  Engine& e;
+ // --tp-replicate rank 0 (2026-10-29): k is the card this image captures. The card-0 image owns the host state, the
+ // bank rotation and the protocol; it forwards device capture/restore to `peer`, the card-1 image.
+ int k=0;std::unique_ptr<SpeculativeImage> peer;
  struct Source {std::string name;Allocation standalone=0;size_t bytes=0;bool bank=false,kv=false,pooled=false;size_t write_bytes=0;bool single_row=false,redo_overwrite=false;};
  struct Extent {Allocation id;size_t offset,bytes,backup_offset;bool redo_overwrite=false;};
  std::vector<Source> sources;
@@ -238,14 +244,14 @@ class SpeculativeImage {
  bool static_mode()const{return e.sealed_selection.choices.at("snapshot_host")=="static";}
  void prepare_static(){
   require(e.miss_banks()&&e.miss_batch()&&e.resident&&e.a.nongemv=="parallel","static snapshot requires resident banked parallel composition");
-  ownrt::CopyEngine engine(e.dev(0));std::vector<SnapshotStatic::Item> rows;
+  ownrt::CopyEngine engine(e.dev(k));std::vector<SnapshotStatic::Item> rows;
   std::vector<ownrt::PreparedCompute> checked;std::set<Allocation> distinct;
   static_ids={0,backup};
-  e.dev(0).begin_capture(checked);
+  e.dev(k).begin_capture(checked);
   try{
    for(const auto& source:sources){
     if(source.bank){require(source.redo_overwrite,"static rotation proof");static_bank_bytes+=source.bytes;continue;}
-    Allocation id=source.standalone?source.standalone:e.buffers[0].at(source.name).id;
+    Allocation id=source.standalone?source.standalone:e.buffers[size_t(k)].at(source.name).id;
     require(distinct.insert(id).second,"overlapping static snapshot allocation");
     size_t bytes=source.write_bytes,stride=0,divisor=1;
     if(source.kv){require(source.single_row,"static QSA must be single row");
@@ -269,12 +275,12 @@ class SpeculativeImage {
     }
     static_ids.push_back(id);static_bytes+=bytes;
    }
-   e.dev(0).end_capture();
-  }catch(...){e.dev(0).end_capture();throw;}
+   e.dev(k).end_capture();
+  }catch(...){e.dev(k).end_capture();throw;}
   require(static_bytes<=capacity&&!rows.empty(),"static snapshot capacity");static_count=rows.size();
-  static_table=e.allocate(0,"speculative-static-copy-table",rows.size()*sizeof(SnapshotStatic::Item),Category::runtime_overhead,Lifetime::process);
+  static_table=e.allocate(k,"speculative-static-copy-table",rows.size()*sizeof(SnapshotStatic::Item),Category::runtime_overhead,Lifetime::process);
   static_ids[0]=static_table;e.immutable_snapshot_tables.insert(static_table);
-  e.upload(0,static_table,0,rows.data(),rows.size()*sizeof(SnapshotStatic::Item));e.drain();
+  e.upload(k,static_table,0,rows.data(),rows.size()*sizeof(SnapshotStatic::Item));e.drain();
  }
  Allocation table=0;size_t table_capacity=0;
  Allocation backup=0;size_t capacity=0;bool valid=false,dirty=false;
@@ -293,10 +299,10 @@ class SpeculativeImage {
  void zero_private() {
   if(!backup)return;
   std::vector<uint8_t> zeros(std::min(capacity,size_t(4*1024*1024)),0);
-  for(size_t off=0;off<capacity;off+=zeros.size())e.upload(0,backup,off,zeros.data(),std::min(zeros.size(),capacity-off));
-  for(const auto& [name,id]:e.state_reserves){const auto bytes=e.dev(0).arena.row(id).bytes;
-   for(size_t off=0;off<bytes;off+=zeros.size())e.upload(0,id,off,zeros.data(),std::min(zeros.size(),bytes-off));}
-  if(table){std::vector<uint8_t> zero(table_capacity,0);e.upload(0,table,0,zero.data(),zero.size());}
+  for(size_t off=0;off<capacity;off+=zeros.size())e.upload(k,backup,off,zeros.data(),std::min(zeros.size(),capacity-off));
+  for(const auto& [name,id]:e.reserves(k)){const auto bytes=e.dev(k).arena.row(id).bytes;
+   for(size_t off=0;off<bytes;off+=zeros.size())e.upload(k,id,off,zeros.data(),std::min(zeros.size(),bytes-off));}
+  if(table){std::vector<uint8_t> zero(table_capacity,0);e.upload(k,table,0,zero.data(),zero.size());}
   dirty=false;
  }
  void copy(bool restore,bool for_redo=false,bool deferred_only=false) {
@@ -308,16 +314,16 @@ class SpeculativeImage {
 #ifdef OWN_RT_HOST_ONLY
    op.omitted_for_negative=omitted_for_negative;
 #endif
-   e.tail=e.dev(0).compute(op,static_ids,{});
+   e.track(k,e.dev(k).compute(op,static_ids,{}));
    if(restore){restored_bytes+=static_bytes;++restore_submissions;}else ++capture_submissions;
    return;
   }
-  ownrt::CopyEngine engine(e.dev(0));
+  ownrt::CopyEngine engine(e.dev(k));
   std::vector<ownrt::PreparedCompute> checked;std::vector<size_t> lengths;
   std::set<Allocation> distinct;
   // Capture is validation/preparation only. The original copy method rejects
   // zero/oversize/dead/out-of-range extents; no alternate checker is introduced.
-  e.dev(0).begin_capture(checked);
+  e.dev(k).begin_capture(checked);
   try {
    for(const auto& x:saved){require(distinct.insert(x.id).second,"overlapping snapshot source allocation");
     if(restore&&for_redo&&x.redo_overwrite){redo_omitted_bytes+=x.bytes;continue;}
@@ -330,8 +336,8 @@ class SpeculativeImage {
      lengths.push_back(count);
     }
    }
-   e.dev(0).end_capture();
-  }catch(...){e.dev(0).end_capture();throw;}
+   e.dev(k).end_capture();
+  }catch(...){e.dev(k).end_capture();throw;}
   require(checked.size()==lengths.size(),"snapshot copy capture cardinality");
   if(e.miss_batch()&&!checked.empty()) {
    std::vector<SnapshotFlat::Item> rows;std::vector<Allocation> ids{table};size_t tiles=0;
@@ -342,8 +348,8 @@ class SpeculativeImage {
     ids.insert(ids.end(),item.ids.begin(),item.ids.end());
    }
    require(rows.size()*sizeof(SnapshotFlat::Item)<=table_capacity,"flat snapshot table capacity");
-   e.upload(0,table,0,rows.data(),rows.size()*sizeof(SnapshotFlat::Item));
-   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.tail=e.dev(0).compute(op,ids,{});
+   e.upload(k,table,0,rows.data(),rows.size()*sizeof(SnapshotFlat::Item));
+   SnapshotFlat op;op.count=rows.size();op.tiles=tiles;e.track(k,e.dev(k).compute(op,ids,{}));
    (restore?restore_submissions:capture_submissions)+=2;return;
   }
   // Similar-sized pieces share one kernel, limiting padded work. Each batch
@@ -362,8 +368,8 @@ class SpeculativeImage {
     ids.insert(ids.end(),item.ids.begin(),item.ids.end());++cursor;
    }
    require(batch.count&&batch.total<=SnapshotBatch::limit,"snapshot batch bound");
-   if(batch.count==1)e.tail=e.dev(0).issue(checked[order[start]]);
-   else e.tail=e.dev(0).compute(batch,ids,{});
+   if(batch.count==1)e.track(k,e.dev(k).issue(checked[order[start]]));
+   else e.track(k,e.dev(k).compute(batch,ids,{}));
    ++submissions;
   }
   (restore?restore_submissions:capture_submissions)+=submissions;
@@ -382,28 +388,31 @@ public:
     bytes=s.single_row?s.bytes/rows:s.bytes-offset;
    }
    if(bytes)++extents;total+=bytes;
-   std::string label=s.name.empty()?e.dev(0).arena.row(s.standalone).label:s.name;
+   std::string label=s.name.empty()?e.dev(k).arena.row(s.standalone).label:s.name;
    out<<(comma?",":"")<<"{\"name\":"<<ownrt::quote(label)<<",\"allocation_bytes\":"<<s.bytes<<",\"copy_bytes\":"<<bytes<<",\"offset\":"<<offset<<",\"bank\":"<<(s.bank?"true":"false")<<",\"kv\":"<<(s.kv?"true":"false")<<"}";comma=true;
   }
   out<<"],\"capture_bytes\":"<<total<<",\"extents\":"<<extents<<",\"bank_bytes_avoided\":"<<omitted<<",\"capture_submissions\":2}";save(path,out.str());
  }
 #endif
- explicit SpeculativeImage(Engine& owner):e(owner) {
+ explicit SpeculativeImage(Engine& owner,int card=0):e(owner),k(card) {
   if(e.a.rank!=0)return;
+  require(k==0||e.a.tp_replicate,"card-1 speculative image only under --tp-replicate");
   std::set<std::string> outputs{"token","position","token_history"},kv;
   std::set<Allocation> represented;
   for(const auto& site:e.p.launches){outputs.insert(site.outputs.begin(),site.outputs.end());if(site.op=="qsa_append_pool")kv.insert(site.outputs.begin(),site.outputs.end());}
-  for(const auto& [name,slot]:e.buffers[0]) {
+  for(const auto& [name,slot]:e.buffers[size_t(k)]) {
    represented.insert(slot.id);
    // packet186 V3: a buffer whose only readers/writers are the moved layers 24-25 is written
    // exclusively by the boundary command, which runs only for an accepted, verified token and
    // never while a speculation is outstanding (Engine::v3_check_plan proves the plan side at
    // load; rank.hpp enforces the command order). It is never captured or restored.
    if(!outputs.count(name)||e.v3_private.count(name))continue;
-   Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.state_spares.count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
+   Source row{name,0,slot.n*flash::scalar_bytes(slot.type),e.spares(k).count(name)!=0,kv.count(name)!=0,ends(name,".pooled")};
    row.write_bytes=row.bytes;row.kv=row.kv&&SnapshotWriteSet::single_row(e.p,name,true);
    row.single_row=row.kv&&e.a.nongemv=="parallel";
-   if(row.bank){auto proof=RedoBankProof::derive(e.p,name);row.redo_overwrite=proof.bytes==row.bytes&&proof.bytes>0;require(!e.miss_banks()||row.redo_overwrite,"third bank requires proved full destination overwrite");}
+   if(row.bank){auto proof=RedoBankProof::derive(e.p,name,k);size_t extent=row.bytes;
+    if(auto split=e.head_split_layout.find(name);split!=e.head_split_layout.end()){extent=0;for(const auto& run:split->second[size_t(k)])extent+=run[2]*flash::scalar_bytes(slot.type);} // compact heads
+    row.redo_overwrite=proof.bytes==extent&&proof.bytes>0;require(!e.miss_banks()||row.redo_overwrite,"third bank requires proved full destination overwrite");}
    // A single-row QSA source is captured one row at a time (static rows and begin() both copy bytes/rows), so it
    // needs one row of backup, not its whole context extent (about 0.75 GB on rank 0 at context 32768).
    if(!(e.miss_banks()&&row.bank)){size_t need=row.bytes;
@@ -412,9 +421,9 @@ public:
     capacity+=need;}
    sources.push_back(std::move(row));
   }
-  for(const auto& [name,id]:e.state_spares)represented.insert(id);
-  for(const auto& [name,id]:e.state_reserves)represented.insert(id);
-  for(const auto& [id,owner]:e.allocations){const auto& row=e.dev(owner.first).arena.row(id);
+  for(const auto& [name,id]:e.spares(k))represented.insert(id);
+  for(const auto& [name,id]:e.reserves(k))represented.insert(id);
+  for(const auto& [id,owner]:e.allocations){if(owner.first!=k)continue;const auto& row=e.dev(owner.first).arena.row(id);
    if(e.probe_auxiliary.contains(id)){
     require(owner.first==0&&row.label.starts_with("card0:p149:")&&!represented.count(id)&&
       row.category==Category::runtime_overhead&&row.bytes==65536,"p149 private scratch cannot alias target state");
@@ -424,28 +433,52 @@ public:
     require(e.split_head()&&owner.first==0&&row.label.starts_with("card0:p105:")&&!represented.count(id),"p105 auxiliary cannot alias target state");
     continue; // only the post-half suffix service reads/writes these allocations
    }
-   if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[0])continue;
+   if(!row.live||row.category==Category::weights||row.category==Category::pinned_slab||represented.count(id)||id==e.one[size_t(k)])continue;
+   // Direct-exchange control words: epoch counters advance identically on both cards for every executed (also
+   // cancelled-prefix) exchange site, so they are never captured or restored.
+   if(std::find(e.xctl.begin(),e.xctl.end(),id)!=e.xctl.end())continue;
    // Batched-prefill shadows (prefill_allocate, 36 MB at 32 rows): only prefill_chunk reaches them, through row views it
    // switches on at entry and off on every exit, and no speculation is outstanding then. A decode half never reads or
    // writes them, so capturing and restoring them copied identical bytes on every speculative row and every miss.
-   if(row.label.starts_with("card0:prefill:"))continue;
-   require(owner.first==0&&row.memory==Memory::device,"snapshot owner/memory");
-   Source source{{},id,row.bytes,false,false,false};source.write_bytes=id==e.scratch[0]?SnapshotWriteSet::scratch(e.p,row.bytes,e.a.nongemv=="parallel"):row.bytes;
+   if(row.label.starts_with("card"+std::to_string(k)+":prefill:"))continue;
+   require(owner.first==k&&row.memory==Memory::device,"snapshot owner/memory");
+   Source source{{},id,row.bytes,false,false,false};source.write_bytes=id==e.scratch[size_t(k)]?SnapshotWriteSet::scratch(e.p,row.bytes,e.a.nongemv=="parallel"):row.bytes;
    sources.push_back(source);capacity+=row.bytes;
   }
   require(capacity>0,"empty speculative snapshot");saved.reserve(sources.size());
-  backup=e.allocate(0,"speculative-private-image",capacity,Category::runtime_overhead,Lifetime::process);
+  backup=e.allocate(k,"speculative-private-image",capacity,Category::runtime_overhead,Lifetime::process);
   if(e.miss_batch()){
    table_capacity=(sources.size()+capacity/SnapshotBatch::limit+1)*sizeof(SnapshotFlat::Item);
-   table=e.allocate(0,"speculative-copy-table",table_capacity,Category::runtime_overhead,Lifetime::process);
+   table=e.allocate(k,"speculative-copy-table",table_capacity,Category::runtime_overhead,Lifetime::process);
   }
   zero_private();if(!e.a.gsq_packed||static_mode())prepare_static();
+  if(k==0&&e.a.tp_replicate)peer=std::make_unique<SpeculativeImage>(e,1);
  }
  // packet188 rank0_prepare=async passes known_position (the half's request position): no synchronous error /
  // position readback here; the half captures the device position by an ordered copy and refuses after its final
  // drain unless it equals known_position, and the sticky error is checked at that same end, before any reply.
+ // Card-1 image: the device capture only, at the card-0 image's position (host state, banks: card-0 image).
+ void begin_device(int position) {
+  require(k==1&&backup&&!valid&&!redo_pending&&position>=0&&position<e.p.g.context,"card-1 snapshot begin");
+  captured_position=position;
+  if(static_mode()){valid=true;dirty=true;copy(false);++captures;saved_bytes+=static_bytes;return;}
+  saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
+  for(const auto& source:sources){
+   Allocation id=source.standalone;size_t skip=0,bytes=source.write_bytes;
+   if(!id){id=source.bank?e.spares(k).at(source.name):e.buffers[size_t(k)].at(source.name).id;
+    if(source.bank&&e.miss_banks())continue;
+    if(source.kv){size_t rows=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
+     size_t valid_rows=source.pooled?size_t(position/4):size_t(position);
+     require(source.bytes%rows==0,"snapshot QSA row geometry");skip=valid_rows*(source.bytes/rows);
+     bytes=source.single_row?source.bytes/rows:source.bytes-skip;}
+   }
+   require(skip<=source.bytes&&bytes<=source.bytes-skip,"snapshot writer range");
+   if(bytes)saved.push_back({id,skip,bytes,offset,source.redo_overwrite});offset+=bytes;
+  }
+  require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;copy(false);++captures;saved_bytes+=offset;
+ }
  void begin(uint8_t* shared,int known_position=-1) {
-  require(e.a.rank==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
+  require(e.a.rank==0&&k==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
   require(!e.poisoned&&(known_position>=0||!e.integer(0,"error")),"snapshot cannot erase target failure");
   // Host layer streaming releases its weights at every completed half. Restoring
   // metadata never revives an allocation freed by a later layer transition.
@@ -458,13 +491,13 @@ public:
   captured_position=position;
   if(static_mode()){
    valid=true;dirty=true;bank_capture_bytes_avoided+=static_bank_bytes;
-   copy(false);e.rotate_spare_bank();rotated=true;++captures;saved_bytes+=static_bytes;return;
+   copy(false);if(peer)peer->begin_device(position);e.rotate_spare_bank();rotated=true;++captures;saved_bytes+=static_bytes;return;
   }
   saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
   for(const auto& source:sources){
    Allocation id=source.standalone;size_t skip=0,bytes=source.write_bytes;
-   if(!id){id=source.bank?e.state_spares.at(source.name):e.buffers[0].at(source.name).id;
-    if(source.bank)protected_active.push_back({e.buffers[0].at(source.name).id,source.bytes});
+   if(!id){id=source.bank?e.spares(k).at(source.name):e.buffers[size_t(k)].at(source.name).id;
+    if(source.bank)protected_active.push_back({e.buffers[size_t(k)].at(source.name).id,source.bytes});
     if(source.bank&&e.miss_banks()){bank_capture_bytes_avoided+=source.bytes;continue;}
     if(source.kv){size_t rows=source.pooled?size_t((e.p.g.context+3)/4):size_t(e.p.g.context);
      size_t valid_rows=source.pooled?size_t(position/4):size_t(position);
@@ -476,21 +509,24 @@ public:
    // Active recurrent banks and already-committed QSA prefixes are not saved:
    // illegal mutation there must remain visible to the full-state gate.
    require(skip<=source.bytes&&bytes<=source.bytes-skip,"snapshot writer range");
-   if(source.redo_overwrite){require(source.bank&&id==e.state_spares.at(source.name)&&id!=e.buffers[0].at(source.name).id&&skip==0&&bytes==source.bytes,"redo spare bank binding/coverage");}
+   if(source.redo_overwrite){require(source.bank&&id==e.spares(k).at(source.name)&&id!=e.buffers[size_t(k)].at(source.name).id&&skip==0&&bytes==source.bytes,"redo spare bank binding/coverage");}
    if(bytes)saved.push_back({id,skip,bytes,offset,source.redo_overwrite});offset+=bytes;
   }
   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;
-  copy(false);if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
+  copy(false);if(peer)peer->begin_device(position);if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
  }
- void accept(){require(valid,"snapshot accept without speculation");e.drain();rotated=false;valid=false;}
+ void accept(){require(valid,"snapshot accept without speculation");e.drain();rotated=false;valid=false;if(peer)peer->accept();}
  void restore(bool for_redo=false,int position=-1,int token=-1){
   require(valid,"snapshot restore without speculation");e.drain();
+  if(k==1){ // card-1 device restore, called by the card-0 image after its bank rotation and copy
+   require(!redo_pending,"nested card-1 redo restore");copy(true,for_redo);valid=false;++restores;
+   if(for_redo){redo_pending=true;redo_position=position;redo_token=token;++redo_restores;}return;}
   require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot roll back sticky failure");
   require(e.bank_parity==parity,"snapshot restore bank selection");
   if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,"snapshot restore streaming layer retained");
   require(!redo_pending,"nested redo restore");
   if(rotated){e.rotate_spare_bank();rotated=false;}
-  copy(true,for_redo);if(!e.miss_overlap())e.drain();
+  copy(true,for_redo);if(peer)peer->restore(for_redo,position,token);if(!e.miss_overlap())e.drain();
   require(shared_slot!=nullptr,"restore shared slot lifetime");std::memcpy(shared_slot,shared_before.data(),shared_before.size());
   // Restore both prepared-command banks as well as their launch metadata.
   // Rebuild only QSA sites through the same admission path. Do this before
@@ -507,6 +543,7 @@ public:
   if(for_redo){redo_pending=true;redo_position=position;redo_token=token;++redo_restores;}
  }
  bool before_command(bool confirmed_half,int position,int token){
+  if(peer)peer->before_command(confirmed_half,position,token);
   if(!redo_pending)return false;
   if(confirmed_half&&position==redo_position&&token==redo_token)return true;
   // A promised redo may be abandoned by cancel/end/reset/dump. Restore its
@@ -514,8 +551,9 @@ public:
   e.drain();require(!e.poisoned&&!e.integer(0,"error"),"deferred restore cannot erase failure");
   copy(true,false,true);e.drain();redo_pending=false;redo_position=redo_token=-1;++redo_fallbacks;return false;
  }
- void finish_redo(){require(redo_pending&&!valid,"redo completion without pending restore");redo_pending=false;redo_position=redo_token=-1;++completed_redos;}
+ void finish_redo(){require(redo_pending&&!valid,"redo completion without pending restore");redo_pending=false;redo_position=redo_token=-1;++completed_redos;if(peer)peer->finish_redo();}
  void boundary(){
+  if(peer)peer->boundary();
   before_command(false,-1,-1);
 #ifdef OWN_RT_HOST_ONLY
   omitted_for_negative=SIZE_MAX;
@@ -525,7 +563,7 @@ public:
   protected_active.clear();protected_qsa.clear();history0=history1=0;parity=0;launch_extent=alternate_launch_extent=32;
   shared_before.fill(0);shared_slot=nullptr;
   require(lookup.empty()&&selected.empty()&&loaded.empty()&&fp32_sources.empty()&&fp32_extents.empty()&&saved.empty(),"private host snapshot retirement");
-  if(backup)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"miss_selection\":"+ownrt::quote(e.miss_choice())+",\"bank_capture_bytes_avoided\":"+std::to_string(bank_capture_bytes_avoided)+",\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"capture_submissions\":"+std::to_string(capture_submissions)+",\"restore_submissions\":"+std::to_string(restore_submissions)+",\"restored_bytes\":"+std::to_string(restored_bytes)+",\"redo_omitted_bytes\":"+std::to_string(redo_omitted_bytes)+",\"redo_restores\":"+std::to_string(redo_restores)+",\"completed_redos\":"+std::to_string(completed_redos)+",\"redo_fallbacks\":"+std::to_string(redo_fallbacks)+",\"copy_extent_guard_unchanged\":true,\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true,\"rank0_shared_slot_bytes\":65536,\"rank1_shared_regions_untouched\":true}");
+  if(backup&&k==0)save(e.a.output/"speculative-snapshot.json","{\"passed\":true,\"miss_selection\":"+ownrt::quote(e.miss_choice())+",\"bank_capture_bytes_avoided\":"+std::to_string(bank_capture_bytes_avoided)+",\"capacity_bytes\":"+std::to_string(capacity)+",\"captures\":"+std::to_string(captures)+",\"restores\":"+std::to_string(restores)+",\"snapshot_payload_bytes\":"+std::to_string(saved_bytes)+",\"capture_submissions\":"+std::to_string(capture_submissions)+",\"restore_submissions\":"+std::to_string(restore_submissions)+",\"restored_bytes\":"+std::to_string(restored_bytes)+",\"redo_omitted_bytes\":"+std::to_string(redo_omitted_bytes)+",\"redo_restores\":"+std::to_string(redo_restores)+",\"completed_redos\":"+std::to_string(completed_redos)+",\"redo_fallbacks\":"+std::to_string(redo_fallbacks)+",\"copy_extent_guard_unchanged\":true,\"private_backup_zeroed\":true,\"committed_state_scrubbed\":false,\"private_host_backup_empty\":true,\"snapshot_valid\":false,\"counters_are_telemetry\":true,\"rank0_shared_slot_bytes\":65536,\"rank1_shared_regions_untouched\":true}");
  }
 #ifdef OWN_RT_HOST_ONLY
  // CPU-only negative control: write a byte excluded from the rollback image.
