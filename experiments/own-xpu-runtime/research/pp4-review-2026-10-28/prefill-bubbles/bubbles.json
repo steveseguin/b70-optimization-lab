@@ -1,0 +1,651 @@
+{
+ "schema": "ownrt.prefill-bubbles-screen.v1",
+ "date": "2026-10-28",
+ "scope": "CPU parse of retained host-wall traces; no GPU/build/service/model access",
+ "busy_definition": "command_end-command_began from dedicated_prefill_pipeline.py lines34 and52-62; host-observed command duration (socket, native host work and device work), not GPU utilisation",
+ "runs": {
+  "control_3plus1_262k_cuts_0_17_33_48": {
+   "chunks": 476,
+   "span_s": 250.333,
+   "actors": {
+    "stage0": {
+     "busy_s": 248.434,
+     "idle_in_span_s": 1.899,
+     "busy_pct_of_span": 99.24,
+     "steady_mean_ms": 521.86,
+     "first_chunk_ms": 540.8,
+     "first_start_s": 0.0,
+     "last_end_s": 249.056,
+     "busy_pct_by_decile": [
+      99.6,
+      99.7,
+      99.8,
+      99.8,
+      99.8,
+      99.8,
+      99.8,
+      99.8,
+      99.8,
+      94.7
+     ]
+    },
+    "stage1": {
+     "busy_s": 218.327,
+     "idle_in_span_s": 32.007,
+     "busy_pct_of_span": 87.21,
+     "steady_mean_ms": 458.66,
+     "first_chunk_ms": 461.8,
+     "first_start_s": 0.55,
+     "last_end_s": 249.518,
+     "busy_pct_by_decile": [
+      86.0,
+      87.6,
+      87.4,
+      87.4,
+      87.7,
+      87.7,
+      87.7,
+      87.6,
+      87.8,
+      85.3
+     ]
+    },
+    "stage2": {
+     "busy_s": 211.771,
+     "idle_in_span_s": 38.562,
+     "busy_pct_of_span": 84.6,
+     "steady_mean_ms": 444.88,
+     "first_chunk_ms": 450.7,
+     "first_start_s": 1.019,
+     "last_end_s": 249.965,
+     "busy_pct_by_decile": [
+      82.0,
+      84.9,
+      84.8,
+      85.1,
+      85.3,
+      85.1,
+      85.0,
+      84.9,
+      85.1,
+      84.0
+     ]
+    },
+    "provider": {
+     "busy_s": 171.191,
+     "idle_in_span_s": 79.142,
+     "busy_pct_of_span": 68.39,
+     "steady_mean_ms": 359.56,
+     "first_chunk_ms": 398.0,
+     "first_start_s": 1.475,
+     "last_end_s": 250.333,
+     "busy_pct_by_decile": [
+      65.9,
+      68.6,
+      68.4,
+      68.3,
+      68.4,
+      69.0,
+      68.2,
+      68.9,
+      69.0,
+      69.1
+     ]
+    }
+   },
+   "stage0_lease_bound_chunks": 0,
+   "stage0_lease_wait_s": 0.0,
+   "stage0_issue_after_previous_completion_s": 0.027,
+   "busy_actor_seconds_by_count": {
+    "0": 0.016,
+    "1": 1.075,
+    "2": 4.614,
+    "3": 139.093,
+    "4": 105.535
+   },
+   "mean_busy_actors": 3.394,
+   "drain_after_stage0_last_end_s": 1.277,
+   "transport_slots": 4,
+   "ttft_s": 250.84163720393553,
+   "request_s": 261.38151908502914,
+   "ttft_decomposition_s": {
+    "request_start_to_first_issue": 0.105,
+    "stage0_command_work": 248.434,
+    "stage0_inter_command_host": 0.622,
+    "drain_last_chunk_stage1_stage2_provider": 1.277,
+    "prefill_end_to_first_token": 0.404
+   },
+   "busy_pct_of_ttft": {
+    "stage0": 99.04,
+    "stage1": 87.04,
+    "stage2": 84.42,
+    "provider": 68.25
+   },
+   "non_stage0_work_overhead_s": 2.408
+  },
+  "equal16_3plus1_262k_cuts_0_16_32_48": {
+   "chunks": 476,
+   "span_s": 235.665,
+   "actors": {
+    "stage0": {
+     "busy_s": 233.715,
+     "idle_in_span_s": 1.95,
+     "busy_pct_of_span": 99.17,
+     "steady_mean_ms": 490.92,
+     "first_chunk_ms": 528.1,
+     "first_start_s": 0.0,
+     "last_end_s": 234.344,
+     "busy_pct_by_decile": [
+      99.6,
+      99.8,
+      99.8,
+      99.8,
+      99.7,
+      99.7,
+      99.8,
+      99.8,
+      99.7,
+      94.1
+     ]
+    },
+    "stage1": {
+     "busy_s": 222.59,
+     "idle_in_span_s": 13.075,
+     "busy_pct_of_span": 94.45,
+     "steady_mean_ms": 467.62,
+     "first_chunk_ms": 466.1,
+     "first_start_s": 0.536,
+     "last_end_s": 234.819,
+     "busy_pct_by_decile": [
+      92.1,
+      94.9,
+      94.5,
+      94.9,
+      95.0,
+      95.4,
+      95.2,
+      95.3,
+      95.3,
+      91.9
+     ]
+    },
+    "stage2": {
+     "busy_s": 225.314,
+     "idle_in_span_s": 10.351,
+     "busy_pct_of_span": 95.61,
+     "steady_mean_ms": 473.31,
+     "first_chunk_ms": 485.0,
+     "first_start_s": 1.009,
+     "last_end_s": 235.299,
+     "busy_pct_by_decile": [
+      92.1,
+      96.7,
+      96.1,
+      96.2,
+      96.0,
+      96.1,
+      95.9,
+      96.2,
+      96.2,
+      94.5
+     ]
+    },
+    "provider": {
+     "busy_s": 170.764,
+     "idle_in_span_s": 64.901,
+     "busy_pct_of_span": 72.46,
+     "steady_mean_ms": 358.7,
+     "first_chunk_ms": 379.8,
+     "first_start_s": 1.502,
+     "last_end_s": 235.665,
+     "busy_pct_by_decile": [
+      68.7,
+      73.1,
+      72.2,
+      72.6,
+      72.7,
+      73.2,
+      72.5,
+      73.2,
+      73.3,
+      73.1
+     ]
+    }
+   },
+   "stage0_lease_bound_chunks": 0,
+   "stage0_lease_wait_s": 0.0,
+   "stage0_issue_after_previous_completion_s": 0.037,
+   "busy_actor_seconds_by_count": {
+    "0": 0.013,
+    "1": 1.062,
+    "2": 4.573,
+    "3": 77.891,
+    "4": 152.126
+   },
+   "mean_busy_actors": 3.617,
+   "drain_after_stage0_last_end_s": 1.321,
+   "transport_slots": 4,
+   "ttft_s": 236.20906309294514,
+   "request_s": 248.71683319285512,
+   "ttft_decomposition_s": {
+    "request_start_to_first_issue": 0.103,
+    "stage0_command_work": 233.715,
+    "stage0_inter_command_host": 0.629,
+    "drain_last_chunk_stage1_stage2_provider": 1.321,
+    "prefill_end_to_first_token": 0.441
+   },
+   "busy_pct_of_ttft": {
+    "stage0": 98.94,
+    "stage1": 94.23,
+    "stage2": 95.39,
+    "provider": 72.29
+   },
+   "non_stage0_work_overhead_s": 2.494
+  },
+  "historical_two_slots_3plus1_pre_aot": {
+   "chunks": 476,
+   "span_s": 586.059,
+   "actors": {
+    "stage0": {
+     "busy_s": 292.063,
+     "idle_in_span_s": 293.995,
+     "busy_pct_of_span": 49.84,
+     "steady_mean_ms": 516.13,
+     "first_chunk_ms": 46894.5,
+     "first_start_s": 0.0,
+     "last_end_s": 584.776,
+     "busy_pct_by_decile": [
+      80.9,
+      0.0,
+      14.4,
+      58.1,
+      57.7,
+      58.0,
+      57.6,
+      57.7,
+      57.1,
+      57.0
+     ]
+    },
+    "stage1": {
+     "busy_s": 258.385,
+     "idle_in_span_s": 327.674,
+     "busy_pct_of_span": 44.09,
+     "steady_mean_ms": 458.58,
+     "first_chunk_ms": 40556.5,
+     "first_start_s": 46.902,
+     "last_end_s": 585.241,
+     "busy_pct_by_decile": [
+      20.0,
+      50.0,
+      12.2,
+      51.5,
+      51.4,
+      51.3,
+      51.0,
+      51.7,
+      51.0,
+      50.8
+     ]
+    },
+    "stage2": {
+     "busy_s": 251.514,
+     "idle_in_span_s": 334.545,
+     "busy_pct_of_span": 42.92,
+     "steady_mean_ms": 443.98,
+     "first_chunk_ms": 40615.9,
+     "first_start_s": 87.475,
+     "last_end_s": 585.692,
+     "busy_pct_by_decile": [
+      0.0,
+      50.7,
+      31.0,
+      49.3,
+      49.8,
+      49.8,
+      49.8,
+      49.4,
+      50.0,
+      49.2
+     ]
+    },
+    "provider": {
+     "busy_s": 203.649,
+     "idle_in_span_s": 382.41,
+     "busy_pct_of_span": 34.75,
+     "steady_mean_ms": 358.55,
+     "first_chunk_ms": 33334.2,
+     "first_start_s": 128.1,
+     "last_end_s": 586.059,
+     "busy_pct_by_decile": [
+      0.0,
+      0.0,
+      67.0,
+      39.8,
+      39.9,
+      40.0,
+      40.4,
+      39.6,
+      40.3,
+      40.6
+     ]
+    }
+   },
+   "stage0_lease_bound_chunks": 348,
+   "stage0_lease_wait_s": 292.475,
+   "stage0_issue_after_previous_completion_s": 292.487,
+   "busy_actor_seconds_by_count": {
+    "0": 0.186,
+    "1": 166.133,
+    "2": 419.739
+   },
+   "mean_busy_actors": 1.716,
+   "drain_after_stage0_last_end_s": 1.283,
+   "transport_slots": 2
+  },
+  "historical_four_slots_3plus1_pre_aot": {
+   "chunks": 476,
+   "span_s": 409.269,
+   "actors": {
+    "stage0": {
+     "busy_s": 294.516,
+     "idle_in_span_s": 114.753,
+     "busy_pct_of_span": 71.96,
+     "steady_mean_ms": 520.72,
+     "first_chunk_ms": 47169.4,
+     "first_start_s": 0.0,
+     "last_end_s": 407.987,
+     "busy_pct_by_decile": [
+      100.0,
+      18.9,
+      0.0,
+      5.2,
+      99.7,
+      99.8,
+      99.8,
+      99.8,
+      99.8,
+      96.7
+     ]
+    },
+    "stage1": {
+     "busy_s": 258.384,
+     "idle_in_span_s": 150.885,
+     "busy_pct_of_span": 63.13,
+     "steady_mean_ms": 458.73,
+     "first_chunk_ms": 40485.7,
+     "first_start_s": 47.179,
+     "last_end_s": 408.449,
+     "busy_pct_by_decile": [
+      0.0,
+      84.7,
+      17.4,
+      3.6,
+      87.6,
+      87.7,
+      87.9,
+      87.8,
+      88.1,
+      86.6
+     ]
+    },
+    "stage2": {
+     "busy_s": 251.774,
+     "idle_in_span_s": 157.495,
+     "busy_pct_of_span": 61.52,
+     "steady_mean_ms": 444.88,
+     "first_chunk_ms": 40458.0,
+     "first_start_s": 87.684,
+     "last_end_s": 408.895,
+     "busy_pct_by_decile": [
+      0.0,
+      0.0,
+      85.8,
+      18.8,
+      85.0,
+      85.1,
+      85.4,
+      85.1,
+      85.3,
+      84.8
+     ]
+    },
+    "provider": {
+     "busy_s": 204.903,
+     "idle_in_span_s": 204.366,
+     "busy_pct_of_span": 50.07,
+     "steady_mean_ms": 361.04,
+     "first_chunk_ms": 33404.2,
+     "first_start_s": 128.151,
+     "last_end_s": 409.269,
+     "busy_pct_by_decile": [
+      0.0,
+      0.0,
+      0.0,
+      85.8,
+      70.1,
+      68.9,
+      68.5,
+      68.8,
+      68.8,
+      69.7
+     ]
+    }
+   },
+   "stage0_lease_bound_chunks": 1,
+   "stage0_lease_wait_s": 112.891,
+   "stage0_issue_after_previous_completion_s": 112.918,
+   "busy_actor_seconds_by_count": {
+    "0": 0.044,
+    "1": 157.959,
+    "2": 8.651,
+    "3": 136.144,
+    "4": 106.471
+   },
+   "mean_busy_actors": 2.467,
+   "drain_after_stage0_last_end_s": 1.282,
+   "transport_slots": 4
+  }
+ },
+ "inputs": {
+  "equal16-topology-screen/control-r1-evidence/control-output/dedicated-prefill-pipeline.jsonl.gz": "15dbcd58740e17fa8bf6386cdd0be62c87fbee0c937d289b95b0307d230d3c41",
+  "equal16-topology-screen/control-r1-evidence/control-output/driver-result.json.gz": "fc5fd820d00f76dc72d2c10d7ab0d6c5f5a3837ed3ca7369c0e2936f01fca27d",
+  "equal16-topology-screen/equal16-r1-evidence/equal16-output/dedicated-prefill-pipeline.jsonl.gz": "642c8f55638a1c6dedc9c27f0a7affdee2b09d355bbe5ba9cf9c691a8af5746a",
+  "equal16-topology-screen/equal16-r1-evidence/equal16-output/driver-result.json.gz": "86675f679e4708077cbad47f527ed095f3d132620034e3a33365d87ec0343131",
+  "dedicated-gate/two-slots-control-long-r1-evidence/run/output/dedicated-prefill-pipeline.jsonl.gz": "90cddc6594a85169a057b84af177f183856cf686a89cd8a0ec493ea3898926d4",
+  "dedicated-gate/four-slots-long-r1-evidence/run/output/dedicated-prefill-pipeline.jsonl.gz": "4ab883d187cd074179e54713ae871d0ec611fe698be4f086ba8f8461bbe95d31",
+  "reference-one-row/router-tie-candidate/planner-policy/prefill-profile-r1-evidence/output/stage0/native/prefill-profile.jsonl.gz": "1c9bcc98ebabf81004b01bbbbbd7ec6f27772c2b47dd7c1f55bdfe2a197801e2",
+  "prefill-bubbles/evidence/profile-run-dedicated-prefill-pipeline.jsonl.gz": "4bb68ddf759dd7941afa939014d2aa2bb5e23add448786df672d235310a68cc4",
+  "candidate-long/matched-result.json": "72fea3afdb2c0c800be13d55e6de1b661e93289cf4497cb02957df654a3a9b51",
+  "equal16-topology-screen/control-r1-evidence/control-output/commands.jsonl.gz": "cad6b37fdd27867ce49e25c83ef3a2e854b5a5f0582da582daab52e6c43517e4",
+  "equal16-topology-screen/equal16-r1-evidence/equal16-output/commands.jsonl.gz": "a71c324424fe89eea4117706db0587bbfb4e05708bf8b4cc6c680572d7c99663",
+  "equal16-topology-screen/screen.json": "7eff4a3583a293df9a06b2feb0e88428908770ca9e65deeeecb8e9e8a6fda45c"
+ },
+ "derived": {
+  "balanced_three_target_bound_s": 226.177,
+  "balanced_three_target_bound_plus_control_overhead_s": 228.585,
+  "all_four_actor_work_over_four_s": 212.431,
+  "layer16_prefill_total_s_from_stage0_difference": 14.719,
+  "layer32_prefill_total_s_from_stage2_difference": 13.543,
+  "single_boundary_0_16_33_48": {
+   "stage0_s": 233.715,
+   "stage1_s_range": [
+    233.046,
+    236.133
+   ],
+   "stage2_s": 211.771,
+   "ttft_estimate_s": [
+    236.123,
+    238.541
+   ],
+   "ttft_reduction_pct": [
+    4.9,
+    5.87
+   ],
+   "method": "bottleneck stage total + control non-work overhead; stage1 by two cross-run differences"
+  }
+ },
+ "stage0_profile_chunks_1_to_5": {
+  "command_mean_ms": 525.29,
+  "drained_site_sum_mean_ms": 493.82,
+  "outside_sites_mean_ms": 31.47,
+  "outside_sites_pct": 5.99,
+  "routed_combine_gather_pct_of_sites": 51.75,
+  "note": "outside-site time holds lookup, uploads, readback, bank swap and RPC (prefill-attribution-hook.txt); unattributed"
+ },
+ "pp4_two_chunk_wave_historical": {
+  "prefill_wall_s": 522.318,
+  "target_work_s": 674.711,
+  "draft_work_s": 169.748,
+  "target_only_s": 339.168,
+  "mixed_s": 98.111,
+  "draft_only_s": 84.658,
+  "mean_target_stages_busy": 1.292,
+  "mean_target_stages_busy_in_target_phases": 1.543,
+  "mechanism": "prefill.py run_pipeline: ThreadPoolExecutor(max_workers=2), phase barriers, 6 phases per 2 chunks; draft-only phases are pure target bubbles. Not the current 3+1 path."
+ },
+ "decode_command_occupancy": {
+  "control_3plus1_262k_cuts_0_17_33_48": {
+   "window_s": 10.604,
+   "command_sum_s": {
+    "provider": 3.87,
+    "stage0": 8.25,
+    "stage1": 6.15,
+    "stage2": 5.149
+   }
+  },
+  "equal16_3plus1_262k_cuts_0_16_32_48": {
+   "window_s": 12.593,
+   "command_sum_s": {
+    "provider": 3.928,
+    "stage0": 8.308,
+    "stage1": 6.824,
+    "stage2": 5.457
+   }
+  }
+ },
+ "moved_layers": {
+  "layers": {
+   "16": {
+    "kind": "GDN",
+    "device_named_bytes": 1204484316,
+    "recurrent_state_bytes": 6537216,
+    "ring_image_delta_bytes": 31421460
+   },
+   "32": {
+    "kind": "GDN",
+    "device_named_bytes": 1095969500,
+    "recurrent_state_bytes": 3268608,
+    "ring_image_delta_bytes": 11809812
+   }
+  },
+  "qsa_layers_per_stage": [
+   4,
+   4,
+   4
+  ],
+  "stream_bytes_per_row": 40960,
+  "chunk_hidden_copy_bytes": 10485760,
+  "single_boundary_stage1_projection_bytes": 24995465228,
+  "single_boundary_stage1_margin_to_30GiB": 7216789492,
+  "phase_split_stage2_projection_bytes": 24950233820,
+  "phase_split_handoff_bytes_max": 9805824,
+  "note": "accounting projections from screen.json incumbent census plus moved named allocations; not native admission"
+ },
+ "device_time_evidence_wall_s": {
+  "reference-one-row/router-tie-candidate/planner-policy/mtp-gate-r1-evidence/completed-dedicated/dedicated-output/terminal.json.gz": 328.002,
+  "reference-one-row/router-tie-candidate/planner-policy/prefill-profile-r1-evidence/output/terminal.json.gz": 331.548,
+  "equal16-topology-screen/control-r1-evidence/control-output/terminal.json.gz": 482.729,
+  "equal16-topology-screen/equal16-r1-evidence/equal16-output/terminal.json.gz": 468.582
+ },
+ "mechanism_citations": {
+  "engine/planning/rolling_provider/dedicated_prefill_pipeline.py:17": "slots=plan dedicated_prefill_slots (2 default; 4 in control)",
+  "engine/planning/rolling_provider/dedicated_prefill_pipeline.py:90-93": "one command per actor; actor a needs chunk k from a-1; stage0 admits k only if <slots leases and parity k%slots free",
+  "engine/planning/rolling_provider/dedicated_prefill_pipeline.py:84-85": "lease released only on provider full ACK",
+  "engine/planning/rolling_provider/prefill.py:14-16": "geometry allows only 2 or 4 slots (header 4096/8192)",
+  "engine/planning/rolling_provider/prefill.py:175-206": "PP4 two-chunk six-phase wave, max_workers=2"
+ },
+ "missing_evidence": [
+  "No GPU event timelines: busy is host-observed command time, not device utilisation.",
+  "Native per-chunk prefill-timings.jsonl are empty for these runs (OP15 bypasses that logger); per-layer prefill cost on stage1/stage2 is not retained.",
+  "Stage0 outside-site time (~31 ms/chunk: lookup, uploads, readback, bank swap, RPC) is unattributed.",
+  "Cause of the equal16 decode loss is not established; decode for 0/16/33/48 is unmeasured.",
+  "Cut 0/16/33/48 has no plan, admission census or run; its TTFT is an estimate."
+ ],
+ "verdict": {
+  "bubbles_material": false,
+  "bottleneck": "stage0 (layers 0-16 plus embedding/PLE lookup); its own command work sets TTFT",
+  "ideal_wall_perfect_fill_s": 248.434,
+  "actual_ttft_s": 250.842,
+  "pipeline_overhead_pct_of_ttft": 0.96,
+  "not_material_now": [
+   "more chunks in flight / wider waves (0 lease-bound chunks)",
+   "draft replay decoupling (provider 68% busy, only last chunk in drain)",
+   "host waits (0.027 s issue gaps, 0.622 s total stage0 handoff)"
+  ]
+ },
+ "proposal": {
+  "change": "Prefill rebalancing: move GDN layer 16 off stage0 for prompt reading.",
+  "exact_because": "contiguous cut change only; same per-layer arithmetic, chunk order and wire; equal16 passed the canonical target/draft/pair/output proof with this kind of change",
+  "first_form": {
+   "cuts": [
+    0,
+    16,
+    33,
+    48
+   ],
+   "ttft_estimate_s": [
+    236.123,
+    238.541
+   ],
+   "ttft_reduction_pct": [
+    4.9,
+    5.87
+   ],
+   "decode": "unmeasured; final owner unchanged",
+   "backlog": "idea 1 next_topology_treatment.single_boundary_followup (new, unmeasured)"
+  },
+  "fallback_form": {
+   "name": "phase-specific cuts (backlog idea 12, new-unmeasured)",
+   "prefill_cuts": [
+    0,
+    16,
+    32,
+    48
+   ],
+   "decode_cuts": [
+    0,
+    17,
+    33,
+    48
+   ],
+   "measured_prefill_ttft_s": 236.209,
+   "derived_request_s": 246.749,
+   "handoff_bytes_max": 9805824,
+   "needs": "owners holding both layer ranges, a GDN state handoff command, new native code"
+  },
+  "limits": [
+   "integer cuts: balanced bound 226.177 s work, about 228.6 s TTFT",
+   "stage0 carries extra non-layer work (equal16 at 16 layers each: 490.92 vs 467.62/473.31 ms per chunk)",
+   "KV append order and QSA placement unchanged: both moved layers are GDN, four QSA layers per stage",
+   "transport slots and activation buffers unchanged; stage1 ring image +31,421,460 B for layer 16 at depth 3",
+   "stage1 projection 24,995,465,228 B (7.22 GB to 30 GiB) is accounting, not native admission"
+  ],
+  "prior_coverage": "No DO-NOT-REPEAT row or closed result covers prefill cut rebalancing or phase-specific topology. equal16 is a measured mixed result (prefill win, decode loss), not a closed negative."
+ },
+ "device_test": {
+  "binary": "native 339b75 (same as control), reference_route_tie_sort true, adapter plan unchanged",
+  "config": "clone equal16-topology-screen/control-r1-evidence/control-config.json.gz (build receipt engine-build-reference-route-mtp-20261028-r1) changing only boundaries to [0,16,33,48] and a fresh exclusive output root; not the older candidate-config.json.gz (different build receipt)",
+  "plan": "engine/tools/pipeline_driver.py CPU plan; read actual planner floors and allocation census before launch",
+  "gate": "existing 3+1/262K 1677-prompt/32-output full-state gate: 2065 target, 73 draft sources, 1707 pairs, 32 outputs",
+  "timing": "one first-inference 121854/512 run against the retained control (TTFT 250.842 s, all511 48.515 tok/s)",
+  "expected_device_wall_s": {
+   "gate": 328.002,
+   "long512": [
+    468.582,
+    482.729
+   ]
+  },
+  "control_repeatability": "retained 3+1/262K runs: TTFT 250.742 s (aot-cold-gate/3plus1-262k-long512-r1-evidence/summary.json) vs 250.842 s (control)"
+ }
+}
