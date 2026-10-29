@@ -1,0 +1,74 @@
+=== device phase start 2026-10-28T22:12:34-04:00 pid 959006 affinity 0-3,16-19
+[klog before-24h] since @1793153554: 13 lines, 0 xe/fault lines
+T0=1793239954
+--- smoke: calibration + one 4 KB round trip
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.12 s
+calibration: local flag poll 158.6 ns/iter, host-USM flag poll 1060.0 ns/iter; caps ping0 1261213 ping 126121 chain 126121 gate 377363
+[kernel-log calibration] since @1793239954: clean
+smoke 4096 B, 1 round trip: wall 517.7 us, mismatches A 0 B 0, timeouts A 0 B 0, rounds 1/1, spins A 58 B 158 -> OK
+[kernel-log smoke ping] since @1793239954: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/smoke.json rc=0
+smoke rc=0
+[klog after-smoke] since @1793239954: 0 lines, 0 xe/fault lines
+smoke gate: PASS {"tag": "smoke", "bytes": 4096, "rounds": 1, "wall_s": 0.000517694, "raw_one_way_us": 258.847, "ok": 1, "cardA": {"mismatches": 0, "timeout": 0, "rounds_done": 1, "spin_sum": 58, "spin_max": 58}, "cardB": {"mismatches": 0, "timeout": 0, "rounds_done": 1, "spin_sum": 158, "spin_max": 158}}
+--- main: pre-scale gate, ping-pong, chain none/direct, chain none/memcpy
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 115.4 ns/iter, host-USM flag poll 1007.7 ns/iter; caps ping0 1732803 ping 173280 chain 173280 gate 396951
+[kernel-log calibration] since @1793239954: clean
+work calibration: 36.661 ns per loop iteration -> work=327 (~12.0 us per kernel)
+[kernel-log work calibration] since @1793239954: clean
+prescale ping   4096 B K=10: OK (wall 568.6 us)
+prescale ping  10240 B K=10: OK (wall 149.9 us)
+prescale ping  40960 B K=10: OK (wall 414.9 us)
+prescale ping 163840 B K=10: OK (wall 1543.3 us)
+prescale chain   4096 B none   E=144: OK (34.98 us/exchange, submit 18.01 us/exchange)
+prescale chain   4096 B direct E=144: OK (36.79 us/exchange, submit 17.00 us/exchange)
+prescale chain  10240 B none   E=144: OK (35.39 us/exchange, submit 15.04 us/exchange)
+prescale chain  10240 B direct E=144: OK (35.03 us/exchange, submit 15.11 us/exchange)
+prescale chain  40960 B none   E=144: OK (33.85 us/exchange, submit 14.36 us/exchange)
+prescale chain  40960 B direct E=144: OK (37.22 us/exchange, submit 14.11 us/exchange)
+prescale chain 163840 B none   E=144: OK (40.73 us/exchange, submit 13.32 us/exchange)
+prescale chain 163840 B direct E=144: OK (44.32 us/exchange, submit 13.73 us/exchange)
+[kernel-log prescale] since @1793239954: clean
+ping   4096 B: median T(K=200) 1214.0 us, T(K=2000) 11952.2 us -> one-way 2.983 us (raw 2.988)
+ping  10240 B: median T(K=200) 2191.2 us, T(K=2000) 21917.5 us -> one-way 5.480 us (raw 5.479)
+ping  40960 B: median T(K=100) 3602.1 us, T(K=1000) 35787.3 us -> one-way 17.881 us (raw 17.894)
+ping 163840 B: median T(K=50) 6784.0 us, T(K=500) 67970.9 us -> one-way 67.986 us (raw 67.971)
+[kernel-log ping-pong] since @1793239954: clean
+chain   4096 B: none 26.116 us/exchange, direct 27.543 us/exchange -> added 1.427 us per exchange (submit none 14.51, direct 14.48 us/exchange)
+chain  10240 B: none 26.495 us/exchange, direct 28.127 us/exchange -> added 1.632 us per exchange (submit none 14.44, direct 13.28 us/exchange)
+chain  40960 B: none 27.752 us/exchange, direct 31.082 us/exchange -> added 3.330 us per exchange (submit none 13.20, direct 13.08 us/exchange)
+chain 163840 B: none 33.313 us/exchange, direct 44.297 us/exchange -> added 10.985 us per exchange (submit none 12.97, direct 13.06 us/exchange)
+[kernel-log chain direct] since @1793239954: clean
+chain   4096 B: none 26.120 us/exchange, memcpy 32.414 us/exchange -> added 6.294 us per exchange (submit none 14.53, memcpy 28.01 us/exchange)
+chain  10240 B: none 26.497 us/exchange, memcpy 32.746 us/exchange -> added 6.249 us per exchange (submit none 14.39, memcpy 25.86 us/exchange)
+chain  40960 B: none 27.753 us/exchange, memcpy 38.016 us/exchange -> added 10.263 us per exchange (submit none 14.43, memcpy 25.74 us/exchange)
+chain 163840 B: none 33.298 us/exchange, memcpy 50.913 us/exchange -> added 17.615 us per exchange (submit none 12.96, memcpy 25.56 us/exchange)
+[kernel-log chain memcpy] since @1793239954: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/main.json rc=0
+main rc=0
+[klog after-main] since @1793239954: 0 lines, 0 xe/fault lines
+--- owner_peer: engine copy-engine peer_copy, same session
+A: LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:shared-context
+B: LevelZero:1:Intel(R) Arc(TM) Pro B70 Graphics:shared-context
+  10240 B  device-side round trip (2 copies + 2 waits):    28.6 us
+  10240 B  enqueue per round trip with waits   29.6 us; copies only: enqueue   12.6 us, total   12.6 us
+  10240 B  host-waited round trip:                       22.0 us
+  10240 B  bytes after 800 hops: bitwise-equal
+  40960 B  device-side round trip (2 copies + 2 waits):    32.6 us
+  40960 B  enqueue per round trip with waits   31.1 us; copies only: enqueue   13.6 us, total   16.4 us
+  40960 B  host-waited round trip:                       28.5 us
+  40960 B  bytes after 800 hops: bitwise-equal
+ 163840 B  device-side round trip (2 copies + 2 waits):    31.1 us
+ 163840 B  enqueue per round trip with waits   31.5 us; copies only: enqueue   13.7 us, total   22.4 us
+ 163840 B  host-waited round trip:                       34.2 us
+ 163840 B  bytes after 800 hops: bitwise-equal
+owner_peer rc=0
+[klog after-owner-peer] since @1793239954: 0 lines, 0 xe/fault lines
+=== device phase done 2026-10-28T22:12:42-04:00

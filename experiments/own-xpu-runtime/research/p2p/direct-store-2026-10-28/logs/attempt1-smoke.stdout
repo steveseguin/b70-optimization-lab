@@ -1,0 +1,9 @@
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.19 s
+calibration: local flag poll 194.8 ns/iter, host-USM flag poll 1025.9 ns/iter; caps ping0 1026947 ping 102694 chain 102694 gate 389891
+[kernel-log calibration] since @1793239540: clean
+smoke 4096 B, 1 round trip: wall 573.5 us, mismatches A 0 B 0, timeouts A 0 B 0, rounds 1/1, spins A 77 B 94 -> OK
+[kernel-log smoke ping] since @1793239540: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/smoke.json rc=0

@@ -1,0 +1,57 @@
+=== device phase start 2026-10-28T22:05:40-04:00 pid 956506 affinity 0-3,16-19
+[klog before-24h] since @1793153140: 13 lines, 0 xe/fault lines
+T0=1793239540
+--- smoke: calibration + one 4 KB round trip
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.19 s
+calibration: local flag poll 194.8 ns/iter, host-USM flag poll 1025.9 ns/iter; caps ping0 1026947 ping 102694 chain 102694 gate 389891
+[kernel-log calibration] since @1793239540: clean
+smoke 4096 B, 1 round trip: wall 573.5 us, mismatches A 0 B 0, timeouts A 0 B 0, rounds 1/1, spins A 77 B 94 -> OK
+[kernel-log smoke ping] since @1793239540: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/smoke.json rc=0
+smoke rc=0
+[klog after-smoke] since @1793239540: 0 lines, 0 xe/fault lines
+smoke gate: PASS {"tag": "smoke", "bytes": 4096, "rounds": 1, "wall_s": 0.00057354, "raw_one_way_us": 286.77, "ok": 1, "cardA": {"mismatches": 0, "timeout": 0, "rounds_done": 1, "spin_sum": 77, "spin_max": 77}, "cardB": {"mismatches": 0, "timeout": 0, "rounds_done": 1, "spin_sum": 94, "spin_max": 94}}
+--- main: pre-scale gate, ping-pong, chain none/direct, chain none/memcpy
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 115.7 ns/iter, host-USM flag poll 1005.3 ns/iter; caps ping0 1728593 ping 172859 chain 172859 gate 397882
+[kernel-log calibration] since @1793239540: clean
+prescale ping   4096 B K=10: FAIL (wall 629.0 us)
+prescale ping  10240 B K=10: FAIL (wall 138.9 us)
+prescale ping  40960 B K=10: FAIL (wall 304.3 us)
+prescale ping 163840 B K=10: FAIL (wall 1036.9 us)
+prescale chain   4096 B none   E=144: FAIL (2962.98 us/exchange, submit 18.13 us/exchange)
+prescale chain   4096 B direct E=144: FAIL (2942.61 us/exchange, submit 14.81 us/exchange)
+prescale chain  10240 B none   E=144: FAIL (2954.69 us/exchange, submit 14.77 us/exchange)
+prescale chain  10240 B direct E=144: FAIL (2868.74 us/exchange, submit 15.01 us/exchange)
+prescale chain  40960 B none   E=144: FAIL (2968.36 us/exchange, submit 15.30 us/exchange)
+prescale chain  40960 B direct E=144: FAIL (3053.74 us/exchange, submit 15.09 us/exchange)
+prescale chain 163840 B none   E=144: FAIL (2944.49 us/exchange, submit 13.54 us/exchange)
+prescale chain 163840 B direct E=144: FAIL (2977.15 us/exchange, submit 15.56 us/exchange)
+[kernel-log prescale] since @1793239540: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/main.json rc=10 HALT: prescale correctness failure: not scaling up
+main rc=10
+[klog after-main] since @1793239540: 0 lines, 0 xe/fault lines
+--- owner_peer: engine copy-engine peer_copy, same session
+A: LevelZero:0:Intel(R) Arc(TM) Pro B70 Graphics:shared-context
+B: LevelZero:1:Intel(R) Arc(TM) Pro B70 Graphics:shared-context
+  10240 B  device-side round trip (2 copies + 2 waits):    24.4 us
+  10240 B  enqueue per round trip with waits   25.6 us; copies only: enqueue   12.6 us, total   12.7 us
+  10240 B  host-waited round trip:                       20.2 us
+  10240 B  bytes after 800 hops: bitwise-equal
+  40960 B  device-side round trip (2 copies + 2 waits):    29.0 us
+  40960 B  enqueue per round trip with waits   27.1 us; copies only: enqueue   13.5 us, total   16.4 us
+  40960 B  host-waited round trip:                       27.7 us
+  40960 B  bytes after 800 hops: bitwise-equal
+ 163840 B  device-side round trip (2 copies + 2 waits):    28.9 us
+ 163840 B  enqueue per round trip with waits   27.8 us; copies only: enqueue   13.3 us, total   22.4 us
+ 163840 B  host-waited round trip:                       33.9 us
+ 163840 B  bytes after 800 hops: bitwise-equal
+owner_peer rc=0
+[klog after-owner-peer] since @1793239540: 0 lines, 0 xe/fault lines
+=== device phase done 2026-10-28T22:05:44-04:00

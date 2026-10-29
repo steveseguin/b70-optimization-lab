@@ -1,0 +1,20 @@
+A 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics | B 0000:47:00.0 Intel(R) Arc(TM) Pro B70 Graphics | driver 1.15.38308+1
+peer access A->B 1 (atomics 0), B->A 1 (atomics 0); enable: ok / ok
+atomic scopes: work_item sub_group work_group device system | fence scopes: work_item sub_group work_group device system 
+kernel bundle built for both devices in 0.00 s
+calibration: local flag poll 115.7 ns/iter, host-USM flag poll 1005.3 ns/iter; caps ping0 1728593 ping 172859 chain 172859 gate 397882
+[kernel-log calibration] since @1793239540: clean
+prescale ping   4096 B K=10: FAIL (wall 629.0 us)
+prescale ping  10240 B K=10: FAIL (wall 138.9 us)
+prescale ping  40960 B K=10: FAIL (wall 304.3 us)
+prescale ping 163840 B K=10: FAIL (wall 1036.9 us)
+prescale chain   4096 B none   E=144: FAIL (2962.98 us/exchange, submit 18.13 us/exchange)
+prescale chain   4096 B direct E=144: FAIL (2942.61 us/exchange, submit 14.81 us/exchange)
+prescale chain  10240 B none   E=144: FAIL (2954.69 us/exchange, submit 14.77 us/exchange)
+prescale chain  10240 B direct E=144: FAIL (2868.74 us/exchange, submit 15.01 us/exchange)
+prescale chain  40960 B none   E=144: FAIL (2968.36 us/exchange, submit 15.30 us/exchange)
+prescale chain  40960 B direct E=144: FAIL (3053.74 us/exchange, submit 15.09 us/exchange)
+prescale chain 163840 B none   E=144: FAIL (2944.49 us/exchange, submit 13.54 us/exchange)
+prescale chain 163840 B direct E=144: FAIL (2977.15 us/exchange, submit 15.56 us/exchange)
+[kernel-log prescale] since @1793239540: clean
+wrote /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/results/main.json rc=10 HALT: prescale correctness failure: not scaling up
