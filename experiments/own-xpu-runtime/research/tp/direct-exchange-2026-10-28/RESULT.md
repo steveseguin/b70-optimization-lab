@@ -206,6 +206,72 @@ arithmetic stays local. From the source (`plan.hpp` `qsa()`, generic `kernels.hp
 - **Risks:** p49's variants (`ATTN_HEADS`, `COMBINE2`, guard) all index the 24-head layout. A split shape must be
   refused on any variant that is not parameterized, as `adapter.cpp` does for GDN.
 
+## Four cards, TP2 inside each pipeline stage: host RAM and the rank-0 plan (2026-10-29, steps 1–2)
+
+### Step 1: host RAM
+
+The two-card shadow comes from NEO's deferred backing, and `NEOReadDebugKeys=1 EnableDeferBacking=0` removes it. This
+is a per-process placement key, not a host memory setting.
+
+| Measurement | `GPUActive` | `MemAvailable` | Process RSS |
+|---|---:|---:|---:|
+| `mem_shadow` 4 GiB per card on 23+47, default ([log](logs/host-ram-shadow.log)) | **+8.00 GiB** | −7.72 GiB | — |
+| same with `EnableDeferBacking=0` | **+0.00 GiB** | −0.02 GiB | — |
+| rank 1 one card, 4K, after load (`t6-one`, 28.5 GiB VRAM) | 11.9 MB | +0.01 GB | 0.26 GB |
+| rank 1 TP two cards, 4K, after load (`t6-compact`, 2 × 28.0 GiB VRAM, `EnableDeferBacking=0`) | 15.3 MB | −0.23 GB | 0.27 GB |
+| service (two one-card ranks, 64K), after load: rank 0 / rank 1 | 23.8 MB | 105.3 → 76.3 GB | **28.7 GB** / 0.26 GB |
+
+- The DRM fdinfo `drm-resident-gtt` of 29 GB per card in TP runs is import bookkeeping of the peer's VRAM, not host
+  pages; `GPUActive` and `MemAvailable` do not move.
+- **Projection, rank 0 and rank 1 as two 2-card processes at 64K, with `EnableDeferBacking=0`.** About 29–30 GB of
+  host RAM, as today: rank 0's 28.7 GB is its host lookup tables and snapshots, held once per process. That leaves about
+  75 GB available after load, against the service's 98.8 GB start floor (checked before load, as today) and 8 GiB
+  running floor. **It fits.**
+- **Without the key**, each process would also shadow its full VRAM, about 2 × 31.5 GB, so +126 GB in all. It needs about
+  156 GB against about 105 GB, **short by about 50 GB**. So `EnableDeferBacking=0` must be in both TP ranks'
+  environment and run identity. No memory or swap setting changes.
+- **VRAM per card:** TP saves 0.45 GiB per card from the row and head splits (4K: 28.46 → 28.01 GiB). Rank 1 at 64K
+  (30.05 GiB today, with the raw ring) also loses its 0.23 GB QSA raw ring under TP (TP excludes the ring today), so
+  it nets about −0.2 GiB and still fits. Rank 0 uses 25.0 GiB at 64K and has room.
+
+### Step 2: rank-0 TP plan
+
+**What splits** (rank 0: layers 0–22, 17 GDN and 6 QSA, plus embedding/PLE lookups and the MTP draft):
+- **Layers:** exactly as Stages 1–2b, unchanged code. GDN by key group, output projections by rows, experts as compact
+  slots, with the direct exchange and per-card submission threads. PLE, HC and the rest are replicated.
+- **Lookups:** replicated. `prepare_token` must upload the token's embedding/PLE rows to both cards; today it writes
+  card 0 only.
+- **MTP draft (1.73 ms):** first on card 0 only, with card 1 idle. Later, split the draft head's vocabulary rows: each
+  card does an argmax over its rows, then one exchange of (value, index) with the lowest-index tie rule. Exact.
+- **Prefill:** one-card arithmetic on card 0. The state then moves to card 1 by exact run copies: replicated buffers
+  whole, head-split GDN state, history and KV in the `head_split_layout` order. The reverse direction is needed
+  before a new prompt follows decode. TP decode kernels are decode-only today.
+
+**What must become per card** (all one-card today; `rank.hpp` and `strict_snapshot.hpp` have about 40 `dev(0)` /
+`buffers[0]` sites):
+1. admission: `--tp-replicate` is refused on rank 0 (`main.cpp`);
+2. the miss banks (`banks()`: alternate GDN/conv state per card, swapped on both cards);
+3. `SpeculativeImage`: snapshot and restore on both cards, static host tables per card;
+4. **cancellation:** a speculative miss cancels a half at a launch boundary. Both cards must stop at the same site,
+   or the exchange epochs drift and later waits time out. The card-1 thread would issue only up to a release index
+   that the half's thread publishes after each layer's cancel check; on cancel, both stop at that layer, then both roll
+   back.
+5. sessions and checkpoints stay refused under TP (as now).
+
+**Estimate.**
+- Rank 1 saved 59 µs per layer (12.25 → 10.77 ms over 25 layers, two-card costs included).
+- Rank 0's 23 layers give about 10.67 → **9.3–9.6 ms per half**. With the 1.73 ms draft on card 0, stage 0 is about
+  11.0–11.3 ms against stage 1's 10.8 ms.
+- **Pipeline period:** about 11.0–11.3 ms against today's 12.4–12.5 ms, **about 1.10–1.13× decode**.
+- With the draft head split by vocabulary, about 0.4–0.6 ms less on stage 0 brings both stages near 10.8 ms: about
+  **1.15×**. Moving the split point is a further lever.
+- These are projections from the rank-1 measurement, not measurements.
+
+**Size of step 3.** Of the five items, the cancellation handshake, the per-card speculative image and the prefill state
+transfer are the risky parts. Each is bitwise-gated by the rank-0 harness (`research/rank0-gdn-c43/tp_rank0_driver.py`,
+which runs non-speculative halves). Speculative rollback also needs a harness mode with forced misses, so that
+cancellation and restore are exercised.
+
 ## Remaining stages
 
 - **Stage 3 (QSA two-KV-group split):** designed above, not built.
