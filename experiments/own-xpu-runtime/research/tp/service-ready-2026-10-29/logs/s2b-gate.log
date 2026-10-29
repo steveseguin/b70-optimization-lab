@@ -1,0 +1,31 @@
+=== phase s2b-gate start 2026-10-29T02:18:09-04:00 pid 1057441 affinity 0-3,16-19 nofile 1048576
+[klog s2b-gate-before-24h] since @1793168289: 12 lines, 0 xe/fault lines
+--- arm r1-one rank=1 mode=one steps=16 prompt=1100 pattern= extra= MemAvailable=107451596800 shm_free=54193004544 at 2026-10-29T02:18:09-04:00
+{"tp": false, "steps": 16, "load_s": 14.569552263012156, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 12.38
+arm r1-one rc=0 after 33 s
+[klog s2b-gate-after-r1-one] since @1793254689: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+--- arm r1-tp rank=1 mode=tp steps=16 prompt=1100 pattern= extra= MemAvailable=105264046080 shm_free=52174036992 at 2026-10-29T02:18:42-04:00
+{"tp": true, "steps": 16, "load_s": 25.91323845903389, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 11.03
+arm r1-tp rc=0 after 46 s
+[klog s2b-gate-after-r1-tp] since @1793254722: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":75888,"waits_that_polled":52379,"max_polls":98307,"poll_sum":1309227},{"abort":0,"timeouts":0,"waits":75888,"waits_that_polled":50193,"max_polls":152,"poll_sum":429608}]}
+{"buffers":785,"differ":[],"passed":true}
+card 0 owned_bytes 32199218796 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+tp card 1 planned_bytes 31717388580 weights 29577867136 buffers 2017800092
+--- arm r0-one rank=0 mode=one steps=48 prompt=0 pattern=hmcx extra= MemAvailable=103342174208 shm_free=50154336256 at 2026-10-29T02:19:28-04:00
+{"steps": 48, "load_s": 119.53849306097254, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 10.527 draft ms 1.319
+arm r0-one rc=0 after 132 s
+[klog s2b-gate-after-r0-one] since @1793254768: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+--- arm r0-tp rank=0 mode=tp steps=48 prompt=0 pattern=hmcx extra= MemAvailable=101691715584 shm_free=48265838592 at 2026-10-29T02:21:40-04:00
+{"steps": 48, "load_s": 70.29749217396602, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 9.245 draft ms 1.305
+arm r0-tp rc=0 after 81 s
+[klog s2b-gate-after-r0-tp] since @1793254900: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":4461,"waits_that_polled":2954,"max_polls":102459,"poll_sum":302836},{"abort":0,"timeouts":0,"waits":4461,"waits_that_polled":3208,"max_polls":82,"poll_sum":30285}]}
+{"buffers":710,"differ":[],"passed":true}
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+tp card 1 planned_bytes 25929055244 weights 24179107712 buffers 1628226180
+=== phase s2b-gate done 2026-10-29T02:23:01-04:00

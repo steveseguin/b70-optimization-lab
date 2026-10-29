@@ -529,11 +529,14 @@ static int run_rank(const Options& a) {
   auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
   // OWNRT_QSA_RAW_RING=1 (lab 2026-10-26, default off; rank 1 only): every QSA raw indexer-key buffer is a 512-row ring
   // (qsa_ring.hpp). Rank 0's speculative image captures KV rows by position, so its buffers keep the full extent.
-  if(qsaring::enabled()&&a.rank==1&&a.gsq_packed&&!a.mini&&!a.pipeline_enabled()&&!a.tp_replicate&&p.g.context>qsaring::rows)
+  // Under --tp-replicate (2026-10-29) the QSA sites are replicated, so each card holds the same ring and runs the same
+  // pool launches on it; the adapter selects ring indexing per card from the bound allocation's size.
+  if(qsaring::enabled()&&a.rank==1&&a.gsq_packed&&!a.mini&&!a.pipeline_enabled()&&p.g.context>qsaring::rows)
    for(auto& b:p.buffers)if(ends(b.name,".qsa.raw")){require(b.shape.size()==2&&b.shape[0]==p.g.context,"QSA raw buffer geometry");b.shape[0]=qsaring::rows;}
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
   // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
-  if(const char* only=std::getenv("OWNRT_PLAN_ONLY");only&&only[0]=='1'){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
+  const bool plan_only=[]{const char* only=std::getenv("OWNRT_PLAN_ONLY");return only&&only[0]=='1';}();
+  if(plan_only&&!a.tp_replicate){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
   Engine::HeadLayout head_layout; // OWNRT_TP_GDN=heads: compact per-card buffers -> one-card layout
   if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
@@ -692,6 +695,8 @@ static int run_rank(const Options& a) {
    }
    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
+   write_tp_plan(a.output/"tp-plan.json",p,*weights,a); // per-card admission of the two-card plan (30 GiB per card)
+   if(plan_only){save(a.output/"plan-only.json","{\"device_contact\":false,\"tp_plan\":true}");munmap(mapping,shared_bytes);::close(fd);return 0;}
   }
   engine=std::make_unique<Engine>(*weights,a,p);engine->head_split_layout=std::move(head_layout);selection_observed_sha256=engine->sealed_selection.observed_sha256;record_host_memory(a.output,"before_load");engine->initialize();
   // Exact F32 activation mode is admitted only on the paths that have F32 variants.

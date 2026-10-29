@@ -2264,12 +2264,30 @@ public:
 };
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/strict_snapshot.hpp"
 #include "gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp"
+// write_plan's per-tensor storage rule: bytes weight n occupies on its card as launch l uses it (whole tensor).
+static size_t plan_stored_bytes(const Weights& w,const Options& a,const flash::Plan& p,const p49d::Selection& selected,
+                                const flash::Launch& l,const std::string& n) {
+  const bool cached_expert=!a.mini&&selected.choices.contains("experts")&&(p100::gate_choice(selected.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(selected.choices.at("experts")).ends_with("+halfcache"));
+  const bool cached_hc=!a.mini&&selected.choices.contains("hc_gate")&&selected.choices.at("hc_gate")=="hc-weightcache";
+  auto &t = w.directory.at(n);
+  auto v=l.op=="gemv"?selected_variant(w,a,p,l):2;
+  size_t stored=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
+  if(a.gsq_packed&&gsq_integration::control_names.contains(n))stored=count(t.shape)*4;
+  const bool raw_stored=dense_raw_weight(w,a,n)&&l.op=="gemv"&&arithmetic::is_expanded(v);
+  if(raw_stored)stored=size_t(t.shape[0])*denseraw::row_bytes(flash::grid_type(t.grid),t.shape[1]);
+  if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
+  if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored=size_t(t.shape[0])*p90::hc_stride;
+  return stored;
+}
+// write_plan's per-card request/workspace bytes outside the plan's buffers.
+static size_t plan_extra_bytes(const flash::Plan& p,const Options& a) {
+  const size_t ab=a.f32_activations?4:2; // exact mode adds the F32 target RoPE table and widens mixture/snapshots
+  return 174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*4*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
+}
 static void write_plan(const fs::path &path, const flash::Plan &p,
                        const Weights &w, int cards, const Options& a) {
   p49d::Selection selected;
   if(!a.selection.empty())selected.load(a.selection.string(),a.selection_sha256);
-  const bool cached_expert=!a.mini&&selected.choices.contains("experts")&&(p100::gate_choice(selected.choices.at("experts"))=="exp-halfcache"||p100::gate_choice(selected.choices.at("experts")).ends_with("+halfcache"));
-  const bool cached_hc=!a.mini&&selected.choices.contains("hc_gate")&&selected.choices.at("hc_gate")=="hc-weightcache";
   std::map<std::string, int> owner;
   std::map<std::string,size_t> stored;
   auto dispatch=[&](const flash::Launch& l,const auto&){return selected_variant(w,a,p,l);};
@@ -2286,12 +2304,8 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
       owner[n] = l.card;
       auto &t = w.directory.at(n);
       auto v=l.op=="gemv"?dispatch(l,t):2;
-      stored[n]=(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head").starts_with("head-split-"))?size_t(p105::prefix)*3380:(n=="output.weight"&&selected.choices.contains("head")&&selected.choices.at("head")=="head-transpose")?t.bytes:p49b_weight(w,a,p,n)?p49b_weight_bytes(t):arithmetic::is_expanded(v)?size_t(t.shape[0])*arithmetic::row_bytes(flash::grid_type(t.grid),t.shape[1],v):t.bytes;
-      if(a.gsq_packed&&gsq_integration::control_names.contains(n))stored[n]=count(t.shape)*4;
+      stored[n]=plan_stored_bytes(w,a,p,selected,l,n);
       const bool raw_stored=dense_raw_weight(w,a,n)&&l.op=="gemv"&&arithmetic::is_expanded(v);
-      if(raw_stored)stored[n]=size_t(t.shape[0])*denseraw::row_bytes(flash::grid_type(t.grid),t.shape[1]);
-      if(cached_expert&&p49b_weight(w,a,p,n)&&flash::grid_type(t.grid)==iq3::Type::IQ2_S)stored[n]=t.bytes/p49bgemv::source_row_bytes(iq3::Type::IQ2_S,t.shape.back())*p90::expert_stride(t.shape.back());
-      if(cached_hc&&n.starts_with("blk.")&&(n.ends_with(".hc_attn_up.weight")||n.ends_with(".hc_ffn_up.weight")))stored[n]=size_t(t.shape[0])*p90::hc_stride;
       o << (comma ? "," : "") << "{\"name\":" << ownrt::quote(n)
         << ",\"card\":" << (l.op == "lookup" ? -1 : l.card)
         << ",\"bytes\":" << t.bytes << ",\"stored_bytes\":" << stored[n]
@@ -2317,8 +2331,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
   o << "],\"expert_placement\":\"all experts belong to their layer owner; none "
        "pruned\",\"one_card_full_model\":\"stream one layer at a "
        "time\",\"capture\":false,\"memory_plan\":{";
-  const size_t ab=a.f32_activations?4:2; // exact mode adds the F32 target RoPE table and widens mixture/snapshots
-  size_t extra=174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*4*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
+  size_t extra=plan_extra_bytes(p,a);
   std::vector<size_t> base(cards,extra),resident(cards,0);
   for(const auto& b:p.buffers)for(int c=0;c<cards;++c)
     if(b.card==-1 || b.card==c)base[c]+=count(b.shape)*flash::scalar_bytes(b.type);
@@ -2343,6 +2356,38 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
     std::cout<<"card "<<c<<" owned_bytes "<<peak_bytes<<" weights "<<(a.memory=="resident"?resident[c]:peak)<<" dispatch "<<a.gemv<<'\n';
     require(peak_bytes<=30ull*1024*1024*1024,"planned card exceeds 30 GiB");
   }
+}
+// --tp-replicate (2026-10-29): per-card bytes of the two-card plan, after the TP transform. write_plan above admits the
+// one-card rank plan; under TP every buffer is on both cards, and each card stores a weight whole unless its launches on
+// that card load a TP row slice (Engine::tp_runs: Launch::row_runs for every weight of the launch, else weights[0] with
+// row_count rows), which stores only those rows. Row bytes are uniform for every sliceable layout (expanded or raw
+// dense rows, and rows of 1-D tensors such as ssm_a), so a slice stores rows/shape[0] of the whole tensor. Adds the
+// exchange control words; prints
+// "tp card <c> planned_bytes <n> weights <w> buffers <b>" and refuses a card above 30 GiB, as write_plan does.
+static std::vector<size_t> write_tp_plan(const fs::path& path,const flash::Plan& p,const Weights& w,const Options& a) {
+  p49d::Selection selected;
+  if(!a.selection.empty())selected.load(a.selection.string(),a.selection_sha256);
+  std::vector<std::map<std::string,size_t>> rows(2),stored(2);  // per card: weight -> stored rows (0 = whole), bytes
+  for(const auto& l:p.launches) {
+    require(l.card==0||l.card==1,"TP plan: launches on card 0 or 1");
+    if(l.op=="lookup")continue;
+    for(const auto& n:l.weights){const auto& t=w.directory.at(n);if(t.component=="embedding"||t.component=="ple_lookup")continue;
+      size_t r=0;if(l.row_count&&(!l.row_runs.empty()||(!l.weights.empty()&&l.weights[0]==n)))r=size_t(l.row_count);
+      auto [it,fresh]=rows[l.card].insert({n,r});require(fresh||it->second==r,"TP plan: one row extent per weight and card: "+n);
+      if(fresh){size_t whole=plan_stored_bytes(w,a,p,selected,l,n);
+        if(r){require(!t.shape.empty()&&r<=size_t(t.shape[0])&&whole%size_t(t.shape[0])==0,"TP plan: uniform rows of "+n);whole=whole/size_t(t.shape[0])*r;}
+        stored[l.card][n]=whole;}}
+  }
+  size_t buffer_bytes=0;for(const auto& b:p.buffers){require(b.card==-1,"TP plan: every buffer on both cards");buffer_bytes+=count(b.shape)*flash::scalar_bytes(b.type);}
+  const size_t extra=plan_extra_bytes(p,a)+ownrt::exchange_layout::bytes;
+  std::vector<size_t> total(2);std::ostringstream o;o<<"{\"schema\":\"ownrt.tp-plan.v1\",\"cap_bytes\":"<<30ull*1024*1024*1024<<",\"cards\":[";
+  for(int c=0;c<2;++c){size_t wb=0,sliced=0;for(const auto& [n,b]:stored[c]){wb+=b;if(rows[c].at(n))++sliced;}
+    total[c]=extra+buffer_bytes+wb;
+    o<<(c?",":"")<<"{\"card\":"<<c<<",\"planned_bytes\":"<<total[c]<<",\"weights\":"<<wb<<",\"weight_tensors\":"<<stored[c].size()<<",\"sliced_tensors\":"<<sliced<<",\"buffers\":"<<buffer_bytes<<",\"workspace\":"<<extra<<"}";
+    std::cout<<"tp card "<<c<<" planned_bytes "<<total[c]<<" weights "<<wb<<" buffers "<<buffer_bytes<<'\n';}
+  o<<"]}";save(path,o.str());
+  for(int c=0;c<2;++c)require(total[c]<=30ull*1024*1024*1024,"planned TP card exceeds 30 GiB");
+  return total;
 }
 static void record_host_memory(const fs::path& output,const char* phase) {
   {std::ifstream status("/proc/self/status");save(output/(std::string("host-status-")+phase+".txt"),std::string((std::istreambuf_iterator<char>(status)),{}));}
