@@ -13,7 +13,14 @@
   touched. Sessions and continuation are still refused under TP.
   [Result](experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/RESULT.md).
 
-**October 29 — four B70s decode SC117 at 73.53 tok/s exact (1.110× the two-card 66.25 on the same binary).**
+**October 29 — four B70s decode SC117 at 73.18 tok/s exact at 64K with batched prompt reading (1.102× the same build on two cards, 66.39).**
+- Service-ready lab run, binary 0702b5a9cd78: QSA raw ring admitted under TP, per-card TP plan admission, TP-native
+  256-row batched prefill (a 3,490-token prompt reaches its first token in 10.34 vs 12.50 s; the 60–90-token
+  suite prompts stay below the batch threshold), teardown check fixed; all 5,965 outputs equal B19.
+  Remaining before the live unit can move: sessions/checkpoints/continuation under TP, and the unit env
+  (EnableDeferBacking=0, LimitNOFILE=1048576). Rank 0 now sets the pace; next is the draft-head vocab split.
+  [Service-ready result](experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/RESULT.md).
+- Earlier the same day (32K, token-by-token prompts): 73.53 vs 66.25 tok/s.
 - Exact TP inside both pipeline ranks (cards 23+27 / 43+47), 12-prompt suite, 32K context, token-by-token prompt
   reading: 73.53 vs 66.25 tok/s median; every prompt +10.8–12.2%; all 5,965 output ids, hashes and MTP hits equal
   the two-card arms and the B19 receipt; cached_tokens=0; state oracles 0 differences. Rank-0 TP alone: 9.39 vs

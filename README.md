@@ -23,7 +23,7 @@ receipts, not certified records:
 
 | Setup | Result | Evidence |
 | --- | --- | --- |
-| 4 B70s, each pipeline stage split exactly across two cards, 32K context | **73.53 tok/s** (same build on 2 cards: 66.25), identical outputs | [result](experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/RESULT.md) |
+| 4 B70s, each pipeline stage split exactly across two cards, 64K context | **73.18 tok/s** (same build on 2 cards: 66.39), identical outputs | [result](experiments/own-xpu-runtime/research/tp/service-ready-2026-10-29/RESULT.md) |
 | 2 B70s, chat service, 64K context | **66.21 tok/s** decode on 12 cold prompts | [suite receipt](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json) |
 | 3 target B70s + 1 draft B70, 64K context | **58.57 tok/s**; all 5,965 outputs match CPU-checked references | [paired summary](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json) |
 | Same layout, 262K context, 121,854-token prompt | First token after 250.8 s, then 48.5 tok/s | [long-prompt summary](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/equal16-r1-evidence/summary.json) |
