@@ -177,13 +177,42 @@ cards hold in full. The new binary's one-card dump equals the earlier binaries' 
 - Run directories (458 files, 2,804,334,509 bytes) moved to
   `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/tp-compact-20261029/` (count and bytes verified).
 
+## Stage 3 design: QSA split by KV group (not built; for review)
+
+**Split.** Card c owns KV head c and query heads [12c, 12c+12) (query head h reads KV head h/12). Every head's
+arithmetic stays local. From the source (`plan.hpp` `qsa()`, generic `kernels.hpp`, `p49_qsa_kernel.hpp`):
+
+| Site (rank 1: 7 layers, 23, 27, …, 47) | Per card | Change |
+|---|---|---|
+| `qsa.qgate` GEMV (12288 rows, per head 256 q + 256 gate) | rows [6144c, 6144c+6144), **one contiguous run** | Stage 1 row slice, no exchange |
+| `qsa.k`, `qsa.v` GEMVs (512 rows) | rows [256c, 256c+256) | row slice |
+| `qsa.iq`, `qsa.ik`, `qsa.select`, raw/pooled index | **replicated** (shared selector; the same selected ids on both cards) | none |
+| `qsa.prepare` (30 groups per token: 24 q, 2 k, 4 index) | 12 q + 1 k + 4 index groups | head geometry in `ng::Shape` (as for GDN) |
+| `qsa.pool` KV append (512 values per token) | 256 per token: **half the KV cache per card** | KV-head count in the shape |
+| `qsa.attention` (p49 split32, implementation 12, with `OWNRT_ATTN_HEADS`/`COMBINE2`) | 12 heads over KV head 0 of the compact cache | parameterize 24 heads, the `id*2+h/12` KV stride and the `tokens*24*tiles*258` partials (about 22 literals) |
+| `qsa.y` (24 x 256) | compact 12 heads = global [3072c, 3072c+3072), **contiguous** | `tp_xgather` exchange (existing contiguous mode) |
+| `attention` output projection | unchanged Stage 1 row split | none |
+
+- **Exchanges:** 3 per QSA layer, as for GDN: y, output projection, experts. One more than today.
+- **Gate:** the dump reassembles q, gate, kn, the k/v GEMV outputs and keys/values. keys/values use one run per
+  position and card, in the [position][KV head][256] layout. y is global after its exchange. One-card identity is
+  required as in Stage 2, with the full-geometry Shape unchanged (heads/extra = 0).
+- **CPU unit test:** generic prepare and pool, and the p49 reference (`p49_qsa_reference.hpp`), full vs two halves.
+- **Expected value at 4K context:** about 95 µs per layer is splittable: the qgate GEMV (12288 x 2560, 50 µs on the
+  Q6_K layers) and attention (about 40 µs; 43.8 µs measured historically). Halving it on 7 layers saves at most about
+  0.3 ms; less 7 exchanges (about 0.04 ms) and the attention kernel's fixed costs, about **0.2–0.3 ms (2–3%)**.
+  Selection stays replicated and grows with context/4. The larger benefit is capacity: each card keeps half the QSA
+  KV cache (`qsa-kv-head-shard-feasibility.txt`: 6 GiB instead of 12 at 262K for the 12 layers).
+- **Risks:** p49's variants (`ATTN_HEADS`, `COMBINE2`, guard) all index the 24-head layout. A split shape must be
+  refused on any variant that is not parameterized, as `adapter.cpp` does for GDN.
+
 ## Remaining stages
 
-- **Stage 3 (QSA two-KV-group split):** not started.
+- **Stage 3 (QSA two-KV-group split):** designed above, not built.
 
 ## Next
 
-1. **Stage 3:** QSA two-KV-group split (7 rank-1 layers); design in progress, not built.
+1. **Stage 3:** QSA two-KV-group split (7 rank-1 layers); designed above, not built.
 2. Shared expert on one card with an uneven routed split (6/4), now that compact slots exist.
 
 ## Files
