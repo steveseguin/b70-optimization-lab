@@ -38,7 +38,7 @@ def arm(runs, name, ref):
                                      differ_outside_masked=[k for k in cc['differ'] if not any(k.endswith(i) for i in IGNORE.split(','))])
     if name != ref:
         args = [sys.executable, '-B', str(DRIVER), 'compare', str(runs / ref), str(d)]
-        if s['tp'] and s.get('tp_env', {}).get('OWNRT_TP_EXPERTS'):
+        if s['tp'] and s.get('tp_env', {}).get('OWNRT_TP_EXPERTS') not in (None, 'compact'):  # compact: full dump, no exclusions
             args += ['--ignore', IGNORE]
         p = subprocess.run(args, capture_output=True, text=True)
         row['vs_reference'] = dict(reference=ref, rc=p.returncode, **json.loads(p.stdout))

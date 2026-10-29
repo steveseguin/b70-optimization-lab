@@ -1,0 +1,35 @@
+=== phase timing-compact start 2026-10-29T00:04:40-04:00 pid 995475 affinity 0-3,16-19
+[klog timing-compact-before-24h] since @1793160280: 12 lines, 0 xe/fault lines
+--- arm t6-one steps=16 mode=one env=none tp=none at 2026-10-29T00:04:40-04:00
+{"tp": false, "steps": 16, "load_s": 14.334971775999293, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.25
+arm t6-one rc=0 after 15 s
+[klog timing-compact-after-t6-one] since @1793246680: 0 lines, 0 xe/fault lines
+--- arm t6-heads steps=16 mode=heads-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-29T00:04:55-04:00
+{"tp": true, "steps": 16, "load_s": 25.45986441592686, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.85
+arm t6-heads rc=0 after 28 s
+[klog timing-compact-after-t6-heads] since @1793246695: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":6108,"max_polls":65595,"poll_sum":1148777},{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":5519,"max_polls":159,"poll_sum":62454}]}
+{"buffers":935,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exps
+--- arm t6-compact steps=16 mode=compact-threads env=OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-29T00:05:23-04:00
+{"tp": true, "steps": 16, "load_s": 25.455597299849615, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.74
+arm t6-compact rc=0 after 27 s
+[klog timing-compact-after-t6-compact] since @1793246723: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1088,"waits_that_polled":744,"max_polls":102878,"poll_sum":197803},{"abort":0,"timeouts":0,"waits":1088,"waits_that_polled":754,"max_polls":316,"poll_sum":7349}]}
+{"buffers":785,"differ":[],"passed":true}
+--- arm t6-heads2 steps=16 mode=heads-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-29T00:05:50-04:00
+{"tp": true, "steps": 16, "load_s": 25.44974686903879, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.85
+arm t6-heads2 rc=0 after 27 s
+[klog timing-compact-after-t6-heads2] since @1793246750: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":6087,"max_polls":83746,"poll_sum":1422574},{"abort":0,"timeouts":0,"waits":7088,"waits_that_polled":5605,"max_polls":729,"poll_sum":69728}]}
+{"buffers":935,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exps
+--- arm t6-compact2 steps=16 mode=compact-threads env=OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads tp=--tp --split .attention,.gdn.qkv at 2026-10-29T00:06:18-04:00
+{"tp": true, "steps": 16, "load_s": 25.44574941904284, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 10.93
+arm t6-compact2 rc=0 after 27 s
+[klog timing-compact-after-t6-compact2] since @1793246778: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1088,"waits_that_polled":833,"max_polls":34093,"poll_sum":101658},{"abort":0,"timeouts":0,"waits":1088,"waits_that_polled":622,"max_polls":483,"poll_sum":5665}]}
+{"buffers":785,"differ":[],"passed":true}
+--- arm t6-one2 steps=16 mode=one env=none tp=none at 2026-10-29T00:06:45-04:00
+{"tp": false, "steps": 16, "load_s": 14.323630016995594, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.26
+arm t6-one2 rc=0 after 15 s
+[klog timing-compact-after-t6-one2] since @1793246805: 0 lines, 0 xe/fault lines
+=== phase timing-compact done 2026-10-29T00:07:00-04:00

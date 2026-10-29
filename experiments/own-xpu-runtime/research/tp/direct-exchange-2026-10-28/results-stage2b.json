@@ -1,0 +1,492 @@
+[
+ {
+  "arm": "t6-one",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": false,
+  "split": null,
+  "tp_env": {},
+  "steps": 16,
+  "load_s": 14.3,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 12.246,
+  "half_ms_min_3_on": 12.156,
+  "half_ms_max_3_on": 12.306,
+  "half_ms": [
+   60.459,
+   12.155,
+   12.156,
+   12.222,
+   12.237,
+   12.227,
+   12.265,
+   12.245,
+   12.25,
+   12.228,
+   12.247,
+   12.306,
+   12.238,
+   12.25,
+   12.267,
+   12.265
+  ],
+  "engine_half_ms_median_3_on": 12.192,
+  "enqueue_ms_median_3_on": 3.909,
+  "card0_launches_per_half": 938,
+  "speedup_vs_reference": 1.0
+ },
+ {
+  "arm": "t6-one2",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": false,
+  "split": null,
+  "tp_env": {},
+  "steps": 16,
+  "load_s": 14.3,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 12.256,
+  "half_ms_min_3_on": 12.166,
+  "half_ms_max_3_on": 12.329,
+  "half_ms": [
+   59.307,
+   12.201,
+   12.166,
+   12.247,
+   12.23,
+   12.248,
+   12.26,
+   12.258,
+   12.251,
+   12.255,
+   12.27,
+   12.263,
+   12.288,
+   12.329,
+   12.253,
+   12.281
+  ],
+  "engine_half_ms_median_3_on": 12.198,
+  "enqueue_ms_median_3_on": 3.533,
+  "card0_launches_per_half": 938,
+  "vs_reference": {
+   "reference": "t6-one",
+   "rc": 0,
+   "compared": 1079,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 0.9992
+ },
+ {
+  "arm": "t6-heads",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "slot",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.5,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.834,
+  "half_ms_min_3_on": 10.802,
+  "half_ms_max_3_on": 11.141,
+  "half_ms": [
+   71.855,
+   10.862,
+   10.802,
+   11.141,
+   10.864,
+   10.818,
+   10.81,
+   10.81,
+   10.939,
+   10.82,
+   10.846,
+   10.829,
+   10.831,
+   10.837,
+   10.856,
+   10.846
+  ],
+  "engine_half_ms_median_3_on": 10.774,
+  "enqueue_ms_median_3_on": 5.964,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 6108,
+     "max_polls": 65595,
+     "poll_sum": 1148777
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 5519,
+     "max_polls": 159,
+     "poll_sum": 62454
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 935,
+   "differ": 125,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t6-one",
+   "rc": 0,
+   "compared": 954,
+   "ignored": 125,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.1303
+ },
+ {
+  "arm": "t6-heads2",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "slot",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.4,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.838,
+  "half_ms_min_3_on": 10.735,
+  "half_ms_max_3_on": 11.05,
+  "half_ms": [
+   72.281,
+   11.002,
+   10.735,
+   10.838,
+   10.846,
+   10.833,
+   11.05,
+   10.838,
+   10.833,
+   10.819,
+   10.865,
+   10.858,
+   10.824,
+   10.829,
+   10.846,
+   10.848
+  ],
+  "engine_half_ms_median_3_on": 10.786,
+  "enqueue_ms_median_3_on": 6.32,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 6087,
+     "max_polls": 83746,
+     "poll_sum": 1422574
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 7088,
+     "waits_that_polled": 5605,
+     "max_polls": 729,
+     "poll_sum": 69728
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 935,
+   "differ": 125,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t6-one",
+   "rc": 0,
+   "compared": 954,
+   "ignored": 125,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.1299
+ },
+ {
+  "arm": "t6-compact",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "compact",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.5,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.735,
+  "half_ms_min_3_on": 10.626,
+  "half_ms_max_3_on": 10.891,
+  "half_ms": [
+   76.016,
+   10.767,
+   10.626,
+   10.707,
+   10.698,
+   10.697,
+   10.726,
+   10.774,
+   10.758,
+   10.778,
+   10.891,
+   10.734,
+   10.733,
+   10.736,
+   10.742,
+   10.745
+  ],
+  "engine_half_ms_median_3_on": 10.688,
+  "enqueue_ms_median_3_on": 6.303,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 1088,
+     "waits_that_polled": 744,
+     "max_polls": 102878,
+     "poll_sum": 197803
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 1088,
+     "waits_that_polled": 754,
+     "max_polls": 316,
+     "poll_sum": 7349
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 785,
+   "differ": 0,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t6-one",
+   "rc": 0,
+   "compared": 1079,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.1408
+ },
+ {
+  "arm": "t6-compact2",
+  "binary": "/dev/shm/engine-build-tp-compact-20261029-r7/sc117-engine",
+  "tp": true,
+  "split": ".attention,.gdn.qkv",
+  "tp_env": {
+   "OWNRT_TP_EXCHANGE": "direct",
+   "OWNRT_TP_EXPERTS": "compact",
+   "OWNRT_TP_GDN": "heads",
+   "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+   "OWNRT_TP_THREADS": "1"
+  },
+  "steps": 16,
+  "load_s": 25.4,
+  "tokens": [
+   28112,
+   76967,
+   11,
+   31906,
+   1495,
+   76793,
+   9695,
+   87553,
+   87106,
+   60436,
+   45728,
+   46459,
+   13153,
+   90379,
+   22592,
+   298
+  ],
+  "half_ms_median_3_on": 10.837,
+  "half_ms_min_3_on": 10.719,
+  "half_ms_max_3_on": 10.99,
+  "half_ms": [
+   74.068,
+   10.96,
+   10.719,
+   10.747,
+   10.781,
+   10.775,
+   10.942,
+   10.938,
+   10.778,
+   10.99,
+   10.927,
+   10.942,
+   10.832,
+   10.99,
+   10.767,
+   10.842
+  ],
+  "engine_half_ms_median_3_on": 10.767,
+  "enqueue_ms_median_3_on": 7.095,
+  "card0_launches_per_half": 1031,
+  "exchange": {
+   "cap_polls": 4194304,
+   "cards": [
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 1088,
+     "waits_that_polled": 833,
+     "max_polls": 34093,
+     "poll_sum": 101658
+    },
+    {
+     "abort": 0,
+     "timeouts": 0,
+     "waits": 1088,
+     "waits_that_polled": 622,
+     "max_polls": 483,
+     "poll_sum": 5665
+    }
+   ]
+  },
+  "card1_vs_card0": {
+   "buffers": 785,
+   "differ": 0,
+   "differ_outside_masked": []
+  },
+  "vs_reference": {
+   "reference": "t6-one",
+   "rc": 0,
+   "compared": 1079,
+   "ignored": 0,
+   "differ": [],
+   "differ_count": 0,
+   "only_one_side": [],
+   "other_fields_differ": {}
+  },
+  "speedup_vs_reference": 1.13
+ }
+]

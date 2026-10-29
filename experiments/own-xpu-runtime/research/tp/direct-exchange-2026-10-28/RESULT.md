@@ -4,8 +4,9 @@
 store straight into the peer card's memory and raise one flag ([p2p/direct-store-2026-10-28](../../p2p/direct-store-2026-10-28/RESULT.md)),
 does exact within-layer splitting pay off inside the engine?
 
-**Answer so far: yes.** With the GDN blocks also split by key group (Stage 2), rank 1 runs **10.82 ms per decode half
-on two cards against 12.24–12.29 ms on one card (1.131×)**, bitwise exact. Stage 1 alone gave 11.35–11.38 ms (1.075–1.078×).
+**Answer so far: yes.** With the GDN blocks split by key group (Stage 2) and compact expert slots (Stage 2b), rank 1 runs
+**10.74–10.84 ms per decode half on two cards against 12.25 ms on one card (1.13–1.14×)**, bitwise exact on the full
+1,079-buffer dump with no exclusions. Stage 2 alone gave 10.82–10.96 ms; Stage 1 alone 11.35–11.38 ms (1.075–1.078×).
 Stage 1 needed two things together:
 - the direct exchange (one kernel per card per exchange, about **6.1 µs** each in the engine, against 13 µs per dense
   gather and 26 µs per expert layer for the copy path);
@@ -139,20 +140,57 @@ compare against the one-card run is unchanged.
   exact on its first attempt; no incidents in Stage 2. Run directories (276 files, 1,730,255,644 bytes) moved to
   `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/tp-heads-20261028/` (count and bytes verified).
 
+## Stage 2b: compact expert slots (`OWNRT_TP_EXPERTS=compact`)
+
+**Design.** Instead of masking the peer's slots in a 10-slot launch, card c launches its expert GEMVs on its own slots
+c, c+2, … only, as dense 5-slot launches (`Launch::slots`):
+- `tp_route_compact` copies those slots' routes into `routes#tp` / `routes.down#tp`. The original routes stay unmasked.
+- gate, up, act and down run with count 5. Each slot keeps its kernel, tile and reduction order; only the slot count and
+  route list change. The IQ3_XXS block policy admits fewer than ten slots only in this mode.
+- The activation and the merged status check cover the card's 5 slots.
+- Down writes compact rows to `expsdown#tp`. One strided direct exchange (the `tp_xheads` kernel: runs of 2560 values,
+  5120 apart) places them at their canonical slot rows of `expsdown` on both cards before the unchanged combine. This
+  replaces the staging copy and the local select of `tp_xslot`.
+- The per-slot buffers (gate, up, act and the three statuses; 150 buffers) are compact on each card and reassembled
+  in slot order at the dump.
+- Exchanges per half: 68 (25 output projections, 18 gated, 25 expert layers). Each now waits in one work-group, so
+  1,088 waits per card over 16 halves, against 7,088 with `tp_xslot`.
+
+**Gate.** The two-card dump now equals one card on **all 1,079 buffers with no exclusions** (smoke and all four timing
+runs). The 125 masked-intermediate exclusions of Stages 1 and 2 are gone. Card 1 equals card 0 on all 785 buffers both
+cards hold in full. The new binary's one-card dump equals the earlier binaries' (1079/1079).
+
+**Results** (binary `d4cc86fdb8e8…`; same harness, setup and arms; four interleaved Stage 2 / Stage 2b pairs;
+[results-stage2b.json](results-stage2b.json), [results-stage2b-pairs.json](results-stage2b-pairs.json)):
+
+| Arm | Half ms, median of halves 3–16 (each run) | vs one card | Host enqueue ms | Exact vs one card |
+|---|---|---:|---:|---|
+| one card (start / end of phase 1) | 12.246 / 12.256 | 1.000 | 3.5–3.9 | reference |
+| Stage 2: GDN heads + rows + masked slots | 10.834, 10.838, 10.904, 10.962 | 1.12–1.13 | 6.0–6.8 | 954/954 (+125 excluded) |
+| **Stage 2b: compact slots** | **10.735, 10.837, 10.767, 10.747** | **1.13–1.14** | 6.3–7.1 | **1079/1079** |
+
+- Stage 2b is faster in all four pairs, by 0.001–0.215 ms. Mean 10.77 against 10.88 ms: about −1%. The masked
+  10-slot launches were already close to 5-slot cost on these kernels; masked work-groups do no weight reads.
+- 0 timeouts in 65,680 waits; kernel log clean before each phase and after every arm.
+- Incident: the first smoke stopped at load on a host-side policy check: the IQ3_XXS block site required the original
+  `routes` input name. Fixed by admitting the compact copy in this mode. No device work had run; kernel log clean.
+- Run directories (458 files, 2,804,334,509 bytes) moved to
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/tp-compact-20261029/` (count and bytes verified).
+
 ## Remaining stages
 
 - **Stage 3 (QSA two-KV-group split):** not started.
 
 ## Next
 
-1. **Follow-up: compact 5-slot expert launches** instead of masked 10-slot ones. Masked slots are not free: about 47%
-   of an expert launch does not shrink (SIZING.md). The `tp_xslot` exchange would scatter the compact slots directly,
-   like `tp_xheads`. This is the largest remaining split inefficiency.
-2. **Stage 3:** QSA two-KV-group split (7 rank-1 layers).
-3. Shared expert on one card with an uneven routed split (6/4), once compact slots exist.
+1. **Stage 3:** QSA two-KV-group split (7 rank-1 layers); design in progress, not built.
+2. Shared expert on one card with an uneven routed split (6/4), now that compact slots exist.
 
 ## Files
 
+- Stage 2b source: `packet6-kopt/kernels.{hpp,cpp}` (`RouteCompact`), `api.hpp` (`Launch::slots`), `main.cpp` (slot
+  count, per-slot sizes, `tp_route_compact`), `expert-iq3xxs-block/.../block.hpp` and `policy.hpp` (compact admission),
+  `rank.hpp` (`OWNRT_TP_EXPERTS=compact` plan and layouts).
 - Stage 2 source: `kernels.hpp`, `round2.hpp`, `round2_submit.cpp`, `adapter.cpp` (head geometry), `packet3/kernels/api.hpp`
   (`Launch::row_runs`, `heads`, `key_heads`), `main.cpp` (`tp_runs` loaders, `tp_xheads`, `head_split_layout`),
   `generic_engine.hpp` (run-aware GSQ loads, dense-block rows), `dense-packed-block/.../block.hpp` and

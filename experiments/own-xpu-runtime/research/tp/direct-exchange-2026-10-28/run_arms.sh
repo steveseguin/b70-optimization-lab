@@ -5,7 +5,8 @@
 #     flock -n -E 75 /dev/shm/card47.lock taskset -c 0-3,16-19 bash run_arms.sh <phase> ARM...
 # ARM = name:steps:mode, mode one | one47 | rep | rep-threads | copy | direct | direct-threads | dense-direct | slot-direct |
 #   xonly-threads (exact diagnostic: no split, the same exchanges of identical rows) | heads-threads (Stage 2) |
-#   heads-alone-threads (Stage 2 head split with nothing else split).
+#   heads-alone-threads (Stage 2 head split with nothing else split) | compact-threads (Stage 2b: Stage 2 with compact
+#   expert slots instead of masked ones).
 # Order per arm: coordination-marker check -> engine run (tp_rank1_driver.py) -> kernel-log check. Any xe/fault line,
 # nonzero exit or exchange timeout halts the phase; nothing is retried. Do not edit while it runs.
 set -u
@@ -38,6 +39,7 @@ for arm in "$@"; do
     slot-direct) tp=(--tp); envs+=(OWNRT_TP_EXCHANGE=direct) ;;
     rep-threads) tp=(--tp); envs=(OWNRT_TP_THREADS=1) ;;
     heads-threads) envs+=(OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;  # Stage 2: + GDN head split
+    compact-threads) envs=(OWNRT_TP_EXPERTS=compact OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;  # Stage 2b
     heads-alone-threads) tp=(--tp); envs=(OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 OWNRT_TP_GDN=heads) ;;  # head split only
     xonly-threads) envs+=(OWNRT_TP_EXCHANGE=direct-replicated OWNRT_TP_THREADS=1) ;;  # exact; exchanges with no split
     *) halt "unknown mode $mode" ;;
