@@ -39,7 +39,7 @@ The repository records the work that produced the performance:
 The `15.55 -> 101.17` endpoints use different checkpoints, quantization, and
 GPU counts. They document the lab program's progression, not a like-for-like
 percentage speedup. The current evidence and recipe status are in the
-[`Qwen3.8 model board`](../README.md#qwen38-27b-model-board) and
+[`Qwen3.8 model board`](../docs/lab-results-history.md#qwen38-27b-model-board) and
 [`AutoRound repro/status`](../repro/qwen38-27b-autoround-int4-b70/README.md).
 
 ## What remains from the source review

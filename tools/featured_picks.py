@@ -12,6 +12,7 @@ GITHUB = 'https://github.com/steveseguin/b70-optimization-lab/blob/main/'
 START = '<!-- BEGIN GENERATED FEATURED PICKS -->'
 END = '<!-- END GENERATED FEATURED PICKS -->'
 PROFILE_DIR = 'data/profiles/2026-10-10/'
+SC117_SERVICE = 'experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json'
 
 
 def read(path):
@@ -155,6 +156,26 @@ def groups(catalog):
         'Liquid AI’s 24B mixture-of-experts model, with about 2B parameters active per token, in 8-bit form. '
         'Every answer matched llama.cpp’s plain SYCL path on both fresh servers.')
     lfm24['note'] = 'Median of two fresh servers, 12-prompt suite, 512-token cap; one user, F16 KV. Clean-host replay pending.'
+    sc117 = pick('sc117-iq3s-b70-research-draft-20261028', 'SC117 Flash-Next IQ3_S · our own engine',
+        'Research recipe · expert setup',
+        'The lab’s own B70 engine running SC117’s IQ3_S quantization of Flash-Next, with 32-bit activations '
+        'and attention cache. Three target cards plus a draft card hold a 262K context; outputs match '
+        'CPU-checked reference answers.', research=True)
+    sc117_pair = 'experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json'
+    sc117_long = 'experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/equal16-r1-evidence/summary.json'
+    long_run = read(sc117_long)
+    assert long_run['identity']['control_cuts'] == read(sc117_pair)['identity']['boundaries'] == [0, 17, 33, 48]
+    prompt = long_run['identity']['prompt_tokens']
+    sc117['metrics'] = [
+        measurement(sc117_pair, ['depth3_full_decode_tps'], label='One person · 4 cards',
+                    scope='12 prompts, 64K context; all-interval rate', digits=2),
+        measurement(sc117_long, ['control', 'all511_tps'], label='After a long prompt',
+                    scope=f'{prompt:,} input tokens, 262K context', digits=1),
+        dict(value=prompt / long_run['control']['ttft_s'], evidence=sc117_long, label='Reads a prompt',
+             scope=f'{prompt:,} input tokens / first-token wait', digits=0, scale=4200, unit='tok/s'),
+    ]
+    sc117['note'] = ('Lab observations, not certified records; no one-command launcher or clean-host installer yet. '
+                     'Two cards serve the same model at the speed in the banner above but cannot hold 262K.')
     deepseek = dict(id='deepseek-v4-research', name='DeepSeek V4 Flash · 180B research', cards=4,
         detail='models/deepseek-v4.html', guide='repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md',
         setup='Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU',
@@ -235,7 +256,7 @@ def groups(catalog):
                     'its capability standing comes from publisher evaluations, not our speed test.')
     return [('task-picks', 'Pick the job you want to do', featured),
             ('other-picks', 'Other models and research options',
-             [minimax, muse, lfm24, ornith, nemotron, deepseek] + small[:3]),
+             [sc117, minimax, muse, lfm24, ornith, nemotron, deepseek] + small[:3]),
             ('small-quick', 'Small and quick · under 9B', small[3:])]
 
 
@@ -279,12 +300,15 @@ def host_ram_gib(catalog, package_id):
 
 
 def render(catalog):
-    ram = host_ram_gib(catalog, 'qwen38-flash-next-iq3xxs-ownrt-tp2-b70')
+    service = read(SC117_SERVICE)
+    assert service['label'].startswith('51f32b2655cc') and service['prompts'] == 12
+    assert all(row['cached_tokens'] == 0 for row in service['rows'])
+    rate = f"{service['median_decode_tok_s']:.2f}"
     out = [START, '''<section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video.</p>
-    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Needs ''' + str(ram) + ''' GiB host RAM. Full-output quality checks pending.</span></p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use a tested two-card recipe; our own engine also has a research layout with two target cards plus a draft card. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video; our own engine runs SC117 Flash-Next with a 262K context.</p>
+    <p class="research-links native-result-link"><span class="status research">Our own engine</span><a href="own-runtime.html#current-sc117">SC117 Flash-Next IQ3_S on two B70s: ''' + rate + ''' tok/s</a><span>Lab chat-service observation, 12 cold prompts, 32-bit activations. Four cards hold a 262K context. <a href="models/sc117-iq3s-b70-research-draft-20261028.html">Expert research recipe</a>; no installer yet.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>''']
     for group_id, title, picks in groups(catalog):

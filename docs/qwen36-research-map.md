@@ -55,7 +55,7 @@ neutral or slower and remain default-off/reverted.
 | 35B A3B AutoRound W4A16, target-only concurrency experiment | 1x B70, vLLM/XPU TP1 | Experimental measured throughput: full seven-point sweep reaches `1,039.408` aggregate tok/s at B64; later two-point treatment reaches `1,052.870` at B64 and `90.909` at B1. Literal smoke passes, but fixed-seed B64 repeat identity remains incomplete, so this is not promoted | [consumer evidence](qwen36-35b-aggregate-throughput-evidence.md), [machine-readable sweep](../data/qwen36-35b-autoround-b70-concurrency-20260824.json) |
 | 35B A3B Quark W8A8 INT8 | 4x B70, vLLM/XPU | Retained campaign reference; strict PIECEWISE forced-comm baseline about `93.55 tok/s`; no valid `>150` speculative result | [result packet](../results/qwen36-35b-quark-int8-b70/README.md) |
 
-The repository [Qwen3.6 27B model board](../README.md#qwen36-27b-model-board)
+The repository [Qwen3.6 27B model board](lab-results-history.md#qwen36-27b-model-board)
 contains the full row-by-row comparison and accounting labels.
 
 ## Identity Rules

@@ -523,8 +523,8 @@ Style genome (duotone-hixffp):
 <section id="featured">
   <div class="wrap">
     <h2 id="t-featured">What should I run?</h2>
-    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use the tested two-card recipe; three-card scaling is not measured here. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video.</p>
-    <p class="research-links native-result-link"><span class="status research">Lab result</span><a href="models/qwen38-flash-next-iq3xxs-ownrt-tp2-b70.html#text-observations">Flash-Next on two B70s: 58.56–58.63 tok/s</a><span>Needs 128 GiB host RAM. Full-output quality checks pending.</span></p>
+    <p class="sub"><strong>1 card:</strong> Qwen 27B INT4 for everyday work, Qwen 27B FP8 for longer documents, Gemma 26B for fast replies. <strong>2 cards:</strong> Qwen 27B shared chat; MiniMax-H3 video with audio. <strong>3 cards:</strong> use a tested two-card recipe; our own engine also has a research layout with two target cards plus a draft card. <strong>4 cards:</strong> Flash-Next for demanding tasks, Laguna for code, LTX for video; our own engine runs SC117 Flash-Next with a 262K context.</p>
+    <p class="research-links native-result-link"><span class="status research">Our own engine</span><a href="own-runtime.html#current-sc117">SC117 Flash-Next IQ3_S on two B70s: 66.21 tok/s</a><span>Lab chat-service observation, 12 cold prompts, 32-bit activations. Four cards hold a 262K context. <a href="models/sc117-iq3s-b70-research-draft-20261028.html">Expert research recipe</a>; no installer yet.</span></p>
     <p class="sub">For owners of 32 GB Intel Arc Pro B70 cards. We weigh public interest in the model family, how recent and capable it is, and our optimization and quality evidence, then choose one setup per need. <a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/notes/2026-10-10-neural-download-featured-ranking.md">Scores, sources and selection reasons</a>. A certified result does not mean a clean-host installer is ready.</p>
     <p class="sub">Writing speed is in tokens per second (tok/s); a token is about three quarters of a word. Bars compare speed, not capability. Use <a href="#uniform">Same test, every model</a> for the shared test conditions.</p>
 <h3 id="task-picks">Pick the job you want to do</h3>
@@ -612,8 +612,18 @@ Style genome (duotone-hixffp):
 </ol>
 <details id="other-picks"><summary>Other models and research options</summary>
 <ol class="pick-list">
-      <li class="pick-row" data-pick-id="minimax-m27-b70-89tps-20260520">
+      <li class="pick-row research" data-pick-id="sc117-iq3s-b70-research-draft-20261028">
         <div class="pick-head"><span class="pick-rank">1</span><div>
+          <p class="eyebrow">Alternative setup</p>
+          <p class="eyebrow research">Research recipe · expert setup</p>
+          <h3><a href="models/sc117-iq3s-b70-research-draft-20261028.html">SC117 Flash-Next IQ3_S · our own engine</a> <span class="card-chip">4 cards</span><small>IQ3_S mixed GSQ-RCO · Own Xe/SYCL runtime; BMG-G31 AOT</small></h3>
+          <p class="pick-why">The lab’s own B70 engine running SC117’s IQ3_S quantization of Flash-Next, with 32-bit activations and attention cache. Three target cards plus a draft card hold a 262K context; outputs match CPU-checked reference answers.</p>
+        </div></div>
+        <div class="pick-bars"><div class="pick-bar-row"><span class="pick-bar-label">One person · 4 cards</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:23.43%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json">58.57 tok/s</a><small>12 prompts, 64K context; all-interval rate</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">After a long prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:19.41%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/equal16-r1-evidence/summary.json">48.5 tok/s</a><small>121,854 input tokens, 262K context</small></span></div><div class="pick-bar-row"><span class="pick-bar-label">Reads a prompt</span><div class="pick-track" aria-hidden="true"><div class="pick-fill" style="width:11.57%"></div></div><span class="pick-val"><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/equal16-r1-evidence/summary.json">486 tok/s</a><small>121,854 input tokens / first-token wait</small></span></div><p class="pick-note">Lab observations, not certified records; no one-command launcher or clean-host installer yet. Two cards serve the same model at the speed in the banner above but cannot hold 262K.</p></div>
+        <div class="pick-links"><a class="button" href="models/sc117-iq3s-b70-research-draft-20261028.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/sc117-iq3s-b70-research-draft-20261028/README.md">Setup guide and quality status</a></div>
+      </li>
+      <li class="pick-row" data-pick-id="minimax-m27-b70-89tps-20260520">
+        <div class="pick-head"><span class="pick-rank">2</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Historical quality-gated record · four cards</p>
           <h3><a href="models/minimax-m27-b70-89tps-20260520.html">MiniMax M2.7 · 229B INT4</a> <span class="card-chip">4 cards</span><small>AutoRound W4A16 INT4 · vLLM XPU + llm-scaler</small></h3>
@@ -623,7 +633,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/minimax-m27-b70-89tps-20260520.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/minimax-m27-b70-89tps-20260520/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="muse-glimmer-30b-q8-woq-b70-100tps-20260813">
-        <div class="pick-head"><span class="pick-rank">2</span><div>
+        <div class="pick-head"><span class="pick-rank">3</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Target-verified record · four cards measured</p>
           <h3><a href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Muse Glimmer 30B Q8 WOQ</a> <span class="card-chip">4 cards</span><small>UD-Q8_K_XL / BF16 draft · llama.cpp SYCL</small></h3>
@@ -633,7 +643,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/muse-glimmer-30b-q8-woq-b70-100tps-20260813.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/muse-glimmer-30b-q8-woq-b70-100tps-20260813/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="lfm25-24b-a2b-q8-b70">
-        <div class="pick-head"><span class="pick-rank">3</span><div>
+        <div class="pick-head"><span class="pick-rank">4</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Exact-output package · one card</p>
           <h3><a href="models/lfm25-24b-a2b-q8-b70.html">LFM2.5 24B-A2B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL + lab patch</small></h3>
@@ -643,7 +653,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/lfm25-24b-a2b-q8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/lfm25-24b-a2b-q8-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row research" data-pick-id="ornith-15-35b-a3b-q4km-b70">
-        <div class="pick-head"><span class="pick-rank">4</span><div>
+        <div class="pick-head"><span class="pick-rank">5</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Candidate · strict headline pending</p>
           <h3><a href="models/ornith-15-35b-a3b-q4km-b70.html">Ornith 1.5 35B-A3B Q4_K_M</a> <span class="card-chip">1 card</span><small>Q4_K_M · llama.cpp SYCL</small></h3>
@@ -653,7 +663,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/ornith-15-35b-a3b-q4km-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/ornith-15-35b-a3b-q4km-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row research" data-pick-id="nemotron-35-lightning-30b-a3b-b70">
-        <div class="pick-head"><span class="pick-rank">5</span><div>
+        <div class="pick-head"><span class="pick-rank">6</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Candidate · strict headline pending</p>
           <h3><a href="models/nemotron-35-lightning-30b-a3b-b70.html">Nemotron 3.5 Lightning 30B-A3B</a> <span class="card-chip">1 card</span><small>UD-Q4_K_M · llama.cpp SYCL</small></h3>
@@ -663,7 +673,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/nemotron-35-lightning-30b-a3b-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/nemotron-35-lightning-30b-a3b-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row research" data-pick-id="deepseek-v4-research">
-        <div class="pick-head"><span class="pick-rank">6</span><div>
+        <div class="pick-head"><span class="pick-rank">7</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow research">Experimental, lossy checkpoint · not a lossless recommendation</p>
           <h3><a href="models/deepseek-v4.html">DeepSeek V4 Flash · 180B research</a> <span class="card-chip">4 cards</span><small>Community-trimmed FP8 / FP4 experts · FP8 KV · vLLM XPU</small></h3>
@@ -673,7 +683,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/deepseek-v4.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/deepseek-v4-flash-k160-b70-80tps-20260718/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen35-9b-w4a16-b70">
-        <div class="pick-head"><span class="pick-rank">7</span><div>
+        <div class="pick-head"><span class="pick-rank">8</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-w4a16-b70.html">Qwen3.5 9B INT4</a> <span class="card-chip">1 card</span><small>W4A16 (compressed-tensors INT4 weights, FP16 activations) · vLLM XPU</small></h3>
@@ -683,7 +693,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-w4a16-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-w4a16-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="qwen35-9b-fp8-b70">
-        <div class="pick-head"><span class="pick-rank">8</span><div>
+        <div class="pick-head"><span class="pick-rank">9</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Qualified package · October speed check</p>
           <h3><a href="models/qwen35-9b-fp8-b70.html">Qwen3.5 9B FP8</a> <span class="card-chip">1 card</span><small>FP8-dynamic (compressed-tensors, per-channel FP8 weights, dynamic activations) · vLLM XPU</small></h3>
@@ -693,7 +703,7 @@ Style genome (duotone-hixffp):
         <div class="pick-links"><a class="button" href="models/qwen35-9b-fp8-b70.html">Details</a><a href="https://github.com/steveseguin/b70-optimization-lab/blob/main/repro/qwen35-9b-fp8-b70/README.md">Setup guide and quality status</a></div>
       </li>
       <li class="pick-row" data-pick-id="ornith-15-9b-q8-b70">
-        <div class="pick-head"><span class="pick-rank">9</span><div>
+        <div class="pick-head"><span class="pick-rank">10</span><div>
           <p class="eyebrow">Alternative setup</p>
           <p class="eyebrow">Strict headline withheld</p>
           <h3><a href="models/ornith-15-9b-q8-b70.html">Ornith 1.5 9B Q8</a> <span class="card-chip">1 card</span><small>Q8_0 · llama.cpp SYCL</small></h3>

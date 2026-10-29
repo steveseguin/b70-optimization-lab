@@ -18,14 +18,14 @@ summaries below. The linked packets own exact numbers and qualification limits.
 
 | Lane | Start here | Evidence status |
 | --- | --- | --- |
-| Own Intel Xe runtimes | [objective](own-xpu-runtime-objective.md), [packets](../experiments/own-xpu-runtime/README.md) | CPU preparation; native execution is a separate admission gate |
+| Own Intel Xe runtimes | [objective](own-xpu-runtime-objective.md), [packets](../experiments/own-xpu-runtime/README.md), [SC117 recipe](../repro/sc117-iq3s-b70-research-draft-20261028/README.md), [engine source](../experiments/own-xpu-runtime/engine/) | Active main lane (October 2026): SC117 Flash-Next IQ3_S runs natively on two to four B70s with exact state gates; see [CURRENT.md](../CURRENT.md) for the latest results |
 | LTX 2.5 | [145-frame recipe](../repro/ltx25-continuation-stream-b70-145f-20261010/README.md) | Lab replay; early-window timing is separate from sustained delivery and later packets |
 | MiniMax-H3 | [result](../results/minimax-h3-b70/README.md), [recipe](../repro/minimax-h3-pruned-bf16-tp2-b70-20261004/README.md) | Owner-selected fitted denoiser; exact scheduling result against its own reference; rebuild gaps remain |
 | Qwen3.8 Flash-Next FP8 | [result](../results/qwen38-flash-next-fp8-b70/README.md), [reopen work](../experiments/qwen38-flash-next-fp8-b70/reopen-20261008/README.md) | September record retained; October fault/loading investigation is separate |
 | Qwen3.8 27B FP8 | [one-card recipe](../repro/qwen38-27b-fp8-vllm-tp1-b70/README.md), [two-card recipe](../repro/qwen38-27b-fp8-vllm-tp2-asrock-b70/README.md) | Official FP8 identity; context and many-user profiles have separate evidence |
 | Qwen3.5 4B / 9B | [4B handoff](../experiments/qwen35-4b-b70/HANDOFF.md), [9B W4A16 recipe](../repro/qwen35-9b-w4a16-b70/README.md), [9B FP8 recipe](../repro/qwen35-9b-fp8-b70/README.md) | Qualified single-request profiles; concurrency, runtime revisions and FP8 remain separately scoped |
 | Qwen3.6 family | [family map](qwen36-research-map.md) | Q8 TP2 record, one-card Q8, INT4/MTP, Q4, FP8 and 35B evidence are distinct |
-| Qwen3.8 27B GGUF / AutoRound INT4 | [model board](../README.md#qwen38-27b-model-board), [INT4 recipe](../repro/qwen38-27b-autoround-int4-b70/README.md) | August discovery notes below are historical; use maintained recipes for later qualification |
+| Qwen3.8 27B GGUF / AutoRound INT4 | [model board](lab-results-history.md#qwen38-27b-model-board), [INT4 recipe](../repro/qwen38-27b-autoround-int4-b70/README.md) | August discovery notes below are historical; use maintained recipes for later qualification |
 | Muse-Glimmer 30B | [result](../results/muse-glimmer-30b-q8-woq-b70/README.md) | Retained Q8/WOQ campaign result; not a BF16/lossless claim |
 | Laguna S 2.1 | [result](../results/laguna-s-2.1-int4-b70/README.md), [125 tok/s recipe](../repro/laguna-s-2.1-int4-b70-125tps-20260731/README.md) | Qualified BF16-KV record; July 26 recipe is an earlier milestone |
 | Gemma 4 26B A4B | [result](../results/gemma4-26b-a4b-q8-b70/README.md), [reconstruction](../repro/gemma4-26b-a4b-q8-b70-125tps-20260701/README.md) | Historical cold-suite result and separate service/prefill work; source reconstruction is not binary-exact replay |
@@ -166,7 +166,7 @@ must not be merged into a family-level speed claim.
 
 Main entries:
 
-- [Qwen3.8 model board](../README.md#qwen38-27b-model-board)
+- [Qwen3.8 model board](lab-results-history.md#qwen38-27b-model-board)
 - [Q8_0 quality-conservative TP2 reproduction](../repro/qwen38-27b-q8-tp2-asrock-b70/README.md)
 - [Q4_K_M target-only TP2 reproduction](../repro/qwen38-27b-q4km-tp2-asrock-b70/README.md)
 - [Q4_K_M fusion patch](../patches/qwen38-27b-q4km-tp2-asrock-b70/README.md)
@@ -224,7 +224,7 @@ Main entries:
 - [validated community/fork packet](../community/mndodd-qwen36-27b-llamacpp-sycl/README.md)
 - [status and provenance boundary](../community/mndodd-qwen36-27b-llamacpp-sycl/STATUS.md)
 - [initial compatibility patch](../community/mndodd-qwen36-27b-llamacpp-sycl/patches/0001-asrock-lab-lowram-dnnless-tp2.patch)
-- [model board](../README.md#qwen36-27b-model-board)
+- [model board](lab-results-history.md#qwen36-27b-model-board)
 
 The retained **2026-08-15 target-only TP2 record** is **36.604128 tok/s**
 conventional (99 intervals); its historical compatibility value is
