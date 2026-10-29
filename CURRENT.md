@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**October 29, about 07:00 — both head splits: four cards reach 74.66 tok/s exact at 64K (two cards 66.42).**
+- New opt-in `OWNRT_TARGET_HEAD_SPLIT=1` (engine `b7786ad42675`): rank 1 splits the target head's vocabulary across its two
+  cards. Each card scores half the rows, then the two best guesses are merged (lowest index wins ties).
+- Rank 1's half drops from 10.9 to 10.4 ms. It is bitwise equal to one card (1079/1079), and each card stores 260 MB less.
+- With rank 1 faster, rank 0 sets the pace again, so the draft head split now helps.
+- Suite at 64K, same binary, one server per arm: 66.42 two cards / 72.99 TP / 73.73 TP + target split / 74.66 both splits.
+  All outputs equal B19 in every arm.
+- Both splits beat TP on every prompt (1.004–1.033×). That is one server per arm, so a fresh-server repeat should
+  confirm it before the flags go into the service. `sc117-lan` not touched.
+  [Result](experiments/own-xpu-runtime/research/tp/target-head-split-2026-10-29/RESULT.md).
+
 **October 29, about 05:00 — rank 0's draft head split across its two cards: exact, but no speed gain (73.26 vs 73.39 tok/s).**
 - New opt-in `OWNRT_DRAFT_HEAD_SPLIT=1` (engine `46891d491b08`): rank 0's MTP draft head is split by vocabulary rows
   across its two TP cards, then the two best guesses are merged (lowest index wins ties). The draft drops from 1.32 to

@@ -23,6 +23,12 @@ Binary `46891d491b08…` (build r1, [receipt](../../../engine/receipts/46891d491
 `/dev/shm/engine-build-draft-split-20261029-r1`. Rank 0 on cards 23:00.0 + 27:00.0 (rank 0's service cards), context
 65536, B19 flags ([arm_env.py](arm_env.py)), F32 target, BF16 draft with the 91,392-row raw Q6_K head prefix.
 
+**Update, later on 10-29** ([target-head-split-2026-10-29](../target-head-split-2026-10-29/RESULT.md)): once rank 1's
+target head is split too, rank 1's in-service half drops from 11.1 to 10.6 ms and rank 0 sets the pace. The draft head
+split then pays off: 1.007–1.027× per prompt over the target split alone (suite medians 74.66 against 73.73 tok/s,
+outputs equal B19). The slow speculative halves of section 5 did not recur in that suite, and its plain TP arm showed
+some too. So they were most likely server-instance variance.
+
 ## 1. Where the draft spends its time
 
 There is no profiling under TP (the shared-context queues cannot time events), so the per-site times come from the
