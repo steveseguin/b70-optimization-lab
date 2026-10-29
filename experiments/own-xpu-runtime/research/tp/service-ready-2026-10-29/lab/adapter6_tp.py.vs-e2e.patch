@@ -1,0 +1,58 @@
+--- ../e2e-suite-2026-10-29/lab/adapter6_tp.py	2026-10-29 01:24:39.154275239 -0400
++++ lab/adapter6_tp.py	2026-10-29 01:55:37.342197013 -0400
+@@ -4,8 +4,11 @@
+ Lab copy for research/tp/e2e-suite-2026-10-29 (four-card TP2xPP2 suite), from serving/lan/adapter6.py. Changes:
+ SC117_RANK_BDFS picks each rank's cards; a rank with two cards runs --cards 2 --tp-replicate with ZE_AFFINITY_MASK over
+ the PCI-ordered B70 list (as tp_rank0_driver.py --tp) and receives the OWNRT_TP_* variables; OWNRT_NO_DRAFT_TIMING and
+-EnableDeferBacking pass through to every rank. Everything else is adapter6 unchanged."""
+-import argparse, copy, fcntl, hashlib, importlib.util, json, mmap, os, shutil, socket, struct, subprocess, time
++EnableDeferBacking pass through to every rank. Everything else is adapter6 unchanged.
++
++research/tp/service-ready-2026-10-29 (from the e2e-suite-2026-10-29 lab copy): Transport.close accepts exactly one
++teardown record per card of a rank (rank_teardown_ok); the sealed P195 check expects one per rank."""
++import argparse, copy, fcntl, hashlib, importlib.util, json, mmap, os, re, shutil, socket, struct, subprocess, time
+ from pathlib import Path
+ 
+ P=Path(__file__).resolve().parent
+@@ -154,9 +157,41 @@
+ # the exact size it reported for this model. The sealed base bounds both ranks' anonymous memory at 8 GiB.
+ LOOKUP_COPY_BYTES=29_137_853_440
+ 
++TEARDOWN_BACKEND=re.compile(r'LevelZero:(\d+):')
++def rank_teardown_ok(receipt,rank,returncode,cards):
++    """The rank receipt check of BASE.Transport.close, per card. A rank on N cards (TP: one shared context) writes exactly
++    N teardown records, one per card (backend 'LevelZero:<card>:...', cards 0..N-1 each once). The rank must exit 0 with
++    a passed receipt for its own rank, and every record must be complete and safe: exit 0, safe to exit, nothing in
++    flight, no live bytes, no error. Anything missing, extra, duplicated or nonzero fails."""
++    if not isinstance(receipt,dict):return False
++    td=receipt.get('teardown')
++    if not(returncode==0 and receipt.get('passed') is True and receipt.get('rank')==rank and type(cards) is int and cards>=1
++           and isinstance(td,list) and len(td)==cards):return False
++    seen=[]
++    for t in td:
++        m=TEARDOWN_BACKEND.match(str(t.get('backend',''))) if isinstance(t,dict) else None
++        if m is None:return False
++        if not(t.get('status')=='complete' and t.get('exit_code')==0 and t.get('safe_to_exit') is True and t.get('in_flight')==0
++               and t.get('live_bytes')==0 and t.get('error')==''):return False
++        seen.append(int(m.group(1)))
++    return sorted(seen)==list(range(cards))
++
+ class Transport(BASE.Transport):
+     """Constructor differs; the anonymous-memory bound also admits rank 0's lookup-table copy. Caller owns admission,
+     leases and physical drain."""
++    def close(self,success):
++        """BASE.Transport.close unchanged up to its last statement, the receipt check 'len(teardown)==1' per rank, which a
++        TP rank (one record per card) fails after a clean drain. That check is replaced by rank_teardown_ok for every
++        rank. The base reaches it only after FINISH, drain, the ownership receipt and closing (self.closed), so catching
++        exactly its error there skips nothing else; every other error propagates."""
++        if self.closed:return
++        try:super().close(success)
++        except ValueError as error:
++            if not(success and self.closed and str(error)=='rank teardown failure'):raise
++        if success:
++            for rank,p in enumerate(self.children):
++                r=json.loads((self.out/f'rank{rank}/receipt.json').read_text())
++                require(rank_teardown_ok(r,rank,p.returncode,len(RANK_BDFS[rank])),'rank teardown failure')
+     def check_alive(self):
+         self.check()
+         require(time.monotonic()-self.start_time<self.a.seconds,"pipeline total deadline")
