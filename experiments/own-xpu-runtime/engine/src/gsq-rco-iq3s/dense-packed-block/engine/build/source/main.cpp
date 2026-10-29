@@ -382,7 +382,9 @@ static Options parse(int argc, char **argv) {
 #endif
   require(a.draft_rank==0||a.draft_rank==1,"draft rank must be0 or1");
   require(a.target_split==0||a.target_split==23||a.target_split==24||(a.gsq_packed&&a.target_split>=20&&a.target_split<=24),"target split must be0 (placement default),23 or24 (GSQ: 20..24)");
-  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&(a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072))),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144");
+  // --tp-replicate (2026-10-29): 131072 is also admitted for a TP rank (two cards). Its admission is the per-card TP
+  // plan (write_tp_plan, 30 GiB per card); a one-card rank stays refused there.
+  require(a.target_split!=23||a.mini||a.context==4096||(a.draft_rank==0&&(a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only||a.tp_replicate)&&a.context==131072))),"23/25 rank1 draft admitted at context4096 only; rank0 at4096/32768/65536/262144 (131072: pipeline/provider/TP rank)");
   require(a.target_split!=24||a.draft_rank!=0||a.mini||a.context==4096||a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072),"24/24 rank0 draft admitted at context4096/32768/65536/262144");
   require(a.draft_head=="full","draft shortlist head not qualified; use full");
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
@@ -521,7 +523,7 @@ static Options parse(int argc, char **argv) {
     // 32768 (the RoPE table's extent) with the rank-0 draft, as main.cpp admits for the 23/25 split; QSA bounds come
     // from capacity or the launch extent and attention keeps its 2051-slot budget, so only allocations grow
     // (card 27 rank-1 lab 2026-10-26: 4096 vs 32768 bitwise on 1,079 buffers; 8K batched == token-by-token).
-    require(a.mini||a.context==4096||((a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only)&&a.context==131072))&&a.draft_rank==0),"GSQ real context 4096, 32768, 65536 or 262144; pipeline/provider additionally 131072 (rank-0 draft)");
+    require(a.mini||a.context==4096||((a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.provider_only||a.tp_replicate)&&a.context==131072))&&a.draft_rank==0),"GSQ real context 4096, 32768, 65536 or 262144; pipeline/provider/TP rank additionally 131072 (rank-0 draft)");
     // GSQ: rank 0 (with the draft) holds layers 0..split-1, rank 1 the rest; stage boundaries only copy activations.
     require(a.mini||(a.target_split>=20&&a.target_split<=24&&a.draft_rank==0),"GSQ split 20..24 with the rank-0 draft required");
   }
@@ -2351,8 +2353,11 @@ static size_t plan_extra_bytes(const flash::Plan& p,const Options& a) {
   const size_t ab=a.f32_activations?4:2; // exact mode adds the F32 target RoPE table and widens mixture/snapshots
   return 174080*4+rope_constants::bytes*(a.f32_activations?3:1)+target_scratch_bytes(p,a)+8*1024*1024+p.g.top*sizeof(iq3::Route)+p.g.h*ab+4+12+2*4*24*(p.g.budget+3)*4+48*4*p.g.h*ab;
 }
+// admit=false (--tp-replicate ranks, 2026-10-29): plan.json and the "card <c> owned_bytes" lines are written as before, but
+// the one-card total is not refused here; the rank's admission is write_tp_plan's per-card plan after the TP transform
+// (same 30 GiB cap per card). Every other caller admits as before.
 static void write_plan(const fs::path &path, const flash::Plan &p,
-                       const Weights &w, int cards, const Options& a) {
+                       const Weights &w, int cards, const Options& a, bool admit=true) {
   p49d::Selection selected;
   if(!a.selection.empty())selected.load(a.selection.string(),a.selection_sha256);
   std::map<std::string, int> owner;
@@ -2421,7 +2426,7 @@ static void write_plan(const fs::path &path, const flash::Plan &p,
   save(path, o.str());
   for(int c=0;c<cards;++c){auto peak_bytes=base[c]+(a.memory=="resident"?resident[c]:peak);
     std::cout<<"card "<<c<<" owned_bytes "<<peak_bytes<<" weights "<<(a.memory=="resident"?resident[c]:peak)<<" dispatch "<<a.gemv<<'\n';
-    require(peak_bytes<=30ull*1024*1024*1024,"planned card exceeds 30 GiB");
+    if(admit)require(peak_bytes<=30ull*1024*1024*1024,"planned card exceeds 30 GiB");
   }
 }
 // --tp-replicate (2026-10-29): per-card bytes of the two-card plan, after the TP transform. write_plan above admits the
@@ -2487,7 +2492,7 @@ static size_t target_scratch_bytes(const flash::Plan& p,const Options& a) {
  }
  // GSQ resident ranks use the same plan-derived bound (the writer union below must fit 8 MiB); binding-time extent
  // guards in every scratch-using kernel stay on, so a short scratch refuses instead of writing out of bounds.
- const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536||a.context==262144||(a.pipeline_enabled()&&a.context==131072))&&a.memory=="resident";
+ const bool gsq=a.gsq_packed&&!a.mini&&(a.context==4096||a.context==32768||a.context==65536||a.context==262144||((a.pipeline_enabled()||a.tp_replicate)&&a.context==131072))&&a.memory=="resident";
  if(!gsq&&(a.target_split!=23||a.draft_rank!=1||a.nongemv!="parallel"||
     (!a.mini&&a.context!=4096)))return legacy;
  require((a.mini||p.g.h==2560)&&p.g.context==a.context&&

@@ -679,7 +679,9 @@ static int run_rank(const Options& a) {
   fd=::open(a.shared.c_str(),O_RDWR|O_NOFOLLOW);require(fd>=0,"shared open");struct stat st{};
   require(!fstat(fd,&st)&&st.st_size==shared_bytes,"shared extent");mapping=mmap(nullptr,shared_bytes,PROT_READ|PROT_WRITE,MAP_SHARED,fd,0);require(mapping!=MAP_FAILED,"shared mmap");
   if(a.pipeline_canary){int rc=run_pipe_canary(a,static_cast<uint8_t*>(mapping));munmap(mapping,shared_bytes);::close(fd);return rc;}
-  // --tp-replicate: the plan is the one-card rank plan; the card-1 twins are added after write_plan.
+  // --tp-replicate: the plan is the one-card rank plan; the card-1 twins are added after write_plan. A TP rank's
+  // admission is the per-card plan after the TP transform (write_tp_plan below, 30 GiB per card), not the one-card
+  // total, which write_plan still records in plan.json (2026-10-29: 131072 on rank 1 plans 34.1 GB on one card).
   Options one_card=a;one_card.cards=1;
   weights=std::make_unique<Weights>(a);auto full_plan=plan(*weights,one_card);
   auto p=a.pipeline_enabled()?ownrt::pipeline_layout::slice(std::move(full_plan),a.pipeline_boundaries,a.pipeline_stage):split(std::move(full_plan),a.rank,a.mini,a.draft_rank,a.target_split,v3::rank0_extended(a));
@@ -689,7 +691,7 @@ static int run_rank(const Options& a) {
   // pool launches on it; the adapter selects ring indexing per card from the bound allocation's size.
   if(qsaring::enabled()&&a.rank==1&&a.gsq_packed&&!a.mini&&!a.pipeline_enabled()&&p.g.context>qsaring::rows)
    for(auto& b:p.buffers)if(ends(b.name,".qsa.raw")){require(b.shape.size()==2&&b.shape[0]==p.g.context,"QSA raw buffer geometry");b.shape[0]=qsaring::rows;}
-  dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card);
+  dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card,!a.tp_replicate);
   // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
   const bool plan_only=[]{const char* only=std::getenv("OWNRT_PLAN_ONLY");return only&&only[0]=='1';}();
   if(plan_only&&!a.tp_replicate){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
