@@ -18,17 +18,18 @@ with 32-bit activations, recurrent state and attention cache, plus the
 official FP8 draft model for speculative decoding. Every speed change must
 leave outputs and engine state bit-identical.
 
-Latest results (October 26–28, 2026). These are lab observations with linked
+Latest results (October 26–29, 2026). These are lab observations with linked
 receipts, not certified records:
 
 | Setup | Result | Evidence |
 | --- | --- | --- |
+| 4 B70s, each pipeline stage split exactly across two cards, 32K context | **73.53 tok/s** (same build on 2 cards: 66.25), identical outputs | [result](experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/RESULT.md) |
 | 2 B70s, chat service, 64K context | **66.21 tok/s** decode on 12 cold prompts | [suite receipt](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json) |
 | 3 target B70s + 1 draft B70, 64K context | **58.57 tok/s**; all 5,965 outputs match CPU-checked references | [paired summary](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json) |
 | Same layout, 262K context, 121,854-token prompt | First token after 250.8 s, then 48.5 tok/s | [long-prompt summary](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/equal16-topology-screen/equal16-r1-evidence/summary.json) |
 
-For one conversation two cards are currently fastest; the four-card layout is
-what holds a 262K context.
+Splitting each layer exactly across two cards made four cards the fastest
+setup for one conversation; a separate four-card layout holds a 262K context.
 
 - Overview: [the own engine on neural.download](https://neural.download/own-runtime.html)
 - Try it: [October 28 SC117 research recipe](repro/sc117-iq3s-b70-research-draft-20261028/README.md), its [results](repro/sc117-iq3s-b70-research-draft-20261028/RESULTS.md)

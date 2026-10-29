@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**October 29 — four B70s decode SC117 at 73.53 tok/s exact (1.110× the two-card 66.25 on the same binary).**
+- Exact TP inside both pipeline ranks (cards 23+27 / 43+47), 12-prompt suite, 32K context, token-by-token prompt
+  reading: 73.53 vs 66.25 tok/s median; every prompt +10.8–12.2%; all 5,965 output ids, hashes and MTP hits equal
+  the two-card arms and the B19 receipt; cached_tokens=0; state oracles 0 differences. Rank-0 TP alone: 9.39 vs
+  10.64 ms per half (1.133×). Open: 64K under TP (rank 1 needs 32.43 GB without the QSA raw ring), batched prompt
+  reading under TP, a teardown-record check that flags TP ranks' two per-card teardowns as a failure.
+  [E2E result](experiments/own-xpu-runtime/research/tp/e2e-suite-2026-10-29/RESULT.md).
+
 **October 28–29 night — exact two-card split reaches 1.131× on rank 1; long-prompt cuts 0/16/33/48 −3.9% TTFT.**
 - Kernel-direct peer stores (producer kernel writes rows into the peer card + flag; fresh consumer kernel waits,
   bounded) cost 1.43/1.63/3.33 µs per exchange at 4/10/40 KB versus 6.3–10.3 µs event+memcpy; 0 mismatches.
