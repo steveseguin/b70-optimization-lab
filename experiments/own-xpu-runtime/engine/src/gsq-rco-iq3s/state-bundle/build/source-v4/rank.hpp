@@ -274,7 +274,21 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  // packet188 rank0_prepare=async: rank 0's inputs are staged without host waits; the device position is
  // captured by an ordered copy and checked after the half's final drain (finish_staged), before any reply.
  const bool staged=e.a.rank==0&&e.prepare_async;
- if(!prepared_inputs&&!staged)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+ // OWNRT_SNAPSHOT_NOWAIT=1 (Engine::snapshot_nowait): rank 0 reads position and token_history once, here, while its
+ // queues are idle (the speculative snapshot only reads them, so these are the bytes the waited path read after it);
+ // the snapshot copies and the input loads are then ordered, unwaited submissions up to the half's kernels.
+ const bool nowait=e.a.rank==0&&!staged&&!prepared_inputs&&Engine::snapshot_nowait();
+ if(nowait)require(e.prepared_path&&!e.kio_active&&!e.v3_active&&!e.a.pipeline_enabled()&&!e.attribution.enabled&&!l4_raw_history(e)&&
+   e.half_inputs.size()==size_t(e.a.cards),"OWNRT_SNAPSHOT_NOWAIT: prepared rank-0 halves only");
+ // OWNRT_ROLLBACK_NOWAIT with nowait: the confirmed redo right after its rollback (corrected: no other command in between,
+ // SpeculativeImage::before_command) needs neither readback: the restore copies, ordered before this half's work, wrote
+ // back the position and token_history bytes the speculative half read before its snapshot (undo() keeps them).
+ const bool known=nowait&&corrected&&e.redo_known&&e.redo_known->first==request.position;
+ if(!prepared_inputs&&!staged&&!known)require(e.integer(0,"position")==request.position,"position sequence mismatch");
+ std::vector<uint8_t> nowait_history;
+ if(known)nowait_history=std::move(e.redo_known->second);
+ else if(nowait&&e.buffers[0].count("token_history"))nowait_history=e.readback(0,e.buffers[0].at("token_history").id,16);
+ e.redo_known.reset();
  require(!prepared_inputs||e.a.rank==1,"prepared half inputs rank ownership");
  require(request.token>=0&&request.token<e.p.g.vocab,"half token bound");
  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
@@ -284,7 +298,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(l4_history)l4_history->begin(request.position,request.sequence,request.token,request.fixture,request.speculative,e.bank_parity);
  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);
  // Snapshot the prior launch extents before admitting a speculative bucket.
- if(request.speculative)p150::measure("snapshot",request.position,false,[&]{image.begin(shared,staged?request.position:-1);});
+ if(request.speculative)p150::measure("snapshot",request.position,false,[&]{image.begin(shared,(staged||nowait)?request.position:-1,nowait);}); // nowait: position read above
  e.admit_position(request.position);
  struct rusage before{},after{},thread_before{},thread_after{};getrusage(RUSAGE_SELF,&before);getrusage(RUSAGE_THREAD,&thread_before);
  auto waits=e.host_waits;double waited=e.wait_ms;e.family_ms.fill(0);
@@ -292,10 +306,13 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  auto start=std::chrono::steady_clock::now();double gpu=e.gemv_ms+e.nongemv_ms;
  candidate={};candidate.pending=true;candidate.position=request.position;candidate.fixture=request.fixture;candidate.speculative=request.speculative;
  if(e.a.rank==0){candidate.h0=e.history0;candidate.h1=e.history1;
-  if(!staged&&e.buffers[0].count("token_history"))p150::measure("token_history",request.position,false,[&]{candidate.token_history=e.readback(0,e.buffers[0].at("token_history").id,16);});}
+  if(nowait){e.begin_half_inputs();candidate.token_history=std::move(nowait_history);} // read before the snapshot (same bytes)
+  else if(!staged&&e.buffers[0].count("token_history"))p150::measure("token_history",request.position,false,[&]{candidate.token_history=e.readback(0,e.buffers[0].at("token_history").id,16);});}
  auto prepare_start=std::chrono::steady_clock::now();
  if(staged)p150::measure("token_prep",request.position,false,[&]{e.stage_half_inputs(request.token);});
  else {
+ // OWNRT_SNAPSHOT_NOWAIT: every put of the token and the lookup rows below is an ordered, unwaited staged copy.
+ struct StagingScope{Engine& e;StagingScope(Engine& x,bool on):e(x){e.half_input_staging=on;}~StagingScope(){e.half_input_staging=false;}} staging_scope(e,nowait);
  if(!prepared_inputs){e.put(0,"token",&request.token,4);if(e.a.tp_replicate)e.put(1,"token",&request.token,4);}
  if(e.a.rank==0){
  const auto h0=e.history0,h1=e.history1;
@@ -304,6 +321,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  e.history0=h0;e.history1=h1;e.prepare_token(request.token);}});
  }
  else if(!prepared_inputs){size_t n=e.stream_bytes();require(n<=slot_bytes,"shared stream extent");e.put(0,"streams",shared+slot_bytes,n);if(e.a.tp_replicate)e.put(1,"streams",shared+slot_bytes,n);}
+ if(nowait)e.flush_half_inputs(); // one ordered load kernel per card
  }
  double prepare_ms=Engine::ms(prepare_start);auto enqueue_start=std::chrono::steady_clock::now();double enqueue_wait=e.wait_ms;
  std::array<int,48> captured{};size_t captured_count=0,issued=0;
@@ -397,6 +415,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  if(decode_profile){std::ofstream o(e.a.output/"decode-profile.jsonl",std::ios::app);o<<"{\"position\":"<<request.position<<",\"fixture\":"<<request.fixture<<",\"speculative\":"<<(request.speculative?"true":"false")<<",\"cancelled\":"<<(candidate.cancelled?"true":"false")<<",\"sites\":{";bool comma=false;
   for(const auto& [k,v]:decode_spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
  if(staged)candidate.token_history=e.finish_staged(request.position,e.buffers[0].count("token_history")>0);
+ else if(nowait)e.finish_half_inputs();
  if(request.fixture>0&&e.head_merge)e.head_merge(request.sequence,request.position,request.fixture);
  int error=0,folded_token=-1;bool folded=false;
  if(e.a.rank==1&&request.fixture>0&&e.kio_active){auto both=e.read_error_and_token();error=both.first;folded_token=both.second;folded=true;} // packet188: one kernel readback
@@ -452,7 +471,9 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
 static void undo(Engine& e,Candidate& c,SpeculativeImage& image,bool redo=false,int position=-1,int token=-1) {
  require(e.a.rank==0&&c.pending&&c.speculative,"rollback outside rank0 speculation");
  e.drain();require(!e.integer(0,"error"),"sticky error cannot be rolled back");
- if(c.swapped)e.swap_state_banks();image.restore(redo,position,token);c={};
+ if(c.swapped)e.swap_state_banks();image.restore(redo,position,token,/*error_checked=*/true);
+ e.redo_known.reset();if(redo&&SpeculativeImage::rollback_nowait()&&Engine::snapshot_nowait())e.redo_known.emplace(c.position,c.token_history);
+ c={};
 }
 static void state_dump(Engine& e,int sequence) {
  std::ostringstream o;o<<"{\"history0\":"<<e.history0<<",\"history1\":"<<e.history1<<",\"buffers\":{";bool comma=false;

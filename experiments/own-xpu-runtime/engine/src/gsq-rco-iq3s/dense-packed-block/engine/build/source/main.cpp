@@ -1147,11 +1147,58 @@ public:
     }
 #endif
     profiling_ms+=ms(profiling_start);
-    pending.clear();attribution.events.clear();tail=0;tail_card=0;card_tails={};
+    pending.clear();attribution.events.clear();tail=0;tail_card=0;card_tails={};half_input_busy=false;
     // OWNRT_TP_THREADS: while card 1's submission thread runs, this thread never touches card 1 (rank.hpp TpWorker).
     for(size_t c=0;c<devices.size();++c)if(!(tp_worker_running&&c==1))retire_events(int(c));
   }
   bool tp_worker_running=false;
+  // OWNRT_SNAPSHOT_NOWAIT=1 (2026-10-29, opt-in, rank 0): no host wait between a half's speculative snapshot copy and its
+  // first kernel. The snapshot copies and the bank rotation are issued without a drain (the static snapshot never touches
+  // a recurrent bank), and the half's inputs (token, lookup rows) are staged in pinned memory and loaded by ordered,
+  // unwaited copies on each card's in-order queue, after the snapshot copy and before the half's kernels. Position and
+  // token_history are read once before the snapshot (rank.hpp half_step), with the queues idle; the snapshot's own
+  // readbacks are skipped (the sticky error is checked after the half's final drain, before any reply, as packet188's
+  // rank0_prepare=async). Every device operation, its bytes and its queue order are unchanged; only host waits go.
+  // Unset, nothing is allocated and no path changes.
+  static bool snapshot_nowait(){static const bool on=[]{const char* v=std::getenv("OWNRT_SNAPSHOT_NOWAIT");return v&&v[0]=='1';}();return on;}
+  static constexpr size_t half_input_bytes=262144,half_input_controls=128; // inputs start at 128
+  std::vector<Allocation> half_inputs;std::array<size_t,2> half_input_offset{};bool half_input_staging=false,half_input_busy=false;
+  struct HalfInput {Allocation dst;size_t offset,bytes;};
+  std::array<std::vector<HalfInput>,2> half_input_pending; // per card: unflushed puts
+  uint64_t half_input_halves=0,half_input_copies=0;
+  // OWNRT_ROLLBACK_NOWAIT + OWNRT_SNAPSHOT_NOWAIT (rank.hpp undo/half_step): the restored position and token_history of the
+  // speculative half just rolled back for a redo; consumed (and cleared) by the next half.
+  std::optional<std::pair<int,std::vector<uint8_t>>> redo_known;
+  void allocate_half_inputs(){
+    if(!snapshot_nowait()||a.rank!=0)return;
+    require(half_inputs.empty()&&a.cards<=2,"half-input staging allocated once");
+    for(int c=0;c<a.cards;++c){half_inputs.push_back(allocate(c,"half-inputs",half_input_bytes,Category::pinned_slab,Lifetime::transfer,Memory::pinned));
+      std::memset(half_input_host(c),0,half_input_bytes);}
+  }
+  uint8_t* half_input_host(int c){return static_cast<uint8_t*>(dev(c).arena.row(half_inputs.at(size_t(c))).pointer);}
+  // Start of a half's inputs: the previous half's staged copies completed at its final drain, which clears the busy flag.
+  void begin_half_inputs(){
+    require(half_inputs.size()==size_t(a.cards)&&!half_input_staging&&half_input_pending[0].empty()&&half_input_pending[1].empty(),"half-input staging ownership");
+    if(half_input_busy)drain();
+    half_input_offset.fill(half_input_controls);++half_input_halves;
+  }
+  // A put of a whole buffer: its bytes go to pinned staging now; flush_half_inputs() loads every staged put of a card with
+  // one ordered packet188 KioCopy kernel (a byte copy), no host wait.
+  void stage_upload(int c,Allocation dst,const void* src,size_t n){
+    require(size_t(c)<half_inputs.size()&&n>0&&n<=dev(c).arena.row(dst).bytes&&half_input_offset[size_t(c)]+n<=half_input_bytes,"half-input staging capacity/extent");
+    auto& off=half_input_offset[size_t(c)];std::memcpy(half_input_host(c)+off,src,n);
+    auto& list=half_input_pending[size_t(c)];if(list.size()==p188::KioCopy::width)flush_half_inputs(c);
+    list.push_back({dst,off,n});off+=(n+63)/64*64;
+  }
+  void flush_half_inputs(int c){
+    auto& list=half_input_pending[size_t(c)];if(list.empty())return;
+    p188::KioCopy op;std::vector<Allocation> ids;
+    for(const auto& x:list){op.add(dev(c).arena.row(x.dst).pointer,half_input_host(c)+x.offset,x.bytes);if(std::find(ids.begin(),ids.end(),x.dst)==ids.end())ids.push_back(x.dst);}
+    track(c,dev(c).compute(op,std::span<const Allocation>(ids.data(),ids.size()),{}));list.clear();half_input_busy=true;++half_input_copies;
+  }
+  void flush_half_inputs(){for(int c=0;c<a.cards;++c)flush_half_inputs(c);}
+  // After the half's final drain: every staged copy has completed.
+  void finish_half_inputs(){require(!tail&&!half_input_busy&&half_input_pending[0].empty()&&half_input_pending[1].empty(),"half inputs pending after the half drained");}
   // OWNRT_NO_DRAFT_TIMING=1 (2026-10-29, opt-in): a one-card rank 0 / MTP process without profiling queues, as under
   // --tp-replicate. Profiling exists only to report the draft's GPU time; the arithmetic is unchanged.
   static bool no_draft_timing(){static const bool on=[]{const char* v=std::getenv("OWNRT_NO_DRAFT_TIMING");return v&&v[0]=='1';}();return on;}
@@ -1336,6 +1383,7 @@ public:
   void put(int c, const std::string &name, const void *b, size_t n) {
     auto s = buffers[c].at(name);
     require(n == s.n * flash::scalar_bytes(s.type), "control extent");
+    if(half_input_staging){stage_upload(c,s.id,b,n);return;} // OWNRT_SNAPSHOT_NOWAIT: a half's token and lookup rows
     upload(c, s.id, 0, b, n);
   }
   int integer(int c, const std::string &name) {
@@ -1540,8 +1588,10 @@ public:
     alternate_context_extent=bank_cache.at(spare_bank*3+active_bank).extent;
     fp32_sources[0]=0;fp32_extents[0]=0;
   }
-  void rotate_spare_bank() {
-    require(miss_banks()&&!state_reserves.empty(),"third bank unavailable");drain();int extent=context_extent,reverse_extent=alternate_context_extent;save_bank_cache();
+  // wait=false (OWNRT_SNAPSHOT_NOWAIT, static snapshot begin only): host-side rotation with only the snapshot copies in
+  // flight; they never read or write a recurrent bank, and every later submission is ordered after them on its card's queue.
+  void rotate_spare_bank(bool wait=true) {
+    require(miss_banks()&&!state_reserves.empty(),"third bank unavailable");if(wait)drain();int extent=context_extent,reverse_extent=alternate_context_extent;save_bank_cache();
     for(auto& [name,id]:state_reserves)std::swap(state_spares.at(name),id);
     for(auto& [name,id]:state_reserves1)std::swap(state_spares1.at(name),id);
     spare_bank=3-active_bank-spare_bank;load_bank_cache();
@@ -1677,6 +1727,7 @@ public:
 
     }
     allocate_kio(); // packet188: pinned kernel-io staging, k3 storage (rank0_layers 0-26) loads only
+    allocate_half_inputs(); // OWNRT_SNAPSHOT_NOWAIT (rank 0): pinned half-input staging per card
   }
   void prepare_plan() {
     if(a.memory!="resident")return;

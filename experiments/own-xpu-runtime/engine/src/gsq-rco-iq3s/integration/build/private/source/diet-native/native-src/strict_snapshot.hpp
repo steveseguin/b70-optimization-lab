@@ -478,8 +478,12 @@ public:
   }
   require(offset<=capacity,"snapshot extent overflow");valid=true;dirty=true;copy(false);++captures;saved_bytes+=offset;
  }
- void begin(uint8_t* shared,int known_position=-1) {
-  require(e.a.rank==0&&k==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");e.drain();
+ // nowait (OWNRT_SNAPSHOT_NOWAIT, static snapshots only; rank.hpp half_step passes known_position): the card-0 and card-1
+ // copies are issued and the spare bank rotates without a drain. The copies read only non-bank sources; the half's inputs
+ // and kernels follow them on each card's in-order queue, so the captured bytes are those the waited path captured.
+ void begin(uint8_t* shared,int known_position=-1,bool nowait=false) {
+  require(e.a.rank==0&&k==0&&backup&&!valid&&!redo_pending,"snapshot begin ownership");
+  require(!nowait||(static_mode()&&known_position>=0),"OWNRT_SNAPSHOT_NOWAIT requires the static snapshot and a known position");e.drain();
   require(!e.poisoned&&(known_position>=0||!e.integer(0,"error")),"snapshot cannot erase target failure");
   // Host layer streaming releases its weights at every completed half. Restoring
   // metadata never revives an allocation freed by a later layer transition.
@@ -492,7 +496,7 @@ public:
   captured_position=position;
   if(static_mode()){
    valid=true;dirty=true;bank_capture_bytes_avoided+=static_bank_bytes;
-   copy(false);if(peer)peer->begin_device(position);e.rotate_spare_bank();rotated=true;++captures;saved_bytes+=static_bytes;return;
+   copy(false);if(peer)peer->begin_device(position);e.rotate_spare_bank(!nowait);rotated=true;++captures;saved_bytes+=static_bytes;return;
   }
   saved.clear();protected_active.clear();protected_qsa.clear();size_t offset=0;
   for(const auto& source:sources){
@@ -517,17 +521,23 @@ public:
   copy(false);if(peer)peer->begin_device(position);if(e.miss_banks()){e.rotate_spare_bank();rotated=true;}++captures;saved_bytes+=offset;
  }
  void accept(){require(valid,"snapshot accept without speculation");e.drain();rotated=false;valid=false;if(peer)peer->accept();}
- void restore(bool for_redo=false,int position=-1,int token=-1){
-  require(valid,"snapshot restore without speculation");e.drain();
+ // OWNRT_ROLLBACK_NOWAIT=1 (2026-10-29, opt-in, static snapshots): the rollback issues the card-0 and card-1 restore
+ // copies back to back without draining between or after them, and skips the second sticky-error readback (rank.hpp
+ // undo() has just drained and read it; no device work runs in between). The redo half and every later command are
+ // ordered after the copies on each card's in-order queue, and every host read drains first. Restored bytes unchanged.
+ static bool rollback_nowait(){static const bool on=[]{const char* v=std::getenv("OWNRT_ROLLBACK_NOWAIT");return v&&v[0]=='1';}();return on;}
+ void restore(bool for_redo=false,int position=-1,int token=-1,bool error_checked=false){
+  const bool nowait=rollback_nowait()&&static_mode();
+  require(valid,"snapshot restore without speculation");if(!(nowait&&k==1))e.drain();
   if(k==1){ // card-1 device restore, called by the card-0 image after its bank rotation and copy
    require(!redo_pending,"nested card-1 redo restore");copy(true,for_redo);valid=false;++restores;
    if(for_redo){redo_pending=true;redo_position=position;redo_token=token;++redo_restores;}return;}
-  require(!e.poisoned&&!e.integer(0,"error"),"snapshot cannot roll back sticky failure");
+  require(!e.poisoned&&((nowait&&error_checked)||!e.integer(0,"error")),"snapshot cannot roll back sticky failure");
   require(e.bank_parity==parity,"snapshot restore bank selection");
   if(!e.resident)for(int layer:e.loaded_layer)require(layer==-1,"snapshot restore streaming layer retained");
   require(!redo_pending,"nested redo restore");
   if(rotated){e.rotate_spare_bank();rotated=false;}
-  copy(true,for_redo);if(peer)peer->restore(for_redo,position,token);if(!e.miss_overlap())e.drain();
+  copy(true,for_redo);if(peer)peer->restore(for_redo,position,token);if(!e.miss_overlap()&&!nowait)e.drain();
   require(shared_slot!=nullptr,"restore shared slot lifetime");std::memcpy(shared_slot,shared_before.data(),shared_before.size());
   // Restore both prepared-command banks as well as their launch metadata.
   // Rebuild only QSA sites through the same admission path. Do this before

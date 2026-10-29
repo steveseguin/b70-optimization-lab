@@ -61,7 +61,7 @@ class DraftRuntime {
  template<class Owner> friend class pipeline::StageCheckpointFor;
  Engine& e;std::unique_ptr<Store> store;flash::Plan p;std::map<std::string,Slot> buffers;std::map<std::string,Weight> weights;
  std::map<const flash::Launch*,Engine::Prepared> prepared;
- struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; };
+ struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; int gemv_split=-1; };
  std::vector<Site> issue_sites;
  std::vector<flash::Launch> merge_plan;
  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
@@ -94,6 +94,7 @@ class DraftRuntime {
   if(fused(l))return;
   if(split&&l.label=="logits"){split_logits(l);return;}
   if(split&&l.op=="argmax"){split_argmax();return;}
+  if(gemv_split)if(int k=gemv_split_index(l.label);k>=0){gemv_split_card0(size_t(k),l);return;}
   if(l.op=="merge_hidden_norm") {
    e.finish(0,changed(l)?p59::norm(e.dev(0),id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),1,4*p.g.h):norm_hidden(e.dev(0),id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),scratch,4*p.g.h),false);return;}
   if(l.op=="norm"&&changed(l)){e.finish(0,p59::norm(e.dev(0),id(l.inputs[0]),weights.at(l.weights[0]).id,id(l.outputs[0]),l.shape[0],l.shape[1]),false);return;}
@@ -109,6 +110,7 @@ class DraftRuntime {
   auto capture=[&](const flash::Launch& l){
    Site site;site.gemv=l.op=="gemv"||l.op=="routed_gemv"||l.op=="expert_gate_up";
    site.head=l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax";
+   if(gemv_split)site.gemv_split=gemv_split_index(l.label);
    e.set_class("draft."+l.label);site.cls=e.current_cls;
    e.preparing_commands=true;e.dev(0).begin_capture(site.commands);
    try {direct(l);e.dev(0).end_capture();e.preparing_commands=false;}
@@ -118,6 +120,7 @@ class DraftRuntime {
   for(const auto& l:merge_plan)capture(l);
   for(const auto& l:p.launches)capture(l);
   if(split)capture_split_card1();
+  if(gemv_split)capture_gemv_split_card1();
   e.current_cls=saved_class;captured=true;
  }
 
@@ -190,6 +193,81 @@ class DraftRuntime {
   split=std::move(s);
   save(e.a.output/"draft-head-split.json","{\"schema\":\"ownrt.draft-head-split.v1\",\"prefix_rows\":"+std::to_string(rows)+",\"card0_rows\":"+std::to_string(split->rows0)+
    ",\"card1_rows\":"+std::to_string(split->rows1)+",\"card1_weight_bytes\":"+std::to_string(size_t(split->rows1)*rb)+",\"exchange_slots\":[0,1],\"cap_polls\":"+std::to_string(Engine::tp_exchange_cap)+"}");
+ }
+ // OWNRT_DRAFT_GEMV_SPLIT=1 (lab 2026-10-29, research/tp/rank0-trims-2026-10-29; --tp-replicate rank 0, prepared commands):
+ // the draft's large dense BF16 GEMVs (production mtp36::linear sites, one input row, no routes; default qsa.qgate,
+ // OWNRT_DRAFT_GEMV_SPLIT_SITES=label,... for others) split by output rows across the rank's two cards. Card 0 computes
+ // rows [0, rows0) with the unchanged kernel and its own weight; card 1 holds a byte copy of rows [rows0, rows) and runs
+ // the same kernel on them (a row's arithmetic never depends on the row count: one subgroup per row, the same lane order
+ // and tree). Per split site and draft step: exchange X1 sends the input row to card 1 (card 1 answers with a ping word),
+ // each card computes its rows, exchange X2 stores card 1's rows into card 0's output at row rows0 (card 0 answers with a
+ // ping). The site's output on card 0 is then the one-card output, so the draft's 71 mutable allocations, its dump and
+ // every later site are unchanged. Card 1's commands for a site are issued just before card 0's. The split's control
+ // words are its own (two slots per site), never reset; card-1 buffers are not draft state.
+ struct GemvSplitSite {std::string label;unsigned rows0=0,rows1=0,columns=0;Allocation w1{},x1{},y1{};size_t x_bytes=0;std::vector<ownrt::PreparedCompute> card1;};
+ struct GemvSplit {std::vector<GemvSplitSite> sites;std::array<Allocation,2> words{},xctl{};Allocation error1{};uint64_t runs=0;};
+ std::optional<GemvSplit> gemv_split;
+ static bool gemv_split_requested(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_GEMV_SPLIT");if(!v||std::string(v)=="0")return false;
+   if(std::string(v)!="1")throw std::invalid_argument("OWNRT_DRAFT_GEMV_SPLIT must be 0 or 1");return true;}();return on;}
+ int gemv_split_index(const std::string& label)const{if(!gemv_split)return -1;for(size_t k=0;k<gemv_split->sites.size();++k)if(gemv_split->sites[k].label==label)return int(k);return -1;}
+ void gemv_split_exchange(int c,unsigned slot,Allocation src,size_t src_offset,size_t bytes,Allocation peer_dst,size_t peer_offset,Allocation error){
+  ownrt::Device::ExchangeSpec x;x.mode=0;x.src=src;x.src_offset=src_offset;x.bytes=bytes;x.peer_dst=peer_dst;x.peer_offset=peer_offset;x.slot=slot;
+  x.cap=Engine::tp_exchange_cap;x.control=gemv_split->xctl[size_t(c)];x.peer_control=gemv_split->xctl[size_t(1-c)];x.error=error;
+  auto event=e.dev(c).exchange(e.dev(1-c),x);e.finish(c,{event,event,1},false);}
+ // The Linear matrix_production() builds for this production site (one input row, no routes, BF16).
+ Linear gemv_split_linear(const flash::Launch& l)const{const auto& w=weights.at(l.weights[0]);
+  Linear a;a.w=w.id;a.x=id(l.inputs[0]);a.y=id(l.outputs[0]);a.rows=l.shape[1];a.columns=l.shape[2];a.batch=l.shape[0];a.experts=w.experts;a.int8=w.int8;a.fp8=w.fp8;return a;}
+ void gemv_split_card0(size_t k,const flash::Launch& l){ // card 0: X1 (input row out), its rows, X2 (card 1's rows in)
+  const auto& s=gemv_split->sites.at(k);const auto& g=*gemv_split;
+  gemv_split_exchange(0,unsigned(2*k),id(l.inputs[0]),0,s.x_bytes,s.x1,0,id("error"));
+  Linear a=gemv_split_linear(l);a.rows=s.rows0;e.finish(0,mtp36::linear(e.dev(0),a),true);
+  gemv_split_exchange(0,unsigned(2*k+1),g.words[0],draft_split::ping_src*4,4,g.words[1],draft_split::ping_sink*4,id("error"));}
+ void capture_gemv_split_card1(){
+  auto& g=*gemv_split;e.preparing_commands=true;
+  for(size_t k=0;k<g.sites.size();++k){auto& s=g.sites[k];e.dev(1).begin_capture(s.card1);
+   try {
+    gemv_split_exchange(1,unsigned(2*k),g.words[1],draft_split::ping_src*4,4,g.words[0],draft_split::ping_sink*4,g.error1); // X1: ping out, input in
+    Linear a;a.w=s.w1;a.x=s.x1;a.y=s.y1;a.rows=s.rows1;a.columns=s.columns;a.batch=1;a.experts=1;e.finish(1,mtp36::linear(e.dev(1),a),true);
+    gemv_split_exchange(1,unsigned(2*k+1),s.y1,0,size_t(s.rows1)*2,id(gemv_split_output(s.label)),size_t(s.rows0)*2,g.error1); // X2: rows out
+    e.dev(1).end_capture();}
+   catch(...){e.dev(1).end_capture();e.preparing_commands=false;throw;}
+   require(s.card1.size()==3,"draft GEMV split: three card-1 commands per site");}
+  e.preparing_commands=false;
+ }
+ std::string gemv_split_output(const std::string& label)const{for(const auto& l:p.launches)if(l.label==label)return l.outputs[0];throw std::runtime_error("draft GEMV split site "+label);}
+ void zero_gemv_split(){auto& g=*gemv_split;auto zero=[&](int c,Allocation a){const size_t n=e.dev(c).arena.row(a).bytes;const std::vector<uint8_t> z(n,0);e.upload(c,a,0,z.data(),n);};
+  for(const auto& s:g.sites){zero(1,s.x1);zero(1,s.y1);}zero(0,g.words[0]);zero(1,g.words[1]);zero(1,g.error1);}
+ void init_gemv_split(){
+  require(e.a.tp_replicate&&e.devices.size()==2&&e.a.rank==0&&!e.a.mini&&e.prepared_path&&!depth_probe&&!e.a.pipeline_enabled()&&
+   !e.a.pipeline_live_draft&&!e.a.pipeline_ring_live_draft&&e.a.draft_capture.empty(),"OWNRT_DRAFT_GEMV_SPLIT: --tp-replicate rank 0, prepared commands, no pipeline or probe modes");
+  std::vector<std::string> labels{"blk.0.qsa.qgate"};
+  if(const char* v=std::getenv("OWNRT_DRAFT_GEMV_SPLIT_SITES")){labels.clear();std::string list=v;size_t at=0;
+   while(at<=list.size()){const size_t end=list.find(',',at);labels.push_back(list.substr(at,end==std::string::npos?std::string::npos:end-at));if(end==std::string::npos)break;at=end+1;}}
+  require(!labels.empty()&&labels.size()<=64,"OWNRT_DRAFT_GEMV_SPLIT_SITES: 1-64 labels");
+  GemvSplit g;
+  auto make=[&](int c,const std::string& name,size_t bytes,Category category){auto a=e.allocate(c,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:Lifetime::transaction);
+   if(category!=Category::weights){const std::vector<uint8_t> z(bytes,0);e.upload(c,a,0,z.data(),bytes);}return a;};
+  for(const auto& label:labels){const flash::Launch* site=nullptr;for(const auto& l:p.launches)if(l.label==label)site=&l;
+   require(site&&site->op=="gemv"&&!changed(*site)&&!fused(*site)&&site->shape.size()==3&&site->shape[0]==1&&!e.a.mini&&packet26::dispatch.gemv_for(label)!="p33.dense.segment","OWNRT_DRAFT_GEMV_SPLIT: "+label+" is not a production one-row dense draft GEMV");
+   for(const auto& s:g.sites)require(s.label!=label,"OWNRT_DRAFT_GEMV_SPLIT: duplicate site "+label);
+   const auto& w=weights.at(site->weights[0]);const auto& x=buffers.at(site->inputs[0]);const auto& y=buffers.at(site->outputs[0]);
+   const unsigned rows=unsigned(site->shape[1]),cols=unsigned(site->shape[2]);
+   require(w.type==iq3::Type::BF16&&!w.int8&&!w.fp8&&w.experts==1&&w.rows==rows&&w.cols==cols&&x.type==flash::Scalar::bf16&&x.n==cols&&y.type==flash::Scalar::bf16&&y.n==rows&&rows%256==0&&(cols*2)%4==0,
+     "OWNRT_DRAFT_GEMV_SPLIT: "+label+" geometry (BF16 weight, BF16 row in and out)");
+   GemvSplitSite s;s.label=label;s.rows0=rows/2;s.rows1=rows-s.rows0;s.columns=cols;s.x_bytes=size_t(cols)*2;
+   const size_t rb=size_t(cols)*2;
+   s.w1=make(1,"gemv-split-weights:"+label,size_t(s.rows1)*rb,Category::weights);
+   for(size_t row=0;row<s.rows1;){const size_t n=std::min(size_t(s.rows1)-row,std::max(size_t(1),size_t(4194304)/rb)); // a byte copy of card 0's uploaded rows
+    auto bytes=e.readback_range(0,w.id,(size_t(s.rows0)+row)*rb,n*rb);e.upload(1,s.w1,row*rb,bytes.data(),bytes.size());row+=n;}
+   s.x1=make(1,"gemv-split-input:"+label,s.x_bytes,Category::scratch);s.y1=make(1,"gemv-split-output:"+label,size_t(s.rows1)*2,Category::scratch);
+   g.sites.push_back(std::move(s));}
+  for(int c=0;c<2;++c){g.words[size_t(c)]=make(c,"gemv-split-words",draft_split::words*4,Category::scratch);
+   g.xctl[size_t(c)]=make(c,"gemv-split-exchange-control",ownrt::exchange_layout::bytes,Category::scratch);}
+  g.error1=make(1,"gemv-split-error",4,Category::scratch);
+  gemv_split=std::move(g);
+  std::ostringstream o;o<<"{\"schema\":\"ownrt.draft-gemv-split.v1\",\"cap_polls\":"<<Engine::tp_exchange_cap<<",\"sites\":[";
+  for(size_t k=0;k<gemv_split->sites.size();++k){const auto& s=gemv_split->sites[k];o<<(k?",":"")<<"{\"label\":"<<ownrt::quote(s.label)<<",\"card0_rows\":"<<s.rows0<<",\"card1_rows\":"<<s.rows1<<",\"columns\":"<<s.columns<<",\"card1_weight_bytes\":"<<size_t(s.rows1)*s.columns*2<<",\"exchange_slots\":["<<2*k<<","<<2*k+1<<"]}";}
+  o<<"]}";save(e.a.output/"draft-gemv-split.json",o.str());
  }
  std::set<Allocation> mutable_ids;size_t allocated=0;int position=0;bool disabled=false;std::ofstream trace;
  Allocation alloc(const std::string& name,size_t bytes,Category category=Category::scratch){auto id=e.allocate(0,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:category==Category::kv?Lifetime::request:Lifetime::transaction);allocated+=bytes;mutable_ids.insert(id);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));return id;}
@@ -348,6 +426,7 @@ public:
   save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*(hw.raw?size_t(hw.cols/256*210):arithmetic::row_bytes(hw.type,hw.cols,head_variant)):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
   weights["output.weight"]=hw;
   if(head_split_requested())init_head_split(hw);
+  if(gemv_split_requested())init_gemv_split();
   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}
   merge_plan={
@@ -417,6 +496,7 @@ public:
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
     if(split&&site.head&&!split_issued){for(const auto& cmd:split->card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}split_issued=true;++split->runs;}
+    if(site.gemv_split>=0){for(const auto& cmd:gemv_split->sites.at(size_t(site.gemv_split)).card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}++gemv_split->runs;}
     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);if(draft_profile)profiled.push_back({site.cls,event});}
    }
    if(draft_profile&&!profiled.empty()){
@@ -430,7 +510,7 @@ public:
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v[1]<<",\"busy_us\":"<<v[0]<<"}";comma=true;}o<<"}}\n";
    }
   } else {
-   require(!split,"OWNRT_DRAFT_HEAD_SPLIT runs prepared draft commands only");
+   require(!split,"OWNRT_DRAFT_HEAD_SPLIT runs prepared draft commands only");require(!gemv_split,"OWNRT_DRAFT_GEMV_SPLIT runs prepared draft commands only");
    for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
@@ -492,7 +572,7 @@ public:
   require(!async_pending,"reset with pending draft publication");e.drain();for(auto allocation:mutable_ids){auto bytes=e.dev(0).arena.row(allocation).bytes;
    std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));
    for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,allocation,off,zero.data(),std::min(zero.size(),bytes-off));}
-  uint32_t active=1;e.upload(0,id("active"),0,&active,4);if(split)zero_split();e.drain();position=0;disabled=false;reverse_hidden=nullptr;
+  uint32_t active=1;e.upload(0,id("active"),0,&active,4);if(split)zero_split();if(gemv_split)zero_gemv_split();e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
   if(e.a.pipeline_persistent_requests||e.a.pipeline_ring_persistent_requests){pending_start={};pending_head=false;pending_confirmed=0;queued_probe=queued_confirmed=-1;probe_reverse_hidden.clear();admit_position(32);}
@@ -585,6 +665,10 @@ public:
    for(int c=0;c<2;++c){auto raw=e.readback(c,split->xctl[size_t(c)],L::header*4);std::vector<uint32_t> w(L::header);std::memcpy(w.data(),raw.data(),raw.size());
     x<<(c?",":"")<<"{\"abort\":"<<w[L::abort]<<",\"timeouts\":"<<w[L::timeouts]<<",\"waits\":"<<w[L::waits]<<",\"waits_that_polled\":"<<w[L::spun]<<",\"max_polls\":"<<w[L::max_spin]<<",\"poll_sum\":"<<w[L::spin_sum]<<"}";}
    x<<"],\"card1_error\":"<<[&]{auto b=e.readback(1,split->error1,4);uint32_t v=0;std::memcpy(&v,b.data(),4);return v;}()<<"}";save(path/"draft-head-split-exchange.json",x.str());}
+  if(gemv_split){namespace L=ownrt::exchange_layout;std::ostringstream x;x<<"{\"runs\":"<<gemv_split->runs<<",\"sites\":"<<gemv_split->sites.size()<<",\"cap_polls\":"<<Engine::tp_exchange_cap<<",\"cards\":[";
+   for(int c=0;c<2;++c){auto raw=e.readback(c,gemv_split->xctl[size_t(c)],L::header*4);std::vector<uint32_t> w(L::header);std::memcpy(w.data(),raw.data(),raw.size());
+    x<<(c?",":"")<<"{\"abort\":"<<w[L::abort]<<",\"timeouts\":"<<w[L::timeouts]<<",\"waits\":"<<w[L::waits]<<",\"waits_that_polled\":"<<w[L::spun]<<",\"max_polls\":"<<w[L::max_spin]<<",\"poll_sum\":"<<w[L::spin_sum]<<"}";}
+   x<<"],\"card1_error\":"<<[&]{auto b=e.readback(1,gemv_split->error1,4);uint32_t v=0;std::memcpy(&v,b.data(),4);return v;}()<<"}";save(path/"draft-gemv-split-exchange.json",x.str());}
  }
  void dump(const fs::path& path,bool logits=false){fs::create_directories(path);for(auto n:{"blk.0.qsa.keys","blk.0.qsa.values","blk.0.qsa.raw","blk.0.qsa.pooled","position"}){auto s=buffers.at(n);size_t elements=s.n;if(logits&&std::string(n)!="position")elements=size_t(std::string(n).ends_with(".pooled")?position/4:position)*(std::string(n).ends_with(".keys")||std::string(n).ends_with(".values")?p.g.kvh*p.g.ad:p.g.id);auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bin"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}
   if(logits)for(auto n:{"final.mix","logits"}){auto s=buffers.at(n);size_t elements=std::string(n)=="logits"?prefix_rows():s.n;auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bf16"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}}
