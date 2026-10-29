@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 28–29 night — exact two-card split now beats one card; long-prompt cuts 0/16/33/48 −3.9% TTFT.**
+- Kernel-direct peer stores (producer kernel writes rows into the peer card + flag; fresh consumer kernel waits,
+  bounded) cost 1.43/1.63/3.33 µs per exchange at 4/10/40 KB versus 6.3–10.3 µs event+memcpy; 0 mismatches.
+  [Microbenchmark](experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/RESULT.md).
+- Exact TP Stage 1 (`OWNRT_TP_EXCHANGE=direct`, `OWNRT_TP_THREADS=1`): rank-1 half 11.37 ms on two cards versus
+  12.24 ms on one (1.075×), 954/954 buffers bitwise. One submission thread for both cards loses (0.88×).
+  Stage 2 (GDN split by key groups) is in progress on cards 23/47.
+  [Result](experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/RESULT.md),
+  [sizing](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/within-layer-sizing/SIZING.md).
+- 3+1 262K, 121,854/512: cuts 0/16/33/48 versus a fresh 0/17/33/48 control: TTFT 240.96 vs 250.75 s, request
+  252.33 vs 261.74 s; decode change within the 4.1% control drift; full state and all 512 outputs match. Stage 1
+  is now the prefill bottleneck. The earlier "1.3–1.5 stages busy" figure belonged to the superseded PP4 wave.
+  [Screen](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/cut16-prefill-screen/RESULT.md),
+  [bubble analysis](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/prefill-bubbles/PREFILL-BUBBLES.md).
+- README rewritten (history moved to `docs/lab-results-history.md`); neural.download now features SC117 own-engine
+  results. Raw state from the 2+1 A/B/A r2, cut16 runs, TP Stage 1 and Oct-26 lab folders moved to
+  `/mnt/raid-models/ownrt-experiment-archives/` (byte-verified receipts) to restore 3+1 admission headroom.
+
 Owner next priority (October 28): investigate within-layer parallelism and
 hybrid pipeline/tensor or expert layouts to improve multi-GPU decode scaling.
 Start with measured compute-plus-communication costs and exact row-shard gates;
