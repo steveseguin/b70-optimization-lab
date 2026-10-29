@@ -1,0 +1,1 @@
+std::bad_alloc

@@ -1,0 +1,20 @@
+=== phase timing2 start 2026-10-28T22:48:27-04:00 pid 974235 affinity 0-3,16-19
+[klog timing2-before-24h] since @1793155707: 15 lines, 0 xe/fault lines
+--- arm s6-none steps=2 mode=none-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=none OWNRT_TP_THREADS=1 tp=--tp --split .attention,.gdn.qkv at 2026-10-28T22:48:27-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 211, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 149, in run
+    rep = call(parent, HALF, seq, position=step, token=1000 + step, fixture=1)
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 42, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/engine/tools/tp_rank1_driver.py", line 35, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm s6-none rc=1 after 27 s
+[klog timing2-after-s6-none] since @1793242107: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 30395405932 weights 30061362432 dispatch r5
+HALT: arm s6-none rc=1

@@ -1,0 +1,35 @@
+=== phase timing3 start 2026-10-28T22:51:39-04:00 pid 975686 affinity 0-3,16-19
+[klog timing3-before-24h] since @1793155899: 12 lines, 0 xe/fault lines
+--- arm s7-xonly steps=2 mode=xonly-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct-replicated OWNRT_TP_THREADS=1 tp=--tp --split .attention,.gdn.qkv at 2026-10-28T22:51:39-04:00
+{"tp": true, "steps": 2, "load_s": 28.95378206903115, "tokens": [28112, 76967], "rc": 0} median half ms 79.82
+arm s7-xonly rc=0 after 30 s
+[klog timing3-after-s7-xonly] since @1793242299: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":866,"waits_that_polled":741,"max_polls":83863,"poll_sum":1282313},{"abort":0,"timeouts":0,"waits":866,"waits_that_polled":541,"max_polls":139,"poll_sum":8071}]}
+{"buffers":1079,"differ":[],"passed":true}
+--- arm t3-one steps=16 mode=one env=none tp=none at 2026-10-28T22:52:09-04:00
+{"tp": false, "steps": 16, "load_s": 14.60863232682459, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.24
+arm t3-one rc=0 after 16 s
+[klog timing3-after-t3-one] since @1793242329: 0 lines, 0 xe/fault lines
+--- arm t3-repthr steps=16 mode=rep-threads env=OWNRT_TP_THREADS=1 tp=--tp at 2026-10-28T22:52:25-04:00
+{"tp": true, "steps": 16, "load_s": 28.750328732887283, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.50
+arm t3-repthr rc=0 after 30 s
+[klog timing3-after-t3-repthr] since @1793242345: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":0,"waits_that_polled":0,"max_polls":0,"poll_sum":0},{"abort":0,"timeouts":0,"waits":0,"waits_that_polled":0,"max_polls":0,"poll_sum":0}]}
+{"buffers":1079,"differ":[],"passed":true}
+--- arm t3-xonly steps=16 mode=xonly-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct-replicated OWNRT_TP_THREADS=1 tp=--tp --split .attention,.gdn.qkv at 2026-10-28T22:52:55-04:00
+{"tp": true, "steps": 16, "load_s": 28.876060114009306, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.85
+arm t3-xonly rc=0 after 31 s
+[klog timing3-after-t3-xonly] since @1793242375: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":6694,"max_polls":71265,"poll_sum":1316662},{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":2610,"max_polls":174,"poll_sum":19586}]}
+{"buffers":1079,"differ":[],"passed":true}
+--- arm t3-thr steps=16 mode=direct-threads env=OWNRT_TP_EXPERTS=slot OWNRT_TP_EXCHANGE=direct OWNRT_TP_THREADS=1 tp=--tp --split .attention,.gdn.qkv at 2026-10-28T22:53:26-04:00
+{"tp": true, "steps": 16, "load_s": 26.61106930184178, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 11.39
+arm t3-thr rc=0 after 28 s
+[klog timing3-after-t3-thr] since @1793242406: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":6194,"max_polls":100005,"poll_sum":1776909},{"abort":0,"timeouts":0,"waits":6928,"waits_that_polled":4730,"max_polls":166,"poll_sum":52826}]}
+{"buffers":1079,"differ":["blk.23.expsact","blk.23.expsgate","blk.23.expsup","blk.23.routes","blk.23.routes.down","blk.24.expsact","blk.24.expsgate","blk.24.expsup","blk.24.routes","blk.24.routes.down","blk.25.expsact","blk.25.expsgate","blk.25.expsup","blk.25.routes","blk.25.routes.down","blk.26.expsact","blk.26.expsgate","blk.26.expsup","blk.26.routes","blk.26.routes.down","blk.27.expsact","blk.27.expsgate","blk.27.expsup","blk.27.routes","blk.27.routes.down","blk.28.expsact","blk.28.expsgate","blk.28.expsup","blk.28.routes","blk.28.routes.down","blk.29.expsact","blk.29.expsgate","blk.29.exp
+--- arm t3-one2 steps=16 mode=one env=none tp=none at 2026-10-28T22:53:54-04:00
+{"tp": false, "steps": 16, "load_s": 14.599460499128327, "tokens": [28112, 76967, 11, 31906, 1495, 76793, 9695, 87553, 87106, 60436, 45728, 46459, 13153, 90379, 22592, 298], "rc": 0} median half ms 12.25
+arm t3-one2 rc=0 after 15 s
+[klog timing3-after-t3-one2] since @1793242434: 0 lines, 0 xe/fault lines
+=== phase timing3 done 2026-10-28T22:54:09-04:00
