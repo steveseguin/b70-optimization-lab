@@ -1,12 +1,13 @@
 # Current Workspace State
 
-**October 28–29 night — exact two-card split now beats one card; long-prompt cuts 0/16/33/48 −3.9% TTFT.**
+**October 28–29 night — exact two-card split reaches 1.131× on rank 1; long-prompt cuts 0/16/33/48 −3.9% TTFT.**
 - Kernel-direct peer stores (producer kernel writes rows into the peer card + flag; fresh consumer kernel waits,
   bounded) cost 1.43/1.63/3.33 µs per exchange at 4/10/40 KB versus 6.3–10.3 µs event+memcpy; 0 mismatches.
   [Microbenchmark](experiments/own-xpu-runtime/research/p2p/direct-store-2026-10-28/RESULT.md).
 - Exact TP Stage 1 (`OWNRT_TP_EXCHANGE=direct`, `OWNRT_TP_THREADS=1`): rank-1 half 11.37 ms on two cards versus
   12.24 ms on one (1.075×), 954/954 buffers bitwise. One submission thread for both cards loses (0.88×).
-  Stage 2 (GDN split by key groups) is in progress on cards 23/47.
+  Stage 2 adds the GDN split by key group (8 keys / 24 value heads per card): 10.824 ms versus 12.237 ms
+  (1.131×), 954/954 buffers and all 16 tokens bitwise; next is compact 5-slot expert launches.
   [Result](experiments/own-xpu-runtime/research/tp/direct-exchange-2026-10-28/RESULT.md),
   [sizing](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/within-layer-sizing/SIZING.md).
 - 3+1 262K, 121,854/512: cuts 0/16/33/48 versus a fresh 0/17/33/48 control: TTFT 240.96 vs 250.75 s, request
