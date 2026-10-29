@@ -27,7 +27,8 @@ The October 25 copy path on the same binary gives 12.64 ms (0.97×). The 1.075×
 - `EnableDeferBacking=0` (with `NEOReadDebugKeys=1`) in all arms, and `OWNRT_QSA_RAW_RING=0` so both arms hold the same
   buffers (TP never used the ring).
 - Binaries: `f5a7d39752e3…` (timing phase 1) and `5c92875f439e…` (phase 3; adds only the exchange-only diagnostic), both
-  built from `engine/src` with `engine/build.py` into fresh `/dev/shm/engine-build-tp-direct-20261028-r{2,4}`.
+  built from `engine/src` with `engine/build.py` into fresh `/dev/shm/engine-build-tp-direct-20261028-r{2,4}` (r1–r3
+  archived to `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/engine-builds/`).
 
 ## What was built (all opt-in; default paths unchanged)
 
@@ -120,6 +121,8 @@ failures on the way, none on the device:
   `tp-exchange.json`).
 - Evidence: [results-stage1.json](results-stage1.json) (phase 1), [results-stage1-timing3.json](results-stage1-timing3.json)
   (phase 3), [results-card47.json](results-card47.json) (phase 4, one card on each card), [logs/](logs/) (phase logs and kernel-log checks), [analyze.py](analyze.py) (tables and comparisons).
-  Run directories (state dumps) stay in `/dev/shm/tp-direct-20261028/runs/`.
+  Run directories (state dumps, 833 files, 4,950,606,710 bytes) were moved on 2026-10-28 23:10 to
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/tp-direct-20261028/runs/` (count and bytes verified) to free
+  host RAM for the four-card screen.
 - The live service receipt `57744505eabc` already did not match `engine/src` before this work (16 sources differ);
   the service unit was not touched.
