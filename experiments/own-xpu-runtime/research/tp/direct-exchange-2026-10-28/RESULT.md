@@ -177,7 +177,7 @@ cards hold in full. The new binary's one-card dump equals the earlier binaries' 
 - Run directories (458 files, 2,804,334,509 bytes) moved to
   `/mnt/raid-models/ownrt-experiment-archives/2026-10-28/tp-compact-20261029/` (count and bytes verified).
 
-## Stage 3 design: QSA split by KV group (not built; for review)
+## Stage 3 design: QSA split by KV group (built 2026-10-29: [qsa-split-2026-10-29](../qsa-split-2026-10-29/RESULT.md))
 
 **Split.** Card c owns KV head c and query heads [12c, 12c+12) (query head h reads KV head h/12). Every head's
 arithmetic stays local. From the source (`plan.hpp` `qsa()`, generic `kernels.hpp`, `p49_qsa_kernel.hpp`):
@@ -361,11 +361,11 @@ cannot run them alone. Three routes:
 
 ## Remaining stages
 
-- **Stage 3 (QSA two-KV-group split):** designed above, not built.
+- **Stage 3 (QSA two-KV-group split):** built and measured in [qsa-split-2026-10-29](../qsa-split-2026-10-29/RESULT.md) (`OWNRT_TP_QSA_SPLIT=1`, exact; suite 1.012×).
 
 ## Next
 
-1. **Stage 3:** QSA two-KV-group split (7 rank-1 layers); designed above, not built.
+1. **Stage 3:** QSA two-KV-group split, built: [qsa-split-2026-10-29](../qsa-split-2026-10-29/RESULT.md).
 2. Shared expert on one card with an uneven routed split (6/4), now that compact slots exist.
 
 ## Files

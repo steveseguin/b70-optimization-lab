@@ -1,0 +1,214 @@
+{
+ "schema": "ownrt.fault-burst.v1",
+ "source": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29",
+ "suites": {
+  "rank0-trims-suite-20261029": {
+   "arm-tpts-r1": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 9,
+     "rank1": 9
+    }
+   },
+   "arm-tpts-r2": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 11,
+     "rank1": 8
+    }
+   },
+   "arm-tptsx-r1": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 8,
+     "rank1": 12298
+    }
+   },
+   "arm-tptsx-r2": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 9,
+     "rank1": 9
+    }
+   }
+  },
+  "target-head-split-repeat-20261029": {
+   "arm-tp-r1": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 9,
+     "rank1": 9
+    }
+   },
+   "arm-tp-r2": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 12,
+     "rank1": 10
+    }
+   },
+   "arm-tpts-r1": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 10,
+     "rank1": 11
+    }
+   },
+   "arm-tpts-r2": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 12,
+     "rank1": 9
+    }
+   }
+  },
+  "target-head-split-suite-20261029": {
+   "arm-tp": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 11,
+     "rank1": 12
+    }
+   },
+   "arm-tpt": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 8,
+     "rank1": 9
+    }
+   },
+   "arm-tpts": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 12,
+     "rank1": 8
+    }
+   },
+   "arm-two": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 0,
+     "rank1": 0
+    }
+   }
+  },
+  "svc-ready-suite-20261029": {
+   "arm-tp": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 10,
+     "rank1": 9
+    }
+   },
+   "arm-two": {
+    "rows": 153,
+    "max_minor_faults_per_half": {
+     "rank0": 0,
+     "rank1": 0
+    }
+   }
+  }
+ },
+ "bursts": [
+  {
+   "suite": "rank0-trims-suite-20261029",
+   "server": "arm-tptsx-r1",
+   "request": "req-000040",
+   "rank": "rank1",
+   "position": 3551,
+   "fixture": 63,
+   "half_ms": 35.712,
+   "enqueue_loop_ms": 32.8519,
+   "wait_ms": 2.56727,
+   "minor_faults": 12298,
+   "major_faults": 0,
+   "voluntary_cs": 177,
+   "involuntary_cs": 7,
+   "capacity_reprepares": 337,
+   "launch_extent": 3552
+  }
+ ],
+ "rows_scanned": 2142,
+ "burst_request": {
+  "request": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29/rank0-trims-suite-20261029/arm-tptsx-r1/evidence/run-20261029T142749Z/req-000040",
+  "rank1_decode_halves": 64,
+  "rank1_median": {
+   "half_ms": 10.66375,
+   "enqueue_loop_ms": 6.312250000000001,
+   "minor_faults": 6.0,
+   "voluntary_cs": 109.0
+  },
+  "rank1_reprepares": [
+   {
+    "position": 3520,
+    "minor_faults": 8,
+    "half_ms": 10.6515
+   },
+   {
+    "position": 3552,
+    "minor_faults": 5,
+    "half_ms": 11.1294
+   }
+  ],
+  "rank0_same_positions": [
+   {
+    "position": 3549,
+    "speculative": true,
+    "minor_faults": 5,
+    "half_ms": 9.405733
+   },
+   {
+    "position": 3550,
+    "speculative": true,
+    "minor_faults": 6,
+    "half_ms": 9.410151
+   },
+   {
+    "position": 3550,
+    "speculative": false,
+    "minor_faults": 6,
+    "half_ms": 9.3987
+   },
+   {
+    "position": 3551,
+    "speculative": true,
+    "minor_faults": 2,
+    "half_ms": 9.39874
+   },
+   {
+    "position": 3552,
+    "speculative": true,
+    "minor_faults": 7,
+    "half_ms": 9.439887
+   },
+   {
+    "position": 3552,
+    "speculative": false,
+    "minor_faults": 7,
+    "half_ms": 10.134531
+   }
+  ]
+ },
+ "rank1_after_load": {
+  "VmHWM": "316084 kB",
+  "VmRSS": "281948 kB",
+  "RssAnon": "155660 kB",
+  "RssFile": "117284 kB",
+  "RssShmem": "9004 kB"
+ },
+ "host_now": {
+  "numa_nodes": 1,
+  "numa_balancing": "0",
+  "thp": "always [madvise] never",
+  "mglru": "0x0007",
+  "swap_devices": 0,
+  "vmstat_since_boot": {
+   "workingset_refault_file": "8249423070",
+   "allocstall_normal": "2021321",
+   "pgsteal_kswapd": "16771757522",
+   "pgmigrate_success": "5745878422",
+   "compact_stall": "2435749",
+   "compact_daemon_wake": "9801705"
+  }
+ }
+}

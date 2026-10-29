@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 29, about 13:30 — QSA attention split across each rank's two cards: four cards reach 77.11 tok/s exact at 64K (76.18 without).**
+- New opt-in flag `OWNRT_TP_QSA_SPLIT=1` (engine `cb04951c3fb4`): on both four-card ranks, each card now computes half
+  of every QSA attention block (one of its two key/value groups, 12 of the 24 heads) and keeps only half of its KV cache.
+  The token selection stays shared, so both cards attend over the same tokens.
+- Rank 1's half drops from 10.43 to about 10.25 ms, rank 0's from 9.43 to 9.25 ms. Each card also stores less: rank 1
+  plans 1.03 GB less per card at 64K, which would make 128K fit. Two admission checks outside the kernels still refuse 128K.
+- Every gate is bitwise equal to one card (rank 1 1079/1079; rank 0 1029/1029 + 71/71 draft, with misses and cancels).
+- 12-prompt suite, four fresh servers (A/B/A/B), same binary: 77.11 against 76.18 tok/s (1.012×), faster on every prompt
+  in every pair. All 5,965 outputs equal B19. The 3,490-token prompt's first token comes 0.3 s sooner.
+- Cost: the lab service's startup gates take about 5 minutes longer (a slow state-dump check; fix listed).
+  Kernel log clean. `sc117-lan` not touched. Recommended four-card flags: arm `tptsxq`.
+  [Result](experiments/own-xpu-runtime/research/tp/qsa-split-2026-10-29/RESULT.md).
+
 **October 29, about 11:10 — three rank-0 trims: four cards reach 75.97 tok/s exact at 64K (74.72 without them).**
 - Three new opt-in flags (engine `3eb140d95695`), each bitwise equal to one card (1029/1029 target, 71/71 draft):
   - `OWNRT_SNAPSHOT_NOWAIT=1`: rank 0 no longer waits on the host between its speculative snapshot copy and the half.
