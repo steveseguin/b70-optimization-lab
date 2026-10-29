@@ -13,6 +13,26 @@ beat the current layer pipeline, while keeping the chosen quantized target's
 output and required state exactly unchanged? Compare pipeline, within-layer
 and hybrid layouts. Keep dedicated-draft placement as a separate variable.
 
+Prior result that bounds this work (added 2026-10-28 review)
+Exact TP2 was built and measured on October 25 and closed: rank-1 half-step
+16.72-17.25 ms on two cards versus 16.73 ms on one, bitwise exact. Every split
+matrix needed a gather (about 13 us per dense site, 26 us per expert layer),
+about the same as the work each split saved; experts by id were unbalanced.
+See ../tp/2026-10-25-exact-tp-closeout.md and the DO-NOT-REPEAT row in
+../../gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md. Since then the engine is
+about 40% faster, so each split saves less while gather latency is unchanged.
+Do not re-run that experiment. Revisit only through its stated conditions:
+  (a) gather mechanism: the producing kernel stores rows straight into the
+      peer card's memory and releases one flag; target one-way <= 5 us for
+      10-40 KB (device-event copy measured ~7 us, engine gather ~13 us).
+      Bounded spin with an error flag only; never with the device profiler.
+  (b) fewer gathers per layer: split along independent GDN heads, the two QSA
+      KV groups and experts by slot, about 3 exchanges per layer instead of ~9.
+      Size it first from the October 25 evidence: the share of the half-step
+      that stays replicated decides the ceiling.
+Steps 2-3 below are replaced by (a) then (b); an operator-family screen with
+copy-engine gathers repeats the closed result.
+
 First work
 1. Reuse the current native stage timing and existing row/head-shard audits.
    Choose a material operator family; do not start by rebuilding a broad TP
