@@ -11,4 +11,8 @@ integrated::Launch elementwise(ownrt::Device&,const integrated::Spec&,std::span<
 integrated::Launch linear(ownrt::Device&,const Linear&);
 integrated::Launch norm_hidden(ownrt::Device&,ownrt::Allocation x,ownrt::Allocation gain,ownrt::Allocation y,ownrt::Allocation scratch,unsigned width);
 integrated::Launch merge(ownrt::Device&,ownrt::Allocation hidden,ownrt::Allocation embedding,ownrt::Allocation streams,unsigned width);
+// OWNRT_DRAFT_HEAD_SPLIT (lab 2026-10-29, draft_head_split.hpp): one card's draft-head rows -> its Best record in
+// `words` (slot = card), with the logits of global rows [offset, offset + rows); card 0's merge of both records.
+integrated::Launch head_shard(ownrt::Device&,ownrt::Allocation logits,ownrt::Allocation words,ownrt::Allocation active,ownrt::Allocation error,unsigned rows,unsigned offset,unsigned slot);
+integrated::Launch head_merge(ownrt::Device&,ownrt::Allocation words,ownrt::Allocation token,ownrt::Allocation active,ownrt::Allocation error);
 }

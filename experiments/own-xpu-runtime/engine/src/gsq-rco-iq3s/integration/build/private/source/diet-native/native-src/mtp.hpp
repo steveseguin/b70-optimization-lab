@@ -2,6 +2,7 @@
 #pragma once
 #include "gsq-rco-iq3s/state-bundle/bundle.hpp"
 #include "stage2/packet194-expert-diet-engine/mtp_kernels.hpp"
+#include "stage2/packet194-expert-diet-engine/draft_head_split.hpp"
 #include "stage2/packet194-expert-diet-engine/p59_draft.hpp"
 #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
 #include "stage2/packet194-expert-diet-engine/p56_prefix.hpp"
@@ -91,6 +92,8 @@ class DraftRuntime {
  bool fused(const flash::Launch& l)const{auto i=p59c::consumers.find(l.label);return i!=p59c::consumers.end()&&selected(i->second);}
  void direct(const flash::Launch& l) {
   if(fused(l))return;
+  if(split&&l.label=="logits"){split_logits(l);return;}
+  if(split&&l.op=="argmax"){split_argmax();return;}
   if(l.op=="merge_hidden_norm") {
    e.finish(0,changed(l)?p59::norm(e.dev(0),id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),1,4*p.g.h):norm_hidden(e.dev(0),id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),scratch,4*p.g.h),false);return;}
   if(l.op=="norm"&&changed(l)){e.finish(0,p59::norm(e.dev(0),id(l.inputs[0]),weights.at(l.weights[0]).id,id(l.outputs[0]),l.shape[0],l.shape[1]),false);return;}
@@ -114,10 +117,80 @@ class DraftRuntime {
   };
   for(const auto& l:merge_plan)capture(l);
   for(const auto& l:p.launches)capture(l);
+  if(split)capture_split_card1();
   e.current_cls=saved_class;captured=true;
  }
 
  Allocation scratch{},control{},score{},probability{},head_workspace{},head_fp32{};unsigned head_variant{};std::string head_candidate;
+ // OWNRT_DRAFT_HEAD_SPLIT=1 (lab 2026-10-29, research/tp/draft-split-2026-10-29; --tp-replicate rank 0, raw Q6_K head):
+ // the draft head's vocabulary prefix split by contiguous rows across the rank's two cards (draft_head_split.hpp).
+ // Card 0 scores rows [0, rows0) from its own head copy; card 1 holds a byte copy of rows [rows0, prefix) read back
+ // from card 0. After final.mix, exchange X1 sends the BF16 hidden row to card 1; each card runs the unchanged raw row
+ // kernel on its rows, then the shard argmax; exchange X2 swaps the Best records; card 0 merges into next_token.
+ // Card 1's commands (X1, rows, shard, X2) are issued just before card 0's first head site. None of these allocations
+ // is in mutable_ids: the draft's 71-allocation state is unchanged, and dump_all_state reassembles the logits of both
+ // cards into the one-card layout. Exchange control words are the split's own (slots 0 and 1), never reset.
+ struct HeadSplit {unsigned rows0=0,rows1=0;Allocation w1{},x1{},y1{},workspace1{},error1{},active1{};std::array<Allocation,2> words{},xctl{};
+  std::vector<ownrt::PreparedCompute> card1;uint64_t runs=0;};
+ std::optional<HeadSplit> split;
+ static bool head_split_requested(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_HEAD_SPLIT");if(!v||std::string(v)=="0")return false;
+   if(std::string(v)!="1")throw std::invalid_argument("OWNRT_DRAFT_HEAD_SPLIT must be 0 or 1");return true;}();return on;}
+ integrated::Launch split_rows(int c,Allocation w,Allocation x,Allocation y,Allocation workspace,unsigned rows){
+  const auto& hw=weights.at("output.weight");integrated::Matrix m{};m.w=w;m.type=hw.type;m.x=x;m.y=y;m.rows=rows;m.columns=hw.cols;m.span=rows;m.workspace=workspace;m.raw=true;
+  return p33::submit(e.dev(c),{m},head_candidate,false,head_variant);}
+ void split_exchange(int c,unsigned slot,Allocation src,size_t src_offset,size_t bytes,Allocation peer_dst,size_t peer_offset,Allocation error){
+  ownrt::Device::ExchangeSpec x;x.mode=0;x.src=src;x.src_offset=src_offset;x.bytes=bytes;x.peer_dst=peer_dst;x.peer_offset=peer_offset;x.slot=slot;
+  x.cap=Engine::tp_exchange_cap;x.control=split->xctl[size_t(c)];x.peer_control=split->xctl[size_t(1-c)];x.error=error;
+  auto event=e.dev(c).exchange(e.dev(1-c),x);e.finish(c,{event,event,1},false);}
+ void split_logits(const flash::Launch& l){ // card 0: X1, then its rows with the matrix() head arguments restricted to rows0
+  const auto& x=buffers.at(l.inputs[0]);const auto& w=weights.at(l.weights[0]);
+  split_exchange(0,0,x.id,0,x.n*flash::scalar_bytes(x.type),split->x1,0,id("error"));
+  integrated::Matrix m{};m.w=w.id;m.type=w.type;m.x=x.id;m.y=id(l.outputs[0]);m.rows=w.rows;m.columns=w.cols;m.span=m.rows;m.workspace=head_workspace;m.raw=w.raw;
+  p56::restrict_matrix(m,split->rows0);e.finish(0,p33::submit(e.dev(0),{m},head_candidate,false,head_variant),true);}
+ void split_argmax(){ // card 0: shard over [0, rows0), X2, merge
+  const auto& s=*split;constexpr size_t record=draft_split::records*4;
+  e.finish(0,head_shard(e.dev(0),id("logits"),s.words[0],id("active"),id("error"),s.rows0,0,0),false);
+  split_exchange(0,1,s.words[0],record,16,s.words[1],record,id("error"));
+  e.finish(0,head_merge(e.dev(0),s.words[0],id("next_token"),id("active"),id("error")),false);}
+ void capture_split_card1(){
+  auto& s=*split;constexpr size_t record=(draft_split::records+draft_split::record_words)*4;
+  e.preparing_commands=true;e.dev(1).begin_capture(s.card1);
+  try {
+   split_exchange(1,0,s.words[1],draft_split::ping_src*4,4,s.words[0],draft_split::ping_sink*4,s.error1); // X1: a ping word out, the hidden row in
+   split_rows(1,s.w1,s.x1,s.y1,s.workspace1,s.rows1);
+   head_shard(e.dev(1),s.y1,s.words[1],s.active1,s.error1,s.rows1,s.rows0,1);
+   split_exchange(1,1,s.words[1],record,16,s.words[0],record,s.error1); // X2
+   e.dev(1).end_capture();e.preparing_commands=false;}
+  catch(...){e.dev(1).end_capture();e.preparing_commands=false;throw;}
+  require(s.card1.size()==4,"draft head split: four card-1 commands");
+ }
+ void zero_split(){auto& s=*split;auto zero=[&](int c,Allocation a){const size_t n=e.dev(c).arena.row(a).bytes;const std::vector<uint8_t> z(n,0);e.upload(c,a,0,z.data(),n);};
+  zero(1,s.x1);zero(1,s.y1);zero(1,s.error1);zero(0,s.words[0]);zero(1,s.words[1]);uint32_t one=1;e.upload(1,s.active1,0,&one,4);}
+ void init_head_split(const Weight& hw){
+  require(e.a.tp_replicate&&e.devices.size()==2&&e.a.rank==0&&!e.a.mini&&e.prepared_path&&hw.raw&&!q4_head()&&!depth_probe&&!e.a.pipeline_enabled()&&
+   !e.a.pipeline_live_draft&&!e.a.pipeline_ring_live_draft&&e.a.draft_capture.empty()&&head_candidate=="p33.dense.segment"&&head_variant==6&&
+   hw.type==iq3::Type::Q6_K&&hw.cols==2560,"OWNRT_DRAFT_HEAD_SPLIT: --tp-replicate rank 0, raw Q6_K draft head (OWNRT_DRAFT_HEAD_RAW=1), prepared commands, no pipeline or probe modes");
+  const auto& logits=buffers.at("logits");const auto& hidden=buffers.at("final.mix");const unsigned rows=prefix_rows();
+  require(logits.type==flash::Scalar::bf16&&hidden.type==flash::Scalar::bf16&&hidden.n==hw.cols&&hw.rows==rows,"OWNRT_DRAFT_HEAD_SPLIT: BF16 head row and logits");
+  unsigned r0=(rows/2+255)/256*256;
+  if(const char* v=std::getenv("OWNRT_DRAFT_HEAD_SPLIT_ROWS"))r0=unsigned(std::atol(v));
+  require(r0>0&&r0<rows&&r0%128==0,"OWNRT_DRAFT_HEAD_SPLIT_ROWS: card 0's rows, a multiple of 128 inside the prefix");
+  HeadSplit s;s.rows0=r0;s.rows1=rows-r0;const size_t rb=hw.cols/256*210;
+  auto make=[&](int c,const std::string& name,size_t bytes,Category category){auto a=e.allocate(c,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:Lifetime::transaction);
+   if(category!=Category::weights){const std::vector<uint8_t> z(bytes,0);e.upload(c,a,0,z.data(),bytes);}return a;};
+  s.w1=make(1,"head-split-weights",size_t(s.rows1)*rb,Category::weights);
+  for(size_t row=0;row<s.rows1;){const size_t n=std::min(size_t(s.rows1)-row,size_t(4194304)/rb); // a byte copy of card 0's uploaded rows
+   auto bytes=e.readback_range(0,hw.id,(size_t(r0)+row)*rb,n*rb);e.upload(1,s.w1,row*rb,bytes.data(),bytes.size());row+=n;}
+  s.x1=make(1,"head-split-hidden",size_t(hidden.n)*2,Category::scratch);s.y1=make(1,"head-split-logits",size_t(s.rows1)*2,Category::scratch);
+  s.workspace1=make(1,"head-split-workspace",size_t(s.rows1)*8*4,Category::scratch);
+  s.error1=make(1,"head-split-error",4,Category::scratch);s.active1=make(1,"head-split-active",4,Category::scratch);
+  for(int c=0;c<2;++c){s.words[size_t(c)]=make(c,"head-split-words",draft_split::words*4,Category::scratch);
+   s.xctl[size_t(c)]=make(c,"head-split-exchange-control",ownrt::exchange_layout::bytes,Category::scratch);}
+  uint32_t one=1;e.upload(1,s.active1,0,&one,4);
+  split=std::move(s);
+  save(e.a.output/"draft-head-split.json","{\"schema\":\"ownrt.draft-head-split.v1\",\"prefix_rows\":"+std::to_string(rows)+",\"card0_rows\":"+std::to_string(split->rows0)+
+   ",\"card1_rows\":"+std::to_string(split->rows1)+",\"card1_weight_bytes\":"+std::to_string(size_t(split->rows1)*rb)+",\"exchange_slots\":[0,1],\"cap_polls\":"+std::to_string(Engine::tp_exchange_cap)+"}");
+ }
  std::set<Allocation> mutable_ids;size_t allocated=0;int position=0;bool disabled=false;std::ofstream trace;
  Allocation alloc(const std::string& name,size_t bytes,Category category=Category::scratch){auto id=e.allocate(0,"draft:"+name,bytes,category,category==Category::weights?Lifetime::process:category==Category::kv?Lifetime::request:Lifetime::transaction);allocated+=bytes;mutable_ids.insert(id);std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,id,off,zero.data(),std::min(zero.size(),bytes-off));return id;}
  Allocation id(const std::string& name)const{auto allocation=buffers.at(name).id;if(e.a.pipeline_draft_partition)require(mutable_ids.count(allocation),"draft matrix/fused buffer outside provider ownership");return allocation;}
@@ -274,6 +347,7 @@ public:
    size_t nr=std::max(size_t(1),size_t(4194304)/std::max(rb,er));for(size_t row=0;row<hw.rows;row+=nr){auto n=std::min(nr,size_t(hw.rows)-row);auto raw=e.w.read("output.weight",row*rb,n*rb);if(arithmetic::is_expanded(head_variant))raw=iq3::expanded::expand(hw.type,raw.data(),raw.size(),hw.cols);e.upload(0,hw.id,row*er,raw.data(),raw.size());}}
   save(e.a.output/"draft-prefix.json","{\"schema\":\"packet83.draft-prefix.v1\",\"rows\":"+std::to_string(prefix_rows())+",\"full_rows\":"+std::to_string(p.g.vocab)+",\"calibration_sha256\":"+(e.a.gsq_packed?std::string("null"):ownrt::quote(p83::coverage_sha256))+",\"target_head_unchanged\":true,\"extra_weight_bytes\":"+std::to_string(q4_head()?size_t(hw.rows)*p83::row_bytes(hw.cols):(e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider())||e.packed_weight("output.weight"))?size_t(hw.rows)*(hw.raw?size_t(hw.cols/256*210):arithmetic::row_bytes(hw.type,hw.cols,head_variant)):0)+",\"head_scope\":\"draft-only-Q4-or-resident-shared\"}");
   weights["output.weight"]=hw;
+  if(head_split_requested())init_head_split(hw);
   for(const auto& l:p.launches)if(l.op!="gemv"&&l.op!="routed_gemv"&&l.op!="expert_gate_up")prepared.emplace(&l,bind(l));
   if(store){require(store->reads.size()==3101,"not all official draft tensors read");std::ostringstream o;o<<"{";bool comma=false;for(auto& [n,h]:store->reads){o<<(comma?",":"")<<ownrt::quote(n)<<":"<<ownrt::quote(h);comma=true;}o<<"}";save(e.a.output/"draft-tensor-reads.json",o.str());}
   merge_plan={
@@ -338,10 +412,11 @@ public:
   if(captured) {
    // OWNRT_DECODE_PROFILE=2: per-site device time of the draft (diagnostic; waits for the draft, no arithmetic change).
    static const bool draft_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&std::atoi(v)==2;}();
-   std::vector<std::pair<int,ownrt::Event>> profiled;
+   std::vector<std::pair<int,ownrt::Event>> profiled;bool split_issued=false;
    for(const auto& site:issue_sites){if(!head&&site.head)continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
     e.guard();e.current_cls=site.cls;
+    if(split&&site.head&&!split_issued){for(const auto& cmd:split->card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}split_issued=true;++split->runs;}
     for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);if(draft_profile)profiled.push_back({site.cls,event});}
    }
    if(draft_profile&&!profiled.empty()){
@@ -355,6 +430,7 @@ public:
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v[1]<<",\"busy_us\":"<<v[0]<<"}";comma=true;}o<<"}}\n";
    }
   } else {
+   require(!split,"OWNRT_DRAFT_HEAD_SPLIT runs prepared draft commands only");
    for(const auto& l:merge_plan){if(e.a.timing=="class")e.set_class("draft."+l.label);direct(l);}
    for(const auto& l:p.launches){if(!head&&(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax"))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
@@ -416,7 +492,7 @@ public:
   require(!async_pending,"reset with pending draft publication");e.drain();for(auto allocation:mutable_ids){auto bytes=e.dev(0).arena.row(allocation).bytes;
    std::vector<uint8_t> zero(std::min(bytes,size_t(4194304)));
    for(size_t off=0;off<bytes;off+=zero.size())e.upload(0,allocation,off,zero.data(),std::min(zero.size(),bytes-off));}
-  uint32_t active=1;e.upload(0,id("active"),0,&active,4);e.drain();position=0;disabled=false;reverse_hidden=nullptr;
+  uint32_t active=1;e.upload(0,id("active"),0,&active,4);if(split)zero_split();e.drain();position=0;disabled=false;reverse_hidden=nullptr;
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   publication_event=0;e.progress_pending=false;e.progress_callback={};
   if(e.a.pipeline_persistent_requests||e.a.pipeline_ring_persistent_requests){pending_start={};pending_head=false;pending_confirmed=0;queued_probe=queued_confirmed=-1;probe_reverse_hidden.clear();admit_position(32);}
@@ -500,8 +576,15 @@ public:
   flush_depth_probe();
   dump(path);std::ostringstream out;out<<"{\"position\":"<<position<<",\"disabled\":"<<(disabled?"true":"false")<<",\"mutable_sha256\":{";
   bool comma=false;for(auto allocation:mutable_ids){const auto& row=e.dev(0).arena.row(allocation);
-   auto bytes=e.readback(0,allocation,row.bytes);out<<(comma?",":"")<<ownrt::quote(row.label)<<":"<<ownrt::quote(hash(bytes));comma=true;}
+   auto bytes=e.readback(0,allocation,row.bytes);
+   if(split&&allocation==buffers.at("logits").id){ // OWNRT_DRAFT_HEAD_SPLIT: card 1's rows into the one-card layout
+    auto rest=e.readback(1,split->y1,size_t(split->rows1)*2);std::memcpy(bytes.data()+size_t(split->rows0)*2,rest.data(),rest.size());}
+   out<<(comma?",":"")<<ownrt::quote(row.label)<<":"<<ownrt::quote(hash(bytes));comma=true;}
   out<<"}}";save(path/"all-state.json",out.str());
+  if(split){namespace L=ownrt::exchange_layout;std::ostringstream x;x<<"{\"runs\":"<<split->runs<<",\"card0_rows\":"<<split->rows0<<",\"card1_rows\":"<<split->rows1<<",\"cap_polls\":"<<Engine::tp_exchange_cap<<",\"cards\":[";
+   for(int c=0;c<2;++c){auto raw=e.readback(c,split->xctl[size_t(c)],L::header*4);std::vector<uint32_t> w(L::header);std::memcpy(w.data(),raw.data(),raw.size());
+    x<<(c?",":"")<<"{\"abort\":"<<w[L::abort]<<",\"timeouts\":"<<w[L::timeouts]<<",\"waits\":"<<w[L::waits]<<",\"waits_that_polled\":"<<w[L::spun]<<",\"max_polls\":"<<w[L::max_spin]<<",\"poll_sum\":"<<w[L::spin_sum]<<"}";}
+   x<<"],\"card1_error\":"<<[&]{auto b=e.readback(1,split->error1,4);uint32_t v=0;std::memcpy(&v,b.data(),4);return v;}()<<"}";save(path/"draft-head-split-exchange.json",x.str());}
  }
  void dump(const fs::path& path,bool logits=false){fs::create_directories(path);for(auto n:{"blk.0.qsa.keys","blk.0.qsa.values","blk.0.qsa.raw","blk.0.qsa.pooled","position"}){auto s=buffers.at(n);size_t elements=s.n;if(logits&&std::string(n)!="position")elements=size_t(std::string(n).ends_with(".pooled")?position/4:position)*(std::string(n).ends_with(".keys")||std::string(n).ends_with(".values")?p.g.kvh*p.g.ad:p.g.id);auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bin"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}
   if(logits)for(auto n:{"final.mix","logits"}){auto s=buffers.at(n);size_t elements=std::string(n)=="logits"?prefix_rows():s.n;auto raw=e.readback(0,s.id,elements*flash::scalar_bytes(s.type));std::ofstream f(path/(std::string(n)+".bf16"),std::ios::binary);f.write(reinterpret_cast<const char*>(raw.data()),raw.size());}}
