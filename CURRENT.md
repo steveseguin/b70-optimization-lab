@@ -17,6 +17,17 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 30, about 15:00 — new four-card record: 87.63 / 87.76 tok/s, exact (84.58 / 84.61 without the new kernels).**
+- `OWNRT_HC_KERNELS=1` (engine receipt `17f5f49ff010`): the hyper-connection norm in one launch, the combine before it
+  merged into that launch (decode only), and a low-projection codegen fix. Four-card set now `tptsxqckh` + this flag.
+- Fresh servers A/B/A/B at 65536: 12/12 prompts faster on every pair (1.034–1.044×), outputs and draft hits = B19,
+  startup gate 13/13; one step 9.68 → 9.34 ms.
+- First attempt stopped at the startup gate (draft guesses differed): the merge moved a write that rank 1 reads for the
+  draft. Fixed (no merge across a host read); the rank harness now also compares rank 1's exported draft rows.
+- Open: with the prompt-reading flags and a second request, the harness's "ones buffer is all 1.0" inventory check
+  fails, although states and outputs are equal; being explained before the batched draft rows are built.
+  [Result](experiments/own-xpu-runtime/research/hc-kernels-2026-10-30/RESULT.md).
+
 **October 30, about 13:00 — four cards read a 121,854-token prompt in 239.3 / 239.4 s (was 250.5), exact.**
 - Five host-side changes on the first stage (glue rows in one launch per chunk, threaded lookups, draft-chunk host
   trims); now the four-card set `tptsxqckh`. Fresh servers A/B/B at 131072, startup gate 13/13, all 512 outputs equal

@@ -61,7 +61,7 @@ class HumanPages(unittest.TestCase):
         self.assertIn('Neither proves sustained 24/7 uptime', output)
         self.assertIn('0.875 seconds elapsed per second of video', output)
         self.assertIn('LFM2.5 2.6B', output)
-        self.assertIn('SC117 Flash-Next IQ3_S on four B70s: 84.47–84.51 tok/s', output)
+        self.assertIn('SC117 Flash-Next IQ3_S on four B70s: 87.63–87.76 tok/s', output)
         self.assertIn('two cards: 66.42 tok/s', output)
         self.assertIn('href="own-runtime.html#current-sc117"', output)
         sc117 = next(p for p in sections[1][2] if p['id'].startswith('sc117-'))
