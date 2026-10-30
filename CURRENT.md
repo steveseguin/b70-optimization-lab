@@ -24,8 +24,9 @@
   startup gate 13/13; one step 9.68 → 9.34 ms.
 - First attempt stopped at the startup gate (draft guesses differed): the merge moved a write that rank 1 reads for the
   draft. Fixed (no merge across a host read); the rank harness now also compares rank 1's exported draft rows.
-- Open: with the prompt-reading flags and a second request, the harness's "ones buffer is all 1.0" inventory check
-  fails, although states and outputs are equal; being explained before the batched draft rows are built.
+- Explained, harmless: with the prompt-reading flags, the harness's "ones buffer is all 1.0" check failed when the
+  request after a reset used chunks shorter than 256 rows. Every chunk rewrites exactly the ones it reads; the check
+  was too strict and now tests the exact pattern (the broken r6 build still fails it).
   [Result](experiments/own-xpu-runtime/research/hc-kernels-2026-10-30/RESULT.md).
 
 **October 30, about 13:00 — four cards read a 121,854-token prompt in 239.3 / 239.4 s (was 250.5), exact.**
