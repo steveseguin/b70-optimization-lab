@@ -14,6 +14,7 @@
 #include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet6-kopt/dense_v2.hpp"
+#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
 #include <algorithm>
 #include <array>
 #include <limits>
@@ -184,6 +185,8 @@ struct Multiply:ownrt::SyclOperation {
         const size_t global=(size_t(subs)*32+127)/128*128;
         if(small_k)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
           h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<4,4>(m,count,it);}));});
+        if(hc_kernels::enabled("lowsel"))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
+          h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi_static<1,10>(m,count,it);}));});
         return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
           h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<1,8>(m,count,it);}));});
       }

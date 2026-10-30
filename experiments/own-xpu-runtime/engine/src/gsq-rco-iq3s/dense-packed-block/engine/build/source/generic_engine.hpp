@@ -54,6 +54,66 @@ struct ExpertPair {const flash::Launch* up;const flash::Launch* act;int family;}
 std::unordered_map<const flash::Launch*,ExpertPair> expert_pair_of;
 std::unordered_set<const flash::Launch*> expert_pair_follower; // up (gsq_linear) and act (execute_site)
 bool gsq_fusion_ready=false;
+// OWNRT_HC_KERNELS cnorm (2026-10-30, research/hc-kernels-2026-10-30; decode only, hc_kernels.hpp): an HC combine
+// (CombineFast: F32, implementation 1) directly followed on the same card by an HC norm of the same streams
+// (specialised, 4 x 2560, F32 gain, one token row) runs as one launch at the norm site; the combine site then issues
+// nothing in decode. Row replays (dev.view_row >= 0), batched prefill and every other pair keep both sites.
+std::unordered_map<const flash::Launch*,const flash::Launch*> hc_cnorm_of; // norm site -> its combine
+std::unordered_set<const flash::Launch*> hc_cnorm_follower;              // combine sites
+bool hc_cnorm_ready=false;
+// The norm site's ng shape exactly as the adapter builds it for the specialised kernels (adapter.cpp submit).
+ng::Shape hc_norm_shape(const Prepared& n) const {
+  const auto& s=n.spec;ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;shape.tokens=s.tokens;
+  if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
+  if(s.nw&&s.grids[0]==iq3::Type::F32)shape.flags|=8;
+  shape.op=ng::norm;shape.width=s.site.shape[1];shape.heads=shape.width?int(s.sizes[0])/shape.width:0;shape.flags|=s.site.parameter?1:0;
+  return shape;
+}
+void hc_prepare_cnorm() {
+  hc_cnorm_ready=true;
+  if(!(hc_kernels::enabled("cnorm")||hc_kernels::enabled("norm1"))||a.mini||!a.f32_activations||a.memory!="resident"||a.nongemv!="parallel")return;
+  static const bool simple_fast=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();
+  size_t norm_sites=0,admitted=0;
+  for(size_t i=0;i<p.launches.size();++i) {
+    const auto& n=p.launches[i];
+    if(n.op!="norm"||!(ends(n.label,".hc.a.norm")||ends(n.label,".hc.f.norm")||n.label=="final.norm"))continue;
+    ++norm_sites;
+    const Prepared pn=prepare_site(n);const auto& sn=pn.spec;
+    // Site inputs include the control buffers (active, error): ni counts them, outputs start at ni.
+    const bool norm_ok=sn.special==Special::normal&&sn.op==Op::norm&&sn.implementation==1&&sn.ni>=1&&sn.no==1&&sn.nw==1&&specialised::hc_norm_admitted(hc_norm_shape(pn));
+    if(norm_ok)++admitted;
+    if(!norm_ok||!hc_kernels::enabled("cnorm")||!simple_fast||i==0)continue;
+    size_t j=i;bool found=false;
+    while(j>0){--j;if(p.launches[j].card==n.card){found=true;break;}}
+    if(!found)continue;
+    const auto& cmb=p.launches[j];
+    if(cmb.op!="hc_combine"||cmb.outputs.size()!=1||n.inputs.empty()||cmb.outputs.at(0)!=n.inputs.at(0)||cmb.inputs.size()<3||cmb.inputs.at(0)!=cmb.outputs.at(0))continue;
+    const Prepared pc=prepare_site(cmb);const auto& sc=pc.spec;const size_t o=size_t(sc.ni);
+    if(sc.special!=Special::normal||sc.op!=Op::hc_combine||sc.fused_combine_norm||sc.implementation!=1||!sc.f32_activations||sc.tokens!=1||sc.ni<3||sc.no!=1||sc.nw!=0)continue;
+    if(sc.types[0]!=Scalar::f32||sc.types[1]!=Scalar::f32||sc.types[2]!=Scalar::f32||sc.types[o]!=Scalar::f32)continue;
+    if(sc.sizes[0]!=10240||sc.sizes[1]!=2560||sc.sizes[2]!=4||sc.sizes[o]!=10240||sc.site.shape[1]!=2560)continue;
+    if(pc.bindings.at(0)!=pc.bindings.at(o)||pn.bindings.at(0)!=pc.bindings.at(0))continue;
+    hc_cnorm_of[&n]=&cmb;hc_cnorm_follower.insert(&cmb);
+  }
+  save(a.output/"hc-kernels.json","{\"tokens\":"+ownrt::quote(hc_kernels::list())+",\"hc_norm_sites\":"+std::to_string(norm_sites)+
+       ",\"norm1_admitted\":"+std::to_string(hc_kernels::enabled("norm1")?admitted:0)+",\"combine_norm_pairs\":"+std::to_string(hc_cnorm_of.size())+"}");
+}
+bool hc_cnorm_follows(const flash::Launch& l){if(!hc_cnorm_ready)hc_prepare_cnorm();return hc_cnorm_follower.count(&l)!=0;}
+bool hc_cnorm_leads(const flash::Launch& l){if(!hc_cnorm_ready)hc_prepare_cnorm();return hc_cnorm_of.count(&l)!=0;}
+// The norm site of a cnorm pair: the combine (its skipped site's bindings) and the norm in one launch.
+void gsq_combine_norm(const flash::Launch& n) {
+  const int c=n.card;const auto& cmb=*hc_cnorm_of.at(&n);
+  Prepared tn,tc;const Prepared* pn=nullptr;const Prepared* pc=nullptr;
+  if(a.memory=="resident"&&!fresh_arguments){pn=&prepared.at(&n);pc=&prepared.at(&cmb);}
+  else {tn=prepare_site(n);tc=prepare_site(cmb);pn=&tn;pc=&tc;}
+  const auto& s=pn->spec;const auto& b=pn->bindings;const int tail=s.ni+s.no+s.nw;
+  require(b.size()>size_t(tail+3)&&pc->bindings.size()>3&&pc->bindings.at(0)==b.at(0),"HC combine+norm bindings");
+  std::array<ownrt::Allocation,19> args;args.fill(b.at(0));
+  args[0]=b.at(0);args[1]=b.at(size_t(s.ni+s.no));args[2]=b.at(size_t(s.ni));
+  args[15]=b.at(size_t(tail+1));args[16]=b.back();args[17]=b.at(size_t(tail+2));args[18]=b.at(size_t(tail+3));
+  finish(c,specialised::submit_combine_norm(dev(c),hc_norm_shape(*pn),args,b.at(size_t(tail)),pc->bindings.at(1),pc->bindings.at(2),{}),false);
+}
+
 bool gsq_kopt_site(const flash::Launch& l) const {
   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
   const auto t=unsigned(flash::grid_type(w.directory.at(l.weights.at(0)).grid));

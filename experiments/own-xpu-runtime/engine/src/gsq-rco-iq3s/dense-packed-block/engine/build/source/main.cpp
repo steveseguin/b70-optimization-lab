@@ -14,6 +14,8 @@
 #include "stage2/packet3/step/plan.hpp"
 #include "stage2/packet194-expert-diet-engine/performance.hpp"
 #include "stage2/packet194-expert-diet-engine/adapter.hpp"
+#include "stage2/packet194-expert-diet-engine/specialised_submit.hpp" // OWNRT_HC_KERNELS cnorm (generic_engine.hpp)
+#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
 #include "stage2/packet194-expert-diet-engine/small_gemv.hpp"
 #include "stage2/packet194-expert-diet-engine/dispatch.hpp"
 #include "stage2/packet194-expert-diet-engine/p39_plan.hpp"
@@ -2125,6 +2127,8 @@ public:
 #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
   void execute_site(const flash::Launch& l) {int c=l.card;
     if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
+    if(a.gsq_packed&&dev(c).view_row<0&&hc_cnorm_follows(l)) { /* OWNRT_HC_KERNELS cnorm: written by the norm site's fused launch */ } else
+    if(a.gsq_packed&&dev(c).view_row<0&&hc_cnorm_leads(l)) { gsq_combine_norm(l); } else
     if(a.gsq_packed&&dev(c).view_row<0&&expert_pair_follower.count(&l)) { /* OWNRT_TP_EXPERT_PAIR: written by the gate's paired launch */ } else
     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }

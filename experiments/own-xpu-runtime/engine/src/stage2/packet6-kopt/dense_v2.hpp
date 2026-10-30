@@ -86,6 +86,17 @@ template<unsigned R,unsigned U> inline void bf16_multi(const std::array<Mat,4>& 
  const Mat d=m[j];
  bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
 }
+// OWNRT_HC_KERNELS lowsel (lab 2026-10-30, research/hc-kernels-2026-10-30): bf16_multi with the matrix chosen by static
+// indices only. bf16_multi's runtime index into the captured descriptor array kept the descriptors in private memory (a
+// dependent load before the first weight load); the same bf16_rows call runs for the same subgroup and row.
+template<unsigned R,unsigned U> inline void bf16_multi_static(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it){
+ const uint32_t gsub=uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(it.get_sub_group().get_group_linear_id());
+ Mat d=m[0];
+ if(count>1&&gsub>=m[1].first_sub)d=m[1];
+ if(count>2&&gsub>=m[2].first_sub)d=m[2];
+ if(count>3&&gsub>=m[3].first_sub)d=m[3];
+ bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
+}
 // OWNRT_DECODE_NEXT2 bf16split (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
 // Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
 // order and the ragged tail, so each logical lane's sum is unchanged. Tree: levels 1..8 by the same xor butterfly inside

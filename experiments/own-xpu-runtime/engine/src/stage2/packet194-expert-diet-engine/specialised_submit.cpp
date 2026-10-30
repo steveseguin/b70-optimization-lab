@@ -9,6 +9,7 @@
 #include "stage2/packet194-expert-diet-engine/select_fast.hpp"
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #endif
+#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
 namespace specialised {
 #ifdef OWN_RT_HOST_ONLY
 template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:integrated::HostOperation {
@@ -162,17 +163,58 @@ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel 
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
  }
 };
+// OWNRT_HC_KERNELS norm1 / cnorm: one work-group per stream row (hc_kernels::norm_row). Pointers: 0 streams, 1 gain,
+// 2 output, 3 error, 4 position, 5 active, 6 scratch, then (COMBINE) 7 branch, 8 inject.
+template<bool COMBINE> struct HcNorm final:ownrt::SyclOperation {
+ ng::Shape shape;explicit HcNorm(ng::Shape s):shape(s){}
+ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>&)const override {
+  hc_kernels::NormArgs a{static_cast<float*>(p[0]),COMBINE?static_cast<const float*>(p[7]):nullptr,COMBINE?static_cast<const float*>(p[8]):nullptr,
+   static_cast<const float*>(p[1]),static_cast<float*>(p[2]),static_cast<float*>(p[6]),static_cast<int32_t*>(p[3]),static_cast<const int32_t*>(p[4]),
+   static_cast<const int32_t*>(p[5]),shape.capacity,shape.tokens,shape.flags};
+  constexpr unsigned WGS=hc_kernels::NORM_WGS;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(4*WGS),sycl::range<1>(WGS))](sycl::handler& h){
+   sycl::local_accessor<float,1> part(sycl::range<1>(96),h);
+   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    hc_kernels::norm_row<COMBINE>(a,it,part.get_multi_ptr<sycl::access::decorated::no>().get());}));});
+ }
+};
 #endif
 template<ng::Op Code,int FixedWidth=0,int FixedHeads=0> integrated::Launch submit_class(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,std::span<const ownrt::Event> deps){
  integrated::Launch result{};
  auto issue=[&]<int Stage>(){Kernel<Code,Stage,FixedWidth,FixedHeads> op(s);std::array<ownrt::Event,1> after{result.last};auto e=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=e;result.last=e;++result.passes;};
  issue.template operator()<0>();if constexpr(Code!=ng::attention_score)issue.template operator()<1>();if constexpr(Code==ng::attention_softmax||Code==ng::route_gather)issue.template operator()<2>();if constexpr(Code==ng::route_gather){issue.template operator()<3>();issue.template operator()<4>();}return result;
 }
+bool hc_norm_admitted(ng::Shape s){
+ return s.op==ng::norm&&s.width==2560&&s.heads==4&&s.tokens==1&&(s.flags&ng::f32_activations_flag)&&(s.flags&8)&&!(s.flags&~(1|8|ng::f32_activations_flag));
+}
+#ifndef OWN_RT_HOST_ONLY
+template<bool COMBINE> integrated::Launch submit_hc_norm(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,
+                                                         ownrt::Allocation branch,ownrt::Allocation inject,std::span<const ownrt::Event> deps){
+ std::vector<ownrt::Allocation> ids{a[0],a[1],a[2],a[15],a[17],a[18],scratch};
+ if constexpr(COMBINE){ids.push_back(branch);ids.push_back(inject);}
+ HcNorm<COMBINE> op(s);auto e=d.compute(op,ids,deps);return {e,e,1};
+}
+#endif
+integrated::Launch submit_combine_norm(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,
+                                       ownrt::Allocation branch,ownrt::Allocation inject,std::span<const ownrt::Event> deps){
+ ng::validate(s);if(a.size()!=19)throw std::invalid_argument("specialised requires 19 bindings");
+ if(!hc_norm_admitted(s))throw std::invalid_argument("HC combine+norm: unadmitted norm shape");
+ if(d.arena.row(scratch).bytes<scratch_floats(s)*sizeof(float))throw std::invalid_argument("specialised scratch extent");
+ if(d.arena.row(branch).bytes<2560*4||d.arena.row(inject).bytes<4*4||d.arena.row(a[0]).bytes<10240*4)throw std::invalid_argument("HC combine+norm binding extents");
+#ifdef OWN_RT_HOST_ONLY
+ throw std::logic_error("HC combine+norm is a device-build path");
+#else
+ return submit_hc_norm<true>(d,s,a,scratch,branch,inject,deps);
+#endif
+}
 integrated::Launch submit(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,std::span<const ownrt::Event> deps){
  ng::validate(s);if(a.size()!=19)throw std::invalid_argument("specialised requires 19 bindings");
  if(d.arena.row(scratch).bytes<scratch_floats(s)*sizeof(float))throw std::invalid_argument("specialised scratch extent");
  std::array<ownrt::Allocation,20> bound{};std::copy(a.begin(),a.end(),bound.begin());bound[19]=scratch;
  if(s.width==2560&&s.heads==4){
+#ifndef OWN_RT_HOST_ONLY
+  if(hc_kernels::enabled("norm1")&&hc_norm_admitted(s))return submit_hc_norm<false>(d,s,a,scratch,0,0,deps);
+#endif
   if(s.op==ng::norm)return submit_class<ng::norm,2560,4>(d,s,bound,deps);
   if(s.op==ng::combine_norm)return submit_class<ng::combine_norm,2560,4>(d,s,bound,deps);
  }
