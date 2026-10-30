@@ -73,6 +73,13 @@ void hc_prepare_cnorm() {
   hc_cnorm_ready=true;
   if(!(hc_kernels::enabled("cnorm")||hc_kernels::enabled("norm1"))||a.mini||!a.f32_activations||a.memory!="resident"||a.nongemv!="parallel")return;
   static const bool simple_fast=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();
+  // A pair moves the combine's write of streams to the norm site, so no controller read of streams may sit between them.
+  // The controller (state-bundle rank.hpp, after each layer-end site) reads streams after a layer's ffn.combine: rank 1
+  // exports its final streams to the draft after layer 47 (the combine before final.norm), pipeline stages export at
+  // their boundary, and --retain-steps copies streams at every layer end. So: never pair the combine before final.norm,
+  // and no pairs at all with pipeline exports or retained steps. (End gate 2026-10-30: pairing final.norm sent the draft
+  // pre-combine rows; tokens and state stayed exact, the startup gate's draft guesses differed.)
+  const bool layer_end_reads=!a.retain_steps.ranges.empty()||a.pipeline_enabled()||a.pipeline_live_draft||a.pipeline_external_provider;
   size_t norm_sites=0,admitted=0;
   for(size_t i=0;i<p.launches.size();++i) {
     const auto& n=p.launches[i];
@@ -82,7 +89,7 @@ void hc_prepare_cnorm() {
     // Site inputs include the control buffers (active, error): ni counts them, outputs start at ni.
     const bool norm_ok=sn.special==Special::normal&&sn.op==Op::norm&&sn.implementation==1&&sn.ni>=1&&sn.no==1&&sn.nw==1&&specialised::hc_norm_admitted(hc_norm_shape(pn));
     if(norm_ok)++admitted;
-    if(!norm_ok||!hc_kernels::enabled("cnorm")||!simple_fast||i==0)continue;
+    if(!norm_ok||!hc_kernels::enabled("cnorm")||!simple_fast||layer_end_reads||n.label=="final.norm"||i==0)continue;
     size_t j=i;bool found=false;
     while(j>0){--j;if(p.launches[j].card==n.card){found=true;break;}}
     if(!found)continue;
