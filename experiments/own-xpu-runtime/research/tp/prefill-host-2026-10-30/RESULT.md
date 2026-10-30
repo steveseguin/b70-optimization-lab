@@ -158,6 +158,8 @@ Measured, per 256-row chunk, from the long request ([results/bounds.json](result
 
 - Engine: `engine/src/.../prefill_engine.hpp`, `main.cpp`, `mtp.hpp`, `stage2/packet194-expert-diet-engine/adapter.cpp`.
   Receipts: `engine/receipts/2bca4e65084d.json`, `c8e173bf4e7d.json`.
+  Build directories (binary + objects) are at `/dev/shm/engine-build-prefill-host-20261030-r{1,2}` and archived with
+  sha256 at `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/engine-builds/prefill-host-20261030-r{1,2}.copy`.
 - Harness, copied from prefill-speed-2026-10-29:
   - [run_phase.sh](run_phase.sh) adds extras `ep rd sr lt=N st gr rc`. Each phase ran from a frozen
     `logs/run_phase-<phase>.sh`.
