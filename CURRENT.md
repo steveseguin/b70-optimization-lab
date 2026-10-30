@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**October 30, about 06:15 — where the four-card overhead goes, measured; next: one campaign against fixed per-kernel costs.**
+- Four cards add 1.58 / 1.68 ms per stage over a perfect split. Two thirds of that is split kernels that do not get
+  twice as fast on half the work (each launch keeps a fixed part). Exchanges (~0.2 ms), waiting for the other card
+  (~0.05 ms) and host bookkeeping (~0.2 ms) are small. Rebalancing the split cannot help.
+- No single fix is worth 5%; together the top four project to 7–10% (78.5 → 84–87 tok/s, not measured).
+- Started: fused expert gate+up launch, host bookkeeping off the critical path, a fused GDN small-kernel launch,
+  exchanges inside the producing kernel, then fusing the small kernels both cards repeat. End gate: fresh four-card
+  servers A/B/A/B, outputs = B19, target +7%.
+  [Result](experiments/own-xpu-runtime/research/tp/stage-overhead-2026-10-30/RESULT.md).
+
 **October 30, about 05:00 — checking several guessed tokens per step: exact, but not cheap enough; parked.**
 - New exact small-row kernels make the large projections cost about one token's time for two tokens. The whole
   step still costs 1.42–1.47× for two tokens and 2.3–2.5× for four (go/no-go: 1.35× and 1.9×). The expert layers

@@ -114,9 +114,23 @@ and less at deeper chains, against 78.3 measured today. That is about +9% for a 
 not measured), so **the verifier (K4) is parked**. Revisit it when the replicated per-layer work and the experts
 are cheaper, because both also lower the multi-row ratio.
 
+### Four-card stage overhead (2026-10-30, measured)
+
+[stage-overhead-2026-10-30](research/tp/stage-overhead-2026-10-30/RESULT.md): the overhead is 1.58 ms per half on
+rank 0 and 1.68 ms on rank 1 (the census's 1.96 ms used an older 10.82 ms cycle; today's is 10.41–10.45 ms).
+About two thirds is split kernels that do not halve (each launch keeps a fixed part: experts on 5 slots run at
+0.59–0.70 of their 10-slot time, the GDN recurrence at 0.8, QSA attention not faster at all). The exchanges cost
+about 0.2 ms, imbalance between the two cards 0.04–0.06 ms, host event retirement 0.17–0.24 ms; the snapshot is
+now negligible. Rebalancing slots, heads or vocabulary rows cannot help.
+
 ### Decision rule
 
-Next (2026-10-30): find where the four-card layout's unexplained ~2 ms per stage goes (exchanges, waits for
+Since 2026-10-30 afternoon: one fixed-cost campaign (`research/tp/fixed-cost-2026-10-30/`). In order: a paired
+gate+up+SiLU compact expert launch, event retirement off the critical path, one fused GDN small-kernel launch,
+exchange stores in the producer's tail, then fusing the largest replicated glue chains. The end gate is fresh
+four-card servers A/B/A/B with a target of +7% or more.
+
+Previously (2026-10-30 morning): find where the four-card layout's unexplained ~2 ms per stage goes (exchanges, waits for
 the slower card, split-kernel efficiency, host). It is about 18% of the 10.82 ms cycle and is not covered by any
 idea above (`research/tp/stage-overhead-2026-10-30/`, in progress). Then cut the replicated per-layer work, which
 is about 4 ms per stage: split the HC projections across the pair, and fuse the weightless glue into neighbouring
