@@ -256,6 +256,28 @@ void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
   d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
 }
 Allocation prefill_shadow(int c,const std::string& name) const {return prefill_shadows[size_t(c)].at(prefill_role_of.at(name)).id;}
+// OWNRT_PREFILL_SPECIAL_ROWS=1 (2026-10-30, research/tp/prefill-host-2026-10-30; default off): the glue ops a prompt row
+// replays one row at a time (begin, commit, broadcast, ple_hash, ple_gate, ple_add; 256 launches per site and card) run
+// as one launch over the chunk's M rows: each row-major binding is its prefill shadow, `token` and `position` are the
+// chunk's per-row arrays (begin and commit also read and write their own row of the trailing position binding), and the
+// persistent ones (error, active, token_history, ple_metadata) stay shared. The adapter runs row r with the unchanged
+// single-row body; ple_hash's rows run in order (its token history carries from row to row).
+static bool prefill_special_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_SPECIAL_ROWS");return e&&e[0]=='1';}();return on;}
+static bool prefill_special_row_op(const std::string& op){return op=="begin"||op=="commit"||op=="broadcast"||op=="ple_hash"||op=="ple_gate"||op=="ple_add";}
+void prefill_special_rows_site(const flash::Launch& l,int M) {
+  const int c=l.card;auto site=prepare_site(l);size_t k=0;
+  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){
+    require(k<20,"prefill special rows: binding count");
+    if(prefill_role_of.count(name)){site.bindings.at(k)=prefill_shadow(c,name);site.spec.row_bytes[k]=uint32_t(prefill_row_bytes(c,name));}
+    else if(name=="position"){site.bindings.at(k)=prefill_positions[size_t(c)];site.spec.row_bytes[k]=4;}
+    else if(name=="token"){site.bindings.at(k)=prefill_tokens[size_t(c)];site.spec.row_bytes[k]=4;}
+    else {require(prefill_persistent(name),"prefill special rows: unexpected binding "+name);site.spec.row_bytes[k]=0;}
+    ++k;}
+  require(int(k)==site.spec.ni+site.spec.no,"prefill special rows: binding layout");
+  if(l.op=="begin"||l.op=="commit")site.bindings.at(size_t(site.spec.ni+site.spec.no+site.spec.nw)+2)=prefill_positions[size_t(c)];
+  site.spec.tokens=M;
+  finish(c,site.submit(dev(c),site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);
+}
 // OWNRT_PREFILL_MOE_NATIVE=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off; F32 exact mode): moe_combine
 // for all M rows in two launches per card instead of M replays of its two single-row commands. execute_site's moe_combine
 // is (1) the F32 epilogue (mixture = sum over slots 0..9 of expsdown[slot] * prob[slot], into the engine's one-row
@@ -288,10 +310,56 @@ void prefill_moe_combine(const flash::Launch& l,int M) {
 // (row r at byte r*bytes of the M-row shadow, where the per-row upload put it) instead of one synchronous upload per
 // row, lookup and card (1,024 per 256-row chunk under TP). Every device byte is unchanged.
 static bool prefill_lookup_batch(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_LOOKUP_BATCH");return e&&e[0]=='1';}();return on;}
+// OWNRT_PREFILL_LOOKUP_THREADS=N (2026-10-30, research/tp/prefill-host-2026-10-30; with OWNRT_PREFILL_LOOKUP_BATCH=1; default
+// off): the chunk's lookup rows are dequantized by N host threads. The ids are computed first, row by row in order with
+// the advancing token history, exactly as the sequential loop (lookup_input); then each thread converts a contiguous
+// range of rows (the same gsq::element per element as lookup_floats, from the resident table bytes read() returns) into
+// its own slice of the chunk's row buffer. The bytes uploaded, lookup_ids, history and read()'s counters end equal.
+// Falls back to the sequential loop when a table is not resident.
+static int prefill_lookup_threads(){static const int n=[]{const char* e=std::getenv("OWNRT_PREFILL_LOOKUP_THREADS");int v=e?std::atoi(e):0;return v<0?0:v>16?16:v;}();return n;}
+bool prefill_lookup_rows_threaded(const std::vector<const flash::Launch*>& sites,const int* tokens,int M,std::vector<std::vector<float>>& rows,std::vector<size_t>& row_bytes){
+  struct Table {std::string name;unsigned type=0;size_t row_bytes=0,columns=0,rows=0,ids=0;bool i64=false;};
+  std::vector<Table> tables;
+  for(const auto* l:sites){
+    const auto input=buffers[size_t(l->card)].at(l->inputs[0]);const auto& t=w.directory.at(l->weights[0]);const auto type=flash::grid_type(t.grid);const auto fmt=iq3::layout(type);
+    Table x{t.name,unsigned(type),size_t(t.shape.back())/fmt.elements*fmt.bytes,size_t(t.shape.back()),size_t(t.shape[0]),input.n,input.type==Scalar::i64};
+    if(!w.resident(x.name,0,x.row_bytes))return false; // not resident: the sequential loop
+    tables.push_back(x);
+  }
+  // 1. ids in row order (the history advances row by row), as the sequential loop computes them
+  std::vector<std::vector<std::vector<uint8_t>>> ids(sites.size(),std::vector<std::vector<uint8_t>>(size_t(M)));
+  for(int r=0;r<M;++r){for(size_t j=0;j<sites.size();++j)ids[j][size_t(r)]=lookup_input(*sites[j],tokens[r]);history0=history1;history1=tokens[r];}
+  for(size_t j=0;j<sites.size();++j)lookup_ids[sites[j]->label]=ids[j][size_t(M-1)];
+  for(size_t j=0;j<sites.size();++j){row_bytes[j]=tables[j].ids*tables[j].columns*4;
+    for(int c=0;c<prefill_cards();++c)require(row_bytes[j]==prefill_row_bytes(c,sites[j]->outputs[0]),"prefill lookup row extent");
+    rows[j].assign(size_t(M)*tables[j].ids*tables[j].columns,0.f);}
+  // 2. values: rows split into contiguous ranges, one per thread
+  const int T=std::min(prefill_lookup_threads(),M);std::vector<std::thread> pool;std::vector<std::string> errors(static_cast<size_t>(T),std::string());std::vector<size_t> bytes_read(static_cast<size_t>(T),0);
+  auto work=[&](int t){try{const int r0=M*t/T,r1=M*(t+1)/T;
+    for(size_t j=0;j<tables.size();++j){const auto& x=tables[j];
+      for(int r=r0;r<r1;++r){const auto& raw=ids[j][size_t(r)];float* out=rows[j].data()+size_t(r)*x.ids*x.columns;
+        for(size_t k=0;k<x.ids;++k){int64_t id;if(x.i64)std::memcpy(&id,raw.data()+k*8,8);else{int32_t v;std::memcpy(&v,raw.data()+k*4,4);id=v;}
+          if(id<0||size_t(id)>=x.rows)throw std::runtime_error("lookup bounds");
+          const uint8_t* row=w.resident(x.name,size_t(id)*x.row_bytes,x.row_bytes);if(!row)throw std::runtime_error("lookup table not resident");
+          bytes_read[size_t(t)]+=x.row_bytes;const std::span<const uint8_t> span(row,x.row_bytes);
+          for(size_t e=0;e<x.columns;++e)out[k*x.columns+e]=gsq::element(x.type,span,x.columns,e);}}}}
+    catch(const std::exception& ex){errors[size_t(t)]=ex.what();}};
+  for(int t=1;t<T;++t)pool.emplace_back(work,t);
+  work(0);for(auto& th:pool)th.join();
+  for(const auto& e:errors)require(e.empty(),"prefill lookup thread: "+e);
+  for(size_t j=0;j<tables.size();++j)for(int r=0;r<M;++r)for(size_t k=0;k<tables[j].ids;++k)w.count_read(tables[j].row_bytes); // read()'s counters, as the sequential loop leaves them
+  return true;
+}
 void prefill_lookups(const int* tokens,int M) {
   if(prefill_lookup_batch()) {
     std::vector<const flash::Launch*> sites;for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0)sites.push_back(&l);
     std::vector<std::vector<float>> rows(sites.size());std::vector<size_t> row_bytes(sites.size(),0);
+    if(prefill_lookup_threads()>1&&prefill_lookup_rows_threaded(sites,tokens,M,rows,row_bytes)){
+      for(size_t j=0;j<sites.size();++j)for(int c=0;c<prefill_cards();++c){
+        require(rows[j].size()*4==size_t(M)*row_bytes[j],"prefill lookup chunk extent");
+        upload(c,prefill_shadow(c,sites[j]->outputs[0]),0,rows[j].data(),rows[j].size()*4);}
+      return;
+    }
     for(int r=0;r<M;++r) {
       for(size_t j=0;j<sites.size();++j) {
         const auto& l=*sites[j];
@@ -520,6 +588,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       else if(l->op=="tp_xgather"||l->op=="tp_xheads"){prefill_exchange(*l,M);trace_kind="exchange";}
       else if(l->op=="tp_route_compact"){prefill_route_compact(*l,M);trace_kind="native";}
       else if(l->op=="moe_combine"&&prefill_moe_native()){prefill_moe_combine(*l,M);trace_kind="native";}
+      else if(prefill_special_rows()&&prefill_special_row_op(l->op)){prefill_special_rows_site(*l,M);trace_kind="native";}
       else if(l->op.starts_with("tp_"))throw std::invalid_argument("TP batched prefill: unsupported site "+l->op);
       else if(prefill_native(*l)){trace_kind="native";
         if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}

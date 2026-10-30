@@ -677,6 +677,16 @@ struct Weights {
           throw std::runtime_error("synthetic weight " + name);
       }
   }
+  // OWNRT_PREFILL_LOOKUP_THREADS (2026-10-30, research/tp/prefill-host-2026-10-30): the bytes read() returns for a
+  // resident lookup table (copy or mapping), as a pointer, without touching read()'s counters, so helper threads can
+  // read rows concurrently; nullptr when the table is not resident. The caller adds the counters afterwards.
+  const uint8_t* resident(const std::string &name, size_t off, size_t n) const {
+    if(mini||!n||n>4*1024*1024)return nullptr;
+    if(auto it=lookup_copies.find(name);it!=lookup_copies.end())return off<=it->second.second&&n<=it->second.second-off?it->second.first.get()+off:nullptr;
+    if(auto it=lookup_mappings.find(name);it!=lookup_mappings.end())return off<=it->second->size()&&n<=it->second->size()-off?it->second->data()+off:nullptr;
+    return nullptr;
+  }
+  void count_read(size_t n){read_bytes+=n;max_read=std::max(max_read,n);}
   std::vector<uint8_t> read(const std::string &name, size_t off, size_t n) {
     require(n && n <= 4 * 1024 * 1024, "bounded read (4 MiB)");
     read_bytes += n;

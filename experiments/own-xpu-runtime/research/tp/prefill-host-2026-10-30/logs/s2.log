@@ -1,0 +1,17 @@
+=== phase s2 binary c8e173bf4e7d start 2026-10-30T10:12:38-04:00 pid 2375176 affinity 0-3,16-19 nofile 1048576
+[klog s2-before-24h] since @1793283158: 12 lines, 0 xe/fault lines
+--- arm s2-r0-c rank=0 mode=tps steps=4 prompt=40 pattern=hmcn extra=rows=16,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko,ep,rd,sr,lt=4,st,gr,rc,ht MemAvailable=71813672960 shm_free=18816270336 at 2026-10-30T10:12:38-04:00
+{"steps": 4, "load_s": 130.34821767406538, "prompt_ms": 316.9073360040784, "draft_replay_ms": 26.549805188551545, "rc": 0} median half ms 8.559 draft ms 1.112
+arm s2-r0-c rc=0 after 145 s
+[klog s2-after-s2-r0-c] since @1793369558: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":552,"waits_that_polled":452,"max_polls":64724,"poll_sum":125569},{"abort":0,"timeouts":0,"waits":552,"waits_that_polled":199,"max_polls":37,"poll_sum":1515}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":37,"poll_sum":112},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":7786,"poll_sum":20378}],"card1_error":0}
+{"runs":4,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":3,"max_polls":64,"poll_sum":185},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":5,"max_polls":10409,"poll_sum":13938}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"schema":"ownrt.qsa-split.v1","layers":5,"kv_buffers_halved":10,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":6,"jobs":6,"error":""}
+{"buffers":670,"differ":[],"passed":true}
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+tp card 1 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+=== phase s2 done 2026-10-30T10:15:04-04:00

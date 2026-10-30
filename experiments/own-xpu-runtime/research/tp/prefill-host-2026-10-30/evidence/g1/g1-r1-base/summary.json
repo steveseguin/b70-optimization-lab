@@ -1,0 +1,331 @@
+{
+ "binary": "/dev/shm/engine-build-fixed-cost-20261030-r4/sc117-engine",
+ "tp_env": {
+  "OWNRT_TP_CARD_CONTEXT": "1",
+  "OWNRT_TP_EXCHANGE": "direct",
+  "OWNRT_TP_EXPERTS": "compact",
+  "OWNRT_TP_EXPERT_PAIR": "1",
+  "OWNRT_TP_GDN": "heads",
+  "OWNRT_TP_QSA_SPLIT": "1",
+  "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+  "OWNRT_TP_THREADS": "1"
+ },
+ "env_flags": {
+  "OWNRT_ATTN_COMBINE2": "1",
+  "OWNRT_ATTN_HEADS": "1",
+  "OWNRT_DECODE_NEXT": "1",
+  "OWNRT_DECODE_NEXT2": "1",
+  "OWNRT_DENSE_DECODE_V2": "1",
+  "OWNRT_DENSE_RAW": "1",
+  "OWNRT_DRAFT_ATTN": "1",
+  "OWNRT_DRAFT_EXPERTS_V2": "1",
+  "OWNRT_DRAFT_HEAD_RAW": "1",
+  "OWNRT_DRAFT_KERNELS": "qsa_attention,attention_output,fuse_attention_combine,hc_a_low,hc_f_low,hc_final_low,fuse_hc_a_low,fuse_hc_f_low,fuse_hc_final_low,hc_final_gate,fuse_hc_final_mix,hc_a_inject,hc_f_inject,embedding_norm,hidden_norm,hc_a_norm,hc_f_norm,final_norm,hidden_projection,embedding_projection,fuse_hidden_merge,qsa_k,qsa_v,qsa_iq,qsa_ik,router,shared_gate,shared_up,shared_down,shared_router,fuse_shared_activation",
+  "OWNRT_DRAFT_MERGE": "1",
+  "OWNRT_DRAFT_PREFIX_ROWS": "91392",
+  "OWNRT_EXPERTS_V2": "1",
+  "OWNRT_GDN_PREP": "1",
+  "OWNRT_MERGE_CHECKS": "1",
+  "OWNRT_MISS": "banks-batch",
+  "OWNRT_NO_DRAFT_TIMING": "1",
+  "OWNRT_PREFILL_EXPERTS": "1",
+  "OWNRT_PREFILL_MOE_NATIVE": "1",
+  "OWNRT_PREFILL_REUSE2": "1",
+  "OWNRT_PREFILL_SHADOW_PACK": "1",
+  "OWNRT_PREFILL_XZERO_ONCE": "1",
+  "OWNRT_QSA_RAW_RING": "1",
+  "OWNRT_RESET_DEVICE_ZERO": "1",
+  "OWNRT_RETIRE_DEFERRED": "1",
+  "OWNRT_SELECT_FAST": "1",
+  "OWNRT_SELECT_TOPK": "1",
+  "OWNRT_SNAPSHOT_HOST": "static",
+  "OWNRT_TARGET_HEAD_SPLIT": "1",
+  "OWNRT_TP_CARD_CONTEXT": "1",
+  "OWNRT_TP_EXCHANGE": "direct",
+  "OWNRT_TP_EXPERTS": "compact",
+  "OWNRT_TP_EXPERT_PAIR": "1",
+  "OWNRT_TP_GDN": "heads",
+  "OWNRT_TP_QSA_SPLIT": "1",
+  "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+  "OWNRT_TP_THREADS": "1"
+ },
+ "tp": true,
+ "pair": "0,3",
+ "split": ".attention,.gdn.qkv",
+ "prompt": 1100,
+ "batched": true,
+ "rows": 256,
+ "prompt_ms": 3304.327060934156,
+ "second_prompt": 0,
+ "second_request": null,
+ "steps": 16,
+ "load_s": 27.952011943096295,
+ "half_ms": [
+  28.898073127493262,
+  9.718114975839853,
+  9.842700092121959,
+  9.752328973263502,
+  9.674552828073502,
+  9.683090029284358,
+  9.694179985672235,
+  9.723084047436714,
+  9.714608080685139,
+  9.667980950325727,
+  9.691485203802586,
+  9.71124111674726,
+  9.696193970739841,
+  9.68894106335938,
+  9.69777605496347,
+  9.743922855705023
+ ],
+ "tokens": [
+  81694,
+  218223,
+  753,
+  28225,
+  18908,
+  748,
+  59608,
+  5858,
+  6,
+  74,
+  248044,
+  986,
+  3141,
+  53455,
+  101793,
+  17404
+ ],
+ "rc": 0,
+ "alloc_trace": null,
+ "calls": [
+  [
+   15,
+   0,
+   1211839615465957,
+   1211840218054436
+  ],
+  [
+   15,
+   256,
+   1211840482997702,
+   1211840951161996
+  ],
+  [
+   15,
+   512,
+   1211841212929750,
+   1211841676676286
+  ],
+  [
+   15,
+   768,
+   1211841935851986,
+   1211842401187990
+  ],
+  [
+   15,
+   1024,
+   1211842477196995,
+   1211842646806766
+  ],
+  [
+   1,
+   1100,
+   1211842648689036,
+   1211842677584604
+  ],
+  [
+   2,
+   1100,
+   1211842677588662,
+   1211842677615492
+  ],
+  [
+   1,
+   1101,
+   1211842678658283,
+   1211842688374655
+  ],
+  [
+   2,
+   1101,
+   1211842688377059,
+   1211842688401635
+  ],
+  [
+   1,
+   1102,
+   1211842689729723,
+   1211842699570829
+  ],
+  [
+   2,
+   1102,
+   1211842699572853,
+   1211842699596407
+  ],
+  [
+   1,
+   1103,
+   1211842700888848,
+   1211842710639724
+  ],
+  [
+   2,
+   1103,
+   1211842710641638,
+   1211842710663649
+  ],
+  [
+   1,
+   1104,
+   1211842711948525,
+   1211842721621976
+  ],
+  [
+   2,
+   1104,
+   1211842721623359,
+   1211842721644729
+  ],
+  [
+   1,
+   1105,
+   1211842722939143,
+   1211842732620880
+  ],
+  [
+   2,
+   1105,
+   1211842732622904,
+   1211842732646518
+  ],
+  [
+   1,
+   1106,
+   1211842733925673,
+   1211842743618200
+  ],
+  [
+   2,
+   1106,
+   1211842743620675,
+   1211842743647916
+  ],
+  [
+   1,
+   1107,
+   1211842744944664,
+   1211842754666075
+  ],
+  [
+   2,
+   1107,
+   1211842754668179,
+   1211842754692305
+  ],
+  [
+   1,
+   1108,
+   1211842755982602,
+   1211842765695998
+  ],
+  [
+   2,
+   1108,
+   1211842765697460,
+   1211842765719371
+  ],
+  [
+   1,
+   1109,
+   1211842767015168,
+   1211842776682277
+  ],
+  [
+   2,
+   1109,
+   1211842776683209,
+   1211842776703787
+  ],
+  [
+   1,
+   1110,
+   1211842778006427,
+   1211842787696339
+  ],
+  [
+   2,
+   1110,
+   1211842787698623,
+   1211842787722819
+  ],
+  [
+   1,
+   1111,
+   1211842789021772,
+   1211842798731060
+  ],
+  [
+   2,
+   1111,
+   1211842798733725,
+   1211842798757600
+  ],
+  [
+   1,
+   1112,
+   1211842800050200,
+   1211842809744951
+  ],
+  [
+   2,
+   1112,
+   1211842809746875,
+   1211842809769407
+  ],
+  [
+   1,
+   1113,
+   1211842811077156,
+   1211842820764804
+  ],
+  [
+   2,
+   1113,
+   1211842820766077,
+   1211842820788108
+  ],
+  [
+   1,
+   1114,
+   1211842822074597,
+   1211842831771032
+  ],
+  [
+   2,
+   1114,
+   1211842831773166,
+   1211842831797471
+  ],
+  [
+   1,
+   1115,
+   1211842833104299,
+   1211842842846699
+  ],
+  [
+   2,
+   1115,
+   1211842842848823,
+   1211842842872157
+  ],
+  [
+   4,
+   2147483647,
+   1211842842879701,
+   1211854994657621
+  ]
+ ]
+}

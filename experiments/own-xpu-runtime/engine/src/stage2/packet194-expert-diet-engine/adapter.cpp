@@ -617,7 +617,10 @@ struct Glue final:HostOperation {
   if(mode==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}
   else if(mode==2){if(ctrl[2])b.fail();}
   else if(mode==3){std::vector<float> scratch(tiny_local_floats(s));for(int g=0;g<tiny_groups(s);++g)tiny(b,g,ng::HostTeam{scratch.data()});}
-  else {std::vector<float> scratch(std::max(4096,s.g.h));int groups=s.special==Special::normal&&s.op==Op::ple_gate?4:1;for(int g=0;g<groups;++g)simple(b,g,ng::HostTeam{scratch.data()});}
+  else {std::vector<float> scratch(std::max(4096,s.g.h));int groups=s.special==Special::normal&&s.op==Op::ple_gate?4:1;
+   for(int r=0;r<std::max(1,s.tokens);++r){Bound br=b;if(s.tokens>1){for(int j=0;j<s.ni+s.no;++j)if(s.row_bytes[j])br.p[j]=static_cast<unsigned char*>(b.p[j])+size_t(r)*s.row_bytes[j];
+     if(s.special==Special::begin||s.special==Special::commit)br.p[b.tail()+2]=static_cast<unsigned char*>(b.p[b.tail()+2])+size_t(r)*4;} // OWNRT_PREFILL_SPECIAL_ROWS token rows
+    for(int g=0;g<groups;++g)simple(br,g,ng::HostTeam{scratch.data()});}}
  }
 };
 #else
@@ -633,6 +636,21 @@ struct Glue final:ownrt::SyclOperation {
   Bound b{s,{}};std::copy(p.begin(),p.end(),b.p.begin());auto ctrl=static_cast<int32_t*>(p.back());auto mode_=mode;
   if(mode==1||mode==2)return ownrt::prepared_submit(q,[=](sycl::handler& h){h.single_task(packet26::checked([=]{if(mode_==1){ctrl[0]=*b.position();ctrl[1]=*b.active();ctrl[2]=b.failed();}else if(mode_==2){if(ctrl[2])b.fail();}}));});
   int groups=mode==3?tiny_groups(s):s.special==Special::normal&&s.op==Op::ple_gate?4:1,local=mode==3?tiny_local_floats(s):std::max(8192,s.g.h);
+  if(mode==0&&s.tokens>1){
+   // OWNRT_PREFILL_SPECIAL_ROWS=1 (2026-10-30, research/tp/prefill-host-2026-10-30; batched prefill only): the token rows
+   // of a glue op in one launch. Row r runs the unchanged simple() body on its own row of each row-major binding
+   // (row_bytes; begin and commit also on their own row of the position array), shared bindings stay shared. ple_hash
+   // carries the token history from row to row, so its rows run in order in one work-group (a barrier between rows, as
+   // the kernel boundary of the row replays); every other op's rows are independent and run as separate work-groups.
+   const int rows=s.tokens;const bool ordered=s.special==Special::ple_hash,row_position=s.special==Special::begin||s.special==Special::commit;
+   const int work_groups=ordered?1:groups*rows;
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(size_t(work_groups)*128,128)](sycl::handler& h){sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
+    auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};
+    auto row=[&](int r){Bound br=b;for(int j=0;j<b.s.ni+b.s.no;++j)if(b.s.row_bytes[j])br.p[j]=static_cast<unsigned char*>(b.p[j])+size_t(r)*b.s.row_bytes[j];
+     if(row_position)br.p[b.tail()+2]=static_cast<unsigned char*>(b.p[b.tail()+2])+size_t(r)*4;return br;};
+    if(ordered){for(int r=0;r<rows;++r){simple(row(r),0,t);t.barrier();}}
+    else {const int g=int(it.get_group_linear_id());simple(row(g/groups),g%groups,t);}}));});
+  }
   return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(groups*128,128)](sycl::handler& h){sycl::local_accessor<float,1> scratch(local,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{auto t=Team{it,scratch.get_multi_ptr<sycl::access::decorated::no>().get()};if(mode_==3)tiny(b,it.get_group_linear_id(),t);else simple(b,it.get_group_linear_id(),t);}));});
  }
 };
@@ -670,7 +688,12 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   // p49 split32 attention (implementation 12) indexes every binding by row r < tokens, with per-row counts and causal
   // bound; up to 4 rows (grouped prefill attention, OWNRT_PREFILL_ATTN_ROWS).
   const bool p49_rows=normal&&s.implementation==12&&s.op==Op::qsa_attention&&s.tokens<=4;
-  if(!simple&&!generic&&!round2_gdn&&!p49_rows)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
+  // OWNRT_PREFILL_SPECIAL_ROWS=1 (2026-10-30, research/tp/prefill-host-2026-10-30; default off): the batched prefill's
+  // begin/commit/broadcast/ple_hash/ple_gate/ple_add rows in one launch each (prefill_engine.hpp prefill_special_rows_site):
+  // the glue kernel's token rows above, or the SimpleNew per-row binding offsets for an implementation's broadcast/ple_add.
+  static const bool special_rows=[]{const char* e=std::getenv("OWNRT_PREFILL_SPECIAL_ROWS");return e&&e[0]=='1';}();
+  const bool glue_rows=special_rows&&(s.special==Special::begin||s.special==Special::commit||s.special==Special::ple_hash||s.special==Special::broadcast||(normal&&(s.op==Op::ple_gate||s.op==Op::ple_add)));
+  if(!simple&&!generic&&!round2_gdn&&!p49_rows&&!glue_rows)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
  }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
  if(s.implementation==2&&s.special==Special::normal&&(s.op==Op::route||s.op==Op::argmax))return round2::submit_simple(d,s,bindings,deps);

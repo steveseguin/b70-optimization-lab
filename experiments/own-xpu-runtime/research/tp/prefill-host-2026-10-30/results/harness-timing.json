@@ -1,0 +1,352 @@
+{
+ "rank0": {
+  "tptsxqckf (g1, 2bca4e65084d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 435.00333333333333,
+    "wall_ms_median": 432.655,
+    "wall_ms_each": [
+     441.2,
+     431.2,
+     432.7
+    ],
+    "inputs_ms": 15.449933333333334,
+    "loop_ms": 415.02666666666664,
+    "loop_blocked_ms": 367.8843333333333,
+    "host_active_ms": 65.54040866666668,
+    "host_waits": 163,
+    "submissions_per_card": [
+     3644,
+     3644
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.59
+     ],
+     [
+      "linear:gemv",
+      7.53
+     ],
+     [
+      "replay:ple_add",
+      2.31
+     ],
+     [
+      "replay:begin",
+      2.11
+     ],
+     [
+      "replay:ple_hash",
+      2.07
+     ],
+     [
+      "linear:routed_gemv",
+      2.06
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 60.252633333333335,
+    "staged_ms": 6.5830633333333335,
+    "replay_ms_1099_rows": 265.03776106983423,
+    "sites_ms": 17.7058,
+    "admit_ms": 1.2327133333333333,
+    "stage_wait_ms": 0,
+    "stage_thread": false,
+    "guard_row": false,
+    "guards": 4608,
+    "commands": 3840
+   }
+  },
+  "tptsxqckf + sr lt=4 st gr (g1, 2bca4e65084d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 414.4433333333333,
+    "wall_ms_median": 413.334,
+    "wall_ms_each": [
+     420.6,
+     409.4,
+     413.3
+    ],
+    "inputs_ms": 5.7703066666666665,
+    "loop_ms": 403.30066666666664,
+    "loop_blocked_ms": 367.743,
+    "host_active_ms": 43.83042066666669,
+    "host_waits": 161,
+    "submissions_per_card": [
+     2114,
+     2114
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      10.19
+     ],
+     [
+      "linear:gemv",
+      7.64
+     ],
+     [
+      "linear:routed_gemv",
+      2.17
+     ],
+     [
+      "native:norm",
+      2.02
+     ],
+     [
+      "exchange:tp_xheads",
+      1.27
+     ],
+     [
+      "native:silu_product",
+      1.01
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 60.36233333333333,
+    "staged_ms": 9.18196,
+    "replay_ms_1099_rows": 268.07070593349636,
+    "sites_ms": 16.9084,
+    "admit_ms": 1.3005166666666668,
+    "stage_wait_ms": 0.011702333333333334,
+    "stage_thread": true,
+    "guard_row": true,
+    "guards": 256,
+    "commands": 3840
+   }
+  },
+  "tptsxqckf (g2, c8e173bf4e7d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 435.04,
+    "wall_ms_median": 434.552,
+    "wall_ms_each": [
+     439.3,
+     434.6,
+     431.3
+    ],
+    "inputs_ms": 15.846033333333333,
+    "loop_ms": 414.7443333333333,
+    "loop_blocked_ms": 367.28933333333333,
+    "host_active_ms": 66.16225666666664,
+    "host_waits": 163,
+    "submissions_per_card": [
+     3644,
+     3644
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.89
+     ],
+     [
+      "linear:gemv",
+      7.57
+     ],
+     [
+      "replay:ple_add",
+      2.28
+     ],
+     [
+      "replay:begin",
+      2.1
+     ],
+     [
+      "replay:ple_hash",
+      2.08
+     ],
+     [
+      "linear:routed_gemv",
+      2.07
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 60.213033333333335,
+    "staged_ms": 6.73362,
+    "replay_ms_1099_rows": 265.08854096755385,
+    "sites_ms": 17.678533333333334,
+    "admit_ms": 1.2405266666666668,
+    "copy_ms": 33.20473333333333,
+    "guard_ms": 0.158416,
+    "stage_wait_ms": 0,
+    "stage_thread": false,
+    "guard_row": false,
+    "row_copy": false,
+    "guards": 4608,
+    "commands": 3840
+   }
+  },
+  "tptsxqckf + sr lt=4 st gr rc (g2, c8e173bf4e7d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 415.51,
+    "wall_ms_median": 414.994,
+    "wall_ms_each": [
+     419.4,
+     412.2,
+     415.0
+    ],
+    "inputs_ms": 6.0612433333333335,
+    "loop_ms": 404.17066666666665,
+    "loop_blocked_ms": 369.78366666666665,
+    "host_active_ms": 42.817989666666676,
+    "host_waits": 161,
+    "submissions_per_card": [
+     2114,
+     2114
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      10.02
+     ],
+     [
+      "linear:gemv",
+      7.67
+     ],
+     [
+      "linear:routed_gemv",
+      2.11
+     ],
+     [
+      "native:norm",
+      1.85
+     ],
+     [
+      "exchange:tp_xheads",
+      1.21
+     ],
+     [
+      "native:hc_combine",
+      1.02
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 56.06766666666667,
+    "staged_ms": 8.05739,
+    "replay_ms_1099_rows": 251.15506630390882,
+    "sites_ms": 14.0105,
+    "admit_ms": 34.65376666666667,
+    "copy_ms": 1.0207366666666666,
+    "guard_ms": 0.174263,
+    "stage_wait_ms": 0.024207666666666666,
+    "stage_thread": true,
+    "guard_row": true,
+    "row_copy": true,
+    "guards": 256,
+    "commands": 3840
+   }
+  }
+ },
+ "rank1": {
+  "tptsxqckf (g1, 2bca4e65084d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 466.52633333333335,
+    "wall_ms_median": 467.866,
+    "wall_ms_each": [
+     468.3,
+     463.4,
+     467.9
+    ],
+    "inputs_ms": 3.059546666666667,
+    "loop_ms": 460.31,
+    "loop_blocked_ms": 416.32233333333335,
+    "host_active_ms": 48.26313733333331,
+    "host_waits": 175,
+    "submissions_per_card": [
+     3105,
+     3105
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      13.29
+     ],
+     [
+      "linear:gemv",
+      8.27
+     ],
+     [
+      "linear:routed_gemv",
+      2.16
+     ],
+     [
+      "native:norm",
+      2.04
+     ],
+     [
+      "replay:commit",
+      1.99
+     ],
+     [
+      "replay:begin",
+      1.92
+     ]
+    ]
+   }
+  },
+  "tptsxqckf + sr (g1, 2bca4e65084d)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 788.4003333333334,
+    "wall_ms_median": 463.296,
+    "wall_ms_each": [
+     1447.1,
+     454.8,
+     463.3
+    ],
+    "inputs_ms": 3.0677166666666666,
+    "loop_ms": 781.06,
+    "loop_blocked_ms": 410.8376666666667,
+    "host_active_ms": 374.40179666666677,
+    "host_waits": 175,
+    "submissions_per_card": [
+     2595,
+     2595
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "linear:routed_gemv",
+      191.48
+     ],
+     [
+      "grouped:qsa_attention",
+      143.69
+     ],
+     [
+      "linear:gemv",
+      17.65
+     ],
+     [
+      "native:norm",
+      2.16
+     ],
+     [
+      "exchange:tp_xheads",
+      1.48
+     ],
+     [
+      "exchange:tp_xgather",
+      1.24
+     ]
+    ]
+   }
+  }
+ }
+}

@@ -1,0 +1,85 @@
+{
+ "schema": "prefill-host.bounds.v1",
+ "long_request": {
+  "tptsxqckf-r1": {
+   "ttft_s": 250.49392745597288,
+   "rank0_prefill_median_ms": 464.804382,
+   "rank0_draft_median_ms": 61.260039,
+   "rank0_critical_ms_per_chunk": 526.2594543403361,
+   "rank1_busy_ms_per_chunk": 467.7476227710084,
+   "rank1_idle_s": 27.30333908344619,
+   "chunks": 476
+  },
+  "tptsxqckh-r1": {
+   "ttft_s": 239.4328558910638,
+   "rank0_prefill_median_ms": 446.251884,
+   "rank0_draft_median_ms": 56.949594,
+   "rank0_critical_ms_per_chunk": 502.9735514411765,
+   "rank1_busy_ms_per_chunk": 465.14568398949575,
+   "rank1_idle_s": 17.501915320986882,
+   "chunks": 476
+  },
+  "tptsxqckh-r2": {
+   "ttft_s": 239.29171833582222,
+   "rank0_prefill_median_ms": 445.93239,
+   "rank0_draft_median_ms": 56.767638,
+   "rank0_critical_ms_per_chunk": 502.6741047499999,
+   "rank1_busy_ms_per_chunk": 465.23355262184873,
+   "rank1_idle_s": 17.31311316578649,
+   "chunks": 476
+  }
+ },
+ "rank1_harness": {
+  "wall_ms": 466.52633333333335,
+  "blocked_on_cards_ms": 416.32233333333335,
+  "device_bound_share": 0.8923876394258559,
+  "host_active_ms": 48.26313733333331,
+  "exchange_sites_per_chunk": 150.0,
+  "layers": 25,
+  "submissions_per_card": [
+   3105,
+   3105
+  ]
+ },
+ "rank0_harness": {
+  "tptsxqckf (g1, 2bca4e65084d)": {
+   "wall_ms": 435.00333333333333,
+   "blocked_on_cards_ms": 367.8843333333333,
+   "device_bound_share": 0.8457046306158573,
+   "exchange_sites_per_chunk": 138.0,
+   "draft_chunk_ms": 60.252633333333335
+  },
+  "tptsxqckf + sr lt=4 st gr (g1, 2bca4e65084d)": {
+   "wall_ms": 414.4433333333333,
+   "blocked_on_cards_ms": 367.743,
+   "device_bound_share": 0.8873179284662962,
+   "exchange_sites_per_chunk": 138.0,
+   "draft_chunk_ms": 60.36233333333333
+  },
+  "tptsxqckf (g2, c8e173bf4e7d)": {
+   "wall_ms": 435.04,
+   "blocked_on_cards_ms": 367.28933333333333,
+   "device_bound_share": 0.8442656613951207,
+   "exchange_sites_per_chunk": 138.0,
+   "draft_chunk_ms": 60.213033333333335
+  },
+  "tptsxqckf + sr lt=4 st gr rc (g2, c8e173bf4e7d)": {
+   "wall_ms": 415.51,
+   "blocked_on_cards_ms": 369.78366666666665,
+   "device_bound_share": 0.8899513048221863,
+   "exchange_sites_per_chunk": 138.0,
+   "draft_chunk_ms": 56.06766666666667
+  }
+ },
+ "next_lever": {
+  "name": "batched KV-only draft rows (M=256 per site instead of 256 x 15 single-row commands)",
+  "measured_basis": "draft chunk 56.8 ms device-bound, 0.22 ms per row; rank 0 prefill 446 ms; rank 1 465 ms",
+  "projection_not_measured": {
+   "draft_chunk_ms_assumed": "5-10",
+   "rank0_critical_ms": "451-456",
+   "bound": "rank 1 at 465 ms/chunk",
+   "ttft_s": 221.4,
+   "gain_s": 17.9
+  }
+ }
+}

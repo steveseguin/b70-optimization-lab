@@ -1,5 +1,22 @@
 # Current Workspace State
 
+**October 30, about 12:40 — four-card long prompt 250.5 → 239.3 s, exact; now at or below the 3+1 262K layout.**
+- Five default-off rank-0 flags on binary `c8e173bf4e7d` (set `tptsxqckh` = `tptsxqckf` + `OWNRT_PREFILL_SPECIAL_ROWS=1
+  OWNRT_PREFILL_LOOKUP_THREADS=4 OWNRT_DRAFT_CHUNK_STAGE_THREAD=1 OWNRT_DRAFT_CHUNK_GUARD_ROW=1 OWNRT_DRAFT_CHUNK_ROW_COPY=1`):
+  - six glue ops in one launch per chunk instead of 256 row replays;
+  - lookup rows dequantized on 4 host threads;
+  - the draft chunk's staging, guards and row copies off its issue path.
+- **Fresh servers at 131,072, A/B/B:** the 121,854-token prompt reads in 250.49 → 239.43 / 239.29 s, and the 3,490-token
+  prompt in 7.37 → 7.08 s.
+  - Decode is unchanged (81.3–81.5 tok/s after the long prompt; suite 84.1–84.3).
+  - All 512 long outputs equal the 3+1 reference, and the suite equals B19.
+  - Startup gate 13/13; 35/35 rank-harness comparisons bitwise equal (including the two-request reset case).
+- Short of the ~223 s goal: the draft chunk turned out device-bound (3,840 single-row kernels, 57 ms per chunk), so
+  removing its host work saved 4 ms, not 6–16.
+- Rank 0 still bounds, at 503 ms per chunk against rank 1's 465. Next lever, not built: batched KV-only draft rows.
+  Projected at about 221 s, where rank 1 becomes the bound.
+  [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
+
 **October 30, about 10:00 — one kernel per layer (persistent kernel): measured, not worth building.**
 - On a B70 a barrier across the whole card (1.5 µs at 64 groups) costs more than the kernel launch it would replace
   (0.6–1.1 µs). On the real hyper-connection chain the persistent version is exact but 9.6% slower; even a free barrier

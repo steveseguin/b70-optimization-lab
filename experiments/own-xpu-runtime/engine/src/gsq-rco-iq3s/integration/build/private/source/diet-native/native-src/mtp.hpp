@@ -7,7 +7,9 @@
 #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
 #include "stage2/packet194-expert-diet-engine/p56_prefix.hpp"
 #include "stage2/packet194-expert-diet-engine/p83_head.hpp"
+#include <atomic>
 #include <cfenv>
+#include <thread>
 #include <poll.h>
 // Included after Engine. All mutable allocations below are private to the draft.
 // The target Engine supplies one lifetime owner, uploads and immutable weights.
@@ -553,6 +555,27 @@ public:
  // submissions, and the sticky error is read once after the last row (an error disables the draft, as in compute()).
  static bool chunk_replay(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_REPLAY");return v&&v[0]=='1';}();return on;}
  Allocation chunk_staging{};size_t chunk_staging_rows=0;uint64_t chunk_replays=0,chunk_rows=0;
+ // OWNRT_DRAFT_CHUNK_ROW_COPY=1 (with OWNRT_DRAFT_CHUNK_REPLAY=1; 2026-10-30, research/tp/prefill-host-2026-10-30; default
+ // off): a chunk row's two staging copies (pinned row -> merge.hidden, pinned row -> embedding) are one prepared KioCopy
+ // kernel per staging row (packet188 kernel_io.hpp: every byte stored unchanged, on the same in-order queue at the same
+ // point as the copies it replaces), captured once and replayed like the sites, instead of two runtime memcpy submissions.
+ static bool chunk_row_copy(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_ROW_COPY");return v&&v[0]=='1';}();return on;}
+ std::vector<ownrt::PreparedCompute> chunk_row_copies;uint64_t chunk_row_copy_generation=0;
+ void build_chunk_row_copies(size_t hidden_bytes,size_t emb_bytes,size_t emb_base){
+  chunk_row_copies.clear();chunk_row_copies.reserve(chunk_staging_rows);
+  const Allocation hid=id("merge.hidden"),emb=id("embedding");const auto& sr=e.dev(0).arena.row(chunk_staging);
+  require(sr.live&&emb_base+chunk_staging_rows*emb_bytes<=sr.bytes&&chunk_staging_rows*hidden_bytes<=emb_base,"draft chunk row copy: staging extent");
+  require(e.dev(0).arena.row(hid).bytes>=hidden_bytes&&e.dev(0).arena.row(emb).bytes>=emb_bytes,"draft chunk row copy: destination extent");
+  require(e.dev(0).arena.row(hid).memory==Memory::device&&e.dev(0).arena.row(emb).memory==Memory::device,"draft chunk row copy: device destinations");
+  auto* staged=static_cast<uint8_t*>(sr.pointer);const std::array<Allocation,2> ids{hid,emb};
+  for(size_t r=0;r<chunk_staging_rows;++r){
+   p188::KioCopy op;op.add(e.raw(0,hid),staged+r*hidden_bytes,hidden_bytes);op.add(e.raw(0,emb),staged+emb_base+r*emb_bytes,emb_bytes);
+   std::vector<ownrt::PreparedCompute> one;e.dev(0).begin_capture(one);
+   try{e.dev(0).compute(op,std::span<const Allocation>(ids.data(),ids.size()),{});e.dev(0).end_capture();}catch(...){e.dev(0).end_capture();throw;}
+   require(one.size()==1,"draft chunk row copy: one prepared command per row");chunk_row_copies.push_back(std::move(one.front()));
+  }
+  chunk_row_copy_generation=e.dev(0).generation();
+ }
  // OWNRT_DRAFT_CHUNK_KV_ONLY=1 (with OWNRT_DRAFT_CHUNK_REPLAY=1; 2026-10-29, research/tp/prefill-speed-2026-10-29; default
  // off): a head-off prompt row issues only the sites its lasting state needs. The draft is one layer, so a prompt row
  // leaves exactly its KV/index-key append (keys, values, raw, pooled) and the position commit; everything else it computes
@@ -624,33 +647,69 @@ public:
   for(int i=0;i<n;++i)require(tokens[i]>=0&&tokens[i]<p.g.vocab,"draft confirmed token bound");
   // Row i's staging is written just before its ordered copy is issued (each row has its own region, and nothing writes
   // it again in this chunk), so the card starts on row 0 while the host stages the next rows.
-  double staged_ms=0;
-  auto stage=[&](int i){const auto s0=std::chrono::steady_clock::now();
+  // OWNRT_DRAFT_CHUNK_STAGE_THREAD=1 (2026-10-30, research/tp/prefill-host-2026-10-30; default off): the rows' inputs are
+  // staged by a helper thread running ahead of the issue loop (the same bytes into the same pinned rows, from the
+  // resident embedding table read() serves); row i's ordered copy is issued only after the thread has published row i
+  // (release/acquire). read()'s counters are added after the join, as the per-row reads leave them. Without a resident
+  // table the rows are staged inline as before.
+  // OWNRT_DRAFT_CHUNK_GUARD_ROW=1 (same date; default off): the cooperative stop/deadline check (Engine::guard, a poll()
+  // of the stop channel) runs once per row instead of before every site; the per-site deadline check stays. Host only.
+  static const bool stage_thread_on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_STAGE_THREAD");return v&&v[0]=='1';}();
+  static const bool guard_row=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_GUARD_ROW");return v&&v[0]=='1';}();
+  static const bool host_trace=[]{const char* v=std::getenv("OWNRT_PREFILL_HOST_TRACE");return v&&v[0]=='1';}();
+  double staged_ms=0,stage_wait_ms=0,sites_ms=0,admit_ms=0,copy_ms=0,guard_ms=0;uint64_t commands=0,guards=0;
+  const bool row_copy=chunk_row_copy();
+  if(row_copy&&(chunk_row_copies.size()!=chunk_staging_rows||chunk_row_copy_generation!=e.dev(0).generation()))build_chunk_row_copies(hidden_bytes,emb_bytes,emb_base);
+  auto stage_row=[&](int i,const uint8_t* resident_row){
    auto* hidden=reinterpret_cast<uint16_t*>(staged+size_t(i)*hidden_bytes);const float* f=rows+size_t(i)*H;for(size_t k=0;k<H;++k)hidden[k]=iq3::bf16_bits(f[k]);
-   auto raw=e.w.read(t.name,size_t(tokens[i])*rb,rb);auto* emb=reinterpret_cast<uint16_t*>(staged+emb_base+size_t(i)*emb_bytes);
-   for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));
-   staged_ms+=Engine::ms(s0);};
+   auto* emb=reinterpret_cast<uint16_t*>(staged+emb_base+size_t(i)*emb_bytes);
+   if(resident_row){const std::span<const uint8_t> raw(resident_row,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}
+   else {auto raw=e.w.read(t.name,size_t(tokens[i])*rb,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}};
+  auto stage=[&](int i){const auto s0=std::chrono::steady_clock::now();stage_row(i,nullptr);staged_ms+=Engine::ms(s0);};
+  const bool threaded=stage_thread_on&&e.w.resident(t.name,0,rb)!=nullptr;
+  std::atomic<int> staged_count{0};std::atomic<bool> stage_failed{false};std::string stage_error;double thread_stage_ms=0;
+  std::thread stager;struct Join{std::thread& t;~Join(){if(t.joinable())t.join();}} join_stager{stager};
+  if(threaded)stager=std::thread([&]{const auto s0=std::chrono::steady_clock::now();
+   try{for(int i=0;i<n;++i){const uint8_t* row=e.w.resident(t.name,size_t(tokens[i])*rb,rb);if(!row)throw std::runtime_error("embedding row not resident");
+     stage_row(i,row);staged_count.store(i+1,std::memory_order_release);}}
+   catch(const std::exception& ex){stage_error=ex.what();stage_failed.store(true,std::memory_order_release);}
+   thread_stage_ms=Engine::ms(s0);});
   struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);
   const bool kv_only=chunk_kv_only();if(kv_only&&chunk_sites.empty())build_chunk_sites();
   uint64_t drained_at=e.submitted;std::vector<double> issued_ms(size_t(n),0.);
   for(int i=0;i<n;++i){
-   admit_position();require(position+1==first_target+i,"draft chunk row position");
-   auto start=std::chrono::steady_clock::now();e.guard();stage(i);
-   e.tail=e.io_copy(0,{{id("merge.hidden"),0,chunk_staging,size_t(i)*hidden_bytes,hidden_bytes},{id("embedding"),0,chunk_staging,emb_base+size_t(i)*emb_bytes,emb_bytes}});e.tail_card=0;
+   const auto a0=std::chrono::steady_clock::now();admit_position();if(host_trace)admit_ms+=Engine::ms(a0);
+   require(position+1==first_target+i,"draft chunk row position");
+   auto start=std::chrono::steady_clock::now();e.guard();++guards;if(host_trace)guard_ms+=Engine::ms(start);
+   if(threaded){const auto w0=std::chrono::steady_clock::now();
+    while(staged_count.load(std::memory_order_acquire)<=i){
+     if(stage_failed.load(std::memory_order_acquire))throw std::runtime_error("draft chunk staging: "+stage_error);
+     if(Engine::ms(w0)>10000.)throw std::runtime_error("draft chunk staging deadline");std::this_thread::yield();}
+    stage_wait_ms+=Engine::ms(w0);}
+   else stage(i);
+   const auto c0=std::chrono::steady_clock::now();
+   if(row_copy)e.tail=e.dev(0).issue(chunk_row_copies.at(size_t(i)));
+   else e.tail=e.io_copy(0,{{id("merge.hidden"),0,chunk_staging,size_t(i)*hidden_bytes,hidden_bytes},{id("embedding"),0,chunk_staging,emb_base+size_t(i)*emb_bytes,emb_bytes}});
+   e.tail_card=0;if(host_trace)copy_ms+=Engine::ms(c0);
+   const auto t_sites=std::chrono::steady_clock::now();
    for(size_t k=0;k<issue_sites.size();++k){const auto& site=issue_sites[k];if(site.head||(kv_only&&!chunk_sites[k]))continue;
     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
-    e.guard();e.current_cls=site.cls;
-    if(site.gemv_split>=0){for(const auto& cmd:gemv_split->sites.at(size_t(site.gemv_split)).card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}++gemv_split->runs;}
-    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+    if(!guard_row){e.guard();++guards;}
+    e.current_cls=site.cls;
+    if(site.gemv_split>=0){for(const auto& cmd:gemv_split->sites.at(size_t(site.gemv_split)).card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);++commands;}++gemv_split->runs;}
+    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);++commands;}
    }
+   if(host_trace)sites_ms+=Engine::ms(t_sites);
    ++position;issued_ms[size_t(i)]=Engine::ms(start);
    if(e.submitted-drained_at>6000){e.drain();drained_at=e.submitted;}
   }
+  if(threaded){stager.join();require(!stage_failed.load(),"draft chunk staging: "+stage_error);staged_ms=thread_stage_ms;for(int i=0;i<n;++i)e.w.count_read(rb);}
   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);
   ++chunk_replays;chunk_rows+=size_t(n);
   const double wall=Engine::ms(chunk_start);
   for(int i=0;i<n;++i)trace<<"{\"draft_position\":"<<first_target+i-1<<",\"confirmed_token\":"<<tokens[i]<<",\"guess\":-1,\"head\":false,\"wall_ms\":"<<issued_ms[size_t(i)]<<",\"chunk_replay\":true}\n";
-  trace<<"{\"chunk_replay\":{\"first_target\":"<<first_target<<",\"rows\":"<<n<<",\"kv_only\":"<<(kv_only?"true":"false")<<",\"staged_ms\":"<<staged_ms<<",\"wall_ms\":"<<wall<<",\"error\":"<<status<<"}}\n";trace.flush();
+  trace<<"{\"chunk_replay\":{\"first_target\":"<<first_target<<",\"rows\":"<<n<<",\"kv_only\":"<<(kv_only?"true":"false")<<",\"staged_ms\":"<<staged_ms<<",\"wall_ms\":"<<wall<<",\"error\":"<<status
+       <<",\"stage_thread\":"<<(threaded?"true":"false")<<",\"guard_row\":"<<(guard_row?"true":"false")<<",\"stage_wait_ms\":"<<stage_wait_ms<<",\"sites_ms\":"<<sites_ms<<",\"admit_ms\":"<<admit_ms<<",\"copy_ms\":"<<copy_ms<<",\"guard_ms\":"<<guard_ms<<",\"row_copy\":"<<(row_copy?"true":"false")<<",\"commands\":"<<commands<<",\"guards\":"<<guards<<"}}\n";trace.flush();
   if(status)disabled=true;
  }
  int run(int confirmed,int target_position,bool head){try{return compute(confirmed,target_position,head);}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
