@@ -80,6 +80,9 @@ struct Backend {
   virtual bool wait(Event, Deadline) = 0;
   virtual void synchronize() = 0; // only after all tracked events complete
   virtual void clear_events() = 0;
+  // OWNRT_RETIRE_DEFERRED (2026-10-30): drop the native events up to and including `last` (all complete; the owner
+  // proved them complete before deferring). Backends without it refuse.
+  virtual void clear_events_through(Event) { throw std::logic_error("prefix event retirement unsupported"); }
   virtual void close_queue() = 0;
   virtual void close_context() = 0;
 };
@@ -249,6 +252,10 @@ class Device {
   // Implementation lives with that integration; graph leases forbid retirement.
   void retire_completed_events();
   void retire_ordered_events(); // Packet76: explicit ordered-backend capability
+  // OWNRT_RETIRE_DEFERRED (2026-10-30, research/tp/fixed-cost-2026-10-30): retire the first n events, which the caller
+  // saw complete (every retirement point waits first), while later work may be in flight. No queue synchronize.
+  void retire_prefix(std::size_t n);
+  std::size_t event_count() const {return events_.size();}
   void graph(std::string, std::vector<Allocation>, std::function<void()>);
   Receipt shutdown(std::chrono::milliseconds timeout);
 };

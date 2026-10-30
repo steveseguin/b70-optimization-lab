@@ -467,6 +467,7 @@ void prefill_exchange(const flash::Launch& l,int M) {
 }
 // Run rows P0..P0+M-1. rows_in: rank 1's M input stream rows (nullptr on rank 0). rows_out: M output stream rows.
 void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t* rows_out) {
+  struct RetireNow{bool& flag;bool saved;~RetireNow(){flag=saved;}} retire_now_scope{retire_now,retire_now};retire_now=true; // OWNRT_RETIRE_DEFERRED: a chunk retires on the spot
   require(a.prefill_rows>0&&M>=1&&M<=a.prefill_rows,"prefill chunk rows");
   require(P0>=0&&P0+M<=p.g.context,"prefill context bound");
   // Diagnostic only (OWNRT_PREFILL_HOST_TRACE=1, 2026-10-29, research/tp/prefill-speed-2026-10-29): host-side timing of

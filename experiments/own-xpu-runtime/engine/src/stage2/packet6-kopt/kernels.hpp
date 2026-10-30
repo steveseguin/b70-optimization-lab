@@ -24,6 +24,11 @@ ownrt::Event slot_select(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,ownr
 // Compact slots (OWNRT_TP_EXPERTS=compact): routes/routes_down of slots parity, parity+2, ... into compact arrays.
 ownrt::Event route_compact(ownrt::Device&,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,uint32_t top,uint32_t parity);
 ownrt::Event slot_rows_compact(ownrt::Device&,ownrt::Allocation rows,ownrt::Allocation compact,uint32_t top,uint32_t parity,uint32_t words);
+// OWNRT_TP_EXPERT_PAIR (2026-10-30): gate and up routed rows of one layer plus act = silu(gate) * up in one launch.
+bool routed_pairs(Type,size_t k,uint32_t count,Type a,Type o,unsigned sg,ownrt::Allocation fp32);
+ownrt::Event routed_pair(ownrt::Device&,Type,ownrt::Allocation w,ownrt::Allocation wu,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation yu,
+                         ownrt::Allocation routes,ownrt::Allocation status,ownrt::Allocation su,uint32_t experts,uint32_t rows,size_t k,uint32_t count,
+                         uint32_t span,ownrt::Allocation act,ownrt::Allocation active,ownrt::Allocation error,ownrt::Allocation position,int limit);
 // Independent inputs only: this does not fuse across real activation dependencies.
 ownrt::Event fused_gemv(ownrt::Device&,const std::vector<Matrix>&,unsigned=16);
 // Populated only inside a coordinator-authorized submit; never enumerates.

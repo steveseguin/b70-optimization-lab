@@ -316,6 +316,11 @@ class SyclDevice final : public Backend, public OrderedQueue {
   }
   void synchronize() override {queue_->wait_and_throw(); check_error();}
   void clear_events() override {std::lock_guard lock(events_mutex_);events_.clear();}
+  void clear_events_through(Event last) override { // OWNRT_RETIRE_DEFERRED: handles are increasing, events_ is sorted
+    std::lock_guard lock(events_mutex_);
+    auto end=std::upper_bound(events_.begin(),events_.end(),last,[](Event h,const auto& v){return h<v.handle;});
+    events_.erase(events_.begin(),end);
+  }
   void close_queue() override {queue_.reset();}
   void close_context() override {
     context_.reset();

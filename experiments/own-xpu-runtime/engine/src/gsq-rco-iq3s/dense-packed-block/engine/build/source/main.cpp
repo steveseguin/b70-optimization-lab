@@ -1063,11 +1063,28 @@ public:
   std::ofstream reply_timings;
   double retirement_ms=0,profiling_ms=0;
   uint64_t retirement_calls=0;
+  // OWNRT_RETIRE_DEFERRED=K (2026-10-30, research/tp/fixed-cost-2026-10-30; default off, host only; "1" = 64): a
+  // retirement point no longer retires card c's events on the spot. Every caller waits first, so all of card c's
+  // events are complete there; their count is recorded and the next decode half retires exactly that prefix after
+  // it has issued K launches on card c (card 1: on its own submission thread), while the card works through them.
+  // Inside a batched prefill chunk, or past 4096 recorded events (the owner's ledger refuses 16384), a retirement
+  // point retires everything as before. No device work changes.
+  static int retire_deferred_after(){static const int k=[]{const char* e=std::getenv("OWNRT_RETIRE_DEFERRED");if(!e||!*e||e[0]=='0')return 0;const int v=std::atoi(e);return v==1?64:v;}();return k;}
+  std::array<std::size_t,2> retire_upto{};std::array<double,2> deferred_retirement_ms{}; // per card: card 1 on its own thread
+  bool retire_now=false; // OWNRT_RETIRE_DEFERRED: set inside a batched prefill chunk (its many launches stay bounded by the ledger)
   void retire_events(int c) {
     auto started=std::chrono::steady_clock::now();
+    if(retire_deferred_after()>0&&!retire_now&&dev(c).event_count()<=4096){retire_upto[size_t(c)]=dev(c).event_count();retirement_ms+=ms(started);++retirement_calls;return;}
+    retire_upto[size_t(c)]=0;
     if(ordered_retirement)dev(c).retire_ordered_events();
     else dev(c).retire_completed_events();
     retirement_ms+=ms(started);++retirement_calls;
+  }
+  void retire_deferred(int c) { // OWNRT_RETIRE_DEFERRED: the recorded complete prefix of card c (thread that issues card c)
+    if(!retire_upto[size_t(c)])return;
+    auto started=std::chrono::steady_clock::now();
+    dev(c).retire_prefix(retire_upto[size_t(c)]);retire_upto[size_t(c)]=0;
+    deferred_retirement_ms[size_t(c)]+=ms(started);
   }
   std::string miss_choice() const {auto i=sealed_selection.choices.find("miss");return i==sealed_selection.choices.end()?"control":i->second;}
   bool miss_banks() const {return a.rank==0&&miss_choice().starts_with("banks");}
@@ -2098,6 +2115,7 @@ public:
 #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
   void execute_site(const flash::Launch& l) {int c=l.card;
     if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
+    if(a.gsq_packed&&dev(c).view_row<0&&expert_pair_follower.count(&l)) { /* OWNRT_TP_EXPERT_PAIR: written by the gate's paired launch */ } else
     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
     else if (l.op == "lookup") { fp32_sources[c]=0; /* Prepared once at token boundary from known input/history. */ }

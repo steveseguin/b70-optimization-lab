@@ -11,6 +11,7 @@
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #include "stage2/packet194-expert-diet-engine/decode_next.hpp"
 #include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
+#include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
 #include "stage1/packet3-prep/src/sycl_operation.hpp"
 #include "stage2/packet6-kopt/dense_v2.hpp"
 #include <algorithm>
@@ -515,6 +516,79 @@ BLOCK_CASE(Q8_0);BLOCK_CASE(Q6_K);BLOCK_CASE(IQ2_S);BLOCK_CASE(IQ3_S);BLOCK_CASE
     throw std::invalid_argument("kopt block rows: decode8 formats only");
   }
 };
+// OWNRT_TP_EXPERT_PAIR (2026-10-30, expert_pair.hpp): MultiplyBlockRows for a layer's gate and up matrices in one
+// launch, plus the SiLU product. A subgroup owns RH consecutive rows of one slot in BOTH matrices (rows i < RH from the
+// gate, i >= RH the same rows from the up matrix): each row's pointer, decode8 values, product-then-add order, ragged
+// tail and adjacent-pair tree are MultiplyBlockRows' (only the weight base differs per row). Both outputs (NaN for
+// inactive rows) and both status words are written as the separate launches write them; lane 0 then forms
+// act = ng::silu(gate) * up from the two stored values under the activation's guard.
+// Bindings: gate w, x, gate y, routes, gate status (Descriptor indices), then up w, up y, up status, act, active, error,
+// position (indices 5..11, appended in that order).
+template<unsigned RH> struct MultiplyBlockRowsPair:ownrt::SyclOperation {
+  static constexpr unsigned Subgroups=4,R=2*RH;
+  Descriptor desc{};unsigned wu=0,yu=0,su=0,act=0,active=0,error=0,position=0;int limit=0;
+  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+    auto d=desc;std::array<void*,12> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt block-rows pair capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+    const unsigned iwu=wu,iyu=yu,isu=su,iact=act,iactive=active,ierror=error,iposition=position;const int lim=limit;
+    const size_t blocks=(d.span+RH-1)/RH,total=blocks*d.count,groups=(total+Subgroups-1)/Subgroups;
+    return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+      h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+        const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
+        const size_t slot=logical/blocks,first=(logical%blocks)*RH;
+        Route r{0,0,uint32_t(d.rows)};r=static_cast<const Route*>(pointers[d.r])[slot];
+        const bool valid=valid_route(r,d.experts,d.rows,d.span);
+        if(first==0&&lane==0){static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;static_cast<uint32_t*>(pointers[isu])[slot]=valid?0:1;}
+        const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;
+        const uint8_t* wbase[2]={static_cast<const uint8_t*>(pointers[d.w]),static_cast<const uint8_t*>(pointers[iwu])};
+        float acc[R];const uint8_t* rows[R];bool live[R];
+        #pragma unroll
+        for(unsigned i=0;i<R;++i){acc[i]=0;const size_t row=first+i%RH;live[i]=valid&&row<d.span&&row<r.row_count;
+          rows[i]=live[i]?wbase[i/RH]+(size_t(r.expert_id)*d.rows+r.row_begin+row)*d.rb:wbase[i/RH];}
+        const uint32_t k32=uint32_t(d.k);uint32_t k=lane*8u;
+        for(;k+8u<=k32;k+=SG*8u) {
+          float input[8];
+          #pragma unroll
+          for(unsigned j=0;j<8;++j)input[j]=x[k+j];
+          #pragma unroll
+          for(unsigned i=0;i<R;++i) {
+            if(!live[i])continue;float values[8];decode8<T>(rows[i],k,values);
+            #pragma unroll
+            for(unsigned j=0;j<8;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
+          }
+        }
+        if(k<k32) {
+          float input[8];for(unsigned j=0;k+j<k32;++j)input[j]=x[k+j];
+          #pragma unroll
+          for(unsigned i=0;i<R;++i) {
+            if(!live[i])continue;float values[8];for(uint32_t j=0;k+j<k32;++j)values[j]=element(T,rows[i],k+j);
+            for(unsigned j=0;k+j<k32;++j){float product=values[j]*input[j];acc[i]=acc[i]+product;}
+          }
+        }
+        float stored[R];
+        #pragma unroll
+        for(unsigned i=0;i<R;++i) {
+          float sum=acc[i];
+          for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+          const size_t row=first+i%RH;stored[i]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
+          if(lane==0&&row<d.span)static_cast<float*>(pointers[i<RH?d.y:iyu])[slot*d.span+row]=stored[i];
+        }
+        const expert_pair::Act a{static_cast<float*>(pointers[iact]),static_cast<const int32_t*>(pointers[iactive]),static_cast<int32_t*>(pointers[ierror]),static_cast<const int32_t*>(pointers[iposition]),lim};
+        if(expert_pair::guard(a,sg,logical==0&&lane==0)&&lane==0) {
+          #pragma unroll
+          for(unsigned i=0;i<RH;++i){const size_t row=first+i;if(row<d.span)a.y[slot*d.span+row]=expert_pair::value(stored[i],stored[RH+i]);}
+        }
+      }));
+    });
+  }
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    switch(desc.type){
+    case Type::IQ2_S:return run<Type::IQ2_S,32>(q,p,deps);
+    case Type::IQ3_S:return run<Type::IQ3_S,32>(q,p,deps);
+    default:break;}
+    throw std::invalid_argument("kopt block-rows pair: IQ2_S and IQ3_S gate/up only");
+  }
+};
 // OWNRT_EXPERTS_V2 (lab 2026-10-26): routed IQ4_NL rows with packed logical lanes (F32, decode slots). Work-item t of a
 // row owns the four logical lanes 4t..4t+3 of Multiply's mapping (lane l: columns l*8+256*i), i.e. IQ4_NL block 8i+t of
 // every 256-column chunk: its 18 bytes are read once as 5 aligned words, its scale converted once. Each logical lane
@@ -926,6 +1000,26 @@ ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
     MultiplyBlockRows<1> block;block.desc=op.desc[0];return d.compute(block,ids,{});
   }
   return finish(d,op,ids);
+}
+// OWNRT_TP_EXPERT_PAIR: only where routed_gemv takes MultiplyBlockRows<4> for both matrices (pairs() true).
+bool routed_pairs(Type t,size_t k,uint32_t count,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
+  return a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&!xgroup2::applies(count)&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S)&&k>640;
+}
+ownrt::Event routed_pair(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation wu,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation yu,ownrt::Allocation r,
+                         ownrt::Allocation status,ownrt::Allocation su,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,
+                         ownrt::Allocation act,ownrt::Allocation active,ownrt::Allocation error,ownrt::Allocation position,int limit) {
+  if(!r||!status||!su||!routed_pairs(t,k,count,Type::F32,Type::F32,32,0))throw std::invalid_argument("kopt routed pair: F32 IQ2_S/IQ3_S block rows only");
+  Multiply op;op.subgroup=32;op.matrices=1;std::vector<ownrt::Allocation> ids;
+  const auto desc=bind_matrix(d,op,ids,{t,w,x,y,rows,k,Type::F32,Type::F32,0},experts,count,span,r,status);
+  // the up matrix: same type and shape as the gate (checked against the gate's binding sizes)
+  check(d,wu,mul(mul(experts,rows),desc.rb));check(d,yu,mul(mul(count,span),4));check(d,su,mul(count,4));
+  check(d,act,mul(mul(count,span),4));check(d,active,4);check(d,error,4);check(d,position,4);
+  // RH rows of each matrix per subgroup: 2 for compact (<= 5 slots, the subgroups of a 10-slot R4 launch), else 4.
+  auto bind=[&](auto& op2){op2.desc=desc;auto add=[&](ownrt::Allocation id){unsigned i=unsigned(ids.size());ids.push_back(id);return i;};
+    op2.wu=add(wu);op2.yu=add(yu);op2.su=add(su);op2.act=add(act);op2.active=add(active);op2.error=add(error);op2.position=add(position);op2.limit=limit;
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt routed pair: aliased bindings");};
+  if(count<=5){MultiplyBlockRowsPair<2> pr;bind(pr);return d.compute(pr,ids,{});}
+  MultiplyBlockRowsPair<4> pr;bind(pr);return d.compute(pr,ids,{});
 }
 ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
   if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");

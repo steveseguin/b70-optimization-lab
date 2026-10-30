@@ -97,6 +97,22 @@ struct XxsDn2Operation final:ownrt::SyclOperation {
  }
 };
 inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+// OWNRT_TP_EXPERT_PAIR (2026-10-30, expert_pair.hpp): XxsDn2Operation's rows for the gate and up matrices of one layer
+// in one launch, plus the SiLU product (dn2::xxs_pair_packed). Bindings: gate w, x, gate y, routes, gate status, up w,
+// up y, up status, act y, active, error, position.
+class XxsPairKernel;
+struct XxsPairOperation final:ownrt::SyclOperation {
+ Shape s{};int limit=0;
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+  const dn2::XxsView v{static_cast<const uint8_t*>(p[0]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4]),
+   uint32_t(s.rows),uint32_t(s.columns),uint32_t(s.row_bytes),uint32_t(s.count),uint32_t(s.experts)};
+  const uint8_t* wu=static_cast<const uint8_t*>(p[5]);float* yu=reinterpret_cast<float*>(p[6]);uint32_t* su=static_cast<uint32_t*>(p[7]);
+  const expert_pair::Act act{reinterpret_cast<float*>(p[8]),static_cast<const int32_t*>(p[9]),static_cast<int32_t*>(p[10]),static_cast<const int32_t*>(p[11]),limit};
+  constexpr unsigned WGSG=4;const uint32_t total=((v.rows+1)/2)*v.count,groups=(total+WGSG-1)/WGSG;
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsPairKernel>(sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{dn2::xxs_pair_packed<WGSG>(v,wu,yu,su,act,it);}));});
+ }
+};
 // OWNRT_EXPERTS_GROUPED=1 (2026-10-30, research/multirow-verify-2026-10-30; default off): a chunk's 11..64 slots run as
 // groups of up to 4 slots sharing an expert (xgroup2::xxs_grouped: xxs_packed's values, order and tree per member).
 class XxsGroupedKernel;
@@ -162,4 +178,23 @@ inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std:
  if(shape.f32){BlockOperation<true> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
  BlockOperation<> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};
 }
+#ifndef OWN_RT_HOST_ONLY
+// OWNRT_TP_EXPERT_PAIR: gate (m) and up (u) of one layer, same input, routes, count and geometry, and the activation's
+// output/guard words. Only where submit() would take XxsDn2Operation for both (pairs() checks before pairing).
+inline bool pairs(const gsqn::Shape& shape){return shape.f32&&!shape.row_major&&block_rows()&&decode_next2::enabled("xxs")&&shape.columns%256==0;}
+inline integrated::Launch submit_pair(ownrt::Device&d,const integrated::Matrix&m,const integrated::Matrix&u,std::string_view label,std::string_view weight,std::string_view up_label,std::string_view up_weight,
+  ownrt::Allocation act,ownrt::Allocation active,ownrt::Allocation error,ownrt::Allocation position,int limit){
+ require(selected(label,weight)&&selected(up_label,up_weight),"IQ3 block exact gate/up site identity (pair)");
+ for(const auto* x:{&m,&u})require(unsigned(x->type)==18&&x->rows==640&&x->columns==2560&&x->count>=1&&x->count<=10&&x->tokens==1&&x->experts==512&&x->span==640&&x->routes&&x->status,"IQ3 block exact routed geometry (pair)");
+ require(u.x==m.x&&u.routes==m.routes&&u.count==m.count&&u.status!=m.status&&u.y!=m.y&&u.w!=m.w,"IQ3 block pair: shared input and routes, distinct weights and outputs");
+ const auto shape=gsqn::validate(d,m,gsqn::InputMode::per_slot,gsqn::Storage::packed_direct);
+ const auto ushape=gsqn::validate(d,u,gsqn::InputMode::per_slot,gsqn::Storage::packed_direct);
+ require(pairs(shape)&&pairs(ushape)&&ushape.row_bytes==shape.row_bytes,"IQ3 block pair: XxsDn2 rows for both matrices");
+ const size_t act_bytes=size_t(m.count)*m.rows*4;
+ require(d.arena.row(act).bytes>=act_bytes&&d.arena.row(active).bytes>=4&&d.arena.row(error).bytes>=4&&d.arena.row(position).bytes>=4,"IQ3 block pair: activation bindings");
+ XxsPairOperation op;op.s=shape;op.limit=limit;
+ std::array<ownrt::Allocation,12>ids{m.w,m.x,m.y,m.routes,m.status,u.w,u.y,u.status,act,active,error,position};
+ auto e=d.compute(op,ids,{});return {e,e,1};
+}
+#endif
 } // namespace iq3block

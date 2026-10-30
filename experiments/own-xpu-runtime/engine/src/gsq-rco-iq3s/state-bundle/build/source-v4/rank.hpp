@@ -254,7 +254,7 @@ inline void tp_issue_card1(Engine& e,int fixture,const std::atomic<size_t>& rele
    if(stopped.load(std::memory_order_acquire)&&i>=release.load(std::memory_order_acquire))return;
    if(std::chrono::steady_clock::now()>end)throw std::runtime_error("TP card-1 release deadline");
    std::this_thread::yield();}
-  for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;}}
+  for(const auto& cmd:site.commands){last=e.dev(1).issue(cmd);++issued;if(issued==uint64_t(Engine::retire_deferred_after()))e.retire_deferred(1);}}
 }
 struct TpWorker {
  Engine& e;std::thread thread;std::atomic<bool> done{false},stopped{false};std::atomic<size_t> release;std::exception_ptr error;ownrt::Event last=0;uint64_t issued=0;
@@ -469,6 +469,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(tp_persistent_thread()){auto& p=tp_persistent(e);p.begin(request.fixture,request.speculative);worker->persistent=&p;}
   else worker->fresh.emplace(e,request.fixture,request.speculative);}
  size_t current=0; // the card-0 launch being issued (cancellation bound for card 1)
+ std::array<size_t,2> issued_by_card{}; // OWNRT_RETIRE_DEFERRED: launches this thread issued per card
  try {for(auto& l:e.p.launches) {
   current=size_t(&l-e.p.launches.data());
   if(e.v3_skip_half[size_t(&l-e.p.launches.data())])continue; // packet186: moved layers run in the boundary (rank 0) or not at all (rank 1, V3)
@@ -486,6 +487,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
   if(l4_history&&request.position==0&&l.label=="blk.4.gdn.conv")
    l4_history->initial_zero(l4_history_read(e,"blk.4.gdn.state",3145728),l4_history_read(e,"blk.4.gdn.history",122880));
   e.enqueue(l,e.logical);
+  if(Engine::retire_deferred_after()>0&&++issued_by_card[size_t(l.card)]==size_t(Engine::retire_deferred_after()))e.retire_deferred(l.card); // OWNRT_RETIRE_DEFERRED
   router_tie_after_gather(e,l,request);
   if(l4_history&&l.label=="blk.4.gdn.recurrence"&&l4probe::enabled())
    l4_capture_prepared(e,l,request,e.issue_sites.at(size_t(&l-e.p.launches.data())).l4_prepared_invocation);

@@ -46,6 +46,13 @@ std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_partner;
 std::unordered_set<const flash::Launch*> gsq_follower;
 std::unordered_map<const flash::Launch*,const flash::Launch*> gsq_mix_partner;
 std::unordered_set<const flash::Launch*> gsq_mix_follower;
+// OWNRT_TP_EXPERT_PAIR=1 (2026-10-30, research/tp/fixed-cost-2026-10-30; decode only, expert_pair.hpp): a layer's routed
+// gate and up GEMVs and their SiLU product run as one launch at the gate site; the up and activation sites then issue
+// nothing in decode (row replays, dev.view_row >= 0, and batched prefill keep the three sites). family 0: kopt
+// MultiplyBlockRows (IQ2_S, IQ3_S); family 1: XxsDn2 (IQ3_XXS block sites). Any other layer stays unpaired.
+struct ExpertPair {const flash::Launch* up;const flash::Launch* act;int family;};
+std::unordered_map<const flash::Launch*,ExpertPair> expert_pair_of;
+std::unordered_set<const flash::Launch*> expert_pair_follower; // up (gsq_linear) and act (execute_site)
 bool gsq_fusion_ready=false;
 bool gsq_kopt_site(const flash::Launch& l) const {
   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
@@ -89,11 +96,37 @@ void gsq_prepare_fusion() {
     if(written)continue;
     gsq_mix_partner[&gate]=&mix;gsq_mix_follower.insert(&mix);
   }
-  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+"}");
+  if(expert_pair::enabled()&&a.f32_activations&&a.memory=="resident"&&experts_v2::enabled("ew"))for(size_t i=0;i<p.launches.size();++i) {
+    const auto& gate=p.launches[i];
+    if(gate.op!="routed_gemv"||!gate.label.starts_with("blk.")||!ends(gate.label,".expsgate")||gate.inputs.size()<2||gate.outputs.size()<2)continue;
+    const std::string prefix=gate.label.substr(0,gate.label.size()-8),card="@"+std::to_string(gate.card);
+    auto up_it=by_label.find(prefix+"expsup"+card),act_it=by_label.find(prefix+"expsact"+card);
+    if(up_it==by_label.end()||act_it==by_label.end())continue;
+    const auto& up=*up_it->second;const auto& act=*act_it->second;
+    const size_t j=size_t(&up-p.launches.data()),k=size_t(&act-p.launches.data());
+    if(!(i<j&&j<k)||up.op!="routed_gemv"||act.op!="silu_product"||up.card!=gate.card||act.card!=gate.card)continue;
+    if(up.slots!=gate.slots||act.slots!=gate.slots||up.inputs.size()<2||up.outputs.size()<2||act.inputs.size()<2||act.outputs.size()!=1)continue;
+    if(up.inputs[0]!=gate.inputs[0]||up.inputs[1]!=gate.inputs[1]||act.inputs[0]!=gate.outputs[0]||act.inputs[1]!=up.outputs[0])continue;
+    bool other=false;for(size_t q=i+1;q<k&&!other;++q)if(q!=j&&p.launches[q].card==gate.card)other=true; // nothing else of this card in between
+    if(other)continue;
+    const auto& tg=w.directory.at(gate.weights.at(0));const auto& tu=w.directory.at(up.weights.at(0));
+    if(tg.grid!=tu.grid)continue;
+    const auto t=flash::grid_type(tg.grid);int family=-1;
+    if(iq3_block_site(w,a,gate)&&iq3_block_site(w,a,up))family=1;
+    else if(!dense_block_site(w,a,gate)&&!dense_block_site(w,a,up)&&(t==iq3::Type::IQ2_S||t==iq3::Type::IQ3_S)&&
+            iq3::kopt::routed_pairs(t,size_t(gate.shape.at(2)),uint32_t(gate.slots?gate.slots:p.g.top),iq3::Type::F32,iq3::Type::F32,32,0))family=0;
+    if(family<0)continue;
+    expert_pair_of[&gate]=ExpertPair{&up,&act,family};expert_pair_follower.insert(&up);expert_pair_follower.insert(&act);
+  }
+  save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+",\"expert_pairs\":"+std::to_string(expert_pair_of.size())+"}");
 }
 void gsq_linear(const flash::Launch& l) {
   if(!gsq_fusion_ready)gsq_prepare_fusion();
   if(gsq_follower.count(&l))return; // written by its fused sibling's launch
+  if(dev(l.card).view_row<0) { // OWNRT_TP_EXPERT_PAIR (decode only)
+    if(expert_pair_follower.count(&l))return; // the up GEMV: written by its gate's paired launch
+    if(auto pr=expert_pair_of.find(&l);pr!=expert_pair_of.end()){gsq_expert_pair(l,pr->second);return;}
+  }
   auto it=matrices.find(&l);
   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
 #ifndef OWN_RT_HOST_ONLY
@@ -113,6 +146,25 @@ void gsq_linear(const flash::Launch& l) {
   }
 #endif
   gsq_linear_matrix(l,it->second.at(0));
+}
+// OWNRT_TP_EXPERT_PAIR: the gate site's paired launch (gate, up, act = silu(gate) * up) with the activation site's own
+// output and guard bindings (its prepared ng bindings: inputs gate y, up y (then active, error), output, then scratch,
+// error, position, active: adapter.cpp a[15], a[17], a[18]).
+void gsq_expert_pair(const flash::Launch& g,const ExpertPair& pr) {
+  const int c=g.card;const auto& u=*pr.up;
+  auto mg_it=matrices.find(&g);if(mg_it==matrices.end())mg_it=matrices.emplace(&g,std::vector<Matrix>{matrix(g)}).first;
+  auto mu_it=matrices.find(&u);if(mu_it==matrices.end())mu_it=matrices.emplace(&u,std::vector<Matrix>{matrix(u)}).first;
+  const Matrix& mg=mg_it->second.at(0);const Matrix& mu=mu_it->second.at(0);
+  const auto& pa=prepared.at(pr.act);const size_t base=size_t(pa.spec.ni+pa.spec.no+pa.spec.nw);
+  require(pa.spec.ni>=2&&pa.spec.no==1&&pa.spec.nw==0&&pa.bindings.size()>base+3&&pa.spec.f32_activations&&pa.spec.tokens==1,"expert pair: activation binding shape (ni "+std::to_string(pa.spec.ni)+
+          " no "+std::to_string(pa.spec.no)+" nw "+std::to_string(pa.spec.nw)+" bindings "+std::to_string(pa.bindings.size())+" f32 "+std::to_string(pa.spec.f32_activations)+" tokens "+std::to_string(pa.spec.tokens)+")");
+  require(pa.bindings[0]==mg.y&&pa.bindings[1]==mu.y&&pa.spec.sizes[0]==mg.count*mg.rows&&mg.tokens==1&&mu.tokens==1,"expert pair: the activation reads this pair's outputs");
+  require(mg.type==mu.type&&mg.x==mu.x&&mg.routes==mu.routes&&mg.count==mu.count&&mg.rows==mu.rows&&mg.columns==mu.columns&&mg.span==mu.span&&mg.experts==mu.experts,"expert pair: matching gate/up matrices");
+  const ownrt::Allocation act=pa.bindings[size_t(pa.spec.ni)],error=pa.bindings[base+1],position=pa.bindings[base+2],active=pa.bindings[base+3]; // ng out(2,0) = bindings[ni]
+  const int limit=pa.spec.g.context-pa.spec.tokens; // ng position_limit(activation) = capacity = g.context
+  if(pr.family==1){finish(c,iq3block::submit_pair(dev(c),mg,mu,g.label,g.weights.at(0),u.label,u.weights.at(0),act,active,error,position,limit),true);return;}
+  finish(c,iq3::kopt::routed_pair(dev(c),mg.type,mg.w,mu.w,mg.x,mg.y,mu.y,mg.routes,mg.status,mu.status,uint32_t(mg.experts),uint32_t(mg.rows),mg.columns,
+                                  uint32_t(mg.count),uint32_t(mg.span),act,active,error,position,limit));
 }
 // One site-selected dispatch for a single row (m.tokens==1, m.count = expert slots) and for batched prefill rows
 // (dense: m.tokens rows of per-slot input; routed: m.count = rows*top slots). Kernel choice, weights and per-row

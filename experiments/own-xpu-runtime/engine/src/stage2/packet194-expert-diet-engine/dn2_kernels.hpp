@@ -5,6 +5,7 @@
 #include <cstdint>
 #include "stage2/packet2/kernels/math.hpp"
 #include "stage2/packet6-kopt/reference.hpp"
+#include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
 namespace dn2 {
 using iq3::Type;
 // Plain view of one routed IQ3_XXS block launch (gsqn::Bound restated): weights, F32 input per slot, F32 output per slot.
@@ -55,5 +56,52 @@ template<unsigned WGSG> inline void xxs_packed(const XxsView v,sycl::nd_item<1> 
  for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
  if(t==0&&row<v.rows)v.y[size_t(slot)*v.rows+row]=live?sum:iq3::bits_float(0x7fc00000);
  if(lane==0&&logical%blocks==0&&v.status)v.status[slot]=!valid;
+}
+// OWNRT_TP_EXPERT_PAIR (2026-10-30, expert_pair.hpp): xxs_packed for a layer's gate (g) and up (wu/yu/su) in one launch,
+// plus the SiLU product. In a 32-lane subgroup, set = lane/8 takes row (block*2 + set%2) of matrix set/2 (sets 0-1 gate,
+// 2-3 up): each row's items, values, products, add order and tree are xxs_packed's, only the weight base differs. Both
+// outputs keep NaN for inactive rows and both status words are written as the original. Lanes 0 and 8 then hold a gate
+// row's stored value and fetch the same row's stored up value from lanes 16 and 24; act = ng::silu(gate) * up under the
+// activation's guard (expert_pair::guard).
+template<unsigned WGSG> inline void xxs_pair_packed(const XxsView v,const uint8_t* wu,float* yu,uint32_t* su,const expert_pair::Act act,sycl::nd_item<1> it){
+ constexpr unsigned SG=32,RPM=2;
+ uint32_t* grid=*sycl::ext::oneapi::group_local_memory_for_overwrite<uint32_t[256]>(it.get_group());
+ for(unsigned li=unsigned(it.get_local_linear_id());li<256;li+=SG*WGSG)grid[li]=iq3::iq3_grid[li];
+ sycl::group_barrier(it.get_group());
+ const uint32_t blocks=(v.rows+RPM-1)/RPM,total=blocks*v.count;
+ const auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8,m=set/2;
+ const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
+ const uint32_t slot=logical/blocks,row=(logical%blocks)*RPM+set%2;
+ const iq3::Route r=v.routes[slot];const bool valid=iq3::valid_route(r,v.experts,v.rows,v.rows);
+ const bool live=valid&&row<v.rows&&row<r.row_count;
+ const float* x=v.x+size_t(slot)*v.columns;
+ const uint8_t* base=m?wu:v.w;
+ const uint8_t* w=live?base+(size_t(r.expert_id)*v.rows+r.row_begin+row)*v.row_bytes:base;
+ float acc[4]={0.f,0.f,0.f,0.f};
+ if(live){
+  const uint32_t nblocks=v.columns/256;const unsigned cshift=7*(t/2),sbase=4*(t%2);
+  for(uint32_t block=0;block<nblocks;++block){
+   const uint8_t* packed=w+block*98u;const float d=iq3::half(iq3::u16(packed));
+   #pragma unroll
+   for(unsigned group=0;group<8;++group){
+    const auto*half_words=reinterpret_cast<const uint16_t*>(packed+66+4*group);const uint32_t word=uint32_t(half_words[0])|uint32_t(half_words[1])<<16;
+    const uint32_t code=(word>>cshift)&127,mask=code|((std::popcount(code)%2)<<7);
+    const float scale=(d*(0.5f+float(word>>28)))*0.5f;
+    const uint32_t entry=grid[packed[2+group*8+t]];
+    const sycl::vec<float,4> xv=*reinterpret_cast<const sycl::vec<float,4>*>(x+block*256u+group*32u+4u*t);
+    #pragma unroll
+    for(unsigned j=0;j<4;++j){const uint32_t mag=(entry>>(8*j))&255;const int sign=(mask>>(sbase+j))&1?-1:1;
+     const float weight=(scale*float(mag))*float(sign);const float product=weight*xv[j];acc[j]=acc[j]+product;}
+   }
+  }
+ }
+ const float a01=acc[0]+acc[1],a23=acc[2]+acc[3];float sum=a01+a23;
+ #pragma unroll
+ for(unsigned width=1;width<8;width*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
+ const float stored=live?sum:iq3::bits_float(0x7fc00000);
+ if(t==0&&row<v.rows)(m?yu:v.y)[size_t(slot)*v.rows+row]=stored;
+ if(lane==0&&logical%blocks==0){if(v.status)v.status[slot]=!valid;if(su)su[slot]=!valid;}
+ const float up=sycl::select_from_group(sg,stored,(lane+16)%SG);
+ if(expert_pair::guard(act,sg,logical==0&&lane==0)&&m==0&&t==0&&row<v.rows)act.y[size_t(slot)*v.rows+row]=expert_pair::value(stored,up);
 }
 }
