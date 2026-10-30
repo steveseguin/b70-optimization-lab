@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**October 30, about 05:00 — checking several guessed tokens per step: exact, but not cheap enough; parked.**
+- New exact small-row kernels make the large projections cost about one token's time for two tokens. The whole
+  step still costs 1.42–1.47× for two tokens and 2.3–2.5× for four (go/no-go: 1.35× and 1.9×). The expert layers
+  are the reason: consecutive tokens use different experts, and three exact grouped-expert kernels were all slower.
+- Projected gain if finished anyway: about +9% on four cards for a large build, so it is parked.
+  [Result](experiments/own-xpu-runtime/research/multirow-verify-2026-10-30/RESULT.md).
+- Next: where the four-card layout's unexplained ~2 ms per stage goes (about 18% of each step), then cutting the
+  ~4 ms per stage of small work both cards repeat.
+
 **October 30, about 04:00 — where decode time goes, measured; main campaign now: check several guessed tokens per step.**
 - One card per stage: half of each step's GPU time is kernels shorter than 20 µs (84% of launches). On four cards about
   4 ms per stage of it runs on both cards.

@@ -102,16 +102,26 @@ From the [decode site census](research/decode-site-census-2026-10-30/RESULT.md):
 | Break down the four-card stage overhead (about 2 ms beyond an ideal split: exchanges, waits at about 70 sync points, snapshot) | Second-largest non-kernel cost on four cards | Unknown until measured; a per-exchange wait trace on the TP harness answers it |
 | Tree drafting (top-2 at the first position: 87.6% coverage against 76.1%) | Raises accepted tokens per cycle without draft training | Needs a cheap multi-row pass first |
 
+### Multi-row verification result (2026-10-30, measured)
+
+[multirow-verify-2026-10-30](research/multirow-verify-2026-10-30/RESULT.md): every path is exact, but the
+whole pass costs **1.42× / 1.47× at two rows and 2.32× / 2.46× at four** (rank 0 / rank 1), against the
+go/no-go of 1.35× and 1.9×. The dense projections now cost about one row's time for two rows (new small-row
+tiles, default off). What is left is the routed experts: rows bring new experts, and three exact grouped-expert
+kernels were all slower than per-slot one-row kernels. The tiny shared-expert matrices are launch-bound.
+Plugging the measured ratios into the census model gives roughly 85 tok/s on four cards at one guess per block
+and less at deeper chains, against 78.3 measured today. That is about +9% for a large verifier build (projection,
+not measured), so **the verifier (K4) is parked**. Revisit it when the replicated per-layer work and the experts
+are cheaper, because both also lower the multi-row ratio.
+
 ### Decision rule
 
-Measured on 2026-10-30: the path above 100 tok/s runs through a cheap
-multi-row decode pass, so that is the main campaign
-(`research/multirow-verify-2026-10-30/`, in progress).
-In order: small-row exact tiles for the dense sites, then a small-M expert path
-grouped by distinct expert, then a multi-row pass with a go/no-go at M=2 ≤ about
-1.35× and M=4 ≤ about 1.9×, then the existing depth-N speculation switched to that
-pass. Glue fusion (#3) is next after it. Prefer a lever that changes tokens per
-cycle or halves a stage over another 1–2% trim.
+Next (2026-10-30): find where the four-card layout's unexplained ~2 ms per stage goes (exchanges, waits for
+the slower card, split-kernel efficiency, host). It is about 18% of the 10.82 ms cycle and is not covered by any
+idea above (`research/tp/stage-overhead-2026-10-30/`, in progress). Then cut the replicated per-layer work, which
+is about 4 ms per stage: split the HC projections across the pair, and fuse the weightless glue into neighbouring
+kernels (each tiny kernel costs at least about 2.5 µs). Prefer a lever that changes tokens per cycle or halves a
+stage over another 1–2% trim.
 
 # Ideas from other runtimes
 
