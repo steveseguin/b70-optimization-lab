@@ -17,6 +17,17 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 30, about 13:00 — four cards read a 121,854-token prompt in 239.3 / 239.4 s (was 250.5), exact.**
+- Five host-side changes on the first stage (glue rows in one launch per chunk, threaded lookups, draft-chunk host
+  trims); now the four-card set `tptsxqckh`. Fresh servers A/B/B at 131072, startup gate 13/13, all 512 outputs equal
+  the 3+1 262K reference, suite = B19; decode unchanged (84.1–84.3).
+- The first stage is still 38 ms per chunk slower than the second: the draft's 256 prompt rows run one at a time and
+  are GPU-bound. Next: run them as one batched pass (about 221 s projected, not measured).
+- Hyper-connection kernels (one-launch norm, combine fused into it, a codegen fix): exact in every harness gate and
+  3.7–4.0% faster per four-card stage; being merged now, then fresh-server A/B/A/B.
+  [Prompt reading](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md) ·
+  [HC kernels](experiments/own-xpu-runtime/research/hc-kernels-2026-10-30/RESULT.md).
+
 **October 30, about 10:00 — one kernel per layer (persistent kernel): measured, not worth building.**
 - On a B70 a barrier across the whole card (1.5 µs at 64 groups) costs more than the kernel launch it would replace
   (0.6–1.1 µs). On the real hyper-connection chain the persistent version is exact but 9.6% slower; even a free barrier
