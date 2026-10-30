@@ -1,0 +1,91 @@
+=== phase g1 binary /dev/shm/hc-kernels-2026-10-30/engine-build-r2/sc117-engine (59d29a4a362e) start 2026-10-30T10:49:52-04:00 pid 2385937 affinity 0-3,16-19 nofile 1048576
+[klog g1-before-24h] since @1793285392: rc=0 12 lines, 0 xe/fault lines
+--- arm g1-r1-off rank=1 mode=one steps=64 prompt=128 pattern=h extra= MemAvailable=74984787968 shm_free=23150186496 at 2026-10-30T10:49:52-04:00
+{"tp": false, "steps": 64, "load_s": 61.74081016005948, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.31
+arm g1-r1-off rc=0 after 69 s
+[klog g1-after-g1-r1-off] since @1793371792: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.3089 draft 0.0
+--- arm g1-r1-on rank=1 mode=one steps=64 prompt=128 pattern=h extra=hk=1 MemAvailable=75610603520 shm_free=23148204032 at 2026-10-30T10:51:01-04:00
+{"tp": false, "steps": 64, "load_s": 19.776393492007628, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.01
+arm g1-r1-on rc=0 after 27 s
+[klog g1-after-g1-r1-on] since @1793371861: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":50}
+half median (3..): 12.0116 draft 0.0
+--- arm g1-r1-off2 rank=1 mode=one steps=64 prompt=128 pattern=h extra= MemAvailable=75845787648 shm_free=23146295296 at 2026-10-30T10:51:28-04:00
+{"tp": false, "steps": 64, "load_s": 14.69547853898257, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.36
+arm g1-r1-off2 rc=0 after 22 s
+[klog g1-after-g1-r1-off2] since @1793371888: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.3624 draft 0.0
+--- arm g1-r1-on2 rank=1 mode=one steps=64 prompt=128 pattern=h extra=hk=1 MemAvailable=75572580352 shm_free=23144312832 at 2026-10-30T10:51:51-04:00
+{"tp": false, "steps": 64, "load_s": 14.660539906006306, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.95
+arm g1-r1-on2 rc=0 after 21 s
+[klog g1-after-g1-r1-on2] since @1793371911: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":50}
+half median (3..): 11.9518 draft 0.0
+--- arm g1-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=batched,sp=64 MemAvailable=75761569792 shm_free=23142404096 at 2026-10-30T10:52:13-04:00
+{"tp": false, "steps": 64, "load_s": 14.682413365924731, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.34
+arm g1-r1-off-b rc=0 after 40 s
+[klog g1-after-g1-r1-off-b] since @1793371933: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.3412 draft 0.0
+--- arm g1-r1-on-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=batched,sp=64,hk=1 MemAvailable=75686227968 shm_free=23094382592 at 2026-10-30T10:52:53-04:00
+{"tp": false, "steps": 64, "load_s": 14.605403699213639, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.02
+arm g1-r1-on-b rc=0 after 27 s
+[klog g1-after-g1-r1-on-b] since @1793371973: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":50}
+half median (3..): 12.0128 draft 0.0
+--- arm g1-r0-off rank=0 mode=one steps=64 prompt=128 pattern=h extra= MemAvailable=75407785984 shm_free=23050350592 at 2026-10-30T10:53:20-04:00
+{"steps": 64, "load_s": 125.53299784217961, "prompt_ms": 1543.301442405209, "draft_replay_ms": 124.28082711994648, "rc": 0} median half ms 10.804 draft ms 1.320
+arm g1-r0-off rc=0 after 135 s
+[klog g1-after-g1-r0-off] since @1793372000: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.8032 draft 1.3204
+--- arm g1-r0-on rank=0 mode=one steps=64 prompt=128 pattern=h extra=hk=1 MemAvailable=75266863104 shm_free=22850490368 at 2026-10-30T10:55:35-04:00
+{"steps": 64, "load_s": 125.46062533906661, "prompt_ms": 1505.6800863239914, "draft_replay_ms": 127.0959007088095, "rc": 0} median half ms 10.467 draft ms 1.329
+arm g1-r0-on rc=0 after 135 s
+[klog g1-after-g1-r0-on] since @1793372135: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.465 draft 1.3289
+--- arm g1-r0-off2 rank=0 mode=one steps=64 prompt=128 pattern=h extra= MemAvailable=75820195840 shm_free=22650773504 at 2026-10-30T10:57:50-04:00
+{"steps": 64, "load_s": 130.95488522900268, "prompt_ms": 1544.6701245382428, "draft_replay_ms": 125.91444607824087, "rc": 0} median half ms 10.801 draft ms 1.319
+arm g1-r0-off2 rc=0 after 140 s
+[klog g1-after-g1-r0-off2] since @1793372270: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.8002 draft 1.3186
+--- arm g1-r0-on2 rank=0 mode=one steps=64 prompt=128 pattern=h extra=hk=1 MemAvailable=75234504704 shm_free=22450913280 at 2026-10-30T11:00:11-04:00
+{"steps": 64, "load_s": 99.14746595988981, "prompt_ms": 1501.1797293554991, "draft_replay_ms": 126.27697992138565, "rc": 0} median half ms 10.467 draft ms 1.319
+arm g1-r0-on2 rc=0 after 108 s
+[klog g1-after-g1-r0-on2] since @1793372411: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4624 draft 1.3187
+--- arm g1-r0-off-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra= MemAvailable=75033112576 shm_free=22251196416 at 2026-10-30T11:01:59-04:00
+{"steps": 64, "load_s": 82.26536781806499, "prompt_ms": 1545.2789310365915, "draft_replay_ms": 125.84585580043495, "rc": 0} median half ms 10.580 draft ms 1.332
+arm g1-r0-off-hmcn rc=0 after 92 s
+[klog g1-after-g1-r0-off-hmcn] since @1793372519: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.8015 draft 1.3317
+--- arm g1-r0-on-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra=hk=1 MemAvailable=75006676992 shm_free=22051307520 at 2026-10-30T11:03:31-04:00
+{"steps": 64, "load_s": 81.44326069997624, "prompt_ms": 1502.919169375673, "draft_replay_ms": 128.34134604781866, "rc": 0} median half ms 10.220 draft ms 1.322
+arm g1-r0-on-hmcn rc=0 after 90 s
+[klog g1-after-g1-r0-on-hmcn] since @1793372611: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4425 draft 1.3219
+--- arm g1-r0-off-m rank=0 mode=one steps=64 prompt=128 pattern=m extra= MemAvailable=74622185472 shm_free=21851561984 at 2026-10-30T11:05:02-04:00
+{"steps": 64, "load_s": 86.68755909707397, "prompt_ms": 1545.1497805770487, "draft_replay_ms": 126.68603868223727, "rc": 0} median half ms 10.547 draft ms 1.332
+arm g1-r0-off-m rc=0 after 96 s
+[klog g1-after-g1-r0-off-m] since @1793372702: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.8037 draft 1.3314
+--- arm g1-r0-on-m rank=0 mode=one steps=64 prompt=128 pattern=m extra=hk=1 MemAvailable=74510860288 shm_free=21651644416 at 2026-10-30T11:06:39-04:00
+{"steps": 64, "load_s": 96.32162456796505, "prompt_ms": 1491.5260926354676, "draft_replay_ms": 128.7195801269263, "rc": 0} median half ms 10.204 draft ms 1.325
+arm g1-r0-on-m rc=0 after 106 s
+[klog g1-after-g1-r0-on-m] since @1793372799: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4655 draft 1.3242
+--- arm g1-r0-off-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=batched,sp=64 MemAvailable=74192470016 shm_free=21451870208 at 2026-10-30T11:08:25-04:00
+{"steps": 64, "load_s": 84.11837957589887, "prompt_ms": 501.36594241485, "draft_replay_ms": 120.76198635622859, "rc": 0} median half ms 10.836 draft ms 1.328
+arm g1-r0-off-sp rc=0 after 97 s
+[klog g1-after-g1-r0-off-sp] since @1793372905: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.8354 draft 1.328
+--- arm g1-r0-on-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=batched,sp=64,hk=1 MemAvailable=74087215104 shm_free=21096607744 at 2026-10-30T11:10:03-04:00
+{"steps": 64, "load_s": 95.97066288697533, "prompt_ms": 492.624303791672, "draft_replay_ms": 122.00238765217364, "rc": 0} median half ms 10.494 draft ms 1.326
+arm g1-r0-on-sp rc=0 after 109 s
+[klog g1-after-g1-r0-on-sp] since @1793373003: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.492 draft 1.3259
+=== phase g1 done 2026-10-30T11:11:53-04:00

@@ -141,8 +141,21 @@ whether a persistent kernel per layer can remove it wholesale (`research/persist
 - The real HC block: 37.45 µs as six launches, 41.04 µs as the best persistent kernel. It is bitwise exact, but slower.
 - Projection: −7.7% on four cards as measured; +8.5% at most even with a free barrier.
 - The tiny kernels' fixed cost is inside them, not between them.
-- Side finding: this bench's plain BF16 HC GEMVs run at 482–529 GB/s against the engine's 400–415 GB/s on the same
-  shapes. That is worth about 0.3 ms per half per card if the engine's exact reduction order can be kept.
+- Side finding, corrected by the follow-up below: measured side by side, the engine's HC GEMVs run at 14.5 / 13.2 µs,
+  not the census's 16.3 / 16.0. Most of the apparent gap was measurement context, not the kernel.
+
+### Exact HC kernels result (2026-10-30, measured)
+
+[hc-kernels-2026-10-30](research/hc-kernels-2026-10-30/RESULT.md): `OWNRT_HC_KERNELS=1`, default off.
+- Three exact changes:
+  - the HC norm in one launch;
+  - the combine before it fused into that launch (decode only; the plan is unchanged);
+  - the low GEMV choosing its descriptor by static indices.
+- Bitwise exact on the kernel bench (97 real blocks), the one-card rank harness (both ranks, h / hmcn / m, batched +
+  two-request) and the four-card TP harness against one card.
+- Four-card halves: rank 1 9.505 → 9.121 ms (−4.0%), rank 0 8.599 → 8.282 ms (−3.7%).
+- Fresh-server end gate pending (after the engine merge).
+- The exact-order GEMVs themselves are at engine speed: every rescheduling was equal or slower.
 
 ### Decision rule
 

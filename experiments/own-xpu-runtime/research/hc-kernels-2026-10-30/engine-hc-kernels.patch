@@ -1,0 +1,366 @@
+diff -ruN head/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp engine/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+--- head/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp	2026-10-30 10:35:58.231385130 -0400
+@@ -54,6 +54,66 @@
+ std::unordered_map<const flash::Launch*,ExpertPair> expert_pair_of;
+ std::unordered_set<const flash::Launch*> expert_pair_follower; // up (gsq_linear) and act (execute_site)
+ bool gsq_fusion_ready=false;
++// OWNRT_HC_KERNELS cnorm (2026-10-30, research/hc-kernels-2026-10-30; decode only, hc_kernels.hpp): an HC combine
++// (CombineFast: F32, implementation 1) directly followed on the same card by an HC norm of the same streams
++// (specialised, 4 x 2560, F32 gain, one token row) runs as one launch at the norm site; the combine site then issues
++// nothing in decode. Row replays (dev.view_row >= 0), batched prefill and every other pair keep both sites.
++std::unordered_map<const flash::Launch*,const flash::Launch*> hc_cnorm_of; // norm site -> its combine
++std::unordered_set<const flash::Launch*> hc_cnorm_follower;              // combine sites
++bool hc_cnorm_ready=false;
++// The norm site's ng shape exactly as the adapter builds it for the specialised kernels (adapter.cpp submit).
++ng::Shape hc_norm_shape(const Prepared& n) const {
++  const auto& s=n.spec;ng::Shape shape{};shape.capacity=s.g.context;shape.extent=s.extent;shape.budget=s.g.budget;shape.tokens=s.tokens;
++  if(s.f32_activations)shape.flags|=ng::f32_activations_flag;
++  if(s.nw&&s.grids[0]==iq3::Type::F32)shape.flags|=8;
++  shape.op=ng::norm;shape.width=s.site.shape[1];shape.heads=shape.width?int(s.sizes[0])/shape.width:0;shape.flags|=s.site.parameter?1:0;
++  return shape;
++}
++void hc_prepare_cnorm() {
++  hc_cnorm_ready=true;
++  if(!(hc_kernels::enabled("cnorm")||hc_kernels::enabled("norm1"))||a.mini||!a.f32_activations||a.memory!="resident"||a.nongemv!="parallel")return;
++  static const bool simple_fast=[]{const char* e=std::getenv("OWNRT_SIMPLE_FAST");return !e||e[0]!='0';}();
++  size_t norm_sites=0,admitted=0;
++  for(size_t i=0;i<p.launches.size();++i) {
++    const auto& n=p.launches[i];
++    if(n.op!="norm"||!(ends(n.label,".hc.a.norm")||ends(n.label,".hc.f.norm")||n.label=="final.norm"))continue;
++    ++norm_sites;
++    const Prepared pn=prepare_site(n);const auto& sn=pn.spec;
++    // Site inputs include the control buffers (active, error): ni counts them, outputs start at ni.
++    const bool norm_ok=sn.special==Special::normal&&sn.op==Op::norm&&sn.implementation==1&&sn.ni>=1&&sn.no==1&&sn.nw==1&&specialised::hc_norm_admitted(hc_norm_shape(pn));
++    if(norm_ok)++admitted;
++    if(!norm_ok||!hc_kernels::enabled("cnorm")||!simple_fast||i==0)continue;
++    size_t j=i;bool found=false;
++    while(j>0){--j;if(p.launches[j].card==n.card){found=true;break;}}
++    if(!found)continue;
++    const auto& cmb=p.launches[j];
++    if(cmb.op!="hc_combine"||cmb.outputs.size()!=1||n.inputs.empty()||cmb.outputs.at(0)!=n.inputs.at(0)||cmb.inputs.size()<3||cmb.inputs.at(0)!=cmb.outputs.at(0))continue;
++    const Prepared pc=prepare_site(cmb);const auto& sc=pc.spec;const size_t o=size_t(sc.ni);
++    if(sc.special!=Special::normal||sc.op!=Op::hc_combine||sc.fused_combine_norm||sc.implementation!=1||!sc.f32_activations||sc.tokens!=1||sc.ni<3||sc.no!=1||sc.nw!=0)continue;
++    if(sc.types[0]!=Scalar::f32||sc.types[1]!=Scalar::f32||sc.types[2]!=Scalar::f32||sc.types[o]!=Scalar::f32)continue;
++    if(sc.sizes[0]!=10240||sc.sizes[1]!=2560||sc.sizes[2]!=4||sc.sizes[o]!=10240||sc.site.shape[1]!=2560)continue;
++    if(pc.bindings.at(0)!=pc.bindings.at(o)||pn.bindings.at(0)!=pc.bindings.at(0))continue;
++    hc_cnorm_of[&n]=&cmb;hc_cnorm_follower.insert(&cmb);
++  }
++  save(a.output/"hc-kernels.json","{\"tokens\":"+ownrt::quote(hc_kernels::list())+",\"hc_norm_sites\":"+std::to_string(norm_sites)+
++       ",\"norm1_admitted\":"+std::to_string(hc_kernels::enabled("norm1")?admitted:0)+",\"combine_norm_pairs\":"+std::to_string(hc_cnorm_of.size())+"}");
++}
++bool hc_cnorm_follows(const flash::Launch& l){if(!hc_cnorm_ready)hc_prepare_cnorm();return hc_cnorm_follower.count(&l)!=0;}
++bool hc_cnorm_leads(const flash::Launch& l){if(!hc_cnorm_ready)hc_prepare_cnorm();return hc_cnorm_of.count(&l)!=0;}
++// The norm site of a cnorm pair: the combine (its skipped site's bindings) and the norm in one launch.
++void gsq_combine_norm(const flash::Launch& n) {
++  const int c=n.card;const auto& cmb=*hc_cnorm_of.at(&n);
++  Prepared tn,tc;const Prepared* pn=nullptr;const Prepared* pc=nullptr;
++  if(a.memory=="resident"&&!fresh_arguments){pn=&prepared.at(&n);pc=&prepared.at(&cmb);}
++  else {tn=prepare_site(n);tc=prepare_site(cmb);pn=&tn;pc=&tc;}
++  const auto& s=pn->spec;const auto& b=pn->bindings;const int tail=s.ni+s.no+s.nw;
++  require(b.size()>size_t(tail+3)&&pc->bindings.size()>3&&pc->bindings.at(0)==b.at(0),"HC combine+norm bindings");
++  std::array<ownrt::Allocation,19> args;args.fill(b.at(0));
++  args[0]=b.at(0);args[1]=b.at(size_t(s.ni+s.no));args[2]=b.at(size_t(s.ni));
++  args[15]=b.at(size_t(tail+1));args[16]=b.back();args[17]=b.at(size_t(tail+2));args[18]=b.at(size_t(tail+3));
++  finish(c,specialised::submit_combine_norm(dev(c),hc_norm_shape(*pn),args,b.at(size_t(tail)),pc->bindings.at(1),pc->bindings.at(2),{}),false);
++}
++
+ bool gsq_kopt_site(const flash::Launch& l) const {
+   if(l.op!="gemv"||dense_block_site(w,a,l)||iq3_block_site(w,a,l)||dense_q6_site(w,a,l)||qkv_q6_site(w,a,l)||attention_q8_site(w,a,l)||l.weights.at(0)=="output.weight")return false;
+   const auto t=unsigned(flash::grid_type(w.directory.at(l.weights.at(0)).grid));
+diff -ruN head/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp engine/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+--- head/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp	2026-10-30 10:26:27.589161726 -0400
+@@ -14,6 +14,8 @@
+ #include "stage2/packet3/step/plan.hpp"
+ #include "stage2/packet194-expert-diet-engine/performance.hpp"
+ #include "stage2/packet194-expert-diet-engine/adapter.hpp"
++#include "stage2/packet194-expert-diet-engine/specialised_submit.hpp" // OWNRT_HC_KERNELS cnorm (generic_engine.hpp)
++#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
+ #include "stage2/packet194-expert-diet-engine/small_gemv.hpp"
+ #include "stage2/packet194-expert-diet-engine/dispatch.hpp"
+ #include "stage2/packet194-expert-diet-engine/p39_plan.hpp"
+@@ -2115,6 +2117,8 @@
+ #include "stage2/packet194-expert-diet-engine/engine_fusion.hpp"
+   void execute_site(const flash::Launch& l) {int c=l.card;
+     if(a.gsq_packed&&dev(c).view_row<0&&gsq_mix_follower.count(&l)) { /* written by the fused HC gate launch */ } else
++    if(a.gsq_packed&&dev(c).view_row<0&&hc_cnorm_follows(l)) { /* OWNRT_HC_KERNELS cnorm: written by the norm site's fused launch */ } else
++    if(a.gsq_packed&&dev(c).view_row<0&&hc_cnorm_leads(l)) { gsq_combine_norm(l); } else
+     if(a.gsq_packed&&dev(c).view_row<0&&expert_pair_follower.count(&l)) { /* OWNRT_TP_EXPERT_PAIR: written by the gate's paired launch */ } else
+     if(!a.gsq_packed&&other_fused_site(l)) { /* Preserve BF16 writer invalidation. */ } else
+     if(!a.gsq_packed&&fused_hc(l)) { /* Preserve the common BF16-writer invalidation below. */ }
+diff -ruN head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/hc_kernels.hpp engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/hc_kernels.hpp
+--- head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/hc_kernels.hpp	1969-12-31 19:00:00.000000000 -0500
++++ engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/hc_kernels.hpp	2026-10-30 10:24:32.758713865 -0400
+@@ -0,0 +1,144 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// OWNRT_HC_KERNELS (lab 2026-10-30, research/hc-kernels-2026-10-30, default off): exact decode HC kernels. "1" enables
++// norm1,lowsel,cnorm; otherwise a comma list of tokens:
++//  norm1   the HC norm (4 x 2560 F32 streams, F32 gain, one token row) in ONE launch instead of specialised's two:
++//          work-group h owns stream row h; the same 32-leaf adjacent subtrees of x^2 (also written to the scratch row,
++//          as stage 0 writes them), the same upper() over the 80 partials (evaluated by one subgroup, upper80), the
++//          same rsqrt and output expression, the same guard results (specialised_submit.cpp).
++//  lowsel  dense_v2 BF16 rows (the bf16_multi<1,8> sites: HC low + inject, the final HC low, ...) choose their matrix
++//          by static indices instead of a runtime index into the captured descriptor array, which kept the
++//          descriptors in private memory: bf16_multi_static<1,10>, the same bf16_rows per row (kopt kernels.cpp).
++//  cnorm   decode only: an HC combine (CombineFast, F32) directly followed on the same card by the HC norm of the same
++//          streams runs as one launch at the norm site (combine_norm, specialised_submit.cpp); the combine site then
++//          issues nothing (generic_engine.hpp, main.cpp execute_site). Row replays (dev.view_row >= 0), batched
++//          prefill and every non-adjacent pair keep both sites; the plan itself is unchanged.
++#include <cstdint>
++#include <cstdlib>
++#include <string>
++namespace hc_kernels {
++inline const std::string& list() {
++  static const std::string v = [] {
++    const char* e = std::getenv("OWNRT_HC_KERNELS");
++    const std::string s = e ? e : "";
++    return s == "1" ? std::string("norm1,lowsel,cnorm") : s;
++  }();
++  return v;
++}
++inline bool enabled(const char* token) {
++  const auto& v = list();
++  if (v.empty() || v == "0") return false;
++  return ("," + v + ",").find(std::string(",") + token + ",") != std::string::npos;
++}
++}  // namespace hc_kernels
++#ifndef OWN_RT_HOST_ONLY
++#include <sycl/sycl.hpp>
++#include "stage2/packet194-expert-diet-engine/specialised.hpp"
++namespace hc_kernels {
++// specialised::upper(p, 80) by one 32-lane subgroup. upper()'s levels 1..16 are the adjacent subtrees of leaves 0..31
++// (a), 32..63 (b) and 64..79 (c, levels 1..8); then stride 16: v64 = v64 + 0 (no right child); stride 32: v0 = v0 + v32,
++// v64 = v64 + 0; stride 64: v0 = v0 + v64. Valid in lane 0.
++inline float upper80(const sycl::sub_group& sg, const float* part, int lane) {
++  float a = part[lane], b = part[32 + lane], c = lane < 16 ? part[64 + lane] : 0.f;
++#pragma unroll
++  for (int s = 1; s < 32; s *= 2) {
++    const float ra = sycl::select_from_group(sg, a, (lane + s) % 32);
++    const float rb = sycl::select_from_group(sg, b, (lane + s) % 32);
++    const float rc = sycl::select_from_group(sg, c, (lane + s) % 32);
++    if (lane % (2 * s) == 0) {
++      a = a + ra;
++      b = b + rb;
++      if (s < 16) c = c + rc;
++    }
++  }
++  float v64 = c + 0.f;
++  float v0 = a + b;
++  v64 = v64 + 0.f;
++  v0 = v0 + v64;
++  return v0;
++}
++// One HC norm row (row = stream h of 4, width 2560) or, with COMBINE, the CombineFast combine of that row first
++// (gate = 2*sigmoid(inject[h]/4); streams[h][k] = streams[h][k] + branch[k]*gate, written back) and then the norm of the
++// combined values. Guards as the separate kernels: inactive or error -> nothing written; the combine has no position
++// check; the norm's position check (fail by item 0 of row 0) follows the combine's write.
++struct NormArgs {
++  float* x;              // streams (read; written back when COMBINE)
++  const float* branch;   // COMBINE: the branch row (2560)
++  const float* inject;   // COMBINE: the 4 inject values
++  const float* gain;     // F32 gain (4 x 2560)
++  float* y;              // norm output (4 x 2560)
++  float* scratch;        // specialised scratch: partials row-major [4][80]
++  int32_t* error;
++  const int32_t* position;
++  const int32_t* active;
++  int capacity, tokens, flags;  // flags bit 0: unit offset
++};
++constexpr unsigned NORM_WGS = 640;  // 20 subgroups x 4 chunks of 32 per stream row
++template <bool COMBINE, unsigned WGS = NORM_WGS>
++inline void norm_row(const NormArgs a, sycl::nd_item<1> it, float* part /* >= 81 floats of local memory */) {
++  constexpr int W = 2560, C = 80, HEADS = 4, NSG = WGS / 32;
++  static_assert(WGS % 32 == 0 && C % NSG == 0, "chunks split evenly over the subgroups");
++  constexpr int CPS = C / NSG;
++  auto g = it.get_group();
++  auto sg = it.get_sub_group();
++  const int lane = int(sg.get_local_linear_id()), sgi = int(sg.get_group_linear_id());
++  const int row = int(g.get_group_linear_id());
++  using ref = sycl::atomic_ref<int32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
++                               sycl::access::address_space::global_space>;
++  float xs[CPS], gs[CPS], bs[CPS];
++#pragma unroll
++  for (int j = 0; j < CPS; ++j) {
++    const int k = (sgi + j * NSG) * 32 + lane;
++    xs[j] = a.x[row * W + k];
++    gs[j] = a.gain[(row % HEADS) * W + k];
++    if constexpr (COMBINE) bs[j] = a.branch[k];
++  }
++  float inj = 0.f;
++  if constexpr (COMBINE) inj = a.inject[row];
++  const int act0 = lane == 0 ? a.active[0] : 0, err0 = lane == 0 ? ref(a.error[0]).load() : 0,
++            pos0 = lane == 0 ? a.position[0] : 0;
++  const int act = sycl::group_broadcast(sg, act0, 0), err = sycl::group_broadcast(sg, err0, 0),
++            pos = sycl::group_broadcast(sg, pos0, 0);
++  if (!act || err) return;
++  if constexpr (COMBINE) {
++    const float gate = 2.f * ng::sigmoid(inj / 4.f);
++#pragma unroll
++    for (int j = 0; j < CPS; ++j) {
++      const int k = (sgi + j * NSG) * 32 + lane;
++      xs[j] = xs[j] + bs[j] * gate;
++      a.x[row * W + k] = xs[j];
++    }
++  }
++  if (pos < 0 || pos > a.capacity - a.tokens) {
++    if (row == 0 && it.get_local_linear_id() == 0) ref(a.error[0]).store(1);
++    return;
++  }
++#pragma unroll
++  for (int j = 0; j < CPS; ++j) {
++    const int c = sgi + j * NSG;
++    float v = xs[j] * xs[j];
++#pragma unroll
++    for (int s = 1; s < 32; s *= 2) {
++      const float rhs = sycl::select_from_group(sg, v, (lane + s) % 32);
++      if (lane % (2 * s) == 0) v = v + rhs;
++    }
++    if (lane == 0) {
++      part[c] = v;
++      a.scratch[row * C + c] = v;
++    }
++  }
++  sycl::group_barrier(g);
++  if (sgi == 0) {
++    const float total = upper80(sg, part, lane);
++    if (lane == 0) part[C] = detmath::rsqrt(total / float(W) + 1e-6f);
++  }
++  sycl::group_barrier(g);
++  const float inv = part[C];
++#pragma unroll
++  for (int j = 0; j < CPS; ++j) {
++    const int k = (sgi + j * NSG) * 32 + lane;
++    a.y[row * W + k] = (xs[j] * inv) * (gs[j] + float(a.flags & 1));
++  }
++}
++}  // namespace hc_kernels
++#endif
+diff -ruN head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp
+--- head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.cpp	2026-10-30 10:25:17.078451553 -0400
+@@ -9,6 +9,7 @@
+ #include "stage2/packet194-expert-diet-engine/select_fast.hpp"
+ #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
+ #endif
++#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
+ namespace specialised {
+ #ifdef OWN_RT_HOST_ONLY
+ template<ng::Op Code,int Stage,int FixedWidth=0,int FixedHeads=0> struct Kernel final:integrated::HostOperation {
+@@ -162,17 +163,58 @@
+   return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body<Code,Stage,FixedWidth,FixedHeads>(s,a,i[0],scratch,Guard{});}));});
+  }
+ };
++// OWNRT_HC_KERNELS norm1 / cnorm: one work-group per stream row (hc_kernels::norm_row). Pointers: 0 streams, 1 gain,
++// 2 output, 3 error, 4 position, 5 active, 6 scratch, then (COMBINE) 7 branch, 8 inject.
++template<bool COMBINE> struct HcNorm final:ownrt::SyclOperation {
++ ng::Shape shape;explicit HcNorm(ng::Shape s):shape(s){}
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>&)const override {
++  hc_kernels::NormArgs a{static_cast<float*>(p[0]),COMBINE?static_cast<const float*>(p[7]):nullptr,COMBINE?static_cast<const float*>(p[8]):nullptr,
++   static_cast<const float*>(p[1]),static_cast<float*>(p[2]),static_cast<float*>(p[6]),static_cast<int32_t*>(p[3]),static_cast<const int32_t*>(p[4]),
++   static_cast<const int32_t*>(p[5]),shape.capacity,shape.tokens,shape.flags};
++  constexpr unsigned WGS=hc_kernels::NORM_WGS;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(4*WGS),sycl::range<1>(WGS))](sycl::handler& h){
++   sycl::local_accessor<float,1> part(sycl::range<1>(96),h);
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++    hc_kernels::norm_row<COMBINE>(a,it,part.get_multi_ptr<sycl::access::decorated::no>().get());}));});
++ }
++};
+ #endif
+ template<ng::Op Code,int FixedWidth=0,int FixedHeads=0> integrated::Launch submit_class(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,std::span<const ownrt::Event> deps){
+  integrated::Launch result{};
+  auto issue=[&]<int Stage>(){Kernel<Code,Stage,FixedWidth,FixedHeads> op(s);std::array<ownrt::Event,1> after{result.last};auto e=d.compute(op,a,result.last?std::span<const ownrt::Event>(after):deps);if(!result.first)result.first=e;result.last=e;++result.passes;};
+  issue.template operator()<0>();if constexpr(Code!=ng::attention_score)issue.template operator()<1>();if constexpr(Code==ng::attention_softmax||Code==ng::route_gather)issue.template operator()<2>();if constexpr(Code==ng::route_gather){issue.template operator()<3>();issue.template operator()<4>();}return result;
+ }
++bool hc_norm_admitted(ng::Shape s){
++ return s.op==ng::norm&&s.width==2560&&s.heads==4&&s.tokens==1&&(s.flags&ng::f32_activations_flag)&&(s.flags&8)&&!(s.flags&~(1|8|ng::f32_activations_flag));
++}
++#ifndef OWN_RT_HOST_ONLY
++template<bool COMBINE> integrated::Launch submit_hc_norm(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,
++                                                         ownrt::Allocation branch,ownrt::Allocation inject,std::span<const ownrt::Event> deps){
++ std::vector<ownrt::Allocation> ids{a[0],a[1],a[2],a[15],a[17],a[18],scratch};
++ if constexpr(COMBINE){ids.push_back(branch);ids.push_back(inject);}
++ HcNorm<COMBINE> op(s);auto e=d.compute(op,ids,deps);return {e,e,1};
++}
++#endif
++integrated::Launch submit_combine_norm(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,
++                                       ownrt::Allocation branch,ownrt::Allocation inject,std::span<const ownrt::Event> deps){
++ ng::validate(s);if(a.size()!=19)throw std::invalid_argument("specialised requires 19 bindings");
++ if(!hc_norm_admitted(s))throw std::invalid_argument("HC combine+norm: unadmitted norm shape");
++ if(d.arena.row(scratch).bytes<scratch_floats(s)*sizeof(float))throw std::invalid_argument("specialised scratch extent");
++ if(d.arena.row(branch).bytes<2560*4||d.arena.row(inject).bytes<4*4||d.arena.row(a[0]).bytes<10240*4)throw std::invalid_argument("HC combine+norm binding extents");
++#ifdef OWN_RT_HOST_ONLY
++ throw std::logic_error("HC combine+norm is a device-build path");
++#else
++ return submit_hc_norm<true>(d,s,a,scratch,branch,inject,deps);
++#endif
++}
+ integrated::Launch submit(ownrt::Device& d,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,std::span<const ownrt::Event> deps){
+  ng::validate(s);if(a.size()!=19)throw std::invalid_argument("specialised requires 19 bindings");
+  if(d.arena.row(scratch).bytes<scratch_floats(s)*sizeof(float))throw std::invalid_argument("specialised scratch extent");
+  std::array<ownrt::Allocation,20> bound{};std::copy(a.begin(),a.end(),bound.begin());bound[19]=scratch;
+  if(s.width==2560&&s.heads==4){
++#ifndef OWN_RT_HOST_ONLY
++  if(hc_kernels::enabled("norm1")&&hc_norm_admitted(s))return submit_hc_norm<false>(d,s,a,scratch,0,0,deps);
++#endif
+   if(s.op==ng::norm)return submit_class<ng::norm,2560,4>(d,s,bound,deps);
+   if(s.op==ng::combine_norm)return submit_class<ng::combine_norm,2560,4>(d,s,bound,deps);
+  }
+diff -ruN head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.hpp engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.hpp
+--- head/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.hpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/specialised_submit.hpp	2026-10-30 10:25:17.078328291 -0400
+@@ -4,4 +4,12 @@
+ #include "stage2/packet194-expert-diet-engine/performance.hpp"
+ namespace specialised {
+ integrated::Launch submit(ownrt::Device&,ng::Shape,std::span<const ownrt::Allocation>,ownrt::Allocation,std::span<const ownrt::Event> = {});
++// OWNRT_HC_KERNELS cnorm (hc_kernels.hpp): the CombineFast combine of streams (branch, inject) then the HC norm `s` of the
++// same streams, one launch. `a` are the norm's 19 bindings as for submit (0 streams, 1 gain, 2 output, 15 error,
++// 17 position, 18 active); `scratch` the norm's scratch.
++integrated::Launch submit_combine_norm(ownrt::Device&,ng::Shape s,std::span<const ownrt::Allocation> a,ownrt::Allocation scratch,
++                                       ownrt::Allocation branch,ownrt::Allocation inject,std::span<const ownrt::Event> = {});
++// True when the HC norm one-launch kernels (norm1 / cnorm) admit this norm shape: 4 x 2560 rows, F32 gain, F32
++// activations, one token row.
++bool hc_norm_admitted(ng::Shape s);
+ }
+diff -ruN head/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp engine/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp
+--- head/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp	2026-10-30 10:24:46.964699288 -0400
+@@ -86,6 +86,17 @@
+  const Mat d=m[j];
+  bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
+ }
++// OWNRT_HC_KERNELS lowsel (lab 2026-10-30, research/hc-kernels-2026-10-30): bf16_multi with the matrix chosen by static
++// indices only. bf16_multi's runtime index into the captured descriptor array kept the descriptors in private memory (a
++// dependent load before the first weight load); the same bf16_rows call runs for the same subgroup and row.
++template<unsigned R,unsigned U> inline void bf16_multi_static(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it){
++ const uint32_t gsub=uint32_t(it.get_group_linear_id())*uint32_t(it.get_local_range(0)/32)+uint32_t(it.get_sub_group().get_group_linear_id());
++ Mat d=m[0];
++ if(count>1&&gsub>=m[1].first_sub)d=m[1];
++ if(count>2&&gsub>=m[2].first_sub)d=m[2];
++ if(count>3&&gsub>=m[3].first_sub)d=m[3];
++ bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,gsub-d.first_sub);
++}
+ // OWNRT_DECODE_NEXT2 bf16split (lab 2026-10-26): one row per pair of 16-lane subgroups of a work-group (WGR rows per group).
+ // Subgroup half h runs logical lanes 16h..16h+15 of bf16_rows<1,U>: the same chunks 8L+256i, the same loads-then-adds
+ // order and the ragged tail, so each logical lane's sum is unchanged. Tree: levels 1..8 by the same xor butterfly inside
+diff -ruN head/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp engine/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+--- head/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-30 09:55:50.000000000 -0400
++++ engine/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-30 10:24:46.964941424 -0400
+@@ -14,6 +14,7 @@
+ #include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet6-kopt/dense_v2.hpp"
++#include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
+ #include <algorithm>
+ #include <array>
+ #include <limits>
+@@ -184,6 +185,8 @@
+         const size_t global=(size_t(subs)*32+127)/128*128;
+         if(small_k)return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
+           h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<4,4>(m,count,it);}));});
++        if(hc_kernels::enabled("lowsel"))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++          h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi_static<1,10>(m,count,it);}));});
+         return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
+           h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<1,8>(m,count,it);}));});
+       }

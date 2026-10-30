@@ -222,7 +222,10 @@ with a free barrier.
 
 ## Next steps this points to (decode tok/s, ranked by measured or estimated size)
 
-1. **HC BF16 GEMVs at the speed this bench reaches.** The engine's four HC GEMVs per layer run at 400–415 GB/s. This
+1. **HC BF16 GEMVs at the speed this bench reaches.** Correction, from
+   [hc-kernels-2026-10-30](../hc-kernels-2026-10-30/RESULT.md): measured side by side on the same data, the engine's
+   HC GEMVs take 14.5 / 13.2 µs, so the exact-order GEMVs are already at engine speed. The 4% it found came from the
+   HC norm and the combine fused into it. The original note follows. The engine's four HC GEMVs per layer run at 400–415 GB/s. This
    bench's plain kernels reach 482–529 GB/s on the same shapes with cold weights.
    - Estimate: per block, (16.3 − 13.65) + (16.0 − 12.40) ≈ 6.3–6.6 µs. That is about 0.29 ms per half on rank 0
      (46 blocks, 1.51 ms of HC GEMVs) and 0.33 ms on rank 1 (50 blocks, 1.63 ms). They are replicated on both cards of
