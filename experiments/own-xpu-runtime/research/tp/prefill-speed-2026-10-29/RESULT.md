@@ -1,26 +1,29 @@
-# Four-card prompt reading at 131,072: the bottleneck, five opt-in changes, and a service gate failure (2026-10-29)
+# Four-card prompt reading at 131,072: 354 → 250.5 s to the first token, exact (2026-10-29/30)
 
 **Question.** On the four-card layout (two pipeline ranks, each split exactly across two cards; flags `tptsxqc`, binary
 `aafd258dd5ea`) a 121,854-token prompt took 355 s to its first token, against 241–251 s on the 3 targets + 1 draft 262K
 layout. Where does the time go, and can exact changes close the gap?
 
-**Answer (stopped at a gate failure; no TTFT measurement of the fix yet).**
-- **Bottleneck, measured:** rank 0 is the critical path. Per 256-row chunk it spends 518 ms on its prefill and 229 ms
-  replaying the MTP draft row by row (256 commands of 0.89 ms), 747 ms × 476 chunks = 355 s. Rank 1 needs 515 ms per
-  chunk and waits about 230 ms. The ranks are already pipelined one chunk apart.
-- **Inside a chunk:** the TP prefill is mostly device-bound (the host waits on the cards 331 / 376 ms of 492 / 508 ms).
-  Its one large host-paced piece is `moe_combine`, replayed row by row (78–86 ms). The draft replay is device-bound
-  (0.79 ms per row even with no host waits): each prompt row computes a full layer whose outputs are never read.
-- **Built (opt-in, exact in 38 rank-harness comparisons):** a multi-row `moe_combine` for prefill, once-per-chunk exchange
-  zeroing, batched lookup uploads, one draft command per chunk, and KV-only draft prompt rows (17 of 46 sites).
-  Harness per chunk: rank 0 492 + 210 → 437 + 60 ms, rank 1 508 → 466 ms.
-- **Service:** server A (current flags, this binary) reproduced the baseline: TTFT 356.6 s, decode 75.95 tok/s, all 512
-  outputs equal the 3+1 262K reference. Server B (the fix) **failed the service's batched-prefill startup gate**: a
-  request reset zeroed the native `moe_combine`'s ones buffer, which the harnesses (one prompt per process, no reset)
-  never exercised. Stopped there as instructed. The one-line fix is in `engine/src` (build r7 `b51c9e8d803e`), not
-  device-gated.
-- Projection, **not a measurement** ([results/projection.json](results/projection.json)): about 249 s TTFT on the long
-  request, against 241–251 s on 3+1.
+**Answer.** The four-card layout now reads the 121,854-token prompt in **250.5 / 250.8 s** (two fresh servers) against
+**353.6 s** for the current flags on the same binary, and 241–251 s on the 3+1 262K layout (250.7 s AOT screen; 241.0 s
+with the cut-16 screen). Decode after it is unchanged (76.3 tok/s), and all 512 outputs equal the 3+1 reference.
+- **Bottleneck, measured:** rank 0 was the critical path. Per 256-row chunk it spent 518 ms on its prefill and 229 ms
+  replaying the MTP draft row by row (256 commands of 0.89 ms): 747 ms × 476 chunks = 355 s. Rank 1 needed 515 ms per chunk
+  and waited about 230 ms. The ranks were already pipelined one chunk apart.
+- **Inside a chunk:** the TP prefill is mostly device-bound. Its one large host-paced piece was `moe_combine`, replayed row
+  by row (78–86 ms per chunk). The draft rows are device-bound (0.79 ms each even with no host waits): each prompt row
+  computed a full layer whose outputs nothing reads.
+- **Built (opt-in, engine r7 `b51c9e8d803e`):** a multi-row `moe_combine` for prefill, once-per-chunk exchange zeroing,
+  batched lookup uploads, one draft command per chunk, and KV-only draft prompt rows (17 of 46 sites).
+- **Long request, measured:** rank 0 466.5 ms prefill + 60.3 ms draft per chunk (526 ms, was 747); rank 1 468 ms
+  (idle 27.5 s, was 110 s).
+- **Gates:**
+  - Build r6 passed 38 rank-harness comparisons but failed the service's startup gate: a request reset zeroed the native
+    `moe_combine`'s ones buffer. The harness never read a prompt after a reset.
+  - A new two-request harness case (prompt → decode → reset → prompt → decode, with the allocation inventory and a ones
+    check) fails on r6 and passes on r7.
+  - On r7, the 38 comparisons rerun all equal. All three new servers passed the startup gate 13/13. Every suite output
+    equals B19.
 
 ## 1. The measured bottleneck
 
@@ -104,35 +107,76 @@ smallest smoke (40 rows in 16-row chunks, 4 halves). Final binary `300e6f8c46ad`
 - The same comparisons also passed on the intermediate builds (g1 r2 four flags, g3 r4 KV-only with prepare unrefined).
 - 0 exchange timeouts or aborts. Kernel log clean before and after every arm.
 
+## 3b. The reset seam, closed on build r7 `b51c9e8d803e` (2026-10-30)
+
+**A harness case that sees the bug.** Both drivers gained `--second-prompt N` (`run_phase.sh` extra `sp=N`): request A
+(1,100 rows batched, 16 decode halves) → RESET (op 11, each reset dumps the request's state, its draft state and the
+reset-time allocation inventory before zeroing) → the shared region zeroed as the lab adapter does → request B (600 rows
+with other token ids and rows, 16 decode halves) → RESET. The compare checks request B like request A, plus:
+- the allocation inventory of both requests (`request-state-inventory.json`, every standalone non-weight allocation the
+  new paths touch: all prefill shadows, positions, tokens, slot rows, `ordered-mixture`, operator scratch): equal to flags
+  off on every common allocation except the exchange control words (`*:tp-exchange-control`, wait/poll statistics);
+- the ones invariant: every `prefill:moe-ones` holds only 1.0f at every reset ([inventory_check.py](inventory_check.py)).
+
+| Comparison (two requests) | Rank 1 | Rank 0 target / draft | Inventory | Ones |
+|---|---|---|---|---|
+| **r6 `300e6f8c46ad` flags on vs flags off (must fail)** | A 1079/1079; **B 938 of 1079 differ, tokens differ** | A 1029/1029, 71/71; **B 888 of 1029 differ** | **B: 36 / 161 allocations differ** | **zero at the second reset, both cards** |
+| r6 flags off vs r7 flags off (the reference itself) | A, B 1079/1079 | A, B 1029/1029, 71/71 | equal | — |
+| r7 smoke (40 + 40 rows, 16-row chunks) on vs off | A, B 1079/1079 | A, B 1029/1029, 71/71, tokens equal | equal (57 / 282) | 1.0f at both resets |
+| **r7 on vs off** | **A, B 1079/1079, tokens equal** | **A, B 1029/1029, 71/71, tokens equal** | **equal (57 / 282)** | **1.0f at both resets** |
+| r7 on vs one card at 65,536 (prefix + zeros) | A, B 1058 + 21 | A, B 1009 + 20 / 67 + 4 | — | — |
+| r7 off vs one card at 65,536 | A, B 1058 + 21 | A, B 1009 + 20 / 67 + 4 | — | — |
+
+So the new case fails on r6 exactly where the service gate failed (the request after a reset) and passes on r7.
+
+**The 38 comparisons of section 3, rerun on r7** ([rerun38.py](rerun38.py); runs `p1`, `p2`): every new-binary run
+replaced by the r7 run with the same flags (6 smokes, 3 rank-1 and 7 rank-0 runs at 1,100 rows), the archived
+`aafd258dd5ea` and one-card runs as references: **38/38 equal**. [results/gates.json](results/gates.json) now holds 84
+comparisons, all equal, plus the 4 rows of the r6 expect-fail phase (2 differ as required, 2 reference rows equal).
+0 exchange timeouts or aborts; kernel log clean before and after every arm.
+
 ## 4. Service at 131,072, fresh servers
 
-Fresh lab services at 131,072 on binary `300e6f8c46ad` ([suite.sh](suite.sh), [run_arm_suite.sh](run_arm_suite.sh); all
-four card locks held by `sc117-tp-svc-pfs-locks-20261029`; `NEOReadDebugKeys=1 EnableDeferBacking=0`,
-`LimitNOFILE=1048576`; order A, B1, B2; [results/suite/summary.json](results/suite/summary.json)):
+Lab services on 127.0.0.1:18171 ([suite.sh](suite.sh), [run_arm_suite.sh](run_arm_suite.sh): one fresh transient unit per
+server, `Restart=no`, `KillMode=process`, no SIGKILL, `LimitNOFILE=1048576`, nice 19, CPUs 0-3,16-19; all four card locks held
+by `sc117-tp-svc-pfs-locks-20261029`; `NEOReadDebugKeys=1 EnableDeferBacking=0`). From the r7 chain on, a server is timed
+only after its startup batched-prefill gate passed 13/13 with batched reading on. Order A, B, B, each once, no retries
+([results/suite/summary.json](results/suite/summary.json)):
 
-| Server | Startup batched-prefill gate | Suite median (mean) tok/s | Outputs | TTFT, 3,490 tokens | 121,854 / 512: TTFT, decode, outputs |
-|---|---|---:|---|---:|---|
-| A `tptsxqc-r1` (current flags) | 13/13 | 78.34 (78.70) | = B19, all 12 | 9.94 s | **356.6 s**, 75.95 tok/s, all 512 = 3+1 262K reference (`bf1f0867d1bd…`) |
-| B1 `tptsxqck-r1` (the fix) | **FAILED: 6 of 9 batched cases** | 78.71 (78.95) | = B19, all 12 | 35.6 s (read token by token after the failed gate) | not run (server stopped) |
-| B2 `tptsxqck-r2` | — | — | — | — | not started (chain halted) |
+| Server | Binary | Startup gate | Suite median (mean) tok/s | Suite outputs | TTFT, 3,490 tokens | **121,854 / 512: TTFT** | decode after it | request | outputs vs 3+1 262K |
+|---|---|---|---:|---|---:|---:|---:|---:|---|
+| A `tptsxqc-r1` (current flags) | r6 | 13/13 | 78.34 (78.70) | = B19, all 12 | 9.94 s | 356.6 s | 75.95 tok/s | 364.1 s | all 512 equal |
+| B `tptsxqck-r1` (fix) | r6 | **FAILED, 6 of 9 batched cases** | 78.71 (78.95) | = B19 | 35.6 s (token by token) | not run | — | — | — |
+| **A `tptsxqc-r2`** (current flags) | **r7** | 13/13 | 78.46 (78.71) | = B19, all 12 | 9.91 s | **353.6 s** | 76.36 tok/s | 361.2 s | all 512 equal |
+| **B `tptsxqck-r2`** (fix) | **r7** | **13/13** | 78.56 (78.90) | = B19, all 12 | **7.36 s** | **250.5 s** | 76.28 tok/s | **257.5 s** | **all 512 equal** |
+| **B `tptsxqck-r3`** (fix) | **r7** | **13/13** | 78.72 (78.97) | = B19, all 12 | **7.35 s** | **250.8 s** | 76.26 tok/s | **257.8 s** | **all 512 equal** |
+| 3+1 at 262K (retained screens) | — | — | — | — | — | 250.7 s (AOT); 241.0 / 250.8 s (cut screens) | 48.3 tok/s (45.0 / 46.5) | 261.3 s | reference |
 
-- A's long request matches the retained ctx131072 servers (355.8 / 355.1 s) and has the same timeline: rank 0 247.2 s
-  prefill + 109.0 s draft replay, rank 1 245.1 s busy and 110.7 s idle ([results/long-trace-tptsxqc-r1-c131072.json](results/long-trace-tptsxqc-r1-c131072.json)).
-- **B1's gate failure** ([logs/incident-b1-prefill-gate.txt](logs/incident-b1-prefill-gate.txt), [prefill-gate.json](results/suite/arm-tptsxqck-r1-c131072/prefill-gate.json)):
-  every case that reads at least one full chunk (258, 259, 514, 581 tokens with 256-row chunks; 53 and 40 tokens with
-  13- and 7-row chunks) differs from token by token in tokens, MTP guesses and all persistent state of both ranks. The
-  three cases below the bulk threshold pass.
-  - Cause: `request_reset` zeroes every live non-weight allocation and restores only the engine's one-row `one`. The
-    M-row ones of `OWNRT_PREFILL_MOE_NATIVE` were written once, at allocation, so after the first reset every batched
-    `moe_combine` used a zero mixture.
-  - The rank harnesses read one prompt per process before any reset, so all 38 comparisons could pass. The service gate
-    (reset before every case) is the one that sees it.
-  - Fix (engine/src, build r7 `b51c9e8d803e`): the ones are rewritten at every chunk. Built, **not device-gated**.
-- B1's 12 suite prompts (60–90 tokens, read token by token either way) equal B19, so decode with the five flags set is
-  unchanged (78.71 against 78.34 tok/s on one server each: no speed claim).
-- Kernel log clean before, after ready, after the suite and after the halt. B1 stopped gracefully (Result=success);
-  no engine process left; all card locks free.
-- Raw server directories (638 files, 316,976,698 B, sha256-verified): `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-suite-20261029/`.
+- **TTFT 353.6 → 250.5 / 250.8 s (−29%, 1.41×)**, with the same 512 output ids (`bf1f0867d1bd…`), MTP 418/511 hits and
+  `cached_tokens=0` on every server. The 3,490-token prompt: 9.91 → 7.36 s.
+- The 512-token request now finishes in 257.5 / 257.8 s against 261.3 s on the 3+1 AOT screen (TTFT 250.7 s). The 3+1
+  cut-16 screen still reads 3.9% faster (TTFT 241.0 s), but it decodes at 45.0 tok/s against 76.3. Counting first-token
+  time plus answer length over decode rate, the four-card layout finishes first for any answer length against the AOT
+  screen, and for answers longer than about 1,060 tokens against the cut-16 screen.
+- **Timeline of the long request** ([analyze_long_trace.py](analyze_long_trace.py); results/long-trace-*.json):
+
+| Per chunk (476) | A r7 (current) | B r7 (fix), server 1 / 2 |
+|---|---:|---:|
+| rank 0 prefill busy | 514 ms (244.8 s) | 465 / 466 ms (221.3 / 221.6 s) |
+| rank 0 draft replay | 228 ms (108.5 s, 122,207 commands) | 61 ms (29.2 s, one command per chunk) |
+| rank 0 critical path | 742 ms | 526 / 527 ms |
+| rank 1 busy / idle | 515 ms / 107.8 s | 467 / 468 ms; idle 27.5 / 27.6 s |
+
+  The projection made before the r7 servers (523.6 ms per chunk, 249 s; [results/projection.json](results/projection.json))
+  was within 0.5%.
+- Decode is unchanged: suite medians 78.46 (A) against 78.56 / 78.72 (B), one A and two B servers; the flags touch only
+  prompt reading. All 5,965 suite ids, hashes and MTP guesses/hits equal B19 on every server.
+- B `tptsxqck-r1` (r6) is the failed gate of 2026-10-29 ([logs/incident-b1-prefill-gate.txt](logs/incident-b1-prefill-gate.txt)):
+  its reset zeroed the native `moe_combine` ones, as section 3b reproduces in the harness.
+- Kernel log clean before, after ready, before the long request, after the suite and after every server. No engine process
+  left; all card locks free. Raw server directories (sha256-verified):
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-suite-20261029/` (r6 servers) and
+  `…/prefill-speed-suite-20261030/` (r7 servers).
 
 ## Incidents (host-side only, no device faults)
 
@@ -144,31 +188,39 @@ four card locks held by `sc117-tp-svc-pfs-locks-20261029`; `NEOReadDebugKeys=1 E
 3. r5 refused at its first chunk command: the `qsa_prepare` wiring check expected 4 inputs; the plan builder appends
    `active` and `error`. Fixed in r6.
 4. Server B1: the service's startup gate failed (section 4). The server was stopped gracefully; the chain halted.
+5. Phase t2 stopped itself before its third arm on the MemAvailable floor (61.8 < 64 GB): the t1 archive was still
+   hashing with its 28 GB in /dev/shm. No device effect; the remaining arms ran as t2b after the archive. Later archives
+   ran in their own transient units and completed before the next phase.
 
 ## Next
 
-1. **Gate r7, then the A/B.** Smallest smoke, then add to the rank harness what the service gate does: two batched prompts
-   in one process with a RESET between them (rank 0 and rank 1), compared bitwise with token by token. Then fresh
-   servers A, B, B at 131,072: startup gate 13/13, TTFT and decode on the 121,854 / 512 request, outputs against the
-   long512 reference, suite = B19. Projection about 249 s ([results/projection.json](results/projection.json)).
-2. **After that rank 0 still sets the pace** (about 524 against 473 ms per chunk, projected). Remaining exact host-side
-   pieces on rank 0, per chunk: the PLE/begin/commit/broadcast row replays (13 ms, both cards near idle), the lookup
-   rows computed on the host with the cards idle (15.6 ms; compute them while the previous draft chunk runs), and the
-   draft staging (6 ms, now overlapped per row).
-3. **Draft rows at 0.23 ms:** a multi-row form of the 17 kept draft sites (merge, hc.a, k/v/ik, prepare, pool) would
-   take most of the remaining 60 ms per chunk.
+1. **Service flags (owner's call; `sc117-lan` not touched):** add the five flags to the four-card set (arm `tptsxqck`,
+   engine `b51c9e8d803e` or later). They change prompt reading only.
+2. **Rank 0 and rank 1 are now nearly balanced** (526 against 468 ms per chunk). On rank 0, about 35 ms per chunk can go
+   without kernel work:
+   - the PLE/begin/commit/broadcast row replays (13 ms, both cards near idle);
+   - the lookup rows computed on the host with the cards idle (15.6 ms; compute them while the draft chunk runs);
+   - the draft staging (6 ms).
+   That would bring rank 0 to rank 1, about 223 s.
+3. **Both ranks together:** the prefill is device-bound at about 466 ms per chunk on each pair of cards. The next lever is
+   inside the kernels: replicated work (HC, shared expert, router about 26% of a layer, done on both cards), and the
+   exchange count (69 / 75 pairs per chunk).
+4. **Harness coverage:** keep the two-request case (`sp=N`) in every prefill gate. The 38 one-request comparisons could
+   not see a buffer that a reset zeroes.
 
 ## Files
 
 - Engine (lab builds r1–r7 from `engine/src`, receipts `da3962e387cf`, `84e1beeb2476`, `035fae939623`, `1203bfaa8fae`,
-  `639ecc563bc6`, `300e6f8c46ad` (gated in the harness, failed the service gate), `b51c9e8d803e` (the ones fix, not device-gated)): `prefill_engine.hpp` (host trace, lookup batch, moe rows, xzero), `main.cpp`
+  `639ecc563bc6`, `300e6f8c46ad` (gated in the harness, failed the service gate), **`b51c9e8d803e`** (r7: the ones
+  rewritten every chunk; all gates and the service A/B/B)): `prefill_engine.hpp` (host trace, lookup batch, moe rows, xzero), `main.cpp`
   (per-card submission counter), `stage2/packet9-kopt4/kernels.{hpp,cpp}` (`epilogue_f32_rows`), `adapter.cpp` (moe rows
   admission), `prefill_wire.hpp` (op 29, draft tokens), `native_controller.hpp` (one draft command per chunk), `rank.hpp`
   (op 29 handler), `mtp.hpp` (`replay_chunk`, KV-only liveness, draft host trace).
-- Lab: [run_phase.sh](run_phase.sh) (extras `ht lb mn xz dc ko`), [tp_rank0_driver.py](tp_rank0_driver.py)
-  (`--draft-chunk`), [compare_phase.sh](compare_phase.sh) (absolute run paths), [analyze_host_trace.py](analyze_host_trace.py),
+- Lab: [run_phase.sh](run_phase.sh) (extras `ht lb mn xz dc ko sp=N`), [tp_rank0_driver.py](tp_rank0_driver.py)
+  (`--draft-chunk`, `--second-prompt`), [tp_rank1_driver.py](tp_rank1_driver.py) (`--second-prompt`), [inventory_check.py](inventory_check.py),
+  [rerun38.py](rerun38.py), [xctx_compare.py](xctx_compare.py) (request B), [compare_phase.sh](compare_phase.sh) (absolute run paths), [analyze_host_trace.py](analyze_host_trace.py),
   [analyze_long_trace.py](analyze_long_trace.py), [summarize_harness.py](summarize_harness.py), [gates_summary.py](gates_summary.py),
   [keep_evidence.sh](keep_evidence.sh), [arm_env.py](arm_env.py) (arms `tptsxqcf`, `tptsxqck`), [lab/](lab/) (adapter passes
   the new keys; `adapter6_tp.py.vs-ctx131072.patch`), suite scripts.
-- Evidence: [evidence/](evidence/) (m1, m2, g1, g3, g5 compact runs; g2/g4 refusals), [results/](results/), [logs/](logs/).
-  Raw runs (sha256-verified): `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-runs-{m1,m2,g1,g2-s3-r0-ko,g3,g4-s5-r0-ko,g5}/`.
+- Evidence: [evidence/](evidence/) (m1, m2, g1, g3, g5, t1–t3, p1, p2 compact runs; g2/g4 refusals), [results/](results/), [logs/](logs/).
+  Raw runs (sha256-verified): `/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-runs-{m1,m2,g1,g2-s3-r0-ko,g3,g4-s5-r0-ko,g5,t1,t2,t3,p1,p2}/`.

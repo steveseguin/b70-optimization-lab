@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Device phase of research/tp/prefill-speed-2026-10-29 (rank drivers alone; copy of ctx131072-2026-10-29/run_phase.sh).
 # Adds extras ht (OWNRT_PREFILL_HOST_TRACE=1, diagnostic host timing), lb (OWNRT_PREFILL_LOOKUP_BATCH=1), mn
-# (OWNRT_PREFILL_MOE_NATIVE=1), xz (OWNRT_PREFILL_XZERO_ONCE=1), ko (OWNRT_DRAFT_CHUNK_KV_ONLY=1, with dc) and dc
+# (OWNRT_PREFILL_MOE_NATIVE=1), xz (OWNRT_PREFILL_XZERO_ONCE=1), ko (OWNRT_DRAFT_CHUNK_KV_ONLY=1, with dc), sp=N (the drivers'
+# --second-prompt N: RESET, then a second request) and dc
 # (OWNRT_DRAFT_CHUNK_REPLAY=1 and the rank-0 driver's --draft-chunk). Everything else is the ctx131072 phase unchanged.
 # (ctx131072-2026-10-29:)
 # Adds extra ctx=N: the launch JSON rank<r>-launch-c<N>-<tag>.json (default 65536), so one phase can hold 65536 and 131072 arms.
@@ -73,6 +74,7 @@ for arm in "$@"; do
     mn) envs+=(OWNRT_PREFILL_MOE_NATIVE=1) ;; xz) envs+=(OWNRT_PREFILL_XZERO_ONCE=1) ;;
     dc) [ "$rank" = 0 ] || halt "dc is rank 0 only"; envs+=(OWNRT_DRAFT_CHUNK_REPLAY=1); more+=(--draft-chunk) ;;
     ko) [ "$rank" = 0 ] || halt "ko is rank 0 only"; envs+=(OWNRT_DRAFT_CHUNK_KV_ONLY=1) ;;
+    sp=*) more+=(--second-prompt "${x#sp=}") ;;
     "") ;; *) halt "unknown extra $x" ;; esac; done
   [ "$mode" = one ] || more+=(--pair "$pair")
   L="$D/rank$rank-launch-c$ctx-$launch.json"; [ -f "$L" ] || halt "no launch $L"

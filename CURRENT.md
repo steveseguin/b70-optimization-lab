@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**October 30, about 03:00 — four cards now read a 121,854-token prompt in 250.5 s instead of 354 s, exact; the 3+1 layout takes 241–251 s.**
+- Fix for last night's failed startup check: a constant buffer of the new MoE path is now refilled for every chunk, since
+  a request reset zeroes it (engine `b51c9e8d803e`).
+- A new harness test reads two prompts with a reset between them. It fails on the broken build and passes on the fixed one.
+- The 38 earlier comparisons, rerun on the fixed build, are all equal.
+- Fresh lab servers at 131,072, A/B/B, each passing its 13-case startup check:
+  - first token after 353.6 s with today's flags, against 250.5 / 250.8 s with the five new flags;
+  - writing speed after it unchanged (76.3 tok/s);
+  - all 512 outputs equal the 3+1 262K result;
+  - the 12-prompt suite matches B19 on every server.
+- Rank 0 now needs 526 ms per 256-token chunk (was 747) and rank 1 468 ms, so the two stages are nearly balanced.
+  Adding the flags to the four-card set (arm `tptsxqck`) is the owner's call. Kernel log clean; `sc117-lan` not touched.
+  [Result](experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/RESULT.md).
+
 **October 29, about 23:00 — four-card prompt reading: the slow part is found and fixed on the rank harness, but the fix failed the service's startup check; stopped there.**
 - Why a 121,854-token prompt takes 355 s on four cards (3+1 layout: 241–251 s): rank 0 is the slow stage. Per 256-token
   chunk it reads the chunk (518 ms) and then replays the draft model row by row (229 ms); rank 1 needs 515 ms and waits.

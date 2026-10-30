@@ -131,6 +131,26 @@ def main():
         d = compare_draft(s / r / 'draft-final-state', l / r / 'draft-final-state', a.ratio)
         res['draft'] = dict(d, extended_count=len(d['extended']))
         bad = bad or bool(d['differ'] or d['only_one_side'] or d['other_fields_differ'])
+    # --second-prompt runs (prefill-speed-2026-10-29): request B's dumps in rank<R>-b, compared the same way.
+    rb = f'{r}-b'
+    have = [(x / rb / 'state-2147483647' / 'state.json').exists() for x in (s, l)]
+    if any(have):
+        if not all(have):
+            res['second'] = dict(on_one_side_only=have); bad = True
+        else:
+            sd2, ld2 = s / rb / 'state-2147483647', l / rb / 'state-2147483647'
+            t2 = compare_target(sd2, ld2, a.ratio)
+            j2s, j2l = json.loads((sd2 / 'state.json').read_text()), json.loads((ld2 / 'state.json').read_text())
+            t2['other_fields_differ'] = {k: (j2s.get(k), j2l.get(k)) for k in j2s.keys() | j2l.keys() if k != 'buffers' and j2s.get(k) != j2l.get(k)}
+            sec = dict(target=dict(t2, extended_count=len(t2['extended'])))
+            q2s, q2l = ss.get('second_request') or {}, sl.get('second_request') or {}
+            sec['summary_differ'] = [k for k in keys if q2s.get(k) != q2l.get(k)] + ([] if q2s.get('prompt') == q2l.get('prompt') else ['prompt'])
+            b2 = bool(t2['differ'] or t2['only_one_side'] or t2['other_fields_differ'] or sec['summary_differ'])
+            if a.rank == 0:
+                d2 = compare_draft(s / rb / 'draft-final-state', l / rb / 'draft-final-state', a.ratio)
+                sec['draft'] = dict(d2, extended_count=len(d2['extended']))
+                b2 = b2 or bool(d2['differ'] or d2['only_one_side'] or d2['other_fields_differ'])
+            sec['passed'] = not b2; res['second'] = sec; bad = bad or b2
     res['passed'] = not bad
     print(json.dumps(res))
     return 0 if res['passed'] else 1

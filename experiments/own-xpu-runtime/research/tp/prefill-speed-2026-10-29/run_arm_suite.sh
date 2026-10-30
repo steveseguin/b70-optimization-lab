@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# One server of the research/tp/prefill-speed-2026-10-29 suites (copy of fault-ladder-2026-10-29/run_arm_suite.sh). Context from
+# One server of the research/tp/prefill-speed-2026-10-29 suites (copy of fault-ladder-2026-10-29/run_arm_suite.sh; halts before
+# timing unless the service's startup batched-prefill gate passed 13/13). Context from
 # ARM_CONTEXT (65536 default, or 131072). At 131072: the oracles copied in are the 4096 and 65536 ones plus this folder's
 # evidence/f32-state-oracle-ctx131072.json when it exists; without it the server must be started with ARM_RECORD_ORACLE=1, and
 # the lab service then records it once after its 4096 and 65536 comparisons pass (copied back to evidence/). After the TTFT
@@ -94,6 +95,11 @@ done
 echo "ready=$ready after $(( $(date +%s) - TS )) s: $(cat "$W/health.json" 2>/dev/null)"
 [ "$ready" = 1 ] || halt "service not ready (state $(systemctl --user is-active "$UNIT"))"
 python3 "$D/klog_check.py" "arm$ARM-after-ready" "$TA" "$D/logs/kernel-log-arm$ARM-after-ready.txt" || halt "kernel log after ready"
+# prefill-speed-2026-10-29: no timing unless the service's one-time batched-prefill gate passed all 13 cases and batched
+# reading is on (the service otherwise keeps serving token by token, as server tptsxqck-r1 did).
+G=$(ls "$W"/control/run-*/prefill-gate.json 2>/dev/null | head -1)
+python3 -c "import json,sys;g=json.load(open('$G'));h=json.load(open('$W/health.json'));c=g['cases'];print('startup prefill gate: passed',g['passed'],'cases',len(c),'passing',sum(x['passed'] for x in c),'health prefill_rows',h.get('prefill_rows'));sys.exit(0 if g['passed'] and len(c)==13 and all(x['passed'] for x in c) and h.get('prefill_rows')==256 else 1)" \
+  || halt "startup batched-prefill gate not 13/13 (or batched reading off): $G"
 # ---- suite (one cold request per frozen prompt, 512 cap, greedy)
 mkdir -p "$OUT"
 timeout 3600 python3 -B "$SUITE" --url "http://127.0.0.1:$PORT/v1/chat/completions" --label "tp-svc-pfs-20261029-arm$ARM-$BIN-ctx$CTX-split23-prefill256" --out "$OUT/suite.json"
