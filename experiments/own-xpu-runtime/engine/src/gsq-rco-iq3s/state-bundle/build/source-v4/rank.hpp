@@ -627,11 +627,11 @@ static void state_dump(Engine& e,int sequence) {
   return global;};
  for(auto& [name,s]:e.buffers[0]){if(name.find("#tp")!=std::string::npos)continue; // TP-internal half buffers: not model state
   auto b=e.readback(0,s.id,s.n*flash::scalar_bytes(s.type));
-  if(e.head_split_layout.count(name))b=assemble(name,std::move(b),e.buffers[1].at(name).id,flash::scalar_bytes(s.type));
+  if(e.head_split_layout.count(name)&&e.a.tp_replicate)b=assemble(name,std::move(b),e.buffers[1].at(name).id,flash::scalar_bytes(s.type)); // OWNRT_TP_SHAPE_PROBE (one card): raw
   bundle.append(name+".bin",b.data(),b.size());
   o<<(comma?",":"")<<ownrt::quote(name)<<":"<<ownrt::quote(hash(b));comma=true;}
  for(auto& [name,id]:e.state_spares){auto b=e.readback(0,id,e.dev(0).arena.row(id).bytes);
-  if(e.head_split_layout.count(name))b=assemble(name,std::move(b),e.state_spares1.at(name),flash::scalar_bytes(e.buffers[0].at(name).type));bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
+  if(e.head_split_layout.count(name)&&e.a.tp_replicate)b=assemble(name,std::move(b),e.state_spares1.at(name),flash::scalar_bytes(e.buffers[0].at(name).type));bundle.append("alternate-"+name+".bin",b.data(),b.size());o<<","<<ownrt::quote("alternate:"+name)<<":"<<ownrt::quote(hash(b));}
  o<<"},\"fp32_cache_valid\":"<<(e.fp32_sources[0]?"true":"false")<<",\"fp32_extent\":"<<e.fp32_extents[0]<<"}";bundle.finish(o.str());
 }
 } // namespace pipeline
@@ -666,6 +666,17 @@ static void tp_compare(Engine& e,const fs::path& path) {
    x<<(c?",":"")<<"{\"abort\":"<<w[L::abort]<<",\"timeouts\":"<<w[L::timeouts]<<",\"waits\":"<<w[L::waits]<<",\"waits_that_polled\":"<<w[L::spun]
     <<",\"max_polls\":"<<w[L::max_spin]<<",\"poll_sum\":"<<w[L::spin_sum]<<"}";}
   x<<"]}";save(path.parent_path()/"tp-exchange.json",x.str());
+  // OWNRT_TP_EXCHANGE_STATS (diagnostic, research/tp/stage-overhead-2026-10-30): per-site wait statistics (words 1..13 of
+  // each site record, written by the exchange kernel's waiting work-item; sub-group clock cycles).
+  if(const char* v=std::getenv("OWNRT_TP_EXCHANGE_STATS");v&&*v){std::ostringstream s;s<<"{\"schema\":\"ownrt.tp-exchange-sites.v1\",\"skip_epochs\":"<<v<<",\"cards\":[";
+   for(int c=0;c<2;++c){auto raw=e.readback(c,e.xctl[size_t(c)],L::bytes);std::vector<uint32_t> w(L::bytes/4);std::memcpy(w.data(),raw.data(),raw.size());
+    s<<(c?",":"")<<"[";bool comma=false;
+    for(uint32_t slot=0;slot<L::slots;++slot){const uint32_t* r=w.data()+L::header+slot*L::stride;if(!r[1])continue;
+     auto u64=[&](int k){return uint64_t(r[k])|(uint64_t(r[k+1])<<32);};
+     s<<(comma?",":"")<<"{\"slot\":"<<slot<<",\"epochs\":"<<r[0]<<",\"n\":"<<r[1]<<",\"wait_cycles\":"<<u64(2)<<",\"own_cycles\":"<<u64(4)<<",\"max_wait_cycles\":"<<r[6]
+      <<",\"polls\":"<<r[7]<<",\"hist\":["<<r[8]<<","<<r[9]<<","<<r[10]<<","<<r[11]<<","<<r[12]<<"],\"polled\":"<<r[13]<<"}";comma=true;}
+    s<<"]";}
+   s<<"]}";save(path.parent_path()/"tp-exchange-sites.json",s.str());}
  }
 }
 static int run_rank(const Options& a) {
@@ -695,9 +706,17 @@ static int run_rank(const Options& a) {
   dump_plan(a.output/"launch-plan.json",p);write_plan(a.output/"plan.json",p,*weights,1,one_card,!a.tp_replicate);
   // Lab diagnostic (2026-10-26, default off): OWNRT_PLAN_ONLY=1 stops after the plan (owned_bytes), before any device contact.
   const bool plan_only=[]{const char* only=std::getenv("OWNRT_PLAN_ONLY");return only&&only[0]=='1';}();
-  if(plan_only&&!a.tp_replicate){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
   Engine::HeadLayout head_layout; // OWNRT_TP_GDN=heads: compact per-card buffers -> one-card layout
-  if(a.tp_replicate){ // every launch also on card 1 (same arithmetic), every buffer on both cards
+  // OWNRT_TP_SHAPE_PROBE=0|1 (lab 2026-10-30, research/tp/stage-overhead-2026-10-30; diagnostic, default off, outputs NOT
+  // exact): a ONE-card process (never --tp-replicate) builds the four-card TP plan with the same transform below, then
+  // keeps only card c's launches (on its own card) and drops the cross-card exchanges and the head merge. Every split
+  // site then runs exactly the kernel, rows, heads and slots card c runs under TP, so their device time can be measured
+  // on one card with the profiler / OWNRT_SITE_TRACE (refused under TP). The peer's rows are never written, so every
+  // output after the first split site differs from the model: timing only. No state reassembly (raw dumps).
+  const int tp_shape_probe=[&]{const char* v=std::getenv("OWNRT_TP_SHAPE_PROBE");if(!v||!*v)return -1;
+   require((std::string(v)=="0"||std::string(v)=="1")&&!a.tp_replicate&&a.cards==1,"OWNRT_TP_SHAPE_PROBE: 0 or 1, one-card process only (never --tp-replicate)");return std::atoi(v);}();
+  if(plan_only&&!a.tp_replicate&&tp_shape_probe<0){save(a.output/"plan-only.json","{\"device_contact\":false}");munmap(mapping,shared_bytes);::close(fd);return 0;}
+  if(a.tp_replicate||tp_shape_probe>=0){ // every launch also on card 1 (same arithmetic), every buffer on both cards
    // OWNRT_TP_SPLIT=".attention,.gdn.qkv": those dense GEMVs are row-split instead. Card c computes rows
    // [c*R/2, (c+1)*R/2) into its half buffer y#tp (whole rows, unchanged arithmetic), then a tp_gather site on each
    // card assembles y from its own half (local copy) and the peer's half (peer copy). Order L0, L1, G0, G1.
@@ -938,7 +957,23 @@ static int run_rank(const Options& a) {
    // A TP rank without the target head (rank 0) leaves the flag inert and says so.
    if(qsa_split)save(a.output/"qsa-split.json","{\"schema\":\"ownrt.qsa-split.v1\",\"layers\":"+std::to_string(qsa_layers)+",\"kv_buffers_halved\":"+std::to_string(qsa_kv_halved.size())+",\"query_heads_per_card\":"+std::to_string(QHc)+",\"kv_heads_per_card\":"+std::to_string(KVc)+"}");
    if(target_head)save(a.output/"target-head-split.json","{\"schema\":\"ownrt.target-head-split.v1\",\"applied\":"+std::string(head_vocab?"true":"false")+",\"vocabulary\":"+std::to_string(head_vocab)+",\"card0_rows\":"+std::to_string(head_rows0)+",\"card1_rows\":"+std::to_string(head_vocab-head_rows0)+"}");
+   // OWNRT_TP_EXCHANGE_STATS (diagnostic): the label of every target exchange slot, for tp-exchange-sites.json.
+   if(const char* v=std::getenv("OWNRT_TP_EXCHANGE_STATS");v&&*v&&tp_shape_probe<0){std::ostringstream o;o<<"{\"schema\":\"ownrt.tp-exchange-slots.v1\",\"slots\":[";bool comma=false;
+    for(const auto& l:both)if(l.card==0&&(l.op=="tp_xgather"||l.op=="tp_xheads"||l.op=="tp_xslot")&&l.shape.size()>=2){
+     o<<(comma?",":"")<<"{\"slot\":"<<l.shape[1]<<",\"op\":"<<ownrt::quote(l.op)<<",\"label\":"<<ownrt::quote(l.label)<<",\"values\":"<<l.shape[0]<<",\"parameter\":"<<l.parameter<<"}";comma=true;}
+    o<<"]}";save(a.output/"tp-exchange-slots.json",o.str());}
    p.launches=std::move(both);for(auto& b:p.buffers)b.card=-1;
+   if(tp_shape_probe>=0){ // card c's launches only, on this process's one card; no exchanges, no head merge
+    std::vector<flash::Launch> mine;size_t dropped=0,kept=0;
+    for(auto& l:p.launches){if(l.card!=tp_shape_probe)continue;
+     if(l.op=="tp_xgather"||l.op=="tp_xheads"||l.op=="tp_xslot"||l.op=="tp_head_merge"||l.op=="tp_gather"||l.op=="tp_push"||l.op=="tp_wait"||l.op=="tp_select"||l.op=="tp_expert_gather"){++dropped;continue;}
+     l.card=0;mine.push_back(std::move(l));++kept;}
+    // Card c's compact extents become the one card's (the rank-0 redo-bank overwrite proof sizes compact buffers by them);
+    // the dump does not reassemble a probe (state_dump: one card).
+    for(auto& [name,cards]:head_layout){cards[0]=cards[size_t(tp_shape_probe)];cards[1].clear();}
+    p.launches=std::move(mine);
+    save(a.output/"tp-shape-probe.json","{\"schema\":\"ownrt.tp-shape-probe.v1\",\"card\":"+std::to_string(tp_shape_probe)+",\"launches\":"+std::to_string(kept)+",\"dropped_exchanges_and_merges\":"+std::to_string(dropped)+",\"exact\":false}");
+   } else
    write_tp_plan(a.output/"tp-plan.json",p,*weights,a); // per-card admission of the two-card plan (30 GiB per card)
    if(plan_only){save(a.output/"plan-only.json","{\"device_contact\":false,\"tp_plan\":true}");munmap(mapping,shared_bytes);::close(fd);return 0;}
   }
