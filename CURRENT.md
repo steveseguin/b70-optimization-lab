@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**October 29, about 23:00 — four-card prompt reading: the slow part is found and fixed on the rank harness, but the fix failed the service's startup check; stopped there.**
+- Why a 121,854-token prompt takes 355 s on four cards (3+1 layout: 241–251 s): rank 0 is the slow stage. Per 256-token
+  chunk it reads the chunk (518 ms) and then replays the draft model row by row (229 ms); rank 1 needs 515 ms and waits.
+- Five opt-in, exact changes (engine `300e6f8c46ad`): the MoE combine for all rows in one launch, cheaper exchange setup,
+  batched lookup uploads, one draft command per chunk, and draft prompt rows that compute only what the draft keeps (its
+  key/value cache). Rank 0 per chunk 492 + 210 → 437 + 60 ms, rank 1 508 → 466 ms; 38 bitwise comparisons all equal.
+- Service: the unchanged server reproduced 356.6 s. The fixed server failed its own batched-reading startup check: a
+  request reset zeroed a constant buffer of the new MoE path, which the rank tests never hit. Stopped as instructed. The
+  fix is in `engine/src` (build `b51c9e8d803e`), not yet run on the cards. Projected TTFT about 249 s (not measured).
+- Kernel log clean, no device fault, `sc117-lan` not touched.
+  [Result](experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/RESULT.md).
+
 **Planning (October 29): ranked path toward 200 tok/s** is in [experiments/own-xpu-runtime/IDEAS.md](experiments/own-xpu-runtime/IDEAS.md#toward-200-toks-for-one-conversation-without-quality-loss-2026-10-29). Key correction: device gaps between kernels are only 0.12 ms per half, so the time is inside the kernels; the biggest lever is cheap multi-row verification enabling more accepted tokens per cycle, then per-layer glue fusion.
 
 **October 29, about 20:00 — four cards now run SC117 at 131,072 tokens of context, exact: 78.23 / 78.51 tok/s.**

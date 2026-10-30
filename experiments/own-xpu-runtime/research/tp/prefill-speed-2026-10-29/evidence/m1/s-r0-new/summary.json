@@ -1,0 +1,123 @@
+{
+ "binary": "/dev/shm/engine-build-prefill-speed-20261029-r1/sc117-engine",
+ "tp": true,
+ "pair": "0,1",
+ "split": ".attention,.gdn.qkv",
+ "pattern": "hmcn",
+ "cancel_launch": -1,
+ "events": {
+  "hits": 1,
+  "misses": 1,
+  "cancelled": 1,
+  "redos": 2
+ },
+ "tp_env": {
+  "EnableDeferBacking": "0",
+  "NEOReadDebugKeys": "1",
+  "OWNRT_DRAFT_GEMV_SPLIT": "1",
+  "OWNRT_DRAFT_HEAD_SPLIT": "1",
+  "OWNRT_ROLLBACK_NOWAIT": "1",
+  "OWNRT_SNAPSHOT_NOWAIT": "1",
+  "OWNRT_TP_CARD_CONTEXT": "1",
+  "OWNRT_TP_EXCHANGE": "direct",
+  "OWNRT_TP_EXPERTS": "compact",
+  "OWNRT_TP_GDN": "heads",
+  "OWNRT_TP_QSA_SPLIT": "1",
+  "OWNRT_TP_SPLIT": ".attention,.gdn.qkv",
+  "OWNRT_TP_THREADS": "1"
+ },
+ "prompt": 40,
+ "token_prompt": false,
+ "draft_chunk": true,
+ "rows": 16,
+ "steps": 4,
+ "load_s": 83.3504556841217,
+ "prompt_ms": 303.35693806409836,
+ "prefill_ms": 262.1149409096688,
+ "draft_replay_ms": 41.241997154429555,
+ "half_ms": [
+  29.95723090134561,
+  9.148870827630162,
+  9.1303251683712,
+  9.071053937077522
+ ],
+ "kinds": [
+  "h",
+  "m",
+  "c",
+  "n"
+ ],
+ "spec_ms": [
+  29.955368023365736,
+  9.673386113718152,
+  0.7591268513351679
+ ],
+ "rollback_ms": [
+  0.5322310607880354,
+  0.0656230840831995
+ ],
+ "redo_ms": [
+  9.148870827630162,
+  9.1303251683712
+ ],
+ "draft_ms": [
+  1.475364901125431,
+  1.1205060873180628,
+  1.1171710211783648,
+  1.1186629999428988
+ ],
+ "draft_gpu_ms": [
+  0.0,
+  0.0,
+  0.0,
+  0.0
+ ],
+ "draft_tokens": [
+  324,
+  55562,
+  6995,
+  11
+ ],
+ "prefill_draft_tokens": [
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1,
+  -1
+ ],
+ "rc": 0
+}

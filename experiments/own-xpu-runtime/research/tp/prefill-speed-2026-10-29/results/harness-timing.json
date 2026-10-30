@@ -1,0 +1,278 @@
+{
+ "rank0": {
+  "flags off (m1, da3962e387cf)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 492.304,
+    "inputs_ms": 16.779366666666668,
+    "loop_ms": 471.12466666666666,
+    "loop_blocked_ms": 331.20099999999996,
+    "host_active_ms": 160.44795000000002,
+    "host_waits": 1323,
+    "submissions_per_card": [
+     15374,
+     15374
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "replay:moe_combine",
+      86.03
+     ],
+     [
+      "grouped:qsa_attention",
+      10.83
+     ],
+     [
+      "linear:gemv",
+      7.69
+     ],
+     [
+      "exchange:tp_xheads",
+      4.76
+     ],
+     [
+      "replay:ple_add",
+      2.61
+     ],
+     [
+      "replay:ple_gate",
+      2.35
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "per-row",
+    "per_256_rows_ms": 209.594624,
+    "row_inputs_ms": 0.036409,
+    "row_issue_ms": 0.232808,
+    "row_blocked_ms": 0.522251,
+    "replay_ms_1099_rows": 945.9587351884693
+   }
+  },
+  "lookup batch + moe native + xzero + draft chunk replay (m2, 84e1beeb2476)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 433.904,
+    "inputs_ms": 15.6378,
+    "loop_ms": 413.6623333333333,
+    "loop_blocked_ms": 366.9653333333333,
+    "host_active_ms": 65.414252,
+    "host_waits": 161,
+    "submissions_per_card": [
+     3644,
+     3644
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.5
+     ],
+     [
+      "linear:gemv",
+      7.48
+     ],
+     [
+      "replay:ple_add",
+      2.25
+     ],
+     [
+      "replay:broadcast",
+      2.22
+     ],
+     [
+      "replay:ple_hash",
+      2.09
+     ],
+     [
+      "replay:begin",
+      2.08
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk",
+    "per_256_rows_ms": 201.30233333333334,
+    "staged_ms": 6.2259633333333335,
+    "replay_ms_1099_rows": 870.6342368386686
+   }
+  },
+  "all five incl. KV-only draft rows (g5, 300e6f8c46ad)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 436.584,
+    "inputs_ms": 15.545033333333334,
+    "loop_ms": 416.49,
+    "loop_blocked_ms": 370.433,
+    "host_active_ms": 64.53810099999997,
+    "host_waits": 161,
+    "submissions_per_card": [
+     3644,
+     3644
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.91
+     ],
+     [
+      "linear:gemv",
+      7.35
+     ],
+     [
+      "replay:ple_add",
+      2.27
+     ],
+     [
+      "replay:ple_hash",
+      2.12
+     ],
+     [
+      "linear:routed_gemv",
+      2.06
+     ],
+     [
+      "replay:begin",
+      2.05
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 59.9352,
+    "staged_ms": 6.680326666666667,
+    "replay_ms_1099_rows": 262.834858847782
+   }
+  }
+ },
+ "rank1": {
+  "flags off (m1, da3962e387cf)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 507.9986666666667,
+    "inputs_ms": 3.0504233333333333,
+    "loop_ms": 501.7103333333333,
+    "loop_blocked_ms": 375.87966666666665,
+    "host_active_ms": 130.2592633333333,
+    "host_waits": 331,
+    "submissions_per_card": [
+     15855,
+     15855
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "replay:moe_combine",
+      78.18
+     ],
+     [
+      "grouped:qsa_attention",
+      14.12
+     ],
+     [
+      "linear:gemv",
+      8.23
+     ],
+     [
+      "exchange:tp_xheads",
+      3.95
+     ],
+     [
+      "linear:routed_gemv",
+      2.15
+     ],
+     [
+      "exchange:tp_xgather",
+      2.14
+     ]
+    ]
+   }
+  },
+  "moe native + xzero (m2, 84e1beeb2476)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 464.6693333333333,
+    "inputs_ms": 3.04964,
+    "loop_ms": 458.51233333333334,
+    "loop_blocked_ms": 414.7873333333333,
+    "host_active_ms": 47.95970800000003,
+    "host_waits": 173,
+    "submissions_per_card": [
+     3105,
+     3105
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      14.01
+     ],
+     [
+      "linear:gemv",
+      8.03
+     ],
+     [
+      "linear:routed_gemv",
+      2.15
+     ],
+     [
+      "native:norm",
+      1.95
+     ],
+     [
+      "replay:commit",
+      1.89
+     ],
+     [
+      "replay:begin",
+      1.87
+     ]
+    ]
+   }
+  },
+  "moe native + xzero (g5, 300e6f8c46ad)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 466.097,
+    "inputs_ms": 3.1698566666666665,
+    "loop_ms": 459.89633333333336,
+    "loop_blocked_ms": 416.352,
+    "host_active_ms": 47.827251,
+    "host_waits": 173,
+    "submissions_per_card": [
+     3105,
+     3105
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      13.86
+     ],
+     [
+      "linear:gemv",
+      8.09
+     ],
+     [
+      "linear:routed_gemv",
+      2.17
+     ],
+     [
+      "replay:begin",
+      2.0
+     ],
+     [
+      "native:norm",
+      1.95
+     ],
+     [
+      "replay:commit",
+      1.83
+     ]
+    ]
+   }
+  }
+ }
+}

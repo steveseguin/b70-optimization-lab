@@ -1,0 +1,22 @@
+=== phase g4 binary 639ecc563bc6 start 2026-10-29T21:46:10-04:00 pid 1986853 affinity 0-3,16-19 nofile 1048576
+[klog g4-before-24h] since @1793238370: 15 lines, 0 xe/fault lines
+--- arm s5-r0-ko rank=0 mode=tps steps=4 prompt=40 pattern=hmcn extra=rows=16,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko MemAvailable=108336160768 shm_free=55070769152 at 2026-10-29T21:46:10-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 366, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 223, in run
+    call(parent, DRAFT_CHUNK, seq, position=first, token=k, fixture=slot)
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 81, in call
+    rep = REP.unpack(recv_exact(sock, REP.size, time.monotonic() + timeout))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 74, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm s5-r0-ko rc=1 after 83 s
+[klog g4-after-s5-r0-ko] since @1793324770: 0 lines, 0 xe/fault lines
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+tp card 1 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+draft qsa_prepare wiring
+HALT: arm s5-r0-ko rc=1

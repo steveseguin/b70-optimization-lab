@@ -1,0 +1,16 @@
+2026-10-29 22:52 server tptsxqck-r1-c131072 (binary 300e6f8c46ad, flags tptsxqc + OWNRT_PREFILL_LOOKUP_BATCH/MOE_NATIVE/XZERO_ONCE/DRAFT_CHUNK_REPLAY/DRAFT_CHUNK_KV_ONLY):
+the lab service's one-time batched-prefill startup gate FAILED (results/suite/arm-tptsxqck-r1-c131072/prefill-gate.json):
+6 of the 9 batched cases (every case that reads at least one full chunk: 258, 259, 514, 581 tokens with 256-row chunks,
+53 tokens with 13-row and 40 tokens with 7-row chunks) differ from token by token in tokens, MTP guesses and every
+persistent state buffer of both ranks; the three cases below the bulk threshold pass. The service then served with
+batched reading off (health prefill_rows 0).
+Cause (source reading): request_reset (stage2/packet194-expert-diet-engine/request_reset.hpp) zeroes every live
+non-weight, non-pinned allocation and restores only the engine's one-row `one`. OWNRT_PREFILL_MOE_NATIVE's M-row ones
+buffer (prefill:moe-ones) was written once at allocation, so after the first reset every batched moe_combine computed
+mixture x 0. The rank harnesses (38 comparisons, all equal) read one prompt per process before any reset, so they could
+not see it. Fix in engine/src (build r7 b51c9e8d803e): the ones are rewritten at every chunk. Built only, not device-gated.
+Action: per the brief ("stop and report at the first gate failure"), the 12-prompt suite on this server was allowed to
+finish (short prompts are read token by token either way; outputs = B19), then the server was stopped gracefully at
+22:55:06 (Result=success); the long request got 503 and the chain halted before server tptsxqck-r2. Kernel log clean;
+all four card locks free; no engine process left.
+stop requested 2026-10-29T22:55:06-04:00

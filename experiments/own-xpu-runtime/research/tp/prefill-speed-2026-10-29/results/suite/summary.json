@@ -1,0 +1,110 @@
+{
+ "b19": "/home/steve/llm-optimizations/experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json",
+ "servers": {
+  "tptsxqc-r1-c131072": {
+   "median": 78.3373493014232,
+   "mean": 78.69775156101274,
+   "min": 75.79714242368208,
+   "max": 82.69886477029769,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "request_wall_s_sum": 85.61780910217203,
+   "per_prompt": {
+    "incident-retrospective": 77.96406092882391,
+    "code-review": 79.32203492227991,
+    "customer-email": 77.14300618096779,
+    "sql-debugging": 82.69886477029769,
+    "release-plan": 76.36072596177533,
+    "benchmark-analysis": 80.46831686108679,
+    "architecture-tradeoff": 82.385558741237,
+    "bug-report-synthesis": 76.78317264474384,
+    "technical-guide": 79.06564471645608,
+    "risk-register": 77.67385290677987,
+    "performance-hypotheses": 78.7106376740225,
+    "decision-memo": 75.79714242368208
+   },
+   "ttft_3490": {
+    "prompt_wall_ms": 9942.28231208399,
+    "decode_tok_s": 69.73850007378533,
+    "output_sha256": "29426ae7332aa93943073a4180bc8b43110cb05743b8faa1a2d12f7480bb2bf1",
+    "prompt_tokens": 3490
+   },
+   "long512": {
+    "prompt_tokens": 121854,
+    "prompt_equals_long512_prompt_i32": true,
+    "ttft_s": 356.55318503500894,
+    "decode_tok_s_all511": 75.95314163056136,
+    "request_wall_s": 364.1285162800923,
+    "output_tokens": 512,
+    "mtp": {
+     "guesses": 511,
+     "hits": 418,
+     "misses": 93
+    },
+    "output_ids_sha256": "bf1f0867d1bd30447de91b21f4fbffabd5cb32942ed0de5d789eb3512723a582",
+    "compare": {
+     "default_routing_3plus1_262k": {
+      "equal": true,
+      "first_differ": null
+     },
+     "reference_route_tie_sort_cut16_control": {
+      "equal": false,
+      "first_differ": 22
+     }
+    }
+   }
+  },
+  "tptsxqck-r1-c131072": {
+   "median": 78.71062186848786,
+   "mean": 78.95400590493651,
+   "min": 76.15046234470945,
+   "max": 83.0777200158613,
+   "ids_equal_b19": true,
+   "sha_equal_b19": true,
+   "mtp_equal_b19": true,
+   "cached_tokens_all_zero": true,
+   "output_tokens": 5965,
+   "request_wall_s_sum": 85.2432192824781,
+   "per_prompt": {
+    "incident-retrospective": 78.34857561709536,
+    "code-review": 79.71110858424387,
+    "customer-email": 76.73773126273117,
+    "sql-debugging": 83.0777200158613,
+    "release-plan": 76.52930801194239,
+    "benchmark-analysis": 80.86024862022286,
+    "architecture-tradeoff": 82.73821556350241,
+    "bug-report-synthesis": 77.05986947855602,
+    "technical-guide": 79.3107199619891,
+    "risk-register": 77.85144327850381,
+    "performance-hypotheses": 79.07266811988036,
+    "decision-memo": 76.15046234470945
+   },
+   "ttft_3490": {
+    "prompt_wall_ms": 35566.23451714404,
+    "decode_tok_s": 70.09781464963022,
+    "output_sha256": "29426ae7332aa93943073a4180bc8b43110cb05743b8faa1a2d12f7480bb2bf1",
+    "prompt_tokens": 3490
+   }
+  }
+ },
+ "configurations": {
+  "tptsxqc-c131072": {
+   "servers": [
+    "tptsxqc-r1-c131072"
+   ],
+   "mean_of_medians": 78.3373493014232,
+   "mean_request_wall_s_sum": 85.61780910217203
+  },
+  "tptsxqck-c131072": {
+   "servers": [
+    "tptsxqck-r1-c131072"
+   ],
+   "mean_of_medians": 78.71062186848786,
+   "mean_request_wall_s_sum": 85.2432192824781
+  }
+ },
+ "pairs": {}
+}

@@ -1,0 +1,142 @@
+{
+ "schema": "prefill-speed.bottleneck.v1",
+ "long_request_retained": {
+  "source": "ctx131072-2026-10-29 servers tptsxqc-r1/r2-c131072 (binary aafd258dd5ea), native-result.json rank traces (archived)",
+  "ttft_s": [
+   355.78716024709865,
+   355.103064839961
+  ],
+  "chunks": 476,
+  "rank0": {
+   "prefill_busy_s": [
+    246.406552159,
+    246.096787059
+   ],
+   "draft_replay_busy_s": [
+    109.063583829,
+    108.69472709200001
+   ],
+   "draft_commands": 122205,
+   "prefill_ms_per_chunk_median": 518.59951,
+   "draft_ms_per_chunk_median": 227.95405299999985,
+   "critical_ms_per_chunk": [
+    746.7859999747899,
+    745.3603238466387
+   ]
+  },
+  "rank1": {
+   "prefill_busy_s": [
+    245.224886968,
+    245.347825478
+   ],
+   "idle_s": [
+    109.7865228666924,
+    108.9788146619685
+   ],
+   "prefill_ms_per_chunk_median": 516.927814
+  },
+  "pipelining": "rank 0 runs draft(k-1) then prefill(k+1) while rank 1 runs prefill(k); rank 1 chunk k starts 0.005 ms (median) after rank 0 chunk k ends, so the ranks are pipelined one chunk apart and rank 1 waits for rank 0 (draft replay) every chunk",
+  "verdict": "rank 0 is the critical path: 518 ms prefill + 229 ms per-row draft replay (0.89 ms x 256 rows) per chunk = 747 ms x 476 chunks = 355.5 s; rank 1 is busy 515 ms per chunk and idle 230 ms"
+ },
+ "harness_host_trace_flags_off": {
+  "note": "OWNRT_PREFILL_HOST_TRACE=1, rank harnesses at 131072, 1,100 rows in 256-row chunks; mean of the full chunks after the first",
+  "rank0": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 492.304,
+    "inputs_ms": 16.779366666666668,
+    "loop_ms": 471.12466666666666,
+    "loop_blocked_ms": 331.20099999999996,
+    "host_active_ms": 160.44795000000002,
+    "host_waits": 1323,
+    "submissions_per_card": [
+     15374,
+     15374
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "replay:moe_combine",
+      86.03
+     ],
+     [
+      "grouped:qsa_attention",
+      10.83
+     ],
+     [
+      "linear:gemv",
+      7.69
+     ],
+     [
+      "exchange:tp_xheads",
+      4.76
+     ],
+     [
+      "replay:ple_add",
+      2.61
+     ],
+     [
+      "replay:ple_gate",
+      2.35
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "per-row",
+    "per_256_rows_ms": 209.594624,
+    "row_inputs_ms": 0.036409,
+    "row_issue_ms": 0.232808,
+    "row_blocked_ms": 0.522251,
+    "replay_ms_1099_rows": 945.9587351884693
+   }
+  },
+  "rank1": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 507.9986666666667,
+    "inputs_ms": 3.0504233333333333,
+    "loop_ms": 501.7103333333333,
+    "loop_blocked_ms": 375.87966666666665,
+    "host_active_ms": 130.2592633333333,
+    "host_waits": 331,
+    "submissions_per_card": [
+     15855,
+     15855
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "replay:moe_combine",
+      78.18
+     ],
+     [
+      "grouped:qsa_attention",
+      14.12
+     ],
+     [
+      "linear:gemv",
+      8.23
+     ],
+     [
+      "exchange:tp_xheads",
+      3.95
+     ],
+     [
+      "linear:routed_gemv",
+      2.15
+     ],
+     [
+      "exchange:tp_xgather",
+      2.14
+     ]
+    ]
+   }
+  },
+  "findings": [
+   "per chunk the submitting thread is blocked on the cards 331 ms (rank 0) / 376 ms (rank 1) at the drains of the 69 / 75 exchange pairs (138 / 150 exchange sites): the TP prefill is mostly device-bound",
+   "host-active 160 / 130 ms per chunk, of which moe_combine replays 86 / 78 ms: 23 / 25 layers x 2 cards x 256 rows x 2 commands issued one row at a time from one host thread, with the other card idle",
+   "rank-0 inputs (embedding/PLE lookup rows computed on the host, 1,024 synchronous uploads) 16.8 ms with both cards idle",
+   "draft replay per row (per-row path): 0.82 ms wall = 0.04 inputs + 0.23 issue + 0.52 blocked; the chunk replay without host syncs is 0.79 ms/row: device-bound"
+  ]
+ }
+}
