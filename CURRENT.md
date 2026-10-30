@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**October 30, about 09:30 — new four-card record: 84.47 / 84.51 tok/s, exact (was 78.60–78.90 the same day, +7.3%).**
+- Two exact changes, both four-card flags (set `tptsxqckf` = `tptsxqck` + `OWNRT_TP_EXPERT_PAIR=1 OWNRT_RETIRE_DEFERRED=1`,
+  binary `0509ad71a0fd`): each card runs a layer's expert gate and up projections, and their product, as one launch; the
+  host retires finished GPU events while the cards work instead of before it replies.
+- Fresh servers A/B/A/B at 65536: every one of the 12 prompts faster on both new servers (1.069–1.078×); all outputs and
+  draft hits equal B19; startup gate 13/13; prompt reading unchanged. One step 10.4 → 9.7 ms. Kernel log clean.
+- Closed without building: the fused GDN kernel, exchanges in the producing kernel and glue-chain fusion (each about
+  0.05–0.1 ms per stage). Rank 0 (its half plus the draft) is now the slower stage in most steps.
+- Next, running: rank-0 host work in four-card prompt reading (TTFT 250 s toward about 223 s), and a design study of
+  one persistent kernel per layer (barrier cost against launch cost on a B70) to decide whether the fixed per-kernel
+  cost can be removed wholesale. `sc117-lan` not touched (still two cards).
+  [Result](experiments/own-xpu-runtime/research/tp/fixed-cost-2026-10-30/RESULT.md).
+
 **October 30, about 06:15 — where the four-card overhead goes, measured; next: one campaign against fixed per-kernel costs.**
 - Four cards add 1.58 / 1.68 ms per stage over a perfect split. Two thirds of that is split kernels that do not get
   twice as fast on half the work (each launch keeps a fixed part). Exchanges (~0.2 ms), waiting for the other card

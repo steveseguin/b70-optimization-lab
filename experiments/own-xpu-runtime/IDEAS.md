@@ -123,6 +123,15 @@ About two thirds is split kernels that do not halve (each launch keeps a fixed p
 about 0.2 ms, imbalance between the two cards 0.04–0.06 ms, host event retirement 0.17–0.24 ms; the snapshot is
 now negligible. Rebalancing slots, heads or vocabulary rows cannot help.
 
+### Fixed-cost campaign result (2026-10-30, measured)
+
+[fixed-cost-2026-10-30](research/tp/fixed-cost-2026-10-30/RESULT.md): **84.47 / 84.51 tok/s on four cards against
+78.90 / 78.60** (1.073×), outputs = B19, from a paired gate+up+SiLU expert launch per card (0.30–0.34 ms per half) and
+deferred host event retirement (0.29–0.30 ms per half). The fused GDN kernel, producer-tail exchanges and glue-chain
+fusion were each sized at 0.05–0.1 ms per stage and closed. Rank 0 (half + draft, about 9.7 ms) is now the slower
+stage in 68–85% of steps. The remaining fixed cost is spread over hundreds of small kernels; the next question is
+whether a persistent kernel per layer can remove it wholesale (`research/persistent-layer-2026-10-30/`, in progress).
+
 ### Decision rule
 
 Since 2026-10-30 afternoon: one fixed-cost campaign (`research/tp/fixed-cost-2026-10-30/`). In order: a paired

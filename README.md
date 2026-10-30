@@ -18,12 +18,12 @@ with 32-bit activations, recurrent state and attention cache, plus the
 official FP8 draft model for speculative decoding. Every speed change must
 leave outputs and engine state bit-identical.
 
-Latest results (October 26–29, 2026). These are lab observations with linked
+Latest results (October 26–30, 2026). These are lab observations with linked
 receipts, not certified records:
 
 | Setup | Result | Evidence |
 | --- | --- | --- |
-| 4 B70s, each pipeline stage split exactly across two cards, 64K context | **78.29–78.62 tok/s** on fresh servers (2 cards: 66.42), identical outputs | [result](experiments/own-xpu-runtime/research/tp/fault-ladder-2026-10-29/RESULT.md) |
+| 4 B70s, each pipeline stage split exactly across two cards, 64K context | **84.47–84.51 tok/s** on fresh servers (was 78.60–78.90 the same day; 2 cards: 66.42), identical outputs | [result](experiments/own-xpu-runtime/research/tp/fixed-cost-2026-10-30/RESULT.md) |
 | Same 4-card split at 128K context, 121,854-token prompt | First token after **250.5–250.8 s** (was 353.6 s), then **76 tok/s**; outputs equal the 262K layout | [result](experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/RESULT.md) |
 | 2 B70s, chat service, 64K context | **66.21 tok/s** decode on 12 cold prompts | [suite receipt](experiments/own-xpu-runtime/gsq-rco-iq3s/service-speed/d-mtp-fp8/suite/f32-suite-51f32b2655cc-ctx65536-split23.json) |
 | 3 target B70s + 1 draft B70, 64K context | **58.57 tok/s**; all 5,965 outputs match CPU-checked references | [paired summary](experiments/own-xpu-runtime/research/pp4-review-2026-10-28/dedicated-depth2-gate/full12-r2-paired-summary.json) |
