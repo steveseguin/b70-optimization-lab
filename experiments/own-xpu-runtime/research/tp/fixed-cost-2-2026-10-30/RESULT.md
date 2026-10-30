@@ -185,6 +185,17 @@ rank 1 on 43:00.0 + 47:00.0, engine receipt [dddf5cf0e067](results/engine-receip
 - Raw server directories (1,270 files, sha256-verified):
   `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/fixed-cost-2-endgate`.
 
+## The HC GEMVs' 16 µs in production against 13–14.5 µs in the bench (candidate 4, from the traces above)
+
+- Most of the HC **gate's** gap was the runtime-indexed descriptor select: in the engine `hcg` takes hc.a.gate from
+  15.9 to 14.2 µs per launch on both ranks and hc.f.gate from 16.2 / 15.8 to 15.1 / 14.5 µs (t6, one card). The kernel
+  bench measured the same kernel at 13.1–13.2 µs with or without the static select, so the bench build did not reproduce
+  the private-memory load (its captured arguments or inlining differ). Bench-only "no change" results for such fixes do
+  not transfer.
+- About 1 µs per launch remains (14.2 vs 13.2 µs), and the HC **low** (static since `lowsel`) still takes 15.1 (hc.a) and
+  16.9–17.1 µs (hc.f) against the bench's 13.75 µs. That remainder is still unexplained; hc.f.low is the slower one in
+  every run (it follows the attention block).
+
 ## Incidents
 
 None on the device. Kernel log clean before every phase, after every arm and through the end-gate chain. Host-side:
