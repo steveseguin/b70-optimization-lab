@@ -1,0 +1,128 @@
+=== phase g1 binary /dev/shm/fc2-2026-10-30/build-r8/sc117-engine (36a04860f0fe) start 2026-10-30T15:51:34-04:00 pid 2675211 affinity 0-3,16-19 nofile 1048576
+[klog g1-before-24h] since @1793303494: rc=0 12 lines, 0 xe/fault lines
+--- arm g1-r1-off rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=78261538816 shm_free=25120591872 at 2026-10-30T15:51:34-04:00
+{"tp": false, "steps": 64, "load_s": 14.513319154968485, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.86
+arm g1-r1-off rc=0 after 22 s
+[klog g1-after-g1-r1-off] since @1793389894: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.8593 draft 0.0
+--- arm g1-r1-on rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=1 MemAvailable=78366392320 shm_free=25118666752 at 2026-10-30T15:51:57-04:00
+{"tp": false, "steps": 64, "load_s": 14.655293488875031, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.56
+arm g1-r1-on rc=0 after 22 s
+[klog g1-after-g1-r1-on] since @1793389917: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.562 draft 0.0
+--- arm g1-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,batched,sp=64 MemAvailable=78343491584 shm_free=25116741632 at 2026-10-30T15:52:19-04:00
+{"tp": false, "steps": 64, "load_s": 14.42481552879326, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.86
+arm g1-r1-off-b rc=0 after 40 s
+[klog g1-after-g1-r1-off-b] since @1793389939: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.8565 draft 0.0
+--- arm g1-r1-on-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=1,batched,sp=64 MemAvailable=78091542528 shm_free=25068765184 at 2026-10-30T15:52:59-04:00
+{"tp": false, "steps": 64, "load_s": 14.459029951831326, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.51
+arm g1-r1-on-b rc=0 after 27 s
+[klog g1-after-g1-r1-on-b] since @1793389979: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.5034 draft 0.0
+--- arm x1-r1-off rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph MemAvailable=78223847424 shm_free=25024704512 at 2026-10-30T15:53:26-04:00
+{"tp": false, "steps": 64, "load_s": 14.530855586985126, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.86
+arm x1-r1-off rc=0 after 22 s
+[klog g1-after-x1-r1-off] since @1793390006: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.8615 draft 0.0
+--- arm x1-r1-on rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,tf=1 MemAvailable=78084988928 shm_free=25022779392 at 2026-10-30T15:53:49-04:00
+{"tp": false, "steps": 64, "load_s": 14.548558929935098, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.54
+arm x1-r1-on rc=0 after 21 s
+[klog g1-after-x1-r1-on] since @1793390029: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.5421 draft 0.0
+--- arm x1-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,batched,sp=64 MemAvailable=78219575296 shm_free=25020854272 at 2026-10-30T15:54:11-04:00
+{"tp": false, "steps": 64, "load_s": 14.478882265975699, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.86
+arm x1-r1-off-b rc=0 after 26 s
+[klog g1-after-x1-r1-off-b] since @1793390051: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.8576 draft 0.0
+--- arm x1-r1-on-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,tf=1,batched,sp=64 MemAvailable=78186237952 shm_free=24976793600 at 2026-10-30T15:54:38-04:00
+{"tp": false, "steps": 64, "load_s": 14.587271974887699, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.55
+arm x1-r1-on-b rc=0 after 26 s
+[klog g1-after-x1-r1-on-b] since @1793390078: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.549 draft 0.0
+--- arm g1-r0-off rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=78029094912 shm_free=24932732928 at 2026-10-30T15:55:05-04:00
+{"steps": 64, "load_s": 120.10727875004523, "prompt_ms": 1499.6614274568856, "draft_replay_ms": 125.92284008860588, "rc": 0} median half ms 10.410 draft ms 1.305
+arm g1-r0-off rc=0 after 130 s
+[klog g1-after-g1-r0-off] since @1793390105: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4063 draft 1.3054
+--- arm g1-r0-on rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1 MemAvailable=77420642304 shm_free=24733016064 at 2026-10-30T15:57:15-04:00
+{"steps": 64, "load_s": 98.2445232172031, "prompt_ms": 1427.4959496688098, "draft_replay_ms": 112.92252223938704, "rc": 0} median half ms 10.044 draft ms 1.222
+arm g1-r0-on rc=0 after 107 s
+[klog g1-after-g1-r0-on] since @1793390235: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 10.0431 draft 1.222
+--- arm g1-r0-off-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra=rd,hk=1 MemAvailable=77635174400 shm_free=24533295104 at 2026-10-30T15:59:03-04:00
+{"steps": 64, "load_s": 81.48761173710227, "prompt_ms": 1502.1431117784232, "draft_replay_ms": 125.5508738104254, "rc": 0} median half ms 10.177 draft ms 1.320
+arm g1-r0-off-hmcn rc=0 after 91 s
+[klog g1-after-g1-r0-off-hmcn] since @1793390343: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.3979 draft 1.3192
+--- arm g1-r0-on-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra=rd,hk=1,df=1,tf=1 MemAvailable=77217722368 shm_free=24333549568 at 2026-10-30T16:00:34-04:00
+{"steps": 64, "load_s": 100.61940103303641, "prompt_ms": 1450.1980519853532, "draft_replay_ms": 115.70688476786017, "rc": 0} median half ms 9.814 draft ms 1.223
+arm g1-r0-on-hmcn rc=0 after 110 s
+[klog g1-after-g1-r0-on-hmcn] since @1793390434: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 10.0291 draft 1.2228
+--- arm g1-r0-off-m rank=0 mode=one steps=64 prompt=128 pattern=m extra=rd,hk=1 MemAvailable=76673662976 shm_free=24133799936 at 2026-10-30T16:02:25-04:00
+{"steps": 64, "load_s": 88.01244664401747, "prompt_ms": 1488.0269137211144, "draft_replay_ms": 125.37283077836037, "rc": 0} median half ms 10.150 draft ms 1.312
+arm g1-r0-off-m rc=0 after 98 s
+[klog g1-after-g1-r0-off-m] since @1793390545: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4041 draft 1.3116
+--- arm g1-r0-on-m rank=0 mode=one steps=64 prompt=128 pattern=m extra=rd,hk=1,df=1,tf=1 MemAvailable=76687548416 shm_free=23934025728 at 2026-10-30T16:04:03-04:00
+{"steps": 64, "load_s": 99.42486071307212, "prompt_ms": 1439.75048372522, "draft_replay_ms": 114.4509760197252, "rc": 0} median half ms 9.801 draft ms 1.225
+arm g1-r0-on-m rc=0 after 109 s
+[klog g1-after-g1-r0-on-m] since @1793390643: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 10.0547 draft 1.2243
+--- arm g1-r0-off-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,batched,sp=64 MemAvailable=98357391360 shm_free=45697785856 at 2026-10-30T16:05:53-04:00
+{"steps": 64, "load_s": 79.29941144608893, "prompt_ms": 496.9562883488834, "draft_replay_ms": 120.58098427951336, "rc": 0} median half ms 10.431 draft ms 1.317
+arm g1-r0-off-sp rc=0 after 92 s
+[klog g1-after-g1-r0-off-sp] since @1793390753: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4302 draft 1.3172
+--- arm g1-r0-on-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1,batched,sp=64 MemAvailable=104281731072 shm_free=51093704704 at 2026-10-30T16:07:26-04:00
+{"steps": 64, "load_s": 53.85131538892165, "prompt_ms": 489.77026203647256, "draft_replay_ms": 111.70870997011662, "rc": 0} median half ms 10.045 draft ms 1.223
+arm g1-r0-on-sp rc=0 after 67 s
+[klog g1-after-g1-r0-on-sp] since @1793390846: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 10.0445 draft 1.2226
+--- arm g1-r1-off2 rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=103831302144 shm_free=50738581504 at 2026-10-30T16:08:34-04:00
+{"tp": false, "steps": 64, "load_s": 55.86610221397132, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.88
+arm g1-r1-off2 rc=0 after 63 s
+[klog g1-after-g1-r1-off2] since @1793390914: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.8781 draft 0.0
+--- arm g1-r1-on2 rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=1 MemAvailable=103830745088 shm_free=50736656384 at 2026-10-30T16:09:37-04:00
+{"tp": false, "steps": 64, "load_s": 14.449399000965059, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.55
+arm g1-r1-on2 rc=0 after 22 s
+[klog g1-after-g1-r1-on2] since @1793390977: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 11.5489 draft 0.0
+--- arm g1-r0-off2 rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=103724920832 shm_free=50734731264 at 2026-10-30T16:09:59-04:00
+{"steps": 64, "load_s": 66.18704391503707, "prompt_ms": 1483.8336321990937, "draft_replay_ms": 122.36714526079595, "rc": 0} median half ms 10.406 draft ms 1.306
+arm g1-r0-off2 rc=0 after 76 s
+[klog g1-after-g1-r0-off2] since @1793390999: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 10.4052 draft 1.3062
+--- arm g1-r0-on2 rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1 MemAvailable=103678996480 shm_free=50535014400 at 2026-10-30T16:11:15-04:00
+{"steps": 64, "load_s": 112.01109325117432, "prompt_ms": 1427.9187913052738, "draft_replay_ms": 115.14940927736461, "rc": 0} median half ms 10.047 draft ms 1.229
+arm g1-r0-on2 rc=0 after 121 s
+[klog g1-after-g1-r0-on2] since @1793391075: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 10.0451 draft 1.2285
+=== phase g1 done 2026-10-30T16:13:17-04:00

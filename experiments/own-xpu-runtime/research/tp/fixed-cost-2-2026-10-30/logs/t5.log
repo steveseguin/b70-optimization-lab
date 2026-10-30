@@ -1,0 +1,45 @@
+=== phase t5 binary /dev/shm/fc2-2026-10-30/build-r6/sc117-engine (3796f1510752) start 2026-10-30T15:27:13-04:00 pid 2668483 affinity 0-3,16-19 nofile 1048576
+[klog t5-before-24h] since @1793302033: rc=0 12 lines, 0 xe/fault lines
+--- arm t5-r0-off rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,trace MemAvailable=87311446016 shm_free=34346561536 at 2026-10-30T15:27:13-04:00
+{"steps": 64, "load_s": 96.22522639087401, "prompt_ms": 16021.95961587131, "draft_replay_ms": 176.12171173095703, "rc": 0} median half ms 16.718 draft ms 1.760
+arm t5-r0-off rc=0 after 120 s
+[klog t5-after-t5-r0-off] since @1793388433: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 157138 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 16.7173 draft 1.7594
+--- arm t5-r0-ssel rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=ssel,trace MemAvailable=87042060288 shm_free=34079031296 at 2026-10-30T15:29:14-04:00
+{"steps": 64, "load_s": 97.42849065898918, "prompt_ms": 2335.4123109020293, "draft_replay_ms": 175.68973521701992, "rc": 0} median half ms 16.643 draft ms 1.757
+arm t5-r0-ssel rc=0 after 108 s
+[klog t5-after-t5-r0-ssel] since @1793388554: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 157138 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 16.6389 draft 1.7563
+--- arm t5-r0-hcg rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=ssel+hcg,trace MemAvailable=101009612800 shm_free=48151293952 at 2026-10-30T15:31:02-04:00
+{"steps": 64, "load_s": 60.51466931309551, "prompt_ms": 2320.522003574297, "draft_replay_ms": 176.57589353621006, "rc": 0} median half ms 16.563 draft ms 1.759
+arm t5-r0-hcg rc=0 after 71 s
+[klog t5-after-t5-r0-hcg] since @1793388662: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 157138 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 16.5588 draft 1.7583
+--- arm t5-r0-kptr rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=ssel+kptr,trace MemAvailable=101031088128 shm_free=47939072000 at 2026-10-30T15:32:13-04:00
+{"steps": 64, "load_s": 53.66688612685539, "prompt_ms": 2337.798561435193, "draft_replay_ms": 176.8012314569205, "rc": 0} median half ms 16.673 draft ms 1.756
+arm t5-r0-kptr rc=0 after 64 s
+[klog t5-after-t5-r0-kptr] since @1793388733: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 157138 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 16.6712 draft 1.7562
+--- arm t5-r1-off rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,trace MemAvailable=100507631616 shm_free=47726850048 at 2026-10-30T15:33:17-04:00
+{"tp": false, "steps": 64, "load_s": 55.88328073290177, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 18.68
+arm t5-r1-off rc=0 after 65 s
+[klog t5-after-t5-r1-off] since @1793388797: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 160192 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 18.6838 draft 0.0
+--- arm t5-r1-all rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=ssel+hcg+kptr,trace MemAvailable=100474417152 shm_free=47712202752 at 2026-10-30T15:34:22-04:00
+{"tp": false, "steps": 64, "load_s": 14.631126098101959, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 18.78
+arm t5-r1-all rc=0 after 23 s
+[klog t5-after-t5-r1-all] since @1793388862: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 160192 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49}
+half median (3..): 18.7674 draft 0.0
+=== phase t5 done 2026-10-30T15:34:46-04:00

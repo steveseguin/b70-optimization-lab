@@ -1,0 +1,15 @@
+=== phase g3 binary /dev/shm/fc2-2026-10-30/build-m2/sc117-engine (dddf5cf0e067) start 2026-10-30T17:35:17-04:00 pid 2784160 affinity 0-3,16-19 nofile 1048576
+[klog g3-before-24h] since @1793309717: rc=0 9 lines, 0 xe/fault lines
+--- arm g3-r1-off rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=102079131648 shm_free=49033498624 at 2026-10-30T17:35:17-04:00
+{"tp": false, "steps": 64, "load_s": 14.476437946083024, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.87
+arm g3-r1-off rc=0 after 21 s
+[klog g3-after-g3-r1-off] since @1793396117: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":0}
+half median (3..): 11.8684 draft 0.0
+--- arm g3-r1-on rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=1 MemAvailable=101566517248 shm_free=48981581824 at 2026-10-30T17:35:39-04:00
+{"tp": false, "steps": 64, "load_s": 14.580261821858585, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.34
+arm g3-r1-on rc=0 after 21 s
+[klog g3-after-g3-r1-on] since @1793396139: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+half median (3..): 11.3406 draft 0.0
+--- arm g3-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,batched,sp=64 MemAvailable=101393960960 shm_free=48979668992 at 2026-10-30T17:36:01-04:00

@@ -1,0 +1,18 @@
+=== phase t1 binary /dev/shm/fc2-2026-10-30/build-r1/sc117-engine (8cfbb6e0b9a4) start 2026-10-30T14:47:03-04:00 pid 2655279 affinity 0-3,16-19 nofile 1048576
+[klog t1-before-24h] since @1793299623: rc=0 12 lines, 0 xe/fault lines
+--- arm t1-r0-on rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1,trace MemAvailable=76545724416 shm_free=23353122816 at 2026-10-30T14:47:03-04:00
+{"steps": 64, "load_s": 113.33940624794923, "prompt_ms": 2323.293223977089, "draft_replay_ms": 161.6989141330123, "rc": 0} median half ms 16.565 draft ms 1.653
+arm t1-r0-on rc=0 after 124 s
+[klog t1-after-t1-r0-on] since @1793386023: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 155228 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,qkv,shx,norm,merge,gmix,cnorm","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"qkv":true,"shx":true,"merge":true,"gmix:blk.0.hc.a.":"not admitted","gmix:blk.0.hc.f.":"not admitted","gmix:final.":"not admitted","norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":"not admitted","norm:final.norm":true},"overridden_sites":19,"fused_away_sites":10,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.qsa.k","commands":1,"head_only":false},{"site":"blk.0.qsa.v","commands":0,"head_only":false},{"site":"blk.0.qsa.iq","commands":0,"head_only":false},{"site":"blk.0.qsa.ik","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.router","commands":1,"head_only":false},{"site":"blk.0.shexpgate","commands":0,"head_only":false},{"site":"blk.0.shexpup","commands":0,"head_only":false},{"site":"blk.0.shared_gate","commands":0,"head_only":false},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 16.5638 draft 1.6522
+--- arm t1-r0-off rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,trace MemAvailable=74636066816 shm_free=23111114752 at 2026-10-30T14:49:07-04:00
+{"steps": 64, "load_s": 113.97121530794539, "prompt_ms": 2341.4858053438365, "draft_replay_ms": 175.2687208354473, "rc": 0} median half ms 16.626 draft ms 1.748
+arm t1-r0-off rc=0 after 125 s
+[klog t1-after-t1-r0-off] since @1793386147: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 157138 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44}
+half median (3..): 16.6246 draft 1.7477
+=== phase t1 done 2026-10-30T14:51:12-04:00

@@ -1,0 +1,1169 @@
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp	2026-10-30 14:14:48.000000000 -0400
++++ experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp	2026-10-30 15:15:11.633055913 -0400
+@@ -5,6 +5,8 @@
+ #include "stage2/packet194-expert-diet-engine/draft_head_split.hpp"
+ #include "stage2/packet194-expert-diet-engine/p59_draft.hpp"
+ #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
++#include "stage2/packet194-expert-diet-engine/draft_fast.hpp"
++#include <functional>
+ #include "stage2/packet194-expert-diet-engine/p56_prefix.hpp"
+ #include "stage2/packet194-expert-diet-engine/p83_head.hpp"
+ #include <atomic>
+@@ -65,6 +67,11 @@
+  std::map<const flash::Launch*,Engine::Prepared> prepared;
+  struct Site { std::vector<ownrt::PreparedCompute> commands; bool gemv=false; int cls=0; bool head=false; int gemv_split=-1; };
+  std::vector<Site> issue_sites;
++ // OWNRT_DRAFT_FAST (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30, default off; draft_fast.hpp): per-site
++ // override commands, issued by compute() (not recursive) instead of the site's own; an overridden site with no
++ // commands is fused into an earlier one. fast_head_only: the override applies to head-on steps only. issue_sites and
++ // the prompt-chunk replay are unchanged; prepare_fast() runs after every prepare_commands().
++ std::vector<std::vector<ownrt::PreparedCompute>> fast_cmds;std::vector<char> fast_on,fast_head_only;
+  std::vector<flash::Launch> merge_plan;
+  bool captured=false;int context_extent=32; const void* reverse_hidden=nullptr;
+  Allocation publication{},half_staging{};ownrt::Event publication_event=0;
+@@ -124,6 +131,132 @@
+   if(split)capture_split_card1();
+   if(gemv_split)capture_gemv_split_card1();
+   e.current_cls=saved_class;captured=true;
++  prepare_fast();
++ }
++ const flash::Launch* site_launch(size_t k)const{return k<merge_plan.size()?&merge_plan[k]:&p.launches[k-merge_plan.size()];}
++ int site_of(const std::string& label)const{for(size_t k=0;k<issue_sites.size();++k)if(site_launch(k)->label==label)return int(k);return -1;}
++ void fast_capture(size_t k,const std::function<void()>& fn){
++  e.set_class("draft."+site_launch(k)->label);fast_cmds[k].clear();
++  e.preparing_commands=true;e.dev(0).begin_capture(fast_cmds[k]);
++  try{fn();e.dev(0).end_capture();e.preparing_commands=false;}
++  catch(...){e.dev(0).end_capture();e.preparing_commands=false;throw;}
++  fast_on[k]=1;fast_head_only[k]=0;
++ }
++ void fast_skip(size_t k,bool head_only=false){fast_cmds[k].clear();fast_on[k]=1;fast_head_only[k]=head_only;}
++ void prepare_fast(){
++  fast_cmds.clear();fast_on.clear();fast_head_only.clear();
++  if(!draft_fast::any()||e.a.mini||!e.prepared_path||!captured)return;
++  const size_t n=issue_sites.size();fast_cmds.assign(n,{});fast_on.assign(n,0);fast_head_only.assign(n,0);
++  const int saved_class=e.current_cls;
++  std::ostringstream rec;rec<<"{\"schema\":\"ownrt.draft-fast.v1\",\"tokens\":"<<ownrt::quote(draft_fast::list())<<",\"admitted\":{";bool comma=false;
++  auto note=[&](const std::string& t,const std::string& why){rec<<(comma?",":"")<<ownrt::quote(t)<<":"<<(why.empty()?std::string("true"):ownrt::quote(why));comma=true;};
++  auto L=[&](const std::string& label)->const flash::Launch*{const int k=site_of(label);return k<0?nullptr:site_launch(size_t(k));};
++  auto K=[&](const std::string& label){return size_t(site_of(label));};
++  auto W=[&](const flash::Launch* l,size_t j=0){return weights.at(l->weights.at(j));};
++  auto bf16_dense=[&](const flash::Launch* l,unsigned rows,unsigned cols){
++   if(!l||l->op!="gemv"||l->shape.size()!=3||l->shape[0]!=1||unsigned(l->shape[1])!=rows||unsigned(l->shape[2])!=cols)return false;
++   const auto& w=W(l);return w.type==iq3::Type::BF16&&!w.int8&&!w.fp8&&!w.raw&&w.rows==rows&&w.cols==cols&&gemv_split_index(l->label)<0;};
++  const unsigned H=unsigned(p.g.h);
++  // inj: HC low (+act) and HC inject in one launch.
++  if(draft_fast::enabled("inj"))for(const std::string pre:{"blk.0.hc.a.","blk.0.hc.f."}){
++   const auto *lo=L(pre+"low"),*in=L(pre+"inject"),*act=L(pre+"act");
++   const bool ok=lo&&in&&act&&changed(*lo)&&fused(*act)&&changed(*in)&&lo->inputs.at(0)==in->inputs.at(0)&&bf16_dense(lo,unsigned(lo->shape[1]),4*H)&&bf16_dense(in,4,4*H);
++   note("inj:"+pre,ok?"":"not admitted");if(!ok)continue;
++   const uint32_t lrows=uint32_t(lo->shape[1]);
++   fast_capture(K(lo->label),[&]{e.finish(0,draft_fast::segments<10240,4>(e.dev(0),id(lo->inputs.at(0)),{
++     {W(lo).id,{},id(lo->outputs.at(0)),{},id(pre+"act"),lrows,draft_fast::tail_low},{W(in).id,{},id(in->outputs.at(0)),{},{},4,draft_fast::tail_none}}),true);});
++   fast_skip(K(in->label));}
++  // att: attention output + fused combine tail on the 4-part segmented kernel (two rows per work-group).
++  if(draft_fast::enabled("att")){
++   const auto *at=L("blk.0.attention"),*cb=L("blk.0.attn.combine");
++   const bool ok=at&&cb&&changed(*at)&&fused(*cb)&&bf16_dense(at,H,unsigned(at->shape[2]))&&at->shape[2]==6144&&H%2==0&&draft_fast::aligned16(e.dev(0),id(at->inputs.at(0)))&&draft_fast::aligned16(e.dev(0),W(at).id);
++   note("att",ok?"":"not admitted");
++   if(ok)fast_capture(K(at->label),[&]{e.finish(0,draft_fast::segments<6144,4>(e.dev(0),id(at->inputs.at(0)),{
++     {W(at).id,{},id(at->outputs.at(0)),{},id("streams"),H,draft_fast::tail_attention,id("blk.0.hc.a.inject")}}),true);});}
++  // qkv: qsa.k, qsa.v, qsa.iq, qsa.ik in one launch.
++  if(draft_fast::enabled("qkv")){
++   const auto *k=L("blk.0.qsa.k"),*v=L("blk.0.qsa.v"),*iq=L("blk.0.qsa.iq"),*ik=L("blk.0.qsa.ik");bool ok=k&&v&&iq&&ik;
++   if(ok)for(auto* l:{k,v,iq,ik})ok=ok&&changed(*l)&&l->inputs.at(0)==k->inputs.at(0)&&bf16_dense(l,unsigned(l->shape[1]),H);
++   note("qkv",ok?"":"not admitted");
++   if(ok){std::vector<draft_fast::SegIn> segs;for(auto* l:{k,v,iq,ik})segs.push_back({W(l).id,{},id(l->outputs.at(0)),{},{},uint32_t(l->shape[1]),draft_fast::tail_none});
++    fast_capture(K(k->label),[&]{e.finish(0,draft_fast::segments<2560,1>(e.dev(0),id(k->inputs.at(0)),segs),true);});
++    for(auto* l:{v,iq,ik})fast_skip(K(l->label));}}
++  // shx: router, shared-expert gate+up (+product), shared-expert router gate in one launch.
++  if(draft_fast::enabled("shx")){
++   const auto *r=L("blk.0.router"),*g=L("blk.0.shexpgate"),*u=L("blk.0.shexpup"),*act=L("blk.0.shexpact"),*sg=L("blk.0.shared_gate");
++   bool ok=r&&g&&u&&act&&sg&&fused(*act)&&L("blk.0.route");
++   if(ok)for(auto* l:{r,g,u,sg})ok=ok&&changed(*l)&&l->inputs.at(0)==r->inputs.at(0)&&bf16_dense(l,unsigned(l->shape[1]),H);
++   ok=ok&&g->shape[1]==u->shape[1];
++   note("shx",ok?"":"not admitted");
++   if(ok){const std::vector<draft_fast::SegIn> segs{
++     {W(r).id,{},id(r->outputs.at(0)),{},{},uint32_t(r->shape[1]),draft_fast::tail_none},
++     {W(g).id,W(u).id,id(g->outputs.at(0)),id(u->outputs.at(0)),id("blk.0.shexpact"),uint32_t(g->shape[1]),draft_fast::tail_pair},
++     {W(sg).id,{},id(sg->outputs.at(0)),{},{},uint32_t(sg->shape[1]),draft_fast::tail_none}};
++    fast_capture(K(r->label),[&]{e.finish(0,draft_fast::segments<2560,1>(e.dev(0),id(r->inputs.at(0)),segs),true);});
++    for(auto* l:{g,u,sg})fast_skip(K(l->label));}}
++  // merge: embedding_projected + projected (+ merge_add) in one launch.
++  if(draft_fast::enabled("merge")){
++   const auto *ep=L("merge.embedding_projected"),*pr=L("merge.projected"),*add=L("merge.add");
++   const bool ok=ep&&pr&&add&&changed(*ep)&&changed(*pr)&&fused(*add)&&weights.at("mtp.fc_embedding.weight").type==iq3::Type::BF16&&weights.at("mtp.fc_hidden.weight").type==iq3::Type::BF16&&H==2560&&
++    draft_fast::aligned16(e.dev(0),weights.at("mtp.fc_embedding.weight").id)&&draft_fast::aligned16(e.dev(0),weights.at("mtp.fc_hidden.weight").id)&&draft_fast::aligned16(e.dev(0),id("merge.embedding_norm"))&&draft_fast::aligned16(e.dev(0),id("merge.norm"));
++   note("merge",ok?"":"not admitted");
++   if(ok){fast_capture(K(ep->label),[&]{e.finish(0,draft_fast::merge(e.dev(0),weights.at("mtp.fc_embedding.weight").id,id("merge.embedding_norm"),weights.at("mtp.fc_hidden.weight").id,id("merge.norm"),
++      id("merge.embedding_projected"),id("merge.projected"),id("streams"),H),true);});fast_skip(K(pr->label));}}
++  // gmix: HC gate with the HC mix in its epilogue (hc.a / hc.f production gate + elementwise mix; final GateMix).
++  if(draft_fast::enabled("gmix"))for(const std::string pre:{"blk.0.hc.a.","blk.0.hc.f.","final."}){
++   const auto *gt=L(pre+"gate"),*mx=L(pre+"mix");const bool fin=pre=="final.";
++   std::string why=!gt||!mx?"sites":!bf16_dense(gt,4*H,unsigned(gt->shape[2]))?"gate geometry/format":gt->shape[2]!=320||H!=2560?"gate shape":
++    mx->inputs.size()<2||mx->inputs.at(1)!=gt->outputs.at(0)||mx->inputs.at(0)!=pre+"norm"?"mix inputs "+(mx->inputs.empty()?std::string():mx->inputs.at(0)):"";
++   if(why.empty()&&fin&&!(changed(*gt)&&fused(*mx)))why="final GateMix not selected";
++   if(why.empty()&&!fin&&(changed(*gt)||fused(*mx)))why="gate/mix not production";
++   if(why.empty()&&!fin&&packet26::dispatch.gemv_for(gt->label)=="p33.dense.segment")why="gate dispatch p33.dense.segment";
++   if(why.empty()&&!draft_fast::aligned16(e.dev(0),W(gt).id))why="weight alignment";
++   if(why.empty()&&!draft_fast::aligned16(e.dev(0),id(gt->inputs.at(0))))why="input alignment";
++   const bool ok=why.empty();
++   note("gmix:"+pre,why);if(!ok)continue;
++   fast_capture(K(gt->label),[&]{e.finish(0,draft_fast::gmix(e.dev(0),W(gt).id,id(gt->inputs.at(0)),id(gt->outputs.at(0)),id(pre+"norm"),id(pre+"mix"),id("active"),id("error"),H,!fin,!fin),true);});
++   if(!fin)fast_skip(K(mx->label));}
++  // gath: expert_gather in one launch (production SimpleNew route descriptors, copy and check).
++  if(draft_fast::enabled("gath")){
++   const auto* g=L("blk.0.gather");
++   bool ok=g&&g->op=="expert_gather"&&g->inputs.size()>=2&&g->outputs.size()==3&&prepared.count(g);
++   if(ok){const auto& v=prepared.at(g);const auto& s=v.spec;
++    ok=s.special==integrated::Special::normal&&(s.implementation==1||s.implementation==11)&&s.tokens<=1&&!s.no_materialize_gather&&
++     buffers.at(g->inputs.at(0)).type==flash::Scalar::u32&&buffers.at(g->inputs.at(1)).type==flash::Scalar::bf16&&buffers.at(g->outputs.at(0)).type==flash::Scalar::u32&&
++     buffers.at(g->outputs.at(1)).type==flash::Scalar::u32&&buffers.at(g->outputs.at(2)).type==flash::Scalar::bf16&&buffers.at(g->inputs.at(1)).n==size_t(H)&&
++     buffers.at(g->outputs.at(2)).n==size_t(p.g.top)*H&&buffers.at(g->inputs.at(0)).n==size_t(p.g.top);}
++   note("gath",ok?"":(g&&prepared.count(g)?"spec (implementation "+std::to_string(prepared.at(g).spec.implementation)+")":"site"));
++   if(ok)fast_capture(K(g->label),[&]{e.finish(0,draft_fast::gather(e.dev(0),id(g->inputs.at(0)),id(g->inputs.at(1)),id(g->outputs.at(0)),id(g->outputs.at(1)),id(g->outputs.at(2)),
++     scratch,id("error"),id("active"),uint32_t(p.g.top),H,uint32_t(p.g.mid),uint32_t(p.g.experts)),false);});}
++  // norm (and cnorm): the p59 draft norms; the two merge norms in one launch; ffn.combine fused into final.norm.
++  const bool fnorm=draft_fast::enabled("norm");
++  auto norm_ok=[&](const flash::Launch* l){return l&&l->op=="norm"&&changed(*l)&&l->shape.size()==2&&(l->shape[0]*l->shape[1]==2560||l->shape[0]*l->shape[1]==10240)&&(l->shape[1]==2560||l->shape[1]==10240);};
++  if(fnorm){
++   const auto *en=L("merge.embedding_norm"),*hn=L("merge.hidden_norm");
++   const bool ok=norm_ok(en)&&hn&&changed(*hn)&&H==2560;
++   note("norm:merge",ok?"":"not admitted");
++   if(ok){fast_capture(K(en->label),[&]{e.finish(0,draft_fast::norms(e.dev(0),{{id("embedding"),W(en).id,id("merge.embedding_norm"),1,H},
++      {id("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,id("merge.norm"),1,4*H}}),false);});fast_skip(K(hn->label));}
++   for(const std::string lab:{"blk.0.hc.a.norm","blk.0.hc.f.norm"}){const auto* l=L(lab);const bool ok2=norm_ok(l);note("norm:"+lab,ok2?"":"not admitted");if(!ok2)continue;
++    fast_capture(K(lab),[&]{e.finish(0,draft_fast::norms(e.dev(0),{{id(l->inputs.at(0)),W(l).id,id(l->outputs.at(0)),uint32_t(l->shape[0]),uint32_t(l->shape[1])}}),false);});}}
++  {const auto *fn=L("final.norm"),*cb=L("blk.0.ffn.combine");
++   const bool want_c=draft_fast::enabled("cnorm");
++   std::string why_c=!norm_ok(fn)?"final.norm":!cb||cb->op!="hc_combine"?"combine site":site_of(fn->label)!=site_of(cb->label)+1?"not adjacent":
++    cb->outputs.size()!=1||cb->inputs.size()<3?"combine arity":cb->inputs.at(0)!=cb->outputs.at(0)||fn->inputs.at(0)!=cb->outputs.at(0)?"streams names "+cb->inputs.at(0)+"/"+fn->inputs.at(0):
++    fn->shape[0]!=4||fn->shape[1]!=2560?"norm shape":"";
++   if(why_c.empty()&&(buffers.at(cb->inputs.at(0)).type!=flash::Scalar::bf16||buffers.at(cb->inputs.at(1)).type!=flash::Scalar::bf16||buffers.at(cb->inputs.at(2)).type!=flash::Scalar::bf16))why_c="buffer types";
++   if(why_c.empty()&&buffers.at(cb->inputs.at(1)).n!=size_t(H))why_c="branch width";
++   const bool ok_c=want_c&&why_c.empty();
++   if(want_c)note("cnorm",why_c);
++   if(ok_c){fast_capture(K(fn->label),[&]{e.finish(0,draft_fast::norms(e.dev(0),{{id(cb->outputs.at(0)),W(fn).id,id(fn->outputs.at(0)),4,H}},true,id(cb->inputs.at(1)),id(cb->inputs.at(2)),id("active"),id("error")),false);});
++    fast_skip(K(cb->label),true);}
++   else if(fnorm){const bool ok2=norm_ok(fn);note("norm:final.norm",ok2?"":"not admitted");
++    if(ok2)fast_capture(K(fn->label),[&]{e.finish(0,draft_fast::norms(e.dev(0),{{id(fn->inputs.at(0)),W(fn).id,id(fn->outputs.at(0)),uint32_t(fn->shape[0]),uint32_t(fn->shape[1])}}),false);});}}
++  e.current_cls=saved_class;
++  size_t over=0,empty=0;for(size_t k=0;k<n;++k)if(fast_on[k]){++over;if(fast_cmds[k].empty())++empty;}
++  rec<<"},\"overridden_sites\":"<<over<<",\"fused_away_sites\":"<<empty<<",\"sites\":[";bool c2=false;
++  for(size_t k=0;k<n;++k)if(fast_on[k]){rec<<(c2?",":"")<<"{\"site\":"<<ownrt::quote(site_launch(k)->label)<<",\"commands\":"<<fast_cmds[k].size()<<",\"head_only\":"<<(fast_head_only[k]?"true":"false")<<"}";c2=true;}
++  rec<<"]}";save(e.a.output/"draft-fast.json",rec.str());
+  }
+ 
+  Allocation scratch{},control{},score{},probability{},head_workspace{},head_fp32{};unsigned head_variant{};std::string head_candidate;
+@@ -498,12 +631,14 @@
+    // OWNRT_DECODE_PROFILE=2: per-site device time of the draft (diagnostic; waits for the draft, no arithmetic change).
+    static const bool draft_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&std::atoi(v)==2;}();
+    std::vector<std::pair<int,ownrt::Event>> profiled;bool split_issued=false;
+-   for(const auto& site:issue_sites){if(!head&&site.head)continue;
++   const bool use_fast=!fast_cmds.empty()&&!recursive;
++   for(size_t k_site=0;k_site<issue_sites.size();++k_site){const auto& site=issue_sites[k_site];if(!head&&site.head)continue;
+     if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+     e.guard();e.current_cls=site.cls;
+     if(split&&site.head&&!split_issued){for(const auto& cmd:split->card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}split_issued=true;++split->runs;}
+     if(site.gemv_split>=0){for(const auto& cmd:gemv_split->sites.at(size_t(site.gemv_split)).card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}++gemv_split->runs;}
+-    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);if(draft_profile)profiled.push_back({site.cls,event});}
++    const bool fast=use_fast&&fast_on[k_site]&&(head||!fast_head_only[k_site]);
++    for(const auto& cmd:(fast?fast_cmds[k_site]:site.commands)){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);if(draft_profile)profiled.push_back({site.cls,event});}
+    }
+    if(draft_profile&&!profiled.empty()){
+     try{e.dev(0).wait(profiled.back().second,std::chrono::milliseconds(10000));}catch(const std::exception&){}
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/draft_fast.hpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/draft_fast.hpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/draft_fast.hpp	1969-12-31 19:00:00.000000000 -0500
++++ experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/draft_fast.hpp	2026-10-30 15:14:55.507642132 -0400
+@@ -0,0 +1,572 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// OWNRT_DRAFT_FAST (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30, default off): exact faster launches for the MTP
++// draft step (mtp.hpp DraftRuntime::compute only; prompt-chunk replay keeps the per-site commands). "1" enables every
++// token; otherwise a comma list:
++//  inj    HC low (+ its act tail) and HC inject of the same norm row in ONE launch: p59 Dense<10240,false,false,1,4>
++//         rows of both matrices (the same chain, subgroup tree and 4-part tree per row; the inject rows have no tail).
++//  qkv    qsa.k, qsa.v, qsa.iq, qsa.ik (p59 Dense<2560,false,false,1,1>, same input row) in ONE launch.
++//  shx    router, shared-expert gate+up (+ the SiLU product tail) and the shared-expert router gate (p59
++//         Dense<2560,false,false,1,1>, same input row) in ONE launch; gate and up of a row in one subgroup, as p59's
++//         paired rows (both sums from the same chain, both trees, the same product expression).
++//  norm   the p59 draft norms (one 256-lane row tree) with the levels 1..16 by subgroup shuffles and 32..128 from the
++//         eight subgroup sums (same operands, same association), one barrier instead of nine, all loads up front;
++//         merge.embedding_norm and merge.hidden_norm in ONE launch.
++//  merge  merge.embedding_projected and merge.projected (+ merge_add tail) in ONE launch: a subgroup owns weight row r
++//         of both matrices; every output keeps p59 Dense<2560,false,false,1,1>'s per-row sequence.
++//  gmix   the HC gate GEMV (10240 x 320, BF16 rows, production mtp36 / p59 GateMix order) with the HC mix in its
++//         epilogue: one subgroup computes the four stream rows of one column (same lane chunks, adds, 32-lane tree per
++//         row), lane 0 forms the mix in the elementwise kernel's order (guarded like it for hc.a / hc.f; final.gate
++//         keeps GateMix's unguarded store).
++//  cnorm  ffn.combine (generic hc_combine, BF16 streams, guarded) fused into final.norm's norm launch: work-group h
++//         combines stream row h, writes it back and normalizes the values it holds. Head-on steps only (head-off
++//         steps skip final.* and run the combine as before).
++//  rows   the draft's production BF16 rows (mtp36 Dense<K,0,false>: qsa.qgate incl. both cards of its four-card split, ...)
++//         two rows per subgroup and the FP8 expert rows (fp8v2) two (gate+up pair) or four (down) rows of one slot per
++//         subgroup: each 8-column input chunk is loaded once for the subgroup's rows; every row keeps its own lane sums
++//         (same chunks, same element order and expression), its own tree and its own stores (mtp_kernels.cpp).
++//  att    the attention output projection with its fused combine tail (p59 Dense<6144,false,false,1,4> + attention tail)
++//         on the 4-part segmented kernel with two rows per work-group (also used by inj): the same per-row order.
++//  gath   expert_gather (generic SimpleNew, two launches: 25,600 items through the typed-view body, then one check
++//         item) as one launch of 256-item groups with static types: the same guard, route descriptors, validity flags
++//         in the scratch, element copy (bf16(widen(x))); group 0 then runs phase 1's check after a group barrier.
++#include "stage2/packet194-expert-diet-engine/p59_draft.hpp"
++#include <cstdint>
++#include <cstdlib>
++#include <string>
++namespace draft_fast {
++inline const std::string& list() {
++  static const std::string v = [] {
++    const char* e = std::getenv("OWNRT_DRAFT_FAST");
++    const std::string s = e ? e : "";
++    return s == "1" ? std::string("inj,norm,merge,cnorm,gath,rows,att") : s;
++  }();
++  return v;
++}
++inline bool enabled(const char* token) {
++  const auto& v = list();
++  if (v.empty() || v == "0") return false;
++  return ("," + v + ",").find(std::string(",") + token + ",") != std::string::npos;
++}
++inline bool any() { const auto& v = list(); return !v.empty() && v != "0"; }
++}  // namespace draft_fast
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
++#include <sycl/sycl.hpp>
++namespace draft_fast {
++using ownrt::Allocation;
++inline float widen(uint16_t b) { return iq3::bits_float(uint32_t(b) << 16); }
++template <class T> inline const T* gptr(const T* p) { return p; }
++
++// ---------------------------------------------------------------------------------------------------------------------
++// Segmented p59 dense rows. Up to four matrices of one K over the same input row x; rows [first, first + rows) of the
++// launch belong to segment s. tail: 0 none, 1 low (silu(y/4)), 2 paired (y = w row, py = peer row, out = silu(y)*py).
++enum : uint32_t { tail_none = 0, tail_low = 1, tail_pair = 2, tail_attention = 3 };
++struct Seg { const uint8_t* w; const uint8_t* peer; uint16_t* y; uint16_t* py; uint16_t* out; const uint16_t* inject; uint32_t rows, first, tail; };
++struct SegSpec { uint32_t rows[4]{}, tail[4]{}; uint32_t count = 0; };
++struct SegArgs { const uint16_t* x; Seg s[4]; uint32_t count, total; };
++inline Seg pick(const SegArgs& a, uint32_t i) {
++  Seg d = a.s[0];
++  if (a.count > 1 && i >= a.s[1].first) d = a.s[1];
++  if (a.count > 2 && i >= a.s[2].first) d = a.s[2];
++  if (a.count > 3 && i >= a.s[3].first) d = a.s[3];
++  return d;
++}
++inline void seg_output(const Seg& d, uint32_t row, float sum, float peer) {
++  const uint16_t y = iq3::bf16_bits(sum);
++  if (d.tail == tail_pair) {
++    const uint16_t py = iq3::bf16_bits(peer);
++    d.py[row] = py;
++    d.y[row] = y;
++    d.out[row] = iq3::bf16_bits(ng::silu(widen(y)) * widen(py));
++  } else {
++    d.y[row] = y;
++    if (d.tail == tail_low) d.out[row] = iq3::bf16_bits(ng::silu(widen(y) / 4.f));
++    // p59 attention tail: streams[s][row] += y * (2*sigmoid(inject[s]/4)), BF16, s = 0..3 in order.
++    if (d.tail == tail_attention)
++      for (unsigned stream = 0; stream < 4; ++stream) {
++        const size_t j = size_t(stream) * d.rows + row;
++        d.out[j] = iq3::bf16_bits(widen(d.out[j]) + widen(y) * (2.f * ng::sigmoid(widen(d.inject[stream]) / 4.f)));
++      }
++  }
++}
++template <unsigned K, unsigned Split> struct Segments final : ownrt::SyclOperation {
++  SegSpec spec;
++  sycl::event submit(sycl::queue& q, std::span<void* const> p, const std::vector<sycl::event>& deps) const override {
++    SegArgs a{};
++    a.x = static_cast<const uint16_t*>(p[0]);
++    a.count = spec.count;
++    uint32_t first = 0;
++    for (uint32_t j = 0; j < spec.count; ++j) {
++      a.s[j] = Seg{static_cast<const uint8_t*>(p[1 + 6 * j]), static_cast<const uint8_t*>(p[2 + 6 * j]),
++                   static_cast<uint16_t*>(p[3 + 6 * j]), static_cast<uint16_t*>(p[4 + 6 * j]),
++                   static_cast<uint16_t*>(p[5 + 6 * j]), static_cast<const uint16_t*>(p[6 + 6 * j]), spec.rows[j], first, spec.tail[j]};
++      first += spec.rows[j];
++    }
++    a.total = first;
++    using D = p59::Dense<K, false, false, 1, Split>;
++    if constexpr (Split == 1) {
++      const size_t global = ((size_t(a.total) * 32 + 255) / 256) * 256;
++      return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(global, 256)](sycl::handler& h) {
++        h.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++          auto sg = it.get_sub_group();
++          const unsigned physical = it.get_local_linear_id() % 32;
++          const uint32_t i = uint32_t(it.get_global_linear_id() / 32);
++          if (i >= a.total) return;
++          const Seg d = pick(a, i);
++          const uint32_t row = i - d.first;
++          float sum = D::chain(d.w + size_t(row) * K * 2, a.x, physical, 0), peer = 0;
++          if (d.tail == tail_pair) peer = D::chain(d.peer + size_t(row) * K * 2, a.x, physical, 0);
++          const unsigned base = sg.get_local_linear_id() - physical;
++          for (unsigned w = 1; w < 32; w *= 2) {
++            float r = sycl::select_from_group(sg, sum, base + (physical + w) % 32),
++                  pr = sycl::select_from_group(sg, peer, base + (physical + w) % 32);
++            if (physical % (2 * w) == 0) { sum += r; peer += pr; }
++          }
++          if (!physical) seg_output(d, row, sum, peer);
++        }));
++      });
++    } else {
++      // R launch rows per work-group (segments hold multiples of R rows, so all R rows share one segment). Subgroup
++      // `part` walks its K range for each of the R rows with p59's lane order, loading each 8-column input chunk once;
++      // per row: the subgroup tree, then the Split-part tree by item 0, then p59's output and tail.
++      const size_t wg = Split * 32;
++      constexpr unsigned R = 2;
++      const size_t groups = (size_t(a.total) + R - 1) / R;
++      return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(groups * wg, wg)](sycl::handler& h) {
++        sycl::local_accessor<float, 1> partial(R * Split, h);
++        h.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++          auto sg = it.get_sub_group();
++          const unsigned physical = it.get_local_linear_id() % 32, part = it.get_local_linear_id() / 32;
++          const uint32_t i0 = uint32_t(it.get_group_linear_id()) * R;
++          const Seg d = pick(a, i0);
++          const uint32_t row0 = i0 - d.first;
++          const unsigned begin = (K / 256 * part / Split) * 256, end = part + 1 == Split ? K : (K / 256 * (part + 1) / Split) * 256;
++          float sum[R];
++#pragma unroll
++          for (unsigned r = 0; r < R; ++r) sum[r] = 0.f;
++          for (unsigned k = begin + physical * 8; k < end; k += 256) {
++            sycl::vec<uint16_t, 8> xv;
++            xv.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.x + k));
++#pragma unroll
++            for (unsigned r = 0; r < R; ++r) {
++              const uint16_t* w = reinterpret_cast<const uint16_t*>(d.w) + size_t(row0 + r) * K;
++              sycl::vec<uint16_t, 8> wv;
++              wv.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(w + k));
++#pragma unroll
++              for (unsigned j = 0; j < 8; ++j) if (k + j < end) { const float v = widen(wv[j]); const float pr = v * widen(xv[j]); sum[r] = sum[r] + pr; }
++            }
++          }
++          const unsigned base = sg.get_local_linear_id() - physical;
++#pragma unroll
++          for (unsigned r = 0; r < R; ++r)
++            for (unsigned w = 1; w < 32; w *= 2) {
++              float rr = sycl::select_from_group(sg, sum[r], base + (physical + w) % 32);
++              if (physical % (2 * w) == 0) sum[r] += rr;
++            }
++          if (!physical)
++            for (unsigned r = 0; r < R; ++r) partial[r * Split + part] = sum[r];
++          it.barrier(sycl::access::fence_space::local_space);
++          if (it.get_local_linear_id() == 0)
++            for (unsigned r = 0; r < R; ++r) {
++              if (i0 + r >= a.total) break;
++              float* pr = &partial[r * Split];
++              for (unsigned w = 1; w < Split; w *= 2)
++                for (unsigned j = 0; j < Split; j += 2 * w) pr[j] += pr[j + w];
++              seg_output(d, row0 + r, pr[0], 0.f);
++            }
++        }));
++      });
++    }
++  }
++};
++// One segment: weight w (rows x K BF16), output y; tail low writes out; tail pair also reads peer, writes py and out.
++struct SegIn { Allocation w{}, peer{}, y{}, py{}, out{}; uint32_t rows = 0, tail = tail_none; Allocation inject{}; };
++inline void seg_extent(ownrt::Device& d, Allocation a, size_t n) {
++  const auto& r = d.arena.row(a);
++  if (!r.live || r.memory != ownrt::Memory::device || r.bytes < n) throw std::invalid_argument("draft_fast extent/lifetime");
++}
++template <unsigned K, unsigned Split>
++inline integrated::Launch segments(ownrt::Device& d, Allocation x, const std::vector<SegIn>& segs) {
++  if (segs.empty() || segs.size() > 4) throw std::invalid_argument("draft_fast segments: 1-4");
++  if (Split > 1) for (const auto& s : segs) if (s.tail == tail_pair) throw std::invalid_argument("draft_fast: paired rows need Split 1");
++  seg_extent(d, x, size_t(K) * 2);
++  Segments<K, Split> op;
++  std::array<Allocation, 25> ids{};
++  ids.fill(x);
++  ids[0] = x;
++  for (size_t j = 0; j < segs.size(); ++j) {
++    const auto& s = segs[j];
++    if (!s.rows) throw std::invalid_argument("draft_fast segment rows");
++    seg_extent(d, s.w, size_t(s.rows) * K * 2);
++    seg_extent(d, s.y, size_t(s.rows) * 2);
++    if (s.tail == tail_pair) { seg_extent(d, s.peer, size_t(s.rows) * K * 2); seg_extent(d, s.py, size_t(s.rows) * 2); }
++    if (s.tail == tail_low || s.tail == tail_pair) seg_extent(d, s.out, size_t(s.rows) * 2);
++    if (s.tail == tail_attention) { if (Split == 1) throw std::invalid_argument("draft_fast: attention tail needs Split 4"); seg_extent(d, s.out, size_t(s.rows) * 2 * 4); seg_extent(d, s.inject, 4 * 2); }
++    if (Split > 1 && s.rows % 2) throw std::invalid_argument("draft_fast: 4-part segments hold even row counts");
++    op.spec.rows[j] = s.rows;
++    op.spec.tail[j] = s.tail;
++    ids[1 + 6 * j] = s.w;
++    ids[2 + 6 * j] = s.tail == tail_pair ? s.peer : s.w;
++    ids[3 + 6 * j] = s.y;
++    ids[4 + 6 * j] = s.tail == tail_pair ? s.py : s.y;
++    ids[5 + 6 * j] = s.tail != tail_none ? s.out : s.y;
++    ids[6 + 6 * j] = s.tail == tail_attention ? s.inject : s.y;
++  }
++  op.spec.count = uint32_t(segs.size());
++  const size_t used = 1 + 6 * segs.size();
++  auto e = d.compute(op, std::span<const Allocation>(ids.data(), used), {});
++  return {e, e, 1};
++}
++
++// ---------------------------------------------------------------------------------------------------------------------
++// p59 draft norm, faster exact form. Per row (one 256-item work-group, as p59::Norm): lane l's sum of v*v over
++// k = l, l+256, ... in order; the 256-lane adjacent-pair tree (levels 1..16 by shuffles inside each 32-lane subgroup,
++// then (p0+p1)+(p2+p3) and (p4+p5)+(p6+p7) and their sum from the eight subgroup sums); inv = rsqrt(s/n + 1e-6);
++// y = bf16((v*inv)*gain). Up to two jobs per launch (job of each group chosen statically); job 0 may carry the
++// ffn.combine prologue (cnorm): row h of the BF16 streams gets streams + branch*(2*sigmoid(inject[h]/4)) under the
++// combine kernel's guard (active and no error), is written back, and the norm uses the stored values.
++struct NormJob { uint16_t* x; const float* gain; uint16_t* y; uint32_t rows, first, per; };
++struct NormArgs {
++  NormJob j[2]; uint32_t count, groups, combine;
++  const uint16_t* branch; const uint16_t* inject; const uint32_t* active; uint32_t* error;
++};
++template <unsigned PER>
++inline void norm_row(const NormArgs& a, const NormJob& jb, uint32_t row, bool combine, sycl::nd_item<1> it, float* part) {
++  auto sg = it.get_sub_group();
++  const unsigned l = unsigned(it.get_local_linear_id()), lane = l % 32, sgid = l / 32;
++  constexpr unsigned n = PER * 256;
++  uint16_t* xr = jb.x + size_t(row) * n;
++  float v[PER];
++  if (combine) {
++    const bool go = *a.active &&
++        !sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
++                          sycl::access::address_space::global_space>(*a.error).load();
++    const float gate = 2.f * ng::sigmoid(widen(a.inject[row]) / 4.f);
++#pragma unroll
++    for (unsigned j = 0; j < PER; ++j) {
++      const unsigned k = l + 256 * j;
++      if (go) {
++        const float c = widen(xr[k]) + widen(a.branch[k]) * gate;
++        const uint16_t cb = iq3::bf16_bits(c);
++        xr[k] = cb;
++        v[j] = widen(cb);
++      } else v[j] = widen(xr[k]);
++    }
++  } else {
++#pragma unroll
++    for (unsigned j = 0; j < PER; ++j) v[j] = widen(xr[l + 256 * j]);
++  }
++  float sum = 0;
++#pragma unroll
++  for (unsigned j = 0; j < PER; ++j) { const float sq = v[j] * v[j]; sum = sum + sq; }
++#pragma unroll
++  for (unsigned w = 1; w < 32; w *= 2) {
++    const float r = sycl::select_from_group(sg, sum, (lane + w) % 32);
++    if (lane % (2 * w) == 0) sum = sum + r;
++  }
++  if (lane == 0) part[sgid] = sum;
++  sycl::group_barrier(it.get_group());
++  const float s01 = part[0] + part[1], s23 = part[2] + part[3], s45 = part[4] + part[5], s67 = part[6] + part[7];
++  const float s03 = s01 + s23, s47 = s45 + s67;
++  const float total = s03 + s47;
++  const float inv = detmath::rsqrt(total / float(n) + 1e-6f);
++  const float* g = jb.gain + size_t(row) * n;
++  uint16_t* y = jb.y + size_t(row) * n;
++#pragma unroll
++  for (unsigned j = 0; j < PER; ++j) { const unsigned k = l + 256 * j; y[k] = iq3::bf16_bits((v[j] * inv) * g[k]); }
++}
++struct Norms final : ownrt::SyclOperation {
++  uint32_t count = 0, rows[2]{}, per[2]{}, combine = 0;
++  sycl::event submit(sycl::queue& q, std::span<void* const> p, const std::vector<sycl::event>& deps) const override {
++    NormArgs a{};
++    a.count = count;
++    uint32_t first = 0;
++    for (uint32_t j = 0; j < count; ++j) {
++      a.j[j] = NormJob{static_cast<uint16_t*>(p[3 * j]), static_cast<const float*>(p[3 * j + 1]),
++                       static_cast<uint16_t*>(p[3 * j + 2]), rows[j], first, per[j]};
++      first += rows[j];
++    }
++    a.groups = first;
++    a.combine = combine;
++    a.branch = static_cast<const uint16_t*>(p[6]);
++    a.inject = static_cast<const uint16_t*>(p[7]);
++    a.active = static_cast<const uint32_t*>(p[8]);
++    a.error = static_cast<uint32_t*>(p[9]);
++    return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(size_t(a.groups) * 256, 256)](sycl::handler& h) {
++      sycl::local_accessor<float, 1> part(8, h);
++      h.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++        const uint32_t g = uint32_t(it.get_group_linear_id());
++        NormJob jb = a.j[0];
++        bool second = a.count > 1 && g >= a.j[1].first;
++        if (second) jb = a.j[1];
++        const uint32_t row = g - jb.first;
++        const bool combine = a.combine && !second;
++        float* pp = &part[0];
++        if (jb.per == 40) norm_row<40>(a, jb, row, combine, it, pp);
++        else norm_row<10>(a, jb, row, combine, it, pp);
++      }));
++    });
++  }
++};
++struct NormIn { Allocation x{}, gain{}, y{}; uint32_t rows = 0, width = 0; };
++// jobs: 1 or 2 (widths 2560 or 10240). combine (job 0 only): branch (width BF16), inject (rows BF16), active, error.
++inline integrated::Launch norms(ownrt::Device& d, const std::vector<NormIn>& jobs, bool combine = false,
++                                Allocation branch = {}, Allocation inject = {}, Allocation active = {}, Allocation error = {}) {
++  if (jobs.empty() || jobs.size() > 2) throw std::invalid_argument("draft_fast norms: 1-2 jobs");
++  Norms op;
++  std::array<Allocation, 10> ids{};
++  for (size_t j = 0; j < jobs.size(); ++j) {
++    const auto& b = jobs[j];
++    if (!b.rows || (b.width != 2560 && b.width != 10240)) throw std::invalid_argument("draft_fast norm width");
++    const size_t n = size_t(b.rows) * b.width;
++    seg_extent(d, b.x, n * 2); seg_extent(d, b.gain, n * 4); seg_extent(d, b.y, n * 2);
++    ids[3 * j] = b.x; ids[3 * j + 1] = b.gain; ids[3 * j + 2] = b.y;
++    op.rows[j] = b.rows; op.per[j] = b.width / 256;
++  }
++  if (jobs.size() == 1) { ids[3] = ids[0]; ids[4] = ids[1]; ids[5] = ids[2]; }
++  op.count = uint32_t(jobs.size());
++  if (combine) {
++    if (jobs[0].width != 2560 || jobs[0].rows != 4) throw std::invalid_argument("draft_fast cnorm shape");
++    seg_extent(d, branch, 2560 * 2); seg_extent(d, inject, 4 * 2); seg_extent(d, active, 4); seg_extent(d, error, 4);
++    ids[6] = branch; ids[7] = inject; ids[8] = active; ids[9] = error; op.combine = 1;
++  } else { ids[6] = ids[0]; ids[7] = ids[0]; ids[8] = ids[0]; ids[9] = ids[0]; }
++  auto e = d.compute(op, ids, {});
++  return {e, e, 1};
++}
++
++// ---------------------------------------------------------------------------------------------------------------------
++// merge: embedding_projected (fc_embedding · x_e) and projected (fc_hidden · x_h[t], t = 0..3) of weight row r in one
++// subgroup; out[t][r] = bf16(projected[t][r] + embedding_projected[r]) (p59 merge_add tail).
++struct MergeArgs { const uint16_t *we, *xe, *wh, *xh; uint16_t *ye, *yh, *out; uint32_t rows; };
++struct Merge final : ownrt::SyclOperation {
++  uint32_t rows = 0;
++  // R weight rows per subgroup (consecutive rows r0..r0+R-1): each 8-column chunk of x_e and the four x_h rows is loaded
++  // once and applied to the R rows; every output keeps its own lane sums (same chunk order, same adds) and own tree.
++  template <unsigned R>
++  sycl::event run(sycl::queue& q, const MergeArgs a) const {
++    constexpr unsigned K = 2560;
++    const size_t groups = (size_t(a.rows) + R - 1) / R;
++    const size_t global = ((groups * 32 + 255) / 256) * 256;
++    return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(global, 256)](sycl::handler& h) {
++      h.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++        auto sg = it.get_sub_group();
++        const unsigned l = sg.get_local_linear_id();
++        const size_t first = (it.get_global_linear_id() / 32) * R;
++        if (first >= a.rows) return;
++        float e[R], s[R][4];
++#pragma unroll
++        for (unsigned r = 0; r < R; ++r) { e[r] = 0.f; for (unsigned t = 0; t < 4; ++t) s[r][t] = 0.f; }
++        for (unsigned k = l * 8; k < K; k += 256) {
++          sycl::vec<uint16_t, 8> xev, xv[4];
++          xev.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.xe + k));
++#pragma unroll
++          for (unsigned t = 0; t < 4; ++t)
++            xv[t].load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.xh + size_t(t) * K + k));
++#pragma unroll
++          for (unsigned r = 0; r < R; ++r) {
++            const size_t row = first + r < a.rows ? first + r : first;
++            sycl::vec<uint16_t, 8> wev, whv;
++            wev.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.we + row * K + k));
++            whv.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.wh + row * K + k));
++#pragma unroll
++            for (unsigned j = 0; j < 8; ++j) { const float v = widen(wev[j]); const float pr = v * widen(xev[j]); e[r] = e[r] + pr; }
++#pragma unroll
++            for (unsigned t = 0; t < 4; ++t)
++#pragma unroll
++              for (unsigned j = 0; j < 8; ++j) { const float v = widen(whv[j]); const float pr = v * widen(xv[t][j]); s[r][t] = s[r][t] + pr; }
++          }
++        }
++#pragma unroll
++        for (unsigned r = 0; r < R; ++r) {
++          for (unsigned width = 1; width < 32; width *= 2) {
++            const float rr = sycl::select_from_group(sg, e[r], (l + width) % 32);
++            if (l % (2 * width) == 0) e[r] += rr;
++          }
++#pragma unroll
++          for (unsigned t = 0; t < 4; ++t)
++            for (unsigned width = 1; width < 32; width *= 2) {
++              const float rr = sycl::select_from_group(sg, s[r][t], (l + width) % 32);
++              if (l % (2 * width) == 0) s[r][t] += rr;
++            }
++        }
++        if (l == 0) {
++#pragma unroll
++          for (unsigned r = 0; r < R; ++r) {
++            const size_t row = first + r;
++            if (row >= a.rows) break;
++            const uint16_t eb = iq3::bf16_bits(e[r]);
++            a.ye[row] = eb;
++#pragma unroll
++            for (unsigned t = 0; t < 4; ++t) {
++              const size_t i = size_t(t) * a.rows + row;
++              const uint16_t yv = iq3::bf16_bits(s[r][t]);
++              a.yh[i] = yv;
++              a.out[i] = iq3::bf16_bits(widen(yv) + widen(eb));
++            }
++          }
++        }
++      }));
++    });
++  }
++  sycl::event submit(sycl::queue& q, std::span<void* const> p, const std::vector<sycl::event>& deps) const override {
++    const MergeArgs a{static_cast<const uint16_t*>(p[0]), static_cast<const uint16_t*>(p[1]), static_cast<const uint16_t*>(p[2]),
++                      static_cast<const uint16_t*>(p[3]), static_cast<uint16_t*>(p[4]), static_cast<uint16_t*>(p[5]),
++                      static_cast<uint16_t*>(p[6]), rows};
++    static const unsigned R = [] { const char* e = std::getenv("OWNRT_DRAFT_FAST_MERGE_R"); return e ? unsigned(std::atoi(e)) : 2u; }();
++    if (R == 4) return run<4>(q, a);
++    if (R == 1) return run<1>(q, a);
++    return run<2>(q, a);
++  }
++};
++inline bool aligned16(ownrt::Device& d, Allocation a) { return reinterpret_cast<uintptr_t>(d.arena.row(a).pointer) % 16 == 0; }
++inline integrated::Launch merge(ownrt::Device& d, Allocation we, Allocation xe, Allocation wh, Allocation xh, Allocation ye,
++                                Allocation yh, Allocation out, uint32_t rows) {
++  if (rows != 2560) throw std::invalid_argument("draft_fast merge rows");
++  seg_extent(d, we, size_t(rows) * 2560 * 2); seg_extent(d, wh, size_t(rows) * 2560 * 2);
++  seg_extent(d, xe, 2560 * 2); seg_extent(d, xh, 4 * 2560 * 2);
++  seg_extent(d, ye, size_t(rows) * 2); seg_extent(d, yh, 4 * size_t(rows) * 2); seg_extent(d, out, 4 * size_t(rows) * 2);
++  for (auto a : {we, xe, wh, xh}) if (!aligned16(d, a)) throw std::invalid_argument("draft_fast merge alignment");
++  Merge op;
++  op.rows = rows;
++  std::array<Allocation, 7> ids{we, xe, wh, xh, ye, yh, out};
++  auto e = d.compute(op, ids, {});
++  return {e, e, 1};
++}
++
++// ---------------------------------------------------------------------------------------------------------------------
++// gmix: HC gate (rows h*C + c, h = 0..3, K = 320 BF16, BF16 input) and the HC mix of column c in one subgroup.
++// Per row: lane L adds w*x over chunk 8L..8L+7, then (L < 8) chunk 256+8L..+7, element by element from 0; the 32-lane
++// adjacent-pair tree. Lane 0: y = bf16 rows; mix = 0 + sigmoid(y_0)*n_0 + ... + sigmoid(y_3)*n_3, /4, bf16.
++struct GmixArgs { const uint16_t *w, *x; uint16_t* y; const uint16_t* n; uint16_t* out; const uint32_t *active, *error; uint32_t columns, guard, quiet; };
++// Production weight decode (p28 dense_lane -> iq3::decode BF16: a NaN weight gets its quiet bit), or p59 widen.
++inline float wdecode(uint16_t b, bool quiet) { uint32_t bits = uint32_t(b) << 16; if (quiet && (bits & 0x7fffffffu) > 0x7f800000u) bits |= 0x400000u; return iq3::bits_float(bits); }
++struct Gmix final : ownrt::SyclOperation {
++  uint32_t columns = 0, guard = 0, quiet = 0;
++  sycl::event submit(sycl::queue& q, std::span<void* const> p, const std::vector<sycl::event>& deps) const override {
++    const GmixArgs a{static_cast<const uint16_t*>(p[0]), static_cast<const uint16_t*>(p[1]), static_cast<uint16_t*>(p[2]),
++                     static_cast<const uint16_t*>(p[3]), static_cast<uint16_t*>(p[4]), static_cast<const uint32_t*>(p[5]),
++                     static_cast<const uint32_t*>(p[6]), columns, guard, quiet};
++    constexpr unsigned K = 320;
++    const size_t global = ((size_t(a.columns) * 32 + 127) / 128) * 128;
++    return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(global, 128)](sycl::handler& h) {
++      h.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++        auto sg = it.get_sub_group();
++        const unsigned l = sg.get_local_linear_id();
++        const size_t c = it.get_global_linear_id() / 32;
++        if (c >= a.columns) return;
++        const unsigned k0 = l * 8, k1 = 256 + l * 8;
++        const bool two = k1 < K;
++        sycl::vec<uint16_t, 8> x0, x1;
++        x0.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.x + k0));
++        if (two) x1.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(a.x + k1));
++        float s[4];
++#pragma unroll
++        for (unsigned hh = 0; hh < 4; ++hh) {
++          const uint16_t* wr = a.w + (size_t(hh) * a.columns + c) * K;
++          sycl::vec<uint16_t, 8> w0, w1;
++          w0.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(wr + k0));
++          if (two) w1.load(0, sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(wr + k1));
++          float sum = 0.f;
++#pragma unroll
++          for (unsigned j = 0; j < 8; ++j) { const float product = wdecode(w0[j], a.quiet) * widen(x0[j]); sum = sum + product; }
++          if (two) {
++#pragma unroll
++            for (unsigned j = 0; j < 8; ++j) { const float product = wdecode(w1[j], a.quiet) * widen(x1[j]); sum = sum + product; }
++          }
++          s[hh] = sum;
++        }
++#pragma unroll
++        for (unsigned hh = 0; hh < 4; ++hh)
++          for (unsigned width = 1; width < 32; width *= 2) {
++            const float rhs = sycl::select_from_group(sg, s[hh], (l + width) % 32);
++            if (l % (2 * width) == 0) s[hh] = s[hh] + rhs;
++          }
++        if (l == 0) {
++          float mix = 0.f;
++#pragma unroll
++          for (unsigned hh = 0; hh < 4; ++hh) {
++            const size_t row = size_t(hh) * a.columns + c;
++            const uint16_t value = iq3::bf16_bits(s[hh]);
++            a.y[row] = value;
++            mix = mix + ng::sigmoid(widen(value)) * widen(a.n[row]);
++          }
++          mix = mix / 4.f;
++          if (!a.guard || (*a.active && !*a.error)) a.out[c] = iq3::bf16_bits(mix);
++        }
++      }));
++    });
++  }
++};
++inline integrated::Launch gmix(ownrt::Device& d, Allocation w, Allocation x, Allocation y, Allocation n, Allocation out,
++                               Allocation active, Allocation error, uint32_t columns, bool guard, bool quiet) {
++  if (columns != 2560) throw std::invalid_argument("draft_fast gmix columns");
++  seg_extent(d, w, size_t(4) * columns * 320 * 2); seg_extent(d, x, 320 * 2); seg_extent(d, y, size_t(4) * columns * 2);
++  seg_extent(d, n, size_t(4) * columns * 2); seg_extent(d, out, size_t(columns) * 2); seg_extent(d, active, 4); seg_extent(d, error, 4);
++  for (auto a : {w, x}) if (!aligned16(d, a)) throw std::invalid_argument("draft_fast gmix alignment");
++  Gmix op;
++  op.columns = columns;
++  op.guard = guard ? 1 : 0;
++  op.quiet = quiet ? 1 : 0;
++  std::array<Allocation, 7> ids{w, x, y, n, out, active, error};
++  auto e = d.compute(op, ids, {});
++  return {e, e, 1};
++}
++
++// ---------------------------------------------------------------------------------------------------------------------
++// gath: SimpleNew<expert_gather> phases 0 and 1 (adapter.cpp simple_body) in one launch. Bindings: ids (u32, top), x
++// (bf16, h), routes (u32, top*3), routes.down (u32, top*3), expert_input (bf16, top*h), scratch (float), error, active.
++struct GatherArgs { const uint32_t* ids; const uint16_t* x; uint32_t *routes, *down; uint16_t* input; float* tmp; uint32_t* error; const uint32_t* active;
++                    uint32_t top, h, mid, experts, n; };
++struct Gather final : ownrt::SyclOperation {
++  uint32_t top = 0, h = 0, mid = 0, experts = 0;
++  sycl::event submit(sycl::queue& q, std::span<void* const> p, const std::vector<sycl::event>& deps) const override {
++    const GatherArgs a{static_cast<const uint32_t*>(p[0]), static_cast<const uint16_t*>(p[1]), static_cast<uint32_t*>(p[2]),
++                       static_cast<uint32_t*>(p[3]), static_cast<uint16_t*>(p[4]), static_cast<float*>(p[5]),
++                       static_cast<uint32_t*>(p[6]), static_cast<const uint32_t*>(p[7]), top, h, mid, experts, top * h};
++    // Item i owns elements 8i..8i+7 of the copy (h % 8 == 0, so they come from x[(8i) % h ..+8]) and, for i < top, the
++    // route descriptor i of phase 0.
++    const size_t items = std::max<size_t>(a.top, (size_t(a.n) + 7) / 8);
++    const size_t global = ((items + 255) / 256) * 256;
++    return ownrt::prepared_submit(q, [=, r0 = sycl::nd_range<1>(global, 256)](sycl::handler& hh) {
++      hh.parallel_for(r0, packet26::checked([=](sycl::nd_item<1> it) {
++        using ref = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space>;
++        const uint32_t i = uint32_t(it.get_global_linear_id());
++        const bool go = *a.active && !ref(*a.error).load();
++        if (go && i < a.top) {
++          const float v = float(a.ids[i]);
++          const bool valid = std::isfinite(v) && v >= 0 && v < float(a.experts) && std::floor(v) == v;
++          const int id = valid ? int(v) : 0;
++          a.tmp[i] = valid ? 0 : 1;
++          for (int k = 0; k < 3; ++k) {
++            a.routes[i * 3 + k] = uint32_t(float(k == 0 ? id : k == 1 ? 0 : int(a.mid)));
++            a.down[i * 3 + k] = uint32_t(float(k == 0 ? id : k == 1 ? 0 : int(a.h)));
++          }
++        }
++        if (go && size_t(i) * 8 < a.n) {
++          const uint32_t e0 = i * 8, k0 = e0 % a.h;
++#pragma unroll
++          for (uint32_t j = 0; j < 8; ++j) if (e0 + j < a.n) a.input[e0 + j] = iq3::bf16_bits(widen(a.x[k0 + j]));
++        }
++        if (it.get_group_linear_id() == 0) {
++          sycl::group_barrier(it.get_group());
++          if (it.get_local_linear_id() == 0 && *a.active && !ref(*a.error).load())
++            for (uint32_t j = 0; j < a.top; ++j) if (a.tmp[j]) ref(*a.error).store(1);
++        }
++      }));
++    });
++  }
++};
++inline integrated::Launch gather(ownrt::Device& d, Allocation ids, Allocation x, Allocation routes, Allocation down, Allocation input,
++                                 Allocation scratch, Allocation error, Allocation active, uint32_t top, uint32_t h, uint32_t mid, uint32_t experts) {
++  if (!top || top > 256 || !h || h % 8) throw std::invalid_argument("draft_fast gather shape");
++  seg_extent(d, ids, top * 4); seg_extent(d, x, h * 2); seg_extent(d, routes, top * 12); seg_extent(d, down, top * 12);
++  seg_extent(d, input, size_t(top) * h * 2); seg_extent(d, scratch, top * 4); seg_extent(d, error, 4); seg_extent(d, active, 4);
++  Gather op;
++  op.top = top; op.h = h; op.mid = mid; op.experts = experts;
++  std::array<Allocation, 8> idv{ids, x, routes, down, input, scratch, error, active};
++  auto e = d.compute(op, idv, {});
++  return {e, e, 1};
++}
++}  // namespace draft_fast
++#endif
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp	2026-10-30 14:14:48.000000000 -0400
++++ experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp	2026-10-30 15:08:21.345677982 -0400
+@@ -38,5 +38,43 @@
+  for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sum,(l+width)%32);float pr=sycl::select_from_group(sg,peer,(l+width)%32);if(l%(2*width)==0){sum=sum+rhs;peer=peer+pr;}}
+  if(l==0){b.y[i]=iq3::bf16_bits(valid?sum:iq3::bits_float(0x7fc00000));if constexpr(Pair)b.py[i]=iq3::bf16_bits(valid?peer:iq3::bits_float(0x7fc00000));if(row==0&&b.route){b.status[slot]=!valid;if constexpr(Pair)b.ps[slot]=!valid;}}
+ }
++// OWNRT_DRAFT_FAST rows (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30): R consecutive rows of ONE slot per subgroup
++// (the caller requires rows % R == 0). Each row's lane loop, element order, products, sums, tree, NaN for an invalid route
++// and status writes are rows<K,Pair>'s; the 16-byte input chunk is loaded once for the R rows.
++template<unsigned K,bool Pair,unsigned R> inline void rows_r(const Rows& b,size_t n,sycl::nd_item<1> it){
++ static_assert(K%128==0);constexpr size_t rb=K+4*(K/128);
++ auto sg=it.get_sub_group();const unsigned l=sg.get_local_linear_id();const size_t first=(it.get_global_linear_id()/32)*R;if(first>=n)return;
++ const unsigned slot=unsigned(first/b.rows),row0=unsigned(first%b.rows);
++ auto r=b.route?b.route[slot]:iq3::Route{0,0,b.rows};
++ bool valid[R];float sum[R],peer[R];
++ #pragma unroll
++ for(unsigned q=0;q<R;++q){valid[q]=iq3::valid_route(r,b.experts,b.rows,b.rows)&&row0+q<r.row_count;sum[q]=0;peer[q]=0;}
++ const uint16_t* x=b.x+(Pair?0:size_t(slot)*K);
++ for(unsigned tile=l*8;tile<K;tile+=256){
++  const sycl::vec<uint16_t,8> xb=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(x+tile);
++  #pragma unroll
++  for(unsigned q=0;q<R;++q){
++   if(!valid[q])continue;
++   const size_t off=(size_t(r.expert_id)*b.rows+r.row_begin+row0+q)*rb;const uint8_t* w=b.w+off;const uint8_t* pw=Pair?b.peer+off:w;
++   const uint32_t c0=*reinterpret_cast<const uint32_t*>(w+tile),c1=*reinterpret_cast<const uint32_t*>(w+tile+4);
++   const float scale=iq3::bits_float(*reinterpret_cast<const uint32_t*>(w+K+(tile/128)*4));
++   uint32_t p0=0,p1=0;float pscale=0;
++   if constexpr(Pair){p0=*reinterpret_cast<const uint32_t*>(pw+tile);p1=*reinterpret_cast<const uint32_t*>(pw+tile+4);pscale=iq3::bits_float(*reinterpret_cast<const uint32_t*>(pw+K+(tile/128)*4));}
++   #pragma unroll
++   for(unsigned j=0;j<8;++j){const float input=iq3::bits_float(uint32_t(xb[j])<<16);
++    {const float v=scale*value(uint8_t((j<4?c0:c1)>>(8*(j&3))));const float product=v*input;sum[q]=sum[q]+product;}
++    if constexpr(Pair){const float v=pscale*value(uint8_t((j<4?p0:p1)>>(8*(j&3))));const float product=v*input;peer[q]=peer[q]+product;}}
++  }
++ }
++ #pragma unroll
++ for(unsigned q=0;q<R;++q)
++  for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sum[q],(l+width)%32);float pr=sycl::select_from_group(sg,peer[q],(l+width)%32);if(l%(2*width)==0){sum[q]=sum[q]+rhs;peer[q]=peer[q]+pr;}}
++ if(l==0){
++  #pragma unroll
++  for(unsigned q=0;q<R;++q){const size_t i=first+q;
++   b.y[i]=iq3::bf16_bits(valid[q]?sum[q]:iq3::bits_float(0x7fc00000));if constexpr(Pair)b.py[i]=iq3::bf16_bits(valid[q]?peer[q]:iq3::bits_float(0x7fc00000));
++   if(row0+q==0&&b.route){b.status[slot]=!valid[q];if constexpr(Pair)b.ps[slot]=!valid[q];}}
++ }
++}
+ inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_EXPERTS_V2");return e&&e[0]=='1';}();return on;}
+ }
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_kernels.cpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_kernels.cpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_kernels.cpp	2026-10-30 14:14:48.000000000 -0400
++++ experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/mtp_kernels.cpp	2026-10-30 15:08:21.345814660 -0400
+@@ -6,6 +6,7 @@
+ #include "stage2/packet194-expert-diet-engine/draft_head_split.hpp"
+ #include "stage2/packet194-expert-diet-engine/p28/dense.hpp"
+ #include "stage2/packet194-expert-diet-engine/specialised.hpp"
++#include "stage2/packet194-expert-diet-engine/draft_fast.hpp"
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage2/packet194-expert-diet-engine/mtp_fp8_v2.hpp"
+ #endif
+@@ -74,6 +75,45 @@
+  }
+ };
+ #endif
++// OWNRT_DRAFT_FAST rows (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30): BF16 (F=0) one-row dense rows, R rows per
++// subgroup. Each row keeps Dense<K,0,false>'s arithmetic: lane l walks tiles l*8, l*8+256, ... and inside a tile the columns
++// in order, value = iq3::decode(BF16) of the weight (NaN gets its quiet bit), input = bf16(x), product, sum = sum + product;
++// the same adjacent-pair 32-lane tree; y = bf16(sum). The 8 inputs of a tile are loaded once for the R rows.
++template<unsigned K,unsigned R> struct DenseRows final:ownrt::SyclOperation {
++ Linear a;
++ sycl::event submit(sycl::queue& q,std::span<void*const> p,const std::vector<sycl::event>& deps)const override{
++  const uint8_t* W=static_cast<const uint8_t*>(p[0]);const uint16_t* X=static_cast<const uint16_t*>(p[2]);uint16_t* Y=static_cast<uint16_t*>(p[3]);const size_t n=a.rows;
++  const size_t groups=(n+R-1)/R;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((groups+3)/4)*128,128)](sycl::handler& h){h.parallel_for(p35_range0,checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   auto sg=it.get_sub_group();const unsigned l=sg.get_local_linear_id();const size_t first=(it.get_global_linear_id()/32)*R;if(first>=n)return;
++   float sum[R];
++   #pragma unroll
++   for(unsigned r=0;r<R;++r)sum[r]=0;
++   for(unsigned tile=l*8;tile<K;tile+=256){
++    const unsigned stop=tile+8<K?tile+8:K;float input[8];
++    for(unsigned i=tile;i<stop;++i)input[i-tile]=iq3::bits_float(uint32_t(X[i])<<16);
++    #pragma unroll
++    for(unsigned r=0;r<R;++r){const size_t row=first+r<n?first+r:first;const uint8_t* w=W+row*size_t(K)*2;
++     for(unsigned i=tile;i<stop;++i){const float value=iq3::decode(iq3::Type::BF16,w+i*2,0);const float product=value*input[i-tile];sum[r]=sum[r]+product;}}
++   }
++   #pragma unroll
++   for(unsigned r=0;r<R;++r)
++    for(unsigned width=1;width<32;width*=2){float rhs=sycl::select_from_group(sg,sum[r],(l+width)%32);if(l%(2*width)==0)sum[r]=sum[r]+rhs;}
++   if(l==0){
++    #pragma unroll
++    for(unsigned r=0;r<R;++r)if(first+r<n)Y[first+r]=iq3::bf16_bits(sum[r]);}
++  })));});
++ }
++};
++template<unsigned K,bool Pair,unsigned R> struct DenseFP8R final:ownrt::SyclOperation {
++ Linear a;
++ sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps)const override{
++  const fp8v2::Rows b{static_cast<const uint8_t*>(p[0]),static_cast<const uint8_t*>(p[1]),static_cast<const uint16_t*>(p[2]),static_cast<uint16_t*>(p[3]),static_cast<uint16_t*>(p[4]),a.routes?static_cast<const iq3::Route*>(p[5]):nullptr,static_cast<uint32_t*>(p[6]),static_cast<uint32_t*>(p[7]),a.rows,a.batch,a.experts};
++  const size_t n=size_t(b.rows)*b.batch,groups=(n+R-1)/R;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((groups+3)/4)*128,128)](sycl::handler& h){h.parallel_for(p35_range0,checked(packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{
++   fp8v2::rows_r<K,Pair,R>(b,n,it);})));});
++ }
++};
+ static void extent(ownrt::Device& d,Allocation a,size_t n){auto r=d.arena.row(a);if(!r.live||r.bytes<n||r.memory!=ownrt::Memory::device)throw std::invalid_argument("draft allocation extent");}
+ template<unsigned K,unsigned I,bool Pair> Launch issue(ownrt::Device& d,const Linear& a){Dense<K,I,Pair> op;op.a=a;std::array<Allocation,8> ids{a.w,Pair?a.peer:a.w,a.x,a.y,Pair?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y};auto e=d.compute(op,ids,{});return {e,e,1};}
+ template<unsigned K> Launch typed(ownrt::Device& d,const Linear& a){if(a.int8)return a.paired?issue<K,1,true>(d,a):issue<K,1,false>(d,a);
+@@ -81,10 +121,17 @@
+ #ifndef OWN_RT_HOST_ONLY
+    if(fp8v2::enabled()&&reinterpret_cast<uintptr_t>(d.arena.row(a.x).pointer)%16==0&&reinterpret_cast<uintptr_t>(d.arena.row(a.w).pointer)%4==0&&(!a.paired||reinterpret_cast<uintptr_t>(d.arena.row(a.peer).pointer)%4==0)){
+     std::array<Allocation,8> ids{a.w,a.paired?a.peer:a.w,a.x,a.y,a.paired?a.py:a.y,a.routes?a.routes:a.x,a.status?a.status:a.y,a.ps?a.ps:a.y};
++    if(draft_fast::enabled("rows")){
++     if(a.paired&&a.rows%2==0){DenseFP8R<K,true,2> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}
++     if(!a.paired&&a.rows%4==0){DenseFP8R<K,false,4> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}}
+     if(a.paired){DenseFP8v2<K,true> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}
+     DenseFP8v2<K,false> op;op.a=a;auto e=d.compute(op,ids,{});return {e,e,1};}
+ #endif
+    return a.paired?issue<K,2,true>(d,a):issue<K,2,false>(d,a);}else throw std::invalid_argument("draft FP8 needs K%128==0");}
++#ifndef OWN_RT_HOST_ONLY
++ if(!a.paired&&!a.routes&&a.batch==1&&a.experts==1&&draft_fast::enabled("rows")&&reinterpret_cast<uintptr_t>(d.arena.row(a.x).pointer)%16==0){
++  DenseRows<K,2> op;op.a=a;std::array<Allocation,4> ids{a.w,a.w,a.x,a.y};auto e=d.compute(op,ids,{});return {e,e,1};}
++#endif
+  return a.paired?issue<K,0,true>(d,a):issue<K,0,false>(d,a);}
+ Launch linear(ownrt::Device& d,const Linear& a){
+  if(a.int8&&a.fp8)throw std::invalid_argument("draft linear format");
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/target_fast.hpp experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/target_fast.hpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/target_fast.hpp	1969-12-31 19:00:00.000000000 -0500
++++ experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/target_fast.hpp	2026-10-30 15:19:10.257702275 -0400
+@@ -0,0 +1,28 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// OWNRT_TARGET_FAST (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30, default off): exact target-side launch levers.
++// "1" enables every token; otherwise a comma list:
++//  ssel   dense_v2 bf16split rows (router + shared gate, GDN a+b, QSA iq+ik, other BF16 K < 8192 sites) choose their
++//         matrix by static indices instead of a runtime index into the captured descriptor array (the HC lowsel
++//         finding: the runtime index keeps the descriptors in private memory); the same per-row code (kopt kernels.cpp).
++//  hcg    the same static select for the HC gate's bf16_multi<2,4> (OWNRT_DECODE_NEXT2 hcgate).
++//  kptr   the kopt block-rows, paired block-rows, IQ4_NL packed and Q8 packed decode kernels (routed experts, shared-expert
++//         down) take their binding pointers resolved on the host instead of indexing the captured pointer array by
++//         descriptor fields inside the kernel; the arithmetic is unchanged (kernels.cpp KPSEL).
++#include <cstdlib>
++#include <string>
++namespace target_fast {
++inline const std::string& list() {
++  static const std::string v = [] {
++    const char* e = std::getenv("OWNRT_TARGET_FAST");
++    const std::string s = e ? e : "";
++    return s == "1" ? std::string("ssel,hcg,kptr") : s;
++  }();
++  return v;
++}
++inline bool enabled(const char* token) {
++  const auto& v = list();
++  if (v.empty() || v == "0") return false;
++  return ("," + v + ",").find(std::string(",") + token + ",") != std::string::npos;
++}
++}  // namespace target_fast
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp	2026-10-30 14:14:48.000000000 -0400
++++ experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/dense_v2.hpp	2026-10-30 14:35:23.686291763 -0400
+@@ -147,5 +147,53 @@
+  sycl::group_barrier(it.get_group());
+  if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
+ }
++// OWNRT_TARGET_FAST ssel (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30): bf16_split with the matrix chosen by static
++// indices only (as bf16_multi_static); every other line is bf16_split's.
++template<unsigned U,unsigned WGR> inline void bf16_split_static(const std::array<Mat,4>& m,unsigned count,sycl::nd_item<1> it,float* xch){
++ auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),sgl=unsigned(sg.get_group_linear_id());
++ const unsigned slot=sgl/2,half=sgl%2;const uint32_t ridx=uint32_t(it.get_group_linear_id())*WGR+slot;
++ Mat d=m[0];
++ if(count>1&&ridx>=m[1].first_sub)d=m[1];
++ if(count>2&&ridx>=m[2].first_sub)d=m[2];
++ if(count>3&&ridx>=m[3].first_sub)d=m[3];const uint32_t row=ridx-d.first_sub;const bool live=row<d.rows;
++ float A=0.f;
++ if(live){
++  const uint32_t k=d.k;const uint8_t* W=d.w+size_t(row)*d.rb;const float* x=d.x;
++  uint32_t base=(half*16u+lane)*8u;
++  for(;base+(U-1)*256u+8u<=k;base+=U*256u){
++   float wide[U][8];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base+u*256u);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[u][e]=a0[e];wide[u][e+4]=a1[e];}}
++   sycl::vec<uint16_t,8> w[U];
++   #pragma unroll
++   for(unsigned u=0;u<U;++u)w[u]=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base+u*256u)*2u);
++   #pragma unroll
++   for(unsigned u=0;u<U;++u){
++    #pragma unroll
++    for(unsigned e=0;e<8;++e){const float product=bf16f(w[u][e])*wide[u][e];A=A+product;}}
++  }
++  for(;base+8u<=k;base+=256u){
++   float wide[8];
++   {const sycl::vec<float,4>*xv=reinterpret_cast<const sycl::vec<float,4>*>(x+base);const auto a0=xv[0],a1=xv[1];
++    #pragma unroll
++    for(unsigned e=0;e<4;++e){wide[e]=a0[e];wide[e+4]=a1[e];}}
++   const auto w=*reinterpret_cast<const sycl::vec<uint16_t,8>*>(W+size_t(base)*2u);
++   #pragma unroll
++   for(unsigned e=0;e<8;++e){const float product=bf16f(w[e])*wide[e];A=A+product;}
++  }
++  if(base<k){
++   const uint16_t* wr=reinterpret_cast<const uint16_t*>(W);float values[8],wide[8];
++   for(unsigned e=0;base+e<k;++e){values[e]=bf16f(wr[base+e]);wide[e]=x[base+e];}
++   for(unsigned e=0;base+e<k;++e){const float product=values[e]*wide[e];A=A+product;}
++  }
++ }
++ #pragma unroll
++ for(unsigned lv=0;lv<4;++lv){const float o=sycl::permute_group_by_xor(sg,A,1u<<lv);A=((lane>>lv)&1u)?o+A:A+o;}
++ if(half==1&&lane==0)xch[slot]=A;
++ sycl::group_barrier(it.get_group());
++ if(half==0&&lane==0&&live){const float upper=xch[slot];d.y[row]=A+upper;}
++}
+ inline bool enabled(){static const bool on=[]{const char* e=std::getenv("OWNRT_DENSE_DECODE_V2");return e&&e[0]=='1';}();return on;}
+ }
+diff -ruN /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+--- /dev/shm/fc2-2026-10-30/base-f10c30c4a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-30 14:14:48.000000000 -0400
++++ experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp	2026-10-30 15:19:26.237250033 -0400
+@@ -14,6 +14,7 @@
+ #include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet6-kopt/dense_v2.hpp"
++#include "stage2/packet194-expert-diet-engine/target_fast.hpp"
+ #include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
+ #include <algorithm>
+ #include <array>
+@@ -167,6 +168,8 @@
+           std::array<dense_v2::Mat,4> m2{};uint32_t s2=0;
+           for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),s2};s2+=(uint32_t(d.rows)+1)/2;}
+           const size_t global=(size_t(s2)*32+127)/128*128;
++          if(target_fast::enabled("hcg"))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi_static<2,4>(m2,count,it);}));});
+           return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
+             h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<2,4>(m2,count,it);}));});
+         }
+@@ -175,6 +178,9 @@
+           std::array<dense_v2::Mat,4> m2{};uint32_t total=0;
+           for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];m2[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),total};total+=uint32_t(d.rows);}
+           constexpr unsigned WGR=4;const size_t global=size_t((total+WGR-1)/WGR)*WGR*32;
++          if(target_fast::enabled("ssel"))return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32))](sycl::handler& h){
++            h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{
++              float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());dense_v2::bf16_split_static<10,WGR>(m2,count,it,xch);}));});
+           return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(WGR*32))](sycl::handler& h){
+             h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{
+               float* xch=*sycl::ext::oneapi::group_local_memory_for_overwrite<float[WGR]>(it.get_group());dense_v2::bf16_split<10,WGR>(m2,count,it,xch);}));});
+@@ -459,21 +465,29 @@
+ // each row straight from global memory (no local staging, no barrier) and shares each 8-column activation chunk across
+ // its rows. Every row keeps Multiply's single-row arithmetic exactly: lane l owns columns l*8+SG*8*i, the same decode8
+ // values, product then add in that order, the same adjacent-pair subgroup tree, and NaN for inactive rows.
++// OWNRT_TARGET_FAST kptr (lab 2026-10-30, research/tp/fixed-cost-2-2026-10-30): the kopt block-rows / pair / packed decode
++// kernels read their bindings through the captured pointer array indexed by descriptor fields (a runtime index: the
++// array stays in private memory, one dependent load before the first access). With kptr the same pointers are resolved
++// on the host before capture; KPSEL picks the host value in that instantiation and the original lookup otherwise.
++// The unselected branch is a discarded statement of the enclosing template, so the flag-off instantiation neither
++// captures the host values nor changes its own lookups.
++#define KPSEL(HP,index,host) ([&]()->void*{if constexpr(HP)return host;else return pointers[index];}())
+ template<unsigned R> struct MultiplyBlockRows:ownrt::SyclOperation {
+   static constexpr unsigned Subgroups=4;
+   Descriptor desc{};unsigned subgroup=32;
+-  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
++  template<Type T,unsigned SG,bool HP=false> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt block-rows capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    void* const h_r=d.routed?pointers[d.r]:nullptr;void* const h_s=d.routed?pointers[d.status]:nullptr;void* const h_x=pointers[d.x];void* const h_w=pointers[d.w];void* const h_y=pointers[d.y];
+     const size_t blocks=(d.span+R-1)/R,total=blocks*d.count,groups=(total+Subgroups-1)/Subgroups;
+     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+       h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+         auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+         const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
+         const size_t slot=logical/blocks,first=(logical%blocks)*R;
+-        Route r{0,0,uint32_t(d.rows)};if(d.routed)r=static_cast<const Route*>(pointers[d.r])[slot];
++        Route r{0,0,uint32_t(d.rows)};if(d.routed)r=static_cast<const Route*>(KPSEL(HP,d.r,h_r))[slot];
+         const bool valid=valid_route(r,d.experts,d.rows,d.span);
+-        if(d.routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;
+-        const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;const uint8_t* w=static_cast<const uint8_t*>(pointers[d.w]);
++        if(d.routed&&first==0&&lane==0)static_cast<uint32_t*>(KPSEL(HP,d.status,h_s))[slot]=valid?0:1;
++        const float* x=static_cast<const float*>(KPSEL(HP,d.x,h_x))+slot*d.k;const uint8_t* w=static_cast<const uint8_t*>(KPSEL(HP,d.w,h_w));
+         float acc[R];const uint8_t* rows[R];bool live[R];
+         #pragma unroll
+         for(unsigned i=0;i<R;++i){acc[i]=0;const size_t row=first+i;live[i]=valid&&row<d.span&&row<r.row_count;
+@@ -505,14 +519,14 @@
+           float sum=acc[i];
+           for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+           const size_t row=first+i;
+-          if(lane==0&&row<d.span)static_cast<float*>(pointers[d.y])[slot*d.span+row]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
++          if(lane==0&&row<d.span)static_cast<float*>(KPSEL(HP,d.y,h_y))[slot*d.span+row]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
+         }
+       }));
+     });
+   }
+   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+     switch(desc.type){
+-#define BLOCK_CASE(T) case Type::T:return run<Type::T,32>(q,p,deps)
++#define BLOCK_CASE(T) case Type::T:return target_fast::enabled("kptr")?run<Type::T,32,true>(q,p,deps):run<Type::T,32>(q,p,deps)
+ BLOCK_CASE(Q8_0);BLOCK_CASE(Q6_K);BLOCK_CASE(IQ2_S);BLOCK_CASE(IQ3_S);BLOCK_CASE(IQ4_NL);
+ #undef BLOCK_CASE
+     default:break;}
+@@ -530,20 +544,22 @@
+ template<unsigned RH> struct MultiplyBlockRowsPair:ownrt::SyclOperation {
+   static constexpr unsigned Subgroups=4,R=2*RH;
+   Descriptor desc{};unsigned wu=0,yu=0,su=0,act=0,active=0,error=0,position=0;int limit=0;
+-  template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
++  template<Type T,unsigned SG,bool HP=false> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     auto d=desc;std::array<void*,12> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt block-rows pair capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+     const unsigned iwu=wu,iyu=yu,isu=su,iact=act,iactive=active,ierror=error,iposition=position;const int lim=limit;
++    void* const h_r=pointers[d.r];void* const h_s=pointers[d.status];void* const h_su=pointers[isu];void* const h_x=pointers[d.x];void* const h_w=pointers[d.w];void* const h_wu=pointers[iwu];
++    void* const h_y=pointers[d.y];void* const h_yu=pointers[iyu];void* const h_act=pointers[iact];void* const h_active=pointers[iactive];void* const h_error=pointers[ierror];void* const h_position=pointers[iposition];
+     const size_t blocks=(d.span+RH-1)/RH,total=blocks*d.count,groups=(total+Subgroups-1)/Subgroups;
+     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(groups*SG*Subgroups),sycl::range<1>(SG*Subgroups))](sycl::handler& h) {
+       h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+         auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id();
+         const size_t logical=it.get_group_linear_id()*Subgroups+sg.get_group_linear_id();if(logical>=total)return;
+         const size_t slot=logical/blocks,first=(logical%blocks)*RH;
+-        Route r{0,0,uint32_t(d.rows)};r=static_cast<const Route*>(pointers[d.r])[slot];
++        Route r{0,0,uint32_t(d.rows)};r=static_cast<const Route*>(KPSEL(HP,d.r,h_r))[slot];
+         const bool valid=valid_route(r,d.experts,d.rows,d.span);
+-        if(first==0&&lane==0){static_cast<uint32_t*>(pointers[d.status])[slot]=valid?0:1;static_cast<uint32_t*>(pointers[isu])[slot]=valid?0:1;}
+-        const float* x=static_cast<const float*>(pointers[d.x])+slot*d.k;
+-        const uint8_t* wbase[2]={static_cast<const uint8_t*>(pointers[d.w]),static_cast<const uint8_t*>(pointers[iwu])};
++        if(first==0&&lane==0){static_cast<uint32_t*>(KPSEL(HP,d.status,h_s))[slot]=valid?0:1;static_cast<uint32_t*>(KPSEL(HP,isu,h_su))[slot]=valid?0:1;}
++        const float* x=static_cast<const float*>(KPSEL(HP,d.x,h_x))+slot*d.k;
++        const uint8_t* wbase[2]={static_cast<const uint8_t*>(KPSEL(HP,d.w,h_w)),static_cast<const uint8_t*>(KPSEL(HP,iwu,h_wu))};
+         float acc[R];const uint8_t* rows[R];bool live[R];
+         #pragma unroll
+         for(unsigned i=0;i<R;++i){acc[i]=0;const size_t row=first+i%RH;live[i]=valid&&row<d.span&&row<r.row_count;
+@@ -574,9 +590,9 @@
+           float sum=acc[i];
+           for(unsigned width=1;width<SG;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(lane%(2*width)==0)sum=sum+rhs;}
+           const size_t row=first+i%RH;stored[i]=valid&&row<r.row_count?sum:bits_float(0x7fc00000);
+-          if(lane==0&&row<d.span)static_cast<float*>(pointers[i<RH?d.y:iyu])[slot*d.span+row]=stored[i];
++          if(lane==0&&row<d.span)static_cast<float*>(i<RH?KPSEL(HP,d.y,h_y):KPSEL(HP,iyu,h_yu))[slot*d.span+row]=stored[i];
+         }
+-        const expert_pair::Act a{static_cast<float*>(pointers[iact]),static_cast<const int32_t*>(pointers[iactive]),static_cast<int32_t*>(pointers[ierror]),static_cast<const int32_t*>(pointers[iposition]),lim};
++        const expert_pair::Act a{static_cast<float*>(KPSEL(HP,iact,h_act)),static_cast<const int32_t*>(KPSEL(HP,iactive,h_active)),static_cast<int32_t*>(KPSEL(HP,ierror,h_error)),static_cast<const int32_t*>(KPSEL(HP,iposition,h_position)),lim};
+         if(expert_pair::guard(a,sg,logical==0&&lane==0)&&lane==0) {
+           #pragma unroll
+           for(unsigned i=0;i<RH;++i){const size_t row=first+i;if(row<d.span)a.y[slot*d.span+row]=expert_pair::value(stored[i],stored[RH+i]);}
+@@ -586,8 +602,8 @@
+   }
+   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+     switch(desc.type){
+-    case Type::IQ2_S:return run<Type::IQ2_S,32>(q,p,deps);
+-    case Type::IQ3_S:return run<Type::IQ3_S,32>(q,p,deps);
++    case Type::IQ2_S:return target_fast::enabled("kptr")?run<Type::IQ2_S,32,true>(q,p,deps):run<Type::IQ2_S,32>(q,p,deps);
++    case Type::IQ3_S:return target_fast::enabled("kptr")?run<Type::IQ3_S,32,true>(q,p,deps):run<Type::IQ3_S,32>(q,p,deps);
+     default:break;}
+     throw std::invalid_argument("kopt block-rows pair: IQ2_S and IQ3_S gate/up only");
+   }
+@@ -603,11 +619,15 @@
+ template<unsigned SG,unsigned RI,unsigned WGSG,int MODE> struct MultiplyIQ4NLPacked:ownrt::SyclOperation {
+   Descriptor desc{};
+   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++    return target_fast::enabled("kptr")?go<true>(q,p,deps):go<false>(q,p,deps);
++  }
++  template<bool HP> sycl::event go(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt iq4nl packed capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+     constexpr unsigned SETS=SG/8,RPS=SETS*RI;
+     const uint32_t span=uint32_t(d.span),rows=uint32_t(d.rows),k=uint32_t(d.k),rb=uint32_t(d.rb),experts=d.experts,count=d.count;
+     const uint32_t blocks=(span+RPS-1)/RPS,total=blocks*count,groups=(total+WGSG-1)/WGSG;
+     const unsigned wi=d.w,xi=d.x,yi=d.y,ri=d.r,si=d.status;
++    void* const h_w=pointers[wi];void* const h_x=pointers[xi];void* const h_y=pointers[yi];void* const h_r=pointers[ri];void* const h_s=pointers[si];
+     return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
+       h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+         // MODE 2: the 16 level floats (float(iq4_level(n)), the same values) in kernel-scope work-group memory.
+@@ -616,10 +636,10 @@
+         auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
+         const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
+         const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
+-        const Route r=static_cast<const Route*>(pointers[ri])[slot];
++        const Route r=static_cast<const Route*>(KPSEL(HP,ri,h_r))[slot];
+         const bool valid=valid_route(r,experts,rows,span);
+-        if(first==0&&lane==0)static_cast<uint32_t*>(pointers[si])[slot]=valid?0:1;
+-        const float* xs=static_cast<const float*>(pointers[xi])+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(pointers[wi]);
++        if(first==0&&lane==0)static_cast<uint32_t*>(KPSEL(HP,si,h_s))[slot]=valid?0:1;
++        const float* xs=static_cast<const float*>(KPSEL(HP,xi,h_x))+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(KPSEL(HP,wi,h_w));
+         float acc[RI][4];const uint8_t* rp[RI];bool live[RI];
+         #pragma unroll
+         for(unsigned i=0;i<RI;++i){
+@@ -661,7 +681,7 @@
+           #pragma unroll
+           for(unsigned width=1;width<8;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
+           const uint32_t row=first+i;
+-          if(t==0&&row<span)static_cast<float*>(pointers[yi])[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
++          if(t==0&&row<span)static_cast<float*>(KPSEL(HP,yi,h_y))[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
+         }
+       }));
+     });
+@@ -676,20 +696,24 @@
+ template<unsigned SG,unsigned RI,unsigned WGSG> struct MultiplyQ8Packed:ownrt::SyclOperation {
+   Descriptor desc{};
+   sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
++    return target_fast::enabled("kptr")?go<true>(q,p,deps):go<false>(q,p,deps);
++  }
++  template<bool HP> sycl::event go(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     auto d=desc;std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("kopt q8 packed capture extent");std::copy(p.begin(),p.end(),pointers.begin());
+     constexpr unsigned SETS=SG/8,RPS=SETS*RI;
+     const uint32_t span=uint32_t(d.span),rows=uint32_t(d.rows),k=uint32_t(d.k),rb=uint32_t(d.rb),experts=d.experts,count=d.count;
+     const uint32_t blocks=(span+RPS-1)/RPS,total=blocks*count,groups=(total+WGSG-1)/WGSG;
+     const unsigned wi=d.w,xi=d.x,yi=d.y,ri=d.r,si=d.status;const bool routed=d.routed;
++    void* const h_w=pointers[wi];void* const h_x=pointers[xi];void* const h_y=pointers[yi];void* const h_r=d.routed?pointers[ri]:nullptr;void* const h_s=d.routed?pointers[si]:nullptr;
+     return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h) {
+       h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+         auto sg=it.get_sub_group();const unsigned lane=sg.get_local_linear_id(),set=lane/8,t=lane%8;
+         const uint32_t logical=uint32_t(it.get_group_linear_id())*WGSG+uint32_t(sg.get_group_linear_id());if(logical>=total)return;
+         const uint32_t slot=logical/blocks,first=(logical%blocks)*RPS+set*RI;
+-        Route r{0,0,rows};if(routed)r=static_cast<const Route*>(pointers[ri])[slot];
++        Route r{0,0,rows};if(routed)r=static_cast<const Route*>(KPSEL(HP,ri,h_r))[slot];
+         const bool valid=valid_route(r,experts,rows,span);
+-        if(routed&&first==0&&lane==0)static_cast<uint32_t*>(pointers[si])[slot]=valid?0:1;
+-        const float* xs=static_cast<const float*>(pointers[xi])+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(pointers[wi]);
++        if(routed&&first==0&&lane==0)static_cast<uint32_t*>(KPSEL(HP,si,h_s))[slot]=valid?0:1;
++        const float* xs=static_cast<const float*>(KPSEL(HP,xi,h_x))+size_t(slot)*k;const uint8_t* w=static_cast<const uint8_t*>(KPSEL(HP,wi,h_w));
+         float acc[RI][4];const uint8_t* rp[RI];bool live[RI];
+         #pragma unroll
+         for(unsigned i=0;i<RI;++i){
+@@ -732,7 +756,7 @@
+           #pragma unroll
+           for(unsigned width=1;width<8;width*=2){float rhs=sycl::select_from_group(sg,sum,(lane+width)%SG);if(t%(2*width)==0)sum=sum+rhs;}
+           const uint32_t row=first+i;
+-          if(t==0&&row<span)static_cast<float*>(pointers[yi])[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
++          if(t==0&&row<span)static_cast<float*>(KPSEL(HP,yi,h_y))[size_t(slot)*span+row]=live[i]?sum:bits_float(0x7fc00000);
+         }
+       }));
+     });
