@@ -1,8 +1,17 @@
 # Current Workspace State
 
-**October 30 — next: one-card per-site timing at 1–4 rows plus a census of small kernels**, the measurement the
-[200 tok/s plan](experiments/own-xpu-runtime/IDEAS.md#toward-200-toks-for-one-conversation-without-quality-loss-2026-10-29)
-asks for before any new kernel build (diagnostic only; results go to `experiments/own-xpu-runtime/research/decode-site-census-2026-10-30/`).
+**October 30, about 04:00 — where decode time goes, measured; main campaign now: check several guessed tokens per step.**
+- One card per stage: half of each step's GPU time is kernels shorter than 20 µs (84% of launches). On four cards about
+  4 ms per stage of it runs on both cards.
+- Checking two tokens at once costs 2.0× today (no multi-row decode path); the best existing exact tiles give 1.55×,
+  just short of the 1.52× where deeper guessing starts to pay. Experts stay costly with more rows: consecutive tokens
+  share only about 4 of 10 experts.
+- Projection (arithmetic, not measured), four cards: cheap multi-row kernels plus deeper guessing about 109 tok/s;
+  plus halved small-kernel cost about 120; everything at best about 145–150. 200 is not reached under realistic costs.
+- Started: small-row exact kernels, then a multi-row pass with a go/no-go at 1.35× for two rows, then deeper guessing
+  on it (`experiments/own-xpu-runtime/research/multirow-verify-2026-10-30/`).
+  [Census](experiments/own-xpu-runtime/research/decode-site-census-2026-10-30/RESULT.md) ·
+  [plan](experiments/own-xpu-runtime/IDEAS.md#census-result-2026-10-30-measured-on-one-card-per-rank).
 
 **October 30, about 03:00 — four cards now read a 121,854-token prompt in 250.5 s instead of 354 s, exact; the 3+1 layout takes 241–251 s.**
 - Fix for last night's failed startup check: a constant buffer of the new MoE path is now refilled for every chunk, since

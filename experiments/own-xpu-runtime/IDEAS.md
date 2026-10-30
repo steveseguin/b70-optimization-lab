@@ -66,12 +66,52 @@ scales into weights, split sums across cards, lossy draft acceptance,
 prompt-lookup or n-gram drafts (barred from headline benchmarks by the validity
 rules), and draft training. Quality stays bit-exact to the target model.
 
+### Census result (2026-10-30, measured on one card per rank)
+
+From the [decode site census](research/decode-site-census-2026-10-30/RESULT.md):
+
+- **Half of every step is small kernels.** Kernels under 20 µs make up 84% of
+  launches and about half the GPU time (5.0 ms of rank 0's 10.1 ms, 5.4 of
+  rank 1's 11.8 ms). On four cards, 3.8–4.2 ms of that per stage runs on both cards.
+- **Checking several rows is expensive today.** There is no multi-row decode
+  path: two rows cost 2.0× (run one after another). The batched prompt path costs
+  2.7–3.0× at 2–4 rows because its tiles are tuned for 256 rows. The best existing
+  exact tiles per site give 1.55× at two rows and 2.2× at four, which is not cheap
+  enough to make deeper speculation pay (it needs ≤1.52× at two rows).
+- **Experts stay costly with more rows.** Consecutive tokens share only about
+  4 of 10 experts, so 2/3/4 rows touch about 16/22/27 distinct experts. Each new
+  expert costs 13–20 µs per layer; an extra row on an already-loaded expert costs
+  almost nothing.
+- **Projection (CPU arithmetic over these tables, not a measurement), four cards:**
+  ideal multi-row kernels (#1) with deeper speculation (#2): about 109 tok/s;
+  plus glue halved (#3): about 120; plus experts at their memory limit (#4):
+  about 144. One stage over four cards (#5): up to about 150. **200 is not
+  reached by any combination under realistic costs**, only in an upper bound
+  that assumes free misses and perfect stage overlap (206–218).
+- **What the list leaves for the rest of the way:** the draft (1.3 ms per chain
+  step, about 0.43 ms of it the vocabulary head), about 2 ms per stage of
+  card-to-card exchange and waiting on four cards, and acceptance (76% per guess;
+  at 90% per position the full stack projects to about 195).
+
+### Ideas the census added
+
+| Idea | Why | Size (estimate) |
+| --- | --- | --- |
+| Split the replicated small GEMVs (HC low/gate, shared expert, router) across the two cards of a stage by output rows, with direct-store gathers | About 2 ms per stage of weight reads now done on both cards | A few percent: each split saves about 5 µs per site against a 2–3 µs exchange |
+| A cheaper draft vocabulary head for chained drafting (for example the most frequent tokens only, falling back to the full head) | Draft head is 0.43 ms of each 1.3 ms chain step; outputs stay exact because the target verifies every token | Matters only at depth 2–3, where the draft costs about 4 ms per cycle; changes acceptance, which must be measured |
+| Break down the four-card stage overhead (about 2 ms beyond an ideal split: exchanges, waits at about 70 sync points, snapshot) | Second-largest non-kernel cost on four cards | Unknown until measured; a per-exchange wait trace on the TP harness answers it |
+| Tree drafting (top-2 at the first position: 87.6% coverage against 76.1%) | Raises accepted tokens per cycle without draft training | Needs a cheap multi-row pass first |
+
 ### Decision rule
 
-Measure before building: the next device work should be the per-site, per-M
-timing table (#1) plus a glue census (#3) on one card, which answers whether the
-path to 200 runs through cheaper multi-row verification. Prefer a lever that
-changes tokens per cycle or halves a stage over another 1–2% trim.
+Measured on 2026-10-30: the path above 100 tok/s runs through a cheap
+multi-row decode pass, so that is the main campaign
+(`research/multirow-verify-2026-10-30/`, in progress).
+In order: small-row exact tiles for the dense sites, then a small-M expert path
+grouped by distinct expert, then a multi-row pass with a go/no-go at M=2 ≤ about
+1.35× and M=4 ≤ about 1.9×, then the existing depth-N speculation switched to that
+pass. Glue fusion (#3) is next after it. Prefer a lever that changes tokens per
+cycle or halves a stage over another 1–2% trim.
 
 # Ideas from other runtimes
 
