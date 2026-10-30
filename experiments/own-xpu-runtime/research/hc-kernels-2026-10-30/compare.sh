@@ -10,7 +10,7 @@ echo "# $PHASE compares at $(date -Is) (runs $RUNS)" >>"$out"
 for c in "$@"; do
   IFS=: read -r rank a b <<<"$c"
   pa="$RUNS/$a"; pb="$RUNS/$b"; [[ "$a" == /* ]] && pa=$a; [[ "$b" == /* ]] && pb=$b
-  if [ "$rank" = 1 ]; then r=$(python3 -B "$PS/tp_rank1_driver.py" compare "$pa" "$pb"); rc=$?
+  if [ "$rank" = 1 ]; then r=$(python3 -B "$D/drivers/tp_rank1_driver.py" compare "$pa" "$pb"); rc=$?
   else r=$(python3 -B "$PS/tp_rank0_driver.py" compare "$pa" "$pb"); rc=$?; fi
   t=$(python3 -c "
 import json,sys

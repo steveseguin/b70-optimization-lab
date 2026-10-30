@@ -154,7 +154,9 @@ whether a persistent kernel per layer can remove it wholesale (`research/persist
 - Bitwise exact on the kernel bench (97 real blocks), the one-card rank harness (both ranks, h / hmcn / m, batched +
   two-request) and the four-card TP harness against one card.
 - Four-card halves: rank 1 9.505 → 9.121 ms (−4.0%), rank 0 8.599 → 8.282 ms (−3.7%).
-- Fresh-server end gate pending (after the engine merge).
+- Fresh-server end gate (A/B/A/B, tptsxqckh ± the flag): 84.59 → 87.69 tok/s (+3.66%), faster on 12/12 prompts in all
+  four cross-pairs, every output equal to B19, hit cycle 9.68 → 9.34 ms. A first attempt halted at the startup gate:
+  pairing `final.norm` moved a combine past the controller's export of `streams` to the draft. Fixed in `3d85cdb20`.
 - The exact-order GEMVs themselves are at engine speed: every rescheduling was equal or slower.
 
 ### Decision rule

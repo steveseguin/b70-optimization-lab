@@ -2,7 +2,8 @@
 # Device phase of research/hc-kernels-2026-10-30 (copy of research/tp/fixed-cost-2026-10-30/run_phase.sh; rank drivers of
 # research/tp/prefill-speed-2026-10-29, unchanged; safety checks unchanged). Changes: one-card arms run on 0000:43:00.0
 # (FilterBdfPath in the launch JSON; lock card43), extra hk=TOKENS sets OWNRT_HC_KERNELS (tokens joined by '+'), and each
-# arm's state.bundle files are removed after the arm (the compare uses state.json hashes). Launched once as a transient
+# arm's state.bundle files are removed after the arm (the compare uses state.json hashes); extra ph adds the tptsxqckh
+# prefill flags; rank 1 runs this folder's driver copy (drivers/), which records rank 1's exported draft-input rows. Launched once as a transient
 # unit that already holds the locks:
 #   systemd-run --user --unit=stage-overhead-<phase> --collect -p Restart=no -p KillMode=process -p LimitNOFILE=1048576 \
 #     -E SO_BIN=... flock -n -E 75 /dev/shm/card23.lock flock -n -E 75 /dev/shm/card27.lock flock -n -E 75 /dev/shm/card47.lock \
@@ -67,6 +68,8 @@ for arm in "$@"; do
     pt) envs+=(OWNRT_TP_PERSISTENT_THREAD=1) ;;
     ep) envs+=(OWNRT_TP_EXPERT_PAIR=1) ;;
     hk=*) v=${x#hk=}; envs+=(OWNRT_HC_KERNELS=${v//+/,}) ;;
+    ph) envs+=(OWNRT_PREFILL_LOOKUP_BATCH=1 OWNRT_PREFILL_MOE_NATIVE=1 OWNRT_PREFILL_XZERO_ONCE=1 OWNRT_DRAFT_CHUNK_REPLAY=1 OWNRT_DRAFT_CHUNK_KV_ONLY=1
+            OWNRT_PREFILL_SPECIAL_ROWS=1 OWNRT_PREFILL_LOOKUP_THREADS=4 OWNRT_DRAFT_CHUNK_STAGE_THREAD=1 OWNRT_DRAFT_CHUNK_GUARD_ROW=1 OWNRT_DRAFT_CHUNK_ROW_COPY=1) ;;  # the tptsxqckh prefill flags
     rd) envs+=(OWNRT_RETIRE_DEFERRED=1) ;;
     rd=*) envs+=(OWNRT_RETIRE_DEFERRED=${x#rd=}) ;;
     gp0) lenv+=(OWNRT_GDN_PREP=0) ;;
@@ -91,7 +94,7 @@ json.dump(d, open(out, 'w'), indent=1)
 PY
   t=$(date +%s)
   if [ "$rank" = 1 ]; then
-    env "${envs[@]}" python3 -B "$PS/tp_rank1_driver.py" run --launch "$L" --out "$out" \
+    env "${envs[@]}" python3 -B "$D/drivers/tp_rank1_driver.py" run --launch "$L" --out "$out" \
       --steps "$steps" --prompt "$prompt" --cache "$CACHE" "${tp[@]}" "${more[@]}"
   else
     env "${envs[@]}" python3 -B "$PS/tp_rank0_driver.py" run --launch "$L" --out "$out" \

@@ -4,27 +4,47 @@
 BF16 hyper-connection (HC) GEMVs looked faster than the engine's. Could kernels that keep the engine's per-element
 arithmetic and reduction order bit for bit win back that bandwidth, and could the two-launch HC norm become one launch?
 
-**Answer: yes, exactly, about 4% per four-card stage.** The GEMVs themselves were already at their speed for the exact
-order; the time came from the norm and the combine next to it, plus a descriptor codegen issue.
-- **Three default-off tokens under `OWNRT_HC_KERNELS`.** `norm1`, `lowsel` and `cnorm` (`=1` sets all three). All
-  three are bitwise exact:
-  - on 97 real HC blocks in the kernel bench;
-  - on the one-card rank harness, both ranks, full state, tokens and draft tokens, including rank 0 `hmcn` and `m`
-    and the two-request case;
-  - on the four-card TP harness against one card.
-- **Rank harness, half medians (A/B/A/B).**
+**Answer: yes, exactly. +3.7% decode tok/s on fresh four-card servers, every output equal to B19.**
 
-  | layout | rank | flags off | flags on | change |
-  | --- | --- | --- | --- | --- |
-  | one card | rank 1 | 12.31 / 12.36 ms | 12.01 / 11.95 ms | −0.35 ms (−2.8%) |
-  | one card | rank 0 | 10.80 / 10.80 ms | 10.465 / 10.46 ms | −0.34 ms (−3.1%) |
-  | four cards (tptsxqckf) | rank 1 | 9.507 / 9.503 ms | 9.120 / 9.121 ms | −0.385 ms (−4.0%) |
-  | four cards (tptsxqckf) | rank 0 | 8.604 / 8.594 ms | 8.283 / 8.281 ms | −0.317 ms (−3.7%) |
+Three default-off tokens, `OWNRT_HC_KERNELS=1` = `norm1,lowsel,cnorm`, merged in `c1c3012e9` and `3d85cdb20`.
 
-- **Pending.** The fresh four-card server end gate (A/B/A/B, 12-prompt suite, outputs = B19) runs after the engine
-  change is merged into `engine/src`. Until then the change lives in
-  [engine-hc-kernels.patch](engine-hc-kernels.patch) against `83abad01a`. Projection, not measured: rank 1 paces the
-  about 9.7 ms hit cycle, so decode should gain about 4%.
+**End gate.** Fresh four-card lab servers at 65536, run in the order A/B/A/B (receipt `17f5f49ff010`):
+- A = `tptsxqckh`; B = `tptsxqckh` + `OWNRT_HC_KERNELS=1`.
+- Every server passed its 13/13 startup gate.
+- On every server, all 12 suite outputs equal B19: token ids, SHA-256, and MTP guesses and hits.
+
+| server | median tok/s | controller hit cycle | miss interval |
+| --- | ---: | ---: | ---: |
+| A r3 | 84.61 | 9.678 ms | 18.55 ms |
+| B r3 | **87.76** | **9.331 ms** | 17.86 ms |
+| A r4 | 84.58 | 9.690 ms | 18.50 ms |
+| B r4 | **87.63** | **9.354 ms** | 17.86 ms |
+
+- Mean of medians: 84.59 → 87.69 tok/s (**+3.66%**).
+- B is faster on 12 of 12 prompts in all four cross-pairs, by 1.034–1.044 (median 1.037).
+- The hit cycle drops by 0.34 ms (−3.5%) and a miss by 0.67 ms.
+- In the service, B's ranks admit every HC norm (rank 0: 92/92, rank 1: 102/102, two cards each), with 88 and 98
+  combine→norm pairs.
+
+**Rank harness, half medians (A/B/A/B).**
+
+| layout | rank | flags off | flags on | change |
+| --- | --- | --- | --- | --- |
+| one card | rank 1 | 12.31 / 12.36 ms | 12.01 / 11.95 ms | −2.8% |
+| one card | rank 0 | 10.80 / 10.80 ms | 10.465 / 10.46 ms | −3.1% |
+| four cards | rank 1 | 9.505 ms | 9.121 ms | −4.0% |
+| four cards | rank 0 | 8.599 ms | 8.282 ms | −3.7% |
+
+**The first end-gate attempt halted, and was fixed.** Receipt `63c4a26a22d6`; no fault.
+- B's startup gate failed 11/13: tokens and state were equal, but the draft guesses differed.
+- `cnorm` had paired `blk.47.ffn.combine` with `final.norm`. Rank 1's controller reads `streams` back right after
+  that combine and sends it to rank 0 as the draft's input, so the draft received pre-combine rows.
+- The rank harness missed it because rank 0 ran on fixture rows.
+- Fix (`3d85cdb20`): never pair across a controller read. The combine before `final.norm` is never paired, and there
+  are no pairs at all with pipeline exports or `--retain-steps`.
+- The harness now records rank 1's exported draft-input rows and requires them equal
+  ([drivers/tp_rank1_driver.py](drivers/tp_rank1_driver.py)). The old binary fails that check from row 0; the fixed
+  one passes it token by token and batched (section "Export check").
 
 ## In plain words
 
@@ -51,8 +71,9 @@ order; the time came from the norm and the combine next to it, plus a descriptor
   stream row. So the norm's work-group combines its own row first, writes it back, and normalizes the values it
   already holds: one launch instead of three.
   - Bench: 9.4 µs becomes 5.4 µs.
-  - Pairs per half: 44 on rank 0 (layer 1's pair is split by the PLE) and 50 on rank 1 (`blk.23.hc.a.norm` follows
-    the handoff).
+  - Pairs per half: 44 on rank 0 (layer 1's pair is split by the PLE) and 49 on rank 1 (`blk.23.hc.a.norm` follows
+    the handoff, and the combine before `final.norm` stays unpaired because the controller exports `streams` there).
+    The rank-harness gates below ran with 50 pairs on rank 1; the end gate ran with 49.
 - **Why this succeeds where `OWNRT_GSQ_FUSE_NORM` did not** (DO-NOT-REPEAT: rank 1 differed from layer 23's KV on).
   - That attempt rewrote the plan: the combine site absorbed the norm's outputs, weights and parameter and the norm
     site was deleted. Every path that walks the plan saw the merged site, including batched prefill (whose multi-row
@@ -137,8 +158,11 @@ order; the time came from the norm and the combine next to it, plus a descriptor
   - Both prepared specs must be the paths the kernel reproduces: CombineFast (F32, implementation 1,
     `OWNRT_SIMPLE_FAST` on) and the `specialised` norm.
   - Also here: `gsq_combine_norm`, and the record `hc-kernels.json` (norm sites, admitted, pairs).
-- **`main.cpp`:** two includes and two `execute_site` hooks, the same pattern as `gsq_mix_follower`. Pending merge:
-  another agent has uncommitted edits in this file.
+- **`main.cpp`:** two includes and two `execute_site` hooks, the same pattern as `gsq_mix_follower`. Merged on top of
+  the prefill agent's commit in `c1c3012e9`.
+- **Controller-read rule** (`3d85cdb20`, `generic_engine.hpp`): no pair may move the combine's write past a host read
+  of `streams`. Rank 1 exports `streams` to the draft after layer 47; pipeline stages and `--retain-steps` read at
+  layer ends. So the combine before `final.norm` is never paired, and pipeline or retained steps admit no pairs.
 
 ## Gates (rank harness: the prefill-speed rank drivers; [run_phase.sh](run_phase.sh), [compare.sh](compare.sh))
 
@@ -172,6 +196,45 @@ decode halves. Kernel log clean before every phase and after every arm (26 arms)
 
   The p10–p90 spread is about ±0.04 ms per arm.
 
+## End gate (fresh four-card lab servers, [suite/](suite/))
+
+- **Tooling.** A copy of `research/tp/prefill-host-2026-10-30`'s suite. Port 18173, `sc117-tp-svc-hk-*` units.
+  - `arm_env.py` adds `tptsxqckhhc` = `tptsxqckh` + `OWNRT_HC_KERNELS=1`.
+  - The lab adapter's `TP_KEYS` also forwards `OWNRT_HC_KERNELS`; without it B would silently equal A.
+  - Verified three ways: B's unit environment (`logs/arm-*-unit-env.txt`), both rank processes' `/proc` environment,
+    and the ranks' `hc-kernels.json` admission counts.
+- **Attempt 1** (receipt `63c4a26a22d6`, [results/attempt1-63c4a26a22d6/](suite/results/attempt1-63c4a26a22d6/)):
+  - A r1: 13/13, suite complete.
+  - B r1: halted at the startup gate, 11/13. code-review-258 and code-review-259 had equal tokens and equal persistent
+    state, but the draft guesses differed.
+  - Cause: the `final.norm` pair, described above.
+- **Attempt 2** (receipt `17f5f49ff010`; [results/suite/summary.json](suite/results/suite/summary.json),
+  [results/pairs-endgate.json](suite/results/pairs-endgate.json),
+  [results/hitcycle-endgate.json](suite/results/hitcycle-endgate.json)): the table at the top.
+  - The 3,490-token TTFT probe is the same in A and B (7.05–7.08 s).
+  - The kernel log stayed clean on every server.
+- **Raw evidence:** `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/hc-kernels-endgate` (servers and
+  export-check runs, `.sha256` verified). Engine builds: `.../engine-builds/hc-kernels-engine-build-merged{,2}`.
+
+## Export check (rank 1's draft-input rows; [logs/x1-compare.txt](logs/x1-compare.txt), [logs/x0-compare.txt](logs/x0-compare.txt))
+
+The lab driver copy records two sets of rows as SHA-256 per row:
+- the shared reverse region after every half (the layer-47 `streams` export);
+- each batched chunk's reverse rows in the prefill file.
+
+Its `compare` requires them equal. One card (43), with the ten tptsxqckh prefill flags (extra `ph`), 128 prompt rows,
+then 64 halves:
+
+| check | binary | result |
+| --- | --- | --- |
+| fixed, flags on vs off, token by token | `17f5f49ff010` | 1079/1079 state, 64 tokens, 192/192 exported rows equal |
+| fixed, flags on vs off, batched + second request | `17f5f49ff010` | both requests equal; exported rows 192 + 128 equal |
+| negative control, flags on vs fixed flags off | `63c4a26a22d6` | state and tokens equal; exported rows differ from row 0 (check fails as it should) |
+
+The batched compare's `ones` invariant (`prefill:moe-ones` all 1.0) fails in the second request's inventory with flags
+**off and on alike**, under the `ph` prefill flags. It is pre-existing, outside the HC kernels, and was passed to the
+coordinator.
+
 ## Files
 
 - **Bench:** [hc_kernels.hpp](hc_kernels.hpp) (candidates), [hc_bench.cpp](hc_bench.cpp), [build.sh](build.sh),
@@ -184,5 +247,7 @@ decode halves. Kernel log clean before every phase and after every arm (26 arms)
   cleanup), [compare.sh](compare.sh), [halves.py](halves.py), [klog.py](klog.py); `logs/` (phases s1, s2, g1, g2).
 - **Raw runs** (state bundles removed after each arm; `state.json` hashes kept):
   `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/hc-kernels-runs` (+ `.sha256`).
-- **Engine change:** [engine-hc-kernels.patch](engine-hc-kernels.patch). Smoke s1 (r1 binary) showed 0 combine pairs
+- **End gate:** [suite/](suite/); export check: [drivers/](drivers/); logs x0, x1.
+- **Engine change:** merged in `c1c3012e9` and `3d85cdb20`. [engine-hc-kernels.patch](engine-hc-kernels.patch) is the
+  original patch against `83abad01a`, without the controller-read fix. Smoke s1 (r1 binary) showed 0 combine pairs
   because the admission counted inputs without the control buffers; r2 fixed the indices before any gate ran.
