@@ -1,0 +1,34 @@
+=== phase c2 binary /dev/shm/engine-build-stage-overhead-20261030-r2/sc117-engine (932e4b5e2b3a) start 2026-10-30T05:30:43-04:00 pid 2212089 affinity 0-3,16-19 nofile 1048576
+[klog c2-before-24h] since @1793266243: rc=0 13 lines, 0 xe/fault lines
+--- arm c2-r0-p0smoke rank=0 mode=probe0 steps=4 prompt=0 pattern=h extra=trace MemAvailable=100502196224 shm_free=47451242496 at 2026-10-30T05:30:43-04:00
+{"steps": 4, "load_s": 54.853445121087134, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 15.985 draft ms 1.750
+arm c2-r0-p0smoke rc=0 after 60 s
+[klog c2-after-c2-r0-p0smoke] since @1793352643: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":875,"dropped_exchanges_and_merges":69,"exact":false}
+site-trace.jsonl 3702 lines
+half median (3..): 15.9632 draft 1.7372
+--- arm c2-r0-p0 rank=0 mode=probe0 steps=48 prompt=0 pattern=h extra=trace MemAvailable=99465056256 shm_free=46236426240 at 2026-10-30T05:31:43-04:00
+{"steps": 48, "load_s": 64.5663340750616, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 15.876 draft ms 1.767
+arm c2-r0-p0 rc=0 after 70 s
+[klog c2-after-c2-r0-p0] since @1793352704: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":875,"dropped_exchanges_and_merges":69,"exact":false}
+site-trace.jsonl 44974 lines
+half median (3..): 15.8756 draft 1.7666
+--- arm c2-r0-p1 rank=0 mode=probe1 steps=48 prompt=0 pattern=h extra=trace MemAvailable=97928355840 shm_free=45018296320 at 2026-10-30T05:32:54-04:00
+{"steps": 48, "load_s": 69.75148713611998, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 15.868 draft ms 1.756
+arm c2-r0-p1 rc=0 after 76 s
+[klog c2-after-c2-r0-p1] since @1793352774: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":1,"launches":875,"dropped_exchanges_and_merges":69,"exact":false}
+site-trace.jsonl 44974 lines
+half median (3..): 15.8659 draft 1.7557
+--- arm c2-r0-one-nw rank=0 mode=one steps=64 prompt=128 pattern=h extra=nw MemAvailable=97048530944 shm_free=43800166400 at 2026-10-30T05:34:10-04:00
+{"steps": 64, "load_s": 78.14355814293958, "prompt_ms": 1527.8885937295854, "draft_replay_ms": 126.29916099831462, "rc": 0} median half ms 10.675 draft ms 1.328
+arm c2-r0-one-nw rc=0 after 87 s
+[klog c2-after-c2-r0-one-nw] since @1793352850: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.6731 draft 1.3281
+--- arm c2-r0-one-nw2 rank=0 mode=one steps=64 prompt=128 pattern=h extra=nw MemAvailable=94898475008 shm_free=41914392576 at 2026-10-30T05:35:37-04:00
+{"steps": 64, "load_s": 77.26202263403684, "prompt_ms": 1528.8367012981325, "draft_replay_ms": 125.72917062789202, "rc": 0} median half ms 10.654 draft ms 1.319
+arm c2-r0-one-nw2 rc=0 after 86 s
+[klog c2-after-c2-r0-one-nw2] since @1793352937: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 10.6515 draft 1.3194
+=== phase c2 done 2026-10-30T05:37:03-04:00

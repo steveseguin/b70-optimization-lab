@@ -1,0 +1,44 @@
+=== phase c1 binary /dev/shm/engine-build-stage-overhead-20261030-r1/sc117-engine (967eca960b91) start 2026-10-30T05:24:21-04:00 pid 2210259 affinity 0-3,16-19 nofile 1048576
+[klog c1-before-24h] since @1793265861: rc=0 13 lines, 0 xe/fault lines
+--- arm c1-r1-one rank=1 mode=one steps=48 prompt=16 pattern=h extra=trace MemAvailable=106706468864 shm_free=53644173312 at 2026-10-30T05:24:21-04:00
+{"tp": false, "steps": 48, "load_s": 15.767905801068991, "tokens": [100495, 1093, 517, 48370, 161657, 631, 16078, 419, 15, 930, 589, 3285, 2972, 88393, 74160, 2699, 4960, 51, 15526, 25161, 164895, 3443, 65926, 3423, 3835, 5664, 220, 5174, 137642, 461, 2491, 5375, 17, 15, 12169, 99432, 295, 15, 2502, 4960, 3445, 76, 318, 58363, 223568, 56891, 3940, 114432], "rc": 0} median half ms 20.04
+arm c1-r1-one rc=0 after 22 s
+[klog c1-after-c1-r1-one] since @1793352261: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 59968 lines
+half median (3..): 20.0374 draft 0.0
+--- arm c1-r1-p0 rank=1 mode=probe0 steps=48 prompt=16 pattern=h extra=trace MemAvailable=104587997184 shm_free=51621416960 at 2026-10-30T05:24:43-04:00
+{"tp": false, "steps": 48, "load_s": 11.599151184083894, "tokens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "rc": 0} median half ms 17.47
+arm c1-r1-p0 rc=0 after 16 s
+[klog c1-after-c1-r1-p0] since @1793352283: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":948,"dropped_exchanges_and_merges":77,"exact":false}
+site-trace.jsonl 61568 lines
+half median (3..): 17.472 draft 0.0
+--- arm c1-r1-p1 rank=1 mode=probe1 steps=48 prompt=16 pattern=h extra=trace MemAvailable=103630061568 shm_free=50537996288 at 2026-10-30T05:24:59-04:00
+{"tp": false, "steps": 48, "load_s": 11.379232045030221, "tokens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "rc": 0} median half ms 17.48
+arm c1-r1-p1 rc=0 after 15 s
+[klog c1-after-c1-r1-p1] since @1793352299: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":1,"launches":948,"dropped_exchanges_and_merges":77,"exact":false}
+site-trace.jsonl 61568 lines
+half median (3..): 17.4762 draft 0.0
+--- arm c1-r0-one rank=0 mode=one steps=48 prompt=0 pattern=h extra=trace MemAvailable=102399401984 shm_free=49454575616 at 2026-10-30T05:25:14-04:00
+{"steps": 48, "load_s": 117.05778888682835, "prompt_ms": 0.0, "draft_replay_ms": 0.0, "rc": 0} median half ms 17.796 draft ms 1.763
+arm c1-r0-one rc=0 after 125 s
+[klog c1-after-c1-r0-one] since @1793352314: rc=0 0 lines, 0 xe/fault lines
+site-trace.jsonl 43870 lines
+half median (3..): 17.7936 draft 1.7633
+--- arm c1-r0-p0 rank=0 mode=probe0 steps=48 prompt=0 pattern=h extra=trace MemAvailable=100657324032 shm_free=47565496320 at 2026-10-30T05:27:19-04:00
+Traceback (most recent call last):
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 421, in <module>
+    sys.exit(run(a) if a.cmd == 'run' else compare(a))
+             ^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 163, in run
+    recv_exact(parent, REP.size, time.monotonic() + 3600)  # ready
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/tp_rank0_driver.py", line 74, in recv_exact
+    raise RuntimeError('rank closed the channel')
+RuntimeError: rank closed the channel
+arm c1-r0-p0 rc=1 after 20 s
+[klog c1-after-c1-r0-p0] since @1793352439: rc=0 0 lines, 0 xe/fault lines
+card 0 owned_bytes 26401823300 weights 24653427968 dispatch r5
+third bank requires proved full destination overwrite
+HALT: arm c1-r0-p0 rc=1
