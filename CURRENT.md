@@ -35,6 +35,18 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 30, about 19:30 — measured on a lab build: 92.51 / 92.75 tok/s on four cards, exact (87.77 / 87.64 without).**
+- Second round of exact fixed-cost cuts (`OWNRT_DRAFT_FAST=1 OWNRT_TARGET_FAST=1`): faster draft norms/merges,
+  kernels reading host-resolved pointers instead of runtime-indexed arrays, a GDN state-slot fix, compile-time ops for
+  the generic small kernels, the moe launches folded into the HC combine+norm launch. Fresh servers A/B/A/B at 65536:
+  12/12 prompts faster on every pair (1.051–1.060×), outputs and draft hits = B19, startup gate 13/13; one step
+  9.37 → 8.84 ms. Both stages are now within 0.05 ms of each other.
+- **Waiting on the owner (2026-10-30):** the permission system refused the agent's copy of the merged engine change
+  into `engine/src`. The change is in the repo as a patch against `979462f7c`
+  (`experiments/own-xpu-runtime/research/tp/fixed-cost-2-2026-10-30/engine-fixed-cost-2.patch`, `verify_receipt.py`
+  checks that an applied tree rebuilds binary `dddf5cf0e067`). The public record stays 87.63–87.76 until it is applied.
+  [Result](experiments/own-xpu-runtime/research/tp/fixed-cost-2-2026-10-30/RESULT.md).
+
 **October 30, about 17:30 — four cards read a 121,854-token prompt in 222.5 s (was 239.3), exact.**
 - `OWNRT_DRAFT_CHUNK_BATCH=1` (engine `e6daa268a3a8`): the draft's prompt rows run as 15 batched launches per chunk
   instead of 3,840 single-row commands (56.8 → 13.8 ms per chunk). Four-card set now `tptsxqckhcb`.
