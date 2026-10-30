@@ -1,0 +1,15 @@
+=== phase k1 binary /dev/shm/engine-build-multirow-k1-20261030/sc117-engine (ab62735bca3c) start 2026-10-30T03:49:25-04:00 pid 2182100 affinity 0-3,16-19 nofile 1048576
+[klog k1-before-24h] since @1793260165: 13 lines, 0 xe/fault lines
+--- arm S1 rank=1 flags=trace,prefix=16,window=12,modes=d+2+3+4,env=OWNRT_PREFILL_REUSE2_SMALL=1,env=OWNRT_PREFILL_REUSE2_SMALL_CYCLE=1,env=OWNRT_PREFILL_REUSE2_BLOCK=2,env=OWNRT_PREFILL_REUSE2_P33=2,env=OWNRT_PREFILL_REUSE2_KOPT=2,env=OWNRT_PREFILL_REUSE2_BF16=2,rowsin=/mnt/raid-models/ownrt-experiment-archives/2026-10-30/decode-site-census-runs/A0/rows-d.bin MemAvailable=107912863744 shm_free=54817185792 at 2026-10-30T03:49:25-04:00
+{"rank": 1, "load_s": 36.1, "rc": 0, "rows_equal": {"d": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 0, "guesses": 0, "oracle": 3, "tokens": 12}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm S1 rc=0 after 110 s
+[klog k1-after-S1] since @1793346565: 0 lines, 0 xe/fault lines
+--- arm K1r1 rank=1 flags=trace,dump,modes=d+2+3+4,env=OWNRT_PREFILL_REUSE2_SMALL=1,env=OWNRT_PREFILL_REUSE2_SMALL_CYCLE=1,env=OWNRT_PREFILL_REUSE2_BLOCK=2,env=OWNRT_PREFILL_REUSE2_P33=2,env=OWNRT_PREFILL_REUSE2_KOPT=2,env=OWNRT_PREFILL_REUSE2_BF16=2,rowsin=/mnt/raid-models/ownrt-experiment-archives/2026-10-30/decode-site-census-runs/A0/rows-d.bin MemAvailable=107876298752 shm_free=54747332608 at 2026-10-30T03:51:15-04:00
+{"rank": 1, "load_s": 15.0, "rc": 0, "rows_equal": {"d": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 0, "guesses": 0, "oracle": 144, "tokens": 144}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm K1r1 rc=0 after 32 s
+[klog k1-after-K1r1] since @1793346675: 0 lines, 0 xe/fault lines
+--- arm K1r0 rank=0 flags=trace,dump,modes=d+2+3+4,env=OWNRT_PREFILL_REUSE2_SMALL=1,env=OWNRT_PREFILL_REUSE2_SMALL_CYCLE=1,env=OWNRT_PREFILL_REUSE2_BLOCK=2,env=OWNRT_PREFILL_REUSE2_P33=2,env=OWNRT_PREFILL_REUSE2_KOPT=2,env=OWNRT_PREFILL_REUSE2_BF16=2,reversein=/mnt/raid-models/ownrt-experiment-archives/2026-10-30/decode-site-census-runs/A1/rows-d.bin MemAvailable=105456660480 shm_free=52616888320 at 2026-10-30T03:51:47-04:00
+{"rank": 0, "load_s": 88.8, "rc": 0, "rows_equal": {"d": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 108, "guesses": 144, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm K1r0 rc=0 after 112 s
+[klog k1-after-K1r0] since @1793346707: 0 lines, 0 xe/fault lines
+=== phase k1 done 2026-10-30T03:53:39-04:00
