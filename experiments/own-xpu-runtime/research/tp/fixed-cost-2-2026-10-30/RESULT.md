@@ -4,7 +4,10 @@
 the hit cycle: its half (8.28 ms) plus the MTP draft step (1.07–1.09 ms) against rank 1's 9.12 ms half. Which exact levers
 take time off the draft step and off both ranks' halves?
 
-**Answer so far (rank harness; the four-card harness and the fresh-server end gate are below when measured).**
+**Answer. Fresh four-card lab servers at 65536, A/B/A/B: 87.77 / 87.64 → 92.51 / 92.75 tok/s (mean of medians 87.71 →
+92.63, +5.6%), every output equal to B19, hit cycle 9.37 → 8.84 ms.** B is faster on 12/12 prompts in all four
+cross-pairs (1.051–1.060). The binary is the merged build m2 (`dddf5cf0e067`); its engine change is
+[engine-fixed-cost-2.patch](engine-fixed-cost-2.patch) against `979462f7c`, not yet applied to `engine/src` (see Merge).
 - Two default-off flags, both bitwise exact on every gate run so far:
   - `OWNRT_DRAFT_FAST=1` (`inj,norm,merge,cnorm,gath`): the draft step's small launches, rewritten or merged with the
     per-row arithmetic unchanged. One card: draft device span **1207 → 1120 µs (−87 µs)**, draft wall 1.305 → 1.225 ms.
@@ -125,19 +128,75 @@ sources). The complete change is [engine-fixed-cost-2.patch](engine-fixed-cost-2
 session's permission system, so it is not applied; [verify_receipt.py](verify_receipt.py) checks that a tree reproduces all
 269 compiled-source hashes of m2 (the private tree: 0 differ).
 
-**G3, one card, on m2**: pending (both ranks; h / hmcn / m; batched two-request with and without the prompt flags and
-`OWNRT_DRAFT_CHUNK_BATCH=1`; export rows).
+**G3, one card (0000:43:00.0), on m2, flags on against flags off** ([logs/g3-compare.txt](logs/g3-compare.txt),
+[results/g3-halves.json](results/g3-halves.json)): all equal, 16 arms rc 0, kernel log clean.
+- Rank 0: 1029/1029 target + 71/71 draft buffers + draft tokens in `h`, `hmcn`, `m`; the batched two-request case both
+  plain (`sp=64`) and with the tptsxqckh prompt flags + `OWNRT_DRAFT_CHUNK_BATCH=1` + `--draft-chunk` (both requests,
+  reset inventories, exact ones checks). The rank's recorded environment shows `OWNRT_DRAFT_CHUNK_BATCH`,
+  `OWNRT_DRAFT_FAST` and `OWNRT_TARGET_FAST` set.
+- Rank 1: 1079/1079 + tokens + exported draft-input rows (192 + 128), token by token and batched + second request, with
+  and without the prompt flags + draft batch.
 
-**G2, four cards** (decode set `full` + `ep,rd,hk=1`): pending, on m2.
+| one card, m2 | flags off | flags on | change |
+| --- | --- | --- | --- |
+| rank 0 half (h) | 10.420 / 10.394 / 10.422 / 10.430 / 10.421 ms | 9.885 / 9.844 / 9.883 / 9.899 / 9.870 ms | **−0.54 ms (−5.2%)** |
+| rank 0 draft | 1.317 ms | 1.227 ms | −0.09 ms |
+| rank 1 half | 11.868 / 11.875 / 11.871 ms | 11.341 / 11.339 / 11.340 ms | **−0.53 ms (−4.5%)** |
 
-**End gate** on m2: pending. A = `tptsxqckhcb` (tptsxqckh + HC kernels + draft batch), B = A + `OWNRT_DRAFT_FAST=1` +
-`OWNRT_TARGET_FAST=1`.
+**G2, four cards, on m2** (decode set `full` + `ep,rd,hk=1`; rank 1 on 23+47, rank 0 on 23+27; [logs/g4-compare.txt](logs/g4-compare.txt),
+[results/g4-halves.json](results/g4-halves.json)): all equal. TP flags-on vs flags-off in both A/B pairs; TP vs one card
+(G3 arms) with flags off and with flags on; card 1 equals card 0 in every TP run (728 / 670 buffers); no exchange
+timeouts.
+
+| four cards, m2 (A/B/A/B) | flags off | flags on | change |
+| --- | --- | --- | --- |
+| rank 1 half | 9.114 / 9.099 ms | 8.654 / 8.688 ms | **−0.44 ms (−4.8%)** |
+| rank 0 speculative half | 8.273 / 8.271 ms | 7.852 / 7.848 ms | **−0.42 ms (−5.1%)** |
+| rank 0 draft | 1.082 / 1.085 ms | 0.989 / 0.982 ms | −0.10 ms |
+| rank 0 half + draft | 9.36 ms | 8.84 ms | −0.52 ms |
+
+Rank 0 (half + draft) still paces the hit cycle: 8.84 against rank 1's 8.67 ms.
+
+**End gate** on m2: fresh four-card lab servers at 65536 ([suite/](suite/), copies of the HC / draft-batch suite tooling),
+A = `tptsxqckhcb` (tptsxqckh + `OWNRT_HC_KERNELS=1` + `OWNRT_DRAFT_CHUNK_BATCH=1`, the prompt-reading agent's arm, identical
+environment), B = `fc2` = A + `OWNRT_DRAFT_FAST=1` + `OWNRT_TARGET_FAST=1`, order A/B/A/B, rank 0 on 23:00.0 + 27:00.0,
+rank 1 on 43:00.0 + 47:00.0, engine receipt [dddf5cf0e067](results/engine-receipt-dddf5cf0e067.json).
+- The lab adapter's `TP_KEYS` forwards `OWNRT_DRAFT_FAST`, `OWNRT_TARGET_FAST` and `OWNRT_DRAFT_CHUNK_BATCH`; both rank
+  processes of B r1 carried all of them ([logs/rank-env-fc2-r1.txt](suite/logs/rank-env-fc2-r1.txt), from
+  `/proc/<pid>/environ`), and the unit environments are in `suite/logs/arm-*-unit-env.txt`.
+- Every server passed its 13-case startup batched-prefill gate (13/13), the F32 self-test and state oracles, then served
+  the 12-prompt suite (one cold request each, 512 cap, greedy) and the 3,490-token TTFT request. Kernel log clean through
+  the chain.
+
+| server | median tok/s | mean | range | outputs | TTFT 3,490 | hit cycle | miss interval | rank 0 half + draft | rank 1 half |
+| --- | ---: | ---: | --- | --- | ---: | ---: | ---: | ---: | ---: |
+| A r1 | 87.77 | 88.06 | 84.89–92.52 | = B19 | 6.60 s | 9.374 ms | 17.83 ms | 8.293 + 1.069 | 9.189 |
+| **B r1** | **92.51** | 92.96 | 89.20–97.72 | = B19 | 6.57 s | **8.838 ms** | 16.89 ms | 7.875 + 0.967 | 8.740 |
+| A r2 | 87.64 | 88.01 | 84.87–92.58 | = B19 | 6.59 s | 9.369 ms | 17.80 ms | 8.294 + 1.069 | 9.181 |
+| **B r2** | **92.75** | 93.11 | 89.50–97.98 | = B19 | 6.55 s | **8.849 ms** | 16.89 ms | 7.868 + 0.965 | 8.741 |
+
+- Mean of medians 87.705 → 92.627 tok/s (**+5.61%**); per prompt B/A 1.051–1.060 in every cross-pair, 12/12 faster
+  ([results/pairs-endgate.json](suite/results/pairs-endgate.json), [results/suite/summary.json](suite/results/suite/summary.json)).
+- Outputs: ids, sha256, MTP guesses (5,954) and hits (4,533, pooled acceptance 0.7613) identical on all four servers and
+  equal to B19.
+- Hit cycle ([results/hitcycle-endgate.json](suite/results/hitcycle-endgate.json), the 3,490-token request, 40 hits and
+  23 misses per server): −0.53 ms (−5.7%); a miss −0.93 ms. Rank 0's path 9.37 → 8.85 ms, rank 1's 9.25 → 8.81 ms: the
+  two stages are now within 0.05 ms, so the next cut must come off both.
+- Raw server directories (1,270 files, sha256-verified):
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/fixed-cost-2-endgate`.
 
 ## Incidents
 
-None on the device. Kernel log clean before every phase and after every arm. Host-side: build r8's first attempt failed to
-compile (a new struct inserted inside another); the r1 smoke's gmix/cnorm admissions were refused by plan-arity checks
-(the planner appends `active`/`error` to every launch's inputs) and fixed in r3.
+None on the device. Kernel log clean before every phase, after every arm and through the end-gate chain. Host-side:
+- build r8's first attempt failed to compile (a new struct inserted inside another);
+- the r1 smoke's gmix/cnorm admissions were refused by plan-arity checks (the planner appends `active`/`error` to every
+  launch's inputs), fixed in r3;
+- `run_phase.sh` was edited while phase t7 was running it: all seven arms had been parsed and ran, the lines after the arm
+  loop then misparsed (a syntax error instead of the "phase done" line). No effect on the arms;
+- `archive_runs.sh` first version would have removed the /dev/shm copies even after a failed verification (`set -e`
+  does not stop on an `&&` list); the archive verified (re-checked: 1,636/1,636), and the script now stops before removal;
+- writing the merged engine files into the shared `engine/src` was refused by the session's permission system; the
+  change is kept as a patch with a hash checker (Merge section).
 
 ## Files
 
@@ -152,4 +211,5 @@ compile (a new struct inserted inside another); the r1 smoke's gmix/cnorm admiss
   [archive_runs.sh](archive_runs.sh), [drivers/](drivers/); end gate tooling [suite/](suite/) (arm `fc2`).
 - Results: [results/](results/) (`t*-sites.json` per trace comparison, `g1-halves.json`); logs: [logs/](logs/).
 - Raw runs (sha256 lists beside them): `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/fixed-cost-2-traces`
-  (h0, s1, t1–t6; 1,636 files verified).
+  (h0, s1, t1–t6; 1,636 files), `.../fixed-cost-2-gates` (G1, G3, G2 = g4, t7, x1, x3; 2,596 files), `.../fixed-cost-2-endgate`
+  (1,270 files), `.../engine-builds/fixed-cost-2-r8`.

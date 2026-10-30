@@ -159,6 +159,26 @@ whether a persistent kernel per layer can remove it wholesale (`research/persist
   pairing `final.norm` moved a combine past the controller's export of `streams` to the draft. Fixed in `3d85cdb20`.
 - The exact-order GEMVs themselves are at engine speed: every rescheduling was equal or slower.
 
+### Fixed cost round 2: the draft step and runtime-indexed kernel arguments (2026-10-30, measured)
+
+[fixed-cost-2-2026-10-30](research/tp/fixed-cost-2-2026-10-30/RESULT.md): two default-off flags, bitwise exact on the
+one-card and four-card rank harnesses.
+- `OWNRT_DRAFT_FAST=1`: draft norms rewritten (one barrier, same tree), the two merge projections in one launch with two
+  rows per subgroup, HC inject folded into the HC low launch, ffn.combine into final.norm, the gather in one launch.
+  Draft step −7% (one card 1207 → 1120 µs device; four cards 1.083 → 0.986 ms wall).
+- `OWNRT_TARGET_FAST=1`: kernels that indexed their captured binding array at run time (router / GDN a+b / QSA iq+ik
+  split GEMVs, the HC gate, routed expert kernels, shared-expert down, route, the merged expert check, the round2 GDN
+  recurrence, the generic ng kernel for conv / gated norm / QSA prepare / pool) now read their bindings by static
+  index or as host-resolved pointers; the layer's two moe launches join the HC combine+norm launch. Four-card halves
+  −0.42 ms (rank 0) / −0.44 ms (rank 1), about −5% each.
+- Lesson: the per-launch "fixed cost" of many small kernels included a private-memory load of the kernel's own
+  argument array. Look for runtime indices into captured arrays before fusing launches; merging small weight GEMVs in
+  the draft made the next large kernel slower instead.
+- End gate (fresh four-card servers at 65536, A/B/A/B, A = tptsxqckhcb): **87.71 → 92.63 tok/s (+5.6%)**, every output
+  equal to B19, 12/12 prompts faster in all four cross-pairs, hit cycle 9.37 → 8.84 ms. The two stages are now within
+  0.05 ms of each other, so further cuts must come off both. The engine change is a patch against `979462f7c` (not yet
+  applied to `engine/src`: the write was refused by the session's permission system).
+
 ### Decision rule
 
 Since 2026-10-30 afternoon: one fixed-cost campaign (`research/tp/fixed-cost-2026-10-30/`). In order: a paired

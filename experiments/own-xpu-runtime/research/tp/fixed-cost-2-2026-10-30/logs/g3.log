@@ -13,3 +13,92 @@ arm g3-r1-on rc=0 after 21 s
 {"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
 half median (3..): 11.3406 draft 0.0
 --- arm g3-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,batched,sp=64 MemAvailable=101393960960 shm_free=48979668992 at 2026-10-30T17:36:01-04:00
+{"tp": false, "steps": 64, "load_s": 14.577120557893068, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.88
+arm g3-r1-off-b rc=0 after 27 s
+[klog g3-after-g3-r1-off-b] since @1793396161: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":0}
+half median (3..): 11.8754 draft 0.0
+--- arm g3-r1-on-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,tf=1,batched,sp=64 MemAvailable=101581025280 shm_free=48935305216 at 2026-10-30T17:36:29-04:00
+{"tp": false, "steps": 64, "load_s": 14.578434225870296, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.34
+arm g3-r1-on-b rc=0 after 26 s
+[klog g3-after-g3-r1-on-b] since @1793396189: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+half median (3..): 11.3388 draft 0.0
+--- arm x3-r1-off-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,db,batched,sp=64 MemAvailable=101327949824 shm_free=48891256832 at 2026-10-30T17:36:56-04:00
+{"tp": false, "steps": 64, "load_s": 14.467987902928144, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.87
+arm x3-r1-off-b rc=0 after 26 s
+[klog g3-after-x3-r1-off-b] since @1793396216: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":0}
+half median (3..): 11.8708 draft 0.0
+--- arm x3-r1-on-b rank=1 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,db,tf=1,batched,sp=64 MemAvailable=101648523264 shm_free=48847196160 at 2026-10-30T17:37:23-04:00
+{"tp": false, "steps": 64, "load_s": 14.486586129060015, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 11.34
+arm x3-r1-on-b rc=0 after 26 s
+[klog g3-after-x3-r1-on-b] since @1793396243: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+half median (3..): 11.3397 draft 0.0
+--- arm g3-r0-off rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1 MemAvailable=101343703040 shm_free=48803147776 at 2026-10-30T17:37:50-04:00
+{"steps": 64, "load_s": 84.21952271903865, "prompt_ms": 4719.180795131251, "draft_replay_ms": 3349.3921442423016, "rc": 0} median half ms 10.423 draft ms 1.317
+arm g3-r0-off rc=0 after 97 s
+[klog g3-after-g3-r0-off] since @1793396270: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":0}
+half median (3..): 10.4197 draft 1.3168
+--- arm g3-r0-on rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1 MemAvailable=101609570304 shm_free=48601698304 at 2026-10-30T17:39:27-04:00
+{"steps": 64, "load_s": 97.09119145409204, "prompt_ms": 1407.6605963055044, "draft_replay_ms": 112.7140880562365, "rc": 0} median half ms 9.886 draft ms 1.228
+arm g3-r0-on rc=0 after 106 s
+[klog g3-after-g3-r0-on] since @1793396367: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 9.8845 draft 1.2273
+--- arm g3-r0-off-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra=rd,hk=1 MemAvailable=100982988800 shm_free=48401997824 at 2026-10-30T17:41:13-04:00
+{"steps": 64, "load_s": 54.47650271910243, "prompt_ms": 1486.1543898005038, "draft_replay_ms": 123.77246958203614, "rc": 0} median half ms 10.185 draft ms 1.319
+arm g3-r0-off-hmcn rc=0 after 64 s
+[klog g3-after-g3-r0-off-hmcn] since @1793396473: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":0}
+half median (3..): 10.3937 draft 1.3179
+--- arm g3-r0-on-hmcn rank=0 mode=one steps=64 prompt=128 pattern=hmcn extra=rd,hk=1,df=1,tf=1 MemAvailable=100749385728 shm_free=48202252288 at 2026-10-30T17:42:18-04:00
+{"steps": 64, "load_s": 53.15286668506451, "prompt_ms": 1405.4382683243603, "draft_replay_ms": 114.72779302857816, "rc": 0} median half ms 9.636 draft ms 1.222
+arm g3-r0-on-hmcn rc=0 after 62 s
+[klog g3-after-g3-r0-on-hmcn] since @1793396538: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 9.8442 draft 1.2216
+--- arm g3-r0-off-m rank=0 mode=one steps=64 prompt=128 pattern=m extra=rd,hk=1 MemAvailable=101183324160 shm_free=48002523136 at 2026-10-30T17:43:20-04:00
+{"steps": 64, "load_s": 52.88202429609373, "prompt_ms": 1488.2082687690854, "draft_replay_ms": 124.05753252096474, "rc": 0} median half ms 10.167 draft ms 1.322
+arm g3-r0-off-m rc=0 after 63 s
+[klog g3-after-g3-r0-off-m] since @1793396600: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":0}
+half median (3..): 10.4216 draft 1.3212
+--- arm g3-r0-on-m rank=0 mode=one steps=64 prompt=128 pattern=m extra=rd,hk=1,df=1,tf=1 MemAvailable=100950466560 shm_free=47802748928 at 2026-10-30T17:44:23-04:00
+{"steps": 64, "load_s": 52.95540728396736, "prompt_ms": 1407.994237029925, "draft_replay_ms": 112.32197610661387, "rc": 0} median half ms 9.639 draft ms 1.231
+arm g3-r0-on-m rc=0 after 62 s
+[klog g3-after-g3-r0-on-m] since @1793396663: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 9.8832 draft 1.2311
+--- arm g3-r0-off-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,batched,sp=64 MemAvailable=100762492928 shm_free=47602995200 at 2026-10-30T17:45:26-04:00
+{"steps": 64, "load_s": 52.916454353835434, "prompt_ms": 498.0850249994546, "draft_replay_ms": 122.03137506730855, "rc": 0} median half ms 10.434 draft ms 1.313
+arm g3-r0-off-sp rc=0 after 66 s
+[klog g3-after-g3-r0-off-sp] since @1793396726: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":0}
+half median (3..): 10.4301 draft 1.3123
+--- arm g3-r0-on-sp rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,df=1,tf=1,batched,sp=64 MemAvailable=100071477248 shm_free=47247876096 at 2026-10-30T17:46:32-04:00
+{"steps": 64, "load_s": 53.419813215965405, "prompt_ms": 483.23613265529275, "draft_replay_ms": 110.24123057723045, "rc": 0} median half ms 9.901 draft ms 1.230
+arm g3-r0-on-sp rc=0 after 67 s
+[klog g3-after-g3-r0-on-sp] since @1793396792: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 9.8987 draft 1.2292
+--- arm g3-r0-off-db rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,batched,dc,db,sp=64 MemAvailable=99914305536 shm_free=46892777472 at 2026-10-30T17:47:39-04:00
+{"steps": 64, "load_s": 52.97597141191363, "prompt_ms": 450.61397389508784, "draft_replay_ms": 96.81599005125463, "rc": 0} median half ms 10.423 draft ms 1.318
+arm g3-r0-off-db rc=0 after 66 s
+[klog g3-after-g3-r0-off-db] since @1793396859: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":0}
+half median (3..): 10.421 draft 1.3179
+--- arm g3-r0-on-db rank=0 mode=one steps=64 prompt=128 pattern=h extra=rd,hk=1,ph,batched,dc,db,df=1,tf=1,sp=64 MemAvailable=99909623808 shm_free=47266619392 at 2026-10-30T17:48:46-04:00
+{"steps": 64, "load_s": 52.95724891801365, "prompt_ms": 358.8713929057121, "draft_replay_ms": 10.242534801363945, "rc": 0} median half ms 9.872 draft ms 1.219
+arm g3-r0-on-db rc=0 after 66 s
+[klog g3-after-g3-r0-on-db] since @1793396926: rc=0 0 lines, 0 xe/fault lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+half median (3..): 9.8704 draft 1.2184
+=== phase g3 done 2026-10-30T17:49:52-04:00

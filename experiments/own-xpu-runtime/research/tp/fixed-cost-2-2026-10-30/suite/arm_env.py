@@ -27,8 +27,9 @@ Copy for research/hc-kernels-2026-10-30/suite: adds tptsxqckf (fixed-cost-2026-1
 OWNRT_RETIRE_DEFERRED=1) and tptsxqckh (tptsxqckf + OWNRT_PREFILL_SPECIAL_ROWS=1, OWNRT_PREFILL_LOOKUP_THREADS=4,
 OWNRT_DRAFT_CHUNK_STAGE_THREAD=1, OWNRT_DRAFT_CHUNK_GUARD_ROW=1, OWNRT_DRAFT_CHUNK_ROW_COPY=1).
 Copy for research/hc-kernels-2026-10-30/suite: adds tptsxqckhhc = tptsxqckh + OWNRT_HC_KERNELS=1.
-Copy for research/tp/fixed-cost-2-2026-10-30/suite: adds fc2 = tptsxqckhhc + OWNRT_DRAFT_FAST=1 (inj,norm,merge,cnorm,gath) +
-OWNRT_TARGET_FAST=1 (ssel,hcg,kptr,bptr).
+Copy for research/tp/fixed-cost-2-2026-10-30/suite: adds tptsxqckhcb (prefill-draft-batch-2026-10-30: tptsxqckhhc +
+OWNRT_DRAFT_CHUNK_BATCH=1) and fc2 = tptsxqckhcb + OWNRT_DRAFT_FAST=1 (inj,norm,merge,cnorm,gath) + OWNRT_TARGET_FAST=1
+(ssel,hcg,kptr,bptr,gdnr,ngop,moec).
 Copy for research/tp/prefill-speed-2026-10-29: adds tptsxqcf, tptsxqc plus the four opt-in prefill changes on both TP ranks
 (OWNRT_PREFILL_LOOKUP_BATCH=1, OWNRT_PREFILL_MOE_NATIVE=1, OWNRT_PREFILL_XZERO_ONCE=1, OWNRT_DRAFT_CHUNK_REPLAY=1), and
 tptsxqck, tptsxqcf plus OWNRT_DRAFT_CHUNK_KV_ONLY=1 (head-off prompt rows issue only the draft's KV-append sites)."""
@@ -94,14 +95,22 @@ ARMS = {
                         OWNRT_TP_EXPERT_PAIR='1', OWNRT_RETIRE_DEFERRED='1', OWNRT_PREFILL_SPECIAL_ROWS='1',
                         OWNRT_PREFILL_LOOKUP_THREADS='4', OWNRT_DRAFT_CHUNK_STAGE_THREAD='1', OWNRT_DRAFT_CHUNK_GUARD_ROW='1',
                         OWNRT_DRAFT_CHUNK_ROW_COPY='1', OWNRT_HC_KERNELS='1', **TP),
-    # research/tp/fixed-cost-2-2026-10-30: B = tptsxqckhhc + the kept draft-step and target levers.
+    # research/tp/prefill-draft-batch-2026-10-30: tptsxqckhcb = tptsxqckhhc + OWNRT_DRAFT_CHUNK_BATCH=1 (copied).
+    'tptsxqckhcb': dict(SC117_RANK_BDFS='0000:23:00.0+0000:27:00.0,0000:43:00.0+0000:47:00.0', OWNRT_TARGET_HEAD_SPLIT='1', OWNRT_DRAFT_HEAD_SPLIT='1',
+                      OWNRT_SNAPSHOT_NOWAIT='1', OWNRT_DRAFT_GEMV_SPLIT='1', OWNRT_ROLLBACK_NOWAIT='1', OWNRT_TP_QSA_SPLIT='1',
+                      OWNRT_TP_CARD_CONTEXT='1', OWNRT_PREFILL_LOOKUP_BATCH='1', OWNRT_PREFILL_MOE_NATIVE='1',
+                      OWNRT_PREFILL_XZERO_ONCE='1', OWNRT_DRAFT_CHUNK_REPLAY='1', OWNRT_DRAFT_CHUNK_KV_ONLY='1',
+                      OWNRT_TP_EXPERT_PAIR='1', OWNRT_RETIRE_DEFERRED='1', OWNRT_PREFILL_SPECIAL_ROWS='1',
+                      OWNRT_PREFILL_LOOKUP_THREADS='4', OWNRT_DRAFT_CHUNK_STAGE_THREAD='1', OWNRT_DRAFT_CHUNK_GUARD_ROW='1',
+                      OWNRT_DRAFT_CHUNK_ROW_COPY='1', OWNRT_DRAFT_CHUNK_BATCH='1', OWNRT_HC_KERNELS='1', **TP),
+    # research/tp/fixed-cost-2-2026-10-30: B = tptsxqckhcb + OWNRT_DRAFT_FAST=1 + OWNRT_TARGET_FAST=1.
     'fc2': dict(SC117_RANK_BDFS='0000:23:00.0+0000:27:00.0,0000:43:00.0+0000:47:00.0', OWNRT_TARGET_HEAD_SPLIT='1', OWNRT_DRAFT_HEAD_SPLIT='1',
                 OWNRT_SNAPSHOT_NOWAIT='1', OWNRT_DRAFT_GEMV_SPLIT='1', OWNRT_ROLLBACK_NOWAIT='1', OWNRT_TP_QSA_SPLIT='1',
                 OWNRT_TP_CARD_CONTEXT='1', OWNRT_PREFILL_LOOKUP_BATCH='1', OWNRT_PREFILL_MOE_NATIVE='1',
                 OWNRT_PREFILL_XZERO_ONCE='1', OWNRT_DRAFT_CHUNK_REPLAY='1', OWNRT_DRAFT_CHUNK_KV_ONLY='1',
                 OWNRT_TP_EXPERT_PAIR='1', OWNRT_RETIRE_DEFERRED='1', OWNRT_PREFILL_SPECIAL_ROWS='1',
                 OWNRT_PREFILL_LOOKUP_THREADS='4', OWNRT_DRAFT_CHUNK_STAGE_THREAD='1', OWNRT_DRAFT_CHUNK_GUARD_ROW='1',
-                OWNRT_DRAFT_CHUNK_ROW_COPY='1', OWNRT_HC_KERNELS='1',
+                OWNRT_DRAFT_CHUNK_ROW_COPY='1', OWNRT_DRAFT_CHUNK_BATCH='1', OWNRT_HC_KERNELS='1',
                 OWNRT_DRAFT_FAST='1', OWNRT_TARGET_FAST='1', **TP),
     'tptsxqcp': dict(SC117_RANK_BDFS='0000:23:00.0+0000:27:00.0,0000:43:00.0+0000:47:00.0', OWNRT_TARGET_HEAD_SPLIT='1', OWNRT_DRAFT_HEAD_SPLIT='1',
                      OWNRT_SNAPSHOT_NOWAIT='1', OWNRT_DRAFT_GEMV_SPLIT='1', OWNRT_ROLLBACK_NOWAIT='1', OWNRT_TP_QSA_SPLIT='1',

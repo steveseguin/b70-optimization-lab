@@ -6,7 +6,7 @@ Writes results/hitcycle-endgate.json."""
 import json, statistics as st, sys
 from pathlib import Path
 HERE = Path(__file__).resolve().parent
-sys.path.insert(0, str(HERE.parent.parent / 'tp' / 'miss-stall-2026-10-29'))
+sys.path.insert(0, str(HERE.parent.parent / 'miss-stall-2026-10-29'))  # research/tp/miss-stall-2026-10-29
 import analyze as M  # noqa: E402
 out = {}
 for w in sys.argv[1:]:

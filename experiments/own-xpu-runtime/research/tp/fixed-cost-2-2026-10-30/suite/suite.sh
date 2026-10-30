@@ -26,7 +26,10 @@ echo "lock holder: all four card locks held=$held at $(date -Is)"
 for spec in "$@"; do
   IFS=: read -r name ctx rec <<<"$spec"
   [ "$(systemctl --user is-active sc117-tp-svc-fc2-locks-20261030)" = active ] || { echo "lock holder not active before $name"; break; }
-  echo "--- server $name ctx $ctx ${rec:-} start $(date -Is)"
+  # (as prefill-draft-batch-2026-10-30) wait, bounded, for MemAvailable to reach the service start floor before each server;
+  # the server's own floor check still decides.
+  for i in $(seq 1 360); do [ "$(awk '/^MemAvailable:/{print $2*1024}' /proc/meminfo)" -ge 99806740766 ] && break; sleep 5; done
+  echo "--- server $name ctx $ctx ${rec:-} start $(date -Is) MemAvailable $(awk '/^MemAvailable:/{print $2*1024}' /proc/meminfo)"
   systemd-run --user --unit=sc117-tp-svc-fc2-run-$name-c$ctx-20261030 -p Restart=no --wait --collect -E SC117_ENGINE_RECEIPT=$R -E ARM_CONTEXT=$ctx \
     -E ARM_RECORD_ORACLE=$([ "${rec:-}" = record ] && echo 1 || echo 0) bash $D/run_arm_suite.sh $name
   st=$(cat "$D/logs/STATUS-$name-c$ctx" 2>/dev/null); echo "server $name-c$ctx: $st at $(date -Is)"
