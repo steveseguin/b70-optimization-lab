@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**October 30, about 10:00 — one kernel per layer (persistent kernel): measured, not worth building.**
+- On a B70 a barrier across the whole card (1.5 µs at 64 groups) costs more than the kernel launch it would replace
+  (0.6–1.1 µs). On the real hyper-connection chain the persistent version is exact but 9.6% slower; even a free barrier
+  would give at most about +8.5% on four cards. Closed. [Study](experiments/own-xpu-runtime/research/persistent-layer-2026-10-30/RESULT.md).
+- Side finding being followed up: the engine's BF16 hyper-connection projections run at 400–415 GB/s where a plain
+  kernel reaches 482–529 GB/s on the same shapes (worth about 3–5% if a faster kernel keeps the exact add order).
+
 **October 30, about 09:30 — new four-card record: 84.47 / 84.51 tok/s, exact (was 78.60–78.90 the same day, +7.3%).**
 - Two exact changes, both four-card flags (set `tptsxqckf` = `tptsxqck` + `OWNRT_TP_EXPERT_PAIR=1 OWNRT_RETIRE_DEFERRED=1`,
   binary `0509ad71a0fd`): each card runs a layer's expert gate and up projections, and their product, as one launch; the
