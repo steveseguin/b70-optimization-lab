@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**Planning (October 29): ranked path toward 200 tok/s** is in [experiments/own-xpu-runtime/IDEAS.md](experiments/own-xpu-runtime/IDEAS.md#toward-200-toks-for-one-conversation-without-quality-loss-2026-10-29). Key correction: device gaps between kernels are only 0.12 ms per half, so the time is inside the kernels; the biggest lever is cheap multi-row verification enabling more accepted tokens per cycle, then per-layer glue fusion.
+
 **October 29, about 20:00 — four cards now run SC117 at 131,072 tokens of context, exact: 78.23 / 78.51 tok/s.**
 - What blocked it: the engine admitted 131,072 only for pipeline processes, and it checked rank 1's memory as if on one
   card (34.1 GB) before the split. Engine `aafd258dd5ea` admits 131,072 for a four-card (TP) rank and checks each card

@@ -1,3 +1,78 @@
+# Ideas and things to try
+
+## Toward 200 tok/s for one conversation, without quality loss (2026-10-29)
+
+Owner direction, 2026-10-29: stop drifting into 1–2% levers and keep the
+dramatic opportunities in view. This section is the ranked list. It is planning,
+not a result; every number is labelled measured or estimated, with its source.
+
+### Where we are (measured)
+
+- SC117 IQ3_S, four B70s, two pipeline stages each split exactly across two
+  cards: **78.29–78.62 tok/s**, outputs identical to build B19
+  ([fault-ladder result](research/tp/fault-ladder-2026-10-29/RESULT.md)).
+  Two cards: 66.42. Each stage takes about 10.4 ms per step.
+- The draft is accepted on 76.1% of guesses; a miss costs about 10 ms and takes
+  about 18% of decode time ([miss analysis](research/tp/miss-stall-2026-10-29/ANALYSIS.md)).
+  With zero misses the same stage speed would give about 96 tok/s.
+- **200 tok/s is 5.0 ms per token.** With today's one-guess pipeline that means
+  each stage at about 5 ms *and* almost no misses, or more than one accepted
+  token per cycle.
+
+### What the measurements say (correcting the obvious first guess)
+
+- **The GPU is not waiting on launches.** A one-card rank-0 half measured 10.16 ms
+  of summed kernel time inside a 10.30 ms device span, with **0.12 ms of gaps**
+  between kernels (about 860 launches; [submission screen](research/pp4-review-2026-10-28/submission-graph-screen.txt)).
+  Host enqueue (4.9–6 ms per half) overlaps device work. So replaying recorded
+  command lists would mostly save host CPU time, not step time. It only pays
+  where a host thread becomes the critical path (one thread feeding two cards
+  did, and per-card threads fixed it).
+- **The time is inside the kernels.** A token reads roughly 4 GB of active
+  weights (about 2 GB per stage). Two cards per stage give about 1.2 TB/s, so the
+  bandwidth floor is roughly 1.7 ms per stage (estimate) against about 10.4 ms
+  measured: kernels run at roughly a fifth to a third of what memory allows.
+- **Why kernels are slow:** expert kernels were measured instruction-bound
+  (IQ3_S/IQ4_NL unpacking plus 32-bit math; every layout variant tried landed at
+  55–74 µs vs 60, [DO-NOT-REPEAT](gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md));
+  about 37% of a step is small work copied to both cards (hyper-connection glue,
+  norms, router, combine), and each tiny kernel has a minimum duration of a few
+  microseconds even when it does almost nothing.
+- **Why deeper speculation lost:** each extra verified row costs about 1.6× on
+  rank 0, because the kernels are compute-bound, not weight-bound, so a second
+  row pays its full arithmetic again ([miss analysis](research/tp/miss-stall-2026-10-29/ANALYSIS.md)).
+  This is the same root cause as above.
+- **XMX matrix engines are not available to us** under the exactness rule:
+  F32 activations against IQ weights cannot go through DPAS without changing
+  rounding. Multi-row work must stay on the vector ALUs.
+
+### Ranked opportunities
+
+| # | Idea | Why it could be big | Rough size (estimate) | First experiment |
+| ---: | --- | --- | --- | --- |
+| 1 | **Weight-stationary multi-row kernels** for experts and dense GEMVs: load each weight block once and apply it to M = 2–4 rows | Removes the 1.6× per-extra-row cost, which is what blocks deeper speculation; also speeds prompt reading | If an extra row costs ≤1.2× instead of 1.6×, depth 3 becomes a win (below) | Per-site one-card timing at M = 1, 2, 4 for the expert and dense kernels; the one-card profiler is safe (it faulted only with `--tp-replicate`) |
+| 2 | **More accepted tokens per cycle**: depth 2–3 MTP chains, or tree drafting (top-2 at the first position) verified in one multi-row pass | The only lever that multiplies tokens per step instead of shaving milliseconds | 2–2.5 accepted tokens per cycle at ≤1.3× cycle cost would give roughly 120–150 tok/s on today's stage speed | Needs #1 first; re-run the depth screen with the new kernels. Prior evidence is mixed, not negative: depth 2 on the two-card pipeline lost 9.6% through reduced overlap, while on the three-target + draft layout depth 3 beat depth 2 by 14% |
+| 3 | **Per-layer glue megakernels**: fuse the replicated small ops (norms, HC mix/gate, router, top-k, combine) into a few kernels per layer | Attacks the 37% that more cards never shrink, and about 860 minimum-duration launches | If glue halves: about 1.8–2 ms per stage (estimate) | Rank the glue sites by measured µs and count; build one exact fused layer-tail kernel and gate it bitwise. Earlier two-op fusions were neutral or non-exact (DO-NOT-REPEAT rows 24–25), so fuse whole chains, not pairs |
+| 4 | **Faster-to-decode lossless weight layout for experts**: re-encode IQ3_S/IQ4_NL codes into a layout whose dequantized values are identical but cheaper to unpack (pre-expanded indices, SLM-resident grids, per-block int8 codes × the same scale) | Experts are instruction-bound while memory sits at a third of its limit, so trading bytes for instructions can pay | Unknown until a kernel bench; experts are about 22.5% of a half | One-expert microbench: same outputs bit for bit, fewer instructions. Needs VRAM: cards are full at 31.4 / 32.2 GB, see #6 |
+| 5 | **One stage across all four cards (TP4) instead of two stages (TP2 × PP2)** | No pipeline, so a miss costs no rank-0 redo (today about 18% of decode time), and multi-token verification becomes a plain batched step | Uncertain: replicated work and exchanges grow with four parties; it pays only together with #1 and #2 | CPU sizing from the existing per-site profile, as done for TP2, before any build |
+| 6 | **Experts by expert id (half the experts per card) instead of every card holding every expert** | Frees roughly half the expert VRAM per card for #4 layouts, longer context or speculation buffers | Imbalance (about 6 of 10 slots on the busier card) costs some expert time | Census of freed bytes and measured imbalance on the 12 prompts |
+| 7 | **Device-side scheduling (a persistent kernel per layer)** | Removes per-kernel minimum durations entirely | High risk on this hardware (no device-wide barrier; a hang faults the card) | Design study only; bounded waits are mandatory |
+| 8 | Recorded command-list replay | Saves host CPU; matters only when a host thread is the critical path | Small for decode today (0.12 ms device gaps) | Revisit if host submission becomes critical again (for example prompt reading) |
+
+### Excluded because they would change outputs or break the rules
+
+Lower-precision activations or KV, XMX/DPAS with rounded inputs, folding norm
+scales into weights, split sums across cards, lossy draft acceptance,
+prompt-lookup or n-gram drafts (barred from headline benchmarks by the validity
+rules), and draft training. Quality stays bit-exact to the target model.
+
+### Decision rule
+
+Measure before building: the next device work should be the per-site, per-M
+timing table (#1) plus a glue census (#3) on one card, which answers whether the
+path to 200 runs through cheaper multi-row verification. Prefer a lever that
+changes tokens per cycle or halves a stage over another 1–2% trim.
+
 # Ideas from other runtimes
 
 Stage 0, 2026-10-10. Static source and documentation survey only. No borrowed
