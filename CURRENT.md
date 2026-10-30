@@ -1,5 +1,9 @@
 # Current Workspace State
 
+**October 30 — next: one-card per-site timing at 1–4 rows plus a census of small kernels**, the measurement the
+[200 tok/s plan](experiments/own-xpu-runtime/IDEAS.md#toward-200-toks-for-one-conversation-without-quality-loss-2026-10-29)
+asks for before any new kernel build (diagnostic only; results go to `experiments/own-xpu-runtime/research/decode-site-census-2026-10-30/`).
+
 **October 30, about 03:00 — four cards now read a 121,854-token prompt in 250.5 s instead of 354 s, exact; the 3+1 layout takes 241–251 s.**
 - Fix for last night's failed startup check: a constant buffer of the new MoE path is now refilled for every chunk, since
   a request reset zeroes it (engine `b51c9e8d803e`).
@@ -11,7 +15,8 @@
   - all 512 outputs equal the 3+1 262K result;
   - the 12-prompt suite matches B19 on every server.
 - Rank 0 now needs 526 ms per 256-token chunk (was 747) and rank 1 468 ms, so the two stages are nearly balanced.
-  Adding the flags to the four-card set (arm `tptsxqck`) is the owner's call. Kernel log clean; `sc117-lan` not touched.
+  Decision: the five flags join the four-card flag set (now `tptsxqck`, engine `b51c9e8d803e`); they change prompt
+  reading only and every gate is exact. Kernel log clean; `sc117-lan` not touched (still two cards).
   [Result](experiments/own-xpu-runtime/research/tp/prefill-speed-2026-10-29/RESULT.md).
 
 **October 29, about 23:00 — four-card prompt reading: the slow part is found and fixed on the rank harness, but the fix failed the service's startup check; stopped there.**
