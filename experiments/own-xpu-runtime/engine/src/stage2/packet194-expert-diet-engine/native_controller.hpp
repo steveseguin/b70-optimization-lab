@@ -140,6 +140,16 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
   // Draft replay for chunk k: confirmed position q+1 takes rank 1's final row of position q, in order.
   auto drafts=[&](int k){if(c.mode!=3)return;
    const auto* rev=pipeline::prefill::reverse(b.prefill,k%2,size_t(b.prefill_rows),b.prefill_stream);
+   // OWNRT_DRAFT_CHUNK_REPLAY=1 (2026-10-29, research/tp/prefill-speed-2026-10-29): the same rows, tokens and order as the
+   // per-row DRAFT calls below, in one rank-0 command (prefill_wire.hpp draft_chunk_op). The shared reverse slot and
+   // reverse_ready are left as the chunk's last per-row call leaves them.
+   if(c.draft_rank==0&&pipeline::prefill::draft_chunk_replay()){
+    auto* tokens=pipeline::prefill::draft_tokens(b.prefill);int n=0;
+    for(int r=0;r<count(k);++r){const int q=base(k)+r;if(q+1>=bulk)break;tokens[r]=c.prompt[q+1];++n;}
+    if(!n)return;
+    std::memcpy(b.shared+reverse_offset,rev+size_t(n-1)*b.prefill_stream,b.prefill_stream);
+    __atomic_store_n(&reverse_ready(b.shared).position_plus_one,uint32_t(base(k)+n),__ATOMIC_RELEASE);
+    b.call(0,pipeline::prefill::draft_chunk_op,n,base(k),k%2,0);return;}
    for(int r=0;r<count(k);++r){const int q=base(k)+r;if(q+1>=bulk)break;
     std::memcpy(b.shared+reverse_offset,rev+size_t(r)*b.prefill_stream,b.prefill_stream);
     __atomic_store_n(&reverse_ready(b.shared).position_plus_one,uint32_t(q+1),__ATOMIC_RELEASE);

@@ -1113,6 +1113,25 @@ static int run_rank(const Options& a) {
     require(engine->correction_exchange_calls==((completing_redo&&engine->sealed_selection.choices.at("probe")=="xchg")?96:0),"p149 corrected-half exchange census");
     if(completing_redo){require(!c.cancelled&&c.swapped,"incomplete confirmed redo");image.finish_redo();}
    }
+   else if(r.op==prefill::draft_chunk_op){
+    // OWNRT_DRAFT_CHUNK_REPLAY=1 (2026-10-29, research/tp/prefill-speed-2026-10-29): the draft replay of one prefill chunk
+    // in one command. Its inputs are those of the n per-row DRAFT commands it replaces (positions q0+1 .. q0+n, head
+    // off): rank 1's final rows q0 .. q0+n-1 (reverse buffer `fixture`) and the confirmed tokens (header draft_tokens).
+    // DraftRuntime::replay_chunk issues each row's prepared commands in the same order; the publication is the one the
+    // last per-row command leaves (no guess).
+    require(prefill::draft_chunk_replay()&&a.rank==0&&a.draft_rank==0&&provider&&prefill_base&&a.prefill_slots==2&&!c.pending&&!async_half_ready&&!r.speculative,"draft chunk command ownership");
+    require(r.token>=1&&r.token<=a.prefill_rows&&r.position>=0&&r.fixture>=0&&r.fixture<a.prefill_slots,"draft chunk command bounds");
+    auto* bytes=static_cast<uint8_t*>(mapping);
+    require(__atomic_load_n(&verification(bytes).position_plus_one,__ATOMIC_ACQUIRE)==0,"draft chunk replay requires no pending target confirmation");
+    const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"draft chunk header");
+    const std::vector<int> tokens(prefill::draft_tokens(prefill_base),prefill::draft_tokens(prefill_base)+r.token);
+    auto before=std::chrono::steady_clock::now();
+    provider->replay_chunk(tokens.data(),reinterpret_cast<const float*>(prefill::reverse(prefill_base,r.fixture,R,S,a.prefill_slots)),r.token,r.position+1);
+    struct Publication{int32_t valid,position,token,error;uint64_t elapsed_ns;int32_t sequence,reserved;double gpu_ms;};static_assert(sizeof(Publication)==40);
+    Publication v{0,r.position+r.token+1,-1,0,uint64_t(Engine::ms(before)*1e6/r.token),r.sequence,0,0};
+    std::memcpy(bytes+2*slot_bytes,&v,sizeof v);
+    response.busy_ms=Engine::ms(before);
+   }
    else if(r.op==prefill::op){
     // --tp-replicate (2026-10-29): TP-native batched prefill (prefill_engine.hpp), each card in its own layout.
     require(prefill_base&&!c.pending&&!async_half_ready&&r.token>=1&&r.token<=a.prefill_rows&&(r.fixture>=0&&r.fixture<a.prefill_slots)&&!r.speculative,"prefill command");

@@ -14,5 +14,8 @@ Launch epilogue(ownrt::Device&,ownrt::Allocation down,ownrt::Allocation weights,
                 ownrt::Allocation output,unsigned rows,ownrt::Allocation fp32=0);
 // Exact-mode F32 variant of epilogue (same slot order and arithmetic, no BF16 store).
 Launch epilogue_f32(ownrt::Device&,ownrt::Allocation down,ownrt::Allocation weights,ownrt::Allocation output,unsigned rows);
+// epilogue_f32 over `tokens` token rows with per-token strides in floats (batched prefill; each element unchanged).
+Launch epilogue_f32_rows(ownrt::Device&,ownrt::Allocation down,ownrt::Allocation weights,ownrt::Allocation output,unsigned rows,unsigned tokens,
+                        unsigned down_stride,unsigned weight_stride);
 Launch multiply_dispatched(ownrt::Device&,const Matrix&);
 }

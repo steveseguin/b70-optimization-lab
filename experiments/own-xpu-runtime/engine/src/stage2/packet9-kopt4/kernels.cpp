@@ -107,6 +107,21 @@ struct CombineF32:ownrt::SyclOperation {
   }));});
  }
 };
+// CombineF32 over `tokens` consecutive token rows (batched prefill, research/tp/prefill-speed-2026-10-29): token t reads its
+// slot rows at down + t*down_stride and its slot weights at weights + t*weight_stride (floats) and writes out + t*rows.
+// Each output element is CombineF32's expression unchanged (the same slot order and operations).
+struct CombineF32Rows:ownrt::SyclOperation {
+ unsigned rows,tokens,down_stride,weight_stride;
+ sycl::event submit(sycl::queue& q,std::span<void* const> ptr,const std::vector<sycl::event>& deps)const override {
+  auto y=static_cast<const float*>(ptr[0]);auto w=static_cast<const float*>(ptr[1]);auto out=static_cast<float*>(ptr[2]);
+  const unsigned n=rows,total=rows*tokens,ds=down_stride,ws=weight_stride;
+  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((size_t(total)+127)/128)*128,128)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it){
+   const unsigned gid=unsigned(it.get_global_linear_id());if(gid>=total)return;const unsigned t=gid/n,row=gid-t*n;
+   const float* yt=y+size_t(t*ds);const float* wt=w+size_t(t*ws);
+   float sum=0;for(unsigned slot=0;slot<10;++slot){float product=yt[size_t(slot)*n+row]*wt[slot];sum=sum+product;}out[size_t(t*n+row)]=sum;
+  }));});
+ }
+};
 }
 Launch expert_gate_up(ownrt::Device& d,const Matrix& gate,const Matrix& up,unsigned split){return project(d,{gate,up},split,true);}
 Launch expert_down(ownrt::Device& d,const Matrix& down,unsigned split){return project(d,{down},split,false);}
@@ -132,6 +147,15 @@ Launch epilogue_f32(ownrt::Device& d,ownrt::Allocation down,ownrt::Allocation we
  if(!rows || rows>32768)throw std::invalid_argument("epilogue rows");
  check(d,down,size_t(10)*rows*4);check(d,weights,40);check(d,out,size_t(rows)*4);
  std::vector<std::pair<uint64_t,bool>> accesses{{down,false},{weights,false},{out,true}};kopt3::validate_aliases(accesses);CombineF32 op;op.rows=rows;
+ std::array ids{down,weights,out};auto e=d.compute(op,ids,{});return {e,e,1};
+}
+Launch epilogue_f32_rows(ownrt::Device& d,ownrt::Allocation down,ownrt::Allocation weights,ownrt::Allocation out,unsigned rows,unsigned tokens,
+                        unsigned down_stride,unsigned weight_stride) {
+ if(!rows || rows>32768 || !tokens || tokens>4096 || down_stride<10u*rows || weight_stride<10u || size_t(rows)*tokens>=(size_t(1)<<31) || size_t(tokens)*down_stride>=(size_t(1)<<31))
+  throw std::invalid_argument("epilogue rows");
+ check(d,down,(size_t(tokens-1)*down_stride+size_t(10)*rows)*4);check(d,weights,(size_t(tokens-1)*weight_stride+10)*4);check(d,out,size_t(tokens)*rows*4);
+ std::vector<std::pair<uint64_t,bool>> accesses{{down,false},{weights,false},{out,true}};kopt3::validate_aliases(accesses);
+ CombineF32Rows op;op.rows=rows;op.tokens=tokens;op.down_stride=down_stride;op.weight_stride=weight_stride;
  std::array ids{down,weights,out};auto e=d.compute(op,ids,{});return {e,e,1};
 }
 }

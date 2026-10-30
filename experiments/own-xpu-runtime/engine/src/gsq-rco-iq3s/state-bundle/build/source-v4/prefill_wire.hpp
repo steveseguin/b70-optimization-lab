@@ -9,6 +9,7 @@
 // The service creates the file at its exact size and writes the header. Ranks verify every field before use.
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 namespace pipeline::prefill {
 constexpr uint32_t magic=0x31465050u; // "PPF1"
 constexpr uint32_t version=1;
@@ -35,4 +36,14 @@ inline const int32_t* tokens(const uint8_t* base,int slots){return slots==4?rein
 inline size_t bytes(size_t rows,size_t stream,int slots=2){return header_size(slots)+2*size_t(slots)*rows*stream;}
 inline uint8_t* forward(uint8_t* base,int index,size_t rows,size_t stream,int slots=2){return base+header_size(slots)+size_t(index)*rows*stream;}
 inline uint8_t* reverse(uint8_t* base,int index,size_t rows,size_t stream,int slots=2){return base+header_size(slots)+size_t(slots+index)*rows*stream;}
+// Draft chunk replay (OWNRT_DRAFT_CHUNK_REPLAY=1, 2026-10-29, research/tp/prefill-speed-2026-10-29; default off): rank 0's
+// MTP draft consumes one prefill chunk's confirmed rows in one command instead of one DRAFT command per row. Command
+// draft_chunk_op: token = rows n, position = the chunk's first target position q0 (draft rows q0+1 .. q0+n, head off),
+// fixture = the reverse buffer holding rank 1's final rows of positions q0 .. q0+n-1. The n confirmed tokens (of
+// positions q0+1 .. q0+n) travel in the header page's unused tail (draft_tokens_offset), which no other reader uses.
+constexpr int32_t draft_chunk_op=29;
+constexpr size_t draft_tokens_offset=2048;
+static_assert(sizeof(Header)<=draft_tokens_offset&&sizeof(HeaderV2)<=draft_tokens_offset&&draft_tokens_offset+4*size_t(max_rows)<=header_bytes);
+inline int32_t* draft_tokens(uint8_t* base){return reinterpret_cast<int32_t*>(base+draft_tokens_offset);}
+inline bool draft_chunk_replay(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_CHUNK_REPLAY");return e&&e[0]=='1';}();return on;}
 }

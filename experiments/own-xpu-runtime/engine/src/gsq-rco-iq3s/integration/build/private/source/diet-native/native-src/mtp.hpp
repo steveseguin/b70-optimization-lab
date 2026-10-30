@@ -390,6 +390,8 @@ public:
   scratch=alloc("scratch",8*1024*1024);control=alloc("controls",12);score=alloc("scores",24*(p.g.budget+3)*4);probability=alloc("probabilities",24*(p.g.budget+3)*4);head_workspace=alloc("head-workspace",size_t(p.g.vocab)*8*4);head_fp32=alloc("head-fp32",size_t(p.g.h)*4);
   publication=e.allocate(0,"draft:publication",8,Category::output_ring,Lifetime::request,Memory::pinned);
   half_staging=e.allocate(0,"draft:half-staging",4+e.stream_bytes(),Category::pinned_slab,Lifetime::transfer,Memory::pinned);
+  // OWNRT_DRAFT_CHUNK_REPLAY=1: pinned staging of one prefill chunk's draft inputs (BF16 hidden rows, then BF16 embedding rows).
+  if(chunk_replay()&&e.a.prefill_rows>0){chunk_staging_rows=size_t(e.a.prefill_rows);chunk_staging=e.allocate(0,"draft:chunk-staging",chunk_staging_rows*size_t(5)*p.g.h*2,Category::pinned_slab,Lifetime::transfer,Memory::pinned);}
   std::memset(e.dev(0).arena.row(publication).pointer,0,8);std::memset(e.dev(0).arena.row(half_staging).pointer,0,4+e.stream_bytes());
   uint32_t active=1;e.upload(0,id("active"),0,&active,4);
   for(const auto& l:p.launches)for(size_t j=0;j<l.weights.size();++j){auto n=l.weights[j];if(n=="output.weight")continue;
@@ -488,6 +490,7 @@ public:
    reverse_hidden=nullptr;}else{require(!e.a.f32_activations,"exact F32 activations: draft must take the converted rank-1 reverse streams");e.tail=e.io_copy(0,id("merge.hidden"),0,e.buffers[0].at("streams").id,0,4*p.g.h*2);}e.drain(); // packet188: kernel when kernel_io=kernel
   // Bounded target embedding row only. No target PLE/history/token preparation.
   auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;auto raw=e.w.read(t.name,size_t(confirmed)*rb,rb);std::vector<uint16_t> emb(p.g.h);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));e.upload(0,id("embedding"),0,emb.data(),emb.size()*2);
+  const double host_prep_ms=Engine::ms(start),host_prep_wait=e.wait_ms; // OWNRT_PREFILL_HOST_TRACE (below)
   if(captured) {
    // OWNRT_DECODE_PROFILE=2: per-site device time of the draft (diagnostic; waits for the draft, no arithmetic change).
    static const bool draft_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&std::atoi(v)==2;}();
@@ -524,11 +527,130 @@ public:
    pending_start=start;pending_head=head;pending_confirmed=confirmed;async_pending=true;e.progress_pending=true;
    return -1;
   }
-  e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);if(status){disabled=true;return -1;}
+  const double host_issued_ms=Engine::ms(start);
+  e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);
+  // Diagnostic only (OWNRT_PREFILL_HOST_TRACE=1, research/tp/prefill-speed-2026-10-29): host-side phases of a synchronous
+  // draft row (inputs: drains, uploads and the embedding row; issue: the prepared commands; end: drain and error readback).
+  static const bool host_trace=[]{const char* v=std::getenv("OWNRT_PREFILL_HOST_TRACE");return v&&v[0]=='1';}();
+  if(host_trace){std::ofstream o(e.a.output/"draft-host-trace.jsonl",std::ios::app);o<<"{\"position\":"<<position<<",\"head\":"<<(head?"true":"false")<<",\"inputs_ms\":"<<host_prep_ms<<",\"issue_ms\":"<<host_issued_ms-host_prep_ms<<",\"wall_ms\":"<<Engine::ms(start)<<",\"blocked_ms\":"<<e.wait_ms-host_prep_wait<<"}\n";}
+  if(status){disabled=true;return -1;}
   ++position;if(e.a.draft_fault=="late-error")throw ProviderError("injected provider failure after cache append");int token=-1;if(head){auto b=e.readback(0,id("next_token"),4);std::memcpy(&token,b.data(),4);}
   if(recursive)return token;
   if(depth_probe&&head&&token>=0&&token<p.g.vocab){queued_probe=token;queued_confirmed=confirmed;}
   trace<<"{\"draft_position\":"<<position-1<<",\"confirmed_token\":"<<confirmed<<",\"guess\":"<<token<<",\"head\":"<<(head?"true":"false")<<",\"wall_ms\":"<<Engine::ms(start)<<"}\n";trace.flush();if(e.a.draft_fault=="suppress")return -1;if(e.a.draft_fault=="garbage")return p.g.vocab;return e.a.draft_fault=="wrong"&&head?(token+1)%p.g.vocab:token;
+ }
+ // OWNRT_DRAFT_CHUNK_REPLAY=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off; rank 0, exact F32 mode,
+ // prepared commands): the draft replay of one prefill chunk, rows first_target .. first_target+n-1 with head off. Row i
+ // is the synchronous compute(tokens[i], first_target+i, false):
+ // - its two inputs are the same bytes (rank 1's F32 row i as BF16 merge.hidden; the token's BF16 embedding row), staged
+ //   for every row in pinned memory and loaded by one ordered copy on card 0's in-order queue before the row's commands,
+ //   where compute() drains and uploads them;
+ // - the row then issues the same prepared commands in the same order (a GEMV-split site's card-1 half first);
+ // - the context extent is admitted per row as in compute() (a drain and a re-capture of the select/attention sites
+ //   when it grows, every 32 positions).
+ // Rows follow each other on the in-order queues without host waits; the event ledger is drained every 6,000
+ // submissions, and the sticky error is read once after the last row (an error disables the draft, as in compute()).
+ static bool chunk_replay(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_REPLAY");return v&&v[0]=='1';}();return on;}
+ Allocation chunk_staging{};size_t chunk_staging_rows=0;uint64_t chunk_replays=0,chunk_rows=0;
+ // OWNRT_DRAFT_CHUNK_KV_ONLY=1 (with OWNRT_DRAFT_CHUNK_REPLAY=1; 2026-10-29, research/tp/prefill-speed-2026-10-29; default
+ // off): a head-off prompt row issues only the sites its lasting state needs. The draft is one layer, so a prompt row
+ // leaves exactly its KV/index-key append (keys, values, raw, pooled) and the position commit; everything else it computes
+ // (selection, attention, output projection, MoE, combine; the head is already skipped) is overwritten by the next row or
+ // decode step before anything reads it. The kept set is derived from the plan (the merge stage's I/O from direct()) by backward liveness from those
+ // persistent buffers (a kept site's inputs become live, for qsa_prepare only those of its live outputs: a prompt row
+ // needs kn, so qgate and iq are not issued; its outputs stop being live above it); begin and commit are always
+ // kept; error and active are ignored (sticky flag / read-only). The derivation must end with nothing live at the top of
+ // a row except the persistent buffers and the row's two inputs, so no other value carries from one row to the next.
+ // Each kept site issues the same prepared commands. Written to draft-chunk-sites.json.
+ static bool chunk_kv_only(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_KV_ONLY");return v&&v[0]=='1';}();return on;}
+ std::vector<char> chunk_sites;
+ void build_chunk_sites(){
+  std::vector<const flash::Launch*> ls;for(const auto& l:merge_plan)ls.push_back(&l);for(const auto& l:p.launches)ls.push_back(&l);
+  require(ls.size()==issue_sites.size(),"draft chunk site inventory");
+  auto persistent=[](const std::string& n){return n.ends_with(".keys")||n.ends_with(".values")||n.ends_with(".raw")||n.ends_with(".pooled")||n=="position";};
+  auto ignored=[](const std::string& n){return n=="error"||n=="active";};
+  std::set<std::string> live;for(const auto* l:ls)for(const auto& o:l->outputs)if(persistent(o))live.insert(o);
+  const std::set<std::string> persistent_set=live;
+  chunk_sites.assign(ls.size(),0);
+  // The merge stage's two plan entries carry no I/O; their writes are in direct(): merge_hidden_norm reads merge.hidden
+  // and writes merge.norm, merge_add reads merge.projected and merge.embedding_projected and writes all of streams.
+  using Names=std::vector<std::string>;
+  auto io=[&](const flash::Launch& l)->std::pair<Names,Names>{
+   if(l.op=="merge_hidden_norm"){require(l.inputs.empty()&&l.outputs.empty(),"draft merge_hidden_norm plan I/O");return {{"merge.hidden"},{"merge.norm"}};}
+   if(l.op=="merge_add"){require(l.inputs.empty()&&l.outputs.empty(),"draft merge_add plan I/O");return {{"merge.projected","merge.embedding_projected"},{"streams"}};}
+   return {l.inputs,l.outputs};};
+  // A kept site's live inputs: all of them, except qsa_prepare, whose work-groups are independent per output
+  // (kernels.hpp group(): q and gate from qgate, kn from k, iqn from iq, each with the position): only the inputs of its
+  // live outputs.
+  auto needed=[&](const flash::Launch& l,const Names& ins,const Names& outs){
+   if(l.op!="qsa_prepare")return ins;
+   require(ins.size()>=4&&outs.size()==4&&ins[0].ends_with(".qsa.qgate")&&ins[1].ends_with(".qsa.k")&&ins[2].ends_with(".qsa.iq")&&ins[3]=="position"&&
+           outs[0].ends_with(".qsa.q")&&outs[1].ends_with(".qsa.gate")&&outs[2].ends_with(".qsa.kn")&&outs[3].ends_with(".qsa.iqn"),"draft qsa_prepare wiring"); // plan.hpp node(): inputs qgate, k, iq, position, then active, error
+   Names n{ins[3]};for(size_t j=4;j<ins.size();++j)n.push_back(ins[j]);if(live.count(outs[0])||live.count(outs[1]))n.push_back(ins[0]);if(live.count(outs[2]))n.push_back(ins[1]);if(live.count(outs[3]))n.push_back(ins[2]);return n;};
+  for(size_t k=ls.size();k-->0;){const auto& l=*ls[k];if(issue_sites[k].head)continue;const auto [ins,outs]=io(l);
+   bool keep=l.op=="begin"||l.op=="commit";for(const auto& o:outs)keep=keep||(!ignored(o)&&live.count(o));
+   if(!keep)continue;chunk_sites[k]=1;const Names use=needed(l,ins,outs);
+   for(const auto& o:outs)if(!persistent(o))live.erase(o);
+   for(const auto& i:use)if(!ignored(i))live.insert(i);}
+  std::vector<std::string> carried;for(const auto& n:live)if(!persistent_set.count(n)&&n!="merge.hidden"&&n!="embedding"&&n!="position")carried.push_back(n);
+  std::ostringstream o;o<<"{\"schema\":\"ownrt.draft-chunk-sites.v1\",\"kept\":[";bool comma=false;
+  for(size_t k=0;k<ls.size();++k)if(chunk_sites[k]){o<<(comma?",":"")<<ownrt::quote(ls[k]->label);comma=true;}
+  o<<"],\"skipped\":[";comma=false;for(size_t k=0;k<ls.size();++k)if(!chunk_sites[k]&&!issue_sites[k].head){o<<(comma?",":"")<<ownrt::quote(ls[k]->label);comma=true;}
+  o<<"],\"persistent\":[";comma=false;for(const auto& n:persistent_set){o<<(comma?",":"")<<ownrt::quote(n);comma=true;}
+  o<<"],\"live_at_row_start\":[";comma=false;for(const auto& n:live){o<<(comma?",":"")<<ownrt::quote(n);comma=true;}o<<"]}";
+  std::ofstream(e.a.output/"draft-chunk-sites.json")<<o.str();
+  require(carried.empty(),"draft chunk KV-only: a non-persistent value carries across rows ("+(carried.empty()?std::string():carried[0])+")");
+  require(persistent_set.size()>=4,"draft chunk KV-only: persistent KV buffers");
+ }
+ // A cooperative provider failure disables the draft, as run() does for a per-row command.
+ void replay_chunk(const int* tokens,const float* rows,int n,int first_target){
+  try{replay_chunk_rows(tokens,rows,n,first_target);}
+  catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();}
+ }
+ void replay_chunk_rows(const int* tokens,const float* rows,int n,int first_target){
+  require(chunk_replay()&&chunk_staging&&captured&&e.a.f32_activations&&e.a.rank==0&&e.a.draft_capture.empty()&&e.a.draft_fault=="none"&&!depth_probe,"draft chunk replay admission");
+  static const bool draft_profile=[]{const char* v=std::getenv("OWNRT_DECODE_PROFILE");return v&&std::atoi(v)==2;}();
+  require(!draft_profile,"draft chunk replay: OWNRT_DECODE_PROFILE=2 profiles per-row drafts only");
+  require(n>=1&&size_t(n)<=chunk_staging_rows&&tokens&&rows,"draft chunk rows");
+  require(!async_pending&&!reverse_hidden&&queued_probe<0,"draft chunk replay with a pending draft");
+  if(disabled)return; // compute() of a disabled draft consumes nothing
+  require(first_target==position+1,"draft chunk position sequence");
+  const auto chunk_start=std::chrono::steady_clock::now();
+  const size_t H=size_t(4)*p.g.h,hidden_bytes=H*2,emb_bytes=size_t(p.g.h)*2,emb_base=chunk_staging_rows*hidden_bytes;
+  e.drain(); // the staging's last readers (the previous chunk's copies) are complete
+  auto* staged=static_cast<uint8_t*>(e.dev(0).arena.row(chunk_staging).pointer);
+  auto t=e.w.directory.at("token_embd.weight");auto type=flash::grid_type(t.grid);auto fmt=iq3::layout(type);size_t rb=p.g.h/fmt.elements*fmt.bytes;
+  for(int i=0;i<n;++i)require(tokens[i]>=0&&tokens[i]<p.g.vocab,"draft confirmed token bound");
+  // Row i's staging is written just before its ordered copy is issued (each row has its own region, and nothing writes
+  // it again in this chunk), so the card starts on row 0 while the host stages the next rows.
+  double staged_ms=0;
+  auto stage=[&](int i){const auto s0=std::chrono::steady_clock::now();
+   auto* hidden=reinterpret_cast<uint16_t*>(staged+size_t(i)*hidden_bytes);const float* f=rows+size_t(i)*H;for(size_t k=0;k<H;++k)hidden[k]=iq3::bf16_bits(f[k]);
+   auto raw=e.w.read(t.name,size_t(tokens[i])*rb,rb);auto* emb=reinterpret_cast<uint16_t*>(staged+emb_base+size_t(i)*emb_bytes);
+   for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));
+   staged_ms+=Engine::ms(s0);};
+  struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);
+  const bool kv_only=chunk_kv_only();if(kv_only&&chunk_sites.empty())build_chunk_sites();
+  uint64_t drained_at=e.submitted;std::vector<double> issued_ms(size_t(n),0.);
+  for(int i=0;i<n;++i){
+   admit_position();require(position+1==first_target+i,"draft chunk row position");
+   auto start=std::chrono::steady_clock::now();e.guard();stage(i);
+   e.tail=e.io_copy(0,{{id("merge.hidden"),0,chunk_staging,size_t(i)*hidden_bytes,hidden_bytes},{id("embedding"),0,chunk_staging,emb_base+size_t(i)*emb_bytes,emb_bytes}});e.tail_card=0;
+   for(size_t k=0;k<issue_sites.size();++k){const auto& site=issue_sites[k];if(site.head||(kv_only&&!chunk_sites[k]))continue;
+    if(Engine::ms(start)>300000.)throw ProviderError("cooperative provider deadline between submissions");
+    e.guard();e.current_cls=site.cls;
+    if(site.gemv_split>=0){for(const auto& cmd:gemv_split->sites.at(size_t(site.gemv_split)).card1){auto event=e.dev(1).issue(cmd);e.finish(1,{event,event,1},false);}++gemv_split->runs;}
+    for(const auto& cmd:site.commands){auto event=e.dev(0).issue(cmd);e.finish(0,{event,event,1},site.gemv);}
+   }
+   ++position;issued_ms[size_t(i)]=Engine::ms(start);
+   if(e.submitted-drained_at>6000){e.drain();drained_at=e.submitted;}
+  }
+  e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);
+  ++chunk_replays;chunk_rows+=size_t(n);
+  const double wall=Engine::ms(chunk_start);
+  for(int i=0;i<n;++i)trace<<"{\"draft_position\":"<<first_target+i-1<<",\"confirmed_token\":"<<tokens[i]<<",\"guess\":-1,\"head\":false,\"wall_ms\":"<<issued_ms[size_t(i)]<<",\"chunk_replay\":true}\n";
+  trace<<"{\"chunk_replay\":{\"first_target\":"<<first_target<<",\"rows\":"<<n<<",\"kv_only\":"<<(kv_only?"true":"false")<<",\"staged_ms\":"<<staged_ms<<",\"wall_ms\":"<<wall<<",\"error\":"<<status<<"}}\n";trace.flush();
+  if(status)disabled=true;
  }
  int run(int confirmed,int target_position,bool head){try{return compute(confirmed,target_position,head);}catch(const ProviderError& ex){e.drain();disabled=true;trace<<"{\"disabled\":true,\"reason\":"<<ownrt::quote(ex.what())<<"}\n";trace.flush();return -1;}}
  bool submitting()const{return async_pending;}

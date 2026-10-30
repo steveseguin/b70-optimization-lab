@@ -153,6 +153,11 @@ void prefill_allocate() {
 #endif
   prefill_positions[size_t(c)]=allocate(c,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
   prefill_tokens[size_t(c)]=allocate(c,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
+  if(prefill_moe_native()){bool moe=false;for(const auto* l:prefill_sites)moe=moe||(l->card==c&&l->op=="moe_combine");
+    if(moe){require(a.f32_activations,"OWNRT_PREFILL_MOE_NATIVE: F32 exact mode");
+      prefill_moe_mix[size_t(c)]=allocate(c,"prefill:moe-mixture",M*size_t(p.g.h)*4,Category::scratch,Lifetime::transaction);
+      prefill_moe_ones[size_t(c)]=allocate(c,"prefill:moe-ones",M*4,Category::scratch,Lifetime::transaction);
+      const std::vector<float> ones(M,1.f);upload(c,prefill_moe_ones[size_t(c)],0,ones.data(),M*4);total+=M*size_t(p.g.h)*4+M*4;}}
   size_t slot_x=0;
   if(a.tp_replicate){ // compact gate/up input rows: this card's slots of the M rows (largest expert input row)
     for(const auto* l:prefill_sites)if(l->card==c&&l->op=="routed_gemv"&&l->slots&&!ends(l->inputs.at(0),".expsact"))slot_x=std::max(slot_x,size_t(l->slots)*prefill_row_bytes(c,l->inputs.at(0))/size_t(p.g.top));
@@ -251,9 +256,58 @@ void prefill_native_group(const flash::Launch& l,int P0,int g,int rows) {
   d.view_row=-1;for(auto v:viewed)d.row_views.erase(v);
 }
 Allocation prefill_shadow(int c,const std::string& name) const {return prefill_shadows[size_t(c)].at(prefill_role_of.at(name)).id;}
+// OWNRT_PREFILL_MOE_NATIVE=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off; F32 exact mode): moe_combine
+// for all M rows in two launches per card instead of M replays of its two single-row commands. execute_site's moe_combine
+// is (1) the F32 epilogue (mixture = sum over slots 0..9 of expsdown[slot] * prob[slot], into the engine's one-row
+// mixture_out) and (2) the moe_combine site on (mixture_out, one, shexpdown, shared_gate). Here (1) is the same
+// per-element expression over the M rows' expsdown/prob shadows into an M-row mixture buffer (epilogue_f32_rows) and (2)
+// the same site with tokens=M on the M-row mixture, an M-row buffer of ones, and the shexpdown, shared_gate and moe
+// shadows (the generic/ew kernel computes row r's elements at idx = r*width + k with the single-row expression).
+static bool prefill_moe_native(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_MOE_NATIVE");return e&&e[0]=='1';}();return on;}
+std::array<Allocation,2> prefill_moe_mix{},prefill_moe_ones{};
+void prefill_moe_combine(const flash::Launch& l,int M) {
+  const int c=l.card;
+  require(a.f32_activations&&l.inputs.size()>=4&&l.outputs.size()==1&&prefill_moe_mix[size_t(c)]&&prefill_moe_ones[size_t(c)],"prefill moe_combine rows admission");
+  for(int j=0;j<4;++j)require(prefill_role_of.count(l.inputs[size_t(j)]),"prefill moe_combine input rows: "+l.inputs[size_t(j)]);
+  require(prefill_role_of.count(l.outputs[0]),"prefill moe_combine output rows");
+  const size_t H=size_t(p.g.h),down=prefill_row_bytes(c,l.inputs[0]),prob=prefill_row_bytes(c,l.inputs[1]);
+  require(down==size_t(10)*H*4&&prob==40&&prefill_row_bytes(c,l.inputs[2])==H*4&&prefill_row_bytes(c,l.inputs[3])==4&&prefill_row_bytes(c,l.outputs[0])==H*4,"prefill moe_combine row geometry");
+  finish(c,iq3::kopt4::epilogue_f32_rows(dev(c),prefill_shadow(c,l.inputs[0]),prefill_shadow(c,l.inputs[1]),prefill_moe_mix[size_t(c)],unsigned(H),unsigned(M),unsigned(down/4),unsigned(prob/4)),false);
+  auto site=prepare_site(l);
+  require(site.bindings.size()>l.inputs.size()&&site.bindings.at(0)==mixture_out[size_t(c)]&&site.bindings.at(1)==one[size_t(c)],"prefill moe_combine site bindings");
+  site.bindings.at(0)=prefill_moe_mix[size_t(c)];site.bindings.at(1)=prefill_moe_ones[size_t(c)];
+  site.bindings.at(2)=prefill_shadow(c,l.inputs[2]);site.bindings.at(3)=prefill_shadow(c,l.inputs[3]);
+  site.bindings.at(l.inputs.size())=prefill_shadow(c,l.outputs[0]);
+  site.spec.tokens=M;
+  finish(c,site.submit(dev(c),site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);
+}
 // Rank 0 host inputs: per-row lookup rows (embedding, PLE) with the token history advanced row by row. Under TP each
 // lookup's card-0 rows are computed once and uploaded to both cards (its card-1 twin reads the same row).
+// OWNRT_PREFILL_LOOKUP_BATCH=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off): the same rows, computed
+// in the same order with the same history, are gathered on the host and written with one upload per lookup and card
+// (row r at byte r*bytes of the M-row shadow, where the per-row upload put it) instead of one synchronous upload per
+// row, lookup and card (1,024 per 256-row chunk under TP). Every device byte is unchanged.
+static bool prefill_lookup_batch(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_LOOKUP_BATCH");return e&&e[0]=='1';}();return on;}
 void prefill_lookups(const int* tokens,int M) {
+  if(prefill_lookup_batch()) {
+    std::vector<const flash::Launch*> sites;for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0)sites.push_back(&l);
+    std::vector<std::vector<float>> rows(sites.size());std::vector<size_t> row_bytes(sites.size(),0);
+    for(int r=0;r<M;++r) {
+      for(size_t j=0;j<sites.size();++j) {
+        const auto& l=*sites[j];
+        lookup_ids[l.label]=lookup_input(l,tokens[r]);
+        auto values=lookup_floats(l);const size_t bytes=values.size()*4;
+        if(!r){for(int c=0;c<prefill_cards();++c)require(bytes==prefill_row_bytes(c,l.outputs[0]),"prefill lookup row extent");row_bytes[j]=bytes;rows[j].reserve(size_t(M)*values.size());}
+        require(bytes==row_bytes[j],"prefill lookup row extent");
+        rows[j].insert(rows[j].end(),values.begin(),values.end());
+      }
+      history0=history1;history1=tokens[r];
+    }
+    for(size_t j=0;j<sites.size();++j)for(int c=0;c<prefill_cards();++c){
+      require(rows[j].size()*4==size_t(M)*row_bytes[j],"prefill lookup chunk extent");
+      upload(c,prefill_shadow(c,sites[j]->outputs[0]),0,rows[j].data(),rows[j].size()*4);}
+    return;
+  }
   for(int r=0;r<M;++r) {
     for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0) {
       lookup_ids[l.label]=lookup_input(l,tokens[r]);
@@ -370,14 +424,32 @@ void prefill_route_compact(const flash::Launch& l,int M) {
 // half then waits on device for card 1's flag, so nothing may drain until card 1's half is issued (prefill_exchange_open:
 // the chunk loop skips its periodic, profile and trace drains while it is set).
 int prefill_exchange_open=-1; // card 0's exchange slot whose card-1 half is not issued yet
+// OWNRT_PREFILL_XZERO_ONCE=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off): every prefill exchange slot
+// is used by exactly one pair per chunk (slot 128 + the pair's plan slot), so the chunk zeroes the counter and flag words
+// of all of them once, on both cards, before its first site (the previous chunk ended drained), instead of two
+// synchronous uploads and a second drain per pair. Each pair still starts with both cards drained, and each exchange's
+// epoch is still 1. The decode slots are untouched.
+static bool prefill_xzero_once(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_XZERO_ONCE");return e&&e[0]=='1';}();return on;}
+uint32_t prefill_xzero_first=0,prefill_xzero_end=0;
+void prefill_xzero_chunk() {
+  namespace L=ownrt::exchange_layout;
+  if(prefill_xzero_end==0){uint32_t lo=UINT32_MAX,hi=0;
+    for(const auto* l:prefill_sites)if((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->shape.size()>=2){const uint32_t s=prefill_exchange_slot_base+uint32_t(l->shape.at(1));lo=std::min(lo,s);hi=std::max(hi,s+1);}
+    require(lo<hi&&hi<=L::slots,"TP prefill exchange slot range");prefill_xzero_first=lo;prefill_xzero_end=hi;}
+  drain();const std::vector<uint8_t> zero(size_t(prefill_xzero_end-prefill_xzero_first)*L::stride*4,0);
+  for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(prefill_xzero_first)*L::stride)*4,zero.data(),zero.size());
+  drain();
+}
 void prefill_exchange(const flash::Launch& l,int M) {
   const int c=l.card,peer=1-c;require(a.tp_replicate&&xctl.size()==2&&l.shape.size()>=2,"TP prefill exchange");
   const uint32_t slot=prefill_exchange_slot_base+uint32_t(l.shape.at(1));require(slot<ownrt::exchange_layout::slots,"TP prefill exchange slot");
   namespace L=ownrt::exchange_layout;
   require(c==0?prefill_exchange_open<0:prefill_exchange_open==int(slot),"TP prefill exchange pairing (card 0 then card 1, same slot)");
-  if(c==0){drain();const std::vector<uint8_t> zero(L::stride*4,0);
-    for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(slot)*L::stride)*4,zero.data(),zero.size());
-    drain();}
+  if(c==0){drain();
+    if(!prefill_xzero_once()){const std::vector<uint8_t> zero(L::stride*4,0);
+      for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(slot)*L::stride)*4,zero.data(),zero.size());
+      drain();}
+    else require(slot>=prefill_xzero_first&&slot<prefill_xzero_end,"TP prefill exchange slot outside the chunk's zeroed range");}
   const auto& y=buffers[size_t(c)].at(l.outputs.at(0));const size_t e=flash::scalar_bytes(y.type),row_in=prefill_row_bytes(c,l.inputs.at(0)),row_out=prefill_row_bytes(c,l.outputs.at(0));
   require(e==4&&row_in%4==0&&row_out%4==0,"TP prefill exchange rows");
   ownrt::Device::ExchangeSpec x;x.slot=slot;x.cap=tp_exchange_cap;x.control=xctl[size_t(c)];x.peer_control=xctl[size_t(peer)];x.error=buffers[size_t(c)].at("error").id;
@@ -396,6 +468,15 @@ void prefill_exchange(const flash::Launch& l,int M) {
 void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t* rows_out) {
   require(a.prefill_rows>0&&M>=1&&M<=a.prefill_rows,"prefill chunk rows");
   require(P0>=0&&P0+M<=p.g.context,"prefill context bound");
+  // Diagnostic only (OWNRT_PREFILL_HOST_TRACE=1, 2026-10-29, research/tp/prefill-speed-2026-10-29): host-side timing of
+  // the chunk (no device timing, no extra drain or wait): where the submitting thread spends its time, how long it is
+  // blocked on the cards (Engine::wait), drains, exchanges and submissions per card. One line per chunk in
+  // prefill-host-trace.jsonl. No arithmetic or ordering change.
+  static const bool host_trace=[]{const char* e=std::getenv("OWNRT_PREFILL_HOST_TRACE");return e&&e[0]=='1';}();
+  using HostClock=std::chrono::steady_clock;const auto trace_start=HostClock::now();
+  const double trace_wait0=wait_ms,trace_transfer0=transfer_ms;const uint64_t trace_waits0=host_waits;const auto trace_cards0=submitted_card;
+  std::map<std::string,std::array<double,3>> trace_sites; // class -> {count, host ms, of which blocked ms}
+  double trace_inputs_ms=0,trace_inputs_wait=0,trace_loop_ms=0,trace_loop_wait=0,trace_final_ms=0,trace_final_wait=0;
   verify_configuration();guard();drain();
   require(integer(0,"position")==P0,"prefill position sequence");
   std::vector<int32_t> positions(M),ids(M);
@@ -403,9 +484,18 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   for(int c=0;c<prefill_cards();++c){
     if(c)require(integer(c,"position")==P0,"prefill position sequence (card 1)");
     upload(c,prefill_positions[size_t(c)],0,positions.data(),size_t(M)*4);upload(c,prefill_tokens[size_t(c)],0,ids.data(),size_t(M)*4);}
+  // OWNRT_PREFILL_MOE_NATIVE: the M-row ones are rewritten every chunk. A request reset zeroes every live non-weight
+  // allocation and restores only the engine's one-row `one` (request_reset.hpp); build r6 wrote these once at allocation,
+  // so every batched chunk after the first reset combined a zero mixture (service startup gate of 2026-10-29 server
+  // tptsxqck-r1; the rank harnesses never read a prompt after a reset). Build r7; not yet device-gated.
+  if(prefill_moe_native()){const std::vector<float> ones(size_t(M),1.f);
+    for(int c=0;c<prefill_cards();++c)if(prefill_moe_ones[size_t(c)])upload(c,prefill_moe_ones[size_t(c)],0,ones.data(),size_t(M)*4);}
   const size_t stream=stream_bytes();
   if(rows_in){for(int c=0;c<prefill_cards();++c)upload(c,prefill_shadow(c,"streams"),0,rows_in,size_t(M)*stream);}
   else prefill_lookups(tokens,M);
+  if(host_trace){trace_inputs_ms=ms(trace_start);trace_inputs_wait=wait_ms-trace_wait0;}
+  if(a.tp_replicate&&prefill_xzero_once())prefill_xzero_chunk();
+  const auto trace_loop_start=HostClock::now();const double trace_loop_wait0=wait_ms;
   uint64_t drained_at=submitted;
   bool banks_native=false,banks_replayed=false;
   // Diagnostic only (OWNRT_PREFILL_PROFILE=1): drain after every site and add its wall time to its op (linear sites
@@ -419,17 +509,20 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       // TP: an open exchange pair is closed by the very next site (card 1's half); no other site may come between.
       require(prefill_exchange_open<0||((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->card==1),"TP prefill: card 1's exchange must follow card 0's");
       if(profile&&prefill_exchange_open<0)drain();
-      const auto site_start=std::chrono::steady_clock::now();
+      const auto site_start=std::chrono::steady_clock::now();const double site_wait0=wait_ms;
+      const char* trace_kind="replay";
       bool banked_native=false;
-      if(l->op=="gemv"||l->op=="routed_gemv")prefill_linear(*l,M);
-      else if(l->op=="tp_xgather"||l->op=="tp_xheads")prefill_exchange(*l,M);
-      else if(l->op=="tp_route_compact")prefill_route_compact(*l,M);
+      if(l->op=="gemv"||l->op=="routed_gemv"){prefill_linear(*l,M);trace_kind="linear";}
+      else if(l->op=="tp_xgather"||l->op=="tp_xheads"){prefill_exchange(*l,M);trace_kind="exchange";}
+      else if(l->op=="tp_route_compact"){prefill_route_compact(*l,M);trace_kind="native";}
+      else if(l->op=="moe_combine"&&prefill_moe_native()){prefill_moe_combine(*l,M);trace_kind="native";}
       else if(l->op.starts_with("tp_"))throw std::invalid_argument("TP batched prefill: unsupported site "+l->op);
-      else if(prefill_native(*l)){
+      else if(prefill_native(*l)){trace_kind="native";
         if(l->op=="qsa_select"&&M>prefill_select_rows()){const int G=prefill_select_rows();for(int g=0;g<M;g+=G)prefill_native_group(*l,P0,g,std::min(G,M-g));}
         else prefill_native_site(*l,P0,M);
         banked_native=l->op=="gdn"||l->op=="conv";}
       else if(l->op=="qsa_attention"&&prefill_attention_rows()>1) {
+        trace_kind="grouped";
         // Grouped rows (OWNRT_PREFILL_ATTN_ROWS=T, T<=4): one admit/tiles/combine launch set per T consecutive rows,
         // from row g's views, with the extent of the group's last row. Each row keeps its own query, ids, slot count and
         // causal bound, and combine stops at the row's own count, so its arithmetic equals its single-row replay.
@@ -467,6 +560,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
         if(xctl.size()==2)for(int k=0;k<2;++k){auto raw=readback(k,xctl[size_t(k)],ownrt::exchange_layout::header*4);std::vector<uint32_t> w(ownrt::exchange_layout::header);std::memcpy(w.data(),raw.data(),raw.size());
           o<<"; card "<<k<<" exchange abort "<<w[ownrt::exchange_layout::abort]<<" timeouts "<<w[ownrt::exchange_layout::timeouts]<<" waits "<<w[ownrt::exchange_layout::waits]<<" max_polls "<<w[ownrt::exchange_layout::max_spin];}
         save(a.output/"prefill-error-trace.txt",o.str());throw std::runtime_error(o.str());}}
+      if(host_trace){auto& t=trace_sites[std::string(trace_kind)+":"+l->op];t[0]+=1;t[1]+=ms(site_start);t[2]+=wait_ms-site_wait0;}
       if(banked_native)banks_native=true;else if(l->op=="gdn"||l->op=="conv")banks_replayed=true;
       // OWNRT_PREFILL_PROFILE_SHAPE=1 (diagnostic) also keys linear sites by their rows x columns.
       static const bool profile_shape=[]{const char* e=std::getenv("OWNRT_PREFILL_PROFILE_SHAPE");return e&&e[0]=='1';}();
@@ -485,6 +579,8 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
 #endif
     ",\"sites\":{";bool comma=false;
     for(const auto& [k,v]:spent){o<<(comma?",":"")<<ownrt::quote(k)<<":{\"count\":"<<v.first<<",\"ms\":"<<v.second<<"}";comma=true;}o<<"}}\n";}
+  if(host_trace){trace_loop_ms=ms(trace_loop_start);trace_loop_wait=wait_ms-trace_loop_wait0;}
+  const auto trace_final_start=HostClock::now();const double trace_final_wait0=wait_ms;
   drain();
   for(int c=0;c<prefill_cards();++c)require(!integer(c,"error"),"sticky rank error in batched prefill");
   // Logical position follows M rows; physical bank publication depends on the recurrence path.
@@ -492,6 +588,17 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   // Replayed recurrences alternate banks per row (M single-row swaps); native ones leave every row in the spare bank.
   prefill_finish_banks(M,banks_native,banks_replayed);
   if(rows_out){auto raw=readback(0,prefill_shadow(0,"streams"),size_t(M)*stream);std::memcpy(rows_out,raw.data(),raw.size());}
+  if(host_trace){
+    trace_final_ms=ms(trace_final_start);trace_final_wait=wait_ms-trace_final_wait0;
+    std::ofstream o(a.output/"prefill-host-trace.jsonl",std::ios::app);o.precision(6);
+    o<<"{\"position\":"<<P0<<",\"rows\":"<<M<<",\"cards\":"<<prefill_cards()<<",\"wall_ms\":"<<ms(trace_start)
+     <<",\"inputs_ms\":"<<trace_inputs_ms<<",\"inputs_blocked_ms\":"<<trace_inputs_wait<<",\"loop_ms\":"<<trace_loop_ms<<",\"loop_blocked_ms\":"<<trace_loop_wait
+     <<",\"final_ms\":"<<trace_final_ms<<",\"final_blocked_ms\":"<<trace_final_wait<<",\"transfer_ms\":"<<transfer_ms-trace_transfer0
+     <<",\"host_waits\":"<<host_waits-trace_waits0<<",\"submitted\":["<<submitted_card[0]-trace_cards0[0]<<","<<submitted_card[1]-trace_cards0[1]<<"]"
+     <<",\"lookup_batch\":"<<(prefill_lookup_batch()?"true":"false")<<",\"sites\":{";
+    bool comma=false;for(const auto& [k,v]:trace_sites){o<<(comma?",":"")<<ownrt::quote(k)<<":["<<v[0]<<","<<v[1]<<","<<v[2]<<"]";comma=true;}
+    o<<"}}\n";
+  }
   ++prefill_chunks;prefill_rows_done+=size_t(M);
 #ifndef OWN_RT_HOST_ONLY
   ++reuse2::chunk_counter(); // OWNRT_PREFILL_REUSE2_CYCLE diagnostic: the next chunk's tile configuration

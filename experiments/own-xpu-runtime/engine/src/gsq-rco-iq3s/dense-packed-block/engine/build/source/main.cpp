@@ -1104,6 +1104,7 @@ public:
   std::ofstream timings, prefill_timings, site_timings;
   double gemv_ms=0, nongemv_ms=0, transfer_ms=0;
   uint64_t submitted=0,max_submission_ns=0;
+  std::array<uint64_t,2> submitted_card{}; // diagnostic: submissions per card (prefill host trace, research/tp/prefill-speed-2026-10-29)
   size_t peak_device_bytes=0;
   static double ms(std::chrono::steady_clock::time_point t) {
     return std::chrono::duration<double,std::milli>(std::chrono::steady_clock::now()-t).count();
@@ -1115,7 +1116,7 @@ public:
     // is not measured there (its wall time still is).
     if(profile_events||(draft_timing&&!a.tp_replicate&&!no_draft_timing()))pending.push_back({l,gemv,current_cls});
     if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
-    tail=l.last; tail_card=c; if(c>=0&&c<2)card_tails[size_t(c)]=l.last; submitted+=l.passes;
+    tail=l.last; tail_card=c; if(c>=0&&c<2){card_tails[size_t(c)]=l.last;submitted_card[size_t(c)]+=l.passes;} submitted+=l.passes;
   }
   void finish(int c, ownrt::Event event) { finish(c,{event,event,1},false); }
   void attribution_row(ownrt::Event event,const ownrt::EventTiming& t) {

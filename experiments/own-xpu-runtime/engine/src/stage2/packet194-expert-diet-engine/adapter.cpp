@@ -661,7 +661,11 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   // Token rows run only on kernels that loop rows with single-row arithmetic: the generic/specialised kernels, and the
   // SimpleNew route/gather/combine kernels through their per-row binding offsets.
   const bool normal=s.special==Special::normal,simple=normal&&(s.implementation==1||s.implementation==11)&&(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm));
-  const bool generic=normal&&(s.implementation<=1||s.implementation==11)&&!(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm)||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||s.op==Op::moe_combine);
+  // OWNRT_PREFILL_MOE_NATIVE=1 (2026-10-29, research/tp/prefill-speed-2026-10-29; default off): the batched prefill's
+  // moe_combine rows (prefill_engine.hpp prefill_moe_combine) run on the generic/ew kernel, which computes each row's
+  // elements with the single-row expression (idx = row*width + k).
+  static const bool moe_rows=[]{const char* e=std::getenv("OWNRT_PREFILL_MOE_NATIVE");return e&&e[0]=='1';}();
+  const bool generic=normal&&(s.implementation<=1||s.implementation==11)&&!(s.op==Op::route||s.op==Op::expert_gather||(s.op==Op::hc_combine&&!s.fused_combine_norm)||s.op==Op::argmax||s.op==Op::ple_add||s.op==Op::ple_gate||s.op==Op::qsa_attention||(s.op==Op::moe_combine&&!moe_rows));
   const bool round2_gdn=normal&&s.implementation==2&&s.op==Op::gdn; // loops token rows like the generic kernel
   // p49 split32 attention (implementation 12) indexes every binding by row r < tokens, with per-row counts and causal
   // bound; up to 4 rows (grouped prefill attention, OWNRT_PREFILL_ATTN_ROWS).
