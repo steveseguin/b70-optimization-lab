@@ -171,6 +171,8 @@ template<iq3::Type T,unsigned K> integrated::Launch raw_issue(ownrt::Device& d,c
   if(d.arena.row(m.w).bytes<size_t(m.rows)*rb||rb%4||!v2_aligned(d,m.w,4)||!v2_aligned(d,m.x,16)||!v2_aligned(d,m.y,4))throw std::invalid_argument("p33 raw: weight extent/alignment");
   if(m.tokens>1&&reuse2::enabled()) {
    // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i, config_count = the raw row kernel).
+   if(const unsigned sc=reuse2::small_config("P33",uint32_t(m.tokens),reuse2::default_small("P33",uint32_t(m.rows),K));sc!=reuse2::no_small){ // OWNRT_PREFILL_REUSE2_SMALL
+    std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};auto e=reuse2::issue<raw::Reuse2Raw<T>,REUSE2_SMALL_CONFIGS>(d,sc,ids,uint32_t(m.rows),K,m.tokens,uint32_t(rb));return {e,e,1};}
    const unsigned c=reuse2::config("P33",reuse2::config_count,reuse2::default_p33(uint32_t(m.rows),K));
    if(c<reuse2::config_count){std::array<ownrt::Allocation,3> ids{m.w,m.x,m.y};auto e=reuse2::issue<raw::Reuse2Raw<T>,REUSE2_CONFIGS>(d,c,ids,uint32_t(m.rows),K,m.tokens,uint32_t(rb));return {e,e,1};}
   }
@@ -205,6 +207,12 @@ template<iq3::Type T,unsigned K> integrated::Launch dense_issue(ownrt::Device& d
  if constexpr(T==iq3::Type::Q6_K||T==iq3::Type::Q8_0) if(m[0].activation==iq3::Type::F32&&m[0].tokens>1&&v==6&&reuse2::enabled()) {
   // Generation-2 token rows (OWNRT_PREFILL_REUSE2=1; tile OWNRT_PREFILL_REUSE2_P33=i): dense_lane's values and sequence.
   const size_t rb=integrated::arithmetic::row_bytes(T,K,6);
+  const unsigned sc=reuse2::small_config("P33",uint32_t(m[0].tokens),reuse2::default_small("P33",uint32_t(m[0].rows),K)); // OWNRT_PREFILL_REUSE2_SMALL
+  if(sc!=reuse2::no_small&&rb%4==0&&K%4==0&&reuse2::aligned(d,m[0].w,4)&&reuse2::aligned(d,m[0].x,16)&&rb<=UINT32_MAX) {
+   std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};
+   auto e=reuse2::issue<reuse2::Expanded8<T==iq3::Type::Q6_K?16u:32u>,REUSE2_SMALL_CONFIGS>(d,sc,ids,uint32_t(m[0].rows),K,m[0].tokens,uint32_t(rb));
+   return {e,e,1};
+  }
   const unsigned c=reuse2::config("P33",reuse2::config_count,reuse2::default_p33(uint32_t(m[0].rows),K));
   if(c<reuse2::config_count&&rb%4==0&&K%4==0&&reuse2::aligned(d,m[0].w,4)&&reuse2::aligned(d,m[0].x,16)&&rb<=UINT32_MAX) {
    std::array<ownrt::Allocation,3> ids{m[0].w,m[0].x,m[0].y};

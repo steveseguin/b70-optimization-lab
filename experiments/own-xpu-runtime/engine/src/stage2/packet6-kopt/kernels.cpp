@@ -6,6 +6,7 @@
 #include "stage2/packet6-kopt/reference.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_switches.hpp"
 #include "stage2/packet194-expert-diet-engine/prefill_reuse2_op.hpp"
+#include "stage2/packet194-expert-diet-engine/expert_groups.hpp"
 #include "stage2/packet194-expert-diet-engine/detmath.hpp"
 #include "stage2/packet194-expert-diet-engine/experts_v2.hpp"
 #include "stage2/packet194-expert-diet-engine/decode_next.hpp"
@@ -835,6 +836,12 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
     // MultiplyRowsLean's (BF16) or MultiplyRows' (Q6_K/Q8_0) single-row sequence and tree. Allocations are 16-byte aligned.
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
     const uint32_t r32=uint32_t(rows),k32=uint32_t(k),rb=uint32_t(op.desc[0].rb);
+    // OWNRT_PREFILL_REUSE2_SMALL=1: 2..4 token rows use a small-row tile (prefill_reuse2_op.hpp small_config).
+    if(const unsigned sc=reuse2::small_config(t==Type::BF16?"BF16":"KOPT",tokens,reuse2::default_small(t==Type::BF16?"BF16":"KOPT",r32,k32));sc!=reuse2::no_small) {
+      if(t==Type::BF16)return reuse2::issue<reuse2::BF16x8,REUSE2_SMALL_CONFIGS>(d,sc,ids,r32,k32,tokens,rb);
+      if(t==Type::Q6_K)return reuse2::issue<reuse2::Decode8<Reuse2Q6>,REUSE2_SMALL_CONFIGS>(d,sc,ids,r32,k32,tokens,rb);
+      return reuse2::issue<reuse2::Decode8<Reuse2Q8>,REUSE2_SMALL_CONFIGS>(d,sc,ids,r32,k32,tokens,rb);
+    }
     const unsigned c=t==Type::BF16?reuse2::config("BF16",reuse2::config_count,reuse2::default_bf16(r32,k32)):reuse2::config("KOPT",reuse2::config_count,reuse2::default_kopt(r32,k32));
     if(c<reuse2::config_count) {
       if(t==Type::BF16)return reuse2::issue<reuse2::BF16x8,REUSE2_CONFIGS>(d,c,ids,r32,k32,tokens,rb);
@@ -860,10 +867,37 @@ ownrt::Event gemv_tokens(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
   if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
   return d.compute(rows_op,ids,{});
 }
+// OWNRT_EXPERTS_GROUPED (expert_groups.hpp): IQ2_S / IQ3_S rows (2 per subgroup) and IQ4_NL packed rows by expert group.
+struct GroupedRows:ownrt::SyclOperation {
+  Descriptor desc{};
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    auto d=desc;std::array<void*,8> pt{};if(p.size()>pt.size())throw std::invalid_argument("kopt grouped capture extent");std::copy(p.begin(),p.end(),pt.begin());
+    const xgroup2::RowsView v{static_cast<const uint8_t*>(pt[d.w]),static_cast<const float*>(pt[d.x]),static_cast<float*>(pt[d.y]),static_cast<const Route*>(pt[d.r]),static_cast<uint32_t*>(pt[d.status]),
+      uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),d.count,d.experts,d.span};
+    // One subgroup per (row block, possible group): G = the slot count, the worst case (IQ4_NL down: 2 rows per 16-lane
+    // subgroup; IQ2_S / IQ3_S gate/up: 2 rows per subgroup).
+    constexpr unsigned WGSG=4;const uint32_t G=v.count;
+    if(d.type==Type::IQ4_NL){constexpr unsigned SG=16,RPS=SG/8;const uint32_t blocks=(v.span+RPS-1)/RPS,total=blocks*G,groups=(total+WGSG-1)/WGSG;
+      return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*SG*WGSG,SG*WGSG)](sycl::handler& h){h.depends_on(deps);
+        h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(16)]]{xgroup2::iq4nl_grouped<16,1,WGSG,2,4>(v,G,it);}));});}
+    constexpr unsigned R=2;const uint32_t blocks=(v.span+R-1)/R,total=blocks*G,groups=(total+WGSG-1)/WGSG;
+    if(d.type==Type::IQ2_S)return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG)](sycl::handler& h){h.depends_on(deps);
+        h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{xgroup2::rows_grouped<Type::IQ2_S,R,4,WGSG>(v,G,it);}));});
+    if(d.type==Type::IQ3_S)return ownrt::prepared_submit(q,[=,range=sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG)](sycl::handler& h){h.depends_on(deps);
+        h.parallel_for(range,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{xgroup2::rows_grouped<Type::IQ3_S,R,4,WGSG>(v,G,it);}));});
+    throw std::invalid_argument("kopt grouped rows: IQ2_S, IQ3_S, IQ4_NL only");
+  }
+};
 ownrt::Event routed_gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,ownrt::Allocation r,ownrt::Allocation status,uint32_t experts,uint32_t rows,size_t k,uint32_t count,uint32_t span,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
   if(!r || !status)throw std::invalid_argument("kopt routing handles required");
   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
   op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},experts,count,span,r,status);
+  // OWNRT_EXPERTS_GROUPED=1 (2026-10-30, research/multirow-verify-2026-10-30; default off): 11..64 slots as groups of up
+  // to 4 slots sharing an expert, each member with MultiplyBlockRows' / MultiplyIQ4NLPacked's values, order and tree.
+  if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&xgroup2::applies(count)&&(t==Type::IQ2_S||t==Type::IQ3_S||(t==Type::IQ4_NL&&k%64==0&&op.desc[0].rb%4==0))) {
+    if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");
+    GroupedRows g;g.desc=op.desc[0];return d.compute(g,ids,{});
+  }
   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&block_rows()&&(t==Type::IQ2_S||t==Type::IQ3_S||t==Type::Q8_0||t==Type::Q6_K)) { // not IQ4_NL: K=640 loses parallelism (153 vs ~107 us/layer)
     // F32 routed rows: 4 rows per subgroup, decoded from global memory (OWNRT_KOPT_BLOCK_ROWS=0 keeps one row each).
     if(std::set<ownrt::Allocation>(ids.begin(),ids.end()).size()!=ids.size())throw std::invalid_argument("kopt aliased bindings");

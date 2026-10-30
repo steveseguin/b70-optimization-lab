@@ -67,6 +67,51 @@ template<unsigned T,class E> struct Block32 {
  }
  template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){stride32_inputs(sg,x,step,lane,in);}
 };
+// Dense packed blocks with the decode of gsqn::v2::rows_fast (dense_decode_v2.hpp, OWNRT_DENSE_DECODE_V2, the one-row
+// decode kernel of these sites), 2026-10-30, research/multirow-verify-2026-10-30, small-row tiles only: the same values as
+// Block32 (block_element's field equations; IQ4_XS levels by iq3::iq4_level, the same integers as block_element's table)
+// with one header load per block (Q4_K/Q5_K: 16 bytes; IQ4_XS: 8 bytes) and the code bytes per lane. The row base and
+// the block size keep the header loads aligned (rows_fast's fits<T>: row bytes and base 16-byte aligned for Q4_K/Q5_K,
+// 8 for IQ4_XS; the caller checks).
+template<unsigned T> struct BlockV2 {
+ static constexpr uint32_t bytes=T==12?144:T==13?176:136;
+ static bool active(uint32_t k,uint32_t step,unsigned lane){return stride32_active(k,step,lane);}
+ static void decode(const uint8_t* row,uint32_t,uint32_t step,unsigned lane,float (&v)[8]){
+  const uint8_t* b=row+step*bytes;
+  if constexpr(T==12||T==13){
+   const sycl::vec<uint32_t,4> h=*reinterpret_cast<const sycl::vec<uint32_t,4>*>(b);
+   const float d=iq3::half(h[0]&0xffffu),dmin=iq3::half(h[0]>>16);
+   uint8_t s[12];
+   #pragma unroll
+   for(unsigned i=0;i<12;++i)s[i]=uint8_t(h[1+i/4]>>(8*(i%4)));
+   constexpr unsigned low_offset=T==12?16:48;
+   uint32_t qh=0;if constexpr(T==13)qh=b[16+lane];
+   uint32_t cb[4];
+   #pragma unroll
+   for(unsigned p=0;p<4;++p)cb[p]=b[low_offset+p*32+lane];
+   #pragma unroll
+   for(unsigned group=0;group<8;++group){
+    const unsigned scale=group<4?s[group]&63:(s[group+4]&15)|((s[group-4]>>6)<<4);
+    const unsigned minimum=group<4?s[group+4]&63:(s[group+4]>>4)|((s[group]>>6)<<4);
+    unsigned code=(cb[group/2]>>(4*(group%2)))&15;
+    if constexpr(T==13)code|=((qh>>group)&1)<<4;
+    const float factor=d*float(scale);const float offset=dmin*float(minimum);
+    const float product0=factor*float(code);v[group]=product0-offset;
+   }
+  }else{
+   const sycl::vec<uint32_t,2> h=*reinterpret_cast<const sycl::vec<uint32_t,2>*>(b);
+   const float d=iq3::half(h[0]&0xffffu);const uint32_t sh=h[0]>>16,sl=h[1];
+   #pragma unroll
+   for(unsigned group=0;group<8;++group){
+    const unsigned scale=((sl>>(8*(group/2)+4*(group%2)))&15)|(((sh>>(2*group))&3)<<4);
+    const unsigned code=(b[8+group*16+lane%16]>>(4*(lane/16)))&15;
+    const float factor=d*float(int(scale)-32);
+    v[group]=factor*float(iq3::iq4_level(code));
+   }
+  }
+ }
+ template<class G> static void inputs(G sg,const float* x,uint32_t step,unsigned lane,float (&in)[8]){stride32_inputs(sg,x,step,lane,in);}
+};
 // p33 expanded rows (variant 6: k signed bytes, then one F32 scale per Group columns; Q6_K Group 16, Q8_0 32): the
 // values of p33::dense_lane / DenseRows, value = scale*float(signed8(code)). Rows and k are multiples of 4 bytes (the
 // caller checks), so the 8 code bytes and the scale are read as aligned 32-bit words; the same bytes, the same values.
@@ -143,13 +188,17 @@ template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0> st
   // lanes with bit w set the odd ones, each adding the same two partials in the same order (a butterfly transpose).
   // After log2(G) levels lane l owns accumulator l % G; the remaining widths add lane l+w into lane l. Lanes 0..G-1
   // then hold the G results and store them with one instruction.
-  constexpr unsigned N=RW*T,G=N<32?N:32;
+  // T that is not a power of two (2026-10-30, small-row tiles: T = 3) is padded to Tp in the reduction only: the padding
+  // accumulators are zero, never stored, and no real output's additions involve them (each butterfly addition combines
+  // the same output's two lane partials). For a power-of-two T, Tp == T and nothing changes.
+  constexpr unsigned Tp=T<=1?1:T<=2?2:T<=4?4:T<=8?8:T<=16?16:32;
+  constexpr unsigned N=RW*Tp,G=N<32?N:32;
   static_assert((N&(N-1))==0,"tile size must be a power of two");
   float flat[N];
   #pragma unroll
   for(unsigned r=0;r<RW;++r)
    #pragma unroll
-   for(unsigned t=0;t<T;++t)flat[r*T+t]=acc[r][t];
+   for(unsigned t=0;t<Tp;++t)flat[r*Tp+t]=t<T?acc[r][t<T?t:0]:0.f;
   #pragma unroll
   for(unsigned g0=0;g0<N;g0+=G){
    float a[G];
@@ -169,7 +218,7 @@ template<class F,unsigned RW,unsigned T,unsigned S,unsigned GRF,unsigned O=0> st
    float sum=a[0];
    #pragma unroll
    for(unsigned w=G;w<32;w*=2){const float rhs=sycl::select_from_group(sg,sum,(lane+w)%32);if(((lane/G)%(2*w/G))==0)sum=sum+rhs;}
-   if(lane<G){const unsigned i=g0+lane,r=i/T,t=i%T;if(row0+r<rows&&tok0+t<tokens)y[(tok0+t)*rows+(row0+r)]=sum;}
+   if(lane<G){const unsigned i=g0+lane,r=i/Tp,t=i%Tp;if(t<T&&row0+r<rows&&tok0+t<tokens)y[(tok0+t)*rows+(row0+r)]=sum;}
   }
  }
  auto get(sycl::ext::oneapi::experimental::properties_tag) const {

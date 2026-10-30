@@ -5,6 +5,7 @@
 #include "stage2/packet194-expert-diet-engine/decode_next2.hpp"
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/dn2_kernels.hpp"
+#include "stage2/packet194-expert-diet-engine/expert_groups.hpp"
 #endif
 namespace iq3block {
 using gsqn::Shape;using gsqn::Bound;
@@ -96,6 +97,20 @@ struct XxsDn2Operation final:ownrt::SyclOperation {
  }
 };
 inline bool block_rows(){static const bool on=[]{const char* e=std::getenv("OWNRT_IQ3_BLOCK_ROWS");return !e||e[0]!='0';}();return on;}
+// OWNRT_EXPERTS_GROUPED=1 (2026-10-30, research/multirow-verify-2026-10-30; default off): a chunk's 11..64 slots run as
+// groups of up to 4 slots sharing an expert (xgroup2::xxs_grouped: xxs_packed's values, order and tree per member).
+class XxsGroupedKernel;
+struct XxsGroupedOperation final:ownrt::SyclOperation {
+ Shape s{};
+ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&deps)const override{
+  require(q.has_property<sycl::property::queue::in_order>(),"GSQ requires selected ordered queue");
+  const dn2::XxsView v{static_cast<const uint8_t*>(p[0]),reinterpret_cast<const float*>(p[1]),reinterpret_cast<float*>(p[2]),static_cast<const iq3::Route*>(p[3]),static_cast<uint32_t*>(p[4]),
+   uint32_t(s.rows),uint32_t(s.columns),uint32_t(s.row_bytes),uint32_t(s.count),uint32_t(s.experts)};
+  // One subgroup per (four-row block, possible group): G = the slot count, the worst case.
+  constexpr unsigned WGSG=4;const uint32_t G=v.count,total=((v.rows+3)/4)*G,groups=(total+WGSG-1)/WGSG;
+  return ownrt::prepared_submit(q,[=](sycl::handler&h){h.depends_on(deps);h.parallel_for<XxsGroupedKernel>(sycl::nd_range<1>(size_t(groups)*32*WGSG,32*WGSG),packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{xgroup2::xxs_grouped<WGSG,4>(v,G,it);}));});
+ }
+};
 #endif
 template<bool F> class BlockKernel;
 template<bool F=false> struct BlockOperation final:
@@ -140,6 +155,7 @@ inline integrated::Launch submit(ownrt::Device&d,const integrated::Matrix&m,std:
  const auto shape=gsqn::validate(d,m,input,gsqn::Storage::packed_direct);
  std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.routes,m.status};
 #ifndef OWN_RT_HOST_ONLY
+ if(shape.f32&&!shape.row_major&&!compact&&xgroup2::applies(uint32_t(m.count))&&shape.columns%256==0){XxsGroupedOperation op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
  if(shape.f32&&!shape.row_major&&block_rows()&&decode_next2::enabled("xxs")&&shape.columns%256==0){XxsDn2Operation op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
  if(shape.f32&&!shape.row_major&&block_rows()){BlockRowsOperation<4> op;op.s=shape;auto e=d.compute(op,ids,{});return {e,e,1};}
 #endif

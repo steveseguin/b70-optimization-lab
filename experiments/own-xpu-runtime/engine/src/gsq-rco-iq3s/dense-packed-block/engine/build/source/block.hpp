@@ -136,6 +136,15 @@ inline const Site& policy(const integrated::Matrix&m,std::string_view label,std:
 template<unsigned T> inline integrated::Launch issue(ownrt::Device&d,const integrated::Matrix&m,Shape s){std::array<ownrt::Allocation,5>ids{m.w,m.x,m.y,m.x,m.y};
 #ifndef OWN_RT_HOST_ONLY
  if(s.f32&&s.row_major&&reuse2::enabled()&&s.columns%256==0&&reuse2::aligned(d,m.x,16)){
+  // OWNRT_PREFILL_REUSE2_SMALL=1: 2..4 token rows use a small-row tile (prefill_reuse2_op.hpp small_config).
+  // Its dense-block format is reuse2::BlockV2 (the one-row decode kernel's header loads) when rows_fast's alignment holds.
+  if(const unsigned sc=reuse2::small_config("BLOCK",uint32_t(s.count),reuse2::default_small("BLOCK",uint32_t(s.rows),uint32_t(s.columns)));sc!=reuse2::no_small){
+   std::array<ownrt::Allocation,3> rows{m.w,m.x,m.y};ownrt::Event e{};
+   if(gsqn::v2::fits<T>(static_cast<const uint8_t*>(d.arena.row(m.w).pointer),s.rows,s.columns,s.row_bytes))
+    e=reuse2::issue<reuse2::BlockV2<T>,REUSE2_SMALL_CONFIGS>(d,sc,rows,uint32_t(s.rows),uint32_t(s.columns),s.count,uint32_t(s.row_bytes));
+   else e=reuse2::issue<reuse2::Block32<T,BlockElement>,REUSE2_SMALL_CONFIGS>(d,sc,rows,uint32_t(s.rows),uint32_t(s.columns),s.count,uint32_t(s.row_bytes));
+   return {e,e,1};
+  }
   // OWNRT_PREFILL_REUSE2_BLOCK=i selects the tile (default reuse2::default_block); the x rows are 16-byte aligned for subgroup block reads.
   if(const unsigned c=reuse2::config("BLOCK",reuse2::config_count,reuse2::default_block(uint32_t(s.rows),uint32_t(s.columns)));c<reuse2::config_count){
    std::array<ownrt::Allocation,3> rows{m.w,m.x,m.y};

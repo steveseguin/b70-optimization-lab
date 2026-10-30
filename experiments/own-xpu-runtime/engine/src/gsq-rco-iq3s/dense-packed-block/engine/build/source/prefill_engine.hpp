@@ -352,6 +352,7 @@ bool prefill_experts_site(const flash::Launch& l,const Matrix& m) {
   (void)l;(void)m;return false;
 #else
   if(!xgroup::enabled()||!xg_order[size_t(l.card)])return false;
+  if(xgroup2::applies(m.count))return false; // OWNRT_EXPERTS_GROUPED: small chunks take the grouped one-row kernels
   if(m.activation!=iq3::Type::F32||m.output_type!=iq3::Type::F32||m.fp32||m.tokens!=1||!m.routes||!m.status||!m.count||!m.experts)return false;
   const size_t c=size_t(l.card);
   if((m.span&&m.span!=m.rows)||m.count>xg_capacity||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||m.columns%32)return false;
