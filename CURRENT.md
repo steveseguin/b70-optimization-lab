@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 29, about 20:00 — four cards now run SC117 at 131,072 tokens of context, exact: 78.23 / 78.51 tok/s.**
+- What blocked it: the engine admitted 131,072 only for pipeline processes, and it checked rank 1's memory as if on one
+  card (34.1 GB) before the split. Engine `aafd258dd5ea` admits 131,072 for a four-card (TP) rank and checks each card
+  against the same 30 GiB cap: rank 1 plans 31.42 GB per card, rank 0 26.09 GB plus the draft. No cap was relaxed.
+- Every gate is exact. At 131,072, each rank holds exactly the state of a 65,536 run on two cards and on one card.
+  Larger buffers hold the same bytes followed by zeros. That is 15 comparisons, all equal.
+- Two fresh lab servers at 131,072: suite 78.23 / 78.51 tok/s (78.47 / 78.53 at 65,536 the same evening). All 5,965
+  outputs equal B19.
+- The 121,854-token prompt with 512 outputs gives the same 512 tokens as the 3-target 262K layout.
+  - First token after 355 s (3+1: 241–251 s).
+  - Writing at 76 tok/s (3+1: 45–48).
+  - Prompt reading is now this layout's weak spot.
+- Side test: the persistent card-1 thread is now a small win on top of the per-card contexts. 78.76 vs 78.50 tok/s
+  (+0.3%), faster on 47 of 48 prompt pairs, and outputs equal B19. It still needs its own bitwise gate with the
+  per-card contexts before it joins the flags.
+- Kernel log clean. `sc117-lan` not touched. Next: faster prompt reading on both four-card ranks.
+  [Result](experiments/own-xpu-runtime/research/tp/ctx131072-2026-10-29/RESULT.md).
+
 **October 29, about 15:30 — the TP page faults are not caused by thread creation; a persistent card-1 thread is exact but not faster.**
 - New opt-in `OWNRT_TP_PERSISTENT_THREAD=1` (engine `1c667aea0690`): card 1's submission thread is created once per process
   instead of once per half. Every gate is bitwise equal (rank 1 1079/1079; rank 0 1029/1029 + 71/71 with hits, misses
