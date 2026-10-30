@@ -1,0 +1,31 @@
+=== phase t1b binary e6daa268a3a8 start 2026-10-30T15:34:46-04:00 pid 2669721 affinity 0-3,16-19 nofile 1048576
+[klog t1b-before-24h] since @1793302486: 12 lines, 0 xe/fault lines
+--- arm t64-r0-b rank=0 mode=tps steps=16 prompt=1100 pattern=hmcn extra=rows=256,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko,ep,rd,sr,lt=4,st,gr,rc,hc,db,sp=64 MemAvailable=100328644608 shm_free=47697555456 at 2026-10-30T15:34:46-04:00
+{"steps": 16, "load_s": 108.79388942709193, "prompt_ms": 1970.7687280606478, "draft_replay_ms": 60.31089788302779, "rc": 0} median half ms 8.363 draft ms 1.117
+arm t64-r0-b rc=0 after 137 s
+[klog t1b-after-t64-r0-b] since @1793388886: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1449,"waits_that_polled":946,"max_polls":246,"poll_sum":12660},{"abort":0,"timeouts":0,"waits":1449,"waits_that_polled":873,"max_polls":148,"poll_sum":7345}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":11,"max_polls":26,"poll_sum":87},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":23,"max_polls":7005,"poll_sum":71375}],"card1_error":0}
+{"runs":16,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":15,"max_polls":81,"poll_sum":989},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":17,"max_polls":9162,"poll_sum":25248}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"schema":"ownrt.qsa-split.v1","layers":5,"kv_buffers_halved":10,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":48,"jobs":48,"error":""}
+{"buffers":670,"differ":[],"passed":true}
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+tp card 1 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+--- arm t64-r0-a rank=0 mode=tps steps=16 prompt=1100 pattern=hmcn extra=rows=256,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko,ep,rd,sr,lt=4,st,gr,rc,hc,sp=64 MemAvailable=92431069184 shm_free=40524914688 at 2026-10-30T15:37:03-04:00
+{"steps": 16, "load_s": 76.04219324397855, "prompt_ms": 2175.2823798451573, "draft_replay_ms": 250.05044881254435, "rc": 0} median half ms 8.368 draft ms 1.119
+arm t64-r0-a rc=0 after 104 s
+[klog t1b-after-t64-r0-a] since @1793389023: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1449,"waits_that_polled":860,"max_polls":18921,"poll_sum":30849},{"abort":0,"timeouts":0,"waits":1449,"waits_that_polled":951,"max_polls":47,"poll_sum":8708}]}
+{"runs":16,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":13,"max_polls":19,"poll_sum":78},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":24,"max_polls":8236,"poll_sum":72659}],"card1_error":0}
+{"runs":16,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":15,"max_polls":80,"poll_sum":1049},{"abort":0,"timeouts":0,"waits":32,"waits_that_polled":17,"max_polls":6483,"poll_sum":22570}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"schema":"ownrt.qsa-split.v1","layers":5,"kv_buffers_halved":10,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":48,"jobs":48,"error":""}
+{"buffers":670,"differ":[],"passed":true}
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+tp card 1 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+=== phase t1b done 2026-10-30T15:38:47-04:00

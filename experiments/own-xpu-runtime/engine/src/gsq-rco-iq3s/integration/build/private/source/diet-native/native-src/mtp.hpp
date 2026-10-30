@@ -7,6 +7,7 @@
 #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
 #include "stage2/packet194-expert-diet-engine/p56_prefix.hpp"
 #include "stage2/packet194-expert-diet-engine/p83_head.hpp"
+#include "stage2/packet194-expert-diet-engine/draft_batch.hpp"
 #include <atomic>
 #include <cfenv>
 #include <thread>
@@ -452,6 +453,7 @@ public:
   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
   prepare_commands();
+  if(chunk_staging&&chunk_batch())allocate_chunk_batch();
   if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
   if(depth_probe){
    for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
@@ -588,6 +590,104 @@ public:
  // Each kept site issues the same prepared commands. Written to draft-chunk-sites.json.
  static bool chunk_kv_only(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_KV_ONLY");return v&&v[0]=='1';}();return on;}
  std::vector<char> chunk_sites;
+ // OWNRT_DRAFT_CHUNK_BATCH=1 (with OWNRT_DRAFT_CHUNK_REPLAY=1 and OWNRT_DRAFT_CHUNK_KV_ONLY=1; 2026-10-30,
+ // research/tp/prefill-draft-batch-2026-10-30; default off): the chunk's KV-only rows as one launch per kept site over all
+ // n rows, instead of n x 15 single-row commands. The kept sites (draft-chunk-sites.json) must be exactly the 17 below,
+ // each with the kernel choice it is batched for (checked at the first chunk). Row-major values live in n-row buffers
+ // ("draft:batch:<name>", token-major, allocated with the chunk staging); the persistent KV, raw and pooled buffers,
+ // error and active are the draft's own; begin and commit read and write per-row positions (P0 + r), and the draft's
+ // position becomes P0 + n afterwards (a device copy of the last row's committed position).
+ // - merge: the embedding and hidden norms (draftbatch::NormTokens = p59::Norm), the two projections
+ //   (draftbatch::DenseTokens = p59::Dense / DenseBatch4, merge_add tail into streams with the token's embedding row);
+ // - begin.0 / commit.final: the adapter glue's token rows (one work-group per row, the single-row body);
+ // - hc.a: norm (NormTokens, 4 rows per token), low with its silu/4 tail (DenseSplitTokens = p59::Dense split 4),
+ //   gate (GateTokens = mtp36 Dense, BF16 production), mix (MixTokens = mtp36 Elements mix);
+ // - qsa.k, qsa.v, qsa.ik (DenseTokens); qsa.prepare and qsa.pool: the generic kernels with Spec.tokens = n (rows at
+ //   position + r; pool reads rows before the chunk from raw, the chunk's own from its input), as the target's batched
+ //   prefill runs them. qsa.prepare's qgate and iq inputs are zero rows (their outputs q, gate, iqn are not live; kn
+ //   depends only on k and the position).
+ // Only the kept sites' persistent writes (keys, values, raw, pooled, position) carry beyond the chunk, as with the KV-only
+ // rows; the single-row intermediates keep their previous values instead of the last row's (dead: the next step writes
+ // them before reading). With the sticky error set no row writes anything in either path; an error raised inside the
+ // chunk (no such row exists in exact operation) disables the draft in both paths.
+ static bool chunk_batch(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_BATCH");return v&&v[0]=='1';}();return on;}
+ struct ChunkBatch {std::map<std::string,Allocation> rows;Allocation positions{};size_t capacity=0;bool checked=false;uint64_t chunks=0,launches=0;};
+ std::optional<ChunkBatch> batch;
+ static const std::vector<std::string>& batch_kept(){static const std::vector<std::string> k{"merge.embedding_norm","merge.hidden_norm","merge.embedding_projected","merge.projected","merge.add","begin.0",
+   "blk.0.hc.a.norm","blk.0.hc.a.low","blk.0.hc.a.act","blk.0.hc.a.gate","blk.0.hc.a.mix","blk.0.qsa.k","blk.0.qsa.v","blk.0.qsa.ik","blk.0.qsa.prepare","blk.0.qsa.pool","commit.final"};return k;}
+ static const std::vector<std::string>& batch_row_buffers(){static const std::vector<std::string> b{"embedding","merge.hidden","merge.embedding_norm","merge.norm","merge.embedding_projected","merge.projected","streams",
+   "blk.0.hc.a.norm","blk.0.hc.a.low","blk.0.hc.a.act","blk.0.hc.a.gate","blk.0.hc.a.mix","blk.0.qsa.k","blk.0.qsa.v","blk.0.qsa.ik","blk.0.qsa.qgate","blk.0.qsa.iq","blk.0.qsa.q","blk.0.qsa.gate","blk.0.qsa.kn","blk.0.qsa.iqn"};return b;}
+ const flash::Launch& batch_launch(const std::string& label)const{for(const auto& l:merge_plan)if(l.label==label)return l;for(const auto& l:p.launches)if(l.label==label)return l;throw std::runtime_error("draft chunk batch: no site "+label);}
+ void allocate_chunk_batch(){
+  require(chunk_replay()&&chunk_kv_only()&&chunk_staging&&chunk_staging_rows>0&&e.a.rank==0&&!e.a.mini&&e.prepared_path,"OWNRT_DRAFT_CHUNK_BATCH: rank 0, prepared commands, OWNRT_DRAFT_CHUNK_REPLAY=1 and OWNRT_DRAFT_CHUNK_KV_ONLY=1");
+  const auto& g=p.g;
+  require(g.h==2560&&g.low==320&&g.kvh*g.ad==512&&g.id==128&&g.ih*g.id==512&&2*g.qh*g.ad==12288&&chunk_staging_rows<=256,"OWNRT_DRAFT_CHUNK_BATCH: model geometry (h 2560, low 320, KV 2x256, index 128) and at most 256 rows");
+  ChunkBatch b;b.capacity=chunk_staging_rows;size_t total=0;
+  auto make=[&](const std::string& name,size_t bytes){auto a=e.allocate(0,"draft:batch:"+name,bytes,Category::scratch,Lifetime::transaction);
+   const std::vector<uint8_t> z(std::min(bytes,size_t(4194304)),0);for(size_t off=0;off<bytes;off+=z.size())e.upload(0,a,off,z.data(),std::min(z.size(),bytes-off));total+=bytes;return a;};
+  for(const auto& name:batch_row_buffers()){const auto& slot=buffers.at(name);require(slot.type==Scalar::bf16,"OWNRT_DRAFT_CHUNK_BATCH: BF16 row buffer "+name);
+   b.rows[name]=make(name,b.capacity*slot.n*2);}
+  b.positions=make("positions",b.capacity*4);
+  batch=std::move(b);
+  save(e.a.output/"draft-chunk-batch.json","{\"schema\":\"ownrt.draft-chunk-batch.v1\",\"rows\":"+std::to_string(batch->capacity)+",\"row_buffers\":"+std::to_string(batch->rows.size())+",\"bytes\":"+std::to_string(total)+"}");
+ }
+ // First batched chunk: the KV-only derivation must keep exactly batch_kept(), each site with the kernel it is batched for.
+ void check_chunk_batch(){
+  require(batch&&chunk_kv_only()&&!chunk_sites.empty(),"OWNRT_DRAFT_CHUNK_BATCH: KV-only sites");
+  std::vector<std::string> kept;size_t k=0;for(const auto& l:merge_plan){if(chunk_sites[k])kept.push_back(l.label);++k;}for(const auto& l:p.launches){if(chunk_sites[k])kept.push_back(l.label);++k;}
+  require(kept==batch_kept(),"OWNRT_DRAFT_CHUNK_BATCH: the KV-only kept sites differ from the batched schedule");
+  auto L=[&](const std::string& s)->const flash::Launch&{return batch_launch(s);};
+  auto linear=[&](const std::string& label,unsigned rows,unsigned cols){const auto& l=L(label);const auto& w=weights.at(l.weights.at(0));
+   require(l.op=="gemv"&&l.shape.size()==3&&l.shape[0]==(label=="merge.projected"?4:1)&&unsigned(l.shape[1])==rows&&unsigned(l.shape[2])==cols&&w.type==iq3::Type::BF16&&!w.int8&&!w.fp8&&!w.raw&&w.experts==1&&w.rows==rows&&w.cols==cols&&gemv_split_index(label)<0,
+     "OWNRT_DRAFT_CHUNK_BATCH: "+label+" is not a "+std::to_string(rows)+"x"+std::to_string(cols)+" BF16 draft projection");};
+  const unsigned h=unsigned(p.g.h);
+  linear("merge.embedding_projected",h,h);linear("merge.projected",h,h);linear("blk.0.hc.a.low",320,4*h);linear("blk.0.hc.a.gate",4*h,320);
+  linear("blk.0.qsa.k",512,h);linear("blk.0.qsa.v",512,h);linear("blk.0.qsa.ik",128,h);
+  require(changed(L("merge.embedding_norm"))&&L("merge.embedding_norm").op=="norm"&&changed(L("merge.hidden_norm"))&&changed(L("merge.embedding_projected"))&&changed(L("merge.projected"))&&
+          selected("fuse_hidden_merge")&&fused(L("merge.add")),"OWNRT_DRAFT_CHUNK_BATCH: merge stage kernels (packet59 norms and projections, merge add fused into the hidden projection)");
+  const auto& hn=L("blk.0.hc.a.norm");
+  require(hn.op=="norm"&&changed(hn)&&hn.shape.size()==2&&hn.shape[0]==4&&unsigned(hn.shape[1])==h&&changed(L("blk.0.hc.a.low"))&&selected(p59c::consumers.at("blk.0.hc.a.act"))&&fused(L("blk.0.hc.a.act"))&&
+          !changed(L("blk.0.hc.a.gate"))&&packet26::dispatch.gemv_for("blk.0.hc.a.gate")!="p33.dense.segment"&&L("blk.0.hc.a.mix").op=="hc_mix"&&!fused(L("blk.0.hc.a.mix")),
+          "OWNRT_DRAFT_CHUNK_BATCH: hc.a kernels (packet59 norm, low with the fused silu/4, production gate, separate mix)");
+  require(changed(L("blk.0.qsa.k"))&&changed(L("blk.0.qsa.v"))&&changed(L("blk.0.qsa.ik")),"OWNRT_DRAFT_CHUNK_BATCH: packet59 qsa.k/v/ik");
+  require(L("blk.0.qsa.prepare").op=="qsa_prepare"&&L("blk.0.qsa.pool").op=="qsa_append_pool"&&L("begin.0").op=="begin"&&L("commit.final").op=="commit","OWNRT_DRAFT_CHUNK_BATCH: glue sites");
+  for(const auto& label:{"blk.0.qsa.prepare","blk.0.qsa.pool"}){const auto& s=prepared.at(&L(label)).spec;require(s.special==Special::normal&&s.implementation<=1&&!s.f32_activations,std::string("OWNRT_DRAFT_CHUNK_BATCH: generic ")+label);}
+  batch->checked=true;
+ }
+ void batch_glue(const flash::Launch& l,int n){auto v=prepared.at(&l);auto& s=v.spec;size_t k=0;
+  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){require(k<20,"draft chunk batch glue bindings");
+   if(name=="position"){v.bindings.at(k)=batch->positions;s.row_bytes[k]=4;}else{require(name=="active"||name=="error","draft chunk batch glue binding "+name);s.row_bytes[k]=0;}++k;}
+  require(int(k)==s.ni+s.no,"draft chunk batch glue layout");v.bindings.at(size_t(s.ni+s.no+s.nw)+2)=batch->positions;s.tokens=n;
+  e.finish(0,packet18::submit_parallel(e.dev(0),s,v.bindings,control,score,probability,{}),false);++batch->launches;}
+ void batch_generic(const flash::Launch& l,int n){auto v=prepared.at(&l);size_t k=0;
+  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){if(auto it=batch->rows.find(name);it!=batch->rows.end())v.bindings.at(k)=it->second;++k;}
+  v.spec.tokens=n;e.finish(0,packet18::submit_parallel(e.dev(0),v.spec,v.bindings,control,score,probability,{}),false);++batch->launches;}
+ // The chunk's sites in the row path's order; the staged rows are already in the pinned staging.
+ void issue_chunk_batch(int n,size_t hidden_bytes,size_t emb_bytes,size_t emb_base){
+  auto& B=*batch;auto& d=e.dev(0);const unsigned T=unsigned(n),h=unsigned(p.g.h);
+  auto R=[&](const char* name){return B.rows.at(name);};
+  auto W=[&](const char* label){return weights.at(batch_launch(label).weights.at(0)).id;};
+  auto fin=[&](integrated::Launch l,bool gemv){e.finish(0,l,gemv);++B.launches;};
+  auto tok=[&](Allocation w,Allocation x,Allocation y,unsigned rows,unsigned slots){draftbatch::Tokens a;a.w=w;a.x=x;a.y=y;a.rows=rows;a.slots=slots;return a;};
+  e.tail=e.io_copy(0,{{R("merge.hidden"),0,chunk_staging,0,size_t(n)*hidden_bytes},{R("embedding"),0,chunk_staging,emb_base,size_t(n)*emb_bytes}});e.tail_card=0;
+  fin(draftbatch::norm(d,R("embedding"),weights.at("mtp.pre_fc_norm_embedding.weight").id,R("merge.embedding_norm"),T,1,h),false);
+  fin(draftbatch::norm(d,R("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,R("merge.norm"),T,1,4*h),false);
+  fin(draftbatch::dense<2560,4>(d,tok(W("merge.embedding_projected"),R("merge.embedding_norm"),R("merge.embedding_projected"),h,T)),true);
+  {auto a=tok(W("merge.projected"),R("merge.norm"),R("merge.projected"),h,4*T);a.per_token=4;a.tail=p59::merge_add;a.other=R("merge.embedding_projected");a.out=R("streams");fin(draftbatch::dense<2560,4>(d,a),true);}
+  batch_glue(batch_launch("begin.0"),n);
+  fin(draftbatch::norm(d,R("streams"),W("blk.0.hc.a.norm"),R("blk.0.hc.a.norm"),T,4,h),false);
+  {auto a=tok(W("blk.0.hc.a.low"),R("blk.0.hc.a.norm"),R("blk.0.hc.a.low"),320,T);a.tail=p59::low;a.out=R("blk.0.hc.a.act");fin(draftbatch::dense_split<10240,4>(d,a),true);}
+  fin(draftbatch::gate<320>(d,tok(W("blk.0.hc.a.gate"),R("blk.0.hc.a.act"),R("blk.0.hc.a.gate"),4*h,T)),true);
+  fin(draftbatch::mix(d,R("blk.0.hc.a.norm"),R("blk.0.hc.a.gate"),R("blk.0.hc.a.mix"),id("error"),id("active"),T,h),false);
+  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.k"),R("blk.0.hc.a.mix"),R("blk.0.qsa.k"),512,T)),true);
+  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.v"),R("blk.0.hc.a.mix"),R("blk.0.qsa.v"),512,T)),true);
+  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.ik"),R("blk.0.hc.a.mix"),R("blk.0.qsa.ik"),128,T)),true);
+  batch_generic(batch_launch("blk.0.qsa.prepare"),n);
+  batch_generic(batch_launch("blk.0.qsa.pool"),n);
+  batch_glue(batch_launch("commit.final"),n);
+  e.tail=e.io_copy(0,{{id("position"),0,B.positions,size_t(n-1)*4,4}});e.tail_card=0;
+  ++B.chunks;
+ }
  void build_chunk_sites(){
   std::vector<const flash::Launch*> ls;for(const auto& l:merge_plan)ls.push_back(&l);for(const auto& l:p.launches)ls.push_back(&l);
   require(ls.size()==issue_sites.size(),"draft chunk site inventory");
@@ -659,14 +759,15 @@ public:
   static const bool host_trace=[]{const char* v=std::getenv("OWNRT_PREFILL_HOST_TRACE");return v&&v[0]=='1';}();
   double staged_ms=0,stage_wait_ms=0,sites_ms=0,admit_ms=0,copy_ms=0,guard_ms=0;uint64_t commands=0,guards=0;
   const bool row_copy=chunk_row_copy();
-  if(row_copy&&(chunk_row_copies.size()!=chunk_staging_rows||chunk_row_copy_generation!=e.dev(0).generation()))build_chunk_row_copies(hidden_bytes,emb_bytes,emb_base);
+  if(row_copy&&!chunk_batch()&&(chunk_row_copies.size()!=chunk_staging_rows||chunk_row_copy_generation!=e.dev(0).generation()))build_chunk_row_copies(hidden_bytes,emb_bytes,emb_base); // the batched path copies the chunk once
   auto stage_row=[&](int i,const uint8_t* resident_row){
    auto* hidden=reinterpret_cast<uint16_t*>(staged+size_t(i)*hidden_bytes);const float* f=rows+size_t(i)*H;for(size_t k=0;k<H;++k)hidden[k]=iq3::bf16_bits(f[k]);
    auto* emb=reinterpret_cast<uint16_t*>(staged+emb_base+size_t(i)*emb_bytes);
    if(resident_row){const std::span<const uint8_t> raw(resident_row,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}
    else {auto raw=e.w.read(t.name,size_t(tokens[i])*rb,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}};
   auto stage=[&](int i){const auto s0=std::chrono::steady_clock::now();stage_row(i,nullptr);staged_ms+=Engine::ms(s0);};
-  const bool threaded=stage_thread_on&&e.w.resident(t.name,0,rb)!=nullptr;
+  const bool batched=chunk_batch();
+  const bool threaded=!batched&&stage_thread_on&&e.w.resident(t.name,0,rb)!=nullptr;
   std::atomic<int> staged_count{0};std::atomic<bool> stage_failed{false};std::string stage_error;double thread_stage_ms=0;
   std::thread stager;struct Join{std::thread& t;~Join(){if(t.joinable())t.join();}} join_stager{stager};
   if(threaded)stager=std::thread([&]{const auto s0=std::chrono::steady_clock::now();
@@ -676,6 +777,39 @@ public:
    thread_stage_ms=Engine::ms(s0);});
   struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);
   const bool kv_only=chunk_kv_only();if(kv_only&&chunk_sites.empty())build_chunk_sites();
+  if(batched){
+   // OWNRT_DRAFT_CHUNK_BATCH=1: stage every row (up to 4 host threads over contiguous row ranges from the resident
+   // embedding table, else inline), then the batched sites (issue_chunk_batch). The host position and context extent end
+   // as after n rows (admit_position for the last row's position, as the row loop's last admission).
+   require(kv_only&&batch,"OWNRT_DRAFT_CHUNK_BATCH requires OWNRT_DRAFT_CHUNK_KV_ONLY=1 and its row buffers");
+   require(size_t(n)<=batch->capacity&&position+n<=p.g.context,"draft chunk batch: rows within the capacity and the context");
+   if(!batch->checked)check_chunk_batch();
+   const int P0=position;std::vector<uint32_t> positions(static_cast<size_t>(n));for(int i=0;i<n;++i)positions[size_t(i)]=uint32_t(P0+i);
+   const auto a0=std::chrono::steady_clock::now();position=P0+n-1;admit_position();position=P0;if(host_trace)admit_ms+=Engine::ms(a0);
+   e.guard();++guards;
+   {const auto s0=std::chrono::steady_clock::now();const bool resident=e.w.resident(t.name,0,rb)!=nullptr;const int T=resident?std::min(4,n):1;
+    std::vector<std::string> errors(static_cast<size_t>(T),std::string());std::vector<std::thread> pool;
+    auto work=[&](int k){try{for(int i=n*k/T;i<n*(k+1)/T;++i){const uint8_t* row=resident?e.w.resident(t.name,size_t(tokens[i])*rb,rb):nullptr;
+       if(resident&&!row)throw std::runtime_error("embedding row not resident");stage_row(i,row);}}catch(const std::exception& ex){errors[size_t(k)]=ex.what();}};
+    for(int k=1;k<T;++k)pool.emplace_back(work,k);
+    work(0);for(auto& th:pool)th.join();
+    for(const auto& er:errors)require(er.empty(),"draft chunk staging: "+er);
+    if(resident)for(int i=0;i<n;++i)e.w.count_read(rb); // read()'s counters, as the per-row reads leave them
+    staged_ms=Engine::ms(s0);}
+   e.upload(0,batch->positions,0,positions.data(),size_t(n)*4);
+   const auto t_sites=std::chrono::steady_clock::now();const uint64_t launches0=batch->launches;
+   issue_chunk_batch(n,hidden_bytes,emb_bytes,emb_base);
+   commands=batch->launches-launches0;if(host_trace)sites_ms+=Engine::ms(t_sites);
+   position=P0+n;
+   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);
+   ++chunk_replays;chunk_rows+=size_t(n);
+   const double wall=Engine::ms(chunk_start);
+   for(int i=0;i<n;++i)trace<<"{\"draft_position\":"<<first_target+i-1<<",\"confirmed_token\":"<<tokens[i]<<",\"guess\":-1,\"head\":false,\"wall_ms\":0,\"chunk_replay\":true,\"batch\":true}\n";
+   trace<<"{\"chunk_replay\":{\"first_target\":"<<first_target<<",\"rows\":"<<n<<",\"kv_only\":true,\"batch\":true,\"staged_ms\":"<<staged_ms<<",\"wall_ms\":"<<wall<<",\"error\":"<<status
+        <<",\"sites_ms\":"<<sites_ms<<",\"admit_ms\":"<<admit_ms<<",\"commands\":"<<commands<<",\"guards\":"<<guards<<"}}\n";trace.flush();
+   if(status)disabled=true;
+   return;
+  }
   uint64_t drained_at=e.submitted;std::vector<double> issued_ms(size_t(n),0.);
   for(int i=0;i<n;++i){
    const auto a0=std::chrono::steady_clock::now();admit_position();if(host_trace)admit_ms+=Engine::ms(a0);

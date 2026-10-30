@@ -1,0 +1,421 @@
+{
+ "schema": "prefill-draft-batch.ones-check.v1",
+ "note": "leading_ones_measured: k such that the reset-time sha256 equals k ones then zeros (F32); exact_check: inventory_check.ones()",
+ "cases": {
+  "hc-kernels x1-r1-off-b (one card, 128 + sp=64, binary 17f5f49ff010)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/hc-kernels-endgate/export-check/x1-r1-off-b",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 64
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    }
+   ]
+  },
+  "hc-kernels x1-r1-on-b": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/hc-kernels-endgate/export-check/x1-r1-on-b",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 64
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-draft-batch t64-r0-b (TP rank 0, 1100 + sp=64, e6daa268a3a8)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/prefill-draft-batch-runs-t1b/t64-r0-b",
+   "measured": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 64
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 64
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-draft-batch t64-r1-b (TP rank 1, 1100 + sp=64)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/prefill-draft-batch-runs-t1c/t64-r1-b",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 64
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 64
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 64,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-draft-batch t-r0-b (sp=600)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/prefill-draft-batch-runs-t1a/t-r0-b",
+   "measured": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-host t-r1-new (sp=600, c8e173bf4e7d)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-30/prefill-host-runs-t2/t-r1-new",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-speed r7 t-r1-mx (sp=600)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-runs-t2/t-r1-mx",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    }
+   ]
+  },
+  "prefill-speed r6 t6-r1-mx (sp=600, expect fail)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-runs-t3/t6-r1-mx",
+   "measured": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 0
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 0
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank1",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank1-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": false
+    },
+    {
+     "file": "rank1-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": false
+    }
+   ]
+  },
+  "prefill-speed r6 t6-r0-ko (sp=600, expect fail)": {
+   "run": "/mnt/raid-models/ownrt-experiment-archives/2026-10-29/prefill-speed-runs-t3/t6-r0-ko",
+   "measured": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 256
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "leading_ones_measured": 0
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "leading_ones_measured": 0
+    }
+   ],
+   "exact_check": [
+    {
+     "file": "rank0",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": true
+    },
+    {
+     "file": "rank0-b",
+     "label": "card0:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": false
+    },
+    {
+     "file": "rank0-b",
+     "label": "card1:prefill:moe-ones",
+     "expected_leading_ones": 256,
+     "ok": false
+    }
+   ]
+  }
+ }
+}

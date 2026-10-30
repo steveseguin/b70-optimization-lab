@@ -1,5 +1,23 @@
 # Current Workspace State
 
+**October 30, about 17:30 — four-card long prompt 239.3 → 222.5 s, exact; the two pipeline ranks are now balanced.**
+- One default-off flag on binary `e6daa268a3a8`, `OWNRT_DRAFT_CHUNK_BATCH=1` (set `tptsxqckhcb` = tptsxqckh +
+  `OWNRT_HC_KERNELS=1` + this). The draft's KV-only prompt rows of each 256-row chunk run as 15 launches over all rows
+  instead of 3,840 single-row commands. Each kernel keeps the single-row arithmetic.
+- **Fresh servers at 131,072, A/B/B:** the 121,854-token prompt reads in 239.30 → 222.50 / 222.47 s, and the 3,490-token
+  prompt in 7.09 → 6.61 s.
+  - Decode is unchanged (84.4–84.6 tok/s after the long prompt; suite 87.5–87.6).
+  - All 512 long outputs equal the 3+1 reference, and the suite equals B19.
+  - Startup gate 13/13; 15/15 rank-harness comparisons bitwise equal (two-request sp=600 and sp=64, rank-1 export rows).
+- The draft chunk takes 13.8 ms instead of 56.8. Rank 0 needs 460 ms per chunk and rank 1 needs 466 ms, so **rank 1 now
+  bounds**: it is busy for the whole prompt.
+- Rank 1's two cards run a chunk in 463 ms where one card takes 683 ms: 74% of a perfect split, 121 ms per chunk of
+  four-card overhead.
+- Next (not built): split that 121 ms per card with the shape probe under batched prefill, then cut it. Rank 1 alone
+  is worth at most about 3 s; both ranks together are worth about 20 s for 40 ms each.
+- The HC agent's moe-ones warning was a too-strict check (§3). The harness check is now exact.
+  [Result](experiments/own-xpu-runtime/research/tp/prefill-draft-batch-2026-10-30/RESULT.md).
+
 **October 30, about 12:40 — four-card long prompt 250.5 → 239.3 s, exact; now at or below the 3+1 262K layout.**
 - Five default-off rank-0 flags on binary `c8e173bf4e7d` (set `tptsxqckh` = `tptsxqckf` + `OWNRT_PREFILL_SPECIAL_ROWS=1
   OWNRT_PREFILL_LOOKUP_THREADS=4 OWNRT_DRAFT_CHUNK_STAGE_THREAD=1 OWNRT_DRAFT_CHUNK_GUARD_ROW=1 OWNRT_DRAFT_CHUNK_ROW_COPY=1`):

@@ -1,0 +1,375 @@
+diff --git a/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp b/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+index 93dd6c256..b2d4e8ddd 100644
+--- a/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
++++ b/gsq-rco-iq3s/integration/build/private/source/diet-native/native-src/mtp.hpp
+@@ -7,6 +7,7 @@
+ #include "stage2/packet194-expert-diet-engine/p59_hc.hpp"
+ #include "stage2/packet194-expert-diet-engine/p56_prefix.hpp"
+ #include "stage2/packet194-expert-diet-engine/p83_head.hpp"
++#include "stage2/packet194-expert-diet-engine/draft_batch.hpp"
+ #include <atomic>
+ #include <cfenv>
+ #include <thread>
+@@ -452,6 +453,7 @@ public:
+   for(const auto& l:merge_plan)record(l);for(const auto& l:p.launches)record(l);
+   choices<<"}}";save(e.a.output/"draft-kernel-choices.json",choices.str());
+   prepare_commands();
++  if(chunk_staging&&chunk_batch())allocate_chunk_batch();
+   if(e.a.pipeline_ring_live_draft)prepare_recursive_depth2();
+   if(depth_probe){
+    for(auto allocation:mutable_ids)probe_bytes+=e.dev(0).arena.row(allocation).bytes;
+@@ -588,6 +590,104 @@ public:
+  // Each kept site issues the same prepared commands. Written to draft-chunk-sites.json.
+  static bool chunk_kv_only(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_KV_ONLY");return v&&v[0]=='1';}();return on;}
+  std::vector<char> chunk_sites;
++ // OWNRT_DRAFT_CHUNK_BATCH=1 (with OWNRT_DRAFT_CHUNK_REPLAY=1 and OWNRT_DRAFT_CHUNK_KV_ONLY=1; 2026-10-30,
++ // research/tp/prefill-draft-batch-2026-10-30; default off): the chunk's KV-only rows as one launch per kept site over all
++ // n rows, instead of n x 15 single-row commands. The kept sites (draft-chunk-sites.json) must be exactly the 17 below,
++ // each with the kernel choice it is batched for (checked at the first chunk). Row-major values live in n-row buffers
++ // ("draft:batch:<name>", token-major, allocated with the chunk staging); the persistent KV, raw and pooled buffers,
++ // error and active are the draft's own; begin and commit read and write per-row positions (P0 + r), and the draft's
++ // position becomes P0 + n afterwards (a device copy of the last row's committed position).
++ // - merge: the embedding and hidden norms (draftbatch::NormTokens = p59::Norm), the two projections
++ //   (draftbatch::DenseTokens = p59::Dense / DenseBatch4, merge_add tail into streams with the token's embedding row);
++ // - begin.0 / commit.final: the adapter glue's token rows (one work-group per row, the single-row body);
++ // - hc.a: norm (NormTokens, 4 rows per token), low with its silu/4 tail (DenseSplitTokens = p59::Dense split 4),
++ //   gate (GateTokens = mtp36 Dense, BF16 production), mix (MixTokens = mtp36 Elements mix);
++ // - qsa.k, qsa.v, qsa.ik (DenseTokens); qsa.prepare and qsa.pool: the generic kernels with Spec.tokens = n (rows at
++ //   position + r; pool reads rows before the chunk from raw, the chunk's own from its input), as the target's batched
++ //   prefill runs them. qsa.prepare's qgate and iq inputs are zero rows (their outputs q, gate, iqn are not live; kn
++ //   depends only on k and the position).
++ // Only the kept sites' persistent writes (keys, values, raw, pooled, position) carry beyond the chunk, as with the KV-only
++ // rows; the single-row intermediates keep their previous values instead of the last row's (dead: the next step writes
++ // them before reading). With the sticky error set no row writes anything in either path; an error raised inside the
++ // chunk (no such row exists in exact operation) disables the draft in both paths.
++ static bool chunk_batch(){static const bool on=[]{const char* v=std::getenv("OWNRT_DRAFT_CHUNK_BATCH");return v&&v[0]=='1';}();return on;}
++ struct ChunkBatch {std::map<std::string,Allocation> rows;Allocation positions{};size_t capacity=0;bool checked=false;uint64_t chunks=0,launches=0;};
++ std::optional<ChunkBatch> batch;
++ static const std::vector<std::string>& batch_kept(){static const std::vector<std::string> k{"merge.embedding_norm","merge.hidden_norm","merge.embedding_projected","merge.projected","merge.add","begin.0",
++   "blk.0.hc.a.norm","blk.0.hc.a.low","blk.0.hc.a.act","blk.0.hc.a.gate","blk.0.hc.a.mix","blk.0.qsa.k","blk.0.qsa.v","blk.0.qsa.ik","blk.0.qsa.prepare","blk.0.qsa.pool","commit.final"};return k;}
++ static const std::vector<std::string>& batch_row_buffers(){static const std::vector<std::string> b{"embedding","merge.hidden","merge.embedding_norm","merge.norm","merge.embedding_projected","merge.projected","streams",
++   "blk.0.hc.a.norm","blk.0.hc.a.low","blk.0.hc.a.act","blk.0.hc.a.gate","blk.0.hc.a.mix","blk.0.qsa.k","blk.0.qsa.v","blk.0.qsa.ik","blk.0.qsa.qgate","blk.0.qsa.iq","blk.0.qsa.q","blk.0.qsa.gate","blk.0.qsa.kn","blk.0.qsa.iqn"};return b;}
++ const flash::Launch& batch_launch(const std::string& label)const{for(const auto& l:merge_plan)if(l.label==label)return l;for(const auto& l:p.launches)if(l.label==label)return l;throw std::runtime_error("draft chunk batch: no site "+label);}
++ void allocate_chunk_batch(){
++  require(chunk_replay()&&chunk_kv_only()&&chunk_staging&&chunk_staging_rows>0&&e.a.rank==0&&!e.a.mini&&e.prepared_path,"OWNRT_DRAFT_CHUNK_BATCH: rank 0, prepared commands, OWNRT_DRAFT_CHUNK_REPLAY=1 and OWNRT_DRAFT_CHUNK_KV_ONLY=1");
++  const auto& g=p.g;
++  require(g.h==2560&&g.low==320&&g.kvh*g.ad==512&&g.id==128&&g.ih*g.id==512&&2*g.qh*g.ad==12288&&chunk_staging_rows<=256,"OWNRT_DRAFT_CHUNK_BATCH: model geometry (h 2560, low 320, KV 2x256, index 128) and at most 256 rows");
++  ChunkBatch b;b.capacity=chunk_staging_rows;size_t total=0;
++  auto make=[&](const std::string& name,size_t bytes){auto a=e.allocate(0,"draft:batch:"+name,bytes,Category::scratch,Lifetime::transaction);
++   const std::vector<uint8_t> z(std::min(bytes,size_t(4194304)),0);for(size_t off=0;off<bytes;off+=z.size())e.upload(0,a,off,z.data(),std::min(z.size(),bytes-off));total+=bytes;return a;};
++  for(const auto& name:batch_row_buffers()){const auto& slot=buffers.at(name);require(slot.type==Scalar::bf16,"OWNRT_DRAFT_CHUNK_BATCH: BF16 row buffer "+name);
++   b.rows[name]=make(name,b.capacity*slot.n*2);}
++  b.positions=make("positions",b.capacity*4);
++  batch=std::move(b);
++  save(e.a.output/"draft-chunk-batch.json","{\"schema\":\"ownrt.draft-chunk-batch.v1\",\"rows\":"+std::to_string(batch->capacity)+",\"row_buffers\":"+std::to_string(batch->rows.size())+",\"bytes\":"+std::to_string(total)+"}");
++ }
++ // First batched chunk: the KV-only derivation must keep exactly batch_kept(), each site with the kernel it is batched for.
++ void check_chunk_batch(){
++  require(batch&&chunk_kv_only()&&!chunk_sites.empty(),"OWNRT_DRAFT_CHUNK_BATCH: KV-only sites");
++  std::vector<std::string> kept;size_t k=0;for(const auto& l:merge_plan){if(chunk_sites[k])kept.push_back(l.label);++k;}for(const auto& l:p.launches){if(chunk_sites[k])kept.push_back(l.label);++k;}
++  require(kept==batch_kept(),"OWNRT_DRAFT_CHUNK_BATCH: the KV-only kept sites differ from the batched schedule");
++  auto L=[&](const std::string& s)->const flash::Launch&{return batch_launch(s);};
++  auto linear=[&](const std::string& label,unsigned rows,unsigned cols){const auto& l=L(label);const auto& w=weights.at(l.weights.at(0));
++   require(l.op=="gemv"&&l.shape.size()==3&&l.shape[0]==(label=="merge.projected"?4:1)&&unsigned(l.shape[1])==rows&&unsigned(l.shape[2])==cols&&w.type==iq3::Type::BF16&&!w.int8&&!w.fp8&&!w.raw&&w.experts==1&&w.rows==rows&&w.cols==cols&&gemv_split_index(label)<0,
++     "OWNRT_DRAFT_CHUNK_BATCH: "+label+" is not a "+std::to_string(rows)+"x"+std::to_string(cols)+" BF16 draft projection");};
++  const unsigned h=unsigned(p.g.h);
++  linear("merge.embedding_projected",h,h);linear("merge.projected",h,h);linear("blk.0.hc.a.low",320,4*h);linear("blk.0.hc.a.gate",4*h,320);
++  linear("blk.0.qsa.k",512,h);linear("blk.0.qsa.v",512,h);linear("blk.0.qsa.ik",128,h);
++  require(changed(L("merge.embedding_norm"))&&L("merge.embedding_norm").op=="norm"&&changed(L("merge.hidden_norm"))&&changed(L("merge.embedding_projected"))&&changed(L("merge.projected"))&&
++          selected("fuse_hidden_merge")&&fused(L("merge.add")),"OWNRT_DRAFT_CHUNK_BATCH: merge stage kernels (packet59 norms and projections, merge add fused into the hidden projection)");
++  const auto& hn=L("blk.0.hc.a.norm");
++  require(hn.op=="norm"&&changed(hn)&&hn.shape.size()==2&&hn.shape[0]==4&&unsigned(hn.shape[1])==h&&changed(L("blk.0.hc.a.low"))&&selected(p59c::consumers.at("blk.0.hc.a.act"))&&fused(L("blk.0.hc.a.act"))&&
++          !changed(L("blk.0.hc.a.gate"))&&packet26::dispatch.gemv_for("blk.0.hc.a.gate")!="p33.dense.segment"&&L("blk.0.hc.a.mix").op=="hc_mix"&&!fused(L("blk.0.hc.a.mix")),
++          "OWNRT_DRAFT_CHUNK_BATCH: hc.a kernels (packet59 norm, low with the fused silu/4, production gate, separate mix)");
++  require(changed(L("blk.0.qsa.k"))&&changed(L("blk.0.qsa.v"))&&changed(L("blk.0.qsa.ik")),"OWNRT_DRAFT_CHUNK_BATCH: packet59 qsa.k/v/ik");
++  require(L("blk.0.qsa.prepare").op=="qsa_prepare"&&L("blk.0.qsa.pool").op=="qsa_append_pool"&&L("begin.0").op=="begin"&&L("commit.final").op=="commit","OWNRT_DRAFT_CHUNK_BATCH: glue sites");
++  for(const auto& label:{"blk.0.qsa.prepare","blk.0.qsa.pool"}){const auto& s=prepared.at(&L(label)).spec;require(s.special==Special::normal&&s.implementation<=1&&!s.f32_activations,std::string("OWNRT_DRAFT_CHUNK_BATCH: generic ")+label);}
++  batch->checked=true;
++ }
++ void batch_glue(const flash::Launch& l,int n){auto v=prepared.at(&l);auto& s=v.spec;size_t k=0;
++  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){require(k<20,"draft chunk batch glue bindings");
++   if(name=="position"){v.bindings.at(k)=batch->positions;s.row_bytes[k]=4;}else{require(name=="active"||name=="error","draft chunk batch glue binding "+name);s.row_bytes[k]=0;}++k;}
++  require(int(k)==s.ni+s.no,"draft chunk batch glue layout");v.bindings.at(size_t(s.ni+s.no+s.nw)+2)=batch->positions;s.tokens=n;
++  e.finish(0,packet18::submit_parallel(e.dev(0),s,v.bindings,control,score,probability,{}),false);++batch->launches;}
++ void batch_generic(const flash::Launch& l,int n){auto v=prepared.at(&l);size_t k=0;
++  for(const auto* names:{&l.inputs,&l.outputs})for(const auto& name:*names){if(auto it=batch->rows.find(name);it!=batch->rows.end())v.bindings.at(k)=it->second;++k;}
++  v.spec.tokens=n;e.finish(0,packet18::submit_parallel(e.dev(0),v.spec,v.bindings,control,score,probability,{}),false);++batch->launches;}
++ // The chunk's sites in the row path's order; the staged rows are already in the pinned staging.
++ void issue_chunk_batch(int n,size_t hidden_bytes,size_t emb_bytes,size_t emb_base){
++  auto& B=*batch;auto& d=e.dev(0);const unsigned T=unsigned(n),h=unsigned(p.g.h);
++  auto R=[&](const char* name){return B.rows.at(name);};
++  auto W=[&](const char* label){return weights.at(batch_launch(label).weights.at(0)).id;};
++  auto fin=[&](integrated::Launch l,bool gemv){e.finish(0,l,gemv);++B.launches;};
++  auto tok=[&](Allocation w,Allocation x,Allocation y,unsigned rows,unsigned slots){draftbatch::Tokens a;a.w=w;a.x=x;a.y=y;a.rows=rows;a.slots=slots;return a;};
++  e.tail=e.io_copy(0,{{R("merge.hidden"),0,chunk_staging,0,size_t(n)*hidden_bytes},{R("embedding"),0,chunk_staging,emb_base,size_t(n)*emb_bytes}});e.tail_card=0;
++  fin(draftbatch::norm(d,R("embedding"),weights.at("mtp.pre_fc_norm_embedding.weight").id,R("merge.embedding_norm"),T,1,h),false);
++  fin(draftbatch::norm(d,R("merge.hidden"),weights.at("mtp.pre_fc_norm_hidden.weight").id,R("merge.norm"),T,1,4*h),false);
++  fin(draftbatch::dense<2560,4>(d,tok(W("merge.embedding_projected"),R("merge.embedding_norm"),R("merge.embedding_projected"),h,T)),true);
++  {auto a=tok(W("merge.projected"),R("merge.norm"),R("merge.projected"),h,4*T);a.per_token=4;a.tail=p59::merge_add;a.other=R("merge.embedding_projected");a.out=R("streams");fin(draftbatch::dense<2560,4>(d,a),true);}
++  batch_glue(batch_launch("begin.0"),n);
++  fin(draftbatch::norm(d,R("streams"),W("blk.0.hc.a.norm"),R("blk.0.hc.a.norm"),T,4,h),false);
++  {auto a=tok(W("blk.0.hc.a.low"),R("blk.0.hc.a.norm"),R("blk.0.hc.a.low"),320,T);a.tail=p59::low;a.out=R("blk.0.hc.a.act");fin(draftbatch::dense_split<10240,4>(d,a),true);}
++  fin(draftbatch::gate<320>(d,tok(W("blk.0.hc.a.gate"),R("blk.0.hc.a.act"),R("blk.0.hc.a.gate"),4*h,T)),true);
++  fin(draftbatch::mix(d,R("blk.0.hc.a.norm"),R("blk.0.hc.a.gate"),R("blk.0.hc.a.mix"),id("error"),id("active"),T,h),false);
++  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.k"),R("blk.0.hc.a.mix"),R("blk.0.qsa.k"),512,T)),true);
++  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.v"),R("blk.0.hc.a.mix"),R("blk.0.qsa.v"),512,T)),true);
++  fin(draftbatch::dense<2560,4>(d,tok(W("blk.0.qsa.ik"),R("blk.0.hc.a.mix"),R("blk.0.qsa.ik"),128,T)),true);
++  batch_generic(batch_launch("blk.0.qsa.prepare"),n);
++  batch_generic(batch_launch("blk.0.qsa.pool"),n);
++  batch_glue(batch_launch("commit.final"),n);
++  e.tail=e.io_copy(0,{{id("position"),0,B.positions,size_t(n-1)*4,4}});e.tail_card=0;
++  ++B.chunks;
++ }
+  void build_chunk_sites(){
+   std::vector<const flash::Launch*> ls;for(const auto& l:merge_plan)ls.push_back(&l);for(const auto& l:p.launches)ls.push_back(&l);
+   require(ls.size()==issue_sites.size(),"draft chunk site inventory");
+@@ -659,14 +759,15 @@ public:
+   static const bool host_trace=[]{const char* v=std::getenv("OWNRT_PREFILL_HOST_TRACE");return v&&v[0]=='1';}();
+   double staged_ms=0,stage_wait_ms=0,sites_ms=0,admit_ms=0,copy_ms=0,guard_ms=0;uint64_t commands=0,guards=0;
+   const bool row_copy=chunk_row_copy();
+-  if(row_copy&&(chunk_row_copies.size()!=chunk_staging_rows||chunk_row_copy_generation!=e.dev(0).generation()))build_chunk_row_copies(hidden_bytes,emb_bytes,emb_base);
++  if(row_copy&&!chunk_batch()&&(chunk_row_copies.size()!=chunk_staging_rows||chunk_row_copy_generation!=e.dev(0).generation()))build_chunk_row_copies(hidden_bytes,emb_bytes,emb_base); // the batched path copies the chunk once
+   auto stage_row=[&](int i,const uint8_t* resident_row){
+    auto* hidden=reinterpret_cast<uint16_t*>(staged+size_t(i)*hidden_bytes);const float* f=rows+size_t(i)*H;for(size_t k=0;k<H;++k)hidden[k]=iq3::bf16_bits(f[k]);
+    auto* emb=reinterpret_cast<uint16_t*>(staged+emb_base+size_t(i)*emb_bytes);
+    if(resident_row){const std::span<const uint8_t> raw(resident_row,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}
+    else {auto raw=e.w.read(t.name,size_t(tokens[i])*rb,rb);for(int k=0;k<p.g.h;++k)emb[k]=iq3::bf16_bits(gsq::element(unsigned(type),raw,p.g.h,k));}};
+   auto stage=[&](int i){const auto s0=std::chrono::steady_clock::now();stage_row(i,nullptr);staged_ms+=Engine::ms(s0);};
+-  const bool threaded=stage_thread_on&&e.w.resident(t.name,0,rb)!=nullptr;
++  const bool batched=chunk_batch();
++  const bool threaded=!batched&&stage_thread_on&&e.w.resident(t.name,0,rb)!=nullptr;
+   std::atomic<int> staged_count{0};std::atomic<bool> stage_failed{false};std::string stage_error;double thread_stage_ms=0;
+   std::thread stager;struct Join{std::thread& t;~Join(){if(t.joinable())t.join();}} join_stager{stager};
+   if(threaded)stager=std::thread([&]{const auto s0=std::chrono::steady_clock::now();
+@@ -676,6 +777,39 @@ public:
+    thread_stage_ms=Engine::ms(s0);});
+   struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);
+   const bool kv_only=chunk_kv_only();if(kv_only&&chunk_sites.empty())build_chunk_sites();
++  if(batched){
++   // OWNRT_DRAFT_CHUNK_BATCH=1: stage every row (up to 4 host threads over contiguous row ranges from the resident
++   // embedding table, else inline), then the batched sites (issue_chunk_batch). The host position and context extent end
++   // as after n rows (admit_position for the last row's position, as the row loop's last admission).
++   require(kv_only&&batch,"OWNRT_DRAFT_CHUNK_BATCH requires OWNRT_DRAFT_CHUNK_KV_ONLY=1 and its row buffers");
++   require(size_t(n)<=batch->capacity&&position+n<=p.g.context,"draft chunk batch: rows within the capacity and the context");
++   if(!batch->checked)check_chunk_batch();
++   const int P0=position;std::vector<uint32_t> positions(static_cast<size_t>(n));for(int i=0;i<n;++i)positions[size_t(i)]=uint32_t(P0+i);
++   const auto a0=std::chrono::steady_clock::now();position=P0+n-1;admit_position();position=P0;if(host_trace)admit_ms+=Engine::ms(a0);
++   e.guard();++guards;
++   {const auto s0=std::chrono::steady_clock::now();const bool resident=e.w.resident(t.name,0,rb)!=nullptr;const int T=resident?std::min(4,n):1;
++    std::vector<std::string> errors(static_cast<size_t>(T),std::string());std::vector<std::thread> pool;
++    auto work=[&](int k){try{for(int i=n*k/T;i<n*(k+1)/T;++i){const uint8_t* row=resident?e.w.resident(t.name,size_t(tokens[i])*rb,rb):nullptr;
++       if(resident&&!row)throw std::runtime_error("embedding row not resident");stage_row(i,row);}}catch(const std::exception& ex){errors[size_t(k)]=ex.what();}};
++    for(int k=1;k<T;++k)pool.emplace_back(work,k);
++    work(0);for(auto& th:pool)th.join();
++    for(const auto& er:errors)require(er.empty(),"draft chunk staging: "+er);
++    if(resident)for(int i=0;i<n;++i)e.w.count_read(rb); // read()'s counters, as the per-row reads leave them
++    staged_ms=Engine::ms(s0);}
++   e.upload(0,batch->positions,0,positions.data(),size_t(n)*4);
++   const auto t_sites=std::chrono::steady_clock::now();const uint64_t launches0=batch->launches;
++   issue_chunk_batch(n,hidden_bytes,emb_bytes,emb_base);
++   commands=batch->launches-launches0;if(host_trace)sites_ms+=Engine::ms(t_sites);
++   position=P0+n;
++   e.drain();auto error=e.readback(0,id("error"),4);int status;std::memcpy(&status,error.data(),4);
++   ++chunk_replays;chunk_rows+=size_t(n);
++   const double wall=Engine::ms(chunk_start);
++   for(int i=0;i<n;++i)trace<<"{\"draft_position\":"<<first_target+i-1<<",\"confirmed_token\":"<<tokens[i]<<",\"guess\":-1,\"head\":false,\"wall_ms\":0,\"chunk_replay\":true,\"batch\":true}\n";
++   trace<<"{\"chunk_replay\":{\"first_target\":"<<first_target<<",\"rows\":"<<n<<",\"kv_only\":true,\"batch\":true,\"staged_ms\":"<<staged_ms<<",\"wall_ms\":"<<wall<<",\"error\":"<<status
++        <<",\"sites_ms\":"<<sites_ms<<",\"admit_ms\":"<<admit_ms<<",\"commands\":"<<commands<<",\"guards\":"<<guards<<"}}\n";trace.flush();
++   if(status)disabled=true;
++   return;
++  }
+   uint64_t drained_at=e.submitted;std::vector<double> issued_ms(size_t(n),0.);
+   for(int i=0;i<n;++i){
+    const auto a0=std::chrono::steady_clock::now();admit_position();if(host_trace)admit_ms+=Engine::ms(a0);
+diff --git a/stage2/packet194-expert-diet-engine/adapter.cpp b/stage2/packet194-expert-diet-engine/adapter.cpp
+index 3d756cb2a..38d7a45d7 100644
+--- a/stage2/packet194-expert-diet-engine/adapter.cpp
++++ b/stage2/packet194-expert-diet-engine/adapter.cpp
+@@ -692,7 +692,11 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
+   // begin/commit/broadcast/ple_hash/ple_gate/ple_add rows in one launch each (prefill_engine.hpp prefill_special_rows_site):
+   // the glue kernel's token rows above, or the SimpleNew per-row binding offsets for an implementation's broadcast/ple_add.
+   static const bool special_rows=[]{const char* e=std::getenv("OWNRT_PREFILL_SPECIAL_ROWS");return e&&e[0]=='1';}();
+-  const bool glue_rows=special_rows&&(s.special==Special::begin||s.special==Special::commit||s.special==Special::ple_hash||s.special==Special::broadcast||(normal&&(s.op==Op::ple_gate||s.op==Op::ple_add)));
++  // OWNRT_DRAFT_CHUNK_BATCH=1 (2026-10-30, research/tp/prefill-draft-batch-2026-10-30; default off): the draft's batched
++  // prompt rows (mtp.hpp issue_chunk_batch) run its begin and commit on the same glue token rows.
++  static const bool draft_batch=[]{const char* e=std::getenv("OWNRT_DRAFT_CHUNK_BATCH");return e&&e[0]=='1';}();
++  const bool glue_rows=(special_rows&&(s.special==Special::begin||s.special==Special::commit||s.special==Special::ple_hash||s.special==Special::broadcast||(normal&&(s.op==Op::ple_gate||s.op==Op::ple_add))))||
++                       (draft_batch&&(s.special==Special::begin||s.special==Special::commit));
+   if(!simple&&!generic&&!round2_gdn&&!p49_rows&&!glue_rows)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
+  }
+  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);
+diff --git a/stage2/packet194-expert-diet-engine/draft_batch.hpp b/stage2/packet194-expert-diet-engine/draft_batch.hpp
+new file mode 100644
+index 000000000..5a94c0e0c
+--- /dev/null
++++ b/stage2/packet194-expert-diet-engine/draft_batch.hpp
+@@ -0,0 +1,169 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage2/packet194-expert-diet-engine/prepared_submission.hpp"
++#endif
++#pragma once
++// OWNRT_DRAFT_CHUNK_BATCH=1 (2026-10-30, research/tp/prefill-draft-batch-2026-10-30; default off): the KV-only draft
++// prompt rows of one prefill chunk as one launch per site over all rows (mtp.hpp replay_chunk_batch), instead of 15
++// single-row commands per row. Each kernel here computes every output with the unchanged single-row arithmetic of
++// the kernel the draft's row path runs at that site; only which work-item computes which (row, token) output changes:
++// - NormTokens: p59::Norm (one 256-item group per normalised row, same tree, rsqrt, products), token-major rows, the
++//   gain of the row within its token.
++// - DenseTokens<K>: p59::Dense<K,false,false,1,1> (and DenseBatch4, whose outputs keep that sequence): one subgroup per
++//   output, p59::lane<K,false> for its weight row and input row, the same 32-lane adjacent tree, bf16 output, and
++//   p59::tail()'s low / merge_add expressions (merge_add adds the token's own row of `other`). A subgroup runs R
++//   consecutive weight rows for one input row (each output its own lane() call) and consecutive subgroups take
++//   consecutive input rows of the same weight rows, so weights and inputs are reused from cache.
++// - DenseSplitTokens<K,Split>: p59::Dense<K,false,false,1,Split> (Split*32 items per output: Dense::chain per part,
++//   the subgroup tree, then the parts' tree in local memory), one work-group per (weight row, input row).
++// - GateTokens<K>: mtp36 Dense<K,0,false> (BF16 production projection): its 32 lane sums p28::dense_lane<BF16,K>
++//   reduced by the same adjacent tree (iq3::tree32 is that tree), computed by one work-item per output.
++// - MixTokens: mtp36 Elements<mix> per (token, element), with its active / sticky-error guard.
++#include "stage2/packet194-expert-diet-engine/p59_draft.hpp"
++#include "stage2/packet194-expert-diet-engine/p28/dense.hpp"
++#ifndef OWN_RT_HOST_ONLY
++#include "stage1/packet3-prep/src/sycl_operation.hpp"
++#endif
++namespace draftbatch {
++#ifdef OWN_RT_HOST_ONLY
++using Base=integrated::HostOperation;
++#else
++using Base=ownrt::SyclOperation;
++#endif
++using ownrt::Allocation;
++inline float widen(uint16_t b){return iq3::bits_float(uint32_t(b)<<16);}
++// The 32-lane adjacent-pair tree of the subgroup reductions (select_from_group(sum, l+w), lanes l % 2w == 0 add).
++inline float tree32(float* s){for(unsigned w=1;w<32;w*=2)for(unsigned j=0;j<32;j+=2*w)s[j]=s[j]+s[j+w];return s[0];}
++inline void extent(ownrt::Device& d,Allocation a,size_t n){const auto& r=d.arena.row(a);if(!r.live||r.memory!=ownrt::Memory::device||r.bytes<n)throw std::invalid_argument("draft batch extent/lifetime");}
++
++// x, y: tokens*rows rows of width BF16 (token-major); gain: rows*width F32 (row r of every token uses gain row r).
++struct NormTokens final:Base {unsigned tokens=0,rows=0,width=0;
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {auto x=static_cast<const uint16_t*>(p[0]);auto gain=static_cast<const float*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);
++  for(unsigned g=0;g<tokens*rows;++g){const unsigned row=g%rows,n=width;float s[256]{};for(unsigned l=0;l<256;++l)for(unsigned k=l;k<n;k+=256){float v=widen(x[g*n+k]);s[l]+=v*v;}
++   for(unsigned w=1;w<256;w*=2)for(unsigned l=0;l<256;l+=2*w)s[l]+=s[l+w];float inv=detmath::rsqrt(s[0]/float(n)+1e-6f);
++   for(unsigned k=0;k<n;++k)y[g*n+k]=iq3::bf16_bits((widen(x[g*n+k])*inv)*gain[row*n+k]);}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&)const override {
++  auto x=static_cast<const uint16_t*>(p[0]);auto gain=static_cast<const float*>(p[1]);auto y=static_cast<uint16_t*>(p[2]);const unsigned R=rows,n=width;const size_t groups=size_t(tokens)*rows;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(groups*256,256)](sycl::handler& h){sycl::local_accessor<float,1>s(256,h);h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){
++   const unsigned l=it.get_local_linear_id(),g=unsigned(it.get_group_linear_id()),row=g%R,base=g*n;float sum=0;
++   for(unsigned k=l;k<n;k+=256){float v=widen(x[base+k]);sum+=v*v;}s[l]=sum;it.barrier(sycl::access::fence_space::local_space);
++   for(unsigned w=1;w<256;w*=2){if(l%(2*w)==0)s[l]+=s[l+w];it.barrier(sycl::access::fence_space::local_space);}
++   float inv=detmath::rsqrt(s[0]/float(n)+1e-6f);for(unsigned k=l;k<n;k+=256)y[base+k]=iq3::bf16_bits((widen(x[base+k])*inv)*gain[row*n+k]);}));});}
++#endif
++};
++inline integrated::Launch norm(ownrt::Device&d,Allocation x,Allocation gain,Allocation y,unsigned tokens,unsigned rows,unsigned width){
++ if(!tokens||!rows||!width||width>10240||size_t(tokens)*rows*width>=(size_t(1)<<31))throw std::invalid_argument("draft batch norm shape");
++ extent(d,x,size_t(tokens)*rows*width*2);extent(d,gain,size_t(rows)*width*4);extent(d,y,size_t(tokens)*rows*width*2);
++ NormTokens op;op.tokens=tokens;op.rows=rows;op.width=width;std::array ids{x,gain,y};auto e=d.compute(op,ids,{});return {e,e,1};}
++
++// One linear site over `slots` input rows (token-major; per_token slots per token): y[slot*rows+row] as p59::Dense writes
++// output i = slot*rows+row of a batch of `slots` rows, and the tail into out[slot*rows+row]; merge_add's other row is
++// other[(slot/per_token)*rows + row] (the token's own row; one token's site reads other[i % rows]).
++struct Tokens {Allocation w{},x{},y{},out{},other{};unsigned rows=0,slots=0,per_token=1;p59::Tail tail=p59::none;};
++struct TokensBound {const uint8_t* w;const uint16_t* x;uint16_t* y;uint16_t* out;const uint16_t* other;unsigned rows,slots,per_token;p59::Tail tail;};
++inline TokensBound bind_tokens(const Tokens& a,std::span<void*const>p){return {static_cast<const uint8_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),
++ static_cast<uint16_t*>(p[3]),static_cast<const uint16_t*>(p[4]),a.rows,a.slots,a.per_token,a.tail};}
++inline void tail(const TokensBound& b,unsigned slot,unsigned row,uint16_t value){const unsigned i=slot*b.rows+row;
++ b.y[i]=value; // p59::tail()
++ if(b.tail==p59::low)b.out[i]=iq3::bf16_bits(ng::silu(widen(value)/4.f));
++ if(b.tail==p59::merge_add)b.out[i]=iq3::bf16_bits(widen(value)+widen(b.other[(slot/b.per_token)*b.rows+row]));}
++template<unsigned K,unsigned R> struct DenseTokens final:Base {Tokens a;
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {auto b=bind_tokens(a,p);
++  for(unsigned slot=0;slot<b.slots;++slot)for(unsigned row=0;row<b.rows;++row){float s[32];for(unsigned l=0;l<32;++l)s[l]=p59::lane<K,false>(b.w+size_t(row)*K*2,b.x+size_t(slot)*K,l,0,K);
++   tail(b,slot,row,iq3::bf16_bits(tree32(s)));}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&)const override {auto b=bind_tokens(a,p);
++  const unsigned groups=b.rows/R,S=b.slots;const size_t subgroups=size_t(groups)*S;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((subgroups*32+255)/256)*256,256)](sycl::handler& h){
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();const unsigned l=sg.get_local_linear_id();if(it.get_global_linear_id()/32>=subgroups)return;
++    const unsigned id=unsigned(it.get_global_linear_id()/32),slot=id%S,row0=(id/S)*R;const uint16_t* x=b.x+slot*K; // 32-bit index math (subgroups < 2^31)
++    float sum[R];
++    #pragma unroll
++    for(unsigned r=0;r<R;++r)sum[r]=p59::lane<K,false>(b.w+(row0+r)*(K*2),x,l,0,K);
++    #pragma unroll
++    for(unsigned r=0;r<R;++r)for(unsigned w=1;w<32;w*=2){float rhs=sycl::select_from_group(sg,sum[r],(l+w)%32);if(l%(2*w)==0)sum[r]+=rhs;}
++    if(l==0)for(unsigned r=0;r<R;++r)tail(b,slot,row0+r,iq3::bf16_bits(sum[r]));
++   }));});}
++#endif
++};
++template<unsigned K,unsigned Split> struct DenseSplitTokens final:Base {Tokens a;
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {auto b=bind_tokens(a,p);using D=p59::Dense<K,false,false,1,Split>;
++  for(unsigned slot=0;slot<b.slots;++slot)for(unsigned row=0;row<b.rows;++row){float parts[Split];
++   for(unsigned part=0;part<Split;++part){float s[32];for(unsigned l=0;l<32;++l)s[l]=D::chain(b.w+size_t(row)*K*2,b.x+size_t(slot)*K,l,part);parts[part]=tree32(s);}
++   for(unsigned w=1;w<Split;w*=2)for(unsigned j=0;j<Split;j+=2*w)parts[j]+=parts[j+w];tail(b,slot,row,iq3::bf16_bits(parts[0]));}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&)const override {auto b=bind_tokens(a,p);using D=p59::Dense<K,false,false,1,Split>;
++  const unsigned S=b.slots;const size_t n=size_t(b.rows)*S;constexpr unsigned wg=Split*32;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(n*wg,wg)](sycl::handler& h){sycl::local_accessor<float,1> partial(Split,h);
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it)[[sycl::reqd_sub_group_size(32)]]{
++    auto sg=it.get_sub_group();const unsigned physical=unsigned(it.get_local_linear_id())%32,part=unsigned(it.get_local_linear_id())/32,i=unsigned(it.get_group_linear_id());
++    const unsigned slot=i%S,row=i/S;
++    float sum=D::chain(b.w+row*(K*2),b.x+slot*K,physical,part);
++    const unsigned base=sg.get_local_linear_id()-physical;
++    for(unsigned w=1;w<32;w*=2){float r=sycl::select_from_group(sg,sum,base+(physical+w)%32);if(physical%(2*w)==0)sum+=r;}
++    if(!physical)partial[part]=sum;it.barrier(sycl::access::fence_space::local_space);
++    if(it.get_local_linear_id()==0){for(unsigned w=1;w<Split;w*=2)for(unsigned j=0;j<Split;j+=2*w)partial[j]+=partial[j+w];tail(b,slot,row,iq3::bf16_bits(partial[0]));}
++   }));});}
++#endif
++};
++template<unsigned K> struct GateTokens final:Base {Tokens a;
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {auto b=bind_tokens(a,p);
++  for(unsigned slot=0;slot<b.slots;++slot)for(unsigned row=0;row<b.rows;++row){float s[32];for(unsigned l=0;l<32;++l)s[l]=p28::dense_lane<iq3::Type::BF16,K>(b.w+size_t(row)*K*2,b.x+size_t(slot)*K,0,K,l);
++   b.y[slot*b.rows+row]=iq3::bf16_bits(tree32(s));}}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&)const override {auto b=bind_tokens(a,p);
++  const unsigned S=b.slots;const size_t n=size_t(b.rows)*S;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(((n+255)/256)*256,256)](sycl::handler& h){
++   h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1>it){
++    if(it.get_global_linear_id()>=n)return;const unsigned i=unsigned(it.get_global_linear_id()),slot=i%S,row=i/S;
++    const uint8_t* w=b.w+row*(K*2);const uint16_t* x=b.x+slot*K;float s[32];
++    for(unsigned l=0;l<32;++l)s[l]=p28::dense_lane<iq3::Type::BF16,K>(w,x,0,K,l);
++    b.y[slot*b.rows+row]=iq3::bf16_bits(tree32(s));
++   }));});}
++#endif
++};
++template<unsigned K,unsigned R> inline integrated::Launch dense(ownrt::Device&d,const Tokens&a){
++ if(!a.rows||a.rows%R||!a.slots||!a.per_token||a.slots%a.per_token||size_t(a.rows)*a.slots>=(size_t(1)<<31)||size_t(a.slots)*K>=(size_t(1)<<31))throw std::invalid_argument("draft batch dense shape");
++ extent(d,a.w,size_t(a.rows)*K*2);extent(d,a.x,size_t(a.slots)*K*2);extent(d,a.y,size_t(a.slots)*a.rows*2);
++ if(a.tail!=p59::none)extent(d,a.out,size_t(a.slots)*a.rows*2);if(a.tail==p59::merge_add)extent(d,a.other,size_t(a.slots/a.per_token)*a.rows*2);
++ if(a.tail!=p59::none&&a.tail!=p59::low&&a.tail!=p59::merge_add)throw std::invalid_argument("draft batch dense tail");
++#ifndef OWN_RT_HOST_ONLY
++ for(auto id:{a.w,a.x})if(reinterpret_cast<uintptr_t>(d.arena.row(id).pointer)%16)throw std::invalid_argument("draft batch dense alignment");
++#endif
++ DenseTokens<K,R> op;op.a=a;std::array ids{a.w,a.x,a.y,a.out?a.out:a.y,a.other?a.other:a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
++template<unsigned K,unsigned Split> inline integrated::Launch dense_split(ownrt::Device&d,const Tokens&a){
++ if(!a.rows||!a.slots||size_t(a.rows)*a.slots>=(size_t(1)<<31)||size_t(a.slots)*K>=(size_t(1)<<31)||(a.tail!=p59::none&&a.tail!=p59::low))throw std::invalid_argument("draft batch split dense shape");
++ extent(d,a.w,size_t(a.rows)*K*2);extent(d,a.x,size_t(a.slots)*K*2);extent(d,a.y,size_t(a.slots)*a.rows*2);if(a.tail==p59::low)extent(d,a.out,size_t(a.slots)*a.rows*2);
++#ifndef OWN_RT_HOST_ONLY
++ for(auto id:{a.w,a.x})if(reinterpret_cast<uintptr_t>(d.arena.row(id).pointer)%16)throw std::invalid_argument("draft batch dense alignment");
++#endif
++ DenseSplitTokens<K,Split> op;op.a=a;std::array ids{a.w,a.x,a.y,a.out?a.out:a.y,a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
++template<unsigned K> inline integrated::Launch gate(ownrt::Device&d,const Tokens&a){
++ if(!a.rows||!a.slots||a.tail!=p59::none||size_t(a.rows)*a.slots>=(size_t(1)<<31))throw std::invalid_argument("draft batch gate shape");
++ extent(d,a.w,size_t(a.rows)*K*2);extent(d,a.x,size_t(a.slots)*K*2);extent(d,a.y,size_t(a.slots)*a.rows*2);
++ GateTokens<K> op;op.a=a;std::array ids{a.w,a.x,a.y,a.y,a.x};auto e=d.compute(op,ids,{});return {e,e,1};}
++
++// mtp36 Elements<mix>: out[t*width+k] = (sum over h<4 of sigmoid(gate[t*4w + h*w + k]) * norm[t*4w + h*w + k]) / 4.
++struct MixTokens final:Base {unsigned tokens=0,width=0;
++ static void body(const uint16_t* norm,const uint16_t* gate,uint16_t* out,const uint32_t* error,const uint32_t* active,unsigned width,unsigned i){
++  if(!*active||*error)return;const unsigned t=i/width,k=i%width;const uint16_t* n0=norm+t*4*width;const uint16_t* g0=gate+t*4*width;float v=0;
++  for(unsigned h=0;h<4;++h)v=v+ng::sigmoid(widen(g0[h*width+k]))*widen(n0[h*width+k]);v=v/4.f;out[i]=iq3::bf16_bits(v);}
++#ifdef OWN_RT_HOST_ONLY
++ void run(std::span<void*const>p)const override {for(unsigned i=0;i<tokens*width;++i)body(static_cast<const uint16_t*>(p[0]),static_cast<const uint16_t*>(p[1]),static_cast<uint16_t*>(p[2]),static_cast<const uint32_t*>(p[3]),static_cast<const uint32_t*>(p[4]),width,i);}
++#else
++ sycl::event submit(sycl::queue&q,std::span<void*const>p,const std::vector<sycl::event>&)const override {
++  auto n0=static_cast<const uint16_t*>(p[0]);auto g0=static_cast<const uint16_t*>(p[1]);auto out=static_cast<uint16_t*>(p[2]);auto error=static_cast<const uint32_t*>(p[3]);auto active=static_cast<const uint32_t*>(p[4]);const unsigned w=width;
++  return ownrt::prepared_submit(q,[=,p35_range0=sycl::range<1>(size_t(tokens)*width)](sycl::handler& h){h.parallel_for(p35_range0,packet26::checked([=](sycl::id<1> i){body(n0,g0,out,error,active,w,unsigned(i[0]));}));});}
++#endif
++};
++inline integrated::Launch mix(ownrt::Device&d,Allocation norm,Allocation gate,Allocation out,Allocation error,Allocation active,unsigned tokens,unsigned width){
++ if(!tokens||!width||size_t(tokens)*4*width>=(size_t(1)<<31))throw std::invalid_argument("draft batch mix shape");
++ extent(d,norm,size_t(tokens)*4*width*2);extent(d,gate,size_t(tokens)*4*width*2);extent(d,out,size_t(tokens)*width*2);extent(d,error,4);extent(d,active,4);
++ MixTokens op;op.tokens=tokens;op.width=width;std::array ids{norm,gate,out,error,active};auto e=d.compute(op,ids,{});return {e,e,1};}
++}

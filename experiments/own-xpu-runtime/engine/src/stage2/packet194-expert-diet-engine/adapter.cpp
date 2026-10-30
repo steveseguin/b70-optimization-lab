@@ -692,7 +692,11 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
   // begin/commit/broadcast/ple_hash/ple_gate/ple_add rows in one launch each (prefill_engine.hpp prefill_special_rows_site):
   // the glue kernel's token rows above, or the SimpleNew per-row binding offsets for an implementation's broadcast/ple_add.
   static const bool special_rows=[]{const char* e=std::getenv("OWNRT_PREFILL_SPECIAL_ROWS");return e&&e[0]=='1';}();
-  const bool glue_rows=special_rows&&(s.special==Special::begin||s.special==Special::commit||s.special==Special::ple_hash||s.special==Special::broadcast||(normal&&(s.op==Op::ple_gate||s.op==Op::ple_add)));
+  // OWNRT_DRAFT_CHUNK_BATCH=1 (2026-10-30, research/tp/prefill-draft-batch-2026-10-30; default off): the draft's batched
+  // prompt rows (mtp.hpp issue_chunk_batch) run its begin and commit on the same glue token rows.
+  static const bool draft_batch=[]{const char* e=std::getenv("OWNRT_DRAFT_CHUNK_BATCH");return e&&e[0]=='1';}();
+  const bool glue_rows=(special_rows&&(s.special==Special::begin||s.special==Special::commit||s.special==Special::ple_hash||s.special==Special::broadcast||(normal&&(s.op==Op::ple_gate||s.op==Op::ple_add))))||
+                       (draft_batch&&(s.special==Special::begin||s.special==Special::commit));
   if(!simple&&!generic&&!round2_gdn&&!p49_rows&&!glue_rows)throw std::invalid_argument("token rows: generic, specialised and SimpleNew route/gather/combine kernels only");
  }
  if(s.implementation==6&&s.special==Special::normal&&s.op==Op::route&&s.sizes[0]==512&&s.site.shape[1]==10)return route42::submit(d,s,bindings,deps);

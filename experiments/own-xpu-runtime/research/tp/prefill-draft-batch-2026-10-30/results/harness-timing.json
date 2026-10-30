@@ -1,0 +1,225 @@
+{
+ "rank0": {
+  "A (g1, flags of the A arm)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 414.1526666666667,
+    "wall_ms_median": 413.576,
+    "wall_ms_each": [
+     418.3,
+     410.6,
+     413.6
+    ],
+    "inputs_ms": 5.58572,
+    "loop_ms": 403.2303333333333,
+    "loop_blocked_ms": 368.60033333333337,
+    "host_active_ms": 42.64120799999998,
+    "host_waits": 161,
+    "submissions_per_card": [
+     2114,
+     2114
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.95
+     ],
+     [
+      "linear:gemv",
+      7.6
+     ],
+     [
+      "linear:routed_gemv",
+      2.17
+     ],
+     [
+      "native:norm",
+      1.93
+     ],
+     [
+      "exchange:tp_xheads",
+      1.26
+     ],
+     [
+      "native:hc_combine",
+      1.02
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 56.2563,
+    "staged_ms": 9.230346666666668,
+    "replay_ms_1099_rows": 250.09370129555464,
+    "sites_ms": 15.668633333333334,
+    "admit_ms": 32.95576666666667,
+    "copy_ms": 1.17,
+    "guard_ms": 0.20622633333333334,
+    "stage_wait_ms": 0.019890666666666668,
+    "stage_thread": true,
+    "guard_row": true,
+    "row_copy": true,
+    "guards": 256,
+    "commands": 3840
+   }
+  },
+  "A + OWNRT_DRAFT_CHUNK_BATCH (g1)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 412.673,
+    "wall_ms_median": 413.275,
+    "wall_ms_each": [
+     413.3,
+     411.2,
+     413.6
+    ],
+    "inputs_ms": 5.034063333333333,
+    "loop_ms": 402.475,
+    "loop_blocked_ms": 369.434,
+    "host_active_ms": 40.47949333333334,
+    "host_waits": 161,
+    "submissions_per_card": [
+     2114,
+     2114
+    ],
+    "exchange_sites": 138.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      9.69
+     ],
+     [
+      "linear:gemv",
+      7.15
+     ],
+     [
+      "linear:routed_gemv",
+      2.04
+     ],
+     [
+      "native:norm",
+      1.86
+     ],
+     [
+      "exchange:tp_xheads",
+      1.18
+     ],
+     [
+      "native:hc_combine",
+      0.99
+     ]
+    ]
+   },
+   "draft": {
+    "mode": "chunk+kv_only",
+    "per_256_rows_ms": 12.599733333333333,
+    "staged_ms": 2.093166666666667,
+    "replay_ms_1099_rows": 57.831946993246675,
+    "sites_ms": 0.110621,
+    "admit_ms": 0.021039,
+    "batch": true,
+    "guards": 1,
+    "commands": 15
+   }
+  }
+ },
+ "rank1": {
+  "A, TP (t1c o-r1-tp)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 462.827,
+    "wall_ms_median": 463.266,
+    "wall_ms_each": [
+     463.3,
+     459.6,
+     465.6
+    ],
+    "inputs_ms": 3.1678566666666668,
+    "loop_ms": 455.36566666666664,
+    "loop_blocked_ms": 415.3353333333333,
+    "host_active_ms": 44.2360366666667,
+    "host_waits": 175,
+    "submissions_per_card": [
+     2595,
+     2595
+    ],
+    "exchange_sites": 150.0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      13.72
+     ],
+     [
+      "linear:gemv",
+      8.2
+     ],
+     [
+      "linear:routed_gemv",
+      2.2
+     ],
+     [
+      "native:norm",
+      2.05
+     ],
+     [
+      "exchange:tp_xheads",
+      1.19
+     ],
+     [
+      "native:hc_combine",
+      1.11
+     ]
+    ]
+   }
+  },
+  "one card, 65536, batched + mn xz sr hc (t1c o-r1-one)": {
+   "prefill": {
+    "chunks": 3,
+    "wall_ms": 682.6943333333334,
+    "wall_ms_median": 682.67,
+    "wall_ms_each": [
+     680.4,
+     682.7,
+     685.0
+    ],
+    "inputs_ms": 1.5103633333333333,
+    "loop_ms": 17.491366666666668,
+    "loop_blocked_ms": 0,
+    "host_active_ms": 21.15431800000003,
+    "host_waits": 13,
+    "submissions_per_card": [
+     2442,
+     0
+    ],
+    "exchange_sites": 0,
+    "top_host_active_ms": [
+     [
+      "grouped:qsa_attention",
+      7.13
+     ],
+     [
+      "linear:gemv",
+      3.91
+     ],
+     [
+      "linear:routed_gemv",
+      1.06
+     ],
+     [
+      "native:norm",
+      0.83
+     ],
+     [
+      "native:hc_combine",
+      0.49
+     ],
+     [
+      "native:silu_product",
+      0.44
+     ]
+    ]
+   }
+  }
+ }
+}
