@@ -1,0 +1,53 @@
+=== phase g1 binary /dev/shm/engine-build-fixed-cost-20261030-r2/sc117-engine (93bf904de18b) start 2026-10-30T06:20:02-04:00 pid 2224251 affinity 0-3,16-19 nofile 1048576
+[klog g1-before-24h] since @1793269202: rc=0 13 lines, 0 xe/fault lines
+--- arm g1-r1-one rank=1 mode=one steps=64 prompt=128 pattern=h extra= MemAvailable=105298038784 shm_free=52474281984 at 2026-10-30T06:20:02-04:00
+{"tp": false, "steps": 64, "load_s": 14.667387129971758, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.32
+arm g1-r1-one rc=0 after 22 s
+[klog g1-after-g1-r1-one] since @1793355602: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.3187 draft 0.0
+--- arm g1-r1-one-ep rank=1 mode=one steps=64 prompt=128 pattern=h extra=ep MemAvailable=103271317504 shm_free=50456129536 at 2026-10-30T06:20:24-04:00
+{"tp": false, "steps": 64, "load_s": 14.675684334943071, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 12.34
+arm g1-r1-one-ep rc=0 after 23 s
+[klog g1-after-g1-r1-one-ep] since @1793355624: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.3367 draft 0.0
+--- arm g1-r1-full rank=1 mode=full steps=64 prompt=128 pattern=h extra= MemAvailable=100715003904 shm_free=48437993472 at 2026-10-30T06:20:47-04:00
+{"tp": true, "steps": 64, "load_s": 22.023529496975243, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 10.18
+arm g1-r1-full rc=0 after 31 s
+[klog g1-after-g1-r1-full] since @1793355647: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":8756,"max_polls":170257,"poll_sum":514152},{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":10627,"max_polls":202,"poll_sum":112134}]}
+{"buffers":728,"differ":[],"passed":true}
+half median (3..): 10.1742 draft 0.0
+--- arm g1-r1-full-ep rank=1 mode=full steps=64 prompt=128 pattern=h extra=ep MemAvailable=99186556928 shm_free=46418743296 at 2026-10-30T06:21:18-04:00
+{"tp": true, "steps": 64, "load_s": 22.166558660101146, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 9.82
+arm g1-r1-full-ep rc=0 after 32 s
+[klog g1-after-g1-r1-full-ep] since @1793355678: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":10147,"max_polls":154990,"poll_sum":474885},{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":9235,"max_polls":207,"poll_sum":86550}]}
+{"buffers":728,"differ":[],"passed":true}
+half median (3..): 9.8214 draft 0.0
+--- arm g1-r1-full2 rank=1 mode=full steps=64 prompt=128 pattern=h extra= MemAvailable=97048768512 shm_free=44399853568 at 2026-10-30T06:21:50-04:00
+{"tp": true, "steps": 64, "load_s": 21.939497452927753, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 10.15
+arm g1-r1-full2 rc=0 after 31 s
+[klog g1-after-g1-r1-full2] since @1793355710: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":10140,"max_polls":123646,"poll_sum":458837},{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":9520,"max_polls":166,"poll_sum":82362}]}
+{"buffers":728,"differ":[],"passed":true}
+half median (3..): 10.1499 draft 0.0
+--- arm g1-r1-full-ep2 rank=1 mode=full steps=64 prompt=128 pattern=h extra=ep MemAvailable=95216594944 shm_free=42380931072 at 2026-10-30T06:22:21-04:00
+{"tp": true, "steps": 64, "load_s": 21.776276860851794, "tokens": [355, 196812, 207550, 77795, 8764, 6667, 190441, 103584, 318, 259, 10582, 244155, 5188, 100102, 40938, 4993, 25055, 15135, 36924, 233666, 13121, 11, 60100, 2972, 183870, 5188, 1630, 53307, 11752, 2502, 60244, 16659, 236161, 96478, 1519, 40849, 11271, 65120, 70, 54234, 20453, 318, 33763, 11271, 258, 200477, 34661, 88611, 216811, 2907, 56091, 126191, 118642, 6455, 134294, 5093, 3053, 244927, 146901, 21742, 233677, 92156, 85838, 345], "rc": 0} median half ms 9.82
+arm g1-r1-full-ep2 rc=0 after 30 s
+[klog g1-after-g1-r1-full-ep2] since @1793355741: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":10409,"max_polls":155160,"poll_sum":460061},{"abort":0,"timeouts":0,"waits":14464,"waits_that_polled":8738,"max_polls":96,"poll_sum":79517}]}
+{"buffers":728,"differ":[],"passed":true}
+half median (3..): 9.8201 draft 0.0
+--- arm g1-r1-one-b rank=1 mode=one steps=16 prompt=1100 pattern=h extra=batched,sp=64 MemAvailable=93185220608 shm_free=40362041344 at 2026-10-30T06:22:52-04:00
+{"tp": false, "steps": 16, "load_s": 14.661011354066432, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 12.50
+arm g1-r1-one-b rc=0 after 42 s
+[klog g1-after-g1-r1-one-b] since @1793355772: rc=0 0 lines, 0 xe/fault lines
+half median (3..): 12.4752 draft 0.0
+--- arm g1-r1-full-ep-b rank=1 mode=full steps=16 prompt=1100 pattern=h extra=batched,sp=64,ep MemAvailable=89325301760 shm_free=36281569280 at 2026-10-30T06:23:34-04:00
+{"tp": true, "steps": 16, "load_s": 21.949602701002732, "tokens": [81694, 218223, 753, 28225, 18908, 748, 59608, 5858, 6, 74, 248044, 986, 3141, 53455, 101793, 17404], "rc": 0} median half ms 9.91
+arm g1-r1-full-ep-b rc=0 after 40 s
+[klog g1-after-g1-r1-full-ep-b] since @1793355814: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":1291,"waits_that_polled":939,"max_polls":477,"poll_sum":17198},{"abort":0,"timeouts":0,"waits":1291,"waits_that_polled":748,"max_polls":40,"poll_sum":6773}]}
+{"buffers":728,"differ":[],"passed":true}
+half median (3..): 9.9088 draft 0.0
+=== phase g1 done 2026-10-30T06:24:14-04:00
