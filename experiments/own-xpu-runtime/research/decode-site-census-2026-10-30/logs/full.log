@@ -1,0 +1,31 @@
+=== phase full binary /dev/shm/engine-build-site-census-20261030/sc117-engine (b0b8d593d530) start 2026-10-30T03:06:17-04:00 pid 2170347 affinity 0-3,16-19 nofile 1048576
+[klog full-before-24h] since @1793257577: 13 lines, 0 xe/fault lines
+--- arm A0 rank=0 flags=modes=d MemAvailable=104120344576 shm_free=51020263424 at 2026-10-30T03:06:17-04:00
+{"rank": 0, "load_s": 100.1, "rc": 0, "rows_equal": {"d": true}, "per_mode": {"d": {"guess_hits": 11, "guesses": 144, "oracle": 0, "tokens": 0}}}
+arm A0 rc=0 after 105 s
+[klog full-after-A0] since @1793343977: 0 lines, 0 xe/fault lines
+--- arm A1 rank=1 flags=trace,dump,modes=d+1+2+3+4,rowsin=A0 MemAvailable=103958495232 shm_free=50964643840 at 2026-10-30T03:08:02-04:00
+{"rank": 1, "load_s": 30.7, "rc": 0, "rows_equal": {"d": true, "1": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 0, "guesses": 0, "oracle": 144, "tokens": 144}, "1": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm A1 rc=0 after 52 s
+[klog full-after-A1] since @1793344082: 0 lines, 0 xe/fault lines
+--- arm C1 rank=1 flags=dump,modes=d+1+2+3+4,rowsin=A0 MemAvailable=101673496576 shm_free=48810225664 at 2026-10-30T03:08:54-04:00
+{"rank": 1, "load_s": 14.6, "rc": 0, "rows_equal": {"d": true, "1": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 0, "guesses": 0, "oracle": 144, "tokens": 144}, "1": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm C1 rc=0 after 31 s
+[klog full-after-C1] since @1793344134: 0 lines, 0 xe/fault lines
+--- arm B0 rank=0 flags=trace,dump,modes=d+1+2+3+4,reversein=A1 MemAvailable=99594067968 shm_free=46694264832 at 2026-10-30T03:09:25-04:00
+{"rank": 0, "load_s": 82.9, "rc": 0, "rows_equal": {"d": true, "1": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 108, "guesses": 144, "oracle": 0, "tokens": 0}, "1": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm B0 rc=0 after 106 s
+[klog full-after-B0] since @1793344165: 0 lines, 0 xe/fault lines
+--- arm C0 rank=0 flags=dump,modes=d+1+2+3+4,reversein=A1 MemAvailable=97963143168 shm_free=44866502656 at 2026-10-30T03:11:11-04:00
+{"rank": 0, "load_s": 62.6, "rc": 0, "rows_equal": {"d": true, "1": true, "2": true, "3": true, "4": true}, "per_mode": {"d": {"guess_hits": 108, "guesses": 144, "oracle": 0, "tokens": 0}, "1": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm C0 rc=0 after 81 s
+[klog full-after-C0] since @1793344271: 0 lines, 0 xe/fault lines
+--- arm R1 rank=1 flags=route-dump,modes=2+3+4,rowsin=A0 MemAvailable=96295309312 shm_free=43079847936 at 2026-10-30T03:12:32-04:00
+{"rank": 1, "load_s": 47.4, "rc": 0, "rows_equal": {"2": true, "3": true, "4": true}, "per_mode": {"2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm R1 rc=0 after 54 s
+[klog full-after-R1] since @1793344352: 0 lines, 0 xe/fault lines
+--- arm R0 rank=0 flags=route-dump,modes=2+3+4,reversein=A1 MemAvailable=96099012608 shm_free=42995142656 at 2026-10-30T03:13:26-04:00
+{"rank": 0, "load_s": 58.6, "rc": 0, "rows_equal": {"2": true, "3": true, "4": true}, "per_mode": {"2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "3": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm R0 rc=0 after 68 s
+[klog full-after-R0] since @1793344406: 0 lines, 0 xe/fault lines
+=== phase full done 2026-10-30T03:14:34-04:00

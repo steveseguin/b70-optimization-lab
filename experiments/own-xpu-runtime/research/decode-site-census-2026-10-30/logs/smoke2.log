@@ -1,0 +1,11 @@
+=== phase smoke2 binary /dev/shm/engine-build-site-census-20261030/sc117-engine (b0b8d593d530) start 2026-10-30T03:03:28-04:00 pid 2169454 affinity 0-3,16-19 nofile 1048576
+[klog smoke2-before-24h] since @1793257408: 13 lines, 0 xe/fault lines
+--- arm s0b rank=0 flags=trace,dump,prefix=16,window=12,modes=d+2+4 MemAvailable=107971694592 shm_free=54819508224 at 2026-10-30T03:03:28-04:00
+{"rank": 0, "load_s": 72.6, "rc": 0, "rows_equal": {"d": true, "2": true, "4": true}, "per_mode": {"d": {"guess_hits": 3, "guesses": 12, "oracle": 0, "tokens": 0}, "2": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm s0b rc=0 after 80 s
+[klog smoke2-after-s0b] since @1793343808: 0 lines, 0 xe/fault lines
+--- arm s1b rank=1 flags=trace,dump,prefix=16,window=12,modes=d+4,rowsin=s0b MemAvailable=106266382336 shm_free=53083684864 at 2026-10-30T03:04:48-04:00
+{"rank": 1, "load_s": 44.9, "rc": 0, "rows_equal": {"d": true, "4": true}, "per_mode": {"d": {"guess_hits": 0, "guesses": 0, "oracle": 3, "tokens": 12}, "4": {"guess_hits": 0, "guesses": 0, "oracle": 0, "tokens": 0}}}
+arm s1b rc=0 after 51 s
+[klog smoke2-after-s1b] since @1793343888: 0 lines, 0 xe/fault lines
+=== phase smoke2 done 2026-10-30T03:05:39-04:00
