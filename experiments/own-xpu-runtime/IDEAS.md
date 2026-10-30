@@ -132,6 +132,18 @@ fusion were each sized at 0.05–0.1 ms per stage and closed. Rank 0 (half + dra
 stage in 68–85% of steps. The remaining fixed cost is spread over hundreds of small kernels; the next question is
 whether a persistent kernel per layer can remove it wholesale (`research/persistent-layer-2026-10-30/`, in progress).
 
+### Persistent layer kernel (#7) result (2026-10-30, measured, closed)
+
+[persistent-layer-2026-10-30](research/persistent-layer-2026-10-30/RESULT.md): **no-go.**
+- A kernel boundary on a B70 costs only 0.63 µs (empty kernel, host ahead) to 1.1 µs (tiny dependent kernel).
+- A bounded device-wide barrier costs 0.57 µs plus about 10 ns per arriving group: 1.5 µs at the 64 × 1024 groups
+  that fill the card, 6.7 µs at 512 × 128. At most 65,536 work-items can be resident, matching the driver's query.
+- The real HC block: 37.45 µs as six launches, 41.04 µs as the best persistent kernel. It is bitwise exact, but slower.
+- Projection: −7.7% on four cards as measured; +8.5% at most even with a free barrier.
+- The tiny kernels' fixed cost is inside them, not between them.
+- Side finding: this bench's plain BF16 HC GEMVs run at 482–529 GB/s against the engine's 400–415 GB/s on the same
+  shapes. That is worth about 0.3 ms per half per card if the engine's exact reduction order can be kept.
+
 ### Decision rule
 
 Since 2026-10-30 afternoon: one fixed-cost campaign (`research/tp/fixed-cost-2026-10-30/`). In order: a paired

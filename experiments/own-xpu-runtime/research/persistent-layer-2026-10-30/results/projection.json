@@ -1,0 +1,107 @@
+{
+ "inputs": {
+  "A_us_per_hc_block": 37.454,
+  "best_persistent": {
+   "wg": 1024,
+   "nwg": 64,
+   "us_per_hc_block": 41.043
+  },
+  "barrier_us_at_best_layout": 1.5142,
+  "net_us_per_absorbed_boundary_measured": -0.7177999999999998,
+  "boundary_saving_us_implied_by_chain": 0.7964000000000002,
+  "empty_kernel_period_us": 0.6298,
+  "upper_bound_us_per_absorbed_launch_free_barrier": 0.7964000000000002
+ },
+ "ranks": {
+  "rank0": {
+   "launches": 863.0,
+   "small_launches": 728.0,
+   "big_launches": 135.0,
+   "one_card_span_ms": 10.12,
+   "four_card_half_ms": 8.605,
+   "scenarios": {
+    "hc_blocks_only": {
+     "absorbed_launches": 230,
+     "fraction_of_launches": 0.2665121668597914,
+     "one_card_ms_measured_net": -0.16509399999999994,
+     "one_card_ms_upper_free_barrier": 0.18317200000000006,
+     "one_card_pct_upper": 1.8100000000000005,
+     "four_card_absorbed_per_card": 230,
+     "four_card_ms_measured_net": -0.16509399999999994,
+     "four_card_ms_upper_free_barrier": 0.18317200000000006,
+     "four_card_pct_upper": 2.128669378268449,
+     "four_card_pct_measured_net": -1.9185822196397437
+    },
+    "all_small_kernels (one persistent kernel per run between big kernels)": {
+     "absorbed_launches": 592.0,
+     "fraction_of_launches": 0.6859791425260718,
+     "one_card_ms_measured_net": -0.42493759999999986,
+     "one_card_ms_upper_free_barrier": 0.4714688000000001,
+     "one_card_pct_upper": 4.658782608695653,
+     "four_card_absorbed_per_card": 592.0,
+     "four_card_ms_measured_net": -0.42493759999999986,
+     "four_card_ms_upper_free_barrier": 0.4714688000000001,
+     "four_card_pct_upper": 5.479009877977921,
+     "four_card_pct_measured_net": -4.93826380011621
+    },
+    "whole_half (one persistent kernel, big GEMVs inside)": {
+     "absorbed_launches": 862.0,
+     "fraction_of_launches": 0.9988412514484357,
+     "one_card_ms_measured_net": -0.6187435999999998,
+     "one_card_ms_upper_free_barrier": 0.6864968000000002,
+     "one_card_pct_upper": 6.783565217391307,
+     "four_card_absorbed_per_card": 931.0,
+     "four_card_ms_measured_net": -0.6682717999999997,
+     "four_card_ms_upper_free_barrier": 0.7414484000000002,
+     "four_card_pct_upper": 8.616483439860549,
+     "four_card_pct_measured_net": -7.766087158628702
+    }
+   }
+  },
+  "rank1": {
+   "launches": 938.0,
+   "small_launches": 792.0,
+   "big_launches": 146.0,
+   "one_card_span_ms": 11.92,
+   "four_card_half_ms": 9.515,
+   "scenarios": {
+    "hc_blocks_only": {
+     "absorbed_launches": 255,
+     "fraction_of_launches": 0.27185501066098083,
+     "one_card_ms_measured_net": -0.18303899999999992,
+     "one_card_ms_upper_free_barrier": 0.20308200000000004,
+     "one_card_pct_upper": 1.7037080536912754,
+     "four_card_absorbed_per_card": 255,
+     "four_card_ms_measured_net": -0.18303899999999992,
+     "four_card_ms_upper_free_barrier": 0.20308200000000004,
+     "four_card_pct_upper": 2.134335260115607,
+     "four_card_pct_measured_net": -1.923688912243825
+    },
+    "all_small_kernels (one persistent kernel per run between big kernels)": {
+     "absorbed_launches": 645.0,
+     "fraction_of_launches": 0.6876332622601279,
+     "one_card_ms_measured_net": -0.46298099999999986,
+     "one_card_ms_upper_free_barrier": 0.5136780000000001,
+     "one_card_pct_upper": 4.309379194630874,
+     "four_card_absorbed_per_card": 645.0,
+     "four_card_ms_measured_net": -0.46298099999999986,
+     "four_card_ms_upper_free_barrier": 0.5136780000000001,
+     "four_card_pct_upper": 5.398612716763007,
+     "four_card_pct_measured_net": -4.865801366263792
+    },
+    "whole_half (one persistent kernel, big GEMVs inside)": {
+     "absorbed_launches": 937.0,
+     "fraction_of_launches": 0.9989339019189766,
+     "one_card_ms_measured_net": -0.6725785999999998,
+     "one_card_ms_upper_free_barrier": 0.7462268000000003,
+     "one_card_pct_upper": 6.260291946308726,
+     "four_card_absorbed_per_card": 1013.0,
+     "four_card_ms_measured_net": -0.7271313999999998,
+     "four_card_ms_upper_free_barrier": 0.8067532000000002,
+     "four_card_pct_upper": 8.478751445086708,
+     "four_card_pct_measured_net": -7.641948502364683
+    }
+   }
+  }
+ }
+}
