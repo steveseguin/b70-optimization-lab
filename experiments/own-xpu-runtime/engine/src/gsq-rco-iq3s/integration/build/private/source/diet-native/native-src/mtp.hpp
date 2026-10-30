@@ -480,7 +480,8 @@ public:
   if(!recursive)flush_depth_probe();
   require(!async_pending,"draft publication still pending");if(disabled)return -1;admit_position();require(confirmed>=0&&confirmed<p.g.vocab,"draft confirmed token bound");require(target_position==position+1,"draft confirmed position sequence");auto start=std::chrono::steady_clock::now();
   if(e.a.draft_fault=="error"||e.a.draft_fault=="stall"){if(e.a.draft_fault=="stall"){auto until=std::chrono::steady_clock::now()+std::chrono::milliseconds(50);while(std::chrono::steady_clock::now()<until){e.guard();poll(nullptr,0,5);}}throw ProviderError("cooperative injected provider failure before submission");}
-  e.drain();struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(recursive){
+  e.drain();e.trace_phase_begin(head?"draft_head":"draft",target_position,1,int(recursive)); // OWNRT_SITE_TRACE (diagnostic)
+  struct Timing{Engine& e;Timing(Engine& x):e(x){e.draft_timing=true;}~Timing(){e.draft_timing=false;}} timing(e);if(recursive){
    e.tail=e.io_copy(0,id("merge.hidden"),0,id("streams"),0,4*p.g.h*2);
   }else if((e.a.rank==0||(e.a.pipeline_live_draft&&e.a.pipeline_provider()))&&e.a.draft_capture.empty()){require(reverse_hidden,"missing confirmed reverse streams");
    if(e.a.f32_activations){ // exact-mode target streams are F32; the draft keeps its BF16 inputs (proposals are target-verified)

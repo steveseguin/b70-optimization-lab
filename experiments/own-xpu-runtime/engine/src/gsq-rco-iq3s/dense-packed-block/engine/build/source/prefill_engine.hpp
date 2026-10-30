@@ -478,6 +478,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
   std::map<std::string,std::array<double,3>> trace_sites; // class -> {count, host ms, of which blocked ms}
   double trace_inputs_ms=0,trace_inputs_wait=0,trace_loop_ms=0,trace_loop_wait=0,trace_final_ms=0,trace_final_wait=0;
   verify_configuration();guard();drain();
+  trace_phase_begin("prefill",P0,M,0); // OWNRT_SITE_TRACE (diagnostic; no device change)
   require(integer(0,"position")==P0,"prefill position sequence");
   std::vector<int32_t> positions(M),ids(M);
   for(int r=0;r<M;++r){positions[r]=P0+r;ids[r]=tokens?tokens[r]:0;require(ids[r]>=0&&ids[r]<p.g.vocab,"prefill token bound");}
@@ -506,6 +507,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
     prefill_set_views(true);
     for(const auto* l:prefill_sites) {
       if(l->op=="lookup")continue; // rows were written by the host above
+      if(site_trace())set_class(l->label); // OWNRT_SITE_TRACE: this site's events carry its full label
       // TP: an open exchange pair is closed by the very next site (card 1's half); no other site may come between.
       require(prefill_exchange_open<0||((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->card==1),"TP prefill: card 1's exchange must follow card 0's");
       if(profile&&prefill_exchange_open<0)drain();

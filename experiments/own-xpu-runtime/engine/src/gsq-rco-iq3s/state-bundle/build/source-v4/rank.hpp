@@ -398,6 +398,7 @@ static Reply half_step(Engine& e,Candidate& candidate,const Request& request,uin
  require(e.a.rank==0||!request.speculative,"rank1 must never speculate");
  require(!e.a.pipeline_enabled()||!request.speculative,"general pipeline is target-only");
  e.verify_configuration();e.guard();
+ e.trace_phase_begin("half",request.position,1,request.fixture*2+int(request.speculative)); // OWNRT_SITE_TRACE (diagnostic)
  auto* l4_history=l4_raw_history(e);
  if(l4_history)l4_history->begin(request.position,request.sequence,request.token,request.fixture,request.speculative,e.bank_parity);
  if(e.attribution.enabled)e.attribution.begin(request.fixture,request.position,request.speculative);

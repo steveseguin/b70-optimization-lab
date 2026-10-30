@@ -1019,16 +1019,32 @@ public:
   std::vector<Allocation> target_ropes;
   size_t act_bytes()const{return a.f32_activations?4:2;}
   size_t stream_bytes()const{return size_t(4)*p.g.h*act_bytes();}
-  struct Pending { Launch launch; bool gemv; int cls; };
+  struct Pending { Launch launch; bool gemv; int cls; uint32_t phase=0; };
   std::map<std::string,int> class_ids;
   std::vector<std::string> class_names;
   std::vector<double> class_ms;
   std::vector<uint64_t> class_launches,class_groups;
   int current_cls=0;
   double wait_ms=0,prepare_ms=0,enqueue_ms=0,enqueue_including_wait_ms=0;
+  // Diagnostic only (OWNRT_SITE_TRACE=1, 2026-10-30, research/decode-site-census-2026-10-30; default off): with a
+  // profiling queue (--timing launch|class), every kernel event drain() already times is also written to
+  // OUTPUT/site-trace.jsonl with its phase (a decode half, a draft row, or a prefill chunk of at most
+  // site_trace_max_rows rows) and the full label of its site (class names keep the layer). Phases are written as
+  // {"phase":N,...} lines when they begin; events as {"p":N,"c":class,"k":pass,"s":start_ns,"e":end_ns}. No arithmetic,
+  // ordering, drain or wait change: the trace reads the timestamps drain() reads anyway.
+  static bool site_trace(){static const bool on=[]{const char* v=std::getenv("OWNRT_SITE_TRACE");return v&&v[0]=='1';}();return on;}
+  static constexpr int site_trace_max_rows=8;
+  uint32_t trace_phase=0,trace_phases=0;std::ofstream site_trace_out;
+  void trace_phase_begin(const char* kind,int position,int rows,int extra) {
+    if(!site_trace())return;
+    if(rows>site_trace_max_rows){trace_phase=0;return;} // long prefill chunks are not traced
+    if(!site_trace_out.is_open())site_trace_out.open(a.output/"site-trace.jsonl",std::ios::app);
+    trace_phase=++trace_phases;
+    site_trace_out<<"{\"phase\":"<<trace_phase<<",\"kind\":\""<<kind<<"\",\"position\":"<<position<<",\"rows\":"<<rows<<",\"extra\":"<<extra<<"}\n";
+  }
   void set_class(const std::string& label) {
     std::string name=label;
-    if(name.starts_with("blk.")){auto dot=name.find('.',4);if(dot!=std::string::npos)name=name.substr(dot+1);}
+    if(!site_trace()&&name.starts_with("blk.")){auto dot=name.find('.',4);if(dot!=std::string::npos)name=name.substr(dot+1);}
     auto [it,added]=class_ids.try_emplace(name,int(class_names.size()));
     if(added){class_names.push_back(name);class_ms.push_back(0);class_launches.push_back(0);class_groups.push_back(0);}
     current_cls=it->second;
@@ -1114,7 +1130,7 @@ public:
     if(preparing_commands)return;
     // --tp-replicate: the shared-context queues never profile (2026-10-25 copy-engine fault), so the draft's GPU time
     // is not measured there (its wall time still is).
-    if(profile_events||(draft_timing&&!a.tp_replicate&&!no_draft_timing()))pending.push_back({l,gemv,current_cls});
+    if(profile_events||(draft_timing&&!a.tp_replicate&&!no_draft_timing()))pending.push_back({l,gemv,current_cls,trace_phase});
     if(!draft_timing&&attribution.active())for(auto event=l.first;event<=l.last;++event)attribution.record(event);
     tail=l.last; tail_card=c; if(c>=0&&c<2){card_tails[size_t(c)]=l.last;submitted_card[size_t(c)]+=l.passes;} submitted+=l.passes;
   }
@@ -1144,6 +1160,9 @@ public:
         require(t.end_ns-t.start_ns<=4000000000ull,"GPU submission exceeded declared 4-second budget");
         duration+=double(t.end_ns-t.start_ns)/1e6;
         attribution_row(id,t);
+        if(item.phase&&site_trace())site_trace_out<<"{\"p\":"<<item.phase<<",\"c\":"
+          <<ownrt::quote(item.cls>=0&&size_t(item.cls)<class_names.size()?class_names[size_t(item.cls)]:std::string("?"))
+          <<",\"k\":"<<(id-item.launch.first)<<",\"s\":"<<t.start_ns<<",\"e\":"<<t.end_ns<<"}\n";
       }
       (item.gemv?gemv_ms:nongemv_ms)+=duration;
       if(class_timing) {class_ms[item.cls]+=duration;class_launches[item.cls]+=item.launch.passes;++class_groups[item.cls];}
