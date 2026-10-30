@@ -35,6 +35,16 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 30, about 17:30 — four cards read a 121,854-token prompt in 222.5 s (was 239.3), exact.**
+- `OWNRT_DRAFT_CHUNK_BATCH=1` (engine `e6daa268a3a8`): the draft's prompt rows run as 15 batched launches per chunk
+  instead of 3,840 single-row commands (56.8 → 13.8 ms per chunk). Four-card set now `tptsxqckhcb`.
+- Fresh servers A/B/B at 131072: startup gate 13/13; all 512 long outputs equal the 3+1 262K reference; suite = B19;
+  decode unchanged (84.4–84.6 after the long prompt, suite 87.5–87.6); the 3,490-token prompt reads in 6.61 s (7.09).
+- The second stage now sets the pace (466 ms per chunk, never idle); its four-card overhead is 121 ms per chunk over a
+  perfect split. [Result](experiments/own-xpu-runtime/research/tp/prefill-draft-batch-2026-10-30/RESULT.md).
+- Next: the second round of exact decode cuts (about 3% per stage on one card) is merging onto this build, then
+  fresh-server A/B/A/B.
+
 **October 30, about 15:00 — new four-card record: 87.63 / 87.76 tok/s, exact (84.58 / 84.61 without the new kernels).**
 - `OWNRT_HC_KERNELS=1` (engine receipt `17f5f49ff010`): the hyper-connection norm in one launch, the combine before it
   merged into that launch (decode only), and a low-projection codegen fix. Four-card set now `tptsxqckh` + this flag.
