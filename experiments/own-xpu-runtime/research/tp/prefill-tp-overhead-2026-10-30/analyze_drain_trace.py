@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Card balance and host turnaround at the drains of TP batched prefill (research/tp/prefill-tp-overhead-2026-10-30), CPU only.
 Input: a TP rank harness run with OWNRT_PREFILL_DRAIN_TRACE=1 (probe build), RUN/rank<r>/prefill-drain-trace.jsonl: one line
-per chunk; per drain (each exchange pair's card-0 drain, then the chunk's final drain) the host-clock ms from the drain's
+per chunk; per drain (each exchange pair's card-0 drain, the loop's periodic event-ledger drain, the chunk's final drain) the host-clock ms from the drain's
 start at which card 0 and card 1 were seen complete, the drain returned (events retired), and each card's exchange was
 issued (-1 for the final drain). Both exchanges of a pair start only after its drain, so a card that finishes first idles
 from its completion to its exchange's issue (plus the device's launch latency, not visible here).
@@ -14,10 +14,13 @@ from pathlib import Path
 run, rank = Path(sys.argv[1]), sys.argv[2]
 rows = int(sys.argv[sys.argv.index('--rows') + 1]) if '--rows' in sys.argv else 256
 out_path = sys.argv[sys.argv.index('--json') + 1] if '--json' in sys.argv else None
-lines = [json.loads(x) for x in (run / f'rank{rank}' / 'prefill-drain-trace.jsonl').read_text().splitlines() if x.strip()]
+src = run / f'rank{rank}' / 'prefill-drain-trace.jsonl'
+src = src if src.exists() else run / 'prefill-drain-trace.jsonl'  # kept evidence is flat
+lines = [json.loads(x) for x in src.read_text().splitlines() if x.strip()]
 full = [d for d in lines if d['rows'] == rows]
 def kind(label):
     if label == 'final': return 'final (chunk end)'
+    if label == 'periodic': return 'periodic (event ledger)'
     if label.endswith('tp_xcompact'): return 'experts (compact slots)'
     if label.endswith('qsa.attention.tp_xgather'): return 'qsa attention'
     if label.endswith('attention.tp_xgather'): return 'attention out-proj'

@@ -5,6 +5,7 @@
 # with the four-card transform flags (compact experts, direct exchange, GDN heads, rows split; qs/ep as extras): card c's
 # launches of the TP plan, no exchanges, timing only (outputs NOT exact); every one-card check applies and
 # tp-shape-probe.json must be written. Extra dt = OWNRT_PREFILL_DRAIN_TRACE=1 (TP; prefill-drain-trace.jsonl must be written).
+# Extra cv = OWNRT_PREFILL_CONV_ROWS=1 (row-parallel conv over batched rows, build r4); gx = OWNRT_PREFILL_GDN_REGS=1 (build r5; gr is the draft guard row).
 # (prefill-draft-batch-2026-10-30: copy of prefill-host-2026-10-30/run_phase.sh; adds extra db =
 # OWNRT_DRAFT_CHUNK_BATCH=1 (both ranks: the service passes it to both; only rank 0 has a draft), and hc = OWNRT_HC_KERNELS=1 of research/hc-kernels-2026-10-30). (prefill-host-2026-10-30: copy of prefill-speed-2026-10-29/run_phase.sh.) Adds extras ep
 # (OWNRT_TP_EXPERT_PAIR=1), rd (OWNRT_RETIRE_DEFERRED=1) of fixed-cost-2026-10-30, and the new sr (OWNRT_PREFILL_SPECIAL_ROWS=1),
@@ -97,6 +98,8 @@ for arm in "$@"; do
     xs=*) [ "$onecard" = 0 ] || halt "xs needs TP"; envs+=(OWNRT_TP_EXCHANGE_STATS=${x#xs=}) ;;
     xp) [ "$onecard" = 0 ] || halt "xp needs TP"; envs+=(OWNRT_PREFILL_EXPERT_PARITY=1) ;;
     dt) [ "$onecard" = 0 ] || halt "dt needs TP"; envs+=(OWNRT_PREFILL_DRAIN_TRACE=1) ;;  # prefill-tp-overhead: drain trace (probe build)
+    cv) envs+=(OWNRT_PREFILL_CONV_ROWS=1) ;;  # prefill-tp-overhead: row-parallel batched conv (build r4)
+    gx) envs+=(OWNRT_PREFILL_GDN_REGS=1) ;;  # prefill-tp-overhead: GDN state rows in registers across batched rows (build r5)
     gd=*) envs+=(OWNRT_PREFILL_EXPERTS_GDIV=${x#gd=}) ;;
     ex=*) envs+=(OWNRT_PREFILL_EXPERTS_IQ3=${x#ex=} OWNRT_PREFILL_EXPERTS_ELEM=${x#ex=} OWNRT_PREFILL_EXPERTS_KOPT=${x#ex=}) ;;  # prefill-tp-overhead: expert tile config index (prefill_experts_policies.hpp)  # prefill-tp-overhead: expert tile launch divisor (prefill_experts.hpp; exact for every value)  # prefill-tp-overhead: expert-parity prefill  # prefill-tp-overhead: per-site exchange statistics  # db on rank 1: the service passes it to both ranks (no draft there)
     "") ;; *) halt "unknown extra $x" ;; esac; done

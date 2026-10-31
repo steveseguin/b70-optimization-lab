@@ -1,0 +1,395 @@
+{
+ "run": "/dev/shm/prefill-tp-overhead-20261030/runs/p-r0-x-dt",
+ "rank": 0,
+ "rows": 256,
+ "full_chunks": 4,
+ "mean": {
+  "idle_ms": [
+   26.30372925,
+   13.991387249999999
+  ],
+  "balance_ms": [
+   24.524289500000002,
+   11.450966499999998
+  ],
+  "turnaround_ms": [
+   1.8237922499999983,
+   2.540420749999999
+  ],
+  "drained_to_issue_ms": [
+   0.8842552499999999,
+   1.6008837500000006
+  ]
+ },
+ "by_kind": {
+  "attention out-proj": {
+   "drains": 23,
+   "balance_ms": [
+    0.940988,
+    0.019559000000000076
+   ],
+   "turnaround_ms": 0.2874474999999999,
+   "later_card0": 2.75,
+   "later_card1": 20.25,
+   "signed_card1_minus_card0_ms": 0.9214289999999999
+  },
+  "experts (compact slots)": {
+   "drains": 23,
+   "balance_ms": [
+    19.4607125,
+    11.399685
+   ],
+   "turnaround_ms": 0.5665400000000003,
+   "later_card0": 7,
+   "later_card1": 16,
+   "signed_card1_minus_card0_ms": 8.061027500000002
+  },
+  "final (chunk end)": {
+   "drains": 1,
+   "balance_ms": [
+    0.04435249999999996,
+    0.0
+   ],
+   "turnaround_ms": 0.0,
+   "later_card0": 0,
+   "later_card1": 1,
+   "signed_card1_minus_card0_ms": 0.04435249999999996
+  },
+  "gdn gated": {
+   "drains": 18,
+   "balance_ms": [
+    3.2520344999999997,
+    0.031722499999999654
+   ],
+   "turnaround_ms": 0.5377174999999987,
+   "later_card0": 2.5,
+   "later_card1": 15.5,
+   "signed_card1_minus_card0_ms": 3.220312
+  },
+  "qsa attention": {
+   "drains": 5,
+   "balance_ms": [
+    0.8262020000000001,
+    0.0
+   ],
+   "turnaround_ms": 0.43208724999999965,
+   "later_card0": 0,
+   "later_card1": 5,
+   "signed_card1_minus_card0_ms": 0.8262020000000001
+  }
+ },
+ "chunks": [
+  {
+   "position": 0,
+   "totals": {
+    "idle_ms": [
+     29.855855,
+     12.666410000000003
+    ],
+    "balance_ms": [
+     27.741943999999993,
+     9.533963
+    ],
+    "turnaround_ms": [
+     2.1519909999999984,
+     3.1324469999999995
+    ],
+    "drained_to_issue_ms": [
+     1.1845330000000005,
+     2.1649890000000016
+    ]
+   },
+   "by_kind": {
+    "gdn gated": {
+     "drains": 18,
+     "balance_ms": [
+      4.108207999999999,
+      0.03365999999999936
+     ],
+     "turnaround_ms": 0.8014099999999988,
+     "later_card1": 15,
+     "later_card0": 3,
+     "signed_card1_minus_card0_ms": 4.074548
+    },
+    "attention out-proj": {
+     "drains": 23,
+     "balance_ms": [
+      1.025018,
+      0.039033000000000095
+     ],
+     "turnaround_ms": 0.3043920000000001,
+     "later_card1": 19,
+     "later_card0": 4,
+     "signed_card1_minus_card0_ms": 0.9859849999999999
+    },
+    "experts (compact slots)": {
+     "drains": 23,
+     "balance_ms": [
+      21.5876,
+      9.461269999999999
+     ],
+     "turnaround_ms": 0.5969600000000002,
+     "later_card1": 19,
+     "later_card0": 4,
+     "signed_card1_minus_card0_ms": 12.12633
+    },
+    "qsa attention": {
+     "drains": 5,
+     "balance_ms": [
+      0.9830379999999999,
+      0.0
+     ],
+     "turnaround_ms": 0.4492289999999997,
+     "later_card1": 5,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.9830379999999999
+    },
+    "final (chunk end)": {
+     "drains": 1,
+     "balance_ms": [
+      0.03807999999999989,
+      0.0
+     ],
+     "turnaround_ms": 0.0,
+     "later_card1": 1,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.03807999999999989
+    }
+   }
+  },
+  {
+   "position": 256,
+   "totals": {
+    "idle_ms": [
+     23.365434999999998,
+     14.08557199999999
+    ],
+    "balance_ms": [
+     21.69529,
+     11.760174
+    ],
+    "turnaround_ms": [
+     1.7177349999999922,
+     2.325397999999991
+    ],
+    "drained_to_issue_ms": [
+     0.7781499999999955,
+     1.385812999999995
+    ]
+   },
+   "by_kind": {
+    "gdn gated": {
+     "drains": 18,
+     "balance_ms": [
+      2.3857800000000005,
+      0.03237999999999985
+     ],
+     "turnaround_ms": 0.4576199999999968,
+     "later_card1": 16,
+     "later_card0": 2,
+     "signed_card1_minus_card0_ms": 2.3534000000000006
+    },
+    "attention out-proj": {
+     "drains": 23,
+     "balance_ms": [
+      0.8301100000000001,
+      0.012674000000000074
+     ],
+     "turnaround_ms": 0.28842499999999993,
+     "later_card1": 22,
+     "later_card0": 1,
+     "signed_card1_minus_card0_ms": 0.817436
+    },
+    "experts (compact slots)": {
+     "drains": 23,
+     "balance_ms": [
+      17.77098,
+      11.715120000000004
+     ],
+     "turnaround_ms": 0.5369999999999955,
+     "later_card1": 15,
+     "later_card0": 8,
+     "signed_card1_minus_card0_ms": 6.055859999999998
+    },
+    "qsa attention": {
+     "drains": 5,
+     "balance_ms": [
+      0.6608299999999994,
+      0.0
+     ],
+     "turnaround_ms": 0.4346899999999998,
+     "later_card1": 5,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.6608299999999994
+    },
+    "final (chunk end)": {
+     "drains": 1,
+     "balance_ms": [
+      0.04759000000000002,
+      0.0
+     ],
+     "turnaround_ms": 0.0,
+     "later_card1": 1,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.04759000000000002
+    }
+   }
+  },
+  {
+   "position": 512,
+   "totals": {
+    "idle_ms": [
+     26.124397000000002,
+     13.880132000000003
+    ],
+    "balance_ms": [
+     24.47473000000001,
+     11.558980999999996
+    ],
+    "turnaround_ms": [
+     1.7007170000000036,
+     2.3211510000000044
+    ],
+    "drained_to_issue_ms": [
+     0.7771520000000016,
+     1.3975860000000027
+    ]
+   },
+   "by_kind": {
+    "gdn gated": {
+     "drains": 18,
+     "balance_ms": [
+      3.4086799999999986,
+      0.029769999999999186
+     ],
+     "turnaround_ms": 0.43900000000000095,
+     "later_card1": 14,
+     "later_card0": 4,
+     "signed_card1_minus_card0_ms": 3.3789099999999994
+    },
+    "attention out-proj": {
+     "drains": 23,
+     "balance_ms": [
+      1.0628800000000003,
+      0.016611000000000042
+     ],
+     "turnaround_ms": 0.2765369999999997,
+     "later_card1": 22,
+     "later_card0": 1,
+     "signed_card1_minus_card0_ms": 1.0462690000000001
+    },
+    "experts (compact slots)": {
+     "drains": 23,
+     "balance_ms": [
+      18.92326,
+      11.512599999999997
+     ],
+     "turnaround_ms": 0.5634300000000048,
+     "later_card1": 15,
+     "later_card0": 8,
+     "signed_card1_minus_card0_ms": 7.410660000000002
+    },
+    "qsa attention": {
+     "drains": 5,
+     "balance_ms": [
+      1.0288600000000008,
+      0.0
+     ],
+     "turnaround_ms": 0.4217499999999985,
+     "later_card1": 5,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 1.0288600000000008
+    },
+    "final (chunk end)": {
+     "drains": 1,
+     "balance_ms": [
+      0.05105000000000004,
+      0.0
+     ],
+     "turnaround_ms": 0.0,
+     "later_card1": 1,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.05105000000000004
+    }
+   }
+  },
+  {
+   "position": 768,
+   "totals": {
+    "idle_ms": [
+     25.86923,
+     15.333434999999998
+    ],
+    "balance_ms": [
+     24.185194000000003,
+     12.950747999999999
+    ],
+    "turnaround_ms": [
+     1.724725999999999,
+     2.3826870000000007
+    ],
+    "drained_to_issue_ms": [
+     0.7971860000000022,
+     1.4551470000000029
+    ]
+   },
+   "by_kind": {
+    "gdn gated": {
+     "drains": 18,
+     "balance_ms": [
+      3.1054700000000004,
+      0.03108000000000022
+     ],
+     "turnaround_ms": 0.45283999999999835,
+     "later_card1": 17,
+     "later_card0": 1,
+     "signed_card1_minus_card0_ms": 3.07439
+    },
+    "attention out-proj": {
+     "drains": 23,
+     "balance_ms": [
+      0.8459439999999999,
+      0.009918000000000093
+     ],
+     "turnaround_ms": 0.2804359999999999,
+     "later_card1": 18,
+     "later_card0": 5,
+     "signed_card1_minus_card0_ms": 0.8360259999999998
+    },
+    "experts (compact slots)": {
+     "drains": 23,
+     "balance_ms": [
+      19.561010000000003,
+      12.909749999999999
+     ],
+     "turnaround_ms": 0.5687700000000007,
+     "later_card1": 15,
+     "later_card0": 8,
+     "signed_card1_minus_card0_ms": 6.651260000000005
+    },
+    "qsa attention": {
+     "drains": 5,
+     "balance_ms": [
+      0.6320800000000002,
+      0.0
+     ],
+     "turnaround_ms": 0.4226800000000006,
+     "later_card1": 5,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.6320800000000002
+    },
+    "final (chunk end)": {
+     "drains": 1,
+     "balance_ms": [
+      0.04068999999999989,
+      0.0
+     ],
+     "turnaround_ms": 0.0,
+     "later_card1": 1,
+     "later_card0": 0,
+     "signed_card1_minus_card0_ms": 0.04068999999999989
+    }
+   }
+  }
+ ]
+}

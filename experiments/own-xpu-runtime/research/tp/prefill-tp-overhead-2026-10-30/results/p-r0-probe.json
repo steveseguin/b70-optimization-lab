@@ -1,0 +1,1952 @@
+{
+ "rank": 0,
+ "chunks": 4,
+ "one_card": "results/m-r0-one256-classes.json",
+ "probes": [
+  "/dev/shm/prefill-tp-overhead-20261030/runs/p-r0-pr0",
+  "/dev/shm/prefill-tp-overhead-20261030/runs/p-r0-pr1"
+ ],
+ "probe_files": [
+  {
+   "schema": "ownrt.tp-shape-probe.v1",
+   "card": 0,
+   "launches": 875,
+   "dropped_exchanges_and_merges": 69,
+   "exact": false
+  },
+  {
+   "schema": "ownrt.tp-shape-probe.v1",
+   "card": 1,
+   "launches": 875,
+   "dropped_exchanges_and_merges": 69,
+   "exact": false
+  }
+ ],
+ "one_card_ms": 589.4133959999999,
+ "perfect_split_ms": 294.70669799999996,
+ "card_busy_ms": [
+  380.882718,
+  382.2531682499999
+ ],
+ "totals": {
+  "split": {
+   "one_card_ms": 485.5399377499999,
+   "card_ms": [
+    279.371216,
+    280.7574634999999
+   ]
+  },
+  "replicated": {
+   "one_card_ms": 103.87345825,
+   "card_ms": [
+    100.2537165,
+    100.23976849999995
+   ]
+  },
+  "excluded": {
+   "one_card_ms": 10.907131749999996,
+   "card_ms": [
+    10.65157775,
+    10.64468325
+   ]
+  },
+  "tp-only": {
+   "one_card_ms": 0.0,
+   "card_ms": [
+    1.2577854999999998,
+    1.2559362499999998
+   ]
+  }
+ },
+ "split_nonhalving_ms": [
+  36.60124712500004,
+  37.987494624999954
+ ],
+ "replicated_change_ms": [
+  -3.619741750000003,
+  -3.6336897500000447
+ ],
+ "classes": [
+  {
+   "cls": "expsdown",
+   "kind": "split",
+   "one_card_ms": 107.016575,
+   "card0_ms": 64.0665,
+   "card1_ms": 64.631325,
+   "card_over_one": [
+    0.5986596001600687,
+    0.6039375208933756
+   ],
+   "nonhalving_ms": [
+    10.558212500000003,
+    11.123037500000002
+   ]
+  },
+  {
+   "cls": "expsup",
+   "kind": "split",
+   "one_card_ms": 91.17512499999998,
+   "card0_ms": 53.2346875,
+   "card1_ms": 53.72721249999999,
+   "card_over_one": [
+    0.5838729313505192,
+    0.5892748981698682
+   ],
+   "nonhalving_ms": [
+    7.64712500000001,
+    8.139650000000003
+   ]
+  },
+  {
+   "cls": "expsgate",
+   "kind": "split",
+   "one_card_ms": 90.47305,
+   "card0_ms": 53.09669,
+   "card1_ms": 53.4283825,
+   "card_over_one": [
+    0.5868785234940129,
+    0.5905447257498228
+   ],
+   "nonhalving_ms": [
+    7.860165000000002,
+    8.191857499999998
+   ]
+  },
+  {
+   "cls": "gdn.recurrence",
+   "kind": "split",
+   "one_card_ms": 47.5008,
+   "card0_ms": 30.938642499999997,
+   "card1_ms": 30.931950000000004,
+   "card_over_one": [
+    0.6513288723558339,
+    0.651187979991916
+   ],
+   "nonhalving_ms": [
+    7.188242499999998,
+    7.181550000000005
+   ]
+  },
+  {
+   "cls": "gdn.qkv",
+   "kind": "split",
+   "one_card_ms": 42.960809999999995,
+   "card0_ms": 21.5286725,
+   "card1_ms": 21.5259075,
+   "card_over_one": [
+    0.5011235239745248,
+    0.501059162990642
+   ],
+   "nonhalving_ms": [
+    0.04826750000000146,
+    0.045502500000001334
+   ]
+  },
+  {
+   "cls": "gdn.z",
+   "kind": "split",
+   "one_card_ms": 28.791559999999997,
+   "card0_ms": 14.336720000000001,
+   "card1_ms": 14.316325,
+   "card_over_one": [
+    0.4979487044119875,
+    0.49724033709878873
+   ],
+   "nonhalving_ms": [
+    -0.059059999999997004,
+    -0.07945499999999761
+   ]
+  },
+  {
+   "cls": "attention",
+   "kind": "split",
+   "one_card_ms": 26.754237500000002,
+   "card0_ms": 12.575685,
+   "card1_ms": 12.603262500000001,
+   "card_over_one": [
+    0.4700446050835872,
+    0.4710753763772935
+   ],
+   "nonhalving_ms": [
+    -0.801433750000001,
+    -0.7738562499999997
+   ]
+  },
+  {
+   "cls": "qsa.qgate",
+   "kind": "split",
+   "one_card_ms": 17.194775,
+   "card0_ms": 8.875055,
+   "card1_ms": 8.8708075,
+   "card_over_one": [
+    0.5161483648375742,
+    0.5159013421228251
+   ],
+   "nonhalving_ms": [
+    0.27766749999999973,
+    0.2734199999999998
+   ]
+  },
+  {
+   "cls": "hc.f.gate",
+   "kind": "replicated",
+   "one_card_ms": 14.698537500000002,
+   "card0_ms": 14.325599999999998,
+   "card1_ms": 14.339632499999999,
+   "card_over_one": [
+    0.9746275777437038,
+    0.9755822645620352
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.a.gate",
+   "kind": "replicated",
+   "one_card_ms": 14.5439875,
+   "card0_ms": 14.366377500000002,
+   "card1_ms": 14.3241925,
+   "card_over_one": [
+    0.9877880808134635,
+    0.984887569519707
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.attention",
+   "kind": "split",
+   "one_card_ms": 11.83235,
+   "card0_ms": 6.902782500000001,
+   "card1_ms": 6.889190000000001,
+   "card_over_one": [
+    0.5833822106344049,
+    0.5822334532024493
+   ],
+   "nonhalving_ms": [
+    0.9866075000000007,
+    0.9730150000000011
+   ]
+  },
+  {
+   "cls": "hc.a.low",
+   "kind": "replicated",
+   "one_card_ms": 11.31331,
+   "card0_ms": 10.605017499999999,
+   "card1_ms": 10.629405000000002,
+   "card_over_one": [
+    0.937392991087489,
+    0.93954863784339
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.f.low",
+   "kind": "replicated",
+   "one_card_ms": 11.139747499999999,
+   "card0_ms": 10.745730000000002,
+   "card1_ms": 10.759269999999999,
+   "card_over_one": [
+    0.964629584288154,
+    0.9658450516943944
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "commit.final",
+   "kind": "excluded",
+   "one_card_ms": 10.566975,
+   "card0_ms": 10.31715,
+   "card1_ms": 10.310125,
+   "card_over_one": [
+    0.9763579453911835,
+    0.975693138291706
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "shexpdown",
+   "kind": "replicated",
+   "one_card_ms": 7.968149999999999,
+   "card0_ms": 7.8151325,
+   "card1_ms": 7.783180000000001,
+   "card_over_one": [
+    0.9807963580002887,
+    0.9767863305786163
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "gdn.conv",
+   "kind": "split",
+   "one_card_ms": 7.595942500000001,
+   "card0_ms": 7.414585000000001,
+   "card1_ms": 7.4153925,
+   "card_over_one": [
+    0.9761244243225905,
+    0.9762307310778089
+   ],
+   "nonhalving_ms": [
+    3.61661375,
+    3.6174212499999996
+   ]
+  },
+  {
+   "cls": "shexpgate",
+   "kind": "replicated",
+   "one_card_ms": 7.065211999999999,
+   "card0_ms": 6.99015625,
+   "card1_ms": 6.991250249999999,
+   "card_over_one": [
+    0.9893767165090023,
+    0.9895315597040826
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "shexpup",
+   "kind": "replicated",
+   "one_card_ms": 5.824583750000001,
+   "card0_ms": 5.69132675,
+   "card1_ms": 5.696668000000001,
+   "card_over_one": [
+    0.9771216269317097,
+    0.9780386452508301
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.pool",
+   "kind": "split",
+   "one_card_ms": 3.2203375,
+   "card0_ms": 0.8724482499999999,
+   "card1_ms": 0.8780987500000001,
+   "card_over_one": [
+    0.2709182655544644,
+    0.27267289530988603
+   ],
+   "nonhalving_ms": [
+    -0.7377205,
+    -0.7320699999999998
+   ]
+  },
+  {
+   "cls": "hc.f.mix",
+   "kind": "replicated",
+   "one_card_ms": 2.9389077499999994,
+   "card0_ms": 2.878931,
+   "card1_ms": 2.849194,
+   "card_over_one": [
+    0.9795921631088967,
+    0.9694737781408758
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.a.mix",
+   "kind": "replicated",
+   "one_card_ms": 2.8848702499999996,
+   "card0_ms": 2.8533854999999995,
+   "card1_ms": 2.86458375,
+   "card_over_one": [
+    0.9890862509327759,
+    0.9929679679701368
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "gdn.gated",
+   "kind": "split",
+   "one_card_ms": 2.5476297499999996,
+   "card0_ms": 1.30895625,
+   "card1_ms": 1.3124735,
+   "card_over_one": [
+    0.5137937528010106,
+    0.5151743498049511
+   ],
+   "nonhalving_ms": [
+    0.03514137500000025,
+    0.03865862500000028
+   ]
+  },
+  {
+   "cls": "router",
+   "kind": "replicated",
+   "one_card_ms": 2.5250237499999995,
+   "card0_ms": 2.4161200000000003,
+   "card1_ms": 2.4082277499999996,
+   "card_over_one": [
+    0.9568702076564629,
+    0.9537445934914474
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.hash",
+   "kind": "replicated",
+   "one_card_ms": 2.312005,
+   "card0_ms": 2.336355,
+   "card1_ms": 2.3547125,
+   "card_over_one": [
+    1.0105319841436329,
+    1.0184720621278933
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "gather",
+   "kind": "replicated",
+   "one_card_ms": 2.193152,
+   "card0_ms": 2.2157285000000004,
+   "card1_ms": 2.2285675000000005,
+   "card_over_one": [
+    1.0102940881434577,
+    1.0161482195488505
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "moe",
+   "kind": "replicated",
+   "one_card_ms": 2.13463675,
+   "card0_ms": 0.9917457500000002,
+   "card1_ms": 0.98653775,
+   "card_over_one": [
+    0.46459696245742993,
+    0.4621572030932195
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.key",
+   "kind": "replicated",
+   "one_card_ms": 1.94552,
+   "card0_ms": 1.98,
+   "card1_ms": 1.995755,
+   "card_over_one": [
+    1.0177227682059296,
+    1.0258208602327399
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.add",
+   "kind": "replicated",
+   "one_card_ms": 1.948985,
+   "card0_ms": 1.9768225,
+   "card1_ms": 1.98073,
+   "card_over_one": [
+    1.0142830755495809,
+    1.0162879652742325
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "streams",
+   "kind": "replicated",
+   "one_card_ms": 1.9350525,
+   "card0_ms": 1.913255,
+   "card1_ms": 1.91974,
+   "card_over_one": [
+    0.9887354477462497,
+    0.992086778007315
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.k",
+   "kind": "split",
+   "one_card_ms": 1.88768325,
+   "card0_ms": 0.85609375,
+   "card1_ms": 0.861823,
+   "card_over_one": [
+    0.45351557259407793,
+    0.45655064216944236
+   ],
+   "nonhalving_ms": [
+    -0.08774787500000003,
+    -0.08201862500000001
+   ]
+  },
+  {
+   "cls": "expsact",
+   "kind": "split",
+   "one_card_ms": 1.7730469999999998,
+   "card0_ms": 0.9426305000000001,
+   "card1_ms": 0.9334367500000001,
+   "card_over_one": [
+    0.5316443952134378,
+    0.526459112476996
+   ],
+   "nonhalving_ms": [
+    0.05610700000000024,
+    0.04691325000000024
+   ]
+  },
+  {
+   "cls": "qsa.v",
+   "kind": "split",
+   "one_card_ms": 1.469296,
+   "card0_ms": 0.70799475,
+   "card1_ms": 0.7088535,
+   "card_over_one": [
+    0.48185984988729297,
+    0.48244431346712985
+   ],
+   "nonhalving_ms": [
+    -0.02665324999999996,
+    -0.025794499999999942
+   ]
+  },
+  {
+   "cls": "hc.a.norm",
+   "kind": "replicated",
+   "one_card_ms": 1.4493494999999998,
+   "card0_ms": 1.2799485,
+   "card1_ms": 1.260911,
+   "card_over_one": [
+    0.8831192890327696,
+    0.8699840859640825
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.f.norm",
+   "kind": "replicated",
+   "one_card_ms": 1.4093729999999998,
+   "card0_ms": 1.269012,
+   "card1_ms": 1.2525544999999998,
+   "card_over_one": [
+    0.9004089052365841,
+    0.8887317268033373
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "attn.combine",
+   "kind": "replicated",
+   "one_card_ms": 1.344192,
+   "card0_ms": 1.37770825,
+   "card1_ms": 1.3825500000000002,
+   "card_over_one": [
+    1.0249341239941911,
+    1.0285361019854307
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "expsdown.check",
+   "kind": "split",
+   "one_card_ms": 1.30596375,
+   "card0_ms": 0.66395975,
+   "card1_ms": 0.66434975,
+   "card_over_one": [
+    0.5084059569034745,
+    0.5087045869381902
+   ],
+   "nonhalving_ms": [
+    0.010977874999999915,
+    0.011367874999999916
+   ]
+  },
+  {
+   "cls": "ffn.combine",
+   "kind": "replicated",
+   "one_card_ms": 1.30322975,
+   "card0_ms": 1.2803379999999998,
+   "card1_ms": 1.2872907500000004,
+   "card_over_one": [
+    0.9824346014200487,
+    0.9877696162169413
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "gather.tp_compact",
+   "kind": "tp-only",
+   "one_card_ms": 0.0,
+   "card0_ms": 1.2577854999999998,
+   "card1_ms": 1.2559362499999998,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "gdn.a",
+   "kind": "split",
+   "one_card_ms": 0.855208,
+   "card0_ms": 0.44939925000000003,
+   "card1_ms": 0.45447925000000006,
+   "card_over_one": [
+    0.5254853205302102,
+    0.5314253959270728
+   ],
+   "nonhalving_ms": [
+    0.021795250000000044,
+    0.026875250000000073
+   ]
+  },
+  {
+   "cls": "gdn.b",
+   "kind": "split",
+   "one_card_ms": 0.8259382500000001,
+   "card0_ms": 0.40218774999999996,
+   "card1_ms": 0.4022402500000001,
+   "card_over_one": [
+    0.4869465120425164,
+    0.4870100761164652
+   ],
+   "nonhalving_ms": [
+    -0.010781375000000093,
+    -0.010728874999999971
+   ]
+  },
+  {
+   "cls": "route",
+   "kind": "replicated",
+   "one_card_ms": 0.7728667500000002,
+   "card0_ms": 0.75361875,
+   "card1_ms": 0.75935,
+   "card_over_one": [
+    0.9750953188243637,
+    0.9825108920780973
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.iq",
+   "kind": "replicated",
+   "one_card_ms": 0.53640675,
+   "card0_ms": 0.52950525,
+   "card1_ms": 0.53411425,
+   "card_over_one": [
+    0.9871338308102946,
+    0.9957261909921901
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.value",
+   "kind": "replicated",
+   "one_card_ms": 0.5035925,
+   "card0_ms": 0.5038025,
+   "card1_ms": 0.5130475,
+   "card_over_one": [
+    1.0004170038274995,
+    1.0187751009000332
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.select",
+   "kind": "replicated",
+   "one_card_ms": 0.46310125,
+   "card0_ms": 0.4616145,
+   "card1_ms": 0.45679625,
+   "card_over_one": [
+    0.9967895789527668,
+    0.9863852667208305
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.conv",
+   "kind": "replicated",
+   "one_card_ms": 0.4409125,
+   "card0_ms": 0.4458325,
+   "card1_ms": 0.448725,
+   "card_over_one": [
+    1.0111586766081706,
+    1.0177189351628724
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.ik",
+   "kind": "replicated",
+   "one_card_ms": 0.38291675,
+   "card0_ms": 0.37815075000000004,
+   "card1_ms": 0.3723435,
+   "card_over_one": [
+    0.9875534303474582,
+    0.9723876012214143
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "qsa.prepare",
+   "kind": "split",
+   "one_card_ms": 0.35960925,
+   "card0_ms": 0.19752575000000003,
+   "card1_ms": 0.20195375,
+   "card_over_one": [
+    0.5492788352913615,
+    0.5615922004230981
+   ],
+   "nonhalving_ms": [
+    0.017721125000000032,
+    0.022149124999999992
+   ]
+  },
+  {
+   "cls": "hc.a.inject",
+   "kind": "replicated",
+   "one_card_ms": 0.347788,
+   "card0_ms": 0.33750074999999996,
+   "card1_ms": 0.33554575,
+   "card_over_one": [
+    0.9704209173404487,
+    0.9647996768146112
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.f.inject",
+   "kind": "replicated",
+   "one_card_ms": 0.34674449999999996,
+   "card0_ms": 0.343957,
+   "card1_ms": 0.339141,
+   "card_over_one": [
+    0.9919609395390556,
+    0.9780717502368461
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "shexpact",
+   "kind": "replicated",
+   "one_card_ms": 0.250261,
+   "card0_ms": 0.2467182500000001,
+   "card1_ms": 0.2515339999999999,
+   "card_over_one": [
+    0.9858437790946256,
+    1.0050866894961656
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.gated",
+   "kind": "replicated",
+   "one_card_ms": 0.19559875,
+   "card0_ms": 0.19682275,
+   "card1_ms": 0.198099,
+   "card_over_one": [
+    1.0062577087021263,
+    1.012782545900728
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.f.act",
+   "kind": "replicated",
+   "one_card_ms": 0.191564,
+   "card0_ms": 0.19497400000000006,
+   "card1_ms": 0.1947915,
+   "card_over_one": [
+    1.0178008394061517,
+    1.0168481551857342
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "hc.a.act",
+   "kind": "replicated",
+   "one_card_ms": 0.17768275000000003,
+   "card0_ms": 0.1721635,
+   "card1_ms": 0.16729200000000002,
+   "card_over_one": [
+    0.9689376149344828,
+    0.9415207722753053
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "shared_gate",
+   "kind": "replicated",
+   "one_card_ms": 0.16911550000000006,
+   "card0_ms": 0.16028724999999996,
+   "card1_ms": 0.15971299999999997,
+   "card_over_one": [
+    0.9477975111684022,
+    0.9444019028415486
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.logits",
+   "kind": "excluded",
+   "one_card_ms": 0.11078125,
+   "card0_ms": 0.110651,
+   "card1_ms": 0.110521,
+   "card_over_one": [
+    0.9988242595204514,
+    0.9976507757404796
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.qn",
+   "kind": "replicated",
+   "one_card_ms": 0.07895825,
+   "card0_ms": 0.07585925,
+   "card1_ms": 0.076589,
+   "card_over_one": [
+    0.960751409764021,
+    0.9699936358771883
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.kn",
+   "kind": "replicated",
+   "one_card_ms": 0.06622375,
+   "card0_ms": 0.06562525,
+   "card1_ms": 0.06546875,
+   "card_over_one": [
+    0.9909624568225146,
+    0.9885992563091037
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.cn",
+   "kind": "replicated",
+   "one_card_ms": 0.05950425,
+   "card0_ms": 0.0578125,
+   "card1_ms": 0.05924425,
+   "card_over_one": [
+    0.9715692576580665,
+    0.9956305642033971
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.qgate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.03046875,
+   "card1_ms": 0.03041675,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.qgate",
+   "kind": "excluded",
+   "one_card_ms": 0.030078,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.attention",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0241145,
+   "card1_ms": 0.0246875,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.attention",
+   "kind": "excluded",
+   "one_card_ms": 0.023724,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsgate",
+   "kind": "excluded",
+   "one_card_ms": 0.02239575,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "begin.0",
+   "kind": "replicated",
+   "one_card_ms": 0.0123955,
+   "card0_ms": 0.02078125,
+   "card1_ms": 0.013021,
+   "card_over_one": [
+    1.6765156710096407,
+    1.0504618611592915
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsgate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.01796875,
+   "card1_ms": 0.0178645,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.merge.projected",
+   "kind": "excluded",
+   "one_card_ms": 0.013151,
+   "card0_ms": 0.013151,
+   "card1_ms": 0.013047,
+   "card_over_one": [
+    1.0,
+    0.9920918561326135
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsdown",
+   "kind": "excluded",
+   "one_card_ms": 0.0127865,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsdown",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.01257825,
+   "card1_ms": 0.01265625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.argmax",
+   "kind": "excluded",
+   "one_card_ms": 0.010052,
+   "card0_ms": 0.0097135,
+   "card1_ms": 0.0096355,
+   "card_over_one": [
+    0.966325109430959,
+    0.9585654596100278
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.merge.embedding_projected",
+   "kind": "excluded",
+   "one_card_ms": 0.00856775,
+   "card0_ms": 0.00921875,
+   "card1_ms": 0.009401,
+   "card_over_one": [
+    1.0759826092031162,
+    1.0972542382772605
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.final.gate",
+   "kind": "excluded",
+   "one_card_ms": 0.00796875,
+   "card0_ms": 0.00799475,
+   "card1_ms": 0.007578,
+   "card_over_one": [
+    1.0032627450980391,
+    0.9509647058823529
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.gate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0066665,
+   "card1_ms": 0.0065625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.gate",
+   "kind": "excluded",
+   "one_card_ms": 0.0066145,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.gate",
+   "kind": "excluded",
+   "one_card_ms": 0.00643225,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.gate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00630225,
+   "card1_ms": 0.006328,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.attention",
+   "kind": "excluded",
+   "one_card_ms": 0.00627575,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.attention",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00617175,
+   "card1_ms": 0.006172,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.gather",
+   "kind": "excluded",
+   "one_card_ms": 0.00596375,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.merge.hidden_norm",
+   "kind": "excluded",
+   "one_card_ms": 0.0058595,
+   "card0_ms": 0.0058855,
+   "card1_ms": 0.0059375,
+   "card_over_one": [
+    1.0044372386722416,
+    1.0133117160167249
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.gather",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0058855,
+   "card1_ms": 0.0059115,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.select",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0052085,
+   "card1_ms": 0.00515625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.select",
+   "kind": "excluded",
+   "one_card_ms": 0.00520825,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.low",
+   "kind": "excluded",
+   "one_card_ms": 0.00502625,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.low",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00466125,
+   "card1_ms": 0.0047135,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.low",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.004297,
+   "card1_ms": 0.00421875,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.low",
+   "kind": "excluded",
+   "one_card_ms": 0.00416675,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.final.low",
+   "kind": "excluded",
+   "one_card_ms": 0.0040625,
+   "card0_ms": 0.0040625,
+   "card1_ms": 0.0040105,
+   "card_over_one": [
+    1.0,
+    0.9872
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.shexpup",
+   "kind": "excluded",
+   "one_card_ms": 0.0034115,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.shexpdown",
+   "kind": "excluded",
+   "one_card_ms": 0.0033855,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.route",
+   "kind": "excluded",
+   "one_card_ms": 0.0033595,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.route",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00333325,
+   "card1_ms": 0.00330725,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.ffn.combine",
+   "kind": "excluded",
+   "one_card_ms": 0.0028905,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.shexpdown",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00283875,
+   "card1_ms": 0.00330725,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.ffn.combine",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0028125,
+   "card1_ms": 0.0027865,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.merge.embedding_norm",
+   "kind": "excluded",
+   "one_card_ms": 0.0027865,
+   "card0_ms": 0.0027085,
+   "card1_ms": 0.0027345,
+   "card_over_one": [
+    0.9720078952090436,
+    0.9813385968060291
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.router",
+   "kind": "excluded",
+   "one_card_ms": 0.00270825,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.shexpup",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00268225,
+   "card1_ms": 0.00265625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.router",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00255225,
+   "card1_ms": 0.00257825,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.shexpgate",
+   "kind": "excluded",
+   "one_card_ms": 0.002474,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.shexpgate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.002474,
+   "card1_ms": 0.00252625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.k",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00205725,
+   "card1_ms": 0.002005,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.prepare",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00203125,
+   "card1_ms": 0.00205725,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.k",
+   "kind": "excluded",
+   "one_card_ms": 0.00203125,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.v",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00200525,
+   "card1_ms": 0.001927,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.inject",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00200525,
+   "card1_ms": 0.00195325,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.final.norm",
+   "kind": "excluded",
+   "one_card_ms": 0.001979,
+   "card0_ms": 0.002005,
+   "card1_ms": 0.001953,
+   "card_over_one": [
+    1.0131379484588177,
+    0.9868620515411826
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.inject",
+   "kind": "excluded",
+   "one_card_ms": 0.00195325,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.norm",
+   "kind": "excluded",
+   "one_card_ms": 0.001953,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.v",
+   "kind": "excluded",
+   "one_card_ms": 0.00192725,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.prepare",
+   "kind": "excluded",
+   "one_card_ms": 0.001927,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.inject",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.001901,
+   "card1_ms": 0.001927,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.iq",
+   "kind": "excluded",
+   "one_card_ms": 0.001901,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.iq",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.001901,
+   "card1_ms": 0.001901,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.norm",
+   "kind": "excluded",
+   "one_card_ms": 0.001875,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.norm",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.001823,
+   "card1_ms": 0.001849,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.norm",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00179675,
+   "card1_ms": 0.00179675,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.inject",
+   "kind": "excluded",
+   "one_card_ms": 0.00177075,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.mix",
+   "kind": "excluded",
+   "one_card_ms": 0.00166675,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.mix",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00158875,
+   "card1_ms": 0.00158875,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.mix",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0015625,
+   "card1_ms": 0.0015625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.mix",
+   "kind": "excluded",
+   "one_card_ms": 0.0015105,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.pool",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0014845,
+   "card1_ms": 0.0014845,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.qsa.ik",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00148425,
+   "card1_ms": 0.0015625,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.ik",
+   "kind": "excluded",
+   "one_card_ms": 0.0014585,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.qsa.pool",
+   "kind": "excluded",
+   "one_card_ms": 0.0014585,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.begin.0",
+   "kind": "excluded",
+   "one_card_ms": 0.00138025,
+   "card0_ms": 0.00138025,
+   "card1_ms": 0.00135425,
+   "card_over_one": [
+    1.0,
+    0.9811628328201413
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.moe",
+   "kind": "excluded",
+   "one_card_ms": 0.00101575,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.commit.final",
+   "kind": "excluded",
+   "one_card_ms": 0.00098975,
+   "card0_ms": 0.00101575,
+   "card1_ms": 0.00098975,
+   "card_over_one": [
+    1.0262692599141197,
+    1.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.shared_gate",
+   "kind": "excluded",
+   "one_card_ms": 0.0009895,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.shared_gate",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0009375,
+   "card1_ms": 0.0009895,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.moe",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0009375,
+   "card1_ms": 0.0008595,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsact",
+   "kind": "excluded",
+   "one_card_ms": 0.000677,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsgate.check",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.000651,
+   "card1_ms": 0.000599,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsgate.check",
+   "kind": "excluded",
+   "one_card_ms": 0.000651,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsact",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.000599,
+   "card1_ms": 0.000599,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsup.check",
+   "kind": "excluded",
+   "one_card_ms": 0.00046875,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsup.check",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00044275,
+   "card1_ms": 0.00046875,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.expsdown.check",
+   "kind": "excluded",
+   "one_card_ms": 0.00044275,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    0.0,
+    0.0
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.expsdown.check",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.00041675,
+   "card1_ms": 0.00041675,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.a.act",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.final.mix",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "embedding",
+   "kind": "replicated",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.f.act",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "ple.lookup",
+   "kind": "replicated",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.shexpact",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.final.act",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.shexpact",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.attn.combine",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.merge.add",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.hc.f.act",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.hc.a.act",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  },
+  {
+   "cls": "draft.blk.0.attn.combine",
+   "kind": "excluded",
+   "one_card_ms": 0.0,
+   "card0_ms": 0.0,
+   "card1_ms": 0.0,
+   "card_over_one": [
+    null,
+    null
+   ],
+   "nonhalving_ms": null
+  }
+ ]
+}

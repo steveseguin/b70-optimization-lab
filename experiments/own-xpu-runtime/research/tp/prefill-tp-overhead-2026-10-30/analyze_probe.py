@@ -22,15 +22,18 @@ def kind(k):
     if k.startswith('draft.') or k == 'commit.final': return 'excluded'
     if 'tp_' in k or '#tp' in k: return 'tp-only'
     return 'split' if k in SPLIT else 'replicated'
+def pick(run, name):  # a harness run (RUN/rank<r>/name) or its kept evidence (flat)
+    f = run / f'rank{rank}' / name
+    return f if f.exists() else run / name
 def load(run):
-    d = json.loads((run / f'rank{rank}' / 'class-times.json').read_text()); agg = {}
+    d = json.loads(pick(run, 'class-times.json').read_text()); agg = {}
     for c in d['classes']:
         k = cls_of(c['class']); a = agg.setdefault(k, [0.0, 0]); a[0] += c['device_ms'] / chunks; a[1] += c['launches']
     return agg
 one = {k: [v['ms_per_chunk'], v['launches']] for k, v in json.loads(one_path.read_text())['classes'].items()}
 one = {('draft.' + k[6:] if k.startswith('draft:') else k): v for k, v in one.items()}  # analyze_class_times keys draft classes 'draft:'
 probes = [load(p0), load(p1)]
-probe_meta = [json.loads((p / f'rank{rank}' / 'tp-shape-probe.json').read_text()) for p in (p0, p1)]
+probe_meta = [json.loads(pick(p, 'tp-shape-probe.json').read_text()) for p in (p0, p1)]
 keys = sorted(set(one) | set(probes[0]) | set(probes[1]), key=lambda k: -max(one.get(k, [0])[0], probes[0].get(k, [0])[0]))
 rows, tot = [], {}
 for k in keys:

@@ -78,6 +78,8 @@ sha256sum "$W"/gate-evidence/*.json
 ENVARGS=()
 while IFS= read -r kv; do ENVARGS+=("--setenv=$kv"); done < <(python3 "$D/arm_env.py" "$ENVARM")
 ENVARGS+=("${RECORD[@]}")
+# prefill-tp-overhead (from hc-split-2026-10-30): 131072 servers give the ranks a 300 s wait deadline (cold-JIT first half)
+[ "$CTX" = 131072 ] && ENVARGS+=("--setenv=SC117_LAB_WAIT_SECONDS=300")
 ENVARGS+=("--setenv=SC117_LAB_UNIT=$UNIT.service" "--setenv=SC117_LAB_CONTROL_PARENT=$W/control" "--setenv=SC117_LAB_EVIDENCE=$W/gate-evidence" "--setenv=SC117_EVIDENCE_PARENT=$W/evidence")
 printf '%s\n' "${ENVARGS[@]}" >"$D/logs/arm-$ARM-unit-env.txt"
 systemd-run --user --unit="$UNIT" --description="prefill-speed suite server $ARM (lab SC117 service, 127.0.0.1:$PORT)" \

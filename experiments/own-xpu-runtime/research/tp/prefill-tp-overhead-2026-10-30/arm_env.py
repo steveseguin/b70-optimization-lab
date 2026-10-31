@@ -28,7 +28,8 @@ OWNRT_RETIRE_DEFERRED=1) and tptsxqckh (tptsxqckf + OWNRT_PREFILL_SPECIAL_ROWS=1
 OWNRT_DRAFT_CHUNK_STAGE_THREAD=1, OWNRT_DRAFT_CHUNK_GUARD_ROW=1, OWNRT_DRAFT_CHUNK_ROW_COPY=1).
 Copy for research/tp/prefill-tp-overhead-2026-10-30: adds tptsxqckhb (tptsxqckh + OWNRT_DRAFT_CHUNK_BATCH=1), tptsxqckhc (tptsxqckh + OWNRT_HC_KERNELS=1) and
 tptsxqckhcb (tptsxqckhc + OWNRT_DRAFT_CHUNK_BATCH=1).
-Copy for research/tp/prefill-tp-overhead-2026-10-30: adds tptsxqckhcbx (tptsxqckhcb + OWNRT_PREFILL_EXPERT_PARITY=1).
+Copy for research/tp/prefill-tp-overhead-2026-10-30: adds tptsxqckhcbx (tptsxqckhcb + OWNRT_PREFILL_EXPERT_PARITY=1) and
+tptsxqckhcbv (tptsxqckhcb + OWNRT_PREFILL_CONV_ROWS=1).
 Copy for research/tp/prefill-speed-2026-10-29: adds tptsxqcf, tptsxqc plus the four opt-in prefill changes on both TP ranks
 (OWNRT_PREFILL_LOOKUP_BATCH=1, OWNRT_PREFILL_MOE_NATIVE=1, OWNRT_PREFILL_XZERO_ONCE=1, OWNRT_DRAFT_CHUNK_REPLAY=1), and
 tptsxqck, tptsxqcf plus OWNRT_DRAFT_CHUNK_KV_ONLY=1 (head-off prompt rows issue only the draft's KV-append sites)."""
@@ -118,6 +119,10 @@ ARMS = {
                      OWNRT_SNAPSHOT_NOWAIT='1', OWNRT_DRAFT_GEMV_SPLIT='1', OWNRT_ROLLBACK_NOWAIT='1', OWNRT_TP_QSA_SPLIT='1',
                      OWNRT_TP_CARD_CONTEXT='1', OWNRT_TP_PERSISTENT_THREAD='1', **TP),
 }
+# prefill-tp-overhead (2026-10-31): tptsxqckhcbv = tptsxqckhcb + the row-parallel batched conv (OWNRT_PREFILL_CONV_ROWS=1, build r4).
+ARMS['tptsxqckhcbv'] = dict(ARMS['tptsxqckhcb'], OWNRT_PREFILL_CONV_ROWS='1')
+# tptsxqckhcbg = tptsxqckhcb + the GDN state rows in registers across batched rows (OWNRT_PREFILL_GDN_REGS=1, build r5).
+ARMS['tptsxqckhcbg'] = dict(ARMS['tptsxqckhcb'], OWNRT_PREFILL_GDN_REGS='1')
 def env(arm):
     return {**COMMON, **ARMS[arm]}
 if __name__ == '__main__':
