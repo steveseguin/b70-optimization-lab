@@ -75,13 +75,120 @@ size_t prefill_row_bytes(int c,const std::string& name) const {
   if(a.tp_replicate)if(auto h=head_split_layout.find(name);h!=head_split_layout.end()){size_t n=0;for(const auto& r:h->second[size_t(c)])n+=r[2];require(n>0&&n<=s.n,"TP compact row extent: "+name);return n*flash::scalar_bytes(s.type);}
   return s.n*flash::scalar_bytes(s.type);
 }
+// OWNRT_PREFILL_SHEXP_SPLIT=1|full|gateup|down (2026-10-31, research/tp/prefill-shexp-split-2026-10-31; TP batched prefill
+// only, default off; decode is unchanged): the replicated shared expert of every layer is split across the card pair
+// in batched prefill. The plan's replicated sites (both cards: shexpgate, shexpup, shexpact, shexpdown) stay what decode
+// runs; prefill_allocate replaces them in prefill_sites by split sites owned here (never in p.launches, so no decode
+// structure sees them):
+// - gateup: card c computes the intermediate rows [c*I/2, (c+1)*I/2) of gate and up into shexpgate#tp / shexpup#tp, the
+//   activation over those rows into shexpact#tp, then one strided direct exchange (tp_xgather, rows of I/2 every I)
+//   assembles shexpact on both cards; the down projection runs replicated from it;
+// - down: gate, up and the activation run replicated; card c computes the output rows [c*H/2, (c+1)*H/2) of down into
+//   shexpdown#tp, then one exchange assembles shexpdown on both cards before the unchanged moe_combine;
+// - full (= 1): both, two exchanges per layer.
+// Whole rows only, never a split along K, so every output element keeps its kernel and single-row arithmetic: a split GEMV
+// is the replicated site's own dispatch (gsq_linear_matrix, or the dense block kernel with its TP row count) at half the
+// rows, reading rows [row0, row0+rows) of the WHOLE replicated weight (no extra memory) through a row view on the weight
+// allocation for that launch only (Device::row_views: the bound weight pointer moves by row0 x row bytes on the host;
+// kernel and arguments unchanged). The activation is elementwise. The new exchanges take flag slots after every decode
+// exchange slot (prefill slot = 128 + slot). The half buffers are planned by the TP transform (rank.hpp).
+static std::string prefill_shexp_split_mode(){static const std::string mode=[]{const char* v=std::getenv("OWNRT_PREFILL_SHEXP_SPLIT");std::string s=v?v:"";
+  if(s.empty()||s=="0")return std::string();if(s=="1")s="full";
+  if(s!="full"&&s!="gateup"&&s!="down")throw std::invalid_argument("OWNRT_PREFILL_SHEXP_SPLIT must be 0, 1 (= full), gateup or down");return s;}();return mode;}
+struct PrefillShexp {const flash::Launch* site=nullptr;size_t row0=0,rows=0,full=0;}; // site: the replicated plan site
+std::vector<std::unique_ptr<flash::Launch>> prefill_shexp_launches; // the split sites (stable addresses for prefill_sites)
+std::unordered_map<const flash::Launch*,PrefillShexp> prefill_shexp; // split GEMV / activation site -> its replicated site
+std::vector<const flash::Launch*> prefill_shexp_sites(const std::vector<const flash::Launch*>& in) {
+  const std::string mode=prefill_shexp_split_mode();const bool gateup=mode!="down",down=mode!="gateup";
+  require(a.tp_replicate&&a.cards==2&&a.f32_activations&&a.gsq_packed&&!a.mini&&prefill_shexp_launches.empty(),"OWNRT_PREFILL_SHEXP_SPLIT: --tp-replicate, F32 exact mode");
+  uint32_t slot=0;for(const auto& l:p.launches)if((l.op=="tp_xgather"||l.op=="tp_xheads"||l.op=="tp_xslot")&&l.shape.size()>=2)slot=std::max(slot,uint32_t(l.shape[1])+1u);
+  require(slot>0,"OWNRT_PREFILL_SHEXP_SPLIT: OWNRT_TP_EXCHANGE=direct");
+  const uint32_t first_slot=slot;
+  auto make=[&](const flash::Launch& from)->flash::Launch&{prefill_shexp_launches.push_back(std::make_unique<flash::Launch>(from));return *prefill_shexp_launches.back();};
+  auto planned=[&](const std::string& name){for(int c=0;c<2;++c)require(buffers[size_t(c)].count(name)>0,"OWNRT_PREFILL_SHEXP_SPLIT: half buffer not planned (rank.hpp): "+name);};
+  std::vector<const flash::Launch*> out;out.reserve(in.size()+64);int layers=0;
+  for(size_t i=0;i<in.size();++i) {
+    const auto& l=*in[i];
+    if(!(l.card==0&&l.op=="gemv"&&ends(l.label,".shexpgate"))){out.push_back(in[i]);continue;}
+    const std::string prefix=l.label.substr(0,l.label.size()-9); // "blk.N."
+    static const char* cls[4]={"shexpgate","shexpup","shexpact","shexpdown"};
+    require(i+8<=in.size(),"OWNRT_PREFILL_SHEXP_SPLIT: shared-expert sites of "+prefix);
+    const flash::Launch* s[4][2];
+    for(int k=0;k<4;++k)for(int c=0;c<2;++c){s[k][c]=in[i+size_t(2*k+c)];require(s[k][c]->card==c&&s[k][c]->label==prefix+cls[k],"OWNRT_PREFILL_SHEXP_SPLIT: shared-expert site order at "+prefix);}
+    const auto& g=*s[0][0];const auto& u=*s[1][0];const auto& act=*s[2][0];const auto& dn=*s[3][0];
+    require(g.op=="gemv"&&u.op=="gemv"&&act.op=="silu_product"&&dn.op=="gemv"&&!act.slots,"OWNRT_PREFILL_SHEXP_SPLIT: shared-expert ops at "+prefix);
+    require(g.shape.size()==3&&u.shape==g.shape&&g.shape[0]==1&&g.shape[1]>0&&g.shape[1]%2==0&&dn.shape.size()==3&&dn.shape[0]==1&&dn.shape[1]>0&&dn.shape[1]%2==0&&dn.shape[2]==g.shape[1],"OWNRT_PREFILL_SHEXP_SPLIT: shared-expert geometry at "+prefix);
+    for(int k=0;k<4;++k)for(int c=0;c<2;++c)require(!s[k][c]->row_count&&s[k][c]->row_runs.empty()&&s[k][c]->outputs.size()==1&&s[k][c]->inputs==s[k][0]->inputs&&s[k][c]->outputs==s[k][0]->outputs&&s[k][c]->weights==s[k][0]->weights,"OWNRT_PREFILL_SHEXP_SPLIT: replicated sites at "+prefix);
+    require(g.inputs.at(0)==u.inputs.at(0)&&act.inputs.size()>=2&&act.inputs[0]==g.outputs[0]&&act.inputs[1]==u.outputs[0]&&dn.inputs.at(0)==act.outputs[0],"OWNRT_PREFILL_SHEXP_SPLIT: shared-expert wiring at "+prefix);
+    require(prefill_native(*s[2][0])&&prefill_native(*s[2][1]),"OWNRT_PREFILL_SHEXP_SPLIT: native batched activation at "+prefix);
+    const size_t I=size_t(g.shape[1]),H=size_t(dn.shape[1]);
+    auto linear=[&](const flash::Launch& o,int c,size_t full)->const flash::Launch*{
+      auto& t=make(o);const size_t half=full/2;planned(o.outputs[0]+"#tp");t.outputs[0]+="#tp";t.row_begin=int(size_t(c)*half);t.row_count=int(half);
+      prefill_shexp[&t]={&o,size_t(c)*half,half,full};return &t;};
+    auto exchange=[&](const std::string& y,size_t R,int c)->const flash::Launch*{
+      flash::Launch x;x.op="tp_xgather";x.label=y+".tp_xgather";x.card=c;x.inputs={y+"#tp"};x.outputs={y};x.shape={int(R),int(slot)};x.parameter=int(R/2);return &make(x);};
+    if(gateup){
+      for(int k=0;k<2;++k)for(int c=0;c<2;++c)out.push_back(linear(*s[k][c],c,I));
+      planned(act.outputs[0]+"#tp");
+      for(int c=0;c<2;++c){auto& t=make(*s[2][c]);t.inputs[0]+="#tp";t.inputs[1]+="#tp";t.outputs[0]+="#tp";prefill_shexp[&t]={s[2][c],0,0,0};out.push_back(&t);}
+      for(int c=0;c<2;++c)out.push_back(exchange(act.outputs[0],I,c));
+      ++slot;
+    } else for(int k=0;k<3;++k)for(int c=0;c<2;++c)out.push_back(s[k][c]);
+    if(down){
+      for(int c=0;c<2;++c)out.push_back(linear(*s[3][c],c,H));
+      for(int c=0;c<2;++c)out.push_back(exchange(dn.outputs[0],H,c));
+      ++slot;
+    } else for(int c=0;c<2;++c)out.push_back(s[3][c]);
+    i+=7;++layers;
+  }
+  require(layers>0,"OWNRT_PREFILL_SHEXP_SPLIT: no shared-expert layer among the prefill sites");
+  require(prefill_exchange_slot_base+slot<=ownrt::exchange_layout::slots,"OWNRT_PREFILL_SHEXP_SPLIT: too many prefill exchange slots");
+  save(a.output/"prefill-shexp-split.json","{\"schema\":\"ownrt.prefill-shexp-split.v1\",\"mode\":"+ownrt::quote(mode)+",\"layers\":"+std::to_string(layers)+
+       ",\"exchanges_per_chunk\":"+std::to_string(slot-first_slot)+",\"first_prefill_slot\":"+std::to_string(prefill_exchange_slot_base+first_slot)+
+       ",\"end_prefill_slot\":"+std::to_string(prefill_exchange_slot_base+slot)+",\"sites_before\":"+std::to_string(in.size())+",\"sites_after\":"+std::to_string(out.size())+"}");
+  return out;
+}
+// A split shared-expert GEMV: the replicated site's own dispatch at half the rows from the whole weight (see above).
+void prefill_shexp_linear(const flash::Launch& l,const PrefillShexp& s,int M) {
+  const int c=l.card;const flash::Launch& o=*s.site;auto& d=dev(c);
+  auto it=matrices.find(&o);if(it==matrices.end())it=matrices.emplace(&o,std::vector<Matrix>{matrix(o)}).first;
+  Matrix m=it->second.at(0);
+  require(o.op=="gemv"&&o.card==c&&!o.row_count&&m.count==1&&!m.routes&&!m.status&&m.rows==s.full&&m.span==s.full&&s.rows*2==s.full&&(s.row0==0||s.row0==s.rows)&&
+          m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32&&!m.fp32&&d.view_row<0,"OWNRT_PREFILL_SHEXP_SPLIT: replicated F32 GEMV "+o.label);
+  require(prefill_row_bytes(c,l.inputs[0])*size_t(M)<=d.arena.row(prefill_shadow(c,l.inputs[0])).bytes&&prefill_row_bytes(c,l.outputs[0])==s.rows*4,"OWNRT_PREFILL_SHEXP_SPLIT: prefill extents "+l.label);
+  const auto& t=w.directory.at(o.weights.at(0));const auto& wrow=d.arena.row(m.w);
+  require(wrow.bytes==t.bytes&&t.shape.size()==2&&size_t(t.shape[0])==s.full&&size_t(t.shape[1])==m.columns&&t.bytes%s.full==0,"OWNRT_PREFILL_SHEXP_SPLIT: whole row-major weight "+o.weights.at(0));
+  const size_t rb=t.bytes/s.full;require((s.rows*rb)%256==0,"OWNRT_PREFILL_SHEXP_SPLIT: half-weight offset alignment "+o.weights.at(0));
+  m.x=prefill_shadow(c,l.inputs[0]);m.y=prefill_shadow(c,l.outputs[0]);m.tokens=unsigned(M);m.rows=m.span=s.rows;
+  // This launch only: the weight allocation is viewed at row block row0/rows of rows x rb bytes; nothing else is viewed.
+  std::unordered_map<Allocation,ownrt::Device::RowView> views{{m.w,{m.w,s.rows*rb,false}}};
+  std::swap(d.row_views,views);d.view_row=int(s.row0/s.rows);
+  auto restore=[&]{d.view_row=-1;std::swap(d.row_views,views);};
+  try {
+    if(dense_block_site(w,a,o)){const auto* b=denseblock::selected(o.label,o.weights.at(0));
+      require(b&&variant(o)==0&&size_t(b->rows)==s.full&&b->bytes==t.bytes,"OWNRT_PREFILL_SHEXP_SPLIT: dense block site "+o.label);
+      finish(c,denseblock::submit(d,m,o.label,o.weights.at(0),M>1?gsqn::InputMode::per_slot:gsqn::InputMode::shared,s.rows),true);}
+    else {require(!iq3_block_site(w,a,o)&&!dense_q6_site(w,a,o)&&!qkv_q6_site(w,a,o)&&!attention_q8_site(w,a,o)&&o.weights.at(0)!="output.weight","OWNRT_PREFILL_SHEXP_SPLIT: dispatch family of "+o.label);
+      gsq_linear_matrix(o,m);}
+  } catch(...){restore();throw;}
+  restore();
+}
+bool prefill_shexp_site(const flash::Launch& l,int P0,int M) {
+  if(prefill_shexp.empty())return false;
+  const auto it=prefill_shexp.find(&l);if(it==prefill_shexp.end())return false;
+  if(l.op=="silu_product")prefill_native_site(l,P0,M);else prefill_shexp_linear(l,it->second,M);
+  return true;
+}
 void prefill_allocate() {
   if(!a.prefill_rows)return;
   require((a.cards==1||(a.tp_replicate&&a.cards==2))&&resident,"batched prefill: one resident card per rank (or --tp-replicate)");
   const size_t M=size_t(a.prefill_rows);const int C=prefill_cards();
   std::array<std::map<std::string,size_t>,2> card_role_bytes;
-  for(const auto& l:p.launches) {
-    if(!prefill_runs(l))continue;
+  std::vector<const flash::Launch*> sites;
+  for(const auto& l:p.launches)if(prefill_runs(l))sites.push_back(&l);
+  if(!prefill_shexp_split_mode().empty())sites=prefill_shexp_sites(sites); // OWNRT_PREFILL_SHEXP_SPLIT (TP only)
+  for(const auto* site:sites) {
+    const auto& l=*site;
     require(l.card>=0&&l.card<C,"prefill site card");
     prefill_sites.push_back(&l);
     std::vector<std::string> names(l.inputs.begin(),l.inputs.end());names.insert(names.end(),l.outputs.begin(),l.outputs.end());
@@ -771,7 +878,8 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       const auto site_start=std::chrono::steady_clock::now();const double site_wait0=wait_ms;
       const char* trace_kind="replay";
       bool banked_native=false;
-      if(prefill_parity_site(*l,M))trace_kind="parity"; // OWNRT_PREFILL_EXPERT_PARITY
+      if(prefill_shexp_site(*l,P0,M))trace_kind="shexp"; // OWNRT_PREFILL_SHEXP_SPLIT: split shared-expert GEMV / activation
+      else if(prefill_parity_site(*l,M))trace_kind="parity"; // OWNRT_PREFILL_EXPERT_PARITY
       else if(l->op=="gemv"||l->op=="routed_gemv"){prefill_linear(*l,M);trace_kind="linear";}
       else if(l->op=="tp_xgather"||l->op=="tp_xheads"){prefill_exchange(*l,M);trace_kind="exchange";}
       else if(l->op=="tp_route_compact"){prefill_route_compact(*l,M);trace_kind="native";}
@@ -817,7 +925,7 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       // so the first site that sets it is named (with the TP exchange words). Serializes the chunk; no arithmetic change.
       static const bool error_trace=[]{const char* e=std::getenv("OWNRT_PREFILL_ERROR_TRACE");return e&&e[0]=='1';}();
       if(error_trace&&prefill_exchange_open<0){drain();for(int c=0;c<prefill_cards();++c)if(integer(c,"error")){
-        std::ostringstream o;o<<"prefill error trace: card "<<c<<" error after site "<<l->label<<" ("<<l->op<<", card "<<l->card<<", index "<<size_t(l-p.launches.data())<<") at P0 "<<P0<<" M "<<M;
+        std::ostringstream o;o<<"prefill error trace: card "<<c<<" error after site "<<l->label<<" ("<<l->op<<", card "<<l->card<<", index "<<(l>=p.launches.data()&&l<p.launches.data()+p.launches.size()?std::to_string(size_t(l-p.launches.data())):std::string("split"))<<") at P0 "<<P0<<" M "<<M;
         if(xctl.size()==2)for(int k=0;k<2;++k){auto raw=readback(k,xctl[size_t(k)],ownrt::exchange_layout::header*4);std::vector<uint32_t> w(ownrt::exchange_layout::header);std::memcpy(w.data(),raw.data(),raw.size());
           o<<"; card "<<k<<" exchange abort "<<w[ownrt::exchange_layout::abort]<<" timeouts "<<w[ownrt::exchange_layout::timeouts]<<" waits "<<w[ownrt::exchange_layout::waits]<<" max_polls "<<w[ownrt::exchange_layout::max_spin];}
         save(a.output/"prefill-error-trace.txt",o.str());throw std::runtime_error(o.str());}}

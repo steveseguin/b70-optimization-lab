@@ -1,0 +1,57 @@
+=== phase s1 binary 37ee90a428cd start 2026-10-31T10:24:18-04:00 pid 3715795 affinity 0-3,16-19 nofile 1048576
+[klog s1-before-24h] since @1793370258: 9 lines, 0 xe/fault lines
+--- arm s-r1-b rank=1 mode=tpt steps=4 prompt=40 pattern=n extra=batched,rows=16,qs,cc,pair=0.3,ctx=131072,mn,xz,ep,rd,sr,hc,gx,eb=rank1,ss=1 MemAvailable=105289211904 shm_free=52234899456 at 2026-10-31T10:24:18-04:00
+{"tp": true, "steps": 4, "load_s": 22.0724308101926, "tokens": [2972, 242128, 8430, 2923], "rc": 0} median half ms 16.36
+arm s-r1-b rc=0 after 103 s
+[klog s1-after-s-r1-b] since @1793456658: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":679,"waits_that_polled":518,"max_polls":39642,"poll_sum":88023},{"abort":0,"timeouts":0,"waits":679,"waits_that_polled":211,"max_polls":94,"poll_sum":2070}]}
+{"schema":"ownrt.target-head-split.v1","applied":true,"vocabulary":248320,"card0_rows":124160,"card1_rows":124160}
+{"schema":"ownrt.qsa-split.v1","layers":7,"kv_buffers_halved":14,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":4,"jobs":4,"error":""}
+{"buffers":728,"differ":[],"passed":true}
+{"schema":"ownrt.prefill-shexp-split.v1","mode":"full","layers":25,"exchanges_per_chunk":50,"first_prefill_slot":204,"end_prefill_slot":254,"sites_before":2032,"sites_after":2132}
+card 0 owned_bytes 34136987244 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31422017604 weights 29223465856 buffers 2076830396
+tp card 1 planned_bytes 31422017604 weights 29223465856 buffers 2076830396
+--- arm s-r1-a rank=1 mode=tpt steps=4 prompt=40 pattern=n extra=batched,rows=16,qs,cc,pair=0.3,ctx=131072,mn,xz,ep,rd,sr,hc,gx,eb=rank1 MemAvailable=100805361664 shm_free=48253181952 at 2026-10-31T10:26:01-04:00
+{"tp": true, "steps": 4, "load_s": 22.13043695501983, "tokens": [2972, 242128, 8430, 2923], "rc": 0} median half ms 9.23
+arm s-r1-a rc=0 after 37 s
+[klog s1-after-s-r1-a] since @1793456761: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":529,"waits_that_polled":427,"max_polls":75434,"poll_sum":190348},{"abort":0,"timeouts":0,"waits":529,"waits_that_polled":216,"max_polls":58,"poll_sum":2101}]}
+{"schema":"ownrt.target-head-split.v1","applied":true,"vocabulary":248320,"card0_rows":124160,"card1_rows":124160}
+{"schema":"ownrt.qsa-split.v1","layers":7,"kv_buffers_halved":14,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":4,"jobs":4,"error":""}
+{"buffers":728,"differ":[],"passed":true}
+card 0 owned_bytes 34136987244 weights 30061362432 dispatch r5
+tp card 0 planned_bytes 31421793604 weights 29223465856 buffers 2076606396
+tp card 1 planned_bytes 31421793604 weights 29223465856 buffers 2076606396
+--- arm s-r0-b rank=0 mode=tps steps=4 prompt=40 pattern=hmcn extra=rows=16,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko,ep,rd,sr,lt=4,st,gr,rc,hc,db,gx,lp,ss=1 MemAvailable=96957730816 shm_free=44294234112 at 2026-10-31T10:26:38-04:00
+{"steps": 4, "load_s": 117.989114764845, "prompt_ms": 9550.626870943233, "draft_replay_ms": 2983.62882505171, "rc": 0} median half ms 11.962 draft ms 1.465
+arm s-r0-b rc=0 after 143 s
+[klog s1-after-s-r0-b] since @1793456798: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":690,"waits_that_polled":596,"max_polls":58586,"poll_sum":124214},{"abort":0,"timeouts":0,"waits":690,"waits_that_polled":149,"max_polls":151,"poll_sum":1165}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":3,"max_polls":30,"poll_sum":54},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":5,"max_polls":4168,"poll_sum":15188}],"card1_error":0}
+{"runs":4,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":3,"max_polls":60,"poll_sum":143},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":5,"max_polls":4487,"poll_sum":8306}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"schema":"ownrt.qsa-split.v1","layers":5,"kv_buffers_halved":10,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":6,"jobs":6,"error":""}
+{"buffers":670,"differ":[],"passed":true}
+{"schema":"ownrt.prefill-shexp-split.v1","mode":"full","layers":23,"exchanges_per_chunk":46,"first_prefill_slot":197,"end_prefill_slot":243,"sites_before":1888,"sites_after":1980}
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089297164 weights 24129366912 buffers 1838208900
+tp card 1 planned_bytes 26089297164 weights 24129366912 buffers 1838208900
+--- arm s-r0-a rank=0 mode=tps steps=4 prompt=40 pattern=hmcn extra=rows=16,nw,gs,rb,qs,cc,ctx=131072,lb,dc,mn,xz,ko,ep,rd,sr,lt=4,st,gr,rc,hc,db,gx,lp MemAvailable=93103693824 shm_free=40735485952 at 2026-10-31T10:29:01-04:00
+{"steps": 4, "load_s": 81.93894527293742, "prompt_ms": 289.56666495651007, "draft_replay_ms": 7.456742925569415, "rc": 0} median half ms 8.248 draft ms 1.092
+arm s-r0-a rc=0 after 97 s
+[klog s1-after-s-r0-a] since @1793456941: 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":552,"waits_that_polled":432,"max_polls":62684,"poll_sum":130836},{"abort":0,"timeouts":0,"waits":552,"waits_that_polled":213,"max_polls":37,"poll_sum":1637}]}
+{"runs":4,"card0_rows":45824,"card1_rows":45568,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":29,"poll_sum":90},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":7715,"poll_sum":20286}],"card1_error":0}
+{"runs":4,"sites":1,"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":4,"max_polls":66,"poll_sum":169},{"abort":0,"timeouts":0,"waits":8,"waits_that_polled":5,"max_polls":11957,"poll_sum":15480}],"card1_error":0}
+{"schema":"ownrt.draft-gemv-split.v1","cap_polls":4194304,"sites":[{"label":"blk.0.qsa.qgate","card0_rows":6144,"card1_rows":6144,"columns":2560,"card1_weight_bytes":31457280,"exchange_slots":[0,1]}]}
+{"schema":"ownrt.qsa-split.v1","layers":5,"kv_buffers_halved":10,"query_heads_per_card":12,"kv_heads_per_card":1}
+{"schema":"ownrt.tp-submit-thread.v1","persistent":false,"threads_created":6,"jobs":6,"error":""}
+{"buffers":670,"differ":[],"passed":true}
+card 0 owned_bytes 27953715780 weights 24653427968 dispatch r5
+tp card 0 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+tp card 1 planned_bytes 26089091084 weights 24129366912 buffers 1838002820
+=== phase s1 done 2026-10-31T10:30:38-04:00

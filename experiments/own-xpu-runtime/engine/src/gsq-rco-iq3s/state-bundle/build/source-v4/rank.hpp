@@ -955,6 +955,25 @@ static int run_rank(const Options& a) {
      }
     }
    }
+   // OWNRT_PREFILL_SHEXP_SPLIT=1|full|gateup|down (2026-10-31, research/tp/prefill-shexp-split-2026-10-31; default off;
+   // needs OWNRT_TP_EXCHANGE=direct and F32): batched prefill splits the replicated shared expert across the card pair
+   // (Engine::prefill_shexp_sites, prefill_engine.hpp). Decode keeps the replicated launches above unchanged; here only
+   // the per-card half buffers the split prefill sites name are planned ('#tp': never written by decode, skipped by the
+   // dump and the card compare). gate/up/act: I/2 intermediate rows each; down: H/2 output rows.
+   if(const std::string shexp=Engine::prefill_shexp_split_mode();!shexp.empty()){
+    require(a.tp_replicate&&tp_shape_probe<0&&direct&&!exchange_only&&a.f32_activations&&!a.mini&&a.gsq_packed,"OWNRT_PREFILL_SHEXP_SPLIT: --tp-replicate, OWNRT_TP_EXCHANGE=direct, F32 exact mode");
+    const bool gateup=shexp!="down",down=shexp!="gateup";int layers=0;
+    for(const auto& l:p.launches){ // the one-card plan (the TP launches are in `both`)
+     if(!l.label.starts_with("blk.")||l.outputs.size()!=1)continue;const auto dot=l.label.find('.',4);if(dot==std::string::npos)continue;
+     const std::string cls=l.label.substr(dot+1);
+     if(cls=="shexpgate"||cls=="shexpup"||cls=="shexpdown"){
+      require(l.op=="gemv"&&l.shape.size()==3&&l.shape[0]==1&&l.shape[1]>0&&l.shape[1]%2==0&&!l.row_count&&l.row_runs.empty(),"OWNRT_PREFILL_SHEXP_SPLIT: one-row replicated GEMV with an even row count: "+l.label);
+      if(cls=="shexpdown"?down:gateup)add_buffer(l.outputs[0],l.outputs[0]+"#tp",{l.shape[1]/2});
+      if(cls=="shexpgate"){++layers;if(gateup)add_buffer(l.label.substr(0,dot+1)+"shexpact",l.label.substr(0,dot+1)+"shexpact#tp",{l.shape[1]/2});}
+     }
+    }
+    require(layers>0,"OWNRT_PREFILL_SHEXP_SPLIT: no shared-expert layer in this rank's plan");
+   }
    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
    // A TP rank without the target head (rank 0) leaves the flag inert and says so.
    if(qsa_split)save(a.output/"qsa-split.json","{\"schema\":\"ownrt.qsa-split.v1\",\"layers\":"+std::to_string(qsa_layers)+",\"kv_buffers_halved\":"+std::to_string(qsa_kv_halved.size())+",\"query_heads_per_card\":"+std::to_string(QHc)+",\"kv_heads_per_card\":"+std::to_string(KVc)+"}");
