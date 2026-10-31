@@ -35,6 +35,18 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 30, about 23:30 — measured on a lab build: 94.04 / 94.31 tok/s on four cards, exact; long prompt 215.7 s.**
+- HC GEMV row split across each card pair (`OWNRT_TP_HC_SPLIT=low,gate,final,prefill`, build `40388fc92c43` =
+  979462f7c + the fixed-cost-2 patch + `engine-hc-split.patch`): fresh servers A/B/A/B at 65536 on the same binary,
+  92.77 / 92.53 → 94.04 / 94.31 (+1.65%), 12/12 prompts faster, outputs = B19, startup gate 13/13. At 131072 the
+  121,854-token prompt reads in 215.7 s (221.3 on the same binary without it), outputs equal the 3+1 reference.
+- Exchanges per half rose 76 → 178; each costs about 4.5 µs, which ate 0.45 of the 0.6 ms saved. Next decode lever:
+  exchange stores in the producing kernel's tail.
+- A fresh server's first decode step JIT-compiles for 53–61 s, close to the ranks' default 60 s `--wait-seconds`
+  (one 131072 server stopped on it; lab servers now pass 300 s). Ahead-of-time kernels would remove this.
+- Still waiting on the owner: both patches are in the repo, not in `engine/src`
+  ([HC split](experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/RESULT.md)).
+
 **October 30, about 19:30 — measured on a lab build: 92.51 / 92.75 tok/s on four cards, exact (87.77 / 87.64 without).**
 - Second round of exact fixed-cost cuts (`OWNRT_DRAFT_FAST=1 OWNRT_TARGET_FAST=1`): faster draft norms/merges,
   kernels reading host-resolved pointers instead of runtime-indexed arrays, a GDN state-slot fix, compile-time ops for
