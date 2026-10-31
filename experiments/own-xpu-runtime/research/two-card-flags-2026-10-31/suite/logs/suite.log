@@ -1,0 +1,40 @@
+=== chain start 2026-10-31T01:01:54-04:00: twoA-r1:65536 twoB-r1:65536 twoA-r2:65536 twoB-r2:65536
+Running as unit: sc117-tp-svc-tc-locks-20261031.service; invocation ID: f4228145116641a4a18b80eab1d0a97f
+lock holder: both card locks held=1 at 2026-10-31T01:15:50-04:00
+--- server twoA-r1 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-31T01:15:50-04:00 MemAvailable 101819961344
+Running as unit: sc117-tp-svc-tc-run-twoA-r1-c65536-20261031.service; invocation ID: 73f05721b5d443b3a6842599d40b7b04
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 11min 23.215s
+CPU time consumed: 3.667s
+Memory peak: 512.0K
+Memory swap peak: 0B
+server twoA-r1-c65536: done twoA-r1-c65536 at 2026-10-31T01:27:13-04:00
+--- server twoB-r1 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-31T01:27:13-04:00 MemAvailable 105772765184
+Running as unit: sc117-tp-svc-tc-run-twoB-r1-c65536-20261031.service; invocation ID: c8bb6fe522344c1789af3ca25d55ef1e
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 11min 41.604s
+CPU time consumed: 3.743s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server twoB-r1-c65536: done twoB-r1-c65536 at 2026-10-31T01:38:54-04:00
+--- server twoA-r2 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-31T01:38:54-04:00 MemAvailable 105642430464
+Running as unit: sc117-tp-svc-tc-run-twoA-r2-c65536-20261031.service; invocation ID: ece26deeac774183b387221f44e1bbdc
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 12min 23.299s
+CPU time consumed: 3.856s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server twoA-r2-c65536: done twoA-r2-c65536 at 2026-10-31T01:51:18-04:00
+--- server twoB-r2 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-31T01:51:18-04:00 MemAvailable 105522524160
+Running as unit: sc117-tp-svc-tc-run-twoB-r2-c65536-20261031.service; invocation ID: c84aef231f8a4e8eba883f5b4adf62a5
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 12min 1.771s
+CPU time consumed: 3.837s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server twoB-r2-c65536: done twoB-r2-c65536 at 2026-10-31T02:03:20-04:00
+=== chain end 2026-10-31T02:03:20-04:00

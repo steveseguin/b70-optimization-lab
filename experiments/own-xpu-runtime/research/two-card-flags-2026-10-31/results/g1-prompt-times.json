@@ -1,0 +1,53 @@
+{
+ "note": "600-row prompts in 256-row chunks (prompt then decode then RESET then a second 600-row prompt); one card 0000:47:00.0, context 65536, binary r1 40388fc92c43; rank 1 prompt_ms is the batched PREFILL wall; rank 0 prompt_ms = prefill_ms + draft_replay_ms",
+ "arms": {
+  "g1-r1-A-b": {
+   "first": {
+    "prompt_ms": 16041.30705888383,
+    "prefill_ms": null,
+    "draft_replay_ms": null
+   },
+   "second": {
+    "prompt_ms": 2313.7774509377778,
+    "prefill_ms": null,
+    "draft_replay_ms": null
+   }
+  },
+  "g1-r1-B-b": {
+   "first": {
+    "prompt_ms": 2309.507283149287,
+    "prefill_ms": null,
+    "draft_replay_ms": null
+   },
+   "second": {
+    "prompt_ms": 2251.583888893947,
+    "prefill_ms": null,
+    "draft_replay_ms": null
+   }
+  },
+  "g1-r0-A-b": {
+   "first": {
+    "prompt_ms": 2106.788673903793,
+    "prefill_ms": 1564.0207058750093,
+    "draft_replay_ms": 542.7679680287838
+   },
+   "second": {
+    "prompt_ms": 2045.1173500623554,
+    "prefill_ms": 1507.6573928818107,
+    "draft_replay_ms": 537.4599571805447
+   }
+  },
+  "g1-r0-B-b": {
+   "first": {
+    "prompt_ms": 1580.0862209871411,
+    "prefill_ms": 1450.9528120979667,
+    "draft_replay_ms": 129.13340888917446
+   },
+   "second": {
+    "prompt_ms": 1443.3087040670216,
+    "prefill_ms": 1410.8533330727369,
+    "draft_replay_ms": 32.45537099428475
+   }
+  }
+ }
+}
