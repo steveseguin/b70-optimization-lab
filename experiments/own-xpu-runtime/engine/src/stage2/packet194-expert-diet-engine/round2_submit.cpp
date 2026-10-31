@@ -32,6 +32,7 @@ template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* pre
  // Head geometry: ng::gdn_key_heads/gdn_value_heads (full model 16/48; a head-split card 8/24, compact rows).
  const int KH=ng::gdn_key_heads(s),VH=ng::gdn_value_heads(s),QKV=ng::gdn_qkv_width(s);const size_t P=gdn_prep_floats_for(s);
  int h=g/128,j=g%128,key=(s.flags&4)?h%KH:h/(VH/KH),state=g*128;
+ const bool regs=(s.flags&ng::gdn_regs_flag)!=0;float held[4]={0.f,0.f,0.f,0.f}; // OWNRT_PREFILL_GDN_REGS
  for(int r=0;r<s.tokens;++r){int qb=r*QKV+key*128,kb=qb+KH*128;float q[4],k[4],v[4],decay,beta,pred=0.f;
   if constexpr(Prepared){
    const float* prep=prepared+size_t(r)*P;
@@ -44,10 +45,14 @@ template<bool Prepared> inline void gdn_device(ng::Shape s,ng::Args a,float* pre
    decay=detmath::exp(av*sp);beta=ng::sigmoid(a.b(2,r*VH+h));
    for(int z=0;z<4;++z){q[z]=(q[z]/qn)/detmath::sqrt(float(128));k[z]=k[z]/kn;}
   }
-  for(int z=0;z<4;++z){v[z]=a.b(r?7:5,state+4*lane+z)*decay;pred=pred+v[z]*k[z];}
+  for(int z=0;z<4;++z){v[z]=(regs&&r?held[z]:a.b(r?7:5,state+4*lane+z))*decay;pred=pred+v[z]*k[z];}
   pred=lane_tree(sg,pred);float delta=(a.b(0,r*QKV+2*KH*128+h*128+j)-pred)*beta,y=0.f;
   for(int z=0;z<4;++z){v[z]=v[z]+delta*k[z];y=y+v[z]*q[z];}
   y=lane_tree(sg,y);if(lane==0)a.put(6,(r*VH+h)*128+j,y);
+  if(regs){ // ng::gdn_regs_flag: the next row reads the value the store/load round trip would give (Args::rnd)
+   for(int z=0;z<4;++z)held[z]=a.rnd(v[z]);
+   if(r==s.tokens-1)for(int z=0;z<4;++z)a.put(7,state+4*lane+z,v[z]);
+   continue;}
   for(int z=0;z<4;++z)a.put(7,state+4*lane+z,v[z]);
   // Next token reads the rounded state, including when input/output alias.
   sycl::group_barrier(sg,sycl::memory_scope::device);

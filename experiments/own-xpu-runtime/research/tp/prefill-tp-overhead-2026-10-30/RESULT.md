@@ -1,11 +1,18 @@
 # Four-card prefill overhead (2026-10-30/31): where the ~120 ms per chunk over a perfect split goes
 
-Status: **in progress.**
+Status: **done; lever 3 is committed to engine/src, default off.**
+
+**Result: four-card long prompt 222.53 → 219.36 / 219.29 s, exact** (`OWNRT_PREFILL_GDN_REGS=1`, set
+`tptsxqckhcbg`, build r6 `9885e8ad63fd`; fresh servers at 131072, both arms on r6).
+- Decode is unchanged: 84.35 → 84.23 / 84.50 tok/s after the long prompt; suite median 87.43 → 87.61 / 87.62.
+- Outputs equal the 3+1 262K reference, and the suite equals B19.
+
+How we got there:
 - Attribution is complete: M1/M4, a shape probe under batched prefill, and a drain trace.
-- Lever 1, expert-parity assignment, is exact but slower, so it is closed. Its loss is explained.
+- Lever 1, expert-parity assignment, is exact but slower, so it is closed. Its loss is explained by card imbalance.
 - Lever 2, a row-parallel batched conv, is closed: no gain, and a race when the history is updated in place.
-- **Lever 3, GDN state rows in registers across batched rows, is exact and a win**: −5.9 ms per chunk on rank 1,
-  −8.9 on rank 0, −11.8 on one card. The two-request gates and the A/B/B servers at 131072 are next.
+- Lever 3 keeps GDN state rows in registers across batched rows: exact; −4.6 / −8.3 ms per chunk on the harness.
+- A codegen lesson is recorded in DO-NOT-REPEAT: a default-off branch in a shared generic kernel cost 1.4% of decode.
 
 Lane: SC117 four-card TP (`tptsxqckhcb` on build `e6daa268a3a8`, commit 979462f7c, TTFT 222.5 s at 131072).
 - Rank 0 runs on 23:00.0+27:00.0 (layers 0-22, lookups, MTP draft). Rank 1 runs on 43:00.0+47:00.0 (layers 23-47, head).
@@ -145,7 +152,89 @@ Exactness:
 - Both 16-row smokes (8-row tail chunk) equal to the independent A references (ps-r1-dt, s2-r0-a).
 - 0 kernel-log faults.
 
-## Builds and patches (all from the private tree `/dev/shm/pto-engine-20261030`; engine/src stays at HEAD)
+### Servers at 131072 on r5, A/B/B (both arms on r5; [results/suite-r5/](results/suite-r5/))
+
+Every server passed its 13/13 startup gate. 15 kernel-log checks, 0 faults.
+
+| server | A `tptsxqckhcb` | B1 `tptsxqckhcbg` | B2 `tptsxqckhcbg` |
+| --- | ---: | ---: | ---: |
+| TTFT, 121,854-token prompt | 224.35 s | **221.51 s** | **221.33 s** |
+| decode after it (all 511) | 83.12 tok/s | 82.55 | 83.34 |
+| 512 outputs = 3+1 262K reference | yes | yes | yes |
+| MTP hits / guesses | 418 / 511 | 418 / 511 | 418 / 511 |
+| 3,490-token TTFT | 6.676 s | 6.586 | 6.587 |
+| 12-prompt suite median (B19 ids/sha/MTP equal) | 86.29 | 86.08 | 86.21 |
+| rank 1 busy per chunk | 470.2 ms | 464.3 | 463.9 |
+| rank 0 critical per chunk (prefill + draft) | 464.9 ms | 459.1 | 459.0 |
+
+**Codegen regression in r4/r5.** r5's default path is about 1.4% slower than the committed binary.
+
+| decode-half median, same harness (ms) | rank 1 | rank 0 |
+| --- | ---: | ---: |
+| e6daa268a3a8 | 9.31 | 8.42 |
+| r3 | 9.33 | 8.43 |
+| r4 | 9.46 | 8.53 |
+| r5 | 9.48 | 8.54 |
+
+- The default prefill chunk is about 3–4 ms slower too.
+- r4 added the conv-rows branch, which is never taken with the flag off, inside the generic `ng::group()`. Decode's
+  norm, mix and activation ops run that same kernel.
+- Lesson recorded in DO-NOT-REPEAT. Lever 3 was therefore rebuilt clean.
+
+### r6 `9885e8ad63fd`: HEAD + lever 3 only ([engine-gdn-regs.patch](engine-gdn-regs.patch); `adapter.cpp`, `kernels.hpp` flag and validate, `round2_submit.cpp`)
+
+- **Exactness (e1), all equal:**
+  - both 16-row smokes against the independent A references;
+  - 1100-row on/off on both ranks;
+  - r6's default state against r3 / e6daa268a3a8 (1079 + 1116 exports, 1029 + 71 draft);
+  - pattern m against g1;
+  - sp=64 on/off on both ranks, both requests, ones and inventories;
+  - one card on/off.
+- **Decode gate (e2, hard limit 0.3%; [decode_gate.py](decode_gate.py)).** r6 A against e6daa268a3a8 A, interleaved
+  ×2, all four cards held: rank 1 9.333 vs 9.328 ms (**+0.06%**), rank 0 8.419 vs 8.413 ms (**+0.07%**). Passed.
+- **Prefill per chunk (e2, 1100-row harness), r6 A → B:** rank 1 462.1 → 457.4 (**−4.6**), rank 0 412.6 → 404.2
+  (**−8.3**). e6daa268a3a8's own A is 463.4 / 411.4. The e2 compares (e6 vs r6 A, r6 A vs B, e6 vs r6 B) are all
+  equal.
+
+### Servers at 131072 on r6, A/B/B (both arms on r6; [results/suite/](results/suite/), [results/suite/summary-r6.json](results/suite/summary-r6.json))
+
+Every server passed its startup gate. 20 kernel-log checks, 0 faults. Long-request timelines:
+[results/long-trace-tptsxqckhcb-r2.json](results/long-trace-tptsxqckhcb-r2.json),
+[-r3](results/long-trace-tptsxqckhcbg-r3.json), [-r4](results/long-trace-tptsxqckhcbg-r4.json).
+
+| server | A r2 `tptsxqckhcb` | B r3 `tptsxqckhcbg` | B r4 `tptsxqckhcbg` |
+| --- | ---: | ---: | ---: |
+| **TTFT, 121,854-token prompt** | **222.53 s** | **219.36 s** | **219.29 s** |
+| decode after it (all 511) | 84.35 tok/s | 84.23 | 84.50 |
+| 512 outputs = 3+1 262K reference (`bf1f0867d1bd`) | yes | yes | yes |
+| MTP on the long request (hits / guesses) | 418 / 511 | 418 / 511 | 418 / 511 |
+| 3,490-token prompt TTFT | 6.611 s | 6.509 | 6.501 |
+| 12-prompt suite median (ids, sha, MTP = B19) | 87.43 tok/s (yes) | 87.61 (yes) | 87.62 (yes) |
+| rank 0 prefill per chunk (median) | 446.2 ms | 440.0 | 440.3 |
+| rank 0 draft chunk (median) | 13.8 ms | 13.7 | 13.7 |
+| rank 0 critical per chunk | 459.9 ms | 453.7 | 453.8 |
+| rank 1 busy per chunk / idle in the prompt | 466.4 ms / 0.03 s | 459.8 / 0.03 | 459.6 / 0.03 |
+
+- A on r6 reproduces the committed lane: 222.50 s, 84.4–84.6 tok/s, suite 87.5. The default path is clean.
+- B saves 6.6 ms per chunk on rank 1, which sets the pace, and 6.2 ms on rank 0. Rank 0 now trails rank 1 by only about
+  6 ms per chunk, so a further cut on rank 1 alone is worth at most about 3 s.
+- Work directories are archived (sha256) at `.../2026-10-31/prefill-tp-overhead-suite-r6`. r5's servers are at
+  `.../2026-10-31/prefill-tp-overhead-suite-r5`.
+
+## Next levers (sized from this attribution; not built)
+
+| lever | rank 1 | rank 0 | note |
+| --- | ---: | ---: | --- |
+| HC low/gate row split | ≤ 34 (about 12 measured: TTFT −5.6 s) | ≤ 31 | the HC-split agent's patch; the largest |
+| receiver-ready handshake inside the exchange kernel instead of the per-pair host drain | ≤ ~12 | ≤ ~4 | 75 / 69 drains per chunk. Turnaround (~2.3 / 2.0) is measured; the ~10 ms rank-1 remainder (about 0.13 ms per pair) is not. Measure first with a timing-only arm that skips the drains |
+| balanced expert ownership (whole experts per card, balanced per layer and chunk; parity generalised) | ~12 | ~0 | parity minus its imbalance saved 12 ms of card work on rank 1 and cost 4.8 on rank 0 |
+| copy-engine overlap of the expert exchange with the shared expert | ≤ 13–14 | ≤ 13 | risky: the BCS has a fault history on these cards |
+| rank-1 input upload / output readback overlapped with the device | ~3–5 | — | the cards idle 5.9 ms per chunk in the chunk's host phases |
+
+Probe sizes for small kernels are upper bounds (lever 2). Each lever should be timed on the 1100-row harness, A/B/A/B,
+before any build is promoted.
+
+## Builds and patches (r1–r5 from the private tree `/dev/shm/pto-engine-20261030`, r6 from `/dev/shm/pto-engine-20261031-gdn`; only lever 3 is committed to engine/src)
 
 - r1 `09328de33c90`: parity. r2 `62119fe983ad`: parity and the tile sweep list. Both are archived.
 - r3 `d6835fcb2967`, the probe build, adds three diagnostics, all default off:
@@ -155,6 +244,13 @@ Exactness:
   Patch: [engine-pto-diagnostics.patch](engine-pto-diagnostics.patch). The default-path state equals e6daa268a3a8's
   (1079 / 1029 buffers).
 - r4 `da02f3346fe9`: r3 plus lever 2 ([engine-pto-r4.patch](engine-pto-r4.patch)).
+- r6 `9885e8ad63fd`: engine/src HEAD plus lever 3 only, from the clean private tree `/dev/shm/pto-engine-20261031-gdn`.
+  Its receipt, `engine/receipts/9885e8ad63fd.json`, pins that tree. **This is the build to promote.**
+  - The committed engine/src files (`adapter.cpp`, `kernels.hpp`, `round2_submit.cpp`) are byte-identical to the tree's.
+  - The binary reads its rope table from the tree, so a durable copy should be rebuilt from engine/src.
+  - [engine-gdn-regs-on-fc2-hcsplit.patch](engine-gdn-regs-on-fc2-hcsplit.patch) is the same change 3-way rebased onto
+    the fc2 + HC-split tree. It merges with fc2's `gdnr` StaticState read and applies to the AOT agent's copy of that
+    tree (`git apply --check`).
 - r5 `66524d88054d`: r4 plus lever 3 ([engine-pto-r5.patch](engine-pto-r5.patch)). Its receipt,
   `engine/receipts/66524d88054d.json`, pins the private tree. The r4 receipt is stale, since lever 3 edited the same
   files after r4 was built.
@@ -166,7 +262,7 @@ Exactness:
 - Analyzers: [analyze_class_times.py](analyze_class_times.py), [analyze_exchange_stats.py](analyze_exchange_stats.py),
   [analyze_probe.py](analyze_probe.py), [analyze_drain_trace.py](analyze_drain_trace.py).
 - Runs, raw (sha256-verified): `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/prefill-tp-overhead-runs-*`
-  (s1m1, s2, g1, d1, u1, u2, p1, p2, c1, q1). From c1 on, state bundles are dropped after
+  (s1m1, s2, g1, d1, u1, u2, p1, p2, c1, q1), and under `2026-10-31/` (e1, e2). From c1 on, state bundles are dropped after
   each arm; the compares use state.json hashes.
 - Builds: `/mnt/raid-models/ownrt-experiment-archives/2026-10-30/engine-builds/prefill-tp-overhead-20261030-r{1,2}`.
 - Kept evidence (state hashes, host / drain traces, class times): [evidence/](evidence/). Kernel-log checks:

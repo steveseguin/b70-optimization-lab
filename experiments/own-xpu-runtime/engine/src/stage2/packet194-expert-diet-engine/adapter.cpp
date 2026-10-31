@@ -754,6 +754,8 @@ Launch submit_parallel(ownrt::Device& d,const Spec& s,std::span<const ownrt::All
  case Op::hc_mix:shape.op=ng::mix;shape.width=s.site.shape[1];in(0,0);in(1,1);out(2,0);break;
  case Op::conv:shape.op=ng::conv;shape.width=s.site.shape[0];shape.extra=s.site.parameter;in(0,0);in(1,1);weight(2,0);out(3,0);out(4,1);break;
  case Op::gdn:shape.op=ng::gdn;shape.flags|=2|(s.packed_heads?4:0);
+  {static const bool gdn_regs=[]{const char* e=std::getenv("OWNRT_PREFILL_GDN_REGS");return e&&e[0]=='1';}(); // kernels.hpp gdn_regs_flag
+   if(gdn_regs&&s.tokens>1&&s.implementation==2)shape.flags|=ng::gdn_regs_flag;}
   // Head split (2026-10-28, --tp-replicate OWNRT_TP_GDN=heads): this card's key/value heads in compact rows. The model
   // geometry keeps extra=0 (16/48), so its Shape and argument bytes are unchanged.
   if(s.g.kh!=16||s.g.vh!=48){shape.extra=s.g.kh;shape.heads=s.g.vh;}

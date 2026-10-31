@@ -45,7 +45,7 @@ for n in data:
 for c, s in sorted(cfgs.items()):
     out['configurations'][c] = dict(servers=s, mean_of_medians=st.mean(out['servers'][n]['median'] for n in s),
                                     mean_request_wall_s_sum=st.mean(out['servers'][n]['request_wall_s_sum'] for n in s))
-for b, a in (('tptsxqcp-c65536', 'tptsxqc-c65536'),):
+for b, a in (('tptsxqcp-c65536', 'tptsxqc-c65536'), ('tptsxqckhcbg-c131072', 'tptsxqckhcb-c131072')):  # prefill-tp-overhead: GDN registers A/B
     if b in cfgs and a in cfgs:
         out['configurations'][f'{b} / {a}'] = out['configurations'][b]['mean_of_medians'] / out['configurations'][a]['mean_of_medians']
         for nb in cfgs[b]:

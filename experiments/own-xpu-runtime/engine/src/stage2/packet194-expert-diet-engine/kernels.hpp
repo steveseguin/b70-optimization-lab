@@ -55,6 +55,11 @@ inline int gdn_qkv_width(Shape s){return (2*gdn_key_heads(s)+gdn_value_heads(s))
 // q/gate/attention-output rows of heads*256, k/v rows and KV-cache rows of (heads/12)*256. Every head's arithmetic is
 // unchanged. The 4 index heads and the raw and pooled index keys are never split (the selection stays shared).
 constexpr int qsa_group_flag=256;
+// OWNRT_PREFILL_GDN_REGS=1 (2026-10-31, research/tp/prefill-tp-overhead-2026-10-30; default off; round2 GDN consumer only,
+// round2_submit.cpp gdn_device): over two or more token rows each subgroup keeps its state row in registers between
+// rows, rounded exactly as the store/load round trip rounds it (Args::rnd), and stores it after the last row only, without
+// the per-row device-scope barrier. Every row's arithmetic and output are unchanged; the decode (one row) never sets it.
+constexpr int gdn_regs_flag=1024;
 inline int qsa_query_heads(Shape s){return (s.flags&qsa_group_flag)?s.heads:24;}
 inline int qsa_kv_heads(Shape s){return qsa_query_heads(s)/12;}
 inline float sigmoid(float x){return 1.f / (1.f + detmath::exp(-x));}
@@ -87,7 +92,8 @@ inline int local_floats(Shape s){
 inline void validate(Shape s){
  if(s.op<conv||s.op>attention_value||s.tokens<1||s.tokens>256||s.width<1||s.width>10240||s.heads<1||s.heads>48||s.capacity<s.tokens||s.capacity>262144||s.budget<4||s.budget>2048||s.budget%4)throw std::invalid_argument("shape outside registered limits");
  if(s.extent<0||(s.extent&&(s.extent<s.tokens||s.extent>s.capacity)))throw std::invalid_argument("invalid launch extent");
- if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag|qsa_group_flag))throw std::invalid_argument("unknown shape flag");
+ if(s.flags&~(1|2|4|8|16|f32_activations_flag|qsaring::flag|qsa_group_flag|gdn_regs_flag))throw std::invalid_argument("unknown shape flag");
+ if((s.flags&gdn_regs_flag)&&(s.op!=gdn||s.tokens<2))throw std::invalid_argument("GDN registers flag: GDN over two or more token rows only");
  if((s.flags&qsa_group_flag)&&(!(s.op==prepare||s.op==pool||s.op==attention_score||s.op==attention_softmax||s.op==attention_value)||(s.heads!=12&&s.heads!=24)))throw std::invalid_argument("QSA KV-group geometry");
  if((s.flags&qsaring::flag)&&(s.op!=pool||s.capacity<=qsaring::rows))throw std::invalid_argument("QSA raw ring flag: pool with capacity above the ring only");
  if((s.flags&16)&&s.op!=conv&&s.op!=gdn)throw std::invalid_argument("F32 recurrent flag on non-recurrent op");
