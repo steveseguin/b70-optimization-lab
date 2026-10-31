@@ -1,0 +1,9 @@
+=== phase s1 binary /dev/shm/xtail-2026-10-31/build-r1/sc117-engine (3611caefc688) start 2026-10-30T23:34:46-04:00 pid 3133741 affinity 0-3,16-19 nofile 1048576
+[klog s1-before-24h] since @1793331286: rc=0 9 lines, 0 xe/fault lines
+--- arm s1-r1-xt rank=1 mode=full steps=8 prompt=16 pattern=h extra=ep,rd,hk=1,tf=1,hs=1,xt=1 MemAvailable=103650582528 shm_free=52818563072 at 2026-10-30T23:34:46-04:00
+{"tp": true, "steps": 8, "load_s": 36.067033560946584, "tokens": [100495, 1093, 517, 48370, 161657, 631, 16078, 419], "rc": 0} median half ms 11.78
+arm s1-r1-xt rc=0 after 92 s
+[klog s1-after-s1-r1-xt] since @1793417686: rc=0 0 lines, 0 xe/fault lines
+{"cap_polls":4194304,"cards":[{"abort":0,"timeouts":0,"waits":4224,"waits_that_polled":2877,"max_polls":27387,"poll_sum":228366},{"abort":0,"timeouts":0,"waits":4224,"waits_that_polled":2557,"max_polls":318,"poll_sum":122536}]}
+{"buffers":728,"differ":["blk.42.hc.f.act"],"passed":false}
+HALT: card 1 differs from card 0 in s1-r1-xt

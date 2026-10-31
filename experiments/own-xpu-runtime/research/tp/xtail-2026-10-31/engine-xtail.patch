@@ -1,0 +1,309 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+index 121c962..ee0751d 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+@@ -216,9 +216,80 @@ void gsq_prepare_fusion() {
+   }
+   save(a.output/"decode-fusion.json","{\"pairs\":"+std::to_string(gsq_partner.size())+",\"gate_mix\":"+std::to_string(gsq_mix_partner.size())+",\"expert_pairs\":"+std::to_string(expert_pair_of.size())+"}");
+ }
++// OWNRT_TP_XTAIL (2026-10-31, research/tp/xtail-2026-10-31; default off; decode only): an OWNRT_TP_HC_SPLIT GEMV whose
++// tp_xgather is the next launch on its card runs its exchange in its own launch (kopt xtail.hpp): its rows go straight
++// into this card's offset of the whole y and to the same rows of the peer's y, and the launch's last work-group runs the
++// direct-exchange protocol on the tp_xgather's flag slot; the tp_xgather then issues nothing in decode. Batched prefill
++// (prefill_linear / prefill_exchange) and row replays keep the split launch and its exchange unchanged. Tokens: hc
++// (1 = hc; peer stores spread over the work-groups) or hcl (peer stores by the counting-complete work-group). Not with OWNRT_TP_EXCHANGE_STATS (the stats exchange kernel records per-site words the tail does not).
++std::unordered_map<const flash::Launch*,const flash::Launch*> xtail_of; // producer -> its tp_xgather
++std::unordered_set<const flash::Launch*> xtail_follower;               // tp_xgather launches issued by their producer
++bool xtail_ready=false;
++static bool xtail_token(const char* t){
++  static const std::string v=[]{const char* e=std::getenv("OWNRT_TP_XTAIL");if(!e||!*e||std::string(e)=="0")return std::string();return std::string(e)=="1"?std::string("hc"):std::string(e);}();
++  size_t at=0;while(!v.empty()&&at<=v.size()){auto end=v.find(',',at);if(end==std::string::npos)end=v.size();if(v.substr(at,end-at)==t)return true;at=end+1;}
++  return false;
++}
++std::vector<iq3::kopt::Matrix> xtail_matrices(const flash::Launch& l,const flash::Launch& g) {
++  auto it=matrices.find(&l);if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
++  const auto& m=it->second.at(0);
++  std::vector<iq3::kopt::Matrix> ms{{m.type,m.w,m.x,buffers[l.card].at(g.outputs.at(0)).id,m.rows,m.columns,m.activation,m.output_type,0,m.row0}};
++  if(auto partner=gsq_partner.find(&l);partner!=gsq_partner.end()) { // the HC low's inject: whole rows, its own output
++    auto other=matrices.find(partner->second);
++    if(other==matrices.end())other=matrices.emplace(partner->second,std::vector<Matrix>{matrix(*partner->second)}).first;
++    const auto& n=other->second.at(0);
++    require(m.tokens==1&&n.tokens==1&&m.x==n.x&&m.type==n.type&&!n.row0,"exchange tail sibling matrices");
++    ms.push_back({n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0,0});
++  }
++  return ms;
++}
++void xtail_prepare() {
++  xtail_ready=true;
++#ifdef OWN_RT_HOST_ONLY
++  return; // the host build has no exchange-tail launch; every tp_xgather runs
++#endif
++  if(!gsq_fusion_ready)gsq_prepare_fusion();
++  static const bool stats=[]{const char* v=std::getenv("OWNRT_TP_EXCHANGE_STATS");return v&&*v;}();
++  if(!(xtail_token("hc")||xtail_token("hcl"))||!a.tp_replicate||xctl.size()!=2||a.mini||!a.f32_activations||stats)return;
++  size_t candidates=0;
++  for(size_t i=0;i<p.launches.size();++i) {
++    const auto& g=p.launches[i];
++    if(g.op!="tp_xgather"||g.inputs.size()!=1||g.outputs.size()!=1||g.inputs[0]==g.outputs[0]||g.shape.size()<2||!g.inputs[0].ends_with("#tp"))continue;
++    size_t j=i;bool found=false;while(j>0){--j;if(p.launches[j].card==g.card){found=true;break;}}
++    if(!found)continue;
++    const auto& l=p.launches[j];
++    const bool hc=(l.label.starts_with("blk.")&&(ends(l.label,".hc.a.low")||ends(l.label,".hc.f.low")||ends(l.label,".hc.a.gate")||ends(l.label,".hc.f.gate")))||l.label=="final.low"||l.label=="final.gate";
++    if(!hc||l.op!="gemv"||l.outputs.size()!=1||l.outputs[0]!=g.inputs[0]||!l.row_count||l.row_count!=g.parameter||size_t(g.shape[0])!=2*size_t(g.parameter)||!gsq_kopt_site(l))continue;
++    if(gsq_follower.count(&l)||gsq_mix_partner.count(&l)||expert_pair_of.count(&l))continue;
++    ++candidates;
++    const auto ms=xtail_matrices(l,g);
++    if(buffers[l.card].at(g.outputs[0]).n<size_t(g.shape[0])||!iq3::kopt::xtail_admits(dev(l.card),ms,32))continue;
++    xtail_of[&l]=&g;xtail_follower.insert(&g);
++  }
++  save(a.output/"xtail.json","{\"schema\":\"ownrt.tp-xtail.v1\",\"tokens\":\""+std::string(xtail_token("hcl")?"hcl":"hc")+"\",\"candidates\":"+std::to_string(candidates)+",\"admitted\":"+std::to_string(xtail_of.size())+"}");
++}
++bool xtail_follows(const flash::Launch& g){if(!xtail_ready)xtail_prepare();return xtail_follower.count(&g)!=0;}
++// The producer's launch with the exchange in its tail (the tp_xgather's slot, offsets and peer as main.cpp sets them).
++void gsq_xtail(const flash::Launch& l,const flash::Launch& g) {
++  const int c=l.card,peer=1-c;namespace L=ownrt::exchange_layout;
++  const uint32_t slot=uint32_t(g.shape.at(1));require(slot<L::slots&&xctl.size()==2,"exchange tail slot");
++  auto ptr=[&](int k,ownrt::Allocation id){return dev(k).arena.row(id).pointer;};
++  iq3::kopt::XTailSpec s;s.matrix=0;s.y_offset=size_t(c)*size_t(g.parameter);
++  s.remote=static_cast<float*>(ptr(peer,buffers[peer].at(g.outputs.at(0)).id))+s.y_offset;
++  s.ctl=static_cast<uint32_t*>(ptr(c,xctl[size_t(c)]));s.peer_flag=static_cast<uint32_t*>(ptr(peer,xctl[size_t(peer)]))+L::header+slot*L::stride+L::flag;
++  s.error=static_cast<uint32_t*>(ptr(c,buffers[c].at("error").id));s.record_at=L::header+slot*L::stride;s.cap=tp_exchange_cap;
++  static const bool last_copy=xtail_token("hcl");s.last_copy=last_copy?1u:0u;
++  finish(c,iq3::kopt::fused_gemv_xtail(dev(c),xtail_matrices(l,g),32,s));
++}
+ void gsq_linear(const flash::Launch& l) {
+   if(!gsq_fusion_ready)gsq_prepare_fusion();
+   if(gsq_follower.count(&l))return; // written by its fused sibling's launch
++#ifndef OWN_RT_HOST_ONLY
++  if(dev(l.card).view_row<0) { // OWNRT_TP_XTAIL (decode only)
++    if(!xtail_ready)xtail_prepare();
++    if(auto xt=xtail_of.find(&l);xt!=xtail_of.end()){gsq_xtail(l,*xt->second);return;}
++  }
++#endif
+   if(dev(l.card).view_row<0) { // OWNRT_TP_EXPERT_PAIR (decode only)
+     if(expert_pair_follower.count(&l))return; // the up GEMV: written by its gate's paired launch
+     if(auto pr=expert_pair_of.find(&l);pr!=expert_pair_of.end()){gsq_expert_pair(l,pr->second);return;}
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+index c27d52b..6666261 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -2178,6 +2178,8 @@ public:
+       require(y.type==flash::Scalar::f32&&bytes%(size_t(p.g.top)*4)==0,"TP expert gather: F32 slot rows");
+       auto remote=dev(c).peer_copy(dev(peer),buffers[c].at(l.inputs.at(0)).id,0,buffers[peer].at(l.outputs.at(0)).id,0,bytes);finish(c,{remote,remote,1},false);
+       finish(c,iq3::kopt::slot_select(dev(c),y.id,buffers[c].at(l.inputs.at(0)).id,buffers[c].at(l.inputs.at(1)).id,uint32_t(p.g.top),uint32_t(bytes/(size_t(p.g.top)*4)),uint32_t(l.parameter)));
++    } else if (l.op == "tp_xgather" && dev(c).view_row<0 && xtail_follows(l)) {
++      // OWNRT_TP_XTAIL (2026-10-31): this exchange runs in its producer's launch (generic_engine.hpp gsq_xtail).
+     } else if (l.op == "tp_xgather" || l.op == "tp_xslot" || l.op == "tp_xheads") {
+       // OWNRT_TP_EXCHANGE=direct (2026-10-28): one kernel per card replaces the copy gathers (Device::exchange). Bitwise.
+       //  tp_xgather: this card's half rows (y#tp) into y at c*half here and on the peer.
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+index d502ffc..060c826 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+@@ -14,6 +14,7 @@
+ #include "stage2/packet194-expert-diet-engine/expert_pair.hpp"
+ #include "stage1/packet3-prep/src/sycl_operation.hpp"
+ #include "stage2/packet6-kopt/dense_v2.hpp"
++#include "stage2/packet6-kopt/xtail.hpp"
+ #include "stage2/packet194-expert-diet-engine/target_fast.hpp"
+ #include "stage2/packet194-expert-diet-engine/hc_kernels.hpp"
+ #include <algorithm>
+@@ -144,6 +145,8 @@ struct Multiply:ownrt::SyclOperation {
+   // OWNRT_TP_HC_SPLIT (2026-10-30): weight row offset of each dense matrix (Matrix::row0), applied to the bound weight
+   // pointer on the host before any kernel is built. Never captured by a kernel.
+   std::array<size_t,4> row0{};
++  // OWNRT_TP_XTAIL (2026-10-31): the exchange tail (xtail.hpp). Host-side; the kernel captures a copy of its pointers.
++  bool xt=false;XTailSpec xts{};
+   template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     // Several independent matrices of one type share a launch (sibling fusion): work-groups are partitioned by each
+     // descriptor's first_group, and every row runs the unchanged single-matrix code with its own descriptor.
+@@ -156,6 +159,9 @@ struct Multiply:ownrt::SyclOperation {
+     for(unsigned j=0;j<count;++j)if(row0[j]){
+       if(descriptors[j].routed||descriptors[j].count!=1||descriptors[j].experts!=1)throw std::invalid_argument("kopt row offset: dense one-row matrices only");
+       pointers[descriptors[j].w]=static_cast<uint8_t*>(pointers[descriptors[j].w])+row0[j]*descriptors[j].rb;}
++    if(xt){if(xts.matrix>=count)throw std::invalid_argument("kopt exchange tail matrix");
++      pointers[descriptors[xts.matrix].y]=static_cast<float*>(pointers[descriptors[xts.matrix].y])+xts.y_offset;} // this card's rows of the whole y
++    if constexpr(!(T==Type::BF16&&SG==32))if(xt)throw std::invalid_argument("kopt exchange tail: BF16, 32 lanes only");
+     if constexpr(T==Type::BF16&&SG==32)if(dense_v2::enabled()){
+       // OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): dense BF16 rows, F32 in/out, R rows per subgroup with the
+       // same per-row lane chunks, order and tree (dense_v2.hpp). Anything else keeps this kernel.
+@@ -164,6 +170,21 @@ struct Multiply:ownrt::SyclOperation {
+         ok=ok&&!d.routed&&!d.diagnostic&&!d.row_major&&d.count==1&&d.experts==1&&d.span==d.rows&&d.activation==Type::F32&&d.output==Type::F32&&
+           d.rb==d.k*2&&d.rb%16==0&&d.rows<=UINT32_MAX&&d.k<=16384&&reinterpret_cast<uintptr_t>(pointers[d.w])%16==0&&reinterpret_cast<uintptr_t>(pointers[d.x])%16==0;
+         maxrows=std::max(maxrows,uint32_t(d.rows));maxk=std::max(maxk,uint32_t(d.k));}
++      if(ok&&xt){
++        // OWNRT_TP_XTAIL: the kernel the paths below select (same R, U, 128-item groups, subgroup partition by matrix),
++        // with the exchange tail. bf16split (two 16-lane subgroups per row) is not admitted.
++        const bool small_k=maxk<=1024&&maxrows>=2048;
++        if(!small_k&&maxk<8192&&decode_next2::enabled("bf16split"))throw std::invalid_argument("kopt exchange tail: bf16split path not admitted");
++        const uint32_t R=small_k?(decode_next2::enabled("hcgate")?2u:4u):1u;
++        std::array<dense_v2::Mat,4> mm{};uint32_t s=0;
++        for(unsigned j=0;j<count;++j){const auto& d=descriptors[j];mm[j]=dense_v2::Mat{static_cast<const uint8_t*>(pointers[d.w]),static_cast<const float*>(pointers[d.x]),static_cast<float*>(pointers[d.y]),uint32_t(d.rows),uint32_t(d.k),uint32_t(d.rb),s};s+=(uint32_t(d.rows)+R-1)/R;}
++        const size_t global=(size_t(s)*32+127)/128*128;
++        const xtail::Tail tl{static_cast<uint32_t*>(xts.remote),xts.ctl,xts.peer_flag,xts.error,xts.record_at,xts.cap,xts.matrix,xts.last_copy};
++        auto launch=[&]<unsigned RR,unsigned UU>(){return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(global),sycl::range<1>(128))](sycl::handler& h){
++          h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{xtail::body<RR,UU>(mm,count,it,tl);}));});};
++        if(small_k)return R==2?launch.template operator()<2,4>():launch.template operator()<4,4>();
++        return hc_kernels::enabled("lowsel")?launch.template operator()<1,10>():launch.template operator()<1,8>();
++      }
+       if(ok){
+         // OWNRT_DECODE_NEXT2 hcgate / bf16split (lab 2026-10-26): the same rows with bf16_rows' per-row arithmetic.
+         //  hcgate: small K (HC gate, 10240 x 320): 2 rows per subgroup instead of 4 (rank-1 profile, 50 sites:
+@@ -205,6 +226,7 @@ struct Multiply:ownrt::SyclOperation {
+           h.parallel_for(p35_range0,packet26::checked([=](sycl::nd_item<1> it)[[sycl::reqd_sub_group_size(32)]]{dense_v2::bf16_multi<1,8>(m,count,it);}));});
+       }
+     }
++    if(xt)throw std::invalid_argument("kopt exchange tail: not admitted on this path (dense_v2 conditions)");
+     return ownrt::prepared_submit(q,[=,p35_range0=sycl::nd_range<1>(sycl::range<1>(ng*SG*rows_per_group),sycl::range<1>(SG*rows_per_group))](sycl::handler& h) {
+       sycl::local_accessor<uint8_t,1> storage(stride*rows_per_group,h);
+       h.parallel_for(p35_range0,
+@@ -1058,6 +1080,25 @@ ownrt::Event routed_pair(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
+   if(count<=5){MultiplyBlockRowsPair<2> pr;bind(pr);return d.compute(pr,ids,{});}
+   MultiplyBlockRowsPair<4> pr;bind(pr);return d.compute(pr,ids,{});
+ }
++bool xtail_admits(ownrt::Device& d,const std::vector<Matrix>& ms,unsigned sg) {
++  if(ms.empty()||ms.size()>4||sg!=32||!dense_v2::enabled())return false;
++  uint32_t maxrows=0,maxk=0;
++  for(const auto& m:ms){
++    if(m.type!=Type::BF16||m.activation!=Type::F32||m.output_type!=Type::F32||m.fp32||!m.rows||m.rows>UINT32_MAX||!m.columns||m.columns>16384||(m.columns*2)%16)return false;
++    const auto& w=d.arena.row(m.w);const auto& x=d.arena.row(m.x);
++    if(w.bytes<(m.row0+m.rows)*m.columns*2||(reinterpret_cast<uintptr_t>(w.pointer)+m.row0*m.columns*2)%16||reinterpret_cast<uintptr_t>(x.pointer)%16)return false;
++    maxrows=std::max(maxrows,uint32_t(m.rows));maxk=std::max(maxk,uint32_t(m.columns));}
++  const bool small_k=maxk<=1024&&maxrows>=2048;
++  return !(!small_k&&maxk<8192&&decode_next2::enabled("bf16split"));
++}
++ownrt::Event fused_gemv_xtail(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg,const XTailSpec& spec) {
++  if(!xtail_admits(d,matrices,sg)||spec.matrix>=matrices.size()||!spec.remote||!spec.ctl||!spec.peer_flag||!spec.error||!spec.cap)throw std::invalid_argument("kopt exchange tail admission");
++  Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
++  for(size_t i=0;i<matrices.size();++i){op.desc[i]=bind_matrix(d,op,ids,matrices[i],1,1,matrices[i].rows);op.row0[i]=matrices[i].row0;}
++  check(d,matrices[spec.matrix].y,mul(spec.y_offset+matrices[spec.matrix].rows,4)); // this card's rows inside the whole y
++  op.xt=true;op.xts=spec;
++  return finish(d,op,ids);
++}
+ ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
+   if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");
+   Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
+index c595005..b301113 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
+@@ -12,6 +12,13 @@ struct Matrix {
+ };
+ ownrt::Event gemv(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,size_t,size_t,
+                   Type=Type::BF16,Type=Type::BF16,unsigned=16,ownrt::Allocation=0,size_t row0=0);
++// OWNRT_TP_XTAIL (2026-10-31, xtail.hpp): a fused / single dense GEMV whose matrix `matrix` is a TP card's rows, written
++// into the whole output at element `y_offset` and copied to the peer's y (`remote`, already at that offset), with the
++// direct-exchange protocol of slot `record_at` in the launch's tail. Only the dense_v2 paths (BF16, F32 in/out, 32 lanes)
++// other than bf16split are admitted (xtail_admits); everything else must keep the separate exchange.
++struct XTailSpec {unsigned matrix=0;size_t y_offset=0;void* remote=nullptr;uint32_t* ctl=nullptr;uint32_t* peer_flag=nullptr;uint32_t* error=nullptr;uint32_t record_at=0,cap=0,last_copy=0;};
++bool xtail_admits(ownrt::Device&,const std::vector<Matrix>&,unsigned sg);
++ownrt::Event fused_gemv_xtail(ownrt::Device&,const std::vector<Matrix>&,unsigned sg,const XTailSpec&);
+ ownrt::Event routed_gemv(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,
+                          ownrt::Allocation,ownrt::Allocation,uint32_t,uint32_t,size_t,uint32_t,uint32_t,
+                          Type=Type::BF16,Type=Type::BF16,unsigned=16,ownrt::Allocation=0);
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/xtail.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/xtail.hpp
+new file mode 100644
+index 0000000..46ee682
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/xtail.hpp
+@@ -0,0 +1,100 @@
++#include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
++#pragma once
++// OWNRT_TP_XTAIL (lab 2026-10-31, research/tp/xtail-2026-10-31; default off): the direct exchange of a row-split dense
++// GEMV (OWNRT_TP_HC_SPLIT) in the GEMV's own launch instead of a separate tp_xgather kernel.
++//
++// Rows: every subgroup runs dense_v2::bf16_rows<R,U> unchanged (same matrix selection by static indices as
++// bf16_multi_static), so every output value is the one the separate-exchange path computes. The split matrix writes
++// its rows straight into the card's offset of the whole output y (the tp_xgather's local destination); afterwards the
++// work-item that stored a row copies the stored 32-bit word to the same row of the peer card's y (the tp_xgather's peer
++// destination). Other matrices of the launch (the HC low's 4-row inject) store locally only, as before. The peer
++// stores are spread over the groups (token hc) or made by the counting-complete group (token hcl), see body().
++//
++// Exchange protocol: single_device.cpp submit_exchange, mode 0, unchanged except that the work-groups are the GEMV's:
++// - every work-item, after its stores: atomic_fence(release, system); then a work-group barrier;
++// - work-item 0 of each group: fetch_add(1, acq_rel) on this site's local counter (device scope); epoch = old/groups+1;
++//   the group whose increment completes the epoch (last) does fence(acq_rel, system), stores the epoch into the peer's
++//   flag word for this site, fence(release, system), then (unless this card's abort word is set) polls its own flag
++//   word with system-scope atomic loads, at most `cap` polls; a timeout sets the sticky error, the abort word and the
++//   timeout counter, otherwise fence(acquire, system). The wait counters (waits, spun, spin_sum, max_spin) as there.
++// The consumer of y is the next launch on the card (a fresh kernel), as after a tp_xgather. Stores always happen.
++// The last group waits only after every group of the launch has stored, fenced and counted, so no group of this
++// kernel can be waiting to be scheduled behind it.
++#include "stage2/packet6-kopt/dense_v2.hpp"
++#include "stage2/packet194-expert-diet-engine/owner_api.hpp"
++#include <sycl/sycl.hpp>
++#include <array>
++#include <cstdint>
++#include <cstdlib>
++#include <string>
++namespace iq3::kopt::xtail {
++struct Tail {
++  uint32_t* remote=nullptr;   // the peer's y at this card's row offset (32-bit words)
++  uint32_t* ctl=nullptr;      // this card's exchange control words
++  uint32_t* peer_flag=nullptr;// the peer's flag word of this site
++  uint32_t* error=nullptr;    // this card's sticky error word
++  uint32_t record_at=0,cap=0,matrix=0;
++  uint32_t last_copy=0;       // 1: the last work-group stores every row to the peer (token hcl), else each row's item
++};
++// Peer stores: token hc, each row's storing item copies its word right after bf16_rows (stores spread over every
++// work-group); token hcl, the work-group that completes the counter copies all of the card's rows of the split matrix
++// (read back from local y after the counter's acquire, coalesced by consecutive items) before its own release fence and
++// the flag, as one exchange-kernel group does. hcl is the A/B against the spread form (2026-10-31 smoke s1: one buffer
++// differed between the cards with the spread form).
++template<unsigned R,unsigned U> inline void body(const std::array<dense_v2::Mat,4>& m,unsigned count,sycl::nd_item<1> it,const Tail& t){
++ using u32=std::uint32_t;namespace L=ownrt::exchange_layout;
++ using dev_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::device,sycl::access::address_space::global_space>;
++ using sys_ref=sycl::atomic_ref<u32,sycl::memory_order::relaxed,sycl::memory_scope::system,sycl::access::address_space::global_space>;
++ const u32 gsub=u32(it.get_group_linear_id())*u32(it.get_local_range(0)/32)+u32(it.get_sub_group().get_group_linear_id());
++ dense_v2::Mat d=m[0];unsigned j=0;
++ if(count>1&&gsub>=m[1].first_sub){d=m[1];j=1;}
++ if(count>2&&gsub>=m[2].first_sub){d=m[2];j=2;}
++ if(count>3&&gsub>=m[3].first_sub){d=m[3];j=3;}
++ const u32 sub=gsub-d.first_sub;
++ dense_v2::bf16_rows<R,U>(d.w,d.x,d.y,d.rows,d.k,d.rb,it,sub); // returns early (from the call only) past the last row
++ const unsigned lane=it.get_sub_group().get_local_linear_id();const u32 row=sub*R+(lane&(R-1));
++ if(!t.last_copy&&j==t.matrix&&lane<R&&row<d.rows)t.remote[row]=sycl::bit_cast<u32>(d.y[row]); // the value this item stored
++ sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
++ sycl::group_barrier(it.get_group());
++ const u32 lid=u32(it.get_local_linear_id());u32 old=0,count_last=0;
++ u32* ctl=t.ctl;const u32 groups=u32(it.get_group_range(0)),record_at=t.record_at,cap=t.cap;
++ if(lid==0){old=dev_ref(ctl[record_at+L::counter]).fetch_add(1u,sycl::memory_order::acq_rel);count_last=(old+1u)%groups==0u?1u:0u;}
++ if(t.last_copy){
++  count_last=sycl::group_broadcast(it.get_group(),count_last,0);
++  if(count_last){ // every group has stored its rows of local y and counted: copy them all to the peer
++   sycl::atomic_fence(sycl::memory_order::acquire,sycl::memory_scope::device);
++   // 16-byte words, every load of a batch issued before its stores (src and remote may alias for the compiler).
++   const dense_v2::Mat& s=m[t.matrix];const u32* src=reinterpret_cast<const u32*>(s.y);const u32 n=s.rows,step=u32(it.get_local_range(0));
++   const bool vec=(reinterpret_cast<uintptr_t>(src)|reinterpret_cast<uintptr_t>(t.remote))%16==0;const u32 nv=vec?n/4:0;
++   using v4=sycl::vec<u32,4>;const v4* sv=reinterpret_cast<const v4*>(src);v4* dv=reinterpret_cast<v4*>(t.remote);
++   constexpr u32 B=8;
++   for(u32 base=0;base<nv;base+=B*step){
++    v4 r[B];
++    #pragma unroll
++    for(u32 b=0;b<B;++b){const u32 i=base+b*step+lid;if(i<nv)r[b]=sv[i];}
++    #pragma unroll
++    for(u32 b=0;b<B;++b){const u32 i=base+b*step+lid;if(i<nv)dv[i]=r[b];}
++   }
++   for(u32 i=nv*4+lid;i<n;i+=step)t.remote[i]=src[i];
++   sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
++   sycl::group_barrier(it.get_group());
++  }
++ }
++ if(lid==0){
++  const u32 epoch=old/groups+1u;const bool last=count_last!=0u;
++  if(last){
++   sycl::atomic_fence(sycl::memory_order::acq_rel,sycl::memory_scope::system);
++   *reinterpret_cast<volatile u32*>(t.peer_flag)=epoch;
++   sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
++  }
++  if(last&&dev_ref(ctl[L::abort]).load()==0u){
++   sys_ref flag(ctl[record_at+L::flag]);u32 polls=0,v=flag.load();
++   while(v<epoch&&polls<cap){++polls;v=flag.load();}
++   if(v<epoch){dev_ref(ctl[L::abort]).store(1u);dev_ref(ctl[L::timeouts]).fetch_add(1u);dev_ref(*t.error).store(1u);}
++   else sycl::atomic_fence(sycl::memory_order::acquire,sycl::memory_scope::system);
++   dev_ref(ctl[L::waits]).fetch_add(1u);
++   if(polls){dev_ref(ctl[L::spun]).fetch_add(1u);dev_ref(ctl[L::spin_sum]).fetch_add(polls);dev_ref(ctl[L::max_spin]).fetch_max(polls);}
++  }
++ }
++}
++}
