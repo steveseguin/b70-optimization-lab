@@ -1,0 +1,336 @@
+{
+ "run": "/dev/shm/prefill-tp-overhead-20261030/runs/m-r1-one128",
+ "rank": 1,
+ "chunks": 8,
+ "target_ms_per_chunk": 360.1283865,
+ "replicated_ms_per_chunk": 53.43067525,
+ "split_ms_per_chunk": 306.69771125,
+ "tp_per_card_compute_ms": 206.779530875,
+ "perfect_split_ms": 180.06419325,
+ "classes": {
+  "expsdown": {
+   "kind": "split",
+   "ms_per_chunk": 73.49030000000002,
+   "share": 0.20406694599732703,
+   "launches": 425
+  },
+  "expsup": {
+   "kind": "split",
+   "ms_per_chunk": 63.63933750000001,
+   "share": 0.1767129165198423,
+   "launches": 425
+  },
+  "expsgate": {
+   "kind": "split",
+   "ms_per_chunk": 63.62538749999999,
+   "share": 0.17667418033429583,
+   "launches": 425
+  },
+  "gdn.recurrence": {
+   "kind": "split",
+   "ms_per_chunk": 24.690737499999994,
+   "share": 0.06856093111671438,
+   "launches": 324
+  },
+  "gdn.qkv": {
+   "kind": "split",
+   "ms_per_chunk": 22.427868750000002,
+   "share": 0.06227742547031904,
+   "launches": 162
+  },
+  "attention": {
+   "kind": "split",
+   "ms_per_chunk": 14.642940000000003,
+   "share": 0.040660332672775856,
+   "launches": 225
+  },
+  "gdn.z": {
+   "kind": "split",
+   "ms_per_chunk": 13.63991125,
+   "share": 0.03787513498328463,
+   "launches": 162
+  },
+  "qsa.qgate": {
+   "kind": "split",
+   "ms_per_chunk": 10.2122125,
+   "share": 0.028357143959825002,
+   "launches": 63
+  },
+  "qsa.attention": {
+   "kind": "split",
+   "ms_per_chunk": 8.5583375,
+   "share": 0.023764684542577706,
+   "launches": 5397
+  },
+  "hc.f.gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 8.203438750000002,
+   "share": 0.022779206131811,
+   "launches": 225
+  },
+  "hc.a.gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 8.165731249999999,
+   "share": 0.02267450041736712,
+   "launches": 225
+  },
+  "hc.a.low": {
+   "kind": "replicated",
+   "ms_per_chunk": 6.0508774999999995,
+   "share": 0.016802000971950594,
+   "launches": 225
+  },
+  "hc.f.low": {
+   "kind": "replicated",
+   "ms_per_chunk": 6.019535,
+   "share": 0.01671496950990838,
+   "launches": 225
+  },
+  "shexpdown": {
+   "kind": "replicated",
+   "ms_per_chunk": 4.502785,
+   "share": 0.012503277077826244,
+   "launches": 225
+  },
+  "shexpgate": {
+   "kind": "replicated",
+   "ms_per_chunk": 4.180522125,
+   "share": 0.011608421556627278,
+   "launches": 225
+  },
+  "gdn.conv": {
+   "kind": "split",
+   "ms_per_chunk": 3.8478137500000003,
+   "share": 0.010684561101655894,
+   "launches": 162
+  },
+  "shexpup": {
+   "kind": "replicated",
+   "ms_per_chunk": 3.6389314999999995,
+   "share": 0.010104539482060516,
+   "launches": 225
+  },
+  "hc.f.mix": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.6782814999999998,
+   "share": 0.004660231081228582,
+   "launches": 225
+  },
+  "hc.a.mix": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.6733977500000001,
+   "share": 0.004646669945302965,
+   "launches": 225
+  },
+  "gdn.gated": {
+   "kind": "split",
+   "ms_per_chunk": 1.337838375,
+   "share": 0.0037148928691851397,
+   "launches": 162
+  },
+  "router": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.333542625,
+   "share": 0.0037029644843062097,
+   "launches": 225
+  },
+  "qsa.k": {
+   "kind": "split",
+   "ms_per_chunk": 1.2773050000000001,
+   "share": 0.0035468045504932727,
+   "launches": 63
+  },
+  "qsa.v": {
+   "kind": "split",
+   "ms_per_chunk": 1.261795,
+   "share": 0.00350373657645563,
+   "launches": 63
+  },
+  "qsa.pool": {
+   "kind": "split",
+   "ms_per_chunk": 1.12862,
+   "share": 0.003133937901893218,
+   "launches": 63
+  },
+  "gather": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.12617225,
+   "share": 0.0031271410203038796,
+   "launches": 225
+  },
+  "moe": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.0508588749999999,
+   "share": 0.0029180117824452578,
+   "launches": 450
+  },
+  "expsact": {
+   "kind": "split",
+   "ms_per_chunk": 1.031810375,
+   "share": 0.0028651181458587962,
+   "launches": 225
+  },
+  "attn.combine": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.853763875,
+   "share": 0.002370720851242866,
+   "launches": 200
+  },
+  "ffn.combine": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.800430625,
+   "share": 0.0022226257496088826,
+   "launches": 201
+  },
+  "expsdown.check": {
+   "kind": "split",
+   "ms_per_chunk": 0.7642973750000001,
+   "share": 0.0021222913928780228,
+   "launches": 225
+  },
+  "hc.f.norm": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.7069271250000001,
+   "share": 0.0019629864001292773,
+   "launches": 425
+  },
+  "hc.a.norm": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.6882546249999998,
+   "share": 0.0019111368356406965,
+   "launches": 425
+  },
+  "route": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.48544374999999995,
+   "share": 0.0013479741342189361,
+   "launches": 225
+  },
+  "gdn.a": {
+   "kind": "split",
+   "ms_per_chunk": 0.439609625,
+   "share": 0.0012207025091036526,
+   "launches": 162
+  },
+  "gdn.b": {
+   "kind": "split",
+   "ms_per_chunk": 0.40023475,
+   "share": 0.001111366848611363,
+   "launches": 144
+  },
+  "qsa.iq": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.386262625,
+   "share": 0.0010725692266416215,
+   "launches": 63
+  },
+  "qsa.select": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.34235699999999997,
+   "share": 0.0009506526362092257,
+   "launches": 126
+  },
+  "hc.f.inject": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.3154687499999999,
+   "share": 0.0008759896798637946,
+   "launches": 200
+  },
+  "hc.a.inject": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.3127344999999999,
+   "share": 0.0008683972486573198,
+   "launches": 200
+  },
+  "qsa.prepare": {
+   "kind": "split",
+   "ms_per_chunk": 0.28135450000000006,
+   "share": 0.0007812616570840634,
+   "launches": 63
+  },
+  "qsa.ik": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.2276435,
+   "share": 0.0006321176239740823,
+   "launches": 56
+  },
+  "shexpact": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.17502487500000005,
+   "share": 0.00048600688410326145,
+   "launches": 225
+  },
+  "shared_gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.13029800000000002,
+   "share": 0.0003618098569411162,
+   "launches": 200
+  },
+  "hc.f.act": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.118033,
+   "share": 0.00032775255832269694,
+   "launches": 225
+  },
+  "logits": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.1103255,
+   "share": 0.0003063504687098583,
+   "launches": 1
+  },
+  "hc.a.act": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.10636762500000001,
+   "share": 0.0002953602909055879,
+   "launches": 225
+  },
+  "begin.0": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.019088625,
+   "share": 5.30050551846737e-05,
+   "launches": 9
+  },
+  "argmax": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.012825625,
+   "share": 3.56140351074491e-05,
+   "launches": 1
+  },
+  "commit.final": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.009322875,
+   "share": 2.588764271155281e-05,
+   "launches": 9
+  },
+  "final.low": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.002252625,
+   "share": 6.255060929499929e-06,
+   "launches": 1
+  },
+  "final.gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.001979125,
+   "share": 5.495609549790377e-06,
+   "launches": 1
+  },
+  "final.norm": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.0009505,
+   "share": 2.6393365133964517e-06,
+   "launches": 1
+  },
+  "final.mix": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.00045575,
+   "share": 1.2655209005580569e-06,
+   "launches": 1
+  },
+  "final.act": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.000390625,
+   "share": 1.0846826149873637e-06,
+   "launches": 1
+  }
+ }
+}

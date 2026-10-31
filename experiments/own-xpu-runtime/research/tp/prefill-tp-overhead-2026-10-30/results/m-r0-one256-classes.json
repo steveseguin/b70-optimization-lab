@@ -1,0 +1,684 @@
+{
+ "run": "/dev/shm/prefill-tp-overhead-20261030/runs/m-r0-one256",
+ "rank": 0,
+ "chunks": 4,
+ "target_ms_per_chunk": 599.980371,
+ "replicated_ms_per_chunk": 114.44043325,
+ "split_ms_per_chunk": 485.53993775,
+ "tp_per_card_compute_ms": 357.210402125,
+ "perfect_split_ms": 299.9901855,
+ "classes": {
+  "expsdown": {
+   "kind": "split",
+   "ms_per_chunk": 107.016575,
+   "share": 0.17836679360298607,
+   "launches": 207
+  },
+  "expsup": {
+   "kind": "split",
+   "ms_per_chunk": 91.17512499999998,
+   "share": 0.15196351315299944,
+   "launches": 207
+  },
+  "expsgate": {
+   "kind": "split",
+   "ms_per_chunk": 90.47305,
+   "share": 0.1507933498711077,
+   "launches": 207
+  },
+  "gdn.recurrence": {
+   "kind": "split",
+   "ms_per_chunk": 47.5008,
+   "share": 0.079170590065854,
+   "launches": 180
+  },
+  "gdn.qkv": {
+   "kind": "split",
+   "ms_per_chunk": 42.960809999999995,
+   "share": 0.07160369251480062,
+   "launches": 90
+  },
+  "gdn.z": {
+   "kind": "split",
+   "ms_per_chunk": 28.791559999999997,
+   "share": 0.047987503244501975,
+   "launches": 90
+  },
+  "attention": {
+   "kind": "split",
+   "ms_per_chunk": 26.754237500000002,
+   "share": 0.0445918546558584,
+   "launches": 115
+  },
+  "qsa.qgate": {
+   "kind": "split",
+   "ms_per_chunk": 17.194775,
+   "share": 0.028658895909113,
+   "launches": 25
+  },
+  "hc.f.gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 14.698537500000002,
+   "share": 0.024498363963977084,
+   "launches": 115
+  },
+  "hc.a.gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 14.5439875,
+   "share": 0.024240772203529305,
+   "launches": 115
+  },
+  "qsa.attention": {
+   "kind": "split",
+   "ms_per_chunk": 11.83235,
+   "share": 0.019721228513324147,
+   "launches": 3855
+  },
+  "hc.a.low": {
+   "kind": "replicated",
+   "ms_per_chunk": 11.31331,
+   "share": 0.018856133545075593,
+   "launches": 115
+  },
+  "hc.f.low": {
+   "kind": "replicated",
+   "ms_per_chunk": 11.139747499999999,
+   "share": 0.01856685324793734,
+   "launches": 115
+  },
+  "commit.final": {
+   "kind": "replicated",
+   "ms_per_chunk": 10.566975,
+   "share": 0.017612201183161705,
+   "launches": 65
+  },
+  "shexpdown": {
+   "kind": "replicated",
+   "ms_per_chunk": 7.968149999999999,
+   "share": 0.013280684477592683,
+   "launches": 115
+  },
+  "gdn.conv": {
+   "kind": "split",
+   "ms_per_chunk": 7.595942500000001,
+   "share": 0.012660318348981457,
+   "launches": 90
+  },
+  "shexpgate": {
+   "kind": "replicated",
+   "ms_per_chunk": 7.065211999999999,
+   "share": 0.011775738576620867,
+   "launches": 115
+  },
+  "shexpup": {
+   "kind": "replicated",
+   "ms_per_chunk": 5.824583750000001,
+   "share": 0.009707957179152451,
+   "launches": 115
+  },
+  "qsa.pool": {
+   "kind": "split",
+   "ms_per_chunk": 3.2203375,
+   "share": 0.0053674047613134325,
+   "launches": 25
+  },
+  "hc.f.mix": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.9389077499999994,
+   "share": 0.004898339832520953,
+   "launches": 115
+  },
+  "hc.a.mix": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.8848702499999996,
+   "share": 0.004808274386029872,
+   "launches": 115
+  },
+  "gdn.gated": {
+   "kind": "split",
+   "ms_per_chunk": 2.5476297499999996,
+   "share": 0.004246188497390025,
+   "launches": 90
+  },
+  "router": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.5250237499999995,
+   "share": 0.004208510598090883,
+   "launches": 115
+  },
+  "ple.hash": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.312005,
+   "share": 0.0038534677328635474,
+   "launches": 5
+  },
+  "gather": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.193152,
+   "share": 0.003655372918858374,
+   "launches": 115
+  },
+  "moe": {
+   "kind": "replicated",
+   "ms_per_chunk": 2.13463675,
+   "share": 0.0035578443115433186,
+   "launches": 230
+  },
+  "ple.add": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.948985,
+   "share": 0.003248414605217143,
+   "launches": 5
+  },
+  "ple.key": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.94552,
+   "share": 0.003242639416281837,
+   "launches": 5
+  },
+  "streams": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.9350525,
+   "share": 0.003225193012189394,
+   "launches": 5
+  },
+  "qsa.k": {
+   "kind": "split",
+   "ms_per_chunk": 1.88768325,
+   "share": 0.0031462416792965384,
+   "launches": 25
+  },
+  "expsact": {
+   "kind": "split",
+   "ms_per_chunk": 1.7730469999999998,
+   "share": 0.0029551750118838468,
+   "launches": 115
+  },
+  "qsa.v": {
+   "kind": "split",
+   "ms_per_chunk": 1.469296,
+   "share": 0.002448906782652061,
+   "launches": 25
+  },
+  "hc.a.norm": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.4493494999999998,
+   "share": 0.0024156615283669005,
+   "launches": 207
+  },
+  "hc.f.norm": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.4093729999999998,
+   "share": 0.002349031848576926,
+   "launches": 207
+  },
+  "attn.combine": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.344192,
+   "share": 0.0022403932944666284,
+   "launches": 92
+  },
+  "expsdown.check": {
+   "kind": "split",
+   "ms_per_chunk": 1.30596375,
+   "share": 0.0021766774600031043,
+   "launches": 115
+  },
+  "ffn.combine": {
+   "kind": "replicated",
+   "ms_per_chunk": 1.30322975,
+   "share": 0.0021721206442602103,
+   "launches": 94
+  },
+  "gdn.a": {
+   "kind": "split",
+   "ms_per_chunk": 0.855208,
+   "share": 0.0014253932984084241,
+   "launches": 90
+  },
+  "gdn.b": {
+   "kind": "split",
+   "ms_per_chunk": 0.8259382500000001,
+   "share": 0.0013766087857564262,
+   "launches": 72
+  },
+  "route": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.7728667500000002,
+   "share": 0.0012881533919382176,
+   "launches": 115
+  },
+  "qsa.iq": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.53640675,
+   "share": 0.0008940404985349097,
+   "launches": 25
+  },
+  "ple.value": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.5035925,
+   "share": 0.0008393482926127262,
+   "launches": 5
+  },
+  "qsa.select": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.46310125,
+   "share": 0.0007718606680884232,
+   "launches": 90
+  },
+  "ple.conv": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.4409125,
+   "share": 0.0007348782082072481,
+   "launches": 5
+  },
+  "qsa.ik": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.38291675,
+   "share": 0.0006382154625521907,
+   "launches": 20
+  },
+  "qsa.prepare": {
+   "kind": "split",
+   "ms_per_chunk": 0.35960925,
+   "share": 0.000599368358335843,
+   "launches": 25
+  },
+  "hc.a.inject": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.347788,
+   "share": 0.0005796656304277661,
+   "launches": 92
+  },
+  "hc.f.inject": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.34674449999999996,
+   "share": 0.0005779264068624004,
+   "launches": 92
+  },
+  "shexpact": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.250261,
+   "share": 0.0004171153125941182,
+   "launches": 115
+  },
+  "ple.gated": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.19559875,
+   "share": 0.000326008582037428,
+   "launches": 5
+  },
+  "hc.f.act": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.191564,
+   "share": 0.0003192837787021536,
+   "launches": 115
+  },
+  "hc.a.act": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.17768275000000003,
+   "share": 0.00029614760513556874,
+   "launches": 115
+  },
+  "shared_gate": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.16911550000000006,
+   "share": 0.0002818683879909799,
+   "launches": 92
+  },
+  "draft:logits": {
+   "kind": "draft",
+   "ms_per_chunk": 0.11078125,
+   "share": null,
+   "launches": 1
+  },
+  "ple.qn": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.07895825,
+   "share": 0.00013160138867276375,
+   "launches": 9
+  },
+  "ple.kn": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.06622375,
+   "share": 0.00011037652763476824,
+   "launches": 9
+  },
+  "ple.cn": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.05950425,
+   "share": 9.917699457537754e-05,
+   "launches": 9
+  },
+  "draft:qsa.qgate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.030078,
+   "share": null,
+   "launches": 1
+  },
+  "draft:attention": {
+   "kind": "draft",
+   "ms_per_chunk": 0.023724,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsgate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.02239575,
+   "share": null,
+   "launches": 1
+  },
+  "draft:merge.projected": {
+   "kind": "draft",
+   "ms_per_chunk": 0.013151,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsdown": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0127865,
+   "share": null,
+   "launches": 1
+  },
+  "begin.0": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.0123955,
+   "share": 2.0659842553415803e-05,
+   "launches": 5
+  },
+  "draft:argmax": {
+   "kind": "draft",
+   "ms_per_chunk": 0.010052,
+   "share": null,
+   "launches": 1
+  },
+  "draft:merge.embedding_projected": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00856775,
+   "share": null,
+   "launches": 1
+  },
+  "draft:final.gate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00796875,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.f.gate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0066145,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.a.gate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00643225,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.attention": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00627575,
+   "share": null,
+   "launches": 3
+  },
+  "draft:gather": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00596375,
+   "share": null,
+   "launches": 2
+  },
+  "draft:merge.hidden_norm": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0058595,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.select": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00520825,
+   "share": null,
+   "launches": 2
+  },
+  "draft:hc.f.low": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00502625,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.a.low": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00416675,
+   "share": null,
+   "launches": 1
+  },
+  "draft:final.low": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0040625,
+   "share": null,
+   "launches": 1
+  },
+  "draft:shexpup": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0034115,
+   "share": null,
+   "launches": 1
+  },
+  "draft:shexpdown": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0033855,
+   "share": null,
+   "launches": 1
+  },
+  "draft:route": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0033595,
+   "share": null,
+   "launches": 1
+  },
+  "draft:ffn.combine": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0028905,
+   "share": null,
+   "launches": 1
+  },
+  "draft:merge.embedding_norm": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0027865,
+   "share": null,
+   "launches": 1
+  },
+  "draft:router": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00270825,
+   "share": null,
+   "launches": 1
+  },
+  "draft:shexpgate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.002474,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.k": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00203125,
+   "share": null,
+   "launches": 1
+  },
+  "draft:final.norm": {
+   "kind": "draft",
+   "ms_per_chunk": 0.001979,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.a.inject": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00195325,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.f.norm": {
+   "kind": "draft",
+   "ms_per_chunk": 0.001953,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.v": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00192725,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.prepare": {
+   "kind": "draft",
+   "ms_per_chunk": 0.001927,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.iq": {
+   "kind": "draft",
+   "ms_per_chunk": 0.001901,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.a.norm": {
+   "kind": "draft",
+   "ms_per_chunk": 0.001875,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.f.inject": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00177075,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.a.mix": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00166675,
+   "share": null,
+   "launches": 1
+  },
+  "draft:hc.f.mix": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0015105,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.ik": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0014585,
+   "share": null,
+   "launches": 1
+  },
+  "draft:qsa.pool": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0014585,
+   "share": null,
+   "launches": 1
+  },
+  "draft:begin.0": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00138025,
+   "share": null,
+   "launches": 1
+  },
+  "draft:moe": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00101575,
+   "share": null,
+   "launches": 1
+  },
+  "draft:commit.final": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00098975,
+   "share": null,
+   "launches": 1
+  },
+  "draft:shared_gate": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0009895,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsact": {
+   "kind": "draft",
+   "ms_per_chunk": 0.000677,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsgate.check": {
+   "kind": "draft",
+   "ms_per_chunk": 0.000651,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsup.check": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00046875,
+   "share": null,
+   "launches": 1
+  },
+  "draft:expsdown.check": {
+   "kind": "draft",
+   "ms_per_chunk": 0.00044275,
+   "share": null,
+   "launches": 1
+  },
+  "embedding": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.0,
+   "share": 0.0,
+   "launches": 0
+  },
+  "ple.lookup": {
+   "kind": "replicated",
+   "ms_per_chunk": 0.0,
+   "share": 0.0,
+   "launches": 0
+  },
+  "draft:merge.add": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:hc.a.act": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:attn.combine": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:hc.f.act": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:shexpact": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:final.act": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  },
+  "draft:final.mix": {
+   "kind": "draft",
+   "ms_per_chunk": 0.0,
+   "share": null,
+   "launches": 0
+  }
+ }
+}

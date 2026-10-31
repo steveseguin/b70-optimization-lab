@@ -1,0 +1,54 @@
+{
+ "schema": "prefill-tp-overhead.breakdown.v1",
+ "note": "per 256-row chunk; one card: --timing class device sums (M1, 4 chunks of 1024 rows; includes one decode half and startup launches, ~1%); TP wall: host-trace harness means (prefill-draft-batch o-r1-tp, g1-r0-b); exchange own/wait: OWNRT_TP_EXCHANGE_STATS last full chunk (M4)",
+ "rank1": {
+  "one_card_device_ms": 674.50737925,
+  "one_card_wall_ms": 682.7,
+  "draft_chunk_device_ms_attributed_to_commit": 0.0,
+  "replicated_ms": 105.78410450000001,
+  "split_ms": 568.72327475,
+  "perfect_split_ms": 337.253689625,
+  "tp_wall_ms": 462.8,
+  "over_perfect_split_ms": 125.54631037500002,
+  "replicated_excess_ms": 52.892052250000006,
+  "of_which_hc_excess_ms": 33.982845125000004,
+  "of_which_shared_expert_excess_ms": 12.1081255,
+  "experts_one_card_ms": 352.48064999999997,
+  "experts_one_card_half_rows_ms": 200.75502500000002,
+  "expert_nonhalving_ms": 24.514700000000033,
+  "exchange_own_ms": 18.903415,
+  "exchange_wait_ms": 0.6007653571428572,
+  "exchange_own_by_kind": {
+   "qsa attention": 0.9495303571428573,
+   "attention out-proj": 1.4127067857142859,
+   "experts (compact slots)": 14.035120714285716,
+   "gdn gated": 2.526364285714286
+  },
+  "unexplained_ms": 28.635377767857122
+ },
+ "rank0": {
+  "one_card_device_ms": 589.4133959999999,
+  "one_card_wall_ms": 602.5,
+  "draft_chunk_device_ms_attributed_to_commit": 10.566975,
+  "replicated_ms": 103.87345825,
+  "split_ms": 485.53993775,
+  "perfect_split_ms": 294.70669799999996,
+  "tp_wall_ms": 412.7,
+  "over_perfect_split_ms": 117.99330200000003,
+  "replicated_excess_ms": 51.936729125,
+  "of_which_hc_excess_ms": 30.720931125,
+  "of_which_shared_expert_excess_ms": 10.554103374999999,
+  "experts_one_card_ms": 288.66474999999997,
+  "experts_one_card_half_rows_ms": 150.90803749999998,
+  "expert_nonhalving_ms": 6.575662499999993,
+  "exchange_own_ms": 17.491286428571428,
+  "exchange_wait_ms": 0.6357439285714286,
+  "exchange_own_by_kind": {
+   "gdn gated": 2.5145657142857147,
+   "attention out-proj": 1.3527289285714283,
+   "experts (compact slots)": 12.916930714285712,
+   "qsa attention": 0.7070610714285716
+  },
+  "unexplained_ms": 41.35388001785718
+ }
+}

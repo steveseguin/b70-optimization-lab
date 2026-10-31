@@ -1,0 +1,1027 @@
+{
+ "run": "/dev/shm/prefill-tp-overhead-20261030/runs/g1-r0-a",
+ "rank": 0,
+ "chunks": [
+  {
+   "position": 0,
+   "rows": 256,
+   "wall_ms": 541.601,
+   "inputs_ms": 6.16682,
+   "loop_ms": 524.786,
+   "loop_blocked_ms": 348.784,
+   "final_ms": 10.5939,
+   "final_blocked_ms": 2.14304,
+   "host_active_ms": 189.88396400000002,
+   "host_waits": 161,
+   "submitted": [
+    2114,
+    2114
+   ],
+   "classes": {
+    "exchange": [
+     138,
+     351.5292,
+     348.7847
+    ],
+    "grouped": [
+     10,
+     17.119,
+     0.0
+    ],
+    "linear": [
+     888,
+     84.6913,
+     0.0
+    ],
+    "native": [
+     848,
+     70.087017,
+     0.0
+    ]
+   },
+   "sites": {
+    "exchange:tp_xgather": [
+     56,
+     38.2452,
+     37.3487
+    ],
+    "exchange:tp_xheads": [
+     82,
+     313.284,
+     311.436
+    ],
+    "grouped:qsa_attention": [
+     10,
+     17.119,
+     0
+    ],
+    "linear:gemv": [
+     750,
+     57.1346,
+     0
+    ],
+    "linear:routed_gemv": [
+     138,
+     27.5567,
+     0
+    ],
+    "native:begin": [
+     2,
+     8.82716,
+     0
+    ],
+    "native:broadcast": [
+     2,
+     9.95634,
+     0
+    ],
+    "native:check_status": [
+     46,
+     1.38655,
+     0
+    ],
+    "native:commit": [
+     2,
+     0.018315,
+     0
+    ],
+    "native:conv": [
+     38,
+     2.63838,
+     0
+    ],
+    "native:expert_gather": [
+     46,
+     1.49969,
+     0
+    ],
+    "native:gdn": [
+     36,
+     3.93706,
+     0
+    ],
+    "native:gdn_norm_gate": [
+     36,
+     0.609555,
+     0
+    ],
+    "native:hc_combine": [
+     92,
+     1.98157,
+     0
+    ],
+    "native:hc_mix": [
+     92,
+     0.897481,
+     0
+    ],
+    "native:moe_combine": [
+     46,
+     1.03072,
+     0
+    ],
+    "native:norm": [
+     98,
+     13.4182,
+     0
+    ],
+    "native:ple_add": [
+     2,
+     0.960075,
+     0
+    ],
+    "native:ple_gate": [
+     2,
+     0.023554,
+     0
+    ],
+    "native:ple_hash": [
+     2,
+     0.029025,
+     0
+    ],
+    "native:qsa_append_pool": [
+     10,
+     0.192742,
+     0
+    ],
+    "native:qsa_prepare": [
+     10,
+     0.30279,
+     0
+    ],
+    "native:qsa_select": [
+     10,
+     15.4138,
+     0
+    ],
+    "native:route": [
+     46,
+     1.62147,
+     0
+    ],
+    "native:silu_div4": [
+     92,
+     2.87848,
+     0
+    ],
+    "native:silu_product": [
+     92,
+     1.01241,
+     0
+    ],
+    "native:tp_route_compact": [
+     46,
+     1.45165,
+     0
+    ]
+   }
+  },
+  {
+   "position": 256,
+   "rows": 256,
+   "wall_ms": 418.262,
+   "inputs_ms": 5.70508,
+   "loop_ms": 404.337,
+   "loop_blocked_ms": 370.328,
+   "final_ms": 8.19314,
+   "final_blocked_ms": 2.22236,
+   "host_active_ms": 45.09103500000001,
+   "host_waits": 161,
+   "submitted": [
+    2114,
+    2114
+   ],
+   "classes": {
+    "exchange": [
+     138,
+     372.5438,
+     370.3274
+    ],
+    "grouped": [
+     10,
+     9.7348,
+     0.0
+    ],
+    "linear": [
+     888,
+     9.30999,
+     0.0
+    ],
+    "native": [
+     848,
+     11.391207,
+     0.0
+    ]
+   },
+   "sites": {
+    "exchange:tp_xgather": [
+     56,
+     44.5098,
+     43.6334
+    ],
+    "exchange:tp_xheads": [
+     82,
+     328.034,
+     326.694
+    ],
+    "grouped:qsa_attention": [
+     10,
+     9.7348,
+     0
+    ],
+    "linear:gemv": [
+     750,
+     7.31552,
+     0
+    ],
+    "linear:routed_gemv": [
+     138,
+     1.99447,
+     0
+    ],
+    "native:begin": [
+     2,
+     0.068238,
+     0
+    ],
+    "native:broadcast": [
+     2,
+     0.030567,
+     0
+    ],
+    "native:check_status": [
+     46,
+     0.463813,
+     0
+    ],
+    "native:commit": [
+     2,
+     0.015429,
+     0
+    ],
+    "native:conv": [
+     38,
+     0.625974,
+     0
+    ],
+    "native:expert_gather": [
+     46,
+     0.481694,
+     0
+    ],
+    "native:gdn": [
+     36,
+     0.817616,
+     0
+    ],
+    "native:gdn_norm_gate": [
+     36,
+     0.573758,
+     0
+    ],
+    "native:hc_combine": [
+     92,
+     0.997707,
+     0
+    ],
+    "native:hc_mix": [
+     92,
+     0.835091,
+     0
+    ],
+    "native:moe_combine": [
+     46,
+     0.672834,
+     0
+    ],
+    "native:norm": [
+     98,
+     1.99136,
+     0
+    ],
+    "native:ple_add": [
+     2,
+     0.027582,
+     0
+    ],
+    "native:ple_gate": [
+     2,
+     0.020117,
+     0
+    ],
+    "native:ple_hash": [
+     2,
+     0.020027,
+     0
+    ],
+    "native:qsa_append_pool": [
+     10,
+     0.190338,
+     0
+    ],
+    "native:qsa_prepare": [
+     10,
+     0.279426,
+     0
+    ],
+    "native:qsa_select": [
+     10,
+     0.514006,
+     0
+    ],
+    "native:route": [
+     46,
+     0.513369,
+     0
+    ],
+    "native:silu_div4": [
+     92,
+     0.824525,
+     0
+    ],
+    "native:silu_product": [
+     92,
+     0.90944,
+     0
+    ],
+    "native:tp_route_compact": [
+     46,
+     0.518296,
+     0
+    ]
+   }
+  },
+  {
+   "position": 512,
+   "rows": 256,
+   "wall_ms": 413.618,
+   "inputs_ms": 5.41934,
+   "loop_ms": 404.481,
+   "loop_blocked_ms": 371.318,
+   "final_ms": 3.68665,
+   "final_blocked_ms": 2.22744,
+   "host_active_ms": 39.43568099999999,
+   "host_waits": 161,
+   "submitted": [
+    2114,
+    2114
+   ],
+   "classes": {
+    "exchange": [
+     138,
+     373.3758,
+     371.3179
+    ],
+    "grouped": [
+     10,
+     9.68949,
+     0.0
+    ],
+    "linear": [
+     888,
+     9.16211,
+     0.0
+    ],
+    "native": [
+     848,
+     11.064536000000002,
+     0.0
+    ]
+   },
+   "sites": {
+    "exchange:tp_xgather": [
+     56,
+     45.3108,
+     44.4519
+    ],
+    "exchange:tp_xheads": [
+     82,
+     328.065,
+     326.866
+    ],
+    "grouped:qsa_attention": [
+     10,
+     9.68949,
+     0
+    ],
+    "linear:gemv": [
+     750,
+     7.19937,
+     0
+    ],
+    "linear:routed_gemv": [
+     138,
+     1.96274,
+     0
+    ],
+    "native:begin": [
+     2,
+     0.046918,
+     0
+    ],
+    "native:broadcast": [
+     2,
+     0.028333,
+     0
+    ],
+    "native:check_status": [
+     46,
+     0.43079,
+     0
+    ],
+    "native:commit": [
+     2,
+     0.017262,
+     0
+    ],
+    "native:conv": [
+     38,
+     0.574969,
+     0
+    ],
+    "native:expert_gather": [
+     46,
+     0.469513,
+     0
+    ],
+    "native:gdn": [
+     36,
+     0.763867,
+     0
+    ],
+    "native:gdn_norm_gate": [
+     36,
+     0.553474,
+     0
+    ],
+    "native:hc_combine": [
+     92,
+     0.967126,
+     0
+    ],
+    "native:hc_mix": [
+     92,
+     0.852292,
+     0
+    ],
+    "native:moe_combine": [
+     46,
+     0.688167,
+     0
+    ],
+    "native:norm": [
+     98,
+     1.95268,
+     0
+    ],
+    "native:ple_add": [
+     2,
+     0.024106,
+     0
+    ],
+    "native:ple_gate": [
+     2,
+     0.019597,
+     0
+    ],
+    "native:ple_hash": [
+     2,
+     0.019986,
+     0
+    ],
+    "native:qsa_append_pool": [
+     10,
+     0.172695,
+     0
+    ],
+    "native:qsa_prepare": [
+     10,
+     0.263836,
+     0
+    ],
+    "native:qsa_select": [
+     10,
+     0.495742,
+     0
+    ],
+    "native:route": [
+     46,
+     0.521927,
+     0
+    ],
+    "native:silu_div4": [
+     92,
+     0.814555,
+     0
+    ],
+    "native:silu_product": [
+     92,
+     0.888657,
+     0
+    ],
+    "native:tp_route_compact": [
+     46,
+     0.498044,
+     0
+    ]
+   }
+  },
+  {
+   "position": 768,
+   "rows": 256,
+   "wall_ms": 411.032,
+   "inputs_ms": 5.28923,
+   "loop_ms": 402.055,
+   "loop_blocked_ms": 368.18,
+   "final_ms": 3.65895,
+   "final_blocked_ms": 2.19136,
+   "host_active_ms": 40.17396599999998,
+   "host_waits": 161,
+   "submitted": [
+    2114,
+    2114
+   ],
+   "classes": {
+    "exchange": [
+     138,
+     370.27570000000003,
+     368.17949999999996
+    ],
+    "grouped": [
+     10,
+     9.67577,
+     0.0
+    ],
+    "linear": [
+     888,
+     9.610949999999999,
+     0.0
+    ],
+    "native": [
+     848,
+     11.292334999999998,
+     0.0
+    ]
+   },
+   "sites": {
+    "exchange:tp_xgather": [
+     56,
+     45.5577,
+     44.6695
+    ],
+    "exchange:tp_xheads": [
+     82,
+     324.718,
+     323.51
+    ],
+    "grouped:qsa_attention": [
+     10,
+     9.67577,
+     0
+    ],
+    "linear:gemv": [
+     750,
+     7.41543,
+     0
+    ],
+    "linear:routed_gemv": [
+     138,
+     2.19552,
+     0
+    ],
+    "native:begin": [
+     2,
+     0.06361,
+     0
+    ],
+    "native:broadcast": [
+     2,
+     0.036619,
+     0
+    ],
+    "native:check_status": [
+     46,
+     0.447451,
+     0
+    ],
+    "native:commit": [
+     2,
+     0.016271,
+     0
+    ],
+    "native:conv": [
+     38,
+     0.612134,
+     0
+    ],
+    "native:expert_gather": [
+     46,
+     0.496936,
+     0
+    ],
+    "native:gdn": [
+     36,
+     0.774514,
+     0
+    ],
+    "native:gdn_norm_gate": [
+     36,
+     0.570542,
+     0
+    ],
+    "native:hc_combine": [
+     92,
+     0.993919,
+     0
+    ],
+    "native:hc_mix": [
+     92,
+     0.838227,
+     0
+    ],
+    "native:moe_combine": [
+     46,
+     0.690555,
+     0
+    ],
+    "native:norm": [
+     98,
+     1.90674,
+     0
+    ],
+    "native:ple_add": [
+     2,
+     0.023625,
+     0
+    ],
+    "native:ple_gate": [
+     2,
+     0.019987,
+     0
+    ],
+    "native:ple_hash": [
+     2,
+     0.020299,
+     0
+    ],
+    "native:qsa_append_pool": [
+     10,
+     0.178336,
+     0
+    ],
+    "native:qsa_prepare": [
+     10,
+     0.264727,
+     0
+    ],
+    "native:qsa_select": [
+     10,
+     0.529955,
+     0
+    ],
+    "native:route": [
+     46,
+     0.523933,
+     0
+    ],
+    "native:silu_div4": [
+     92,
+     0.810587,
+     0
+    ],
+    "native:silu_product": [
+     92,
+     0.947538,
+     0
+    ],
+    "native:tp_route_compact": [
+     46,
+     0.52583,
+     0
+    ]
+   }
+  },
+  {
+   "position": 1024,
+   "rows": 76,
+   "wall_ms": 139.016,
+   "inputs_ms": 1.9176,
+   "loop_ms": 135.961,
+   "loop_blocked_ms": 109.669,
+   "final_ms": 1.11316,
+   "final_blocked_ms": 0.592561,
+   "host_active_ms": 28.509979999999988,
+   "host_waits": 159,
+   "submitted": [
+    1419,
+    1419
+   ],
+   "classes": {
+    "exchange": [
+     138,
+     111.4684,
+     109.6689
+    ],
+    "grouped": [
+     10,
+     2.9536,
+     0.0
+    ],
+    "linear": [
+     888,
+     9.43029,
+     0.0
+    ],
+    "native": [
+     848,
+     10.875043999999999,
+     0.0
+    ]
+   },
+   "sites": {
+    "exchange:tp_xgather": [
+     56,
+     14.0968,
+     13.4733
+    ],
+    "exchange:tp_xheads": [
+     82,
+     97.3716,
+     96.1956
+    ],
+    "grouped:qsa_attention": [
+     10,
+     2.9536,
+     0
+    ],
+    "linear:gemv": [
+     750,
+     7.30903,
+     0
+    ],
+    "linear:routed_gemv": [
+     138,
+     2.12126,
+     0
+    ],
+    "native:begin": [
+     2,
+     0.076394,
+     0
+    ],
+    "native:broadcast": [
+     2,
+     0.033233,
+     0
+    ],
+    "native:check_status": [
+     46,
+     0.44166,
+     0
+    ],
+    "native:commit": [
+     2,
+     0.016601,
+     0
+    ],
+    "native:conv": [
+     38,
+     0.580304,
+     0
+    ],
+    "native:expert_gather": [
+     46,
+     0.486267,
+     0
+    ],
+    "native:gdn": [
+     36,
+     0.789503,
+     0
+    ],
+    "native:gdn_norm_gate": [
+     36,
+     0.571945,
+     0
+    ],
+    "native:hc_combine": [
+     92,
+     0.975805,
+     0
+    ],
+    "native:hc_mix": [
+     92,
+     0.827944,
+     0
+    ],
+    "native:moe_combine": [
+     46,
+     0.688215,
+     0
+    ],
+    "native:norm": [
+     98,
+     1.85232,
+     0
+    ],
+    "native:ple_add": [
+     2,
+     0.027011,
+     0
+    ],
+    "native:ple_gate": [
+     2,
+     0.022853,
+     0
+    ],
+    "native:ple_hash": [
+     2,
+     0.026349,
+     0
+    ],
+    "native:qsa_append_pool": [
+     10,
+     0.168798,
+     0
+    ],
+    "native:qsa_prepare": [
+     10,
+     0.257865,
+     0
+    ],
+    "native:qsa_select": [
+     10,
+     0.267551,
+     0
+    ],
+    "native:route": [
+     46,
+     0.511872,
+     0
+    ],
+    "native:silu_div4": [
+     92,
+     0.815265,
+     0
+    ],
+    "native:silu_product": [
+     92,
+     0.914138,
+     0
+    ],
+    "native:tp_route_compact": [
+     46,
+     0.523151,
+     0
+    ]
+   }
+  }
+ ],
+ "full_chunk_mean": {
+  "wall_ms": 414.304,
+  "inputs_ms": 5.471216666666667,
+  "loop_ms": 403.6243333333333,
+  "loop_blocked_ms": 369.942,
+  "final_ms": 5.17958,
+  "final_blocked_ms": 2.21372,
+  "host_active_ms": 41.56689399999999,
+  "sites": {
+   "exchange:tp_xgather": [
+    56,
+    45.1261,
+    44.2516
+   ],
+   "exchange:tp_xheads": [
+    82,
+    326.939,
+    325.69
+   ],
+   "grouped:qsa_attention": [
+    10,
+    9.70002,
+    0
+   ],
+   "linear:gemv": [
+    750,
+    7.310106666666667,
+    0
+   ],
+   "linear:routed_gemv": [
+    138,
+    2.05091,
+    0
+   ],
+   "native:begin": [
+    2,
+    0.059588666666666665,
+    0
+   ],
+   "native:broadcast": [
+    2,
+    0.03183966666666667,
+    0
+   ],
+   "native:check_status": [
+    46,
+    0.4473513333333333,
+    0
+   ],
+   "native:commit": [
+    2,
+    0.016320666666666667,
+    0
+   ],
+   "native:conv": [
+    38,
+    0.604359,
+    0
+   ],
+   "native:expert_gather": [
+    46,
+    0.48271433333333336,
+    0
+   ],
+   "native:gdn": [
+    36,
+    0.7853323333333333,
+    0
+   ],
+   "native:gdn_norm_gate": [
+    36,
+    0.5659246666666666,
+    0
+   ],
+   "native:hc_combine": [
+    92,
+    0.9862506666666667,
+    0
+   ],
+   "native:hc_mix": [
+    92,
+    0.84187,
+    0
+   ],
+   "native:moe_combine": [
+    46,
+    0.683852,
+    0
+   ],
+   "native:norm": [
+    98,
+    1.95026,
+    0
+   ],
+   "native:ple_add": [
+    2,
+    0.025104333333333333,
+    0
+   ],
+   "native:ple_gate": [
+    2,
+    0.019900333333333332,
+    0
+   ],
+   "native:ple_hash": [
+    2,
+    0.020104,
+    0
+   ],
+   "native:qsa_append_pool": [
+    10,
+    0.18045633333333333,
+    0
+   ],
+   "native:qsa_prepare": [
+    10,
+    0.2693296666666667,
+    0
+   ],
+   "native:qsa_select": [
+    10,
+    0.5132343333333333,
+    0
+   ],
+   "native:route": [
+    46,
+    0.519743,
+    0
+   ],
+   "native:silu_div4": [
+    92,
+    0.8165556666666667,
+    0
+   ],
+   "native:silu_product": [
+    92,
+    0.9152116666666666,
+    0
+   ],
+   "native:tp_route_compact": [
+    46,
+    0.5140566666666666,
+    0
+   ]
+  }
+ }
+}

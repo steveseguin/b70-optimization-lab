@@ -1,0 +1,528 @@
+{
+ "schema": "prefill-tp-overhead.work-model.v1",
+ "chunk_rows": 256,
+ "geometry": {
+  "h": 2560,
+  "low": 320,
+  "experts": 512,
+  "top": 10,
+  "mid": 640,
+  "kh": 16,
+  "vh": 48,
+  "d": 128,
+  "qh": 24,
+  "kvh": 2,
+  "ad": 256,
+  "ih": 4,
+  "id": 128
+ },
+ "measured": {
+  "rank1_one_card_ms": 682.7,
+  "rank1_tp_ms": 462.8,
+  "rank0_tp_ms_harness": 412.7,
+  "rank1_tp_long_ms": 466.4,
+  "rank0_prefill_long_ms": 446.2
+ },
+ "rank1": {
+  "layers": 25,
+  "qsa_layers": 7,
+  "gdn_layers": 18,
+  "classes": {
+   "hc.a.norm": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "hc.a.low": {
+    "kind": "replicated",
+    "macs_per_row": 81920000,
+    "layers": 25
+   },
+   "hc.a.act": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "hc.a.gate": {
+    "kind": "replicated",
+    "macs_per_row": 81920000,
+    "layers": 25
+   },
+   "hc.a.mix": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "qsa.qgate": {
+    "kind": "split (heads)",
+    "macs_per_row": 220200960,
+    "layers": 7
+   },
+   "qsa.k+v": {
+    "kind": "split (heads)",
+    "macs_per_row": 18350080,
+    "layers": 7
+   },
+   "qsa.iq+ik": {
+    "kind": "replicated",
+    "macs_per_row": 11468800,
+    "layers": 7
+   },
+   "qsa.prepare/pool": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 7
+   },
+   "qsa.select": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 7
+   },
+   "qsa.attention": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 7
+   },
+   "attention (out proj)": {
+    "kind": "split (rows)",
+    "macs_per_row": 393216000,
+    "layers": 25
+   },
+   "attn.combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "hc.f.norm": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "hc.f.low": {
+    "kind": "replicated",
+    "macs_per_row": 81920000,
+    "layers": 25
+   },
+   "hc.f.act": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "hc.f.gate": {
+    "kind": "replicated",
+    "macs_per_row": 81920000,
+    "layers": 25
+   },
+   "hc.f.mix": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "router": {
+    "kind": "replicated",
+    "macs_per_row": 32768000,
+    "layers": 25
+   },
+   "route+gather": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "route_compact": {
+    "kind": "per card",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "expsgate+up": {
+    "kind": "split (slots)",
+    "macs_per_row": 819200000,
+    "layers": 25
+   },
+   "expsact": {
+    "kind": "split (slots)",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "expsdown": {
+    "kind": "split (slots)",
+    "macs_per_row": 409600000,
+    "layers": 25
+   },
+   "shexp gate+up": {
+    "kind": "replicated",
+    "macs_per_row": 81920000,
+    "layers": 25
+   },
+   "shexpact": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "shexpdown": {
+    "kind": "replicated",
+    "macs_per_row": 40960000,
+    "layers": 25
+   },
+   "shared_gate": {
+    "kind": "replicated",
+    "macs_per_row": 64000,
+    "layers": 25
+   },
+   "check_status": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "moe_combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "ffn.combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 25
+   },
+   "gdn.qkv": {
+    "kind": "split (heads)",
+    "macs_per_row": 471859200,
+    "layers": 18
+   },
+   "gdn.z": {
+    "kind": "split (heads)",
+    "macs_per_row": 283115520,
+    "layers": 18
+   },
+   "gdn.a+b": {
+    "kind": "split (heads)",
+    "macs_per_row": 4423680,
+    "layers": 18
+   },
+   "gdn.conv": {
+    "kind": "split (heads)",
+    "macs_per_row": 737280,
+    "layers": 18
+   },
+   "gdn.recurrence": {
+    "kind": "split (heads)",
+    "macs_per_row": 28311552,
+    "layers": 18
+   },
+   "gdn.gated": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 18
+   }
+  },
+  "exchanges": {
+   "qsa.attention tp_xgather": {
+    "bytes_per_row_per_card": 12288,
+    "layers": 7
+   },
+   "attention tp_xgather": {
+    "bytes_per_row_per_card": 5120,
+    "layers": 25
+   },
+   "expsdown tp_xcompact": {
+    "bytes_per_row_per_card": 51200,
+    "layers": 25
+   },
+   "gdn.gated tp_xheads": {
+    "bytes_per_row_per_card": 12288,
+    "layers": 18
+   }
+  },
+  "exchanges_per_card": 75,
+  "exchange_bytes_per_card": 439091200,
+  "macs_per_row_one_card": 3143875072,
+  "macs_per_row_replicated": 494860800,
+  "replicated_share": 0.1574047278173781,
+  "per_card_over_one_card": 0.578702363908689,
+  "exchange_mb_per_card_per_chunk": 439.0912,
+  "model": {
+   "one_card_ms": 682.7,
+   "perfect_split_ms": 341.35,
+   "compute_only_tp_ms": 395.080103840462,
+   "replicated_excess_ms": 53.73010384046202,
+   "measured_tp_ms": 462.8,
+   "unexplained_ms": 67.719896159538
+  }
+ },
+ "rank0": {
+  "layers": 23,
+  "qsa_layers": 5,
+  "gdn_layers": 18,
+  "classes": {
+   "hc.a.norm": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "hc.a.low": {
+    "kind": "replicated",
+    "macs_per_row": 75366400,
+    "layers": 23
+   },
+   "hc.a.act": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "hc.a.gate": {
+    "kind": "replicated",
+    "macs_per_row": 75366400,
+    "layers": 23
+   },
+   "hc.a.mix": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "gdn.qkv": {
+    "kind": "split (heads)",
+    "macs_per_row": 471859200,
+    "layers": 18
+   },
+   "gdn.z": {
+    "kind": "split (heads)",
+    "macs_per_row": 283115520,
+    "layers": 18
+   },
+   "gdn.a+b": {
+    "kind": "split (heads)",
+    "macs_per_row": 4423680,
+    "layers": 18
+   },
+   "gdn.conv": {
+    "kind": "split (heads)",
+    "macs_per_row": 737280,
+    "layers": 18
+   },
+   "gdn.recurrence": {
+    "kind": "split (heads)",
+    "macs_per_row": 28311552,
+    "layers": 18
+   },
+   "gdn.gated": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 18
+   },
+   "attention (out proj)": {
+    "kind": "split (rows)",
+    "macs_per_row": 361758720,
+    "layers": 23
+   },
+   "attn.combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "hc.f.norm": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "hc.f.low": {
+    "kind": "replicated",
+    "macs_per_row": 75366400,
+    "layers": 23
+   },
+   "hc.f.act": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "hc.f.gate": {
+    "kind": "replicated",
+    "macs_per_row": 75366400,
+    "layers": 23
+   },
+   "hc.f.mix": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "router": {
+    "kind": "replicated",
+    "macs_per_row": 30146560,
+    "layers": 23
+   },
+   "route+gather": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "route_compact": {
+    "kind": "per card",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "expsgate+up": {
+    "kind": "split (slots)",
+    "macs_per_row": 753664000,
+    "layers": 23
+   },
+   "expsact": {
+    "kind": "split (slots)",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "expsdown": {
+    "kind": "split (slots)",
+    "macs_per_row": 376832000,
+    "layers": 23
+   },
+   "shexp gate+up": {
+    "kind": "replicated",
+    "macs_per_row": 75366400,
+    "layers": 23
+   },
+   "shexpact": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "shexpdown": {
+    "kind": "replicated",
+    "macs_per_row": 37683200,
+    "layers": 23
+   },
+   "shared_gate": {
+    "kind": "replicated",
+    "macs_per_row": 58880,
+    "layers": 23
+   },
+   "check_status": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "moe_combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "ffn.combine": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 23
+   },
+   "qsa.qgate": {
+    "kind": "split (heads)",
+    "macs_per_row": 157286400,
+    "layers": 5
+   },
+   "qsa.k+v": {
+    "kind": "split (heads)",
+    "macs_per_row": 13107200,
+    "layers": 5
+   },
+   "qsa.iq+ik": {
+    "kind": "replicated",
+    "macs_per_row": 8192000,
+    "layers": 5
+   },
+   "qsa.prepare/pool": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 5
+   },
+   "qsa.select": {
+    "kind": "replicated",
+    "macs_per_row": 0,
+    "layers": 5
+   },
+   "qsa.attention": {
+    "kind": "split (heads)",
+    "macs_per_row": 0,
+    "layers": 5
+   },
+   "ple key+value": {
+    "kind": "replicated",
+    "macs_per_row": 32768000,
+    "layers": 1
+   }
+  },
+  "exchanges": {
+   "gdn.gated tp_xheads": {
+    "bytes_per_row_per_card": 12288,
+    "layers": 18
+   },
+   "attention tp_xgather": {
+    "bytes_per_row_per_card": 5120,
+    "layers": 23
+   },
+   "expsdown tp_xcompact": {
+    "bytes_per_row_per_card": 51200,
+    "layers": 23
+   },
+   "qsa.attention tp_xgather": {
+    "bytes_per_row_per_card": 12288,
+    "layers": 5
+   }
+  },
+  "exchanges_per_card": 69,
+  "exchange_bytes_per_card": 403963904,
+  "macs_per_row_one_card": 2936776192,
+  "macs_per_row_replicated": 485680640,
+  "replicated_share": 0.1653788400093377,
+  "per_card_over_one_card": 0.5826894200046688,
+  "exchange_mb_per_card_per_chunk": 403.963904,
+  "model": {
+   "one_card_ms_estimated": 637.7279823027269,
+   "perfect_split_ms": 318.86399115136345,
+   "compute_only_tp_ms": 371.59734812872364,
+   "replicated_excess_ms": 52.73335697736021,
+   "measured_tp_ms_harness": 412.7,
+   "unexplained_ms": 41.10265187127635
+  }
+ },
+ "levers_model_only": {
+  "rank1": {
+   "hc_gate_mix_split": {
+    "saved_compute_ms": 17.789124160210907,
+    "extra_exchanges": 50,
+    "extra_mb_per_card": 65.536
+   },
+   "hc_low_split": {
+    "saved_compute_ms": 17.789124160210907,
+    "extra_exchanges": 50,
+    "extra_mb_per_card": 8.192
+   },
+   "shared_expert_split": {
+    "saved_compute_ms": 13.34184312015818,
+    "extra_exchanges": 25,
+    "extra_mb_per_card": 32.768
+   },
+   "router_split": {
+    "saved_compute_ms": 3.557824832042181,
+    "extra_exchanges": 25,
+    "extra_mb_per_card": 6.5536
+   }
+  },
+  "rank0": {
+   "hc_gate_mix_split": {
+    "saved_compute_ms": 16.365994227394033,
+    "extra_exchanges": 46,
+    "extra_mb_per_card": 60.29312
+   },
+   "hc_low_split": {
+    "saved_compute_ms": 16.365994227394033,
+    "extra_exchanges": 46,
+    "extra_mb_per_card": 7.53664
+   },
+   "shared_expert_split": {
+    "saved_compute_ms": 12.274495670545527,
+    "extra_exchanges": 23,
+    "extra_mb_per_card": 30.14656
+   },
+   "router_split": {
+    "saved_compute_ms": 3.2731988454788072,
+    "extra_exchanges": 23,
+    "extra_mb_per_card": 6.029312
+   }
+  }
+ },
+ "ms_per_gmac_rank1_one_card": 0.8482515411477521
+}

@@ -1,0 +1,1442 @@
+{
+ "run": "/dev/shm/prefill-tp-overhead-20261030/runs/d-r0-xs",
+ "rank": 0,
+ "per_chunk_totals": {
+  "own_ms": [
+   17.362811785714285,
+   17.122496785714286
+  ],
+  "wait_ms": [
+   2.1165725,
+   1.2136110714285715
+  ]
+ },
+ "by_kind": {
+  "gdn gated": {
+   "sites": 18,
+   "own_ms": [
+    2.5684892857142856,
+    2.555142142857143
+   ],
+   "wait_ms": [
+    0.14181714285714286,
+    0.02767142857142857
+   ]
+  },
+  "attention out-proj": {
+   "sites": 23,
+   "own_ms": [
+    1.3258421428571432,
+    1.2488507142857144
+   ],
+   "wait_ms": [
+    0.15510857142857143,
+    0.007021785714285716
+   ]
+  },
+  "experts (compact slots)": {
+   "sites": 23,
+   "own_ms": [
+    12.75236285714286,
+    12.606898928571427
+   ],
+   "wait_ms": [
+    1.7665899999999999,
+    1.1772975
+   ]
+  },
+  "qsa attention": {
+   "sites": 5,
+   "own_ms": [
+    0.7161175,
+    0.711605
+   ],
+   "wait_ms": [
+    0.053056785714285716,
+    0.001620357142857143
+   ]
+  }
+ },
+ "sites": [
+  {
+   "card": 0,
+   "slot": 128,
+   "label": "blk.0.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1378542857142857,
+   "wait_ms": 0.012607142857142857
+  },
+  {
+   "card": 0,
+   "slot": 129,
+   "label": "blk.0.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05654107142857143,
+   "wait_ms": 0.006695714285714286
+  },
+  {
+   "card": 0,
+   "slot": 130,
+   "label": "blk.0.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6062885714285714,
+   "wait_ms": 0.0003210714285714286
+  },
+  {
+   "card": 0,
+   "slot": 131,
+   "label": "blk.1.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1417442857142857,
+   "wait_ms": 0.010540357142857143
+  },
+  {
+   "card": 0,
+   "slot": 132,
+   "label": "blk.1.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05745892857142857,
+   "wait_ms": 0.0070625
+  },
+  {
+   "card": 0,
+   "slot": 133,
+   "label": "blk.1.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4830575,
+   "wait_ms": 0.18411464285714285
+  },
+  {
+   "card": 0,
+   "slot": 134,
+   "label": "blk.2.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14429214285714287,
+   "wait_ms": 0.007678928571428572
+  },
+  {
+   "card": 0,
+   "slot": 135,
+   "label": "blk.2.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05725285714285714,
+   "wait_ms": 0.008260357142857142
+  },
+  {
+   "card": 0,
+   "slot": 136,
+   "label": "blk.2.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5078657142857143,
+   "wait_ms": 0.09945535714285714
+  },
+  {
+   "card": 0,
+   "slot": 137,
+   "label": "blk.3.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14280964285714284,
+   "wait_ms": 0.011571785714285715
+  },
+  {
+   "card": 0,
+   "slot": 138,
+   "label": "blk.3.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05586892857142857,
+   "wait_ms": 0.007355
+  },
+  {
+   "card": 0,
+   "slot": 139,
+   "label": "blk.3.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6015542857142857,
+   "wait_ms": 0.0003239285714285714
+  },
+  {
+   "card": 0,
+   "slot": 140,
+   "label": "blk.4.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14528785714285714,
+   "wait_ms": 0.005783214285714286
+  },
+  {
+   "card": 0,
+   "slot": 141,
+   "label": "blk.4.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.056584642857142854,
+   "wait_ms": 0.006829642857142857
+  },
+  {
+   "card": 0,
+   "slot": 142,
+   "label": "blk.4.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5367846428571429,
+   "wait_ms": 0.053800714285714285
+  },
+  {
+   "card": 0,
+   "slot": 143,
+   "label": "blk.5.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.142485,
+   "wait_ms": 0.007838928571428571
+  },
+  {
+   "card": 0,
+   "slot": 144,
+   "label": "blk.5.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05631964285714286,
+   "wait_ms": 0.008485
+  },
+  {
+   "card": 0,
+   "slot": 145,
+   "label": "blk.5.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6524307142857143,
+   "wait_ms": 0.00033357142857142857
+  },
+  {
+   "card": 0,
+   "slot": 146,
+   "label": "blk.6.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1420532142857143,
+   "wait_ms": 0.008613571428571429
+  },
+  {
+   "card": 0,
+   "slot": 147,
+   "label": "blk.6.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05672142857142857,
+   "wait_ms": 0.005588214285714286
+  },
+  {
+   "card": 0,
+   "slot": 148,
+   "label": "blk.6.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.49701285714285715,
+   "wait_ms": 0.12702714285714287
+  },
+  {
+   "card": 0,
+   "slot": 149,
+   "label": "blk.7.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14194035714285713,
+   "wait_ms": 0.0088775
+  },
+  {
+   "card": 0,
+   "slot": 150,
+   "label": "blk.7.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05572785714285714,
+   "wait_ms": 0.007134642857142857
+  },
+  {
+   "card": 0,
+   "slot": 151,
+   "label": "blk.7.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5326292857142857,
+   "wait_ms": 0.02871
+  },
+  {
+   "card": 0,
+   "slot": 152,
+   "label": "blk.8.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14248107142857142,
+   "wait_ms": 0.008097857142857143
+  },
+  {
+   "card": 0,
+   "slot": 153,
+   "label": "blk.8.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.0581225,
+   "wait_ms": 0.005627857142857143
+  },
+  {
+   "card": 0,
+   "slot": 154,
+   "label": "blk.8.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6185478571428571,
+   "wait_ms": 0.00036
+  },
+  {
+   "card": 0,
+   "slot": 155,
+   "label": "blk.9.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14178321428571428,
+   "wait_ms": 0.0084375
+  },
+  {
+   "card": 0,
+   "slot": 156,
+   "label": "blk.9.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05680321428571428,
+   "wait_ms": 0.006543928571428571
+  },
+  {
+   "card": 0,
+   "slot": 157,
+   "label": "blk.9.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.7314014285714285,
+   "wait_ms": 0.0003639285714285714
+  },
+  {
+   "card": 0,
+   "slot": 158,
+   "label": "blk.10.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14347107142857143,
+   "wait_ms": 0.008006071428571428
+  },
+  {
+   "card": 0,
+   "slot": 159,
+   "label": "blk.10.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05536392857142857,
+   "wait_ms": 0.008773214285714285
+  },
+  {
+   "card": 0,
+   "slot": 160,
+   "label": "blk.10.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.47352607142857145,
+   "wait_ms": 0.18590892857142857
+  },
+  {
+   "card": 0,
+   "slot": 161,
+   "label": "blk.11.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14304392857142856,
+   "wait_ms": 0.008503214285714286
+  },
+  {
+   "card": 0,
+   "slot": 162,
+   "label": "blk.11.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05681785714285714,
+   "wait_ms": 0.0056575
+  },
+  {
+   "card": 0,
+   "slot": 163,
+   "label": "blk.11.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5118321428571428,
+   "wait_ms": 0.093055
+  },
+  {
+   "card": 0,
+   "slot": 164,
+   "label": "blk.12.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14181642857142857,
+   "wait_ms": 0.00849392857142857
+  },
+  {
+   "card": 0,
+   "slot": 165,
+   "label": "blk.12.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.056614285714285714,
+   "wait_ms": 0.006005
+  },
+  {
+   "card": 0,
+   "slot": 166,
+   "label": "blk.12.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5005896428571428,
+   "wait_ms": 0.11906928571428571
+  },
+  {
+   "card": 0,
+   "slot": 167,
+   "label": "blk.13.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1431917857142857,
+   "wait_ms": 0.0004342857142857143
+  },
+  {
+   "card": 0,
+   "slot": 168,
+   "label": "blk.13.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.08091714285714285,
+   "wait_ms": 0.006023928571428572
+  },
+  {
+   "card": 0,
+   "slot": 169,
+   "label": "blk.13.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.40039142857142856,
+   "wait_ms": 0.2839028571428571
+  },
+  {
+   "card": 0,
+   "slot": 170,
+   "label": "blk.14.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14304785714285714,
+   "wait_ms": 0.007881071428571428
+  },
+  {
+   "card": 0,
+   "slot": 171,
+   "label": "blk.14.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.057270714285714286,
+   "wait_ms": 0.006256785714285714
+  },
+  {
+   "card": 0,
+   "slot": 172,
+   "label": "blk.14.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.7141014285714286,
+   "wait_ms": 0.00030321428571428573
+  },
+  {
+   "card": 0,
+   "slot": 173,
+   "label": "blk.15.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14458535714285714,
+   "wait_ms": 0.008185714285714286
+  },
+  {
+   "card": 0,
+   "slot": 174,
+   "label": "blk.15.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.0559575,
+   "wait_ms": 0.008338571428571428
+  },
+  {
+   "card": 0,
+   "slot": 175,
+   "label": "blk.15.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.647255,
+   "wait_ms": 0.00035142857142857144
+  },
+  {
+   "card": 0,
+   "slot": 176,
+   "label": "blk.16.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14441928571428572,
+   "wait_ms": 0.007348571428571428
+  },
+  {
+   "card": 0,
+   "slot": 177,
+   "label": "blk.16.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05528142857142857,
+   "wait_ms": 0.008288928571428572
+  },
+  {
+   "card": 0,
+   "slot": 178,
+   "label": "blk.16.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5304382142857142,
+   "wait_ms": 0.05220857142857143
+  },
+  {
+   "card": 0,
+   "slot": 179,
+   "label": "blk.17.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14540107142857142,
+   "wait_ms": 0.005833214285714285
+  },
+  {
+   "card": 0,
+   "slot": 180,
+   "label": "blk.17.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05638857142857143,
+   "wait_ms": 0.006462857142857143
+  },
+  {
+   "card": 0,
+   "slot": 181,
+   "label": "blk.17.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6717075,
+   "wait_ms": 0.0003357142857142857
+  },
+  {
+   "card": 0,
+   "slot": 182,
+   "label": "blk.18.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14263392857142856,
+   "wait_ms": 0.008205714285714285
+  },
+  {
+   "card": 0,
+   "slot": 183,
+   "label": "blk.18.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05664321428571428,
+   "wait_ms": 0.005486071428571429
+  },
+  {
+   "card": 0,
+   "slot": 184,
+   "label": "blk.18.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5594614285714286,
+   "wait_ms": 0.006728214285714285
+  },
+  {
+   "card": 0,
+   "slot": 185,
+   "label": "blk.19.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1437382142857143,
+   "wait_ms": 0.015918571428571428
+  },
+  {
+   "card": 0,
+   "slot": 186,
+   "label": "blk.19.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.055791071428571426,
+   "wait_ms": 0.0065592857142857145
+  },
+  {
+   "card": 0,
+   "slot": 187,
+   "label": "blk.19.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.49825821428571426,
+   "wait_ms": 0.13539214285714285
+  },
+  {
+   "card": 0,
+   "slot": 188,
+   "label": "blk.20.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14224035714285715,
+   "wait_ms": 0.008128928571428572
+  },
+  {
+   "card": 0,
+   "slot": 189,
+   "label": "blk.20.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.056285357142857144,
+   "wait_ms": 0.007134642857142857
+  },
+  {
+   "card": 0,
+   "slot": 190,
+   "label": "blk.20.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.48338892857142857,
+   "wait_ms": 0.13140214285714286
+  },
+  {
+   "card": 0,
+   "slot": 191,
+   "label": "blk.21.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14252607142857143,
+   "wait_ms": 0.008822857142857143
+  },
+  {
+   "card": 0,
+   "slot": 192,
+   "label": "blk.21.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.057353214285714285,
+   "wait_ms": 0.005833214285714285
+  },
+  {
+   "card": 0,
+   "slot": 193,
+   "label": "blk.21.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4627907142857143,
+   "wait_ms": 0.2055657142857143
+  },
+  {
+   "card": 0,
+   "slot": 194,
+   "label": "blk.22.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14176035714285715,
+   "wait_ms": 0.009065
+  },
+  {
+   "card": 0,
+   "slot": 195,
+   "label": "blk.22.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05775678571428571,
+   "wait_ms": 0.004705714285714285
+  },
+  {
+   "card": 0,
+   "slot": 196,
+   "label": "blk.22.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5310492857142857,
+   "wait_ms": 0.05755642857142857
+  },
+  {
+   "card": 1,
+   "slot": 128,
+   "label": "blk.0.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1344217857142857,
+   "wait_ms": 0.00031714285714285715
+  },
+  {
+   "card": 1,
+   "slot": 129,
+   "label": "blk.0.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.053679642857142856,
+   "wait_ms": 0.0002957142857142857
+  },
+  {
+   "card": 1,
+   "slot": 130,
+   "label": "blk.0.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4903657142857143,
+   "wait_ms": 0.033393928571428574
+  },
+  {
+   "card": 1,
+   "slot": 131,
+   "label": "blk.1.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1383882142857143,
+   "wait_ms": 0.0003225
+  },
+  {
+   "card": 1,
+   "slot": 132,
+   "label": "blk.1.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05570607142857143,
+   "wait_ms": 0.0003182142857142857
+  },
+  {
+   "card": 1,
+   "slot": 133,
+   "label": "blk.1.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6159167857142858,
+   "wait_ms": 0.0002925
+  },
+  {
+   "card": 1,
+   "slot": 134,
+   "label": "blk.2.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14315357142857144,
+   "wait_ms": 0.00030607142857142855
+  },
+  {
+   "card": 1,
+   "slot": 135,
+   "label": "blk.2.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05551642857142857,
+   "wait_ms": 0.00030892857142857143
+  },
+  {
+   "card": 1,
+   "slot": 136,
+   "label": "blk.2.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5763207142857143,
+   "wait_ms": 0.00033357142857142857
+  },
+  {
+   "card": 1,
+   "slot": 137,
+   "label": "blk.3.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14425892857142858,
+   "wait_ms": 0.0003292857142857143
+  },
+  {
+   "card": 1,
+   "slot": 138,
+   "label": "blk.3.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05513642857142857,
+   "wait_ms": 0.00031214285714285713
+  },
+  {
+   "card": 1,
+   "slot": 139,
+   "label": "blk.3.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5111425,
+   "wait_ms": 0.08101
+  },
+  {
+   "card": 1,
+   "slot": 140,
+   "label": "blk.4.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14299142857142857,
+   "wait_ms": 0.0003492857142857143
+  },
+  {
+   "card": 1,
+   "slot": 141,
+   "label": "blk.4.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05434571428571429,
+   "wait_ms": 0.0003071428571428571
+  },
+  {
+   "card": 1,
+   "slot": 142,
+   "label": "blk.4.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5602642857142857,
+   "wait_ms": 0.0003332142857142857
+  },
+  {
+   "card": 1,
+   "slot": 143,
+   "label": "blk.5.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14287178571428572,
+   "wait_ms": 0.0003210714285714286
+  },
+  {
+   "card": 1,
+   "slot": 144,
+   "label": "blk.5.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05636392857142857,
+   "wait_ms": 0.00028321428571428573
+  },
+  {
+   "card": 1,
+   "slot": 145,
+   "label": "blk.5.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4682067857142857,
+   "wait_ms": 0.15320071428571427
+  },
+  {
+   "card": 1,
+   "slot": 146,
+   "label": "blk.6.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1421725,
+   "wait_ms": 0.0003182142857142857
+  },
+  {
+   "card": 1,
+   "slot": 147,
+   "label": "blk.6.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05531035714285714,
+   "wait_ms": 0.00028857142857142856
+  },
+  {
+   "card": 1,
+   "slot": 148,
+   "label": "blk.6.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6146228571428571,
+   "wait_ms": 0.00028892857142857144
+  },
+  {
+   "card": 1,
+   "slot": 149,
+   "label": "blk.7.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14309107142857141,
+   "wait_ms": 0.0002982142857142857
+  },
+  {
+   "card": 1,
+   "slot": 150,
+   "label": "blk.7.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05336785714285714,
+   "wait_ms": 0.00028321428571428573
+  },
+  {
+   "card": 1,
+   "slot": 151,
+   "label": "blk.7.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5581428571428572,
+   "wait_ms": 0.00030285714285714285
+  },
+  {
+   "card": 1,
+   "slot": 152,
+   "label": "blk.8.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14242107142857144,
+   "wait_ms": 0.00029535714285714283
+  },
+  {
+   "card": 1,
+   "slot": 153,
+   "label": "blk.8.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.054931071428571426,
+   "wait_ms": 0.0002842857142857143
+  },
+  {
+   "card": 1,
+   "slot": 154,
+   "label": "blk.8.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4894667857142857,
+   "wait_ms": 0.09863535714285715
+  },
+  {
+   "card": 1,
+   "slot": 155,
+   "label": "blk.9.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14240785714285714,
+   "wait_ms": 0.0002985714285714286
+  },
+  {
+   "card": 1,
+   "slot": 156,
+   "label": "blk.9.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05351321428571429,
+   "wait_ms": 0.00028357142857142855
+  },
+  {
+   "card": 1,
+   "slot": 157,
+   "label": "blk.9.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4240542857142857,
+   "wait_ms": 0.2276632142857143
+  },
+  {
+   "card": 1,
+   "slot": 158,
+   "label": "blk.10.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14245464285714285,
+   "wait_ms": 0.00037035714285714287
+  },
+  {
+   "card": 1,
+   "slot": 159,
+   "label": "blk.10.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05548678571428572,
+   "wait_ms": 0.0002957142857142857
+  },
+  {
+   "card": 1,
+   "slot": 160,
+   "label": "blk.10.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6259089285714285,
+   "wait_ms": 0.00029107142857142857
+  },
+  {
+   "card": 1,
+   "slot": 161,
+   "label": "blk.11.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14250107142857144,
+   "wait_ms": 0.0003275
+  },
+  {
+   "card": 1,
+   "slot": 162,
+   "label": "blk.11.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05312392857142857,
+   "wait_ms": 0.0003271428571428571
+  },
+  {
+   "card": 1,
+   "slot": 163,
+   "label": "blk.11.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5741096428571428,
+   "wait_ms": 0.00031107142857142857
+  },
+  {
+   "card": 1,
+   "slot": 164,
+   "label": "blk.12.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14233357142857142,
+   "wait_ms": 0.0003242857142857143
+  },
+  {
+   "card": 1,
+   "slot": 165,
+   "label": "blk.12.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.0554675,
+   "wait_ms": 0.0003175
+  },
+  {
+   "card": 1,
+   "slot": 166,
+   "label": "blk.12.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.61248,
+   "wait_ms": 0.0003189285714285714
+  },
+  {
+   "card": 1,
+   "slot": 167,
+   "label": "blk.13.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.141815,
+   "wait_ms": 0.022177142857142857
+  },
+  {
+   "card": 1,
+   "slot": 168,
+   "label": "blk.13.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05114392857142857,
+   "wait_ms": 0.0003007142857142857
+  },
+  {
+   "card": 1,
+   "slot": 169,
+   "label": "blk.13.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6519607142857143,
+   "wait_ms": 0.00032464285714285717
+  },
+  {
+   "card": 1,
+   "slot": 170,
+   "label": "blk.14.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14357,
+   "wait_ms": 0.0003271428571428571
+  },
+  {
+   "card": 1,
+   "slot": 171,
+   "label": "blk.14.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05400035714285714,
+   "wait_ms": 0.00031142857142857144
+  },
+  {
+   "card": 1,
+   "slot": 172,
+   "label": "blk.14.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4187635714285714,
+   "wait_ms": 0.21766
+  },
+  {
+   "card": 1,
+   "slot": 173,
+   "label": "blk.15.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.13886071428571428,
+   "wait_ms": 0.00034464285714285716
+  },
+  {
+   "card": 1,
+   "slot": 174,
+   "label": "blk.15.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05372821428571429,
+   "wait_ms": 0.00033428571428571426
+  },
+  {
+   "card": 1,
+   "slot": 175,
+   "label": "blk.15.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.4512539285714286,
+   "wait_ms": 0.1650332142857143
+  },
+  {
+   "card": 1,
+   "slot": 176,
+   "label": "blk.16.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.143535,
+   "wait_ms": 0.0002985714285714286
+  },
+  {
+   "card": 1,
+   "slot": 177,
+   "label": "blk.16.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05394357142857143,
+   "wait_ms": 0.00028857142857142856
+  },
+  {
+   "card": 1,
+   "slot": 178,
+   "label": "blk.16.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5526792857142857,
+   "wait_ms": 0.00039642857142857145
+  },
+  {
+   "card": 1,
+   "slot": 179,
+   "label": "blk.17.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.1422425,
+   "wait_ms": 0.0002975
+  },
+  {
+   "card": 1,
+   "slot": 180,
+   "label": "blk.17.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.053905357142857144,
+   "wait_ms": 0.0002875
+  },
+  {
+   "card": 1,
+   "slot": 181,
+   "label": "blk.17.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.44397785714285715,
+   "wait_ms": 0.19592535714285714
+  },
+  {
+   "card": 1,
+   "slot": 182,
+   "label": "blk.18.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14212321428571428,
+   "wait_ms": 0.00031785714285714284
+  },
+  {
+   "card": 1,
+   "slot": 183,
+   "label": "blk.18.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05335535714285714,
+   "wait_ms": 0.000285
+  },
+  {
+   "card": 1,
+   "slot": 184,
+   "label": "blk.18.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5367710714285714,
+   "wait_ms": 0.00030785714285714287
+  },
+  {
+   "card": 1,
+   "slot": 185,
+   "label": "blk.19.qsa.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14289321428571428,
+   "wait_ms": 0.0003207142857142857
+  },
+  {
+   "card": 1,
+   "slot": 186,
+   "label": "blk.19.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05522642857142857,
+   "wait_ms": 0.0003071428571428571
+  },
+  {
+   "card": 1,
+   "slot": 187,
+   "label": "blk.19.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6259814285714286,
+   "wait_ms": 0.0003107142857142857
+  },
+  {
+   "card": 1,
+   "slot": 188,
+   "label": "blk.20.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14262964285714286,
+   "wait_ms": 0.0002989285714285714
+  },
+  {
+   "card": 1,
+   "slot": 189,
+   "label": "blk.20.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05403928571428571,
+   "wait_ms": 0.00030571428571428573
+  },
+  {
+   "card": 1,
+   "slot": 190,
+   "label": "blk.20.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6127732142857143,
+   "wait_ms": 0.0002839285714285714
+  },
+  {
+   "card": 1,
+   "slot": 191,
+   "label": "blk.21.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14344214285714285,
+   "wait_ms": 0.00036535714285714286
+  },
+  {
+   "card": 1,
+   "slot": 192,
+   "label": "blk.21.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.05447428571428571,
+   "wait_ms": 0.00034857142857142856
+  },
+  {
+   "card": 1,
+   "slot": 193,
+   "label": "blk.21.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.6345439285714286,
+   "wait_ms": 0.00033214285714285713
+  },
+  {
+   "card": 1,
+   "slot": 194,
+   "label": "blk.22.gdn.gated.tp_xheads",
+   "op": "tp_xheads",
+   "values": 6144,
+   "n": 1,
+   "own_ms": 0.14216821428571427,
+   "wait_ms": 0.00036607142857142855
+  },
+  {
+   "card": 1,
+   "slot": 195,
+   "label": "blk.22.attention.tp_xgather",
+   "op": "tp_xgather",
+   "values": 2560,
+   "n": 1,
+   "own_ms": 0.053085,
+   "wait_ms": 0.0003475
+  },
+  {
+   "card": 1,
+   "slot": 196,
+   "label": "blk.22.expsdown.tp_xcompact",
+   "op": "tp_xheads",
+   "values": 25600,
+   "n": 1,
+   "own_ms": 0.5571917857142857,
+   "wait_ms": 0.00034785714285714286
+  }
+ ]
+}
