@@ -1,0 +1,113 @@
+{
+ "workdir": "/dev/shm/tp-svc-aot-20261031/arm-twobj-r1-c65536",
+ "unit": "sc117-tp-svc-aot-arm-twobj-r1-c65536-20261031",
+ "unit_started_epoch": 1793442703.881735,
+ "ready_epoch": 1793443326.077184,
+ "launch_to_ready_s": 622.195,
+ "first_request": {
+  "wall_s": 112.02089642989449,
+  "prompt_wall_ms": 111596.44947713241,
+  "decode_wall_ms": 418.24849299155176,
+  "prompt_tokens": 87,
+  "output_tokens": 32,
+  "started_after_launch_s": 145.783
+ },
+ "second_request": {
+  "wall_s": 1.85118842497468,
+  "prompt_wall_ms": 915.1319481898099,
+  "decode_wall_ms": 411.44797089509666
+ },
+ "startup_gate": {
+  "requests": 24,
+  "seconds": 335.175,
+  "started_after_launch_s": 274.446,
+  "first_batched": {
+   "label": "prefill-gate-code-review-258-256",
+   "wall_s": 28.50702833989635,
+   "prompt_wall_ms": 28163.403927115723
+  },
+  "batched_walls_s": [
+   28.507,
+   1.653,
+   2.294,
+   0.442,
+   1.223,
+   1.044,
+   0.683,
+   0.342,
+   1.185,
+   1.609,
+   2.592
+  ]
+ },
+ "first_half": {
+  "rank0": {
+   "first": {
+    "position": 0,
+    "half_completion_ms": 53230.4,
+    "enqueue_loop_ms": 52661.9,
+    "prepare_ms": 556.982,
+    "wait_ms": 11.3801,
+    "launches_issued": 728
+   },
+   "second": {
+    "position": 1,
+    "half_completion_ms": 15.7277,
+    "enqueue_loop_ms": 3.14271,
+    "prepare_ms": 0.101481,
+    "wait_ms": 12.4266,
+    "launches_issued": 728
+   }
+  },
+  "rank1": {
+   "first": {
+    "position": 0,
+    "half_completion_ms": 46319.5,
+    "enqueue_loop_ms": 46319.4,
+    "prepare_ms": 0.062878,
+    "wait_ms": 0.118955,
+    "launches_issued": 783
+   },
+   "second": {
+    "position": 1,
+    "half_completion_ms": 16.3502,
+    "enqueue_loop_ms": 3.71073,
+    "prepare_ms": 0.031379,
+    "wait_ms": 12.6181,
+    "launches_issued": 783
+   }
+  }
+ },
+ "jit_caches": {
+  "rank0/sycl": {
+   "files": 0,
+   "bytes": 0,
+   "exists": true
+  },
+  "rank0/neo": {
+   "files": 27,
+   "bytes": 25688160,
+   "exists": true
+  },
+  "rank0/xdg": {
+   "files": 0,
+   "bytes": 0,
+   "exists": true
+  },
+  "rank1/sycl": {
+   "files": 0,
+   "bytes": 0,
+   "exists": true
+  },
+  "rank1/neo": {
+   "files": 22,
+   "bytes": 22776296,
+   "exists": true
+  },
+  "rank1/xdg": {
+   "files": 0,
+   "bytes": 0,
+   "exists": true
+  }
+ }
+}
