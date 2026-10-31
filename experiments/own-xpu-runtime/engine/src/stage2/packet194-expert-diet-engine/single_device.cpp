@@ -116,10 +116,10 @@ class SyclDevice final : public Backend, public OrderedQueue {
     if(exchange_stats_skip()>=0)return submit_exchange_stats(x); // OWNRT_TP_EXCHANGE_STATS (diagnostic, default off)
     using u32=std::uint32_t;namespace L=exchange_layout;constexpr u32 wg=256;
     const u32 mode=x.mode,words=x.words,rows=x.rows,parity=x.parity,cap=x.cap,run=x.run,stride=x.dst_stride;
-    const u32 owned=mode?((x.top+1u-parity)/2u)*rows:words,other=mode?((x.top+parity)/2u)*rows:0u;
+    const u32 owned=mode==1u?((x.top+1u-parity)/2u)*rows:words,other=mode==1u?((x.top+parity)/2u)*rows:0u; // mode 2: words, like mode 0
     const u32 groups=std::clamp<u32>((std::max(owned,other)+511u)/512u,2u,16u);
     const u32* src=static_cast<const u32*>(x.src);u32* local=static_cast<u32*>(x.local_dst);u32* remote=static_cast<u32*>(x.peer_dst);
-    const u32* staging=static_cast<const u32*>(x.select_src);u32* out=static_cast<u32*>(x.select_dst);
+    const u32* staging=static_cast<const u32*>(x.select_src);u32* out=static_cast<u32*>(x.select_dst);const u32* routes=static_cast<const u32*>(x.routes);
     u32* ctl=x.control;u32* error=x.error;const u32 record_at=L::header+x.slot*L::stride;
     u32* peer_flag=x.peer_control+record_at+L::flag;
     return queue_->submit([&](sycl::handler& h){
@@ -129,6 +129,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
         const u32 gid=u32(it.get_global_linear_id()),lid=u32(it.get_local_linear_id()),step=groups*wg;
         if(mode==0u&&run==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i];if(local)local[i]=v;remote[i]=v;}}
         else if(mode==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i],w=(i/run)*stride+i%run;if(local)local[w]=v;remote[w]=v;}}
+        else if(mode==2u){for(u32 i=gid;i<words;i+=step)if(routes[3u*(i/run)]!=0xfffffffeu)remote[i]=src[i];} // OWNRT_PREFILL_EXPERT_PARITY/_BALANCE: this card's rows (its filtered route is not the skip route)
         else for(u32 i=gid;i<owned;i+=step){const u32 w=(2u*(i/rows)+parity)*rows+i%rows;remote[w]=src[w];}
         sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());
@@ -175,11 +176,11 @@ class SyclDevice final : public Backend, public OrderedQueue {
   sycl::event submit_exchange_stats(const Exchange& x) {
     using u32=std::uint32_t;using u64=std::uint64_t;namespace L=exchange_layout;constexpr u32 wg=256;
     const u32 mode=x.mode,words=x.words,rows=x.rows,parity=x.parity,cap=x.cap,run=x.run,stride=x.dst_stride;
-    const u32 owned=mode?((x.top+1u-parity)/2u)*rows:words,other=mode?((x.top+parity)/2u)*rows:0u;
+    const u32 owned=mode==1u?((x.top+1u-parity)/2u)*rows:words,other=mode==1u?((x.top+parity)/2u)*rows:0u; // mode 2: words, like mode 0
     const u32 groups=std::clamp<u32>((std::max(owned,other)+511u)/512u,2u,16u);
     const u32 skip=u32(exchange_stats_skip());
     const u32* src=static_cast<const u32*>(x.src);u32* local=static_cast<u32*>(x.local_dst);u32* remote=static_cast<u32*>(x.peer_dst);
-    const u32* staging=static_cast<const u32*>(x.select_src);u32* out=static_cast<u32*>(x.select_dst);
+    const u32* staging=static_cast<const u32*>(x.select_src);u32* out=static_cast<u32*>(x.select_dst);const u32* routes=static_cast<const u32*>(x.routes);
     u32* ctl=x.control;u32* error=x.error;const u32 record_at=L::header+x.slot*L::stride;
     u32* peer_flag=x.peer_control+record_at+L::flag;
     return queue_->submit([&](sycl::handler& h){
@@ -192,6 +193,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
         u64 t_entry=0;if(lid==0u)t_entry=X::clock<X::clock_scope::sub_group>();
         if(mode==0u&&run==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i];if(local)local[i]=v;remote[i]=v;}}
         else if(mode==0u){for(u32 i=gid;i<words;i+=step){const u32 v=src[i],w=(i/run)*stride+i%run;if(local)local[w]=v;remote[w]=v;}}
+        else if(mode==2u){for(u32 i=gid;i<words;i+=step)if(routes[3u*(i/run)]!=0xfffffffeu)remote[i]=src[i];} // OWNRT_PREFILL_EXPERT_PARITY/_BALANCE: this card's rows (its filtered route is not the skip route)
         else for(u32 i=gid;i<owned;i+=step){const u32 w=(2u*(i/rows)+parity)*rows+i%rows;remote[w]=src[w];}
         sycl::atomic_fence(sycl::memory_order::release,sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());
@@ -213,7 +215,7 @@ class SyclDevice final : public Backend, public OrderedQueue {
             else sycl::atomic_fence(sycl::memory_order::acquire,sycl::memory_scope::system);
             dev_ref(ctl[L::waits]).fetch_add(1u);
             if(polls){dev_ref(ctl[L::spun]).fetch_add(1u);dev_ref(ctl[L::spin_sum]).fetch_add(polls);dev_ref(ctl[L::max_spin]).fetch_max(polls);}
-            if(mode==0u&&epoch>skip){
+            if((mode==0u||mode==2u)&&epoch>skip){
               u32* r=ctl+record_at;const u64 wait=t_release-t_arrive,own=t_arrive-t_entry;const u32 w32=wait>0xffffffffull?0xffffffffu:u32(wait);
               dev_ref(r[1]).fetch_add(1u);
               dev64(*reinterpret_cast<unsigned long long*>(r+2)).fetch_add(wait);

@@ -1176,6 +1176,12 @@ static int run_rank(const Options& a) {
     const size_t S=engine->stream_bytes(),R=size_t(a.prefill_rows);auto before=std::chrono::steady_clock::now();
     require(prefill::valid_header(prefill_base,R,S,a.prefill_slots),"prefill command header changed");
     std::vector<int> owned_tokens;if(a.rank==0){const auto* tokens=prefill::tokens(prefill_base,a.prefill_slots);owned_tokens.assign(tokens,tokens+r.token);}
+    // OWNRT_PREFILL_LOOKUP_PREFETCH=1 (2026-10-31, prefill_wire.hpp, prefill_engine.hpp): the announced next rank-0 chunk;
+    // its lookup rows are computed on a helper thread while this chunk runs. The hint is consumed (magic cleared).
+    if(a.rank==0&&prefill::lookup_prefetch()){auto* h=prefill::prefetch_hint(prefill_base);
+     if(__atomic_load_n(&h->magic,__ATOMIC_ACQUIRE)==prefill::prefetch_magic){const int P=h->position,n=h->rows;
+      if(n>=1&&n<=a.prefill_rows&&P>=0)engine->prefill_lookup_prefetch_arm(P,prefill::next_tokens(prefill_base),n);
+      __atomic_store_n(&h->magic,0u,__ATOMIC_RELEASE);}}
     if(a.rank==0)engine->prefill_chunk(r.position,owned_tokens.data(),r.token,nullptr,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots));
     else engine->prefill_chunk(r.position,nullptr,r.token,prefill::forward(prefill_base,r.fixture,R,S,a.prefill_slots),prefill::reverse(prefill_base,r.fixture,R,S,a.prefill_slots));
     if(a.pipeline_ring){ring_dispatcher->prefill_complete(r,a.rank==0?owned_tokens.data():nullptr);ring_dispatcher->external_prefill_publish(r,a.rank==0?owned_tokens.data():nullptr,prefill_base);}

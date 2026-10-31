@@ -114,6 +114,9 @@ void prefill_allocate() {
     }
     for(const auto& [r,seg]:open)live[r].push_back(seg);
     for(auto& [r,segs]:live)if(!r.starts_with("blk.*")){segs.assign(1,{0,n});}
+    // OWNRT_PREFILL_EXPERT_PARITY: gate/up read expert_input later, and down writes the canonical expsdown earlier, than
+    // the plan's sites say; neither role shares an allocation then (live for the whole chunk).
+    if(prefill_expert_owned())for(auto& [r,segs]:live)if(r=="blk.*.expert_input"||r=="blk.*.expsdown"){segs.assign(1,{0,n});}
     for(const auto& [r,bytes]:role_bytes)require(live.count(r),"prefill shadow role without a site");
     auto overlap=[&](const std::string& x,const std::string& y){for(const auto& a0:live.at(x))for(const auto& b0:live.at(y))if(a0.first<=b0.second&&b0.first<=a0.second)return true;return false;};
     std::vector<std::pair<size_t,std::string>> order;for(const auto& [r,bytes]:role_bytes)order.push_back({bytes,r});
@@ -150,6 +153,17 @@ void prefill_allocate() {
     xg_tiles[size_t(c)]=allocate(c,"prefill:xg-tiles",xg_capacity*xgroup::desc_words*4,Category::scratch,Lifetime::transaction);
     xg_count[size_t(c)]=allocate(c,"prefill:xg-count",64,Category::scratch,Lifetime::transaction);
   }
+  if(a.tp_replicate&&prefill_expert_owned()) {
+    bool compact=false;for(const auto* l:prefill_sites)compact=compact||(l->card==c&&l->op=="tp_route_compact");
+    require(compact&&xgroup::enabled()&&a.f32_activations,"OWNRT_PREFILL_EXPERT_PARITY: OWNRT_TP_EXPERTS=compact, OWNRT_PREFILL_EXPERTS=1, F32 exact mode");
+    const size_t n=size_t(p.g.top)*M,mid=size_t(p.g.mid);auto& b=prefill_parity[size_t(c)];
+    auto mk=[&](const char* name,size_t bytes){auto id=allocate(c,std::string("prefill:parity-")+name,bytes,Category::scratch,Lifetime::transaction);
+      const std::vector<uint8_t> z(std::min(bytes,size_t(4194304)),0);for(size_t off=0;off<bytes;off+=z.size())upload(c,id,off,z.data(),std::min(z.size(),bytes-off));total+=bytes;return id;};
+    b.routes=mk("routes",n*12);b.routes_down=mk("routes-down",n*12);b.gate=mk("gate",n*mid*4);b.up=mk("up",n*mid*4);b.act=mk("act",n*mid*4);
+    b.status_gate=mk("status-gate",n*4);b.status_up=mk("status-up",n*4);b.status_down=mk("status-down",n*4);
+  }
+#else
+  require(!prefill_expert_owned(),"OWNRT_PREFILL_EXPERT_PARITY/_BALANCE: device builds only");
 #endif
   prefill_positions[size_t(c)]=allocate(c,"prefill:positions",M*4,Category::scratch,Lifetime::transaction);
   prefill_tokens[size_t(c)]=allocate(c,"prefill:tokens",M*4,Category::scratch,Lifetime::transaction);
@@ -350,11 +364,99 @@ bool prefill_lookup_rows_threaded(const std::vector<const flash::Launch*>& sites
   for(size_t j=0;j<tables.size();++j)for(int r=0;r<M;++r)for(size_t k=0;k<tables[j].ids;++k)w.count_read(tables[j].row_bytes); // read()'s counters, as the sequential loop leaves them
   return true;
 }
+// OWNRT_PREFILL_LOOKUP_PREFETCH=1 (2026-10-31, research/tp/prefill-balance-2026-10-31; default off; rank 0 with
+// OWNRT_PREFILL_LOOKUP_BATCH=1 and OWNRT_PREFILL_LOOKUP_THREADS>1; prefill_wire.hpp): each prefill command announces the
+// next chunk; once this chunk's lookup rows are computed, rank 0 computes the next chunk's on a helper thread while this
+// chunk runs on the device (the host mostly waits in drains then):
+// the ids row by row from the token history the previous chunk left (lookup_input_at: lookup_input with that history),
+// then the same multi-threaded dequantization as prefill_lookup_rows_threaded. The rows are a pure function of the tokens,
+// the starting history and the resident tables. The next prefill command uses them only if its position, rows, tokens
+// and starting history equal the announced ones; it then applies what the threaded path leaves (row-extent checks,
+// lookup_ids, history, read() counters) and uploads the same bytes. Otherwise it computes the rows as before.
+static bool prefill_lookup_prefetch(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_LOOKUP_PREFETCH");return e&&e[0]=='1';}();return on;}
+struct LookupPrefetch {int P0=-1,M=0;std::vector<int> tokens;int64_t h0=0,h1=0;std::vector<std::vector<float>> rows;std::vector<size_t> row_bytes,table_row_bytes,table_ids;
+  std::vector<std::vector<uint8_t>> last_ids;bool ok=false;std::string error;double ms=0;};
+struct LookupPrefetchJob {std::thread t;std::shared_ptr<LookupPrefetch> r;uint64_t started=0,used=0,missed=0;~LookupPrefetchJob(){if(t.joinable())t.join();}};
+LookupPrefetchJob lookup_prefetch_job;bool last_lookup_prefetched=false;
+std::vector<uint8_t> lookup_input_at(const flash::Launch& l,int token,int64_t old0,int64_t old1) const { // lookup_input at a given history
+  auto input=buffers[l.card].at(l.inputs[0]);
+  std::vector<uint8_t> raw(input.n*flash::scalar_bytes(input.type));
+  if(input.type==Scalar::i32)std::memcpy(raw.data(),&token,4);
+  else {
+    if(old1==p.g.eos)old0=p.g.eos;
+    for(int n=2;n<=3;++n) {
+      uint64_t bits=uint64_t(token)*uint64_t(metadata[0]);
+      bits^=uint64_t(old1)*uint64_t(metadata[1]);
+      if(n==3)bits^=uint64_t(old0)*uint64_t(metadata[2]);
+      int64_t v=std::bit_cast<int64_t>(bits);
+      for(int h=0;h<8;++h){int i=(n-2)*8+h;auto size=metadata[3+i];require(size>0,"PLE host size");
+        int64_t id=(v%size+size)%size+metadata[19+i];std::memcpy(raw.data()+i*8,&id,8);}
+    }
+  }
+  return raw;
+}
+bool prefill_lookup_rows_compute(LookupPrefetch& r) { // the threaded path's rows, without touching engine state
+  std::vector<const flash::Launch*> sites;for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0)sites.push_back(&l);
+  struct Table {std::string name;unsigned type=0;size_t row_bytes=0,columns=0,rows=0,ids=0;bool i64=false;};
+  std::vector<Table> tables;
+  for(const auto* l:sites){
+    const auto input=buffers[size_t(l->card)].at(l->inputs[0]);const auto& t=w.directory.at(l->weights[0]);const auto type=flash::grid_type(t.grid);const auto fmt=iq3::layout(type);
+    Table x{t.name,unsigned(type),size_t(t.shape.back())/fmt.elements*fmt.bytes,size_t(t.shape.back()),size_t(t.shape[0]),input.n,input.type==Scalar::i64};
+    if(!w.resident(x.name,0,x.row_bytes))return false;
+    tables.push_back(x);
+  }
+  const int M=r.M;int64_t h0=r.h0,h1=r.h1;
+  std::vector<std::vector<std::vector<uint8_t>>> ids(sites.size(),std::vector<std::vector<uint8_t>>(size_t(M)));
+  for(int q=0;q<M;++q){for(size_t j=0;j<sites.size();++j)ids[j][size_t(q)]=lookup_input_at(*sites[j],r.tokens[size_t(q)],h0,h1);h0=h1;h1=r.tokens[size_t(q)];}
+  r.rows.assign(sites.size(),{});r.row_bytes.assign(sites.size(),0);r.table_row_bytes.assign(sites.size(),0);r.table_ids.assign(sites.size(),0);r.last_ids.assign(sites.size(),{});
+  for(size_t j=0;j<sites.size();++j){r.row_bytes[j]=tables[j].ids*tables[j].columns*4;r.table_row_bytes[j]=tables[j].row_bytes;r.table_ids[j]=tables[j].ids;
+    r.last_ids[j]=ids[j][size_t(M-1)];r.rows[j].assign(size_t(M)*tables[j].ids*tables[j].columns,0.f);}
+  const int T=std::min(prefill_lookup_threads(),M);std::vector<std::thread> pool;std::vector<std::string> errors(static_cast<size_t>(T),std::string());
+  auto work=[&](int t){try{const int r0=M*t/T,r1=M*(t+1)/T;
+    for(size_t j=0;j<tables.size();++j){const auto& x=tables[j];
+      for(int q=r0;q<r1;++q){const auto& raw=ids[j][size_t(q)];float* out=r.rows[j].data()+size_t(q)*x.ids*x.columns;
+        for(size_t k=0;k<x.ids;++k){int64_t id;if(x.i64)std::memcpy(&id,raw.data()+k*8,8);else{int32_t v;std::memcpy(&v,raw.data()+k*4,4);id=v;}
+          if(id<0||size_t(id)>=x.rows)throw std::runtime_error("lookup bounds");
+          const uint8_t* row=w.resident(x.name,size_t(id)*x.row_bytes,x.row_bytes);if(!row)throw std::runtime_error("lookup table not resident");
+          const std::span<const uint8_t> span(row,x.row_bytes);
+          for(size_t e=0;e<x.columns;++e)out[k*x.columns+e]=gsq::element(x.type,span,x.columns,e);}}}}
+    catch(const std::exception& ex){errors[size_t(t)]=ex.what();}};
+  for(int t=1;t<T;++t)pool.emplace_back(work,t);
+  work(0);for(auto& th:pool)th.join();
+  for(const auto& e:errors)if(!e.empty())throw std::runtime_error("lookup prefetch thread: "+e);
+  return true;
+}
+void prefill_lookup_prefetch_start(int P0,const int* tokens,int M) {
+  if(!prefill_lookup_prefetch()||a.rank!=0||!prefill_lookup_batch()||prefill_lookup_threads()<2||M<1||M>a.prefill_rows)return;
+  if(lookup_prefetch_job.t.joinable())lookup_prefetch_job.t.join();
+  auto r=std::make_shared<LookupPrefetch>();r->P0=P0;r->M=M;r->tokens.assign(tokens,tokens+M);r->h0=history0;r->h1=history1;
+  lookup_prefetch_job.r=r;++lookup_prefetch_job.started;
+  lookup_prefetch_job.t=std::thread([this,r]{const auto t0=std::chrono::steady_clock::now();
+    try{r->ok=prefill_lookup_rows_compute(*r);}catch(const std::exception& e){r->error=e.what();r->ok=false;}r->ms=ms(t0);});
+}
+// The announced rows for this chunk, if they match; applies the threaded path's side effects.
+bool prefill_lookup_prefetch_take(int P0,const int* tokens,int M,const std::vector<const flash::Launch*>& sites,std::vector<std::vector<float>>& rows,std::vector<size_t>& row_bytes) {
+  auto& job=lookup_prefetch_job;if(!job.r)return false;
+  if(job.t.joinable())job.t.join();
+  auto r=std::move(job.r);job.r.reset();
+  const bool match=r->ok&&r->P0==P0&&r->M==M&&std::equal(tokens,tokens+M,r->tokens.begin())&&r->h0==history0&&r->h1==history1&&r->rows.size()==sites.size();
+  if(!match){++job.missed;return false;}
+  for(size_t j=0;j<sites.size();++j){for(int c=0;c<prefill_cards();++c)require(r->row_bytes[j]==prefill_row_bytes(c,sites[j]->outputs[0]),"prefill lookup row extent");
+    lookup_ids[sites[j]->label]=r->last_ids[j];}
+  for(int q=0;q<M;++q){history0=history1;history1=tokens[q];}
+  for(size_t j=0;j<sites.size();++j)for(int q=0;q<M;++q)for(size_t k=0;k<r->table_ids[j];++k)w.count_read(r->table_row_bytes[j]);
+  rows=std::move(r->rows);row_bytes=r->row_bytes;++job.used;return true;
+}
+int prefill_lookup_P0=-1; // prefill_chunk's first position, for the prefetch match
+struct LookupPrefetchArm {int P0=-1,M=0;std::vector<int> tokens;};std::optional<LookupPrefetchArm> lookup_prefetch_armed; // the announced next chunk
+void prefill_lookup_prefetch_arm(int P0,const int* tokens,int M){if(!prefill_lookup_prefetch()||M<1||M>a.prefill_rows)return;lookup_prefetch_armed=LookupPrefetchArm{P0,M,std::vector<int>(tokens,tokens+M)};}
 void prefill_lookups(const int* tokens,int M) {
   if(prefill_lookup_batch()) {
     std::vector<const flash::Launch*> sites;for(const auto& l:p.launches)if(l.op=="lookup"&&l.card==0)sites.push_back(&l);
     std::vector<std::vector<float>> rows(sites.size());std::vector<size_t> row_bytes(sites.size(),0);
-    if(prefill_lookup_threads()>1&&prefill_lookup_rows_threaded(sites,tokens,M,rows,row_bytes)){
+    last_lookup_prefetched=false;
+    if(prefill_lookup_threads()>1&&((prefill_lookup_prefetch()&&(last_lookup_prefetched=prefill_lookup_prefetch_take(prefill_lookup_P0,tokens,M,sites,rows,row_bytes)))||
+                                    prefill_lookup_rows_threaded(sites,tokens,M,rows,row_bytes))){
       for(size_t j=0;j<sites.size();++j)for(int c=0;c<prefill_cards();++c){
         require(rows[j].size()*4==size_t(M)*row_bytes[j],"prefill lookup chunk extent");
         upload(c,prefill_shadow(c,sites[j]->outputs[0]),0,rows[j].data(),rows[j].size()*4);}
@@ -478,6 +580,83 @@ void prefill_set_views(bool on) {
 }
 // TP: card c's tp_route_compact over the M rows (routes of slots c, c+2, ... of every row, in row order), and the same
 // slots' expert input rows for the compact gate/up launches. The input is the layer's expert_gather output.
+// OWNRT_PREFILL_EXPERT_PARITY=1 (2026-10-30, research/tp/prefill-tp-overhead-2026-10-30; TP batched prefill with
+// OWNRT_TP_EXPERTS=compact and OWNRT_PREFILL_EXPERTS=1; default off; decode unchanged): the chunk's expert slots are split
+// between the two cards by EXPERT-id parity instead of slot position. With 256 rows x 10 slots, the slot split leaves each
+// card ~2.7 slots per expert over ~470 of 512 experts, so every expert's rows are still decoded on both cards (measured:
+// rank 1's experts take 200.8 ms per 256-row chunk where half the one-card 352.5 would be 176). By parity each card decodes
+// only its 256 experts, for all of their slots.
+// - tp_route_compact: kopt::route_parity keeps this card's slots' routes (and down routes) in place and gives every other
+//   slot the skip route, which the expert-grouped bucket leaves out (no tile, no write, status 0);
+// - expsgate/expsup: all top x M slots over the canonical expert_input rows, outputs and statuses in parity buffers;
+//   expsact: the generic activation over those rows; expsdown: from the parity act into the CANONICAL expsdown rows
+//   (this card's slots only); the merged status check over the parity statuses (top x M each);
+// - tp_xcompact: exchange mode 2 stores this card's rows of the canonical expsdown into the peer's at the same offset
+//   (rows whose route's expert id has this card's parity); after the flag both cards hold every slot's row.
+// Each slot's row is computed by the same tile kernel with its single-row arithmetic (prefill_experts.hpp), so the
+// expsdown rows the unchanged moe_combine reads are bit for bit the compact path's. Statuses: an invalid route is the
+// owner's (parity of its expert id) and sets that card's error, as the compact path sets the error of the card that holds
+// the slot.
+static bool prefill_expert_parity(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERT_PARITY");return e&&e[0]=='1';}();return on;}
+// OWNRT_PREFILL_EXPERT_BALANCE=rank1|both (2026-10-31, research/tp/prefill-balance-2026-10-31; default off; batched prefill
+// under TP): the same owned-slot machinery as OWNRT_PREFILL_EXPERT_PARITY, with the owner of each expert chosen per layer
+// and chunk to balance the two cards (iq3::kopt::route_balance: snake order over the experts sorted by 1 + ceil(slots/4))
+// instead of the expert-id parity. `rank1` applies it on rank 1 only (on rank 0 parity's owned path cost card work).
+static int prefill_expert_balance_mode(){static const int m=[]{const char* e=std::getenv("OWNRT_PREFILL_EXPERT_BALANCE");if(!e||!*e)return 0;
+  const std::string v=e;if(v=="rank1")return 1;if(v=="both")return 2;throw std::invalid_argument("OWNRT_PREFILL_EXPERT_BALANCE must be rank1 or both");}();return m;}
+bool prefill_expert_balance() const {const int m=prefill_expert_balance_mode();return m==2||(m==1&&a.rank==1);}
+bool prefill_expert_owned() const {return prefill_expert_parity()||prefill_expert_balance();}
+struct PrefillParity {Allocation routes=0,routes_down=0,gate=0,up=0,act=0,status_gate=0,status_up=0,status_down=0;};
+std::array<PrefillParity,2> prefill_parity{};
+bool prefill_parity_site(const flash::Launch& l,int M) {
+#ifdef OWN_RT_HOST_ONLY
+  (void)l;(void)M;return false;
+#else
+  if(!a.tp_replicate||!prefill_expert_owned())return false;
+  const int c=l.card;const auto& b=prefill_parity[size_t(c)];const uint32_t n=uint32_t(p.g.top)*uint32_t(M);
+  if(l.op=="tp_route_compact"){
+    require(b.routes&&l.inputs.size()==2&&l.parameter==c&&ends(l.inputs[0],".routes")&&ends(l.inputs[1],".routes.down"),"expert parity route wiring");
+    if(prefill_expert_balance())finish(c,iq3::kopt::route_balance(dev(c),prefill_shadow(c,l.inputs[0]),prefill_shadow(c,l.inputs[1]),b.routes,b.routes_down,n,uint32_t(p.g.experts),uint32_t(c))); // OWNRT_PREFILL_EXPERT_BALANCE
+    else finish(c,iq3::kopt::route_parity(dev(c),prefill_shadow(c,l.inputs[0]),prefill_shadow(c,l.inputs[1]),b.routes,b.routes_down,n,uint32_t(c)));
+    return true;}
+  if(l.op=="routed_gemv"&&l.slots){
+    const bool down=ends(l.label,".expsdown"),gate=ends(l.label,".expsgate"),up=ends(l.label,".expsup");
+    require(down||gate||up,"expert parity: compact routed site "+l.label);
+    auto it=matrices.find(&l);if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
+    Matrix m=it->second.at(0);require(m.count==unsigned(l.slots)&&m.routes&&m.status,"expert parity routed site "+l.label);
+    m.count=n;
+    if(down){
+      require(l.outputs.size()==2&&ends(l.outputs[0],"#tp"),"expert parity down output "+l.label);
+      const std::string y=l.outputs[0].substr(0,l.outputs[0].size()-3);
+      require(prefill_role_of.count(y)&&prefill_row_bytes(c,y)==size_t(p.g.top)*m.rows*4,"expert parity canonical expsdown rows "+y);
+      m.x=b.act;m.routes=b.routes_down;m.y=prefill_shadow(c,y);m.status=b.status_down;
+    } else {
+      require(prefill_role_of.count(l.inputs.at(0))&&prefill_row_bytes(c,l.inputs[0])==size_t(p.g.top)*m.columns*4&&size_t(m.rows)==size_t(p.g.mid),"expert parity expert input rows "+l.label);
+      m.x=prefill_shadow(c,l.inputs[0]);m.routes=b.routes;m.y=gate?b.gate:b.up;m.status=gate?b.status_gate:b.status_up;
+    }
+    require(prefill_experts_site(l,m),"OWNRT_PREFILL_EXPERT_PARITY: the expert-grouped kernel must take "+l.label);
+    return true;}
+  if(l.op=="silu_product"&&ends(l.label,".expsact")){
+    auto site=prepare_site(l);require(site.spec.ni>=2&&site.spec.no==1,"expert parity act wiring "+l.label);
+    const size_t w=size_t(p.g.top)*size_t(p.g.mid);
+    site.bindings.at(0)=b.gate;site.bindings.at(1)=b.up;site.bindings.at(size_t(site.spec.ni))=b.act;
+    site.spec.sizes[0]=w;site.spec.sizes[1]=w;site.spec.sizes[site.spec.ni]=w;site.spec.tokens=M;
+    finish(c,site.submit(dev(c),site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);
+    return true;}
+  if(l.op=="check_status"){
+    bool expert=false;for(const auto& name:l.inputs)expert=expert||ends(name,".expsgate.status")||ends(name,".expsup.status")||ends(name,".expsdown.status");
+    if(!expert)return false;
+    auto site=prepare_site(l);require(site.spec.special==Special::check_status,"expert parity status check "+l.label);
+    size_t k=0;
+    for(;k<l.inputs.size()&&ends(l.inputs[k],".status");++k){const auto& name=l.inputs[k];
+      require(ends(name,".expsgate.status")||ends(name,".expsup.status")||ends(name,".expsdown.status"),"expert parity status check input "+name);
+      site.bindings.at(k)=ends(name,".expsgate.status")?b.status_gate:ends(name,".expsup.status")?b.status_up:b.status_down;site.spec.sizes[k]=n;}
+    require(k>0,"expert parity status check inputs");
+    finish(c,site.submit(dev(c),site.spec,site.bindings,controls[size_t(c)],scores[size_t(c)],probabilities[size_t(c)],{}),false);
+    return true;}
+  return false;
+#endif
+}
 void prefill_route_compact(const flash::Launch& l,int M) {
   const int c=l.card;require(a.tp_replicate&&l.inputs.size()==2&&l.outputs.size()==2&&l.parameter==c,"TP prefill route compact wiring");
   const uint32_t top=uint32_t(p.g.top)*uint32_t(M);
@@ -523,6 +702,12 @@ void prefill_exchange(const flash::Launch& l,int M) {
   require(e==4&&row_in%4==0&&row_out%4==0,"TP prefill exchange rows");
   ownrt::Device::ExchangeSpec x;x.slot=slot;x.cap=tp_exchange_cap;x.control=xctl[size_t(c)];x.peer_control=xctl[size_t(peer)];x.error=buffers[size_t(c)].at("error").id;
   x.mode=0;x.src=prefill_shadow(c,l.inputs.at(0));x.bytes=row_in*size_t(M);x.local_dst=prefill_shadow(c,l.outputs.at(0));x.peer_dst=prefill_shadow(peer,l.outputs.at(0));
+  if(prefill_expert_owned()&&ends(l.label,".tp_xcompact")){ // OWNRT_PREFILL_EXPERT_PARITY/_BALANCE: exchange mode 2 over this card's filtered routes
+    const std::string& y=l.outputs.at(0);const std::string routes=y.substr(0,y.size()-std::string("expsdown").size())+"routes";
+    require(ends(y,".expsdown")&&prefill_role_of.count(routes)&&row_out%(size_t(p.g.top)*4)==0,"expert parity exchange rows");
+    x.mode=2;x.src=prefill_shadow(c,y);x.local_dst=0;x.peer_dst=prefill_shadow(peer,y);x.bytes=row_out*size_t(M);
+    x.rows=uint32_t(p.g.top)*uint32_t(M);x.run=uint32_t(row_out/4/size_t(p.g.top));x.parity=uint32_t(c);x.routes=prefill_parity[size_t(c)].routes_down; // owned: not the skip route
+  } else
   if(l.op=="tp_xheads"){ // shape {global values per row, slot, run, run stride, card offset}: uniform across rows
     require(l.shape.size()==5&&l.shape[2]>0&&size_t(l.shape[0])*4==row_out&&row_in/4%size_t(l.shape[2])==0&&row_in/4/size_t(l.shape[2])*size_t(l.shape[3])*4==row_out,"TP prefill head exchange geometry"); // the run pattern continues across rows
     x.run=uint32_t(l.shape[2]);x.dst_stride=uint32_t(l.shape[3]);x.local_offset=x.peer_offset=size_t(l.shape[4])*e;
@@ -563,7 +748,9 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
     for(int c=0;c<prefill_cards();++c)if(prefill_moe_ones[size_t(c)])upload(c,prefill_moe_ones[size_t(c)],0,ones.data(),size_t(M)*4);}
   const size_t stream=stream_bytes();
   if(rows_in){for(int c=0;c<prefill_cards();++c)upload(c,prefill_shadow(c,"streams"),0,rows_in,size_t(M)*stream);}
-  else prefill_lookups(tokens,M);
+  else {prefill_lookup_P0=P0;prefill_lookups(tokens,M);
+    if(lookup_prefetch_armed){auto armed=std::move(*lookup_prefetch_armed);lookup_prefetch_armed.reset(); // OWNRT_PREFILL_LOOKUP_PREFETCH: the next chunk, from this chunk's final history
+      prefill_lookup_prefetch_start(armed.P0,armed.tokens.data(),armed.M);}}
   if(host_trace){trace_inputs_ms=ms(trace_start);trace_inputs_wait=wait_ms-trace_wait0;}
   if(a.tp_replicate&&prefill_xzero_once())prefill_xzero_chunk();
   const auto trace_loop_start=HostClock::now();const double trace_loop_wait0=wait_ms;
@@ -584,7 +771,8 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
       const auto site_start=std::chrono::steady_clock::now();const double site_wait0=wait_ms;
       const char* trace_kind="replay";
       bool banked_native=false;
-      if(l->op=="gemv"||l->op=="routed_gemv"){prefill_linear(*l,M);trace_kind="linear";}
+      if(prefill_parity_site(*l,M))trace_kind="parity"; // OWNRT_PREFILL_EXPERT_PARITY
+      else if(l->op=="gemv"||l->op=="routed_gemv"){prefill_linear(*l,M);trace_kind="linear";}
       else if(l->op=="tp_xgather"||l->op=="tp_xheads"){prefill_exchange(*l,M);trace_kind="exchange";}
       else if(l->op=="tp_route_compact"){prefill_route_compact(*l,M);trace_kind="native";}
       else if(l->op=="moe_combine"&&prefill_moe_native()){prefill_moe_combine(*l,M);trace_kind="native";}
@@ -668,7 +856,8 @@ void prefill_chunk(int P0,const int* tokens,int M,const uint8_t* rows_in,uint8_t
      <<",\"inputs_ms\":"<<trace_inputs_ms<<",\"inputs_blocked_ms\":"<<trace_inputs_wait<<",\"loop_ms\":"<<trace_loop_ms<<",\"loop_blocked_ms\":"<<trace_loop_wait
      <<",\"final_ms\":"<<trace_final_ms<<",\"final_blocked_ms\":"<<trace_final_wait<<",\"transfer_ms\":"<<transfer_ms-trace_transfer0
      <<",\"host_waits\":"<<host_waits-trace_waits0<<",\"submitted\":["<<submitted_card[0]-trace_cards0[0]<<","<<submitted_card[1]-trace_cards0[1]<<"]"
-     <<",\"lookup_batch\":"<<(prefill_lookup_batch()?"true":"false")<<",\"sites\":{";
+     <<",\"lookup_batch\":"<<(prefill_lookup_batch()?"true":"false")<<",\"lookup_prefetched\":"<<(last_lookup_prefetched?"true":"false")
+     <<",\"lookup_prefetch\":["<<lookup_prefetch_job.started<<","<<lookup_prefetch_job.used<<","<<lookup_prefetch_job.missed<<"]"<<",\"sites\":{";
     bool comma=false;for(const auto& [k,v]:trace_sites){o<<(comma?",":"")<<ownrt::quote(k)<<":["<<v[0]<<","<<v[1]<<","<<v[2]<<"]";comma=true;}
     o<<"}}\n";
   }

@@ -36,6 +36,10 @@ inline unsigned config(const char* family,unsigned count,unsigned fallback){
 }
 inline constexpr uint32_t desc_words=5; // tile: weight row base (expert*rows + row_begin), row_count, first, count, valid
 inline constexpr uint32_t special=0xffffffffu;
+// OWNRT_PREFILL_EXPERT_PARITY (2026-10-30, research/tp/prefill-tp-overhead-2026-10-30): a slot whose route is the skip route
+// {skip_expert, 0, 0} (kopt::route_parity: another card computes it) gets no tile and no output write, and status 0.
+// Route kernels never produce this expert id, so nothing changes for any other route.
+inline constexpr uint32_t skip_expert=0xfffffffeu,skip_key=0xfffffffeu;
 inline constexpr uint32_t bucket_items=512;
 // Bucket: one work-group of bucket_items work-items. keys: local n words.
 struct Bucket {
@@ -45,7 +49,8 @@ struct Bucket {
   const auto g=it.get_group();const uint32_t lid=uint32_t(it.get_local_linear_id());
   for(uint32_t i=lid;i<n;i+=bucket_items){
    const iq3::Route r=routes[i];const bool v=iq3::valid_route(r,experts,rows,span);
-   status[i]=v?0u:1u;keys[i]=v&&r.row_begin==0&&r.row_count==rows?r.expert_id:special;
+   const bool skip=r.expert_id==skip_expert&&r.row_begin==0u&&r.row_count==0u;
+   status[i]=v||skip?0u:1u;keys[i]=skip?skip_key:v&&r.row_begin==0&&r.row_count==rows?r.expert_id:special;
   }
   sycl::group_barrier(g);
   uint32_t mine=0,mytiles=0,myspecial=0;

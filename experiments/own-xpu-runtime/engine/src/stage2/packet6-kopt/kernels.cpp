@@ -815,6 +815,53 @@ struct RouteCompact:ownrt::SyclOperation {
       const uint32_t k=uint32_t(i[0]),slot=2u*k+par;ca[k]=a[slot];cb[k]=b[slot];}));});
   }
 };
+// OWNRT_PREFILL_EXPERT_PARITY=1 (2026-10-30, research/tp/prefill-tp-overhead-2026-10-30; batched prefill under TP): this
+// card's slots by EXPERT-id parity. Slot i keeps its route (and down route) when routes[i].expert_id % 2 == parity, else
+// becomes the skip route {0xfffffffe, 0, 0}, which the expert-grouped bucket (prefill_experts.hpp) leaves out: no tile, no
+// output write, status 0. Every slot keeps its position; the routes are copied bit for bit.
+struct RouteParity:ownrt::SyclOperation {
+  uint32_t n=0,parity=0;
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    const auto* a=static_cast<const Route*>(p[0]);const auto* b=static_cast<const Route*>(p[1]);auto* pa=static_cast<Route*>(p[2]);auto* pb=static_cast<Route*>(p[3]);
+    const uint32_t par=parity;
+    return ownrt::prepared_submit(q,[=,range=sycl::range<1>(n)](sycl::handler& h){h.parallel_for(range,packet26::checked([=](sycl::id<1> i){
+      const Route ra=a[i],rb=b[i];const Route skip{0xfffffffeu,0u,0u};
+      pa[i]=ra.expert_id%2u==par?ra:skip;pb[i]=rb.expert_id%2u==par?rb:skip;}));});
+  }
+};
+// OWNRT_PREFILL_EXPERT_BALANCE (2026-10-31, research/tp/prefill-balance-2026-10-31; batched prefill under TP): whole experts
+// per card, balanced per layer and chunk. One work-group: (1) slots per expert over the n routes (local histogram), (2) a
+// cost per expert, 1 + ceil(count/4) (the expert's weight pass plus its 4-slot tiles; 0 if unrouted), (3) experts sorted by
+// (cost desc, id asc) with a local bitonic sort, (4) owners in snake order over the sorted list (positions 4j and 4j+3
+// to card 0, 4j+1 and 4j+2 to card 1), (5) every slot filtered as RouteParity filters it: kept when its expert's owner is
+// this card, else the skip route. Integer-only and order-independent, so both cards derive the same owners from the same
+// routes; every slot is computed by exactly one card with its unchanged arithmetic.
+struct RouteBalance:ownrt::SyclOperation {
+  uint32_t n=0,card=0,experts=0;
+  sycl::event submit(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const override {
+    const auto* a=static_cast<const Route*>(p[0]);const auto* b=static_cast<const Route*>(p[1]);auto* pa=static_cast<Route*>(p[2]);auto* pb=static_cast<Route*>(p[3]);
+    const uint32_t N=n,C=card,E=experts;constexpr uint32_t W=512;
+    return ownrt::prepared_submit(q,[=](sycl::handler& h){sycl::local_accessor<uint32_t,1> count(sycl::range<1>(W),h),key(sycl::range<1>(W),h),owner(sycl::range<1>(W),h);
+      h.parallel_for(sycl::nd_range<1>(W,W),packet26::checked([=](sycl::nd_item<1> it){
+        const uint32_t t=uint32_t(it.get_local_linear_id());auto g=it.get_group();
+        count[t]=0u;sycl::group_barrier(g);
+        for(uint32_t i=t;i<N;i+=W){const uint32_t e=a[i].expert_id;if(e<E){sycl::atomic_ref<uint32_t,sycl::memory_order::relaxed,sycl::memory_scope::work_group,sycl::access::address_space::local_space>(count[e]).fetch_add(1u);}}
+        sycl::group_barrier(g);
+        const uint32_t c=count[t],cost=c?1u+(c+3u)/4u:0u;
+        key[t]=((0xffffu-cost)<<16)|t; // ascending key = cost descending, then expert id ascending
+        sycl::group_barrier(g);
+        for(uint32_t k=2;k<=W;k<<=1)for(uint32_t j=k>>1;j>0;j>>=1){
+          const uint32_t o=t^j;
+          if(o>t){const uint32_t x=key[t],y=key[o];const bool up=(t&k)==0u;if(up?x>y:x<y){key[t]=y;key[o]=x;}}
+          sycl::group_barrier(g);}
+        const uint32_t e=key[t]&0xffffu,m=t&3u;owner[e]=(m==0u||m==3u)?0u:1u;
+        sycl::group_barrier(g);
+        const Route skip{0xfffffffeu,0u,0u};
+        for(uint32_t i=t;i<N;i+=W){const Route ra=a[i],rb=b[i];
+          pa[i]=ra.expert_id<E&&owner[ra.expert_id]==C?ra:skip;pb[i]=rb.expert_id<E&&owner[rb.expert_id]==C?rb:skip;}
+      }));});
+  }
+};
 // TP batched prefill (2026-10-29): this card's slot rows (slots parity, parity+2, ... of top) of a per-slot row buffer,
 // compact and in order, as RouteCompact does for routes: dst[k] = src[2k+parity], each row `words` 32-bit words, copied
 // bit for bit. With top = rows x slots per row, row r's slots stay together (top per row is even).
@@ -889,6 +936,18 @@ ownrt::Event route_compact(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allo
   check(d,routes,size_t(top)*sizeof(Route));check(d,routes_down,size_t(top)*sizeof(Route));check(d,compact,size_t(n)*sizeof(Route));check(d,compact_down,size_t(n)*sizeof(Route));
   if(std::set<ownrt::Allocation>{routes,routes_down,compact,compact_down}.size()!=4)throw std::invalid_argument("route compact aliases");
   RouteCompact op;op.top=top;op.parity=parity;std::vector<ownrt::Allocation> ids{routes,routes_down,compact,compact_down};return d.compute(op,ids,{});
+}
+ownrt::Event route_parity(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allocation routes_down,ownrt::Allocation out,ownrt::Allocation out_down,uint32_t n,uint32_t parity) {
+  if(!n||parity>1)throw std::invalid_argument("route parity geometry");
+  check(d,routes,size_t(n)*sizeof(Route));check(d,routes_down,size_t(n)*sizeof(Route));check(d,out,size_t(n)*sizeof(Route));check(d,out_down,size_t(n)*sizeof(Route));
+  if(std::set<ownrt::Allocation>{routes,routes_down,out,out_down}.size()!=4)throw std::invalid_argument("route parity aliases");
+  RouteParity op;op.n=n;op.parity=parity;std::vector<ownrt::Allocation> ids{routes,routes_down,out,out_down};return d.compute(op,ids,{});
+}
+ownrt::Event route_balance(ownrt::Device& d,ownrt::Allocation routes,ownrt::Allocation routes_down,ownrt::Allocation out,ownrt::Allocation out_down,uint32_t n,uint32_t experts,uint32_t card) {
+  if(!n||card>1||!experts||experts>512)throw std::invalid_argument("route balance geometry");
+  check(d,routes,size_t(n)*sizeof(Route));check(d,routes_down,size_t(n)*sizeof(Route));check(d,out,size_t(n)*sizeof(Route));check(d,out_down,size_t(n)*sizeof(Route));
+  if(std::set<ownrt::Allocation>{routes,routes_down,out,out_down}.size()!=4)throw std::invalid_argument("route balance aliases");
+  RouteBalance op;op.n=n;op.card=card;op.experts=experts;std::vector<ownrt::Allocation> ids{routes,routes_down,out,out_down};return d.compute(op,ids,{});
 }
 ownrt::Event slot_rows_compact(ownrt::Device& d,ownrt::Allocation rows,ownrt::Allocation compact,uint32_t top,uint32_t parity,uint32_t words) {
   const uint32_t n=(top+1u-parity)/2u;if(!top||parity>1||!n||!words||uint64_t(top)*words>0xffffffffull)throw std::invalid_argument("slot rows compact geometry");

@@ -45,5 +45,18 @@ constexpr int32_t draft_chunk_op=29;
 constexpr size_t draft_tokens_offset=2048;
 static_assert(sizeof(Header)<=draft_tokens_offset&&sizeof(HeaderV2)<=draft_tokens_offset&&draft_tokens_offset+4*size_t(max_rows)<=header_bytes);
 inline int32_t* draft_tokens(uint8_t* base){return reinterpret_cast<int32_t*>(base+draft_tokens_offset);}
+// OWNRT_PREFILL_LOOKUP_PREFETCH=1 (2026-10-31, research/tp/prefill-balance-2026-10-31; default off; controller and rank 0):
+// with each rank-0 prefill command the controller announces the NEXT rank-0 chunk: its tokens at next_tokens_offset and
+// this hint (position, rows; magic written last). Rank 0 consumes the hint at the prefill command (clears magic) and, once
+// this chunk's lookup rows are computed, computes the next chunk's on a helper thread while this chunk runs on the device.
+// The next prefill command uses them only if position, rows, tokens and starting history all match.
+constexpr size_t prefetch_hint_offset=1536,next_tokens_offset=3072;
+constexpr uint32_t prefetch_magic=0x32485050u; // "PPH2"
+struct PrefetchHint {uint32_t magic;int32_t position,rows,reserved;};
+static_assert(sizeof(Header)<=prefetch_hint_offset&&sizeof(HeaderV2)<=prefetch_hint_offset&&prefetch_hint_offset+sizeof(PrefetchHint)<=draft_tokens_offset);
+static_assert(draft_tokens_offset+4*size_t(max_rows)<=next_tokens_offset&&next_tokens_offset+4*size_t(max_rows)<=header_bytes);
+inline PrefetchHint* prefetch_hint(uint8_t* base){return reinterpret_cast<PrefetchHint*>(base+prefetch_hint_offset);}
+inline int32_t* next_tokens(uint8_t* base){return reinterpret_cast<int32_t*>(base+next_tokens_offset);}
+inline bool lookup_prefetch(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_LOOKUP_PREFETCH");return e&&e[0]=='1';}();return on;}
 inline bool draft_chunk_replay(){static const bool on=[]{const char* e=std::getenv("OWNRT_DRAFT_CHUNK_REPLAY");return e&&e[0]=='1';}();return on;}
 }

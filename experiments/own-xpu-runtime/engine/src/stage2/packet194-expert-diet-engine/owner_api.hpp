@@ -73,6 +73,7 @@ struct Backend {
     std::uint32_t* control=nullptr;std::uint32_t* peer_control=nullptr;std::uint32_t* error=nullptr;
     std::uint32_t cap=0;
     std::uint32_t run=0,dst_stride=0; // mode 0 strided destination: word i goes to (i/run)*dst_stride + i%run (0 = contiguous)
+    const void* routes=nullptr; // mode 2: per-row routes ({expert_id, row_begin, row_count} words); row r of run words is sent when expert_id % 2 == parity
   };
   virtual Event exchange(const Exchange&) { throw std::logic_error("direct exchange unsupported"); }
   virtual std::function<Event()> prepare_exchange(const Exchange& x) { return [this,x]{return exchange(x);}; }
@@ -244,6 +245,10 @@ class Device {
     std::uint32_t mode=0,rows=0,top=0,parity=0,slot=0,cap=0;
     Allocation control=0,peer_control=0,error=0;
     std::uint32_t run=0,dst_stride=0; // mode 0: destination runs of `run` words, `dst_stride` words apart (0 = contiguous)
+    // mode 2 (2026-10-30, OWNRT_PREFILL_EXPERT_PARITY, research/tp/prefill-tp-overhead-2026-10-30): rows of `run` words, row r
+    // stored into the peer at the same offset when routes[r].expert_id % 2 == parity (this card computed it); `rows` rows,
+    // bytes = rows * run * 4. No local copy, no select; the flag protocol is mode 0's.
+    Allocation routes=0;
   };
   Event exchange(Device& peer, const ExchangeSpec&);
   void invalidate_prepared() { if(in_flight())throw std::logic_error("invalidate while pending");generation_=next_handle(); }

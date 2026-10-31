@@ -136,7 +136,12 @@ inline Result run(Backend& b,const Config& c,const EmitConfirmed& emit={}){
   const int span=bulk-start,chunks=(span+rows-1)/rows;
   auto base=[&](int k){return start+k*rows;};
   auto count=[&](int k){return std::min(rows,span-k*rows);};
-  auto rank0_chunk=[&](int k){std::memcpy(header->tokens,c.prompt.data()+base(k),size_t(count(k))*4);b.call(0,pipeline::prefill::op,count(k),base(k),k%2);};
+  // OWNRT_PREFILL_LOOKUP_PREFETCH=1 (2026-10-31, prefill_wire.hpp): each rank-0 chunk command also announces the next one
+  // (its tokens at next_tokens_offset, then the hint, magic last).
+  auto rank0_chunk=[&](int k){std::memcpy(header->tokens,c.prompt.data()+base(k),size_t(count(k))*4);
+   if(pipeline::prefill::lookup_prefetch()&&k+1<chunks){std::memcpy(pipeline::prefill::next_tokens(b.prefill),c.prompt.data()+base(k+1),size_t(count(k+1))*4);
+    auto* h=pipeline::prefill::prefetch_hint(b.prefill);h->position=base(k+1);h->rows=count(k+1);h->reserved=0;__atomic_store_n(&h->magic,pipeline::prefill::prefetch_magic,__ATOMIC_RELEASE);}
+   b.call(0,pipeline::prefill::op,count(k),base(k),k%2);};
   // Draft replay for chunk k: confirmed position q+1 takes rank 1's final row of position q, in order.
   auto drafts=[&](int k){if(c.mode!=3)return;
    const auto* rev=pipeline::prefill::reverse(b.prefill,k%2,size_t(b.prefill_rows),b.prefill_stream);

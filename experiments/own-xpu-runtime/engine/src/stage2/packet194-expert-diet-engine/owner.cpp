@@ -376,8 +376,17 @@ Event Device::exchange(Device& peer,const ExchangeSpec& s) {
     if(!n||!r.live||r.memory!=Memory::device||off>r.bytes||n>r.bytes-off)throw std::out_of_range("exchange extent/lifetime");
     return static_cast<std::byte*>(r.pointer)+off;
   };
-  if(s.mode>1||!s.bytes||s.bytes%4||s.bytes/4>0xffffffffull||s.slot>=exchange_layout::slots||!s.cap)throw std::invalid_argument("exchange mode/extent/slot/cap");
+  if(s.mode>2||!s.bytes||s.bytes%4||s.bytes/4>0xffffffffull||s.slot>=exchange_layout::slots||!s.cap)throw std::invalid_argument("exchange mode/extent/slot/cap");
   Backend::Exchange x;x.mode=s.mode;x.slot=s.slot;x.cap=s.cap;x.words=std::uint32_t(s.bytes/4);
+  if(s.mode==2) { // OWNRT_PREFILL_EXPERT_PARITY: rows selected by their route's expert-id parity, same offset on the peer
+    if(!s.rows||!s.run||s.parity>1||s.dst_stride||s.local_dst||s.select_src||s.select_dst||!s.routes||std::size_t(s.rows)*s.run*4!=s.bytes)
+      throw std::invalid_argument("exchange mode 2 geometry (rows x run words, routes, nothing local or selected)");
+    if(capture_)throw std::logic_error("exchange mode 2 is never captured");
+    x.rows=s.rows;x.run=s.run;x.parity=s.parity;
+    x.src=row(arena,s.src,s.src_offset,s.bytes);x.peer_dst=row(peer.arena,s.peer_dst,s.peer_offset,s.bytes);
+    x.routes=row(arena,s.routes,0,std::size_t(s.rows)*3*4);
+  } else {
+  if(s.routes)throw std::invalid_argument("exchange routes: mode 2 only");
   // Destination extent: contiguous, or (runs - 1) strides plus one run.
   if(s.run&&(s.mode!=0||!s.dst_stride||s.dst_stride<s.run||x.words%s.run))throw std::invalid_argument("exchange run geometry");
   const std::size_t dst_bytes=s.run?(std::size_t(x.words/s.run-1)*s.dst_stride+s.run)*4:s.bytes;
@@ -388,6 +397,7 @@ Event Device::exchange(Device& peer,const ExchangeSpec& s) {
     if(!s.rows||!s.top||s.top>64||s.parity>1||s.src_offset||s.peer_offset||s.local_dst||std::size_t(s.rows)*s.top*4!=s.bytes)throw std::invalid_argument("exchange slot geometry");
     if(!s.select_src||s.select_dst!=s.src||s.select_src==s.src)throw std::invalid_argument("exchange slot select: staging in, routed output out");
     x.select_src=row(arena,s.select_src,0,s.bytes);x.select_dst=row(arena,s.select_dst,0,s.bytes);x.rows=s.rows;x.top=s.top;x.parity=s.parity;
+  }
   }
   x.control=static_cast<std::uint32_t*>(row(arena,s.control,0,exchange_layout::bytes));
   x.peer_control=static_cast<std::uint32_t*>(row(peer.arena,s.peer_control,0,exchange_layout::bytes));
