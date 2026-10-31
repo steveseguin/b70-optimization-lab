@@ -35,6 +35,15 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 31, about 02:30 — two cards, measured on the same lab build: 72.46 / 72.44 tok/s, exact (66.07 / 66.11 without).**
+- Today's non-TP flags (retire deferred, HC kernels, draft fast, target fast, the rank-0 trims, ten prompt-reading
+  flags) on build `40388fc92c43`, fresh two-card servers A/B/A/B at 65536: +9.6%, 12/12 prompts faster, outputs =
+  B19, startup gate 13/13; the 3,490-token prompt reads in 9.95 s (12.51). The lab adapter forwarded these keys only
+  to TP ranks; the fix is in the lab copy (`ONE_CARD_KEYS`).
+- The `sc117-lan` service would need the engine patches applied (owner's decision, below), 16 unit lines, an adapter
+  that forwards them, and its session compat gate. Not changed.
+  [Result](experiments/own-xpu-runtime/research/two-card-flags-2026-10-31/RESULT.md).
+
 **October 30, about 23:30 — measured on a lab build: 94.04 / 94.31 tok/s on four cards, exact; long prompt 215.7 s.**
 - HC GEMV row split across each card pair (`OWNRT_TP_HC_SPLIT=low,gate,final,prefill`, build `40388fc92c43` =
   979462f7c + the fixed-cost-2 patch + `engine-hc-split.patch`): fresh servers A/B/A/B at 65536 on the same binary,
