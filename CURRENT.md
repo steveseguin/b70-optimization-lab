@@ -35,6 +35,16 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 31, about 06:15 — four cards read the 121,854-token prompt in 219.3 / 219.4 s (was 222.5), exact; committed to `engine/src`.**
+- `OWNRT_PREFILL_GDN_REGS=1` (commit `5cf6f085e`, default off): batched prefill keeps each GDN state row in registers
+  across the chunk's rows instead of a global-memory round trip per row. Fresh servers A/B/B at 131072 on one binary
+  (`9885e8ad63fd`): 222.53 → 219.36 / 219.29 s, decode after it unchanged (84.2–84.5), all 512 outputs equal the 3+1
+  reference, suite = B19. Four-card set now `tptsxqckhcbg`.
+- Measured where the four-card prefill overhead goes: replicated work ~49 ms per chunk (HC 33, shared expert 12), split
+  work that does not halve ~31–37 (experts 22–27), exchanges ~19, card waits ~4–5. Closed: expert-parity ownership
+  (made the cards uneven), row-parallel GDN conv (no gain, aliasing race). [Result](experiments/own-xpu-runtime/research/tp/prefill-tp-overhead-2026-10-30/RESULT.md).
+- On the unmerged lab build the HC split adds a further ~5 s (215.7 s before this change).
+
 **October 31, about 02:30 — two cards, measured on the same lab build: 72.46 / 72.44 tok/s, exact (66.07 / 66.11 without).**
 - Today's non-TP flags (retire deferred, HC kernels, draft fast, target fast, the rank-0 trims, ten prompt-reading
   flags) on build `40388fc92c43`, fresh two-card servers A/B/A/B at 65536: +9.6%, 12/12 prompts faster, outputs =
