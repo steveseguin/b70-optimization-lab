@@ -66,6 +66,9 @@ outputs bit-identical to build B19 (12-prompt suite) and, for the long prompt, t
      overlap is `round2_submit.cpp` (fixed-cost-2's `StaticState` gdnr change vs the GDN-registers change); see
      [`engine-gdn-regs-on-fc2-hcsplit.patch`](research/tp/prefill-tp-overhead-2026-10-30/engine-gdn-regs-on-fc2-hcsplit.patch)
      for the resolved form.
+   - The HC split's prefill mode and the shared-expert split both add prefill exchange slots: rank 1 already uses
+     slot 254 of 256, so combining them needs the HC-split patch's 512-slot exchange control block
+     (`exchange_layout::slots`).
    - Rebuild with `engine/build.py` (JIT), check every compiled-source hash against the patched tree
      ([`verify_receipt.py`](research/tp/fixed-cost-2-2026-10-30/verify_receipt.py) shows how).
    - Gates on the merged binary: one-card rank harness both ranks (h / hmcn / m on rank 0), rank 1 exported draft rows,
@@ -164,6 +167,8 @@ engine, in the style of the existing documented packages and graphs. Plan:
   while anyone's fresh-server timing runs. Multi-card processes need `LimitNOFILE=1048576`, `NEOReadDebugKeys=1
   EnableDeferBacking=0` and `OWNRT_TP_CARD_CONTEXT=1` under TP.
 - **Permission refusals** are the owner's decision; report them, never route around them.
+- **Never leave files staged** in the shared tree: another agent's plain `git commit` swept a staged file into its
+  commit once. Commit with explicit pathspecs (`git commit -- <paths>`).
 
 ## How the work was run
 
