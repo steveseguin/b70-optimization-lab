@@ -6,7 +6,8 @@ Status: **done.** Both levers are committed to engine/src, default off.
 `OWNRT_PREFILL_LOOKUP_PREFETCH=1` + `OWNRT_PREFILL_EXPERT_BALANCE=rank1`; build r3 `4128ad66dd3c`; fresh servers at
 131072, both arms on r3).
 - Decode is unchanged (84.30 → 84.29 / 84.49 tok/s), and outputs equal the 3+1 262K reference and B19.
-- In the long request, rank 1 dropped only 5.8 ms per chunk, against 14.7 on the harness (open question below).
+- In the long request, rank 1 dropped only 5.8 ms per chunk, against 14.7 on the harness. The 43+47 check shows this
+  comes from the real prompt's routing, not from the cards.
 - Rank 1 still sets the pace, now 6 ms ahead of rank 0.
 
 Starting point: the lane published at 219.3 s (tptsxqckhcbg, commit 5cf6f085e). Per 256-row chunk of the long prompt:
@@ -110,13 +111,30 @@ Every server passed its startup gate. 15 kernel-log checks, 0 faults. Long-reque
   454.6 ms would just exceed rank 1's new 454.3. Rank 0 is now the next pacer, only 6 ms behind rank 1, so lever A is the
   headroom any further rank-1 cut needs.
 
-**Open question: lever B gave −14.7 ms on the harness but −5.8 ms in the service.**
-- What differs between the two:
-  - the harness puts rank 1 on cards 23+47, the service on 43+47;
-  - the harness prompt is the 1,100-row evidence prompt, the service runs the 121,854-token request.
-- The A arms agree (harness 457–459, service early chunks 448–453), and the service gain does not depend on context.
-- Next measurement: a harness A/B on cards 43+47. If the gap closes, card pairing explains it; if not, it is the
-  routing distribution of the real prompt.
+**Why lever B gives −14.7 ms on the harness but −5.8 ms in the service: the routing, not the cards.**
+- Same harness, same 1,100-row prompt, rank 1 moved to the service's cards 43+47 (pair 2.3), A/B/A/B:
+  457.62 / 457.74 → 443.95 / 444.20 ms per chunk, **−13.6 ms**. Exact (states and 1116 exports equal), 0 faults
+  (phase x1).
+- On 23+47 the same comparison gave −14.7 ms. So the cards do not explain the gap.
+- What remains is the input: the 121,854-token real prompt routes its 256-row chunks so that whole-expert ownership saves
+  less weight traffic than on the 1,100-row evidence prompt.
+- The service number (−5.8 ms per chunk on the pacing rank) is the one that counts. Future expert-path levers should be
+  sized on a chunk of the long prompt's rows, not on the evidence prompt alone.
+
+## What is left for prompt reading
+
+Per 256-row chunk of the long prompt, rank 1 sets the pace at 454.3 ms and rank 0's critical path is 448.2 ms.
+
+- **HC split on prefill: the largest remaining item, about −5.6 s TTFT** (HC-split agent's measurement). It waits on the
+  owner's decision about the unmerged fc2 / HC-split patches. Not built around here.
+- **Rank-1 input upload and readback overlap:** 3–5 ms per chunk on rank 1. The cards idle about 5.9 ms per chunk in rank
+  1's host phases.
+- **Expert path on rank 1:** what remains of the 22 ms of split work that does not halve. The real prompt's routing
+  limits whole-expert ownership; finer per-tile balancing or a better cost model would need sizing on long-prompt rows.
+- **Rank 0** must drop too before rank 1 gains count fully: it is only 6 ms behind. Its draft chunk is 13.7 ms, and its
+  card 27 runs about 9 ms per chunk behind card 23 at the drains.
+- **Closed:** the per-pair drain handshake (≤ 1.6 ms) and the copy-engine overlap (BCS fault history). Also closed: expert
+  parity, row-parallel conv, balanced experts on rank 0, and prefetch during the draft (all in DO-NOT-REPEAT).
 
 ## Builds and patches
 
@@ -127,4 +145,5 @@ Every server passed its startup gate. 15 kernel-log checks, 0 faults. Long-reque
 - Harness: copied from prefill-tp-overhead-2026-10-30, plus extras `lp` and `eb=V`. The rank-0 driver writes the
   prefetch announcement. The lab adapter passes both flags to TP ranks. Arm `tptsxqckhcbgl` in [arm_env.py](arm_env.py).
 - Runs: archived and sha256-verified under
-  `/mnt/raid-models/ownrt-experiment-archives/2026-10-31/prefill-balance-runs-{l1,b1,b2,g1}`.
+  `/mnt/raid-models/ownrt-experiment-archives/2026-10-31/prefill-balance-runs-{l1,b1,b2,g1,x1}`; servers at
+  `.../2026-10-31/prefill-balance-suite-r3`.
