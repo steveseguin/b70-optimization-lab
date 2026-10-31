@@ -35,6 +35,17 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**Hosted now (owner request, 2026-10-31 13:28): four-card SC117 server on the LAN.**
+- `http://192.168.2.44:18160/v1/chat/completions` (also 127.0.0.1:18160), model `sc117-qwen3.8-flash-next-iq3s-ownrt`,
+  context 131,072, greedy, F32, MTP verified by the target. All four cards (23/27/43/47) are in use; the card locks are
+  held by `sc117-tp-svc-4card-lan-locks`, so no lab work can start on the cards while it runs.
+- Committed build `37ee90a428cd`, flag set `tptsxqckhcbgls`, started by
+  [`serving/four-card-lan/serve.sh`](experiments/own-xpu-runtime/serving/four-card-lan/serve.sh); ready after 1,050 s,
+  startup batched-prefill gate 13/13, kernel log clean; a LAN test request decoded at 97.6 tok/s (short answer).
+- It stops itself after its 47 h lifetime (engine maximum 48 h); nothing restarts it. Stop gracefully with
+  `systemctl --user stop sc117-tp-svc-4card-lan.service`, then `systemctl --user stop sc117-tp-svc-4card-lan-locks.service`.
+  The old two-card `sc117-lan` unit stays stopped.
+
 **October 31, about 12:45 — handoff.** The own-engine SC117 lane's handoff guide is
 [experiments/own-xpu-runtime/HANDOFF.md](experiments/own-xpu-runtime/HANDOFF.md): state, open owner decisions, what to
 finish, the publication plan for neural.download and this repo, next work and ideas. Nothing is running on the cards.

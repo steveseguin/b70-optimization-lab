@@ -36,8 +36,9 @@ outputs bit-identical to build B19 (12-prompt suite) and, for the long prompt, t
   (fixed-cost-2) and `OWNRT_TP_HC_SPLIT=low,gate,final,prefill` (hc-split).
 - Two-card layout: one card per rank, no TP. Its lab flag set is `B` in
   [`research/two-card-flags-2026-10-31/flags.py`](research/two-card-flags-2026-10-31/flags.py).
-- The `sc117-lan` service (two cards, B19 build, unit in `gsq-rco-iq3s/serving/lan/`) is stopped and untouched.
-  Nothing is hosted on the cards.
+- **Hosted at handoff (owner request):** the four-card server on `192.168.2.44:18160` (committed build, `tptsxqckhcbgls`,
+  131,072 context), started by [`serving/four-card-lan/serve.sh`](serving/four-card-lan/serve.sh). It holds all four card
+  locks; stop it gracefully (see `CURRENT.md`) before any lab work. The two-card `sc117-lan` unit is stopped and untouched.
 
 ## Owner decisions still open (do not act on these without the owner)
 
