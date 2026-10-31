@@ -12,6 +12,7 @@ How we got there:
 - Lever 1, expert-parity assignment, is exact but slower, so it is closed. Its loss is explained by card imbalance.
 - Lever 2, a row-parallel batched conv, is closed: no gain, and a race when the history is updated in place.
 - Lever 3 keeps GDN state rows in registers across batched rows: exact; −4.6 / −8.3 ms per chunk on the harness.
+- Lever 4 (replace the per-pair host drains) is closed at its measured ceiling: 0.9 / 1.6 ms per chunk.
 - A codegen lesson is recorded in DO-NOT-REPEAT: a default-off branch in a shared generic kernel cost 1.4% of decode.
 
 Lane: SC117 four-card TP (`tptsxqckhcb` on build `e6daa268a3a8`, commit 979462f7c, TTFT 222.5 s at 131072).
@@ -34,7 +35,7 @@ Lane: SC117 four-card TP (`tptsxqckhcb` on build `e6daa268a3a8`, commit 979462f7
 | card balance at the drains (Σ\|diff\|/2) | 3.9 | 5.4 | drain trace |
 | drain turnaround (later card done → exchange issued) | ~2.3 | ~2.0 | drain trace |
 | chunk inputs + final readback with the cards idle | 5.9 | 9.8 | host trace (final minus its blocked part) |
-| not attributed | ~10 | ≈ −2 | rank 1: about 0.13 ms per pair, perhaps device restart after each drain (not measured) |
+| not attributed | ~10 | ≈ −2 | rank 1; not drain or device restart: skipping the drains saves only 0.9 ms (Lever 4 ceiling) |
 | **TP wall (prefill_chunk, host trace)** | **461–464** | **413–415** | A arms g1/u1/u2/p2 |
 
 Split work that does not halve, per TP card ([results/p-r1-probe.json](results/p-r1-probe.json),
@@ -221,18 +222,52 @@ Every server passed its startup gate. 20 kernel-log checks, 0 faults. Long-reque
 - Work directories are archived (sha256) at `.../2026-10-31/prefill-tp-overhead-suite-r6`. r5's servers are at
   `.../2026-10-31/prefill-tp-overhead-suite-r5`.
 
-## Next levers (sized from this attribution; not built)
+## Lever 4 ceiling: no host drain before the exchange pairs, closed (2026-10-31)
+
+Question: the ~2 ms turnaround plus the ~10 ms rank-1 remainder (about 0.13 ms per pair) might be the host drain and
+the device restart before every exchange pair. If so, a receiver-ready handshake inside the exchange kernel would
+remove them.
+
+Ceiling measurement:
+- Diagnostic: the timing-only `OWNRT_PREFILL_DRAIN_SKIP=1` skips the card-0 drain before each pair.
+- Build: r7 `9139cd812e2d` = HEAD + [engine-drain-skip-diagnostic.patch](engine-drain-skip-diagnostic.patch); not
+  committed.
+- Bar (coordinator's rule): build the handshake only if the ceiling is ≥ 8 ms per chunk on both ranks.
+
+| 1100-row harness, ms per chunk (A/B/A/B; A = tptsxqckhcbg) | A1 | skip1 | A2 | skip2 | ceiling |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| rank 0 (TP, 131072) | 404.24 | 403.40 | 404.97 | 402.67 | **1.6** |
+| rank 1 (TP, 65536, shadow packing off in both arms) | 458.27 | 457.40 | 459.48 | 458.49 | **0.9** |
+
+- **Closed.** Ledger row in [service-speed DO-NOT-REPEAT](../../../gsq-rco-iq3s/service-speed/DO-NOT-REPEAT.md).
+- The ~10 ms left unattributed on rank 1 is not drain or restart cost.
+- Without packing, skipping the drains was exact: all compares equal, including exports. The peer can be at most one
+  exchange ahead, and every unpacked role's last reader precedes the next write.
+- With rank 1's shadow packing the first attempt was not safe. Phase k1's 16-row smoke hit a sticky rank error (no
+  device fault, no exchange timeout), because packed live ranges assume peer stores land at the drained exchange.
+- 0 kernel-log faults in k1 and k2.
+
+## Remaining plan (not built)
+
+Rank 0 now trails rank 1 by only about 6 ms per chunk (459.8 vs 453.7 critical; the critical figure includes the draft
+chunk). So a lever that helps rank 1 alone is capped at about 6 ms per chunk (about 3 s) until rank 0 also drops.
 
 | lever | rank 1 | rank 0 | note |
 | --- | ---: | ---: | --- |
-| HC low/gate row split | ≤ 34 (about 12 measured: TTFT −5.6 s) | ≤ 31 | the HC-split agent's patch; the largest |
-| receiver-ready handshake inside the exchange kernel instead of the per-pair host drain | ≤ ~12 | ≤ ~4 | 75 / 69 drains per chunk. Turnaround (~2.3 / 2.0) is measured; the ~10 ms rank-1 remainder (about 0.13 ms per pair) is not. Measure first with a timing-only arm that skips the drains |
-| balanced expert ownership (whole experts per card, balanced per layer and chunk; parity generalised) | ~12 | ~0 | parity minus its imbalance saved 12 ms of card work on rank 1 and cost 4.8 on rank 0 |
-| copy-engine overlap of the expert exchange with the shared expert | ≤ 13–14 | ≤ 13 | risky: the BCS has a fault history on these cards |
-| rank-1 input upload / output readback overlapped with the device | ~3–5 | — | the cards idle 5.9 ms per chunk in the chunk's host phases |
+| HC low/gate row split | about 12 measured (TTFT −5.6 s) | ≤ 31 sized | the HC-split agent's patch; the largest; both ranks |
+| rank-0 lookup rows of chunk k+1 prepared while chunk k runs | — | ≤ ~5–7 | the cards idle 6.9 ms per chunk in rank 0's inputs phase (host lookups); exact (host only); unblocks the rank-1 levers |
+| balanced expert ownership (whole experts per card, balanced per layer and chunk) | ~12 | ~0 | parity minus its imbalance; worth ≤ 6 until rank 0 drops |
+| rank-1 input upload / output readback overlapped with the device | ~3–5 | — | 5.9 ms per chunk of idle host phases |
+| copy-engine overlap of the expert exchange | ≤ 13–14 | ≤ 13 | **left alone**: BCS fault history |
+| device-side drain handshake | 0.9 | 1.6 | closed (ceiling above) |
 
-Probe sizes for small kernels are upper bounds (lever 2). Each lever should be timed on the 1100-row harness, A/B/A/B,
-before any build is promoted.
+Suggested order:
+1. Merge the HC split. It is the biggest, and it applies to both ranks.
+2. Rank-0 lookup prefetch.
+3. Balanced expert ownership together with the rank-1 host-phase overlap.
+
+Each lever should be timed on the 1100-row harness, A/B/A/B, against the decode-half gate, before any build is
+promoted.
 
 ## Builds and patches (r1–r5 from the private tree `/dev/shm/pto-engine-20261030`, r6 from `/dev/shm/pto-engine-20261031-gdn`; only lever 3 is committed to engine/src)
 
@@ -251,13 +286,16 @@ before any build is promoted.
   - [engine-gdn-regs-on-fc2-hcsplit.patch](engine-gdn-regs-on-fc2-hcsplit.patch) is the same change 3-way rebased onto
     the fc2 + HC-split tree. It merges with fc2's `gdnr` StaticState read and applies to the AOT agent's copy of that
     tree (`git apply --check`).
+- r7 `9139cd812e2d`: HEAD (lever 3 included) plus the timing-only drain skip, from `/dev/shm/pto-engine-20261031-xk`
+  ([engine-drain-skip-diagnostic.patch](engine-drain-skip-diagnostic.patch); not committed). Receipt
+  `engine/receipts/9139cd812e2d.json`.
 - r5 `66524d88054d`: r4 plus lever 3 ([engine-pto-r5.patch](engine-pto-r5.patch)). Its receipt,
   `engine/receipts/66524d88054d.json`, pins the private tree. The r4 receipt is stale, since lever 3 edited the same
   files after r4 was built.
 
 ## Files and archives
 
-- Harness: copies from prefill-draft-batch-2026-10-30. Extras added: `st1`, `xs=N`, `xp`, `gd=N`, `ex=N`, `dt`, `cv`,
+- Harness: copies from prefill-draft-batch-2026-10-30. Extras added: `st1`, `xs=N`, `xp`, `gd=N`, `ex=N`, `dt`, `cv`, `gx`, `xk`,
   modes `probe0|probe1`.
 - Analyzers: [analyze_class_times.py](analyze_class_times.py), [analyze_exchange_stats.py](analyze_exchange_stats.py),
   [analyze_probe.py](analyze_probe.py), [analyze_drain_trace.py](analyze_drain_trace.py).

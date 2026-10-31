@@ -1,0 +1,25 @@
+diff --git a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+index 647b4810c..563178ff7 100644
+--- a/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
++++ b/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+@@ -509,12 +509,19 @@ void prefill_xzero_chunk() {
+   for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(prefill_xzero_first)*L::stride)*4,zero.data(),zero.size());
+   drain();
+ }
++// OWNRT_PREFILL_DRAIN_SKIP=1 (2026-10-31, research/tp/prefill-tp-overhead-2026-10-30; TIMING-ONLY diagnostic, outputs NOT
++// trusted, never a service flag; requires OWNRT_PREFILL_XZERO_ONCE=1, which zeroes every pair's slot words once per chunk
++// with both cards drained): the card-0 drain before each exchange pair is skipped. A peer's stores can then land in a shadow
++// that this card's earlier sites still read, so outputs may differ; the exchange kernels' flag waits stay bounded
++// (tp_exchange_cap). It sizes what a device-side receiver-ready handshake inside the exchange kernel could save: the host
++// drain, event retirement and device restart before every pair. Card balance still shows up as exchange wait.
++static bool prefill_drain_skip(){static const bool on=[]{const char* e=std::getenv("OWNRT_PREFILL_DRAIN_SKIP");return e&&e[0]=='1';}();return on;}
+ void prefill_exchange(const flash::Launch& l,int M) {
+   const int c=l.card,peer=1-c;require(a.tp_replicate&&xctl.size()==2&&l.shape.size()>=2,"TP prefill exchange");
+   const uint32_t slot=prefill_exchange_slot_base+uint32_t(l.shape.at(1));require(slot<ownrt::exchange_layout::slots,"TP prefill exchange slot");
+   namespace L=ownrt::exchange_layout;
+   require(c==0?prefill_exchange_open<0:prefill_exchange_open==int(slot),"TP prefill exchange pairing (card 0 then card 1, same slot)");
+-  if(c==0){drain();
++  if(c==0){if(prefill_drain_skip())require(prefill_xzero_once(),"OWNRT_PREFILL_DRAIN_SKIP requires OWNRT_PREFILL_XZERO_ONCE=1");else drain();
+     if(!prefill_xzero_once()){const std::vector<uint8_t> zero(L::stride*4,0);
+       for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(slot)*L::stride)*4,zero.data(),zero.size());
+       drain();}
