@@ -179,6 +179,28 @@ one-card and four-card rank harnesses.
   0.05 ms of each other, so further cuts must come off both. The engine change is a patch against `979462f7c` (not yet
   applied to `engine/src`: the write was refused by the session's permission system).
 
+### Where it stands after two days (2026-10-31, measured)
+
+| | Oct 29 | Committed `engine/src` | Lab build (patches not yet in `engine/src`) |
+| --- | ---: | ---: | ---: |
+| Four cards, decode tok/s | 78.3 | 87.6–87.8 | 94.0–94.3 (fixed-cost-2 + HC split) |
+| Two cards, decode tok/s | 66.1 | — | 72.4 (same patches, non-TP flags) |
+| Four cards, 121,854-token prompt, first token | 353.6 s | 216.7 s | 215.7 s before the last two prefill steps |
+
+Closed on measurement: multi-row verification (1.42× at two rows), a persistent kernel per layer (barrier dearer than a
+launch), exchanges in the producer's tail (scattered peer stores race; one-group stores slower), expert parity and
+balanced experts on rank 0, row-parallel GDN conv, the drain handshake. Every remaining known decode lever is sized
+at ≤1–2% (shared-expert split, more glue fusion, the last runtime-indexed lookups); prefill levers are 1–3% each.
+
+**What would move the north star next** (none sized as large; listed so they are not lost):
+1. Apply the two lab patches (owner decision) and the AOT build to the services: four cards 94 tok/s, two cards 72.
+2. Shared-expert split for prefill (in progress, ~5 s on the long prompt), then rank 1's input/readback overlap.
+3. The open precision question: lab builds use the compiler's default F32 divide/sqrt rounding on the GPU; a
+   correctly rounded build changes outputs and needs its own gate (owner decision; may bear on the CPU-reference
+   disagreements).
+4. Beyond ~100 tok/s on four cards needs a new idea: the step is now about 8.7 ms with both stages balanced, about
+   half of it replicated or split work that keeps a fixed per-launch part, and misses still cost ~18% of decode time.
+
 ### Decision rule
 
 Since 2026-10-30 afternoon: one fixed-cost campaign (`research/tp/fixed-cost-2026-10-30/`). In order: a paired
