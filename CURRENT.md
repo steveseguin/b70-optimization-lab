@@ -35,6 +35,16 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 31, about 12:45 — handoff.** The own-engine SC117 lane's handoff guide is
+[experiments/own-xpu-runtime/HANDOFF.md](experiments/own-xpu-runtime/HANDOFF.md): state, open owner decisions, what to
+finish, the publication plan for neural.download and this repo, next work and ideas. Nothing is running on the cards.
+
+**October 31, about 12:40 — four cards read the 121,854-token prompt in 213.0 / 213.1 s (was 216.8), exact; committed.**
+- `OWNRT_PREFILL_SHEXP_SPLIT=1` (commit `5209e0fd3`, default off): the shared expert is split across each card pair in
+  batched prefill (whole weights at a row offset, decode untouched). Fresh servers A/B/B at 131072 on build
+  `37ee90a428cd`: 216.82 → 213.04 / 213.13 s; decode, suite and all 512 long outputs unchanged. Four-card set now
+  `tptsxqckhcbgls`. [Result](experiments/own-xpu-runtime/research/tp/prefill-shexp-split-2026-10-31/RESULT.md).
+
 **October 31, about 10:30 — four cards read the 121,854-token prompt in 216.7 / 216.8 s (was 219.5), exact; committed.**
 - `OWNRT_PREFILL_EXPERT_BALANCE=rank1` (rank 1's two cards own whole experts, split evenly per layer) and
   `OWNRT_PREFILL_LOOKUP_PREFETCH=1` (rank 0 computes the next chunk's lookup rows while the current one runs); commit

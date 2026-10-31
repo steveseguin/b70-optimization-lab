@@ -25,14 +25,14 @@ outputs bit-identical to build B19 (12-prompt suite) and, for the long prompt, t
 | --- | ---: | ---: | ---: |
 | Four cards, decode, 12-prompt suite median | 78.3 tok/s | 87.6–87.8 tok/s ([hc-kernels](research/hc-kernels-2026-10-30/RESULT.md)) | **94.0–94.3 tok/s** ([hc-split](research/tp/hc-split-2026-10-30/RESULT.md)) |
 | Two cards, decode | 66.1 tok/s | — | **72.4 tok/s** ([two-card-flags](research/two-card-flags-2026-10-31/RESULT.md)) |
-| Four cards, 121,854-token prompt, first token | 353.6 s | **216.7 s** ([prefill-balance](research/tp/prefill-balance-2026-10-31/RESULT.md)) | 215.7 s with the HC split, before the last two prefill steps |
+| Four cards, 121,854-token prompt, first token | 353.6 s | **213.0–213.1 s** ([prefill-shexp-split](research/tp/prefill-shexp-split-2026-10-31/RESULT.md)) | the HC split's prefill mode would add roughly −5 s (measured 221.3 → 215.7 s on an earlier base) |
 | Fresh four-card server, launch to ready | — | — | 528–554 s with AOT kernels, 670–695 s JIT ([aot-tp](research/aot-tp-2026-10-31/RESULT.md)) |
 
 - Four-card layout: two pipeline ranks (rank 0 = layers 0–22 + MTP draft on cards 23+27; rank 1 = layers 23–47 + head
   on cards 43+47), each split exactly across its two cards ("TP"). The committed four-card flag set is
-  `tptsxqckhcbgl`, defined in
-  [`research/tp/prefill-balance-2026-10-31/arm_env.py`](research/tp/prefill-balance-2026-10-31/arm_env.py) (plus
-  `--tp-replicate`, passed by the lab adapter). The lab decode set adds `OWNRT_DRAFT_FAST=1 OWNRT_TARGET_FAST=1`
+  `tptsxqckhcbgls` = `tptsxqckhcbgl` (defined in
+  [`research/tp/prefill-balance-2026-10-31/arm_env.py`](research/tp/prefill-balance-2026-10-31/arm_env.py)) +
+  `OWNRT_PREFILL_SHEXP_SPLIT=1`, plus `--tp-replicate`, passed by the lab adapter. The lab decode set adds `OWNRT_DRAFT_FAST=1 OWNRT_TARGET_FAST=1`
   (fixed-cost-2) and `OWNRT_TP_HC_SPLIT=low,gate,final,prefill` (hc-split).
 - Two-card layout: one card per rank, no TP. Its lab flag set is `B` in
   [`research/two-card-flags-2026-10-31/flags.py`](research/two-card-flags-2026-10-31/flags.py).
@@ -56,11 +56,10 @@ outputs bit-identical to build B19 (12-prompt suite) and, for the long prompt, t
 
 ## Finish first
 
-1. **Shared-expert split for prefill** (`OWNRT_PREFILL_SHEXP_SPLIT=1`,
-   [`research/tp/prefill-shexp-split-2026-10-31/`](research/tp/prefill-shexp-split-2026-10-31/)): exact in every
-   harness gate, −6.1 / −8.0 ms per chunk (rank 1 / rank 0), decode unchanged. Its fresh-server A/B/B at 131072 was
-   running at handoff; see that folder's RESULT.md for the outcome. If it won, commit the engine change to
-   `engine/src` (default off), publish the new long-prompt time, and make `tptsxqckhcbgls` the four-card set.
+1. **Shared-expert split for prefill: done** (`OWNRT_PREFILL_SHEXP_SPLIT=1`,
+   [`research/tp/prefill-shexp-split-2026-10-31/`](research/tp/prefill-shexp-split-2026-10-31/), build
+   `37ee90a428cd`): fresh servers A/B/B at 131072, 216.82 → 213.04 / 213.13 s, decode and all outputs unchanged;
+   committed to `engine/src` default off and published. Rank 1 still paces, ~4.5 ms per chunk ahead of rank 0.
 2. **If the owner approves decision 1**, merge in this order and re-gate:
    - `engine/src` HEAD already contains later changes (GDN registers, prefill balance, possibly the shared-expert
      split). Apply `engine-fixed-cost-2.patch` and `engine-hc-split.patch` with a 3-way merge onto HEAD. The known
@@ -106,7 +105,7 @@ engine, in the style of the existing documented packages and graphs. Plan:
   tables and context-performance graphs on other model pages.
 - **Before claiming "reproducible":** a clean rebuild from the committed source must reproduce the binary's
   compiled-source hashes and pass the bitwise gates; downloads must be re-hashed from their public URLs.
-- Only publish numbers whose engine source is committed. Today that means the 216.7 s long prompt and the ~87.7 tok/s
+- Only publish numbers whose engine source is committed. Today that means the 213.0 s long prompt and the ~87.7 tok/s
   four-card decode; 94.2 / 72.4 tok/s wait on decision 1.
 
 ## Next work (ranked, with sizes)
@@ -117,7 +116,7 @@ engine, in the style of the existing documented packages and graphs. Plan:
 2. Prompt reading, each 1–3% of the long prompt (see
    [prefill-balance RESULT, "What is left"](research/tp/prefill-balance-2026-10-31/RESULT.md)):
    rank 1's input upload / readback overlap (~3–5 ms per chunk); rank 0's draft chunk (13.7 ms) and its card 27
-   trailing card 23 by ~9 ms; the HC split's prefill mode (in the unmerged patch, ~5 s). Rank 0 is only ~6 ms per
+   trailing card 23 by ~9 ms; the HC split's prefill mode (in the unmerged patch, ~5 s). Rank 0 is only ~4.5 ms per
    chunk behind rank 1, so rank-1-only levers are capped until rank 0 also drops.
 3. Decode, each ≤1–2%: shared-expert split for decode (exchange cost eats most of it), more exact glue fusions
    (obey the host-readback rule), the last runtime-indexed lookups (begin/commit/PLE glue, argmax, readback copy),
