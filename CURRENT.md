@@ -35,6 +35,15 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 31, about 08:00 — kernels compiled ahead of time: exact, servers ready ~140 s sooner, no 60 s deadline risk.**
+- `engine/build.py OUT --aot-target intel_gpu_bmg_g31` (lab build `a1959e7ccf88`, same 269 source hashes as `40388fc92c43`):
+  28 harness arms bitwise equal to the JIT build; 7 fresh servers equal B19 with unchanged decode (four cards 94.2–94.4,
+  two cards 72.44). Four-card launch to ready 670–695 → 528–554 s; first request 106 → 1.2 s; first decode step 53 s →
+  0.08 s. A 131072 server ran with the default 60 s deadline. [Result](experiments/own-xpu-runtime/research/aot-tp-2026-10-31/RESULT.md).
+- **For the owner (2026-10-31):** the lab builds carry no offload precision flags on the link line, so GPU F32 divide
+  and sqrt use the compiler's default rounding (JIT and AOT alike, which is why AOT is bit-identical). Adding them
+  would change outputs and would need its own gate; it may bear on the open CPU-reference disagreements. Not changed.
+
 **October 31, about 06:15 — four cards read the 121,854-token prompt in 219.3 / 219.4 s (was 222.5), exact; committed to `engine/src`.**
 - `OWNRT_PREFILL_GDN_REGS=1` (commit `5cf6f085e`, default off): batched prefill keeps each GDN state row in registers
   across the chunk's rows instead of a global-memory round trip per row. Fresh servers A/B/B at 131072 on one binary
