@@ -1,0 +1,53 @@
+=== phase p1 binary /dev/shm/hcsplit-2026-10-30/build-r1/sc117-engine (40388fc92c43) start 2026-10-30T20:07:51-04:00 pid 2928578 affinity 0-3,16-19 nofile 1048576
+[klog p1-before-24h] since @1793318872: rc=0 9 lines, 0 xe/fault lines
+--- arm p1-r1-probe0 rank=1 mode=probe0 steps=48 prompt=16 pattern=h extra=ep,rd,hk=1,tf=1,trace MemAvailable=83496554496 shm_free=30396952576 at 2026-10-30T20:07:52-04:00
+{"tp": false, "steps": 48, "load_s": 53.8751210658811, "tokens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "rc": 0} median half ms 14.78
+arm p1-r1-probe0 rc=0 after 57 s
+[klog p1-after-p1-r1-probe0] since @1793405272: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":948,"dropped_exchanges_and_merges":77,"exact":false}
+site-trace.jsonl 49040 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+decode-fusion {"pairs":100,"gate_mix":0,"expert_pairs":24}
+half median (3..): 14.7737 draft 0.0
+--- arm p1-r1-probe0-hs rank=1 mode=probe0 steps=48 prompt=16 pattern=h extra=ep,rd,hk=1,tf=1,hs=1,trace MemAvailable=82997350400 shm_free=30391259136 at 2026-10-30T20:08:50-04:00
+{"tp": false, "steps": 48, "load_s": 11.419009198900312, "tokens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "rc": 0} median half ms 13.93
+arm p1-r1-probe0-hs rc=0 after 15 s
+[klog p1-after-p1-r1-probe0-hs] since @1793405330: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":948,"dropped_exchanges_and_merges":179,"exact":false}
+site-trace.jsonl 49040 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+tp-hc-split {"schema": "ownrt.tp-hc-split.v1", "tokens": ["final", "gate", "low"], "whole_weights": true, "prefill_split": false, "sites": {"final": 2, "gate": 50, "low": 50}, "exchanges": 102, "first_slot": 76, "slots_total": 178, "rows_total": 538560}
+decode-fusion {"pairs":100,"gate_mix":0,"expert_pairs":24}
+half median (3..): 13.9247 draft 0.0
+--- arm p1-r1-probe1-hs rank=1 mode=probe1 steps=48 prompt=16 pattern=h extra=ep,rd,hk=1,tf=1,hs=1,trace MemAvailable=83223605248 shm_free=30385446912 at 2026-10-30T20:09:05-04:00
+{"tp": false, "steps": 48, "load_s": 12.473876853939146, "tokens": [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], "rc": 0} median half ms 13.91
+arm p1-r1-probe1-hs rc=0 after 16 s
+[klog p1-after-p1-r1-probe1-hs] since @1793405345: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":1,"launches":948,"dropped_exchanges_and_merges":179,"exact":false}
+site-trace.jsonl 49040 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":51,"norm1_admitted":51,"combine_norm_pairs":49,"moe_combine_norm":24}
+tp-hc-split {"schema": "ownrt.tp-hc-split.v1", "tokens": ["final", "gate", "low"], "whole_weights": true, "prefill_split": false, "sites": {"final": 2, "gate": 50, "low": 50}, "exchanges": 102, "first_slot": 76, "slots_total": 178, "rows_total": 538560}
+decode-fusion {"pairs":100,"gate_mix":0,"expert_pairs":24}
+half median (3..): 13.9106 draft 0.0
+--- arm p1-r0-probe0 rank=0 mode=probe0 steps=48 prompt=16 pattern=h extra=ep,rd,hk=1,df=1,tf=1,trace MemAvailable=83010588672 shm_free=30379634688 at 2026-10-30T20:09:21-04:00
+{"steps": 48, "load_s": 111.62798997713253, "prompt_ms": 312.4973904341459, "draft_replay_ms": 30.709777725860476, "rc": 0} median half ms 13.228 draft ms 1.594
+arm p1-r0-probe0 rc=0 after 118 s
+[klog p1-after-p1-r0-probe0] since @1793405362: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":875,"dropped_exchanges_and_merges":69,"exact":false}
+site-trace.jsonl 47959 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+decode-fusion {"pairs":92,"gate_mix":0,"expert_pairs":23}
+half median (3..): 13.2253 draft 1.5943
+--- arm p1-r0-probe0-hs rank=0 mode=probe0 steps=48 prompt=16 pattern=h extra=ep,rd,hk=1,df=1,tf=1,hs=1,trace MemAvailable=82797965312 shm_free=30176210944 at 2026-10-30T20:11:20-04:00
+{"steps": 48, "load_s": 87.2264899930451, "prompt_ms": 287.76990715414286, "draft_replay_ms": 27.778382878750563, "rc": 0} median half ms 12.618 draft ms 1.606
+arm p1-r0-probe0-hs rc=0 after 94 s
+[klog p1-after-p1-r0-probe0-hs] since @1793405480: rc=0 0 lines, 0 xe/fault lines
+{"schema":"ownrt.tp-shape-probe.v1","card":0,"launches":875,"dropped_exchanges_and_merges":161,"exact":false}
+site-trace.jsonl 47959 lines
+{"tokens":"norm1,lowsel,cnorm","hc_norm_sites":46,"norm1_admitted":46,"combine_norm_pairs":44,"moe_combine_norm":21}
+{"schema":"ownrt.draft-fast.v1","tokens":"inj,norm,merge,cnorm,gath","admitted":{"inj:blk.0.hc.a.":true,"inj:blk.0.hc.f.":true,"merge":true,"gath":true,"norm:merge":true,"norm:blk.0.hc.a.norm":true,"norm:blk.0.hc.f.norm":true,"cnorm":true},"overridden_sites":13,"fused_away_sites":5,"sites":[{"site":"merge.embedding_norm","commands":1,"head_only":false},{"site":"merge.hidden_norm","commands":0,"head_only":false},{"site":"merge.embedding_projected","commands":1,"head_only":false},{"site":"merge.projected","commands":0,"head_only":false},{"site":"blk.0.hc.a.norm","commands":1,"head_only":false},{"site":"blk.0.hc.a.low","commands":1,"head_only":false},{"site":"blk.0.hc.a.inject","commands":0,"head_only":false},{"site":"blk.0.hc.f.norm","commands":1,"head_only":false},{"site":"blk.0.hc.f.low","commands":1,"head_only":false},{"site":"blk.0.hc.f.inject","commands":0,"head_only":false},{"site":"blk.0.gather","commands":1,"head_only":false},{"site":"blk.0.ffn.combine","commands":0,"head_only":true},{"site":"final.norm","commands":1,"head_only":false}]}
+tp-hc-split {"schema": "ownrt.tp-hc-split.v1", "tokens": ["final", "gate", "low"], "whole_weights": true, "prefill_split": false, "sites": {"gate": 46, "low": 46}, "exchanges": 92, "first_slot": 69, "slots_total": 161, "rows_total": 485760}
+decode-fusion {"pairs":92,"gate_mix":0,"expert_pairs":23}
+half median (3..): 12.6161 draft 1.6056
+=== phase p1 done 2026-10-30T20:12:55-04:00

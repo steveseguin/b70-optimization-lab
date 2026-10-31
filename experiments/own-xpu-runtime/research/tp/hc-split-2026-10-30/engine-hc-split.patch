@@ -1,0 +1,345 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+index 8caf9fb..121c962 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/generic_engine.hpp
+@@ -183,6 +183,7 @@ void gsq_prepare_fusion() {
+   if(mix_enabled&&a.f32_activations)for(size_t i=0;i<p.launches.size();++i) {
+     const auto& gate=p.launches[i];
+     if(gate.op!="gemv"||!(ends(gate.label,".hc.a.gate")||ends(gate.label,".hc.f.gate"))||!gsq_kopt_site(gate)||gsq_partner.count(&gate)||gsq_follower.count(&gate))continue;
++    if(gate.row_count)continue; // OWNRT_TP_HC_SPLIT: a split gate writes half rows; its mix needs all of them
+     auto found=by_label.find(gate.label.substr(0,gate.label.size()-4)+"mix@"+std::to_string(gate.card));if(found==by_label.end())continue;
+     const auto& mix=*found->second;const size_t j=size_t(&mix-p.launches.data());
+     if(j<=i||mix.op!="hc_mix"||mix.card!=gate.card||mix.inputs.size()<2||mix.inputs.at(1)!=gate.outputs.at(0)||mix.outputs.size()!=1)continue;
+@@ -230,7 +231,7 @@ void gsq_linear(const flash::Launch& l) {
+     if(other==matrices.end())other=matrices.emplace(partner->second,std::vector<Matrix>{matrix(*partner->second)}).first;
+     const auto& m=it->second.at(0);const auto& n=other->second.at(0);
+     require(m.tokens==1&&n.tokens==1&&m.x==n.x&&m.type==n.type,"fused sibling matrices");
+-    std::vector<iq3::kopt::Matrix> pair{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0},{n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0}};
++    std::vector<iq3::kopt::Matrix> pair{{m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,0,m.row0},{n.type,n.w,n.x,n.y,n.rows,n.columns,n.activation,n.output_type,0,n.row0}}; // row0: OWNRT_TP_HC_SPLIT
+     finish(l.card,iq3::kopt::fused_gemv(dev(l.card),pair,32));return;
+   }
+   if(auto mixed=gsq_mix_partner.find(&l);mixed!=gsq_mix_partner.end()) {
+@@ -267,6 +268,8 @@ void gsq_expert_pair(const flash::Launch& g,const ExpertPair& pr) {
+ void gsq_linear_matrix(const flash::Launch& l,const Matrix& m) {
+   const int c=l.card;
+   require(l.op=="gemv"||l.op=="routed_gemv","GSQ unfused linear operation");
++  // OWNRT_TP_HC_SPLIT: a row offset into a whole weight reaches only the one-row kopt GEMV below (Multiply's paths).
++  if(m.row0)require(l.op=="gemv"&&m.tokens==1&&!m.routes&&m.type==iq3::Type::BF16&&gsq_kopt_site(l),"TP row offset: one-row BF16 kopt GEMV only ("+l.label+")");
+   const auto dense_input=m.tokens>1?gsqn::InputMode::per_slot:gsqn::InputMode::shared;
+   if(dense_block_site(w,a,l)){const auto*s=denseblock::selected(l.label,l.weights.at(0));require(s&&variant(l)==0&&dev(c).arena.row(m.w).bytes==(l.row_count?size_t(l.row_count)*(s->bytes/s->rows):s->bytes),"dense block raw storage/variant");finish(c,denseblock::submit(dev(c),m,l.label,l.weights.at(0),dense_input,size_t(l.row_count)),true);return;}
+   if(iq3_block_site(w,a,l)){require(((m.activation==iq3::Type::BF16&&m.output_type==iq3::Type::BF16)||(m.activation==iq3::Type::F32&&m.output_type==iq3::Type::F32))&&!m.fp32&&dev(c).arena.row(m.w).bytes==321126400,"IQ3 block exact matrix storage");finish(c,iq3block::submit(dev(c),m,l.label,l.weights.at(0),gsqn::InputMode::per_slot,l.slots!=0),true);return;}
+@@ -285,11 +288,11 @@ void gsq_linear_matrix(const flash::Launch& l,const Matrix& m) {
+ #ifdef OWN_RT_HOST_ONLY
+   // Original Host variant0 executes the same kopt lane/tree arithmetic.
+   // performance::experts would instead select variant2, so call multiply.
+-  require(m.tokens==1,"GSQ host generic: one token row");
++  require(m.tokens==1&&!m.row0,"GSQ host generic: one token row, no TP row offset");
+   finish(c,gsq_integration::host_generic(dev(c),m),true);
+ #else
+   ownrt::Event event;
+-  if(l.op=="gemv")event=m.tokens>1?iq3::kopt::gemv_tokens(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.tokens,m.activation,m.output_type,32):iq3::kopt::gemv(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32);
++  if(l.op=="gemv")event=m.tokens>1?iq3::kopt::gemv_tokens(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.tokens,m.activation,m.output_type,32):iq3::kopt::gemv(dev(c),m.type,m.w,m.x,m.y,m.rows,m.columns,m.activation,m.output_type,32,0,m.row0);
+   else event=iq3::kopt::routed_gemv(dev(c),m.type,m.w,m.x,m.y,m.routes,m.status,m.experts,m.rows,m.columns,m.count,m.rows,m.activation,m.output_type,32);
+   finish(c,event);
+ #endif
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+index 0249b2f..c27d52b 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/main.cpp
+@@ -1499,7 +1499,7 @@ public:
+   // launch (e.g. ssm_a and ssm_dt.bias of a recurrence). Rows are uploaded in run order, each row unchanged.
+   std::vector<std::pair<size_t,size_t>> tp_runs(int c,const std::string& name) const {
+     for(const auto& l:p.launches) {
+-      if(l.card!=c||!l.row_count)continue;
++      if(l.card!=c||!l.row_count||l.row_offset)continue; // OWNRT_TP_HC_SPLIT row_offset: the whole tensor, read at an offset
+       if(!l.row_runs.empty()) {
+         if(std::find(l.weights.begin(),l.weights.end(),name)==l.weights.end())continue;
+         std::vector<std::pair<size_t,size_t>> runs;size_t total=0;
+@@ -1915,6 +1915,7 @@ public:
+     m.x=buffers[c].at(l.inputs[0]).id;m.y=buffers[c].at(l.outputs[projection*2]).id;
+     m.rows=l.shape[1];m.columns=l.shape[2];m.span=m.rows;
+     if(l.row_count){m.rows=m.span=size_t(l.row_count);} // TP row split: this card's rows only
++    if(l.row_offset){require(l.row_count>0&&l.row_runs.empty()&&!routed&&projection==0,"TP row offset: one dense row range");m.row0=size_t(l.row_begin);} // OWNRT_TP_HC_SPLIT: rows of the whole weight
+     m.workspace=workspace[c];
+     if(l.weights[projection]=="output.weight"&&split_head()){require(a.rank==1,"p105 target prefix rank");m.rows=m.span=p105::prefix;}
+     if(routed) {
+@@ -2498,7 +2499,7 @@ static std::vector<size_t> write_tp_plan(const fs::path& path,const flash::Plan&
+     require(l.card==0||l.card==1,"TP plan: launches on card 0 or 1");
+     if(l.op=="lookup")continue;
+     for(const auto& n:l.weights){const auto& t=w.directory.at(n);if(t.component=="embedding"||t.component=="ple_lookup")continue;
+-      size_t r=0;if(l.row_count&&(!l.row_runs.empty()||(!l.weights.empty()&&l.weights[0]==n)))r=size_t(l.row_count);
++      size_t r=0;if(l.row_count&&!l.row_offset&&(!l.row_runs.empty()||(!l.weights.empty()&&l.weights[0]==n)))r=size_t(l.row_count); // row_offset: whole weight
+       auto [it,fresh]=rows[l.card].insert({n,r});require(fresh||it->second==r,"TP plan: one row extent per weight and card: "+n);
+       if(fresh){size_t whole=plan_stored_bytes(w,a,p,selected,l,n);
+         if(r){require(!t.shape.empty()&&r<=size_t(t.shape[0])&&whole%size_t(t.shape[0])==0,"TP plan: uniform rows of "+n);whole=whole/size_t(t.shape[0])*r;}
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+index 647b481..da8c0e4 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/dense-packed-block/engine/build/source/prefill_engine.hpp
+@@ -36,7 +36,24 @@ std::array<Allocation,2> xg_order{},xg_tiles{},xg_count{};size_t xg_capacity=0;
+ std::array<Allocation,2> prefill_slot_x{};             // TP: this card's expert input rows (compact slots) of the chunk
+ uint64_t prefill_chunks=0,prefill_rows_done=0;
+ int prefill_cards() const {return a.tp_replicate?2:1;}
+-static constexpr uint32_t prefill_exchange_slot_base=128;
++// Prefill flag slots are the decode slot + this base: 128, or (OWNRT_TP_HC_SPLIT, 2026-10-30: up to 102 more decode
++// exchange sites per rank) the first slot after every decode exchange slot, so prefill never zeroes a decode slot.
++uint32_t prefill_slot_base_cache=0;
++uint32_t prefill_exchange_slot_base() {
++  if(!prefill_slot_base_cache){uint32_t n=0;
++    for(const auto& l:p.launches)if((l.op=="tp_xgather"||l.op=="tp_xheads"||l.op=="tp_xslot")&&l.shape.size()>=2)n=std::max(n,uint32_t(l.shape[1])+1u);
++    prefill_slot_base_cache=std::max<uint32_t>(128u,n);}
++  return prefill_slot_base_cache;
++}
++// OWNRT_TP_HC_SPLIT without its prefill token (Launch::row_offset, 2026-10-30): batched prefill runs a split HC GEMV's
++// full rows from the whole weight into the site's own output (the exchange's destination y, not y#tp), exactly as the
++// replicated site did before the split, and skips the site's exchange pair (prefill_runs). Decode keeps the split.
++std::string prefill_output(const flash::Launch& l,size_t k) const {
++  const std::string& o=l.outputs.at(k);
++  if(k||!l.row_offset||l.op!="gemv")return o;
++  require(o.size()>3&&o.ends_with("#tp"),"TP row offset prefill output: "+l.label);return o.substr(0,o.size()-3);
++}
++std::vector<std::string> prefill_outputs(const flash::Launch& l) const {std::vector<std::string> v;for(size_t k=0;k<l.outputs.size();++k)v.push_back(prefill_output(l,k));return v;}
+ // Request-local ring accounting: native recurrence chunks publish once into the
+ // spare bank, while scalar/replayed rows swap per row. No model state is changed.
+ unsigned prefill_bank_parity_bias=0;
+@@ -66,6 +83,7 @@ bool prefill_persistent(const std::string& name) const {
+ bool prefill_runs(const flash::Launch& l) const {
+   if(v3_skip_half[size_t(&l-p.launches.data())])return false;
+   if(l.label.starts_with("final.")||l.label=="logits"||l.label=="argmax")return false;
++  if(l.row_offset&&l.op=="tp_xgather")return false; // OWNRT_TP_HC_SPLIT without prefill: its producer ran full rows
+   return l.op!="handoff"&&l.op!="handoff_result";
+ }
+ // Bytes of one shadow row of `name` on card c: the buffer's bytes, or under TP a head-split / compact-slot buffer's
+@@ -84,7 +102,7 @@ void prefill_allocate() {
+     if(!prefill_runs(l))continue;
+     require(l.card>=0&&l.card<C,"prefill site card");
+     prefill_sites.push_back(&l);
+-    std::vector<std::string> names(l.inputs.begin(),l.inputs.end());names.insert(names.end(),l.outputs.begin(),l.outputs.end());
++    std::vector<std::string> names(l.inputs.begin(),l.inputs.end());const auto outs=prefill_outputs(l);names.insert(names.end(),outs.begin(),outs.end());
+     for(const auto& name:names) {
+       if(name=="position"||name=="token"||prefill_persistent(name))continue;
+       const size_t bytes=prefill_row_bytes(l.card,name);
+@@ -109,7 +127,7 @@ void prefill_allocate() {
+     for(size_t i=0;i<n;++i){const auto& l=*prefill_sites[i];if(l.card!=c)continue; // this card's sites (TP: a peer store lands after a drain)
+       for(const auto& name:l.inputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
+         if(it==open.end())open[r]={0,i};else it->second.second=i;}
+-      for(const auto& name:l.outputs)if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
++      for(const auto& name:prefill_outputs(l))if(prefill_role_of.count(name)){const auto& r=prefill_role_of.at(name);auto it=open.find(r);
+         if(it!=open.end())live[r].push_back(it->second);open[r]={l.op=="lookup"?0:i,i};}
+     }
+     for(const auto& [r,seg]:open)live[r].push_back(seg);
+@@ -393,7 +411,8 @@ void prefill_linear(const flash::Launch& l,int M) {
+   if(it==matrices.end())it=matrices.emplace(&l,std::vector<Matrix>{matrix(l)}).first;
+   Matrix m=it->second.at(0);
+   require(prefill_row_bytes(c,l.inputs[0])*size_t(M)<=dev(c).arena.row(prefill_shadow(c,l.inputs[0])).bytes,"prefill linear input extent");
+-  m.x=prefill_shadow(c,l.inputs[0]);m.y=prefill_shadow(c,l.outputs[0]);
++  m.x=prefill_shadow(c,l.inputs[0]);m.y=prefill_shadow(c,prefill_output(l,0));
++  if(l.row_offset){require(l.op=="gemv"&&l.shape.size()==3&&!m.routes,"TP row offset prefill site");m.rows=m.span=size_t(l.shape[1]);m.row0=0;} // full rows, as before the split
+   if(l.op=="routed_gemv") {
+     const unsigned slots=l.slots?unsigned(l.slots):unsigned(p.g.top); // TP compact slots: this card's slots of each row
+     require(m.count==slots&&m.routes&&m.status,"prefill routed site");
+@@ -503,7 +522,7 @@ uint32_t prefill_xzero_first=0,prefill_xzero_end=0;
+ void prefill_xzero_chunk() {
+   namespace L=ownrt::exchange_layout;
+   if(prefill_xzero_end==0){uint32_t lo=UINT32_MAX,hi=0;
+-    for(const auto* l:prefill_sites)if((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->shape.size()>=2){const uint32_t s=prefill_exchange_slot_base+uint32_t(l->shape.at(1));lo=std::min(lo,s);hi=std::max(hi,s+1);}
++    for(const auto* l:prefill_sites)if((l->op=="tp_xgather"||l->op=="tp_xheads")&&l->shape.size()>=2){const uint32_t s=prefill_exchange_slot_base()+uint32_t(l->shape.at(1));lo=std::min(lo,s);hi=std::max(hi,s+1);}
+     require(lo<hi&&hi<=L::slots,"TP prefill exchange slot range");prefill_xzero_first=lo;prefill_xzero_end=hi;}
+   drain();const std::vector<uint8_t> zero(size_t(prefill_xzero_end-prefill_xzero_first)*L::stride*4,0);
+   for(int k=0;k<2;++k)upload(k,xctl[size_t(k)],(size_t(L::header)+size_t(prefill_xzero_first)*L::stride)*4,zero.data(),zero.size());
+@@ -511,7 +530,7 @@ void prefill_xzero_chunk() {
+ }
+ void prefill_exchange(const flash::Launch& l,int M) {
+   const int c=l.card,peer=1-c;require(a.tp_replicate&&xctl.size()==2&&l.shape.size()>=2,"TP prefill exchange");
+-  const uint32_t slot=prefill_exchange_slot_base+uint32_t(l.shape.at(1));require(slot<ownrt::exchange_layout::slots,"TP prefill exchange slot");
++  const uint32_t slot=prefill_exchange_slot_base()+uint32_t(l.shape.at(1));require(slot<ownrt::exchange_layout::slots,"TP prefill exchange slot");
+   namespace L=ownrt::exchange_layout;
+   require(c==0?prefill_exchange_open<0:prefill_exchange_open==int(slot),"TP prefill exchange pairing (card 0 then card 1, same slot)");
+   if(c==0){drain();
+diff --git a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+index 257d4dc..cbaaa36 100644
+--- a/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
++++ b/experiments/own-xpu-runtime/engine/src/gsq-rco-iq3s/state-bundle/build/source-v4/rank.hpp
+@@ -830,6 +830,39 @@ static int run_rank(const Options& a) {
+     if((cls=="qsa.prepare"&&l.op=="qsa_prepare")||(cls=="qsa.pool"&&l.op=="qsa_append_pool")||(cls=="qsa.attention"&&l.op=="qsa_attention"))return cls;
+     return "";};
+    std::set<std::string> qsa_kv_halved;int qsa_layers=0;
++   // OWNRT_TP_HC_SPLIT (2026-10-30, research/tp/hc-split-2026-10-30; default off; needs OWNRT_TP_EXCHANGE=direct, F32):
++   // the replicated hyper-connection GEMVs (BF16 rows on the kopt Multiply paths) are row-split across the card pair.
++   // Card c computes the contiguous rows [c*R/2, (c+1)*R/2) of the site into y#tp with the unchanged kernel and per-row
++   // arithmetic, and one direct exchange (tp_xgather) assembles y on both cards before its consumer (HC act / mix); the
++   // dump therefore keeps the one-card layout (y whole, y#tp skipped). Comma tokens (1 = low,gate,final):
++   //  low      blk.*.hc.a.low, blk.*.hc.f.low (320 x 10240; the low+inject fusion launches the half low with the whole
++   //           4-row inject, replicated as before)
++   //  gate     blk.*.hc.a.gate, blk.*.hc.f.gate (10240 x 320)
++   //  final    final.low, final.gate (rank 1's head HC; decode halves only, batched prefill never runs final.*)
++   //  prefill  batched prefill runs the split sites too (row halves and one strided exchange per site, as the other row
++   //           splits), and each card stores only its rows of a split weight. Without it, a split launch reads its rows
++   //           from the whole replicated weight at a row offset (Launch::row_offset), and batched prefill runs that
++   //           site's full rows into y and skips its exchange, exactly as before the split.
++   // The split sites' exchanges take flag slots after every other exchange site, so the other sites keep their slots.
++   const std::set<std::string> hc_tokens=[]{std::set<std::string> t;const char* v=std::getenv("OWNRT_TP_HC_SPLIT");if(!v||!*v||std::string(v)=="0")return t;
++    std::string s=std::string(v)=="1"?std::string("low,gate,final"):std::string(v);size_t at=0;
++    while(at<=s.size()){auto end=s.find(',',at);if(end==std::string::npos)end=s.size();if(end>at)t.insert(s.substr(at,end-at));at=end+1;}
++    for(const auto& x:t)require(x=="low"||x=="gate"||x=="final"||x=="prefill","OWNRT_TP_HC_SPLIT tokens: low, gate, final, prefill (1 = low,gate,final)");
++    if(t.count("prefill"))require(t.size()>1,"OWNRT_TP_HC_SPLIT: prefill needs low, gate or final");
++    return t;}();
++   const bool hc_split=!hc_tokens.empty(),hc_prefill=hc_tokens.count("prefill")>0;
++   require(!hc_split||(direct&&!exchange_only&&a.f32_activations&&!a.mini&&a.gsq_packed),"OWNRT_TP_HC_SPLIT: OWNRT_TP_EXCHANGE=direct, F32 exact mode");
++   auto hc_split_class=[&](const flash::Launch& l)->std::string{
++    if(!hc_split||l.op!="gemv")return "";
++    std::string cls;
++    if(l.label.starts_with("blk.")){if(ends(l.label,".hc.a.low")||ends(l.label,".hc.f.low"))cls="low";else if(ends(l.label,".hc.a.gate")||ends(l.label,".hc.f.gate"))cls="gate";}
++    else if(l.label=="final.low"||l.label=="final.gate")cls="final";
++    if(cls.empty()||!hc_tokens.count(cls))return "";
++    require(l.weights.size()==1&&l.outputs.size()==1&&l.shape.size()==3&&l.shape[0]==1&&l.shape[1]>0&&l.shape[1]%2==0&&!l.row_count&&l.row_runs.empty(),"OWNRT_TP_HC_SPLIT: one-row GEMV with an even row count: "+l.label);
++    const auto& t=weights->directory.at(l.weights[0]);
++    require(flash::grid_type(t.grid)==iq3::Type::BF16&&t.shape==std::vector<int>({l.shape[1],l.shape[2]}),"OWNRT_TP_HC_SPLIT: BF16 weight rows of "+l.label);
++    return cls;};
++   std::vector<size_t> hc_exchanges;std::map<std::string,int> hc_sites;int hc_rows_total=0;
+    for(const auto& l:p.launches){
+     if(const auto qcls=qsa_class(l);!qcls.empty()){
+      for(int c=0;c<2;++c){auto t=l;t.card=c;
+@@ -929,6 +962,13 @@ static int run_rank(const Options& a) {
+      for(int c=0;c<2;++c){auto t=l;t.card=c;t.row_begin=c*(R/2);t.row_count=R/2;t.outputs.at(0)=part;both.push_back(std::move(t));}
+      if(direct){for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R,exchange_slot};g.parameter=R/2;both.push_back(std::move(g));}++exchange_slot;}
+      else for(int c=0;c<2;++c){flash::Launch g;g.op="tp_gather";g.label=l.label+".tp_gather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R};g.parameter=R/2;both.push_back(std::move(g));}
++    } else if(const auto hcls=hc_split_class(l);!hcls.empty()){ // OWNRT_TP_HC_SPLIT: rows [c*R/2, (c+1)*R/2) into y#tp, then tp_xgather
++     const int R=l.shape[1];const std::string y=l.outputs[0],part=y+"#tp";
++     add_buffer(y,part,{R/2});
++     for(int c=0;c<2;++c){auto t=l;t.card=c;t.row_begin=c*(R/2);t.row_count=R/2;t.row_offset=!hc_prefill;t.outputs[0]=part;both.push_back(std::move(t));}
++     for(int c=0;c<2;++c){flash::Launch g;g.op="tp_xgather";g.label=l.label+".tp_xgather";g.card=c;g.inputs={part};g.outputs={y};g.shape={R,-1};g.parameter=R/2;g.row_offset=!hc_prefill;
++      hc_exchanges.push_back(both.size());both.push_back(std::move(g));} // flag slot assigned after the loop
++     ++hc_sites[hcls];hc_rows_total+=R;
+     } else {both.push_back(l);auto twin=l;twin.card=1;both.push_back(std::move(twin));}
+     // OWNRT_TP_EXPERTS=1: card c computes only the slots whose expert id has parity c (routes masked after the
+     // gather), and takes the other slots' expsdown rows from the peer before the unchanged in-order moe_combine.
+@@ -955,6 +995,22 @@ static int run_rank(const Options& a) {
+      }
+     }
+    }
++   if(hc_split){ // the split HC exchanges: one flag slot per site (both cards' halves), after every other exchange site
++    const int first=exchange_slot;require(hc_exchanges.size()%2==0,"OWNRT_TP_HC_SPLIT exchange pairs");
++    for(size_t k=0;k<hc_exchanges.size();++k){auto& g=both.at(hc_exchanges[k]);require(g.op=="tp_xgather"&&g.shape.size()==2&&g.shape[1]==-1&&g.card==int(k%2),"OWNRT_TP_HC_SPLIT exchange order");g.shape[1]=first+int(k/2);}
++    exchange_slot+=int(hc_exchanges.size()/2);
++    int n=0;for(const auto& [cls,k]:hc_sites)n+=k;
++    require(n>0,"OWNRT_TP_HC_SPLIT: no HC GEMV site admitted (tokens "+std::string(std::getenv("OWNRT_TP_HC_SPLIT"))+")");
++    std::ostringstream o;o<<"{\"schema\":\"ownrt.tp-hc-split.v1\",\"tokens\":[";bool comma=false;for(const auto& x:hc_tokens){o<<(comma?",":"")<<ownrt::quote(x);comma=true;}
++    o<<"],\"whole_weights\":"<<(hc_prefill?"false":"true")<<",\"prefill_split\":"<<(hc_prefill?"true":"false")<<",\"sites\":{";comma=false;
++    for(const auto& [cls,k]:hc_sites){o<<(comma?",":"")<<ownrt::quote(cls)<<":"<<k;comma=true;}
++    o<<"},\"exchanges\":"<<n<<",\"first_slot\":"<<first<<",\"slots_total\":"<<exchange_slot<<",\"rows_total\":"<<hc_rows_total<<",\"launches\":[";comma=false;
++    for(const auto& l:both)if(l.label.find("hc.")!=std::string::npos||l.label.starts_with("final.low")||l.label.starts_with("final.gate"))if(l.row_count||l.op=="tp_xgather"){
++     o<<(comma?",":"")<<"{\"label\":"<<ownrt::quote(l.label)<<",\"op\":"<<ownrt::quote(l.op)<<",\"card\":"<<l.card<<",\"row_begin\":"<<l.row_begin<<",\"row_count\":"<<l.row_count
++      <<",\"row_offset\":"<<(l.row_offset?"true":"false")<<",\"inputs\":"<<ownrt::quote(l.inputs.empty()?std::string():l.inputs[0])<<",\"output\":"<<ownrt::quote(l.outputs.empty()?std::string():l.outputs[0])
++      <<",\"weight\":"<<ownrt::quote(l.weights.empty()?std::string():l.weights[0])<<",\"shape\":["<<(l.shape.size()>0?l.shape[0]:0)<<","<<(l.shape.size()>1?l.shape[1]:0)<<","<<(l.shape.size()>2?l.shape[2]:0)<<"],\"parameter\":"<<l.parameter<<"}";comma=true;}
++    o<<"]}";save(a.output/"tp-hc-split.json",o.str());
++   }
+    require(exchange_slot<=int(ownrt::exchange_layout::slots),"direct exchange: too many exchange sites");
+    // A TP rank without the target head (rank 0) leaves the flag inert and says so.
+    if(qsa_split)save(a.output/"qsa-split.json","{\"schema\":\"ownrt.qsa-split.v1\",\"layers\":"+std::to_string(qsa_layers)+",\"kv_buffers_halved\":"+std::to_string(qsa_kv_halved.size())+",\"query_heads_per_card\":"+std::to_string(QHc)+",\"kv_heads_per_card\":"+std::to_string(KVc)+"}");
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_api.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_api.hpp
+index 926fc74..d909254 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_api.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet194-expert-diet-engine/owner_api.hpp
+@@ -22,7 +22,9 @@
+ namespace ownrt {
+ // Direct-exchange control words (u32) per card: a header, then one 128-byte record per exchange site.
+ namespace exchange_layout {
+-inline constexpr std::uint32_t header=32, stride=32, counter=0, flag=16, slots=256;
++// slots 256 -> 512 (2026-10-30, OWNRT_TP_HC_SPLIT): up to 178 decode exchange sites per rank plus their prefill slots
++// (decode slot + a base past the decode slots). Each control allocation is 64 KiB; the record layout is unchanged.
++inline constexpr std::uint32_t header=32, stride=32, counter=0, flag=16, slots=512;
+ inline constexpr std::uint32_t abort=0, timeouts=1, waits=2, spun=3, max_spin=4, spin_sum=5;
+ inline constexpr std::size_t bytes=std::size_t(header+stride*slots)*4;
+ }
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/api.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/api.hpp
+index 0447e41..395ae8b 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/api.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/api.hpp
+@@ -51,6 +51,10 @@ struct Launch {
+   std::vector<std::pair<int, int>> row_runs;
+   int heads = 0, key_heads = 0;
+   int slots = 0; // compact expert slots (2026-10-28): this card's routed slot count; 0 = the model's top
++  // OWNRT_TP_HC_SPLIT (2026-10-30) without its prefill token: this card's rows [row_begin, row_begin+row_count) are read
++  // from the WHOLE (replicated, unsliced) weight at a row offset; batched prefill runs the launch's full rows and skips its
++  // exchange (which carries the same mark).
++  bool row_offset = false;
+ };
+ // CONTRACT v1:
+ // ENTRY PRECONDITION: inputs_ready covers uploads to BOTH owners. Replicated
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+index 1dc860c..d502ffc 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.cpp
+@@ -141,6 +141,9 @@ template<unsigned SG> float dispatch_dot(Type t,const uint8_t* row,const uint16_
+ }
+ struct Multiply:ownrt::SyclOperation {
+   std::array<Descriptor,4> desc{};unsigned matrices=0,subgroup=16;size_t groups=0,local_stride=16;
++  // OWNRT_TP_HC_SPLIT (2026-10-30): weight row offset of each dense matrix (Matrix::row0), applied to the bound weight
++  // pointer on the host before any kernel is built. Never captured by a kernel.
++  std::array<size_t,4> row0{};
+   template<Type T,unsigned SG> sycl::event run(sycl::queue& q,std::span<void* const> p,const std::vector<sycl::event>& deps) const {
+     // Several independent matrices of one type share a launch (sibling fusion): work-groups are partitioned by each
+     // descriptor's first_group, and every row runs the unchanged single-matrix code with its own descriptor.
+@@ -148,6 +151,11 @@ struct Multiply:ownrt::SyclOperation {
+     for(unsigned j=1;j<matrices;++j)if(desc[j].type!=desc[0].type||desc[j].activation!=desc[0].activation||desc[j].output!=desc[0].output||desc[j].routed)throw std::invalid_argument("kopt fused matrices must share type/activation/output and be dense");
+     auto descriptors=desc;const unsigned count=matrices;auto ng=groups,stride=local_stride;
+     std::array<void*,8> pointers{};if(p.size()>pointers.size())throw std::invalid_argument("packet26 capture extent");std::copy(p.begin(),p.end(),pointers.begin());
++    // OWNRT_TP_HC_SPLIT: rows [row0, row0+rows) of a whole weight. Moving the base pointer leaves every row's kernel,
++    // lanes, order and tree unchanged (row r reads exactly the bytes row row0+r reads in the full-matrix launch).
++    for(unsigned j=0;j<count;++j)if(row0[j]){
++      if(descriptors[j].routed||descriptors[j].count!=1||descriptors[j].experts!=1)throw std::invalid_argument("kopt row offset: dense one-row matrices only");
++      pointers[descriptors[j].w]=static_cast<uint8_t*>(pointers[descriptors[j].w])+row0[j]*descriptors[j].rb;}
+     if constexpr(T==Type::BF16&&SG==32)if(dense_v2::enabled()){
+       // OWNRT_DENSE_DECODE_V2=1 (lab 2026-10-26, default off): dense BF16 rows, F32 in/out, R rows per subgroup with the
+       // same per-row lane chunks, order and tree (dense_v2.hpp). Anything else keeps this kernel.
+@@ -862,7 +870,8 @@ Descriptor bind_matrix(ownrt::Device& d,Multiply& op,std::vector<ownrt::Allocati
+   const size_t ab=m.activation==Type::F32?4:2;
+   // A shared read-only input (fused siblings) binds once; outputs and weights must stay distinct.
+   auto input=[&](ownrt::Allocation id,size_t bytes){for(unsigned i=0;i<ids.size();++i)if(ids[i]==id){check(d,id,bytes);return i;}return add(id,bytes);};
+-  v.w=add(m.w,mul(mul(experts,m.rows),rb));v.x=input(m.x,mul(mul(count,m.columns),ab));v.y=add(m.y,mul(mul(count,span),ab));
++  if(m.row0&&(r||experts!=1||count!=1))throw std::invalid_argument("kopt row offset: dense one-row matrices only");
++  v.w=add(m.w,mul(mul(experts,m.rows+m.row0),rb));v.x=input(m.x,mul(mul(count,m.columns),ab));v.y=add(m.y,mul(mul(count,span),ab));
+   if(r){v.r=add(r,mul(count,sizeof(Route)));v.status=add(status,mul(count,4));}
+   if(m.fp32)v.fp32=add(m.fp32,mul(mul(count,span),4));
+   if(l.elements!=1)op.local_stride=std::max(op.local_stride,(rb+15)/16*16);
+@@ -875,9 +884,10 @@ ownrt::Event finish(ownrt::Device& d,Multiply& op,const std::vector<ownrt::Alloc
+ }
+ }
+ std::string device_properties(){return properties;}
+-ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32) {
++ownrt::Event gemv(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allocation x,ownrt::Allocation y,size_t rows,size_t k,Type a,Type o,unsigned sg,ownrt::Allocation fp32,size_t row0) {
+   Multiply op;op.subgroup=sg;op.matrices=1;std::vector<ownrt::Allocation> ids;
+-  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32},1,1,rows);
++  op.desc[0]=bind_matrix(d,op,ids,{t,w,x,y,rows,k,a,o,fp32,row0},1,1,rows);op.row0[0]=row0;
++  if(row0&&(t==Type::Q8_0||t==Type::Q6_K))throw std::invalid_argument("kopt row offset: the Multiply paths only (not dense8)");
+   if(a==Type::F32&&o==Type::F32&&sg==32&&!fp32&&(t==Type::Q8_0||t==Type::Q6_K)&&decode_next::enabled("dense8")) {
+     // OWNRT_DECODE_NEXT dense8 (lab 2026-10-26): dense Q8_0 / Q6_K decode rows. Every row keeps Multiply's single-row
+     // arithmetic (decode8 values, lane l owns columns 8l+256i, product then add in order, the same adjacent-pair tree).
+@@ -1051,7 +1061,7 @@ ownrt::Event routed_pair(ownrt::Device& d,Type t,ownrt::Allocation w,ownrt::Allo
+ ownrt::Event fused_gemv(ownrt::Device& d,const std::vector<Matrix>& matrices,unsigned sg) {
+   if(matrices.empty() || matrices.size()>4)throw std::invalid_argument("kopt fused matrix count1..4");
+   Multiply op;op.subgroup=sg;op.matrices=matrices.size();std::vector<ownrt::Allocation> ids;
+-  for(size_t i=0;i<matrices.size();++i)op.desc[i]=bind_matrix(d,op,ids,matrices[i],1,1,matrices[i].rows);
++  for(size_t i=0;i<matrices.size();++i){op.desc[i]=bind_matrix(d,op,ids,matrices[i],1,1,matrices[i].rows);op.row0[i]=matrices[i].row0;}
+   return finish(d,op,ids);
+ }
+ }
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
+index b884ded..c595005 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet6-kopt/kernels.hpp
+@@ -6,9 +6,12 @@ struct Matrix {
+   Type type;ownrt::Allocation w,x,y;size_t rows,columns;
+   Type activation=Type::BF16,output_type=Type::BF16;
+   ownrt::Allocation fp32=0;
++  // OWNRT_TP_HC_SPLIT (2026-10-30): the matrix's rows start row0 rows into the bound weight (a TP card's contiguous
++  // rows of a whole, unsliced tensor). Dense one-row GEMVs only (gemv, fused_gemv); 0 everywhere else.
++  size_t row0=0;
+ };
+ ownrt::Event gemv(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,size_t,size_t,
+-                  Type=Type::BF16,Type=Type::BF16,unsigned=16,ownrt::Allocation=0);
++                  Type=Type::BF16,Type=Type::BF16,unsigned=16,ownrt::Allocation=0,size_t row0=0);
+ ownrt::Event routed_gemv(ownrt::Device&,Type,ownrt::Allocation,ownrt::Allocation,ownrt::Allocation,
+                          ownrt::Allocation,ownrt::Allocation,uint32_t,uint32_t,size_t,uint32_t,uint32_t,
+                          Type=Type::BF16,Type=Type::BF16,unsigned=16,ownrt::Allocation=0);

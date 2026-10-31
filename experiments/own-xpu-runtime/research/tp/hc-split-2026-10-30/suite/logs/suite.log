@@ -1,0 +1,72 @@
+=== chain start 2026-10-30T21:09:12-04:00: fc2-r1:65536 hsp-r1:65536 fc2-r2:65536 hsp-r2:65536 fc2-r3:131072 hsp-r3:131072
+Running as unit: sc117-tp-svc-hs-locks-20261030.service; invocation ID: 9fe76fe9def742678f6b2b0cdcdaca73
+lock holder: all four card locks held=1 at 2026-10-30T21:22:28-04:00
+--- server fc2-r1 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T21:37:33-04:00 MemAvailable 101853192192
+Running as unit: sc117-tp-svc-hs-run-fc2-r1-c65536-20261030.service; invocation ID: e7bc5d1ad5e64476a4cdd34a068ef3a1
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 14min 14.386s
+CPU time consumed: 4.311s
+Memory peak: 512.0K
+Memory swap peak: 0B
+server fc2-r1-c65536: done fc2-r1-c65536 at 2026-10-30T21:51:48-04:00
+--- server hsp-r1 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T21:51:48-04:00 MemAvailable 106003509248
+Running as unit: sc117-tp-svc-hs-run-hsp-r1-c65536-20261030.service; invocation ID: b5f3437b01814653a32cd143064e23cf
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 13min 58.162s
+CPU time consumed: 4.236s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server hsp-r1-c65536: done hsp-r1-c65536 at 2026-10-30T22:05:46-04:00
+--- server fc2-r2 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T22:05:46-04:00 MemAvailable 105916817408
+Running as unit: sc117-tp-svc-hs-run-fc2-r2-c65536-20261030.service; invocation ID: e5b2c91addb94040babb5dc382ea4349
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 12min 24.028s
+CPU time consumed: 3.939s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server fc2-r2-c65536: done fc2-r2-c65536 at 2026-10-30T22:18:10-04:00
+--- server hsp-r2 ctx 65536  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T22:18:10-04:00 MemAvailable 105766240256
+Running as unit: sc117-tp-svc-hs-run-hsp-r2-c65536-20261030.service; invocation ID: 7957b65e9bc84eefbd4cba9d28edb0eb
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 13min 32.906s
+CPU time consumed: 4.153s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server hsp-r2-c65536: done hsp-r2-c65536 at 2026-10-30T22:31:43-04:00
+--- server fc2-r3 ctx 131072  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T22:31:43-04:00 MemAvailable 105672998912
+Running as unit: sc117-tp-svc-hs-run-fc2-r3-c131072-20261030.service; invocation ID: 127b3d9e96194cb1aa74201f14df76c3
+Finished with result: exit-code
+Main processes terminated with: code=exited/status=1
+Service runtime: 3min 36.032s
+CPU time consumed: 943ms
+Memory peak: 512.0K
+Memory swap peak: 0B
+server fc2-r3-c131072: HALT fc2-r3-c131072: service not ready (state failed) at 2026-10-30T22:35:19-04:00
+HALT chain after fc2-r3-c131072
+=== chain end 2026-10-30T22:35:19-04:00
+=== chain start 2026-10-30T22:37:50-04:00: fc2-r4:131072 hsp-r4:131072
+Running as unit: sc117-tp-svc-hs-locks-20261030.service; invocation ID: 743def370f2244aa880b8bfb192f64dd
+lock holder: all four card locks held=1 at 2026-10-30T22:37:55-04:00
+--- server fc2-r4 ctx 131072  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T22:37:55-04:00 MemAvailable 105614622720
+Running as unit: sc117-tp-svc-hs-run-fc2-r4-c131072-20261030.service; invocation ID: 2e88d432809d40d2863f66424a189c01
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 23min 8.825s
+CPU time consumed: 6.159s
+Memory peak: 256.0K
+Memory swap peak: 0B
+server fc2-r4-c131072: done fc2-r4-c131072 at 2026-10-30T23:01:04-04:00
+--- server hsp-r4 ctx 131072  receipt /home/steve/llm-optimizations/experiments/own-xpu-runtime/research/tp/hc-split-2026-10-30/results/engine-receipt-40388fc92c43.json start 2026-10-30T23:01:04-04:00 MemAvailable 105474203648
+Running as unit: sc117-tp-svc-hs-run-hsp-r4-c131072-20261030.service; invocation ID: 4674eb26ba93445dabce71c60449dc3d
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 22min 41.813s
+CPU time consumed: 6.106s
+Memory peak: 512.0K
+Memory swap peak: 0B
+server hsp-r4-c131072: done hsp-r4-c131072 at 2026-10-30T23:23:45-04:00
+=== chain end 2026-10-30T23:23:45-04:00

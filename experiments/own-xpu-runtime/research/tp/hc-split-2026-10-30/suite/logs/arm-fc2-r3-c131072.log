@@ -1,0 +1,20 @@
+=== arm fc2-r3-c131072 start 2026-10-30T22:31:43-04:00 pid 3062667
+MemAvailable 105672011776
+root free 30532911104
+[klog armfc2-r3-c131072-before] since @1793410303: 0 lines, 0 xe/fault lines
+42cf72f6e260e24818cfdc14f215cb0625d710c7e927a3d032357094e4d63a40  /dev/shm/tp-svc-hs-20261030/arm-fc2-r3-c131072/gate-evidence/f32-state-oracle-ctx131072.json
+a49923bb6f8c37f1b0613496a3e7e50b826506ff5203462a483ec3f3ec24599d  /dev/shm/tp-svc-hs-20261030/arm-fc2-r3-c131072/gate-evidence/f32-state-oracle-ctx65536.json
+7e4a31b64a0a5530268c4111e5e60dda7f8affa8ea24120d7b955598f17e7d6d  /dev/shm/tp-svc-hs-20261030/arm-fc2-r3-c131072/gate-evidence/f32-state-oracle.json
+Running as unit: sc117-tp-svc-hs-arm-fc2-r3-c131072-20261030.service; invocation ID: 00422d2803314d3086fcaff0e5a6be51
+waiting 30 s: {"status": "starting", "detail": "loading model on both cards", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 0, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 60 s: {"status": "starting", "detail": "loading model on both cards", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 0, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 91 s: {"status": "starting", "detail": "loading model on both cards", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 0, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 121 s: {"status": "starting", "detail": "loading model on both cards", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 0, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 151 s: {"status": "starting", "detail": "startup self-test 1/2 (fixed 32-token MTP output)", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 1, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 181 s: {"status": "starting", "detail": "startup self-test 1/2 (fixed 32-token MTP output)", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 1, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+waiting 211 s: {"status": "halted", "detail": "DeviceOwnerFailure('rank failed with exit 1')", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 1, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+ready=0 after 216 s: {"status": "halted", "detail": "DeviceOwnerFailure('rank failed with exit 1')", "waiting": 0, "activations": "f32", "prefill_rows": 0, "requests_served": 1, "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"}
+HALT: service not ready (state failed)
+service state: failed result: Result=exit-code ExecMainStatus=1 
+{"run-20261031T023143Z/rank0": {"census": {"card0": 29828273898}, "pdevs": ["0000:23:00.0", "0000:27:00.0"]}, "run-20261031T023143Z/rank1": {"census": {"card0": 31445170564}, "pdevs": ["0000:43:00.0", "0000:47:00.0"]}}
+[klog armfc2-r3-c131072-after-halt] since @1793413903: 0 lines, 0 xe/fault lines
