@@ -35,6 +35,13 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
+**October 31, about 10:30 — four cards read the 121,854-token prompt in 216.7 / 216.8 s (was 219.5), exact; committed.**
+- `OWNRT_PREFILL_EXPERT_BALANCE=rank1` (rank 1's two cards own whole experts, split evenly per layer) and
+  `OWNRT_PREFILL_LOOKUP_PREFETCH=1` (rank 0 computes the next chunk's lookup rows while the current one runs); commit
+  `aca6d6035`, default off. Fresh servers A/B/B at 131072 on one binary: 219.51 → 216.74 / 216.76 s; decode, suite and
+  all 512 long outputs unchanged. Four-card set now `tptsxqckhcbgl`. Closed: the drain handshake (ceiling 0.9 / 1.6 ms
+  per chunk), balanced experts on rank 0 (+6.7 ms). [Result](experiments/own-xpu-runtime/research/tp/prefill-balance-2026-10-31/RESULT.md).
+
 **October 31, about 08:00 — kernels compiled ahead of time: exact, servers ready ~140 s sooner, no 60 s deadline risk.**
 - `engine/build.py OUT --aot-target intel_gpu_bmg_g31` (lab build `a1959e7ccf88`, same 269 source hashes as `40388fc92c43`):
   28 harness arms bitwise equal to the JIT build; 7 fresh servers equal B19 with unchanged decode (four cards 94.2–94.4,
