@@ -153,15 +153,30 @@ def _fields(body):
     kwargs = body.get('chat_template_kwargs') or {}
     if not isinstance(kwargs, dict):
         raise RequestError('chat_template_kwargs must be an object')
-    thinking = kwargs.get('enable_thinking', False)
-    if not isinstance(thinking, bool):
-        raise RequestError('enable_thinking must be boolean')
     # reasoning_effort (top level, as OpenAI clients send it, or in chat_template_kwargs) goes to the template, which
     # adds effort instructions to the system block when thinking is on; medium adds none, so a thinking-on and a
     # thinking-off request then share their opening tokens. Unset keeps the template default.
-    effort = body.get('reasoning_effort', kwargs.get('reasoning_effort'))
+    reasoning = body.get('reasoning') if isinstance(body.get('reasoning'), dict) else {}
+    effort = body.get('reasoning_effort', kwargs.get('reasoning_effort', reasoning.get('effort')))
+    # Thinking switch (2026-10-31, owner: clients such as Pi could not turn thinking on). Explicit enable_thinking wins
+    # (chat_template_kwargs as vLLM/SGLang clients send it, or top level as Qwen-style clients send it); otherwise
+    # thinking: {"type": "enabled"|"disabled"} or reasoning: {"enabled": bool}; otherwise a reasoning effort turns it on
+    # ("none"/"minimal" mean off). With none of these the default stays off, as before.
+    thinking = kwargs.get('enable_thinking', body.get('enable_thinking'))
+    if thinking is None:
+        t = body.get('thinking')
+        if isinstance(t, dict) and t.get('type') in ('enabled', 'disabled'):
+            thinking = t['type'] == 'enabled'
+        elif isinstance(reasoning.get('enabled'), bool):
+            thinking = reasoning['enabled']
+        else:
+            thinking = effort is not None and effort not in ('none', 'minimal')
+    if not isinstance(thinking, bool):
+        raise RequestError('enable_thinking must be boolean')
+    if effort in ('none', 'minimal'):
+        effort = None
     if effort is not None and effort not in ('low', 'medium', 'high', 'xhigh'):
-        raise RequestError('reasoning_effort must be low, medium, high or xhigh')
+        raise RequestError('reasoning_effort must be none, minimal, low, medium, high or xhigh')
     stop = body.get('stop')
     if stop is None:
         stop = []
