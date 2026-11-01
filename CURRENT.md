@@ -45,6 +45,12 @@
 - It stops itself after its 47 h lifetime (engine maximum 48 h); nothing restarts it. Stop gracefully with
   `systemctl --user stop sc117-tp-svc-4card-lan.service`, then `systemctl --user stop sc117-tp-svc-4card-lan-locks.service`.
   The old two-card `sc117-lan` unit stays stopped.
+- 2026-10-31 21:40: restarted once (controlled reload) so the server accepts the common thinking switches
+  (`reasoning_effort`, top-level `enable_thinking`, `reasoning:{}`, `thinking:{type}`, besides `chat_template_kwargs`);
+  ready after 1,140 s, startup gate 13/13, thinking verified over the LAN. It now stops itself about 2026-11-02 20:40.
+- Context is 131,072 by design: in this layout every card holds all experts, so 131,072 is the most that fits (31.4 of
+  32 GB per card). The 262K endpoint is the other four-card layout (`sc117-pp4-262k-lan`, port 18161): ~48–58 tok/s and
+  limited to 512 output tokens per request, so not suitable for a coding harness.
 
 **October 31, about 12:45 — handoff.** The own-engine SC117 lane's handoff guide is
 [experiments/own-xpu-runtime/HANDOFF.md](experiments/own-xpu-runtime/HANDOFF.md): state, open owner decisions, what to
