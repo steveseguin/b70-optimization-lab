@@ -18,7 +18,8 @@
   installed version/settings remain unverified.
 - Targeted file-reading guidance reduced the same real code repair from54.5s to31.0s
   with the exact fix and all11 tests preserved (one run each). Native keeper policy
-  is being checked separately on the same persistent engine; it remains off. [Evidence and limits](notes/2026-11-04-sc117-persistent-pi-experience.md).
+  passed a separate cut/recall test, but inaccurate summary counts and the older
+  false-summary/deletion failure remain; it stays off. [Evidence and limits](notes/2026-11-04-sc117-persistent-pi-experience.md).
 
 **November 4, 20:12 EST — four-card LAN server is stopped; its planned 47-hour lifetime expired cleanly.**
 - Previous-boot journal confirms shutdown on November 2 at 19:40:12 EST, after 309 counted requests:

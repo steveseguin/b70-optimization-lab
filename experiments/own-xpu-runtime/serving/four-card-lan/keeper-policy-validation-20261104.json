@@ -1,0 +1,64 @@
+{
+  "schema": "sc117.keeper-policy-validation.v1",
+  "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/keeper-policy-16k-r1",
+  "summary_sha256": "6283d99cd266ac399d4c96599402fd3bbb284ae6a9df0aef6904a80fc1bbef93",
+  "checks": {
+    "cut_happened": true,
+    "archive_has_primary": true,
+    "primary_checksum_retained": true,
+    "secondary_archived_fact_available": true,
+    "instructed_recall_used": true,
+    "secondary_checksum_recalled": true,
+    "no_internal_recall_leak": true,
+    "valid_finish_reasons": true
+  },
+  "passed_narrow_retention_test": true,
+  "policy": {
+    "budget": 16384,
+    "reply_reserve": 1024,
+    "headroom": 1024,
+    "target_ratio": 0.6,
+    "notes_mode": "inplace",
+    "inplace_tokens": 8192,
+    "inplace_fit": true,
+    "notes_max_tokens": 2048,
+    "notes_thinking": false,
+    "effort": "medium",
+    "max_recalls": 2,
+    "empty_retry": false,
+    "notes_async": null,
+    "log_calls": true
+  },
+  "calls": 10,
+  "upstream_seconds": 63.64258030899964,
+  "primary": {
+    "correct": true,
+    "natural_recall_delta": 1,
+    "checksum_in_notes": false
+  },
+  "secondary": {
+    "fact": {
+      "timestamp": "2026-10-26T05:00:00Z",
+      "host": "web-23",
+      "job": "delta-84",
+      "checksum": "25957367",
+      "archived_message": 4,
+      "record": "2026-10-26T05:00:00Z host=web-23 job=delta-84 status=ok duration=39.0s checksum=25957367"
+    },
+    "correct": true,
+    "recall_delta": 1
+  },
+  "cuts": 1,
+  "recalls": 2,
+  "notes_seconds": 4.511,
+  "notes_prompt_tokens": 16638,
+  "notes_cached_tokens": 16166,
+  "observations": [
+    "Primary checksum was absent from notes; model naturally recalled it from archive. Secondary explicitly instructed recall also worked.",
+    "No-thinking log status replies falsely counted68 jobs per70-line part; keeper notes propagated272 rather than280 across4parts. This was not graded by the narrow retention check.",
+    "Part5 status hit256-token output limit; both checksum final answers finished normally.",
+    "Nominal16K standalone policy uses estimates: its notes prompt reached16638 tokens. Native endpoint capacity131072 was not approached.",
+    "Native keeper still buffers replies and lacks TP checkpoints. These policy tests do not qualify native integration or fix historical unsupported summary/deletion error."
+  ],
+  "enabled_on_live_endpoint": false
+}

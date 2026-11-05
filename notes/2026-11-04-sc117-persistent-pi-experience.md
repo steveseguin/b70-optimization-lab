@@ -161,3 +161,17 @@ Uncached input18620→5625 tokens; output1797→1702. Maximum follow-up first de
 byte-identical; only project reading guidance differs. One run per condition,
 no inference-kernel throughput claim. Raw: `pi-notesdelta-focused/` under the
 same RAID evidence root. Optional guidance saved in `pi/AGENTS.example.md`.
+
+Keeper policy test: narrow retention PASS,10 model calls,63.64s upstream time,
+1 cut and2 archive recalls. Primary checksum was absent from notes but naturally
+recalled; a second explicitly requested archive fact also matched. Notes cost4.51s
+and reused16166 of16638 prompt tokens. No reload or production keeper enablement.
+
+Limits found in the actual outputs: no-thinking status replies reported68 jobs
+per70-line log, and notes propagated272 rather than280 for four parts. The fifth
+status hit its256-token limit (checksum answers ended normally). Standalone
+keeper estimates also let its nominal16K notes prompt reach16638 tokens; the
+actual131K server had ample room. Thus retention passes do not prove accurate
+summaries or strict budget enforcement. Keep native keeper off; use qualified
+plain Pi compaction/reuse. Structured record: `keeper-policy-validation-20261104.json`
+in the four-card-lan folder; raw `keeper-policy-16k-r1/` on the RAID evidence root.
