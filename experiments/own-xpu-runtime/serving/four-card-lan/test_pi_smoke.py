@@ -4,6 +4,7 @@ import http.client
 import http.server
 import importlib.util
 import json
+import hashlib
 from pathlib import Path
 import tempfile
 import threading
@@ -29,6 +30,19 @@ class Fake(http.server.BaseHTTPRequestHandler):
 
 
 class SmokeTests(unittest.TestCase):
+    def test_notesdelta_fixture_changes_only_unique_value_index(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'smoke'
+            P.prepare(out, P.MODEL, False, 'notesdelta')
+            original = (P.REPO / 'tools/ctxkeeper/notesdelta.py').read_bytes()
+            changed = (out / 'work/notesdelta.py').read_bytes()
+            self.assertEqual(changed, original.replace(b'return int(nums[-1].replace', b'return int(nums[0].replace', 1))
+            self.assertIn(b'len(nums[-1]) <= 24', changed)
+            manifest = json.loads((out / 'manifest.json').read_text())
+            for name in ('test_notesdelta.py', 'sync_notesdelta.py'):
+                self.assertEqual(hashlib.sha256((out / 'work' / name).read_bytes()).hexdigest(),
+                                 manifest['fixture_source_sha256'][name])
+
     def test_prepare_is_fresh_and_uses_isolated_dummy_config(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'smoke'
@@ -95,6 +109,30 @@ class SmokeTests(unittest.TestCase):
 
     def test_sse_error_halts_future_upstream_calls(self):
         self.proxy_case(b'data: {"error":{"message":"test fault"}}\n\n', True)
+
+    def test_compaction_grade_requires_end_success_tools_five_reads_and_final_fact(self):
+        events = []
+        def tool(name, args):
+            ident = str(len(events))
+            events.extend([{'type': 'tool_execution_start', 'toolCallId': ident, 'toolName': name, 'args': args},
+                           {'type': 'tool_execution_end', 'toolCallId': ident, 'toolName': name, 'isError': False}])
+        for i in range(1, 6): tool('read', {'path': f'/work/log-part-{i}.txt'})
+        tool('edit', {'path': 'sum.mjs'})
+        tool('bash', {'command': 'node --test'})
+        events += [{'type': 'compaction_start'},
+                   {'type': 'compaction_end', 'aborted': False, 'result': {'summary': 'Keep checksum 48151623.'}},
+                   {'type': 'message_end', 'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': 'Fixed. Checksum 48151623.'}]}}]
+        checks, details = P.event_checks(events, True)
+        self.assertTrue(all(checks.values()), checks)
+        self.assertEqual(details['log_reads'], [f'log-part-{i}.txt' for i in range(1, 6)])
+        without_end = [e for e in events if e['type'] != 'compaction_end']
+        self.assertFalse(P.event_checks(without_end, True)[0]['client_compaction_succeeded'])
+        events[-2]['errorMessage'] = 'summary failed'
+        self.assertFalse(P.event_checks(events, True)[0]['client_compaction_succeeded'])
+        events[-1]['message']['content'][0]['text'] = 'Fixed.'
+        self.assertFalse(P.event_checks(events, True)[0]['checksum_in_final_answer'])
+        events = [e for e in events if not (e.get('type') == 'tool_execution_start' and e.get('args', {}).get('path') == '/work/log-part-5.txt')]
+        self.assertFalse(P.event_checks(events, True)[0]['all_five_logs_read'])
 
 
 if __name__ == '__main__': unittest.main()

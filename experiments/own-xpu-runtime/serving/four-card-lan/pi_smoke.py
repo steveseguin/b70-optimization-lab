@@ -10,6 +10,7 @@ import http.client
 import http.server
 import json
 import os
+import re
 from pathlib import Path
 import subprocess
 import threading
@@ -17,6 +18,7 @@ import time
 from urllib.parse import urlsplit
 
 HERE = Path(__file__).resolve().parent
+REPO = HERE.parents[3]
 NODE_IMAGE = 'node@sha256:8a34c4ab3ea2c5cd194f07e317b2a8f09461d3c8b05c4e34c8ccd56d56024c4d'
 MODEL = 'sc117-qwen3.8-flash-next-iq3s-ownrt'
 SOURCE = 'export function sum(values) {\n  let total = 0;\n  for (const value of values) total = value;\n  return total;\n}\n'
@@ -36,15 +38,32 @@ def save(path, obj):
     path.write_text(json.dumps(obj, indent=2) + '\n')
 
 
-def prepare(out, model, compaction):
+def prepare(out, model, compaction, fixture='sum'):
     out.mkdir(mode=0o700, parents=True, exist_ok=False)
     for name in ('work', 'home', 'home/.pi', 'home/.pi/agent'):
         (out / name).mkdir(mode=0o700)
-    (out / 'work/sum.mjs').write_text(SOURCE)
-    (out / 'work/test_sum.mjs').write_text(TEST)
-    prompt = ('Fix sum.mjs so node --test passes. First read the source and test, run the failing test, '
-              'edit only sum.mjs, then run the test again. Do not alter tests or install anything. '
-              'Use the available tools and keep your final explanation short.')
+    source_hashes = {}
+    if fixture == 'notesdelta':
+        for name in ('notesdelta.py', 'test_notesdelta.py', 'sync_notesdelta.py'):
+            original = (REPO / 'tools/ctxkeeper' / name).read_bytes()
+            source_hashes[name] = hashlib.sha256(original).hexdigest()
+            if name == 'notesdelta.py':
+                needle = b'return int(nums[-1].replace(",", ""))'
+                if original.count(needle) != 1:
+                    raise ValueError('unique notesdelta mutation site no longer matches')
+                original = original.replace(needle, b'return int(nums[0].replace(",", ""))', 1)
+            (out / 'work' / name).write_bytes(original)
+        prompt = ('Fix the bug in notesdelta.py so python3 -m unittest -v passes. First run the tests and '
+                  'inspect the failing behavior, then read the relevant implementation and tests. Edit only '
+                  'notesdelta.py, make the smallest fix, and run the tests again. Do not alter test_notesdelta.py '
+                  'or sync_notesdelta.py and do not install anything. Keep your final explanation short.')
+    else:
+        (out / 'work/sum.mjs').write_text(SOURCE)
+        (out / 'work/test_sum.mjs').write_text(TEST)
+        source_hashes = {'test_sum.mjs': hashlib.sha256(TEST.encode()).hexdigest()}
+        prompt = ('Fix sum.mjs so node --test passes. First read the source and test, run the failing test, '
+                  'edit only sum.mjs, then run the test again. Do not alter tests or install anything. '
+                  'Use the available tools and keep your final explanation short.')
     if compaction:
         for i in range(1, 6):
             rows = [f'PART {i}']
@@ -65,7 +84,9 @@ def prepare(out, model, compaction):
         'cacheWarming': 'off', 'enableInstallTelemetry': False, 'enableAnalytics': False})
     save(out / 'manifest.json', {'schema': 'sc117.pi-functional-smoke.v1', 'model': model,
         'pi_version': '1.2.0', 'node_image': NODE_IMAGE, 'compaction': 'pi-client-8192' if compaction else 'off',
-        'fixture_test_sha256': hashlib.sha256(TEST.encode()).hexdigest(), 'server_mutations': False,
+        'fixture': fixture, 'fixture_source_sha256': source_hashes,
+        'fixture_test_sha256': source_hashes.get('test_sum.mjs', source_hashes.get('test_notesdelta.py')),
+        'server_mutations': False,
         'notes': 'No requests until --run. CPU preparation does not qualify inference or compaction.'})
 
 
@@ -178,6 +199,53 @@ class Recorder:
         return Handler
 
 
+def event_checks(events, compaction):
+    """Grade executed tools and completed compaction, never mere model intent/start notifications."""
+    starts, executed, successful, log_reads, bash_log_mentions = {}, [], set(), [], []
+    final_answer = ''
+    completions = []
+    for event in events:
+        kind = event.get('type')
+        if kind == 'tool_execution_start':
+            starts[event.get('toolCallId')] = event
+        elif kind == 'tool_execution_end':
+            start = starts.get(event.get('toolCallId'), {})
+            name = event.get('toolName', start.get('toolName'))
+            args = start.get('args') or {}
+            executed.append(name)
+            if event.get('isError') is not False:
+                continue
+            successful.add(name)
+            if name == 'read':
+                base = Path(str(args.get('path', ''))).name
+                if re.fullmatch(r'log-part-[1-5]\.txt', base):
+                    log_reads.append(base)
+            if name == 'bash':
+                mentions = re.findall(r'log-part-[1-5]\.txt', str(args.get('command', '')))
+                if mentions:
+                    # A mention does not prove a read (it could be echo); retain the deviation explicitly.
+                    bash_log_mentions.append({'command': args.get('command'), 'files': mentions})
+        elif kind == 'message_end' and (event.get('message') or {}).get('role') == 'assistant':
+            final_answer = ''.join(block.get('text', '') for block in event['message'].get('content', [])
+                                   if isinstance(block, dict) and block.get('type') == 'text')
+        elif kind in ('compaction_end', 'auto_compaction_end'):
+            result = event.get('result')
+            ok = (event.get('aborted') is False and not event.get('errorMessage') and not event.get('error')
+                  and isinstance(result, dict) and isinstance(result.get('summary'), str)
+                  and bool(result['summary'].strip()))
+            completions.append({'successful': ok, 'reason': event.get('reason'),
+                                'aborted': event.get('aborted'), 'error': event.get('errorMessage', event.get('error')),
+                                'tokens_before': result.get('tokensBefore') if isinstance(result, dict) else None,
+                                'estimated_tokens_after': result.get('estimatedTokensAfter') if isinstance(result, dict) else None})
+    checks = {f'{name}_tool_executed': name in successful for name in ('read', 'edit', 'bash')}
+    if compaction:
+        checks.update(client_compaction_succeeded=bool(completions) and all(c['successful'] for c in completions),
+                      all_five_logs_read=list(dict.fromkeys(log_reads)) == [f'log-part-{i}.txt' for i in range(1, 6)],
+                      checksum_in_final_answer='48151623' in final_answer)
+    return checks, {'executed_tools': executed, 'log_reads': log_reads, 'bash_log_mentions': bash_log_mentions,
+                    'compaction_results': completions, 'final_answer': final_answer}
+
+
 def run(args, out):
     runtime = args.runtime.resolve()
     package = runtime / 'node_modules/@earendil-works/pi-coding-agent'
@@ -189,11 +257,12 @@ def run(args, out):
     save(out / 'home/.pi/agent/models.json', models(f'http://127.0.0.1:{proxy.server_port}', args.model, args.compaction))
     thread = threading.Thread(target=proxy.serve_forever, daemon=True); thread.start()
     name = f'sc117-pi-smoke-{os.getpid()}'
+    work_target = '/pi/work' if args.fixture == 'notesdelta' else '/work'
     common = ['docker', 'run', '--rm', '--name', name, '--network', 'host', '--read-only',
         '--cap-drop=ALL', '--security-opt=no-new-privileges', '--user', f'{os.getuid()}:{os.getgid()}',
         '--tmpfs', '/tmp:rw,nosuid,nodev,size=268435456',
-        '-v', f'{runtime}:/opt/agent:ro', '-v', f'{out / "work"}:/work:rw',
-        '-v', f'{out / "home"}:/home/pi:rw', '-w', '/work',
+        '-v', f'{runtime}:/opt/agent:ro', '-v', f'{out / "work"}:{work_target}:rw',
+        '-v', f'{out / "home"}:/home/pi:rw', '-w', work_target,
         '-e', 'PI_CODING_AGENT_DIR=/home/pi/.pi/agent',
         '-e', 'PI_OFFLINE=1', '-e', 'PI_SKIP_VERSION_CHECK=1', '-e', 'PI_TELEMETRY=0',
         '-e', 'NO_PROXY=127.0.0.1,localhost', '-e', 'no_proxy=127.0.0.1,localhost', args.node_image]
@@ -212,16 +281,22 @@ def run(args, out):
         subprocess.run(['docker', 'stop', '-t', '10', name], capture_output=True, timeout=20)
     finally:
         proxy.shutdown(); proxy.server_close(); thread.join()
+    grade_command = ['python3', '-B', '-m', 'unittest', '-v'] if args.fixture == 'notesdelta' else ['node', '--test']
     grade = subprocess.run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--cap-drop=ALL',
         '--security-opt=no-new-privileges', '--user', f'{os.getuid()}:{os.getgid()}',
-        '-v', f'{out / "work"}:/work:ro', '-w', '/work', args.node_image, 'node', '--test'],
+        '-v', f'{out / "work"}:{work_target}:ro', '-w', work_target, args.node_image, *grade_command],
         capture_output=True, text=True, timeout=30)
     (out / 'grade.txt').write_text(grade.stdout + grade.stderr)
     events = []
     for line in (out / 'pi-events.jsonl').read_text().splitlines():
         try: events.append(json.loads(line))
         except ValueError: pass
-    unchanged = hashlib.sha256((out / 'work/test_sum.mjs').read_bytes()).hexdigest() == hashlib.sha256(TEST.encode()).hexdigest()
+    fixture_manifest = json.loads((out / 'manifest.json').read_text())
+    source_hashes = fixture_manifest['fixture_source_sha256']
+    protected = ['test_notesdelta.py', 'sync_notesdelta.py'] if args.fixture == 'notesdelta' else ['test_sum.mjs']
+    unchanged = all((out / 'work' / name).is_file() and
+                    hashlib.sha256((out / 'work' / name).read_bytes()).hexdigest() == source_hashes[name]
+                    for name in protected)
     cached = [((r.get('usage') or {}).get('prompt_tokens_details') or {}).get('cached_tokens', 0) for r in recorder.rows]
     compactions = [e.get('type') for e in events if 'compaction' in str(e.get('type', '')).lower()]
     checks = {'client_exit_zero': rc == 0, 'fixture_tests_pass': grade.returncode == 0,
@@ -230,11 +305,16 @@ def run(args, out):
         'tool_calls_on_wire': any(r['tool_chunks'] for r in recorder.rows),
         'no_upstream_error': bool(recorder.rows) and not any(r['error'] for r in recorder.rows),
         'reuse_observed': any(n > 0 for n in cached)}
-    if args.compaction: checks['client_compaction_observed'] = bool(compactions)
+    if args.fixture == 'notesdelta':
+        target = out / 'work/notesdelta.py'
+        checks['original_source_restored_exactly'] = (target.is_file() and
+            hashlib.sha256(target.read_bytes()).hexdigest() == source_hashes['notesdelta.py'])
+    tool_checks, event_details = event_checks(events, args.compaction)
+    checks.update(tool_checks)
     required = [v for k, v in checks.items() if k != 'reuse_observed' or args.require_reuse]
     result = {'passed': all(required), 'checks': checks, 'requests': len(recorder.rows),
               'cached_tokens': cached, 'compaction_events': compactions, 'client_exit': rc,
-              'server_restarts': 0, 'server_signals': 0}
+              'server_restarts': 0, 'server_signals': 0, 'event_details': event_details}
     save(out / 'result.json', result)
     print(json.dumps(result, indent=2))
     return 0 if result['passed'] else 1
@@ -247,6 +327,7 @@ def main():
     parser.add_argument('--model', default=MODEL)
     parser.add_argument('--runtime', type=Path, help='directory containing pinned Pi node_modules, mounted read-only')
     parser.add_argument('--node-image', default=NODE_IMAGE)
+    parser.add_argument('--fixture', choices=('sum', 'notesdelta'), default='sum')
     parser.add_argument('--run', action='store_true', help='explicitly send real inference requests')
     parser.add_argument('--compaction', action='store_true', help='separate Pi-client 8K compaction scenario')
     parser.add_argument('--require-reuse', action='store_true')
@@ -257,7 +338,7 @@ def main():
     if not 1 <= args.max_requests <= 32 or not 30 <= args.wall_seconds <= 1800:
         parser.error('request count must be1..32 and wall time30..1800 seconds')
     out = args.out.absolute()
-    prepare(out, args.model, args.compaction)
+    prepare(out, args.model, args.compaction, args.fixture)
     if args.run: return run(args, out)
     save(out / 'home/.pi/agent/models.json', models('http://127.0.0.1:PORT-ASSIGNED-AT-RUN', args.model, args.compaction))
     print(f'Prepared {out}; no inference requests sent. Run again with --run --runtime PATH and a fresh --out.')
