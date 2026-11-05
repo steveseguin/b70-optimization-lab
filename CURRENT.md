@@ -1,5 +1,20 @@
 # Current Workspace State
 
+**November 4, 20:12 EST — four-card LAN server is stopped; its planned 47-hour lifetime expired cleanly.**
+- Previous-boot journal confirms shutdown on November 2 at 19:40:12 EST, after 309 counted requests:
+  `passed=true`, `first_error=null`, `monitor_first=null`, `drained=true`, no restarts, kills or retries.
+  The earlier 20:40 prediction below missed the daylight-saving clock change. No matching kernel fault or OOM
+  was found in the October 31–November 4 journal window.
+- The host booted again November 4 at about 19:25 EST. No inference server or port 18160 listener is running;
+  the transient four-card service units no longer exist. The reboot's cause was not established by this review.
+- The launcher still pins build `37ee90a428cd` at `/dev/shm/engine-build-pss-20261031-r1/sc117-engine`, now absent.
+  Durable serving needs a persistent build and assets, plus coordinated service/native lifetime handling;
+  increasing only the launcher's 47-hour setting cannot remove the native 48-hour maximum.
+- All four B70 render nodes are present; memory blocks 53–57 are now all offline and the boot exclusion service
+  remains enabled. Root storage has about 30 GiB available. These are passive observations, not a compute health gate.
+- Review only: no server launch, GPU workload, restart, reset or host-setting change.
+  [Evidence and next steps](notes/2026-11-04-sc117-lan-planned-expiry-review.md).
+
 **October 30, about 17:30 — four-card long prompt 239.3 → 222.5 s, exact; the two pipeline ranks are now balanced.**
 - One default-off flag on binary `e6daa268a3a8`, `OWNRT_DRAFT_CHUNK_BATCH=1` (set `tptsxqckhcb` = tptsxqckh +
   `OWNRT_HC_KERNELS=1` + this). The draft's KV-only prompt rows of each 256-row chunk run as 15 launches over all rows
@@ -35,7 +50,7 @@
   Projected at about 221 s, where rank 1 becomes the bound.
   [Result](experiments/own-xpu-runtime/research/tp/prefill-host-2026-10-30/RESULT.md).
 
-**Hosted now (owner request, 2026-10-31 13:28): four-card SC117 server on the LAN.**
+**Historical hosting (owner request, 2026-10-31 13:28; stopped November 2, see above): four-card SC117 server on the LAN.**
 - `http://192.168.2.44:18160/v1/chat/completions` (also 127.0.0.1:18160), model `sc117-qwen3.8-flash-next-iq3s-ownrt`,
   context 131,072, greedy, F32, MTP verified by the target. All four cards (23/27/43/47) are in use; the card locks are
   held by `sc117-tp-svc-4card-lan-locks`, so no lab work can start on the cards while it runs.
