@@ -5,6 +5,7 @@ import ast
 from datetime import datetime, timezone
 import hashlib
 import json
+import os
 from pathlib import Path
 import re
 import shutil
@@ -104,7 +105,7 @@ def observe():
         for line in str(x.get('MESSAGE', '')).splitlines():
             if patterns['FAULT'].search(line) and not patterns['DELETED'].search(line):
                 row['kernel']['faults'].append(dict(message=line, timestamp=x.get('__MONOTONIC_TIMESTAMP')))
-    baseline = json.loads((HERE/'host-before-stop.json').read_text())
+    baseline = json.loads(Path(os.environ.get('SC117_HOST_BASELINE', str(HERE/'host-before-stop.json'))).read_text())
     row['known_fault_baseline_matches'] = (row['boot'] == baseline['boot']
         and row['kernel']['faults'] == baseline['kernel']['faults'])
     queue = ROOT/'experiments/own-xpu-runtime/ops/lane-queue'

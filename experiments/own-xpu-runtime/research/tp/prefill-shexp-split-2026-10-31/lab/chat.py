@@ -395,6 +395,19 @@ class Streamer:
             return text[len(prev):]
         return None
 
+    def _safe_tool_content(self, text):
+        # Prose may stream while tools are offered. Hold a possible opening tag
+        # and everything after a complete one for the canonical final parser.
+        # It rstrips the prose before a call, so trailing whitespace must wait.
+        marker = '<tool_call>'
+        at = text.find(marker)
+        if at >= 0:
+            return text[:at].rstrip()
+        for length in range(min(len(marker) - 1, len(text)), 0, -1):
+            if text.endswith(marker[:length]):
+                return text[:-length].rstrip()
+        return text.rstrip()
+
     def feed(self, token):
         if self.stopped:
             return []
@@ -407,8 +420,11 @@ class Streamer:
             d = self._delta('reasoning_content', r.rstrip() if not answering else r)
             if d:
                 out.append(('reasoning_content', d))
-        if answering and not self.req.get('parse_tool_calls'):
-            d = self._delta('content', self._safe_content(content))
+        if answering:
+            safe = self._safe_content(content)
+            if self.req.get('parse_tool_calls'):
+                safe = self._safe_tool_content(safe)
+            d = self._delta('content', safe)
             if d:
                 out.append(('content', d))
         return out

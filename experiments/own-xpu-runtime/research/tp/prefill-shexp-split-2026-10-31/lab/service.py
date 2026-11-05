@@ -51,7 +51,7 @@ DUMP_BYTES = (310_364_224 + 9_699_332) * (int(os.environ.get('SC117_CONTEXT', '4
 META_RESERVE = 64 * 1024**2
 MEM_START = 98_806_740_766                    # corrected-engine admission (recurrent-f32 plans)
 MEM_ONGOING = 8 * 1024**3
-NATIVE_SECONDS = 172_800                      # native hard maximum; engine deadline starts at load
+NATIVE_SECONDS = 172_800                      # maximum for explicitly time-limited experiments
 SAMPLE_SECONDS = 3.0
 INCONCLUSIVE_LIMIT = 10                       # consecutive unusable observations before halting
 QUEUE_LIMIT = 8
@@ -92,6 +92,15 @@ def require(ok, message):
     if not ok:
         raise RuntimeError(message)
 
+
+def native_lifetime_seconds(hours):
+    require(hours == 0 or 0.1 <= hours <= NATIVE_SECONDS / 3600 - 0.5,
+            'lifetime: 0 for persistent serving, otherwise 0.1..47.5 hours')
+    return 0 if hours == 0 else NATIVE_SECONDS
+
+
+def lifetime_deadline(start, hours):
+    return None if hours == 0 else start + hours * 3600
 
 def save(path, value):
     tmp = Path(str(path) + '.tmp')
@@ -687,7 +696,8 @@ class Sessions:
 
 
 class Engine:
-    def __init__(self, control, evidence, monitor):
+    def __init__(self, control, evidence, monitor, native_seconds=0):
+        self.native_seconds = native_seconds
         self.control = control
         self.evidence = evidence
         self.monitor = monitor
@@ -710,7 +720,7 @@ class Engine:
         self.storage_checks = []     # more stores counted in storage_ok (SC117_KEEPER: the keeper's state directory)
 
     def start(self):
-        plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=NATIVE_SECONDS,
+        plan = A.build_plan(self.control / 'ranks', mini=False, max_new=128, seconds=self.native_seconds,
                             evidence_output=self.evidence)
         save(self.control / 'plan.json', plan)
         t = A.Transport.__new__(A.Transport)
@@ -766,10 +776,11 @@ class Engine:
             targets = [previous]
         for path in targets:
             if path.exists():
-                for f in sorted(path.glob('rank*/tp-*.json')):  # lab: TP exchange statistics / card-1 compare survive retention
+                retain_details = os.environ.get('SC117_RETAIN_TIMINGS', '1') == '1'
+                for f in sorted(path.glob('rank*/tp-*.json')) if retain_details else []:
                     (self.control / 'tp-evidence').mkdir(exist_ok=True)
                     shutil.copy2(f, self.control / 'tp-evidence' / f'{path.name}-{f.parent.name}-{f.name}')
-                for f in sorted(path.glob('rank*/timings.jsonl')):  # lab (persistent-thread-2026-10-29): every request's per-half rows survive retention
+                for f in sorted(path.glob('rank*/timings.jsonl')) if retain_details else []:
                     (self.control / 'tp-evidence').mkdir(exist_ok=True)
                     shutil.copy2(f, self.control / 'tp-evidence' / f'{path.name}-{f.parent.name}-{f.name}')
                 removed += sum(f.stat().st_size for f in path.rglob('*') if f.is_file())
@@ -1124,9 +1135,17 @@ def continuation_gate(engine, prompt):
     """One-time gate per binary and configuration for conversation continuation. For a long follow-up (read in batched
     chunks) and a short one (token by token): turn 1 runs fresh, turn 2 continues its state, and the same turn 2 runs
     fresh after a RESET. Both turn-2 runs must emit the same tokens and MTP guesses and leave the same full target state
-    on both ranks (every buffer except the spare recurrent banks, whose roles depend on the step parity)."""
+    on both ranks (every buffer except the spare recurrent banks, whose roles depend on the step parity).
+    Start beyond the 512-row raw-key ring and append more than two prefill chunks. The old 72-token 'long' suffix
+    never entered batched continuation with the current 256-row chunks, and never crossed a ring wrap."""
+    require(bool(prompt), 'continuation gate needs a prompt')
+    rows = max(1, engine.prefill_rows)
+    seed = list(prompt)
+    def repeated(n):
+        return (seed * ((n + len(seed) - 1) // len(seed)))[:n]
+    prompt = repeated(max(515, 2 * rows + 3))
     cases, passed = [], True
-    for name, suffix in (('long', (list(prompt) * 2)[:72]), ('short', list(prompt)[:3])):
+    for name, suffix in (('long', repeated(2 * rows + 3)), ('short', repeated(3))):
         first, _ = engine.generate(prompt, 16, f'continue-gate-{name}-turn1', force_reset=True)
         turn2 = list(prompt) + first + suffix
         cont, summary_c = engine.generate(turn2, 32, f'continue-gate-{name}-continued', continue_ok=True)
@@ -1138,6 +1157,7 @@ def continuation_gate(engine, prompt):
         differ = {r: sorted(k for k in state_f[r] if not k.startswith('alternate-') and state_f[r][k] != state_c[r].get(k))
                   for r in state_f}
         row = dict(case=name, prompt_tokens=len(turn2), continued_from=summary_c['continued_from'],
+                   initial_prompt_tokens=len(prompt), suffix_tokens=len(suffix), prefill_rows=rows,
                    tokens_equal=cont == fresh, guesses_equal=guesses_c == guesses_f, state_differences=differ,
                    decode_tok_s=[summary_c['decode_tok_s'], summary_f['decode_tok_s']],
                    prompt_wall_ms=[summary_c['prompt_wall_ms'], summary_f['prompt_wall_ms']])
@@ -1320,6 +1340,8 @@ def make_handler(state, engine, chat, key, keeper=None):
                 health = {'status': state.phase, 'detail': state.detail, 'waiting': state.waiting,
                           'activations': engine.activations() if engine.t is not None else None,
                           'prefill_rows': engine.prefill_rows,
+                          'context_length': CHAT.CONTEXT, 'continuation': engine.continuation,
+                          'persistent': engine.native_seconds == 0,
                           'requests_served': engine.count, 'model': CHAT.MODEL_ID}
                 if keeper is not None:
                     health['keeper'] = keeper.health()
@@ -1332,6 +1354,9 @@ def make_handler(state, engine, chat, key, keeper=None):
                 self.reply(200, {'object': 'list', 'data': models})
             elif path == '/keeper/status' and keeper is not None:
                 self.reply(200, keeper.status())
+            elif path in ('/client-config/pi/models.json', '/client-config/pi/settings.json') and os.environ.get('SC117_CLIENT_CONFIG_DIR'):
+                config = Path(os.environ['SC117_CLIENT_CONFIG_DIR']) / path.rsplit('/', 1)[-1]
+                self.reply(200, json.loads(config.read_text()))
             else:
                 self.error(404, 'not found')
 
@@ -1344,6 +1369,11 @@ def make_handler(state, engine, chat, key, keeper=None):
                 n = int(self.headers.get('Content-Length', '0'))
                 require(0 < n <= 64 * 1024**2, 'body size')  # agents resend whole histories
                 body = json.loads(self.rfile.read(n))
+                available_models = {CHAT.MODEL_ID}
+                if keeper is not None:
+                    available_models.add(keeper.model_id)
+                if isinstance(body, dict) and body.get('model') is not None and body['model'] not in available_models:
+                    raise CHAT.RequestError('unknown model; available: ' + ', '.join(sorted(available_models)))
                 to_keeper = keeper is not None and isinstance(body, dict) and body.get('model') == keeper.model_id
                 req = CHAT.validate(body) if to_keeper else CHAT.parse(body, chat)
             except CHAT.RequestError as e:
@@ -1590,9 +1620,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--bind', default='192.168.2.44')
     ap.add_argument('--port', type=int, default=18160)
-    ap.add_argument('--lifetime-hours', type=float, default=47.0)
+    ap.add_argument('--lifetime-hours', type=float, default=0,
+                    help='process lifetime; 0 (default) serves until explicitly stopped or a fault')
     a = ap.parse_args()
-    require(0.1 <= a.lifetime_hours <= NATIVE_SECONDS / 3600 - 0.5, 'lifetime must end before the native deadline')
+    native_seconds = native_lifetime_seconds(a.lifetime_hours)
     require(os.environ.get('INVOCATION_ID'), 'run through the systemd user unit, not directly')
     text = subprocess.run(['systemctl', '--user', 'show', UNIT, '--property=' + ','.join(['MainPID', *UNIT_PROPERTIES])],
                           capture_output=True, text=True, timeout=30).stdout
@@ -1617,7 +1648,7 @@ def main():
 
     state = State()
     monitor = Monitor(control)
-    engine = Engine(control, evidence, monitor)
+    engine = Engine(control, evidence, monitor, native_seconds=native_seconds)
     chat = CHAT.Chat()
     status = dict(schema='sc117.lan.run.v1', started=utc(), pid=os.getpid(), bind=a.bind, interface=interface, port=a.port,
                   control=str(control), evidence=str(evidence), api_key_required=bool(key), lifetime_hours=a.lifetime_hours,
@@ -1811,7 +1842,7 @@ def main():
             status['prefill_rows'] = engine.prefill_rows
             # Conversation continuation: its own one-time gate per binary and configuration (needs batched prefill).
             if engine.prefill_rows and os.environ.get('SC117_CONTINUE', '1') == '1':
-                cmarker = marker.with_name(marker.name.replace('prefill-', 'continue-', 1))
+                cmarker = marker.with_name(marker.name.replace('prefill-', 'continue-ring-v2-', 1))
                 if not cmarker.exists():
                     state.detail = 'one-time continuation gate: continued turn vs fresh turn (tokens, guesses, full state)'
                     engine.continuation = True
@@ -1835,13 +1866,13 @@ def main():
         if not state.stop.is_set():
             state.phase = 'ready'
             state.detail = ''
-        deadline = engine.t.start_time + a.lifetime_hours * 3600  # same clock as the transport deadline
+        deadline = lifetime_deadline(engine.t.start_time, a.lifetime_hours)
         print(json.dumps(dict(ready=True, selftest=summary)), flush=True)
         while not state.stop.is_set():
             if monitor.first is not None:
                 fault(monitor.first)
                 break
-            if time.monotonic() > deadline:
+            if deadline is not None and time.monotonic() > deadline:
                 state.detail = 'planned lifetime reached (native engine deadline); start the unit again to continue'
                 break
             if engine.lock.acquire(blocking=False):

@@ -392,8 +392,8 @@ static Options parse(int argc, char **argv) {
   require(a.cards >= 1 && a.cards <= 2 && a.card >= 0 && a.card + a.cards <= 4,
           "card range");
   require(a.tokens > 0 && a.tokens <= ((a.pipeline_enabled()||a.provider_only) ? 512 : 128) && a.context >= 8 &&
-              a.context <= 262144 && a.seconds > 0 && a.seconds <= 172800,
-          "bounded generation/context/deadline");
+              a.context <= 262144 && a.seconds >= 0 && a.seconds <= 172800,
+          "bounded generation/context; seconds 0 means persistent serving");
   require(a.timing=="token" || a.timing=="launch" || a.timing=="class" || a.timing=="attribution","timing mode");
   require(a.wait_seconds>0 && a.wait_seconds<=600,"bounded wait deadline");
   const bool dedicated_bulk=!a.provider_prefill_prompt.empty();
@@ -1303,7 +1303,9 @@ public:
     ordered_retirement=a.rank==1 && (host_choice=="ordered"||host_choice=="reply-first");
     reply_report.enabled=a.rank==1 && host_choice=="reply-first";
     if(host_choice=="reply-first")require(a.memory=="resident"&&!a.legacy&&a.draft_rank==1&&(a.target_split==0||a.target_split==24),"p92 reply-first requires resident prepared rank1-draft 24/24");
-    if(a.rank==1){reply_timings.open(a.output/"p92-host.jsonl");require(bool(reply_timings),"p92 host timing open");reply_report.output=&reply_timings;}
+    // Per-half research diagnostics must not grow for the lifetime of a hosted server.
+    // Finite experiments retain the historical file; persistent hosting keeps request summaries.
+    if(a.rank==1){reply_timings.open(a.seconds==0?fs::path("/dev/null"):a.output/"p92-host.jsonl");require(bool(reply_timings),"p92 host timing open");reply_report.output=&reply_timings;}
     for(const auto& l:p.launches)if(l.op=="gemv"||l.op=="expert_gate_up"||l.op=="routed_gemv"){
       std::array<unsigned,2> variants{selected_variant(w,a,p,l),0};if(l.op=="expert_gate_up")variants[1]=selected_variant(w,a,p,l,1);
       gemv_choices.emplace(&l,std::make_pair(a.gsq_packed?(((l.weights[0]=="output.weight"&&!a.mini)||(combined_site(w,a,l)||dense_q6_site(w,a,l)))?std::string("p33.dense.segment"):std::string("gsq.packed")):packet26::dispatch.gemv_for(l.label),variants));
@@ -1365,7 +1367,9 @@ public:
     pipeline_cancel_check();
     require(!poisoned, "poisoned step");
     require(!stopped, "cooperative stop");
-    require(std::chrono::steady_clock::now() < deadline,
+    // Hosted servers have no process-age cutoff. Operation waits and cooperative
+    // cancellation remain bounded independently of --seconds=0.
+    require(a.seconds == 0 || std::chrono::steady_clock::now() < deadline,
             "cooperative deadline");
   }
   ownrt::Device &dev(int c) {

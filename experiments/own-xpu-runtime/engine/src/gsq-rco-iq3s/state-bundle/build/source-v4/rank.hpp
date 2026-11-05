@@ -29,12 +29,16 @@ struct Reply { int32_t status,token,error,bytes,sequence,rank,reserved[2]; doubl
 static_assert(sizeof(Request)==32 && sizeof(Reply)==64);
 // Reserved MTP wire fields at offset 2*slot_bytes: valid, position, token,
 // provider error, then provider elapsed ns. Provider runs on rank1 before HALF.
-static void transfer(int fd,void* ptr,size_t n,bool send,int seconds) {
+// Persistent hosting may idle between commands indefinitely. Once a command's
+// first byte arrives, the remaining transfer still has a bounded deadline.
+static void transfer(int fd,void* ptr,size_t n,bool send,int seconds,bool persistent_idle=false) {
+ require(seconds>0 && (!persistent_idle || !send),"bounded transfer budget; persistent idle is receive-only");
  auto end=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
  size_t done=0;
  while(done<n) {
   pipeline_cancel_check();
-  auto left=std::chrono::duration_cast<std::chrono::milliseconds>(end-std::chrono::steady_clock::now()).count();
+  const bool idle=persistent_idle && done==0;
+  auto left=idle?int64_t(100):std::chrono::duration_cast<std::chrono::milliseconds>(end-std::chrono::steady_clock::now()).count();
   require(left>0,"bounded channel timeout");
   pollfd fds[2]={{fd,short(send?POLLOUT:POLLIN),0},{pipeline_stop_fd,POLLIN,0}};
   int rc=::poll(fds,pipeline_stop_fd>=0?2:1,int(std::min<int64_t>(left,100)));
@@ -45,7 +49,9 @@ static void transfer(int fd,void* ptr,size_t n,bool send,int seconds) {
   auto count=send?::send(fd,static_cast<char*>(ptr)+done,n-done,MSG_NOSIGNAL|MSG_DONTWAIT):
                   ::recv(fd,static_cast<char*>(ptr)+done,n-done,MSG_DONTWAIT);
   if(count<0&&(errno==EAGAIN||errno==EINTR))continue;
-  require(count>0,"short/closed channel");done+=size_t(count);
+  require(count>0,"short/closed channel");
+  if(idle)end=std::chrono::steady_clock::now()+std::chrono::seconds(seconds);
+  done+=size_t(count);
  }
 }
 static flash::Plan split(flash::Plan p,int rank,bool mini,int draft_rank=1,int target_split=0,int rank0_extra=0) {
@@ -683,6 +689,8 @@ static void tp_compare(Engine& e,const fs::path& path) {
 }
 static int run_rank(const Options& a) {
  using namespace pipeline;
+ // --seconds=0 disables process age, not native request/IPC deadlines.
+ const int request_seconds=a.seconds==0?172800:a.seconds;
  std::unique_ptr<Weights> weights;std::unique_ptr<Engine> engine;std::unique_ptr<mtp36::DraftRuntime> provider;
  std::unique_ptr<p105::Runtime> head_runtime;bool native_active=false;
  int fd=-1;void* mapping=MAP_FAILED;std::string error,selection_observed_sha256;std::vector<std::string> teardown;
@@ -1063,7 +1071,7 @@ static int run_rank(const Options& a) {
     <<",\"activation_dtype\":\"F32\",\"stream_bytes\":"<<engine->stream_bytes()<<",\"boundaries\":[";
    for(size_t i=0;i<a.pipeline_boundaries.size();++i)o<<(i?",":"")<<a.pipeline_boundaries[i];o<<"],\"mode\":"<<ownrt::quote(a.pipeline_ring?(a.pipeline_ring_pending_provider?"verified-ring-pending-provider":(a.pipeline_ring_live_draft?"verified-ring-live":"verified-ring")):(a.pipeline_wavefront?"wavefront":"target-only"))<<",\"speculation_enabled\":"<<((a.pipeline_wavefront||a.pipeline_ring)?"true":"false")<<",\"inactive_alternate_banks\":[";bool comma=false;for(const auto& [name,id]:engine->state_spares){o<<(comma?",":"")<<ownrt::quote(name);comma=true;}o<<"]";if(a.pipeline_ring)o<<",\"ring_capacity\":"<<a.pipeline_ring_depth<<",\"depth\":"<<a.pipeline_ring_depth<<",\"ring_epoch\":0,\"ring_request_sha256\":"<<ownrt::quote(a.pipeline_ring_request_sha256);if(a.pipeline_ring_live_draft)o<<",\"provider_borrow_mode\":"<<ownrt::quote(a.pipeline_ring_pending_provider?"pending-target":"quiescent-target");o<<"}";if(a.pipeline_ring_persistent_requests)ring_dispatcher->write_request_stage_metadata();else save(a.output/"pipeline-stage.json",o.str());
   }
-  Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,a.seconds);
+  Reply ready{};ready.rank=a.rank;if(a.pipeline_enabled()){ready.reserved[0]=a.pipeline_stage;ready.reserved[1]=a.pipeline_final();ready.bytes=int32_t(engine->stream_bytes());}transfer(a.channel,&ready,sizeof ready,true,request_seconds);
   ownrt::live_draft::Sequence live_draft_sequence;
   Candidate c;int sequence=0,accepted=0;bool async_half_ready=false;int async_half_position=-1,async_half_token=-1;V3Boundary v3state;
   // Opt-in session checkpoint (ops 17-19, session_checkpoint.hpp): VERIFY only directly after the request reset,
@@ -1250,7 +1258,7 @@ static int run_rank(const Options& a) {
     if(response.status!=0)checkpoint_after_reset=checkpoint_fresh; // refused before any upload
    }
    else if(r.op==fail)throw std::runtime_error("injected rank failure");
-   else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(a.seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
+   else if(r.op==stall){auto until=std::chrono::steady_clock::now()+std::chrono::seconds(request_seconds);while(std::chrono::steady_clock::now()<until){pipeline_cancel_check();poll(nullptr,0,10);}throw std::runtime_error("bounded injected stall");}
    else throw std::runtime_error("unknown rank command");
    if(a.rank==1)engine->reply_report.after(r.op);
    response.redo_ms=std::chrono::duration<double>(received.time_since_epoch()).count();
@@ -1262,7 +1270,7 @@ static int run_rank(const Options& a) {
   auto execute=[&](const Request& r)->Reply {
    weights->verify_lookup_views();auto reply=execute_body(r);weights->verify_lookup_views();return reply;
   };
-  for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,a.seconds);require(r.sequence==++sequence,"command sequence");
+  for(;;){Request r{};transfer(a.channel,&r,sizeof r,false,request_seconds,a.seconds==0);require(r.sequence==++sequence,"command sequence");
    if(a.pipeline_enabled()){
     require(r.reserved[0]==a.pipeline_stage&&r.reserved[1]==int(a.pipeline_final()),"pipeline command stage identity");
     if(a.pipeline_ring)require(ring_dispatcher->handles_command(r.op)||
@@ -1279,12 +1287,12 @@ static int run_rank(const Options& a) {
     auto* bytes=static_cast<uint8_t*>(mapping);auto& mailbox=*reinterpret_cast<native38::Mailbox*>(bytes+2*slot_bytes+256);
     auto cancel=[&](){pipeline_cancel_check();if(engine->progress_pending&&engine->progress_callback)engine->progress_callback();};
     try {native_active=true;p150::samples.clear();
-     if(a.rank==1)native38::worker(mailbox,a.seconds,execute,cancel,
+     if(a.rank==1)native38::worker(mailbox,request_seconds,execute,cancel,
        [&](const Request& cmd){if(cmd.op==half)engine->reply_report.published();},
        [&](){engine->reply_report.flush();});
      else {
       auto cfg=native38::config(a.shared.parent_path()/"native-request.txt",engine->p.g.context,engine->p.g.vocab);cfg.draft_rank=a.draft_rank;
-      native38::Backend backend(mailbox,bytes,a.seconds,execute,cancel);
+      native38::Backend backend(mailbox,bytes,request_seconds,execute,cancel);
       backend.prefill=prefill_base;backend.prefill_rows=a.prefill_rows;backend.prefill_stream=a.prefill_rows?engine->stream_bytes():0;
       backend.split_replay=engine->sealed_selection.choices.at("probe")=="split";
       backend.correction_probe=engine->sealed_selection.choices.at("probe")=="xchg";
@@ -1303,7 +1311,7 @@ static int run_rank(const Options& a) {
     }catch(...){p105::publish(head_box.abort,1);native38::abort(mailbox);throw;}
     response.sequence=r.sequence;response.rank=a.rank;
    }else response=execute(r);
-   transfer(a.channel,&response,sizeof response,true,a.seconds);
+   transfer(a.channel,&response,sizeof response,true,request_seconds);
    if(a.pipeline_ring)ring_dispatcher->reply_published(r.op);
    if(a.rank==1&&(r.op==half||(a.pipeline_wavefront&&r.op==ownrt::wavefront::row_op)))engine->reply_report.published();
   }

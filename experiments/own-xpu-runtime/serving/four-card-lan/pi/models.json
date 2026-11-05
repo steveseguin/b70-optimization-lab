@@ -1,0 +1,37 @@
+{
+  "$schema": "https://pi.dev/schemas/models.schema.json",
+  "providers": {
+    "sc117": {
+      "baseUrl": "http://192.168.2.44:18160/v1",
+      "api": "openai-completions",
+      "apiKey": "sc117-lan-no-key",
+      "models": [
+        {
+          "id": "sc117-qwen3.8-flash-next-iq3s-ownrt",
+          "name": "SC117 Flash-Next IQ3_S, four B70s, 128K context",
+          "reasoning": true,
+          "input": ["text"],
+          "contextWindow": 131072,
+          "maxTokens": 8192,
+          "thinkingLevelMap": {
+            "off": "none",
+            "minimal": "low",
+            "low": "low",
+            "medium": "medium",
+            "high": "xhigh",
+            "xhigh": "xhigh",
+            "max": "xhigh"
+          },
+          "compat": {
+            "thinkingFormat": "openai",
+            "maxTokensField": "max_completion_tokens",
+            "supportsDeveloperRole": false,
+            "supportsStore": false,
+            "supportsReasoningEffort": true,
+            "supportsUsageInStreaming": true
+          }
+        }
+      ]
+    }
+  }
+}

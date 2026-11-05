@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 4, 20:31 EST — persistent four-card server starting; Pi experience fixes under test.**
+- Owner requested removal of the timer and continued improvement/testing for Pi. One start at20:26:30,
+  build `69d73cd6efa2` at a persistent RAID path; lifetime0 means no process-age cutoff. Request/operation
+  timeouts and fault handling remain. Four-card health preflight passed, no new GPU faults observed.
+- Same131072/F32/target-verified-MTP configuration; exact live continuation requested behind a stronger
+  startup gate. Keeper and parked sessions remain off. Do not launch other work on the four cards.
+- Pi profile now advertises the actual context, enables visible medium thinking and client compaction;
+  ordinary text streams with tools enabled, and disabled keeper IDs return400. Remote client settings
+  still need applying there. Real Pi coding/compaction tests follow startup; no claim of success yet.
+- [Work and evidence](notes/2026-11-04-sc117-persistent-pi-experience.md).
+
 **November 4, 20:12 EST — four-card LAN server is stopped; its planned 47-hour lifetime expired cleanly.**
 - Previous-boot journal confirms shutdown on November 2 at 19:40:12 EST, after 309 counted requests:
   `passed=true`, `first_error=null`, `monitor_first=null`, `drained=true`, no restarts, kills or retries.
