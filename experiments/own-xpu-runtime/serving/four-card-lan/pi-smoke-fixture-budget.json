@@ -1,14 +1,101 @@
 {
-  "schema": "sc117.pi-smoke-cpu-token-budget.v1",
+  "schema": "sc117.pi-smoke-cpu-token-budget.v2",
   "date": "2026-11-04",
-  "tokenizer_sha256": "0997f410c57a1f4e53b09e4be8f4a172d90edd9564368fb0847030937229b9f3",
-  "system_tools_source": "experiments/own-xpu-runtime/research/keeper-device/pi-e2e-events-8ed9f5cb695e.jsonl",
-  "template": "pinned SC117 GGUF chat template, thinking enabled, effort medium",
-  "initial_prompt_tokens": 1656,
-  "log_file_tokens": [1865, 1847, 1847, 1847, 1847],
-  "initial_plus_logs_before_assistant_tool_envelopes": 10909,
-  "advertised_client_context": 8192,
-  "reply_reserve": 2048,
-  "approximate_compaction_threshold": 6144,
-  "notes": "CPU sizing only, using retained Pi 1.2.0 system/tool descriptions. Initial prompt is below threshold; five log reads cross it. New Pi system details, tool envelopes and generated reasoning add tokens. Actual requests and compaction events must be checked in the real run. This tests Pi client compaction, not native ctxkeeper."
+  "failed_8192_geometry": {
+    "schema": "sc117.pi-smoke-cpu-token-budget.v1",
+    "date": "2026-11-04",
+    "tokenizer_sha256": "0997f410c57a1f4e53b09e4be8f4a172d90edd9564368fb0847030937229b9f3",
+    "system_tools_source": "experiments/own-xpu-runtime/research/keeper-device/pi-e2e-events-8ed9f5cb695e.jsonl",
+    "template": "pinned SC117 GGUF chat template, thinking enabled, effort medium",
+    "initial_prompt_tokens": 1656,
+    "log_file_tokens": [
+      1865,
+      1847,
+      1847,
+      1847,
+      1847
+    ],
+    "initial_plus_logs_before_assistant_tool_envelopes": 10909,
+    "advertised_client_context": 8192,
+    "reply_reserve": 2048,
+    "approximate_compaction_threshold": 6144,
+    "notes": "CPU sizing only, using retained Pi 1.2.0 system/tool descriptions. Initial prompt is below threshold; five log reads cross it. New Pi system details, tool envelopes and generated reasoning add tokens. Actual requests and compaction events must be checked in the real run. This tests Pi client compaction, not native ctxkeeper."
+  },
+  "failed_run": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-compaction",
+  "cause": "Pi 1.2.0 reserves 4096 tokens in the provider max-token clamp. With an 8192 window and reserveTokens 2048, the 6144 compaction threshold is above the 4096 point at which the provider output budget is exhausted. Recorded projected estimates stayed below the compaction threshold while output was clipped to 1 token; recovery compaction did not restore enough output headroom.",
+  "pinned_source": {
+    "clamp": "pi-ai/dist/api/simple-options.js:3-9",
+    "estimator": "pi-ai/dist/utils/estimate.js:72-89",
+    "cache_accounting": "pi-ai/dist/api/openai-completions.js:1163-1187",
+    "compaction_boundaries": "pi-coding-agent/dist/core/agent-session.js:424-432,535-541 (before next assistant response),1453,1529 (run boundaries); same methods in bundled chunks/chunk-TJXZSVTD.js",
+    "continue": "pi-coding-agent/dist/main.js:341; core/session-manager.js:1354"
+  },
+  "cpu_replay": {
+    "method": "Installed pinned functions, recorded persisted session projections, Docker network none/read-only; no model requests",
+    "estimated_context": [
+      1752,
+      3122,
+      5030,
+      3504,
+      5405,
+      3869,
+      5785,
+      3853,
+      5798,
+      3903
+    ],
+    "predicted_and_observed_max_output": [
+      2048,
+      974,
+      1,
+      592,
+      1,
+      227,
+      1,
+      243,
+      1,
+      193
+    ],
+    "same_context_max_output_at16384": [
+      2048,
+      2048,
+      2048,
+      2048,
+      2048,
+      2048,
+      2048,
+      2048,
+      2048,
+      2048
+    ],
+    "cache_double_counted": false
+  },
+  "revised_geometry": {
+    "advertised_client_context": 16384,
+    "model_max_tokens": 2048,
+    "reserve_tokens": 8192,
+    "keep_recent_tokens": 2048,
+    "threshold": 8192,
+    "provider_safety_margin": 4096,
+    "full_output_context_ceiling": 10240,
+    "phase1": "Read parts1-4 then brief acknowledgment; approx9.1K prompt plus small generated text, cross8K threshold while below provider soft ceiling",
+    "phase1_gate": "Successful threshold compaction, exactly ordered first4 reads, no edits/bash, one persisted session, client exit0, no proxy error",
+    "phase2": "Same mounted home/work, same Pi session via --continue; readpart5, fixsum, tests, checksum recall. Grade final answer after compaction and identical session IDs.",
+    "live_status": "Parent reported PASSED: 9 requests, threshold compaction tokensBefore 9299 to estimatedTokensAfter 1812; checksum retained, code fixed, tests passed. Two phases provide an explicit grading boundary; they are not required because of missing per-tool compaction."
+  },
+  "production_131072": {
+    "reserve_tokens": 16384,
+    "model_max_tokens": 8192,
+    "provider_safety_margin": 4096,
+    "threshold": 114688,
+    "full_output_context_ceiling": 118784,
+    "headroom_at_threshold": 4096,
+    "limitation": "Pi 1.2.0 checks projected context before the next assistant response, including tool continuations. Reserve 16384 covers 8192 desired output plus 4096 provider safety with 4096 additional margin under matching estimates. Compaction and provider token estimators differ, so reserve arithmetic is not an exact-token guarantee for arbitrary large tool results."
+  },
+  "audit_correction": {
+    "date": "2026-11-04",
+    "incorrect_claim": "Pi1.2.0 checks compaction only between whole agent runs.",
+    "correction": "Source audit originally followed only _checkCompaction and missed _compactBeforeNextAssistantResponse wired by prepareNextTurnWithContext. The exact installed unbundled source AND CLI bundle contain proactive next-assistant compaction. No stale bundle was established.",
+    "unchanged_finding": "Pinned-functions replay exactly reproduces output clipping from fixed4096 safety margin and incompatible8K threshold geometry."
+  }
 }

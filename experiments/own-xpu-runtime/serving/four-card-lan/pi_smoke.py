@@ -2,7 +2,7 @@
 """Prepare or explicitly run isolated Pi 1.2.0 functional smoke; never starts/restarts the model server.
 
 Default is preparation only. --run forwards bounded real inference requests, so use only after coordinator admission.
---compaction exercises Pi's CLIENT compaction at an advertised 8K window, not the server's native keeper policy.
+--compaction exercises Pi's CLIENT compaction at 16K; --continuous keeps the task in one user phase.
 """
 import argparse
 import hashlib
@@ -38,7 +38,7 @@ def save(path, obj):
     path.write_text(json.dumps(obj, indent=2) + '\n')
 
 
-def prepare(out, model, compaction, fixture='sum'):
+def prepare(out, model, compaction, fixture='sum', continuous=False):
     out.mkdir(mode=0o700, parents=True, exist_ok=False)
     for name in ('work', 'home', 'home/.pi', 'home/.pi/agent'):
         (out / name).mkdir(mode=0o700)
@@ -61,7 +61,7 @@ def prepare(out, model, compaction, fixture='sum'):
         (out / 'work/sum.mjs').write_text(SOURCE)
         (out / 'work/test_sum.mjs').write_text(TEST)
         source_hashes = {'test_sum.mjs': hashlib.sha256(TEST.encode()).hexdigest()}
-        prompt = ('Fix sum.mjs so node --test passes. First read the source and test, run the failing test, '
+        prompt = ('Fix sum.mjs so node --test test_sum.mjs passes. First read the source and test, run the failing test, '
                   'edit only sum.mjs, then run the test again. Do not alter tests or install anything. '
                   'Use the available tools and keep your final explanation short.')
     if compaction:
@@ -72,18 +72,30 @@ def prepare(out, model, compaction, fixture='sum'):
             rows.extend(f'job-{i}-{j:03d} host=worker-{j%17} status=OK duration={j%31+1}s verified=true'
                         for j in range(80))
             (out / f'work/log-part-{i}.txt').write_text('\n'.join(rows) + '\n')
-        prompt = ('Before fixing the code, read log-part-1.txt through log-part-5.txt in order, '
-                  'one separate read tool call per file. Remember the checksum in part 1 and repeat it in your '
-                  'final answer. Do not use a combined command or omit a part. ' + prompt)
+        if continuous:
+            prompt = ('Before fixing the code, read log-part-1.txt through log-part-5.txt in order, '
+                      'one separate read tool call per file. Remember the checksum in part 1 and repeat it in your '
+                      'final answer. Do not use a combined command or omit a part. ' + prompt)
+        else:
+            (out / 'prompt-phase2.txt').write_text(
+                'Continue our previous task: read log-part-5.txt with the read tool, then fix the code. '
+                'Repeat the deployment checksum remembered from part 1 in your final answer. '
+                'Do not reread log-part-1.txt or the other earlier logs. ' + prompt + '\n')
+            prompt = ('Read log-part-1.txt through log-part-4.txt in order, one separate read tool call per file. '
+                      'Remember the deployment checksum in part 1 for my next message. '
+                      'Do not read part 5, inspect or fix code yet. After all four reads, stop with a brief '
+                      'acknowledgment that you are ready. Do not use a combined command or omit a part.')
     (out / 'prompt.txt').write_text(prompt + '\n')
     save(out / 'home/.pi/agent/settings.json', {
         'defaultProvider': 'sc117-smoke', 'defaultModel': model, 'defaultThinkingLevel': 'medium',
-        'compaction': {'enabled': compaction, 'reserveTokens': 2048, 'keepRecentTokens': 2048},
+        'compaction': {'enabled': compaction, 'reserveTokens': 8192 if compaction else 2048,
+                       'keepRecentTokens': 2048},
         'httpIdleTimeoutMs': 180000, 'retry': {'enabled': False, 'maxRetries': 0,
                                             'provider': {'timeoutMs': 180000, 'maxRetries': 0}},
         'cacheWarming': 'off', 'enableInstallTelemetry': False, 'enableAnalytics': False})
     save(out / 'manifest.json', {'schema': 'sc117.pi-functional-smoke.v1', 'model': model,
-        'pi_version': '1.2.0', 'node_image': NODE_IMAGE, 'compaction': 'pi-client-8192' if compaction else 'off',
+        'pi_version': '1.2.0', 'node_image': NODE_IMAGE,
+        'compaction': ('pi-client-16384-continuous' if continuous else 'pi-client-16384-two-phase') if compaction else 'off',
         'fixture': fixture, 'fixture_source_sha256': source_hashes,
         'fixture_test_sha256': source_hashes.get('test_sum.mjs', source_hashes.get('test_notesdelta.py')),
         'server_mutations': False,
@@ -97,7 +109,7 @@ def models(url, model, compaction):
     provider.update(baseUrl=url + '/v1', apiKey='sc117-smoke-dummy')
     configured = provider['models'][0]
     configured.update(id=model, name='SC117 isolated functional smoke',
-                      contextWindow=8192 if compaction else 131072,
+                      contextWindow=16384 if compaction else 131072,
                       maxTokens=2048 if compaction else 4096)
     return {'providers': {'sc117-smoke': provider}}
 
@@ -199,14 +211,22 @@ class Recorder:
         return Handler
 
 
-def event_checks(events, compaction):
+def event_checks(events, compaction, continuous=False):
     """Grade executed tools and completed compaction, never mere model intent/start notifications."""
     starts, executed, successful, log_reads, bash_log_mentions = {}, [], set(), [], []
     final_answer = ''
     completions = []
+    phase2_started = False
+    threshold_before_phase2 = False
+    final_after_phase2 = False
+    threshold_before_final = False
+    tools_after_threshold = set()
     for event in events:
         kind = event.get('type')
-        if kind == 'tool_execution_start':
+        if kind == 'smoke_phase_start' and event.get('phase') == 2:
+            phase2_started = True
+            threshold_before_phase2 = any(c['successful'] and c['reason'] == 'threshold' for c in completions)
+        elif kind == 'tool_execution_start':
             starts[event.get('toolCallId')] = event
         elif kind == 'tool_execution_end':
             start = starts.get(event.get('toolCallId'), {})
@@ -216,6 +236,8 @@ def event_checks(events, compaction):
             if event.get('isError') is not False:
                 continue
             successful.add(name)
+            if any(c['successful'] and c['reason'] == 'threshold' for c in completions):
+                tools_after_threshold.add(name)
             if name == 'read':
                 base = Path(str(args.get('path', ''))).name
                 if re.fullmatch(r'log-part-[1-5]\.txt', base):
@@ -226,6 +248,8 @@ def event_checks(events, compaction):
                     # A mention does not prove a read (it could be echo); retain the deviation explicitly.
                     bash_log_mentions.append({'command': args.get('command'), 'files': mentions})
         elif kind == 'message_end' and (event.get('message') or {}).get('role') == 'assistant':
+            final_after_phase2 = phase2_started
+            threshold_before_final = any(c['successful'] and c['reason'] == 'threshold' for c in completions)
             final_answer = ''.join(block.get('text', '') for block in event['message'].get('content', [])
                                    if isinstance(block, dict) and block.get('type') == 'text')
         elif kind in ('compaction_end', 'auto_compaction_end'):
@@ -241,9 +265,40 @@ def event_checks(events, compaction):
     if compaction:
         checks.update(client_compaction_succeeded=bool(completions) and all(c['successful'] for c in completions),
                       all_five_logs_read=list(dict.fromkeys(log_reads)) == [f'log-part-{i}.txt' for i in range(1, 6)],
-                      checksum_in_final_answer='48151623' in final_answer)
+                      checksum_in_final_answer=(threshold_before_final if continuous else final_after_phase2)
+                                              and '48151623' in final_answer)
+        if continuous:
+            checks.update(threshold_compaction_before_final=threshold_before_final,
+                          edit_and_bash_after_compaction={'edit', 'bash'} <= tools_after_threshold)
+        else:
+            checks['threshold_compaction_before_phase2'] = threshold_before_phase2
     return checks, {'executed_tools': executed, 'log_reads': log_reads, 'bash_log_mentions': bash_log_mentions,
-                    'compaction_results': completions, 'final_answer': final_answer}
+                    'compaction_results': completions, 'final_answer': final_answer,
+                    'tools_after_threshold_compaction': sorted(tools_after_threshold)}
+
+
+def grade_outcome(returncode, output, fixture):
+    pattern = r'^Ran (\d+) tests? in ' if fixture == 'notesdelta' else r'^# tests (\d+)\s*$'
+    matches = re.findall(pattern, output, re.M)
+    count = int(matches[-1]) if matches else 0
+    return {'passed': returncode == 0 and count > 0, 'test_count': count}
+
+
+def read_events(path):
+    events = []
+    for line in path.read_text().splitlines():
+        try: events.append(json.loads(line))
+        except ValueError: pass
+    return events
+
+
+def phase1_ready(events):
+    _, details = event_checks(events, False)
+    completions = details['compaction_results']
+    return (bool(completions) and all(c['successful'] for c in completions)
+            and any(c['reason'] == 'threshold' for c in completions)
+            and details['log_reads'] == [f'log-part-{i}.txt' for i in range(1, 5)]
+            and not any(t in ('edit', 'write', 'bash') for t in details['executed_tools']))
 
 
 def run(args, out):
@@ -266,31 +321,46 @@ def run(args, out):
         '-e', 'PI_CODING_AGENT_DIR=/home/pi/.pi/agent',
         '-e', 'PI_OFFLINE=1', '-e', 'PI_SKIP_VERSION_CHECK=1', '-e', 'PI_TELEMETRY=0',
         '-e', 'NO_PROXY=127.0.0.1,localhost', '-e', 'no_proxy=127.0.0.1,localhost', args.node_image]
-    command = common + ['node', '/opt/agent/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js',
-        '--mode', 'json', '--offline', '--no-extensions', '--provider', 'sc117-smoke', '--model', args.model,
-        '--', (out / 'prompt.txt').read_text()]
-    save(out / 'command.json', command)
+    client = ['node', '/opt/agent/node_modules/@earendil-works/pi-coding-agent/dist/bundle/cli.js',
+              '--mode', 'json', '--offline', '--no-extensions', '--provider', 'sc117-smoke', '--model', args.model]
+    commands = [common + client + ['--', (out / 'prompt.txt').read_text()]]
+    if args.compaction and not args.continuous:
+        commands.append(common + client + ['--continue', '--', (out / 'prompt-phase2.txt').read_text()])
+    save(out / 'command.json', commands[0])
+    save(out / 'commands.json', commands)
     rc = None
+    phases = []
+    deadline = time.monotonic() + args.wall_seconds
     try:
         with (out / 'pi-events.jsonl').open('w') as stdout, (out / 'pi-stderr.txt').open('w') as stderr:
-            rc = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
-                                timeout=args.wall_seconds).returncode
+            for phase, command in enumerate(commands, 1):
+                if phase == 2:
+                    sessions = list((out / 'home/.pi/agent/sessions').rglob('*.jsonl'))
+                    ready = phase1_ready(read_events(out / 'pi-events.jsonl'))
+                    if rc != 0 or recorder.halted or not ready or len(sessions) != 1:
+                        phases.append({'phase': 2, 'skipped': 'phase 1 must compact successfully at threshold and persist exactly one session',
+                                       'phase1_ready': ready, 'session_count': len(sessions)})
+                        break
+                stdout.write(json.dumps({'type': 'smoke_phase_start', 'phase': phase}) + '\n'); stdout.flush()
+                rc = subprocess.run(command, stdin=subprocess.DEVNULL, stdout=stdout, stderr=stderr,
+                                    timeout=max(0.01, deadline - time.monotonic())).returncode
+                phases.append({'phase': phase, 'returncode': rc, 'requests_after': len(recorder.rows)})
+                stdout.write(json.dumps({'type': 'smoke_phase_end', 'phase': phase, 'returncode': rc}) + '\n'); stdout.flush()
     except subprocess.TimeoutExpired:
         recorder.halted = True
         # This is the isolated CPU client container; the GPU server is never signalled.
         subprocess.run(['docker', 'stop', '-t', '10', name], capture_output=True, timeout=20)
     finally:
         proxy.shutdown(); proxy.server_close(); thread.join()
-    grade_command = ['python3', '-B', '-m', 'unittest', '-v'] if args.fixture == 'notesdelta' else ['node', '--test']
+    grade_command = ['python3', '-B', '-m', 'unittest', '-v'] if args.fixture == 'notesdelta' else ['node', '--test', 'test_sum.mjs']
     grade = subprocess.run(['docker', 'run', '--rm', '--network', 'none', '--read-only', '--cap-drop=ALL',
         '--security-opt=no-new-privileges', '--user', f'{os.getuid()}:{os.getgid()}',
         '-v', f'{out / "work"}:{work_target}:ro', '-w', work_target, args.node_image, *grade_command],
         capture_output=True, text=True, timeout=30)
-    (out / 'grade.txt').write_text(grade.stdout + grade.stderr)
-    events = []
-    for line in (out / 'pi-events.jsonl').read_text().splitlines():
-        try: events.append(json.loads(line))
-        except ValueError: pass
+    grade_output = grade.stdout + grade.stderr
+    (out / 'grade.txt').write_text(grade_output)
+    graded = grade_outcome(grade.returncode, grade_output, args.fixture)
+    events = read_events(out / 'pi-events.jsonl')
     fixture_manifest = json.loads((out / 'manifest.json').read_text())
     source_hashes = fixture_manifest['fixture_source_sha256']
     protected = ['test_notesdelta.py', 'sync_notesdelta.py'] if args.fixture == 'notesdelta' else ['test_sum.mjs']
@@ -299,7 +369,8 @@ def run(args, out):
                     for name in protected)
     cached = [((r.get('usage') or {}).get('prompt_tokens_details') or {}).get('cached_tokens', 0) for r in recorder.rows]
     compactions = [e.get('type') for e in events if 'compaction' in str(e.get('type', '')).lower()]
-    checks = {'client_exit_zero': rc == 0, 'fixture_tests_pass': grade.returncode == 0,
+    checks = {'client_exit_zero': rc == 0, 'fixture_tests_pass': graded['passed'],
+        'fixture_tests_executed': graded['test_count'] > 0,
         'fixture_tests_unchanged': unchanged, 'multiple_turns': len(recorder.rows) >= 3,
         'thinking_on_wire': any(r['reasoning_chunks'] for r in recorder.rows),
         'tool_calls_on_wire': any(r['tool_chunks'] for r in recorder.rows),
@@ -309,12 +380,17 @@ def run(args, out):
         target = out / 'work/notesdelta.py'
         checks['original_source_restored_exactly'] = (target.is_file() and
             hashlib.sha256(target.read_bytes()).hexdigest() == source_hashes['notesdelta.py'])
-    tool_checks, event_details = event_checks(events, args.compaction)
+    if args.compaction and not args.continuous:
+        checks['both_phases_completed'] = len(phases) == 2 and all(p.get('returncode') == 0 for p in phases)
+        session_ids = [e.get('id') for e in events if e.get('type') == 'session']
+        checks['same_persisted_session'] = len(session_ids) == 2 and bool(session_ids[0]) and len(set(session_ids)) == 1
+    tool_checks, event_details = event_checks(events, args.compaction, args.continuous)
     checks.update(tool_checks)
     required = [v for k, v in checks.items() if k != 'reuse_observed' or args.require_reuse]
     result = {'passed': all(required), 'checks': checks, 'requests': len(recorder.rows),
               'cached_tokens': cached, 'compaction_events': compactions, 'client_exit': rc,
-              'server_restarts': 0, 'server_signals': 0, 'event_details': event_details}
+              'server_restarts': 0, 'server_signals': 0, 'event_details': event_details,
+              'fixture_test_count': graded['test_count'], 'phases': phases}
     save(out / 'result.json', result)
     print(json.dumps(result, indent=2))
     return 0 if result['passed'] else 1
@@ -329,16 +405,18 @@ def main():
     parser.add_argument('--node-image', default=NODE_IMAGE)
     parser.add_argument('--fixture', choices=('sum', 'notesdelta'), default='sum')
     parser.add_argument('--run', action='store_true', help='explicitly send real inference requests')
-    parser.add_argument('--compaction', action='store_true', help='separate Pi-client 8K compaction scenario')
+    parser.add_argument('--compaction', action='store_true', help='separate Pi-client 16K two-phase compaction scenario')
+    parser.add_argument('--continuous', action='store_true', help='with --compaction, one uninterrupted five-log coding task')
     parser.add_argument('--require-reuse', action='store_true')
     parser.add_argument('--max-requests', type=int, default=16)
     parser.add_argument('--wall-seconds', type=int, default=900)
     args = parser.parse_args()
     if args.run and args.runtime is None: parser.error('--run requires --runtime')
+    if args.continuous and not args.compaction: parser.error('--continuous requires --compaction')
     if not 1 <= args.max_requests <= 32 or not 30 <= args.wall_seconds <= 1800:
         parser.error('request count must be1..32 and wall time30..1800 seconds')
     out = args.out.absolute()
-    prepare(out, args.model, args.compaction, args.fixture)
+    prepare(out, args.model, args.compaction, args.fixture, args.continuous)
     if args.run: return run(args, out)
     save(out / 'home/.pi/agent/models.json', models('http://127.0.0.1:PORT-ASSIGNED-AT-RUN', args.model, args.compaction))
     print(f'Prepared {out}; no inference requests sent. Run again with --run --runtime PATH and a fresh --out.')

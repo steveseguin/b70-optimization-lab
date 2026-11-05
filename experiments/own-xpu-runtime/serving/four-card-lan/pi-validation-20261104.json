@@ -1,0 +1,325 @@
+{
+  "schema": "sc117.pi-live-validation.v1",
+  "recorded_at": "2026-11-04T21:16:56.352002-05:00",
+  "engine_receipt": "experiments/own-xpu-runtime/engine/receipts/persistent-20261104.json",
+  "pi_version": "1.2.0",
+  "live_health": {
+    "status": "ready",
+    "detail": "",
+    "waiting": 0,
+    "activations": "f32",
+    "prefill_rows": 256,
+    "context_length": 131072,
+    "continuation": true,
+    "persistent": true,
+    "requests_served": 80,
+    "model": "sc117-qwen3.8-flash-next-iq3s-ownrt"
+  },
+  "server_start": "2026-11-04T20:26:30-05:00",
+  "server_restarts": 0,
+  "tests": {
+    "pi-basic": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-basic",
+      "result_sha256": "d75b78d76b5b84b84549a0216022fc66a5dffa0331c227833dfb50e318578b4b",
+      "passed": true,
+      "requests": 7,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": true,
+        "bash_tool_executed": true,
+        "fixture_tests_executed": true
+      },
+      "cached_tokens": [
+        0,
+        1679,
+        1947,
+        2659,
+        3498,
+        3626,
+        3887
+      ],
+      "first_delta_seconds": [
+        3.318127,
+        1.650326,
+        1.848033,
+        1.04888,
+        0.336921,
+        1.591776,
+        0.531562
+      ],
+      "elapsed_request_span_seconds": 29.606,
+      "compaction_results": []
+    },
+    "pi-notesdelta": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-notesdelta",
+      "result_sha256": "86183a468b61dbe7cf25b83800edc8c1cb9194fafe0bcda53b96c92b9f9069f4",
+      "passed": true,
+      "requests": 6,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "original_source_restored_exactly": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": true,
+        "bash_tool_executed": true
+      },
+      "cached_tokens": [
+        0,
+        1689,
+        2634,
+        18881,
+        19708,
+        19810
+      ],
+      "first_delta_seconds": [
+        3.303803,
+        1.991986,
+        26.357749,
+        1.612407,
+        0.351662,
+        1.15734
+      ],
+      "elapsed_request_span_seconds": 54.5,
+      "compaction_results": []
+    },
+    "pi-compaction": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-compaction",
+      "result_sha256": "bb02fd08f1d1c97eef6cca1fe6e16286825c60ad339a8eb5642ff177c03366bb",
+      "passed": false,
+      "requests": 14,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": false,
+        "fixture_tests_executed": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": false,
+        "bash_tool_executed": false,
+        "client_compaction_succeeded": false,
+        "all_five_logs_read": true,
+        "checksum_in_final_answer": false
+      },
+      "cached_tokens": [
+        0,
+        1706,
+        3631,
+        0,
+        0,
+        4006,
+        0,
+        0,
+        4386,
+        0,
+        0,
+        4399,
+        0,
+        0
+      ],
+      "first_delta_seconds": [
+        3.351252,
+        3.719607,
+        3.671894,
+        2.390809,
+        7.192317,
+        3.68311,
+        3.238943,
+        7.905644,
+        3.684153,
+        3.89195,
+        7.944951,
+        3.698952,
+        3.953601,
+        8.058507
+      ],
+      "elapsed_request_span_seconds": 108.865,
+      "compaction_results": [
+        {
+          "successful": true,
+          "reason": "overflow",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 4038,
+          "estimated_tokens_after": 3037
+        },
+        {
+          "successful": true,
+          "reason": "overflow",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 4334,
+          "estimated_tokens_after": 3356
+        },
+        {
+          "successful": true,
+          "reason": "overflow",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 4598,
+          "estimated_tokens_after": 3342
+        },
+        {
+          "successful": true,
+          "reason": "overflow",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 4588,
+          "estimated_tokens_after": 3387
+        },
+        {
+          "successful": false,
+          "reason": "overflow",
+          "aborted": false,
+          "error": "Truncated response recovery failed after one compact-and-retry attempt.",
+          "tokens_before": null,
+          "estimated_tokens_after": null
+        }
+      ]
+    },
+    "pi-compaction-16k": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-compaction-16k",
+      "result_sha256": "4d57ea2288b476df09bbd660641809e0242d7ac5099639e69a620ffbdfd88813",
+      "passed": true,
+      "requests": 9,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": true,
+        "fixture_tests_executed": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "both_phases_completed": true,
+        "same_persisted_session": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": true,
+        "bash_tool_executed": true,
+        "client_compaction_succeeded": true,
+        "threshold_compaction_before_phase2": true,
+        "all_five_logs_read": true,
+        "checksum_in_final_answer": true
+      },
+      "cached_tokens": [
+        0,
+        1764,
+        0,
+        0,
+        2216,
+        4167,
+        4398,
+        4685,
+        4784
+      ],
+      "first_delta_seconds": [
+        3.303087,
+        13.109512,
+        6.276216,
+        4.104537,
+        3.662687,
+        1.642688,
+        1.997787,
+        0.330361,
+        0.735717
+      ],
+      "elapsed_request_span_seconds": 49.353,
+      "compaction_results": [
+        {
+          "successful": true,
+          "reason": "threshold",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 9299,
+          "estimated_tokens_after": 1812
+        }
+      ]
+    },
+    "pi-compaction-continuous-16k": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-compaction-continuous-16k",
+      "result_sha256": "08147ddf12e4ee340bae703249f414543e2be9ba28c30df8ec370470ce905e7a",
+      "passed": true,
+      "requests": 11,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": true,
+        "fixture_tests_executed": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": true,
+        "bash_tool_executed": true,
+        "client_compaction_succeeded": true,
+        "all_five_logs_read": true,
+        "checksum_in_final_answer": true,
+        "threshold_compaction_before_final": true,
+        "edit_and_bash_after_compaction": true
+      },
+      "cached_tokens": [
+        0,
+        1706,
+        3631,
+        5535,
+        0,
+        0,
+        4048,
+        6019,
+        6269,
+        6599,
+        6674
+      ],
+      "first_delta_seconds": [
+        3.363032,
+        3.710122,
+        3.709128,
+        3.71773,
+        5.065865,
+        7.340827,
+        3.711103,
+        1.644065,
+        1.998523,
+        0.332247,
+        0.737026
+      ],
+      "elapsed_request_span_seconds": 50.975,
+      "compaction_results": [
+        {
+          "successful": true,
+          "reason": "threshold",
+          "aborted": false,
+          "error": null,
+          "tokens_before": 8676,
+          "estimated_tokens_after": 3082
+        }
+      ]
+    }
+  },
+  "limitations": [
+    "Functional warmed-server tests, not throughput records",
+    "131K long-context quality and multi-day stability not established",
+    "Remote Pi installation not inspected",
+    "Native keeper and parked sessions disabled"
+  ]
+}

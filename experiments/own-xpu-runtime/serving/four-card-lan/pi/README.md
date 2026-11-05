@@ -21,8 +21,12 @@ xhigh default. Responses stream thinking as `reasoning_content`, which Pi
 recognizes. Both reasoning and the final answer consume the 8192-token output
 budget. Low thinking is available when latency matters more.
 
-The four-card service currently reads the complete prompt again on each turn.
-Prompt reading grows with conversation length; compaction reduces that cost.
+The four-card service reuses its live prompt state when the next request has
+an exactly matching token prefix. This passed full-state correctness checks
+and real Pi tool turns. A different session or a changed earlier prefix requires
+a fresh prompt read; large new tool results still take time to read. Automatic
+Pi compaction reduces context growth. Native ctxkeeper and parked sessions remain
+disabled; this profile does not claim their features.
 Tool calls are sent once their complete arguments are available, while ordinary
 answer text and reasoning stream incrementally. Images, forced tool choice and
 non-greedy sampling are not supported. The dummy key is for an endpoint with

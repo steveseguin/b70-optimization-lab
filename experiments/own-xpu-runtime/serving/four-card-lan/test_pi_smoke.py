@@ -30,6 +30,14 @@ class Fake(http.server.BaseHTTPRequestHandler):
 
 
 class SmokeTests(unittest.TestCase):
+    def test_grader_refuses_zero_discovered_tests_even_with_exit_zero(self):
+        self.assertEqual(P.grade_outcome(0, 'TAP version 13\n1..0\n# tests 0\n# pass 0\n', 'sum'),
+                         {'passed': False, 'test_count': 0})
+        self.assertEqual(P.grade_outcome(0, 'TAP version 13\n1..1\n# tests 1\n# pass 1\n', 'sum'),
+                         {'passed': True, 'test_count': 1})
+        self.assertFalse(P.grade_outcome(1, '# tests 1\n# fail 1\n', 'sum')['passed'])
+        self.assertFalse(P.grade_outcome(0, 'no recognized test summary', 'sum')['passed'])
+        self.assertTrue(P.grade_outcome(0, 'Ran 11 tests in 0.01s\n\nOK (skipped=1)', 'notesdelta')['passed'])
     def test_notesdelta_fixture_changes_only_unique_value_index(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'smoke'
@@ -66,7 +74,13 @@ class SmokeTests(unittest.TestCase):
             P.prepare(out, P.MODEL, True)
             self.assertEqual(len(list((out / 'work').glob('log-part-*.txt'))), 5)
             config = P.models('http://localhost:12345', P.MODEL, True)
-            self.assertEqual(config['providers']['sc117-smoke']['models'][0]['contextWindow'], 8192)
+            self.assertEqual(config['providers']['sc117-smoke']['models'][0]['contextWindow'], 16384)
+            settings = json.loads((out / 'home/.pi/agent/settings.json').read_text())
+            self.assertEqual(settings['compaction']['reserveTokens'], 8192)
+            self.assertIn('log-part-4.txt', (out / 'prompt.txt').read_text())
+            self.assertIn('Do not read part 5', (out / 'prompt.txt').read_text())
+            self.assertIn('log-part-5.txt', (out / 'prompt-phase2.txt').read_text())
+            self.assertNotIn('48151623', (out / 'prompt-phase2.txt').read_text())
             self.assertIn('48151623', (out / 'work/log-part-1.txt').read_text())
 
     def proxy_case(self, payload, expect_error):
@@ -93,6 +107,45 @@ class SmokeTests(unittest.TestCase):
                 proxy.shutdown(); proxy.server_close(); pt.join()
                 upstream.shutdown(); upstream.server_close(); ut.join()
 
+    def test_continuous_compaction_prepares_one_original_five_log_prompt(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            out = Path(tmp) / 'smoke'
+            P.prepare(out, P.MODEL, True, continuous=True)
+            prompt = (out / 'prompt.txt').read_text()
+            self.assertIn('log-part-1.txt through log-part-5.txt in order', prompt)
+            self.assertIn('Fix sum.mjs so node --test test_sum.mjs passes.', prompt)
+            self.assertIn('repeat it in your final answer', prompt)
+            self.assertNotIn('48151623', prompt)
+            self.assertFalse((out / 'prompt-phase2.txt').exists())
+            manifest = json.loads((out / 'manifest.json').read_text())
+            self.assertEqual(manifest['compaction'], 'pi-client-16384-continuous')
+
+    def test_continuous_grade_requires_compaction_then_tools_and_final_fact(self):
+        events = []
+        def tool(name, args):
+            ident = str(len(events))
+            events.extend([{'type': 'tool_execution_start', 'toolCallId': ident, 'toolName': name, 'args': args},
+                           {'type': 'tool_execution_end', 'toolCallId': ident, 'toolName': name, 'isError': False}])
+        for i in range(1, 5): tool('read', {'path': f'/work/log-part-{i}.txt'})
+        compact = {'type': 'compaction_end', 'reason': 'threshold', 'aborted': False,
+                   'result': {'summary': 'Retain checksum 48151623.'}}
+        events.append(compact)
+        tool('read', {'path': '/work/log-part-5.txt'})
+        tool('edit', {'path': 'sum.mjs'})
+        tool('bash', {'command': 'node --test test_sum.mjs'})
+        events.append({'type': 'message_end', 'message': {'role': 'assistant', 'content': [
+            {'type': 'text', 'text': 'Fixed. Tests pass. Checksum 48151623.'}]}})
+        checks, _ = P.event_checks(events, True, continuous=True)
+        self.assertTrue(all(checks.values()), checks)
+        self.assertNotIn('threshold_compaction_before_phase2', checks)
+        no_compact = [e for e in events if e is not compact]
+        late = no_compact + [compact]
+        self.assertFalse(P.event_checks(late, True, True)[0]['threshold_compaction_before_final'])
+        after_tools = no_compact[:-1] + [compact, no_compact[-1]]
+        self.assertFalse(P.event_checks(after_tools, True, True)[0]['edit_and_bash_after_compaction'])
+        compact['errorMessage'] = 'summary failed'
+        self.assertFalse(P.event_checks(events, True, True)[0]['client_compaction_succeeded'])
+
     def test_sse_thinking_tools_usage_and_request_cap(self):
         row = self.proxy_case(b'data: {"choices":[{"delta":{"reasoning_content":"Let me check","tool_calls":[{}]}}]}\n\n'
                              b'data: {"choices":[{"delta":{"content":"Answer"}}]}\n\n'
@@ -116,18 +169,27 @@ class SmokeTests(unittest.TestCase):
             ident = str(len(events))
             events.extend([{'type': 'tool_execution_start', 'toolCallId': ident, 'toolName': name, 'args': args},
                            {'type': 'tool_execution_end', 'toolCallId': ident, 'toolName': name, 'isError': False}])
-        for i in range(1, 6): tool('read', {'path': f'/work/log-part-{i}.txt'})
+        for i in range(1, 5): tool('read', {'path': f'/work/log-part-{i}.txt'})
+        events += [{'type': 'compaction_start', 'reason': 'threshold'},
+                   {'type': 'compaction_end', 'reason': 'threshold', 'aborted': False,
+                    'result': {'summary': 'Keep checksum 48151623.'}}]
+        self.assertTrue(P.phase1_ready(events))
+        events[-1]['reason'] = 'overflow'
+        self.assertFalse(P.phase1_ready(events))
+        events[-1]['reason'] = 'threshold'
+        events.append({'type': 'smoke_phase_start', 'phase': 2})
+        tool('read', {'path': '/work/log-part-5.txt'})
         tool('edit', {'path': 'sum.mjs'})
         tool('bash', {'command': 'node --test'})
-        events += [{'type': 'compaction_start'},
-                   {'type': 'compaction_end', 'aborted': False, 'result': {'summary': 'Keep checksum 48151623.'}},
-                   {'type': 'message_end', 'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': 'Fixed. Checksum 48151623.'}]}}]
+        events += [{'type': 'message_end', 'message': {'role': 'assistant', 'content': [{'type': 'text', 'text': 'Fixed. Checksum 48151623.'}]}}]
         checks, details = P.event_checks(events, True)
         self.assertTrue(all(checks.values()), checks)
         self.assertEqual(details['log_reads'], [f'log-part-{i}.txt' for i in range(1, 6)])
         without_end = [e for e in events if e['type'] != 'compaction_end']
         self.assertFalse(P.event_checks(without_end, True)[0]['client_compaction_succeeded'])
-        events[-2]['errorMessage'] = 'summary failed'
+        late_compaction = [e for e in events if e.get('type') != 'compaction_end'] + [events[9]]
+        self.assertFalse(P.event_checks(late_compaction, True)[0]['threshold_compaction_before_phase2'])
+        events[9]['errorMessage'] = 'summary failed'
         self.assertFalse(P.event_checks(events, True)[0]['client_compaction_succeeded'])
         events[-1]['message']['content'][0]['text'] = 'Fixed.'
         self.assertFalse(P.event_checks(events, True)[0]['checksum_in_final_answer'])

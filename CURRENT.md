@@ -1,15 +1,23 @@
 # Current Workspace State
 
-**November 4, 20:31 EST — persistent four-card server starting; Pi experience fixes under test.**
-- Owner requested removal of the timer and continued improvement/testing for Pi. One start at20:26:30,
-  build `69d73cd6efa2` at a persistent RAID path; lifetime0 means no process-age cutoff. Request/operation
-  timeouts and fault handling remain. Four-card health preflight passed, no new GPU faults observed.
-- Same131072/F32/target-verified-MTP configuration; exact live continuation requested behind a stronger
-  startup gate. Keeper and parked sessions remain off. Do not launch other work on the four cards.
-- Pi profile now advertises the actual context, enables visible medium thinking and client compaction;
-  ordinary text streams with tools enabled, and disabled keeper IDs return400. Remote client settings
-  still need applying there. Real Pi coding/compaction tests follow startup; no claim of success yet.
-- [Work and evidence](notes/2026-11-04-sc117-persistent-pi-experience.md).
+**November 4, 21:20 EST — LAN server live without the shutdown timer; real Pi coding and compaction tests passed.**
+- One start at20:26:30, ready20:47:14; no restarts or new GPU faults. Persistent
+  build `69d73cd6efa2` and assets survive reboot, but these transient service units
+  are not boot-autostart units. Lifetime0 removes process-age expiry; fault and
+  operation timeouts remain. Do not launch other GPU work on these four cards.
+- Exact prompt reuse passed long/short full-state gates and real Pi tool turns.
+  The131072 context, F32 and target-verified MTP remain. Native keeper and parked
+  sessions are off. New large inputs still require prompt processing.
+- Real Pi1.2.0 repaired two coding fixtures, streamed thinking and used read/edit/bash.
+  Both resumed and uninterrupted compaction tests retained an early checksum and
+  continued to a passing code fix. The failed8K fixture was an output-reserve mismatch;
+  the corrected16K fixture passed. No claim of131K quality or multi-day stability yet.
+- Four-card Pi profiles are served at `/client-config/pi/models.json` and
+  `/client-config/pi/settings.json` on `http://192.168.2.44:18160`. Merge on the
+  remote client, select the plain SC117 model and medium thinking. Its actual
+  installed version/settings remain unverified.
+- Next lever: assess native keeper integration/streaming on this same persistent
+  engine. [Evidence and limits](notes/2026-11-04-sc117-persistent-pi-experience.md).
 
 **November 4, 20:12 EST — four-card LAN server is stopped; its planned 47-hour lifetime expired cleanly.**
 - Previous-boot journal confirms shutdown on November 2 at 19:40:12 EST, after 309 counted requests:
