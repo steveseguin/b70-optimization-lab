@@ -314,6 +314,45 @@
           "estimated_tokens_after": 3082
         }
       ]
+    },
+    "pi-notesdelta-focused": {
+      "path": "/mnt/raid-models/ownrt-serving/2026-11-04-persistent/pi-notesdelta-focused",
+      "result_sha256": "2bfff4dcf0edd787e512ee800fef9e733e1c85ef5a987eb717a63e19dadbba8e",
+      "passed": true,
+      "requests": 6,
+      "checks": {
+        "client_exit_zero": true,
+        "fixture_tests_pass": true,
+        "fixture_tests_executed": true,
+        "fixture_tests_unchanged": true,
+        "multiple_turns": true,
+        "thinking_on_wire": true,
+        "tool_calls_on_wire": true,
+        "no_upstream_error": true,
+        "reuse_observed": true,
+        "original_source_restored_exactly": true,
+        "fixture_guidance_unchanged": true,
+        "read_tool_executed": true,
+        "edit_tool_executed": true,
+        "bash_tool_executed": true
+      },
+      "cached_tokens": [
+        0,
+        1830,
+        3169,
+        4307,
+        6503,
+        6765
+      ],
+      "first_delta_seconds": [
+        3.498115,
+        2.6483,
+        2.343845,
+        2.499292,
+        0.383348,
+        1.137622
+      ],
+      "elapsed_request_span_seconds": 31.017
     }
   },
   "limitations": [
@@ -321,5 +360,15 @@
     "131K long-context quality and multi-day stability not established",
     "Remote Pi installation not inspected",
     "Native keeper and parked sessions disabled"
-  ]
+  ],
+  "focused_reads_comparison": {
+    "same_bug_task_and_tests": true,
+    "default_seconds": 54.5,
+    "focused_seconds": 31.017,
+    "default_uncached_input_tokens": 18620,
+    "focused_uncached_input_tokens": 5625,
+    "default_output_tokens": 1797,
+    "focused_output_tokens": 1702,
+    "interpretation": "One run each, workflow task comparison on warmed persistent service; not a kernel throughput claim."
+  }
 }

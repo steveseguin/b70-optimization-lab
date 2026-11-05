@@ -132,3 +132,32 @@ then examine native keeper integration as the next useful context-management
 lever. One continuously running server; no power/memory changes or restart loop.
 
 Structured results: `experiments/own-xpu-runtime/serving/four-card-lan/pi-validation-20261104.json`.
+
+## Next levers: bounded reads and keeper policy
+
+The notesdelta task processed a17808-token prompt after reading the full module;
+2634 tokens were reused and first output took26.36s. Subsequent turns were fast.
+Test the same task with optional project guidance to locate the failing function
+and read relevant line ranges, expanding when needed. Preserve exact source fix
+and test gates; report one-run task timing rather than a throughput record.
+
+Native keeper is not a free upgrade: keeper_post currently buffers all response
+content/reasoning until its internal recall loop finishes. Its TP checkpoint
+path is unsupported, although the policy can operate without checkpoints. A
+separate policy harness can use this existing endpoint without reloading it.
+
+Historical quality caveat: campaign20b Pi wrote seven audit answers at message492
+after the request at487; keeper notes for the478–502 cut falsely said no audit
+request existed and suggested removing AUDIT.md. Pi then deleted it. Current1.3
+parse_delta/apply_delta still accepts that exact false note without a mismatch;
+later numeric/truncation/loop fixes do not establish a fix for unsupported prose.
+Evidence: experiments/qwen38-27b-b70/notes/2026-10-10-context-16k-baseline.md:2736.
+A small checksum/recall pass cannot justify enabling keeper for real Pi work.
+
+Focused-read result: PASS,6 requests,31.017s versus54.500s default. Exact original
+source hash restored,11 tests with1 expected skip, all protected files unchanged.
+Uncached input18620→5625 tokens; output1797→1702. Maximum follow-up first delta
+2.65s, versus26.36s for the full-file read. Task prompt and bug/test files are
+byte-identical; only project reading guidance differs. One run per condition,
+no inference-kernel throughput claim. Raw: `pi-notesdelta-focused/` under the
+same RAID evidence root. Optional guidance saved in `pi/AGENTS.example.md`.

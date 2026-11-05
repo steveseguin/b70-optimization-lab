@@ -68,6 +68,26 @@ class SmokeTests(unittest.TestCase):
             self.assertTrue(model['compat']['supportsReasoningEffort'])
             self.assertEqual(model['thinkingLevelMap']['medium'], 'medium')
 
+    def test_focused_reads_only_adds_hashed_guidance_to_notesdelta(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            baseline, focused = Path(tmp) / 'baseline', Path(tmp) / 'focused'
+            P.prepare(baseline, P.MODEL, False, 'notesdelta')
+            P.prepare(focused, P.MODEL, False, 'notesdelta', focused_reads=True)
+            self.assertEqual((baseline / 'prompt.txt').read_bytes(), (focused / 'prompt.txt').read_bytes())
+            for name in ('notesdelta.py', 'test_notesdelta.py', 'sync_notesdelta.py'):
+                self.assertEqual((baseline / 'work' / name).read_bytes(), (focused / 'work' / name).read_bytes())
+            self.assertFalse((baseline / 'work/AGENTS.md').exists())
+            manifest = json.loads((focused / 'manifest.json').read_text())
+            guidance = (focused / 'work/AGENTS.md').read_text()
+            self.assertEqual(guidance, manifest['fixture_guidance']['text'])
+            expected = hashlib.sha256(guidance.encode()).hexdigest()
+            self.assertEqual(manifest['fixture_guidance']['sha256'], expected)
+            self.assertEqual(manifest['fixture_source_sha256']['AGENTS.md'], expected)
+            self.assertIn('line-limited reads', guidance)
+            self.assertIn('Keep all required test runs and correctness checks', guidance)
+            with self.assertRaises(ValueError):
+                P.prepare(Path(tmp) / 'wrong-fixture', P.MODEL, False, focused_reads=True)
+
     def test_compaction_fixture_has_small_budget_and_five_separate_reads(self):
         with tempfile.TemporaryDirectory() as tmp:
             out = Path(tmp) / 'smoke'

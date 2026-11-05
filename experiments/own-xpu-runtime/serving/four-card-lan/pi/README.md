@@ -38,3 +38,15 @@ Schema and request mapping checked against Pi v1.2.0's official
 [OpenAI completion adapter](https://github.com/badlogic/pi-mono/blob/v1.2.0/packages/ai/src/api/openai-completions.ts)
 and [settings reference](https://github.com/badlogic/pi-mono/blob/v1.2.0/packages/coding-agent/docs/settings.md).
 The version installed on the other computer has not been inspected.
+
+Optional project guidance: merge [AGENTS.example.md](AGENTS.example.md) into the
+project's existing AGENTS.md on the Pi computer. A single real notesdelta repair
+fell from54.5s to31.0s with targeted reads; exact source restoration and11 tests
+(including1 expected skip) passed in both. New input fell from18620 to5625 tokens.
+This is a task comparison, not a throughput record or a guarantee for every bug.
+The fixture used the same guidance plus a test-only instruction not to edit it.
+
+Treat summaries as fallible records: missing information does not cancel an
+original user request. Verify the original instruction before deleting a
+requested deliverable. This is precautionary guidance, not a demonstrated fix
+for the historical keeper summary failure; native keeper remains disabled.
