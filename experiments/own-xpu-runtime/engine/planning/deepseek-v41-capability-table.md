@@ -16,7 +16,7 @@ Reference graph reader: llama.cpp `src/models/deepseek4.cpp` (arch
 ## Fixture status (2026-11-08 second pass, this host)
 
 All "smallest missing fixture" rows above except the dspark-only
-IQ4_NL_4_4 are now **implemented and passing** under
+MXFP4 are now **implemented and passing** under
 [`dsv41-fixtures/`](dsv41-fixtures/README.md) (independent implementations,
 differential vs the pinned llama.cpp reference and torch reference dumps;
 real sha256-verified GGUF bytes):
@@ -49,7 +49,7 @@ under `-fp-model=precise -ffp-contract=off`) are in the fixtures README.
 gate proj — covered by format decoders + the packed-dot contract), fp8/fp4
 activation quantization (the engine's bf16/f32 activation path is strictly
 higher precision; a quantization-vs-not choice belongs to the kernel
-campaign), sampler (Gumbel-max, host-trivial), IQ4_NL_4_4 (dspark-only),
+campaign), sampler (Gumbel-max, host-trivial), MXFP4 (dspark experts),
 vision tower.
 
 ## Next engineering steps (post-fixture)
@@ -86,7 +86,7 @@ kernels in `engine/src/gsq-rco-iq3s/`. Backbone = 165.3 GB over shards 2–5
 | **IQ2_XXS** | **38.5 GB** | ❌ absent | decoder + gemv; **bulk of attention/shared tensors** | single-row decode vs reference, then packed `gemv_row` fixture |
 | IQ1_S | 17.7 GB (20 tensors) | ❌ absent | decoder + gemv | single-row decode vs reference |
 | IQ3_XXS | 26.0 GB | ✅ | — | — |
-| IQ4_NL_4_4 | 7.6 GB (dspark only) | ❌ absent | 4×4-interleaved layout decode | one expert row decode; dspark is a separate later gate |
+| MXFP4 | 7.6 GB (dspark only) | ❌ absent | E8M0 scale + split-nibble e2m1 decode | gated: `mxfp4` fixture bit-exact; engine Type/layout/decode row still open |
 
 ## Operators (deepseek41 graph vs engine op set)
 

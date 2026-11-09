@@ -52,18 +52,22 @@ template <typename Block>
 int run_fixture(const char *name, uint32_t type_id,
                 const std::function<void(const Block *, float *, long long)> &ours,
                 const std::function<void(const Block *, float *, int64_t)> &ref,
-                 int argc, char **argv, size_t d_offset = 0, size_t dmin_offset = SIZE_MAX) {
+                 int argc, char **argv, size_t d_offset = 0, size_t dmin_offset = SIZE_MAX,
+                 long long elems_per_block = 256,
+                 const std::function<void(Block &)> &extra_sanitize = nullptr) {
     std::vector<Block> syn(4096);
     for (auto &b : syn) {
         auto *raw = (uint16_t *)&b;
         for (size_t i = 0; i < sizeof(Block) / 2; ++i) raw[i] = (uint16_t)rng();
         // force fp16 super-scales finite (exp 5, random mantissa) so the
         // gate compares meaningful values instead of identical NaN payloads
-        *(uint16_t *)((char *)&b + d_offset) = (uint16_t)(0x1400 | (rng() & 0x3ff));
+        if (d_offset != SIZE_MAX)
+            *(uint16_t *)((char *)&b + d_offset) = (uint16_t)(0x1400 | (rng() & 0x3ff));
         if (dmin_offset != SIZE_MAX)
             *(uint16_t *)((char *)&b + dmin_offset) = (uint16_t)(0x1400 | (rng() & 0x3ff));
+        if (extra_sanitize) extra_sanitize(b);
     }
-    if (!compare<Block>("synthetic x4096", syn.data(), 4096, 256, ours, ref)) return 1;
+    if (!compare<Block>("synthetic x4096", syn.data(), 4096, elems_per_block, ours, ref)) return 1;
 
     const char *path = argc > 1 ? argv[1]
         : "/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00002-of-00006.gguf";
@@ -74,10 +78,10 @@ int run_fixture(const char *name, uint32_t type_id,
     if (map == MAP_FAILED) { perror("mmap"); return 1; }
     if (std::memcmp(map, "GGUF", 4) != 0) { std::fprintf(stderr, "not gguf\n"); return 1; }
     long long nb = 0;
-    const uint8_t *t = find_first_of_type(map, st.st_size, type_id, 256, sizeof(Block), &nb);
+    const uint8_t *t = find_first_of_type(map, st.st_size, type_id, (uint32_t)elems_per_block, sizeof(Block), &nb);
     if (!t) { std::fprintf(stderr, "no tensor of type %u found for %s\n", type_id, name); return 1; }
     if (nb > 512) nb = 512;
-    int rc = compare<Block>("real gguf x512", (const Block *)t, nb, 256, ours, ref) ? 0 : 1;
+    int rc = compare<Block>("real gguf x512", (const Block *)t, nb, elems_per_block, ours, ref) ? 0 : 1;
     munmap((void *)map, st.st_size);
     close(fd);
     if (rc == 0) std::printf("FIXTURE_PASS %s\n", name);

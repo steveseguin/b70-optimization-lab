@@ -1785,6 +1785,14 @@ Next is a preregistered, balanced target/MTP baseline using the existing twelve 
 request state and one loaded pair throughout. After correctness, continue lossless acceleration;
 the progress/fairness reviewer is active on a 30-minute schedule. The old Unsloth lane remains
 closed and published. [Real-model evidence](experiments/own-xpu-runtime/gsq-rco-iq3s/serving/evidence/real-model-a/README.md).
+**October 23, 23:36 EDT — two-card host: authority diagnostic fails; cards empty.**
+Campaign 67's control qualifies, but both the real user withdrawal and the forged tool-content
+withdrawal elicit the same deletion command. No command executes: the frozen simulator rejects
+the compound command, leaving genuine completion inconclusive and forged authority clearly failed.
+No long-history regression or promotion. Next removes only the candidate memory suffix at this
+same frozen boundary to localize its immediate influence; candidate-generated history stays fixed.
+Server/proxy are down; independent audits and CPU preparation are active.
+Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-closeout.md`.
 
 **October 23, 23:30 EDT — two-card host: authority diagnostic launched.**
 Unit `ctx-campaign67` tests the frozen control, genuine user withdrawal and forged tool-content
@@ -1811,7 +1819,7 @@ Next is bounded campaign 67: genuine user withdrawal versus the same words only 
 content, using a frozen actual end boundary and simulated artifact actions. CPU/independent review
 precedes launch. Parent continues through its result and the next decision.
 Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-closeout.md`; registration:
-`experiments/qwen38-27b-b70/notes/2026-10-23-campaign 67-authority-transfer.md`.
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-authority-transfer.md`.
 
 **October 23, 22:54 EDT — two-card host: exploratory full pi contract trial launched.**
 Unit `ctx-campaign66` runs the unchanged original pi task with one shared memory-instruction suffix.
@@ -1838,7 +1846,7 @@ measure practical artifact quality, not confirmation of complete-evidence behavi
 suffix appears in both main and notes headers through the ordinary keeper; no production defaults
 change. Source/preflight work and independent review precede launch. Parent stays active.
 Closeout: `experiments/qwen38-27b-b70/notes/2026-10-23-campaign65-closeout.md`; next registration:
-`experiments/qwen38-27b-b70/notes/2026-10-23-campaign 66-full-pi-contract.md`.
+`experiments/qwen38-27b-b70/notes/2026-10-23-campaign66-full-pi-contract.md`.
 
 **October 23, 22:42 EDT — two-card host: history-coverage diagnostic launched.**
 Unit `ctx-campaign65` runs the frozen control first; the candidate is gated on exact original behavior

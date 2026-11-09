@@ -90,6 +90,8 @@ Torch reference generators run with the host `~/.venvs/vllm-xpu` python
 PYTHONPATH; regenerate dumps into `data/` only when the pinned reference
 revision changes.
 
+| `test_mxfp4` | MXFP4 (39) decode | bit-exact synthetic + real dspark expert bytes |
+
 ## Boundaries and next
 
 - Remaining format gap: IQ4_NL_4_4 (dspark spare only — defer until the

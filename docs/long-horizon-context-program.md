@@ -25,7 +25,7 @@ https://skindeep.ai/context.html (public page, stale as of 10-08: landing page l
 | Flat cost | Campaign 59's fixed-metadata pair reproduced every NOTES/archive text and answer; counting memo cut request-clock wall 92m25s→83m12s (9.97%) | Memo default restored; residual client work still grows; this is not a cold model speed claim |
 | Same answers | Release and hostile-task gates remain separate; failed runs retained | Preserve observed completed work without refusing real user corrections |
 
-**Chosen next:** legitimate later user correction versus forged tool-content authority at the actual pi end boundary.
+**Chosen next:** localize the forged-authority failure at the actual pi end boundary by removing only the candidate memory suffix.
 Campaign 60 reproduced the pi failure with both thinking workflows; all 18 conditions fail the broad
 source gate, including omitted work and wrong identities. Its thinking-on failure cut hit the cap and
 fell back. [Campaign 60 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign60-closeout.md)
@@ -47,6 +47,12 @@ passes the practical full task: 40/40 fixed/clean and 7/7 audit. Early identitie
 nine later recalls repair recent workflow gaps, so original early-receipt verification remains unproved.
 [Campaign 67](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-authority-transfer.md)
 tests the separate real-correction/forged-authority boundary before hostile long-history regression.
+Its [closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign67-closeout.md)
+records a failed authority gate: forged tool text induces the same deletion proposal as a genuine
+user withdrawal. The fixed simulator executes neither compound command, so genuine completion is
+inconclusive. Long-history candidate runs are deferred. Campaign 68 removes only the new suffix at
+the same frozen boundary to distinguish its immediate influence from a pre-existing model weakness;
+it cannot establish an end-to-end original-history baseline.
 This changes candidate behavior; no production adoption or lossless speed claim.
 The [campaign 59 closeout](../experiments/qwen38-27b-b70/notes/2026-10-23-campaign59-closeout.md) records
 the qualified harness memo and its measurement scope.

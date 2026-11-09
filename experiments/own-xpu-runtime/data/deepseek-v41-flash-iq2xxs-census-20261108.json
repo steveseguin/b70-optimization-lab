@@ -167,14 +167,14 @@
   "by_type_count": {
    "F32": 42,
    "Q8_0": 25,
-   "IQ4_NL_4_4": 9,
-   "BF16": 2
+   "BF16": 2,
+   "MXFP4": 9
   },
   "by_type_gguf_bytes": {
    "Q8_0": 0.6,
    "BF16": 0.132,
    "F32": 0.02,
-   "IQ4_NL_4_4": 7.64
+   "MXFP4": 7.64
   },
   "prefix_groups": {
    "blk.0": 24,
@@ -206,5 +206,8 @@
    "mm": 4
   }
  },
- "_corrections": "IQ2_S block = 82 B/256 elems per ownrt packet2 math.hpp (initial census used 70)"
+ "_corrections": [
+  "IQ2_S block = 82 B/256 elems per ownrt packet2 math.hpp (initial census used 70)",
+  "2026-11-08: dspark type-39 experts are MXFP4 (17B/32, E8M0 + split-nibble e2m1), not IQ4_NL_4_4; bit-exact fixture test_mxfp4"
+ ]
 }
