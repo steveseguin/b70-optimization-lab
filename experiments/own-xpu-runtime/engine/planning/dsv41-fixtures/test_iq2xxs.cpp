@@ -9,6 +9,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cmath>
 #include <fcntl.h>
 #include <string>
 #include <sys/mman.h>
@@ -16,6 +17,7 @@
 #include <unistd.h>
 #include <vector>
 #include "iq2xxs_decode.hpp"
+#include "gguf_locate.hpp"
 
 extern "C" void dequantize_row_iq2_xxs(const void *x, float *y, int64_t k);
 
@@ -29,6 +31,11 @@ static bool compare(const char *what, const dsv41::block_iq2_xxs *blk, long long
     std::vector<float> a(nb * 256), b(nb * 256);
     dsv41::dequantize_iq2_xxs(blk, a.data(), nb);
     dequantize_row_iq2_xxs(blk, b.data(), nb * 256);
+    for (size_t i = 0; i < a.size(); ++i)
+        if (!std::isfinite(a[i]) || !std::isfinite(b[i])) {
+            std::fprintf(stderr, "FAIL %s: non-finite value at %zu (NaN payloads are not a gate)\n", what, i);
+            return false;
+        }
     if (std::memcmp(a.data(), b.data(), a.size() * 4) != 0) {
         for (size_t i = 0; i < a.size(); ++i)
             if (std::memcmp(&a[i], &b[i], 4) != 0) {
@@ -41,47 +48,11 @@ static bool compare(const char *what, const dsv41::block_iq2_xxs *blk, long long
     return true;
 }
 
-// Minimal GGUF header walk to locate the first type-16 (IQ2_XXS) tensor.
-static const uint8_t *find_iq2xxs(const uint8_t *base, size_t len, size_t *out_bytes) {
-    auto rd = [&](auto &v, const uint8_t *&p) { std::memcpy(&v, p, sizeof v); p += sizeof v; };
-    const uint8_t *p = base + 4;  // magic checked by caller
-    uint32_t ver; rd(ver, p);
-    uint64_t nt, nkv; rd(nt, p); rd(nkv, p);
-    static const int tsz[13] = {1,1,2,2,4,4,4,1,-1,-1,8,8,8};
-    for (uint64_t i = 0; i < nkv; ++i) {
-        uint64_t kl; rd(kl, p); p += kl;
-        uint32_t t; rd(t, p);
-        if (t == 8) { uint64_t n; rd(n, p); p += n; }
-        else if (t == 9) {
-            uint32_t et; rd(et, p); uint64_t n; rd(n, p);
-            if (et == 8) for (uint64_t j = 0; j < n; ++j) { uint64_t m; rd(m, p); p += m; }
-            else p += n * tsz[et];
-        } else p += tsz[t];
-    }
-    for (uint64_t i = 0; i < nt; ++i) {
-        uint64_t nl; rd(nl, p);
-        std::string name((const char *)p, nl); p += nl;
-        uint32_t nd; rd(nd, p);
-        uint64_t elems = 1;
-        for (uint32_t d = 0; d < nd; ++d) { uint64_t v; rd(v, p); elems *= v; }
-        uint32_t type; rd(type, p);
-        uint64_t off; rd(off, p);
-        if (type == 16) {
-            size_t data = ((size_t)(p - base) + 31) & ~31ull;  // default align 32
-            *out_bytes = elems / 256 * 66;
-            if (data + off + *out_bytes > len) { std::fprintf(stderr, "bounds\n"); std::exit(1); }
-            std::printf("real tensor: %s (%llu elems)\n", name.c_str(), (unsigned long long)elems);
-            return base + data + off;
-        }
-    }
-    return nullptr;
-}
-
 int main(int argc, char **argv) {
     // 1) synthetic coverage
     std::vector<dsv41::block_iq2_xxs> syn(4096);
     for (auto &b : syn) {
-        b.d = (uint16_t)rng();
+        b.d = (uint16_t)(0x1400 | (rng() & 0x3ff));  // finite fp16 scale; NaN payloads must not mask
         for (auto &q : b.qs) q = (uint16_t)rng();
     }
     if (!compare("synthetic x4096", syn.data(), 4096)) return 1;
@@ -95,10 +66,10 @@ int main(int argc, char **argv) {
     const uint8_t *map = (const uint8_t *)mmap(nullptr, st.st_size, PROT_READ, MAP_SHARED, fd, 0);
     if (map == MAP_FAILED) { perror("mmap"); return 1; }
     if (std::memcmp(map, "GGUF", 4) != 0) { std::fprintf(stderr, "not gguf\n"); return 1; }
-    size_t nb = 0;
-    const uint8_t *t = find_iq2xxs(map, st.st_size, &nb);
+    long long nb = 0;
+    const uint8_t *t = dsv41fix::find_first_of_type(map, st.st_size, 16, 256, 66, &nb);
     if (!t) { std::fprintf(stderr, "no IQ2_XXS tensor found\n"); return 1; }
-    long long blocks = (long long)(nb / 66);
+    long long blocks = nb;
     if (blocks > 512) blocks = 512;
     int rc = compare("real gguf x512", (const dsv41::block_iq2_xxs *)t, blocks) ? 0 : 1;
     munmap((void *)map, st.st_size);
