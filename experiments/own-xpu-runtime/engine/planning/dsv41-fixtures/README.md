@@ -74,6 +74,22 @@ offset cross-check.
    while the dot differed — icpx reorders reductions at default fp-model.
    Fixed flags above.
 
+## Additional gated units (same pattern)
+
+| Fixture | Gates | Result |
+| --- | --- | --- |
+| `test_hc_sinkhorn.cpp` (+ `hc_sinkhorn.hpp`, `data/hc_sinkhorn/`, `gen_hc_ref.py`) | HC split+Sinkhorn-20, real blk.0 hc_attn scale/base | f64 1.1e-16, f32 1.4e-7 |
+| `test_route_gate.cpp` (+ `route_gate.hpp`, `data/route/`, `gen_route_ref.py`) | sqrtsoftplus top-6, bias-select, norm x1.5, engineered tie row | f64 1.4e-16, sets exact |
+| `test_ops_misc.cpp` (+ `ops_misc.hpp`, `data/ops/`, `gen_ops_ref.py`) | SwiGLU clamp 10; engram gate; YaRN table + fwd/inverse rotation | f64 <= 1.1e-14 (rope exact 0.0) |
+| `test_engram_hash.cpp` (+ `engram_hash.hpp`, `data/engram/`, `gen_engram_ref.py`) | prime chain re-derivation + 24,576 hash ids | bit-exact (int) |
+| `test_engram_gather.cpp` (+ `q5k_decode.hpp`) | Q5_K decode differential + 8-row gather from the real 135.2 GB shard-6 table at hash ids | bit-exact |
+| `test_attn.cpp` (+ `attn_ops.hpp`, `data/attn/`, `gen_attn_ref.py`) | sparse-attn core (sink, -1 skip, zero-row); compressor pool+RMSNorm; indexer score/topk/candidates; window ring idxs | f64 <= 8.9e-16; ints exact |
+
+Torch reference generators run with the host `~/.venvs/vllm-xpu` python
+(torch 2.11, CPU) plus the throwaway `/tmp/ggufcheck` venv's `gguf` on
+PYTHONPATH; regenerate dumps into `data/` only when the pinned reference
+revision changes.
+
 ## Boundaries and next
 
 - Remaining format gap: IQ4_NL_4_4 (dspark spare only — defer until the

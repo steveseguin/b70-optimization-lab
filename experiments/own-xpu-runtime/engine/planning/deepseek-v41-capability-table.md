@@ -13,7 +13,60 @@ Reference graph reader: llama.cpp `src/models/deepseek4.cpp` (arch
 `deepseek41`), KV state in `src/llama-kv-cache-dsv4.h`, engram/PLE lookup in
 `src/models/qwen4exp.cpp` (same `per_layer_token_embd.weight` mechanism).
 
-## GGUF tensor formats (measured census vs engine decoders)
+## Fixture status (2026-11-08 second pass, this host)
+
+All "smallest missing fixture" rows above except the dspark-only
+IQ4_NL_4_4 are now **implemented and passing** under
+[`dsv41-fixtures/`](dsv41-fixtures/README.md) (independent implementations,
+differential vs the pinned llama.cpp reference and torch reference dumps;
+real sha256-verified GGUF bytes):
+
+| Gap | Fixture | Result |
+| --- | --- | --- |
+| IQ2_XXS decode + packed gemv | `test_iq2xxs`, `test_gemv_iq2xxs` | bit-exact (synthetic + real tensor blocks) |
+| Q2_K decode | `test_q2k` | bit-exact |
+| IQ2_XS decode | `test_iq2xs` | bit-exact |
+| IQ1_S decode | `test_iq1s` | bit-exact |
+| Q5_K engram-table decode + row gather | `test_engram_gather` | bit-exact; 8 rows gathered from the real 135.2 GB table at hash-fixture ids |
+| HC Sinkhorn (20 iters) | `test_hc_sinkhorn` | f64 anchor 1.1e-16; f32 ≤ 1.4e-7, real `blk.0.hc_attn_scale/base` |
+| Route (sqrtsoftplus top-6, bias-select, norm ×1.5) | `test_route_gate` | f64 anchor 1.4e-16; index sets exact incl. engineered tie |
+| SwiGLU clamp (lim 10) | `test_ops_misc` | f64 1.4e-14 |
+| Engram gate (normalized dot, signed-sqrt sigmoid) | `test_ops_misc` | f64 1.1e-14 |
+| YaRN rope table + fwd/inverse rotation | `test_ops_misc` | f64 0.0 / 1.1e-16 |
+| Sparse-attn core (sink, -1 skip, zero-row convention) | `test_attn` A1 | f64 6.7e-16 |
+| Compressor pooling + RMSNorm | `test_attn` A2 | f64 8.9e-16 |
+| Indexer score/topk/candidate blocks | `test_attn` A3 | score 9.5e-7; topk + mask exact |
+| Window ring idxs | `test_attn` A4 | bit-exact (4 cases) |
+
+**Corrections from the official `config.json`/`model.py`** (supersede the
+llama.cpp-derived rows where they differ): `score_func = sqrtsoftplus`
+(sqrt(softplus), not sigmoid); `hc_eps = 1e-06` (not 1e-7); router top-k =
+**6**; engram gate/rms eps = `norm_eps = 1e-20`. Fixture-hardening notes
+(NaN-payload masking, GGUF data-start two-pass rule, icpx FP reassociation
+under `-fp-model=precise -ffp-contract=off`) are in the fixtures README.
+
+**Not fixtured (deliberately):** GEMM plumbing (wq_a/b, wkv, wo_a/b, w1/2/3,
+gate proj — covered by format decoders + the packed-dot contract), fp8/fp4
+activation quantization (the engine's bf16/f32 activation path is strictly
+higher precision; a quantization-vs-not choice belongs to the kernel
+campaign), sampler (Gumbel-max, host-trivial), IQ4_NL_4_4 (dspark-only),
+vision tower.
+
+## Next engineering steps (post-fixture)
+
+The audit's operator/format rows are now reference-locked. Remaining work is
+engine-side, in dependency order: (1) dsv41 capability path in
+`deployment/prepare.py` (`load_profile` + 40-layer `parse_placement` admit);
+(2) SYCL device kernels per `kernels/api.hpp` contract — IQ2_XXS packed
+gemv first (fixture `iq2xxs_gemv.hpp` pins the arithmetic), then the HC /
+sparse-attn / indexer ops; (3) 6-owner placement policy (165.3 GB packed ≈
+27.6 GB/card); (4) NVMe-backed engram store + prefetch admission; (5) KV
+state machine per `llama-kv-cache-dsv4.h` semantics. DSpark draft and vision
+stay separate later gates.
+
+## Original audit (first pass)
+
+
 
 Engine decoder inventory: `engine/src/stage2/packet2/kernels/math.hpp`
 (`enum class Type`, `layout()`, `decode()`, `gemv_row()`); SC117 retained
