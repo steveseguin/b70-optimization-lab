@@ -90,7 +90,7 @@ class PartitionTests(unittest.TestCase):
             placement.plan(fixture(), 'test', [2, 2])
 
     def test_real_sc117_metadata_without_model_access(self):
-        source = Path(__file__).resolve().parents[2] / 'gsq-rco-iq3s/loader/placement.tsv'
+        source = Path(__file__).resolve().parents[1] / 'profiles/sc117-iq3s/placement.tsv'
         result = placement.plan(source.read_bytes(), 'SC117', [1, 2, 4, 6])
         self.assertEqual(result['proposals'][0]['stages'][0]['layer_end_exclusive'], 48)
         self.assertEqual(sum(t['bytes'] for t in result['excluded_lookup_tensors']), 29137853440)

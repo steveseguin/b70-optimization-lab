@@ -1,6 +1,7 @@
 # Own XPU runtime engine: canonical source tree
 
-For a new development computer, start with [DEVELOPING.md](DEVELOPING.md):
+For the project direction and source map, start with [PROJECT.md](PROJECT.md).
+For a new development computer, use [DEVELOPING.md](DEVELOPING.md):
 source checkout, build prerequisites, CPU tests and the DeepSeek V4.1 porting
 handoff. DeepSeek is a planned model adapter, not current executable support.
 

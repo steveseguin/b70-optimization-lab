@@ -117,11 +117,13 @@ class SourceBundleTests(unittest.TestCase):
 
     def test_developer_guide_and_root_license_are_committed_inputs(self):
         self.write("DEVELOPING.md", "Build and extend the engine.\n")
+        self.write("PROJECT.md", "Project direction\n")
         (self.root / "LICENSE").write_text("Fixture license\n")
         self.git("add", "LICENSE")
         self.commit()
         contents, report = bundle.prepare(self.engine)
         self.assertEqual(contents["DEVELOPING.md"], b"Build and extend the engine.\n")
+        self.assertEqual(contents["PROJECT.md"], b"Project direction\n")
         self.assertEqual(contents["LICENSE"], b"Fixture license\n")
         self.assertIn("LICENSE", {row["path"] for row in report["inputs"]})
         (self.root / "LICENSE").write_text("Changed license\n")

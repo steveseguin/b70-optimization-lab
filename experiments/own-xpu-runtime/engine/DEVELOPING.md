@@ -1,5 +1,8 @@
 # Build and develop the Own Xe engine on another computer
 
+Read [PROJECT.md](PROJECT.md) for the project's purpose, source map and
+development sequence before selecting an implementation task.
+
 Start here for source development, including the planned DeepSeek V4.1 Flash
 adapter. The current executable implements the SC117/Qwen family. DeepSeek
 support is not implemented; its [onboarding plan](planning/deepseek-v41-onboarding.md)

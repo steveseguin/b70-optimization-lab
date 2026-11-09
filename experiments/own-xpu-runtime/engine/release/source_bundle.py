@@ -125,8 +125,9 @@ def prepare(engine):
     required = [prefix + "/" + name for name in ("README.md", "build.py", "build-manifest.json")]
     optional = sorted(name for name in tracked if any(name.startswith(prefix + "/" + folder + "/")
                       for folder in ("planning", "release", "deployment", "profiles")))
-    if prefix + "/DEVELOPING.md" in tracked:
-        optional.append(prefix + "/DEVELOPING.md")
+    for guide in ("DEVELOPING.md", "PROJECT.md"):
+        if prefix + "/" + guide in tracked:
+            optional.append(prefix + "/" + guide)
     if b"from deployment.prepare import" in (engine / "build.py").read_bytes():
         required += [prefix + "/deployment/" + name for name in ("prepare.py", "bound.hpp.in")]
     dynamic = sorted({name for trigger,names in DYNAMIC_RUNTIME_GROUPS
