@@ -1,0 +1,102 @@
+{
+ "activation_dtype": "F32",
+ "architecture": "deepseek41",
+ "draft": {
+  "admission": "deferred",
+  "format": "gguf",
+  "shards": [
+   {
+    "bytes": 7976914240,
+    "name": "dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf",
+    "sha256": "6ba6ac1b331c540691a209e7fc97dec2a24e295acb1e755c84c7d24a4373927a"
+   }
+  ]
+ },
+ "engram": {
+  "row_dim": 256,
+  "rows": 768022850,
+  "shards": [
+   {
+    "bytes": 135172021792,
+    "data_start": 192,
+    "header_bytes": 192,
+    "header_sha256": "1906981b4a2cc5e2647dadbd97bde90cd766ebb2d91d7ad8511a07685f787e46",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00006-of-00006.gguf",
+    "sha256": "406103485a7a7193337adee38b7178d3b636940aaa3ca033bc91e0d3687e3031"
+   }
+  ],
+  "store": "nvme-mmap",
+  "tensor": "per_layer_token_embd.weight"
+ },
+ "geometry": {
+  "dim": 5120,
+  "experts": 384,
+  "hc_mult": 4,
+  "head_dim": 512,
+  "heads": 64,
+  "kv_rank": 512,
+  "layers": 40,
+  "moe_inter": 2304,
+  "q_lora": 1280,
+  "vocab": 129280
+ },
+ "id": "dsv41-deepseek-v41-flash-1017-iq2xxs",
+ "native_context": 32768,
+ "schema": "ownrt.portable-model-profile.v41",
+ "target": {
+  "placement": {
+   "file": "placement.tsv",
+   "sha256": "f755fc40f6a17afee1266e5fcf6e15cc3019e2f7c44b36c0481c0f918d0475de",
+   "tensor_count": 1042
+  },
+  "repository": "unsloth/DeepSeek-V4.1-Flash-1017-GGUF",
+  "shards": [
+   {
+    "bytes": 5780923,
+    "data_start": 5780923,
+    "header_bytes": 5780923,
+    "header_sha256": "22ad51c224e499883c1a753ad35719af44c296bbc8bcb9c931de6bdf950fa3aa",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00001-of-00006.gguf",
+    "sha256": "22ad51c224e499883c1a753ad35719af44c296bbc8bcb9c931de6bdf950fa3aa"
+   },
+   {
+    "bytes": 49955895008,
+    "data_start": 24032,
+    "header_bytes": 24032,
+    "header_sha256": "f2157800df68fad8cbb01c791a3f6809e15aa06c18673fa241e91897d9b96692",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00002-of-00006.gguf",
+    "sha256": "6880d0483490504a530b72686d79c92daa46e58ca5b71763bbfa3778d8a6131a"
+   },
+   {
+    "bytes": 49950675200,
+    "data_start": 19712,
+    "header_bytes": 19712,
+    "header_sha256": "c431849ab6395fc1a957a187f42b60a40c259034ca1f504e01e75eef5d9894e9",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00003-of-00006.gguf",
+    "sha256": "04b3ec7947255efaf789da77557da9180e93128948644828798d07b8a6e7a60a"
+   },
+   {
+    "bytes": 48971469632,
+    "data_start": 16192,
+    "header_bytes": 16192,
+    "header_sha256": "41ffdcbe56826baba6366fedea57963716f277b8866d3b8b6f351055c37a8415",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00004-of-00006.gguf",
+    "sha256": "318762f39cd7ebf03e3d7b30feaf938fab0464a9c2d6c0e0e99fc030bbfcd820"
+   },
+   {
+    "bytes": 16419622240,
+    "data_start": 5728,
+    "header_bytes": 5728,
+    "header_sha256": "c1d9b93cadee213c37377d1c2d2de8a1aa99d34aa135989c0c455f7232d4b90e",
+    "name": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00005-of-00006.gguf",
+    "sha256": "34fa48fbe2237b1b71a4f18a04bbe10946f6b1c76b7bbff21c76da630da677b6"
+   }
+  ],
+  "variant": "UD-IQ2_XXS"
+ },
+ "tokenizer": {
+  "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "shard": "DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00001-of-00006.gguf",
+  "source": "gguf-metadata"
+ }
+}

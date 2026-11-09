@@ -136,7 +136,7 @@ def asset(profile_path, record):
     return raw
 
 
-def parse_placement(raw, shards, count):
+def parse_placement(raw, shards, count, layer_cap=48, mask_max=3):
     rows, names = [], set()
     for line in raw.decode('utf-8').splitlines():
         fields = line.split()
@@ -146,7 +146,7 @@ def parse_placement(raw, shards, count):
                 and re.fullmatch(r'[A-Za-z0-9_]+', component), 'placement names')
         kind, offset, size, layer, mask, rank, *dims = map(int, fields[3:])
         require(name not in names and 0 <= kind <= 255 and 0 < rank <= 8 and len(dims) == rank
-                and all(0 < d < 2**32 for d in dims) and -1 <= layer < 48 and 0 <= mask <= 3,
+                and all(0 < d < 2**32 for d in dims) and -1 <= layer < layer_cap and 0 <= mask <= mask_max,
                 'placement descriptor')
         payload_bytes = shards[shard]['bytes'] - shards[shard]['data_start']
         require(0 <= offset < payload_bytes and 0 < size <= payload_bytes - offset, 'placement range')
@@ -176,7 +176,7 @@ def parse_draft(raw, shards, count):
     return rows
 
 
-def shard_map(component, target=False):
+def shard_map(component, target=False, allow_empty_payload=False):
     result = {}
     for row in component['shards']:
         name = basename(row['name'])
@@ -185,17 +185,49 @@ def shard_map(component, target=False):
         if target:
             require(type(row['header_bytes']) is int and 0 < row['header_bytes'] <= 16 * 1024**2
                     and row['header_bytes'] <= row['bytes'] and hexhash(row['header_sha256']), 'header identity')
-            require(type(row['data_start']) is int and row['header_bytes'] <= row['data_start'] < row['bytes'], 'GGUF payload base')
+            require(type(row['data_start']) is int and row['header_bytes'] <= row['data_start']
+                    and (row['data_start'] < row['bytes']
+                         or (allow_empty_payload and row['data_start'] == row['bytes'])),
+                    'GGUF payload base')
         result[name] = row
     require(0 < len(result) <= 128 and sum(r['bytes'] for r in result.values()) <= 256 * 1024**3,
             'bounded shard inventory')
     return result
 
 
+def load_profile_v41(profile, path):
+    """deepseek41 family: GGUF-only components (backbone shards + NVMe engram
+    store + deferred GGUF draft), tokenizer embedded in the metadata shard.
+    Six-owner placement (mask 0..5 owner card, 7 = NVMe store)."""
+    require(profile['architecture'] == 'deepseek41'
+            and profile['native_context'] == 32768
+            and profile['activation_dtype'] == 'F32', 'unsupported v41 profile capability')
+    target = shard_map(profile['target'], True, allow_empty_payload=True)
+    engram = shard_map(profile['engram'], True)
+    require(profile['target']['placement']['file'] == 'placement.tsv', 'v41 asset names')
+    placement = asset(path, profile['target']['placement'])
+    rows = parse_placement(placement, target, profile['target']['placement']['tensor_count'],
+                           layer_cap=40, mask_max=7)
+    geo = profile['geometry']
+    require(geo['dim'] == 5120 and geo['vocab'] == 129280 and geo['layers'] == 40
+            and geo['experts'] == 384, 'v41 geometry identity')
+    require(profile['engram']['store'] == 'nvme-mmap'
+            and profile['engram']['rows'] == 768022850
+            and profile['engram']['row_dim'] == 256, 'v41 engram identity')
+    require(profile['draft']['format'] == 'gguf'
+            and profile['draft']['admission'] == 'deferred', 'v41 draft must stay deferred')
+    require(profile['tokenizer']['source'] == 'gguf-metadata'
+            and hexhash(profile['tokenizer']['sha256']), 'v41 tokenizer identity')
+    return target, engram, placement, rows
+
+
 def load_profile(path, trusted_sha256):
     raw = read_small(path)
     require(hexhash(trusted_sha256) and digest(raw) == trusted_sha256, 'trusted profile SHA256 mismatch')
     profile = json.loads(raw, object_pairs_hook=pairs)
+    if profile['schema'] == 'ownrt.portable-model-profile.v41':
+        target, engram, placement, rows = load_profile_v41(profile, path)
+        return profile, raw, placement, rows, [], None
     require(profile['schema'] == 'ownrt.portable-model-profile.v1'
             and profile['architecture'] == 'qwen4exp'
             and profile['native_context'] == 4096 and profile['activation_dtype'] == 'F32',
@@ -238,10 +270,14 @@ def render_header(placement, auth, model_root, rows, shards, bindings, *, placem
 def plan(profile_path, trusted_sha256, model_root, output, draft_root=None, tokenizer_root=None):
     """Read small trusted metadata and file stats only; never read model payloads."""
     profile, _, _, _, draft_rows, _ = load_profile(profile_path, trusted_sha256)
+    v41 = profile['schema'] == 'ownrt.portable-model-profile.v41'
     output = Path(output).absolute()
     require(not output.exists() and not output.is_symlink(), 'fresh deployment output required')
-    roots = [('target', model_root, shard_map(profile['target'], True))]
-    if draft_root is not None:
+    roots = [('target', model_root, shard_map(profile['target'], True, allow_empty_payload=v41))]
+    if v41:
+        # engram store ships in the same model directory; draft stays deferred
+        roots.append(('engram', model_root, shard_map(profile['engram'], True)))
+    elif draft_root is not None:
         roots.append(('draft', draft_root, shard_map(profile['draft'])))
     locations, full_bytes, extra_bytes = [], 0, 0
     with Directory(output.parent) as directory:
@@ -257,20 +293,21 @@ def plan(profile_path, trusted_sha256, model_root, output, draft_root=None, toke
                     held.stable()
             count_bytes = sum(r['bytes'] for r in shards.values())
             full_bytes += count_bytes
-            extra_bytes += (sum(r['header_bytes'] for r in shards.values()) if kind == 'target'
-                            else sum(t['bytes'] for t in draft_rows))
+            extra_bytes += (sum(r['header_bytes'] for r in shards.values())
+                            if kind in ('target', 'engram') else sum(t['bytes'] for t in draft_rows))
             locations.append(dict(kind=kind, root=str(directory.path), dev=os.fstat(directory.fd).st_dev,
                                   available_bytes=volume.f_bavail * volume.f_frsize,
                                   shard_count=len(shards), full_file_bytes=count_bytes))
-    if tokenizer_root is not None:
+    if tokenizer_root is not None and not v41:
         with Directory(tokenizer_root) as directory, HeldFile(directory, profile['tokenizer']['file']) as held:
             require(held.before['bytes'] <= 64 * 1024**2, 'tokenizer size cap')
             full_bytes += held.before['bytes']; held.stable()
             locations.append(dict(kind='tokenizer', root=str(directory.path),
                                   dev=os.fstat(directory.fd).st_dev, full_file_bytes=held.before['bytes']))
-    artifacts = ['profile.json', 'placement.tsv', 'draft-tensors.tsv', 'shard-auth.tsv',
+    artifacts = ['profile.json', 'placement.tsv', 'shard-auth.tsv', 'binding.json'] if v41 else [
+                 'profile.json', 'placement.tsv', 'draft-tensors.tsv', 'shard-auth.tsv',
                  'chat-template.jinja', 'include/'+HEADER, 'binding.json']
-    if draft_root is not None:
+    if draft_root is not None and not v41:
         artifacts.append('draft-manifest.tsv')
     return dict(schema='ownrt.deployment-preparation-plan.v1', profile_sha256=trusted_sha256,
                 locations=locations, destination=destination, output=str(output), artifacts=artifacts,
@@ -285,6 +322,9 @@ def prepare(profile_path, trusted_sha256, model_root, output, draft_root=None, t
             seconds=7200):
     require(1 <= seconds <= 86400, 'bounded preparation time')
     profile, raw, placement, rows, draft_rows, template = load_profile(profile_path, trusted_sha256)
+    require(profile['schema'] != 'ownrt.portable-model-profile.v41',
+            'dsv41 prepare: generated binding header not yet admitted for this family; '
+            '--plan-only validates identity and read budget')
     target = shard_map(profile['target'], True)
     draft = shard_map(profile['draft']) if draft_root is not None else {}
     total = sum(r['bytes'] for r in [*target.values(), *draft.values()])
