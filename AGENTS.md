@@ -5,7 +5,7 @@ models on Intel XPUs: recipes, patches, measurements and the history of what
 was tried. It covers several model lanes (Qwen, MiniMax, Gemma, LTX and future
 ones) and is worked on from two machines that both push to `main`:
 
-- the **two-card host** (`steve-TURIND8-2L2T`: two Arc Pro B70, 15 GiB of RAM);
+- the **two-card host** (`steve-TURIND8-2L2T`: two Arc Pro B70 until October 2026, **six since November 2026**, 15 GiB of RAM);
 - the **four-card host** (`steve-b70s`: four Arc Pro B70, 128 GiB of RAM).
 
 A rule below applies to both hosts unless it names one. Reviewed and
@@ -536,8 +536,8 @@ Things that differ between the two machines. Check `hostname` first.
 | | Two-card host | Four-card host |
 | --- | --- | --- |
 | Hostname | `steve-TURIND8-2L2T` | `steve-b70s` |
-| Cards | two B70 (`0000:03:00.0`, `0000:e3:00.0`) | four B70 |
-| Host memory | 15 GiB, ECC, error counters work | 128 GiB, **no ECC**, one module has a bad chip (see the stability guide) |
+| Cards | six B70 since November 2026 (`0000:03`, `23`, `43`, `83`, `a3`, `e3:00.0`); two before (`03`, `e3`) | four B70 |
+| Host memory | 15 GiB, ECC, error counters work. Card memory must never spill into it: one SYCL context per card, check free card memory before loading (`experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md`) | 128 GiB, **no ECC**, one module has a bad chip (see the stability guide) |
 | Sudo password file | `/home/steve/SUDO_PASSWORD.txt` | `/home/steve/SUDOPASSWORD.txt` (as `docs/local-ops.md` records it; check which exists) |
 | Active lanes | Qwen3.8 27B FP8, MiniMax-H3 | LTX 2.5, Flash-Next |
 

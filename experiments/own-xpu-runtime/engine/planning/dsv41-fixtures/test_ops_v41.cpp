@@ -32,7 +32,8 @@ int main() {
         for (auto &v : sink) v = frand();
         int32_t idxs[K] = {0, 3, -1, 5, 7, -1, 11, 2};
         std::vector<float> o1(H * D), o2(H * D);
-        ops41::sparse_attn(q.data(), kv.data(), sink.data(), idxs, K, H, D, o1.data());
+        // dual-base signature: one base here, so every slot is a window row
+        ops41::sparse_attn(q.data(), kv.data(), kv.data(), sink.data(), idxs, K, H, D, S, o1.data());
         dsv41::sparse_attn_core(qf.data(), kvf.data(), sink.data(), idxs,
                                 1.0f / std::sqrt(float(D)), o2.data(), 1, H, D, K);
         // ops41 reads bf16; recompute fixture on bf16-rounded inputs
@@ -140,11 +141,15 @@ int main() {
         std::vector<uint16_t> ring(win * d, 0), kv(d);
         for (auto &v : kv) v = ops41::bf16b(1.0f);
         int32_t idxs[8];
-        ops41::window_append(ring.data(), kv.data(), win, d, 3, idxs);
-        int32_t ref[8];
-        dsv41::window_topk_idxs(win, 1, 3, ref); // decode branch: [win] row
         int exact = 1;
-        for (int i = 0; i < win; ++i) exact &= idxs[i] == ref[i];
+        // 7, 15: start_pos % win == win-1, where the ring's oldest slot wraps
+        // to 0 (the engine indexed slot `win` there until 2026-11-09)
+        for (int sp : {3, 7, 8, 15, 21}) {
+            ops41::window_append(ring.data(), kv.data(), win, d, sp, idxs);
+            int32_t ref[8];
+            dsv41::window_topk_idxs(win, 1, sp, ref); // decode branch: [win] row
+            for (int i = 0; i < win; ++i) exact &= idxs[i] == ref[i];
+        }
         std::printf("%-14s idxs %s\n", "window_append", exact ? "EXACT" : "MISMATCH");
         if (!exact) fails++;
     }
@@ -189,8 +194,9 @@ int main() {
         md = 0;
         for (int j = 0; j < 4; ++j)
             for (int i = 0; i < h; ++i) {
+                // official Block.hc_post: y[dst] = post[dst]*x + sum_src comb[src][dst]*residual[src]
                 double ref = double(post[j]) * ops41::bf16(x[i]);
-                for (int k = 0; k < 4; ++k) ref += double(comb[j * 4 + k]) * ops41::bf16(s[k * h + i]);
+                for (int k = 0; k < 4; ++k) ref += double(comb[k * 4 + j]) * ops41::bf16(s[k * h + i]);
                 md = std::max(md, (double)std::fabs(ops41::bf16(s2[j * h + i]) - float(ref)));
             }
         report("hc_post", md, 2e-3);

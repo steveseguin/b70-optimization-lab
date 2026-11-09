@@ -69,7 +69,10 @@ inline void hc_pre(const uint16_t *streams, const float *mix, uint16_t *out, int
   }
 }
 
-// streams'[j] = post[j]*x + sum_k comb[j][k]*streams[k]
+// streams'[dst] = post[dst]*x + sum_src comb[src][dst]*streams[src]
+// (official Block.hc_post sums over the FIRST comb index; llama.cpp
+// build_hc_post reads the same element. The transpose shipped here until
+// 2026-11-09 and was caught against the llama.cpp reference text.)
 inline void hc_post(uint16_t *streams, const uint16_t *x, const float *post,
                     const float *comb, int h) {
   std::vector<float> old(4 * h);
@@ -77,7 +80,7 @@ inline void hc_post(uint16_t *streams, const uint16_t *x, const float *post,
   for (int j = 0; j < 4; ++j)
     for (int i = 0; i < h; ++i) {
       float acc = post[j] * bf16(x[i]);
-      for (int k = 0; k < 4; ++k) acc += comb[j * 4 + k] * old[k * h + i];
+      for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * old[k * h + i];
       streams[j * h + i] = bf16b(acc);
     }
 }
@@ -143,7 +146,7 @@ inline void rope_rotate(uint16_t *x, int rows, int d, int rdim,
 inline void window_append(uint16_t *ring, const uint16_t *kv, int win, int d,
                           int start_pos, int32_t *idxs) {
   std::memcpy(ring + (start_pos % win) * d, kv, d * sizeof(uint16_t));
-  int oldest = start_pos % win + 1;
+  int oldest = (start_pos % win + 1) % win; // wraps to slot 0 at win-1
   // oldest-first ring order; slots never written yet read as -1
   for (int i = 0, j = oldest; i < win; ++i, j = (j + 1) % win)
     idxs[i] = j > start_pos ? -1 : j;

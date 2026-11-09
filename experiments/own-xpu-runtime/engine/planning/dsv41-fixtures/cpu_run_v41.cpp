@@ -25,6 +25,48 @@
 
 static void die(const char *m) { std::fprintf(stderr, "fatal: %s\n", m); exit(1); }
 
+// Decode-step trace for device bring-up (OWN_TRACE=path): tagged f32 records
+// [u32 step][u32 layer][u32 tag][u32 n][n x f32]. Tags are shared with
+// own_run_v41 (trace_tags_v41.hpp); compare with tools/dsv41_trace_diff.py.
+#include "stage2/packet3/backend/trace_tags_v41.hpp"
+static struct Trace {
+    FILE *f = nullptr;
+    bool on = false;
+    int step = 0;
+    void rec(int layer, int tag, const float *v, size_t n) {
+        if (!f || !on) return;
+        uint32_t h[4] = {(uint32_t)step, (uint32_t)layer, (uint32_t)tag, (uint32_t)n};
+        fwrite(h, 4, 4, f);
+        fwrite(v, 4, n, f);
+    }
+} TR;
+// Prefill dump for the llama.cpp cross-check (OWN_PDUMP=path): same record
+// format and tensor names as the out-of-tree llama_dump tool
+// (u32 name_len, "name-L", i64 ne[4], u64 n, n x f32); compare with
+// tools/dsv41_llama_diff.py.
+static struct PDump {
+    FILE *f = nullptr;
+    bool on = false;
+    void rec(const char *name, int layer, const float *v, size_t n) {
+        if (!f || !on) return;
+        char nm[96];
+        if (layer >= 0) snprintf(nm, sizeof nm, "%s-%d", name, layer);
+        else snprintf(nm, sizeof nm, "%s", name);
+        uint32_t nl = (uint32_t)strlen(nm);
+        fwrite(&nl, 4, 1, f);
+        fwrite(nm, 1, nl, f);
+        int64_t ne[4] = {(int64_t)n, 1, 1, 1};
+        fwrite(ne, 8, 4, f);
+        uint64_t n64 = n;
+        fwrite(&n64, 8, 1, f);
+        fwrite(v, 4, n, f);
+    }
+} PD;
+// OWN_HC_LEGACY=1 restores the pre-2026-11-09 threading (FFN collapsed with
+// its own pre-mix). Official model.py and llama.cpp deepseek41.cpp both use
+// the ATTENTION's pre-mix for the FFN input; that is the default here.
+static bool g_hc_legacy = false;
+
 // ---------------------------------------------------------------- weights
 struct Weight {
     const uint8_t *ptr = nullptr;
@@ -207,6 +249,8 @@ static void hc_mixes(const float *streams, const float *fn, const float *scale,
         }
     }
 }
+// OWN_COMB_LEGACY=1 restores the pre-2026-11-09 transposed comb (A/B only).
+static bool g_comb_legacy = false;
 static void hc_pre(const float *streams, const float *mix, float *out) {
     for (int i = 0; i < 5120; ++i) {
         float acc = 0;
@@ -218,8 +262,10 @@ static void hc_post(float *streams, const float *x, const float *post, const flo
     std::vector<float> old(streams, streams + 4 * 5120);
     for (int j = 0; j < 4; ++j)
         for (int i = 0; i < 5120; ++i) {
+            // official: y[dst] = post[dst]*x + sum_src comb[src][dst]*residual[src]
             float acc = post[j] * x[i];
-            for (int k = 0; k < 4; ++k) acc += comb[j * 4 + k] * old[(size_t)k * 5120 + i];
+            for (int k = 0; k < 4; ++k)
+                acc += (g_comb_legacy ? comb[j * 4 + k] : comb[k * 4 + j]) * old[(size_t)k * 5120 + i];
             streams[(size_t)j * 5120 + i] = acc;
         }
 }
@@ -240,7 +286,11 @@ static void route(const float *logits, const float *bias, uint32_t *ids, float *
 // ---------------------------------------------------------------- state
 static const int N_LAYER = 40, D = 5120, H = 64, HD = 512, QL = 1280;
 static const int WIN = 128, TOPK = 512, MOE_D = 2304;
-static const int compress_ratio[40] = {0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,0,0};
+// config.json compress_ratios has 43 entries: 40 main layers (0,0, 2 x18, 1 x20)
+// followed by three zeros for the DSpark blocks. Layers 37-39 are ratio 1
+// (YaRN rope, compressed reads); an earlier table took the trailing zeros
+// for them (caught against llama.cpp per-layer dumps, 2026-11-09).
+static const int compress_ratio[40] = {0,0,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,2,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1};
 static const int kv_source[4] = {2, 8, 14, 20};
 static const int index_source[8] = {2, 8, 14, 20, 24, 28, 32, 36};
 static bool is_in(int v, const int *a, int n) { for (int i = 0; i < n; ++i) if (a[i] == v) return true; return false; }
@@ -269,10 +319,19 @@ struct Model {
     int64_t eng_pad = 0;
     std::map<std::string, std::vector<float>> lw; // small-weight cache (norms, hc)
 } M;
+// Called from inside OpenMP regions (engram_apply_at during prefill): the
+// cache must be locked. An unlocked insert corrupted the map once and left
+// the main thread spinning in it forever (2026-11-09). Map nodes are stable,
+// so the returned reference outlives the lock.
 static const std::vector<float> &lw(const std::string &n) {
-    auto it = M.lw.find(n);
-    if (it == M.lw.end()) it = M.lw.emplace(n, w_all(S.at(n))).first;
-    return it->second;
+    const std::vector<float> *r;
+#pragma omp critical(lw_cache)
+    {
+        auto it = M.lw.find(n);
+        if (it == M.lw.end()) it = M.lw.emplace(n, w_all(S.at(n))).first;
+        r = &it->second;
+    }
+    return *r;
 }
 
 static void engram_lookup(int li, const int64_t *ids24, float *out) {
@@ -336,6 +395,7 @@ static void attention(int L, const float *x, int P, int start, float *out) {
     gemm(S.at(p + "attn_q_a.weight"), x, P, qr.data());
     for (int t = 0; t < P; ++t)
         rmsnorm(qr.data() + (size_t)t * QL, lw(p + "attn_q_a_norm.weight").data(), QL, qr.data() + (size_t)t * QL);
+    PD.rec("qr_norm", L, qr.data(), (size_t)P * QL);
     gemm(S.at(p + "attn_q_b.weight"), qr.data(), P, q.data());
     for (int t = 0; t < P; ++t)
         for (int hh = 0; hh < H; ++hh)
@@ -349,6 +409,10 @@ static void attention(int L, const float *x, int P, int start, float *out) {
     for (int t = 0; t < P; ++t)
         rope_at(kv.data() + (size_t)t * HD, HD,
                 cosb.data() + (size_t)(start + t) * 32, sinb.data() + (size_t)(start + t) * 32, false);
+    TR.rec(L, TT_Q, q.data(), (size_t)H * HD);
+    TR.rec(L, TT_KV, kv.data(), HD);
+    PD.rec("q", L, q.data(), (size_t)P * H * HD);
+    PD.rec("kv", L, kv.data(), (size_t)P * HD);
     auto &ring = M.ring[L];
     if (start == 0) {
         if (P <= WIN) {
@@ -430,6 +494,7 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 }
             }
         }
+        if (!latent_pre.empty()) PD.rec("comp_latent", L, latent_pre.data(), latent_pre.size());
         if (is_in(L, index_source, 8)) {
             int T_ = compress_len;
             if (T_ > 0) {
@@ -458,7 +523,7 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 gemm(S.at(p + "indexer.proj.weight"), x, P, wv.data());
                 std::vector<std::vector<float>> score(P, std::vector<float>(T_));
                 for (int t = 0; t < P; ++t) {
-                    int len = (int)std::min<int64_t>(T_, (int64_t)(start + t) / r + 1);
+                    int len = (int)std::min<int64_t>(T_, (int64_t)(start + t + 1) / r);
                     for (int j = 0; j < T_; ++j) {
                         if (j >= len || j >= krows) { score[t][j] = -INFINITY; continue; }
                         float s = 0;
@@ -476,20 +541,21 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                     int nb = (T_ + bs - 1) / bs;
                     M.cand_mask.assign(P, std::vector<uint8_t>(T_, 0));
                     for (int t = 0; t < P; ++t) {
-                        int len = (int)std::min<int64_t>(T_, (int64_t)(start + t) / r + 1);
+                        int len = (int)std::min<int64_t>(T_, (int64_t)(start + t + 1) / r);
                         std::vector<float> bsc(nb, -INFINITY);
                         for (int j = 0; j < len; ++j) bsc[j / bs] = std::max(bsc[j / bs], score[t][j]);
                         int last = (len - 1) / bs;
+                        bsc[last] = INFINITY; // official: pinned inside the top-k budget
                         std::vector<int> ord(nb);
                         std::iota(ord.begin(), ord.end(), 0);
                         int tk = std::min(tb, nb);
-                        std::partial_sort(ord.begin(), ord.begin() + tk, ord.end(),
-                                          [&](int a, int b) { return bsc[a] > bsc[b]; });
+                        std::partial_sort(ord.begin(), ord.begin() + tk, ord.end(), [&](int a, int b) {
+                            return bsc[a] > bsc[b] || (bsc[a] == bsc[b] && a < b);
+                        });
                         for (int i = 0; i < tk; ++i)
                             if (bsc[ord[i]] > -INFINITY)
                                 for (int j = ord[i] * bs; j < std::min((ord[i] + 1) * bs, T_); ++j)
                                     M.cand_mask[t][j] = 1;
-                        for (int j = last * bs; j < std::min((last + 1) * bs, T_); ++j) M.cand_mask[t][j] = 1;
                     }
                 }
                 if (L > 20 && !M.cand_mask.empty()) {
@@ -500,12 +566,13 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                     }
                 }
                 for (int t = 0; t < P; ++t) {
-                    int len = (int)std::min<int64_t>(T_, (int64_t)(start + t) / r + 1);
+                    int len = (int)std::min<int64_t>(T_, (int64_t)(start + t + 1) / r);
                     int k = std::min(TOPK, len);
                     std::vector<int> ord(T_);
                     std::iota(ord.begin(), ord.end(), 0);
-                    std::partial_sort(ord.begin(), ord.begin() + k, ord.end(),
-                                      [&](int a, int b) { return score[t][a] > score[t][b]; });
+                    std::partial_sort(ord.begin(), ord.begin() + k, ord.end(), [&](int a, int b) {
+                        return score[t][a] > score[t][b] || (score[t][a] == score[t][b] && a < b);
+                    });
                     std::vector<int> sel(ord.begin(), ord.begin() + k);
                     std::sort(sel.begin(), sel.end());
                     cidx[t].resize(TOPK);
@@ -527,6 +594,10 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 rope_at(latent_pre.data() + (size_t)j * HD, HD,
                         cosb.data() + (size_t)gpos * 32, sinb.data() + (size_t)gpos * 32, false);
                 memcpy(CS.ckv.data() + (size_t)(CS.len + j) * HD, latent_pre.data() + (size_t)j * HD, HD * 4);
+            }
+            if (P == 1) {
+                TR.rec(L, TT_PUB_CKV, CS.ckv.data() + (size_t)CS.len * HD, HD);
+                TR.rec(L, TT_PUB_IK, CS.ik.data() + (size_t)CS.len * 128, 128);
             }
             CS.len += nl;
         }
@@ -576,6 +647,12 @@ static void attention(int L, const float *x, int P, int start, float *out) {
             }
         }
     }
+    if (TR.on && TR.f && r) {
+        std::vector<float> ci(TOPK);
+        for (int i = 0; i < TOPK; ++i) ci[i] = (float)cidx[0][i];
+        TR.rec(L, TT_CIDX, ci.data(), TOPK);
+    }
+    TR.rec(L, TT_ATTN_O, o.data(), (size_t)H * HD);
     for (int t = 0; t < P; ++t)
         for (int hh = 0; hh < H; ++hh)
             rope_at(o.data() + ((size_t)t * H + hh) * HD, HD,
@@ -600,6 +677,9 @@ static void attention(int L, const float *x, int P, int start, float *out) {
             }
         }
     }
+    TR.rec(L, TT_ATTN_OA, oa.data(), 8192);
+    PD.rec("attn_derope", L, o.data(), (size_t)P * H * HD);
+    PD.rec("attn_wo_a", L, oa.data(), (size_t)P * 8192);
     gemm(S.at(p + "attn_output_b.weight"), oa.data(), P, out);
 }
 
@@ -622,6 +702,14 @@ static void moe(int L, const float *x, int P, float *out) {
     for (int t = 0; t < P; ++t) {
         route(logits.data() + (size_t)t * 384, bias.data(), eids[t].data(), probs[t].data());
         for (int i = 0; i < 6; ++i) by_exp[eids[t][i]].push_back(t);
+    }
+    if (TR.on && TR.f) {
+        float idf[6];
+        for (int i = 0; i < 6; ++i) idf[i] = (float)eids[0][i];
+        TR.rec(L, TT_ROUTE_LOGITS, logits.data(), 384);
+        TR.rec(L, TT_ROUTE_IDS, idf, 6);
+        TR.rec(L, TT_ROUTE_PROB, probs[0].data(), 6);
+        TR.rec(L, TT_SHARED_DOWN, sd.data(), D);
     }
     std::vector<float> acc((size_t)P * D, 0);
     const Weight &gE = S.at(p + "ffn_gate_exps.weight");
@@ -651,6 +739,9 @@ static void moe(int L, const float *x, int P, float *out) {
             for (int c = 0; c < D; ++c) acc[(size_t)by_exp[e][i] * D + c] += dn[(size_t)i * D + c];
     }
     for (size_t i = 0; i < (size_t)P * D; ++i) out[i] = acc[i] + sd[i];
+    PD.rec("ffn_moe_logits", L, logits.data(), (size_t)P * 384);
+    PD.rec("ffn_moe_out", L, acc.data(), (size_t)P * D);
+    PD.rec("ffn_shexp", L, sd.data(), (size_t)P * D);
 }
 
 static void block(int L, float *streams, const std::vector<float> &pre_mix, int P, int start,
@@ -660,18 +751,31 @@ static void block(int L, float *streams, const std::vector<float> &pre_mix, int 
     const auto &fn_f = lw(p + "hc_ffn_fn.weight"), &fb_f = lw(p + "hc_ffn_base.weight"), &fs_f = lw(p + "hc_ffn_scale.weight");
     const auto &an = lw(p + "attn_norm.weight"), &fnn = lw(p + "ffn_norm.weight");
     std::vector<float> x1((size_t)P * D), attn_out((size_t)P * D);
-    std::vector<std::array<float, 4>> a_post(P);
+    std::vector<std::array<float, 4>> a_post(P), a_pre(P);
     std::vector<std::array<float, 16>> a_comb(P);
     for (int t = 0; t < P; ++t) {
         float *st = streams + (size_t)t * 4 * D;
-        float pre[4];
-        hc_mixes(st, fn_a.data(), fs_a.data(), fb_a.data(), pre, a_post[t].data(), a_comb[t].data());
+        hc_mixes(st, fn_a.data(), fs_a.data(), fb_a.data(), a_pre[t].data(), a_post[t].data(), a_comb[t].data());
         hc_pre(st, pre_mix.data() + (size_t)t * 4, x1.data() + (size_t)t * D);
-        rmsnorm(x1.data() + (size_t)t * D, an.data(), D, x1.data() + (size_t)t * D);
     }
+    PD.rec("hc_attn_pre", L, x1.data(), (size_t)P * D);
+    PD.rec("hc_pre_a", L, a_pre[0].data(), (size_t)P * 4);
+    PD.rec("hc_post_a", L, a_post[0].data(), (size_t)P * 4);
+    PD.rec("hc_comb_a", L, a_comb[0].data(), (size_t)P * 16);
+    for (int t = 0; t < P; ++t)
+        rmsnorm(x1.data() + (size_t)t * D, an.data(), D, x1.data() + (size_t)t * D);
+    PD.rec("attn_norm", L, x1.data(), (size_t)P * D);
+    TR.rec(L, TT_ATTN_MIX_PRE, a_pre[0].data(), 4);
+    TR.rec(L, TT_ATTN_MIX_POST, a_post[0].data(), 4);
+    TR.rec(L, TT_ATTN_MIX_COMB, a_comb[0].data(), 16);
+    TR.rec(L, TT_ATTN_IN, x1.data(), D);
     attention(L, x1.data(), P, start, attn_out.data());
+    TR.rec(L, TT_ATTN_OUT, attn_out.data(), D);
+    PD.rec("attn_out", L, attn_out.data(), (size_t)P * D);
     for (int t = 0; t < P; ++t)
         hc_post(streams + (size_t)t * 4 * D, attn_out.data() + (size_t)t * D, a_post[t].data(), a_comb[t].data());
+    TR.rec(L, TT_STREAMS_ATTN, streams, 4 * D);
+    PD.rec("hc_attn_post", L, streams, (size_t)P * 4 * D);
     std::vector<float> ffn_in((size_t)P * D), ffn_out((size_t)P * D);
     std::vector<std::array<float, 4>> f_post(P);
     std::vector<std::array<float, 16>> f_comb(P);
@@ -681,12 +785,26 @@ static void block(int L, float *streams, const std::vector<float> &pre_mix, int 
         float pre[4];
         hc_mixes(st, fn_f.data(), fs_f.data(), fb_f.data(), pre, f_post[t].data(), f_comb[t].data());
         memcpy(ffn_pre.data() + (size_t)t * 4, pre, 16);
-        hc_pre(st, pre, ffn_in.data() + (size_t)t * D);
-        rmsnorm(ffn_in.data() + (size_t)t * D, fnn.data(), D, ffn_in.data() + (size_t)t * D);
+        // official Block.forward: "attention uses what the previous layer's FFN
+        // produced and the FFN uses what this attention produced".
+        hc_pre(st, g_hc_legacy ? pre : a_pre[t].data(), ffn_in.data() + (size_t)t * D);
     }
+    PD.rec("hc_ffn_pre", L, ffn_in.data(), (size_t)P * D);
+    PD.rec("hc_pre_f", L, ffn_pre.data(), (size_t)P * 4);
+    PD.rec("hc_post_f", L, f_post[0].data(), (size_t)P * 4);
+    PD.rec("hc_comb_f", L, f_comb[0].data(), (size_t)P * 16);
+    for (int t = 0; t < P; ++t)
+        rmsnorm(ffn_in.data() + (size_t)t * D, fnn.data(), D, ffn_in.data() + (size_t)t * D);
+    PD.rec("ffn_norm", L, ffn_in.data(), (size_t)P * D);
+    TR.rec(L, TT_FFN_MIX_PRE, ffn_pre.data(), 4);
+    TR.rec(L, TT_FFN_IN, ffn_in.data(), D);
     moe(L, ffn_in.data(), P, ffn_out.data());
+    TR.rec(L, TT_FFN_OUT, ffn_out.data(), D);
+    PD.rec("ffn_out", L, ffn_out.data(), (size_t)P * D);
     for (int t = 0; t < P; ++t)
         hc_post(streams + (size_t)t * 4 * D, ffn_out.data() + (size_t)t * D, f_post[t].data(), f_comb[t].data());
+    TR.rec(L, TT_STREAMS_FFN, streams, 4 * D);
+    PD.rec("l_out", L, streams, (size_t)P * 4 * D);
 }
 
 // ---------------------------------------------------------------- engram file
@@ -751,6 +869,10 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "usage: %s ids.txt ndecode out_ids.txt [max_ctx] [engram.gguf]\n", argv[0]);
         return 2;
     }
+    g_hc_legacy = getenv("OWN_HC_LEGACY") != nullptr;
+    g_comb_legacy = getenv("OWN_COMB_LEGACY") != nullptr;
+    if (const char *tp = getenv("OWN_TRACE")) TR.f = fopen(tp, "wb");
+    const int trace_steps = getenv("OWN_TRACE_STEPS") ? atoi(getenv("OWN_TRACE_STEPS")) : 2;
     std::vector<int> forced;
     if (argc > 6) { std::ifstream ff(argv[6]); long long v; while (ff >> v) forced.push_back((int)v); }
     std::ifstream idf(argv[1]);
@@ -823,12 +945,29 @@ int main(int argc, char **argv) {
     std::vector<float> pre_mix((size_t)P * 4, 0);
     for (int t = 0; t < P; ++t) pre_mix[(size_t)t * 4] = 1.0f;
 
+    if (const char *pp = getenv("OWN_PDUMP")) PD.f = fopen(pp, "wb");
+    PD.on = true;
+    PD.rec("hc_init", -1, streams.data(), (size_t)P * 4 * D);
+    // OWN_LLAMA_INJECT: teacher-force every layer's input from llama.cpp's own
+    // l_out / FFN pre-mix (tools/dsv41_llama_inject.py), so each layer is
+    // checked in isolation and reference noise cannot accumulate.
+    FILE *inj = nullptr;
+    if (const char *ip = getenv("OWN_LLAMA_INJECT"))
+        if (!(inj = fopen(ip, "rb"))) die("OWN_LLAMA_INJECT unreadable");
     auto run_layers = [&](int P_, int start) {
         for (int L = 0; L < N_LAYER; ++L) {
+            if (inj && start == 0 && L > 0) {
+                uint64_t n[2];
+                if (fread(n, 8, 2, inj) != 2 || n[0] != (uint64_t)P_ * 4 * D || n[1] != (uint64_t)P_ * 4)
+                    die("inject file does not match this prompt");
+                if (fread(streams.data(), 4, n[0], inj) != n[0]) die("inject short");
+                if (fread(pre_mix.data(), 4, n[1], inj) != n[1]) die("inject short");
+            }
             if (L == 1 || L == 14) {
 #pragma omp parallel for schedule(static)
                 for (int t = 0; t < P_; ++t)
                     engram_apply_at(L, streams.data() + (size_t)t * 4 * D, start + t);
+                PD.rec("engram_out", L, streams.data(), (size_t)P_ * 4 * D);
             }
             std::vector<float> ffn_pre;
             block(L, streams.data(), pre_mix, P_, start, ffn_pre);
@@ -839,8 +978,13 @@ int main(int argc, char **argv) {
     run_layers(P, 0);
     std::vector<float> hx(D), logits(129280);
     hc_pre(streams.data() + (size_t)(P - 1) * 4 * D, pre_mix.data() + (size_t)(P - 1) * 4, hx.data());
+    PD.rec("hc_out", -1, hx.data(), D);
     rmsnorm(hx.data(), lw("output_norm.weight").data(), D, hx.data());
+    PD.rec("result_norm", -1, hx.data(), D);
     gemv(S.at("output.weight"), hx.data(), logits.data());
+    PD.rec("result_output", -1, logits.data(), 129280);
+    PD.on = false;
+    if (PD.f) { fclose(PD.f); PD.f = nullptr; }
     int next = (int)(std::max_element(logits.begin(), logits.end()) - logits.begin());
     {
         std::vector<int> ord(129280);
@@ -853,6 +997,31 @@ int main(int argc, char **argv) {
     }
     std::vector<int> out_ids{next};
     std::fprintf(stderr, "prefill done; first token %d\n", next);
+    if (argc > 7) { // dump device-handoff state (post-prefill, incl first token)
+        std::ofstream df(argv[7], std::ios::binary);
+        long posd = P;
+        df.write((char *)&posd, 8);
+        long lens[4];
+        for (int i = 0; i < 4; ++i) lens[i] = M.src[i].len;
+        df.write((char *)lens, 32);
+        for (int L = 0; L < N_LAYER; ++L)
+            df.write((char *)M.ring[L].data(), (size_t)WIN * HD * 4);
+        for (int i = 0; i < 4; ++i) {
+            df.write((char *)M.src[i].ckv.data(), (size_t)lens[i] * HD * 4);
+            df.write((char *)M.src[i].ik.data(), (size_t)lens[i] * 128 * 4);
+        }
+        for (int i = 0; i < 4; ++i) {
+            df.write((char *)M.src[i].kv_state.data(), 2 * HD * 4);
+            df.write((char *)M.src[i].score_state.data(), 2 * HD * 4);
+        }
+        long nt = (long)M.toks.size();
+        df.write((char *)&nt, 8);
+        df.write((char *)M.toks.data(), nt * 4);
+        df.write((char *)M.comp_ids.data(), nt * 8);
+        df.write((char *)&next, 4);
+        std::fprintf(stderr, "state dumped: pos=%ld lens=%ld,%ld,%ld,%ld next=%d\n",
+                     posd, lens[0], lens[1], lens[2], lens[3], next);
+    }
 
     for (int d = 1; d < ndecode; ++d) {
         int feed = (d - 1 < (int)forced.size()) ? forced[d - 1] : next;
@@ -867,8 +1036,14 @@ int main(int argc, char **argv) {
         }
         std::vector<float> pm(4, 0);
         pm[0] = 1;
+        TR.step = d;
+        TR.on = d <= trace_steps;
+        TR.rec(0, TT_EMBED, s1.data(), 4 * D);
         for (int L = 0; L < N_LAYER; ++L) {
-            if (L == 1 || L == 14) engram_apply_at(L, s1.data(), pos);
+            if (L == 1 || L == 14) {
+                engram_apply_at(L, s1.data(), pos);
+                TR.rec(L, TT_ENGRAM, s1.data(), 4 * D);
+            }
             std::vector<float> ffn_pre;
             block(L, s1.data(), pm, 1, pos, ffn_pre);
             pm = ffn_pre;
@@ -876,6 +1051,10 @@ int main(int argc, char **argv) {
         hc_pre(s1.data(), pm.data(), hx.data());
         rmsnorm(hx.data(), lw("output_norm.weight").data(), D, hx.data());
         gemv(S.at("output.weight"), hx.data(), logits.data());
+        TR.rec(40, TT_FINAL_N, hx.data(), D);
+        TR.rec(40, TT_LOGITS, logits.data(), 129280);
+        TR.on = false;
+        if (TR.f) fflush(TR.f);
         next = (int)(std::max_element(logits.begin(), logits.end()) - logits.begin());
         out_ids.push_back(next);
         {

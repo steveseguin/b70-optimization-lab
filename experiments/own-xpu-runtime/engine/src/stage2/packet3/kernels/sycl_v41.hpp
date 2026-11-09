@@ -127,7 +127,8 @@ struct HcPre {
         out[i] = ops41::bf16b(acc);
     }
 };
-// hc_post: streams'[j][i] = post[j]*x[i] + sum_k comb[j][k]*old[k][i].
+// hc_post: streams'[j][i] = post[j]*x[i] + sum_k comb[k][j]*old[k][i]
+// (comb is [src][dst], official Block.hc_post).
 // `old` is a snapshot of streams (device memcpy first): in-place reads would
 // race across work-items.
 struct HcPost {
@@ -138,7 +139,7 @@ struct HcPost {
         int j = g / h, i = g % h;
         if (j >= 4) return;
         float acc = post[j] * ops41::bf16(x[i]);
-        for (int k = 0; k < 4; ++k) acc += comb[j * 4 + k] * ops41::bf16(old[(size_t)k * h + i]);
+        for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * ops41::bf16(old[(size_t)k * h + i]);
         streams[(size_t)j * h + i] = ops41::bf16b(acc);
     }
 };
@@ -159,7 +160,7 @@ struct WindowAppend {
     void operator()(sycl::nd_item<1> it, uint16_t *ring, const uint16_t *kv, int32_t *idxs) const {
         if (it.get_global_linear_id() != 0) return;
         for (int i = 0; i < d; ++i) ring[(size_t)(start_pos % win) * d + i] = kv[i];
-        int oldest = start_pos % win + 1;
+        int oldest = (start_pos % win + 1) % win; // wraps to slot 0 at win-1
         for (int i = 0, j = oldest; i < win; ++i, j = (j + 1) % win)
             idxs[i] = j > start_pos ? -1 : j;
     }
@@ -328,6 +329,52 @@ struct GemvGrouped {
     }
 };
 
+// gemv_grouped over a QUANTIZED weight ([groups*n, k] rows of any iq3 type):
+// row r belongs to group r/n and reads that group's k-slice of o. Same lane
+// order + tree32 as Gemv.
+struct GemvGroupedQ {
+    iq3::Type wtype; unsigned n, k;
+    void operator()(sycl::nd_item<1> it, const uint8_t *w, size_t row_bytes_,
+                    const uint16_t *o, uint16_t *out) const {
+        auto sg = it.get_sub_group();
+        unsigned l = sg.get_local_linear_id();
+        unsigned r = it.get_group_linear_id();
+        const uint8_t *row = w + (size_t)r * row_bytes_;
+        const uint16_t *xg = o + (size_t)(r / n) * k;
+        float sum = 0;
+        for (unsigned i = l; i < k; i += 32)
+            sum = sum + iq3::element(wtype, row, i) * ops41::bf16(xg[i]);
+        sum = sg_tree32(sg, sum);
+        if (l == 0) out[r] = ops41::bf16b(sum);
+    }
+};
+
+// route41 on f32 logits (official model.py computes the router in F32;
+// llama.cpp pins GGML_PREC_F32 on the same node). Same order as Route.
+struct RouteF32 {
+    int experts, topk;
+    void operator()(sycl::nd_item<1> it, const float *logits, const float *bias,
+                    uint32_t *ids, float *prob) const {
+        if (it.get_global_linear_id() != 0) return;
+        float s[384], sb[384];
+        for (int i = 0; i < experts; ++i) {
+            s[i] = sycl::sqrt(sycl::log1p(sycl::exp(logits[i])));
+            sb[i] = s[i] + bias[i];
+        }
+        float sum = 0;
+        for (int t = 0; t < topk; ++t) {
+            int best = -1;
+            for (int i = 0; i < experts; ++i)
+                if (best < 0 || sb[i] > sb[best]) best = i;
+            ids[t] = (uint32_t)best;
+            prob[t] = s[best];
+            sum += s[best];
+            sb[best] = -INFINITY;
+        }
+        for (int t = 0; t < topk; ++t) prob[t] = prob[t] / (sum + 1e-20f) * 1.5f;
+    }
+};
+
 // hc_mix phase A: 24 items, serial double dot over 4*h in host order -> m[24].
 // The rsqrt statistic is recomputed per item (grid-wide sync impossible in
 // one launch); identical value everywhere since the loop order is fixed.
@@ -472,6 +519,7 @@ struct Broadcast4 {
 // Lane order/tree32 identical to Gemv -> bit-exact vs host per-expert gemv.
 struct RoutedGemv {
     iq3::Type t; unsigned rows, cols; // per-expert matrix shape
+    bool per_slot_x = false;          // down: x is [6][cols], one row per slot
     void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x,
                     const uint32_t *ids, uint16_t *out) const {
         unsigned g = it.get_global_linear_id();
@@ -482,7 +530,8 @@ struct RoutedGemv {
         const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * rb;
         sycl::sub_group sg = it.get_sub_group();
         int lane = it.get_local_linear_id();
-        float a = iq3::lane_dot(t, row, x, iq3::Type::BF16, cols, lane);
+        const uint16_t *xs = per_slot_x ? x + (size_t)slot * cols : x;
+        float a = iq3::lane_dot(t, row, xs, iq3::Type::BF16, cols, lane);
         for (int w_ = 16; w_; w_ >>= 1)
             a += sycl::select_from_group(sg, a, lane ^ w_);
         if (lane == 0) out[slot * rows + r] = ops41::bf16b(a);
