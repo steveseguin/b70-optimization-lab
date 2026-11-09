@@ -11,6 +11,12 @@ with Intel. Commands, patches and results are provided under the
 
 ## Current focus: our own B70 engine
 
+**Own Xe development:** [project direction](experiments/own-xpu-runtime/engine/PROJECT.md),
+[build on another computer](experiments/own-xpu-runtime/engine/DEVELOPING.md),
+[current source download](downloads/own-engine/README.md), and
+[DeepSeek V4.1 Unsloth GGUF onboarding](experiments/own-xpu-runtime/engine/planning/deepseek-v41-onboarding.md).
+DeepSeek is the next architecture target; support is not implemented yet.
+
 We are building a model-specific inference engine for the B70 in SYCL/C++.
 It runs [SC117's IQ3_S quantization](https://huggingface.co/SC117/Qwen3.8-Flash-Next-GSQ-RCO-abliterated-GGUF)
 of **Qwen3.8 Flash-Next** (125B total parameters, about 6B active per token)
