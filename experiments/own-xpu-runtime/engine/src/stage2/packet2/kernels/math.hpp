@@ -11,8 +11,8 @@
 // Original scalar equations from the lab's FORMAT.md, not ggml kernels.
 // The generated tables are credited normative GGUF format data.
 namespace iq3 {
-enum class Type : uint32_t { F32=0,F16=1,Q8_0=8,Q3_K=11,Q4_K=12,Q5_K=13,Q6_K=14,
-                            IQ3_XXS=18,IQ4_NL=20,IQ3_S=21,IQ2_S=22,IQ4_XS=23,BF16=30,Q2_0=42 };
+enum class Type : uint32_t { F32=0,F16=1,Q8_0=8,Q2_K=10,Q3_K=11,Q4_K=12,Q5_K=13,Q6_K=14,
+                            IQ2_XXS=16,IQ2_XS=17,IQ3_XXS=18,IQ1_S=19,IQ4_NL=20,IQ3_S=21,IQ2_S=22,IQ4_XS=23,BF16=30,MXFP4=39,Q2_0=42 };
 struct Layout { uint32_t elements, bytes; };
 inline constexpr Layout layout(Type t) {
   switch(t) {
@@ -22,6 +22,9 @@ inline constexpr Layout layout(Type t) {
     case Type::Q4_K:return {256,144};case Type::Q5_K:return {256,176};case Type::IQ4_XS:return {256,136};case Type::Q2_0:return {64,18};
     case Type::Q6_K:return {256,210}; case Type::IQ3_XXS:return {256,98};
     case Type::IQ4_NL:return {32,18}; case Type::IQ2_S:return {256,82};
+    case Type::Q2_K:return {256,84}; case Type::IQ2_XXS:return {256,66};
+    case Type::IQ2_XS:return {256,74}; case Type::IQ1_S:return {256,50};
+    case Type::MXFP4:return {32,17};
   }
   return {0,0}; // admission rejects unknown types before submission
 }
@@ -140,6 +143,47 @@ inline float decode(Type t,const uint8_t* b,uint32_t i) {
     int sign=(mask>>(i%8))&1?-1:1;
     auto mag=(iq3_grid[b[2+i/4]]>>(8*(i%4)))&255;
     return (((half(u16(b))*(0.5f+float(word>>28)))*0.5f)*float(mag))*float(sign);
+  }
+  // dsv41 additions; field equations verified bit-exact against the reference
+  // decoders by planning/dsv41-fixtures/test_engine_types.cpp.
+  if(t==Type::Q2_K) {
+    const unsigned h=i/128,j=(i%128)/32,m=i%32;
+    const unsigned sc=b[8*h+2*j+(m<16?0:1)];
+    const float dl=half(u16(b+80))*float(sc&15),ml=half(u16(b+82))*float(sc>>4);
+    return dl*float((b[16+32*h+m]>>(2*j))&3)-ml;
+  }
+  if(t==Type::IQ2_XXS) {
+    const unsigned g=i/32,l=(i%32)/8,j=i%8;
+    const uint32_t lo=u32(b+2+8*g),hi=u32(b+2+8*g+4);
+    const auto mag=(iq2_xxs_grid[(lo>>(8*l))&255]>>(8*j))&255;
+    const int sign=((iq2_signs[(hi>>(7*l))&127]>>j)&1)?-1:1;
+    return (((half(u16(b))*(0.5f+float(hi>>28)))*0.25f)*float(mag))*float(sign);
+  }
+  if(t==Type::IQ2_XS) {
+    const unsigned g=i/32,l=(i%32)/8,j=i%8;
+    const unsigned aux=u16(b+2+2*(4*g+l));
+    const unsigned sc=(b[66+g]>>(4*(l>>1)))&15;
+    const auto mag=(iq2_xs_grid[aux&511]>>(8*j))&255;
+    const int sign=((iq2_signs[aux>>9]>>j)&1)?-1:1;
+    return (((half(u16(b))*(0.5f+float(sc)))*0.25f)*float(mag))*float(sign);
+  }
+  if(t==Type::IQ1_S) {
+    const unsigned g=i/32,l=(i%32)/8,j=i%8;
+    const uint32_t qh=u16(b+34+2*g);
+    const float dl=half(u16(b))*float(2*((qh>>12)&7)+1);
+    const float delta=(qh&0x8000)?-0.125f:0.125f;
+    const unsigned ix=b[2+4*g+l]|(((qh>>(3*l))&7)<<8);
+    const int code=int(int8_t(uint8_t((iq1_s_grid[ix]>>(8*j))&255)));
+    return dl*(float(code)+delta);
+  }
+  if(t==Type::MXFP4) {
+    // E8M0 scale halved (doubled e2m1 table); magnitudes 0,1,2,3,4,6,8,12
+    // packed as one register word to keep the codebook out of private memory.
+    const unsigned e=b[0];
+    const float d=bits_float(e<2?0x00200000u<<e:uint32_t(e-1)<<23);
+    const unsigned code=(b[1+(i%16)]>>(i<16?0:4))&15;
+    const int mag=int((0xC8643210u>>(4*(code&7)))&15);
+    return d*float(code<8?mag:(code>8?-mag:0));
   }
   return bits_float(0x7fc00000);
 }

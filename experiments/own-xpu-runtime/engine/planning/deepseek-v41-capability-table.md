@@ -80,13 +80,13 @@ kernels in `engine/src/gsq-rco-iq3s/`. Backbone = 165.3 GB over shards 2–5
 | Q8_0 | 5.4 GB (embd, LoRA a/b, attn_kv) | ✅ | — | — |
 | Q6_K | 2.2 GB (incl. output head) | ✅ | — | — |
 | Q5_K | 135.2 GB (**engram table**) | ✅ decode exists | usage is row-gather, not GEMV | gather 176 B rows by index from mmap'd file; compare vs llama.cpp PLE lookup rows |
-| Q2_K | 1.5 GB (1 tensor) | ❌ no match in `engine/src` | decoder + gemv | CPU `decode()` of one Q2_K superblock row vs llama.cpp `dequantize_row_q2_K` on real shard bytes |
+| Q2_K | 1.5 GB (1 tensor) | ✅ `math.hpp` decode + layout | decoder + gemv | bit-exact vs reference: `test_q2k` (fixture) + `test_engine_types` (engine `decode()`) |
 | IQ2_S | 65.3 GB | ✅ (`math.hpp` {256,82}) | — | — |
-| IQ2_XS | 7.9 GB | ❌ absent | decoder + gemv | single-row codebook decode vs llama.cpp reference |
-| **IQ2_XXS** | **38.5 GB** | ❌ absent | decoder + gemv; **bulk of attention/shared tensors** | single-row decode vs reference, then packed `gemv_row` fixture |
-| IQ1_S | 17.7 GB (20 tensors) | ❌ absent | decoder + gemv | single-row decode vs reference |
+| IQ2_XS | 7.9 GB | ✅ `math.hpp` decode + layout | decoder + gemv | bit-exact: `test_iq2xs` + `test_engine_types`; SYCL packed gemv still open |
+| **IQ2_XXS** | **38.5 GB** | ✅ `math.hpp` decode + layout | decoder + gemv; **bulk of attention/shared tensors** | bit-exact: `test_iq2xxs` + `test_engine_types`; SYCL packed gemv still open |
+| IQ1_S | 17.7 GB (20 tensors) | ✅ `math.hpp` decode + layout | decoder + gemv | bit-exact: `test_iq1s` + `test_engine_types`; SYCL packed gemv still open |
 | IQ3_XXS | 26.0 GB | ✅ | — | — |
-| MXFP4 | 7.6 GB (dspark only) | ❌ absent | E8M0 scale + split-nibble e2m1 decode | gated: `mxfp4` fixture bit-exact; engine Type/layout/decode row still open |
+| MXFP4 | 7.6 GB (dspark only) | ✅ `math.hpp` decode + layout | E8M0 scale + split-nibble e2m1 decode | bit-exact: `test_mxfp4` + `test_engine_types`; dspark admission separate later gate |
 
 ## Operators (deepseek41 graph vs engine op set)
 
