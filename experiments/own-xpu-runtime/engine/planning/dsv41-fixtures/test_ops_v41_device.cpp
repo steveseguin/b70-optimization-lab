@@ -552,6 +552,136 @@ int main() {
         sycl::free(dr, q); sycl::free(do8, q);
     }
 
+    // --- hc_mix lane/tree form: HcMixDots32 + HcMixFinishD vs ops41::hc_mix_lanes ---
+    {
+        const int h = 5120, N = 4 * h;
+        std::vector<uint16_t> st(N);
+        for (auto &v : st) v = rbf16(-3, 3);
+        std::vector<float> fn((size_t)24 * N), scale(3), base(24);
+        std::uniform_real_distribution<float> d(-0.05f, 0.05f);
+        for (auto &v : fn) v = d(rng);
+        for (auto &v : scale) v = 1.0f + d(rng);
+        for (auto &v : base) v = d(rng) * 10;
+        float hp[4], hpo[4], hc[16], dp[4], dpo[4], dc[16];
+        ops41::hc_mix_lanes(st.data(), fn.data(), scale.data(), base.data(), h, hp, hpo, hc);
+        auto *ds = sycl::malloc_device<uint16_t>(N, q);
+        auto *dfn = sycl::malloc_device<float>(fn.size(), q);
+        auto *dsc = sycl::malloc_device<float>(3, q);
+        auto *dba = sycl::malloc_device<float>(24, q);
+        auto *d25 = sycl::malloc_device<double>(25, q);
+        auto *o = sycl::malloc_device<float>(24, q);
+        q.memcpy(ds, st.data(), N * 2); q.memcpy(dfn, fn.data(), fn.size() * 4);
+        q.memcpy(dsc, scale.data(), 12); q.memcpy(dba, base.data(), 96);
+        q.wait();
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::HcMixDots32 k{h};
+            hh.parallel_for(sycl::nd_range<1>(25 * 32, 32),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, ds, dfn, d25); });
+        }).wait();
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::HcMixFinishD k{h};
+            hh.parallel_for(sycl::nd_range<1>(1, 1), [=](sycl::nd_item<1> it) { k(it, d25, dsc, dba, o, o + 4, o + 8); });
+        }).wait();
+        std::vector<float> ov(24);
+        q.memcpy(ov.data(), o, 96).wait();
+        memcpy(dp, ov.data(), 16); memcpy(dpo, ov.data() + 4, 16); memcpy(dc, ov.data() + 8, 64);
+        check_f32("hc_mix_lanes_pre", hp, dp, 4, 2e-6f);
+        check_f32("hc_mix_lanes_post", hpo, dpo, 4, 2e-6f);
+        check_f32("hc_mix_lanes_comb", hc, dc, 16, 2e-5f);
+        sycl::free(ds, q); sycl::free(dfn, q); sycl::free(dsc, q); sycl::free(dba, q);
+        sycl::free(d25, q); sycl::free(o, q);
+    }
+
+    // --- dec_t (byte-load grid extraction) == iq3::decode, every element, on device and host ---
+    {
+        auto run = [&](const char *name, auto tag) {
+            constexpr iq3::Type T = decltype(tag)::value;
+            const auto lay = iq3::layout(T);
+            const int blocks = 512;
+            std::vector<uint8_t> w((size_t)blocks * lay.bytes);
+            for (auto &b : w) b = uint8_t(rng());
+            for (int b = 0; b < blocks; ++b) { // finite fp16 block scale: exponent 5..20, random mantissa
+                uint16_t sc = uint16_t(((5 + rng() % 16) << 10) | (rng() & 1023) | ((rng() & 1) << 15));
+                memcpy(&w[(size_t)b * lay.bytes], &sc, 2);
+            }
+            const size_t n = (size_t)blocks * lay.elements;
+            auto *dw = sycl::malloc_device<uint8_t>(w.size(), q);
+            auto *da = sycl::malloc_device<float>(n, q);
+            auto *db = sycl::malloc_device<float>(n, q);
+            q.memcpy(dw, w.data(), w.size()).wait();
+            const unsigned el = lay.elements, by = lay.bytes;
+            q.parallel_for(sycl::range<1>(n), [=](sycl::id<1> id) {
+                size_t i = id[0];
+                da[i] = ops41sycl::dec_t<T>(dw + (i / el) * by, (uint32_t)(i % el));
+                db[i] = iq3::decode(T, dw + (i / el) * by, (uint32_t)(i % el));
+            }).wait();
+            std::vector<float> a(n), b(n), h(n);
+            q.memcpy(a.data(), da, n * 4).wait();
+            q.memcpy(b.data(), db, n * 4).wait();
+            for (size_t i = 0; i < n; ++i)
+                h[i] = ops41sycl::dec_t<T>(w.data() + (i / el) * by, (uint32_t)(i % el));
+            int bad = memcmp(a.data(), b.data(), n * 4) != 0 || memcmp(a.data(), h.data(), n * 4) != 0;
+            int nonfinite = 0;
+            for (float v : a) nonfinite += !std::isfinite(v);
+            if (bad || nonfinite) { std::printf("FAIL decode_fast_%s (bits %d nonfinite %d)\n", name, bad, nonfinite); ++fails; }
+            else std::printf("ok   decode_fast_%s (%zu elements, bit-identical device/host/iq3::decode)\n", name, n);
+            sycl::free(dw, q); sycl::free(da, q); sycl::free(db, q);
+        };
+        run("iq2_xxs", std::integral_constant<iq3::Type, iq3::Type::IQ2_XXS>{});
+        run("iq2_xs", std::integral_constant<iq3::Type, iq3::Type::IQ2_XS>{});
+        run("iq1_s", std::integral_constant<iq3::Type, iq3::Type::IQ1_S>{});
+        run("iq2_s", std::integral_constant<iq3::Type, iq3::Type::IQ2_S>{});
+    }
+
+    // --- sparse attention in three launches == the one-launch kernel, bit for bit ---
+    {
+        const int heads = 64, hd = 512, win = 128, ncomp = 300, n_idx = 640;
+        std::vector<uint16_t> qv((size_t)heads * hd), kw((size_t)win * hd), kc((size_t)ncomp * hd);
+        for (auto &v : qv) v = rbf16(-1, 1);
+        for (auto &v : kw) v = rbf16(-1, 1);
+        for (auto &v : kc) v = rbf16(-1, 1);
+        std::vector<float> sinks(heads);
+        for (auto &v : sinks) v = ops41::bf16(rbf16(-1, 1));
+        std::vector<int32_t> idx(n_idx, -1);
+        for (int i = 0; i < 100; ++i) idx[i] = i + 20;           // partly filled window
+        for (int i = 0; i < 280; ++i) idx[128 + i] = win + i;     // compressed rows, rest -1
+        auto *dq = sycl::malloc_device<uint16_t>(qv.size(), q);
+        auto *dkw = sycl::malloc_device<uint16_t>(kw.size(), q);
+        auto *dkc = sycl::malloc_device<uint16_t>(kc.size(), q);
+        auto *dsn = sycl::malloc_device<float>(heads, q);
+        auto *dix = sycl::malloc_device<int32_t>(n_idx, q);
+        auto *o1 = sycl::malloc_device<float>((size_t)heads * hd, q);
+        auto *o2 = sycl::malloc_device<float>((size_t)heads * hd, q);
+        auto *w = sycl::malloc_device<float>((size_t)heads * n_idx, q);
+        q.memcpy(dq, qv.data(), qv.size() * 2); q.memcpy(dkw, kw.data(), kw.size() * 2);
+        q.memcpy(dkc, kc.data(), kc.size() * 2); q.memcpy(dsn, sinks.data(), heads * 4);
+        q.memcpy(dix, idx.data(), n_idx * 4);
+        q.wait();
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::SparseAttn k{n_idx, heads, hd, win};
+            hh.parallel_for(sycl::nd_range<1>(heads, 8), [=](sycl::nd_item<1> it) { k(it, dq, dkw, dkc, dsn, dix, o1); });
+        }).wait(); // this test's queue is out-of-order: the three phases must be sequenced by hand
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::SparseScore k{n_idx, heads, hd, win};
+            hh.parallel_for(sycl::nd_range<1>((size_t)heads * n_idx, 32), [=](sycl::nd_item<1> it) { k(it, dq, dkw, dkc, dix, w); });
+        }).wait();
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::SparseSoftmax k{n_idx, heads};
+            hh.parallel_for(sycl::nd_range<1>(heads, 8), [=](sycl::nd_item<1> it) { k(it, dsn, dix, w); });
+        }).wait();
+        q.submit([&](sycl::handler &hh) {
+            ops41sycl::SparseOut k{n_idx, heads, hd, win};
+            hh.parallel_for(sycl::nd_range<1>((size_t)heads * hd, 32), [=](sycl::nd_item<1> it) { k(it, dkw, dkc, dix, w, o2); });
+        }).wait();
+        std::vector<float> a((size_t)heads * hd), b((size_t)heads * hd);
+        q.memcpy(a.data(), o1, a.size() * 4).wait(); q.memcpy(b.data(), o2, b.size() * 4).wait();
+        int diff = memcmp(a.data(), b.data(), a.size() * 4) != 0;
+        if (diff) { std::printf("FAIL sparse_attn_split (bits differ)\n"); ++fails; }
+        else std::printf("ok   sparse_attn_split (%zu f32, bit-identical)\n", a.size());
+        sycl::free(dq, q); sycl::free(dkw, q); sycl::free(dkc, q); sycl::free(dsn, q);
+        sycl::free(dix, q); sycl::free(o1, q); sycl::free(o2, q); sycl::free(w, q);
+    }
+
     std::printf(fails ? "FAILURES: %d\n" : "ALL DEVICE GATES PASS\n", fails);
     return fails ? 1 : 0;
 }

@@ -1,0 +1,21 @@
+decode: 6 steps after the first, 0.629 s/step, 1.59 tok/s
+profile (ms per step, queue wait at every mark):
+  sparse_attn      185.29   29.5%
+  hc_mix           162.90   25.9%
+  exp_gate          61.66    9.8%
+  exp_up            61.42    9.8%
+  exp_down          40.72    6.5%
+  engram            31.27    5.0%
+  shared            16.95    2.7%
+  attn_o_b          15.93    2.5%
+  attn_q_b          12.93    2.1%
+  attn_o_a          10.90    1.7%
+  router            10.41    1.7%
+  hc_pre_norm        4.40    0.7%
+  attn_q_a           3.79    0.6%
+  attn_kv            3.38    0.5%
+  index              2.40    0.4%
+  hc_post            1.68    0.3%
+  publish            1.66    0.3%
+  migrate            0.79    0.1%
+  total            628.49

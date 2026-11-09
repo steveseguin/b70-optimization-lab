@@ -163,6 +163,7 @@ public:
         std::vector<int> devices;            // SYCL gpu indices for the ACTIVE tiles, ascending tile order
         long host_floor_mib = 3072;          // abort the load below this MemAvailable
         bool hc_legacy = false;              // pre-2026-11-09 FFN pre-mix (A/B only)
+        bool generic_kernels = false;        // runtime-type gemv kernels (A/B against the specialized ones)
         bool debug = false;
     };
     struct DevPtr {
@@ -433,6 +434,27 @@ public:
     int64_t eng_mult[2][4];
     int64_t eng_pad = 0;
 
+    // profile (OWN_PROF): wall time per op group, with a queue wait at every
+    // mark. The waits change the totals; use it for shares, not for tok/s.
+    bool prof_on = false;
+    std::map<std::string, double> prof_t;
+    double prof_last = 0;
+    static double now_s() {
+        return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+    }
+    void prof_begin(int t) {
+        if (!prof_on) return;
+        qs[t].wait();
+        prof_last = now_s();
+    }
+    void prof(const char *name, int t) {
+        if (!prof_on) return;
+        qs[t].wait();
+        double n = now_s();
+        prof_t[name] += n - prof_last;
+        prof_last = n;
+    }
+
     // trace (same record format and tags as cpu_run_v41; OWN_TRACE)
     FILE *trace_f = nullptr;
     bool trace_on = false;
@@ -468,9 +490,10 @@ public:
             cur = 0;
             tr16(0, TT_EMBED, 0, streams[0], 4 * (size_t)H_);
         }
+        prof_begin(cur);
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
             int t = tile_of_layer(L);
-            if (t != cur) migrate(t);
+            if (t != cur) { migrate(t); prof("migrate", t); }
             layer(L, t);
         }
         int32_t next = -1;
@@ -484,6 +507,7 @@ public:
             launch_sg(HEAD_TILE, 1, ops41sycl::Argmax{g.vocab}, (const float *)logits_, tok_out_,
                       (float *)nullptr);
             qs[HEAD_TILE].memcpy(&next, tok_out_, 4).wait();
+            prof("head", HEAD_TILE);
             tr16(40, TT_FINAL_N, HEAD_TILE, s.xn, H_);
             trf(40, TT_LOGITS, HEAD_TILE, logits_, g.vocab);
         } else {
@@ -596,10 +620,12 @@ private:
         uint16_t *expg, *expu, *act, *expd;
         uint16_t *shg, *shu, *sha, *shd;
         float *of;                      // attention output, f32
+        float *attn_w;                  // [heads][640] attention scores -> weights
         uint16_t *obuf, *oa, *ob;       // bf16 attn out, o_a out, sublayer output
         uint16_t *cw, *scg, *latent, *kk;
         float *kv_state, *score_state;  // [4 sources][2 slots][hd]
-        float *pre_a, *post_a, *comb_a, *pre_f, *post_f, *comb_f, *m24, *cur_pre;
+        float *pre_a, *post_a, *comb_a, *pre_f, *post_f, *comb_f, *cur_pre;
+        double *d25;                    // hc_mix: 24 dots + sum of squares
         int32_t *idxs_cat, *widx;
         uint16_t *old, *eng_rows, *kvbuf;
     };
@@ -623,13 +649,14 @@ private:
         s.act = md((size_t)6 * g.mid); s.expd = md((size_t)6 * g.h);
         s.shg = md(g.mid); s.shu = md(g.mid); s.sha = md(g.mid); s.shd = md(g.h);
         s.of = mf((size_t)g.qh * g.hd);
+        s.attn_w = mf((size_t)g.qh * 640);
         s.obuf = md((size_t)g.qh * g.hd);
         s.oa = md(g.ototal); s.ob = md(g.h);
         s.cw = md(g.hd); s.scg = md(g.hd); s.latent = md(g.hd); s.kk = md(128);
         s.kv_state = mf((size_t)4 * 2 * g.hd); s.score_state = mf((size_t)4 * 2 * g.hd);
         s.pre_a = mf(4); s.post_a = mf(4); s.comb_a = mf(16);
         s.pre_f = mf(4); s.post_f = mf(4); s.comb_f = mf(16);
-        s.m24 = mf(24); s.cur_pre = mf(4);
+        s.d25 = dalloc<double>(t, 25); s.cur_pre = mf(4);
         s.idxs_cat = dalloc<int32_t>(t, 640); s.widx = dalloc<int32_t>(t, 128);
         s.old = md((size_t)4 * g.h);
         s.eng_rows = md((size_t)24 * g.engram_dim); s.kvbuf = md((size_t)5 * g.h);
@@ -658,10 +685,61 @@ private:
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
         });
     }
+    // One kernel per weight format (OWN_GENERIC_KERNELS=1 selects the
+    // runtime-type kernels instead; outputs are bit-identical either way).
     void gemv(int tile, const std::string &wn, const uint16_t *x, void *y, bool f32out = false) {
         const auto &e = we(wn);
-        launch_sg(tile, (size_t)e.rows, ops41sycl::Gemv{e.type, (unsigned)e.rows, (unsigned)e.cols, f32out},
-                  wp(wn), wrb(e), x, y);
+        const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+        if (o.generic_kernels) {
+            launch_sg(tile, (size_t)rows, ops41sycl::Gemv{e.type, rows, cols, f32out}, wp(wn), wrb(e), x, y);
+            return;
+        }
+        switch (e.type) {
+#define X(TY)                                                                                              \
+    case iq3::Type::TY:                                                                                    \
+        launch_sg(tile, (size_t)rows, ops41sycl::GemvT<iq3::Type::TY>{rows, cols, f32out}, wp(wn), x, y);  \
+        break;
+            OWN41_WEIGHT_TYPES(X)
+#undef X
+        default: throw std::runtime_error("unsupported weight format: " + wn);
+        }
+    }
+    void gemv_grouped(int tile, const std::string &wn, const uint16_t *x, uint16_t *y) {
+        const auto &e = we(wn);
+        if (e.rows != g.ototal || e.cols != g.oin) throw std::runtime_error("attn_output_a shape");
+        const unsigned n = (unsigned)(g.ototal / 8), k = (unsigned)g.oin;
+        if (o.generic_kernels) {
+            launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQ{e.type, n, k}, wp(wn), wrb(e), x, y);
+            return;
+        }
+        switch (e.type) {
+#define X(TY)                                                                                              \
+    case iq3::Type::TY:                                                                                    \
+        launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQT<iq3::Type::TY>{n, k}, wp(wn), x, y);      \
+        break;
+            OWN41_WEIGHT_TYPES(X)
+#undef X
+        default: throw std::runtime_error("unsupported weight format: " + wn);
+        }
+    }
+    void routed_gemv(int tile, const std::string &wn, const uint16_t *x, const uint32_t *ids, uint16_t *y,
+                     bool per_slot) {
+        const auto &e = we(wn);
+        const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+        if (o.generic_kernels) {
+            launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemv{e.type, rows, cols, per_slot}, wp(wn), x, ids, y);
+            return;
+        }
+        switch (e.type) {
+#define X(TY)                                                                                              \
+    case iq3::Type::TY:                                                                                    \
+        launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemvT<iq3::Type::TY>{rows, cols, per_slot},     \
+                  wp(wn), x, ids, y);                                                                      \
+        break;
+            OWN41_WEIGHT_TYPES(X)
+#undef X
+        default: throw std::runtime_error("unsupported weight format: " + wn);
+        }
     }
     void rmsnorm(int tile, const uint16_t *x, const std::string &wn, int n, uint16_t *y) {
         launch_sg(tile, 1, ops41sycl::RmsNorm{n}, x, wp<float>(wn), y);
@@ -719,10 +797,12 @@ private:
 
     void hc_mix(int t, const std::string &prefix, float *pre, float *post, float *comb) {
         auto &s = sc[t];
-        launch(t, 24, 8, ops41sycl::HcMixDots{g.h}, (const uint16_t *)streams[t],
-               wp<float>(prefix + "fn.weight"), s.m24);
-        launch(t, 1, 1, ops41sycl::HcMixFinish{}, (const float *)s.m24, wp<float>(prefix + "scale.weight"),
-               wp<float>(prefix + "base.weight"), pre, post, comb);
+        // lane/tree reduction (anchor ops41::hc_mix_lanes); the serial-order
+        // HcMixDots kernel cost ~3 ms per call
+        launch_sg(t, 25, ops41sycl::HcMixDots32{g.h}, (const uint16_t *)streams[t],
+                  wp<float>(prefix + "fn.weight"), s.d25);
+        launch(t, 1, 1, ops41sycl::HcMixFinishD{g.h}, (const double *)s.d25,
+               wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
     }
 
     // Official Block.forward threading: the attention collapses the streams
@@ -735,11 +815,14 @@ private:
         const size_t sb = 2 * 4 * (size_t)H_;
         if (L == 1 || L == 14) {
             engram_host(L, t);
+            prof("engram", t);
             tr16(L, TT_ENGRAM, t, streams[t], 4 * (size_t)H_);
         }
         hc_mix(t, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
+        prof("hc_mix", t);
         launch(t, H_, 32, ops41sycl::HcPre{H_}, (const uint16_t *)streams[t], (const float *)s.cur_pre, s.x);
         rmsnorm(t, s.x, p + "attn_norm.weight", H_, s.xn);
+        prof("hc_pre_norm", t);
         trf(L, TT_ATTN_MIX_PRE, t, s.pre_a, 4);
         trf(L, TT_ATTN_MIX_POST, t, s.post_a, 4);
         trf(L, TT_ATTN_MIX_COMB, t, s.comb_a, 16);
@@ -749,12 +832,15 @@ private:
         qs[t].memcpy(s.old, streams[t], sb);
         launch(t, (size_t)4 * H_, 32, ops41sycl::HcPost{H_}, streams[t], (const uint16_t *)s.old,
                (const uint16_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a);
+        prof("hc_post", t);
         tr16(L, TT_STREAMS_ATTN, t, streams[t], 4 * (size_t)H_);
 
         hc_mix(t, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
+        prof("hc_mix", t);
         launch(t, H_, 32, ops41sycl::HcPre{H_}, (const uint16_t *)streams[t],
                (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), s.x);
         rmsnorm(t, s.x, p + "ffn_norm.weight", H_, s.xn);
+        prof("hc_pre_norm", t);
         trf(L, TT_FFN_MIX_PRE, t, s.pre_f, 4);
         tr16(L, TT_FFN_IN, t, s.xn, H_);
         moe(L, t);
@@ -763,6 +849,7 @@ private:
         launch(t, (size_t)4 * H_, 32, ops41sycl::HcPost{H_}, streams[t], (const uint16_t *)s.old,
                (const uint16_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f);
         qs[t].memcpy(s.cur_pre, s.pre_f, 16);
+        prof("hc_post", t);
         tr16(L, TT_STREAMS_FFN, t, streams[t], 4 * (size_t)H_);
     }
 
@@ -794,19 +881,22 @@ private:
         const bool yarn = cr > 0;
         gemv(t, p + "attn_q_a.weight", s.xn, s.qa);
         rmsnorm(t, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
+        prof("attn_q_a", t);
         gemv(t, p + "attn_q_b.weight", s.qn, s.q);
         rope(t, s.q, g.qh, g.hd, pos, yarn, false);
+        prof("attn_q_b", t);
         gemv(t, p + "attn_kv.weight", s.xn, s.kv);
         rmsnorm(t, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
         rope(t, s.kvn, 1, g.hd, pos, yarn, false);
+        prof("attn_kv", t);
         tr16(L, TT_Q, t, s.q, (size_t)g.qh * g.hd);
         tr16(L, TT_KV, t, s.kvn, g.hd);
         launch(t, 1, 1, ops41sycl::WindowAppend{128, g.hd, (int)pos}, ring[L], (const uint16_t *)s.kvn, s.widx);
         int si = src_index(L);
         int n_idx = 128;
         if (cr) {
-            if (is_kv_source(L)) publish(L, t, si, yarn);
-            if (index_slot(L) >= 0) index(L, t, si, yarn);
+            if (is_kv_source(L)) { publish(L, t, si, yarn); prof("publish", t); }
+            if (index_slot(L) >= 0) { index(L, t, si, yarn); prof("index", t); }
             qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
             qs[t].memcpy(s.idxs_cat + 128, cidx_mirror[t][isrc_for(L)], 512 * 4);
             n_idx += 512;
@@ -814,21 +904,25 @@ private:
         } else {
             qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
         }
-        launch(t, g.qh, 8, ops41sycl::SparseAttn{n_idx, g.qh, g.hd, 128}, (const uint16_t *)s.q,
-               (const uint16_t *)ring[L], (const uint16_t *)(cr ? ckv_mirror[t][si] : ring[L]),
-               wp<float>(p + "attn_sinks.weight"), (const int32_t *)s.idxs_cat, s.of);
+        { // three launches, same arithmetic order as the one-launch SparseAttn kernel
+            const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
+            launch(t, (size_t)g.qh * n_idx, 32, ops41sycl::SparseScore{n_idx, g.qh, g.hd, 128},
+                   (const uint16_t *)s.q, kvw, kvc, (const int32_t *)s.idxs_cat, s.attn_w);
+            launch(t, g.qh, 8, ops41sycl::SparseSoftmax{n_idx, g.qh}, wp<float>(p + "attn_sinks.weight"),
+                   (const int32_t *)s.idxs_cat, s.attn_w);
+            launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::SparseOut{n_idx, g.qh, g.hd, 128}, kvw, kvc,
+                   (const int32_t *)s.idxs_cat, (const float *)s.attn_w, s.of);
+        }
+        prof("sparse_attn", t);
         trf(L, TT_ATTN_O, t, s.of, (size_t)g.qh * g.hd);
         launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::ToBf16{g.qh * g.hd}, (const float *)s.of, s.obuf);
         rope(t, s.obuf, g.qh, g.hd, pos, yarn, true);
-        { // grouped output LoRA: 8 groups of 1024 rows, each reads its 4096-slice
-            const auto &e = we(p + "attn_output_a.weight");
-            if (e.rows != g.ototal || e.cols != g.oin) throw std::runtime_error("attn_output_a shape");
-            launch_sg(t, (size_t)e.rows,
-                      ops41sycl::GemvGroupedQ{e.type, (unsigned)(g.ototal / 8), (unsigned)g.oin},
-                      wp(p + "attn_output_a.weight"), wrb(e), (const uint16_t *)s.obuf, s.oa);
-        }
+        // grouped output LoRA: 8 groups of 1024 rows, each reads its 4096-slice
+        gemv_grouped(t, p + "attn_output_a.weight", s.obuf, s.oa);
+        prof("attn_o_a", t);
         tr16(L, TT_ATTN_OA, t, s.oa, g.ototal);
         gemv(t, p + "attn_output_b.weight", s.oa, s.ob);
+        prof("attn_o_b", t);
     }
 
     // append the staged row (h_kv_row / h_ik_row) to every active card's mirrors
@@ -949,19 +1043,16 @@ private:
         gemv(t, p + "ffn_gate_inp.weight", s.xn, s.router, true); // router logits stay f32
         launch(t, 1, 1, ops41sycl::RouteF32{g.experts, 6}, (const float *)s.router,
                wp<float>(p + "exp_probs_b.bias"), s.ids, s.prob);
-        const auto &ge = we(p + "ffn_gate_exps.weight");
-        const auto &ue = we(p + "ffn_up_exps.weight");
-        const auto &de = we(p + "ffn_down_exps.weight");
-        launch_sg(t, (size_t)6 * ge.rows, ops41sycl::RoutedGemv{ge.type, (unsigned)ge.rows, (unsigned)ge.cols},
-                  wp(p + "ffn_gate_exps.weight"), (const uint16_t *)s.xn, (const uint32_t *)s.ids, s.expg);
-        launch_sg(t, (size_t)6 * ue.rows, ops41sycl::RoutedGemv{ue.type, (unsigned)ue.rows, (unsigned)ue.cols},
-                  wp(p + "ffn_up_exps.weight"), (const uint16_t *)s.xn, (const uint32_t *)s.ids, s.expu);
+        prof("router", t);
+        routed_gemv(t, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
+        prof("exp_gate", t);
+        routed_gemv(t, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
+        prof("exp_up", t);
         launch(t, (size_t)6 * g.mid, 32, ops41sycl::Swiglu{(long long)6 * g.mid, 10.0f},
                (const uint16_t *)s.expg, (const uint16_t *)s.expu, s.act);
         launch(t, (size_t)6 * g.mid, 32, ops41sycl::ProbScale{6, g.mid}, s.act, (const float *)s.prob);
-        launch_sg(t, (size_t)6 * de.rows,
-                  ops41sycl::RoutedGemv{de.type, (unsigned)de.rows, (unsigned)de.cols, true},
-                  wp(p + "ffn_down_exps.weight"), (const uint16_t *)s.act, (const uint32_t *)s.ids, s.expd);
+        routed_gemv(t, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
+        prof("exp_down", t);
         gemv(t, p + "ffn_gate_shexp.weight", s.xn, s.shg);
         gemv(t, p + "ffn_up_shexp.weight", s.xn, s.shu);
         launch(t, g.mid, 32, ops41sycl::Swiglu{(long long)g.mid, 10.0f}, (const uint16_t *)s.shg,
@@ -969,6 +1060,7 @@ private:
         gemv(t, p + "ffn_down_shexp.weight", s.sha, s.shd);
         launch(t, g.h, 32, ops41sycl::MoeCombine{6, g.h}, (const uint16_t *)s.expd, (const uint16_t *)s.shd,
                s.ob);
+        prof("shared", t);
         if (tracing()) {
             trf(L, TT_ROUTE_LOGITS, t, s.router, g.experts);
             tri(L, TT_ROUTE_IDS, t, s.ids, 6);

@@ -13,7 +13,8 @@ engram table on NVMe). Lane: `engine/` (Own Xe), family `dsv41`.
   llama.cpp's own rounding), and the cards match the reference on every layer and on the output tokens.
 - **Not done:** one run on all six cards at once. Two cards are held by the Gemma service that restarts at every
   boot. The model was validated in two halves instead (layers 0-27 on four cards; layers 28-39 + head on two).
-- Speed is not tuned: about 0.86 s per token summed over the two halves (llama.cpp reference screen: 14 tok/s).
+- Speed after a first tuning round: about 0.16 s per token summed over the two halves (6 tok/s), from 0.86 s
+  when it first ran. The llama.cpp reference screen is 14 tok/s. Section 6.
 
 ## 1. The freezes
 
@@ -115,7 +116,30 @@ step; `engine/tools/dsv41_trace_diff.py` compares them.
 The ~1 % is the activation format: device buffers are BF16 between operators (as the official model runs), the
 reference is f32. An f32-activation mode is open work if exactness against the reference is wanted.
 
-Timing (unoptimized, includes per-op sync and host top-k): 0.60 s for layers 0-27, 0.26 s for layers 28-39 + head.
+Timing when it first ran (per-op sync, host top-k): 0.60 s for layers 0-27, 0.26 s for layers 28-39 + head.
+
+## 6. First speed round (same day)
+
+`OWN_PROF=1` prints time per operation group. Every change below left the decode trace **byte-identical** to the
+run before it, except the stream-mix statistic, whose reduction order was redefined (host anchor and device
+agree exactly; trace gate against the reference unchanged).
+
+| Change | Layers 0-27, ms per token |
+| --- | --- |
+| as first run | 629 (profiled) / 600 |
+| attention core in three launches (per head x slot scores, per-head softmax, per head x channel output) instead of 64 long serial work-items | 448 |
+| stream-mix statistics as 32 strided lanes + tree in double (`ops41::hc_mix_lanes`) instead of 24 serial 20480-term loops | 324 (profiled) |
+| one gemv kernel per weight format (`GemvT`, `RoutedGemvT`, `GemvGroupedQT`): the format no longer is re-selected per element | 225 (profiled) |
+| expert kernel takes slot and row from the **group** id, so the row address is uniform across the 32 lanes (it was a per-lane gather) | 111 (profiled) / **103** |
+
+Tried and worth nothing here: chunk-indexed lane loop (-5 %), byte loads instead of 64-bit variable shifts for the
+64-bit grid formats (0 %; kept, bit-exact, gated as `decode_fast_*`).
+
+Now: layers 0-27 in 0.103 s, layers 28-39 + head in 0.059 s, 0.16 s per token, about 6 tok/s. Remaining time on
+layers 0-27 (profiled, ms): expert down 19, stream mix 13, expert gate 10 + up 10, router 9, engram 8 (mostly cold
+4 KiB reads of the 24 hashed rows from NVMe), attention core 7, shared expert 6, output LoRA b 6 + a 4, query 5.
+Not launch overhead: the profile's 1,260 queue waits add only 8 ms.
+Evidence: `data/dsv41-bringup-20261109/profile-layers0-27-round{0,1}.txt`, `device-speed-*.log`.
 
 ## Reproduce
 
@@ -143,8 +167,8 @@ gemma4-26b-q8-quad-backends` first: six-card runs need it stopped.
 ## Open
 
 1. The six-card run (needs the two Gemma cards).
-2. Speed: kernels decode every weight element with a runtime type switch; thousands of tiny launches per token;
-   host round trips for top-k and row mirrors; kernel build per context at first use.
+2. Speed, next levers in order: expert down-projection (30,720 short rows), router selection (one serial
+   work-item), engram row prefetch at step start, stream-mix lanes, then fusing the small launches.
 3. Prompt pass on the cards (today: CPU reference, roughly a minute and a half for 36 tokens).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. f32-activation mode; a float-exact llama.cpp comparison to remove the remaining noise from section 4.

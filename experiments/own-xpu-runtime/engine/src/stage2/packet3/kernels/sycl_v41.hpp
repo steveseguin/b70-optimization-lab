@@ -68,6 +68,140 @@ struct Gemv {
     }
 };
 
+// Type-specialized forms of Gemv / RoutedGemv / GemvGroupedQ: the weight
+// format is a template argument, so iq3::decode folds to one format's field
+// equations (the runtime-type kernels re-select the format per element).
+// Same element values, same lane order, same reductions -> bit-identical.
+// Element decode for the specialized kernels. Same field equations as
+// iq3::decode (packet2/kernels/math.hpp, left untouched: the SC117 build
+// identity includes it); the only change is how the magnitude byte leaves a
+// 64-bit grid entry: a byte load from the table instead of
+// (grid[ix] >> (8*j)) & 255, because a 64-bit VARIABLE shift is emulated on
+// the B70. Bit-exact against iq3::decode by the device gate (decode_fast_*).
+inline uint32_t grid64_byte(const uint64_t *grid, unsigned ix, unsigned j) {
+    return reinterpret_cast<const uint8_t *>(grid)[(size_t)ix * 8 + j]; // little-endian byte j
+}
+template <iq3::Type T> [[gnu::always_inline]] inline float dec_t(const uint8_t *b, uint32_t i) {
+    using iq3::half;
+    using iq3::u16;
+    using iq3::u32;
+    if constexpr (T == iq3::Type::IQ2_XXS) {
+        const unsigned g = i / 32, l = (i % 32) / 8, j = i % 8;
+        const uint32_t lo = u32(b + 2 + 8 * g), hi = u32(b + 2 + 8 * g + 4);
+        const auto mag = grid64_byte(iq3::iq2_xxs_grid, (lo >> (8 * l)) & 255, j);
+        const int sign = ((iq3::iq2_signs[(hi >> (7 * l)) & 127] >> j) & 1) ? -1 : 1;
+        return (((half(u16(b)) * (0.5f + float(hi >> 28))) * 0.25f) * float(mag)) * float(sign);
+    } else if constexpr (T == iq3::Type::IQ2_XS) {
+        const unsigned g = i / 32, l = (i % 32) / 8, j = i % 8;
+        const unsigned aux = u16(b + 2 + 2 * (4 * g + l));
+        const unsigned sc = (b[66 + g] >> (4 * (l >> 1))) & 15;
+        const auto mag = grid64_byte(iq3::iq2_xs_grid, aux & 511, j);
+        const int sign = ((iq3::iq2_signs[aux >> 9] >> j) & 1) ? -1 : 1;
+        return (((half(u16(b)) * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign);
+    } else if constexpr (T == iq3::Type::IQ1_S) {
+        const unsigned g = i / 32, l = (i % 32) / 8, j = i % 8;
+        const uint32_t qh = u16(b + 34 + 2 * g);
+        const float dl = half(u16(b)) * float(2 * ((qh >> 12) & 7) + 1);
+        const float delta = (qh & 0x8000) ? -0.125f : 0.125f;
+        const unsigned ix = b[2 + 4 * g + l] | (((qh >> (3 * l)) & 7) << 8);
+        const int code = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, ix, j))));
+        return dl * (float(code) + delta);
+    } else if constexpr (T == iq3::Type::IQ2_S) {
+        auto q = i / 8;
+        auto ix = b[2 + q] | (((b[66 + q / 4] >> (2 * (q % 4))) & 3) << 8);
+        auto mag = grid64_byte(iq3::iq2_s_grid, ix, i % 8);
+        int sign = (b[34 + q] >> (i % 8)) & 1 ? -1 : 1;
+        auto sc = (b[74 + i / 32] >> (4 * ((i / 16) % 2))) & 15;
+        return (((half(u16(b)) * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign);
+    } else {
+        return iq3::decode(T, b, i);
+    }
+}
+
+// Lane l's partial sum over columns l, l+32, ... in ascending order (the
+// iq3::lane_dot order). For block formats the loop runs over 32-column chunks:
+// block pointer and in-block chunk index depend only on the chunk, so the
+// compiler can keep block headers and group words uniform across the
+// sub-group; the lane id only picks bit fields. Same products, same order.
+template <iq3::Type T>
+[[gnu::always_inline]] inline float lane_sum_t(const uint8_t *row, const uint16_t *x, unsigned cols, unsigned lane) {
+    constexpr auto L = iq3::layout(T);
+    float sum = 0;
+    if constexpr (L.elements >= 32) {
+        constexpr unsigned CPB = L.elements / 32; // chunks per block
+        lane &= 31u;
+        const unsigned chunks = cols / 32;
+        for (unsigned c = 0; c < chunks; ++c) {
+            const uint8_t *blk = row + (size_t)(c / CPB) * L.bytes;
+            const unsigned i = ((c % CPB) << 5) | lane;
+            sum = sum + dec_t<T>(blk, i) * ops41::bf16(x[(c << 5) | lane]);
+        }
+    } else {
+        for (unsigned k = lane; k < cols; k += 32)
+            sum = sum + dec_t<T>(row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * ops41::bf16(x[k]);
+    }
+    return sum;
+}
+template <iq3::Type T> struct GemvT {
+    unsigned rows, cols;
+    bool f32out = false;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x, void *yv) const {
+        constexpr auto L = iq3::layout(T);
+        const size_t rb = (size_t)(cols / L.elements) * L.bytes;
+        auto sg = it.get_sub_group();
+        unsigned l = sg.get_local_linear_id();
+        unsigned r = it.get_group_linear_id();
+        const uint8_t *row = w + (size_t)r * rb;
+        float sum = lane_sum_t<T>(row, x, cols, l);
+        sum = sg_tree32(sg, sum);
+        if (l == 0) {
+            if (f32out) reinterpret_cast<float *>(yv)[r] = sum;
+            else reinterpret_cast<uint16_t *>(yv)[r] = ops41::bf16b(sum);
+        }
+    }
+};
+template <iq3::Type T> struct GemvGroupedQT {
+    unsigned n, k;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *o, uint16_t *out) const {
+        constexpr auto L = iq3::layout(T);
+        const size_t rb = (size_t)(k / L.elements) * L.bytes;
+        auto sg = it.get_sub_group();
+        unsigned l = sg.get_local_linear_id();
+        unsigned r = it.get_group_linear_id();
+        const uint8_t *row = w + (size_t)r * rb;
+        const uint16_t *xg = o + (size_t)(r / n) * k;
+        float sum = lane_sum_t<T>(row, xg, k, l);
+        sum = sg_tree32(sg, sum);
+        if (l == 0) out[r] = ops41::bf16b(sum);
+    }
+};
+template <iq3::Type T> struct RoutedGemvT {
+    unsigned rows, cols; // per-expert matrix shape
+    bool per_slot_x = false;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x,
+                                     const uint32_t *ids, uint16_t *out) const {
+        constexpr auto L = iq3::layout(T);
+        const size_t rb = (size_t)(cols / L.elements) * L.bytes;
+        // slot/row from the GROUP id: uniform across the sub-group, so the row
+        // pointer and everything loaded through it stays uniform (deriving
+        // them from the global id made every load a per-lane gather)
+        const unsigned grp = it.get_group_linear_id();
+        const unsigned slot = grp / rows, r = grp % rows;
+        if (slot >= 6) return;
+        const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * rb;
+        sycl::sub_group sg = it.get_sub_group();
+        int lane = it.get_local_linear_id();
+        const uint16_t *xs = per_slot_x ? x + (size_t)slot * cols : x;
+        float a = lane_sum_t<T>(row, xs, cols, (unsigned)lane);
+        for (int w_ = 16; w_; w_ >>= 1)
+            a += sycl::select_from_group(sg, a, lane ^ w_);
+        if (lane == 0) out[slot * rows + r] = ops41::bf16b(a);
+    }
+};
+// the formats present in the UD-IQ2_XXS release (profile census)
+#define OWN41_WEIGHT_TYPES(X) \
+    X(F32) X(Q8_0) X(Q2_K) X(Q5_K) X(Q6_K) X(IQ2_XXS) X(IQ2_XS) X(IQ3_XXS) X(IQ1_S) X(IQ2_S) X(BF16)
+
 // rope rotate tail rdim of each row, adjacent pairs. Pairs are independent:
 // parallel over (row, pair) is bit-identical to the host serial loop.
 struct RopePairs {
@@ -205,6 +339,65 @@ struct SparseAttn {
                                                 : kvc + (size_t)(slot - win_rows) * hd;
             for (int j = 0; j < hd; ++j) o[j] += w * ops41::bf16(k[j]);
         }
+    }
+};
+
+// sparse_attn split into three launches with the SAME arithmetic order as
+// SparseAttn (so the output is bit-identical) but 41k / 64 / 33k work-items
+// instead of 64 long serial ones:
+//   SparseScore   one item per (head, slot): serial dot over hd, * scale
+//   SparseSoftmax one item per head: max, exp, sum in slot order (sink first)
+//   SparseOut     one item per (head, j): serial sum over slots
+// score is [heads][n_idx] f32; skipped slots (idx < 0) are never read.
+struct SparseScore {
+    int n_idx, heads, hd, win_rows;
+    void operator()(sycl::nd_item<1> it, const uint16_t *q, const uint16_t *kvw, const uint16_t *kvc,
+                    const int32_t *idxs, float *score) const {
+        size_t g = it.get_global_linear_id();
+        int h = (int)(g / n_idx), i = (int)(g % n_idx);
+        if (h >= heads) return;
+        int slot = idxs[i];
+        if (slot < 0) return;
+        const float scale = 1.0f / sycl::sqrt(float(hd));
+        const uint16_t *qh = q + (size_t)h * hd;
+        const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * hd : kvc + (size_t)(slot - win_rows) * hd;
+        float acc = 0;
+        for (int j = 0; j < hd; ++j) acc += ops41::bf16(qh[j]) * ops41::bf16(k[j]);
+        score[g] = acc * scale;
+    }
+};
+struct SparseSoftmax {
+    int n_idx, heads;
+    void operator()(sycl::nd_item<1> it, const float *sinks, const int32_t *idxs, float *score) const {
+        int h = it.get_global_linear_id();
+        if (h >= heads) return;
+        float *s = score + (size_t)h * n_idx;
+        float mx = sinks[h];
+        for (int i = 0; i < n_idx; ++i)
+            if (idxs[i] >= 0) mx = s[i] > mx ? s[i] : mx;
+        float sum = sycl::exp(sinks[h] - mx);
+        for (int i = 0; i < n_idx; ++i)
+            if (idxs[i] >= 0) { s[i] = sycl::exp(s[i] - mx); sum += s[i]; }
+        for (int i = 0; i < n_idx; ++i)
+            if (idxs[i] >= 0) s[i] = s[i] / sum;
+    }
+};
+struct SparseOut {
+    int n_idx, heads, hd, win_rows;
+    void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                    const float *w, float *out) const {
+        size_t g = it.get_global_linear_id();
+        int h = (int)(g / hd), j = (int)(g % hd);
+        if (h >= heads) return;
+        const float *wh = w + (size_t)h * n_idx;
+        float o = 0;
+        for (int i = 0; i < n_idx; ++i) {
+            int slot = idxs[i];
+            if (slot < 0) continue;
+            const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * hd : kvc + (size_t)(slot - win_rows) * hd;
+            o += wh[i] * ops41::bf16(k[j]);
+        }
+        out[g] = o;
     }
 };
 
@@ -397,6 +590,67 @@ struct HcMixFinish {
     void operator()(sycl::nd_item<1> it, const float *m24, const float *scale, const float *base,
                     float *pre, float *post, float *comb) const {
         if (it.get_global_linear_id() != 0) return;
+        auto sig = [](float v) { return 1.0f / (1.0f + sycl::exp(-v)); };
+        const float eps = 1e-6f;
+        for (int j = 0; j < 4; ++j) pre[j] = sig(m24[j] * scale[0] + base[j]) + eps;
+        for (int j = 0; j < 4; ++j) post[j] = 2.0f * sig(m24[4 + j] * scale[1] + base[4 + j]);
+        for (int j = 0; j < 16; ++j) comb[j] = m24[8 + j] * scale[2] + base[8 + j];
+        for (int j = 0; j < 4; ++j) {
+            float mx = comb[j * 4];
+            for (int k = 1; k < 4; ++k) mx = comb[j * 4 + k] > mx ? comb[j * 4 + k] : mx;
+            float s = 0;
+            for (int k = 0; k < 4; ++k) { comb[j * 4 + k] = sycl::exp(comb[j * 4 + k] - mx); s += comb[j * 4 + k]; }
+            for (int k = 0; k < 4; ++k) comb[j * 4 + k] = comb[j * 4 + k] / s + eps;
+        }
+        for (int it2 = 0; it2 < 20; ++it2) {
+            if (it2 > 0)
+                for (int j = 0; j < 4; ++j) {
+                    float s = 0;
+                    for (int k = 0; k < 4; ++k) s += comb[j * 4 + k];
+                    for (int k = 0; k < 4; ++k) comb[j * 4 + k] /= (s + eps);
+                }
+            for (int k = 0; k < 4; ++k) {
+                float s = 0;
+                for (int j = 0; j < 4; ++j) s += comb[j * 4 + k];
+                for (int j = 0; j < 4; ++j) comb[j * 4 + k] /= (s + eps);
+            }
+        }
+    }
+};
+
+// hc_mix in lane/tree form (anchor ops41::hc_mix_lanes): 25 sub-groups of 32
+// lanes. Group r < 24: dot of fn row r with the flattened streams; group 24:
+// sum of squares. Strided lanes in double, tree32 pairing, lane 0 writes.
+struct HcMixDots32 {
+    int h;
+    void operator()(sycl::nd_item<1> it, const uint16_t *streams, const float *fn, double *out) const {
+        auto sg = it.get_sub_group();
+        unsigned l = sg.get_local_linear_id();
+        unsigned r = it.get_group_linear_id();
+        const int N = 4 * h;
+        double acc = 0;
+        if (r < 24) {
+            for (int i = l; i < N; i += 32) acc += double(fn[(size_t)r * N + i]) * ops41::bf16(streams[i]);
+        } else {
+            for (int i = l; i < N; i += 32) { float v = ops41::bf16(streams[i]); acc += double(v) * v; }
+        }
+        for (unsigned w = 1; w < 32; w *= 2) {
+            double o = sycl::select_from_group(sg, acc, (l + w) % 32);
+            if (l % (2 * w) == 0) acc = acc + o;
+        }
+        if (l == 0) out[r] = acc;
+    }
+};
+// finish from the 25 doubles: rsqrt statistic, 24 mixes, then HcMixFinish.
+struct HcMixFinishD {
+    int h;
+    void operator()(sycl::nd_item<1> it, const double *d25, const float *scale, const float *base,
+                    float *pre, float *post, float *comb) const {
+        if (it.get_global_linear_id() != 0) return;
+        const int N = 4 * h;
+        float rsqrt = float(1.0 / sycl::sqrt(d25[24] / N + 1e-20));
+        float m24[24];
+        for (int j = 0; j < 24; ++j) m24[j] = float(d25[j]) * rsqrt;
         auto sig = [](float v) { return 1.0f / (1.0f + sycl::exp(-v)); };
         const float eps = 1e-6f;
         for (int j = 0; j < 4; ++j) pre[j] = sig(m24[j] * scale[0] + base[j]) + eps;

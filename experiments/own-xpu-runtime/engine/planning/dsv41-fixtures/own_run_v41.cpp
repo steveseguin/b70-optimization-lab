@@ -15,6 +15,8 @@
 //   OWN_HOST_FLOOR_MIB abort the load below this MemAvailable (default 3072)
 //   OWN_HC_LEGACY=1    old FFN pre-mix threading (A/B only)
 //   OWN_LOAD_ONLY=1    stop after the upload (load/memory test)
+//   OWN_GENERIC_KERNELS=1 runtime-type gemv kernels instead of one kernel per weight format
+//   OWN_PROF=1         per-op-group time shares (adds a queue wait at every mark)
 //   OWN_DEBUG=1        progress output
 #include <chrono>
 #include <cstdio>
@@ -115,6 +117,7 @@ int main(int argc, char **argv) {
     own41::Backend41::Options opt;
     opt.debug = getenv("OWN_DEBUG") != nullptr;
     opt.hc_legacy = getenv("OWN_HC_LEGACY") != nullptr;
+    opt.generic_kernels = getenv("OWN_GENERIC_KERNELS") != nullptr;
     if (const char *e = getenv("OWN_HOST_FLOOR_MIB")) opt.host_floor_mib = atol(e);
     if (const char *e = getenv("OWN_LAYERS"))
         if (sscanf(e, "%d:%d", &opt.layer_begin, &opt.layer_end) != 2) die("OWN_LAYERS=a:b");
@@ -234,6 +237,7 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "state loaded: pos=%ld lens=%ld,%ld,%ld,%ld first=%d\n", pos, lens[0], lens[1],
                      lens[2], lens[3], first);
         if (const char *tp = getenv("OWN_TRACE")) be.trace_f = fopen(tp, "wb");
+        be.prof_on = getenv("OWN_PROF") != nullptr;
 
         // ---- decode ----
         static const int srcs[4] = {2, 8, 14, 20};
@@ -269,6 +273,7 @@ int main(int argc, char **argv) {
             int next = be.decode_step(cur);
             double dt = now() - t1;
             if (step > 1) { t_dec += dt; ++n_timed; } // first step carries kernel compilation
+            else be.prof_t.clear();
             if (opt.head) {
                 std::fprintf(stderr, "tok %d -> %d (%.3fs)", step, next, dt);
                 if (opt.debug || step <= trace_steps) {
@@ -286,6 +291,15 @@ int main(int argc, char **argv) {
         if (n_timed)
             std::fprintf(stderr, "decode: %d steps after the first, %.3f s/step, %.2f tok/s\n", n_timed,
                          t_dec / n_timed, n_timed / t_dec);
+        if (be.prof_on && n_timed) {
+            std::vector<std::pair<double, std::string>> v;
+            double tot = 0;
+            for (auto &[k, t] : be.prof_t) { v.push_back({t / n_timed, k}); tot += t / n_timed; }
+            std::sort(v.rbegin(), v.rend());
+            std::fprintf(stderr, "profile (ms per step, queue wait at every mark):\n");
+            for (auto &[t, k] : v) std::fprintf(stderr, "  %-14s %8.2f  %5.1f%%\n", k.c_str(), t * 1e3, 100 * t / tot);
+            std::fprintf(stderr, "  %-14s %8.2f\n", "total", tot * 1e3);
+        }
         std::ofstream of(argv[3]);
         for (int t : out_ids) of << t << "\n";
     } catch (const std::exception &ex) {
