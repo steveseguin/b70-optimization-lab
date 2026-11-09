@@ -868,7 +868,15 @@ int main(int argc, char **argv) {
         gemv(S.at("output.weight"), hx.data(), logits.data());
         next = (int)(std::max_element(logits.begin(), logits.end()) - logits.begin());
         out_ids.push_back(next);
-        std::fprintf(stderr, "tok %d -> %d\n", d, next);
+        {
+            std::vector<int> ord(129280);
+            std::iota(ord.begin(), ord.end(), 0);
+            std::partial_sort(ord.begin(), ord.begin() + 5, ord.end(),
+                              [&](int a, int b) { return logits[a] > logits[b]; });
+            std::fprintf(stderr, "tok %d -> %d | top5:", d, next);
+            for (int i = 0; i < 5; ++i) std::fprintf(stderr, " %d:%.4f", ord[i], logits[ord[i]]);
+            std::fprintf(stderr, "\n");
+        }
     }
     std::ofstream of(argv[3]);
     for (int t : out_ids) of << t << "\n";
