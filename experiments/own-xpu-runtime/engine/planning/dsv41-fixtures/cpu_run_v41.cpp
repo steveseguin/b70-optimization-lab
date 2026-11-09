@@ -775,7 +775,7 @@ int main(int argc, char **argv) {
     std::fprintf(stderr, "store: %zu tensors\n", S.w.size());
 
     const char *eng_path = argc > 5 ? argv[5]
-        : "/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/engram/DeepSeek-V4.1-Flash-1017-engram-Q5_K.gguf_file";
+        : "/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00006-of-00006.gguf";
     for (int li = 0; li < 2; ++li) M.eng[li] = map_engram(eng_path, li);
 
     {

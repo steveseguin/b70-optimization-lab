@@ -16,16 +16,19 @@
 int main(int argc, char **argv) {
     const char *shard = "/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/UD-IQ2_XXS/DeepSeek-V4.1-Flash-1017-UD-IQ2_XXS-00002-of-00006.gguf";
     // token_embd.weight: IQ2_XXS [5120, 129280] in shard 2; offset from placement
-    long data_start = 576;
+    // usage: probe OFFSET [NROWS] [TYPE_ID] [COLS]
+    long data_start = 24032;
     long offset = -1, rows = 129280, cols = 5120;
-    // placement: find token_embd offset (type IQ2_XXS=34? read from argv for flexibility)
+    iq3::Type ttype = iq3::Type::IQ2_XXS;
     if (argc > 1) offset = atol(argv[1]);
+    if (argc > 3) ttype = (iq3::Type)atoi(argv[3]);
+    if (argc > 4) cols = atol(argv[4]);
     if (offset < 0) { std::fprintf(stderr, "need placement offset\n"); return 2; }
 
     int fd = open(shard, O_RDONLY);
     struct stat st; fstat(fd, &st);
     auto *file = (const uint8_t *)mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    auto lay = iq3::layout(iq3::Type::IQ2_XXS);
+    auto lay = iq3::layout(ttype);
     size_t rb = (size_t)(cols / lay.elements) * lay.bytes;
     const uint8_t *base = file + data_start + offset;
 
@@ -40,7 +43,7 @@ int main(int argc, char **argv) {
         const uint8_t *row = base + (size_t)r * rb;
         float acc = 0;
         for (int c = 0; c < cols; ++c)
-            acc += iq3::decode(iq3::Type::IQ2_XXS, row + (size_t)(c / lay.elements) * lay.bytes, c % lay.elements) * x[c];
+            acc += iq3::decode(ttype, row + (size_t)(c / lay.elements) * lay.bytes, c % lay.elements) * x[c];
         href[r] = acc;
     }
     auto t1 = std::chrono::steady_clock::now();
@@ -62,7 +65,7 @@ int main(int argc, char **argv) {
                 const uint8_t *row = dw + (size_t)r * rb;
                 float acc = 0;
                 for (int c = 0; c < cols; ++c)
-                    acc += iq3::decode(iq3::Type::IQ2_XXS, row + (size_t)(c / lay.elements) * lay.bytes,
+                    acc += iq3::decode(ttype, row + (size_t)(c / lay.elements) * lay.bytes,
                                        c % lay.elements) * dx[c];
                 dy[r] = acc;
             });
