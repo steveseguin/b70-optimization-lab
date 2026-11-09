@@ -23,6 +23,8 @@ DeepSeek support is planned, not implemented.
   compilation/link passed for all 40 translation units with oneAPI 2026.0.0.
   All 267 compiled dependencies match this archive. This was a CPU-only build
   on the originating Ubuntu host, not a clean-host or GPU qualification.
+  The archive was also downloaded from public GitHub and its full SHA-256
+  verified; the validation receipt records the immutable download URL.
 
 This includes the November 4 persistent-serving native changes. The full Git
 repository also carries Pi integration, research patches and results outside
