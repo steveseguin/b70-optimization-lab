@@ -143,3 +143,23 @@ Twelve devices visible (6 dual-tile cards x ~31 GiB). Naive one-row-per-item
 kernel: correct vs host (max rel err accumulation-order noise), 6.6 GB/s —
 latency-bound baseline only; production kernels need coalesced block loads
 (cf. packet10 expanded-split4 winners on the SC117 lane).
+
+## Device gates (2026-11-09) — ALL PASS on Arc Pro B70
+
+`src/stage2/packet3/kernels/sycl_v41.hpp`: SYCL kernels for the full v41
+decode op set (gemv lane_dot/tree32 SG32, rope pairs, swiglu, prob_scale,
+moe_combine, hc_pre/post/mean/mix+sinkhorn, window_append, sparse_attn,
+compress_pool, indexer score+topk, engram_gate, gemv_grouped). Mul/add paths
+bit-exact vs the ops41 host anchors; exp/sigmoid paths within +-1 bf16 ulp.
+Gate: `planning/dsv41-fixtures/test_ops_v41_device.cpp` (19 checks):
+
+```bash
+$ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off \
+  -I planning/dsv41-fixtures -I src \
+  planning/dsv41-fixtures/test_ops_v41_device.cpp -o /tmp/test_ops41_dev
+LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib \
+  ONEAPI_DEVICE_SELECTOR=level_zero:0 /tmp/test_ops41_dev
+```
+
+Gotcha recorded: this B70 rejects non-uniform work-groups; pad global ranges
+to a multiple of the group size and guard inside the kernel.
