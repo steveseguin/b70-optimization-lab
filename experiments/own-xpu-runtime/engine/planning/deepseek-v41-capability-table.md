@@ -37,6 +37,8 @@ real sha256-verified GGUF bytes):
 | Compressor pooling + RMSNorm | `test_attn` A2 | f64 8.9e-16 |
 | Indexer score/topk/candidate blocks | `test_attn` A3 | score 9.5e-7; topk + mask exact |
 | Window ring idxs | `test_attn` A4 | bit-exact (4 cases) |
+| Engine `iq3::decode` Q2_K/IQ2_XXS/IQ2_XS/IQ1_S/MXFP4 (enum + layout + branch in `math.hpp`) | `test_engine_types` | bit-exact vs reference, synthetic + real bytes (third leg of the three-way) |
+| v41 directory geometry (`directory_v41.hpp`, real 1043-tensor directory) | `test_directory_v41` | derives exact admitted geometry; tampered directory rejected |
 
 **Corrections from the official `config.json`/`model.py`** (supersede the
 llama.cpp-derived rows where they differ): `score_func = sqrtsoftplus`
