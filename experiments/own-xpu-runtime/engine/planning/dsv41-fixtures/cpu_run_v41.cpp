@@ -395,14 +395,16 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                     for (int j = 0; j < full / 2; ++j) {
                         const float *k0 = cw.data() + (size_t)(2 * j) * HD, *k1 = k0 + HD;
                         const float *s0 = score.data() + (size_t)(2 * j) * HD, *s1 = s0 + HD;
-                        float mx = -1e30f;
-                        for (int i = 0; i < HD; ++i) mx = std::max(mx, std::max(s0[i], s1[i]));
-                        double d0 = 0, d1 = 0;
-                        for (int i = 0; i < HD; ++i) { d0 += std::exp(double(s0[i]) - mx); d1 += std::exp(double(s1[i]) - mx); }
-                        for (int i = 0; i < HD; ++i)
+                        // official: softmax JOINTLY over the slot axis per channel
+                        // (model.py score.softmax(dim=1); llama.cpp ggml_soft_max
+                        // over the ratio dim). An earlier per-slot denominator
+                        // version diverged at token 4.
+                        for (int i = 0; i < HD; ++i) {
+                            float mx = std::max(s0[i], s1[i]);
+                            double e0 = std::exp(double(s0[i]) - mx), e1 = std::exp(double(s1[i]) - mx);
                             latent_pre[(size_t)j * HD + i] =
-                                k0[i] * (float)(std::exp(double(s0[i]) - mx) / d0) +
-                                k1[i] * (float)(std::exp(double(s1[i]) - mx) / d1);
+                                k0[i] * (float)(e0 / (e0 + e1)) + k1[i] * (float)(e1 / (e0 + e1));
+                        }
                         rmsnorm(latent_pre.data() + (size_t)j * HD, lw(p + "attn_compressor_norm.weight").data(),
                                 HD, latent_pre.data() + (size_t)j * HD);
                     }
@@ -415,18 +417,14 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                     memcpy(CS.score_state.data() + (size_t)(start % 2) * HD, score.data(), HD * 4);
                     if ((start + 1) % 2 == 0) {
                         latent_pre.resize(HD);
-                        float mx = -1e30f;
-                        for (int i = 0; i < HD; ++i)
-                            mx = std::max(mx, std::max(CS.score_state[i], CS.score_state[HD + i]));
-                        double d0 = 0, d1 = 0;
                         for (int i = 0; i < HD; ++i) {
-                            d0 += std::exp(double(CS.score_state[i]) - mx);
-                            d1 += std::exp(double(CS.score_state[HD + i]) - mx);
-                        }
-                        for (int i = 0; i < HD; ++i)
+                            float mx = std::max(CS.score_state[i], CS.score_state[HD + i]);
+                            double e0 = std::exp(double(CS.score_state[i]) - mx);
+                            double e1 = std::exp(double(CS.score_state[HD + i]) - mx);
                             latent_pre[i] =
-                                CS.kv_state[i] * (float)(std::exp(double(CS.score_state[i]) - mx) / d0) +
-                                CS.kv_state[HD + i] * (float)(std::exp(double(CS.score_state[HD + i]) - mx) / d1);
+                                CS.kv_state[i] * (float)(e0 / (e0 + e1)) +
+                                CS.kv_state[HD + i] * (float)(e1 / (e0 + e1));
+                        }
                         rmsnorm(latent_pre.data(), lw(p + "attn_compressor_norm.weight").data(), HD, latent_pre.data());
                     }
                 }
@@ -753,6 +751,8 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "usage: %s ids.txt ndecode out_ids.txt [max_ctx] [engram.gguf]\n", argv[0]);
         return 2;
     }
+    std::vector<int> forced;
+    if (argc > 6) { std::ifstream ff(argv[6]); long long v; while (ff >> v) forced.push_back((int)v); }
     std::ifstream idf(argv[1]);
     std::vector<int> ids;
     long long v;
@@ -842,17 +842,27 @@ int main(int argc, char **argv) {
     rmsnorm(hx.data(), lw("output_norm.weight").data(), D, hx.data());
     gemv(S.at("output.weight"), hx.data(), logits.data());
     int next = (int)(std::max_element(logits.begin(), logits.end()) - logits.begin());
+    {
+        std::vector<int> ord(129280);
+        std::iota(ord.begin(), ord.end(), 0);
+        std::partial_sort(ord.begin(), ord.begin() + 5, ord.end(),
+                          [&](int a, int b) { return logits[a] > logits[b]; });
+        std::fprintf(stderr, "tok 0 -> %d | top5:", next);
+        for (int i = 0; i < 5; ++i) std::fprintf(stderr, " %d:%.4f", ord[i], logits[ord[i]]);
+        std::fprintf(stderr, "\n");
+    }
     std::vector<int> out_ids{next};
     std::fprintf(stderr, "prefill done; first token %d\n", next);
 
     for (int d = 1; d < ndecode; ++d) {
-        M.toks.push_back(next);
-        M.comp_ids.push_back(M.token_map[next]);
+        int feed = (d - 1 < (int)forced.size()) ? forced[d - 1] : next;
+        M.toks.push_back(feed);
+        M.comp_ids.push_back(M.token_map[feed]);
         int pos = P + d - 1;
         std::vector<float> s1(4 * D);
         {
             std::vector<float> row(D);
-            dequant_row(S.at("token_embd.weight"), next, row.data());
+            dequant_row(S.at("token_embd.weight"), feed, row.data());
             for (int j = 0; j < 4; ++j) memcpy(s1.data() + (size_t)j * D, row.data(), D * 4);
         }
         std::vector<float> pm(4, 0);

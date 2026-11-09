@@ -30,7 +30,7 @@ inline float sg_tree32(sycl::sub_group sg, float v) {
 // same math different order -> gate at +-1 bf16 ulp.
 struct RmsNorm {
     int n;
-    void operator()(sycl::nd_item<1> it, const uint16_t *x, const uint16_t *w,
+    void operator()(sycl::nd_item<1> it, const uint16_t *x, const float *w,
                     uint16_t *y) const {
         int lane = it.get_local_linear_id();
         sycl::sub_group sg = it.get_sub_group();
@@ -44,14 +44,15 @@ struct RmsNorm {
             acc += sycl::select_from_group(sg, acc, lane ^ w_);
         float rs = float(1.0 / sycl::sqrt(acc / n + 1e-20));
         for (int i = lane; i < n; i += 32)
-            y[base + i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[base + i]) * rs);
+            y[base + i] = ops41::bf16b(w[i] * (ops41::bf16(x[base + i]) * rs));
     }
 };
 
 struct Gemv {
     Type wtype; unsigned rows, cols; // x is bf16
+    bool f32out = false;             // logits parity: skip bf16 rounding
     void operator()(sycl::nd_item<1> it, const uint8_t *w, size_t row_bytes_,
-                    const uint16_t *x, uint16_t *y) const {
+                    const uint16_t *x, void *yv) const {
         auto sg = it.get_sub_group();
         unsigned l = sg.get_local_linear_id();
         unsigned r = it.get_group_linear_id();
@@ -60,7 +61,10 @@ struct Gemv {
         for (unsigned k = l; k < cols; k += 32)
             sum = sum + iq3::element(wtype, row, k) * ops41::bf16(x[k]);
         sum = sg_tree32(sg, sum);
-        if (l == 0) y[r] = ops41::bf16b(sum);
+        if (l == 0) {
+            if (f32out) reinterpret_cast<float *>(yv)[r] = sum;
+            else reinterpret_cast<uint16_t *>(yv)[r] = ops41::bf16b(sum);
+        }
     }
 };
 
@@ -162,10 +166,13 @@ struct WindowAppend {
 };
 
 // sparse_attn decode row: one work-item per head; serial slot order as host.
+// Dual bases: slot < win_rows reads the window ring, else kvc at
+// slot-win_rows (compress mirror) -- matching the runner's win_ptr/comp_ptr.
 struct SparseAttn {
-    int n_idx, heads, hd;
-    void operator()(sycl::nd_item<1> it, const uint16_t *q, const uint16_t *kv,
-                    const float *sinks, const int32_t *idxs, float *out) const {
+    int n_idx, heads, hd, win_rows;
+    void operator()(sycl::nd_item<1> it, const uint16_t *q, const uint16_t *kvw,
+                    const uint16_t *kvc, const float *sinks, const int32_t *idxs,
+                    float *out) const {
         int h = it.get_global_linear_id();
         if (h >= heads) return;
         const float scale = 1.0f / sycl::sqrt(float(hd));
@@ -176,7 +183,8 @@ struct SparseAttn {
         for (int i = 0; i < n_idx; ++i) {
             int slot = idxs[i];
             if (slot < 0) continue;
-            const uint16_t *k = kv + (size_t)slot * hd;
+            const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * hd
+                                                : kvc + (size_t)(slot - win_rows) * hd;
             float acc = 0;
             for (int j = 0; j < hd; ++j) acc += ops41::bf16(qh[j]) * ops41::bf16(k[j]);
             logits[live++] = acc * scale;
@@ -192,7 +200,8 @@ struct SparseAttn {
             int slot = idxs[i];
             if (slot < 0) continue;
             float w = logits[li++] / sum;
-            const uint16_t *k = kv + (size_t)slot * hd;
+            const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * hd
+                                                : kvc + (size_t)(slot - win_rows) * hd;
             for (int j = 0; j < hd; ++j) o[j] += w * ops41::bf16(k[j]);
         }
     }
@@ -425,6 +434,99 @@ struct EmbedRow {
         auto l = iq3::layout(t);
         out[i] = ops41::bf16b(
             iq3::decode(t, row + (size_t)(i / l.elements) * l.bytes, i % l.elements));
+    }
+};
+
+// candidate mask application: score[j] = mask[j] ? score[j] : -inf
+struct MaskApply {
+    int T_;
+    void operator()(sycl::nd_item<1> it, float *score, const uint8_t *mask) const {
+        int j = it.get_global_linear_id();
+        if (j >= T_) return;
+        if (!mask[j]) score[j] = -INFINITY;
+    }
+};
+
+// f32 -> bf16 row convert (sparse_attn f32 out feeds rope/grouped gemv in bf16)
+struct ToBf16 {
+    int n;
+    void operator()(sycl::nd_item<1> it, const float *x, uint16_t *y) const {
+        int i = it.get_global_linear_id();
+        if (i >= n) return;
+        y[i] = ops41::bf16b(x[i]);
+    }
+};
+
+// broadcast: streams[j][i] = x[i] for all 4 streams (identity at token start).
+struct Broadcast4 {
+    int h;
+    void operator()(sycl::nd_item<1> it, const uint16_t *x, uint16_t *streams) const {
+        int i = it.get_global_linear_id();
+        if (i >= h) return;
+        uint16_t v = x[i];
+        for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = v;
+    }
+};
+
+// routed_gemv: group per (slot, row); expert bank row = ids[slot]*rows + row.
+// Lane order/tree32 identical to Gemv -> bit-exact vs host per-expert gemv.
+struct RoutedGemv {
+    iq3::Type t; unsigned rows, cols; // per-expert matrix shape
+    void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x,
+                    const uint32_t *ids, uint16_t *out) const {
+        unsigned g = it.get_global_linear_id();
+        unsigned slot = g / (rows * 32), r = (g / 32) % rows;
+        if (slot >= 6) return;
+        auto l = iq3::layout(t);
+        size_t rb = (size_t)(cols / l.elements) * l.bytes;
+        const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * rb;
+        sycl::sub_group sg = it.get_sub_group();
+        int lane = it.get_local_linear_id();
+        float a = iq3::lane_dot(t, row, x, iq3::Type::BF16, cols, lane);
+        for (int w_ = 16; w_; w_ >>= 1)
+            a += sycl::select_from_group(sg, a, lane ^ w_);
+        if (lane == 0) out[slot * rows + r] = ops41::bf16b(a);
+    }
+};
+
+// bf16 -> f32 (compressor group state writes)
+struct ToF32 {
+    int n;
+    void operator()(sycl::nd_item<1> it, const uint16_t *x, float *y) const {
+        int i = it.get_global_linear_id();
+        if (i >= n) return;
+        y[i] = ops41::bf16(x[i]);
+    }
+};
+
+// candidate blocks (layer 20, decode m=1): per-channel max over 8-blocks,
+// last block forced, top-2048 selection (fixture select_candidate_blocks
+// order: strict >, first-max ties, -inf dropped), mask bytes out.
+struct CandidateBlocks {
+    int T_, bs, topk_blocks;
+    void operator()(sycl::nd_item<1> it, const float *score, const int64_t *lens,
+                    uint8_t *mask) const {
+        if (it.get_global_linear_id() != 0) return;
+        int nb = (T_ + bs - 1) / bs;
+        float bsc[2048];
+        for (int b = 0; b < nb; ++b) bsc[b] = -INFINITY;
+        for (int j = 0; j < T_; ++j) {
+            float v = score[j];
+            if (v > bsc[j / bs]) bsc[j / bs] = v;
+        }
+        int last = (int)((lens[0] - 1) / bs);
+        bsc[last] = INFINITY;
+        uint8_t keep[2048] = {};
+        for (int i = 0; i < topk_blocks && i < nb; ++i) {
+            int best = -1;
+            for (int b = 0; b < nb; ++b) {
+                if (keep[b]) continue;
+                if (best < 0 || bsc[b] > bsc[best] || (bsc[b] == bsc[best] && b < best)) best = b;
+            }
+            if (best < 0 || bsc[best] == -INFINITY) break;
+            keep[best] = 1;
+        }
+        for (int j = 0; j < T_; ++j) mask[j] = keep[j / bs];
     }
 };
 

@@ -151,19 +151,21 @@ inline void window_append(uint16_t *ring, const uint16_t *kv, int win, int d,
 
 // sparse_attn41 decode row: per head, softmax over sinks + selected slots
 // (window row then compress row; -1 skips; scale = hd^-0.5).
-inline void sparse_attn(const uint16_t *q, const uint16_t *kv,
+// Dual bases: slot < win_rows reads the window ring, else kv_c.
+inline void sparse_attn(const uint16_t *q, const uint16_t *kv_w, const uint16_t *kv_c,
                         const float *sinks, const int32_t *idxs, int n_idx,
-                        int heads, int hd, float *out) {
-  const float scale = 1.0f / std::sqrt(float(hd));
-  for (int h = 0; h < heads; ++h) {
-    const uint16_t *qh = q + h * hd;
-    std::vector<float> logits(n_idx + 1);
-    logits[0] = sinks[h];
-    int live = 1;
-    for (int i = 0; i < n_idx; ++i) {
-      int slot = idxs[i];
-      if (slot < 0) continue;
-      const uint16_t *k = kv + slot * hd;
+                        int heads, int hd, int win_rows, float *out) {
+    const float scale = 1.0f / std::sqrt(float(hd));
+    for (int h = 0; h < heads; ++h) {
+        const uint16_t *qh = q + h * hd;
+        std::vector<float> logits(n_idx + 1);
+        logits[0] = sinks[h];
+        int live = 1;
+        for (int i = 0; i < n_idx; ++i) {
+            int slot = idxs[i];
+            if (slot < 0) continue;
+            const uint16_t *k = slot < win_rows ? kv_w + (size_t)slot * hd
+                                                : kv_c + (size_t)(slot - win_rows) * hd;
       float acc = 0;
       for (int j = 0; j < hd; ++j) acc += bf16(qh[j]) * bf16(k[j]);
       logits[live++] = acc * scale;
@@ -178,7 +180,8 @@ inline void sparse_attn(const uint16_t *q, const uint16_t *kv,
       int slot = idxs[i];
       if (slot < 0) continue;
       float w = logits[li++] / sum;
-      const uint16_t *k = kv + slot * hd;
+      const uint16_t *k = slot < win_rows ? kv_w + (size_t)slot * hd
+                                          : kv_c + (size_t)(slot - win_rows) * hd;
       for (int j = 0; j < hd; ++j) o[j] += w * bf16(k[j]);
     }
     for (int j = 0; j < hd; ++j) out[h * hd + j] = o[j];

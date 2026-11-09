@@ -177,7 +177,7 @@ int main() {
         for (int i = 0; i < 128; ++i) idxs[i] = rng() % 128;
         for (int i = 128; i < n_idx; ++i) idxs[i] = (rng() % 4 == 0) ? -1 : 128 + rng() % 512;
         std::vector<float> href(heads * hd), dev(heads * hd);
-        ops41::sparse_attn(qv.data(), kv.data(), sinks.data(), idxs.data(), n_idx, heads, hd, href.data());
+        ops41::sparse_attn(qv.data(), kv.data(), kv.data() + (size_t)128 * hd, sinks.data(), idxs.data(), n_idx, heads, hd, 128, href.data());
         auto *dq = sycl::malloc_device<uint16_t>(qv.size(), q);
         auto *dk = sycl::malloc_device<uint16_t>(kv.size(), q);
         auto *dsn = sycl::malloc_device<float>(heads, q);
@@ -188,8 +188,8 @@ int main() {
         q.memcpy(dsn, sinks.data(), heads * 4);
         q.memcpy(dix, idxs.data(), n_idx * 4);
         q.submit([&](sycl::handler &hh) {
-             ops41sycl::SparseAttn k{n_idx, heads, hd};
-             hh.parallel_for(sycl::nd_range<1>((size_t)heads, 8), [=](sycl::nd_item<1> it) { k(it, dq, dk, dsn, dix, do2); });
+             ops41sycl::SparseAttn k{n_idx, heads, hd, 128};
+             hh.parallel_for(sycl::nd_range<1>((size_t)heads, 8), [=](sycl::nd_item<1> it) { k(it, dq, dk, dk + (size_t)128 * hd, dsn, dix, do2); });
          }).wait();
         q.memcpy(dev.data(), do2, heads * hd * 4).wait();
         check_f32("sparse_attn", href.data(), dev.data(), heads * hd, 1e-4f);
@@ -451,19 +451,20 @@ int main() {
     // --- RmsNorm (+-1 ulp: device lane-order double sum vs host serial) ---
     {
         const int n = 5120;
-        std::vector<uint16_t> x(n), w(n), href(n), dev(n);
+        std::vector<uint16_t> x(n), href(n), dev(n);
+        std::vector<float> w(n);
         for (auto &v : x) v = rbf16();
-        for (auto &v : w) v = rbf16(0.5f, 1.5f);
+        for (auto &v : w) { std::uniform_real_distribution<float> d(0.5f, 1.5f); v = d(rng); }
         double sq = 0;
         for (int i = 0; i < n; ++i) { float v = ops41::bf16(x[i]); sq += double(v) * v; }
         float rs = float(1.0 / std::sqrt(sq / n + 1e-20));
         for (int i = 0; i < n; ++i)
-            href[i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[i]) * rs);
+            href[i] = ops41::bf16b(w[i] * (ops41::bf16(x[i]) * rs));
         auto *dxn = sycl::malloc_device<uint16_t>(n, q);
-        auto *dwn = sycl::malloc_device<uint16_t>(n, q);
+        auto *dwn = sycl::malloc_device<float>(n, q);
         auto *dyn = sycl::malloc_device<uint16_t>(n, q);
         q.memcpy(dxn, x.data(), n * 2);
-        q.memcpy(dwn, w.data(), n * 2);
+        q.memcpy(dwn, w.data(), n * 4);
         q.submit([&](sycl::handler &hh) {
              ops41sycl::RmsNorm kk{n};
              hh.parallel_for(sycl::nd_range<1>(32, 32),
