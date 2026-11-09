@@ -17,7 +17,7 @@ class BundleError(ValueError):
     pass
 
 
-SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv charconv chrono cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring deque filesystem fstream functional iomanip iostream limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
+SYSTEM_HEADERS = set("algorithm array atomic bit cassert cctype cerrno cfenv charconv chrono climits cmath condition_variable csignal cstddef cstdint cstdio cstdlib cstring deque filesystem fstream functional iomanip iostream iterator limits map memory mutex numeric optional ostream random set span sstream stdexcept string string_view thread tuple type_traits typeinfo unordered_map unordered_set utility variant vector fcntl.h poll.h sched.h unistd.h".split())
 SYSTEM_PREFIXES = ("sycl/", "openssl/", "level_zero/", "sys/", "linux/")
 
 
@@ -122,6 +122,8 @@ def prepare(engine):
     required = [prefix + "/" + name for name in ("README.md", "build.py", "build-manifest.json")]
     optional = sorted(name for name in tracked if any(name.startswith(prefix + "/" + folder + "/")
                       for folder in ("planning", "release", "deployment", "profiles")))
+    if prefix + "/DEVELOPING.md" in tracked:
+        optional.append(prefix + "/DEVELOPING.md")
     if b"from deployment.prepare import" in (engine / "build.py").read_bytes():
         required += [prefix + "/deployment/" + name for name in ("prepare.py", "bound.hpp.in")]
     dynamic = sorted({name for trigger,names in DYNAMIC_RUNTIME_GROUPS
@@ -148,6 +150,16 @@ def prepare(engine):
         rel = path.relative_to(engine).as_posix()
         contents[rel] = data
         inputs.append({"path": name, "sha256": digest(data), "bytes": len(data)})
+    # Carry the repository license into standalone developer snapshots, while
+    # preserving compatibility with historical trees that have no root license.
+    if git(root, "ls-files", "--", "LICENSE").strip():
+        license_path = root / "LICENSE"
+        original = git(root, "show", commit + ":LICENSE")
+        if (not license_path.is_file() or license_path.is_symlink()
+                or license_path.read_bytes() != original):
+            raise BundleError("Missing or changed repository LICENSE")
+        contents["LICENSE"] = original
+        inputs.append({"path": "LICENSE", "sha256": digest(original), "bytes": len(original)})
     source = {name[4:]: data for name, data in contents.items() if name.startswith("src/")}
     original_manifest = json.loads(contents["build-manifest.json"])
     units = original_manifest["translation_units"]

@@ -109,6 +109,25 @@ class SourceBundleTests(unittest.TestCase):
         with self.assertRaisesRegex(bundle.BundleError,'Unknown angle include'):
             bundle.prepare(self.engine)
 
+    def test_current_cpp_standard_headers_are_inventoried(self):
+        self.write("src/main.cpp", "#include <iterator>\n#include <climits>\n")
+        self.commit()
+        _, report = bundle.prepare(self.engine)
+        self.assertEqual(report["external_system_headers"], ["climits", "iterator"])
+
+    def test_developer_guide_and_root_license_are_committed_inputs(self):
+        self.write("DEVELOPING.md", "Build and extend the engine.\n")
+        (self.root / "LICENSE").write_text("Fixture license\n")
+        self.git("add", "LICENSE")
+        self.commit()
+        contents, report = bundle.prepare(self.engine)
+        self.assertEqual(contents["DEVELOPING.md"], b"Build and extend the engine.\n")
+        self.assertEqual(contents["LICENSE"], b"Fixture license\n")
+        self.assertIn("LICENSE", {row["path"] for row in report["inputs"]})
+        (self.root / "LICENSE").write_text("Changed license\n")
+        with self.assertRaisesRegex(bundle.BundleError, "changed repository LICENSE"):
+            bundle.prepare(self.engine)
+
     def test_supplemental_host_header_is_committed_and_hash_bound(self):
         path = self.root / "gsq-rco-iq3s/integration/host-support/device_validation.hpp"
         path.parent.mkdir(parents=True)

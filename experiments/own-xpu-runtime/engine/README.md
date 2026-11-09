@@ -1,5 +1,9 @@
 # Own XPU runtime engine: canonical source tree
 
+For a new development computer, start with [DEVELOPING.md](DEVELOPING.md):
+source checkout, build prerequisites, CPU tests and the DeepSeek V4.1 porting
+handoff. DeepSeek is a planned model adapter, not current executable support.
+
 This is the single source tree of our own B70 runtime. It starts from the exact files that
 built the SC117 service binary `17c3c5c2…`.
 - That engine had grown as a chain of packet overlays: copied `source-v2` trees, absolute `#include` paths and
