@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 9, 2026 ~03:00 UTC — DeepSeek-V4.1-Flash-1017 engine lane: download + CPU parity + device kernels done; SYCL executor is next.**
+- Weights on `/mnt/fast-ai` (9100 PRO): `llm-models/DeepSeek-V4.1-Flash-1017-GGUF/UD-IQ2_XXS/` = 165.3GB backbone shards 1-5 + shard 6 = Q5_K engram table 135.2GB (byte-identical to the repo's separate engram/ Q5_K; duplicate deleted). Plus dspark Q8_0 7.5GB, mmproj BF16. 150GB disk free.
+- Model facts: 552B backbone + 196B engram, 40 layers, hc_mult 4, heads 64x512, q_lora 1280, 384+1 experts top-6 (moe_inter 2304), kv sources 2/8/14/20 (ratio 2,2,2,1), index sources +24/28/32/36, candidate source 20 (top 2048 blocks of 8), window 128, index_topk 512, engram layers 1/14 (24 lookups of 256 from 384M-row Q5_K tables), YaRN rope on compress layers (theta 160000, factor 16, beta 32/1, orig 65536).
+- CPU bring-up runner `engine/planning/dsv41-fixtures/cpu_run_v41.cpp` VALIDATED vs live llama.cpp 7d7f02875 greedy on UD-IQ2_XXS: tokens exact through first 4 generated; token-5 split is a 0.21-logit tie (llama.cpp's own runs disagree at a 0.18 tie). Build/run instructions in `engine/planning/dsv41-fixtures/README.md`. Engram prep tables via official engram.py + real tokenizer -> `data/dsv41-reference/engram_prep.bin` (vocab 99092 asserted).
+- Admission slice committed: profile `engine/profiles/dsv41-iq2xxs/profile.json`, plan-only validation on real files (165.3GB+135.2GB stat-verified), prepare() gated pending v41 binding header.
+- Device kernels `src/stage2/packet3/kernels/sycl_v41.hpp`: full decode op set, 19/19 device gates pass on Arc Pro B70 (`test_ops_v41_device.cpp`). Gotchas: libumf.so.1 must be on LD_LIBRARY_PATH for Level Zero adapters (setvars gap); B70 rejects non-uniform work-groups (pad ranges, guard inside). 12 SYCL devices = 6 dual-tile B70 x ~31GiB.
+- llama.cpp ground-truth server: `LD_LIBRARY_PATH=/opt/intel/oneapi/compiler/latest/lib:/opt/intel/oneapi/dnnl/latest/lib:/opt/intel/oneapi/umf/latest/lib /home/steve/src/llama.cpp-dsv41-20261108/build-jit/bin/llama-server -m <shard1> --port 18241 -ngl 99 -c 8192 --jinja` (~12 min load; SYCL4 940MiB compute-buffer alloc failure is recovered automatically).
+- NEXT: backend_v41 executor (12-tile layer placement ~14GB/tile, one-time 165GB upload, activation hops ~10KB; engram rows host-gather + H2D to layers 1/14 owners; per-layer op sequence from plan_v41.hpp launches; gate = per-layer fixtures vs CPU runner, then 64-token bit-parity run). Then kernel optimization rounds toward the 590GB/s ceiling per SC117 playbook. SC117 lane untouched, its host-halt policy still applies to its own cards schedule.
+
 **November 4, 21:20 EST — LAN server live without the shutdown timer; real Pi coding and compaction tests passed.**
 - One start at20:26:30, ready20:47:14; no restarts or new GPU faults. Persistent
   build `69d73cd6efa2` and assets survive reboot, but these transient service units
