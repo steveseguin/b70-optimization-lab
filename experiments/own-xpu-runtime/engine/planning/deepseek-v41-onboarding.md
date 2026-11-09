@@ -1,7 +1,9 @@
 # DeepSeek V4.1 Flash: native engine onboarding handoff
 
 Read-only audit findings, 2026-11-08. This packet supports development on
-another computer. Its hardware and exact target release remain unconfirmed.
+another computer. The owner targets **Unsloth Dynamic 3.0 GGUF of DeepSeek
+V4.1 Flash used with llama.cpp**. Hardware, exact filenames, quant variant and
+revision remain unconfirmed; do not silently choose 1017 or today's latest files.
 **DeepSeek support is not implemented or qualified in the native engine.**
 
 ## Source baseline and boundaries
@@ -16,6 +18,28 @@ admission checks. No training is authorized.
 The current profile admits SC117 `qwen4exp`, F32 activations and native context
 4096. Other model geometry, formats and state layouts require an explicit new
 capability path. Metadata planning alone does not supply native support.
+The broader goal is reusable model and per-tensor quant interfaces that make
+later onboarding and optimization quicker; no hours/days completion guarantee
+follows from that goal. llama.cpp supplies a reference graph, GGUF semantics and
+comparison execution; our native engine remains our own implementation.
+
+## GGUF target takes priority
+
+Unsloth's [model card](https://huggingface.co/unsloth/DeepSeek-V4.1-Flash-1017-GGUF/blob/2688c0c3c2c3b052ec4f6d10a8417b0ef7ee4eba/README.md)
+and [local guide](https://unsloth.ai/docs/models/deepseek-v4.1-flash) confirm a
+GGUF release for llama.cpp. Metadata-only inspection returned repository SHA
+`2688c0c3c2c3b052ec4f6d10a8417b0ef7ee4eba`; its filenames include distinct
+`UD-IQ3_S`, `UD-IQ3_XXS` and `UD-Q3_K_XL` shard sets, among other variants.
+This is an observed candidate repository, not the owner's selected artifact.
+The guide now advertises Dynamic V3.1, so latest `main` does not identify the
+requested Dynamic 3.0 generation. **Dynamic 3.0 is a quantization generation,
+not a declaration that every tensor is 3-bit.** Do not infer a filename from it.
+
+Prioritize actual GGUF architecture metadata, per-tensor quant types, shapes,
+block layouts/scales and any separate Engram/vision artifacts. Pin the matching
+llama.cpp revision and supported graph semantics. The official FP8/FP4 config
+below is architecture reference, not the chosen GGUF's storage contract;
+implementing its native FP4 loader would not establish GGUF support.
 
 ## Verified official inputs
 
@@ -71,20 +95,24 @@ dimensions into this adapter or transfer old speed claims.
 
 ## Ordered development gates
 
-1. **Fix identity and scope.** Choose Flash or 1017 and text-first scope;
-   authenticate shard/header metadata, tokenizer, encoder and reference sources
-   at the chosen revision. Keep formats, model geometry, topology and tuning
-   separate. Do not download weights until storage and source requirements pass.
+1. **Fix identity and scope.** Obtain the owner's GGUF repository revision,
+   variant, complete shard names and any separate Engram/vision artifacts;
+   authenticate GGUF headers, tokenizer/encoding and matching llama.cpp reference.
+   Keep formats, geometry, topology and tuning separate. Pending exact identity
+   does not block CPU source review; do not download weights for this handoff.
 2. **Inventory and budget on CPU.** Account for every tensor's actual packed
    bytes and scales, Engram tables, host shadows, expanded weights, runtime
    reserves, caches, scratch and checkpoint/rollback copies. HF metadata reports
-   about 763B stored parameter entries for both candidates; this is not a byte
-   size or a residency guarantee. Select execution placement from actual hardware.
-3. **Build independent operator fixtures.** Cover FP8/FP4 decoding and scaling,
+   about 763B stored parameter entries for the official candidates; that is not
+   the selected GGUF's byte size or a residency guarantee. Use actual GGUF types
+   and storage lengths; select execution placement from actual hardware.
+3. **Build independent operator fixtures.** Cover required GGUF decoding/scaling,
    routing, Hyper-Connections, Engram hashing/history, attention/index selection,
    RoPE and shared-cache lifetime. Engram remains required for text inference.
 4. **Implement plain autoregressive text inference.** Gate one operator, one
-   layer, then short prefill/decode against the selected official reference.
+   layer, then short prefill/decode against a pinned same-GGUF reference. Use
+   official model code to resolve architecture semantics, not as an oracle for
+   different quantized weight bytes.
    Preserve declared cache precision and record arithmetic differences explicitly.
    Keep independent-reference fidelity separate from repeatability/internal parity.
 5. **Qualify lifecycle and transport.** Prove cold reset, append, state ownership
@@ -95,5 +123,18 @@ dimensions into this adapter or transfer old speed claims.
    multi-device execution, DSpark and vision through separate qualified gates;
    do not inherit SC117 tuning or older V4 acceptance/performance results.
 
-This handoff authorizes no GPU launch, build, service change or host setting
-change. Follow the receiving workspace's main-only Git and fault-handling rules.
+## Small first task for the incoming AI
+
+CPU only: inspect the canonical loader/kernel capability inventory and the
+selected llama.cpp DeepSeek graph/metadata readers. Produce one table of required
+operators and GGUF tensor formats versus implemented native support, with source
+paths and a smallest missing fixture for each gap. Mark unknown tensor types
+pending the exact GGUF header instead of guessing them. If identity is still
+pending, finish the source-side architecture inventory and clearly label it
+provisional. Do not attempt the whole adapter, run a model, or relax admission
+guards as this first task. A second AI should be able to pick one bounded gap
+from the table and implement it without re-auditing the entire engine.
+
+Use [DEVELOPING.md](../DEVELOPING.md) for the build. This architecture inventory
+does not qualify a GPU launch or require service or host-setting changes.
+Follow the receiving workspace's main-only Git and fault-handling rules.

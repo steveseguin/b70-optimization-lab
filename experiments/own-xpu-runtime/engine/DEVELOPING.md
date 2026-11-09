@@ -4,6 +4,9 @@ Start here for source development, including the planned DeepSeek V4.1 Flash
 adapter. The current executable implements the SC117/Qwen family. DeepSeek
 support is not implemented; its [onboarding plan](planning/deepseek-v41-onboarding.md)
 identifies the new operators, model metadata and reference gates it needs.
+The requested first target is an Unsloth Dynamic 3.0 GGUF used with llama.cpp;
+the exact quantization file/revision is still to be pinned. Dynamic 3.0 names
+the quantization generation, not a uniform tensor bit width.
 
 You can compile the engine and run the CPU tests without model weights or an
 available GPU. Executing inference additionally needs supported Intel hardware,
