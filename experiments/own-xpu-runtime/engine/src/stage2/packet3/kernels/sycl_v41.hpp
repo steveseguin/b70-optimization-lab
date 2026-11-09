@@ -72,6 +72,23 @@ struct Gemv {
 // format is a template argument, so iq3::decode folds to one format's field
 // equations (the runtime-type kernels re-select the format per element).
 // Same element values, same lane order, same reductions -> bit-identical.
+// Activation storage policy. The executor's buffers between operators are
+// either BF16 (8 significant bits, the official model's style, the original
+// bring-up) or F32. F32 is the default: BF16 activations add about 1 % of
+// noise per layer output, enough to flip a 0.4-logit token against the f32
+// reference (seen at token 27 of the first six-card run). KV rows (window
+// rings, compressed rows, index keys) are BF16 in both modes.
+struct ActBF16 {
+    using T = uint16_t;
+    static float rd(T v) { return ops41::bf16(v); }
+    static T wr(float f) { return ops41::bf16b(f); }
+};
+struct ActF32 {
+    using T = float;
+    static float rd(T v) { return v; }
+    static T wr(float f) { return f; }
+};
+
 // Element decode for the specialized kernels. Same field equations as
 // iq3::decode (packet2/kernels/math.hpp, left untouched: the SC117 build
 // identity includes it); the only change is how the magnitude byte leaves a
@@ -140,8 +157,8 @@ inline uint32_t sign7_bit(uint32_t k, unsigned j) {
 // on the host. Kernel microbench 2026-11-09 (G elements/s, per-element form
 // -> this): IQ2_XXS 23 -> 302, IQ3_XXS 53 -> 301, IQ1_S 129 -> 334,
 // IQ2_XS 131 -> 293, IQ2_S 62 -> 266, Q5_K 49 -> 129.
-template <iq3::Type T>
-[[gnu::always_inline]] inline float lane_sum_t(const uint8_t *row, const uint16_t *x, unsigned cols, unsigned lane) {
+template <iq3::Type T, typename A = ActBF16>
+[[gnu::always_inline]] inline float lane_sum_t(const uint8_t *row, const typename A::T *x, unsigned cols, unsigned lane) {
     using iq3::half;
     using iq3::u16;
     using iq3::u32;
@@ -153,34 +170,34 @@ template <iq3::Type T>
         for (unsigned blk = 0; blk < cols / 256; ++blk) {
             const uint8_t *b = row + (size_t)blk * 66;
             const float d = half(u16(b));
-            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            const typename A::T *xb = x + (size_t)blk * 256 + lane;
             for (unsigned g = 0; g < 8; ++g) {
                 const uint32_t lo = u32(b + 2 + 8 * g), hi = u32(b + 6 + 8 * g);
                 const float db = (d * (0.5f + float(hi >> 28))) * 0.25f;
                 const uint32_t mag = grid64_byte(iq3::iq2_xxs_grid, (lo >> (8 * l8)) & 255, j);
                 const int sign = sign7_bit((hi >> (7 * l8)) & 127, j) ? -1 : 1;
-                sum = sum + ((db * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
+                sum = sum + ((db * float(mag)) * float(sign)) * A::rd(xb[g * 32]);
             }
         }
     } else if constexpr (T == iq3::Type::IQ2_XS) {
-        for (unsigned blk = 0; blk < cols / 256; ++blk) {
-            const uint8_t *b = row + (size_t)blk * 74;
+        // flat chunk loop: the block->chunk nest is wrong on the B70 for this
+        // format with f32 activations (same hazard as IQ2_S below)
+        for (unsigned c = 0; c < cols / 32; ++c) {
+            const uint8_t *b = row + (size_t)(c >> 3) * 74;
+            const unsigned g = c & 7u;
             const float d = half(u16(b));
-            const uint16_t *xb = x + (size_t)blk * 256 + lane;
-            for (unsigned g = 0; g < 8; ++g) {
-                const uint32_t a0 = u32(b + 2 + 8 * g), a1 = u32(b + 6 + 8 * g);
-                const uint32_t aux = ((l8 < 2 ? a0 : a1) >> (16 * (l8 & 1))) & 0xffffu;
-                const unsigned sc = (b[66 + g] >> (4 * (l8 >> 1))) & 15;
-                const uint32_t mag = grid64_byte(iq3::iq2_xs_grid, aux & 511, j);
-                const int sign = sign7_bit(aux >> 9, j) ? -1 : 1;
-                sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
-            }
+            const uint32_t a0 = u32(b + 2 + 8 * g), a1 = u32(b + 6 + 8 * g);
+            const uint32_t aux = ((l8 < 2 ? a0 : a1) >> (16 * (l8 & 1))) & 0xffffu;
+            const unsigned sc = (b[66 + g] >> (4 * (l8 >> 1))) & 15;
+            const uint32_t mag = grid64_byte(iq3::iq2_xs_grid, aux & 511, j);
+            const int sign = sign7_bit(aux >> 9, j) ? -1 : 1;
+            sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * A::rd(x[(c << 5) | lane]);
         }
     } else if constexpr (T == iq3::Type::IQ1_S) {
         for (unsigned blk = 0; blk < cols / 256; ++blk) {
             const uint8_t *b = row + (size_t)blk * 50;
             const float d = half(u16(b));
-            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            const typename A::T *xb = x + (size_t)blk * 256 + lane;
             for (unsigned g = 0; g < 8; ++g) {
                 const uint32_t qh = u16(b + 34 + 2 * g);
                 const float dl = d * float(2 * ((qh >> 12) & 7) + 1);
@@ -188,7 +205,7 @@ template <iq3::Type T>
                 const uint32_t qs = u32(b + 2 + 4 * g);
                 const unsigned ix = ((qs >> (8 * l8)) & 255) | (((qh >> (3 * l8)) & 7) << 8);
                 const int code = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, ix, j))));
-                sum = sum + (dl * (float(code) + delta)) * ops41::bf16(xb[g * 32]);
+                sum = sum + (dl * (float(code) + delta)) * A::rd(xb[g * 32]);
             }
         }
     } else if constexpr (T == iq3::Type::IQ2_S) {
@@ -206,14 +223,14 @@ template <iq3::Type T>
             const uint32_t mag = grid64_byte(iq3::iq2_s_grid, ix, j);
             const int sign = ((b[34 + 4 * g + l8] >> j) & 1) ? -1 : 1;
             const unsigned sc = (scb >> (4 * (lane >> 4))) & 15;
-            sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * ops41::bf16(x[(c << 5) | lane]);
+            sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * A::rd(x[(c << 5) | lane]);
         }
     } else if constexpr (T == iq3::Type::IQ3_XXS) {
         const unsigned l4 = lane >> 2;
         for (unsigned blk = 0; blk < cols / 256; ++blk) {
             const uint8_t *b = row + (size_t)blk * 98;
             const float d = half(u16(b));
-            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            const typename A::T *xb = x + (size_t)blk * 256 + lane;
             for (unsigned g = 0; g < 8; ++g) {
                 const uint32_t word = u32(b + 66 + 4 * g);
                 const uint32_t code = (word >> (7 * l8)) & 127;
@@ -221,7 +238,7 @@ template <iq3::Type T>
                 const uint32_t w0 = u32(b + 2 + 8 * g), w1 = u32(b + 6 + 8 * g);
                 const unsigned gi = ((l4 < 4 ? w0 : w1) >> (8 * (l4 & 3))) & 255;
                 const uint32_t mag = (iq3::iq3_grid[gi] >> (8 * (lane & 3))) & 255;
-                sum = sum + ((((d * (0.5f + float(word >> 28))) * 0.5f) * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
+                sum = sum + ((((d * (0.5f + float(word >> 28))) * 0.5f) * float(mag)) * float(sign)) * A::rd(xb[g * 32]);
             }
         }
     } else if constexpr (L.elements >= 32) {
@@ -230,61 +247,62 @@ template <iq3::Type T>
         for (unsigned c = 0; c < chunks; ++c) {
             const uint8_t *blk = row + (size_t)(c / CPB) * L.bytes;
             const unsigned i = ((c % CPB) << 5) | lane;
-            sum = sum + dec_t<T>(blk, i) * ops41::bf16(x[(c << 5) | lane]);
+            sum = sum + dec_t<T>(blk, i) * A::rd(x[(c << 5) | lane]);
         }
     } else {
         for (unsigned k = lane; k < cols; k += 32)
-            sum = sum + dec_t<T>(row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * ops41::bf16(x[k]);
+            sum = sum + dec_t<T>(row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * A::rd(x[k]);
     }
     return sum;
 }
 // reference form of the same lane sum (per-element iq3::decode); gates and benches compare against it
-template <iq3::Type T>
-[[gnu::always_inline]] inline float lane_sum_ref(const uint8_t *row, const uint16_t *x, unsigned cols, unsigned lane) {
+template <iq3::Type T, typename A = ActBF16>
+[[gnu::always_inline]] inline float lane_sum_ref(const uint8_t *row, const typename A::T *x, unsigned cols, unsigned lane) {
     constexpr auto L = iq3::layout(T);
     float sum = 0;
     for (unsigned k = lane; k < cols; k += 32)
-        sum = sum + iq3::decode(T, row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * ops41::bf16(x[k]);
+        sum = sum + iq3::decode(T, row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * A::rd(x[k]);
     return sum;
 }
-template <iq3::Type T> struct GemvT {
+template <iq3::Type T, typename A = ActBF16> struct GemvT {
     unsigned rows, cols;
     bool f32out = false;
-    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x, void *yv) const {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *x, void *yv) const {
         constexpr auto L = iq3::layout(T);
         const size_t rb = (size_t)(cols / L.elements) * L.bytes;
         auto sg = it.get_sub_group();
         unsigned l = sg.get_local_linear_id();
         unsigned r = it.get_group_linear_id();
         const uint8_t *row = w + (size_t)r * rb;
-        float sum = lane_sum_t<T>(row, x, cols, l);
+        float sum = lane_sum_t<T, A>(row, x, cols, l);
         sum = sg_tree32(sg, sum);
         if (l == 0) {
             if (f32out) reinterpret_cast<float *>(yv)[r] = sum;
-            else reinterpret_cast<uint16_t *>(yv)[r] = ops41::bf16b(sum);
+            else reinterpret_cast<typename A::T *>(yv)[r] = A::wr(sum);
         }
     }
 };
-template <iq3::Type T> struct GemvGroupedQT {
+template <iq3::Type T, typename A = ActBF16> struct GemvGroupedQT {
     unsigned n, k;
-    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *o, uint16_t *out) const {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *o,
+                                     typename A::T *out) const {
         constexpr auto L = iq3::layout(T);
         const size_t rb = (size_t)(k / L.elements) * L.bytes;
         auto sg = it.get_sub_group();
         unsigned l = sg.get_local_linear_id();
         unsigned r = it.get_group_linear_id();
         const uint8_t *row = w + (size_t)r * rb;
-        const uint16_t *xg = o + (size_t)(r / n) * k;
-        float sum = lane_sum_t<T>(row, xg, k, l);
+        const typename A::T *xg = o + (size_t)(r / n) * k;
+        float sum = lane_sum_t<T, A>(row, xg, k, l);
         sum = sg_tree32(sg, sum);
-        if (l == 0) out[r] = ops41::bf16b(sum);
+        if (l == 0) out[r] = A::wr(sum);
     }
 };
-template <iq3::Type T> struct RoutedGemvT {
+template <iq3::Type T, typename A = ActBF16> struct RoutedGemvT {
     unsigned rows, cols; // per-expert matrix shape
     bool per_slot_x = false;
-    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const uint16_t *x,
-                                     const uint32_t *ids, uint16_t *out) const {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *x,
+                                     const uint32_t *ids, typename A::T *out) const {
         constexpr auto L = iq3::layout(T);
         const size_t rb = (size_t)(cols / L.elements) * L.bytes;
         // slot/row from the GROUP id: uniform across the sub-group, so the row
@@ -296,11 +314,11 @@ template <iq3::Type T> struct RoutedGemvT {
         const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * rb;
         sycl::sub_group sg = it.get_sub_group();
         int lane = it.get_local_linear_id();
-        const uint16_t *xs = per_slot_x ? x + (size_t)slot * cols : x;
-        float a = lane_sum_t<T>(row, xs, cols, (unsigned)lane);
+        const typename A::T *xs = per_slot_x ? x + (size_t)slot * cols : x;
+        float a = lane_sum_t<T, A>(row, xs, cols, (unsigned)lane);
         for (int w_ = 16; w_; w_ >>= 1)
             a += sycl::select_from_group(sg, a, lane ^ w_);
-        if (lane == 0) out[slot * rows + r] = ops41::bf16b(a);
+        if (lane == 0) out[slot * rows + r] = A::wr(a);
     }
 };
 // the formats present in the UD-IQ2_XXS release (profile census)
@@ -935,6 +953,241 @@ struct CandidateBlocks {
             keep[best] = 1;
         }
         for (int j = 0; j < T_; ++j) mask[j] = keep[j / bs];
+    }
+};
+
+// ---- activation-generic forms (A = ActBF16 or ActF32) of the kernels the
+// executor launches. With A = ActBF16 each is the same arithmetic as its
+// BF16 namesake above (the decode trace stays byte-identical). KV rows are
+// always BF16.
+template <typename A> struct RmsNormA {
+    int n;
+    void operator()(sycl::nd_item<1> it, const typename A::T *x, const float *w, typename A::T *y) const {
+        int lane = it.get_local_linear_id();
+        sycl::sub_group sg = it.get_sub_group();
+        int base = it.get_group_linear_id() * n;
+        double acc = 0;
+        for (int i = lane; i < n; i += 32) {
+            float v = A::rd(x[base + i]);
+            acc += double(v) * v;
+        }
+        for (int w_ = 16; w_; w_ >>= 1)
+            acc += sycl::select_from_group(sg, acc, lane ^ w_);
+        float rs = float(1.0 / sycl::sqrt(acc / n + 1e-20));
+        for (int i = lane; i < n; i += 32)
+            y[base + i] = A::wr(w[i] * (A::rd(x[base + i]) * rs));
+    }
+};
+template <typename A> struct RopePairsA {
+    unsigned rows, d, rdim; bool inverse;
+    void operator()(sycl::nd_item<1> it, typename A::T *x, const float *cosb, const float *sinb) const {
+        unsigned g = it.get_global_linear_id();
+        unsigned pairs = rdim / 2;
+        unsigned r = g / pairs, i = g % pairs;
+        if (r >= rows) return;
+        typename A::T *row = x + (size_t)r * d + (d - rdim);
+        float re = A::rd(row[2 * i]), im = A::rd(row[2 * i + 1]);
+        float c = cosb[i], s = inverse ? -sinb[i] : sinb[i];
+        row[2 * i] = A::wr(re * c - im * s);
+        row[2 * i + 1] = A::wr(re * s + im * c);
+    }
+};
+template <typename A> struct SwigluA {
+    long long n; float lim;
+    void operator()(sycl::nd_item<1> it, const typename A::T *gate, const typename A::T *up, typename A::T *out) const {
+        long long i = it.get_global_linear_id();
+        if (i >= n) return;
+        float g = sycl::fmin(A::rd(gate[i]), lim);
+        float u = sycl::clamp(A::rd(up[i]), -lim, lim);
+        out[i] = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+    }
+};
+template <typename A> struct ProbScaleA {
+    int rows, n;
+    void operator()(sycl::nd_item<1> it, typename A::T *act, const float *prob) const {
+        int g = it.get_global_linear_id();
+        int r = g / n, i = g % n;
+        if (r >= rows) return;
+        act[(size_t)r * n + i] = A::wr(prob[r] * A::rd(act[(size_t)r * n + i]));
+    }
+};
+template <typename A> struct MoeCombineA {
+    int top, h;
+    void operator()(sycl::nd_item<1> it, const typename A::T *exps, const typename A::T *shared, typename A::T *out) const {
+        int i = it.get_global_linear_id();
+        if (i >= h) return;
+        float acc = A::rd(shared[i]);
+        for (int r = 0; r < top; ++r) acc += A::rd(exps[(size_t)r * h + i]);
+        out[i] = A::wr(acc);
+    }
+};
+template <typename A> struct HcPreA {
+    int h;
+    void operator()(sycl::nd_item<1> it, const typename A::T *streams, const float *mix, typename A::T *out) const {
+        int i = it.get_global_linear_id();
+        if (i >= h) return;
+        float acc = 0;
+        for (int j = 0; j < 4; ++j) acc += mix[j] * A::rd(streams[(size_t)j * h + i]);
+        out[i] = A::wr(acc);
+    }
+};
+template <typename A> struct HcPostA {
+    int h;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *old, const typename A::T *x,
+                    const float *post, const float *comb) const {
+        int g = it.get_global_linear_id();
+        int j = g / h, i = g % h;
+        if (j >= 4) return;
+        float acc = post[j] * A::rd(x[i]);
+        for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * A::rd(old[(size_t)k * h + i]);
+        streams[(size_t)j * h + i] = A::wr(acc);
+    }
+};
+// window_append: the KV row is stored BF16 whatever the activation type
+template <typename A> struct WindowAppendA {
+    int win, d, start_pos;
+    void operator()(sycl::nd_item<1> it, uint16_t *ring, const typename A::T *kv, int32_t *idxs) const {
+        if (it.get_global_linear_id() != 0) return;
+        for (int i = 0; i < d; ++i) ring[(size_t)(start_pos % win) * d + i] = ops41::bf16b(A::rd(kv[i]));
+        int oldest = (start_pos % win + 1) % win;
+        for (int i = 0, j = oldest; i < win; ++i, j = (j + 1) % win)
+            idxs[i] = j > start_pos ? -1 : j;
+    }
+};
+template <typename A> struct SparseScoreA {
+    int n_idx, heads, hd, win_rows;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *kvw, const uint16_t *kvc,
+                    const int32_t *idxs, float *score) const {
+        size_t g = it.get_global_linear_id();
+        int h = (int)(g / n_idx), i = (int)(g % n_idx);
+        if (h >= heads) return;
+        int slot = idxs[i];
+        if (slot < 0) return;
+        const float scale = 1.0f / sycl::sqrt(float(hd));
+        const typename A::T *qh = q + (size_t)h * hd;
+        const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * hd : kvc + (size_t)(slot - win_rows) * hd;
+        float acc = 0;
+        for (int j = 0; j < hd; ++j) acc += A::rd(qh[j]) * ops41::bf16(k[j]);
+        score[g] = acc * scale;
+    }
+};
+template <typename A> struct CompressPoolA {
+    int r, hd;
+    void operator()(sycl::nd_item<1> it, const float *kv_state, const float *score_state, const float *nw,
+                    typename A::T *out) const {
+        if (it.get_global_linear_id() != 0) return;
+        float tmp[512];
+        for (int i = 0; i < hd; ++i) {
+            float mx = score_state[i];
+            for (int j = 1; j < r; ++j) mx = score_state[j * hd + i] > mx ? score_state[j * hd + i] : mx;
+            float sum = 0, acc = 0;
+            for (int j = 0; j < r; ++j) sum += sycl::exp(score_state[j * hd + i] - mx);
+            for (int j = 0; j < r; ++j)
+                acc += kv_state[j * hd + i] * (sycl::exp(score_state[j * hd + i] - mx) / sum);
+            tmp[i] = acc;
+        }
+        double sq = 0;
+        for (int i = 0; i < hd; ++i) sq += double(tmp[i]) * tmp[i];
+        float rs = float(1.0 / sycl::sqrt(sq / hd + 1e-20));
+        for (int i = 0; i < hd; ++i) out[i] = A::wr(nw[i] * (tmp[i] * rs));
+    }
+};
+// indexer score: query and head weights are activations, keys are BF16 KV rows
+template <typename A> struct IndexerScoreA {
+    int H, dk, T_, m;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+                    const int64_t *lens, float *score) const {
+        int g = it.get_global_linear_id();
+        int t = g / T_, j = g % T_;
+        if (t >= m) return;
+        if (j >= lens[t]) { score[(size_t)t * T_ + j] = -INFINITY; return; }
+        float s = 0;
+        for (int hh = 0; hh < H; ++hh) {
+            float d = 0;
+            for (int i = 0; i < dk; ++i)
+                d += A::rd(q[((size_t)t * H + hh) * dk + i]) * ops41::bf16(k[(size_t)j * dk + i]);
+            s += (d > 0 ? d : 0) * A::rd(w[(size_t)t * H + hh]);
+        }
+        score[(size_t)t * T_ + j] = s;
+    }
+};
+template <typename A> struct EngramGateA {
+    int h;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *kvbuf, const float *gate_w) const {
+        int j = it.get_global_linear_id();
+        if (j >= 4) return;
+        const float eps = 1e-20f, clamp_v = 1e-6f;
+        double hsq = 0, ksq = 0;
+        for (int i = 0; i < h; ++i) {
+            float hv = A::rd(streams[(size_t)j * h + i]);
+            hsq += double(hv) * hv;
+            float kvv = A::rd(kvbuf[(size_t)j * h + i]);
+            ksq += double(kvv) * kvv;
+        }
+        double dot = 0;
+        for (int i = 0; i < h; ++i)
+            dot += double(A::rd(streams[(size_t)j * h + i])) * gate_w[(size_t)j * h + i] *
+                   A::rd(kvbuf[(size_t)j * h + i]);
+        float rstd = float(1.0 / sycl::sqrt(hsq / h + eps) * (1.0 / sycl::sqrt(ksq / h + eps)));
+        float d = float(dot) * rstd / sycl::sqrt(float(h));
+        float g = 1.0f / (1.0f + sycl::exp(-sycl::copysign(sycl::sqrt(sycl::fmax(sycl::fabs(d), clamp_v)), d)));
+        for (int i = 0; i < h; ++i)
+            streams[(size_t)j * h + i] =
+                A::wr(A::rd(streams[(size_t)j * h + i]) + g * A::rd(kvbuf[(size_t)4 * h + i]));
+    }
+};
+template <typename A> struct HcMixDots32A {
+    int h;
+    void operator()(sycl::nd_item<1> it, const typename A::T *streams, const float *fn, double *out) const {
+        auto sg = it.get_sub_group();
+        unsigned l = sg.get_local_linear_id();
+        unsigned r = it.get_group_linear_id();
+        const int N = 4 * h;
+        double acc = 0;
+        if (r < 24) {
+            for (int i = l; i < N; i += 32) acc += double(fn[(size_t)r * N + i]) * A::rd(streams[i]);
+        } else {
+            for (int i = l; i < N; i += 32) { float v = A::rd(streams[i]); acc += double(v) * v; }
+        }
+        for (unsigned w = 1; w < 32; w *= 2) {
+            double o = sycl::select_from_group(sg, acc, (l + w) % 32);
+            if (l % (2 * w) == 0) acc = acc + o;
+        }
+        if (l == 0) out[r] = acc;
+    }
+};
+template <typename A> struct ToActA { // f32 -> activation
+    int n;
+    void operator()(sycl::nd_item<1> it, const float *x, typename A::T *y) const {
+        int i = it.get_global_linear_id();
+        if (i >= n) return;
+        y[i] = A::wr(x[i]);
+    }
+};
+template <typename A> struct ToF32A { // activation -> f32
+    int n;
+    void operator()(sycl::nd_item<1> it, const typename A::T *x, float *y) const {
+        int i = it.get_global_linear_id();
+        if (i >= n) return;
+        y[i] = A::rd(x[i]);
+    }
+};
+template <typename A> struct Broadcast4A {
+    int h;
+    void operator()(sycl::nd_item<1> it, const typename A::T *x, typename A::T *streams) const {
+        int i = it.get_global_linear_id();
+        if (i >= h) return;
+        typename A::T v = x[i];
+        for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = v;
+    }
+};
+template <typename A> struct EmbedRowA {
+    iq3::Type t; int cols;
+    void operator()(sycl::nd_item<1> it, const uint8_t *row, typename A::T *out) const {
+        int i = it.get_global_linear_id();
+        if (i >= cols) return;
+        auto l = iq3::layout(t);
+        out[i] = A::wr(iq3::decode(t, row + (size_t)(i / l.elements) * l.bytes, i % l.elements));
     }
 };
 

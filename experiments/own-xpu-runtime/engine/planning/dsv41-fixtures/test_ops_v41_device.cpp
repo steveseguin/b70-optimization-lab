@@ -637,8 +637,10 @@ int main() {
     //     device, and both == the host, for every weight format in the release. This gate exists
     //     because one formulation (IQ2_S, block->chunk nest) is right on the host and wrong on the card.
     {
-        auto run = [&](const char *name, auto tag, unsigned rows, unsigned cols) {
+        auto run = [&](const char *name, auto tag, auto act, unsigned rows, unsigned cols) {
             constexpr iq3::Type T = decltype(tag)::value;
+            using A = decltype(act);
+            using AT = typename A::T;
             const auto lay = iq3::layout(T);
             const size_t rb = (size_t)(cols / lay.elements) * lay.bytes;
             std::vector<uint8_t> w((size_t)rows * rb);
@@ -656,24 +658,27 @@ int main() {
                     else put(0);
                 }
             }
-            std::vector<uint16_t> x(cols);
-            for (auto &v : x) v = rbf16(-1, 1);
+            std::vector<AT> x(cols);
+            {
+                std::uniform_real_distribution<float> xd(-1, 1);
+                for (auto &v : x) v = A::wr(xd(rng)); // f32 activations keep all 24 bits
+            }
             auto *dw = sycl::malloc_device<uint8_t>(w.size(), q);
-            auto *dx = sycl::malloc_device<uint16_t>(cols, q);
+            auto *dx = sycl::malloc_device<AT>(cols, q);
             auto *da = sycl::malloc_device<float>((size_t)rows * 32, q);
             auto *db = sycl::malloc_device<float>((size_t)rows * 32, q);
             q.memcpy(dw, w.data(), w.size()).wait();
-            q.memcpy(dx, x.data(), cols * 2).wait();
+            q.memcpy(dx, x.data(), cols * sizeof(AT)).wait();
             q.submit([&](sycl::handler &hh) {
                 hh.parallel_for(sycl::nd_range<1>((size_t)rows * 32, 32), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
                     unsigned r = it.get_group_linear_id(), l = it.get_local_linear_id();
-                    da[r * 32 + l] = ops41sycl::lane_sum_t<T>(dw + (size_t)r * rb, dx, cols, l);
+                    da[r * 32 + l] = ops41sycl::lane_sum_t<T, A>(dw + (size_t)r * rb, dx, cols, l);
                 });
             }).wait();
             q.submit([&](sycl::handler &hh) {
                 hh.parallel_for(sycl::nd_range<1>((size_t)rows * 32, 32), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
                     unsigned r = it.get_group_linear_id(), l = it.get_local_linear_id();
-                    db[r * 32 + l] = ops41sycl::lane_sum_ref<T>(dw + (size_t)r * rb, dx, cols, l);
+                    db[r * 32 + l] = ops41sycl::lane_sum_ref<T, A>(dw + (size_t)r * rb, dx, cols, l);
                 });
             }).wait();
             std::vector<float> a((size_t)rows * 32), b((size_t)rows * 32);
@@ -683,18 +688,20 @@ int main() {
             for (size_t i = 0; i < a.size(); ++i) dev_diff += memcmp(&a[i], &b[i], 4) != 0;
             for (unsigned r = 0; r < rows; ++r)
                 for (unsigned l = 0; l < 32; ++l) {
-                    float h = ops41sycl::lane_sum_ref<T>(w.data() + (size_t)r * rb, x.data(), cols, l);
+                    float h = ops41sycl::lane_sum_ref<T, A>(w.data() + (size_t)r * rb, x.data(), cols, l);
                     host_diff += memcmp(&h, &a[r * 32 + l], 4) != 0;
                     nonfinite += !std::isfinite(h);
                 }
             if (dev_diff || host_diff || nonfinite) {
-                std::printf("FAIL lane_sum_%s %ux%u (device fast vs ref %d, vs host %d, nonfinite %d)\n", name, rows, cols, dev_diff, host_diff, nonfinite);
+                std::printf("FAIL lane_sum_%s %s %ux%u (device fast vs ref %d, vs host %d, nonfinite %d)\n", name, sizeof(AT) == 4 ? "f32-act" : "bf16-act", rows, cols, dev_diff, host_diff, nonfinite);
                 ++fails;
-            } else std::printf("ok   lane_sum_%s %ux%u (%zu lane sums, device fast == device ref == host)\n", name, rows, cols, a.size());
+            } else std::printf("ok   lane_sum_%s %s %ux%u (%zu lane sums, device fast == device ref == host)\n", name, sizeof(AT) == 4 ? "f32-act" : "bf16-act", rows, cols, a.size());
             sycl::free(dw, q); sycl::free(dx, q); sycl::free(da, q); sycl::free(db, q);
         };
-#define LS(TY, name) run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, 96, 5120); \
-                     run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, 96, 2304);
+#define LS(TY, name) run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, ops41sycl::ActBF16{}, 96, 5120); \
+                     run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, ops41sycl::ActBF16{}, 96, 2304); \
+                     run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, ops41sycl::ActF32{}, 96, 5120);  \
+                     run(name, std::integral_constant<iq3::Type, iq3::Type::TY>{}, ops41sycl::ActF32{}, 96, 2304);
         LS(IQ2_XXS, "iq2_xxs") LS(IQ2_XS, "iq2_xs") LS(IQ1_S, "iq1_s") LS(IQ2_S, "iq2_s") LS(IQ3_XXS, "iq3_xxs")
         LS(Q2_K, "q2_k") LS(Q5_K, "q5_k") LS(Q6_K, "q6_k") LS(Q8_0, "q8_0") LS(BF16, "bf16") LS(F32, "f32")
 #undef LS

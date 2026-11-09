@@ -155,8 +155,7 @@ Evidence: `data/dsv41-bringup-20261109/profile-layers0-27-round{0,1}.txt`, `devi
 Why the 27th token differs: the device keeps activations in BF16 between operators (8 significant bits, the
 official model's style), the reference in f32. That is about 1 % of noise per layer output and up to 0.2-0.7
 logits at the end, enough to flip a close expert choice or a close token. It is not a logic difference: every
-kernel is bit-exact against its own host anchor. **An f32-activation mode is the fix if the device is to follow
-the reference token for token**; it costs nothing in memory that matters (activations are kilobytes).
+kernel is bit-exact against its own host anchor. An f32-activation build fixes it (section 8, done the same evening): 40 of 40 tokens equal.
 
 Second speed round, before the six-card run (all bit-identical to the reference form on the card and the host,
 gated per format as `lane_sum_*`): per-format block kernels for the five expert formats. The block scale is read
@@ -171,6 +170,30 @@ card. IQ2_S uses the flat loop. Never ship a lane kernel without the on-card `la
 Tried, slower: several rows per hardware thread (2 rows -9 %, 16 rows -57 %). Launch cost is not a lever: a tiny
 kernel costs 1.6 us end to end.
 
+## 8. f32 activations and the contract reference (17:15-17:40 EST)
+
+The device executor is now built with **f32 activations by default** (`-DOWN41_ACT_BF16` keeps the BF16 build; its
+decode trace is byte-identical to the build before the conversion). KV rows stay BF16. The reference got two
+switches: `OWN_KV_BF16=1` (store KV rows as BF16 like the engine) and `OWN_CONTRACT=1` (sum in the device's order:
+32 strided f32 lanes + the kernel's tree for every dot product, the same lane forms in double for the RMSNorm and
+stream-mix statistics, f32 softmax and gates; build it with `-fp-model=precise -ffp-contract=off`).
+
+| Device build | Reference | Tokens equal | Top-5 logits, largest difference | Block outputs (rel.) |
+| --- | --- | --- | --- | --- |
+| BF16 activations | f32, f32 KV | 26 of 40 (0.39-logit call lost) | 0.18-0.75 | 0.4-1.3 % |
+| **f32 activations** | f32, BF16 KV | **40 of 40** | 0.005 for 8 steps, then 0.07-0.84 after one near-tied expert choice at step 9 | 5e-7 at layer 0, 4e-4 at layer 39 |
+| **f32 activations** | contract order, BF16 KV | **14 of 14** (all that were run) | 0.007-0.021 | layer 0: embed, sublayer input, q, kv **bit-exact**; 2e-7 after the first softmax; 4e-4 at layer 39 |
+
+Reading: against the contract reference every matmul chain is bit-exact; what remains is the last bit of `exp`
+between host libm and the card (softmax, sigmoid, SiLU), which grows about 20 % per layer to 4e-4 at the output.
+The plain reference's serial f32 sums were themselves 1e-4 off, enough to flip a sixth-of-six expert about once
+in ten tokens. Speed is unchanged by f32 activations: 0.162 s per token, 6.2 tok/s (98 steps).
+
+The on-card gate (`test_ops_v41_device.cpp`, 75 checks) now runs every weight format's lane kernel with both
+activation types. It caught the compiler hazard a second time: **IQ2_XS with f32 activations** in the block ->
+chunk nest is wrong on lanes 1-31 (right with BF16 activations, right on the host). IQ2_XS now uses the flat loop
+like IQ2_S.
+
 ## Reproduce
 
 ```bash
@@ -181,8 +204,9 @@ $ICPX -O3 -fiopenmp -std=c++20 -DOWN_RT_HOST_ONLY -I src -I planning/dsv41-fixtu
 $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv41-fixtures -I src \
   planning/dsv41-fixtures/own_run_v41.cpp -o own_run_v41
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
-# reference: prompt ids -> 40 tokens, state dump, 3-step trace
-OWN_TRACE=cpu.trc OWN_TRACE_STEPS=3 OMP_NUM_THREADS=16 ./cpu_run_v41 ids.txt 40 ref_ids.txt 4096 \
+# reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
+# add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
+OWN_KV_BF16=1 OWN_TRACE=cpu.trc OWN_TRACE_STEPS=3 OMP_NUM_THREADS=16 ./cpu_run_v41 ids.txt 40 ref_ids.txt 4096 \
   <shard 6> /dev/null state.bin
 # all six cards (cards must be empty; the runner refuses otherwise)
 OWN_DEBUG=1 OWN_TRACE=dev.trc OWN_TRACE_STEPS=3 ./own_run_v41 state.bin 40 dev_ids.txt 4096
@@ -196,9 +220,10 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 
 ## Open
 
-1. f32 activations on the device, so tokens follow the reference beyond near ties (section 7).
+1. Stop at the end-of-sentence token in the runner; a server front end.
 2. Speed, next levers in order: expert down-projection (30,720 short rows), router selection (one serial
    work-item), engram row prefetch at step start, stream-mix lanes, then fusing the small launches.
 3. Prompt pass on the cards (today: CPU reference, roughly a minute and a half for 36 tokens).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
-5. f32-activation mode; a float-exact llama.cpp comparison to remove the remaining noise from section 4.
+5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
+   miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

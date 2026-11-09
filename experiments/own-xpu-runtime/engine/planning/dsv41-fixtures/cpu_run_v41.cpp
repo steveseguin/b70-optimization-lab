@@ -129,12 +129,65 @@ static std::vector<float> w_all(const Weight &w) {
     for (int r = 0; r < w.rows; ++r) dequant_row(w, r, v.data() + (size_t)r * w.cols);
     return v;
 }
-static void gemv(const Weight &w, const float *x, float *y) {
+// OWN_CONTRACT=1: compute with the device executor's arithmetic order, so the
+// reference is an oracle for it rather than a second opinion. Dot products
+// run as 32 strided lanes (lane l sums columns l, l+32, ... ascending, one
+// f32 accumulator each) and are then reduced with the device kernel's tree
+// (adjacent pairs for Gemv/GemvGrouped, the XOR butterfly for the routed
+// expert kernel); stream-mix and RMSNorm statistics use the same lane forms
+// in double; softmaxes and gates use the device's f32 sequences. Build with
+// -fp-model=precise -ffp-contract=off or the compiler reorders these sums.
+// Without it the naive serial f32 sums here differ from the device by ~1e-4,
+// which is enough to flip a near-tied expert about once every ten tokens.
+static bool g_contract = false;
+enum Tree32 { TREE_ADJ, TREE_XOR };
+static inline float reduce32(float *v, Tree32 t) {
+    if (t == TREE_ADJ) {
+        for (unsigned w = 1; w < 32; w *= 2)
+            for (unsigned i = 0; i < 32; i += 2 * w) v[i] = v[i] + v[i + w];
+        return v[0];
+    }
+    float n[32];
+    for (int w = 16; w; w >>= 1) {
+        for (int l = 0; l < 32; ++l) n[l] = v[l] + v[l ^ w];
+        memcpy(v, n, sizeof n);
+    }
+    return v[0];
+}
+static inline double reduce32d(double *v, Tree32 t) {
+    if (t == TREE_ADJ) {
+        for (unsigned w = 1; w < 32; w *= 2)
+            for (unsigned i = 0; i < 32; i += 2 * w) v[i] = v[i] + v[i + w];
+        return v[0];
+    }
+    double n[32];
+    for (int w = 16; w; w >>= 1) {
+        for (int l = 0; l < 32; ++l) n[l] = v[l] + v[l ^ w];
+        memcpy(v, n, sizeof n);
+    }
+    return v[0];
+}
+static inline float dot_contract(const float *row, const float *x, int cols, Tree32 t) {
+    float lanes[32];
+    for (int l = 0; l < 32; ++l) lanes[l] = 0;
+    for (int c = 0; c < cols; ++c) lanes[c & 31] = lanes[c & 31] + row[c] * x[c];
+    return reduce32(lanes, t);
+}
+static void gemv(const Weight &w, const float *x, float *y, Tree32 tree = TREE_ADJ) {
     auto l = iq3::layout(w.type);
     size_t rb = row_bytes(w);
 #pragma omp parallel for schedule(static)
     for (int r = 0; r < w.rows; ++r) {
         const uint8_t *row = w.ptr + (size_t)r * rb;
+        if (g_contract) {
+            float lanes[32];
+            for (int k = 0; k < 32; ++k) lanes[k] = 0;
+            for (int c = 0; c < w.cols; ++c)
+                lanes[c & 31] = lanes[c & 31] +
+                                iq3::decode(w.type, row + (size_t)(c / l.elements) * l.bytes, c % l.elements) * x[c];
+            y[r] = reduce32(lanes, tree);
+            continue;
+        }
         float acc = 0;
         for (int c = 0; c < w.cols; ++c)
             acc += iq3::decode(w.type, row + (size_t)(c / l.elements) * l.bytes, c % l.elements) * x[c];
@@ -144,17 +197,22 @@ static void gemv(const Weight &w, const float *x, float *y) {
 static void gemv_expert(const Weight &w, int expert, const float *x, float *y) {
     Weight e = w;
     e.ptr = w.ptr + (size_t)expert * w.rows * row_bytes(w);
-    gemv(e, x, y);
+    gemv(e, x, y, TREE_XOR);
 }
-static void gemm(const Weight &w, const float *x, int npos, float *out) {
+static void gemm(const Weight &w, const float *x, int npos, float *out, Tree32 tree = TREE_ADJ) {
     size_t rb = row_bytes(w);
+    (void)rb;
 #pragma omp parallel for schedule(static)
     for (int r = 0; r < w.rows; ++r) {
         std::vector<float> row(w.cols);
         dequant_row(w, r, row.data());
         for (int p = 0; p < npos; ++p) {
-            float acc = 0;
             const float *xp = x + (size_t)p * w.cols;
+            if (g_contract) {
+                out[(size_t)p * w.rows + r] = dot_contract(row.data(), xp, w.cols, tree);
+                continue;
+            }
+            float acc = 0;
             for (int c = 0; c < w.cols; ++c) acc += row[c] * xp[c];
             out[(size_t)p * w.rows + r] = acc;
         }
@@ -163,13 +221,20 @@ static void gemm(const Weight &w, const float *x, int npos, float *out) {
 static void gemm_expert(const Weight &w, int expert, const float *x, int npos, float *out) {
     Weight e = w;
     e.ptr = w.ptr + (size_t)expert * w.rows * row_bytes(w);
-    gemm(e, x, npos, out);
+    gemm(e, x, npos, out, TREE_XOR); // routed-expert kernel reduces with the XOR butterfly
 }
 
 // ---------------------------------------------------------------- helpers
 static void rmsnorm(const float *x, const float *w, int n, float *out) {
     double sq = 0;
-    for (int i = 0; i < n; ++i) sq += double(x[i]) * x[i];
+    if (g_contract) {
+        double lanes[32];
+        for (int l = 0; l < 32; ++l) lanes[l] = 0;
+        for (int i = 0; i < n; ++i) lanes[i & 31] += double(x[i]) * x[i];
+        sq = reduce32d(lanes, TREE_XOR);
+    } else {
+        for (int i = 0; i < n; ++i) sq += double(x[i]) * x[i];
+    }
     float rs = float(1.0 / std::sqrt(sq / n + 1e-20));
     for (int i = 0; i < n; ++i) out[i] = w[i] * (x[i] * rs);
 }
@@ -216,12 +281,25 @@ static void hc_mixes(const float *streams, const float *fn, const float *scale,
                      const float *base, float *pre, float *post, float *comb) {
     const int N = 4 * 5120;
     double sq = 0;
-    for (int i = 0; i < N; ++i) sq += double(streams[i]) * streams[i];
+    double lanes[32];
+    if (g_contract) {
+        for (int l = 0; l < 32; ++l) lanes[l] = 0;
+        for (int i = 0; i < N; ++i) lanes[i & 31] += double(streams[i]) * streams[i];
+        sq = reduce32d(lanes, TREE_ADJ);
+    } else {
+        for (int i = 0; i < N; ++i) sq += double(streams[i]) * streams[i];
+    }
     float rsqrt = float(1.0 / std::sqrt(sq / N + 1e-20));
     float m[24];
     for (int j = 0; j < 24; ++j) {
         double acc = 0;
-        for (int i = 0; i < N; ++i) acc += double(fn[(size_t)j * N + i]) * streams[i];
+        if (g_contract) {
+            for (int l = 0; l < 32; ++l) lanes[l] = 0;
+            for (int i = 0; i < N; ++i) lanes[i & 31] += double(fn[(size_t)j * N + i]) * streams[i];
+            acc = reduce32d(lanes, TREE_ADJ);
+        } else {
+            for (int i = 0; i < N; ++i) acc += double(fn[(size_t)j * N + i]) * streams[i];
+        }
         m[j] = float(acc) * rsqrt;
     }
     const float eps = 1e-6f;
@@ -251,6 +329,17 @@ static void hc_mixes(const float *streams, const float *fn, const float *scale,
 }
 // OWN_COMB_LEGACY=1 restores the pre-2026-11-09 transposed comb (A/B only).
 static bool g_comb_legacy = false;
+// OWN_KV_BF16=1: store KV rows (window rows, compressed rows, index keys) as
+// BF16, the engine's KV contract; activations stay f32. This is the reference
+// the f32-activation device executor is compared with.
+static bool g_kv_bf16 = false;
+static inline float bf16_round(float f) {
+    uint32_t b;
+    memcpy(&b, &f, 4);
+    b = ((b + 0x7fff + ((b >> 16) & 1)) >> 16) << 16; // RNE, same as ops41::bf16b
+    memcpy(&f, &b, 4);
+    return f;
+}
 static void hc_pre(const float *streams, const float *mix, float *out) {
     for (int i = 0; i < 5120; ++i) {
         float acc = 0;
@@ -381,6 +470,11 @@ static void engram_apply_at(int L, float *streams, int abs_pos) {
             dot += double(h[i]) * qw[(size_t)j * 5120 + i] * key[(size_t)j * 5120 + i];
         double d = dot * rstd * (1.0 / std::sqrt(5120.0));
         float g = sigmoidf((float)std::copysign(std::sqrt(std::max(std::fabs(d), 1e-6)), d));
+        if (g_contract) { // EngramGate kernel: f32 from the rstd product on
+            const float rstd_f = float(1.0 / std::sqrt(hs / 5120 + double(1e-20f)) * (1.0 / std::sqrt(ks / 5120 + double(1e-20f))));
+            const float df = float(dot) * rstd_f / std::sqrt(5120.0f);
+            g = 1.0f / (1.0f + std::exp(-std::copysign(std::sqrt(std::max(std::fabs(df), 1e-6f)), df)));
+        }
         for (int i = 0; i < 5120; ++i) h[i] += g * val[i];
     }
 }
@@ -411,6 +505,8 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 cosb.data() + (size_t)(start + t) * 32, sinb.data() + (size_t)(start + t) * 32, false);
     TR.rec(L, TT_Q, q.data(), (size_t)H * HD);
     TR.rec(L, TT_KV, kv.data(), HD);
+    if (g_kv_bf16)
+        for (auto &v : kv) v = bf16_round(v);
     PD.rec("q", L, q.data(), (size_t)P * H * HD);
     PD.rec("kv", L, kv.data(), (size_t)P * HD);
     auto &ring = M.ring[L];
@@ -468,6 +564,14 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                             double e0 = std::exp(double(s0[i]) - mx), e1 = std::exp(double(s1[i]) - mx);
                             latent_pre[(size_t)j * HD + i] =
                                 k0[i] * (float)(e0 / (e0 + e1)) + k1[i] * (float)(e1 / (e0 + e1));
+                            if (g_contract) {
+                                float f0 = std::exp(s0[i] - mx), f1 = std::exp(s1[i] - mx), fs = 0;
+                                fs += f0; fs += f1;
+                                float a = 0;
+                                a += k0[i] * (f0 / fs);
+                                a += k1[i] * (f1 / fs);
+                                latent_pre[(size_t)j * HD + i] = a;
+                            }
                         }
                         rmsnorm(latent_pre.data() + (size_t)j * HD, lw(p + "attn_compressor_norm.weight").data(),
                                 HD, latent_pre.data() + (size_t)j * HD);
@@ -488,6 +592,14 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                             latent_pre[i] =
                                 CS.kv_state[i] * (float)(e0 / (e0 + e1)) +
                                 CS.kv_state[HD + i] * (float)(e1 / (e0 + e1));
+                            if (g_contract) {
+                                float f0 = std::exp(CS.score_state[i] - mx), f1 = std::exp(CS.score_state[HD + i] - mx), fs = 0;
+                                fs += f0; fs += f1;
+                                float a = 0;
+                                a += CS.kv_state[i] * (f0 / fs);
+                                a += CS.kv_state[HD + i] * (f1 / fs);
+                                latent_pre[i] = a;
+                            }
                         }
                         rmsnorm(latent_pre.data(), lw(p + "attn_compressor_norm.weight").data(), HD, latent_pre.data());
                     }
@@ -515,6 +627,8 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                         int gpos = (start == 0 ? j : (start + 1 - r) / r + j) * r;
                         rope_at(kk.data() + (size_t)j * 128, 128,
                                 cosb.data() + (size_t)gpos * 32, sinb.data() + (size_t)gpos * 32, false);
+                        if (g_kv_bf16)
+                            for (int i = 0; i < 128; ++i) kk[(size_t)j * 128 + i] = bf16_round(kk[(size_t)j * 128 + i]);
                         memcpy(CS.ik.data() + (size_t)(CS.len + j) * 128, kk.data() + (size_t)j * 128, 128 * 4);
                     }
                     krows = CS.len + nl;
@@ -593,6 +707,8 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 int gpos = (start == 0 ? j : (start + 1 - r) / r + j) * r;
                 rope_at(latent_pre.data() + (size_t)j * HD, HD,
                         cosb.data() + (size_t)gpos * 32, sinb.data() + (size_t)gpos * 32, false);
+                if (g_kv_bf16)
+                    for (int i = 0; i < HD; ++i) latent_pre[(size_t)j * HD + i] = bf16_round(latent_pre[(size_t)j * HD + i]);
                 memcpy(CS.ckv.data() + (size_t)(CS.len + j) * HD, latent_pre.data() + (size_t)j * HD, HD * 4);
             }
             if (P == 1) {
@@ -635,10 +751,23 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 sc[i] = d * scale;
                 mx = std::max(mx, sc[i]);
             }
+            float *oh = o.data() + ((size_t)t * H + hh) * HD;
+            if (g_contract) { // SparseSoftmax/SparseOut: f32 exp and sum, sink first, slot order
+                float sum = std::exp(sinks[hh] - mx);
+                std::vector<float> wv(idxs.size(), 0.0f);
+                for (size_t i = 0; i < idxs.size(); ++i)
+                    if (idxs[i] >= 0) { wv[i] = std::exp(sc[i] - mx); sum += wv[i]; }
+                for (size_t i = 0; i < idxs.size(); ++i) {
+                    if (idxs[i] < 0) continue;
+                    const float wgt = wv[i] / sum;
+                    const float *kvp = idxs[i] < win_rows ? win_ptr[idxs[i]] : comp_ptr[idxs[i] - win_rows];
+                    for (int c = 0; c < HD; ++c) oh[c] += wgt * kvp[c];
+                }
+                continue;
+            }
             double se = std::exp(double(sinks[hh]) - mx);
             for (size_t i = 0; i < idxs.size(); ++i)
                 if (sc[i] > -INFINITY) se += std::exp(double(sc[i]) - mx);
-            float *oh = o.data() + ((size_t)t * H + hh) * HD;
             for (size_t i = 0; i < idxs.size(); ++i) {
                 if (sc[i] <= -INFINITY) continue;
                 float wgt = (float)(std::exp(double(sc[i]) - mx) / se);
@@ -647,12 +776,6 @@ static void attention(int L, const float *x, int P, int start, float *out) {
             }
         }
     }
-    if (TR.on && TR.f && r) {
-        std::vector<float> ci(TOPK);
-        for (int i = 0; i < TOPK; ++i) ci[i] = (float)cidx[0][i];
-        TR.rec(L, TT_CIDX, ci.data(), TOPK);
-    }
-    TR.rec(L, TT_ATTN_O, o.data(), (size_t)H * HD);
     for (int t = 0; t < P; ++t)
         for (int hh = 0; hh < H; ++hh)
             rope_at(o.data() + ((size_t)t * H + hh) * HD, HD,
@@ -671,6 +794,10 @@ static void attention(int L, const float *x, int P, int start, float *out) {
                 row[c] = iq3::decode(wa.type, rp + (size_t)(c / lay.elements) * lay.bytes, c % lay.elements);
             for (int t = 0; t < P; ++t) {
                 const float *xp = o.data() + (size_t)t * H * HD + (size_t)g * 4096;
+                if (g_contract) {
+                    oa[(size_t)t * 8192 + rr] = dot_contract(row.data(), xp, 4096, TREE_ADJ);
+                    continue;
+                }
                 float acc = 0;
                 for (int c = 0; c < 4096; ++c) acc += row[c] * xp[c];
                 oa[(size_t)t * 8192 + rr] = acc;
@@ -712,6 +839,7 @@ static void moe(int L, const float *x, int P, float *out) {
         TR.rec(L, TT_SHARED_DOWN, sd.data(), D);
     }
     std::vector<float> acc((size_t)P * D, 0);
+    std::vector<float> slot_out(g_contract ? (size_t)P * 6 * D : 0);
     const Weight &gE = S.at(p + "ffn_gate_exps.weight");
     const Weight &uE = S.at(p + "ffn_up_exps.weight");
     const Weight &dE = S.at(p + "ffn_down_exps.weight");
@@ -730,15 +858,28 @@ static void moe(int L, const float *x, int P, float *out) {
             for (int c = 0; c < MOE_D; ++c) {
                 float gv = std::min(g[(size_t)i * MOE_D + c], 10.0f);
                 float uv = std::clamp(u[(size_t)i * MOE_D + c], -10.0f, 10.0f);
-                g[(size_t)i * MOE_D + c] = pr * siluf(gv) * uv;
+                g[(size_t)i * MOE_D + c] = g_contract ? pr * (siluf(gv) * uv) : pr * siluf(gv) * uv;
             }
         }
         std::vector<float> dn((size_t)n * D);
         gemm_expert(dE, e, g.data(), n, dn.data());
-        for (int i = 0; i < n; ++i)
-            for (int c = 0; c < D; ++c) acc[(size_t)by_exp[e][i] * D + c] += dn[(size_t)i * D + c];
+        for (int i = 0; i < n; ++i) {
+            const int t = by_exp[e][i];
+            for (int c = 0; c < D; ++c) acc[(size_t)t * D + c] += dn[(size_t)i * D + c];
+            if (g_contract)
+                for (int k = 0; k < 6; ++k)
+                    if (eids[t][k] == (uint32_t)e)
+                        memcpy(slot_out.data() + ((size_t)t * 6 + k) * D, dn.data() + (size_t)i * D, D * 4);
+        }
     }
     for (size_t i = 0; i < (size_t)P * D; ++i) out[i] = acc[i] + sd[i];
+    if (g_contract) // MoeCombine: shared first, then the six slots in route order
+        for (int t = 0; t < P; ++t)
+            for (int c = 0; c < D; ++c) {
+                float a = sd[(size_t)t * D + c];
+                for (int k = 0; k < 6; ++k) a += slot_out[((size_t)t * 6 + k) * D + c];
+                out[(size_t)t * D + c] = a;
+            }
     PD.rec("ffn_moe_logits", L, logits.data(), (size_t)P * 384);
     PD.rec("ffn_moe_out", L, acc.data(), (size_t)P * D);
     PD.rec("ffn_shexp", L, sd.data(), (size_t)P * D);
@@ -871,6 +1012,8 @@ int main(int argc, char **argv) {
     }
     g_hc_legacy = getenv("OWN_HC_LEGACY") != nullptr;
     g_comb_legacy = getenv("OWN_COMB_LEGACY") != nullptr;
+    g_kv_bf16 = getenv("OWN_KV_BF16") != nullptr;
+    g_contract = getenv("OWN_CONTRACT") != nullptr;
     if (const char *tp = getenv("OWN_TRACE")) TR.f = fopen(tp, "wb");
     const int trace_steps = getenv("OWN_TRACE_STEPS") ? atoi(getenv("OWN_TRACE_STEPS")) : 2;
     std::vector<int> forced;

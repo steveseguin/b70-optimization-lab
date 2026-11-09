@@ -155,6 +155,16 @@ inline int layer_of_name(const std::string &n) { // -1: not a block tensor
 // ---- backend ---------------------------------------------------------------
 class Backend41 {
 public:
+    // Activation storage between operators: F32 by default; -DOWN41_ACT_BF16
+    // builds the original BF16-activation executor (see ops41sycl::ActBF16).
+#ifdef OWN41_ACT_BF16
+    using Act = ops41sycl::ActBF16;
+    static constexpr const char *act_name = "bf16";
+#else
+    using Act = ops41sycl::ActF32;
+    static constexpr const char *act_name = "f32";
+#endif
+    using act_t = Act::T;
     static constexpr int TILES = 6;
     static constexpr int HEAD_TILE = 5;
     struct Options {
@@ -227,7 +237,7 @@ public:
         const size_t rows_c2 = (size_t)max_seq / 2 + 2, rows_c1 = (size_t)max_seq + 2;
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
-            streams[t] = dalloc<uint16_t>(t, 4 * (size_t)g.h);
+            streams[t] = dalloc<act_t>(t, 4 * (size_t)g.h);
             for (int s = 0; s < 4; ++s) {
                 size_t rows = s == 3 ? rows_c1 : rows_c2; // layer 20 publishes at ratio 1
                 ckv_mirror[t][s] = dalloc<uint16_t>(t, rows * g.hd);
@@ -463,8 +473,8 @@ public:
     // segment mode: reference streams + pre-mix enter at the first layer
     void set_streams(const float *s4h, const float *pre4) {
         int t = o.layer_begin < o.layer_end ? tile_of_layer(o.layer_begin) : HEAD_TILE;
-        for (size_t i = 0; i < 4 * (size_t)g.h; ++i) h_streams[i] = ops41::bf16b(s4h[i]);
-        qs[t].memcpy(streams[t], h_streams.data(), 2 * 4 * (size_t)g.h);
+        for (size_t i = 0; i < 4 * (size_t)g.h; ++i) h_streams[i] = Act::wr(s4h[i]);
+        qs[t].memcpy(streams[t], h_streams.data(), sizeof(act_t) * 4 * (size_t)g.h);
         qs[t].memcpy(sc[t].cur_pre, pre4, 16);
         qs[t].wait();
         cur = t;
@@ -482,13 +492,13 @@ public:
         if (o.layer_begin == 0) {
             const auto &te = we("token_embd.weight");
             const uint8_t *row = (const uint8_t *)wgt.at("token_embd.weight").p + (size_t)token * wrb(te);
-            launch(0, H_, 32, ops41sycl::EmbedRow{te.type, H_}, row, sc[0].x);
-            launch(0, H_, 32, ops41sycl::Broadcast4{H_}, (const uint16_t *)sc[0].x, streams[0]);
+            launch(0, H_, 32, ops41sycl::EmbedRowA<Act>{te.type, H_}, row, sc[0].x);
+            launch(0, H_, 32, ops41sycl::Broadcast4A<Act>{H_}, (const act_t *)sc[0].x, streams[0]);
             float pm[4] = {1, 0, 0, 0};
             qs[0].memcpy(sc[0].cur_pre, pm, 16);
             qs[0].wait();
             cur = 0;
-            tr16(0, TT_EMBED, 0, streams[0], 4 * (size_t)H_);
+            tra(0, TT_EMBED, 0, streams[0], 4 * (size_t)H_);
         }
         prof_begin(cur);
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
@@ -500,7 +510,7 @@ public:
         if (o.head) {
             if (cur != HEAD_TILE) migrate(HEAD_TILE);
             auto &s = sc[HEAD_TILE];
-            launch(HEAD_TILE, H_, 32, ops41sycl::HcPre{H_}, (const uint16_t *)streams[HEAD_TILE],
+            launch(HEAD_TILE, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[HEAD_TILE],
                    (const float *)s.cur_pre, s.x);
             rmsnorm(HEAD_TILE, s.x, "output_norm.weight", H_, s.xn);
             gemv(HEAD_TILE, "output.weight", s.xn, logits_, true);
@@ -508,7 +518,7 @@ public:
                       (float *)nullptr);
             qs[HEAD_TILE].memcpy(&next, tok_out_, 4).wait();
             prof("head", HEAD_TILE);
-            tr16(40, TT_FINAL_N, HEAD_TILE, s.xn, H_);
+            tra(40, TT_FINAL_N, HEAD_TILE, s.xn, H_);
             trf(40, TT_LOGITS, HEAD_TILE, logits_, g.vocab);
         } else {
             qs[cur].wait();
@@ -579,7 +589,7 @@ private:
     std::vector<void *> owned[TILES];
     std::unordered_map<std::string, DevPtr> wgt;
     const WeightTab *W = nullptr;
-    uint16_t *streams[TILES] = {};
+    act_t *streams[TILES] = {};
     uint16_t *ckv_mirror[TILES][4] = {};
     uint16_t *ik_mirror[TILES][4] = {};
     int32_t *cidx_mirror[TILES][8] = {};
@@ -588,7 +598,8 @@ private:
     float *logits_ = nullptr;
     int32_t *tok_out_ = nullptr;
     int cur = 0;
-    std::vector<uint16_t> h_streams, h_kv_row, h_ik_row;
+    std::vector<act_t> h_streams;
+    std::vector<uint16_t> h_kv_row, h_ik_row; // KV rows are BF16 in both activation modes
     std::vector<uint8_t> cand_host; // layer-20 candidate mask of the current step
     bool cand_valid = false;
 
@@ -608,32 +619,32 @@ private:
     }
 
     struct Scratch {
-        uint16_t *x, *xn;               // sublayer input, normalized
-        uint16_t *qa, *qn, *q;          // q LoRA
-        uint16_t *kv, *kvn;             // latent kv row
-        uint16_t *qi, *wv;              // indexer query / head weights
+        act_t *x, *xn;               // sublayer input, normalized
+        act_t *qa, *qn, *q;          // q LoRA
+        act_t *kv, *kvn;             // latent kv row
+        act_t *qi, *wv;              // indexer query / head weights
         float *score;
         int64_t *lens;
         float *router;                  // f32 router logits
         uint32_t *ids;
         float *prob;
-        uint16_t *expg, *expu, *act, *expd;
-        uint16_t *shg, *shu, *sha, *shd;
+        act_t *expg, *expu, *act, *expd;
+        act_t *shg, *shu, *sha, *shd;
         float *of;                      // attention output, f32
         float *attn_w;                  // [heads][640] attention scores -> weights
-        uint16_t *obuf, *oa, *ob;       // bf16 attn out, o_a out, sublayer output
-        uint16_t *cw, *scg, *latent, *kk;
+        act_t *obuf, *oa, *ob;       // bf16 attn out, o_a out, sublayer output
+        act_t *cw, *scg, *latent, *kk;
         float *kv_state, *score_state;  // [4 sources][2 slots][hd]
         float *pre_a, *post_a, *comb_a, *pre_f, *post_f, *comb_f, *cur_pre;
         double *d25;                    // hc_mix: 24 dots + sum of squares
         int32_t *idxs_cat, *widx;
-        uint16_t *old, *eng_rows, *kvbuf;
+        act_t *old, *eng_rows, *kvbuf;
     };
     Scratch sc[TILES] = {};
 
     void scratch_alloc(int t) {
         auto &s = sc[t];
-        auto md = [&](size_t n) { return dalloc<uint16_t>(t, n); };
+        auto md = [&](size_t n) { return dalloc<act_t>(t, n); };
         auto mf = [&](size_t n) { return dalloc<float>(t, n); };
         s.x = md(g.h); s.xn = md(g.h);
         s.qa = md(g.qrank); s.qn = md(g.qrank);
@@ -687,53 +698,65 @@ private:
     }
     // One kernel per weight format (OWN_GENERIC_KERNELS=1 selects the
     // runtime-type kernels instead; outputs are bit-identical either way).
-    void gemv(int tile, const std::string &wn, const uint16_t *x, void *y, bool f32out = false) {
+    void gemv(int tile, const std::string &wn, const act_t *x, void *y, bool f32out = false) {
         const auto &e = we(wn);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+#ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)rows, ops41sycl::Gemv{e.type, rows, cols, f32out}, wp(wn), wrb(e), x, y);
             return;
         }
+#else
+        if (o.generic_kernels) throw std::runtime_error("runtime-type kernels exist only in the BF16-activation build");
+#endif
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
-        launch_sg(tile, (size_t)rows, ops41sycl::GemvT<iq3::Type::TY>{rows, cols, f32out}, wp(wn), x, y);  \
+        launch_sg(tile, (size_t)rows, ops41sycl::GemvT<iq3::Type::TY, Act>{rows, cols, f32out}, wp(wn), x, y); \
         break;
             OWN41_WEIGHT_TYPES(X)
 #undef X
         default: throw std::runtime_error("unsupported weight format: " + wn);
         }
     }
-    void gemv_grouped(int tile, const std::string &wn, const uint16_t *x, uint16_t *y) {
+    void gemv_grouped(int tile, const std::string &wn, const act_t *x, act_t *y) {
         const auto &e = we(wn);
         if (e.rows != g.ototal || e.cols != g.oin) throw std::runtime_error("attn_output_a shape");
         const unsigned n = (unsigned)(g.ototal / 8), k = (unsigned)g.oin;
+#ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQ{e.type, n, k}, wp(wn), wrb(e), x, y);
             return;
         }
+#else
+        if (o.generic_kernels) throw std::runtime_error("runtime-type kernels exist only in the BF16-activation build");
+#endif
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
-        launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQT<iq3::Type::TY>{n, k}, wp(wn), x, y);      \
+        launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQT<iq3::Type::TY, Act>{n, k}, wp(wn), x, y); \
         break;
             OWN41_WEIGHT_TYPES(X)
 #undef X
         default: throw std::runtime_error("unsupported weight format: " + wn);
         }
     }
-    void routed_gemv(int tile, const std::string &wn, const uint16_t *x, const uint32_t *ids, uint16_t *y,
+    void routed_gemv(int tile, const std::string &wn, const act_t *x, const uint32_t *ids, act_t *y,
                      bool per_slot) {
         const auto &e = we(wn);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+#ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemv{e.type, rows, cols, per_slot}, wp(wn), x, ids, y);
             return;
         }
+#else
+        if (o.generic_kernels) throw std::runtime_error("runtime-type kernels exist only in the BF16-activation build");
+#endif
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
-        launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemvT<iq3::Type::TY>{rows, cols, per_slot},     \
+        launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemvT<iq3::Type::TY, Act>{rows, cols, per_slot}, \
                   wp(wn), x, ids, y);                                                                      \
         break;
             OWN41_WEIGHT_TYPES(X)
@@ -741,14 +764,14 @@ private:
         default: throw std::runtime_error("unsupported weight format: " + wn);
         }
     }
-    void rmsnorm(int tile, const uint16_t *x, const std::string &wn, int n, uint16_t *y) {
-        launch_sg(tile, 1, ops41sycl::RmsNorm{n}, x, wp<float>(wn), y);
+    void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
+        launch_sg(tile, 1, ops41sycl::RmsNormA<Act>{n}, x, wp<float>(wn), y);
     }
-    void rope(int tile, uint16_t *x, int rows, int d, long p_, bool yarn, bool inv) {
+    void rope(int tile, act_t *x, int rows, int d, long p_, bool yarn, bool inv) {
         if (p_ < 0 || p_ >= max_seq) throw std::runtime_error("position beyond max_seq");
         const float *cb = yarn ? cos_yarn[tile] : cos_base[tile];
         const float *sb = yarn ? sin_yarn[tile] : sin_base[tile];
-        launch(tile, (size_t)rows * 32, 32, ops41sycl::RopePairs{(unsigned)rows, (unsigned)d, 64u, inv}, x,
+        launch(tile, (size_t)rows * 32, 32, ops41sycl::RopePairsA<Act>{(unsigned)rows, (unsigned)d, 64u, inv}, x,
                cb + (size_t)p_ * 32, sb + (size_t)p_ * 32);
     }
 
@@ -759,12 +782,12 @@ private:
         fwrite(v, 4, n, trace_f);
     }
     bool tracing() const { return trace_f && trace_on; }
-    void tr16(int layer, int tag, int t, const uint16_t *p, size_t n) {
+    void tra(int layer, int tag, int t, const act_t *p, size_t n) { // activation buffer
         if (!tracing()) return;
-        std::vector<uint16_t> b(n);
-        qs[t].memcpy(b.data(), p, n * 2).wait();
+        std::vector<act_t> b(n);
+        qs[t].memcpy(b.data(), p, n * sizeof(act_t)).wait();
         std::vector<float> f(n);
-        for (size_t i = 0; i < n; ++i) f[i] = ops41::bf16(b[i]);
+        for (size_t i = 0; i < n; ++i) f[i] = Act::rd(b[i]);
         trw(layer, tag, f.data(), n);
     }
     void trf(int layer, int tag, int t, const float *p, size_t n) {
@@ -784,7 +807,7 @@ private:
 
     // ---- decode step pieces -------------------------------------------------
     void migrate(int t) {
-        const size_t nb = 2 * 4 * (size_t)g.h;
+        const size_t nb = sizeof(act_t) * 4 * (size_t)g.h;
         float pre[4];
         qs[cur].memcpy(h_streams.data(), streams[cur], nb);
         qs[cur].memcpy(pre, sc[cur].cur_pre, 16);
@@ -799,7 +822,7 @@ private:
         auto &s = sc[t];
         // lane/tree reduction (anchor ops41::hc_mix_lanes); the serial-order
         // HcMixDots kernel cost ~3 ms per call
-        launch_sg(t, 25, ops41sycl::HcMixDots32{g.h}, (const uint16_t *)streams[t],
+        launch_sg(t, 25, ops41sycl::HcMixDots32A<Act>{g.h}, (const act_t *)streams[t],
                   wp<float>(prefix + "fn.weight"), s.d25);
         launch(t, 1, 1, ops41sycl::HcMixFinishD{g.h}, (const double *)s.d25,
                wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
@@ -812,45 +835,45 @@ private:
         auto &s = sc[t];
         const int H_ = g.h;
         const std::string p = "blk." + std::to_string(L) + ".";
-        const size_t sb = 2 * 4 * (size_t)H_;
+        const size_t sb = sizeof(act_t) * 4 * (size_t)H_;
         if (L == 1 || L == 14) {
             engram_host(L, t);
             prof("engram", t);
-            tr16(L, TT_ENGRAM, t, streams[t], 4 * (size_t)H_);
+            tra(L, TT_ENGRAM, t, streams[t], 4 * (size_t)H_);
         }
         hc_mix(t, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
         prof("hc_mix", t);
-        launch(t, H_, 32, ops41sycl::HcPre{H_}, (const uint16_t *)streams[t], (const float *)s.cur_pre, s.x);
+        launch(t, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[t], (const float *)s.cur_pre, s.x);
         rmsnorm(t, s.x, p + "attn_norm.weight", H_, s.xn);
         prof("hc_pre_norm", t);
         trf(L, TT_ATTN_MIX_PRE, t, s.pre_a, 4);
         trf(L, TT_ATTN_MIX_POST, t, s.post_a, 4);
         trf(L, TT_ATTN_MIX_COMB, t, s.comb_a, 16);
-        tr16(L, TT_ATTN_IN, t, s.xn, H_);
+        tra(L, TT_ATTN_IN, t, s.xn, H_);
         attention(L, t);
-        tr16(L, TT_ATTN_OUT, t, s.ob, H_);
+        tra(L, TT_ATTN_OUT, t, s.ob, H_);
         qs[t].memcpy(s.old, streams[t], sb);
-        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPost{H_}, streams[t], (const uint16_t *)s.old,
-               (const uint16_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a);
+        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPostA<Act>{H_}, streams[t], (const act_t *)s.old,
+               (const act_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a);
         prof("hc_post", t);
-        tr16(L, TT_STREAMS_ATTN, t, streams[t], 4 * (size_t)H_);
+        tra(L, TT_STREAMS_ATTN, t, streams[t], 4 * (size_t)H_);
 
         hc_mix(t, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
         prof("hc_mix", t);
-        launch(t, H_, 32, ops41sycl::HcPre{H_}, (const uint16_t *)streams[t],
+        launch(t, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[t],
                (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), s.x);
         rmsnorm(t, s.x, p + "ffn_norm.weight", H_, s.xn);
         prof("hc_pre_norm", t);
         trf(L, TT_FFN_MIX_PRE, t, s.pre_f, 4);
-        tr16(L, TT_FFN_IN, t, s.xn, H_);
+        tra(L, TT_FFN_IN, t, s.xn, H_);
         moe(L, t);
-        tr16(L, TT_FFN_OUT, t, s.ob, H_);
+        tra(L, TT_FFN_OUT, t, s.ob, H_);
         qs[t].memcpy(s.old, streams[t], sb);
-        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPost{H_}, streams[t], (const uint16_t *)s.old,
-               (const uint16_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f);
+        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPostA<Act>{H_}, streams[t], (const act_t *)s.old,
+               (const act_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f);
         qs[t].memcpy(s.cur_pre, s.pre_f, 16);
         prof("hc_post", t);
-        tr16(L, TT_STREAMS_FFN, t, streams[t], 4 * (size_t)H_);
+        tra(L, TT_STREAMS_FFN, t, streams[t], 4 * (size_t)H_);
     }
 
     static int src_index(int layer) { // latest kv source at or below layer
@@ -889,9 +912,9 @@ private:
         rmsnorm(t, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
         rope(t, s.kvn, 1, g.hd, pos, yarn, false);
         prof("attn_kv", t);
-        tr16(L, TT_Q, t, s.q, (size_t)g.qh * g.hd);
-        tr16(L, TT_KV, t, s.kvn, g.hd);
-        launch(t, 1, 1, ops41sycl::WindowAppend{128, g.hd, (int)pos}, ring[L], (const uint16_t *)s.kvn, s.widx);
+        tra(L, TT_Q, t, s.q, (size_t)g.qh * g.hd);
+        tra(L, TT_KV, t, s.kvn, g.hd);
+        launch(t, 1, 1, ops41sycl::WindowAppendA<Act>{128, g.hd, (int)pos}, ring[L], (const act_t *)s.kvn, s.widx);
         int si = src_index(L);
         int n_idx = 128;
         if (cr) {
@@ -906,8 +929,8 @@ private:
         }
         { // three launches, same arithmetic order as the one-launch SparseAttn kernel
             const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
-            launch(t, (size_t)g.qh * n_idx, 32, ops41sycl::SparseScore{n_idx, g.qh, g.hd, 128},
-                   (const uint16_t *)s.q, kvw, kvc, (const int32_t *)s.idxs_cat, s.attn_w);
+            launch(t, (size_t)g.qh * n_idx, 32, ops41sycl::SparseScoreA<Act>{n_idx, g.qh, g.hd, 128},
+                   (const act_t *)s.q, kvw, kvc, (const int32_t *)s.idxs_cat, s.attn_w);
             launch(t, g.qh, 8, ops41sycl::SparseSoftmax{n_idx, g.qh}, wp<float>(p + "attn_sinks.weight"),
                    (const int32_t *)s.idxs_cat, s.attn_w);
             launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::SparseOut{n_idx, g.qh, g.hd, 128}, kvw, kvc,
@@ -915,12 +938,12 @@ private:
         }
         prof("sparse_attn", t);
         trf(L, TT_ATTN_O, t, s.of, (size_t)g.qh * g.hd);
-        launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::ToBf16{g.qh * g.hd}, (const float *)s.of, s.obuf);
+        launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::ToActA<Act>{g.qh * g.hd}, (const float *)s.of, s.obuf);
         rope(t, s.obuf, g.qh, g.hd, pos, yarn, true);
         // grouped output LoRA: 8 groups of 1024 rows, each reads its 4096-slice
         gemv_grouped(t, p + "attn_output_a.weight", s.obuf, s.oa);
         prof("attn_o_a", t);
-        tr16(L, TT_ATTN_OA, t, s.oa, g.ototal);
+        tra(L, TT_ATTN_OA, t, s.oa, g.ototal);
         gemv(t, p + "attn_output_b.weight", s.oa, s.ob);
         prof("attn_o_b", t);
     }
@@ -954,13 +977,13 @@ private:
             gemv(t, p + "attn_compressor_kv.weight", s.xn, s.cw);
             gemv(t, p + "attn_compressor_gate.weight", s.xn, s.scg);
             const int slot = (int)(pos % 2);
-            launch(t, g.hd, 32, ops41sycl::ToF32{g.hd}, (const uint16_t *)s.cw,
+            launch(t, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.cw,
                    s.kv_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
-            launch(t, g.hd, 32, ops41sycl::ToF32{g.hd}, (const uint16_t *)s.scg,
+            launch(t, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.scg,
                    s.score_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
             if (pos % 2 == 0) return; // group not complete yet
             gpos = pos - 1;           // a latent stands for the first token of its group
-            launch(t, 1, 1, ops41sycl::CompressPool{2, g.hd},
+            launch(t, 1, 1, ops41sycl::CompressPoolA<Act>{2, g.hd},
                    (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
                    (const float *)(s.score_state + (size_t)si * 2 * g.hd),
                    wp<float>(p + "attn_compressor_norm.weight"), s.latent);
@@ -970,9 +993,13 @@ private:
         rmsnorm(t, s.kk, p + "indexer.k_norm.weight", 128, s.kk);
         rope(t, s.kk, 1, 128, gpos, yarn, false);
         rope(t, s.latent, 1, g.hd, gpos, yarn, false);
-        qs[t].memcpy(h_kv_row.data(), s.latent, 2 * (size_t)g.hd);
-        qs[t].memcpy(h_ik_row.data(), s.kk, 2 * 128);
+        // the published rows leave the activation domain here: KV is BF16
+        std::vector<act_t> ha(g.hd), hk(128);
+        qs[t].memcpy(ha.data(), s.latent, sizeof(act_t) * (size_t)g.hd);
+        qs[t].memcpy(hk.data(), s.kk, sizeof(act_t) * 128);
         qs[t].wait();
+        for (int i = 0; i < g.hd; ++i) h_kv_row[i] = ops41::bf16b(Act::rd(ha[i]));
+        for (int i = 0; i < 128; ++i) h_ik_row[i] = ops41::bf16b(Act::rd(hk[i]));
         broadcast_row(si);
     }
 
@@ -990,8 +1017,8 @@ private:
             int64_t l64 = len;
             qs[t].memcpy(s.lens, &l64, 8);
             const int T_ = (int)((len + 31) / 32 * 32);
-            launch(t, (size_t)T_, 32, ops41sycl::IndexerScore{32, 128, T_, 1}, (const uint16_t *)s.qi,
-                   (const uint16_t *)ik_mirror[t][si], (const uint16_t *)s.wv, (const int64_t *)s.lens,
+            launch(t, (size_t)T_, 32, ops41sycl::IndexerScoreA<Act>{32, 128, T_, 1}, (const act_t *)s.qi,
+                   (const uint16_t *)ik_mirror[t][si], (const act_t *)s.wv, (const int64_t *)s.lens,
                    s.score);
             std::vector<float> hs(len);
             qs[t].memcpy(hs.data(), s.score, (size_t)len * 4).wait();
@@ -1048,24 +1075,24 @@ private:
         prof("exp_gate", t);
         routed_gemv(t, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
         prof("exp_up", t);
-        launch(t, (size_t)6 * g.mid, 32, ops41sycl::Swiglu{(long long)6 * g.mid, 10.0f},
-               (const uint16_t *)s.expg, (const uint16_t *)s.expu, s.act);
-        launch(t, (size_t)6 * g.mid, 32, ops41sycl::ProbScale{6, g.mid}, s.act, (const float *)s.prob);
+        launch(t, (size_t)6 * g.mid, 32, ops41sycl::SwigluA<Act>{(long long)6 * g.mid, 10.0f},
+               (const act_t *)s.expg, (const act_t *)s.expu, s.act);
+        launch(t, (size_t)6 * g.mid, 32, ops41sycl::ProbScaleA<Act>{6, g.mid}, s.act, (const float *)s.prob);
         routed_gemv(t, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
         prof("exp_down", t);
         gemv(t, p + "ffn_gate_shexp.weight", s.xn, s.shg);
         gemv(t, p + "ffn_up_shexp.weight", s.xn, s.shu);
-        launch(t, g.mid, 32, ops41sycl::Swiglu{(long long)g.mid, 10.0f}, (const uint16_t *)s.shg,
-               (const uint16_t *)s.shu, s.sha);
+        launch(t, g.mid, 32, ops41sycl::SwigluA<Act>{(long long)g.mid, 10.0f}, (const act_t *)s.shg,
+               (const act_t *)s.shu, s.sha);
         gemv(t, p + "ffn_down_shexp.weight", s.sha, s.shd);
-        launch(t, g.h, 32, ops41sycl::MoeCombine{6, g.h}, (const uint16_t *)s.expd, (const uint16_t *)s.shd,
+        launch(t, g.h, 32, ops41sycl::MoeCombineA<Act>{6, g.h}, (const act_t *)s.expd, (const act_t *)s.shd,
                s.ob);
         prof("shared", t);
         if (tracing()) {
             trf(L, TT_ROUTE_LOGITS, t, s.router, g.experts);
             tri(L, TT_ROUTE_IDS, t, s.ids, 6);
             trf(L, TT_ROUTE_PROB, t, s.prob, 6);
-            tr16(L, TT_SHARED_DOWN, t, s.shd, g.h);
+            tra(L, TT_SHARED_DOWN, t, s.shd, g.h);
         }
     }
 
@@ -1095,16 +1122,16 @@ private:
         int64_t ids[24];
         engram_hash((int)pos, li, ids);
         auto l = iq3::layout(iq3::Type::Q5_K);
-        std::vector<uint16_t> rows(24 * 256);
+        std::vector<act_t> rows(24 * 256);
         for (int c = 0; c < 24; ++c) {
             const uint8_t *row = eng_base[li] + (size_t)ids[c] * l.bytes;
             for (int i = 0; i < 256; ++i)
-                rows[c * 256 + i] = ops41::bf16b(iq3::decode(iq3::Type::Q5_K, row, i));
+                rows[c * 256 + i] = Act::wr(iq3::decode(iq3::Type::Q5_K, row, i));
         }
         const std::string p = "blk." + std::to_string(L) + ".";
-        qs[t].memcpy(s.eng_rows, rows.data(), rows.size() * 2).wait(); // rows is a local
+        qs[t].memcpy(s.eng_rows, rows.data(), rows.size() * sizeof(act_t)).wait(); // rows is a local
         gemv(t, p + "engram_kv.weight", s.eng_rows, s.kvbuf);
-        launch(t, 4, 4, ops41sycl::EngramGate{g.h}, streams[t], (const uint16_t *)s.kvbuf,
+        launch(t, 4, 4, ops41sycl::EngramGateA<Act>{g.h}, streams[t], (const act_t *)s.kvbuf,
                wp<float>(p + "engram_gate.weight"));
     }
 

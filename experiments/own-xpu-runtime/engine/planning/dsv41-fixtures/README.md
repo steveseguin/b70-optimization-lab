@@ -153,7 +153,9 @@ Environment: `OWN_TRACE=path` (+`OWN_TRACE_STEPS`) decode-step trace for the
 device gate; `OWN_PDUMP=path` prompt-pass tensors under llama.cpp's names;
 `OWN_LLAMA_INJECT=path` teacher-force each layer from llama.cpp
 (`tools/dsv41_llama_inject.py`); `OWN_HC_LEGACY=1` / `OWN_COMB_LEGACY=1`
-restore two of the old errors for A/B only.
+restore two of the old errors for A/B only; `OWN_KV_BF16=1` stores KV rows
+as BF16 like the engine; `OWN_CONTRACT=1` sums in the device executor's
+order (build with `-fp-model=precise -ffp-contract=off`).
 
 ## Device runner (2026-11-09)
 
@@ -162,9 +164,10 @@ on the cards from the reference's state dump. Usage and environment are in
 the file header. Loader rules (one SYCL context per card, free-memory check,
 bounded upload) exist because the first version froze this 15 GiB host four
 times; do not relax them. Gate: `tools/dsv41_trace_diff.py ref.trc dev.trc`.
-Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 6.1
-tok/s, first 26 greedy tokens equal to the reference, then a near tie that
-BF16 activations decide differently).
+Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 6.2
+tok/s). Activations are f32 by default (`-DOWN41_ACT_BF16` for the first,
+BF16-activation build); KV rows are BF16. With f32 activations all 40 greedy
+tokens of prompt 1 equal the reference run with `OWN_KV_BF16=1`.
 
 ## SYCL probe (2026-11-09)
 
