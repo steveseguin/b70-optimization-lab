@@ -67,29 +67,40 @@ inline void hc_mix(const uint16_t *streams, const float *fn, const float *scale,
 // of hc_mix costs ~3 ms per call on a B70 (26 % of a decode step). Same
 // equation; the double sums differ from the serial order in the last bits
 // only, and device == this anchor exactly.
+// `seg` > 1: the columns are cut into seg equal segments, each reduced as
+// above, and a row's segments are added in order (the device spreads the
+// segments over hardware threads; seg = 1 is the unsegmented form).
 inline void hc_mix_lanes(const uint16_t *streams, const float *fn, const float *scale,
-                         const float *base, int h, float *pre, float *post, float *comb) {
-  const int N = 4 * h;
+                         const float *base, int h, float *pre, float *post, float *comb, int seg = 1) {
+  const int N = 4 * h, len = N / seg;
   auto tree = [](double *v) {
     for (unsigned w = 1; w < 32; w *= 2)
       for (unsigned i = 0; i < 32; i += 2 * w) v[i] = v[i] + v[i + w];
     return v[0];
   };
   double lanes[32];
-  for (int l = 0; l < 32; ++l) {
-    double acc = 0;
-    for (int i = l; i < N; i += 32) { float v = bf16(streams[i]); acc += double(v) * v; }
-    lanes[l] = acc;
-  }
-  float rsqrt = float(1.0 / std::sqrt(tree(lanes) / N + 1e-20));
-  float m[24];
-  for (int j = 0; j < 24; ++j) {
+  double sq = 0;
+  for (int k = 0; k < seg; ++k) {
     for (int l = 0; l < 32; ++l) {
       double acc = 0;
-      for (int i = l; i < N; i += 32) acc += double(fn[(size_t)j * N + i]) * bf16(streams[i]);
+      for (int i = k * len + l; i < (k + 1) * len; i += 32) { float v = bf16(streams[i]); acc += double(v) * v; }
       lanes[l] = acc;
     }
-    m[j] = float(tree(lanes)) * rsqrt;
+    sq += tree(lanes);
+  }
+  float rsqrt = float(1.0 / std::sqrt(sq / N + 1e-20));
+  float m[24];
+  for (int j = 0; j < 24; ++j) {
+    double tot = 0;
+    for (int k = 0; k < seg; ++k) {
+      for (int l = 0; l < 32; ++l) {
+        double acc = 0;
+        for (int i = k * len + l; i < (k + 1) * len; i += 32) acc += double(fn[(size_t)j * N + i]) * bf16(streams[i]);
+        lanes[l] = acc;
+      }
+      tot += tree(lanes);
+    }
+    m[j] = float(tot) * rsqrt;
   }
   auto sigmoid = [](float v) { return 1.0f / (1.0f + std::exp(-v)); };
   const float eps = 1e-6f;

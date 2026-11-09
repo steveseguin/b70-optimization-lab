@@ -282,10 +282,13 @@ static void hc_mixes(const float *streams, const float *fn, const float *scale,
     const int N = 4 * 5120;
     double sq = 0;
     double lanes[32];
+    const int SEG = 8, SLEN = N / SEG; // Backend41::HC_SEG: segments reduced separately, added in order
     if (g_contract) {
-        for (int l = 0; l < 32; ++l) lanes[l] = 0;
-        for (int i = 0; i < N; ++i) lanes[i & 31] += double(streams[i]) * streams[i];
-        sq = reduce32d(lanes, TREE_ADJ);
+        for (int k = 0; k < SEG; ++k) {
+            for (int l = 0; l < 32; ++l) lanes[l] = 0;
+            for (int i = k * SLEN; i < (k + 1) * SLEN; ++i) lanes[i & 31] += double(streams[i]) * streams[i];
+            sq += reduce32d(lanes, TREE_ADJ);
+        }
     } else {
         for (int i = 0; i < N; ++i) sq += double(streams[i]) * streams[i];
     }
@@ -294,9 +297,11 @@ static void hc_mixes(const float *streams, const float *fn, const float *scale,
     for (int j = 0; j < 24; ++j) {
         double acc = 0;
         if (g_contract) {
-            for (int l = 0; l < 32; ++l) lanes[l] = 0;
-            for (int i = 0; i < N; ++i) lanes[i & 31] += double(fn[(size_t)j * N + i]) * streams[i];
-            acc = reduce32d(lanes, TREE_ADJ);
+            for (int k = 0; k < SEG; ++k) {
+                for (int l = 0; l < 32; ++l) lanes[l] = 0;
+                for (int i = k * SLEN; i < (k + 1) * SLEN; ++i) lanes[i & 31] += double(fn[(size_t)j * N + i]) * streams[i];
+                acc += reduce32d(lanes, TREE_ADJ);
+            }
         } else {
             for (int i = 0; i < N; ++i) acc += double(fn[(size_t)j * N + i]) * streams[i];
         }

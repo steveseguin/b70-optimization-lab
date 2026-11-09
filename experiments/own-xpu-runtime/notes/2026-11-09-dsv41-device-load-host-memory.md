@@ -12,10 +12,10 @@ engram table on NVMe). Lane: `engine/` (Own Xe), family `dsv41`.
   The reference is now checked **layer by layer against llama.cpp** (all 40 layers and the output agree within
   llama.cpp's own rounding), and the cards match the reference on every layer and on the output tokens.
 - **The whole model runs on all six cards** (owner stopped and disabled the Gemma service at about 17:05 EST):
-  165.3 GB loaded in 20 s with host free memory flat, a complete correct answer, 6.1 tok/s. The first 26 tokens equal
-  the CPU reference; the 27th is a 0.39-logit call that the device's BF16 activations decide the other way. Section 7.
-- Speed after a first tuning round: about 0.16 s per token summed over the two halves (6 tok/s), from 0.86 s
-  when it first ran. The llama.cpp reference screen is 14 tok/s. Section 6.
+  165.3 GB loaded in 20 s with host free memory flat, a complete correct answer. With f32 activations (default
+  since 17:30) all 40 tokens of the test equal the CPU reference. Sections 7 and 8.
+- Speed: 0.111 s per token on six cards (9.0 tok/s), from 0.86 s when it first ran. The llama.cpp reference
+  screen is 14 tok/s. Sections 6, 7 and 9.
 
 ## 1. The freezes
 
@@ -194,6 +194,32 @@ activation types. It caught the compiler hazard a second time: **IQ2_XS with f32
 chunk nest is wrong on lanes 1-31 (right with BF16 activations, right on the host). IQ2_XS now uses the flat loop
 like IQ2_S.
 
+## 9. Third speed round: 6.2 -> 9.0 tok/s on six cards (17:40-18:10 EST)
+
+| Change | s per token | Output |
+| --- | --- | --- |
+| start of round (f32 activations) | 0.162 | |
+| router in three launches (score per expert, rank per expert, normalize) instead of one serial work-item; stream-mix statistics cut into 8 column segments (200 hardware threads instead of 25; anchor `ops41::hc_mix_lanes(seg=8)`, contract reference follows); engram rows prefetched (`madvise`) at step start | 0.147 | router bit-identical (gated); 100 tokens equal |
+| mirrored state synced lazily: published rows and index lists stay on the host and a card is updated only when a layer on it reads them (was: copy to all six cards and wait on each queue, ~80 blocking round trips per token); top-512 of <= 512 rows is all rows, so no scoring below 512 compressed rows | **0.187 (slower)** | trace byte-identical |
+| + **keep-warm**: after each layer, a 32-item kernel on every other card, then wait | **0.110** | trace byte-identical, 100 tokens equal |
+
+**The finding that matters: an idle card clocks down, and a pipeline that visits six cards in turn leaves each one
+idle five sixths of the time.** In the lazy build every kernel group, including untouched ones, ran a uniform 40 %
+slower; the earlier design had been pinging all six cards constantly by accident (its broadcast waits). A deliberate
+ping restores full clock for 0.6 ms per token. This changes no power setting (`OWN_KEEP_WARM=0` turns it off;
+`=2` pings only the next card, 0.114 s). It does keep all six cards at full clock while decoding, so expect more
+power draw during generation than the 0.19 s configuration. Extra queue waits between operators (`OWN_PACE`) and
+waiting after host->card copies (`OWN_H2D_WAIT`) make no measurable difference once the cards are warm.
+
+Six cards now: 0.111 s per token over 40 tokens, 0.113 s over 200 (8.8-9.0 tok/s); 40 of 40 tokens equal the
+reference; load 165.3 GB in 20 s; no kernel fault line all day. Profile (ms per token): expert down 12.7, gate 11.9,
+up 11.7, shared expert 11.3, attention core 10.9, output LoRA b 9.0 + a 6.7, query 7.5, stream mix 5.6, collapse +
+norm 5.5, engram 4.8, head 4.3, router 3.0, keep-warm 0.6. Evidence: `profile-six-cards-round3-*.txt`,
+`six-card-*-round3-*.log`, `device-gates-76.log`.
+
+Long contexts are not measured yet: above 512 compressed rows the indexer scores on the card and selects on the
+host (one blocking read per index layer), and the attention core always walks 640 slots.
+
 ## Reproduce
 
 ```bash
@@ -221,8 +247,9 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 ## Open
 
 1. Stop at the end-of-sentence token in the runner; a server front end.
-2. Speed, next levers in order: expert down-projection (30,720 short rows), router selection (one serial
-   work-item), engram row prefetch at step start, stream-mix lanes, then fusing the small launches.
+2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
+   Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
+   context (compact the live slots); top-512 selection on the card for long contexts.
 3. Prompt pass on the cards (today: CPU reference, roughly a minute and a half for 36 tokens).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop

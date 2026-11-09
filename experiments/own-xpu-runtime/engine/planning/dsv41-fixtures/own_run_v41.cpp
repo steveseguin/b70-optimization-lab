@@ -16,6 +16,10 @@
 //   OWN_HC_LEGACY=1    old FFN pre-mix threading (A/B only)
 //   OWN_LOAD_ONLY=1    stop after the upload (load/memory test)
 //   OWN_GENERIC_KERNELS=1 runtime-type gemv kernels instead of one kernel per weight format
+//   OWN_KEEP_WARM=0|1|2 after each layer, ping the other cards with a tiny kernel so they stay at
+//                      full clock (default 1; 2 = next card only; 0 = off, about 40 % slower)
+//   OWN_PACE=0|1|2     extra queue waits (per layer / per operator group); no measured benefit
+//   OWN_H2D_WAIT=0|1   wait after host->card state uploads (default 1; no measured difference)
 //   OWN_PROF=1         per-op-group time shares (adds a queue wait at every mark)
 //   OWN_DEBUG=1        progress output
 #include <chrono>
@@ -238,6 +242,10 @@ int main(int argc, char **argv) {
                      lens[2], lens[3], first);
         if (const char *tp = getenv("OWN_TRACE")) be.trace_f = fopen(tp, "wb");
         be.prof_on = getenv("OWN_PROF") != nullptr;
+        if (const char *e = getenv("OWN_PACE")) be.pace = atoi(e);
+        if (const char *e = getenv("OWN_H2D_WAIT")) be.h2d_wait = atoi(e) != 0;
+        if (const char *e = getenv("OWN_KEEP_WARM")) be.keep_warm = atoi(e);
+        if (const char *e = getenv("OWN_WARM_ITEMS")) be.warm_items = (size_t)atol(e) / 32 * 32;
 
         // ---- decode ----
         static const int srcs[4] = {2, 8, 14, 20};

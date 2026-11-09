@@ -2,10 +2,11 @@
 
 **November 9, 2026 ~17:15 EST — DeepSeek V4.1 runs on all six cards in our own engine; the host freezes are fixed.**
 - Cards: nothing is loaded. The owner stopped and **disabled** the Gemma units at about 17:05 EST, so all six cards on `steve-TURIND8-2L2T` (six B70, 15 GiB of RAM) are free and stay free after a reboot.
-- Whole model, six cards: 165 GB loads in 20 s with free RAM unchanged; it writes a complete correct answer at 6.2 tokens/s (it first ran at 1.2). With 32-bit activations (the default since 17:30 EST) all 40 tokens of the test equal the CPU reference; with the first 16-bit build the 27th token lost a close call. llama.cpp screen on the same cards: 14 tok/s.
+- Whole model, six cards: 165 GB loads in 20 s with free RAM unchanged; it writes a complete correct answer at 9.0 tokens/s (it first ran at 1.2). With 32-bit activations (the default since 17:30 EST) all 40 tokens of the test equal the CPU reference; with the first 16-bit build the 27th token lost a close call. llama.cpp screen on the same cards: 14 tok/s.
 - Why the machine froze four times: card memory was landing in ordinary RAM. (1) One shared SYCL setup over all cards makes every GiB on a card also cost a GiB of host RAM; one setup per card costs almost nothing. (2) The driver never refuses memory on a full card, it pushes other programs' card memory into RAM, and the Gemma service had two cards full. The loader now uses one setup per card, checks free card memory and refuses to start, and uploads in small pieces with a free-RAM floor.
 - The device decode had never run and had nine real bugs; the CPU reference had four more (it was labelled "validated" on four matching tokens). The reference now agrees with llama.cpp on every one of the 40 layers checked in isolation.
-- Next: more kernel speed (stream-mix statistics, router, engram reads, the Q6_K/Q5_K layers); prompt reading on the cards; stop at end-of-sentence and a server front end.
+- Worth knowing: a card that sits idle clocks down. The decode visits the six cards in turn, so it now pings the other cards after each layer to keep them at full clock (no power setting is changed; it is 40 % slower without). More power is drawn while generating.
+- Next: more kernel speed (the weight matmuls are 75 % of the time), long-context cost, prompt reading on the cards; stop at end-of-sentence and a server front end.
 - Details, commands and evidence: [note](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md), `experiments/own-xpu-runtime/data/dsv41-bringup-20261109/`.
 
 **November 9, 2026 ~03:00 UTC — DeepSeek-V4.1-Flash-1017 engine lane: download + CPU parity + device kernels done; SYCL executor is next.**

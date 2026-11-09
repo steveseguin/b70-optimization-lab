@@ -563,23 +563,24 @@ int main() {
         for (auto &v : scale) v = 1.0f + d(rng);
         for (auto &v : base) v = d(rng) * 10;
         float hp[4], hpo[4], hc[16], dp[4], dpo[4], dc[16];
-        ops41::hc_mix_lanes(st.data(), fn.data(), scale.data(), base.data(), h, hp, hpo, hc);
+        const int SEG = 8;
+        ops41::hc_mix_lanes(st.data(), fn.data(), scale.data(), base.data(), h, hp, hpo, hc, SEG);
         auto *ds = sycl::malloc_device<uint16_t>(N, q);
         auto *dfn = sycl::malloc_device<float>(fn.size(), q);
         auto *dsc = sycl::malloc_device<float>(3, q);
         auto *dba = sycl::malloc_device<float>(24, q);
-        auto *d25 = sycl::malloc_device<double>(25, q);
+        auto *d25 = sycl::malloc_device<double>(25 * SEG, q);
         auto *o = sycl::malloc_device<float>(24, q);
         q.memcpy(ds, st.data(), N * 2); q.memcpy(dfn, fn.data(), fn.size() * 4);
         q.memcpy(dsc, scale.data(), 12); q.memcpy(dba, base.data(), 96);
         q.wait();
         q.submit([&](sycl::handler &hh) {
-            ops41sycl::HcMixDots32 k{h};
-            hh.parallel_for(sycl::nd_range<1>(25 * 32, 32),
+            ops41sycl::HcMixDots32A<ops41sycl::ActBF16> k{h, SEG};
+            hh.parallel_for(sycl::nd_range<1>((size_t)25 * SEG * 32, 32),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, ds, dfn, d25); });
         }).wait();
         q.submit([&](sycl::handler &hh) {
-            ops41sycl::HcMixFinishD k{h};
+            ops41sycl::HcMixFinishSeg k{h, SEG};
             hh.parallel_for(sycl::nd_range<1>(1, 1), [=](sycl::nd_item<1> it) { k(it, d25, dsc, dba, o, o + 4, o + 8); });
         }).wait();
         std::vector<float> ov(24);
@@ -590,6 +591,41 @@ int main() {
         check_f32("hc_mix_lanes_comb", hc, dc, 16, 2e-5f);
         sycl::free(ds, q); sycl::free(dfn, q); sycl::free(dsc, q); sycl::free(dba, q);
         sycl::free(d25, q); sycl::free(o, q);
+    }
+
+    // --- router in three launches == RouteF32 (one serial work-item), bit for bit ---
+    {
+        const int E = 384;
+        std::vector<float> lg(E), bias(E);
+        std::uniform_real_distribution<float> d(-6, 6);
+        for (auto &v : lg) v = d(rng);
+        for (auto &v : bias) v = d(rng) * 0.05f;
+        lg[77] = lg[11]; bias[77] = bias[11]; // an exact tie: the lower index must win
+        auto *dl = sycl::malloc_device<float>(E, q);
+        auto *dbs = sycl::malloc_device<float>(E, q);
+        auto *ds = sycl::malloc_device<float>(E, q);
+        auto *dsb = sycl::malloc_device<float>(E, q);
+        auto *i1 = sycl::malloc_device<uint32_t>(6, q);
+        auto *i2 = sycl::malloc_device<uint32_t>(6, q);
+        auto *p1 = sycl::malloc_device<float>(6, q);
+        auto *p2 = sycl::malloc_device<float>(6, q);
+        q.memcpy(dl, lg.data(), E * 4).wait();
+        q.memcpy(dbs, bias.data(), E * 4).wait();
+        q.submit([&](sycl::handler &hh) { ops41sycl::RouteF32 k{E, 6};
+            hh.parallel_for(sycl::nd_range<1>(1, 1), [=](sycl::nd_item<1> it) { k(it, dl, dbs, i1, p1); }); }).wait();
+        q.submit([&](sycl::handler &hh) { ops41sycl::RouteScore k{E};
+            hh.parallel_for(sycl::nd_range<1>(E, 32), [=](sycl::nd_item<1> it) { k(it, dl, dbs, ds, dsb); }); }).wait();
+        q.submit([&](sycl::handler &hh) { ops41sycl::RouteRank k{E, 6};
+            hh.parallel_for(sycl::nd_range<1>(E, 32), [=](sycl::nd_item<1> it) { k(it, ds, dsb, i2, p2); }); }).wait();
+        q.submit([&](sycl::handler &hh) { ops41sycl::RouteNorm k{6};
+            hh.parallel_for(sycl::nd_range<1>(1, 1), [=](sycl::nd_item<1> it) { k(it, p2); }); }).wait();
+        uint32_t a1[6], a2[6]; float b1[6], b2[6];
+        q.memcpy(a1, i1, 24).wait(); q.memcpy(a2, i2, 24).wait();
+        q.memcpy(b1, p1, 24).wait(); q.memcpy(b2, p2, 24).wait();
+        if (memcmp(a1, a2, 24) || memcmp(b1, b2, 24)) { std::printf("FAIL route_split (ids or probs differ)\n"); ++fails; }
+        else std::printf("ok   route_split (6 ids + 6 probs, bit-identical, tie -> lower index)\n");
+        sycl::free(dl, q); sycl::free(dbs, q); sycl::free(ds, q); sycl::free(dsb, q);
+        sycl::free(i1, q); sycl::free(i2, q); sycl::free(p1, q); sycl::free(p2, q);
     }
 
     // --- dec_t (byte-load grid extraction) == iq3::decode, every element, on device and host ---

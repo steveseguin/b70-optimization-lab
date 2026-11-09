@@ -167,6 +167,7 @@ public:
     using act_t = Act::T;
     static constexpr int TILES = 6;
     static constexpr int HEAD_TILE = 5;
+    static constexpr int HC_SEG = 8; // hc_mix column segments (part of the arithmetic contract)
     struct Options {
         int layer_begin = 0, layer_end = 40; // layers executed on device
         bool head = true;                    // output norm + logits + argmax
@@ -257,8 +258,15 @@ public:
             tok_out_ = dalloc<int32_t>(HEAD_TILE, 1);
         }
         h_streams.resize(4 * (size_t)g.h);
-        h_kv_row.resize(g.hd);
-        h_ik_row.resize(128);
+        for (int s = 0; s < 4; ++s) {
+            size_t rows = s == 3 ? rows_c1 : rows_c2;
+            h_ckv[s].reserve(rows * g.hd);
+            h_ik[s].reserve(rows * 128);
+        }
+        for (auto &slot : h_cidx)
+            for (auto &v : slot) v.assign(512, -1);
+        for (auto &layer : h_eng)
+            for (auto &v : layer) v.resize((size_t)24 * g.engram_dim);
         build_rope_tables();
         for (int t = 0; t < TILES; ++t)
             if (active[t]) qs[t].wait();
@@ -457,8 +465,47 @@ public:
         qs[t].wait();
         prof_last = now_s();
     }
+    // pace: 0 = never wait between operators, 1 = wait at the end of each
+    // layer, 2 = wait at every operator-group mark (OWN_PACE)
+    int pace = 0;
+    // keep_warm (OWN_KEEP_WARM): 0 off; 1 = after each layer, run a tiny kernel
+    // on every OTHER active card and wait for it; 2 = only on the next card in
+    // line. An idle card clocks down within a fraction of a second and then
+    // runs its whole slice of layers ~40 % slower. No power setting is changed.
+    int keep_warm = 1;
+    void warm(int t) {
+        if (!keep_warm) return;
+        int next = -1;
+        for (int k = 1; k <= TILES; ++k) {
+            int t2 = (t + k) % TILES;
+            if (active[t2] && t2 != t) { next = t2; break; }
+        }
+        for (int t2 = 0; t2 < TILES; ++t2) {
+            if (!active[t2] || t2 == t) continue;
+            if (keep_warm == 2 && t2 != next) continue;
+            float *p = sc[t2].warm;
+            qs[t2].submit([&](sycl::handler &hh) {
+                hh.parallel_for(sycl::nd_range<1>(warm_items, 32), [=](sycl::nd_item<1> it) {
+                    size_t g = it.get_global_linear_id();
+                    p[g & 1023] = float(g);
+                });
+            });
+        }
+        for (int t2 = 0; t2 < TILES; ++t2) {
+            if (!active[t2] || t2 == t) continue;
+            if (keep_warm == 2 && t2 != next) continue;
+            qs[t2].wait();
+        }
+    }
+    size_t warm_items = 32;
+    // wait right after every host->card copy (OWN_H2D_WAIT, default on): on this
+    // stack a host-pointer copy left pending slows every launch behind it
+    bool h2d_wait = true;
     void prof(const char *name, int t) {
-        if (!prof_on) return;
+        if (!prof_on) {
+            if (pace >= 2) qs[t].wait();
+            return;
+        }
         qs[t].wait();
         double n = now_s();
         prof_t[name] += n - prof_last;
@@ -481,14 +528,36 @@ public:
     }
     // segment mode: a row published by a source layer outside the range
     void append_published(int si, const float *ckv_row, const float *ik_row) {
-        for (int i = 0; i < g.hd; ++i) h_kv_row[i] = ops41::bf16b(ckv_row[i]);
-        for (int i = 0; i < 128; ++i) h_ik_row[i] = ops41::bf16b(ik_row[i]);
-        broadcast_row(si);
+        std::vector<uint16_t> kvr(g.hd), ikr(128);
+        for (int i = 0; i < g.hd; ++i) kvr[i] = ops41::bf16b(ckv_row[i]);
+        for (int i = 0; i < 128; ++i) ikr[i] = ops41::bf16b(ik_row[i]);
+        append_row_host(si, kvr.data(), ikr.data());
+    }
+
+    // The 24 hashed engram rows per engram layer are cold 4 KiB reads from the
+    // 135 GB table (about 2 ms per layer when taken inline). Their ids depend
+    // only on the token history, so ask the kernel for them at step start.
+    void engram_prefetch() {
+        static const long page = sysconf(_SC_PAGESIZE);
+        auto l = iq3::layout(iq3::Type::Q5_K);
+        for (int li = 0; li < 2; ++li) {
+            int L = li == 0 ? 1 : 14;
+            if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+            if ((long)comp_ids.size() <= pos) continue;
+            int64_t ids[24];
+            engram_hash((int)pos, li, ids);
+            for (int c = 0; c < 24; ++c) {
+                uintptr_t a = (uintptr_t)(eng_base[li] + (size_t)ids[c] * l.bytes);
+                uintptr_t a0 = a & ~(uintptr_t)(page - 1);
+                madvise((void *)a0, (size_t)(a + l.bytes - a0), MADV_WILLNEED);
+            }
+        }
     }
 
     // decode one token; returns the next token id (-1 when the head is not loaded)
     int32_t decode_step(int32_t token) {
         const int H_ = g.h;
+        engram_prefetch();
         if (o.layer_begin == 0) {
             const auto &te = we("token_embd.weight");
             const uint8_t *row = (const uint8_t *)wgt.at("token_embd.weight").p + (size_t)token * wrb(te);
@@ -561,11 +630,11 @@ public:
             src_len[i] = lens[i];
             size_t cap = (i == 3 ? (size_t)max_seq + 2 : (size_t)max_seq / 2 + 2);
             if ((size_t)lens[i] > cap) throw std::runtime_error("state exceeds max_seq");
-            for (int t = 0; t < TILES; ++t) {
-                if (!active[t]) continue;
-                up16(ckv_mirror[t][i], ckv[i].data(), ckv[i].size(), t);
-                up16(ik_mirror[t][i], ik[i].data(), ik[i].size(), t);
-            }
+            h_ckv[i].resize(ckv[i].size());
+            h_ik[i].resize(ik[i].size());
+            for (size_t k = 0; k < ckv[i].size(); ++k) h_ckv[i][k] = ops41::bf16b(ckv[i][k]);
+            for (size_t k = 0; k < ik[i].size(); ++k) h_ik[i][k] = ops41::bf16b(ik[i][k]);
+            for (int t = 0; t < TILES; ++t) synced[t][i] = 0; // cards catch up on first use
             int st = tile_of_layer(srcs[i]);
             if (srcs[i] >= o.layer_begin && srcs[i] < o.layer_end) {
                 qs[st].memcpy(sc[st].kv_state + (size_t)i * 2 * g.hd, kv_state[i], 1024 * 4);
@@ -599,7 +668,17 @@ private:
     int32_t *tok_out_ = nullptr;
     int cur = 0;
     std::vector<act_t> h_streams;
-    std::vector<uint16_t> h_kv_row, h_ik_row; // KV rows are BF16 in both activation modes
+    // Host copies of the state every card mirrors (KV rows are BF16 in both
+    // activation modes). A card is brought up to date only when a layer on
+    // it is about to read the state, with non-blocking uploads: the old
+    // design copied every new row and index list to all six cards and waited
+    // on each queue, about 80 blocking round trips per token.
+    std::vector<uint16_t> h_ckv[4], h_ik[4]; // append-only; capacity reserved, so pointers stay valid
+    long synced[TILES][4] = {};              // rows already on each card
+    std::vector<int32_t> h_cidx[8][4];       // 4-deep ring per slot: a pending upload never sees a rewrite
+    unsigned cidx_ver[8] = {}, tile_cidx_ver[TILES][8] = {};
+    std::vector<act_t> h_eng[2][2];          // engram rows, two alternating buffers per engram layer
+    unsigned eng_flip[2] = {};
     std::vector<uint8_t> cand_host; // layer-20 candidate mask of the current step
     bool cand_valid = false;
 
@@ -636,7 +715,9 @@ private:
         act_t *cw, *scg, *latent, *kk;
         float *kv_state, *score_state;  // [4 sources][2 slots][hd]
         float *pre_a, *post_a, *comb_a, *pre_f, *post_f, *comb_f, *cur_pre;
-        double *d25;                    // hc_mix: 24 dots + sum of squares
+        double *d25;                    // hc_mix: (24 dots + sum of squares) x HC_SEG segments
+        float *rs, *rsb;                // router scores, scores + bias
+        float *warm;                    // keep-warm scribble buffer
         int32_t *idxs_cat, *widx;
         act_t *old, *eng_rows, *kvbuf;
     };
@@ -667,7 +748,9 @@ private:
         s.kv_state = mf((size_t)4 * 2 * g.hd); s.score_state = mf((size_t)4 * 2 * g.hd);
         s.pre_a = mf(4); s.post_a = mf(4); s.comb_a = mf(16);
         s.pre_f = mf(4); s.post_f = mf(4); s.comb_f = mf(16);
-        s.d25 = dalloc<double>(t, 25); s.cur_pre = mf(4);
+        s.d25 = dalloc<double>(t, 25 * HC_SEG); s.cur_pre = mf(4);
+        s.rs = mf(g.experts); s.rsb = mf(g.experts);
+        s.warm = mf(1024);
         s.idxs_cat = dalloc<int32_t>(t, 640); s.widx = dalloc<int32_t>(t, 128);
         s.old = md((size_t)4 * g.h);
         s.eng_rows = md((size_t)24 * g.engram_dim); s.kvbuf = md((size_t)5 * g.h);
@@ -822,9 +905,9 @@ private:
         auto &s = sc[t];
         // lane/tree reduction (anchor ops41::hc_mix_lanes); the serial-order
         // HcMixDots kernel cost ~3 ms per call
-        launch_sg(t, 25, ops41sycl::HcMixDots32A<Act>{g.h}, (const act_t *)streams[t],
+        launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDots32A<Act>{g.h, HC_SEG}, (const act_t *)streams[t],
                   wp<float>(prefix + "fn.weight"), s.d25);
-        launch(t, 1, 1, ops41sycl::HcMixFinishD{g.h}, (const double *)s.d25,
+        launch(t, 1, 1, ops41sycl::HcMixFinishSeg{g.h, HC_SEG}, (const double *)s.d25,
                wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
     }
 
@@ -873,6 +956,9 @@ private:
                (const act_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f);
         qs[t].memcpy(s.cur_pre, s.pre_f, 16);
         prof("hc_post", t);
+        if (pace == 1) qs[t].wait();
+        warm(t);
+        if (prof_on) prof("keep_warm", t);
         tra(L, TT_STREAMS_FFN, t, streams[t], 4 * (size_t)H_);
     }
 
@@ -920,6 +1006,8 @@ private:
         if (cr) {
             if (is_kv_source(L)) { publish(L, t, si, yarn); prof("publish", t); }
             if (index_slot(L) >= 0) { index(L, t, si, yarn); prof("index", t); }
+            sync_rows(t, si);
+            sync_cidx(t, isrc_for(L));
             qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
             qs[t].memcpy(s.idxs_cat + 128, cidx_mirror[t][isrc_for(L)], 512 * 4);
             n_idx += 512;
@@ -948,19 +1036,40 @@ private:
         prof("attn_o_b", t);
     }
 
-    // append the staged row (h_kv_row / h_ik_row) to every active card's mirrors
-    void broadcast_row(int si) {
-        long row = src_len[si];
-        long cap = si == 3 ? (long)max_seq + 2 : (long)max_seq / 2 + 2;
-        if (row >= cap) throw std::runtime_error("compressed cache full (max_seq)");
-        for (int t2 = 0; t2 < TILES; ++t2) {
-            if (!active[t2]) continue;
-            qs[t2].memcpy(ckv_mirror[t2][si] + (size_t)row * g.hd, h_kv_row.data(), 2 * (size_t)g.hd);
-            qs[t2].memcpy(ik_mirror[t2][si] + (size_t)row * 128, h_ik_row.data(), 2 * 128);
-        }
-        for (int t2 = 0; t2 < TILES; ++t2)
-            if (active[t2]) qs[t2].wait();
+    // append one published row to the host mirrors (cards sync lazily)
+    void append_row_host(int si, const uint16_t *kv_row, const uint16_t *ik_row) {
+        if (h_ckv[si].size() + g.hd > h_ckv[si].capacity() || h_ik[si].size() + 128 > h_ik[si].capacity())
+            throw std::runtime_error("compressed cache full (max_seq)");
+        h_ckv[si].insert(h_ckv[si].end(), kv_row, kv_row + g.hd); // within capacity: no reallocation
+        h_ik[si].insert(h_ik[si].end(), ik_row, ik_row + 128);
         src_len[si]++;
+    }
+    // bring card t's copy of source si up to date; non-blocking (the host rows
+    // are append-only and never move). Pieces stay under 64 MiB.
+    void sync_rows(int t, int si) {
+        long have = synced[t][si];
+        const long want = src_len[si];
+        const long step = ((long)64 << 20) / ((long)g.hd * 2);
+        while (have < want) {
+            const long n = std::min(step, want - have);
+            qs[t].memcpy(ckv_mirror[t][si] + (size_t)have * g.hd, h_ckv[si].data() + (size_t)have * g.hd,
+                         (size_t)n * g.hd * 2);
+            qs[t].memcpy(ik_mirror[t][si] + (size_t)have * 128, h_ik[si].data() + (size_t)have * 128,
+                         (size_t)n * 128 * 2);
+            have += n;
+        }
+        if (h2d_wait) qs[t].wait();
+        synced[t][si] = want;
+    }
+    void set_cidx(int slot, const std::vector<int32_t> &sel) {
+        ++cidx_ver[slot];
+        std::copy(sel.begin(), sel.end(), h_cidx[slot][cidx_ver[slot] % 4].begin());
+    }
+    void sync_cidx(int t, int slot) {
+        if (tile_cidx_ver[t][slot] == cidx_ver[slot]) return;
+        auto ev = qs[t].memcpy(cidx_mirror[t][slot], h_cidx[slot][cidx_ver[slot] % 4].data(), 512 * 4);
+        if (h2d_wait) ev.wait();
+        tile_cidx_ver[t][slot] = cidx_ver[slot];
     }
 
     // compressor publish + index-key append (kv source layers 2/8/14/20)
@@ -998,9 +1107,10 @@ private:
         qs[t].memcpy(ha.data(), s.latent, sizeof(act_t) * (size_t)g.hd);
         qs[t].memcpy(hk.data(), s.kk, sizeof(act_t) * 128);
         qs[t].wait();
-        for (int i = 0; i < g.hd; ++i) h_kv_row[i] = ops41::bf16b(Act::rd(ha[i]));
-        for (int i = 0; i < 128; ++i) h_ik_row[i] = ops41::bf16b(Act::rd(hk[i]));
-        broadcast_row(si);
+        std::vector<uint16_t> kvr(g.hd), ikr(128);
+        for (int i = 0; i < g.hd; ++i) kvr[i] = ops41::bf16b(Act::rd(ha[i]));
+        for (int i = 0; i < 128; ++i) ikr[i] = ops41::bf16b(Act::rd(hk[i]));
+        append_row_host(si, kvr.data(), ikr.data());
     }
 
     // indexer: score every visible compressed row, keep the best 512 (host
@@ -1010,7 +1120,18 @@ private:
         const std::string p = "blk." + std::to_string(L) + ".";
         const long len = src_len[si];
         std::vector<int32_t> sel(512, -1);
-        if (len > 0) {
+        if (len > 0 && len <= 512) {
+            // top-512 of at most 512 visible rows is all of them, whatever the
+            // scores (official: topk = min(index_topk, rows), then sorted by
+            // position), and with at most 2048 blocks the candidate mask keeps
+            // every block. Nothing to compute.
+            for (long j = 0; j < len; ++j) sel[j] = (int32_t)j + 128;
+            if (L == 20) {
+                cand_host.assign(len, 1);
+                cand_valid = true;
+            }
+        } else if (len > 0) {
+            sync_rows(t, si); // the scores read this card's index keys
             gemv(t, p + "indexer.attn_q_b.weight", s.qn, s.qi);
             rope(t, s.qi, 32, 128, pos, yarn, false);
             gemv(t, p + "indexer.proj.weight", s.xn, s.wv);
@@ -1057,19 +1178,19 @@ private:
             std::sort(ord.begin(), ord.begin() + nk);
             for (int i = 0; i < nk; ++i) sel[i] = ord[i] + 128;
         }
-        const int slot = index_slot(L);
-        for (int t2 = 0; t2 < TILES; ++t2)
-            if (active[t2]) qs[t2].memcpy(cidx_mirror[t2][slot], sel.data(), 512 * 4);
-        for (int t2 = 0; t2 < TILES; ++t2)
-            if (active[t2]) qs[t2].wait(); // sel is a local
+        set_cidx(index_slot(L), sel);
     }
 
     void moe(int L, int t) {
         auto &s = sc[t];
         const std::string p = "blk." + std::to_string(L) + ".";
         gemv(t, p + "ffn_gate_inp.weight", s.xn, s.router, true); // router logits stay f32
-        launch(t, 1, 1, ops41sycl::RouteF32{g.experts, 6}, (const float *)s.router,
-               wp<float>(p + "exp_probs_b.bias"), s.ids, s.prob);
+        // three launches, same picks and arithmetic as the one-work-item RouteF32
+        launch(t, g.experts, 32, ops41sycl::RouteScore{g.experts}, (const float *)s.router,
+               wp<float>(p + "exp_probs_b.bias"), s.rs, s.rsb);
+        launch(t, g.experts, 32, ops41sycl::RouteRank{g.experts, 6}, (const float *)s.rs, (const float *)s.rsb,
+               s.ids, s.prob);
+        launch(t, 1, 1, ops41sycl::RouteNorm{6}, s.prob);
         prof("router", t);
         routed_gemv(t, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
         prof("exp_gate", t);
@@ -1122,14 +1243,15 @@ private:
         int64_t ids[24];
         engram_hash((int)pos, li, ids);
         auto l = iq3::layout(iq3::Type::Q5_K);
-        std::vector<act_t> rows(24 * 256);
+        std::vector<act_t> &rows = h_eng[li][eng_flip[li]++ & 1]; // persistent: the upload below does not wait
         for (int c = 0; c < 24; ++c) {
             const uint8_t *row = eng_base[li] + (size_t)ids[c] * l.bytes;
             for (int i = 0; i < 256; ++i)
                 rows[c * 256 + i] = Act::wr(iq3::decode(iq3::Type::Q5_K, row, i));
         }
         const std::string p = "blk." + std::to_string(L) + ".";
-        qs[t].memcpy(s.eng_rows, rows.data(), rows.size() * sizeof(act_t)).wait(); // rows is a local
+        auto ev = qs[t].memcpy(s.eng_rows, rows.data(), rows.size() * sizeof(act_t));
+        if (h2d_wait) ev.wait();
         gemv(t, p + "engram_kv.weight", s.eng_rows, s.kvbuf);
         launch(t, 4, 4, ops41sycl::EngramGateA<Act>{g.h}, streams[t], (const act_t *)s.kvbuf,
                wp<float>(p + "engram_gate.weight"));

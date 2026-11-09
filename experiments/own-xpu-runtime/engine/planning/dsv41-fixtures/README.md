@@ -164,8 +164,8 @@ on the cards from the reference's state dump. Usage and environment are in
 the file header. Loader rules (one SYCL context per card, free-memory check,
 bounded upload) exist because the first version froze this 15 GiB host four
 times; do not relax them. Gate: `tools/dsv41_trace_diff.py ref.trc dev.trc`.
-Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 6.2
-tok/s). Activations are f32 by default (`-DOWN41_ACT_BF16` for the first,
+Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 9.0
+tok/s since 18:10). Activations are f32 by default (`-DOWN41_ACT_BF16` for the first,
 BF16-activation build); KV rows are BF16. With f32 activations all 40 greedy
 tokens of prompt 1 equal the reference run with `OWN_KV_BF16=1`.
 

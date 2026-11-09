@@ -691,6 +691,47 @@ struct RouteF32 {
     }
 };
 
+// route41 in three launches, bit-identical to RouteF32 (one serial work-item
+// doing 384 softplus + 6 x 384 scans cost ~0.3 ms per layer):
+//   RouteScore one item per expert: s = sqrt(log1p(exp(logit))), sb = s + bias
+//   RouteRank  one item per expert: its rank under (sb desc, index asc) --
+//              exactly the order RouteF32's repeated first-max scan picks in;
+//              ranks below topk write ids[rank] and the raw score
+//   RouteNorm  one item: sum in rank order, prob = raw / (sum + 1e-20) * 1.5
+struct RouteScore {
+    int experts;
+    void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, float *s, float *sb) const {
+        int i = it.get_global_linear_id();
+        if (i >= experts) return;
+        float v = sycl::sqrt(sycl::log1p(sycl::exp(logits[i])));
+        s[i] = v;
+        sb[i] = v + bias[i];
+    }
+};
+struct RouteRank {
+    int experts, topk;
+    void operator()(sycl::nd_item<1> it, const float *s, const float *sb, uint32_t *ids, float *praw) const {
+        int i = it.get_global_linear_id();
+        if (i >= experts) return;
+        const float v = sb[i];
+        int rank = 0;
+        for (int j = 0; j < experts; ++j) rank += (sb[j] > v || (sb[j] == v && j < i)) ? 1 : 0;
+        if (rank < topk) {
+            ids[rank] = (uint32_t)i;
+            praw[rank] = s[i];
+        }
+    }
+};
+struct RouteNorm {
+    int topk;
+    void operator()(sycl::nd_item<1> it, float *prob) const {
+        if (it.get_global_linear_id() != 0) return;
+        float sum = 0;
+        for (int t = 0; t < topk; ++t) sum += prob[t];
+        for (int t = 0; t < topk; ++t) prob[t] = prob[t] / (sum + 1e-20f) * 1.5f;
+    }
+};
+
 // hc_mix phase A: 24 items, serial double dot over 4*h in host order -> m[24].
 // The rsqrt statistic is recomputed per item (grid-wide sync impossible in
 // one launch); identical value everywhere since the loop order is fixed.
@@ -1136,24 +1177,73 @@ template <typename A> struct EngramGateA {
                 A::wr(A::rd(streams[(size_t)j * h + i]) + g * A::rd(kvbuf[(size_t)4 * h + i]));
     }
 };
+// hc_mix statistics, segmented: the 20480 columns are cut into SEG equal
+// segments; group (r, seg) sums its segment as 32 strided double lanes +
+// tree32 into out[r * SEG + seg]; the finish kernel adds a row's segments
+// in order. 25 rows x 8 segments = 200 hardware threads instead of 25
+// (anchor: ops41::hc_mix_lanes with the same segment count).
 template <typename A> struct HcMixDots32A {
-    int h;
+    int h, seg;
     void operator()(sycl::nd_item<1> it, const typename A::T *streams, const float *fn, double *out) const {
         auto sg = it.get_sub_group();
         unsigned l = sg.get_local_linear_id();
-        unsigned r = it.get_group_linear_id();
-        const int N = 4 * h;
+        const unsigned grp = it.get_group_linear_id();
+        const unsigned r = grp / seg, sgi = grp % seg;
+        const int N = 4 * h, len = N / seg;
+        const int i0 = (int)sgi * len, i1 = i0 + len;
         double acc = 0;
         if (r < 24) {
-            for (int i = l; i < N; i += 32) acc += double(fn[(size_t)r * N + i]) * A::rd(streams[i]);
+            for (int i = i0 + (int)l; i < i1; i += 32) acc += double(fn[(size_t)r * N + i]) * A::rd(streams[i]);
         } else {
-            for (int i = l; i < N; i += 32) { float v = A::rd(streams[i]); acc += double(v) * v; }
+            for (int i = i0 + (int)l; i < i1; i += 32) { float v = A::rd(streams[i]); acc += double(v) * v; }
         }
         for (unsigned w = 1; w < 32; w *= 2) {
             double o = sycl::select_from_group(sg, acc, (l + w) % 32);
             if (l % (2 * w) == 0) acc = acc + o;
         }
-        if (l == 0) out[r] = acc;
+        if (l == 0) out[grp] = acc;
+    }
+};
+struct HcMixFinishSeg {
+    int h, seg;
+    void operator()(sycl::nd_item<1> it, const double *d, const float *scale, const float *base,
+                    float *pre, float *post, float *comb) const {
+        if (it.get_global_linear_id() != 0) return;
+        const int N = 4 * h;
+        double tot[25];
+        for (int r = 0; r < 25; ++r) {
+            double t = 0;
+            for (int k = 0; k < seg; ++k) t += d[r * seg + k];
+            tot[r] = t;
+        }
+        float rsqrt = float(1.0 / sycl::sqrt(tot[24] / N + 1e-20));
+        float m24[24];
+        for (int j = 0; j < 24; ++j) m24[j] = float(tot[j]) * rsqrt;
+        auto sig = [](float v) { return 1.0f / (1.0f + sycl::exp(-v)); };
+        const float eps = 1e-6f;
+        for (int j = 0; j < 4; ++j) pre[j] = sig(m24[j] * scale[0] + base[j]) + eps;
+        for (int j = 0; j < 4; ++j) post[j] = 2.0f * sig(m24[4 + j] * scale[1] + base[4 + j]);
+        for (int j = 0; j < 16; ++j) comb[j] = m24[8 + j] * scale[2] + base[8 + j];
+        for (int j = 0; j < 4; ++j) {
+            float mx = comb[j * 4];
+            for (int k = 1; k < 4; ++k) mx = comb[j * 4 + k] > mx ? comb[j * 4 + k] : mx;
+            float sm = 0;
+            for (int k = 0; k < 4; ++k) { comb[j * 4 + k] = sycl::exp(comb[j * 4 + k] - mx); sm += comb[j * 4 + k]; }
+            for (int k = 0; k < 4; ++k) comb[j * 4 + k] = comb[j * 4 + k] / sm + eps;
+        }
+        for (int it2 = 0; it2 < 20; ++it2) {
+            if (it2 > 0)
+                for (int j = 0; j < 4; ++j) {
+                    float sm = 0;
+                    for (int k = 0; k < 4; ++k) sm += comb[j * 4 + k];
+                    for (int k = 0; k < 4; ++k) comb[j * 4 + k] /= (sm + eps);
+                }
+            for (int k = 0; k < 4; ++k) {
+                float sm = 0;
+                for (int j = 0; j < 4; ++j) sm += comb[j * 4 + k];
+                for (int j = 0; j < 4; ++j) comb[j * 4 + k] /= (sm + eps);
+            }
+        }
     }
 };
 template <typename A> struct ToActA { // f32 -> activation
