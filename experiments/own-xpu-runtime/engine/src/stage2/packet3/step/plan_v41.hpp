@@ -301,8 +301,13 @@ public:
       hc_mixes("streams", t + "hc_attn_", t + "hc.a");
       hc_pre("streams", "pre_mix", t + "attn.in");
       norm(t + "attn.in", t + "attn.n", 1, g.h, t + "attn_norm.weight");
+      // publish/rope from config compress_ratios: 0 for layers 0,1 and
+      // 37..39 (dspark targets, window-only readers, base rope); 2 for
+      // 2..19; 1 for 20..36. The previous hardcode gave 37-39 yarn +
+      // publish, contradicting the validated CPU runner.
+      int ratio = (i < 2 || i > 36) ? 0 : (i < 20 ? 2 : 1);
       attention(t + "attn.n", t, t + "attn.out", i, kv_sources.count(i),
-                index_sources.count(i), i < 2 ? 0 : (i < 20 ? 2 : 1));
+                index_sources.count(i), ratio);
       hc_post("streams", t + "attn.ob", t + "hc.a.post", t + "hc.a.comb",
               t + "attn");
       hc_mixes("streams", t + "hc_ffn_", t + "hc.f");

@@ -25,6 +25,29 @@ inline float sg_tree32(sycl::sub_group sg, float v) {
 // gemv over one quantized row: lane l sums k = l, l+32, ... serially
 // (iq3::lane_dot order), tree32 butterfly, bf16 RNE out. One sub-group per
 // row; global id = row.
+// rmsnorm: y[i] = w[i] * x[i] / sqrt(mean(x^2)+eps). Host runner accumulates
+// x^2 serially in double; device uses SG32 strided lanes + tree32 in double,
+// same math different order -> gate at +-1 bf16 ulp.
+struct RmsNorm {
+    int n;
+    void operator()(sycl::nd_item<1> it, const uint16_t *x, const uint16_t *w,
+                    uint16_t *y) const {
+        int lane = it.get_local_linear_id();
+        sycl::sub_group sg = it.get_sub_group();
+        int base = it.get_group_linear_id() * n;
+        double acc = 0;
+        for (int i = lane; i < n; i += 32) {
+            float v = ops41::bf16(x[base + i]);
+            acc += double(v) * v;
+        }
+        for (int w_ = 16; w_; w_ >>= 1)
+            acc += sycl::select_from_group(sg, acc, lane ^ w_);
+        float rs = float(1.0 / sycl::sqrt(acc / n + 1e-5));
+        for (int i = lane; i < n; i += 32)
+            y[base + i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[base + i]) * rs);
+    }
+};
+
 struct Gemv {
     Type wtype; unsigned rows, cols; // x is bf16
     void operator()(sycl::nd_item<1> it, const uint8_t *w, size_t row_bytes_,

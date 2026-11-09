@@ -448,6 +448,32 @@ int main() {
         sycl::free(ds7, q); sycl::free(dt8, q); sycl::free(ds9, q);
     }
 
+    // --- RmsNorm (+-1 ulp: device lane-order double sum vs host serial) ---
+    {
+        const int n = 5120;
+        std::vector<uint16_t> x(n), w(n), href(n), dev(n);
+        for (auto &v : x) v = rbf16();
+        for (auto &v : w) v = rbf16(0.5f, 1.5f);
+        double sq = 0;
+        for (int i = 0; i < n; ++i) { float v = ops41::bf16(x[i]); sq += double(v) * v; }
+        float rs = float(1.0 / std::sqrt(sq / n + 1e-5));
+        for (int i = 0; i < n; ++i)
+            href[i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[i]) * rs);
+        auto *dxn = sycl::malloc_device<uint16_t>(n, q);
+        auto *dwn = sycl::malloc_device<uint16_t>(n, q);
+        auto *dyn = sycl::malloc_device<uint16_t>(n, q);
+        q.memcpy(dxn, x.data(), n * 2);
+        q.memcpy(dwn, w.data(), n * 2);
+        q.submit([&](sycl::handler &hh) {
+             ops41sycl::RmsNorm kk{n};
+             hh.parallel_for(sycl::nd_range<1>(32, 32),
+                             [=](sycl::nd_item<1> it) { kk(it, dxn, dwn, dyn); });
+         }).wait();
+        q.memcpy(dev.data(), dyn, n * 2).wait();
+        check_bits("rmsnorm", href.data(), dev.data(), n, 1);
+        sycl::free(dxn, q); sycl::free(dwn, q); sycl::free(dyn, q);
+    }
+
     std::printf(fails ? "FAILURES: %d\n" : "ALL DEVICE GATES PASS\n", fails);
     return fails ? 1 : 0;
 }
