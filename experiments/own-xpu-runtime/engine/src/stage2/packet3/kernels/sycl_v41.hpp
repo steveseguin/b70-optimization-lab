@@ -118,18 +118,114 @@ template <iq3::Type T> [[gnu::always_inline]] inline float dec_t(const uint8_t *
     }
 }
 
+// iq2_signs[k] is k with its parity in bit 7 (checked below), so the sign
+// bit needs no table read. Table reads are the expensive part of these
+// kernels on the B70: dropping this one alone was 2.6x on IQ2_XXS.
+constexpr bool iq2_signs_are_parity() {
+    for (unsigned k = 0; k < 128; ++k)
+        if (iq3::iq2_signs[k] != (k | ((unsigned(std::popcount(k)) & 1u) << 7))) return false;
+    return true;
+}
+static_assert(iq2_signs_are_parity());
+inline uint32_t sign7_bit(uint32_t k, unsigned j) {
+    return ((k | ((uint32_t(std::popcount(k)) & 1u) << 7)) >> j) & 1u;
+}
+
 // Lane l's partial sum over columns l, l+32, ... in ascending order (the
-// iq3::lane_dot order). For block formats the loop runs over 32-column chunks:
-// block pointer and in-block chunk index depend only on the chunk, so the
-// compiler can keep block headers and group words uniform across the
-// sub-group; the lane id only picks bit fields. Same products, same order.
+// iq3::lane_dot order), written per format so that block and chunk state is
+// read once (uniform across the sub-group) and the lane only picks bit
+// fields and does one grid read. The float operations and their order are
+// exactly those of iq3::decode, so results are bit-identical: the device
+// gate lane_sum_* checks every format against lane_sum_ref on the card and
+// on the host. Kernel microbench 2026-11-09 (G elements/s, per-element form
+// -> this): IQ2_XXS 23 -> 302, IQ3_XXS 53 -> 301, IQ1_S 129 -> 334,
+// IQ2_XS 131 -> 293, IQ2_S 62 -> 266, Q5_K 49 -> 129.
 template <iq3::Type T>
 [[gnu::always_inline]] inline float lane_sum_t(const uint8_t *row, const uint16_t *x, unsigned cols, unsigned lane) {
+    using iq3::half;
+    using iq3::u16;
+    using iq3::u32;
     constexpr auto L = iq3::layout(T);
     float sum = 0;
-    if constexpr (L.elements >= 32) {
+    lane &= 31u;
+    [[maybe_unused]] const unsigned l8 = lane >> 3, j = lane & 7u;
+    if constexpr (T == iq3::Type::IQ2_XXS) {
+        for (unsigned blk = 0; blk < cols / 256; ++blk) {
+            const uint8_t *b = row + (size_t)blk * 66;
+            const float d = half(u16(b));
+            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            for (unsigned g = 0; g < 8; ++g) {
+                const uint32_t lo = u32(b + 2 + 8 * g), hi = u32(b + 6 + 8 * g);
+                const float db = (d * (0.5f + float(hi >> 28))) * 0.25f;
+                const uint32_t mag = grid64_byte(iq3::iq2_xxs_grid, (lo >> (8 * l8)) & 255, j);
+                const int sign = sign7_bit((hi >> (7 * l8)) & 127, j) ? -1 : 1;
+                sum = sum + ((db * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
+            }
+        }
+    } else if constexpr (T == iq3::Type::IQ2_XS) {
+        for (unsigned blk = 0; blk < cols / 256; ++blk) {
+            const uint8_t *b = row + (size_t)blk * 74;
+            const float d = half(u16(b));
+            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            for (unsigned g = 0; g < 8; ++g) {
+                const uint32_t a0 = u32(b + 2 + 8 * g), a1 = u32(b + 6 + 8 * g);
+                const uint32_t aux = ((l8 < 2 ? a0 : a1) >> (16 * (l8 & 1))) & 0xffffu;
+                const unsigned sc = (b[66 + g] >> (4 * (l8 >> 1))) & 15;
+                const uint32_t mag = grid64_byte(iq3::iq2_xs_grid, aux & 511, j);
+                const int sign = sign7_bit(aux >> 9, j) ? -1 : 1;
+                sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
+            }
+        }
+    } else if constexpr (T == iq3::Type::IQ1_S) {
+        for (unsigned blk = 0; blk < cols / 256; ++blk) {
+            const uint8_t *b = row + (size_t)blk * 50;
+            const float d = half(u16(b));
+            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            for (unsigned g = 0; g < 8; ++g) {
+                const uint32_t qh = u16(b + 34 + 2 * g);
+                const float dl = d * float(2 * ((qh >> 12) & 7) + 1);
+                const float delta = (qh & 0x8000) ? -0.125f : 0.125f;
+                const uint32_t qs = u32(b + 2 + 4 * g);
+                const unsigned ix = ((qs >> (8 * l8)) & 255) | (((qh >> (3 * l8)) & 7) << 8);
+                const int code = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, ix, j))));
+                sum = sum + (dl * (float(code) + delta)) * ops41::bf16(xb[g * 32]);
+            }
+        }
+    } else if constexpr (T == iq3::Type::IQ2_S) {
+        // FLAT chunk loop on purpose. The block->chunk nest used by the other
+        // formats gives WRONG sums on lanes 1..31 for this format on the B70
+        // (icpx 2026.1 / NEO 26.x; the same source is right on the host and the
+        // flat form is right on the device; even the nest with iq3::decode
+        // inside is wrong). Any change here must pass the lane_sum_iq2_s gate.
+        for (unsigned c = 0; c < cols / 32; ++c) {
+            const uint8_t *b = row + (size_t)(c >> 3) * 82;
+            const unsigned g = c & 7u;
+            const float d = half(u16(b));
+            const unsigned qhb = b[66 + g], scb = b[74 + g];
+            const unsigned ix = b[2 + 4 * g + l8] | (((qhb >> (2 * l8)) & 3) << 8);
+            const uint32_t mag = grid64_byte(iq3::iq2_s_grid, ix, j);
+            const int sign = ((b[34 + 4 * g + l8] >> j) & 1) ? -1 : 1;
+            const unsigned sc = (scb >> (4 * (lane >> 4))) & 15;
+            sum = sum + ((((d * (0.5f + float(sc))) * 0.25f) * float(mag)) * float(sign)) * ops41::bf16(x[(c << 5) | lane]);
+        }
+    } else if constexpr (T == iq3::Type::IQ3_XXS) {
+        const unsigned l4 = lane >> 2;
+        for (unsigned blk = 0; blk < cols / 256; ++blk) {
+            const uint8_t *b = row + (size_t)blk * 98;
+            const float d = half(u16(b));
+            const uint16_t *xb = x + (size_t)blk * 256 + lane;
+            for (unsigned g = 0; g < 8; ++g) {
+                const uint32_t word = u32(b + 66 + 4 * g);
+                const uint32_t code = (word >> (7 * l8)) & 127;
+                const int sign = sign7_bit(code, j) ? -1 : 1;
+                const uint32_t w0 = u32(b + 2 + 8 * g), w1 = u32(b + 6 + 8 * g);
+                const unsigned gi = ((l4 < 4 ? w0 : w1) >> (8 * (l4 & 3))) & 255;
+                const uint32_t mag = (iq3::iq3_grid[gi] >> (8 * (lane & 3))) & 255;
+                sum = sum + ((((d * (0.5f + float(word >> 28))) * 0.5f) * float(mag)) * float(sign)) * ops41::bf16(xb[g * 32]);
+            }
+        }
+    } else if constexpr (L.elements >= 32) {
         constexpr unsigned CPB = L.elements / 32; // chunks per block
-        lane &= 31u;
         const unsigned chunks = cols / 32;
         for (unsigned c = 0; c < chunks; ++c) {
             const uint8_t *blk = row + (size_t)(c / CPB) * L.bytes;
@@ -140,6 +236,15 @@ template <iq3::Type T>
         for (unsigned k = lane; k < cols; k += 32)
             sum = sum + dec_t<T>(row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * ops41::bf16(x[k]);
     }
+    return sum;
+}
+// reference form of the same lane sum (per-element iq3::decode); gates and benches compare against it
+template <iq3::Type T>
+[[gnu::always_inline]] inline float lane_sum_ref(const uint8_t *row, const uint16_t *x, unsigned cols, unsigned lane) {
+    constexpr auto L = iq3::layout(T);
+    float sum = 0;
+    for (unsigned k = lane; k < cols; k += 32)
+        sum = sum + iq3::decode(T, row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * ops41::bf16(x[k]);
     return sum;
 }
 template <iq3::Type T> struct GemvT {

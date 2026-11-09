@@ -11,8 +11,9 @@ engram table on NVMe). Lane: `engine/` (Own Xe), family `dsv41`.
 - The device decode had never run. It had real bugs, and so did the CPU reference it was to be checked against.
   The reference is now checked **layer by layer against llama.cpp** (all 40 layers and the output agree within
   llama.cpp's own rounding), and the cards match the reference on every layer and on the output tokens.
-- **Not done:** one run on all six cards at once. Two cards are held by the Gemma service that restarts at every
-  boot. The model was validated in two halves instead (layers 0-27 on four cards; layers 28-39 + head on two).
+- **The whole model runs on all six cards** (owner stopped and disabled the Gemma service at about 17:05 EST):
+  165.3 GB loaded in 20 s with host free memory flat, a complete correct answer, 6.1 tok/s. The first 26 tokens equal
+  the CPU reference; the 27th is a 0.39-logit call that the device's BF16 activations decide the other way. Section 7.
 - Speed after a first tuning round: about 0.16 s per token summed over the two halves (6 tok/s), from 0.86 s
   when it first ran. The llama.cpp reference screen is 14 tok/s. Section 6.
 
@@ -141,6 +142,35 @@ layers 0-27 (profiled, ms): expert down 19, stream mix 13, expert gate 10 + up 1
 Not launch overhead: the profile's 1,260 queue waits add only 8 ms.
 Evidence: `data/dsv41-bringup-20261109/profile-layers0-27-round{0,1}.txt`, `device-speed-*.log`.
 
+## 7. Six cards, whole model (17:07 EST)
+
+| | |
+| --- | --- |
+| Load | 165.3 GB in 19.7 s and 20.2 s (8.2-8.4 GB/s); `MemAvailable` 13.1 GiB before, during and after; 5.0-7.0 GiB left free per card; no kernel fault line |
+| Output | `The user wants a simple greeting in one sentence. I should respond with a friendly hello in exactly one sentence. Keep it brief and warm.</think>Hello! It's nice to meet you, and I'm here to help with whatever you need.<EOS>` |
+| Against the CPU reference | tokens 1-26 equal; token 27 is " warm" (device) vs " natural" (reference), a 0.39-logit margin in the reference |
+| Trace gate, 3 steps, 2289 records | steps 1 and 3 clean; step 2 has one expert choice that differs at layer 36 (sixth of six, a near tie), which lifts four later records to 5.0-5.7 %; same argmax |
+| Speed | 0.163 s per token, 6.1 tok/s over 98 steps (the runner does not stop at EOS) |
+
+Why the 27th token differs: the device keeps activations in BF16 between operators (8 significant bits, the
+official model's style), the reference in f32. That is about 1 % of noise per layer output and up to 0.2-0.7
+logits at the end, enough to flip a close expert choice or a close token. It is not a logic difference: every
+kernel is bit-exact against its own host anchor. **An f32-activation mode is the fix if the device is to follow
+the reference token for token**; it costs nothing in memory that matters (activations are kilobytes).
+
+Second speed round, before the six-card run (all bit-identical to the reference form on the card and the host,
+gated per format as `lane_sum_*`): per-format block kernels for the five expert formats. The block scale is read
+once per block, chunk words once per chunk, sign bits are computed (parity) instead of read from a table, and
+each lane does one grid read. Kernel microbench, G elements/s, per-element form -> block form: IQ2_XXS 23 -> 302,
+IQ3_XXS 53 -> 301, IQ1_S 129 -> 334, IQ2_XS 131 -> 293, IQ2_S 62 -> 266, Q5_K 49 -> 129. Layers 0-27: 103 -> 89 ms.
+
+**Compiler hazard found by the gate:** for IQ2_S only, the block -> chunk loop nest gives wrong sums on lanes
+1-31 on the B70 (icpx 2026.1), while the same source is right on the host and a flat chunk loop is right on the
+card. IQ2_S uses the flat loop. Never ship a lane kernel without the on-card `lane_sum_*` gate.
+
+Tried, slower: several rows per hardware thread (2 rows -9 %, 16 rows -57 %). Launch cost is not a lever: a tiny
+kernel costs 1.6 us end to end.
+
 ## Reproduce
 
 ```bash
@@ -161,12 +191,12 @@ python3 tools/dsv41_trace_diff.py cpu.trc dev.trc
 #                    OWN_LAYERS=28:40 OWN_DEVS=2,3 OWN_INJECT=cpu.trc OWN_FORCED=ref_ids.txt
 ```
 
-Long GPU runs go in their own unit (`systemd-run --user`). Check `systemctl is-active
-gemma4-26b-q8-quad-backends` first: six-card runs need it stopped.
+Long GPU runs go in their own unit (`systemd-run --user`). The Gemma units were stopped and disabled by the
+owner on 2026-11-09; if they are ever enabled again they take two cards at boot and the runner will refuse.
 
 ## Open
 
-1. The six-card run (needs the two Gemma cards).
+1. f32 activations on the device, so tokens follow the reference beyond near ties (section 7).
 2. Speed, next levers in order: expert down-projection (30,720 short rows), router selection (one serial
    work-item), engram row prefetch at step start, stream-mix lanes, then fusing the small launches.
 3. Prompt pass on the cards (today: CPU reference, roughly a minute and a half for 36 tokens).

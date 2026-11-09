@@ -162,8 +162,9 @@ on the cards from the reference's state dump. Usage and environment are in
 the file header. Loader rules (one SYCL context per card, free-memory check,
 bounded upload) exist because the first version froze this 15 GiB host four
 times; do not relax them. Gate: `tools/dsv41_trace_diff.py ref.trc dev.trc`.
-Validated in two halves (layers 0-27 on four cards, layers 28-39 + head on
-two); a single six-card run is still open.
+Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 6.1
+tok/s, first 26 greedy tokens equal to the reference, then a near tie that
+BF16 activations decide differently).
 
 ## SYCL probe (2026-11-09)
 
