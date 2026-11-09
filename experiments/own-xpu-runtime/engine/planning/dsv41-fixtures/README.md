@@ -97,6 +97,8 @@ revision changes.
 
 | `test_plan_v41` | `plan_v41.hpp` decode-step builder vs real directory | all tensors consumed (indexer wk/k_norm residue on non-kv-source layers documented); op census matches reference (80 hc_mixes, 40 sparse_attn, 4 compress, 8 index, 2 engram, 3 MTP captures); shared-cache references verified |
 
+| `test_ops_v41` | engine host kernels (`ops_v41.hpp`) vs fixture impls | sparse_attn/route/swiglu/window/rope/gemv_grouped bit-exact or EXACT; engram/hc within 1-2 bf16 ulp |
+
 ## Boundaries and next
 
 - Remaining format gap: IQ4_NL_4_4 (dspark spare only — defer until the
