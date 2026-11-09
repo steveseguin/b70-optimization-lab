@@ -95,6 +95,8 @@ revision changes.
 | `test_engine_types` | engine `iq3::decode` Q2_K/IQ2_XXS/IQ2_XS/IQ1_S/MXFP4 | bit-exact vs reference (three-way with per-type fixtures) |
 | `test_directory_v41` | `geometry_v41_from_directory` on real shard directory (`data/dsv41-directory.tsv`, regenerate with `dump_directory.py`) | derives exact admitted geometry; tamper rejected |
 
+| `test_plan_v41` | `plan_v41.hpp` decode-step builder vs real directory | all tensors consumed (indexer wk/k_norm residue on non-kv-source layers documented); op census matches reference (80 hc_mixes, 40 sparse_attn, 4 compress, 8 index, 2 engram, 3 MTP captures); shared-cache references verified |
+
 ## Boundaries and next
 
 - Remaining format gap: IQ4_NL_4_4 (dspark spare only — defer until the
