@@ -287,6 +287,8 @@ int main(int argc, char **argv) {
         double t_dec = 0;
         int n_timed = 0;
         for (int step = 1; step < ndecode; ++step) {
+            // The prompt/state already produced the first output token.
+            if (forced.empty() && cur == eos) break;
             if (!forced.empty()) {
                 if (step - 1 >= (int)forced.size()) break;
                 cur = forced[step - 1];
