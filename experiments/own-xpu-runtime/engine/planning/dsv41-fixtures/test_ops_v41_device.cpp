@@ -456,7 +456,7 @@ int main() {
         for (auto &v : w) v = rbf16(0.5f, 1.5f);
         double sq = 0;
         for (int i = 0; i < n; ++i) { float v = ops41::bf16(x[i]); sq += double(v) * v; }
-        float rs = float(1.0 / std::sqrt(sq / n + 1e-5));
+        float rs = float(1.0 / std::sqrt(sq / n + 1e-20));
         for (int i = 0; i < n; ++i)
             href[i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[i]) * rs);
         auto *dxn = sycl::malloc_device<uint16_t>(n, q);

@@ -42,7 +42,7 @@ struct RmsNorm {
         }
         for (int w_ = 16; w_; w_ >>= 1)
             acc += sycl::select_from_group(sg, acc, lane ^ w_);
-        float rs = float(1.0 / sycl::sqrt(acc / n + 1e-5));
+        float rs = float(1.0 / sycl::sqrt(acc / n + 1e-20));
         for (int i = lane; i < n; i += 32)
             y[base + i] = ops41::bf16b(ops41::bf16(w[i]) * ops41::bf16(x[base + i]) * rs);
     }
