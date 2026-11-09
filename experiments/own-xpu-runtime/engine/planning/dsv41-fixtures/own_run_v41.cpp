@@ -3,11 +3,19 @@
 // group states, token history, first token).
 //
 //   own_run_v41 state.bin ndecode out_ids.txt [max_ctx]
+//   OWN_PROMPT=ids.txt own_run_v41 - ndecode out_ids.txt [max_ctx]
+//
+// With OWN_PROMPT the cards read the prompt themselves, one token per decode
+// step from an empty state (causal model: identical to a batched prompt
+// pass), and no CPU reference state is needed. Prompt reading then runs at
+// the decode rate.
 //
 // Environment:
 //   OWN_LAYERS=a:b     run only layers [a,b) (default 0:40)
 //   OWN_HEAD=0|1       output norm + logits + argmax (default: 1 iff b == 40)
 //   OWN_DEVS=i,j,...   SYCL gpu indices for the cards this range needs
+//   OWN_PROMPT=ids.txt read this prompt on the cards instead of loading a state dump
+//   OWN_EOS=id         stop when this token is generated (default 1; -1 = never)
 //   OWN_FORCED=ids.txt teacher-force these tokens (required without the head)
 //   OWN_INJECT=cpu.trc reference trace: streams/pre-mix (and rows published by
 //                      sources outside the range) enter at layer a
@@ -207,8 +215,16 @@ int main(int argc, char **argv) {
         long lens[4];
         std::vector<std::vector<float>> rings(40), ckv(4), ik(4);
         float kv_state[4][1024], score_state[4][1024];
-        int first;
-        {
+        int first = -1;
+        std::vector<int> prompt;
+        if (const char *pp = getenv("OWN_PROMPT")) {
+            std::ifstream pf2(pp);
+            long long v;
+            while (pf2 >> v) prompt.push_back((int)v);
+            if (prompt.empty()) die("OWN_PROMPT file empty");
+            if (opt.layer_begin != 0 || !opt.head) die("OWN_PROMPT needs the whole model (no OWN_LAYERS)");
+            if ((int)prompt.size() + ndecode > max_ctx) die("prompt + ndecode exceeds max_ctx");
+        } else {
             std::ifstream sf(state_path, std::ios::binary);
             if (!sf) die("state unreadable");
             sf.read((char *)&pos, 8);
@@ -236,16 +252,33 @@ int main(int argc, char **argv) {
             sf.read((char *)&first, 4);
             if (!sf) die("state file truncated");
             be.comp_ids.assign(cids.begin(), cids.end());
+            be.load_state(pos, lens, rings, ckv, ik, kv_state, score_state);
+            std::fprintf(stderr, "state loaded: pos=%ld lens=%ld,%ld,%ld,%ld first=%d\n", pos, lens[0], lens[1],
+                         lens[2], lens[3], first);
         }
-        be.load_state(pos, lens, rings, ckv, ik, kv_state, score_state);
-        std::fprintf(stderr, "state loaded: pos=%ld lens=%ld,%ld,%ld,%ld first=%d\n", pos, lens[0], lens[1],
-                     lens[2], lens[3], first);
         if (const char *tp = getenv("OWN_TRACE")) be.trace_f = fopen(tp, "wb");
         be.prof_on = getenv("OWN_PROF") != nullptr;
         if (const char *e = getenv("OWN_PACE")) be.pace = atoi(e);
         if (const char *e = getenv("OWN_H2D_WAIT")) be.h2d_wait = atoi(e) != 0;
         if (const char *e = getenv("OWN_KEEP_WARM")) be.keep_warm = atoi(e);
         if (const char *e = getenv("OWN_WARM_ITEMS")) be.warm_items = (size_t)atol(e) / 32 * 32;
+
+        // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----
+        const int eos = getenv("OWN_EOS") ? atoi(getenv("OWN_EOS")) : 1;
+        if (!prompt.empty()) {
+            double tp0 = now(), t_first = 0;
+            for (size_t i = 0; i < prompt.size(); ++i) {
+                be.comp_ids.push_back(token_map[prompt[i]]);
+                be.trace_on = false;
+                double t1 = now();
+                first = be.decode_step(prompt[i]);
+                if (i == 0) t_first = now() - t1;
+            }
+            double dtp = now() - tp0;
+            std::fprintf(stderr, "prompt: %zu tokens read on the cards in %.2fs (%.1f tok/s; first step %.2fs incl. kernel build), first token %d\n",
+                         prompt.size(), dtp, prompt.size() > 1 ? (prompt.size() - 1) / (dtp - t_first) : 0.0, t_first,
+                         first);
+        }
 
         // ---- decode ----
         static const int srcs[4] = {2, 8, 14, 20};
@@ -280,7 +313,7 @@ int main(int argc, char **argv) {
             double t1 = now();
             int next = be.decode_step(cur);
             double dt = now() - t1;
-            if (step > 1) { t_dec += dt; ++n_timed; } // first step carries kernel compilation
+            if (step > 1 || !prompt.empty()) { t_dec += dt; ++n_timed; } // a cold first step carries kernel compilation
             else be.prof_t.clear();
             if (opt.head) {
                 std::fprintf(stderr, "tok %d -> %d (%.3fs)", step, next, dt);
@@ -291,6 +324,10 @@ int main(int argc, char **argv) {
                 std::fprintf(stderr, "\n");
                 out_ids.push_back(next);
                 cur = next;
+                if (forced.empty() && next == eos) {
+                    std::fprintf(stderr, "end of sentence after %d generated tokens\n", (int)out_ids.size());
+                    break;
+                }
             } else {
                 std::fprintf(stderr, "step %d layers %d:%d (%.3fs)\n", step, opt.layer_begin, opt.layer_end, dt);
             }

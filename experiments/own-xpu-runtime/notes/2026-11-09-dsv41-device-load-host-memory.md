@@ -220,6 +220,22 @@ norm 5.5, engram 4.8, head 4.3, router 3.0, keep-warm 0.6. Evidence: `profile-si
 Long contexts are not measured yet: above 512 compressed rows the indexer scores on the card and selects on the
 host (one blocking read per index layer), and the attention core always walks 640 slots.
 
+## 10. Cards only: prompt in, answer out (18:20 EST)
+
+`OWN_PROMPT=ids.txt own_run_v41 - N out.txt` reads the prompt on the cards, one decode step per prompt token from
+an empty state, then generates and stops at the end-of-sentence token (`OWN_EOS`, default 1). No CPU reference
+state is involved. The model is causal, so this equals a batched prompt pass; prompt reading runs at the decode
+rate until a batched pass exists.
+
+| Prompt | Prompt read | Answer | Text |
+| --- | --- | --- | --- |
+| "Say hello in one sentence." (36 tokens) | 3.95 s, 9.3 tok/s | 44 tokens, 9.2 tok/s, EOS | `...</think>Hello! It's nice to meet you, and I'm here to help with whatever you need.` |
+| "Write a one-line Python function that reverses a string." (41 tokens) | 4.57 s, 9.1 tok/s | 88 tokens, 8.7 tok/s, EOS | reasoning equals llama.cpp's saved answer word for word for its first ~45 tokens, then `reverse_string = lambda s: s[::-1]` (llama.cpp's pack: the `def` form) |
+
+Prompt 1: the first 40 generated tokens equal the CPU reference that read the prompt on the CPU, and two fresh
+processes give identical tokens. Start-up with a warm kernel cache: 20 s load + 0.17 s for the first step.
+Evidence: `data/dsv41-bringup-20261109/cards-only-*`.
+
 ## Reproduce
 
 ```bash
@@ -234,7 +250,9 @@ export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compil
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
 OWN_KV_BF16=1 OWN_TRACE=cpu.trc OWN_TRACE_STEPS=3 OMP_NUM_THREADS=16 ./cpu_run_v41 ids.txt 40 ref_ids.txt 4096 \
   <shard 6> /dev/null state.bin
-# all six cards (cards must be empty; the runner refuses otherwise)
+# cards only: prompt ids in, generated ids out (stops at end of sentence)
+OWN_PROMPT=ids.txt ./own_run_v41 - 200 out_ids.txt 4096
+# from the reference's state, with a trace for the gate (cards must be empty; the runner refuses otherwise)
 OWN_DEBUG=1 OWN_TRACE=dev.trc OWN_TRACE_STEPS=3 ./own_run_v41 state.bin 40 dev_ids.txt 4096
 python3 tools/dsv41_trace_diff.py cpu.trc dev.trc
 # a subset of cards: OWN_LAYERS=0:28 OWN_HEAD=0 OWN_DEVS=2,3,4,5 OWN_FORCED=ref_ids.txt
@@ -246,11 +264,11 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 
 ## Open
 
-1. Stop at the end-of-sentence token in the runner; a server front end.
+1. A server front end (tokenizer + chat template in the engine; today token ids come from a helper script).
 2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
    Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
    context (compact the live slots); top-512 selection on the card for long contexts.
-3. Prompt pass on the cards (today: CPU reference, roughly a minute and a half for 36 tokens).
+3. A batched prompt pass on the cards (today the cards read the prompt one token per step, 9 tok/s).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

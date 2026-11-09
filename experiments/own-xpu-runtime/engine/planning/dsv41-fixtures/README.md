@@ -159,9 +159,11 @@ order (build with `-fp-model=precise -ffp-contract=off`).
 
 ## Device runner (2026-11-09)
 
-`own_run_v41.cpp` + `src/stage2/packet3/backend/backend_sycl_v41.hpp`: decode
-on the cards from the reference's state dump. Usage and environment are in
-the file header. Loader rules (one SYCL context per card, free-memory check,
+`own_run_v41.cpp` + `src/stage2/packet3/backend/backend_sycl_v41.hpp`: the
+model on the cards. `OWN_PROMPT=ids.txt own_run_v41 - N out.txt` reads a
+prompt (token ids) and writes the answer with no CPU reference involved;
+`own_run_v41 state.bin N out.txt` continues from the reference's state dump
+for the trace gate. Usage and environment are in the file header. Loader rules (one SYCL context per card, free-memory check,
 bounded upload) exist because the first version froze this 15 GiB host four
 times; do not relax them. Gate: `tools/dsv41_trace_diff.py ref.trc dev.trc`.
 Whole model on six cards since 2026-11-09 17:07 EST (165 GB in 20 s, 9.0
