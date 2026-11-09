@@ -62,13 +62,16 @@ ROLLING_RUNTIME=PENDING_RING_RUNTIME+(
     'planning/rolling_provider/transport.py')
 PERSISTENT_ROLLING_RUNTIME=ROLLING_RUNTIME+(
     'tools/persistent_rolling_driver.py','tools/persistent_rolling_suite.py')
+DEDICATED_RUNTIME=PERSISTENT_ROLLING_RUNTIME+(
+    'tools/dedicated_reset_suite.py','tools/reset_all.py')
 DYNAMIC_RUNTIME_GROUPS=(
     ('deployment/portable_live.py',PORTABLE_LIVE_RUNTIME),
     ('tools/ring_driver.py',RING_RUNTIME),
     ('tools/ring_live_driver.py',RING_LIVE_RUNTIME),
     ('tools/pending_ring_live_driver.py',PENDING_RING_RUNTIME),
     ('tools/rolling_ring_driver.py',ROLLING_RUNTIME),
-    ('tools/persistent_rolling_driver.py',PERSISTENT_ROLLING_RUNTIME))
+    ('tools/persistent_rolling_driver.py',PERSISTENT_ROLLING_RUNTIME),
+    ('planning/rolling_provider/dedicated_transport.py',DEDICATED_RUNTIME))
 # Planning research/tests import these CPU fixtures. Include only committed
 # fixtures; an import of an untracked/missing fixture still fails closed below.
 RING_TEST_SUPPORT=(

@@ -271,6 +271,29 @@ class PythonClosureTests(unittest.TestCase):
         subprocess.run([sys.executable,'-I','-c',code,str(snapshot/'tools'),str(snapshot/'planning')],
                        check=True,capture_output=True,text=True,timeout=10)
 
+    def test_dedicated_transport_lazy_reset_dependencies_are_exported(self):
+        for name in bundle.DEDICATED_RUNTIME:
+            path = self.engine / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('# committed fixture\n')
+        self.write('planning/rolling_provider/dedicated_transport.py',
+                   'def reset():\n from dedicated_reset_suite import admit_drive\n')
+        self.write('tools/dedicated_reset_suite.py', 'import reset_all\n')
+        self.write('tools/reset_all.py', 'import persistent_rolling_suite\n')
+        self.commit()
+        contents, report = bundle.prepare(self.engine)
+        self.assertIn('tools/reset_all.py', contents)
+        self.assertIn('tools/dedicated_reset_suite.py', contents)
+        self.assertIn({'from': 'planning/rolling_provider/dedicated_transport.py',
+                       'to': 'tools/dedicated_reset_suite.py'}, report['python_import_edges'])
+        missing = self.engine / 'tools/reset_all.py'
+        raw = missing.read_bytes()
+        missing.unlink()
+        self.commit()
+        missing.write_bytes(raw)
+        with self.assertRaisesRegex(bundle.BundleError, 'Untracked required input'):
+            bundle.prepare(self.engine)
+
     def test_untracked_rolling_package_member_cannot_claim_complete_runtime(self):
         self.install_rolling_fixture()
         missing=self.engine/'planning/rolling_provider/transport.py';raw=missing.read_bytes()
