@@ -92,6 +92,9 @@ revision changes.
 
 | `test_mxfp4` | MXFP4 (39) decode | bit-exact synthetic + real dspark expert bytes |
 
+| `test_engine_types` | engine `iq3::decode` Q2_K/IQ2_XXS/IQ2_XS/IQ1_S/MXFP4 | bit-exact vs reference (three-way with per-type fixtures) |
+| `test_directory_v41` | `geometry_v41_from_directory` on real shard directory (`data/dsv41-directory.tsv`, regenerate with `dump_directory.py`) | derives exact admitted geometry; tamper rejected |
+
 ## Boundaries and next
 
 - Remaining format gap: IQ4_NL_4_4 (dspark spare only — defer until the

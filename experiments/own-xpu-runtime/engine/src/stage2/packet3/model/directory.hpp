@@ -30,13 +30,19 @@ inline std::string grid_name(Type t) {
   case Type::Q5_K:return "Q5_K";
   case Type::IQ4_XS:return "IQ4_XS";
   case Type::Q2_0:return "Q2_0";
+  case Type::Q2_K:return "Q2_K";
+  case Type::IQ2_XXS:return "IQ2_XXS";
+  case Type::IQ2_XS:return "IQ2_XS";
+  case Type::IQ1_S:return "IQ1_S";
+  case Type::MXFP4:return "MXFP4";
   default:
     throw std::invalid_argument("grid absent from IQ3 census");
   }
 }
 inline Type grid_type(const std::string &name) {
   for (auto t : {Type::F32, Type::BF16, Type::Q8_0, Type::Q6_K, Type::IQ2_S,
-                 Type::IQ3_S, Type::IQ4_NL, Type::F16, Type::IQ3_XXS, Type::Q4_K, Type::Q5_K, Type::IQ4_XS, Type::Q2_0})
+                 Type::IQ3_S, Type::IQ4_NL, Type::F16, Type::IQ3_XXS, Type::Q4_K, Type::Q5_K, Type::IQ4_XS, Type::Q2_0,
+                 Type::Q2_K, Type::IQ2_XXS, Type::IQ2_XS, Type::IQ1_S, Type::MXFP4})
     if (grid_name(t) == name)
       return t;
   throw std::invalid_argument("unknown grid");
