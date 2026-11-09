@@ -474,6 +474,83 @@ int main() {
         sycl::free(dxn, q); sycl::free(dwn, q); sycl::free(dyn, q);
     }
 
+    // --- Route (fixture-order vs ops41::route; ids exact, probs 1e-5) ---
+    {
+        const int E = 384, k = 6;
+        std::vector<uint16_t> logits(E);
+        for (auto &v : logits) v = rbf16(-4.f, 4.f);
+        std::vector<float> lf(E), bias(E);
+        for (int i = 0; i < E; ++i) lf[i] = ops41::bf16(logits[i]);
+        for (auto &v : bias) { std::uniform_real_distribution<float> d(-0.5f, 0.5f); v = d(rng); }
+        std::vector<uint32_t> ih(k), idv(k);
+        std::vector<float> ph(k), pdv(k);
+        ops41::route(lf.data(), bias.data(), E, k, ih.data(), ph.data());
+        auto *dl = sycl::malloc_device<uint16_t>(E, q);
+        auto *db = sycl::malloc_device<float>(E, q);
+        auto *di = sycl::malloc_device<uint32_t>(k, q);
+        auto *dpp = sycl::malloc_device<float>(k, q);
+        q.memcpy(dl, logits.data(), E * 2);
+        q.memcpy(db, bias.data(), E * 4);
+        q.submit([&](sycl::handler &hh) {
+             ops41sycl::Route kk{E, k};
+             hh.parallel_for(sycl::nd_range<1>(1, 1),
+                             [=](sycl::nd_item<1> it) { kk(it, dl, db, di, dpp); });
+         }).wait();
+        q.memcpy(idv.data(), di, k * 4);
+        q.memcpy(pdv.data(), dpp, k * 4).wait();
+        int idiff = 0;
+        for (int i = 0; i < k; ++i) idiff += ih[i] != idv[i];
+        if (idiff) { std::printf("FAIL route ids (%d)\n", idiff); ++fails; }
+        else {
+            check_f32("route_probs", ph.data(), pdv.data(), k, 1e-4f);
+        }
+        sycl::free(dl, q); sycl::free(db, q); sycl::free(di, q); sycl::free(dpp, q);
+    }
+    // --- Argmax (exact) ---
+    {
+        const int n = 129280;
+        std::vector<float> lg(n);
+        for (auto &v : lg) { std::uniform_real_distribution<float> d(-10.f, 10.f); v = d(rng); }
+        lg[4242] = 11.0f; lg[77000] = 11.0f; // tie -> lowest index wins
+        int href = int(std::max_element(lg.begin(), lg.end()) - lg.begin());
+        auto *dlg = sycl::malloc_device<float>(n, q);
+        auto *dout = sycl::malloc_device<int32_t>(1, q);
+        q.memcpy(dlg, lg.data(), n * 4);
+        q.submit([&](sycl::handler &hh) {
+             ops41sycl::Argmax kk{n};
+             hh.parallel_for(sycl::nd_range<1>(32, 32),
+                             [=](sycl::nd_item<1> it) { kk(it, dlg, dout, nullptr); });
+         }).wait();
+        int32_t dev = -1;
+        q.memcpy(&dev, dout, 4).wait();
+        if (dev != href) { std::printf("FAIL argmax %d != %d\n", dev, href); ++fails; }
+        else std::printf("ok   argmax (%d)\n", dev);
+        sycl::free(dlg, q); sycl::free(dout, q);
+    }
+    // --- EmbedRow (bit-exact decode of one Q8_0 row) ---
+    {
+        const int cols = 5120, blocks = cols / 32;
+        std::vector<uint8_t> row(blocks * 34);
+        for (auto &v : row) v = uint8_t(rng());
+        std::vector<uint16_t> href(cols), dev(cols);
+        for (int i = 0; i < cols; ++i) {
+            auto l = iq3::layout(iq3::Type::Q8_0);
+            href[i] = ops41::bf16b(iq3::decode(iq3::Type::Q8_0,
+                row.data() + (size_t)(i / l.elements) * l.bytes, i % l.elements));
+        }
+        auto *dr = sycl::malloc_device<uint8_t>(row.size(), q);
+        auto *do8 = sycl::malloc_device<uint16_t>(cols, q);
+        q.memcpy(dr, row.data(), row.size());
+        q.submit([&](sycl::handler &hh) {
+             ops41sycl::EmbedRow kk{iq3::Type::Q8_0, cols};
+             hh.parallel_for(sycl::nd_range<1>((size_t)((cols + 31) / 32) * 32, 32),
+                             [=](sycl::nd_item<1> it) { kk(it, dr, do8); });
+         }).wait();
+        q.memcpy(dev.data(), do8, cols * 2).wait();
+        check_bits("embed_row", href.data(), dev.data(), cols, 0);
+        sycl::free(dr, q); sycl::free(do8, q);
+    }
+
     std::printf(fails ? "FAILURES: %d\n" : "ALL DEVICE GATES PASS\n", fails);
     return fails ? 1 : 0;
 }

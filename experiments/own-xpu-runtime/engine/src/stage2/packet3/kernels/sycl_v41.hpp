@@ -369,5 +369,64 @@ struct HcMixFinish {
     }
 };
 
+// route41: single work-item; ops41::route order. s = sqrt(log1p(exp(logit))),
+// top-k by s+bias (strict > keeps lowest id on ties), prob = s/(sum+1e-20)*1.5.
+// logits bf16 buffer, bias f32, prob f32 out (feeds prob_scale41).
+struct Route {
+    int experts, topk;
+    void operator()(sycl::nd_item<1> it, const uint16_t *logits,
+                    const float *bias, uint32_t *ids, float *prob) const {
+        if (it.get_global_linear_id() != 0) return;
+        float s[384], sb[384];
+        for (int i = 0; i < experts; ++i) {
+            s[i] = sycl::sqrt(sycl::log1p(sycl::exp(ops41::bf16(logits[i]))));
+            sb[i] = s[i] + bias[i];
+        }
+        float sum = 0;
+        for (int t = 0; t < topk; ++t) {
+            int best = -1;
+            for (int i = 0; i < experts; ++i)
+                if (best < 0 || sb[i] > sb[best]) best = i;
+            ids[t] = (uint32_t)best;
+            prob[t] = s[best];
+            sum += s[best];
+            sb[best] = -INFINITY;
+        }
+        for (int t = 0; t < topk; ++t) prob[t] = prob[t] / (sum + 1e-20f) * 1.5f;
+    }
+};
+
+// argmax over f32 logits, tree reduce with first-max tie-break (host
+// std::max_element order). One work-group; block partials then serial tail.
+struct Argmax {
+    int n;
+    void operator()(sycl::nd_item<1> it, const float *logits, int32_t *out,
+                    float *scratch) const {
+        int lane = it.get_local_linear_id();
+        sycl::sub_group sg = it.get_sub_group();
+        float bv = -INFINITY; int bi = n;
+        for (int i = lane; i < n; i += 32)
+            if (logits[i] > bv) { bv = logits[i]; bi = i; }
+        for (int w = 16; w; w >>= 1) {
+            float ov = sycl::select_from_group(sg, bv, lane ^ w);
+            int oi = sycl::select_from_group(sg, bi, lane ^ w);
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        if (lane == 0) *out = bi;
+    }
+};
+
+// embedding row: decode one quant row to bf16 (engram-free token lookup).
+struct EmbedRow {
+    iq3::Type t; int cols;
+    void operator()(sycl::nd_item<1> it, const uint8_t *row, uint16_t *out) const {
+        int i = it.get_global_linear_id();
+        if (i >= cols) return;
+        auto l = iq3::layout(t);
+        out[i] = ops41::bf16b(
+            iq3::decode(t, row + (size_t)(i / l.elements) * l.bytes, i % l.elements));
+    }
+};
+
 } // namespace ops41sycl
 #endif
