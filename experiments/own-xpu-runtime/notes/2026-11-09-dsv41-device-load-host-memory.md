@@ -784,6 +784,169 @@ waits ~1.8 ms more per round in exchanges than card 2: cards 2 and 5 carry two o
 Evening that out needs the attention outputs exchanged before o_a (an extra all-gather of 32K floats per
 token, ~15-30 us per layer) against ~26 us per layer saved: not worth it.
 
+## 24. Three small levers from section 23's profile: ~92 -> 95.4 tok/s median, text identical (2026-11-10 03:15-04:30 EST)
+
+Each change is a default-on switch whose sums are the old kernel's in the old order; every run below passed the
+trace gates (blocks of 16 and 5, one token: `TRACE_IDENTICAL`, `IDS40_SAME`), the plain 128-token answers
+(`SPEED128_SAME`) and printed `SAME AS the plain run` for every guessing answer. Builds tp52-tp54, ahead of time.
+
+| tok/s, whole answer (end of sentence or 512 tokens) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| dsp.fc on every card (section 23's form) | 89.77 | 75.57 | 101.75 | 91.72 | 94.32 | 91.72 | 97.63 |
+| **dsp.fc split** | 93.91 | 78.36 | 105.96 | 94.45 | 97.30 | 94.45 | 99.34 |
+| dsp.fc split + gate / up 96 work-groups | 93.35 | 78.15 | 105.31 | 94.13 | 96.97 | 94.13 | 98.08 |
+| Q2_K experts generic (tp53, off) | 91.33 | 76.11 | 103.33 | 92.45 | 94.46 | 92.45 | 101.22 |
+| **Q2_K experts fast** | 94.08 | 78.61 | 106.72 | 94.97 | 97.79 | 94.97 | 101.80 |
+| BF16 rows generic (tp54, off) | 94.00 | 78.88 | 106.76 | 94.54 | 97.82 | 94.54 | 101.55 |
+| **BF16 rows by block reads** | 94.76 | 79.62 | 107.54 | 95.41 | 98.70 | **95.41** | 102.34 |
+| BF16 rows generic again (A-B-A) | 94.22 | 79.06 | 106.66 | 94.72 | 97.89 | 94.72 | 101.82 |
+
+(`round18-e63-summary.txt`, `round18-e64-summary.txt`, `round18-e65-summary.txt`; one run each, interleaved
+per prompt; each block of rows is one session.)
+
+- **dsp.fc split** (`OWN_DR_FC_SPLIT=1`): the draft's input projection (15,360 columns) by model rows like
+  attn_output_b, its rows all-gathered in `dr_inject`, instead of every card reading the whole matrix. Draft
+  3.29-3.40 -> 3.07-3.10 ms per round, and the check 0.2-0.8 ms less (the feature projection runs in the check
+  step).
+- **Gate + up work-groups 96** (`OWN_PAIR_WG=96 OWN_PAIR_WG_IQ1=128`, section 23's bench): plain 128-token
+  answers +0.5-0.9 % (77.57 / 77.32 vs 76.88 / 76.93) but every guessing answer slower. Closed; 128 stays.
+- **Q2_K experts** (`RoutedQ2KF<NB>`, `OWN_Q2K_FAST=1`): layer 0's unpacked Q2_K expert rows with the block
+  scales read once per block and every lane on its own 8 weights; `tools/bench/bench_routed_m1.cpp ONLY=q2k`,
+  0 of 559,872 values differ at M = 1, 2, 3, 5, 16; M1 73.3 -> 19.4 us, M4 259 -> 65, M16 1026 -> 265
+  (`round18-e63c-q2k-kernel-bench.txt`). The round profile has the kernel at 185 -> 50 us per round, but the
+  guessing answers gained 0.6-0.8 ms of check per round: more than the kernel time (not explained yet).
+- **BF16 rows by block reads** (`GemvH16P` for BF16 matrices of 256/512/1280/5120 columns, `OWN_BF16_ROWS=1`):
+  BF16 storage is the upper half of the f32 value, so the 16-bit rows kernel reads it unchanged (same lane order,
+  same tree sums as `GemvT<BF16>`; NaN payloads aside). `tools/bench/test_rows_mt.cpp ONLY=bf16h`: 59 checks
+  PASS, 0 values differ, no stray writes (`round18-e65pre-bf16h-rows-check.txt`). Plain 128-token answers 78.07
+  / 77.88 vs 76.94 / 76.46. The run order does not explain the gains: the generic rows run again after them give
+  the first run's speed within 0.3 %.
+- Round profile, 3K document, card 2 (`round18-e65-spec-round-profile-card2.txt`): 22.32 ms of kernels per round
+  (23.22 in `round18-e63-spec-round-profile-card2.txt`); the generic BF16 rows (0.86 ms) are gone.
+
+**The vocabulary head is slow in row blocks** (`tools/bench/bench_q6k_rows.cpp`, card 0, the head's 21,547 Q6_K
+rows of 5,120 columns per card, cold, `round18-e65pre-q6k-rows-bench.txt` and
+`round18-e66pre-q6k-head-groups-bench.txt`): the production form for blocks of 2-6 tokens (4-row blocks, rows
+>= 4096, section 23) runs 459-651 us; token groups without row blocks run 184-305 us (6 tokens: 651 vs 305;
+one group of all 6 tokens 457), every value equal. The round profile shows the same: the head's row-block launches are
+1.07 ms per round on card 2 (`round18-e63-spec-round-profile-card2.txt`). A loads-first form of the row kernel (`Q6KAll`) is 15 % faster at one token (169 vs 199 us) and
+equal at three. Q8_0 matrices keep their row blocks (`tools/bench/bench_dense_rowblock.cpp`: one group of 5 or 6
+tokens is no faster than groups of 3 in 4-row blocks, `round18-e66pre-q8-rowblock-g56-bench.txt`).
+
+**The head without row blocks on six cards: slower** (build tp56, `OWN_MT_TGW_ROWS=16384` with token groups
+`OWN_MT_TGWM` 2:2, 3:3, 4:2, 5:3, 6:3; `round18-e66-summary.txt`, `round18-e67-summary.txt`). Every value is the
+same (traces identical, every answer SAME), and the head itself is faster in the round profile (card 2: 1.07 ->
+0.59 ms per round), but in e67 (off / on interleaved three times on three prompts) every "on" run is slower:
+draft -0.12 ms, check +0.5-0.7 ms per round (code 92.94 / 95.06 / 95.25 off vs 93.26 / 93.05 / 93.03 on;
+analysis 107.48 / 107.30 / 107.66 vs 105.11 / 105.09 / 105.16). The two round profiles
+(`round18-e67-spec-round-profile-card2-{off,on}.txt`) show why: with the head faster, every OTHER kernel is 3-5 %
+slower (norms 10.22 -> 10.71 us, attention output 20.7 -> 21.8, IQ1_S experts 86.8 -> 91.5, exchanges 15.9 ->
+17.2), the signature of a lower clock, not of the kernels. Each card has a 230 W power cap (275 W on 03 and 83)
+over a short window (hwmon `power1_cap`, `power1_cap_interval`).
+
+Measured in e68 with a read-only sampler (`round18-scripts/tools/gpu_sampler.py`: every ~14 ms on all six
+cards, `act_freq`, throttle reasons, `energy1_input`; per-run decode windows from `tools/tele_runs.py`,
+`round18-e68-telemetry-per-run.txt`): with the head's token groups on, the four 230 W cards (0000:23, 43, a3,
+e3) average 2,574-2,654 MHz over the whole answer (306-478 samples per run under 2,700 MHz), while the two 275 W
+cards stay at 2,800; head off, all six run 2,782-2,800. The slower cards draw LESS power (168-193 W against
+188-217 W off on the same four cards) and report no throttle reason during those runs, so it is not the power cap as such; the card's
+own clock choice for this mix of work, cause unknown. Off runs do flag `pl2` (short-window power limit) on
+0000:43 and 0000:e3 (537 and 234 samples in the campaign, mostly on the analysis prompt) with the clock still at
+2,785-2,800. The switch is now off by default (`mt_tgw_rows = 0`, build tp58). **Bench rule from this:** a
+single-card bench runs on a 230 W card (SYCL index 2 = 0000:43) with the sampler on; card 0 (275 W) hid this.
+
+**Q6_K rows of 1-3 tokens load every block first** (`Q6Seg<NB, NT>`, build tp57, e68): bitwise by construction
+(the bench's `Q6KAll`, same products in the same order); every e68 gate passed and every answer SAME. Code 95.09
+/ 95.10, prose 79.67 / 79.72, analysis 107.67 / 107.70, against tp56 (head off) 92.95 / 95.35, 77.58 / 79.83,
+107.80 / 107.80 (`round18-e68-summary.txt`). Never slower than the faster tp56 run of the same prompt, and all six
+tp57 runs were in the fast mode below. Adopted.
+
+**Two speeds of the same build.** About a quarter to a third of tp56 runs (and earlier builds) are ~2.3 % slower
+than the others with identical output (code_off1 92.95 vs code_off2 95.35: check 18.66 vs 18.11 ms per round).
+The slow runs have the same clocks (2,792-2,800 MHz) and draw 3-4 W less per card, a stall rather than a clock.
+tp57's six runs were all fast; perhaps loading the head's blocks first hides the memory delay that the slow mode
+adds. Not settled; later campaigns run each setting twice, interleaved, and take medians.
+
+**Uneven row shares: slower** (`OWN_TP_WEIGHTS`, e66). Cards 2 and 5 take fewer expert / shared-expert /
+output-b / engram rows (weights 875 or 750 against 1000): every value the same (traces identical with 750, plain
+answers and every guessing answer SAME), but 0.6-1.0 % slower at 875 and 1.5-4 % slower at 750. The cards meet
+at every exchange, so extra attention work on cards 2 and 5 can only be balanced inside the same stretch between
+two exchanges; the moved rows sit in the FFN stretch, where the other four cards then become the slow ones. At
+750 the four other cards also had only 0.86 GiB free after loading (3.19 equal). The switch stays (default
+equal; it may suit other card mixes). Also from e66: the same setting run first and fifth on a prompt differed by
+up to 2.7 % (prose 77.50 vs 79.57), so single runs cannot settle effects under ~1 %; e67 and later interleave.
+
+## 25. The draft's experts packed and grouped: ~95.5 -> 97.2-97.7 tok/s median, text identical; Q8_0 loads-first; host threads (2026-11-10 05:00-06:25 EST)
+
+**Q8_0 rows** (`tools/bench/bench_q8_rows.cpp`, card 2 = 0000:43, 230 W, cold, with the sampler;
+`round18-e69pre-q8-rows-bench.txt`, `round18-e69pre-q8-rows-mt-bench.txt`). `Q8All<C, NT, SQ>` is `rowg` with SQ
+quant words per load segment (production 8, or 6 at 2,304 columns); every arm bitwise equal to production.
+Loading every word first (SQ = all):
+
+| shape (per card) | 1 token | groups of 2 | groups of 3 | 5 tokens (3 + 2) |
+| --- | --- | --- | --- | --- |
+| 5120 x 1024 | 12.8 -> 26.3 us | 17.2 -> 14.8 | 22.4 -> 16.7 | 24.0 -> 20.9 |
+| 5120 x 384 | 8.1 -> 19.9 | 12.3 -> 11.3 | 17.1 -> 14.3 | 17.6 -> 15.3 |
+| 4096 x 864 | 9.1 -> 13.3 | 12.7 -> 21.2 | 16.6 -> 13.5 | 19.9 -> 17.1 |
+| 8192 x 864 | 15.7 -> 15.7 | 23.1 -> 19.6 | 30.4 -> 24.4 | 35.9 -> 29.2 |
+| 2304 x 864 | 6.2 -> 7.1 | 8.0 -> 9.6 | 9.9 -> 11.6 | 12.6 -> 14.3 |
+| 1280 x 4096 (already all) | equal | equal | equal | equal |
+
+Two tokens stay in groups of one (13.4 us for 5120 x 1024 against 14.8 in one group of 2). `Q8Seg<C, NT>` now
+takes all words for groups of 3 on rows of 32+ words and groups of 2 on rows of 40+ words (build tp59); one token,
+2,304 columns and groups of 2 on 4,096 columns keep their segments.
+
+On six cards it changes nothing measurable (e69, `round18-e69-summary.txt`; tp58 = tp57 with the head's token
+groups off by default, tp59 = tp58 + `Q8Seg<C, NT>`; gates passed, every answer SAME, same guesses kept):
+
+| tok/s | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| tp58, round 1 | 92.83 | 77.56 | 105.07 | 92.99 | 95.95 | 92.99 | 101.18 |
+| tp59, round 1 | 95.52 | 79.65 | 107.84 | 95.55 | 98.64 | 95.55 | 103.85 |
+| tp58, round 2 | 95.26 | 79.58 | 107.70 | 95.64 | 98.78 | 95.64 | 103.86 |
+| tp59, round 2 | 95.21 | 79.82 | 107.73 | 95.53 | 98.83 | 95.53 | 103.70 |
+
+Round 2 is within 0.3 % on every prompt. All six tp58 runs of round 1 were in the slow mode of section 24 (check
++0.56-0.62 ms per round, the same 2,777-2,800 MHz clocks, ~4 W less on every card:
+`round18-e69-telemetry-per-run.txt`), and none of round 2. Kept (bitwise, faster on one card, neutral here).
+A lesson from this campaign: two CPU builds ran beside the first part of round 1 (on CPUs 14-15, one of which also
+carried a card thread). The docs and 3K tp58 runs came after both had ended and were still slow, so the builds do
+not explain the slow mode alone, but builds now wait for campaigns to end.
+
+**The draft's MXFP4 experts packed and grouped by expert** (`OWN_DR_MXP=1`, default on; build tp60). The draft
+read its experts as raw 17-byte blocks, one sub-group per (slot, row), with byte loads (`RoutedMXFP4N`: 166 us
+gate + up, 92 us down per stage, three stages per round). Now the upload packs them (`pk41` MXFP4: per 256 columns
+32 lane words of 8 nibbles, then the scale bytes; the same size) and `RoutedMXFP4U` = `ops41sycl::RoutedU` with a
+new format (`RUFmtMXFP4`, `ops41draft`): the block's slots that picked the same expert share one read and decode of
+its rows (`ExpertGroupM`, once per stage), each slot keeps its own sum in the old order, and the lanes are summed
+by `reduce_over_group` as before (`RoutedU` gained a slots-per-token parameter, 3 for the draft, and two format
+traits: `SGR` for that reduction, `CLAMP_EXP` for the old kernel's expert-id clamp; the target's kernels are
+unchanged). `tools/bench/bench_draft_mxfp4.cpp` (card 2, cold, `round18-e70pre-draft-mxfp4-bench.txt`): every
+output bitwise equal in all three expert patterns; gate + up 168 -> 94 us with 15 different experts, 167 -> 60
+with 7 (a draft-like block), 167 -> 71 with 3; down 94 -> 50, 93 -> 40, 92 -> 37; the grouping launch 2.2-3.2 us.
+(The bench's first version timed the old kernel on an eighth of each row: its `NB` counts blocks of 32, the new
+format's counts groups of 256.)
+
+On six cards (e70, `round18-e70-summary.txt`; gates passed, every answer SAME, the same guesses kept with and
+without, so the draft's outputs are unchanged): draft 3.06-3.09 -> 2.55-2.62 ms per round.
+
+| tok/s (tp60) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| `OWN_DR_MXP=0`, round 1 | 95.29 | 79.76 | 107.74 | 95.77 | 98.76 | 95.77 | 103.95 |
+| **`OWN_DR_MXP=1`, round 1** | 97.02 | 81.23 | 109.63 | 97.71 | 100.71 | **97.71** | 105.59 |
+| `OWN_DR_MXP=0`, round 2 | 95.16 | 79.53 | 107.88 | 95.53 | 98.54 | 95.53 | 103.72 |
+| **`OWN_DR_MXP=1`, round 2** | 96.93 | 81.07 | 109.82 | 97.23 | 100.37 | **97.23** | 105.36 |
+
+(The MXP=0 rows ran with the threads pinned, see below; pinned and unpinned MXP=1 runs differ by 0-2 %.)
+
+**Card threads pinned to cores: slower** (`OWN_TP_PIN=c0,..,c5[,main]`, default off). On this host the six card
+threads float; CPU n and n + 8 share a core, and the cards' interrupts are taken on CPUs 3, 4, 6 and 8
+(`/proc/interrupts`: 0000:e3 -> 3, a3 and 83 -> 4, 03 and 23 -> 6, 43 -> 8). Pinned to CPUs 0-5 with the main
+thread on 6, plain answers 74.94 / 75.54 vs 78.13 / 77.91 tok/s unpinned, guessing answers the same to 2 % slower
+(e70). Left off; a layout that avoids the interrupt CPUs is untested. The host-time profile (`OWN_TP_HOSTPROF`,
+plain steps) shows every card thread busy for the whole step and never blocked in its queue wait (12.8 ms per step
+unpinned, 13.3 pinned): the threads spin, in the driver's waits or ours, so where they run matters.
+
 ## Reproduce
 
 ```bash
@@ -824,12 +987,13 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
    Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
    context (compact the live slots).
-3. Guessing rounds (section 23 has the profile): checking a block of 4 still costs ~1.8x a one-token step. Next:
-   the draft's `dsp.fc` split across the cards (0.32 ms per round), BF16 indexer / compressor rows read once per
-   block (0.9 ms), a packed Q2_K expert kernel (0.2 ms), gate + up work-groups per format, token norms inside
-   their neighbours (0.9 ms), exchanges folded into the kernels that consume them. The attention groups stay
-   uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess counts, section 23; the
-   batched prompt pass, sections 20-21, 251 tok/s at 3K.)
+3. Guessing rounds (profiles in sections 23-24): checking a block of 4 still costs ~1.8x a one-token step. Next:
+   the head's 4-row blocks at 2-6 tokens (0.6 ms per round on card 2; the row-block-free form drops the 230 W
+   cards' clocks, section 24; blocks of 5 alone are being tried), token norms inside their neighbours (0.9 ms),
+   exchanges folded into the kernels that consume them, the card threads' spinning waits (section 25). The
+   attention groups stay uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess
+   counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
+   section 24; the draft's experts, section 25.)
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

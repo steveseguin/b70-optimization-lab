@@ -11,7 +11,8 @@
 //   icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O2 -std=c++20 -fp-model=precise -ffp-contract=off \
 //     -Wno-deprecated-declarations -I src tools/bench/bench_routed_m1.cpp -o $S/bench_routed_m1 -lze_loader
 //   LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib $S/bench_routed_m1 [CARD]
-//   ONLY=xxs,iq2s,iq3,iq2xs,iq1 selects formats for the sweep. Exit status 1 on any mismatch.
+//   ONLY=q2k,xxs,iq2s,iq3,iq2xs,iq1 selects formats for the sweep (q2k: layer 0's fast Q2_K down kernel against
+//   the generic one, M = 1..16 tokens). Exit status 1 on any mismatch.
 #include <sycl/sycl.hpp>
 #include <algorithm>
 #include <cmath>
@@ -104,6 +105,95 @@ template <unsigned NB, unsigned R> struct RoutedIQ2XXSR {
                 for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
                 if (lane == 0 && r0 + q < rows) om[slot * rows + r0 + q] = s;
             }
+        }
+    }
+};
+
+// ---- candidate 2: the production kernel with the next row's quant words and scale words loaded while the
+// current row is computed (double-buffered registers). Same per-row arithmetic and order; only when the
+// loads are issued changes.
+template <unsigned NB> struct RoutedIQ2XXSPF {
+    static constexpr unsigned TAB = 2048;
+    unsigned rows;
+    bool per_slot_x;
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u;
+        const unsigned ssh = 31u - 8u * l8 - j;
+        const unsigned rot = (37u - 8u * l8) & 31u, j4 = j << 2;
+        const char *tb = reinterpret_cast<const char *>(tab);
+        constexpr size_t RB = ((size_t)NB * 70 + 15) & ~(size_t)15;
+        constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+        static_assert(NB <= 32);
+        const unsigned stride = (unsigned)(it.get_global_range(0) / 32);
+        const unsigned nt = (w2 ? 2 : 1) * nsl * rows;
+        // row p -> its bytes, its output slot, x
+        auto rowp = [&](unsigned p) {
+            unsigned slot = p / rows;
+            const unsigned r = p % rows;
+            const uint8_t *wm = w;
+            if (slot >= nsl) slot -= nsl, wm = w2;
+            return wm + ((size_t)ids[slot] * rows + r) * RB;
+        };
+        uint32_t wd[NR], sw = 0;
+        float dl = 0;
+        unsigned p = packed_row_id(it);
+        auto fetch = [&](unsigned q, uint32_t (&wq)[NR], float &dq, uint32_t &sq) {
+            const uint8_t *row = rowp(q);
+            const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+            for (unsigned k = 0; k < NR; ++k) wq[k] = row_words<NW>(sg, rw, k, lane);
+            dq = lane < NB ? iq3::half(reinterpret_cast<const uint16_t *>(row + (size_t)NB * 68)[lane]) : 0.0f;
+            sq = lane < NB ? reinterpret_cast<const uint32_t *>(row + (size_t)NB * 64)[lane] : 0u;
+        };
+        if (p < nt) fetch(p, wd, dl, sw);
+        for (; p < nt; p += stride) {
+            uint32_t wn[NR], swn = 0;
+            float dln = 0;
+            if (p + stride < nt) fetch(p + stride, wn, dln, swn);
+            unsigned slot = p / rows;
+            const unsigned r = p % rows;
+            float *om = out;
+            if (slot >= nsl) slot -= nsl, om = out2;
+            const float *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0);
+            // chunk_scales' expressions from the fetched half scales and scale words
+            float dbc[NCR];
+#pragma unroll
+            for (unsigned k = 0; k < NCR; ++k) {
+                const unsigned c = 32 * k + lane, b = c / 8 < NB ? c / 8 : NB - 1;
+                const float d = sycl::select_from_group(sg, dl, b);
+                const uint32_t s = sycl::select_from_group(sg, sw, b);
+                dbc[k] = (d * (0.5f + float((s >> (4 * (c & 7))) & 15u))) * 0.25f;
+            }
+            float sum = 0;
+#pragma unroll
+            for (unsigned blk = 0; blk < NB; ++blk) {
+                const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+                for (unsigned g = 0; g < 8; ++g) {
+                    const unsigned wl = blk * 16 + 2 * g, wh = wl + 1, c = blk * 8 + g;
+                    const uint32_t lo = sycl::select_from_group(sg, wd[wl / 32], wl % 32);
+                    const uint32_t es = sycl::select_from_group(sg, wd[wh / 32], wh % 32);
+                    const float db = sycl::select_from_group(sg, dbc[c / 32], c % 32);
+                    const float mag = *reinterpret_cast<const float *>(tb + ((sycl::rotate(lo, rot) & 0x1FE0u) | j4));
+                    const uint32_t sb = (es << ssh) & 0x80000000u;
+                    const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+                    sum = sum + v * xv[g];
+                }
+            }
+            for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_);
+            if (lane == 0) om[slot * rows + r] = sum;
+#pragma unroll
+            for (unsigned k = 0; k < NR; ++k) wd[k] = wn[k];
+            dl = dln;
+            sw = swn;
         }
     }
 };
@@ -241,6 +331,118 @@ template <unsigned NB, unsigned R> static void cand(sycl::queue &q, const Bank &
     std::fflush(stdout);
 }
 
+template <unsigned NB> static void cand_pf(sycl::queue &q, const Bank &b) {
+    using KP = RoutedIQ2XXSP<NB, ActF32>;
+    using KF = RoutedIQ2XXSPF<NB>;
+    const size_t mats = b.down ? 1 : 2, npos = mats * 6 * b.rows;
+    size_t bad = 0, tot = 0;
+    for (size_t wg : {96, 128})
+        for (unsigned s = 0; s < 4; ++s) {
+            const auto a = run_out<KP>(q, b, npos, wg, s), c = run_out<KF>(q, b, npos, wg, s);
+            const size_t n = (size_t)6 * b.rows * mats;
+            for (size_t i = 0; i < n; ++i) bad += std::memcmp(&a[i], &c[i], 4) != 0;
+            tot += n;
+        }
+    std::printf("  prefetch %s: %s %zu of %zu differ |", b.down ? "down" : "pair", bad ? "FAIL" : "PASS", bad, tot);
+    g_fail += bad != 0;
+    for (size_t wg : {64, 96, 128, 192, 256})
+        std::printf(" wg%zu prod %.1f pf %.1f", wg, time_k<KP>(q, b, npos, wg), time_k<KF>(q, b, npos, wg));
+    std::printf(" us\n");
+    std::fflush(stdout);
+}
+
+// ---- layer 0's Q2_K expert down rows (unpacked GGUF bytes): RoutedQ2KF<9> against RoutedGemvT<Q2_K, ActF32>,
+// launched as Backend41::launch_sg (one sub-group per work-group), M tokens (nsl = 6 M slots, per-slot x,
+// token stride xtok = 6 * 2304), bitwise, then timed
+template <typename K> static sycl::event launch_sg(sycl::queue &q, size_t groups, const K &k, const uint8_t *w,
+                                                   const float *x, const uint32_t *ids, float *y) {
+    const K kk = k;
+    return q.submit([&](sycl::handler &h) {
+        h.parallel_for(sycl::nd_range<1>(groups * 32, 32),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { kk(it, w, x, ids, y); });
+    });
+}
+static void q2k_gate(sycl::queue &q) {
+    constexpr unsigned COLS = 2304, NBQ = 9, MMAX = 16;
+    const size_t nrow = (size_t)NEXP * DOWN_ROWS, rb = (size_t)NBQ * 84;
+    uint8_t *w = sycl::malloc_device<uint8_t>(nrow * rb, q);
+    float *x = sycl::malloc_device<float>((size_t)MMAX * 6 * COLS, q);
+    uint32_t *ids = sycl::malloc_device<uint32_t>((size_t)NSET * 6 * MMAX, q);
+    float *ya = sycl::malloc_device<float>((size_t)MMAX * 6 * DOWN_ROWS, q), *yb = sycl::malloc_device<float>((size_t)MMAX * 6 * DOWN_ROWS, q);
+    if (!w || !x || !ids || !ya || !yb) {
+        std::printf("FAIL cannot allocate the Q2_K bank\n");
+        std::exit(1);
+    }
+    uint64_t seed = 21;
+    {
+        constexpr size_t CH = 8192;
+        std::vector<uint8_t> h(CH * rb);
+        for (size_t r0 = 0; r0 < nrow; r0 += CH) {
+            const size_t n = std::min(CH, nrow - r0);
+            for (size_t i = 0; i < n * rb; i += 8) {
+                const uint64_t v = sm64(seed);
+                std::memcpy(&h[i], &v, std::min<size_t>(8, n * rb - i));
+            }
+            for (size_t b = 0; b < n * NBQ; ++b) { // d, dmin: normal halves
+                const uint16_t d = 0x1400 + (sm64(seed) & 0x3ff), dm = 0x1000 + (sm64(seed) & 0x3ff);
+                std::memcpy(&h[b * 84 + 80], &d, 2);
+                std::memcpy(&h[b * 84 + 82], &dm, 2);
+            }
+            q.memcpy(w + r0 * rb, h.data(), n * rb).wait();
+        }
+    }
+    std::mt19937 rng(7);
+    std::uniform_real_distribution<float> ux(-1.f, 1.f);
+    std::vector<float> hx((size_t)MMAX * 6 * COLS);
+    for (auto &v : hx) v = ux(rng);
+    std::vector<uint32_t> hid((size_t)NSET * 6 * MMAX);
+    for (auto &v : hid) v = rng() % NEXP;
+    q.memcpy(x, hx.data(), hx.size() * 4);
+    q.memcpy(ids, hid.data(), hid.size() * 4).wait();
+    const unsigned xtok = 6 * COLS;
+    size_t bad = 0, tot = 0;
+    for (unsigned m : {1u, 2u, 3u, 5u, 16u})
+        for (unsigned s = 0; s < 4; ++s) {
+            const unsigned nsl = 6 * m;
+            const size_t n = (size_t)nsl * DOWN_ROWS;
+            const uint32_t *is = ids + (size_t)s * 6 * MMAX;
+            q.memset(ya, 0xff, n * 4);
+            q.memset(yb, 0xff, n * 4);
+            launch_sg(q, n, RoutedGemvT<Ty::Q2_K, ActF32>{DOWN_ROWS, COLS, true, nsl, xtok}, w, x, is, ya);
+            launch_sg(q, n, RoutedQ2KF<NBQ>{DOWN_ROWS, COLS, true, nsl, xtok}, w, x, is, yb).wait();
+            std::vector<float> a(n), b(n);
+            q.memcpy(a.data(), ya, n * 4);
+            q.memcpy(b.data(), yb, n * 4).wait();
+            for (size_t i = 0; i < n; ++i) bad += std::memcmp(&a[i], &b[i], 4) != 0;
+            tot += n;
+        }
+    std::printf("Q2_K down (6 M x %u rows, 9 blocks), M = 1,2,3,5,16: %s %zu of %zu differ |", DOWN_ROWS,
+                bad ? "FAIL" : "PASS", bad, tot);
+    g_fail += bad != 0;
+    for (unsigned m : {1u, 4u, 16u}) {
+        const unsigned nsl = 6 * m;
+        const size_t n = (size_t)nsl * DOWN_ROWS;
+        double ta = 0, tb = 0;
+        for (unsigned p = 0; p < PASSES + 1; ++p)
+            for (unsigned s = 0; s < NSET; ++s) {
+                const uint32_t *is = ids + (size_t)s * 6 * MMAX;
+                auto ea = launch_sg(q, n, RoutedGemvT<Ty::Q2_K, ActF32>{DOWN_ROWS, COLS, true, nsl, xtok}, w, x, is, ya);
+                ea.wait();
+                auto eb = launch_sg(q, n, RoutedQ2KF<NBQ>{DOWN_ROWS, COLS, true, nsl, xtok}, w, x, is, yb);
+                eb.wait();
+                if (p) ta += ev_us(ea), tb += ev_us(eb); // pass 0 warms
+            }
+        std::printf(" M%u generic %.1f fast %.1f", m, ta / (PASSES * NSET), tb / (PASSES * NSET));
+    }
+    std::printf(" us\n");
+    std::fflush(stdout);
+    sycl::free(w, q);
+    sycl::free(x, q);
+    sycl::free(ids, q);
+    sycl::free(ya, q);
+    sycl::free(yb, q);
+}
+
 int main(int argc, char **argv) {
     const int card = argc > 1 ? std::atoi(argv[1]) : 0;
     std::vector<sycl::device> l0;
@@ -250,7 +452,7 @@ int main(int argc, char **argv) {
     const sycl::context ctx(dev);
     sycl::queue q(ctx, dev, {sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
     std::printf("card %d %s\n", card, dev.get_info<sycl::info::device::name>().c_str());
-    const std::string only = getenv("ONLY") ? getenv("ONLY") : "xxs,iq2s,iq3,iq2xs,iq1";
+    const std::string only = getenv("ONLY") ? getenv("ONLY") : "q2k,xxs,iq2s,iq3,iq2xs,iq1";
     auto want = [&](const char *f) { return ("," + only + ",").find(std::string(",") + f + ",") != std::string::npos; };
 
     std::mt19937 rng(5);
@@ -271,22 +473,30 @@ int main(int argc, char **argv) {
     q.memcpy(x, hx.data(), hx.size() * 4);
     q.memcpy(ids, hid.data(), hid.size() * 4).wait();
 
+    if (want("q2k")) q2k_gate(q);
     // candidate first (IQ2_XXS), then the production sweep
     if (want("xxs")) {
         uint8_t *g = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 11);
         uint8_t *u = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 12);
         Bank bp{g, u, x, ids, o1, o2, PAIR_ROWS, false};
-        std::printf("IQ2_XXS candidate, rows per sub-group:\n");
-        cand<20, 2>(q, bp, 128);
-        cand<20, 3>(q, bp, 128);
-        cand<20, 4>(q, bp, 128);
+        std::printf("IQ2_XXS candidates:\n");
+        cand_pf<20>(q, bp);
+        if (!getenv("PF_ONLY")) {
+            cand<20, 2>(q, bp, 128);
+            cand<20, 3>(q, bp, 128);
+            cand<20, 4>(q, bp, 128);
+        }
         sycl::free(g, q);
         sycl::free(u, q);
         uint8_t *d = packed_bank<Ty::IQ2_XXS>(q, 2304, (size_t)NEXP * DOWN_ROWS, 13);
         Bank bd{d, nullptr, x, ids, o1, o2, DOWN_ROWS, true};
-        cand<9, 2>(q, bd, 128);
-        cand<9, 4>(q, bd, 128);
+        cand_pf<9>(q, bd);
+        if (!getenv("PF_ONLY")) {
+            cand<9, 2>(q, bd, 128);
+            cand<9, 4>(q, bd, 128);
+        }
         sycl::free(d, q);
+        if (getenv("PF_ONLY")) return g_fail ? 1 : 0;
     }
     std::printf("production kernels, work-groups (wg0 = one sub-group per row, no cap):\n");
     if (want("xxs")) sweep<Ty::IQ2_XXS, RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSP<9, ActF32>>(q, "IQ2_XXS", x, ids, o1, o2);

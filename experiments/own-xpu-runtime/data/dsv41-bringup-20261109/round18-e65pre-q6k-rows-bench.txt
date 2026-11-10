@@ -1,0 +1,68 @@
+card 0 Intel(R) Arc(TM) Pro B70 Graphics
+head (output.weight, card slice): 21547 rows x 5120 columns, 90.7 MB
+  PASS all-loads R1 vs rowg, 1 token: 0 of 21547 differ
+  PASS all-loads R2 vs rowg, 1 token: 0 of 21547 differ
+  PASS production rowgr R4 vs rowg, 1 token: 0 of 21547 differ
+  PASS all-loads R1 vs rowg, 3 tokens: 0 of 64641 differ
+  PASS all-loads R2 vs rowg, 3 tokens: 0 of 64641 differ
+  PASS production rowgr R4 vs rowg, 3 tokens: 0 of 64641 differ
+ one token:
+  row (DenseRowsG G1)                   199.4 us    455 GB/s
+  rowgr R2                              228.0 us    398 GB/s
+  rowgr R4 (production >= 4096 rows)    390.1 us    232 GB/s
+  all-loads R1                          168.6 us    538 GB/s
+  all-loads R2                          188.1 us    482 GB/s
+ three tokens:
+  rowg G3                               188.8 us    480 GB/s
+  rowgr G3 R2                           353.0 us    257 GB/s
+  rowgr G3 R4 (production)              461.3 us    197 GB/s
+  all-loads G3 R1                       189.4 us    479 GB/s
+  all-loads G3 R2                       350.5 us    259 GB/s
+ five tokens (groups of 3: two passes):
+  rowgr G3 R4 x2 (production)           652.4 us    139 GB/s
+  all-loads G3 R1 x2                    308.5 us    294 GB/s
+q_b (Q6_K layers, two groups): 8192 rows x 1280 columns, 8.7 MB
+  PASS all-loads R1 vs rowg, 1 token: 0 of 8192 differ
+  PASS all-loads R2 vs rowg, 1 token: 0 of 8192 differ
+  PASS production rowgr R4 vs rowg, 1 token: 0 of 8192 differ
+  PASS all-loads R1 vs rowg, 3 tokens: 0 of 24576 differ
+  PASS all-loads R2 vs rowg, 3 tokens: 0 of 24576 differ
+  PASS production rowgr R4 vs rowg, 3 tokens: 0 of 24576 differ
+ one token:
+  row (DenseRowsG G1)                    24.0 us    361 GB/s
+  rowgr R2                               26.4 us    328 GB/s
+  rowgr R4 (production >= 4096 rows)     26.0 us    332 GB/s
+  all-loads R1                           24.2 us    358 GB/s
+  all-loads R2                           26.2 us    330 GB/s
+ three tokens:
+  rowg G3                                37.8 us    229 GB/s
+  rowgr G3 R2                            45.5 us    190 GB/s
+  rowgr G3 R4 (production)               40.9 us    212 GB/s
+  all-loads G3 R1                        38.4 us    225 GB/s
+  all-loads G3 R2                        45.4 us    191 GB/s
+ five tokens (groups of 3: two passes):
+  rowgr G3 R4 x2 (production)            64.3 us    135 GB/s
+  all-loads G3 R1 x2                     62.6 us    138 GB/s
+output_b (Q6_K layers, card slice): 864 rows x 8192 columns, 5.8 MB
+  PASS all-loads R1 vs rowg, 1 token: 0 of 864 differ
+  PASS all-loads R2 vs rowg, 1 token: 0 of 864 differ
+  PASS production rowgr R4 vs rowg, 1 token: 0 of 864 differ
+  PASS all-loads R1 vs rowg, 3 tokens: 0 of 2592 differ
+  PASS all-loads R2 vs rowg, 3 tokens: 0 of 2592 differ
+  PASS production rowgr R4 vs rowg, 3 tokens: 0 of 2592 differ
+ one token:
+  row (DenseRowsG G1)                    19.4 us    299 GB/s
+  rowgr R2                               61.9 us     94 GB/s
+  rowgr R4 (production >= 4096 rows)     70.3 us     83 GB/s
+  all-loads R1                           16.3 us    356 GB/s
+  all-loads R2                           62.2 us     93 GB/s
+ three tokens:
+  rowg G3                                66.2 us     88 GB/s
+  rowgr G3 R2                           106.7 us     54 GB/s
+  rowgr G3 R4 (production)               86.8 us     67 GB/s
+  all-loads G3 R1                        65.5 us     89 GB/s
+  all-loads G3 R2                       106.5 us     54 GB/s
+ five tokens (groups of 3: two passes):
+  rowgr G3 R4 x2 (production)            86.0 us     68 GB/s
+  all-loads G3 R1 x2                     71.7 us     81 GB/s
+PASS

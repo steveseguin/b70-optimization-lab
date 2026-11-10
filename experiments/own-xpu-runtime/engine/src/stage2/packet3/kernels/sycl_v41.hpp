@@ -1448,6 +1448,48 @@ template <int N, typename T> inline sycl::vec<T, N> sg_bloadN(sycl::sub_group sg
     return sg.load<N>(sycl::address_space_cast<sycl::access::address_space::global_space,
                                                 sycl::access::decorated::yes>(const_cast<T *>(p)));
 }
+// RoutedGemvT<Q2_K> (layer 0's expert down rows, GGUF layout, 84-byte blocks) with the block's bytes read by
+// sub-group loads instead of per-element gathers. Lane l's sum is lane_sum_t's generic branch: chunks c
+// ascending, element i = (c % 8) * 32 + l of block c / 8, value iq3::decode's (dl * float(q)) - ml with
+// dl = d * float(sc & 15), ml = dmin * float(sc >> 4), then sum + value * x; the same xor butterfly.
+// Launch as RoutedGemvT (one sub-group per work-group, group = slot * rows + row). Gate:
+// tools/bench/bench_routed_m1.cpp (bitwise against RoutedGemvT<Q2_K>).
+template <unsigned NB> struct RoutedQ2KF {
+    unsigned rows, cols; // per-expert matrix shape (cols == NB * 256)
+    bool per_slot_x = false;
+    unsigned nsl = 6, xtok = 0;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out) const {
+        const unsigned grp = it.get_group_linear_id();
+        const unsigned slot = grp / rows, r = grp % rows;
+        if (slot >= nsl) return;
+        const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * ((size_t)NB * 84);
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const float *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0);
+        float sum = 0;
+        for (unsigned b = 0; b < NB; ++b) {
+            const uint8_t *bk = row + (size_t)b * 84;
+            // scales bytes 0..15 (lane l < 16 holds byte l), quants bytes 16..79 (lane l holds 16 + l, 48 + l)
+            const unsigned scl = lane < 16 ? bk[lane] : 0u;
+            const unsigned q0 = bk[16 + lane], q1 = bk[48 + lane];
+            const float d = iq3::half(iq3::u16(bk + 80)), dm = iq3::half(iq3::u16(bk + 82));
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)b * 256);
+#pragma unroll
+            for (unsigned cc = 0; cc < 8; ++cc) { // chunk 8b + cc: h = cc / 4, j = cc % 4
+                const unsigned h = cc / 4, j = cc % 4;
+                const unsigned s0 = sycl::select_from_group(sg, scl, 8 * h + 2 * j);
+                const unsigned s1 = sycl::select_from_group(sg, scl, 8 * h + 2 * j + 1);
+                const unsigned sc = lane < 16 ? s0 : s1;
+                const float dl = d * float(sc & 15), ml = dm * float(sc >> 4);
+                const unsigned q = ((h ? q1 : q0) >> (2 * j)) & 3;
+                sum = sum + (dl * float(q) - ml) * xv[cc];
+            }
+        }
+        for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_);
+        if (lane == 0) out[slot * rows + r] = sum;
+    }
+};
 // Words [32k, 32k + 32) of the NW quant words at the start of a packed row:
 // one block read when all 32 lie inside them, else a per-lane load of those
 // that do (0 above). A block read past the quant words could run past the row
@@ -1464,7 +1506,15 @@ inline unsigned packed_row_id(const sycl::nd_item<1> &it) {
 
 // Q8_0, C chunks per row. Row r reads x + (r / xn) * 32C when xn > 0 (the
 // grouped output LoRA), else x. Reduction sg_tree32, as GemvT / GemvGroupedQT.
-template <unsigned C> struct Q8Seg { static constexpr unsigned NQ = C / 4, v = NQ % 8 == 0 ? 8 : (NQ <= 10 ? NQ : 6); };
+// Q8Seg<C, NT>: quant words per load segment. rowg for groups of 3 tokens on rows of 32+ words, and of 2 tokens on
+// rows of 40+ words, loads every quant word before the first product: bench_q8_rows (round18 e69pre, 230 W card,
+// cold) 5120 columns x 1024 rows 5 tokens 24.0 -> 20.9 us, 8192 x 864 35.9 -> 29.2, 4096 x 864 19.9 -> 17.1;
+// 4 tokens 5120 x 1024 18.3 -> 17.2, 8192 x 864 25.9 -> 22.5. Same products in the same order (bitwise). One
+// token, 2304 columns, and 2 tokens on 4096 columns (14.4 -> 22.9) keep the 8 / 6 word segments.
+template <unsigned C, unsigned NT = 1> struct Q8Seg {
+    static constexpr unsigned NQ = C / 4, b = NQ % 8 == 0 ? 8 : (NQ <= 10 ? NQ : 6);
+    static constexpr unsigned v = (NT == 3 && NQ >= 32) || (NT == 2 && NQ >= 40) ? NQ : b;
+};
 template <unsigned C, typename A> struct GemvQ8P {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     static_assert(C % 4 == 0);
@@ -1525,7 +1575,7 @@ template <unsigned C, typename A> struct GemvQ8P {
     template <unsigned NT>
     [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
                                             const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
-        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C>::v, ND = (C + 31) / 32;
+        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C, NT>::v, ND = (C + 31) / 32;
         static_assert(NQ % SEGQ == 0);
         constexpr size_t RB = ((size_t)C * 34 + 15) & ~(size_t)15;
         const uint8_t *row = w + (size_t)r * RB;
@@ -2098,6 +2148,10 @@ template <unsigned NB, typename A, bool BYTES = true, typename EX = NoRows> stru
 // Each lane's quant bytes for a block arrive in one word (its own lane: no
 // broadcast); the per-16 / per-32 scale products are built lane-parallel.
 template <unsigned NB> struct KSeg { static constexpr unsigned v = NB % 4 == 0 ? 4 : NB % 5 == 0 ? 5 : NB % 3 == 0 ? 3 : 1; };
+// Q6_K rows for 1-3 tokens load every block's quant words before the first product (Q6Seg = NB up to 32 blocks):
+// bench_q6k_rows, the head's 21,547 rows at one token 199 -> 169 us, output_b 19.4 -> 16.3, three tokens equal;
+// same products in the same order (bitwise). 4+ tokens keep KSeg (registers).
+template <unsigned NB, unsigned NT> struct Q6Seg { static constexpr unsigned v = NT <= 3 && NB <= 32 ? NB : KSeg<NB>::v; };
 
 // Q6_K element (block b, chunk c, lane l; h = c >> 2, cc = c & 3), iq3::decode order:
 //   (d * float(scale[2c + (l >> 4)])) * float((low | high << 4) - 32), then * x
@@ -2115,7 +2169,7 @@ template <unsigned NB, typename A> struct GemvQ6KP {
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
                                            const float *x, float *y) const {
         constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
-        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = Q6Seg<NB, 1>::v;
         const uint8_t *row = w + (size_t)r * RB;
         const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x;
         const uint32_t *ql = reinterpret_cast<const uint32_t *>(row);
@@ -2173,7 +2227,7 @@ template <unsigned NB, typename A> struct GemvQ6KP {
     [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
                                             const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
         constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
-        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = Q6Seg<NB, NT>::v;
         const uint8_t *row = w + (size_t)r * RB;
         const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x; // token t: xr + t * xs
         const uint32_t *ql = reinterpret_cast<const uint32_t *>(row);
@@ -4961,7 +5015,10 @@ template <unsigned NB_, bool BYTES = true> struct RUFmtIQ1S { // RoutedIQ1SP<NB,
 // for every slot i < count of the group that slot's 8 x values (the same sg_bloadN<8> of the same address as
 // the slot-major kernel) into its own accumulator. Registers (AOT for BMG at 128 GRF, 2026-11-09): no spill
 // at MT 6 and 8 for any format and NB, nor at MT 16 except IQ2_S NB 20 (320 B; slot-major IQ3_XXS NB 20: 256 B).
-template <typename F, unsigned MT, typename EX = NoRows> struct RoutedU {
+// SPT: slots per token (the target 6; the DSpark draft 3). A format with F::SGR sums each slot's lanes by
+// sycl::reduce_over_group (the draft's RoutedMXFP4 sum) instead of the xor tree; with F::CLAMP_EXP an expert id
+// at or past nexp reads expert 0 (as RoutedMXFP4: no read past the bank).
+template <typename F, unsigned MT, typename EX = NoRows, unsigned SPT = 6> struct RoutedU {
     static_assert(MT >= 1 && MT <= RUGrp::CAP, "1 .. 16 slots per group");
     static constexpr unsigned TAB = F::TAB, NB = F::NB;
     unsigned rows; // per-expert rows
@@ -4970,6 +5027,7 @@ template <typename F, unsigned MT, typename EX = NoRows> struct RoutedU {
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
     unsigned nsl = 6, xtok = 0;
+    unsigned nexp = 0; // F::CLAMP_EXP only
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *grp,
                                      float *out, float *tab) const {
         F::fill(it, tab);
@@ -5003,8 +5061,10 @@ template <typename F, unsigned MT, typename EX = NoRows> struct RoutedU {
             const unsigned cnt = grp[RUGrp::CNT + u];
             // lane i < cnt: slot i of the group and its x offset (broadcast per use)
             const uint32_t sl = lane < cnt ? grp[RUGrp::SLOT + u * RUGrp::CAP + lane] : 0u;
-            const uint32_t xo = (sl / 6) * xtok + (per_slot_x ? (sl % 6) * (NB * 256) : 0u);
-            f.load(sg, lane, wm + ((size_t)grp[RUGrp::EXP + u] * rows + r) * F::RB);
+            const uint32_t xo = (sl / SPT) * xtok + (per_slot_x ? (sl % SPT) * (NB * 256) : 0u);
+            unsigned eid = grp[RUGrp::EXP + u];
+            if constexpr (requires { F::CLAMP_EXP; }) eid = eid < nexp ? eid : 0u;
+            f.load(sg, lane, wm + ((size_t)eid * rows + r) * F::RB);
             float sum[MT];
 #pragma unroll
             for (unsigned i = 0; i < MT; ++i) sum[i] = 0;
@@ -5026,7 +5086,10 @@ template <typename F, unsigned MT, typename EX = NoRows> struct RoutedU {
             for (unsigned i = 0; i < MT; ++i) {
                 if (i < cnt) {
                     float s = sum[i];
-                    for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
+                    if constexpr (requires { F::SGR; })
+                        s = sycl::reduce_over_group(sg, s, sycl::plus<float>());
+                    else
+                        for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
                     const unsigned slot = sycl::select_from_group(sg, sl, i);
                     if (lane == 0) om[slot * rows + r] = s;
                 }

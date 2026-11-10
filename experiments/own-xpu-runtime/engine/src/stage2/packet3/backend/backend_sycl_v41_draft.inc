@@ -64,8 +64,15 @@ void dr_inject(int c, int n, long p0, bool staged = false) {
     if (n < 1 || n > MTX || mt_n != n) throw std::runtime_error("draft injection: rows");
     if (p0 < 0 || p0 + n > max_seq) throw std::runtime_error("draft injection: position beyond max_seq");
     const size_t H = g.h, hd = g.hd;
-    gemv_m(c, "dsp.fc.weight", (const act_t *)dfeat[c], 3 * H, dmain[c], H, 0, (unsigned)n);
-    rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{dmain[c], wp<float>(c, "dsp.enc.output_norm.weight"), dmainn[c]}, H, H));
+    const act_t *fcy = dmain[c];
+    if (wgt[c].at("dsp.fc.weight").nrows == (unsigned)H) { // replicated (OWN_DR_FC_SPLIT=0): every card all rows
+        gemv_m(c, "dsp.fc.weight", (const act_t *)dfeat[c], 3 * H, dmain[c], H, 0, (unsigned)n);
+    } else { // this card's model rows (attn_output_b's split), then all-gathered: the same row values
+        gemv_m(c, "dsp.fc.weight", (const act_t *)dfeat[c], 3 * H, xarena[c] + xfcM + td0[c], H, 0, (unsigned)n);
+        xchg_m(c, xfcM, (unsigned)g.h, (unsigned)n, td0[c], td1[c], 0, XP_H);
+        fcy = xarena[c] + xfcM;
+    }
+    rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{fcy, wp<float>(c, "dsp.enc.output_norm.weight"), dmainn[c]}, H, H));
     for (int s = 0; s < DR_STAGES; ++s) {
         const std::string p = "dsp.blk." + std::to_string(s) + ".";
         gemv_m(c, p + "attn_kv.weight", dmainn[c], H, dkv[c], hd, 0, (unsigned)n);
@@ -82,15 +89,35 @@ void dr_routed(int c, const std::string &wn, const std::string &wn2, const act_t
                act_t *y, act_t *y2) {
     const auto &e = we(wn);
     const auto &dp = wgt[c].at(wn);
-    if (e.type != iq3::Type::MXFP4 || dp.packed || e.cols % 32) throw std::runtime_error("draft experts: form " + wn);
+    if (e.type != iq3::Type::MXFP4 || e.cols % 32) throw std::runtime_error("draft experts: form " + wn);
     const unsigned rows = dp.nrows, nsl = 3u * (unsigned)mt_n;
     const uint8_t *w2 = nullptr;
     if (!wn2.empty()) {
         const auto &dp2 = wgt[c].at(wn2);
-        if (we(wn2).type != e.type || dp2.nrows != rows) throw std::runtime_error("draft experts: pair " + wn);
+        if (we(wn2).type != e.type || dp2.nrows != rows || dp2.packed != dp.packed)
+            throw std::runtime_error("draft experts: pair " + wn);
         w2 = (const uint8_t *)dp2.p;
     }
     const size_t np = (size_t)(w2 ? 2 : 1) * nsl * rows;
+    if (dp.packed) { // OWN_DR_MXP: packed rows, the block's slots grouped by expert (RoutedMXFP4U, the same sums)
+        if (!per_slot) // gate + up come first in each stage; down reuses the groups
+            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::WG, ops41sycl::ExpertGroupM{nsl, 6u},
+                                                      (const uint32_t *)scm[c][0].ids, egrp[c]);
+        auto gu = [&](auto nbc) {
+            constexpr unsigned NB = decltype(nbc)::value;
+            using K = ops41draft::RoutedMXFP4U<NB, 6>;
+            K k{rows, per_slot};
+            k.nsl = nsl;
+            k.xtok = (unsigned)xtok;
+            k.nexp = (unsigned)e.experts;
+            k.w2 = w2;
+            k.out2 = y2;
+            launch_rows<K::TAB>(c, np, 1024, k, (const uint8_t *)dp.p, (const float *)x, (const uint32_t *)egrp[c], y);
+        };
+        if (e.cols == 5120) return gu(std::integral_constant<unsigned, 20>{});
+        if (e.cols == 2304) return gu(std::integral_constant<unsigned, 9>{});
+        throw std::runtime_error("draft experts: no packed kernel for " + wn);
+    }
     auto gn = [&](auto nbc) { // OWN_DR_MXN=1 (default): the unrolled form at the draft's two widths
         constexpr unsigned NB = decltype(nbc)::value;
         ops41draft::RoutedMXFP4N<NB> k{rows, nsl, 3u, (unsigned)xtok, per_slot};

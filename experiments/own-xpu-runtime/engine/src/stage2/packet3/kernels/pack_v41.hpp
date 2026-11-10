@@ -39,6 +39,10 @@
 //   Q5_K (176-byte blocks: d, dmin, scales[12], qh[32], qs[128]):
 //     [NB x 32 u32: word l = qs[l] | qs[32+l]<<8 | qs[64+l]<<16 | qs[96+l]<<24]
 //     [NB x 32 qh bytes][NB x 16 bytes: d, dmin, scales[12] unchanged][pad]
+//   MXFP4 (the DSpark draft's routed experts; 17-byte blocks of 32: e8m0 scale, qs[16], element j in the low
+//   nibble of qs[j] for j < 16, else the high nibble of qs[j - 16]), NB = cols/256 groups of 8 blocks:
+//     [NB x 32 u32: word l of group k = element l of blocks 8k .. 8k+7, block 8k+g in nibble g]
+//     [cols/32 scale bytes][pad]   (packed only on request: Backend41::pack_wanted, OWN_DR_MXP)
 // (quant words first so the whole-row block reads never run past the row)
 // Row strides are multiples of 16 bytes so every row starts aligned.
 #pragma once
@@ -97,6 +101,7 @@ inline size_t packed_row_bytes(iq3::Type t, size_t cols) {
     case iq3::Type::Q6_K: return pad16(cols / 256 * 210);
     case iq3::Type::Q5_K: return pad16(cols / 256 * 176);
     case iq3::Type::F32: return pad16(cols * 2); // upper halves only: see pack_row
+    case iq3::Type::MXFP4: return pad16(cols / 2 + cols / 32);
     default: return 0;
     }
 }
@@ -195,6 +200,20 @@ inline void pack_row(iq3::Type t, const uint8_t *src, uint8_t *dst, size_t cols)
             std::memcpy(dst + nb * 128 + b * 32, s + 16, 32);
             std::memcpy(dst + nb * 160 + b * 16, s, 16);
         }
+    } else if (t == iq3::Type::MXFP4) {
+        if (cols % 256) throw std::runtime_error("MXFP4 rows pack in groups of 256 columns");
+        const size_t nb = cols / 256, nx = cols / 32;
+        for (size_t k = 0; k < nb; ++k)
+            for (size_t l = 0; l < 32; ++l) {
+                uint32_t wv = 0;
+                for (size_t g = 0; g < 8; ++g) {
+                    const uint8_t *s = src + (8 * k + g) * 17;
+                    const uint32_t code = l < 16 ? s[1 + l] & 15u : s[1 + l - 16] >> 4;
+                    wv |= code << (4 * g);
+                }
+                std::memcpy(dst + k * 128 + 4 * l, &wv, 4);
+            }
+        for (size_t b = 0; b < nx; ++b) dst[nb * 128 + b] = src[b * 17];
     }
 }
 

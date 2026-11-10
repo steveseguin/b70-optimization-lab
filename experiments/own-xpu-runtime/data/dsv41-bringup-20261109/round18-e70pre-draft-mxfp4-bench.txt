@@ -1,0 +1,18 @@
+card 2 Intel(R) Arc(TM) Pro B70 Graphics (pci 0000:43:00.0)
+-- all different
+gate + up (5120 columns, 2 x 384 rows), 15 different experts: PASS 0 of 11520 outputs differ (0 not finite)
+  RoutedMXFP4N   168.01 us | RoutedMXFP4U    93.91 us (+ ExpertGroupM 2.54 us, once per stage)
+down (2304 columns, 864 rows, per-slot input), 15 different experts: PASS 0 of 12960 outputs differ (0 not finite)
+  RoutedMXFP4N    94.07 us | RoutedMXFP4U    50.29 us (+ ExpertGroupM 2.21 us, once per stage)
+-- draft-like
+gate + up (5120 columns, 2 x 384 rows), 7 different experts: PASS 0 of 11520 outputs differ (0 not finite)
+  RoutedMXFP4N   167.17 us | RoutedMXFP4U    59.96 us (+ ExpertGroupM 2.84 us, once per stage)
+down (2304 columns, 864 rows, per-slot input), 7 different experts: PASS 0 of 12960 outputs differ (0 not finite)
+  RoutedMXFP4N    92.66 us | RoutedMXFP4U    39.54 us (+ ExpertGroupM 2.90 us, once per stage)
+-- all on 3 experts
+gate + up (5120 columns, 2 x 384 rows), 3 different experts: PASS 0 of 11520 outputs differ (0 not finite)
+  RoutedMXFP4N   167.11 us | RoutedMXFP4U    71.17 us (+ ExpertGroupM 3.20 us, once per stage)
+down (2304 columns, 864 rows, per-slot input), 3 different experts: PASS 0 of 12960 outputs differ (0 not finite)
+  RoutedMXFP4N    91.60 us | RoutedMXFP4U    36.67 us (+ ExpertGroupM 3.24 us, once per stage)
+PASS
+exit 0

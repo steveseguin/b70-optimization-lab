@@ -123,6 +123,44 @@ template <unsigned NB> struct RoutedMXFP4N {
     }
 };
 
+// Packed MXFP4 rows (pk41 MXFP4 layout, NB = cols / 256) for ops41sycl::RoutedU: the slots of a draft block that
+// picked the same expert share one read and decode of its rows (ExpertGroupM groups), each slot with its own
+// sum. Lane l still owns element l of every block of 32 (word k = element l of blocks 8k .. 8k+7), the value
+// is mxfp4_d(e) * mxfp4_v(code) (mxfp4_v from a 16-entry table of the same floats) times x[32 b + l], summed
+// block after block and reduced by reduce_over_group (SGR): RoutedMXFP4N's sums bit for bit.
+template <unsigned NB_> struct RUFmtMXFP4 {
+    static constexpr unsigned NB = NB_, TAB = 16, NX = NB * 8, NDL = (NX + 31) / 32;
+    static constexpr bool SGR = true, CLAMP_EXP = true;
+    static constexpr size_t RB = ((size_t)NB * 128 + NX + 15) & ~(size_t)15;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0)) tab[k] = mxfp4_v(k);
+    }
+    const float *tb;
+    uint32_t wd[NB];
+    float dl[NDL];
+    RUFmtMXFP4(unsigned, float *tab) : tb(tab) {}
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned lane, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NB; ++k) wd[k] = ops41sycl::sg_bload(sg, rw + (size_t)k * 32);
+        const uint8_t *sc = row + (size_t)NB * 128;
+#pragma unroll
+        for (unsigned k = 0; k < NDL; ++k) { // (the index is clamped so no lane reads past the row)
+            const unsigned b = 32 * k + lane < NX ? 32 * k + lane : NX - 1;
+            dl[k] = 32 * k + lane < NX ? mxfp4_d(sc[b]) : 0.0f;
+        }
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned b = blk * 8 + g;
+            const float d = sycl::select_from_group(sg, dl[b / 32], b % 32);
+            v[g] = d * tb[(wd[blk] >> (4 * g)) & 15u];
+        }
+    }
+};
+template <unsigned NB, unsigned MT> using RoutedMXFP4U = ops41sycl::RoutedU<RUFmtMXFP4<NB>, MT, ops41sycl::NoRows, 3>;
+
 // The input feature of one target row for the draft: the mean of the 4 streams (weight 1/4 each, not the
 // stream collapse) of the input of target layer L, written at feat + t * fs + li * h (li = 0, 1, 2 for
 // layers 37, 38, 39). One item per element.

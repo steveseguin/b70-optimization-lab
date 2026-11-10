@@ -1,10 +1,11 @@
 // Row-blocked multi-token dense rows (GemvQ8P::rowgr<G, R>, DenseRowsGR) against the one-token kernel,
 // BITWISE per token, and timed against the production adapter (DenseRowsG<GemvQ8P, G>) on one card, at the
-// block step's Q8_0 shapes. Cold timing: a 128 MiB write before every launch (the matrix is evicted, as in a
-// decode step). Exit status 1 on any mismatch.
+// block step's Q8_0 shapes. Cold timing: a 128 MiB read before every launch (the matrix is evicted, as in a
+// decode step; a written flush leaves dirty lines that are written back during the timed launch). Blocks of 5 and
+// 6 tokens also as ONE token group (G5 / G6: the matrix read once, OWN_MT_TGW_ROWS). Exit status 1 on any mismatch.
 //
 //   cd engine; export PATH=/opt/intel/oneapi/compiler/latest/bin:$PATH
-//   icpx -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -Wno-deprecated-declarations -I src \
+//   icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -O2 -std=c++20 -fp-model=precise -ffp-contract=off -Wno-deprecated-declarations -I src \
 //     tools/bench/bench_dense_rowblock.cpp -o $S/bench_dense_rowblock
 //   LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib $S/bench_dense_rowblock [CARD]
 #include <sycl/sycl.hpp>
@@ -187,6 +188,13 @@ template <typename K, iq3::Type T> static void run_shape(sycl::queue &q, const c
     check_time(q, s, g1<3>(s, 6), 6, "G3 prod", 512, 0);
     check_time(q, s, gr<3, 2>(s, 6), 6, "G3 R2", 512, b6);
     check_time(q, s, gr<3, 4>(s, 6), 6, "G3 R4", 512, b6);
+    check_time(q, s, g1<6>(s, 6), 6, "G6", 512, b6); // one token group: the matrix read once (OWN_MT_TGW_ROWS)
+    check_time(q, s, gr<6, 2>(s, 6), 6, "G6 R2", 512, b6);
+    const double b5 = cold_us(q, g1<3>(s, 5), 512);
+    check_time(q, s, g1<3>(s, 5), 5, "G3 prod", 512, 0);
+    check_time(q, s, gr<3, 4>(s, 5), 5, "G3 R4", 512, b5);
+    check_time(q, s, g1<5>(s, 5), 5, "G5", 512, b5);
+    check_time(q, s, gr<5, 2>(s, 5), 5, "G5 R2", 512, b5);
     const double b1 = cold_us(q, g1<1>(s, 1), 512);
     check_time(q, s, g1<1>(s, 1), 1, "G1", 512, 0);
     check_time(q, s, gr<1, 2>(s, 1), 1, "G1 R2", 512, b1);

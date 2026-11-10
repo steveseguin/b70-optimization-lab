@@ -18,7 +18,7 @@ std::vector<act_t> h_engm[TILES][2];
 int32_t *cidxm[TILES][8] = {};   // one 512-row list per token per index slot
 uint32_t *egrp[TILES] = {};      // the layer's expert groups (RUGrp layout, mt_eu)
 long mlen[TILES][4][MTX] = {};   // rows of each kv source after token t's publish
-unsigned xoaM = 0, xobM = 0, xactM = 0, xengM = 0;
+unsigned xoaM = 0, xobM = 0, xactM = 0, xengM = 0, xfcM = 0; // xfcM: the draft's dsp.fc rows (dr_inject)
 uint32_t eng_seqm[TILES] = {};
 float *pkv[TILES][3] = {}, *psc[TILES][3] = {}; // the block's ratio-2 states per source (row 0: the carried even one)
 // the head for every token of a block (draft checking): logits rows of this card, argmax candidates
@@ -74,6 +74,12 @@ unsigned mt_tgr[MTX + 1] = {}; // OWN_MT_TGR="m:r,...": blocks of m tokens run t
 unsigned mt_tgr_rows = 2048; // ... only for matrices of at least this many rows on the card (OWN_MT_TGR_ROWS)
 unsigned mt_tgr_fmt = 3;      // ... for these formats (OWN_MT_TGR_FMT: 1 Q8_0, 2 Q6_K, 3 both)
 bool mt_tgr_draft = true;     // ... also in the draft's steps (OWN_MT_TGR_DRAFT)
+unsigned mt_tgw_rows = 0;     // OWN_MT_TGW_ROWS=n: packed matrices of at least n rows on the card (the vocabulary head)
+                              // run their own token groups (mt_tgwm) with NO row blocks; 0: off. Same sums (rowg is
+                              // per token). bench_q6k_rows, the head's 21,547 Q6_K rows, 6 tokens: 4-row blocks in
+                              // groups of 3 651 us, groups of 3 305, one group of 6 457 -- but OFF: with 16384 the
+                              // four 230 W cards run every kernel at ~2,600 instead of 2,800 MHz (round18 e67/e68)
+unsigned mt_tgwm[MTX + 1] = {0, 0, 2, 3, 2, 3, 3}; // OWN_MT_TGWM="m:g,...": token group g (1-6) for blocks of m tokens
 unsigned mt_tgu = 0;     // OWN_MT_TGU=1/2/3: the unpacked rows (GemvTM) in token groups over sub-groups (0: all 16 at once)
 bool mt_ride = false;    // OWN_MT_RIDE=1: the stream mix's dot rows ride in q_a's and the router's launches
 unsigned mt_rwg = 0;     // OWN_MT_RWG=n: row launches of at most n rows use one sub-group per work-group (rows_launch)
@@ -111,7 +117,8 @@ template <size_t SLM, typename K, typename... A> void launch_wgs(int c, size_t n
 }
 
 size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones
-    return (size_t)MTX * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats();
+    return (size_t)MTX * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
+           (size_t)MTX * (size_t)g.h;
 }
 void mt_offsets(size_t base) {
     xoaM = (unsigned)base;
@@ -119,6 +126,8 @@ void mt_offsets(size_t base) {
     xactM = xobM + MTX * (unsigned)g.h;
     xengM = xactM + MTX * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
     xdrM = xengM + MTX * 10 * (unsigned)g.h;   // the draft's argmax rows (backend_sycl_v41_draft.inc)
+    xfcM = xdrM + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
+                                               // last layer's exchange on xobM with no exchange in between)
 }
 void mt_alloc(int c) {
     auto md = [&](size_t n) { return dalloc<act_t>(c, n * MTX); };
@@ -225,6 +234,23 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
         }
         go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
     };
+    if constexpr (std::is_same_v<RD, ops41sycl::NoRows> && requires { &DK::template rowgr<2, 2>; }) {
+        const unsigned gw = mt_tgw_rows && dk.rows >= mt_tgw_rows && mt <= MTX ? mt_tgwm[mt] : 0;
+        if (gw) { // OWN_MT_TGW_ROWS: the head's token groups, no row blocks
+            auto grp = [&](auto gc) {
+                constexpr unsigned G = decltype(gc)::value;
+                go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
+            };
+            switch (gw) {
+            case 1: return grp(std::integral_constant<unsigned, 1>{});
+            case 2: return grp(std::integral_constant<unsigned, 2>{});
+            case 3: return grp(std::integral_constant<unsigned, 3>{});
+            case 4: return grp(std::integral_constant<unsigned, 4>{});
+            case 5: return grp(std::integral_constant<unsigned, 5>{});
+            default: return grp(std::integral_constant<unsigned, 6>{});
+            }
+        }
+    }
     const unsigned tg = mt <= MTX && mt_tgm[mt] ? mt_tgm[mt] : mt <= mt_tg_max && mt > mt_tg ? mt_tg : 0;
     if (tg == 1) return split(std::integral_constant<unsigned, 1>{});
     if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
@@ -245,6 +271,8 @@ void gemv_m(int c, const std::string &wn, const act_t *x, size_t xs, act_t *y, s
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
         if (o.packed && e.type == iq3::Type::F32 && cols == 5120) // gemv's block-read F32 rows
             return dense_m(c, ops41sycl::GemvF32P<160, Act>{rows}, wp(c, wn), x, xs, y, ys, mt, ops41sycl::NoRows{});
+        if (bf16_h16(e, wp(c, wn))) // gemv's block-read BF16 rows, every token in the dense token groups
+            return h16_rows(cols, rows, [&](auto dk) { dense_m(c, dk, wp(c, wn), x, xs, y, ys, mt, ops41sycl::NoRows{}); });
         auto tgu = [&](auto ty, auto gc) { // OWN_MT_TGU: tokens in groups over sub-groups
             constexpr iq3::Type TY = decltype(ty)::value;
             constexpr unsigned G = decltype(gc)::value;
@@ -355,6 +383,17 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
     if (!dp.packed) { // the generic per-format kernel (layer 0's Q2_K down rows)
         if (!wn2.empty()) throw std::runtime_error("multi-token step: unpacked expert pair " + wn);
         const unsigned rows = dp.nrows, cols = (unsigned)e.cols;
+#ifndef OWN41_ACT_BF16
+        if (o.q2k_fast && e.type == iq3::Type::Q2_K && (cols == 9 * 256 || cols == 20 * 256)) { // as routed_gemv
+            if (cols == 9 * 256)
+                launch_sg(c, (size_t)nsl0 * rows, ops41sycl::RoutedQ2KF<9>{rows, cols, per_slot, nsl0, (unsigned)xtok},
+                          wp(c, wn), x, ids, y);
+            else
+                launch_sg(c, (size_t)nsl0 * rows, ops41sycl::RoutedQ2KF<20>{rows, cols, per_slot, nsl0, (unsigned)xtok},
+                          wp(c, wn), x, ids, y);
+            return;
+        }
+#endif
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
@@ -377,7 +416,8 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
     }
     const unsigned rows = dp.nrows, nsl = 6u * (unsigned)mt_n;
     const size_t npos = (size_t)(w2 ? 2 : 1) * nsl * rows;
-    const size_t maxwg = per_slot ? (size_t)o.down_wg : (size_t)o.pair_wg;
+    const size_t maxwg = per_slot ? (size_t)o.down_wg
+                                  : e.type == iq3::Type::IQ1_S && o.pair_wg_iq1 > 0 ? (size_t)o.pair_wg_iq1 : (size_t)o.pair_wg;
     auto go = [&](auto kt) {
         using K = typename decltype(kt)::type;
         K k{rows, per_slot};

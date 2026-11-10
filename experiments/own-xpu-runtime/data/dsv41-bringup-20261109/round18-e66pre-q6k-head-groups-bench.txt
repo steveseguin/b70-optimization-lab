@@ -1,0 +1,52 @@
+card 0 Intel(R) Arc(TM) Pro B70 Graphics
+head (output.weight, card slice): 21547 rows x 5120 columns, 90.7 MB
+  PASS all-loads R1 vs rowg, 1 token: 0 of 21547 differ
+  PASS all-loads R2 vs rowg, 1 token: 0 of 21547 differ
+  PASS production rowgr R4 vs rowg, 1 token: 0 of 21547 differ
+  PASS all-loads R1 vs rowg, 3 tokens: 0 of 64641 differ
+  PASS all-loads R2 vs rowg, 3 tokens: 0 of 64641 differ
+  PASS production rowgr R4 vs rowg, 3 tokens: 0 of 64641 differ
+ one token:
+  row (DenseRowsG G1)                   355.1 us    255 GB/s
+  rowgr R2                              188.0 us    482 GB/s
+  rowgr R4 (production >= 4096 rows)    336.9 us    269 GB/s
+  all-loads R1                          158.6 us    572 GB/s
+  all-loads R2                          188.1 us    482 GB/s
+ three tokens:
+  rowg G3                               188.4 us    481 GB/s
+  rowgr G3 R2                           344.2 us    263 GB/s
+  rowgr G3 R4 (production)              459.1 us    197 GB/s
+  all-loads G3 R1                       188.7 us    481 GB/s
+  all-loads G3 R2                       350.9 us    258 GB/s
+ five tokens (groups of 3: two passes):
+  rowgr G3 R4 x2 (production)           650.2 us    139 GB/s
+  all-loads G3 R1 x2                    304.6 us    298 GB/s
+  PASS one group G2 vs G1 x2, 2 tokens: 0 of 43094 differ
+  PASS all-loads G2 vs G1 x2, 2 tokens: 0 of 43094 differ
+ 2 tokens:
+  rowgr G1 R4 x2 (production)           476.1 us    190 GB/s
+  rowg G1 x2 (no row blocks)            214.1 us    424 GB/s
+  rowg G2 x1 (one group)                184.4 us    492 GB/s
+  all-loads G2 x1                       171.3 us    529 GB/s
+  PASS one group G4 vs G1 x4, 4 tokens: 0 of 86188 differ
+  PASS all-loads G4 vs G1 x4, 4 tokens: 0 of 86188 differ
+ 4 tokens:
+  rowgr G2 R4 x2 (production)           600.9 us    151 GB/s
+  rowg G2 x2 (no row blocks)            269.4 us    337 GB/s
+  rowg G4 x1 (one group)                337.7 us    268 GB/s
+  all-loads G4 x1                       340.0 us    267 GB/s
+  PASS one group G5 vs G1 x5, 5 tokens: 0 of 107735 differ
+  PASS all-loads G5 vs G1 x5, 5 tokens: 0 of 107735 differ
+ 5 tokens:
+  rowgr G3 R4 x2 (production)           648.6 us    140 GB/s
+  rowg G3 x2 (no row blocks)            304.5 us    298 GB/s
+  rowg G5 x1 (one group)                373.5 us    243 GB/s
+  all-loads G5 x1                       377.1 us    240 GB/s
+  PASS one group G6 vs G1 x6, 6 tokens: 0 of 129282 differ
+  PASS all-loads G6 vs G1 x6, 6 tokens: 0 of 129282 differ
+ 6 tokens:
+  rowgr G3 R4 x2 (production)           651.4 us    139 GB/s
+  rowg G3 x2 (no row blocks)            304.7 us    298 GB/s
+  rowg G6 x1 (one group)                456.8 us    198 GB/s
+  all-loads G6 x1                       432.6 us    210 GB/s
+PASS

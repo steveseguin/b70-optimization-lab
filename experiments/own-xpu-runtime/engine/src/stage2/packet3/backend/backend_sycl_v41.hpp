@@ -49,6 +49,8 @@
 #include <fstream>
 #include <map>
 #include <mutex>
+#include <pthread.h>
+#include <sched.h>
 #include <stdexcept>
 #include <string>
 #include <sys/mman.h>
@@ -191,6 +193,13 @@ public:
         // card to card (XchgP). 1 = the layer pipeline above. Needs the f32 build.
         int tp = 1;
         bool tp_threads = true; // one host thread per card (OWN_TP_THREADS; trace runs force 0)
+        int tp_pin[7] = {-1, -1, -1, -1, -1, -1, -1}; // OWN_TP_PIN="c0,..,c5[,m]": card c's host thread on CPU c_c,
+                                // the main thread on CPU m (-1 = left to the scheduler). On this host the six
+                                // threads otherwise float and can share a physical core (CPU n and n + 8).
+        int tp_w[6] = {};       // tp: relative shares per card of the expert / shared-expert / output-b / engram rows
+                                // (OWN_TP_WEIGHTS="w0,..,w5", all 0 = equal): the cards holding two of the eight
+                                // attention groups can take fewer. Every row's sums are the same on any card.
+        int tp_vw[6] = {};      // ... of the vocabulary rows: head, draft Markov rows (OWN_TP_VWEIGHTS)
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
@@ -198,6 +207,11 @@ public:
         bool down_ex = false;   // tp: shared expert down rows inside the expert down launch (OWN_DOWN_EX=1; no gain)
         int pair_wg = 128;      // tp: work-groups of the expert gate+up launch (OWN_PAIR_WG)
         int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
+        int pair_wg_iq1 = 0;    // gate+up work-groups for IQ1_S experts, 0 = pair_wg (OWN_PAIR_WG_IQ1)
+        bool dr_fc_split = true; // the draft's dsp.fc rows split across the cards + an exchange (OWN_DR_FC_SPLIT)
+        bool dr_mxp = true; // the draft's MXFP4 experts packed (pk41 MXFP4) and run grouped by expert (OWN_DR_MXP)
+        bool q2k_fast = true;    // layer 0's unpacked Q2_K expert rows through RoutedQ2KF (bitwise; OWN_Q2K_FAST)
+        bool bf16_rows = true;   // BF16 rows (indexer, compressor) by block reads through GemvH16P (OWN_BF16_ROWS)
         bool rope_out = true;   // tp: inverse rope in the attention output's store (OWN_ROPE_OUT=0: own launch)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
@@ -581,6 +595,8 @@ public:
 #else
         if (!o.packed || n == "token_embd.weight") return false;
         if (e.type == iq3::Type::F32 && n.rfind("dsp.", 0) == 0) return false; // the draft's router stays F32
+        if (e.type == iq3::Type::MXFP4) // only the draft's routed experts (dr_routed reads the packed form)
+            return o.dr_mxp && n.rfind("dsp.", 0) == 0 && e.experts > 0 && (e.cols == 5120 || e.cols == 2304);
         if (e.type == iq3::Type::F32) { // the router: upload refuses (pack_row) if a value is not exact in 16 bits
             static const std::string rn = "ffn_gate_inp.weight";
             return o.router16 && e.cols == 5120 && e.experts == 0 && n.size() > rn.size() &&
@@ -1313,6 +1329,12 @@ private:
             launch_rows<0>(tile, rows, 0, ops41sycl::GemvF32P<160, Act>{rows}, (const uint8_t *)wp(tile, wn), x, (act_t *)y);
             return;
         }
+        // BF16 rows are GemvH16P's layout as stored (the upper halves of the floats): block reads, GemvT's lane
+        // order and tree, so the same sums bit for bit (a NaN weight would differ in its payload only)
+        if (bf16_h16(e, wp(tile, wn))) {
+            h16_rows(cols, rows, [&](auto dk) { launch_rows<0>(tile, rows, 0, dk, (const uint8_t *)wp(tile, wn), x, (act_t *)y); });
+            return;
+        }
 #endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
@@ -1393,6 +1415,16 @@ private:
 #else
         if (o.generic_kernels) throw std::runtime_error("runtime-type kernels exist only in the BF16-activation build");
 #endif
+#ifndef OWN41_ACT_BF16
+        // block-loaded form of RoutedGemvT<Q2_K> (same sums bit for bit; tools/bench/bench_routed_m1.cpp)
+        if (o.q2k_fast && e.type == iq3::Type::Q2_K && (cols == 9 * 256 || cols == 20 * 256)) {
+            if (cols == 9 * 256)
+                launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedQ2KF<9>{rows, cols, per_slot}, wp(tile, wn), x, ids, y);
+            else
+                launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedQ2KF<20>{rows, cols, per_slot}, wp(tile, wn), x, ids, y);
+            return;
+        }
+#endif
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
@@ -1425,7 +1457,7 @@ private:
         const auto &da = wgt[tile].at(wa), &db = wgt[tile].at(wb);
         const unsigned rows = da.nrows;
         const auto *w = (const uint8_t *)da.p;
-        const size_t MAXWG = o.pair_wg;
+        const size_t MAXWG = ea.type == iq3::Type::IQ1_S && o.pair_wg_iq1 > 0 ? o.pair_wg_iq1 : o.pair_wg;
         auto go = [&](auto kt) {
             using K = typename decltype(kt)::type;
             K k{rows, false, ex};
@@ -1486,6 +1518,25 @@ private:
     }
 #endif
     static bool al16(const void *p) { return ((uintptr_t)p & 15u) == 0; }
+    // BF16 rows of these widths through GemvH16P<cols / 32> (OWN_BF16_ROWS)
+    static bool h16_width(long cols) { return cols == 256 || cols == 512 || cols == 1280 || cols == 5120; }
+    bool bf16_h16(const WeightTab::E &e, const void *w) const {
+#ifdef OWN41_ACT_BF16
+        (void)e; (void)w;
+        return false;
+#else
+        return o.bf16_rows && e.type == iq3::Type::BF16 && e.experts == 0 && h16_width(e.cols) && al16(w);
+#endif
+    }
+    template <typename F> static void h16_rows(unsigned cols, unsigned rows, F &&f) {
+        switch (cols) {
+        case 256: return f(ops41sycl::GemvH16P<8, Act>{rows});
+        case 512: return f(ops41sycl::GemvH16P<16, Act>{rows});
+        case 1280: return f(ops41sycl::GemvH16P<40, Act>{rows});
+        case 5120: return f(ops41sycl::GemvH16P<160, Act>{rows});
+        default: throw std::runtime_error("h16_rows: width");
+        }
+    }
     void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
         const float *w = wp<float>(tile, wn);
 #ifndef OWN41_ACT_BF16
@@ -2209,6 +2260,8 @@ private:
         // (dsp.fc.weight, 15360 columns, is not packable: the generic rows read the whole matrix, so every
         // card holds all of it and projects the features alone, without an exchange)
         if (dsp && n == "dsp.markov_w2.weight") { need(g.vocab); return {(unsigned)tv0[c], (unsigned)tv1[c]}; }
+        // OWN_DR_FC_SPLIT (default): dsp.fc by model rows like attn_output_b, its rows all-gathered in dr_inject
+        if (dsp && n == "dsp.fc.weight" && o.dr_fc_split) { need(g.h); return {(unsigned)td0[c], (unsigned)td1[c]}; }
         const std::string nl = dsp ? n.substr(4) : n;
         if (layer_of_name(nl) < 0) return {0, R};
         const std::string suf = nl.substr(nl.find('.', 4) + 1);
@@ -2238,9 +2291,21 @@ private:
         const int N = o.tp;
         if (g.ototal % 8 || g.qh % 8 || g.h % 16 || g.mid % 16 || g.ototal / 8 * 8 != g.ototal || g.oin != g.qh / 8 * g.hd)
             throw std::runtime_error("tensor parallel: geometry");
-        auto split = [&](int n, int c, int al) {
-            const long u = n / al;
-            const int a = (int)(u * c / N) * al, b = c + 1 == N ? n : (int)(u * (c + 1) / N) * al;
+        // rows [a, b) of n for card c in units of al, shares by weight w (all 0: equal, u * c / N as before)
+        for (const int *w : {o.tp_w, o.tp_vw}) {
+            int nz = 0;
+            for (int d = 0; d < N; ++d) nz += w[d] > 0;
+            if (nz != 0 && nz != N) throw std::runtime_error("tensor parallel: OWN_TP_WEIGHTS needs a weight per card");
+        }
+        auto split = [&](int n, int c, int al, const int *w) {
+            long W = 0, Wc = 0;
+            for (int d = 0; d < N; ++d) {
+                const long wd = w[d] > 0 ? w[d] : 1;
+                if (d < c) Wc += wd;
+                W += wd;
+            }
+            const long u = n / al, wc = w[c] > 0 ? w[c] : 1;
+            const int a = (int)(u * Wc / W) * al, b = c + 1 == N ? n : (int)(u * (Wc + wc) / W) * al;
             return std::pair<int, int>{a, b};
         };
         for (int c = 0; c < N; ++c) {
@@ -2249,11 +2314,19 @@ private:
             if (tog1[c] <= tog0[c]) throw std::runtime_error("tensor parallel: more cards than output groups");
             thq0[c] = tog0[c] * g.qh / 8;
             thq1[c] = tog1[c] * g.qh / 8;
-            std::tie(tm0[c], tm1[c]) = split(g.mid, c, 16);
-            std::tie(td0[c], td1[c]) = split(g.h, c, 16);
-            std::tie(tv0[c], tv1[c]) = split(g.vocab, c, 16);
-            std::tie(te0[c], te1[c]) = split(5 * g.h, c, 16);
+            std::tie(tm0[c], tm1[c]) = split(g.mid, c, 16, o.tp_w);
+            std::tie(td0[c], td1[c]) = split(g.h, c, 16, o.tp_w);
+            std::tie(tv0[c], tv1[c]) = split(g.vocab, c, 16, o.tp_vw);
+            std::tie(te0[c], te1[c]) = split(5 * g.h, c, 16, o.tp_w);
             if ((thq1[c] - thq0[c]) % 4) throw std::runtime_error("tensor parallel: heads per card % 4");
+            if (tm1[c] <= tm0[c] || td1[c] <= td0[c] || tv1[c] <= tv0[c] || te1[c] <= te0[c])
+                throw std::runtime_error("tensor parallel: a card without rows (OWN_TP_WEIGHTS)");
+        }
+        if (o.tp_w[0] > 0 || o.tp_vw[0] > 0) {
+            std::fprintf(stderr, "tensor parallel rows per card (mid / model / vocab):");
+            for (int c = 0; c < N; ++c)
+                std::fprintf(stderr, " %d/%d/%d", tm1[c] - tm0[c], td1[c] - td0[c], tv1[c] - tv0[c]);
+            std::fprintf(stderr, "\n");
         }
         xoa = 1024; // [0, 1024): flags, uint32 16 * card
         xob = xoa + (unsigned)g.ototal;
@@ -2314,6 +2387,18 @@ private:
         for (int c = 0; c < N; ++c) qs[c].wait();
         if (o.tp_threads)
             for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
+        auto pin = [&](pthread_t t, int cpu, const char *who) {
+            if (cpu < 0) return;
+            cpu_set_t cs;
+            CPU_ZERO(&cs);
+            CPU_SET(cpu, &cs);
+            if (pthread_setaffinity_np(t, sizeof cs, &cs) != 0)
+                throw std::runtime_error(std::string("OWN_TP_PIN: cannot pin the ") + who + " thread to CPU " +
+                                         std::to_string(cpu));
+        };
+        for (int c = 0; c < (int)tp_th.size() && c < 6; ++c) pin(tp_th[c].native_handle(), o.tp_pin[c], "card");
+        // (the main thread's CPU, OWN_TP_PIN's seventh entry, is set by the runner after the upload: the upload's
+        // threads would otherwise inherit it)
     }
 
 #ifndef OWN41_ACT_BF16

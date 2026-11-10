@@ -154,11 +154,34 @@ int main(int argc, char **argv) {
         while (std::getline(ss, tok, ',')) opt.devices.push_back(atoi(tok.c_str()));
     }
     if (const char *e = getenv("OWN_TP")) opt.tp = atoi(e); // every layer split across this many cards
+    auto weights = [](const char *e, int *w) { // "w0,w1,...": relative row shares per card
+        std::stringstream ss(e);
+        std::string tok;
+        for (int d = 0; d < 6 && std::getline(ss, tok, ','); ++d) w[d] = atoi(tok.c_str());
+    };
+    if (const char *e = getenv("OWN_TP_WEIGHTS")) weights(e, opt.tp_w);
+    if (const char *e = getenv("OWN_TP_VWEIGHTS")) weights(e, opt.tp_vw);
     if (const char *e = getenv("OWN_GPROF_CARD")) opt.prof_card = atoi(e);
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
     if (const char *e = getenv("OWN_DIET")) opt.diet = atoi(e) != 0;
     if (const char *e = getenv("OWN_PAIR_WG")) opt.pair_wg = atoi(e);
+    if (const char *e = getenv("OWN_PAIR_WG_IQ1")) opt.pair_wg_iq1 = atoi(e);
+    if (const char *e = getenv("OWN_DR_FC_SPLIT")) opt.dr_fc_split = atoi(e) != 0;
+    if (const char *e = getenv("OWN_DR_MXP")) opt.dr_mxp = atoi(e) != 0;
+    if (const char *e = getenv("OWN_TP_PIN")) { // "c0,..,c5[,m]": CPUs for the six card threads and the main thread
+        std::string v = e;
+        int i = 0;
+        for (size_t a = 0; a <= v.size() && i < 7; ++i) {
+            const size_t b = v.find(',', a);
+            opt.tp_pin[i] = atoi(v.substr(a, b == std::string::npos ? std::string::npos : b - a).c_str());
+            if (b == std::string::npos) { ++i; break; }
+            a = b + 1;
+        }
+        if (i < 6) die("OWN_TP_PIN: six CPU ids for the card threads (and optionally a seventh for the main thread)");
+    }
+    if (const char *e = getenv("OWN_Q2K_FAST")) opt.q2k_fast = atoi(e) != 0;
+    if (const char *e = getenv("OWN_BF16_ROWS")) opt.bf16_rows = atoi(e) != 0;
     if (const char *e = getenv("OWN_DOWN_WG")) opt.down_wg = atoi(e);
     if (const char *e = getenv("OWN_ROPE_OUT")) opt.rope_out = atoi(e) != 0;
     if (const char *e = getenv("OWN_XTAIL")) opt.xtail = atoi(e) != 0;
@@ -236,6 +259,12 @@ int main(int argc, char **argv) {
             if (be.tile_active(t))
                 std::fprintf(stderr, "tile %d card %s: %.2f GiB free after load\n", t, be.tile_pci(t).c_str(),
                              be.free_bytes(t) / 1073741824.0);
+        if (opt.tp_pin[6] >= 0) { // OWN_TP_PIN's seventh entry: the main thread, after the upload's threads are gone
+            cpu_set_t cs;
+            CPU_ZERO(&cs);
+            CPU_SET(opt.tp_pin[6], &cs);
+            if (pthread_setaffinity_np(pthread_self(), sizeof cs, &cs) != 0) die("OWN_TP_PIN: cannot pin the main thread");
+        }
         if (getenv("OWN_LOAD_ONLY")) return 0;
 
         // ---- engram tables + prep ----
@@ -337,6 +366,16 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TGR_ROWS")) be.mt_tgr_rows = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_FMT")) be.mt_tgr_fmt = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_DRAFT")) be.mt_tgr_draft = atoi(e) != 0;
+        if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
+        if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
+            for (const char *s = e; *s;) {
+                unsigned m = 0, gsz = 0;
+                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 6) be.mt_tgwm[m] = gsz;
+                const char *cm = std::strchr(s, ',');
+                if (!cm) break;
+                s = cm + 1;
+            }
+        }
         if (const char *e = getenv("OWN_DR_MXN")) be.dr_mxn = atoi(e) != 0;
         if (const char *e = getenv("OWN_HC_FIN")) be.hc_fin_form = atoi(e);
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router

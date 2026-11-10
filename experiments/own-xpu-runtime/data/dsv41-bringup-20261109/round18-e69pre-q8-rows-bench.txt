@@ -1,0 +1,81 @@
+card 2 Intel(R) Arc(TM) Pro B70 Graphics (pci 0000:43:00.0)
+5120 x 1024 (q_a, replicated): 1024 rows x 5120 columns, 5.57 MB, 40 quant words per lane (production segment 8)
+  PASS segment 40 vs production, 1 token(s): 0 of 1024 differ
+  G1 production (segment 8)               12.80 us    435 GB/s
+  G1 segment 40                           26.31 us    212 GB/s
+  PASS segment 40 vs production, 2 token(s): 0 of 2048 differ
+  G2 production (segment 8)               17.17 us    324 GB/s
+  G2 segment 40                           14.75 us    378 GB/s
+  PASS segment 40 vs production, 3 token(s): 0 of 3072 differ
+  G3 production (segment 8)               22.42 us    249 GB/s
+  G3 segment 40                           16.74 us    333 GB/s
+  PASS segment 20 vs production, 1 token(s): 0 of 1024 differ
+  G1 production (segment 8)               12.08 us    461 GB/s
+  G1 segment 20                           14.87 us    375 GB/s
+5120 x 384 (shared expert gate / up slice): 384 rows x 5120 columns, 2.09 MB, 40 quant words per lane (production segment 8)
+  PASS segment 40 vs production, 1 token(s): 0 of 384 differ
+  G1 production (segment 8)                8.05 us    259 GB/s
+  G1 segment 40                           19.93 us    105 GB/s
+  PASS segment 40 vs production, 2 token(s): 0 of 768 differ
+  G2 production (segment 8)               12.28 us    170 GB/s
+  G2 segment 40                           11.28 us    185 GB/s
+  PASS segment 40 vs production, 3 token(s): 0 of 1152 differ
+  G3 production (segment 8)               17.11 us    122 GB/s
+  G3 segment 40                           14.32 us    146 GB/s
+  PASS segment 20 vs production, 1 token(s): 0 of 384 differ
+  G1 production (segment 8)                8.05 us    259 GB/s
+  G1 segment 20                           10.27 us    203 GB/s
+4096 x 864 (output_b slice): 864 rows x 4096 columns, 3.76 MB, 32 quant words per lane (production segment 8)
+  PASS segment 32 vs production, 1 token(s): 0 of 864 differ
+  G1 production (segment 8)                9.08 us    414 GB/s
+  G1 segment 32                           13.30 us    283 GB/s
+  PASS segment 32 vs production, 2 token(s): 0 of 1728 differ
+  G2 production (segment 8)               12.69 us    296 GB/s
+  G2 segment 32                           21.20 us    177 GB/s
+  PASS segment 32 vs production, 3 token(s): 0 of 2592 differ
+  G3 production (segment 8)               16.57 us    227 GB/s
+  G3 segment 32                           13.54 us    278 GB/s
+  PASS segment 16 vs production, 1 token(s): 0 of 864 differ
+  G1 production (segment 8)                9.08 us    414 GB/s
+  G1 segment 16                           11.30 us    333 GB/s
+  PASS segment 16 vs production, 3 token(s): 0 of 2592 differ
+  G3 production (segment 8)               16.47 us    228 GB/s
+  G3 segment 16                           18.39 us    205 GB/s
+8192 x 864 (output_b slice): 864 rows x 8192 columns, 7.52 MB, 64 quant words per lane (production segment 8)
+  PASS segment 64 vs production, 1 token(s): 0 of 864 differ
+  G1 production (segment 8)               15.66 us    480 GB/s
+  G1 segment 64                           15.67 us    480 GB/s
+  PASS segment 64 vs production, 2 token(s): 0 of 1728 differ
+  G2 production (segment 8)               23.11 us    325 GB/s
+  G2 segment 64                           19.59 us    384 GB/s
+  PASS segment 64 vs production, 3 token(s): 0 of 2592 differ
+  G3 production (segment 8)               30.38 us    248 GB/s
+  G3 segment 64                           24.42 us    308 GB/s
+  PASS segment 16 vs production, 1 token(s): 0 of 864 differ
+  G1 production (segment 8)               15.68 us    479 GB/s
+  G1 segment 16                           19.70 us    382 GB/s
+  PASS segment 16 vs production, 3 token(s): 0 of 2592 differ
+  G3 production (segment 8)               30.35 us    248 GB/s
+  G3 segment 16                           33.24 us    226 GB/s
+2304 x 864 (shared expert down slice): 864 rows x 2304 columns, 2.12 MB, 18 quant words per lane (production segment 6)
+  PASS segment 18 vs production, 1 token(s): 0 of 864 differ
+  G1 production (segment 6)                6.22 us    340 GB/s
+  G1 segment 18                            7.06 us    299 GB/s
+  PASS segment 18 vs production, 2 token(s): 0 of 1728 differ
+  G2 production (segment 6)                7.95 us    266 GB/s
+  G2 segment 18                            9.59 us    221 GB/s
+  PASS segment 18 vs production, 3 token(s): 0 of 2592 differ
+  G3 production (segment 6)                9.93 us    213 GB/s
+  G3 segment 18                           11.62 us    182 GB/s
+1280 x 4096 (q_b, one group): 4096 rows x 1280 columns, 5.57 MB, 10 quant words per lane (production segment 10)
+  PASS segment 10 vs production, 1 token(s): 0 of 4096 differ
+  G1 production (segment 10)              13.92 us    400 GB/s
+  G1 segment 10                           14.07 us    396 GB/s
+  PASS segment 10 vs production, 2 token(s): 0 of 8192 differ
+  G2 production (segment 10)              17.96 us    310 GB/s
+  G2 segment 10                           17.94 us    311 GB/s
+  PASS segment 10 vs production, 3 token(s): 0 of 12288 differ
+  G3 production (segment 10)              21.90 us    254 GB/s
+  G3 segment 10                           21.50 us    259 GB/s
+PASS
+exit 0

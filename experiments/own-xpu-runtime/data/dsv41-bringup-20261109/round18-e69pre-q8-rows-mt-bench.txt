@@ -1,0 +1,99 @@
+card 2 Intel(R) Arc(TM) Pro B70 Graphics (pci 0000:43:00.0)
+5120 x 1024 (q_a, replicated): 1024 rows x 5120 columns, 5.57 MB, 40 quant words per lane (production segment 8)
+  PASS 2 tokens: groups of 2 segment 8 vs production: 0 of 2048 differ
+  M2 production groups of 1 (seg 8)       17.15 us    325 GB/s
+  M2 groups of 2 segment 8                16.79 us    332 GB/s
+  PASS 2 tokens: groups of 2 segment 40 vs production: 0 of 2048 differ
+  M2 production groups of 1 (seg 8)       13.43 us    415 GB/s
+  M2 groups of 2 segment 40               14.75 us    378 GB/s
+  PASS 4 tokens: groups of 2 segment 40 vs production: 0 of 4096 differ
+  M4 production groups of 2 (seg 8)       18.34 us    304 GB/s
+  M4 groups of 2 segment 40               17.15 us    325 GB/s
+  PASS 5 tokens: groups of 3 segment 40 vs production: 0 of 5120 differ
+  M5 production groups of 3 (seg 8)       23.97 us    232 GB/s
+  M5 groups of 3 segment 40               20.92 us    266 GB/s
+  PASS 6 tokens: groups of 3 segment 40 vs production: 0 of 6144 differ
+  M6 production groups of 3 (seg 8)       24.00 us    232 GB/s
+  M6 groups of 3 segment 40               21.00 us    265 GB/s
+5120 x 384 (shared expert gate / up slice): 384 rows x 5120 columns, 2.09 MB, 40 quant words per lane (production segment 8)
+  PASS 2 tokens: groups of 2 segment 8 vs production: 0 of 768 differ
+  M2 production groups of 1 (seg 8)        8.96 us    233 GB/s
+  M2 groups of 2 segment 8                12.20 us    171 GB/s
+  PASS 2 tokens: groups of 2 segment 40 vs production: 0 of 768 differ
+  M2 production groups of 1 (seg 8)        8.78 us    238 GB/s
+  M2 groups of 2 segment 40               11.22 us    186 GB/s
+  PASS 4 tokens: groups of 2 segment 40 vs production: 0 of 1536 differ
+  M4 production groups of 2 (seg 8)       13.01 us    161 GB/s
+  M4 groups of 2 segment 40               12.20 us    171 GB/s
+  PASS 5 tokens: groups of 3 segment 40 vs production: 0 of 1920 differ
+  M5 production groups of 3 (seg 8)       17.56 us    119 GB/s
+  M5 groups of 3 segment 40               15.34 us    136 GB/s
+  PASS 6 tokens: groups of 3 segment 40 vs production: 0 of 2304 differ
+  M6 production groups of 3 (seg 8)       17.55 us    119 GB/s
+  M6 groups of 3 segment 40               15.40 us    136 GB/s
+4096 x 864 (output_b slice): 864 rows x 4096 columns, 3.76 MB, 32 quant words per lane (production segment 8)
+  PASS 2 tokens: groups of 2 segment 8 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 8)       10.22 us    368 GB/s
+  M2 groups of 2 segment 8                12.75 us    295 GB/s
+  PASS 2 tokens: groups of 2 segment 32 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 8)       10.31 us    365 GB/s
+  M2 groups of 2 segment 32               21.01 us    179 GB/s
+  PASS 4 tokens: groups of 2 segment 32 vs production: 0 of 3456 differ
+  M4 production groups of 2 (seg 8)       14.41 us    261 GB/s
+  M4 groups of 2 segment 32               22.91 us    164 GB/s
+  PASS 5 tokens: groups of 3 segment 32 vs production: 0 of 4320 differ
+  M5 production groups of 3 (seg 8)       19.91 us    189 GB/s
+  M5 groups of 3 segment 32               17.08 us    220 GB/s
+  PASS 6 tokens: groups of 3 segment 32 vs production: 0 of 5184 differ
+  M6 production groups of 3 (seg 8)       19.96 us    188 GB/s
+  M6 groups of 3 segment 32               17.10 us    220 GB/s
+8192 x 864 (output_b slice): 864 rows x 8192 columns, 7.52 MB, 64 quant words per lane (production segment 8)
+  PASS 2 tokens: groups of 2 segment 8 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 8)       17.27 us    435 GB/s
+  M2 groups of 2 segment 8                22.72 us    331 GB/s
+  PASS 2 tokens: groups of 2 segment 64 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 8)       17.29 us    435 GB/s
+  M2 groups of 2 segment 64               19.49 us    386 GB/s
+  PASS 4 tokens: groups of 2 segment 64 vs production: 0 of 3456 differ
+  M4 production groups of 2 (seg 8)       25.85 us    291 GB/s
+  M4 groups of 2 segment 64               22.49 us    334 GB/s
+  PASS 5 tokens: groups of 3 segment 64 vs production: 0 of 4320 differ
+  M5 production groups of 3 (seg 8)       35.93 us    209 GB/s
+  M5 groups of 3 segment 64               29.19 us    258 GB/s
+  PASS 6 tokens: groups of 3 segment 64 vs production: 0 of 5184 differ
+  M6 production groups of 3 (seg 8)       35.66 us    211 GB/s
+  M6 groups of 3 segment 64               29.09 us    259 GB/s
+2304 x 864 (shared expert down slice): 864 rows x 2304 columns, 2.12 MB, 18 quant words per lane (production segment 6)
+  PASS 2 tokens: groups of 2 segment 6 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 6)        7.86 us    269 GB/s
+  M2 groups of 2 segment 6                 8.21 us    258 GB/s
+  PASS 2 tokens: groups of 2 segment 18 vs production: 0 of 1728 differ
+  M2 production groups of 1 (seg 6)        7.74 us    273 GB/s
+  M2 groups of 2 segment 18                9.32 us    227 GB/s
+  PASS 4 tokens: groups of 2 segment 18 vs production: 0 of 3456 differ
+  M4 production groups of 2 (seg 6)        9.80 us    216 GB/s
+  M4 groups of 2 segment 18               11.41 us    185 GB/s
+  PASS 5 tokens: groups of 3 segment 18 vs production: 0 of 4320 differ
+  M5 production groups of 3 (seg 6)       12.60 us    168 GB/s
+  M5 groups of 3 segment 18               14.34 us    147 GB/s
+  PASS 6 tokens: groups of 3 segment 18 vs production: 0 of 5184 differ
+  M6 production groups of 3 (seg 6)       12.49 us    169 GB/s
+  M6 groups of 3 segment 18               14.39 us    147 GB/s
+1280 x 4096 (q_b, one group): 4096 rows x 1280 columns, 5.57 MB, 10 quant words per lane (production segment 10)
+  PASS 2 tokens: groups of 2 segment 10 vs production: 0 of 8192 differ
+  M2 production groups of 1 (seg 10)      18.40 us    303 GB/s
+  M2 groups of 2 segment 10               17.84 us    312 GB/s
+  PASS 2 tokens: groups of 2 segment 10 vs production: 0 of 8192 differ
+  M2 production groups of 1 (seg 10)      18.43 us    302 GB/s
+  M2 groups of 2 segment 10               17.83 us    313 GB/s
+  PASS 4 tokens: groups of 2 segment 10 vs production: 0 of 16384 differ
+  M4 production groups of 2 (seg 10)      25.53 us    218 GB/s
+  M4 groups of 2 segment 10               25.52 us    218 GB/s
+  PASS 5 tokens: groups of 3 segment 10 vs production: 0 of 20480 differ
+  M5 production groups of 3 (seg 10)      32.66 us    171 GB/s
+  M5 groups of 3 segment 10               32.29 us    173 GB/s
+  PASS 6 tokens: groups of 3 segment 10 vs production: 0 of 24576 differ
+  M6 production groups of 3 (seg 10)      32.83 us    170 GB/s
+  M6 groups of 3 segment 10               32.42 us    172 GB/s
+PASS
+exit 0

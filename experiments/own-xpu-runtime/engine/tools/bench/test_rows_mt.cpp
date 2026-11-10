@@ -195,6 +195,57 @@ static BF16Fam bf16_fam(sycl::queue &q, unsigned cols, unsigned rows, unsigned s
     return f;
 }
 
+// BF16 rows read by GemvH16P (the engine's OWN_BF16_ROWS path): the reference is the path it replaces,
+// GemvT<BF16> one token at a time (launch_sg); many<MT> is DenseM<GemvH16P<C>, MT> on the same BF16 bytes, and
+// MT = 1 also runs GemvH16P's own one-token row() (h16_one) against the reference.
+template <unsigned C> struct BF16H16Fam {
+    using E = float;
+    using KR = GemvT<iq3::Type::BF16, ActF32>;
+    using KH = GemvH16P<C, ActF32>;
+    char name[64];
+    KR k;
+    unsigned nout;
+    size_t xs, ys, wbytes;
+    const uint8_t *w;
+    const float *x;
+    sycl::event one(sycl::queue &q, unsigned t, E *y) const {
+        const KR kk = k;
+        const uint8_t *ww = w;
+        const float *xx = x + t * xs;
+        void *yy = y + t * ys;
+        return q.parallel_for(sycl::nd_range<1>((size_t)k.rows * 32, 32),
+                              [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { kk(it, ww, xx, yy); });
+    }
+    sycl::event h16_one(sycl::queue &q, unsigned t, E *y) const {
+        const KH kh{k.rows};
+        const uint8_t *ww = w;
+        const float *xx = x + t * xs;
+        E *yy = y + t * ys;
+        return q.parallel_for(sycl::nd_range<1>(((size_t)k.rows + 15) / 16 * 512, 512),
+                              [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { kh(it, ww, xx, yy); });
+    }
+    template <unsigned MT> sycl::event many(sycl::queue &q, unsigned mt, E *y) const {
+        const DenseM<KH, MT> km{KH{k.rows}, xs, ys, mt};
+        const uint8_t *ww = w;
+        const float *xx = x;
+        return q.parallel_for(sycl::nd_range<1>(((size_t)k.rows + 15) / 16 * 512, 512),
+                              [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { km(it, ww, xx, y); });
+    }
+};
+template <unsigned C> static BF16H16Fam<C> bf16h_fam(sycl::queue &q, unsigned rows, unsigned seed) {
+    BF16H16Fam<C> f{};
+    const unsigned cols = C * 32;
+    std::snprintf(f.name, sizeof f.name, "BF16 by GemvH16P<%u> %ux%u", C, cols, rows);
+    f.k = typename BF16H16Fam<C>::KR{rows, cols, false};
+    f.nout = rows;
+    f.xs = cols + 32;
+    f.ys = rows + 8;
+    const std::vector<uint8_t> hw = float_rows(cols, rows, seed, 2);
+    f.wbytes = hw.size();
+    f.w = dev_copy(q, hw);
+    f.x = dev_copy(q, rand_f(MTMAX * f.xs, seed + 1, -2.0f, 2.0f));
+    return f;
+}
 // HcMixDotsP<5120, 8>: 25 x 8 double partials per token (24 fn rows + the sum of squares)
 struct HcFam {
     using E = double;
@@ -257,6 +308,21 @@ static void report(const char *name, unsigned MT, unsigned mt, size_t differ, si
                 differ, of, stray);
     std::fflush(stdout);
 }
+// GemvH16P's one-token row() on every token against the family's reference
+template <unsigned C> static void h16_one_check(sycl::queue &q, const BF16H16Fam<C> &f, const std::vector<float> &ref) {
+    const size_t n = (size_t)MTMAX * f.ys;
+    float *y = sycl::malloc_device<float>(n, q);
+    q.memset(y, 0xff, n * 4).wait();
+    for (unsigned t = 0; t < MTMAX; ++t) f.h16_one(q, t, y);
+    q.wait();
+    std::vector<float> got(n);
+    q.memcpy(got.data(), y, n * 4).wait();
+    size_t differ, stray;
+    compare(got, ref, MTMAX, f.nout, f.ys, differ, stray);
+    report("  (GemvH16P one-token row)", 1, MTMAX, differ, (size_t)MTMAX * f.nout, stray);
+    sycl::free(y, q);
+}
+
 template <unsigned MT, typename F>
 static void check(sycl::queue &q, const F &f, typename F::E *ym, const std::vector<typename F::E> &ref) {
     using E = typename F::E;
@@ -434,6 +500,20 @@ int main(int argc, char **argv) {
         auto f2 = bf16_fam(q, 5120, 512, 602);
         drop(f2);
         run_family(q, f2);
+    }
+    if (want("bf16h")) { // the engine's BF16 shapes: indexer q_b, compressor kv / gate, indexer k, indexer proj
+        auto f1 = bf16h_fam<40>(q, 4096, 611);
+        drop(f1);
+        h16_one_check(q, f1, run_family(q, f1));
+        auto f2 = bf16h_fam<160>(q, 512, 612);
+        drop(f2);
+        h16_one_check(q, f2, run_family(q, f2));
+        auto f3 = bf16h_fam<16>(q, 128, 613);
+        drop(f3);
+        h16_one_check(q, f3, run_family(q, f3));
+        auto f4 = bf16h_fam<160>(q, 32, 614);
+        drop(f4);
+        h16_one_check(q, f4, run_family(q, f4));
     }
     HcFam hc{};
     std::vector<double> hc_ref;
