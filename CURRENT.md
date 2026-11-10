@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**November 9, 2026 ~19:45 EST — DeepSeek V4.1 on six cards now writes 28 tokens/s (was 9.0 this afternoon), with output byte-identical.**
+- The owner's target was 25 tok/s with no quality loss. Every step was checked: the full 3-step trace of every layer's numbers is byte-for-byte the same as the 9 tok/s build, and the 40- and 128-token answers are identical.
+- How: the weights are stored on the cards in a regrouped order that the cards can read in big blocks (same bytes), and the small operations between the big ones were rewritten so they no longer wait on one slow thread. Each new kernel is checked against the one it replaces on every output.
+- One card fault on the way, caused by our own test code reading past the end of a weight row; evidence saved, fixed, health check passed, no fault since.
+- Cards: nothing loaded. Next: the expert kernels (a third of the time; they are limited by instructions per weight, not memory), then larger changes such as splitting each layer over several cards.
+- Details: [note section 11](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 9, 2026 ~17:15 EST — DeepSeek V4.1 runs on all six cards in our own engine; the host freezes are fixed.**
 - Cards: nothing is loaded. The owner stopped and **disabled** the Gemma units at about 17:05 EST, so all six cards on `steve-TURIND8-2L2T` (six B70, 15 GiB of RAM) are free and stay free after a reboot.
 - It now runs on the cards alone: token ids of a prompt in, answer out, stopping at end of sentence (prompt read at 9 tokens/s, answer written at 9 tokens/s). Two prompts checked; one reasons word for word like llama.cpp's saved answer for its first 45 tokens.

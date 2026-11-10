@@ -1281,5 +1281,1090 @@ template <typename A> struct EmbedRowA {
     }
 };
 
+// ---- kernels over packed rows (layouts: pack_v41.hpp) ------------------------
+// Same float operations in the same order as lane_sum_t / GemvT / RoutedGemvT
+// (bit-identical outputs, gated per format in test_ops_v41_device.cpp), but:
+//  * a row's quant words arrive in a few aligned sub-group block reads issued
+//    up front, instead of many dependent 1-2 byte loads (the old kernels were
+//    bound by memory latency per sub-group, ~70-250 GB/s);
+//  * per-block values (scales, grid-index words) are computed lane-parallel
+//    once and broadcast from a constant lane (free register-region operands);
+//  * grid magnitudes come from a float table in shared local memory (32-bit
+//    addresses, no byte->float conversion), filled once per work-group.
+// Activations must be f32 (the default executor build).
+template <typename T> inline T sg_bload(sycl::sub_group sg, const T *p) {
+    return sg.load(sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(
+        const_cast<T *>(p)));
+}
+template <int N, typename T> inline sycl::vec<T, N> sg_bloadN(sycl::sub_group sg, const T *p) {
+    return sg.load<N>(sycl::address_space_cast<sycl::access::address_space::global_space,
+                                                sycl::access::decorated::yes>(const_cast<T *>(p)));
+}
+// Words [32k, 32k + 32) of the NW quant words at the start of a packed row:
+// one block read when all 32 lie inside them, else a per-lane load of those
+// that do (0 above). A block read past the quant words could run past the row
+// and, on the last row of a bank, past the allocation (page fault, 2026-11-09:
+// IQ2_XXS with 9 blocks per row has 144 quant words in a 152-word row).
+template <unsigned NW> inline uint32_t row_words(sycl::sub_group sg, const uint32_t *rw, unsigned k, unsigned lane) {
+    if (32 * k + 32 <= NW) return sg_bload(sg, rw + 32 * k);
+    return 32 * k + lane < NW ? rw[32 * k + lane] : 0u;
+}
+inline unsigned packed_row_id(const sycl::nd_item<1> &it) {
+    return it.get_group_linear_id() * (unsigned)(it.get_local_range(0) / 32) +
+           it.get_sub_group().get_group_linear_id();
+}
+
+// Q8_0, C chunks per row. Row r reads x + (r / xn) * 32C when xn > 0 (the
+// grouped output LoRA), else x. Reduction sg_tree32, as GemvT / GemvGroupedQT.
+template <unsigned C> struct Q8Seg { static constexpr unsigned NQ = C / 4, v = NQ % 8 == 0 ? 8 : (NQ <= 10 ? NQ : 6); };
+template <unsigned C, typename A> struct GemvQ8P {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static_assert(C % 4 == 0);
+    unsigned rows, xn;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C>::v, ND = (C + 31) / 32;
+        static_assert(NQ % SEGQ == 0);
+        constexpr size_t RB = ((size_t)C * 34 + 15) & ~(size_t)15;
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= rows) return;
+        const unsigned lane = sg.get_local_linear_id();
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * C * 32 : x;
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)C * 32);
+        float dv[ND];
+#pragma unroll
+        for (unsigned k = 0; k < ND; ++k) dv[k] = 32 * k + lane < C ? iq3::half(dp[32 * k + lane]) : 0.0f;
+        const uint32_t *qw = reinterpret_cast<const uint32_t *>(row);
+        float sum = 0;
+        // fully unrolled: every chunk index, register and broadcast lane is a constant
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NQ; s0 += SEGQ) {
+            uint32_t q[SEGQ];
+#pragma unroll
+            for (unsigned m = 0; m < SEGQ; ++m) q[m] = sg_bload(sg, qw + (size_t)(s0 + m) * 32);
+#pragma unroll
+            for (unsigned m = 0; m < SEGQ; ++m) {
+                const auto xv = sg_bloadN<4>(sg, xr + (size_t)(s0 + m) * 128);
+#pragma unroll
+                for (unsigned k = 0; k < 4; ++k) {
+                    const unsigned c = (s0 + m) * 4 + k;
+                    const float d = sycl::select_from_group(sg, dv[c / 32], c % 32);
+                    const float e = d * float(int8_t(uint8_t(q[m] >> (8 * k)))); // iq3::decode Q8_0
+                    sum = sum + e * xv[k];
+                }
+            }
+        }
+        sum = sg_tree32(sg, sum);
+        if (lane == 0) y[r] = sum;
+    }
+};
+
+// Routed packed kernels (layouts in pack_v41.hpp). Each sub-group loops over
+// rows grp, grp + stride, ... so a launch with fewer work-groups fills the
+// local table fewer times. Per-block / per-chunk scales are built
+// lane-parallel and broadcast; "lane < 16 ? a : b" picks a half-dependent
+// operand (both broadcasts are constant lanes). The element arithmetic of each
+// kernel is that of lane_sum_t for its format, in the same order, and the
+// reduction is RoutedGemvT's xor butterfly.
+#define OWN41_ROUTED_ROWS_BEGIN(RB)                                                              \
+    const unsigned stride = (unsigned)(it.get_global_range(0) / 32);                             \
+    for (unsigned grp = packed_row_id(it); grp < 6 * rows; grp += stride) {                      \
+        const unsigned slot = grp / rows, r = grp % rows;                                         \
+        const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * (RB);                           \
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);                             \
+        const float *xs = per_slot_x ? x + (size_t)slot * NB * 256 : x;                           \
+        float sum = 0;
+#define OWN41_ROUTED_ROWS_END                                                                     \
+        for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_); \
+        if (lane == 0) out[slot * rows + r] = sum;                                                \
+    }
+
+// Routed IQ2_XXS over packed rows, NB blocks per row: work-group = 16 rows
+// (sub-groups), grid table tab[ix*8 + j] = float(byte j of iq2_xxs_grid[ix])
+// in local memory (2048 floats). Same element arithmetic as lane_sum_t
+// <IQ2_XXS>: ((db * mag) * sign) * x, the sign applied as a sign-bit xor
+// (== multiplying a finite value by -1); same xor-butterfly reduction as
+// RoutedGemvT.
+template <unsigned NB, typename A> struct RoutedIQ2XXSP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static constexpr unsigned TAB = 2048;
+    unsigned rows; // per-expert rows
+    bool per_slot_x;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u;
+        // sign bit of element j of 8-group l8: bit 7*l8+j of hi for j < 7; the parity of the
+        // group's 7 bits for j == 7 (iq2_signs[k] = k | parity(k) << 7)
+        const uint32_t smask = j == 7 ? (127u << (7 * l8)) : (1u << (7 * l8 + j));
+        const unsigned rot = (35u - 8u * l8) & 31u; // rotate grid-index byte l8 to bits 3..10
+        constexpr size_t RB = ((size_t)NB * 66 + 15) & ~(size_t)15;
+        constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32;
+        OWN41_ROUTED_ROWS_BEGIN(RB)
+        uint32_t wd[NR]; // word k of the row's qs words lives in wd[k / 32], lane k % 32
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 64);
+        const float dl = lane < NB ? iq3::half(dp[lane]) : 0.0f;
+        // block scale per hi word (odd word index): db = (d * (0.5 + (hi >> 28))) * 0.25
+        float dbr[NR];
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) {
+            const float d0 = sycl::select_from_group(sg, dl, 2 * k);
+            const float d1 = sycl::select_from_group(sg, dl, 2 * k + 1 < NB ? 2 * k + 1 : 0);
+            dbr[k] = ((lane < 16 ? d0 : d1) * (0.5f + float(wd[k] >> 28))) * 0.25f;
+        }
+#pragma unroll
+        for (unsigned blk = 0; blk < NB; ++blk) {
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+            for (unsigned g = 0; g < 8; ++g) {
+                const unsigned wl = blk * 16 + 2 * g, wh = wl + 1;
+                const uint32_t lo = sycl::select_from_group(sg, wd[wl / 32], wl % 32);
+                const uint32_t hi = sycl::select_from_group(sg, wd[wh / 32], wh % 32);
+                const float db = sycl::select_from_group(sg, dbr[wh / 32], wh % 32);
+                const float mag = tab[(sycl::rotate(lo, rot) & 0x7F8u) | j];
+                const uint32_t sb = uint32_t(sycl::popcount(hi & smask)) << 31;
+                const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+                sum = sum + v * xv[g];
+            }
+        }
+        OWN41_ROUTED_ROWS_END
+    }
+};
+
+// IQ2_S: ((((d * (0.5 + sc)) * 0.25) * mag) * sign) * x; table 1024 x 8 floats.
+template <unsigned NB, typename A> struct RoutedIQ2SP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static constexpr unsigned TAB = 8192;
+    unsigned rows;
+    bool per_slot_x;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u;
+        const unsigned rot = (35u - 8u * l8) & 31u; // idx byte l8 -> bits 3..10
+        const unsigned qsh = 11u - 2u * l8;         // qh bits 2*l8, 2*l8+1 -> bits 11, 12
+        const unsigned ssh = 31u - 8u * l8 - j;     // sign bit 8*l8 + j -> bit 31
+        constexpr size_t RB = ((size_t)NB * 82 + 15) & ~(size_t)15;
+        constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+        OWN41_ROUTED_ROWS_BEGIN(RB)
+        uint32_t wd[NR];
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint8_t *meta = row + (size_t)NB * 64; // per block: qh[8], scales[8]
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 80);
+        float dbl[NCR], dbh[NCR];
+        uint32_t qhc[NCR];
+#pragma unroll
+        for (unsigned k = 0; k < NCR; ++k) {
+            const unsigned c = 32 * k + lane < NC ? 32 * k + lane : NC - 1, b = c >> 3, g = c & 7u;
+            const float d = iq3::half(dp[b]);
+            const unsigned scb = meta[16 * b + 8 + g];
+            qhc[k] = meta[16 * b + g];
+            dbl[k] = (d * (0.5f + float(scb & 15u))) * 0.25f;
+            dbh[k] = (d * (0.5f + float(scb >> 4))) * 0.25f;
+        }
+#pragma unroll
+        for (unsigned blk = 0; blk < NB; ++blk) {
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+            for (unsigned g = 0; g < 8; ++g) {
+                const unsigned c = blk * 8 + g, wl = blk * 16 + 2 * g, wh = wl + 1;
+                const uint32_t lo = sycl::select_from_group(sg, wd[wl / 32], wl % 32);
+                const uint32_t hi = sycl::select_from_group(sg, wd[wh / 32], wh % 32);
+                const float dlo = sycl::select_from_group(sg, dbl[c / 32], c % 32);
+                const float dhi = sycl::select_from_group(sg, dbh[c / 32], c % 32);
+                const uint32_t qhb = sycl::select_from_group(sg, qhc[c / 32], c % 32);
+                const float db = lane < 16 ? dlo : dhi;
+                const float mag = tab[(sycl::rotate(lo, rot) & 0x7F8u) | ((qhb << qsh) & 0x1800u) | j];
+                const uint32_t sb = (hi << ssh) & 0x80000000u;
+                const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+                sum = sum + v * xv[g];
+            }
+        }
+        OWN41_ROUTED_ROWS_END
+    }
+};
+
+// IQ3_XXS: ((((d * (0.5 + s)) * 0.5) * mag) * sign) * x; table 256 x 4 floats.
+template <unsigned NB, typename A> struct RoutedIQ3XXSP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static constexpr unsigned TAB = 1024;
+    unsigned rows;
+    bool per_slot_x;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float((iq3::iq3_grid[k >> 2] >> (8 * (k & 3))) & 255);
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u;
+        const unsigned rot = (34u - 8u * ((lane >> 2) & 3u)) & 31u; // grid byte -> bits 2..9
+        const uint32_t smask = j == 7 ? (127u << (7 * l8)) : (1u << (7 * l8 + j));
+        const unsigned jj = lane & 3u;
+        constexpr size_t RB = ((size_t)NB * 98 + 15) & ~(size_t)15;
+        constexpr unsigned NW = NB * 24, NR = (NW + 31) / 32;
+        OWN41_ROUTED_ROWS_BEGIN(RB)
+        uint32_t wd[NR];
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 96);
+        float dbw[NR]; // valid at the scale/sign words (index 3g + 2 of each block)
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) {
+            const unsigned wi = 32 * k + lane < NW ? 32 * k + lane : NW - 1;
+            dbw[k] = (iq3::half(dp[wi / 24]) * (0.5f + float(wd[k] >> 28))) * 0.5f;
+        }
+#pragma unroll
+        for (unsigned blk = 0; blk < NB; ++blk) {
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+            for (unsigned g = 0; g < 8; ++g) {
+                const unsigned w0 = blk * 24 + 3 * g, w1 = w0 + 1, ws = w0 + 2;
+                const uint32_t q0 = sycl::select_from_group(sg, wd[w0 / 32], w0 % 32);
+                const uint32_t q1 = sycl::select_from_group(sg, wd[w1 / 32], w1 % 32);
+                const uint32_t sw = sycl::select_from_group(sg, wd[ws / 32], ws % 32);
+                const float db = sycl::select_from_group(sg, dbw[ws / 32], ws % 32);
+                const uint32_t q = lane < 16 ? q0 : q1;
+                const float mag = tab[(sycl::rotate(q, rot) & 0x3FCu) | jj];
+                const uint32_t sb = uint32_t(sycl::popcount(sw & smask)) << 31;
+                const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+                sum = sum + v * xv[g];
+            }
+        }
+        OWN41_ROUTED_ROWS_END
+    }
+};
+
+// IQ2_XS: ((((d * (0.5 + sc)) * 0.25) * mag) * sign) * x; table 512 x 8 floats.
+template <unsigned NB, typename A> struct RoutedIQ2XSP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static constexpr unsigned TAB = 4096;
+    unsigned rows;
+    bool per_slot_x;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xs_grid, k >> 3, k & 7));
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u, hs = 16u * (l8 & 1u);
+        const unsigned rot = (3u - hs) & 31u; // aux bits 0..8 -> bits 3..11
+        const uint32_t smask = j == 7 ? (127u << (hs + 9)) : (1u << (hs + 9 + j));
+        constexpr size_t RB = ((size_t)NB * 74 + 15) & ~(size_t)15;
+        constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+        OWN41_ROUTED_ROWS_BEGIN(RB)
+        uint32_t wd[NR];
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint8_t *scl = row + (size_t)NB * 64;
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 72);
+        float dbl[NCR], dbh[NCR];
+#pragma unroll
+        for (unsigned k = 0; k < NCR; ++k) {
+            const unsigned c = 32 * k + lane < NC ? 32 * k + lane : NC - 1;
+            const float d = iq3::half(dp[c >> 3]);
+            const unsigned scb = scl[c]; // block c >> 3, group c & 7
+            dbl[k] = (d * (0.5f + float(scb & 15u))) * 0.25f;
+            dbh[k] = (d * (0.5f + float(scb >> 4))) * 0.25f;
+        }
+#pragma unroll
+        for (unsigned blk = 0; blk < NB; ++blk) {
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+            for (unsigned g = 0; g < 8; ++g) {
+                const unsigned c = blk * 8 + g, w0 = blk * 16 + 2 * g, w1 = w0 + 1;
+                const uint32_t a0 = sycl::select_from_group(sg, wd[w0 / 32], w0 % 32);
+                const uint32_t a1 = sycl::select_from_group(sg, wd[w1 / 32], w1 % 32);
+                const float dlo = sycl::select_from_group(sg, dbl[c / 32], c % 32);
+                const float dhi = sycl::select_from_group(sg, dbh[c / 32], c % 32);
+                const uint32_t a = lane < 16 ? a0 : a1;
+                const float db = lane < 16 ? dlo : dhi;
+                const float mag = tab[(sycl::rotate(a, rot) & 0xFF8u) | j];
+                const uint32_t sb = uint32_t(sycl::popcount(a & smask)) << 31;
+                const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+                sum = sum + v * xv[g];
+            }
+        }
+        OWN41_ROUTED_ROWS_END
+    }
+};
+
+// IQ1_S: (dl * (code + delta)) * x, dl = d * (2 * ((qh >> 12) & 7) + 1);
+// table 2048 x 8 floats (the int8 grid codes).
+template <unsigned NB, typename A, bool BYTES = true> struct RoutedIQ1SP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    // BYTES: the codes as int8 (16 KiB, more work-groups per core), else as floats (64 KiB)
+    static constexpr unsigned TAB = BYTES ? 4096 : 16384;
+    unsigned rows;
+    bool per_slot_x;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        int8_t *btab = reinterpret_cast<int8_t *>(tab);
+        for (unsigned k = it.get_local_linear_id(); k < 16384; k += (unsigned)it.get_local_range(0)) {
+            const int8_t c = int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, k >> 3, k & 7)));
+            if constexpr (BYTES) btab[k] = c;
+            else tab[k] = float(int(c));
+        }
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), l8 = lane >> 3, j = lane & 7u;
+        const unsigned rot = (35u - 8u * l8) & 31u; // qs byte l8 -> bits 3..10
+        const unsigned qsh = 11u - 3u * l8;         // qh bits 3*l8 .. 3*l8+2 -> bits 11..13
+        constexpr size_t RB = ((size_t)NB * 50 + 15) & ~(size_t)15;
+        constexpr unsigned NG = NB * 8, NW = NG, NR = (NW + 31) / 32;
+        OWN41_ROUTED_ROWS_BEGIN(RB)
+        uint32_t wd[NR]; // qs word of group k (block k >> 3)
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint16_t *qh16 = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 32);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 48);
+        float dlr[NR], der[NR];
+        uint32_t qhr[NR];
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) {
+            const unsigned gi = 32 * k + lane < NG ? 32 * k + lane : NG - 1;
+            const uint32_t qh = qh16[gi];
+            qhr[k] = qh;
+            dlr[k] = iq3::half(dp[gi >> 3]) * float(2 * ((qh >> 12) & 7) + 1);
+            der[k] = (qh & 0x8000) ? -0.125f : 0.125f;
+        }
+#pragma unroll
+        for (unsigned blk = 0; blk < NB; ++blk) {
+            const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+            for (unsigned g = 0; g < 8; ++g) {
+                const unsigned gi = blk * 8 + g;
+                const uint32_t qs = sycl::select_from_group(sg, wd[gi / 32], gi % 32);
+                const uint32_t qh = sycl::select_from_group(sg, qhr[gi / 32], gi % 32);
+                const float dl = sycl::select_from_group(sg, dlr[gi / 32], gi % 32);
+                const float de = sycl::select_from_group(sg, der[gi / 32], gi % 32);
+                const unsigned a = (sycl::rotate(qs, rot) & 0x7F8u) | ((qh << qsh) & 0x3800u) | j;
+                float code;
+                if constexpr (BYTES) code = float(int(btab[a]));
+                else code = tab[a];
+                sum = sum + (dl * (code + de)) * xv[g];
+            }
+        }
+        OWN41_ROUTED_ROWS_END
+    }
+};
+#undef OWN41_ROUTED_ROWS_BEGIN
+#undef OWN41_ROUTED_ROWS_END
+
+// Dense K-quant gemv over packed rows (layouts in pack_v41.hpp), NB blocks per
+// row, one sub-group per row, sg_tree32 reduction as GemvT / GemvGroupedQT.
+// Row r reads x + (r / xn) * NB * 256 when xn > 0 (the grouped output LoRA).
+// Each lane's quant bytes for a block arrive in one word (its own lane: no
+// broadcast); the per-16 / per-32 scale products are built lane-parallel.
+template <unsigned NB> struct KSeg { static constexpr unsigned v = NB % 4 == 0 ? 4 : NB % 5 == 0 ? 5 : NB % 3 == 0 ? 3 : 1; };
+
+// Q6_K element (block b, chunk c, lane l; h = c >> 2, cc = c & 3), iq3::decode order:
+//   (d * float(scale[2c + (l >> 4)])) * float((low | high << 4) - 32), then * x
+//   low = nibble (cc >> 1) of ql byte 2h + (cc & 1); high = bits 8h + 2cc of the qh pair
+template <unsigned NB, typename A> struct GemvQ6KP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    unsigned rows, xn;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= rows) return;
+        const unsigned lane = sg.get_local_linear_id();
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x;
+        const uint32_t *ql = reinterpret_cast<const uint32_t *>(row);
+        const uint16_t *qh = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 128);
+        const int8_t *scl = reinterpret_cast<const int8_t *>(row + (size_t)NB * 192);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 208);
+        float dbs[NSR]; // d * scale, scale index 32k + lane
+#pragma unroll
+        for (unsigned k = 0; k < NSR; ++k) {
+            const unsigned si = 32 * k + lane < NS ? 32 * k + lane : NS - 1;
+            dbs[k] = iq3::half(dp[si >> 4]) * float(int(scl[si]));
+        }
+        float sum = 0;
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NB; s0 += SEG) {
+            uint32_t qa[SEG], qb[SEG];
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                qa[m] = sg_bload(sg, ql + (size_t)(s0 + m) * 32);
+                qb[m] = qh[(size_t)(s0 + m) * 32 + lane];
+            }
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                const unsigned b = s0 + m;
+                const auto xv = sg_bloadN<8>(sg, xr + (size_t)b * 256);
+#pragma unroll
+                for (unsigned c = 0; c < 8; ++c) {
+                    const unsigned h = c >> 2, cc = c & 3u;
+                    const unsigned low = (qa[m] >> (8 * (2 * h + (cc & 1u)) + 4 * (cc >> 1))) & 15u;
+                    const unsigned high = (qb[m] >> (8 * h + 2 * cc)) & 3u;
+                    const unsigned si = b * 16 + 2 * c; // even: si and si + 1 share a register
+                    const float d0 = sycl::select_from_group(sg, dbs[si / 32], si % 32);
+                    const float d1 = sycl::select_from_group(sg, dbs[si / 32], si % 32 + 1);
+                    const float v = (lane < 16 ? d0 : d1) * float(int(low | (high << 4)) - 32);
+                    sum = sum + v * xv[c];
+                }
+            }
+        }
+        sum = sg_tree32(sg, sum);
+        if (lane == 0) y[r] = sum;
+    }
+};
+
+// Q5_K element (block b, group c, lane l), iq3::decode order:
+//   (d * float(scale_c)) * float(code) - dmin * float(min_c), then * x
+//   code = nibble c of the qs word (byte c >> 1, half c & 1) | bit c of qh byte l << 4
+template <unsigned NB, typename A> struct GemvQ5KP {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    unsigned rows, xn;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        constexpr size_t RB = ((size_t)NB * 176 + 15) & ~(size_t)15;
+        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = KSeg<NB>::v;
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= rows) return;
+        const unsigned lane = sg.get_local_linear_id();
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x;
+        const uint32_t *qs = reinterpret_cast<const uint32_t *>(row);
+        const uint8_t *qh = row + (size_t)NB * 128;
+        const uint8_t *hd = row + (size_t)NB * 160; // per block: d, dmin, scales[12]
+        float fac[NGR], off[NGR]; // group 32k + lane
+#pragma unroll
+        for (unsigned k = 0; k < NGR; ++k) {
+            const unsigned gi = 32 * k + lane < NG ? 32 * k + lane : NG - 1, c = gi & 7u, c3 = c & 3u;
+            const uint8_t *hb = hd + 16 * (gi >> 3), *s = hb + 4;
+            const unsigned u0 = s[c3], u1 = s[4 + c3], u2 = s[8 + c3];
+            const unsigned scale = c < 4 ? u0 & 63u : (u2 & 15u) | ((u0 >> 6) << 4);
+            const unsigned minimum = c < 4 ? u1 & 63u : (u2 >> 4) | ((u1 >> 6) << 4);
+            fac[k] = iq3::half(iq3::u16(hb)) * float(scale);
+            off[k] = iq3::half(iq3::u16(hb + 2)) * float(minimum);
+        }
+        float sum = 0;
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NB; s0 += SEG) {
+            uint32_t qa[SEG], qb[SEG];
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                qa[m] = sg_bload(sg, qs + (size_t)(s0 + m) * 32);
+                qb[m] = qh[(size_t)(s0 + m) * 32 + lane];
+            }
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                const unsigned b = s0 + m;
+                const auto xv = sg_bloadN<8>(sg, xr + (size_t)b * 256);
+#pragma unroll
+                for (unsigned c = 0; c < 8; ++c) {
+                    const unsigned code = ((qa[m] >> (4 * c)) & 15u) | (((qb[m] >> c) & 1u) << 4);
+                    const unsigned gi = b * 8 + c;
+                    const float f = sycl::select_from_group(sg, fac[gi / 32], gi % 32);
+                    const float o = sycl::select_from_group(sg, off[gi / 32], gi % 32);
+                    const float v = f * float(code) - o;
+                    sum = sum + v * xv[c];
+                }
+            }
+        }
+        sum = sg_tree32(sg, sum);
+        if (lane == 0) y[r] = sum;
+    }
+};
+
+// F32 rows (no packing; rows are 16-byte aligned when cols % 4 == 0): lane l
+// sums w[k] * x[k], k = l, l + 32, ... ascending (GemvT<F32> order), C chunks.
+template <unsigned C, typename A> struct GemvF32P {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static_assert(C % 8 == 0);
+    unsigned rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= rows) return;
+        const unsigned lane = sg.get_local_linear_id();
+        const float *row = reinterpret_cast<const float *>(w) + (size_t)r * C * 32;
+        float sum = 0;
+#pragma unroll
+        for (unsigned s = 0; s < C / 8; ++s) {
+            const auto wv = sg_bloadN<8>(sg, row + (size_t)s * 256);
+            const auto xv = sg_bloadN<8>(sg, x + (size_t)s * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) sum = sum + wv[m] * xv[m];
+        }
+        sum = sg_tree32(sg, sum);
+        if (lane == 0) y[r] = sum;
+    }
+};
+
+// ---- small per-layer ops, latency-bound forms (2026-11-09) -------------------
+// Same float/double operations in the same order as the kernels they replace
+// (RmsNormA, HcMixDots32A, HcMixFinishSeg, SparseScoreA, SparseSoftmax,
+// SparseOut); the old forms waited on one dependent load at a time (a
+// 160-element lane loop took ~45 us even in float) and ran the Sinkhorn
+// normalisation in a single work-item. Gated bitwise in
+// planning/dsv41-fixtures/test_small_v41_device.cpp. f32 activations only.
+
+// RmsNormA, N % 256 == 0, one sub-group. x and w are read with 8-wide
+// sub-group block reads (16-byte aligned pointers: the backend checks and
+// falls back to RmsNormA): plain per-lane loads in a lane loop were issued one
+// at a time (~290 ns each, 160 per lane at N = 5120).
+template <unsigned N> struct RmsNormP {
+    static_assert(N % 256 == 0);
+    static constexpr unsigned C = N / 256;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        double acc = 0;
+#pragma unroll
+        for (unsigned c = 0; c < C; ++c) {
+            const auto xv = sg_bloadN<8>(sg, x + c * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) acc += double(xv[m]) * xv[m];
+        }
+        for (int w_ = 16; w_; w_ >>= 1) acc += sycl::select_from_group(sg, acc, (int)lane ^ w_);
+        const float rs = float(1.0 / sycl::sqrt(acc / N + 1e-20));
+#pragma unroll
+        for (unsigned c = 0; c < C; ++c) {
+            const auto xv = sg_bloadN<8>(sg, x + c * 256);
+            const auto wv = sg_bloadN<8>(sg, w + c * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) y[c * 256 + m * 32 + lane] = wv[m] * (xv[m] * rs);
+        }
+    }
+};
+
+// HcMixDots32A for 4*H columns in SEG segments (one sub-group per (row, segment))
+template <unsigned H, unsigned SEG> struct HcMixDotsP {
+    static constexpr unsigned N = 4 * H, LEN = N / SEG, K = LEN / 32;
+    static_assert(LEN % 32 == 0);
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *streams, const float *fn, double *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned l = sg.get_local_linear_id();
+        const unsigned grp = it.get_group_linear_id();
+        const unsigned r = grp / SEG, sgi = grp % SEG;
+        // 8-wide block reads (16-byte aligned streams and fn: checked by the backend)
+        static_assert(LEN % 256 == 0);
+        const float *sv = streams + (size_t)sgi * LEN;
+        const float *f = fn + (size_t)(r < 24 ? r : 0) * N + (size_t)sgi * LEN;
+        double acc = 0;
+#pragma unroll
+        for (unsigned c = 0; c < LEN / 256; ++c) {
+            const auto a = sg_bloadN<8>(sg, sv + c * 256);
+            const auto b = sg_bloadN<8>(sg, f + c * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) acc += double(r < 24 ? b[m] : a[m]) * a[m];
+        }
+        for (unsigned w = 1; w < 32; w *= 2) {
+            double o = sycl::select_from_group(sg, acc, (l + w) % 32);
+            if (l % (2 * w) == 0) acc = acc + o;
+        }
+        if (l == 0) out[grp] = acc;
+    }
+};
+
+// HcMixFinishSeg on one sub-group: lane r sums its 8 segment partials, lanes
+// 0..3 / 4..7 / 8..23 hold pre / post / comb, each comb row's max and sums are
+// formed from its four lanes in the original order (row j = lanes 8+4j..11+4j).
+struct HcMixFinishSG {
+    int h, seg;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const double *d, const float *scale, const float *base,
+                                     float *pre, float *post, float *comb) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int l = (int)sg.get_local_linear_id();
+        const int N = 4 * h;
+        double t = 0;
+        if (l < 25)
+            for (int k = 0; k < seg; ++k) t += d[l * seg + k];
+        const double t24 = sycl::select_from_group(sg, t, 24);
+        const float rsqrt = float(1.0 / sycl::sqrt(t24 / N + 1e-20));
+        const float m = float(t) * rsqrt; // m24[l] for l < 24
+        auto sig = [](float v) { return 1.0f / (1.0f + sycl::exp(-v)); };
+        const float eps = 1e-6f;
+        if (l < 4) pre[l] = sig(m * scale[0] + base[l]) + eps;
+        else if (l < 8) post[l - 4] = 2.0f * sig(m * scale[1] + base[l]);
+        const int q = l - 8;                         // comb index for lanes 8..23
+        const int rb = 8 + 4 * ((q >= 0 && q < 16 ? q : 0) >> 2), cb = 8 + (q >= 0 && q < 16 ? q & 3 : 0);
+        float c = (q >= 0 && q < 16) ? m * scale[2] + base[l] : 0.0f;
+        auto row = [&](int k) { return sycl::select_from_group(sg, c, rb + k); };
+        auto col = [&](int j) { return sycl::select_from_group(sg, c, cb + 4 * j); };
+        {
+            float mx = row(0);
+            for (int k = 1; k < 4; ++k) { const float v = row(k); mx = v > mx ? v : mx; }
+            c = sycl::exp(c - mx);
+            float sm = 0;
+            for (int k = 0; k < 4; ++k) sm += row(k);
+            c = c / sm + eps;
+        }
+        for (int it2 = 0; it2 < 20; ++it2) {
+            if (it2 > 0) {
+                float sm = 0;
+                for (int k = 0; k < 4; ++k) sm += row(k);
+                c = c / (sm + eps);
+            }
+            float sm = 0;
+            for (int j = 0; j < 4; ++j) sm += col(j);
+            c = c / (sm + eps);
+        }
+        if (q >= 0 && q < 16) comb[q] = c;
+    }
+};
+
+// SparseScoreA: work-group = one sub-group of 32 consecutive (head, idx)
+// items (n_idx % 32 == 0, so the head is uniform); each lane reads its
+// key row 8 bf16 at a time and the query uniformly; same serial j order.
+template <unsigned HD> struct SparseScoreP {
+    int n_idx, heads, win_rows, hd; // hd == HD, kept at run time: the scale is 1 / sqrt(float(hd)) on the card as before
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *q, const uint16_t *kvw, const uint16_t *kvc,
+                                     const int32_t *idxs, float *score) const {
+        const size_t g = it.get_global_linear_id();
+        const int h = (int)((size_t)it.get_group_linear_id() * 32 / n_idx), i = (int)(g % n_idx);
+        if (h >= heads) return;
+        const int slot = idxs[i];
+        const int s0 = slot < 0 ? 0 : slot;
+        const float scale = 1.0f / sycl::sqrt(float(hd));
+        const float *qh = q + (size_t)h * HD;
+        const uint16_t *k = s0 < win_rows ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - win_rows) * HD;
+        const sycl::vec<uint16_t, 8> *k8 = reinterpret_cast<const sycl::vec<uint16_t, 8> *>(k);
+        float acc = 0;
+#pragma unroll 8
+        for (unsigned j0 = 0; j0 < HD / 8; ++j0) {
+            const sycl::vec<uint16_t, 8> kv = k8[j0];
+#pragma unroll
+            for (int m = 0; m < 8; ++m) acc += qh[8 * j0 + m] * ops41::bf16(kv[m]);
+        }
+        if (slot >= 0) score[g] = acc * scale;
+    }
+};
+
+// SparseSoftmax: one sub-group per head, NI = n_idx (% 32 == 0). The max is
+// order-free (any NaN is never selected either way; a +0/-0 tie gives the
+// same exp arguments); the sum keeps the serial i order via broadcasts.
+template <int NI> struct SparseSoftmaxP {
+    int heads;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *sinks, const int32_t *idxs, float *score) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int h = (int)it.get_group_linear_id();
+        if (h >= heads) return;
+        constexpr int K = NI / 32;
+        float *s = score + (size_t)h * NI;
+        float v[K];
+        int ok[K];
+        const float sk = sinks[h];
+        float mx = sk;
+#pragma unroll
+        for (int k = 0; k < K; ++k) {
+            ok[k] = idxs[32 * k + lane] >= 0 ? 1 : 0;
+            v[k] = s[32 * k + lane];
+            if (ok[k]) mx = v[k] > mx ? v[k] : mx;
+        }
+        for (int w_ = 16; w_; w_ >>= 1) {
+            const float o = sycl::select_from_group(sg, mx, lane ^ w_);
+            mx = o > mx ? o : mx;
+        }
+        float sum = sycl::exp(sk - mx);
+#pragma unroll
+        for (int k = 0; k < K; ++k) {
+            if (ok[k]) v[k] = sycl::exp(v[k] - mx);
+#pragma unroll
+            for (int l2 = 0; l2 < 32; ++l2) {
+                const float e = sycl::select_from_group(sg, v[k], l2);
+                const int o2 = sycl::select_from_group(sg, ok[k], l2);
+                if (o2) sum += e;
+            }
+        }
+#pragma unroll
+        for (int k = 0; k < K; ++k)
+            if (ok[k]) s[32 * k + lane] = v[k] / sum;
+    }
+};
+
+// SparseOut: same item mapping (h, j); 16 index rows fetched per round
+template <unsigned HD> struct SparseOutP {
+    int n_idx, heads, win_rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out) const {
+        const size_t g = it.get_global_linear_id();
+        const int h = (int)(g / HD), j = (int)(g % HD);
+        if (h >= heads) return;
+        const float *wh = w + (size_t)h * n_idx;
+        float o = 0;
+        for (int i0 = 0; i0 < n_idx; i0 += 16) {
+            int sl[16];
+            float kv[16], wv[16];
+#pragma unroll
+            for (int u = 0; u < 16; ++u) { sl[u] = idxs[i0 + u]; wv[u] = wh[i0 + u]; }
+#pragma unroll
+            for (int u = 0; u < 16; ++u) {
+                const int s0 = sl[u] < 0 ? 0 : sl[u];
+                const uint16_t *k = s0 < win_rows ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - win_rows) * HD;
+                kv[u] = ops41::bf16(k[j]);
+            }
+#pragma unroll
+            for (int u = 0; u < 16; ++u)
+                if (sl[u] >= 0) o += wv[u] * kv[u];
+        }
+        out[g] = o;
+    }
+};
+
+// SparseScoreA, head-grouped: one sub-group = 32 consecutive indices x HG
+// heads; each lane reads its key row 32 values at a time (once for all HG
+// heads), the queries for that j-chunk arrive one per lane and are broadcast.
+// Per (head, index) the same serial j order and float operations.
+template <unsigned HD, unsigned HG> struct SparseScoreHG {
+    int n_idx, heads, win_rows, hd; // hd == HD at run time (scale as before)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *q, const uint16_t *kvw, const uint16_t *kvc,
+                                     const int32_t *idxs, float *score) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const unsigned grp = it.get_group_linear_id(), nib = (unsigned)n_idx / 32;
+        const unsigned h0 = (grp / nib) * HG, i = (grp % nib) * 32 + lane;
+        if (h0 >= (unsigned)heads) return;
+        const int slot = idxs[i];
+        const int s0 = slot < 0 ? 0 : slot;
+        const float scale = 1.0f / sycl::sqrt(float(hd));
+        const uint16_t *k = s0 < win_rows ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - win_rows) * HD;
+        const sycl::vec<uint16_t, 8> *k8 = reinterpret_cast<const sycl::vec<uint16_t, 8> *>(k);
+        float acc[HG];
+#pragma unroll
+        for (unsigned hh = 0; hh < HG; ++hh) acc[hh] = 0;
+        for (unsigned c = 0; c < HD / 32; ++c) {
+            float qv[HG];
+#pragma unroll
+            for (unsigned hh = 0; hh < HG; ++hh) qv[hh] = q[(size_t)(h0 + hh) * HD + 32 * c + lane];
+            sycl::vec<uint16_t, 8> kv[4];
+#pragma unroll
+            for (unsigned u = 0; u < 4; ++u) kv[u] = k8[4 * c + u];
+#pragma unroll
+            for (unsigned jj = 0; jj < 32; ++jj) {
+                const float kf = ops41::bf16(kv[jj / 8][jj % 8]);
+#pragma unroll
+                for (unsigned hh = 0; hh < HG; ++hh) acc[hh] += sycl::select_from_group(sg, qv[hh], jj) * kf;
+            }
+        }
+        if (slot >= 0)
+#pragma unroll
+            for (unsigned hh = 0; hh < HG; ++hh) score[(size_t)(h0 + hh) * n_idx + i] = acc[hh] * scale;
+    }
+};
+
+// SparseOut, head-grouped: one sub-group = 32 consecutive j x HG heads; per
+// index the key value is read once (coalesced) for all HG heads; weights and
+// slots for 32 indices arrive one per lane and are broadcast. Per (head, j)
+// the same serial index order and float operations.
+template <unsigned HD, unsigned HG> struct SparseOutHG {
+    int n_idx, heads, win_rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const unsigned grp = it.get_group_linear_id();
+        const unsigned h0 = (grp / (HD / 32)) * HG, j = (grp % (HD / 32)) * 32 + lane;
+        if (h0 >= (unsigned)heads) return;
+        float o[HG];
+#pragma unroll
+        for (unsigned hh = 0; hh < HG; ++hh) o[hh] = 0;
+        for (int i0 = 0; i0 < n_idx; i0 += 32) {
+            const int sl = idxs[i0 + lane];
+            float wv[HG];
+#pragma unroll
+            for (unsigned hh = 0; hh < HG; ++hh) wv[hh] = w[(size_t)(h0 + hh) * n_idx + i0 + lane];
+#pragma unroll 8
+            for (int u = 0; u < 32; ++u) {
+                const int slot = sycl::select_from_group(sg, sl, u);
+                if (slot < 0) continue;
+                const uint16_t *k = slot < win_rows ? kvw + (size_t)slot * HD : kvc + (size_t)(slot - win_rows) * HD;
+                const float kf = ops41::bf16(k[j]);
+#pragma unroll
+                for (unsigned hh = 0; hh < HG; ++hh) o[hh] += sycl::select_from_group(sg, wv[hh], u) * kf;
+            }
+        }
+#pragma unroll
+        for (unsigned hh = 0; hh < HG; ++hh) out[(size_t)(h0 + hh) * HD + j] = o[hh];
+    }
+};
+
+// SparseOut: same item mapping (h, j). Per round of 32 indices the slots and
+// weights arrive one per lane (one coalesced load each, next round's issued
+// before this round's sums) and are broadcast from constant lanes; the 32
+// key reads go out together. Same serial index order per (h, j).
+template <unsigned HD> struct SparseOutP2 {
+    int n_idx, heads, win_rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const size_t g = it.get_global_linear_id();
+        const int h = (int)((size_t)it.get_group_linear_id() * 32 / HD), j = (int)(g % HD);
+        if (h >= heads) return;
+        const float *wh = w + (size_t)h * n_idx;
+        float o = 0;
+        int sl = idxs[lane];
+        float wl = wh[lane];
+        for (int i0 = 0; i0 < n_idx; i0 += 32) {
+            const int sl_n = i0 + 32 < n_idx ? idxs[i0 + 32 + lane] : 0;
+            const float wl_n = i0 + 32 < n_idx ? wh[i0 + 32 + lane] : 0.0f;
+            float kv[32];
+#pragma unroll
+            for (int u = 0; u < 32; ++u) {
+                const int slot = sycl::select_from_group(sg, sl, u);
+                const int s0 = slot < 0 ? 0 : slot;
+                const uint16_t *k = s0 < win_rows ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - win_rows) * HD;
+                kv[u] = ops41::bf16(k[j]);
+            }
+#pragma unroll
+            for (int u = 0; u < 32; ++u) {
+                const int slot = sycl::select_from_group(sg, sl, u);
+                const float wu = sycl::select_from_group(sg, wl, u);
+                if (slot >= 0) o += wu * kv[u];
+            }
+            sl = sl_n;
+            wl = wl_n;
+        }
+        out[g] = o;
+    }
+};
+
+// SparseOutP2 with JP consecutive outputs per lane (one JP x bf16 load per
+// index): the slot broadcast and row address are shared by JP outputs. Each
+// output (h, j) still sums its products in serial index order.
+template <unsigned HD, unsigned JP> struct SparseOutJ {
+    static_assert(JP == 1 || JP == 2 || JP == 4 || JP == 8);
+    int n_idx, heads, win_rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        constexpr unsigned SPAN = 32 * JP, PER_HEAD = HD / SPAN;
+        const unsigned grp = it.get_group_linear_id();
+        const int h = (int)(grp / PER_HEAD);
+        const unsigned j0 = (grp % PER_HEAD) * SPAN + JP * lane;
+        if (h >= heads) return;
+        using V = sycl::vec<uint16_t, JP>;
+        const float *wh = w + (size_t)h * n_idx;
+        float o[JP];
+#pragma unroll
+        for (unsigned e = 0; e < JP; ++e) o[e] = 0;
+        int sl = idxs[lane];
+        float wl = wh[lane];
+        for (int i0 = 0; i0 < n_idx; i0 += 32) {
+            const int sl_n = i0 + 32 < n_idx ? idxs[i0 + 32 + lane] : 0;
+            const float wl_n = i0 + 32 < n_idx ? wh[i0 + 32 + lane] : 0.0f;
+#pragma unroll
+            for (int u0 = 0; u0 < 32; u0 += 8) {
+                V kv[8];
+#pragma unroll
+                for (int u = 0; u < 8; ++u) {
+                    const int slot = sycl::select_from_group(sg, sl, u0 + u);
+                    const int s0 = slot < 0 ? 0 : slot;
+                    const uint16_t *k = s0 < win_rows ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - win_rows) * HD;
+                    kv[u] = *reinterpret_cast<const V *>(k + j0);
+                }
+#pragma unroll
+                for (int u = 0; u < 8; ++u) {
+                    const int slot = sycl::select_from_group(sg, sl, u0 + u);
+                    const float wu = sycl::select_from_group(sg, wl, u0 + u);
+                    if (slot >= 0)
+#pragma unroll
+                        for (unsigned e = 0; e < JP; ++e) o[e] += wu * ops41::bf16(kv[u][e]);
+                }
+            }
+            sl = sl_n;
+            wl = wl_n;
+        }
+#pragma unroll
+        for (unsigned e = 0; e < JP; ++e) out[(size_t)h * HD + j0 + e] = o[e];
+    }
+};
+
+// EngramGateA on 4 sub-groups (row j = group): lanes load 32 elements at a
+// time and form the double products; the three sums run serially in element
+// order on every lane from broadcast products (the same adds in the same
+// order as the one-work-item loops); the final update is elementwise.
+struct EngramGateP {
+    int h; // % 32 == 0
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int j = (int)it.get_group_linear_id();
+        if (j >= 4) return;
+        const float eps = 1e-20f, clamp_v = 1e-6f;
+        const float *sr = streams + (size_t)j * h, *kr = kvbuf + (size_t)j * h, *gr = gate_w + (size_t)j * h;
+        double hsq = 0, ksq = 0, dot = 0;
+        for (int i0 = 0; i0 < h; i0 += 32) {
+            const float hv = sr[i0 + lane], kvv = kr[i0 + lane], gw = gr[i0 + lane];
+            const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
+#pragma unroll
+            for (int l2 = 0; l2 < 32; ++l2) {
+                hsq += sycl::select_from_group(sg, ph, l2);
+                ksq += sycl::select_from_group(sg, pk, l2);
+            }
+#pragma unroll
+            for (int l2 = 0; l2 < 32; ++l2) dot += sycl::select_from_group(sg, pd, l2);
+        }
+        const float rstd = float(1.0 / sycl::sqrt(hsq / h + eps) * (1.0 / sycl::sqrt(ksq / h + eps)));
+        const float d = float(dot) * rstd / sycl::sqrt(float(h));
+        const float g = 1.0f / (1.0f + sycl::exp(-sycl::copysign(sycl::sqrt(sycl::fmax(sycl::fabs(d), clamp_v)), d)));
+        float *so = streams + (size_t)j * h;
+        const float *vr = kvbuf + (size_t)4 * h;
+        for (int i = lane; i < h; i += 32) so[i] = so[i] + g * vr[i];
+    }
+};
+
+// Argmax with Argmax's result (the smallest index among the elements equal
+// to the largest non-NaN value; n when there is none), which does not depend
+// on the scan order: pass 1, G sub-groups over contiguous spans (CH per
+// sub-group); pass 2, one sub-group over the G candidates.
+struct ArgmaxP1 {
+    int n, ch;
+    void operator()(sycl::nd_item<1> it, const float *logits, float *bvs, int32_t *bis) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int gi = (int)it.get_group_linear_id();
+        const int i0 = gi * ch, i1 = sycl::min(n, i0 + ch);
+        float bv = -INFINITY;
+        int bi = n;
+        for (int i = i0 + lane; i < i1; i += 32) {
+            const float v = logits[i];
+            if (v > bv) { bv = v; bi = i; }
+        }
+        for (int w = 16; w; w >>= 1) {
+            const float ov = sycl::select_from_group(sg, bv, lane ^ w);
+            const int oi = sycl::select_from_group(sg, bi, lane ^ w);
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        if (lane == 0) { bvs[gi] = bv; bis[gi] = bi; }
+    }
+};
+struct ArgmaxP2 {
+    int groups;
+    void operator()(sycl::nd_item<1> it, const float *bvs, const int32_t *bis, int32_t *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        float bv = -INFINITY;
+        int bi = 0x7fffffff;
+        for (int k = lane; k < groups; k += 32) {
+            const float ov = bvs[k];
+            const int oi = bis[k];
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        for (int w = 16; w; w >>= 1) {
+            const float ov = sycl::select_from_group(sg, bv, lane ^ w);
+            const int oi = sycl::select_from_group(sg, bi, lane ^ w);
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        if (lane == 0) *out = bi;
+    }
+};
+
+// WindowAppendA spread over work-items (it ran on ONE item, ~42 us per layer),
+// and the attention's index list built in the same launch (it was two queue
+// copies): cat[0, win) = the window indices, cat[win, win + nc) = cidx.
+// Pure stores of the same values. Launch max(d, win, nc) items.
+template <typename A> struct WindowAppendP {
+    int win, d, start_pos, nc;
+    void operator()(sycl::nd_item<1> it, uint16_t *ring, const typename A::T *kv, int32_t *widx, int32_t *cat,
+                    const int32_t *cidx) const {
+        const int i = (int)it.get_global_linear_id();
+        if (i < d) ring[(size_t)(start_pos % win) * d + i] = ops41::bf16b(A::rd(kv[i]));
+        if (i < win) {
+            const int j = ((start_pos % win + 1) % win + i) % win; // WindowAppendA's j after i steps
+            const int32_t v = j > start_pos ? -1 : j;
+            widx[i] = v;
+            cat[i] = v;
+        }
+        if (i < nc) cat[win + i] = cidx[i];
+    }
+};
+
+// RouteScore + RouteRank + RouteNorm in one work-group of >= experts items
+// (one launch instead of three; the rank loop reads local memory instead of
+// 256 global loads per item). Same expressions, same comparisons, same sum
+// order. lm: local memory, 2 * experts + topk floats.
+struct RouteP {
+    int experts, topk;
+    void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, uint32_t *ids, float *prob,
+                    float *lm) const {
+        float *ls = lm, *lsb = lm + experts, *lp = lm + 2 * experts;
+        const int i = (int)it.get_local_linear_id();
+        if (i < topk) lp[i] = prob[i]; // RouteNorm reads what is there for a rank nobody took (NaN scores)
+        if (i < experts) {
+            const float v = sycl::sqrt(sycl::log1p(sycl::exp(logits[i])));
+            ls[i] = v;
+            lsb[i] = v + bias[i];
+        }
+        sycl::group_barrier(it.get_group());
+        if (experts % 32 == 0) { // 32 scores per local load, broadcast from constant lanes
+            sycl::sub_group sg = it.get_sub_group();
+            const int lane = (int)sg.get_local_linear_id();
+            const float v = lsb[i];
+            int rank = 0;
+            for (int jb = 0; jb < experts; jb += 32) {
+                const float u = lsb[jb + lane];
+#pragma unroll
+                for (int k = 0; k < 32; ++k) {
+                    const float w = sycl::select_from_group(sg, u, k);
+                    rank += (w > v || (w == v && jb + k < i)) ? 1 : 0;
+                }
+            }
+            if (rank < topk) {
+                ids[rank] = (uint32_t)i;
+                lp[rank] = ls[i];
+            }
+        } else if (i < experts) {
+            const float v = lsb[i];
+            int rank = 0;
+            for (int j = 0; j < experts; ++j) rank += (lsb[j] > v || (lsb[j] == v && j < i)) ? 1 : 0;
+            if (rank < topk) {
+                ids[rank] = (uint32_t)i;
+                lp[rank] = ls[i];
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        if (i < topk) {
+            float sum = 0;
+            for (int t = 0; t < topk; ++t) sum += lp[t];
+            prob[i] = lp[i] / (sum + 1e-20f) * 1.5f;
+        }
+    }
+};
+
+// CompressPoolA on one sub-group: the per-channel softmax pool is
+// independent per channel (lane-parallel, same expressions); the RMS
+// statistic keeps CompressPoolA's serial double sum in channel order (every
+// lane runs it on the same values). tmp: local memory, hd floats.
+template <typename A> struct CompressPoolP {
+    int r, hd;
+    void operator()(sycl::nd_item<1> it, const float *kv_state, const float *score_state, const float *nw,
+                    typename A::T *out, float *tmp) const {
+        const int lane = (int)it.get_local_linear_id();
+        for (int i = lane; i < hd; i += 32) {
+            float mx = score_state[i];
+            for (int j = 1; j < r; ++j) mx = score_state[j * hd + i] > mx ? score_state[j * hd + i] : mx;
+            float sum = 0, acc = 0;
+            for (int j = 0; j < r; ++j) sum += sycl::exp(score_state[j * hd + i] - mx);
+            for (int j = 0; j < r; ++j)
+                acc += kv_state[j * hd + i] * (sycl::exp(score_state[j * hd + i] - mx) / sum);
+            tmp[i] = acc;
+        }
+        sycl::group_barrier(it.get_group());
+        double sq = 0;
+        for (int i = 0; i < hd; ++i) sq += double(tmp[i]) * tmp[i];
+        const float rs = float(1.0 / sycl::sqrt(sq / hd + 1e-20));
+        for (int i = lane; i < hd; i += 32) out[i] = A::wr(nw[i] * (tmp[i] * rs));
+    }
+};
+
 } // namespace ops41sycl
 #endif

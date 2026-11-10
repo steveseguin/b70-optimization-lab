@@ -236,6 +236,66 @@ Prompt 1: the first 40 generated tokens equal the CPU reference that read the pr
 processes give identical tokens. Start-up with a warm kernel cache: 20 s load + 0.17 s for the first step.
 Evidence: `data/dsv41-bringup-20261109/cards-only-*`.
 
+## 11. Fourth speed round: 9.0 -> 28.0 tok/s, output byte-identical (18:30-19:45 EST)
+
+Goal from the owner: 25 tok/s with no quality loss. Every step below was checked the same way: the 3-step
+decode trace (`OWN_TRACE`, 70 MB of tagged tensors) is **byte-identical** (`cmp`) to the 9.0 tok/s build, and
+the 40-token and 128-token greedy answers to prompt 1 are identical. Each new kernel is also gated on the card
+against the kernel it replaces (bitwise, every output).
+
+| Build | Change | s per token | tok/s |
+| --- | --- | --- | --- |
+| start | 9.0 tok/s build of section 9 | 0.111 | 9.0 |
+| p1 | Q8_0 dense and IQ2_XXS expert weights stored **packed** on the card (same bytes, regrouped so a 32-lane sub-group reads them with block loads; scales gathered in one place) and new kernels for them | 0.092 | 10.9 |
+| p2 | the other four expert formats packed (IQ2_S, IQ3_XXS, IQ2_XS, IQ1_S); expert kernels loop over rows with 128 work-groups, so each work-group fills its grid table once | 0.074 | 13.4 |
+| p3 | Q6_K, Q5_K and F32 dense weights packed (attention projections, head, shared expert, engram, router) | 0.058 | 17.3 |
+| p4 | small operators rewritten for latency: RMSNorm (block loads, lane sums in double, same tree), stream-mix dot products + Sinkhorn finish on one sub-group, sparse-attention score / softmax / output | 0.042 | 23.8 |
+| p5 | engram gate (15x) and the final argmax (45x, two passes; the answer is independent of scan order) | 0.038 | 26.05 |
+| **p6** | window append on 512 work-items instead of one (42 -> 2 us per layer) fused with building the attention's index list (two queue copies gone); router score + rank + normalize in one work-group (33 -> 22 us per layer); compressor pool lane-parallel (316 -> 37 us) | **0.036** | **28.02** |
+
+How the kernels stay exact: each output is still summed by 32 lanes in the old order (lane l adds elements l,
+l+32, l+64, ... one at a time, multiply then add, no fused multiply-add; build flags `-fp-model=precise
+-ffp-contract=off`) and reduced by the same tree. Only *where the bytes sit* and *how many loads fetch them*
+changed. Per-block scales are computed once per row in parallel across lanes and broadcast from a fixed lane.
+
+Kernel gates (card e3, all **0 differing outputs**; `data/dsv41-bringup-20261109/kernel-gates-round4-*.log`):
+
+| Kernel | old | new |
+| --- | --- | --- |
+| expert IQ2_XXS 6 x 2304 x 5120 | 281 us | 83 us |
+| expert IQ2_S 6 x 2304 x 5120 / 6 x 5120 x 2304 | 369 / 373 us | 123 / 106 us |
+| expert IQ3_XXS, IQ2_XS, IQ1_S | 243, 375, 252 us | 99, 99, 104 us |
+| Q8_0 dense (attention query 32768 x 1280) | 190 us, 235 GB/s | 76 us, 588 GB/s |
+| Q6_K head 129280 x 5120 | 3670 us | 935 us (581 GB/s) |
+| Q5_K engram projections | 164 / 104 us | 20 / 17 us |
+| RMSNorm 5120, stream-mix finish | 61, 54 us | 15, 14 us |
+| sparse attention, 640 slots (score + softmax + output) | 70 + 271 + 110 us | 9 + 11 + 39 us |
+| engram gate, argmax | 1432, 458 us | 97, 11 us |
+| window append + index list, router, compressor pool | 145, 65, 305 us | 2.2, 14.8, 32 us |
+
+**A fault on the way, our own bug (saved, fixed, probed):** the first packed IQ2_XXS kernel read whole 32-word
+blocks past the end of a 9-block row (144 quant words in a 152-word row); on the last row of the bank that ran
+off the allocation and card e3 page-faulted twice in the microbenchmark (`data/fault-20261109-rq-bench/`, fault
+address = end of the packed bank). The same overrun was latent in p1. Fix: `row_words<NW>` reads per lane past
+the last full block. Health probe passed both times; no fault line since.
+
+Facts measured on the B70 that shaped the kernels: a dependent double add costs ~26 ns, a float add ~8.6 ns, a
+precise float divide ~81 ns; a plain per-lane load in a lane loop is issued one at a time (~290 ns each), so
+small kernels need sub-group block loads; holding 160 floats per lane spills registers; an empty kernel costs
+1.5-2 us; a single launch's time drifts with the card clock, so kernels are timed back to back.
+
+GPU time per token at p6 (OWN_GPROF=2, 37.6 ms with profiling barriers; `round4-p6-kernel-profile.log`): kernels
+34.3 ms in 1,514 launches, gaps and copies 3.3 ms. Expert kernels 12.4 ms (IQ2_S 5.2, IQ2_XXS 2.8, IQ1_S 2.1,
+IQ3_XXS 1.4, IQ2_XS 0.6, one unpacked Q2_K 0.36), dense Q8_0 8.7, Q6_K 4.1, sparse attention 2.2, RMSNorm 1.6,
+stream mix 1.6, router 1.5. The dense projections run at 550-600 GB/s (the card's memory speed). The expert
+kernels at 130-270 GB/s are limited by instructions per weight, not memory: the machine code of the IQ2_XXS
+kernel has about 10 ALU instructions per weight (4 of them only for the sign bit), IQ2_S about 14 (IGC dump:
+`IGC_ShaderDumpEnable=1 IGC_DumpToCustomDir=... NEO_CACHE_PERSISTENT=0`).
+
+Switches: `OWN_PACKED=0` (raw rows, old kernels), `OWN_SMALL=0` (old small operators), `OWN_GPROF=1` (GPU time
+per operator group, profiling barriers), `OWN_GPROF=2` (also time per kernel type). Upload is 33 s now (was 20 s):
+the host packs rows while uploading.
+
 ## Reproduce
 
 ```bash

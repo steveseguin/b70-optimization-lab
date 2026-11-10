@@ -1,0 +1,11 @@
+card 5 local mem 128 KiB, CUs 256
+IQ2_XXS: w 0xffff85aaeee00000..0xffff85aaf7938000  packed 0xffff85aaf7a00000..0xffff85ab00610000  x 0xffff840154ed0000..0xffff840154ed5000
+  old kernel ok
+  packed kernel ok
+IQ2_XXS    cols  5120 rows  2304 slot_x 0 | old   261.8 us    70 GB/s | packed    91.3 us   200 GB/s   775 Gel/s x2.87 | wg 864 | differ 0 of 442368
+IQ2_XXS: w 0xffff85aaeee00000..0xffff85aaf7938000  packed 0xffff85aaf7a00000..0xffff85ab00880000  x 0xffff840154ea0000..0xffff840154ead800
+  old kernel ok
+  packed kernel ok
+terminate called after throwing an instance of 'sycl::_V1::exception'
+  what():  level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+timeout: the monitored command dumped core

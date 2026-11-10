@@ -24,6 +24,7 @@
 //   OWN_HC_LEGACY=1    old FFN pre-mix threading (A/B only)
 //   OWN_LOAD_ONLY=1    stop after the upload (load/memory test)
 //   OWN_GENERIC_KERNELS=1 runtime-type gemv kernels instead of one kernel per weight format
+//   OWN_PACKED=0|1     packed device rows + packed kernels where available (default 1; f32 build)
 //   OWN_KEEP_WARM=0|1|2 after each layer, ping the other cards with a tiny kernel so they stay at
 //                      full clock (default 1; 2 = next card only; 0 = off, about 40 % slower)
 //   OWN_PACE=0|1|2     extra queue waits (per layer / per operator group); no measured benefit
@@ -130,6 +131,10 @@ int main(int argc, char **argv) {
     opt.debug = getenv("OWN_DEBUG") != nullptr;
     opt.hc_legacy = getenv("OWN_HC_LEGACY") != nullptr;
     opt.generic_kernels = getenv("OWN_GENERIC_KERNELS") != nullptr;
+    if (const char *e = getenv("OWN_PACKED")) opt.packed = atoi(e) != 0;
+    opt.gprof = getenv("OWN_GPROF") != nullptr;
+    opt.kprof = opt.gprof && atoi(getenv("OWN_GPROF")) >= 2;
+    if (const char *e = getenv("OWN_SMALL")) opt.small_fast = atoi(e) != 0;
     if (const char *e = getenv("OWN_HOST_FLOOR_MIB")) opt.host_floor_mib = atol(e);
     if (const char *e = getenv("OWN_LAYERS"))
         if (sscanf(e, "%d:%d", &opt.layer_begin, &opt.layer_end) != 2) die("OWN_LAYERS=a:b");
@@ -187,6 +192,7 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "upload: %.1f GB in %.1fs (%.2f GB/s); host MemAvailable %ld MiB\n",
                      be.uploaded_bytes / 1e9, now() - t0, be.uploaded_bytes / 1e9 / (now() - t0),
                      own41::meminfo_kb("MemAvailable") / 1024);
+        std::fprintf(stderr, "packed rows: %zu tensors, %.2f GB on the cards\n", be.packed_tensors, be.packed_bytes / 1e9);
         for (int t = 0; t < own41::Backend41::TILES; ++t)
             if (be.tile_active(t))
                 std::fprintf(stderr, "tile %d card %s: %.2f GiB free after load\n", t, be.tile_pci(t).c_str(),
@@ -315,6 +321,8 @@ int main(int argc, char **argv) {
             double dt = now() - t1;
             if (step > 1 || !prompt.empty()) { t_dec += dt; ++n_timed; } // a cold first step carries kernel compilation
             else be.prof_t.clear();
+            be.gprof_collect();
+            if (!(step > 1 || !prompt.empty())) { be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
             if (opt.head) {
                 std::fprintf(stderr, "tok %d -> %d (%.3fs)", step, next, dt);
                 if (opt.debug || step <= trace_steps) {
@@ -344,6 +352,30 @@ int main(int argc, char **argv) {
             std::fprintf(stderr, "profile (ms per step, queue wait at every mark):\n");
             for (auto &[t, k] : v) std::fprintf(stderr, "  %-14s %8.2f  %5.1f%%\n", k.c_str(), t * 1e3, 100 * t / tot);
             std::fprintf(stderr, "  %-14s %8.2f\n", "total", tot * 1e3);
+        }
+        if (opt.gprof && n_timed) {
+            std::vector<std::pair<double, std::string>> v;
+            double tot = 0;
+            for (auto &[k, t] : be.gprof_t) { v.push_back({t / n_timed, k}); tot += t / n_timed; }
+            std::sort(v.rbegin(), v.rend());
+            std::fprintf(stderr, "GPU-time profile (ms per step; card time between marks, no waits):\n");
+            for (auto &[t, k] : v)
+                std::fprintf(stderr, "  %-14s %8.3f  %5.1f%%  (%ld marks/step)\n", k.c_str(), t * 1e3, 100 * t / tot,
+                             be.gprof_n[k] / n_timed);
+            std::fprintf(stderr, "  %-14s %8.3f   (wall %.3f)\n", "total", tot * 1e3, t_dec / n_timed * 1e3);
+            if (opt.kprof) {
+                std::vector<std::pair<double, std::string>> kv;
+                double ktot = 0;
+                for (auto &[k, t] : be.kprof_t) { kv.push_back({t / n_timed, k}); ktot += t / n_timed; }
+                std::sort(kv.rbegin(), kv.rend());
+                std::fprintf(stderr, "kernel time per type (ms per step, start to end; launches per step):\n");
+                for (auto &[t, k] : kv)
+                    std::fprintf(stderr, "  %8.3f  %5.1f%%  %5ld  %8.2f us  %s\n", t * 1e3, 100 * t / tot,
+                                 be.kprof_n[k] / n_timed, t * 1e6 * n_timed / std::max(1L, be.kprof_n[k]), k.c_str());
+                std::fprintf(stderr, "  kernels %8.3f ms, launches %ld per step; marks total %.3f -> gaps/copies %.3f ms\n",
+                             ktot * 1e3, [&] { long n = 0; for (auto &[k, c] : be.kprof_n) n += c; return n / n_timed; }(),
+                             tot * 1e3, (tot - ktot) * 1e3);
+            }
         }
         std::ofstream of(argv[3]);
         for (int t : out_ids) of << t << "\n";

@@ -43,6 +43,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <cxxabi.h>
 #include <fcntl.h>
 #include <fstream>
 #include <map>
@@ -56,6 +57,7 @@
 #include <unordered_map>
 #include <vector>
 #include "stage2/packet3/backend/trace_tags_v41.hpp"
+#include "stage2/packet3/kernels/pack_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
 
@@ -175,12 +177,17 @@ public:
         long host_floor_mib = 3072;          // abort the load below this MemAvailable
         bool hc_legacy = false;              // pre-2026-11-09 FFN pre-mix (A/B only)
         bool generic_kernels = false;        // runtime-type gemv kernels (A/B against the specialized ones)
+        bool packed = true;                  // packed device rows + packed kernels where available (pack_v41.hpp)
+        bool gprof = false;                  // profiling queues: GPU time between profile marks, no waits (OWN_GPROF)
+        bool kprof = false;                  // with gprof: also kernel time per kernel type (OWN_GPROF=2)
+        bool small_fast = true;              // latency-bound forms of norm / hc mix / sparse attention (OWN_SMALL=0: old)
         bool debug = false;
     };
     struct DevPtr {
         void *p = nullptr;
         size_t bytes = 0;
         int tile = -1;
+        bool packed = false; // rows are in the pack_v41.hpp layout
     };
 
     Backend41(const flash41::Plan41 &plan, int max_seq, Options opt)
@@ -219,7 +226,11 @@ public:
         for (int t = 0; t < TILES; ++t) {
             int a = active[t] ? t : first;
             ctxs.push_back(cm.at(a));
-            qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.gprof)
+                qs.emplace_back(cm.at(a), devs[a],
+                                sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
+            else
+                qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
         }
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
@@ -256,6 +267,8 @@ public:
         if (o.head) {
             logits_ = dalloc<float>(HEAD_TILE, g.vocab);
             tok_out_ = dalloc<int32_t>(HEAD_TILE, 1);
+            am_v_ = dalloc<float>(HEAD_TILE, (size_t)g.vocab / AM_CH + 1);
+            am_i_ = dalloc<int32_t>(HEAD_TILE, (size_t)g.vocab / AM_CH + 1);
         }
         h_streams.resize(4 * (size_t)g.h);
         for (int s = 0; s < 4; ++s) {
@@ -317,6 +330,8 @@ public:
             const std::string *name;
             const WeightTab::E *e;
             size_t bytes, chunk, off;
+            bool packed;
+            size_t rb, prb; // raw / packed row bytes (packed items)
         };
         std::vector<Item> items[TILES];
         std::vector<size_t> chunk_sz[TILES];
@@ -324,7 +339,15 @@ public:
         for (const auto &kv : wt.w) {
             if (!wanted(kv.first)) continue;
             int t = tile_of(kv.first);
-            items[t].push_back({&kv.first, &kv.second, wt.bytes(kv.second), 0, 0});
+            const auto &e = kv.second;
+            Item it{&kv.first, &e, wt.bytes(e), 0, 0, false, 0, 0};
+            if (pack_wanted(kv.first, e)) {
+                it.packed = true;
+                it.rb = wt.row_bytes(e);
+                it.prb = pk41::packed_row_bytes(e.type, (size_t)e.cols);
+                it.bytes = it.prb * (size_t)e.rows * (size_t)(e.experts ? e.experts : 1);
+            }
+            items[t].push_back(it);
         }
         for (int t = 0; t < TILES; ++t) {
             auto &v = items[t];
@@ -332,13 +355,13 @@ public:
                 return a.e->shard != b.e->shard ? a.e->shard < b.e->shard : a.e->off < b.e->off;
             });
             for (auto &it : v) {
-                size_t padded = (it.bytes + 255) & ~(size_t)255;
+                size_t padded = (it.bytes + 255) & ~(size_t)255; // device bytes (packed size if packed)
                 if (chunk_sz[t].empty() || chunk_sz[t].back() + padded > CHUNK) chunk_sz[t].push_back(0);
                 it.chunk = chunk_sz[t].size() - 1;
                 it.off = chunk_sz[t].back();
                 chunk_sz[t].back() += padded;
                 need[t] += padded;
-                total += it.bytes;
+                total += wt.bytes(*it.e); // file bytes (progress counter)
             }
         }
         // preflight: every card must already have room (see header: no overcommit)
@@ -388,12 +411,15 @@ public:
         };
         auto worker = [&](int t) {
             uint8_t *stage = (uint8_t *)aligned_alloc(4096, PIECE + 8192);
-            if (!stage) return fail("staging alloc");
+            uint8_t *pstage = (uint8_t *)aligned_alloc(4096, PIECE + PIECE / 8 + 65536); // packed rows
+            if (!stage || !pstage) { free(stage); free(pstage); return fail("staging alloc"); }
             try {
                 for (const auto &it : items[t]) {
                     uint8_t *dst = chunks[t][it.chunk] + it.off;
-                    for (size_t d = 0; d < it.bytes && !stop;) {
-                        size_t n = std::min(PIECE, it.bytes - d);
+                    const size_t raw = wt.bytes(*it.e); // bytes in the file
+                    for (size_t d = 0; d < raw && !stop;) {
+                        // packed tensors move whole rows per piece
+                        size_t n = it.packed ? std::min(PIECE / it.rb * it.rb, raw - d) : std::min(PIECE, raw - d);
                         off_t fo = it.e->off + (off_t)d, a0 = fo & ~(off_t)4095;
                         size_t lead = (size_t)(fo - a0), want = (lead + n + 4095) & ~(size_t)4095;
                         ssize_t got = dfd[it.e->shard] >= 0 ? pread(dfd[it.e->shard], stage, want, a0) : -1;
@@ -405,7 +431,15 @@ public:
                                 r += (size_t)k;
                             }
                         }
-                        qs[t].memcpy(dst + d, stage + lead, n).wait();
+                        if (it.packed) {
+                            const size_t nr = n / it.rb;
+                            for (size_t r = 0; r < nr; ++r)
+                                pk41::pack_row(it.e->type, stage + lead + r * it.rb, pstage + r * it.prb,
+                                               (size_t)it.e->cols);
+                            qs[t].memcpy(dst + d / it.rb * it.prb, pstage, nr * it.prb).wait();
+                        } else {
+                            qs[t].memcpy(dst + d, stage + lead, n).wait();
+                        }
                         d += n;
                         done += n;
                         if (host_low()) fail("host MemAvailable fell below the floor during upload");
@@ -416,6 +450,7 @@ public:
                 fail(std::string("upload tile ") + std::to_string(t) + ": " + ex.what());
             }
             free(stage);
+            free(pstage);
         };
         std::vector<std::thread> th;
         auto t0 = std::chrono::steady_clock::now();
@@ -436,11 +471,25 @@ public:
         for (int fd : bfd) if (fd >= 0) close(fd);
         if (!err.empty()) throw std::runtime_error(err);
         for (int t = 0; t < TILES; ++t)
-            for (const auto &it : items[t])
-                wgt[*it.name] = {chunks[t][it.chunk] + it.off, it.bytes, t};
+            for (const auto &it : items[t]) {
+                wgt[*it.name] = {chunks[t][it.chunk] + it.off, it.bytes, t, it.packed};
+                if (it.packed) { ++packed_tensors; packed_bytes += it.bytes; }
+            }
         uploaded_bytes = total;
     }
     size_t uploaded_bytes = 0;
+    size_t packed_tensors = 0, packed_bytes = 0;
+    // Weights read only by gemv / gemv_grouped / routed_gemv may be packed;
+    // the token embedding is read row-by-row by EmbedRow and stays raw.
+    bool pack_wanted(const std::string &n, const WeightTab::E &e) const {
+#ifdef OWN41_ACT_BF16
+        (void)n; (void)e;
+        return false; // packed kernels take f32 activations
+#else
+        if (!o.packed || n == "token_embd.weight") return false;
+        return pk41::packable(e.type, (size_t)e.cols, e.experts > 0);
+#endif
+    }
 
     // ---- public decode state -----------------------------------------------
     long pos = 0;
@@ -461,9 +510,64 @@ public:
         return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
     void prof_begin(int t) {
+        if (o.gprof) {
+            gmarks.clear();
+            kevs.clear(); // steps without a collect (prompt reading) leave theirs behind
+            gmark("begin", t);
+            return;
+        }
         if (!prof_on) return;
         qs[t].wait();
         prof_last = now_s();
+    }
+    // GPU-time profile (Options::gprof): a barrier at every mark; per card, the
+    // device time between consecutive marks of one step goes to the later
+    // mark's name. Includes idle time on the card while the host had not yet
+    // submitted (host-bound gaps), excludes everything before a card's first
+    // mark in the step (hand-over from the previous card).
+    struct GMark { const char *name; int t; sycl::event e; };
+    std::vector<GMark> gmarks;
+    std::map<std::string, double> gprof_t; // seconds, summed over steps
+    std::map<std::string, long> gprof_n;
+    void gmark(const char *name, int t) { gmarks.push_back({name, t, qs[t].ext_oneapi_submit_barrier()}); }
+    // kernel-type profile (Options::kprof): start-to-end time of every launch
+    struct KEv { const char *name; sycl::event e; };
+    std::vector<KEv> kevs;
+    std::map<std::string, double> kprof_t;
+    std::map<std::string, long> kprof_n;
+    template <typename K> static const char *kname() {
+        static const std::string n = [] {
+            int st = 0;
+            char *d = abi::__cxa_demangle(typeid(K).name(), nullptr, nullptr, &st);
+            std::string r = st == 0 && d ? d : typeid(K).name();
+            std::free(d);
+            for (const char *pre : {"ops41sycl::", "own41::"})
+                for (size_t q; (q = r.find(pre)) != std::string::npos;) r.erase(q, std::strlen(pre));
+            return r;
+        }();
+        return n.c_str();
+    }
+    void kev(const char *name, const sycl::event &e) {
+        if (o.kprof) kevs.push_back({name, e});
+    }
+    void gprof_collect() {
+        if (!o.gprof) return;
+        for (auto &k : kevs) {
+            k.e.wait();
+            const long long a = (long long)k.e.get_profiling_info<sycl::info::event_profiling::command_start>();
+            const long long b = (long long)k.e.get_profiling_info<sycl::info::event_profiling::command_end>();
+            kprof_t[k.name] += (b - a) * 1e-9;
+            kprof_n[k.name] += 1;
+        }
+        kevs.clear();
+        std::vector<long long> last(TILES, -1);
+        for (auto &m : gmarks) {
+            m.e.wait();
+            const long long e = (long long)m.e.get_profiling_info<sycl::info::event_profiling::command_end>();
+            if (last[m.t] >= 0) { gprof_t[m.name] += (e - last[m.t]) * 1e-9; gprof_n[m.name] += 1; }
+            last[m.t] = e;
+        }
+        gmarks.clear();
     }
     // pace: 0 = never wait between operators, 1 = wait at the end of each
     // layer, 2 = wait at every operator-group mark (OWN_PACE)
@@ -502,6 +606,10 @@ public:
     // stack a host-pointer copy left pending slows every launch behind it
     bool h2d_wait = true;
     void prof(const char *name, int t) {
+        if (o.gprof) {
+            gmark(name, t);
+            return;
+        }
         if (!prof_on) {
             if (pace >= 2) qs[t].wait();
             return;
@@ -583,8 +691,14 @@ public:
                    (const float *)s.cur_pre, s.x);
             rmsnorm(HEAD_TILE, s.x, "output_norm.weight", H_, s.xn);
             gemv(HEAD_TILE, "output.weight", s.xn, logits_, true);
-            launch_sg(HEAD_TILE, 1, ops41sycl::Argmax{g.vocab}, (const float *)logits_, tok_out_,
-                      (float *)nullptr);
+            if (o.small_fast) { // same result as Argmax (order-free definition), test_small_v41_device.cpp
+                const int G = (g.vocab + AM_CH - 1) / AM_CH;
+                launch_sg(HEAD_TILE, G, ops41sycl::ArgmaxP1{g.vocab, AM_CH}, (const float *)logits_, am_v_, am_i_);
+                launch_sg(HEAD_TILE, 1, ops41sycl::ArgmaxP2{G}, (const float *)am_v_, (const int32_t *)am_i_, tok_out_);
+            } else {
+                launch_sg(HEAD_TILE, 1, ops41sycl::Argmax{g.vocab}, (const float *)logits_, tok_out_,
+                          (float *)nullptr);
+            }
             qs[HEAD_TILE].memcpy(&next, tok_out_, 4).wait();
             prof("head", HEAD_TILE);
             tra(40, TT_FINAL_N, HEAD_TILE, s.xn, H_);
@@ -666,6 +780,9 @@ private:
     float *cos_yarn[TILES] = {}, *sin_yarn[TILES] = {}, *cos_base[TILES] = {}, *sin_base[TILES] = {};
     float *logits_ = nullptr;
     int32_t *tok_out_ = nullptr;
+    static constexpr int AM_CH = 512; // argmax pass-1 span per sub-group
+    float *am_v_ = nullptr;
+    int32_t *am_i_ = nullptr;
     int cur = 0;
     std::vector<act_t> h_streams;
     // Host copies of the state every card mirrors (KV rows are BF16 in both
@@ -768,22 +885,96 @@ private:
     template <typename K, typename... A>
     void launch(int tile, size_t nwork, size_t lwork, K k, A... args) {
         size_t n = (nwork + lwork - 1) / lwork * lwork; // B70 rejects non-uniform groups
-        qs[tile].submit([&](sycl::handler &hh) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
             hh.parallel_for(sycl::nd_range<1>(n, lwork), [=](sycl::nd_item<1> it) { k(it, args...); });
         });
+        kev(kname<K>(), e);
     }
     // kernels built on 32-lane sub-group reductions: one work-group == one sub-group
     template <typename K, typename... A> void launch_sg(int tile, size_t groups, K k, A... args) {
-        qs[tile].submit([&](sycl::handler &hh) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
             hh.parallel_for(sycl::nd_range<1>(groups * 32, 32),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
         });
+        kev(kname<K>(), e);
     }
+    // one work-group of `items` (a multiple of 32) with SLM floats of local
+    // memory passed as the last argument
+    template <size_t SLM, typename K, typename... A> void launch_local(int tile, size_t items, K k, A... args) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(SLM, hh);
+            hh.parallel_for(sycl::nd_range<1>(items, items), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                k(it, args..., &lt[0]);
+            });
+        });
+        kev(kname<K>(), e);
+    }
+    // packed-row kernels: 16 sub-groups (rows) per work-group, optional local
+    // table; max_wg > 0 caps the work-groups (the routed kernels loop over rows)
+    template <size_t SLM, typename K, typename... A>
+    void launch_rows(int tile, size_t rows, size_t max_wg, K k, A... args) {
+        constexpr size_t WG = 512, PER = WG / 32;
+        size_t nwg = (rows + PER - 1) / PER;
+        if (max_wg && nwg > max_wg) nwg = max_wg;
+        const size_t n = nwg * WG;
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
+            if constexpr (SLM > 0) {
+                sycl::local_accessor<float, 1> lt(SLM, hh);
+                hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                    k(it, args..., &lt[0]);
+                });
+            } else {
+                hh.parallel_for(sycl::nd_range<1>(n, WG),
+                                [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
+            }
+        });
+        kev(kname<K>(), e);
+    }
+#ifndef OWN41_ACT_BF16
+    // dense Q8_0 over packed rows; xn > 0 = grouped (row r reads x + (r / xn) * cols)
+    void gemv_q8p(int tile, const WeightTab::E &e, const void *w, const act_t *x, act_t *y, unsigned rows,
+                  unsigned xn, unsigned cols) {
+        switch (cols) {
+#define X(COLS) \
+    case COLS: launch_rows<0>(tile, rows, 0, ops41sycl::GemvQ8P<COLS / 32, Act>{rows, xn}, (const uint8_t *)w, x, y); break;
+            X(1280) X(2304) X(4096) X(5120) X(8192)
+#undef X
+        default: throw std::runtime_error("no packed Q8_0 kernel for cols " + std::to_string(cols));
+        }
+        (void)e;
+    }
+    // any packed dense format (pk41::packable); xn as gemv_q8p
+    void gemv_kp(int tile, const WeightTab::E &e, const void *w, const act_t *x, act_t *y, unsigned rows, unsigned xn,
+                 unsigned cols, const std::string &wn) {
+        const auto *wb = (const uint8_t *)w;
+#define X(KERN, NB)                                                                                        \
+    if (cols == NB * 256) {                                                                                \
+        launch_rows<0>(tile, rows, 0, ops41sycl::KERN<NB, Act>{rows, xn}, wb, x, y);                       \
+        return;                                                                                            \
+    }
+        if (e.type == iq3::Type::Q8_0) return gemv_q8p(tile, e, w, x, y, rows, xn, cols);
+        if (e.type == iq3::Type::Q6_K) { X(GemvQ6KP, 5) X(GemvQ6KP, 16) X(GemvQ6KP, 20) X(GemvQ6KP, 24) X(GemvQ6KP, 32) }
+        if (e.type == iq3::Type::Q5_K) { X(GemvQ5KP, 9) X(GemvQ5KP, 20) }
+#undef X
+        throw std::runtime_error("packed dense kernel missing: " + wn);
+    }
+#endif
     // One kernel per weight format (OWN_GENERIC_KERNELS=1 selects the
     // runtime-type kernels instead; outputs are bit-identical either way).
     void gemv(int tile, const std::string &wn, const act_t *x, void *y, bool f32out = false) {
         const auto &e = we(wn);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+#ifndef OWN41_ACT_BF16
+        if (const auto &dp = wgt.at(wn); dp.packed) { // f32 activations: f32out is the same store
+            gemv_kp(tile, e, dp.p, x, (act_t *)y, rows, 0, cols, wn);
+            return;
+        }
+        // F32 rows need no packing: block-read kernel (the router logits, 5120 columns)
+        if (o.packed && e.type == iq3::Type::F32 && cols == 5120) {
+            launch_rows<0>(tile, rows, 0, ops41sycl::GemvF32P<160, Act>{rows}, (const uint8_t *)wp(wn), x, (act_t *)y);
+            return;
+        }
+#endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)rows, ops41sycl::Gemv{e.type, rows, cols, f32out}, wp(wn), wrb(e), x, y);
@@ -806,6 +997,12 @@ private:
         const auto &e = we(wn);
         if (e.rows != g.ototal || e.cols != g.oin) throw std::runtime_error("attn_output_a shape");
         const unsigned n = (unsigned)(g.ototal / 8), k = (unsigned)g.oin;
+#ifndef OWN41_ACT_BF16
+        if (const auto &dp = wgt.at(wn); dp.packed) {
+            gemv_kp(tile, e, dp.p, x, y, (unsigned)e.rows, n, k, wn);
+            return;
+        }
+#endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQ{e.type, n, k}, wp(wn), wrb(e), x, y);
@@ -828,6 +1025,27 @@ private:
                      bool per_slot) {
         const auto &e = we(wn);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+#ifndef OWN41_ACT_BF16
+        if (const auto &dp = wgt.at(wn); dp.packed) {
+            const auto *w = (const uint8_t *)dp.p;
+            // 128 work-groups (2,048 sub-groups): best for every format and shape in
+            // the 2026-11-09 kernel bench (each fills its local table once)
+            constexpr size_t MAXWG = 128;
+#define X(TY, KERN, NB)                                                                                    \
+    if (e.type == iq3::Type::TY && cols == NB * 256) {                                                     \
+        using K = ops41sycl::KERN<NB, Act>;                                                                \
+        launch_rows<K::TAB>(tile, (size_t)6 * rows, MAXWG, K{rows, per_slot}, w, x, ids, y);               \
+        return;                                                                                            \
+    }
+            X(IQ2_XXS, RoutedIQ2XXSP, 20) X(IQ2_XXS, RoutedIQ2XXSP, 9)
+            X(IQ2_S, RoutedIQ2SP, 20) X(IQ2_S, RoutedIQ2SP, 9)
+            X(IQ3_XXS, RoutedIQ3XXSP, 20) X(IQ3_XXS, RoutedIQ3XXSP, 9)
+            X(IQ2_XS, RoutedIQ2XSP, 20) X(IQ2_XS, RoutedIQ2XSP, 9)
+            X(IQ1_S, RoutedIQ1SP, 20) X(IQ1_S, RoutedIQ1SP, 9)
+#undef X
+            throw std::runtime_error("packed routed kernel missing: " + wn);
+        }
+#endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
             launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemv{e.type, rows, cols, per_slot}, wp(wn), x, ids, y);
@@ -847,8 +1065,20 @@ private:
         default: throw std::runtime_error("unsupported weight format: " + wn);
         }
     }
+    static bool al16(const void *p) { return ((uintptr_t)p & 15u) == 0; }
     void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
-        launch_sg(tile, 1, ops41sycl::RmsNormA<Act>{n}, x, wp<float>(wn), y);
+        const float *w = wp<float>(wn);
+#ifndef OWN41_ACT_BF16
+        if (o.small_fast && al16(x) && al16(w)) {
+            switch (n) {
+            case 512: launch_sg(tile, 1, ops41sycl::RmsNormP<512>{}, x, w, y); return;
+            case 1280: launch_sg(tile, 1, ops41sycl::RmsNormP<1280>{}, x, w, y); return;
+            case 5120: launch_sg(tile, 1, ops41sycl::RmsNormP<5120>{}, x, w, y); return;
+            default: break;
+            }
+        }
+#endif
+        launch_sg(tile, 1, ops41sycl::RmsNormA<Act>{n}, x, w, y);
     }
     void rope(int tile, act_t *x, int rows, int d, long p_, bool yarn, bool inv) {
         if (p_ < 0 || p_ >= max_seq) throw std::runtime_error("position beyond max_seq");
@@ -905,8 +1135,16 @@ private:
         auto &s = sc[t];
         // lane/tree reduction (anchor ops41::hc_mix_lanes); the serial-order
         // HcMixDots kernel cost ~3 ms per call
-        launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDots32A<Act>{g.h, HC_SEG}, (const act_t *)streams[t],
-                  wp<float>(prefix + "fn.weight"), s.d25);
+        const float *fn = wp<float>(prefix + "fn.weight");
+#ifndef OWN41_ACT_BF16
+        if (o.small_fast && g.h == 5120 && HC_SEG == 8 && al16(streams[t]) && al16(fn)) {
+            launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDotsP<5120, HC_SEG>{}, (const act_t *)streams[t], fn, s.d25);
+            launch_sg(t, 1, ops41sycl::HcMixFinishSG{g.h, HC_SEG}, (const double *)s.d25,
+                      wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
+            return;
+        }
+#endif
+        launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDots32A<Act>{g.h, HC_SEG}, (const act_t *)streams[t], fn, s.d25);
         launch(t, 1, 1, ops41sycl::HcMixFinishSeg{g.h, HC_SEG}, (const double *)s.d25,
                wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
     }
@@ -1000,7 +1238,11 @@ private:
         prof("attn_kv", t);
         tra(L, TT_Q, t, s.q, (size_t)g.qh * g.hd);
         tra(L, TT_KV, t, s.kvn, g.hd);
-        launch(t, 1, 1, ops41sycl::WindowAppendA<Act>{128, g.hd, (int)pos}, ring[L], (const act_t *)s.kvn, s.widx);
+        // small_fast: the window append moves below, fused with building the index list
+        // (nothing between reads the ring or the window indices)
+        const bool fast_win = o.small_fast && g.hd <= 1024;
+        if (!fast_win)
+            launch(t, 1, 1, ops41sycl::WindowAppendA<Act>{128, g.hd, (int)pos}, ring[L], (const act_t *)s.kvn, s.widx);
         int si = src_index(L);
         int n_idx = 128;
         if (cr) {
@@ -1008,13 +1250,40 @@ private:
             if (index_slot(L) >= 0) { index(L, t, si, yarn); prof("index", t); }
             sync_rows(t, si);
             sync_cidx(t, isrc_for(L));
-            qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
-            qs[t].memcpy(s.idxs_cat + 128, cidx_mirror[t][isrc_for(L)], 512 * 4);
+            if (fast_win) {
+                launch(t, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 512}, ring[L],
+                       (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)cidx_mirror[t][isrc_for(L)]);
+            } else {
+                qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
+                qs[t].memcpy(s.idxs_cat + 128, cidx_mirror[t][isrc_for(L)], 512 * 4);
+            }
             n_idx += 512;
             tri(L, TT_CIDX, t, s.idxs_cat + 128, 512);
+        } else if (fast_win) {
+            launch(t, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 0}, ring[L],
+                   (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
         } else {
             qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
         }
+#ifndef OWN41_ACT_BF16
+        if (o.small_fast && g.hd == 512 && (n_idx == 128 || n_idx == 640) && g.qh % 4 == 0) {
+            // same per-output arithmetic as the three launches below (test_small_v41_device.cpp)
+            const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
+            const float *sinks = wp<float>(p + "attn_sinks.weight");
+            const int32_t *ix = (const int32_t *)s.idxs_cat;
+            if (n_idx == 128) {
+                launch_sg(t, (size_t)g.qh * n_idx / 32, ops41sycl::SparseScoreP<512>{n_idx, g.qh, 128, g.hd},
+                          (const act_t *)s.q, kvw, kvc, ix, s.attn_w);
+                launch_sg(t, g.qh, ops41sycl::SparseSoftmaxP<128>{g.qh}, sinks, ix, s.attn_w);
+            } else {
+                launch_sg(t, (size_t)(g.qh / 4) * (n_idx / 32), ops41sycl::SparseScoreHG<512, 4>{n_idx, g.qh, 128, g.hd},
+                          (const act_t *)s.q, kvw, kvc, ix, s.attn_w);
+                launch_sg(t, g.qh, ops41sycl::SparseSoftmaxP<640>{g.qh}, sinks, ix, s.attn_w);
+            }
+            launch_sg(t, (size_t)g.qh * g.hd / 64, ops41sycl::SparseOutJ<512, 2>{n_idx, g.qh, 128}, kvw, kvc, ix,
+                      (const float *)s.attn_w, s.of);
+        } else
+#endif
         { // three launches, same arithmetic order as the one-launch SparseAttn kernel
             const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
             launch(t, (size_t)g.qh * n_idx, 32, ops41sycl::SparseScoreA<Act>{n_idx, g.qh, g.hd, 128},
@@ -1092,10 +1361,16 @@ private:
                    s.score_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
             if (pos % 2 == 0) return; // group not complete yet
             gpos = pos - 1;           // a latent stands for the first token of its group
-            launch(t, 1, 1, ops41sycl::CompressPoolA<Act>{2, g.hd},
-                   (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
-                   (const float *)(s.score_state + (size_t)si * 2 * g.hd),
-                   wp<float>(p + "attn_compressor_norm.weight"), s.latent);
+            if (o.small_fast && g.hd <= 1024)
+                launch_local<1024>(t, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
+                                   (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
+                                   (const float *)(s.score_state + (size_t)si * 2 * g.hd),
+                                   wp<float>(p + "attn_compressor_norm.weight"), s.latent);
+            else
+                launch(t, 1, 1, ops41sycl::CompressPoolA<Act>{2, g.hd},
+                       (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
+                       (const float *)(s.score_state + (size_t)si * 2 * g.hd),
+                       wp<float>(p + "attn_compressor_norm.weight"), s.latent);
         }
         // reference order: ik = rope(k_norm(wk * latent)); ckv = rope(latent)
         gemv(t, p + "indexer.attn_k.weight", s.latent, s.kk);
@@ -1185,12 +1460,18 @@ private:
         auto &s = sc[t];
         const std::string p = "blk." + std::to_string(L) + ".";
         gemv(t, p + "ffn_gate_inp.weight", s.xn, s.router, true); // router logits stay f32
-        // three launches, same picks and arithmetic as the one-work-item RouteF32
-        launch(t, g.experts, 32, ops41sycl::RouteScore{g.experts}, (const float *)s.router,
-               wp<float>(p + "exp_probs_b.bias"), s.rs, s.rsb);
-        launch(t, g.experts, 32, ops41sycl::RouteRank{g.experts, 6}, (const float *)s.rs, (const float *)s.rsb,
-               s.ids, s.prob);
-        launch(t, 1, 1, ops41sycl::RouteNorm{6}, s.prob);
+        if (o.small_fast && g.experts % 32 == 0 && g.experts <= 1024) {
+            // one work-group, same picks and arithmetic (test_small_v41_device.cpp)
+            launch_local<2 * 1024 + 6>(t, (size_t)g.experts, ops41sycl::RouteP{g.experts, 6}, (const float *)s.router,
+                                       wp<float>(p + "exp_probs_b.bias"), s.ids, s.prob);
+        } else {
+            // three launches, same picks and arithmetic as the one-work-item RouteF32
+            launch(t, g.experts, 32, ops41sycl::RouteScore{g.experts}, (const float *)s.router,
+                   wp<float>(p + "exp_probs_b.bias"), s.rs, s.rsb);
+            launch(t, g.experts, 32, ops41sycl::RouteRank{g.experts, 6}, (const float *)s.rs, (const float *)s.rsb,
+                   s.ids, s.prob);
+            launch(t, 1, 1, ops41sycl::RouteNorm{6}, s.prob);
+        }
         prof("router", t);
         routed_gemv(t, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
         prof("exp_gate", t);
@@ -1253,6 +1534,13 @@ private:
         auto ev = qs[t].memcpy(s.eng_rows, rows.data(), rows.size() * sizeof(act_t));
         if (h2d_wait) ev.wait();
         gemv(t, p + "engram_kv.weight", s.eng_rows, s.kvbuf);
+#ifndef OWN41_ACT_BF16
+        if (o.small_fast && g.h % 32 == 0) {
+            launch_sg(t, 4, ops41sycl::EngramGateP{g.h}, streams[t], (const act_t *)s.kvbuf,
+                      wp<float>(p + "engram_gate.weight"));
+            return;
+        }
+#endif
         launch(t, 4, 4, ops41sycl::EngramGateA<Act>{g.h}, streams[t], (const act_t *)s.kvbuf,
                wp<float>(p + "engram_gate.weight"));
     }

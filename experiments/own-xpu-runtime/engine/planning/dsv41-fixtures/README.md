@@ -171,6 +171,26 @@ tok/s since 18:10). Activations are f32 by default (`-DOWN41_ACT_BF16` for the f
 BF16-activation build); KV rows are BF16. With f32 activations all 40 greedy
 tokens of prompt 1 equal the reference run with `OWN_KV_BF16=1`.
 
+Since 2026-11-09 19:45 EST: 28 tok/s (packed weight rows + latency forms of the
+small operators, decode trace byte-identical to the 9 tok/s build; lane note
+section 11). Switches: `OWN_PACKED=0` raw rows and the old kernels,
+`OWN_SMALL=0` the old small operators, `OWN_GPROF=1` GPU time per operator
+group (profiling barriers, not a speed run), `OWN_GPROF=2` also GPU time per
+kernel type. Gates for the new kernels (each against the kernel it replaces,
+bitwise on every output; exit status = failures):
+
+```bash
+$ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv41-fixtures -I src \
+  planning/dsv41-fixtures/test_packed_v41_device.cpp -o /tmp/test_packed41   # packed weight kernels
+$ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv41-fixtures -I src \
+  planning/dsv41-fixtures/test_small_v41_device.cpp -o /tmp/test_small41     # norm, mix, attention, router, ...
+/tmp/test_packed41 5; /tmp/test_small41 5    # card index; ONLY=<name> filters test_packed41
+```
+
+Every routed (expert) kernel reads its quant words with `row_words<NW>`: a
+32-word block read past the end of a short row page-faulted a card on
+2026-11-09 (`data/fault-20261109-rq-bench/`).
+
 ## SYCL probe (2026-11-09)
 
 `sycl_probe_gemv.cpp`: device gemv over real IQ1_S/IQ2_XXS tensor slices on
