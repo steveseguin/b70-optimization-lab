@@ -194,6 +194,11 @@ public:
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
         bool diet = true;       // tp: neighbouring launches merged (OWN_DIET=0: one launch per operator as before)
+        bool down_ex = false;   // tp: shared expert down rows inside the expert down launch (OWN_DOWN_EX=1; no gain)
+        bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
+                                // launch ends only when its prefetch work-groups do)
+        bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
+        bool exp_pair = true;   // tp: expert gate + up rows in one launch (OWN_EXP_PAIR=0: two launches)
         bool eng_split = true;  // tp: engram_kv rows split across the cards, pushed at step start (OWN_ENG_SPLIT=0: every card all rows)
     };
     struct DevPtr {
@@ -1018,6 +1023,24 @@ private:
         });
         kev(tile, kname<K>(), e);
     }
+    // launch_sg plus work-groups that prefetch [p, p + bytes) into the card's cache (WithPf); plain launch_sg
+    // when there is nothing to prefetch
+    struct Pf {
+        const void *p = nullptr;
+        size_t bytes = 0;
+    };
+    Pf pf_of(int tile, const std::string &wn) {
+        if (!o.pf) return {};
+        const auto &dp = wgt[tile].at(wn);
+        return {dp.p, dp.bytes};
+    }
+    template <typename K, typename... A> void launch_sg_pf(int tile, size_t groups, Pf pf, K k, A... args) {
+        if (!pf.p || !pf.bytes) return launch_sg(tile, groups, k, args...);
+        const uintptr_t a = (uintptr_t)pf.p & ~(uintptr_t)63;
+        const unsigned lines = (unsigned)(((uintptr_t)pf.p + pf.bytes - a + 63) / 64);
+        const size_t npg = std::min<size_t>(1024, (lines + 127) / 128);
+        launch_sg(tile, groups + npg, ops41sycl::WithPf<K>{k, (unsigned)groups, (const uint8_t *)a, lines}, args...);
+    }
     // one work-group of `items` (a multiple of 32), 32-lane sub-groups, no local memory
     template <typename K, typename... A> void launch_wg(int tile, size_t items, K k, A... args) {
         auto e = qs[tile].submit([&](sycl::handler &hh) {
@@ -1286,6 +1309,87 @@ private:
         default: throw std::runtime_error("unsupported weight format: " + wn);
         }
     }
+#ifndef OWN41_ACT_BF16
+    // two routed matrices of the same format and shape on the same x (expert gate + up) in one launch: rows
+    // 6 * rows .. 12 * rows - 1 of the launch are the second matrix's (same per-row code); false when unfit
+    bool routed_pair_fits(int tile, const std::string &wa, const std::string &wb) {
+        const auto &ea = we(wa), &eb = we(wb);
+        const auto &da = wgt[tile].at(wa), &db = wgt[tile].at(wb);
+        if (!da.packed || !db.packed || ea.type != eb.type || ea.cols != eb.cols || da.nrows != db.nrows) return false;
+        if (ea.cols != 20 * 256) return false;
+        const auto t = ea.type;
+        return t == iq3::Type::IQ2_XXS || t == iq3::Type::IQ2_S || t == iq3::Type::IQ3_XXS || t == iq3::Type::IQ2_XS ||
+               t == iq3::Type::IQ1_S;
+    }
+    // ... plus extra rows EX (placed first: a long one starts at once)
+    template <typename EX = ops41sycl::NoRows>
+    bool routed_pair(int tile, const std::string &wa, const std::string &wb, const act_t *x, const uint32_t *ids,
+                     act_t *ya, act_t *yb, EX ex = {}) {
+        if (!routed_pair_fits(tile, wa, wb)) return false;
+        const auto &ea = we(wa);
+        const auto &da = wgt[tile].at(wa), &db = wgt[tile].at(wb);
+        const unsigned rows = da.nrows;
+        const auto *w = (const uint8_t *)da.p;
+        constexpr size_t MAXWG = 128;
+        auto go = [&](auto kt) {
+            using K = typename decltype(kt)::type;
+            K k{rows, false, ex};
+            k.w2 = (const uint8_t *)db.p;
+            k.out2 = yb;
+            launch_rows<K::TAB>(tile, (size_t)12 * rows + ex.n(), MAXWG, k, w, x, ids, ya);
+            return true;
+        };
+        using namespace ops41sycl;
+        switch (ea.type) {
+        case iq3::Type::IQ2_XXS: return go(std::type_identity<RoutedIQ2XXSP<20, Act, EX>>{});
+        case iq3::Type::IQ2_S: return go(std::type_identity<RoutedIQ2SP<20, Act, EX>>{});
+        case iq3::Type::IQ3_XXS: return go(std::type_identity<RoutedIQ3XXSP<20, Act, EX>>{});
+        case iq3::Type::IQ2_XS: return go(std::type_identity<RoutedIQ2XSP<20, Act, EX>>{});
+        case iq3::Type::IQ1_S: return go(std::type_identity<RoutedIQ1SP<20, Act, true, EX>>{});
+        default: return false;
+        }
+    }
+    // routed_gemv (packed rows) with extra rows EX spread through the same launch; false when unfit
+    template <typename EX>
+    bool routed_gemv_ex(int tile, const std::string &wn, const act_t *x, const uint32_t *ids, act_t *y, bool per_slot,
+                        EX ex) {
+        const auto &e = we(wn);
+        const auto &dp = wgt[tile].at(wn);
+        if (!dp.packed) return false;
+        const unsigned rows = dp.nrows, cols = (unsigned)e.cols;
+        const auto *w = (const uint8_t *)dp.p;
+        constexpr size_t MAXWG = 128;
+        if (cols != 9 * 256) return false;
+        auto go = [&](auto kt) {
+            using K = typename decltype(kt)::type;
+            launch_rows<K::TAB>(tile, (size_t)6 * rows + ex.n(), MAXWG, K{rows, per_slot, ex}, w, x, ids, y);
+            return true;
+        };
+        using namespace ops41sycl;
+        if (e.type == iq3::Type::IQ2_XXS) return go(std::type_identity<RoutedIQ2XXSP<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ2_S) return go(std::type_identity<RoutedIQ2SP<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ3_XXS) return go(std::type_identity<RoutedIQ3XXSP<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ2_XS) return go(std::type_identity<RoutedIQ2XSP<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ1_S) return go(std::type_identity<RoutedIQ1SP<9, Act, true, EX>>{});
+        return false;
+    }
+    // expert down rows with the shared expert's down rows in the same launch
+    bool down_with_shared(int c, const std::string &p) {
+        auto &s = sc[c];
+        const std::string wn = p + "ffn_down_shexp.weight";
+        const auto &es = we(wn);
+        const auto &ds = wgt[c].at(wn);
+        if (!ds.packed || es.cols != 2304) return false;
+        const act_t *xs = s.act + (size_t)6 * g.mid;
+        if (es.type == iq3::Type::Q8_0)
+            return routed_gemv_ex(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true,
+                                  ops41sycl::DenseRows<ops41sycl::GemvQ8P<72, Act>>{{ds.nrows, 0}, (const uint8_t *)ds.p, xs, s.shd});
+        if (es.type == iq3::Type::Q5_K)
+            return routed_gemv_ex(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true,
+                                  ops41sycl::DenseRows<ops41sycl::GemvQ5KP<9, Act>>{{ds.nrows, 0}, (const uint8_t *)ds.p, xs, s.shd});
+        return false;
+    }
+#endif
     static bool al16(const void *p) { return ((uintptr_t)p & 15u) == 0; }
     void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
         const float *w = wp<float>(tile, wn);
@@ -1861,6 +1965,7 @@ private:
     unsigned xoa = 0, xob = 0, xact = 0, xeng = 0;
     int te0[TILES] = {}, te1[TILES] = {}; // engram_kv rows per card (eng_split)
     uint32_t eng_seq[TILES] = {};         // the engram push's exchange number
+    bool fin_attn[TILES] = {};            // fin_move: this layer's attention mix finish waits for output-b's launch
     float *xarena[TILES] = {};
     void *xpeer[TILES][TILES] = {};
     uint32_t *xerr[TILES] = {};
@@ -2082,10 +2187,16 @@ private:
                             {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
                 launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
                 prof("attn_q_a", c);
-                gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
-                             ops41sycl::RowsPair<ops41sycl::HcFinishRows, ops41sycl::RopeRows<Act>>{
-                                 hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a),
-                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}});
+                if (o.fin_move) { // the mix's finish rides in output-b's launch instead (case 2)
+                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
+                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false});
+                    fin_attn[c] = true;
+                } else {
+                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
+                                 ops41sycl::RowsPair<ops41sycl::HcFinishRows, ops41sycl::RopeRows<Act>>{
+                                     hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a),
+                                     ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}});
+                }
                 launch_rows<0>(c, (size_t)nh, 0,
                                ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{
                                    {s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
@@ -2145,17 +2256,20 @@ private:
             if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("tensor parallel: kv alignment");
             const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
             const int32_t *ix = (const int32_t *)s.idxs_cat;
+            // the attention reads little: output-a's and output-b's rows are pulled into the cache meanwhile
+            const Pf pfa = pf_of(c, p + "attn_output_a.weight"), pfb = pf_of(c, p + "attn_output_b.weight");
             if (n_idx == 128) {
-                launch_sg(c, (size_t)nh * n_idx / 32, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
-                          (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
+                launch_sg_pf(c, (size_t)nh * n_idx / 32, pfa, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
+                             (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<128>{nh}, sinks, ix, s.attn_w);
             } else {
-                launch_sg(c, (size_t)(nh / 4) * (n_idx / 32), ops41sycl::SparseScoreHG<512, 4>{n_idx, nh, 128, g.hd},
-                          (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
+                launch_sg_pf(c, (size_t)(nh / 4) * (n_idx / 32), pfa,
+                             ops41sycl::SparseScoreHG<512, 4>{n_idx, nh, 128, g.hd}, (const act_t *)(s.q + qo), kvw,
+                             kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
             }
-            launch_sg(c, (size_t)nh * g.hd / 64, ops41sycl::SparseOutJB<512, 1, 16>{n_idx, nh, 128}, kvw, kvc, ix,
-                      (const float *)s.attn_w, s.of + qo);
+            launch_sg_pf(c, (size_t)nh * g.hd / 64, pfb, ops41sycl::SparseOutJB<512, 1, 16>{n_idx, nh, 128}, kvw, kvc,
+                         ix, (const float *)s.attn_w, s.of + qo);
             prof("sparse_attn", c);
             if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
@@ -2170,7 +2284,13 @@ private:
             break;
         }
         case 2:
-            gemv_part(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c]);
+            if (fin_attn[c]) {
+                gemv_part_ex(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c],
+                             hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
+                fin_attn[c] = false;
+            } else {
+                gemv_part(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c]);
+            }
             prof("attn_o_b", c);
             xchg(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
             prof("xchg", c);
@@ -2195,17 +2315,27 @@ private:
                 pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
             }
             prof("hc_pre_norm", c);
+            // with the expert gate + up launch the FFN mix's finish rides there (a long launch, finish first)
+            const bool fin_pair = ride && o.fin_move && o.exp_pair &&
+                                  routed_pair_fits(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight");
             if (ride) {
                 gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
-                route_shared_tp(c, p, hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
+                if (fin_pair) route_shared_tp(c, p);
+                else route_shared_tp(c, p, hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
             } else {
                 gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
                 route_shared_tp(c, p);
             }
             prof("router", c);
-            routed_gemv(c, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
-            prof("exp_gate", c);
-            routed_gemv(c, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
+            if (fin_pair) {
+                routed_pair(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight", s.xn, s.ids, s.expg, s.expu,
+                            hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
+            } else if (!o.exp_pair ||
+                       !routed_pair(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight", s.xn, s.ids, s.expg, s.expu)) {
+                routed_gemv(c, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
+                prof("exp_gate", c);
+                routed_gemv(c, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
+            }
             prof("exp_up", c);
             const int nm = tm1[c] - tm0[c];
             launch(c, (size_t)7 * nm, 64, ops41sycl::SwigluBothS<Act>{6, nm, 10.0f, g.mid}, (const act_t *)s.expg,
@@ -2216,10 +2346,12 @@ private:
             break;
         }
         case 4: {
-            routed_gemv(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
-            prof("exp_down", c);
             const int nd = td1[c] - td0[c];
-            gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
+            if (!o.down_ex || !down_with_shared(c, p)) {
+                routed_gemv(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
+                prof("exp_down", c);
+                gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
+            }
             launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
                    s.ob + td0[c]);
             prof("shared", c);
@@ -2368,6 +2500,7 @@ private:
     void tp_card_step(int c) {
         const double t0 = now_s();
         x_ready[c] = false; // a step that failed part-way must not leave it set
+        fin_attn[c] = false;
         tp_engram_upload(c);
         if (o.layer_begin == 0) tp_embed(c, tp_tok);
         else twait(c);
@@ -2459,7 +2592,7 @@ private:
     // one host thread for every card in phase order (trace runs): every card's
     // kernels of a phase, exchanges included, are queued before any host wait
     void tp_step_serial(int32_t token) {
-        for (int c = 0; c < o.tp; ++c) x_ready[c] = false;
+        for (int c = 0; c < o.tp; ++c) x_ready[c] = fin_attn[c] = false;
         for (int c = 0; c < o.tp; ++c) tp_engram_upload(c);
         if (o.layer_begin == 0) {
             for (int c = 0; c < o.tp; ++c) tp_embed(c, token);
@@ -2473,6 +2606,13 @@ private:
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) {
                 for (int c = 0; c < o.tp; ++c) tp_phase(L, c, ph);
+                // fin_move: the attention mix is final only after phase 2; the records of phases 0-1 are
+                // read then (in the same order; nothing they read changes before phase 3)
+                if (o.fin_move && ph < 2) continue;
+                if (o.fin_move && ph == 2) {
+                    tp_trace(L, 0);
+                    tp_trace(L, 1);
+                }
                 tp_trace(L, ph);
             }
         if (o.head) {

@@ -439,6 +439,34 @@ one more exchange per layer, so it stays.
 Gate (`round10-engsplit-gate-summary.txt`): 3-step trace `cmp`-identical (`OWN_TP=6`), 40- and 128-token answers
 identical, no fault line; 68.50 / 68.33 tok/s against 66.95 with `OWN_ENG_SPLIT=0` in the same session.
 
+## 17. Expert gate + up in one launch, softmax chain: 68.3 -> 71.2-71.7 tok/s (21:55-22:20 EST)
+
+- **`OWN_EXP_PAIR`** (default on). The routed kernels run as 128 persistent work-groups (2,048 sub-groups, what
+  a card holds at once at 128 registers). With six-way splitting a card's gate launch has 6 x 384 = 2,304 rows:
+  one full round and a second round of 256 rows that costs nearly a full round (the kernels are ALU-bound, about
+  10.8 us per round for IQ2_XXS). Gate and up now run in one launch (`w2`/`out2` in the routed kernels: rows
+  6 x rows .. 12 x rows read the second matrix; same per-row code), 4,608 rows = 2.25 rounds instead of 2 x 2.
+  68.08 -> 71.14 / 71.11 tok/s (`round11-exppair-gate-summary.txt`).
+- **Softmax chain** (`SparseSoftmaxP`): the element-order sum skipped unused slots with a select inside the
+  chain; they now add +0, which leaves a sum of exp terms (>= +0) unchanged, so the chain is one add per element.
+  Bench 22.96 -> 12.25 us (differ 0 of 10,240); in the step 10.5 -> 5.3 us per layer.
+- Profile (card 0, `round11-tp6-kernel-profile-card0.log`): kernels 12.8 ms of a 15.0 ms profiled step, 1,086
+  launches; exchanges 2.0 ms, experts 3.2 ms, router + shared 1.5 ms, norms 0.8 ms, attention 1.2 ms.
+
+Tried and left off (switches kept, results in `round11-*`):
+- `OWN_DOWN_EX=1`: the shared expert's down rows as extra rows of the expert down launch (6 x 853 + 853 rows =
+  2.9 rounds). 70.45 / 69.74 against 70.72: no gain.
+- `OWN_FIN_MOVE=1`: the stream-mix finishes ride in output-b's and the expert pair's launches instead of
+  query-b's and the router-select launch. Byte-identical, but 70.23 / 69.49 against 71.48.
+- `OWN_PF=1`: extra work-groups in the attention launches prefetch output-a/b rows into the card's 24 MiB cache.
+  Output-b 15.95 -> 11.93 us and output-a 10.11 -> 7.29 us, but the score and output launches grow by 6.7 and
+  9.6 us because a launch ends only when its prefetch work-groups do: 68.83 / 68.35 against 71.47 / 71.34.
+  Bench (`bench_l2`, card 0): a 5.6 MB Q8_0 GEMV takes 12.9 us from memory, 9.8 us from the cache after a
+  separate prefetch, 7.0 us right after itself; pulling 5.6 MB into the cache takes ~10 us.
+
+Gate (defaults, `round11-defaults-gate-summary.txt`): 3-step trace `cmp`-identical for `OWN_TP=6` and the
+one-card-per-layer layout, 40- and 128-token answers identical, no fault line; 71.68 / 71.23 tok/s.
+
 ## Reproduce
 
 ```bash

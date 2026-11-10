@@ -8,6 +8,7 @@
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #include "stage2/packet2/kernels/math.hpp"
 #include "stage2/packet3/kernels/ops_v41.hpp"
+#include <sycl/ext/oneapi/experimental/prefetch.hpp>
 
 namespace ops41sycl {
 using iq3::Type;
@@ -1417,30 +1418,38 @@ template <typename R1, typename R2> struct RowsPair {
 };
 
 // Row positions p = sub-group, sub-group + stride, ...; with ne extra rows the
-// ne of nt positions are spread evenly (position p is extra when floor((p+1)ne/nt)
-// > floor(p ne/nt)), so every sub-group runs some of each kind.
+// ne of nt positions are spread evenly (position p is extra when ceil((p+1)ne/nt)
+// > ceil(p ne/nt): position 0 is always one, so a single long extra row starts at once).
 #define OWN41_ROUTED_ROWS_BEGIN(RB)                                                              \
     const unsigned stride = (unsigned)(it.get_global_range(0) / 32);                             \
-    const unsigned nr_ = 6 * rows, ne_ = ex.n(), nt_ = nr_ + ne_;                                 \
+    const unsigned nr_ = (w2 ? 12 : 6) * rows, ne_ = ex.n(), nt_ = nr_ + ne_;                     \
     for (unsigned p_ = packed_row_id(it); p_ < nt_; p_ += stride) {                              \
         unsigned grp = p_;                                                                        \
         if (ne_) {                                                                                \
-            const unsigned d0 = (unsigned)((uint64_t)p_ * ne_ / nt_);                             \
-            const unsigned d1 = (unsigned)((uint64_t)(p_ + 1) * ne_ / nt_);                       \
+            const unsigned d0 = (unsigned)(((uint64_t)p_ * ne_ + nt_ - 1) / nt_);                 \
+            const unsigned d1 = (unsigned)(((uint64_t)(p_ + 1) * ne_ + nt_ - 1) / nt_);           \
             if (d1 > d0) {                                                                        \
                 ex.row(sg, lane, d0);                                                             \
                 continue;                                                                         \
             }                                                                                     \
             grp = p_ - d1;                                                                        \
         }                                                                                         \
-        const unsigned slot = grp / rows, r = grp % rows;                                         \
-        const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * (RB);                           \
+        unsigned slot = grp / rows;                                                               \
+        const unsigned r = grp % rows;                                                            \
+        const uint8_t *wm_ = w;                                                                   \
+        float *om_ = out;                                                                         \
+        if (slot >= 6) {                                                                          \
+            slot -= 6;                                                                            \
+            wm_ = w2;                                                                             \
+            om_ = out2;                                                                           \
+        }                                                                                         \
+        const uint8_t *row = wm_ + ((size_t)ids[slot] * rows + r) * (RB);                         \
         const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);                             \
         const float *xs = per_slot_x ? x + (size_t)slot * NB * 256 : x;                           \
         float sum = 0;
 #define OWN41_ROUTED_ROWS_END                                                                     \
         for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_); \
-        if (lane == 0) out[slot * rows + r] = sum;                                                \
+        if (lane == 0) om_[slot * rows + r] = sum;                                                \
     }
 
 // Routed IQ2_XXS over packed rows (sign words expanded to 8 bits per group
@@ -1456,6 +1465,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSP {
     unsigned rows; // per-expert rows
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
+    // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
+    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1505,6 +1518,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SP {
     unsigned rows;
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
+    // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
+    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1566,6 +1583,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ3XXSP {
     unsigned rows;
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
+    // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
+    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1618,6 +1639,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XSP {
     unsigned rows;
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
+    // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
+    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1676,6 +1701,10 @@ template <unsigned NB, typename A, bool BYTES = true, typename EX = NoRows> stru
     unsigned rows;
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
+    // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
+    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         int8_t *btab = reinterpret_cast<int8_t *>(tab);
@@ -2186,17 +2215,19 @@ template <int NI> struct SparseSoftmaxP {
             const float o = sycl::select_from_group(sg, mx, lane ^ w_);
             mx = o > mx ? o : mx;
         }
+        // element order; a skipped slot adds +0, which leaves the sum (>= +0: exp terms) unchanged, so the
+        // chain is one add per element instead of an add and a select
         float sum = sycl::exp(sk - mx);
+        float e0[K];
 #pragma unroll
         for (int k = 0; k < K; ++k) {
             if (ok[k]) v[k] = sycl::exp(v[k] - mx);
-#pragma unroll
-            for (int l2 = 0; l2 < 32; ++l2) {
-                const float e = sycl::select_from_group(sg, v[k], l2);
-                const int o2 = sycl::select_from_group(sg, ok[k], l2);
-                if (o2) sum += e;
-            }
+            e0[k] = ok[k] ? v[k] : 0.0f;
         }
+#pragma unroll
+        for (int k = 0; k < K; ++k)
+#pragma unroll
+            for (int l2 = 0; l2 < 32; ++l2) sum += sycl::select_from_group(sg, e0[k], l2);
 #pragma unroll
         for (int k = 0; k < K; ++k)
             if (ok[k]) s[32 * k + lane] = v[k] / sum;
@@ -2999,6 +3030,27 @@ template <unsigned N, unsigned S> struct HcPreNormPS {
 // costs every launch a driver-wide lock shared by all cards' threads (and,
 // with DisableIndirectAccess=1, a peer arena reached only that way would
 // never be made resident on this card).
+// K's work-groups [0, nmain) exactly as launched alone; the work-groups after them pull a byte range into
+// the card's cache (prefetch: nothing is returned or written) for a matrix launch that comes later, while K
+// itself is latency-bound and the memory is idle. K's arithmetic is untouched.
+template <typename K> struct WithPf {
+    K k;
+    unsigned nmain;
+    const uint8_t *pf; // 64-byte lines from here
+    unsigned lines;
+    template <typename... A> [[gnu::flatten]] void operator()(sycl::nd_item<1> it, A... a) const {
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g < nmain) {
+            k(it, a...);
+            return;
+        }
+        namespace ex = sycl::ext::oneapi::experimental;
+        const unsigned L = (unsigned)it.get_local_range(0), np = (unsigned)it.get_group_range(0) - nmain;
+        for (unsigned i = (g - nmain) * L + (unsigned)it.get_local_linear_id(); i < lines; i += np * L)
+            ex::prefetch((void *)(pf + (size_t)i * 64), ex::properties{ex::prefetch_hint_L3});
+    }
+};
+
 struct XchgP {
     int n, me;
     unsigned off, stride, nslot, r0, r1;
