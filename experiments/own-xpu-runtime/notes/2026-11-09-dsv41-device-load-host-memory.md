@@ -256,10 +256,15 @@ against the kernel it replaces (bitwise, every output).
 | p8 (20:05) | four fused small kernels: stream post-mix (+ the pre-mix copy, no stream copy), SwiGLU + router weight, output conversion + inverse rope, stream pre-mix + RMSNorm. Byte-identical but **no faster** (28.90): the fused pre-mix + RMSNorm took 22.1 us in the real step against 11.4 for the two kernels it replaced (19 vs 23 us in the gate). That one is switched off in p9; the other three stay | 0.035 | 28.90 |
 | **p9** (20:20) | sparse-attention output reads each key row with a sub-group block read at a uniform address (the per-lane 64-bit address arithmetic per index was the cost, not load latency: a software-pipelined form was no faster); 35 -> 20 us per layer | **0.033** | **30.14** |
 
-p7-p9: trace, 40-token and 128-token answers byte-identical to the 9.0 tok/s build. IQ3_XXS with expanded signs was
+| **p10** (20:45) | the router (one work-group of serial work) runs in the same launch as the shared expert's gate and up rows (memory-bound), 52 -> 28 us in the gate; the routed SwiGLU and the shared SwiGLU in one launch. Router + shared expert 4.95 -> 3.77 ms per token | **0.032** | **31.24** |
+
+p7-p10: trace, 40-token and 128-token answers byte-identical to the 9.0 tok/s build. IQ3_XXS with expanded signs was
 7 % slower (98 vs 91 us) and stays on its original layout. Gate timings for the sparse-attention output at 640
 slots (`test_small_v41_device.cpp`, card e3): SparseOutJ2 39.3 us, pipelined loads 40.1, address formed once per
-round 29.3, block reads 25.1 (8 per batch) / 22.8 (16 per batch, used).
+round 29.3, block reads 25.1 (8 per batch) / 22.8 (16 per batch, used). Closed: the shared expert's dense rows run
+*inside* the routed expert launches (rows interleaved, `DenseRows` extra rows; bitwise equal) save nothing: the
+routed kernel slows by about the dense rows' own time (-15 to +12 us across formats,
+`kernel-gates-round5-fused.log`), so the expert kernels have no spare issue slots for memory-bound rows.
 
 How the kernels stay exact: each output is still summed by 32 lanes in the old order (lane l adds elements l,
 l+32, l+64, ... one at a time, multiply then add, no fused multiply-add; build flags `-fp-model=precise

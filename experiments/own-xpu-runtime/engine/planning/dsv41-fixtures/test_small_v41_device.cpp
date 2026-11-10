@@ -491,6 +491,27 @@ int main(int argc, char **argv) {
         d = ndiff(host(o0, R * M), host(o1, R * M));
         t0 = gpu_us(g0) * 2; t1 = gpu_us(g1);
         report("Swiglu + ProbScale", d, R * M, t0, t1);
+        {   // routed SwiGLU + prob and the shared expert's SwiGLU in one launch
+            std::vector<float> hsg(M), hsu(M);
+            for (auto &v : hsg) v = U(-14, 14);
+            for (auto &v : hsu) v = U(-14, 14);
+            float *sg_ = dev_vec(hsg), *su_ = dev_vec(hsu);
+            float *s0 = sycl::malloc_device<float>(M, q), *s1 = sycl::malloc_device<float>(M, q);
+            float *o2 = sycl::malloc_device<float>(R * M, q);
+            SwigluA<ActF32> sws{(long long)M, 10.0f};
+            SwigluBothA<ActF32> sb{R, M, 10.0f};
+            auto b0 = [&] {
+                q.parallel_for(sycl::nd_range<1>(R * M, 64), [=](sycl::nd_item<1> it) { sp(it, gg, uu, o1, pr); });
+                return q.parallel_for(sycl::nd_range<1>(M, 32), [=](sycl::nd_item<1> it) { sws(it, sg_, su_, s0); });
+            };
+            auto b1 = [&] {
+                return q.parallel_for(sycl::nd_range<1>((R + 1) * M, 64), [=](sycl::nd_item<1> it) { sb(it, gg, uu, o2, pr, sg_, su_, s1); });
+            };
+            b0(); b1(); q.wait();
+            d = ndiff(host(o1, R * M), host(o2, R * M)) + ndiff(host(s0, M), host(s1, M));
+            t0 = gpu_us(b0) * 2; t1 = gpu_us(b1);
+            report("Swiglu+Prob and shared Swiglu", d, (R + 1) * M, t0, t1);
+        }
 
         // ToAct + inverse rope (64 heads x 512, last 64 dims rotated)
         const int QH = 64, HD = 512;

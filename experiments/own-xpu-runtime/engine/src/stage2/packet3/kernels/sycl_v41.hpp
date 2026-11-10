@@ -1322,13 +1322,17 @@ template <unsigned C, typename A> struct GemvQ8P {
     static_assert(C % 4 == 0);
     unsigned rows, xn;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
-        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C>::v, ND = (C + 31) / 32;
-        static_assert(NQ % SEGQ == 0);
-        constexpr size_t RB = ((size_t)C * 34 + 15) & ~(size_t)15;
         sycl::sub_group sg = it.get_sub_group();
         const unsigned r = packed_row_id(it);
         if (r >= rows) return;
-        const unsigned lane = sg.get_local_linear_id();
+        row(sg, sg.get_local_linear_id(), r, w, x, y);
+    }
+    // one row on one sub-group (also run inside fused launches: DenseRows)
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                           const float *x, float *y) const {
+        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C>::v, ND = (C + 31) / 32;
+        static_assert(NQ % SEGQ == 0);
+        constexpr size_t RB = ((size_t)C * 34 + 15) & ~(size_t)15;
         const uint8_t *row = w + (size_t)r * RB;
         const float *xr = xn ? x + (size_t)(r / xn) * C * 32 : x;
         const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)C * 32);
@@ -1386,9 +1390,49 @@ inline void chunk_scales(sycl::sub_group sg, unsigned lane, const uint16_t *dp, 
     }
 }
 
+// Extra rows run by a routed kernel's sub-groups between its own rows (one
+// launch; the memory-bound dense rows of the shared expert overlap the
+// ALU-bound expert rows). Each extra row is computed by the dense kernel's own
+// row body, so its output is the same as from its own launch.
+struct NoRows {
+    unsigned n() const { return 0; }
+    void row(sycl::sub_group, unsigned, unsigned) const {}
+};
+template <typename D> struct DenseRows {
+    D k; // GemvQ8P / GemvQ5KP / GemvQ6KP: rows and xn
+    const uint8_t *w;
+    const float *x;
+    float *y;
+    unsigned n() const { return k.rows; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const { k.row(sg, lane, r, w, x, y); }
+};
+template <typename R1, typename R2> struct RowsPair {
+    R1 a;
+    R2 b;
+    unsigned n() const { return a.n() + b.n(); }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
+        if (r < a.n()) a.row(sg, lane, r);
+        else b.row(sg, lane, r - a.n());
+    }
+};
+
+// Row positions p = sub-group, sub-group + stride, ...; with ne extra rows the
+// ne of nt positions are spread evenly (position p is extra when floor((p+1)ne/nt)
+// > floor(p ne/nt)), so every sub-group runs some of each kind.
 #define OWN41_ROUTED_ROWS_BEGIN(RB)                                                              \
     const unsigned stride = (unsigned)(it.get_global_range(0) / 32);                             \
-    for (unsigned grp = packed_row_id(it); grp < 6 * rows; grp += stride) {                      \
+    const unsigned nr_ = 6 * rows, ne_ = ex.n(), nt_ = nr_ + ne_;                                 \
+    for (unsigned p_ = packed_row_id(it); p_ < nt_; p_ += stride) {                              \
+        unsigned grp = p_;                                                                        \
+        if (ne_) {                                                                                \
+            const unsigned d0 = (unsigned)((uint64_t)p_ * ne_ / nt_);                             \
+            const unsigned d1 = (unsigned)((uint64_t)(p_ + 1) * ne_ / nt_);                       \
+            if (d1 > d0) {                                                                        \
+                ex.row(sg, lane, d0);                                                             \
+                continue;                                                                         \
+            }                                                                                     \
+            grp = p_ - d1;                                                                        \
+        }                                                                                         \
         const unsigned slot = grp / rows, r = grp % rows;                                         \
         const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * (RB);                           \
         const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);                             \
@@ -1406,11 +1450,12 @@ inline void chunk_scales(sycl::sub_group sg, unsigned lane, const uint16_t *dp, 
 // <IQ2_XXS>: ((db * mag) * sign) * x, the sign applied as a sign-bit xor
 // (== multiplying a finite value by -1); same xor-butterfly reduction as
 // RoutedGemvT.
-template <unsigned NB, typename A> struct RoutedIQ2XXSP {
+template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     static constexpr unsigned TAB = 2048;
     unsigned rows; // per-expert rows
     bool per_slot_x;
+    EX ex{}; // extra rows run in the same launch (NoRows: none)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1454,11 +1499,12 @@ template <unsigned NB, typename A> struct RoutedIQ2XXSP {
 };
 
 // IQ2_S: ((((d * (0.5 + sc)) * 0.25) * mag) * sign) * x; table 1024 x 8 floats.
-template <unsigned NB, typename A> struct RoutedIQ2SP {
+template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     static constexpr unsigned TAB = 8192;
     unsigned rows;
     bool per_slot_x;
+    EX ex{}; // extra rows run in the same launch (NoRows: none)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1514,11 +1560,12 @@ template <unsigned NB, typename A> struct RoutedIQ2SP {
 };
 
 // IQ3_XXS: ((((d * (0.5 + s)) * 0.5) * mag) * sign) * x; table 256 x 4 floats.
-template <unsigned NB, typename A> struct RoutedIQ3XXSP {
+template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ3XXSP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     static constexpr unsigned TAB = 1024;
     unsigned rows;
     bool per_slot_x;
+    EX ex{}; // extra rows run in the same launch (NoRows: none)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1565,11 +1612,12 @@ template <unsigned NB, typename A> struct RoutedIQ3XXSP {
 };
 
 // IQ2_XS: ((((d * (0.5 + sc)) * 0.25) * mag) * sign) * x; table 512 x 8 floats.
-template <unsigned NB, typename A> struct RoutedIQ2XSP {
+template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XSP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     static constexpr unsigned TAB = 4096;
     unsigned rows;
     bool per_slot_x;
+    EX ex{}; // extra rows run in the same launch (NoRows: none)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1621,12 +1669,13 @@ template <unsigned NB, typename A> struct RoutedIQ2XSP {
 
 // IQ1_S: (dl * (code + delta)) * x, dl = d * (2 * ((qh >> 12) & 7) + 1);
 // table 2048 x 8 floats (the int8 grid codes).
-template <unsigned NB, typename A, bool BYTES = true> struct RoutedIQ1SP {
+template <unsigned NB, typename A, bool BYTES = true, typename EX = NoRows> struct RoutedIQ1SP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     // BYTES: the codes as int8 (16 KiB, more work-groups per core), else as floats (64 KiB)
     static constexpr unsigned TAB = BYTES ? 4096 : 16384;
     unsigned rows;
     bool per_slot_x;
+    EX ex{}; // extra rows run in the same launch (NoRows: none)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         int8_t *btab = reinterpret_cast<int8_t *>(tab);
@@ -1751,12 +1800,16 @@ template <unsigned NB, typename A> struct GemvQ5KP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     unsigned rows, xn;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
-        constexpr size_t RB = ((size_t)NB * 176 + 15) & ~(size_t)15;
-        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = KSeg<NB>::v;
         sycl::sub_group sg = it.get_sub_group();
         const unsigned r = packed_row_id(it);
         if (r >= rows) return;
-        const unsigned lane = sg.get_local_linear_id();
+        row(sg, sg.get_local_linear_id(), r, w, x, y);
+    }
+    // one row on one sub-group (also run inside fused launches: DenseRows)
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                           const float *x, float *y) const {
+        constexpr size_t RB = ((size_t)NB * 176 + 15) & ~(size_t)15;
+        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = KSeg<NB>::v;
         const uint8_t *row = w + (size_t)r * RB;
         const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x;
         const uint32_t *qs = reinterpret_cast<const uint32_t *>(row);
@@ -2588,7 +2641,7 @@ struct RouteP {
                     rank += (w > v || (w == v && jb + k < i)) ? 1 : 0;
                 }
             }
-            if (rank < topk) {
+            if (i < experts && rank < topk) { // i >= experts: a larger work-group (RoutePRows)
                 ids[rank] = (uint32_t)i;
                 lp[rank] = ls[i];
             }
@@ -2606,6 +2659,48 @@ struct RouteP {
             float sum = 0;
             for (int t = 0; t < topk; ++t) sum += lp[t];
             prob[i] = lp[i] / (sum + 1e-20f) * 1.5f;
+        }
+    }
+};
+
+// RouteP in work-group 0 (>= experts items, local memory as RouteP) while the
+// other work-groups run dense rows (the shared expert's gate and up rows: the
+// router is one work-group of serial work, the rows are memory-bound). Each
+// part computes exactly what its own launch computes.
+template <typename R> struct RoutePRows {
+    RouteP rp;
+    R rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, uint32_t *ids,
+                                     float *prob, float *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g == 0) {
+            rp(it, logits, bias, ids, prob, lm);
+            return;
+        }
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = (g - 1) * (unsigned)(it.get_local_range(0) / 32) + sg.get_group_linear_id();
+        if (r < rows.n()) rows.row(sg, sg.get_local_linear_id(), r);
+    }
+};
+
+// SwigluProbA on the routed rows then SwigluA on the shared expert's n
+// elements, one launch (items [0, rows*n) and [rows*n, rows*n + n)).
+template <typename A> struct SwigluBothA {
+    int rows, n; float lim;
+    void operator()(sycl::nd_item<1> it, const typename A::T *gate, const typename A::T *up, typename A::T *out,
+                    const float *prob, const typename A::T *sgate, const typename A::T *sup, typename A::T *sout) const {
+        const int g_ = (int)it.get_global_linear_id();
+        if (g_ < rows * n) {
+            const int r = g_ / n;
+            float g = sycl::fmin(A::rd(gate[g_]), lim);
+            float u = sycl::clamp(A::rd(up[g_]), -lim, lim);
+            const typename A::T v = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+            out[g_] = A::wr(prob[r] * A::rd(v));
+        } else if (g_ < (rows + 1) * n) {
+            const int i = g_ - rows * n;
+            float g = sycl::fmin(A::rd(sgate[i]), lim);
+            float u = sycl::clamp(A::rd(sup[i]), -lim, lim);
+            sout[i] = A::wr(g / (1.0f + sycl::exp(-g)) * u);
         }
     }
 };

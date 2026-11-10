@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**November 9, 2026 ~20:45 EST — DeepSeek V4.1 on six cards: 31.2 tokens/s, output still byte-identical.** The router now runs in the same launch as the shared expert's first two matrix products (it was one slow thread group with the rest of the card idle).
+
 **November 9, 2026 ~20:20 EST — DeepSeek V4.1 on six cards: 30.1 tokens/s, output still byte-identical.**
 - Since 19:45: faster expert kernels (fewer instructions per weight), three small fused kernels, and the attention output step now reads each stored key row in one block (35 -> 20 us per layer). One fused kernel was slower in the real model than in its test and is switched off.
 - Same checks as before (whole trace byte-identical, 40- and 128-token answers identical). Cards: nothing loaded. Next: run the shared expert and the router alongside the big expert kernels instead of after them.

@@ -1508,10 +1508,76 @@ private:
         set_cidx(index_slot(L), sel);
     }
 
+#ifndef OWN41_ACT_BF16
+    // RouteP in work-group 0 and the shared expert's gate and up rows in the
+    // others, one launch (test_packed_v41_device.cpp "fused": 52 -> 28 us)
+    template <typename DK> void route_with_shared(int t, const std::string &p, DK dk, const uint8_t *wg, const uint8_t *wu) {
+        auto &s = sc[t];
+        using R1 = ops41sycl::DenseRows<DK>;
+        using RR = ops41sycl::RowsPair<R1, R1>;
+        using K = ops41sycl::RoutePRows<RR>;
+        K k{ops41sycl::RouteP{g.experts, 6}, RR{R1{dk, wg, s.xn, s.shg}, R1{dk, wu, s.xn, s.shu}}};
+        const size_t ng = 1 + (2 * (size_t)dk.rows + 15) / 16;
+        const float *logits = s.router, *bias = wp<float>(p + "exp_probs_b.bias");
+        uint32_t *ids = s.ids;
+        float *prob = s.prob;
+        auto e = qs[t].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(2 * 1024 + 6, hh);
+            hh.parallel_for(sycl::nd_range<1>(ng * 512, 512), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                k(it, logits, bias, ids, prob, &lt[0]);
+            });
+        });
+        kev(kname<K>(), e);
+    }
+    // true when the router and the shared gate/up rows went out in one launch
+    bool route_shared_fused(int t, const std::string &p) {
+        if (!o.small_fast || g.experts % 32 != 0 || g.experts > 512) return false;
+        const auto &eg = we(p + "ffn_gate_shexp.weight"), &eu = we(p + "ffn_up_shexp.weight");
+        const auto &dg = wgt.at(p + "ffn_gate_shexp.weight"), &du = wgt.at(p + "ffn_up_shexp.weight");
+        if (!dg.packed || !du.packed || eg.type != eu.type || eg.rows != eu.rows || eg.cols != eu.cols ||
+            eg.cols != 5120)
+            return false;
+        const unsigned rows = (unsigned)eg.rows;
+        auto sh = wgt.at(p + "ffn_gate_shexp.weight").p, su = wgt.at(p + "ffn_up_shexp.weight").p;
+        if (eg.type == iq3::Type::Q8_0)
+            route_with_shared(t, p, ops41sycl::GemvQ8P<160, Act>{rows, 0}, (const uint8_t *)sh, (const uint8_t *)su);
+        else if (eg.type == iq3::Type::Q5_K)
+            route_with_shared(t, p, ops41sycl::GemvQ5KP<20, Act>{rows, 0}, (const uint8_t *)sh, (const uint8_t *)su);
+        else
+            return false;
+        return true;
+    }
+#endif
     void moe(int L, int t) {
         auto &s = sc[t];
         const std::string p = "blk." + std::to_string(L) + ".";
         gemv(t, p + "ffn_gate_inp.weight", s.xn, s.router, true); // router logits stay f32
+#ifndef OWN41_ACT_BF16
+        if (route_shared_fused(t, p)) {
+            prof("router", t);
+            routed_gemv(t, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
+            prof("exp_gate", t);
+            routed_gemv(t, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
+            prof("exp_up", t);
+            // routed SwiGLU + router weight and the shared SwiGLU, one launch
+            launch(t, (size_t)7 * g.mid, 64, ops41sycl::SwigluBothA<Act>{6, g.mid, 10.0f}, (const act_t *)s.expg,
+                   (const act_t *)s.expu, s.act, (const float *)s.prob, (const act_t *)s.shg, (const act_t *)s.shu,
+                   s.sha);
+            routed_gemv(t, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
+            prof("exp_down", t);
+            gemv(t, p + "ffn_down_shexp.weight", s.sha, s.shd);
+            launch(t, g.h, 32, ops41sycl::MoeCombineA<Act>{6, g.h}, (const act_t *)s.expd, (const act_t *)s.shd,
+                   s.ob);
+            prof("shared", t);
+            if (tracing()) {
+                trf(L, TT_ROUTE_LOGITS, t, s.router, g.experts);
+                tri(L, TT_ROUTE_IDS, t, s.ids, 6);
+                trf(L, TT_ROUTE_PROB, t, s.prob, 6);
+                tra(L, TT_SHARED_DOWN, t, s.shd, g.h);
+            }
+            return;
+        }
+#endif
         if (o.small_fast && g.experts % 32 == 0 && g.experts <= 1024) {
             // one work-group, same picks and arithmetic (test_small_v41_device.cpp)
             launch_local<2 * 1024 + 6>(t, (size_t)g.experts, ops41sycl::RouteP{g.experts, 6}, (const float *)s.router,
