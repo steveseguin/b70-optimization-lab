@@ -2566,6 +2566,10 @@ template <unsigned HD, unsigned NW, unsigned U = 8, bool PIPE = false> struct Sp
     static constexpr unsigned SPAN = 64 * NW, PER_HEAD = HD / SPAN, NBT = 32 / U;
     static_assert(HD % SPAN == 0);
     int n_idx, heads, win_rows;
+    // ToActRopeA (f32, rdim 64, inverse) on the way out when ry is set: ry gets the head row with its last 64
+    // dims rotated back (pair i = lane of the last span: same expressions), out keeps the plain row
+    float *ry = nullptr;
+    const float *cosb = nullptr, *sinb = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
                                      const float *w, float *out) const {
         sycl::sub_group sg = it.get_sub_group();
@@ -2646,6 +2650,20 @@ template <unsigned HD, unsigned NW, unsigned U = 8, bool PIPE = false> struct Sp
         for (unsigned k = 0; k < NW; ++k) {
             oh[64 * k + 2 * lane] = o[2 * k];
             oh[64 * k + 2 * lane + 1] = o[2 * k + 1];
+        }
+        if (ry) {
+            float *yh = ry + (size_t)h * HD + base;
+#pragma unroll
+            for (unsigned k = 0; k < NW; ++k) {
+                float a0 = o[2 * k], a1 = o[2 * k + 1];
+                if (base + 64 * k == HD - 64) {
+                    const float re = a0, im = a1, cs = cosb[lane], sn = -sinb[lane];
+                    a0 = re * cs - im * sn;
+                    a1 = re * sn + im * cs;
+                }
+                yh[64 * k + 2 * lane] = a0;
+                yh[64 * k + 2 * lane + 1] = a1;
+            }
         }
     }
 };
@@ -3099,6 +3117,27 @@ struct XchgP {
         sycl::group_barrier(it.get_group());
     }
 };
+
+// The exchange at the end of the launch that produced its rows (no launch between them): every work-group
+// releases its writes and counts itself done; the work-group that brings the count to the group count
+// resets it, acquires, and runs XchgP's body (push, flags, wait) with its own items.
+inline void xchg_tail(sycl::nd_item<1> it, const XchgP &x, uint32_t *cnt, float *p0, float *p1, float *p2, float *p3,
+                      float *p4, float *p5, uint32_t *err) {
+    using ARD = sycl::atomic_ref<uint32_t, sycl::memory_order::acq_rel, sycl::memory_scope::device,
+                                 sycl::access::address_space::global_space>;
+    sycl::group_barrier(it.get_group());
+    uint32_t last = 0;
+    if (it.get_local_linear_id() == 0) { // after the barrier, one release covers the group's writes
+        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
+        ARD c(*cnt);
+        last = c.fetch_add(1u) + 1u == (uint32_t)it.get_group_range(0) ? 1u : 0u;
+        if (last) c.store(0u, sycl::memory_order::relaxed); // the next tail launch comes after this one ends
+    }
+    last = sycl::group_broadcast(it.get_group(), last, 0);
+    if (!last) return;
+    sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::device);
+    x(it, p0, p1, p2, p3, p4, p5, err);
+}
 
 // SwigluBothA with the routed outputs at a row stride: routed row r, element i
 // -> out[r * ostride + i] (a card's slice of the full [rows][ostride] layout);

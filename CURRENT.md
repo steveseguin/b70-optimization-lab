@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**November 9, 2026 ~22:45 EST — DeepSeek V4.1 on six cards: 73.8 tokens/s, output still byte-identical.** Small work that waited for a slow serial step now runs next to it in the same launch, and one more step merged into the attention output. The engine also compiles all its kernels on every card at start-up (a fresh build could otherwise time out on its first word). Details: note section 18.
+
 **November 9, 2026 ~22:20 EST — DeepSeek V4.1 on six cards: 71 tokens/s, output still byte-identical.** The experts' two input matrices now run in one launch, which packs the card's work rounds better (+4.5 %), and the attention's softmax sum no longer branches inside its serial chain. Three other ideas were tried and measured slower; they stay switched off. Details: note section 17.
 
 **November 9, 2026 ~21:55 EST — DeepSeek V4.1 on six cards: 68 tokens/s, output still byte-identical.** The two "engram" layers' big lookup projection depends only on the input word, so each card now computes a sixth of it at the start of the word and sends it to the others, instead of every card doing all of it. (The times in the entries below were written about two hours late by mistake and are corrected.) Details: note section 16.

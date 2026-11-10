@@ -195,6 +195,11 @@ public:
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
         bool diet = true;       // tp: neighbouring launches merged (OWN_DIET=0: one launch per operator as before)
         bool down_ex = false;   // tp: shared expert down rows inside the expert down launch (OWN_DOWN_EX=1; no gain)
+        int pair_wg = 128;      // tp: work-groups of the expert gate+up launch (OWN_PAIR_WG)
+        int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
+        bool rope_out = true;   // tp: inverse rope in the attention output's store (OWN_ROPE_OUT=0: own launch)
+        bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
+        bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
                                 // launch ends only when its prefetch work-groups do)
         bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
@@ -258,6 +263,15 @@ public:
                                 sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
             else
                 qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+        }
+        if (o.tp > 1) {
+            // every kernel built for every card before the first step: a card still compiling a kernel at its
+            // first launch while a peer already waits in an exchange times that exchange out (a new binary
+            // with a cold compiler cache). One card at a time: the first fills the driver's cache.
+            const double t0 = now_s();
+            for (int t = 0; t < o.tp; ++t)
+                (void)sycl::get_kernel_bundle<sycl::bundle_state::executable>(ctxs[t], {devs[t]});
+            std::printf("kernels built for %d cards in %.1fs\n", o.tp, now_s() - t0);
         }
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
@@ -1007,9 +1021,51 @@ private:
     }
 
     // ---- launch helpers -----------------------------------------------------
+    // arm_xtail(exchange) before the producer's launch, end_xtail() after it: with xtail the producer's launch
+    // (launch / launch_rows without local memory) ends with the exchange (ops41sycl::xchg_tail); otherwise, or
+    // when no such launch took it, end_xtail() runs it as its own launch after the producer
+    struct XTail {
+        bool on = false;      // the next launch takes the exchange
+        bool pending = false; // armed and not yet run
+        unsigned off = 0, stride = 0, nslot = 0, r0 = 0, r1 = 0;
+    };
+    XTail xt[TILES];
+    uint32_t *xcnt[TILES] = {};
+    void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
+        xt[c] = {o.xtail, true, off, stride, nslot, r0, r1};
+    }
+    void end_xtail(int c) {
+        const XTail t = xt[c];
+        xt[c].on = xt[c].pending = false;
+        if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1);
+    }
+    template <bool SG32, typename K, typename... A> void launch_xt(int c, sycl::nd_range<1> nr, K k, A... args) {
+        const XTail t = xt[c];
+        xt[c].on = xt[c].pending = false;
+        float *P[6] = {};
+        for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
+        float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+        const uint32_t seq = ++xseq[c];
+        const ops41sycl::XchgP x{o.tp, c, t.off, t.stride, t.nslot, t.r0, t.r1, seq, XSPIN, 0};
+        uint32_t *cnt = xcnt[c], *err = xerr[c];
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            if constexpr (SG32)
+                hh.parallel_for(nr, [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                    k(it, args...);
+                    ops41sycl::xchg_tail(it, x, cnt, p0, p1, p2, p3, p4, p5, err);
+                });
+            else
+                hh.parallel_for(nr, [=](sycl::nd_item<1> it) {
+                    k(it, args...);
+                    ops41sycl::xchg_tail(it, x, cnt, p0, p1, p2, p3, p4, p5, err);
+                });
+        });
+        kev(c, kname<K>(), e);
+    }
     template <typename K, typename... A>
     void launch(int tile, size_t nwork, size_t lwork, K k, A... args) {
         size_t n = (nwork + lwork - 1) / lwork * lwork; // B70 rejects non-uniform groups
+        if (xt[tile].on) return launch_xt<false>(tile, sycl::nd_range<1>(n, lwork), k, args...);
         auto e = qs[tile].submit([&](sycl::handler &hh) {
             hh.parallel_for(sycl::nd_range<1>(n, lwork), [=](sycl::nd_item<1> it) { k(it, args...); });
         });
@@ -1068,6 +1124,8 @@ private:
         size_t nwg = (rows + PER - 1) / PER;
         if (max_wg && nwg > max_wg) nwg = max_wg;
         const size_t n = nwg * WG;
+        if constexpr (SLM == 0)
+            if (xt[tile].on) return launch_xt<true>(tile, sycl::nd_range<1>(n, WG), k, args...);
         auto e = qs[tile].submit([&](sycl::handler &hh) {
             if constexpr (SLM > 0) {
                 sycl::local_accessor<float, 1> lt(SLM, hh);
@@ -1181,6 +1239,16 @@ private:
             return false;
         return true;
     }
+    // the 5,120-wide norm (four sub-group parts, RmsNormPS) with extra rows EX in one launch: the norm is a
+    // serial chain on four sub-groups, so rows that do not need its output fill the card meanwhile
+    template <typename EX> bool norm_ex(int c, const act_t *x, const std::string &wn, act_t *y, EX ex) {
+        const float *w = wp<float>(c, wn);
+        if (g.h != 5120 || !o.small_fast || !al16(x) || !al16(w) || !al16(y) || x == y) return false;
+        using R = ops41sycl::RowsPair<ops41sycl::NormRows<5120, 4>, EX>;
+        const R r{{x, w, y}, ex};
+        launch_rows<0>(c, r.n(), 0, ops41sycl::RowsP<R>{r});
+        return true;
+    }
     // tp phase 0 in four launches (see tp_phase): shapes the fused forms are written for
     bool attn_in_diet(int c, const std::string &p) const {
         const auto &s = sc[c];
@@ -1273,8 +1341,8 @@ private:
         if (const auto &dp = wgt[tile].at(wn); dp.packed) {
             const auto *w = (const uint8_t *)dp.p;
             // 128 work-groups (2,048 sub-groups): best for every format and shape in
-            // the 2026-11-09 kernel bench (each fills its local table once)
-            constexpr size_t MAXWG = 128;
+            // the 2026-11-09 kernel bench (each fills its local table once); o.down_wg for the down rows
+            const size_t MAXWG = per_slot ? o.down_wg : 128;
 #define X(TY, KERN, NB)                                                                                    \
     if (e.type == iq3::Type::TY && cols == NB * 256) {                                                     \
         using K = ops41sycl::KERN<NB, Act>;                                                                \
@@ -1330,7 +1398,7 @@ private:
         const auto &da = wgt[tile].at(wa), &db = wgt[tile].at(wb);
         const unsigned rows = da.nrows;
         const auto *w = (const uint8_t *)da.p;
-        constexpr size_t MAXWG = 128;
+        const size_t MAXWG = o.pair_wg;
         auto go = [&](auto kt) {
             using K = typename decltype(kt)::type;
             K k{rows, false, ex};
@@ -2058,6 +2126,8 @@ private:
         const size_t nf = xeng + 10 * (size_t)g.h;
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nf);
+            xcnt[c] = dalloc<uint32_t>(c, 16);
+            qs[c].memset(xcnt[c], 0, 64);
             xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
             if (!xerr[c]) throw std::runtime_error("host error word");
             std::memset(xerr[c], 0, 16);
@@ -2166,8 +2236,11 @@ private:
                 hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
                 prof("hc_mix", c);
             }
+            bool dots_done = false; // the mix's dot rows already ran (in the norm's launch)
             if (x_ready[c]) { // the previous FFN's hc_post already collapsed the streams into s.x (HcPostPreP)
-                rmsnorm(c, s.x, p + "attn_norm.weight", g.h, s.xn);
+                if (ride && o.norm_dots && attn_in_diet(c, p))
+                    dots_done = norm_ex(c, s.x, p + "attn_norm.weight", s.xn, hc_dots(c, p + "hc_attn_"));
+                if (!dots_done) rmsnorm(c, s.x, p + "attn_norm.weight", g.h, s.xn);
                 x_ready[c] = false;
             } else {
                 pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
@@ -2179,9 +2252,11 @@ private:
                 if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
                 const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
                 const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
-                if (!gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight", s.kv, s.xn,
-                                  hc_dots(c, p + "hc_attn_")))
-                    throw std::runtime_error("query-a / key-value pair launch: " + p);
+                const bool pair_ok = dots_done ? gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
+                                                              s.kv, s.xn, ops41sycl::NoRows{})
+                                               : gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
+                                                              s.kv, s.xn, hc_dots(c, p + "hc_attn_"));
+                if (!pair_ok) throw std::runtime_error("query-a / key-value pair launch: " + p);
                 using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
                 const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
                             {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
@@ -2268,22 +2343,30 @@ private:
                              kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
             }
-            launch_sg_pf(c, (size_t)nh * g.hd / 64, pfb, ops41sycl::SparseOutJB<512, 1, 16>{n_idx, nh, 128}, kvw, kvc,
-                         ix, (const float *)s.attn_w, s.of + qo);
-            prof("sparse_attn", c);
             if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
             const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
-            launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},
-                   (const float *)(s.of + qo), s.obuf + qo, cb, sbp);
+            ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
+            if (o.rope_out) { // the inverse rope in the output's store (f32 activations: obuf is f32 too)
+                so.ry = (float *)(s.obuf + qo);
+                so.cosb = cb;
+                so.sinb = sbp;
+            }
+            launch_sg_pf(c, (size_t)nh * g.hd / 64, pfb, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
+            prof("sparse_attn", c);
+            if (!o.rope_out)
+                launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},
+                       (const float *)(s.of + qo), s.obuf + qo, cb, sbp);
             const unsigned per = (unsigned)g.ototal / 8;
+            arm_xtail(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per);
             gemv_part(c, p + "attn_output_a.weight", s.obuf + (size_t)tog0[c] * g.oin, s.oa + (size_t)tog0[c] * per, per);
             prof("attn_o_a", c);
-            xchg(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per);
+            end_xtail(c);
             prof("xchg", c);
             break;
         }
         case 2:
+            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
             if (fin_attn[c]) {
                 gemv_part_ex(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c],
                              hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
@@ -2292,19 +2375,21 @@ private:
                 gemv_part(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c]);
             }
             prof("attn_o_b", c);
-            xchg(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            end_xtail(c);
             prof("xchg", c);
             break;
         case 3: {
             // the FFN's pre-norm takes the attention's pre-mix (pre_a): the FFN mix is first read at the
             // next hc_post, so its dot rows ride in the router launch, its finish with the shared rows
             const bool ride = hc_rides(c, p + "hc_ffn_");
+            bool ffn_dots_done = false; // the FFN mix's dot rows already ran (in the norm's launch)
             if (ride && post_pre_ok()) { // hc_post and the FFN's stream collapse in one launch
                 launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
                        (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
                        (const float *)s.pre_a, s.x);
                 prof("hc_post", c);
-                rmsnorm(c, s.x, p + "ffn_norm.weight", g.h, s.xn);
+                if (o.norm_dots) ffn_dots_done = norm_ex(c, s.x, p + "ffn_norm.weight", s.xn, hc_dots(c, p + "hc_ffn_"));
+                if (!ffn_dots_done) rmsnorm(c, s.x, p + "ffn_norm.weight", g.h, s.xn);
             } else {
                 hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
                 prof("hc_post", c);
@@ -2319,7 +2404,8 @@ private:
             const bool fin_pair = ride && o.fin_move && o.exp_pair &&
                                   routed_pair_fits(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight");
             if (ride) {
-                gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
+                if (ffn_dots_done) gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
+                else gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
                 if (fin_pair) route_shared_tp(c, p);
                 else route_shared_tp(c, p, hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
             } else {
@@ -2338,10 +2424,11 @@ private:
             }
             prof("exp_up", c);
             const int nm = tm1[c] - tm0[c];
+            arm_xtail(c, xact, (unsigned)g.mid, 7, tm0[c], tm1[c]);
             launch(c, (size_t)7 * nm, 64, ops41sycl::SwigluBothS<Act>{6, nm, 10.0f, g.mid}, (const act_t *)s.expg,
                    (const act_t *)s.expu, s.act + tm0[c], (const float *)s.prob, (const act_t *)s.shg,
                    (const act_t *)s.shu, s.act + (size_t)6 * g.mid + tm0[c]);
-            xchg(c, xact, (unsigned)g.mid, 7, tm0[c], tm1[c]);
+            end_xtail(c);
             prof("xchg", c);
             break;
         }
@@ -2352,10 +2439,11 @@ private:
                 prof("exp_down", c);
                 gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
             }
+            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
             launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
                    s.ob + td0[c]);
             prof("shared", c);
-            xchg(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            end_xtail(c);
             prof("xchg", c);
             break;
         }
@@ -2501,6 +2589,7 @@ private:
         const double t0 = now_s();
         x_ready[c] = false; // a step that failed part-way must not leave it set
         fin_attn[c] = false;
+        xt[c].on = xt[c].pending = false;
         tp_engram_upload(c);
         if (o.layer_begin == 0) tp_embed(c, tp_tok);
         else twait(c);
@@ -2592,7 +2681,10 @@ private:
     // one host thread for every card in phase order (trace runs): every card's
     // kernels of a phase, exchanges included, are queued before any host wait
     void tp_step_serial(int32_t token) {
-        for (int c = 0; c < o.tp; ++c) x_ready[c] = fin_attn[c] = false;
+        for (int c = 0; c < o.tp; ++c) {
+            x_ready[c] = fin_attn[c] = false;
+            xt[c].on = xt[c].pending = false;
+        }
         for (int c = 0; c < o.tp; ++c) tp_engram_upload(c);
         if (o.layer_begin == 0) {
             for (int c = 0; c < o.tp; ++c) tp_embed(c, token);

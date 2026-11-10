@@ -158,6 +158,11 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
     if (const char *e = getenv("OWN_DIET")) opt.diet = atoi(e) != 0;
+    if (const char *e = getenv("OWN_PAIR_WG")) opt.pair_wg = atoi(e);
+    if (const char *e = getenv("OWN_DOWN_WG")) opt.down_wg = atoi(e);
+    if (const char *e = getenv("OWN_ROPE_OUT")) opt.rope_out = atoi(e) != 0;
+    if (const char *e = getenv("OWN_XTAIL")) opt.xtail = atoi(e) != 0;
+    if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
     if (const char *e = getenv("OWN_DOWN_EX")) opt.down_ex = atoi(e) != 0;

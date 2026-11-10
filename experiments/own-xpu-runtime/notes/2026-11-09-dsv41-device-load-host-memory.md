@@ -467,6 +467,30 @@ Tried and left off (switches kept, results in `round11-*`):
 Gate (defaults, `round11-defaults-gate-summary.txt`): 3-step trace `cmp`-identical for `OWN_TP=6` and the
 one-card-per-layer layout, 40- and 128-token answers identical, no fault line; 71.68 / 71.23 tok/s.
 
+## 18. Mix dots inside the norm launch, inverse rope in the output store: 71.5 -> 73.7-73.9 tok/s (22:20-22:45 EST)
+
+- **`OWN_NORM_DOTS`** (default on). The 5,120-wide pre-norm is a serial double chain on four sub-groups (~10 us)
+  with the rest of the card idle. The stream mix's 200 dot partials only read the streams (final before the
+  norm), so they now run as extra rows of the norm's launch (`norm_ex`: `RowsP<RowsPair<NormRows<5120,4>,
+  HcDotsRows>>`) instead of the query-a or router launch: the FFN norm always, the attention norm when the
+  previous FFN's `hc_post` already collapsed the streams (`x_ready`). 71.66 / 71.48 -> 72.82 / 73.02 tok/s
+  (`round12-normdots-gate-summary.txt`).
+- **`OWN_ROPE_OUT`** (default on). `SparseOutJB` writes the head row a second time into the output-a input with
+  the last 64 dims rotated back (lane = pair index of the last span; `ToActRopeA`'s expressions), so the
+  separate inverse-rope launch is gone. 72.55 / 73.31 -> 73.93 / 73.67 tok/s (`round12-ropeout-gate-summary.txt`).
+- **Kernels built at start-up for every card** (`get_kernel_bundle<executable>`, one card after the other). The
+  first threaded run of a new binary timed out an exchange on the first token (no card fault): one card was still
+  compiling a kernel at its first launch while a peer waited >0.9 s for its flag. Earlier gates began with a
+  single-thread trace run that warmed the driver's compiler cache. Now 12.6 s once per new binary, 0.2 s after.
+
+Tried and left off: **`OWN_XTAIL=1`**, the exchange run by the last work-group of its producer's launch
+(release + counter per work-group, `xchg_tail`) to drop one launch per exchange: 66.6 / 67.1 against 73.2
+(`round12-xtail-summary.txt`; its first form also ran the exchange before the producer with the switch off,
+which the 128-token check caught).
+
+Gate (defaults): 3-step trace `cmp`-identical for `OWN_TP=6` and the one-card-per-layer layout, 40- and
+128-token answers identical, no fault line.
+
 ## Reproduce
 
 ```bash

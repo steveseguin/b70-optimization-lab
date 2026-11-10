@@ -1,0 +1,39 @@
+tp6tr exit 0
+tp6tr TRACE_IDENTICAL
+tp6tr IDS40_SAME
+tp6tr: decode: 39 steps after the first, 0.018 s/step, 54.69 tok/s
+sp1 exit 0
+sp1 SPEED128_SAME
+sp1: decode: 127 steps after the first, 0.015 s/step, 65.70 tok/s
+noxt exit 0
+noxt SPEED128_DIFFER
+noxt: decode: 127 steps after the first, 0.015 s/step, 66.72 tok/s
+sp2 exit 0
+sp2 SPEED128_SAME
+sp2: decode: 127 steps after the first, 0.015 s/step, 64.86 tok/s
+noxt2 exit 0
+noxt2 SPEED128_DIFFER
+noxt2: decode: 127 steps after the first, 0.014 s/step, 69.99 tok/s
+tp1tr exit 0
+tp1tr TRACE_IDENTICAL
+tp1tr IDS40_SAME
+tp1tr: decode: 39 steps after the first, 0.033 s/step, 30.76 tok/s
+DONE
+--- after the switch fix (tp18)
+noxt exit 1
+noxt SPEED128_DIFFER
+noxt: fatal: card 0000:83:00.0: card-to-card exchange timed out waiting for card 5
+sp1 exit 0
+sp1 SPEED128_SAME
+sp1: decode: 127 steps after the first, 0.015 s/step, 66.63 tok/s
+noxt2 exit 0
+noxt2 SPEED128_SAME
+noxt2: decode: 127 steps after the first, 0.014 s/step, 73.15 tok/s
+sp2 exit 0
+sp2 SPEED128_SAME
+sp2: decode: 127 steps after the first, 0.015 s/step, 67.09 tok/s
+noxttr exit 0
+noxttr TRACE_IDENTICAL
+noxttr IDS40_SAME
+noxttr: decode: 39 steps after the first, 0.018 s/step, 56.66 tok/s
+DONE
