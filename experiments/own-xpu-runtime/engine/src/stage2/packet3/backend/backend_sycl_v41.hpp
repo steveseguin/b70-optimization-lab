@@ -190,6 +190,7 @@ public:
         // card to card (XchgP). 1 = the layer pipeline above. Needs the f32 build.
         int tp = 1;
         bool tp_threads = true; // one host thread per card (OWN_TP_THREADS; trace runs force 0)
+        int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -608,7 +609,7 @@ public:
         return n.c_str();
     }
     void kev(int tile, const char *name, const sycl::event &e) {
-        if (o.kprof && (o.tp <= 1 || tile == 0)) kevs.push_back({name, e}); // tp: the first card's kernels
+        if (o.kprof && (o.tp <= 1 || tile == o.prof_card)) kevs.push_back({name, e}); // tp: one card's kernels
     }
     void gprof_collect() {
         if (!o.gprof) return;
@@ -667,7 +668,7 @@ public:
     bool h2d_wait = true;
     void prof(const char *name, int t) {
         if (o.tp > 1) { // card 0's marks only; never a host wait (a card may be waiting for a peer not yet submitted)
-            if (o.gprof && t == 0) gmark(name, t);
+            if (o.gprof && t == o.prof_card) gmark(name, t);
             return;
         }
         if (o.gprof) {
@@ -712,6 +713,8 @@ public:
         for (int i = 0; i < g.hd; ++i) kvr[i] = ops41::bf16b(ckv_row[i]);
         for (int i = 0; i < 128; ++i) ikr[i] = ops41::bf16b(ik_row[i]);
         append_row_host(si, kvr.data(), ikr.data());
+        if (o.tp > 1) // host rows reach the cards through sync_rows; the cards' row counts follow
+            for (int c = 0; c < o.tp; ++c) ++tlen[c][si];
     }
 
     // The 24 hashed engram rows per engram layer are cold 4 KiB reads from the
@@ -830,7 +833,18 @@ public:
             for (size_t k = 0; k < ckv[i].size(); ++k) h_ckv[i][k] = ops41::bf16b(ckv[i][k]);
             for (size_t k = 0; k < ik[i].size(); ++k) h_ik[i][k] = ops41::bf16b(ik[i][k]);
             for (int t = 0; t < TILES; ++t) synced[t][i] = 0; // cards catch up on first use
-            int st = o.tp > 1 ? 0 : tile_of_layer(srcs[i]); // tp: the lead card publishes
+            int st = o.tp > 1 ? 0 : tile_of_layer(srcs[i]); // tp: kv_state goes to every card below
+            if (o.tp > 1) {
+                for (int c = 0; c < o.tp; ++c) {
+                    tlen[c][i] = lens[i];
+                    if (srcs[i] >= o.layer_begin && srcs[i] < o.layer_end) {
+                        qs[c].memcpy(sc[c].kv_state + (size_t)i * 2 * g.hd, kv_state[i], 1024 * 4);
+                        qs[c].memcpy(sc[c].score_state + (size_t)i * 2 * g.hd, score_state[i], 1024 * 4);
+                        qs[c].wait();
+                    }
+                }
+                continue;
+            }
             if (srcs[i] >= o.layer_begin && srcs[i] < o.layer_end) {
                 qs[st].memcpy(sc[st].kv_state + (size_t)i * 2 * g.hd, kv_state[i], 1024 * 4);
                 qs[st].memcpy(sc[st].score_state + (size_t)i * 2 * g.hd, score_state[i], 1024 * 4);
@@ -892,7 +906,23 @@ private:
                                      pci[t]);
         owned[t].push_back(p);
         if (zero) qs[t].memset(p, 0, count * sizeof(T));
+        touch(t, p);
         return p;
+    }
+    // One launch with p as a direct pointer argument, so the driver makes p's allocation resident on
+    // card t. own_run sets DisableIndirectAccess=1: the driver then stops re-registering every
+    // allocation on each launch of a kernel its compiler marks "indirect" (any data-dependent
+    // address, a pointer in a by-value struct, a program-scope table). That bookkeeping ran under a
+    // lock shared by all cards' host threads (six threads: ~52 -> ~60 tok/s without it). Every
+    // allocation the engine owns or opens (dalloc, the error words, the peers' arenas) passes
+    // through here once, so none depends on some later kernel taking it as a direct argument.
+    int touch_zero = 0;
+    void touch(int t, void *p) {
+        uint8_t *b = (uint8_t *)p;
+        const int z = touch_zero; // 0 at run time; the device compiler cannot drop the argument
+        qs[t].single_task([=] {
+            if (z) b[0] = 0;
+        });
     }
 
     struct Scratch {
@@ -1451,6 +1481,7 @@ private:
     void sync_rows(int t, int si) {
         long have = synced[t][si];
         const long want = src_len[si];
+        const bool copies = have < want;
         const long step = ((long)64 << 20) / ((long)g.hd * 2);
         while (have < want) {
             const long n = std::min(step, want - have);
@@ -1460,7 +1491,7 @@ private:
                          (size_t)n * 128 * 2);
             have += n;
         }
-        if (h2d_wait) qs[t].wait();
+        if (h2d_wait && (o.tp <= 1 || copies)) twait(t); // tp: no drain when nothing was copied
         synced[t][si] = want;
     }
     void set_cidx(int slot, const std::vector<int32_t> &sel) {
@@ -1523,10 +1554,10 @@ private:
 
     // indexer: score every visible compressed row, keep the best 512 (host
     // selection: long serial device kernels trip the driver's hang check)
-    void index(int L, int t, int si, bool yarn) {
+    void index(int L, int t, int si, bool yarn, long len = -1) { // len: rows of source si (default: src_len)
         auto &s = sc[t];
         const std::string p = "blk." + std::to_string(L) + ".";
-        const long len = src_len[si];
+        if (len < 0) len = src_len[si];
         std::vector<int32_t> sel(512, -1);
         if (len > 0 && len <= 512) {
             // top-512 of at most 512 visible rows is all of them, whatever the
@@ -1739,6 +1770,17 @@ private:
     std::atomic<long> tp_mark{0};
     long tp_stepn = 0;
     int32_t tp_tok = 0;
+    bool tp_hostprof = getenv("OWN_TP_HOSTPROF") != nullptr; // host time per card thread: busy vs blocked
+    double tph_step[TILES] = {}, tph_wait[TILES] = {};
+    long tph_n = 0;
+    void twait(int c) {
+        if (!tp_hostprof || o.tp <= 1) { qs[c].wait(); return; }
+        const double t0 = now_s();
+        qs[c].wait();
+        tph_wait[c] += now_s() - t0;
+    }
+    long tlen[TILES][4] = {};         // rows of each kv source on card c (tp: every card publishes for itself)
+    act_t *teng[TILES][2] = {};       // engram rows of layers 1 / 14, uploaded at step start
 
     // rows of tensor n held by card c (all rows unless tp splits it)
     std::pair<unsigned, unsigned> tp_rows(const std::string &n, const WeightTab::E &e, int c) const {
@@ -1797,11 +1839,14 @@ private:
             xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
             if (!xerr[c]) throw std::runtime_error("host error word");
             std::memset(xerr[c], 0, 16);
+            touch(c, xerr[c]);
             auto &s = sc[c];
             s.oa = xarena[c] + xoa;
             s.ob = xarena[c] + xob;
             s.act = xarena[c] + xact;
             s.sha = s.act + (size_t)6 * g.mid;
+            teng[c][0] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
+            teng[c][1] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
             if (o.head) {
                 const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
                 tlog[c] = dalloc<float>(c, nl);
@@ -1827,8 +1872,10 @@ private:
                 if (zeMemOpenIpcHandle(zxc, zdc, h, 0, &ptr) != ZE_RESULT_SUCCESS || !ptr)
                     throw std::runtime_error("zeMemOpenIpcHandle failed: card " + pci[c] + " <- " + pci[d]);
                 xpeer[c][d] = ptr;
+                touch(c, ptr);
             }
         }
+        for (int c = 0; c < N; ++c) qs[c].wait();
         if (o.tp_threads)
             for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
     }
@@ -1836,10 +1883,11 @@ private:
 #ifndef OWN41_ACT_BF16
     // all-gather of rows [r0, r1) of nslot slots (stride floats) at arena offset off
     void xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
-        ops41sycl::XchgPeers P{};
-        for (int d = 0; d < o.tp; ++d) P.p[d] = (float *)xpeer[c][d];
+        float *P[6] = {};
+        for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
         const uint32_t seq = ++xseq[c];
-        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN}, P, xerr[c]);
+        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN}, P[0], P[1], P[2],
+                  P[3], P[4], P[5], xerr[c]);
     }
     // this card's rows of a dense matrix -> y[0, nrows) (packed rows); xn as gemv_kp
     void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0) {
@@ -1876,13 +1924,13 @@ private:
         const bool yarn = cr > 0;
         const int si = src_index(L);
         const bool lead = c == 0;
-        const bool host_work = cr && (is_kv_source(L) || index_slot(L) >= 0);
+        const bool host_work = cr && index_slot(L) >= 0 && tlen[c][si] > 512; // the lead's host top-k
         const int nh = thq1[c] - thq0[c];
         const size_t qo = (size_t)thq0[c] * g.hd;
         switch (ph) {
         case 0:
             if (L == 1 || L == 14) {
-                engram_host(L, c);
+                engram_tp(L, c);
                 prof("engram", c);
             }
             hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
@@ -1899,10 +1947,23 @@ private:
             rmsnorm(c, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
             rope(c, s.kvn, 1, g.hd, pos, yarn, false);
             prof("attn_kv", c);
-            if (lead && cr) {
-                if (is_kv_source(L)) { publish(L, c, si, yarn); prof("publish", c); }
-                if (index_slot(L) >= 0) { index(L, c, si, yarn); prof("index", c); }
-                if (host_work) tp_mark.store(tp_stepn * 64 + L + 1, std::memory_order_release);
+            if (cr && is_kv_source(L)) { // every card publishes for itself: no host round trip
+                publish_tp(L, c, si, yarn);
+                prof("publish", c);
+            }
+            if (cr && index_slot(L) >= 0) {
+                const long len = tlen[c][si];
+                if (len <= 512) { // all rows in order (index()'s short path), filled on every card
+                    launch(c, 512, 64, ops41sycl::CidxFill{(int)len, 512}, cidx_mirror[c][index_slot(L)]);
+                    if (lead && L == 20) {
+                        cand_host.assign(len, 1);
+                        cand_valid = true;
+                    }
+                } else if (lead) { // scores + top-k on the host; the others copy the list (tp_mark)
+                    index(L, c, si, yarn, len);
+                    tp_mark.store(tp_stepn * 64 + L + 1, std::memory_order_release);
+                }
+                prof("index", c);
             }
             break;
         case 1: {
@@ -1994,6 +2055,67 @@ private:
             break;
         }
     }
+    // publish() on card c, appending to its own mirrors (same kernels, same BF16 rounding)
+    void publish_tp(int L, int c, int si, bool yarn) {
+        auto &s = sc[c];
+        const std::string p = "blk." + std::to_string(L) + ".";
+        long gpos;
+        if (cr_of(L) == 1) {
+            gemv(c, p + "attn_compressor_kv.weight", s.xn, s.cw);
+            rmsnorm(c, s.cw, p + "attn_compressor_norm.weight", g.hd, s.latent);
+            gpos = pos;
+        } else {
+            gemv(c, p + "attn_compressor_kv.weight", s.xn, s.cw);
+            gemv(c, p + "attn_compressor_gate.weight", s.xn, s.scg);
+            const int slot = (int)(pos % 2);
+            launch(c, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.cw,
+                   s.kv_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
+            launch(c, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.scg,
+                   s.score_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
+            if (pos % 2 == 0) return;
+            gpos = pos - 1;
+            if (!o.small_fast || g.hd > 1024) throw std::runtime_error("tensor parallel: compressor pool form");
+            launch_local<1024>(c, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
+                               (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
+                               (const float *)(s.score_state + (size_t)si * 2 * g.hd),
+                               wp<float>(c, p + "attn_compressor_norm.weight"), s.latent);
+        }
+        gemv(c, p + "indexer.attn_k.weight", s.latent, s.kk);
+        rmsnorm(c, s.kk, p + "indexer.k_norm.weight", 128, s.kk);
+        rope(c, s.kk, 1, 128, gpos, yarn, false);
+        rope(c, s.latent, 1, g.hd, gpos, yarn, false);
+        const size_t cap = si == 3 ? (size_t)max_seq + 2 : (size_t)max_seq / 2 + 2;
+        if ((size_t)tlen[c][si] + 1 > cap) throw std::runtime_error("compressed cache full (max_seq)");
+        launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::PubAppendA<Act>{g.hd, 128, (int)tlen[c][si]},
+               (const act_t *)s.latent, (const act_t *)s.kk, ckv_mirror[c][si], ik_mirror[c][si]);
+        ++tlen[c][si];
+    }
+    // engram rows for this step's two engram layers: decoded and uploaded at step start
+    // (the queue is empty then), so layers 1 and 14 do not drain it
+    void tp_engram_upload(int c) {
+        auto l = iq3::layout(iq3::Type::Q5_K);
+        for (int li = 0; li < 2; ++li) {
+            const int L = li == 0 ? 1 : 14;
+            if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+            if ((long)comp_ids.size() <= pos) throw std::runtime_error("comp_ids behind position");
+            int64_t ids[24];
+            engram_hash((int)pos, li, ids);
+            std::vector<act_t> &rows = h_eng[c][li][eng_flip[c][li]++ & 1];
+            for (int k = 0; k < 24; ++k) {
+                const uint8_t *row = eng_base[li] + (size_t)ids[k] * l.bytes;
+                for (int i = 0; i < 256; ++i) rows[k * 256 + i] = Act::wr(iq3::decode(iq3::Type::Q5_K, row, i));
+            }
+            qs[c].memcpy(teng[c][li], rows.data(), rows.size() * sizeof(act_t));
+        }
+    }
+    void engram_tp(int L, int c) {
+        const int li = L == 1 ? 0 : 1;
+        const std::string p = "blk." + std::to_string(L) + ".";
+        gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
+        if (!o.small_fast || g.h % 32) throw std::runtime_error("tensor parallel: engram gate form");
+        launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], (const act_t *)sc[c].kvbuf,
+                  wp<float>(c, p + "engram_gate.weight"));
+    }
     void tp_embed(int c, int32_t token) {
         const auto &te = we("token_embd.weight");
         const uint8_t *row = (const uint8_t *)wgt[c].at("token_embd.weight").p + (size_t)token * wrb(te);
@@ -2001,7 +2123,7 @@ private:
         launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
         float pm[4] = {1, 0, 0, 0};
         qs[c].memcpy(sc[c].cur_pre, pm, 16);
-        qs[c].wait();
+        twait(c);
     }
     // final norm + this card's logits rows + its argmax candidates (to the host)
     void tp_head(int c) {
@@ -2016,7 +2138,7 @@ private:
         h_ami[c].resize(G);
         qs[c].memcpy(h_amv[c].data(), tam_v[c], (size_t)G * 4);
         qs[c].memcpy(h_ami[c].data(), tam_i[c], (size_t)G * 4);
-        qs[c].wait();
+        twait(c);
         prof("head", c);
     }
     // ArgmaxP2's comparison over every card's candidates: the order-free
@@ -2033,12 +2155,16 @@ private:
         return bi;
     }
     void tp_card_step(int c) {
+        const double t0 = now_s();
+        tp_engram_upload(c);
         if (o.layer_begin == 0) tp_embed(c, tp_tok);
-        if (c == 0) prof_begin(0);
+        else twait(c);
+        if (c == o.prof_card) prof_begin(c);
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
         if (o.head) tp_head(c);
-        else qs[c].wait();
+        else twait(c);
+        tph_step[c] += now_s() - t0;
     }
     void tp_worker(int c) {
         long seen = 0;
@@ -2119,11 +2245,12 @@ private:
     // one host thread for every card in phase order (trace runs): every card's
     // kernels of a phase, exchanges included, are queued before any host wait
     void tp_step_serial(int32_t token) {
+        for (int c = 0; c < o.tp; ++c) tp_engram_upload(c);
         if (o.layer_begin == 0) {
             for (int c = 0; c < o.tp; ++c) tp_embed(c, token);
             tra(0, TT_EMBED, 0, streams[0], 4 * (size_t)g.h);
         }
-        prof_begin(0);
+        prof_begin(o.prof_card);
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) {
                 for (int c = 0; c < o.tp; ++c) tp_phase(L, c, ph);
@@ -2165,6 +2292,14 @@ private:
                                          std::to_string((int)xerr[c][0] - 1));
         const int32_t next = o.head ? tp_argmax() : -1;
         ++pos;
+        if (tp_hostprof && !tp_th.empty() && ++tph_n % 32 == 0) {
+            std::fprintf(stderr, "host per step (ms), %ld steps: ", tph_n);
+            for (int c = 0; c < o.tp; ++c)
+                std::fprintf(stderr, " card%d %.2f (blocked %.2f, busy %.2f)", c, tph_step[c] / 32 * 1e3,
+                             tph_wait[c] / 32 * 1e3, (tph_step[c] - tph_wait[c]) / 32 * 1e3);
+            std::fprintf(stderr, "\n");
+            for (int c = 0; c < o.tp; ++c) tph_step[c] = tph_wait[c] = 0;
+        }
         return next;
     }
 #else

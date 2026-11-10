@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**November 9, 2026 ~23:15 EST — DeepSeek V4.1 on six cards: 60 tokens/s, output still byte-identical.**
+- Every layer is now split across all six cards (each card computes a slice and they swap results directly through each other's memory), instead of the cards taking turns: 31 -> about 50 tokens/s.
+- Then a lock inside Intel's driver made the six host threads that feed the cards wait on each other on most launches. A driver switch removes that work; the engine now registers every block of card memory itself, so the switch is safe: about 50 -> 60 tokens/s.
+- Checks: whole trace byte-identical for both layouts, 40- and 128-token answers identical, no card faults. Cards: nothing loaded. Run with `OWN_TP=6`.
+- Details: [note sections 12-13](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 9, 2026 ~20:45 EST — DeepSeek V4.1 on six cards: 31.2 tokens/s, output still byte-identical.** The router now runs in the same launch as the shared expert's first two matrix products (it was one slow thread group with the rest of the card idle).
 
 **November 9, 2026 ~20:20 EST — DeepSeek V4.1 on six cards: 30.1 tokens/s, output still byte-identical.**

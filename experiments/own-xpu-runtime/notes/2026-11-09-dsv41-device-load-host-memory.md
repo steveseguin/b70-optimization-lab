@@ -16,6 +16,9 @@ engram table on NVMe). Lane: `engine/` (Own Xe), family `dsv41`.
   since 17:30) all 40 tokens of the test equal the CPU reference. Sections 7 and 8.
 - Speed: 0.111 s per token on six cards (9.0 tok/s), from 0.86 s when it first ran. The llama.cpp reference
   screen is 14 tok/s. Sections 6, 7 and 9.
+- **Later the same evening: 60 tok/s, output byte-identical** (owner's goal was 25). New kernels and packed
+  weights (28-31 tok/s, section 11), every layer split across all six cards (47-52, section 12), and a driver
+  lock that made the six host threads wait on each other removed (60, section 13).
 
 ## 1. The freezes
 
@@ -309,6 +312,70 @@ Switches: `OWN_PACKED=0` (raw rows, old kernels), `OWN_SMALL=0` (old small opera
 per operator group, profiling barriers), `OWN_GPROF=2` (also time per kernel type). Upload is 33 s now (was 20 s):
 the host packs rows while uploading.
 
+## 12. Every layer on all six cards: 31.2 -> 47-52 tok/s (20:45-22:30 EST)
+
+Until p10 each card held whole layers and the six cards took turns (one busy, five idle). `OWN_TP=6` splits
+**every layer across all six cards** (commit a0d94e2c4, plus the follow-ups in section 13's commit):
+
+- Row slices, so every output element is still computed whole on one card by the same kernel (no partial sums
+  added across cards, so nothing changes bitwise): query up-projection by heads following the eight output
+  groups (cards get 1,1,2,1,1,2 groups), output-a by group, output-b / expert down / shared down by rows of the
+  hidden size (16-aligned), expert and shared gate/up by rows of the 2304 intermediate (384 each), head by
+  vocabulary. Everything else (norms, stream mixing, router, the attention bookkeeping) runs replicated.
+- Four all-gathers per layer (output-a, output-b, the SwiGLU outputs as 7 slots, the FFN output), done by one
+  kernel (`XchgP`) that writes this card's slice straight into the five peers' memory (Level Zero IPC handles
+  opened in each card's own context), then a system-scope release fence and a sequence-number flag per peer;
+  the reader spins on its own memory. Buffers are never reused before every reader has passed them (reuse
+  distance >= 2 exchanges), slices are 64-byte aligned. A timed-out wait (~0.9 s) poisons the card's later
+  waits and reports the peer, so a fault fails one step instead of hanging.
+- One host thread per card submits that card's whole step; trace runs (`OWN_TRACE`) submit phase by phase from
+  one thread so the record order equals the one-card-per-layer build. The index top-k needs the host only past
+  512 tokens; below that a kernel fills the list (`CidxFill`). Publishing the compressed rows runs on every card;
+  the engram rows for the next step upload while the current step runs.
+- `sync_rows` no longer drains the card's queue when it has nothing to copy (the drain stopped the card's
+  pipeline once per layer: 47 -> ~51 tok/s).
+
+Gate (each change): 3-step trace `cmp`-identical to the 9.0 tok/s build for `OWN_TP=6` and for the old layout,
+40-token and 128-token answers identical. 47.42 tok/s at a0d94e2c4 (`round6-tp6-*`); 49.9-51.5 with the drain
+fix. The profile at that point (card 0, `OWN_GPROF=2`): kernels 15.8 ms of a 25 ms profiled step, 1,473 launches
+per step; the exchanges 3.7 ms (160 per step, ~15 us each including the wait for the slowest card). Head-count
+balancing between cards is closed: the sparse-attention kernels are latency-bound, imbalance ~0.5 ms.
+
+## 13. The driver's launch lock: 50 -> 60 tok/s (2026-11-09 22:30-23:15 EST)
+
+With six submitting threads the host, not the cards, set the pace. `perf` on a running decode: 62 % of host
+time inside `ur_command_list_manager::appendKernelLaunchLocked`, much of it a `pthread_rwlock_wrlock` futex in
+`libze_intel_gpu` (the same calls take ~2.9 us per launch from one thread and 6-13 us with six). Two driver
+switches that sound right did not help (`MakeIndirectAllocationsResidentAsPack=1` 45.2, `DetectIndirectAccessInKernel=1`
+46.1, control 49.9 tok/s).
+
+Cause, pinned with a bench (`engine/tools/l0_launch_lock_bench.cpp`): **a kernel the compiler marks as
+"indirect access" makes every launch re-register all allocations under one lock shared by every thread of the
+process.** Six threads launching such a kernel cost 10-11 us per round of six launches, plain kernels 2.5 us.
+The marks (`is_ptr` on a by-value argument, or `indirect_stateless_count > 0` in the kernel's zeinfo) come from
+a pointer inside a by-value struct (the exchange kernel's peer table), a pointer loaded from memory, a
+program-scope table (the expert grid tables), and even a plain data-dependent address like `p[ix[i]]` (every
+sparse-attention and routed-expert kernel). 47 of the engine's 230 kernels carry a mark, 22 more only reference
+a program-scope table (`round7-indirect-kernel-census.txt`, from `-fsycl-dump-device-code` + `ocloc compile
+-device bmg`); in the six-card step that is roughly 390 of the 1,473 launches. Allocation count does not matter (1,000 extra allocations: no change).
+
+Fix: the driver switch `DisableIndirectAccess=1` (with `NEOReadDebugKeys=1`), set by `own_run_v41` before the
+cards start (`OWN_INDIRECT_ACCESS=1` keeps the driver default). Without the bookkeeping, an allocation that
+kernels only reach indirectly would never be made resident, so (a) the exchange kernel takes the six peer
+arenas as direct pointer arguments (it was the only kernel that reached memory no other kernel names), and (b)
+every allocation the engine owns or opens is passed once to a one-item kernel as a direct argument when it is
+made (`Backend41::touch`: `dalloc`, the error words, the opened peer arenas). The bench: 2.4 us per round with
+the switch.
+
+| Run (128 tokens, prompt 1) | tok/s | answer |
+| --- | --- | --- |
+| six cards, switch on (two runs) | **60.10, 59.96** | identical |
+| six cards, driver default (same build) | 43.94 (earlier runs 47-52) | identical |
+
+Trace gate: `OWN_TP=6` and the one-card-per-layer layout both `cmp`-identical, 40-token answers identical
+(`round7-launch-lock-gate-summary.txt`); no fault line in the kernel log. Prompt reading on the cards (still one
+token per step): 36 tokens in 0.63 s (60 tok/s).
+
 ## Reproduce
 
 ```bash
@@ -317,7 +384,7 @@ ICPX=/opt/intel/oneapi/compiler/latest/bin/icpx
 $ICPX -O3 -fiopenmp -std=c++20 -DOWN_RT_HOST_ONLY -I src -I planning/dsv41-fixtures \
   -o cpu_run_v41 planning/dsv41-fixtures/cpu_run_v41.cpp
 $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv41-fixtures -I src \
-  planning/dsv41-fixtures/own_run_v41.cpp -o own_run_v41
+  planning/dsv41-fixtures/own_run_v41.cpp -o own_run_v41 -lze_loader
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
 # reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
@@ -325,6 +392,8 @@ OWN_KV_BF16=1 OWN_TRACE=cpu.trc OWN_TRACE_STEPS=3 OMP_NUM_THREADS=16 ./cpu_run_v
   <shard 6> /dev/null state.bin
 # cards only: prompt ids in, generated ids out (stops at end of sentence)
 OWN_PROMPT=ids.txt ./own_run_v41 - 200 out_ids.txt 4096
+# every layer split across the six cards (fastest; OWN_GPROF=2 OWN_GPROF_CARD=c profiles card c)
+OWN_TP=6 OWN_PROMPT=ids.txt ./own_run_v41 - 200 out_ids.txt 4096
 # from the reference's state, with a trace for the gate (cards must be empty; the runner refuses otherwise)
 OWN_DEBUG=1 OWN_TRACE=dev.trc OWN_TRACE_STEPS=3 ./own_run_v41 state.bin 40 dev_ids.txt 4096
 python3 tools/dsv41_trace_diff.py cpu.trc dev.trc
@@ -341,7 +410,8 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
    Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
    context (compact the live slots); top-512 selection on the card for long contexts.
-3. A batched prompt pass on the cards (today the cards read the prompt one token per step, 9 tok/s).
+3. A batched prompt pass on the cards (today the cards read the prompt one token per step, 60 tok/s with
+   `OWN_TP=6`).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

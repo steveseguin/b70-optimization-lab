@@ -122,6 +122,14 @@ int main(int argc, char **argv) {
         return 2;
     }
     setenv("ZES_ENABLE_SYSMAN", "1", 0); // free-memory query; must precede SYCL startup
+    // Driver switch (read at SYCL startup): no per-launch re-registration of all allocations for
+    // kernels the compiler marks "indirect access". That work runs under a lock shared by every
+    // card's host thread and cost the six-card path ~15 % (see Backend41::touch, which registers
+    // each allocation once instead). OWN_INDIRECT_ACCESS=1 keeps the driver default.
+    if (!(getenv("OWN_INDIRECT_ACCESS") && atoi(getenv("OWN_INDIRECT_ACCESS")) == 1)) {
+        setenv("NEOReadDebugKeys", "1", 0);
+        setenv("DisableIndirectAccess", "1", 0);
+    }
     const char *state_path = argv[1];
     int ndecode = atoi(argv[2]);
     int max_ctx = argc > 4 ? atoi(argv[4]) : 16384;
@@ -146,6 +154,7 @@ int main(int argc, char **argv) {
         while (std::getline(ss, tok, ',')) opt.devices.push_back(atoi(tok.c_str()));
     }
     if (const char *e = getenv("OWN_TP")) opt.tp = atoi(e); // every layer split across this many cards
+    if (const char *e = getenv("OWN_GPROF_CARD")) opt.prof_card = atoi(e);
     // one host thread per card; trace runs submit phase by phase from one thread
     opt.tp_threads = !getenv("OWN_TRACE") && !(getenv("OWN_TP_THREADS") && atoi(getenv("OWN_TP_THREADS")) == 0);
     std::vector<int> forced;

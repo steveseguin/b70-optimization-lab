@@ -2855,34 +2855,44 @@ template <unsigned N, unsigned S> struct HcPreNormPS {
 // and the arenas 16-byte aligned. A wait that runs past `spin` polls (~175 ns
 // each) records 1 + peer in err[0] (host memory) and lets the queue go on: the
 // host checks err after every step and fails the run.
-struct XchgPeers {
-    float *p[6];
-};
+// The six arena pointers are separate kernel arguments, never fields of a
+// struct passed by value: the driver tracks only direct pointer arguments, and
+// a pointer inside a by-value struct marks the kernel "indirect access", which
+// costs every launch a driver-wide lock shared by all cards' threads (and,
+// with DisableIndirectAccess=1, a peer arena reached only that way would
+// never be made resident on this card).
 struct XchgP {
     int n, me;
     unsigned off, stride, nslot, r0, r1;
     uint32_t seq;
     long spin;
-    void operator()(sycl::nd_item<1> it, XchgPeers P, uint32_t *err) const {
+    static float *pick(int d, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5) {
+        return d == 0 ? p0 : d == 1 ? p1 : d == 2 ? p2 : d == 3 ? p3 : d == 4 ? p4 : p5;
+    }
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
         using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
                                     sycl::access::address_space::global_space>;
         const unsigned t = (unsigned)it.get_local_linear_id(), T = (unsigned)it.get_local_range(0);
-        const float *own = P.p[me] + off;
+        float *mine = pick(me, p0, p1, p2, p3, p4, p5);
+        const float *own = mine + off;
         const unsigned n4 = (r1 - r0) / 4;
         for (unsigned k = t; k < nslot * n4; k += T) {
             const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
             const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
             for (int d = 0; d < n; ++d)
-                if (d != me) *reinterpret_cast<sycl::vec<float, 4> *>(P.p[d] + off + o) = v;
+                if (d != me)
+                    *reinterpret_cast<sycl::vec<float, 4> *>(pick(d, p0, p1, p2, p3, p4, p5) + off + o) = v;
         }
         sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());
-        if ((int)t < n && (int)t != me) AR(reinterpret_cast<uint32_t *>(P.p[t])[16 * me]).store(seq);
+        if ((int)t < n && (int)t != me)
+            AR(reinterpret_cast<uint32_t *>(pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(seq);
         if ((int)t < n && (int)t != me) {
             // after one timeout this card stops waiting (poison word, uint32 index 96 of its own arena):
             // the step is already failed, and a stalled peer must not cost 0.9 s per exchange
-            AR poison(reinterpret_cast<uint32_t *>(P.p[me])[96]);
-            AR f(reinterpret_cast<uint32_t *>(P.p[me])[16 * t]);
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
             long s = 0;
             if (!poison.load())
                 while (f.load() < seq && ++s < spin) {}
@@ -2916,6 +2926,28 @@ template <typename A> struct SwigluBothS {
             float u = sycl::clamp(A::rd(sup[i]), -lim, lim);
             sout[i] = A::wr(g / (1.0f + sycl::exp(-g)) * u);
         }
+    }
+};
+
+// A published compressor row appended on the card (tensor parallel: every
+// card publishes for itself): the same BF16 rounding as the host path
+// (ops41::bf16b of the activation value), into row `row` of the mirrors.
+template <typename A> struct PubAppendA {
+    int hd, ik, row;
+    void operator()(sycl::nd_item<1> it, const typename A::T *latent, const typename A::T *kk, uint16_t *ckv,
+                    uint16_t *ikm) const {
+        const int i = (int)it.get_global_linear_id();
+        if (i < hd) ckv[(size_t)row * hd + i] = ops41::bf16b(A::rd(latent[i]));
+        if (i < ik) ikm[(size_t)row * ik + i] = ops41::bf16b(A::rd(kk[i]));
+    }
+};
+// The indexer's choice while a source has at most n rows: all of them, in
+// order (Backend41::index, len <= 512): cidx[j] = j + 128 for j < len, else -1.
+struct CidxFill {
+    int len, n;
+    void operator()(sycl::nd_item<1> it, int32_t *cidx) const {
+        const int i = (int)it.get_global_linear_id();
+        if (i < n) cidx[i] = i < len ? i + 128 : -1;
     }
 };
 
