@@ -193,6 +193,7 @@ public:
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
+        bool diet = true;       // tp: neighbouring launches merged (OWN_DIET=0: one launch per operator as before)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -1132,6 +1133,44 @@ private:
         return o.hc_ride && o.small_fast && !o.hc_legacy && g.h == 5120 && HC_SEG == 8 && al16(streams[t]) &&
                al16(wp<float>(t, prefix + "fn.weight"));
     }
+    // two packed matrices of one format, 5120 wide, reading the same x (query-a and key/value), plus the
+    // extra rows EX, in one launch; false (nothing launched) for any other shape
+    template <typename EX>
+    bool gemv_pair_ex(int t, const std::string &wa, act_t *ya, const std::string &wb, act_t *yb, const act_t *x, EX ex) {
+        const auto &ea = we(wa), &eb = we(wb);
+        const auto &da = wgt[t].at(wa), &db = wgt[t].at(wb);
+        if (!da.packed || !db.packed || ea.type != eb.type || ea.cols != 5120 || eb.cols != 5120) return false;
+        auto go = [&](auto dka, auto dkb) {
+            using DK = decltype(dka);
+            using D = ops41sycl::DenseRows<DK>;
+            using R = ops41sycl::RowsPair<EX, ops41sycl::RowsPair<D, D>>;
+            const R r{ex, {D{dka, (const uint8_t *)da.p, x, ya}, D{dkb, (const uint8_t *)db.p, x, yb}}};
+            launch_rows<0>(t, r.n(), 0, ops41sycl::RowsP<R>{r});
+        };
+        if (ea.type == iq3::Type::Q8_0)
+            go(ops41sycl::GemvQ8P<160, Act>{da.nrows, 0}, ops41sycl::GemvQ8P<160, Act>{db.nrows, 0});
+        else if (ea.type == iq3::Type::Q6_K)
+            go(ops41sycl::GemvQ6KP<20, Act>{da.nrows, 0}, ops41sycl::GemvQ6KP<20, Act>{db.nrows, 0});
+        else if (ea.type == iq3::Type::Q5_K)
+            go(ops41sycl::GemvQ5KP<20, Act>{da.nrows, 0}, ops41sycl::GemvQ5KP<20, Act>{db.nrows, 0});
+        else
+            return false;
+        return true;
+    }
+    // tp phase 0 in four launches (see tp_phase): shapes the fused forms are written for
+    bool attn_in_diet(int c, const std::string &p) const {
+        const auto &s = sc[c];
+        if (!o.diet || !o.small_fast || g.qrank != 1280 || g.hd != 512) return false;
+        const auto &ea = we(p + "attn_q_a.weight"), &eb = we(p + "attn_kv.weight");
+        const auto &da = wgt[c].at(p + "attn_q_a.weight"), &db = wgt[c].at(p + "attn_kv.weight");
+        if (!da.packed || !db.packed || ea.type != eb.type || ea.cols != 5120 || eb.cols != 5120) return false;
+        if (ea.type != iq3::Type::Q8_0 && ea.type != iq3::Type::Q6_K && ea.type != iq3::Type::Q5_K) return false;
+        return al16(s.qa) && al16(s.qn) && al16(s.kv) && al16(s.kvn) && s.qa != s.qn && s.kv != s.kvn &&
+               al16(wp<float>(c, p + "attn_q_a_norm.weight")) && al16(wp<float>(c, p + "attn_kv_a_norm.weight"));
+    }
+    // HcPostPreP may stand in for hc_post + the next sublayer's HcPreA
+    bool post_pre_ok() const { return o.diet && o.small_fast && !o.hc_legacy; }
+    bool x_ready[TILES] = {}; // s.x holds the next pre-norm's input (HcPostPreP ran)
     ops41sycl::HcDotsRows<5120, HC_SEG> hc_dots(int t, const std::string &prefix) {
         return {(const float *)streams[t], wp<float>(t, prefix + "fn.weight"), sc[t].d25};
     }
@@ -2009,22 +2048,51 @@ private:
                 hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
                 prof("hc_mix", c);
             }
-            pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
+            if (x_ready[c]) { // the previous FFN's hc_post already collapsed the streams into s.x (HcPostPreP)
+                rmsnorm(c, s.x, p + "attn_norm.weight", g.h, s.xn);
+                x_ready[c] = false;
+            } else {
+                pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
+            }
             prof("hc_pre_norm", c);
-            if (ride) gemv_ex(c, p + "attn_q_a.weight", s.xn, s.qa, hc_dots(c, p + "hc_attn_"));
-            else gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
-            rmsnorm(c, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
-            prof("attn_q_a", c);
-            if (ride)
+            if (ride && attn_in_diet(c, p)) {
+                // four launches: query-a + key/value rows (+ the mix's dot rows); both norms; query-b rows
+                // (+ the mix's finish + the key's rope); the query's rope
+                if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
+                const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
+                const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+                if (!gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight", s.kv, s.xn,
+                                  hc_dots(c, p + "hc_attn_")))
+                    throw std::runtime_error("query-a / key-value pair launch: " + p);
+                using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
+                const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
+                            {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
+                launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
+                prof("attn_q_a", c);
                 gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
-                             hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
-            else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
-            rope(c, s.q + qo, nh, g.hd, pos, yarn, false);
-            prof("attn_q_b", c);
-            gemv(c, p + "attn_kv.weight", s.xn, s.kv);
-            rmsnorm(c, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
-            rope(c, s.kvn, 1, g.hd, pos, yarn, false);
-            prof("attn_kv", c);
+                             ops41sycl::RowsPair<ops41sycl::HcFinishRows, ops41sycl::RopeRows<Act>>{
+                                 hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a),
+                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}});
+                launch_rows<0>(c, (size_t)nh, 0,
+                               ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{
+                                   {s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
+                prof("attn_q_b", c);
+            } else {
+                if (ride) gemv_ex(c, p + "attn_q_a.weight", s.xn, s.qa, hc_dots(c, p + "hc_attn_"));
+                else gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
+                rmsnorm(c, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
+                prof("attn_q_a", c);
+                if (ride)
+                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
+                                 hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
+                else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
+                rope(c, s.q + qo, nh, g.hd, pos, yarn, false);
+                prof("attn_q_b", c);
+                gemv(c, p + "attn_kv.weight", s.xn, s.kv);
+                rmsnorm(c, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
+                rope(c, s.kvn, 1, g.hd, pos, yarn, false);
+                prof("attn_kv", c);
+            }
             if (cr && is_kv_source(L)) { // every card publishes for itself: no host round trip
                 publish_tp(L, c, si, yarn);
                 prof("publish", c);
@@ -2095,16 +2163,24 @@ private:
             prof("xchg", c);
             break;
         case 3: {
-            hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
-            prof("hc_post", c);
             // the FFN's pre-norm takes the attention's pre-mix (pre_a): the FFN mix is first read at the
             // next hc_post, so its dot rows ride in the router launch, its finish with the shared rows
             const bool ride = hc_rides(c, p + "hc_ffn_");
-            if (!ride) {
-                hc_mix(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
-                prof("hc_mix", c);
+            if (ride && post_pre_ok()) { // hc_post and the FFN's stream collapse in one launch
+                launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
+                       (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
+                       (const float *)s.pre_a, s.x);
+                prof("hc_post", c);
+                rmsnorm(c, s.x, p + "ffn_norm.weight", g.h, s.xn);
+            } else {
+                hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
+                prof("hc_post", c);
+                if (!ride) {
+                    hc_mix(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
+                    prof("hc_mix", c);
+                }
+                pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
             }
-            pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
             prof("hc_pre_norm", c);
             if (ride) {
                 gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
@@ -2138,10 +2214,21 @@ private:
             prof("xchg", c);
             break;
         }
-        case 5:
-            hc_post(c, s.post_f, s.comb_f, s.pre_f, s.cur_pre);
+        case 5: {
+            // with the next attention's stream collapse (its mix = this FFN's pre-mix, copied to cur_pre here)
+            // unless the next layer adds its engram row first, or nothing follows
+            const int Ln = L + 1;
+            if (post_pre_ok() && Ln != 1 && Ln != 14 && (Ln < o.layer_end || o.head)) {
+                launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
+                       (const float *)s.post_f, (const float *)s.comb_f, (const float *)s.pre_f, s.cur_pre,
+                       (const float *)s.pre_f, s.x);
+                x_ready[c] = true;
+            } else {
+                hc_post(c, s.post_f, s.comb_f, s.pre_f, s.cur_pre);
+            }
             prof("hc_post", c);
             break;
+        }
         }
     }
     // publish() on card c, appending to its own mirrors (same kernels, same BF16 rounding)
@@ -2218,7 +2305,9 @@ private:
     void tp_head(int c) {
         auto &s = sc[c];
         const int H_ = g.h;
-        launch(c, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[c], (const float *)s.cur_pre, s.x);
+        if (!x_ready[c]) // else the last FFN's HcPostPreP already collapsed the streams into s.x
+            launch(c, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[c], (const float *)s.cur_pre, s.x);
+        x_ready[c] = false;
         rmsnorm(c, s.x, "output_norm.weight", H_, s.xn);
         gemv_part(c, "output.weight", s.xn, tlog[c]);
         const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
@@ -2245,6 +2334,7 @@ private:
     }
     void tp_card_step(int c) {
         const double t0 = now_s();
+        x_ready[c] = false; // a step that failed part-way must not leave it set
         tp_engram_upload(c);
         if (o.layer_begin == 0) tp_embed(c, tp_tok);
         else twait(c);
@@ -2334,6 +2424,7 @@ private:
     // one host thread for every card in phase order (trace runs): every card's
     // kernels of a phase, exchanges included, are queued before any host wait
     void tp_step_serial(int32_t token) {
+        for (int c = 0; c < o.tp; ++c) x_ready[c] = false;
         for (int c = 0; c < o.tp; ++c) tp_engram_upload(c);
         if (o.layer_begin == 0) {
             for (int c = 0; c < o.tp; ++c) tp_embed(c, token);

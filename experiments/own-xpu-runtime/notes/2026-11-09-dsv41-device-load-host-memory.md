@@ -402,6 +402,23 @@ Looked at and set aside: the engram gate (118 us twice per step) sums three 5,12
 double, element order (part of the arithmetic), so its time is the chain; splitting the engram matrix (224 us,
 repeated on all cards) across cards would save ~0.3 ms per step, not done yet.
 
+## 15. Launch diet, stage 1: 66.3 -> 67.0-67.4 tok/s (2026-11-10 00:00-00:40 EST)
+
+`OWN_DIET` (default on) merges neighbouring launches when the stream mix rides (section 14); every merged piece
+runs the same per-sub-group code as its old kernel:
+
+- The FFN's `hc_post` and the next sublayer's stream collapse (`HcPreA`) are one launch (`HcPostPreP`): it
+  writes the new streams, then collapses them with the pre-mix it is given. After the FFN this also prepares the
+  next layer's attention input (`x_ready`), so the next layer starts at its norm (not before layers 1 and 14,
+  which add their engram row first, and not at the last layer without the head).
+- Attention input: query-a and kv rows in one launch with the mix dots (`gemv_pair_ex`), both norms in one
+  launch (`NormRows`), the kv rotary step and the mix finish ride in the query-b launch (`RopeRows`,
+  `HcFinishRows`), then the query rotary step. Five launches fewer per layer.
+
+Gate (`round9-diet1-gate-summary.txt`): 3-step trace `cmp`-identical for `OWN_TP=6` and the one-card-per-layer
+layout, 40- and 128-token answers identical, no fault line. 67.02 / 67.37 tok/s against 66.31 with `OWN_DIET=0`
+in the same session (`round9-tp6-speed-128.log`).
+
 ## Reproduce
 
 ```bash

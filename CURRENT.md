@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**November 10, 2026 ~00:40 EST — DeepSeek V4.1 on six cards: 67 tokens/s, output still byte-identical.** More small steps now share one launch (the attention's input steps, and the end of each layer with the start of the next): five fewer launches per layer. Details: note section 15.
+
 **November 9, 2026 ~23:45 EST — DeepSeek V4.1 on six cards: 66 tokens/s, output still byte-identical.** Two more steps since 23:15: the small stream-mixing work now runs inside the big matrix launches that follow it (160 fewer launches per token), and the router's weights are stored at half size (every value is exactly representable, so nothing changes). Details: note section 14.
 
 **November 9, 2026 ~23:15 EST — DeepSeek V4.1 on six cards: 60 tokens/s, output still byte-identical.**

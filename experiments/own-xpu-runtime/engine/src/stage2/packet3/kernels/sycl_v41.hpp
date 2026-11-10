@@ -1962,7 +1962,12 @@ template <unsigned N, unsigned S> struct RmsNormPS {
     static constexpr unsigned C = N / 256;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y) const {
         sycl::sub_group sg = it.get_sub_group();
-        const unsigned lane = sg.get_local_linear_id(), sgi = sg.get_group_linear_id();
+        part(sg, sg.get_local_linear_id(), sg.get_group_linear_id(), x, w, y);
+    }
+    // sub-group sgi of S: the whole sum (every sub-group forms it alike), then its share of the outputs;
+    // no barrier between sub-groups, so the parts also run as rows of a fused launch (NormRows)
+    [[gnu::always_inline]] static inline void part(sycl::sub_group sg, unsigned lane, unsigned sgi, const float *x,
+                                                   const float *w, float *y) {
         double acc = 0;
 #pragma unroll
         for (unsigned c = 0; c < C; ++c) {
@@ -2090,6 +2095,31 @@ struct HcFinishRows {
     unsigned n() const { return 1; }
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned, unsigned) const {
         k.run(sg, d, scale, base, pre, post, comb);
+    }
+};
+// RmsNormPS<N, S>'s S sub-group parts as rows
+template <unsigned N, unsigned S> struct NormRows {
+    const float *x, *w;
+    float *y;
+    unsigned n() const { return S; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
+        RmsNormPS<N, S>::part(sg, lane, r, x, w, y);
+    }
+};
+// RopePairsA with rdim 64 (32 pairs = one sub-group per row) as rows; same expressions
+template <typename A> struct RopeRows {
+    typename A::T *x;
+    const float *cosb, *sinb;
+    unsigned rows, d;
+    bool inverse;
+    unsigned n() const { return rows; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group, unsigned lane, unsigned r) const {
+        const unsigned i = lane;
+        typename A::T *rw = x + (size_t)r * d + (d - 64);
+        float re = A::rd(rw[2 * i]), im = A::rd(rw[2 * i + 1]);
+        float c = cosb[i], s = inverse ? -sinb[i] : sinb[i];
+        rw[2 * i] = A::wr(re * c - im * s);
+        rw[2 * i + 1] = A::wr(re * s + im * c);
     }
 };
 // rows of R, one per sub-group (16 per 512-item work-group), in launch order
@@ -2833,6 +2863,36 @@ template <typename A> struct HcPostP {
             r[j] = acc;
         }
         for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = A::wr(r[j]);
+    }
+};
+// HcPostP then the next sublayer's HcPreA in one launch (both elementwise in i): the new streams as
+// stored, collapsed with mix into out. mix must not be pre_dst (the copy races with the readers): the
+// attention after an FFN passes the FFN pre-mix itself (pre_src), the FFN passes pre_a.
+template <typename A> struct HcPostPreP {
+    int h;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *x, const float *post,
+                    const float *comb, const float *pre_src, float *pre_dst, const float *mix,
+                    typename A::T *out) const {
+        const int i = (int)it.get_global_linear_id();
+        if (pre_dst && i < 4) pre_dst[i] = pre_src[i];
+        if (i >= h) return;
+        float o[4];
+        for (int k = 0; k < 4; ++k) o[k] = A::rd(streams[(size_t)k * h + i]);
+        const float xi = A::rd(x[i]);
+        float r[4];
+        for (int j = 0; j < 4; ++j) {
+            float acc = post[j] * xi;
+            for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * o[k];
+            r[j] = acc;
+        }
+        typename A::T sv[4];
+        for (int j = 0; j < 4; ++j) {
+            sv[j] = A::wr(r[j]);
+            streams[(size_t)j * h + i] = sv[j];
+        }
+        float acc = 0;
+        for (int j = 0; j < 4; ++j) acc += mix[j] * A::rd(sv[j]);
+        out[i] = A::wr(acc);
     }
 };
 
