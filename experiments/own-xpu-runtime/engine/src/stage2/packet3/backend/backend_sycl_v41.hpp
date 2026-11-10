@@ -1034,11 +1034,13 @@ private:
     void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
         xt[c] = {o.xtail, true, off, stride, nslot, r0, r1};
     }
+#ifndef OWN41_ACT_BF16
     void end_xtail(int c) {
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
         if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1);
     }
+#endif
     template <bool SG32, typename K, typename... A> void launch_xt(int c, sycl::nd_range<1> nr, K k, A... args) {
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
