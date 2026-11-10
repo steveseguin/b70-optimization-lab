@@ -2842,5 +2842,107 @@ template <unsigned N, unsigned S> struct HcPreNormPS {
     }
 };
 
+// ---- tensor-parallel pieces (Backend41 Options::tp > 1) ---------------------
+
+// All-gather of row slices between the cards of a tensor-parallel group, card
+// to card through Level Zero IPC-mapped arenas (one work-group). Card `me`
+// copies its rows [r0, r1) of each of `nslot` slots (slot stride `stride`
+// floats, from float offset `off` of the arena) out of its own arena into every
+// peer's arena at the same place, fences at system scope, then stores `seq`
+// into its flag in every peer's arena (uint32 index 16 * me, me < 6); it then waits
+// until every peer's flag in its own arena has reached `seq`. Pure copies: the
+// gathered values are the producer's bits. r0, r1 and stride are multiples of 4
+// and the arenas 16-byte aligned. A wait that runs past `spin` polls (~175 ns
+// each) records 1 + peer in err[0] (host memory) and lets the queue go on: the
+// host checks err after every step and fails the run.
+struct XchgPeers {
+    float *p[6];
+};
+struct XchgP {
+    int n, me;
+    unsigned off, stride, nslot, r0, r1;
+    uint32_t seq;
+    long spin;
+    void operator()(sycl::nd_item<1> it, XchgPeers P, uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned t = (unsigned)it.get_local_linear_id(), T = (unsigned)it.get_local_range(0);
+        const float *own = P.p[me] + off;
+        const unsigned n4 = (r1 - r0) / 4;
+        for (unsigned k = t; k < nslot * n4; k += T) {
+            const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
+            const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
+            for (int d = 0; d < n; ++d)
+                if (d != me) *reinterpret_cast<sycl::vec<float, 4> *>(P.p[d] + off + o) = v;
+        }
+        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        if ((int)t < n && (int)t != me) AR(reinterpret_cast<uint32_t *>(P.p[t])[16 * me]).store(seq);
+        if ((int)t < n && (int)t != me) {
+            // after one timeout this card stops waiting (poison word, uint32 index 96 of its own arena):
+            // the step is already failed, and a stalled peer must not cost 0.9 s per exchange
+            AR poison(reinterpret_cast<uint32_t *>(P.p[me])[96]);
+            AR f(reinterpret_cast<uint32_t *>(P.p[me])[16 * t]);
+            long s = 0;
+            if (!poison.load())
+                while (f.load() < seq && ++s < spin) {}
+            if (s >= spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+    }
+};
+
+// SwigluBothA with the routed outputs at a row stride: routed row r, element i
+// -> out[r * ostride + i] (a card's slice of the full [rows][ostride] layout);
+// shared -> sout[i]. Same expressions as SwigluBothA.
+template <typename A> struct SwigluBothS {
+    int rows, n; float lim; int ostride;
+    void operator()(sycl::nd_item<1> it, const typename A::T *gate, const typename A::T *up, typename A::T *out,
+                    const float *prob, const typename A::T *sgate, const typename A::T *sup, typename A::T *sout) const {
+        const int g_ = (int)it.get_global_linear_id();
+        if (g_ < rows * n) {
+            const int r = g_ / n, i = g_ % n;
+            float g = sycl::fmin(A::rd(gate[g_]), lim);
+            float u = sycl::clamp(A::rd(up[g_]), -lim, lim);
+            const typename A::T v = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+            out[(size_t)r * ostride + i] = A::wr(prob[r] * A::rd(v));
+        } else if (g_ < (rows + 1) * n) {
+            const int i = g_ - rows * n;
+            float g = sycl::fmin(A::rd(sgate[i]), lim);
+            float u = sycl::clamp(A::rd(sup[i]), -lim, lim);
+            sout[i] = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+        }
+    }
+};
+
+// ArgmaxP1 over a card's slice of the logits: indices are reported as
+// off + i, and `none` (the full vocabulary size) when the span has no
+// non-NaN value above -inf, exactly as ArgmaxP1 would for the full vector.
+struct ArgmaxP1O {
+    int n, ch, off, none;
+    void operator()(sycl::nd_item<1> it, const float *logits, float *bvs, int32_t *bis) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int gi = (int)it.get_group_linear_id();
+        const int i0 = gi * ch, i1 = sycl::min(n, i0 + ch);
+        float bv = -INFINITY;
+        int bi = none;
+        for (int i = i0 + lane; i < i1; i += 32) {
+            const float v = logits[i];
+            if (v > bv) { bv = v; bi = off + i; }
+        }
+        for (int w = 16; w; w >>= 1) {
+            const float ov = sycl::select_from_group(sg, bv, lane ^ w);
+            const int oi = sycl::select_from_group(sg, bi, lane ^ w);
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        if (lane == 0) { bvs[gi] = bv; bis[gi] = bi; }
+    }
+};
+
 } // namespace ops41sycl
 #endif

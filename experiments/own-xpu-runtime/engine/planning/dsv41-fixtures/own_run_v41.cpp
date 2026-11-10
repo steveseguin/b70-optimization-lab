@@ -145,6 +145,9 @@ int main(int argc, char **argv) {
         std::string tok;
         while (std::getline(ss, tok, ',')) opt.devices.push_back(atoi(tok.c_str()));
     }
+    if (const char *e = getenv("OWN_TP")) opt.tp = atoi(e); // every layer split across this many cards
+    // one host thread per card; trace runs submit phase by phase from one thread
+    opt.tp_threads = !getenv("OWN_TRACE") && !(getenv("OWN_TP_THREADS") && atoi(getenv("OWN_TP_THREADS")) == 0);
     std::vector<int> forced;
     if (const char *e = getenv("OWN_FORCED")) {
         std::ifstream ff(e);

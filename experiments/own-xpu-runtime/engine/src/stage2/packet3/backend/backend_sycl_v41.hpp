@@ -43,6 +43,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <condition_variable>
 #include <cxxabi.h>
 #include <fcntl.h>
 #include <fstream>
@@ -60,6 +61,8 @@
 #include "stage2/packet3/kernels/pack_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
+#include <level_zero/ze_api.h>
+#include <sycl/ext/oneapi/backend/level_zero.hpp>
 
 namespace own41 {
 
@@ -182,20 +185,34 @@ public:
         bool kprof = false;                  // with gprof: also kernel time per kernel type (OWN_GPROF=2)
         bool small_fast = true;              // latency-bound forms of norm / hc mix / sparse attention (OWN_SMALL=0: old)
         bool debug = false;
+        // tensor parallel (OWN_TP): every layer runs on all `tp` active cards at
+        // once, each with a row slice of the big matrices; the cards swap slices
+        // card to card (XchgP). 1 = the layer pipeline above. Needs the f32 build.
+        int tp = 1;
+        bool tp_threads = true; // one host thread per card (OWN_TP_THREADS; trace runs force 0)
     };
     struct DevPtr {
         void *p = nullptr;
         size_t bytes = 0;
         int tile = -1;
         bool packed = false; // rows are in the pack_v41.hpp layout
+        unsigned r0 = 0, nrows = 0; // rows [r0, r0 + nrows) of each expert / of the matrix are on this card
     };
 
     Backend41(const flash41::Plan41 &plan, int max_seq, Options opt)
         : g(plan.g), max_seq(max_seq), o(std::move(opt)) {
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
-        for (int L = o.layer_begin; L < o.layer_end; ++L) active[tile_of_layer(L)] = true;
-        if (o.head) active[HEAD_TILE] = true;
+        if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
+#ifdef OWN41_ACT_BF16
+            throw std::invalid_argument("tensor parallel (OWN_TP) needs the f32-activation build");
+#endif
+            if (o.tp > TILES) throw std::invalid_argument("tp > 6");
+            for (int t = 0; t < o.tp; ++t) active[t] = true;
+        } else {
+            for (int L = o.layer_begin; L < o.layer_end; ++L) active[tile_of_layer(L)] = true;
+            if (o.head) active[HEAD_TILE] = true;
+        }
         int n_active = 0;
         for (bool a : active) n_active += a;
         if (!n_active) throw std::invalid_argument("nothing to run");
@@ -262,9 +279,13 @@ public:
             }
             scratch_alloc(t);
         }
-        for (int L = o.layer_begin; L < o.layer_end; ++L)
-            ring[L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
-        if (o.head) {
+        for (int L = o.layer_begin; L < o.layer_end; ++L) {
+            if (o.tp > 1)
+                for (int t = 0; t < o.tp; ++t) ring[t][L] = dalloc<uint16_t>(t, (size_t)128 * g.hd);
+            else
+                ring[tile_of_layer(L)][L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
+        }
+        if (o.head && o.tp <= 1) {
             logits_ = dalloc<float>(HEAD_TILE, g.vocab);
             tok_out_ = dalloc<int32_t>(HEAD_TILE, 1);
             am_v_ = dalloc<float>(HEAD_TILE, (size_t)g.vocab / AM_CH + 1);
@@ -278,18 +299,39 @@ public:
         }
         for (auto &slot : h_cidx)
             for (auto &v : slot) v.assign(512, -1);
-        for (auto &layer : h_eng)
-            for (auto &v : layer) v.resize((size_t)24 * g.engram_dim);
+        for (auto &card : h_eng)
+            for (auto &layer : card)
+                for (auto &v : layer) v.resize((size_t)24 * g.engram_dim);
         build_rope_tables();
         for (int t = 0; t < TILES; ++t)
             if (active[t]) qs[t].wait();
         cur = o.layer_begin < g.layers ? tile_of_layer(o.layer_begin) : HEAD_TILE;
+        if (o.tp > 1) {
+            cur = 0;
+            tp_setup();
+        }
     }
 
     ~Backend41() {
+        if (!tp_th.empty()) {
+            {
+                std::lock_guard<std::mutex> lk(tp_mu);
+                tp_quit = true;
+            }
+            tp_cv.notify_all();
+            for (auto &x : tp_th) x.join();
+        }
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
             try { qs[t].wait(); } catch (...) {}
+        }
+        for (int c = 0; c < TILES; ++c) // peers' arenas opened in this card's context
+            for (int d = 0; d < TILES; ++d)
+                if (c != d && xpeer[c][d])
+                    zeMemCloseIpcHandle(sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]), xpeer[c][d]);
+        for (int t = 0; t < TILES; ++t) {
+            if (!active[t]) continue;
+            if (xerr[t]) sycl::free(xerr[t], ctxs[t]);
             for (void *p : owned[t]) sycl::free(p, ctxs[t]);
         }
         if (trace_f) fclose(trace_f);
@@ -331,23 +373,32 @@ public:
             const WeightTab::E *e;
             size_t bytes, chunk, off;
             bool packed;
-            size_t rb, prb; // raw / packed row bytes (packed items)
+            size_t rb, prb;   // raw / packed row bytes
+            unsigned sr0, sr1; // rows of each expert (of the matrix) on this card: all unless tp splits it
+            size_t fbytes;     // bytes read from the file
         };
         std::vector<Item> items[TILES];
         std::vector<size_t> chunk_sz[TILES];
         size_t need[TILES] = {}, total = 0;
         for (const auto &kv : wt.w) {
             if (!wanted(kv.first)) continue;
-            int t = tile_of(kv.first);
             const auto &e = kv.second;
-            Item it{&kv.first, &e, wt.bytes(e), 0, 0, false, 0, 0};
-            if (pack_wanted(kv.first, e)) {
-                it.packed = true;
-                it.rb = wt.row_bytes(e);
-                it.prb = pk41::packed_row_bytes(e.type, (size_t)e.cols);
-                it.bytes = it.prb * (size_t)e.rows * (size_t)(e.experts ? e.experts : 1);
-            }
-            items[t].push_back(it);
+            auto add = [&](int t) {
+                const auto [a, b] = tp_rows(kv.first, e, t);
+                Item it{&kv.first, &e, wt.bytes(e), 0, 0, false, wt.row_bytes(e), 0, a, b, wt.bytes(e)};
+                const size_t nr = (size_t)(b - a) * (size_t)(e.experts ? e.experts : 1);
+                if ((long)(b - a) != e.rows) it.bytes = it.fbytes = it.rb * nr;
+                if (pack_wanted(kv.first, e)) {
+                    it.packed = true;
+                    it.prb = pk41::packed_row_bytes(e.type, (size_t)e.cols);
+                    it.bytes = it.prb * nr;
+                }
+                items[t].push_back(it);
+            };
+            if (o.tp > 1)
+                for (int t = 0; t < o.tp; ++t) add(t);
+            else
+                add(tile_of(kv.first));
         }
         for (int t = 0; t < TILES; ++t) {
             auto &v = items[t];
@@ -361,7 +412,7 @@ public:
                 it.off = chunk_sz[t].back();
                 chunk_sz[t].back() += padded;
                 need[t] += padded;
-                total += wt.bytes(*it.e); // file bytes (progress counter)
+                total += it.fbytes; // file bytes (progress counter)
             }
         }
         // preflight: every card must already have room (see header: no overcommit)
@@ -415,12 +466,19 @@ public:
             if (!stage || !pstage) { free(stage); free(pstage); return fail("staging alloc"); }
             try {
                 for (const auto &it : items[t]) {
-                    uint8_t *dst = chunks[t][it.chunk] + it.off;
-                    const size_t raw = wt.bytes(*it.e); // bytes in the file
+                  // a row slice (tp) is one file segment per expert: rows [sr0, sr1) of each
+                  const bool whole = (long)(it.sr1 - it.sr0) == it.e->rows;
+                  const size_t nseg = whole ? 1 : (size_t)(it.e->experts ? it.e->experts : 1);
+                  const size_t raw = whole ? wt.bytes(*it.e) : (size_t)(it.sr1 - it.sr0) * it.rb; // file bytes per segment
+                  const size_t seg_dev = it.packed ? raw / it.rb * it.prb : raw;
+                  for (size_t sg = 0; sg < nseg && !stop; ++sg) {
+                    uint8_t *dst = chunks[t][it.chunk] + it.off + sg * seg_dev;
+                    const off_t fbase =
+                        it.e->off + (off_t)(whole ? 0 : (sg * (size_t)it.e->rows + it.sr0) * it.rb);
                     for (size_t d = 0; d < raw && !stop;) {
                         // packed tensors move whole rows per piece
                         size_t n = it.packed ? std::min(PIECE / it.rb * it.rb, raw - d) : std::min(PIECE, raw - d);
-                        off_t fo = it.e->off + (off_t)d, a0 = fo & ~(off_t)4095;
+                        off_t fo = fbase + (off_t)d, a0 = fo & ~(off_t)4095;
                         size_t lead = (size_t)(fo - a0), want = (lead + n + 4095) & ~(size_t)4095;
                         ssize_t got = dfd[it.e->shard] >= 0 ? pread(dfd[it.e->shard], stage, want, a0) : -1;
                         if (got < (ssize_t)(lead + n)) { // no O_DIRECT here: plain read
@@ -444,7 +502,8 @@ public:
                         done += n;
                         if (host_low()) fail("host MemAvailable fell below the floor during upload");
                     }
-                    if (stop) break;
+                  }
+                  if (stop) break;
                 }
             } catch (const std::exception &ex) {
                 fail(std::string("upload tile ") + std::to_string(t) + ": " + ex.what());
@@ -472,7 +531,7 @@ public:
         if (!err.empty()) throw std::runtime_error(err);
         for (int t = 0; t < TILES; ++t)
             for (const auto &it : items[t]) {
-                wgt[*it.name] = {chunks[t][it.chunk] + it.off, it.bytes, t, it.packed};
+                wgt[t][*it.name] = {chunks[t][it.chunk] + it.off, it.bytes, t, it.packed, it.sr0, it.sr1 - it.sr0};
                 if (it.packed) { ++packed_tensors; packed_bytes += it.bytes; }
             }
         uploaded_bytes = total;
@@ -510,6 +569,7 @@ public:
         return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
     }
     void prof_begin(int t) {
+        if (o.tp > 1 && !o.gprof) return;
         if (o.gprof) {
             gmarks.clear();
             kevs.clear(); // steps without a collect (prompt reading) leave theirs behind
@@ -547,8 +607,8 @@ public:
         }();
         return n.c_str();
     }
-    void kev(const char *name, const sycl::event &e) {
-        if (o.kprof) kevs.push_back({name, e});
+    void kev(int tile, const char *name, const sycl::event &e) {
+        if (o.kprof && (o.tp <= 1 || tile == 0)) kevs.push_back({name, e}); // tp: the first card's kernels
     }
     void gprof_collect() {
         if (!o.gprof) return;
@@ -606,6 +666,10 @@ public:
     // stack a host-pointer copy left pending slows every launch behind it
     bool h2d_wait = true;
     void prof(const char *name, int t) {
+        if (o.tp > 1) { // card 0's marks only; never a host wait (a card may be waiting for a peer not yet submitted)
+            if (o.gprof && t == 0) gmark(name, t);
+            return;
+        }
         if (o.gprof) {
             gmark(name, t);
             return;
@@ -629,6 +693,14 @@ public:
     void set_streams(const float *s4h, const float *pre4) {
         int t = o.layer_begin < o.layer_end ? tile_of_layer(o.layer_begin) : HEAD_TILE;
         for (size_t i = 0; i < 4 * (size_t)g.h; ++i) h_streams[i] = Act::wr(s4h[i]);
+        if (o.tp > 1) {
+            for (int c = 0; c < o.tp; ++c) {
+                qs[c].memcpy(streams[c], h_streams.data(), sizeof(act_t) * 4 * (size_t)g.h);
+                qs[c].memcpy(sc[c].cur_pre, pre4, 16);
+                qs[c].wait();
+            }
+            return;
+        }
         qs[t].memcpy(streams[t], h_streams.data(), sizeof(act_t) * 4 * (size_t)g.h);
         qs[t].memcpy(sc[t].cur_pre, pre4, 16);
         qs[t].wait();
@@ -664,11 +736,12 @@ public:
 
     // decode one token; returns the next token id (-1 when the head is not loaded)
     int32_t decode_step(int32_t token) {
+        if (o.tp > 1) return decode_step_tp(token);
         const int H_ = g.h;
         engram_prefetch();
         if (o.layer_begin == 0) {
             const auto &te = we("token_embd.weight");
-            const uint8_t *row = (const uint8_t *)wgt.at("token_embd.weight").p + (size_t)token * wrb(te);
+            const uint8_t *row = (const uint8_t *)wgt[0].at("token_embd.weight").p + (size_t)token * wrb(te);
             launch(0, H_, 32, ops41sycl::EmbedRowA<Act>{te.type, H_}, row, sc[0].x);
             launch(0, H_, 32, ops41sycl::Broadcast4A<Act>{H_}, (const act_t *)sc[0].x, streams[0]);
             float pm[4] = {1, 0, 0, 0};
@@ -713,7 +786,11 @@ public:
     // top-5 of the last logits (debug print; D2H of the whole vector)
     std::vector<std::pair<int, float>> top5() {
         std::vector<float> lg(g.vocab);
-        qs[HEAD_TILE].memcpy(lg.data(), logits_, (size_t)g.vocab * 4).wait();
+        if (o.tp > 1)
+            for (int c = 0; c < o.tp; ++c)
+                qs[c].memcpy(lg.data() + tv0[c], tlog[c], (size_t)(tv1[c] - tv0[c]) * 4).wait();
+        else
+            qs[HEAD_TILE].memcpy(lg.data(), logits_, (size_t)g.vocab * 4).wait();
         std::vector<int> ord(g.vocab);
         for (int i = 0; i < g.vocab; ++i) ord[i] = i;
         std::partial_sort(ord.begin(), ord.begin() + 5, ord.end(),
@@ -737,8 +814,12 @@ public:
             for (size_t i = 0; i < n; ++i) tmp[i] = ops41::bf16b(src[i]);
             qs[t].memcpy(dst, tmp.data(), n * 2).wait(); // tmp is reused: wait
         };
-        for (int L = o.layer_begin; L < o.layer_end; ++L)
-            up16(ring[L], rings[L].data(), rings[L].size(), tile_of_layer(L));
+        for (int L = o.layer_begin; L < o.layer_end; ++L) {
+            if (o.tp > 1)
+                for (int c = 0; c < o.tp; ++c) up16(ring[c][L], rings[L].data(), rings[L].size(), c);
+            else
+                up16(ring[tile_of_layer(L)][L], rings[L].data(), rings[L].size(), tile_of_layer(L));
+        }
         static const int srcs[4] = {2, 8, 14, 20};
         for (int i = 0; i < 4; ++i) {
             src_len[i] = lens[i];
@@ -749,7 +830,7 @@ public:
             for (size_t k = 0; k < ckv[i].size(); ++k) h_ckv[i][k] = ops41::bf16b(ckv[i][k]);
             for (size_t k = 0; k < ik[i].size(); ++k) h_ik[i][k] = ops41::bf16b(ik[i][k]);
             for (int t = 0; t < TILES; ++t) synced[t][i] = 0; // cards catch up on first use
-            int st = tile_of_layer(srcs[i]);
+            int st = o.tp > 1 ? 0 : tile_of_layer(srcs[i]); // tp: the lead card publishes
             if (srcs[i] >= o.layer_begin && srcs[i] < o.layer_end) {
                 qs[st].memcpy(sc[st].kv_state + (size_t)i * 2 * g.hd, kv_state[i], 1024 * 4);
                 qs[st].memcpy(sc[st].score_state + (size_t)i * 2 * g.hd, score_state[i], 1024 * 4);
@@ -770,13 +851,13 @@ private:
     std::vector<sycl::device> devs;
     std::vector<sycl::queue> qs;
     std::vector<void *> owned[TILES];
-    std::unordered_map<std::string, DevPtr> wgt;
+    std::unordered_map<std::string, DevPtr> wgt[TILES]; // per card (tp: every card holds its slice)
     const WeightTab *W = nullptr;
     act_t *streams[TILES] = {};
     uint16_t *ckv_mirror[TILES][4] = {};
     uint16_t *ik_mirror[TILES][4] = {};
     int32_t *cidx_mirror[TILES][8] = {};
-    uint16_t *ring[40] = {};
+    uint16_t *ring[TILES][40] = {}; // window ring per card per layer
     float *cos_yarn[TILES] = {}, *sin_yarn[TILES] = {}, *cos_base[TILES] = {}, *sin_base[TILES] = {};
     float *logits_ = nullptr;
     int32_t *tok_out_ = nullptr;
@@ -794,8 +875,8 @@ private:
     long synced[TILES][4] = {};              // rows already on each card
     std::vector<int32_t> h_cidx[8][4];       // 4-deep ring per slot: a pending upload never sees a rewrite
     unsigned cidx_ver[8] = {}, tile_cidx_ver[TILES][8] = {};
-    std::vector<act_t> h_eng[2][2];          // engram rows, two alternating buffers per engram layer
-    unsigned eng_flip[2] = {};
+    std::vector<act_t> h_eng[TILES][2][2];   // engram rows per card, two alternating buffers per engram layer
+    unsigned eng_flip[TILES][2] = {};
     std::vector<uint8_t> cand_host; // layer-20 candidate mask of the current step
     bool cand_valid = false;
 
@@ -875,9 +956,9 @@ private:
 
     const WeightTab::E &we(const std::string &n) const { return W->at(n); }
     size_t wrb(const WeightTab::E &e) const { return W->row_bytes(e); }
-    template <typename T = uint8_t> const T *wp(const std::string &n) const {
-        auto it = wgt.find(n);
-        if (it == wgt.end()) throw std::invalid_argument("weight not uploaded " + n);
+    template <typename T = uint8_t> const T *wp(int t, const std::string &n) const {
+        auto it = wgt[t].find(n);
+        if (it == wgt[t].end()) throw std::invalid_argument("weight not uploaded " + n);
         return (const T *)it->second.p;
     }
 
@@ -888,7 +969,7 @@ private:
         auto e = qs[tile].submit([&](sycl::handler &hh) {
             hh.parallel_for(sycl::nd_range<1>(n, lwork), [=](sycl::nd_item<1> it) { k(it, args...); });
         });
-        kev(kname<K>(), e);
+        kev(tile, kname<K>(), e);
     }
     // kernels built on 32-lane sub-group reductions: one work-group == one sub-group
     template <typename K, typename... A> void launch_sg(int tile, size_t groups, K k, A... args) {
@@ -896,7 +977,7 @@ private:
             hh.parallel_for(sycl::nd_range<1>(groups * 32, 32),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
         });
-        kev(kname<K>(), e);
+        kev(tile, kname<K>(), e);
     }
     // one work-group of `items` (a multiple of 32), 32-lane sub-groups, no local memory
     template <typename K, typename... A> void launch_wg(int tile, size_t items, K k, A... args) {
@@ -904,7 +985,7 @@ private:
             hh.parallel_for(sycl::nd_range<1>(items, items),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
         });
-        kev(kname<K>(), e);
+        kev(tile, kname<K>(), e);
     }
     // one work-group of `items` (a multiple of 32) with SLM floats of local
     // memory passed as the last argument
@@ -915,7 +996,7 @@ private:
                 k(it, args..., &lt[0]);
             });
         });
-        kev(kname<K>(), e);
+        kev(tile, kname<K>(), e);
     }
     // packed-row kernels: 16 sub-groups (rows) per work-group, optional local
     // table; max_wg > 0 caps the work-groups (the routed kernels loop over rows)
@@ -936,7 +1017,7 @@ private:
                                 [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
             }
         });
-        kev(kname<K>(), e);
+        kev(tile, kname<K>(), e);
     }
 #ifndef OWN41_ACT_BF16
     // dense Q8_0 over packed rows; xn > 0 = grouped (row r reads x + (r / xn) * cols)
@@ -973,19 +1054,19 @@ private:
         const auto &e = we(wn);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
 #ifndef OWN41_ACT_BF16
-        if (const auto &dp = wgt.at(wn); dp.packed) { // f32 activations: f32out is the same store
+        if (const auto &dp = wgt[tile].at(wn); dp.packed) { // f32 activations: f32out is the same store
             gemv_kp(tile, e, dp.p, x, (act_t *)y, rows, 0, cols, wn);
             return;
         }
         // F32 rows need no packing: block-read kernel (the router logits, 5120 columns)
         if (o.packed && e.type == iq3::Type::F32 && cols == 5120) {
-            launch_rows<0>(tile, rows, 0, ops41sycl::GemvF32P<160, Act>{rows}, (const uint8_t *)wp(wn), x, (act_t *)y);
+            launch_rows<0>(tile, rows, 0, ops41sycl::GemvF32P<160, Act>{rows}, (const uint8_t *)wp(tile, wn), x, (act_t *)y);
             return;
         }
 #endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
-            launch_sg(tile, (size_t)rows, ops41sycl::Gemv{e.type, rows, cols, f32out}, wp(wn), wrb(e), x, y);
+            launch_sg(tile, (size_t)rows, ops41sycl::Gemv{e.type, rows, cols, f32out}, wp(tile, wn), wrb(e), x, y);
             return;
         }
 #else
@@ -994,7 +1075,7 @@ private:
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
-        launch_sg(tile, (size_t)rows, ops41sycl::GemvT<iq3::Type::TY, Act>{rows, cols, f32out}, wp(wn), x, y); \
+        launch_sg(tile, (size_t)rows, ops41sycl::GemvT<iq3::Type::TY, Act>{rows, cols, f32out}, wp(tile, wn), x, y); \
         break;
             OWN41_WEIGHT_TYPES(X)
 #undef X
@@ -1006,14 +1087,14 @@ private:
         if (e.rows != g.ototal || e.cols != g.oin) throw std::runtime_error("attn_output_a shape");
         const unsigned n = (unsigned)(g.ototal / 8), k = (unsigned)g.oin;
 #ifndef OWN41_ACT_BF16
-        if (const auto &dp = wgt.at(wn); dp.packed) {
+        if (const auto &dp = wgt[tile].at(wn); dp.packed) {
             gemv_kp(tile, e, dp.p, x, y, (unsigned)e.rows, n, k, wn);
             return;
         }
 #endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
-            launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQ{e.type, n, k}, wp(wn), wrb(e), x, y);
+            launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQ{e.type, n, k}, wp(tile, wn), wrb(e), x, y);
             return;
         }
 #else
@@ -1022,7 +1103,7 @@ private:
         switch (e.type) {
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
-        launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQT<iq3::Type::TY, Act>{n, k}, wp(wn), x, y); \
+        launch_sg(tile, (size_t)e.rows, ops41sycl::GemvGroupedQT<iq3::Type::TY, Act>{n, k}, wp(tile, wn), x, y); \
         break;
             OWN41_WEIGHT_TYPES(X)
 #undef X
@@ -1032,9 +1113,9 @@ private:
     void routed_gemv(int tile, const std::string &wn, const act_t *x, const uint32_t *ids, act_t *y,
                      bool per_slot) {
         const auto &e = we(wn);
-        const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
+        const unsigned rows = wgt[tile].at(wn).nrows, cols = (unsigned)e.cols; // tp: this card's rows of each expert
 #ifndef OWN41_ACT_BF16
-        if (const auto &dp = wgt.at(wn); dp.packed) {
+        if (const auto &dp = wgt[tile].at(wn); dp.packed) {
             const auto *w = (const uint8_t *)dp.p;
             // 128 work-groups (2,048 sub-groups): best for every format and shape in
             // the 2026-11-09 kernel bench (each fills its local table once)
@@ -1056,7 +1137,7 @@ private:
 #endif
 #ifdef OWN41_ACT_BF16
         if (o.generic_kernels) {
-            launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemv{e.type, rows, cols, per_slot}, wp(wn), x, ids, y);
+            launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemv{e.type, rows, cols, per_slot}, wp(tile, wn), x, ids, y);
             return;
         }
 #else
@@ -1066,7 +1147,7 @@ private:
 #define X(TY)                                                                                              \
     case iq3::Type::TY:                                                                                    \
         launch_sg(tile, (size_t)6 * rows, ops41sycl::RoutedGemvT<iq3::Type::TY, Act>{rows, cols, per_slot}, \
-                  wp(wn), x, ids, y);                                                                      \
+                  wp(tile, wn), x, ids, y);                                                                      \
         break;
             OWN41_WEIGHT_TYPES(X)
 #undef X
@@ -1075,7 +1156,7 @@ private:
     }
     static bool al16(const void *p) { return ((uintptr_t)p & 15u) == 0; }
     void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
-        const float *w = wp<float>(wn);
+        const float *w = wp<float>(tile, wn);
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && al16(x) && al16(w) && al16(y) && x != y) { // several sub-groups: not in place
             switch (n) {
@@ -1151,18 +1232,18 @@ private:
         auto &s = sc[t];
         // lane/tree reduction (anchor ops41::hc_mix_lanes); the serial-order
         // HcMixDots kernel cost ~3 ms per call
-        const float *fn = wp<float>(prefix + "fn.weight");
+        const float *fn = wp<float>(t, prefix + "fn.weight");
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && g.h == 5120 && HC_SEG == 8 && al16(streams[t]) && al16(fn)) {
             launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDotsP<5120, HC_SEG>{}, (const act_t *)streams[t], fn, s.d25);
             launch_sg(t, 1, ops41sycl::HcMixFinishSG{g.h, HC_SEG}, (const double *)s.d25,
-                      wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
+                      wp<float>(t, prefix + "scale.weight"), wp<float>(t, prefix + "base.weight"), pre, post, comb);
             return;
         }
 #endif
         launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDots32A<Act>{g.h, HC_SEG}, (const act_t *)streams[t], fn, s.d25);
         launch(t, 1, 1, ops41sycl::HcMixFinishSeg{g.h, HC_SEG}, (const double *)s.d25,
-               wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
+               wp<float>(t, prefix + "scale.weight"), wp<float>(t, prefix + "base.weight"), pre, post, comb);
     }
 
     // collapse the 4 streams with `mix` (HcPreA) and RMS-normalize into s.xn
@@ -1170,7 +1251,7 @@ private:
         auto &s = sc[t];
         const int H_ = g.h;
 #ifndef OWN41_ACT_BF16
-        const float *w = wp<float>(wn);
+        const float *w = wp<float>(t, wn);
         // Off: same arithmetic as the two launches below (test_small_v41_device.cpp), faster alone (19 vs 23 us)
         // but 22.1 us per call in the real step against 11.4 for HcPreA + RmsNormPS (p8 profile, 2026-11-09)
         constexpr bool fused_pre_norm = false;
@@ -1282,7 +1363,7 @@ private:
         // (nothing between reads the ring or the window indices)
         const bool fast_win = o.small_fast && g.hd <= 1024;
         if (!fast_win)
-            launch(t, 1, 1, ops41sycl::WindowAppendA<Act>{128, g.hd, (int)pos}, ring[L], (const act_t *)s.kvn, s.widx);
+            launch(t, 1, 1, ops41sycl::WindowAppendA<Act>{128, g.hd, (int)pos}, ring[t][L], (const act_t *)s.kvn, s.widx);
         int si = src_index(L);
         int n_idx = 128;
         if (cr) {
@@ -1291,7 +1372,7 @@ private:
             sync_rows(t, si);
             sync_cidx(t, isrc_for(L));
             if (fast_win) {
-                launch(t, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 512}, ring[L],
+                launch(t, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 512}, ring[t][L],
                        (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)cidx_mirror[t][isrc_for(L)]);
             } else {
                 qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
@@ -1300,7 +1381,7 @@ private:
             n_idx += 512;
             tri(L, TT_CIDX, t, s.idxs_cat + 128, 512);
         } else if (fast_win) {
-            launch(t, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 0}, ring[L],
+            launch(t, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 0}, ring[t][L],
                    (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
         } else {
             qs[t].memcpy(s.idxs_cat, s.widx, 128 * 4);
@@ -1308,8 +1389,8 @@ private:
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && g.hd == 512 && (n_idx == 128 || n_idx == 640) && g.qh % 4 == 0) {
             // same per-output arithmetic as the three launches below (test_small_v41_device.cpp)
-            const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
-            const float *sinks = wp<float>(p + "attn_sinks.weight");
+            const uint16_t *kvw = ring[t][L], *kvc = cr ? ckv_mirror[t][si] : ring[t][L];
+            const float *sinks = wp<float>(t, p + "attn_sinks.weight");
             const int32_t *ix = (const int32_t *)s.idxs_cat;
             if (n_idx == 128) {
                 launch_sg(t, (size_t)g.qh * n_idx / 32, ops41sycl::SparseScoreP<512>{n_idx, g.qh, 128, g.hd},
@@ -1329,10 +1410,10 @@ private:
         } else
 #endif
         { // three launches, same arithmetic order as the one-launch SparseAttn kernel
-            const uint16_t *kvw = ring[L], *kvc = cr ? ckv_mirror[t][si] : ring[L];
+            const uint16_t *kvw = ring[t][L], *kvc = cr ? ckv_mirror[t][si] : ring[t][L];
             launch(t, (size_t)g.qh * n_idx, 32, ops41sycl::SparseScoreA<Act>{n_idx, g.qh, g.hd, 128},
                    (const act_t *)s.q, kvw, kvc, (const int32_t *)s.idxs_cat, s.attn_w);
-            launch(t, g.qh, 8, ops41sycl::SparseSoftmax{n_idx, g.qh}, wp<float>(p + "attn_sinks.weight"),
+            launch(t, g.qh, 8, ops41sycl::SparseSoftmax{n_idx, g.qh}, wp<float>(t, p + "attn_sinks.weight"),
                    (const int32_t *)s.idxs_cat, s.attn_w);
             launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::SparseOut{n_idx, g.qh, g.hd, 128}, kvw, kvc,
                    (const int32_t *)s.idxs_cat, (const float *)s.attn_w, s.of);
@@ -1417,12 +1498,12 @@ private:
                 launch_local<1024>(t, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
                                    (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
                                    (const float *)(s.score_state + (size_t)si * 2 * g.hd),
-                                   wp<float>(p + "attn_compressor_norm.weight"), s.latent);
+                                   wp<float>(t, p + "attn_compressor_norm.weight"), s.latent);
             else
                 launch(t, 1, 1, ops41sycl::CompressPoolA<Act>{2, g.hd},
                        (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
                        (const float *)(s.score_state + (size_t)si * 2 * g.hd),
-                       wp<float>(p + "attn_compressor_norm.weight"), s.latent);
+                       wp<float>(t, p + "attn_compressor_norm.weight"), s.latent);
         }
         // reference order: ik = rope(k_norm(wk * latent)); ckv = rope(latent)
         gemv(t, p + "indexer.attn_k.weight", s.latent, s.kk);
@@ -1518,7 +1599,7 @@ private:
         using K = ops41sycl::RoutePRows<RR>;
         K k{ops41sycl::RouteP{g.experts, 6}, RR{R1{dk, wg, s.xn, s.shg}, R1{dk, wu, s.xn, s.shu}}};
         const size_t ng = 1 + (2 * (size_t)dk.rows + 15) / 16;
-        const float *logits = s.router, *bias = wp<float>(p + "exp_probs_b.bias");
+        const float *logits = s.router, *bias = wp<float>(t, p + "exp_probs_b.bias");
         uint32_t *ids = s.ids;
         float *prob = s.prob;
         auto e = qs[t].submit([&](sycl::handler &hh) {
@@ -1527,18 +1608,18 @@ private:
                 k(it, logits, bias, ids, prob, &lt[0]);
             });
         });
-        kev(kname<K>(), e);
+        kev(t, kname<K>(), e);
     }
     // true when the router and the shared gate/up rows went out in one launch
     bool route_shared_fused(int t, const std::string &p) {
         if (!o.small_fast || g.experts % 32 != 0 || g.experts > 512) return false;
         const auto &eg = we(p + "ffn_gate_shexp.weight"), &eu = we(p + "ffn_up_shexp.weight");
-        const auto &dg = wgt.at(p + "ffn_gate_shexp.weight"), &du = wgt.at(p + "ffn_up_shexp.weight");
+        const auto &dg = wgt[t].at(p + "ffn_gate_shexp.weight"), &du = wgt[t].at(p + "ffn_up_shexp.weight");
         if (!dg.packed || !du.packed || eg.type != eu.type || eg.rows != eu.rows || eg.cols != eu.cols ||
             eg.cols != 5120)
             return false;
         const unsigned rows = (unsigned)eg.rows;
-        auto sh = wgt.at(p + "ffn_gate_shexp.weight").p, su = wgt.at(p + "ffn_up_shexp.weight").p;
+        auto sh = wgt[t].at(p + "ffn_gate_shexp.weight").p, su = wgt[t].at(p + "ffn_up_shexp.weight").p;
         if (eg.type == iq3::Type::Q8_0)
             route_with_shared(t, p, ops41sycl::GemvQ8P<160, Act>{rows, 0}, (const uint8_t *)sh, (const uint8_t *)su);
         else if (eg.type == iq3::Type::Q5_K)
@@ -1581,11 +1662,11 @@ private:
         if (o.small_fast && g.experts % 32 == 0 && g.experts <= 1024) {
             // one work-group, same picks and arithmetic (test_small_v41_device.cpp)
             launch_local<2 * 1024 + 6>(t, (size_t)g.experts, ops41sycl::RouteP{g.experts, 6}, (const float *)s.router,
-                                       wp<float>(p + "exp_probs_b.bias"), s.ids, s.prob);
+                                       wp<float>(t, p + "exp_probs_b.bias"), s.ids, s.prob);
         } else {
             // three launches, same picks and arithmetic as the one-work-item RouteF32
             launch(t, g.experts, 32, ops41sycl::RouteScore{g.experts}, (const float *)s.router,
-                   wp<float>(p + "exp_probs_b.bias"), s.rs, s.rsb);
+                   wp<float>(t, p + "exp_probs_b.bias"), s.rs, s.rsb);
             launch(t, g.experts, 32, ops41sycl::RouteRank{g.experts, 6}, (const float *)s.rs, (const float *)s.rsb,
                    s.ids, s.prob);
             launch(t, 1, 1, ops41sycl::RouteNorm{6}, s.prob);
@@ -1621,6 +1702,476 @@ private:
         }
     }
 
+    // ---- tensor-parallel decode (Options::tp > 1) ---------------------------
+    // Every layer runs on all tp cards at once. Card c holds a row slice of
+    // q_b (whole heads, following its o_a groups), attn_output_a (whole groups
+    // of 1024 rows), attn_output_b, the expert and shared gate/up (rows of mid)
+    // and down (rows of h) matrices and the head; everything else is
+    // replicated and computed on every card. Per layer the cards swap four
+    // slices card to card (XchgP): o_a out, o_b out, the SwiGLU outputs (6
+    // routed + shared, one exchange), the MoE out. A slice is computed by the
+    // same kernel over the same rows as on one card, so every value is
+    // bit-identical. Card 0 ("lead") alone does the host-side work (publish,
+    // index); the others wait for it (tp_mark) before they read the mirrors.
+    // An exchange buffer is rewritten no earlier than two exchanges later and
+    // every reader consumes it before its own next push, so one buffer each is
+    // enough (no double buffering).
+    int tog0[TILES] = {}, tog1[TILES] = {}, thq0[TILES] = {}, thq1[TILES] = {};
+    int tm0[TILES] = {}, tm1[TILES] = {}, td0[TILES] = {}, td1[TILES] = {}, tv0[TILES] = {}, tv1[TILES] = {};
+    unsigned xoa = 0, xob = 0, xact = 0;
+    float *xarena[TILES] = {};
+    void *xpeer[TILES][TILES] = {};
+    uint32_t *xerr[TILES] = {};
+    uint32_t xseq[TILES] = {};
+    float *tlog[TILES] = {}, *tam_v[TILES] = {};
+    int32_t *tam_i[TILES] = {};
+    std::vector<float> h_amv[TILES];
+    std::vector<int32_t> h_ami[TILES];
+    static constexpr long XSPIN = 5000000; // ~0.9 s of flag polls, under the driver's hang check
+    std::vector<std::thread> tp_th;
+    std::mutex tp_mu;
+    std::condition_variable tp_cv, tp_done_cv;
+    long tp_gen = 0;
+    int tp_left = 0;
+    bool tp_quit = false;
+    std::string tp_err;
+    std::atomic<bool> tp_abort{false};
+    std::atomic<long> tp_mark{0};
+    long tp_stepn = 0;
+    int32_t tp_tok = 0;
+
+    // rows of tensor n held by card c (all rows unless tp splits it)
+    std::pair<unsigned, unsigned> tp_rows(const std::string &n, const WeightTab::E &e, int c) const {
+        const unsigned R = (unsigned)e.rows;
+        if (o.tp <= 1) return {0, R};
+        auto need = [&](long want) {
+            if (e.rows != want) throw std::runtime_error("tensor parallel: unexpected rows in " + n);
+        };
+        if (n == "output.weight") { need(g.vocab); return {(unsigned)tv0[c], (unsigned)tv1[c]}; }
+        if (layer_of_name(n) < 0) return {0, R};
+        const std::string suf = n.substr(n.find('.', 4) + 1);
+        if (suf == "attn_q_b.weight") { need((long)g.qh * g.hd); return {(unsigned)(thq0[c] * g.hd), (unsigned)(thq1[c] * g.hd)}; }
+        if (suf == "attn_output_a.weight") {
+            need(g.ototal);
+            const unsigned per = (unsigned)g.ototal / 8;
+            return {tog0[c] * per, tog1[c] * per};
+        }
+        if (suf == "attn_output_b.weight" || suf == "ffn_down_exps.weight" || suf == "ffn_down_shexp.weight") {
+            need(g.h);
+            return {(unsigned)td0[c], (unsigned)td1[c]};
+        }
+        if (suf == "ffn_gate_exps.weight" || suf == "ffn_up_exps.weight" || suf == "ffn_gate_shexp.weight" ||
+            suf == "ffn_up_shexp.weight") {
+            need(g.mid);
+            return {(unsigned)tm0[c], (unsigned)tm1[c]};
+        }
+        return {0, R};
+    }
+
+    void tp_setup() {
+        const int N = o.tp;
+        if (g.ototal % 8 || g.qh % 8 || g.h % 16 || g.mid % 16 || g.ototal / 8 * 8 != g.ototal || g.oin != g.qh / 8 * g.hd)
+            throw std::runtime_error("tensor parallel: geometry");
+        auto split = [&](int n, int c, int al) {
+            const long u = n / al;
+            const int a = (int)(u * c / N) * al, b = c + 1 == N ? n : (int)(u * (c + 1) / N) * al;
+            return std::pair<int, int>{a, b};
+        };
+        for (int c = 0; c < N; ++c) {
+            tog0[c] = 8 * c / N;
+            tog1[c] = 8 * (c + 1) / N;
+            if (tog1[c] <= tog0[c]) throw std::runtime_error("tensor parallel: more cards than output groups");
+            thq0[c] = tog0[c] * g.qh / 8;
+            thq1[c] = tog1[c] * g.qh / 8;
+            std::tie(tm0[c], tm1[c]) = split(g.mid, c, 16);
+            std::tie(td0[c], td1[c]) = split(g.h, c, 16);
+            std::tie(tv0[c], tv1[c]) = split(g.vocab, c, 16);
+            if ((thq1[c] - thq0[c]) % 4) throw std::runtime_error("tensor parallel: heads per card % 4");
+        }
+        xoa = 1024; // [0, 1024): flags, uint32 16 * card
+        xob = xoa + (unsigned)g.ototal;
+        xact = xob + (unsigned)g.h;
+        const size_t nf = xact + 7 * (size_t)g.mid;
+        for (int c = 0; c < N; ++c) {
+            xarena[c] = dalloc<float>(c, nf);
+            xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
+            if (!xerr[c]) throw std::runtime_error("host error word");
+            std::memset(xerr[c], 0, 16);
+            auto &s = sc[c];
+            s.oa = xarena[c] + xoa;
+            s.ob = xarena[c] + xob;
+            s.act = xarena[c] + xact;
+            s.sha = s.act + (size_t)6 * g.mid;
+            if (o.head) {
+                const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
+                tlog[c] = dalloc<float>(c, nl);
+                tam_v[c] = dalloc<float>(c, G);
+                tam_i[c] = dalloc<int32_t>(c, G);
+            }
+            qs[c].wait();
+        }
+        for (int d = 0; d < N; ++d) {
+            auto zxd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[d]);
+            auto zdd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[d]);
+            ze_ipc_mem_handle_t h;
+            if (zeMemGetIpcHandle(zxd, xarena[d], &h) != ZE_RESULT_SUCCESS)
+                throw std::runtime_error("zeMemGetIpcHandle failed on card " + pci[d]);
+            for (int c = 0; c < N; ++c) {
+                if (c == d) { xpeer[c][d] = xarena[d]; continue; }
+                auto zxc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]);
+                auto zdc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+                ze_bool_t can = 0;
+                if (zeDeviceCanAccessPeer(zdc, zdd, &can) != ZE_RESULT_SUCCESS || !can)
+                    throw std::runtime_error("card " + pci[c] + " cannot access card " + pci[d]);
+                void *ptr = nullptr;
+                if (zeMemOpenIpcHandle(zxc, zdc, h, 0, &ptr) != ZE_RESULT_SUCCESS || !ptr)
+                    throw std::runtime_error("zeMemOpenIpcHandle failed: card " + pci[c] + " <- " + pci[d]);
+                xpeer[c][d] = ptr;
+            }
+        }
+        if (o.tp_threads)
+            for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
+    }
+
+#ifndef OWN41_ACT_BF16
+    // all-gather of rows [r0, r1) of nslot slots (stride floats) at arena offset off
+    void xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
+        ops41sycl::XchgPeers P{};
+        for (int d = 0; d < o.tp; ++d) P.p[d] = (float *)xpeer[c][d];
+        const uint32_t seq = ++xseq[c];
+        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN}, P, xerr[c]);
+    }
+    // this card's rows of a dense matrix -> y[0, nrows) (packed rows); xn as gemv_kp
+    void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0) {
+        const auto &e = we(wn);
+        const auto &dp = wgt[t].at(wn);
+        if (!dp.packed) throw std::runtime_error("tensor-parallel slice needs packed rows: " + wn);
+        gemv_kp(t, e, dp.p, x, y, dp.nrows, xn, (unsigned)e.cols, wn);
+    }
+    void route_shared_tp(int c, const std::string &p) {
+        const auto &eg = we(p + "ffn_gate_shexp.weight"), &eu = we(p + "ffn_up_shexp.weight");
+        const auto &dg = wgt[c].at(p + "ffn_gate_shexp.weight"), &du = wgt[c].at(p + "ffn_up_shexp.weight");
+        if (!o.small_fast || g.experts % 32 != 0 || g.experts > 512 || !dg.packed || !du.packed || eg.type != eu.type ||
+            eg.cols != eu.cols || eg.cols != 5120 || dg.nrows != du.nrows)
+            throw std::runtime_error("tensor parallel needs the fused router + shared gate/up launch: " + p);
+        const unsigned rows = dg.nrows;
+        if (eg.type == iq3::Type::Q8_0)
+            route_with_shared(c, p, ops41sycl::GemvQ8P<160, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p);
+        else if (eg.type == iq3::Type::Q5_K)
+            route_with_shared(c, p, ops41sycl::GemvQ5KP<20, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p);
+        else
+            throw std::runtime_error("tensor parallel: shared expert format " + p);
+    }
+    void tp_wait_mark(long v) {
+        for (long i = 0; tp_mark.load(std::memory_order_acquire) < v; ++i) {
+            if (tp_abort.load()) throw std::runtime_error("lead card failed");
+            if (i > 256) std::this_thread::yield();
+        }
+    }
+    // one layer = phases 0..5; a phase ends where the cards exchange (1-4)
+    void tp_phase(int L, int c, int ph) {
+        auto &s = sc[c];
+        const std::string p = "blk." + std::to_string(L) + ".";
+        const int cr = cr_of(L);
+        const bool yarn = cr > 0;
+        const int si = src_index(L);
+        const bool lead = c == 0;
+        const bool host_work = cr && (is_kv_source(L) || index_slot(L) >= 0);
+        const int nh = thq1[c] - thq0[c];
+        const size_t qo = (size_t)thq0[c] * g.hd;
+        switch (ph) {
+        case 0:
+            if (L == 1 || L == 14) {
+                engram_host(L, c);
+                prof("engram", c);
+            }
+            hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
+            prof("hc_mix", c);
+            pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
+            prof("hc_pre_norm", c);
+            gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
+            rmsnorm(c, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
+            prof("attn_q_a", c);
+            gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
+            rope(c, s.q + qo, nh, g.hd, pos, yarn, false);
+            prof("attn_q_b", c);
+            gemv(c, p + "attn_kv.weight", s.xn, s.kv);
+            rmsnorm(c, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
+            rope(c, s.kvn, 1, g.hd, pos, yarn, false);
+            prof("attn_kv", c);
+            if (lead && cr) {
+                if (is_kv_source(L)) { publish(L, c, si, yarn); prof("publish", c); }
+                if (index_slot(L) >= 0) { index(L, c, si, yarn); prof("index", c); }
+                if (host_work) tp_mark.store(tp_stepn * 64 + L + 1, std::memory_order_release);
+            }
+            break;
+        case 1: {
+            if (g.hd != 512) throw std::runtime_error("tensor parallel: head dim");
+            int n_idx = 128;
+            if (cr) {
+                if (!lead && host_work && !tp_th.empty()) tp_wait_mark(tp_stepn * 64 + L + 1);
+                sync_rows(c, si);
+                sync_cidx(c, isrc_for(L));
+                launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 512},
+                       ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
+                       (const int32_t *)cidx_mirror[c][isrc_for(L)]);
+                n_idx += 512;
+            } else {
+                launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 0},
+                       ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
+            }
+            const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
+            if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("tensor parallel: kv alignment");
+            const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
+            const int32_t *ix = (const int32_t *)s.idxs_cat;
+            if (n_idx == 128) {
+                launch_sg(c, (size_t)nh * n_idx / 32, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
+                          (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
+                launch_sg(c, nh, ops41sycl::SparseSoftmaxP<128>{nh}, sinks, ix, s.attn_w);
+            } else {
+                launch_sg(c, (size_t)(nh / 4) * (n_idx / 32), ops41sycl::SparseScoreHG<512, 4>{n_idx, nh, 128, g.hd},
+                          (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
+                launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
+            }
+            launch_sg(c, (size_t)nh * g.hd / 64, ops41sycl::SparseOutJB<512, 1, 16>{n_idx, nh, 128}, kvw, kvc, ix,
+                      (const float *)s.attn_w, s.of + qo);
+            prof("sparse_attn", c);
+            if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
+            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
+            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+            launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},
+                   (const float *)(s.of + qo), s.obuf + qo, cb, sbp);
+            const unsigned per = (unsigned)g.ototal / 8;
+            gemv_part(c, p + "attn_output_a.weight", s.obuf + (size_t)tog0[c] * g.oin, s.oa + (size_t)tog0[c] * per, per);
+            prof("attn_o_a", c);
+            xchg(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per);
+            prof("xchg", c);
+            break;
+        }
+        case 2:
+            gemv_part(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c]);
+            prof("attn_o_b", c);
+            xchg(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            prof("xchg", c);
+            break;
+        case 3: {
+            hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
+            prof("hc_post", c);
+            hc_mix(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
+            prof("hc_mix", c);
+            pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
+            prof("hc_pre_norm", c);
+            gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
+            route_shared_tp(c, p);
+            prof("router", c);
+            routed_gemv(c, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
+            prof("exp_gate", c);
+            routed_gemv(c, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
+            prof("exp_up", c);
+            const int nm = tm1[c] - tm0[c];
+            launch(c, (size_t)7 * nm, 64, ops41sycl::SwigluBothS<Act>{6, nm, 10.0f, g.mid}, (const act_t *)s.expg,
+                   (const act_t *)s.expu, s.act + tm0[c], (const float *)s.prob, (const act_t *)s.shg,
+                   (const act_t *)s.shu, s.act + (size_t)6 * g.mid + tm0[c]);
+            xchg(c, xact, (unsigned)g.mid, 7, tm0[c], tm1[c]);
+            prof("xchg", c);
+            break;
+        }
+        case 4: {
+            routed_gemv(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
+            prof("exp_down", c);
+            const int nd = td1[c] - td0[c];
+            gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
+            launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
+                   s.ob + td0[c]);
+            prof("shared", c);
+            xchg(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            prof("xchg", c);
+            break;
+        }
+        case 5:
+            hc_post(c, s.post_f, s.comb_f, s.pre_f, s.cur_pre);
+            prof("hc_post", c);
+            break;
+        }
+    }
+    void tp_embed(int c, int32_t token) {
+        const auto &te = we("token_embd.weight");
+        const uint8_t *row = (const uint8_t *)wgt[c].at("token_embd.weight").p + (size_t)token * wrb(te);
+        launch(c, g.h, 32, ops41sycl::EmbedRowA<Act>{te.type, g.h}, row, sc[c].x);
+        launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
+        float pm[4] = {1, 0, 0, 0};
+        qs[c].memcpy(sc[c].cur_pre, pm, 16);
+        qs[c].wait();
+    }
+    // final norm + this card's logits rows + its argmax candidates (to the host)
+    void tp_head(int c) {
+        auto &s = sc[c];
+        const int H_ = g.h;
+        launch(c, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[c], (const float *)s.cur_pre, s.x);
+        rmsnorm(c, s.x, "output_norm.weight", H_, s.xn);
+        gemv_part(c, "output.weight", s.xn, tlog[c]);
+        const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
+        launch_sg(c, G, ops41sycl::ArgmaxP1O{nl, AM_CH, tv0[c], g.vocab}, (const float *)tlog[c], tam_v[c], tam_i[c]);
+        h_amv[c].resize(G);
+        h_ami[c].resize(G);
+        qs[c].memcpy(h_amv[c].data(), tam_v[c], (size_t)G * 4);
+        qs[c].memcpy(h_ami[c].data(), tam_i[c], (size_t)G * 4);
+        qs[c].wait();
+        prof("head", c);
+    }
+    // ArgmaxP2's comparison over every card's candidates: the order-free
+    // definition (largest non-NaN value, lowest index among equals)
+    int32_t tp_argmax() const {
+        float bv = -INFINITY;
+        int bi = 0x7fffffff;
+        for (int c = 0; c < o.tp; ++c)
+            for (size_t k = 0; k < h_amv[c].size(); ++k) {
+                const float ov = h_amv[c][k];
+                const int oi = h_ami[c][k];
+                if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+            }
+        return bi;
+    }
+    void tp_card_step(int c) {
+        if (o.layer_begin == 0) tp_embed(c, tp_tok);
+        if (c == 0) prof_begin(0);
+        for (int L = o.layer_begin; L < o.layer_end; ++L)
+            for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
+        if (o.head) tp_head(c);
+        else qs[c].wait();
+    }
+    void tp_worker(int c) {
+        long seen = 0;
+        for (;;) {
+            {
+                std::unique_lock<std::mutex> lk(tp_mu);
+                tp_cv.wait(lk, [&] { return tp_quit || tp_gen != seen; });
+                if (tp_quit) return;
+                seen = tp_gen;
+            }
+            try {
+                tp_card_step(c);
+            } catch (const std::exception &e) {
+                tp_abort = true;
+                std::lock_guard<std::mutex> lk(tp_mu);
+                if (tp_err.empty()) tp_err = "card " + pci[c] + ": " + e.what();
+            }
+            std::lock_guard<std::mutex> lk(tp_mu);
+            if (--tp_left == 0) tp_done_cv.notify_all();
+        }
+    }
+    // trace a vector whose row slices live on different cards: card c's
+    // [a_c, b_c) x mult floats, read at src_c + a_c * mult (or at src_c when local)
+    void tr_gather(int L, int tag, const int *a, const int *b, size_t mult, size_t n, bool local,
+                   const float *const *src) {
+        if (!tracing()) return;
+        std::vector<float> f(n);
+        for (int c = 0; c < o.tp; ++c) {
+            const size_t k = (size_t)(b[c] - a[c]) * mult;
+            qs[c].memcpy(f.data() + (size_t)a[c] * mult, src[c] + (local ? 0 : (size_t)a[c] * mult), k * 4).wait();
+        }
+        trw(L, tag, f.data(), n);
+    }
+    // the tp=1 trace records in the same order (serial mode only)
+    void tp_trace(int L, int ph) {
+        if (!tracing()) return;
+        const int H_ = g.h;
+        auto &s = sc[0];
+        const float *src[TILES] = {};
+        switch (ph) {
+        case 0:
+            if (L == 1 || L == 14) tra(L, TT_ENGRAM, 0, streams[0], 4 * (size_t)H_);
+            trf(L, TT_ATTN_MIX_PRE, 0, s.pre_a, 4);
+            trf(L, TT_ATTN_MIX_POST, 0, s.post_a, 4);
+            trf(L, TT_ATTN_MIX_COMB, 0, s.comb_a, 16);
+            tra(L, TT_ATTN_IN, 0, s.xn, H_);
+            for (int c = 0; c < o.tp; ++c) src[c] = sc[c].q;
+            tr_gather(L, TT_Q, thq0, thq1, g.hd, (size_t)g.qh * g.hd, false, src);
+            tra(L, TT_KV, 0, s.kvn, g.hd);
+            break;
+        case 1:
+            if (cr_of(L)) tri(L, TT_CIDX, 0, s.idxs_cat + 128, 512);
+            for (int c = 0; c < o.tp; ++c) src[c] = sc[c].of;
+            tr_gather(L, TT_ATTN_O, thq0, thq1, g.hd, (size_t)g.qh * g.hd, false, src);
+            tra(L, TT_ATTN_OA, 0, s.oa, g.ototal);
+            break;
+        case 2:
+            tra(L, TT_ATTN_OUT, 0, s.ob, H_);
+            break;
+        case 3:
+            tra(L, TT_STREAMS_ATTN, 0, streams[0], 4 * (size_t)H_);
+            trf(L, TT_FFN_MIX_PRE, 0, s.pre_f, 4);
+            tra(L, TT_FFN_IN, 0, s.xn, H_);
+            break;
+        case 4:
+            trf(L, TT_ROUTE_LOGITS, 0, s.router, g.experts);
+            tri(L, TT_ROUTE_IDS, 0, s.ids, 6);
+            trf(L, TT_ROUTE_PROB, 0, s.prob, 6);
+            for (int c = 0; c < o.tp; ++c) src[c] = sc[c].shd;
+            tr_gather(L, TT_SHARED_DOWN, td0, td1, 1, H_, true, src);
+            tra(L, TT_FFN_OUT, 0, s.ob, H_);
+            break;
+        case 5:
+            tra(L, TT_STREAMS_FFN, 0, streams[0], 4 * (size_t)H_);
+            break;
+        }
+    }
+    // one host thread for every card in phase order (trace runs): every card's
+    // kernels of a phase, exchanges included, are queued before any host wait
+    void tp_step_serial(int32_t token) {
+        if (o.layer_begin == 0) {
+            for (int c = 0; c < o.tp; ++c) tp_embed(c, token);
+            tra(0, TT_EMBED, 0, streams[0], 4 * (size_t)g.h);
+        }
+        prof_begin(0);
+        for (int L = o.layer_begin; L < o.layer_end; ++L)
+            for (int ph = 0; ph < 6; ++ph) {
+                for (int c = 0; c < o.tp; ++c) tp_phase(L, c, ph);
+                tp_trace(L, ph);
+            }
+        if (o.head) {
+            for (int c = 0; c < o.tp; ++c) tp_head(c);
+            tra(40, TT_FINAL_N, 0, sc[0].xn, g.h);
+            const float *src[TILES] = {};
+            for (int c = 0; c < o.tp; ++c) src[c] = tlog[c];
+            tr_gather(40, TT_LOGITS, tv0, tv1, 1, g.vocab, true, src);
+        } else {
+            for (int c = 0; c < o.tp; ++c) qs[c].wait();
+        }
+    }
+    int32_t decode_step_tp(int32_t token) {
+        engram_prefetch();
+        ++tp_stepn;
+        tp_tok = token;
+        if (!tp_th.empty()) {
+            if (tracing()) throw std::runtime_error("tensor-parallel trace runs need OWN_TP_THREADS=0");
+            tp_abort = false;
+            {
+                std::lock_guard<std::mutex> lk(tp_mu);
+                tp_err.clear();
+                tp_left = o.tp;
+                ++tp_gen;
+            }
+            tp_cv.notify_all();
+            std::unique_lock<std::mutex> lk(tp_mu);
+            tp_done_cv.wait(lk, [&] { return tp_left == 0; });
+            if (!tp_err.empty()) throw std::runtime_error("tensor-parallel step: " + tp_err);
+        } else {
+            tp_step_serial(token);
+        }
+        for (int c = 0; c < o.tp; ++c)
+            if (xerr[c][0])
+                throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
+                                         std::to_string((int)xerr[c][0] - 1));
+        const int32_t next = o.head ? tp_argmax() : -1;
+        ++pos;
+        return next;
+    }
+#else
+    int32_t decode_step_tp(int32_t) { throw std::runtime_error("tensor parallel needs the f32-activation build"); }
+    void tp_worker(int) {}
+#endif
+
     void engram_hash(int p, int li, int64_t *ids24) const {
         for (int i = 1; i <= 3; ++i) {
             uint64_t rolling = 0;
@@ -1647,7 +2198,7 @@ private:
         int64_t ids[24];
         engram_hash((int)pos, li, ids);
         auto l = iq3::layout(iq3::Type::Q5_K);
-        std::vector<act_t> &rows = h_eng[li][eng_flip[li]++ & 1]; // persistent: the upload below does not wait
+        std::vector<act_t> &rows = h_eng[t][li][eng_flip[t][li]++ & 1]; // persistent: the upload below does not wait
         for (int c = 0; c < 24; ++c) {
             const uint8_t *row = eng_base[li] + (size_t)ids[c] * l.bytes;
             for (int i = 0; i < 256; ++i)
@@ -1660,12 +2211,12 @@ private:
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && g.h % 32 == 0) {
             launch_sg(t, 4, ops41sycl::EngramGateP{g.h}, streams[t], (const act_t *)s.kvbuf,
-                      wp<float>(p + "engram_gate.weight"));
+                      wp<float>(t, p + "engram_gate.weight"));
             return;
         }
 #endif
         launch(t, 4, 4, ops41sycl::EngramGateA<Act>{g.h}, streams[t], (const act_t *)s.kvbuf,
-               wp<float>(p + "engram_gate.weight"));
+               wp<float>(t, p + "engram_gate.weight"));
     }
 
     void build_rope_tables() {
