@@ -82,6 +82,14 @@ int main(int argc, char **argv) {
         char nm[64];
         std::snprintf(nm, sizeof nm, "RmsNorm n=%u", N);
         report(nm, ndiff(host(y0, N), host(y1, N)), N, t0, t1);
+        constexpr unsigned S = N == 512 ? 2 : 4;
+        RmsNormPS<N, S> k2{};
+        q.memset(y1, 0, N * 4).wait();
+        double t2 = gpu_us([&] {
+            return q.parallel_for(sycl::nd_range<1>(32 * S, 32 * S), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k2(it, x, w, y1); });
+        });
+        std::snprintf(nm, sizeof nm, "RmsNormPS n=%u S=%u", N, S);
+        report(nm, ndiff(host(y0, N), host(y1, N)), N, t0, t2);
     };
     rms(std::integral_constant<unsigned, 512>{});
     rms(std::integral_constant<unsigned, 1280>{});
@@ -264,6 +272,50 @@ int main(int argc, char **argv) {
         out_j(std::integral_constant<unsigned, 2>{});
         out_j(std::integral_constant<unsigned, 4>{});
         out_j(std::integral_constant<unsigned, 8>{});
+        auto out_jp = [&](auto JPC, auto UC) {
+            constexpr unsigned JP = decltype(JPC)::value, UU = decltype(UC)::value;
+            q.memset(o1, 0, (size_t)HEADS * HD * 4).wait();
+            SparseOutJP<512, JP, UU> u5{n_idx, HEADS, WIN};
+            double t5 = gpu_us([&] { return sg32((size_t)HEADS * HD / 32 / JP, [=](sycl::nd_item<1> it) { u5(it, kw, kc, id, w0, o1); }); });
+            char nm2[64];
+            std::snprintf(nm2, sizeof nm2, "SparseOutJP%u U%u n_idx=%d", JP, UU, n_idx);
+            report(nm2, ndiff(host(o0, (size_t)HEADS * HD), host(o1, (size_t)HEADS * HD)), (size_t)HEADS * HD, t0, t5);
+        };
+        if (getenv("ALL_VARIANTS")) {
+            out_jp(std::integral_constant<unsigned, 2>{}, std::integral_constant<unsigned, 8>{});
+            out_jp(std::integral_constant<unsigned, 2>{}, std::integral_constant<unsigned, 16>{});
+        }
+        auto out_jq = [&](auto JPC) {
+            constexpr unsigned JP = decltype(JPC)::value;
+            q.memset(o1, 0, (size_t)HEADS * HD * 4).wait();
+            SparseOutJQ<512, JP> u6{n_idx, HEADS, WIN};
+            double t6 = gpu_us([&] { return sg32((size_t)HEADS * HD / 32 / JP, [=](sycl::nd_item<1> it) { u6(it, kw, kc, id, w0, o1); }); });
+            char nm2[64];
+            std::snprintf(nm2, sizeof nm2, "SparseOutJQ%u n_idx=%d", JP, n_idx);
+            report(nm2, ndiff(host(o0, (size_t)HEADS * HD), host(o1, (size_t)HEADS * HD)), (size_t)HEADS * HD, t0, t6);
+        };
+        out_jq(std::integral_constant<unsigned, 1>{});
+        out_jq(std::integral_constant<unsigned, 2>{});
+        out_jq(std::integral_constant<unsigned, 4>{});
+        auto out_jb = [&](auto NWC, auto UC, auto PC) {
+            constexpr unsigned NW = decltype(NWC)::value, UU = decltype(UC)::value;
+            constexpr bool PP = decltype(PC)::value;
+            q.memset(o1, 0, (size_t)HEADS * HD * 4).wait();
+            SparseOutJB<512, NW, UU, PP> u7{n_idx, HEADS, WIN};
+            double t7 = gpu_us([&] { return sg32((size_t)HEADS * HD / 64 / NW, [=](sycl::nd_item<1> it) { u7(it, kw, kc, id, w0, o1); }); });
+            char nm2[64];
+            std::snprintf(nm2, sizeof nm2, "SparseOutJB%u U%u%s n_idx=%d", NW, UU, PP ? " pipe" : "", n_idx);
+            report(nm2, ndiff(host(o0, (size_t)HEADS * HD), host(o1, (size_t)HEADS * HD)), (size_t)HEADS * HD, t0, t7);
+        };
+        using I = std::integral_constant<unsigned, 1>;
+        using F = std::false_type;
+        using T = std::true_type;
+        out_jb(I{}, std::integral_constant<unsigned, 8>{}, F{});
+        out_jb(I{}, std::integral_constant<unsigned, 16>{}, F{});
+        out_jb(I{}, std::integral_constant<unsigned, 32>{}, F{});
+        out_jb(I{}, std::integral_constant<unsigned, 8>{}, T{});
+        out_jb(I{}, std::integral_constant<unsigned, 16>{}, T{});
+        out_jb(std::integral_constant<unsigned, 2>{}, std::integral_constant<unsigned, 8>{}, T{});
         if (getenv("ALL_VARIANTS")) {
             out_hg(std::integral_constant<unsigned, 2>{});
             out_hg(std::integral_constant<unsigned, 4>{});
@@ -371,6 +423,94 @@ int main(int argc, char **argv) {
         char nm[64];
         std::snprintf(nm, sizeof nm, "CompressPool r=%d", R);
         report(nm, ndiff(host(o0, HD), host(o1, HD)), HD, t0, t1);
+    }
+    // ---- fused elementwise steps --------------------------------------------------
+    {
+        const int H = 5120;
+        std::vector<float> hs(4 * H), hx(H), hp(4), hc(16), hpre(4);
+        for (auto &v : hs) v = U(-3, 3);
+        for (auto &v : hx) v = U(-2, 2);
+        for (auto &v : hp) v = U(0.1f, 2);
+        for (auto &v : hc) v = U(0, 1);
+        for (auto &v : hpre) v = U(0, 1);
+        hs[7] = -0.0f; hx[7] = 0.0f;
+        float *s0 = dev_vec(hs), *s1 = dev_vec(hs), *x = dev_vec(hx), *po = dev_vec(hp), *co = dev_vec(hc);
+        float *old = sycl::malloc_device<float>(4 * H, q), *pre = dev_vec(hpre);
+        float *cp0 = sycl::malloc_device<float>(4, q), *cp1 = sycl::malloc_device<float>(4, q);
+        HcPostA<ActF32> a{H};
+        HcPostP<ActF32> b{H};
+        auto run0 = [&] {
+            q.memcpy(old, s0, 4 * H * 4);
+            q.parallel_for(sycl::nd_range<1>(4 * H, 32), [=](sycl::nd_item<1> it) { a(it, s0, old, x, po, co); });
+            return q.memcpy(cp0, pre, 16);
+        };
+        auto run1 = [&] { return q.parallel_for(sycl::nd_range<1>(H, 64), [=](sycl::nd_item<1> it) { b(it, s1, x, po, co, pre, cp1); }); };
+        run0(); run1(); q.wait();
+        size_t d = ndiff(host(s0, 4 * H), host(s1, 4 * H)) + ndiff(host(cp0, 4), host(cp1, 4));
+        double t0 = gpu_us(run0) * 3, t1 = gpu_us(run1);
+        report("HcPost (+pre copy)", d, 4 * H + 4, t0, t1);
+
+        // HcPre + RmsNorm 5120
+        float *w = sycl::malloc_device<float>(H, q), *xa = sycl::malloc_device<float>(H, q);
+        float *y0 = sycl::malloc_device<float>(H, q), *y1 = sycl::malloc_device<float>(H, q);
+        {
+            std::vector<float> hw(H);
+            for (auto &v : hw) v = U(0.2f, 2);
+            q.memcpy(w, hw.data(), H * 4).wait();
+        }
+        HcPreA<ActF32> pa{H};
+        RmsNormP<5120> rn{};
+        HcPreNormPS<5120, 4> pn{};
+        auto r0 = [&] {
+            q.parallel_for(sycl::nd_range<1>(H, 32), [=](sycl::nd_item<1> it) { pa(it, s0, pre, xa); });
+            return q.parallel_for(sycl::nd_range<1>(32, 32), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { rn(it, xa, w, y0); });
+        };
+        auto r1 = [&] { return q.parallel_for(sycl::nd_range<1>(128, 128), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { pn(it, s0, pre, w, y1); }); };
+        r0(); r1(); q.wait();
+        d = ndiff(host(y0, H), host(y1, H));
+        t0 = gpu_us(r0) * 2; t1 = gpu_us(r1);
+        report("HcPre + RmsNorm 5120", d, H, t0, t1);
+
+        // SwiGLU + prob scale (6 x 2304), values past the clamp included
+        const int R = 6, M = 2304;
+        std::vector<float> hg(R * M), hu(R * M), hpr(R);
+        for (auto &v : hg) v = U(-14, 14);
+        for (auto &v : hu) v = U(-14, 14);
+        for (auto &v : hpr) v = U(0, 1);
+        float *gg = dev_vec(hg), *uu = dev_vec(hu), *pr = dev_vec(hpr);
+        float *o0 = sycl::malloc_device<float>(R * M, q), *o1 = sycl::malloc_device<float>(R * M, q);
+        SwigluA<ActF32> sw{(long long)R * M, 10.0f};
+        ProbScaleA<ActF32> ps{R, M};
+        SwigluProbA<ActF32> sp{R, M, 10.0f};
+        auto g0 = [&] {
+            q.parallel_for(sycl::nd_range<1>(R * M, 32), [=](sycl::nd_item<1> it) { sw(it, gg, uu, o0); });
+            return q.parallel_for(sycl::nd_range<1>(R * M, 32), [=](sycl::nd_item<1> it) { ps(it, o0, pr); });
+        };
+        auto g1 = [&] { return q.parallel_for(sycl::nd_range<1>(R * M, 64), [=](sycl::nd_item<1> it) { sp(it, gg, uu, o1, pr); }); };
+        g0(); g1(); q.wait();
+        d = ndiff(host(o0, R * M), host(o1, R * M));
+        t0 = gpu_us(g0) * 2; t1 = gpu_us(g1);
+        report("Swiglu + ProbScale", d, R * M, t0, t1);
+
+        // ToAct + inverse rope (64 heads x 512, last 64 dims rotated)
+        const int QH = 64, HD = 512;
+        std::vector<float> ho(QH * HD), hcs(32), hsn(32);
+        for (auto &v : ho) v = U(-3, 3);
+        for (int i = 0; i < 32; ++i) { hcs[i] = std::cos(0.3f * i); hsn[i] = std::sin(0.3f * i); }
+        float *of = dev_vec(ho), *cs = dev_vec(hcs), *sn = dev_vec(hsn);
+        float *b0 = sycl::malloc_device<float>(QH * HD, q), *b1 = sycl::malloc_device<float>(QH * HD, q);
+        ToActA<ActF32> ta{QH * HD};
+        RopePairsA<ActF32> rp{(unsigned)QH, (unsigned)HD, 64u, true};
+        ToActRopeA<ActF32> tr{(unsigned)QH, (unsigned)HD, 64u, true};
+        auto e0 = [&] {
+            q.parallel_for(sycl::nd_range<1>(QH * HD, 32), [=](sycl::nd_item<1> it) { ta(it, of, b0); });
+            return q.parallel_for(sycl::nd_range<1>(QH * 32, 32), [=](sycl::nd_item<1> it) { rp(it, b0, cs, sn); });
+        };
+        auto e1 = [&] { return q.parallel_for(sycl::nd_range<1>(QH * HD, 64), [=](sycl::nd_item<1> it) { tr(it, of, b1, cs, sn); }); };
+        e0(); e1(); q.wait();
+        d = ndiff(host(b0, QH * HD), host(b1, QH * HD));
+        t0 = gpu_us(e0) * 2; t1 = gpu_us(e1);
+        report("ToAct + inverse rope", d, QH * HD, t0, t1);
     }
     std::printf("%s: %d failed check(s)\n", g_fail ? "FAIL" : "PASS", g_fail);
     return g_fail;

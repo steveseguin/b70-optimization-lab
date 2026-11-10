@@ -898,6 +898,14 @@ private:
         });
         kev(kname<K>(), e);
     }
+    // one work-group of `items` (a multiple of 32), 32-lane sub-groups, no local memory
+    template <typename K, typename... A> void launch_wg(int tile, size_t items, K k, A... args) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
+            hh.parallel_for(sycl::nd_range<1>(items, items),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, args...); });
+        });
+        kev(kname<K>(), e);
+    }
     // one work-group of `items` (a multiple of 32) with SLM floats of local
     // memory passed as the last argument
     template <size_t SLM, typename K, typename... A> void launch_local(int tile, size_t items, K k, A... args) {
@@ -1069,6 +1077,14 @@ private:
     void rmsnorm(int tile, const act_t *x, const std::string &wn, int n, act_t *y) {
         const float *w = wp<float>(wn);
 #ifndef OWN41_ACT_BF16
+        if (o.small_fast && al16(x) && al16(w) && al16(y) && x != y) { // several sub-groups: not in place
+            switch (n) {
+            case 512: launch_wg(tile, 64, ops41sycl::RmsNormPS<512, 2>{}, x, w, y); return;
+            case 1280: launch_wg(tile, 128, ops41sycl::RmsNormPS<1280, 4>{}, x, w, y); return;
+            case 5120: launch_wg(tile, 128, ops41sycl::RmsNormPS<5120, 4>{}, x, w, y); return;
+            default: break;
+            }
+        }
         if (o.small_fast && al16(x) && al16(w)) {
             switch (n) {
             case 512: launch_sg(tile, 1, ops41sycl::RmsNormP<512>{}, x, w, y); return;
@@ -1149,6 +1165,38 @@ private:
                wp<float>(prefix + "scale.weight"), wp<float>(prefix + "base.weight"), pre, post, comb);
     }
 
+    // collapse the 4 streams with `mix` (HcPreA) and RMS-normalize into s.xn
+    void pre_norm(int t, const float *mix, const std::string &wn) {
+        auto &s = sc[t];
+        const int H_ = g.h;
+#ifndef OWN41_ACT_BF16
+        const float *w = wp<float>(wn);
+        // Off: same arithmetic as the two launches below (test_small_v41_device.cpp), faster alone (19 vs 23 us)
+        // but 22.1 us per call in the real step against 11.4 for HcPreA + RmsNormPS (p8 profile, 2026-11-09)
+        constexpr bool fused_pre_norm = false;
+        if (fused_pre_norm && o.small_fast && H_ == 5120 && al16(streams[t]) && al16(w) && al16(s.xn)) {
+            launch_wg(t, 128, ops41sycl::HcPreNormPS<5120, 4>{}, (const float *)streams[t], mix, w, s.xn);
+            return;
+        }
+#endif
+        launch(t, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[t], mix, s.x);
+        rmsnorm(t, s.x, wn, H_, s.xn);
+    }
+    // streams <- post * ob + comb^T * streams; optionally copy 4 pre-mix floats pre_src -> pre_dst after
+    void hc_post(int t, const float *post, const float *comb, const float *pre_src, float *pre_dst) {
+        auto &s = sc[t];
+        const int H_ = g.h;
+        if (o.small_fast) { // one launch, no stream copy (test_small_v41_device.cpp)
+            launch(t, (size_t)H_, 64, ops41sycl::HcPostP<Act>{H_}, streams[t], (const act_t *)s.ob, post, comb, pre_src,
+                   pre_dst);
+            return;
+        }
+        qs[t].memcpy(s.old, streams[t], sizeof(act_t) * 4 * (size_t)H_);
+        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPostA<Act>{H_}, streams[t], (const act_t *)s.old,
+               (const act_t *)s.ob, post, comb);
+        if (pre_dst) qs[t].memcpy(pre_dst, pre_src, 16);
+    }
+
     // Official Block.forward threading: the attention collapses the streams
     // with the previous layer's FFN pre-mix; the FFN collapses them with the
     // pre-mix THIS attention computed (from the pre-attention streams).
@@ -1164,8 +1212,7 @@ private:
         }
         hc_mix(t, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
         prof("hc_mix", t);
-        launch(t, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[t], (const float *)s.cur_pre, s.x);
-        rmsnorm(t, s.x, p + "attn_norm.weight", H_, s.xn);
+        pre_norm(t, (const float *)s.cur_pre, p + "attn_norm.weight");
         prof("hc_pre_norm", t);
         trf(L, TT_ATTN_MIX_PRE, t, s.pre_a, 4);
         trf(L, TT_ATTN_MIX_POST, t, s.post_a, 4);
@@ -1173,26 +1220,19 @@ private:
         tra(L, TT_ATTN_IN, t, s.xn, H_);
         attention(L, t);
         tra(L, TT_ATTN_OUT, t, s.ob, H_);
-        qs[t].memcpy(s.old, streams[t], sb);
-        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPostA<Act>{H_}, streams[t], (const act_t *)s.old,
-               (const act_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a);
+        hc_post(t, s.post_a, s.comb_a, nullptr, nullptr);
         prof("hc_post", t);
         tra(L, TT_STREAMS_ATTN, t, streams[t], 4 * (size_t)H_);
 
         hc_mix(t, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
         prof("hc_mix", t);
-        launch(t, H_, 32, ops41sycl::HcPreA<Act>{H_}, (const act_t *)streams[t],
-               (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), s.x);
-        rmsnorm(t, s.x, p + "ffn_norm.weight", H_, s.xn);
+        pre_norm(t, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
         prof("hc_pre_norm", t);
         trf(L, TT_FFN_MIX_PRE, t, s.pre_f, 4);
         tra(L, TT_FFN_IN, t, s.xn, H_);
         moe(L, t);
         tra(L, TT_FFN_OUT, t, s.ob, H_);
-        qs[t].memcpy(s.old, streams[t], sb);
-        launch(t, (size_t)4 * H_, 32, ops41sycl::HcPostA<Act>{H_}, streams[t], (const act_t *)s.old,
-               (const act_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f);
-        qs[t].memcpy(s.cur_pre, s.pre_f, 16);
+        hc_post(t, s.post_f, s.comb_f, s.pre_f, s.cur_pre);
         prof("hc_post", t);
         if (pace == 1) qs[t].wait();
         warm(t);
@@ -1280,8 +1320,12 @@ private:
                           (const act_t *)s.q, kvw, kvc, ix, s.attn_w);
                 launch_sg(t, g.qh, ops41sycl::SparseSoftmaxP<640>{g.qh}, sinks, ix, s.attn_w);
             }
-            launch_sg(t, (size_t)g.qh * g.hd / 64, ops41sycl::SparseOutJ<512, 2>{n_idx, g.qh, 128}, kvw, kvc, ix,
-                      (const float *)s.attn_w, s.of);
+            if (al16(kvw) && al16(kvc)) // block reads: uniform row address per index (2026-11-09: 39 -> 23 us at 640)
+                launch_sg(t, (size_t)g.qh * g.hd / 64, ops41sycl::SparseOutJB<512, 1, 16>{n_idx, g.qh, 128}, kvw, kvc,
+                          ix, (const float *)s.attn_w, s.of);
+            else
+                launch_sg(t, (size_t)g.qh * g.hd / 64, ops41sycl::SparseOutJ<512, 2>{n_idx, g.qh, 128}, kvw, kvc, ix,
+                          (const float *)s.attn_w, s.of);
         } else
 #endif
         { // three launches, same arithmetic order as the one-launch SparseAttn kernel
@@ -1295,8 +1339,16 @@ private:
         }
         prof("sparse_attn", t);
         trf(L, TT_ATTN_O, t, s.of, (size_t)g.qh * g.hd);
-        launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::ToActA<Act>{g.qh * g.hd}, (const float *)s.of, s.obuf);
-        rope(t, s.obuf, g.qh, g.hd, pos, yarn, true);
+        if (o.small_fast) { // one launch (test_small_v41_device.cpp)
+            if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
+            const float *cb = (yarn ? cos_yarn[t] : cos_base[t]) + (size_t)pos * 32;
+            const float *sbp = (yarn ? sin_yarn[t] : sin_base[t]) + (size_t)pos * 32;
+            launch(t, (size_t)g.qh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)g.qh, (unsigned)g.hd, 64u, true},
+                   (const float *)s.of, s.obuf, cb, sbp);
+        } else {
+            launch(t, (size_t)g.qh * g.hd, 32, ops41sycl::ToActA<Act>{g.qh * g.hd}, (const float *)s.of, s.obuf);
+            rope(t, s.obuf, g.qh, g.hd, pos, yarn, true);
+        }
         // grouped output LoRA: 8 groups of 1024 rows, each reads its 4096-slice
         gemv_grouped(t, p + "attn_output_a.weight", s.obuf, s.oa);
         prof("attn_o_a", t);
@@ -1477,9 +1529,14 @@ private:
         prof("exp_gate", t);
         routed_gemv(t, p + "ffn_up_exps.weight", s.xn, s.ids, s.expu, false);
         prof("exp_up", t);
-        launch(t, (size_t)6 * g.mid, 32, ops41sycl::SwigluA<Act>{(long long)6 * g.mid, 10.0f},
-               (const act_t *)s.expg, (const act_t *)s.expu, s.act);
-        launch(t, (size_t)6 * g.mid, 32, ops41sycl::ProbScaleA<Act>{6, g.mid}, s.act, (const float *)s.prob);
+        if (o.small_fast) { // one launch (test_small_v41_device.cpp)
+            launch(t, (size_t)6 * g.mid, 64, ops41sycl::SwigluProbA<Act>{6, g.mid, 10.0f}, (const act_t *)s.expg,
+                   (const act_t *)s.expu, s.act, (const float *)s.prob);
+        } else {
+            launch(t, (size_t)6 * g.mid, 32, ops41sycl::SwigluA<Act>{(long long)6 * g.mid, 10.0f},
+                   (const act_t *)s.expg, (const act_t *)s.expu, s.act);
+            launch(t, (size_t)6 * g.mid, 32, ops41sycl::ProbScaleA<Act>{6, g.mid}, s.act, (const float *)s.prob);
+        }
         routed_gemv(t, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
         prof("exp_down", t);
         gemv(t, p + "ffn_gate_shexp.weight", s.xn, s.shg);

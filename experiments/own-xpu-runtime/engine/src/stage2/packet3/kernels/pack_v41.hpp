@@ -14,15 +14,20 @@
 //   Q8_0, C = cols/32 chunks, C % 4 == 0:
 //     [C/4 quads x 32 u32] word l of quad m = q[4m][l] | q[4m+1][l]<<8 | q[4m+2][l]<<16 | q[4m+3][l]<<24
 //     [C x u16 scale d][zero pad to a multiple of 16 bytes]
-//   IQ2_XXS, NB = cols/256 blocks:
-//     [NB x 64 bytes: the block's qs bytes 2..65 unchanged (16 u32: lo0 hi0 lo1 hi1 ...)]
-//     [NB x u16 scale d][zero pad to a multiple of 16 bytes]
+//   IQ2_XXS, NB = cols/256 blocks (66-byte blocks: d, then 8 x (lo, hi) u32):
+//     [NB x 16 u32: lo0 s0 lo1 s1 ...: lo unchanged; s = expand_signs(hi)]
+//     [NB x u32: nibble g = hi_g >> 28 (the 4-bit scale)][NB x u16 scale d][pad]
+//   expand_signs: hi's four 7-bit sign fields (bits 7k..7k+6), each widened to
+//   8 bits with its parity as bit 7 (iq2xs ksigns: the 8th sign is the parity
+//   of the other seven), byte k of the result. The kernel then reads sign j of
+//   field k as bit 8k + j (one shift) instead of a popcount over a mask.
 //   IQ2_S (82-byte blocks: d, idx[32], signs[32], qh[8], scales[8]):
 //     [NB x 16 u32: per group g, word 2g = idx bytes 4g..4g+3, word 2g+1 = sign bytes 4g..4g+3]
 //     [NB x 4 u32: qh[8], scales[8]][NB x u16 d][pad]
 //   IQ3_XXS (98-byte blocks: d, qs[64], scale/sign words[8]):
 //     [NB x 24 u32: per group g, words 3g, 3g+1 = qs bytes 8g..8g+7, word 3g+2 = scale/sign word g]
 //     [NB x u16 d][pad]
+//     (expand_signs here measured 7 % SLOWER on the card, 2026-11-09: kept unexpanded)
 //   IQ1_S (50-byte blocks: d, qs[32], qh u16[8]):
 //     [NB x 8 u32: word g = qs bytes 4g..4g+3][NB x 8 u16 qh][NB x u16 d][pad]
 //   IQ2_XS (74-byte blocks: d, qs u16[32], scales[8]):
@@ -45,6 +50,16 @@
 namespace pk41 {
 
 inline size_t pad16(size_t n) { return (n + 15) & ~(size_t)15; }
+
+inline uint32_t expand_signs(uint32_t w) {
+    uint32_t r = 0;
+    for (unsigned k = 0; k < 4; ++k) {
+        const uint32_t s7 = (w >> (7 * k)) & 127u;
+        const uint32_t par = (uint32_t)__builtin_popcount(s7) & 1u;
+        r |= (s7 | (par << 7)) << (8 * k);
+    }
+    return r;
+}
 
 // Is there a packed form (and a packed kernel) for this format at this row
 // length? `routed` = rank-3 expert bank (routed kernel), else dense gemv.
@@ -72,7 +87,7 @@ inline bool packable(iq3::Type t, size_t cols, bool routed) {
 inline size_t packed_row_bytes(iq3::Type t, size_t cols) {
     switch (t) {
     case iq3::Type::Q8_0: { const size_t C = cols / 32; return pad16(C * 32 + C * 2); }
-    case iq3::Type::IQ2_XXS: { const size_t nb = cols / 256; return pad16(nb * 64 + nb * 2); }
+    case iq3::Type::IQ2_XXS: { const size_t nb = cols / 256; return pad16(nb * 70); }
     case iq3::Type::IQ2_S: { const size_t nb = cols / 256; return pad16(nb * 80 + nb * 2); }
     case iq3::Type::IQ3_XXS: { const size_t nb = cols / 256; return pad16(nb * 96 + nb * 2); }
     case iq3::Type::IQ1_S: { const size_t nb = cols / 256; return pad16(nb * 48 + nb * 2); }
@@ -96,8 +111,18 @@ inline void pack_row(iq3::Type t, const uint8_t *src, uint8_t *dst, size_t cols)
     } else if (t == iq3::Type::IQ2_XXS) {
         const size_t nb = cols / 256;
         for (size_t b = 0; b < nb; ++b) {
-            std::memcpy(dst + b * 64, src + b * 66 + 2, 64);
-            std::memcpy(dst + nb * 64 + 2 * b, src + b * 66, 2);
+            uint32_t sc = 0;
+            for (size_t g = 0; g < 8; ++g) {
+                uint32_t lo, hi;
+                std::memcpy(&lo, src + b * 66 + 2 + 8 * g, 4);
+                std::memcpy(&hi, src + b * 66 + 6 + 8 * g, 4);
+                const uint32_t es = expand_signs(hi);
+                std::memcpy(dst + b * 64 + 8 * g, &lo, 4);
+                std::memcpy(dst + b * 64 + 8 * g + 4, &es, 4);
+                sc |= (hi >> 28) << (4 * g);
+            }
+            std::memcpy(dst + nb * 64 + 4 * b, &sc, 4);
+            std::memcpy(dst + nb * 68 + 2 * b, src + b * 66, 2);
         }
     } else if (t == iq3::Type::IQ2_S) {
         const size_t nb = cols / 256;

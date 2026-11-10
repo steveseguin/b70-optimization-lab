@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**November 9, 2026 ~20:20 EST — DeepSeek V4.1 on six cards: 30.1 tokens/s, output still byte-identical.**
+- Since 19:45: faster expert kernels (fewer instructions per weight), three small fused kernels, and the attention output step now reads each stored key row in one block (35 -> 20 us per layer). One fused kernel was slower in the real model than in its test and is switched off.
+- Same checks as before (whole trace byte-identical, 40- and 128-token answers identical). Cards: nothing loaded. Next: run the shared expert and the router alongside the big expert kernels instead of after them.
+- Details: [note section 11](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 9, 2026 ~19:45 EST — DeepSeek V4.1 on six cards now writes 28 tokens/s (was 9.0 this afternoon), with output byte-identical.**
 - The owner's target was 25 tok/s with no quality loss. Every step was checked: the full 3-step trace of every layer's numbers is byte-for-byte the same as the 9 tok/s build, and the 40- and 128-token answers are identical.
 - How: the weights are stored on the cards in a regrouped order that the cards can read in big blocks (same bytes), and the small operations between the big ones were rewritten so they no longer wait on one slow thread. Each new kernel is checked against the one it replaces on every output.

@@ -252,6 +252,14 @@ against the kernel it replaces (bitwise, every output).
 | p4 | small operators rewritten for latency: RMSNorm (block loads, lane sums in double, same tree), stream-mix dot products + Sinkhorn finish on one sub-group, sparse-attention score / softmax / output | 0.042 | 23.8 |
 | p5 | engram gate (15x) and the final argmax (45x, two passes; the answer is independent of scan order) | 0.038 | 26.05 |
 | **p6** | window append on 512 work-items instead of one (42 -> 2 us per layer) fused with building the attention's index list (two queue copies gone); router score + rank + normalize in one work-group (33 -> 22 us per layer); compressor pool lane-parallel (316 -> 37 us) | **0.036** | **28.02** |
+| p7 (20:00) | expert kernels address their grid table in bytes (one shift per weight fewer); IQ2_XXS sign words expanded by the packer to 8 bits per group (parity precomputed) and its 4-bit scales moved to their own array, per-chunk scales built lane-parallel; RMSNorm on 2-4 sub-groups | 0.034 | 28.99 |
+| p8 (20:05) | four fused small kernels: stream post-mix (+ the pre-mix copy, no stream copy), SwiGLU + router weight, output conversion + inverse rope, stream pre-mix + RMSNorm. Byte-identical but **no faster** (28.90): the fused pre-mix + RMSNorm took 22.1 us in the real step against 11.4 for the two kernels it replaced (19 vs 23 us in the gate). That one is switched off in p9; the other three stay | 0.035 | 28.90 |
+| **p9** (20:20) | sparse-attention output reads each key row with a sub-group block read at a uniform address (the per-lane 64-bit address arithmetic per index was the cost, not load latency: a software-pipelined form was no faster); 35 -> 20 us per layer | **0.033** | **30.14** |
+
+p7-p9: trace, 40-token and 128-token answers byte-identical to the 9.0 tok/s build. IQ3_XXS with expanded signs was
+7 % slower (98 vs 91 us) and stays on its original layout. Gate timings for the sparse-attention output at 640
+slots (`test_small_v41_device.cpp`, card e3): SparseOutJ2 39.3 us, pipelined loads 40.1, address formed once per
+round 29.3, block reads 25.1 (8 per batch) / 22.8 (16 per batch, used).
 
 How the kernels stay exact: each output is still summed by 32 lanes in the old order (lane l adds elements l,
 l+32, l+64, ... one at a time, multiply then add, no fused multiply-add; build flags `-fp-model=precise
