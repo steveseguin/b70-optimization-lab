@@ -1080,7 +1080,28 @@ void tpm_card_step(int c) {
     }
     tok_end(c);
 }
+// OWN_ENG_AHEAD (prompt reading, with OWN_ENG_EARLY): the engram rows of the tokens after this block (eng_ahead,
+// in the engram vocabulary) asked from the disk while the cards run this block; only page-cache hints, so the
+// values read later cannot change
+void engram_ask_ahead() {
+    static const long page = sysconf(_SC_PAGESIZE);
+    auto l = iq3::layout(iq3::Type::Q5_K);
+    const long p0 = (long)comp_ids.size();
+    for (int li = 0; li < 2; ++li) {
+        const int L = li == 0 ? 1 : 14;
+        if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+        for (long q = p0; q < p0 + (long)eng_ahead.size(); ++q) {
+            int64_t ids[24];
+            engram_hash((int)q, li, ids, -2, &eng_ahead);
+            for (int k = 0; k < 24; ++k) {
+                const uintptr_t a = (uintptr_t)(eng_base[li] + (size_t)ids[k] * l.bytes), a0 = a & ~(uintptr_t)(page - 1);
+                madvise((void *)a0, (size_t)(a + l.bytes - a0), MADV_WILLNEED);
+            }
+        }
+    }
+}
 public:
+std::vector<int64_t> eng_ahead; // the prompt's tokens after the current block (engram vocabulary; OWN_ENG_AHEAD)
 // mt tokens in one step (prompt reading); returns the next token after the last one (-1 without the head)
 int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (o.tp < 2 || tp_th.empty()) throw std::runtime_error("multi-token step needs OWN_TP > 1 with card threads");
@@ -1095,17 +1116,9 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     eng_anchor_asked = false;
     ++tp_stepn;
     tp_abort = false;
-    {
-        std::lock_guard<std::mutex> lk(tp_mu);
-        tp_err.clear();
-        tp_left = o.tp;
-        ++tp_gen;
-    }
-    tp_cv.notify_all();
-    {
-        std::unique_lock<std::mutex> lk(tp_mu);
-        tp_done_cv.wait(lk, [&] { return tp_left == 0; });
-    }
+    tp_go();
+    if (o.eng_early && !eng_ahead.empty() && (long)comp_ids.size() == pos + mt) engram_ask_ahead();
+    tp_join();
     mt_n = 0;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
     for (int c = 0; c < o.tp; ++c)

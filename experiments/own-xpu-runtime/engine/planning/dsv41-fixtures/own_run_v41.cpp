@@ -124,8 +124,9 @@ static const uint8_t *map_engram(const char *path, int li) {
     off_t ds = (lseek(fd, 0, SEEK_CUR) + 31) / 32 * 32;
     const uint8_t *m = (const uint8_t *)mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (m == MAP_FAILED) { perror("mmap engram"); exit(1); }
-    // OWN_ENG_EARLY: a row read that misses the page cache fetches its page only, not the 128 KiB read-around
-    if (const char *e = getenv("OWN_ENG_EARLY"); e && atoi(e) != 0) madvise((void *)m, st.st_size, MADV_RANDOM);
+    // OWN_ENG_EARLY (default on): a row read that misses the page cache fetches its page only, not the 128 KiB
+    // read-around
+    if (const char *e = getenv("OWN_ENG_EARLY"); !e || atoi(e) != 0) madvise((void *)m, st.st_size, MADV_RANDOM);
     close(fd);
     auto it = offs.find("per_layer_token_embd.weight");
     if (it == offs.end()) die("engram table name");
@@ -229,6 +230,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ENG_DEV")) opt.eng_dev = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_EARLY")) opt.eng_early = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_LATE")) opt.eng_late = atoi(e) != 0;
+    if (const char *e = getenv("OWN_TP_SPIN_US")) opt.tp_spin_us = atol(e);
     if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
@@ -428,9 +430,17 @@ int main(int argc, char **argv) {
             // OWN_PROMPT_BLOCK=m (OWN_TP > 1): m prompt tokens per step (decode_block_tp), the same values
             const int pblock = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
             if (pblock > 1 && opt.tp > 1) {
+                // OWN_ENG_AHEAD=n (default 16; 0 off; needs OWN_ENG_EARLY): the engram rows of the next n prompt
+                // tokens are asked from the disk while the cards run the current block
+                const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : 16;
                 for (size_t i = 0; i < prompt.size();) {
                     const int m = (int)std::min<size_t>((size_t)pblock, prompt.size() - i);
                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);
+#ifndef OWN41_ACT_BF16
+                    be.eng_ahead.clear();
+                    for (size_t k = i + m; k < prompt.size() && (long)(k - i - m) < ahead; ++k)
+                        be.eng_ahead.push_back(token_map[prompt[k]]);
+#endif
                     be.trace_on = false;
                     double t1 = now();
                     be.skip_head = i + m < prompt.size();
@@ -440,6 +450,9 @@ int main(int argc, char **argv) {
                     if (i == 0) { t_first = now() - t1; first_n = (size_t)m; }
                     i += m;
                 }
+#ifndef OWN41_ACT_BF16
+                be.eng_ahead.clear();
+#endif
             } else {
                 for (size_t i = 0; i < prompt.size(); ++i) {
                     be.comp_ids.push_back(token_map[prompt[i]]);

@@ -965,7 +965,7 @@ enough to bring the clocks down.
 
 No run in e71 was in the slow mode (all 12 row-block runs within 0.4 % per prompt).
 
-## 26. The "slow mode" is the engram table's rows missing from the file cache; asking for them sooner: a new prompt's cost 2.4 % -> 0.5 %, repeats ~97.5 -> ~98.2 tok/s median (2026-11-10 06:40-08:00 EST)
+## 26. The "slow mode" is the engram table's rows missing from the file cache; asking for them sooner and later: a new prompt's cost 2.4-2.6 % -> 0.2 %, median ~97.5 -> ~99.1 tok/s (2026-11-10 06:40-09:10 EST)
 
 **What it was.** Layers 1 and 14 (engram) read 24 hashed rows per token (one Q5_K block of 176 bytes each) from the
 135 GB table in shard 6 on the NVMe, through `mmap`. A row that is not in the file cache costs a disk read inside
@@ -1023,6 +1023,115 @@ three guessing runs finished (SAME). tp63 stages the raw rows in ordinary host m
 campaigns now stop at the first fault line (the filter gained `timedout job`, `exec queue reset`, `suspend fence`,
 `vm worker error`) and log `/proc/vmstat` around every run.
 
+The `/proc/vmstat` logs show why pinned host memory is a risk on this host: memory compaction moves 5,000-260,000
+pages during every run (`pgmigrate_success`, `round18-e73-vmstat.txt`), and the driver maps a pinned host buffer
+from ordinary process pages; moving one forces the driver to remap it, which needs our running jobs paused, and
+ours spin-wait on each other. (Compaction is a host memory setting: not changed.) Background reclaim also frees
+about 200 MB of file cache per run with 8-10 GB free, so a prompt's rows can drop out between two of its runs
+(e74's `_x1` runs read 60-100 MiB each, right after the same prompts ran cached): read the `host io` line before
+comparing two runs.
+
+**`OWN_ENG_LATE=1`, rows decoded on the cards again (tp63; both default on from tp64).** LATE: each card thread
+launches the embed and layer 0 first and only then fetches the rows (and asks for its share of the reads), copies
+them and pushes the engram projection; layers 1 and 14 are the first to need them, and the embed no longer waits
+for its queue. The copy from ordinary host memory returns only when the queue reaches it, so the host now waits
+for layer 0 there instead of the card waiting for the host (`engram rows` reads 260-550 us, mostly that wait).
+`OWN_ENG_DEV` now stages the raw rows in ordinary host memory (no pinned buffers). Gates for both (traces of
+blocks of 16 and 5 and one token, plain 128) identical; 42 guessing answers SAME; no fault line (e74,
+`round18-e74-summary.txt`, table `round18-e74-table.md`). Plain 128-token answers: 77.73-78.07 tok/s default,
+78.32-78.34 LATE, 78.32-78.43 LATE + DEV.
+
+| tok/s (tp63) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| EARLY, round 1 (rows read from disk, see above) | 97.02 | 81.31 | 109.51 | 97.50 | 100.56 | 97.50 | 105.36 |
+| EARLY, round 2 | 97.53 | 81.61 | 110.49 | 97.99 | 101.35 | 97.99 | 105.90 |
+| EARLY + LATE, round 1 | 97.99 | 82.07 | 111.07 | 98.64 | 101.68 | 98.64 | 106.65 |
+| EARLY + LATE, round 2 | 98.08 | 82.07 | 111.15 | 98.75 | 101.55 | 98.75 | 106.43 |
+| **EARLY + LATE + DEV, round 1** | 98.36 | 82.37 | 111.63 | 99.03 | 102.05 | **99.03** | 107.16 |
+| **EARLY + LATE + DEV, round 2** | 98.22 | 82.45 | 111.59 | 98.97 | 102.09 | **98.97** | 106.97 |
+
+**Defaults from tp64: EARLY, LATE and DEV on** (`OWN_ENG_EARLY=0`, `OWN_ENG_LATE=0`, `OWN_ENG_DEV=0` give the old
+way back). tp64 also has `OWN_TP_SPIN_US=n`: the main thread and the card threads wait for each other's hand-off by
+polling for up to n us before sleeping. e75 (`round18-e75-summary.txt`, table `round18-e75-table.md`): gates for
+the default and for `OWN_TP_SPIN_US=2000` (traces of blocks of 16 and 5 and one token, 40-token answers) identical;
+30 guessing answers SAME as the plain run; no fault line. Plain 128-token answers: 77.83-77.96 tok/s the old way
+(warm), 78.36-78.40 default, 78.32-78.37 spin.
+
+| tok/s (tp64) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| first runs after the build (423 MiB of rows read from disk over the six) | 98.55 | 82.23 | 111.57 | 98.74 | 102.01 | 98.74 | 106.98 |
+| **default, round 1** | 98.38 | 82.51 | 111.66 | 99.17 | 102.37 | **99.17** | 107.06 |
+| spin 2000 us, round 1 | 98.65 | 82.55 | 111.71 | 99.08 | 102.47 | 99.08 | 106.87 |
+| spin 2000 us, round 2 | 98.50 | 82.30 | 111.49 | 99.11 | 102.27 | 99.11 | 106.98 |
+| **default, round 2** | 98.50 | 82.42 | 111.43 | 99.03 | 102.21 | **99.03** | 107.14 |
+
+The spin hand-off changes nothing measurable (closed; default 0). Twelve new prompts f13-f24 (never run before),
+each answered cold then warm, odd ones the old way and even ones with the defaults (`round18-fresh-prompts/`): every
+cold answer equals its warm one; the cold runs read 89-105 MiB from disk each. Old way: cold / warm 0.970-0.977
+(median 0.974), the check 0.56 ms per round slower cold (median). Default: cold / warm 0.997-1.004 (median 0.998),
+the check 0.03 ms slower. **A prompt the machine has never seen now runs as fast as a repeated one.**
+
+## 27. A larger register file where kernels would spill: guessing ~99.1 -> ~102.1 tok/s median, text identical; prompt reading settings; new long documents (2026-11-10 09:10-11:10 EST)
+
+**Prompt reading settings (e76, tp64, `round18-e76-table.md`).** The 3K document read in blocks of 16, two rounds
+(second reversed), each run's first 16 answer tokens checked against the plain answer (17 of 17 the same):
+
+| 3K document, blocks of 16 (tp64) | round 1 tok/s | round 2 tok/s |
+| --- | --- | --- |
+| default (token groups of 4) | 277.0 | 277.0 |
+| row blocks of 4 (`OWN_MT_TGR=16:4`), matrices of >= 4,096 rows | 273.5 | 273.1 |
+| row blocks of 4, >= 2,048 rows | 269.7 | 269.6 |
+| row blocks of 4, every matrix | 231.3 | 231.2 |
+| row blocks of 2, >= 4,096 rows | 277.9 | 279.0 |
+| token groups of 3 + row blocks of 4 | 267.2 | 267.4 |
+| unpacked rows in groups of 3 (`OWN_MT_TGU=3`) | 276.4 | 276.4 |
+| unpacked rows all at once (`OWN_MT_TGU=0`) | 276.6 | 276.7 |
+
+The build log explains the row-block losses: 92 kernel forms spilled registers (`DenseRowsGR<GemvQ6KP<20>, 1, 4>`
+145, `DenseRowsM<GemvQ8P<160>, 16, 8>` 398, ...). Kernel time per 16-token block on card 2
+(`round18-e76-prompt-3k-profile-card2.txt`): dense weight rows 25.0 ms, routed experts 18.9, exchanges 8.0,
+attention 2.8, other 1.3, norms 1.2 (57.2 ms).
+
+**New long documents (never run before): reading them cold costs 0.5 %; `OWN_ENG_AHEAD` removes it.** Eight lab
+documents (`round18-fresh-prompts/long/`, 2,246-3,219 tokens), each read cold then warm: on tp64 the cold read is
+0.994-0.995 of the warm one (L1-L4); every cold answer equals its warm one. tp65's `OWN_ENG_AHEAD=n` (default 16;
+needs `OWN_ENG_EARLY`): while the cards run one prompt block, the main thread asks the disk for the engram rows of
+the next n prompt tokens (page-cache hints only, so the rows read later are the same bytes). e77: off 0.995 and
+0.995 (L5, L7), on 1.000 and 1.003 (L6, L8).
+
+**The GPU compiler's automatic large register file (tp65).** Built with
+`-Xsycl-target-backend=intel_gpu_bmg_g31 "-options -ze-intel-enable-auto-large-GRF-mode"`: a kernel that would spill
+is compiled again with 256 registers per thread instead of 128 (half as many threads per core). Same instructions,
+so the same values (`round18-scripts/grf_test.cpp` shows the switch on a small kernel: 128 registers + 212 spilled
+-> 256 + 92). Spill warnings 92 -> 29 kernel forms; build 424 s. e77 (`round18-e77-summary.txt`, table
+`round18-e77-table.md`): gates identical (traces of blocks of 16 and 5 and one token, plain 128-token answers);
+36 guessing answers SAME as the plain run; no fault line.
+
+| tok/s | code | prose | analysis | ops | docs | median of 5 | 3K document | draft ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| tp64, round 1 | 98.54 | 82.35 | 111.63 | 99.23 | 102.09 | 99.23 | 106.84 | 2.57-2.60 |
+| **tp65, round 1** | 101.44 | 84.84 | 114.71 | 102.06 | 105.22 | **102.06** | 109.98 | 2.27-2.31 |
+| **tp65, round 2** | 101.43 | 85.09 | 114.92 | 102.08 | 104.87 | **102.08** | 110.33 | 2.26-2.31 |
+| tp64, round 2 | 98.68 | 82.17 | 111.69 | 99.17 | 102.08 | 99.17 | 106.70 | 2.56-2.59 |
+
+The draft step gains most (2.57 -> 2.28 ms; its expert rows spilled), the check 0.3 ms per round. Plain 128-token
+answers lose a little: 78.05-78.18 tok/s against 78.34-78.36 (some one-token kernel now runs with half the
+threads). Prompt reading at 3K: 275.6-276.8 against 274.1-275.3.
+
+**Where prompt reading waits (e77, tp65, per 16-token block, `round18-e77-prompt-3k-profile-card{0,2,5}.txt`).**
+
+| card | attention groups | dense rows ms | routed experts ms | exchanges ms | attention ms | other ms |
+| --- | --- | --- | --- | --- | --- | --- |
+| 0 (0000:03) | 1 | 20.30 | 18.48 | 13.32 | 2.17 | 2.46 |
+| 2 (0000:43) | 2 | 24.66 | 18.88 | 7.96 | 2.78 | 2.52 |
+| 5 (0000:e3) | 2 | 26.06 | 20.18 | 4.92 | 2.94 | 2.66 |
+
+Card 5 sets the pace: it carries two of the eight attention groups (q_b and o_a rows and the attention core
+twice) and also runs its expert rows 7-9 % slower than the others; it is the card whose clock drops (2,738-2,792
+MHz against 2,800, with throttle reasons logged, `round18-e77-telemetry-per-run.txt`). Every exchange costs it
+4.9 ms per block; the other cards wait up to 8.4 ms more for it. Evening the attention groups needs one more
+(small, two-card) exchange of head outputs per layer; that is the next lever measured against this table.
+
 ## Reproduce
 
 ```bash
@@ -1032,6 +1141,8 @@ $ICPX -O3 -fiopenmp -std=c++20 -DOWN_RT_HOST_ONLY -I src -I planning/dsv41-fixtu
   -o cpu_run_v41 planning/dsv41-fixtures/cpu_run_v41.cpp
 $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv41-fixtures -I src \
   planning/dsv41-fixtures/own_run_v41.cpp -o own_run_v41 -lze_loader
+# (the measured builds since section 27 add -fsycl-targets=intel_gpu_bmg_g31 and
+#  -Xsycl-target-backend=intel_gpu_bmg_g31 "-options -ze-intel-enable-auto-large-GRF-mode")
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
 # reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
@@ -1066,11 +1177,17 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 3. Guessing rounds (profiles in sections 23-24): checking a block of 4 still costs ~1.8x a one-token step. Next:
    the head's 4-row blocks at 2-6 tokens (0.6 ms per round on card 2; the row-block-free form drops the 230 W
    cards' clocks, section 24, even when it runs only for blocks of 5, section 25), token norms inside their neighbours (0.9 ms),
-   exchanges folded into the kernels that consume them, the card threads' spinning waits (section 25), the host's engram row work before each step (0.25-0.35 ms per
-   round with the rows cached, section 26; fetching after layer 0's launches is in test). The
+   exchanges folded into the kernels that consume them, the copy of the engram rows without the queue wait
+   (section 26: the host now waits for layer 0 there). Closed: the card threads' spinning waits (section 25)
+   and polling hand-offs (section 26). The
    attention groups stay uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess
    counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
-   section 24; the draft's experts, section 25.)
+   section 24; the draft's experts, section 25; engram rows asked early and fetched after layer 0, section 26.)
+6. Prompt reading (~276 tok/s at 3K, blocks of 16): card 5 sets the pace (two attention groups and a lower
+   clock, section 27 table); the other cards wait up to 8.4 ms per 16-token block at the exchanges. Next: split
+   the two doubled attention groups by heads between card pairs (one small exchange of head outputs per layer).
+   Closed: row blocks and token-group variants for blocks of 16 (section 27, e76); cold reads of new documents
+   (`OWN_ENG_AHEAD`, section 27).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

@@ -224,13 +224,16 @@ public:
         bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
         bool exp_pair = true;   // tp: expert gate + up rows in one launch (OWN_EXP_PAIR=0: two launches)
         bool eng_split = true;  // tp: engram_kv rows split across the cards, pushed at step start (OWN_ENG_SPLIT=0: every card all rows)
-        bool eng_dev = false;   // tp: the 24 hashed engram rows go to each card as raw Q5_K bytes (pinned host copy)
-                                // and the card decodes them (EngRowsA: EmbedRowA's decode), not six host decodes (OWN_ENG_DEV=1)
-        bool eng_early = false; // tp: the engram rows' disk reads start sooner: the anchor's rows while the draft runs,
+        bool eng_dev = true;    // tp: the 24 hashed engram rows go to each card as raw Q5_K bytes (copied from ordinary
+                                // host memory) and the card decodes them (EngRowsA: EmbedRowA's decode), not six host
+                                // decodes (OWN_ENG_DEV=0: host decode)
+        bool eng_early = true;  // tp: the engram rows' disk reads start sooner: the anchor's rows while the draft runs,
                                 // a block's other rows split over the card threads (each its share, then reads),
-                                // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=1)
-        bool eng_late = false;  // tp: the engram rows are fetched and pushed after layer 0's launches (the card runs the
-                                // embed and layer 0 meanwhile; layers 1 and 14 need them), not before the embed (OWN_ENG_LATE=1)
+                                // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=0: off)
+        long tp_spin_us = 0;    // tp: the main thread and the card threads poll for each other's hand-off for up to this
+                                // many us before sleeping on the condition variable (OWN_TP_SPIN_US; 0 = sleep at once)
+        bool eng_late = true;   // tp: the engram rows are fetched and pushed after layer 0's launches (the card runs the
+                                // embed and layer 0 meanwhile; layers 1 and 14 need them), not before the embed (OWN_ENG_LATE=0: before)
         bool dev_index = true;  // tp: past 512 rows every card picks its own top-512 on the card (TopKSelP), no host
                                 // round trip (OWN_DEV_INDEX=0: the lead's host top-k, the others wait)
         bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
@@ -374,6 +377,7 @@ public:
                 tp_quit = true;
             }
             tp_cv.notify_all();
+            // (a spinning worker sees tp_quit too)
             for (auto &x : tp_th) x.join();
         }
         for (int t = 0; t < TILES; ++t) {
@@ -2241,9 +2245,38 @@ private:
     std::vector<std::thread> tp_th;
     std::mutex tp_mu;
     std::condition_variable tp_cv, tp_done_cv;
-    long tp_gen = 0;
-    int tp_left = 0;
-    bool tp_quit = false;
+    std::atomic<long> tp_gen{0};
+    std::atomic<int> tp_left{0};
+    std::atomic<bool> tp_quit{false};
+    // hand-offs: the caller sets the step up, tp_go starts every card thread on it, tp_join waits for all of them
+    // (OWN_TP_SPIN_US: both sides poll first; the generation and the count change under tp_mu or are read under it
+    // before sleeping, so a wake-up is never lost)
+    void tp_go() {
+        {
+            std::lock_guard<std::mutex> lk(tp_mu);
+            tp_err.clear();
+            tp_left.store(o.tp);
+            tp_gen.fetch_add(1);
+        }
+        tp_cv.notify_all();
+    }
+    template <typename F> static bool tp_poll(long us, F &&done) {
+        if (us <= 0) return done();
+        const auto t0 = std::chrono::steady_clock::now();
+        for (unsigned k = 0;; ++k) {
+            if (done()) return true;
+            __builtin_ia32_pause();
+            if ((k & 255) == 255 && std::chrono::steady_clock::now() - t0 > std::chrono::microseconds(us)) return done();
+        }
+    }
+    void tp_join() {
+        if (tp_poll(o.tp_spin_us, [&] { return tp_left.load() == 0; })) {
+            std::lock_guard<std::mutex> lk(tp_mu); // tp_err was written under it
+            return;
+        }
+        std::unique_lock<std::mutex> lk(tp_mu);
+        tp_done_cv.wait(lk, [&] { return tp_left.load() == 0; });
+    }
     std::string tp_err;
     std::atomic<bool> tp_abort{false};
     std::atomic<long> tp_mark{0};
@@ -2933,12 +2966,12 @@ private:
     void tp_worker(int c) {
         long seen = 0;
         for (;;) {
-            {
+            if (!tp_poll(o.tp_spin_us, [&] { return tp_quit.load() || tp_gen.load() != seen; })) {
                 std::unique_lock<std::mutex> lk(tp_mu);
-                tp_cv.wait(lk, [&] { return tp_quit || tp_gen != seen; });
-                if (tp_quit) return;
-                seen = tp_gen;
+                tp_cv.wait(lk, [&] { return tp_quit.load() || tp_gen.load() != seen; });
             }
+            if (tp_quit) return;
+            seen = tp_gen.load();
             try {
                 if (dr_step) dr_card_step(c);
                 else if (mt_n > 0) tpm_card_step(c);
@@ -2948,8 +2981,10 @@ private:
                 std::lock_guard<std::mutex> lk(tp_mu);
                 if (tp_err.empty()) tp_err = "card " + pci[c] + ": " + e.what();
             }
-            std::lock_guard<std::mutex> lk(tp_mu);
-            if (--tp_left == 0) tp_done_cv.notify_all();
+            if (tp_left.fetch_sub(1) == 1) {
+                std::lock_guard<std::mutex> lk(tp_mu);
+                tp_done_cv.notify_all();
+            }
         }
     }
     // trace a vector whose row slices live on different cards: card c's
@@ -3056,15 +3091,8 @@ private:
         tp_tok = token;
         if (!tp_th.empty() && !tracing()) { // traced steps run phase by phase from this thread (workers parked)
             tp_abort = false;
-            {
-                std::lock_guard<std::mutex> lk(tp_mu);
-                tp_err.clear();
-                tp_left = o.tp;
-                ++tp_gen;
-            }
-            tp_cv.notify_all();
-            std::unique_lock<std::mutex> lk(tp_mu);
-            tp_done_cv.wait(lk, [&] { return tp_left == 0; });
+            tp_go();
+            tp_join();
             if (!tp_err.empty()) throw std::runtime_error("tensor-parallel step: " + tp_err);
         } else {
             tp_step_serial(token);
@@ -3093,13 +3121,19 @@ private:
     void tp_worker(int) {}
 #endif
 
-    // tok_p >= 0: the token at position p (not yet in comp_ids)
-    void engram_hash(int p, int li, int64_t *ids24, long long tok_p = -2) const {
+    // tok_p >= 0: the token at position p (not yet in comp_ids); ahead: the tokens after comp_ids' end (the
+    // prompt's next block, read ahead of its step: engram_ask_ahead)
+    void engram_hash(int p, int li, int64_t *ids24, long long tok_p = -2,
+                     const std::vector<int64_t> *ahead = nullptr) const {
+        const long nc = (long)comp_ids.size();
         for (int i = 1; i <= 3; ++i) {
             uint64_t rolling = 0;
             for (int sh = 0; sh <= i; ++sh) {
+                const long q = p - sh;
                 long long tk = sh == 0 && tok_p >= 0 ? tok_p
-                               : (p - sh < 0 || p - sh >= (long)comp_ids.size()) ? eng_pad : comp_ids[p - sh];
+                               : q < 0 ? eng_pad
+                               : q < nc ? comp_ids[q]
+                               : ahead && q - nc < (long)ahead->size() ? (*ahead)[q - nc] : eng_pad;
                 if (tk == -1) tk = eng_pad;
                 rolling ^= (uint64_t)(tk * eng_mult[li][sh]);
             }

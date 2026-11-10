@@ -306,13 +306,7 @@ void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = 
     mt_toks = dr_toks;
     dr_step = true;
     tp_abort = false;
-    {
-        std::lock_guard<std::mutex> lk(tp_mu);
-        tp_err.clear();
-        tp_left = o.tp;
-        ++tp_gen;
-    }
-    tp_cv.notify_all();
+    tp_go();
     // OWN_ENG_EARLY: the next check block starts with the anchor at position pos; its 48 engram rows are known
     // now, so their disk reads run behind the draft (anchor_comp = the anchor's id in the engram vocabulary)
     if (o.eng_early && anchor_comp >= 0 && (long)comp_ids.size() == pos) {
@@ -330,10 +324,7 @@ void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = 
         }
         eng_anchor_asked = true;
     }
-    {
-        std::unique_lock<std::mutex> lk(tp_mu);
-        tp_done_cv.wait(lk, [&] { return tp_left == 0; });
-    }
+    tp_join();
     mt_n = 0;
     dr_step = false;
     if (!tp_err.empty()) throw std::runtime_error("draft step: " + tp_err);
