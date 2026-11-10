@@ -1,0 +1,50 @@
+decode h (5120 x 1)        largest slice    3456 B | pull check 2000 iters: 0 wrong values, 0 timeouts (21.0 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:    18.7 us/exchange
+                             pull nwg  4:    12.4 us/exchange
+                             pull nwg 16:    12.9 us/exchange
+                             pull nwg 64:    17.8 us/exchange
+                             push (XchgP) :     7.1 us/exchange
+decode act (2304 x 7)      largest slice   10752 B | pull check 2000 iters: 0 wrong values, 0 timeouts (13.2 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:    30.8 us/exchange
+                             pull nwg  4:    13.9 us/exchange
+                             pull nwg 16:    11.0 us/exchange
+                             pull nwg 64:    16.2 us/exchange
+                             push (XchgP) :    16.1 us/exchange
+decode oa (8192 x 1)       largest slice    8192 B | pull check 2000 iters: 0 wrong values, 0 timeouts (12.8 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:    18.9 us/exchange
+                             pull nwg  4:    10.7 us/exchange
+                             pull nwg 16:    10.6 us/exchange
+                             pull nwg 64:    15.8 us/exchange
+                             push (XchgP) :     7.5 us/exchange
+block6 act (2304 x 42)     largest slice   64512 B | pull check 2000 iters: 0 wrong values, 0 timeouts (24.2 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:   141.0 us/exchange
+                             pull nwg  4:    40.7 us/exchange
+                             pull nwg 16:    21.1 us/exchange
+                             pull nwg 64:    22.2 us/exchange
+                             push (XchgP) :   235.4 us/exchange
+block16 h (5120 x 16)      largest slice   55296 B | pull check 2000 iters: 0 wrong values, 0 timeouts (29.8 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:   138.5 us/exchange
+                             pull nwg  4:    42.7 us/exchange
+                             pull nwg 16:    26.8 us/exchange
+                             pull nwg 64:    25.7 us/exchange
+                             push (XchgP) :   187.8 us/exchange
+block16 act (2304 x 112)   largest slice  172032 B | pull check 2000 iters: 0 wrong values, 0 timeouts (42.0 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:   360.3 us/exchange
+                             pull nwg  4:    94.6 us/exchange
+                             pull nwg 16:    37.7 us/exchange
+                             pull nwg 64:    40.9 us/exchange
+                             push (XchgP) :   767.2 us/exchange
+block16 oa (8192 x 16)     largest slice  131072 B | pull check 2000 iters: 0 wrong values, 0 timeouts (30.0 us/iter incl. producer + check)
+                                                    | push check 500 iters: 0 wrong values, 0 timeouts
+                             pull nwg  1:   203.3 us/exchange
+                             pull nwg  4:    55.0 us/exchange
+                             pull nwg 16:    26.6 us/exchange
+                             pull nwg 64:    27.4 us/exchange
+                             push (XchgP) :   485.1 us/exchange
+PASS

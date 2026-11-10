@@ -195,6 +195,9 @@ int main(int argc, char **argv) {
     };
     if (const char *e = getenv("OWN_TP_WEIGHTS")) weights(e, opt.tp_w);
     if (const char *e = getenv("OWN_TP_VWEIGHTS")) weights(e, opt.tp_vw);
+    if (const char *e = getenv("OWN_TP_HEADS")) weights(e, opt.tp_heads);
+    if (const char *e = getenv("OWN_TP_HEADS_DR")) opt.tp_heads_dr = atoi(e) != 0;
+    if (const char *e = getenv("OWN_TP_HEADS_MIN")) opt.tp_heads_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_GPROF_CARD")) opt.prof_card = atoi(e);
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
@@ -221,6 +224,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XTAIL")) opt.xtail = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL")) opt.xpull = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
@@ -234,6 +238,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
+    if (const char *e = getenv("OWN_IDX_R")) opt.idx_r = (unsigned)atoi(e);
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");
@@ -280,6 +285,16 @@ int main(int argc, char **argv) {
         }
         flash41::Plan41 plan = flash41::model_plan_v41(d, max_ctx);
 
+#ifndef OWN41_ACT_BF16
+        // default since 2026-11-10 (note section 28, e81): six cards split the attention heads 12, 12, 12, 12, 8, 8
+        // for blocks of >= 16 tokens (prompt reading); one-token steps, checks and the draft keep whole groups.
+        // OWN_TP_HEADS=0 keeps whole groups everywhere.
+        if (opt.tp == 6 && !opt.xtail && !getenv("OWN_TP_HEADS")) {
+            const int dh[6] = {3, 3, 3, 3, 2, 2};
+            for (int c = 0; c < 6; ++c) opt.tp_heads[c] = dh[c];
+            if (!getenv("OWN_TP_HEADS_MIN")) opt.tp_heads_min = 16;
+        }
+#endif
         std::fprintf(stderr, "host MemAvailable %ld MiB (floor %ld MiB)\n",
                      own41::meminfo_kb("MemAvailable") / 1024, opt.host_floor_mib);
         own41::Backend41 be(plan, max_ctx, opt);
@@ -392,10 +407,14 @@ int main(int argc, char **argv) {
                 s = cm + 1;
             }
         }
+        // default since 2026-11-10 (note section 28, e81): prompt blocks of 16 run 4-row blocks on matrices of >= 4,096
+        // rows on the card (OWN_MT_TGR=16:0 turns it off; the row threshold also applies to other OWN_MT_TGR entries)
+        be.mt_tgr[16] = 4;
+        be.mt_tgr_rows = 4096;
         if (const char *e = getenv("OWN_MT_TGR")) { // per block size: "m:r,m:r" rows per sub-group (2 or 4)
             for (const char *s = e; *s;) {
                 unsigned m = 0, rr = 0;
-                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 2 || rr == 4)) be.mt_tgr[m] = rr;
+                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 0 || rr == 2 || rr == 4)) be.mt_tgr[m] = rr;
                 const char *cm = std::strchr(s, ',');
                 if (!cm) break;
                 s = cm + 1;

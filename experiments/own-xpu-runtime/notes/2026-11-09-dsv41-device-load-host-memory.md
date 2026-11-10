@@ -1132,6 +1132,113 @@ MHz against 2,800, with throttle reasons logged, `round18-e77-telemetry-per-run.
 4.9 ms per block; the other cards wait up to 8.4 ms more for it. Evening the attention groups needs one more
 (small, two-card) exchange of head outputs per layer; that is the next lever measured against this table.
 
+## 28. Attention heads split between neighbouring cards for prompt blocks: 3K reading 278 -> 293 tok/s, guessing and plain answers unchanged; what an exchange costs (2026-11-10 10:00-12:00 EST)
+
+**The old settings on the large-register build (e78, tp65, `round18-e78-table.md`).** One round of the guessing
+block settings that were tuned while kernels spilled: the current ones stay (median 101.85; 2-row blocks 101.25,
+row blocks from 2,048 rows 101.46, one token group for blocks of 4 102.09, groups of 2 for blocks of 6 101.73;
+30 of 30 answers SAME). Prompt reading at 3K in blocks of 16: row blocks of 4 for matrices of >= 4,096 rows now
+281.1 tok/s against 277.7 (2-row blocks 280.2, all 16 tokens in one sub-group 257.0): with 256 registers the
+row-block form no longer spills (on tp64, e76, the same setting was 1.3 % slower: 273.5 against 277.0).
+
+**OWN_TP_HEADS (tp66).** The eight groups of 8 heads sat whole on the cards (8c/6: 8, 8, 16, 8, 8, 16 heads), so
+cards 2 and 5 ran two groups' q_b rows, attention and output-a rows (section 27's profiles). `OWN_TP_HEADS=u0,..,u5`
+gives card c u_c units of 4 heads (contiguous); a group whose two halves land on neighbouring cards is run as
+follows (`Backend41::head_layout`, `oa_run`, `ops41sycl::XchgPair`): each card runs q_b, rope and attention of
+its own heads, publishes its head outputs (they now live in the exchange arena), runs the output-a rows of its
+whole groups, waits for the partner's flag and copies the partner's 4 heads (2,048 floats per token, loads from
+the partner's arena), then runs its half of the split group's output-a rows. Every output-a row reads the same 8
+head outputs as before, so the values are the same. The cards without a partner count the exchange too (the
+flag numbers stay equal on all cards). A = 3,3,3,3,2,2 (12, 12, 12, 12, 8, 8 heads; pairs 0-1 and 2-3; the
+throttling card 5 gets the light share), B = 2,3,3,3,3,2. `OWN_TP_HEADS_DR=1` splits the draft's stages too.
+
+e79 (`round18-e79-table.md`): traces of blocks of 16 / 5 / one token byte-identical with A (B and whole groups
+at 16), plain 128-token answers identical, 48 of 48 guessing answers SAME, and every arm kept exactly the same
+guesses (259 of 338 on code, ...: the draft's values are unchanged).
+
+| e79 (tp66) | median of 5, round 1 | round 2 | 3K document read (tok/s), round 1 | round 2 |
+| --- | --- | --- | --- | --- |
+| whole groups | 101.77 | 101.80 | 277.7 | 276.4 |
+| A | 101.50 | 101.43 | 288.6 | 288.1 |
+| A + draft | 100.95 | 100.99 | 288.2 | 288.8 |
+| B + draft | 101.16 | 100.98 | 288.4 | 288.5 |
+
+Prompt reading +4 %; guess checks 0.15-0.2 ms slower (mean of 6 prompts 18.90-18.92 ms whole groups, 19.06-19.12
+split; code 17.61-17.63 against 17.75-17.83), the draft a little slower when split too. Plain 128-token answers
+77.56 (A) against 77.84-77.99. With A, card 5 draws 192-195 W instead of 206-216 on the guessing runs and its
+throttle counts go to 0, while card 1 (now 12 heads) logs some (`round18-e79-telemetry-per-run.txt`). Pulling the
+6 KB one-token output-a slices instead of pushing them (`OWN_XPULL_MIN=6144`) 76.1-76.9: kept off.
+
+**Why the checks do not gain (e80, `round18-e80-spec-cycle-profile-card{0,2,5}.txt`, grouped by
+`round18-scripts/prof_cat.py`).** Per guessing cycle (code prompt, whole groups, profiled): card 2 spends 2.46 ms
+in the q_b and output-a kernels against card 0's 1.39 (+1.07 ms), and card 0 waits 3.52 ms in the exchanges against
+card 2's 2.41 (+1.10 ms): the two-group cards set the pace (time outside exchanges: card 0 15.77 ms, card 2 16.91,
+card 5 16.98). Splitting would move about half of the 1.07 ms off cards 2 and 5 but adds 43 pair exchanges and a
+second output-a launch per layer to every check, and at 2-6 tokens those cost more than they save (e79's check
+times). Card 2's cycle: dense rows 41.4 % (q_b 7.7 %, output-a 5.0 %), routed experts 24.0 %, exchanges 12.5 %
+(XchgPull 14.66 us x 123.9 per cycle, XchgP 8.60 us x 57), attention 9.5 %, norms 7.1 % (the 5,120-wide norm takes
+10.26 us per launch, 83 per cycle: a serial chain of 160 double adds per lane fixes its order, so it stays), other
+5.4 %. The output head at 3 tokens (Q6_K) takes 369 us per launch.
+In prompt reading (`round18-e80-prompt-3k-heads-profile-card{0,2,4,5}.txt`, A) q_b at 16 tokens runs at
+1.08-1.19 TMAC/s against output-a's 1.77-1.88 (Q8_0; Q6_K output-a 1.18-1.37): q_b's 1,280-column rows reload the
+16 tokens' inputs for every row, which is what the row-block form (4 rows per input load) addresses.
+
+**The split only where it gains: `OWN_TP_HEADS_MIN` (tp67, e81, `round18-e81-table.md`).** With `OWN_TP_HEADS_MIN=m`
+every card stores the q_b and output-a rows of both layouts (`HeadLay hl[3]`: whole groups, the draft's, the split
+one; card 2 keeps 2.44 GiB free instead of 2.61), blocks of >= m tokens run the split layout and everything else
+(one-token steps, checks, the draft) whole groups. Gates with A + MIN=16: traces of blocks of 16 / 5 / one token
+byte-identical, plain 128-token answers identical (78.30 / 78.07 tok/s against 78.29 / 78.24); 24 of 24 guessing
+answers SAME with the same guesses kept. Guessing median of five 102.09 / 102.02 against 101.82 / 102.30 (the
+default's first round read 212 MiB of rows from disk), unchanged. The 3K read in blocks of 16 (16 answer tokens,
+all the same as the plain answer):
+
+| 3K document, blocks of 16 (tp67) | round 1 tok/s | round 2 tok/s |
+| --- | --- | --- |
+| whole groups (default until now) | 278.0 | 278.0 |
+| A + MIN=16 | 290.2 | 290.1 |
+| B + MIN=16 | 289.6 | 289.8 |
+| row blocks of 4 from 4,096 rows (`OWN_MT_TGR=16:4`) | 281.0 | 281.1 |
+| **A + MIN=16 + row blocks of 4** | **292.9** | **292.8** |
+
+**New defaults (tp68):** six cards split the heads 12, 12, 12, 12, 8, 8 for blocks of >= 16 tokens
+(`OWN_TP_HEADS=0` turns it off) and blocks of 16 run 4-row blocks on matrices of >= 4,096 rows (`OWN_MT_TGR=16:0`
+turns that off; `OWN_MT_TGR_ROWS` now defaults to 4,096). Prompt reading at 3K: 278 -> ~293 tok/s (+5.4 %).
+
+**What one exchange costs (e81b / e81d, `tools/bench/xchg_lat_bench.cpp`, `round18-e81b-xchg-lat-bench.txt`,
+`round18-e81d-xchg-lat-bench-lb.txt`).** The same XchgPull back to back on all six idle cards with parts switched
+off, microseconds per exchange (e81b):
+
+| shape | full | no fences | flags + fences, no copy | copy only | empty kernel |
+| --- | --- | --- | --- | --- | --- |
+| h, 1 token | 11.89-13.53 | 11.89-11.91 | 4.70-4.71 | 7.45-7.46 | 2.13-2.41 |
+| h, 3 tokens | 13.62-13.63 | 13.61-13.62 | 5.13-5.14 | 8.69-8.70 | 2.40-2.44 |
+| h, 6 tokens | 14.98-15.01 | 14.98-14.99 | 6.01-6.02 | 9.63-9.64 | 2.41-2.42 |
+| h, 16 tokens | 24.47-24.52 | 24.53-24.55 | 9.02-9.07 | 15.53-15.59 | 2.39-2.49 |
+| act, 21 slots | 13.89-13.91 | 13.88-13.92 | 6.92-6.94 | 8.06-8.11 | 2.39-2.46 |
+
+The system-scope fences cost nothing. An exchange is a launch (~2.4 us), one round trip for the flags (~2.5-3 us)
+and one for the loads from the peers (~5-6 us at 1-6 tokens), one after the other. Loading every peer's rows of a
+round before storing any (`XchgPull::copy_lb`, `OWN_XPULL_LB=1`) is slower (1 and 3 tokens: copy 8.13-9.54 against
+7.41-8.67 us;
+`xchg_pull_test` 0 wrong values with it, `round18-e81d-xchg-pull-test.txt`): the loads were already in flight
+together. Kept off; the exchange is at the two round trips of this PCIe fabric (pushes are slower still, ~1 GB/s,
+section 21). With 124 pulls + 57 pushes per guessing round the exchanges stay ~12 % of a round.
+
+**The indexer score with 2 or 4 rows per item (`IndexerScoreBMR`, `OWN_IDX_R`, `tools/bench/test_index_score_m.cpp`,
+`round18-e81c-index-score-rows-bench.txt`, 230 W card).** Bitwise identical to `IndexerScoreBM` at 700-34,000 rows
+for 1, 4 and 16 tokens; blocks of 16: 810.7 -> 686.2 us at 34,000 rows, 587.0 -> 483.4 at 24,000, slower below
+~4,000 rows (43.0 -> 72.7 at 700). The score runs at ~2.75 T products/s at 16 x 34,000, about half of the card's
+~5.7 T (32 cores x 128 lanes x 2.8 GHz, a multiply and an add per product): compute, not loads. Option only (default off); measured on long documents below.
+
+**How far plain decode is from the cards' memory (`round18-scripts/active_bytes.py`,
+`round18-active-bytes-per-step.txt`).** From the model file's tensor sizes: a one-token step reads every tensor
+once except the routed experts (6 of 384 per layer) and the embedding tables (engram rows come from the disk):
+10.16 GB over the six cards, 1.69 GB per card. At 78.3 tok/s that is ~133 GB/s per card, a third of the ~450 GB/s
+the draft's q_b rows reach at one token. The time is in many small launches (card 2: 1,386 per guessing round,
+421 of them under 3 us, `round18-e80-spec-cycle-profile-card2.txt`), each kernel's ramp and tail at a few MB of
+rows, and the exchanges above; kernel time nearly adds up to the wall time (19.32 ms of kernels per round of
+2.56 + 17.63 ms in the profiled run), so there are almost no idle gaps between kernels to close.
+
 ## Reproduce
 
 ```bash
@@ -1143,6 +1250,8 @@ $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv4
   planning/dsv41-fixtures/own_run_v41.cpp -o own_run_v41 -lze_loader
 # (the measured builds since section 27 add -fsycl-targets=intel_gpu_bmg_g31 and
 #  -Xsycl-target-backend=intel_gpu_bmg_g31 "-options -ze-intel-enable-auto-large-GRF-mode")
+# (since section 28, OWN_TP=6 prompt blocks of 16 split the attention heads 12,12,12,12,8,8 and run 4-row blocks
+#  by default; OWN_TP_HEADS=0 / OWN_MT_TGR=16:0 turn them off)
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
 # reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
@@ -1177,17 +1286,17 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 3. Guessing rounds (profiles in sections 23-24): checking a block of 4 still costs ~1.8x a one-token step. Next:
    the head's 4-row blocks at 2-6 tokens (0.6 ms per round on card 2; the row-block-free form drops the 230 W
    cards' clocks, section 24, even when it runs only for blocks of 5, section 25), token norms inside their neighbours (0.9 ms),
-   exchanges folded into the kernels that consume them, the copy of the engram rows without the queue wait
+   exchanges folded into the kernels that consume them (an exchange is a launch and two PCIe round trips, its
+   fences are free and loading all peers first is slower, section 28), the copy of the engram rows without the queue wait
    (section 26: the host now waits for layer 0 there). Closed: the card threads' spinning waits (section 25)
    and polling hand-offs (section 26). The
-   attention groups stay uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess
+   attention groups stay uneven in checks (evening them costs a pair exchange per layer, section 28). (Done: adaptive guess
    counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
    section 24; the draft's experts, section 25; engram rows asked early and fetched after layer 0, section 26.)
-6. Prompt reading (~276 tok/s at 3K, blocks of 16): card 5 sets the pace (two attention groups and a lower
-   clock, section 27 table); the other cards wait up to 8.4 ms per 16-token block at the exchanges. Next: split
-   the two doubled attention groups by heads between card pairs (one small exchange of head outputs per layer).
-   Closed: row blocks and token-group variants for blocks of 16 (section 27, e76); cold reads of new documents
-   (`OWN_ENG_AHEAD`, section 27).
+6. Prompt reading (~293 tok/s at 3K, blocks of 16, section 28): the doubled attention groups are split between
+   card pairs for blocks of >= 16 tokens, with 4-row blocks. Next: long documents (section 28, e82). Closed: the
+   split for checks and the draft (section 28: each pair exchange costs more than it saves at 2-6 tokens);
+   cold reads of new documents (`OWN_ENG_AHEAD`, section 27).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

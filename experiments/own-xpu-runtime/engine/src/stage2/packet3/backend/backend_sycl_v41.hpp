@@ -200,6 +200,13 @@ public:
                                 // (OWN_TP_WEIGHTS="w0,..,w5", all 0 = equal): the cards holding two of the eight
                                 // attention groups can take fewer. Every row's sums are the same on any card.
         int tp_vw[6] = {};      // ... of the vocabulary rows: head, draft Markov rows (OWN_TP_VWEIGHTS)
+        int tp_heads[6] = {};   // tp: attention heads per card in units of 4 (OWN_TP_HEADS="3,3,3,3,2,2", sum 16; all 0:
+                                // the eight groups of 8 heads whole, 8c/6 per card). A group split between two
+                                // neighbours: each runs the attention of its own heads, the pair swaps those head
+                                // outputs (XchgPair), each runs its half of the group's output-a rows.
+        bool tp_heads_dr = false; // ... the DSpark draft's stages too (OWN_TP_HEADS_DR=1; else whole groups)
+        unsigned tp_heads_min = 0; // ... only for blocks of at least this many tokens (OWN_TP_HEADS_MIN=m > 1; the
+                                // others keep whole groups): every card holds the q_b / output-a rows of both
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
@@ -217,6 +224,7 @@ public:
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
         unsigned xpull_min = 8192; // (OWN_XPULL_MIN)
+        bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
@@ -238,6 +246,7 @@ public:
                                 // round trip (OWN_DEV_INDEX=0: the lead's host top-k, the others wait)
         bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
         bool score_b = true;    // dev_index: IndexerScoreB, keys read once, same sums (OWN_SCORE_B=0: IndexerScoreA)
+        unsigned idx_r = 0;     // dev_index / tpm_index: IndexerScoreBMR with 2 or 4 rows per item, same sums (OWN_IDX_R)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -1142,10 +1151,13 @@ private:
         const void *p = nullptr;
         size_t bytes = 0;
     };
-    Pf pf_of(int tile, const std::string &wn) {
+    // (ra, rb: only the packed rows [ra, rb); rb == 0: the whole matrix)
+    Pf pf_of(int tile, const std::string &wn, unsigned ra = 0, unsigned rb = 0) {
         if (!o.pf) return {};
         const auto &dp = wgt[tile].at(wn);
-        return {dp.p, dp.bytes};
+        if (!rb || !dp.packed) return {dp.p, dp.bytes};
+        const size_t prb = pk41::packed_row_bytes(we(wn).type, (size_t)we(wn).cols);
+        return {(const uint8_t *)dp.p + (size_t)ra * prb, (size_t)(rb - ra) * prb};
     }
     template <typename K, typename... A> void launch_sg_pf(int tile, size_t groups, Pf pf, K k, A... args) {
         if (!pf.p || !pf.bytes) return launch_sg(tile, groups, k, args...);
@@ -1261,11 +1273,15 @@ private:
             return launch_dense_ex(tile, ops41sycl::GemvF32P<160, Act>{(unsigned)e.rows}, (const uint8_t *)dp.p, x, y, ex);
         throw std::runtime_error("no fused-row kernel for " + wn);
     }
-    template <typename EX> void gemv_part_ex(int t, const std::string &wn, const act_t *x, act_t *y, EX ex) {
+    template <typename EX>
+    void gemv_part_ex(int t, const std::string &wn, const act_t *x, act_t *y, EX ex, unsigned ra = 0, unsigned rb = 0) {
         const auto &e = we(wn);
         const auto &dp = wgt[t].at(wn);
         if (!dp.packed) throw std::runtime_error("tensor-parallel slice needs packed rows: " + wn);
-        gemv_kp_ex(t, e, dp.p, x, y, dp.nrows, 0, (unsigned)e.cols, wn, ex);
+        if (!rb) rb = dp.nrows;
+        if (ra >= rb || rb > dp.nrows) throw std::runtime_error("gemv_part_ex rows: " + wn);
+        const uint8_t *w = (const uint8_t *)dp.p + (size_t)ra * pk41::packed_row_bytes(e.type, (size_t)e.cols);
+        gemv_kp_ex(t, e, w, x, y, rb - ra, 0, (unsigned)e.cols, wn, ex);
     }
     // stream mix riding in later launches (see HcDotsRows); false: the mix runs as its own two launches
     bool hc_rides(int t, const std::string &prefix) const {
@@ -1998,6 +2014,32 @@ private:
     bool dcand_ok[TILES] = {};
     // out: the list's destination (multi-token steps: one list per token; the token's own layer-20 mask in
     // s.cand, same length, so layers past 20 always mask); default this card's list for the slot
+    // IndexerScoreBMR<R> for m tokens (token t: lens[t] rows, query qi + t * qsz, weights wv + t * wsz, scores
+    // sco + t * ssz); lens[t] <= 0 skips the token
+    void idx_score_r(int c, unsigned R, int m, const long *lens, const act_t *qi, const act_t *wv, const uint16_t *ik,
+                     float *sco, size_t qsz, size_t wsz, size_t ssz) {
+        constexpr size_t WG = 128;
+        long lmax = 0;
+        for (int i = 0; i < m; ++i) lmax = std::max(lmax, lens[i]);
+        auto go = [&](auto rc) {
+            constexpr int RR = decltype(rc)::value;
+            using KS = ops41sycl::IndexerScoreBMR<Act, RR>;
+            KS k{};
+            for (int i = 0; i < m; ++i) k.lens[i] = lens[i] > 0 ? (int)lens[i] : 0;
+            k.m = (unsigned)m;
+            k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG * RR - 1) / (WG * RR));
+            k.qs = qsz, k.ws = wsz, k.ss = ssz;
+            auto e = qs[c].submit([&](sycl::handler &hh) {
+                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+                hh.parallel_for(sycl::nd_range<1>((size_t)m * k.gpt * WG, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                    k(it, qi, ik, wv, sco, &lt[0]);
+                });
+            });
+            kev(c, kname<KS>(), e);
+        };
+        if (R == 4) go(std::integral_constant<int, 4>{});
+        else go(std::integral_constant<int, 2>{});
+    }
     void dev_index(int L, int t, int si, bool yarn, long len, int32_t *out = nullptr) {
         auto &s = sc[t];
         const std::string p = "blk." + std::to_string(L) + ".";
@@ -2007,7 +2049,9 @@ private:
         rope(t, s.qi, 32, 128, cpos(t), yarn, false);
         gemv(t, p + "indexer.proj.weight", s.xn, s.wv);
         const int T_ = (int)((len + 31) / 32 * 32);
-        if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
+        if (o.score_b && (o.idx_r == 2 || o.idx_r == 4)) { // the same sums, R rows per item
+            idx_score_r(t, o.idx_r, 1, &len, s.qi, s.wv, ik_mirror[t][si], s.score, 0, 0, 0);
+        } else if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
             using KS = ops41sycl::IndexerScoreB<Act>;
             constexpr size_t WG = 128;
             const size_t n = ((size_t)T_ + WG - 1) / WG * WG;
@@ -2228,6 +2272,25 @@ private:
     // every reader consumes it before its own next push, so one buffer each is
     // enough (no double buffering).
     int tog0[TILES] = {}, tog1[TILES] = {}, thq0[TILES] = {}, thq1[TILES] = {};
+    // attention layouts (hl[0] the target's layers, hl[1] the draft's stages; OWN_TP_HEADS): heads [hq0, hq1)
+    // and output-a rows [oa0, oa1) per card, in units of 4 heads = ototal / 16 output-a rows (a group of 8 heads
+    // is two units). A card whose first (last) unit is the second (first) half of a group gets the group's other
+    // half of head outputs from the previous (next) card: partner k = pd, the floats [pb0, pb1) of each token's
+    // head outputs, for the output-a rows [sa, sb). Rows [la, lb) read only the card's own heads.
+    struct HeadLay {
+        int hq0[TILES] = {}, hq1[TILES] = {};
+        unsigned oa0[TILES] = {}, oa1[TILES] = {}, la[TILES] = {}, lb[TILES] = {};
+        int np[TILES] = {}, pd[TILES][2] = {};
+        unsigned pb0[TILES][2] = {}, pb1[TILES][2] = {}, sa[TILES][2] = {}, sb[TILES][2] = {};
+        bool split = false;
+    };
+    HeadLay hl[3]; // [2]: blocks of >= OWN_TP_HEADS_MIN tokens (== hl[0] unless that is set)
+    int qst0[TILES] = {}, qst1[TILES] = {};        // the target's q_b heads held per card (hl[0] and hl[2])
+    unsigned ost0[TILES] = {}, ost1[TILES] = {};   // ... and output-a rows
+    const HeadLay &lay_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? hl[2] : hl[0]; }
+    int xp_oa_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? 5 /* XP_OAP */ : 0 /* XP_OA */; }
+    bool any_split() const { return hl[0].split || hl[1].split || hl[2].split; }
+    unsigned xhoM = 0; // arena offset of the head outputs (MTX tokens x qh * hd floats) when a layout splits groups
     int tm0[TILES] = {}, tm1[TILES] = {}, td0[TILES] = {}, td1[TILES] = {}, tv0[TILES] = {}, tv1[TILES] = {};
     unsigned xoa = 0, xob = 0, xact = 0, xeng = 0;
     int te0[TILES] = {}, te1[TILES] = {}; // engram_kv rows per card (eng_split)
@@ -2294,6 +2357,64 @@ private:
     long tlen[TILES][4] = {};         // rows of each kv source on card c (tp: every card publishes for itself)
     act_t *teng[TILES][2] = {};       // engram rows of layers 1 / 14, uploaded at step start
 
+    // the attention layout (HeadLay): units of 4 heads per card from OWN_TP_HEADS (use), else whole groups (8c/N)
+    void head_layout(HeadLay &h, bool use) const {
+        const int N = o.tp;
+        const unsigned U = (unsigned)g.qh / 4, ur = (unsigned)g.ototal / U, hd = (unsigned)g.hd;
+        if (g.qh % 8 || g.ototal % U || ur % 4) throw std::runtime_error("tensor parallel: head units");
+        unsigned u[TILES + 1] = {};
+        for (int c = 0; c <= N; ++c) u[c] = use ? (c ? u[c - 1] + (unsigned)o.tp_heads[c - 1] : 0u) : 2u * (unsigned)(8 * c / N);
+        h = HeadLay{};
+        for (int c = 0; c < N; ++c) {
+            const unsigned u0 = u[c], u1 = u[c + 1];
+            if (u1 <= u0) throw std::runtime_error("tensor parallel: a card without heads");
+            h.hq0[c] = (int)(4 * u0), h.hq1[c] = (int)(4 * u1);
+            h.oa0[c] = u0 * ur, h.oa1[c] = u1 * ur;
+            h.la[c] = (u0 + (u0 & 1)) * ur, h.lb[c] = (u1 - (u1 & 1)) * ur;
+            if (h.lb[c] < h.la[c]) h.lb[c] = h.la[c];
+            auto add = [&](int d, unsigned unit, unsigned rows_unit) { // pull unit's heads from d for rows_unit
+                const int k = h.np[c]++;
+                h.pd[c][k] = d;
+                h.pb0[c][k] = 4 * unit * hd, h.pb1[c][k] = 4 * (unit + 1) * hd;
+                h.sa[c][k] = rows_unit * ur, h.sb[c][k] = (rows_unit + 1) * ur;
+            };
+            if (u0 & 1) add(c - 1, u0 - 1, u0); // the group's first half is the previous card's last unit
+            if (u1 & 1) add(c + 1, u1, u1 - 1); // its second half the next card's first unit
+            h.split |= h.np[c] > 0;
+        }
+    }
+    // output-a rows of card c for nslot tokens in layout h: f(r0, r1) launches the rows [r0, r1) (whole groups or
+    // half of one group, so row r reads the group (r - r0) / (ototal / 8) after r0's). With split groups: publish
+    // this card's head outputs, run the rows of whole groups, wait for the partners' and copy them (XchgPair, arena
+    // offset xhoM, a token's head outputs qh * hd floats apart), then the split groups' rows. Every card counts
+    // the exchange (the flag numbers stay the same on all cards).
+    template <typename F> void oa_run(int c, const HeadLay &h, unsigned nslot, F &&f) {
+        if (!h.split) { f(h.oa0[c], h.oa1[c]); return; }
+        const uint32_t seq = ++xseq[c];
+        if (h.np[c]) pair_x(c, h, nslot, seq, 1);
+        if (h.la[c] < h.lb[c]) f(h.la[c], h.lb[c]);
+        if (!h.np[c]) return;
+        pair_x(c, h, nslot, seq, 2);
+        for (int k = 0; k < h.np[c]; ++k) f(h.sa[c][k], h.sb[c][k]);
+    }
+    void pair_x(int c, const HeadLay &h, unsigned nslot, uint32_t seq, int mode) {
+        float *P[6] = {};
+        for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
+        ops41sycl::XchgPair x{h.np[c], c, {h.pd[c][0], h.pd[c][1]}, {h.pb0[c][0], h.pb0[c][1]}, {h.pb1[c][0], h.pb1[c][1]},
+                              xhoM, (unsigned)g.qh * (unsigned)g.hd, nslot, seq, XSPIN, mode};
+        size_t nv = 0;
+        for (int k = 0; k < h.np[c]; ++k) nv += (size_t)nslot * ((h.pb1[c][k] - h.pb0[c][k]) / 4);
+        const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 1, 64);
+        float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+        uint32_t *err = xerr[c];
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            hh.parallel_for(sycl::nd_range<1>(nwg * 256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                x(it, p0, p1, p2, p3, p4, p5, err);
+            });
+        });
+        kev(c, kname<ops41sycl::XchgPair>(), e);
+    }
+
     // rows of tensor n held by card c (all rows unless tp splits it)
     std::pair<unsigned, unsigned> tp_rows(const std::string &n, const WeightTab::E &e, int c) const {
         const unsigned R = (unsigned)e.rows;
@@ -2313,11 +2434,17 @@ private:
         const std::string nl = dsp ? n.substr(4) : n;
         if (layer_of_name(nl) < 0) return {0, R};
         const std::string suf = nl.substr(nl.find('.', 4) + 1);
-        if (suf == "attn_q_b.weight") { need((long)g.qh * g.hd); return {(unsigned)(thq0[c] * g.hd), (unsigned)(thq1[c] * g.hd)}; }
+        // (the target: the rows of both its layouts, hl[0] and hl[2]; the draft: hl[1]'s)
+        const HeadLay &h = hl[1];
+        if (suf == "attn_q_b.weight") {
+            need((long)g.qh * g.hd);
+            if (dsp) return {(unsigned)(h.hq0[c] * g.hd), (unsigned)(h.hq1[c] * g.hd)};
+            return {(unsigned)(qst0[c] * g.hd), (unsigned)(qst1[c] * g.hd)};
+        }
         if (suf == "attn_output_a.weight") {
             need(g.ototal);
-            const unsigned per = (unsigned)g.ototal / 8;
-            return {tog0[c] * per, tog1[c] * per};
+            if (dsp) return {h.oa0[c], h.oa1[c]};
+            return {ost0[c], ost1[c]};
         }
         if (suf == "attn_output_b.weight" || suf == "ffn_down_exps.weight" || suf == "ffn_down_shexp.weight") {
             need(g.h);
@@ -2370,6 +2497,35 @@ private:
             if (tm1[c] <= tm0[c] || td1[c] <= td0[c] || tv1[c] <= tv0[c] || te1[c] <= te0[c])
                 throw std::runtime_error("tensor parallel: a card without rows (OWN_TP_WEIGHTS)");
         }
+        {
+            int nz = 0, sum = 0;
+            for (int d = 0; d < N; ++d) nz += o.tp_heads[d] > 0, sum += o.tp_heads[d];
+            if (nz != 0 && (nz != N || sum != g.qh / 4))
+                throw std::runtime_error("tensor parallel: OWN_TP_HEADS needs units of 4 heads per card, " +
+                                         std::to_string(g.qh / 4) + " in all");
+#ifdef OWN41_ACT_BF16
+            if (nz) throw std::runtime_error("OWN_TP_HEADS: f32 activations only");
+#endif
+            if (nz && o.xtail) throw std::runtime_error("OWN_TP_HEADS: not with OWN_XTAIL");
+            const bool dual = nz && o.tp_heads_min > 1;
+            head_layout(hl[0], nz != 0 && !dual);
+            head_layout(hl[1], nz != 0 && o.tp_heads_dr);
+            head_layout(hl[2], nz != 0);
+            for (int c = 0; c < N; ++c) {
+                thq0[c] = hl[0].hq0[c], thq1[c] = hl[0].hq1[c];
+                qst0[c] = std::min(hl[0].hq0[c], hl[2].hq0[c]), qst1[c] = std::max(hl[0].hq1[c], hl[2].hq1[c]);
+                ost0[c] = std::min(hl[0].oa0[c], hl[2].oa0[c]), ost1[c] = std::max(hl[0].oa1[c], hl[2].oa1[c]);
+            }
+            if (nz) {
+                std::fprintf(stderr, "tensor parallel heads per card%s%s:", o.tp_heads_dr ? " (draft too)" : "",
+                             dual ? (" (blocks of >= " + std::to_string(o.tp_heads_min) + " tokens)").c_str() : "");
+                for (int c = 0; c < N; ++c) {
+                    std::fprintf(stderr, " %d", hl[2].hq1[c] - hl[2].hq0[c]);
+                    for (int k = 0; k < hl[2].np[c]; ++k) std::fprintf(stderr, "%s%d", k ? "," : "<->", hl[2].pd[c][k]);
+                }
+                std::fprintf(stderr, "\n");
+            }
+        }
         if (o.tp_w[0] > 0 || o.tp_vw[0] > 0) {
             std::fprintf(stderr, "tensor parallel rows per card (mid / model / vocab):");
             for (int c = 0; c < N; ++c)
@@ -2409,6 +2565,7 @@ private:
                 }
             }
 #ifndef OWN41_ACT_BF16
+            if (any_split()) s.obuf = (act_t *)(xarena[c] + xhoM); // partners read the head outputs
             mt_alloc(c);
 #endif
             if (o.head) {
@@ -2469,6 +2626,7 @@ private:
         if (mode != 2) seq = ++xseq[c];
         if (use_pull(part, nslot)) {
             ops41sycl::XchgPull x{o.tp, c, off, stride, nslot, {}, {}, seq, XSPIN, mode};
+            x.lb = o.xpull_lb ? 1 : 0;
             xbounds(part, x.b0, x.b1);
             if (x.b0[c] != r0 || x.b1[c] != r1) throw std::runtime_error("exchange: rows do not match the part");
             size_t nv = 0;
@@ -2489,14 +2647,16 @@ private:
                   P[3], P[4], P[5], xerr[c]);
         return seq;
     }
-    enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3 };
+    // XP_OAD: the draft's output-a rows (hl[1]); XP_OAP: the target's in blocks of >= OWN_TP_HEADS_MIN (hl[2])
+    enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3, XP_OAD = 4, XP_OAP = 5 };
     void xbounds(int part, unsigned *b0, unsigned *b1) const {
-        const unsigned per = (unsigned)g.ototal / 8;
         for (int d = 0; d < 6; ++d) {
             b0[d] = b1[d] = 0;
             if (d >= o.tp) continue;
             switch (part) {
-            case XP_OA: b0[d] = tog0[d] * per, b1[d] = tog1[d] * per; break;
+            case XP_OA: b0[d] = hl[0].oa0[d], b1[d] = hl[0].oa1[d]; break;
+            case XP_OAD: b0[d] = hl[1].oa0[d], b1[d] = hl[1].oa1[d]; break;
+            case XP_OAP: b0[d] = hl[2].oa0[d], b1[d] = hl[2].oa1[d]; break;
             case XP_H: b0[d] = td0[d], b1[d] = td1[d]; break;
             case XP_ACT: b0[d] = tm0[d], b1[d] = tm1[d]; break;
             case XP_ENG: b0[d] = te0[d], b1[d] = te1[d]; break;
@@ -2514,11 +2674,16 @@ private:
         return mx >= o.xpull_min;
     }
     // this card's rows of a dense matrix -> y[0, nrows) (packed rows); xn as gemv_kp
-    void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0) {
+    // (ra, rb: only the card's rows [ra, rb), rb == 0: all; y is then row ra's output)
+    void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0, unsigned ra = 0,
+                   unsigned rb = 0) {
         const auto &e = we(wn);
         const auto &dp = wgt[t].at(wn);
         if (!dp.packed) throw std::runtime_error("tensor-parallel slice needs packed rows: " + wn);
-        gemv_kp(t, e, dp.p, x, y, dp.nrows, xn, (unsigned)e.cols, wn);
+        if (!rb) rb = dp.nrows;
+        if (ra >= rb || rb > dp.nrows) throw std::runtime_error("gemv_part rows: " + wn);
+        const uint8_t *w = (const uint8_t *)dp.p + (size_t)ra * pk41::packed_row_bytes(e.type, (size_t)e.cols);
+        gemv_kp(t, e, w, x, y, rb - ra, xn, (unsigned)e.cols, wn);
     }
     template <typename EX = ops41sycl::NoRows> void route_shared_tp(int c, const std::string &p, EX ex = {}) {
         const auto &eg = we(p + "ffn_gate_shexp.weight"), &eu = we(p + "ffn_up_shexp.weight");
@@ -2551,6 +2716,8 @@ private:
         const bool host_work = cr && index_slot(L) >= 0 && tlen[c][si] > 512 && !o.dev_index; // the lead's host top-k
         const int nh = thq1[c] - thq0[c];
         const size_t qo = (size_t)thq0[c] * g.hd;
+        // this layout's q_b rows among the card's (OWN_TP_HEADS_MIN: the card holds two layouts' rows)
+        const unsigned qbr0 = (unsigned)((thq0[c] - qst0[c]) * g.hd), qbr1 = (unsigned)((thq1[c] - qst0[c]) * g.hd);
         switch (ph) {
         case 0: {
             if (L == 1 || L == 14) {
@@ -2592,13 +2759,14 @@ private:
                 prof("attn_q_a", c);
                 if (o.fin_move) { // the mix's finish rides in output-b's launch instead (case 2)
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
-                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false});
+                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}, qbr0, qbr1);
                     fin_attn[c] = true;
                 } else {
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
                                  ops41sycl::RowsPair<ops41sycl::HcFinishRows, ops41sycl::RopeRows<Act>>{
                                      hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a),
-                                     ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}});
+                                     ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}},
+                                 qbr0, qbr1);
                 }
                 launch_rows<0>(c, (size_t)nh, 0,
                                ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{
@@ -2611,8 +2779,8 @@ private:
                 prof("attn_q_a", c);
                 if (ride)
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
-                                 hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
-                else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
+                                 hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a), qbr0, qbr1);
+                else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo, 0, qbr0, qbr1);
                 rope(c, s.q + qo, nh, g.hd, cpos(c), yarn, false);
                 prof("attn_q_b", c);
                 gemv(c, p + "attn_kv.weight", s.xn, s.kv);
@@ -2663,7 +2831,8 @@ private:
             const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
             const int32_t *ix = (const int32_t *)s.idxs_cat;
             // the attention reads little: output-a's and output-b's rows are pulled into the cache meanwhile
-            const Pf pfa = pf_of(c, p + "attn_output_a.weight"), pfb = pf_of(c, p + "attn_output_b.weight");
+            const Pf pfa = pf_of(c, p + "attn_output_a.weight", hl[0].oa0[c] - ost0[c], hl[0].oa1[c] - ost0[c]),
+                     pfb = pf_of(c, p + "attn_output_b.weight");
             if (n_idx == 128) {
                 launch_sg_pf(c, (size_t)nh * n_idx / 32, pfa, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
                              (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
@@ -2688,9 +2857,12 @@ private:
             if (!o.rope_out)
                 launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},
                        (const float *)(s.of + qo), s.obuf + qo, cb, sbp);
-            const unsigned per = (unsigned)g.ototal / 8;
-            arm_xtail(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per, XP_OA);
-            gemv_part(c, p + "attn_output_a.weight", s.obuf + (size_t)tog0[c] * g.oin, s.oa + (size_t)tog0[c] * per, per);
+            const HeadLay &h = hl[0];
+            arm_xtail(c, xoa, (unsigned)g.ototal, 1, h.oa0[c], h.oa1[c], XP_OA);
+            oa_run(c, h, 1, [&](unsigned r0, unsigned r1) {
+                gemv_part(c, p + "attn_output_a.weight", s.obuf + (size_t)(r0 / (g.ototal / 8)) * g.oin, s.oa + r0,
+                          (unsigned)g.ototal / 8, r0 - ost0[c], r1 - ost0[c]);
+            });
             prof("attn_o_a", c);
             end_xtail(c);
             prof("xchg", c);

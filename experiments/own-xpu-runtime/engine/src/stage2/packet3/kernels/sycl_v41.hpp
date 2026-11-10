@@ -4500,6 +4500,64 @@ template <typename A> struct IndexerScoreBM {
         kk.run(it, j, q + t * qs, k, w + t * ws, score + t * ss, lq);
     }
 };
+// IndexerScoreBM with R rows per item (rows j, j + WG, ..., j + (R-1) WG of the group's R * WG): every query
+// value read from shared memory serves R rows (IndexerScoreB reads one per product). Each row's 32 head sums
+// take the same products in the same order (dims 0..127), then the same weighted sum over the heads: the same
+// scores bit for bit. gpt = groups per token over R * WG rows.
+template <typename A, int R> struct IndexerScoreBMR {
+    static constexpr int H = 32, DK = 128, CH = 16;
+    int lens[16];
+    unsigned m, gpt;
+    size_t qs, ws, ss;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+                    float *score, float *lq) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m || lens[t] <= 0) return; // the whole work-group: before the barrier
+        const int len = lens[t], T_ = (len + 31) / 32 * 32;
+        const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(0);
+        const typename A::T *qt = q + t * qs, *wt = w + t * ws;
+        for (int i = lid; i < H * DK; i += nl) lq[i] = A::rd(qt[i]);
+        for (int i = lid; i < H; i += nl) lq[H * DK + i] = A::rd(wt[i]);
+        sycl::group_barrier(it.get_group());
+        float *sc = score + t * ss;
+        const int j0 = (int)(grp % gpt) * nl * R + lid;
+        float d[R][H];
+#pragma unroll
+        for (int r = 0; r < R; ++r)
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh) d[r][hh] = 0;
+        for (int i0 = 0; i0 < DK; i0 += CH) {
+            float kf[R][CH];
+#pragma unroll
+            for (int r = 0; r < R; ++r) {
+                const int j = j0 + r * nl;
+                const uint16_t *kr = k + (size_t)(j < len ? j : 0) * DK + i0;
+#pragma unroll
+                for (int ii = 0; ii < CH; ++ii) kf[r][ii] = ops41::bf16(kr[ii]);
+            }
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh)
+#pragma unroll
+                for (int ii = 0; ii < CH; ++ii) {
+                    const float qv = lq[hh * DK + i0 + ii];
+#pragma unroll
+                    for (int r = 0; r < R; ++r) d[r][hh] += qv * kf[r][ii];
+                }
+        }
+#pragma unroll
+        for (int r = 0; r < R; ++r) {
+            const int j = j0 + r * nl;
+            if (j >= len) {
+                if (j < T_) sc[j] = -INFINITY;
+                continue;
+            }
+            float s = 0;
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh) s += (d[r][hh] > 0 ? d[r][hh] : 0) * lq[H * DK + hh];
+            sc[j] = s;
+        }
+    }
+};
 // TopKSelP for every token with lens[t] > 0, one work-group each. BLOCK (layer 20): n = blocks of 8 of
 // lens[t] rows, the candidate mask to cand + t * cs. Else: n = lens[t], top 512 (+128) to out + t * 512,
 // masked by cand + t * cs (cand_n = lens[t]) when mask.
@@ -4568,7 +4626,17 @@ struct XchgPull {
         }
         sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());
-        // copy: items over (peer, slot, vec4); peers in order 0..n-1 without me
+        if (lb) copy_lb(it, n, me, off, stride, nslot, b0, b1, p0, p1, p2, p3, p4, p5);
+        else copy_seq(it, n, me, off, stride, nslot, b0, b1, p0, p1, p2, p3, p4, p5);
+    }
+    int lb = 0; // copy_lb (OWN_XPULL_LB=1) or copy_seq (default: copy_lb measured slower, 8.1-9.5 vs 7.4-8.7 us, e81d)
+    // copy: items over (peer, slot, vec4); peers in order 0..n-1 without me; item gid takes the indices k of peer d
+    // with (base_d + k) % T == gid (base_d: the counts of the peers before d)
+    // copy_seq: peer after peer (the default)
+    static void copy_seq(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride, unsigned nslot,
+                         const unsigned *b0, const unsigned *b1, float *p0, float *p1, float *p2, float *p3,
+                         float *p4, float *p5) {
+        float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
         const size_t T = it.get_global_range(0);
         size_t base = 0;
         for (int d = 0; d < n; ++d) {
@@ -4577,11 +4645,104 @@ struct XchgPull {
             const size_t cnt = (size_t)nslot * n4;
             const float *src = XchgP::pick(d, p0, p1, p2, p3, p4, p5) + off;
             float *dst = mine + off;
-            // this item's indices k in [0, cnt) with (base + k) % T == global id
             const size_t gid = it.get_global_linear_id();
             size_t k0 = (gid + T - base % T) % T;
             for (size_t k = k0; k < cnt; k += T) {
                 const size_t o = (size_t)(k / n4) * stride + b0[d] + (k % n4) * 4;
+                *reinterpret_cast<sycl::vec<float, 4> *>(dst + o) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + o);
+            }
+            base += cnt;
+        }
+    }
+    // copy_lb: the same elements on the same items, in rounds: round r loads index k0_d + r * T of every peer
+    // first, then stores them (tried 2026-11-10: slower; the copy's cost is one PCIe read round trip either way)
+    static void copy_lb(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride, unsigned nslot,
+                        const unsigned *b0, const unsigned *b1, float *p0, float *p1, float *p2, float *p3,
+                        float *p4, float *p5) {
+        float *dst = XchgP::pick(me, p0, p1, p2, p3, p4, p5) + off;
+        const size_t T = it.get_global_range(0), gid = it.get_global_linear_id();
+        size_t k0[6], cnt[6];
+        unsigned n4[6];
+        size_t base = 0;
+#pragma unroll
+        for (int d = 0; d < 6; ++d) {
+            const bool on = d < n && d != me;
+            n4[d] = on ? (b1[d] - b0[d]) / 4 : 1u;
+            cnt[d] = on ? (size_t)nslot * n4[d] : 0;
+            k0[d] = (gid + T - base % T) % T;
+            base += cnt[d];
+        }
+        for (size_t r = 0;; ++r) {
+            sycl::vec<float, 4> v[6];
+            size_t o[6];
+            bool h[6], any = false;
+#pragma unroll
+            for (int d = 0; d < 6; ++d) {
+                const size_t k = k0[d] + r * T;
+                h[d] = k < cnt[d];
+                o[d] = h[d] ? (size_t)(k / n4[d]) * stride + b0[d] + (k % n4[d]) * 4 : 0;
+                if (h[d]) {
+                    v[d] = *reinterpret_cast<const sycl::vec<float, 4> *>(XchgP::pick(d, p0, p1, p2, p3, p4, p5) + off + o[d]);
+                    any = true;
+                }
+            }
+            if (!any) break;
+#pragma unroll
+            for (int d = 0; d < 6; ++d)
+                if (h[d]) *reinterpret_cast<sycl::vec<float, 4> *>(dst + o[d]) = v[d];
+        }
+    }
+};
+
+// XchgPull between a card and its one or two partners only (split attention groups, Backend41::oa_run): publish
+// seq into each partner's flag word 16 * me, wait for each partner's flag, copy partner k's floats [b0[k], b1[k])
+// of every slot (stride floats apart) from its arena into mine (same offsets). The other cards count the same
+// exchange number without a launch, so every card's flags stay in step. Overwrite safety as XchgPull: a partner
+// raises its next all-card flag only after its copy (in-order queue), and this card rewrites the rows only
+// after that flag. mode 0 publish + wait + copy, 1 publish only, 2 wait + copy.
+struct XchgPair {
+    int np, me;
+    int pd[2];
+    unsigned b0[2], b1[2];
+    unsigned off, stride, nslot;
+    uint32_t seq;
+    long spin;
+    int mode = 0;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned t = (unsigned)it.get_local_linear_id();
+        float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
+        if (mode != 2 && it.get_group_linear_id() == 0) {
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < np)
+                AR(reinterpret_cast<uint32_t *>(XchgP::pick(pd[t], p0, p1, p2, p3, p4, p5))[16 * me]).store(seq);
+        }
+        if (mode == 1) return;
+        if ((int)t < np) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[16 * pd[t]]);
+            long s = 0;
+            if (!poison.load())
+                while (f.load() < seq && ++s < spin) {}
+            if (s >= spin) {
+                poison.store(1u);
+                err[0] = 1u + (unsigned)pd[t];
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        const size_t T = it.get_global_range(0), gid = it.get_global_linear_id();
+        size_t base = 0;
+        for (int k = 0; k < np; ++k) {
+            const unsigned n4 = (b1[k] - b0[k]) / 4;
+            const size_t cnt = (size_t)nslot * n4;
+            const float *src = XchgP::pick(pd[k], p0, p1, p2, p3, p4, p5) + off;
+            float *dst = mine + off;
+            for (size_t i = (gid + T - base % T) % T; i < cnt; i += T) {
+                const size_t o = (size_t)(i / n4) * stride + b0[k] + (i % n4) * 4;
                 *reinterpret_cast<sycl::vec<float, 4> *>(dst + o) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + o);
             }
             base += cnt;

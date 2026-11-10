@@ -121,9 +121,9 @@ template <size_t SLM, typename K, typename... A> void launch_wgs(int c, size_t n
     kev(c, kname<K>(), e);
 }
 
-size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones
+size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones (+ the head outputs)
     return (size_t)MTX * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
-           (size_t)MTX * (size_t)g.h;
+           (size_t)MTX * (size_t)g.h + (size_t)MTX * (size_t)g.qh * (size_t)g.hd;
 }
 void mt_offsets(size_t base) {
     xoaM = (unsigned)base;
@@ -133,6 +133,7 @@ void mt_offsets(size_t base) {
     xdrM = xengM + MTX * 10 * (unsigned)g.h;   // the draft's argmax rows (backend_sycl_v41_draft.inc)
     xfcM = xdrM + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
                                                // last layer's exchange on xobM with no exchange in between)
+    xhoM = xfcM + MTX * (unsigned)g.h;         // the head outputs (OWN_TP_HEADS), MTX tokens of qh * hd
 }
 void mt_alloc(int c) {
     auto md = [&](size_t n) { return dalloc<act_t>(c, n * MTX); };
@@ -146,7 +147,8 @@ void mt_alloc(int c) {
     uint32_t *ids = dalloc<uint32_t>(c, 6 * MTX);
     act_t *expg = md(6 * nm), *expu = md(6 * nm), *expd = md(6 * nd), *shg = md(g.mid), *shu = md(g.mid), *shd = md(H);
     float *of = mf(Q), *attn_w = mf((size_t)g.qh * 640);
-    act_t *obuf = md(Q), *cw = md(g.hd), *scg = md(g.hd), *latent = md(g.hd), *kk = md(128);
+    // (split attention groups: the head outputs in the arena, where the partner card reads them)
+    act_t *obuf = any_split() ? (act_t *)(xarena[c] + xhoM) : md(Q), *cw = md(g.hd), *scg = md(g.hd), *latent = md(g.hd), *kk = md(128);
     float *pa = mf(4), *qa4 = mf(4), *ca = mf(16), *pf = mf(4), *qf = mf(4), *cf = mf(16), *cur = mf(4);
     double *d25 = dalloc<double>(c, (size_t)25 * HC_SEG * MTX);
     float *rs = mf(g.experts), *rsb = mf(g.experts);
@@ -268,14 +270,16 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
     go(ops41sycl::DenseRowsM<DK, MTX>{dk, (const uint8_t *)w, x, xs, y, ys, mt});
 }
 // (mt: tokens, default the block's; the publish runs its pooled rows only; rider: see dense_m, packed rows only)
+// (ra, rb: packed rows only, the card's rows [ra, rb) with y row ra's output; rb == 0: all)
 template <typename RD = ops41sycl::NoRows>
 void gemv_m(int c, const std::string &wn, const act_t *x, size_t xs, act_t *y, size_t ys, unsigned xn = 0,
-            unsigned mt = 0, const RD &rider = {}) {
+            unsigned mt = 0, const RD &rider = {}, unsigned ra = 0, unsigned rb = 0) {
     if (!mt) mt = (unsigned)mt_n;
     const auto &e = we(wn);
     const auto &dp = wgt[c].at(wn);
     if (!dp.packed) { // the generic per-format rows (GemvT's rowm), whole matrix
         if (xn) throw std::runtime_error("multi-token step: grouped unpacked rows " + wn);
+        if (rb) throw std::runtime_error("multi-token step: a row range of unpacked rows " + wn);
         if constexpr (!std::is_same_v<RD, ops41sycl::NoRows>) rows_launch(c, rider);
         const unsigned rows = (unsigned)e.rows, cols = (unsigned)e.cols;
         if (o.packed && e.type == iq3::Type::F32 && cols == 5120) // gemv's block-read F32 rows
@@ -303,16 +307,20 @@ void gemv_m(int c, const std::string &wn, const act_t *x, size_t xs, act_t *y, s
         default: throw std::runtime_error("multi-token step: no unpacked rows form for " + wn);
         }
     }
-    const unsigned rows = dp.nrows, cols = (unsigned)e.cols;
+    const unsigned cols = (unsigned)e.cols;
+    if (!rb) rb = dp.nrows;
+    if (ra >= rb || rb > dp.nrows) throw std::runtime_error("multi-token step: rows of " + wn);
+    const unsigned rows = rb - ra;
+    const void *wr = (const uint8_t *)dp.p + (size_t)ra * pk41::packed_row_bytes(e.type, (size_t)cols);
 #define XQ(COLS)                                                                                           \
-    if (cols == COLS) return dense_m(c, ops41sycl::GemvQ8P<COLS / 32, Act>{rows, xn}, dp.p, x, xs, y, ys, mt, rider);
+    if (cols == COLS) return dense_m(c, ops41sycl::GemvQ8P<COLS / 32, Act>{rows, xn}, wr, x, xs, y, ys, mt, rider);
 #define X(KERN, NB)                                                                                        \
-    if (cols == NB * 256) return dense_m(c, ops41sycl::KERN<NB, Act>{rows, xn}, dp.p, x, xs, y, ys, mt, rider);
+    if (cols == NB * 256) return dense_m(c, ops41sycl::KERN<NB, Act>{rows, xn}, wr, x, xs, y, ys, mt, rider);
     if (e.type == iq3::Type::Q8_0) { XQ(1280) XQ(2304) XQ(4096) XQ(5120) XQ(8192) XQ(15360) }
     if (e.type == iq3::Type::Q6_K) { X(GemvQ6KP, 5) X(GemvQ6KP, 16) X(GemvQ6KP, 20) X(GemvQ6KP, 24) X(GemvQ6KP, 32) }
     if (e.type == iq3::Type::Q5_K) { X(GemvQ5KP, 9) X(GemvQ5KP, 20) }
     if (e.type == iq3::Type::F32 && cols == 5120 && !xn)
-        return dense_m(c, ops41sycl::GemvH16P<160, Act>{rows}, dp.p, x, xs, y, ys, mt, rider);
+        return dense_m(c, ops41sycl::GemvH16P<160, Act>{rows}, wr, x, xs, y, ys, mt, rider);
 #undef X
 #undef XQ
     throw std::runtime_error("multi-token step: no packed kernel for " + wn);
@@ -656,7 +664,11 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
     }
     gemv_m(c, p + "indexer.proj.weight", b.xn, g.h, b.wv, 32);
     const size_t SS = (size_t)max_seq + 64; // per-token score / candidate stride (mt_alloc)
-    {
+    if (o.idx_r == 2 || o.idx_r == 4) {
+        long ll[16] = {};
+        for (int t = 0; t < M; ++t) ll[t] = lens[t];
+        idx_score_r(c, o.idx_r, M, ll, b.qi, b.wv, ik_mirror[c][si], b.score, 4096, 32, SS);
+    } else {
         using KS = ops41sycl::IndexerScoreBM<Act>;
         constexpr size_t WG = 128;
         const unsigned gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
@@ -695,14 +707,26 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
     kt.cs = SS;
     launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cidxm[c][slot]);
 }
+// the block's output-a rows (layout h: oa_run) and their all-gather; wb: the first output-a row the card holds
+void oa_m(int c, const std::string &p, const HeadLay &h, int part, unsigned wb) {
+    const unsigned M = (unsigned)mt_n, per = (unsigned)g.ototal / 8;
+    const Scratch &b = scm[c][0];
+    oa_run(c, h, M, [&](unsigned r0, unsigned r1) {
+        gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)(r0 / per) * g.oin, (size_t)g.qh * g.hd,
+               xarena[c] + xoaM + r0, (size_t)g.ototal, per, 0, ops41sycl::NoRows{}, r0 - wb, r1 - wb);
+    });
+    xchg_m(c, xoaM, (unsigned)g.ototal, M, h.oa0[c], h.oa1[c], 0, part);
+}
 void tpm_layer(int L, int c) {
     const int M = mt_n;
     const std::string p = "blk." + std::to_string(L) + ".";
     const int cr = cr_of(L);
     const bool yarn = cr > 0;
     const int si = src_index(L);
-    const int nh = thq1[c] - thq0[c];
-    const size_t qo = (size_t)thq0[c] * g.hd, H = g.h;
+    const HeadLay &hla = lay_m((unsigned)M); // the block's attention layout (OWN_TP_HEADS_MIN)
+    const int nh = hla.hq1[c] - hla.hq0[c];
+    const size_t qo = (size_t)hla.hq0[c] * g.hd, H = g.h;
+    const unsigned qbr0 = (unsigned)((hla.hq0[c] - qst0[c]) * g.hd), qbr1 = (unsigned)((hla.hq1[c] - qst0[c]) * g.hd);
     const Scratch &b = scm[c][0]; // token 0's views are the bases of the block's arrays
     const size_t H4 = 4 * H, Q = (size_t)g.qh * g.hd, FS = (size_t)25 * HC_SEG;
     if (g.hd != 512) throw std::runtime_error("multi-token step: head dim");
@@ -779,7 +803,7 @@ void tpm_layer(int L, int c) {
             launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
         }
     }
-    gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q);
+    gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, ops41sycl::NoRows{}, qbr0, qbr1);
     if (pos < 0 || pos + M > max_seq) throw std::runtime_error("position beyond max_seq");
     if (mt_small) { // key and query rope, every token (positions pos .. pos + M - 1: 32 table entries apart)
         const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
@@ -827,7 +851,7 @@ void tpm_layer(int L, int c) {
                (const act_t *)b.kvn, b.idxs_cat, (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr));
         const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
         if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("multi-token step: kv alignment");
-        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
+        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
         const size_t WS = (size_t)g.qh * 640;
         const int32_t *ix = (const int32_t *)b.idxs_cat;
         if (n_idx == 128) {
@@ -874,7 +898,7 @@ void tpm_layer(int L, int c) {
         }
         const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
         if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("multi-token step: kv alignment");
-        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
+        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
         const int32_t *ix = (const int32_t *)s.idxs_cat;
         if (n_idx == 128) {
             launch_sg(c, (size_t)nh * n_idx / 32, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
@@ -893,10 +917,7 @@ void tpm_layer(int L, int c) {
         so.sinb = sbp;
         launch_sg(c, (size_t)nh * g.hd / 64, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
     }
-    const unsigned per = (unsigned)g.ototal / 8;
-    gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)tog0[c] * g.oin, (size_t)g.qh * g.hd,
-           xarena[c] + xoaM + (size_t)tog0[c] * per, (size_t)g.ototal, per);
-    xchg_m(c, xoaM, (unsigned)g.ototal, (unsigned)M, tog0[c] * per, tog1[c] * per, 0, XP_OA);
+    oa_m(c, p, hla, xp_oa_m((unsigned)M), ost0[c]);
     // ---- phase 2: output-b rows
     gemv_m(c, p + "attn_output_b.weight", xarena[c] + xoaM, (size_t)g.ototal, xarena[c] + xobM + td0[c], H);
     xchg_m(c, xobM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], 0, XP_H);

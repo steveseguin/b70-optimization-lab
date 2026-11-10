@@ -138,8 +138,9 @@ void dr_routed(int c, const std::string &wn, const std::string &wn2, const act_t
 void dr_stage(int s, int c) {
     const int M = mt_n;
     const std::string p = "dsp.blk." + std::to_string(s) + ".";
-    const int nh = thq1[c] - thq0[c];
-    const size_t qo = (size_t)thq0[c] * g.hd, H = g.h;
+    const HeadLay &hly = hl[1]; // the draft's heads (whole groups unless OWN_TP_HEADS_DR)
+    const int nh = hly.hq1[c] - hly.hq0[c];
+    const size_t qo = (size_t)hly.hq0[c] * g.hd, H = g.h;
     const Scratch &b = scm[c][0];
     const size_t H4 = 4 * H, Q = (size_t)g.qh * g.hd, FS = (size_t)25 * HC_SEG;
     using NR5 = ops41sycl::NormRows<5120, 4>;
@@ -182,7 +183,7 @@ void dr_stage(int s, int c) {
         const int n_idx = DR_NIDX, W = DR_WIN + MTX;
         const uint16_t *kv = dring[c][s];
         if (!al16(kv)) throw std::runtime_error("draft: kv alignment");
-        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
+        const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hly.hq0[c];
         const size_t WS = (size_t)g.qh * 640;
         const int32_t *ix = (const int32_t *)b.idxs_cat;
         const unsigned gpt = (unsigned)(nh * n_idx / 32);
@@ -201,10 +202,7 @@ void dr_stage(int s, int c) {
         launch_sg(c, (size_t)M * gpo, ops41sycl::OutM<SO>{so, gpo, (unsigned)M, 640, WS, Q, Q}, kv, kv, ix,
                   (const float *)b.attn_w, b.of + qo);
     }
-    const unsigned per = (unsigned)g.ototal / 8;
-    gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)tog0[c] * g.oin, (size_t)g.qh * g.hd,
-           xarena[c] + xoaM + (size_t)tog0[c] * per, (size_t)g.ototal, per);
-    xchg_m(c, xoaM, (unsigned)g.ototal, (unsigned)M, tog0[c] * per, tog1[c] * per, 0, XP_OA);
+    oa_m(c, p, hly, XP_OAD, hly.oa0[c]);
     // ---- phase 2: output-b rows
     gemv_m(c, p + "attn_output_b.weight", xarena[c] + xoaM, (size_t)g.ototal, xarena[c] + xobM + td0[c], H);
     xchg_m(c, xobM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], 0, XP_H);
