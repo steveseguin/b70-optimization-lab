@@ -158,6 +158,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
     if (const char *e = getenv("OWN_DIET")) opt.diet = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_SPLIT")) opt.eng_split = atoi(e) != 0;
     // one host thread per card; trace runs submit phase by phase from one thread
     opt.tp_threads = !getenv("OWN_TRACE") && !(getenv("OWN_TP_THREADS") && atoi(getenv("OWN_TP_THREADS")) == 0);
     std::vector<int> forced;

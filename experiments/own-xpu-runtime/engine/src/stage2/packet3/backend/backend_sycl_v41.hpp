@@ -194,6 +194,7 @@ public:
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
         bool diet = true;       // tp: neighbouring launches merged (OWN_DIET=0: one launch per operator as before)
+        bool eng_split = true;  // tp: engram_kv rows split across the cards, pushed at step start (OWN_ENG_SPLIT=0: every card all rows)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -1857,7 +1858,9 @@ private:
     // enough (no double buffering).
     int tog0[TILES] = {}, tog1[TILES] = {}, thq0[TILES] = {}, thq1[TILES] = {};
     int tm0[TILES] = {}, tm1[TILES] = {}, td0[TILES] = {}, td1[TILES] = {}, tv0[TILES] = {}, tv1[TILES] = {};
-    unsigned xoa = 0, xob = 0, xact = 0;
+    unsigned xoa = 0, xob = 0, xact = 0, xeng = 0;
+    int te0[TILES] = {}, te1[TILES] = {}; // engram_kv rows per card (eng_split)
+    uint32_t eng_seq[TILES] = {};         // the engram push's exchange number
     float *xarena[TILES] = {};
     void *xpeer[TILES][TILES] = {};
     uint32_t *xerr[TILES] = {};
@@ -1910,6 +1913,10 @@ private:
             need(g.h);
             return {(unsigned)td0[c], (unsigned)td1[c]};
         }
+        if (suf == "engram_kv.weight" && o.eng_split) {
+            need(5L * g.h);
+            return {(unsigned)te0[c], (unsigned)te1[c]};
+        }
         if (suf == "ffn_gate_exps.weight" || suf == "ffn_up_exps.weight" || suf == "ffn_gate_shexp.weight" ||
             suf == "ffn_up_shexp.weight") {
             need(g.mid);
@@ -1936,12 +1943,14 @@ private:
             std::tie(tm0[c], tm1[c]) = split(g.mid, c, 16);
             std::tie(td0[c], td1[c]) = split(g.h, c, 16);
             std::tie(tv0[c], tv1[c]) = split(g.vocab, c, 16);
+            std::tie(te0[c], te1[c]) = split(5 * g.h, c, 16);
             if ((thq1[c] - thq0[c]) % 4) throw std::runtime_error("tensor parallel: heads per card % 4");
         }
         xoa = 1024; // [0, 1024): flags, uint32 16 * card
         xob = xoa + (unsigned)g.ototal;
         xact = xob + (unsigned)g.h;
-        const size_t nf = xact + 7 * (size_t)g.mid;
+        xeng = xact + 7 * (unsigned)g.mid; // two engram layers' kv rows, 5 * h each
+        const size_t nf = xeng + 10 * (size_t)g.h;
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nf);
             xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
@@ -1990,12 +1999,16 @@ private:
 
 #ifndef OWN41_ACT_BF16
     // all-gather of rows [r0, r1) of nslot slots (stride floats) at arena offset off
-    void xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
+    // mode 0: push this card's rows and wait for every peer's; 1: push only (the wait is a later exchange's,
+    // whose flags come after this one's in every peer's queue); 2: wait only for exchange number seq
+    uint32_t xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int mode = 0,
+                  uint32_t seq = 0) {
         float *P[6] = {};
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
-        const uint32_t seq = ++xseq[c];
-        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN}, P[0], P[1], P[2],
+        if (mode != 2) seq = ++xseq[c];
+        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode}, P[0], P[1], P[2],
                   P[3], P[4], P[5], xerr[c]);
+        return seq;
     }
     // this card's rows of a dense matrix -> y[0, nrows) (packed rows); xn as gemv_kp
     void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0) {
@@ -2284,13 +2297,33 @@ private:
             qs[c].memcpy(teng[c][li], rows.data(), rows.size() * sizeof(act_t));
         }
     }
+    // eng_split: engram_kv depends on the token only, so at step start each card computes its rows of both
+    // engram layers and pushes them to every peer (no wait); a later exchange's wait covers them (the
+    // peers' flags for it come after this push in their queues), else engram_tp waits for this one
+    void tp_engram_kv(int c) {
+        if (!o.eng_split) return;
+        bool any = false;
+        for (int li = 0; li < 2; ++li) {
+            const int L = li == 0 ? 1 : 14;
+            if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+            gemv_part(c, "blk." + std::to_string(L) + ".engram_kv.weight", teng[c][li],
+                      xarena[c] + xeng + (size_t)li * 5 * g.h + te0[c]);
+            any = true;
+        }
+        if (any) eng_seq[c] = xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 1);
+    }
     void engram_tp(int L, int c) {
         const int li = L == 1 ? 0 : 1;
         const std::string p = "blk." + std::to_string(L) + ".";
-        gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
+        const float *kv = sc[c].kvbuf;
+        if (o.eng_split) {
+            if (xseq[c] == eng_seq[c]) xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 2, eng_seq[c]);
+            kv = xarena[c] + xeng + (size_t)li * 5 * g.h;
+        } else {
+            gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
+        }
         if (!o.small_fast || g.h % 32) throw std::runtime_error("tensor parallel: engram gate form");
-        launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], (const act_t *)sc[c].kvbuf,
-                  wp<float>(c, p + "engram_gate.weight"));
+        launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], kv, wp<float>(c, p + "engram_gate.weight"));
     }
     void tp_embed(int c, int32_t token) {
         const auto &te = we("token_embd.weight");
@@ -2339,6 +2372,8 @@ private:
         if (o.layer_begin == 0) tp_embed(c, tp_tok);
         else twait(c);
         if (c == o.prof_card) prof_begin(c);
+        tp_engram_kv(c);
+        prof("engram", c);
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
         if (o.head) tp_head(c);
@@ -2431,6 +2466,10 @@ private:
             tra(0, TT_EMBED, 0, streams[0], 4 * (size_t)g.h);
         }
         prof_begin(o.prof_card);
+        for (int c = 0; c < o.tp; ++c) {
+            tp_engram_kv(c);
+            prof("engram", c);
+        }
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) {
                 for (int c = 0; c < o.tp; ++c) tp_phase(L, c, ph);

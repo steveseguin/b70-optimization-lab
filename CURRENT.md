@@ -1,10 +1,12 @@
 # Current Workspace State
 
-**November 10, 2026 ~00:40 EST — DeepSeek V4.1 on six cards: 67 tokens/s, output still byte-identical.** More small steps now share one launch (the attention's input steps, and the end of each layer with the start of the next): five fewer launches per layer. Details: note section 15.
+**November 9, 2026 ~21:55 EST — DeepSeek V4.1 on six cards: 68 tokens/s, output still byte-identical.** The two "engram" layers' big lookup projection depends only on the input word, so each card now computes a sixth of it at the start of the word and sends it to the others, instead of every card doing all of it. (The times in the entries below were written about two hours late by mistake and are corrected.) Details: note section 16.
 
-**November 9, 2026 ~23:45 EST — DeepSeek V4.1 on six cards: 66 tokens/s, output still byte-identical.** Two more steps since 23:15: the small stream-mixing work now runs inside the big matrix launches that follow it (160 fewer launches per token), and the router's weights are stored at half size (every value is exactly representable, so nothing changes). Details: note section 14.
+**November 9, 2026 ~21:40 EST — DeepSeek V4.1 on six cards: 67 tokens/s, output still byte-identical.** More small steps now share one launch (the attention's input steps, and the end of each layer with the start of the next): five fewer launches per layer. Details: note section 15.
 
-**November 9, 2026 ~23:15 EST — DeepSeek V4.1 on six cards: 60 tokens/s, output still byte-identical.**
+**November 9, 2026 ~21:30 EST — DeepSeek V4.1 on six cards: 66 tokens/s, output still byte-identical.** Two more steps since 21:15: the small stream-mixing work now runs inside the big matrix launches that follow it (160 fewer launches per token), and the router's weights are stored at half size (every value is exactly representable, so nothing changes). Details: note section 14.
+
+**November 9, 2026 ~21:15 EST — DeepSeek V4.1 on six cards: 60 tokens/s, output still byte-identical.**
 - Every layer is now split across all six cards (each card computes a slice and they swap results directly through each other's memory), instead of the cards taking turns: 31 -> about 50 tokens/s.
 - Then a lock inside Intel's driver made the six host threads that feed the cards wait on each other on most launches. A driver switch removes that work; the engine now registers every block of card memory itself, so the switch is safe: about 50 -> 60 tokens/s.
 - Checks: whole trace byte-identical for both layouts, 40- and 128-token answers identical, no card faults. Cards: nothing loaded. Run with `OWN_TP=6`.

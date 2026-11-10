@@ -312,7 +312,7 @@ Switches: `OWN_PACKED=0` (raw rows, old kernels), `OWN_SMALL=0` (old small opera
 per operator group, profiling barriers), `OWN_GPROF=2` (also time per kernel type). Upload is 33 s now (was 20 s):
 the host packs rows while uploading.
 
-## 12. Every layer on all six cards: 31.2 -> 47-52 tok/s (20:45-22:30 EST)
+## 12. Every layer on all six cards: 31.2 -> 47-52 tok/s (20:15-21:00 EST)
 
 Until p10 each card held whole layers and the six cards took turns (one busy, five idle). `OWN_TP=6` splits
 **every layer across all six cards** (commit a0d94e2c4, plus the follow-ups in section 13's commit):
@@ -341,7 +341,7 @@ fix. The profile at that point (card 0, `OWN_GPROF=2`): kernels 15.8 ms of a 25 
 per step; the exchanges 3.7 ms (160 per step, ~15 us each including the wait for the slowest card). Head-count
 balancing between cards is closed: the sparse-attention kernels are latency-bound, imbalance ~0.5 ms.
 
-## 13. The driver's launch lock: 50 -> 60 tok/s (2026-11-09 22:30-23:15 EST)
+## 13. The driver's launch lock: 50 -> 60 tok/s (2026-11-09 21:00-21:15 EST)
 
 With six submitting threads the host, not the cards, set the pace. `perf` on a running decode: 62 % of host
 time inside `ur_command_list_manager::appendKernelLaunchLocked`, much of it a `pthread_rwlock_wrlock` futex in
@@ -376,7 +376,7 @@ Trace gate: `OWN_TP=6` and the one-card-per-layer layout both `cmp`-identical, 4
 (`round7-launch-lock-gate-summary.txt`); no fault line in the kernel log. Prompt reading on the cards (still one
 token per step): 36 tokens in 0.63 s (60 tok/s).
 
-## 14. Stream mix inside other launches, router rows halved: 60 -> 66 tok/s (23:15-23:45 EST)
+## 14. Stream mix inside other launches, router rows halved: 60 -> 66 tok/s (21:15-21:30 EST)
 
 Profile after section 13 (card 0, `round7-tp6-kernel-profile-card0.log`; card 2 with two output groups in
 `-card2.log`): 18.3 ms profiled step, kernels 15.2 ms in 1,483 launches, 3.0 ms idle between kernels; the
@@ -402,7 +402,7 @@ Looked at and set aside: the engram gate (118 us twice per step) sums three 5,12
 double, element order (part of the arithmetic), so its time is the chain; splitting the engram matrix (224 us,
 repeated on all cards) across cards would save ~0.3 ms per step, not done yet.
 
-## 15. Launch diet, stage 1: 66.3 -> 67.0-67.4 tok/s (2026-11-10 00:00-00:40 EST)
+## 15. Launch diet, stage 1: 66.3 -> 67.0-67.4 tok/s (2026-11-09 21:30-21:40 EST)
 
 `OWN_DIET` (default on) merges neighbouring launches when the stream mix rides (section 14); every merged piece
 runs the same per-sub-group code as its old kernel:
@@ -418,6 +418,26 @@ runs the same per-sub-group code as its old kernel:
 Gate (`round9-diet1-gate-summary.txt`): 3-step trace `cmp`-identical for `OWN_TP=6` and the one-card-per-layer
 layout, 40- and 128-token answers identical, no fault line. 67.02 / 67.37 tok/s against 66.31 with `OWN_DIET=0`
 in the same session (`round9-tp6-speed-128.log`).
+
+Section headers 12-15 were first written with times about two hours late; corrected from the commit times.
+
+## 16. Engram projection split across the cards: 67.0 -> 68.3-68.5 tok/s (21:40-21:55 EST)
+
+Profile at section 15 (`round9-tp6-kernel-profile-card{0,2,3}.log`): 1,125 launches, kernels 13.7-14.0 ms of a
+16.1-16.5 ms profiled step. The two-output-group cards (2 and 5) spend ~0.5 ms more per step on query-b and
+output-a, but the others' exchanges are only ~1 us longer on average (~0.15 ms per step): balancing it would need
+one more exchange per layer, so it stays.
+
+- **`OWN_ENG_SPLIT`** (default on): `engram_kv` (25,600 x 6,144 Q6_K, 129 MB per engram layer, 223 us on every
+  card) reads only the hashed rows of the current token, so it does not wait for the layers before it. Each card
+  now holds and computes 1/6 of its rows for both engram layers at the start of the step and pushes them to the
+  peers with a push-only exchange (`XchgP` mode 1, no wait). Layer 0's exchanges come later in every peer's queue,
+  so their waits already cover the engram rows; when layer 1 is the first layer, a wait-only exchange (mode 2)
+  runs before the gate. Rows are the same per-row kernel code, so the values are identical. Also saves ~215 MB
+  of card memory per card.
+
+Gate (`round10-engsplit-gate-summary.txt`): 3-step trace `cmp`-identical (`OWN_TP=6`), 40- and 128-token answers
+identical, no fault line; 68.50 / 68.33 tok/s against 66.95 with `OWN_ENG_SPLIT=0` in the same session.
 
 ## Reproduce
 

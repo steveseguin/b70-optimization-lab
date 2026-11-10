@@ -3004,6 +3004,7 @@ struct XchgP {
     unsigned off, stride, nslot, r0, r1;
     uint32_t seq;
     long spin;
+    int mode = 0; // 0 push + wait, 1 push only, 2 wait only (see Backend41::xchg)
     static float *pick(int d, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5) {
         return d == 0 ? p0 : d == 1 ? p1 : d == 2 ? p2 : d == 3 ? p3 : d == 4 ? p4 : p5;
     }
@@ -3015,17 +3016,20 @@ struct XchgP {
         float *mine = pick(me, p0, p1, p2, p3, p4, p5);
         const float *own = mine + off;
         const unsigned n4 = (r1 - r0) / 4;
-        for (unsigned k = t; k < nslot * n4; k += T) {
-            const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
-            const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
-            for (int d = 0; d < n; ++d)
-                if (d != me)
-                    *reinterpret_cast<sycl::vec<float, 4> *>(pick(d, p0, p1, p2, p3, p4, p5) + off + o) = v;
+        if (mode != 2) {
+            for (unsigned k = t; k < nslot * n4; k += T) {
+                const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
+                const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
+                for (int d = 0; d < n; ++d)
+                    if (d != me)
+                        *reinterpret_cast<sycl::vec<float, 4> *>(pick(d, p0, p1, p2, p3, p4, p5) + off + o) = v;
+            }
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < n && (int)t != me)
+                AR(reinterpret_cast<uint32_t *>(pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(seq);
         }
-        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
-        sycl::group_barrier(it.get_group());
-        if ((int)t < n && (int)t != me)
-            AR(reinterpret_cast<uint32_t *>(pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(seq);
+        if (mode == 1) return;
         if ((int)t < n && (int)t != me) {
             // after one timeout this card stops waiting (poison word, uint32 index 96 of its own arena):
             // the step is already failed, and a stalled peer must not cost 0.9 s per exchange
