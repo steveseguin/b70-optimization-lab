@@ -1810,6 +1810,7 @@ private:
         return {0, R};
     }
 
+#ifndef OWN41_ACT_BF16
     void tp_setup() {
         const int N = o.tp;
         if (g.ototal % 8 || g.qh % 8 || g.h % 16 || g.mid % 16 || g.ototal / 8 * 8 != g.ototal || g.oin != g.qh / 8 * g.hd)
@@ -1880,7 +1881,6 @@ private:
             for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
     }
 
-#ifndef OWN41_ACT_BF16
     // all-gather of rows [r0, r1) of nslot slots (stride floats) at arena offset off
     void xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
         float *P[6] = {};
@@ -2303,6 +2303,7 @@ private:
         return next;
     }
 #else
+    void tp_setup() { throw std::runtime_error("tensor parallel needs the f32-activation build"); }
     int32_t decode_step_tp(int32_t) { throw std::runtime_error("tensor parallel needs the f32-activation build"); }
     void tp_worker(int) {}
 #endif
