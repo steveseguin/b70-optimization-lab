@@ -45,6 +45,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
+#include <stdexcept>
 #include "stage2/packet2/kernels/math.hpp"
 
 namespace pk41 {
@@ -94,6 +95,7 @@ inline size_t packed_row_bytes(iq3::Type t, size_t cols) {
     case iq3::Type::IQ2_XS: { const size_t nb = cols / 256; return pad16(nb * 72 + nb * 2); }
     case iq3::Type::Q6_K: return pad16(cols / 256 * 210);
     case iq3::Type::Q5_K: return pad16(cols / 256 * 176);
+    case iq3::Type::F32: return pad16(cols * 2); // upper halves only: see pack_row
     default: return 0;
     }
 }
@@ -102,6 +104,19 @@ inline size_t packed_row_bytes(iq3::Type t, size_t cols) {
 inline void pack_row(iq3::Type t, const uint8_t *src, uint8_t *dst, size_t cols) {
     const size_t pb = packed_row_bytes(t, cols);
     std::memset(dst, 0, pb);
+    if (t == iq3::Type::F32) {
+        // an F32 row whose every value has zero low 16 bits (a bf16 checkpoint widened to f32, e.g. the
+        // router) is stored as the upper halves: widening them back gives the same floats bit for bit.
+        // Any other row is refused (the backend packs F32 only where asked to, see pack_wanted).
+        for (size_t i = 0; i < cols; ++i) {
+            uint32_t v;
+            std::memcpy(&v, src + 4 * i, 4);
+            if (v & 0xFFFFu) throw std::runtime_error("F32 row not exact in 16 bits: cannot store it halved");
+            const uint16_t h = (uint16_t)(v >> 16);
+            std::memcpy(dst + 2 * i, &h, 2);
+        }
+        return;
+    }
     if (t == iq3::Type::Q8_0) {
         const size_t C = cols / 32;
         for (size_t m = 0; m < C / 4; ++m)

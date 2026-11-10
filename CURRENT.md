@@ -1,5 +1,7 @@
 # Current Workspace State
 
+**November 9, 2026 ~23:45 EST — DeepSeek V4.1 on six cards: 66 tokens/s, output still byte-identical.** Two more steps since 23:15: the small stream-mixing work now runs inside the big matrix launches that follow it (160 fewer launches per token), and the router's weights are stored at half size (every value is exactly representable, so nothing changes). Details: note section 14.
+
 **November 9, 2026 ~23:15 EST — DeepSeek V4.1 on six cards: 60 tokens/s, output still byte-identical.**
 - Every layer is now split across all six cards (each card computes a slice and they swap results directly through each other's memory), instead of the cards taking turns: 31 -> about 50 tokens/s.
 - Then a lock inside Intel's driver made the six host threads that feed the cards wait on each other on most launches. A driver switch removes that work; the engine now registers every block of card memory itself, so the switch is safe: about 50 -> 60 tokens/s.

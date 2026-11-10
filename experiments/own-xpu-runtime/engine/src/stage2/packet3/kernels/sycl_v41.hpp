@@ -1744,12 +1744,16 @@ template <unsigned NB, typename A> struct GemvQ6KP {
     static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
     unsigned rows, xn;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
-        constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
-        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
         sycl::sub_group sg = it.get_sub_group();
         const unsigned r = packed_row_id(it);
         if (r >= rows) return;
-        const unsigned lane = sg.get_local_linear_id();
+        row(sg, sg.get_local_linear_id(), r, w, x, y);
+    }
+    // one row on one sub-group (also run inside fused launches: DenseRows)
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                           const float *x, float *y) const {
+        constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
         const uint8_t *row = w + (size_t)r * RB;
         const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x;
         const uint32_t *ql = reinterpret_cast<const uint32_t *>(row);
@@ -1787,6 +1791,35 @@ template <unsigned NB, typename A> struct GemvQ6KP {
                     sum = sum + v * xv[c];
                 }
             }
+        }
+        sum = sg_tree32(sg, sum);
+        if (lane == 0) y[r] = sum;
+    }
+};
+
+// F32 rows stored as their upper 16 bits (pack_v41 F32: only rows whose low
+// halves are all zero, e.g. the router). Widening gives the F32 row's floats
+// bit for bit; same lanes, order and tree as GemvF32P, half the bytes read.
+template <unsigned C, typename A> struct GemvH16P {
+    static_assert(sizeof(typename A::T) == 4, "packed kernels take f32 activations");
+    static_assert(C % 8 == 0);
+    unsigned rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= rows) return;
+        row(sg, sg.get_local_linear_id(), r, w, x, y);
+    }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                           const float *x, float *y) const {
+        const uint16_t *row = reinterpret_cast<const uint16_t *>(w) + (size_t)r * C * 32;
+        float sum = 0;
+#pragma unroll
+        for (unsigned s = 0; s < C / 8; ++s) {
+            const auto wv = sg_bloadN<8>(sg, row + (size_t)s * 256);
+            const auto xv = sg_bloadN<8>(sg, x + (size_t)s * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) sum = sum + sycl::bit_cast<float>(uint32_t(wv[m]) << 16) * xv[m];
         }
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
@@ -1865,7 +1898,11 @@ template <unsigned C, typename A> struct GemvF32P {
         sycl::sub_group sg = it.get_sub_group();
         const unsigned r = packed_row_id(it);
         if (r >= rows) return;
-        const unsigned lane = sg.get_local_linear_id();
+        row(sg, sg.get_local_linear_id(), r, w, x, y);
+    }
+    // one row on one sub-group (also run inside fused launches: DenseRows)
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                           const float *x, float *y) const {
         const float *row = reinterpret_cast<const float *>(w) + (size_t)r * C * 32;
         float sum = 0;
 #pragma unroll
@@ -1955,8 +1992,11 @@ template <unsigned H, unsigned SEG> struct HcMixDotsP {
     static_assert(LEN % 32 == 0);
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *streams, const float *fn, double *out) const {
         sycl::sub_group sg = it.get_sub_group();
-        const unsigned l = sg.get_local_linear_id();
-        const unsigned grp = it.get_group_linear_id();
+        row(sg, sg.get_local_linear_id(), it.get_group_linear_id(), streams, fn, out);
+    }
+    // partial grp (= dot r, segment sgi) on one sub-group (also inside fused launches: HcDotsRows)
+    [[gnu::always_inline]] static inline void row(sycl::sub_group sg, unsigned l, unsigned grp, const float *streams,
+                                                  const float *fn, double *out) {
         const unsigned r = grp / SEG, sgi = grp % SEG;
         // 8-wide block reads (16-byte aligned streams and fn: checked by the backend)
         static_assert(LEN % 256 == 0);
@@ -1985,7 +2025,11 @@ struct HcMixFinishSG {
     int h, seg;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const double *d, const float *scale, const float *base,
                                      float *pre, float *post, float *comb) const {
-        sycl::sub_group sg = it.get_sub_group();
+        run(it.get_sub_group(), d, scale, base, pre, post, comb);
+    }
+    // the whole finish on one sub-group (also inside fused launches: HcFinishRows)
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, const double *d, const float *scale, const float *base,
+                                           float *pre, float *post, float *comb) const {
         const int l = (int)sg.get_local_linear_id();
         const int N = 4 * h;
         double t = 0;
@@ -2022,6 +2066,40 @@ struct HcMixFinishSG {
             c = c / (sm + eps);
         }
         if (q >= 0 && q < 16) comb[q] = c;
+    }
+};
+
+// The stream mix's results (pre/post/comb) are first read at the end of the
+// sublayer (hc_post) or by the next sublayer's pre-norm, so its two launches
+// can ride as extra sub-groups in matrix launches that follow: the 200 dot
+// partials (HcDotsRows) in one, the one-sub-group finish (HcFinishRows) in a
+// later one. Same per-sub-group code as HcMixDotsP / HcMixFinishSG.
+template <unsigned H, unsigned SEG> struct HcDotsRows {
+    const float *streams, *fn;
+    double *out;
+    unsigned n() const { return 25 * SEG; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
+        HcMixDotsP<H, SEG>::row(sg, lane, r, streams, fn, out);
+    }
+};
+struct HcFinishRows {
+    HcMixFinishSG k;
+    const double *d;
+    const float *scale, *base;
+    float *pre, *post, *comb;
+    unsigned n() const { return 1; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned, unsigned) const {
+        k.run(sg, d, scale, base, pre, post, comb);
+    }
+};
+// rows of R, one per sub-group (16 per 512-item work-group), in launch order
+template <typename R> struct RowsP {
+    R rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it) const {
+        const unsigned r = packed_row_id(it);
+        if (r >= rows.n()) return;
+        sycl::sub_group sg = it.get_sub_group();
+        rows.row(sg, sg.get_local_linear_id(), r);
     }
 };
 

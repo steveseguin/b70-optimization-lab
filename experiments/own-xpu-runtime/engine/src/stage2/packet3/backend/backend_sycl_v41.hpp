@@ -191,6 +191,8 @@ public:
         int tp = 1;
         bool tp_threads = true; // one host thread per card (OWN_TP_THREADS; trace runs force 0)
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
+        bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
+        bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -547,6 +549,11 @@ public:
         return false; // packed kernels take f32 activations
 #else
         if (!o.packed || n == "token_embd.weight") return false;
+        if (e.type == iq3::Type::F32) { // the router: upload refuses (pack_row) if a value is not exact in 16 bits
+            static const std::string rn = "ffn_gate_inp.weight";
+            return o.router16 && e.cols == 5120 && e.experts == 0 && n.size() > rn.size() &&
+                   n.compare(n.size() - rn.size(), rn.size(), rn) == 0;
+        }
         return pk41::packable(e.type, (size_t)e.cols, e.experts > 0);
 #endif
     }
@@ -1074,8 +1081,63 @@ private:
         if (e.type == iq3::Type::Q8_0) return gemv_q8p(tile, e, w, x, y, rows, xn, cols);
         if (e.type == iq3::Type::Q6_K) { X(GemvQ6KP, 5) X(GemvQ6KP, 16) X(GemvQ6KP, 20) X(GemvQ6KP, 24) X(GemvQ6KP, 32) }
         if (e.type == iq3::Type::Q5_K) { X(GemvQ5KP, 9) X(GemvQ5KP, 20) }
+        if (e.type == iq3::Type::F32 && cols == 5120 && !xn) {
+            launch_rows<0>(tile, rows, 0, ops41sycl::GemvH16P<160, Act>{rows}, wb, x, y);
+            return;
+        }
 #undef X
         throw std::runtime_error("packed dense kernel missing: " + wn);
+    }
+    // gemv_kp plus the extra rows EX (sub-group rows, see HcDotsRows) in the same launch; the extra rows
+    // come first so a long one starts at once. Every row runs the same per-row code as alone.
+    template <typename DK, typename EX>
+    void launch_dense_ex(int tile, DK dk, const uint8_t *w, const act_t *x, act_t *y, EX ex) {
+        using R = ops41sycl::RowsPair<EX, ops41sycl::DenseRows<DK>>;
+        launch_rows<0>(tile, ex.n() + dk.rows, 0, ops41sycl::RowsP<R>{R{ex, ops41sycl::DenseRows<DK>{dk, w, x, y}}});
+    }
+    template <typename EX>
+    void gemv_kp_ex(int tile, const WeightTab::E &e, const void *w, const act_t *x, act_t *y, unsigned rows,
+                    unsigned xn, unsigned cols, const std::string &wn, EX ex) {
+        const auto *wb = (const uint8_t *)w;
+#define X(KERN, NB)                                                                                        \
+    if (cols == NB * 256) return launch_dense_ex(tile, ops41sycl::KERN<NB, Act>{rows, xn}, wb, x, y, ex);
+#define XQ(COLS)                                                                                           \
+    if (cols == COLS) return launch_dense_ex(tile, ops41sycl::GemvQ8P<COLS / 32, Act>{rows, xn}, wb, x, y, ex);
+        if (e.type == iq3::Type::Q8_0) { XQ(1280) XQ(2304) XQ(4096) XQ(5120) XQ(8192) }
+        if (e.type == iq3::Type::Q6_K) { X(GemvQ6KP, 5) X(GemvQ6KP, 16) X(GemvQ6KP, 20) X(GemvQ6KP, 24) X(GemvQ6KP, 32) }
+        if (e.type == iq3::Type::Q5_K) { X(GemvQ5KP, 9) X(GemvQ5KP, 20) }
+        if (e.type == iq3::Type::F32 && cols == 5120 && !xn)
+            return launch_dense_ex(tile, ops41sycl::GemvH16P<160, Act>{rows}, wb, x, y, ex);
+#undef XQ
+#undef X
+        throw std::runtime_error("packed dense kernel missing: " + wn);
+    }
+    // gemv() / gemv_part() with extra rows (packed weights, or the F32 router rows)
+    template <typename EX> void gemv_ex(int tile, const std::string &wn, const act_t *x, act_t *y, EX ex) {
+        const auto &e = we(wn);
+        const auto &dp = wgt[tile].at(wn);
+        if (dp.packed) return gemv_kp_ex(tile, e, dp.p, x, y, (unsigned)e.rows, 0, (unsigned)e.cols, wn, ex);
+        if (o.packed && e.type == iq3::Type::F32 && e.cols == 5120)
+            return launch_dense_ex(tile, ops41sycl::GemvF32P<160, Act>{(unsigned)e.rows}, (const uint8_t *)dp.p, x, y, ex);
+        throw std::runtime_error("no fused-row kernel for " + wn);
+    }
+    template <typename EX> void gemv_part_ex(int t, const std::string &wn, const act_t *x, act_t *y, EX ex) {
+        const auto &e = we(wn);
+        const auto &dp = wgt[t].at(wn);
+        if (!dp.packed) throw std::runtime_error("tensor-parallel slice needs packed rows: " + wn);
+        gemv_kp_ex(t, e, dp.p, x, y, dp.nrows, 0, (unsigned)e.cols, wn, ex);
+    }
+    // stream mix riding in later launches (see HcDotsRows); false: the mix runs as its own two launches
+    bool hc_rides(int t, const std::string &prefix) const {
+        return o.hc_ride && o.small_fast && !o.hc_legacy && g.h == 5120 && HC_SEG == 8 && al16(streams[t]) &&
+               al16(wp<float>(t, prefix + "fn.weight"));
+    }
+    ops41sycl::HcDotsRows<5120, HC_SEG> hc_dots(int t, const std::string &prefix) {
+        return {(const float *)streams[t], wp<float>(t, prefix + "fn.weight"), sc[t].d25};
+    }
+    ops41sycl::HcFinishRows hc_finish(int t, const std::string &prefix, float *pre, float *post, float *comb) {
+        return {ops41sycl::HcMixFinishSG{g.h, HC_SEG}, (const double *)sc[t].d25, wp<float>(t, prefix + "scale.weight"),
+                wp<float>(t, prefix + "base.weight"), pre, post, comb};
     }
 #endif
     // One kernel per weight format (OWN_GENERIC_KERNELS=1 selects the
@@ -1623,13 +1685,20 @@ private:
 #ifndef OWN41_ACT_BF16
     // RouteP in work-group 0 and the shared expert's gate and up rows in the
     // others, one launch (test_packed_v41_device.cpp "fused": 52 -> 28 us)
-    template <typename DK> void route_with_shared(int t, const std::string &p, DK dk, const uint8_t *wg, const uint8_t *wu) {
+    // EX: extra sub-group rows in the same launch, before the shared rows (see HcFinishRows)
+    template <typename DK, typename EX = ops41sycl::NoRows>
+    void route_with_shared(int t, const std::string &p, DK dk, const uint8_t *wg, const uint8_t *wu, EX ex = {}) {
         auto &s = sc[t];
         using R1 = ops41sycl::DenseRows<DK>;
         using RR = ops41sycl::RowsPair<R1, R1>;
-        using K = ops41sycl::RoutePRows<RR>;
-        K k{ops41sycl::RouteP{g.experts, 6}, RR{R1{dk, wg, s.xn, s.shg}, R1{dk, wu, s.xn, s.shu}}};
-        const size_t ng = 1 + (2 * (size_t)dk.rows + 15) / 16;
+        using RX = std::conditional_t<std::is_same_v<EX, ops41sycl::NoRows>, RR, ops41sycl::RowsPair<EX, RR>>;
+        using K = ops41sycl::RoutePRows<RX>;
+        const RR rr{R1{dk, wg, s.xn, s.shg}, R1{dk, wu, s.xn, s.shu}};
+        RX rx;
+        if constexpr (std::is_same_v<EX, ops41sycl::NoRows>) rx = rr;
+        else rx = RX{ex, rr};
+        K k{ops41sycl::RouteP{g.experts, 6}, rx};
+        const size_t ng = 1 + (rx.n() + 15) / 16;
         const float *logits = s.router, *bias = wp<float>(t, p + "exp_probs_b.bias");
         uint32_t *ids = s.ids;
         float *prob = s.prob;
@@ -1896,7 +1965,7 @@ private:
         if (!dp.packed) throw std::runtime_error("tensor-parallel slice needs packed rows: " + wn);
         gemv_kp(t, e, dp.p, x, y, dp.nrows, xn, (unsigned)e.cols, wn);
     }
-    void route_shared_tp(int c, const std::string &p) {
+    template <typename EX = ops41sycl::NoRows> void route_shared_tp(int c, const std::string &p, EX ex = {}) {
         const auto &eg = we(p + "ffn_gate_shexp.weight"), &eu = we(p + "ffn_up_shexp.weight");
         const auto &dg = wgt[c].at(p + "ffn_gate_shexp.weight"), &du = wgt[c].at(p + "ffn_up_shexp.weight");
         if (!o.small_fast || g.experts % 32 != 0 || g.experts > 512 || !dg.packed || !du.packed || eg.type != eu.type ||
@@ -1904,9 +1973,9 @@ private:
             throw std::runtime_error("tensor parallel needs the fused router + shared gate/up launch: " + p);
         const unsigned rows = dg.nrows;
         if (eg.type == iq3::Type::Q8_0)
-            route_with_shared(c, p, ops41sycl::GemvQ8P<160, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p);
+            route_with_shared(c, p, ops41sycl::GemvQ8P<160, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p, ex);
         else if (eg.type == iq3::Type::Q5_K)
-            route_with_shared(c, p, ops41sycl::GemvQ5KP<20, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p);
+            route_with_shared(c, p, ops41sycl::GemvQ5KP<20, Act>{rows, 0}, (const uint8_t *)dg.p, (const uint8_t *)du.p, ex);
         else
             throw std::runtime_error("tensor parallel: shared expert format " + p);
     }
@@ -1928,19 +1997,28 @@ private:
         const int nh = thq1[c] - thq0[c];
         const size_t qo = (size_t)thq0[c] * g.hd;
         switch (ph) {
-        case 0:
+        case 0: {
             if (L == 1 || L == 14) {
                 engram_tp(L, c);
                 prof("engram", c);
             }
-            hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
-            prof("hc_mix", c);
+            // the attention's pre-norm takes the previous FFN's pre-mix (cur_pre), so this sublayer's stream
+            // mix is first read at hc_post: its dot rows ride in q_a's launch, its finish in q_b's
+            const bool ride = hc_rides(c, p + "hc_attn_") && wgt[c].at(p + "attn_q_a.weight").packed;
+            if (!ride) {
+                hc_mix(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a);
+                prof("hc_mix", c);
+            }
             pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
             prof("hc_pre_norm", c);
-            gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
+            if (ride) gemv_ex(c, p + "attn_q_a.weight", s.xn, s.qa, hc_dots(c, p + "hc_attn_"));
+            else gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
             rmsnorm(c, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
             prof("attn_q_a", c);
-            gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
+            if (ride)
+                gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
+                             hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
+            else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
             rope(c, s.q + qo, nh, g.hd, pos, yarn, false);
             prof("attn_q_b", c);
             gemv(c, p + "attn_kv.weight", s.xn, s.kv);
@@ -1966,6 +2044,7 @@ private:
                 prof("index", c);
             }
             break;
+        }
         case 1: {
             if (g.hd != 512) throw std::runtime_error("tensor parallel: head dim");
             int n_idx = 128;
@@ -2018,12 +2097,22 @@ private:
         case 3: {
             hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
             prof("hc_post", c);
-            hc_mix(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
-            prof("hc_mix", c);
+            // the FFN's pre-norm takes the attention's pre-mix (pre_a): the FFN mix is first read at the
+            // next hc_post, so its dot rows ride in the router launch, its finish with the shared rows
+            const bool ride = hc_rides(c, p + "hc_ffn_");
+            if (!ride) {
+                hc_mix(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f);
+                prof("hc_mix", c);
+            }
             pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
             prof("hc_pre_norm", c);
-            gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
-            route_shared_tp(c, p);
+            if (ride) {
+                gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
+                route_shared_tp(c, p, hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
+            } else {
+                gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
+                route_shared_tp(c, p);
+            }
             prof("router", c);
             routed_gemv(c, p + "ffn_gate_exps.weight", s.xn, s.ids, s.expg, false);
             prof("exp_gate", c);

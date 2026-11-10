@@ -376,6 +376,32 @@ Trace gate: `OWN_TP=6` and the one-card-per-layer layout both `cmp`-identical, 4
 (`round7-launch-lock-gate-summary.txt`); no fault line in the kernel log. Prompt reading on the cards (still one
 token per step): 36 tokens in 0.63 s (60 tok/s).
 
+## 14. Stream mix inside other launches, router rows halved: 60 -> 66 tok/s (23:15-23:45 EST)
+
+Profile after section 13 (card 0, `round7-tp6-kernel-profile-card0.log`; card 2 with two output groups in
+`-card2.log`): 18.3 ms profiled step, kernels 15.2 ms in 1,483 launches, 3.0 ms idle between kernels; the
+exchanges 1.8 ms (11.3 us each on card 0, 9.4 us on card 2: card 2 has ~0.6 ms more query/output-a work and the
+others wait for it); stream mixing and pre-norms 2.4 ms, repeated on every card.
+
+- **Stream mix riding in later launches** (`OWN_HC_RIDE`, default on). A sublayer's pre-norm uses the *previous*
+  sublayer's pre-mix (the attention's `cur_pre`, the FFN's `pre_a`), so the mix this sublayer computes is first
+  read at its `hc_post`. Its 200 dot partials now run as extra sub-groups in the query-a launch (attention) or
+  the router launch (FFN), and the one-sub-group Sinkhorn finish in the query-b launch / the router-select +
+  shared-rows launch (`HcDotsRows`, `HcFinishRows`, `RowsP`, `gemv_ex`; same per-sub-group code as
+  `HcMixDotsP` / `HcMixFinishSG`). 160 launches fewer per step. 60.19 -> 64.66 / 64.55 tok/s.
+- **Router rows halved** (`OWN_ROUTER16`, default on). `ffn_gate_inp` is F32 in the GGUF, but every one of its
+  values has zero low 16 bits (checked over all 40 layers; the other F32 matrices, e.g. `hc_*_fn`, do not).
+  Stored as the upper halves and widened on the card (`GemvH16P`), the products are bit-identical with half
+  the bytes; the packer refuses the upload if any value is not exact. 64.60 -> 65.90 / 66.03 tok/s.
+- `GemvQ6KP` and `GemvF32P` got the one-row form (`row()`) the other packed kernels have, body unchanged.
+
+Gate (both): 3-step trace `cmp`-identical for `OWN_TP=6` and the one-card-per-layer layout, 40- and 128-token
+answers identical, no fault line (`round8-*-gate-summary.txt`).
+
+Looked at and set aside: the engram gate (118 us twice per step) sums three 5,120-long chains serially in
+double, element order (part of the arithmetic), so its time is the chain; splitting the engram matrix (224 us,
+repeated on all cards) across cards would save ~0.3 ms per step, not done yet.
+
 ## Reproduce
 
 ```bash
