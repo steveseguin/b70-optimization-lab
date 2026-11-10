@@ -224,6 +224,13 @@ public:
         bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
         bool exp_pair = true;   // tp: expert gate + up rows in one launch (OWN_EXP_PAIR=0: two launches)
         bool eng_split = true;  // tp: engram_kv rows split across the cards, pushed at step start (OWN_ENG_SPLIT=0: every card all rows)
+        bool eng_dev = false;   // tp: the 24 hashed engram rows go to each card as raw Q5_K bytes (pinned host copy)
+                                // and the card decodes them (EngRowsA: EmbedRowA's decode), not six host decodes (OWN_ENG_DEV=1)
+        bool eng_early = false; // tp: the engram rows' disk reads start sooner: the anchor's rows while the draft runs,
+                                // a block's other rows split over the card threads (each its share, then reads),
+                                // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=1)
+        bool eng_late = false;  // tp: the engram rows are fetched and pushed after layer 0's launches (the card runs the
+                                // embed and layer 0 meanwhile; layers 1 and 14 need them), not before the embed (OWN_ENG_LATE=1)
         bool dev_index = true;  // tp: past 512 rows every card picks its own top-512 on the card (TopKSelP), no host
                                 // round trip (OWN_DEV_INDEX=0: the lead's host top-k, the others wait)
         bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
@@ -954,6 +961,14 @@ private:
     unsigned cidx_ver[8] = {}, tile_cidx_ver[TILES][8] = {};
     std::vector<act_t> h_eng[TILES][2][2];   // engram rows per card, two alternating buffers per engram layer
     unsigned eng_flip[TILES][2] = {};
+    std::vector<uint8_t> h_engr[TILES][2][2]; // eng_dev: the raw rows (ordinary host memory, copied like h_eng;
+                                              // pinned host buffers were in the run that faulted, e72), same alternation
+    uint8_t *tengr[TILES][2] = {};           // eng_dev: the raw rows on the card
+  public:
+    double eng_t[TILES] = {};                // host time in the engram row upload per card (seconds; the caller resets)
+    long eng_n[TILES] = {};
+    double eng_tq[TILES] = {};               // of which OWN_ENG_DEV's copy + decode launch calls
+  private:
     std::vector<uint8_t> cand_host; // layer-20 candidate mask of the current step
     bool cand_valid = false;
 
@@ -2353,6 +2368,13 @@ private:
             s.sha = s.act + (size_t)6 * g.mid;
             teng[c][0] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
             teng[c][1] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
+            if (o.eng_dev) {
+                if (g.engram_dim != 256) throw std::runtime_error("OWN_ENG_DEV: engram rows of one Q5_K block expected");
+                for (int li = 0; li < 2; ++li) {
+                    tengr[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176);
+                    for (int f = 0; f < 2; ++f) h_engr[c][li][f].resize((size_t)24 * 176);
+                }
+            }
 #ifndef OWN41_ACT_BF16
             mt_alloc(c);
 #endif
@@ -2785,7 +2807,18 @@ private:
             if ((long)comp_ids.size() <= cpos(c)) throw std::runtime_error("comp_ids behind position");
             int64_t ids[24];
             engram_hash((int)cpos(c), li, ids);
-            std::vector<act_t> &rows = h_eng[c][li][eng_flip[c][li]++ & 1];
+            const unsigned fl = eng_flip[c][li]++ & 1;
+            if (o.eng_dev) {
+                uint8_t *raw = h_engr[c][li][fl].data();
+                for (int k = 0; k < 24; ++k)
+                    std::memcpy(raw + (size_t)k * l.bytes, eng_base[li] + (size_t)ids[k] * l.bytes, l.bytes);
+                const auto q0 = std::chrono::steady_clock::now();
+                qs[c].memcpy(tengr[c][li], raw, (size_t)24 * l.bytes);
+                launch(c, (size_t)24 * 256, 256, ops41sycl::EngRowsA<Act>{24u}, (const uint8_t *)tengr[c][li], teng[c][li]);
+                eng_tq[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - q0).count();
+                continue;
+            }
+            std::vector<act_t> &rows = h_eng[c][li][fl];
             for (int k = 0; k < 24; ++k) {
                 const uint8_t *row = eng_base[li] + (size_t)ids[k] * l.bytes;
                 for (int i = 0; i < 256; ++i) rows[k * 256 + i] = Act::wr(iq3::decode(iq3::Type::Q5_K, row, i));
@@ -2823,14 +2856,14 @@ private:
         if (!o.small_fast || g.h % 32) throw std::runtime_error("tensor parallel: engram gate form");
         launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], kv, wp<float>(c, p + "engram_gate.weight"));
     }
-    void tp_embed(int c, int32_t token) {
+    void tp_embed(int c, int32_t token, bool wait = true) {
         const auto &te = we("token_embd.weight");
         const uint8_t *row = (const uint8_t *)wgt[c].at("token_embd.weight").p + (size_t)token * wrb(te);
         launch(c, g.h, 32, ops41sycl::EmbedRowA<Act>{te.type, g.h}, row, sc[c].x);
         launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
         float pm[4] = {1, 0, 0, 0};
         qs[c].memcpy(sc[c].cur_pre, pm, 16);
-        twait(c);
+        if (wait) twait(c);
     }
     // final norm + this card's logits rows + its argmax candidates (to the host)
     void tp_head(int c) {
@@ -2869,14 +2902,30 @@ private:
         x_ready[c] = false; // a step that failed part-way must not leave it set
         fin_attn[c] = false;
         xt[c].on = xt[c].pending = false;
-        tp_engram_upload(c);
-        if (o.layer_begin == 0) tp_embed(c, tp_tok);
+        auto eng = [&] {
+            const auto e0 = std::chrono::steady_clock::now();
+            tp_engram_upload(c);
+            eng_t[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - e0).count();
+            ++eng_n[c];
+        };
+        if (!o.eng_late) eng();
+        if (o.layer_begin == 0) tp_embed(c, tp_tok, !o.eng_late); // late: the rows' copy is later, nothing to wait for
         else twait(c);
         if (c == o.prof_card) prof_begin(c);
-        tp_engram_kv(c);
-        prof("engram", c);
-        for (int L = o.layer_begin; L < o.layer_end; ++L)
+        if (!o.eng_late) {
+            tp_engram_kv(c);
+            prof("engram", c);
+        }
+        bool eng_done = !o.eng_late;
+        for (int L = o.layer_begin; L < o.layer_end; ++L) {
+            if (!eng_done && L >= 1) { // after layer 0's launches: the host reads the rows while the card runs them
+                eng();
+                tp_engram_kv(c);
+                prof("engram", c);
+                eng_done = true;
+            }
             for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
+        }
         if (o.head && !skip_head) tp_head(c);
         else twait(c);
         tph_step[c] += now_s() - t0;
@@ -3044,11 +3093,13 @@ private:
     void tp_worker(int) {}
 #endif
 
-    void engram_hash(int p, int li, int64_t *ids24) const {
+    // tok_p >= 0: the token at position p (not yet in comp_ids)
+    void engram_hash(int p, int li, int64_t *ids24, long long tok_p = -2) const {
         for (int i = 1; i <= 3; ++i) {
             uint64_t rolling = 0;
             for (int sh = 0; sh <= i; ++sh) {
-                long long tk = (p - sh < 0 || p - sh >= (long)comp_ids.size()) ? eng_pad : comp_ids[p - sh];
+                long long tk = sh == 0 && tok_p >= 0 ? tok_p
+                               : (p - sh < 0 || p - sh >= (long)comp_ids.size()) ? eng_pad : comp_ids[p - sh];
                 if (tk == -1) tk = eng_pad;
                 rolling ^= (uint64_t)(tk * eng_mult[li][sh]);
             }

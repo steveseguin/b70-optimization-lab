@@ -39,6 +39,7 @@
 #include <map>
 #include <sstream>
 #include <sys/mman.h>
+#include <sys/resource.h>
 #include <sys/stat.h>
 #include <tuple>
 #include <unistd.h>
@@ -48,6 +49,36 @@
 static void die(const std::string &m) { std::fprintf(stderr, "fatal: %s\n", m.c_str()); exit(1); }
 static double now() {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
+}
+// bytes this process made the kernel read from disk, and its major page faults (the engram table is read through
+// the page cache: rows that are not cached cost a disk read inside the step)
+static std::pair<long, long> host_io() {
+    long rb = -1;
+    if (FILE *f = std::fopen("/proc/self/io", "r")) {
+        char k[64];
+        long v;
+        while (std::fscanf(f, "%63s %ld", k, &v) == 2)
+            if (!std::strcmp(k, "read_bytes:")) rb = v;
+        std::fclose(f);
+    }
+    struct rusage ru {};
+    getrusage(RUSAGE_SELF, &ru);
+    return {rb, ru.ru_majflt};
+}
+static void host_io_line(own41::Backend41 &be, int tp, std::pair<long, long> io0) {
+    const auto io1 = host_io();
+    double tsum = 0, tmax = 0, tq = 0;
+    long nsum = 0;
+    for (int c = 0; c < std::max(1, tp); ++c) {
+        tq += be.eng_tq[c];
+        tsum += be.eng_t[c];
+        nsum += be.eng_n[c];
+        if (be.eng_n[c]) tmax = std::max(tmax, be.eng_t[c] / be.eng_n[c]);
+    }
+    std::fprintf(stderr, "host io during decode: %.1f MiB read from disk, %ld major page faults; engram rows %.1f us "
+                 "per step and card (slowest card %.1f us; copy + decode launch calls %.1f us)\n",
+                 (io1.first - io0.first) / 1048576.0, io1.second - io0.second, nsum ? 1e6 * tsum / nsum : 0.0, 1e6 * tmax,
+                 nsum ? 1e6 * tq / nsum : 0.0);
 }
 
 // GGUF single-tensor table locator (from the validated CPU runner).
@@ -93,6 +124,8 @@ static const uint8_t *map_engram(const char *path, int li) {
     off_t ds = (lseek(fd, 0, SEEK_CUR) + 31) / 32 * 32;
     const uint8_t *m = (const uint8_t *)mmap(nullptr, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (m == MAP_FAILED) { perror("mmap engram"); exit(1); }
+    // OWN_ENG_EARLY: a row read that misses the page cache fetches its page only, not the 128 KiB read-around
+    if (const char *e = getenv("OWN_ENG_EARLY"); e && atoi(e) != 0) madvise((void *)m, st.st_size, MADV_RANDOM);
     close(fd);
     auto it = offs.find("per_layer_token_embd.weight");
     if (it == offs.end()) die("engram table name");
@@ -193,6 +226,9 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DOWN_EX")) opt.down_ex = atoi(e) != 0;
     if (const char *e = getenv("OWN_EXP_PAIR")) opt.exp_pair = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_SPLIT")) opt.eng_split = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_DEV")) opt.eng_dev = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_EARLY")) opt.eng_early = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_LATE")) opt.eng_late = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
@@ -521,13 +557,15 @@ int main(int argc, char **argv) {
             const float tau = getenv("OWN_SPEC_TAU") ? (float)atof(getenv("OWN_SPEC_TAU")) : 0.0f;
             const int kmin = getenv("OWN_SPEC_KMIN") ? std::max(0, atoi(getenv("OWN_SPEC_KMIN"))) : 1; // 0: a round may check no guess
             FILE *slog = getenv("OWN_SPEC_LOG") ? std::fopen(getenv("OWN_SPEC_LOG"), "w") : nullptr;
+            for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
+            const auto io0 = host_io();
             const double ts0 = now();
             while ((int)out.size() < ndecode) {
                 int32_t d[own41::Backend41::DR_BLOCK];
                 float conf[own41::Backend41::DR_BLOCK];
                 const double ta = now();
                 int kk = std::min(k, ndecode - (int)out.size());
-                be.draft_tp(cur, d, kk, conf);
+                be.draft_tp(cur, d, kk, conf, token_map[cur]);
                 const double tb = now();
                 if (tau > 0.0f) {
                     float run = 1.0f;
@@ -593,6 +631,7 @@ int main(int argc, char **argv) {
                          100.0 * accepted / std::max(1L, guessed), dt, (out.size() - 1) / dt, t_draft / cycles * 1e3,
                          t_check / cycles * 1e3,
                          ref.empty() ? "no reference" : same ? "SAME AS the plain run" : "DIFFERENT FROM the plain run");
+            host_io_line(be, opt.tp, io0);
             std::fprintf(stderr, "kept guesses per cycle:");
             for (int j = 0; j <= k; ++j) std::fprintf(stderr, " %d:%ld", j, hist[j]);
             std::fprintf(stderr, "\n");
@@ -607,6 +646,8 @@ int main(int argc, char **argv) {
         int cur = out_ids[0];
         double t_dec = 0;
         int n_timed = 0;
+        for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
+        const auto io0p = host_io();
         for (int step = 1; step < ndecode; ++step) {
             if (!forced.empty()) {
                 if (step - 1 >= (int)forced.size()) break;
@@ -656,9 +697,11 @@ int main(int argc, char **argv) {
             }
             if (be.trace_f) fflush(be.trace_f);
         }
-        if (n_timed)
+        if (n_timed) {
             std::fprintf(stderr, "decode: %d steps after the first, %.3f s/step, %.2f tok/s\n", n_timed,
                          t_dec / n_timed, n_timed / t_dec);
+            host_io_line(be, opt.tp, io0p);
+        }
         if (be.prof_on && n_timed) {
             std::vector<std::pair<double, std::string>> v;
             double tot = 0;

@@ -1429,6 +1429,16 @@ template <typename A> struct EmbedRowA {
     }
 };
 
+// n engram rows of one Q5_K block each (176 bytes -> 256 values), EmbedRowA's decode per value
+template <typename A> struct EngRowsA {
+    unsigned n;
+    void operator()(sycl::nd_item<1> it, const uint8_t *raw, typename A::T *out) const {
+        const unsigned i = (unsigned)it.get_global_linear_id();
+        if (i >= n * 256u) return;
+        out[i] = A::wr(iq3::decode(iq3::Type::Q5_K, raw + (size_t)(i / 256u) * 176u, i % 256u));
+    }
+};
+
 // ---- kernels over packed rows (layouts: pack_v41.hpp) ------------------------
 // Same float operations in the same order as lane_sum_t / GemvT / RoutedGemvT
 // (bit-identical outputs, gated per format in test_ops_v41_device.cpp), but:

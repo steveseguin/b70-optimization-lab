@@ -1,0 +1,53 @@
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.016 s/step, 64.16 tok/s
+h16: host io during decode: 4.4 MiB read from disk, 0 major page faults; engram rows 564.2 us per step and card (slowest card 565.4 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.016 s/step, 64.45 tok/s
+h5: host io during decode: 6.9 MiB read from disk, 3 major page faults; engram rows 670.5 us per step and card (slowest card 670.6 us)
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.015 s/step, 65.72 tok/s
+h1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 596.0 us per step and card (slowest card 597.2 us)
+p1e exit 0
+p1e SPEED128_SAME
+p1e: decode: 127 steps after the first, 0.013 s/step, 75.32 tok/s
+p1e: host io during decode: 16.1 MiB read from disk, 0 major page faults; engram rows 550.5 us per step and card (slowest card 552.5 us)
+p1b exit 0
+p1b SPEED128_SAME
+p1b: decode: 127 steps after the first, 0.013 s/step, 78.11 tok/s
+p1b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 138.7 us per step and card (slowest card 139.0 us)
+h16: host io during decode: 4.4 MiB read from disk, 0 major page faults; engram rows 564.2 us per step and card (slowest card 565.4 us)
+h5: host io during decode: 6.9 MiB read from disk, 3 major page faults; engram rows 670.5 us per step and card (slowest card 670.6 us)
+h1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 596.0 us per step and card (slowest card 597.2 us)
+p1e: host io during decode: 16.1 MiB read from disk, 0 major page faults; engram rows 550.5 us per step and card (slowest card 552.5 us)
+p1b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 138.7 us per step and card (slowest card 139.0 us)
+code_b1 exit 0
+code_b1: spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 5.40s = 94.68 tok/s; draft 2.56 ms + check 18.78 ms per cycle; SAME AS the plain run
+code_b1: host io during decode: 94.4 MiB read from disk, 1 major page faults; engram rows 744.9 us per step and card (slowest card 745.2 us)
+code_e1 exit 1
+code_e1: fatal: tensor-parallel block: card 0000:43:00.0: level_zero backend failed with error: 40 (UR_RESULT_ERROR_OUT_OF_RESOURCES)
+xe 0000:43:00.0: [drm] Xe device coredump has been created
+prose_b1 exit 0
+prose_b1: spec decode: 511 tokens in 300 cycles (1.70 per cycle; 211 of 412 guesses kept, 51.2 %) in 6.44s = 79.34 tok/s; draft 2.55 ms + check 18.92 ms per cycle; SAME AS the plain run
+prose_b1: host io during decode: 123.3 MiB read from disk, 8 major page faults; engram rows 783.2 us per step and card (slowest card 784.0 us)
+prose_e1 exit 0
+prose_e1: spec decode: 511 tokens in 300 cycles (1.70 per cycle; 211 of 412 guesses kept, 51.2 %) in 6.27s = 81.53 tok/s; draft 2.58 ms + check 18.31 ms per cycle; SAME AS the plain run
+prose_e1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 187.4 us per step and card (slowest card 187.8 us)
+analysis_b1 exit 0
+analysis_b1: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.75s = 107.50 tok/s; draft 2.59 ms + check 21.42 ms per cycle; SAME AS the plain run
+analysis_b1: host io during decode: 78.0 MiB read from disk, 5 major page faults; engram rows 773.3 us per step and card (slowest card 774.0 us)
+analysis_e1 exit 0
+analysis_e1: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.65s = 109.91 tok/s; draft 2.60 ms + check 20.89 ms per cycle; SAME AS the plain run
+analysis_e1: host io during decode: 0.1 MiB read from disk, 0 major page faults; engram rows 362.9 us per step and card (slowest card 363.7 us)
+ops_b1 exit 0
+ops_b1: spec decode: 511 tokens in 236 cycles (2.17 per cycle; 275 of 438 guesses kept, 62.8 %) in 5.39s = 94.83 tok/s; draft 2.58 ms + check 20.25 ms per cycle; SAME AS the plain run
+ops_b1: host io during decode: 110.9 MiB read from disk, 12 major page faults; engram rows 798.8 us per step and card (slowest card 801.0 us)
+(runner paused after the fault; ops_e1 finished, its lines copied from ops_e1.log:)
+ops_e1: spec decode: 511 tokens in 236 cycles (2.17 per cycle; 275 of 438 guesses kept, 62.8 %) in 5.25s = 97.40 tok/s; draft 2.58 ms + check 19.65 ms per cycle; SAME AS the plain run
+ops_e1: host io during decode: 23.0 MiB read from disk, 3 major page faults; engram rows 336.1 us per step and card (slowest card 336.6 us)
+health probe (scripts/check-qwen36-xpu-xccl-health.sh, six cards) after the fault: rc 0

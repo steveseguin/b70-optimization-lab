@@ -15,6 +15,11 @@ Scratch sc_keep[TILES] = {};
 act_t *strm[TILES] = {}, *streams_keep[TILES] = {};
 act_t *tengm[TILES][2] = {};
 std::vector<act_t> h_engm[TILES][2];
+std::vector<uint8_t> h_engrm[TILES][2]; // OWN_ENG_DEV: raw rows (ordinary host memory, like h_engm)
+uint8_t *tengrm[TILES][2] = {};         // OWN_ENG_DEV: raw rows on the card
+int eng_t0 = 0;                   // OWN_ENG_EARLY: the block's first token whose rows the card threads ask for
+bool eng_anchor_asked = false;    // OWN_ENG_EARLY: draft_tp asked for the anchor's rows (position pos)
+unsigned eng_sink[TILES] = {};
 int32_t *cidxm[TILES][8] = {};   // one 512-row list per token per index slot
 uint32_t *egrp[TILES] = {};      // the layer's expert groups (RUGrp layout, mt_eu)
 long mlen[TILES][4][MTX] = {};   // rows of each kv source after token t's publish
@@ -178,6 +183,10 @@ void mt_alloc(int c) {
     for (int li = 0; li < 2; ++li) {
         tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * MTX);
         h_engm[c][li].resize((size_t)24 * g.engram_dim * MTX);
+        if (o.eng_dev) {
+            tengrm[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176 * MTX);
+            h_engrm[c][li].resize((size_t)24 * 176 * MTX);
+        }
     }
     for (int k = 0; k < 8; ++k) cidxm[c][k] = dalloc<int32_t>(c, (size_t)512 * MTX);
     egrp[c] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS);
@@ -468,12 +477,58 @@ void tpm_engram_prefetch() {
     }
     pos = keep;
 }
+// OWN_ENG_EARLY: this card thread's share of the block's row reads (every o.tp-th row from token eng_t0 on; the
+// anchor's rows were asked for during the draft), asked for, then waited on, before it reads all the rows
+void tpm_engram_share(int c) {
+    static const long page = sysconf(_SC_PAGESIZE);
+    auto l = iq3::layout(iq3::Type::Q5_K);
+    const uint8_t *mine[2 * 24 * MTX];
+    int nm = 0, r = 0;
+    for (int li = 0; li < 2; ++li) {
+        const int L = li == 0 ? 1 : 14;
+        if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+        for (int t = eng_t0; t < mt_n; ++t) {
+            const long p_ = pos + t;
+            if ((long)comp_ids.size() <= p_) throw std::runtime_error("comp_ids behind position");
+            int64_t ids[24];
+            engram_hash((int)p_, li, ids);
+            for (int k = 0; k < 24; ++k, ++r) {
+                if (r % o.tp != c) continue;
+                const uint8_t *row = eng_base[li] + (size_t)ids[k] * l.bytes;
+                const uintptr_t a = (uintptr_t)row, a0 = a & ~(uintptr_t)(page - 1);
+                madvise((void *)a0, (size_t)(a + l.bytes - a0), MADV_WILLNEED);
+                mine[nm++] = row;
+            }
+        }
+    }
+    unsigned sink = 0;
+    for (int i = 0; i < nm; ++i) sink += *(volatile const uint8_t *)mine[i] + *(volatile const uint8_t *)(mine[i] + l.bytes - 1);
+    eng_sink[c] += sink;
+}
 void tpm_engram_upload(int c) {
     auto l = iq3::layout(iq3::Type::Q5_K);
+    if (o.eng_early) tpm_engram_share(c);
     const size_t per = (size_t)24 * g.engram_dim;
     for (int li = 0; li < 2; ++li) {
         const int L = li == 0 ? 1 : 14;
         if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+        if (o.eng_dev) { // raw rows to the card, decoded there (same decode as the host's, EngRowsA)
+            uint8_t *raw = h_engrm[c][li].data();
+            for (int t = 0; t < mt_n; ++t) {
+                const long p_ = pos + t;
+                if ((long)comp_ids.size() <= p_) throw std::runtime_error("comp_ids behind position");
+                int64_t ids[24];
+                engram_hash((int)p_, li, ids);
+                for (int k = 0; k < 24; ++k)
+                    std::memcpy(raw + (size_t)(t * 24 + k) * l.bytes, eng_base[li] + (size_t)ids[k] * l.bytes, l.bytes);
+            }
+            const auto q0 = std::chrono::steady_clock::now();
+            qs[c].memcpy(tengrm[c][li], raw, (size_t)mt_n * 24 * l.bytes);
+            launch(c, (size_t)mt_n * 24 * 256, 256, ops41sycl::EngRowsA<Act>{(unsigned)mt_n * 24u},
+                   (const uint8_t *)tengrm[c][li], tengm[c][li]);
+            eng_tq[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - q0).count();
+            continue;
+        }
         std::vector<act_t> &rows = h_engm[c][li]; // the embed's twait below finishes the copy before any reuse
         for (int t = 0; t < mt_n; ++t) {
             const long p_ = pos + t;
@@ -489,7 +544,7 @@ void tpm_engram_upload(int c) {
         qs[c].memcpy(tengm[c][li], rows.data(), (size_t)mt_n * per * sizeof(act_t));
     }
 }
-void tpm_embed(int c) {
+void tpm_embed(int c, bool wait = true) {
     const auto &te = we("token_embd.weight");
     for (int t = 0; t < mt_n; ++t) {
         tok_set(c, t);
@@ -499,7 +554,7 @@ void tpm_embed(int c) {
         qs[c].memcpy(sc[c].cur_pre, k_pm1, 16);
     }
     tok_end(c);
-    twait(c);
+    if (wait) twait(c);
 }
 void tpm_engram_kv(int c) {
     if (!o.eng_split) throw std::runtime_error("multi-token step needs OWN_ENG_SPLIT=1");
@@ -986,11 +1041,23 @@ void tpm_card_step(int c) {
         fin_attn[c] = false;
         xt[c].on = xt[c].pending = false;
         mx_ready[c] = false;
-        tpm_engram_upload(c);
+        auto eng = [&] {
+            const auto e0 = std::chrono::steady_clock::now();
+            tpm_engram_upload(c);
+            eng_t[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - e0).count();
+            ++eng_n[c];
+        };
+        if (!o.eng_late) eng();
         if (o.layer_begin != 0) throw std::runtime_error("multi-token step needs every layer");
-        tpm_embed(c);
-        tpm_engram_kv(c);
-        for (int L = o.layer_begin; L < o.layer_end; ++L) tpm_layer(L, c);
+        tpm_embed(c, !o.eng_late); // late: the rows' copy comes after layer 0's launches; the step's end waits
+        if (!o.eng_late) tpm_engram_kv(c);
+        for (int L = o.layer_begin; L < o.layer_end; ++L) {
+            if (o.eng_late && L == 1) { // the host reads the rows while the card runs the embed and layer 0
+                eng();
+                tpm_engram_kv(c);
+            }
+            tpm_layer(L, c);
+        }
         if (o.head && mt_heads) {
             tok_end(c);
             tpm_head_all(c);
@@ -1023,7 +1090,9 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
         throw std::runtime_error("multi-token step is written for the default options");
     mt_n = mt;
     mt_toks = toks;
-    tpm_engram_prefetch();
+    if (!o.eng_early) tpm_engram_prefetch();
+    eng_t0 = o.eng_early && eng_anchor_asked ? 1 : 0;
+    eng_anchor_asked = false;
     ++tp_stepn;
     tp_abort = false;
     {

@@ -945,7 +945,83 @@ threads float; CPU n and n + 8 share a core, and the cards' interrupts are taken
 thread on 6, plain answers 74.94 / 75.54 vs 78.13 / 77.91 tok/s unpinned, guessing answers the same to 2 % slower
 (e70). Left off; a layout that avoids the interrupt CPUs is untested. The host-time profile (`OWN_TP_HOSTPROF`,
 plain steps) shows every card thread busy for the whole step and never blocked in its queue wait (12.8 ms per step
-unpinned, 13.3 pinned): the threads spin, in the driver's waits or ours, so where they run matters.
+unpinned, 13.3 pinned): the threads spin, in the driver's waits or ours, so where they run matters. (Correction: that profile counts only
+our queue wait as blocked; the head's final copy-back wait counts as busy, so "busy the whole step" does not show
+the threads are the limit.)
+
+**The head without row blocks for blocks of 5 only: slower, closed** (e71, `round18-e71-summary.txt`,
+`round18-e71-telemetry-per-run.txt`; tp60, `OWN_MT_TGW_ROWS=16384 OWN_MT_TGWM=1:0,2:0,3:0,4:0,5:3,6:0`, so the form
+runs once per round, in the draft's head). Every answer SAME. The draft got faster (2.57-2.61 -> 2.37-2.41 ms per
+round), but the check got slower (+0.4-0.55 ms): the four 230 W cards ran at 2,639-2,665 MHz for the whole run
+instead of 2,740-2,800, as with the form on every block size (e67/e68). One launch of that form per round is
+enough to bring the clocks down.
+
+| tok/s (tp60) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| row blocks, round 1 | 96.87 | 80.99 | 109.57 | 97.18 | 100.58 | 97.18 | 105.41 |
+| head-5 groups, round 1 | 95.29 | 79.96 | 108.19 | 95.99 | 99.01 | 95.99 | 103.90 |
+| row blocks, round 2 | 96.79 | 81.08 | 109.87 | 97.34 | 100.51 | 97.34 | 105.56 |
+| head-5 groups, round 2 | 95.69 | 80.08 | 108.16 | 96.02 | 99.20 | 96.02 | 103.94 |
+
+No run in e71 was in the slow mode (all 12 row-block runs within 0.4 % per prompt).
+
+## 26. The "slow mode" is the engram table's rows missing from the file cache; asking for them sooner: a new prompt's cost 2.4 % -> 0.5 %, repeats ~97.5 -> ~98.2 tok/s median (2026-11-10 06:40-08:00 EST)
+
+**What it was.** Layers 1 and 14 (engram) read 24 hashed rows per token (one Q5_K block of 176 bytes each) from the
+135 GB table in shard 6 on the NVMe, through `mmap`. A row that is not in the file cache costs a disk read inside
+the step, and the card waits for the host. New per-run line (tp61 on): `host io during decode: X MiB read from
+disk, N major page faults; engram rows U us per step and card` (bytes from `/proc/self/io`, host time from the
+start of the card thread's row upload to its end: hashes, reads, decode, copy).
+
+A CPU-only bench of the read pattern (`round18-scripts/bench_eng_io.cpp`, 240 rows = one 5-token block, random
+rows of the real shard): rows already cached, `madvise(WILLNEED)` on all 240 takes 43 us and reading them 0.2 us;
+new rows read one after another 26.9 ms; new rows with `madvise` first (the engine's way) 614 us of `madvise` +
+293 us of reads.
+
+**Evidence.** The first runs of each prompt after a build (e72 `_b1`, e73 `_w0`) read 40-123 MiB from disk (40 for the 256-token 3K answer), spend
+0.74-0.80 ms per step on the rows (0.30-0.38 warm) and run 1.9-3.2 % slower with 0.5-0.7 ms more check per
+round: the "slow mode" of sections 24-25 (same clocks, a little less power: the cards wait). The same prompts read
+the same amount again after the next build (code 94.4 / 94.3 MiB, prose 123.3 / 123.3, analysis 78.0 / 78.0 in
+e72 / e73): the build's memory use pushes the rows out of the cache. The second run of a prompt reads 0 MiB.
+(Section 24's unexplained extra check time in e63, 0.6-0.8 ms per round, is the size of this effect and may
+be it.) The first plain 128-token run after a build is slowed too: 75.00 tok/s, 15.9 MiB, 570 us
+per step on the rows; the next one 78.22, 0 MiB, 133 us (e73 `p1x`/`p1b`).
+
+**Fairness.** Every guessing number before this section was measured on prompts that had run before, with their
+rows cached. A prompt the engine has never seen pays the reads in its first answer (the lab's gate wants cold
+first responses). Twelve new prompts (`round18-fresh-prompts/f1-f12`, never run before), each answered twice with
+one setting: the old way, the first answer is 2.1-2.6 % slower than the second (median 0.976, +0.54 ms check per
+round); with `OWN_ENG_EARLY=1`, 0.4-0.7 % (median 0.995, +0.11 ms). Both answers of every prompt are the same
+text. Table: `round18-e73-fresh-prompts-table.md`.
+
+**`OWN_ENG_EARLY=1`** (tp62): (a) the anchor's 48 rows (its position is known before the draft runs) are asked
+for in `draft_tp` right after the cards start the draft, so their reads run behind it; (b) a block's other rows
+are split over the six card threads, each asking for its share (every sixth row) and waiting on it before
+reading all rows, instead of the main thread's 240 serial requests; (c) `MADV_RANDOM` on the table mapping, so a
+miss reads its page only, not 128 KiB around it. Trace gates (blocks of 16 and 5, one token) `TRACE_IDENTICAL`
+/ `IDS40_SAME`, plain 128 `SPEED128_SAME`, every guessing answer SAME (e73, `round18-e73-summary.txt`). With the
+rows cached it also helps a little (rows 340 -> 288 us per step):
+
+| tok/s (tp62, rows cached) | code | prose | analysis | ops | docs | median of 5 | 3K document |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| first runs after the build (rows read from disk) | 94.55 | 78.54 | 107.29 | 94.77 | 98.08 | 94.77 | 103.17 |
+| default, round 1 | 97.04 | 81.11 | 109.75 | 97.52 | 100.68 | 97.52 | 105.39 |
+| **`OWN_ENG_EARLY=1`, round 1** | 97.45 | 81.72 | 110.47 | 98.06 | 100.99 | **98.06** | 105.98 |
+| **`OWN_ENG_EARLY=1`, round 2** | 97.41 | 81.47 | 110.34 | 98.27 | 100.98 | **98.27** | 106.03 |
+| default, round 2 | 97.13 | 81.10 | 109.79 | 97.40 | 100.65 | 97.40 | 105.61 |
+
+**Rows decoded on the cards (`OWN_ENG_DEV=1`, tp61): a GPU fault in one run; off.** Each card thread decodes the
+same rows on the host (about 133 us per one-token step, 300-440 us per checked block); `OWN_ENG_DEV` copies the
+raw 176-byte rows to each card and decodes them there with `EmbedRowA`'s decode (`EngRowsA`). Its gates passed
+bitwise (e72). In its second guessing run (code), card 0000:43 faulted (06:49:01): `Suspend fence, guc_id=7,
+failed to respond`, then a timed-out job on the driver's own copy queue (`bcs0`, "no process"), `VM worker error:
+-62`, a GT reset; the run ended with `UR_RESULT_ERROR_OUT_OF_RESOURCES`. A job of ours did not pause when the
+driver needed to move a buffer; the new code's pinned host buffers (`malloc_host`) are the suspect, not proven.
+The runner was paused between runs, the dump saved (`round18-e72-devcoredump-43.txt.gz`, kernel lines in
+`round18-e72-fault-kernel-log.txt`), and the six-card health probe passed with a clean kernel log. Its other
+three guessing runs finished (SAME). tp63 stages the raw rows in ordinary host memory, as the default path does;
+campaigns now stop at the first fault line (the filter gained `timedout job`, `exec queue reset`, `suspend fence`,
+`vm worker error`) and log `/proc/vmstat` around every run.
 
 ## Reproduce
 
@@ -989,8 +1065,9 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
    context (compact the live slots).
 3. Guessing rounds (profiles in sections 23-24): checking a block of 4 still costs ~1.8x a one-token step. Next:
    the head's 4-row blocks at 2-6 tokens (0.6 ms per round on card 2; the row-block-free form drops the 230 W
-   cards' clocks, section 24; blocks of 5 alone are being tried), token norms inside their neighbours (0.9 ms),
-   exchanges folded into the kernels that consume them, the card threads' spinning waits (section 25). The
+   cards' clocks, section 24, even when it runs only for blocks of 5, section 25), token norms inside their neighbours (0.9 ms),
+   exchanges folded into the kernels that consume them, the card threads' spinning waits (section 25), the host's engram row work before each step (0.25-0.35 ms per
+   round with the rows cached, section 26; fetching after layer 0's launches is in test). The
    attention groups stay uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess
    counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
    section 24; the draft's experts, section 25.)

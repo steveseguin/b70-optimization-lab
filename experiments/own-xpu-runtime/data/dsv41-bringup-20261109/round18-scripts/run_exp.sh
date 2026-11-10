@@ -25,6 +25,6 @@ for spec in "$@"; do
     cmp -s $D/$name-ids.txt $B/base-speed-ids.txt && echo "$name SPEED128_SAME" >> $sum || echo "$name SPEED128_DIFFER" >> $sum
   fi
   grep -h "decode:\|rror\|timed out" $D/$name.log | sed "s/^/$name: /" >> $sum
-  journalctl -k --since "$t0" -o cat | grep -iE "fault response|cat error|engine reset|coredump has been created|gt reset" | head -3 >> $sum
+  journalctl -k --since "$t0" -o cat | grep -iE "fault response|cat error|engine reset|coredump has been created|gt reset|timedout job|exec queue reset|suspend fence|vm worker error|reset started" | head -3 >> $sum
 done
 echo DONE >> $sum

@@ -294,7 +294,7 @@ public:
 // The draft's guesses for the text after the committed position pos: the block [anchor, MASK x 4] at pos ..
 // pos + 4 (anchor = the target's token for pos, not yet run by the target); out[0 .. 4] = the 5 guesses.
 // Every position before pos must have been injected (prompt blocks, commit_block).
-void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = nullptr) {
+void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = nullptr, long long anchor_comp = -1) {
     if (nrows < 1 || nrows > DR_BLOCK) throw std::runtime_error("draft_tp: 1..5 guesses");
     dr_rows = nrows;
     if (!o.dspark || !mt_small || o.tp < 2 || tp_th.empty()) throw std::runtime_error("draft_tp: needs the draft, OWN_TP > 1, block forms");
@@ -313,6 +313,23 @@ void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = 
         ++tp_gen;
     }
     tp_cv.notify_all();
+    // OWN_ENG_EARLY: the next check block starts with the anchor at position pos; its 48 engram rows are known
+    // now, so their disk reads run behind the draft (anchor_comp = the anchor's id in the engram vocabulary)
+    if (o.eng_early && anchor_comp >= 0 && (long)comp_ids.size() == pos) {
+        static const long page = sysconf(_SC_PAGESIZE);
+        auto l = iq3::layout(iq3::Type::Q5_K);
+        for (int li = 0; li < 2; ++li) {
+            const int L = li == 0 ? 1 : 14;
+            if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+            int64_t ids[24];
+            engram_hash((int)pos, li, ids, anchor_comp);
+            for (int k = 0; k < 24; ++k) {
+                const uintptr_t a = (uintptr_t)(eng_base[li] + (size_t)ids[k] * l.bytes), a0 = a & ~(uintptr_t)(page - 1);
+                madvise((void *)a0, (size_t)(a + l.bytes - a0), MADV_WILLNEED);
+            }
+        }
+        eng_anchor_asked = true;
+    }
     {
         std::unique_lock<std::mutex> lk(tp_mu);
         tp_done_cv.wait(lk, [&] { return tp_left == 0; });
