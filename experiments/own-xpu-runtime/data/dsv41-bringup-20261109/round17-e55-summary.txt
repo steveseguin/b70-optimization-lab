@@ -1,0 +1,31 @@
+gf16 exit 0
+gf16 TRACE_IDENTICAL
+gf16 IDS40_SAME
+gf16: decode: 39 steps after the first, 0.015 s/step, 66.90 tok/s
+gf5 exit 0
+gf5 TRACE_IDENTICAL
+gf5 IDS40_SAME
+gf5: decode: 39 steps after the first, 0.015 s/step, 66.85 tok/s
+gf7m exit 0
+gf7m TRACE_IDENTICAL
+gf7m IDS40_SAME
+gf7m: decode: 39 steps after the first, 0.015 s/step, 66.74 tok/s
+v3f0 exit 0
+v3f0: verify test: 127 tokens in 32 cycles (3.97 per cycle; 96 of 96 guesses kept) in 0.78s = 162.34 tok/s; SAME AS the plain run
+v3f1 exit 0
+v3f1: verify test: 127 tokens in 32 cycles (3.97 per cycle; 96 of 96 guesses kept) in 0.75s = 170.28 tok/s; SAME AS the plain run
+v5f1 exit 0
+v5f1: verify test: 127 tokens in 22 cycles (5.77 per cycle; 106 of 106 guesses kept) in 0.63s = 202.64 tok/s; SAME AS the plain run
+v3f0b exit 0
+v3f0b: verify test: 127 tokens in 32 cycles (3.97 per cycle; 96 of 96 guesses kept) in 0.78s = 162.05 tok/s; SAME AS the plain run
+v3f1b exit 0
+v3f1b: verify test: 127 tokens in 32 cycles (3.97 per cycle; 96 of 96 guesses kept) in 0.75s = 169.16 tok/s; SAME AS the plain run
+p3ks3 exit 0
+p3ks3: prompt: 3323 tokens read on the cards in 12.99s (256.3 tok/s; first step 0.09s incl. kernel build), first token 2581
+p3ks3: spec decode: 255 tokens in 100 cycles (2.55 per cycle; 155 of 300 guesses kept, 51.7 %) in 2.83s = 90.01 tok/s; draft 3.32 ms + check 25.01 ms per cycle; SAME AS the plain run
+p3ks3: kept guesses per cycle: 0:23 1:24 2:28 3:25
+p10ks3 exit 0
+p10ks3: prompt: 10621 tokens read on the cards in 42.85s (248.0 tok/s; first step 0.09s incl. kernel build), first token 2581
+p10ks3: spec decode: 63 tokens in 25 cycles (2.52 per cycle; 38 of 75 guesses kept, 50.7 %) in 0.74s = 85.58 tok/s; draft 3.32 ms + check 26.12 ms per cycle; SAME AS the plain run
+p10ks3: kept guesses per cycle: 0:8 1:4 2:5 3:8
+ALLDONE

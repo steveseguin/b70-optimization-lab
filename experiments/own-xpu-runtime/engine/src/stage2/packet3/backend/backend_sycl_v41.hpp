@@ -704,6 +704,7 @@ public:
     size_t warm_items = 32;
     // wait right after every host->card copy (OWN_H2D_WAIT, default on): on this
     // stack a host-pointer copy left pending slows every launch behind it
+    int hc_fin_form = 0; // OWN_HC_FIN=1: the stream mix's finish by constant-lane broadcasts (HcMixFinishSG::run_bc)
     bool h2d_wait = true;
     // tp: the step's head (final norm, output rows, argmax) is skipped; a prompt token whose
     // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
@@ -1287,8 +1288,13 @@ private:
     ops41sycl::HcDotsRows<5120, HC_SEG> hc_dots(int t, const std::string &prefix) {
         return {(const float *)streams[t], wp<float>(t, prefix + "fn.weight"), sc[t].d25};
     }
+    ops41sycl::HcMixFinishSG hc_fin_k() const {
+        ops41sycl::HcMixFinishSG k{g.h, HC_SEG};
+        k.form = hc_fin_form;
+        return k;
+    }
     ops41sycl::HcFinishRows hc_finish(int t, const std::string &prefix, float *pre, float *post, float *comb) {
-        return {ops41sycl::HcMixFinishSG{g.h, HC_SEG}, (const double *)sc[t].d25, wp<float>(t, prefix + "scale.weight"),
+        return {hc_fin_k(), (const double *)sc[t].d25, wp<float>(t, prefix + "scale.weight"),
                 wp<float>(t, prefix + "base.weight"), pre, post, comb};
     }
 #endif
@@ -1561,7 +1567,7 @@ private:
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && g.h == 5120 && HC_SEG == 8 && al16(streams[t]) && al16(fn)) {
             launch_sg(t, 25 * HC_SEG, ops41sycl::HcMixDotsP<5120, HC_SEG>{}, (const act_t *)streams[t], fn, s.d25);
-            launch_sg(t, 1, ops41sycl::HcMixFinishSG{g.h, HC_SEG}, (const double *)s.d25,
+            launch_sg(t, 1, hc_fin_k(), (const double *)s.d25,
                       wp<float>(t, prefix + "scale.weight"), wp<float>(t, prefix + "base.weight"), pre, post, comb);
             return;
         }

@@ -66,6 +66,63 @@ struct RoutedMXFP4 {
     }
 };
 
+// RoutedMXFP4 with the block count NB = cols / 32 fixed at compile time and the block loop unrolled 8 blocks at a
+// time, so each lane's 8 nibble bytes, 8 scale bytes and 8 activations are in flight together (the run-time loop
+// issued them one block after another). Each lane's sum is RoutedMXFP4's expression in RoutedMXFP4's order and
+// the same reduction: the same outputs bit for bit.
+template <unsigned NB> struct RoutedMXFP4N {
+    unsigned rows, nsl, spt, xtok;
+    bool per_slot_x;
+    unsigned nexp = 128;
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
+    void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids, float *out) const {
+        constexpr unsigned U = 8, NC = NB / U, NT = NB % U;
+        constexpr size_t rb = (size_t)NB * 17;
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const unsigned nsg = (unsigned)(it.get_global_range(0) / 32);
+        const unsigned np = (w2 ? 2u : 1u) * nsl * rows;
+        const unsigned bi = 1u + (lane & 15u), sh = lane < 16 ? 0u : 4u;
+        for (unsigned p = (unsigned)(it.get_global_linear_id() / 32); p < np; p += nsg) {
+            unsigned slot = p / rows;
+            const unsigned r = p % rows;
+            const uint8_t *wm = w;
+            float *om = out;
+            if (slot >= nsl) {
+                slot -= nsl;
+                wm = w2;
+                om = out2;
+            }
+            const unsigned ex = ids[slot] < nexp ? ids[slot] : 0u;
+            const uint8_t *row = wm + ((size_t)ex * rows + r) * rb;
+            const float *xs = x + (size_t)(slot / spt) * xtok + (per_slot_x ? (size_t)(slot % spt) * NB * 32 : 0);
+            float sum = 0.0f;
+#pragma unroll 1
+            for (unsigned cb = 0; cb < NC; ++cb) {
+                unsigned e[U], q[U];
+                float xv[U];
+#pragma unroll
+                for (unsigned j = 0; j < U; ++j) {
+                    const uint8_t *blk = row + (size_t)(cb * U + j) * 17;
+                    e[j] = blk[0];
+                    q[j] = blk[bi];
+                    xv[j] = xs[(size_t)(cb * U + j) * 32 + lane];
+                }
+#pragma unroll
+                for (unsigned j = 0; j < U; ++j) sum += mxfp4_d(e[j]) * mxfp4_v((q[j] >> sh) & 15u) * xv[j];
+            }
+#pragma unroll
+            for (unsigned j = 0; j < NT; ++j) {
+                const uint8_t *blk = row + (size_t)(NC * U + j) * 17;
+                sum += mxfp4_d(blk[0]) * mxfp4_v((blk[bi] >> sh) & 15u) * xs[(size_t)(NC * U + j) * 32 + lane];
+            }
+            sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+            if (lane == 0) om[(size_t)slot * rows + r] = sum;
+        }
+    }
+};
+
 // The input feature of one target row for the draft: the mean of the 4 streams (weight 1/4 each, not the
 // stream collapse) of the input of target layer L, written at feat + t * fs + li * h (li = 0, 1, 2 for
 // layers 37, 38, 39). One item per element.
@@ -140,14 +197,15 @@ struct DraftBest {
         if (lane == 0) {
             slot[0] = bv;
             slot[1] = sycl::bit_cast<float>(bi);
-            slot[2] = slot[3] = 0.0f;
+            slot[3] = 0.0f; // slot[2]: DraftSumExp
         }
     }
 };
-// The draft row's token from every card's slot (n cards, stride floats apart): prev[0] = the best index.
+// The draft row's token from every card's slot (n cards, stride floats apart): prev[0] = the best index;
+// conf[0] = the draft's probability of it (slot[2] = the card's sum of exp(logit - its best), DraftSumExp).
 struct DraftPick {
     unsigned n, stride;
-    void operator()(sycl::nd_item<1> it, const float *slots, int32_t *prev) const {
+    void operator()(sycl::nd_item<1> it, const float *slots, int32_t *prev, float *conf) const {
         if (it.get_global_linear_id() != 0) return;
         float bv = -INFINITY;
         int bi = 0x7fffffff;
@@ -157,6 +215,22 @@ struct DraftPick {
             if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
         }
         prev[0] = bi;
+        float se = 0.0f;
+        for (unsigned d = 0; d < n; ++d) se += slots[(size_t)d * stride + 2] * sycl::exp(slots[(size_t)d * stride] - bv);
+        conf[0] = se > 0.0f ? 1.0f / se : 0.0f;
+    }
+};
+// slot[2] = sum over this card's nl logits of exp(logit - slot[0]) (slot[0] = the card's best, DraftBest);
+// one work-group, a fixed order (the draft's confidence only chooses how many guesses to check)
+struct DraftSumExp {
+    unsigned nl;
+    void operator()(sycl::nd_item<1> it, const float *logits, float *slot, float *) const {
+        const float m = slot[0];
+        float v = 0.0f;
+        for (unsigned j = (unsigned)it.get_local_linear_id(); j < nl; j += (unsigned)it.get_local_range(0))
+            v += sycl::exp(logits[j] - m);
+        v = sycl::reduce_over_group(it.get_group(), v, sycl::plus<float>());
+        if (it.get_local_linear_id() == 0) slot[2] = v;
     }
 };
 

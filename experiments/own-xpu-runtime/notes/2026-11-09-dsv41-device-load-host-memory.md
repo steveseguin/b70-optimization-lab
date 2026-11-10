@@ -687,6 +687,103 @@ and the other cards wait for them at the next exchange. Routed experts 6.7 ms, d
 of 4 tokens 1.4 ms (17 us each: all 16 sub-groups of 4 tokens in one 512-wide work-group, so on one core: next
 round spreads them, `OWN_MT_RWG`).
 
+## 23. Five kinds of prompts; guess as many as the draft is sure of; row blocks: ~86 -> ~92 tok/s median, text identical (2026-11-10 01:35-03:15 EST)
+
+**Prompts.** One short chat prompt per class the realistic suite asks for (code, prose, analysis, operations,
+documentation), written for these runs and unchanged since: `data/dsv41-bringup-20261109/spec-prompts/`
+(README there; ids made with `tools/mk_chat_ids.py`). Each answer runs to its end of sentence or 512 tokens and is
+checked against the plain run token for token (`OWN_VERIFY_REF`). Every run below: **SAME AS the plain run**. These
+are lab screening runs (one run per prompt, the engine's own clock over the whole answer), not the realistic-suite
+gate (99 intervals after the first token, served).
+
+**How sure the draft is, and when to stop guessing.** The draft's top probability for each guess is well
+calibrated: over 1,163 rounds of five guesses on the six prompts (`round17-spec-conf/e57-*`, `OWN_SPEC_CONF=1`),
+first guesses it gave 0.99 or more were right 98 % of the time, 0.5-0.7 52 %, under 0.3 12 % (later guesses
+alike, counted where the guesses before them were right). Whether one round's guesses are right says nothing
+about the next round's. A simulator over those logs with the measured round costs (`round17-scripts/simk.py`;
+fixed 2 guesses 84.5, fixed 3 80.4) picked the rule now in the runner: check the leading guesses while the
+running product of their probabilities stays at or above `OWN_SPEC_TAU` (0.4 and 0.5 89.9, 0.6 88.5), up to
+`OWN_SPEC=5`; `OWN_SPEC_KMIN=0` lets a round check no guess
+at all (a one-token block step, which needs token groups of 1 for blocks of 1: `OWN_MT_TGM=1:1,...`).
+
+| measured round cost, short context (draft + check) | ms |
+| --- | --- |
+| plain one-token step | 13.8 |
+| 0 guesses (block of 1 + draft) | ~17.1 |
+| 1 guess | 22.1 |
+| 2 guesses | 24.3 |
+| 3 guesses | 28.0 |
+| 4 guesses | 32.5 |
+| 5 guesses | 33.3 |
+
+**Row blocks** (`DenseRowsGR`, `GemvQ8P::rowgr` / `GemvQ6KP::rowgr`): a sub-group computes R rows of a weight
+matrix for its token group at once, so each activation value is read once for R rows. Each row's sum keeps the
+row-at-a-time kernel's expressions and order (bitwise: traces identical after blocks of 16 with R = 4 on every
+matrix, and after blocks of 5). It only pays where a card holds many rows: `tools/bench/bench_dense_rowblock.cpp`
+(`round17-dense-rowblock-bench.txt`), 4 tokens, Q8_0 1280 x 8192 rows 70 -> 51 us, 1280 x 4096 39 -> 30 us, but
+4096 x 864 and smaller lose (too few sub-groups to fill the card). Runner: `OWN_MT_TGR=m:R,...` per block size,
+`OWN_MT_TGR_ROWS=4096` (only matrices with that many rows on the card), `OWN_MT_TGR_FMT` (1 Q8_0, 2 Q6_K, 3 both),
+`OWN_MT_TGR_DRAFT` (also in the draft's matrices). Check cost per round -0.9 to -1.2 ms. Bench lesson: the first
+"cold" timing flushed the cache by writing a large buffer, and the dirty lines were written back during the timed
+launch (one-token rows showed 250 GB/s); evict by reading only.
+
+**Draft experts** (`RoutedMXFP4N<NB>`, `OWN_DR_MXN=1` default): the draft's MXFP4 expert rows with the block count
+fixed at build time (160 for 5120 columns, 72 for 2304) and the block loop unrolled by 8, loads first. Same sums
+in the same order; the guesses are identical. Draft -0.13 ms per round.
+
+**Stream-mix finish** (`HcMixFinishSG` form 1, `OWN_HC_FIN=1`): the 4 x 4 Sinkhorn finish (20 rounds, precise
+divides) ran its row and column sums through sub-group reductions; form 1 broadcasts each of the 16 values from a
+fixed lane and sums them in the same order. `tools/bench/bench_hc_finish.cpp`: 0 of 98,304 values differ over
+4,096 random sets; one sub-group 12.50 -> 7.29 us. Plain 128-token runs 75.5 / 76.3 -> 76.8 / 76.6 tok/s;
+traces identical.
+
+| tok/s, whole answer to end of sentence or 512 tokens | code | prose | analysis | ops | docs | 3K document |
+| --- | --- | --- | --- | --- | --- | --- |
+| plain (one token per step) | ~72-77 | | | | | 68.7 |
+| 3 guesses every round (section 22's best) | 88.7 | 67.9 | 94.4 | 83.3 | 88.5 | 90.2 |
+| tau 0.5, at least 1 guess | 91.6 | 72.3 | 98.9 | 88.3 | 90.7 | 95.4 |
+| tau 0.5, 0 guesses allowed | 89.3 | 73.6 | 101.3 | 89.6 | 91.9 | 95.2 |
+| **+ row blocks (rows >= 4096)** | **92.2** | **77.0** | **104.0** | **92.4** | **95.2** | |
+
+(First two rows `round17-e58-summary.txt` on build tp46, the rest `round17-e60-summary.txt` on tp49; same session,
+one run each; this host drifts about 3 % back to back.) Median over the five classes: 92.4 tok/s, against ~72.5
+plain, +27 %. Prose is the hardest for the draft (2.0 tokens per round at 0 guesses allowed, vs 2.9 on analysis).
+
+**Which row blocks** (`round17-e61-summary.txt`, build tp51, six prompts x four settings, all SAME): both formats
+(`OWN_MT_TGR_FMT=3`, the default) beat Q8_0 only by 1-2.5 % on every prompt; leaving the draft's matrices out
+(`OWN_MT_TGR_DRAFT=0`) saves 0.1 ms of draft but is not faster overall; `OWN_HC_FIN=1` adds about 1 %. Kept:
+`OWN_MT_TGR_FMT=3 OWN_MT_TGR_DRAFT=1 OWN_HC_FIN=1` (the e61 numbers are 1-3 % under e60's on some prompts: same
+session, drift).
+
+**Ahead-of-time build** (`round17-e62-summary.txt`): the first run of a new binary used to compile its kernels on
+the cards for ~5.5 minutes (one card at a time fills the driver's cache). Built with
+`-fsycl-targets=intel_gpu_bmg_g31` (7.5 minutes on the CPU, 98 MB binary, while the cards run something else), the
+first run takes 30 s including the 30 s weight upload; traces identical (blocks of 16 with row blocks on every
+matrix, blocks of 5), 128-token answers identical, 76.8 / 76.7 tok/s plain (the JIT build 76.8 / 76.6). Builds
+are ahead of time from now on.
+
+**Expert kernels at one token** (`tools/bench/bench_routed_m1.cpp`, card 0, the six-card shapes: gate + up 12 x 384
+rows of 20 blocks, down 6 x 864 rows of 9 blocks, 6 random experts of 384 per launch; in `round17-e62-summary.txt`):
+- Their machine code is already lean: IQ2_XXS is 7 ALU instructions per 32 weights (rotate, and-or, local load,
+  multiply, shift, and-xor, multiply, add; the compiler already uses 3-input logic ops), IQ2_S 10.
+- R rows per sub-group with the activations read once for all R (`RoutedIQ2XXSR`, bitwise equal): slower (R = 2
+  33.2 vs 32.1 us, R = 4 45 us). The kernel is not limited by cache reads; it is ALU-bound. Closed.
+- A lane-group broadcast (`select_from_group(sg, v, k + (lane >> 3))`, 16-bit pre-shifted indices) does not
+  become a free register region: the compiler emits indirect-register moves (`r[a0.0]`) and more instructions
+  (`tools/bench/probe_lane_group_region.cpp`). Closed without inline assembly.
+- Work-group count for gate + up: 96 groups (1,536 sub-groups, exactly 3 rounds of 4,608 rows) beats the
+  engine's 128 by 6-7 % on IQ2_XXS / IQ2_S / IQ3_XXS / IQ2_XS (29.1 vs 31.2, 42.5 vs 45.4 us); IQ1_S is best at
+  128 (50.1 vs 56.3). Down: 128 is best or within noise. (`OWN_PAIR_WG` sets all formats at once.)
+
+**Where a guessing round goes** (3K document, `OWN_GPROF=2`, `round17-e61-spec-round-profile-card{0,2}.txt`, 23.7
+ms of kernels per round on both cards, 1,400 launches): routed experts 5.3 ms, exchanges 2.7 ms on card 2 but
+4.5 ms on card 0, the draft's MXFP4 experts 0.78 ms, the attention core ~1.9 ms, BF16 indexer / compressor rows
+0.9 ms, token norms 0.9 ms (83 launches of 10.6 us: a 160-long chain of double adds is ~4.2 us of it), the
+draft's `dsp.fc` (15,360 columns, every card the whole matrix) 0.32 ms, the Q2_K expert layer 0.2 ms. Card 0
+waits ~1.8 ms more per round in exchanges than card 2: cards 2 and 5 carry two of the eight attention groups.
+Evening that out needs the attention outputs exchanged before o_a (an extra all-gather of 32K floats per
+token, ~15-30 us per layer) against ~26 us per layer saved: not worth it.
+
 ## Reproduce
 
 ```bash
@@ -705,6 +802,12 @@ OWN_KV_BF16=1 OWN_TRACE=cpu.trc OWN_TRACE_STEPS=3 OMP_NUM_THREADS=16 ./cpu_run_v
 OWN_PROMPT=ids.txt ./own_run_v41 - 200 out_ids.txt 4096
 # every layer split across the six cards (fastest; OWN_GPROF=2 OWN_GPROF_CARD=c profiles card c)
 OWN_TP=6 OWN_PROMPT=ids.txt ./own_run_v41 - 200 out_ids.txt 4096
+# with the DSpark draft guessing (section 23's settings; OWN_VERIFY_REF=<plain run's ids> checks the text)
+G="OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1"
+env OWN_TP=6 OWN_PROMPT_BLOCK=16 OWN_MT_TG=4 OWN_MT_TG_MAX=16 $G OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3,6:3 \
+  OWN_SPEC=5 OWN_SPEC_TAU=0.5 OWN_SPEC_KMIN=0 OWN_MT_TGR=2:4,3:4,4:4,5:4,6:4 OWN_MT_TGR_ROWS=4096 \
+  OWN_DSPARK=dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf OWN_PROMPT=ids.txt ./own_run_v41 - 512 out_ids.txt 4096
+# (build with -fsycl-targets=intel_gpu_bmg_g31 added to skip ~5.5 min of kernel compiling on the first run)
 # from the reference's state, with a trace for the gate (cards must be empty; the runner refuses otherwise)
 OWN_DEBUG=1 OWN_TRACE=dev.trc OWN_TRACE_STEPS=3 ./own_run_v41 state.bin 40 dev_ids.txt 4096
 python3 tools/dsv41_trace_diff.py cpu.trc dev.trc
@@ -721,9 +824,12 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
    Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
    context (compact the live slots).
-3. Checking guesses costs about twice a one-token step for a block of 4 (section 22): the attention groups are
-   uneven over six cards (8 groups: two cards carry two), small launches, exchange latency. Smarter guess counts
-   (stop a round where the draft is unsure). (The batched prompt pass is done: sections 20-21, 251 tok/s at 3K.)
+3. Guessing rounds (section 23 has the profile): checking a block of 4 still costs ~1.8x a one-token step. Next:
+   the draft's `dsp.fc` split across the cards (0.32 ms per round), BF16 indexer / compressor rows read once per
+   block (0.9 ms), a packed Q2_K expert kernel (0.2 ms), gate + up work-groups per format, token norms inside
+   their neighbours (0.9 ms), exchanges folded into the kernels that consume them. The attention groups stay
+   uneven (8 over 6 cards: evening them costs an extra exchange). (Done: adaptive guess counts, section 23; the
+   batched prompt pass, sections 20-21, 251 tok/s at 3K.)
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

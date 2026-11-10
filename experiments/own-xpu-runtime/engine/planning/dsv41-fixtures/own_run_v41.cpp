@@ -325,8 +325,23 @@ int main(int argc, char **argv) {
                 s = cm + 1;
             }
         }
+        if (const char *e = getenv("OWN_MT_TGR")) { // per block size: "m:r,m:r" rows per sub-group (2 or 4)
+            for (const char *s = e; *s;) {
+                unsigned m = 0, rr = 0;
+                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 2 || rr == 4)) be.mt_tgr[m] = rr;
+                const char *cm = std::strchr(s, ',');
+                if (!cm) break;
+                s = cm + 1;
+            }
+        }
+        if (const char *e = getenv("OWN_MT_TGR_ROWS")) be.mt_tgr_rows = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_TGR_FMT")) be.mt_tgr_fmt = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_TGR_DRAFT")) be.mt_tgr_draft = atoi(e) != 0;
+        if (const char *e = getenv("OWN_DR_MXN")) be.dr_mxn = atoi(e) != 0;
+        if (const char *e = getenv("OWN_HC_FIN")) be.hc_fin_form = atoi(e);
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
         if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
+        if (const char *e = getenv("OWN_MT_RFUSE")) be.mt_rfuse = atoi(e) != 0; // router + shared gate/up in one launch
 #endif
 
         // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----
@@ -461,13 +476,26 @@ int main(int argc, char **argv) {
             long cycles = 0, guessed = 0, accepted = 0;
             std::vector<long> hist(k + 2, 0);
             double t_draft = 0, t_check = 0;
+            // OWN_SPEC_TAU=p: check only the leading guesses whose running product of the draft's probabilities
+            // stays >= p (at least OWN_SPEC_KMIN, default 1; 0 = the anchor alone, a one-token block); OWN_SPEC_LOG=file: per round the 5 probabilities and
+            // the guesses kept
+            const float tau = getenv("OWN_SPEC_TAU") ? (float)atof(getenv("OWN_SPEC_TAU")) : 0.0f;
+            const int kmin = getenv("OWN_SPEC_KMIN") ? std::max(0, atoi(getenv("OWN_SPEC_KMIN"))) : 1; // 0: a round may check no guess
+            FILE *slog = getenv("OWN_SPEC_LOG") ? std::fopen(getenv("OWN_SPEC_LOG"), "w") : nullptr;
             const double ts0 = now();
             while ((int)out.size() < ndecode) {
                 int32_t d[own41::Backend41::DR_BLOCK];
+                float conf[own41::Backend41::DR_BLOCK];
                 const double ta = now();
-                be.draft_tp(cur, d);
+                int kk = std::min(k, ndecode - (int)out.size());
+                be.draft_tp(cur, d, kk, conf);
                 const double tb = now();
-                const int kk = std::min(k, ndecode - (int)out.size());
+                if (tau > 0.0f) {
+                    float run = 1.0f;
+                    int kt = 0;
+                    while (kt < kk && (run *= conf[kt]) >= tau) ++kt;
+                    kk = std::max(std::min(kmin, kk), kt);
+                }
                 std::vector<int32_t> blk{cur};
                 for (int j = 0; j < kk; ++j) blk.push_back(d[j]);
                 for (int32_t t : blk) be.comp_ids.push_back(token_map[t]);
@@ -479,6 +507,10 @@ int main(int argc, char **argv) {
                 be.comp_ids.resize((size_t)be.pos);
                 t_draft += tb - ta;
                 t_check += now() - tb;
+                if (slog) {
+                    for (int j = 0; j < own41::Backend41::DR_BLOCK; ++j) std::fprintf(slog, "%.4f ", conf[j]);
+                    std::fprintf(slog, "%d %d\n", kk, n - 1);
+                }
                 const size_t o0 = out.size();
                 for (int j = 1; j < n; ++j) out.push_back(blk[j]);
                 out.push_back(nx[n - 1]);
@@ -510,6 +542,7 @@ int main(int argc, char **argv) {
                                  be.kprof_n[kn] / nc, t * 1e6 * nc / std::max(1L, be.kprof_n[kn]), kn.c_str());
                 std::fprintf(stderr, "  kernels %.3f ms per cycle\n", ktot * 1e3);
             }
+            if (slog) std::fclose(slog);
             out.resize(std::min<size_t>(out.size(), (size_t)ndecode));
             const double dt = now() - ts0;
             bool same = !ref.empty();

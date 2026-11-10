@@ -21,14 +21,18 @@
 
 public:
 static constexpr int DR_STAGES = 3, DR_BLOCK = 5, DR_MASK = 128799, DR_WIN = 128, DR_NIDX = 160;
+bool dr_mxn = true; // OWN_DR_MXN=0: the draft's experts by the run-time-loop RoutedMXFP4 (same outputs)
 private:
 uint16_t *dring[TILES][DR_STAGES] = {}; // per stage: window rows (position p at row p % 128), block rows 128 ..
 float *dfeat[TILES] = {};               // the block's target features [MTX][3 h] (layers 37 .. 39 inputs)
 act_t *dmain[TILES] = {}, *dmainn[TILES] = {}, *dkv[TILES] = {}, *dkvn[TILES] = {}; // injection rows
 int32_t *dprev[TILES] = {};             // [0] the anchor, [1 .. 5] the drafted tokens
 int32_t h_dprev[8] = {};
+float *dconf[TILES] = {};               // the draft's probability of each guess (DraftPick)
+float h_dconf[8] = {};
 int32_t dr_toks[MTX] = {};
 bool dr_step = false;                   // the card threads run a draft step (tp_worker)
+int dr_rows = DR_BLOCK;                 // head rows of this draft step (draft_tp's nrows)
 unsigned xdrM = 0;                      // the Markov chain's argmax rows: DR_BLOCK rows of 6 cards x 4 floats
 
 static constexpr size_t dr_arena_floats() { return (size_t)8 * 24; }
@@ -43,6 +47,7 @@ void dr_alloc(int c) {
     dkv[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
     dkvn[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
     dprev[c] = dalloc<int32_t>(c, 8);
+    dconf[c] = dalloc<float>(c, 8);
     qs[c].wait();
 }
 // the target's block features at layer L's input (tpm_layer, before the layer touches the streams)
@@ -85,11 +90,21 @@ void dr_routed(int c, const std::string &wn, const std::string &wn2, const act_t
         if (we(wn2).type != e.type || dp2.nrows != rows) throw std::runtime_error("draft experts: pair " + wn);
         w2 = (const uint8_t *)dp2.p;
     }
+    const size_t np = (size_t)(w2 ? 2 : 1) * nsl * rows;
+    auto gn = [&](auto nbc) { // OWN_DR_MXN=1 (default): the unrolled form at the draft's two widths
+        constexpr unsigned NB = decltype(nbc)::value;
+        ops41draft::RoutedMXFP4N<NB> k{rows, nsl, 3u, (unsigned)xtok, per_slot};
+        k.nexp = (unsigned)e.experts;
+        k.w2 = w2;
+        k.out2 = y2;
+        launch_rows<0>(c, np, 1024, k, (const uint8_t *)dp.p, (const float *)x, (const uint32_t *)scm[c][0].ids, y);
+    };
+    if (dr_mxn && e.cols == 5120) return gn(std::integral_constant<unsigned, 160>{});
+    if (dr_mxn && e.cols == 2304) return gn(std::integral_constant<unsigned, 72>{});
     ops41draft::RoutedMXFP4 k{rows, (unsigned)e.cols, nsl, 3u, (unsigned)xtok, per_slot};
     k.nexp = (unsigned)e.experts;
     k.w2 = w2;
     k.out2 = y2;
-    const size_t np = (size_t)(w2 ? 2 : 1) * nsl * rows;
     launch_rows<0>(c, np, 1024, k, (const uint8_t *)dp.p, (const float *)x, (const uint32_t *)scm[c][0].ids, y);
 }
 // one draft stage for the block (tpm_layer's block forms; no engram, compressor or indexer)
@@ -204,13 +219,13 @@ void dr_stage(int s, int c) {
 // output norm, this card's logits rows (the target's output.weight), the Markov chain: row i's token from
 // every card's best (DraftBest -> exchange -> DraftPick), the next row's bias from it
 void dr_head(int c) {
-    const int M = mt_n;
+    const int M = dr_rows; // the head for the rows whose guesses are used (the stages ran all mt_n block rows)
     const Scratch &b = scm[c][0];
     const size_t H = g.h;
     if (!mx_ready[c]) throw std::runtime_error("draft head: no collapse");
     rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{b.x, wp<float>(c, "dsp.output_norm.weight"), b.xn}, H, H));
     const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
-    gemv_m(c, "output.weight", b.xn, H, tlogm[c], (size_t)nl);
+    gemv_m(c, "output.weight", b.xn, H, tlogm[c], (size_t)nl, 0, (unsigned)M);
     qs[c].memcpy(dprev[c], dr_toks, 4);
     const uint16_t *w1 = wp<uint16_t>(c, "dsp.markov_w1.weight"), *w2 = wp<uint16_t>(c, "dsp.markov_w2.weight");
     for (int i = 0; i < M; ++i) {
@@ -221,10 +236,15 @@ void dr_head(int c) {
         const unsigned off = xdrM + (unsigned)i * 24;
         launch_sg(c, 1, ops41draft::DraftBest{(unsigned)G}, (const float *)tamvm[c], (const int32_t *)tamim[c],
                   xarena[c] + off + 4 * c);
+        launch_wgs<1>(c, 1, 512, ops41draft::DraftSumExp{(unsigned)nl}, (const float *)li, xarena[c] + off + 4 * c);
         xchg(c, off, 24, 1, 4u * c, 4u * c + 4, 0, 0, -1);
-        launch(c, 32, 32, ops41draft::DraftPick{(unsigned)o.tp, 4}, (const float *)(xarena[c] + off), dprev[c] + i + 1);
+        launch(c, 32, 32, ops41draft::DraftPick{(unsigned)o.tp, 4}, (const float *)(xarena[c] + off), dprev[c] + i + 1,
+               dconf[c] + i);
     }
-    if (c == 0) qs[c].memcpy(h_dprev, dprev[c], 8 * 4);
+    if (c == 0) {
+        qs[c].memcpy(h_dprev, dprev[c], 8 * 4);
+        qs[c].memcpy(h_dconf, dconf[c], 8 * 4);
+    }
     twait(c);
 }
 void dr_card_step(int c) {
@@ -247,7 +267,9 @@ public:
 // The draft's guesses for the text after the committed position pos: the block [anchor, MASK x 4] at pos ..
 // pos + 4 (anchor = the target's token for pos, not yet run by the target); out[0 .. 4] = the 5 guesses.
 // Every position before pos must have been injected (prompt blocks, commit_block).
-void draft_tp(int32_t anchor, int32_t *out) {
+void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = nullptr) {
+    if (nrows < 1 || nrows > DR_BLOCK) throw std::runtime_error("draft_tp: 1..5 guesses");
+    dr_rows = nrows;
     if (!o.dspark || !mt_small || o.tp < 2 || tp_th.empty()) throw std::runtime_error("draft_tp: needs the draft, OWN_TP > 1, block forms");
     if (vpos0 >= 0) throw std::runtime_error("draft_tp: a checked block is not committed");
     if (pos + DR_BLOCK > max_seq) throw std::runtime_error("draft_tp: position beyond max_seq");
@@ -276,6 +298,8 @@ void draft_tp(int32_t anchor, int32_t *out) {
             throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                      std::to_string((int)xerr[c][0] - 1));
     for (int i = 0; i < DR_BLOCK; ++i) // a token outside the vocabulary (never from a sane chain) becomes 0
-        out[i] = h_dprev[i + 1] >= 0 && h_dprev[i + 1] < g.vocab ? h_dprev[i + 1] : 0;
+        out[i] = i < nrows && h_dprev[i + 1] >= 0 && h_dprev[i + 1] < g.vocab ? h_dprev[i + 1] : 0;
+    if (conf)
+        for (int i = 0; i < DR_BLOCK; ++i) conf[i] = i < nrows ? h_dconf[i] : 0.0f;
 }
 private:

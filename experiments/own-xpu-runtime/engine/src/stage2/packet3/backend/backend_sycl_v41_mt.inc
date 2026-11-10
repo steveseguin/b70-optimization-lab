@@ -69,9 +69,15 @@ unsigned mt_tg = 0;      // OWN_MT_TG=1/2/4: dense rows run token groups of that
 unsigned mt_tg_max = 8;  // ... for blocks of at most this many tokens (OWN_MT_TG_MAX)
 unsigned mt_tgm[MTX + 1] = {}; // OWN_MT_TGM="m:g,...": dense token groups g (1-4) for blocks of exactly m tokens
                                // (overrides OWN_MT_TG for that m; 9 = all tokens in one sub-group, DenseRowsM)
+unsigned mt_tgr[MTX + 1] = {}; // OWN_MT_TGR="m:r,...": blocks of m tokens run the token-group dense rows (OWN_MT_TGM)
+                               // r = 2 or 4 rows per sub-group where the kernel has rowgr (Q8_0): activations read once per r rows
+unsigned mt_tgr_rows = 2048; // ... only for matrices of at least this many rows on the card (OWN_MT_TGR_ROWS)
+unsigned mt_tgr_fmt = 3;      // ... for these formats (OWN_MT_TGR_FMT: 1 Q8_0, 2 Q6_K, 3 both)
+bool mt_tgr_draft = true;     // ... also in the draft's steps (OWN_MT_TGR_DRAFT)
 unsigned mt_tgu = 0;     // OWN_MT_TGU=1/2/3: the unpacked rows (GemvTM) in token groups over sub-groups (0: all 16 at once)
 bool mt_ride = false;    // OWN_MT_RIDE=1: the stream mix's dot rows ride in q_a's and the router's launches
 unsigned mt_rwg = 0;     // OWN_MT_RWG=n: row launches of at most n rows use one sub-group per work-group (rows_launch)
+bool mt_rfuse = false;   // OWN_MT_RFUSE=1: router top-k + FFN mix finish + shared gate/up rows in one launch
 unsigned mt_eu = 0;      // OWN_MT_EU=6: routed rows expert-major (RoutedU, groups of at most 6 slots; 0: slot-major)
 bool mt_idstat = false; // OWN_MT_IDSTAT=1: count distinct experts per block and layer on card 0 (diagnostic, waits)
 long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push over many work-groups (OWN_MT_XPUSH=0: XchgP's one group)
@@ -206,8 +212,17 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
             launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<RD, D>>{rp});
         }
     };
-    auto split = [&](auto gc) { // token groups of G over sub-groups (DenseRowsG)
+    auto split = [&](auto gc) { // token groups of G over sub-groups (DenseRowsG; DenseRowsGR: r rows per sub-group)
         constexpr unsigned G = decltype(gc)::value;
+        if constexpr (requires { &DK::template rowgr<G, 2>; }) {
+            constexpr unsigned fb = ops41sycl::is_q6kp_v<DK> ? 2u : 1u; // 1: Q8_0 rows, 2: Q6_K rows
+            const bool on = (mt_tgr_fmt & fb) && (!dr_step || mt_tgr_draft);
+            const unsigned rr = on && mt <= MTX && dk.rows >= mt_tgr_rows ? mt_tgr[mt] : 0;
+            if (rr == 2 && dk.xn % 2 == 0)
+                return go(ops41sycl::DenseRowsGR<DK, G, 2>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
+            if (rr == 4 && dk.xn % 4 == 0)
+                return go(ops41sycl::DenseRowsGR<DK, G, 4>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
+        }
         go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
     };
     const unsigned tg = mt <= MTX && mt_tgm[mt] ? mt_tgm[mt] : mt <= mt_tg_max && mt > mt_tg ? mt_tg : 0;
@@ -264,6 +279,64 @@ void gemv_m(int c, const std::string &wn, const act_t *x, size_t xs, act_t *y, s
 #undef X
 #undef XQ
     throw std::runtime_error("multi-token step: no packed kernel for " + wn);
+}
+// f(kernel, packed weights) for a packed dense matrix (the kernel gemv_m picks); false when there is none
+template <typename F> bool dense_kernel(int c, const std::string &wn, F &&f) {
+    const auto &e = we(wn);
+    const auto &dp = wgt[c].at(wn);
+    if (!dp.packed) return false;
+    const unsigned rows = dp.nrows, cols = (unsigned)e.cols;
+    const uint8_t *w = (const uint8_t *)dp.p;
+#define XQ(COLS)                                                                                           \
+    if (cols == COLS) { f(ops41sycl::GemvQ8P<COLS / 32, Act>{rows, 0}, w); return true; }
+#define X(KERN, NB)                                                                                        \
+    if (cols == NB * 256) { f(ops41sycl::KERN<NB, Act>{rows, 0}, w); return true; }
+    if (e.type == iq3::Type::Q8_0) { XQ(1280) XQ(2304) XQ(4096) XQ(5120) XQ(8192) }
+    if (e.type == iq3::Type::Q6_K) { X(GemvQ6KP, 5) X(GemvQ6KP, 16) X(GemvQ6KP, 20) X(GemvQ6KP, 24) X(GemvQ6KP, 32) }
+    if (e.type == iq3::Type::Q5_K) { X(GemvQ5KP, 9) X(GemvQ5KP, 20) }
+#undef X
+#undef XQ
+    return false;
+}
+// OWN_MT_RFUSE: the block's router top-k (a work-group per token), the FFN mix's finish and the shared expert's
+// gate + up rows in ONE launch (the one-token path's route_with_shared). False (nothing launched) when the gate
+// and up matrices are not the same packed kernel.
+bool route_shared_m(int c, const std::string &p, const float *bias) {
+    const std::string gn = p + "ffn_gate_shexp.weight", un = p + "ffn_up_shexp.weight";
+    const auto &eg = we(gn), &eu = we(un);
+    if (eg.type != eu.type || eg.cols != eu.cols || !wgt[c].at(gn).packed || !wgt[c].at(un).packed) return false;
+    if (wgt[c].at(gn).nrows != wgt[c].at(un).nrows || g.experts % 32 != 0 || g.experts > 512) return false;
+    const unsigned mt = (unsigned)mt_n;
+    const Scratch &b = scm[c][0];
+    const size_t H = g.h, FS = (size_t)25 * HC_SEG;
+    const uint8_t *wu = (const uint8_t *)wgt[c].at(un).p;
+    tok_set(c, 0);
+    using FR = ops41sycl::TokRows<ops41sycl::HcFinishRows>;
+    const FR fin = tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16);
+    const unsigned tg = mt_tgm[mt] ? mt_tgm[mt] : mt <= mt_tg_max && mt > mt_tg ? mt_tg : 0;
+    return dense_kernel(c, gn, [&](auto dk, const uint8_t *wg) {
+        using DK = decltype(dk);
+        auto go = [&](const auto &dg, const auto &du) {
+            using DG = std::decay_t<decltype(dg)>;
+            using RX = ops41sycl::RowsPair<FR, ops41sycl::RowsPair<DG, DG>>;
+            const RX rx{fin, {dg, du}};
+            const ops41sycl::RoutePMRows<RX> k{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, mt, rx};
+            launch_wgs<2 * 1024 + 6>(c, (size_t)mt + (rx.n() + 15) / 16, 512, k, (const float *)b.router, bias, b.ids,
+                                     b.prob);
+        };
+        auto split = [&](auto gc) {
+            constexpr unsigned G = decltype(gc)::value;
+            using D = ops41sycl::DenseRowsG<DK, G>;
+            const unsigned ng = (mt + G - 1) / G;
+            go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, ng}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt, ng});
+        };
+        if (tg == 1) return split(std::integral_constant<unsigned, 1>{});
+        if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
+        if (tg == 3) return split(std::integral_constant<unsigned, 3>{});
+        if (tg == 4) return split(std::integral_constant<unsigned, 4>{});
+        using D = ops41sycl::DenseRowsM<DK, MTX>;
+        go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt});
+    });
 }
 // the stream-mix dot rows of every token (HcMixDotsP rows, fn values read once)
 void hc_dots_m(int c, const std::string &prefix) {
@@ -735,6 +808,7 @@ void tpm_layer(int L, int c) {
     // ---- phase 3: stream post + FFN pre-norm, router, shared and routed gate/up, SwiGLU
     const float *bias = wp<float>(c, p + "exp_probs_b.bias");
     const int nm = tm1[c] - tm0[c], nd = td1[c] - td0[c];
+    bool shared_done = false; // the shared expert's gate + up already ran with the router (route_shared_m)
     if (mt_small) {
         launch(c, (size_t)M * H, 64, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H},
                strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
@@ -747,10 +821,13 @@ void tpm_layer(int L, int c) {
                                tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dots(p + "hc_ffn_")});
             gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
         }
-        launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts},
-                                 (const float *)b.router, bias, b.ids, b.prob);
-        tok_set(c, 0);
-        rows_launch(c, tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16));
+        shared_done = mt_rfuse && route_shared_m(c, p, bias);
+        if (!shared_done) {
+            launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts},
+                                     (const float *)b.router, bias, b.ids, b.prob);
+            tok_set(c, 0);
+            rows_launch(c, tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16));
+        }
     } else {
         for (int t = 0; t < M; ++t) {
             tok_set(c, t);
@@ -781,8 +858,10 @@ void tpm_layer(int L, int c) {
         launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::WG,
                                                   ops41sycl::ExpertGroupM{6u * (unsigned)M, mt_eu},
                                                   (const uint32_t *)b.ids, egrp[c]);
-    gemv_m(c, p + "ffn_gate_shexp.weight", b.xn, H, b.shg, (size_t)g.mid);
-    gemv_m(c, p + "ffn_up_shexp.weight", b.xn, H, b.shu, (size_t)g.mid);
+    if (!shared_done) {
+        gemv_m(c, p + "ffn_gate_shexp.weight", b.xn, H, b.shg, (size_t)g.mid);
+        gemv_m(c, p + "ffn_up_shexp.weight", b.xn, H, b.shu, (size_t)g.mid);
+    }
     routed_m(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight", b.xn, H, b.ids, b.expg, b.expu, false);
     const size_t A7 = (size_t)7 * g.mid;
     if (mt_small) {

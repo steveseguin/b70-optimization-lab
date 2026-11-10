@@ -1,0 +1,41 @@
+routed_m1 exit 0
+card 0 Intel(R) Arc(TM) Pro B70 Graphics
+IQ2_XXS candidate, rows per sub-group:
+  R 2 pair: PASS 0 of 18432 differ | prod wg128 32.1 | wg64 38.8 wg72 34.0 wg96 33.2 wg112 35.3 wg128 36.5 wg144 40.6 wg160 40.6 wg192 40.4 wg256 40.9 wg0 40.8 us
+  R 3 pair: PASS 0 of 18432 differ | prod wg128 32.0 | wg64 45.8 wg72 50.2 wg96 37.3 wg112 37.4 wg128 37.3 wg144 37.4 wg160 37.3 wg192 37.3 wg256 37.2 wg0 37.3 us
+  R 4 pair: PASS 0 of 18432 differ | prod wg128 31.8 | wg64 65.3 wg72 45.3 wg96 45.4 wg112 45.4 wg128 45.3 wg144 45.2 wg160 45.3 wg192 45.2 wg256 45.2 wg0 45.2 us
+  R 2 down: PASS 0 of 20736 differ | prod wg128 18.1 | wg64 19.5 wg72 21.4 wg96 18.2 wg112 18.0 wg128 18.0 wg144 19.0 wg160 19.5 wg192 19.4 wg256 19.5 wg0 19.5 us
+  R 4 down: PASS 0 of 20736 differ | prod wg128 15.8 | wg64 24.6 wg72 27.0 wg96 18.2 wg112 18.0 wg128 18.0 wg144 18.3 wg160 17.9 wg192 17.9 wg256 17.9 wg0 17.9 us
+production kernels, work-groups (wg0 = one sub-group per row, no cap):
+IQ2_XXS pair (12 x 384 rows, 20 blocks): wg64 30.1 wg72 33.8 wg96 29.1 wg112 30.0 wg128 31.2 wg144 41.3 wg160 34.2 wg192 33.2 wg256 34.4 wg0 35.6 us
+IQ2_XXS down (6 x 864 rows, 9 blocks):  wg64 23.2 wg72 25.0 wg96 20.9 wg112 21.6 wg128 20.6 wg144 24.8 wg160 25.3 wg192 23.7 wg256 20.2 wg0 22.3 us
+IQ2_S   pair (12 x 384 rows, 20 blocks): wg64 53.8 wg72 49.6 wg96 42.5 wg112 43.8 wg128 45.4 wg144 63.1 wg160 52.1 wg192 47.3 wg256 47.8 wg0 55.5 us
+IQ2_S   down (6 x 864 rows, 9 blocks):  wg64 31.2 wg72 33.6 wg96 28.3 wg112 29.3 wg128 28.0 wg144 34.0 wg160 36.7 wg192 35.2 wg256 28.7 wg0 33.3 us
+IQ3_XXS pair (12 x 384 rows, 20 blocks): wg64 53.3 wg72 48.0 wg96 42.4 wg112 42.8 wg128 45.3 wg144 57.4 wg160 47.7 wg192 46.6 wg256 48.9 wg0 50.2 us
+IQ3_XXS down (6 x 864 rows, 9 blocks):  wg64 27.6 wg72 25.8 wg96 23.5 wg112 21.3 wg128 21.2 wg144 25.5 wg160 26.5 wg192 25.4 wg256 22.5 wg0 23.6 us
+IQ2_XS  pair (12 x 384 rows, 20 blocks): wg64 47.7 wg72 43.5 wg96 38.0 wg112 39.0 wg128 40.7 wg144 55.7 wg160 46.0 wg192 42.5 wg256 44.4 wg0 46.8 us
+IQ2_XS  down (6 x 864 rows, 9 blocks):  wg64 22.4 wg72 28.9 wg96 24.0 wg112 24.5 wg128 23.4 wg144 27.1 wg160 28.0 wg192 27.6 wg256 24.2 wg0 26.9 us
+IQ1_S   pair (12 x 384 rows, 20 blocks): wg64 80.1 wg72 68.8 wg96 56.3 wg112 59.6 wg128 50.1 wg144 64.5 wg160 53.5 wg192 52.3 wg256 52.5 wg0 60.6 us
+IQ1_S   down (6 x 864 rows, 9 blocks):  wg64 25.7 wg72 27.9 wg96 24.7 wg112 25.5 wg128 24.8 wg144 31.8 wg160 35.0 wg192 34.7 wg256 30.9 wg0 39.1 us
+PASS
+pa1 exit 0
+pa1 SPEED128_SAME
+pa1: decode: 127 steps after the first, 0.014 s/step, 73.18 tok/s
+DONE
+pa1 wall 30 s (first run of the ahead-of-time build)
+pa2 exit 0
+pa2 SPEED128_SAME
+pa2: decode: 127 steps after the first, 0.013 s/step, 76.76 tok/s
+ha16 exit 0
+ha16 TRACE_IDENTICAL
+ha16 IDS40_SAME
+ha16: decode: 39 steps after the first, 0.015 s/step, 66.04 tok/s
+ha5 exit 0
+ha5 TRACE_IDENTICAL
+ha5 IDS40_SAME
+ha5: decode: 39 steps after the first, 0.015 s/step, 65.81 tok/s
+pa3 exit 0
+pa3 SPEED128_SAME
+pa3: decode: 127 steps after the first, 0.013 s/step, 76.66 tok/s
+DONE
+ALLDONE
