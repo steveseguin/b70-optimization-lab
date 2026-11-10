@@ -1,0 +1,64 @@
+t1tr exit 0
+t1tr TRACE_IDENTICAL
+t1tr IDS40_SAME
+t1tr: decode: 39 steps after the first, 0.015 s/step, 66.22 tok/s
+b16tr exit 0
+b16tr TRACE_IDENTICAL
+b16tr IDS40_SAME
+b16tr: decode: 39 steps after the first, 0.015 s/step, 65.85 tok/s
+b7tr exit 0
+b7tr TRACE_IDENTICAL
+b7tr IDS40_SAME
+b7tr: decode: 39 steps after the first, 0.015 s/step, 65.94 tok/s
+b5tr exit 0
+b5tr TRACE_IDENTICAL
+b5tr IDS40_SAME
+b5tr: decode: 39 steps after the first, 0.015 s/step, 65.99 tok/s
+sp_pull1 exit 0
+sp_pull1 SPEED128_SAME
+sp_pull1: decode: 127 steps after the first, 0.013 s/step, 75.66 tok/s
+sp_push1 exit 0
+sp_push1 SPEED128_SAME
+sp_push1: decode: 127 steps after the first, 0.013 s/step, 74.75 tok/s
+sp_pull2 exit 0
+sp_pull2 SPEED128_SAME
+sp_pull2: decode: 127 steps after the first, 0.013 s/step, 76.71 tok/s
+sp_push2 exit 0
+sp_push2 SPEED128_SAME
+sp_push2: decode: 127 steps after the first, 0.013 s/step, 74.60 tok/s
+p3kb16 exit 0
+p3kb16: prompt: 3323 tokens read on the cards in 18.58s (179.2 tok/s; first step 0.13s incl. kernel build), first token 2581
+p3kb16: decode: 63 steps after the first, 0.014 s/step, 69.97 tok/s
+p3kb16push exit 0
+p3kb16push: prompt: 3323 tokens read on the cards in 35.14s (94.7 tok/s; first step 0.22s incl. kernel build), first token 2581
+p3kb16push: decode: 63 steps after the first, 0.014 s/step, 69.32 tok/s
+p10kb16 exit 0
+p10kb16: prompt: 10621 tokens read on the cards in 60.94s (174.4 tok/s; first step 0.13s incl. kernel build), first token 2581
+p10kb16: decode: 63 steps after the first, 0.015 s/step, 66.82 tok/s
+DONE
+p3kb16 IDS_SAME
+p3kb16push IDS_SAME
+p10kb16 IDS_SAME
+v5ok exit 0
+v5ok: prompt: 36 tokens read on the cards in 0.25s (158.5 tok/s; first step 0.13s incl. kernel build), first token 671
+v5ok: verify test: 127 tokens in 22 cycles (5.77 per cycle; 106 of 106 guesses kept) in 1.04s = 122.18 tok/s; SAME AS the plain run
+v5b30 exit 0
+v5b30: prompt: 36 tokens read on the cards in 0.25s (157.2 tok/s; first step 0.12s incl. kernel build), first token 671
+v5b30: verify test: 127 tokens in 49 cycles (2.59 per cycle; 79 of 240 guesses kept) in 2.35s = 53.96 tok/s; SAME AS the plain run
+v5b100 exit 0
+v5b100: prompt: 36 tokens read on the cards in 0.25s (158.1 tok/s; first step 0.13s incl. kernel build), first token 671
+v5b100: verify test: 127 tokens in 127 cycles (1.00 per cycle; 0 of 625 guesses kept) in 6.07s = 20.93 tok/s; SAME AS the plain run
+v15b10 exit 0
+v15b10: prompt: 36 tokens read on the cards in 0.25s (158.9 tok/s; first step 0.13s incl. kernel build), first token 671
+v15b10: verify test: 127 tokens in 17 cycles (7.47 per cycle; 111 of 246 guesses kept) in 1.54s = 82.21 tok/s; SAME AS the plain run
+v3b20 exit 0
+v3b20: prompt: 36 tokens read on the cards in 0.25s (158.0 tok/s; first step 0.13s incl. kernel build), first token 671
+v3b20: verify test: 127 tokens in 49 cycles (2.59 per cycle; 78 of 145 guesses kept) in 1.78s = 71.39 tok/s; SAME AS the plain run
+p3kv5b30 exit 0
+p3kv5b30: prompt: 3323 tokens read on the cards in 18.59s (179.1 tok/s; first step 0.12s incl. kernel build), first token 2581
+p3kv5b30: verify test: 63 tokens in 25 cycles (2.52 per cycle; 38 of 121 guesses kept) in 1.24s = 50.75 tok/s; SAME AS the plain run
+p10kv5b50 exit 0
+p10kv5b50: prompt: 10621 tokens read on the cards in 59.94s (177.3 tok/s; first step 0.13s incl. kernel build), first token 2581
+p10kv5b50: verify test: 63 tokens in 39 cycles (1.62 per cycle; 25 of 187 guesses kept) in 1.98s = 31.88 tok/s; SAME AS the plain run
+ALLDONE
+ALLDONE

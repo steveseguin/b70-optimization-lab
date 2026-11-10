@@ -162,14 +162,20 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DOWN_WG")) opt.down_wg = atoi(e);
     if (const char *e = getenv("OWN_ROPE_OUT")) opt.rope_out = atoi(e) != 0;
     if (const char *e = getenv("OWN_XTAIL")) opt.xtail = atoi(e) != 0;
+    if (const char *e = getenv("OWN_XPULL")) opt.xpull = atoi(e) != 0;
+    if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
     if (const char *e = getenv("OWN_DOWN_EX")) opt.down_ex = atoi(e) != 0;
     if (const char *e = getenv("OWN_EXP_PAIR")) opt.exp_pair = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_SPLIT")) opt.eng_split = atoi(e) != 0;
+    if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
+    if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
+    if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
     // one host thread per card; trace runs submit phase by phase from one thread
-    opt.tp_threads = !getenv("OWN_TRACE") && !(getenv("OWN_TP_THREADS") && atoi(getenv("OWN_TP_THREADS")) == 0);
+    // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
+    opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");
     std::vector<int> forced;
     if (const char *e = getenv("OWN_FORCED")) {
         std::ifstream ff(e);
@@ -195,6 +201,14 @@ int main(int argc, char **argv) {
         }
         own41::WeightTab wt;
         own41::load_weights(wt, root + "/profiles/dsv41-iq2xxs/placement.tsv", shards);
+        // OWN_DSPARK=<dspark gguf>: the official DSpark draft's tensors ("dsp." names, absolute offsets) in the
+        // same table (profiles/dspark-q8/placement.tsv, tools/mk_dspark_placement.py)
+        if (const char *dp = getenv("OWN_DSPARK"); dp && *dp) {
+            std::string base = dp;
+            base = base.substr(base.find_last_of('/') + 1);
+            own41::load_weights(wt, root + "/profiles/dspark-q8/placement.tsv", {{base, {std::string(dp), 0L}}});
+            opt.dspark = true;
+        }
         std::fprintf(stderr, "store: %zu tensors\n", wt.w.size());
 
         flash::Directory d;
@@ -293,24 +307,228 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_H2D_WAIT")) be.h2d_wait = atoi(e) != 0;
         if (const char *e = getenv("OWN_KEEP_WARM")) be.keep_warm = atoi(e);
         if (const char *e = getenv("OWN_WARM_ITEMS")) be.warm_items = (size_t)atol(e) / 32 * 32;
+#ifndef OWN41_ACT_BF16
+        if (const char *e = getenv("OWN_MT_SMALL")) be.mt_small = atoi(e) != 0; // block steps: small launches per block
+        if (const char *e = getenv("OWN_MT_XPUSH")) be.mt_xpush = atoi(e); // block exchanges: 0 one group, 1 many, 2 per peer
+        if (const char *e = getenv("OWN_MT_XGPP")) be.mt_xgpp = (unsigned)std::max(1, atoi(e));
+        if (const char *e = getenv("OWN_MT_IDSTAT")) be.mt_idstat = atoi(e) != 0;
+        if (const char *e = getenv("OWN_MT_TG")) be.mt_tg = (unsigned)atoi(e); // dense token groups per sub-group
+        if (const char *e = getenv("OWN_MT_TG_MAX")) be.mt_tg_max = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_EU")) be.mt_eu = (unsigned)atoi(e); // expert-major routed rows (6)
+        if (const char *e = getenv("OWN_MT_TGU")) be.mt_tgu = (unsigned)atoi(e); // unpacked rows in token groups
+        if (const char *e = getenv("OWN_MT_TGM")) { // per block size: "m:g,m:g"
+            for (const char *s = e; *s;) {
+                unsigned m = 0, gsz = 0;
+                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 9) be.mt_tgm[m] = gsz;
+                const char *cm = std::strchr(s, ',');
+                if (!cm) break;
+                s = cm + 1;
+            }
+        }
+        if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
+        if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
+#endif
 
         // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----
         const int eos = getenv("OWN_EOS") ? atoi(getenv("OWN_EOS")) : 1;
+        const bool prompt_head = getenv("OWN_PROMPT_HEAD") && atoi(getenv("OWN_PROMPT_HEAD")) != 0;
         if (!prompt.empty()) {
             double tp0 = now(), t_first = 0;
-            for (size_t i = 0; i < prompt.size(); ++i) {
-                be.comp_ids.push_back(token_map[prompt[i]]);
-                be.trace_on = false;
-                double t1 = now();
-                first = be.decode_step(prompt[i]);
-                if (i == 0) t_first = now() - t1;
+            size_t first_n = 1; // tokens in the first step (timed apart: kernel warm-up)
+            // OWN_PROMPT_BLOCK=m (OWN_TP > 1): m prompt tokens per step (decode_block_tp), the same values
+            const int pblock = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
+            if (pblock > 1 && opt.tp > 1) {
+                for (size_t i = 0; i < prompt.size();) {
+                    const int m = (int)std::min<size_t>((size_t)pblock, prompt.size() - i);
+                    for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);
+                    be.trace_on = false;
+                    double t1 = now();
+                    be.skip_head = i + m < prompt.size();
+                    std::vector<int32_t> blk(prompt.begin() + i, prompt.begin() + i + m);
+                    first = be.decode_block_tp(blk.data(), m);
+                    be.gprof_collect(); // OWN_GPROF: the prompt blocks' kernels count too (run with few answer tokens)
+                    if (i == 0) { t_first = now() - t1; first_n = (size_t)m; }
+                    i += m;
+                }
+            } else {
+                for (size_t i = 0; i < prompt.size(); ++i) {
+                    be.comp_ids.push_back(token_map[prompt[i]]);
+                    be.trace_on = false;
+                    double t1 = now();
+                    // the head only for the last prompt token (OWN_PROMPT_HEAD=1: for every one, as before)
+                    be.skip_head = opt.tp > 1 && !prompt_head && i + 1 < prompt.size();
+                    first = be.decode_step(prompt[i]);
+                    if (i == 0) t_first = now() - t1;
+                }
             }
+            be.skip_head = false;
+#ifndef OWN41_ACT_BF16
+            if (be.mt_idstat && be.ids_picks)
+                std::fprintf(stderr, "expert picks: %ld blocks, %ld picks, %ld distinct per (block, layer) summed (%.1f %%)\n",
+                             be.ids_blocks, be.ids_picks, be.ids_unique, 100.0 * be.ids_unique / be.ids_picks);
+#endif
             double dtp = now() - tp0;
             std::fprintf(stderr, "prompt: %zu tokens read on the cards in %.2fs (%.1f tok/s; first step %.2fs incl. kernel build), first token %d\n",
-                         prompt.size(), dtp, prompt.size() > 1 ? (prompt.size() - 1) / (dtp - t_first) : 0.0, t_first,
+                         prompt.size(), dtp, prompt.size() > first_n ? (prompt.size() - first_n) / (dtp - t_first) : 0.0, t_first,
                          first);
         }
 
+#ifndef OWN41_ACT_BF16
+        // ---- draft checking test (OWN_VERIFY_TEST=k, OWN_VERIFY_REF=ids of a plain run): every cycle checks
+        // [current token, k guesses] in one block step and keeps what the model agrees with. The guesses are
+        // the reference continuation, each replaced by a wrong token with probability OWN_VERIFY_BAD percent
+        // (fixed pseudo-random sequence). The kept text must equal the plain run's.
+        if (const char *vt = getenv("OWN_VERIFY_TEST"); vt && !prompt.empty()) {
+            const int k = std::max(1, std::min(atoi(vt), (int)own41::Backend41::MTX - 1));
+            std::vector<int> ref;
+            if (const char *rf = getenv("OWN_VERIFY_REF")) {
+                std::ifstream f(rf);
+                long long v;
+                while (f >> v) ref.push_back((int)v);
+            }
+            if (ref.empty()) die("OWN_VERIFY_TEST needs OWN_VERIFY_REF");
+            const int bad = getenv("OWN_VERIFY_BAD") ? atoi(getenv("OWN_VERIFY_BAD")) : 0;
+            uint32_t rng = 12345u;
+            std::vector<int> out{first};
+            int cur = first;
+            long cycles = 0, guessed = 0, accepted = 0;
+            const double tv0 = now();
+            while ((int)out.size() < ndecode) {
+                const size_t i = out.size();
+                const int kk = std::min(k, ndecode - (int)out.size());
+                std::vector<int32_t> blk{cur};
+                for (int j = 0; j < kk; ++j) {
+                    int d = i + j < ref.size() ? ref[i + j] : 0;
+                    rng = rng * 1664525u + 1013904223u;
+                    if ((int)((rng >> 8) % 100) < bad) d = (d + 1) % 129280;
+                    blk.push_back(d);
+                }
+                for (int32_t t : blk) be.comp_ids.push_back(token_map[t]);
+                std::vector<int32_t> nx(blk.size());
+                be.decode_verify_tp(blk.data(), (int)blk.size(), nx.data());
+                int n = 1;
+                while (n < (int)blk.size() && nx[n - 1] == blk[n]) ++n;
+                be.commit_block(n);
+                be.comp_ids.resize((size_t)be.pos);
+                for (int j = 1; j < n; ++j) out.push_back(blk[j]);
+                out.push_back(nx[n - 1]);
+                cur = nx[n - 1];
+                ++cycles;
+                guessed += kk;
+                accepted += n - 1;
+                be.gprof_collect(); // OWN_GPROF=2: kernel time per verify cycle (the first cycle is dropped)
+                if (cycles == 1) { be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
+            }
+            out.resize(std::min<size_t>(out.size(), (size_t)ndecode));
+            const double dt = now() - tv0;
+            bool same = true;
+            for (size_t j = 0; j < out.size(); ++j)
+                if (j >= ref.size() || out[j] != ref[j]) { same = false; break; }
+            std::fprintf(stderr, "verify test: %zu tokens in %ld cycles (%.2f per cycle; %ld of %ld guesses kept) in %.2fs "
+                         "= %.2f tok/s; %s the plain run\n", out.size() - 1, cycles, (double)(out.size() - 1) / cycles,
+                         accepted, guessed, dt, (out.size() - 1) / dt, same ? "SAME AS" : "DIFFERENT FROM");
+            if (opt.kprof && cycles > 1) {
+                std::vector<std::pair<double, std::string>> kv;
+                double ktot = 0;
+                const double nc = (double)(cycles - 1);
+                for (auto &[kn, t] : be.kprof_t) { kv.push_back({t / nc, kn}); ktot += t / nc; }
+                std::sort(kv.rbegin(), kv.rend());
+                std::fprintf(stderr, "kernel time per type (ms per verify cycle, start to end; launches per cycle):\n");
+                for (auto &[t, kn] : kv)
+                    std::fprintf(stderr, "  %8.3f  %5.1f%%  %7.1f  %8.2f us  %s\n", t * 1e3, 100 * t / ktot,
+                                 be.kprof_n[kn] / nc, t * 1e6 * nc / std::max(1L, be.kprof_n[kn]), kn.c_str());
+                std::fprintf(stderr, "  kernels %.3f ms per cycle (wall %.3f ms per cycle)\n", ktot * 1e3, dt / cycles * 1e3);
+            }
+            std::ofstream of(argv[3]);
+            for (int t : out) of << t << "\n";
+            return same ? 0 : 3;
+        }
+        // ---- speculative decoding with the DSpark draft (OWN_DSPARK + OWN_SPEC=k, k = 1 .. 5 guesses per
+        // cycle): the draft proposes k tokens after the current one, the target checks [current, guesses] in
+        // one block step and keeps the guesses it agrees with plus its own next token. The text is the target's
+        // greedy text by construction; OWN_VERIFY_REF (a plain run's ids) checks that.
+        if (const char *sv = getenv("OWN_SPEC"); sv && !prompt.empty()) {
+            if (!opt.dspark) die("OWN_SPEC needs OWN_DSPARK");
+            const int k = std::max(1, std::min(atoi(sv), (int)own41::Backend41::DR_BLOCK));
+            std::vector<int> ref;
+            if (const char *rf = getenv("OWN_VERIFY_REF")) {
+                std::ifstream f(rf);
+                long long v;
+                while (f >> v) ref.push_back((int)v);
+            }
+            std::vector<int> out{first};
+            int cur = first;
+            long cycles = 0, guessed = 0, accepted = 0;
+            std::vector<long> hist(k + 2, 0);
+            double t_draft = 0, t_check = 0;
+            const double ts0 = now();
+            while ((int)out.size() < ndecode) {
+                int32_t d[own41::Backend41::DR_BLOCK];
+                const double ta = now();
+                be.draft_tp(cur, d);
+                const double tb = now();
+                const int kk = std::min(k, ndecode - (int)out.size());
+                std::vector<int32_t> blk{cur};
+                for (int j = 0; j < kk; ++j) blk.push_back(d[j]);
+                for (int32_t t : blk) be.comp_ids.push_back(token_map[t]);
+                std::vector<int32_t> nx(blk.size());
+                be.decode_verify_tp(blk.data(), (int)blk.size(), nx.data());
+                int n = 1;
+                while (n < (int)blk.size() && nx[n - 1] == blk[n]) ++n;
+                be.commit_block(n);
+                be.comp_ids.resize((size_t)be.pos);
+                t_draft += tb - ta;
+                t_check += now() - tb;
+                const size_t o0 = out.size();
+                for (int j = 1; j < n; ++j) out.push_back(blk[j]);
+                out.push_back(nx[n - 1]);
+                cur = nx[n - 1];
+                ++cycles;
+                guessed += kk;
+                accepted += n - 1;
+                ++hist[n - 1];
+                bool ended = false; // a kept guess can be the end of sentence: the text ends there, as a plain run's
+                for (size_t j = o0; eos >= 0 && j < out.size(); ++j)
+                    if (out[j] == eos) { out.resize(j + 1); ended = true; break; }
+                if (ended) {
+                    be.gprof_collect();
+                    break;
+                }
+                be.gprof_collect(); // OWN_GPROF=2: kernel time per cycle, draft + check (the first cycle is dropped)
+                if (cycles == 1) { be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
+                if (eos >= 0 && cur == eos) break;
+            }
+            if (opt.kprof && cycles > 1) {
+                std::vector<std::pair<double, std::string>> kv;
+                double ktot = 0;
+                const double nc = (double)(cycles - 1);
+                for (auto &[kn, t] : be.kprof_t) { kv.push_back({t / nc, kn}); ktot += t / nc; }
+                std::sort(kv.rbegin(), kv.rend());
+                std::fprintf(stderr, "kernel time per type (ms per spec cycle, draft + check, start to end; launches per cycle):\n");
+                for (auto &[t, kn] : kv)
+                    std::fprintf(stderr, "  %8.3f  %5.1f%%  %7.1f  %8.2f us  %s\n", t * 1e3, 100 * t / ktot,
+                                 be.kprof_n[kn] / nc, t * 1e6 * nc / std::max(1L, be.kprof_n[kn]), kn.c_str());
+                std::fprintf(stderr, "  kernels %.3f ms per cycle\n", ktot * 1e3);
+            }
+            out.resize(std::min<size_t>(out.size(), (size_t)ndecode));
+            const double dt = now() - ts0;
+            bool same = !ref.empty();
+            for (size_t j = 0; same && j < out.size(); ++j)
+                if (j >= ref.size() || out[j] != ref[j]) same = false;
+            std::fprintf(stderr, "spec decode: %zu tokens in %ld cycles (%.2f per cycle; %ld of %ld guesses kept, %.1f %%) in "
+                         "%.2fs = %.2f tok/s; draft %.2f ms + check %.2f ms per cycle; %s\n",
+                         out.size() - 1, cycles, (double)(out.size() - 1) / cycles, accepted, guessed,
+                         100.0 * accepted / std::max(1L, guessed), dt, (out.size() - 1) / dt, t_draft / cycles * 1e3,
+                         t_check / cycles * 1e3,
+                         ref.empty() ? "no reference" : same ? "SAME AS the plain run" : "DIFFERENT FROM the plain run");
+            std::fprintf(stderr, "kept guesses per cycle:");
+            for (int j = 0; j <= k; ++j) std::fprintf(stderr, " %d:%ld", j, hist[j]);
+            std::fprintf(stderr, "\n");
+            std::ofstream of(argv[3]);
+            for (int t : out) of << t << "\n";
+            return ref.empty() || same ? 0 : 3;
+        }
+#endif
         // ---- decode ----
         static const int srcs[4] = {2, 8, 14, 20};
         std::vector<int> out_ids{forced.empty() ? first : forced[0]};

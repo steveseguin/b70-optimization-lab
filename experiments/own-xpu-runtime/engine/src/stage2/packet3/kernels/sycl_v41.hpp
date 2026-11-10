@@ -265,6 +265,52 @@ template <iq3::Type T, typename A = ActBF16>
         sum = sum + iq3::decode(T, row + (size_t)(k / L.elements) * L.bytes, k % L.elements) * A::rd(x[k]);
     return sum;
 }
+// ---- multi-token rows (2026-11-09) --------------------------------------------
+// A row kernel's rowm<MT>(...) runs one row for MT tokens (MT compile-time,
+// accumulators unrolled): token t reads its own activations (x + t * xs) into
+// its own accumulator; every weight value is loaded and dequantized once and
+// applied to each token with the one-token row()'s exact expression (same
+// operands, same order, same intermediate products), and each token's sum goes
+// through row()'s reduction. Each token's float operations are therefore those
+// of row() on that token alone: bit-identical under the build's
+// -fp-model=precise -ffp-contract=off (no contraction, no reassociation).
+// Tokens t < mt (mt <= MT, uniform) are stored; the others run on in-bounds data
+// (the caller's buffers hold MT tokens) and are dropped. Tokens run in groups of
+// at most G (default: the kernel's MTG); each group re-reads the row (from the
+// card's cache) so that the per-token activation vectors stay in registers. A
+// group changes no token's operations. Gate: tools/bench/test_rows_mt.cpp.
+//
+// lane_sum_t for NT tokens: same lane order, same expression per element. Only
+// lane_sum_t's generic branches (F32, F16, BF16, Q8_0, the K-quants, ...), not
+// its hand-written IQ loops.
+template <iq3::Type T, typename A, unsigned NT>
+[[gnu::always_inline]] inline void lane_sum_tm(const uint8_t *row, const typename A::T *x, size_t xs, unsigned cols,
+                                               unsigned lane, float (&sum)[NT]) {
+    static_assert(T != iq3::Type::IQ2_XXS && T != iq3::Type::IQ2_XS && T != iq3::Type::IQ1_S &&
+                      T != iq3::Type::IQ2_S && T != iq3::Type::IQ3_XXS,
+                  "lane_sum_tm: no multi-token form of lane_sum_t's hand-written IQ loops");
+    constexpr auto L = iq3::layout(T);
+    lane &= 31u;
+#pragma unroll
+    for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+    if constexpr (L.elements >= 32) {
+        constexpr unsigned CPB = L.elements / 32; // chunks per block
+        const unsigned chunks = cols / 32;
+        for (unsigned c = 0; c < chunks; ++c) {
+            const uint8_t *blk = row + (size_t)(c / CPB) * L.bytes;
+            const unsigned i = ((c % CPB) << 5) | lane;
+            const float v = dec_t<T>(blk, i);
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + v * A::rd(x[t * xs + ((c << 5) | lane)]);
+        }
+    } else {
+        for (unsigned k = lane; k < cols; k += 32) {
+            const float v = dec_t<T>(row + (size_t)(k / L.elements) * L.bytes, k % L.elements);
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + v * A::rd(x[t * xs + k]);
+        }
+    }
+}
 template <iq3::Type T, typename A = ActBF16> struct GemvT {
     unsigned rows, cols;
     bool f32out = false;
@@ -281,6 +327,64 @@ template <iq3::Type T, typename A = ActBF16> struct GemvT {
             if (f32out) reinterpret_cast<float *>(yv)[r] = sum;
             else reinterpret_cast<typename A::T *>(yv)[r] = A::wr(sum);
         }
+    }
+    // M tokens (see "multi-token rows" above): token t reads x + t * xs and writes output element
+    // t * ys + r (float when f32out, else A::T) when t < mt. The lane loop is not unrolled and keeps
+    // one activation per token live, so all 16 tokens fit one group.
+    static constexpr unsigned MTG = 16;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const typename A::T *x, size_t xs, void *yv, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, yv, T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, yv, ys, mt);
+        }
+    }
+    // NT tokens from output element y0 (token t at y0 + t * ys + r); stores t < mt
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const typename A::T *x, size_t xs, void *yv, size_t y0, size_t ys,
+                                            unsigned mt) const {
+        constexpr auto L = iq3::layout(T);
+        const size_t rb = (size_t)(cols / L.elements) * L.bytes;
+        const uint8_t *row = w + (size_t)r * rb;
+        float sum[NT];
+        lane_sum_tm<T, A, NT>(row, x, xs, cols, lane, sum);
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) {
+                if (t >= mt) continue;
+                if (f32out) reinterpret_cast<float *>(yv)[y0 + t * ys + r] = sum[t];
+                else reinterpret_cast<typename A::T *>(yv)[y0 + t * ys + r] = A::wr(sum[t]);
+            }
+        }
+    }
+};
+// GemvT for M tokens as its own launch (launch_sg: one sub-group per work-group, row = group id; the
+// pointers stay direct kernel arguments). xs / ys: per-token strides of x and of the output, in elements.
+template <iq3::Type T, typename A, unsigned MT, unsigned G = GemvT<T, A>::MTG> struct GemvTM {
+    GemvT<T, A> k;
+    size_t xs, ys;
+    unsigned mt;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *x, void *yv) const {
+        auto sg = it.get_sub_group();
+        k.template rowm<MT, G>(sg, sg.get_local_linear_id(), (unsigned)it.get_group_linear_id(), w, x, xs, yv, ys, mt);
+    }
+};
+// GemvTM's tokens in groups of G over sub-groups (GemvTM runs all MT accumulators whatever mt is): work-group p
+// = (row p / ng, tokens (p % ng) * G ..); per token the same sums as GemvT (lane_sum_tm keeps every token's
+// order whatever the group size).
+template <iq3::Type T, typename A, unsigned G> struct GemvTMG {
+    GemvT<T, A> k;
+    size_t xs, ys;
+    unsigned mt, ng;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *x, void *yv) const {
+        auto sg = it.get_sub_group();
+        const unsigned p = (unsigned)it.get_group_linear_id(), r = p / ng, t0 = (p % ng) * G;
+        k.template rowg<G>(sg, sg.get_local_linear_id(), r, w, x + t0 * xs, xs, yv, t0 * ys, ys, mt - t0);
     }
 };
 template <iq3::Type T, typename A = ActBF16> struct GemvGroupedQT {
@@ -302,6 +406,7 @@ template <iq3::Type T, typename A = ActBF16> struct GemvGroupedQT {
 template <iq3::Type T, typename A = ActBF16> struct RoutedGemvT {
     unsigned rows, cols; // per-expert matrix shape
     bool per_slot_x = false;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const typename A::T *x,
                                      const uint32_t *ids, typename A::T *out) const {
         constexpr auto L = iq3::layout(T);
@@ -311,11 +416,11 @@ template <iq3::Type T, typename A = ActBF16> struct RoutedGemvT {
         // them from the global id made every load a per-lane gather)
         const unsigned grp = it.get_group_linear_id();
         const unsigned slot = grp / rows, r = grp % rows;
-        if (slot >= 6) return;
+        if (slot >= nsl) return;
         const uint8_t *row = w + ((size_t)ids[slot] * rows + r) * rb;
         sycl::sub_group sg = it.get_sub_group();
         int lane = it.get_local_linear_id();
-        const typename A::T *xs = per_slot_x ? x + (size_t)slot * cols : x;
+        const typename A::T *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * cols : 0);
         float a = lane_sum_t<T, A>(row, xs, cols, (unsigned)lane);
         for (int w_ = 16; w_; w_ >>= 1)
             a += sycl::select_from_group(sg, a, lane ^ w_);
@@ -1153,6 +1258,48 @@ template <typename A> struct IndexerScoreA {
         score[(size_t)t * T_ + j] = s;
     }
 };
+// IndexerScoreA for one token (m = 1, H = 32, dk = 128) with each row's sums in the
+// same order (heads in order, each head's 128 products in order), but the row's keys
+// read once: the query and head weights sit in local memory and the 32 head sums run
+// side by side. One item per row, 16-lane sub-groups; rows [len, T_) get -inf as in A.
+// Local memory: 32 * 128 + 32 floats.
+template <typename A> struct IndexerScoreB {
+    static constexpr int H = 32, DK = 128, CH = 16;
+    int len, T_;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+                    float *score, float *lq) const {
+        run(it, (int)it.get_global_linear_id(), q, k, w, score, lq);
+    }
+    // row j on this item (the multi-token form, IndexerScoreBM, numbers rows per token)
+    [[gnu::always_inline]] inline void run(sycl::nd_item<1> it, int j, const typename A::T *q, const uint16_t *k,
+                                           const typename A::T *w, float *score, float *lq) const {
+        const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(0);
+        for (int i = lid; i < H * DK; i += nl) lq[i] = A::rd(q[i]);
+        for (int i = lid; i < H; i += nl) lq[H * DK + i] = A::rd(w[i]);
+        sycl::group_barrier(it.get_group());
+        if (j >= len) {
+            if (j < T_) score[j] = -INFINITY;
+            return;
+        }
+        float d[H];
+#pragma unroll
+        for (int hh = 0; hh < H; ++hh) d[hh] = 0;
+        const uint16_t *kr = k + (size_t)j * DK;
+        for (int i0 = 0; i0 < DK; i0 += CH) {
+            float kf[CH];
+#pragma unroll
+            for (int ii = 0; ii < CH; ++ii) kf[ii] = ops41::bf16(kr[i0 + ii]);
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh)
+#pragma unroll
+                for (int ii = 0; ii < CH; ++ii) d[hh] += lq[hh * DK + i0 + ii] * kf[ii];
+        }
+        float s = 0;
+#pragma unroll
+        for (int hh = 0; hh < H; ++hh) s += (d[hh] > 0 ? d[hh] : 0) * lq[H * DK + hh];
+        score[j] = s;
+    }
+};
 template <typename A> struct EngramGateA {
     int h;
     void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *kvbuf, const float *gate_w) const {
@@ -1363,6 +1510,62 @@ template <unsigned C, typename A> struct GemvQ8P {
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
     }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads x + t * xs (then row()'s r / xn
+    // group offset) and writes y[t * ys + r] when t < mt; xs % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 8;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, y + T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, y, ys, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        constexpr unsigned NQ = C / 4, SEGQ = Q8Seg<C>::v, ND = (C + 31) / 32;
+        static_assert(NQ % SEGQ == 0);
+        constexpr size_t RB = ((size_t)C * 34 + 15) & ~(size_t)15;
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * C * 32 : x; // token t: xr + t * xs
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)C * 32);
+        float dv[ND];
+#pragma unroll
+        for (unsigned k = 0; k < ND; ++k) dv[k] = 32 * k + lane < C ? iq3::half(dp[32 * k + lane]) : 0.0f;
+        const uint32_t *qw = reinterpret_cast<const uint32_t *>(row);
+        float sum[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NQ; s0 += SEGQ) {
+            uint32_t q[SEGQ];
+#pragma unroll
+            for (unsigned m = 0; m < SEGQ; ++m) q[m] = sg_bload(sg, qw + (size_t)(s0 + m) * 32);
+#pragma unroll
+            for (unsigned m = 0; m < SEGQ; ++m) {
+                sycl::vec<float, 4> xv[NT];
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) xv[t] = sg_bloadN<4>(sg, xr + t * xs + (size_t)(s0 + m) * 128);
+#pragma unroll
+                for (unsigned k = 0; k < 4; ++k) {
+                    const unsigned c = (s0 + m) * 4 + k;
+                    const float d = sycl::select_from_group(sg, dv[c / 32], c % 32);
+                    const float e = d * float(int8_t(uint8_t(q[m] >> (8 * k)))); // iq3::decode Q8_0
+#pragma unroll
+                    for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + e * xv[t][k];
+                }
+            }
+        }
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) y[t * ys + r] = sum[t];
+        }
+    }
 };
 
 // Routed packed kernels (layouts in pack_v41.hpp). Each sub-group loops over
@@ -1407,6 +1610,53 @@ template <typename D> struct DenseRows {
     unsigned n() const { return k.rows; }
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const { k.row(sg, lane, r, w, x, y); }
 };
+// DenseRows for MT tokens (D::rowm<MT>, see "multi-token rows" at lane_sum_tm): token t reads x + t * xs,
+// writes y + t * ys; tokens t >= mt are not stored. Composes with RowsP / RowsPair like DenseRows.
+template <typename D, unsigned MT, unsigned G = D::MTG> struct DenseRowsM {
+    D k; // GemvQ8P / GemvQ5KP / GemvQ6KP / GemvH16P / GemvF32P: rows and xn
+    const uint8_t *w;
+    const float *x;
+    size_t xs;
+    float *y;
+    size_t ys;
+    unsigned mt;
+    unsigned n() const { return k.rows; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
+        k.template rowm<MT, G>(sg, lane, r, w, x, xs, y, ys, mt);
+    }
+};
+// A dense packed kernel D for MT tokens as its own launch, laid out as D's operator() (launch_rows: one
+// row per sub-group, rows >= D::rows idle; the pointers stay direct kernel arguments)
+template <typename D, unsigned MT, unsigned G = D::MTG> struct DenseM {
+    D k;
+    size_t xs, ys;
+    unsigned mt;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, float *y) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned r = packed_row_id(it);
+        if (r >= k.rows) return;
+        k.template rowm<MT, G>(sg, sg.get_local_linear_id(), r, w, x, xs, y, ys, mt);
+    }
+};
+// DenseRowsM with the token groups spread over sub-groups (2026-11-10): position p runs row p / ng's token
+// group p % ng (tokens G * (p % ng) .. + G - 1) through D::rowg<G>, the group body rowm runs one after
+// another on one sub-group. The same operations per token as rowm (a group changes no token's operations);
+// a block of a few tokens gets ng times as many sub-groups (a 384-row slice at 6 tokens was 384 sub-groups,
+// most of the card idle). Tokens >= mt run on in-bounds data (G * ng <= MTX) and are not stored.
+template <typename D, unsigned G> struct DenseRowsG {
+    D k;
+    const uint8_t *w;
+    const float *x;
+    size_t xs;
+    float *y;
+    size_t ys;
+    unsigned mt, ng;
+    unsigned n() const { return k.rows * ng; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned p) const {
+        const unsigned r = p / ng, t0 = (p % ng) * G;
+        k.template rowg<G>(sg, lane, r, w, x + t0 * xs, xs, y + t0 * ys, ys, mt - t0);
+    }
+};
 template <typename R1, typename R2> struct RowsPair {
     R1 a;
     R2 b;
@@ -1422,7 +1672,7 @@ template <typename R1, typename R2> struct RowsPair {
 // > ceil(p ne/nt): position 0 is always one, so a single long extra row starts at once).
 #define OWN41_ROUTED_ROWS_BEGIN(RB)                                                              \
     const unsigned stride = (unsigned)(it.get_global_range(0) / 32);                             \
-    const unsigned nr_ = (w2 ? 12 : 6) * rows, ne_ = ex.n(), nt_ = nr_ + ne_;                     \
+    const unsigned nr_ = (w2 ? 2 : 1) * nsl * rows, ne_ = ex.n(), nt_ = nr_ + ne_;               \
     for (unsigned p_ = packed_row_id(it); p_ < nt_; p_ += stride) {                              \
         unsigned grp = p_;                                                                        \
         if (ne_) {                                                                                \
@@ -1438,14 +1688,14 @@ template <typename R1, typename R2> struct RowsPair {
         const unsigned r = grp % rows;                                                            \
         const uint8_t *wm_ = w;                                                                   \
         float *om_ = out;                                                                         \
-        if (slot >= 6) {                                                                          \
-            slot -= 6;                                                                            \
+        if (slot >= nsl) {                                                                        \
+            slot -= nsl;                                                                          \
             wm_ = w2;                                                                             \
             om_ = out2;                                                                           \
         }                                                                                         \
         const uint8_t *row = wm_ + ((size_t)ids[slot] * rows + r) * (RB);                         \
         const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);                             \
-        const float *xs = per_slot_x ? x + (size_t)slot * NB * 256 : x;                           \
+        const float *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0); \
         float sum = 0;
 #define OWN41_ROUTED_ROWS_END                                                                     \
         for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_); \
@@ -1466,9 +1716,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSP {
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
     // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
-    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    // positions nsl * rows .. 2 * nsl * rows - 1 read w2 and write out2
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1519,9 +1770,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SP {
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
     // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
-    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    // positions nsl * rows .. 2 * nsl * rows - 1 read w2 and write out2
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1584,9 +1836,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ3XXSP {
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
     // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
-    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    // positions nsl * rows .. 2 * nsl * rows - 1 read w2 and write out2
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1640,9 +1893,10 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XSP {
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
     // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
-    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    // positions nsl * rows .. 2 * nsl * rows - 1 read w2 and write out2
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
@@ -1702,9 +1956,10 @@ template <unsigned NB, typename A, bool BYTES = true, typename EX = NoRows> stru
     bool per_slot_x;
     EX ex{}; // extra rows run in the same launch (NoRows: none)
     // a second matrix of the same format and shape on the same x and ids (expert gate + up in one launch):
-    // positions 6 * rows .. 12 * rows - 1 read w2 and write out2
+    // positions nsl * rows .. 2 * nsl * rows - 1 read w2 and write out2
     const uint8_t *w2 = nullptr;
     float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0; // slots (6 per token) and the x stride between tokens (multi-token step)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
         int8_t *btab = reinterpret_cast<int8_t *>(tab);
@@ -1824,6 +2079,74 @@ template <unsigned NB, typename A> struct GemvQ6KP {
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
     }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads x + t * xs (then row()'s r / xn
+    // group offset) and writes y[t * ys + r] when t < mt; xs % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 4;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, y + T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, y, ys, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x; // token t: xr + t * xs
+        const uint32_t *ql = reinterpret_cast<const uint32_t *>(row);
+        const uint16_t *qh = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 128);
+        const int8_t *scl = reinterpret_cast<const int8_t *>(row + (size_t)NB * 192);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 208);
+        float dbs[NSR]; // d * scale, scale index 32k + lane
+#pragma unroll
+        for (unsigned k = 0; k < NSR; ++k) {
+            const unsigned si = 32 * k + lane < NS ? 32 * k + lane : NS - 1;
+            dbs[k] = iq3::half(dp[si >> 4]) * float(int(scl[si]));
+        }
+        float sum[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NB; s0 += SEG) {
+            uint32_t qa[SEG], qb[SEG];
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                qa[m] = sg_bload(sg, ql + (size_t)(s0 + m) * 32);
+                qb[m] = qh[(size_t)(s0 + m) * 32 + lane];
+            }
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                const unsigned b = s0 + m;
+                sycl::vec<float, 8> xv[NT];
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) xv[t] = sg_bloadN<8>(sg, xr + t * xs + (size_t)b * 256);
+#pragma unroll
+                for (unsigned c = 0; c < 8; ++c) {
+                    const unsigned h = c >> 2, cc = c & 3u;
+                    const unsigned low = (qa[m] >> (8 * (2 * h + (cc & 1u)) + 4 * (cc >> 1))) & 15u;
+                    const unsigned high = (qb[m] >> (8 * h + 2 * cc)) & 3u;
+                    const unsigned si = b * 16 + 2 * c; // even: si and si + 1 share a register
+                    const float d0 = sycl::select_from_group(sg, dbs[si / 32], si % 32);
+                    const float d1 = sycl::select_from_group(sg, dbs[si / 32], si % 32 + 1);
+                    const float v = (lane < 16 ? d0 : d1) * float(int(low | (high << 4)) - 32);
+#pragma unroll
+                    for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + v * xv[t][c];
+                }
+            }
+        }
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) y[t * ys + r] = sum[t];
+        }
+    }
 };
 
 // F32 rows stored as their upper 16 bits (pack_v41 F32: only rows whose low
@@ -1852,6 +2175,46 @@ template <unsigned C, typename A> struct GemvH16P {
         }
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
+    }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads x + t * xs and writes
+    // y[t * ys + r] when t < mt; xs % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 8;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, y + T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, y, ys, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        const uint16_t *row = reinterpret_cast<const uint16_t *>(w) + (size_t)r * C * 32;
+        float sum[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+#pragma unroll
+        for (unsigned s = 0; s < C / 8; ++s) {
+            const auto wv = sg_bloadN<8>(sg, row + (size_t)s * 256);
+            sycl::vec<float, 8> xv[NT];
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) xv[t] = sg_bloadN<8>(sg, x + t * xs + (size_t)s * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m) {
+                const float wf = sycl::bit_cast<float>(uint32_t(wv[m]) << 16);
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + wf * xv[t][m];
+            }
+        }
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) y[t * ys + r] = sum[t];
+        }
     }
 };
 
@@ -1915,6 +2278,76 @@ template <unsigned NB, typename A> struct GemvQ5KP {
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
     }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads x + t * xs (then row()'s r / xn
+    // group offset) and writes y[t * ys + r] when t < mt; xs % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 4;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, y + T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, y, ys, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        constexpr size_t RB = ((size_t)NB * 176 + 15) & ~(size_t)15;
+        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = KSeg<NB>::v;
+        const uint8_t *row = w + (size_t)r * RB;
+        const float *xr = xn ? x + (size_t)(r / xn) * NB * 256 : x; // token t: xr + t * xs
+        const uint32_t *qs = reinterpret_cast<const uint32_t *>(row);
+        const uint8_t *qh = row + (size_t)NB * 128;
+        const uint8_t *hd = row + (size_t)NB * 160; // per block: d, dmin, scales[12]
+        float fac[NGR], off[NGR]; // group 32k + lane
+#pragma unroll
+        for (unsigned k = 0; k < NGR; ++k) {
+            const unsigned gi = 32 * k + lane < NG ? 32 * k + lane : NG - 1, c = gi & 7u, c3 = c & 3u;
+            const uint8_t *hb = hd + 16 * (gi >> 3), *s = hb + 4;
+            const unsigned u0 = s[c3], u1 = s[4 + c3], u2 = s[8 + c3];
+            const unsigned scale = c < 4 ? u0 & 63u : (u2 & 15u) | ((u0 >> 6) << 4);
+            const unsigned minimum = c < 4 ? u1 & 63u : (u2 >> 4) | ((u1 >> 6) << 4);
+            fac[k] = iq3::half(iq3::u16(hb)) * float(scale);
+            off[k] = iq3::half(iq3::u16(hb + 2)) * float(minimum);
+        }
+        float sum[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+#pragma unroll
+        for (unsigned s0 = 0; s0 < NB; s0 += SEG) {
+            uint32_t qa[SEG], qb[SEG];
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                qa[m] = sg_bload(sg, qs + (size_t)(s0 + m) * 32);
+                qb[m] = qh[(size_t)(s0 + m) * 32 + lane];
+            }
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                const unsigned b = s0 + m;
+                sycl::vec<float, 8> xv[NT];
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) xv[t] = sg_bloadN<8>(sg, xr + t * xs + (size_t)b * 256);
+#pragma unroll
+                for (unsigned c = 0; c < 8; ++c) {
+                    const unsigned code = ((qa[m] >> (4 * c)) & 15u) | (((qb[m] >> c) & 1u) << 4);
+                    const unsigned gi = b * 8 + c;
+                    const float f = sycl::select_from_group(sg, fac[gi / 32], gi % 32);
+                    const float o = sycl::select_from_group(sg, off[gi / 32], gi % 32);
+                    const float v = f * float(code) - o;
+#pragma unroll
+                    for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + v * xv[t][c];
+                }
+            }
+        }
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) y[t * ys + r] = sum[t];
+        }
+    }
 };
 
 // F32 rows (no packing; rows are 16-byte aligned when cols % 4 == 0): lane l
@@ -1943,6 +2376,44 @@ template <unsigned C, typename A> struct GemvF32P {
         }
         sum = sg_tree32(sg, sum);
         if (lane == 0) y[r] = sum;
+    }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads x + t * xs and writes
+    // y[t * ys + r] when t < mt; xs % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 8;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] inline void rowm(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, lane, r, w, x + T0 * xs, xs, y + T0 * ys, ys, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, lane, r, w, x, xs, y, ys, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] inline void rowg(sycl::sub_group sg, unsigned lane, unsigned r, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        const float *row = reinterpret_cast<const float *>(w) + (size_t)r * C * 32;
+        float sum[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = 0;
+#pragma unroll
+        for (unsigned s = 0; s < C / 8; ++s) {
+            const auto wv = sg_bloadN<8>(sg, row + (size_t)s * 256);
+            sycl::vec<float, 8> xv[NT];
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) xv[t] = sg_bloadN<8>(sg, x + t * xs + (size_t)s * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m)
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) sum[t] = sum[t] + wv[m] * xv[t][m];
+        }
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) sum[t] = sg_tree32(sg, sum[t]);
+        if (lane == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) y[t * ys + r] = sum[t];
+        }
     }
 };
 
@@ -2050,6 +2521,63 @@ template <unsigned H, unsigned SEG> struct HcMixDotsP {
         }
         if (l == 0) out[grp] = acc;
     }
+    // M tokens (see "multi-token rows" at lane_sum_tm): token t reads streams + t * ss and writes
+    // out[t * os + grp] when t < mt; the fn values are read once per chunk for a group's tokens, and
+    // each token keeps row()'s products, sums and tree. ss % 4 == 0 (block reads).
+    static constexpr unsigned MTG = 4;
+    template <unsigned MT, unsigned G = MTG, unsigned T0 = 0>
+    [[gnu::always_inline]] static inline void rowm(sycl::sub_group sg, unsigned l, unsigned grp, const float *streams,
+                                                   size_t ss, const float *fn, double *out, size_t os, unsigned mt) {
+        if constexpr (T0 < MT) {
+            constexpr unsigned NT = MT - T0 < G ? MT - T0 : G;
+            if (T0 < mt) rowg<NT>(sg, l, grp, streams + T0 * ss, ss, fn, out + T0 * os, os, mt - T0);
+            rowm<MT, G, T0 + NT>(sg, l, grp, streams, ss, fn, out, os, mt);
+        }
+    }
+    template <unsigned NT>
+    [[gnu::always_inline]] static inline void rowg(sycl::sub_group sg, unsigned l, unsigned grp, const float *streams,
+                                                   size_t ss, const float *fn, double *out, size_t os, unsigned mt) {
+        const unsigned r = grp / SEG, sgi = grp % SEG;
+        static_assert(LEN % 256 == 0);
+        const float *sv = streams + (size_t)sgi * LEN; // token t: sv + t * ss
+        const float *f = fn + (size_t)(r < 24 ? r : 0) * N + (size_t)sgi * LEN;
+        double acc[NT];
+#pragma unroll
+        for (unsigned t = 0; t < NT; ++t) acc[t] = 0;
+#pragma unroll
+        for (unsigned c = 0; c < LEN / 256; ++c) {
+            const auto b = sg_bloadN<8>(sg, f + c * 256);
+            sycl::vec<float, 8> a[NT];
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) a[t] = sg_bloadN<8>(sg, sv + t * ss + c * 256);
+#pragma unroll
+            for (unsigned m = 0; m < 8; ++m)
+#pragma unroll
+                for (unsigned t = 0; t < NT; ++t) acc[t] += double(r < 24 ? b[m] : a[t][m]) * a[t][m];
+        }
+        for (unsigned w = 1; w < 32; w *= 2) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t) {
+                double o = sycl::select_from_group(sg, acc[t], (l + w) % 32);
+                if (l % (2 * w) == 0) acc[t] = acc[t] + o;
+            }
+        }
+        if (l == 0) {
+#pragma unroll
+            for (unsigned t = 0; t < NT; ++t)
+                if (t < mt) out[t * os + grp] = acc[t];
+        }
+    }
+};
+// HcMixDotsP for MT tokens as its own launch (launch_sg, 25 * SEG work-groups of one sub-group)
+template <unsigned H, unsigned SEG, unsigned MT, unsigned G = HcMixDotsP<H, SEG>::MTG> struct HcMixDotsPM {
+    size_t ss, os; // per-token strides of streams (floats) and out (doubles)
+    unsigned mt;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *streams, const float *fn, double *out) const {
+        sycl::sub_group sg = it.get_sub_group();
+        HcMixDotsP<H, SEG>::template rowm<MT, G>(sg, sg.get_local_linear_id(), (unsigned)it.get_group_linear_id(), streams,
+                                               ss, fn, out, os, mt);
+    }
 };
 
 // HcMixFinishSeg on one sub-group: lane r sums its 8 segment partials, lanes
@@ -2116,6 +2644,20 @@ template <unsigned H, unsigned SEG> struct HcDotsRows {
         HcMixDotsP<H, SEG>::row(sg, lane, r, streams, fn, out);
     }
 };
+// HcDotsRows for MT tokens (HcMixDotsP::rowm<MT>): token t's streams at streams + t * ss, its 25 * SEG
+// partials at out + t * os; tokens t >= mt are not stored
+template <unsigned H, unsigned SEG, unsigned MT, unsigned G = HcMixDotsP<H, SEG>::MTG> struct HcDotsRowsM {
+    const float *streams;
+    size_t ss;
+    const float *fn;
+    double *out;
+    size_t os;
+    unsigned mt;
+    unsigned n() const { return 25 * SEG; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
+        HcMixDotsP<H, SEG>::template rowm<MT, G>(sg, lane, r, streams, ss, fn, out, os, mt);
+    }
+};
 struct HcFinishRows {
     HcMixFinishSG k;
     const double *d;
@@ -2169,8 +2711,13 @@ template <unsigned HD> struct SparseScoreP {
     int n_idx, heads, win_rows, hd; // hd == HD, kept at run time: the scale is 1 / sqrt(float(hd)) on the card as before
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *q, const uint16_t *kvw, const uint16_t *kvc,
                                      const int32_t *idxs, float *score) const {
-        const size_t g = it.get_global_linear_id();
-        const int h = (int)((size_t)it.get_group_linear_id() * 32 / n_idx), i = (int)(g % n_idx);
+        run(it.get_sub_group(), (unsigned)it.get_group_linear_id(), q, kvw, kvc, idxs, score);
+    }
+    // work-group (= sub-group) grp of the launch (also the multi-token form, SparseAttnM)
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, unsigned grp, const float *q, const uint16_t *kvw,
+                                           const uint16_t *kvc, const int32_t *idxs, float *score) const {
+        const size_t g = (size_t)grp * 32 + sg.get_local_linear_id();
+        const int h = (int)((size_t)grp * 32 / n_idx), i = (int)(g % n_idx);
         if (h >= heads) return;
         const int slot = idxs[i];
         const int s0 = slot < 0 ? 0 : slot;
@@ -2195,9 +2742,12 @@ template <unsigned HD> struct SparseScoreP {
 template <int NI> struct SparseSoftmaxP {
     int heads;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *sinks, const int32_t *idxs, float *score) const {
-        sycl::sub_group sg = it.get_sub_group();
+        run(it.get_sub_group(), (unsigned)it.get_group_linear_id(), sinks, idxs, score);
+    }
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, unsigned grp, const float *sinks, const int32_t *idxs,
+                                           float *score) const {
         const int lane = (int)sg.get_local_linear_id();
-        const int h = (int)it.get_group_linear_id();
+        const int h = (int)grp;
         if (h >= heads) return;
         constexpr int K = NI / 32;
         float *s = score + (size_t)h * NI;
@@ -2271,9 +2821,12 @@ template <unsigned HD, unsigned HG> struct SparseScoreHG {
     int n_idx, heads, win_rows, hd; // hd == HD at run time (scale as before)
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *q, const uint16_t *kvw, const uint16_t *kvc,
                                      const int32_t *idxs, float *score) const {
-        sycl::sub_group sg = it.get_sub_group();
+        run(it.get_sub_group(), (unsigned)it.get_group_linear_id(), q, kvw, kvc, idxs, score);
+    }
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, unsigned grp, const float *q, const uint16_t *kvw,
+                                           const uint16_t *kvc, const int32_t *idxs, float *score) const {
         const unsigned lane = sg.get_local_linear_id();
-        const unsigned grp = it.get_group_linear_id(), nib = (unsigned)n_idx / 32;
+        const unsigned nib = (unsigned)n_idx / 32;
         const unsigned h0 = (grp / nib) * HG, i = (grp % nib) * 32 + lane;
         if (h0 >= (unsigned)heads) return;
         const int slot = idxs[i];
@@ -2572,9 +3125,11 @@ template <unsigned HD, unsigned NW, unsigned U = 8, bool PIPE = false> struct Sp
     const float *cosb = nullptr, *sinb = nullptr;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
                                      const float *w, float *out) const {
-        sycl::sub_group sg = it.get_sub_group();
+        run(it.get_sub_group(), (unsigned)it.get_group_linear_id(), kvw, kvc, idxs, w, out);
+    }
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, unsigned grp, const uint16_t *kvw, const uint16_t *kvc,
+                                           const int32_t *idxs, const float *w, float *out) const {
         const unsigned lane = sg.get_local_linear_id();
-        const unsigned grp = it.get_group_linear_id();
         const int h = (int)(grp / PER_HEAD);
         const unsigned base = (grp % PER_HEAD) * SPAN;
         if (h >= heads) return;
@@ -2676,9 +3231,13 @@ struct EngramGateP {
     int h; // % 32 == 0
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w) const {
         sycl::sub_group sg = it.get_sub_group();
-        const int lane = (int)sg.get_local_linear_id();
         const int j = (int)it.get_group_linear_id();
         if (j >= 4) return;
+        run(sg, (int)sg.get_local_linear_id(), j, streams, kvbuf, gate_w);
+    }
+    // stream j on one sub-group (also the multi-token form, EngramGatePM)
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, int lane, int j, float *streams, const float *kvbuf,
+                                           const float *gate_w) const {
         const float eps = 1e-20f, clamp_v = 1e-6f;
         const float *sr = streams + (size_t)j * h, *kr = kvbuf + (size_t)j * h, *gr = gate_w + (size_t)j * h;
         double hsq = 0, ksq = 0, dot = 0;
@@ -3184,15 +3743,126 @@ struct CidxFill {
     }
 };
 
+// Exact top-k of n float scores in the host index()'s order: score descending,
+// the lower index first among equal scores, -0 equal to +0 (scores are never
+// NaN). One work-group of WG items: a radix select over order keys finds the
+// k-th key T, then one pass in index order keeps every key above T and the
+// first (by index) of the keys equal to T, which is the host's
+// partial_sort + sort set exactly. Two forms:
+//  - rows (BLOCK false): keys are the rows' scores; with a candidate mask, rows
+//    j < cand_n with cand[j] == 0 count as -inf. Writes the kept rows as
+//    out[i] = j + add in ascending j, then -1 up to outn.
+//  - blocks (BLOCK true, select_candidate_blocks): keys are each block's
+//    largest score over bs rows of `rows`, the newest block +inf. Writes
+//    cand[r] = 1 for the rows of the kept blocks whose largest score is above
+//    -inf and 0 for every other row.
+// Local memory: NSG * 256 + 8 words.
+template <bool BLOCK> struct TopKSelP {
+    static constexpr int WG = 1024, NSG = WG / 32;
+    int n, k, add, outn, cand_n, bs, rows;
+    static uint32_t okey(float f) {
+        uint32_t u = sycl::bit_cast<uint32_t>(f);
+        if (u == 0x80000000u) u = 0u;
+        return (u & 0x80000000u) ? ~u : (u | 0x80000000u);
+    }
+    float val(const float *sc, const uint8_t *cand, int j) const {
+        if constexpr (BLOCK) {
+            if (j == n - 1) return INFINITY;
+            float m = -INFINITY; // std::max(m, v) per row, as the host folds it
+            const int a = j * bs, b = sycl::min(a + bs, rows);
+            for (int r = a; r < b; ++r) {
+                const float v = sc[r];
+                m = m < v ? v : m;
+            }
+            return m;
+        } else {
+            if (cand && j < cand_n && !cand[j]) return -INFINITY;
+            return sc[j];
+        }
+    }
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand_in, int32_t *out, uint8_t *cand_out,
+                    float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        const int sgi = (int)it.get_sub_group().get_group_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const bool all = k >= n;
+        uint32_t T = 0, rem = 0;
+        if (!all) {
+            uint32_t prefix = 0, pmask = 0;
+            rem = (uint32_t)k;
+            for (int pass = 0; pass < 4; ++pass) {
+                const int shift = 24 - 8 * pass;
+                for (int i = lid; i < NSG * 256; i += WG) hist[i] = 0;
+                sycl::group_barrier(g);
+                for (int j = lid; j < n; j += WG) {
+                    const uint32_t kk = okey(val(sc, cand_in, j));
+                    if ((kk & pmask) == prefix)
+                        sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::work_group,
+                                         sycl::access::address_space::local_space>(
+                            hist[sgi * 256 + ((kk >> shift) & 255u)])
+                            .fetch_add(1u);
+                }
+                sycl::group_barrier(g);
+                uint32_t tot = 0; // item i < 256 holds bin 255 - i: the scan runs from the top bin down
+                if (lid < 256)
+                    for (int s = 0; s < NSG; ++s) tot += hist[s * 256 + (255 - lid)];
+                const uint32_t inc = sycl::inclusive_scan_over_group(g, tot, sycl::plus<uint32_t>());
+                const uint32_t exc = inc - tot;
+                if (lid < 256 && exc < rem && rem <= inc) {
+                    misc[0] = 255u - (uint32_t)lid;
+                    misc[1] = exc;
+                }
+                sycl::group_barrier(g);
+                prefix |= misc[0] << shift;
+                pmask |= 255u << shift;
+                rem -= misc[1];
+                sycl::group_barrier(g);
+            }
+            T = prefix;
+        }
+        const uint32_t KNEG = okey(-INFINITY);
+        uint32_t base = 0, eqseen = 0;
+        for (int c0 = 0; c0 < n; c0 += WG) {
+            const int j = c0 + lid;
+            const bool in = j < n;
+            const uint32_t kk = in ? okey(val(sc, cand_in, j)) : 0u;
+            const bool gt = in && (all || kk > T), eq = in && !all && kk == T;
+            const uint32_t e = eq ? 1u : 0u;
+            const uint32_t einc = sycl::inclusive_scan_over_group(g, e, sycl::plus<uint32_t>());
+            const uint32_t etot = sycl::group_broadcast(g, einc, WG - 1);
+            const bool sel = gt || (eq && eqseen + einc - e < rem);
+            if constexpr (BLOCK) {
+                if (in) {
+                    const uint8_t f = (sel && kk > KNEG) ? 1 : 0;
+                    const int a = j * bs, b = sycl::min(a + bs, rows);
+                    for (int r = a; r < b; ++r) cand_out[r] = f;
+                }
+            } else {
+                const uint32_t s1 = sel ? 1u : 0u;
+                const uint32_t sinc = sycl::inclusive_scan_over_group(g, s1, sycl::plus<uint32_t>());
+                const uint32_t stot = sycl::group_broadcast(g, sinc, WG - 1);
+                if (sel && base + sinc - 1 < (uint32_t)outn) out[base + sinc - 1] = j + add;
+                base += stot;
+            }
+            eqseen += etot;
+        }
+        if constexpr (!BLOCK)
+            for (int i = (int)base + lid; i < outn; i += WG) out[i] = -1;
+    }
+};
+
 // ArgmaxP1 over a card's slice of the logits: indices are reported as
 // off + i, and `none` (the full vocabulary size) when the span has no
 // non-NaN value above -inf, exactly as ArgmaxP1 would for the full vector.
 struct ArgmaxP1O {
     int n, ch, off, none;
     void operator()(sycl::nd_item<1> it, const float *logits, float *bvs, int32_t *bis) const {
-        sycl::sub_group sg = it.get_sub_group();
+        run(it.get_sub_group(), (int)it.get_group_linear_id(), logits, bvs, bis);
+    }
+    // span gi on one sub-group (also the multi-token form, ArgmaxP1OM)
+    [[gnu::always_inline]] inline void run(sycl::sub_group sg, int gi, const float *logits, float *bvs, int32_t *bis) const {
         const int lane = (int)sg.get_local_linear_id();
-        const int gi = (int)it.get_group_linear_id();
         const int i0 = gi * ch, i1 = sycl::min(n, i0 + ch);
         float bv = -INFINITY;
         int bi = none;
@@ -3208,6 +3878,913 @@ struct ArgmaxP1O {
         if (lane == 0) { bvs[gi] = bv; bis[gi] = bi; }
     }
 };
+
+// ---- multi-token forms of the per-token small launches (backend_sycl_v41_mt.inc) ------------------
+// Token t's pointers are the one-token pointers + t * stride (the block's per-token buffers are laid
+// out at fixed strides); every item runs the one-token kernel's code on them, so every value is the
+// one-token step's value. Tokens at or past m do nothing.
+template <unsigned N, unsigned S> inline NormRows<N, S> tok_at(NormRows<N, S> r, unsigned t, const size_t *st) {
+    r.x += t * st[0];
+    r.y += t * st[1];
+    return r;
+}
+template <typename A> inline RopeRows<A> tok_at(RopeRows<A> r, unsigned t, const size_t *st) {
+    r.x += t * st[0];
+    r.cosb += t * st[1]; // consecutive positions: 32 table entries apart
+    r.sinb += t * st[1];
+    return r;
+}
+template <unsigned H, unsigned SEG> inline HcDotsRows<H, SEG> tok_at(HcDotsRows<H, SEG> r, unsigned t, const size_t *st) {
+    r.streams += t * st[0];
+    r.out += t * st[1];
+    return r;
+}
+inline HcFinishRows tok_at(HcFinishRows r, unsigned t, const size_t *st) {
+    r.d += t * st[0];
+    r.pre += t * st[1];
+    r.post += t * st[2];
+    r.comb += t * st[3];
+    return r;
+}
+// m tokens of a rows type R (token-major: rows t * R::n() .. (t + 1) * R::n() - 1 are token t's)
+template <typename R> struct TokRows {
+    R r;
+    unsigned m;
+    size_t st[4];
+    unsigned n() const { return m * r.n(); }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned i) const {
+        const unsigned n0 = r.n();
+        tok_at(r, i / n0, st).row(sg, lane, i % n0);
+    }
+};
+// HcPostPreP for m tokens: items t * h .. (t + 1) * h - 1 are token t's (pre_src / pre_dst may be null)
+template <typename A> struct HcPostPrePM {
+    int h;
+    unsigned m;
+    size_t ss, xs, ps, cs, pss, pds, mxs, os; // per-token strides of the arguments, in order
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *x, const float *post,
+                    const float *comb, const float *pre_src, float *pre_dst, const float *mix,
+                    typename A::T *out) const {
+        const size_t g = it.get_global_linear_id();
+        const unsigned t = (unsigned)(g / (size_t)h);
+        if (t >= m) return;
+        const int i = (int)(g % (size_t)h);
+        streams += t * ss;
+        x += t * xs;
+        post += t * ps;
+        comb += t * cs;
+        if (pre_src) pre_src += t * pss;
+        if (pre_dst) pre_dst += t * pds;
+        mix += t * mxs;
+        out += t * os;
+        // HcPostPreP's expressions
+        if (pre_dst && i < 4) pre_dst[i] = pre_src[i];
+        float o[4];
+        for (int k = 0; k < 4; ++k) o[k] = A::rd(streams[(size_t)k * h + i]);
+        const float xi = A::rd(x[i]);
+        float r[4];
+        for (int j = 0; j < 4; ++j) {
+            float acc = post[j] * xi;
+            for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * o[k];
+            r[j] = acc;
+        }
+        typename A::T sv[4];
+        for (int j = 0; j < 4; ++j) {
+            sv[j] = A::wr(r[j]);
+            streams[(size_t)j * h + i] = sv[j];
+        }
+        float acc = 0;
+        for (int j = 0; j < 4; ++j) acc += mix[j] * A::rd(sv[j]);
+        out[i] = A::wr(acc);
+    }
+};
+// HcPostP for m tokens (HcPostP's expressions)
+template <typename A> struct HcPostPM {
+    int h;
+    unsigned m;
+    size_t ss, xs, ps, cs, pss, pds;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *x, const float *post,
+                    const float *comb, const float *pre_src, float *pre_dst) const {
+        const size_t g = it.get_global_linear_id();
+        const unsigned t = (unsigned)(g / (size_t)h);
+        if (t >= m) return;
+        const int i = (int)(g % (size_t)h);
+        streams += t * ss;
+        x += t * xs;
+        post += t * ps;
+        comb += t * cs;
+        if (pre_src) pre_src += t * pss;
+        if (pre_dst) pre_dst += t * pds;
+        if (pre_dst && i < 4) pre_dst[i] = pre_src[i];
+        float o[4];
+        for (int k = 0; k < 4; ++k) o[k] = A::rd(streams[(size_t)k * h + i]);
+        const float xi = A::rd(x[i]);
+        float r[4];
+        for (int j = 0; j < 4; ++j) {
+            float acc = post[j] * xi;
+            for (int k = 0; k < 4; ++k) acc += comb[k * 4 + j] * o[k];
+            r[j] = acc;
+        }
+        for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = A::wr(r[j]);
+    }
+};
+// HcPreA for m tokens
+template <typename A> struct HcPreAM {
+    int h;
+    unsigned m;
+    size_t ss, ms, os;
+    void operator()(sycl::nd_item<1> it, const typename A::T *streams, const float *mix, typename A::T *out) const {
+        const size_t g = it.get_global_linear_id();
+        const unsigned t = (unsigned)(g / (size_t)h);
+        if (t >= m) return;
+        const int i = (int)(g % (size_t)h);
+        streams += t * ss;
+        mix += t * ms;
+        out += t * os;
+        float acc = 0;
+        for (int j = 0; j < 4; ++j) acc += mix[j] * A::rd(streams[(size_t)j * h + i]);
+        out[i] = A::wr(acc);
+    }
+};
+// MoeCombineA for m tokens
+template <typename A> struct MoeCombineAM {
+    int top, h;
+    unsigned m;
+    size_t es, ss, os;
+    void operator()(sycl::nd_item<1> it, const typename A::T *exps, const typename A::T *shared, typename A::T *out) const {
+        const size_t g = it.get_global_linear_id();
+        const unsigned t = (unsigned)(g / (size_t)h);
+        if (t >= m) return;
+        const int i = (int)(g % (size_t)h);
+        exps += t * es;
+        shared += t * ss;
+        out += t * os;
+        float acc = A::rd(shared[i]);
+        for (int r = 0; r < top; ++r) acc += A::rd(exps[(size_t)r * h + i]);
+        out[i] = A::wr(acc);
+    }
+};
+// SwigluBothS for m tokens: items t * (rows + 1) * n .. are token t's
+template <typename A> struct SwigluBothSM {
+    int rows, n; float lim; int ostride;
+    unsigned m;
+    size_t gs, os, ps, sgs, sos; // gate / up, out, prob, shared gate / up, shared out
+    void operator()(sycl::nd_item<1> it, const typename A::T *gate, const typename A::T *up, typename A::T *out,
+                    const float *prob, const typename A::T *sgate, const typename A::T *sup, typename A::T *sout) const {
+        const size_t per = (size_t)(rows + 1) * n, gg = it.get_global_linear_id();
+        const unsigned t = (unsigned)(gg / per);
+        if (t >= m) return;
+        const int g_ = (int)(gg % per);
+        gate += t * gs;
+        up += t * gs;
+        out += t * os;
+        prob += t * ps;
+        sgate += t * sgs;
+        sup += t * sgs;
+        sout += t * sos;
+        if (g_ < rows * n) {
+            const int r = g_ / n, i = g_ % n;
+            float g = sycl::fmin(A::rd(gate[g_]), lim);
+            float u = sycl::clamp(A::rd(up[g_]), -lim, lim);
+            const typename A::T v = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+            out[(size_t)r * ostride + i] = A::wr(prob[r] * A::rd(v));
+        } else {
+            const int i = g_ - rows * n;
+            float g = sycl::fmin(A::rd(sgate[i]), lim);
+            float u = sycl::clamp(A::rd(sup[i]), -lim, lim);
+            sout[i] = A::wr(g / (1.0f + sycl::exp(-g)) * u);
+        }
+    }
+};
+// RouteP for m tokens: work-group t (of 512 items) routes token t
+struct RoutePM {
+    RouteP k;
+    size_t ls; // logits stride
+    void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, uint32_t *ids, float *prob,
+                    float *lm) const {
+        const size_t t = it.get_group_linear_id();
+        k(it, logits + t * ls, bias, ids + t * (size_t)k.topk, prob + t * (size_t)k.topk, lm);
+    }
+};
+// EngramGateP for m tokens: sub-group (work-group) 4 * t + j is token t's stream j
+struct EngramGatePM {
+    EngramGateP k;
+    unsigned m;
+    size_t ss, ks;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned g = (unsigned)it.get_group_linear_id(), t = g / 4;
+        if (t >= m) return;
+        k.run(sg, (int)sg.get_local_linear_id(), (int)(g % 4), streams + t * ss, kvbuf + t * ks, gate_w);
+    }
+};
+
+// The block's window rows and attention lists. Token t (position P = pos0 + t) stores its key row in the
+// block area, ring row win + t (RingCommitM moves it to its ring slot after the layer's attention), and
+// its list cat + t * cst names positions P - win + 1 .. P oldest first (WindowAppendP's order; -1 before
+// position 0): rows before pos0 at their ring slot q % win, the block's in the block area; then the
+// compressed list with its rows moved past the block area (+ mtx; the attention runs with win_rows =
+// win + mtx). The same rows in the same order as the one-token lists.
+template <typename A> struct WindowAppendM {
+    int win, d, pos0, nc, m, mtx;
+    size_t ks, cs, cst; // per-token strides: key row, compressed list, attention list
+    void operator()(sycl::nd_item<1> it, uint16_t *ring, const typename A::T *kv, int32_t *cat,
+                    const int32_t *cidx) const {
+        const int per = sycl::max(d, win + nc);
+        const int g = (int)it.get_global_linear_id(), t = g / per, i = g % per;
+        if (t >= m) return;
+        if (i < d) ring[(size_t)(win + t) * d + i] = ops41::bf16b(A::rd(kv[(size_t)t * ks + i]));
+        int32_t *ct = cat + (size_t)t * cst;
+        if (i < win) {
+            const long q = (long)pos0 + t - (win - 1) + i;
+            ct[i] = q < 0 ? -1 : (q >= pos0 ? win + (int)(q - pos0) : (int)(q % win));
+        } else if (i < win + nc) {
+            const int32_t v = cidx[(size_t)t * cs + (i - win)];
+            ct[i] = v < 0 ? v : v + mtx;
+        }
+    }
+};
+// the block area's rows to their ring slots (after every token's attention of the layer)
+struct RingCommitM {
+    int win, d, pos0, m;
+    void operator()(sycl::nd_item<1> it, uint16_t *ring) const {
+        const int g = (int)it.get_global_linear_id(), t = g / d, i = g % d;
+        if (t >= m) return;
+        ring[(size_t)((pos0 + t) % win) * d + i] = ring[(size_t)(win + t) * d + i];
+    }
+};
+// the attention kernels for m tokens: work-groups t * gpt .. (t + 1) * gpt - 1 run token t's groups of the
+// one-token launch on token t's arrays (the one-token pointers + t * strides)
+template <typename K> struct ScoreM {
+    K k;
+    unsigned gpt, m;
+    size_t qs, is, ss;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *q, const uint16_t *kvw, const uint16_t *kvc,
+                                     const int32_t *idxs, float *score) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m) return;
+        k.run(it.get_sub_group(), grp % gpt, q + t * qs, kvw, kvc, idxs + t * is, score + t * ss);
+    }
+};
+template <typename K> struct SoftmaxM {
+    K k;
+    unsigned gpt, m;
+    size_t is, ss;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *sinks, const int32_t *idxs, float *score) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m) return;
+        k.run(it.get_sub_group(), grp % gpt, sinks, idxs + t * is, score + t * ss);
+    }
+};
+template <typename K> struct OutM {
+    K k;
+    unsigned gpt, m;
+    size_t is, ws, os, rs; // lists, weights, out, ry (the rope tables move 32 per token)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m) return;
+        K k2 = k;
+        if (k2.ry) {
+            k2.ry += t * rs;
+            k2.cosb += t * 32;
+            k2.sinb += t * 32;
+        }
+        k2.run(it.get_sub_group(), grp % gpt, kvw, kvc, idxs + t * is, w + t * ws, out + t * os);
+    }
+};
+
+// ---- the block's index lists (backend_sycl_v41_mt.inc tpm_index): per-token row counts lens[t] ----------
+// CidxFill for the tokens with lens[t] in [0, 512] (others: lens[t] < 0, left alone): list t at out + t * 512
+struct CidxFillM {
+    int lens[16];
+    unsigned m;
+    void operator()(sycl::nd_item<1> it, int32_t *out) const {
+        const unsigned g = (unsigned)it.get_global_linear_id(), t = g / 512, i = g % 512;
+        if (t >= m || lens[t] < 0) return;
+        out[(size_t)t * 512 + i] = (int)i < lens[t] ? (int)i + 128 : -1;
+    }
+};
+// IndexerScoreB for every token with lens[t] > 0: work-groups t * gpt .. are token t's (rows j = (group %
+// gpt) * WG + local id); its query, weights and scores at the one-token pointers + t * strides
+template <typename A> struct IndexerScoreBM {
+    int lens[16];
+    unsigned m, gpt;
+    size_t qs, ws, ss;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+                    float *score, float *lq) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m || lens[t] <= 0) return; // the whole work-group: before the kernel's barrier
+        const int len = lens[t];
+        const IndexerScoreB<A> kk{len, (len + 31) / 32 * 32};
+        const int j = (int)((grp % gpt) * (unsigned)it.get_local_range(0) + (unsigned)it.get_local_linear_id());
+        kk.run(it, j, q + t * qs, k, w + t * ws, score + t * ss, lq);
+    }
+};
+// TopKSelP for every token with lens[t] > 0, one work-group each. BLOCK (layer 20): n = blocks of 8 of
+// lens[t] rows, the candidate mask to cand + t * cs. Else: n = lens[t], top 512 (+128) to out + t * 512,
+// masked by cand + t * cs (cand_n = lens[t]) when mask.
+template <bool BLOCK> struct TopKSelM {
+    int lens[16];
+    unsigned m;
+    bool mask;
+    size_t ss, cs;
+    void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m || lens[t] <= 0) return;
+        const int len = lens[t];
+        if constexpr (BLOCK) {
+            const TopKSelP<true> k{(len + 7) / 8, 2048, 0, 0, 0, 8, len};
+            k(it, sc + t * ss, (const uint8_t *)nullptr, (int32_t *)nullptr, cand + t * cs, lm);
+        } else {
+            const TopKSelP<false> k{len, 512, 128, 512, mask ? len : 0, 0, 0};
+            k(it, sc + t * ss, mask ? (const uint8_t *)(cand + t * cs) : (const uint8_t *)nullptr, out + (size_t)t * 512,
+              (uint8_t *)nullptr, lm);
+        }
+    }
+};
+
+// XchgP's push spread over many work-groups (a block of tokens moves nslot = M or 7M slots: one
+// work-group pushing alone took most of the step); the same stores. XchgP with nslot 0 then releases,
+// raises the flags and waits: the in-order queue starts it after every push here has been issued.
+// The exchange by LOADS (2026-11-10): on this host a kernel's stores into a peer card's memory run at ~1 GB/s
+// per card whatever the shape, while loads from a peer's memory run at 25-37 GB/s (all six cards at once,
+// 20-64 work-groups; tools/bench/xchg_bw_bench.cpp). Every card leaves its rows in its own arena; the
+// exchange publishes them (system-scope release, flag seq into every peer's flag word 16 * me, as XchgP),
+// waits for every peer's flag, then copies each peer's rows [b0[d], b1[d]) of every slot from the peer's
+// arena into its own (same offsets). Work-group 0 publishes; every work-group waits (one item polls) and
+// copies a share. A card overwrites an exchange region only after a later exchange completed, and every
+// peer raises that later flag only after its copy of the earlier rows (in-order queue), so no row is
+// overwritten before all peers have read it. mode 0 publish + wait + copy, 1 publish only, 2 wait + copy.
+struct XchgPull {
+    int n, me;
+    unsigned off, stride, nslot;
+    unsigned b0[6], b1[6]; // every card's rows (multiples of 4)
+    uint32_t seq;
+    long spin;
+    int mode = 0;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned t = (unsigned)it.get_local_linear_id();
+        float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
+        if (mode != 2 && it.get_group_linear_id() == 0) {
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < n && (int)t != me)
+                AR(reinterpret_cast<uint32_t *>(XchgP::pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(seq);
+        }
+        if (mode == 1) return;
+        if ((int)t < n && (int)t != me) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
+            long s = 0;
+            if (!poison.load())
+                while (f.load() < seq && ++s < spin) {}
+            if (s >= spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        // copy: items over (peer, slot, vec4); peers in order 0..n-1 without me
+        const size_t T = it.get_global_range(0);
+        size_t base = 0;
+        for (int d = 0; d < n; ++d) {
+            if (d == me) continue;
+            const unsigned n4 = (b1[d] - b0[d]) / 4;
+            const size_t cnt = (size_t)nslot * n4;
+            const float *src = XchgP::pick(d, p0, p1, p2, p3, p4, p5) + off;
+            float *dst = mine + off;
+            // this item's indices k in [0, cnt) with (base + k) % T == global id
+            const size_t gid = it.get_global_linear_id();
+            size_t k0 = (gid + T - base % T) % T;
+            for (size_t k = k0; k < cnt; k += T) {
+                const size_t o = (size_t)(k / n4) * stride + b0[d] + (k % n4) * 4;
+                *reinterpret_cast<sycl::vec<float, 4> *>(dst + o) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + o);
+            }
+            base += cnt;
+        }
+    }
+};
+
+struct XchgPushM {
+    int n, me;
+    unsigned off, stride, nslot, r0, r1;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5) const {
+        const float *own = XchgP::pick(me, p0, p1, p2, p3, p4, p5) + off;
+        const unsigned n4 = (r1 - r0) / 4;
+        const size_t T = it.get_global_range(0);
+        for (size_t k = it.get_global_linear_id(); k < (size_t)nslot * n4; k += T) {
+            const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
+            const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
+            for (int d = 0; d < n; ++d)
+                if (d != me) *reinterpret_cast<sycl::vec<float, 4> *>(XchgP::pick(d, p0, p1, p2, p3, p4, p5) + off + o) = v;
+        }
+        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system); // as XchgP before its flags
+    }
+};
+// XchgPushM with each work-group writing to one peer only (long runs of stores to one card): group g sends to
+// peer g % (n - 1) (skipping me), chunk g / (n - 1) of gpp chunks; one release per work-group after a barrier
+struct XchgPushD {
+    int n, me;
+    unsigned off, stride, nslot, r0, r1, gpp;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), np = (unsigned)n - 1;
+        const unsigned di = grp % np, gi = grp / np, d = di < (unsigned)me ? di : di + 1;
+        const float *own = XchgP::pick(me, p0, p1, p2, p3, p4, p5) + off;
+        float *dst = XchgP::pick((int)d, p0, p1, p2, p3, p4, p5) + off;
+        const unsigned n4 = (r1 - r0) / 4;
+        const size_t L = it.get_local_range(0);
+        for (size_t k = (size_t)gi * L + it.get_local_linear_id(); k < (size_t)nslot * n4; k += (size_t)gpp * L) {
+            const size_t o = (size_t)(k / n4) * stride + r0 + (k % n4) * 4;
+            *reinterpret_cast<sycl::vec<float, 4> *>(dst + o) = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
+        }
+        sycl::group_barrier(it.get_group());
+        if (it.get_local_linear_id() == 0) sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+    }
+};
+
+// ---- the block's compressor publish (backend_sycl_v41_mt.inc tpm_publish) -----------------------------
+// ratio-2 states of the block: row 1 + t = token t's (f32, ToF32A's values), row 0 = the carried even state
+// (kv_state / score_state slot 0) for a block that starts at an odd position
+template <typename A> struct StatePackM {
+    int hd;
+    unsigned m;
+    void operator()(sycl::nd_item<1> it, const typename A::T *cw, const typename A::T *scg, const float *kv0,
+                    const float *sc0, float *mkv, float *msc) const {
+        const size_t g = it.get_global_linear_id();
+        const unsigned r = (unsigned)(g / (size_t)hd), i = (unsigned)(g % (size_t)hd);
+        if (r > m) return;
+        if (r == 0) {
+            mkv[i] = kv0[i];
+            msc[i] = sc0[i];
+        } else {
+            mkv[(size_t)r * hd + i] = A::rd(cw[(size_t)(r - 1) * hd + i]);
+            msc[(size_t)r * hd + i] = A::rd(scg[(size_t)(r - 1) * hd + i]);
+        }
+    }
+};
+// CompressPoolP for the block's odd positions: work-group g pools state rows t, t + 1 (t = t0 + 2 g: token t's
+// row and the one before it) into out + g * hd
+template <typename A> struct CompressPoolPM {
+    CompressPoolP<A> k;
+    unsigned t0, np;
+    void operator()(sycl::nd_item<1> it, const float *mkv, const float *msc, const float *nw, typename A::T *out,
+                    float *tmp) const {
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g >= np) return;
+        const size_t t = t0 + 2 * g;
+        k(it, mkv + t * k.hd, msc + t * k.hd, nw, out + (size_t)g * k.hd, tmp);
+    }
+};
+// PubAppendA for n published rows at rows row0 .. row0 + n - 1 (latent g at latent + g * hd, key at kk + g * ik)
+template <typename A> struct PubAppendAM {
+    int hd, ik, row0;
+    unsigned n;
+    void operator()(sycl::nd_item<1> it, const typename A::T *latent, const typename A::T *kk, uint16_t *ckv,
+                    uint16_t *ikm) const {
+        const int per = sycl::max(hd, ik);
+        const size_t gg = it.get_global_linear_id();
+        const unsigned g = (unsigned)(gg / (size_t)per);
+        if (g >= n) return;
+        const int i = (int)(gg % (size_t)per), row = row0 + (int)g;
+        if (i < hd) ckv[(size_t)row * hd + i] = ops41::bf16b(A::rd(latent[(size_t)g * hd + i]));
+        if (i < ik) ikm[(size_t)row * ik + i] = ops41::bf16b(A::rd(kk[(size_t)g * ik + i]));
+    }
+};
+
+// ArgmaxP1O for m tokens: groups t * G .. (t + 1) * G - 1 scan token t's logits (logits + t * ls) into bvs /
+// bis + t * G (the block's head for every token: draft checking)
+struct ArgmaxP1OM {
+    ArgmaxP1O k;
+    unsigned G, m;
+    size_t ls;
+    void operator()(sycl::nd_item<1> it, const float *logits, float *bvs, int32_t *bis) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / G;
+        if (t >= m) return;
+        k.run(it.get_sub_group(), (int)(grp % G), logits + t * ls, bvs + (size_t)t * G, bis + (size_t)t * G);
+    }
+};
+
+// ==== expert-major routed rows (multi-token step, 2026-11-09) ============================================
+// In a step of M tokens the routed kernels run 6M slots, and in blocks of 16 tokens only about half of the
+// (block, layer) picks are distinct experts. The packed routed kernels (RoutedIQ2XXSP ... RoutedIQ1SP) are
+// ALU-bound on decoding the IQ weights, so here a work item is (expert group u, row r [, matrix 2]): the
+// sub-group decodes each block of the row once and runs every slot of the group through its own accumulator.
+// Bit-identity with the slot-major kernels, slot by slot: the dequantized value v of (lane, block, element)
+// does not depend on x and is formed by the same expression as there (RUFmt*::decode, copied operation for
+// operation); each slot keeps its own accumulator `sum = sum + v * x` in the same block / element order on
+// the same x values (the same addresses: x + (slot / 6) * xtok [+ (slot % 6) * NB * 256 when per_slot_x]),
+// then the same xor butterfly, and lane 0 stores om[slot * rows + r].
+//
+// grp (uint32, RUGrp::WORDS words), written by ExpertGroupM from the slots' expert ids:
+//   grp[0] = nu, the number of groups
+//   grp[RUGrp::EXP + u] = the expert of group u, grp[RUGrp::CNT + u] = its slot count (1 .. cap)
+//   grp[RUGrp::SLOT + 16 u + i] = its i-th slot (ascending), i < count
+// An expert picked by more than cap slots gets ceil(count / cap) groups (cap = the MT of the kernel that reads
+// grp; a token picks distinct experts, so with cap >= M every expert is one group). Group order is ascending
+// first slot (it does not matter: every slot's output is written by exactly one group).
+struct RUGrp {
+    static constexpr unsigned MAXU = 128, CAP = 16; // groups (>= slots), slots per group
+    static constexpr unsigned EXP = 4, CNT = EXP + MAXU, SLOT = CNT + MAXU, WORDS = SLOT + MAXU * CAP;
+};
+// One work-group of WG items (launch: nd_range(WG, WG), LM floats of local memory as the last argument, e.g.
+// launch_local<ExpertGroupM::LM>(c, ExpertGroupM::WG, ExpertGroupM{nsl, cap}, ids, grp)). Item s = slot s:
+// one O(nsl) scan of the ids staged in local memory gives its occurrence index among the slots of its expert
+// (before), the expert's total and the first slot of its chunk (head); a work-group scan ranks the heads.
+struct ExpertGroupM {
+    static constexpr unsigned WG = 128, LM = 2 * WG;
+    unsigned nsl;      // slots, 1 .. WG
+    unsigned cap = 16; // slots per group at most, 1 .. RUGrp::CAP
+    void operator()(sycl::nd_item<1> it, const uint32_t *ids, uint32_t *grp, float *lm) const {
+        uint32_t *le = reinterpret_cast<uint32_t *>(lm), *lr = le + WG;
+        const unsigned s = (unsigned)it.get_local_linear_id();
+        const unsigned cap = this->cap < 1 ? 1u : this->cap > RUGrp::CAP ? RUGrp::CAP : this->cap;
+        const bool on = s < nsl;
+        const uint32_t e = on ? ids[s] : 0u;
+        le[s] = e;
+        sycl::group_barrier(it.get_group());
+        unsigned before = 0, total = 0, head = s;
+        if (on) {
+            for (unsigned j = 0; j < nsl; ++j) {
+                const bool eq = le[j] == e;
+                if (eq && j < s) {
+                    if (before % cap == 0) head = j; // occurrence `before` of e starts a chunk
+                    ++before;
+                }
+                total += eq ? 1u : 0u;
+            }
+            if (before % cap == 0) head = s;
+        }
+        const bool first = on && before % cap == 0;
+        const unsigned rank = sycl::exclusive_scan_over_group(it.get_group(), first ? 1u : 0u, sycl::plus<unsigned>());
+        const unsigned nu = sycl::reduce_over_group(it.get_group(), first ? 1u : 0u, sycl::plus<unsigned>());
+        if (first) lr[s] = rank;
+        sycl::group_barrier(it.get_group());
+        if (on) {
+            const unsigned u = lr[head], i = before % cap;
+            grp[RUGrp::SLOT + u * RUGrp::CAP + i] = s;
+            if (first) {
+                const unsigned left = total - before;
+                grp[RUGrp::EXP + u] = e;
+                grp[RUGrp::CNT + u] = left < cap ? left : cap;
+            }
+        }
+        if (s == 0) grp[0] = nu;
+    }
+};
+
+// Per-format decode of one packed row for the expert-major kernels (used by RoutedU only). fill() = the
+// original kernel's table fill; the constructor = its per-lane constants; load() = its per-row words and
+// scales; decode(sg, blk, v) = v[g] for the 8 element groups g of block blk, the value the original
+// multiplies by xv[g] (same operations in the same order).
+template <unsigned NB_> struct RUFmtIQ2XXS { // RoutedIQ2XXSP
+    static constexpr unsigned NB = NB_, TAB = 2048;
+    static constexpr size_t RB = ((size_t)NB * 70 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+    }
+    const char *tb;
+    unsigned ssh, rot, j4;
+    uint32_t wd[NR];
+    float dbc[NCR];
+    RUFmtIQ2XXS(unsigned lane, float *tab) {
+        const unsigned l8 = lane >> 3, j = lane & 7u;
+        ssh = 31u - 8u * l8 - j;
+        rot = (37u - 8u * l8) & 31u;
+        j4 = j << 2;
+        tb = reinterpret_cast<const char *>(tab);
+    }
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned lane, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        chunk_scales<NB>(sg, lane, reinterpret_cast<const uint16_t *>(row + (size_t)NB * 68),
+                         reinterpret_cast<const uint32_t *>(row + (size_t)NB * 64), 0.25f, dbc);
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned wl = blk * 16 + 2 * g, wh = wl + 1, c = blk * 8 + g;
+            const uint32_t lo = sycl::select_from_group(sg, wd[wl / 32], wl % 32);
+            const uint32_t es = sycl::select_from_group(sg, wd[wh / 32], wh % 32);
+            const float db = sycl::select_from_group(sg, dbc[c / 32], c % 32);
+            const float mag = *reinterpret_cast<const float *>(tb + ((sycl::rotate(lo, rot) & 0x1FE0u) | j4));
+            const uint32_t sb = (es << ssh) & 0x80000000u;
+            v[g] = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+        }
+    }
+};
+template <unsigned NB_> struct RUFmtIQ2S { // RoutedIQ2SP
+    static constexpr unsigned NB = NB_, TAB = 8192;
+    static constexpr size_t RB = ((size_t)NB * 82 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+    }
+    const char *tb;
+    unsigned lane, rot, qsh, j4, ssh;
+    uint32_t wd[NR];
+    float dbl[NCR], dbh[NCR];
+    uint32_t qhc[NCR];
+    RUFmtIQ2S(unsigned lane_, float *tab) : lane(lane_) {
+        const unsigned l8 = lane >> 3, j = lane & 7u;
+        rot = (37u - 8u * l8) & 31u;
+        qsh = 13u - 2u * l8;
+        j4 = j << 2;
+        tb = reinterpret_cast<const char *>(tab);
+        ssh = 31u - 8u * l8 - j;
+    }
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint8_t *meta = row + (size_t)NB * 64; // per block: qh[8], scales[8]
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 80);
+#pragma unroll
+        for (unsigned k = 0; k < NCR; ++k) {
+            const unsigned c = 32 * k + lane < NC ? 32 * k + lane : NC - 1, b = c >> 3, g = c & 7u;
+            const float d = iq3::half(dp[b]);
+            const unsigned scb = meta[16 * b + 8 + g];
+            qhc[k] = meta[16 * b + g];
+            dbl[k] = (d * (0.5f + float(scb & 15u))) * 0.25f;
+            dbh[k] = (d * (0.5f + float(scb >> 4))) * 0.25f;
+        }
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned c = blk * 8 + g, wl = blk * 16 + 2 * g, wh = wl + 1;
+            const uint32_t lo = sycl::select_from_group(sg, wd[wl / 32], wl % 32);
+            const uint32_t hi = sycl::select_from_group(sg, wd[wh / 32], wh % 32);
+            const float dlo = sycl::select_from_group(sg, dbl[c / 32], c % 32);
+            const float dhi = sycl::select_from_group(sg, dbh[c / 32], c % 32);
+            const uint32_t qhb = sycl::select_from_group(sg, qhc[c / 32], c % 32);
+            const float db = lane < 16 ? dlo : dhi;
+            const float mag =
+                *reinterpret_cast<const float *>(tb + ((sycl::rotate(lo, rot) & 0x1FE0u) | ((qhb << qsh) & 0x6000u) | j4));
+            const uint32_t sb = (hi << ssh) & 0x80000000u;
+            v[g] = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+        }
+    }
+};
+// The group scale is kept per element group (dbg[NC / 32]: 5 registers at NB 20) instead of RoutedIQ3XXSP's
+// per word (dbw[NR], valid only at the scale/sign words: 15 registers), so MT = 16 accumulators fit in 128
+// registers. Same value: (half(d of block b) * (0.5 + (scale/sign word >> 28))) * 0.5 from the same word bits
+// (read from the row by a per-lane load instead of picked out of wd).
+template <unsigned NB_> struct RUFmtIQ3XXS { // RoutedIQ3XXSP
+    static constexpr unsigned NB = NB_, TAB = 1024;
+    static constexpr size_t RB = ((size_t)NB * 98 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 24, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float((iq3::iq3_grid[k >> 2] >> (8 * (k & 3))) & 255);
+    }
+    const char *tb;
+    unsigned lane, rot, jj4;
+    uint32_t smask;
+    uint32_t wd[NR];
+    float dbg[NCR]; // group c = 8 b + g: the scale of its scale/sign word 24 b + 3 g + 2
+    RUFmtIQ3XXS(unsigned lane_, float *tab) : lane(lane_) {
+        const unsigned l8 = lane >> 3, j = lane & 7u;
+        rot = (36u - 8u * ((lane >> 2) & 3u)) & 31u;
+        smask = j == 7 ? (127u << (7 * l8)) : (1u << (7 * l8 + j));
+        jj4 = (lane & 3u) << 2;
+        tb = reinterpret_cast<const char *>(tab);
+    }
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 96);
+#pragma unroll
+        for (unsigned k = 0; k < NCR; ++k) {
+            const unsigned c = 32 * k + lane < NC ? 32 * k + lane : NC - 1, b = c >> 3, ws = b * 24 + 3 * (c & 7u) + 2;
+            dbg[k] = (iq3::half(dp[b]) * (0.5f + float(rw[ws] >> 28))) * 0.5f;
+        }
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned w0 = blk * 24 + 3 * g, w1 = w0 + 1, ws = w0 + 2;
+            const uint32_t q0 = sycl::select_from_group(sg, wd[w0 / 32], w0 % 32);
+            const uint32_t q1 = sycl::select_from_group(sg, wd[w1 / 32], w1 % 32);
+            const uint32_t sw = sycl::select_from_group(sg, wd[ws / 32], ws % 32);
+            const unsigned c = blk * 8 + g;
+            const float db = sycl::select_from_group(sg, dbg[c / 32], c % 32);
+            const uint32_t q = lane < 16 ? q0 : q1;
+            const float mag = *reinterpret_cast<const float *>(tb + ((sycl::rotate(q, rot) & 0xFF0u) | jj4));
+            const uint32_t sb = uint32_t(sycl::popcount(sw & smask)) << 31;
+            v[g] = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+        }
+    }
+};
+template <unsigned NB_> struct RUFmtIQ2XS { // RoutedIQ2XSP
+    static constexpr unsigned NB = NB_, TAB = 4096;
+    static constexpr size_t RB = ((size_t)NB * 74 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NCR = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xs_grid, k >> 3, k & 7));
+    }
+    const char *tb;
+    unsigned lane, rot, j4;
+    uint32_t smask;
+    uint32_t wd[NR];
+    float dbl[NCR], dbh[NCR];
+    RUFmtIQ2XS(unsigned lane_, float *tab) : lane(lane_) {
+        const unsigned l8 = lane >> 3, j = lane & 7u, hs = 16u * (l8 & 1u);
+        rot = (5u - hs) & 31u;
+        j4 = j << 2;
+        tb = reinterpret_cast<const char *>(tab);
+        smask = j == 7 ? (127u << (hs + 9)) : (1u << (hs + 9 + j));
+    }
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint8_t *scl = row + (size_t)NB * 64;
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 72);
+#pragma unroll
+        for (unsigned k = 0; k < NCR; ++k) {
+            const unsigned c = 32 * k + lane < NC ? 32 * k + lane : NC - 1;
+            const float d = iq3::half(dp[c >> 3]);
+            const unsigned scb = scl[c]; // block c >> 3, group c & 7
+            dbl[k] = (d * (0.5f + float(scb & 15u))) * 0.25f;
+            dbh[k] = (d * (0.5f + float(scb >> 4))) * 0.25f;
+        }
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned c = blk * 8 + g, w0 = blk * 16 + 2 * g, w1 = w0 + 1;
+            const uint32_t a0 = sycl::select_from_group(sg, wd[w0 / 32], w0 % 32);
+            const uint32_t a1 = sycl::select_from_group(sg, wd[w1 / 32], w1 % 32);
+            const float dlo = sycl::select_from_group(sg, dbl[c / 32], c % 32);
+            const float dhi = sycl::select_from_group(sg, dbh[c / 32], c % 32);
+            const uint32_t a = lane < 16 ? a0 : a1;
+            const float db = lane < 16 ? dlo : dhi;
+            const float mag = *reinterpret_cast<const float *>(tb + ((sycl::rotate(a, rot) & 0x3FE0u) | j4));
+            const uint32_t sb = uint32_t(sycl::popcount(a & smask)) << 31;
+            v[g] = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ sb);
+        }
+    }
+};
+// IQ1_S: v = dl * (code + delta), the factor RoutedIQ1SP multiplies by xv[g]
+template <unsigned NB_, bool BYTES = true> struct RUFmtIQ1S { // RoutedIQ1SP<NB, A, BYTES>
+    static constexpr unsigned NB = NB_, TAB = BYTES ? 4096 : 16384;
+    static constexpr size_t RB = ((size_t)NB * 50 + 15) & ~(size_t)15;
+    static constexpr unsigned NG = NB * 8, NW = NG, NR = (NW + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        int8_t *btab = reinterpret_cast<int8_t *>(tab);
+        for (unsigned k = it.get_local_linear_id(); k < 16384; k += (unsigned)it.get_local_range(0)) {
+            const int8_t c = int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, k >> 3, k & 7)));
+            if constexpr (BYTES) btab[k] = c;
+            else tab[k] = float(int(c));
+        }
+    }
+    const float *ftab;
+    const int8_t *btab;
+    unsigned lane, j, rot, qsh;
+    uint32_t wd[NR]; // qs word of group k (block k >> 3)
+    float dlr[NR], der[NR];
+    uint32_t qhr[NR];
+    RUFmtIQ1S(unsigned lane_, float *tab) : lane(lane_) {
+        const unsigned l8 = lane >> 3;
+        j = lane & 7u;
+        rot = (35u - 8u * l8) & 31u; // qs byte l8 -> bits 3..10
+        qsh = 11u - 3u * l8;         // qh bits 3*l8 .. 3*l8+2 -> bits 11..13
+        ftab = tab;
+        btab = reinterpret_cast<const int8_t *>(tab);
+    }
+    [[gnu::always_inline]] inline void load(sycl::sub_group sg, unsigned, const uint8_t *row) {
+        const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) wd[k] = row_words<NW>(sg, rw, k, lane);
+        const uint16_t *qh16 = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 32);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 48);
+#pragma unroll
+        for (unsigned k = 0; k < NR; ++k) {
+            const unsigned gi = 32 * k + lane < NG ? 32 * k + lane : NG - 1;
+            const uint32_t qh = qh16[gi];
+            qhr[k] = qh;
+            dlr[k] = iq3::half(dp[gi >> 3]) * float(2 * ((qh >> 12) & 7) + 1);
+            der[k] = (qh & 0x8000) ? -0.125f : 0.125f;
+        }
+    }
+    [[gnu::always_inline]] inline void decode(sycl::sub_group sg, unsigned blk, float (&v)[8]) const {
+#pragma unroll
+        for (unsigned g = 0; g < 8; ++g) {
+            const unsigned gi = blk * 8 + g;
+            const uint32_t qs = sycl::select_from_group(sg, wd[gi / 32], gi % 32);
+            const uint32_t qh = sycl::select_from_group(sg, qhr[gi / 32], gi % 32);
+            const float dl = sycl::select_from_group(sg, dlr[gi / 32], gi % 32);
+            const float de = sycl::select_from_group(sg, der[gi / 32], gi % 32);
+            const unsigned a = (sycl::rotate(qs, rot) & 0x7F8u) | ((qh << qsh) & 0x3800u) | j;
+            float code;
+            if constexpr (BYTES) code = float(int(btab[a]));
+            else code = ftab[a];
+            v[g] = dl * (code + de);
+        }
+    }
+};
+
+// The expert-major routed kernel for format F (RUFmt*), up to MT slots per group (MT >= the cap ExpertGroupM
+// was run with; MT <= 16). Members as the slot-major kernels: rows, per_slot_x, ex (extra rows spread through
+// the launch as there), w2 / out2 (a second matrix of the same shape on the same groups: positions nu * rows ..
+// 2 nu * rows - 1), xtok; nsl is not read (the positions come from grp[0]). Launch as the slot-major kernel,
+// with grp in place of ids (the experts are in grp): launch_rows<K::TAB>(c, (w2 ? 2 : 1) * nsl * rows +
+// ex.n(), maxwg, k, w, x, grp, out) (512 items, 16 sub-groups per work-group, TAB floats of local memory last;
+// the sub-groups loop over the positions, so any grid size is correct).
+// Per position: the row's words and scales once (F::load), then per block the 8 values once (F::decode) and
+// for every slot i < count of the group that slot's 8 x values (the same sg_bloadN<8> of the same address as
+// the slot-major kernel) into its own accumulator. Registers (AOT for BMG at 128 GRF, 2026-11-09): no spill
+// at MT 6 and 8 for any format and NB, nor at MT 16 except IQ2_S NB 20 (320 B; slot-major IQ3_XXS NB 20: 256 B).
+template <typename F, unsigned MT, typename EX = NoRows> struct RoutedU {
+    static_assert(MT >= 1 && MT <= RUGrp::CAP, "1 .. 16 slots per group");
+    static constexpr unsigned TAB = F::TAB, NB = F::NB;
+    unsigned rows; // per-expert rows
+    bool per_slot_x;
+    EX ex{};
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *grp,
+                                     float *out, float *tab) const {
+        F::fill(it, tab);
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        F f(lane, tab);
+        const unsigned nu = grp[0];
+        const unsigned stride = (unsigned)(it.get_global_range(0) / 32);
+        const unsigned nr_ = (w2 ? 2 : 1) * nu * rows, ne_ = ex.n(), nt_ = nr_ + ne_;
+        for (unsigned p_ = packed_row_id(it); p_ < nt_; p_ += stride) {
+            unsigned q_ = p_;
+            if (ne_) { // extra rows spread as OWN41_ROUTED_ROWS_BEGIN
+                const unsigned d0 = (unsigned)(((uint64_t)p_ * ne_ + nt_ - 1) / nt_);
+                const unsigned d1 = (unsigned)(((uint64_t)(p_ + 1) * ne_ + nt_ - 1) / nt_);
+                if (d1 > d0) {
+                    ex.row(sg, lane, d0);
+                    continue;
+                }
+                q_ = p_ - d1;
+            }
+            unsigned u = q_ / rows;
+            const unsigned r = q_ % rows;
+            const uint8_t *wm = w;
+            float *om = out;
+            if (u >= nu) {
+                u -= nu;
+                wm = w2;
+                om = out2;
+            }
+            const unsigned cnt = grp[RUGrp::CNT + u];
+            // lane i < cnt: slot i of the group and its x offset (broadcast per use)
+            const uint32_t sl = lane < cnt ? grp[RUGrp::SLOT + u * RUGrp::CAP + lane] : 0u;
+            const uint32_t xo = (sl / 6) * xtok + (per_slot_x ? (sl % 6) * (NB * 256) : 0u);
+            f.load(sg, lane, wm + ((size_t)grp[RUGrp::EXP + u] * rows + r) * F::RB);
+            float sum[MT];
+#pragma unroll
+            for (unsigned i = 0; i < MT; ++i) sum[i] = 0;
+#pragma unroll
+            for (unsigned blk = 0; blk < NB; ++blk) {
+                float v[8];
+                f.decode(sg, blk, v);
+#pragma unroll
+                for (unsigned i = 0; i < MT; ++i) {
+                    if (i < cnt) {
+                        const float *xs = x + sycl::select_from_group(sg, xo, i);
+                        const auto xv = sg_bloadN<8>(sg, xs + (size_t)blk * 256);
+#pragma unroll
+                        for (unsigned g = 0; g < 8; ++g) sum[i] = sum[i] + v[g] * xv[g];
+                    }
+                }
+            }
+#pragma unroll
+            for (unsigned i = 0; i < MT; ++i) {
+                if (i < cnt) {
+                    float s = sum[i];
+                    for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
+                    const unsigned slot = sycl::select_from_group(sg, sl, i);
+                    if (lane == 0) om[slot * rows + r] = s;
+                }
+            }
+        }
+    }
+};
+// The five packed formats (f32 activations, as the slot-major *P kernels)
+template <unsigned NB, unsigned MT> using RoutedIQ2XXSU = RoutedU<RUFmtIQ2XXS<NB>, MT>;
+template <unsigned NB, unsigned MT> using RoutedIQ2SU = RoutedU<RUFmtIQ2S<NB>, MT>;
+template <unsigned NB, unsigned MT> using RoutedIQ3XXSU = RoutedU<RUFmtIQ3XXS<NB>, MT>;
+template <unsigned NB, unsigned MT> using RoutedIQ2XSU = RoutedU<RUFmtIQ2XS<NB>, MT>;
+template <unsigned NB, unsigned MT, bool BYTES = true> using RoutedIQ1SU = RoutedU<RUFmtIQ1S<NB, BYTES>, MT>;
 
 } // namespace ops41sycl
 #endif

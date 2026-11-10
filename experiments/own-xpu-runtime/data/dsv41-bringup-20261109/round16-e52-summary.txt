@@ -1,0 +1,34 @@
+p3kplain exit 0 (256 ids)
+p3kplain: prompt: 3323 tokens read on the cards in 13.33s (250.1 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3kplain: decode: 255 steps after the first, 0.015 s/step, 68.71 tok/s
+p3kplain first 64 SAME as e25
+p3ks3 exit 0
+p3ks3: spec decode: 255 tokens in 100 cycles (2.55 per cycle; 155 of 300 guesses kept, 51.7 %) in 3.04s = 83.83 tok/s; draft 3.35 ms + check 27.07 ms per cycle; SAME AS the plain run
+p3ks3: kept guesses per cycle: 0:23 1:24 2:28 3:25
+p3ks4 exit 0
+p3ks4: spec decode: 255 tokens in 95 cycles (2.68 per cycle; 161 of 377 guesses kept, 42.7 %) in 3.29s = 77.61 tok/s; draft 3.41 ms + check 31.18 ms per cycle; SAME AS the plain run
+p3ks4: kept guesses per cycle: 0:21 1:27 2:22 3:10 4:15
+p3ks5 exit 0
+p3ks5: spec decode: 255 tokens in 91 cycles (2.80 per cycle; 165 of 453 guesses kept, 36.4 %) in 3.31s = 76.96 tok/s; draft 3.39 ms + check 33.02 ms per cycle; SAME AS the plain run
+p3ks5: kept guesses per cycle: 0:17 1:26 2:25 3:12 4:2 5:9
+p3ks2 exit 0
+p3ks2: spec decode: 255 tokens in 116 cycles (2.20 per cycle; 139 of 231 guesses kept, 60.2 %) in 4.55s = 56.04 tok/s; draft 3.58 ms + check 35.65 ms per cycle; SAME AS the plain run
+p3ks2: kept guesses per cycle: 0:33 1:27 2:56
+p1plain exit 0 (44 ids)
+p1plain: prompt: 36 tokens read on the cards in 0.19s (226.5 tok/s; first step 0.10s incl. kernel build), first token 671
+p1plain: decode: 43 steps after the first, 0.013 s/step, 77.04 tok/s
+p1s3 exit 3
+p1s3: spec decode: 54 tokens in 29 cycles (1.86 per cycle; 25 of 87 guesses kept, 28.7 %) in 0.86s = 62.73 tok/s; draft 3.35 ms + check 26.33 ms per cycle; DIFFERENT FROM the plain run
+p1s3: kept guesses per cycle: 0:15 1:8 2:1 3:5
+p1s5 exit 3
+p1s5: spec decode: 54 tokens in 26 cycles (2.08 per cycle; 28 of 130 guesses kept, 21.5 %) in 0.92s = 58.55 tok/s; draft 3.37 ms + check 32.10 ms per cycle; DIFFERENT FROM the plain run
+p1s5: kept guesses per cycle: 0:14 1:6 2:1 3:2 4:1 5:2
+p3ks3prof2 exit 0
+p3ks3prof2:   kernels 28.726 ms per cycle
+p3ks3prof2: spec decode: 127 tokens in 52 cycles (2.44 per cycle; 76 of 155 guesses kept, 49.0 %) in 2.00s = 63.37 tok/s; draft 3.28 ms + check 26.75 ms per cycle; SAME AS the plain run
+p3ks3prof2: kept guesses per cycle: 0:13 1:12 2:17 3:10
+p3ks3prof0 exit 0
+p3ks3prof0:   kernels 28.838 ms per cycle
+p3ks3prof0: spec decode: 127 tokens in 52 cycles (2.44 per cycle; 76 of 155 guesses kept, 49.0 %) in 2.01s = 63.21 tok/s; draft 3.32 ms + check 26.84 ms per cycle; SAME AS the plain run
+p3ks3prof0: kept guesses per cycle: 0:13 1:12 2:17 3:10
+ALLDONE

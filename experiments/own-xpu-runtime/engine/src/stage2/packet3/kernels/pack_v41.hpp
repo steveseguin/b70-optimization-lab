@@ -68,7 +68,8 @@ inline bool packable(iq3::Type t, size_t cols, bool routed) {
     switch (t) {
     case iq3::Type::Q8_0:
         if (routed) return false;
-        return cols == 1280 || cols == 2304 || cols == 4096 || cols == 5120 || cols == 8192;
+        return cols == 1280 || cols == 2304 || cols == 4096 || cols == 5120 || cols == 8192 ||
+               cols == 15360; // 15360: the DSpark draft's feature projection (dsp.fc)
     case iq3::Type::Q6_K:
         if (routed) return false;
         return cols == 1280 || cols == 4096 || cols == 5120 || cols == 6144 || cols == 8192;

@@ -1,0 +1,127 @@
+card 0 Intel(R) Arc(TM) Pro B70 Graphics
+PASS GemvQ8P<160> 5120x1280               MT  1 mt  1 | differ 0 of 1280 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  4 mt  4 | differ 0 of 5120 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  4 mt  3 | differ 0 of 3840 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  6 mt  6 | differ 0 of 7680 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  6 mt  5 | differ 0 of 6400 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  8 mt  8 | differ 0 of 10240 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT  8 mt  7 | differ 0 of 8960 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT 16 mt 16 | differ 0 of 20480 | stray writes 0
+PASS GemvQ8P<160> 5120x1280               MT 16 mt 15 | differ 0 of 19200 | stray writes 0
+time GemvQ8P<160> 5120x1280               MT  8 | warm:  8 one-token     61.5 us, one launch     50.2 us (x 1.22) | cold:    232.1 us vs    119.0 us (x 1.95) =   14.9 us/token | weights 6.96 MB
+time GemvQ8P<160> 5120x1280               MT 16 | warm: 16 one-token    114.3 us, one launch     51.4 us (x 2.23) | cold:    464.6 us vs    105.5 us (x 4.40) =    6.6 us/token | weights 6.96 MB
+PASS GemvQ8P<40> 1280x4096                MT  1 mt  1 | differ 0 of 4096 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  4 mt  4 | differ 0 of 16384 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  4 mt  3 | differ 0 of 12288 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  6 mt  6 | differ 0 of 24576 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  6 mt  5 | differ 0 of 20480 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  8 mt  8 | differ 0 of 32768 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT  8 mt  7 | differ 0 of 28672 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT 16 mt 16 | differ 0 of 65536 | stray writes 0
+PASS GemvQ8P<40> 1280x4096                MT 16 mt 15 | differ 0 of 61440 | stray writes 0
+time GemvQ8P<40> 1280x4096                MT  8 | warm:  8 one-token     57.7 us, one launch     31.2 us (x 1.85) | cold:    183.9 us vs     52.2 us (x 3.52) =    6.5 us/token | weights 5.57 MB
+time GemvQ8P<40> 1280x4096                MT 16 | warm: 16 one-token    112.5 us, one launch     70.7 us (x 1.59) | cold:    368.0 us vs    112.1 us (x 3.28) =    7.0 us/token | weights 5.57 MB
+PASS GemvQ8P<128> 4096x2048 grouped       MT  1 mt  1 | differ 0 of 2048 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  4 mt  4 | differ 0 of 8192 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  4 mt  3 | differ 0 of 6144 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  6 mt  6 | differ 0 of 12288 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  6 mt  5 | differ 0 of 10240 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  8 mt  8 | differ 0 of 16384 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT  8 mt  7 | differ 0 of 14336 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT 16 mt 16 | differ 0 of 32768 | stray writes 0
+PASS GemvQ8P<128> 4096x2048 grouped       MT 16 mt 15 | differ 0 of 30720 | stray writes 0
+time GemvQ8P<128> 4096x2048 grouped       MT  8 | warm:  8 one-token     59.2 us, one launch     27.3 us (x 2.17) | cold:    293.2 us vs     64.5 us (x 4.55) =    8.1 us/token | weights 8.91 MB
+time GemvQ8P<128> 4096x2048 grouped       MT 16 | warm: 16 one-token    112.7 us, one launch     69.2 us (x 1.63) | cold:    587.0 us vs    155.6 us (x 3.77) =    9.7 us/token | weights 8.91 MB
+PASS GemvQ6KP<20> 5120x1280               MT  1 mt  1 | differ 0 of 1280 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  4 mt  4 | differ 0 of 5120 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  4 mt  3 | differ 0 of 3840 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  6 mt  6 | differ 0 of 7680 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  6 mt  5 | differ 0 of 6400 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  8 mt  8 | differ 0 of 10240 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT  8 mt  7 | differ 0 of 8960 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT 16 mt 16 | differ 0 of 20480 | stray writes 0
+PASS GemvQ6KP<20> 5120x1280               MT 16 mt 15 | differ 0 of 19200 | stray writes 0
+time GemvQ6KP<20> 5120x1280               MT  8 | warm:  8 one-token     65.5 us, one launch     45.1 us (x 1.45) | cold:    191.7 us vs    101.9 us (x 1.88) =   12.7 us/token | weights 5.39 MB
+time GemvQ6KP<20> 5120x1280               MT 16 | warm: 16 one-token    128.9 us, one launch     87.7 us (x 1.47) | cold:    383.5 us vs    189.4 us (x 2.03) =   11.8 us/token | weights 5.39 MB
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  1 mt  1 | differ 0 of 2048 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  4 mt  4 | differ 0 of 8192 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  4 mt  3 | differ 0 of 6144 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  6 mt  6 | differ 0 of 12288 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  6 mt  5 | differ 0 of 10240 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  8 mt  8 | differ 0 of 16384 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT  8 mt  7 | differ 0 of 14336 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT 16 mt 16 | differ 0 of 32768 | stray writes 0
+PASS GemvQ6KP<16> 4096x2048 grouped       MT 16 mt 15 | differ 0 of 30720 | stray writes 0
+time GemvQ6KP<16> 4096x2048 grouped       MT  8 | warm:  8 one-token     70.6 us, one launch     44.1 us (x 1.60) | cold:    232.4 us vs    100.9 us (x 2.30) =   12.6 us/token | weights 6.88 MB
+time GemvQ6KP<16> 4096x2048 grouped       MT 16 | warm: 16 one-token    134.8 us, one launch     85.1 us (x 1.58) | cold:    465.1 us vs    185.1 us (x 2.51) =   11.6 us/token | weights 6.88 MB
+PASS GemvQ5KP<9> 2304x848                 MT  1 mt  1 | differ 0 of 848 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  4 mt  4 | differ 0 of 3392 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  4 mt  3 | differ 0 of 2544 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  6 mt  6 | differ 0 of 5088 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  6 mt  5 | differ 0 of 4240 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  8 mt  8 | differ 0 of 6784 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT  8 mt  7 | differ 0 of 5936 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT 16 mt 16 | differ 0 of 13568 | stray writes 0
+PASS GemvQ5KP<9> 2304x848                 MT 16 mt 15 | differ 0 of 12720 | stray writes 0
+time GemvQ5KP<9> 2304x848                 MT  8 | warm:  8 one-token     35.3 us, one launch     23.2 us (x 1.52) | cold:     64.2 us vs     48.2 us (x 1.33) =    6.0 us/token | weights 1.34 MB
+time GemvQ5KP<9> 2304x848                 MT 16 | warm: 16 one-token     69.2 us, one launch     45.5 us (x 1.52) | cold:    128.7 us vs     95.8 us (x 1.34) =    6.0 us/token | weights 1.34 MB
+PASS GemvH16P<160> 5120x384               MT  1 mt  1 | differ 0 of 384 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  4 mt  4 | differ 0 of 1536 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  4 mt  3 | differ 0 of 1152 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  6 mt  6 | differ 0 of 2304 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  6 mt  5 | differ 0 of 1920 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  8 mt  8 | differ 0 of 3072 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT  8 mt  7 | differ 0 of 2688 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT 16 mt 16 | differ 0 of 6144 | stray writes 0
+PASS GemvH16P<160> 5120x384               MT 16 mt 15 | differ 0 of 5760 | stray writes 0
+time GemvH16P<160> 5120x384               MT  8 | warm:  8 one-token     40.7 us, one launch     49.1 us (x 0.83) | cold:    145.0 us vs     92.4 us (x 1.57) =   11.5 us/token | weights 3.93 MB
+time GemvH16P<160> 5120x384               MT 16 | warm: 16 one-token     71.5 us, one launch     71.1 us (x 1.00) | cold:    283.1 us vs    134.2 us (x 2.11) =    8.4 us/token | weights 3.93 MB
+PASS GemvF32P<160> 5120x384               MT  1 mt  1 | differ 0 of 384 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  4 mt  4 | differ 0 of 1536 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  4 mt  3 | differ 0 of 1152 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  6 mt  6 | differ 0 of 2304 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  6 mt  5 | differ 0 of 1920 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  8 mt  8 | differ 0 of 3072 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT  8 mt  7 | differ 0 of 2688 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT 16 mt 16 | differ 0 of 6144 | stray writes 0
+PASS GemvF32P<160> 5120x384               MT 16 mt 15 | differ 0 of 5760 | stray writes 0
+time GemvF32P<160> 5120x384               MT  8 | warm:  8 one-token     32.6 us, one launch     37.6 us (x 0.87) | cold:    256.1 us vs     91.9 us (x 2.79) =   11.5 us/token | weights 7.86 MB
+time GemvF32P<160> 5120x384               MT 16 | warm: 16 one-token     69.6 us, one launch     80.3 us (x 0.87) | cold:    510.2 us vs    180.7 us (x 2.82) =   11.3 us/token | weights 7.86 MB
+PASS GemvT<BF16> 1280x4096                MT  1 mt  1 | differ 0 of 4096 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  4 mt  4 | differ 0 of 16384 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  4 mt  3 | differ 0 of 12288 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  6 mt  6 | differ 0 of 24576 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  6 mt  5 | differ 0 of 20480 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  8 mt  8 | differ 0 of 32768 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT  8 mt  7 | differ 0 of 28672 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT 16 mt 16 | differ 0 of 65536 | stray writes 0
+PASS GemvT<BF16> 1280x4096                MT 16 mt 15 | differ 0 of 61440 | stray writes 0
+time GemvT<BF16> 1280x4096                MT  8 | warm:  8 one-token    131.4 us, one launch     40.9 us (x 3.21) | cold:    357.0 us vs     68.2 us (x 5.23) =    8.5 us/token | weights 10.49 MB
+time GemvT<BF16> 1280x4096                MT 16 | warm: 16 one-token    260.9 us, one launch     72.0 us (x 3.63) | cold:    713.4 us vs    101.9 us (x 7.00) =    6.4 us/token | weights 10.49 MB
+PASS GemvT<BF16> 5120x512                 MT  1 mt  1 | differ 0 of 512 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  4 mt  4 | differ 0 of 2048 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  4 mt  3 | differ 0 of 1536 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  6 mt  6 | differ 0 of 3072 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  6 mt  5 | differ 0 of 2560 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  8 mt  8 | differ 0 of 4096 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT  8 mt  7 | differ 0 of 3584 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT 16 mt 16 | differ 0 of 8192 | stray writes 0
+PASS GemvT<BF16> 5120x512                 MT 16 mt 15 | differ 0 of 7680 | stray writes 0
+time GemvT<BF16> 5120x512                 MT  8 | warm:  8 one-token    205.8 us, one launch     31.7 us (x 6.50) | cold:    363.5 us vs     72.1 us (x 5.04) =    9.0 us/token | weights 5.24 MB
+time GemvT<BF16> 5120x512                 MT 16 | warm: 16 one-token    410.9 us, one launch     53.6 us (x 7.66) | cold:    729.0 us vs    135.1 us (x 5.40) =    8.4 us/token | weights 5.24 MB
+PASS HcMixDotsP<5120,8>                   MT  1 mt  1 | differ 0 of 200 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  4 mt  4 | differ 0 of 800 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  4 mt  3 | differ 0 of 600 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  6 mt  6 | differ 0 of 1200 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  6 mt  5 | differ 0 of 1000 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  8 mt  8 | differ 0 of 1600 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT  8 mt  7 | differ 0 of 1400 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT 16 mt 16 | differ 0 of 3200 | stray writes 0
+PASS HcMixDotsP<5120,8>                   MT 16 mt 15 | differ 0 of 3000 | stray writes 0
+time HcMixDotsP<5120,8>                   MT  8 | warm:  8 one-token     63.2 us, one launch     72.0 us (x 0.88) | cold:     92.4 us vs     82.2 us (x 1.12) =   10.3 us/token | weights 1.97 MB
+time HcMixDotsP<5120,8>                   MT 16 | warm: 16 one-token     90.5 us, one launch    113.0 us (x 0.80) | cold:    170.1 us vs    130.4 us (x 1.30) =    8.2 us/token | weights 1.97 MB
+PASS fused HcDotsRowsM + DenseRowsM<Q8 160> MT  4 mt  4 | differ 0 of 5920 | stray writes 0
+PASS fused HcDotsRowsM + DenseRowsM<Q8 160> MT  4 mt  3 | differ 0 of 4440 | stray writes 0
+PASS fused HcDotsRowsM + DenseRowsM<Q8 160> MT 16 mt 16 | differ 0 of 23680 | stray writes 0
+PASS fused HcDotsRowsM + DenseRowsM<Q8 160> MT 16 mt 15 | differ 0 of 22200 | stray writes 0
+PASS: 0 failed check(s)

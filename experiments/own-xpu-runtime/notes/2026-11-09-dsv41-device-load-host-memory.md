@@ -421,7 +421,7 @@ in the same session (`round9-tp6-speed-128.log`).
 
 Section headers 12-15 were first written with times about two hours late; corrected from the commit times.
 
-## 16. Engram projection split across the cards: 67.0 -> 68.3-68.5 tok/s (21:40-21:55 EST)
+## 16. Engram projection split across the cards: 67.0 -> 68.3-68.5 tok/s (21:40-21:50 EST)
 
 Profile at section 15 (`round9-tp6-kernel-profile-card{0,2,3}.log`): 1,125 launches, kernels 13.7-14.0 ms of a
 16.1-16.5 ms profiled step. The two-output-group cards (2 and 5) spend ~0.5 ms more per step on query-b and
@@ -439,7 +439,7 @@ one more exchange per layer, so it stays.
 Gate (`round10-engsplit-gate-summary.txt`): 3-step trace `cmp`-identical (`OWN_TP=6`), 40- and 128-token answers
 identical, no fault line; 68.50 / 68.33 tok/s against 66.95 with `OWN_ENG_SPLIT=0` in the same session.
 
-## 17. Expert gate + up in one launch, softmax chain: 68.3 -> 71.2-71.7 tok/s (21:55-22:20 EST)
+## 17. Expert gate + up in one launch, softmax chain: 68.3 -> 71.2-71.7 tok/s (21:50-22:10 EST)
 
 - **`OWN_EXP_PAIR`** (default on). The routed kernels run as 128 persistent work-groups (2,048 sub-groups, what
   a card holds at once at 128 registers). With six-way splitting a card's gate launch has 6 x 384 = 2,304 rows:
@@ -467,7 +467,7 @@ Tried and left off (switches kept, results in `round11-*`):
 Gate (defaults, `round11-defaults-gate-summary.txt`): 3-step trace `cmp`-identical for `OWN_TP=6` and the
 one-card-per-layer layout, 40- and 128-token answers identical, no fault line; 71.68 / 71.23 tok/s.
 
-## 18. Mix dots inside the norm launch, inverse rope in the output store: 71.5 -> 73.7-73.9 tok/s (22:20-22:45 EST)
+## 18. Mix dots inside the norm launch, inverse rope in the output store: 71.5 -> 73.7-73.9 tok/s (22:10-22:25 EST)
 
 - **`OWN_NORM_DOTS`** (default on). The 5,120-wide pre-norm is a serial double chain on four sub-groups (~10 us)
   with the rest of the card idle. The stream mix's 200 dot partials only read the streams (final before the
@@ -490,6 +490,202 @@ which the 128-token check caught).
 
 Gate (defaults): 3-step trace `cmp`-identical for `OWN_TP=6` and the one-card-per-layer layout, 40- and
 128-token answers identical, no fault line.
+
+## 19. Long context: index selection on the cards, 55.4-55.7 -> 67.9 tok/s at 3K and 10K tokens (22:30-23:05 EST)
+
+Prompts: 3,323 and 10,621 tokens (a chat-templated request over a long document, `tools/mk_prompt_ids.py`),
+64 answer tokens each; reference answers from the one-card host-index path (`round13-longctx-host-index-summary.txt`:
+decode 55.73 / 55.42 tok/s, prompt reading 58.8 / 57.9 tok/s). Above 512 compressed rows every index layer used
+to score on the card, copy the scores to the host, select the top 512 there and copy the list back to every card.
+
+- **`OWN_DEV_INDEX`** (default on): the selection runs on the card, exactly. `TopKSelP` (kernels): one work-group
+  of 1,024, a radix select over four 8-bit passes with per-sub-group histograms in shared memory, then an in-order
+  compaction, so ties go to the lower row and the list comes out ascending (+128 for the window), the host's
+  order. The layer-20 candidate mask (block 8, top 2,048, newest block always in) is the same kernel with
+  `BLOCK=true`. `OWN_DEV_INDEX_CHECK=1` compares every list with the host selection: 475,136 lists, 0 mismatches
+  at 10K (`round13-devindex-summary.txt`). Decode 59.8 / 57.5 tok/s.
+- **`OWN_SCORE_B`** (default on): the indexer score as one row per work-group with the query and weights in shared
+  memory and each key row read once, same per-row sums in the same order as `IndexerScoreA` (heads in order, 128
+  products in order). 14-27x faster alone and bitwise identical at 513 to 131,072 rows
+  (`round13-indexer-score-bench.txt`, `tools/bench/test_index_score.cpp`). Decode 67.1 / 67.7 tok/s.
+- **Head skipped for prompt tokens** that are not the last (`skip_head`): prompt reading 58.8 / 57.9 -> 69.6 /
+  69.9 tok/s.
+
+Gate (all on as defaults, `round13-defaults-gate-summary.txt`): 3-step trace identical for `OWN_TP=6` and the
+one-card-per-layer layout, 40- and 128-token answers identical, 3K and 10K answers identical to the reference,
+decode 67.86 / 67.85 tok/s. Short-context speed unchanged: old/new alternating 73.51 / 73.18 / 72.98 / 72.91
+(`round13-short-old-new-summary.txt`). Card 0 profile at 3K: `round13-tp6-kernel-profile-p3k-card0.txt`
+(exchanges 11.5 %, the norm + mix-dots launch 7 %, attention output 5.6 %).
+
+Next: a step that runs up to 16 tokens at once with each token's result bit-identical to the one-token step, for
+prompt reading and then for checking DSpark draft guesses
+(`2026-11-09-dsv41-multitoken-and-dspark-plan.md`).
+
+## 20. Reading the prompt 16 tokens per step: 69.6-69.9 -> 90.0-91.5 tok/s, answers identical (2026-11-09 23:10-23:50 EST)
+
+`backend/backend_sycl_v41_mt.inc` (included in `Backend41`), runner `OWN_PROMPT_BLOCK=m` (m <= `MTX` = 16):
+one step runs m prompt tokens, and every token's results are bit-identical to the one-token step, so the
+state after the prompt is the same bytes and the answer cannot change.
+
+- **Weight rows**: `rowm<MT>` in every dense row kernel (`GemvQ8P`, `GemvQ6KP`, `GemvQ5KP`, `GemvH16P`,
+  `GemvF32P`, `GemvT`) decodes a weight block once and runs each token's own accumulator through the
+  one-token op sequence and tree (`DenseRowsM`, `DenseM`, `GemvTM`). `tools/bench/test_rows_mt.cpp`:
+  104 checks bitwise on card 0 (MT 1/4/6/8/16, mt = MT and MT - 1; `round14-rows-mt-test-card0.txt`).
+- **Small ops**: per-token buffers at fixed strides; `TokRows<R>` runs the one-token row op on token t's
+  pointers, so norms, stream-mix dots/finishes, rope, router, swiglu and combine for all tokens go in one
+  launch each (`OWN_MT_SMALL=0` keeps one launch per token, the first form).
+- **Attention**: ring of 128 + 16 rows per layer; the block's key rows go to rows 128 + t and
+  `RingCommitM` moves them to their ring rows after every token has read them. Index lists shift block
+  rows accordingly. Ratio-2 compressor: `StatePackM` stacks the carried even state and each token's
+  state, odd tokens pool rows (t, t + 1) (`CompressPoolPM`), publish/index per token with each token's
+  own row count (`tpm_publish`, `tpm_index`, `IndexerScoreBM`, `TopKSelM`).
+- **Routed experts**: 6m slots through the existing slot kernels (`nsl`, `xtok`).
+- **Exchanges**: m rows per exchange (section 21 replaced the stores by loads).
+
+Gate (every build): 3-step decode trace identical after a prompt read in blocks of 16, 7 and 5
+(`OWN_TP_THREADS=1` keeps the worker threads and runs traced steps serially), 40- and 128-token answers
+identical, the 3K and 10K answers identical to the one-token reading, a block of 13 on 3K identical.
+
+| build | 3K prompt tok/s | 10K prompt tok/s |
+| --- | --- | --- |
+| one token per step (section 19) | 69.6 | 69.9 |
+| blocks of 16, one launch per token for small ops | 63.1 | - |
+| + merged small launches | 76.6 | 75.8 |
+| + block attention | 86.1 | 85.1 |
+| + block index, many-group exchange push, `TokRows` mix dots | 87.8 | 89.2 |
+| + block publish | 90.0 | 91.5 |
+
+**Checking guesses** (`decode_verify_tp(toks, m, next)`): one block step with the head for every token
+(per-token argmax over the cards' candidates); `commit_block(n)` keeps the first n tokens: row counts from
+the per-token `mlen`, the ratio-2 carried state restored from the block's state row n when the last kept
+position is even, position reset. Runner test `OWN_VERIFY_TEST=k OWN_VERIFY_BAD=pct`: blocks [token, k
+guesses] from the plain run's answer with pct % of the guesses replaced; the kept text must equal the plain
+run. The first build failed every test with a wrong guess: `RingCommitM` moved every block token's key row
+into the ring, and a dropped token's row overwrote the row of position - 128, which the next tokens' windows
+still read. Now the rows stay in the block area and `commit_block` moves the kept tokens' rows only.
+
+## 21. The card-to-card exchange by loads; token groups; shared expert rows (2026-11-09 23:50 - 2026-11-10 00:40 EST)
+
+**Peer stores are slow, peer loads are fast on this host.** `tools/bench/xchg_bw_bench.cpp`
+(`round15-xchg-bw-bench.txt`): a kernel storing into another card's memory moves ~1 GB/s per card whatever the
+shape (push from many work-groups, a work-group per destination, one fence), the copy engine 7-25 GB/s with all six
+cards busy, kernel loads from the peers 23-25 GB/s. The block step's exchanges were about half its time.
+
+- **`XchgPull`** (kernels; `OWN_XPULL`, default on, for slices of at least `OWN_XPULL_MIN` = 8,192 bytes): work-group 0
+  publishes (system-scope release fence, then the sequence number into every peer's flag word); every work-group waits
+  for the peers' flags, then copies the peers' rows into its own arena with vector loads. A region is rewritten only
+  after a later exchange, which a peer raises only after its copy, so no copy can read a newer row.
+  `tools/bench/xchg_pull_test.cpp` (`round15-xchg-pull-test.txt`): 0 wrong values in 2,000 iterations of every
+  shape with changing data; a block of 16's activation exchange 773 -> 40 us, a block of 6's 237 -> 20 us; the
+  one-token h exchange (3,456 bytes) stays a push (8.9 vs 12.0 us).
+- Fault while writing the bench (23:58:37, all six cards, `fault-20261109-2358-xchg-bench/`): the bench passed peer
+  pointers inside a by-value struct, which this driver mode (`DisableIndirectAccess=1`) does not make resident. Peer
+  pointers go to kernels as direct arguments only (the engine already did). Evidence saved, health probe passed, no
+  later faults.
+
+Gate (`round15-pull-gate-summary.txt`): traces identical after blocks of 16, 7 and 5; 40- and 128-token answers
+identical; 3K and 10K answers identical. Prompt reading 94.7 -> **179.2 tok/s at 3K, 174.4 at 10K**; decode
+74.6-74.8 -> **75.7-76.7 tok/s** (two runs each); verify tests: all guesses kept, 30 %, 100 % and 50 % wrong, blocks
+of 4, 6 and 16, on prompt 1, 3K and 10K: every kept text the same as the plain run.
+
+Profile of a checked block of 6 (all kept, card 2, `round15-verify6-cycle-profile-card2.txt`): 44.3 ms of kernels
+per cycle; the dense weight rows ~22 ms, routed experts ~11 ms, exchanges 4 ms. A 384-row slice at 6 tokens was 384
+sub-groups, one row each, so most of the card sat idle.
+
+- **Token groups over sub-groups** (`DenseRowsG`, `OWN_MT_TG=1/2/4`, `OWN_MT_TG_MAX`): position p runs row p / ng's
+  token group p % ng through the kernel's `rowg<G>` (the group body `rowm` ran one after another), so each token's
+  operations are unchanged.
+- **Shared expert rows** (`ExpertGroupM` + `RoutedU`, `OWN_MT_EU=6`; written by a subagent, checked here): the slots
+  of a block that picked the same expert form a group (at most 6); a sub-group decodes each block of an expert row
+  once and runs every slot of the group through its own accumulator in the slot kernels' order.
+  `tools/bench/test_routed_u.cpp` on card 0: 41 of 41 bitwise checks (5 formats, both shapes, splitting groups);
+  gate+up 1.23-1.39x at 6 tokens, 1.44-2.19x at 16 (`round15-routed-u-test-card0.txt`).
+
+Gate (`round15-tg-eu-gate-summary.txt`): traces identical after blocks of 16 (TG 2 + EU), 5 (TG 1 + EU) and 7
+(TG 4); every verify run the same as the plain run; 3K answers identical.
+
+| checked block of 6, all kept (prompt 1, 128 tokens) | tok/s | ms per cycle |
+| --- | --- | --- |
+| section 20 build | 75.9 | ~76 |
+| exchange by loads | 120.9-122.9 | 47 |
+| + token groups of 2 | 162.0 | 35 |
+| + shared expert rows | **176.8** | **32.7** |
+
+| 3K prompt, blocks of 16 | tok/s |
+| --- | --- |
+| exchange by loads | 176.6-179.2 |
+| + shared expert rows | 202.6 |
+| + token groups of 4 | **250.7** |
+| (token groups of 2 instead) | 242.4 |
+
+## 22. The official DSpark draft on the cards: 3K answers 68.7 -> 86.8 tok/s, text identical (2026-11-10 00:10-01:35 EST)
+
+The DSpark draft that DeepSeek publishes with V4.1 Flash (Unsloth's Q8_0 GGUF of it,
+`dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf`) now runs on the six cards next to the target
+(`backend/backend_sycl_v41_draft.inc`, kernels `kernels/sycl_v41_draft.hpp`; semantics from llama.cpp's
+`src/models/dflash.cpp` `graph_dsv41` and `build_dspark_markov_head`, read for semantics only, credited in
+`2026-11-09-dsv41-multitoken-and-dspark-plan.md`). Runner: `OWN_DSPARK=<gguf> OWN_SPEC=k` (k = 1..5 guesses per
+round). Placement: `profiles/dspark-q8/placement.tsv` (`tools/mk_dspark_placement.py`); the draft's tensors split
+across the cards by the target's rules (`tp_rows`), `dsp.fc` replicated.
+
+- **Draft step** (`draft_tp`, `dr_card_step`): the block [anchor, MASK x 4] at positions pos .. pos + 4 through 3
+  stages of the target's layer shape (non-causal attention over the stage's 128 window rows plus the 5 block rows;
+  single-pass stream mixing; 128 MXFP4 experts, top 3, `RoutedMXFP4`), then output norm, the target's output rows
+  and the Markov chain (row i's logits + `markov_w2 . markov_w1[prev]`, prev = the anchor or row i - 1's pick; each
+  row's pick crosses the cards through a 24-float exchange: `DraftBest` -> exchange -> `DraftPick`). 3.3 ms.
+- **Features**: the mean of the 4 streams at the inputs of target layers 37, 38, 39 (`StreamMeanM`, captured in
+  `tpm_layer`), through `fc`, `enc.output_norm`, each stage's `attn_kv`, `kv_a_norm` and rope into the stage's window
+  ring. Prompt blocks inject directly; a checked block's rows are staged in the ring's block area and only the kept
+  ones are moved (as the target's own window rows, section 20).
+- **Checking** reuses section 20's `decode_verify_tp` (each token bit-identical to the one-token step) and
+  `commit_block`; the kept text is the target's greedy text by construction. Every run in this section: **SAME AS
+  the plain run**.
+
+Rounds of speed work on the checking step (all pure speed changes; traces identical after blocks of 16, 7, 6 and 5;
+the 40- and 128-token answers identical):
+
+1. `commit_block` did its card work (ratio-2 state, 40 window-row moves, the draft's rows) from the main thread one
+   card at a time: now it records the commit and each card applies it at the start of its next step
+   (`commit_pending`), all cards at once; the draft rows are staged by the checking step itself. Check 41.7 -> 33.7
+   ms per round at k = 5.
+2. The unpacked rows (BF16 compressor and indexer weights) ran all 16 accumulators whatever the block size:
+   `GemvTMG` runs token groups over sub-groups (`OWN_MT_TGU=2`).
+3. The stream mix's double-precision dot rows ride in q_a's and the router's launches (`OWN_MT_RIDE=1`, as the
+   one-token path's `OWN_NORM_DOTS=0` form).
+4. Token-group size per block size (`OWN_MT_TGM=2:1,3:1,4:2,5:3,6:3`; checked blocks of 4: groups of 2 25.0 ms, of 1
+   26.9, of 4 25.3; blocks of 6: groups of 3 30.5, of 2 31.8).
+5. `dsp.fc` (15360 columns) packed for the block-read Q8_0 rows (1.05 -> 0.18 ms per round).
+6. Small row launches (norms, mix finishes of a few tokens) one sub-group per work-group (`OWN_MT_RWG=128`): the
+   512-wide groups put all of a block's norm sub-groups on one core (25.0 -> 24.4 ms for a block of 4).
+
+| check cost, all guesses right (prompt 1) | ms per round |
+| --- | --- |
+| one-token step (for comparison) | 13 |
+| block of 3 | 23.0 |
+| block of 4 | 24.4 |
+| block of 5 | 28.8 (before 6) |
+| block of 6 | 29.6 |
+
+| 3K prompt, 256 tokens (`OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_TGM=2:1,3:1,4:2,5:3,6:3 OWN_MT_RIDE=1 OWN_MT_RWG=128`) | tok/s | tokens per round | guesses kept |
+| --- | --- | --- | --- |
+| plain | 68.7 | 1 | - |
+| k = 2 | 78.7 | 2.20 | 60.2 % |
+| **k = 3** | **86.8** | 2.55 | 51.7 % |
+| k = 4 | 80.6 | 2.68 | 42.7 % |
+| k = 5 (before 6) | 77.0 | 2.80 | 36.4 % |
+
+Prompt 1 (a short chat answer, 43 tokens to the end of sentence): 75.8 tok/s at k = 3 vs 77.0 plain (2.15 tokens
+per round). The 3K and 10K document prompts keep 38-52 % of the guesses (10K, k = 5, before 2-6: 73.7 vs ~69 tok/s
+plain). The first acceptance numbers came from 64-token answers and moved by +-0.3 tokens per round between k
+values: use 256 tokens or more. The runner first kept writing after a kept end-of-sentence guess (fixed: the text
+ends there). Summaries `round16-e48..e53-summary.txt`, scripts `round16-scripts/`.
+
+Profile of a k = 3 round at 3K (cards 2 and 0, `OWN_GPROF=2`; 28.7 ms of kernels per round incl. the draft): the
+card-to-card exchanges are 3.1 ms on card 2 and 5.5 ms on card 0. Cards 2 and 5 carry two of the eight attention
+groups (heads 16, o_a groups 2; the others one), so their q_b, attention core and o_a take about twice as long
+and the other cards wait for them at the next exchange. Routed experts 6.7 ms, dense rows ~8 ms, the pre-norms
+of 4 tokens 1.4 ms (17 us each: all 16 sub-groups of 4 tokens in one 512-wide work-group, so on one core: next
+round spreads them, `OWN_MT_RWG`).
 
 ## Reproduce
 
@@ -524,9 +720,10 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 1. A server front end (tokenizer + chat template in the engine; today token ids come from a helper script).
 2. Speed, next levers: the weight matmuls are now 75 % of the time at 200-330 G elements/s (flat-loop forms for
    Q6_K/Q5_K, which carry the deeper layers, the head and the engram projections); the attention core at short
-   context (compact the live slots); top-512 selection on the card for long contexts.
-3. A batched prompt pass on the cards (today the cards read the prompt one token per step, 60 tok/s with
-   `OWN_TP=6`).
+   context (compact the live slots).
+3. Checking guesses costs about twice a one-token step for a block of 4 (section 22): the attention groups are
+   uneven over six cards (8 groups: two cards carry two), small launches, exchange latency. Smarter guess counts
+   (stop a round where the draft is unsure). (The batched prompt pass is done: sections 20-21, 251 tok/s at 3K.)
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
 5. A float-exact llama.cpp comparison to remove the remaining noise from section 4; report the nested-loop
    miscompile (IQ2_S, IQ2_XS/f32) upstream with the standalone reproducer shape from the gate.

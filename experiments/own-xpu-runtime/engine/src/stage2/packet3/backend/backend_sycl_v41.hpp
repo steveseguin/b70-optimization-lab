@@ -60,6 +60,7 @@
 #include "stage2/packet3/backend/trace_tags_v41.hpp"
 #include "stage2/packet3/kernels/pack_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
+#include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
 #include <level_zero/ze_api.h>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -199,12 +200,20 @@ public:
         int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
         bool rope_out = true;   // tp: inverse rope in the attention output's store (OWN_ROPE_OUT=0: own launch)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
+        bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
+                                // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
+        unsigned xpull_min = 8192; // (OWN_XPULL_MIN)
+        bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
                                 // launch ends only when its prefetch work-groups do)
         bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
         bool exp_pair = true;   // tp: expert gate + up rows in one launch (OWN_EXP_PAIR=0: two launches)
         bool eng_split = true;  // tp: engram_kv rows split across the cards, pushed at step start (OWN_ENG_SPLIT=0: every card all rows)
+        bool dev_index = true;  // tp: past 512 rows every card picks its own top-512 on the card (TopKSelP), no host
+                                // round trip (OWN_DEV_INDEX=0: the lead's host top-k, the others wait)
+        bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
+        bool score_b = true;    // dev_index: IndexerScoreB, keys read once, same sums (OWN_SCORE_B=0: IndexerScoreA)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -305,7 +314,8 @@ public:
         }
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
             if (o.tp > 1)
-                for (int t = 0; t < o.tp; ++t) ring[t][L] = dalloc<uint16_t>(t, (size_t)128 * g.hd);
+                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps)
+                    ring[t][L] = dalloc<uint16_t>(t, (size_t)(128 + MTX) * g.hd);
             else
                 ring[tile_of_layer(L)][L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
         }
@@ -570,6 +580,7 @@ public:
         return false; // packed kernels take f32 activations
 #else
         if (!o.packed || n == "token_embd.weight") return false;
+        if (e.type == iq3::Type::F32 && n.rfind("dsp.", 0) == 0) return false; // the draft's router stays F32
         if (e.type == iq3::Type::F32) { // the router: upload refuses (pack_row) if a value is not exact in 16 bits
             static const std::string rn = "ffn_gate_inp.weight";
             return o.router16 && e.cols == 5120 && e.experts == 0 && n.size() > rn.size() &&
@@ -694,6 +705,13 @@ public:
     // wait right after every host->card copy (OWN_H2D_WAIT, default on): on this
     // stack a host-pointer copy left pending slows every launch behind it
     bool h2d_wait = true;
+    // tp: the step's head (final norm, output rows, argmax) is skipped; a prompt token whose
+    // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
+    bool skip_head = false;
+    // tp: token index inside a multi-token step (0 in one-token steps); the card's position is pos + tokoff
+    static constexpr int MTX = 16; // tokens per multi-token step, at most
+    long tokoff[TILES] = {};
+    long cpos(int c) const { return pos + tokoff[c]; }
     void prof(const char *name, int t) {
         if (o.tp > 1) { // card 0's marks only; never a host wait (a card may be waiting for a peer not yet submitted)
             if (o.gprof && t == o.prof_card) gmark(name, t);
@@ -976,6 +994,7 @@ private:
         float *warm;                    // keep-warm scribble buffer
         int32_t *idxs_cat, *widx;
         act_t *old, *eng_rows, *kvbuf;
+        uint8_t *cand;                  // dev_index: layer-20 candidate mask of the current step
     };
     Scratch sc[TILES] = {};
 
@@ -1010,6 +1029,7 @@ private:
         s.idxs_cat = dalloc<int32_t>(t, 640); s.widx = dalloc<int32_t>(t, 128);
         s.old = md((size_t)4 * g.h);
         s.eng_rows = md((size_t)24 * g.engram_dim); s.kvbuf = md((size_t)5 * g.h);
+        s.cand = dalloc<uint8_t>(t, (size_t)max_seq + 64);
     }
 
     const WeightTab::E &we(const std::string &n) const { return W->at(n); }
@@ -1028,16 +1048,17 @@ private:
         bool on = false;      // the next launch takes the exchange
         bool pending = false; // armed and not yet run
         unsigned off = 0, stride = 0, nslot = 0, r0 = 0, r1 = 0;
+        int part = -1;
     };
     XTail xt[TILES];
     uint32_t *xcnt[TILES] = {};
-    void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1) {
-        xt[c] = {o.xtail, true, off, stride, nslot, r0, r1};
+    void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int part) {
+        xt[c] = {o.xtail && !use_pull(part, nslot), true, off, stride, nslot, r0, r1, part};
     }
     void end_xtail(int c) {
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
-        if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1);
+        if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1, 0, 0, t.part);
     }
     template <bool SG32, typename K, typename... A> void launch_xt(int c, sycl::nd_range<1> nr, K k, A... args) {
         const XTail t = xt[c];
@@ -1118,9 +1139,9 @@ private:
     }
     // packed-row kernels: 16 sub-groups (rows) per work-group, optional local
     // table; max_wg > 0 caps the work-groups (the routed kernels loop over rows)
-    template <size_t SLM, typename K, typename... A>
+    template <size_t SLM, size_t WG = 512, typename K, typename... A>
     void launch_rows(int tile, size_t rows, size_t max_wg, K k, A... args) {
-        constexpr size_t WG = 512, PER = WG / 32;
+        constexpr size_t PER = WG / 32;
         size_t nwg = (rows + PER - 1) / PER;
         if (max_wg && nwg > max_wg) nwg = max_wg;
         const size_t n = nwg * WG;
@@ -1894,6 +1915,108 @@ private:
         set_cidx(index_slot(L), sel);
     }
 
+    // index() for len > 512 on card t alone (tp, o.dev_index): the same scores, then the
+    // candidate blocks (layer 20) and the top-512 by TopKSelP straight into this card's list.
+    // Every card holds the indexer weights and its own keys, so each picks for itself.
+    long dcand_n[TILES] = {};
+    bool dcand_ok[TILES] = {};
+    // out: the list's destination (multi-token steps: one list per token; the token's own layer-20 mask in
+    // s.cand, same length, so layers past 20 always mask); default this card's list for the slot
+    void dev_index(int L, int t, int si, bool yarn, long len, int32_t *out = nullptr) {
+        auto &s = sc[t];
+        const std::string p = "blk." + std::to_string(L) + ".";
+        const int slot = index_slot(L);
+        sync_rows(t, si);
+        gemv(t, p + "indexer.attn_q_b.weight", s.qn, s.qi);
+        rope(t, s.qi, 32, 128, cpos(t), yarn, false);
+        gemv(t, p + "indexer.proj.weight", s.xn, s.wv);
+        const int T_ = (int)((len + 31) / 32 * 32);
+        if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
+            using KS = ops41sycl::IndexerScoreB<Act>;
+            constexpr size_t WG = 128;
+            const size_t n = ((size_t)T_ + WG - 1) / WG * WG;
+            const KS k{(int)len, T_};
+            const act_t *qi = s.qi, *wv = s.wv;
+            const uint16_t *ik = ik_mirror[t][si];
+            float *sco = s.score;
+            auto e = qs[t].submit([&](sycl::handler &hh) {
+                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+                hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                    k(it, qi, ik, wv, sco, &lt[0]);
+                });
+            });
+            kev(t, kname<KS>(), e);
+        } else {
+            qs[t].fill(s.lens, (int64_t)len, 1);
+            launch(t, (size_t)T_, 32, ops41sycl::IndexerScoreA<Act>{32, 128, T_, 1}, (const act_t *)s.qi,
+                   (const uint16_t *)ik_mirror[t][si], (const act_t *)s.wv, (const int64_t *)s.lens, s.score);
+        }
+        using KR = ops41sycl::TopKSelP<false>;
+        using KB = ops41sycl::TopKSelP<true>;
+        constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+        if (L == 20) { // official select_candidate_blocks (block 8, top 2048, newest pinned)
+            const int nb = (int)((len + 7) / 8);
+            launch_local<SLM>(t, KB::WG, KB{nb, 2048, 0, 0, 0, 8, (int)len}, (const float *)s.score,
+                              (const uint8_t *)nullptr, (int32_t *)nullptr, s.cand);
+            dcand_n[t] = len;
+            dcand_ok[t] = true;
+        }
+        const bool mask = L > 20 && (out || dcand_ok[t]);
+        if (L > 20 && !out && !dcand_ok[t] && len > 2048 * 8)
+            throw std::runtime_error("candidate mask missing (layer 20 not in range) beyond 16384 rows");
+        int32_t *dst = out ? out : cidx_mirror[t][slot];
+        launch_local<SLM>(t, KR::WG, KR{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0},
+                          (const float *)s.score, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst,
+                          (uint8_t *)nullptr);
+        if (!out) tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
+        if (o.dev_index_check) dev_index_check(L, t, len, mask, dst);
+    }
+    // OWN_DEV_INDEX_CHECK=1: every dev_index list (and layer-20 mask) against index()'s host selection
+    std::vector<uint8_t> chk_cand[TILES][MTX]; // per card and token of the step
+    std::atomic<long> chk_calls{0}, chk_bad{0};
+    void dev_index_check(int L, int t, long len, bool mask, const int32_t *dst) {
+        auto &s = sc[t];
+        std::vector<float> hs(len);
+        std::vector<int32_t> dl(512);
+        qs[t].memcpy(hs.data(), s.score, (size_t)len * 4);
+        qs[t].memcpy(dl.data(), dst, 512 * 4).wait();
+        bool bad = false;
+        if (L == 20) {
+            const int bs = 8, tb = 2048;
+            const int nb = (int)((len + bs - 1) / bs);
+            std::vector<float> bsc(nb, -INFINITY);
+            for (long j = 0; j < len; ++j) bsc[j / bs] = std::max(bsc[j / bs], hs[j]);
+            bsc[(len - 1) / bs] = INFINITY;
+            std::vector<int> ord(nb);
+            for (int i = 0; i < nb; ++i) ord[i] = i;
+            const int tk = std::min(tb, nb);
+            std::partial_sort(ord.begin(), ord.begin() + tk, ord.end(),
+                              [&](int a, int b) { return bsc[a] > bsc[b] || (bsc[a] == bsc[b] && a < b); });
+            auto &hc = chk_cand[t][tokoff[t]];
+            hc.assign(len, 0);
+            for (int i = 0; i < tk; ++i)
+                if (bsc[ord[i]] > -INFINITY)
+                    for (long j = (long)ord[i] * bs; j < std::min<long>((long)(ord[i] + 1) * bs, len); ++j) hc[j] = 1;
+            std::vector<uint8_t> dc(len);
+            qs[t].memcpy(dc.data(), s.cand, (size_t)len).wait();
+            if (dc != hc) bad = true;
+        }
+        if (mask)
+            for (long j = 0; j < len && j < (long)chk_cand[t][tokoff[t]].size(); ++j)
+                if (!chk_cand[t][tokoff[t]][j]) hs[j] = -INFINITY;
+        std::vector<int32_t> ord(len), sel(512, -1);
+        for (long j = 0; j < len; ++j) ord[j] = (int32_t)j;
+        std::partial_sort(ord.begin(), ord.begin() + 512, ord.end(),
+                          [&](int32_t a, int32_t b) { return hs[a] > hs[b] || (hs[a] == hs[b] && a < b); });
+        std::sort(ord.begin(), ord.begin() + 512);
+        for (int i = 0; i < 512; ++i) sel[i] = ord[i] + 128;
+        if (sel != dl) bad = true;
+        const long n = ++chk_calls, nb_ = bad ? ++chk_bad : chk_bad.load();
+        if (bad && nb_ <= 5) fprintf(stderr, "dev_index check: MISMATCH card %d layer %d len %ld pos %ld\n", t, L, len, (long)pos);
+        if ((n & (n - 1)) == 0 || n % 4096 == 0)
+            fprintf(stderr, "dev_index check: %ld lists, %ld mismatches (last: card %d layer %d len %ld)\n", n, nb_, t, L, len);
+    }
+
 #ifndef OWN41_ACT_BF16
     // RouteP in work-group 0 and the shared expert's gate and up rows in the
     // others, one launch (test_packed_v41_device.cpp "fused": 52 -> 28 us)
@@ -2074,8 +2197,15 @@ private:
             if (e.rows != want) throw std::runtime_error("tensor parallel: unexpected rows in " + n);
         };
         if (n == "output.weight") { need(g.vocab); return {(unsigned)tv0[c], (unsigned)tv1[c]}; }
-        if (layer_of_name(n) < 0) return {0, R};
-        const std::string suf = n.substr(n.find('.', 4) + 1);
+        // the DSpark draft ("dsp." names, same layer geometry as the target): split as the target's layers;
+        // its input projection by model rows, its Markov output rows by vocabulary
+        const bool dsp = n.rfind("dsp.", 0) == 0;
+        // (dsp.fc.weight, 15360 columns, is not packable: the generic rows read the whole matrix, so every
+        // card holds all of it and projects the features alone, without an exchange)
+        if (dsp && n == "dsp.markov_w2.weight") { need(g.vocab); return {(unsigned)tv0[c], (unsigned)tv1[c]}; }
+        const std::string nl = dsp ? n.substr(4) : n;
+        if (layer_of_name(nl) < 0) return {0, R};
+        const std::string suf = nl.substr(nl.find('.', 4) + 1);
         if (suf == "attn_q_b.weight") { need((long)g.qh * g.hd); return {(unsigned)(thq0[c] * g.hd), (unsigned)(thq1[c] * g.hd)}; }
         if (suf == "attn_output_a.weight") {
             need(g.ototal);
@@ -2123,7 +2253,12 @@ private:
         xob = xoa + (unsigned)g.ototal;
         xact = xob + (unsigned)g.h;
         xeng = xact + 7 * (unsigned)g.mid; // two engram layers' kv rows, 5 * h each
+#ifndef OWN41_ACT_BF16
+        mt_offsets(xeng + 10 * (size_t)g.h); // the multi-token step's regions follow
+        const size_t nf = xeng + 10 * (size_t)g.h + mt_arena_floats();
+#else
         const size_t nf = xeng + 10 * (size_t)g.h;
+#endif
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nf);
             xcnt[c] = dalloc<uint32_t>(c, 16);
@@ -2139,6 +2274,9 @@ private:
             s.sha = s.act + (size_t)6 * g.mid;
             teng[c][0] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
             teng[c][1] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
+#ifndef OWN41_ACT_BF16
+            mt_alloc(c);
+#endif
             if (o.head) {
                 const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
                 tlog[c] = dalloc<float>(c, nl);
@@ -2176,14 +2314,58 @@ private:
     // all-gather of rows [r0, r1) of nslot slots (stride floats) at arena offset off
     // mode 0: push this card's rows and wait for every peer's; 1: push only (the wait is a later exchange's,
     // whose flags come after this one's in every peer's queue); 2: wait only for exchange number seq
+    // part (XP_*) names whose rows every card owns (xbounds); the exchanges of one part and slot count take the
+    // same form on every card (use_pull decides from all cards' rows), stores (XchgP) or loads (XchgPull)
     uint32_t xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int mode = 0,
-                  uint32_t seq = 0) {
+                  uint32_t seq = 0, int part = -1) {
         float *P[6] = {};
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
         if (mode != 2) seq = ++xseq[c];
+        if (use_pull(part, nslot)) {
+            ops41sycl::XchgPull x{o.tp, c, off, stride, nslot, {}, {}, seq, XSPIN, mode};
+            xbounds(part, x.b0, x.b1);
+            if (x.b0[c] != r0 || x.b1[c] != r1) throw std::runtime_error("exchange: rows do not match the part");
+            size_t nv = 0;
+            for (int d = 0; d < o.tp; ++d)
+                if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
+            const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
+            float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+            uint32_t *err = xerr[c];
+            auto e = qs[c].submit([&](sycl::handler &hh) {
+                hh.parallel_for(sycl::nd_range<1>(nwg * 256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                    x(it, p0, p1, p2, p3, p4, p5, err);
+                });
+            });
+            kev(c, kname<ops41sycl::XchgPull>(), e);
+            return seq;
+        }
         launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode}, P[0], P[1], P[2],
                   P[3], P[4], P[5], xerr[c]);
         return seq;
+    }
+    enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3 };
+    void xbounds(int part, unsigned *b0, unsigned *b1) const {
+        const unsigned per = (unsigned)g.ototal / 8;
+        for (int d = 0; d < 6; ++d) {
+            b0[d] = b1[d] = 0;
+            if (d >= o.tp) continue;
+            switch (part) {
+            case XP_OA: b0[d] = tog0[d] * per, b1[d] = tog1[d] * per; break;
+            case XP_H: b0[d] = td0[d], b1[d] = td1[d]; break;
+            case XP_ACT: b0[d] = tm0[d], b1[d] = tm1[d]; break;
+            case XP_ENG: b0[d] = te0[d], b1[d] = te1[d]; break;
+            default: throw std::runtime_error("exchange part");
+            }
+            if ((b1[d] - b0[d]) % 4 || b0[d] % 4) throw std::runtime_error("exchange rows not multiples of 4");
+        }
+    }
+    bool use_pull(int part, unsigned nslot) const {
+        if (!o.xpull || part < 0 || o.tp > 6) return false;
+        unsigned b0[6], b1[6];
+        xbounds(part, b0, b1);
+        size_t mx = 0;
+        for (int d = 0; d < o.tp; ++d) mx = std::max<size_t>(mx, (size_t)(b1[d] - b0[d]) * nslot * 4);
+        return mx >= o.xpull_min;
     }
     // this card's rows of a dense matrix -> y[0, nrows) (packed rows); xn as gemv_kp
     void gemv_part(int t, const std::string &wn, const act_t *x, act_t *y, unsigned xn = 0) {
@@ -2220,7 +2402,7 @@ private:
         const bool yarn = cr > 0;
         const int si = src_index(L);
         const bool lead = c == 0;
-        const bool host_work = cr && index_slot(L) >= 0 && tlen[c][si] > 512; // the lead's host top-k
+        const bool host_work = cr && index_slot(L) >= 0 && tlen[c][si] > 512 && !o.dev_index; // the lead's host top-k
         const int nh = thq1[c] - thq0[c];
         const size_t qo = (size_t)thq0[c] * g.hd;
         switch (ph) {
@@ -2249,9 +2431,9 @@ private:
             if (ride && attn_in_diet(c, p)) {
                 // four launches: query-a + key/value rows (+ the mix's dot rows); both norms; query-b rows
                 // (+ the mix's finish + the key's rope); the query's rope
-                if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
-                const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
-                const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+                if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
+                const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
+                const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
                 const bool pair_ok = dots_done ? gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
                                                               s.kv, s.xn, ops41sycl::NoRows{})
                                                : gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
@@ -2285,11 +2467,11 @@ private:
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
                                  hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
                 else gemv_part(c, p + "attn_q_b.weight", s.qn, s.q + qo);
-                rope(c, s.q + qo, nh, g.hd, pos, yarn, false);
+                rope(c, s.q + qo, nh, g.hd, cpos(c), yarn, false);
                 prof("attn_q_b", c);
                 gemv(c, p + "attn_kv.weight", s.xn, s.kv);
                 rmsnorm(c, s.kv, p + "attn_kv_a_norm.weight", g.hd, s.kvn);
-                rope(c, s.kvn, 1, g.hd, pos, yarn, false);
+                rope(c, s.kvn, 1, g.hd, cpos(c), yarn, false);
                 prof("attn_kv", c);
             }
             if (cr && is_kv_source(L)) { // every card publishes for itself: no host round trip
@@ -2304,6 +2486,9 @@ private:
                         cand_host.assign(len, 1);
                         cand_valid = true;
                     }
+                    if (L == 20) dcand_ok[c] = false; // every row a candidate: layers 24-36 are short too
+                } else if (o.dev_index) {
+                    dev_index(L, c, si, yarn, len);
                 } else if (lead) { // scores + top-k on the host; the others copy the list (tp_mark)
                     index(L, c, si, yarn, len);
                     tp_mark.store(tp_stepn * 64 + L + 1, std::memory_order_release);
@@ -2319,12 +2504,12 @@ private:
                 if (!lead && host_work && !tp_th.empty()) tp_wait_mark(tp_stepn * 64 + L + 1);
                 sync_rows(c, si);
                 sync_cidx(c, isrc_for(L));
-                launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 512},
+                launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 512},
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
                        (const int32_t *)cidx_mirror[c][isrc_for(L)]);
                 n_idx += 512;
             } else {
-                launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)pos, 0},
+                launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 0},
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
             }
             const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
@@ -2343,9 +2528,9 @@ private:
                              kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
             }
-            if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
-            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
-            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+            if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
+            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
+            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
             ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
             if (o.rope_out) { // the inverse rope in the output's store (f32 activations: obuf is f32 too)
                 so.ry = (float *)(s.obuf + qo);
@@ -2358,7 +2543,7 @@ private:
                 launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},
                        (const float *)(s.of + qo), s.obuf + qo, cb, sbp);
             const unsigned per = (unsigned)g.ototal / 8;
-            arm_xtail(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per);
+            arm_xtail(c, xoa, (unsigned)g.ototal, 1, tog0[c] * per, tog1[c] * per, XP_OA);
             gemv_part(c, p + "attn_output_a.weight", s.obuf + (size_t)tog0[c] * g.oin, s.oa + (size_t)tog0[c] * per, per);
             prof("attn_o_a", c);
             end_xtail(c);
@@ -2366,7 +2551,7 @@ private:
             break;
         }
         case 2:
-            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c], XP_H);
             if (fin_attn[c]) {
                 gemv_part_ex(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c],
                              hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a));
@@ -2424,7 +2609,7 @@ private:
             }
             prof("exp_up", c);
             const int nm = tm1[c] - tm0[c];
-            arm_xtail(c, xact, (unsigned)g.mid, 7, tm0[c], tm1[c]);
+            arm_xtail(c, xact, (unsigned)g.mid, 7, tm0[c], tm1[c], XP_ACT);
             launch(c, (size_t)7 * nm, 64, ops41sycl::SwigluBothS<Act>{6, nm, 10.0f, g.mid}, (const act_t *)s.expg,
                    (const act_t *)s.expu, s.act + tm0[c], (const float *)s.prob, (const act_t *)s.shg,
                    (const act_t *)s.shu, s.act + (size_t)6 * g.mid + tm0[c]);
@@ -2439,7 +2624,7 @@ private:
                 prof("exp_down", c);
                 gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
             }
-            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c]);
+            arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c], XP_H);
             launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
                    s.ob + td0[c]);
             prof("shared", c);
@@ -2472,17 +2657,17 @@ private:
         if (cr_of(L) == 1) {
             gemv(c, p + "attn_compressor_kv.weight", s.xn, s.cw);
             rmsnorm(c, s.cw, p + "attn_compressor_norm.weight", g.hd, s.latent);
-            gpos = pos;
+            gpos = cpos(c);
         } else {
             gemv(c, p + "attn_compressor_kv.weight", s.xn, s.cw);
             gemv(c, p + "attn_compressor_gate.weight", s.xn, s.scg);
-            const int slot = (int)(pos % 2);
+            const int slot = (int)(cpos(c) % 2);
             launch(c, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.cw,
                    s.kv_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
             launch(c, g.hd, 32, ops41sycl::ToF32A<Act>{g.hd}, (const act_t *)s.scg,
                    s.score_state + (size_t)si * 2 * g.hd + (size_t)slot * g.hd);
-            if (pos % 2 == 0) return;
-            gpos = pos - 1;
+            if (cpos(c) % 2 == 0) return;
+            gpos = cpos(c) - 1;
             if (!o.small_fast || g.hd > 1024) throw std::runtime_error("tensor parallel: compressor pool form");
             launch_local<1024>(c, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
                                (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
@@ -2506,9 +2691,9 @@ private:
         for (int li = 0; li < 2; ++li) {
             const int L = li == 0 ? 1 : 14;
             if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
-            if ((long)comp_ids.size() <= pos) throw std::runtime_error("comp_ids behind position");
+            if ((long)comp_ids.size() <= cpos(c)) throw std::runtime_error("comp_ids behind position");
             int64_t ids[24];
-            engram_hash((int)pos, li, ids);
+            engram_hash((int)cpos(c), li, ids);
             std::vector<act_t> &rows = h_eng[c][li][eng_flip[c][li]++ & 1];
             for (int k = 0; k < 24; ++k) {
                 const uint8_t *row = eng_base[li] + (size_t)ids[k] * l.bytes;
@@ -2530,14 +2715,16 @@ private:
                       xarena[c] + xeng + (size_t)li * 5 * g.h + te0[c]);
             any = true;
         }
-        if (any) eng_seq[c] = xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 1);
+        if (any) eng_seq[c] = xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 1, 0, XP_ENG);
     }
     void engram_tp(int L, int c) {
         const int li = L == 1 ? 0 : 1;
         const std::string p = "blk." + std::to_string(L) + ".";
         const float *kv = sc[c].kvbuf;
         if (o.eng_split) {
-            if (xseq[c] == eng_seq[c]) xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 2, eng_seq[c]);
+            // loads: the rows arrive only by this copy; stores: a later exchange's wait already covers them
+            if (use_pull(XP_ENG, 2) || xseq[c] == eng_seq[c])
+                xchg(c, xeng, 5u * (unsigned)g.h, 2, te0[c], te1[c], 2, eng_seq[c], XP_ENG);
             kv = xarena[c] + xeng + (size_t)li * 5 * g.h;
         } else {
             gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
@@ -2587,6 +2774,7 @@ private:
     }
     void tp_card_step(int c) {
         const double t0 = now_s();
+        commit_pending(c);
         x_ready[c] = false; // a step that failed part-way must not leave it set
         fin_attn[c] = false;
         xt[c].on = xt[c].pending = false;
@@ -2598,7 +2786,7 @@ private:
         prof("engram", c);
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
-        if (o.head) tp_head(c);
+        if (o.head && !skip_head) tp_head(c);
         else twait(c);
         tph_step[c] += now_s() - t0;
     }
@@ -2612,7 +2800,9 @@ private:
                 seen = tp_gen;
             }
             try {
-                tp_card_step(c);
+                if (dr_step) dr_card_step(c);
+                else if (mt_n > 0) tpm_card_step(c);
+                else tp_card_step(c);
             } catch (const std::exception &e) {
                 tp_abort = true;
                 std::lock_guard<std::mutex> lk(tp_mu);
@@ -2682,6 +2872,7 @@ private:
     // kernels of a phase, exchanges included, are queued before any host wait
     void tp_step_serial(int32_t token) {
         for (int c = 0; c < o.tp; ++c) {
+            commit_pending(c);
             x_ready[c] = fin_attn[c] = false;
             xt[c].on = xt[c].pending = false;
         }
@@ -2707,7 +2898,7 @@ private:
                 }
                 tp_trace(L, ph);
             }
-        if (o.head) {
+        if (o.head && !skip_head) {
             for (int c = 0; c < o.tp; ++c) tp_head(c);
             tra(40, TT_FINAL_N, 0, sc[0].xn, g.h);
             const float *src[TILES] = {};
@@ -2717,12 +2908,13 @@ private:
             for (int c = 0; c < o.tp; ++c) qs[c].wait();
         }
     }
+#include "backend_sycl_v41_mt.inc"
+#include "backend_sycl_v41_draft.inc"
     int32_t decode_step_tp(int32_t token) {
         engram_prefetch();
         ++tp_stepn;
         tp_tok = token;
-        if (!tp_th.empty()) {
-            if (tracing()) throw std::runtime_error("tensor-parallel trace runs need OWN_TP_THREADS=0");
+        if (!tp_th.empty() && !tracing()) { // traced steps run phase by phase from this thread (workers parked)
             tp_abort = false;
             {
                 std::lock_guard<std::mutex> lk(tp_mu);
@@ -2741,7 +2933,7 @@ private:
             if (xerr[c][0])
                 throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                          std::to_string((int)xerr[c][0] - 1));
-        const int32_t next = o.head ? tp_argmax() : -1;
+        const int32_t next = o.head && !skip_head ? tp_argmax() : -1;
         ++pos;
         if (tp_hostprof && !tp_th.empty() && ++tph_n % 32 == 0) {
             std::fprintf(stderr, "host per step (ms), %ld steps: ", tph_n);
@@ -2755,6 +2947,9 @@ private:
     }
 #else
     int32_t decode_step_tp(int32_t) { throw std::runtime_error("tensor parallel needs the f32-activation build"); }
+  public:
+    int32_t decode_block_tp(const int32_t *, int) { throw std::runtime_error("tensor parallel needs the f32-activation build"); }
+  private:
     void tp_worker(int) {}
 #endif
 
