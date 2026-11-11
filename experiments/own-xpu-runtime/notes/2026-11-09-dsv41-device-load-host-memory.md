@@ -1239,6 +1239,189 @@ the draft's q_b rows reach at one token. The time is in many small launches (car
 rows, and the exchanges above; kernel time nearly adds up to the wall time (19.32 ms of kernels per round of
 2.56 + 17.63 ms in the profiled run), so there are almost no idle gaps between kernels to close.
 
+## 29. Long documents (19K-95K tokens): the index over the candidate rows only, the select by ranges, attention over the live rows: 95K-token answers 56.5 -> 65.2 tok/s, short chat +2.8 %, text identical (2026-11-10 12:00-19:30 EST)
+
+**Speeds on long documents (e82, tp68 defaults, `round18-e82-table.md`, `round18-scripts/e82.sh`).** Four repo
+documents in a chat-templated request (`prompts/xl`, 18,692 / 33,815 / 68,506 / 95,497 tokens), read in blocks
+of 16, then 256 plain answer tokens (the reference) or guessing (the section 27 settings). Gates first: traces of
+blocks of 16 / 5 / one token byte-identical, plain 128-token answers identical.
+
+| document | prompt reading tok/s | plain answers tok/s (ms per token) | guessing tok/s (draft + check ms per round) |
+| --- | --- | --- | --- |
+| 36 tokens (prompt 1, e81) | - | 78.30 (12.77) | 102.09 / 102.02 (five-prompt medians, e81 d1 / d2) |
+| 3,323 tokens (e81) | 292.9 | - | - |
+| 18,692 | 279.5 | 67.79 (14.75) | 89.76 (2.31 + 20.78) |
+| 33,815 | 271.7 | 65.30 (15.31) | 91.59 (2.31 + 21.90) |
+| 68,506 | 257.5 | 60.42 (16.55) | 81.32 (2.30 + 22.78) |
+| 95,497 | 246.8 | 56.60 (17.67) | not run |
+
+All guessing answers SAME as the plain runs. Reading the 19K document one token at a time (70.2 tok/s) gives
+the same first 16 answer tokens as the blocks of 16. The indexer score with 4 rows per item (`OWN_IDX_R=4`,
+section 28) reads +0.3 / +0.8 / +1.6 / +2.4 % faster on the four documents (280.2 / 273.8 / 261.7 / 252.7 tok/s),
+plain answers identical and as fast (68.21 / 66.24 / 59.43 / 56.64).
+
+**What grows (e83, tp69 = tp68 + `OWN_GPROF_DECODE=1`: the profile counts answer steps only; without it a
+prompt's kernels are divided over the answer steps, as in e82's 69K profile). Card 2, kernel time per answer
+token (profiled runs, `round18-e83-*-decode-profile-card2.txt`):**
+
+| kernel time per token, card 2 (ms) | 36 tokens | 3,323 | 18,692 | 68,506 |
+| --- | --- | --- | --- | --- |
+| all kernels | 12.401 | 13.178 | 13.592 | 15.783 |
+| index: top-512 select (`TopKSelP<false>`, 8 per token) | 0 | 0.156 | 0.508 | 1.663 |
+| index: score (`IndexerScoreB`, 8 per token) | 0 | 0.165 | 0.281 | 0.987 |
+| index: layer-20 block select (`TopKSelP<true>`) | 0 | 0.004 | 0.026 | 0.068 |
+| attention (`SparseScoreHG` + `SparseSoftmaxP<640>` + `SparseOutJB`) | 1.227 | 1.458 | 1.481 | 1.484 |
+| exchanges (`XchgPull` + `XchgP`) | 1.438 | 1.471 | 1.368 | 1.603 |
+
+From 36 tokens to 68,506 the card's kernels grow 3.38 ms per token, 2.72 ms of it in the index (the top-512
+select alone 1.66 ms: one work-group of 1,024 walks the 68,506 scores of a ratio-1 layer four times for the
+threshold and once more in steps of 1,024 with two group scans each), against 3.78 ms of wall time between the
+unprofiled runs (12.77 -> 16.55 ms). Attention stops growing past ~2K tokens (512 compressed rows + the window).
+Five of the eight index layers (20, 24, 28, 32, 36) read the ratio-1 rows (one per token); layers 24-36 score and
+select over all of them although only rows of layer 20's 2,048 chosen blocks of 8 can be picked (the others are
+-inf in their select).
+
+**The index over the candidate rows only (`OWN_IDX_CAND=1`, tp70, e84, `round18-e84-table.md`).** Past 16,384
+rows (when layer 20's 2,048 blocks of 8 leave rows out), the one-token index of layers 24-36 scores only the
+candidate rows and selects among them:
+- `TopKSelP<true>` (layer 20's block select) also writes the chosen blocks in ascending order (`out[0]` = count);
+- `IndexerScoreBC` scores row `bl[1 + i / 8] * 8 + i % 8` on item i with `IndexerScoreB::run` (each row's sum is
+  the same code, the other rows are not written);
+- `TopKSelC` runs `TopKSelP<false>`'s threshold passes and walk over the candidate positions (ascending rows).
+  Every other row is -inf in the masked select, so when at least 512 candidate rows score above -inf the
+  threshold, the ties taken (lowest rows first) and the list are the same; otherwise it runs the masked
+  `TopKSelP<false>` over all rows itself (counted first, one group reduction).
+`OWN_IDX_CAND=2` also runs the full score and masked select and compares the candidate rows' scores and the 512
+entries bit for bit.
+
+Checks: `tools/bench/test_index_cand.cpp` (230 W card, `round18-e84-test-index-cand.txt`): random queries and keys
+at 16,500-130,000 rows, scores at the candidate rows and the lists identical, and crafted score arrays (a few
+values with heavy ties, +0 / -0 only, mostly -inf so that the fallback runs, plain normal) at 16,391 / 40,000 /
+120,001 rows, lists identical: PASS. In the engine: traces of blocks of 16 / 5 / one token byte-identical and plain
+128-token answers identical with the option off; with `OWN_IDX_CAND=2` on the 34K document 1,024+ lists compared,
+0 mismatches; 256 plain answer tokens identical to e82's on all four documents.
+
+**The same for blocks (tp71, e85, `round18-e85-table.md`).** Prompt reading and guess checks run the index of a
+block of tokens (`tpm_index`): with `OWN_IDX_CAND=1`, when every long token of the block has more than 16,384
+rows, layers 24-36 score each token's candidate rows (`IndexerScoreBCM`, token t's work-groups over its own block
+list) and select among them (`TopKSelMC`: `TopKSelC` per token); layer 20's block select writes each token's block
+list (`TopKSelM<true>` with `bls`). `OWN_IDX_CAND=2` compares one block layer in 37 per card (every token of it)
+and every one-token list: on the 34K document 12,288 lists, 0 mismatches. Gates with the option off identical.
+
+| `OWN_IDX_CAND=1` (all answers identical to e82's) | e82 (off) | e84 (tp70, one-token steps) | e85 (tp71, also blocks) |
+| --- | --- | --- | --- |
+| 18,692 tokens: reading / plain answers tok/s | 279.5 / 67.79 | 278.7 / 67.99 | - |
+| 33,815 tokens | 271.7 / 65.30 | 271.0 / 67.23 | 273.2 / 67.11 |
+| 68,506 tokens | 257.5 / 60.42 (e84 off: 257.4 / 60.14) | 257.0 / 66.02 (warm rows) | 266.9 / 64.70 |
+| 95,497 tokens | 246.8 / 56.60 | 246.6 / 62.92 | 262.2 / 63.00 |
+| guessing 33,815 (draft + check ms) | 91.59 (2.31 + 21.90) | - | 95.56 (2.32 + 20.89) |
+| guessing 68,506 | 81.32 (2.30 + 22.78) | - | 86.67 (2.30 + 21.24) |
+
+One card, `test_index_cand` (us per layer, one token) at 69,000 rows: score all 128.4 +
+masked select 267.1 -> candidates 31.8 + 75.9; 95,000 rows: 163.8 + 361.6 -> 32.0 + 78.8; 34,000 rows: 71.2 +
+125.2 -> 31.0 + 72.8 (the block select, 73.1 us at 69,000, stays).
+
+**The select's last walk by ranges (`OWN_TOPK_R=1`, `TopKSelR`, tp72, e86, `round18-e86-test-topk-r.txt`).**
+`TopKSelP`'s threshold passes stay; its walk in steps of 1,024 positions (two group scans per step) becomes one
+pass: item i takes the positions [i c, (i + 1) c), c = ceil(n / 1,024), counts its values above the threshold and
+equal to it, two group scans give its place in the list and the number of equal values before it, and a second
+walk over its range writes its entries. The same entries in the same ascending order with the same ties (the
+lowest positions equal to the threshold). It runs for the plain and masked selects and for `TopKSelC`'s walk
+(`rwalk`); layer 20's block select keeps `TopKSelP` (by ranges it is slower: it needs a third scan for the block
+count). `tools/bench/test_topk_r.cpp`, one card, us per select, lists identical on all shapes (normal values, few
+values with heavy ties, +0 / -0 only, mostly -inf, with NaNs) at 600-130,000 positions: PASS.
+
+| positions (normal values) | plain select P -> R | masked select P -> R | block select P -> R |
+| --- | --- | --- | --- |
+| 600 | 52.0 -> 53.5 | 53.4 -> 54.6 | 19.4 -> 31.6 |
+| 17,000 | 143.5 -> 67.5 | 151.2 -> 77.0 | 62.7 -> 60.2 |
+| 34,000 | 115.6 -> 47.7 | 124.2 -> 57.8 | 40.9 -> 44.1 |
+| 69,000 | 240.5 -> 101.6 | 265.0 -> 124.9 | 73.1 -> 84.4 |
+| 95,000 | 326.5 -> 143.3 | 359.6 -> 173.6 | 95.5 -> 113.9 |
+
+Over the candidate rows (`test_index_cand`, r1, `round18-r1-test-index-cand.txt`, lists identical): the select
+75.8 -> 46.8 us at 69,000 rows, 78.9 -> 48.9 at 95,000.
+
+**Attention over the live rows only (`OWN_ATT_TRIM=1`).** Below 512 compressed rows (prompts shorter than ~2K
+tokens on the ratio-4 layers, ~64K on ratio-128), a compressed layer's 640 attention slots (the window of 128 +
+512 compressed rows) are mostly skipped ones (index -1). The trimmed form runs the score, softmax
+(`SparseSoftmaxPN<640>`) and output over 128 + the live rows rounded up to 32 (the longest token's in a block).
+The skipped slots take no part in the maximum and add +0 to the sum chain, so every kept weight and every sum is
+the same. e86 found a bug in its block form: traces of blocks of 16 and 5 differed (from step 1, layer 2's
+attention output, `round18-e86-h16t-trace-first-differences.txt`), one-token traces were identical, and the
+128-token answers changed. `WindowAppendM` (the block's window rows and attention lists) maps item g to token
+g / max(d, win + nc) with nc = 512, but the trimmed launch sized itself with the trimmed slot count, so the last
+tokens of a block got no lists. The launch now uses max(d, 128 + nc) items per token whatever the attention reads.
+
+**Gates and speeds after the fix (r1, tp73 = tp72 + the launch fix; the host reset in between, below;
+`round18-r1-table.md`, `round18-r1-guessing-table.md`, `round18-scripts/r1.sh`).** References rebuilt with the
+pushed commit's build (tp68h; every build since ab1 gave them byte for byte): its trace and 40 answers equal
+the saved CPU BF16 reference's and the six-card F32 run's. tp73 with both options on (A): traces of blocks of 16 /
+5 / one token byte-identical, 40 answers the same; prompt-1 128 answers the same; 24 of 24 guessing answers SAME
+as the plain runs; 256 plain answers the same on all four documents; `OWN_IDX_CAND=2` with `OWN_TOPK_R=1` on the
+34K document 12,288 lists compared, 0 mismatches; the cards' index lists against the host's (`OWN_DEV_INDEX_CHECK=1`,
+10,621-token prompt, by ranges) 475,136 lists, 0 mismatches.
+
+| tp73 + A vs the reference (tp68h defaults) | reading tok/s | plain answers tok/s (ms per token) |
+| --- | --- | --- |
+| 18,692 tokens | 279.4 -> 279.6 (+0.1 %) | 68.00 -> 69.10 (+1.6 %, 14.47 ms) |
+| 33,815 | 271.4 -> 274.3 (+1.1 %) | 65.23 -> 68.39 (+4.8 %, 14.62 ms) |
+| 68,506 | 257.3 -> 267.8 (+4.1 %) | 60.43 -> 67.16 (+11.1 %, 14.89 ms; tp73 defaults 64.85) |
+| 95,497 | 246.7 -> 263.6 (+6.9 %) | 56.51 -> 65.20 (+15.4 %, 15.34 ms) |
+| prompt 1 (36 tokens), alternated | - | tp68h 74.64 / 76.31, tp73 defaults 75.72 / 76.36, A 78.26 / 78.13 (+2.8 %) |
+| guessing, five-prompt median (alternated) | - | tp73 defaults 99.59 / 99.68, A 100.48 / 100.40 (+0.8 %); 3K document 107.6-107.8 -> 107.8-108.1 |
+
+A 95K-token document's answer tokens now cost 1.20x a short chat's (15.34 vs 12.79 ms; the reference build
+today: 17.70 vs 13.37 ms, 1.32x). On short prompts the gain is the trimmed attention (the index costs 0.03 ms
+per step there).
+
+**What is left (r1 profiles with A, card 2, `round18-r1-{p1,x19k,x69k}-decode-profile-card2.txt`, ms per answer
+step):** prompt 1: exchanges 2.205, expert up 1.949, norms 1.408, router 1.369; the 69K document: index 1.338
+(19K: 0.835), attention 1.711 (1.138 at 36 tokens), the rest as at 36 tokens. The index's remaining cost is one
+card doing layers 24-36's candidate work; splitting rows across cards is the next long-document lever.
+
+**The norm's double chain (`tools/bench/bench_norm_dp.cpp`, one 230 W card, `round18-r1-bench-norm-dp.txt`).**
+`RmsNormPS<5120, 4>` (81 per answer step, inside the fused row launches) forms its sum of squares in double
+precision: one sub-group of 32 lanes per sum, 160 terms per lane in order, then a tree. Medians per launch:
+the engine form 11.88 us; the same on one sub-group 14.48; loading all 20 chunks first 19.38; a sub-group of 16
+with two chains per lane 15.00; two sub-groups of 16 (logical lanes 0-15 and 16-31, the w = 16 step through local
+memory) 8.96, all bitwise equal; a float accumulator 5.42 (not exact, the floor); an empty launch 0.62. The chain
+is bound by double-precision issue per sub-group, not by its dependency: spreading the same lanes over two
+sub-groups helps, more chains per lane does not. Inside the fused SIMD32 row launches that means a second
+sub-group per row; at most ~2 % of a step, not taken now.
+
+**The host reset (15:16 EST, `round18-host-reset-20261110-1516.txt`).** During e87's 69K / 95K runs the host
+reset itself with no GPU fault line. The firmware's boot error record: a fatal PCIe completion timeout on the
+I210 network chip 0000:a7:00.0 (the LAN link in use), under root complex 0000:a0, which also holds card
+0000:a3, plus a fatal machine check. Not a card fault; the health probe afterwards (barrier + all-reduce on all
+six cards, `round18-r1-health-probe.txt`) passed. (Run inside the engine's environment it fails in PyTorch:
+`round18-r1-health-probe-engine-env-failed.txt`; it needs a clean shell.) The reboot wiped /tmp, so references,
+prompts and builds were remade (above); campaign files now live outside /tmp. Campaign fault checks also stop on
+`PCIe Bus Error|AER:|Hardware Error|Machine check`.
+
+**Both options on by default (tp74, g74, `round18-g74-summary.txt`, `round18-scripts/g74.sh`).** `own_run_v41`
+now turns `OWN_TOPK_R` and `OWN_ATT_TRIM` on unless they are set to 0 (the only change from tp73). With the
+default environment: traces of blocks of 16 / 5 / one token byte-identical, 40 answers the same (one-token trace
+with both =0 too); prompt 1's 128 answers the same at 76.00 (the first run after the build: 14.8 MiB of engram
+rows read from disk) / 77.98 tok/s, against tp73 with both set 77.97 / 77.65 and tp73 defaults 76.29 / 76.26
+(alternated); the 34K document read at 274.6 tok/s, 256 answers the same at 68.24; guessing on code 99.62 and
+analysis 112.87 tok/s, both SAME as the plain runs. No fault lines.
+
+**Plain answers ~3 % slower than this morning on the same build (x1, `round18-x1-*`, `round18-scripts/x1.sh`).**
+After the reset, prompt 1 with the pushed commit's build ran 74.64 / 76.31 tok/s (e81 this morning: 78.29-78.30),
+guessing medians 99.6-99.7 (101.8-102.3), checks 19.39 ms (18.89-18.95). The card's compute kernels take the same
+time (r1 vs e83 card-2 profiles: the norm launch 14.63 vs 14.49 us, expert and matrix kernels within 0.5 %); the
+exchange kernels take longer (XchgPull 12.84 vs 11.63 us, XchgP 7.11 vs 5.90), but the exchange bench alone is
+as fast as this morning (`xchg_lat_bench`: one row 12.04 vs 11.99 us, the copy 7.43-7.50 vs 7.41-7.50), so the
+extra time is waiting for other cards. In the boot before the reset every card but 0000:43 had its DMA
+addresses above 4 GiB from 2026-11-09 15:32 on ("Using 46-bit DMA addresses"); this boot had none.
+`tools/bench/iova_wide.cpp` (each card maps 5 GiB of its neighbour's memory) moved five cards there (0000:23
+kept the 32-bit first try): no change (prompt 1 78.23 before / 78.35 after, guessing code 99.38 / 99.48,
+analysis 112.72 / 112.92, answers SAME, the bench the same). Card clocks (2,800 MHz), PCIe links (32 GT/s x16 at
+every root port), kernel, GuC firmware and kernel command line are as before the reset; the CPU governor is
+`performance`. The host's engram row work per step is ~3 % slower (266-269 -> 272-281 us). Not explained; not
+a code change (tp68h and tp73 alternate within 1 %).
+
 ## Reproduce
 
 ```bash
@@ -1252,6 +1435,9 @@ $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv4
 #  -Xsycl-target-backend=intel_gpu_bmg_g31 "-options -ze-intel-enable-auto-large-GRF-mode")
 # (since section 28, OWN_TP=6 prompt blocks of 16 split the attention heads 12,12,12,12,8,8 and run 4-row blocks
 #  by default; OWN_TP_HEADS=0 / OWN_MT_TGR=16:0 turn them off)
+# (since section 29, past 16,384 rows the index of layers 24-36 runs over layer 20's candidate rows only
+#  (OWN_IDX_CAND), the top-512 selects walk by ranges (OWN_TOPK_R) and below 512 compressed rows the attention
+#  runs over the live rows only (OWN_ATT_TRIM), all by default; =0 for the old forms)
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
 # reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
@@ -1288,13 +1474,17 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
    cards' clocks, section 24, even when it runs only for blocks of 5, section 25), token norms inside their neighbours (0.9 ms),
    exchanges folded into the kernels that consume them (an exchange is a launch and two PCIe round trips, its
    fences are free and loading all peers first is slower, section 28), the copy of the engram rows without the queue wait
-   (section 26: the host now waits for layer 0 there). Closed: the card threads' spinning waits (section 25)
+   (section 26: the host now waits for layer 0 there), the norms' double sums spread over two sub-groups per row
+   (11.9 -> 9.0 us alone, bitwise; needs a second sub-group in the fused row launches, section 29). Closed: the
+   card threads' spinning waits (section 25)
    and polling hand-offs (section 26). The
    attention groups stay uneven in checks (evening them costs a pair exchange per layer, section 28). (Done: adaptive guess
    counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
    section 24; the draft's experts, section 25; engram rows asked early and fetched after layer 0, section 26.)
 6. Prompt reading (~293 tok/s at 3K, blocks of 16, section 28): the doubled attention groups are split between
-   card pairs for blocks of >= 16 tokens, with 4-row blocks. Next: long documents (section 28, e82). Closed: the
+   card pairs for blocks of >= 16 tokens, with 4-row blocks. Long documents (section 29): 246.7 -> 263.6 tok/s
+   reading and 56.5 -> 65.2 tok/s answers at 95K tokens. Next: the index work that is left (layers 24-36 over
+   the candidate rows, 1.34 ms per answer step at 69K) split across the cards. Closed: the
    split for checks and the draft (section 28: each pair exchange costs more than it saves at 2-6 tokens);
    cold reads of new documents (`OWN_ENG_AHEAD`, section 27).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.

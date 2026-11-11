@@ -1,0 +1,57 @@
+builds: xchg_lat_bench 0, iova_wide 0 in 6 s
+46-bit lines before: 0
+bench_b exit 0
+p1b1 exit 0
+p1b1: prompt: 36 tokens read on the cards in 0.17s (250.7 tok/s; first step 0.09s incl. kernel build), first token 671
+p1b1: decode: 127 steps after the first, 0.013 s/step, 76.96 tok/s
+p1b1: host io during decode: 1.1 MiB read from disk, 0 major page faults; engram rows 484.9 us per step and card (slowest card 486.7 us; copy + decode launch calls 133.0 us)
+p1b1 SPEED128_SAME
+p1b2 exit 0
+p1b2: prompt: 36 tokens read on the cards in 0.17s (249.8 tok/s; first step 0.09s incl. kernel build), first token 671
+p1b2: decode: 127 steps after the first, 0.013 s/step, 78.23 tok/s
+p1b2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 273.0 us per step and card (slowest card 275.6 us; copy + decode launch calls 197.0 us)
+p1b2 SPEED128_SAME
+code_b exit 0
+code_b: prompt: 82 tokens read on the cards in 0.32s (291.3 tok/s; first step 0.09s incl. kernel build), first token 2581
+code_b: spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 5.14s = 99.38 tok/s; draft 2.31 ms + check 18.02 ms per cycle; SAME AS the plain run
+code_b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 457.0 us per step and card (slowest card 459.7 us; copy + decode launch calls 283.9 us)
+analysis_b exit 0
+analysis_b: prompt: 113 tokens read on the cards in 0.42s (294.6 tok/s; first step 0.09s incl. kernel build), first token 2581
+analysis_b: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.53s = 112.72 tok/s; draft 2.35 ms + check 20.55 ms per cycle; SAME AS the plain run
+analysis_b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 454.9 us per step and card (slowest card 457.2 us; copy + decode launch calls 341.3 us)
+p1b_prof exit 0
+p1b_prof: prompt: 36 tokens read on the cards in 0.20s (207.0 tok/s; first step 0.10s incl. kernel build), first token 671
+p1b_prof: decode: 63 steps after the first, 0.015 s/step, 66.03 tok/s
+p1b_prof: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 411.7 us per step and card (slowest card 585.1 us; copy + decode launch calls 361.4 us)
+iova_wide exit 0
+46-bit lines after: 5
+xe 0000:03:00.0: Using 46-bit DMA addresses
+xe 0000:43:00.0: Using 46-bit DMA addresses
+xe 0000:83:00.0: Using 46-bit DMA addresses
+xe 0000:a3:00.0: Using 46-bit DMA addresses
+xe 0000:e3:00.0: Using 46-bit DMA addresses
+bench_a exit 0
+p1a1 exit 0
+p1a1: prompt: 36 tokens read on the cards in 0.17s (250.9 tok/s; first step 0.10s incl. kernel build), first token 671
+p1a1: decode: 127 steps after the first, 0.013 s/step, 75.84 tok/s
+p1a1: host io during decode: 23.2 MiB read from disk, 17 major page faults; engram rows 572.1 us per step and card (slowest card 577.1 us; copy + decode launch calls 22.9 us)
+p1a1 SPEED128_SAME
+p1a2 exit 0
+p1a2: prompt: 36 tokens read on the cards in 0.17s (249.3 tok/s; first step 0.09s incl. kernel build), first token 671
+p1a2: decode: 127 steps after the first, 0.013 s/step, 78.35 tok/s
+p1a2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 272.2 us per step and card (slowest card 276.3 us; copy + decode launch calls 203.9 us)
+p1a2 SPEED128_SAME
+code_a exit 0
+code_a: prompt: 82 tokens read on the cards in 0.32s (288.6 tok/s; first step 0.09s incl. kernel build), first token 2581
+code_a: spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 5.14s = 99.48 tok/s; draft 2.32 ms + check 17.99 ms per cycle; SAME AS the plain run
+code_a: host io during decode: 94.5 MiB read from disk, 8 major page faults; engram rows 398.4 us per step and card (slowest card 400.5 us; copy + decode launch calls 177.7 us)
+analysis_a exit 0
+analysis_a: prompt: 113 tokens read on the cards in 0.42s (296.3 tok/s; first step 0.09s incl. kernel build), first token 2581
+analysis_a: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.53s = 112.92 tok/s; draft 2.34 ms + check 20.51 ms per cycle; SAME AS the plain run
+analysis_a: host io during decode: 78.2 MiB read from disk, 3 major page faults; engram rows 476.5 us per step and card (slowest card 479.0 us; copy + decode launch calls 197.4 us)
+p1a_prof exit 0
+p1a_prof: prompt: 36 tokens read on the cards in 0.20s (210.4 tok/s; first step 0.10s incl. kernel build), first token 671
+p1a_prof: decode: 63 steps after the first, 0.015 s/step, 66.18 tok/s
+p1a_prof: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 391.8 us per step and card (slowest card 544.0 us; copy + decode launch calls 350.1 us)
+guessing SAME count: 4
+ALLDONE

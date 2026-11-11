@@ -239,6 +239,14 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
     if (const char *e = getenv("OWN_IDX_R")) opt.idx_r = (unsigned)atoi(e);
+    // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
+    // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
+    opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
+    // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
+    // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
+    // round 18 e87 / r1 (=0 for the old forms)
+    opt.topk_r = getenv("OWN_TOPK_R") ? atoi(getenv("OWN_TOPK_R")) != 0 : true;
+    opt.att_trim = getenv("OWN_ATT_TRIM") ? atoi(getenv("OWN_ATT_TRIM")) != 0 : true;
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");
@@ -680,6 +688,11 @@ int main(int argc, char **argv) {
         int n_timed = 0;
         for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
         const auto io0p = host_io();
+        // OWN_GPROF_DECODE=1: the profile counts the answer steps only (the prompt blocks' kernels and the first
+        // answer step are dropped; without it a prompt's kernels are divided over the answer steps)
+        const bool gprof_dec = opt.gprof && getenv("OWN_GPROF_DECODE") && atoi(getenv("OWN_GPROF_DECODE")) > 0;
+        int n_prof = 0;
+        if (gprof_dec) { be.gprof_collect(); be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
         for (int step = 1; step < ndecode; ++step) {
             if (!forced.empty()) {
                 if (step - 1 >= (int)forced.size()) break;
@@ -710,7 +723,8 @@ int main(int argc, char **argv) {
             if (step > 1 || !prompt.empty()) { t_dec += dt; ++n_timed; } // a cold first step carries kernel compilation
             else be.prof_t.clear();
             be.gprof_collect();
-            if (!(step > 1 || !prompt.empty())) { be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
+            if (!(step > 1 || !prompt.empty()) || (gprof_dec && step == 1)) { be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
+            else ++n_prof;
             if (opt.head) {
                 std::fprintf(stderr, "tok %d -> %d (%.3fs)", step, next, dt);
                 if (opt.debug || step <= trace_steps) {
@@ -743,27 +757,28 @@ int main(int argc, char **argv) {
             for (auto &[t, k] : v) std::fprintf(stderr, "  %-14s %8.2f  %5.1f%%\n", k.c_str(), t * 1e3, 100 * t / tot);
             std::fprintf(stderr, "  %-14s %8.2f\n", "total", tot * 1e3);
         }
-        if (opt.gprof && n_timed) {
+        if (opt.gprof && n_prof) {
+            const int n_pr = n_prof; // steps in the profile (== n_timed unless OWN_GPROF_DECODE drops the first)
             std::vector<std::pair<double, std::string>> v;
             double tot = 0;
-            for (auto &[k, t] : be.gprof_t) { v.push_back({t / n_timed, k}); tot += t / n_timed; }
+            for (auto &[k, t] : be.gprof_t) { v.push_back({t / n_pr, k}); tot += t / n_pr; }
             std::sort(v.rbegin(), v.rend());
             std::fprintf(stderr, "GPU-time profile (ms per step; card time between marks, no waits):\n");
             for (auto &[t, k] : v)
                 std::fprintf(stderr, "  %-14s %8.3f  %5.1f%%  (%ld marks/step)\n", k.c_str(), t * 1e3, 100 * t / tot,
-                             be.gprof_n[k] / n_timed);
+                             be.gprof_n[k] / n_pr);
             std::fprintf(stderr, "  %-14s %8.3f   (wall %.3f)\n", "total", tot * 1e3, t_dec / n_timed * 1e3);
             if (opt.kprof) {
                 std::vector<std::pair<double, std::string>> kv;
                 double ktot = 0;
-                for (auto &[k, t] : be.kprof_t) { kv.push_back({t / n_timed, k}); ktot += t / n_timed; }
+                for (auto &[k, t] : be.kprof_t) { kv.push_back({t / n_pr, k}); ktot += t / n_pr; }
                 std::sort(kv.rbegin(), kv.rend());
                 std::fprintf(stderr, "kernel time per type (ms per step, start to end; launches per step):\n");
                 for (auto &[t, k] : kv)
                     std::fprintf(stderr, "  %8.3f  %5.1f%%  %5ld  %8.2f us  %s\n", t * 1e3, 100 * t / tot,
-                                 be.kprof_n[k] / n_timed, t * 1e6 * n_timed / std::max(1L, be.kprof_n[k]), k.c_str());
+                                 be.kprof_n[k] / n_pr, t * 1e6 * n_pr / std::max(1L, be.kprof_n[k]), k.c_str());
                 std::fprintf(stderr, "  kernels %8.3f ms, launches %ld per step; marks total %.3f -> gaps/copies %.3f ms\n",
-                             ktot * 1e3, [&] { long n = 0; for (auto &[k, c] : be.kprof_n) n += c; return n / n_timed; }(),
+                             ktot * 1e3, [&] { long n = 0; for (auto &[k, c] : be.kprof_n) n += c; return n / n_pr; }(),
                              tot * 1e3, (tot - ktot) * 1e3);
             }
         }

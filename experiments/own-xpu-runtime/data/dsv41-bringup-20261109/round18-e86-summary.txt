@@ -1,0 +1,53 @@
+tp72 build exit 0, test_topk_r build exit 0 in 431 s
+test_topk_r exit 0: PASS
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.015 s/step, 64.75 tok/s
+h16: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 576.8 us per step and card (slowest card 580.9 us; copy + decode launch calls 18.7 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.015 s/step, 65.85 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 276.1 us per step and card (slowest card 280.8 us; copy + decode launch calls 209.2 us)
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.015 s/step, 66.03 tok/s
+h1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 266.4 us per step and card (slowest card 269.2 us; copy + decode launch calls 200.3 us)
+h16t exit 0
+h16t TRACE_DIFFERS
+h16t IDS40_DIFFER
+h16t: decode: 39 steps after the first, 0.015 s/step, 65.51 tok/s
+h16t: host io during decode: 4.5 MiB read from disk, 0 major page faults; engram rows 461.0 us per step and card (slowest card 464.5 us; copy + decode launch calls 73.9 us)
+h5t exit 0
+h5t TRACE_DIFFERS
+h5t IDS40_DIFFER
+h5t: decode: 39 steps after the first, 0.015 s/step, 65.43 tok/s
+h5t: host io during decode: 4.8 MiB read from disk, 0 major page faults; engram rows 475.3 us per step and card (slowest card 476.9 us; copy + decode launch calls 70.6 us)
+h1t exit 0
+h1t TRACE_IDENTICAL
+h1t IDS40_SAME
+h1t: decode: 39 steps after the first, 0.015 s/step, 68.02 tok/s
+h1t: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 272.8 us per step and card (slowest card 278.6 us; copy + decode launch calls 206.4 us)
+p1t0 exit 0
+p1t0 SPEED128_DIFFER
+p1t0: decode: 127 steps after the first, 0.013 s/step, 77.33 tok/s
+p1t0: host io during decode: 2.9 MiB read from disk, 1 major page faults; engram rows 355.6 us per step and card (slowest card 358.5 us; copy + decode launch calls 202.8 us)
+p1n1 exit 0
+p1n1 SPEED128_SAME
+p1n1: decode: 127 steps after the first, 0.013 s/step, 74.66 tok/s
+p1n1: host io during decode: 15.3 MiB read from disk, 2 major page faults; engram rows 529.3 us per step and card (slowest card 531.9 us; copy + decode launch calls 77.5 us)
+p1t1 exit 0
+p1t1 SPEED128_DIFFER
+p1t1: decode: 127 steps after the first, 0.013 s/step, 78.00 tok/s
+p1t1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 260.2 us per step and card (slowest card 290.7 us; copy + decode launch calls 229.1 us)
+p1t2 exit 0
+p1t2 SPEED128_DIFFER
+p1t2: decode: 127 steps after the first, 0.013 s/step, 78.27 tok/s
+p1t2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 256.2 us per step and card (slowest card 259.7 us; copy + decode launch calls 224.1 us)
+p1n2 exit 0
+p1n2 SPEED128_SAME
+p1n2: decode: 127 steps after the first, 0.013 s/step, 76.43 tok/s
+p1n2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 271.2 us per step and card (slowest card 274.9 us; copy + decode launch calls 204.8 us)
+STOP_GATE

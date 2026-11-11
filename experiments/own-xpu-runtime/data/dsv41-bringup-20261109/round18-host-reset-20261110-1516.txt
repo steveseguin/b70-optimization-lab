@@ -1,0 +1,77 @@
+# Host reset 2026-11-10 15:16:37 EST (last journal line of boot -1) during campaign e87's long-document runs (tp73);
+# boot 0 started 15:18:56. No GPU fault line in boot -1 after 06:50 (the e72 fault). The firmware's boot error record (BERT):
+BERT: Error records from previous boot:
+[Hardware Error]: event severity: fatal
+[Hardware Error]:  Error 0, type: fatal
+[Hardware Error]:  fru_text: PcieError
+[Hardware Error]:   section_type: PCIe error
+[Hardware Error]:   port_type: 0, PCIe end point
+[Hardware Error]:   version: 0.2
+[Hardware Error]:   command: 0x0000, status: 0x0010
+[Hardware Error]:   device_id: 0000:a7:00.0
+[Hardware Error]:   slot: 0
+[Hardware Error]:   secondary_bus: 0x00
+[Hardware Error]:   vendor_id: 0x8086, device_id: 0x1533
+[Hardware Error]:   class_code: 020000
+[Hardware Error]:   bridge: secondary_status: 0xb788, control: 0x0000
+[Hardware Error]:   aer_cor_status: 0x00000000, aer_cor_mask: 0x00003000
+[Hardware Error]:   aer_uncor_status: 0x00004000, aer_uncor_mask: 0x00000000
+[Hardware Error]:   aer_uncor_severity: 0x004f6031
+[Hardware Error]:   TLP Header: 00000000 00000000 00000000 00000000
+[Hardware Error]:  Error 1, type: fatal
+[Hardware Error]:  fru_text: Perr S0:T002:B05
+[Hardware Error]:   section_type: IA32/X64 processor error
+[Hardware Error]:   Local APIC_ID: 0x0
+[Hardware Error]:   CPUID Info:
+[Hardware Error]:   00000000: 00b00f21 00000000 00100800 00000000
+[Hardware Error]:   00000010: 76fa320b 00000000 178bfbff 00000000
+[Hardware Error]:   00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:   Error Information Structure 0:
+[Hardware Error]:    Error Structure Type: cache error
+[Hardware Error]:    Check Information: 0x000000000602001f
+[Hardware Error]:     Transaction Type: 2, Generic
+[Hardware Error]:     Operation: 0, generic error
+[Hardware Error]:     Level: 0
+[Hardware Error]:     Processor Context Corrupt: true
+[Hardware Error]:     Uncorrected: true
+[Hardware Error]:   Context Information Structure 0:
+[Hardware Error]:    Register Context Type: MSR Registers (Machine Check and other MSRs)
+[Hardware Error]:    Register Array Size: 0x0080
+[Hardware Error]:    MSR Address: 0xc0002051
+mce: [Hardware Error]: Machine check events logged
+[Hardware Error]:   Context Information Structure 1:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0010
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 00000010 00000000 d9cb85c0 00003808
+[Hardware Error]:   Context Information Structure 2:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0040
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 20029b00 000500b0 00000000 00000000
+[Hardware Error]:    00000010: 00000000 00000000 00000000 00000000
+[Hardware Error]:    00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:    00000030: 00000000 00000000 00000000 00000000
+BERT: Total records found: 1
+mce: [Hardware Error]: Machine check events logged
+mce: [Hardware Error]: CPU 0: Machine Check: 0 Bank 5: bea0000001000108
+mce: [Hardware Error]: TSC 0 ADDR 77a05f86e9b9 MISC d0140ff600000000 PPIN 25136dc0f4dc00a SYND 4d000000 SYND1 3a30532072726550 SYND2 3530423a32303054 IPID 500b020029a00 
+mce: [Hardware Error]: PROCESSOR 2:b00f21 TIME 1794341924 SOCKET 0 APIC 0 microcode b00211e
+
+# 0000:a7:00.0 = enp167s0 (I210, the LAN link in use); its root complex and card a3's:
+a7:00.0 Ethernet controller: Intel Corporation I210 Gigabit Network Connection (rev 03)
+/sys/devices/pci0000:a0/0000:a0:03.6/0000:a7:00.0
+/sys/devices/pci0000:a0/0000:a0:01.1/0000:a1:00.0/0000:a2:01.0/0000:a3:00.0
+enp167s0         UP             48:21:0b:7b:3c:b0 <BROADCAST,MULTICAST,UP,LOWER_UP> 
+
+# boot -1, last 10 lines:
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6118] policy: auto-activating connection 'Wired connection 5' (0da2a4d5-7707-3281-85e8-a0b3549796a9)
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6121] device (enxe226665a7c93): Activation: starting connection 'Wired connection 5' (0da2a4d5-7707-3281-85e8-a0b3549796a9)
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6121] device (enxe226665a7c93): state change: disconnected -> prepare (reason 'none', sys-iface-state: 'managed')
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6123] device (enxe226665a7c93): state change: prepare -> config (reason 'none', sys-iface-state: 'managed')
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6126] device (enxe226665a7c93): state change: config -> ip-config (reason 'none', sys-iface-state: 'managed')
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T NetworkManager[1438]: <info>  [1794341796.6127] dhcp4 (enxe226665a7c93): activation: beginning transaction (timeout in 45 seconds)
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T avahi-daemon[1325]: Joining mDNS multicast group on interface enxe226665a7c93.IPv6 with address fe80::d6a5:59f:6768:b59c.
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T avahi-daemon[1325]: New relevant interface enxe226665a7c93.IPv6 for mDNS.
+2026-11-10T15:16:36-05:00 steve-TURIND8-2L2T avahi-daemon[1325]: Registering new address record for fe80::d6a5:59f:6768:b59c on enxe226665a7c93.*.
+2026-11-10T15:16:37-05:00 steve-TURIND8-2L2T tracker-miner-fs-3[354396]: (tracker-extract-3:354396): GLib-GIO-WARNING **: 15:16:37.345: Error creating IO channel for /proc/self/mountinfo: Invalid argument (g-io-error-quark, 13)

@@ -1,0 +1,30 @@
+part 1: random queries and keys (GPU us; full = score all rows + masked select over all rows)
+     len  score all     blocks     select cand score   cand sel   saved us
+   16500      109.9       95.6      238.2       95.9      253.0       -0.7
+    random                             len  16500: 16380 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   17000       35.0       26.8       65.6       31.3       73.4       -4.1
+    random                             len  17000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   24000       41.2       28.4       89.3       30.4       73.6       26.5
+    random                             len  24000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   34000       71.2       40.8      125.2       31.0       72.8       92.6
+    random                             len  34000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   69000      128.4       73.1      267.1       31.8       75.9      287.8
+    random                             len  69000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   95000      163.8      102.7      361.6       32.0       78.8      414.7
+    random                             len  95000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+  130000      218.0      134.8      487.6       32.0       80.1      593.5
+    random                             len 130000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+part 2: crafted scores, select only (TopKSelC on the same array as the masked select)
+    ties (few values)                  len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values)                  len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values)                  len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len  16391:  2231 candidate rows ( 279 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len  40000:  2336 candidate rows ( 292 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len 120001:  2369 candidate rows ( 297 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+PASS

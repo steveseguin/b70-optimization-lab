@@ -21,6 +21,9 @@ int eng_t0 = 0;                   // OWN_ENG_EARLY: the block's first token whos
 bool eng_anchor_asked = false;    // OWN_ENG_EARLY: draft_tp asked for the anchor's rows (position pos)
 unsigned eng_sink[TILES] = {};
 int32_t *cidxm[TILES][8] = {};   // one 512-row list per token per index slot
+int32_t *blm[TILES] = {};        // OWN_IDX_CAND: per token the layer-20 block list (2048 + 64 ints each)
+float *score2m[TILES] = {};      // OWN_IDX_CAND=2: the full scores per token (stride max_seq + 64)
+int32_t *list2m[TILES] = {};     // OWN_IDX_CAND=2: the full select's lists (512 per token)
 uint32_t *egrp[TILES] = {};      // the layer's expert groups (RUGrp layout, mt_eu)
 long mlen[TILES][4][MTX] = {};   // rows of each kv source after token t's publish
 unsigned xoaM = 0, xobM = 0, xactM = 0, xengM = 0, xfcM = 0; // xfcM: the draft's dsp.fc rows (dr_inject)
@@ -155,6 +158,8 @@ void mt_alloc(int c) {
     int32_t *cat = dalloc<int32_t>(c, (size_t)640 * MTX), *widx = dalloc<int32_t>(c, (size_t)128 * MTX);
     act_t *old = md(4 * H);
     uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * MTX);
+    if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * MTX);
+    if (o.idx_cand == 2) { score2m[c] = mf(((size_t)max_seq + 64) * MTX); list2m[c] = dalloc<int32_t>(c, (size_t)512 * MTX); }
     strm[c] = md(4 * H);
     for (int t = 0; t < MTX; ++t) {
         Scratch s = sc[c]; // kv_state, score_state, warm, eng_rows, kvbuf stay the card's own
@@ -664,6 +669,45 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
     }
     gemv_m(c, p + "indexer.proj.weight", b.xn, g.h, b.wv, 32);
     const size_t SS = (size_t)max_seq + 64; // per-token score / candidate stride (mt_alloc)
+    // OWN_IDX_CAND: past layer 20, when every long token has more rows than candidates, only each token's
+    // layer-20 candidate rows are scored and selected (the others are -inf in the masked select)
+    bool ccm = o.idx_cand && L > 20;
+    for (int t = 0; t < M && ccm; ++t)
+        if (lens[t] > 0 && lens[t] <= 2048 * 8) ccm = false;
+    if (ccm) {
+        using KS = ops41sycl::IndexerScoreBCM<Act>;
+        constexpr size_t WG = 128;
+        KS k{};
+        for (int t = 0; t < M; ++t) k.lens[t] = lens[t];
+        k.m = (unsigned)M;
+        k.gpt = (unsigned)(2048 * 8 / WG);
+        k.qs = 4096;
+        k.ws = 32;
+        k.ss = SS;
+        k.bls = 2048 + 64;
+        const act_t *qi = b.qi, *wv = b.wv;
+        const uint16_t *ik = ik_mirror[c][si];
+        const int32_t *bl = blm[c];
+        float *sco = b.score;
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+            hh.parallel_for(sycl::nd_range<1>((size_t)M * k.gpt * WG, WG),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, sco, bl, &lt[0]); });
+        });
+        kev(c, kname<KS>(), e);
+        ops41sycl::TopKSelMC kt{};
+        for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+        kt.m = (unsigned)M;
+        kt.ss = SS;
+        kt.cs = SS;
+        kt.bls = 2048 + 64;
+        kt.rwalk = o.topk_r;
+        constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
+        launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kt, (const float *)b.score, (const uint8_t *)b.cand,
+                         (const int32_t *)blm[c], cidxm[c][slot]);
+        if (o.idx_cand == 2) idx_cand_check_m(L, c, si, M, lens, slot);
+        return;
+    }
     if (o.idx_r == 2 || o.idx_r == 4) {
         long ll[16] = {};
         for (int t = 0; t < M; ++t) ll[t] = lens[t];
@@ -697,7 +741,8 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
         kb.m = (unsigned)M;
         kb.ss = SS;
         kb.cs = SS;
-        launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, (int32_t *)nullptr);
+        kb.bls = 2048 + 64;
+        launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blm[c]); // blm: OWN_IDX_CAND (else null)
     }
     ops41sycl::TopKSelM<false> kt{};
     for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
@@ -705,7 +750,81 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
     kt.mask = L > 20;
     kt.ss = SS;
     kt.cs = SS;
+    kt.rwalk = o.topk_r;
     launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cidxm[c][slot]);
+}
+// OWN_IDX_CAND=2, blocks (one call in 37 per card): each token's candidate-only scores and list against the full score (score2m) and the
+// masked select over all its rows (list2m), bitwise; the block lists against the masks
+long icc_m_n[TILES] = {};
+void idx_cand_check_m(int L, int c, int si, int M, const int *lens, int slot) {
+    if (icc_m_n[c]++ % 37) return; // one block layer in 37 (a prompt's blocks would copy ~9 bytes per row each)
+    const Scratch &b = scm[c][0];
+    const size_t SS = (size_t)max_seq + 64;
+    long lmax = 0;
+    for (int t = 0; t < M; ++t) lmax = std::max<long>(lmax, lens[t]);
+    {
+        using KS = ops41sycl::IndexerScoreBM<Act>;
+        constexpr size_t WG = 128;
+        KS k{};
+        for (int t = 0; t < M; ++t) k.lens[t] = lens[t];
+        k.m = (unsigned)M;
+        k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
+        k.qs = 4096;
+        k.ws = 32;
+        k.ss = SS;
+        const act_t *qi = b.qi, *wv = b.wv;
+        const uint16_t *ik = ik_mirror[c][si];
+        float *sco = score2m[c];
+        qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+            hh.parallel_for(sycl::nd_range<1>((size_t)M * k.gpt * WG, WG),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, sco, &lt[0]); });
+        });
+    }
+    using KR = ops41sycl::TopKSelP<false>;
+    constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+    ops41sycl::TopKSelM<false> kt{};
+    for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+    kt.m = (unsigned)M;
+    kt.mask = true;
+    kt.ss = SS;
+    kt.cs = SS;
+    launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)score2m[c], b.cand, list2m[c]);
+    qs[c].wait();
+    for (int t = 0; t < M; ++t) {
+        if (lens[t] <= 0) continue;
+        const long len = lens[t];
+        std::vector<float> a(len), f(len);
+        std::vector<uint8_t> cm(len);
+        std::vector<int32_t> la(512), lb(512), bl(2049);
+        qs[c].memcpy(a.data(), b.score + t * SS, (size_t)len * 4);
+        qs[c].memcpy(f.data(), score2m[c] + t * SS, (size_t)len * 4);
+        qs[c].memcpy(cm.data(), b.cand + t * SS, (size_t)len);
+        qs[c].memcpy(bl.data(), blm[c] + (size_t)t * (2048 + 64), 2049 * 4);
+        qs[c].memcpy(la.data(), cidxm[c][slot] + (size_t)t * 512, 512 * 4);
+        qs[c].memcpy(lb.data(), list2m[c] + (size_t)t * 512, 512 * 4).wait();
+        long ncand = 0, sbad = 0;
+        for (long j = 0; j < len; ++j)
+            if (cm[j]) { ++ncand; if (std::memcmp(&a[j], &f[j], 4)) ++sbad; }
+        bool lbad = la != lb, bbad = bl[0] < 0 || bl[0] > 2048;
+        if (!bbad) {
+            std::vector<uint8_t> m2(len, 0);
+            for (int i = 0; i < bl[0]; ++i) {
+                if (i && bl[1 + i] <= bl[i]) bbad = true;
+                for (long j = (long)bl[1 + i] * 8; j < std::min<long>((long)bl[1 + i] * 8 + 8, len); ++j) m2[j] = 1;
+            }
+            if (m2 != cm) bbad = true;
+        }
+        const bool bad = sbad || lbad || bbad;
+        const long n = ++icc_calls, nb_ = bad ? ++icc_bad : icc_bad.load();
+        if (bad && nb_ <= 5)
+            fprintf(stderr, "idx_cand check (blocks): MISMATCH card %d layer %d token %d len %ld: %ld of %ld candidate "
+                            "scores differ, list %s, blocks %s\n", c, L, t, len, sbad, ncand, lbad ? "DIFFERS" : "same",
+                    bbad ? "WRONG" : "ok");
+        if ((n & (n - 1)) == 0 || n % 1024 == 0)
+            fprintf(stderr, "idx_cand check: %ld lists, %ld mismatches (last: card %d layer %d len %ld, %ld candidates, block)\n",
+                    n, nb_, c, L, len, ncand);
+    }
 }
 // the block's output-a rows (layout h: oa_run) and their all-gather; wb: the first output-a row the card holds
 void oa_m(int c, const std::string &p, const HeadLay &h, int part, unsigned wb) {
@@ -845,8 +964,15 @@ void tpm_layer(int L, int c) {
     }
     // ---- phase 1: attention; output-a rows for all tokens
     if (mt_small) { // every token at once: the block's key rows wait in the ring's block area until all have read
-        const int nc = cr ? 512 : 0, n_idx = 128 + nc, W = 128 + MTX;
-        launch(c, (size_t)M * std::max(g.hd, n_idx), 64,
+        const int nc = cr ? 512 : 0, W = 128 + MTX;
+        int n_idx = 128 + nc;
+        if (cr && o.att_trim) { // OWN_ATT_TRIM: every token's list below 512 rows: up to the longest, rounded up
+            long lm = 0;
+            for (int t = 0; t < M; ++t) lm = std::max<long>(lm, mlen[c][si][t]);
+            if (lm < 512) n_idx = att_trim_n(lm);
+        }
+        // (items per token: WindowAppendM's max(d, win + nc), whatever slots the attention reads)
+        launch(c, (size_t)M * std::max(g.hd, 128 + nc), 64,
                ops41sycl::WindowAppendM<Act>{128, g.hd, (int)pos, nc, M, MTX, (size_t)g.hd, 512, 640}, ring[c][L],
                (const act_t *)b.kvn, b.idxs_cat, (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr));
         const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
@@ -867,9 +993,14 @@ void tpm_layer(int L, int c) {
             launch_sg(c, (size_t)M * gpt,
                       ops41sycl::ScoreM<ops41sycl::SparseScoreHG<512, 4>>{{n_idx, nh, W, g.hd}, gpt, (unsigned)M, Q, 640, WS},
                       (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
-            launch_sg(c, (size_t)M * nh,
-                      ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<640>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS}, sinks,
-                      ix, b.attn_w);
+            if (n_idx < 640)
+                launch_sg(c, (size_t)M * nh,
+                          ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxPN<640>>{{nh, n_idx}, (unsigned)nh, (unsigned)M, 640, WS},
+                          sinks, ix, b.attn_w);
+            else
+                launch_sg(c, (size_t)M * nh,
+                          ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<640>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS}, sinks,
+                          ix, b.attn_w);
         }
         using SO = ops41sycl::SparseOutJB<512, 1, 16>;
         SO so{n_idx, nh, W};

@@ -247,6 +247,13 @@ public:
         bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
         bool score_b = true;    // dev_index: IndexerScoreB, keys read once, same sums (OWN_SCORE_B=0: IndexerScoreA)
         unsigned idx_r = 0;     // dev_index / tpm_index: IndexerScoreBMR with 2 or 4 rows per item, same sums (OWN_IDX_R)
+        bool att_trim = false;  // tp attention below 512 compressed rows: the window + the first rows rounded up to
+                                // 32 instead of all 640 slots (the others are skipped ones), the same sums (on in own_run_v41; OWN_ATT_TRIM=0 off)
+        bool topk_r = false;    // dev_index / tpm_index: the top-k selects' final walk by ranges (TopKSelR), the same
+                                // lists (on in own_run_v41; OWN_TOPK_R=0 off)
+        int idx_cand = 0;       // dev_index, layers past 20 beyond 16,384 rows: score and select the layer-20 candidate
+                                // rows only (IndexerScoreBC + TopKSelC), the same lists (OWN_IDX_CAND=1; 2 also runs the
+                                // full score + select and compares scores and lists bitwise)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -1040,6 +1047,9 @@ private:
         int32_t *idxs_cat, *widx;
         act_t *old, *eng_rows, *kvbuf;
         uint8_t *cand;                  // dev_index: layer-20 candidate mask of the current step
+        int32_t *blist = nullptr;       // OWN_IDX_CAND: [0] = flagged layer-20 blocks, [1 + i] = the blocks in order
+        float *score2 = nullptr;        // OWN_IDX_CAND=2: the full score for the comparison
+        int32_t *list2 = nullptr;       // OWN_IDX_CAND=2: the full select's list
     };
     Scratch sc[TILES] = {};
 
@@ -1075,6 +1085,8 @@ private:
         s.old = md((size_t)4 * g.h);
         s.eng_rows = md((size_t)24 * g.engram_dim); s.kvbuf = md((size_t)5 * g.h);
         s.cand = dalloc<uint8_t>(t, (size_t)max_seq + 64);
+        if (o.idx_cand) s.blist = dalloc<int32_t>(t, 2048 + 64);
+        if (o.idx_cand == 2) { s.score2 = mf((size_t)max_seq + 64); s.list2 = dalloc<int32_t>(t, 512); }
     }
 
     const WeightTab::E &we(const std::string &n) const { return W->at(n); }
@@ -1756,6 +1768,9 @@ private:
         for (int i = 0; i < 8; ++i) if (idx[i] <= layer) si = i;
         return si;
     }
+    // OWN_ATT_TRIM: the slots attention runs over for a list of len < 512 compressed rows in order (CidxFill):
+    // the 128 window slots + len rounded up to 32, at least 32 (the 640-slot kernels stay: SparseScoreHG)
+    static int att_trim_n(long len) { return 128 + (int)std::max<long>(32, (len + 31) / 32 * 32); }
     // config.json compress_ratios, main layers: 0,0, 2 x18, 1 x20 (37-39 are ratio 1)
     int cr_of(int L) const { return L < 2 ? 0 : (L < 20 ? 2 : 1); }
 
@@ -2049,6 +2064,34 @@ private:
         rope(t, s.qi, 32, 128, cpos(t), yarn, false);
         gemv(t, p + "indexer.proj.weight", s.xn, s.wv);
         const int T_ = (int)((len + 31) / 32 * 32);
+        // OWN_IDX_CAND: past layer 20 with the step's mask over all rows and more rows than candidates, only the
+        // candidate rows are scored and selected (the others are -inf in the masked select)
+        const bool cc = o.idx_cand && o.score_b && L > 20 && !out && dcand_ok[t] && dcand_n[t] == len &&
+                        len > 2048L * 8 && !o.dev_index_check;
+        if (cc) {
+            using KS = ops41sycl::IndexerScoreBC<Act>;
+            constexpr size_t WG = 128;
+            const KS k{{(int)len, T_}};
+            const act_t *qi = s.qi, *wv = s.wv;
+            const uint16_t *ik = ik_mirror[t][si];
+            const int32_t *bl = s.blist;
+            float *sco = s.score;
+            auto e = qs[t].submit([&](sycl::handler &hh) {
+                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+                hh.parallel_for(sycl::nd_range<1>((size_t)2048 * 8, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                    k(it, qi, ik, wv, sco, bl, &lt[0]);
+                });
+            });
+            kev(t, kname<KS>(), e);
+            int32_t *dst = cidx_mirror[t][slot];
+            using KC = ops41sycl::TopKSelC;
+            constexpr size_t SLMC = (size_t)KC::NSG * 256 + 8;
+            launch_local<SLMC>(t, KC::WG, KC{(int)len, 512, 128, 512, 8, o.topk_r}, (const float *)s.score,
+                               (const uint8_t *)s.cand, (const int32_t *)s.blist, dst);
+            tile_cidx_ver[t][slot] = cidx_ver[slot];
+            if (o.idx_cand == 2) idx_cand_check(L, t, si, len, dst);
+            return;
+        }
         if (o.score_b && (o.idx_r == 2 || o.idx_r == 4)) { // the same sums, R rows per item
             idx_score_r(t, o.idx_r, 1, &len, s.qi, s.wv, ik_mirror[t][si], s.score, 0, 0, 0);
         } else if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
@@ -2076,8 +2119,9 @@ private:
         constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
         if (L == 20) { // official select_candidate_blocks (block 8, top 2048, newest pinned)
             const int nb = (int)((len + 7) / 8);
+            // (TopKSelR<true>, the block select by ranges, measured slower: test_topk_r, round 18 e86)
             launch_local<SLM>(t, KB::WG, KB{nb, 2048, 0, 0, 0, 8, (int)len}, (const float *)s.score,
-                              (const uint8_t *)nullptr, (int32_t *)nullptr, s.cand);
+                              (const uint8_t *)nullptr, (int32_t *)s.blist, s.cand); // blist: OWN_IDX_CAND (else null)
             dcand_n[t] = len;
             dcand_ok[t] = true;
         }
@@ -2085,11 +2129,73 @@ private:
         if (L > 20 && !out && !dcand_ok[t] && len > 2048 * 8)
             throw std::runtime_error("candidate mask missing (layer 20 not in range) beyond 16384 rows");
         int32_t *dst = out ? out : cidx_mirror[t][slot];
-        launch_local<SLM>(t, KR::WG, KR{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0},
-                          (const float *)s.score, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst,
-                          (uint8_t *)nullptr);
+        const KR kr{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0};
+        if (o.topk_r)
+            launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)s.score,
+                              mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst, (uint8_t *)nullptr);
+        else
+            launch_local<SLM>(t, KR::WG, kr, (const float *)s.score, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr,
+                              dst, (uint8_t *)nullptr);
         if (!out) tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
         if (o.dev_index_check) dev_index_check(L, t, len, mask, dst);
+    }
+    // OWN_IDX_CAND=2: the candidate-only score and list against the full score (into score2) and the masked
+    // select over all rows (into list2), bitwise: the candidate rows' scores and the 512 entries
+    std::atomic<long> icc_calls{0}, icc_bad{0};
+    void idx_cand_check(int L, int t, int si, long len, const int32_t *dst) {
+        auto &s = sc[t];
+        const int T_ = (int)((len + 31) / 32 * 32);
+        {
+            using KS = ops41sycl::IndexerScoreB<Act>;
+            constexpr size_t WG = 128;
+            const size_t n = ((size_t)T_ + WG - 1) / WG * WG;
+            const KS k{(int)len, T_};
+            const act_t *qi = s.qi, *wv = s.wv;
+            const uint16_t *ik = ik_mirror[t][si];
+            float *sco = s.score2;
+            qs[t].submit([&](sycl::handler &hh) {
+                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+                hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                    k(it, qi, ik, wv, sco, &lt[0]);
+                });
+            });
+        }
+        using KR = ops41sycl::TopKSelP<false>;
+        constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+        launch_local<SLM>(t, KR::WG, KR{(int)len, 512, 128, 512, (int)len, 0, 0}, (const float *)s.score2,
+                          (const uint8_t *)s.cand, s.list2, (uint8_t *)nullptr);
+        std::vector<float> a(len), b(len);
+        std::vector<uint8_t> cm(len);
+        std::vector<int32_t> la(512), lb(512), bl(2049);
+        qs[t].memcpy(a.data(), s.score, (size_t)len * 4);
+        qs[t].memcpy(b.data(), s.score2, (size_t)len * 4);
+        qs[t].memcpy(cm.data(), s.cand, (size_t)len);
+        qs[t].memcpy(bl.data(), s.blist, 2049 * 4);
+        qs[t].memcpy(la.data(), dst, 512 * 4);
+        qs[t].memcpy(lb.data(), s.list2, 512 * 4).wait();
+        long ncand = 0, sbad = 0;
+        for (long j = 0; j < len; ++j)
+            if (cm[j]) { ++ncand; if (std::memcmp(&a[j], &b[j], 4)) ++sbad; }
+        long nbl = 0; // the block list must flag exactly the mask's rows
+        bool lbad = la != lb, bbad = bl[0] < 0 || bl[0] > 2048;
+        if (!bbad) {
+            std::vector<uint8_t> m2(len, 0);
+            for (int i = 0; i < bl[0]; ++i) {
+                if (i && bl[1 + i] <= bl[i]) bbad = true;
+                for (long j = (long)bl[1 + i] * 8; j < std::min<long>((long)bl[1 + i] * 8 + 8, len); ++j) m2[j] = 1;
+            }
+            nbl = bl[0];
+            if (m2 != cm) bbad = true;
+        }
+        const bool bad = sbad || lbad || bbad;
+        const long n = ++icc_calls, nb_ = bad ? ++icc_bad : icc_bad.load();
+        if (bad && nb_ <= 5)
+            fprintf(stderr, "idx_cand check: MISMATCH card %d layer %d len %ld pos %ld: %ld of %ld candidate scores differ, "
+                            "list %s, blocks %s (%ld)\n", t, L, len, (long)pos, sbad, ncand, lbad ? "DIFFERS" : "same",
+                    bbad ? "WRONG" : "ok", nbl);
+        if ((n & (n - 1)) == 0 || n % 1024 == 0)
+            fprintf(stderr, "idx_cand check: %ld lists, %ld mismatches (last: card %d layer %d len %ld, %ld candidates)\n",
+                    n, nb_, t, L, len, ncand);
     }
     // OWN_DEV_INDEX_CHECK=1: every dev_index list (and layer-20 mask) against index()'s host selection
     std::vector<uint8_t> chk_cand[TILES][MTX]; // per card and token of the step
@@ -2822,6 +2928,9 @@ private:
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
                        (const int32_t *)cidx_mirror[c][isrc_for(L)]);
                 n_idx += 512;
+                // OWN_ATT_TRIM: below 512 compressed rows the list is rows 0..len-1, then -1: the attention runs
+                // over the window and the first len rounded up to 32 (the slots left out are skipped ones)
+                if (o.att_trim && tlen[c][si] < 512) n_idx = att_trim_n(tlen[c][si]);
             } else {
                 launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 0},
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
@@ -2841,7 +2950,8 @@ private:
                 launch_sg_pf(c, (size_t)(nh / 4) * (n_idx / 32), pfa,
                              ops41sycl::SparseScoreHG<512, 4>{n_idx, nh, 128, g.hd}, (const act_t *)(s.q + qo), kvw,
                              kvc, ix, s.attn_w);
-                launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
+                if (n_idx < 640) launch_sg(c, nh, ops41sycl::SparseSoftmaxPN<640>{nh, n_idx}, sinks, ix, s.attn_w);
+                else launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
             }
             if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;

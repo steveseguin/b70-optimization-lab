@@ -1,0 +1,49 @@
+part 1: random queries and keys (GPU us; full = score all rows + masked select over all rows)
+     len  score all     blocks     select cand score   cand sel ranges sel   saved us
+    random                             len  16500: 16380 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   16500       52.6       45.8      114.4       46.9      127.0       76.8       43.4
+    random, select by ranges           len  16500: 16380 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len  17000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   17000       47.5       39.9       97.4       41.2      105.1       63.6       40.2
+    random, select by ranges           len  17000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len  24000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   24000       41.7       28.4       89.3       31.8       73.5       43.9       55.3
+    random, select by ranges           len  24000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len  34000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   34000       71.2       40.8      126.0       32.9       73.6       44.1      120.1
+    random, select by ranges           len  34000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len  69000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   69000      130.2       73.1      266.9       32.7       75.8       46.8      317.5
+    random, select by ranges           len  69000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len  95000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+   95000      165.4      102.6      361.8       32.7       78.9       48.9      445.6
+    random, select by ranges           len  95000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    random                             len 130000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+  130000      219.6      134.7      488.6       32.8       80.2       50.7      624.7
+    random, select by ranges           len 130000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+part 2: crafted scores, select only (TopKSelC on the same array as the masked select)
+    ties (few values)                  len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values), by ranges       len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values)                  len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values), by ranges       len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values)                  len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    ties (few values), by ranges       len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only, by ranges            len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only, by ranges            len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only                       len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    +0 / -0 only, by ranges            len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len  16391:  2231 candidate rows ( 279 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback), by ranges  len  16391:  2231 candidate rows ( 279 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len  40000:  2336 candidate rows ( 292 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback), by ranges  len  40000:  2336 candidate rows ( 292 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback)             len 120001:  2369 candidate rows ( 297 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    mostly -inf (fallback), by ranges  len 120001:  2369 candidate rows ( 297 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal, by ranges            len  16391: 16383 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal, by ranges            len  40000: 16384 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal                       len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+    plain normal, by ranges            len 120001: 16377 candidate rows (2048 blocks), 0 scores differ, 0 list entries differ (0 empty), blocks ok -> SAME
+PASS

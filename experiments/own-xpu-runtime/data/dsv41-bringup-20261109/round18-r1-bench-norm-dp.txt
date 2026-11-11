@@ -1,0 +1,10 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+form                                        median us     min us
+A RmsNormPS<5120,4> (engine)                    11.88       8.33 
+B one sub-group, S = 1                          14.48      10.10 bitwise = A
+C loads first, S = 4                            19.38      13.44 bitwise = A
+D sub-group 16, 2 chains / lane                 15.00      10.52 bitwise = A
+H two sub-groups of 16 + local memory            8.96       6.25 bitwise = A
+F float accumulator (inexact)                    5.42       3.65 
+E empty launch                                   0.62       0.42 
+PASS

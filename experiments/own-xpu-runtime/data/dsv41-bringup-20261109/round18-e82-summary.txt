@@ -1,0 +1,162 @@
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.015 s/step, 64.91 tok/s
+h16: host io during decode: 4.5 MiB read from disk, 1 major page faults; engram rows 512.2 us per step and card (slowest card 515.5 us; copy + decode launch calls 43.5 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.015 s/step, 66.02 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 268.6 us per step and card (slowest card 271.0 us; copy + decode launch calls 199.6 us)
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.016 s/step, 63.60 tok/s
+h1: host io during decode: 0.8 MiB read from disk, 0 major page faults; engram rows 999.2 us per step and card (slowest card 1001.3 us; copy + decode launch calls 165.9 us)
+h16i exit 0
+h16i TRACE_IDENTICAL
+h16i IDS40_SAME
+h16i: decode: 39 steps after the first, 0.015 s/step, 66.10 tok/s
+h16i: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 264.6 us per step and card (slowest card 268.2 us; copy + decode launch calls 200.7 us)
+p1 exit 0
+p1 SPEED128_SAME
+p1: decode: 127 steps after the first, 0.013 s/step, 74.55 tok/s
+p1: host io during decode: 12.2 MiB read from disk, 1 major page faults; engram rows 530.5 us per step and card (slowest card 534.0 us; copy + decode launch calls 74.0 us)
+IR=4
+x19k_plain exit 0
+x19k_plain: tile 0 card 0000:03:00.0: 4.27 GiB free after load
+x19k_plain: tile 1 card 0000:23:00.0: 4.10 GiB free after load
+x19k_plain: tile 2 card 0000:43:00.0: 3.74 GiB free after load
+x19k_plain: tile 3 card 0000:83:00.0: 4.10 GiB free after load
+x19k_plain: tile 4 card 0000:a3:00.0: 4.10 GiB free after load
+x19k_plain: tile 5 card 0000:e3:00.0: 3.91 GiB free after load
+x19k_plain: prompt: 18692 tokens read on the cards in 66.93s (279.5 tok/s; first step 0.12s incl. kernel build), first token 2581
+x19k_plain: decode: 255 steps after the first, 0.015 s/step, 67.79 tok/s
+x19k_plain: host io during decode: 31.3 MiB read from disk, 1 major page faults; engram rows 573.9 us per step and card (slowest card 577.5 us; copy + decode launch calls 55.5 us)
+x19k_idx exit 0
+x19k_idx: tile 0 card 0000:03:00.0: 4.27 GiB free after load
+x19k_idx: tile 1 card 0000:23:00.0: 4.10 GiB free after load
+x19k_idx: tile 2 card 0000:43:00.0: 3.74 GiB free after load
+x19k_idx: tile 3 card 0000:83:00.0: 4.10 GiB free after load
+x19k_idx: tile 4 card 0000:a3:00.0: 4.10 GiB free after load
+x19k_idx: tile 5 card 0000:e3:00.0: 3.91 GiB free after load
+x19k_idx: prompt: 18692 tokens read on the cards in 66.75s (280.2 tok/s; first step 0.10s incl. kernel build), first token 2581
+x19k_idx: decode: 255 steps after the first, 0.015 s/step, 68.21 tok/s
+x19k_idx: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 353.1 us per step and card (slowest card 354.8 us; copy + decode launch calls 218.8 us)
+x19k_idx ANSWER256_SAME_AS_x19k_plain
+x19k_spec exit 0
+x19k_spec: tile 0 card 0000:03:00.0: 2.95 GiB free after load
+x19k_spec: tile 1 card 0000:23:00.0: 2.78 GiB free after load
+x19k_spec: tile 2 card 0000:43:00.0: 2.39 GiB free after load
+x19k_spec: tile 3 card 0000:83:00.0: 2.78 GiB free after load
+x19k_spec: tile 4 card 0000:a3:00.0: 2.78 GiB free after load
+x19k_spec: tile 5 card 0000:e3:00.0: 2.56 GiB free after load
+x19k_spec: prompt: 18692 tokens read on the cards in 67.29s (278.0 tok/s; first step 0.10s incl. kernel build), first token 2581
+x19k_spec: spec decode: 255 tokens in 123 cycles (2.07 per cycle; 133 of 185 guesses kept, 71.9 %) in 2.84s = 89.76 tok/s; draft 2.31 ms + check 20.78 ms per cycle; SAME AS the plain run
+x19k_spec: host io during decode: 7.9 MiB read from disk, 0 major page faults; engram rows 1018.5 us per step and card (slowest card 1022.2 us; copy + decode launch calls 223.9 us)
+x34k_plain exit 0
+x34k_plain: tile 0 card 0000:03:00.0: 4.22 GiB free after load
+x34k_plain: tile 1 card 0000:23:00.0: 4.05 GiB free after load
+x34k_plain: tile 2 card 0000:43:00.0: 3.69 GiB free after load
+x34k_plain: tile 3 card 0000:83:00.0: 4.05 GiB free after load
+x34k_plain: tile 4 card 0000:a3:00.0: 4.05 GiB free after load
+x34k_plain: tile 5 card 0000:e3:00.0: 3.86 GiB free after load
+x34k_plain: prompt: 33815 tokens read on the cards in 124.49s (271.7 tok/s; first step 0.10s incl. kernel build), first token 2581
+x34k_plain: decode: 255 steps after the first, 0.015 s/step, 65.30 tok/s
+x34k_plain: host io during decode: 25.2 MiB read from disk, 0 major page faults; engram rows 567.6 us per step and card (slowest card 570.1 us; copy + decode launch calls 76.9 us)
+x34k_idx exit 0
+x34k_idx: tile 0 card 0000:03:00.0: 4.22 GiB free after load
+x34k_idx: tile 1 card 0000:23:00.0: 4.05 GiB free after load
+x34k_idx: tile 2 card 0000:43:00.0: 3.69 GiB free after load
+x34k_idx: tile 3 card 0000:83:00.0: 4.05 GiB free after load
+x34k_idx: tile 4 card 0000:a3:00.0: 4.05 GiB free after load
+x34k_idx: tile 5 card 0000:e3:00.0: 3.86 GiB free after load
+x34k_idx: prompt: 33815 tokens read on the cards in 123.58s (273.8 tok/s; first step 0.13s incl. kernel build), first token 2581
+x34k_idx: decode: 255 steps after the first, 0.015 s/step, 66.24 tok/s
+x34k_idx: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 281.5 us per step and card (slowest card 282.9 us; copy + decode launch calls 222.9 us)
+x34k_idx ANSWER256_SAME_AS_x34k_plain
+x34k_spec exit 0
+x34k_spec: tile 0 card 0000:03:00.0: 2.90 GiB free after load
+x34k_spec: tile 1 card 0000:23:00.0: 2.73 GiB free after load
+x34k_spec: tile 2 card 0000:43:00.0: 2.34 GiB free after load
+x34k_spec: tile 3 card 0000:83:00.0: 2.73 GiB free after load
+x34k_spec: tile 4 card 0000:a3:00.0: 2.73 GiB free after load
+x34k_spec: tile 5 card 0000:e3:00.0: 2.51 GiB free after load
+x34k_spec: prompt: 33815 tokens read on the cards in 125.15s (270.3 tok/s; first step 0.10s incl. kernel build), first token 2581
+x34k_spec: spec decode: 255 tokens in 115 cycles (2.22 per cycle; 140 of 190 guesses kept, 73.7 %) in 2.78s = 91.59 tok/s; draft 2.31 ms + check 21.90 ms per cycle; SAME AS the plain run
+x34k_spec: host io during decode: 6.5 MiB read from disk, 1 major page faults; engram rows 963.3 us per step and card (slowest card 964.9 us; copy + decode launch calls 241.0 us)
+x69k_plain exit 0
+x69k_plain: tile 0 card 0000:03:00.0: 4.10 GiB free after load
+x69k_plain: tile 1 card 0000:23:00.0: 3.93 GiB free after load
+x69k_plain: tile 2 card 0000:43:00.0: 3.57 GiB free after load
+x69k_plain: tile 3 card 0000:83:00.0: 3.93 GiB free after load
+x69k_plain: tile 4 card 0000:a3:00.0: 3.93 GiB free after load
+x69k_plain: tile 5 card 0000:e3:00.0: 3.74 GiB free after load
+x69k_plain: prompt: 68506 tokens read on the cards in 266.13s (257.5 tok/s; first step 0.10s incl. kernel build), first token 2581
+x69k_plain: decode: 255 steps after the first, 0.017 s/step, 60.42 tok/s
+x69k_plain: host io during decode: 23.6 MiB read from disk, 0 major page faults; engram rows 546.8 us per step and card (slowest card 548.5 us; copy + decode launch calls 70.7 us)
+x69k_idx exit 0
+x69k_idx: tile 0 card 0000:03:00.0: 4.10 GiB free after load
+x69k_idx: tile 1 card 0000:23:00.0: 3.93 GiB free after load
+x69k_idx: tile 2 card 0000:43:00.0: 3.57 GiB free after load
+x69k_idx: tile 3 card 0000:83:00.0: 3.93 GiB free after load
+x69k_idx: tile 4 card 0000:a3:00.0: 3.93 GiB free after load
+x69k_idx: tile 5 card 0000:e3:00.0: 3.74 GiB free after load
+x69k_idx: prompt: 68506 tokens read on the cards in 261.88s (261.7 tok/s; first step 0.12s incl. kernel build), first token 2581
+x69k_idx: decode: 255 steps after the first, 0.017 s/step, 59.43 tok/s
+x69k_idx: host io during decode: 25.4 MiB read from disk, 1 major page faults; engram rows 588.3 us per step and card (slowest card 599.8 us; copy + decode launch calls 57.0 us)
+x69k_idx ANSWER256_SAME_AS_x69k_plain
+x69k_spec exit 0
+x69k_spec: tile 0 card 0000:03:00.0: 2.78 GiB free after load
+x69k_spec: tile 1 card 0000:23:00.0: 2.61 GiB free after load
+x69k_spec: tile 2 card 0000:43:00.0: 2.21 GiB free after load
+x69k_spec: tile 3 card 0000:83:00.0: 2.61 GiB free after load
+x69k_spec: tile 4 card 0000:a3:00.0: 2.61 GiB free after load
+x69k_spec: tile 5 card 0000:e3:00.0: 2.39 GiB free after load
+x69k_spec: prompt: 68506 tokens read on the cards in 267.40s (256.2 tok/s; first step 0.09s incl. kernel build), first token 2581
+x69k_spec: spec decode: 255 tokens in 125 cycles (2.04 per cycle; 130 of 184 guesses kept, 70.7 %) in 3.14s = 81.32 tok/s; draft 2.30 ms + check 22.78 ms per cycle; SAME AS the plain run
+x69k_spec: host io during decode: 38.9 MiB read from disk, 3 major page faults; engram rows 461.0 us per step and card (slowest card 464.0 us; copy + decode launch calls 199.0 us)
+x95k_plain exit 0
+x95k_plain: tile 0 card 0000:03:00.0: 4.01 GiB free after load
+x95k_plain: tile 1 card 0000:23:00.0: 3.83 GiB free after load
+x95k_plain: tile 2 card 0000:43:00.0: 3.47 GiB free after load
+x95k_plain: tile 3 card 0000:83:00.0: 3.83 GiB free after load
+x95k_plain: tile 4 card 0000:a3:00.0: 3.83 GiB free after load
+x95k_plain: tile 5 card 0000:e3:00.0: 3.65 GiB free after load
+x95k_plain: prompt: 95497 tokens read on the cards in 386.91s (246.8 tok/s; first step 0.10s incl. kernel build), first token 2581
+x95k_plain: decode: 255 steps after the first, 0.018 s/step, 56.60 tok/s
+x95k_plain: host io during decode: 35.3 MiB read from disk, 1 major page faults; engram rows 585.4 us per step and card (slowest card 595.2 us; copy + decode launch calls 29.4 us)
+x95k_idx exit 0
+x95k_idx: tile 0 card 0000:03:00.0: 4.01 GiB free after load
+x95k_idx: tile 1 card 0000:23:00.0: 3.83 GiB free after load
+x95k_idx: tile 2 card 0000:43:00.0: 3.47 GiB free after load
+x95k_idx: tile 3 card 0000:83:00.0: 3.83 GiB free after load
+x95k_idx: tile 4 card 0000:a3:00.0: 3.83 GiB free after load
+x95k_idx: tile 5 card 0000:e3:00.0: 3.65 GiB free after load
+x95k_idx: prompt: 95497 tokens read on the cards in 377.91s (252.7 tok/s; first step 0.10s incl. kernel build), first token 2581
+x95k_idx: decode: 255 steps after the first, 0.018 s/step, 56.64 tok/s
+x95k_idx: host io during decode: 35.1 MiB read from disk, 1 major page faults; engram rows 582.8 us per step and card (slowest card 584.9 us; copy + decode launch calls 27.2 us)
+x95k_idx ANSWER256_SAME_AS_x95k_plain
+x19k_one exit 0
+x19k_one: tile 0 card 0000:03:00.0: 4.27 GiB free after load
+x19k_one: tile 1 card 0000:23:00.0: 4.10 GiB free after load
+x19k_one: tile 2 card 0000:43:00.0: 3.74 GiB free after load
+x19k_one: tile 3 card 0000:83:00.0: 4.10 GiB free after load
+x19k_one: tile 4 card 0000:a3:00.0: 4.10 GiB free after load
+x19k_one: tile 5 card 0000:e3:00.0: 3.91 GiB free after load
+x19k_one: prompt: 18692 tokens read on the cards in 266.32s (70.2 tok/s; first step 0.05s incl. kernel build), first token 2581
+x19k_one: decode: 15 steps after the first, 0.015 s/step, 68.69 tok/s
+x19k_one: host io during decode: 0.7 MiB read from disk, 0 major page faults; engram rows 378.7 us per step and card (slowest card 382.5 us; copy + decode launch calls 150.6 us)
+x19k_one ANSWER16_SAME_AS_x19k_plain
+x69k_prof2 exit 0
+x69k_prof2: tile 0 card 0000:03:00.0: 4.10 GiB free after load
+x69k_prof2: tile 1 card 0000:23:00.0: 3.93 GiB free after load
+x69k_prof2: tile 2 card 0000:43:00.0: 3.57 GiB free after load
+x69k_prof2: tile 3 card 0000:83:00.0: 3.93 GiB free after load
+x69k_prof2: tile 4 card 0000:a3:00.0: 3.93 GiB free after load
+x69k_prof2: tile 5 card 0000:e3:00.0: 3.74 GiB free after load
+x69k_prof2: prompt: 68506 tokens read on the cards in 299.64s (228.7 tok/s; first step 0.10s incl. kernel build), first token 2581
+x69k_prof2: decode: 31 steps after the first, 0.019 s/step, 53.22 tok/s
+x69k_prof2: host io during decode: 4.6 MiB read from disk, 0 major page faults; engram rows 684.0 us per step and card (slowest card 795.5 us; copy + decode launch calls 238.5 us)
+x69k_prof2 ANSWER32_SAME_AS_x69k_plain
+ALLDONE
