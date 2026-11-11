@@ -1,0 +1,194 @@
+case,group,fitted,per_step,measured_us,predicted_us,error_pct,bound,issue_us,fp64_us,latency_us,memory_us,port_us,floor_us,waves,threads,source
+eng o_a Q8_0 2048x4096,engine dense,1,27,18.060,18.598,3.0,memory,8.866,0.000,6.261,17.950,5.994,18.596,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng o_b Q8_0 864x8192,engine dense,1,27,16.140,15.834,-1.9,memory,7.171,0.000,10.606,15.150,5.053,15.796,1,864,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng shared down Q8_0 864x2304,engine dense,1,27,6.300,5.038,-20.0,memory,2.321,0.000,3.837,4.271,1.430,4.917,1,864,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng o_a Q6_K,engine dense,1,13,19.560,15.978,-18.3,issue,14.689,0.000,8.386,13.860,5.846,14.507,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng o_b Q6_K,engine dense,1,13,15.040,20.948,39.3,latency,12.061,0.000,20.286,11.705,4.929,12.351,1,864,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng output head Q6_K 21552x5120,engine dense,1,1,158.970,209.726,31.9,issue,190.949,0.000,140.776,182.705,76.874,191.626,11,21552,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng engram_kv Q6_K 4272x6144,engine dense,1,2,45.910,52.252,13.8,latency,45.115,0.000,45.862,43.374,18.282,45.676,3,4272,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng shared down Q5_K,engine dense,1,13,6.310,6.960,10.3,latency,3.913,0.000,6.310,2.760,1.368,3.406,1,864,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng router / compressor rows (halves),engine dense,1,47,9.220,8.968,-2.7,memory,1.867,0.000,4.405,8.320,2.219,8.967,1,400,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng publish: indexer k,engine dense,1,2,2.910,1.460,-49.8,latency,0.303,0.000,0.814,0.264,0.224,0.910,1,128,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng q_a + kv Q8_0 1792x5120,engine dense,1,24,19.680,21.414,8.8,memory,19.044,0.000,14.006,19.642,13.115,20.289,1,1792,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng q_a + kv Q6_K,engine dense,1,13,17.460,32.605,86.7,issue,31.651,0.000,25.410,15.190,12.792,15.836,1,1792,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng q_b Q8_0 8192x1280 + mix finish,engine fused,1,27,23.410,26.415,12.8,memory,13.768,0.357,11.484,22.443,7.575,26.399,5,8193,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng q_b Q6_K + mix finish,engine fused,1,13,21.600,25.067,16.1,issue,20.788,0.357,13.172,17.426,7.318,21.382,5,8193,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng q_a+kv Q8_0 + attn dots (L0/1/14),engine fused,1,3,23.660,24.263,2.5,memory,13.177,3.100,7.046,23.611,7.132,24.257,1,1992,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng norm + mix dots @wg64 (ff),engine fused,1,77,8.250,7.042,-14.6,latency,4.666,3.100,6.362,4.170,0.595,4.816,1,204,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ2SP<20u,engine experts,1,15,51.140,48.847,-4.5,issue,46.687,0.000,42.003,15.291,35.003,15.937,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ2XXSP<20u,engine experts,1,15,34.840,36.225,4.0,port,31.082,0.000,14.892,13.075,34.601,13.721,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ1SP<20u,engine experts,1,10,52.080,45.179,-13.3,issue,44.222,0.000,34.357,9.348,19.318,9.994,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ2SP<9u,engine experts,1,15,27.990,27.318,-2.4,issue,26.618,0.000,15.663,7.857,17.889,8.503,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ3XXSP<9u,engine experts,1,15,25.220,25.732,2.0,issue,24.856,0.000,18.972,9.348,18.049,9.994,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ2XSP<9u,engine experts,1,6,25.110,26.228,4.5,issue,25.517,0.000,14.242,7.011,17.745,7.657,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng experts RoutedIQ2XXSP<9u,engine experts,1,3,20.600,19.532,-5.2,port,17.626,0.000,8.854,6.688,17.684,7.335,1,2048,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+"eng SparseScoreHG<512,4>",engine attention,1,38,8.460,7.914,-6.5,latency,6.469,0.000,7.018,0.443,0.185,1.089,1,24,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng SparseSoftmaxPN<640>,engine attention,1,38,5.790,5.076,-12.3,latency,2.371,0.000,4.429,0.060,0.023,0.707,1,16,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+"eng SparseOutJC<512,16,128>",engine attention,1,40,5.610,7.900,40.8,latency,5.757,0.000,7.184,0.423,3.997,1.069,1,256,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng EngramGateP (3 double chains),engine serial,1,2,116.070,105.041,-9.5,latency,28.422,16.916,104.395,0.524,0.462,1.170,1,4,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng HcPostPreP,engine small,1,78,1.240,1.092,-11.9,latency,0.122,0.000,0.427,0.403,0.022,1.049,1,160,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng WindowAppendP,engine small,1,40,2.140,1.243,-41.9,latency,0.172,0.000,0.597,0.010,0.003,0.656,1,16,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng SwigluBothS,engine small,1,40,1.100,1.250,13.6,latency,0.209,0.000,0.604,0.060,0.009,0.707,1,84,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng MoeCombineA,engine small,1,40,1.480,1.533,3.6,latency,0.094,0.000,0.887,0.060,0.004,0.707,1,27,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng RowsP<RopeRows>,engine small,1,40,0.920,0.908,-1.3,latency,0.045,0.000,0.262,0.004,0.003,0.650,1,1,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng router + finish + shared Q8_0 (two-stage pick),engine fused,0,27,12.830,12.175,-5.1,latency,4.379,0.357,11.484,8.421,2.825,9.067,1,785,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+eng norms 1280 + 512 @wg64,engine fused,0,40,4.100,6.812,66.2,latency,4.925,2.909,6.104,0.014,0.241,0.660,1,6,data/dsv41-bringup-20261109/round18-g82-pf_new-decode-profile-card2.txt
+n5 B norm 5120 chain,bench serial,1,,5.520,8.914,61.5,latency,7.127,4.867,8.069,0.010,0.555,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 F norm 5120 fast bracket,bench serial,1,,5.620,5.742,2.2,latency,3.397,0.920,5.088,0.010,0.555,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 H norm 1280 chain,bench serial,1,,3.540,3.574,1.0,latency,2.368,1.537,2.894,0.003,0.278,0.649,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 I norm 1280 fast bracket,bench serial,1,,2.810,3.175,13.0,latency,1.614,0.661,2.526,0.003,0.278,0.649,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 E1 fast norm V1 alone,bench serial,1,,5.620,5.342,-5.0,latency,3.390,0.920,4.679,0.010,0.555,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+"n5 E2 fast norm, no fallback",bench serial,1,,4.690,5.240,11.7,latency,3.179,0.769,4.584,0.010,0.573,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+"n5 E3 fast sum, no check",bench serial,1,,4.690,5.240,11.7,latency,3.179,0.769,4.584,0.010,0.573,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+"n5 E0 fast norm, two roots",bench serial,1,,11.560,11.084,-4.1,latency,3.812,1.166,10.438,0.010,0.555,0.656,1,4,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 C mix dots alone @wg512,bench fp64 rows,1,,9.690,9.633,-0.6,issue,8.972,5.961,4.869,0.517,1.423,1.164,1,200,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 N mix dots alone @wg128,bench fp64 rows,1,,5.730,5.759,0.5,latency,4.666,3.100,4.869,0.517,0.578,1.164,1,200,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 O mix dots alone @wg64,bench fp64 rows,1,,5.730,5.759,0.5,latency,4.666,3.100,4.869,0.517,0.578,1.164,1,200,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 A norm(chain) + mix dots @wg512,bench fused,1,,9.900,10.104,2.1,issue,9.247,6.148,8.069,0.527,1.466,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 G norm(fast) + mix dots @wg512,bench fused,1,,9.900,9.764,-1.4,issue,9.103,5.996,5.088,0.527,1.466,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 J norm(chain) + mix dots @wg128,bench fused,1,,9.060,8.914,-1.6,latency,7.127,4.867,8.069,0.527,0.595,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 L norm(fast) + mix dots @wg128,bench fused,1,,6.040,5.909,-2.2,latency,4.666,3.100,5.088,0.527,0.595,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 K norm(chain) + mix dots @wg64,bench fused,1,,9.270,8.914,-3.8,latency,7.127,4.867,8.069,0.527,0.595,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+n5 M norm(fast) + mix dots @wg64,bench fused,1,,6.040,5.909,-2.2,latency,4.666,3.100,5.088,0.527,0.595,1.174,1,204,data/dsv41-bringup-20261109/round18-n5-norm-ff-bench.txt
+rt5 C mix finish alone (1 sub-group),bench serial,1,,6.670,12.130,81.9,latency,4.379,0.357,11.484,0.003,0.058,0.649,1,1,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rt5 D shared gate+up rows alone,bench dense warm,1,,6.560,8.813,34.3,issue,8.139,0.000,5.352,1.045,5.617,1.691,1,768,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rt5 H router scores only,bench serial,1,,0.940,1.918,104.1,latency,0.430,0.000,1.272,0.003,0.067,0.649,1,16,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rt5 B RouteP alone (two=False),bench branchy,0,,21.350,10.461,-51.0,latency,7.423,0.000,9.759,0.003,0.468,0.649,1,16,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rt5 K RouteP alone (two=True),bench branchy,0,,9.170,10.461,14.1,latency,7.423,0.000,9.759,0.003,0.468,0.649,1,16,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rt5 I RouteQ alone,bench branchy,0,,8.650,4.284,-50.5,latency,2.977,0.000,3.590,0.003,0.122,0.649,1,16,data/dsv41-bringup-20261109/round18-rt5-route-rows-bench.txt
+rp3 V0 Sets<RouteP>,bench branchy,0,,8.650,9.557,10.5,latency,6.043,0.000,8.894,0.001,0.433,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V1 Sets<PickV<1> >,bench branchy,0,,8.540,4.303,-49.6,latency,3.003,0.000,3.607,0.001,0.122,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V2 Sets<PickV<2> >,bench serial,1,,2.710,2.441,-9.9,latency,1.125,0.000,1.793,0.001,0.090,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V3 Sets<PickV<3> >,bench branchy,0,,8.120,3.697,-54.5,latency,2.224,0.000,3.039,0.001,0.105,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V4 Sets<PickV<4> >,bench branchy,0,,10.110,3.688,-63.5,latency,2.045,0.000,3.036,0.001,0.095,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V5 Sets<PickV<5> >,bench serial,1,,1.040,1.651,58.7,latency,0.474,0.000,1.004,0.001,0.062,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V6 Sets<PickV<6> >,bench branchy,0,,8.540,4.398,-48.5,latency,2.974,0.000,3.717,0.001,0.113,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V7 Sets<Empty>,bench serial,1,,0.520,0.777,49.4,latency,0.029,0.000,0.131,0.001,0.005,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V8 Sets<PickV<8> >,bench branchy,0,,6.670,4.845,-27.4,latency,3.596,0.000,4.107,0.001,0.178,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V9 Sets<PickV<9> >,bench branchy,0,,3.330,3.616,8.6,latency,1.997,0.000,2.965,0.001,0.094,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V10 Sets<PickV<10> >,bench branchy,0,,8.540,4.303,-49.6,latency,3.001,0.000,3.607,0.001,0.136,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V11 Sets<PickV<11> >,bench branchy,0,,4.790,3.955,-17.4,latency,2.477,0.000,3.292,0.001,0.122,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V12 Sets<PickC<72> >,bench branchy,0,,6.040,4.255,-29.6,latency,2.879,0.000,3.573,0.001,0.203,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V13 Sets<PickV<13> >,bench branchy,0,,2.710,3.846,41.9,latency,2.465,0.000,3.178,0.001,0.178,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V14 Sets<PickV<14> >,bench branchy,0,,3.650,3.866,5.9,latency,2.156,0.000,3.215,0.001,0.122,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+rp3 V15 Sets<PickV<15> >,bench branchy,0,,2.810,3.936,40.1,latency,2.475,0.000,3.272,0.001,0.179,0.647,1,16,/home/steve/dsv41-work/rp/r3/out.txt
+"eg2 A engram chains (engine82 code, warm)",bench serial,1,,96.140,105.041,9.3,latency,28.422,16.916,104.395,0.065,0.462,0.711,1,4,/home/steve/dsv41-work/eg/r2/bench_engram_ff.txt
+d3 Q8_0 6144x1280 engine G4 R4,bench dense m16,1,,105.100,79.910,-24.0,issue,74.367,0.000,70.184,17.007,22.663,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D0V0,bench dense m16,1,,101.100,79.910,-21.0,issue,74.367,0.000,70.184,17.007,22.663,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D1V0,bench dense m16,1,,155.200,158.672,2.2,latency,105.755,0.000,153.570,17.007,22.497,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D2V0,bench dense m16,1,,132.000,106.748,-19.1,issue,101.905,0.000,62.046,17.007,22.497,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D0V1,bench dense m16,1,,100.800,79.890,-20.7,issue,74.367,0.000,70.134,17.007,22.663,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D0V2,bench dense m16,1,,97.500,77.535,-20.5,issue,74.231,0.000,61.654,17.007,22.663,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D0V3,bench dense m16,1,,96.700,76.240,-21.2,issue,72.952,0.000,60.600,17.007,22.663,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D2V1,bench dense m16,1,,132.000,106.748,-19.1,issue,101.905,0.000,62.046,17.007,22.497,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D2V2,bench dense m16,1,,131.200,106.786,-18.6,issue,101.918,0.000,64.115,17.007,22.497,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G4R4 D2V3,bench dense m16,1,,134.400,105.613,-21.4,issue,100.762,0.000,62.137,17.007,22.497,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D0V0,bench dense m16,1,,105.400,68.240,-35.3,issue,65.320,0.000,52.127,17.007,37.957,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D1V0,bench dense m16,1,,126.000,94.821,-24.7,latency,81.551,0.000,86.201,17.007,37.874,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D2V0,bench dense m16,1,,113.200,84.441,-25.4,issue,79.646,0.000,40.607,17.007,37.874,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D0V1,bench dense m16,1,,105.700,68.240,-35.4,issue,65.320,0.000,52.130,17.007,37.957,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D0V2,bench dense m16,1,,99.000,70.918,-28.4,issue,66.041,0.000,42.746,17.007,37.957,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D0V3,bench dense m16,1,,105.800,67.497,-36.2,issue,64.939,0.000,47.199,17.007,37.957,19.308,3,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D2V1,bench dense m16,1,,112.700,84.441,-25.1,issue,79.646,0.000,40.607,17.007,37.874,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D2V2,bench dense m16,1,,112.100,84.442,-24.7,issue,79.646,0.000,41.096,17.007,37.874,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 6144x1280 G8R2 D2V3,bench dense m16,1,,112.700,83.776,-25.7,issue,78.980,0.000,40.888,17.007,37.874,21.791,6,6144,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 engine G4,bench dense m16,1,,80.900,94.319,16.6,port,80.619,0.000,36.428,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D0V0,bench dense m16,1,,80.200,94.314,17.6,port,80.603,0.000,34.907,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D1V0,bench dense m16,1,,98.400,125.358,27.4,issue,116.968,0.000,109.708,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D2V0,bench dense m16,1,,89.300,120.109,34.5,issue,116.333,0.000,45.506,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D0V1,bench dense m16,1,,80.700,94.314,16.9,port,80.603,0.000,34.907,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D0V2,bench dense m16,1,,80.000,94.537,18.2,port,81.286,0.000,35.783,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D0V3,bench dense m16,1,,79.400,94.160,18.6,port,80.111,0.000,35.507,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D2V1,bench dense m16,1,,88.900,120.244,35.3,issue,116.476,0.000,45.242,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D2V2,bench dense m16,1,,83.100,121.743,46.5,issue,118.048,0.000,44.526,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G4 D2V3,bench dense m16,1,,86.900,118.921,36.8,issue,115.079,0.000,45.148,20.303,88.307,23.431,4,7168,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D0V0,bench dense m16,1,,70.300,64.243,-8.6,issue,61.687,0.000,51.750,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D1V0,bench dense m16,1,,97.200,111.156,14.4,latency,82.504,0.000,109.098,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D2V0,bench dense m16,1,,85.300,82.447,-3.3,issue,80.937,0.000,45.691,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D0V1,bench dense m16,1,,70.600,64.243,-9.0,issue,61.687,0.000,51.750,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D0V2,bench dense m16,1,,66.600,63.441,-4.7,issue,61.698,0.000,40.706,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D0V3,bench dense m16,1,,66.700,62.688,-6.0,issue,60.877,0.000,42.013,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D2V1,bench dense m16,1,,85.000,82.487,-3.0,issue,80.976,0.000,45.757,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D2V2,bench dense m16,1,,86.200,82.371,-4.4,issue,80.865,0.000,44.377,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 1792x5120 G8R2 D2V3,bench dense m16,1,,88.200,81.988,-7.0,issue,80.476,0.000,45.444,20.303,44.137,21.776,2,1792,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 engine G4,bench dense m16,1,,67.000,71.227,6.3,port,60.161,0.000,27.758,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D0V0,bench dense m16,1,,65.600,71.390,8.8,port,60.781,0.000,28.818,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D1V0,bench dense m16,1,,82.400,95.465,15.9,issue,88.194,0.000,86.866,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D2V0,bench dense m16,1,,74.200,89.976,21.3,issue,87.903,0.000,35.509,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D0V1,bench dense m16,1,,65.500,71.388,9.0,port,60.773,0.000,28.827,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D0V2,bench dense m16,1,,66.100,71.379,8.0,port,60.742,0.000,28.154,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D0V3,bench dense m16,1,,65.000,71.116,9.4,port,59.709,0.000,28.117,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D2V1,bench dense m16,1,,72.500,90.070,24.2,issue,88.003,0.000,34.928,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D2V2,bench dense m16,1,,70.300,91.370,30.0,issue,89.380,0.000,34.549,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G4 D2V3,bench dense m16,1,,73.400,88.996,21.2,issue,86.855,0.000,35.116,16.206,68.104,17.680,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D0V0,bench dense m16,1,,52.700,47.767,-9.4,issue,46.936,0.000,24.977,16.206,34.294,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D1V0,bench dense m16,1,,82.200,109.422,33.1,latency,65.885,0.000,108.715,16.206,34.044,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D2V0,bench dense m16,1,,71.800,66.760,-7.0,issue,64.785,0.000,56.188,16.206,34.044,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D0V1,bench dense m16,1,,53.100,47.795,-10.0,issue,46.967,0.000,24.411,16.206,34.294,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D0V2,bench dense m16,1,,61.600,47.682,-22.6,issue,46.848,0.000,24.989,16.206,34.294,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D0V3,bench dense m16,1,,62.300,47.208,-24.2,issue,46.357,0.000,24.702,16.206,34.294,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D2V1,bench dense m16,1,,66.600,61.616,-7.5,issue,60.936,0.000,34.991,16.206,34.044,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D2V2,bench dense m16,1,,66.400,61.496,-7.4,issue,60.809,0.000,35.753,16.206,34.044,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x8192 G8R2 D2V3,bench dense m16,1,,66.900,61.151,-8.6,issue,60.473,0.000,34.183,16.206,34.044,16.852,1,864,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 engine G4,bench dense m16,1,,26.800,22.179,-17.2,issue,19.500,0.000,9.611,4.568,19.200,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D0V0,bench dense m16,1,,26.600,22.187,-16.6,issue,19.515,0.000,9.380,4.568,19.200,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D1V0,bench dense m16,1,,32.600,29.798,-8.6,issue,27.145,0.000,25.478,4.568,19.177,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D2V0,bench dense m16,1,,29.600,28.461,-3.8,issue,26.908,0.000,11.396,4.568,19.177,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D0V1,bench dense m16,1,,26.600,22.187,-16.6,issue,19.515,0.000,9.380,4.568,19.200,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D0V2,bench dense m16,1,,26.000,22.277,-14.3,issue,19.668,0.000,9.972,4.568,19.200,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D0V3,bench dense m16,1,,26.500,22.080,-16.7,issue,19.324,0.000,9.960,4.568,19.200,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D2V1,bench dense m16,1,,29.400,28.506,-3.0,issue,26.954,0.000,11.422,4.568,19.177,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D2V2,bench dense m16,1,,28.900,28.424,-1.6,issue,26.870,0.000,11.037,4.568,19.177,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4 D2V3,bench dense m16,1,,28.100,28.416,1.1,issue,26.862,0.000,10.911,4.568,19.177,6.042,2,3456,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D0V0,bench dense m16,1,,23.800,18.408,-22.7,issue,17.755,0.000,8.797,4.568,10.208,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D1V0,bench dense m16,1,,29.800,27.059,-9.2,issue,25.466,0.000,23.595,4.568,10.184,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D2V0,bench dense m16,1,,27.100,25.802,-4.8,issue,25.156,0.000,9.610,4.568,10.184,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D0V1,bench dense m16,1,,23.600,18.442,-21.9,issue,17.790,0.000,8.370,4.568,10.208,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D0V2,bench dense m16,1,,23.300,18.412,-21.0,issue,17.759,0.000,8.306,4.568,10.208,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D0V3,bench dense m16,1,,23.600,18.145,-23.1,issue,17.491,0.000,8.076,4.568,10.208,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D2V1,bench dense m16,1,,27.300,25.917,-5.1,issue,25.270,0.000,9.558,4.568,10.184,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D2V2,bench dense m16,1,,26.600,25.844,-2.8,issue,25.198,0.000,9.668,4.568,10.184,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 864x2304 G4R2 D2V3,bench dense m16,1,,26.600,25.488,-4.2,issue,24.842,0.000,9.530,4.568,10.184,5.214,1,1728,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 engine G4,bench dense m16,1,,37.100,32.948,-11.2,port,28.238,0.000,14.146,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D0V0,bench dense m16,1,,36.900,32.940,-10.7,port,28.218,0.000,14.557,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D1V0,bench dense m16,1,,46.700,46.895,0.4,latency,40.578,0.000,43.695,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D2V0,bench dense m16,1,,42.600,42.041,-1.3,issue,40.367,0.000,18.560,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D0V1,bench dense m16,1,,36.900,32.940,-10.7,port,28.218,0.000,14.557,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D0V2,bench dense m16,1,,37.700,33.040,-12.4,port,28.483,0.000,14.760,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D0V3,bench dense m16,1,,37.000,32.851,-11.2,port,27.966,0.000,14.458,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D2V1,bench dense m16,1,,42.800,42.074,-1.7,issue,40.401,0.000,18.543,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D2V2,bench dense m16,1,,40.400,42.595,5.4,issue,40.946,0.000,18.157,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G4 D2V3,bench dense m16,1,,41.500,41.652,0.4,issue,39.959,0.000,18.457,7.257,30.282,8.731,2,3072,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D0V0,bench dense m16,1,,34.400,34.651,0.7,issue,32.799,0.000,30.349,7.257,10.874,7.903,1,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D1V0,bench dense m16,1,,101.800,170.104,67.1,latency,59.803,0.000,168.630,7.257,10.874,8.731,2,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D2V0,bench dense m16,1,,83.900,66.888,-20.3,latency,58.857,0.000,62.850,7.257,10.874,8.731,2,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D0V1,bench dense m16,1,,34.300,34.651,1.0,issue,32.799,0.000,30.349,7.257,10.874,7.903,1,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D0V2,bench dense m16,1,,36.600,33.913,-7.3,issue,32.983,0.000,26.158,7.257,10.874,7.903,1,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D0V3,bench dense m16,1,,32.600,32.870,0.8,issue,31.949,0.000,25.340,7.257,10.874,7.903,1,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D2V1,bench dense m16,1,,80.900,64.811,-19.9,latency,59.007,0.000,59.409,7.257,10.874,8.731,2,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D2V2,bench dense m16,1,,80.600,65.258,-19.0,latency,59.252,0.000,59.986,7.257,10.874,8.731,2,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d3 Q8_0 768x4096 G2R4 D2V3,bench dense m16,1,,80.800,64.536,-20.1,latency,58.306,0.000,59.543,7.257,10.874,8.731,2,1536,data/dsv41-bringup-20261109/round18-d3-dense-m16-decode-variants.txt
+d4 Q6_K 6144x1280 engine G4 R4,bench dense m16,1,,114.800,99.861,-13.0,issue,94.721,0.000,69.172,13.240,21.894,18.023,6,6144,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 6144x1280 G4,bench dense m16,1,,107.000,117.284,9.6,issue,107.265,0.000,46.970,13.240,75.255,22.988,12,24576,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 6144x1280 G8,bench dense m16,1,,109.500,93.580,-14.5,issue,81.551,0.000,47.900,13.240,73.091,22.988,12,12288,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 6144x1280 G4 R2,bench dense m16,1,,116.100,104.506,-10.0,issue,98.776,0.000,79.202,13.240,39.681,18.023,6,12288,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 6144x1280 G8 R2,bench dense m16,1,,107.500,80.868,-24.8,issue,75.524,0.000,58.968,13.240,37.572,18.023,6,6144,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 6144x1280 G2 R4,bench dense m16,1,,131.500,144.319,9.7,issue,138.803,0.000,104.833,13.240,26.057,18.023,6,12288,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 engine G4,bench dense m16,1,,144.500,126.074,-12.8,latency,103.175,0.000,120.375,15.850,87.661,18.979,4,7168,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 G8,bench dense m16,1,,92.800,91.510,-1.4,port,78.635,0.000,58.139,15.850,85.204,18.979,4,3584,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 G4 R2,bench dense m16,1,,89.600,104.169,16.3,issue,98.389,0.000,87.921,15.850,46.255,18.979,4,3584,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 G4 R4,bench dense m16,1,,95.000,106.104,11.7,issue,97.988,0.000,97.639,15.850,27.491,17.324,2,1792,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 G8 R2,bench dense m16,1,,92.700,82.130,-11.4,issue,75.389,0.000,75.381,15.850,44.784,17.324,2,1792,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 1792x5120 G2 R4,bench dense m16,1,,138.200,189.731,37.3,latency,149.524,0.000,184.655,15.850,34.295,18.979,4,3584,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 engine G4,bench dense m16,1,,77.900,87.202,11.9,issue,78.474,0.000,76.944,12.761,67.605,15.890,4,3456,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 G8,bench dense m16,1,,87.000,71.647,-17.6,port,58.500,0.000,63.134,12.761,65.719,14.235,2,1728,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 G4 R2,bench dense m16,1,,75.500,90.032,19.2,latency,76.381,0.000,86.463,12.761,37.169,14.235,2,1728,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 G4 R4,bench dense m16,1,,84.300,92.247,9.4,latency,74.302,0.000,90.509,12.761,21.203,13.407,1,864,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 G8 R2,bench dense m16,1,,80.800,73.238,-9.4,latency,57.124,0.000,71.965,12.761,34.543,13.407,1,864,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 864x8192 G2 R4,bench dense m16,1,,124.600,147.303,18.2,latency,112.837,0.000,144.783,12.761,26.447,14.235,2,1728,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 engine G4,bench dense m16,1,,72.000,50.721,-29.6,latency,35.939,0.000,49.025,5.726,30.061,7.199,2,3072,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 G8,bench dense m16,1,,41.100,32.294,-21.4,port,27.388,0.000,25.211,5.726,29.216,7.199,2,1536,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 G4 R2,bench dense m16,1,,39.700,39.021,-1.7,latency,34.194,0.000,35.832,5.726,15.861,7.199,2,1536,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 G4 R4,bench dense m16,1,,45.900,48.060,4.7,latency,34.264,0.000,47.249,5.726,9.427,6.372,1,768,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 G8 R2,bench dense m16,1,,54.000,30.760,-43.0,latency,25.534,0.000,29.524,5.726,15.023,6.372,1,768,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
+d4 Q6_K 768x4096 G2 R4,bench dense m16,1,,51.600,59.508,15.3,latency,49.898,0.000,56.710,5.726,10.431,7.199,2,1536,data/dsv41-bringup-20261109/round18-d4-dense-m16-q6k-forms.txt
