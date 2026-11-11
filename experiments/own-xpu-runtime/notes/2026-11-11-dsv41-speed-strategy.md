@@ -152,7 +152,17 @@ Host and step structure (from tl85, 2026-11-11):
   28-31; card 5 keeps 48-55, cards 4 / 0 compute 56-59 / 60-63. Expected: heavy card -11 us per layer, light +7.5 us
   (of ~20 us slack): ~0.4 ms per one-token step (~4 %), more in checks; the draft's stages have the same imbalance
   (q_b 52 vs 28 us, o_a 28 vs 16 per stage). Same bits: each row's chain is the same kernel form on any card. Helper
-  (qboff), 2026-11-11: `qb-off-1.patch`, `OWN_QB_OFF` (heads per helper, 0 = off).
+  (qboff), 2026-11-11: `qb-off-1.patch`, `OWN_QB_OFF` (heads per helper, 0 = off). **Done (patch, not run;
+  `/home/steve/dsv41-work/qboff/`)**: the all-card profiles (round19-b1-profiles) correct the gap: the heavy q_b is
+  23.4 / 21.7 us (Q8_0 / Q6_K) against 15.4-15.8 / 14.7-15.1 on the light cards (~7.6 us of the launch is fixed),
+  so q_b is ~7.6 us per layer of the gap and o_a ~7.7 (o_a cannot move: its input exists only on the heavy card).
+  The heavy card keeps its middle 16 - 2k heads (k = 4: card 2 keeps 20-27, cards 1 / 3 compute 16-19 / 28-31;
+  card 5 keeps 52-59, cards 4 / 0 compute 48-51 / 60-63; cards 1 / 4 already hold those rows, cards 3 / 0 get
+  ~103 MB more), the helpers rope with the same kernel and push one way into the heavy card's q (moved into the
+  arena), the heavy card waits inside its existing rope launch (phase 0, before every attention form). Expected
+  k = 4 ~0.30 ms per step (2.5-3 %), k = 3 ~0.23, k = 2 ~0.15, if the pushes land by the time the heavy card ends
+  its own rows (~15 us); the light cards keep only ~2 us slack at k = 4. One-token steps only; checks and draft
+  next if it pays. In tp95 / tg95.
 
 Kernels (only where the budget says a kernel is far from its floor):
 - K1. One reusable proven-exact "fast serial sum" helper (bracket + fallback) for every remaining serial double
