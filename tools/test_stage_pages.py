@@ -1,9 +1,11 @@
 """Static Pages staging preserves public bytes and refuses unsafe inputs."""
 import importlib.util
+import io
 import json
 from pathlib import Path
 import tempfile
 import unittest
+from unittest import mock
 
 SPEC = importlib.util.spec_from_file_location("stage_pages", Path(__file__).with_name("stage-pages.py"))
 stage = importlib.util.module_from_spec(SPEC)
@@ -27,6 +29,49 @@ class PagesStaging(unittest.TestCase):
     def plan(self):
         planner = stage.Planner(self.root, self.tracked)
         return planner, planner.plan()
+
+    def run_cli(self, max_bytes):
+        output = self.root.parent / "output"
+        report = self.root.parent / "pages-report.json"
+        argv = ["stage-pages.py", "--source", str(self.root), "--output", str(output),
+                "--report", str(report), "--max-bytes", str(max_bytes)]
+        with mock.patch.object(stage, "tracked_paths", return_value=self.tracked), \
+                mock.patch.object(stage.sys, "argv", argv), \
+                mock.patch.object(stage.sys, "stdout", io.StringIO()), \
+                mock.patch.object(stage.sys, "stderr", io.StringIO()):
+            result = stage.main()
+        return result, json.loads(report.read_text()), output
+
+    def test_cli_retains_full_inventory_when_payload_exceeds_limit(self):
+        self.put("index.html", '<a href="proof.md">Proof</a>')
+        self.put("proof.md", "[Historical link](missing.md)")
+        _, expected = self.plan()
+        result, report, output = self.run_cli(expected["bytes"] - 1)
+        self.assertEqual(result, 1)
+        self.assertEqual(report["files"], expected["files"])
+        self.assertEqual(report["bytes"], expected["bytes"])
+        self.assertEqual(report["file_count"], expected["file_count"])
+        self.assertEqual(report["warnings"], expected["warnings"])
+        self.assertEqual(report["errors"], [{"source": "<plan>", "url": "",
+                         "reason": "planned payload exceeds --max-bytes"}])
+        self.assertFalse(output.exists())
+
+    def test_cli_retains_inventory_when_required_asset_is_missing(self):
+        self.put("index.html", '<img src="missing.png">')
+        _, expected = self.plan()
+        result, report, output = self.run_cli(expected["bytes"])
+        self.assertEqual(result, 1)
+        self.assertEqual(report, expected)
+        self.assertFalse(output.exists())
+
+    def test_cli_at_payload_limit_still_copies_original_bytes(self):
+        self.put("index.html", "Hello")
+        _, expected = self.plan()
+        result, report, output = self.run_cli(expected["bytes"])
+        self.assertEqual(result, 0)
+        self.assertEqual(report, expected)
+        self.assertEqual((output / "index.html").read_bytes(), (self.root / "index.html").read_bytes())
+        self.assertTrue((output / ".nojekyll").exists())
 
     def test_closure_preserves_assets_and_raw_markdown_but_not_experiment_tree(self):
         self.put("index.html", '<link href="site.css"><a href="models/">Models</a>'
@@ -154,6 +199,19 @@ class PagesStaging(unittest.TestCase):
         _, report = self.plan()
         self.assertEqual(len(report["errors"]), 1)
         self.assertEqual(report["errors"][0]["url"], "data/missing.json")
+
+
+class PagesWorkflow(unittest.TestCase):
+    def test_failure_retention_does_not_bypass_publication_gates(self):
+        workflow = (Path(__file__).resolve().parents[1] / ".github/workflows/pages.yml").read_text()
+        inventory = workflow.split("      - name: Retain the file inventory and historical-link warnings\n", 1)[1]
+        inventory, publish = inventory.split("      - uses: actions/upload-pages-artifact@v3\n", 1)
+        self.assertIn("        if: ${{ !cancelled() }}\n", inventory)
+        self.assertIn("          if-no-files-found: error\n", inventory)
+        self.assertNotIn("if:", publish.split("\n  deploy:", 1)[0])
+        self.assertIn("    needs: build\n", publish)
+        self.assertIn("--max-bytes 900000000\n", workflow)
+        self.assertNotIn("continue-on-error:", workflow)
 
 
 if __name__ == "__main__":
