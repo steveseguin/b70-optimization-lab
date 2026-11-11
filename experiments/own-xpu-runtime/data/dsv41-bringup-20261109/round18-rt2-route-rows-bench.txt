@@ -1,0 +1,15 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+form                                        median us     min us     p10 us     p90 us
+A engine: route + finish + shared rows          23.64      23.23      23.44      64.27
+B route alone (512 items)                       21.46      21.35      21.46      63.23
+C finish alone (one sub-group)                   6.67       6.56       6.67      19.79
+D shared rows alone                              6.77       6.46       6.67      14.17
+E A without the finish                          22.92      22.50      22.81      64.17
+F A, finish alone in work-group 1               23.65      23.44      23.54      64.27
+G route alone (384 items)                       21.46      21.35      21.46      63.23
+H scores only (no ranks; timing)                 1.04       0.83       0.83       2.71
+I two-stage route (RouteQ) alone                10.73      10.52      10.62      31.46
+J A with RouteQ                                 13.65      13.12      13.33      34.27
+PASS
+exit 0
+DONE

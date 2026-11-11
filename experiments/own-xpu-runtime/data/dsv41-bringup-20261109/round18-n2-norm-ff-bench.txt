@@ -1,0 +1,36 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+form                                        median us     min us
+A engine: norm + stream-mix dots                12.81      12.60
+B norm alone                                     8.75       8.54
+C stream-mix dots alone                          9.90       9.58
+D A with the fast norm (V1)                     10.11       9.89
+E0 fast norm alone, two rs (V0)                 12.29      11.35
+E1 fast norm alone (V1)                          5.83       5.42
+E2 V1 without fallback (timing)                  4.90       4.48
+E3 fast sum, no check (floor)                    5.21       4.58
+bulk round  0 (spread 2^ 0): 65536 vectors, V1 rs differs 0, fallbacks 5; V0 differs 0, fallbacks 2
+bulk round  1 (spread 2^ 4): 65536 vectors, V1 rs differs 0, fallbacks 5; V0 differs 0, fallbacks 2
+bulk round  2 (spread 2^ 8): 65536 vectors, V1 rs differs 0, fallbacks 6; V0 differs 0, fallbacks 4
+bulk round  3 (spread 2^ 12): 65536 vectors, V1 rs differs 0, fallbacks 3; V0 differs 0, fallbacks 1
+bulk round  4 (spread 2^ 16): 65536 vectors, V1 rs differs 0, fallbacks 9; V0 differs 0, fallbacks 1
+bulk round  5 (spread 2^ 20): 65536 vectors, V1 rs differs 0, fallbacks 6; V0 differs 0, fallbacks 5
+bulk round  6 (spread 2^ 24): 65536 vectors, V1 rs differs 0, fallbacks 7; V0 differs 0, fallbacks 4
+bulk round  7 (spread 2^ 28): 65536 vectors, V1 rs differs 0, fallbacks 6; V0 differs 0, fallbacks 4
+bulk round  8 (spread 2^ 0): 65536 vectors, V1 rs differs 0, fallbacks 13; V0 differs 0, fallbacks 8
+bulk round  9 (spread 2^ 4): 65536 vectors, V1 rs differs 0, fallbacks 9; V0 differs 0, fallbacks 3
+bulk round 10 (spread 2^ 8): 65536 vectors, V1 rs differs 0, fallbacks 10; V0 differs 0, fallbacks 4
+bulk round 11 (spread 2^ 12): 65536 vectors, V1 rs differs 0, fallbacks 5; V0 differs 0, fallbacks 5
+bulk round 12 (spread 2^ 16): 65536 vectors, V1 rs differs 0, fallbacks 10; V0 differs 0, fallbacks 6
+bulk round 13 (spread 2^ 20): 65536 vectors, V1 rs differs 0, fallbacks 8; V0 differs 0, fallbacks 4
+bulk round 14 (spread 2^ 24): 65536 vectors, V1 rs differs 0, fallbacks 7; V0 differs 0, fallbacks 3
+bulk round 15 (spread 2^ 28): 65536 vectors, V1 rs differs 0, fallbacks 8; V0 differs 0, fallbacks 5
+bulk round 16 (edge kind 0): 65536 vectors, V1 rs differs 0, fallbacks 65536; V0 differs 0, fallbacks 65536
+bulk round 17 (edge kind 1): 65536 vectors, V1 rs differs 0, fallbacks 65536; V0 differs 0, fallbacks 65536
+bulk round 18 (edge kind 2): 65536 vectors, V1 rs differs 0, fallbacks 4; V0 differs 0, fallbacks 3
+bulk round 19 (edge kind 3): 65536 vectors, V1 rs differs 0, fallbacks 8; V0 differs 0, fallbacks 5
+bulk round 20 (edge kind 4): 65536 vectors, V1 rs differs 0, fallbacks 5; V0 differs 0, fallbacks 1
+bulk round 21 (edge kind 5): 65536 vectors, V1 rs differs 0, fallbacks 5; V0 differs 0, fallbacks 3
+bulk: 1441792 vectors, 0 differ (V1 + V0), V1 fallbacks 131211, V0 fallbacks 131145
+PASS
+exit 0
+DONE

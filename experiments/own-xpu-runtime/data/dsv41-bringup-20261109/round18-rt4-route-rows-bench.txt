@@ -1,0 +1,26 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+sweep random                         4096 sets: 0 differ (first set ids 191 42 76 303 325 22)
+sweep quantized ties                 4096 sets: 0 differ (first set ids 179 240 293 345 254 295)
+sweep all equal                      4096 sets: 0 differ (first set ids 0 1 2 3 4 5)
+sweep some NaN                       RouteP vs RouteP: 265 of 4096 sets differ; 0 ranks never written
+sweep some NaN                       4096 sets: 496 differ (first set ids 380 53 371 252 362 379)
+sweep some +inf                      4096 sets: 0 differ (first set ids 52 104 157 193 216 241)
+sweep some -inf                      4096 sets: 0 differ (first set ids 173 277 253 163 139 361)
+sweep huge negative                  4096 sets: 0 differ (first set ids 47 155 174 320 4 94)
+sweep zero scores, signed-zero bias  4096 sets: 0 differ (first set ids 0 1 2 3 4 5)
+sweep bias ties only                 4096 sets: 0 differ (first set ids 303 25 36 66 74 102)
+sweep two values                     4096 sets: 0 differ (first set ids 1 2 7 11 12 14)
+form                                        median us     min us     p10 us     p90 us
+A engine: route + finish + shared rows          23.33      22.81      22.92      76.25
+B route alone (512 items)                       21.46      21.35      21.35      75.10
+C finish alone (one sub-group)                   6.67       6.56       6.56      23.33
+D shared rows alone                              6.77       6.25       6.46      16.98
+E A without the finish                          22.92      22.50      22.60      76.15
+F A, finish alone in work-group 1               23.65      23.12      23.23      76.14
+G route alone (384 items)                       21.46      21.35      21.46      75.10
+H scores only (no ranks; timing)                 1.04       0.83       0.94       3.23
+I two-stage route (RouteQ) alone                 8.75       8.54       8.65      30.52
+J A with RouteQ                                 11.67      11.14      11.36      34.38
+PASS
+exit 0
+DONE

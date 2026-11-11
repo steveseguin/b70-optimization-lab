@@ -1587,6 +1587,68 @@ local load, multiply, shift, and-xor, multiply, add; the three sub-group broadca
 instructions (no indirect moves, unlike the dense rows in d2). Issue-bound with lean code, as section 23's bench
 found; nothing to take without changing the sums. Closed.
 
+## 32. The norm's sum from a proven fast bracket, norm launches on more cores, the router's picks in two stages: plain answers 78.1 -> 85.2 tok/s, guessing +3-4 %, text identical (2026-11-10 22:50-23:55 EST)
+
+**Where the time was (p80, tp79, `round18-p80-*-profile.txt`, `round18-scripts/p80.sh`).** Plain answer steps on
+card 2 (profiled): exchanges 2.09 ms, expert gate + up 1.93, the norm group 1.41 (the 5,120-wide norm with the
+stream mix's dot rows in one launch: 14.63 us x 77 per step), the router 1.36 (`RoutePRows`: 21.6 us x 40), expert
+down 1.19; guessing rounds on the code prompt 19.0 ms of kernels per round.
+
+**The norm's sum (n1-n5, `tools/bench/bench_norm_ff.cpp`, `round18-n1..n5-norm-ff-bench.txt`,
+`round18-scripts/n-bench/`).** `RmsNormPS` forms acc = sum of double(x) * x per lane (160 terms in order, then the
+xor tree) and the scale float(1 / sqrt(acc / N + 1e-20)), a composition of correctly rounded monotone operations.
+The fast form brackets acc: per lane blocks of 16 terms in float-float (p = x * x, e = fma(x, x, -p) exact, TwoSum
+of the p, the low parts summed in float), each block's two parts added in double, the same tree. With E the exact
+sum (all terms >= 0): a block's low sum rounds by at most k(k + 1) 2^-48 E_b (9.7e-13 E_b at k = 16), the double
+adds and tree by 25 x 2^-53 E, the chain itself by 165 x 2^-53 E, so the two sums differ by less than 1.0e-12 E.
+The bracket moves D = 1 / sqrt(acc / N + 1e-20) by at most 0.5e-12 D plus four double roundings: when D (from the
+fast sum) lies farther than 4e-12 D from both midpoints between float(D) and its float neighbours, float(D) is the
+chain's scale. Otherwise, or outside 1e-25 < s < 1e30, the chain runs. Bulk check: 1,441,792 vectors (random
+magnitudes up to 2^+-28, sparse, one large value, constant, mixed tiny), the scale bitwise equal on every one; the
+chain ran for 139 of the 1,310,720 in-range vectors plus all 131,072 of the two out-of-range sets.
+Timing lesson: with a wait after each launch the card idles between them and medians moved up to 2x between runs
+(n1-n3); launched back to back, as in the engine, they are stable (n4, n5). n5: the engine's launch 9.90 us; the
+norm alone 5.52 (chain) / 5.62 (fast): no gain alone; the dot rows alone 9.69, in work-groups of 4 rows 5.73; the
+launch in work-groups of 4 rows 9.06 (chain) / 6.04 (fast), of 2 rows 9.27 / 6.04. The cause: 16 rows per
+work-group put the double-precision work on 13 of the 32 cores; spread out, the norm's four redundant chains set
+the pace, and the fast form removes them. `OWN_NORM_FF` (norms of 1,280+ columns, default on) and `OWN_NORM_WG`
+(the one-token norm launches' work-group size: 64 default, 128, or 512 the old) change no value: each row is the
+same sub-group code either way.
+
+**In the engine (tp81, g81, `round18-g81-summary.txt`, `round18-g81-pf_*-decode-profile-card2.txt`,
+`round18-scripts/g81.sh`).** Traces of blocks of 16 / 5 / one token byte-identical with the fast form and groups of
+2 rows, one token also with groups of 4 rows and with the old forms; 40 answers the same. Prompt 1's 128 answers
+the same in every run: old 78.95 / 78.56 tok/s, fast norm only 81.11 / 81.01, plus groups of 2 rows 82.61 / 82.20,
+of 4 rows 82.34 / 82.34. Profile: the launch 14.94 -> 8.24 us, the q_a / kv norms 4.76 -> 4.09, the norm group 1.433
+-> 0.905 ms per step. The 3K document read at 299.4 / 299.3 against 297.5 / 298.4 tok/s, its 256 answers the same at
+77.46 / 77.29 against 73.86 / 74.15; guessing on code 101.93 against 100.35, analysis 115.07 against 113.44, all
+SAME as the plain runs.
+
+**The router's picks (rt1-rt5, `tools/bench/bench_route_rows.cpp`, `round18-rt1..rt5-route-rows-bench.txt`,
+`round18-scripts/rt-bench/`).** The launch's parts on one card (rt5, medians): the whole launch 21.67 us, the expert
+pick (`RouteP`) alone 21.35, the mix's finish alone 6.67, the shared rows alone 6.56, the scores without the ranks
+0.94. The pick ranked every expert against all 384 (rank = how many come before it: a larger score, or the same
+score at a lower index). Two stages instead: each lane's rank among its sub-group's 32 scores; the 6 best of each
+sub-group are candidates; each candidate's rank among the 72 candidates. Anything that comes before a top-6 expert
+is itself top-6 and so a candidate, so a top-6 expert's candidate rank is its rank; any other expert has the 6 best
+before it, all candidates, so its candidate rank is >= 6 too. A NaN score anywhere runs the old loop. Sweep, 4,096
+sets per pattern (random, half-step ties, all equal, +inf, -inf, huge negative, zero scores with signed-zero bias,
+bias ties, two values): the engine's two-stage form gives the same ids and probabilities bit for bit on all 36,864.
+With NaN scores the old pick's rank writes collide and race: the old pick against itself differs on 255 of 4,096
+sets, so that case has no defined result in either form. The pick 21.35 -> 9.17 us, the launch 21.67 -> 11.77.
+`OWN_ROUTE_Q` (default on; `=0` the old pick) covers every router launch (one token, blocks, the draft's 3-expert
+pick).
+
+**All three on by default (tp82, g82, `round18-g82-summary.txt`, `round18-g82-pf_*-decode-profile-card2.txt`,
+`round18-scripts/g82.sh`).** Traces of blocks of 16 / 5 / one token byte-identical, also one token with
+`OWN_ROUTE_Q=0` and with everything old; 40 answers the same. Prompt 1's 128 answers the same in every run: 85.11 /
+85.33 tok/s against 82.52 / 82.49 with `OWN_ROUTE_Q=0` and 78.24 / 78.01 with all three old (+9.2 %). Profile on
+card 2: the router launch 21.71 -> 12.83 us on Q8_0 layers and 21.59 -> 11.94 on Q5_K layers, the router group 1.350
+-> 0.984 ms per step, kernels 12.08 -> 11.15 ms per step. Guessing on code 104.22 against 100.28 tok/s, analysis
+117.05 against 113.16, the 3K document 112.65, all SAME as the plain runs. The 3K document read at 299.9 / 299.7
+against 297.8 / 298.5 tok/s, its 256 answers the same at 79.37 / 79.68 against 73.96 / 74.33 (+7.3 %). No fault
+lines.
+
 ## Reproduce
 
 ```bash
@@ -1641,13 +1703,15 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
    cards' clocks, section 24, even when it runs only for blocks of 5, section 25), token norms inside their neighbours (0.9 ms),
    exchanges folded into the kernels that consume them (an exchange is a launch and two PCIe round trips, its
    fences are free and loading all peers first is slower, section 28), the copy of the engram rows without the queue wait
-   (section 26: the host now waits for layer 0 there), the norms' double sums spread over two sub-groups per row
-   (11.9 -> 9.0 us alone, bitwise; needs a second sub-group in the fused row launches, section 29). Closed: the
+   (section 26: the host now waits for layer 0 there), the mix's finish inside the router launch (6.7 of its 11.8 us
+   alone, section 32). Closed: the
    card threads' spinning waits (section 25)
    and polling hand-offs (section 26). The
    attention groups stay uneven in checks (evening them costs a pair exchange per layer, section 28). (Done: adaptive guess
    counts, section 23; the batched prompt pass, sections 20-21, 251 tok/s at 3K; dsp.fc split, Q2_K and BF16 rows,
-   section 24; the draft's experts, section 25; engram rows asked early and fetched after layer 0, section 26.)
+   section 24; the draft's experts, section 25; engram rows asked early and fetched after layer 0, section 26;
+   the norms' sums from a proven fast bracket, the one-token norm launches spread over more cores and the router's
+   picks in two stages, section 32: plain answers 78.1 -> 85.2 tok/s.)
 6. Prompt reading (~293 tok/s at 3K, blocks of 16, section 28): the doubled attention groups are split between
    card pairs for blocks of >= 16 tokens, with 4-row blocks. Long documents (section 29): 246.7 -> 263.6 tok/s
    reading and 56.5 -> 65.2 tok/s answers at 95K tokens. Next: the index work that is left (layers 24-36 over

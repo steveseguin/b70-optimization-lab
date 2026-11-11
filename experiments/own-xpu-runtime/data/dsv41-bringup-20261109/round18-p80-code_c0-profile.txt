@@ -1,0 +1,130 @@
+kernel time per type (ms per spec cycle, draft + check, start to end; launches per cycle):
+     3.080   16.2%    123.9     24.85 us  XchgPull
+     1.142    6.0%     15.0     76.13 us  RoutedU<RUFmtIQ2S<20u>, 6u, NoRows, 6u>
+     0.860    4.5%     15.0     57.33 us  RoutedU<RUFmtIQ2XXS<20u>, 6u, NoRows, 6u>
+     0.848    4.4%     83.0     10.21 us  RowsP<TokRows<NormRows<5120u, 4u> > >
+     0.750    3.9%     10.0     74.96 us  RoutedU<RUFmtIQ1S<20u, true>, 6u, NoRows, 6u>
+     0.667    3.5%     15.0     44.49 us  RoutedU<RUFmtIQ2S<9u>, 6u, NoRows, 6u>
+     0.587    3.1%     15.0     39.14 us  RoutedU<RUFmtIQ3XXS<9u>, 6u, NoRows, 6u>
+     0.488    2.6%     57.0      8.56 us  XchgP
+     0.460    2.4%      1.3    367.00 us  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 3u, 4u> >
+     0.449    2.4%     40.0     11.22 us  OutMC<SparseOutJC<512u, 16u, 128u, 16u> >
+     0.400    2.1%     25.7     15.55 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvH16P<160u, ActF32>, 1u> > >
+     0.398    2.1%     17.4     22.94 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ8P<160u, ActF32>, 1u>, DenseRowsG<GemvQ8P<160u, ActF32>, 1u> > > >
+     0.351    1.8%     17.4     20.22 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ8P<160u, ActF32>, 1u> > >
+     0.349    1.8%     43.0      8.11 us  RowsP<RowsPair<TokRows<HcFinishRows>, RowsPair<TokRows<NormRows<1280u, 4u> >, TokRows<NormRows<512u, 2u> > > > >
+     0.332    1.7%     38.0      8.75 us  ScoreM<SparseScoreHG<512u, 4u> >
+     0.289    1.5%     17.4     16.66 us  RowsP<DenseRowsG<GemvQ8P<256u, ActF32>, 1u> >
+     0.285    1.5%     19.9     14.36 us  RowsP<DenseRowsG<GemvQ8P<160u, ActF32>, 3u> >
+     0.248    1.3%     10.5     23.72 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvH16P<160u, ActF32>, 3u> > >
+     0.239    1.3%     10.1     23.77 us  RowsP<DenseRowsGR<GemvQ8P<40u, ActF32>, 3u, 4u> >
+     0.238    1.2%      6.0     39.68 us  RoutedU<RUFmtIQ2XS<9u>, 6u, NoRows, 6u>
+     0.230    1.2%      2.0    115.23 us  EngramGatePM
+     0.229    1.2%     33.5      6.83 us  SoftmaxM<SparseSoftmaxPN<640> >
+     0.226    1.2%     10.1     22.44 us  RowsP<DenseRowsG<GemvQ8P<256u, ActF32>, 3u> >
+     0.222    1.2%      7.1     31.46 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ8P<160u, ActF32>, 3u> > >
+     0.204    1.1%      8.4     24.36 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ5KP<20u, ActF32>, 1u>, DenseRowsG<GemvQ5KP<20u, ActF32>, 1u> > > >
+     0.197    1.0%     84.0      2.34 us  HcPostPrePM<ActF32>
+     0.184    1.0%     17.4     10.60 us  RowsP<DenseRowsG<GemvQ8P<128u, ActF32>, 1u> >
+     0.182    1.0%      8.4     21.72 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ6KP<20u, ActF32>, 1u> > >
+     0.174    0.9%      7.1     24.58 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ8P<160u, ActF32>, 3u>, DenseRowsG<GemvQ8P<160u, ActF32>, 3u> > > >
+     0.159    0.8%      3.0     52.89 us  RoutedU<ops41draft::RUFmtMXFP4<20u>, 6u, NoRows, 3u>
+     0.156    0.8%     19.3      8.10 us  RowsP<DenseRowsG<GemvQ8P<160u, ActF32>, 1u> >
+     0.153    0.8%     43.0      3.56 us  ExpertGroupM
+     0.147    0.8%      6.0     24.43 us  RowsP<RowsPair<TokRows<NormRows<5120u, 4u> >, TokRows<HcDotsRows<5120u, 8u> > > >
+     0.143    0.8%     10.1     14.21 us  RowsP<DenseRowsG<GemvQ8P<128u, ActF32>, 3u> >
+     0.140    0.7%      8.4     16.79 us  RowsP<DenseRowsG<GemvQ6KP<32u, ActF32>, 1u> >
+     0.135    0.7%      8.0     16.86 us  RowsP<DenseRowsGR<GemvQ8P<40u, ActF32>, 1u, 4u> >
+     0.131    0.7%      9.3     14.10 us  RowsP<DenseRowsG<GemvQ8P<40u, ActF32>, 1u> >
+     0.130    0.7%      8.7     14.91 us  RowsP<DenseRowsG<GemvQ6KP<20u, ActF32>, 1u> >
+     0.129    0.7%      3.4     38.01 us  RowsP<DenseRowsG<GemvQ6KP<32u, ActF32>, 3u> >
+     0.123    0.6%      3.4     36.13 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ6KP<20u, ActF32>, 3u> > >
+     0.116    0.6%     17.4      6.68 us  RowsP<DenseRowsG<GemvQ8P<72u, ActF32>, 1u> >
+     0.111    0.6%      8.4     13.24 us  RowsP<DenseRowsG<GemvQ6KP<16u, ActF32>, 1u> >
+     0.102    0.5%      3.0     33.89 us  RoutedU<RUFmtIQ2XXS<9u>, 6u, NoRows, 6u>
+     0.101    0.5%     10.1     10.05 us  RowsP<DenseRowsG<GemvQ8P<72u, ActF32>, 3u> >
+     0.101    0.5%     43.0      2.35 us  RingCommitM
+     0.101    0.5%     52.1      1.94 us  XchgPushM
+     0.094    0.5%      3.0     31.44 us  RoutedU<ops41draft::RUFmtMXFP4<9u>, 6u, NoRows, 3u>
+     0.093    0.5%      5.0     18.70 us  ops41draft::MarkovAdd
+     0.091    0.5%     43.0      2.13 us  MoeCombineAM<ActF32>
+     0.089    0.5%      3.8     23.48 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvH16P<160u, ActF32>, 2u> > >
+     0.085    0.4%     40.0      2.13 us  WindowAppendM<ActF32>
+     0.084    0.4%      2.5     33.45 us  CompressPoolPM<ActF32>
+     0.083    0.4%      3.4     24.24 us  RowsP<DenseRowsGR<GemvQ6KP<5u, ActF32>, 3u, 4u> >
+     0.080    0.4%     43.0      1.85 us  SwigluBothSM<ActF32>
+     0.079    0.4%      3.4     23.33 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ5KP<20u, ActF32>, 3u>, DenseRowsG<GemvQ5KP<20u, ActF32>, 3u> > > >
+     0.079    0.4%      0.3    263.26 us  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 1u, 4u> >
+     0.079    0.4%      2.6     30.71 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ8P<160u, ActF32>, 2u> > >
+     0.073    0.4%      3.9     18.91 us  RowsP<DenseRowsGR<GemvQ6KP<5u, ActF32>, 1u, 4u> >
+     0.070    0.4%      2.6     27.19 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ8P<160u, ActF32>, 2u>, DenseRowsG<GemvQ8P<160u, ActF32>, 2u> > > >
+     0.066    0.3%      3.0     21.84 us  RoutePM
+     0.061    0.3%      0.5    116.47 us  RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 3u, 4u> >
+     0.060    0.3%      4.5     13.34 us  RowsP<DenseRowsG<GemvQ6KP<5u, ActF32>, 1u> >
+     0.057    0.3%     46.5      1.22 us  RowsP<RowsPair<TokRows<RopeRows<ActF32> >, TokRows<RopeRows<ActF32> > > >
+     0.057    0.3%      8.4      6.77 us  RowsP<DenseRowsG<GemvQ5KP<9u, ActF32>, 1u> >
+     0.057    0.3%      2.6     22.00 us  RowsP<DenseRowsGR<GemvQ8P<40u, ActF32>, 2u, 4u> >
+     0.056    0.3%      5.1     11.01 us  RowsP<DenseRowsG<GemvH16P<160u, ActF32>, 1u> >
+     0.054    0.3%      2.6     21.11 us  RowsP<DenseRowsG<GemvQ8P<256u, ActF32>, 2u> >
+     0.051    0.3%      0.6     85.47 us  RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 1u, 4u> >
+     0.050    0.3%      3.4     14.65 us  RowsP<DenseRowsG<GemvQ6KP<16u, ActF32>, 3u> >
+     0.043    0.2%      1.0     42.76 us  RoutedQ2KF<9u>
+     0.041    0.2%      1.2     33.11 us  RowsP<RowsPair<TokRows<HcDotsRows<5120u, 8u> >, DenseRowsG<GemvQ6KP<20u, ActF32>, 2u> > >
+     0.039    0.2%      3.4     11.54 us  RowsP<DenseRowsG<GemvQ6KP<20u, ActF32>, 3u> >
+     0.036    0.2%      3.0     12.01 us  RowsP<DenseRowsG<GemvF32P<160u, ActF32>, 3u> >
+     0.035    0.2%      2.6     13.53 us  RowsP<DenseRowsG<GemvQ8P<128u, ActF32>, 2u> >
+     0.035    0.2%      5.0      6.97 us  ops41draft::DraftSumExp
+     0.034    0.2%      1.2     27.75 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsG<GemvQ5KP<20u, ActF32>, 2u>, DenseRowsG<GemvQ5KP<20u, ActF32>, 2u> > > >
+     0.034    0.2%      3.4      9.88 us  RowsP<DenseRowsG<GemvQ5KP<9u, ActF32>, 3u> >
+     0.033    0.2%      5.0      6.57 us  ScoreM<SparseScoreP<512u> >
+     0.032    0.2%      0.7     45.86 us  RowsP<DenseRowsG<GemvQ6KP<24u, ActF32>, 1u> >
+     0.031    0.2%      1.2     25.23 us  RowsP<DenseRowsGR<GemvQ6KP<5u, ActF32>, 2u, 4u> >
+     0.031    0.2%      0.1    327.14 us  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 2u, 4u> >
+     0.031    0.2%      4.5      6.84 us  SoftmaxM<SparseSoftmaxP<640> >
+     0.029    0.2%      1.2     23.67 us  RowsP<DenseRowsG<GemvQ6KP<32u, ActF32>, 2u> >
+     0.028    0.1%      2.9      9.94 us  RowsP<DenseRowsG<GemvQ8P<160u, ActF32>, 2u> >
+     0.026    0.1%      2.0     12.94 us  RowsP<DenseRowsG<GemvH16P<160u, ActF32>, 3u> >
+     0.023    0.1%      3.0      7.74 us  RowsP<TokRows<HcFinishRows> >
+     0.023    0.1%      2.6      9.01 us  RowsP<DenseRowsG<GemvQ8P<72u, ActF32>, 2u> >
+     0.021    0.1%      6.0      3.44 us  ArgmaxP1OM
+     0.020    0.1%      0.2    106.34 us  RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 2u, 4u> >
+     0.020    0.1%      3.0      6.69 us  OutM<SparseOutJB<512u, 1u, 16u, false> >
+     0.019    0.1%      0.8     22.63 us  IndexerScoreBM<ActF32>
+     0.019    0.1%      0.6     29.29 us  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 1u> >
+     0.017    0.1%      1.2     14.02 us  RowsP<DenseRowsG<GemvQ6KP<16u, ActF32>, 2u> >
+     0.014    0.1%      0.3     54.43 us  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 3u> >
+     0.013    0.1%      1.2     10.68 us  RowsP<DenseRowsG<GemvQ6KP<20u, ActF32>, 2u> >
+     0.012    0.1%      7.3      1.70 us  EmbedRowA<ActF32>
+     0.012    0.1%      1.2     10.08 us  RowsP<DenseRowsG<GemvQ5KP<9u, ActF32>, 2u> >
+     0.012    0.1%      3.5      3.51 us  RmsNormA<ActF32>
+     0.012    0.1%      6.0      1.99 us  ops41draft::DraftKvRows<ActF32>
+     0.012    0.1%      0.6     20.95 us  RowsP<DenseRowsG<GemvH16P<40u, ActF32>, 1u> >
+     0.010    0.1%      0.8     12.58 us  TopKSelM<false>
+     0.010    0.1%      7.2      1.42 us  CidxFillM
+     0.010    0.1%      4.0      2.44 us  RowsP<TokRows<NormRows<512u, 2u> > >
+     0.010    0.1%      2.9      3.29 us  RowsP<DenseRowsG<GemvH16P<16u, ActF32>, 1u> >
+     0.010    0.1%      5.0      1.93 us  ops41draft::DraftPick
+     0.009    0.0%      0.7     12.64 us  RowsP<DenseRowsG<GemvH16P<160u, ActF32>, 2u> >
+     0.008    0.0%      3.5      2.41 us  PubAppendAM<ActF32>
+     0.008    0.0%      3.0      2.81 us  SoftmaxM<SparseSoftmaxP<160> >
+     0.007    0.0%      7.3      0.96 us  Broadcast4A<ActF32>
+     0.006    0.0%      4.0      1.59 us  HcPreAM<ActF32>
+     0.006    0.0%      5.0      1.15 us  ops41draft::DraftBest
+     0.006    0.0%      0.2     28.12 us  RowsP<DenseRowsG<GemvH16P<40u, ActF32>, 3u> >
+     0.005    0.0%      2.0      2.60 us  EngRowsA<ActF32>
+     0.005    0.0%      3.0      1.67 us  StatePackM<ActF32>
+     0.004    0.0%      2.0      2.07 us  HcPostPM<ActF32>
+     0.004    0.0%      3.8      1.07 us  RowsP<TokRows<RopeRows<ActF32> > >
+     0.004    0.0%      2.0      2.01 us  SoftmaxM<SparseSoftmaxP<128> >
+     0.004    0.0%      0.1     41.93 us  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 2u> >
+     0.004    0.0%      3.0      1.32 us  ops41draft::StreamMeanM
+     0.002    0.0%      0.1     28.90 us  RowsP<DenseRowsG<GemvH16P<40u, ActF32>, 2u> >
+     0.002    0.0%      0.5      4.49 us  RowsP<DenseRowsG<GemvH16P<16u, ActF32>, 3u> >
+     0.001    0.0%      1.0      1.27 us  ops41draft::DraftIdx
+     0.001    0.0%      0.2      6.28 us  TopKSelM<true>
+     0.000    0.0%      0.1      4.10 us  RowsP<DenseRowsG<GemvH16P<16u, ActF32>, 2u> >
+  kernels 19.061 ms per cycle
+spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 7.33s = 69.70 tok/s; draft 2.58 ms + check 17.66 ms per cycle; no reference
+host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 407.6 us per step and card (slowest card 418.9 us; copy + decode launch calls 315.7 us)
+kept guesses per cycle: 0:106 1:83 2:35 3:17 4:5 5:7
+kernels built for 6 cards in 0.9s

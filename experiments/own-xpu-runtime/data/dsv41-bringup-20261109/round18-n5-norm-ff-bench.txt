@@ -1,0 +1,23 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+form                                        median us     min us     p10 us     p90 us
+A engine: norm + stream-mix dots                 9.90       9.69       9.79      50.00
+B norm alone                                     5.52       5.31       5.42      27.60
+C stream-mix dots alone                          9.69       9.58       9.69      49.38
+D A with the fast norm (V1)                      9.90       9.79       9.90      50.42
+E0 fast norm alone, two rs (V0)                 11.56      11.36      11.46      58.65
+E1 fast norm alone (V1)                          5.62       5.31       5.52      28.12
+E2 V1 without fallback (timing)                  4.69       4.69       4.69      23.96
+E3 fast sum, no check (floor)                    4.69       4.69       4.69      23.96
+F engine NormRows, ff (alone)                    5.62       5.52       5.52      28.44
+G engine fused launch, ff                        9.90       9.79       9.79      50.10
+H 1280 wide, chain                               3.54       3.44       3.44      17.81
+I 1280 wide, engine ff                           2.81       2.71       2.71      14.17
+J A in work-groups of 4 rows                     9.06       8.75       8.85      46.15
+K A in work-groups of 2 rows                     9.27       9.06       9.17      46.56
+L G in work-groups of 4 rows                     6.04       5.94       5.94      30.62
+M G in work-groups of 2 rows                     6.04       5.83       5.94      30.21
+N C in work-groups of 4 rows                     5.73       5.62       5.62      28.96
+O C in work-groups of 2 rows                     5.73       5.52       5.62      28.54
+PASS (no bulk check)
+exit 0
+DONE

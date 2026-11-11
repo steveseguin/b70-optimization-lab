@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 10, 2026 ~23:55 EST — DeepSeek V4.1 on six cards: plain answers 78.1 -> 85.2 tokens/s (+9 %), guessing 3-4 % faster, text the same.**
+- Two small steps that run before every layer's work got faster, with results identical bit for bit:
+  - The normalizing step (it scales each word's numbers by their size) now adds up its squares with a quicker method that comes with a proof of when it gives exactly the old answer; when it can't be sure (139 of 1.3 million test cases), it falls back to the old way. It also now spreads over more of the chip's cores. That step went from 14.9 to 8.2 microseconds.
+  - The router (it picks which 6 of 384 experts handle each word) now picks in two rounds: best 6 of each group of 32, then the best 6 of those finalists. Same picks on all 36,864 test sets. 21.7 -> 12.8 microseconds.
+- Measured on short chat: 85.1 / 85.3 tokens/s against 78.2 / 78.0 before. 3K document: answers 79.4 / 79.7 against 74.0 / 74.3; reading 299.9 against 297.8. Guessing: code 104.2 against 100.3, analysis 117.1 against 113.2.
+- Checks: every trace byte-identical, every answer the same, every guessing run the same as plain writing, no card faults.
+- Still paused until you decide: long-document tests on all six cards (the three machine resets earlier today). Short six-card tests and one-card tests continue.
+- Cards: nothing loaded. Details: [note section 32](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 10, 2026 ~22:30 EST — DeepSeek V4.1 on six cards: answers on long documents about 3 % faster (69K tokens: 67.7 -> 69.8 tokens/s), prompt reading 2.4 % faster, text the same; a third machine reset, so long six-card tests are paused.**
 - The attention output step (about 5 % of every answer word past ~640 words of context) now runs in the new form tested on one card earlier tonight. It gives the same results bit for bit. Measured: 69K-token document 69.8 tokens/s against 67.7 for the build before, 3K document 74.3-74.5 against 72.3-72.4, short chat unchanged (about 78.5).
 - The first version made prompt reading 1.3 % slower, because the new form needs too much on-chip storage per group when 16 words are processed at once. It now runs only for up to 8 words at a time (the guessing checks), so reading is back to its old speed.

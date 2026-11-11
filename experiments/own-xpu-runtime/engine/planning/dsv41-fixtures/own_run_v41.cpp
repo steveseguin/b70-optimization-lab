@@ -203,6 +203,8 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
     if (const char *e = getenv("OWN_DIET")) opt.diet = atoi(e) != 0;
     if (const char *e = getenv("OWN_PAIR_WG")) opt.pair_wg = atoi(e);
+    // one-token norm launches: 64 (default since round 18 g81) / 128 / 512 (the old form) items per group
+    if (const char *e = getenv("OWN_NORM_WG")) opt.norm_wg = atoi(e);
     if (const char *e = getenv("OWN_PAIR_WG_IQ1")) opt.pair_wg_iq1 = atoi(e);
     if (const char *e = getenv("OWN_DR_FC_SPLIT")) opt.dr_fc_split = atoi(e) != 0;
     if (const char *e = getenv("OWN_DR_MXP")) opt.dr_mxp = atoi(e) != 0;
@@ -253,6 +255,13 @@ int main(int argc, char **argv) {
     // the attention output from local memory, a column per lane (the same outputs): default since round 18 s3 / g76
     // (=0 for SparseOutJB)
     opt.att_out_c = getenv("OWN_ATT_OUT_C") ? atoi(getenv("OWN_ATT_OUT_C")) != 0 : true;
+    // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
+    // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
+    // norm kernel is built.
+    ops41sycl::g_norm_ff = getenv("OWN_NORM_FF") ? atoi(getenv("OWN_NORM_FF")) != 0 : true;
+    // the router's expert picks in two stages (the same ids and probabilities; round 18 rt1-rt5,
+    // tools/bench/bench_route_rows.cpp); =0 for RouteP's all-pairs ranks. Read before any router kernel is built.
+    ops41sycl::g_route_q = getenv("OWN_ROUTE_Q") ? atoi(getenv("OWN_ROUTE_Q")) != 0 : true;
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");

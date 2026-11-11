@@ -213,6 +213,11 @@ public:
         bool diet = true;       // tp: neighbouring launches merged (OWN_DIET=0: one launch per operator as before)
         bool down_ex = false;   // tp: shared expert down rows inside the expert down launch (OWN_DOWN_EX=1; no gain)
         int pair_wg = 128;      // tp: work-groups of the expert gate+up launch (OWN_PAIR_WG)
+        int norm_wg = 64;       // items per work-group of the one-token norm launches (the 5,120-wide norm with the
+                                // stream-mix dots, the q_a / kv norms; OWN_NORM_WG = 64 / 128 / 512): each row is a
+                                // sub-group either way (same values); 16 rows per group put the double-precision
+                                // chains on 13 of the 32 cores (round 18 n5: 9.9 -> 6.0 us with OWN_NORM_FF; g81 in
+                                // the engine 14.9 -> 8.2 us, plain answers +4.6 %). Default 64 since g81 (512: old)
         int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
         int pair_wg_iq1 = 0;    // gate+up work-groups for IQ1_S experts, 0 = pair_wg (OWN_PAIR_WG_IQ1)
         bool dr_fc_split = true; // the draft's dsp.fc rows split across the cards + an exchange (OWN_DR_FC_SPLIT)
@@ -1338,6 +1343,12 @@ private:
             return false;
         return true;
     }
+    // a one-token norm launch in work-groups of o.norm_wg items (OWN_NORM_WG; the rows are sub-groups either way)
+    template <typename K> void norm_rows_launch(int c, K k, size_t rows) {
+        if (o.norm_wg == 64) launch_rows<0, 64>(c, rows, 0, k);
+        else if (o.norm_wg == 128) launch_rows<0, 128>(c, rows, 0, k);
+        else launch_rows<0>(c, rows, 0, k);
+    }
     // the 5,120-wide norm (four sub-group parts, RmsNormPS) with extra rows EX in one launch: the norm is a
     // serial chain on four sub-groups, so rows that do not need its output fill the card meanwhile
     template <typename EX> bool norm_ex(int c, const act_t *x, const std::string &wn, act_t *y, EX ex) {
@@ -1345,7 +1356,7 @@ private:
         if (g.h != 5120 || !o.small_fast || !al16(x) || !al16(w) || !al16(y) || x == y) return false;
         using R = ops41sycl::RowsPair<ops41sycl::NormRows<5120, 4>, EX>;
         const R r{{x, w, y}, ex};
-        launch_rows<0>(c, r.n(), 0, ops41sycl::RowsP<R>{r});
+        norm_rows_launch(c, ops41sycl::RowsP<R>{r}, r.n());
         return true;
     }
     // tp phase 0 in four launches (see tp_phase): shapes the fused forms are written for
@@ -2895,7 +2906,7 @@ private:
                 using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
                 const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
                             {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
-                launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
+                norm_rows_launch(c, ops41sycl::RowsP<NR>{nr}, nr.n());
                 prof("attn_q_a", c);
                 if (o.fin_move) { // the mix's finish rides in output-b's launch instead (case 2)
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,

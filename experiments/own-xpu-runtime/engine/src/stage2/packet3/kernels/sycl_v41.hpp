@@ -2697,17 +2697,30 @@ template <unsigned N> struct RmsNormP {
 // RmsNormP on a work-group of S sub-groups: every sub-group computes the same
 // statistic (same loads, same serial lane sums, same tree), then writes the
 // 256-element chunks c with c % S == its index (block stores). Not in place.
+// OWN_NORM_FF (host, read when a norm kernel is built; round 18 n1-n5, tools/bench/bench_norm_ff.cpp): the RMS
+// norm's scale from a fast bracket of the double chain; same values bit for bit by construction (below), 1.44 M
+// bench vectors identical. Alone about as fast as the chain; beside the stream-mix dots in work-groups of 4 rows
+// (OWN_NORM_WG=128) the launch is 9.9 -> 6.0 us, because the four sub-groups no longer queue for the double unit
+inline bool g_norm_ff = true;
+// a norm built in device code (benches) takes the chain
+inline bool norm_ff_default() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return false;
+#else
+    return g_norm_ff;
+#endif
+}
 template <unsigned N, unsigned S> struct RmsNormPS {
     static_assert(N % 256 == 0);
     static constexpr unsigned C = N / 256;
+    bool ff = norm_ff_default();
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y) const {
         sycl::sub_group sg = it.get_sub_group();
-        part(sg, sg.get_local_linear_id(), sg.get_group_linear_id(), x, w, y);
+        part(sg, sg.get_local_linear_id(), sg.get_group_linear_id(), x, w, y, ff);
     }
-    // sub-group sgi of S: the whole sum (every sub-group forms it alike), then its share of the outputs;
-    // no barrier between sub-groups, so the parts also run as rows of a fused launch (NormRows)
-    [[gnu::always_inline]] static inline void part(sycl::sub_group sg, unsigned lane, unsigned sgi, const float *x,
-                                                   const float *w, float *y) {
+    static inline float rs_of(double acc) { return float(1.0 / sycl::sqrt(acc / N + 1e-20)); }
+    // the chain: acc = sum of double(x) * x, per lane C * 8 terms in order, then the xor tree
+    [[gnu::always_inline]] static inline double acc_chain(sycl::sub_group sg, unsigned lane, const float *x) {
         double acc = 0;
 #pragma unroll
         for (unsigned c = 0; c < C; ++c) {
@@ -2716,7 +2729,58 @@ template <unsigned N, unsigned S> struct RmsNormPS {
             for (unsigned m = 0; m < 8; ++m) acc += double(xv[m]) * xv[m];
         }
         for (int w_ = 16; w_; w_ >>= 1) acc += sycl::select_from_group(sg, acc, (int)lane ^ w_);
-        const float rs = float(1.0 / sycl::sqrt(acc / N + 1e-20));
+        return acc;
+    }
+    // The fast bracket. rs_of is a composition of correctly rounded monotone operations, so the chain's scale is
+    // float(D_chain) with D_chain = 1 / sqrt(acc_chain / N + 1e-20) in double. Estimate s: per lane blocks of 16
+    // terms in float-float (p = x * x, e = fma(x, x, -p) exact; TwoSum of the p, the low parts summed in float),
+    // each block's (hi, lo) added in double, the same xor tree. All terms >= 0 with exact sum E (u = 2^-24,
+    // v = 2^-53): a block's low sum rounds by <= k(k + 1) u^2 E_b (9.7e-13 E_b at k = 16), the double adds and
+    // tree by <= 25 v E, the chain by <= 165 v E: |acc_chain - s| < 1.0e-12 E. That moves D by at most
+    // 0.5e-12 D plus four double roundings, so D (from s) farther than 4e-12 D from both midpoints between
+    // float(D) and its float neighbours means float(D_chain) == float(D). Needs 1e-25 < s < 1e30 (no float
+    // overflow, flushes far under the bound); otherwise, or near a midpoint (~6e-5 of the bench vectors), ok =
+    // false and the chain runs.
+    [[gnu::always_inline]] static inline float rs_fast(sycl::sub_group sg, unsigned lane, const float *x, bool &ok) {
+        double acc = 0;
+#pragma unroll
+        for (unsigned c2 = 0; c2 < C; c2 += 2) {
+            float hi = 0, lo = 0;
+#pragma unroll
+            for (unsigned h = 0; h < 2 && c2 + h < C; ++h) {
+                const auto xv = sg_bloadN<8>(sg, x + (c2 + h) * 256);
+#pragma unroll
+                for (unsigned m = 0; m < 8; ++m) {
+                    const float a = xv[m];
+                    const float p = a * a;
+                    const float e = sycl::fma(a, a, -p);
+                    const float t = hi + p;
+                    const float z = t - hi;
+                    const float er = (hi - (t - z)) + (p - z);
+                    hi = t;
+                    lo = lo + (er + e);
+                }
+            }
+            acc = acc + double(hi);
+            acc = acc + double(lo);
+        }
+        for (int w_ = 16; w_; w_ >>= 1) acc += sycl::select_from_group(sg, acc, (int)lane ^ w_);
+        const double D = 1.0 / sycl::sqrt(acc / N + 1e-20);
+        const float f = float(D);
+        const double fd = f, up = sycl::nextafter(f, INFINITY), dn = sycl::nextafter(f, 0.0f);
+        ok = acc > 1e-25 && acc < 1e30 && D * (1 + 4e-12) < fd + (up - fd) * 0.5 && D * (1 - 4e-12) > fd - (fd - dn) * 0.5;
+        return f;
+    }
+    // sub-group sgi of S: the whole sum (every sub-group forms it alike), then its share of the outputs;
+    // no barrier between sub-groups, so the parts also run as rows of a fused launch (NormRows). ff: the fast
+    // bracket first (N >= 1280; the same scale bit for bit)
+    [[gnu::always_inline]] static inline void part(sycl::sub_group sg, unsigned lane, unsigned sgi, const float *x,
+                                                   const float *w, float *y, bool ff = false) {
+        float rs = 0;
+        bool ok = false;
+        if constexpr (N >= 1280)
+            if (ff) rs = rs_fast(sg, lane, x, ok);
+        if (!ok) rs = rs_of(acc_chain(sg, lane, x));
 #pragma unroll
         for (unsigned c = 0; c < C; ++c) {
             if (c % S != sgi) continue;
@@ -2992,9 +3056,10 @@ struct HcFinishRows {
 template <unsigned N, unsigned S> struct NormRows {
     const float *x, *w;
     float *y;
+    bool ff = norm_ff_default(); // OWN_NORM_FF: the fast bracket (same values)
     unsigned n() const { return S; }
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned r) const {
-        RmsNormPS<N, S>::part(sg, lane, r, x, w, y);
+        RmsNormPS<N, S>::part(sg, lane, r, x, w, y, ff);
     }
 };
 // RopePairsA with rdim 64 (32 pairs = one sub-group per row) as rows; same expressions
@@ -3834,10 +3899,107 @@ template <typename A> struct WindowAppendP {
 // (one launch instead of three; the rank loop reads local memory instead of
 // 256 global loads per item). Same expressions, same comparisons, same sum
 // order. lm: local memory, 2 * experts + topk floats.
+// OWN_ROUTE_Q (host, read when a router kernel is built; round 18 rt1-rt5, tools/bench/bench_route_rows.cpp): RouteP's
+// picks in two stages (run_two below), the same ids and probabilities for every input without NaN scores (36,864
+// bench sets: random, ties, +-inf, signed zeros); with NaN scores RouteP's rank writes collide and race (RouteP
+// against itself: 265 of 4,096 sets differ), so both forms leave that case undefined. The pick 21.5 -> 8.8 us, the
+// router launch with the shared rows 23.3 -> 11.7 us.
+inline bool g_route_q = true;
+inline bool route_q_default() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return false;
+#else
+    return g_route_q;
+#endif
+}
 struct RouteP {
     int experts, topk;
+    bool two = route_q_default();
+    // Two stages. Order: a before b when a > b, or a == b and a's index is lower (a strict total order on non-NaN
+    // floats). Stage 1: each lane's rank among its sub-group's 32 scores (broadcasts); the topk best of every
+    // sub-group are the candidates (a slot each in local memory). Stage 2: each candidate's rank among the
+    // candidates (loaded 32 at a time, broadcast). Every element that comes before a global top-k element is itself
+    // global top-k, so it is a candidate: a top-k element's rank among the candidates is its global rank; any other
+    // element has the k global best before it, all candidates, so its candidate rank is >= k too. A NaN score in any
+    // sub-group: RouteP's loop (below). Needs experts % 32 == 0, experts <= 512, a work-group of >= experts items,
+    // topk * experts / 32 <= 96 and 1,248 floats of local memory (RouteP's 2 * 512 + 6, then candidates and flags).
+    [[gnu::always_inline]] inline void run_two(sycl::nd_item<1> it, const float *logits, const float *bias,
+                                               uint32_t *ids, float *prob, float *lm) const {
+        float *lsb = lm + experts, *lp = lm + 2 * experts;
+        float *cv = lm + 1040;
+        int *ci = reinterpret_cast<int *>(lm + 1136);
+        int *nanf = reinterpret_cast<int *>(lm + 1232);
+        const int i = (int)it.get_local_linear_id();
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+        const bool live = sgi * 32 < experts;
+        if (i < topk) lp[i] = prob[i]; // RouteNorm reads what is there for a rank nobody took (NaN scores)
+        float v = 0, s0 = 0;
+        if (live) {
+            s0 = sycl::sqrt(sycl::log1p(sycl::exp(logits[i])));
+            v = s0 + bias[i];
+            lsb[i] = v;
+        }
+        int r1 = 0;
+        if (live) {
+#pragma unroll
+            for (int k = 0; k < 32; ++k) {
+                const float w = sycl::select_from_group(sg, v, k);
+                r1 += (w > v || (w == v && k < lane)) ? 1 : 0;
+            }
+        }
+        const bool anynan = live && sycl::any_of_group(sg, sycl::isnan(v));
+        if (lane == 0) nanf[sgi] = anynan ? 1 : 0;
+        const bool cand = live && r1 < topk;
+        if (cand) {
+            cv[sgi * topk + r1] = v;
+            ci[sgi * topk + r1] = i;
+        }
+        sycl::group_barrier(it.get_group());
+        int nan_any = 0;
+        for (int k = 0; k < (int)(it.get_local_range(0) / 32); ++k) nan_any |= nanf[k];
+        if (live) {
+            int rank = 0;
+            if (nan_any) {
+                for (int jb = 0; jb < experts; jb += 32) {
+                    const float u = lsb[jb + lane];
+#pragma unroll
+                    for (int k = 0; k < 32; ++k) {
+                        const float w = sycl::select_from_group(sg, u, k);
+                        rank += (w > v || (w == v && jb + k < i)) ? 1 : 0;
+                    }
+                }
+            } else {
+                const int nc = experts / 32 * topk;
+                for (int jb = 0; jb < nc; jb += 32) {
+                    const bool in = jb + lane < nc;
+                    const float u = in ? cv[jb + lane] : 0.0f;
+                    const int ui = in ? ci[jb + lane] : 0;
+#pragma unroll
+                    for (int k = 0; k < 32; ++k) {
+                        const float w = sycl::select_from_group(sg, u, k);
+                        const int wi = sycl::select_from_group(sg, ui, k);
+                        rank += (jb + k < nc && (w > v || (w == v && wi < i))) ? 1 : 0;
+                    }
+                }
+            }
+            if ((nan_any || cand) && rank < topk) {
+                ids[rank] = (uint32_t)i;
+                lp[rank] = s0;
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        if (i < topk) {
+            float sum = 0;
+            for (int t = 0; t < topk; ++t) sum += lp[t];
+            prob[i] = lp[i] / (sum + 1e-20f) * 1.5f;
+        }
+    }
     void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, uint32_t *ids, float *prob,
                     float *lm) const {
+        if (two && experts % 32 == 0 && experts <= 512 && (int)it.get_local_range(0) >= experts &&
+            topk * (experts / 32) <= 96 && topk <= 32)
+            return run_two(it, logits, bias, ids, prob, lm);
         float *ls = lm, *lsb = lm + experts, *lp = lm + 2 * experts;
         const int i = (int)it.get_local_linear_id();
         if (i < topk) lp[i] = prob[i]; // RouteNorm reads what is there for a rank nobody took (NaN scores)
