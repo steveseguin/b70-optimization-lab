@@ -525,6 +525,16 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_SKDOTS")) be.mt_skdots = (unsigned)atoi(e);  // dot rows as SkDotsWM<K> (8 or 4)
         if (be.mt_skdots && be.mt_skdots != 4 && be.mt_skdots != 8) die("OWN_MT_SKDOTS: 0, 4 or 8");
         if (const char *e = getenv("OWN_MT_SKDOTS_MIN")) be.mt_skdots_min = (unsigned)atoi(e); // OWN_MT_SKDOTS from m tokens on
+        // skn-1 (off by default; each a bit-identical form): the one-token path's one-work-group norms per token of a
+        // block. OWN_MT_SKNORM=mask: 1 5,120 norms alone, 2 pre-norm + SKDOTS rows in one launch, 4 q_a + kv norms,
+        // 8 compressor pools (ratio 2), 16 compressor 512 norm (ratio 1); 31 = all. OWN_MT_SKNORM_MIN / _MAX: block sizes
+        // (MAX, default 64, limits bits 1, 2 and 16 only)
+        if (const char *e = getenv("OWN_MT_SKNORM")) be.mt_sknorm = (unsigned)atoi(e);
+        if (be.mt_sknorm > 31) die("OWN_MT_SKNORM: a mask of 1, 2, 4, 8, 16");
+        if (const char *e = getenv("OWN_MT_SKNORM_MIN")) be.mt_sknorm_min = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_SKNORM_MAX")) be.mt_sknorm_max = (unsigned)atoi(e);
+        // skn-1 (off by default; the same values): the block's HcPostPrePM with the item index split by work-group
+        if (const char *e = getenv("OWN_MT_HCPP")) be.mt_hcpp = atoi(e) != 0;
         // the check path's fixed cost (ckpath-1; each a bit-identical form; CK1, KVPAIR, FIN_QB, RING_ONE, DR_NOWAIT on by
         // default since tg90 (=0: off), KVPAIR / FIN_QB only for blocks of <= OWN_MT_MS_MAX=16 tokens)
         if (const char *e = getenv("OWN_CK1")) be.ck1 = atoi(e) != 0;                     // a one-token check as the plain step

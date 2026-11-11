@@ -139,6 +139,37 @@ int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own lau
 unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
 unsigned mt_skdots_min = 2;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (2 since tg91)
+// ---- skn-1 (2026-11-11; off by default, each a bit-identical form): the one-token path's one-work-group norms
+// (smallk) for the m tokens of a block, one work-group per token (ops41sycl::SkNormWM / SkNormPairWM / SkNormDotsWM /
+// SkCompressPoolWM). OWN_MT_SKNORM=mask: 1 the 5,120 norms that run alone (pre-norms beside riding or SKDOTS dot rows,
+// the head's output norm) as SkNormWM<5120, 16>; 2 where OWN_MT_SKDOTS runs: the pre-norm and its SkDotsWM rows in one
+// launch (SkNormDotsWM); 4 the q_a + kv norms where they run alone (OWN_MT_FIN_QB / OWN_MT_DSPLIT) as SkNormPairWM;
+// 8 the compressor's ratio-2 pools as SkCompressPoolWM; 16 the compressor's ratio-1 512 norm as SkNormWM<512, 2>.
+// Where a bit is off, or the norm launch also carries other rows, the production launch runs unchanged.
+unsigned mt_sknorm = 0;
+// OWN_MT_SKNORM_MIN / _MAX: only in blocks of min .. max tokens. MAX limits bits 1, 2 and 16 only (bench_skn: these
+// per-token norms lose from ~96 tokens, where the production rows fill the card better); bits 4 and 8 win at every
+// block size measured (to 256 tokens) and take only MIN
+unsigned mt_sknorm_min = 1, mt_sknorm_max = 64;
+bool skn_on(unsigned bit) const {
+    const bool capped = (bit & (1u | 2u | 16u)) != 0;
+    return (mt_sknorm & bit) && mt_small && (unsigned)mt_n >= mt_sknorm_min &&
+           (!capped || (unsigned)mt_n <= mt_sknorm_max);
+}
+// OWN_MT_SKNORM bit 1: a block's 5,120 norm (x -> y, token strides xs / ys) as SkNormWM<5120, 16>; false: not taken
+// (the caller runs the production rows)
+bool skn_norm5(int c, const float *x, const float *w, float *y, size_t xs, size_t ys) {
+    if (!skn_on(1) || g.h != 5120 || !al16(x) || !al16(w) || !al16(y) || x == y || xs % 4 || ys % 4) return false;
+    launch_wgl<32>(c, (size_t)mt_n, 512, ops41sycl::SkNormWM<5120, 16>{(unsigned)mt_n, xs, ys}, x, w, y);
+    return true;
+}
+// OWN_MT_HCPP=1 (skn-1, off by default; the same values): the block's HcPostPrePM launches as HcPostPrePMG (the item
+// index split by work-group instead of a 64-bit division of the global id)
+bool mt_hcpp = false;
+template <typename... A> void hcpp_launch(int c, const ops41sycl::HcPostPrePM<Act> &k, A... args) {
+    if (mt_hcpp && k.h % 64 == 0) launch(c, (size_t)k.m * (size_t)k.h, 64, ops41sycl::HcPostPrePMG<Act>{k}, args...);
+    else launch(c, (size_t)k.m * (size_t)k.h, 64, k, args...);
+}
 // ---- the check path's fixed cost (ckpath-1, 2026-11-11; every switch off by default, each a bit-identical form)
 bool ck1 = true;          // OWN_CK1 (default on since tg90; =0: off): a check of the anchor alone (no guesses) runs as the one-token step (tpm_card_step1)
 unsigned mt_ride_min = 0; // OWN_MT_RIDE_MIN=m: OWN_MT_RIDE only in blocks of at least m tokens (smaller: dots in the norms' launches)
@@ -886,8 +917,12 @@ void tpm_publish(int L, int c, int si, bool yarn) {
     size_t pstep;  // positions between them
     gemv_m(c, p + "attn_compressor_kv.weight", b.xn, g.h, b.cw, hd);
     if (cr_of(L) == 1) {
-        rows_launch(c, tokr(ops41sycl::NormRows<512, 2>{b.cw, wp<float>(c, p + "attn_compressor_norm.weight"), b.latent},
-                            hd, hd));
+        const float *cnw = wp<float>(c, p + "attn_compressor_norm.weight");
+        if (skn_on(16) && hd == 512 && al16(b.cw) && al16(cnw) && al16(b.latent) && b.cw != b.latent) // (OWN_MT_SKNORM bit 16)
+            launch_wgl<4>(c, (size_t)M, 64, ops41sycl::SkNormWM<512, 2>{(unsigned)M, hd, hd}, (const float *)b.cw, cnw,
+                          (float *)b.latent);
+        else
+            rows_launch(c, tokr(ops41sycl::NormRows<512, 2>{b.cw, cnw, b.latent}, hd, hd));
         np = (unsigned)M;
         gpos0 = pos;
         pstep = 1;
@@ -910,8 +945,12 @@ void tpm_publish(int L, int c, int si, bool yarn) {
             qs[c].memcpy(sc[c].score_state + so, psc[c][si] + (size_t)M * hd, hd * 4);
         }
         if (!np) return;
-        launch_wgs<1024>(c, np, 32, ops41sycl::CompressPoolPM<Act>{{2, g.hd}, t0, np}, (const float *)pkv[c][si],
-                         (const float *)psc[c][si], wp<float>(c, p + "attn_compressor_norm.weight"), b.latent);
+        if (skn_on(8) && g.hd == 512) // OWN_MT_SKNORM bit 8: SkCompressPoolW per pooled row (the same outputs)
+            launch_wgs<1024>(c, np, 512, ops41sycl::SkCompressPoolWM<Act>{{2, g.hd}, t0, np}, (const float *)pkv[c][si],
+                             (const float *)psc[c][si], wp<float>(c, p + "attn_compressor_norm.weight"), b.latent);
+        else
+            launch_wgs<1024>(c, np, 32, ops41sycl::CompressPoolPM<Act>{{2, g.hd}, t0, np}, (const float *)pkv[c][si],
+                             (const float *)psc[c][si], wp<float>(c, p + "attn_compressor_norm.weight"), b.latent);
         gpos0 = pos + t0 - 1;
         pstep = 2;
     }
@@ -1197,6 +1236,23 @@ void tpm_layer(int L, int c) {
         if (mt_skdots == 4) launch_wgl<64>(c, (size_t)nt * 25, 512, ops41sycl::SkDotsWM<4>{nt, H4, FS}, sv, fn, out);
         else launch_wgl<64>(c, (size_t)nt * 25, 512, ops41sycl::SkDotsWM<8>{nt, H4, FS}, sv, fn, out);
     };
+    // OWN_MT_SKNORM bit 2 (with skd): the pre-norm (x -> y, all M tokens) and skmix's SkDotsWM rows (the same tokens,
+    // streams, fn rows and partials pointers) in one launch, SkNormDotsWM; false: not taken (norm launch + skmix)
+    auto sknd = [&](const float *x, const std::string &wn, float *y, const std::string &prefix, unsigned xr,
+                    const unsigned *t0, const unsigned *t1) {
+        if (!skd || !skn_on(2) || HC_SEG != 8) return false;
+        const float *w = wp<float>(c, wn);
+        if (!al16(x) || !al16(w) || !al16(y) || x == y) return false;
+        const unsigned u0 = dsp ? t0[c] : 0u, nt = dsp ? t1[c] - t0[c] : (unsigned)M;
+        const float *sv = (const float *)strm[c] + u0 * H4, *fn = wp<float>(c, prefix + "fn.weight");
+        double *out = (dsp ? (double *)(xarena[c] + xr) : b.d25) + u0 * FS;
+        const size_t ng = (size_t)M + (size_t)nt * 25;
+        if (mt_skdots == 4)
+            launch_wgl<64>(c, ng, 512, ops41sycl::SkNormDotsWM<4>{(unsigned)M, nt, H, H, H4, FS}, x, w, y, sv, fn, out);
+        else
+            launch_wgl<64>(c, ng, 512, ops41sycl::SkNormDotsWM<8>{(unsigned)M, nt, H, H, H4, FS}, x, w, y, sv, fn, out);
+        return true;
+    };
     // OWN_MT_DSPLIT: a mix's finish for every token from the gathered partials (production's finish rows; only the
     // partials pointer differs), and whether it rides in the launch of matrix wn
     auto fmix = [&](const std::string &prefix, unsigned xr, float *pre, float *post, float *comb) {
@@ -1237,13 +1293,18 @@ void tpm_layer(int L, int c) {
         if (!mx_ready[c])
             launch(c, (size_t)M * H, 32, ops41sycl::HcPreAM<Act>{g.h, (unsigned)M, H4, 4, H}, (const act_t *)strm[c],
                    (const float *)b.cur_pre, b.x);
-        if (ride || skd) // the dot rows ride in q_a's launch below (OWN_MT_SKDOTS: their own launch)
-            rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H));
-        else
-            rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
-                               tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H),
-                               dmix(p + "hc_attn_", xdsA, dA0, dA1)});
-        if (skd) skmix(p + "hc_attn_", xdsA, dA0, dA1);
+        if (sknd(b.x, p + "attn_norm.weight", b.xn, p + "hc_attn_", xdsA, dA0, dA1)) {
+            // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
+        } else {
+            if (ride || skd) { // the dot rows ride in q_a's launch below (OWN_MT_SKDOTS: their own launch)
+                if (!skn_norm5(c, b.x, wp<float>(c, p + "attn_norm.weight"), b.xn, H, H))
+                    rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H));
+            } else
+                rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
+                                   tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H),
+                                   dmix(p + "hc_attn_", xdsA, dA0, dA1)});
+            if (skd) skmix(p + "hc_attn_", xdsA, dA0, dA1);
+        }
     } else {
         for (int t = 0; t < M; ++t) {
             tok_set(c, t);
@@ -1277,9 +1338,17 @@ void tpm_layer(int L, int c) {
     const bool fin_qb = mt_small && mt_fin_qb && (unsigned)M <= mt_ms_max && wgt[c].at(p + "attn_q_b.weight").packed &&
                         (!mt_tgw_rows || qbr1 - qbr0 < mt_tgw_rows);
     if (mt_small && (fin_qb || dsp)) { // both norms (OWN_MT_DSPLIT: the finish after the output-a pull)
-        using R = ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>;
-        rows_launch(c, R{tokr(N1{b.qa, wp<float>(c, p + "attn_q_a_norm.weight"), b.qn}, g.qrank, g.qrank),
-                         tokr(N2{b.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), b.kvn}, g.hd, g.hd)});
+        const float *wq = wp<float>(c, p + "attn_q_a_norm.weight"), *wk = wp<float>(c, p + "attn_kv_a_norm.weight");
+        // OWN_MT_SKNORM bit 4: SkNormPairW per token (SkNormPairWM), its conditions as the one-token path's
+        if (skn_on(4) && g.qrank == 1280 && g.hd == 512 && al16(b.qa) && al16(b.qn) && al16(b.kv) && al16(b.kvn) &&
+            al16(wq) && al16(wk) && b.qa != b.qn && b.kv != b.kvn)
+            launch_wgl<16>(c, (size_t)M, 256, ops41sycl::SkNormPairWM{(unsigned)M, (size_t)g.qrank, (size_t)g.qrank,
+                                                                       (size_t)g.hd, (size_t)g.hd},
+                           (const float *)b.qa, wq, (float *)b.qn, (const float *)b.kv, wk, (float *)b.kvn);
+        else {
+            using R = ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>;
+            rows_launch(c, R{tokr(N1{b.qa, wq, b.qn}, g.qrank, g.qrank), tokr(N2{b.kv, wk, b.kvn}, g.hd, g.hd)});
+        }
     } else if (mt_small) { // the mix's finish + both norms
         tok_set(c, 0);
         using R = ops41sycl::RowsPair<FR, ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>>;
@@ -1480,18 +1549,22 @@ void tpm_layer(int L, int c) {
     const int nm = tm1[c] - tm0[c], nd = td1[c] - td0[c];
     bool shared_done = false; // the shared expert's gate + up already ran with the router (route_shared_m)
     if (mt_small) {
-        launch(c, (size_t)M * H, 64, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H},
-               strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
-               (float *)nullptr, (const float *)b.pre_a, b.x);
+        hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H}, // (OWN_MT_HCPP)
+                    strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
+                    (float *)nullptr, (const float *)b.pre_a, b.x);
         if (rd) { // the dot rows ride in the router's launch
-            rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
+            if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
+                rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
             if (dsp && dF0[c] == dF1[c]) // (OWN_MT_DSPLIT, no tokens here: no rows to launch beside the unpacked router)
                 gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
             else
                 gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts, 0, 0, dmix(p + "hc_ffn_", xdsF, dF0, dF1));
         } else {
-            if (skd) { // OWN_MT_SKDOTS: the norm, then the dot rows' own launch
-                rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
+            if (sknd(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", xdsF, dF0, dF1)) {
+                // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
+            } else if (skd) { // OWN_MT_SKDOTS: the norm, then the dot rows' own launch
+                if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
+                    rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
                 skmix(p + "hc_ffn_", xdsF, dF0, dF1);
             } else {
                 rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
@@ -1595,9 +1668,9 @@ void tpm_layer(int L, int c) {
     const bool pp = post_pre_ok() && Ln != 1 && Ln != 14 && (Ln < o.layer_end || o.head);
     if (mt_small) {
         if (pp)
-            launch(c, (size_t)M * H, 64, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 4, 4, 4, H},
-                   strm[c], (const act_t *)b.ob, (const float *)b.post_f, (const float *)b.comb_f,
-                   (const float *)b.pre_f, b.cur_pre, (const float *)b.pre_f, b.x);
+            hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 4, 4, 4, H}, // (OWN_MT_HCPP)
+                        strm[c], (const act_t *)b.ob, (const float *)b.post_f, (const float *)b.comb_f,
+                        (const float *)b.pre_f, b.cur_pre, (const float *)b.pre_f, b.x);
         else
             launch(c, (size_t)M * H, 64, ops41sycl::HcPostPM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 4, 4}, strm[c],
                    (const act_t *)b.ob, (const float *)b.post_f, (const float *)b.comb_f, (const float *)b.pre_f,
@@ -1628,7 +1701,8 @@ void tpm_head_all(int c, bool defer = false) {
     if (!mx_ready[c])
         launch(c, (size_t)M * H, 32, ops41sycl::HcPreAM<Act>{g.h, (unsigned)M, H4, 4, H}, (const act_t *)strm[c],
                (const float *)b.cur_pre, b.x);
-    rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{b.x, wp<float>(c, "output_norm.weight"), b.xn}, H, H));
+    if (!skn_norm5(c, b.x, wp<float>(c, "output_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
+        rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{b.x, wp<float>(c, "output_norm.weight"), b.xn}, H, H));
     const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
     gemv_m(c, "output.weight", b.xn, H, tlogm[c], (size_t)nl);
     if (defer) {

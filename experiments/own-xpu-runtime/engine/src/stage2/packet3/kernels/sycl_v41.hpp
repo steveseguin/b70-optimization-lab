@@ -5196,6 +5196,56 @@ template <unsigned K> struct SkDotsWM {
         SkDotsFF<K>::run(it, sgi, lm, g % 25, streams + t * ss, fn, out + t * os);
     }
 };
+// ---- skn-1 (2026-11-11, OWN_MT_SKNORM; benches /home/steve/dsv41-work/skn/bench_skn.cpp): the one-token path's
+// one-work-group norms for the m tokens of a block, one work-group per token. Work-group t runs exactly the
+// one-token kernel's code (SkNormW's SkNormSplit<N, S>::run, SkNormPairW's operator()) on token t's pointers, the
+// one-token pointers moved by t * the token strides as TokRows / tok_at does; the norm weights are shared. So token
+// t's outputs are that kernel's outputs on token t's inputs: the RmsNormPS chain's scale (SkNormSplit's proof; the
+// chain itself where its check fails) and the production expression w * (x * rs), the same bits as the production
+// block rows RowsP<TokRows<NormRows<N, *>>> (whose rs_fast / chain give the same scale). Not in place (x != y),
+// as the production rows. Every work-group is one whole token, so each barrier inside is reached by all its items.
+// SkNormWM<5120, 16>: launch_wgl<32>(c, m, 512, ...); SkNormWM<512, 2>: launch_wgl<4>(c, m, 64, ...).
+template <unsigned N, unsigned S> struct SkNormWM {
+    unsigned m;
+    size_t xs, ys; // per-token strides of x and y (floats)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y, uint32_t *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m) return; // (whole work-groups; the launch has exactly m)
+        SkNormSplit<N, S>::run(it, it.get_sub_group().get_group_linear_id(), lm, 0, x + t * xs, w, y + t * ys);
+    }
+};
+// SkNormPairW (q_a 1280 + kv 512 norms) per token: launch_wgl<16>(c, m, 256, ...)
+struct SkNormPairWM {
+    unsigned m;
+    size_t qxs, qys, kxs, kys; // per-token strides of qa, qn, kv, kvn (floats)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *qa, const float *wq, float *qn, const float *kv,
+                                     const float *wk, float *kvn, uint32_t *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m) return;
+        SkNormPairW{}(it, qa + t * qxs, wq, qn + t * qys, kv + t * kxs, wk, kvn + t * kys, lm);
+    }
+};
+// the block's 5,120 pre-norm (m tokens) and the SkDotsWM<K> launch beside it (nd tokens) as one launch, the block
+// form of SkNormDotsW: work-groups 0 .. m - 1 = SkNormWM<5120, 16>'s, work-groups m + q = SkDotsWM<K>'s work-group
+// q (token q / 25's row q % 25). The two parts share no buffer: the norm reads x (the collapsed stream) and w and
+// writes y; the dot rows read the streams and the fn rows and write their partials (their inputs are written by the
+// launches before both). Each work-group runs the code it runs in its own launch, so the outputs are the two
+// launches' outputs bit for bit. launch_wgl<64>(c, m + nd * 25, 512, ...)
+template <unsigned K> struct SkNormDotsWM {
+    unsigned m, nd;
+    size_t xs, ys, ss, os; // strides: x, y (floats); streams (floats), partials (doubles)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y, const float *streams,
+                                     const float *fn, double *out, uint32_t *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), sgi = it.get_sub_group().get_group_linear_id();
+        if (g < m) {
+            SkNormSplit<5120, 16>::run(it, sgi, lm, 0, x + g * xs, w, y + g * ys);
+            return;
+        }
+        const unsigned q = g - m, t = q / 25;
+        if (t >= nd) return;
+        SkDotsFF<K>::run(it, sgi, lm, q % 25, streams + t * ss, fn, out + t * os);
+    }
+};
 // CompressPoolP (r = 2, hd = 512) on one work-group of 512 items, one channel per item (launch_local<1024>(c, 512,
 // ...)): the per-channel softmax pool is CompressPoolP's expression (it is per channel already); the RMS
 // statistic's fast sum: one exact term double(t) t per item, the lane xor tree, the 16 partials in a fixed xor tree
@@ -5240,6 +5290,21 @@ template <typename A> struct SkCompressPoolW {
             rs = sycl::bit_cast<float>(lm[2 * NSG]);
         }
         out[i] = A::wr(nw[i] * (a * rs));
+    }
+};
+// skn-1 (OWN_MT_SKNORM bit 8): CompressPoolPM's pools (the block's odd positions) as SkCompressPoolW per pooled row:
+// work-group g runs SkCompressPoolW on state rows t, t + 1 (t = t0 + 2 g), output row g: the one-token kernel's code
+// on CompressPoolPM's pointers, so CompressPoolP's outputs bit for bit (SkCompressPoolW's proof). r = 2, hd = 512
+// (the host checks). launch_wgs<1024>(c, np, 512, ...): 1024 floats of local memory per work-group.
+template <typename A> struct SkCompressPoolWM {
+    SkCompressPoolW<A> k;
+    unsigned t0, np;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *mkv, const float *msc, const float *nw,
+                                     typename A::T *out, float *tmp) const {
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g >= np) return;
+        const size_t t = t0 + 2 * g;
+        k(it, mkv + t * k.hd, msc + t * k.hd, nw, out + (size_t)g * k.hd, tmp);
     }
 };
 // EngramGateW<S> (EngramGateP::run_wg<S>) at h = 5120 with (a) the per-lane term count a constant (the loops
@@ -6446,6 +6511,49 @@ template <typename A> struct HcPostPrePM {
         out[i] = A::wr(acc);
     }
 };
+// skn-1 (OWN_MT_HCPP=1): HcPostPrePM with the item index split by work-group (h % 64 == 0, work-groups of 64 items:
+// token t = group / (h / 64), i = the item's place in the token) instead of a 64-bit division and modulo of the global
+// id (emulated on the card: 1.35 -> 1.04 us at 2 tokens, 8.4 -> 4.6 us at 64, bench_skn). The per-token pointers and
+// every expression are HcPostPrePM's, item (t, i) for item (t, i): the same values. launch(c, m * h, 64, ...)
+template <typename A> struct HcPostPrePMG {
+    HcPostPrePM<A> k;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *x, const float *post,
+                    const float *comb, const float *pre_src, float *pre_dst, const float *mix,
+                    typename A::T *out) const {
+        const int h = k.h;
+        const unsigned gpt = (unsigned)h / 64u, grp = (unsigned)it.get_group_linear_id();
+        const unsigned t = grp / gpt;
+        if (t >= k.m) return;
+        const int i = (int)((grp - t * gpt) * 64u + (unsigned)it.get_local_linear_id());
+        streams += t * k.ss;
+        x += t * k.xs;
+        post += t * k.ps;
+        comb += t * k.cs;
+        if (pre_src) pre_src += t * k.pss;
+        if (pre_dst) pre_dst += t * k.pds;
+        mix += t * k.mxs;
+        out += t * k.os;
+        // HcPostPreP's expressions
+        if (pre_dst && i < 4) pre_dst[i] = pre_src[i];
+        float o[4];
+        for (int kk = 0; kk < 4; ++kk) o[kk] = A::rd(streams[(size_t)kk * h + i]);
+        const float xi = A::rd(x[i]);
+        float r[4];
+        for (int j = 0; j < 4; ++j) {
+            float acc = post[j] * xi;
+            for (int kk = 0; kk < 4; ++kk) acc += comb[kk * 4 + j] * o[kk];
+            r[j] = acc;
+        }
+        typename A::T sv[4];
+        for (int j = 0; j < 4; ++j) {
+            sv[j] = A::wr(r[j]);
+            streams[(size_t)j * h + i] = sv[j];
+        }
+        float acc = 0;
+        for (int j = 0; j < 4; ++j) acc += mix[j] * A::rd(sv[j]);
+        out[i] = A::wr(acc);
+    }
+};
 // HcPostP for m tokens (HcPostP's expressions)
 template <typename A> struct HcPostPM {
     int h;
@@ -7362,7 +7470,6 @@ struct ExpertGroupM {
         if (li == 0) grp[0] = nu;
     }
 };
-
 // Per-format decode of one packed row for the expert-major kernels (used by RoutedU only). fill() = the
 // original kernel's table fill; the constructor = its per-lane constants; load() = its per-row words and
 // scales; decode(sg, blk, v) = v[g] for the 8 element groups g of block blk, the value the original
