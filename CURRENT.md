@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**November 11, 2026 12:36-12:48 EST — card 5 (e3) copy-engine fault, our software; recovered, probe passed.**
+- A helper's queued one-card bench started in the ~1.5 s gap while one six-card gate (tg96) handed the cards to the
+  next (tg96b), was stopped 0.8 s later when the gate came back, and its in-flight copy read freed memory ("Engine
+  memory CAT error [18]: class=bcs", 12:36:24). The dead context kept card 5's copy engine busy (bcs0 in
+  MI_SEMAPHORE_WAIT), so tg96b's first run hung; stopped by pid at 12:47:30, the driver reset card 5's GT itself
+  (12:47:35), and the six-card health probe passed (barrier + all-reduce). Evidence:
+  /home/steve/dsv41-work/faults/fault-20261111T1236/. Fix: helpers start GPU work only after the cards have been
+  free for 3 minutes, and never kill a running GPU job when a gate appears (card-share-README.txt). tg96b restarted
+  12:48.
+
 **November 11, 2026 ~11:57 EST — DeepSeek V4.1: build tp96 + six-card check tg96 (~2 h) started.**
 - tp95's check (tg95 / tg95b): every answer the same. Check rows (`OWN_MT_CK`) +0.5-1 % guessing; the q_b offload
   gave nothing and is closed (the four light cards became the slow ones); the one-launch attention was not exact
