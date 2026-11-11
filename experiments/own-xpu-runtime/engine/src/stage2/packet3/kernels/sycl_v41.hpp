@@ -16,6 +16,8 @@
 #include "stage2/packet2/kernels/math.hpp"
 #include "stage2/packet3/kernels/ops_v41.hpp"
 #include <sycl/ext/oneapi/experimental/prefetch.hpp>
+#include <sycl/ext/oneapi/experimental/annotated_ptr/annotated_ptr.hpp>
+#include <sycl/ext/intel/experimental/cache_control_properties.hpp>
 
 namespace ops41sycl {
 using iq3::Type;
@@ -2674,6 +2676,27 @@ template <unsigned R, unsigned T>
     const unsigned j = lane / T, t = lane % T;
     if (lane < R * T && r0 + j < rows && t < mt) y[t * ys + r0 + j] = a[0];
 }
+// OWN_MT_CK=1 (own_run_v41; default off): the guessing checks' blocks (2 .. 6 tokens) take WsTab's check picks
+// (WsPicks k2 .. k6, pa/ck bench_ck 2026-11-11: card 2's check shapes, cold weights, bit for bit the one-token
+// rows) where one is set; off: tg90's picks (c2 .. c6)
+inline bool g_ws_ck = false;
+// a WS form's weight loads (WsF PF / 10): 0 = sub-group block reads; 1 = per-lane loads, L1 uncached (L3 cached),
+// so the streaming weights stop evicting the T tokens' activations from L1 (the same values)
+template <unsigned H> struct WsLd {
+    template <typename V> [[gnu::always_inline]] static inline V at(const V *p, size_t i) {
+        if constexpr (H == 1) {
+            namespace sx = sycl::ext::oneapi::experimental;
+            namespace ix = sycl::ext::intel::experimental;
+            sx::annotated_ptr<V, decltype(sx::properties{ix::read_hint<ix::cache_control<ix::cache_mode::uncached, sx::cache_level::L1>>})>
+                a{const_cast<V *>(p)};
+            return a[(std::ptrdiff_t)i];
+        } else return p[i];
+    }
+    [[gnu::always_inline]] static inline uint32_t words(sycl::sub_group sg, unsigned lane, const uint32_t *p) {
+        if constexpr (H == 0) return sg_bload(sg, p);
+        else return at(p, lane);
+    }
+};
 // Q8_0 packed rows (GemvQ8P's layout). rowt<T, R, XW, LOOP>: rows r0 .. r0 + R - 1 (a row past `rows` reads row r0
 // and is not stored), tokens x + t * xs -> y + t * ys, t < T (t >= mt computed, not stored).
 //   XW: quant words per activation block read (2: vec8 = 256 columns)
@@ -2706,7 +2729,7 @@ template <unsigned C> struct WsQ8 {
                 for (unsigned j = 0; j < R; ++j) sum[j * T + t] = sum[j * T + t] + e[j][i] * xv[i];
         }
     }
-    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP>
+    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0>
     [[gnu::always_inline]] inline void rowt(sycl::sub_group sg, unsigned lane, unsigned r0, const uint8_t *w,
                                             const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
         constexpr unsigned NQ = C / 4, ND = (C + 31) / 32;
@@ -2719,14 +2742,16 @@ template <unsigned C> struct WsQ8 {
 #pragma unroll
         for (unsigned i = 0; i < R * T; ++i) sum[i] = 0;
         if constexpr (LOOP == 0) {
-            constexpr unsigned SEGQ = Q8Seg<C>::v; // quant words loaded ahead
+            // quant words loaded ahead (PF % 10 = 5: all of the rows', 6: half; else Q8Seg's)
+            constexpr unsigned SEGQ = PF % 10 == 5 ? NQ : PF % 10 == 6 && NQ % 2 == 0 && (NQ / 2) % XW == 0 ? NQ / 2 : Q8Seg<C>::v;
+            using LD = WsLd<PF / 10>;
             static_assert(NQ % SEGQ == 0 && SEGQ % XW == 0);
             float dv[R][ND];
 #pragma unroll
             for (unsigned j = 0; j < R; ++j) {
                 const uint16_t *dp = reinterpret_cast<const uint16_t *>(rowp[j] + (size_t)C * 32);
 #pragma unroll
-                for (unsigned k = 0; k < ND; ++k) dv[j][k] = 32 * k + lane < C ? iq3::half(dp[32 * k + lane]) : 0.0f;
+                for (unsigned k = 0; k < ND; ++k) dv[j][k] = 32 * k + lane < C ? iq3::half(LD::at(dp, 32 * k + lane)) : 0.0f;
             }
 #pragma unroll
             for (unsigned s0 = 0; s0 < NQ; s0 += SEGQ) {
@@ -2735,7 +2760,7 @@ template <unsigned C> struct WsQ8 {
                 for (unsigned j = 0; j < R; ++j)
 #pragma unroll
                     for (unsigned m = 0; m < SEGQ; ++m)
-                        q[j][m] = sg_bload(sg, reinterpret_cast<const uint32_t *>(rowp[j]) + (size_t)(s0 + m) * 32);
+                        q[j][m] = LD::words(sg, lane, reinterpret_cast<const uint32_t *>(rowp[j]) + (size_t)(s0 + m) * 32);
 #pragma unroll
                 for (unsigned m0 = 0; m0 < SEGQ; m0 += XW) {
                     const unsigned c0 = (s0 + m0) * 4; // 4 * XW chunks never cross a 32-chunk scale register
@@ -2795,11 +2820,12 @@ template <unsigned C> struct WsQ8 {
 template <unsigned NB> struct WsQ6 {
     unsigned rows, xn;
     static constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
-    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP>
+    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0>
     [[gnu::always_inline]] inline void rowt(sycl::sub_group sg, unsigned lane, unsigned r0, const uint8_t *w,
                                             const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
         static_assert(XW == 1 && LOOP == 0);
-        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = KSeg<NB>::v;
+        constexpr unsigned NS = NB * 16, NSR = (NS + 31) / 32, SEG = PF % 10 == 5 ? NB : KSeg<NB>::v; // PF % 10 = 5: every block's words first
+        using LD = WsLd<PF / 10>;
         static_assert(NB % SEG == 0);
         const float *xr = xn ? x + (size_t)(r0 / xn) * NB * 256 : x;
         const uint32_t *ql[R];
@@ -2828,8 +2854,8 @@ template <unsigned NB> struct WsQ6 {
             for (unsigned j = 0; j < R; ++j)
 #pragma unroll
                 for (unsigned m = 0; m < SEG; ++m) {
-                    qa[j][m] = sg_bload(sg, ql[j] + (size_t)(s0 + m) * 32);
-                    qb[j][m] = qh[j][(size_t)(s0 + m) * 32 + lane];
+                    qa[j][m] = LD::words(sg, lane, ql[j] + (size_t)(s0 + m) * 32);
+                    qb[j][m] = LD::at(qh[j], (size_t)(s0 + m) * 32 + lane);
                 }
 #pragma unroll
             for (unsigned m = 0; m < SEG; ++m) {
@@ -2865,11 +2891,12 @@ template <unsigned NB> struct WsQ6 {
 template <unsigned NB> struct WsQ5 {
     unsigned rows, xn;
     static constexpr size_t RB = ((size_t)NB * 176 + 15) & ~(size_t)15;
-    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP>
+    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0>
     [[gnu::always_inline]] inline void rowt(sycl::sub_group sg, unsigned lane, unsigned r0, const uint8_t *w,
                                             const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
         static_assert(XW == 1 && LOOP == 0);
-        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = KSeg<NB>::v;
+        constexpr unsigned NG = NB * 8, NGR = (NG + 31) / 32, SEG = PF % 10 == 5 ? NB : KSeg<NB>::v; // PF % 10 = 5: every block's words first
+        using LD = WsLd<PF / 10>;
         static_assert(NB % SEG == 0);
         const float *xr = xn ? x + (size_t)(r0 / xn) * NB * 256 : x;
         const uint32_t *qs[R];
@@ -2902,8 +2929,8 @@ template <unsigned NB> struct WsQ5 {
             for (unsigned j = 0; j < R; ++j)
 #pragma unroll
                 for (unsigned m = 0; m < SEG; ++m) {
-                    qa[j][m] = sg_bload(sg, qs[j] + (size_t)(s0 + m) * 32);
-                    qb[j][m] = qh[j][(size_t)(s0 + m) * 32 + lane];
+                    qa[j][m] = LD::words(sg, lane, qs[j] + (size_t)(s0 + m) * 32);
+                    qb[j][m] = LD::at(qh[j], (size_t)(s0 + m) * 32 + lane);
                 }
 #pragma unroll
             for (unsigned m = 0; m < SEG; ++m) {
@@ -2935,7 +2962,7 @@ template <unsigned NB> struct WsQ5 {
 };
 // position p = (row block p / ng, token group p % ng), as DenseRowsGR; the last group's tokens past mt are computed
 // on the buffers' spare rows and not stored
-template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP> struct DenseRowsWS {
+template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0> struct DenseRowsWS {
     W k; // WsQ8 / WsQ6 / WsQ5: rows and xn (xn % R == 0)
     const uint8_t *w;
     const float *x;
@@ -2946,7 +2973,7 @@ template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP> struct
     unsigned n() const { return (k.rows + R - 1) / R * ng; }
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned p) const {
         const unsigned r0 = p / ng * R, t0 = (p % ng) * T;
-        k.template rowt<T, R, XW, LOOP>(sg, lane, r0, w, x + t0 * xs, xs, y + t0 * ys, ys, mt - t0);
+        k.template rowt<T, R, XW, LOOP, PF>(sg, lane, r0, w, x + t0 * xs, xs, y + t0 * ys, ys, mt - t0);
     }
 };
 // the weight-stationary kernel of a packed dense kernel (void: none) and its format / columns
@@ -2954,15 +2981,23 @@ template <typename DK> struct WsOf { using type = void; static constexpr unsigne
 template <unsigned C, typename A> struct WsOf<GemvQ8P<C, A>> { using type = WsQ8<C>; static constexpr unsigned fmt = 8, cols = 32 * C; };
 template <unsigned NB, typename A> struct WsOf<GemvQ6KP<NB, A>> { using type = WsQ6<NB>; static constexpr unsigned fmt = 6, cols = 256 * NB; };
 template <unsigned NB, typename A> struct WsOf<GemvQ5KP<NB, A>> { using type = WsQ5<NB>; static constexpr unsigned fmt = 5, cols = 256 * NB; };
-// a form: T tokens x R rows per sub-group, XW (Q8_0), LOOP (Q8_0); id 0 = the engine's form
-template <unsigned T, unsigned R, unsigned XW = 1, unsigned LOOP = 0> struct WsF {
-    static constexpr unsigned t = T, r = R, xw = XW, loop = LOOP, id = T | R << 8 | XW << 12 | LOOP << 14;
+// a form: T tokens x R rows per sub-group, XW (Q8_0), LOOP (Q8_0), PF (WsQ8 / WsQ6 / WsQ5 rowt); id 0 = the
+// engine's form
+template <unsigned T, unsigned R, unsigned XW = 1, unsigned LOOP = 0, unsigned PF = 0> struct WsF {
+    static constexpr unsigned t = T, r = R, xw = XW, loop = LOOP, pf = PF, id = T | R << 8 | XW << 12 | LOOP << 14 | PF << 16;
 };
 template <typename... Fs> struct WsList {};
+// a pair form (WS_PAIR): the first matrix's rows in FA, the second's in FB; ID: WsTab::pair's id
+template <typename FA, typename FB, unsigned ID> struct WsPF {
+    using a = FA;
+    using b = FB;
+    static constexpr unsigned id = ID;
+};
 // the launch a dense matrix runs in: alone (dense_m), with the stream mix's dot rows (dense_m's rider: q_a with
 // OWN_MT_RIDE), or as the shared expert's gate + up pair in the router's launch (route_shared_m, OWN_MT_RFUSE; rows:
 // one matrix's)
-enum : unsigned { WS_PLAIN = 0, WS_DOTS = 1, WS_SHARED = 2 };
+// WS_PAIR (OWN_MT_CK): q_a's and kv's rows in one launch (gemv_pair_m), WsTab::pair(ra, rb, mt)
+enum : unsigned { WS_PLAIN = 0, WS_DOTS = 1, WS_SHARED = 2, WS_PAIR = 3 };
 // block-size classes: 2 .. 6 (the guessing checks) as themselves, 9-16 -> 16, 17-32 -> 32, 33-64 -> 64,
 // 65-128 -> 128, 129-256 -> 256; 1, 7, 8: none (the engine's forms)
 constexpr unsigned ws_cls(unsigned mt) {
@@ -2978,21 +3013,22 @@ constexpr unsigned ws_cls(unsigned mt) {
 // WsTab<format, columns, launch kind>: forms = every form pick() can return; pick(rows on the card, tokens).
 template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsTab {
     using forms = WsList<>;
-    static constexpr unsigned pick(unsigned, unsigned) { return 0; }
+    static unsigned pick(unsigned, unsigned) { return 0; }
 };
 // one form id per block-size class (ws_cls): the checks' 2 .. 6 tokens, prompt blocks of 9-16, 17-32, 33-64,
 // 65-128 and 129-256 tokens (0: the engine's form). A prompt class takes a form only where the bench measured it
 // at least 3 % faster at every size tried in the class (9 / 12 / 16, 17 / 24 / 32, 33 / 48 / 64, 65 / 96 / 128,
 // 129 / 192 / 256): the class's first size is a T-form's worst case (a group of mostly spare tokens)
+// k2 .. k6: the checks' picks under OWN_MT_CK=1 (0: c2 .. c6)
 struct WsPicks {
-    unsigned c2, c3, c4, c5, c6, c16, c32, c64, c128, c256;
-    constexpr unsigned at(unsigned mt) const {
+    unsigned c2, c3, c4, c5, c6, c16, c32, c64, c128, c256, k2 = 0, k3 = 0, k4 = 0, k5 = 0, k6 = 0;
+    unsigned at(unsigned mt) const {
         switch (ws_cls(mt)) {
-        case 2: return c2;
-        case 3: return c3;
-        case 4: return c4;
-        case 5: return c5;
-        case 6: return c6;
+        case 2: return g_ws_ck && k2 ? k2 : c2;
+        case 3: return g_ws_ck && k3 ? k3 : c3;
+        case 4: return g_ws_ck && k4 ? k4 : c4;
+        case 5: return g_ws_ck && k5 ? k5 : c5;
+        case 6: return g_ws_ck && k6 ? k6 : c6;
         case 16: return c16;
         case 32: return c32;
         case 64: return c64;
@@ -3023,6 +3059,31 @@ using WfK5R1 = WsF<5, 1>;
 using WfK5R2 = WsF<5, 2>;
 using WfK6R1 = WsF<6, 1>;
 using WfK6R2 = WsF<6, 2>;
+// the guessing checks' forms (OWN_MT_CK; pa/ck bench_ck): PF 5 = every quant word first, 15 = + L1-uncached weights
+using WfC3R4 = WsF<3, 4, 2, 0, 0>;
+using WfC5R4x1 = WsF<5, 4, 1, 0, 0>;
+using WfC6R4x1 = WsF<6, 4, 1, 0, 0>;
+using WfC2R1P5 = WsF<2, 1, 2, 0, 5>;
+using WfC3R1P5 = WsF<3, 1, 2, 0, 5>;
+using WfC1R1x1 = WsF<1, 1, 1, 0, 0>;
+using WfC2R1x1 = WsF<2, 1, 1, 0, 0>;
+using WfC1R1 = WsF<1, 1, 2, 0, 0>;
+using WfC1R2P5 = WsF<1, 2, 2, 0, 5>;
+using WfC2R2P5 = WsF<2, 2, 2, 0, 5>;
+using WfC2R1P15 = WsF<2, 1, 2, 0, 15>;
+using WfC3R2P15 = WsF<3, 2, 2, 0, 15>;
+constexpr unsigned C3R4 = WfC3R4::id, C5R4x1 = WfC5R4x1::id, C6R4x1 = WfC6R4x1::id, C2R1P5 = WfC2R1P5::id,
+                   C3R1P5 = WfC3R1P5::id, C2R1x1 = WfC2R1x1::id, C1R1x1 = WfC1R1x1::id, C1R1 = WfC1R1::id,
+                   C1R2P5 = WfC1R2P5::id, C2R2P5 = WfC2R2P5::id, C2R1P15 = WfC2R1P15::id, C3R2P15 = WfC3R2P15::id;
+using WfD2R1P5 = WsF<2, 1, 1, 0, 5>;
+using WfD3R1P5 = WsF<3, 1, 1, 0, 5>;
+using WfD2R1P10 = WsF<2, 1, 1, 0, 10>;
+using WfD2R2P10 = WsF<2, 2, 1, 0, 10>;
+using WfD4R2P10 = WsF<4, 2, 1, 0, 10>;
+using WfD5R2P10 = WsF<5, 2, 1, 0, 10>;
+using WfD3R2P15 = WsF<3, 2, 1, 0, 15>;
+constexpr unsigned D2R1P5 = WfD2R1P5::id, D3R1P5 = WfD3R1P5::id, D2R1P10 = WfD2R1P10::id, D4R2P10 = WfD4R2P10::id,
+                   D5R2P10 = WfD5R2P10::id, D3R2P15 = WfD3R2P15::id;
 constexpr unsigned X16R2 = WfX16R2::id, X8R2L = WfX8R2L::id, X4R4 = WfX4R4::id, K16R2 = WfK16R2::id,
                    K8R2 = WfK8R2::id, K4R2 = WfK4R2::id;
 // Tables (card 2 of six, 12 heads; us per launch, engine -> table form, cold weights). The engine: tg87 BEST
@@ -3032,8 +3093,13 @@ constexpr unsigned X16R2 = WfX16R2::id, X8R2L = WfX8R2L::id, X4R4 = WfX4R4::id, 
 // 16 tokens 99.6 -> 47.2, 256: 1562 -> 637 (2.45x; every class >= 1.66x); checks 27.0 -> 18.0, 27.2 -> 23.8,
 // 37.0 -> 26.9, 49.3 -> 29.5, 49.3 -> 32.6
 template <> struct WsTab<8, 1280, WS_PLAIN> {
-    using forms = WsList<WfX16R2, WfX2R4, WfX3R1, WfX4R4, WfX5R1, WfX6R1>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    using forms = WsList<WfX16R2, WfX2R4, WfX3R1, WfX4R4, WfX5R1, WfX6R1, WfC3R4, WfC5R4x1, WfC6R4x1>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK, 8,192 rows (a 16-head card at checks; us per launch, SEQ / cold): 3: 27.3 / 29.8 -> 27.2 / 27.9,
+        // 4: 29.3 / 30.3 -> 28.4 / 29.8, 5: 31.9 / 36.6 -> 31.8 / 32.6, 6: 34.7 / 40.4 -> 33.8 / 34.7
+        if (rows > 6144 && rows <= 8192)
+            return WsPicks{WfX2R4::id, WfX3R1::id, WfX4R4::id, WfX5R1::id, WfX6R1::id, X16R2, X16R2, X16R2, X16R2, X16R2,
+                           0, C3R4, WfX2R4::id, C5R4x1, C6R4x1}.at(mt);
         if (rows >= 4096 && rows <= 8192)
             return WsPicks{WfX2R4::id, WfX3R1::id, WfX4R4::id, WfX5R1::id, WfX6R1::id, X16R2, X16R2, X16R2, X16R2, X16R2}.at(mt);
         return 0;
@@ -3043,7 +3109,7 @@ template <> struct WsTab<8, 1280, WS_PLAIN> {
 // q_a 17-32 >= 1.18x, 33-64 >= 1.18x, 65-128 >= 1.49x, 256: 1418 -> 580; kv 17-128 >= 1.10x, 256: 544 -> 239
 template <> struct WsTab<8, 5120, WS_PLAIN> {
     using forms = WsList<WfX8R2L, WfX4R4>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    static unsigned pick(unsigned rows, unsigned mt) {
         if (rows == 1280 || rows == 512) return WsPicks{0, 0, 0, 0, 0, 0, X8R2L, X8R2L, X8R2L, X4R4}.at(mt);
         return 0;
     }
@@ -3052,7 +3118,7 @@ template <> struct WsTab<8, 5120, WS_PLAIN> {
 // 65-128 >= 1.46x, 256: 2282 -> 1501
 template <> struct WsTab<8, 5120, WS_DOTS> {
     using forms = WsList<WfX4R4>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    static unsigned pick(unsigned rows, unsigned mt) {
         if (rows == 1280) return WsPicks{0, 0, 0, 0, 0, 0, 0, X4R4, X4R4, X4R4}.at(mt);
         return 0;
     }
@@ -3060,9 +3126,11 @@ template <> struct WsTab<8, 5120, WS_DOTS> {
 // the shared expert's gate + up (384 + 384 rows) in the router's launch: 16: 38.5 -> 37.1 (9-16 >= 1.03x), 17-32
 // kept (17: 0.77x), 33-64 >= 1.37x, 65-128 >= 1.60x, 256: 857 -> 352
 template <> struct WsTab<8, 5120, WS_SHARED> {
-    using forms = WsList<WfX8R2L, WfX4R4>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows == 384) return WsPicks{0, 0, 0, 0, 0, X8R2L, 0, X8R2L, X8R2L, X4R4}.at(mt);
+    using forms = WsList<WfX8R2L, WfX4R4, WfC1R1, WfC1R2P5, WfC2R1P5, WfC3R1P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (SEQ / cold): 2: 9.5 / 11.9 -> 9.5 / 10.7, 3: 11.5 / 15.9 -> 10.2 / 14.1, 4: 10.6 / 14.9 -> 10.1 / 14.1,
+        // 5: 12.6 / 18.0 -> 10.9 / 16.8, 6: 12.6 / 18.1 -> 11.2 / 17.0
+        if (rows == 384) return WsPicks{0, 0, 0, 0, 0, X8R2L, 0, X8R2L, X8R2L, X4R4, C1R1, C2R1P5, C2R1P5, C3R1P5, C3R1P5}.at(mt);
         return 0;
     }
 };
@@ -3070,8 +3138,11 @@ template <> struct WsTab<8, 5120, WS_SHARED> {
 // 17-64 >= 1.11x, 65-128 >= 1.47x, 256: 871 -> 357; 768 rows 16: 1.35x, 17-32 >= 1.08x, 33-64 >= 1.29x, 256: 2.44x;
 // half a group (512) 9-16 kept (0.85-0.93x), 17-32 >= 1.25x, 33-64 >= 1.15x, 256: 436 -> 179
 template <> struct WsTab<8, 4096, WS_PLAIN> {
-    using forms = WsList<WfX4R4, WfX8R2L>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    using forms = WsList<WfX4R4, WfX8R2L, WfC1R2P5, WfC3R1P5, WfC2R2P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK, two groups (2,048 rows; SEQ / cold): 2: 19.3 / 20.7 -> 17.4 / 17.8, 3: 19.1 / 20.6 -> 16.8 / 18.9,
+        // 4: 22.5 / 27.1 -> 17.6 / 20.3, 5: 25.5 / 33.9 -> 20.6 / 29.0, 6: 25.5 / 33.8 -> 20.7 / 28.9
+        if (rows > 1024 && rows <= 2048) return WsPicks{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, C1R2P5, C3R1P5, C2R2P5, C3R1P5, C3R1P5}.at(mt);
         if (rows > 896 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, X4R4, X8R2L, X8R2L, X4R4, X4R4}.at(mt);
         if (rows > 639 && rows <= 896) return WsPicks{0, 0, 0, 0, 0, X4R4, X4R4, X8R2L, X4R4, X4R4}.at(mt);
         if (rows >= 384 && rows <= 639) return WsPicks{0, 0, 0, 0, 0, 0, X4R4, X8R2L, X4R4, X4R4}.at(mt);
@@ -3080,17 +3151,22 @@ template <> struct WsTab<8, 4096, WS_PLAIN> {
 };
 // Q8_0 output-b (8,192 columns, ~864 rows; engine G8 R2): 9-32 kept (<= 1.02x), 33-128 >= 1.09x, 256: 877 -> 657
 template <> struct WsTab<8, 8192, WS_PLAIN> {
-    using forms = WsList<WfX8R2L, WfX4R4>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows >= 768 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, 0, 0, X8R2L, X8R2L, X4R4}.at(mt);
+    using forms = WsList<WfX8R2L, WfX4R4, WfC1R1x1, WfC2R1P5, WfC3R2P15>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (864 rows; SEQ / cold): 2: 16.2 / 17.2 -> 16.0 / 16.7, 3: 16.9 / 24.6 -> 16.2 / 21.8,
+        // 4: 17.9 / 22.6 -> 16.2 / 21.8, 5: 21.0 / 28.8 -> 19.7 / 24.7, 6: 20.9 / 28.6 -> 19.8 / 24.7
+        if (rows >= 768 && rows <= 1024)
+            return WsPicks{0, 0, 0, 0, 0, 0, 0, X8R2L, X8R2L, X4R4, C1R1x1, C2R1P5, C2R1P5, C3R2P15, C3R2P15}.at(mt);
         return 0;
     }
 };
 // Q8_0 shared down (2,304 columns, ~864 rows; engine G4 R2): 16: 23.3 -> 15.7, every class >= 1.35x, 256: 313 -> 195
 template <> struct WsTab<8, 2304, WS_PLAIN> {
-    using forms = WsList<WfX4R4>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows >= 768 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, X4R4, X4R4, X4R4, X4R4, X4R4}.at(mt);
+    using forms = WsList<WfX4R4, WfC2R1x1, WfC2R2P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (864 rows; SEQ / cold): 2: 6.7 / 7.6 -> 5.6 / 7.3, 3: 7.0 / 9.9 -> 6.8 / 8.2, 4: 8.2 / 9.8 -> 6.8 / 8.1,
+        // 5: 10.3 / 12.6 -> 7.5 / 9.9, 6: 10.3 / 12.6 -> 7.5 / 9.9
+        if (rows >= 768 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, X4R4, X4R4, X4R4, X4R4, X4R4, C2R1x1, C2R2P5, C2R2P5, C2R2P5, C2R2P5}.at(mt);
         return 0;
     }
 };
@@ -3098,7 +3174,7 @@ template <> struct WsTab<8, 2304, WS_PLAIN> {
 // >= 1.55x; checks 30.2 -> 18.3, 33.8 -> 22.1, 48.2 -> 24.8, 48.1 -> 27.6, 48.1 -> 29.5
 template <> struct WsTab<6, 1280, WS_PLAIN> {
     using forms = WsList<WfK16R2, WfK2R4, WfK3R1, WfK4R1, WfK5R1, WfK6R1>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    static unsigned pick(unsigned rows, unsigned mt) {
         if (rows >= 4096 && rows <= 8192)
             return WsPicks{WfK2R4::id, WfK3R1::id, WfK4R1::id, WfK5R1::id, WfK6R1::id, K16R2, K16R2, K16R2, K16R2, K16R2}.at(mt);
         return 0;
@@ -3108,11 +3184,13 @@ template <> struct WsTab<6, 1280, WS_PLAIN> {
 // 256: 945 -> 758; kv (512) 9-128 >= 1.09x, 256: 386 -> 306. The head (>= 16,384 rows; checks only, engine G R4):
 // 320 -> 177, 299 -> 193, 326 -> 211, 385 -> 232, 385 -> 262
 template <> struct WsTab<6, 5120, WS_PLAIN> {
-    using forms = WsList<WfK4R2, WfK8R2, WfK16R2, WfK2R1, WfK3R2, WfK5R2, WfK6R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    using forms = WsList<WfK4R2, WfK8R2, WfK16R2, WfK2R1, WfK3R2, WfK5R2, WfK6R2, WfD2R1P5, WfD3R1P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
         if (rows == 1280) return WsPicks{0, 0, 0, 0, 0, K4R2, K4R2, K4R2, K16R2, K8R2}.at(mt);
         if (rows == 512) return WsPicks{0, 0, 0, 0, 0, K4R2, K4R2, K4R2, K4R2, K8R2}.at(mt);
-        if (rows >= 16384) return WsPicks{WfK2R1::id, WfK3R2::id, K4R2, WfK5R2::id, WfK6R2::id, 0, 0, 0, 0, 0}.at(mt);
+        // OWN_MT_CK, the head (SEQ / cold): 2: 173.0 / 179.6 -> 163.4 / 169.0, 3: 187.7 / 192.9 -> 170.4 / 173.9 (4-6 kept)
+        if (rows >= 16384)
+            return WsPicks{WfK2R1::id, WfK3R2::id, K4R2, WfK5R2::id, WfK6R2::id, 0, 0, 0, 0, 0, D2R1P5, D3R1P5}.at(mt);
         return 0;
     }
 };
@@ -3120,7 +3198,7 @@ template <> struct WsTab<6, 5120, WS_PLAIN> {
 // 54.9 -> 50.2; prompt 16: 121 -> 111, every class >= 1.08x, 256: 1857 -> 1659
 template <> struct WsTab<6, 5120, WS_DOTS> {
     using forms = WsList<WfK2R1, WfK3R1, WfK5R2, WfK6R2, WfK4R2, WfK8R2, WfK16R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    static unsigned pick(unsigned rows, unsigned mt) {
         if (rows == 1280) return WsPicks{WfK2R1::id, WfK3R1::id, 0, WfK5R2::id, WfK6R2::id, K4R2, K4R2, K8R2, K16R2, K16R2}.at(mt);
         return 0;
     }
@@ -3129,8 +3207,12 @@ template <> struct WsTab<6, 5120, WS_DOTS> {
 // >= 1.22x, 256: 619 -> 470, checks 3: 20.6 -> 14.3, 5: 24.3 -> 22.1 (2 / 4 / 6 kept); 768 rows every class
 // >= 1.26x; 512 rows every class >= 1.14x
 template <> struct WsTab<6, 4096, WS_PLAIN> {
-    using forms = WsList<WfK3R2, WfK5R2, WfK4R2, WfK8R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    using forms = WsList<WfK3R2, WfK5R2, WfK4R2, WfK8R2, WfK6R2, WfD2R1P5, WfD4R2P10, WfD5R2P10>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK, two groups (2,048 rows; SEQ / cold): 2: 24.8 / 29.2 -> 14.8 / 16.2, 3: 17.5 / 25.9 -> 15.4 / 17.8,
+        // 4: 23.2 / 28.1 -> 18.0 / 22.5, 5: 28.0 / 46.1 -> 19.0 / 24.3, 6: 28.8 / 46.4 -> 21.8 / 33.2
+        if (rows > 1024 && rows <= 2048)
+            return WsPicks{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, D2R1P5, WfK3R2::id, D4R2P10, D5R2P10, WfK6R2::id}.at(mt);
         if (rows > 896 && rows <= 1024) return WsPicks{0, WfK3R2::id, 0, WfK5R2::id, 0, K4R2, K4R2, K8R2, K8R2, K8R2}.at(mt);
         if (rows > 639 && rows <= 896) return WsPicks{0, 0, 0, 0, 0, K8R2, K4R2, K8R2, K8R2, K8R2}.at(mt);
         if (rows >= 384 && rows <= 639) return WsPicks{0, 0, 0, 0, 0, K4R2, K4R2, K4R2, K8R2, K8R2}.at(mt);
@@ -3141,36 +3223,71 @@ template <> struct WsTab<6, 4096, WS_PLAIN> {
 // checks 3: 66.9 -> 26.6, 5: 73.1 -> 41.9, 6: 73.0 -> 46.4 (2 / 4 kept)
 template <> struct WsTab<6, 8192, WS_PLAIN> {
     using forms = WsList<WfK3R2, WfK5R2, WfK6R2, WfK8R2, WfK4R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows >= 768 && rows <= 1024) return WsPicks{0, WfK3R2::id, 0, WfK5R2::id, WfK6R2::id, K8R2, K8R2, K4R2, K8R2, K8R2}.at(mt);
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (SEQ / cold): 6: 24.5 / 46.4 -> 23.3 / 27.8
+        if (rows >= 768 && rows <= 1024)
+            return WsPicks{0, WfK3R2::id, 0, WfK5R2::id, WfK6R2::id, K8R2, K8R2, K4R2, K8R2, K8R2, 0, 0, 0, 0, WfK3R2::id}.at(mt);
         return 0;
     }
 };
 // Q6_K engram_kv (6,144 columns, ~4,266 rows; engine G R4, at 9-15 tokens G4): checks 85.4 -> 57.9, 108 -> 65.9,
 // 107 -> 72.2, 136 -> 94.8, 136 -> 99.4; 16: 246 -> 162, 9-64 >= 1.22x, 65-128 >= 1.36x, 129-256 kept (<= 1.01x)
 template <> struct WsTab<6, 6144, WS_PLAIN> {
-    using forms = WsList<WfK2R2, WfK3R2, WfK4R2, WfK5R2, WfK6R2, WfK8R2, WfK16R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
+    using forms = WsList<WfK2R2, WfK3R2, WfK4R2, WfK5R2, WfK6R2, WfK8R2, WfK16R2, WfD2R1P5, WfD3R1P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (SEQ / cold): 2: 54.7 / 57.9 -> 46.7 / 52.1, 3: 57.4 / 65.7 -> 48.2 / 53.6, 6: 76.6 / 100.3 -> 76.6 / 78.9
+        // (4, 5 kept: 5 loses 1-4 % in SEQ)
         if (rows >= 4096 && rows <= 4608)
-            return WsPicks{WfK2R2::id, WfK3R2::id, K4R2, WfK5R2::id, WfK6R2::id, K8R2, K8R2, K8R2, K16R2, 0}.at(mt);
+            return WsPicks{WfK2R2::id, WfK3R2::id, K4R2, WfK5R2::id, WfK6R2::id, K8R2, K8R2, K8R2, K16R2, 0,
+                           D2R1P5, D3R1P5, 0, 0, D3R1P5}.at(mt);
         return 0;
     }
 };
 // Q5_K shared gate + up (384 + 384 rows) in the router's launch (engine G4, checks G1 at 2 tokens): 16: 86.6 -> 40.6,
 // every class >= 1.53x, 256: 918 -> 490; check 2: 15.2 -> 13.0 (3-6 kept)
 template <> struct WsTab<5, 5120, WS_SHARED> {
-    using forms = WsList<WfK2R1, WfK4R2, WfK8R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows == 384) return WsPicks{WfK2R1::id, 0, 0, 0, 0, K8R2, K4R2, K8R2, K8R2, K8R2}.at(mt);
+    using forms = WsList<WfK2R1, WfK4R2, WfK8R2, WfK3R2>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (SEQ / cold): 3: 15.9 / 31.7 -> 10.6 / 15.2, 4: 11.9 / 16.1 -> 10.5 / 15.3, 5: 17.6 / 35.6 -> 16.4 / 19.0,
+        // 6: 17.8 / 35.7 -> 16.5 / 19.1 (2 kept)
+        if (rows == 384)
+            return WsPicks{WfK2R1::id, 0, 0, 0, 0, K8R2, K4R2, K8R2, K8R2, K8R2, 0, WfK2R1::id, WfK2R1::id, WfK3R2::id,
+                           WfK3R2::id}.at(mt);
         return 0;
     }
 };
 // Q5_K shared down (2,304 columns, ~864 rows; engine G4): 16: 43.9 -> 19.1, every class >= 1.72x, 256: 499 -> 241
 template <> struct WsTab<5, 2304, WS_PLAIN> {
-    using forms = WsList<WfK8R2>;
-    static constexpr unsigned pick(unsigned rows, unsigned mt) {
-        if (rows >= 768 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, K8R2, K8R2, K8R2, K8R2, K8R2}.at(mt);
+    using forms = WsList<WfK8R2, WfK2R1, WfD2R1P10, WfD3R2P15>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        // OWN_MT_CK (864 rows; SEQ / cold): 2: 6.7 / 8.3 -> 5.5 / 8.0, 4: 9.1 / 10.7 -> 7.4 / 10.0, 5: 10.4 / 12.8 -> 8.5 / 10.8,
+        // 6: 10.4 / 12.8 -> 8.5 / 10.8 (3 kept)
+        if (rows >= 768 && rows <= 1024)
+            return WsPicks{0, 0, 0, 0, 0, K8R2, K8R2, K8R2, K8R2, K8R2, D2R1P10, 0, WfK2R1::id, D3R2P15, D3R2P15}.at(mt);
         return 0;
+    }
+};
+// OWN_MT_CK: the q_a + kv pair launch (1,280 + 512 rows, gemv_pair_m) at checks in WS forms, one launch (pa/ck
+// bench_ck; us per launch, tp92's DenseRowsG pair -> this, SEQ / cold): 2: 20.9 / 22.3 -> 18.3 / 18.8,
+// 3: 20.7 / 22.6 -> 18.8 / 20.2, 4: 23.8 / 27.8 -> 21.2 / 25.2, 5: 30.0 / 34.7 -> 23.5 / 30.0, 6: 30.0 / 34.6 -> 23.4 / 30.1
+template <> struct WsTab<8, 5120, WS_PAIR> {
+    using forms = WsList<WsPF<WfC2R1P5, WfC1R2P5, 1>, WsPF<WfC3R1P5, WfC1R2P5, 2>, WsPF<WfC2R1P5, WfC2R1P5, 3>,
+                         WsPF<WfC3R1P5, WfC2R1P5, 4>>;
+    static unsigned pick(unsigned, unsigned) { return 0; }
+    static unsigned pair(unsigned ra, unsigned rb, unsigned mt) {
+        if (!g_ws_ck || ra != 1280 || rb != 512) return 0;
+        return mt == 2 ? 1 : mt == 3 ? 2 : mt == 4 ? 3 : mt == 5 || mt == 6 ? 4 : 0;
+    }
+};
+// OWN_MT_CK: the Q6_K q_a + kv pair (SEQ / cold): 2: 21.1 / 23.9 -> 17.5 / 19.4, 3: 19.2 / 34.1 -> 17.8 / 21.2,
+// 5: 35.2 / 52.4 -> 29.3 / 32.0, 6: 35.6 / 52.7 -> 30.6 / 35.9 (4 kept: 0.92x in SEQ). With OWN_MT_RIDE=1 the dot
+// rows ride q_a below OWN_MT_SKDOTS_MIN and WS_DOTS's q_a forms refuse the pair first (the separate launches stay)
+template <> struct WsTab<6, 5120, WS_PAIR> {
+    using forms = WsList<WsPF<WfD2R2P10, WfD2R2P10, 1>, WsPF<WfK3R2, WfK3R2, 2>, WsPF<WfD5R2P10, WfD2R2P10, 3>>;
+    static unsigned pick(unsigned, unsigned) { return 0; }
+    static unsigned pair(unsigned ra, unsigned rb, unsigned mt) {
+        if (!g_ws_ck || ra != 1280 || rb != 512) return 0;
+        return mt == 2 ? 1 : mt == 3 || mt == 6 ? 2 : mt == 5 ? 3 : 0;
     }
 };
 // ws_rows<DK, KIND>: f(DenseRowsWS rows) when WsTab picks a form for this launch; false: none (the engine's form).
@@ -3189,13 +3306,43 @@ inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, f
             using FM = decltype(fm);
             if (FM::id != id || dk.xn % FM::r || (mt + FM::t - 1) / FM::t * FM::t > cap) return false;
             using WK = typename O::type;
-            f(DenseRowsWS<WK, FM::t, FM::r, FM::xw, FM::loop>{WK{dk.rows, dk.xn}, w, x, xs, y, ys, mt,
-                                                               (mt + FM::t - 1) / FM::t});
+            f(DenseRowsWS<WK, FM::t, FM::r, FM::xw, FM::loop, FM::pf>{WK{dk.rows, dk.xn}, w, x, xs, y, ys, mt,
+                                                                        (mt + FM::t - 1) / FM::t});
             return true;
         });
     }
 }
 
+// ws_pair_rows (OWN_MT_CK): f(RowsPair<A, B>) with the first matrix's rows (dka: ra rows, xn 0) in WsTab WS_PAIR's
+// FA and the second's (rb rows) in FB when WsTab::pair picks a pair form; false: none (gemv_pair_m's DenseRowsG pair).
+// cap: as ws_rows
+template <typename DK, typename F>
+inline bool ws_pair_rows(const DK &dka, unsigned rb, const uint8_t *wa, const uint8_t *wb, const float *x, size_t xs,
+                         float *ya, size_t ysa, float *yb, size_t ysb, unsigned mt, unsigned cap, F &&f) {
+    using O = WsOf<DK>;
+    if constexpr (O::fmt == 0) return false;
+    else {
+        using Tab = WsTab<O::fmt, O::cols, WS_PAIR>;
+        if constexpr (!requires { Tab::pair(0u, 0u, 0u); }) return false;
+        else {
+            const unsigned id = Tab::pair(dka.rows, rb, mt);
+            if (!id || dka.xn) return false;
+            return ws_each(typename Tab::forms{}, [&](auto pf) {
+                using PF = decltype(pf);
+                using FA = typename PF::a;
+                using FB = typename PF::b;
+                if (PF::id != id || (mt + FA::t - 1) / FA::t * FA::t > cap || (mt + FB::t - 1) / FB::t * FB::t > cap)
+                    return false;
+                using WK = typename O::type;
+                using A = DenseRowsWS<WK, FA::t, FA::r, FA::xw, FA::loop, FA::pf>;
+                using B = DenseRowsWS<WK, FB::t, FB::r, FB::xw, FB::loop, FB::pf>;
+                f(RowsPair<A, B>{A{WK{dka.rows, 0}, wa, x, xs, ya, ysa, mt, (mt + FA::t - 1) / FA::t},
+                                 B{WK{rb, 0}, wb, x, xs, yb, ysb, mt, (mt + FB::t - 1) / FB::t}});
+                return true;
+            });
+        }
+    }
+}
 // F32 rows (no packing; rows are 16-byte aligned when cols % 4 == 0): lane l
 // sums w[k] * x[k], k = l, l + 32, ... ascending (GemvT<F32> order), C chunks.
 template <unsigned C, typename A> struct GemvF32P {

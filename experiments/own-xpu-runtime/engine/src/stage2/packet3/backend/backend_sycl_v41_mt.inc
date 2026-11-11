@@ -132,13 +132,13 @@ long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push
 // the expert-act pulls as XchgPull2's second region, and every card then runs every token's finish from the
 // gathered partials. A token's partials are HcDotsRows's rows (SkDotsWM's with OWN_MT_SKDOTS) on that token's
 // streams, which every card holds alike: the same code on the same inputs, run on one card instead of on all six.
-unsigned mt_dsplit_min = 2;  // OWN_MT_DSPLIT_MIN=m: only in blocks of at least m tokens (2 since tg91: checks too)
+unsigned mt_dsplit_min = 4;  // OWN_MT_DSPLIT_MIN=m: only in blocks of at least m tokens (4 since tune92: checks of 4-6 too; 2 loses at 2-3)
 int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own launches after the pulls (0), as riders
                              // in output-b's and shared down's launches (1), or 2 (default): 1 unless OWN_MT_WS (with a
                              // rider dense_m skips the weight-stationary forms, which have no WS_DOTS entries there)
 unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
-unsigned mt_skdots_min = 2;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (2 since tg91)
+unsigned mt_skdots_min = 4;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (4 since tune92)
 // ---- skn-1 (2026-11-11; off by default, each a bit-identical form): the one-token path's one-work-group norms
 // (smallk) for the m tokens of a block, one work-group per token (ops41sycl::SkNormWM / SkNormPairWM / SkNormDotsWM /
 // SkCompressPoolWM). OWN_MT_SKNORM=mask: 1 the 5,120 norms that run alone (pre-norms beside riding or SKDOTS dot rows,
@@ -146,7 +146,7 @@ unsigned mt_skdots_min = 2;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least 
 // launch (SkNormDotsWM); 4 the q_a + kv norms where they run alone (OWN_MT_FIN_QB / OWN_MT_DSPLIT) as SkNormPairWM;
 // 8 the compressor's ratio-2 pools as SkCompressPoolWM; 16 the compressor's ratio-1 512 norm as SkNormWM<512, 2>.
 // Where a bit is off, or the norm launch also carries other rows, the production launch runs unchanged.
-unsigned mt_sknorm = 0;
+unsigned mt_sknorm = 15; // default 15 (bits 1, 2, 4, 8) since tg93 (+3.3-3.5 % guessing); =0: off
 // OWN_MT_SKNORM_MIN / _MAX: only in blocks of min .. max tokens. MAX limits bits 1, 2 and 16 only (bench_skn: these
 // per-token norms lose from ~96 tokens, where the production rows fill the card better); bits 4 and 8 win at every
 // block size measured (to 256 tokens) and take only MIN
@@ -163,9 +163,9 @@ bool skn_norm5(int c, const float *x, const float *w, float *y, size_t xs, size_
     launch_wgl<32>(c, (size_t)mt_n, 512, ops41sycl::SkNormWM<5120, 16>{(unsigned)mt_n, xs, ys}, x, w, y);
     return true;
 }
-// OWN_MT_HCPP=1 (skn-1, off by default; the same values): the block's HcPostPrePM launches as HcPostPrePMG (the item
+// OWN_MT_HCPP (skn-1, default on since tg93, =0: off; the same values): the block's HcPostPrePM launches as HcPostPrePMG (the item
 // index split by work-group instead of a 64-bit division of the global id)
-bool mt_hcpp = false;
+bool mt_hcpp = true;
 template <typename... A> void hcpp_launch(int c, const ops41sycl::HcPostPrePM<Act> &k, A... args) {
     if (mt_hcpp && k.h % 64 == 0) launch(c, (size_t)k.m * (size_t)k.h, 64, ops41sycl::HcPostPrePMG<Act>{k}, args...);
     else launch(c, (size_t)k.m * (size_t)k.h, 64, k, args...);
@@ -591,6 +591,20 @@ bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std:
             if (ops41sycl::WsTab<O::fmt, O::cols, KA>::pick(nra, mt) ||
                 ops41sycl::WsTab<O::fmt, O::cols, ops41sycl::WS_PLAIN>::pick(nrb, mt))
                 return;
+            // OWN_MT_CK: both matrices' rows in check forms (WsTab WS_PAIR), still one launch, the rider first
+            if (ops41sycl::ws_pair_rows(dk, nrb, wpa, wpb, x, xs, ya, ysa, yb, ysb, mt, MTA, [&](const auto &pr) {
+                    using P = std::decay_t<decltype(pr)>;
+                    if constexpr (std::is_same_v<RD, ops41sycl::NoRows>) {
+                        launch_rows<0>(c, pr.n(), 0, ops41sycl::RowsP<P>{pr});
+                    } else {
+                        using PR = ops41sycl::RowsPair<RD, P>;
+                        const PR rp{rider, pr};
+                        launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<PR>{rp});
+                    }
+                })) {
+                ok = true;
+                return;
+            }
         }
         auto split = [&](auto gc) {
             constexpr unsigned G = decltype(gc)::value;
@@ -1429,7 +1443,14 @@ void tpm_layer(int L, int c) {
         const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
         const size_t WS = (size_t)g.qh * 640;
         const int32_t *ix = (const int32_t *)b.idxs_cat;
-        if (n_idx == 128) {
+        // OWN_ATT_T: one launch (SparseOutF, at the output below) or score tiles + the output with the softmax
+        // (blocks of up to OWN_ATT_T_M_MAX tokens, OUT_C on)
+        const bool att2 = o.att_t && o.att_out_c && (unsigned)M <= o.att_t_m_max;
+        const bool att1 = att2 && att_f_on(nh, n_idx, (unsigned)M);
+        if (att1) {
+        } else if (att2) {
+            score_t(c, nh, n_idx, W, (unsigned)M, Q, WS, (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
+        } else if (n_idx == 128) {
             const unsigned gpt = (unsigned)(nh * n_idx / 32);
             launch_sg(c, (size_t)M * gpt,
                       ops41sycl::ScoreM<ops41sycl::SparseScoreP<512>>{{n_idx, nh, W, g.hd}, gpt, (unsigned)M, Q, 640, WS},
@@ -1467,7 +1488,14 @@ void tpm_layer(int L, int c) {
         // OWN_ATT_OUT_C: blocks of up to 8 tokens only (guess checks); from 12 tokens on (prompt reading, 16) the
         // 32 KiB of local memory per work-group leaves too few of them resident and OutM<JB> is faster (round18 s5:
         // 16 heads, 640 slots: M = 1..6 15.8-20.9 us vs 23.3-29.6, M = 8 24.3 vs 24.4, M = 16 44.9 vs 30.8)
-        if (o.att_out_c && M <= 8) {
+        if (att1) {
+            out_f<128, false>(c, nh, n_idx, W, (unsigned)M, Q, WS, (const act_t *)(b.q + qo), (uint16_t *)kvw, kvc,
+                              (int32_t *)ix, (const act_t *)nullptr, (const int32_t *)nullptr, (int32_t *)nullptr, 0, 0,
+                              sinks, b.attn_w, b.of + qo, (float *)(b.obuf + qo), cbm, sbm);
+        } else if (att2) {
+            out_je<128>(c, nh, n_idx, W, true, (unsigned)M, Q, WS, kvw, kvc, ix, sinks, (const float *)b.attn_w, b.of + qo,
+                        (float *)(b.obuf + qo), cbm, sbm);
+        } else if (o.att_out_c && M <= 8) {
             using SC = ops41sycl::SparseOutJC<512, 16, 128>;
             SC so{n_idx, nh, W};
             so.ry = (float *)(b.obuf + qo);
@@ -1910,10 +1938,12 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     tp_join();
     mt_n = 0;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
-    for (int c = 0; c < o.tp; ++c)
+    for (int c = 0; c < o.tp; ++c) {
         if (xerr[c][0])
             throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                      std::to_string((int)xerr[c][0] - 1));
+        if (xerr[c][1]) throw std::runtime_error("card " + pci[c] + ": attention (one launch) timed out waiting for its score tiles");
+    }
     const int32_t next = o.head && !skip_head ? tp_argmax() : -1;
     pos += mt;
     return next;

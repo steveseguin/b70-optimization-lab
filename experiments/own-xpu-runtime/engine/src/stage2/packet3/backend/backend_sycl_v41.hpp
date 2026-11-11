@@ -46,6 +46,7 @@
 #include <ctime>
 #include <condition_variable>
 #include <cxxabi.h>
+#include <deque>
 #include <fcntl.h>
 #include <fstream>
 #include <map>
@@ -64,6 +65,8 @@
 #include "stage2/packet3/kernels/pack_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_r2.hpp" // routed expert kernels, bitwise production's (r2)
+#include "stage2/packet3/kernels/sycl_v41_attn.hpp" // sparse attention in one or two launches, bitwise production's (attn a1)
+#include "stage2/packet3/kernels/sycl_v41_qboff.hpp" // query-b rows of the 16-head cards from their neighbours (qb-off-1)
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
 #include <level_zero/ze_api.h>
@@ -258,6 +261,11 @@ public:
         bool tp_heads_dr = false; // ... the DSpark draft's stages too (OWN_TP_HEADS_DR=1; else whole groups)
         unsigned tp_heads_min = 0; // ... only for blocks of at least this many tokens (OWN_TP_HEADS_MIN=m > 1; the
                                 // others keep whole groups): every card holds the q_b / output-a rows of both
+        unsigned qb_off = 0;    // tp one-token steps (qb-off-1, OWN_QB_OFF=k, 0 = off): each 16-head card's two light
+                                // neighbours compute k of its query-b heads (the same per-row code and rope) and
+                                // push them into its s.q; it runs only the other 16 - 2k heads' rows and waits for
+                                // the pushes in its query rope launch (sycl_v41_qboff.hpp). Whole groups only
+        unsigned qb_off_wg = 2; // ... work-groups of each push (OWN_QB_OFF_WG, 1..4; each raises its own flag)
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
@@ -286,6 +294,17 @@ public:
                                 // tg88: traces identical; OWN_ATT_M=0: the old forms)
         unsigned att_m_max = 16; // ... only in blocks of at most this many tokens (OWN_ATT_M_MAX; tg88: the 3K read in
                                  // blocks of 256 301 against 306 tok/s without them)
+        bool att_t = false;     // tp: sparse attention in one or two launches (OWN_ATT_T=1; sycl_v41_attn.hpp, tools/
+                                // bench/bench_attn_a1.cpp), where OWN_ATT_OUT_C runs, not with OWN_PF. One launch
+                                // (SparseOutF: score tiles + the softmax + the output; one token: with the window
+                                // append) where att_f_on says so, else two (SparseScoreT tiles, then SparseOutJE with
+                                // the softmax). The same outputs, rope'd outputs, ring rows and lists bitwise; attn_w
+                                // keeps the raw scores
+        unsigned att_t_m_max = 8; // ... in blocks of at most this many tokens (OWN_ATT_T_M_MAX)
+        unsigned att_t_hg = 8;  // ... two launches: heads per score work-group, 8 or 16 (OWN_ATT_T_HG; 16 builds at
+                                // 256 registers: two register-mode changes)
+        bool att_f = true;      // ... the one-launch form where it is faster (OWN_ATT_F=0: two launches only); its
+                                // registers and tile heads per shape (sycl_v41_attn.hpp att_f_grf / att_f_s8)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
@@ -576,6 +595,19 @@ public:
                     it.bytes = it.prb * nr;
                 }
                 items[t].push_back(it);
+                // OWN_QB_OFF: a helper's copy of the heavy neighbour's query-b rows it computes (when its own
+                // slice does not hold them): the same file rows, packed the same way
+                if (const std::string *xn = qbo_extra(kv.first, t)) {
+                    Item x = it;
+                    x.name = xn;
+                    x.sr0 = (unsigned)(qbo[t].h0 * g.hd), x.sr1 = (unsigned)(qbo[t].h1 * g.hd);
+                    const size_t nx = (size_t)(x.sr1 - x.sr0);
+                    if (!x.packed || e.experts || (long)x.sr1 > e.rows)
+                        throw std::runtime_error("OWN_QB_OFF: query-b rows must be packed: " + kv.first);
+                    x.fbytes = x.rb * nx;
+                    x.bytes = x.prb * nx;
+                    items[t].push_back(x);
+                }
             };
             if (o.tp > 1)
                 for (int t = 0; t < o.tp; ++t) add(t);
@@ -1228,6 +1260,11 @@ private:
     };
     XTail xt[TILES];
     uint32_t *xcnt[TILES] = {};
+    // OWN_ATT_T one launch (SparseOutF): per card, the score tiles finished (device counter, zeroed at start) and
+    // the count the next launch's output work-groups wait for (every earlier launch's tiles + its own; the card's
+    // launches run in order on its queue)
+    uint32_t *attc[TILES] = {};
+    uint32_t attseq[TILES] = {};
     void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int part) {
         xt[c] = {o.xtail && !use_pull(part, nslot), true, off, stride, nslot, r0, r1, part};
     }
@@ -1979,6 +2016,113 @@ private:
             launch_sg(c, (size_t)M * nh, ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<NI>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS},
                       sinks, ix, w);
             return true; } }
+    // OWN_ATT_T (sycl_v41_attn.hpp, attn a1). Two launches: the score in tiles, SparseScoreT<512, 8 | 16> over M
+    // tokens (per-token strides as ScoreM: query Q, list 640, scores WS; win: one token with WindowAppendP's
+    // stores), then the output with the softmax, SparseOutJE<512, n, 16>. One launch: SparseOutF<512, n, win>.
+    unsigned att_t_hg_of(int, unsigned) const { return o.att_t_hg == 16 ? 16 : 8; }
+    // one launch where it was faster on card 3 (bench_attn_a1: 8 / 12 / 16 heads, 128-640 slots, the cache flushed,
+    // between 128-register kernels): one token and blocks of up to 4 always, blocks of 5-8 at 128-160 or 640 slots
+    bool att_f_on(int, int n, unsigned M) const { return o.att_f && (M <= 4 || n <= 160 || n >= 640); }
+    void score_t(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, const act_t *q, const uint16_t *kvw,
+                 const uint16_t *kvc, const int32_t *ix, float *w) {
+        auto go = [&](auto hgc) {
+            using K = ops41sycl::SparseScoreT<512, decltype(hgc)::value>;
+            K k{n, nh, W, g.hd};
+            k.m = M;
+            k.qs = Q;
+            k.is = 640;
+            k.ss = WS;
+            launch_wgl<K::SLM>(c, (size_t)M * K::groups(n, nh), K::WG, k, q, kvw, kvc, ix, w);
+        };
+        if (att_t_hg_of(nh, M) == 8) go(std::integral_constant<unsigned, 8>{});
+        else go(std::integral_constant<unsigned, 16>{});
+    }
+    void score_tw(int c, int nh, int n, int pos, int nc, const act_t *q, uint16_t *rg, const uint16_t *kvc,
+                  const act_t *kv, const int32_t *cidx, int32_t *widx, int32_t *cat, float *w) {
+        auto go = [&](auto hgc) {
+            using K = ops41sycl::SparseScoreT<512, decltype(hgc)::value, true, Act>;
+            K k{n, nh, 128, g.hd};
+            k.start_pos = pos;
+            k.nc = nc;
+            launch_wgl<K::SLM>(c, K::groups(n, nh), K::WG, k, q, rg, kvc, kv, cidx, widx, cat, w);
+        };
+        if (att_t_hg_of(nh, 1) == 8) go(std::integral_constant<unsigned, 8>{});
+        else go(std::integral_constant<unsigned, 16>{});
+    }
+    // ... the output with the softmax in its launch, SparseOutJE<512, n, 16> built for the list's slot count (128 ...
+    // 640, multiples of 32); w: the raw scores; M tokens through OutMJ (strides as OutMC: list 640, scores WS, out
+    // and ry Q) or one token (blk false)
+    template <int NI> void out_je(int c, int nh, int n, int W, bool blk, unsigned M, size_t Q, size_t WS,
+                                  const uint16_t *kvw, const uint16_t *kvc, const int32_t *ix, const float *sinks,
+                                  const float *w, float *out, float *ry, const float *cb, const float *sb) {
+        if constexpr (NI > 640) {
+            throw std::runtime_error("attention: slot count");
+        } else {
+            if (n != NI) return out_je<NI + 32>(c, nh, n, W, blk, M, Q, WS, kvw, kvc, ix, sinks, w, out, ry, cb, sb);
+            using SC = ops41sycl::SparseOutJE<512, NI, 16, true>;
+            SC so{n, nh, W};
+            so.ry = ry;
+            so.cosb = cb;
+            so.sinb = sb;
+            so.sinks = sinks;
+            const unsigned gpo = (unsigned)SC::groups(nh);
+            if (!blk) launch_wgl<SC::SLM>(c, gpo, SC::WG, so, kvw, kvc, ix, w, out);
+            else
+                launch_wgl<SC::SLM>(c, (size_t)M * gpo, SC::WG, ops41sycl::OutMJ<SC>{so, gpo, M, 640, WS, Q, Q}, kvw, kvc,
+                                    ix, w, out);
+        }
+    }
+    // ... one launch: SparseOutF<512, n, WIN, Act, 8 | 16> (WIN: one token with WindowAppendP's work, win 128, cidx /
+    // nc as WindowAppendP's; else M tokens with the lists in ix, window W) at att_f_grf registers. w: the raw scores.
+    // A wait past XSPIN polls stores 1 into xerr[c][1]: the step fails
+    template <int NI, bool WIN> void out_f(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, const act_t *q,
+                                           uint16_t *kvw, const uint16_t *kvc, int32_t *ix, const act_t *kv,
+                                           const int32_t *cidx, int32_t *widx, int pos, int nc, const float *sinks, float *w,
+                                           float *out, float *ry, const float *cb, const float *sb) {
+        if constexpr (NI > 640) {
+            throw std::runtime_error("attention: slot count");
+        } else {
+            if (n != NI)
+                return out_f<NI + 32, WIN>(c, nh, n, W, M, Q, WS, q, kvw, kvc, ix, kv, cidx, widx, pos, nc, sinks, w, out,
+                                           ry, cb, sb);
+            if (WIN && (W != 128 || M != 1)) throw std::runtime_error("attention: one launch with the window append");
+            constexpr unsigned GRF = ops41sycl::att_f_grf<NI, WIN>();
+            auto go = [&](auto shgc) {
+                using K = ops41sycl::SparseOutF<512, NI, WIN, Act, decltype(shgc)::value>;
+                K k{nh, W, g.hd};
+                k.m = M;
+                k.qs = Q;
+                k.is = 640;
+                k.ss = WS;
+                k.os = Q;
+                k.rs = Q;
+                k.start_pos = pos;
+                k.nc = nc;
+                attseq[c] += M * (uint32_t)K::nst(nh);
+                k.target = attseq[c];
+                k.spin = XSPIN;
+                const size_t gr = K::groups(nh, M);
+                uint32_t *cnt = attc[c], *err = xerr[c] + 1;
+                auto e = qs[c].submit([&](sycl::handler &hh) {
+                    sycl::local_accessor<uint32_t, 1> lt(K::SLM, hh);
+                    hh.parallel_for(sycl::nd_range<1>(gr * K::WG, K::WG),
+                                    ops41sycl::SparseOutFK<K, GRF>{k, q, kvw, kvc, ix, kv, cidx, widx, w, out, ry, cb, sb, sinks,
+                                                                   nullptr, cnt, err, lt});
+                });
+                kev(c, kname<K>(), e);
+            };
+            // score tiles of 8 heads where att_f_s8 says so (with the window append: up to 448 slots; blocks: built
+            // both ways up to 384 slots)
+            if constexpr (WIN) {
+                go(std::integral_constant<unsigned, (NI <= 448 ? 8u : 16u)>{});
+            } else if constexpr (NI <= 384) {
+                if (ops41sycl::att_f_s8(NI, false, M)) go(std::integral_constant<unsigned, 8>{});
+                else go(std::integral_constant<unsigned, 16>{});
+            } else {
+                go(std::integral_constant<unsigned, 16>{});
+            }
+        }
+    }
     // config.json compress_ratios, main layers: 0,0, 2 x18, 1 x20 (37-39 are ratio 1)
     int cr_of(int L) const { return L < 2 ? 0 : (L < 20 ? 2 : 1); }
 
@@ -2621,6 +2765,27 @@ private:
     HeadLay hl[3]; // [2]: blocks of >= OWN_TP_HEADS_MIN tokens (== hl[0] unless that is set)
     int qst0[TILES] = {}, qst1[TILES] = {};        // the target's q_b heads held per card (hl[0] and hl[2])
     unsigned ost0[TILES] = {}, ost1[TILES] = {};   // ... and output-a rows
+    // OWN_QB_OFF (qb-off-1): role 1 = a 16-head card that runs only its kept heads [h0, h1) of query-b and receives
+    // the others from its two helpers (from); role 2 = a helper that computes the heads [h0, h1) of card `to` (rows
+    // inside its own attn_q_b slice when own_w, else from its extra copy qbo_wname) and pushes them roped
+    struct QbOff {
+        int role = 0, to = -1, h0 = 0, h1 = 0, from[2] = {-1, -1};
+        bool own_w = false;
+    };
+    QbOff qbo[TILES];
+    size_t xq = 0;                    // arena offset (floats) of s.q while OWN_QB_OFF is on
+    float *qbst[TILES] = {};          // a helper's rows before the push
+    uint32_t qbo_seq[TILES] = {};     // the layers run with OWN_QB_OFF so far (the same count on every card)
+    int qbo_ord[TILES] = {0, 1, 2, 3, 4, 5}; // serial steps: phase 0's card order (helpers first when on)
+    std::deque<std::string> qbo_names; // the extra copies' weight names (upload items point at them)
+    static std::string qbo_wname(const std::string &qb) { return qb + "#qboff"; }
+    // the helper's extra copy of its heavy neighbour's query-b rows (upload): the name, or nullptr when none
+    const std::string *qbo_extra(const std::string &n, int t) {
+        if (!o.qb_off || o.tp <= 1 || qbo[t].role != 2 || qbo[t].own_w || n.rfind("dsp.", 0) == 0) return nullptr;
+        if (layer_of_name(n) < 0 || n.substr(n.find('.', 4) + 1) != "attn_q_b.weight") return nullptr; // (not the indexer's)
+        qbo_names.push_back(qbo_wname(n));
+        return &qbo_names.back();
+    }
     const HeadLay &lay_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? hl[2] : hl[0]; }
     int xp_oa_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? 5 /* XP_OAP */ : 0 /* XP_OA */; }
     bool any_split() const { return hl[0].split || hl[1].split || hl[2].split; }
@@ -3021,6 +3186,55 @@ private:
             h.split |= h.np[c] > 0;
         }
     }
+    // OWN_QB_OFF (qb-off-1): every card with the most heads (16 on six cards: cards 2 and 5) gets its two
+    // neighbours (c - 1, c + 1 mod N), which must hold the fewest heads and help no one else, as helpers: the left
+    // one computes its first k heads, the right one its last k; it keeps the middle 16 - 2k. A helper's heads come
+    // from its own attn_q_b slice when OWN_TP_HEADS_MIN's union holds them (six cards: cards 1 and 4), else from an
+    // extra copy (cards 3 and 0: k x 512 rows per layer)
+    void qbo_setup() {
+#ifdef OWN41_ACT_BF16
+        throw std::runtime_error("OWN_QB_OFF: f32 activations only");
+#else
+        const int N = o.tp, k = (int)o.qb_off;
+        if (hl[0].split) throw std::runtime_error("OWN_QB_OFF: one-token steps with whole attention groups only "
+                                                  "(OWN_TP_HEADS needs OWN_TP_HEADS_MIN with it)");
+        if (o.qb_off_wg < 1 || o.qb_off_wg > 4) throw std::runtime_error("OWN_QB_OFF_WG: 1 to 4");
+        int mn = 1 << 30, mx = 0;
+        for (int c = 0; c < N; ++c) mn = std::min(mn, thq1[c] - thq0[c]), mx = std::max(mx, thq1[c] - thq0[c]);
+        if (N < 3 || mx == mn) throw std::runtime_error("OWN_QB_OFF: no card holds more heads than another");
+        if (2 * k >= mx || mn + k > mx)
+            throw std::runtime_error("OWN_QB_OFF: at most " + std::to_string(std::min(mx - mn, (mx - 1) / 2)) +
+                                     " heads per helper");
+        for (int c = 0; c < N; ++c) qbo[c] = QbOff{};
+        for (int c = 0; c < N; ++c) {
+            if (thq1[c] - thq0[c] != mx) continue;
+            const int lft = (c + N - 1) % N, rgt = (c + 1) % N;
+            for (int d : {lft, rgt})
+                if (thq1[d] - thq0[d] != mn || qbo[d].role)
+                    throw std::runtime_error("OWN_QB_OFF: card " + std::to_string(c) + " has no free light neighbour " +
+                                             std::to_string(d));
+            qbo[c] = {1, -1, thq0[c] + k, thq1[c] - k, {lft, rgt}, false};
+            qbo[lft] = {2, c, thq0[c], thq0[c] + k, {-1, -1}, false};
+            qbo[rgt] = {2, c, thq1[c] - k, thq1[c], {-1, -1}, false};
+        }
+        for (int c = 0; c < N; ++c)
+            if (qbo[c].role == 2) qbo[c].own_w = qst0[c] <= qbo[c].h0 && qbo[c].h1 <= qst1[c];
+        int n = 0;
+        for (int c = 0; c < N; ++c)
+            if (qbo[c].role == 2) qbo_ord[n++] = c;
+        for (int c = 0; c < N; ++c)
+            if (qbo[c].role != 2) qbo_ord[n++] = c;
+        std::fprintf(stderr, "query-b offload (OWN_QB_OFF=%d, %u push groups):", k, o.qb_off_wg);
+        for (int c = 0; c < N; ++c)
+            if (qbo[c].role == 1)
+                std::fprintf(stderr, " card %d keeps heads %d-%d, card %d computes %d-%d (%s), card %d %d-%d (%s);", c,
+                             qbo[c].h0, qbo[c].h1 - 1, qbo[c].from[0], qbo[qbo[c].from[0]].h0, qbo[qbo[c].from[0]].h1 - 1,
+                             qbo[qbo[c].from[0]].own_w ? "own rows" : "extra copy", qbo[c].from[1],
+                             qbo[qbo[c].from[1]].h0, qbo[qbo[c].from[1]].h1 - 1,
+                             qbo[qbo[c].from[1]].own_w ? "own rows" : "extra copy");
+        std::fprintf(stderr, "\n");
+#endif
+    }
     // output-a rows of card c for nslot tokens in layout h: f(r0, r1) launches the rows [r0, r1) (whole groups or
     // half of one group, so row r reads the group (r - r0) / (ototal / 8) after r0's). With split groups: publish
     // this card's head outputs, run the rows of whole groups, wait for the partners' and copy them (XchgPair, arena
@@ -3164,6 +3378,7 @@ private:
                 std::fprintf(stderr, "\n");
             }
         }
+        if (o.qb_off) qbo_setup();
         if (o.tp_w[0] > 0 || o.tp_vw[0] > 0) {
             std::fprintf(stderr, "tensor parallel rows per card (mid / model / vocab):");
             for (int c = 0; c < N; ++c)
@@ -3180,10 +3395,16 @@ private:
 #else
         const size_t nf = xeng + 10 * (size_t)g.h;
 #endif
+        // OWN_QB_OFF: s.q of every card at the arena's end (16-float aligned), where the helpers store their rows
+        if (o.qb_off) xq = (nf + 15) & ~(size_t)15;
+        const size_t nfq = o.qb_off ? xq + (size_t)g.qh * g.hd : nf;
+        if (o.qb_off && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
         for (int c = 0; c < N; ++c) {
-            xarena[c] = dalloc<float>(c, nf);
+            xarena[c] = dalloc<float>(c, nfq);
             xcnt[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(xcnt[c], 0, 64);
+            attc[c] = dalloc<uint32_t>(c, 16);
+            qs[c].memset(attc[c], 0, 64);
             if (xw_path) { // OWN_XWAIT ring (zeroed)
 #ifndef OWN41_XWAIT
                 throw std::runtime_error("OWN_XWAIT needs the diagnostic build (icpx ... -DOWN41_XWAIT): the exchange "
@@ -3200,6 +3421,10 @@ private:
             s.ob = xarena[c] + xob;
             s.act = xarena[c] + xact;
             s.sha = s.act + (size_t)6 * g.mid;
+            if (o.qb_off) { // (before mt_alloc copies the scratch)
+                s.q = (act_t *)(xarena[c] + xq);
+                if (qbo[c].role == 2) qbst[c] = dalloc<float>(c, (size_t)(qbo[c].h1 - qbo[c].h0) * g.hd);
+            }
             teng[c][0] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
             teng[c][1] = dalloc<act_t>(c, (size_t)24 * g.engram_dim);
             if (o.eng_dev) {
@@ -3387,6 +3612,52 @@ private:
             if (i > 256) std::this_thread::yield();
         }
     }
+    // OWN_QB_OFF, helper c (phase 0, after the q_a / kv norms, before its own query-b): the heavy card's heads
+    // [h0, h1) of query-b into qbst in q_b's launch form (RowsP<RowsPair<NoRows, DenseRows<GemvQ8P<40> /
+    // GemvQ6KP<5>>>>: each row is one sub-group running the same row() over the same packed row bytes and the same
+    // replicated s.qn as the heavy card's launch, so the same bits whatever rows a launch covers), the heavy card's
+    // own query rope kernel on them (RowsP<RopeRows>, the same cos / sin row), then the one-way push into its s.q
+    // (arena offset xq) and the flags (QbPush, no wait here)
+    void qbo_send(int c, const std::string &p, const float *cb, const float *sbp, uint32_t seq) {
+        const QbOff &q = qbo[c];
+        const std::string wn = p + "attn_q_b.weight";
+        const auto &e = we(wn);
+        const unsigned nhh = (unsigned)(q.h1 - q.h0), nr = nhh * (unsigned)g.hd;
+        const uint8_t *w = nullptr;
+        if (q.own_w) {
+            const auto &dp = wgt[c].at(wn);
+            if (!dp.packed || (unsigned)((q.h1 - qst0[c]) * g.hd) > dp.nrows)
+                throw std::runtime_error("OWN_QB_OFF: own query-b rows " + wn);
+            w = (const uint8_t *)dp.p +
+                (size_t)(q.h0 - qst0[c]) * g.hd * pk41::packed_row_bytes(e.type, (size_t)e.cols);
+        } else {
+            const auto &dp = wgt[c].at(qbo_wname(wn));
+            if (!dp.packed || dp.nrows != nr) throw std::runtime_error("OWN_QB_OFF: extra query-b rows " + wn);
+            w = (const uint8_t *)dp.p;
+        }
+        auto &s = sc[c];
+        gemv_kp_ex(c, e, w, s.qn, qbst[c], nr, 0, (unsigned)e.cols, wn, ops41sycl::NoRows{});
+        launch_rows<0>(c, (size_t)nhh, 0,
+                       ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{{qbst[c], cb, sbp, nhh, (unsigned)g.hd, false}});
+        const ops41sycl::QbPush k{(unsigned)(xq + (size_t)q.h0 * g.hd), nr / 4, 128u + 16u * (unsigned)c, seq};
+        const float *src = qbst[c];
+        float *peer = (float *)xpeer[c][q.to];
+        const sycl::nd_range<1> nr1((size_t)o.qb_off_wg * 256, 256);
+        auto ev = qs[c].submit([&](sycl::handler &hh) {
+            hh.parallel_for(nr1, [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, src, peer); });
+        });
+        kev(c, kname<ops41sycl::QbPush>(), ev);
+    }
+    // OWN_QB_OFF, heavy card c: the query rope of its kept heads [h0, h1) after both helpers' flags reached seq
+    // (QbWaitRope: the same rope rows as RowsP<RopeRows>, launched as launch_rows does; XSPIN polls, then the
+    // poison word and xerr like the exchanges)
+    void qbo_wait_rope(int c, const float *cb, const float *sbp, uint32_t seq) {
+        const QbOff &q = qbo[c];
+        const unsigned nk = (unsigned)(q.h1 - q.h0);
+        const ops41sycl::QbWaitRope<Act> k{{sc[c].q + (size_t)q.h0 * g.hd, cb, sbp, nk, (unsigned)g.hd, false},
+                                           (unsigned)q.from[0], (unsigned)q.from[1], o.qb_off_wg, seq, XSPIN};
+        launch_rows<0>(c, (size_t)nk, 0, k, xarena[c], xerr[c]);
+    }
     // one layer = phases 0..5; a phase ends where the cards exchange (1-4)
     void tp_phase(int L, int c, int ph) {
         auto &s = sc[c];
@@ -3448,22 +3719,33 @@ private:
                     norm_rows_launch(c, ops41sycl::RowsP<NR>{nr}, nr.n());
                 }
                 prof("attn_q_a", c);
+                // OWN_QB_OFF: a helper first computes, ropes and pushes its heavy neighbour's heads; a heavy card
+                // runs only its kept heads' rows [h0, h1) (off: qk0 = qk1 = 0, today's launches)
+                const uint32_t qseq = o.qb_off ? ++qbo_seq[c] : 0u;
+                if (o.qb_off && qbo[c].role == 2) qbo_send(c, p, cb, sbp, qseq);
+                const bool qh = o.qb_off && qbo[c].role == 1;
+                const unsigned qk0 = qh ? (unsigned)((qbo[c].h0 - thq0[c]) * g.hd) : 0u,
+                               qk1 = qh ? (unsigned)((thq1[c] - qbo[c].h1) * g.hd) : 0u;
                 if (o.fin_move) { // the mix's finish rides in output-b's launch instead (case 2)
-                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
-                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}, qbr0, qbr1);
+                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo + qk0,
+                                 ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}, qbr0 + qk0,
+                                 qbr1 - qk1);
                     fin_attn[c] = true;
                 } else {
-                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
+                    gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo + qk0,
                                  ops41sycl::RowsPair<ops41sycl::HcFinishRows, ops41sycl::RopeRows<Act>>{
                                      hc_finish(c, p + "hc_attn_", s.pre_a, s.post_a, s.comb_a),
                                      ops41sycl::RopeRows<Act>{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}},
-                                 qbr0, qbr1);
+                                 qbr0 + qk0, qbr1 - qk1);
                 }
-                launch_rows<0>(c, (size_t)nh, 0,
-                               ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{
-                                   {s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
+                if (qh) qbo_wait_rope(c, cb, sbp, qseq); // the helpers' heads: waited for here, before any attention
+                else
+                    launch_rows<0>(c, (size_t)nh, 0,
+                                   ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{
+                                       {s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
                 prof("attn_q_b", c);
             } else {
+                if (o.qb_off) throw std::runtime_error("OWN_QB_OFF needs the fused attention launches (" + p + ")");
                 if (ride) gemv_ex(c, p + "attn_q_a.weight", s.xn, s.qa, hc_dots(c, p + "hc_attn_"));
                 else gemv(c, p + "attn_q_a.weight", s.xn, s.qa);
                 rmsnorm(c, s.qa, p + "attn_q_a_norm.weight", g.qrank, s.qn);
@@ -3505,21 +3787,27 @@ private:
         case 1: {
             if (g.hd != 512) throw std::runtime_error("tensor parallel: head dim");
             int n_idx = 128;
+            // OWN_ATT_T: the window append runs in the score launch (SparseScoreT WIN) or in the one launch
+            // (SparseOutF WIN), the softmax in the output's (not with OWN_PF: its prefetch work-groups ride the score
+            // and output launches)
+            const bool att2 = o.att_t && o.att_out_c && !o.pf;
             if (cr) {
                 if (!lead && host_work && !tp_th.empty()) tp_wait_mark(tp_stepn * 64 + L + 1);
                 sync_rows(c, si);
                 sync_cidx(c, isrc_for(L));
-                launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 512},
-                       ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
-                       (const int32_t *)cidx_mirror[c][isrc_for(L)]);
+                if (!att2)
+                    launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 512},
+                           ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
+                           (const int32_t *)cidx_mirror[c][isrc_for(L)]);
                 n_idx += 512;
                 // OWN_ATT_TRIM: below 512 compressed rows the list is rows 0..len-1, then -1: the attention runs
                 // over the window and the first len rounded up to 32 (the slots left out are skipped ones)
                 if (o.att_trim && tlen[c][si] < 512) n_idx = att_trim_n(tlen[c][si]);
-            } else {
+            } else if (!att2) {
                 launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 0},
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
             }
+            const bool att1 = att2 && att_f_on(nh, n_idx, 1); // ... in one launch (below, at the output)
             const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
             if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("tensor parallel: kv alignment");
             const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
@@ -3527,7 +3815,12 @@ private:
             // the attention reads little: output-a's and output-b's rows are pulled into the cache meanwhile
             const Pf pfa = pf_of(c, p + "attn_output_a.weight", hl[0].oa0[c] - ost0[c], hl[0].oa1[c] - ost0[c]),
                      pfb = pf_of(c, p + "attn_output_b.weight");
-            if (n_idx == 128) {
+            if (att1) {
+            } else if (att2) {
+                score_tw(c, nh, n_idx, (int)cpos(c), cr ? 512 : 0, (const act_t *)(s.q + qo), ring[c][L], kvc,
+                         (const act_t *)s.kvn, cr ? (const int32_t *)cidx_mirror[c][isrc_for(L)] : (const int32_t *)nullptr,
+                         s.widx, s.idxs_cat, s.attn_w);
+            } else if (n_idx == 128) {
                 launch_sg_pf(c, (size_t)nh * n_idx / 32, pfa, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
                              (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<128>{nh}, sinks, ix, s.attn_w);
@@ -3548,7 +3841,16 @@ private:
             if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
             const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
-            if (o.att_out_c && !pfb.p) { // OWN_ATT_OUT_C (no prefetch work-groups in this form)
+            if (att1) { // OWN_ATT_T, one launch: the window append, score, softmax and output (attn_w: raw scores)
+                out_f<128, true>(c, nh, n_idx, 128, 1, 0, 0, (const act_t *)(s.q + qo), ring[c][L], kvc, s.idxs_cat,
+                                 (const act_t *)s.kvn,
+                                 cr ? (const int32_t *)cidx_mirror[c][isrc_for(L)] : (const int32_t *)nullptr, s.widx,
+                                 (int)cpos(c), cr ? 512 : 0, sinks, s.attn_w, s.of + qo,
+                                 o.rope_out ? (float *)(s.obuf + qo) : nullptr, cb, sbp);
+            } else if (att2) { // OWN_ATT_T, two launches: the softmax in this one (attn_w: the raw scores)
+                out_je<128>(c, nh, n_idx, 128, false, 1, 0, 0, kvw, kvc, ix, sinks, (const float *)s.attn_w, s.of + qo,
+                            o.rope_out ? (float *)(s.obuf + qo) : nullptr, cb, sbp);
+            } else if (o.att_out_c && !pfb.p) { // OWN_ATT_OUT_C (no prefetch work-groups in this form)
                 using SC = ops41sycl::SparseOutJC<512, 16, 128>;
                 SC so{n_idx, nh, 128};
                 if (o.rope_out) {
@@ -3999,7 +4301,8 @@ private:
         }
         for (int L = o.layer_begin; L < o.layer_end; ++L)
             for (int ph = 0; ph < 6; ++ph) {
-                for (int c = 0; c < o.tp; ++c) tp_phase(L, c, ph);
+                // (OWN_QB_OFF: phase 0's helpers first, so no heavy card's queue waits for a card not yet submitted)
+                for (int i = 0; i < o.tp; ++i) tp_phase(L, ph == 0 ? qbo_ord[i] : i, ph);
                 // fin_move: the attention mix is final only after phase 2; the records of phases 0-1 are
                 // read then (in the same order; nothing they read changes before phase 3)
                 if (o.fin_move && ph < 2) continue;
@@ -4033,10 +4336,12 @@ private:
         } else {
             tp_step_serial(token);
         }
-        for (int c = 0; c < o.tp; ++c)
+        for (int c = 0; c < o.tp; ++c) {
             if (xerr[c][0])
                 throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                          std::to_string((int)xerr[c][0] - 1));
+            if (xerr[c][1]) throw std::runtime_error("card " + pci[c] + ": attention (one launch) timed out waiting for its score tiles");
+        }
         if (xw_path) // OWN_XWAIT records of this step (main thread: every card is done)
             for (int c = 0; c < o.tp; ++c) xw_collect(c);
         if (tl_path) tl_step_done(); // OWN_TIMELINE

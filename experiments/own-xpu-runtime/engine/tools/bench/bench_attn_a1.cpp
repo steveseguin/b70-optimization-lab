@@ -1,0 +1,620 @@
+// attn a1 (2026-11-11): the engine's sparse attention at its one-token and guess-check shapes against
+// sycl_v41_attn.hpp, one card. Production: WindowAppendP + SparseScoreHG<512, 1> (SparseScoreP<512> at 128 slots) +
+// SparseSoftmaxP<n> + SparseOutJC<512, 16, 128> (with the rope'd ry); blocks ScoreM / SoftmaxM / OutMC<JC>.
+// Forms (main table, the lists given): 0 production; 1 SparseScoreT<512, 8> + SparseOutJE<512, n, 16, true>
+// (the softmax in the output launch); 2 SparseScoreT<512, 16> + the same; 3 SparseOutF<512, n> (one launch, through
+// SparseOutFK at FGRF registers). WIN=1: one token with the window append, production against SparseScoreT<512, 8 |
+// 16, true> + SparseOutJE and against SparseOutF<512, n, true> (ring, widx, cat, weights, out, ry).
+// OUT=1: the output alone, SparseOutJC against SparseOutJE<512, n, 16, false> (weights given).
+// Checks: everything BITWISE against production (memcmp): out, ry, the kept slots' weights (production's softmax
+// output against SparseOutJE's wout copy), the kept slots' raw scores (production's score launch alone against
+// SparseScoreT's; the engine's attn_w keeps them), WIN: the ring, widx, the list; every shape and both data kinds
+// (normal; peaky q * 6 with 40 early window slots and 1/8 of the chosen rows skipped), stale scores NaN / inf / huge,
+// out and ry NaN before each run.
+// Time: GPU time per launch and the chain (first start -> last end), median of IT runs, the card's cache flushed
+// before each run (the engine's rows come cold), after a 400 ms warm-up (an idle card runs ~2.5x slower at first).
+// NB=128 | 256: a one-work-group kernel of that register file right before and after each form (the engine's
+// neighbours are 128-register kernels: a 256-register launch between them costs two register-mode changes); the
+// chain then runs from the first neighbour's start to the second's end.
+// Env: ONLY=substring of the shape tag, IT (default 60), MS=1,2,4,6,8 (token counts), NOFLUSH=1, NOCHECK=1, NOTIME=1,
+// WIN=1, OUT=1, FGRF=0 (the engine's register file and tile heads per shape, att_f_grf / att_f_s8; or 128 | 256 with
+// SHG=16 | 8: SparseOutF's score tiles of 16 or 8 heads), NB. Build: icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -Xsycl-target-backend=intel_gpu_bmg_g31
+// "-options -ze-intel-enable-auto-large-GRF-mode" -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I src.
+#include <sycl/sycl.hpp>
+#include <algorithm>
+#include <chrono>
+#include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <random>
+#include <string>
+#include <vector>
+#include "stage2/packet3/kernels/sycl_v41.hpp"
+#include "stage2/packet3/kernels/sycl_v41_attn.hpp"
+using namespace ops41sycl;
+
+static sycl::queue *gq;
+template <typename K, typename... A> sycl::event lsg(size_t g, K k, A... a) {
+    return gq->parallel_for(sycl::nd_range<1>(g * 32, 32),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, a...); });
+}
+template <size_t SLM, typename K, typename... A> sycl::event lwg(size_t g, size_t wg, K k, A... a) {
+    return gq->submit([&](sycl::handler &h) {
+        sycl::local_accessor<uint32_t, 1> lt(SLM, h);
+        h.parallel_for(sycl::nd_range<1>(g * wg, wg),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, a..., &lt[0]); });
+    });
+}
+template <unsigned GRF> struct NbK {
+    float *p;
+    void operator()(sycl::nd_item<1> it) const {
+        if (it.get_global_linear_id() == 0) p[0] += 1.0f;
+    }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<GRF>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+static int g_nb = 0, g_fgrf = 0;
+static float *g_nbp = nullptr;
+static sycl::event nbk() {
+    if (g_nb == 256) return gq->parallel_for(sycl::nd_range<1>(32, 32), NbK<256>{g_nbp});
+    return gq->parallel_for(sycl::nd_range<1>(32, 32), NbK<128>{g_nbp});
+}
+static double evus(const sycl::event &e) {
+    return (e.get_profiling_info<sycl::info::event_profiling::command_end>() -
+            e.get_profiling_info<sycl::info::event_profiling::command_start>()) * 1e-3;
+}
+static double span_us(const sycl::event &a, const sycl::event &b) {
+    return (b.get_profiling_info<sycl::info::event_profiling::command_end>() -
+            a.get_profiling_info<sycl::info::event_profiling::command_start>()) * 1e-3;
+}
+
+constexpr unsigned HD = 512, QH = 64;
+constexpr size_t QS = (size_t)QH * HD, WS = (size_t)QH * 640;
+constexpr int NVALS[] = {128, 160, 192, 288, 320, 384, 448, 512, 576, 640};
+constexpr int NNV = (int)(sizeof(NVALS) / sizeof(int));
+
+struct Bufs {
+    float *q, *sinks, *w, *w2, *out, *ry, *cs, *sn;
+    uint16_t *kvw, *kvc;
+    int32_t *ix;
+};
+
+// ---- production
+template <int NI> void softmax_prod(unsigned M, int nh, const float *sinks, const int32_t *ix, float *w, std::vector<sycl::event> &ev) {
+    if (M == 1) ev.push_back(lsg(nh, SparseSoftmaxP<NI>{nh}, sinks, ix, w));
+    else ev.push_back(lsg((size_t)M * nh, SoftmaxM<SparseSoftmaxP<NI>>{{nh}, (unsigned)nh, M, 640, WS}, sinks, ix, w));
+}
+template <int I = 0> void softmax_any(int n, unsigned M, int nh, const float *s, const int32_t *ix, float *w, std::vector<sycl::event> &ev) {
+    if constexpr (I < NNV) {
+        if (n == NVALS[I]) return softmax_prod<NVALS[I]>(M, nh, s, ix, w, ev);
+        return softmax_any<I + 1>(n, M, nh, s, ix, w, ev);
+    } else {
+        std::printf("no softmax for n %d\n", n);
+        std::exit(2);
+    }
+}
+static void score_prod(int n, unsigned M, int nh, int W, const Bufs &b, std::vector<sycl::event> &ev) {
+    if (n == 128) {
+        if (M == 1) ev.push_back(lsg((size_t)nh * n / 32, SparseScoreP<512>{n, nh, W, (int)HD}, (const float *)b.q, (const uint16_t *)b.kvw,
+                                     (const uint16_t *)b.kvc, (const int32_t *)b.ix, b.w));
+        else ev.push_back(lsg((size_t)M * nh * n / 32, ScoreM<SparseScoreP<512>>{{n, nh, W, (int)HD}, (unsigned)(nh * n / 32), M, QS, 640, WS},
+                              (const float *)b.q, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc, (const int32_t *)b.ix, b.w));
+    } else {
+        const unsigned gpt = (unsigned)(nh * (n / 32));
+        if (M == 1) ev.push_back(lsg(gpt, SparseScoreHG<512, 1>{n, nh, W, (int)HD}, (const float *)b.q, (const uint16_t *)b.kvw,
+                                     (const uint16_t *)b.kvc, (const int32_t *)b.ix, b.w));
+        else ev.push_back(lsg((size_t)M * gpt, ScoreM<SparseScoreHG<512, 1>>{{n, nh, W, (int)HD}, gpt, M, QS, 640, WS}, (const float *)b.q,
+                              (const uint16_t *)b.kvw, (const uint16_t *)b.kvc, (const int32_t *)b.ix, b.w));
+    }
+}
+static sycl::event out_jc(unsigned M, int n, int nh, int W, const Bufs &b) {
+    using SC = SparseOutJC<512, 16, 128>;
+    SC so{n, nh, W};
+    so.ry = b.ry, so.cosb = b.cs, so.sinb = b.sn;
+    const unsigned gpo = (unsigned)SC::groups(nh);
+    if (M == 1) return lwg<SC::SLM>(gpo, SC::WG, so, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc, (const int32_t *)b.ix, (const float *)b.w, b.out);
+    return lwg<SC::SLM>((size_t)M * gpo, SC::WG, OutMC<SC>{so, gpo, M, 640, WS, QS, QS}, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc,
+                        (const int32_t *)b.ix, (const float *)b.w, b.out);
+}
+
+// ---- sycl_v41_attn.hpp
+template <unsigned HG> sycl::event score_t(int n, unsigned M, int nh, int W, const Bufs &b) {
+    using K = SparseScoreT<HD, HG>;
+    K k{n, nh, W, (int)HD};
+    k.m = M;
+    k.qs = QS, k.is = 640, k.ss = WS;
+    return lwg<K::SLM>((size_t)M * K::groups(n, nh), K::WG, k, (const float *)b.q, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc,
+                       (const int32_t *)b.ix, b.w);
+}
+template <int NI, bool SM> sycl::event out_je1(unsigned M, int n, int nh, int W, const Bufs &b) {
+    using SC = SparseOutJE<HD, NI, 16, SM>;
+    SC so{n, nh, W};
+    so.ry = b.ry, so.cosb = b.cs, so.sinb = b.sn;
+    so.sinks = b.sinks;
+    so.wout = SM ? b.w2 : nullptr;
+    const unsigned gpo = (unsigned)SC::groups(nh);
+    if (M == 1) return lwg<SC::SLM>(gpo, SC::WG, so, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc, (const int32_t *)b.ix, (const float *)b.w, b.out);
+    return lwg<SC::SLM>((size_t)M * gpo, SC::WG, OutMJ<SC>{so, gpo, M, 640, WS, QS, QS}, (const uint16_t *)b.kvw, (const uint16_t *)b.kvc,
+                        (const int32_t *)b.ix, (const float *)b.w, b.out);
+}
+template <bool SM, int I = 0> sycl::event out_je(unsigned M, int n, int nh, int W, const Bufs &b) {
+    if constexpr (I < NNV) {
+        if (n == NVALS[I]) return out_je1<NVALS[I], SM>(M, n, nh, W, b);
+        return out_je<SM, I + 1>(M, n, nh, W, b);
+    } else {
+        std::printf("no output for n %d\n", n);
+        std::exit(2);
+    }
+}
+
+// one launch: SparseOutF (the card's counter g_cnt, the running count g_target, the error word g_err)
+static uint32_t *g_cnt = nullptr, *g_err = nullptr;
+static uint32_t g_target = 0;
+static int g_shg = 16; // SHG=8: SparseOutF's score tiles of 8 heads
+template <int NI, bool WIN, unsigned SHG> sycl::event out_f2(unsigned grf, unsigned M, int nh, int W, const Bufs &b, int p, int nc,
+                                                             const float *kv, const int32_t *cidx, int32_t *widx) {
+    using K = SparseOutF<HD, NI, WIN, ActF32, SHG>;
+    K k{nh, W, (int)HD};
+    k.m = M;
+    k.qs = QS, k.is = 640, k.ss = WS, k.os = QS, k.rs = QS;
+    k.start_pos = p, k.nc = nc;
+    g_target += M * (uint32_t)K::nst(nh);
+    k.target = g_target;
+    k.spin = 5000000;
+    const size_t gr = K::groups(nh, M);
+    return gq->submit([&](sycl::handler &h) {
+        sycl::local_accessor<uint32_t, 1> lt(K::SLM, h);
+        if (grf == 128)
+            h.parallel_for(sycl::nd_range<1>(gr * K::WG, K::WG),
+                           SparseOutFK<K, 128>{k, b.q, b.kvw, b.kvc, b.ix, kv, cidx, widx, b.w, b.out, b.ry, b.cs, b.sn, b.sinks, b.w2,
+                                               g_cnt, g_err, lt});
+        else
+            h.parallel_for(sycl::nd_range<1>(gr * K::WG, K::WG),
+                           SparseOutFK<K, 256>{k, b.q, b.kvw, b.kvc, b.ix, kv, cidx, widx, b.w, b.out, b.ry, b.cs, b.sn, b.sinks, b.w2,
+                                               g_cnt, g_err, lt});
+    });
+}
+template <int NI, bool WIN> sycl::event out_f1(unsigned M, int nh, int W, const Bufs &b, int p, int nc, const float *kv,
+                                               const int32_t *cidx, int32_t *widx) {
+    // FGRF=0 (default): the engine's choice (att_f_grf, att_f_s8); else FGRF and SHG as given
+    const unsigned grf = g_fgrf ? (unsigned)g_fgrf : att_f_grf<NI, WIN>();
+    const bool s8 = g_fgrf ? g_shg == 8 : att_f_s8(NI, WIN, M);
+    if (s8) return out_f2<NI, WIN, 8>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
+    return out_f2<NI, WIN, 16>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
+}
+template <bool WIN, int I = 0> sycl::event out_f(int n, unsigned M, int nh, int W, const Bufs &b, int p = 0, int nc = 0,
+                                                 const float *kv = nullptr, const int32_t *cidx = nullptr, int32_t *widx = nullptr) {
+    if constexpr (I < NNV) {
+        if (n == NVALS[I]) return out_f1<NVALS[I], WIN>(M, nh, W, b, p, nc, kv, cidx, widx);
+        return out_f<WIN, I + 1>(n, M, nh, W, b, p, nc, kv, cidx, widx);
+    } else {
+        std::printf("no one-launch form for n %d\n", n);
+        std::exit(2);
+    }
+}
+
+// main forms: 0 production; 1 T8 + JE (softmax in it); 2 T16 + JE; 3 F (one launch)
+constexpr int NF = 4;
+static const char *fname[NF] = {"prod", "T8+JE", "T16+JE", "F"};
+static void run_form(int form, int n, unsigned M, int nh, int W, const Bufs &b, std::vector<sycl::event> &ev) {
+    if (form == 3) {
+        ev.push_back(out_f<false>(n, M, nh, W, b));
+        return;
+    }
+    if (form == 0) {
+        score_prod(n, M, nh, W, b, ev);
+        softmax_any(n, M, nh, b.sinks, b.ix, b.w, ev);
+        ev.push_back(out_jc(M, n, nh, W, b));
+        return;
+    }
+    ev.push_back(form == 1 ? score_t<8>(n, M, nh, W, b) : score_t<16>(n, M, nh, W, b));
+    ev.push_back(out_je<true>(M, n, nh, W, b));
+}
+
+// one token with the window append: 0 production (WindowAppendP + score + softmax + JC); 1 / 2 SparseScoreT<512, 8 /
+// 16, true> + JE; 3 SparseOutF<512, n, true>
+template <unsigned HG> sycl::event score_tw(int n, int nh, int p, int nc, const Bufs &b, const float *kv, const int32_t *cidx, int32_t *widx) {
+    using K = SparseScoreT<HD, HG, true, ActF32>;
+    K k{n, nh, 128, (int)HD};
+    k.start_pos = p, k.nc = nc;
+    return lwg<K::SLM>(K::groups(n, nh), K::WG, k, (const float *)b.q, b.kvw, (const uint16_t *)b.kvc, kv, cidx, widx, b.ix, b.w);
+}
+static void run_win(int f, int n, int nh, int p, const Bufs &b, const float *kv, const int32_t *cidx, int32_t *widx,
+                    std::vector<sycl::event> &ev) {
+    const int nc = n > 128 ? 512 : 0;
+    const int32_t *ci = nc ? cidx : (const int32_t *)nullptr;
+    if (f == 3) {
+        ev.push_back(out_f<true>(n, 1, nh, 128, b, p, nc, kv, ci, widx));
+        return;
+    }
+    if (f == 0) {
+        const WindowAppendP<ActF32> wa{128, (int)HD, p, nc};
+        uint16_t *ring = b.kvw;
+        int32_t *cat = b.ix;
+        ev.push_back(gq->parallel_for(sycl::nd_range<1>(512, 64), [=](sycl::nd_item<1> it) { wa(it, ring, kv, widx, cat, ci); }));
+        score_prod(n, 1, nh, 128, b, ev);
+        softmax_any(n, 1, nh, b.sinks, b.ix, b.w, ev);
+        ev.push_back(out_jc(1, n, nh, 128, b));
+        return;
+    }
+    ev.push_back(f == 1 ? score_tw<8>(n, nh, p, nc, b, kv, ci, widx) : score_tw<16>(n, nh, p, nc, b, kv, ci, widx));
+    ev.push_back(out_je<true>(1, n, nh, 128, b));
+}
+
+static uint16_t f2bf(float f) { // round to nearest even (finite values)
+    uint32_t u;
+    std::memcpy(&u, &f, 4);
+    return (uint16_t)((u + 0x7fff + ((u >> 16) & 1)) >> 16);
+}
+
+int main() {
+    sycl::queue q{sycl::gpu_selector_v, sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}}};
+    gq = &q;
+    std::printf("%s\n", q.get_device().get_info<sycl::info::device::name>().c_str());
+    if (const char *e = std::getenv("FGRF")) g_fgrf = std::atoi(e);
+    if (const char *e = std::getenv("NB")) g_nb = std::atoi(e);
+    if (const char *e = std::getenv("SHG")) g_shg = std::atoi(e);
+    g_nbp = sycl::malloc_device<float>(16, q);
+    g_cnt = sycl::malloc_device<uint32_t>(16, q);
+    g_err = sycl::malloc_device<uint32_t>(16, q);
+    q.fill(g_nbp, 0.f, 16).wait();
+    q.fill(g_cnt, 0u, 16).wait();
+    q.fill(g_err, 0u, 16).wait();
+    auto ferr = [&]() { // a one-launch wait that timed out
+        uint32_t e = 0;
+        q.memcpy(&e, g_err, 4).wait();
+        if (e) std::printf("ONE-LAUNCH WAIT TIMED OUT\n");
+        return e != 0;
+    };
+    const char *only = std::getenv("ONLY");
+    const int IT = std::getenv("IT") ? std::atoi(std::getenv("IT")) : 60;
+    const bool flush = !std::getenv("NOFLUSH"), check = !std::getenv("NOCHECK"), timing = !std::getenv("NOTIME");
+    constexpr int MMAX = 16, WMAX = 128 + 256, CROWS = 8192;
+    const size_t nq = MMAX * QS, nw = MMAX * WS, nix = MMAX * 640;
+    Bufs b{};
+    b.q = sycl::malloc_device<float>(nq, q);
+    b.sinks = sycl::malloc_device<float>(QH, q);
+    b.w = sycl::malloc_device<float>(nw, q);
+    b.w2 = sycl::malloc_device<float>(nw, q);
+    b.out = sycl::malloc_device<float>(nq, q);
+    b.ry = sycl::malloc_device<float>(nq, q);
+    b.cs = sycl::malloc_device<float>(MMAX * 32, q);
+    b.sn = sycl::malloc_device<float>(MMAX * 32, q);
+    b.kvw = sycl::malloc_device<uint16_t>((size_t)WMAX * HD, q);
+    b.kvc = sycl::malloc_device<uint16_t>((size_t)CROWS * HD, q);
+    b.ix = sycl::malloc_device<int32_t>(nix, q);
+    const size_t nfl = (size_t)64 << 20; // 256 MiB of floats to push the rows out of L2
+    float *fl = sycl::malloc_device<float>(nfl, q), *fo = sycl::malloc_device<float>(1024, q);
+    q.fill(fl, 1.0f, nfl).wait();
+    auto flush_k = [=](sycl::nd_item<1> it) {
+        float s = 0;
+        for (size_t i = it.get_global_linear_id(); i < nfl; i += 1024 * 32) s += fl[i];
+        if (s == 12345.f) fo[0] = s;
+    };
+    auto warm = [&](int ms) { // keep the card busy so its clock is up (an idle card runs ~2.5x slower at first)
+        const auto t0 = std::chrono::steady_clock::now();
+        while (std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count() < ms) {
+            for (int r = 0; r < 20; ++r) lsg(1024, flush_k);
+            q.wait();
+        }
+    };
+    warm(400);
+    std::mt19937 rng(41);
+    std::normal_distribution<float> nd(0.f, 1.f);
+    {
+        std::vector<uint16_t> kw((size_t)WMAX * HD), kc((size_t)CROWS * HD);
+        for (auto &x : kw) x = f2bf(nd(rng));
+        for (auto &x : kc) x = f2bf(nd(rng));
+        q.memcpy(b.kvw, kw.data(), kw.size() * 2).wait();
+        q.memcpy(b.kvc, kc.data(), kc.size() * 2).wait();
+        std::vector<float> cs(MMAX * 32), sn(MMAX * 32);
+        for (int i = 0; i < MMAX * 32; ++i) cs[i] = std::cos(0.37f * i), sn[i] = std::sin(0.37f * i);
+        q.memcpy(b.cs, cs.data(), cs.size() * 4).wait();
+        q.memcpy(b.sn, sn.data(), sn.size() * 4).wait();
+    }
+    // stale scores / weights: a pattern with NaN / inf / huge values, the same before every run
+    std::vector<float> stale(nw);
+    for (size_t i = 0; i < nw; ++i) {
+        const uint32_t pat[4] = {0x7fc12345u, 0x7f800000u, 0xff800000u, 0x7f7fffffu};
+        uint32_t u = pat[i % 4];
+        std::memcpy(&stale[i], &u, 4);
+    }
+    struct Kind { const char *name; float qscale; int early; int skip8; };
+    const Kind kinds[] = {{"normal", 1.f, 0, 0}, {"peaky q*6, early window, 1/8 skipped", 6.f, 40, 1}};
+    struct Shape { int n; unsigned M; int nh; };
+    std::vector<Shape> shapes;
+    std::vector<unsigned> ms = {1u, 2u, 4u, 6u, 8u};
+    if (const char *e = std::getenv("MS")) {
+        ms.clear();
+        for (const char *c = e; *c;) {
+            ms.push_back((unsigned)std::atoi(c));
+            while (*c && *c != ',') ++c;
+            if (*c) ++c;
+        }
+    }
+    for (int nh : {16, 12, 8}) // (12: the cards of a split head group in blocks, OWN_TP_HEADS_MIN)
+        for (unsigned M : ms)
+            for (int n : NVALS) shapes.push_back({n, M, nh});
+    auto kept_equal = [&](const std::vector<float> &a, const std::vector<float> &c, const std::vector<int32_t> &ix, unsigned M, int nh, int n) {
+        size_t bad = 0;
+        for (unsigned t = 0; t < M; ++t)
+            for (int h = 0; h < nh; ++h)
+                for (int i = 0; i < n; ++i)
+                    if (ix[t * 640 + i] >= 0) {
+                        const size_t o = t * WS + (size_t)h * n + i;
+                        bad += std::memcmp(&a[o], &c[o], 4) != 0;
+                    }
+        return bad;
+    };
+    auto out_equal = [&](const std::vector<float> &a, const std::vector<float> &c, unsigned M, int nh) {
+        size_t bad = 0;
+        for (unsigned t = 0; t < M; ++t)
+            for (int h = 0; h < nh; ++h) bad += std::memcmp(&a[t * QS + (size_t)h * HD], &c[t * QS + (size_t)h * HD], HD * 4) != 0;
+        return bad;
+    };
+    if (std::getenv("WIN")) {
+        bool ok = true;
+        float *kv = sycl::malloc_device<float>(HD, q);
+        int32_t *cidx = sycl::malloc_device<int32_t>(512, q), *widx = sycl::malloc_device<int32_t>(128, q);
+        std::vector<uint16_t> ring0((size_t)128 * HD);
+        q.memcpy(ring0.data(), b.kvw, ring0.size() * 2).wait();
+        std::printf("one token, window + score + softmax + output chain us (median of %d%s%s): prod, TW8 + JE, TW16 + JE, F\n", IT,
+                    flush ? ", L2 flushed" : "", g_nb ? ", between neighbour kernels" : "");
+        for (int nh : {16, 8})
+            for (int n : NVALS)
+                for (int p : {1000, 60, 127, 0}) {
+                    char tag[64];
+                    std::snprintf(tag, sizeof tag, "h%d n%d p%d", nh, n, p);
+                    if (only && !std::strstr(tag, only)) continue;
+                    std::vector<float> hq(nq), hs(QH), hk(HD);
+                    for (auto &x : hq) x = nd(rng);
+                    for (auto &x : hs) x = nd(rng) * 2.f;
+                    for (auto &x : hk) x = nd(rng);
+                    std::vector<int32_t> hc(512, -1);
+                    if (n == 640) {
+                        std::vector<int> pc(CROWS);
+                        for (int i = 0; i < CROWS; ++i) pc[i] = i;
+                        std::shuffle(pc.begin(), pc.end(), rng);
+                        for (int i = 0; i < 512; ++i) hc[i] = (i % 8 == 5) ? -1 : 128 + pc[i];
+                    } else if (n > 128) {
+                        const int len = n - 128 - (int)(rng() % 32);
+                        for (int i = 0; i < 512; ++i) hc[i] = i < len ? 128 + i : -1;
+                    }
+                    q.memcpy(b.q, hq.data(), nq * 4).wait();
+                    q.memcpy(b.sinks, hs.data(), QH * 4).wait();
+                    q.memcpy(kv, hk.data(), HD * 4).wait();
+                    q.memcpy(cidx, hc.data(), 512 * 4).wait();
+                    std::vector<float> rw[4], ro[4], rr[4];
+                    std::vector<uint16_t> rg[4];
+                    std::vector<int32_t> rc[4], rx[4];
+                    auto reset = [&]() {
+                        q.memcpy(b.kvw, ring0.data(), ring0.size() * 2).wait();
+                        q.memcpy(b.w, stale.data(), nw * 4).wait();
+                        q.memcpy(b.w2, stale.data(), nw * 4).wait();
+                        q.fill(b.ix, (int32_t)-7, nix).wait();
+                        q.fill(widx, (int32_t)-7, 128).wait();
+                        q.fill(b.out, std::nanf(""), nq).wait();
+                        q.fill(b.ry, std::nanf(""), nq).wait();
+                    };
+                    for (int f = 0; f < 4; ++f) {
+                        reset();
+                        std::vector<sycl::event> ev;
+                        run_win(f, n, nh, p, b, kv, cidx, widx, ev);
+                        q.wait();
+                        rw[f].resize(nw), ro[f].resize(nq), rr[f].resize(nq), rg[f].resize(ring0.size()), rc[f].resize(nix), rx[f].resize(128);
+                        q.memcpy(rw[f].data(), f ? b.w2 : b.w, nw * 4).wait(); // the weights: production's softmax, JE's wout
+                        q.memcpy(ro[f].data(), b.out, nq * 4).wait();
+                        q.memcpy(rr[f].data(), b.ry, nq * 4).wait();
+                        q.memcpy(rg[f].data(), b.kvw, ring0.size() * 2).wait();
+                        q.memcpy(rc[f].data(), b.ix, nix * 4).wait();
+                        q.memcpy(rx[f].data(), widx, 128 * 4).wait();
+                        if (f) {
+                            const size_t bw = kept_equal(rw[0], rw[f], rc[0], 1, nh, n), bo = out_equal(ro[0], ro[f], 1, nh),
+                                         by = out_equal(rr[0], rr[f], 1, nh);
+                            const bool same = !bw && !bo && !by && rg[0] == rg[f] && rc[0] == rc[f] && rx[0] == rx[f];
+                            if (!same) {
+                                ok = false;
+                                std::printf("  %s form %d differs (w %zu out %zu ry %zu ring %d cat %d widx %d)\n", tag, f, bw, bo, by,
+                                            (int)(rg[0] != rg[f]), (int)(rc[0] != rc[f]), (int)(rx[0] != rx[f]));
+                            }
+                        }
+                    }
+                    if (!timing || p != 1000) continue;
+                    double ch[4];
+                    for (int f = 0; f < 4; ++f) {
+                        std::vector<double> v;
+                        for (int r = 0; r < IT + 3; ++r) {
+                            if (flush) lsg(1024, flush_k);
+                            else if (r % 8 == 0) warm(2);
+                            std::vector<sycl::event> ev;
+                            sycl::event e0, e1;
+                            if (g_nb) e0 = nbk();
+                            run_win(f, n, nh, p, b, kv, cidx, widx, ev);
+                            if (g_nb) e1 = nbk();
+                            q.wait();
+                            if (r >= 3) v.push_back(g_nb ? span_us(e0, e1) : span_us(ev.front(), ev.back()));
+                        }
+                        std::sort(v.begin(), v.end());
+                        ch[f] = v[v.size() / 2];
+                    }
+                    std::printf("%-16s %6.2f %6.2f %6.2f %6.2f\n", tag, ch[0], ch[1], ch[2], ch[3]);
+                    std::fflush(stdout);
+                }
+        if (ferr()) ok = false;
+        std::printf(ok ? "PASS\n" : "FAIL\n");
+        return ok ? 0 : 1;
+    }
+    auto fill_lists = [&](const Shape &sh, const Kind &kd, int W, std::vector<int32_t> &hix) {
+        hix.assign(nix, -1);
+        for (unsigned t = 0; t < sh.M; ++t) {
+            int32_t *L = hix.data() + (size_t)t * 640;
+            std::vector<int> perm(W);
+            for (int i = 0; i < W; ++i) perm[i] = i;
+            std::shuffle(perm.begin(), perm.end(), rng);
+            for (int i = 0; i < 128; ++i) L[i] = i < kd.early ? -1 : perm[i];
+            const int nc = sh.n - 128;
+            if (sh.n == 640) { // 512 chosen rows (distinct), some skipped
+                std::vector<int> pc(CROWS);
+                for (int i = 0; i < CROWS; ++i) pc[i] = i;
+                std::shuffle(pc.begin(), pc.end(), rng);
+                for (int i = 0; i < nc; ++i) L[128 + i] = (kd.skip8 && i % 8 == 5) ? -1 : W + pc[i];
+            } else if (nc > 0) { // a trimmed list: rows 0 .. len - 1, then -1 up to n
+                const int len = nc - (int)(rng() % 32);
+                for (int i = 0; i < nc; ++i) L[128 + i] = i < len ? W + i : -1;
+            }
+        }
+    };
+    if (std::getenv("OUT")) { // the output alone (weights from production's score + softmax): JC against JE<false>
+        bool ok = true;
+        std::printf("output only, us per launch (median of %d%s): JC, JE\n", IT, flush ? ", L2 flushed" : "");
+        for (const Shape &sh : shapes) {
+            char tag[64];
+            std::snprintf(tag, sizeof tag, "h%d n%d M%u", sh.nh, sh.n, sh.M);
+            if (only && !std::strstr(tag, only)) continue;
+            const int W = sh.M == 1 ? 128 : 128 + 256;
+            for (int kind = 0; kind < 2; ++kind) {
+                std::vector<float> hq(nq), hs(QH);
+                for (auto &x : hq) x = nd(rng) * (kind ? 6.f : 1.f);
+                for (auto &x : hs) x = nd(rng) * 2.f;
+                std::vector<int32_t> hix;
+                fill_lists(sh, kinds[kind], W, hix);
+                q.memcpy(b.q, hq.data(), nq * 4).wait();
+                q.memcpy(b.sinks, hs.data(), QH * 4).wait();
+                q.memcpy(b.ix, hix.data(), nix * 4).wait();
+                q.memcpy(b.w, stale.data(), nw * 4).wait();
+                std::vector<sycl::event> ev;
+                run_form(0, sh.n, sh.M, sh.nh, W, b, ev);
+                q.wait();
+                std::vector<float> r0(nq), r1(nq), y0(nq), y1(nq);
+                double med[2];
+                for (int f = 0; f < 2; ++f) {
+                    q.fill(b.out, std::nanf(""), nq).wait();
+                    q.fill(b.ry, std::nanf(""), nq).wait();
+                    (f ? out_je<false>(sh.M, sh.n, sh.nh, W, b) : out_jc(sh.M, sh.n, sh.nh, W, b)).wait();
+                    q.memcpy(f ? r1.data() : r0.data(), b.out, nq * 4).wait();
+                    q.memcpy(f ? y1.data() : y0.data(), b.ry, nq * 4).wait();
+                    if (f && (out_equal(r0, r1, sh.M, sh.nh) || out_equal(y0, y1, sh.M, sh.nh))) {
+                        ok = false;
+                        std::printf("  %s kind %d JE differs\n", tag, kind);
+                    }
+                    if (kind == 0 && timing) {
+                        std::vector<double> v;
+                        for (int r = 0; r < IT + 3; ++r) {
+                            if (flush) {
+                                lsg(1024, flush_k);
+                                std::vector<sycl::event> e2;
+                                score_prod(sh.n, sh.M, sh.nh, W, b, e2); // the rows warm as after the score (the engine's state)
+                                softmax_any(sh.n, sh.M, sh.nh, b.sinks, b.ix, b.w, e2);
+                            } else if (r % 8 == 0) warm(2);
+                            sycl::event e = f ? out_je<false>(sh.M, sh.n, sh.nh, W, b) : out_jc(sh.M, sh.n, sh.nh, W, b);
+                            q.wait();
+                            if (r >= 3) v.push_back(evus(e));
+                        }
+                        std::sort(v.begin(), v.end());
+                        med[f] = v[v.size() / 2];
+                    }
+                }
+                if (kind == 0 && timing) {
+                    std::printf("%-22s %6.2f %6.2f\n", tag, med[0], med[1]);
+                    std::fflush(stdout);
+                }
+            }
+        }
+        std::printf(ok ? "PASS\n" : "FAIL\n");
+        return ok ? 0 : 1;
+    }
+    bool all_ok = true;
+    std::printf("us: production score + softmax + output launches and chain (first start -> last end); T8 / T16 + JE: "
+                "score + output launches and chain; F: one launch (median of %d%s%s)\n", IT, flush ? ", L2 flushed" : "",
+                g_nb ? ", chains between neighbour kernels" : "");
+    for (const Shape &sh : shapes) {
+        char tag[64];
+        std::snprintf(tag, sizeof tag, "h%d n%d M%u", sh.nh, sh.n, sh.M);
+        if (only && !std::strstr(tag, only)) continue;
+        const int W = sh.M == 1 ? 128 : 128 + 256;
+        for (const Kind &kd : kinds) {
+            std::vector<float> hq(nq), hs(QH);
+            for (auto &x : hq) x = nd(rng) * kd.qscale;
+            for (auto &x : hs) x = nd(rng) * 2.f;
+            std::vector<int32_t> hix;
+            fill_lists(sh, kd, W, hix);
+            q.memcpy(b.q, hq.data(), nq * 4).wait();
+            q.memcpy(b.sinks, hs.data(), QH * 4).wait();
+            q.memcpy(b.ix, hix.data(), nix * 4).wait();
+            if (!check) continue;
+            auto clear = [&]() {
+                q.memcpy(b.w, stale.data(), nw * 4).wait();
+                q.memcpy(b.w2, stale.data(), nw * 4).wait();
+                q.fill(b.out, std::nanf(""), nq).wait();
+                q.fill(b.ry, std::nanf(""), nq).wait();
+            };
+            std::vector<float> rs(nw), rw(nw), ro(nq), rr(nq), cs(nw), cw(nw), co(nq), cr(nq);
+            std::vector<sycl::event> ev;
+            clear(); // production's raw scores (the score launch alone)
+            score_prod(sh.n, sh.M, sh.nh, W, b, ev);
+            q.wait();
+            q.memcpy(rs.data(), b.w, nw * 4).wait();
+            clear();
+            ev.clear();
+            run_form(0, sh.n, sh.M, sh.nh, W, b, ev);
+            q.wait();
+            q.memcpy(rw.data(), b.w, nw * 4).wait();
+            q.memcpy(ro.data(), b.out, nq * 4).wait();
+            q.memcpy(rr.data(), b.ry, nq * 4).wait();
+            for (int form = 1; form < NF; ++form) {
+                clear();
+                ev.clear();
+                run_form(form, sh.n, sh.M, sh.nh, W, b, ev);
+                q.wait();
+                q.memcpy(cs.data(), b.w, nw * 4).wait();
+                q.memcpy(cw.data(), b.w2, nw * 4).wait();
+                q.memcpy(co.data(), b.out, nq * 4).wait();
+                q.memcpy(cr.data(), b.ry, nq * 4).wait();
+                const size_t bs = kept_equal(rs, cs, hix, sh.M, sh.nh, sh.n), bw = kept_equal(rw, cw, hix, sh.M, sh.nh, sh.n),
+                             bo = out_equal(ro, co, sh.M, sh.nh), by = out_equal(rr, cr, sh.M, sh.nh);
+                if (bs || bw || bo || by) {
+                    all_ok = false;
+                    std::printf("  %s %s form %s: scores %zu weights %zu out heads %zu ry heads %zu differ\n", tag, kd.name, fname[form], bs,
+                                bw, bo, by);
+                }
+            }
+        }
+        if (timing) {
+            double med[NF][3] = {}, chain[NF] = {};
+            for (int form = 0; form < NF; ++form) {
+                std::vector<std::vector<double>> per(3);
+                std::vector<double> ch;
+                for (int r = 0; r < IT + 3; ++r) {
+                    if (flush) lsg(1024, flush_k);
+                    else if (r % 8 == 0) warm(2);
+                    std::vector<sycl::event> ev;
+                    sycl::event e0, e1;
+                    if (g_nb) e0 = nbk();
+                    run_form(form, sh.n, sh.M, sh.nh, W, b, ev);
+                    if (g_nb) e1 = nbk();
+                    q.wait();
+                    if (r < 3) continue;
+                    for (size_t k = 0; k < ev.size(); ++k) per[k].push_back(evus(ev[k]));
+                    ch.push_back(g_nb ? span_us(e0, e1) : span_us(ev.front(), ev.back()));
+                }
+                for (int k = 0; k < 3; ++k)
+                    if (!per[k].empty()) {
+                        std::sort(per[k].begin(), per[k].end());
+                        med[form][k] = per[k][per[k].size() / 2];
+                    }
+                std::sort(ch.begin(), ch.end());
+                chain[form] = ch[ch.size() / 2];
+            }
+            std::printf("%-14s prod %5.2f+%5.2f+%5.2f chain %6.2f | T8 %5.2f+%5.2f chain %6.2f | T16 %5.2f+%5.2f chain %6.2f | F %6.2f\n",
+                        tag, med[0][0], med[0][1], med[0][2], chain[0], med[1][0], med[1][1], chain[1], med[2][0], med[2][1], chain[2],
+                        chain[3]);
+            std::fflush(stdout);
+        }
+    }
+    if (ferr()) all_ok = false;
+    std::printf(all_ok ? "PASS\n" : "FAIL\n");
+    return all_ok ? 0 : 1;
+}

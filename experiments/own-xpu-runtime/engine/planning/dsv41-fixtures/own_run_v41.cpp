@@ -199,6 +199,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_TP_HEADS")) weights(e, opt.tp_heads);
     if (const char *e = getenv("OWN_TP_HEADS_DR")) opt.tp_heads_dr = atoi(e) != 0;
     if (const char *e = getenv("OWN_TP_HEADS_MIN")) opt.tp_heads_min = (unsigned)atoi(e);
+    // qb-off-1: each 16-head card's two light neighbours compute this many of its query-b heads in one-token steps
+    // (0 = off: today's launches); OWN_QB_OFF_WG: work-groups of each push
+    if (const char *e = getenv("OWN_QB_OFF")) opt.qb_off = (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_QB_OFF_WG")) opt.qb_off_wg = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_GPROF_CARD")) opt.prof_card = atoi(e);
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;
@@ -288,6 +292,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ATT_PK")) opt.att_pk = atoi(e) != 0;
     if (const char *e = getenv("OWN_ATT_M")) opt.att_m = atoi(e) != 0; // the attention forms in blocks too (default since tg88)
     if (const char *e = getenv("OWN_ATT_M_MAX")) opt.att_m_max = (unsigned)atoi(e); // ... in blocks up to this size
+    if (const char *e = getenv("OWN_ATT_T")) opt.att_t = atoi(e) != 0; // sparse attention in one or two launches (attn a1)
+    if (const char *e = getenv("OWN_ATT_T_M_MAX")) opt.att_t_m_max = (unsigned)atoi(e); // ... in blocks up to this size
+    if (const char *e = getenv("OWN_ATT_T_HG")) opt.att_t_hg = (unsigned)atoi(e); // ... two launches: score heads per work-group
+    if (const char *e = getenv("OWN_ATT_F")) opt.att_f = atoi(e) != 0; // ... =0: two launches only
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.
@@ -499,6 +507,8 @@ int main(int argc, char **argv) {
         // weight-stationary dense rows for the matrix shapes and block sizes ops41sycl::WsTab lists (default on since
         // tg90: 3K read 353 -> 416 tok/s at blocks of 64; OWN_MT_WS=0: off)
         be.mt_ws = getenv("OWN_MT_WS") ? atoi(getenv("OWN_MT_WS")) != 0 : true;
+        // the guessing checks' blocks (2 .. 6 tokens) take WsTab's check picks (pa/ck bench_ck; OWN_MT_CK=1: on)
+        ops41sycl::g_ws_ck = getenv("OWN_MT_CK") && atoi(getenv("OWN_MT_CK")) != 0;
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
@@ -519,13 +529,13 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
         if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
         if (const char *e = getenv("OWN_MT_RFUSE")) be.mt_rfuse = atoi(e) != 0; // router + shared gate/up in one launch
-        // the stream mixes' dot rows in prompt blocks (pcd-1; DSPLIT + SKDOTS=8 from 2 tokens on by default since tg91, each a bit-identical form)
+        // the stream mixes' dot rows in prompt blocks (pcd-1; DSPLIT + SKDOTS=8 by default since tg91, from 4 tokens on since tune92; each a bit-identical form)
         if (const char *e = getenv("OWN_MT_DSPLIT_MIN")) be.mt_dsplit_min = (unsigned)atoi(e); // OWN_MT_DSPLIT from m tokens on
         if (const char *e = getenv("OWN_MT_DSPLIT_FIN")) be.mt_dsplit_fin = atoi(e);    // finishes: 0 own, 1 riding, 2 auto
         if (const char *e = getenv("OWN_MT_SKDOTS")) be.mt_skdots = (unsigned)atoi(e);  // dot rows as SkDotsWM<K> (8 or 4)
         if (be.mt_skdots && be.mt_skdots != 4 && be.mt_skdots != 8) die("OWN_MT_SKDOTS: 0, 4 or 8");
         if (const char *e = getenv("OWN_MT_SKDOTS_MIN")) be.mt_skdots_min = (unsigned)atoi(e); // OWN_MT_SKDOTS from m tokens on
-        // skn-1 (off by default; each a bit-identical form): the one-token path's one-work-group norms per token of a
+        // skn-1 (OWN_MT_SKNORM=15 and OWN_MT_HCPP=1 by default since tg93; each a bit-identical form): the one-token path's one-work-group norms per token of a
         // block. OWN_MT_SKNORM=mask: 1 5,120 norms alone, 2 pre-norm + SKDOTS rows in one launch, 4 q_a + kv norms,
         // 8 compressor pools (ratio 2), 16 compressor 512 norm (ratio 1); 31 = all. OWN_MT_SKNORM_MIN / _MAX: block sizes
         // (MAX, default 64, limits bits 1, 2 and 16 only)
