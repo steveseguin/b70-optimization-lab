@@ -329,7 +329,7 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~08:37 EST)
+## Work in flight (2026-11-11, updated ~10:30 EST)
 
 - Done (tg92, 2026-11-11 08:02-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
   guessing SAME. Code 128.70 / 128.97, analysis 142.22 / 142.84; vocabulary list 130.0-130.7 / 144.9-145.0; 3K read
@@ -368,8 +368,22 @@ Did not work (and why):
   / 132.61, with thresholds 4/4 133.16 / 133.10; analysis 142.28 / 142.59 -> 147.12 / 147.19 (4/4: 147.51 / 147.30);
   prose 108.15 -> 111.74; 3K guessing 127.63 -> 135.96; 3K read 468.0-469.0 -> 470.5-471.2; plain unchanged. Check
   ms per round 15.8 -> 15.3 (code), 18.0 -> 17.3 (analysis). Defaults from tp94: SKNORM=15, HCPP=1, thresholds 4.
-- Next: tp94 = these defaults + the attention helper's one-launch attention (`SparseOutF`, opt-in) when its card-3
-  checks pass; then the ws helper's check rows and the rux prompt expert kernels.
+- Ready (attn-a1, `/home/steve/dsv41-work/attn/attn-a1.patch` + README, card 3): `OWN_ATT_T=1` = sparse attention in
+  one launch per layer (`SparseOutF`: score tiles, then output work-groups that load their rows meanwhile and wait on a
+  per-card device counter; one token also does the window append). 16 heads, us per layer: one token 15.2 -> 8.3 (128
+  slots), 16.4 -> 9.4 (192), 29.1 -> 20.9 (640); checks of 2 tokens 13.3 -> 8.8, 4 tokens 15.4 -> 10.6. Expected -0.27
+  ms per one-token step, -0.19-0.22 ms per check. Blocks of 5-8 at 192-576 slots: two launches (`OWN_ATT_F=0` form);
+  above 8 tokens production. Register size fixed per shape (a 256-register launch costs ~1.3 us twice between
+  128-register neighbours: measure next to the real neighbours). Bitwise PASS every form.
+- Ready (ck, `/home/steve/dsv41-work/pa/ck.patch` + README-ck.txt, card 2): `OWN_MT_CK=1` = the checks' dense rows
+  in their own forms per block size 2-6 (PF: all quant words first / L1-uncached weights), q_a + kv in
+  weight-stationary forms inside the pair launch. Saved per check on card 2 (back-to-back timing): M = 2: 0.38 ms,
+  3: 0.34, 4: 0.42, 5: 0.73, 6: 0.79; the extra token's cost in these launches 492 -> 388 us. 97 pick launches bitwise.
+  Lesson: time forms back to back over cold weight copies ("SEQ"); a cache flush before each launch inflated K-quant
+  forms up to 1.9x.
+- In flight (2026-11-11 ~10:30): tp94 built (defaults + attn) but not gated; tp95 = tp94 + ck building, gate tg95
+  (both opt-in arms, traces at blocks 1-256 incl. 2-6 with CK, 3K traces, plain, 3K read, 22 guessing runs, profile +
+  check timeline). Helpers: qboff (H8), k7 (K7), rux (prompt experts).
 
 ### Earlier entries (07:41)
 
