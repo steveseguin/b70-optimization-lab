@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 11, 2026 ~10:30 EST — DeepSeek V4.1: build tp94 and its six-card check (tg94) queued.**
+- tp94 = tp93 with the new defaults (norm kernels in checks, mixing share-out from 4 words) plus the attention helper's
+  one-launch attention as a switch (`OWN_ATT_T=1`, off by default). One card bench: the attention per layer
+  15.2 -> 8.3 us (one word), bit for bit in every check; expected ~+2.5 % plain, ~+1-1.5 % guessing.
+- Two cards hold twice the attention heads, and the other four wait ~0.9 ms per word for them. New idea H8 in the
+  plan (the light cards compute part of the heavy cards' query rows first and send them over); helper writing it.
+  Another helper writes K7 (the mixing sums shared out over the exchanges). Check-rows and prompt-expert helpers
+  still running.
+- Rule slip found by the attention helper: one of its bench builds at 07:38 overlapped the first ~30 s of tune91's
+  six-card run. tune91's results were all identical; noted here for the record.
+
 **November 11, 2026 ~10:00 EST — DeepSeek V4.1 on six cards: guessing 133 (code) / 147 (analysis) / 136 (3,000-token document) tokens/s; text the same everywhere.**
 - New build tp93 passed every test (all traces identical, 20 of 20 guessing runs word for word the plain answers, no faults).
 - What helped: each check of guessed words ran its number-scaling steps (norms) with a slow general kernel. A helper rewrote them to use the fast single-word kernels, one per word, with the same bits.
