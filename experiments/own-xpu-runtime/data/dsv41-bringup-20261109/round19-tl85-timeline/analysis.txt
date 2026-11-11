@@ -1,0 +1,68 @@
+# OWN_TIMELINE tl.txt: 8 answer steps (20-27), cards 0,1,2,3,4,5, clocks: causal
+#   c0: cal mapping implausible (start - submit: p1 29365490.9 us, median 29368634.5 us)
+#   c1: cal mapping implausible (start - submit: p1 29365359.4 us, median 29368453.0 us)
+#   c2: cal mapping implausible (start - submit: p1 29365386.6 us, median 29368468.5 us)
+#   c3: cal mapping implausible (start - submit: p1 29365397.6 us, median 29368482.2 us)
+#   c4: cal mapping implausible (start - submit: p1 29365422.7 us, median 29368504.1 us)
+#   c5: cal mapping implausible (start - submit: p1 29365429.3 us, median 29368565.0 us)
+#   cal vs causal alignment, per card (us, relative to the median card): c0 +898957.9, c1 -78686.2, c2 -121817.5, c3 +837593.7, c4 -33124.1, c5 +33124.1   (spread = the alignment uncertainty across cards)
+
+Step wall (first card thread begin -> last launch end): 18100401.719 ms mean (min 18100360.944, max 18100442.670)
+
+Per card, ms per step (mean over 8 steps):
+card     span    busy    idle hostlate (inwait)  devgap lead-in    tail    xchg launch
+c0    -18100379.217  10.751 54301138.819   0.000   0.000 54301138.819 18100390.493   0.000   2.082   1058
+c1    -18099401.442  10.752 54298205.492   0.000   0.000 54298205.492 18099412.722   0.000   2.017   1058
+c2    -18099358.333  10.764 54298076.152   0.000   0.000 54298076.152 18099369.610   0.000   1.532   1058
+c3    -18100317.753  10.744 54300954.430   0.000   0.000 54300954.430 18100329.036   0.000   2.051   1058
+c4    -18099447.064  10.744 54298342.365   0.000   0.000 54298342.365 18099458.344   0.000   2.096   1058
+c5    -18099513.307  10.753 54298541.093   0.000   0.000 54298541.093 18099524.591   0.000   1.476   1058
+(192 launch pairs overlap on one queue: an in-order queue should not; alignment or a profiling artefact)
+
+Exchanges per step: kind, count, mean ms in the kernels per card; the card that STARTS the exchange last
+(its peers wait for it), share of exchanges, and by how much it trails the second-last (median us):
+  output-a              40.0  dur 1.010 1.014 0.448 1.014 1.026 0.455  last: c0 100%  by 61458.5
+  expert act            40.0  dur 0.523 0.458 0.502 0.468 0.534 0.496  last: c0 100%  by 61457.7
+  ffn rows              40.0  dur 0.259 0.264 0.277 0.291 0.244 0.237  last: c0 100%  by 61459.2
+  output-b rows         40.0  dur 0.243 0.240 0.258 0.237 0.251 0.247  last: c0 100%  by 61458.3
+  engram                 2.0  dur 0.042 0.037 0.043 0.037 0.037 0.035  last: c0 100%  by 61455.7
+  engram (push)          1.0  dur 0.005 0.004 0.005 0.004 0.005 0.005
+  all exchanges, last to start: c0 100%
+
+Idle before each kernel type (us per step, mean card): host late / dev gap / launches per step
+       0.0 36199473145.7    2.0  EngRowsA<ActF32>
+       0.0 18099736217.1    3.0  HcPreA<ActF32>
+       0.0     81.4   83.0  XchgPull
+       0.0     37.8   38.0  SparseSoftmaxPN<640>
+       0.0     37.6   40.0  SparseOutJC<512u, 16u, 128u, 16u>
+       0.0     26.6   27.0  GemvQ8P<256u, ActF32>
+       0.0     22.8   40.0  WindowAppendP<ActF32>
+       0.0     14.6   15.0  RoutedIQ2SP<9u, ActF32, NoRows>
+       0.0     14.6   15.0  RoutedIQ3XXSP<9u, ActF32, NoRows>
+       0.0     12.6   13.0  GemvQ6KP<32u, ActF32>
+       0.0     10.0   78.0  HcPostPreP<ActF32>
+       0.0      9.8   80.0  XchgP
+
+Largest 20 gaps (us): step card cause | before -> after
+  18100420591.6  s27  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100420522.1  s27  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100420062.8  s27  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100408713.1  s26  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100408649.6  s26  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100408354.4  s26  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100397169.5  s25  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100397100.9  s25  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100396731.1  s25  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100385383.3  s24  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100385312.8  s24  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100385014.3  s24  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100373826.4  s23  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100373753.8  s23  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100373467.7  s23  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100362072.9  s22  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100362032.0  s22  c0  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100361724.8  s22  c0  dev gap                     | copy: pre-mix, host to card -> HcPreA<ActF32>
+  18100359131.0  s27  c3  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+  18100359065.1  s27  c3  dev gap                     | copy: engram rows, host to card -> EngRowsA<ActF32>
+
+Between steps (last card thread done -> first card thread starts the next): median 373.3 us, max 382.1 us

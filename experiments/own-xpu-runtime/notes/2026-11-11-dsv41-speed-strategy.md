@@ -131,7 +131,7 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~01:45)
+## Work in flight (2026-11-11, updated ~02:05)
 
 - Done: g83 gate (router branch-free + engram gate over 16 sub-groups, §33): 85.2 -> 86-87 tok/s, bit-identical.
 - Done: the ledger (`2026-11-11-dsv41-step-budget.md`), our older code and other projects
@@ -147,6 +147,27 @@ Did not work (and why):
   many more 256-register kernels (83 of 180 in `bench_dense_m16`'s dump): count the mode changes per block there.
   Also seen: a chain of tiny kernels alone runs at ~2.0 us per launch (the card's launch rate), while a tiny
   kernel right after a 6 us kernel adds only ~0.8 us (its setup overlaps the long kernel).
+- Found (ad1-ad4, `tools/bench/bench_attn_dec.cpp`, card 3, 2026-11-11 ~02:00): the one-token attention's score +
+  softmax per layer runs **13.8 -> 6.1 us** at short lists (n = 160) and 13.1 -> 10.8-11.0 us at 640 slots, every
+  output bit-identical: (a) `SparseScoreHG<512, 1>` instead of `<512, 4>` (4x the sub-groups, the same per-(head,
+  slot) sum; 7.1 -> 4.2 us at n = 160); (b) the trimmed lists' softmax as `SparseSoftmaxP<n>` built for each slot
+  count (n = 160 ... 608) instead of `SparseSoftmaxPN<640>{n}`: 128 registers, 3.9 -> 1.7 us, and no register-mode
+  change around it (the chain saves another ~2.8 us, as gs1 predicted). The "bit-mask" slim form tried first still
+  built at 256 registers (flag spills) and was dropped; a lean runtime-loop form is 128 registers but slower at 640.
+  In the engine as `OWN_ATT_HG=1 OWN_ATT_PK=1` (opt-in, tp86; gate tg86 queued). Expected ~0.29 ms per step at
+  short context (~2.5 %), ~0.08 ms at 3K+. Lesson: check the register mode in the dump before calling a fix done.
+- Found (tl85, `OWN_TIMELINE` on tp85 = tp84 + the timeline patch, answer steps 20-27 of prompt 1, all six cards,
+  `data/dsv41-bringup-20261109/round19-tl85-timeline/`; device clock only, since the host/device clock mapping came
+  out implausible and the copies carry no profiling times): per card and step **busy 10.75 ms, idle inside the
+  step 0.47 ms, idle between steps 0.44 ms** (of which ~0.28 ms was the timeline's own per-step clock calibration:
+  six cards x four 12.5 us brackets; now done at the window's edges only). Inside the step: **~0.26 ms are
+  register-mode changes**: the pull exchange kernel (the `xchg()` lambda, 83 per step) is built at 256 registers,
+  so every exchange is entered and left with a ~1 us device gap (166 per step), and `SparseSoftmaxPN` adds 76 more;
+  every other launch follows its predecessor by ~0.12 us. The rest: the engram rows' uploads (`EngRowsA` waits
+  2 x 42 us per step: the host's row reads come after layer 0's launches) and the pre-mix copy (`HcPreA`, 3 x 8.6
+  us). Fix in hand: `OWN_XPULL_GRF=128` (`XPullK128`, the same code pinned to 128 registers; 256 bytes of spill,
+  `tools/perf/xpull_grf_tu.cpp`) for tp87. Exchanges in the profile: XchgPull 16.5 us x 83 + XchgP 6.35 us x 80
+  = 1.88 ms per step (17 %).
 - Done: S2 transport L1 (shared native context, direct stores): safe for host RAM, but no faster than today's
   setup; closed (scoreboard). Exchanges can only shrink by merging or hiding them.
 - Gaps: a per-launch timeline on all cards + who waits for whom (`OWN_TIMELINE`, `OWN_XWAIT`; helper writing the

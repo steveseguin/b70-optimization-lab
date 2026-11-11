@@ -1100,7 +1100,7 @@ def xwait_report(L, path, mhz):
     ex = defaultdict(dict)  # (step, k) -> card -> (label, spins[6], ticks[6])
     for ln in open(path):
         f = ln.split()
-        if len(f) != 17 or f[0] != 'xw':
+        if len(f) < 17 or f[0] != 'xw':  # (dsv41_timeline.patch appends push ticks, kernel ticks, answer step)
             continue
         step, c, k, lab = int(f[1]), int(f[2]), int(f[3]), int(f[4])
         ex[(step, k)][c] = (lab, [int(x) for x in f[5:11]], [int(x) for x in f[11:17]])

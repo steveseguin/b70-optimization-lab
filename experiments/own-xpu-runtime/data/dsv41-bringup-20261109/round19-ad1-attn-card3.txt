@@ -1,0 +1,46 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+n = 160 slots, 12 heads
+    score HG = 2 vs HG = 4             PASS (0 of 1920 differ)
+    score HG = 1 vs HG = 4             PASS (0 of 1920 differ)
+    softmax slim vs old (on HG = 4 scores) PASS (0 of 1920 differ)
+    score HG = 4:  35.69 us (15 sub-groups)
+    score HG = 2:  24.18 us (30 sub-groups)
+    score HG = 1:   4.23 us (60 sub-groups)
+    softmax old:   3.87 us
+    softmax slim (128 registers?):   4.03 us
+    chain score + softmax, HG = 4 + old :  13.84 us per pair (host clock)
+    chain score + softmax, HG = 1 + slim:  11.04 us per pair (host clock)
+n = 160 slots, 16 heads
+    score HG = 2 vs HG = 4             PASS (0 of 2560 differ)
+    score HG = 1 vs HG = 4             PASS (0 of 2560 differ)
+    softmax slim vs old (on HG = 4 scores) PASS (0 of 2560 differ)
+    score HG = 4:   7.14 us (20 sub-groups)
+    score HG = 2:   5.08 us (40 sub-groups)
+    score HG = 1:   4.25 us (80 sub-groups)
+    softmax old:   3.88 us
+    softmax slim (128 registers?):   4.04 us
+    chain score + softmax, HG = 4 + old :  13.85 us per pair (host clock)
+    chain score + softmax, HG = 1 + slim:  11.09 us per pair (host clock)
+n = 640 slots, 12 heads
+    score HG = 2 vs HG = 4             PASS (0 of 7680 differ)
+    score HG = 1 vs HG = 4             PASS (0 of 7680 differ)
+    softmax slim vs old (on HG = 4 scores) PASS (0 of 7680 differ)
+    score HG = 4:   7.19 us (60 sub-groups)
+    score HG = 2:   5.21 us (120 sub-groups)
+    score HG = 1:   5.12 us (240 sub-groups)
+    softmax old:   8.20 us
+    softmax slim (128 registers?):   8.43 us
+    chain score + softmax, HG = 4 + old :  18.25 us per pair (host clock)
+    chain score + softmax, HG = 1 + slim:  17.64 us per pair (host clock)
+n = 640 slots, 16 heads
+    score HG = 2 vs HG = 4             PASS (0 of 10240 differ)
+    score HG = 1 vs HG = 4             PASS (0 of 10240 differ)
+    softmax slim vs old (on HG = 4 scores) PASS (0 of 10240 differ)
+    score HG = 4:   7.20 us (80 sub-groups)
+    score HG = 2:   5.41 us (160 sub-groups)
+    score HG = 1:   5.75 us (320 sub-groups)
+    softmax old:   8.17 us
+    softmax slim (128 registers?):   8.41 us
+    chain score + softmax, HG = 4 + old :  19.62 us per pair (host clock)
+    chain score + softmax, HG = 1 + slim:  18.56 us per pair (host clock)
+PASS
