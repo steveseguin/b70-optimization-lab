@@ -1,0 +1,176 @@
+start 2026-11-11 16:27:00
+h1 TRACE_IDENTICAL (tg98)
+h1 IDS40_SAME (tg98)
+h5 TRACE_IDENTICAL (tg98)
+h5 IDS40_SAME (tg98)
+h64 TRACE_IDENTICAL (tg98)
+h64 IDS40_SAME (tg98)
+h4dr TRACE_IDENTICAL (tg98)
+h4dr IDS40_SAME (tg98)
+h5dr TRACE_IDENTICAL (tg98)
+h5dr IDS40_SAME (tg98)
+h6dr TRACE_IDENTICAL (tg98)
+h6dr IDS40_SAME (tg98)
+h5drf TRACE_IDENTICAL (tg98)
+h5drf IDS40_SAME (tg98)
+h64dr TRACE_IDENTICAL (tg98)
+h64dr IDS40_SAME (tg98)
+gate 1 (from tg98): DROK=1 WAOK=0 QBOK=0 ALLOK=0 (WAIN=0)
+t3k_b64 exit 0
+t3k_b64: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b64: prompt: 3323 tokens read on the cards in 6.87s (494.9 tok/s; first step 0.28s incl. kernel build), first token 2581
+t3k_b64: decode: 39 steps after the first, 0.014 s/step, 70.23 tok/s
+t3k_b64: host io during decode: 5.9 MiB read from disk, 9 major page faults; engram rows 259.8 us per step and card (slowest card 266.2 us; copy + decode launch calls 17.0 us)
+t3k_b64 TRACE_IDENTICAL
+t3k_b64 IDS40_SAME
+gate 2: DROK=1 WAOK=0 QBOK=0 ALLOK=0
+warm exit 0
+warm SPEED128_SAME
+warm: decode: 127 steps after the first, 0.010 s/step, 100.55 tok/s
+warm: host io during decode: 22.2 MiB read from disk, 0 major page faults; engram rows 106.8 us per step and card (slowest card 108.3 us; copy + decode launch calls 10.0 us)
+d98_1 exit 0
+d98_1 SPEED128_SAME
+d98_1: decode: 127 steps after the first, 0.010 s/step, 101.36 tok/s
+d98_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 78.0 us per step and card (slowest card 80.7 us; copy + decode launch calls 10.4 us)
+a97_1 exit 0
+a97_1 SPEED128_SAME
+a97_1: decode: 127 steps after the first, 0.010 s/step, 100.21 tok/s
+a97_1: host io during decode: 0.6 MiB read from disk, 23 major page faults; engram rows 148.4 us per step and card (slowest card 151.1 us; copy + decode launch calls 10.1 us)
+d98_2 exit 0
+d98_2 SPEED128_SAME
+d98_2: decode: 127 steps after the first, 0.010 s/step, 101.43 tok/s
+d98_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 76.8 us per step and card (slowest card 79.4 us; copy + decode launch calls 10.1 us)
+a97_2 exit 0
+a97_2 SPEED128_SAME
+a97_2: decode: 127 steps after the first, 0.010 s/step, 101.49 tok/s
+a97_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 79.3 us per step and card (slowest card 81.4 us; copy + decode launch calls 10.1 us)
+p3k_b64_1 exit 0
+p3k_b64_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_b64_1: prompt: 3323 tokens read on the cards in 6.78s (494.3 tok/s; first step 0.19s incl. kernel build), first token 2581
+p3k_b64_1: decode: 255 steps after the first, 0.011 s/step, 90.55 tok/s
+p3k_b64_1: host io during decode: 28.8 MiB read from disk, 7 major page faults; engram rows 364.6 us per step and card (slowest card 365.6 us; copy + decode launch calls 10.2 us)
+p3k_b64_1 ANSWER256_SAME
+p3k_b256_1 exit 0
+p3k_b256_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_b256_1: prompt: 3323 tokens read on the cards in 6.71s (497.4 tok/s; first step 0.54s incl. kernel build), first token 2581
+p3k_b256_1: decode: 255 steps after the first, 0.011 s/step, 92.60 tok/s
+p3k_b256_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.5 us per step and card (slowest card 53.3 us; copy + decode launch calls 10.2 us)
+p3k_b256_1 ANSWER256_SAME
+p3k_hw_1 exit 0
+p3k_hw_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_hw_1: prompt: 3323 tokens read on the cards in 6.77s (495.3 tok/s; first step 0.18s incl. kernel build), first token 2581
+p3k_hw_1: decode: 255 steps after the first, 0.011 s/step, 92.62 tok/s
+p3k_hw_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.8 us per step and card (slowest card 54.8 us; copy + decode launch calls 9.8 us)
+p3k_hw_1 ANSWER256_SAME
+p3k_b64_2 exit 0
+p3k_b64_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_b64_2: prompt: 3323 tokens read on the cards in 6.79s (493.2 tok/s; first step 0.18s incl. kernel build), first token 2581
+p3k_b64_2: decode: 255 steps after the first, 0.011 s/step, 93.17 tok/s
+p3k_b64_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.8 us per step and card (slowest card 54.0 us; copy + decode launch calls 9.9 us)
+p3k_b64_2 ANSWER256_SAME
+p3k_b256_2 exit 0
+p3k_b256_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_b256_2: prompt: 3323 tokens read on the cards in 6.72s (496.9 tok/s; first step 0.54s incl. kernel build), first token 2581
+p3k_b256_2: decode: 255 steps after the first, 0.011 s/step, 93.36 tok/s
+p3k_b256_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 49.9 us per step and card (slowest card 52.6 us; copy + decode launch calls 10.0 us)
+p3k_b256_2 ANSWER256_SAME
+p3k_hw_2 exit 0
+p3k_hw_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_hw_2: prompt: 3323 tokens read on the cards in 6.85s (494.4 tok/s; first step 0.26s incl. kernel build), first token 2581
+p3k_hw_2: decode: 255 steps after the first, 0.011 s/step, 93.24 tok/s
+p3k_hw_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 54.7 us per step and card (slowest card 55.5 us; copy + decode launch calls 9.6 us)
+p3k_hw_2 ANSWER256_SAME
+code_d98_1 exit 0
+code_d98_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_d98_1: prompt: 82 tokens read on the cards in 0.23s (367.0 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_d98_1: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.68s = 138.74 tok/s; draft 1.93 ms + check 14.59 ms per cycle; SAME AS the plain run
+code_d98_1: host io during decode: 91.5 MiB read from disk, 32 major page faults; engram rows 281.6 us per step and card (slowest card 284.2 us; copy + decode launch calls 12.7 us)
+code_d98_1: kept guesses per cycle: 0:74 1:75 2:38 3:17 4:9 5:10
+code_d98_1_vs_tg97b GLOG_SAME
+code_dr_1 exit 0
+code_dr_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_dr_1: prompt: 82 tokens read on the cards in 0.27s (369.1 tok/s; first step 0.22s incl. kernel build), first token 2581
+code_dr_1: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.63s = 140.65 tok/s; draft 1.92 ms + check 14.37 ms per cycle; SAME AS the plain run
+code_dr_1: host io during decode: 0.3 MiB read from disk, 5 major page faults; engram rows 121.8 us per step and card (slowest card 123.4 us; copy + decode launch calls 12.5 us)
+code_dr_1: kept guesses per cycle: 0:74 1:75 2:38 3:17 4:9 5:10
+code_dr_1 GLOG_SAME
+analysis_d98_1 exit 0
+analysis_d98_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_d98_1: prompt: 113 tokens read on the cards in 0.29s (476.3 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_d98_1: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.35s = 152.71 tok/s; draft 1.94 ms + check 16.65 ms per cycle; SAME AS the plain run
+analysis_d98_1: host io during decode: 73.5 MiB read from disk, 2 major page faults; engram rows 368.3 us per step and card (slowest card 369.2 us; copy + decode launch calls 13.0 us)
+analysis_d98_1: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_d98_1_vs_tg97b GLOG_SAME
+analysis_dr_1 exit 0
+analysis_dr_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_dr_1: prompt: 113 tokens read on the cards in 0.28s (475.9 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_dr_1: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.27s = 156.04 tok/s; draft 1.93 ms + check 16.26 ms per cycle; SAME AS the plain run
+analysis_dr_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 128.7 us per step and card (slowest card 129.7 us; copy + decode launch calls 13.1 us)
+analysis_dr_1: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_dr_1 GLOG_SAME
+code_d98_2 exit 0
+code_d98_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_d98_2: prompt: 82 tokens read on the cards in 0.23s (366.4 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_d98_2: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.67s = 139.41 tok/s; draft 1.92 ms + check 14.52 ms per cycle; SAME AS the plain run
+code_d98_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 122.7 us per step and card (slowest card 124.8 us; copy + decode launch calls 12.8 us)
+code_d98_2: kept guesses per cycle: 0:74 1:75 2:38 3:17 4:9 5:10
+code_d98_2_vs_tg97b GLOG_SAME
+code_dr_2 exit 0
+code_dr_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_dr_2: prompt: 82 tokens read on the cards in 0.23s (368.6 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_dr_2: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.63s = 140.76 tok/s; draft 1.93 ms + check 14.35 ms per cycle; SAME AS the plain run
+code_dr_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 119.4 us per step and card (slowest card 120.9 us; copy + decode launch calls 12.0 us)
+code_dr_2: kept guesses per cycle: 0:74 1:75 2:38 3:17 4:9 5:10
+code_dr_2 GLOG_SAME
+analysis_d98_2 exit 0
+analysis_d98_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_d98_2: prompt: 113 tokens read on the cards in 0.28s (476.4 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_d98_2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.32s = 153.83 tok/s; draft 1.93 ms + check 16.52 ms per cycle; SAME AS the plain run
+analysis_d98_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 127.8 us per step and card (slowest card 130.1 us; copy + decode launch calls 13.6 us)
+analysis_d98_2: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_d98_2_vs_tg97b GLOG_SAME
+analysis_dr_2 exit 0
+analysis_dr_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_dr_2: prompt: 113 tokens read on the cards in 0.28s (476.6 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_dr_2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.28s = 155.86 tok/s; draft 1.94 ms + check 16.27 ms per cycle; SAME AS the plain run
+analysis_dr_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 128.0 us per step and card (slowest card 130.4 us; copy + decode launch calls 13.4 us)
+analysis_dr_2: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_dr_2 GLOG_SAME
+prose_d98 exit 0
+prose_d98: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+prose_d98: prompt: 62 tokens read on the cards in 0.26s (0.0 tok/s; first step 0.26s incl. kernel build), first token 33001
+prose_d98: spec decode: 511 tokens in 265 cycles (1.93 per cycle; 246 of 433 guesses kept, 56.8 %) in 4.37s = 117.00 tok/s; draft 1.92 ms + check 14.56 ms per cycle; SAME AS the plain run
+prose_d98: host io during decode: 118.5 MiB read from disk, 7 major page faults; engram rows 305.5 us per step and card (slowest card 308.0 us; copy + decode launch calls 12.9 us)
+prose_d98: kept guesses per cycle: 0:124 1:78 2:37 3:15 4:6 5:5
+prose_b2 exit 0
+prose_b2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+prose_b2: prompt: 62 tokens read on the cards in 0.18s (0.0 tok/s; first step 0.18s incl. kernel build), first token 33001
+prose_b2: spec decode: 511 tokens in 265 cycles (1.93 per cycle; 246 of 433 guesses kept, 56.8 %) in 4.31s = 118.49 tok/s; draft 1.92 ms + check 14.35 ms per cycle; SAME AS the plain run
+prose_b2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 125.6 us per step and card (slowest card 127.4 us; copy + decode launch calls 12.5 us)
+prose_b2: kept guesses per cycle: 0:124 1:78 2:37 3:15 4:6 5:5
+p3k_spec_d98 exit 0
+p3k_spec_d98: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_spec_d98: prompt: 3323 tokens read on the cards in 6.84s (489.7 tok/s; first step 0.18s incl. kernel build), first token 2581
+p3k_spec_d98: spec decode: 255 tokens in 95 cycles (2.68 per cycle; 161 of 211 guesses kept, 76.3 %) in 1.87s = 136.71 tok/s; draft 1.93 ms + check 17.70 ms per cycle; SAME AS the plain run
+p3k_spec_d98: host io during decode: 7.4 MiB read from disk, 0 major page faults; engram rows 895.4 us per step and card (slowest card 896.9 us; copy + decode launch calls 14.3 us)
+p3k_spec_d98: kept guesses per cycle: 0:26 1:28 2:17 3:8 4:5 5:11
+p3k_spec_b2 exit 0
+p3k_spec_b2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_spec_b2: prompt: 3323 tokens read on the cards in 6.83s (490.2 tok/s; first step 0.18s incl. kernel build), first token 2581
+p3k_spec_b2: spec decode: 255 tokens in 95 cycles (2.68 per cycle; 161 of 211 guesses kept, 76.3 %) in 1.78s = 143.36 tok/s; draft 1.93 ms + check 16.79 ms per cycle; SAME AS the plain run
+p3k_spec_b2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 114.3 us per step and card (slowest card 115.7 us; copy + decode launch calls 12.9 us)
+p3k_spec_b2: kept guesses per cycle: 0:26 1:28 2:17 3:8 4:5 5:11
+guessing SAME count: 12
+tl_ck exit 0
+tl_ck: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+tl_ck: prompt: 82 tokens read on the cards in 0.23s (371.3 tok/s; first step 0.18s incl. kernel build), first token 2581
+tl_ck: spec decode: 255 tokens in 115 cycles (2.22 per cycle; 140 of 169 guesses kept, 82.8 %) in 2.12s = 120.01 tok/s; draft 1.96 ms + check 16.52 ms per cycle; no reference
+tl_ck: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 128.2 us per step and card (slowest card 131.5 us; copy + decode launch calls 14.0 us)
+tl_ck: kept guesses per cycle: 0:37 1:41 2:22 3:7 4:6 5:2
+tl_ck3 exit 0
+tl_ck3: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+tl_ck3: prompt: 82 tokens read on the cards in 0.23s (370.9 tok/s; first step 0.18s incl. kernel build), first token 2581
+tl_ck3: spec decode: 255 tokens in 115 cycles (2.22 per cycle; 140 of 169 guesses kept, 82.8 %) in 2.11s = 120.76 tok/s; draft 1.94 ms + check 16.42 ms per cycle; no reference
+tl_ck3: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 127.1 us per step and card (slowest card 128.9 us; copy + decode launch calls 14.1 us)
+tl_ck3: kept guesses per cycle: 0:37 1:41 2:22 3:7 4:6 5:2
+ALLDONE

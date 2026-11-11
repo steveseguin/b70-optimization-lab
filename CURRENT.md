@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 11, 2026 16:45 EST — DeepSeek V4.1 tp98 gate (tg98 + tg98b) done; dride default from tp99; build99 queued.**
+- dride-1 (`OWN_MT_DRIDE`) bitwise everywhere and faster: code 138.7 / 139.4 -> 140.7 / 140.8 tok/s, analysis
+  152.7 / 153.8 -> 156.0 / 155.9, after a 3K prompt 136.7 -> 143.4; checks of 4-6 tokens -0.7-0.8 ms. Plain 101.4,
+  3K read 6.78 s (blocks of 256: 6.71 s). Results: experiments/own-xpu-runtime/data/dsv41-bringup-20261109/round19-tg98/.
+- qb-off-3 hung cards 2 and 5 at 16:25 (driver job timeouts, our software; probe passed 16:26; evidence
+  /home/steve/dsv41-work/faults/fault-20261111T1625/). Parked, stays off.
+- tp99 (tree, uncommitted) = tp98 sources (a548f90aa) + dride default + wa-1 (`OWN_ATT_WA`) + xll-1 (`OWN_XLL`),
+  the last two opt-in. Unit build99 starts after the xll six-card check (xllverify, short steps only).
+
 **November 11, 2026 15:17:25 EST — host reset (fourth, same signature as 2026-11-10); probe passed after boot.**
 - During a helper's sustained six-card peer-traffic stress bench (one-trip pull study, `xll_bench --phase=check`,
   runs xll-long-2..5 from 15:14:35, ~53 s each back to back). Boot 15:20:21. BERT records: fatal PCIe error on
