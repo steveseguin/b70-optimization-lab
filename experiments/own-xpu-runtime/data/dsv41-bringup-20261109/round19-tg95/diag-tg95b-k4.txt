@@ -1,0 +1,26 @@
+# /home/steve/dsv41-work/runs/tg95b/tl_ck.txt  one-token steps [10021, 10025, 10026]
+step wall ms: 10.252 10.305 10.287  mean 10.281
+layer period (output-a end to next output-a end, latest card), us: median 238.89 mean 248.46
+per card, median per layer (us):
+quantity                 c0     c1     c2     c3     c4     c5
+prev_to_q             43.44  44.06  30.73  43.54  44.06  31.15
+pre_span              13.12  13.23   0.10  13.18  13.12   0.10
+q_d                   15.42  15.73  15.42  15.52  15.62  15.42
+wait                   0.00   0.00   1.56   0.00   0.00   1.56
+rope                   0.52   0.52   0.00   0.52   0.52   0.00
+att                   18.28  18.54  18.64  18.12  18.18  18.33
+oa                    10.52  10.42  18.33  10.42  10.42  18.39
+q_to_xa               46.56  46.98  55.21  46.30  46.88  55.42
+prev_to_xa            89.22  90.31  85.36  89.11  90.00  86.04
+xa_d                  12.92  10.62  17.08  12.60  11.98  16.46
+pre:XR                 7.71   7.71      -   7.81   7.81      -
+pre:ROPE               1.04   1.04      -   1.04   1.04      -
+pre:PUSH               3.85   3.85      -   3.75   3.75      -
+push_late_vs_qb_end       -      -  -1.50      -      -  -2.04
+mean per layer (us):
+q_d                    15.49   15.57   15.36   15.53   15.57   15.49
+q_to_xa                49.20   49.57   58.37   49.27   49.51   58.62
+prev_to_xa             93.54   94.18   89.76   93.40   93.89   90.32
+xa_d                   13.92   12.42   17.76   13.51   13.37   17.38
+last to start output-a: c0 7%, c1 60%, c2 0%, c3 12%, c4 19%, c5 0%  (margin median 0.85 us)
+heavy minus light arrival at output-a (latest heavy - latest light), us: median -5.07, p10 -7.25, p90 -3.31
