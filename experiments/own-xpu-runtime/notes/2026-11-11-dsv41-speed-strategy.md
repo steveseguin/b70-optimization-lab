@@ -222,6 +222,11 @@ Prompt reading:
   exchange (its input needs the finish), so `SkNormDotsW` 6.6 us becomes a norm alone (~3.5 us) plus a ~1 us
   partial step before the exchange: ~0.15-0.3 ms per plain step (1.5-3 %), more in checks of 2-6 tokens (the
   token split leaves cards idle there, the column split does not). Queued after K6 and the dense / attention work.
+- Closed 2026-11-11 ~10:45 by arithmetic: **tree guesses** (check a second draft candidate at the least certain
+  position, tree attention mask). Every extra token in a check costs ~2 ms here (14 % of an analysis round: its
+  experts are new bytes), and a second candidate rescues only the misses at that position (analysis: 13 of 40
+  one-guess rounds miss the first guess; at a typical ~30 % top-2 hit rate that is +0.1 token per round for +2 ms).
+  Trees pay where an extra check token is nearly free; revisit only if the extra token falls under ~0.5 ms.
 - Closed 2026-11-11: storing `hc_*_fn` in 16 bits. Unlike the router (`ffn_gate_inp`, 100 % exact in bf16, already
   stored as upper halves), `hc_attn_fn` / `hc_ffn_fn` are true F32 (4-15 of 491,520 values per tensor exact in
   bf16, layers 0 / 1 / 20 checked). The norm weights are bf16-exact but tiny.
