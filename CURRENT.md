@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 11, 2026 ~11:57 EST — DeepSeek V4.1: build tp96 + six-card check tg96 (~2 h) started.**
+- tp95's check (tg95 / tg95b): every answer the same. Check rows (`OWN_MT_CK`) +0.5-1 % guessing; the q_b offload
+  gave nothing and is closed (the four light cards became the slow ones); the one-launch attention was not exact
+  (scores read through a non-shared cache inside the launch), fixed in attn-a2.
+- tp96 adds four switches, all off by default: attn-a2 (attention fix), k7-1 (mixing sums ride the exchanges,
+  ~1.5-2 % expected), rux-1 (prompt expert kernels, 3K read ~470 -> ~495-530 tok/s expected), ck-2 (check rows
+  with the q_b fallback fixed, ~0.5-1 ms per check expected), plus five no-rebuild switches for 2-token checks.
+- Where a 2-token check's extra 3.2 ms goes is now measured (notes, ck2tok): ~1.75 ms new work, ~1.5 ms fixable.
+
 **November 11, 2026 ~10:15 EST — DeepSeek V4.1: build tp94 queued; at 10:32 replaced by tp95 (tp94 + check rows + query-row offload, all switches off by default) and its six-card check tg95.**
 - tp94 = tp93 with the new defaults (norm kernels in checks, mixing share-out from 4 words) plus the attention helper's
   one-launch attention as a switch (`OWN_ATT_T=1`, off by default). One card bench: the attention per layer
