@@ -504,7 +504,7 @@ def prompt_role(name):
         return 'answer step'
     rules = [
         (r'^Xchg(Pull|P)$', 'exchange'), (r'^XchgPair', 'exchange (head pairs)'),
-        (r'RoutedU<RUFmt\w+<20u', 'routed gate+up'), (r'RoutedU<RUFmt\w+<9u', 'routed down'),
+        (r'RoutedU\d?<R\w+<20u', 'routed gate+up'), (r'RoutedU\d?<R\w+<9u', 'routed down'),
         (r'^RoutedQ2KF<9u>', 'routed down'),
         (r'TokRows<HcDotsRows.*GemvH16P<160u', 'router logits + mix dots'),
         (r'TokRows<HcDotsRows.*Gemv(Q8P<160u|Q6KP<20u)', 'q_a + mix dots'),

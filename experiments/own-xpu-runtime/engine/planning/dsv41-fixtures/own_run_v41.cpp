@@ -231,10 +231,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     // smallk (2026-11-11, /home/steve/dsv41-work/smallk): one-work-group forms of the 5,120 norm, the q_a + kv norms,
-    // the compressor pool and the engram gate (the same bits; bench-checked incl. forced fallbacks); opt-in until gated
+    // the compressor pool and the engram gate (the same bits; bench-checked incl. forced fallbacks); default since tg89, =0: off
     if (const char *e = getenv("OWN_SMALLK")) opt.smallk = atoi(e) != 0;
     // the pre-norm + the stream mix's dot rows by a proven fast sum, block size K = 8 or 4 (the finish's outputs the
-    // same bits; opt-in): OWN_SMALLK_DOTS=8
+    // same bits; default 8 since tg89, =0: off): OWN_SMALLK_DOTS=8
     if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     // OWN_XL2=bits: while a card waits in a one-token exchange, a prefetch launch on its second queue pulls the next
@@ -486,6 +486,8 @@ int main(int argc, char **argv) {
         // default since round 18 d4 / g78: blocks of 9-16 tokens (and larger ones, as 16) pick their dense forms per
         // matrix shape (OWN_MT_W16=0: off)
         be.mt_w16 = getenv("OWN_MT_W16") ? atoi(getenv("OWN_MT_W16")) != 0 : true;
+        // weight-stationary dense rows for the matrix shapes and block sizes ops41sycl::WsTab lists (OWN_MT_WS=1; off)
+        be.mt_ws = getenv("OWN_MT_WS") && atoi(getenv("OWN_MT_WS")) != 0;
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
@@ -506,6 +508,14 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
         if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
         if (const char *e = getenv("OWN_MT_RFUSE")) be.mt_rfuse = atoi(e) != 0; // router + shared gate/up in one launch
+        // the check path's fixed cost (ckpath-1; all off by default, each a bit-identical form)
+        if (const char *e = getenv("OWN_CK1")) be.ck1 = atoi(e) != 0;                     // a one-token check as the plain step
+        if (const char *e = getenv("OWN_MT_RIDE_MIN")) be.mt_ride_min = (unsigned)atoi(e); // OWN_MT_RIDE from m tokens on
+        if (const char *e = getenv("OWN_MT_KVPAIR")) be.mt_kvpair = atoi(e) != 0;         // q_a + kv rows in one launch
+        if (const char *e = getenv("OWN_MT_FIN_QB")) be.mt_fin_qb = atoi(e) != 0;         // attention mix finish in q_b's launch
+        if (const char *e = getenv("OWN_MT_EU_MIN")) be.mt_eu_min = (unsigned)atoi(e);     // OWN_MT_EU from m tokens on
+        if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
+        if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
 #endif
 
         // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----

@@ -1,5 +1,33 @@
 # Current Workspace State
 
+**November 11, 2026 ~07:40 EST — DeepSeek V4.1 on six cards: guessing 128-140 tokens/s (was 118-132), prompts read at 416 tokens/s (was 339); text the same everywhere.**
+- Prompt reading: the 3,000-token document reads at 416 tokens/s, up from 339. Two changes:
+  - the expert code from the last build, now also in prompt blocks: 339 -> 353
+  - unpacking each weight once per group of tokens instead of once per token: 353 -> 416
+- Guessing, word for word the plain answers in all 28 runs:
+
+  | Prompt | Before (tokens/s) | Now (tokens/s) |
+  |---|---|---|
+  | Code | 118.6 | 128.6 |
+  | Analysis | 131.5 | 140.4 |
+  | 3,000-token document | 121.8 | 130.8 |
+
+  - The checks got the faster expert code.
+  - A round with no guesses now runs as a plain word: 10.4 ms instead of 12.0.
+  - A few launches inside each check were merged.
+- Plain answers: about 99 tokens/s, unchanged.
+- Tried and dropped:
+  - preloading weights from a separate queue (still slower)
+  - host threads that wait busily (no change)
+  - reading the result on the copy queue (slower)
+  - 256-token prompt blocks (still slower than 64)
+- Where a guessing round's time goes now:
+  - A check with one guess costs about 4.4 ms more than a plain word. Each further guess costs about 2.4 ms.
+  - Of each further guess (slowest card): about 1.1 ms is the ordinary weights, 0.9 ms the expert weights and 0.7 ms the card-to-card copies. The ordinary weights take about 10x what their arithmetic needs.
+  - The model of the guessing rounds says 200 tokens/s needs each extra guess at about 1 ms and the guesser under 1 ms.
+- Next build: these settings on by default, plus two tested-before-default patches. One trims the guesser (it costs 2.2 ms per round). The other cuts the prompt reading's per-token mixing work (estimated +10-15 %).
+- Helpers are working on the weights inside checks and on attention.
+
 **November 11, 2026 ~05:15 EST — DeepSeek V4.1 on six cards: plain answers 92 -> 99.6 tokens/s; guessing unchanged at 118-132; text the same everywhere.**
 - Faster expert kernels (fewer instructions per weight) are now the default: plain answers 92.0 -> 95.4-97.5 tokens/s.
 - With the proven shortcuts for small serial steps on top: 99.6-99.7 tokens/s. They become the default in the next build.

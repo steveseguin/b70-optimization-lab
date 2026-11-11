@@ -50,6 +50,17 @@ void commit_pending(int c) {
             qs[c].memcpy(sc[c].kv_state + so, pkv[c][si] + (size_t)pend_n * g.hd, (size_t)g.hd * 4);
             qs[c].memcpy(sc[c].score_state + so, psc[c][si] + (size_t)pend_n * g.hd, (size_t)g.hd * 4);
         }
+    // OWN_RING_ONE: the same moves of every ring below in one launch (RingCommitN; 43 launches of ~2.4 us each
+    // were ~100 us of card time at the start of every draft step after a check that kept guesses)
+    const int nring = (o.layer_end - o.layer_begin) + (o.dspark ? DR_STAGES : 0);
+    if (ring_one && nring >= 1 && nring <= ops41sycl::RingCommitN::MAXR) {
+        ops41sycl::RingCommitN k{128, g.hd, (int)pend_p0, pend_n, 0, {}};
+        for (int L = o.layer_begin; L < o.layer_end; ++L) k.r[k.nr++] = ring[c][L];
+        if (o.dspark)
+            for (int s = 0; s < DR_STAGES; ++s) k.r[k.nr++] = dring[c][s];
+        launch(c, (size_t)k.nr * pend_n * g.hd, 64, k);
+        return;
+    }
     for (int L = o.layer_begin; L < o.layer_end; ++L) // the kept tokens' window rows (left in the block area)
         launch(c, (size_t)pend_n * g.hd, 64, ops41sycl::RingCommitM{128, g.hd, (int)pend_p0, pend_n}, ring[c][L]);
     if (o.dspark) // the draft's rows of the kept tokens (staged by the checking step; a dropped one's row would
@@ -86,6 +97,8 @@ unsigned mt_tgr_fmt = 3;      // ... for these formats (OWN_MT_TGR_FMT: 1 Q8_0, 
 bool mt_tgr_draft = true;     // ... also in the draft's steps (OWN_MT_TGR_DRAFT)
 bool mt_w16 = false;          // OWN_MT_W16: blocks of 9 or more tokens pick token groups and row blocks per matrix shape
                               // (w16_g / w16_r below; overrides OWN_MT_TG / OWN_MT_TGR for those matrices)
+bool mt_ws = false;           // OWN_MT_WS=1: weight-stationary dense rows (ops41sycl::DenseRowsWS) for the matrix
+                              // shapes and block sizes ops41sycl::WsTab lists (ahead of OWN_MT_W16 / TG / TGR)
 unsigned mt_tgw_rows = 0;     // OWN_MT_TGW_ROWS=n: packed matrices of at least n rows on the card (the vocabulary head)
                               // run their own token groups (mt_tgwm) with NO row blocks; 0: off. Same sums (rowg is
                               // per token). bench_q6k_rows, the head's 21,547 Q6_K rows, 6 tokens: 4-row blocks in
@@ -106,7 +119,17 @@ unsigned eu_cap_c[TILES] = {}; // the cap card c's current layer was grouped wit
 bool mt_idstat = false; // OWN_MT_IDSTAT=1: count distinct experts per block and layer on card 0 (diagnostic, waits)
 FILE *mt_iddump = nullptr; // OWN_MT_IDDUMP=<file> (with OWN_MT_IDSTAT=1): write each block's ids per layer
 long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push over many work-groups (OWN_MT_XPUSH=0: XchgP's one group)
+// ---- the check path's fixed cost (ckpath-1, 2026-11-11; every switch off by default, each a bit-identical form)
+bool ck1 = false;         // OWN_CK1=1: a check of the anchor alone (no guesses) runs as the one-token step (tpm_card_step1)
+unsigned mt_ride_min = 0; // OWN_MT_RIDE_MIN=m: OWN_MT_RIDE only in blocks of at least m tokens (smaller: dots in the norms' launches)
+bool mt_kvpair = false;   // OWN_MT_KVPAIR=1: q_a's and kv's rows in one launch (gemv_pair_m; the one-token path's pair)
+bool mt_fin_qb = false;   // OWN_MT_FIN_QB=1: the attention mix's finish rides in q_b's launch (the one-token path's place)
+unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at least m tokens (smaller: slot-major rows)
+bool ring_one = false;    // OWN_RING_ONE=1: commit_pending's ring moves in one launch (RingCommitN)
+bool dr_nowait = false;   // OWN_DR_NOWAIT=1: the draft step's embed does not wait for the card (no host buffer to protect)
 private:
+bool ck1_run = false;     // decode_verify_tp -> tpm_card_step: this check is one token and OWN_CK1 is on
+bool vck1 = false;        // the checked block ran as a one-token step (commit_block: nothing staged)
 // xchg for a block: the stores by XchgPushM, then XchgP without slots for the release, flags and wait
 uint32_t xchg_m(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int mode, int part) {
     if (!mt_xpush || use_pull(part, nslot)) return xchg(c, off, stride, nslot, r0, r1, mode, 0, part);
@@ -290,6 +313,12 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
         }
         go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
     };
+    // OWN_MT_WS: the (matrix shape, block size) pairs bench_dense_ws measured faster than the forms below
+    // (ops41sycl::WsTab; the same sums per row and token, bit for bit). The draft's steps keep the general rules.
+    if (mt_ws && !dr_step && mt <= MTX) {
+        constexpr unsigned KIND = std::is_same_v<RD, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN : ops41sycl::WS_DOTS;
+        if (ops41sycl::ws_rows<DK, KIND>(dk, (const uint8_t *)w, x, xs, y, ys, mt, MTA, [&](const auto &d) { go(d); })) return;
+    }
     if constexpr (requires { &DK::template rowgr<2, 2>; }) {
         constexpr unsigned WG = w16_g<DK>(), WR = w16_r<DK>();
         if constexpr (WG != 0)
@@ -412,6 +441,66 @@ template <typename F> bool dense_kernel(int c, const std::string &wn, F &&f) {
 #undef XQ
     return false;
 }
+// OWN_MT_KVPAIR: two packed matrices of one kernel that read the same activations (q_a and kv) in ONE launch,
+// rider rows first, then a's rows, then b's (RowsPair: a row's code does not depend on its launch). Each matrix
+// runs in the plain token groups dense_m would give it (DenseRowsG<DK, mt_tg_of>); false, nothing launched,
+// wherever dense_m could pick another form (row blocks OWN_MT_TGR, OWN_MT_W16, OWN_MT_TGW_ROWS, DenseRowsM), so
+// every row runs the same rowg<G> code on the same inputs as in its own launch
+template <typename RD>
+bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std::string &wb, act_t *yb, size_t ysb,
+                 const act_t *x, size_t xs, const RD &rider) {
+    const auto &ea = we(wa), &eb = we(wb);
+    const auto &da = wgt[c].at(wa), &db = wgt[c].at(wb);
+    if (ea.type != eb.type || ea.cols != eb.cols || !da.packed || !db.packed) return false;
+    const unsigned mt = (unsigned)mt_n, nra = da.nrows, nrb = db.nrows;
+    if (mt < 1 || mt > (unsigned)MTX) return false;
+    if (mt_w16 && mt >= 9) return false;
+    if (mt_tgw_rows && std::max(nra, nrb) >= mt_tgw_rows) return false;
+    const unsigned tg = mt_tg_of(mt);
+    if (tg < 1 || tg > 4) return false;
+    const uint8_t *wpb = (const uint8_t *)db.p;
+    bool ok = false;
+    dense_kernel(c, wa, [&](auto dk, const uint8_t *wpa) {
+        using DK = decltype(dk);
+        if (mt_ws && !dr_step) { // OWN_MT_WS: false where dense_m gives either matrix a weight-stationary form
+            using O = ops41sycl::WsOf<DK>;
+            constexpr unsigned KA = std::is_same_v<RD, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN : ops41sycl::WS_DOTS;
+            if (ops41sycl::WsTab<O::fmt, O::cols, KA>::pick(nra, mt) ||
+                ops41sycl::WsTab<O::fmt, O::cols, ops41sycl::WS_PLAIN>::pick(nrb, mt))
+                return;
+        }
+        auto split = [&](auto gc) {
+            constexpr unsigned G = decltype(gc)::value;
+            if constexpr (requires { &DK::template rowgr<G, 2>; }) { // dense_m's row-block rule (xn = 0 here)
+                constexpr unsigned fb = ops41sycl::is_q6kp_v<DK> ? 2u : 1u;
+                const bool on = (mt_tgr_fmt & fb) && (!dr_step || mt_tgr_draft);
+                for (const unsigned nr : {nra, nrb}) {
+                    const unsigned rr = on && nr >= mt_tgr_rows ? mt_tgr[mt] : 0;
+                    if (rr == 2 || rr == 4) return;
+                }
+            }
+            DK dkb = dk;
+            dkb.rows = nrb;
+            using D = ops41sycl::DenseRowsG<DK, G>;
+            using P = ops41sycl::RowsPair<D, D>;
+            const unsigned ng = (mt + G - 1) / G;
+            const P pr{D{dk, wpa, x, xs, ya, ysa, mt, ng}, D{dkb, wpb, x, xs, yb, ysb, mt, ng}};
+            if constexpr (std::is_same_v<RD, ops41sycl::NoRows>) {
+                launch_rows<0>(c, pr.n(), 0, ops41sycl::RowsP<P>{pr});
+            } else {
+                using PR = ops41sycl::RowsPair<RD, P>;
+                const PR rp{rider, pr};
+                launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<PR>{rp});
+            }
+            ok = true;
+        };
+        if (tg == 1) return split(std::integral_constant<unsigned, 1>{});
+        if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
+        if (tg == 3) return split(std::integral_constant<unsigned, 3>{});
+        return split(std::integral_constant<unsigned, 4>{});
+    });
+    return ok;
+}
 // OWN_MT_RFUSE: the block's router top-k (a work-group per token), the FFN mix's finish and the shared expert's
 // gate + up rows in ONE launch (the one-token path's route_with_shared). False (nothing launched) when the gate
 // and up matrices are not the same packed kernel.
@@ -444,6 +533,15 @@ bool route_shared_m(int c, const std::string &p, const float *bias) {
             const unsigned ng = (mt + G - 1) / G;
             go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, ng}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt, ng});
         };
+        if (mt_ws && !dr_step) { // OWN_MT_WS (as dense_m): both matrices in the same form
+            const bool ws = ops41sycl::ws_rows<DK, ops41sycl::WS_SHARED>(dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, MTA,
+                                                                         [&](const auto &dg) {
+                                                                             auto du = dg;
+                                                                             du.w = wu, du.y = b.shu;
+                                                                             go(dg, du);
+                                                                         });
+            if (ws) return;
+        }
         if (tg == 1) return split(std::integral_constant<unsigned, 1>{});
         if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
         if (tg == 3) return split(std::integral_constant<unsigned, 3>{});
@@ -524,7 +622,7 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
     };
     using namespace ops41sycl;
     const unsigned cols = (unsigned)e.cols;
-    if (mt_eu) { // expert-major: the layer's groups (ExpertGroupM, tpm_layer) in place of the ids; grid for nu = nsl
+    if (mt_eu && (unsigned)mt_n >= mt_eu_min) { // expert-major: the layer's groups (ExpertGroupM, tpm_layer) in place of the ids; grid for nu = nsl
         if (mt_eu > 6) throw std::runtime_error("OWN_MT_EU: groups of at most 6 slots (the kernels' MT)");
         const unsigned cap = eu_cap_c[c]; // <= 6: the MT 6 kernels; else MT 16 (MT 8 for IQ2_S at 5,120 columns)
         if (cap < 1 || cap > 16) throw std::runtime_error("OWN_MT_EU_BIG: groups of 1 .. 16 slots");
@@ -982,6 +1080,7 @@ void tpm_layer(int L, int c) {
                     H4, FS);
     };
     if (g.h != 5120 || g.qrank != 1280) throw std::runtime_error("multi-token step: model width");
+    const bool ride = mt_ride && (unsigned)M >= mt_ride_min; // OWN_MT_RIDE (OWN_MT_RIDE_MIN: from m tokens on)
     dr_capture(L, c); // the draft's input features (layers 37 .. 39; read only)
     // ---- phase 0: pre-norm, mix, query/key rows, publish, index
     if (L == 1 || L == 14) {
@@ -1010,7 +1109,7 @@ void tpm_layer(int L, int c) {
         if (!mx_ready[c])
             launch(c, (size_t)M * H, 32, ops41sycl::HcPreAM<Act>{g.h, (unsigned)M, H4, 4, H}, (const act_t *)strm[c],
                    (const float *)b.cur_pre, b.x);
-        if (mt_ride) // the dot rows ride in q_a's launch below
+        if (ride) // the dot rows ride in q_a's launch below
             rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H));
         else
             rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
@@ -1029,14 +1128,30 @@ void tpm_layer(int L, int c) {
         }
     }
     mx_ready[c] = false;
-    if (mt_small && mt_ride) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dots(p + "hc_attn_"));
-    else gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank);
-    gemv_m(c, p + "attn_kv.weight", b.xn, H, b.kv, g.hd);
+    // OWN_MT_KVPAIR: q_a + kv rows (+ the dot rows) in one launch, each matrix in the token groups dense_m gives it
+    const bool kvp = mt_small && mt_kvpair &&
+                     (ride ? gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
+                                         dots(p + "hc_attn_"))
+                           : gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
+                                         ops41sycl::NoRows{}));
+    if (!kvp) {
+        if (mt_small && ride) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dots(p + "hc_attn_"));
+        else gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank);
+        gemv_m(c, p + "attn_kv.weight", b.xn, H, b.kv, g.hd);
+    }
     using N1 = ops41sycl::NormRows<1280, 4>;
     using N2 = ops41sycl::NormRows<512, 2>;
-    if (mt_small) { // the mix's finish + both norms
+    using FR = ops41sycl::TokRows<ops41sycl::HcFinishRows>;
+    // OWN_MT_FIN_QB: the mix's finish rides in q_b's launch (as the one-token step's); q_b's own rows keep their form
+    // (a rider skips only dense_m's OWN_MT_TGW_ROWS branch, so not where that branch would take q_b)
+    const bool fin_qb = mt_small && mt_fin_qb && wgt[c].at(p + "attn_q_b.weight").packed &&
+                        (!mt_tgw_rows || qbr1 - qbr0 < mt_tgw_rows);
+    if (mt_small && fin_qb) { // both norms
+        using R = ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>;
+        rows_launch(c, R{tokr(N1{b.qa, wp<float>(c, p + "attn_q_a_norm.weight"), b.qn}, g.qrank, g.qrank),
+                         tokr(N2{b.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), b.kvn}, g.hd, g.hd)});
+    } else if (mt_small) { // the mix's finish + both norms
         tok_set(c, 0);
-        using FR = ops41sycl::TokRows<ops41sycl::HcFinishRows>;
         using R = ops41sycl::RowsPair<FR, ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>>;
         rows_launch(c, R{tokr(hc_finish(c, p + "hc_attn_", b.pre_a, b.post_a, b.comb_a), FS, 4, 4, 16),
                          {tokr(N1{b.qa, wp<float>(c, p + "attn_q_a_norm.weight"), b.qn}, g.qrank, g.qrank),
@@ -1051,7 +1166,13 @@ void tpm_layer(int L, int c) {
             launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
         }
     }
-    gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, ops41sycl::NoRows{}, qbr0, qbr1);
+    if (fin_qb) {
+        tok_set(c, 0); // (hc_finish reads token 0's partials pointer: the block's base)
+        const FR fin = tokr(hc_finish(c, p + "hc_attn_", b.pre_a, b.post_a, b.comb_a), FS, 4, 4, 16);
+        gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, fin, qbr0, qbr1);
+    } else {
+        gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, ops41sycl::NoRows{}, qbr0, qbr1);
+    }
     if (pos < 0 || pos + M > max_seq) throw std::runtime_error("position beyond max_seq");
     if (mt_small) { // key and query rope, every token (positions pos .. pos + M - 1: 32 table entries apart)
         const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
@@ -1225,7 +1346,7 @@ void tpm_layer(int L, int c) {
         launch(c, (size_t)M * H, 64, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H},
                strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
                (float *)nullptr, (const float *)b.pre_a, b.x);
-        if (mt_ride) { // the dot rows ride in the router's launch
+        if (ride) { // the dot rows ride in the router's launch
             rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
             gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts, 0, 0, dots(p + "hc_ffn_"));
         } else {
@@ -1271,7 +1392,7 @@ void tpm_layer(int L, int c) {
         ids_unique += (long)(std::unique(hid.begin(), hid.end()) - hid.begin());
         if (L == 0) ++ids_blocks;
     }
-    if (mt_eu) { // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
+    if (mt_eu && (unsigned)M >= mt_eu_min) { // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
         const bool big = mt_eu_big && (unsigned)M >= mt_eu_big_m;
         unsigned cap = big ? mt_eu_big : mt_eu;
         const auto &eg = we(p + "ffn_gate_exps.weight");
@@ -1384,7 +1505,92 @@ void head_readback(int c) {
     e1.wait();
     e2.wait();
 }
+// OWN_CK1: a check of the anchor alone (decode_verify_tp with mt = 1: no guesses) as the one-token step --
+// tp_card_step's code on the one-token buffers (tp_embed, tp_phase, tp_head's launches), so the logits, the
+// target's window row (WindowAppendP, straight into slot pos % 128), compressed rows, the ratio-2 carried state
+// and tlen are a plain step's, bit for bit -- plus the check's own work: the draft's features at the inputs of
+// layers 37 .. 39 (dr_capture's StreamMeanM at m = 1 on the one-token streams) and the draft's injection of
+// this position (dr_inject at n = 1). A one-token check always keeps its token (commit_block(1)), so nothing is
+// staged: the draft's rows go straight to slot pos % 128 (DraftKvRows unstaged, the same conversion as staged +
+// RingCommitM's copy), and commit_block leaves no commit_pending work. The 12.8 ms check vs the 10.9 ms step
+// (tg88): the block forms' fixed costs at M = 1 (the kv launch, the dot rows in the router's launch, the
+// finish beside the norms, ExpertGroupM, block exchanges, the M forms) plus the next draft's 43 ring moves.
+void tpm_card_step1(int c) {
+    sc_keep[c] = sc[c];
+    streams_keep[c] = streams[c];
+    if (tl_path) tl_begin_ck(c); // OWN_TIMELINE_CHECKS (a check, counted with the others)
+    try {
+        commit_pending(c);
+        x_ready[c] = false;
+        fin_attn[c] = false;
+        xt[c].on = xt[c].pending = false;
+        mx_ready[c] = false;
+        auto eng = [&] {
+            const auto e0 = std::chrono::steady_clock::now();
+            tp_engram_upload(c);
+            eng_t[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - e0).count();
+            ++eng_n[c];
+        };
+        if (o.layer_begin != 0) throw std::runtime_error("one-token check needs every layer");
+        if (!o.eng_late) eng();
+        tp_embed(c, mt_toks[0], !o.eng_late); // late: the rows' copy is later, nothing to wait for (tp_card_step)
+        if (!o.eng_late) {
+            tp_engram_kv(c);
+            prof("engram", c);
+        }
+        bool eng_done = !o.eng_late;
+        const size_t H = g.h;
+        for (int L = o.layer_begin; L < o.layer_end; ++L) {
+            if (!eng_done && L >= 1) { // after layer 0's launches (tp_card_step)
+                eng();
+                tp_engram_kv(c);
+                prof("engram", c);
+                eng_done = true;
+            }
+            if (o.dspark && L >= 37 && L <= 39) // dr_capture for the one token: its streams at layer L's input
+                launch(c, H, 64, ops41draft::StreamMeanM{(unsigned)g.h, 1u, (unsigned)(L - 37), 4 * H, 3 * H},
+                       (const float *)streams[c], dfeat[c]);
+            for (int ph = 0; ph < 6; ++ph) tp_phase(L, c, ph);
+        }
+        for (int si = 0; si < 4; ++si) mlen[c][si][0] = tlen[c][si]; // (commit_block(1) keeps them)
+        if (!(o.head_cq && o.dspark)) {
+            tp_head(c); // (waits: the candidates are on the host)
+            if (o.dspark) dr_inject(c, 1, pos); // (the host does not wait for it; this queue runs it before the next step)
+        } else { // OWN_HEAD_CQ: tp_head's launches, the candidates' copy on the copy queue, then the injection
+            auto &s = sc[c];
+            if (!x_ready[c])
+                launch(c, g.h, 32, ops41sycl::HcPreA<Act>{g.h}, (const act_t *)streams[c], (const float *)s.cur_pre, s.x);
+            x_ready[c] = false;
+            rmsnorm(c, s.x, "output_norm.weight", g.h, s.xn);
+            gemv_part(c, "output.weight", s.xn, tlog[c]);
+            const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
+            const ops41sycl::ArgmaxP1O ak{nl, AM_CH, tv0[c], g.vocab};
+            const float *lg = tlog[c];
+            float *av = tam_v[c];
+            int32_t *ai = tam_i[c];
+            head_ev[c] = qs[c].submit([&](sycl::handler &hh) { // launch_sg's form
+                hh.parallel_for(sycl::nd_range<1>((size_t)G * 32, 32),
+                                [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { ak(it, lg, av, ai); });
+            });
+            kev(c, kname<ops41sycl::ArgmaxP1O>(), head_ev[c]);
+            h_amv[c].resize(G);
+            h_ami[c].resize(G);
+            const sycl::event ea = head_ev[c];
+            auto e1 = cqs[c].submit([&](sycl::handler &hh) { hh.depends_on(ea); hh.memcpy(h_amv[c].data(), av, (size_t)G * 4); });
+            auto e2 = cqs[c].submit([&](sycl::handler &hh) { hh.depends_on(ea); hh.memcpy(h_ami[c].data(), ai, (size_t)G * 4); });
+            dr_inject(c, 1, pos);
+            e1.wait();
+            e2.wait();
+        }
+    } catch (...) {
+        tok_end(c);
+        throw;
+    }
+    tok_end(c);
+    if (tl_path) tl_end(c);
+}
 void tpm_card_step(int c) {
+    if (ck1_run) return tpm_card_step1(c); // OWN_CK1: a one-token check
     sc_keep[c] = sc[c];
     streams_keep[c] = streams[c];
     if (tl_path && mt_heads) tl_begin_ck(c); // OWN_TIMELINE_CHECKS
@@ -1499,17 +1705,23 @@ void decode_verify_tp(const int32_t *toks, int mt, int32_t *next) {
     const bool sh = skip_head;
     skip_head = true; // decode_block_tp's last-token head is replaced by every token's
     mt_heads = true;
+    ck1_run = ck1 && mt == 1 && o.dev_index; // OWN_CK1: the card threads run tpm_card_step1 (the plain step's
+                                              // index on the card: the block steps keep no host rows)
     try {
         decode_block_tp(toks, mt);
     } catch (...) {
+        ck1_run = false;
         mt_heads = false;
         skip_head = sh;
         throw;
     }
+    const bool one = ck1_run;
+    ck1_run = false;
     mt_heads = false;
     skip_head = sh;
     const int G = (tv1[0] - tv0[0] + AM_CH - 1) / AM_CH;
-    for (int t = 0; t < mt; ++t) { // tp_argmax's order-free comparison, per token
+    if (one) next[0] = tp_argmax(); // (tp_head's candidates: the same order-free comparison)
+    for (int t = 0; t < mt && !one; ++t) { // tp_argmax's order-free comparison, per token
         float bv = -INFINITY;
         int bi = 0x7fffffff;
         for (int c = 0; c < o.tp; ++c) {
@@ -1524,6 +1736,7 @@ void decode_verify_tp(const int32_t *toks, int mt, int32_t *next) {
     }
     (void)G;
     vpos0 = p0;
+    vck1 = one;
     if (tl_path) tl_check_done(); // OWN_TIMELINE_CHECKS: clock pairs / the file (every card is done)
 }
 // Keeps the first n tokens (1..mt) of the checked block. The cards' part (the ratio-2 carried state, the kept
@@ -1536,8 +1749,9 @@ void commit_block(int n) {
     const long pa = vpos0 + n - 1; // the last kept position
     for (int c = 0; c < o.tp; ++c) {
         for (int si = 0; si < 4; ++si) tlen[c][si] = mlen[c][si][n - 1];
-        pend[c] = true;
+        pend[c] = !vck1; // OWN_CK1's one-token check left nothing staged (its rows are in their slots)
     }
+    vck1 = false;
     pend_state = pa % 2 == 0 && n < mt; // its ratio-2 state is the carried one (the block may have carried a later one)
     pend_p0 = vpos0;
     pend_n = n;

@@ -283,9 +283,10 @@ public:
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
-        bool smallk = false;    // OWN_SMALLK=1: one-work-group forms of the 5,120 norm, the q_a + kv norms, the
+        bool smallk = true;     // (default since tg89: traces identical, plain 96.4 -> 99.6 tok/s; OWN_SMALLK=0: off)
+                                // one-work-group forms of the 5,120 norm, the q_a + kv norms, the
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
-        int smallk_dots = 0;    // OWN_SMALLK_DOTS=8 (or 4: the block size K): the pre-norm + the stream mix's dot
+        int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
         unsigned xl2 = 0;       // tp one-token steps: while a card waits in an exchange, a separate prefetch launch on its
                                 // second queue (cqs, released by the producer's event: both queued together, so they run
@@ -390,7 +391,8 @@ public:
                                 sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
             else
                 qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
-            if (opt.eng_cq || opt.head_cq || opt.xl2) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.eng_cq || opt.head_cq) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.xl2) pfq.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
         }
         if (o.tp > 1) {
             // every kernel built for every card before the first step: a card still compiling a kernel at its
@@ -1051,6 +1053,8 @@ private:
     std::vector<sycl::device> devs;
     std::vector<sycl::queue> qs;
     std::vector<sycl::queue> cqs; // OWN_ENG_CQ: one more in-order queue per card (same context), copies only
+    std::vector<sycl::queue> pfq; // OWN_XL2: the prefetch launches' own queue per card (tg89: on cqs they held the
+                                  // engram copies back, 80 -> 257 us per step, and plain answers lost 14 %)
     std::vector<void *> owned[TILES];
     std::unordered_map<std::string, DevPtr> wgt[TILES]; // per card (tp: every card holds its slice)
     const WeightTab *W = nullptr;
@@ -1301,7 +1305,7 @@ private:
         const L2PfK128 k{a[0], a[1], a[2], l[0], l[1], l[2]};
         const sycl::event dep = qlast[c];
         const sycl::nd_range<1> nr((size_t)o.xl2_wg * 256, 256);
-        cqs[c].submit([&](sycl::handler &hh) {
+        pfq[c].submit([&](sycl::handler &hh) {
             hh.depends_on(dep);
             hh.parallel_for(nr, k);
         });

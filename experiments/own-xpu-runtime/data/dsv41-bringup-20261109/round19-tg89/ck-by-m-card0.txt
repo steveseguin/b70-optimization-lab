@@ -1,0 +1,44 @@
+steps in timeline: [10020, 10021, 10022] ... 8
+M per check: [2, 1, 2, 5, 4, 1, 1, 2]
+family                                                       M=2     M=1     M=2     M=5     M=4     M=1     M=1     M=2   slope/token
+RoutedU                                                     3968    2687    3913    7211    6185    2698    2683    3894     1137.3
+XchgPull                                                    2181    1744    2302    4821    4090    1748    1774    2315      782.8
+RowsP:DenseRowsG+GemvQ8P                                    1243    1520    1265    1918    1531    1540    1519    1245       83.3
+RowsP:DenseRowsG+GemvQ6KP                                    562     897     582    1181     648     898     896     565       38.1
+RowsP:TokRows+HcDotsRows+DenseRowsG+GemvH16P                 634     628     651     980     938     631     632     614       96.7
+RowsP:TokRows+HcDotsRows+DenseRowsG+GemvQ8P                  590     532     586    1044     843     515     512     586      126.3
+RowsP:TokRows+NormRows                                       599     601     602     611     611     604     595     622        2.8
+RoutePMRows                                                  542     436     543     702     621     437     434     541       62.9
+RowsP:DenseRowsGR+GemvQ6KP                                   680       0     680    1102     888       0       0     684      262.7
+XchgP                                                        944     433     808       0       0     408     445     807     -145.0
+RowsP:TokRows+HcDotsRows+DenseRowsG+GemvQ6KP                 357     236     337     618     429     236     236     340       84.4
+RowsP:DenseRowsGR+GemvQ8P                                    458       0     459     747     617       0       0     458      179.9
+OutMC                                                        330     330     332     351     339     331     334     334        4.3
+RowsP:TokRows+HcFinishRows+NormRows                          325     326     326     346     357     326     326     328        6.8
+ScoreM                                                       236     231     236     267     260     236     236     239        8.6
+ExpertGroupM                                                 160     151     161     253     218     152     152     161       25.1
+HcPostPrePM                                                  159     147     159     203     185     143     145     160       14.2
+SoftmaxM                                                     133     131     134     141     140     131     130     133        2.7
+XchgPushM                                                    178     125     179       0       0     125     125     177      -38.8
+RowsP:DenseRowsG+GemvQ5KP                                     99      85      98     153     129      85      84      98       16.5
+RowsP:DenseRowsG+GemvH16P                                     98      92      99     114     109      84      93      99        6.1
+CompressPoolPM                                               100     101     101     118      99       0     119     101        9.6
+MoeCombineAM                                                  84      78      85      89      86      78      78      84        2.5
+WindowAppendM                                                 84      78      83      88      88      76      78      84        2.7
+SwigluBothSM                                                  77      75      77      82      81      74      72      77        2.2
+RowsP:TokRows+RopeRows                                        56      56      56      63      58      54      56      56        1.6
+RoutedQ2KF                                                    36      22      36      83      68      23      23      36       15.2
+EngramGateWM                                                  23      23      23      22      23      23      23      23       -0.1
+CidxFillM                                                     15      14      15      16      15      14      14      15        0.4
+RmsNormA                                                      14      14      14      14      14       4      14      14        0.9
+PubAppendAM                                                   10      10      10      10      10       2      10      10        0.7
+ops41draft::DraftKvRows                                        6       6       6       6       6       5       5       6        0.1
+ArgmaxP1OM                                                     6       5       5       5       5       5       5       5        0.1
+EngRowsA                                                       5       5       5       6       6       5       4       5        0.4
+StatePackM                                                     5       5       5       5       5       4       4       5        0.0
+HcPreAM                                                        4       4       4       5       4       4       4       4        0.0
+EmbedRowA                                                      4       2       4       7       6       2       2       4        1.2
+HcPostPM                                                       4       4       4       5       4       4       4       4        0.4
+ops41draft::StreamMeanM                                        4       4       4       4       4       4       4       4        0.0
+Broadcast4PA                                                   2       1       2       4       3       1       1       2        0.8
+TOTAL busy                                                 15016   11840   14989   23396   19724   11710   11871   14938     2796.4

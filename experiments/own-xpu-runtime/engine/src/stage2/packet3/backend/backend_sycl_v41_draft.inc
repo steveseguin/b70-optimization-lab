@@ -287,7 +287,9 @@ void dr_card_step(int c) {
     try {
         commit_pending(c); // first: the draft's block rows below reuse the ring's block area
         mx_ready[c] = false;
-        tpm_embed(c); // [anchor, MASK x 4]: x and the 4 streams per row, the collapse weights [1, 0, 0, 0]
+        // [anchor, MASK x 4]: x and the 4 streams per row, the collapse weights [1, 0, 0, 0]. OWN_DR_NOWAIT: no
+        // wait (no host buffer is read by these launches: the token rows are on the card, k_pm1 is static)
+        tpm_embed(c, !dr_nowait);
         launch(c, (size_t)mt_n * DR_NIDX, 64, ops41draft::DraftIdx{(int)pos, mt_n, DR_NIDX, 640}, scm[c][0].idxs_cat);
         for (int s = 0; s < DR_STAGES; ++s) dr_stage(s, c);
         dr_head(c);

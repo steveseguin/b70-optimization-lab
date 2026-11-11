@@ -1,0 +1,80 @@
+== code_d90
+code_d90-spec.txt: 223 rounds, 511 tokens, 2.29 per round, 18.56 ms per round, 123.4 tok/s (draft + check only); draft 2.20 ms, check 16.37 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      63       0.00      63      2.17             11.99           12.07
+        1      64       0.92       5      2.20             14.69           14.73
+        2      41       1.76       2      2.20             17.14           17.42
+        3      21       2.14       2      2.23             19.28           19.31
+        4      14       3.07       0      2.20             23.00           23.11
+        5      20       3.45       2      2.24             25.22           25.16
+== code_ck
+code_ck-spec.txt: 223 rounds, 511 tokens, 2.29 per round, 17.98 ms per round, 127.4 tok/s (draft + check only); draft 2.10 ms, check 15.88 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      63       0.00      63      2.07             10.37           10.46
+        1      64       0.92       5      2.10             14.75           14.78
+        2      41       1.76       2      2.11             17.14           17.22
+        3      21       2.14       2      2.13             19.09           19.26
+        4      14       3.07       0      2.12             23.16           23.08
+        5      20       3.45       2      2.14             25.22           25.13
+== code_ckms
+code_ckms-spec.txt: 223 rounds, 511 tokens, 2.29 per round, 17.88 ms per round, 128.2 tok/s (draft + check only); draft 2.11 ms, check 15.77 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      63       0.00      63      2.07             10.41           10.46
+        1      64       0.92       5      2.10             14.50           14.51
+        2      41       1.76       2      2.12             16.91           17.00
+        3      21       2.14       2      2.14             19.22           19.27
+        4      14       3.07       0      2.13             22.94           23.06
+        5      20       3.45       2      2.14             25.19           25.22
+== code_ws
+code_ws-spec.txt: 223 rounds, 511 tokens, 2.29 per round, 17.81 ms per round, 128.7 tok/s (draft + check only); draft 2.12 ms, check 15.69 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      63       0.00      63      2.09             10.43           10.51
+        1      64       0.92       5      2.11             14.43           14.46
+        2      41       1.76       2      2.13             16.78           16.88
+        3      21       2.14       2      2.15             19.14           19.19
+        4      14       3.07       0      2.13             22.58           22.60
+        5      20       3.45       2      2.18             25.03           24.99
+== analysis_d90
+analysis_d90-spec.txt: 180 rounds, 512 tokens, 2.84 per round, 20.82 ms per round, 136.6 tok/s (draft + check only); draft 2.22 ms, check 18.61 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      27       0.00      27      2.19             12.04           12.06
+        1      40       0.68      13      2.19             14.82           14.83
+        2      32       1.47       5      2.23             17.34           17.39
+        3      24       2.04       2      2.23             19.32           19.42
+        4      21       3.10       1      2.25             22.97           23.49
+        5      36       4.00       2      2.24             24.86           25.40
+== analysis_ws
+analysis_ws-spec.txt: 180 rounds, 512 tokens, 2.84 per round, 20.23 ms per round, 140.6 tok/s (draft + check only); draft 2.14 ms, check 18.08 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      27       0.00      27      2.12             10.52           10.55
+        1      40       0.68      13      2.12             14.70           14.71
+        2      32       1.47       5      2.15             17.01           17.04
+        3      24       2.04       2      2.15             19.24           19.35
+        4      21       3.10       1      2.17             22.71           22.83
+        5      36       4.00       2      2.17             24.67           24.79
+== p3k_spec_a
+p3k_spec_a-spec.txt: 95 rounds, 256 tokens, 2.69 per round, 21.90 ms per round, 123.0 tok/s (draft + check only); draft 2.22 ms, check 19.68 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      18       0.00      18      2.20             12.79           12.85
+        1      24       0.88       3      2.21             15.69           16.13
+        2      18       1.44       3      2.20             18.37           19.75
+        3       7       2.57       0      2.25             20.59           21.73
+        4      10       2.90       1      2.23             24.89           25.30
+        5      18       3.72       1      2.27             26.31           27.26
+== p3k_spec_d
+p3k_spec_d-spec.txt: 95 rounds, 256 tokens, 2.69 per round, 20.51 ms per round, 131.4 tok/s (draft + check only); draft 2.13 ms, check 18.38 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0      18       0.00      18      2.11             11.15           11.21
+        1      24       0.88       3      2.11             15.35           15.44
+        2      18       1.44       3      2.11             17.74           17.83
+        3       7       2.57       0      2.15             20.62           20.41
+        4      10       2.90       1      2.14             23.94           23.88
+        5      18       3.72       1      2.20             26.25           26.17
+== code_k0
+code_k0-spec.txt: 511 rounds, 511 tokens, 1.00 per round, 14.13 ms per round, 70.8 tok/s (draft + check only); draft 2.16 ms, check 11.97 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0     511       0.00     511      2.16             11.93           11.97
+== code_k0ck
+code_k0ck-spec.txt: 511 rounds, 511 tokens, 1.00 per round, 12.45 ms per round, 80.3 tok/s (draft + check only); draft 2.07 ms, check 10.39 ms per round; lookup rounds 0
+  guesses  rounds  kept-mean  kept=0  draft-ms  check-ms(median)  check-ms(mean)
+        0     511       0.00     511      2.07             10.35           10.39

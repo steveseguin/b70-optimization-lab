@@ -24,6 +24,8 @@
 //     before a sub-group's routed rows, outside the row loop (R2_EX_ROWS), on the sub-groups that continue the
 //     routed rows' round; production's in-loop placement kept the finish's code and a 64-bit division per row in
 //     the hot loop (IQ1_S 26 -> 35.6 us with the row) and left the pair forms unusable with it (r3, 2026-11-11).
+//  6. r4: the expert-major kernels of multi-token steps (RoutedU: checks, prompt blocks) with the b forms' decode
+//     built per 4-block segment (RoutedU3, RU3*), named RoutedIQ2XXSU ... RoutedIQ1SU for the backend.
 //  IQ1_S: table of the high 16 bits of float(code) (32 KB, as the I16 form) shifted up by an integer op instead of
 //  a float convert: code is the same float, so code + de is.
 // The selectors at the end (RoutedIQ2SPx, ...) pick the form per shape and EX; the backend dispatch names them.
@@ -1090,6 +1092,445 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSPe {
     }
 };
 
+
+// ==== r4: expert-major routed rows (RoutedU, multi-token steps: checks, prompt blocks) with the b decoders =====
+// RoutedU3<F, MT, EX, SPT> = RoutedU's work items, group lookups, per-slot accumulators, x loads, reduction and
+// stores, with the b forms' per-lane state (block reads + register-region moves) built per segment of 32 chunks
+// (4 blocks) inside a run-time loop over units of F::SPU segments (one meta-register load per unit), as the e
+// forms do: the whole-row state of the b forms with MT accumulators asks for 256 registers (half the threads,
+// slower than RoutedU). F::wv<m>(u) = lane's value of chunk m of the segment: v = (db * mag) ^ sign (IQ1_S:
+// dl * (code + de)), the same float values as RUFmt*::decode (which copy the slot-major kernels' expressions,
+// as the b forms do). Per slot the same `sum = sum + v * x` in the same block / element order on the same x,
+// the same xor butterfly, the same store: bitwise RoutedU's outputs. Extra rows run outside the row loop
+// (R2_EX_ROWS). Bench: tools/bench/bench_routed_u2.cpp.
+template <unsigned NB_> struct RU3IQ2XXS {
+    static constexpr unsigned NB = NB_, TAB = 2048, SPU = 1;
+    static constexpr size_t RB = ((size_t)NB * 70 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NS = (NC + 31) / 32;
+    static_assert(NB <= 32);
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+    }
+    struct Row {
+        const uint32_t *rw;
+        float dl;
+        uint32_t sw;
+    };
+    struct Unit {};
+    struct Sg {
+        uint32_t aw[2], ew;
+        float db;
+    };
+    const char *tb;
+    unsigned lane, hs, ssh;
+    uint32_t j4;
+    RU3IQ2XXS(unsigned lane_, float *tab)
+        : tb(reinterpret_cast<const char *>(tab)), lane(lane_), hs(lane_ & 1u), ssh(31u - lane_), j4((lane_ & 7u) << 2) {}
+    [[gnu::always_inline]] inline void row(sycl::sub_group, const uint8_t *r, Row &q) const {
+        q.rw = reinterpret_cast<const uint32_t *>(r);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(r + (size_t)NB * 68);
+        const uint32_t *scw = reinterpret_cast<const uint32_t *>(r + (size_t)NB * 64);
+        q.dl = lane < NB ? iq3::half(dp[lane]) : 0.0f; // as chunk_scales
+        q.sw = lane < NB ? scw[lane] : 0u;
+    }
+    [[gnu::always_inline]] inline void unit(sycl::sub_group, const Row &, unsigned, Unit &) const {}
+    template <unsigned SP>
+    [[gnu::always_inline]] inline void seg(sycl::sub_group sg, const Row &q, const Unit &, unsigned S, Sg &u) const {
+        const uint32_t w0 = row_words<NW>(sg, q.rw, 2 * S, lane);
+        const uint32_t w1 = 2 * S + 1 < NR ? row_words<NW>(sg, q.rw, 2 * S + 1, lane) : w0;
+        r2::sfor<2>([&](auto jj) {
+            constexpr unsigned j = decltype(jj)::value;
+            const uint32_t lo = r2::even2(j ? w1 : w0), h = hs ? lo >> 16 : lo & 0xFFFFu;
+            u.aw[j] = ((h & 255u) << 5) | ((h >> 8) << 21);
+        });
+        u.ew = r2::odd2x(w0, w1);
+        // chunk_scales' expression for chunk c = 32S + lane, block b = c / 8 (clamped)
+        const unsigned b0 = 4 * S < NB ? 4 * S : NB - 1, b1 = 4 * S + 1 < NB ? 4 * S + 1 : NB - 1;
+        const unsigned b2 = 4 * S + 2 < NB ? 4 * S + 2 : NB - 1, b3 = 4 * S + 3 < NB ? 4 * S + 3 : NB - 1;
+        const float e0 = sycl::select_from_group(sg, q.dl, b0), e1 = sycl::select_from_group(sg, q.dl, b1);
+        const float e2 = sycl::select_from_group(sg, q.dl, b2), e3 = sycl::select_from_group(sg, q.dl, b3);
+        const uint32_t s0 = sycl::select_from_group(sg, q.sw, b0), s1 = sycl::select_from_group(sg, q.sw, b1);
+        const uint32_t s2 = sycl::select_from_group(sg, q.sw, b2), s3 = sycl::select_from_group(sg, q.sw, b3);
+        const float d = lane < 16 ? (lane < 8 ? e0 : e1) : (lane < 24 ? e2 : e3);
+        const uint32_t sc = lane < 16 ? (lane < 8 ? s0 : s1) : (lane < 24 ? s2 : s3);
+        u.db = (d * (0.5f + float((sc >> (4 * (lane & 7u))) & 15u))) * 0.25f;
+    }
+    template <unsigned M> [[gnu::always_inline]] inline float wv(sycl::sub_group sg, const Sg &u) const {
+        const uint32_t ad = r2::ag8<M % 16>(u.aw[M / 16], j4);
+        const float mag = *reinterpret_cast<const float *>(tb + ad);
+        const float p = sycl::select_from_group(sg, u.db, M) * mag;
+        const uint32_t e = sycl::select_from_group(sg, u.ew, M);
+        return sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(p) ^ ((e << ssh) & 0x80000000u));
+    }
+};
+template <unsigned NB_> struct RU3IQ2S {
+    static constexpr unsigned NB = NB_, TAB = 8192, SPU = 2;
+    static constexpr size_t RB = ((size_t)NB * 82 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NWM = NB * 4, NC = NB * 8, NS = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+    }
+    struct Row {
+        const uint32_t *rw;
+        float dv;
+    };
+    struct Unit {
+        uint32_t mr; // meta register T: per block qh[8], scales[8] of blocks 8T .. 8T + 7
+    };
+    struct Sg {
+        uint32_t aw[2], ew;
+        float dw[2];
+    };
+    const char *tb;
+    unsigned lane, hs, ssh;
+    uint32_t j4;
+    RU3IQ2S(unsigned lane_, float *tab)
+        : tb(reinterpret_cast<const char *>(tab)), lane(lane_), hs(lane_ & 1u), ssh(31u - lane_), j4((lane_ & 7u) << 2) {}
+    [[gnu::always_inline]] inline void row(sycl::sub_group, const uint8_t *r, Row &q) const {
+        q.rw = reinterpret_cast<const uint32_t *>(r);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(r + (size_t)NB * 80);
+        q.dv = iq3::half(dp[lane < NB ? lane : NB - 1]); // lane b: block b's d
+    }
+    [[gnu::always_inline]] inline void unit(sycl::sub_group sg, const Row &q, unsigned T, Unit &un) const {
+        un.mr = row_words<NWM>(sg, q.rw + NW, T, lane);
+    }
+    template <unsigned SP>
+    [[gnu::always_inline]] inline void seg(sycl::sub_group sg, const Row &q, const Unit &un, unsigned S, Sg &u) const {
+        const uint32_t w0 = row_words<NW>(sg, q.rw, 2 * S, lane);
+        const uint32_t w1 = 2 * S + 1 < NR ? row_words<NW>(sg, q.rw, 2 * S + 1, lane) : w0;
+        r2::sfor<2>([&](auto jj) {
+            constexpr unsigned j = decltype(jj)::value, kq = 2 * SP + j; // k % 4
+            const unsigned k = 2 * S + j;
+            const uint32_t lo = r2::even2(j ? w1 : w0), qh = r2::qhb<kq>(un.mr);
+            const uint32_t h = hs ? lo >> 16 : lo & 0xFFFFu, qq = hs ? qh >> 4 : qh;
+            const uint32_t i0 = (h & 255u) | ((qq & 3u) << 8), i1 = (h >> 8) | (((qq >> 2) & 3u) << 8);
+            u.aw[j] = (i0 << 5) | (i1 << 21);
+            const unsigned B0 = 2 * k < NB ? 2 * k : NB - 1, B1 = 2 * k + 1 < NB ? 2 * k + 1 : NB - 1;
+            const float d0 = sycl::select_from_group(sg, q.dv, B0), d1 = sycl::select_from_group(sg, q.dv, B1);
+            const float d = (lane & 8u) ? d1 : d0;
+            const uint32_t sc = r2::scb<kq>(un.mr);
+            u.dw[j] = (d * (0.5f + float((sc >> (4 * (lane >> 4))) & 15u))) * 0.25f;
+        });
+        u.ew = r2::odd2x(w0, w1);
+    }
+    template <unsigned M> [[gnu::always_inline]] inline float wv(sycl::sub_group sg, const Sg &u) const {
+        const uint32_t ad = r2::ag8<M % 16>(u.aw[M / 16], j4);
+        const float mag = *reinterpret_cast<const float *>(tb + ad);
+        const float p = r2::mp16<M % 16>(u.dw[M / 16], mag);
+        const uint32_t e = sycl::select_from_group(sg, u.ew, M);
+        return sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(p) ^ ((e << ssh) & 0x80000000u));
+    }
+};
+template <unsigned NB_> struct RU3IQ2XS {
+    static constexpr unsigned NB = NB_, TAB = 4096, SPU = 4;
+    static constexpr size_t RB = ((size_t)NB * 74 + 15) & ~(size_t)15;
+    static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NWS = NB * 2, NC = NB * 8, NS = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float(grid64_byte(iq3::iq2_xs_grid, k >> 3, k & 7));
+    }
+    struct Row {
+        const uint32_t *rw;
+        float dv;
+    };
+    struct Unit {
+        uint32_t sr; // scale register T: one scale byte per chunk of chunks 128T .. 128T + 127
+    };
+    struct Sg {
+        uint32_t aw[2], ew;
+        float dw[2];
+    };
+    const char *tb;
+    unsigned lane, ssh;
+    uint32_t j4;
+    RU3IQ2XS(unsigned lane_, float *tab)
+        : tb(reinterpret_cast<const char *>(tab)), lane(lane_), ssh(31u - lane_), j4((lane_ & 7u) << 2) {}
+    [[gnu::always_inline]] inline void row(sycl::sub_group, const uint8_t *r, Row &q) const {
+        q.rw = reinterpret_cast<const uint32_t *>(r);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(r + (size_t)NB * 72);
+        q.dv = iq3::half(dp[lane < NB ? lane : NB - 1]); // lane b: block b's d
+    }
+    [[gnu::always_inline]] inline void unit(sycl::sub_group sg, const Row &q, unsigned T, Unit &un) const {
+        un.sr = row_words<NWS>(sg, q.rw + NW, T, lane);
+    }
+    template <unsigned SP>
+    [[gnu::always_inline]] inline void seg(sycl::sub_group sg, const Row &q, const Unit &un, unsigned S, Sg &u) const {
+        const uint32_t w0 = row_words<NW>(sg, q.rw, 2 * S, lane);
+        const uint32_t w1 = 2 * S + 1 < NR ? row_words<NW>(sg, q.rw, 2 * S + 1, lane) : w0;
+        r2::sfor<2>([&](auto jj) {
+            constexpr unsigned j = decltype(jj)::value, k8 = 2 * SP + j; // k % 8
+            const unsigned k = 2 * S + j;
+            const uint32_t a = j ? w1 : w0;
+            u.aw[j] = ((a & 511u) << 5) | (((a >> 16) & 511u) << 21);
+            const unsigned B0 = 2 * k < NB ? 2 * k : NB - 1, B1 = 2 * k + 1 < NB ? 2 * k + 1 : NB - 1;
+            const float d0 = sycl::select_from_group(sg, q.dv, B0), d1 = sycl::select_from_group(sg, q.dv, B1);
+            const float d = (lane & 8u) ? d1 : d0;
+            const uint32_t sc = r2::sb1<k8>(un.sr);
+            u.dw[j] = (d * (0.5f + float((sc >> (4 * (lane >> 4))) & 15u))) * 0.25f;
+        });
+        const uint32_t a0 = r2::even2x(w0, w1), a1 = r2::odd2x(w0, w1);
+        u.ew = r2::widen4((a0 >> 9) & 127u, a0 >> 25, (a1 >> 9) & 127u, a1 >> 25);
+    }
+    template <unsigned M> [[gnu::always_inline]] inline float wv(sycl::sub_group sg, const Sg &u) const {
+        const uint32_t ad = r2::ag8<M % 16>(u.aw[M / 16], j4);
+        const float mag = *reinterpret_cast<const float *>(tb + ad);
+        const float p = r2::mp16<M % 16>(u.dw[M / 16], mag);
+        const uint32_t e = sycl::select_from_group(sg, u.ew, M);
+        return sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(p) ^ ((e << ssh) & 0x80000000u));
+    }
+};
+// IQ1_S: table of the high 16 bits of float(code) (the b form's TM 3): code is the same float as RUFmtIQ1S's
+// float(int(byte)), so dl * (code + de) is
+template <unsigned NB_> struct RU3IQ1S {
+    static constexpr unsigned NB = NB_, TAB = 8192, SPU = 2;
+    static constexpr size_t RB = ((size_t)NB * 50 + 15) & ~(size_t)15;
+    static constexpr unsigned NC = NB * 8, NS = (NC + 31) / 32, NWQ = NB * 8, NWH = NB * 4;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        int16_t *sbt = reinterpret_cast<int16_t *>(tab);
+        for (unsigned k = it.get_local_linear_id(); k < 16384; k += (unsigned)it.get_local_range(0)) {
+            const int c = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, k >> 3, k & 7))));
+            sbt[k] = int16_t(c == 0 ? 0 : c > 0 ? 0x3F80 : 0xBF80); // float(c) >> 16
+        }
+    }
+    struct Row {
+        const uint32_t *rw;
+        float dv;
+    };
+    struct Unit {
+        uint32_t wh; // qh register T: one half per chunk of chunks 64T .. 64T + 63
+    };
+    struct Sg {
+        uint32_t aw[2];
+        float dl, de;
+    };
+    unsigned lane, hs;
+    uint32_t jb;
+    RU3IQ1S(unsigned lane_, float *) : lane(lane_), hs(lane_ & 1u), jb((lane_ & 7u) << 1) {}
+    [[gnu::always_inline]] inline void row(sycl::sub_group, const uint8_t *r, Row &q) const {
+        q.rw = reinterpret_cast<const uint32_t *>(r);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(r + (size_t)NB * 48);
+        q.dv = iq3::half(dp[lane < NB ? lane : NB - 1]); // lane b: block b's d
+    }
+    [[gnu::always_inline]] inline void unit(sycl::sub_group sg, const Row &q, unsigned T, Unit &un) const {
+        un.wh = row_words<NWH>(sg, q.rw + NWQ, T, lane);
+    }
+    template <unsigned SP>
+    [[gnu::always_inline]] inline void seg(sycl::sub_group sg, const Row &q, const Unit &un, unsigned S, Sg &u) const {
+        const uint32_t wq = row_words<NWQ>(sg, q.rw, S, lane);
+        r2::sfor<2>([&](auto jj) {
+            constexpr unsigned j = decltype(jj)::value, k4 = 2 * SP + j; // k % 4, k = 2S + j
+            const uint32_t qs = r2::qsp<j>(wq), qh = r2::qhp<k4>(un.wh);
+            const uint32_t h = hs ? qs >> 16 : qs & 0xFFFFu, qq = hs ? qh >> 6 : qh; // groups 2hs, 2hs + 1
+            const uint32_t i0 = (h & 255u) | ((qq & 7u) << 8), i1 = (h >> 8) | (((qq >> 3) & 7u) << 8);
+            u.aw[j] = (i0 << 4) | (i1 << 20);
+        });
+        const uint32_t qh = r2::qh1<SP>(un.wh);
+        u.dl = r2::blk_d4<NB>(sg, q.dv, S, lane) * float(2 * ((qh >> 12) & 7) + 1);
+        u.de = (qh & 0x8000) ? -0.125f : 0.125f;
+    }
+    template <unsigned M> [[gnu::always_inline]] inline float wv(sycl::sub_group sg, const Sg &u) const {
+        const uint32_t ad = r2::ag8<M % 16>(u.aw[M / 16], jb);
+        const float dl = sycl::select_from_group(sg, u.dl, M);
+        const float code = sycl::bit_cast<float>(r2::ld16(ad) << 16);
+        const float de = sycl::select_from_group(sg, u.de, M);
+        return dl * (code + de);
+    }
+};
+template <unsigned NB_> struct RU3IQ3XXS {
+    static constexpr unsigned NB = NB_, TAB = 1024, SPU = 1;
+    static constexpr size_t RB = ((size_t)NB * 98 + 15) & ~(size_t)15;
+    static constexpr unsigned NC = NB * 8, NS = (NC + 31) / 32;
+    static void fill(const sycl::nd_item<1> &it, float *tab) {
+        for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
+            tab[k] = float((iq3::iq3_grid[k >> 2] >> (8 * (k & 3))) & 255);
+    }
+    struct Row {
+        const uint32_t *rw;
+        float dv;
+    };
+    struct Unit {};
+    struct Sg {
+        uint32_t aw[4], ew;
+        float db;
+    };
+    const char *tb;
+    unsigned lane, hs, ssh;
+    uint32_t jj4;
+    RU3IQ3XXS(unsigned lane_, float *tab)
+        : tb(reinterpret_cast<const char *>(tab)), lane(lane_), hs(lane_ & 1u), ssh(31u - lane_), jj4((lane_ & 3u) << 2) {}
+    [[gnu::always_inline]] inline void row(sycl::sub_group, const uint8_t *r, Row &q) const {
+        q.rw = reinterpret_cast<const uint32_t *>(r);
+        const uint16_t *dp = reinterpret_cast<const uint16_t *>(r + (size_t)NB * 96);
+        q.dv = iq3::half(dp[lane < NB ? lane : NB - 1]); // lane b: block b's d
+    }
+    [[gnu::always_inline]] inline void unit(sycl::sub_group, const Row &, unsigned, Unit &) const {}
+    template <unsigned SP>
+    [[gnu::always_inline]] inline void seg(sycl::sub_group sg, const Row &q, const Unit &, unsigned S, Sg &u) const {
+        const unsigned c = 32 * S + lane < NC ? 32 * S + lane : NC - 1;
+        const uint32_t *cp = q.rw + 3 * c; // = 24 (c >> 3) + 3 (c & 7)
+        const uint32_t q0 = cp[0], q1 = cp[1], sw = cp[2];
+        u.ew = r2::widen4(sw & 127u, (sw >> 7) & 127u, (sw >> 14) & 127u, (sw >> 21) & 127u);
+        u.db = (r2::blk_d4<NB>(sg, q.dv, S, lane) * (0.5f + float(sw >> 28))) * 0.5f;
+        r2::sfor<4>([&](auto kk) {
+            constexpr unsigned k = decltype(kk)::value;
+            const uint32_t qq = r2::iq3q<k>(q0, q1), h = hs ? qq >> 16 : qq & 0xFFFFu;
+            u.aw[k] = ((h & 255u) << 4) | ((h >> 8) << 20);
+        });
+    }
+    template <unsigned M> [[gnu::always_inline]] inline float wv(sycl::sub_group sg, const Sg &u) const {
+        const uint32_t ad = r2::ag4<M % 8>(u.aw[M / 8], jj4);
+        const float mag = *reinterpret_cast<const float *>(tb + ad);
+        const float db = sycl::select_from_group(sg, u.db, M);
+        const uint32_t e = sycl::select_from_group(sg, u.ew, M);
+        return sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mag) ^ ((e << ssh) & 0x80000000u));
+    }
+};
+// The kernel: RoutedU (sycl_v41.hpp) with F = RU3*; same members (aggregate order), launch and grp layout.
+// PAIRS: in blocks of at least PAIR_NSL / 6 tokens (nsl, set by the backend) a sub-group first takes row pairs
+// (2q, 2q + 1) of one group (rows per expert even), so each slot's x block read feeds both rows (as the one-token
+// e forms), then single rows; npair <= P * (rmax / 2), rmax = RoutedU's rows per sub-group, so no sub-group runs
+// more rows than RoutedU. Per row the same sums in the same order. (Pairs lose at 1-6 tokens: bench_routed_u2.)
+template <typename F, unsigned MT, typename EX = NoRows, unsigned SPT = 6, bool PAIRS = false> struct RoutedU3 {
+    static_assert(MT >= 1 && MT <= RUGrp::CAP, "1 .. 16 slots per group");
+    static constexpr unsigned TAB = F::TAB, NB = F::NB, SPU = F::SPU, NS = F::NS;
+    static constexpr unsigned NFU = (NB / 4) / SPU; // units whose segments all have 4 blocks (run-time loop)
+    static constexpr unsigned PAIR_NSL = 96;
+    unsigned rows; // per-expert rows
+    bool per_slot_x;
+    EX ex{};
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0;
+    unsigned nexp = 0; // not read (RoutedU's F::CLAMP_EXP formats are not RU3 formats)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *grp,
+                                     float *out, float *tab) const {
+        F::fill(it, tab);
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const F f(lane, tab);
+        const unsigned nu = grp[0];
+        const unsigned P = (unsigned)(it.get_global_range(0) / 32), p0 = packed_row_id(it);
+        const unsigned nr_ = (w2 ? 2 : 1) * nu * rows;
+        unsigned npair = 0;
+        if constexpr (PAIRS) {
+            const unsigned rmax = (nr_ + P - 1) / P, pc = P * (rmax / 2);
+            if (nsl >= PAIR_NSL && rows % 2 == 0) npair = pc < nr_ / 2 ? pc : nr_ / 2; // at most rmax rows per sub-group
+        }
+        R2_EX_ROWS(P, p0, npair + (nr_ - 2 * npair)) // after the pairs' and single rows' rounds
+        // row q_ (TWO: rows q_, q_ + 1 of the same group and matrix)
+        auto job = [&](auto two, unsigned q_) {
+            constexpr bool TWO = decltype(two)::value;
+            unsigned u = q_ / rows;
+            const unsigned r = q_ % rows;
+            const uint8_t *wm = w;
+            float *om = out;
+            if (u >= nu) {
+                u -= nu;
+                wm = w2;
+                om = out2;
+            }
+            const unsigned cnt = grp[RUGrp::CNT + u];
+            const uint32_t sl = lane < cnt ? grp[RUGrp::SLOT + u * RUGrp::CAP + lane] : 0u;
+            const uint32_t xo = (sl / SPT) * xtok + (per_slot_x ? (sl % SPT) * (NB * 256) : 0u);
+            const unsigned eid = grp[RUGrp::EXP + u];
+            const uint8_t *ra = wm + ((size_t)eid * rows + r) * F::RB;
+            typename F::Row rr[TWO ? 2 : 1];
+            f.row(sg, ra, rr[0]);
+            if constexpr (TWO) f.row(sg, ra + F::RB, rr[1]);
+            float sum[TWO ? 2 : 1][MT];
+#pragma unroll
+            for (unsigned i = 0; i < MT; ++i) {
+                sum[0][i] = 0;
+                if constexpr (TWO) sum[1][i] = 0;
+            }
+            // NBS blocks of segment S: each lane's 8 values per block and row once, then every slot of the group
+            auto blocks = [&](auto nbs, unsigned S, const typename F::Sg (&sgs)[TWO ? 2 : 1]) {
+                r2::sfor<decltype(nbs)::value>([&](auto bk) {
+                    constexpr unsigned bb = decltype(bk)::value;
+                    float v[TWO ? 2 : 1][8];
+                    r2::sfor<8>([&](auto gk) {
+                        constexpr unsigned g = decltype(gk)::value;
+                        v[0][g] = f.template wv<8 * bb + g>(sg, sgs[0]);
+                        if constexpr (TWO) v[1][g] = f.template wv<8 * bb + g>(sg, sgs[1]);
+                    });
+                    const size_t bo = (size_t)(4 * S + bb) * 256;
+#pragma unroll
+                    for (unsigned i = 0; i < MT; ++i) {
+                        if (i < cnt) {
+                            const auto xv = sg_bloadN<8>(sg, x + sycl::select_from_group(sg, xo, i) + bo);
+#pragma unroll
+                            for (unsigned g = 0; g < 8; ++g) {
+                                sum[0][i] = sum[0][i] + v[0][g] * xv[g];
+                                if constexpr (TWO) sum[1][i] = sum[1][i] + v[1][g] * xv[g];
+                            }
+                        }
+                    }
+                });
+            };
+#pragma unroll 1
+            for (unsigned T = 0; T < NFU; ++T) {
+                typename F::Unit un[TWO ? 2 : 1];
+                f.unit(sg, rr[0], T, un[0]);
+                if constexpr (TWO) f.unit(sg, rr[1], T, un[1]);
+                r2::sfor<SPU>([&](auto spk) {
+                    constexpr unsigned SP = decltype(spk)::value;
+                    const unsigned S = SPU * T + SP;
+                    typename F::Sg sgs[TWO ? 2 : 1];
+                    f.template seg<SP>(sg, rr[0], un[0], S, sgs[0]);
+                    if constexpr (TWO) f.template seg<SP>(sg, rr[1], un[1], S, sgs[1]);
+                    blocks(std::integral_constant<unsigned, 4>{}, S, sgs);
+                });
+            }
+            if constexpr (SPU * NFU < NS) { // the rest: compile-time segments
+                typename F::Unit un[TWO ? 2 : 1];
+                f.unit(sg, rr[0], NFU, un[0]);
+                if constexpr (TWO) f.unit(sg, rr[1], NFU, un[1]);
+                r2::sfor<NS - SPU * NFU>([&](auto spk) {
+                    constexpr unsigned SP = decltype(spk)::value, S = SPU * NFU + SP;
+                    constexpr unsigned NBS = 4 * S + 4 <= NB ? 4 : NB - 4 * S;
+                    typename F::Sg sgs[TWO ? 2 : 1];
+                    f.template seg<SP>(sg, rr[0], un[0], S, sgs[0]);
+                    if constexpr (TWO) f.template seg<SP>(sg, rr[1], un[1], S, sgs[1]);
+                    blocks(std::integral_constant<unsigned, NBS>{}, S, sgs);
+                });
+            }
+#pragma unroll
+            for (unsigned i = 0; i < MT; ++i) {
+                if (i < cnt) {
+                    const unsigned slot = sycl::select_from_group(sg, sl, i);
+                    r2::sfor<TWO ? 2 : 1>([&](auto hk) {
+                        constexpr unsigned h = decltype(hk)::value;
+                        float s = sum[h][i];
+                        for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
+                        if (lane == 0) om[slot * rows + r + h] = s;
+                    });
+                }
+            }
+        };
+        if constexpr (PAIRS)
+            for (unsigned q_ = p0; q_ < npair; q_ += P) job(std::true_type{}, 2 * q_);
+        for (unsigned q_ = 2 * npair + p0; q_ < nr_; q_ += P) job(std::false_type{}, q_);
+    }
+};
+
+// The five formats' expert-major kernels as the backend names them (backend_sycl_v41_mt.inc, routed_m): RoutedU3,
+// with row pairs for IQ2_XXS / IQ2_XS at MT <= 6 (their pair forms stay in 128 registers; the others' do not and
+// lose), and RoutedU's own form (RUFmt*, sycl_v41.hpp: RoutedIQ2XXSU0 ...) where RoutedU3 was not faster: MT 16 at
+// 9 blocks for IQ1_S (256 registers there), IQ2_XXS and IQ3_XXS (bench_routed_u2, card 3, 2026-11-11). BYTES
+// (RoutedU's IQ1_S table) changes no value.
+template <unsigned NB, unsigned MT> inline constexpr bool r4_u0 = NB < 12 && MT > 8;
+template <unsigned NB, unsigned MT>
+using RoutedIQ2XXSU = std::conditional_t<r4_u0<NB, MT>, RoutedU<RUFmtIQ2XXS<NB>, MT>,
+                                         RoutedU3<RU3IQ2XXS<NB>, MT, NoRows, 6, (MT <= 6)>>;
+template <unsigned NB, unsigned MT> using RoutedIQ2SU = RoutedU3<RU3IQ2S<NB>, MT>;
+template <unsigned NB, unsigned MT>
+using RoutedIQ3XXSU = std::conditional_t<r4_u0<NB, MT>, RoutedU<RUFmtIQ3XXS<NB>, MT>, RoutedU3<RU3IQ3XXS<NB>, MT>>;
+template <unsigned NB, unsigned MT> using RoutedIQ2XSU = RoutedU3<RU3IQ2XS<NB>, MT, NoRows, 6, (MT <= 6)>;
+template <unsigned NB, unsigned MT, bool BYTES = true>
+using RoutedIQ1SU = std::conditional_t<r4_u0<NB, MT>, RoutedU<RUFmtIQ1S<NB, BYTES>, MT>, RoutedU3<RU3IQ1S<NB>, MT>>;
 
 // Per-shape choice (bench_routed_r2, card 3, 2026-11-11): row pairs for IQ2_S / IQ2_XXS (e at 20 blocks, d at 9)
 // with no extra rows or the stream mix's finish row (HcFinishRows, gate + up with OWN_HC_FIN), the b form with the

@@ -1,0 +1,55 @@
+p1 exit 0
+p1: half32 oa (8192 x 32)      check, two queues, pull 128 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1: half32 oa (8192 x 32)      check, two queues, pull 256 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1:                            compute 128 regs, pull 128 regs, 16 groups: compute only   305.1 us, one queue   399.0, two queues   309.8 per iteration -> hidden  95.0 %
+p1:                            compute 128 regs, pull 128 regs, 64 groups: compute only   304.8 us, one queue   393.7, two queues   325.8 per iteration -> hidden  76.4 %
+p1:                            compute 128 regs, pull 256 regs, 16 groups: compute only   304.5 us, one queue   403.7, two queues   404.9 per iteration -> hidden  -1.2 %
+p1:                            compute 128 regs, pull 256 regs, 64 groups: compute only   304.4 us, one queue   398.4, two queues   399.5 per iteration -> hidden  -1.2 %
+p1:                            compute 256 regs, pull 128 regs, 16 groups: compute only   384.5 us, one queue   484.7, two queues   486.4 per iteration -> hidden  -1.7 %
+p1:                            compute 256 regs, pull 128 regs, 64 groups: compute only   384.7 us, one queue   481.7, two queues   483.1 per iteration -> hidden  -1.4 %
+p1:                            compute 256 regs, pull 256 regs, 16 groups: compute only   384.7 us, one queue   478.1, two queues   399.4 per iteration -> hidden  84.3 %
+p1:                            compute 256 regs, pull 256 regs, 64 groups: compute only   384.7 us, one queue   473.7, two queues   429.5 per iteration -> hidden  49.7 %
+p1: half32 h (5120 x 32)       check, two queues, pull 128 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1: half32 h (5120 x 32)       check, two queues, pull 256 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1:                            compute 128 regs, pull 128 regs, 16 groups: compute only   304.5 us, one queue   392.0, two queues   309.7 per iteration -> hidden  94.1 %
+p1:                            compute 128 regs, pull 128 regs, 64 groups: compute only   304.5 us, one queue   381.8, two queues   321.0 per iteration -> hidden  78.7 %
+p1:                            compute 128 regs, pull 256 regs, 16 groups: compute only   304.4 us, one queue   396.6, two queues   398.4 per iteration -> hidden  -2.0 %
+p1:                            compute 128 regs, pull 256 regs, 64 groups: compute only   304.8 us, one queue   387.0, two queues   388.8 per iteration -> hidden  -2.2 %
+p1:                            compute 256 regs, pull 128 regs, 16 groups: compute only   384.7 us, one queue   477.7, two queues   479.3 per iteration -> hidden  -1.7 %
+p1:                            compute 256 regs, pull 128 regs, 64 groups: compute only   384.8 us, one queue   471.2, two queues   472.3 per iteration -> hidden  -1.2 %
+p1:                            compute 256 regs, pull 256 regs, 16 groups: compute only   384.6 us, one queue   471.8, two queues   398.6 per iteration -> hidden  83.9 %
+p1:                            compute 256 regs, pull 256 regs, 64 groups: compute only   384.6 us, one queue   462.2, two queues   422.2 per iteration -> hidden  51.6 %
+p1: half32 act (2304 x 224)    check, two queues, pull 128 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1: half32 act (2304 x 224)    check, two queues, pull 256 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1:                            compute 128 regs, pull 128 regs, 16 groups: compute only   304.9 us, one queue   483.4, two queues   318.8 per iteration -> hidden  92.2 %
+p1:                            compute 128 regs, pull 128 regs, 64 groups: compute only   304.7 us, one queue   453.8, two queues   340.5 per iteration -> hidden  76.0 %
+p1:                            compute 128 regs, pull 256 regs, 16 groups: compute only   304.1 us, one queue   487.5, two queues   488.8 per iteration -> hidden  -0.7 %
+p1:                            compute 128 regs, pull 256 regs, 64 groups: compute only   304.5 us, one queue   466.0, two queues   467.2 per iteration -> hidden  -0.7 %
+p1:                            compute 256 regs, pull 128 regs, 16 groups: compute only   384.6 us, one queue   569.0, two queues   570.5 per iteration -> hidden  -0.8 %
+p1:                            compute 256 regs, pull 128 regs, 64 groups: compute only   384.6 us, one queue   550.1, two queues   551.0 per iteration -> hidden  -0.5 %
+p1:                            compute 256 regs, pull 256 regs, 16 groups: compute only   384.6 us, one queue   562.0, two queues   411.7 per iteration -> hidden  84.7 %
+p1:                            compute 256 regs, pull 256 regs, 64 groups: compute only   384.7 us, one queue   533.6, two queues   459.1 per iteration -> hidden  50.0 %
+p1: half128 h (5120 x 128)     check, two queues, pull 128 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1: half128 h (5120 x 128)     check, two queues, pull 256 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1:                            compute 128 regs, pull 128 regs, 16 groups: compute only   304.8 us, one queue   639.4, two queues   443.0 per iteration -> hidden  58.7 %
+p1:                            compute 128 regs, pull 128 regs, 64 groups: compute only   304.9 us, one queue   554.3, two queues   360.9 per iteration -> hidden  77.6 %
+p1:                            compute 128 regs, pull 256 regs, 16 groups: compute only   304.7 us, one queue   643.5, two queues   646.1 per iteration -> hidden  -0.8 %
+p1:                            compute 128 regs, pull 256 regs, 64 groups: compute only   304.7 us, one queue   586.7, two queues   588.5 per iteration -> hidden  -0.7 %
+p1:                            compute 256 regs, pull 128 regs, 16 groups: compute only   384.7 us, one queue   725.0, two queues   726.9 per iteration -> hidden  -0.6 %
+p1:                            compute 256 regs, pull 128 regs, 64 groups: compute only   384.6 us, one queue   684.6, two queues   686.1 per iteration -> hidden  -0.5 %
+p1:                            compute 256 regs, pull 256 regs, 16 groups: compute only   384.8 us, one queue   718.8, two queues   471.0 per iteration -> hidden  74.2 %
+p1:                            compute 256 regs, pull 256 regs, 64 groups: compute only   384.6 us, one queue   633.3, two queues   494.4 per iteration -> hidden  55.9 %
+p1: half128 act (2304 x 896)   check, two queues, pull 128 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1: half128 act (2304 x 896)   check, two queues, pull 256 regs: 0 wrong values, 0 timeouts (400 iterations)
+p1:                            compute 128 regs, pull 128 regs, 16 groups: compute only   304.6 us, one queue  1036.3, two queues   839.4 per iteration -> hidden  26.9 %
+p1:                            compute 128 regs, pull 128 regs, 64 groups: compute only   304.5 us, one queue   884.5, two queues   689.2 per iteration -> hidden  33.7 %
+p1:                            compute 128 regs, pull 256 regs, 16 groups: compute only   303.7 us, one queue  1045.1, two queues  1046.6 per iteration -> hidden  -0.2 %
+p1:                            compute 128 regs, pull 256 regs, 64 groups: compute only   304.9 us, one queue   954.1, two queues   955.3 per iteration -> hidden  -0.2 %
+p1:                            compute 256 regs, pull 128 regs, 16 groups: compute only   384.8 us, one queue  1121.5, two queues  1123.5 per iteration -> hidden  -0.3 %
+p1:                            compute 256 regs, pull 128 regs, 64 groups: compute only   384.6 us, one queue  1046.8, two queues  1048.1 per iteration -> hidden  -0.2 %
+p1:                            compute 256 regs, pull 256 regs, 16 groups: compute only   384.7 us, one queue  1120.8, two queues   868.3 per iteration -> hidden  34.3 %
+p1:                            compute 256 regs, pull 256 regs, 64 groups: compute only   384.6 us, one queue   962.3, two queues   713.7 per iteration -> hidden  43.0 %
+p1: PASS
+stuck exit 0
+stuck: stuck card 5: 5 of 6 cards report a timeout (4364288 wrong values after it; expected)
+ALLDONE
