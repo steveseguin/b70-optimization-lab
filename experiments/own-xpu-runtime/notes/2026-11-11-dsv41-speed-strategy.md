@@ -140,6 +140,19 @@ Host and step structure (from tl85, 2026-11-11):
   / 4 tokens and for the draft (tune91, runtime switches only).
 - H6. **Host hand-off**: ~0.25-0.35 ms of each step's gaps are thread hand-offs on the host (ckpath helper);
   `OWN_TP_SPIN_US=300` (the threads poll before sleeping) is an arm in tg90.
+- H8. **q_b offload: the light cards compute part of the heavy cards' q_b rows first and push them one way**
+  (idea, 2026-11-11 ~10:15, after xw92): the four 8-head cards wait ~22 us per layer at output-a (856-916 us per
+  step) while cards 2 / 5 run twice the q_b rows (8,192 x 1,280 Q8_0: 23.4 us against ~12.5) and twice the
+  output-a rows (18.1 us against ~9.5). q_b's input (the normed q_a output) is replicated and bit-identical on every
+  card, so a light neighbour can compute 4 of the heavy card's heads (2,048 rows, ~6 us) before its own q_b and push
+  them into the heavy card's q (one way, no wait on its side); the heavy card runs q_b for 8 heads with the same
+  riders and waits on the flags only before its attention reads q. Unlike H2 / H7 (head split: the pair exchange
+  sits between attention and output-a) and H3 (needs an extra pull), the push overlaps the heavy card's own q_b
+  (~12.5 us against ~6 + ~5.5 for rows + push). Mapping: card 2 keeps heads 16-23, cards 1 / 3 compute 24-27 /
+  28-31; card 5 keeps 48-55, cards 4 / 0 compute 56-59 / 60-63. Expected: heavy card -11 us per layer, light +7.5 us
+  (of ~20 us slack): ~0.4 ms per one-token step (~4 %), more in checks; the draft's stages have the same imbalance
+  (q_b 52 vs 28 us, o_a 28 vs 16 per stage). Same bits: each row's chain is the same kernel form on any card. Helper
+  (qboff), 2026-11-11: `qb-off-1.patch`, `OWN_QB_OFF` (heads per helper, 0 = off).
 
 Kernels (only where the budget says a kernel is far from its floor):
 - K1. One reusable proven-exact "fast serial sum" helper (bracket + fallback) for every remaining serial double
