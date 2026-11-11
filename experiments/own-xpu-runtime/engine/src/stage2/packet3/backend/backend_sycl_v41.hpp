@@ -220,6 +220,8 @@ public:
         bool q2k_fast = true;    // layer 0's unpacked Q2_K expert rows through RoutedQ2KF (bitwise; OWN_Q2K_FAST)
         bool bf16_rows = true;   // BF16 rows (indexer, compressor) by block reads through GemvH16P (OWN_BF16_ROWS)
         bool rope_out = true;   // tp: inverse rope in the attention output's store (OWN_ROPE_OUT=0: own launch)
+        bool att_out_c = false; // tp: the attention output from local memory, a column per lane (SparseOutJC;
+                                // OWN_ATT_OUT_C, the same outputs as SparseOutJB)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
@@ -1179,6 +1181,16 @@ private:
         const unsigned lines = (unsigned)(((uintptr_t)pf.p + pf.bytes - a + 63) / 64);
         const size_t npg = std::min<size_t>(1024, (lines + 127) / 128);
         launch_sg(tile, groups + npg, ops41sycl::WithPf<K>{k, (unsigned)groups, (const uint8_t *)a, lines}, args...);
+    }
+    // work-groups of `wg` items (32-lane sub-groups), SLM 32-bit words of local memory each
+    template <size_t SLM, typename K, typename... A> void launch_wgl(int tile, size_t groups, size_t wg, K k, A... args) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<uint32_t, 1> lt(SLM, hh);
+            hh.parallel_for(sycl::nd_range<1>(groups * wg, wg), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                k(it, args..., &lt[0]);
+            });
+        });
+        kev(tile, kname<K>(), e);
     }
     // one work-group of `items` (a multiple of 32), 32-lane sub-groups, no local memory
     template <typename K, typename... A> void launch_wg(int tile, size_t items, K k, A... args) {
@@ -2978,13 +2990,24 @@ private:
             if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
             const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
-            ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
-            if (o.rope_out) { // the inverse rope in the output's store (f32 activations: obuf is f32 too)
-                so.ry = (float *)(s.obuf + qo);
-                so.cosb = cb;
-                so.sinb = sbp;
+            if (o.att_out_c && !pfb.p) { // OWN_ATT_OUT_C (no prefetch work-groups in this form)
+                using SC = ops41sycl::SparseOutJC<512, 16, 128>;
+                SC so{n_idx, nh, 128};
+                if (o.rope_out) {
+                    so.ry = (float *)(s.obuf + qo);
+                    so.cosb = cb;
+                    so.sinb = sbp;
+                }
+                launch_wgl<SC::SLM>(c, SC::groups(nh), SC::WG, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
+            } else {
+                ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
+                if (o.rope_out) { // the inverse rope in the output's store (f32 activations: obuf is f32 too)
+                    so.ry = (float *)(s.obuf + qo);
+                    so.cosb = cb;
+                    so.sinb = sbp;
+                }
+                launch_sg_pf(c, (size_t)nh * g.hd / 64, pfb, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
             }
-            launch_sg_pf(c, (size_t)nh * g.hd / 64, pfb, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
             prof("sparse_attn", c);
             if (!o.rope_out)
                 launch(c, (size_t)nh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)nh, (unsigned)g.hd, 64u, true},

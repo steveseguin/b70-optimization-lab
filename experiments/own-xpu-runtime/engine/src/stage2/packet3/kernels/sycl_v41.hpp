@@ -2384,6 +2384,10 @@ template <unsigned NB, typename A> struct GemvQ6KP {
 
 template <typename T> inline constexpr bool is_q6kp_v = false;
 template <unsigned NB, typename A> inline constexpr bool is_q6kp_v<GemvQ6KP<NB, A>> = true;
+// columns of a packed dense row kernel with row blocks (rowgr): Q8_0 chunks of 32, Q6_K super-blocks of 256; 0 else
+template <typename T> inline constexpr unsigned dense_cols_v = 0;
+template <unsigned C, typename A> inline constexpr unsigned dense_cols_v<GemvQ8P<C, A>> = 32 * C;
+template <unsigned NB, typename A> inline constexpr unsigned dense_cols_v<GemvQ6KP<NB, A>> = 256 * NB;
 
 // F32 rows stored as their upper 16 bits (pack_v41 F32: only rows whose low
 // halves are all zero, e.g. the router). Widening gives the F32 row's floats
@@ -3587,6 +3591,137 @@ template <unsigned HD, unsigned NW, unsigned U = 8, bool PIPE = false> struct Sp
                 yh[64 * k + 2 * lane] = a0;
                 yh[64 * k + 2 * lane + 1] = a1;
             }
+        }
+    }
+};
+
+// SparseOutJB<HD, 1, U>'s sums from local memory, one column per lane (OWN_ATT_OUT_C). Work-group = HG sub-groups of
+// 32 = heads hg * HG .. + HG - 1 of one 32-column span (group = hg * (HD / 32) + span). The list goes chunk by
+// chunk (CH slots): the work-group's sub-groups load the chunk's 64-byte row pieces (sub-group g the pieces
+// g * CH / HG .., all issued before any is waited for) into local memory as f32 (bf16 << 16: the same values), the
+// next chunk's loads issued before this one is summed; sub-group g then sums head hg * HG + g over the chunk in slot
+// order, lane l column base + l. A skipped slot (< 0) adds -0.0f instead of being branched around: x + -0 == x for
+// every float, +0 and -0 included, so each output is SparseOutJB's (the slot's product, from row 0 and whatever
+// weight the softmax left there, is formed and dropped). The rope epilogue's pairs (2i, 2i + 1) are lanes
+// (2m, 2m + 1), the partner's value by a shuffle, the same expressions. n_idx % 32 == 0; rows 16-byte aligned.
+// Round 18 s1-s4 (tools/bench/bench_sparse_out.cpp, one card): 21.8-22.9 -> 11.9-12.8 us at 640 slots (8 or 16
+// heads), 6.0 -> 4.0-4.5 at 160, 4.8-5.1 -> 2.7-3.6 at 128, out and ry bitwise equal. Without the local memory the
+// added -0.0f alone gains nothing; 16-lane sub-groups, 4 or 8 heads per work-group, more loads in flight: slower.
+template <unsigned HD, unsigned HG_, unsigned CH, unsigned U = 16> struct SparseOutJC {
+    static constexpr unsigned HG = HG_, PER_HEAD = HD / 32, LP = CH / HG, NK = CH / 32;
+    static constexpr size_t SLM = 2 * (size_t)CH * 32, WG = 32 * (size_t)HG; // 32-bit words: two chunk buffers
+    static_assert(HD % 32 == 0 && CH % 32 == 0 && CH % HG == 0 && LP >= 1 && LP <= 32 && 32 % U == 0);
+    int n_idx, heads, win_rows;
+    // ToActRopeA (f32, rdim 64, inverse) on the way out when ry is set, as SparseOutJB
+    float *ry = nullptr;
+    const float *cosb = nullptr, *sinb = nullptr;
+    static size_t groups(int heads) { return (size_t)PER_HEAD * (size_t)((heads + (int)HG - 1) / (int)HG); }
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out, uint32_t *lm) const {
+        run(it, (unsigned)it.get_group_linear_id(), kvw, kvc, idxs, w, out, lm);
+    }
+    [[gnu::always_inline]] inline void run(sycl::nd_item<1> it, unsigned grp, const uint16_t *kvw, const uint16_t *kvc,
+                                           const int32_t *idxs, const float *w, float *out, uint32_t *lm) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), g = sg.get_group_linear_id();
+        const unsigned base = (grp % PER_HEAD) * 32;
+        const int h = (int)((grp / PER_HEAD) * HG + g);
+        const bool act = h < heads;
+        const int n = n_idx, wr = win_rows, nch = (n + (int)CH - 1) / (int)CH;
+        const float *wh = w + (size_t)(act ? h : 0) * n;
+        auto row_addr = [&](int slot) {
+            const int s0 = slot < 0 ? 0 : slot;
+            return (s0 < wr ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - wr) * HD) + base;
+        };
+        // loader slots of chunk c: lane u < LP holds slot c * CH + g * LP + u
+        auto lslots = [&](int c) {
+            const int i = c * (int)CH + (int)(g * LP + lane);
+            return lane < LP && i < n ? idxs[i] : -1;
+        };
+        uint16_t pc[LP];
+        auto issue = [&](int c, int ls) {
+#pragma unroll
+            for (unsigned u = 0; u < LP; ++u)
+                if (c * (int)CH + (int)(g * LP + u) < n) pc[u] = sg_bloadN<1>(sg, row_addr(sycl::select_from_group(sg, ls, u)))[0];
+        };
+        auto put = [&](int c) {
+            uint32_t *b = lm + (size_t)(c & 1) * CH * 32;
+#pragma unroll
+            for (unsigned u = 0; u < LP; ++u)
+                if (c * (int)CH + (int)(g * LP + u) < n) b[(g * LP + u) * 32 + lane] = (uint32_t)pc[u] << 16;
+        };
+        // this head's slots and weights of chunk c (lane l of k: slot c * CH + 32 k + l)
+        int csl[NK], nsl[NK];
+        float cwl[NK], nwl[NK];
+        auto lw = [&](int c, int (&s)[NK], float (&x)[NK]) {
+#pragma unroll
+            for (unsigned k = 0; k < NK; ++k) {
+                const int i = c * (int)CH + (int)(32 * k + lane);
+                const bool in = c * (int)CH + (int)(32 * k) < n;
+                s[k] = in ? idxs[i] : -1;
+                x[k] = in ? wh[i] : 0.0f;
+            }
+        };
+        float o = 0;
+        int ls = lslots(0);
+        issue(0, ls);
+        lw(0, csl, cwl);
+        if (nch > 1) ls = lslots(1);
+        put(0);
+        sycl::group_barrier(it.get_group());
+        for (int c = 0; c < nch; ++c) {
+            const bool more = c + 1 < nch;
+            if (more) {
+                issue(c + 1, ls);
+                lw(c + 1, nsl, nwl);
+                if (c + 2 < nch) ls = lslots(c + 2);
+            }
+            if (act) {
+                const uint32_t *b = lm + (size_t)(c & 1) * CH * 32;
+#pragma unroll
+                for (unsigned k = 0; k < NK; ++k) {
+                    if (c * (int)CH + (int)(32 * k) >= n) break;
+#pragma unroll
+                    for (unsigned u0 = 0; u0 < 32; u0 += U) {
+                        uint32_t x[U];
+#pragma unroll
+                        for (unsigned u = 0; u < U; ++u) x[u] = b[(32 * k + u0 + u) * 32 + lane];
+#pragma unroll
+                        for (unsigned u = 0; u < U; ++u) {
+                            const bool ok = sycl::select_from_group(sg, csl[k], u0 + u) >= 0;
+                            const float p0 = sycl::select_from_group(sg, cwl[k], u0 + u) * sycl::bit_cast<float>(x[u]);
+                            o += ok ? p0 : -0.0f;
+                        }
+                    }
+                }
+            }
+            if (more) {
+                put(c + 1);
+#pragma unroll
+                for (unsigned k = 0; k < NK; ++k) {
+                    csl[k] = nsl[k];
+                    cwl[k] = nwl[k];
+                }
+            }
+            sycl::group_barrier(it.get_group());
+        }
+        const float pr = sycl::select_from_group(sg, o, lane ^ 1u);
+        if (!act) return;
+        out[(size_t)h * HD + base + lane] = o;
+        if (ry) {
+            float a = o;
+            if (base >= HD - 64) {
+                const unsigned i = (base - (HD - 64) + lane) / 2;
+                const float cs = cosb[i], sn = -sinb[i];
+                if (lane & 1) {
+                    const float re = pr, im = o;
+                    a = re * sn + im * cs;
+                } else {
+                    const float re = o, im = pr;
+                    a = re * cs - im * sn;
+                }
+            }
+            ry[(size_t)h * HD + base + lane] = a;
         }
     }
 };
@@ -5042,6 +5177,25 @@ template <typename K> struct OutM {
             k2.sinb += t * 32;
         }
         k2.run(it.get_sub_group(), grp % gpt, kvw, kvc, idxs + t * is, w + t * ws, out + t * os);
+    }
+};
+
+// OutM for SparseOutJC (local memory; work-groups t * gpt .. are token t's, a whole work-group returns together)
+template <typename K> struct OutMC {
+    K k;
+    unsigned gpt, m;
+    size_t is, ws, os, rs;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint16_t *kvw, const uint16_t *kvc, const int32_t *idxs,
+                                     const float *w, float *out, uint32_t *lm) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        if (t >= m) return;
+        K k2 = k;
+        if (k2.ry) {
+            k2.ry += t * rs;
+            k2.cosb += t * 32;
+            k2.sinb += t * 32;
+        }
+        k2.run(it, grp % gpt, kvw, kvc, idxs + t * is, w + t * ws, out + t * os, lm);
     }
 };
 

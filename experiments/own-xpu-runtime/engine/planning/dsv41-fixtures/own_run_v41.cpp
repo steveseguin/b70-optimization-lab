@@ -250,6 +250,9 @@ int main(int argc, char **argv) {
     // the selects with every key in registers (rows >= 4,096, blocks > 2,048; the same lists): default since round 18
     // q4 / g75 (=0 for TopKSelR / TopKSelP / TopKSelC)
     opt.topk_q = getenv("OWN_TOPK_Q") ? atoi(getenv("OWN_TOPK_Q")) != 0 : true;
+    // the attention output from local memory, a column per lane (the same outputs): default since round 18 s3 / g76
+    // (=0 for SparseOutJB)
+    opt.att_out_c = getenv("OWN_ATT_OUT_C") ? atoi(getenv("OWN_ATT_OUT_C")) != 0 : true;
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");
@@ -434,6 +437,8 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TGR_ROWS")) be.mt_tgr_rows = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_FMT")) be.mt_tgr_fmt = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_DRAFT")) be.mt_tgr_draft = atoi(e) != 0;
+        // default since round 18 d4 / g78: blocks of 9-16 tokens pick their dense forms per matrix shape (OWN_MT_W16=0: off)
+        be.mt_w16 = getenv("OWN_MT_W16") ? atoi(getenv("OWN_MT_W16")) != 0 : true;
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {

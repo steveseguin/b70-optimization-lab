@@ -1,0 +1,32 @@
+Intel(R) Arc(TM) Pro B70 Graphics 0000:23:00.0
+-- Q6_K 6144x1280: weights 6.49 MB, 125.8 M weight-tokens
+bitwise Q6_K 6144x1280         engine G4 R4   | cold   114.8 us
+bitwise Q6_K 6144x1280         G4             | cold   107.0 us (x1.073)
+bitwise Q6_K 6144x1280         G8             | cold   109.5 us (x1.049)
+bitwise Q6_K 6144x1280         G4 R2          | cold   116.1 us (x0.988)
+bitwise Q6_K 6144x1280         G8 R2          | cold   107.5 us (x1.068)
+bitwise Q6_K 6144x1280         G2 R4          | cold   131.5 us (x0.873)
+-- Q6_K 1792x5120: weights 7.54 MB, 146.8 M weight-tokens
+bitwise Q6_K 1792x5120         engine G4      | cold   144.5 us
+bitwise Q6_K 1792x5120         G8             | cold    92.8 us (x1.557)
+bitwise Q6_K 1792x5120         G4 R2          | cold    89.6 us (x1.613)
+bitwise Q6_K 1792x5120         G4 R4          | cold    95.0 us (x1.521)
+bitwise Q6_K 1792x5120         G8 R2          | cold    92.7 us (x1.558)
+bitwise Q6_K 1792x5120         G2 R4          | cold   138.2 us (x1.045)
+-- Q6_K 864x8192: weights 5.81 MB, 113.2 M weight-tokens
+bitwise Q6_K 864x8192          engine G4      | cold    77.9 us
+bitwise Q6_K 864x8192          G8             | cold    87.0 us (x0.896)
+bitwise Q6_K 864x8192          G4 R2          | cold    75.5 us (x1.032)
+bitwise Q6_K 864x8192          G4 R4          | cold    84.3 us (x0.925)
+bitwise Q6_K 864x8192          G8 R2          | cold    80.8 us (x0.964)
+bitwise Q6_K 864x8192          G2 R4          | cold   124.6 us (x0.625)
+-- Q6_K 768x4096: weights 2.58 MB, 50.3 M weight-tokens
+bitwise Q6_K 768x4096          engine G4      | cold    72.0 us
+bitwise Q6_K 768x4096          G8             | cold    41.1 us (x1.749)
+bitwise Q6_K 768x4096          G4 R2          | cold    39.7 us (x1.814)
+bitwise Q6_K 768x4096          G4 R4          | cold    45.9 us (x1.567)
+bitwise Q6_K 768x4096          G8 R2          | cold    54.0 us (x1.334)
+bitwise Q6_K 768x4096          G2 R4          | cold    51.6 us (x1.396)
+PASS
+exit 0
+DONE

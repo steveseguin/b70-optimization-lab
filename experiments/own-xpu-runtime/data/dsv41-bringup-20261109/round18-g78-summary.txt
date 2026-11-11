@@ -1,0 +1,55 @@
+tp78 build exit 0 in 447 s
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.015 s/step, 68.26 tok/s
+h16: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 267.8 us per step and card (slowest card 275.6 us; copy + decode launch calls 202.7 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.015 s/step, 67.25 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 276.6 us per step and card (slowest card 283.5 us; copy + decode launch calls 210.3 us)
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.015 s/step, 67.99 tok/s
+h1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 281.1 us per step and card (slowest card 286.9 us; copy + decode launch calls 214.0 us)
+code_q exit 0
+code_q: prompt: 82 tokens read on the cards in 0.32s (294.9 tok/s; first step 0.09s incl. kernel build), first token 2581
+code_q: spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 5.07s = 100.71 tok/s; draft 2.32 ms + check 17.73 ms per cycle; SAME AS the plain run
+code_q: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 387.8 us per step and card (slowest card 389.4 us; copy + decode launch calls 292.8 us)
+analysis_q exit 0
+analysis_q: prompt: 113 tokens read on the cards in 0.42s (298.5 tok/s; first step 0.09s incl. kernel build), first token 2581
+analysis_q: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.50s = 113.66 tok/s; draft 2.35 ms + check 20.36 ms per cycle; SAME AS the plain run
+analysis_q: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 451.9 us per step and card (slowest card 453.1 us; copy + decode launch calls 341.6 us)
+p3k_q1 exit 0
+p3k_q1: prompt: 3323 tokens read on the cards in 11.28s (295.8 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3k_q1: decode: 255 steps after the first, 0.013 s/step, 74.11 tok/s
+p3k_q1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 257.7 us per step and card (slowest card 259.9 us; copy + decode launch calls 212.3 us)
+p3k_q1 ANSWER256_SAME
+p3k_d1 exit 0
+p3k_d1: prompt: 3323 tokens read on the cards in 11.41s (292.2 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3k_d1: decode: 255 steps after the first, 0.013 s/step, 74.52 tok/s
+p3k_d1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 257.2 us per step and card (slowest card 257.7 us; copy + decode launch calls 213.1 us)
+p3k_d1 ANSWER256_SAME
+p3k_q2 exit 0
+p3k_q2: prompt: 3323 tokens read on the cards in 11.27s (295.9 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3k_q2: decode: 255 steps after the first, 0.013 s/step, 74.58 tok/s
+p3k_q2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 256.4 us per step and card (slowest card 258.6 us; copy + decode launch calls 212.1 us)
+p3k_q2 ANSWER256_SAME
+p3k_d2 exit 0
+p3k_d2: prompt: 3323 tokens read on the cards in 11.43s (291.7 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3k_d2: decode: 255 steps after the first, 0.013 s/step, 74.41 tok/s
+p3k_d2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 257.6 us per step and card (slowest card 259.9 us; copy + decode launch calls 213.5 us)
+p3k_d2 ANSWER256_SAME
+p3k_off exit 0
+p3k_off: prompt: 3323 tokens read on the cards in 11.44s (291.6 tok/s; first step 0.10s incl. kernel build), first token 2581
+p3k_off: decode: 63 steps after the first, 0.013 s/step, 74.27 tok/s
+p3k_off: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 254.6 us per step and card (slowest card 255.9 us; copy + decode launch calls 206.9 us)
+p3k_off ANSWER64_SAME
+p3k_spec exit 0
+p3k_spec: prompt: 3323 tokens read on the cards in 11.35s (293.7 tok/s; first step 0.09s incl. kernel build), first token 2581
+p3k_spec: spec decode: 255 tokens in 103 cycles (2.48 per cycle; 152 of 201 guesses kept, 75.6 %) in 2.33s = 109.27 tok/s; draft 2.32 ms + check 20.34 ms per cycle; SAME AS the plain run
+p3k_spec: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 424.2 us per step and card (slowest card 427.3 us; copy + decode launch calls 335.1 us)
+guessing SAME count: 3
+ALLDONE

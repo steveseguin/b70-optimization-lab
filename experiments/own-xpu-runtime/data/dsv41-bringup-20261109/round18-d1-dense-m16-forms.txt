@@ -1,0 +1,59 @@
+Intel(R) Arc(TM) Pro B70 Graphics 0000:23:00.0
+-- Q8_0 6144x1280: weights 8.36 MB, 7864320 x 16 = 125.8 M weight-tokens
+bitwise Q8_0 6144x1280         engine G4 R4   | cold   106.2 us
+   engine form: 1.18 T weight-tokens/s, weights 79 GB/s
+   diag warm 94.8 us, x shared 102.5 us
+bitwise Q8_0 6144x1280         G4             | cold   111.7 us (x0.951)
+bitwise Q8_0 6144x1280         G8             | cold   103.4 us (x1.027)
+bitwise Q8_0 6144x1280         G16            | cold   105.5 us (x1.007)
+bitwise Q8_0 6144x1280         G4 R2          | cold   105.0 us (x1.012)
+bitwise Q8_0 6144x1280         G8 R2          | cold   104.9 us (x1.013)
+bitwise Q8_0 6144x1280         G2 R4          | cold   111.5 us (x0.953)
+bitwise Q8_0 6144x1280         G2 R8          | cold   129.9 us (x0.818)
+-- Q8_0 1792x5120: weights 9.75 MB, 9175040 x 16 = 146.8 M weight-tokens
+bitwise Q8_0 1792x5120         engine G4      | cold    80.4 us
+   engine form: 1.83 T weight-tokens/s, weights 121 GB/s
+   diag warm 74.3 us, x shared 74.0 us
+bitwise Q8_0 1792x5120         G8             | cold   178.5 us (x0.450)
+bitwise Q8_0 1792x5120         G16            | cold   114.8 us (x0.701)
+bitwise Q8_0 1792x5120         G4 R2          | cold    79.3 us (x1.014)
+bitwise Q8_0 1792x5120         G4 R4          | cold    78.1 us (x1.029)
+bitwise Q8_0 1792x5120         G8 R2          | cold    70.8 us (x1.135)
+bitwise Q8_0 1792x5120         G2 R4          | cold    83.5 us (x0.963)
+bitwise Q8_0 1792x5120         G2 R8          | cold   105.4 us (x0.763)
+-- Q8_0 864x8192: weights 7.52 MB, 7077888 x 16 = 113.2 M weight-tokens
+bitwise Q8_0 864x8192          engine G4      | cold    67.6 us
+   engine form: 1.68 T weight-tokens/s, weights 111 GB/s
+   diag warm 57.3 us, x shared 57.7 us
+bitwise Q8_0 864x8192          G8             | cold   200.7 us (x0.337)
+bitwise Q8_0 864x8192          G16            | cold   127.8 us (x0.529)
+bitwise Q8_0 864x8192          G4 R2          | cold   123.6 us (x0.547)
+bitwise Q8_0 864x8192          G4 R4          | cold    56.2 us (x1.202)
+bitwise Q8_0 864x8192          G8 R2          | cold    52.9 us (x1.278)
+bitwise Q8_0 864x8192          G2 R4          | cold   110.7 us (x0.611)
+bitwise Q8_0 864x8192          G2 R8          | cold    78.9 us (x0.857)
+-- Q8_0 864x2304: weights 2.12 MB, 1990656 x 16 = 31.9 M weight-tokens
+bitwise Q8_0 864x2304          engine G4      | cold    26.6 us
+   engine form: 1.20 T weight-tokens/s, weights 80 GB/s
+   diag warm 24.6 us, x shared 25.7 us
+bitwise Q8_0 864x2304          G8             | cold    28.4 us (x0.934)
+bitwise Q8_0 864x2304          G16            | cold    31.4 us (x0.847)
+bitwise Q8_0 864x2304          G4 R2          | cold    24.0 us (x1.109)
+bitwise Q8_0 864x2304          G4 R4          | cold    48.1 us (x0.552)
+bitwise Q8_0 864x2304          G8 R2          | cold    54.5 us (x0.488)
+bitwise Q8_0 864x2304          G2 R4          | cold    26.8 us (x0.992)
+bitwise Q8_0 864x2304          G2 R8          | cold    57.4 us (x0.463)
+-- Q8_0 768x4096: weights 3.34 MB, 3145728 x 16 = 50.3 M weight-tokens
+bitwise Q8_0 768x4096          engine G4      | cold    37.3 us
+   engine form: 1.35 T weight-tokens/s, weights 90 GB/s
+   diag warm 34.5 us, x shared 33.9 us
+bitwise Q8_0 768x4096          G8             | cold    38.5 us (x0.968)
+bitwise Q8_0 768x4096          G16            | cold    54.0 us (x0.691)
+bitwise Q8_0 768x4096          G4 R2          | cold    34.9 us (x1.069)
+bitwise Q8_0 768x4096          G4 R4          | cold    87.1 us (x0.428)
+bitwise Q8_0 768x4096          G8 R2          | cold    36.0 us (x1.035)
+bitwise Q8_0 768x4096          G2 R4          | cold    34.3 us (x1.088)
+bitwise Q8_0 768x4096          G2 R8          | cold    46.5 us (x0.803)
+PASS
+exit 0
+DONE

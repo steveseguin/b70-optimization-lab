@@ -1,0 +1,56 @@
+tp76 build exit 0 in 443 s
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.015 s/step, 67.11 tok/s
+h16: host io during decode: 6.4 MiB read from disk, 0 major page faults; engram rows 434.3 us per step and card (slowest card 438.0 us; copy + decode launch calls 19.9 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.015 s/step, 68.07 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 272.7 us per step and card (slowest card 276.9 us; copy + decode launch calls 201.7 us)
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.015 s/step, 68.02 tok/s
+h1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 269.9 us per step and card (slowest card 274.7 us; copy + decode launch calls 202.0 us)
+p1q1 exit 0
+p1q1 SPEED128_SAME
+p1q1: decode: 127 steps after the first, 0.013 s/step, 76.77 tok/s
+p1q1: host io during decode: 14.3 MiB read from disk, 0 major page faults; engram rows 538.8 us per step and card (slowest card 541.8 us; copy + decode launch calls 75.8 us)
+p1d1 exit 0
+p1d1 SPEED128_SAME
+p1d1: decode: 127 steps after the first, 0.013 s/step, 77.86 tok/s
+p1d1: host io during decode: 0.3 MiB read from disk, 21 major page faults; engram rows 274.2 us per step and card (slowest card 276.1 us; copy + decode launch calls 200.0 us)
+p1q2 exit 0
+p1q2 SPEED128_SAME
+p1q2: decode: 127 steps after the first, 0.013 s/step, 78.52 tok/s
+p1q2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 278.2 us per step and card (slowest card 282.4 us; copy + decode launch calls 208.6 us)
+p1d2 exit 0
+p1d2 SPEED128_SAME
+p1d2: decode: 127 steps after the first, 0.013 s/step, 78.01 tok/s
+p1d2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 276.4 us per step and card (slowest card 278.9 us; copy + decode launch calls 199.5 us)
+WARN corrected PCIe:  1 {4}[Hardware Error]: device_id: 0000:21:00.0; 1 {5}[Hardware Error]: device_id: 0000:21:00.0;
+code_q exit 0
+code_q: prompt: 82 tokens read on the cards in 0.32s (292.5 tok/s; first step 0.09s incl. kernel build), first token 2581
+code_q: spec decode: 511 tokens in 253 cycles (2.02 per cycle; 259 of 338 guesses kept, 76.6 %) in 5.07s = 100.77 tok/s; draft 2.31 ms + check 17.73 ms per cycle; SAME AS the plain run
+code_q: host io during decode: 87.8 MiB read from disk, 1 major page faults; engram rows 396.2 us per step and card (slowest card 398.6 us; copy + decode launch calls 179.6 us)
+analysis_q exit 0
+analysis_q: prompt: 113 tokens read on the cards in 0.42s (294.4 tok/s; first step 0.09s incl. kernel build), first token 2581
+analysis_q: spec decode: 511 tokens in 198 cycles (2.58 per cycle; 314 of 446 guesses kept, 70.4 %) in 4.49s = 113.72 tok/s; draft 2.35 ms + check 20.35 ms per cycle; SAME AS the plain run
+analysis_q: host io during decode: 71.7 MiB read from disk, 4 major page faults; engram rows 478.4 us per step and card (slowest card 481.5 us; copy + decode launch calls 208.2 us)
+x19k_q exit 0
+x19k_q: prompt: 18692 tokens read on the cards in 67.72s (276.2 tok/s; first step 0.09s incl. kernel build), first token 2581
+x19k_q: decode: 255 steps after the first, 0.014 s/step, 71.65 tok/s
+x19k_q: host io during decode: 26.7 MiB read from disk, 1 major page faults; engram rows 546.7 us per step and card (slowest card 549.4 us; copy + decode launch calls 68.9 us)
+x19k_q ANSWER256_SAME
+x69k_q exit 0
+x69k_q: prompt: 68506 tokens read on the cards in 258.68s (264.9 tok/s; first step 0.09s incl. kernel build), first token 2581
+x69k_q: decode: 255 steps after the first, 0.014 s/step, 69.78 tok/s
+x69k_q: host io during decode: 27.6 MiB read from disk, 6 major page faults; engram rows 540.2 us per step and card (slowest card 544.1 us; copy + decode launch calls 56.6 us)
+x69k_q ANSWER256_SAME
+x69k_d exit 0
+x69k_d: prompt: 68506 tokens read on the cards in 255.38s (268.3 tok/s; first step 0.13s incl. kernel build), first token 2581
+x69k_d: decode: 255 steps after the first, 0.015 s/step, 67.73 tok/s
+x69k_d: host io during decode: 36.9 MiB read from disk, 3 major page faults; engram rows 579.9 us per step and card (slowest card 581.7 us; copy + decode launch calls 28.0 us)
+x69k_d ANSWER256_SAME

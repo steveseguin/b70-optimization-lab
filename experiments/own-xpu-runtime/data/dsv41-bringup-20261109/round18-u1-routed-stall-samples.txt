@@ -1,0 +1,390 @@
+# u1 (2026-11-10 ~22:50 EST): EU stall sampling of the expert kernels, tools/bench/test_routed_u.cpp PCS=1 ONLY=xxs,iq2s,
+# card 0000:23 (ZE_AFFINITY_MASK=1), every case of the test (M 1-16, both kernel families); root only to read the counters.
+# build: icpx -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -fsycl-targets=intel_gpu_bmg_g31 -I src -I $PTI/include tools/bench/test_routed_u.cpp -lze_loader -L $PTI/lib -lpti_view
+card 0 Intel(R) Arc(TM) Pro B70 Graphics | 256 experts x 384 rows per bank, routed work-groups <= 128
+real-pattern pool: 36 experts at M <= 6, 57 at M = 16
+PASS IQ2_XXS NB 20 rows 384 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB 20 rows 384 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB 20 rows 383 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB 20 rows 383 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+time IQ2_XXS pair NB 20 rows 384 M  6 distinct 0.653 | slot-major     0.1 us | MT6     0.1 us x1.07 (+group 0.1 us)  MT16     0.1 us x1.00 (+group 0.1 us)
+time IQ2_XXS pair NB 20 rows 384 M 16 distinct 0.494 | slot-major     0.1 us | MT16     0.1 us x1.00 (+group 0.1 us)  MT8     0.1 us x1.00 (+group 0.1 us)  MT6     0.1 us x1.00 (+group 0.1 us)
+PASS IQ2_XXS NB  9 rows 384 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB  9 rows 384 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB  9 rows 383 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_XXS NB  9 rows 383 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+time IQ2_XXS down NB  9 rows 384 M  6 distinct 0.674 | slot-major     0.1 us | MT6     0.1 us x1.00 (+group 0.1 us)  MT16     0.1 us x0.75 (+group 0.1 us)
+time IQ2_XXS down NB  9 rows 384 M 16 distinct 0.497 | slot-major     0.1 us | MT16     0.1 us x0.81 (+group 0.1 us)  MT8     0.1 us x0.93 (+group 0.1 us)  MT6     0.1 us x0.81 (+group 0.1 us)
+PASS IQ2_S   NB 20 rows 384 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB 20 rows 384 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB 20 rows 383 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB 20 rows 383 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+time IQ2_S   pair NB 20 rows 384 M  6 distinct 0.653 | slot-major     0.1 us | MT6     0.1 us x0.87 (+group 0.1 us)  MT16     0.1 us x0.93 (+group 0.1 us)
+time IQ2_S   pair NB 20 rows 384 M 16 distinct 0.494 | slot-major     0.1 us | MT16     0.1 us x1.07 (+group 0.1 us)  MT8     0.1 us x1.00 (+group 0.1 us)  MT6     0.1 us x1.00 (+group 0.1 us)
+PASS IQ2_S   NB  9 rows 384 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB  9 rows 384 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB  9 rows 383 pair | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+PASS IQ2_S   NB  9 rows 383 down | M1/MT2 0 M2/MT2 0 M6/MT6 0 M6/MT16 0 M16/MT16 0 M16/MT8 0 M16/MT6 0  (problems per case, 3 id patterns)
+time IQ2_S   down NB  9 rows 384 M  6 distinct 0.674 | slot-major     0.1 us | MT6     0.1 us x0.71 (+group 0.1 us)  MT16     0.1 us x1.25 (+group 0.1 us)
+time IQ2_S   down NB  9 rows 384 M 16 distinct 0.497 | slot-major     0.1 us | MT16     0.1 us x1.07 (+group 0.1 us)  MT8     0.1 us x1.07 (+group 0.1 us)  MT6     0.1 us x1.15 (+group 0.1 us)
+pcs: 10 stall reasons: Active PSDepStall ControlStall PipeStall SendStall DistStall SbidStall SyncStall InstrFetchStall OtherStall
+pcs: device samples 1410714, pcs 47120, dropped 0
+
+kernel _ZTSZZL13launch_routedIN9ops41sycl11RoutedIQ2SPILj20ENS0_6ActF32ENS0_6NoRowsEEEEN4sycl3_V15eventERNS6_5queueEmRKT_PKhPKfPKjPfENKUlRNS6_7handlerEE_clES
+  samples 523950: Active 52.8% SbidStall 26.1% SendStall 8.5% PipeStall 8.4% DistStall 3.9% InstrFetchStall 0.1% ControlStall 0.1% SyncStall 0.0% OtherStall 0.0%
+    +0x00e40   1.1% | Active 92 SendStall 5539 DistStall 28
+    +0x001c0   0.9% | Active 91 SbidStall 4692 PipeStall 3
+    +0x00b70   0.7% | Active 114 SendStall 3584
+    +0x00e68   0.7% | Active 96 SendStall 3464 DistStall 31
+    +0x00bf0   0.7% | Active 105 SendStall 3371 InstrFetchStall 1
+    +0x00ba0   0.4% | Active 101 SendStall 2124 DistStall 2
+    +0x07940   0.4% | Active 175 SbidStall 2020
+    +0x07e80   0.4% | Active 148 SbidStall 1994 PipeStall 1
+    +0x05d80   0.4% | Active 169 SbidStall 1887
+    +0x062c0   0.4% | Active 141 SbidStall 1894 PipeStall 1
+    +0x06800   0.4% | Active 156 SbidStall 1875
+    +0x00e50   0.4% | Active 94 SendStall 1907
+    +0x07400   0.4% | Active 153 SbidStall 1832
+    +0x05810   0.4% | Active 151 SbidStall 1826 PipeStall 1
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj9EEELj6ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE
+  samples 14280: Active 57.9% PipeStall 15.5% SbidStall 12.8% SendStall 7.1% DistStall 3.6% InstrFetchStall 1.8% ControlStall 1.2% OtherStall 0.1% SyncStall 0.1%
+    +0x00be0   1.6% | Active 7 PipeStall 11 SbidStall 208
+    +0x008a0   0.8% | Active 6 PipeStall 1 SbidStall 99 ControlStall 4
+    +0x001a0   0.8% | Active 7 SbidStall 103
+    +0x00bd0   0.7% | Active 8 SendStall 81 DistStall 7
+    +0x03d30   0.6% | Active 10 SbidStall 69
+    +0x055f0   0.5% | Active 7 SbidStall 69
+    +0x04db0   0.5% | Active 8 SbidStall 64
+    +0x007e0   0.5% | Active 4 PipeStall 5 SbidStall 57
+    +0x04570   0.4% | Active 6 SbidStall 58
+    +0x02470   0.4% | Active 5 SbidStall 57
+    +0x002a0   0.4% | Active 2 SbidStall 58 DistStall 1
+    +0x02cb0   0.4% | Active 6 SbidStall 51
+    +0x00f18   0.4% | Active 6 PipeStall 46
+    +0x034f0   0.4% | Active 5 SbidStall 47
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj9EEELj8ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE
+  samples 10226: Active 57.8% PipeStall 15.0% SbidStall 12.2% SendStall 6.6% DistStall 4.3% InstrFetchStall 2.5% ControlStall 1.5% SyncStall 0.1% OtherStall 0.0%
+    +0x00be0   1.4% | Active 1 PipeStall 4 SbidStall 136
+    +0x008a0   0.6% | Active 6 PipeStall 1 SbidStall 57 ControlStall 2
+    +0x06630   0.6% | Active 5 SbidStall 61
+    +0x001a0   0.6% | Active 3 PipeStall 1 SbidStall 54
+    +0x00bd0   0.5% | Active 6 SendStall 38 DistStall 4
+    +0x051b0   0.5% | Active 5 SbidStall 43
+    +0x01e80   0.4% | Active 4 SbidStall 38
+    +0x03e30   0.4% | Active 2 SbidStall 38
+    +0x028b0   0.4% | Active 2 SbidStall 37
+    +0x03d30   0.4% | Active 2 SbidStall 36
+    +0x00f18   0.4% | PipeStall 38
+    +0x04770   0.4% | Active 3 SbidStall 35
+    +0x05bf0   0.4% | Active 3 SbidStall 35
+    +0x032f0   0.3% | Active 4 SbidStall 31
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj20EEELj16ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EE
+  samples 65480: Active 51.5% PipeStall 15.2% SbidStall 9.6% DistStall 8.5% InstrFetchStall 7.6% SendStall 5.0% ControlStall 2.5% SyncStall 0.0% OtherStall 0.0%
+    +0x00c00   0.9% | Active 10 DistStall 2 InstrFetchStall 1 SendStall 582
+    +0x00c10   0.7% | Active 10 PipeStall 19 SbidStall 408
+    +0x00ac0   0.5% | Active 13 SendStall 301
+    +0x00180   0.4% | Active 1 SbidStall 236
+    +0x008e0   0.3% | Active 8 PipeStall 10 SbidStall 199 ControlStall 3
+    +0x00d50   0.2% | Active 9 SendStall 151
+    +0x007a0   0.2% | SbidStall 151
+    +0x0af60   0.2% | Active 24 SbidStall 125
+    +0x0d4e0   0.2% | Active 32 SbidStall 110
+    +0x0e7a0   0.2% | Active 23 SbidStall 112
+    +0x11f30   0.2% | Active 21 SbidStall 102
+    +0x10cb0   0.2% | Active 19 SbidStall 103
+    +0x15690   0.2% | Active 16 SbidStall 104
+    +0x168e0   0.2% | Active 19 SbidStall 96
+
+kernel RoutedUINS0_9RUFmtIQ2SILj9EEELj6ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 17058: Active 68.2% PipeStall 9.8% SbidStall 9.5% SendStall 7.2% DistStall 3.0% InstrFetchStall 1.3% ControlStall 0.9% SyncStall 0.1% OtherStall 0.0%
+    +0x001d0   1.5% | Active 14 PipeStall 2 SbidStall 235
+    +0x00ae0   0.9% | Active 5 SendStall 148 DistStall 2
+    +0x00bb0   0.8% | Active 8 PipeStall 1 SbidStall 126
+    +0x008b0   0.7% | Active 7 PipeStall 2 SbidStall 110 ControlStall 1
+    +0x00b90   0.7% | Active 8 SendStall 108 DistStall 3
+    +0x00780   0.5% | Active 2 PipeStall 2 SbidStall 79
+    +0x00d20   0.4% | Active 9 SendStall 62 DistStall 3
+    +0x00a20   0.4% | Active 2 SendStall 66
+    +0x05fd0   0.4% | Active 8 SbidStall 59
+    +0x00da0   0.4% | Active 8 PipeStall 4 SbidStall 52
+    +0x06a00   0.4% | Active 10 SbidStall 52
+    +0x04b90   0.3% | Active 8 SbidStall 51
+    +0x04170   0.3% | Active 6 SbidStall 48
+    +0x02d10   0.3% | Active 9 SbidStall 43
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj9EEELj16ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEE
+  samples 18898: Active 50.5% PipeStall 14.8% SbidStall 13.4% DistStall 9.0% InstrFetchStall 7.2% ControlStall 3.2% SendStall 1.8% SyncStall 0.1% OtherStall 0.0%
+    +0x00c10   1.1% | Active 8 PipeStall 7 SbidStall 201
+    +0x01030   0.9% | Active 10 PipeStall 156
+    +0x008b0   0.8% | Active 4 PipeStall 6 SbidStall 141 ControlStall 1
+    +0x072f0   0.7% | Active 13 SbidStall 111
+    +0x00180   0.6% | Active 3 SbidStall 106
+    +0x03b60   0.6% | Active 7 PipeStall 1 SbidStall 101
+    +0x09800   0.5% | Active 8 SbidStall 95
+    +0x06090   0.5% | Active 16 SbidStall 86
+    +0x0aa60   0.5% | Active 7 SbidStall 93
+    +0x028b0   0.5% | Active 10 SbidStall 88
+    +0x04e10   0.5% | Active 10 SbidStall 87
+    +0x08590   0.5% | Active 9 SbidStall 84
+    +0x00780   0.5% | SbidStall 91
+    +0x00c00   0.4% | Active 5 DistStall 5 SendStall 65
+
+kernel RoutedUINS0_9RUFmtIQ2SILj20EEELj2ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 1133: Active 74.0% PipeStall 10.3% SbidStall 8.8% SendStall 3.4% DistStall 2.4% InstrFetchStall 0.5% ControlStall 0.3% SyncStall 0.3% OtherStall 0.1%
+    +0x001c0   4.0% | Active 2 SbidStall 43
+    +0x001d8   0.7% | Active 8
+    +0x00d98   0.7% | SendStall 8
+    +0x00160   0.6% | Active 5 DistStall 2
+    +0x00ab0   0.5% | Active 2 SendStall 4
+    +0x00170   0.4% | Active 4 PipeStall 1
+    +0x07b20   0.4% | Active 1 SbidStall 4
+    +0x01c10   0.4% | Active 4
+    +0x00340   0.4% | SbidStall 4
+    +0x008e0   0.4% | Active 1 PipeStall 1 SbidStall 2
+    +0x03040   0.4% | Active 4
+    +0x04350   0.3% | SbidStall 3
+    +0x01e00   0.3% | Active 2 SbidStall 1
+    +0x09350   0.3% | Active 2 PipeStall 1
+
+kernel RoutedUINS0_9RUFmtIQ2SILj9EEELj2ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 595: Active 71.3% PipeStall 11.6% SbidStall 9.2% SendStall 2.7% DistStall 2.2% ControlStall 1.2% InstrFetchStall 1.2% OtherStall 0.5% SyncStall 0.2%
+    +0x001d0   3.9% | Active 8 SbidStall 15
+    +0x00140   1.2% | Active 3 PipeStall 1 InstrFetchStall 3
+    +0x00170   1.2% | Active 7
+    +0x024b0   1.0% | SbidStall 6
+    +0x00210   1.0% | Active 5 ControlStall 1
+    +0x00180   1.0% | Active 3 PipeStall 2 DistStall 1
+    +0x00da0   1.0% | Active 1 SbidStall 5
+    +0x00150   0.8% | Active 5
+    +0x00178   0.8% | Active 5
+    +0x04a30   0.7% | SbidStall 4
+    +0x00ae0   0.7% | SendStall 4
+    +0x00200   0.7% | Active 4
+    +0x00bb0   0.7% | SbidStall 4
+    +0x00160   0.7% | Active 3 DistStall 1
+
+kernel RoutedUINS0_9RUFmtIQ2SILj9EEELj8ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 12152: Active 66.1% SbidStall 10.1% PipeStall 10.0% SendStall 7.0% DistStall 3.6% InstrFetchStall 1.9% ControlStall 1.1% SyncStall 0.1% OtherStall 0.0%
+    +0x001d0   1.1% | Active 10 SbidStall 124
+    +0x00bb0   0.7% | Active 3 SbidStall 85 PipeStall 2
+    +0x00ae0   0.6% | Active 6 SendStall 68 DistStall 3
+    +0x008b0   0.6% | Active 4 SbidStall 70 PipeStall 1 ControlStall 1
+    +0x00780   0.6% | Active 7 SbidStall 60 PipeStall 2
+    +0x00a10   0.6% | Active 8 SendStall 60
+    +0x00b90   0.5% | Active 4 SendStall 52 DistStall 2
+    +0x061d0   0.5% | Active 8 SbidStall 48
+    +0x079f0   0.4% | Active 2 SbidStall 50
+    +0x055d0   0.4% | Active 7 SbidStall 42
+    +0x06dd0   0.4% | Active 6 SbidStall 43
+    +0x00da0   0.3% | Active 4 SbidStall 36 PipeStall 1
+    +0x03190   0.3% | Active 3 SbidStall 37
+    +0x03d90   0.3% | Active 7 SbidStall 29
+
+kernel RoutedUINS0_9RUFmtIQ2SILj9EEELj16ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 21963: Active 58.1% SbidStall 13.1% DistStall 9.1% PipeStall 9.0% InstrFetchStall 4.9% SendStall 3.2% ControlStall 2.4% SyncStall 0.1% OtherStall 0.0%
+    +0x001c0   1.7% | Active 22 SbidStall 345
+    +0x00c10   0.9% | Active 11 SbidStall 189 PipeStall 3
+    +0x00b30   0.6% | Active 6 SendStall 136
+    +0x008e0   0.6% | Active 5 SbidStall 115 ControlStall 4
+    +0x0ab20   0.5% | Active 20 SbidStall 93
+    +0x00bf0   0.5% | Active 7 DistStall 3 SendStall 101
+    +0x007c0   0.5% | SbidStall 104
+    +0x096a0   0.5% | Active 8 SbidStall 95
+    +0x06da0   0.4% | Active 15 SbidStall 83
+    +0x05920   0.4% | Active 16 SbidStall 80
+    +0x0bf70   0.4% | Active 12 SbidStall 83
+    +0x08220   0.4% | Active 9 SbidStall 76
+    +0x044a0   0.4% | Active 11 SbidStall 73
+    +0x00340   0.3% | Active 1 SbidStall 70
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj20EEELj6ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEE
+  samples 47554: Active 60.2% PipeStall 16.4% SendStall 11.2% SbidStall 7.0% DistStall 2.4% InstrFetchStall 2.1% ControlStall 0.7% OtherStall 0.1% SyncStall 0.0%
+    +0x00bc0   1.3% | Active 12 SendStall 594 DistStall 3
+    +0x00a50   0.8% | Active 14 SendStall 371
+    +0x00bd0   0.5% | Active 12 PipeStall 15 SbidStall 225
+    +0x001a0   0.5% | Active 9 SbidStall 233
+    +0x00cf0   0.4% | Active 15 SendStall 161 DistStall 3
+    +0x01228   0.3% | Active 12 PipeStall 137
+    +0x008b0   0.3% | Active 7 PipeStall 9 SbidStall 128
+    +0x00790   0.2% | SbidStall 104
+    +0x00ab0   0.2% | Active 20 SendStall 82
+    +0x01290   0.2% | Active 9 PipeStall 88
+    +0x00fe0   0.2% | Active 2 PipeStall 90
+    +0x002a0   0.2% | SbidStall 86
+    +0x00760   0.2% | Active 5 SendStall 75 DistStall 1
+    +0x08230   0.2% | Active 15 SbidStall 66
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj9EEELj2ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE
+  samples 459: Active 56.4% PipeStall 20.3% SbidStall 11.5% DistStall 5.2% SendStall 4.1% InstrFetchStall 1.1% SyncStall 0.7% OtherStall 0.4% ControlStall 0.2%
+    +0x001a0   1.7% | SbidStall 8
+    +0x00bd0   1.5% | SbidStall 7
+    +0x024e0   1.1% | SbidStall 5
+    +0x027b8   1.1% | Active 5
+    +0x006a0   0.9% | Active 4
+    +0x00e70   0.9% | PipeStall 4
+    +0x008a0   0.9% | SbidStall 4
+    +0x00e10   0.9% | PipeStall 3 DistStall 1
+    +0x02dd8   0.9% | Active 3 SbidStall 1
+    +0x002a0   0.9% | SbidStall 4
+    +0x00d80   0.7% | PipeStall 2 DistStall 1
+    +0x00cd8   0.7% | PipeStall 1 DistStall 2
+    +0x02670   0.7% | Active 3
+    +0x00bc0   0.7% | Active 1 DistStall 1 SendStall 1
+
+kernel _ZTSZZL13launch_routedIN9ops41sycl11RoutedIQ2SPILj9ENS0_6ActF32ENS0_6NoRowsEEEEN4sycl3_V15eventERNS6_5queueEmRKT_PKhPKfPKjPfENKUlRNS6_7handlerEE_clESL
+  samples 97179: Active 72.0% PipeStall 15.7% SendStall 5.6% SbidStall 4.6% DistStall 1.6% InstrFetchStall 0.2% ControlStall 0.2% SyncStall 0.1% OtherStall 0.0%
+    +0x001c0   1.5% | Active 111 PipeStall 2 SbidStall 1350
+    +0x00b50   1.4% | Active 45 SendStall 1337 DistStall 17
+    +0x00bd0   1.0% | Active 81 PipeStall 9 SbidStall 875
+    +0x00bc0   0.6% | Active 50 SendStall 566 DistStall 8
+    +0x00958   0.5% | Active 35 PipeStall 19 SbidStall 393
+    +0x00aa0   0.4% | Active 49 SendStall 334 DistStall 5
+    +0x00d00   0.4% | Active 63 SendStall 302 DistStall 11
+    +0x00d50   0.4% | Active 54 PipeStall 15 SbidStall 297
+    +0x00d28   0.3% | Active 52 SendStall 240 DistStall 10
+    +0x00930   0.3% | Active 53 SendStall 191 DistStall 11
+    +0x00a50   0.2% | Active 43 SendStall 166 DistStall 4
+    +0x00f28   0.2% | Active 52 SendStall 156
+    +0x00a70   0.2% | Active 46 SendStall 146
+    +0x00d10   0.2% | Active 41 SendStall 149
+
+kernel RoutedUINS0_9RUFmtIQ2SILj20EEELj8ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 44465: Active 63.6% SendStall 12.6% PipeStall 9.2% SbidStall 8.1% DistStall 3.4% InstrFetchStall 2.3% ControlStall 0.7% SyncStall 0.0% OtherStall 0.0%
+    +0x001c0   1.3% | Active 16 PipeStall 1 SbidStall 546
+    +0x00db0   1.0% | Active 8 SendStall 440 DistStall 3
+    +0x00ae0   0.6% | Active 8 SendStall 239
+    +0x00de0   0.4% | Active 9 SendStall 183 DistStall 4
+    +0x00b40   0.4% | Active 7 SendStall 183 InstrFetchStall 3
+    +0x01070   0.4% | Active 10 SendStall 150 DistStall 2
+    +0x00dc0   0.2% | Active 2 SendStall 109
+    +0x00e10   0.2% | Active 10 PipeStall 1 SbidStall 95
+    +0x008f0   0.2% | Active 8 PipeStall 1 SbidStall 86 ControlStall 2
+    +0x007d0   0.2% | Active 6 SendStall 89 DistStall 2
+    +0x010a0   0.2% | Active 7 SendStall 73 DistStall 6
+    +0x00b50   0.2% | Active 7 SendStall 74
+    +0x00b90   0.2% | Active 3 SendStall 76
+    +0x00b80   0.2% | Active 4 SendStall 75
+
+kernel _ZTSZZL13launch_routedIN9ops41sycl13RoutedIQ2XXSPILj20ENS0_6ActF32ENS0_6NoRowsEEEEN4sycl3_V15eventERNS6_5queueEmRKT_PKhPKfPKjPfENKUlRNS6_7handlerEE_cl
+  samples 285737: Active 60.4% PipeStall 31.3% SendStall 5.7% SbidStall 1.7% DistStall 0.7% ControlStall 0.1% InstrFetchStall 0.1% SyncStall 0.0% OtherStall 0.0%
+    +0x00b00   1.0% | Active 79 SendStall 2906 DistStall 14
+    +0x009c0   0.8% | Active 88 SendStall 2186
+    +0x00b20   0.7% | Active 101 PipeStall 340 SbidStall 1562
+    +0x008e0   0.6% | Active 96 SendStall 1481
+    +0x00180   0.4% | Active 25 SbidStall 1245
+    +0x00c50   0.4% | Active 111 SendStall 1110 DistStall 13
+    +0x00f48   0.3% | Active 86 PipeStall 832 DistStall 7
+    +0x01030   0.3% | Active 107 PipeStall 811 DistStall 4
+    +0x00f10   0.3% | Active 104 PipeStall 811 DistStall 1
+    +0x00d40   0.3% | Active 93 PipeStall 675 SbidStall 131 DistStall 6
+    +0x007c0   0.3% | Active 72 PipeStall 69 SbidStall 754
+    +0x00e70   0.3% | Active 113 PipeStall 728 DistStall 10
+    +0x01070   0.3% | Active 86 PipeStall 749 DistStall 12
+    +0x00fd0   0.3% | Active 89 PipeStall 738 DistStall 9
+
+kernel _ZTSZZL13launch_routedIN9ops41sycl13RoutedIQ2XXSPILj9ENS0_6ActF32ENS0_6NoRowsEEEEN4sycl3_V15eventERNS6_5queueEmRKT_PKhPKfPKjPfENKUlRNS6_7handlerEE_clE
+  samples 72571: Active 62.9% PipeStall 29.9% SbidStall 3.2% SendStall 1.8% DistStall 1.5% ControlStall 0.3% InstrFetchStall 0.3% SyncStall 0.1% OtherStall 0.0%
+    +0x00b80   1.9% | Active 63 PipeStall 149 SbidStall 1163
+    +0x00e60   0.7% | Active 47 PipeStall 473
+    +0x00a50   0.7% | Active 44 SendStall 448 DistStall 14
+    +0x00180   0.7% | Active 21 SbidStall 461
+    +0x00d00   0.6% | Active 50 PipeStall 367 DistStall 12
+    +0x00b70   0.5% | Active 58 SendStall 325 DistStall 12
+    +0x00dc0   0.5% | Active 58 PipeStall 322 DistStall 5
+    +0x00840   0.5% | Active 46 PipeStall 16 SbidStall 322
+    +0x00d80   0.5% | Active 58 PipeStall 296 SbidStall 16 DistStall 6
+    +0x00d40   0.5% | Active 44 PipeStall 323 DistStall 4
+    +0x00e00   0.5% | Active 61 PipeStall 297 DistStall 7
+    +0x00ea0   0.5% | Active 54 PipeStall 284 DistStall 3
+    +0x00cb0   0.5% | Active 44 PipeStall 274 ControlStall 14
+    +0x00bb0   0.5% | Active 66 PipeStall 242 DistStall 20
+
+kernel RoutedUINS0_9RUFmtIQ2SILj20EEELj6ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 62358: Active 65.4% SendStall 13.5% PipeStall 9.5% SbidStall 6.5% DistStall 2.6% InstrFetchStall 2.0% ControlStall 0.5% OtherStall 0.0% SyncStall 0.0%
+    +0x001c0   1.6% | Active 23 SbidStall 944
+    +0x00db0   1.3% | Active 9 SendStall 815
+    +0x00ae0   0.7% | Active 9 SendStall 411 DistStall 1
+    +0x00de0   0.6% | Active 11 SendStall 345 DistStall 5
+    +0x00b40   0.6% | Active 7 SendStall 342 InstrFetchStall 1
+    +0x01070   0.4% | Active 9 SendStall 233 DistStall 1
+    +0x00790   0.3% | Active 12 SendStall 142 DistStall 4
+    +0x00dc0   0.2% | Active 7 SendStall 133
+    +0x01308   0.2% | Active 4 SendStall 131 DistStall 3
+    +0x00b90   0.2% | Active 14 SendStall 124
+    +0x00900   0.2% | Active 13 PipeStall 6 SbidStall 118 InstrFetchStall 1
+    +0x00e10   0.2% | Active 17 PipeStall 3 SbidStall 102
+    +0x010a0   0.2% | Active 10 SendStall 103 DistStall 3
+    +0x007c0   0.2% | SbidStall 99 InstrFetchStall 2
+
+kernel _ZTSZZL12launch_groupRN4sycl3_V15queueEjjPKjPjENKUlRNS0_7handlerEE_clES7_EUlNS0_7nd_itemILi1EEEE_
+  samples 320: SyncStall 34.1% DistStall 23.8% SbidStall 13.1% Active 9.1% InstrFetchStall 7.5% OtherStall 7.2% ControlStall 5.3%
+    +0x01500  32.5% | SyncStall 104
+    +0x00630   4.4% | DistStall 2 SbidStall 12
+    +0x003a0   3.4% | SbidStall 11
+    +0x008e0   2.8% | SbidStall 9
+    +0x00b70   2.2% | DistStall 1 SbidStall 5 OtherStall 1
+    +0x005d0   1.9% | OtherStall 4 ControlStall 2
+    +0x005c0   1.6% | InstrFetchStall 4 ControlStall 1
+    +0x00510   1.2% | DistStall 4
+    +0x00880   1.2% | Active 3 OtherStall 1
+    +0x00650   1.2% | ControlStall 4
+    +0x00640   1.2% | DistStall 3 OtherStall 1
+    +0x00b40   1.2% | DistStall 4
+    +0x00b60   1.2% | DistStall 3 Active 1
+    +0x00890   0.9% | DistStall 2 Active 1
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj20EEELj2ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEE
+  samples 880: Active 60.8% PipeStall 21.5% SbidStall 7.6% SendStall 6.0% DistStall 3.0% ControlStall 0.5% InstrFetchStall 0.5% SyncStall 0.2%
+    +0x001a0   1.4% | SbidStall 12
+    +0x00ba0   1.1% | Active 2 SendStall 7 DistStall 1
+    +0x00bb0   1.0% | PipeStall 1 SbidStall 8
+    +0x05890   0.7% | SbidStall 6
+    +0x00f00   0.6% | Active 1 PipeStall 4
+    +0x00ec0   0.6% | Active 1 PipeStall 4
+    +0x00f80   0.6% | PipeStall 5
+    +0x00a50   0.6% | SendStall 5
+    +0x05d00   0.5% | SbidStall 4
+    +0x046d0   0.5% | SbidStall 4
+    +0x015e0   0.5% | Active 2 SbidStall 2
+    +0x00e00   0.5% | Active 1 PipeStall 3
+    +0x00dc0   0.5% | PipeStall 4
+    +0x04260   0.5% | Active 2 SbidStall 2
+
+kernel RoutedUINS0_11RUFmtIQ2XXSILj20EEELj8ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEE
+  samples 34517: Active 58.7% PipeStall 15.5% SendStall 10.7% SbidStall 8.1% DistStall 2.9% InstrFetchStall 2.8% ControlStall 1.2% SyncStall 0.0% OtherStall 0.0%
+    +0x00bc0   1.2% | Active 5 SendStall 389 DistStall 5 InstrFetchStall 1
+    +0x00a50   0.5% | Active 6 SendStall 160
+    +0x00bd0   0.4% | Active 2 PipeStall 6 SbidStall 143
+    +0x001a0   0.4% | Active 1 SbidStall 131
+    +0x00cf0   0.3% | Active 9 SendStall 96 DistStall 3
+    +0x01228   0.3% | Active 8 PipeStall 94
+    +0x008b0   0.3% | Active 4 PipeStall 1 SbidStall 81 ControlStall 1
+    +0x09cb0   0.2% | Active 14 SbidStall 59
+    +0x00fe0   0.2% | Active 6 PipeStall 61
+    +0x0da30   0.2% | Active 9 SbidStall 55
+    +0x06980   0.2% | Active 19 SbidStall 44
+    +0x0cff0   0.2% | Active 7 SbidStall 55
+    +0x05f30   0.2% | Active 17 SbidStall 45
+    +0x073b0   0.2% | Active 15 SbidStall 43
+
+kernel RoutedUINS0_9RUFmtIQ2SILj20EEELj16ENS0_6NoRowsELj6EEEEN4sycl3_V15eventERNS7_5queueEmRKT_PKhPKfPKjPfENKUlRNS7_7handlerEE_clESM_EUlNS7_7nd_itemILi1EEEE_
+  samples 78939: Active 56.6% SbidStall 10.3% SendStall 9.9% DistStall 7.9% PipeStall 7.5% InstrFetchStall 5.7% ControlStall 2.0% SyncStall 0.0% OtherStall 0.0%
+    +0x00e58   1.3% | Active 7 SendStall 980 DistStall 2
+    +0x001e0   1.2% | Active 28 SbidStall 920 PipeStall 1
+    +0x00b90   0.6% | Active 13 SendStall 475 DistStall 2
+    +0x00e90   0.6% | Active 13 SendStall 461 DistStall 4
+    +0x00bf0   0.5% | Active 11 SendStall 400 InstrFetchStall 1
+    +0x01108   0.4% | Active 10 SendStall 301 DistStall 1
+    +0x00e68   0.3% | Active 15 SendStall 261
+    +0x00eb0   0.3% | Active 2 SbidStall 209 PipeStall 1
+    +0x00cb0   0.3% | Active 9 SbidStall 196
+    +0x009a0   0.2% | Active 9 SbidStall 178 PipeStall 4 ControlStall 4
+    +0x00c40   0.2% | Active 8 SendStall 177
+    +0x007b0   0.2% | Active 8 SendStall 163 DistStall 1
+    +0x00c80   0.2% | Active 9 SendStall 160 InstrFetchStall 2
+    +0x00c30   0.2% | Active 11 SendStall 154
+PASS: 0 failed line(s)
+rc=0

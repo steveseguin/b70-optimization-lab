@@ -1,0 +1,29 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+list                        n heads | softmax |       A: + JB |       C: + JC |          X128           X64
+scores                    640    16 |     5.8 |  23.0 ( 28.9) |  12.4 ( 18.2) y |  18.4 y      19.4 y
+scores                    640     8 |     5.7 |  22.9 ( 28.6) |  12.0 ( 17.7) y |  18.2 y      19.1 y
+scores                    160    16 |     4.0 |   6.6 ( 10.5) |   4.1 (  8.0) y |   7.8 y       7.4 y
+scores                    160     8 |     4.0 |   6.5 ( 10.4) |   4.0 (  7.9) y |   7.6 y       7.8 y
+scores                    128    16 |     1.5 |   5.1 (  6.6) |   2.7 (  4.2) y |   6.5 y       6.4 y
+scores                    128     8 |     1.5 |   5.1 (  6.6) |   2.7 (  4.2) y |   6.4 y       6.2 y
+signed, -1 slots, NaNs    640    16 |     5.7 |  22.0 ( 27.7) |  12.4 ( 18.1) y |  18.5 y      19.4 y
+signed, -1 slots, NaNs    640     8 |     5.7 |  22.1 ( 27.8) |  12.0 ( 17.7) y |  18.1 y      19.2 y
+signed, -1 slots, NaNs    160    16 |     4.0 |   6.1 ( 10.1) |   4.2 (  8.1) y |   7.7 y       7.4 y
+signed, -1 slots, NaNs    160     8 |     4.0 |   6.1 ( 10.1) |   4.1 (  8.0) y |   7.7 y       7.9 y
+signed, -1 slots, NaNs    128    16 |     1.5 |   4.9 (  6.4) |   2.8 (  4.3) y |   6.5 y       6.4 y
+signed, -1 slots, NaNs    128     8 |     1.5 |   4.9 (  6.4) |   2.7 (  4.2) y |   6.4 y       6.2 y
+list tail -1              640    16 |     5.4 |  21.9 ( 27.3) |  12.3 ( 17.7) y |  18.3 y      19.3 y
+list tail -1              640     8 |     5.5 |  21.9 ( 27.4) |  12.1 ( 17.6) y |  18.0 y      19.0 y
+list tail -1              160    16 |     4.0 |   6.5 ( 10.4) |   4.2 (  8.1) y |   7.7 y       7.4 y
+list tail -1              160     8 |     4.0 |   6.4 ( 10.3) |   4.1 (  8.0) y |   7.7 y       7.9 y
+list tail -1              128    16 |     1.5 |   5.1 (  6.6) |   2.7 (  4.2) y |   6.5 y       6.4 y
+list tail -1              128     8 |     1.5 |   5.1 (  6.6) |   2.7 (  4.2) y |   6.4 y       6.2 y
+(median us per launch; in brackets with the softmax launch; y = out and ry bitwise = A)
+forms:
+  A softmax + SparseOutJB<512,1,16> (engine before OWN_ATT_OUT_C)
+  C softmax + SparseOutJC<512,16,128>
+  X SparseOutJCS<512,16,128> (softmax inside)
+  X SparseOutJCS<512,16,64>
+PASS
+exit 0
+DONE

@@ -1,0 +1,90 @@
+# Third host reset 2026-11-10 ~20:51 EST (last journal line of boot -1: 20:51:43) during gate g76's x34k_spec run
+# (tp76; started 20:50:04 = monotonic 3857.40; weights uploaded, ~70 s into reading the 34K document). Boot 0 started 20:54:13.
+# This time the firmware's record has only the processor error (no PCIe section): CPU 0 machine check bank 5,
+# 'Perr S0:T002:B05' (the SYND words in ASCII), status bea0000000000108, the same bank and IPID as the two earlier resets.
+BERT: Error records from previous boot:
+[Hardware Error]: event severity: fatal
+[Hardware Error]:  Error 0, type: fatal
+[Hardware Error]:  fru_text: Perr S0:T002:B05
+[Hardware Error]:   section_type: IA32/X64 processor error
+[Hardware Error]:   Local APIC_ID: 0x0
+[Hardware Error]:   CPUID Info:
+[Hardware Error]:   00000000: 00b00f21 00000000 00100800 00000000
+[Hardware Error]:   00000010: 76fa320b 00000000 178bfbff 00000000
+[Hardware Error]:   00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:   Error Information Structure 0:
+[Hardware Error]:    Error Structure Type: cache error
+[Hardware Error]:    Check Information: 0x000000000602001f
+[Hardware Error]:     Transaction Type: 2, Generic
+[Hardware Error]:     Operation: 0, generic error
+[Hardware Error]:     Level: 0
+[Hardware Error]:     Processor Context Corrupt: true
+[Hardware Error]:     Uncorrected: true
+[Hardware Error]:   Context Information Structure 0:
+[Hardware Error]:    Register Context Type: MSR Registers (Machine Check and other MSRs)
+[Hardware Error]:    Register Array Size: 0x0080
+[Hardware Error]:    MSR Address: 0xc0002051
+mce: [Hardware Error]: Machine check events logged
+[Hardware Error]:   Context Information Structure 1:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0010
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 00000010 00000000 1a009100 fffffffe
+[Hardware Error]:   Context Information Structure 2:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0040
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 20029b00 000500b0 000e0108 dc200000
+[Hardware Error]:    00000010: 4a800003 00002774 07070000 ac008707
+[Hardware Error]:    00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:    00000030: 00000000 00000000 00000000 00000000
+BERT: Total records found: 1
+PM:   Magic number: 2:850:912
+port serial8250:0.6: hash matches
+mce: [Hardware Error]: CPU 0: Machine Check: 0 Bank 5: bea0000000000108
+mce: [Hardware Error]: TSC 0 ADDR ada81be2 MISC d0140ff600000000 PPIN 25136dc0f4dc00a SYND 4d000000 SYND1 3a30532072726550 SYND2 3530423a32303054 IPID 500b020029a00 
+mce: [Hardware Error]: PROCESSOR 2:b00f21 TIME 1794362043 SOCKET 0 APIC 0 microcode b00211e
+
+# The machine-check addresses of the three resets: 15:16 0x77a05f86e9b9, 19:43 0xafff25ec, 20:51 0xada81be2;
+# the two low ones fall in /proc/iomem '9fffb000-afffffff : Reserved' (firmware-reserved).
+
+# The board controller's event log (sudo ipmitool sel elist, read only), last entries:
+ 110 | 11/09/2026 | 02:36:32 PM EST | Power Unit PowerUnit | Power off/down | Asserted
+ 111 | 11/09/2026 | 02:36:33 PM EST | Power Unit PowerUnit | Power off/down | Deasserted
+ 112 | 11/09/2026 | 02:38:27 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 113 | 11/09/2026 | 02:41:35 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 114 | 11/09/2026 | 02:44:14 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 115 | 11/09/2026 | 02:46:42 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 116 | 11/09/2026 | 03:04:29 PM EST | Power Unit PowerUnit | Power off/down | Asserted
+ 117 | 11/09/2026 | 03:04:31 PM EST | Power Unit PowerUnit | Power off/down | Deasserted
+ 118 | 11/10/2026 | 03:18:03 PM EST | Critical Interrupt | PCI SERR | Asserted
+ 119 | 11/10/2026 | 03:18:36 PM EST | Unknown |  | Asserted
+ 11a | 11/10/2026 | 07:44:55 PM EST | Critical Interrupt | PCI SERR | Asserted
+ 11b | 11/10/2026 | 07:45:28 PM EST | Unknown |  | Asserted
+ 11c | 11/10/2026 | 08:15:36 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 11d | 11/10/2026 | 08:19:11 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 11e | 11/10/2026 | 08:22:01 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 11f | 11/10/2026 | 08:35:02 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 120 | 11/10/2026 | 08:35:51 PM EST | Critical Interrupt | PCI PERR | Asserted
+ 121 | 11/10/2026 | 08:53:54 PM EST | Unknown |  | Asserted
+
+# Corrected PCIe records (kernel, APEI) on card 0000:23's upstream port 0000:21:00.0, by boot:
+boot -5 (2026-11-09 11:43:32): 0 corrected
+boot -4 (2026-11-09 14:38:20): 4 corrected
+boot -3 (2026-11-09 15:06:19): 0 corrected
+boot -2 (2026-11-10 15:18:56): 0 corrected
+boot -1 (2026-11-10 19:45:47): 5 corrected
+boot 0 (2026-11-10 20:54:13): 0 corrected
+
+# g76 marks:
+code_q start 3110.5970
+code_q end 3145.2210
+analysis_q start 3145.2372
+analysis_q end 3179.4049
+x19k_q start 3179.4291
+x19k_q end 3278.9965
+x69k_q start 3279.0219
+x69k_q end 3569.7518
+x69k_d start 3569.7807
+x69k_d end 3857.3769
+x34k_spec start 3857.4029

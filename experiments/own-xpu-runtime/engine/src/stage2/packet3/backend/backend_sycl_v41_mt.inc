@@ -82,6 +82,8 @@ unsigned mt_tgr[MTX + 1] = {}; // OWN_MT_TGR="m:r,...": blocks of m tokens run t
 unsigned mt_tgr_rows = 2048; // ... only for matrices of at least this many rows on the card (OWN_MT_TGR_ROWS)
 unsigned mt_tgr_fmt = 3;      // ... for these formats (OWN_MT_TGR_FMT: 1 Q8_0, 2 Q6_K, 3 both)
 bool mt_tgr_draft = true;     // ... also in the draft's steps (OWN_MT_TGR_DRAFT)
+bool mt_w16 = false;          // OWN_MT_W16: blocks of 9-16 tokens pick token groups and row blocks per matrix shape
+                              // (w16_g / w16_r below; overrides OWN_MT_TG / OWN_MT_TGR for those matrices)
 unsigned mt_tgw_rows = 0;     // OWN_MT_TGW_ROWS=n: packed matrices of at least n rows on the card (the vocabulary head)
                               // run their own token groups (mt_tgwm) with NO row blocks; 0: off. Same sums (rowg is
                               // per token). bench_q6k_rows, the head's 21,547 Q6_K rows, 6 tokens: 4-row blocks in
@@ -225,6 +227,31 @@ void tok_end(int c) {
 // ---- weight rows for all tokens (rowm) ------------------------------------
 // y + t * ys = rows of the matrix (this card's slice when split) . (x + t * xs), t < mt_n
 // rider: other rows in the same launch, first (OWN_MT_RIDE: the stream mix's double dot rows behind a matrix)
+// OWN_MT_W16's forms for blocks of 9-16 tokens, from tools/bench/bench_dense_m16.cpp (round18 d1/d3/d4, one 230 W
+// card, 16 tokens, cold, bitwise, us per launch at a 12-head card's shapes, engine form -> this one):
+//   Q8_0 5120 columns (1792 rows) G4 80.4 -> G8 R2 70.3-70.8; 8192 (output-b, 864) G4 67.0-67.6 ->
+//   G8 R2 52.7-52.9; 2304 (shared down, 864) G4 26.6-26.8 -> G4 R2 23.8-24.0; 4096 (output-a, 768) G4 37.1-37.3
+//   -> G2 R4 34.3-34.4; 1280 (q_b) keeps G4 R4 (from 4,096 rows).
+//   Q6_K 5120 (1792 rows) G4 144.5 -> G4 R2 89.6; 4096 (768) G4 72.0 -> G4 R2 39.7; 8192 (864) G4 77.9 -> G4 R2
+//   75.5; 1280 (q_b, 6144) G4 R4 114.8 -> G4 107.0.
+// In the engine (p78, OWN_GPROF=2 on cards 2 and 4, the 3K document, per launch off -> on) Q8_0's 5120-column rows
+// lost: q_a with the stream mix's dot rows in its launch 107.9 -> 121.4 us, kv alone 22.0 -> 24.4 (fewer rows than
+// the bench's 1792: groups of 8 with 2-row blocks leave the card under-filled), and output-a's 4096 columns 28.2 ->
+// 30.4 (the engine's launches hold fewer rows than the bench's 768); those keep the general rules. Kept: Q8_0
+// output-b 61.0 -> 49.0, shared down 25.6 -> 24.0 (card 4), Q6_K q_a with the dot rows 140.0 -> 122.0, output-a
+// 42.3 -> 30.5, output-b 71.9 -> 65.4, q_b 112.0 -> 105.8.
+// Other column counts (the engram rows, 6144), formats, matrices of > 8,192 rows on the card (the head) and the
+// draft's steps keep the general rules. w16_r == 1: no row blocks.
+template <typename DK> static constexpr unsigned w16_g() {
+    constexpr unsigned n = ops41sycl::dense_cols_v<DK>;
+    if constexpr (ops41sycl::is_q6kp_v<DK>) return n == 1280 || n == 4096 || n == 5120 || n == 8192 ? 4 : 0;
+    else return n == 8192 ? 8 : n == 2304 ? 4 : 0;
+}
+template <typename DK> static constexpr unsigned w16_r() {
+    constexpr unsigned n = ops41sycl::dense_cols_v<DK>;
+    if constexpr (ops41sycl::is_q6kp_v<DK>) return n == 1280 ? 1 : 2;
+    else return 2;
+}
 template <typename DK, typename RD = ops41sycl::NoRows>
 void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, size_t ys, unsigned mt = 0,
              const RD &rider = {}) {
@@ -250,6 +277,16 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
         }
         go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
     };
+    if constexpr (requires { &DK::template rowgr<2, 2>; }) {
+        constexpr unsigned WG = w16_g<DK>(), WR = w16_r<DK>();
+        if constexpr (WG != 0)
+            if (mt_w16 && mt >= 9 && mt <= MTX && !dr_step && dk.rows <= 8192 && (WR == 1 || dk.xn % WR == 0)) {
+                if constexpr (WR == 1)
+                    return go(ops41sycl::DenseRowsG<DK, WG>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + WG - 1) / WG});
+                else
+                    return go(ops41sycl::DenseRowsGR<DK, WG, WR>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + WG - 1) / WG});
+            }
+    }
     if constexpr (std::is_same_v<RD, ops41sycl::NoRows> && requires { &DK::template rowgr<2, 2>; }) {
         const unsigned gw = mt_tgw_rows && dk.rows >= mt_tgw_rows && mt <= MTX ? mt_tgwm[mt] : 0;
         if (gw) { // OWN_MT_TGW_ROWS: the head's token groups, no row blocks
@@ -1029,14 +1066,30 @@ void tpm_layer(int L, int c) {
                           ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<640>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS}, sinks,
                           ix, b.attn_w);
         }
-        using SO = ops41sycl::SparseOutJB<512, 1, 16>;
-        SO so{n_idx, nh, W};
-        so.ry = (float *)(b.obuf + qo);
-        so.cosb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
-        so.sinb = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
-        const unsigned gpo = (unsigned)(nh * g.hd / 64);
-        launch_sg(c, (size_t)M * gpo, ops41sycl::OutM<SO>{so, gpo, (unsigned)M, 640, WS, Q, Q}, kvw, kvc, ix,
-                  (const float *)b.attn_w, b.of + qo);
+        const float *cbm = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
+        const float *sbm = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+        // OWN_ATT_OUT_C: blocks of up to 8 tokens only (guess checks); from 12 tokens on (prompt reading, 16) the
+        // 32 KiB of local memory per work-group leaves too few of them resident and OutM<JB> is faster (round18 s5:
+        // 16 heads, 640 slots: M = 1..6 15.8-20.9 us vs 23.3-29.6, M = 8 24.3 vs 24.4, M = 16 44.9 vs 30.8)
+        if (o.att_out_c && M <= 8) {
+            using SC = ops41sycl::SparseOutJC<512, 16, 128>;
+            SC so{n_idx, nh, W};
+            so.ry = (float *)(b.obuf + qo);
+            so.cosb = cbm;
+            so.sinb = sbm;
+            const unsigned gpo = (unsigned)SC::groups(nh);
+            launch_wgl<SC::SLM>(c, (size_t)M * gpo, SC::WG, ops41sycl::OutMC<SC>{so, gpo, (unsigned)M, 640, WS, Q, Q}, kvw,
+                                kvc, ix, (const float *)b.attn_w, b.of + qo);
+        } else {
+            using SO = ops41sycl::SparseOutJB<512, 1, 16>;
+            SO so{n_idx, nh, W};
+            so.ry = (float *)(b.obuf + qo);
+            so.cosb = cbm;
+            so.sinb = sbm;
+            const unsigned gpo = (unsigned)(nh * g.hd / 64);
+            launch_sg(c, (size_t)M * gpo, ops41sycl::OutM<SO>{so, gpo, (unsigned)M, 640, WS, Q, Q}, kvw, kvc, ix,
+                      (const float *)b.attn_w, b.of + qo);
+        }
         // draft checking: the rows move into the ring at commit_block, kept tokens only (a dropped token's row
         // would overwrite position - 128, which the next tokens' windows still read)
         if (!mt_heads) launch(c, (size_t)M * g.hd, 64, ops41sycl::RingCommitM{128, g.hd, (int)pos, M}, ring[c][L]);
@@ -1069,11 +1122,20 @@ void tpm_layer(int L, int c) {
         }
         const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
         const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
-        ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
-        so.ry = (float *)(s.obuf + qo);
-        so.cosb = cb;
-        so.sinb = sbp;
-        launch_sg(c, (size_t)nh * g.hd / 64, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
+        if (o.att_out_c) { // OWN_ATT_OUT_C
+            using SC = ops41sycl::SparseOutJC<512, 16, 128>;
+            SC so{n_idx, nh, 128};
+            so.ry = (float *)(s.obuf + qo);
+            so.cosb = cb;
+            so.sinb = sbp;
+            launch_wgl<SC::SLM>(c, SC::groups(nh), SC::WG, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
+        } else {
+            ops41sycl::SparseOutJB<512, 1, 16> so{n_idx, nh, 128};
+            so.ry = (float *)(s.obuf + qo);
+            so.cosb = cb;
+            so.sinb = sbp;
+            launch_sg(c, (size_t)nh * g.hd / 64, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
+        }
     }
     oa_m(c, p, hla, xp_oa_m((unsigned)M), ost0[c]);
     // ---- phase 2: output-b rows

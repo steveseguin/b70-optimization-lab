@@ -33,6 +33,7 @@
 #include <random>
 #include <string>
 #include <vector>
+#include "pcs.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/kernels/pack_v41.hpp"
 using namespace ops41sycl;
@@ -428,6 +429,10 @@ template <Ty TY, unsigned NB> static void run_fmt(sycl::queue &q) {
 }
 
 int main(int argc, char **argv) {
+    // PCS=1: EU stall sampling of every kernel of the run (tools/bench/pcs.hpp; root, ZE_AFFINITY_MASK = the card,
+    // card argument 0; build with -I $PTI/include -L $PTI/lib -lpti_view)
+    const bool pcs_on = std::getenv("PCS") && std::atoi(std::getenv("PCS"));
+    if (pcs_on && !pcs::begin()) return 2;
     const int card = argc > 1 ? std::atoi(argv[1]) : 0;
     if (const char *e = std::getenv("NOTIME")) g_time = !(e[0] && e[0] != '0');
     if (const char *e = std::getenv("NEXP")) g_nexp = std::max(96, std::atoi(e));
@@ -443,11 +448,13 @@ int main(int argc, char **argv) {
     std::printf("real-pattern pool: %u experts at M <= 6, %u at M = 16\n", real_pool(6), real_pool(16));
     const char *only = std::getenv("ONLY");
     auto want = [&](const char *n) { return !only || std::strstr(only, n); };
+    if (pcs_on) pcs::start();
     if (want("xxs")) run_fmt<Ty::IQ2_XXS, 20>(q), run_fmt<Ty::IQ2_XXS, 9>(q);
     if (want("iq2s")) run_fmt<Ty::IQ2_S, 20>(q), run_fmt<Ty::IQ2_S, 9>(q);
     if (want("iq3")) run_fmt<Ty::IQ3_XXS, 20>(q), run_fmt<Ty::IQ3_XXS, 9>(q);
     if (want("iq2xs")) run_fmt<Ty::IQ2_XS, 20>(q), run_fmt<Ty::IQ2_XS, 9>(q);
     if (want("iq1")) run_fmt<Ty::IQ1_S, 20>(q), run_fmt<Ty::IQ1_S, 9>(q);
+    if (pcs_on) pcs::stop_print("RoutedU", 150, 14);
     std::printf("%s: %d failed line(s)\n", g_fail ? "FAIL" : "PASS", g_fail);
     return g_fail ? 1 : 0;
 }

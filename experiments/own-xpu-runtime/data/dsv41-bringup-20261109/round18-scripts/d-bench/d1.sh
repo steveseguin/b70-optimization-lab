@@ -1,0 +1,10 @@
+#!/bin/bash
+# d1: Q8_0 dense rows for blocks of 16 tokens at the reading shapes (tools/bench/bench_dense_m16.cpp), 230 W card + clock sampler
+W=/home/steve/dsv41-work; D=$W/runs/d1
+export LD_LIBRARY_PATH=/opt/intel/oneapi/pti/latest/lib:/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
+python3 -I $W/tools/gpu_sampler.py $D/telemetry.smp 0.05 & SP=$!
+ONEAPI_DEVICE_SELECTOR=level_zero:1 $W/bench_dense_m16 > $D/out.txt 2>&1; echo "exit $?" >> $D/out.txt
+kill $SP
+J='fault response|cat error|engine reset|coredump has been created|gt reset|timedout job|exec queue reset|suspend fence|vm worker error|reset started|PCIe Bus Error|AER:|Hardware Error|Machine check'
+journalctl -k --since "-10 min" -o cat | grep -iE "$J" | sed 's/^/FAULT: /' >> $D/out.txt
+echo DONE >> $D/out.txt

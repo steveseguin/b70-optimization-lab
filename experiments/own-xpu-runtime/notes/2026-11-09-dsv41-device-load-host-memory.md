@@ -1486,6 +1486,107 @@ sub-group per (head, 64 columns), each walking all 640 slots. The bench compares
 All forms bitwise equal on every case. Next: that form in the engine (`OWN_ATT_OUT_C`: one-token steps, prompt
 blocks and checks), gate g76.
 
+## 31. The attention output from local memory in the engine: long-document answers +3 %, text identical; prompt reading +2.4 % from dense forms by shape; a third host reset, long six-card runs paused (2026-11-10 20:40-22:30 EST)
+
+**In the engine (tp76, g76, `round18-g76-summary-partial.txt`, `round18-g76-marks.txt`, `round18-scripts/g76.sh`).**
+`OWN_ATT_OUT_C` (default on; `=0` for `SparseOutJB`) runs section 30's `SparseOutJC<512, 16, 128>` in one-token steps
+and, through `OutMC` (a whole work-group returns together past the block's tokens), in prompt blocks and checks; the
+launcher `launch_wgl` gives it its local memory. Traces of blocks of 16 / 5 / one token byte-identical, 40 answers
+the same; prompt 1's 128 answers the same at 76.77 / 78.52 tok/s against tp75's 77.86 / 78.01 (alternated; prompt 1's
+trimmed lists are short); guessing on code 100.77 and analysis 113.72 tok/s, SAME as the plain runs; the 19K document
+read at 276.2 tok/s, 256 answers the same at 71.65 tok/s; the 69K document 256 answers the same at 69.78 tok/s
+against tp75's 67.73 in the next run (+3.0 %), but read at 264.9 against 268.3 tok/s (-1.3 %). The 34K guessing and
+95K runs did not happen (the reset below).
+
+**Why reading got slower (s5, `tools/bench/bench_sparse_out_m.cpp`, `round18-s5-sparse-out-blocks.txt`).** `OutM<JB>`
+against `OutMC<JC>` for blocks of M tokens, 640 slots, bitwise on every case. 16 heads: M = 1-6 15.7-20.9 us against
+23.3-29.6, M = 8 24.3 against 24.4, M = 12 / 16 45.0 / 44.9 against 27.8 / 30.8 (12 and 8 heads alike). Each JC
+work-group holds 32 KiB of local memory, so past 8 tokens too few of them are resident. The block form now runs JC
+only up to 8 tokens (checks and short tails), `OutM<JB>` above.
+
+**The softmax inside the output kernel (s6, `tools/bench/bench_sparse_out_fused.cpp`,
+`round18-s6-sparse-out-fused-softmax.txt`).** `SparseOutJCS` computes `SparseSoftmaxPN`'s weights per head into local
+memory in the output kernel's prologue: 640 slots 18.4 us against 18.2 for the separate softmax (5.8) + JC (12.4);
+128 slots 6.5 against 4.2. Bitwise, slower. Closed.
+
+**The block limit (tp77, g77, `round18-g77-summary.txt`, `round18-scripts/g77.sh`).** Short runs only (below).
+Traces byte-identical, 40 answers the same; the 3K document (3,323 tokens) read at 292.6 / 292.0 tok/s against
+tp76's 288.4 / 288.4 and tp75's 291.8 / 291.8 (alternated), its 256 answers the same as the plain reference at
+74.31 tok/s (tp77's second run; its first read 32.6 MiB of engram rows from disk) against tp76's 74.52 / 74.42 and
+tp75's 72.40 / 72.32 (+2.8 % from the output kernel); prompt 1 78.55 against tp76's 78.69 / 78.73 (the same
+one-token code); guessing on code 100.47, analysis 114.10 and the 3K document 106.52 tok/s, all SAME as the plain
+runs. No fault lines.
+
+**A third host reset (20:51, `round18-host-reset-20261110-2051.txt`).** About 70 s into g76's 34K guessing run
+(weights uploaded, prompt being read) the host reset again. This time the firmware's record holds only the
+processor error: CPU 0 machine check bank 5, status bea0000000000108 ("Perr S0:T002:B05"), the same bank as the two
+earlier resets, no PCIe section. Machine-check addresses of the three: 0x77a05f86e9b9, 0xafff25ec, 0xada81be2 (the
+two low ones inside the firmware-reserved 9fffb000-afffffff). The board controller's event log (read only) has a
+PCI SERR before the first two resets and an "Unknown" event after the third. Card 0000:23's upstream port logged
+corrected receiver errors in two boots only (4 on 2026-11-09 14:38, 5 in the boot before this reset), so they are not
+new since the resets. All three resets came while the six cards read a long document (34K-95K tokens); short
+six-card runs and one-card benches never triggered one. **Six-card long-document runs are paused until the owner
+decides on the platform options** (BIOS / PCIe settings, the network chip's cable or the chip itself, reseating card
+23, the chip's completion timeout); g77 and g78 use short runs only. Health probe after the reset: passed
+(`round18-health-probe-20261110-2110.txt`).
+
+**Prompt reading's dense rows (d1-d4, `tools/bench/bench_dense_m16.cpp`, `round18-d1..d4-*.txt`,
+`round18-scripts/d-bench/`).** In a 16-token block the dense weight rows are ~25 ms of ~57 (section 27). The bench
+runs the engine's forms at a 12-head card's shapes, 16 tokens, cold (the matrix evicted by reading 256 MiB), every
+form compared bit for bit with the one-token kernel per token.
+- d1, the engine forms: Q8_0 6144 x 1280 (q_b, 4-row blocks) 106.2 us, 1792 x 5120 (q_a + kv) 80.4, 864 x 8192
+  (output-b) 67.6, 864 x 2304 (shared down) 26.6, 768 x 4096 (output-a) 37.3: 1.18-1.83 T weight-tokens/s and 79-121
+  GB/s, neither the card's arithmetic nor its memory. Diagnostics: every token reading token 0's activations (the 16
+  activation rows' cache traffic gone) 102.5 / 74.0 / 57.7 / 25.7 / 33.9 us, and a warm matrix 94.8 / 74.3 / 57.3 /
+  24.6 / 34.5: activation reads and memory explain little. Other token groups and row blocks: up to x1.28 (output-b,
+  groups of 8 with 2-row blocks 52.9 us), some far slower (groups of 8 alone on output-b 200.7).
+- d2, EU stall sampling (`tools/bench/pcs.hpp`, the oneAPI PTI library's PC sampling; run as root only to read the
+  counters, since `/proc/sys/dev/xe/observation_paranoid` is 1): q_b's form is active 40.1 % of the samples and waits
+  for the ALU pipe 42.0 %, for memory data 12.5 %; output-b active 51.5 %, waiting to send loads 29.5 %; the others
+  in between. The machine code (IGC dump) of q_b's form has ~4.1 instructions per weight and token: per weight and row
+  a shift, three movs (byte -> word -> float), an indirect-register mov (the scale's sub-group broadcast) and the scale
+  multiply, then per token the multiply and the add.
+- d3, the same values by other instructions (`Q8V<C, D, V>` in the bench: the product of a half scale and an int8 is
+  exact in float, so any exact route gives the same bits), each against the same form with the engine's
+  instructions: the scale by uniform loads instead of the broadcast 3.5-66 % slower in every form; int8 -> float by
+  a bit cast within 1 %, by the 2^23 trick or a shift pair from 15.4 % slower to 6.5 % faster (q_b 101.1 -> 96.7 us,
+  output-b's groups of 8 with 2-row blocks 52.7 -> 62.3). Not taken: the sign depends on the form.
+- d4, Q6_K at the same shapes: 1792 x 5120 144.5 -> 89.6 us with 2-row blocks (x1.61), 768 x 4096 72.0 -> 39.7
+  (x1.81), 864 x 8192 77.9 -> 75.5, 6144 x 1280 114.8 (4-row blocks) -> 107.0 (none).
+
+**`OWN_MT_W16` (tp78, g78, `round18-g78-summary.txt`, `round18-scripts/g78.sh`).** Blocks of 9-16 tokens pick
+their Q8_0 / Q6_K forms by the matrix's column count (`w16_g` / `w16_r` in `backend_sycl_v41_mt.inc`, only the
+benched shapes, at most 8,192 rows on the card, not in the draft). First rule set (every winner from d1/d4): Q8_0
+5120 / 8192 columns groups of 8 with 2-row blocks, 2304 groups of 4 with 2-row blocks, 4096 groups of 2 with 4-row
+blocks; Q6_K groups of 4 with 2-row blocks, 1280 columns without row blocks. Traces of blocks of 16 / 5 / one token
+byte-identical, 40 answers the same; the 3K document read at 295.8 / 295.9 tok/s against tp77's 292.2 / 291.7 and
+tp78 with `OWN_MT_W16=0` 291.6 (+1.3 %), its 256 answers the same; guessing on code 100.71, analysis 113.66 and the
+3K document 109.27 tok/s, SAME as the plain runs.
+
+**Why only +1.3 % (p78, `round18-p78-*`, `round18-scripts/p78.sh`).** The 3K read with `OWN_GPROF=2` on card 2 (12
+heads) and card 4 (8 heads), the switch on and off. Per launch on card 2, off -> on: Q8_0 q_a with the stream mix's
+dot rows in its launch 107.9 -> 121.4 us, a 5120-column launch without riders 22.0 -> 24.4, output-a 28.2 -> 30.4 (slower: the engine's
+launches hold fewer rows than the bench's shapes, and groups of 8 with 2-row blocks leave the card under-filled);
+Q8_0 output-b 61.0 -> 49.0, Q6_K q_a with the dot rows 140.0 -> 122.0, output-a 42.3 -> 30.5, output-b 71.9 ->
+65.4, q_b 112.0 -> 105.8 (faster); card 4 alike (shared down 25.6 -> 24.0). Lesson: bench the engine's own launch
+shapes, riders included, or profile the engine. The rule keeps the winners only (tp79).
+**On by default (tp79, g79, `round18-g79-summary.txt`, `round18-scripts/g79.sh`).** `own_run_v41` turns
+`OWN_MT_W16` on unless it is set to 0, with the winners only: Q6_K rows of 1280 / 4096 / 5120 / 8192 columns (groups
+of 4, 2-row blocks; 1280 columns without row blocks), Q8_0 output-b (8192 columns, groups of 8 with 2-row blocks) and
+shared down (2304, groups of 4 with 2-row blocks). Traces of blocks of 16 / 5 / one token byte-identical, 40 answers
+the same; the 3K document read at 298.8 / 298.9 tok/s against tp77's 291.9 / 291.9 and tp79 with `OWN_MT_W16=0`
+291.7 (+2.4 %), its 256 answers the same (74.46-74.61 tok/s); guessing on code 100.58, analysis 113.61 and the 3K
+document 109.41 tok/s, SAME as the plain runs. No fault lines.
+
+**The expert kernels' stalls (u1, `tools/bench/test_routed_u.cpp` with `PCS=1`, `round18-u1-routed-stall-samples.txt`,
+`round18-scripts/u-bench/u1.sh`).** Every case of the test (1-16 tokens) on IQ2_XXS and IQ2_S, card 0000:23. The
+engine's slot-major kernels: IQ2_XXS gate + up (20 blocks) active 60.4 % of the samples, waiting for the ALU pipe
+31.3 %; IQ2_XXS down (9 blocks) 62.9 / 29.9 %; IQ2_S gate + up active 52.8 %, waiting on register dependencies
+(the local table loads) 26.1 %; IQ2_S down active 72.0 %. The IQ2_XXS machine code per 32 weights: rotate, and-or,
+local load, multiply, shift, and-xor, multiply, add; the three sub-group broadcasts are register regions of those
+instructions (no indirect moves, unlike the dense rows in d2). Issue-bound with lean code, as section 23's bench
+found; nothing to take without changing the sums. Closed.
+
 ## Reproduce
 
 ```bash
@@ -1551,7 +1652,9 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
    card pairs for blocks of >= 16 tokens, with 4-row blocks. Long documents (section 29): 246.7 -> 263.6 tok/s
    reading and 56.5 -> 65.2 tok/s answers at 95K tokens. Next: the index work that is left (layers 24-36 over
    the candidate rows, 1.34 ms per answer step at 69K; its selects ~0.3 ms faster since section 30) split across
-   the cards; the attention output step (section 30: 22 -> 12 us per layer in the bench, into the engine next). Closed: the
+   the cards (the attention output step is in, section 31: +3 % answers at 69K). Dense rows of 16-token blocks by
+   shape: +2.4 % (section 31); the expert kernels are issue-bound with lean code (section 31, closed). Six-card
+   long-document runs are paused after three host resets (section 31) until the owner decides. Closed: the
    split for checks and the draft (section 28: each pair exchange costs more than it saves at 2-6 tokens);
    cold reads of new documents (`OWN_ENG_AHEAD`, section 27).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.
