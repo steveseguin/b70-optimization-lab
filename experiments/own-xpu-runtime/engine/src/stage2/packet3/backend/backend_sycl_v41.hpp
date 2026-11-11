@@ -72,6 +72,7 @@
 #include "stage2/packet3/kernels/sycl_v41_k7.hpp" // K7: the stream mix's dot partials carried by the h exchange (OWN_K7)
 #include "stage2/packet3/step/plan_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
+#include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -99,6 +100,18 @@ struct XPullK128x2 {
     float *p0, *p1, *p2, *p3, *p4, *p5;
     uint32_t *err;
     void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+// OWN_XLL: the one-trip pull (ops41sycl::XchgPullL, kernels/sycl_v41_xll.hpp) at 128 registers, as XPullK128; the
+// peer pointers are this functor's own fields (direct kernel arguments)
+template <typename X> struct XPullLK128 {
+    X x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *cnt, *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, cnt, err, nullptr); }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
@@ -311,6 +324,9 @@ public:
                                 // 256 registers: two register-mode changes)
         bool att_f = true;      // ... the one-launch form where it is faster (OWN_ATT_F=0: two launches only); its
                                 // registers and tile heads per shape (sycl_v41_attn.hpp att_f_grf / att_f_s8)
+        bool att_wa = false;    // ... blocks of up to 8 tokens: WindowAppendM's work inside that launch (SparseOutF) or
+                                // the score launch (SparseScoreT) instead of its own launch (OWN_ATT_WA=1, attn wa-1; the
+                                // same ring rows, lists and outputs bitwise)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
@@ -318,6 +334,12 @@ public:
         bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
         unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
+        unsigned xll = 0; // OWN_XLL (xll-1, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip
+                          // (ops41sycl::XchgPullL: the rows travel in units of 16 / 64 bytes that carry the exchange
+                          // number, read as soon as they are there); 16 or 64 (unit bytes; OWN_XLL=1: XLL_DEFAULT_U), 0: off
+        static constexpr unsigned XLL_DEFAULT_U = 64; // OWN_XLL=1: 64-byte units (15 row words + the number)
+        unsigned xll_quick = 0; // OWN_XLL_QUICK: re-reads at once of a late peer's units before its flag is waited for
+                                // (each one PCIe read round trip of the pending units; 0: the flag after the first read)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool smallk = true;     // (default since tg89: traces identical, plain 96.4 -> 99.6 tok/s; OWN_SMALLK=0: off)
@@ -1271,6 +1293,14 @@ private:
     };
     XTail xt[TILES];
     uint32_t *xcnt[TILES] = {};
+    uint32_t *xlcnt[TILES] = {}; // OWN_XLL: the exchange's work-groups whose units are out (device counter, zeroed)
+    size_t xlb = 0;              // OWN_XLL: the outboxes' start in the arena (floats; the same on every card)
+    // OWN_XLL: the outbox of the region at arena offset off: a 17/16 margin over the units' own growth (W / D words
+    // per row word), so outboxes of disjoint regions never meet (xll_fit checks it per exchange)
+    size_t xll_ob(size_t off) const {
+        const size_t W = o.xll / 4, D = W - 1;
+        return xlb + (off * W * 17 + 256 * D - 1) / (256 * D) * 16;
+    }
     // OWN_ATT_T one launch (SparseOutF): per card, the score tiles finished (device counter, zeroed at start) and
     // the count the next launch's output work-groups wait for (every earlier launch's tiles + its own; the card's
     // launches run in order on its queue)
@@ -2160,6 +2190,25 @@ private:
         if (att_t_hg_of(nh, M) == 8) go(std::integral_constant<unsigned, 8>{});
         else go(std::integral_constant<unsigned, 16>{});
     }
+    // ... OWN_ATT_WA: the score tiles with WindowAppendM's work (block start pos, nc; kv / cidx: the block's key rows
+    // and compressed lists at strides hd / 512), the lists into ix and the block rows into kvw for the output launch
+    void score_ta(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, int pos, int nc, const act_t *q,
+                  uint16_t *kvw, const uint16_t *kvc, const act_t *kv, const int32_t *cidx, int32_t *ix, float *w) {
+        if (W < 128 + (int)M || M > 8 || (nc && !cidx)) throw std::runtime_error("attention: score tiles with the block append");
+        auto go = [&](auto hgc) {
+            using K = ops41sycl::SparseScoreT<512, decltype(hgc)::value, false, Act, true>;
+            K k{n, nh, W, g.hd};
+            k.m = M;
+            k.qs = Q;
+            k.is = 640;
+            k.ss = WS;
+            k.start_pos = pos;
+            k.nc = nc;
+            launch_wgl<K::SLM>(c, (size_t)M * K::groups(n, nh), K::WG, k, q, kvw, kvc, kv, cidx, ix, w);
+        };
+        if (att_t_hg_of(nh, M) == 8) go(std::integral_constant<unsigned, 8>{});
+        else go(std::integral_constant<unsigned, 16>{});
+    }
     void score_tw(int c, int nh, int n, int pos, int nc, const act_t *q, uint16_t *rg, const uint16_t *kvc,
                   const act_t *kv, const int32_t *cidx, int32_t *widx, int32_t *cat, float *w) {
         auto go = [&](auto hgc) {
@@ -2197,8 +2246,9 @@ private:
     }
     // ... one launch: SparseOutF<512, n, WIN, Act, 8 | 16> (WIN: one token with WindowAppendP's work, win 128, cidx /
     // nc as WindowAppendP's; else M tokens with the lists in ix, window W) at att_f_grf registers. w: the raw scores.
-    // A wait past XSPIN polls stores 1 into xerr[c][1]: the step fails
-    template <int NI, bool WIN> void out_f(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, const act_t *q,
+    // A wait past XSPIN polls stores 1 into xerr[c][1]: the step fails. WA (OWN_ATT_WA): M tokens with WindowAppendM's
+    // work (block start pos, nc, kv / cidx as score_ta; the lists into ix, the block rows into kvw)
+    template <int NI, bool WIN, bool WA = false> void out_f(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, const act_t *q,
                                            uint16_t *kvw, const uint16_t *kvc, int32_t *ix, const act_t *kv,
                                            const int32_t *cidx, int32_t *widx, int pos, int nc, const float *sinks, float *w,
                                            float *out, float *ry, const float *cb, const float *sb) {
@@ -2206,12 +2256,13 @@ private:
             throw std::runtime_error("attention: slot count");
         } else {
             if (n != NI)
-                return out_f<NI + 32, WIN>(c, nh, n, W, M, Q, WS, q, kvw, kvc, ix, kv, cidx, widx, pos, nc, sinks, w, out,
-                                           ry, cb, sb);
+                return out_f<NI + 32, WIN, WA>(c, nh, n, W, M, Q, WS, q, kvw, kvc, ix, kv, cidx, widx, pos, nc, sinks, w, out,
+                                               ry, cb, sb);
             if (WIN && (W != 128 || M != 1)) throw std::runtime_error("attention: one launch with the window append");
+            if (WA && (W < 128 + (int)M || M > 8 || (nc && !cidx))) throw std::runtime_error("attention: one launch with the block append");
             constexpr unsigned GRF = ops41sycl::att_f_grf<NI, WIN>();
             auto go = [&](auto shgc) {
-                using K = ops41sycl::SparseOutF<512, NI, WIN, Act, decltype(shgc)::value>;
+                using K = ops41sycl::SparseOutF<512, NI, WIN, Act, decltype(shgc)::value, WA>;
                 K k{nh, W, g.hd};
                 k.m = M;
                 k.qs = Q;
@@ -2944,6 +2995,8 @@ private:
     std::vector<float> h_amv[TILES];
     std::vector<int32_t> h_ami[TILES];
     static constexpr long XSPIN = 5000000; // ~0.9 s of flag polls, under the driver's hang check
+    static constexpr long XLL_PASSES = 200000; // OWN_XLL: re-reads of a peer's units after its flag (~0.5 s)
+    static constexpr int XLL_POL = 2;          // OWN_XLL: re-read a late peer's units only after its flag is here
     std::vector<std::thread> tp_th;
     std::mutex tp_mu;
     std::condition_variable tp_cv, tp_done_cv;
@@ -3554,10 +3607,26 @@ private:
             nfq = xqm + (size_t)6 * qbo_kx() * g.hd;
         }
         if ((o.qb_off || qbm_any()) && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
+        if (o.xll && xw_path) {
+            std::fprintf(stderr, "OWN_XLL: off (OWN_XWAIT's exchanges record their waits; XchgPull)\n");
+            o.xll = 0;
+        }
+        if (o.xll) { // OWN_XLL: every region's outbox at xll_ob(its offset), past everything else
+            if (o.xll != 16 && o.xll != 64) throw std::runtime_error("OWN_XLL: 16 or 64 (unit bytes)");
+            if (o.xll_quick > 8) throw std::runtime_error("OWN_XLL_QUICK: at most 8 (each is a read of every pending unit)");
+            xlb = (nfq + 15) & ~(size_t)15;
+            nfq = xll_ob(nfq) + 64;
+            if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_XLL: arena offsets");
+        }
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nfq);
             xcnt[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(xcnt[c], 0, 64);
+            if (o.xll) {
+                xlcnt[c] = dalloc<uint32_t>(c, 16);
+                qs[c].memset(xlcnt[c], 0, 64);
+                qs[c].memset(xarena[c] + xlb, 0, (nfq - xlb) * sizeof(float)); // (unit numbers 0: none yet)
+            }
             attc[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(attc[c], 0, 64);
             if (xw_path) { // OWN_XWAIT ring (zeroed)
@@ -3660,6 +3729,7 @@ private:
             x.lb = o.xpull_lb ? 1 : 0;
             xbounds(part, x.b0, x.b1);
             if (x.b0[c] != r0 || x.b1[c] != r1) throw std::runtime_error("exchange: rows do not match the part");
+            if (o.xll) return xll_xchg(c, x, mode, part, P); // OWN_XLL: one round trip (xr2[c] rides along)
             size_t nv = 0;
             for (int d = 0; d < o.tp; ++d)
                 if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
@@ -3712,6 +3782,48 @@ private:
 #endif
         launch_wg(c, 256, xp, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]);
         return seq;
+    }
+    template <typename X>
+    unsigned xll_fit(unsigned off, unsigned stride, unsigned nslot, const unsigned *b0, const unsigned *b1) const {
+        unsigned nd = 0, top = 0;
+        for (int d = 0; d < o.tp; ++d) nd = std::max(nd, b1[d] - b0[d]), top = std::max(top, b1[d]);
+        const size_t ob = xll_ob(off);
+        if (nslot && top && ob + X::outbox_words(nslot, nd) > xll_ob((size_t)off + (size_t)(nslot - 1) * stride + top))
+            throw std::runtime_error("OWN_XLL: an outbox does not fit its region's place");
+        return (unsigned)ob;
+    }
+    // OWN_XLL: XchgPull's exchange x (rows, number, mode as xchg built it) in one round trip; the same form on every
+    // card (o.xll); xr2[c] (OWN_MT_DSPLIT) as the second region, cleared
+    uint32_t xll_xchg(int c, const ops41sycl::XchgPull &x, int mode, int part, float *const *P) {
+        return o.xll == 16 ? xll_run<ops41sycl::XchgPullL<16, XLL_POL, 3>>(c, x, mode, part, P)
+                           : xll_run<ops41sycl::XchgPullL<64, XLL_POL, 3>>(c, x, mode, part, P);
+    }
+    template <typename X> uint32_t xll_run(int c, const ops41sycl::XchgPull &x, int mode, int part, float *const *P) {
+        X k{};
+        k.n = o.tp, k.me = c, k.off = x.off, k.stride = x.stride, k.nslot = x.nslot;
+        for (int d = 0; d < 6; ++d) k.b0[d] = x.b0[d], k.b1[d] = x.b1[d];
+        k.ob = xll_fit<X>(x.off, x.stride, x.nslot, x.b0, x.b1);
+        if (xr2[c].on) {
+            const XR2 r = xr2[c];
+            xr2[c].on = false;
+            k.off2 = r.off, k.stride2 = r.stride, k.nslot2 = r.nslot;
+            for (int d = 0; d < 6; ++d) k.c0[d] = r.c0[d], k.c1[d] = r.c1[d];
+            k.ob2 = xll_fit<X>(r.off, r.stride, r.nslot, r.c0, r.c1);
+        }
+        k.seq = x.seq, k.spin = XSPIN, k.passes = XLL_PASSES, k.mode = mode, k.quick = (long)o.xll_quick;
+        size_t nv = 0, own = 0; // the pull's list (every peer's pieces, each region's padded to 32) / this card's pieces
+        for (int d = 0; d < o.tp; ++d) {
+            const size_t a = X::pieces(k.nslot, k.b1[d] - k.b0[d]), b = k.nslot2 ? X::pieces(k.nslot2, k.c1[d] - k.c0[d]) : 0;
+            if (d == c) own = a + b;
+            else nv += (a + 31) / 32 * 32 + (b + 31) / 32 * 32;
+        }
+        const size_t nwg = mode == 1 ? std::clamp<size_t>((own + 511) / 512, 1, 16) : std::clamp<size_t>((nv + 511) / 512, 4, 64);
+        k.ng = (unsigned)nwg;
+        if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)-1, (int8_t)mode};
+        auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 256, 256),
+                                    XPullLK128<X>{k, P[0], P[1], P[2], P[3], P[4], P[5], xlcnt[c], xerr[c]});
+        kev(c, kname<X>(), e);
+        return x.seq;
     }
     // XP_OAD: the draft's output-a rows (hl[1]); XP_OAP: the target's in blocks of >= OWN_TP_HEADS_MIN (hl[2])
     enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3, XP_OAD = 4, XP_OAP = 5 };
@@ -4623,6 +4735,11 @@ private:
             tp_step_serial(token);
         }
         for (int c = 0; c < o.tp; ++c) {
+            if (xerr[c][2]) // OWN_XLL (sycl_v41_xll.hpp): xerr[c][2] / [3] = the first failure code and its exchange number
+                throw std::runtime_error("card " + pci[c] + ": one-trip exchange (OWN_XLL) failed, code 0x" +
+                                         [](unsigned v) { char b[16]; std::snprintf(b, sizeof b, "%x", v); return std::string(b); }(xerr[c][2]) +
+                                         " at exchange " + std::to_string(xerr[c][3]) +
+                                         " (1 + d: card d's rows never came; 0x100 + d: a newer unit of card d; 0x200 / 0x300 + d: card d's flag never came)");
             if (xerr[c][0])
                 throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                          std::to_string((int)xerr[c][0] - 1));

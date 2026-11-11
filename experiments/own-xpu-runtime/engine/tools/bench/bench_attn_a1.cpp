@@ -21,6 +21,14 @@
 // reads F's score array and the layer's ring; RFLUSH=1: the cache flush before every step; CONC=1 | 2: copy-engine
 // copies | streaming kernels on a second queue during each shape. (a1's F failed in the
 // engine, gate tg95, not in the checks above: they ran one launch after a fresh stale fill.)
+// WA=1 (attn wa-1): blocks (MS, default 2,3,4,5,6,8; 16 / 12 / 8 heads; the 10 slot counts; block start 1000, 125, 60
+// and 0; ONLY tags "wa h.. n.. M.. p..") with the window append: WindowAppendM + production against WindowAppendM +
+// the engine's OWN_ATT_T form and the WA forms (F, T8 + JE, T16 + JE): out, ry, kept weights and raw scores, the whole
+// ring (its block area starts stale) and the lists, bitwise; then the time of WindowAppendM alone and of the engine's
+// chain without / with WA (after the flush the block's kv and q are read once, as the engine's rope launches leave
+// them in L2; WA_COLD=1: not). WA_STEPS=n: n consecutive checks per shape on two layers (each its ring, lists and
+// queries; the layers share each form's score array), RingCommitM after each, every launch's out / ry compared on
+// the card, the rings and lists at the end; CONC as RACE (ONLY tags "ws h.. n.. M..").
 // Time: GPU time per launch and the chain (first start -> last end), median of IT runs, the card's cache flushed
 // before each run (the engine's rows come cold), after a 400 ms warm-up (an idle card runs ~2.5x slower at first).
 // NB=128 | 256: a one-work-group kernel of that register file right before and after each form (the engine's
@@ -164,9 +172,9 @@ template <bool SM, int I = 0> sycl::event out_je(unsigned M, int n, int nh, int 
 static uint32_t *g_cnt = nullptr, *g_err = nullptr;
 static uint32_t g_target = 0;
 static int g_shg = 16; // SHG=8: SparseOutF's score tiles of 8 heads
-template <int NI, bool WIN, unsigned SHG> sycl::event out_f2(unsigned grf, unsigned M, int nh, int W, const Bufs &b, int p, int nc,
-                                                             const float *kv, const int32_t *cidx, int32_t *widx) {
-    using K = SparseOutF<HD, NI, WIN, ActF32, SHG>;
+template <int NI, bool WIN, unsigned SHG, bool WA = false> sycl::event out_f2(unsigned grf, unsigned M, int nh, int W, const Bufs &b, int p,
+                                                                             int nc, const float *kv, const int32_t *cidx, int32_t *widx) {
+    using K = SparseOutF<HD, NI, WIN, ActF32, SHG, WA>;
     K k{nh, W, (int)HD};
     k.m = M;
     k.qs = QS, k.is = 640, k.ss = WS, k.os = QS, k.rs = QS;
@@ -187,19 +195,20 @@ template <int NI, bool WIN, unsigned SHG> sycl::event out_f2(unsigned grf, unsig
                                                g_cnt, g_err, lt});
     });
 }
-template <int NI, bool WIN> sycl::event out_f1(unsigned M, int nh, int W, const Bufs &b, int p, int nc, const float *kv,
-                                               const int32_t *cidx, int32_t *widx) {
+template <int NI, bool WIN, bool WA = false> sycl::event out_f1(unsigned M, int nh, int W, const Bufs &b, int p, int nc, const float *kv,
+                                                               const int32_t *cidx, int32_t *widx) {
     // FGRF=0 (default): the engine's choice (att_f_grf, att_f_s8); else FGRF and SHG as given
     const unsigned grf = g_fgrf ? (unsigned)g_fgrf : att_f_grf<NI, WIN>();
     const bool s8 = g_fgrf ? g_shg == 8 : att_f_s8(NI, WIN, M);
-    if (s8) return out_f2<NI, WIN, 8>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
-    return out_f2<NI, WIN, 16>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
+    if (s8) return out_f2<NI, WIN, 8, WA>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
+    return out_f2<NI, WIN, 16, WA>(grf, M, nh, W, b, p, nc, kv, cidx, widx);
 }
-template <bool WIN, int I = 0> sycl::event out_f(int n, unsigned M, int nh, int W, const Bufs &b, int p = 0, int nc = 0,
-                                                 const float *kv = nullptr, const int32_t *cidx = nullptr, int32_t *widx = nullptr) {
+template <bool WIN, int I = 0, bool WA = false>
+sycl::event out_f(int n, unsigned M, int nh, int W, const Bufs &b, int p = 0, int nc = 0, const float *kv = nullptr,
+                  const int32_t *cidx = nullptr, int32_t *widx = nullptr) {
     if constexpr (I < NNV) {
-        if (n == NVALS[I]) return out_f1<NVALS[I], WIN>(M, nh, W, b, p, nc, kv, cidx, widx);
-        return out_f<WIN, I + 1>(n, M, nh, W, b, p, nc, kv, cidx, widx);
+        if (n == NVALS[I]) return out_f1<NVALS[I], WIN, WA>(M, nh, W, b, p, nc, kv, cidx, widx);
+        return out_f<WIN, I + 1, WA>(n, M, nh, W, b, p, nc, kv, cidx, widx);
     } else {
         std::printf("no one-launch form for n %d\n", n);
         std::exit(2);
@@ -252,6 +261,44 @@ static void run_win(int f, int n, int nh, int p, const Bufs &b, const float *kv,
     }
     ev.push_back(f == 1 ? score_tw<8>(n, nh, p, nc, b, kv, ci, widx) : score_tw<16>(n, nh, p, nc, b, kv, ci, widx));
     ev.push_back(out_je<true>(1, n, nh, 128, b));
+}
+
+// attn wa-1: blocks with the window append (W = 128 + 256 window rows, as the engine's MTX). 0 WindowAppendM +
+// production (ScoreM + SoftmaxM + OutMC); 1 WindowAppendM + the engine's OWN_ATT_T form (att_f_on: F, else T8 + JE);
+// 2 SparseOutF WA; 3 SparseScoreT<512, 8> WA + JE; 4 SparseScoreT<512, 16> WA + JE; 5 the engine's form with WA
+// (OWN_ATT_WA=1: att_f_on ? 2 : 3)
+constexpr int WA_W = 128 + 256;
+static bool wa_f_on(int n, unsigned M) { return M <= 4 || n <= 160 || n >= 640; } // (backend att_f_on)
+static sycl::event wam(unsigned M, int p, int nc, uint16_t *ring, const float *kv, int32_t *cat, const int32_t *ci) {
+    const WindowAppendM<ActF32> wa{128, (int)HD, p, nc, (int)M, WA_W - 128, (size_t)HD, 512, 640};
+    return gq->parallel_for(sycl::nd_range<1>((size_t)M * std::max<int>((int)HD, 128 + nc), 64),
+                            [=](sycl::nd_item<1> it) { wa(it, ring, kv, cat, ci); });
+}
+template <unsigned HG> sycl::event score_ta(int n, unsigned M, int nh, int p, int nc, const Bufs &b, const float *kv, const int32_t *ci) {
+    using K = SparseScoreT<HD, HG, false, ActF32, true>;
+    K k{n, nh, WA_W, (int)HD};
+    k.m = M;
+    k.qs = QS, k.is = 640, k.ss = WS;
+    k.start_pos = p, k.nc = nc;
+    return lwg<K::SLM>((size_t)M * K::groups(n, nh), K::WG, k, (const float *)b.q, b.kvw, (const uint16_t *)b.kvc, kv, ci, b.ix, b.w);
+}
+static void run_wa(int f, int n, unsigned M, int nh, int p, const Bufs &b, const float *kv, const int32_t *cidx,
+                   std::vector<sycl::event> &ev) {
+    const int nc = n > 128 ? 512 : 0;
+    const int32_t *ci = nc ? cidx : (const int32_t *)nullptr;
+    if (f == 5) f = wa_f_on(n, M) ? 2 : 3;
+    if (f <= 1) {
+        ev.push_back(wam(M, p, nc, b.kvw, kv, b.ix, ci));
+        if (f == 0) run_form(0, n, M, nh, WA_W, b, ev);
+        else run_form(wa_f_on(n, M) ? 3 : 1, n, M, nh, WA_W, b, ev);
+        return;
+    }
+    if (f == 2) {
+        ev.push_back(out_f<false, 0, true>(n, M, nh, WA_W, b, p, nc, kv, ci, nullptr));
+        return;
+    }
+    ev.push_back(f == 3 ? score_ta<8>(n, M, nh, p, nc, b, kv, ci) : score_ta<16>(n, M, nh, p, nc, b, kv, ci));
+    ev.push_back(out_je<true>(M, n, nh, WA_W, b));
 }
 
 static uint16_t f2bf(float f) { // round to nearest even (finite values)
@@ -453,6 +500,275 @@ int main() {
                     std::printf("%-16s %6.2f %6.2f %6.2f %6.2f\n", tag, ch[0], ch[1], ch[2], ch[3]);
                     std::fflush(stdout);
                 }
+        if (ferr()) ok = false;
+        std::printf(ok ? "PASS\n" : "FAIL\n");
+        return ok ? 0 : 1;
+    }
+    // attn wa-1 (see run_wa): token t's compressed list as the engine's (640 slots: 512 distinct rows, 1/8 skipped in
+    // the peaky kind; 160 .. 608: CidxFill's rows 0 .. len_t - 1 with len_t within 31 of n - 128, so the trimmed
+    // slot count is n; 128: none)
+    auto wa_lists = [&](int n, unsigned M, int skip8, std::vector<int32_t> &hc) {
+        hc.assign((size_t)MMAX * 512, -1);
+        for (unsigned t = 0; t < M; ++t) {
+            int32_t *c = hc.data() + (size_t)t * 512;
+            if (n == 640) {
+                std::vector<int> pc(CROWS);
+                for (int i = 0; i < CROWS; ++i) pc[i] = i;
+                std::shuffle(pc.begin(), pc.end(), rng);
+                for (int i = 0; i < 512; ++i) c[i] = (skip8 && i % 8 == 5) ? -1 : 128 + pc[i];
+            } else if (n > 128) {
+                const int len = n - 128 - (int)(rng() % 32);
+                for (int i = 0; i < 512; ++i) c[i] = i < len ? 128 + i : -1;
+            }
+        }
+    };
+    if (std::getenv("WA") || std::getenv("WA_STEPS")) {
+        if (!std::getenv("MS")) ms = {2u, 3u, 4u, 5u, 6u, 8u};
+        float *kv = sycl::malloc_device<float>((size_t)MMAX * HD, q);
+        int32_t *cidx = sycl::malloc_device<int32_t>((size_t)MMAX * 512, q);
+        const size_t nrg = (size_t)WA_W * HD;
+        bool ok = true;
+        auto kv_fill = [&](float *d, size_t n) {
+            std::vector<float> hk(n);
+            for (auto &x : hk) x = nd(rng);
+            q.memcpy(d, hk.data(), n * 4).wait();
+        };
+        if (const char *se = std::getenv("WA_STEPS")) { // consecutive checks, as the engine runs them (see the top)
+            const int N = std::max(1, std::atoi(se));
+            const int conc = std::getenv("CONC") ? std::atoi(std::getenv("CONC")) : 0;
+            sycl::queue q2{q.get_context(), q.get_device(), sycl::property_list{sycl::property::queue::in_order{}}};
+            const size_t ncb = (size_t)32 << 20;
+            float *cb0 = conc ? sycl::malloc_device<float>(ncb, q) : nullptr, *cb1 = conc ? sycl::malloc_device<float>(ncb, q) : nullptr;
+            if (conc) {
+                q.fill(cb0, 1.0f, ncb).wait();
+                q.fill(cb1, 2.0f, ncb).wait();
+            }
+            uint32_t *bad = sycl::malloc_device<uint32_t>(4, q);
+            float *wP = sycl::malloc_device<float>(nw, q), *wF = sycl::malloc_device<float>(nw, q);
+            float *oP = sycl::malloc_device<float>(nq, q), *yP = sycl::malloc_device<float>(nq, q);
+            float *oF = sycl::malloc_device<float>(nq, q), *yF = sycl::malloc_device<float>(nq, q);
+            constexpr int NKV = 16; // key-row sets (M tokens each) cycled through the steps, per layer
+            float *kvs = sycl::malloc_device<float>((size_t)NKV * 2 * MMAX * HD, q);
+            kv_fill(kvs, (size_t)NKV * 2 * MMAX * HD);
+            struct Lay { float *q, *sinks; int32_t *ixP, *ixF, *cidx; uint16_t *ringP, *ringF; };
+            Lay ly[2];
+            for (Lay &l : ly) {
+                l.q = sycl::malloc_device<float>(nq, q);
+                l.sinks = sycl::malloc_device<float>(QH, q);
+                l.ixP = sycl::malloc_device<int32_t>(nix, q);
+                l.ixF = sycl::malloc_device<int32_t>(nix, q);
+                l.cidx = sycl::malloc_device<int32_t>((size_t)MMAX * 512, q);
+                l.ringP = sycl::malloc_device<uint16_t>(nrg, q);
+                l.ringF = sycl::malloc_device<uint16_t>(nrg, q);
+            }
+            auto cmp = [&](const float *a, const float *c, size_t n, uint32_t step) {
+                q.parallel_for(sycl::range<1>(n), [=](sycl::item<1> it) {
+                    const size_t i = it.get_linear_id();
+                    if (sycl::bit_cast<uint32_t>(a[i]) != sycl::bit_cast<uint32_t>(c[i])) {
+                        using ARu = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                                     sycl::access::address_space::global_space>;
+                        ARu(bad[0]).fetch_add(1u);
+                        ARu(bad[1]).fetch_min(step);
+                    }
+                });
+            };
+            std::printf("WA_STEPS: %d consecutive checks x 2 layers per shape (window append + attention + RingCommitM; the layers "
+                        "share each form's score array), production against the engine's OWN_ATT_WA form%s\n", N,
+                        conc == 2 ? ", CONC=2" : conc == 1 ? ", CONC=1" : "");
+            for (int nh : {16, 12, 8})
+                for (int n : {128, 160, 288, 384, 640})
+                    for (unsigned M : ms) {
+                        char tag[64];
+                        std::snprintf(tag, sizeof tag, "ws h%d n%d M%u", nh, n, M);
+                        if (only && !std::strstr(tag, only)) continue;
+                        const int nc = n > 128 ? 512 : 0, p0 = 100;
+                        for (int L = 0; L < 2; ++L) {
+                            Lay &l = ly[L];
+                            std::vector<float> hq(nq), hs(QH);
+                            for (auto &x : hq) x = nd(rng) * (L ? 6.f : 1.f);
+                            for (auto &x : hs) x = nd(rng) * 2.f;
+                            q.memcpy(l.q, hq.data(), nq * 4).wait();
+                            q.memcpy(l.sinks, hs.data(), QH * 4).wait();
+                            std::vector<int32_t> hc;
+                            wa_lists(n, M, L, hc);
+                            q.memcpy(l.cidx, hc.data(), hc.size() * 4).wait();
+                            std::vector<uint16_t> rg(nrg);
+                            for (auto &x : rg) x = f2bf(nd(rng));
+                            q.memcpy(l.ringP, rg.data(), nrg * 2).wait();
+                            q.memcpy(l.ringF, rg.data(), nrg * 2).wait();
+                            q.fill(l.ixP, (int32_t)-7, nix).wait();
+                            q.fill(l.ixF, (int32_t)-7, nix).wait();
+                        }
+                        q.memcpy(wP, stale.data(), nw * 4).wait();
+                        q.memcpy(wF, stale.data(), nw * 4).wait();
+                        q.fill(oP, 0.f, nq).wait();
+                        q.fill(oF, 0.f, nq).wait();
+                        q.fill(yP, 0.f, nq).wait();
+                        q.fill(yF, 0.f, nq).wait();
+                        const uint32_t init[4] = {0u, 0xffffffffu, 0u, 0u};
+                        q.memcpy(bad, init, 16).wait();
+                        const size_t no = (size_t)(M - 1) * QS + (size_t)nh * HD;
+                        const auto t0 = std::chrono::steady_clock::now();
+                        for (int r2 = 0; conc && r2 < 24; ++r2) {
+                            if (conc == 1) q2.memcpy(r2 % 2 ? cb0 : cb1, r2 % 2 ? cb1 : cb0, ncb * 4);
+                            else
+                                q2.parallel_for(sycl::nd_range<1>(64 * 256, 256), [=](sycl::nd_item<1> it) {
+                                    for (size_t i = it.get_global_linear_id(); i < ncb; i += 64 * 256) cb1[i] = cb0[i] + 1.0f;
+                                });
+                        }
+                        for (int st = 0; st < N; ++st) {
+                            const int p = p0 + st * (int)M;
+                            for (int L = 0; L < 2; ++L) {
+                                const Lay &l = ly[L];
+                                Bufs bp{l.q, l.sinks, wP, nullptr, oP, yP, b.cs, b.sn, l.ringP, b.kvc, l.ixP};
+                                Bufs bf{l.q, l.sinks, wF, nullptr, oF, yF, b.cs, b.sn, l.ringF, b.kvc, l.ixF};
+                                const float *kvL = kvs + ((size_t)(st % NKV) * 2 + L) * MMAX * HD;
+                                std::vector<sycl::event> ev;
+                                const RingCommitM rc{128, (int)HD, p, (int)M};
+                                run_wa(0, n, M, nh, p, bp, kvL, l.cidx, ev);
+                                uint16_t *rP = l.ringP, *rF = l.ringF;
+                                q.parallel_for(sycl::nd_range<1>((size_t)M * HD, 64), [=](sycl::nd_item<1> it) { rc(it, rP); });
+                                run_wa(5, n, M, nh, p, bf, kvL, l.cidx, ev);
+                                q.parallel_for(sycl::nd_range<1>((size_t)M * HD, 64), [=](sycl::nd_item<1> it) { rc(it, rF); });
+                                cmp(oP, oF, no, (uint32_t)(2 * st + L));
+                                cmp(yP, yF, no, (uint32_t)(2 * st + L));
+                            }
+                        }
+                        q.wait();
+                        const double msd = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+                        q2.wait();
+                        uint32_t hb[4];
+                        q.memcpy(hb, bad, 16).wait();
+                        size_t sb = 0;
+                        for (const Lay &l : ly) {
+                            std::vector<uint16_t> g0(nrg), g1(nrg);
+                            std::vector<int32_t> c0(nix), c1(nix);
+                            q.memcpy(g0.data(), l.ringP, nrg * 2).wait();
+                            q.memcpy(g1.data(), l.ringF, nrg * 2).wait();
+                            q.memcpy(c0.data(), l.ixP, nix * 4).wait();
+                            q.memcpy(c1.data(), l.ixF, nix * 4).wait();
+                            sb += (g0 != g1) + (c0 != c1);
+                        }
+                        if (hb[0] || sb) ok = false;
+                        std::printf("%-16s %s: %u output words differ (first at launch %d)%s  [%.0f ms]\n", tag, hb[0] || sb ? "FAIL" : "ok",
+                                    hb[0], hb[0] ? (int)hb[1] : -1, sb ? ", rings / lists differ at the end" : "", msd);
+                        std::fflush(stdout);
+                    }
+            if (ferr()) ok = false;
+            std::printf(ok ? "PASS\n" : "FAIL\n");
+            return ok ? 0 : 1;
+        }
+        std::vector<uint16_t> ring0(nrg);
+        q.memcpy(ring0.data(), b.kvw, nrg * 2).wait(); // (random rows, the block area too: stale for every form)
+        std::printf("blocks with the window append, bitwise against WindowAppendM + production: forms 1 (WindowAppendM + the "
+                    "engine's form), 2 F WA, 3 T8 WA + JE, 4 T16 WA + JE. Time (p1000, median of %d%s%s): WindowAppendM alone, "
+                    "the chain WindowAppendM + the engine's form, the engine's form with WA\n", IT, flush ? ", L2 flushed" : "",
+                    g_nb ? ", chains between neighbour kernels" : "");
+        for (int nh : {16, 12, 8})
+            for (unsigned M : ms)
+                for (int n : NVALS)
+                    for (int p : {1000, 125, 60, 0}) {
+                        char tag[64];
+                        std::snprintf(tag, sizeof tag, "wa h%d n%d M%u p%d", nh, n, M, p);
+                        if (only && !std::strstr(tag, only)) continue;
+                        const int nc = n > 128 ? 512 : 0;
+                        for (int kind = 0; kind < 2; ++kind) {
+                            std::vector<float> hq(nq), hs(QH);
+                            for (auto &x : hq) x = nd(rng) * (kind ? 6.f : 1.f);
+                            for (auto &x : hs) x = nd(rng) * 2.f;
+                            q.memcpy(b.q, hq.data(), nq * 4).wait();
+                            q.memcpy(b.sinks, hs.data(), QH * 4).wait();
+                            kv_fill(kv, (size_t)MMAX * HD);
+                            std::vector<int32_t> hc;
+                            wa_lists(n, M, kind, hc);
+                            q.memcpy(cidx, hc.data(), hc.size() * 4).wait();
+                            if (!check) break;
+                            const size_t mw = (size_t)M * WS, mq = (size_t)M * QS, mx = (size_t)M * 640; // (M tokens' parts)
+                            auto reset = [&]() {
+                                q.memcpy(b.kvw, ring0.data(), nrg * 2);
+                                q.memcpy(b.w, stale.data(), mw * 4);
+                                q.memcpy(b.w2, stale.data(), mw * 4);
+                                q.fill(b.ix, (int32_t)-7, mx);
+                                q.fill(b.out, std::nanf(""), mq);
+                                q.fill(b.ry, std::nanf(""), mq).wait();
+                            };
+                            std::vector<float> rs(nw), rw(nw), ro(nq), rr(nq), cs(nw), cw(nw), co(nq), cr(nq);
+                            std::vector<uint16_t> rg0(nrg), rg(nrg);
+                            std::vector<int32_t> rc0(nix), rc(nix);
+                            std::vector<sycl::event> ev;
+                            reset(); // production's raw scores (WindowAppendM, then the score launch alone)
+                            ev.push_back(wam(M, p, nc, b.kvw, kv, b.ix, nc ? cidx : nullptr));
+                            score_prod(n, M, nh, WA_W, b, ev);
+                            q.wait();
+                            q.memcpy(rs.data(), b.w, mw * 4).wait();
+                            reset();
+                            ev.clear();
+                            run_wa(0, n, M, nh, p, b, kv, cidx, ev);
+                            q.memcpy(rw.data(), b.w, mw * 4);
+                            q.memcpy(ro.data(), b.out, mq * 4);
+                            q.memcpy(rr.data(), b.ry, mq * 4);
+                            q.memcpy(rg0.data(), b.kvw, nrg * 2);
+                            q.memcpy(rc0.data(), b.ix, mx * 4).wait();
+                            for (int f = 1; f <= 4; ++f) {
+                                reset();
+                                ev.clear();
+                                run_wa(f, n, M, nh, p, b, kv, cidx, ev);
+                                q.memcpy(cs.data(), b.w, mw * 4);
+                                q.memcpy(cw.data(), b.w2, mw * 4);
+                                q.memcpy(co.data(), b.out, mq * 4);
+                                q.memcpy(cr.data(), b.ry, mq * 4);
+                                q.memcpy(rg.data(), b.kvw, nrg * 2);
+                                q.memcpy(rc.data(), b.ix, mx * 4).wait();
+                                const size_t bs = kept_equal(rs, cs, rc0, M, nh, n), bw = kept_equal(rw, cw, rc0, M, nh, n),
+                                             bo = out_equal(ro, co, M, nh), by = out_equal(rr, cr, M, nh);
+                                const bool brg = rg != rg0, bcat = rc != rc0;
+                                if (bs || bw || bo || by || brg || bcat) {
+                                    ok = false;
+                                    std::printf("  %s %s form %d: scores %zu weights %zu out heads %zu ry heads %zu differ%s%s\n", tag,
+                                                kind ? "peaky" : "normal", f, bs, bw, bo, by, brg ? ", ring differs" : "",
+                                                bcat ? ", lists differ" : "");
+                                }
+                            }
+                        }
+                        if (!timing || p != 1000) continue;
+                        // (after the cache flush, the block's key rows and queries read once, as the engine's rope
+                        // launches leave them in L2 just before; the rows, compressed rows and cidx stay cold.
+                        // WA_COLD=1: kv and q cold too)
+                        const bool cold = std::getenv("WA_COLD") != nullptr;
+                        auto touch = [&](const float *src, size_t cnt) {
+                            q.parallel_for(sycl::nd_range<1>(64 * 256, 256), [=](sycl::nd_item<1> it) {
+                                float s = 0;
+                                for (size_t i = it.get_global_linear_id(); i < cnt; i += 64 * 256) s += src[i];
+                                if (s == 12345.f) fo[0] = s;
+                            });
+                        };
+                        double med[3];
+                        for (int k = 0; k < 3; ++k) { // WindowAppendM alone, form 1's chain, form 5's chain
+                            std::vector<double> v;
+                            for (int r = 0; r < IT + 3; ++r) {
+                                if (flush) {
+                                    lsg(1024, flush_k);
+                                    if (!cold) {
+                                        touch(kv, (size_t)M * HD);
+                                        touch(b.q, (size_t)M * QS);
+                                    }
+                                } else if (r % 8 == 0) warm(2);
+                                std::vector<sycl::event> ev;
+                                sycl::event e0, e1;
+                                if (g_nb) e0 = nbk();
+                                if (k == 0) ev.push_back(wam(M, p, nc, b.kvw, kv, b.ix, nc ? cidx : nullptr));
+                                else run_wa(k == 1 ? 1 : 5, n, M, nh, p, b, kv, cidx, ev);
+                                if (g_nb) e1 = nbk();
+                                q.wait();
+                                if (r >= 3) v.push_back(k == 0 ? evus(ev[0]) : g_nb ? span_us(e0, e1) : span_us(ev.front(), ev.back()));
+                            }
+                            std::sort(v.begin(), v.end());
+                            med[k] = v[v.size() / 2];
+                        }
+                        std::printf("%-22s %-2s wam %5.2f | chain %6.2f -> %6.2f (%+.2f)\n", tag, wa_f_on(n, M) ? "F" : "T", med[0], med[1],
+                                    med[2], med[2] - med[1]);
+                        std::fflush(stdout);
+                    }
         if (ferr()) ok = false;
         std::printf(ok ? "PASS\n" : "FAIL\n");
         return ok ? 0 : 1;

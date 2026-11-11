@@ -1494,9 +1494,14 @@ void tpm_layer(int L, int c) {
             if (lm < 512) n_idx = att_trim_n(lm);
         }
         // (items per token: WindowAppendM's max(d, win + nc), whatever slots the attention reads)
-        launch(c, (size_t)M * std::max(g.hd, 128 + nc), 64,
-               ops41sycl::WindowAppendM<Act>{128, g.hd, (int)pos, nc, M, MTX, (size_t)g.hd, 512, 640}, ring[c][L],
-               (const act_t *)b.kvn, b.idxs_cat, (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr));
+        // OWN_ATT_WA: its work inside the OWN_ATT_T launches below instead (att2's condition; the same rows and lists)
+        const act_t *wkv = (const act_t *)b.kvn;
+        const int32_t *wci = (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr);
+        const bool wa = o.att_wa && o.att_t && o.att_out_c && (unsigned)M <= o.att_t_m_max && M <= 8; // (WA: up to 8)
+        if (!wa)
+            launch(c, (size_t)M * std::max(g.hd, 128 + nc), 64,
+                   ops41sycl::WindowAppendM<Act>{128, g.hd, (int)pos, nc, M, MTX, (size_t)g.hd, 512, 640}, ring[c][L],
+                   wkv, b.idxs_cat, wci);
         const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
         if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("multi-token step: kv alignment");
         const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
@@ -1507,6 +1512,9 @@ void tpm_layer(int L, int c) {
         const bool att2 = o.att_t && o.att_out_c && (unsigned)M <= o.att_t_m_max;
         const bool att1 = att2 && att_f_on(nh, n_idx, (unsigned)M);
         if (att1) {
+        } else if (att2 && wa) {
+            score_ta(c, nh, n_idx, W, (unsigned)M, Q, WS, (int)pos, nc, (const act_t *)(b.q + qo), ring[c][L], kvc, wkv, wci,
+                     b.idxs_cat, b.attn_w);
         } else if (att2) {
             score_t(c, nh, n_idx, W, (unsigned)M, Q, WS, (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
         } else if (n_idx == 128) {
@@ -1547,7 +1555,11 @@ void tpm_layer(int L, int c) {
         // OWN_ATT_OUT_C: blocks of up to 8 tokens only (guess checks); from 12 tokens on (prompt reading, 16) the
         // 32 KiB of local memory per work-group leaves too few of them resident and OutM<JB> is faster (round18 s5:
         // 16 heads, 640 slots: M = 1..6 15.8-20.9 us vs 23.3-29.6, M = 8 24.3 vs 24.4, M = 16 44.9 vs 30.8)
-        if (att1) {
+        if (att1 && wa) {
+            out_f<128, false, true>(c, nh, n_idx, W, (unsigned)M, Q, WS, (const act_t *)(b.q + qo), ring[c][L], kvc,
+                                    b.idxs_cat, wkv, wci, (int32_t *)nullptr, (int)pos, nc, sinks, b.attn_w, b.of + qo,
+                                    (float *)(b.obuf + qo), cbm, sbm);
+        } else if (att1) {
             out_f<128, false>(c, nh, n_idx, W, (unsigned)M, Q, WS, (const act_t *)(b.q + qo), (uint16_t *)kvw, kvc,
                               (int32_t *)ix, (const act_t *)nullptr, (const int32_t *)nullptr, (int32_t *)nullptr, 0, 0,
                               sinks, b.attn_w, b.of + qo, (float *)(b.obuf + qo), cbm, sbm);

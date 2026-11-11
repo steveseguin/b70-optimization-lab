@@ -2690,7 +2690,7 @@ inline bool ws_ckf_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ckf_mask
 // g_ws_dride_mask (OWN_MT_DRIDE=1: 4, 5 and 6), OWN_MT_DSPLIT's two mix finishes ride output-b's and shared down's
 // launches under OWN_MT_WS too, where the rider keeps the rows' weight-stationary form (WsTab<.., 8192 / 2304,
 // WS_DOTS>, ws_ride_keeps); off: the finishes run as their own launches there
-inline unsigned g_ws_dride_mask = 0;
+inline unsigned g_ws_dride_mask = 0x1cu; // default since tp99 (tg98b: checks of 4-6 tokens -0.7-0.8 ms); OWN_MT_DRIDE=0: off
 inline bool ws_dride_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_dride_mask >> (mt - 2) & 1u); }
 // a WS form's weight loads (WsF PF / 10): 0 = sub-group block reads; 1 = per-lane loads, L1 uncached (L3 cached),
 // so the streaming weights stop evicting the T tokens' activations from L1 (the same values)

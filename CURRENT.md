@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**November 11, 2026 17:17 EST — host reset (FIFTH; second today); probe passed after boot; multi-card work paused.**
+- Same BERT signature: fatal PCIe completion timeout on 0000:a7:00.0 (I210 `enp167s0`, the LAN link) + CPU bank 5
+  machine check. This time NOT under sustained traffic: gate tg99 (short trace runs), ~3 s into run h5xa's start
+  (device init / weight upload), right after h4xa had ended (GPU telemetry: all cards ~6 W idle, then ramping).
+  Boot 17:19:38. Probe (six-card barrier + all-reduce) passed 17:28. Evidence:
+  /home/steve/dsv41-work/faults/host-reset-20261111T1717/.
+- tg99 before the reset (build tp99 = tp98 + dride default + wa-1 + xll-1): defaults h1 / h4 / h5 / h6 / h64 and
+  dride-off h5dr0 identical; all 11 `OWN_ATT_WA=1` traces identical (blocks 2-8, F=0, HEADS_MIN=3, 16, 64);
+  `OWN_XLL=1` h1xa / h4xa identical. Speed arms never ran.
+- Owner decision ~17:50: "make the error non-fatal". Done 17:53 on the I210 a7:00.0 only (UESvrt 004f6031 ->
+  004f2031: completion timeout non-fatal; DevCtl2 completion timeout 50 us-50 ms -> 17-64 s). Not persistent:
+  /home/steve/dsv41-work/i210-nonfatal.sh after every boot (the gates run it at start). Gate tg99b resumed 17:55.
+
 **November 11, 2026 16:45 EST — DeepSeek V4.1 tp98 gate (tg98 + tg98b) done; dride default from tp99; build99 queued.**
 - dride-1 (`OWN_MT_DRIDE`) bitwise everywhere and faster: code 138.7 / 139.4 -> 140.7 / 140.8 tok/s, analysis
   152.7 / 153.8 -> 156.0 / 155.9, after a 3K prompt 136.7 -> 143.4; checks of 4-6 tokens -0.7-0.8 ms. Plain 101.4,

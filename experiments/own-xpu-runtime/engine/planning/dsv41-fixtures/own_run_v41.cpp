@@ -245,6 +245,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
+    // xll-1 (2026-11-11, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip; 1 = the default unit
+    // (Options::XLL_DEFAULT_U bytes), 16 / 64: that unit, 0: off (the backend refuses anything else)
+    if (const char *e = getenv("OWN_XLL")) opt.xll = atoi(e) == 1 ? (unsigned)own41::Backend41::Options::XLL_DEFAULT_U : (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_XLL_QUICK")) opt.xll_quick = (unsigned)atoi(e); // (default 0; at most 8)
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     // smallk (2026-11-11, /home/steve/dsv41-work/smallk): one-work-group forms of the 5,120 norm, the q_a + kv norms,
     // the compressor pool and the engram gate (the same bits; bench-checked incl. forced fallbacks); default since tg89, =0: off
@@ -315,6 +319,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ATT_T_M_MAX")) opt.att_t_m_max = (unsigned)atoi(e); // ... in blocks up to this size
     if (const char *e = getenv("OWN_ATT_T_HG")) opt.att_t_hg = (unsigned)atoi(e); // ... two launches: score heads per work-group
     if (const char *e = getenv("OWN_ATT_F")) opt.att_f = atoi(e) != 0; // ... =0: two launches only
+    if (const char *e = getenv("OWN_ATT_WA")) opt.att_wa = atoi(e) != 0; // ... blocks: the window append inside them (attn wa-1)
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.
@@ -542,7 +547,7 @@ int main(int argc, char **argv) {
         }
         ops41sycl::g_ws_ckf_mask = ops41sycl::g_ws_ck_mask;
         if (const char *e = getenv("OWN_MT_CK_FIN")) ops41sycl::g_ws_ckf_mask = ck_mask(e);
-        // dride-1 (opt-in): OWN_MT_DSPLIT's two mix finishes ride output-b's and shared down's launches under OWN_MT_WS
+        // dride-1 (default 4-6 since tp99; OWN_MT_DRIDE=0 off): OWN_MT_DSPLIT's two mix finishes ride output-b's and shared down's launches under OWN_MT_WS
         // too, their weight-stationary forms kept (WsTab WS_DOTS; OWN_MT_DSPLIT_FIN=2, the default, or 1).
         // OWN_MT_DRIDE=1: checks of 4, 5 and 6 tokens; OWN_MT_DRIDE=n (n != 1; 0x.. allowed): the sizes M = 2 .. 6
         // whose bit M - 2 is set; OWN_MT_DRIDE_MS="4,6": those sizes
