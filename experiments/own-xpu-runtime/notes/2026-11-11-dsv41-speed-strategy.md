@@ -179,7 +179,13 @@ Prompt reading:
   per check, latency-bound), and the q_a / kv norm pair ~29 at ~4.1 us; the one-token path does norm + 25 dot rows
   in 6.4-6.6 us (`SkNormDotsW`) and the pair in 2.7 us (`SkNormPairW`). Per-token block forms of those (one
   work-group per token, the same code), fused with `SkDotsWM` where adjacent: ~0.3-0.4 ms off every check
-  (+1.5-2 % guessing). Helper (skn), 2026-11-11.
+  (+1.5-2 % guessing). Helper (skn), 2026-11-11: **`skn-1.patch` done** (`/home/steve/dsv41-work/skn/`, bench
+  `tools/bench/bench_skn.cpp`): `OWN_MT_SKNORM` bits 1 (`SkNormWM`), 2 (`SkNormDotsWM`, the pre-norm fused with its
+  SkDotsWM rows), 4 (`SkNormPairWM`), 8 (`SkCompressPoolWM`), `OWN_MT_HCPP=1` (`HcPostPrePM` without the emulated 64-bit
+  division). One card, us per launch: norm 2-6 tokens 5.6-7.0 -> 2.7-3.2; norm + dots 10.0 -> 4.6; q_a + kv 2.8 ->
+  2.0; compressor pools 31.5 -> 2.1; HcPostPrePM 1.35-1.9 -> 1.0-1.25 (64 tokens 8.4 -> 4.6). 7,988 comparisons over
+  1-256 tokens incl. 11,323 forced-fallback vectors: 0 differ. Expected ~0.5-0.6 ms per check, ~1.2 ms per 64-token
+  prompt block. In tp93 (opt-in), gate tg93.
 - K7. **Stream-mix dot partials computed by each card over its own output slice and carried by the exchange that
   already gathers that output** (idea, 2026-11-11): every card reads the whole `hc_*_fn` (F32 20480 x 24, 2 per
   layer, 152 MB per card per step, 0.28 ms at the floor; `SkNormDotsW` 0.53 ms per step on card 2). Before the
@@ -322,8 +328,23 @@ Did not work (and why):
   The table is 135 GB, so fresh text always reads cold rows; the gate prompts are warm. cold92 measures four
   never-run prompts once cold and once warm. Lever if large: start each guessed token's row reads as soon as the
   draft proposes it (the anchor's already start during the draft, `OWN_ENG_EARLY`), with more reads in flight.
-- Queue (systemd units, in order): xw92 (XWAIT diagnostic build of src92 + one plain run), pp92 (3K prompt kernel
-  profiles, cards 2 / 0, blocks 64 / 128 / 256), cold92, tune92.
+- Done (cold92, `data/.../round19-cold92/`): fresh text costs little. Four never-run prompts: plain 95.2-95.3 tok/s
+  cold against 94.0-97.1 warm (75-90 MiB of engram rows read from disk per 512 tokens); guessing cold / warm: heat
+  111.96 / 111.59, bash 138.30 / 141.36, tsdb 107.05 / 107.10, email 134.33 / 135.10; answers the same. The reads
+  overlap the card work (`OWN_ENG_EARLY` / `OWN_ENG_LATE`); closed as a lever. The gate numbers stand for fresh text.
+- Done (xw92, `data/.../round19-xw92/who-waits.md`, 63 plain steps, XWAIT build of src92): at the output-a exchange
+  the four 8-head cards wait 856-916 us per step for cards 2 / 5 (16 heads: q_b + o_a bytes twice, ~16 us per layer;
+  the attention kernels themselves are latency-bound and take the same time on both). At output-b, expert-act and
+  FFN exchanges every card waits ~4-7 us per exchange and the last card varies (jitter, not structure). The pace
+  cards 2 / 5 wait 0.70-0.78 ms per step in total. Balancing heads needs pair exchanges (one-token heads split was
+  not better in e79; tune91 / tg92 at 2+ tokens neutral); fewer exchanges or less jitter are the remaining levers.
+- Done (pp92, `data/.../round19-pp92/`, card 2 / card 0 kernel totals over the 3K read): experts 3.2 s of 7.0 s
+  (46 %), dense rows 2.1 s (30 %), exchanges 1.0 s (14 %; card 0 1.45 s), attention 0.4 s; all flat from blocks of
+  64 to 256 (each RoutedU3 launch scales with its slot count: `RoutedU3<RU3IQ2S<20u>>` 977 us x 780 at 64, 3928 us x
+  195 at 256). The decode is shared per expert group already; the per-slot x loads and FMA chains re-done for every
+  row are what costs, and the dense WS rows show the same. Byte and FMA floors are far below. Helper (rux,
+  2026-11-11): row tiles / x staged in local memory for the prompt expert kernels, bit for bit.
+- Queue: tune92 (mix-split thresholds, running), then tg93 (tp93 = tp92 + skn-1, opt-in).
 
 ### Earlier entries (07:41)
 

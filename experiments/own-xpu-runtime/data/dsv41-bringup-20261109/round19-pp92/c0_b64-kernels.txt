@@ -1,0 +1,115 @@
+kernel time per type (ms per step, start to end; launches per step):
+   754.398  5753.1%   4160    181.35 us  XchgPull2
+   708.918  5406.3%    780    908.87 us  RoutedU3<RU3IQ2S<20u>, 6u, NoRows, 6u, false>
+   649.743  4955.0%   4399    147.70 us  XchgPull
+   586.604  4473.5%    780    752.06 us  RoutedU3<RU3IQ2XXS<20u>, 6u, NoRows, 6u, true>
+   455.658  3474.9%    780    584.18 us  RoutedU3<RU3IQ3XXS<9u>, 6u, NoRows, 6u, false>
+   441.557  3367.3%    520    849.15 us  RoutedU3<RU3IQ1S<20u>, 6u, NoRows, 6u, false>
+   432.181  3295.8%    780    554.08 us  RoutedU3<RU3IQ2S<9u>, 6u, NoRows, 6u, false>
+   235.082  1792.8%   2808     83.72 us  RowsP<DenseRowsWS<WsQ8<160u>, 8u, 2u, 2u, 1u> >
+   220.215  1679.4%   1404    156.85 us  RowsP<DenseRowsWS<WsQ8<256u>, 8u, 2u, 2u, 1u> >
+   202.596  1545.0%   1404    144.30 us  RowsP<DenseRowsWS<WsQ8<40u>, 16u, 2u, 2u, 0u> >
+   179.217  1366.7%   1352    132.56 us  RowsP<DenseRowsWS<WsQ6<20u>, 4u, 2u, 1u, 0u> >
+   177.858  1356.4%   2772     64.16 us  RowsP<DenseRowsG<GemvH16P<160u, ActF32>, 4u> >
+   172.020  1311.8%   2808     61.26 us  RowsP<DenseRowsWS<WsQ8<128u>, 8u, 2u, 2u, 1u> >
+   157.039  1197.6%   2080     75.50 us  OutM<SparseOutJB<512u, 1u, 16u, false> >
+   151.427  1154.8%    676    224.00 us  RowsP<DenseRowsWS<WsQ6<32u>, 4u, 2u, 1u, 0u> >
+   130.101  992.2%    312    416.99 us  RoutedU3<RU3IQ2XS<9u>, 6u, NoRows, 6u, true>
+   108.055  824.0%   1404     76.96 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsWS<WsQ8<160u>, 8u, 2u, 2u, 1u>, DenseRowsWS<WsQ8<160u>, 8u, 2u, 2u, 1u> > > >
+    99.935  762.1%   1976     50.57 us  ScoreM<SparseScoreHG<512u, 4u> >
+    98.948  754.6%    676    146.37 us  RowsP<DenseRowsWS<WsQ6<5u>, 16u, 2u, 1u, 0u> >
+    92.771  707.5%    328    282.84 us  RowsP<DenseRowsG<GemvH16P<40u, ActF32>, 4u> >
+    91.355  696.7%   2080     43.92 us  ExpertGroupM
+    88.259  673.1%   4160     21.22 us  SkDotsWM<8u>
+    82.310  627.7%   1404     58.63 us  RowsP<DenseRowsWS<WsQ8<72u>, 4u, 4u, 2u, 0u> >
+    68.733  524.2%    156    440.59 us  RoutedU3<RU3IQ2XXS<9u>, 6u, NoRows, 6u, true>
+    64.397  491.1%   4056     15.88 us  HcPostPrePM<ActF32>
+    63.423  483.7%    676     93.82 us  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsWS<WsQ5<20u>, 8u, 2u, 1u, 0u>, DenseRowsWS<WsQ5<20u>, 8u, 2u, 1u, 0u> > > >
+    60.934  464.7%    328    185.77 us  IndexerScoreBM<ActF32>
+    60.625  462.3%    676     89.68 us  RowsP<DenseRowsWS<WsQ6<16u>, 8u, 2u, 1u, 0u> >
+    55.508  423.3%    104    533.73 us  RowsP<DenseRowsWS<WsQ6<24u>, 8u, 2u, 1u, 0u> >
+    52.756  402.3%     53    995.39 us  RoutedQ2KF<9u>
+    45.719  348.7%   4160     10.99 us  XchgPair
+    45.294  345.4%    676     67.00 us  RowsP<DenseRowsWS<WsQ6<16u>, 4u, 2u, 1u, 0u> >
+    40.847  311.5%    676     60.42 us  RowsP<DenseRowsWS<WsQ5<9u>, 8u, 2u, 1u, 0u> >
+    36.236  276.3%   4160      8.71 us  RowsP<TokRows<NormRows<5120u, 4u> > >
+    33.565  256.0%   4160      8.07 us  RowsP<TokRows<HcFinishRows> >
+    11.925   90.9%   2080      5.73 us  SwigluBothSM<ActF32>
+    11.859   90.4%   1566      7.57 us  SoftmaxM<SparseSoftmaxP<640> >
+    10.817   82.5%   2080      5.20 us  RowsP<RowsPair<TokRows<NormRows<1280u, 4u> >, TokRows<NormRows<512u, 2u> > > >
+     8.597   65.6%   2080      4.13 us  MoeCombineAM<ActF32>
+     6.256   47.7%    328     19.07 us  TopKSelM<false>
+     5.805   44.3%    104     55.82 us  EngramGateWM<16u>
+     5.241   40.0%   2080      2.52 us  WindowAppendM<ActF32>
+     5.097   38.9%    156     32.67 us  CompressPoolPM<ActF32>
+     4.331   33.0%   2288      1.89 us  RowsP<RowsPair<TokRows<RopeRows<ActF32> >, TokRows<RopeRows<ActF32> > > >
+     4.315   32.9%   3323      1.30 us  EmbedRowA<ActF32>
+     4.264   32.5%   2080      2.05 us  RingCommitM
+     3.168   24.2%    410      7.73 us  SoftmaxM<SparseSoftmaxPN<640> >
+     2.738   20.9%    104     26.33 us  ScoreM<SparseScoreP<512u> >
+     2.524   19.3%   3323      0.76 us  Broadcast4PA<ActF32>
+     1.523   11.6%    106     14.37 us  EngRowsA<ActF32>
+     1.477   11.3%    208      7.10 us  RowsP<DenseRowsG<GemvH16P<16u, ActF32>, 4u> >
+     1.247    9.5%    104     11.99 us  HcPostPM<ActF32>
+     1.012    7.7%    156      6.49 us  HcPreAM<ActF32>
+     0.724    5.5%    212      3.42 us  RmsNormA<ActF32>
+     0.565    4.3%     40     14.12 us  SparseOutJC<512u, 16u, 128u, 16u>
+     0.541    4.1%    208      2.60 us  PubAppendAM<ActF32>
+     0.537    4.1%     77      6.97 us  SkNormDotsW<8u>
+     0.524    4.0%     15     34.91 us  RoutedIQ2SPe<20u, ActF32, NoRows>
+     0.504    3.8%    328      1.54 us  RowsP<TokRows<RopeRows<ActF32> > >
+     0.478    3.6%     55      8.70 us  GemvH16P<160u, ActF32>
+     0.471    3.6%     24     19.61 us  RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, DenseRows<GemvQ8P<160u, ActF32> > > > >
+     0.432    3.3%     44      9.81 us  TopKSelM<true>
+     0.426    3.3%     27     15.79 us  GemvQ8P<256u, ActF32>
+     0.421    3.2%     27     15.58 us  RowsP<RowsPair<RowsPair<HcFinishRows, RopeRows<ActF32> >, DenseRows<GemvQ8P<40u, ActF32> > > >
+     0.409    3.1%     15     27.26 us  RoutedIQ2XXSPe<20u, ActF32, NoRows>
+     0.399    3.0%     80      4.99 us  XchgP
+     0.360    2.7%     10     36.02 us  RoutedIQ1SPb<20u, ActF32, 3, NoRows>
+     0.348    2.7%     15     23.19 us  RoutedIQ2SPd<9u, ActF32, NoRows>
+     0.337    2.6%      2    168.28 us  GemvQ6KP<20u, ActF32>
+     0.328    2.5%    156      2.10 us  StatePackM<ActF32>
+     0.316    2.4%     15     21.08 us  RoutedIQ3XXSPb<9u, ActF32, NoRows>
+     0.296    2.3%     27     10.96 us  RoutePRows<RowsPair<HcFinishRows, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, DenseRows<GemvQ8P<160u, ActF32> > > > >
+     0.296    2.3%     91      3.25 us  CidxFillM
+     0.280    2.1%     27     10.35 us  GemvQ8P<128u, ActF32>
+     0.243    1.9%     38      6.40 us  SparseSoftmaxP<640>
+     0.239    1.8%    104      2.30 us  SoftmaxM<SparseSoftmaxP<128> >
+     0.229    1.7%     13     17.59 us  RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ6KP<20u, ActF32> >, DenseRows<GemvQ6KP<20u, ActF32> > > > >
+     0.227    1.7%     38      5.98 us  SparseScoreHG<512u, 1u>
+     0.194    1.5%     13     14.90 us  RowsP<RowsPair<RowsPair<HcFinishRows, RopeRows<ActF32> >, DenseRows<GemvQ6KP<5u, ActF32> > > >
+     0.190    1.4%     13     14.60 us  GemvQ6KP<32u, ActF32>
+     0.169    1.3%     27      6.26 us  GemvQ8P<72u, ActF32>
+     0.165    1.3%      8     20.65 us  IndexerScoreB<ActF32>
+     0.161    1.2%     13     12.35 us  GemvQ6KP<16u, ActF32>
+     0.159    1.2%      8     19.92 us  GemvH16P<40u, ActF32>
+     0.144    1.1%     13     11.09 us  RoutePRows<RowsPair<HcFinishRows, RowsPair<DenseRows<GemvQ5KP<20u, ActF32> >, DenseRows<GemvQ5KP<20u, ActF32> > > > >
+     0.136    1.0%     52      2.62 us  RowsP<TokRows<NormRows<512u, 2u> > >
+     0.121    0.9%      6     20.17 us  RoutedIQ2XSPb<9u, ActF32, NoRows>
+     0.120    0.9%      8     15.04 us  TopKSelR<false>
+     0.112    0.9%     40      2.81 us  SkNormPairW
+     0.095    0.7%     78      1.22 us  HcPostPreP<ActF32>
+     0.092    0.7%      2     46.04 us  GemvQ6KP<24u, ActF32>
+     0.085    0.6%     40      2.11 us  WindowAppendP<ActF32>
+     0.084    0.6%     13      6.44 us  GemvQ5KP<9u, ActF32>
+     0.070    0.5%      3     23.44 us  RowsP<RowsPair<HcDotsRows<5120u, 8u>, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, DenseRows<GemvQ8P<160u, ActF32> > > > >
+     0.059    0.5%     40      1.48 us  MoeCombineA<ActF32>
+     0.053    0.4%      3     17.71 us  RoutedIQ2XXSPd<9u, ActF32, NoRows>
+     0.049    0.4%     40      1.23 us  SwigluBothS<ActF32>
+     0.033    0.3%     40      0.84 us  RowsP<RopeRows<ActF32> >
+     0.019    0.1%      5      3.87 us  SkNormW<5120u, 16u>
+     0.017    0.1%      2      8.28 us  SkEngramGateW<16u>
+     0.014    0.1%     16      0.89 us  RopePairsA<ActF32>
+     0.012    0.1%      2      6.25 us  SparseScoreP<512u>
+     0.012    0.1%      4      2.94 us  GemvH16P<16u, ActF32>
+     0.010    0.1%      2      4.84 us  ArgmaxP1O
+     0.009    0.1%      4      2.19 us  PubAppendA<ActF32>
+     0.008    0.1%      3      2.78 us  SkCompressPoolW<ActF32>
+     0.005    0.0%      1      5.31 us  TopKSelP<true>
+     0.004    0.0%      6      0.71 us  ToF32A<ActF32>
+     0.004    0.0%      2      1.93 us  SparseSoftmaxP<128>
+     0.004    0.0%      3      1.22 us  HcPreA<ActF32>
+     0.003    0.0%      2      1.25 us  HcPostP<ActF32>
+     0.002    0.0%      1      2.40 us  RmsNormPS<512u, 2u>
+  kernels 7048.826 ms, launches 84501 per step; marks total 13.113 -> gaps/copies -7035.713 ms
+kernels built for 6 cards in 2.0s

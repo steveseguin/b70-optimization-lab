@@ -1,0 +1,49 @@
+heat_plain_cold exit 0
+heat_plain_cold: decode: 511 steps after the first, 0.011 s/step, 95.16 tok/s
+heat_plain_cold: host io during decode: 90.3 MiB read from disk, 3 major page faults; engram rows 268.6 us per step and card (slowest card 272.4 us; copy + decode launch calls 10.6 us)
+heat_plain_warm exit 0
+heat_plain_warm: decode: 511 steps after the first, 0.011 s/step, 94.04 tok/s
+heat_plain_warm: host io during decode: 0.3 MiB read from disk, 0 major page faults; engram rows 381.8 us per step and card (slowest card 383.0 us; copy + decode launch calls 10.6 us)
+heat_spec_cold exit 0
+heat_spec_cold: spec decode: 511 tokens in 255 cycles (2.00 per cycle; 256 of 402 guesses kept, 63.7 %) in 4.56s = 111.96 tok/s; draft 1.95 ms + check 15.95 ms per cycle; SAME AS the plain run
+heat_spec_cold: host io during decode: 23.3 MiB read from disk, 6 major page faults; engram rows 493.6 us per step and card (slowest card 495.3 us; copy + decode launch calls 12.4 us)
+heat_spec_warm exit 0
+heat_spec_warm: spec decode: 511 tokens in 255 cycles (2.00 per cycle; 256 of 402 guesses kept, 63.7 %) in 4.58s = 111.59 tok/s; draft 1.96 ms + check 16.00 ms per cycle; SAME AS the plain run
+heat_spec_warm: host io during decode: 0.2 MiB read from disk, 0 major page faults; engram rows 440.2 us per step and card (slowest card 442.8 us; copy + decode launch calls 12.5 us)
+heat plain cold/warm SAME
+bash_plain_cold exit 0
+bash_plain_cold: decode: 511 steps after the first, 0.010 s/step, 95.30 tok/s
+bash_plain_cold: host io during decode: 75.2 MiB read from disk, 2 major page faults; engram rows 255.7 us per step and card (slowest card 258.3 us; copy + decode launch calls 9.8 us)
+bash_plain_warm exit 0
+bash_plain_warm: decode: 511 steps after the first, 0.010 s/step, 96.93 tok/s
+bash_plain_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 66.7 us per step and card (slowest card 67.9 us; copy + decode launch calls 9.7 us)
+bash_spec_cold exit 0
+bash_spec_cold: spec decode: 511 tokens in 194 cycles (2.63 per cycle; 318 of 391 guesses kept, 81.3 %) in 3.69s = 138.30 tok/s; draft 1.96 ms + check 17.09 ms per cycle; SAME AS the plain run
+bash_spec_cold: host io during decode: 7.6 MiB read from disk, 1 major page faults; engram rows 616.3 us per step and card (slowest card 618.2 us; copy + decode launch calls 12.9 us)
+bash_spec_warm exit 0
+bash_spec_warm: spec decode: 511 tokens in 194 cycles (2.63 per cycle; 318 of 391 guesses kept, 81.3 %) in 3.61s = 141.36 tok/s; draft 1.96 ms + check 16.67 ms per cycle; SAME AS the plain run
+bash_spec_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 123.5 us per step and card (slowest card 124.9 us; copy + decode launch calls 12.7 us)
+bash plain cold/warm SAME
+tsdb_spec_cold exit 0
+tsdb_spec_cold: spec decode: 511 tokens in 284 cycles (1.80 per cycle; 227 of 348 guesses kept, 65.2 %) in 4.77s = 107.05 tok/s; draft 1.95 ms + check 14.85 ms per cycle; no reference
+tsdb_spec_cold: host io during decode: 99.1 MiB read from disk, 3 major page faults; engram rows 250.2 us per step and card (slowest card 251.9 us; copy + decode launch calls 11.9 us)
+tsdb_spec_warm exit 0
+tsdb_spec_warm: spec decode: 511 tokens in 284 cycles (1.80 per cycle; 227 of 348 guesses kept, 65.2 %) in 4.77s = 107.10 tok/s; draft 1.96 ms + check 14.84 ms per cycle; no reference
+tsdb_spec_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 109.9 us per step and card (slowest card 112.7 us; copy + decode launch calls 12.0 us)
+tsdb_plain_warm exit 0
+tsdb_plain_warm: decode: 511 steps after the first, 0.010 s/step, 97.08 tok/s
+tsdb_plain_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 75.9 us per step and card (slowest card 77.6 us; copy + decode launch calls 9.8 us)
+tsdb spec_cold SAME as plain (512 ids)
+tsdb spec_warm SAME as plain (512 ids)
+email_spec_cold exit 0
+email_spec_cold: spec decode: 381 tokens in 143 cycles (2.66 per cycle; 239 of 349 guesses kept, 68.5 %) in 2.84s = 134.33 tok/s; draft 1.96 ms + check 17.87 ms per cycle; no reference
+email_spec_cold: host io during decode: 70.7 MiB read from disk, 2 major page faults; engram rows 419.1 us per step and card (slowest card 421.4 us; copy + decode launch calls 13.2 us)
+email_spec_warm exit 0
+email_spec_warm: spec decode: 381 tokens in 143 cycles (2.66 per cycle; 239 of 349 guesses kept, 68.5 %) in 2.82s = 135.10 tok/s; draft 1.96 ms + check 17.76 ms per cycle; no reference
+email_spec_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 139.3 us per step and card (slowest card 142.0 us; copy + decode launch calls 13.4 us)
+email_plain_warm exit 0
+email_plain_warm: decode: 381 steps after the first, 0.010 s/step, 97.08 tok/s
+email_plain_warm: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 70.4 us per step and card (slowest card 71.0 us; copy + decode launch calls 9.9 us)
+email spec_cold SAME as plain (382 ids)
+email spec_warm SAME as plain (382 ids)
+ALLDONE
