@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**November 11, 2026 15:17 EST — DeepSeek V4.1: tp98 build + gate tg98 queued (units build98, tg98).** tp98 = tp97 +
+qb-off-3 (`OWN_QB_OFF_M` hang fix: one poller per flag word, in-kernel timeout report) + dride-1 (`OWN_MT_DRIDE=1`:
+split finishes ride output-b / shared down at 4-6 tokens, one-card bench bitwise, ~0.6 ms per such check), both
+opt-in. The build waits until no helper holds a card lock. Tree uncommitted until the gate passes.
+
 **November 11, 2026 14:33 EST — DeepSeek V4.1 tp97 gate (tg97 + tg97b) done.** The tp96 winners are the defaults now
 (every trace identical, 16 / 16 guessing runs the same as plain): plain 100.4 / 100.6 tok/s, code 138.4 / 139.2,
 analysis 153.0 / 150.5. k7-2 (`OWN_K7`) bitwise but 1.5 % slower plain: off. qb-off-2 (`OWN_QB_OFF_M`) hangs: do not
