@@ -227,6 +227,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL")) opt.xpull = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
+    if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // 128: XPullK128 (opt-in)
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
@@ -255,6 +256,10 @@ int main(int argc, char **argv) {
     // the attention output from local memory, a column per lane (the same outputs): default since round 18 s3 / g76
     // (=0 for SparseOutJB)
     opt.att_out_c = getenv("OWN_ATT_OUT_C") ? atoi(getenv("OWN_ATT_OUT_C")) != 0 : true;
+    // the score's heads per sub-group (4, 2 or 1) and the trimmed lists' softmax built per slot count (the same
+    // outputs; tools/bench/bench_attn_dec.cpp 2026-11-11): opt-in until gated
+    if (getenv("OWN_ATT_HG")) opt.att_hg = (unsigned)atoi(getenv("OWN_ATT_HG"));
+    if (const char *e = getenv("OWN_ATT_PK")) opt.att_pk = atoi(e) != 0; // default on (tg86: same answers, +2.4 %)
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.
@@ -425,10 +430,14 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TG_MAX")) be.mt_tg_max = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_EU")) be.mt_eu = (unsigned)atoi(e); // expert-major routed rows (6)
         if (const char *e = getenv("OWN_MT_TGU")) be.mt_tgu = (unsigned)atoi(e); // unpacked rows in token groups
+        // the per-block-size tables (OWN_MT_TGM / OWN_MT_TGR / OWN_MT_TGWM): an entry past MTF (16) tokens that no
+        // option names takes the MTF entry (blocks of up to MTX = 64 tokens pick their forms as a block of 16)
+        constexpr int MTX_ = own41::Backend41::MTX, MTF_ = own41::Backend41::MTF;
+        bool set_tgm[MTX_ + 1] = {}, set_tgr[MTX_ + 1] = {}, set_tgwm[MTX_ + 1] = {};
         if (const char *e = getenv("OWN_MT_TGM")) { // per block size: "m:g,m:g"
             for (const char *s = e; *s;) {
                 unsigned m = 0, gsz = 0;
-                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 9) be.mt_tgm[m] = gsz;
+                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 9) be.mt_tgm[m] = gsz, set_tgm[m] = true;
                 const char *cm = std::strchr(s, ',');
                 if (!cm) break;
                 s = cm + 1;
@@ -441,7 +450,7 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TGR")) { // per block size: "m:r,m:r" rows per sub-group (2 or 4)
             for (const char *s = e; *s;) {
                 unsigned m = 0, rr = 0;
-                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 0 || rr == 2 || rr == 4)) be.mt_tgr[m] = rr;
+                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 0 || rr == 2 || rr == 4)) be.mt_tgr[m] = rr, set_tgr[m] = true;
                 const char *cm = std::strchr(s, ',');
                 if (!cm) break;
                 s = cm + 1;
@@ -450,17 +459,23 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TGR_ROWS")) be.mt_tgr_rows = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_FMT")) be.mt_tgr_fmt = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_TGR_DRAFT")) be.mt_tgr_draft = atoi(e) != 0;
-        // default since round 18 d4 / g78: blocks of 9-16 tokens pick their dense forms per matrix shape (OWN_MT_W16=0: off)
+        // default since round 18 d4 / g78: blocks of 9-16 tokens (and larger ones, as 16) pick their dense forms per
+        // matrix shape (OWN_MT_W16=0: off)
         be.mt_w16 = getenv("OWN_MT_W16") ? atoi(getenv("OWN_MT_W16")) != 0 : true;
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
                 unsigned m = 0, gsz = 0;
-                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 6) be.mt_tgwm[m] = gsz;
+                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 6) be.mt_tgwm[m] = gsz, set_tgwm[m] = true;
                 const char *cm = std::strchr(s, ',');
                 if (!cm) break;
                 s = cm + 1;
             }
+        }
+        for (int m = MTF_ + 1; m <= MTX_; ++m) {
+            if (!set_tgm[m]) be.mt_tgm[m] = be.mt_tgm[MTF_];
+            if (!set_tgr[m]) be.mt_tgr[m] = be.mt_tgr[MTF_];
+            if (!set_tgwm[m]) be.mt_tgwm[m] = be.mt_tgwm[MTF_];
         }
         if (const char *e = getenv("OWN_DR_MXN")) be.dr_mxn = atoi(e) != 0;
         if (const char *e = getenv("OWN_HC_FIN")) be.hc_fin_form = atoi(e);
@@ -478,9 +493,10 @@ int main(int argc, char **argv) {
             // OWN_PROMPT_BLOCK=m (OWN_TP > 1): m prompt tokens per step (decode_block_tp), the same values
             const int pblock = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
             if (pblock > 1 && opt.tp > 1) {
-                // OWN_ENG_AHEAD=n (default 16; 0 off; needs OWN_ENG_EARLY): the engram rows of the next n prompt
-                // tokens are asked from the disk while the cards run the current block
-                const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : 16;
+                // OWN_ENG_AHEAD=n (default 16, or the block size past 16 tokens: the whole next block; 0 off; needs
+                // OWN_ENG_EARLY): the engram rows of the next n prompt tokens are asked from the disk (page-cache hints
+                // only) while the cards run the current block
+                const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pblock);
                 for (size_t i = 0; i < prompt.size();) {
                     const int m = (int)std::min<size_t>((size_t)pblock, prompt.size() - i);
                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);

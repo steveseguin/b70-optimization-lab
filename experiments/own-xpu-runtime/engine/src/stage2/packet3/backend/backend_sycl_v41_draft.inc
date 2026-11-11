@@ -41,11 +41,12 @@ void dr_alloc(int c) {
         dring[c][s] = dalloc<uint16_t>(c, (size_t)(DR_WIN + MTX) * g.hd);
         qs[c].memset(dring[c][s], 0, (size_t)(DR_WIN + MTX) * g.hd * 2);
     }
-    dfeat[c] = dalloc<float>(c, (size_t)MTX * 3 * g.h);
-    dmain[c] = dalloc<act_t>(c, (size_t)MTX * g.h);
-    dmainn[c] = dalloc<act_t>(c, (size_t)MTX * g.h);
-    dkv[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
-    dkvn[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
+    // (MTA tokens: dfeat and dmainn are the injection's dense-row inputs, see MTA)
+    dfeat[c] = dalloc<float>(c, (size_t)MTA * 3 * g.h);
+    dmain[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
+    dmainn[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
+    dkv[c] = dalloc<act_t>(c, (size_t)MTA * g.hd);
+    dkvn[c] = dalloc<act_t>(c, (size_t)MTA * g.hd);
     dprev[c] = dalloc<int32_t>(c, 8);
     dconf[c] = dalloc<float>(c, 8);
     qs[c].wait();
@@ -101,7 +102,7 @@ void dr_routed(int c, const std::string &wn, const std::string &wn2, const act_t
     const size_t np = (size_t)(w2 ? 2 : 1) * nsl * rows;
     if (dp.packed) { // OWN_DR_MXP: packed rows, the block's slots grouped by expert (RoutedMXFP4U, the same sums)
         if (!per_slot) // gate + up come first in each stage; down reuses the groups
-            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::WG, ops41sycl::ExpertGroupM{nsl, 6u},
+            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(nsl), ops41sycl::ExpertGroupM{nsl, 6u},
                                                       (const uint32_t *)scm[c][0].ids, egrp[c]);
         auto gu = [&](auto nbc) {
             constexpr unsigned NB = decltype(nbc)::value;
@@ -214,8 +215,16 @@ void dr_stage(int s, int c) {
            (const float *)b.pre_a, b.x);
     rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
                        tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dots(p + "hc_ffn_")});
+    // the pick over the draft's own experts (128: 128 router rows, 128 biases). Its logits rows keep the target's
+    // stride (g.experts) in the shared router buffer, but only their first dne entries are written here; a pick over
+    // g.experts read the target's last block's router logits behind them (which depend on how the prompt was cut
+    // into blocks) with ffn_gate_inp's first floats as their biases, the picks past 127 reading expert 0.
+    const int dne = (int)we(p + "ffn_gate_inp.weight").rows;
+    if (dne < 32 || dne % 32 || dne > g.experts || we(p + "exp_probs_b.bias").cols != dne ||
+        we(p + "ffn_gate_exps.weight").experts != dne)
+        throw std::runtime_error("draft router: expert count of " + p);
     gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
-    launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 3}, (size_t)g.experts},
+    launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{dne, 3}, (size_t)g.experts},
                              (const float *)b.router, bias, b.ids, b.prob);
     tok_set(c, 0);
     rows_launch(c, tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16));

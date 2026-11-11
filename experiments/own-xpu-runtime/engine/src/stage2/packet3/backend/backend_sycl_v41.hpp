@@ -43,6 +43,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <ctime>
 #include <condition_variable>
 #include <cxxabi.h>
 #include <fcntl.h>
@@ -65,9 +66,25 @@
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
 #include <level_zero/ze_api.h>
+#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
 
 namespace own41 {
+
+// the pull exchange pinned to 128 registers (OWN_XPULL_GRF=128). The build's auto mode gives the lambda form 256,
+// so each of the 83 exchanges per one-token step sits between 128-register kernels and costs two register-mode
+// changes (~1 us of device idle each in tl85's timeline; gs1: ~2.9 us per 256-register kernel by the host clock).
+// At 128 registers the kernel spills 256 bytes (17 references; tools/perf/xpull_grf_tu.cpp's dump). Same code.
+struct XPullK128 {
+    ops41sycl::XchgPull x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
 
 inline long meminfo_kb(const char *key) {
     std::ifstream f("/proc/meminfo");
@@ -227,11 +244,16 @@ public:
         bool rope_out = true;   // tp: inverse rope in the attention output's store (OWN_ROPE_OUT=0: own launch)
         bool att_out_c = false; // tp: the attention output from local memory, a column per lane (SparseOutJC;
                                 // OWN_ATT_OUT_C, the same outputs as SparseOutJB)
+        unsigned att_hg = 1;    // tp: the score's heads per sub-group, 1 (default since tg86), 2 or 4 (OWN_ATT_HG; fewer = more sub-groups,
+                                // every (head, slot) sum the same; tools/bench/bench_attn_dec.cpp, 2026-11-11)
+        bool att_pk = true;     // tp (default since tg86; OWN_ATT_PK=0: off): a trimmed list's softmax built for its slot count (SparseSoftmaxP<n>, 128
+                                // registers; OWN_ATT_PK) instead of SparseSoftmaxPN<640> (256 registers: mode changes)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
         unsigned xpull_min = 8192; // (OWN_XPULL_MIN)
         bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
+        unsigned xpull_grf = 0; // 128: XchgPull built for 128 registers (XPullK128; OWN_XPULL_GRF=128), else auto (256)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
@@ -316,7 +338,7 @@ public:
         for (int t = 0; t < TILES; ++t) {
             int a = active[t] ? t : first;
             ctxs.push_back(cm.at(a));
-            if (opt.gprof)
+            if (opt.gprof || tl_path) // (OWN_TIMELINE: the launches' timestamps come from profiling events too)
                 qs.emplace_back(cm.at(a), devs[a],
                                 sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
             else
@@ -363,7 +385,7 @@ public:
         }
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
             if (o.tp > 1)
-                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps)
+                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps; MTX <= 128)
                     ring[t][L] = dalloc<uint16_t>(t, (size_t)(128 + MTX) * g.hd);
             else
                 ring[tile_of_layer(L)][L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
@@ -409,6 +431,14 @@ public:
             if (!active[t]) continue;
             try { qs[t].wait(); } catch (...) {}
         }
+        try { // OWN_TIMELINE / OWN_XWAIT: what is still in memory (a window cut short by the end of the answer)
+            for (int c = 0; c < TILES; ++c) {
+                if (tl_path && !tl_done[c] && !tl_rec[c].empty()) tl_flush(c);
+                if (xw_f && !xw_buf[c].empty()) xw_flush_card(c);
+            }
+        } catch (...) {}
+        if (tl_f) std::fclose(tl_f);
+        if (xw_f) std::fclose(xw_f);
         for (int c = 0; c < TILES; ++c) // peers' arenas opened in this card's context
             for (int d = 0; d < TILES; ++d)
                 if (c != d && xpeer[c][d])
@@ -701,6 +731,7 @@ public:
     }
     void kev(int tile, const char *name, const sycl::event &e) {
         if (o.kprof && (o.tp <= 1 || tile == o.prof_card)) kevs.push_back({name, e}); // tp: one card's kernels
+        if (tl_on[tile]) tl_add(tile, name, e); // OWN_TIMELINE window
     }
     void gprof_collect() {
         if (!o.gprof) return;
@@ -762,7 +793,14 @@ public:
     // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
     bool skip_head = false;
     // tp: token index inside a multi-token step (0 in one-token steps); the card's position is pos + tokoff
-    static constexpr int MTX = 16; // tokens per multi-token step, at most
+    // tokens per multi-token step, at most (OWN41_MTX, default 64; was 16 until 2026-11-11). Only capacities
+    // follow it: block buffers, exchange regions, the ring's block area, the kernels' per-token tables.
+    static constexpr int MTX = (int)ops41sycl::MT_MAX;
+    // blocks of up to MTF tokens run the one-sub-group dense forms (DenseRowsM / GemvTM / HcDotsRowsM) built at
+    // MTF tokens, as before; larger blocks run the same per-token groups (rowg<G> of the same G) spread over
+    // sub-groups or launches. The block buffers hold MTA tokens (8 spare: token groups of G <= 9 read up to
+    // ceil(mt / G) * G tokens' inputs and store only t < mt).
+    static constexpr int MTF = 16, MTA = MTX + 8;
     long tokoff[TILES] = {};
     long cpos(int c) const { return pos + tokoff[c]; }
     void prof(const char *name, int t) {
@@ -1796,6 +1834,17 @@ private:
     // OWN_ATT_TRIM: the slots attention runs over for a list of len < 512 compressed rows in order (CidxFill):
     // the 128 window slots + len rounded up to 32, at least 32 (the 640-slot kernels stay: SparseScoreHG)
     static int att_trim_n(long len) { return 128 + (int)std::max<long>(32, (len + 31) / 32 * 32); }
+    // OWN_ATT_PK: a trimmed list's softmax as SparseSoftmaxP<n> (n = 160 ... 608; a head's slots at stride n, as in
+    // SparseSoftmaxPN<640>{n}: the same max and the same serial sum); false for any other n
+    template <int NI> bool softmax_pk(int c, int nh, int n, const float *sinks, const int32_t *ix, float *w) {
+        if constexpr (NI >= 640) {
+            return false;
+        } else {
+            if (n != NI) return softmax_pk<NI + 32>(c, nh, n, sinks, ix, w);
+            launch_sg(c, nh, ops41sycl::SparseSoftmaxP<NI>{nh}, sinks, ix, w);
+            return true;
+        }
+    }
     // config.json compress_ratios, main layers: 0,0, 2 x18, 1 x20 (37-39 are ratio 1)
     int cr_of(int L) const { return L < 2 ? 0 : (L < 20 ? 2 : 1); }
 
@@ -2496,14 +2545,318 @@ private:
     std::atomic<long> tp_mark{0};
     long tp_stepn = 0;
     int32_t tp_tok = 0;
+
+    // ---- OWN_XWAIT=<file> (diagnostic build, -DOWN41_XWAIT): who waits for whom at each exchange ---------------
+    // In every one-token step (tp_card_step) each card records, for each exchange it waits in, the flag polls and
+    // the clock ticks until each peer's flag arrived (ops41sycl::XchgPW / XchgPullW in sycl_v41.hpp, which only
+    // that build compiles; a normal build refuses OWN_XWAIT). One line per (step, card, exchange), in batches:
+    //   xw <step> <card> <k> <label> <polls x6> <ticks x6> <push ticks> <kernel ticks> <answer step>
+    // step = the backend's step count (prompt one-token steps included); k = the card's k-th waiting exchange of
+    // the step (the same exchange on every card); label = layer * 100 + phase * 10 + part (part 9: none; "phase"
+    // 9 of layer 0: before layer 0); answer step = the runner's "tok N" (0 in prompt steps). The card the others
+    // wait longest for arrived last. Off: the plain exchange kernels, no record, no copy. On: clock reads in the
+    // waits, and after each step one ~10 KB copy back per card (main thread, every card done).
+    static constexpr unsigned XW_N = 256;
+    const char *xw_path = [] { const char *e = getenv("OWN_XWAIT"); return e && *e ? e : nullptr; }();
+    uint32_t *xw_d[TILES] = {};
+    bool xw_on[TILES] = {};  // inside tp_card_step (prompt blocks and the draft are not recorded)
+    unsigned xw_k[TILES] = {};
+    int xw_ph[TILES] = {};   // layer * 10 + phase of the exchanges being launched
+    std::vector<int> xw_lab[TILES];
+    std::vector<uint32_t> xw_h[TILES];
+    std::string xw_buf[TILES];
+    std::mutex xw_mu;
+    FILE *xw_f = nullptr;
+    void xw_begin(int c) {
+        xw_on[c] = xw_d[c] != nullptr;
+        xw_k[c] = 0;
+        xw_lab[c].clear();
+        xw_ph[c] = 9; // before layer 0 (label 9x)
+    }
+    // the record slot of the next exchange of card c; -1: none (push only, ring full, outside tp_card_step)
+    int xw_arm(int c, int mode, int part, bool pull = false) {
+        if (!xw_on[c] || mode == 1 || xw_k[c] >= XW_N || (pull && o.xpull_lb)) return -1; // (XchgPullW: copy_seq only)
+        xw_lab[c].push_back(xw_ph[c] * 10 + (part < 0 ? 9 : part));
+        return (int)xw_k[c]++;
+    }
+    void xw_collect(int c) { // decode_step_tp, after every card finished the step
+        if (!xw_on[c]) return;
+        xw_on[c] = false;
+        if (!xw_k[c]) return;
+        auto &h = xw_h[c];
+        h.resize((size_t)xw_k[c] * 16);
+        qs[c].memcpy(h.data(), xw_d[c], h.size() * 4).wait();
+        char ln[384];
+        for (unsigned k = 0; k < xw_k[c]; ++k) {
+            const uint32_t *r = h.data() + (size_t)k * 16;
+            if (!r[12]) continue;
+            int n = std::snprintf(ln, sizeof ln, "xw %ld %d %u %d", tp_stepn, c, k, xw_lab[c][k]);
+            for (int i = 0; i < 12; ++i) n += std::snprintf(ln + n, sizeof ln - n, " %u", r[i]);
+            n += std::snprintf(ln + n, sizeof ln - n, " %u %u %d\n", r[13], r[14], trace_step);
+            xw_buf[c].append(ln, (size_t)n);
+        }
+        if (xw_buf[c].size() > ((size_t)1 << 20)) xw_flush_card(c);
+    }
+    void xw_flush_card(int c) {
+        std::lock_guard<std::mutex> lk(xw_mu);
+        if (xw_f) {
+            std::fwrite(xw_buf[c].data(), 1, xw_buf[c].size(), xw_f);
+            std::fflush(xw_f);
+        }
+        xw_buf[c].clear();
+    }
+
+    // ---- OWN_TIMELINE=<file> (diagnostic): a per-launch timeline of one-token answer steps ---------------------
+    // OWN_TIMELINE_STEPS=a-b (default 20-27; the runner's "tok N" numbers, a >= 1): in those steps EVERY card
+    // records each launch (kernel type, the GPU start and end of its profiling event) with the host time right
+    // after its submit returned, the host's queue waits (twait) and the card thread's step begin and end. After
+    // steps a-1 .. b, once every card is done (main thread, decode_step_tp), one device/host clock pair per card
+    // (zeDeviceGetGlobalTimestamps: device ticks with the driver's host time, CLOCK_MONOTONIC_RAW on Linux = the
+    // clock of every host time here; kept if that time lies inside the call's own bracket, else the bracket's
+    // middle, ok = 2). The file is written after step b, also from the main thread (or at exit if the answer
+    // ended first). Lines:
+    //   card <c> <pci> <timer ns/tick> <timer Hz> <kernel timestamp bits> <global timestamp bits>
+    //   cal <c> <step> <ok> <dev ticks> <dev ns> <host ns> <host before> <host after>
+    //   kname <id> <kernel or copy name>
+    //   st <step> <c> <host begin> <host end>            (the card thread's tp_card_step)
+    //   hw <step> <c> <host from> <host to>              (a host queue wait)
+    //   <step> <c> <idx> <name id> <t_submit_host_ns> <t_start_ns> <t_end_ns> <dev start> <dev end> <dev submit>
+    //       <xpart> <xmode> <xk>
+    // t_start / t_end are the GPU times on the host clock, linear between the card's two clock pairs around them:
+    // comparable across cards and with t_submit (dev *: the raw profiling ns, each card its own timer; dev submit:
+    // SYCL's own submit stamp; xpart / xmode / xk: for an exchange its part (XP_*), mode (0 push + wait, 1 push,
+    // 2 wait) and OWN_XWAIT slot, else -1). Analysis: tools/perf/dsv41_timeline.py.
+    // Off: plain queues, no events kept, no clock read (one flag test per launch and per queue wait). On: the
+    // queues have profiling for the whole run; in the window each launch costs a clock read and keeps its event
+    // (~1,050 per card per step) until the window ends. No barrier and no wait is added inside a step; between
+    // the window's steps nothing (clock pairs after steps a-1 and b only), after step b ~tens of ms on the file.
+    // OWN_TIMELINE_CHECKS=a-b instead records the guessing checks number a..b (blocks with every position's head,
+    // counted from 1 per run; steps 10000 + n in the file; the one-token window is then off), clock pairs after
+    // checks a-1 and b (decode_verify_tp).
+    // Do not combine with OWN_GPROF (its barriers become unrecorded gaps).
+    struct TLRec { const char *name; sycl::event e; int64_t host_ns; int step; int16_t xpart, xk; int8_t xmode; };
+    struct TLCal { int step, ok; uint64_t ticks; int64_t dev_ns, host_ns, lo, hi; };
+    struct TLSpan { int step; int64_t a, b; };
+    struct TLX { int16_t part = -1, xk = -1; int8_t mode = -1; };
+    const char *tl_path = [] { const char *e = getenv("OWN_TIMELINE"); return e && *e ? e : nullptr; }();
+    int tl_a = 20, tl_b = 27;
+    int tl_ca = -1, tl_cb = -1; // OWN_TIMELINE_CHECKS
+    long tl_ckn[TILES] = {};    // checks begun per card
+    bool tl_on[TILES] = {}, tl_done[TILES] = {};
+    int tl_step[TILES] = {};
+    int64_t tl_t0[TILES] = {};
+    TLX tl_x[TILES];
+    std::vector<TLRec> tl_rec[TILES];
+    std::vector<TLCal> tl_cal[TILES];
+    std::vector<TLSpan> tl_hw[TILES], tl_st[TILES];
+    uint64_t tl_res[TILES] = {}, tl_hz[TILES] = {};
+    uint32_t tl_kbits[TILES] = {}, tl_tbits[TILES] = {};
+    std::mutex tl_mu;
+    FILE *tl_f = nullptr;
+    std::map<const char *, int> tl_ids; // under tl_mu
+    static int64_t tl_now() {
+        timespec ts;
+        clock_gettime(CLOCK_MONOTONIC_RAW, &ts);
+        return (int64_t)ts.tv_sec * 1000000000LL + ts.tv_nsec;
+    }
+    void tl_add(int c, const char *name, const sycl::event &e) {
+        const int64_t h = tl_now();
+        tl_rec[c].push_back({name, e, h, tl_step[c], tl_x[c].part, tl_x[c].xk, tl_x[c].mode});
+        tl_x[c] = {};
+    }
+    int64_t tl_dev_ns(int c, uint64_t ticks) const { // as the runtime turns kernel timestamps into ns
+        const uint32_t b = tl_kbits[c];
+        const uint64_t m = b == 0 || b >= 64 ? ~0ull : (1ull << b) - 1;
+        return (int64_t)((ticks & m) * (tl_res[c] ? tl_res[c] : 1));
+    }
+    void tl_setup() { // tp_setup
+        if (!tl_path) return;
+        if (const char *e = getenv("OWN_TIMELINE_STEPS")) {
+            int a = 0, b = 0;
+            const int n = std::sscanf(e, "%d-%d", &a, &b);
+            if (n < 1 || a < 1 || (n == 2 && b < a))
+                throw std::runtime_error("OWN_TIMELINE_STEPS: a-b (answer steps, 1 <= a <= b)");
+            tl_a = a, tl_b = n == 2 ? b : a;
+        }
+        if (const char *e = getenv("OWN_TIMELINE_CHECKS")) {
+            int a = 0, b = 0;
+            const int n = std::sscanf(e, "%d-%d", &a, &b);
+            if (n < 1 || a < 1 || (n == 2 && b < a))
+                throw std::runtime_error("OWN_TIMELINE_CHECKS: a-b (guessing checks, 1 <= a <= b)");
+            tl_ca = a, tl_cb = n == 2 ? b : a;
+            tl_a = tl_b = 1 << 30; // the one-token window off
+        }
+        if (!(tl_f = std::fopen(tl_path, "w"))) throw std::runtime_error("OWN_TIMELINE: cannot write the file");
+        std::fprintf(tl_f, "# OWN_TIMELINE v1: answer steps %d-%d, %d cards, host clock CLOCK_MONOTONIC_RAW ns "
+                     "(format: backend_sycl_v41.hpp; analysis: tools/perf/dsv41_timeline.py)\n", tl_a, tl_b, o.tp);
+        for (int c = 0; c < o.tp; ++c) {
+            auto zd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+            ze_device_properties_t p{};
+            p.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES; // timerResolution in ns per tick
+            if (zeDeviceGetProperties(zd, &p) == ZE_RESULT_SUCCESS) {
+                tl_res[c] = p.timerResolution;
+                tl_kbits[c] = p.kernelTimestampValidBits;
+                tl_tbits[c] = p.timestampValidBits;
+            }
+            ze_device_properties_t p2{};
+            p2.stype = ZE_STRUCTURE_TYPE_DEVICE_PROPERTIES_1_2; // ... in ticks per second
+            if (zeDeviceGetProperties(zd, &p2) == ZE_RESULT_SUCCESS) tl_hz[c] = p2.timerResolution;
+            std::fprintf(tl_f, "card %d %s %llu %llu %u %u\n", c, pci[c].c_str(), (unsigned long long)tl_res[c],
+                         (unsigned long long)tl_hz[c], tl_kbits[c], tl_tbits[c]);
+        }
+        std::fflush(tl_f);
+    }
+    void tl_calibrate(int c, int step) { // the narrowest of four brackets
+        auto zd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+        TLCal best{step, 0, 0, 0, 0, 0, 0};
+        int64_t bw = -1;
+        for (int i = 0; i < 4; ++i) {
+            uint64_t ht = 0, dt = 0;
+            const int64_t lo = tl_now();
+            if (zeDeviceGetGlobalTimestamps(zd, &ht, &dt) != ZE_RESULT_SUCCESS) break;
+            const int64_t hi = tl_now();
+            if (bw >= 0 && hi - lo >= bw) continue;
+            bw = hi - lo;
+            const bool in = (int64_t)ht >= lo && (int64_t)ht <= hi;
+            best = {step, in ? 1 : 2, dt, tl_dev_ns(c, dt), in ? (int64_t)ht : lo + (hi - lo) / 2, lo, hi};
+        }
+        tl_cal[c].push_back(best);
+    }
+    bool tl_window() const { return !skip_head && trace_step >= tl_a && trace_step <= tl_b; }
+    void tl_begin(int c) { // tp_card_step's start (card thread)
+        tl_step[c] = trace_step;
+        tl_on[c] = !tl_done[c] && tl_window();
+        if (!tl_on[c]) return;
+        if (tl_rec[c].empty()) { // the window's first step on this card: no reallocation inside the window
+            tl_rec[c].reserve((size_t)2048 * (tl_b - tl_a + 1));
+            tl_hw[c].reserve((size_t)64 * (tl_b - tl_a + 1));
+            tl_st[c].reserve((size_t)(tl_b - tl_a + 1));
+        }
+        tl_t0[c] = tl_now();
+    }
+    void tl_begin_ck(int c) { // tpm_card_step's start for a checked block (OWN_TIMELINE_CHECKS)
+        const long k = ++tl_ckn[c];
+        tl_step[c] = 10000 + (int)k;
+        tl_on[c] = !tl_done[c] && tl_ca > 0 && k >= tl_ca && k <= tl_cb;
+        if (!tl_on[c]) return;
+        if (tl_rec[c].empty()) {
+            tl_rec[c].reserve((size_t)4096 * (tl_cb - tl_ca + 1));
+            tl_hw[c].reserve((size_t)64 * (tl_cb - tl_ca + 1));
+            tl_st[c].reserve((size_t)(tl_cb - tl_ca + 1));
+        }
+        tl_t0[c] = tl_now();
+    }
+    void tl_check_done() { // decode_verify_tp, main thread, after every card finished the check
+        if (tl_ca < 0) return;
+        const long k = tl_ckn[0];
+        if (k != tl_ca - 1 && k != tl_cb) return;
+        for (int c = 0; c < o.tp; ++c) {
+            if (tl_done[c]) continue;
+            tl_calibrate(c, 10000 + (int)k);
+            if (k == tl_cb) tl_flush(c);
+        }
+    }
+    void tl_end(int c) { // tp_card_step's end (card thread; its queue is empty)
+        if (!tl_on[c]) return;
+        tl_on[c] = false;
+        tl_st[c].push_back({tl_step[c], tl_t0[c], tl_now()});
+    }
+    // decode_step_tp, main thread, after every card finished the step (nothing runs beside it): a clock pair per
+    // card after steps a-1 and b only (four ~12.5 us clock brackets, ~50 us per card: after every step the six
+    // cards' calibrations put ~0.28 ms of host time between the window's steps, tl85 2026-11-11), and the
+    // window's file after step b
+    void tl_step_done() {
+        const bool last = !skip_head && trace_step == tl_b;
+        if (skip_head || (trace_step != tl_a - 1 && trace_step != tl_b)) return;
+        for (int c = 0; c < o.tp; ++c) {
+            if (tl_done[c]) continue;
+            tl_calibrate(c, trace_step);
+            if (last) tl_flush(c);
+        }
+    }
+    // card c's window to the file (after its last step: every event is complete)
+    void tl_flush(int c) {
+        if (tl_done[c]) return;
+        tl_done[c] = true;
+        tl_on[c] = false;
+        struct V { int64_t s, e, sub; };
+        std::vector<V> v(tl_rec[c].size());
+        for (size_t i = 0; i < v.size(); ++i) {
+            auto &ev = tl_rec[c][i].e;
+            ev.wait();
+            v[i].s = (int64_t)ev.get_profiling_info<sycl::info::event_profiling::command_start>();
+            v[i].e = (int64_t)ev.get_profiling_info<sycl::info::event_profiling::command_end>();
+            v[i].sub = (int64_t)ev.get_profiling_info<sycl::info::event_profiling::command_submit>();
+        }
+        // device ns -> host ns: unwrapped against the first pair (kernel timestamps keep tl_kbits bits), then
+        // linear between the two pairs around d (or the two nearest); one pair: its offset only
+        const double range = tl_kbits[c] && tl_kbits[c] < 64
+                                 ? std::ldexp((double)(tl_res[c] ? tl_res[c] : 1), (int)tl_kbits[c]) : 0.0;
+        const double ref = tl_cal[c].empty() ? 0.0 : (double)tl_cal[c][0].dev_ns;
+        auto unwrap = [&](double d) {
+            if (range <= 0) return d;
+            double x = std::fmod(d - ref, range);
+            if (x < -range / 2) x += range;
+            if (x >= range / 2) x -= range;
+            return ref + x;
+        };
+        std::vector<std::pair<double, double>> P;
+        for (auto &k : tl_cal[c])
+            if (k.ok) P.push_back({unwrap((double)k.dev_ns), (double)k.host_ns});
+        std::sort(P.begin(), P.end());
+        auto conv = [&](int64_t di) -> long long {
+            if (P.empty()) return (long long)di; // no clock pair: the card's own timer (not aligned)
+            const double d = unwrap((double)di);
+            if (P.size() == 1) return std::llround(P[0].second + (d - P[0].first));
+            size_t j = (size_t)(std::upper_bound(P.begin(), P.end(), std::make_pair(d, 1e300)) - P.begin());
+            const size_t i0 = j == 0 ? 0 : std::min(j - 1, P.size() - 2), i1 = i0 + 1;
+            const double dd = P[i1].first - P[i0].first;
+            const double sl = dd > 0 ? (P[i1].second - P[i0].second) / dd : 1.0;
+            return std::llround(P[i0].second + (d - P[i0].first) * sl);
+        };
+        std::lock_guard<std::mutex> lk(tl_mu);
+        if (!tl_f) return;
+        for (auto &r : tl_rec[c]) {
+            auto it = tl_ids.find(r.name);
+            if (it == tl_ids.end()) {
+                const int id = (int)tl_ids.size();
+                tl_ids.emplace(r.name, id);
+                std::fprintf(tl_f, "kname %d %s\n", id, r.name);
+            }
+        }
+        for (auto &k : tl_cal[c])
+            std::fprintf(tl_f, "cal %d %d %d %llu %lld %lld %lld %lld\n", c, k.step, k.ok, (unsigned long long)k.ticks,
+                         (long long)k.dev_ns, (long long)k.host_ns, (long long)k.lo, (long long)k.hi);
+        for (auto &w : tl_st[c]) std::fprintf(tl_f, "st %d %d %lld %lld\n", w.step, c, (long long)w.a, (long long)w.b);
+        for (auto &w : tl_hw[c]) std::fprintf(tl_f, "hw %d %d %lld %lld\n", w.step, c, (long long)w.a, (long long)w.b);
+        int step = -1, idx = 0;
+        for (size_t i = 0; i < v.size(); ++i) {
+            const auto &r = tl_rec[c][i];
+            if (r.step != step) step = r.step, idx = 0;
+            std::fprintf(tl_f, "%d %d %d %d %lld %lld %lld %lld %lld %lld %d %d %d\n", r.step, c, idx++, tl_ids[r.name],
+                         (long long)r.host_ns, conv(v[i].s), conv(v[i].e), (long long)v[i].s, (long long)v[i].e,
+                         (long long)v[i].sub, (int)r.xpart, (int)r.xmode, (int)r.xk);
+        }
+        std::fflush(tl_f);
+        std::fprintf(stderr, "OWN_TIMELINE: card %d: %zu launches of answer steps %d-%d -> %s (%zu clock pairs)\n", c,
+                     v.size(), tl_a, tl_b, tl_path, P.size());
+        tl_rec[c] = {};
+        tl_hw[c] = {};
+        tl_st[c] = {};
+    }
     bool tp_hostprof = getenv("OWN_TP_HOSTPROF") != nullptr; // host time per card thread: busy vs blocked
     double tph_step[TILES] = {}, tph_wait[TILES] = {};
     long tph_n = 0;
     void twait(int c) {
-        if (!tp_hostprof || o.tp <= 1) { qs[c].wait(); return; }
-        const double t0 = now_s();
-        qs[c].wait();
-        tph_wait[c] += now_s() - t0;
+        const int64_t tw0 = tl_on[c] ? tl_now() : 0; // OWN_TIMELINE: the host's queue waits in the window
+        if (!tp_hostprof || o.tp <= 1) {
+            qs[c].wait();
+        } else {
+            const double t0 = now_s();
+            qs[c].wait();
+            tph_wait[c] += now_s() - t0;
+        }
+        if (tw0) tl_hw[c].push_back({tl_step[c], tw0, tl_now()});
     }
     long tlen[TILES][4] = {};         // rows of each kv source on card c (tp: every card publishes for itself)
     act_t *teng[TILES][2] = {};       // engram rows of layers 1 / 14, uploaded at step start
@@ -2697,6 +3050,13 @@ private:
             xarena[c] = dalloc<float>(c, nf);
             xcnt[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(xcnt[c], 0, 64);
+            if (xw_path) { // OWN_XWAIT ring (zeroed)
+#ifndef OWN41_XWAIT
+                throw std::runtime_error("OWN_XWAIT needs the diagnostic build (icpx ... -DOWN41_XWAIT): the exchange "
+                                         "kernels with wait clocks are not in this one");
+#endif
+                xw_d[c] = dalloc<uint32_t>(c, (size_t)XW_N * 16);
+            }
             xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
             if (!xerr[c]) throw std::runtime_error("host error word");
             std::memset(xerr[c], 0, 16);
@@ -2748,6 +3108,8 @@ private:
             }
         }
         for (int c = 0; c < N; ++c) qs[c].wait();
+        tl_setup(); // OWN_TIMELINE
+        if (xw_path && !(xw_f = std::fopen(xw_path, "w"))) throw std::runtime_error("OWN_XWAIT: cannot write the file");
         if (o.tp_threads)
             for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
         auto pin = [&](pthread_t t, int cpu, const char *who) {
@@ -2786,16 +3148,48 @@ private:
             const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
             float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
             uint32_t *err = xerr[c];
-            auto e = qs[c].submit([&](sycl::handler &hh) {
-                hh.parallel_for(sycl::nd_range<1>(nwg * 256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
-                    x(it, p0, p1, p2, p3, p4, p5, err);
+            const int xk = xw_arm(c, mode, part, true); // OWN_XWAIT slot (-1: none)
+            if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)mode};
+#ifdef OWN41_XWAIT
+            if (xk >= 0) { // the same exchange with the wait record, under XchgPull's name
+                const ops41sycl::XchgPullW xr{x, xw_d[c], (unsigned)xk};
+                auto e = qs[c].submit([&](sycl::handler &hh) {
+                    hh.parallel_for(sycl::nd_range<1>(nwg * 256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                        xr(it, p0, p1, p2, p3, p4, p5, err);
+                    });
                 });
-            });
+                kev(c, kname<ops41sycl::XchgPull>(), e);
+                return seq;
+            }
+#endif
+            const sycl::nd_range<1> xr(nwg * 256, 256);
+            auto e = o.xpull_grf == 128 ? qs[c].parallel_for(xr, XPullK128{x, p0, p1, p2, p3, p4, p5, err})
+                                        : qs[c].submit([&](sycl::handler &hh) {
+                                              hh.parallel_for(xr, [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                                                  x(it, p0, p1, p2, p3, p4, p5, err);
+                                              });
+                                          });
             kev(c, kname<ops41sycl::XchgPull>(), e);
             return seq;
         }
-        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode}, P[0], P[1], P[2],
-                  P[3], P[4], P[5], xerr[c]);
+        const ops41sycl::XchgP xp{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode};
+        const int xk = xw_arm(c, mode, part); // OWN_XWAIT slot (-1: none)
+        if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)mode};
+#ifdef OWN41_XWAIT
+        if (xk >= 0) { // the same exchange with the wait record, under XchgP's name
+            const ops41sycl::XchgPW xr{xp, xw_d[c], (unsigned)xk};
+            float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+            uint32_t *err = xerr[c];
+            auto e = qs[c].submit([&](sycl::handler &hh) {
+                hh.parallel_for(sycl::nd_range<1>(256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                    xr(it, p0, p1, p2, p3, p4, p5, err);
+                });
+            });
+            kev(c, kname<ops41sycl::XchgP>(), e);
+            return seq;
+        }
+#endif
+        launch_wg(c, 256, xp, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]);
         return seq;
     }
     // XP_OAD: the draft's output-a rows (hl[1]); XP_OAP: the target's in blocks of >= OWN_TP_HEADS_MIN (hl[2])
@@ -2859,6 +3253,7 @@ private:
     // one layer = phases 0..5; a phase ends where the cards exchange (1-4)
     void tp_phase(int L, int c, int ph) {
         auto &s = sc[c];
+        if (xw_on[c]) xw_ph[c] = L * 10 + ph; // OWN_XWAIT label
         const std::string p = "blk." + std::to_string(L) + ".";
         const int cr = cr_of(L);
         const bool yarn = cr > 0;
@@ -2992,11 +3387,18 @@ private:
                              (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
                 launch_sg(c, nh, ops41sycl::SparseSoftmaxP<128>{nh}, sinks, ix, s.attn_w);
             } else {
-                launch_sg_pf(c, (size_t)(nh / 4) * (n_idx / 32), pfa,
-                             ops41sycl::SparseScoreHG<512, 4>{n_idx, nh, 128, g.hd}, (const act_t *)(s.q + qo), kvw,
-                             kvc, ix, s.attn_w);
-                if (n_idx < 640) launch_sg(c, nh, ops41sycl::SparseSoftmaxPN<640>{nh, n_idx}, sinks, ix, s.attn_w);
-                else launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
+                auto score_hg = [&](auto hgc) {
+                    constexpr unsigned HG = decltype(hgc)::value;
+                    launch_sg_pf(c, (size_t)(nh / HG) * (n_idx / 32), pfa,
+                                 ops41sycl::SparseScoreHG<512, HG>{n_idx, nh, 128, g.hd}, (const act_t *)(s.q + qo),
+                                 kvw, kvc, ix, s.attn_w);
+                };
+                if (o.att_hg == 1 || nh % 4) score_hg(std::integral_constant<unsigned, 1>{});
+                else if (o.att_hg == 2) score_hg(std::integral_constant<unsigned, 2>{});
+                else score_hg(std::integral_constant<unsigned, 4>{});
+                if (n_idx >= 640) launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
+                else if (!o.att_pk || !softmax_pk<160>(c, nh, n_idx, sinks, ix, s.attn_w))
+                    launch_sg(c, nh, ops41sycl::SparseSoftmaxPN<640>{nh, n_idx}, sinks, ix, s.attn_w);
             }
             if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
             const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
@@ -3184,7 +3586,8 @@ private:
                 for (int k = 0; k < 24; ++k)
                     std::memcpy(raw + (size_t)k * l.bytes, eng_base[li] + (size_t)ids[k] * l.bytes, l.bytes);
                 const auto q0 = std::chrono::steady_clock::now();
-                qs[c].memcpy(tengr[c][li], raw, (size_t)24 * l.bytes);
+                auto ce = qs[c].memcpy(tengr[c][li], raw, (size_t)24 * l.bytes);
+                if (tl_on[c]) tl_add(c, "copy: engram rows, host to card", ce);
                 launch(c, (size_t)24 * 256, 256, ops41sycl::EngRowsA<Act>{24u}, (const uint8_t *)tengr[c][li], teng[c][li]);
                 eng_tq[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - q0).count();
                 continue;
@@ -3194,7 +3597,8 @@ private:
                 const uint8_t *row = eng_base[li] + (size_t)ids[k] * l.bytes;
                 for (int i = 0; i < 256; ++i) rows[k * 256 + i] = Act::wr(iq3::decode(iq3::Type::Q5_K, row, i));
             }
-            qs[c].memcpy(teng[c][li], rows.data(), rows.size() * sizeof(act_t));
+            auto ce = qs[c].memcpy(teng[c][li], rows.data(), rows.size() * sizeof(act_t));
+            if (tl_on[c]) tl_add(c, "copy: engram rows, host to card", ce);
         }
     }
     // eng_split: engram_kv depends on the token only, so at step start each card computes its rows of both
@@ -3237,7 +3641,8 @@ private:
         launch(c, g.h, 32, ops41sycl::EmbedRowA<Act>{te.type, g.h}, row, sc[c].x);
         launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
         float pm[4] = {1, 0, 0, 0};
-        qs[c].memcpy(sc[c].cur_pre, pm, 16);
+        auto ce = qs[c].memcpy(sc[c].cur_pre, pm, 16);
+        if (tl_on[c]) tl_add(c, "copy: pre-mix, host to card", ce);
         if (wait) twait(c);
     }
     // final norm + this card's logits rows + its argmax candidates (to the host)
@@ -3253,8 +3658,10 @@ private:
         launch_sg(c, G, ops41sycl::ArgmaxP1O{nl, AM_CH, tv0[c], g.vocab}, (const float *)tlog[c], tam_v[c], tam_i[c]);
         h_amv[c].resize(G);
         h_ami[c].resize(G);
-        qs[c].memcpy(h_amv[c].data(), tam_v[c], (size_t)G * 4);
-        qs[c].memcpy(h_ami[c].data(), tam_i[c], (size_t)G * 4);
+        auto ce = qs[c].memcpy(h_amv[c].data(), tam_v[c], (size_t)G * 4);
+        if (tl_on[c]) tl_add(c, "copy: argmax values, card to host", ce);
+        ce = qs[c].memcpy(h_ami[c].data(), tam_i[c], (size_t)G * 4);
+        if (tl_on[c]) tl_add(c, "copy: argmax ids, card to host", ce);
         twait(c);
         prof("head", c);
     }
@@ -3273,6 +3680,8 @@ private:
     }
     void tp_card_step(int c) {
         const double t0 = now_s();
+        if (tl_path) tl_begin(c); // OWN_TIMELINE: answer steps OWN_TIMELINE_STEPS
+        if (xw_path) xw_begin(c); // OWN_XWAIT: this step's exchanges from slot 0
         commit_pending(c);
         x_ready[c] = false; // a step that failed part-way must not leave it set
         fin_attn[c] = false;
@@ -3303,6 +3712,7 @@ private:
         }
         if (o.head && !skip_head) tp_head(c);
         else twait(c);
+        if (tl_path) tl_end(c);
         tph_step[c] += now_s() - t0;
     }
     void tp_worker(int c) {
@@ -3443,6 +3853,9 @@ private:
             if (xerr[c][0])
                 throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
                                          std::to_string((int)xerr[c][0] - 1));
+        if (xw_path) // OWN_XWAIT records of this step (main thread: every card is done)
+            for (int c = 0; c < o.tp; ++c) xw_collect(c);
+        if (tl_path) tl_step_done(); // OWN_TIMELINE
         const int32_t next = o.head && !skip_head ? tp_argmax() : -1;
         ++pos;
         if (tp_hostprof && !tp_th.empty() && ++tph_n % 32 == 0) {

@@ -1,0 +1,478 @@
+diff --git a/src/stage2/packet3/kernels/sycl_v41.hpp b/src/stage2/packet3/kernels/sycl_v41.hpp
+--- a/src/stage2/packet3/kernels/sycl_v41.hpp
++++ b/src/stage2/packet3/kernels/sycl_v41.hpp
+@@ -4,6 +4,13 @@
+ // exp/sigmoid/silu admit +-1 bf16 ulp (device vs host libm), same rule as
+ // the SC117 identity-v2 gates.
+ #pragma once
++// Tokens per multi-token step (prompt block, checked block), at most: Backend41::MTX. Build with -DOWN41_MTX=n
++// (16 <= n <= 128; default 64). Only capacities follow it (the block kernels' per-token tables, the expert
++// groups' slot and group counts, the window ring's block area, the block buffers); no kernel's per-token
++// arithmetic depends on it.
++#ifndef OWN41_MTX
++#define OWN41_MTX 64
++#endif
+ #ifndef OWN_RT_HOST_ONLY
+ #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
+ #include "stage2/packet2/kernels/math.hpp"
+@@ -12,6 +19,10 @@
+ 
+ namespace ops41sycl {
+ using iq3::Type;
++inline constexpr unsigned MT_MAX = OWN41_MTX;
++// >= 16: the one-sub-group block forms (DenseRowsM / GemvTM / HcDotsRowsM at 16 tokens) read 16 tokens' inputs;
++// <= 128: the block's window rows go to distinct ring rows (RingCommitM: position % 128)
++static_assert(MT_MAX >= 16 && MT_MAX <= 128, "OWN41_MTX: 16 .. 128 tokens per block step");
+ 
+ // SG32 butterfly in tree32 pairing order (width 1,2,4,8,16; i += 2w).
+ inline float sg_tree32(sycl::sub_group sg, float v) {
+@@ -1781,7 +1792,8 @@
+ // group p % ng (tokens G * (p % ng) .. + G - 1) through D::rowg<G>, the group body rowm runs one after
+ // another on one sub-group. The same operations per token as rowm (a group changes no token's operations);
+ // a block of a few tokens gets ng times as many sub-groups (a 384-row slice at 6 tokens was 384 sub-groups,
+-// most of the card idle). Tokens >= mt run on in-bounds data (G * ng <= MTX) and are not stored.
++// most of the card idle). Tokens >= mt run on in-bounds data and are not stored (G * ng <= mt + G - 1: the
++// block buffers hold Backend41::MTA = MTX + 8 tokens, so any G <= 9 stays inside them).
+ template <typename D, unsigned G> struct DenseRowsG {
+     D k;
+     const uint8_t *w;
+@@ -5574,7 +5586,7 @@
+ // ---- the block's index lists (backend_sycl_v41_mt.inc tpm_index): per-token row counts lens[t] ----------
+ // CidxFill for the tokens with lens[t] in [0, 512] (others: lens[t] < 0, left alone): list t at out + t * 512
+ struct CidxFillM {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     void operator()(sycl::nd_item<1> it, int32_t *out) const {
+         const unsigned g = (unsigned)it.get_global_linear_id(), t = g / 512, i = g % 512;
+@@ -5585,7 +5597,7 @@
+ // IndexerScoreB for every token with lens[t] > 0: work-groups t * gpt .. are token t's (rows j = (group %
+ // gpt) * WG + local id); its query, weights and scores at the one-token pointers + t * strides
+ template <typename A> struct IndexerScoreBM {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m, gpt;
+     size_t qs, ws, ss;
+     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+@@ -5604,7 +5616,7 @@
+ // scores bit for bit. gpt = groups per token over R * WG rows.
+ template <typename A, int R> struct IndexerScoreBMR {
+     static constexpr int H = 32, DK = 128, CH = 16;
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m, gpt;
+     size_t qs, ws, ss;
+     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+@@ -5660,7 +5672,7 @@
+ // lens[t] rows, the candidate mask to cand + t * cs. Else: n = lens[t], top 512 (+128) to out + t * 512,
+ // masked by cand + t * cs (cand_n = lens[t]) when mask.
+ template <bool BLOCK> struct TopKSelM {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     bool mask;
+     size_t ss, cs;
+@@ -5685,7 +5697,7 @@
+ // TopKSelM<false> with the mask, over each token's candidate rows (TopKSelC; OWN_IDX_CAND): token t's block list
+ // at bl + t * bls, its scores at sc + t * ss, its mask at cand + t * cs (cand_n == its rows), its list at out + 512 t
+ struct TopKSelMC {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     size_t ss, cs, bls;
+     bool rwalk = false; // OWN_TOPK_R (TopKSelC::rwalk)
+@@ -5701,7 +5713,7 @@
+ // select by TopKSelQ<MAXC> (MAXC >= qsel_span of every token's rows), the block select by TopKSelBQ<MAXC> (of its
+ // blocks), the candidate select by TopKSelCQ<16>. The same lists.
+ template <int MAXC> struct TopKSelMQ {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     bool mask;
+     size_t ss, cs;
+@@ -5715,7 +5727,7 @@
+     }
+ };
+ template <int MAXC> struct TopKSelMBQ {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     size_t ss, cs, bls = 0;
+     void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
+@@ -5728,7 +5740,7 @@
+     }
+ };
+ struct TopKSelMCQ {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m;
+     size_t ss, cs, bls;
+     void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand, const int32_t *bl, int32_t *out,
+@@ -5741,7 +5753,7 @@
+ // IndexerScoreBM over each token's layer-20 candidate rows (OWN_IDX_CAND): token t's gpt work-groups score its
+ // rows bl[t * bls + 1 + i / 8] * 8 + i % 8 with IndexerScoreB::run (IndexerScoreBC per token)
+ template <typename A> struct IndexerScoreBCM {
+-    int lens[16];
++    int lens[MT_MAX];
+     unsigned m, gpt;
+     size_t qs, ws, ss, bls;
+     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+@@ -6048,7 +6060,9 @@
+ // grp; a token picks distinct experts, so with cap >= M every expert is one group). Group order is ascending
+ // first slot (it does not matter: every slot's output is written by exactly one group).
+ struct RUGrp {
+-    static constexpr unsigned MAXU = 128, CAP = 16; // groups (>= slots), slots per group
++    // groups (>= the slots of the largest block: 6 per token, MT_MAX tokens; 128 as before up to 21 tokens),
++    // slots per group. Only the word offsets below follow MAXU (the writer and every reader use them).
++    static constexpr unsigned MAXU = 6 * MT_MAX > 128 ? 6 * MT_MAX : 128, CAP = 16;
+     static constexpr unsigned EXP = 4, CNT = EXP + MAXU, SLOT = CNT + MAXU, WORDS = SLOT + MAXU * CAP;
+ };
+ // One work-group of WG items (launch: nd_range(WG, WG), LM floats of local memory as the last argument, e.g.
+@@ -6056,9 +6070,15 @@
+ // one O(nsl) scan of the ids staged in local memory gives its occurrence index among the slots of its expert
+ // (before), the expert's total and the first slot of its chunk (head); a work-group scan ranks the heads.
+ struct ExpertGroupM {
+-    static constexpr unsigned WG = 128, LM = 2 * WG;
+-    unsigned nsl;      // slots, 1 .. WG
++    // WG >= the slots of the largest block (item s = slot s; 128 as before up to 21 tokens). Items s >= nsl
++    // take no part (first = false), so the groups and their order do not depend on WG.
++    static constexpr unsigned WG = 6 * MT_MAX > 128 ? (6 * MT_MAX + 31) / 32 * 32 : 128, LM = 2 * WG;
++    static_assert(WG <= 1024 && 6 * MT_MAX <= WG && 6 * MT_MAX <= RUGrp::MAXU, "a block's 6 M slots, one item and at most one group each");
++    unsigned nsl;      // slots, 1 .. the launch's items (items(nsl); 6 M <= 6 MT_MAX <= WG)
+     unsigned cap = 16; // slots per group at most, 1 .. RUGrp::CAP
++    // work-group size to launch for nsl slots: 128 up to 128 slots (the launch before blocks past 21 tokens),
++    // else nsl in whole sub-groups (local memory stays LM: le / lr at WG apart)
++    static size_t items(unsigned nsl) { return nsl <= 128 ? 128 : (size_t)(nsl + 31) / 32 * 32; }
+     void operator()(sycl::nd_item<1> it, const uint32_t *ids, uint32_t *grp, float *lm) const {
+         uint32_t *le = reinterpret_cast<uint32_t *>(lm), *lr = le + WG;
+         const unsigned s = (unsigned)it.get_local_linear_id();
+diff --git a/src/stage2/packet3/backend/backend_sycl_v41.hpp b/src/stage2/packet3/backend/backend_sycl_v41.hpp
+--- a/src/stage2/packet3/backend/backend_sycl_v41.hpp
++++ b/src/stage2/packet3/backend/backend_sycl_v41.hpp
+@@ -363,7 +363,7 @@
+         }
+         for (int L = o.layer_begin; L < o.layer_end; ++L) {
+             if (o.tp > 1)
+-                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps)
++                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps; MTX <= 128)
+                     ring[t][L] = dalloc<uint16_t>(t, (size_t)(128 + MTX) * g.hd);
+             else
+                 ring[tile_of_layer(L)][L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
+@@ -762,7 +762,14 @@
+     // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
+     bool skip_head = false;
+     // tp: token index inside a multi-token step (0 in one-token steps); the card's position is pos + tokoff
+-    static constexpr int MTX = 16; // tokens per multi-token step, at most
++    // tokens per multi-token step, at most (OWN41_MTX, default 64; was 16 until 2026-11-11). Only capacities
++    // follow it: block buffers, exchange regions, the ring's block area, the kernels' per-token tables.
++    static constexpr int MTX = (int)ops41sycl::MT_MAX;
++    // blocks of up to MTF tokens run the one-sub-group dense forms (DenseRowsM / GemvTM / HcDotsRowsM) built at
++    // MTF tokens, as before; larger blocks run the same per-token groups (rowg<G> of the same G) spread over
++    // sub-groups or launches. The block buffers hold MTA tokens (8 spare: token groups of G <= 9 read up to
++    // ceil(mt / G) * G tokens' inputs and store only t < mt).
++    static constexpr int MTF = 16, MTA = MTX + 8;
+     long tokoff[TILES] = {};
+     long cpos(int c) const { return pos + tokoff[c]; }
+     void prof(const char *name, int t) {
+diff --git a/src/stage2/packet3/backend/backend_sycl_v41_mt.inc b/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+--- a/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
++++ b/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+@@ -75,6 +75,7 @@
+ unsigned mt_xgpp = 4;  // XchgPushD: work-groups per peer
+ unsigned mt_tg = 0;      // OWN_MT_TG=1/2/4: dense rows run token groups of that many on separate sub-groups (0: off)
+ unsigned mt_tg_max = 8;  // ... for blocks of at most this many tokens (OWN_MT_TG_MAX)
++// (the tables below: entries past MTF tokens take the MTF entry unless set; own_run_v41.cpp's option parsing)
+ unsigned mt_tgm[MTX + 1] = {}; // OWN_MT_TGM="m:g,...": dense token groups g (1-4) for blocks of exactly m tokens
+                                // (overrides OWN_MT_TG for that m; 9 = all tokens in one sub-group, DenseRowsM)
+ unsigned mt_tgr[MTX + 1] = {}; // OWN_MT_TGR="m:r,...": blocks of m tokens run the token-group dense rows (OWN_MT_TGM)
+@@ -82,7 +83,7 @@
+ unsigned mt_tgr_rows = 2048; // ... only for matrices of at least this many rows on the card (OWN_MT_TGR_ROWS)
+ unsigned mt_tgr_fmt = 3;      // ... for these formats (OWN_MT_TGR_FMT: 1 Q8_0, 2 Q6_K, 3 both)
+ bool mt_tgr_draft = true;     // ... also in the draft's steps (OWN_MT_TGR_DRAFT)
+-bool mt_w16 = false;          // OWN_MT_W16: blocks of 9-16 tokens pick token groups and row blocks per matrix shape
++bool mt_w16 = false;          // OWN_MT_W16: blocks of 9 or more tokens pick token groups and row blocks per matrix shape
+                               // (w16_g / w16_r below; overrides OWN_MT_TG / OWN_MT_TGR for those matrices)
+ unsigned mt_tgw_rows = 0;     // OWN_MT_TGW_ROWS=n: packed matrices of at least n rows on the card (the vocabulary head)
+                               // run their own token groups (mt_tgwm) with NO row blocks; 0: off. Same sums (rowg is
+@@ -127,27 +128,30 @@
+     kev(c, kname<K>(), e);
+ }
+ 
++// (every region holds MTA tokens: MTX + the token groups' spare reads, see MTA)
+ size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones (+ the head outputs)
+-    return (size_t)MTX * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
+-           (size_t)MTX * (size_t)g.h + (size_t)MTX * (size_t)g.qh * (size_t)g.hd;
++    return (size_t)MTA * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
++           (size_t)MTA * (size_t)g.h + (size_t)MTA * (size_t)g.qh * (size_t)g.hd;
+ }
+ void mt_offsets(size_t base) {
++    if (base + mt_arena_floats() > (size_t)UINT32_MAX) throw std::runtime_error("multi-token step: arena offsets");
+     xoaM = (unsigned)base;
+-    xobM = xoaM + MTX * (unsigned)g.ototal;
+-    xactM = xobM + MTX * (unsigned)g.h;
+-    xengM = xactM + MTX * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
+-    xdrM = xengM + MTX * 10 * (unsigned)g.h;   // the draft's argmax rows (backend_sycl_v41_draft.inc)
++    xobM = xoaM + MTA * (unsigned)g.ototal;
++    xactM = xobM + MTA * (unsigned)g.h;
++    xengM = xactM + MTA * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
++    xdrM = xengM + MTA * 10 * (unsigned)g.h;   // the draft's argmax rows (backend_sycl_v41_draft.inc)
+     xfcM = xdrM + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
+                                                // last layer's exchange on xobM with no exchange in between)
+-    xhoM = xfcM + MTX * (unsigned)g.h;         // the head outputs (OWN_TP_HEADS), MTX tokens of qh * hd
++    xhoM = xfcM + MTA * (unsigned)g.h;         // the head outputs (OWN_TP_HEADS), MTA tokens of qh * hd
+ }
+ void mt_alloc(int c) {
+-    auto md = [&](size_t n) { return dalloc<act_t>(c, n * MTX); };
+-    auto mf = [&](size_t n) { return dalloc<float>(c, n * MTX); };
++    // per-token buffers of MTA tokens (token t at t * n; tokens >= MTX only take token groups' spare reads)
++    auto md = [&](size_t n) { return dalloc<act_t>(c, n * MTA); };
++    auto mf = [&](size_t n) { return dalloc<float>(c, n * MTA); };
+     const size_t H = g.h, Q = (size_t)g.qh * g.hd, nm = (size_t)(tm1[c] - tm0[c]), nd = (size_t)(td1[c] - td0[c]);
+     act_t *x = md(H), *xn = md(H), *qa = md(g.qrank), *qn = md(g.qrank), *q = md(Q), *kv = md(g.hd), *kvn = md(g.hd);
+     act_t *qi = md(32 * 128), *wv = md(32);
+-    float *score = mf((size_t)max_seq + 64);
++    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * MTX); // (index scores: only t < mt is read)
+     int64_t *lens = dalloc<int64_t>(c, MTX);
+     float *router = mf(g.experts), *prob = mf(6);
+     uint32_t *ids = dalloc<uint32_t>(c, 6 * MTX);
+@@ -162,7 +166,8 @@
+     act_t *old = md(4 * H);
+     uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * MTX);
+     if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * MTX);
+-    if (o.idx_cand == 2) { score2m[c] = mf(((size_t)max_seq + 64) * MTX); list2m[c] = dalloc<int32_t>(c, (size_t)512 * MTX); }
++    // (score2m: one row of max_seq + 64 per token, as score; it was mf(... * MTX), i.e. MTX rows per token)
++    if (o.idx_cand == 2) { score2m[c] = dalloc<float>(c, ((size_t)max_seq + 64) * MTX); list2m[c] = dalloc<int32_t>(c, (size_t)512 * MTX); }
+     strm[c] = md(4 * H);
+     for (int t = 0; t < MTX; ++t) {
+         Scratch s = sc[c]; // kv_state, score_state, warm, eng_rows, kvbuf stay the card's own
+@@ -191,7 +196,7 @@
+         scm[c][t] = s;
+     }
+     for (int li = 0; li < 2; ++li) {
+-        tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * MTX);
++        tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * MTA); // (engram_kv rows' input: MTA)
+         h_engm[c][li].resize((size_t)24 * g.engram_dim * MTX);
+         if (o.eng_dev) {
+             tengrm[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176 * MTX);
+@@ -228,7 +233,7 @@
+ // ---- weight rows for all tokens (rowm) ------------------------------------
+ // y + t * ys = rows of the matrix (this card's slice when split) . (x + t * xs), t < mt_n
+ // rider: other rows in the same launch, first (OWN_MT_RIDE: the stream mix's double dot rows behind a matrix)
+-// OWN_MT_W16's forms for blocks of 9-16 tokens, from tools/bench/bench_dense_m16.cpp (round18 d1/d3/d4, one 230 W
++// OWN_MT_W16's forms for blocks of 9-16 tokens (and larger blocks, as 16), from tools/bench/bench_dense_m16.cpp (round18 d1/d3/d4, one 230 W
+ // card, 16 tokens, cold, bitwise, us per launch at a 12-head card's shapes, engine form -> this one):
+ //   Q8_0 5120 columns (1792 rows) G4 80.4 -> G8 R2 70.3-70.8; 8192 (output-b, 864) G4 67.0-67.6 ->
+ //   G8 R2 52.7-52.9; 2304 (shared down, 864) G4 26.6-26.8 -> G4 R2 23.8-24.0; 4096 (output-a, 768) G4 37.1-37.3
+@@ -305,12 +310,23 @@
+             }
+         }
+     }
+-    const unsigned tg = mt <= MTX && mt_tgm[mt] ? mt_tgm[mt] : mt <= mt_tg_max && mt > mt_tg ? mt_tg : 0;
++    const unsigned tg = mt_tg_of(mt);
+     if (tg == 1) return split(std::integral_constant<unsigned, 1>{});
+     if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
+     if (tg == 3) return split(std::integral_constant<unsigned, 3>{});
+     if (tg == 4) return split(std::integral_constant<unsigned, 4>{});
+-    go(ops41sycl::DenseRowsM<DK, MTX>{dk, (const uint8_t *)w, x, xs, y, ys, mt});
++    if (mt <= (unsigned)MTF) return go(ops41sycl::DenseRowsM<DK, MTF>{dk, (const uint8_t *)w, x, xs, y, ys, mt});
++    // past MTF tokens: DenseRowsM's token groups (rowg<DK::MTG>, the same calls as its rowm chain) on their own
++    // sub-groups instead of one after another on one (a DenseRowsM<DK, MTX> would unroll MTX / MTG of them)
++    constexpr unsigned GM = DK::MTG;
++    go(ops41sycl::DenseRowsG<DK, GM>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + GM - 1) / GM});
++}
++// the dense token-group size for a block of mt tokens (0: none): OWN_MT_TGM's entry for mt, else OWN_MT_TG for
++// blocks of at most OWN_MT_TG_MAX tokens; a block of more than MTF tokens follows that rule as a block of MTF
++// does (the runner gives OWN_MT_TGM / OWN_MT_TGR / OWN_MT_TGWM entries past MTF the MTF entry unless set)
++unsigned mt_tg_of(unsigned mt) const {
++    const unsigned mq = std::min(mt, (unsigned)MTF);
++    return mt <= (unsigned)MTX && mt_tgm[mt] ? mt_tgm[mt] : mq <= mt_tg_max && mq > mt_tg ? mt_tg : 0;
+ }
+ // (mt: tokens, default the block's; the publish runs its pooled rows only; rider: see dense_m, packed rows only)
+ // (ra, rb: packed rows only, the card's rows [ra, rb) with y row ra's output; rb == 0: all)
+@@ -342,7 +358,10 @@
+         if (mt_tgu == 1) return tgu(std::integral_constant<iq3::Type, iq3::Type::TY>{}, std::integral_constant<unsigned, 1>{}); \
+         if (mt_tgu == 2) return tgu(std::integral_constant<iq3::Type, iq3::Type::TY>{}, std::integral_constant<unsigned, 2>{}); \
+         if (mt_tgu == 3) return tgu(std::integral_constant<iq3::Type, iq3::Type::TY>{}, std::integral_constant<unsigned, 3>{}); \
+-        launch_sg(c, rows, ops41sycl::GemvTM<iq3::Type::TY, Act, MTX>{{rows, cols, false}, xs, ys, mt}, \
++        if (mt > (unsigned)MTF) /* GemvTM's rowg<MTG> groups on their own sub-groups (as dense_m) */     \
++            return tgu(std::integral_constant<iq3::Type, iq3::Type::TY>{},                                 \
++                       std::integral_constant<unsigned, ops41sycl::GemvT<iq3::Type::TY, Act>::MTG>{});     \
++        launch_sg(c, rows, ops41sycl::GemvTM<iq3::Type::TY, Act, MTF>{{rows, cols, false}, xs, ys, mt}, \
+                   (const uint8_t *)wp(c, wn), x, (void *)y);                                               \
+         return;
+             X(F32) X(BF16) X(Q8_0)
+@@ -401,7 +420,7 @@
+     tok_set(c, 0);
+     using FR = ops41sycl::TokRows<ops41sycl::HcFinishRows>;
+     const FR fin = tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16);
+-    const unsigned tg = mt_tgm[mt] ? mt_tgm[mt] : mt <= mt_tg_max && mt > mt_tg ? mt_tg : 0;
++    const unsigned tg = mt_tg_of(mt);
+     return dense_kernel(c, gn, [&](auto dk, const uint8_t *wg) {
+         using DK = decltype(dk);
+         auto go = [&](const auto &dg, const auto &du) {
+@@ -422,16 +441,25 @@
+         if (tg == 2) return split(std::integral_constant<unsigned, 2>{});
+         if (tg == 3) return split(std::integral_constant<unsigned, 3>{});
+         if (tg == 4) return split(std::integral_constant<unsigned, 4>{});
+-        using D = ops41sycl::DenseRowsM<DK, MTX>;
++        if (mt > (unsigned)MTF) { // as dense_m past MTF tokens
++            constexpr unsigned GM = DK::MTG;
++            using D = ops41sycl::DenseRowsG<DK, GM>;
++            const unsigned ng = (mt + GM - 1) / GM;
++            return go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, ng}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt, ng});
++        }
++        using D = ops41sycl::DenseRowsM<DK, MTF>;
+         go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt});
+     });
+ }
+ // the stream-mix dot rows of every token (HcMixDotsP rows, fn values read once)
++// (OWN_MT_SMALL=0 only; one launch per MTF tokens, token t's rows on its own streams and partials as before)
+ void hc_dots_m(int c, const std::string &prefix) {
+-    using R = ops41sycl::HcDotsRowsM<5120, HC_SEG, MTX>;
+-    const R r{(const float *)strm[c], (size_t)4 * g.h, wp<float>(c, prefix + "fn.weight"), scm[c][0].d25,
+-              (size_t)25 * HC_SEG, (unsigned)mt_n};
+-    launch_rows<0>(c, r.n(), 0, ops41sycl::RowsP<R>{r});
++    using R = ops41sycl::HcDotsRowsM<5120, HC_SEG, MTF>;
++    for (int t0 = 0; t0 < mt_n; t0 += MTF) {
++        const R r{(const float *)(strm[c] + (size_t)t0 * 4 * g.h), (size_t)4 * g.h, wp<float>(c, prefix + "fn.weight"),
++                  scm[c][0].d25 + (size_t)t0 * 25 * HC_SEG, (size_t)25 * HC_SEG, (unsigned)std::min(MTF, mt_n - t0)};
++        launch_rows<0>(c, r.n(), 0, ops41sycl::RowsP<R>{r});
++    }
+ }
+ // routed gate + up (and down) for 6 * mt_n slots: slot s is token s / 6's choice s % 6
+ template <typename EX = ops41sycl::NoRows>
+@@ -686,7 +714,7 @@
+     const std::string p = "blk." + std::to_string(L) + ".";
+     ops41sycl::CidxFillM cf{};
+     cf.m = (unsigned)M;
+-    int lens[16] = {}, nshort = 0, nlong = 0;
++    int lens[MTX] = {}, nshort = 0, nlong = 0;
+     long lmax = 0;
+     for (int t = 0; t < M; ++t) {
+         const long len = mlen[c][si][t];
+@@ -758,7 +786,7 @@
+         return;
+     }
+     if (o.idx_r == 2 || o.idx_r == 4) {
+-        long ll[16] = {};
++        long ll[MTX] = {};
+         for (int t = 0; t < M; ++t) ll[t] = lens[t];
+         idx_score_r(c, o.idx_r, M, ll, b.qi, b.wv, ik_mirror[c][si], b.score, 4096, 32, SS);
+     } else {
+@@ -1202,7 +1230,7 @@
+         if (L == 0) ++ids_blocks;
+     }
+     if (mt_eu) // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
+-        launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::WG,
++        launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(6u * (unsigned)M),
+                                                   ops41sycl::ExpertGroupM{6u * (unsigned)M, mt_eu},
+                                                   (const uint32_t *)b.ids, egrp[c]);
+     if (!shared_done) {
+@@ -1357,7 +1385,7 @@
+ // mt tokens in one step (prompt reading); returns the next token after the last one (-1 without the head)
+ int32_t decode_block_tp(const int32_t *toks, int mt) {
+     if (o.tp < 2 || tp_th.empty()) throw std::runtime_error("multi-token step needs OWN_TP > 1 with card threads");
+-    if (mt < 1 || mt > MTX) throw std::runtime_error("multi-token step: 1..16 tokens");
++    if (mt < 1 || mt > MTX) throw std::runtime_error("multi-token step: 1.." + std::to_string(MTX) + " tokens (OWN41_MTX)");
+     if (pos + mt > max_seq) throw std::runtime_error("position beyond max_seq");
+     if (!o.diet || !o.small_fast || o.hc_legacy || !o.hc_ride || !o.rope_out || o.fin_move || o.xtail)
+         throw std::runtime_error("multi-token step is written for the default options");
+diff --git a/src/stage2/packet3/backend/backend_sycl_v41_draft.inc b/src/stage2/packet3/backend/backend_sycl_v41_draft.inc
+--- a/src/stage2/packet3/backend/backend_sycl_v41_draft.inc
++++ b/src/stage2/packet3/backend/backend_sycl_v41_draft.inc
+@@ -41,11 +41,12 @@
+         dring[c][s] = dalloc<uint16_t>(c, (size_t)(DR_WIN + MTX) * g.hd);
+         qs[c].memset(dring[c][s], 0, (size_t)(DR_WIN + MTX) * g.hd * 2);
+     }
+-    dfeat[c] = dalloc<float>(c, (size_t)MTX * 3 * g.h);
+-    dmain[c] = dalloc<act_t>(c, (size_t)MTX * g.h);
+-    dmainn[c] = dalloc<act_t>(c, (size_t)MTX * g.h);
+-    dkv[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
+-    dkvn[c] = dalloc<act_t>(c, (size_t)MTX * g.hd);
++    // (MTA tokens: dfeat and dmainn are the injection's dense-row inputs, see MTA)
++    dfeat[c] = dalloc<float>(c, (size_t)MTA * 3 * g.h);
++    dmain[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
++    dmainn[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
++    dkv[c] = dalloc<act_t>(c, (size_t)MTA * g.hd);
++    dkvn[c] = dalloc<act_t>(c, (size_t)MTA * g.hd);
+     dprev[c] = dalloc<int32_t>(c, 8);
+     dconf[c] = dalloc<float>(c, 8);
+     qs[c].wait();
+@@ -101,7 +102,7 @@
+     const size_t np = (size_t)(w2 ? 2 : 1) * nsl * rows;
+     if (dp.packed) { // OWN_DR_MXP: packed rows, the block's slots grouped by expert (RoutedMXFP4U, the same sums)
+         if (!per_slot) // gate + up come first in each stage; down reuses the groups
+-            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::WG, ops41sycl::ExpertGroupM{nsl, 6u},
++            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(nsl), ops41sycl::ExpertGroupM{nsl, 6u},
+                                                       (const uint32_t *)scm[c][0].ids, egrp[c]);
+         auto gu = [&](auto nbc) {
+             constexpr unsigned NB = decltype(nbc)::value;
+diff --git a/planning/dsv41-fixtures/own_run_v41.cpp b/planning/dsv41-fixtures/own_run_v41.cpp
+--- a/planning/dsv41-fixtures/own_run_v41.cpp
++++ b/planning/dsv41-fixtures/own_run_v41.cpp
+@@ -425,10 +425,14 @@
+         if (const char *e = getenv("OWN_MT_TG_MAX")) be.mt_tg_max = (unsigned)atoi(e);
+         if (const char *e = getenv("OWN_MT_EU")) be.mt_eu = (unsigned)atoi(e); // expert-major routed rows (6)
+         if (const char *e = getenv("OWN_MT_TGU")) be.mt_tgu = (unsigned)atoi(e); // unpacked rows in token groups
++        // the per-block-size tables (OWN_MT_TGM / OWN_MT_TGR / OWN_MT_TGWM): an entry past MTF (16) tokens that no
++        // option names takes the MTF entry (blocks of up to MTX = 64 tokens pick their forms as a block of 16)
++        constexpr int MTX_ = own41::Backend41::MTX, MTF_ = own41::Backend41::MTF;
++        bool set_tgm[MTX_ + 1] = {}, set_tgr[MTX_ + 1] = {}, set_tgwm[MTX_ + 1] = {};
+         if (const char *e = getenv("OWN_MT_TGM")) { // per block size: "m:g,m:g"
+             for (const char *s = e; *s;) {
+                 unsigned m = 0, gsz = 0;
+-                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 9) be.mt_tgm[m] = gsz;
++                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 9) be.mt_tgm[m] = gsz, set_tgm[m] = true;
+                 const char *cm = std::strchr(s, ',');
+                 if (!cm) break;
+                 s = cm + 1;
+@@ -441,7 +445,7 @@
+         if (const char *e = getenv("OWN_MT_TGR")) { // per block size: "m:r,m:r" rows per sub-group (2 or 4)
+             for (const char *s = e; *s;) {
+                 unsigned m = 0, rr = 0;
+-                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 0 || rr == 2 || rr == 4)) be.mt_tgr[m] = rr;
++                if (std::sscanf(s, "%u:%u", &m, &rr) == 2 && m <= own41::Backend41::MTX && (rr == 0 || rr == 2 || rr == 4)) be.mt_tgr[m] = rr, set_tgr[m] = true;
+                 const char *cm = std::strchr(s, ',');
+                 if (!cm) break;
+                 s = cm + 1;
+@@ -450,18 +454,24 @@
+         if (const char *e = getenv("OWN_MT_TGR_ROWS")) be.mt_tgr_rows = (unsigned)atoi(e);
+         if (const char *e = getenv("OWN_MT_TGR_FMT")) be.mt_tgr_fmt = (unsigned)atoi(e);
+         if (const char *e = getenv("OWN_MT_TGR_DRAFT")) be.mt_tgr_draft = atoi(e) != 0;
+-        // default since round 18 d4 / g78: blocks of 9-16 tokens pick their dense forms per matrix shape (OWN_MT_W16=0: off)
++        // default since round 18 d4 / g78: blocks of 9-16 tokens (and larger ones, as 16) pick their dense forms per
++        // matrix shape (OWN_MT_W16=0: off)
+         be.mt_w16 = getenv("OWN_MT_W16") ? atoi(getenv("OWN_MT_W16")) != 0 : true;
+         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
+         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
+             for (const char *s = e; *s;) {
+                 unsigned m = 0, gsz = 0;
+-                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 6) be.mt_tgwm[m] = gsz;
++                if (std::sscanf(s, "%u:%u", &m, &gsz) == 2 && m <= own41::Backend41::MTX && gsz <= 6) be.mt_tgwm[m] = gsz, set_tgwm[m] = true;
+                 const char *cm = std::strchr(s, ',');
+                 if (!cm) break;
+                 s = cm + 1;
+             }
+         }
++        for (int m = MTF_ + 1; m <= MTX_; ++m) {
++            if (!set_tgm[m]) be.mt_tgm[m] = be.mt_tgm[MTF_];
++            if (!set_tgr[m]) be.mt_tgr[m] = be.mt_tgr[MTF_];
++            if (!set_tgwm[m]) be.mt_tgwm[m] = be.mt_tgwm[MTF_];
++        }
+         if (const char *e = getenv("OWN_DR_MXN")) be.dr_mxn = atoi(e) != 0;
+         if (const char *e = getenv("OWN_HC_FIN")) be.hc_fin_form = atoi(e);
+         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
+@@ -478,9 +488,10 @@
+             // OWN_PROMPT_BLOCK=m (OWN_TP > 1): m prompt tokens per step (decode_block_tp), the same values
+             const int pblock = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
+             if (pblock > 1 && opt.tp > 1) {
+-                // OWN_ENG_AHEAD=n (default 16; 0 off; needs OWN_ENG_EARLY): the engram rows of the next n prompt
+-                // tokens are asked from the disk while the cards run the current block
+-                const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : 16;
++                // OWN_ENG_AHEAD=n (default 16, or the block size past 16 tokens: the whole next block; 0 off; needs
++                // OWN_ENG_EARLY): the engram rows of the next n prompt tokens are asked from the disk (page-cache hints
++                // only) while the cards run the current block
++                const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pblock);
+                 for (size_t i = 0; i < prompt.size();) {
+                     const int m = (int)std::min<size_t>((size_t)pblock, prompt.size() - i);
+                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);

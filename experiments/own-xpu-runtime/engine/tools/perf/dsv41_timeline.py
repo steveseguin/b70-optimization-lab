@@ -85,9 +85,60 @@ def read_timeline(path):
             elif len(f) >= 13 and f[0].lstrip('-').isdigit():
                 x = Launch(f)
                 T['L'][(x.step, x.card)].append(x)
+    # host-to-card / card-to-host copies carry no profiling times (one constant start, zero length, tl85):
+    # left out of every device-time figure (counted in T['ncopy'])
+    T['ncopy'] = 0
+    for k in list(T['L']):
+        v = [x for x in T['L'][k] if not T["names"].get(x.nid, '').startswith('copy')]
+        T['ncopy'] += len(T['L'][k]) - len(v)
+        T['L'][k] = v
     for v in T['L'].values():
         v.sort(key=lambda x: x.idx)
     return T
+
+
+def device_report(T, steps, cards, out):
+    """Per card, its own device clock only (no host/device mapping, no cross-card alignment): the step's span,
+    busy and idle time, the idle time between consecutive steps, and the idle gaps by the launch pair around them
+    (a register-mode change shows as ~1 us where a plain launch follows its predecessor by ~0.12 us)."""
+    names = T['names']
+    out('Device clock only, per card (us per step, mean; between = last launch end -> next step first start):')
+    out('card     span     busy  in-step idle  between (median)  launches')
+    pairs = defaultdict(lambda: [0, 0.0])
+    for c in cards:
+        sp, bz, ig, nl, bt = [], [], [], [], []
+        for st in steps:
+            v = sorted(T['L'].get((st, c), []), key=lambda x: x.ds)
+            if not v:
+                continue
+            sp.append((max(x.de for x in v) - v[0].ds) / 1e3)
+            bz.append(sum(x.de - x.ds for x in v) / 1e3)
+            g = 0
+            for p, q in zip(v, v[1:]):
+                d = q.ds - p.de
+                if d > 0:
+                    g += d
+                k = pairs[(names.get(p.nid, '?'), names.get(q.nid, '?'))]
+                k[0] += 1
+                k[1] += max(d, 0)
+            ig.append(g / 1e3)
+            nl.append(len(v))
+            w = sorted(T['L'].get((st + 1, c), []), key=lambda x: x.ds)
+            if w:
+                bt.append((w[0].ds - max(x.de for x in v)) / 1e3)
+        if sp:
+            out('c%-3d %8.1f %8.1f %13.1f %17.1f %9.0f' % (c, statistics.mean(sp), statistics.mean(bz),
+                                                            statistics.mean(ig), pct(bt, 50) if bt else float('nan'),
+                                                            statistics.mean(nl)))
+    nsc = max(1, len(steps) * len(cards))
+    rows = [(k, n, t) for k, (n, t) in pairs.items() if n and t / n >= 500]
+    rows.sort(key=lambda r: -r[2])
+    out('Idle gaps of >= 0.5 us on average, by launch pair (per step and card: count, us each, us total):')
+    tot = 0.0
+    for (a, b), n, t in rows[:25]:
+        tot += t
+        out('  %6.1f %6.2f %7.1f  %s -> %s' % (n / nsc, t / n / 1e3, t / nsc / 1e3, short(a, 48), short(b, 48)))
+    out('  (these pairs: %.1f us per step and card)' % (tot / nsc / 1e3))
 
 
 def read_xwait(path):
@@ -198,6 +249,11 @@ def main():
            ','.join(str(c) for c in cards), mode))
     for n in notes:
         out('#   ' + n)
+    if T.get('ncopy'):
+        out('#   %d copy records left out (no profiling times)' % T['ncopy'])
+    out()
+    device_report(T, steps, cards, out)
+    out()
     if cross:
         ref = statistics.median(cross.values())
         out('#   cal vs causal alignment, per card (us, relative to the median card): '

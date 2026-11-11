@@ -1,0 +1,88 @@
+# OWN_TIMELINE tl_one.txt: 8 answer steps (20-27), cards 0,1,2,3,4,5, clocks: none
+#   c0: cal mapping implausible (start - submit: p1 35561334.2 us, median 35564269.4 us)
+#   c1: cal mapping implausible (start - submit: p1 35561275.2 us, median 35564154.3 us)
+#   c2: cal mapping implausible (start - submit: p1 35561267.5 us, median 35564272.9 us)
+#   c3: cal mapping implausible (start - submit: p1 35561271.8 us, median 35564158.7 us)
+#   c4: cal mapping implausible (start - submit: p1 35561333.2 us, median 35564233.1 us)
+#   c5: cal mapping implausible (start - submit: p1 35561341.4 us, median 35564255.4 us)
+#   240 copy records left out (no profiling times)
+
+Device clock only, per card (us per step, mean; between = last launch end -> next step first start):
+card     span     busy  in-step idle  between (median)  launches
+c0    11011.5  10518.2         493.2             166.1      1053
+c1    11014.2  10545.2         468.9             163.9      1053
+c2    11013.8  10551.9         461.9             163.1      1053
+c3    11011.8  10538.4         473.3             165.7      1053
+c4    11011.1  10545.7         465.4             167.2      1053
+c5    11012.2  10534.3         477.9             167.4      1053
+Idle gaps of >= 0.5 us on average, by launch pair (per step and card: count, us each, us total):
+     1.0 235.74   235.7  HcPostP<ActF32> -> EngRowsA<ActF32>
+     1.0  60.13    60.1  EngRowsA<ActF32> -> EngRowsA<ActF32>
+     1.0  24.44    24.4  Broadcast4A<ActF32> -> HcPreA<ActF32>
+    32.0   0.66    21.2  RowsP<RopeRows<ActF32> > -> WindowAppendP<ActF32>
+     3.0   0.84     2.5  HcPreA<ActF32> -> RmsNormPS<5120u, 4u>
+     1.0   2.34     2.3  EngRowsA<ActF32> -> GemvQ6KP<24u, ActF32>
+     1.0   1.15     1.2  EmbedRowA<ActF32> -> Broadcast4A<ActF32>
+  (these pairs: 347.6 us per step and card)
+
+#   cal vs causal alignment, per card (us, relative to the median card): c0 -31.4, c1 +29.1, c2 +41.0, c3 +32.3, c4 -29.1, c5 -34.5   (spread = the alignment uncertainty across cards)
+#   clocks NOT aligned: cross-card numbers (step wall, last into exchange) are meaningless
+
+Step wall (first card thread begin -> last launch end): 63301.183 ms mean (min 63300.999, max 63301.308)
+
+Per card, ms per step (mean over 8 steps):
+card     span    busy    idle hostlate (inwait)  devgap lead-in    tail    xchg launch
+c0     11.011  10.518   0.493   0.000   0.000   0.493 63290.169   0.000   2.110   1053
+c1     11.014  10.545   0.469   0.000   0.000   0.469 62109.849   0.000   2.158   1053
+c2     11.014  10.552   0.462   0.000   0.000   0.462 62058.312   0.000   1.580   1053
+c3     11.012  10.538   0.473   0.000   0.000   0.473 63218.407   0.000   2.149   1053
+c4     11.011  10.546   0.465   0.000   0.000   0.465 62159.592   0.000   2.178   1053
+c5     11.012  10.534   0.478   0.000   0.000   0.478 62238.725   0.000   1.556   1053
+
+Exchanges per step: kind, count, mean ms in the kernels per card; the card that STARTS the exchange last
+(its peers wait for it), share of exchanges, and by how much it trails the second-last (median us):
+  output-a              40.0  dur 1.005 1.009 0.452 1.002 1.011 0.408  last: c0 100%  by 71762.5
+  expert act            40.0  dur 0.482 0.464 0.506 0.446 0.514 0.503  last: c0 100%  by 71762.4
+  ffn rows              40.0  dur 0.304 0.336 0.293 0.355 0.301 0.283  last: c0 100%  by 71763.9
+  output-b rows         40.0  dur 0.285 0.306 0.283 0.300 0.307 0.324  last: c0 100%  by 71762.9
+  engram                 2.0  dur 0.032 0.039 0.041 0.041 0.041 0.035  last: c0 100%  by 71764.4
+  engram (push)          1.0  dur 0.003 0.004 0.004 0.004 0.004 0.003
+  all exchanges, last to start: c0 100%
+
+Idle before each kernel type (us per step, mean card): host late / dev gap / launches per step
+       0.0    295.9    2.0  EngRowsA<ActF32>
+       0.0     24.7    3.0  HcPreA<ActF32>
+       0.0     22.2   40.0  WindowAppendP<ActF32>
+       0.0     10.3   83.0  XchgPull
+       0.0     10.1   78.0  HcPostPreP<ActF32>
+       0.0      9.9   80.0  XchgP
+       0.0      9.5   77.0  RowsP<RowsPair<NormRows<5120u, 4u>, HcDotsRows<5120u, 8u> > >
+       0.0      5.7   47.0  GemvH16P<160u, ActF32>
+       0.0      5.2   40.0  SwigluBothS<ActF32>
+       0.0      5.1   40.0  RowsP<RowsPair<NormRows<1280u, 4u>, NormRows<512u, 2u> > >
+       0.0      5.1   40.0  RowsP<RopeRows<ActF32> >
+       0.0      5.0   40.0  SparseOutJC<512u, 16u, 128u, 16u>
+
+Largest 20 gaps (us): step card cause | before -> after
+     496.8  s21  c0  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     489.5  s21  c5  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     486.7  s25  c0  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     486.7  s21  c2  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     485.3  s21  c4  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     484.8  s21  c3  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     483.9  s21  c1  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     481.8  s25  c5  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     476.2  s25  c3  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     475.8  s25  c4  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     471.1  s25  c1  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     470.5  s25  c2  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     398.8  s23  c0  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     392.7  s23  c5  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     388.0  s23  c2  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     387.6  s23  c3  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     387.2  s23  c1  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     387.0  s23  c4  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     250.0  s20  c0  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+     244.6  s20  c5  dev gap                     | HcPostP<ActF32> -> EngRowsA<ActF32>
+
+Between steps (last card thread done -> first card thread starts the next): median 105.5 us, max 150.3 us

@@ -4,6 +4,13 @@
 // exp/sigmoid/silu admit +-1 bf16 ulp (device vs host libm), same rule as
 // the SC117 identity-v2 gates.
 #pragma once
+// Tokens per multi-token step (prompt block, checked block), at most: Backend41::MTX. Build with -DOWN41_MTX=n
+// (16 <= n <= 128; default 64). Only capacities follow it (the block kernels' per-token tables, the expert
+// groups' slot and group counts, the window ring's block area, the block buffers); no kernel's per-token
+// arithmetic depends on it.
+#ifndef OWN41_MTX
+#define OWN41_MTX 64
+#endif
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
 #include "stage2/packet2/kernels/math.hpp"
@@ -12,6 +19,10 @@
 
 namespace ops41sycl {
 using iq3::Type;
+inline constexpr unsigned MT_MAX = OWN41_MTX;
+// >= 16: the one-sub-group block forms (DenseRowsM / GemvTM / HcDotsRowsM at 16 tokens) read 16 tokens' inputs;
+// <= 128: the block's window rows go to distinct ring rows (RingCommitM: position % 128)
+static_assert(MT_MAX >= 16 && MT_MAX <= 128, "OWN41_MTX: 16 .. 128 tokens per block step");
 
 // SG32 butterfly in tree32 pairing order (width 1,2,4,8,16; i += 2w).
 inline float sg_tree32(sycl::sub_group sg, float v) {
@@ -1781,7 +1792,8 @@ template <typename D, unsigned MT, unsigned G = D::MTG> struct DenseM {
 // group p % ng (tokens G * (p % ng) .. + G - 1) through D::rowg<G>, the group body rowm runs one after
 // another on one sub-group. The same operations per token as rowm (a group changes no token's operations);
 // a block of a few tokens gets ng times as many sub-groups (a 384-row slice at 6 tokens was 384 sub-groups,
-// most of the card idle). Tokens >= mt run on in-bounds data (G * ng <= MTX) and are not stored.
+// most of the card idle). Tokens >= mt run on in-bounds data and are not stored (G * ng <= mt + G - 1: the
+// block buffers hold Backend41::MTA = MTX + 8 tokens, so any G <= 9 stays inside them).
 template <typename D, unsigned G> struct DenseRowsG {
     D k;
     const uint8_t *w;
@@ -4540,6 +4552,89 @@ struct XchgP {
     }
 };
 
+#ifdef OWN41_XWAIT
+// ---- OWN_XWAIT (diagnostic build, -DOWN41_XWAIT): XchgP / XchgPull with a wait record (Backend41::xchg launches
+// XchgPW / XchgPullW instead of XchgP / XchgPull only when OWN_XWAIT is set). Their bodies are the plain kernels'
+// with clock reads added; the plain kernels and xchg_tail are not changed. Compiled only on request: any of these
+// kernels in the module changed the plain XchgPull's register allocation (HYBRID_BC_RA -> GRAPH_COLORING_FF_BC_RA,
+// 3,230 -> 3,158 instructions, small test unit, 2026-11-11), so the normal build carries none of them. Slot xk of the card's per-step ring xw, 16 words:
+//   [t]      flag polls until peer t's flag was seen (0: it was there first)
+//   [6 + t]  clock ticks from the start of the wait until that poll (the clock is read after every poll, so each
+//            lane keeps its own exit time; one read after the loop would give every peer the slowest one's time)
+//   [12]     1 (written)
+//   [13]     ticks from the kernel's entry to the start of the wait (the push / publish part)
+//   [14]     ticks from the entry to the end of the kernel's work (waiting work-group, lane 0)
+// The peer the others wait longest for arrived last. XchgPullW records in work-group 0 only.
+// The clock is the SPIR-V builtin (IGC: a read of the EU timestamp register tm0), not
+// sycl::ext::oneapi::experimental::clock: that one tags the kernel with aspect ext_oneapi_clock_sub_group, and
+// the ahead-of-time build for intel_gpu_bmg_g31 then leaves the kernel out of the binary without an error
+// (icpx 2026.1, checked 2026-11-11; the tag spreads to every caller). The tick rate is not documented:
+// tools/perf/dsv41_timeline.py fits it against the timeline's kernel times ([14]).
+inline uint64_t xw_clock() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return __spirv_ReadClockKHR(3); // sub-group scope
+#else
+    return 0;
+#endif
+}
+inline uint32_t xw_u32(uint64_t d) { return d > 0xffffffffull ? 0xffffffffu : (uint32_t)d; }
+struct XchgPW {
+    XchgP x;
+    uint32_t *xw;
+    unsigned xk;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const uint64_t ce = xw_clock();
+        const int n = x.n, me = x.me;
+        const unsigned t = (unsigned)it.get_local_linear_id(), T = (unsigned)it.get_local_range(0);
+        float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
+        const float *own = mine + x.off;
+        const unsigned n4 = (x.r1 - x.r0) / 4;
+        if (x.mode != 2) {
+            for (unsigned k = t; k < x.nslot * n4; k += T) {
+                const size_t o = (size_t)(k / n4) * x.stride + x.r0 + (k % n4) * 4;
+                const sycl::vec<float, 4> v = *reinterpret_cast<const sycl::vec<float, 4> *>(own + o);
+                for (int d = 0; d < n; ++d)
+                    if (d != me)
+                        *reinterpret_cast<sycl::vec<float, 4> *>(XchgP::pick(d, p0, p1, p2, p3, p4, p5) + x.off + o) = v;
+            }
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < n && (int)t != me)
+                AR(reinterpret_cast<uint32_t *>(XchgP::pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(x.seq);
+        }
+        if (x.mode == 1) return;
+        uint32_t *xr = xw + (size_t)xk * 16;
+        if (t == 0) xr[13] = xw_u32(xw_clock() - ce);
+        if ((int)t < n && (int)t != me) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
+            long s = 0;
+            const uint64_t c0 = xw_clock();
+            uint64_t c1 = c0;
+            if (!poison.load())
+                for (;;) { // XchgP's polls, the clock after each one
+                    const bool ok = f.load() >= x.seq;
+                    c1 = xw_clock();
+                    if (ok || ++s >= x.spin) break;
+                }
+            xr[t] = (uint32_t)s;
+            xr[6 + t] = xw_u32(c1 - c0);
+            xr[12] = 1u;
+            if (s >= x.spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        if (t == 0) xr[14] = xw_u32(xw_clock() - ce);
+    }
+};
+#endif // OWN41_XWAIT
+
 // The exchange at the end of the launch that produced its rows (no launch between them): every work-group
 // releases its writes and counts itself done; the work-group that brings the count to the group count
 // resets it, acquires, and runs XchgP's body (push, flags, wait) with its own items.
@@ -5574,7 +5669,7 @@ template <typename K> struct OutMC {
 // ---- the block's index lists (backend_sycl_v41_mt.inc tpm_index): per-token row counts lens[t] ----------
 // CidxFill for the tokens with lens[t] in [0, 512] (others: lens[t] < 0, left alone): list t at out + t * 512
 struct CidxFillM {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     void operator()(sycl::nd_item<1> it, int32_t *out) const {
         const unsigned g = (unsigned)it.get_global_linear_id(), t = g / 512, i = g % 512;
@@ -5585,7 +5680,7 @@ struct CidxFillM {
 // IndexerScoreB for every token with lens[t] > 0: work-groups t * gpt .. are token t's (rows j = (group %
 // gpt) * WG + local id); its query, weights and scores at the one-token pointers + t * strides
 template <typename A> struct IndexerScoreBM {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m, gpt;
     size_t qs, ws, ss;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -5604,7 +5699,7 @@ template <typename A> struct IndexerScoreBM {
 // scores bit for bit. gpt = groups per token over R * WG rows.
 template <typename A, int R> struct IndexerScoreBMR {
     static constexpr int H = 32, DK = 128, CH = 16;
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m, gpt;
     size_t qs, ws, ss;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -5660,7 +5755,7 @@ template <typename A, int R> struct IndexerScoreBMR {
 // lens[t] rows, the candidate mask to cand + t * cs. Else: n = lens[t], top 512 (+128) to out + t * 512,
 // masked by cand + t * cs (cand_n = lens[t]) when mask.
 template <bool BLOCK> struct TopKSelM {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     bool mask;
     size_t ss, cs;
@@ -5685,7 +5780,7 @@ template <bool BLOCK> struct TopKSelM {
 // TopKSelM<false> with the mask, over each token's candidate rows (TopKSelC; OWN_IDX_CAND): token t's block list
 // at bl + t * bls, its scores at sc + t * ss, its mask at cand + t * cs (cand_n == its rows), its list at out + 512 t
 struct TopKSelMC {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     size_t ss, cs, bls;
     bool rwalk = false; // OWN_TOPK_R (TopKSelC::rwalk)
@@ -5701,7 +5796,7 @@ struct TopKSelMC {
 // select by TopKSelQ<MAXC> (MAXC >= qsel_span of every token's rows), the block select by TopKSelBQ<MAXC> (of its
 // blocks), the candidate select by TopKSelCQ<16>. The same lists.
 template <int MAXC> struct TopKSelMQ {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     bool mask;
     size_t ss, cs;
@@ -5715,7 +5810,7 @@ template <int MAXC> struct TopKSelMQ {
     }
 };
 template <int MAXC> struct TopKSelMBQ {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     size_t ss, cs, bls = 0;
     void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
@@ -5728,7 +5823,7 @@ template <int MAXC> struct TopKSelMBQ {
     }
 };
 struct TopKSelMCQ {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m;
     size_t ss, cs, bls;
     void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand, const int32_t *bl, int32_t *out,
@@ -5741,7 +5836,7 @@ struct TopKSelMCQ {
 // IndexerScoreBM over each token's layer-20 candidate rows (OWN_IDX_CAND): token t's gpt work-groups score its
 // rows bl[t * bls + 1 + i / 8] * 8 + i % 8 with IndexerScoreB::run (IndexerScoreBC per token)
 template <typename A> struct IndexerScoreBCM {
-    int lens[16];
+    int lens[MT_MAX];
     unsigned m, gpt;
     size_t qs, ws, ss, bls;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -5873,6 +5968,75 @@ struct XchgPull {
         }
     }
 };
+
+#ifdef OWN41_XWAIT
+// XchgPull with the OWN_XWAIT record (see XchgPW; work-group 0 records)
+struct XchgPullW {
+    XchgPull x;
+    uint32_t *xw;
+    unsigned xk;
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const uint64_t ce = xw_clock();
+        const int n = x.n, me = x.me;
+        const unsigned t = (unsigned)it.get_local_linear_id();
+        const bool rec = it.get_group_linear_id() == 0;
+        float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
+        if (x.mode != 2 && it.get_group_linear_id() == 0) {
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < n && (int)t != me)
+                AR(reinterpret_cast<uint32_t *>(XchgP::pick((int)t, p0, p1, p2, p3, p4, p5))[16 * me]).store(x.seq);
+        }
+        if (x.mode == 1) return;
+        uint32_t *xr = xw + (size_t)xk * 16;
+        if (rec && t == 0) xr[13] = xw_u32(xw_clock() - ce);
+        if ((int)t < n && (int)t != me) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
+            long s = 0;
+            const uint64_t c0 = xw_clock();
+            uint64_t c1 = c0;
+            if (!poison.load())
+                for (;;) { // XchgPull's polls, the clock after each one
+                    const bool ok = f.load() >= x.seq;
+                    c1 = xw_clock();
+                    if (ok || ++s >= x.spin) break;
+                }
+            if (rec) {
+                xr[t] = (uint32_t)s;
+                xr[6 + t] = xw_u32(c1 - c0);
+                xr[12] = 1u;
+            }
+            if (s >= x.spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        // XchgPull::copy_seq's copy, written out: a second caller of copy_seq / copy_lb changes the plain
+        // XchgPull's machine code (checked 2026-11-11); copy_lb (OWN_XPULL_LB=1) is not recorded (Backend41::xchg)
+        const size_t T = it.get_global_range(0), gid = it.get_global_linear_id();
+        size_t base = 0;
+        for (int d = 0; d < n; ++d) {
+            if (d == me) continue;
+            const unsigned n4 = (x.b1[d] - x.b0[d]) / 4;
+            const size_t cnt = (size_t)x.nslot * n4;
+            const float *src = XchgP::pick(d, p0, p1, p2, p3, p4, p5) + x.off;
+            float *dst = mine + x.off;
+            for (size_t k = (gid + T - base % T) % T; k < cnt; k += T) {
+                const size_t o = (size_t)(k / n4) * x.stride + x.b0[d] + (k % n4) * 4;
+                *reinterpret_cast<sycl::vec<float, 4> *>(dst + o) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + o);
+            }
+            base += cnt;
+        }
+        if (rec && t == 0) xr[14] = xw_u32(xw_clock() - ce);
+    }
+};
+#endif // OWN41_XWAIT
 
 // XchgPull between a card and its one or two partners only (split attention groups, Backend41::oa_run): publish
 // seq into each partner's flag word 16 * me, wait for each partner's flag, copy partner k's floats [b0[k], b1[k])
@@ -6048,7 +6212,9 @@ struct ArgmaxP1OM {
 // grp; a token picks distinct experts, so with cap >= M every expert is one group). Group order is ascending
 // first slot (it does not matter: every slot's output is written by exactly one group).
 struct RUGrp {
-    static constexpr unsigned MAXU = 128, CAP = 16; // groups (>= slots), slots per group
+    // groups (>= the slots of the largest block: 6 per token, MT_MAX tokens; 128 as before up to 21 tokens),
+    // slots per group. Only the word offsets below follow MAXU (the writer and every reader use them).
+    static constexpr unsigned MAXU = 6 * MT_MAX > 128 ? 6 * MT_MAX : 128, CAP = 16;
     static constexpr unsigned EXP = 4, CNT = EXP + MAXU, SLOT = CNT + MAXU, WORDS = SLOT + MAXU * CAP;
 };
 // One work-group of WG items (launch: nd_range(WG, WG), LM floats of local memory as the last argument, e.g.
@@ -6056,9 +6222,15 @@ struct RUGrp {
 // one O(nsl) scan of the ids staged in local memory gives its occurrence index among the slots of its expert
 // (before), the expert's total and the first slot of its chunk (head); a work-group scan ranks the heads.
 struct ExpertGroupM {
-    static constexpr unsigned WG = 128, LM = 2 * WG;
-    unsigned nsl;      // slots, 1 .. WG
+    // WG >= the slots of the largest block (item s = slot s; 128 as before up to 21 tokens). Items s >= nsl
+    // take no part (first = false), so the groups and their order do not depend on WG.
+    static constexpr unsigned WG = 6 * MT_MAX > 128 ? (6 * MT_MAX + 31) / 32 * 32 : 128, LM = 2 * WG;
+    static_assert(WG <= 1024 && 6 * MT_MAX <= WG && 6 * MT_MAX <= RUGrp::MAXU, "a block's 6 M slots, one item and at most one group each");
+    unsigned nsl;      // slots, 1 .. the launch's items (items(nsl); 6 M <= 6 MT_MAX <= WG)
     unsigned cap = 16; // slots per group at most, 1 .. RUGrp::CAP
+    // work-group size to launch for nsl slots: 128 up to 128 slots (the launch before blocks past 21 tokens),
+    // else nsl in whole sub-groups (local memory stays LM: le / lr at WG apart)
+    static size_t items(unsigned nsl) { return nsl <= 128 ? 128 : (size_t)(nsl + 31) / 32 * 32; }
     void operator()(sycl::nd_item<1> it, const uint32_t *ids, uint32_t *grp, float *lm) const {
         uint32_t *le = reinterpret_cast<uint32_t *>(lm), *lr = le + WG;
         const unsigned s = (unsigned)it.get_local_linear_id();

@@ -1,0 +1,20 @@
+--- a/src/stage2/packet3/backend/backend_sycl_v41_draft.inc
++++ b/src/stage2/packet3/backend/backend_sycl_v41_draft.inc
+@@ -215,8 +215,16 @@
+            (const float *)b.pre_a, b.x);
+     rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
+                        tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dots(p + "hc_ffn_")});
++    // the pick over the draft's own experts (128: 128 router rows, 128 biases). Its logits rows keep the target's
++    // stride (g.experts) in the shared router buffer, but only their first dne entries are written here; a pick over
++    // g.experts read the target's last block's router logits behind them (which depend on how the prompt was cut
++    // into blocks) with ffn_gate_inp's first floats as their biases, the picks past 127 reading expert 0.
++    const int dne = (int)we(p + "ffn_gate_inp.weight").rows;
++    if (dne < 32 || dne % 32 || dne > g.experts || we(p + "exp_probs_b.bias").cols != dne ||
++        we(p + "ffn_gate_exps.weight").experts != dne)
++        throw std::runtime_error("draft router: expert count of " + p);
+     gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
+-    launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 3}, (size_t)g.experts},
++    launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{dne, 3}, (size_t)g.experts},
+                              (const float *)b.router, bias, b.ids, b.prob);
+     tok_set(c, 0);
+     rows_launch(c, tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16));

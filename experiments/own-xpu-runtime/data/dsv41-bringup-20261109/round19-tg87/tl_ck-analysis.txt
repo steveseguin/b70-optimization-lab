@@ -1,0 +1,106 @@
+# OWN_TIMELINE tl_ck.txt: 8 answer steps (10020-10027), cards 0,1,2,3,4,5, clocks: none
+#   c0: cal mapping implausible (start - submit: p1 35614592.6 us, median 35619019.9 us)
+#   c1: cal mapping implausible (start - submit: p1 35614540.2 us, median 35618521.1 us)
+#   c2: cal mapping implausible (start - submit: p1 35614544.1 us, median 35618911.2 us)
+#   c3: cal mapping implausible (start - submit: p1 35614561.2 us, median 35618517.7 us)
+#   c4: cal mapping implausible (start - submit: p1 35614615.6 us, median 35619040.3 us)
+#   c5: cal mapping implausible (start - submit: p1 35614609.7 us, median 35619015.2 us)
+
+Device clock only, per card (us per step, mean; between = last launch end -> next step first start):
+card     span     busy  in-step idle  between (median)  launches
+c0    16018.5  15546.0         472.5            2364.5      1214
+c1    16017.7  15573.4         444.2            2363.4      1214
+c2    16019.2  15583.4         435.8            2361.7      1214
+c3    16020.0  15568.5         451.5            2362.1      1214
+c4    16017.4  15588.2         429.2            2363.1      1214
+c5    16019.3  15539.8         479.4            2357.0      1214
+Idle gaps of >= 0.5 us on average, by launch pair (per step and card: count, us each, us total):
+     1.0  63.90    63.9  EngRowsA<ActF32> -> EngRowsA<ActF32>
+     0.8  59.15    44.4  ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 1u> >
+    38.0   1.00    37.8  ScoreM<SparseScoreHG<512u, 4u> > -> SoftmaxM<SparseSoftmaxPN<640> >
+    38.0   0.98    37.2  SoftmaxM<SparseSoftmaxPN<640> > -> OutMC<SparseOutJC<512u, 16u, 128u, 16u> >
+     1.2  27.26    34.1  Broadcast4A<ActF32> -> EmbedRowA<ActF32>
+     1.0  23.90    23.9  HcPostPM<ActF32> -> EngRowsA<ActF32>
+     1.0  23.12    23.1  Broadcast4A<ActF32> -> HcPreAM<ActF32>
+     0.1  97.64    12.2  ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 3u> >
+     0.1  83.54    10.4  ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 2u> >
+     2.6   2.54     6.7  StatePackM<ActF32> -> CompressPoolPM<ActF32>
+     2.2   1.74     3.9  EmbedRowA<ActF32> -> Broadcast4A<ActF32>
+     0.4   8.63     3.2  StatePackM<ActF32> -> CidxFillM
+     3.0   0.79     2.4  HcPreAM<ActF32> -> RowsP<TokRows<NormRows<5120u, 4u> > >
+     1.6   0.99     1.6  RowsP<RowsPair<TokRows<HcFinishRows>, RowsPai... -> RowsP<DenseRowsGR<GemvQ6KP<5u, ActF32>, 3u, 4...
+     1.6   0.98     1.6  RowsP<DenseRowsGR<GemvQ6KP<5u, ActF32>, 3u, 4... -> RowsP<RowsPair<TokRows<RopeRows<ActF32> >, To...
+     0.4   4.11     1.5  EngRowsA<ActF32> -> RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 1u, ...
+     0.4   2.89     1.1  EngRowsA<ActF32> -> RowsP<DenseRowsG<GemvQ6KP<24u, ActF32>, 1u> >
+     0.8   0.78     0.6  XchgP -> RowsP<TokRows<NormRows<5120u, 4u> > >
+     0.1   4.41     0.6  EngRowsA<ActF32> -> RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 2u, ...
+     0.4   1.24     0.5  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 1u, ... -> ArgmaxP1OM
+     0.1   3.52     0.4  EngRowsA<ActF32> -> RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 3u, ...
+     0.4   1.08     0.4  RowsP<DenseRowsGR<GemvQ6KP<24u, ActF32>, 1u, ... -> XchgPull
+     0.4   1.00     0.4  RowsP<TokRows<NormRows<5120u, 4u> > > -> RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 1u, ...
+     0.1   1.25     0.2  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 3u, ... -> ArgmaxP1OM
+     0.1   1.23     0.2  RowsP<DenseRowsGR<GemvQ6KP<20u, ActF32>, 2u, ... -> ArgmaxP1OM
+  (these pairs: 312.2 us per step and card)
+
+#   cal vs causal alignment, per card (us, relative to the median card): c0 -21.4, c1 +34.9, c2 +42.7, c3 +21.4, c4 -29.8, c5 -29.9   (spread = the alignment uncertainty across cards)
+#   clocks NOT aligned: cross-card numbers (step wall, last into exchange) are meaningless
+
+Step wall (first card thread begin -> last launch end): 63306.226 ms mean (min 63302.568, max 63314.063)
+
+Per card, ms per step (mean over 8 steps):
+card     span    busy    idle hostlate (inwait)  devgap lead-in    tail    xchg launch
+c0     16.019  15.546   0.473   0.000   0.000   0.473 63290.205   0.000   3.221   1214
+c1     16.018  15.573   0.444   0.000   0.000   0.444 62108.150   0.000   3.224   1214
+c2     16.019  15.583   0.436   0.000   0.000   0.436 62056.547   0.000   2.210   1214
+c3     16.020  15.568   0.452   0.000   0.000   0.452 63218.371   0.000   3.234   1214
+c4     16.017  15.588   0.429   0.000   0.000   0.429 62157.923   0.000   3.283   1214
+c5     16.019  15.540   0.479   0.000   0.000   0.479 62237.171   0.000   2.169   1214
+
+Exchanges per step: kind, count, mean ms in the kernels per card; the card that STARTS the exchange last
+(its peers wait for it), share of exchanges, and by how much it trails the second-last (median us):
+  output-a              40.0  dur 1.534 1.510 0.457 1.517 1.526 0.531  last: c0 100%  by 71833.4
+  other                121.5  dur 0.631 0.676 0.696 0.673 0.653 0.595  last: c0 100%  by 71834.6
+  expert act            40.0  dur 0.670 0.642 0.601 0.637 0.696 0.657  last: c0 100%  by 71833.5
+  ffn rows              10.0  dur 0.172 0.172 0.190 0.173 0.158 0.157  last: c0 100%  by 71833.8
+  output-b rows         10.2  dur 0.151 0.154 0.191 0.158 0.174 0.167  last: c0 100%  by 71834.5
+  engram                 2.0  dur 0.058 0.064 0.069 0.070 0.072 0.057  last: c0 100%  by 71835.4
+  engram (push)          1.0  dur 0.005 0.005 0.006 0.005 0.005 0.004
+  all exchanges, last to start: c0 100%
+
+Idle before each kernel type (us per step, mean card): host late / dev gap / launches per step
+       0.0     87.8    2.0  EngRowsA<ActF32>
+       0.0     44.4    0.8  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 1u> >
+       0.0     37.8   38.0  SoftmaxM<SparseSoftmaxPN<640> >
+       0.0     37.5   40.0  OutMC<SparseOutJC<512u, 16u, 128u, 16u> >
+       0.0     34.1    1.2  EmbedRowA<ActF32>
+       0.0     23.4    3.0  HcPreAM<ActF32>
+       0.0     13.2  103.2  XchgPull
+       0.0     12.4   82.0  RowsP<TokRows<NormRows<5120u, 4u> > >
+       0.0     12.2    0.1  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 3u> >
+       0.0     10.4    0.1  RowsP<DenseRowsG<GemvQ8P<480u, ActF32>, 2u> >
+       0.0      9.4   78.0  HcPostPrePM<ActF32>
+       0.0      7.4   60.8  XchgP
+
+Largest 20 gaps (us): step card cause | before -> after
+     105.9  s10023 c5  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+     104.8  s10023 c0  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+     101.5  s10023 c3  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      98.4  s10023 c1  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      90.0  s10024 c5  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      90.0  s10023 c2  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      89.7  s10024 c0  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      86.9  s10024 c3  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      85.2  s10023 c4  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      84.7  s10024 c1  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      76.9  s10022 c3  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      75.6  s10024 c2  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      74.4  s10024 c4  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+      73.8  s10024 c1  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      73.4  s10024 c0  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      73.0  s10024 c3  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      72.5  s10024 c4  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      72.0  s10024 c5  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      71.0  s10024 c2  dev gap                     | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      69.4  s10027 c5  dev gap                     | ArgmaxP1OM -> RowsP<DenseRowsG<GemvQ8P<480u, ...
+
+Between steps (last card thread done -> first card thread starts the next): median 2383.2 us, max 2494.0 us
