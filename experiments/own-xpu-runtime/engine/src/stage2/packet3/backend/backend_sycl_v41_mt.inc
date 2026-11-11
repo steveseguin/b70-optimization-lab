@@ -96,6 +96,7 @@ unsigned mt_rwg = 0;     // OWN_MT_RWG=n: row launches of at most n rows use one
 bool mt_rfuse = false;   // OWN_MT_RFUSE=1: router top-k + FFN mix finish + shared gate/up rows in one launch
 unsigned mt_eu = 0;      // OWN_MT_EU=6: routed rows expert-major (RoutedU, groups of at most 6 slots; 0: slot-major)
 bool mt_idstat = false; // OWN_MT_IDSTAT=1: count distinct experts per block and layer on card 0 (diagnostic, waits)
+FILE *mt_iddump = nullptr; // OWN_MT_IDDUMP=<file> (with OWN_MT_IDSTAT=1): write each block's ids per layer
 long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push over many work-groups (OWN_MT_XPUSH=0: XchgP's one group)
 private:
 // xchg for a block: the stores by XchgPushM, then XchgP without slots for the release, flags and wait
@@ -1190,6 +1191,11 @@ void tpm_layer(int L, int c) {
     if (mt_idstat && c == 0) {
         std::vector<uint32_t> hid((size_t)6 * M);
         qs[c].memcpy(hid.data(), b.ids, hid.size() * 4).wait();
+        if (mt_iddump) { // OWN_MT_IDDUMP: every token's 6 ids per layer, in token order (u(M) for any block size offline)
+            std::fprintf(mt_iddump, "%d %d", L, M);
+            for (uint32_t v : hid) std::fprintf(mt_iddump, " %u", v);
+            std::fputc('\n', mt_iddump);
+        }
         std::sort(hid.begin(), hid.end());
         ids_picks += (long)hid.size();
         ids_unique += (long)(std::unique(hid.begin(), hid.end()) - hid.begin());

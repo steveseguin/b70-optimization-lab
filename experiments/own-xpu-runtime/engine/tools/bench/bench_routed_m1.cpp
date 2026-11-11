@@ -120,7 +120,9 @@ template <unsigned NB, unsigned R> struct RoutedIQ2XXSR {
 // own + partner as production), levels P / 2 .. 1 inside the item (lower lane first, only those feeding lane 0).
 // P rows per sub-group (32 / P items per row). STAB: the sign masks come from a 256 x 8 table in local memory
 // (one uint4 read per 4 weights) instead of a shift and a mask per weight.
-template <unsigned NB, unsigned P, bool STAB = false, bool PF = false> struct RoutedIQ2XXSK {
+template <unsigned NB, unsigned P, bool STAB = false, bool PF = false, bool XB = false> struct RoutedIQ2XXSK {
+    // XB: the item's x for the whole block (8 groups x P floats) loaded at the block's start (pcs1b: the mul waits on
+    // the x load issued just before it)
     static_assert(P == 2 || P == 4 || P == 8, "P logical lanes per item");
     // PF: block blk + 1's quant words, scale word and half are loaded while block blk is computed (pcs1: without it
     // a third of the samples wait for these loads at the top of each block)
@@ -200,6 +202,14 @@ template <unsigned NB, unsigned P, bool STAB = false, bool PF = false> struct Ro
                         wq[4 * k + 3] = v[3];
                     }
                 }
+                [[maybe_unused]] sycl::float4 xbk[XB ? 8 * P / 4 : 1];
+                if constexpr (XB) {
+#pragma unroll
+                    for (unsigned g = 0; g < 8; ++g)
+#pragma unroll
+                        for (unsigned k = 0; k < P / 4; ++k)
+                            xbk[g * (P / 4) + k] = *reinterpret_cast<const sycl::float4 *>(xs + (size_t)blk * 256 + g * 32 + 4 * k);
+                }
 #pragma unroll
                 for (unsigned g = 0; g < 8; ++g) {
                     const uint32_t lo = wq[2 * g], es = wq[2 * g + 1];
@@ -216,7 +226,9 @@ template <unsigned NB, unsigned P, bool STAB = false, bool PF = false> struct Ro
 #pragma unroll
                         for (unsigned k = 0; k < P / 4; ++k) {
                             const sycl::float4 m = *reinterpret_cast<const sycl::float4 *>(tab + idx * 8 + j0 + 4 * k);
-                            const sycl::float4 xx = *reinterpret_cast<const sycl::float4 *>(xg + 4 * k);
+                            sycl::float4 xx;
+                            if constexpr (XB) xx = xbk[g * (P / 4) + k];
+                            else xx = *reinterpret_cast<const sycl::float4 *>(xg + 4 * k);
 #pragma unroll
                             for (unsigned e = 0; e < 4; ++e) mg[4 * k + e] = m[e], xv[4 * k + e] = xx[e];
                         }
@@ -654,8 +666,8 @@ int main(int argc, char **argv) {
         pcs::start();
         for (int r = 0; r < 20; ++r) {
             time_k<RoutedIQ2XXSP<20, ActF32>>(q, bp, npos, 128);
-            time_k<RoutedIQ2XXSK<20, 4, false, true>>(q, bp, npos / 4, 0);
-            time_k<RoutedIQ2XXSK<20, 8, false, true>>(q, bp, npos / 8, 0);
+            time_k<RoutedIQ2XXSK<20, 4, false, false, true>>(q, bp, npos / 4, 0);
+            time_k<RoutedIQ2XXSK<20, 8, false, false, true>>(q, bp, npos / 8, 0);
         }
         pcs::stop_print("Routed", 150, 24);
         return 0;
@@ -668,21 +680,17 @@ int main(int argc, char **argv) {
         uint8_t *u = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 12);
         Bank bp{g, u, x, ids, o1, o2, PAIR_ROWS, false};
         std::printf("IQ2_XXS candidates:\n");
-        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 8, false, true>>(q, bp, 128, 8, "K8pf");
-        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 8, true, true>>(q, bp, 128, 8, "K8spf");
-        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, false, true>>(q, bp, 128, 4, "K4pf");
-        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, true, true>>(q, bp, 128, 4, "K4spf");
-        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 2, false, true>>(q, bp, 128, 2, "K2pf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, false, false, true>>(q, bp, 128, 4, "K4xb");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, true, false, true>>(q, bp, 128, 4, "K4sxb");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, false, true, true>>(q, bp, 128, 4, "K4pfxb");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 8, false, false, true>>(q, bp, 128, 8, "K8xb");
         cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4>>(q, bp, 128, 4, "K4");
         if (getenv("K_ONLY")) {
             sycl::free(g, q);
             sycl::free(u, q);
             uint8_t *d = packed_bank<Ty::IQ2_XXS>(q, 2304, (size_t)NEXP * DOWN_ROWS, 13);
             Bank bd{d, nullptr, x, ids, o1, o2, DOWN_ROWS, true};
-            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 8, false, true>>(q, bd, 128, 8, "K8pf");
-            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 4, false, true>>(q, bd, 128, 4, "K4pf");
-            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 4, true, true>>(q, bd, 128, 4, "K4spf");
-            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 2, false, true>>(q, bd, 128, 2, "K2pf");
+            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 4, false, false, true>>(q, bd, 128, 4, "K4xb");
             sycl::free(d, q);
             std::printf("%s\n", g_fail ? "FAIL" : "PASS");
             return g_fail ? 1 : 0;

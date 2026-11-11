@@ -420,6 +420,7 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_XPUSH")) be.mt_xpush = atoi(e); // block exchanges: 0 one group, 1 many, 2 per peer
         if (const char *e = getenv("OWN_MT_XGPP")) be.mt_xgpp = (unsigned)std::max(1, atoi(e));
         if (const char *e = getenv("OWN_MT_IDSTAT")) be.mt_idstat = atoi(e) != 0;
+        if (const char *e = getenv("OWN_MT_IDDUMP")) be.mt_iddump = std::fopen(e, "w");
         if (const char *e = getenv("OWN_MT_TG")) be.mt_tg = (unsigned)atoi(e); // dense token groups per sub-group
         if (const char *e = getenv("OWN_MT_TG_MAX")) be.mt_tg_max = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_EU")) be.mt_eu = (unsigned)atoi(e); // expert-major routed rows (6)

@@ -179,6 +179,26 @@ also be read once per block for all tokens (keys in registers, every token's que
   layers per card would need a second copy of the 157 GB of experts, and answers would get ~6x slower.
 - *Two groups of three cards on different blocks*: same weight-layout problem.
 
+## Measured 2026-11-11 01:20: distinct experts per block (step 0 done, u84)
+
+`OWN_MT_IDSTAT=1 OWN_MT_IDDUMP=<file>` (tp84) wrote every prompt token's six ids per layer on the 3K and 10K prompts
+(blocks of 16; a token's ids do not depend on the block size). `engine/tools/perf/dsv41_distinct_experts.py` forms
+blocks of M consecutive tokens offline (`data/dsv41-bringup-20261109/round19-u84-distinct-experts-per-block.txt`;
+the dumps stay in `/home/steve/dsv41-work/runs/u84/`, 3 + 9.6 MB). Mean distinct experts per (block, layer), 3K / 10K:
+
+| M tokens | 2 | 4 | 5 | 8 | 16 | 32 | 64 | 128 | 256 | 512 | 1024 |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| distinct (3K) | 10.5 | 17.8 | 21.0 | 29.5 | 47.5 | 73.0 | 105.6 | 143.3 | 184.9 | 227.7 | 271.2 |
+| distinct (10K) | 10.6 | 18.0 | 21.3 | 29.9 | 47.8 | 73.2 | 105.9 | 144.4 | 183.3 | 221.3 | 259.4 |
+| uniform picks | 11.9 | 23.4 | 29.1 | 45.5 | 85.5 | 152.0 | 243.8 | 332.8 | 377.2 | 383.9 | 384.0 |
+| expert bytes per token vs one token (3K) | 0.874 | 0.742 | 0.702 | 0.615 | 0.495 | 0.380 | 0.275 | 0.187 | 0.120 | 0.074 | 0.044 |
+
+Routing is strongly correlated: at 16 tokens a block reads 47.5 experts per layer, not the ~80 this plan assumed
+(and not uniform 85.5), so the routed floor at 16 is ~40 % below the model above, and bigger blocks pay more than
+the table below says: per token, 64-token blocks read 0.56x and 256-token blocks 0.24x the expert weights of
+16-token blocks. Per-layer spread is wide (16 tokens: 36-66 distinct). For guessing checks (2-6 tokens) the saving
+is small (0.87-0.70), as expected. Block size (B, F, F2) moves up in priority; `MTX` (16, compile-time) is the gate.
+
 ## Ranked plan
 
 Expected tok/s on the 3K document, cumulative, from the model above (card 2 critical; balanced cards assumed;
