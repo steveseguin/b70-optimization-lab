@@ -1276,12 +1276,14 @@ private:
     void arm_xtail(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int part) {
         xt[c] = {o.xtail && !use_pull(part, nslot), true, off, stride, nslot, r0, r1, part};
     }
+#ifndef OWN41_ACT_BF16
     void end_xtail(int c) {
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
         if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1, 0, 0, t.part);
         xl2n[c] = 0; // (an exchange that ran inside its producer: no prefetch)
     }
+#endif
     template <bool SG32, typename K, typename... A> void launch_xt(int c, sycl::nd_range<1> nr, K k, A... args) {
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
