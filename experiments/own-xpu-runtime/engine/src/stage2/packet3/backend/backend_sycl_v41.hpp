@@ -3225,7 +3225,11 @@ private:
             gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
         }
         if (!o.small_fast || g.h % 32) throw std::runtime_error("tensor parallel: engram gate form");
-        launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], kv, wp<float>(c, p + "engram_gate.weight"));
+        if (ops41sycl::g_eng_ff) // OWN_ENG_FF: the bracket over 16 sub-groups per stream (the same gate bit for bit)
+            launch_wgl<8 * 16 + 2>(c, 4, 512, ops41sycl::EngramGateW<16>{ops41sycl::EngramGateP{g.h}}, streams[c], kv,
+                                   wp<float>(c, p + "engram_gate.weight"));
+        else
+            launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c], kv, wp<float>(c, p + "engram_gate.weight"));
     }
     void tp_embed(int c, int32_t token, bool wait = true) {
         const auto &te = we("token_embd.weight");

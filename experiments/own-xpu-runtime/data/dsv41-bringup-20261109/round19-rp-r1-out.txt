@@ -1,0 +1,17 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+V0 engine RouteP two = true        2048 sets: 0 differ
+V1 copy of run_two                 2048 sets: 0 differ
+V3 without NaN flags               2048 sets: 0 differ
+V4 stage 2 uniform local reads     2048 sets: 0 differ
+form                                median us     min us     p10 us     p90 us
+V0 engine RouteP two = true              8.65       8.54       8.54      43.75
+V1 copy of run_two                       8.54       8.44       8.54      43.54
+V2 stage 1 + barrier only                2.50       2.40       2.50      12.81
+V3 without NaN flags                     8.23       8.02       8.02      41.25
+V4 stage 2 uniform local reads          10.10      10.00      10.00      51.46
+V5 scores only, no barrier               1.15       0.83       0.94       5.10
+V6 V1 without the prob read              8.54       8.44       8.44      43.23
+V7 empty kernel                          0.52       0.42       0.42       1.98
+PASS
+exit 0
+DONE

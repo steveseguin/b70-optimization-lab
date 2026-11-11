@@ -1,0 +1,10 @@
+Intel(R) Arc(TM) Pro B70 Graphics, compute units 256, G = 32 work-groups of 512
+weights 35.3 MB per layer, 564.2 MB per chain of 16 layers
+form                                      median us     min us us per layer       GB/s
+A one launch per stage                       1187.4     1182.8        74.21      475.1
+P0 persistent                                1735.6     1728.3       108.48      325.0
+P1 persistent + next rows read early         3404.6     3402.8       212.79      165.7
+P2 persistent + first next row early         2477.6     2475.4       154.85      227.7
+F floor: read the bytes                       935.8      934.8        58.49      602.8
+PASS
+exit 0

@@ -1,0 +1,32 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+V0 engine RouteP two = true        2048 sets: 0 differ
+V1 copy of run_two                 2048 sets: 0 differ
+V3 without NaN flags               2048 sets: 0 differ
+V4 stage 2 uniform local reads     2048 sets: 0 differ
+V8 stage 2 constant count          2048 sets: 0 differ
+V10 picks stored after the barrier 2048 sets: 0 differ
+V11 branch-free test               2048 sets: 0 differ
+V12 candidates' lanes only (no NaN path) 2048 sets: 0 differ
+V13 const + branch-free both stages 2048 sets: 0 differ
+V14 branch-free both stages        2048 sets: 0 differ
+V15 V13 with four counters         2048 sets: 0 differ
+form                                        median us     min us     p10 us     p90 us
+V0 engine RouteP two = true                      8.65       8.54       8.54      21.88
+V1 copy of run_two                               8.54       8.44       8.54      21.77
+V2 stage 1 + barrier only                        2.71       2.40       2.50       6.46
+V3 without NaN flags                             8.12       8.02       8.02      20.73
+V4 stage 2 uniform local reads                  10.11      10.00      10.10      25.73
+V5 scores only, no barrier                       1.04       0.83       0.94       2.60
+V6 V1 without the prob read                      8.54       8.44       8.44      21.67
+V7 empty kernel                                  0.52       0.42       0.42       1.04
+V8 stage 2 constant count                        6.67       6.56       6.56      16.98
+V9 stage 2 skipped                               3.33       3.12       3.23       8.23
+V10 picks stored after the barrier               8.54       8.44       8.54      21.77
+V11 branch-free test                             4.79       4.69       4.79      12.19
+V12 candidates' lanes only (no NaN path)         6.04       5.94       6.04      15.42
+V13 const + branch-free both stages              2.71       2.50       2.60       6.67
+V14 branch-free both stages                      3.65       3.54       3.65       9.38
+V15 V13 with four counters                       2.81       2.60       2.60       6.88
+PASS
+exit 0
+DONE

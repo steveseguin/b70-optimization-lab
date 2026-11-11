@@ -1,0 +1,23 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+random                                        16384 streams: 0 differ (W16 0, W8 0), the chains ran for 59
+magnitudes 2^+-28 per vector                  16384 streams: 0 differ (W16 0, W8 0), the chains ran for 56
+sparse (99 % zero)                            16384 streams: 0 differ (W16 0, W8 0), the chains ran for 1
+one huge value                                16384 streams: 0 differ (W16 0, W8 0), the chains ran for 53
+constant                                      16384 streams: 0 differ (W16 0, W8 0), the chains ran for 0
+dot cancels exactly (pairs)                   16384 streams: 0 differ (W16 0, W8 0), the chains ran for 16384
+streams all zero                              16384 streams: 0 differ (W16 0, W8 0), the chains ran for 0
+keys all zero                                 16384 streams: 0 differ (W16 0, W8 0), the chains ran for 0
+tiny (subnormal floats)                       16384 streams: 0 differ (W16 0, W8 0), the chains ran for 0
+large (~1e30)                                 16384 streams: 0 differ (W16 0, W8 0), the chains ran for 0
+an inf in a stream                            16384 streams: 0 differ (W16 0, W8 0), the chains ran for 4140
+a NaN in a key                                16384 streams: 0 differ (W16 0, W8 0), the chains ran for 4141
+quantized (ties)                              16384 streams: 0 differ (W16 0, W8 0), the chains ran for 9
+dot nearly cancels (gate signs alternate)     16384 streams: 0 differ (W16 0, W8 0), the chains ran for 51
+all patterns: 229376 streams, 0 differ, chains ran for 24894 (16613 outside the inf / NaN sets)
+form                                median us     min us     p10 us     p90 us
+A chains (OWN_ENG_FF=0)                 96.14      95.52      95.52      96.25
+B fast bracket, one sub-group           56.98      56.25      56.25      57.08
+C work-group of 16 sub-groups            8.65       8.64       8.65       8.75
+D work-group of 8 sub-groups            10.10       9.89       9.90      10.21
+PASS
+exit 0

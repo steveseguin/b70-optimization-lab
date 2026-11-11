@@ -262,6 +262,9 @@ int main(int argc, char **argv) {
     // the router's expert picks in two stages (the same ids and probabilities; round 18 rt1-rt5,
     // tools/bench/bench_route_rows.cpp); =0 for RouteP's all-pairs ranks. Read before any router kernel is built.
     ops41sycl::g_route_q = getenv("OWN_ROUTE_Q") ? atoi(getenv("OWN_ROUTE_Q")) != 0 : true;
+    // the engram gate's three double sums from a fast bracket (the same gate bit for bit; round 18 eg1,
+    // tools/bench/bench_engram_ff.cpp); =0 for the serial chains only. Read before the gate kernel is built.
+    ops41sycl::g_eng_ff = getenv("OWN_ENG_FF") ? atoi(getenv("OWN_ENG_FF")) != 0 : true;
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");

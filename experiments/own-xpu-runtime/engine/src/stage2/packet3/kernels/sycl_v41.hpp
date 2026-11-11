@@ -3795,37 +3795,215 @@ template <unsigned HD, unsigned HG_, unsigned CH, unsigned U = 16> struct Sparse
 // time and form the double products; the three sums run serially in element
 // order on every lane from broadcast products (the same adds in the same
 // order as the one-work-item loops); the final update is elementwise.
+// OWN_ENG_FF (host, read when the gate kernel is built; round 18 eg1-, tools/bench/bench_engram_ff.cpp): the
+// three serial double chains (hsq, ksq, dot: h - 1 dependent adds each, ~116 us per launch at h = 5,120) are
+// bracketed instead of replayed. Every term is formed exactly as the chain forms it; the fast sums add them per
+// lane in four interleaved accumulators (h / 128 terms each), the accumulators in pairs, then the lanes by an xor
+// tree: every leaf-to-root path has at most h / 128 + 7 adds, so with A = the sum of |terms| (no term can overflow
+// or be subnormal: products of two or three floats in double) |fast - exact| <= gamma(h/128 + 7) A and
+// |chain - exact| <= gamma(h - 1) A, and |chain - fast| < (h + 64) * 1.2e-16 * A_fast (A_fast the fast sum of
+// |terms|, >= (1 - gamma) A). rstd is a composition of correctly rounded monotone operations, non-increasing in
+// hsq and ksq: when the two corners of the bracket give the same float bits, so does the chain; float(dot) the
+// same with dot's bracket. Otherwise (or any sum not finite, or h % 128 != 0) the chains run as before. The tail
+// (d, g, the stream update) is the same code on the same values.
+inline bool g_eng_ff = true;
+inline bool eng_ff_default() {
+#ifdef __SYCL_DEVICE_ONLY__
+    return false;
+#else
+    return g_eng_ff;
+#endif
+}
 struct EngramGateP {
     int h; // % 32 == 0
+    bool ff = eng_ff_default();
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w) const {
         sycl::sub_group sg = it.get_sub_group();
         const int j = (int)it.get_group_linear_id();
         if (j >= 4) return;
         run(sg, (int)sg.get_local_linear_id(), j, streams, kvbuf, gate_w);
     }
+    static inline float rstd_of(double hsq, double ksq, int h, float eps) {
+        return float(1.0 / sycl::sqrt(hsq / h + eps) * (1.0 / sycl::sqrt(ksq / h + eps)));
+    }
+    // the bracket; true when rstd and float(dot) are proven equal to the chains'
+    [[gnu::always_inline]] inline bool fast(sycl::sub_group sg, int lane, const float *sr, const float *kr,
+                                            const float *gr, float eps, float &rstd, float &fd) const {
+        double ah[4] = {0, 0, 0, 0}, ak[4] = {0, 0, 0, 0}, ad[4] = {0, 0, 0, 0}, aa[4] = {0, 0, 0, 0};
+        for (int i0 = 0; i0 < h; i0 += 128) {
+#pragma unroll
+            for (int u = 0; u < 4; ++u) {
+                const int ix = i0 + 32 * u + lane;
+                const float hv = sr[ix], kvv = kr[ix], gw = gr[ix];
+                const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
+                ah[u] += ph;
+                ak[u] += pk;
+                ad[u] += pd;
+                aa[u] += sycl::fabs(pd);
+            }
+        }
+        double sh = (ah[0] + ah[1]) + (ah[2] + ah[3]), sk = (ak[0] + ak[1]) + (ak[2] + ak[3]);
+        double sd = (ad[0] + ad[1]) + (ad[2] + ad[3]), sa = (aa[0] + aa[1]) + (aa[2] + aa[3]);
+#pragma unroll
+        for (int w = 16; w; w >>= 1) { // commutative adds: every lane ends with the same sums
+            sh += sycl::select_from_group(sg, sh, lane ^ w);
+            sk += sycl::select_from_group(sg, sk, lane ^ w);
+            sd += sycl::select_from_group(sg, sd, lane ^ w);
+            sa += sycl::select_from_group(sg, sa, lane ^ w);
+        }
+        bool ok = sycl::isfinite(sh) && sycl::isfinite(sk) && sycl::isfinite(sd) && sycl::isfinite(sa);
+        if (ok) {
+            const double c = (double(h) + 64.0) * 1.2e-16;
+            const double wh = c * sh, wk = c * sk, wd = c * sa;
+            const float r0 = rstd_of(sh + wh, sk + wk, h, eps), r1 = rstd_of(sycl::fmax(sh - wh, 0.0), sycl::fmax(sk - wk, 0.0), h, eps);
+            const float d0 = float(sd - wd), d1 = float(sd + wd);
+            ok = sycl::bit_cast<uint32_t>(r0) == sycl::bit_cast<uint32_t>(r1) &&
+                 sycl::bit_cast<uint32_t>(d0) == sycl::bit_cast<uint32_t>(d1);
+            rstd = r0;
+            fd = d0;
+        }
+        return sycl::select_from_group(sg, ok ? 1 : 0, 0) != 0;
+    }
     // stream j on one sub-group (also the multi-token form, EngramGatePM)
     [[gnu::always_inline]] inline void run(sycl::sub_group sg, int lane, int j, float *streams, const float *kvbuf,
                                            const float *gate_w) const {
         const float eps = 1e-20f, clamp_v = 1e-6f;
         const float *sr = streams + (size_t)j * h, *kr = kvbuf + (size_t)j * h, *gr = gate_w + (size_t)j * h;
-        double hsq = 0, ksq = 0, dot = 0;
-        for (int i0 = 0; i0 < h; i0 += 32) {
-            const float hv = sr[i0 + lane], kvv = kr[i0 + lane], gw = gr[i0 + lane];
-            const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
+        float rstd = 0, fd = 0;
+        if (!(ff && h % 128 == 0 && fast(sg, lane, sr, kr, gr, eps, rstd, fd))) {
+            double hsq = 0, ksq = 0, dot = 0;
+            for (int i0 = 0; i0 < h; i0 += 32) {
+                const float hv = sr[i0 + lane], kvv = kr[i0 + lane], gw = gr[i0 + lane];
+                const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
 #pragma unroll
-            for (int l2 = 0; l2 < 32; ++l2) {
-                hsq += sycl::select_from_group(sg, ph, l2);
-                ksq += sycl::select_from_group(sg, pk, l2);
+                for (int l2 = 0; l2 < 32; ++l2) {
+                    hsq += sycl::select_from_group(sg, ph, l2);
+                    ksq += sycl::select_from_group(sg, pk, l2);
+                }
+#pragma unroll
+                for (int l2 = 0; l2 < 32; ++l2) dot += sycl::select_from_group(sg, pd, l2);
             }
-#pragma unroll
-            for (int l2 = 0; l2 < 32; ++l2) dot += sycl::select_from_group(sg, pd, l2);
+            rstd = rstd_of(hsq, ksq, h, eps);
+            fd = float(dot);
         }
-        const float rstd = float(1.0 / sycl::sqrt(hsq / h + eps) * (1.0 / sycl::sqrt(ksq / h + eps)));
-        const float d = float(dot) * rstd / sycl::sqrt(float(h));
+        const float d = fd * rstd / sycl::sqrt(float(h));
         const float g = 1.0f / (1.0f + sycl::exp(-sycl::copysign(sycl::sqrt(sycl::fmax(sycl::fabs(d), clamp_v)), d)));
         float *so = streams + (size_t)j * h;
         const float *vr = kvbuf + (size_t)4 * h;
         for (int i = lane; i < h; i += 32) so[i] = so[i] + g * vr[i];
+    }
+    // stream j on a work-group of S sub-groups (EngramGateW / EngramGateWM): the bracket's sums split over the
+    // sub-groups (element t * 32 S + 32 sgi + lane; h / (32 S) terms per lane, one accumulator each, then the xor
+    // tree, then the S partial sums in a fixed pairwise tree from local memory: every path <= h / (32 S) + 9 adds,
+    // within fast()'s bound when h / (32 S) <= 48); when the bracket cannot decide, sub-group 0 runs the chains
+    // and hands rstd and float(dot) over in local memory. Then d, g and the update as run(), spread over the
+    // work-group. lm: 8 S + 2 words.
+    template <unsigned S>
+    [[gnu::always_inline]] inline void run_wg(sycl::nd_item<1> it, int j, float *streams, const float *kvbuf,
+                                              const float *gate_w, uint32_t *lm) const {
+        static_assert(S == 4 || S == 8 || S == 16, "S: 4, 8 or 16 sub-groups");
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+        const float eps = 1e-20f, clamp_v = 1e-6f;
+        const float *sr = streams + (size_t)j * h, *kr = kvbuf + (size_t)j * h, *gr = gate_w + (size_t)j * h;
+        const int per = h / (32 * (int)S);
+        const bool try_ff = ff && h % (32 * (int)S) == 0 && per <= 48;
+        auto put = [&](int w, double v) {
+            const uint64_t b = sycl::bit_cast<uint64_t>(v);
+            lm[2 * w] = (uint32_t)b;
+            lm[2 * w + 1] = (uint32_t)(b >> 32);
+        };
+        auto get = [&](int w) { return sycl::bit_cast<double>((uint64_t)lm[2 * w] | ((uint64_t)lm[2 * w + 1] << 32)); };
+        if (try_ff) {
+            double sh = 0, sk = 0, sd = 0, sa = 0;
+            for (int t = 0; t < per; ++t) {
+                const int ix = t * 32 * (int)S + 32 * sgi + lane;
+                const float hv = sr[ix], kvv = kr[ix], gw = gr[ix];
+                const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
+                sh += ph;
+                sk += pk;
+                sd += pd;
+                sa += sycl::fabs(pd);
+            }
+#pragma unroll
+            for (int w = 16; w; w >>= 1) {
+                sh += sycl::select_from_group(sg, sh, lane ^ w);
+                sk += sycl::select_from_group(sg, sk, lane ^ w);
+                sd += sycl::select_from_group(sg, sd, lane ^ w);
+                sa += sycl::select_from_group(sg, sa, lane ^ w);
+            }
+            if (lane == 0) {
+                put(4 * sgi, sh);
+                put(4 * sgi + 1, sk);
+                put(4 * sgi + 2, sd);
+                put(4 * sgi + 3, sa);
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        float rstd = 0, fd = 0;
+        bool ok = false;
+        if (try_ff) {
+            // lane l: sum q = l & 3 of sub-groups l >> 2 (and (l >> 2) + 8 when S == 16), then xor levels 4, 8, 16:
+            // a fixed pairwise tree of depth log2(S) (+0.0 for missing sub-groups: no partial sum is -0.0)
+            const int q = lane & 3, s0 = lane >> 2;
+            double a = s0 < (int)S ? get(4 * s0 + q) : 0.0;
+            if constexpr (S == 16) a = a + get(4 * (s0 + 8) + q);
+#pragma unroll
+            for (int w = 4; w <= 16; w *= 2) a += sycl::select_from_group(sg, a, lane ^ w);
+            const double sh = sycl::select_from_group(sg, a, 0), sk = sycl::select_from_group(sg, a, 1),
+                         sd = sycl::select_from_group(sg, a, 2), sa = sycl::select_from_group(sg, a, 3);
+            ok = sycl::isfinite(sh) && sycl::isfinite(sk) && sycl::isfinite(sd) && sycl::isfinite(sa);
+            if (ok) {
+                const double c = (double(h) + 64.0) * 1.2e-16;
+                const double wh = c * sh, wk = c * sk, wd = c * sa;
+                const float r0 = rstd_of(sh + wh, sk + wk, h, eps),
+                            r1 = rstd_of(sycl::fmax(sh - wh, 0.0), sycl::fmax(sk - wk, 0.0), h, eps);
+                const float d0 = float(sd - wd), d1 = float(sd + wd);
+                ok = sycl::bit_cast<uint32_t>(r0) == sycl::bit_cast<uint32_t>(r1) &&
+                     sycl::bit_cast<uint32_t>(d0) == sycl::bit_cast<uint32_t>(d1);
+                rstd = r0;
+                fd = d0;
+            }
+        }
+        // every lane holds the same sums, so the same verdict; the barrier below is unconditional
+        if (!ok && sgi == 0) {
+            double hsq = 0, ksq = 0, dot = 0;
+            for (int i0 = 0; i0 < h; i0 += 32) {
+                const float hv = sr[i0 + lane], kvv = kr[i0 + lane], gw = gr[i0 + lane];
+                const double ph = double(hv) * hv, pk = double(kvv) * kvv, pd = double(hv) * gw * kvv;
+#pragma unroll
+                for (int l2 = 0; l2 < 32; ++l2) {
+                    hsq += sycl::select_from_group(sg, ph, l2);
+                    ksq += sycl::select_from_group(sg, pk, l2);
+                }
+#pragma unroll
+                for (int l2 = 0; l2 < 32; ++l2) dot += sycl::select_from_group(sg, pd, l2);
+            }
+            if (lane == 0) {
+                lm[8 * S] = sycl::bit_cast<uint32_t>(rstd_of(hsq, ksq, h, eps));
+                lm[8 * S + 1] = sycl::bit_cast<uint32_t>(float(dot));
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        if (!ok) {
+            rstd = sycl::bit_cast<float>(lm[8 * S]);
+            fd = sycl::bit_cast<float>(lm[8 * S + 1]);
+        }
+        const float d = fd * rstd / sycl::sqrt(float(h));
+        const float g = 1.0f / (1.0f + sycl::exp(-sycl::copysign(sycl::sqrt(sycl::fmax(sycl::fabs(d), clamp_v)), d)));
+        float *so = streams + (size_t)j * h;
+        const float *vr = kvbuf + (size_t)4 * h;
+        for (int i = 32 * sgi + lane; i < h; i += 32 * (int)S) so[i] = so[i] + g * vr[i];
+    }
+};
+// EngramGateP's four streams on four work-groups of S sub-groups (run_wg; launch_wgl with 8 S + 2 words)
+template <unsigned S> struct EngramGateW {
+    EngramGateP k;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w,
+                                     uint32_t *lm) const {
+        const int j = (int)it.get_group_linear_id();
+        if (j >= 4) return;
+        k.run_wg<S>(it, j, streams, kvbuf, gate_w, lm);
     }
 };
 
@@ -3923,6 +4101,10 @@ struct RouteP {
     // element has the k global best before it, all candidates, so its candidate rank is >= k too. A NaN score in any
     // sub-group: RouteP's loop (below). Needs experts % 32 == 0, experts <= 512, a work-group of >= experts items,
     // topk * experts / 32 <= 96 and 1,248 floats of local memory (RouteP's 2 * 512 + 6, then candidates and flags).
+    // NC: the candidate count when known at compile time (0: experts / 32 * topk at run time). The order tests are
+    // written without short-circuit branches ((w > v) | ((w == v) & (wi < i)), the same truth value): round 18
+    // rp1-rp3 (tools/bench/bench_route_pick.cpp), the pick 8.5 -> 2.7 us with NC = 72 (384 experts, top 6).
+    template <int NC = 0>
     [[gnu::always_inline]] inline void run_two(sycl::nd_item<1> it, const float *logits, const float *bias,
                                                uint32_t *ids, float *prob, float *lm) const {
         float *lsb = lm + experts, *lp = lm + 2 * experts;
@@ -3945,7 +4127,7 @@ struct RouteP {
 #pragma unroll
             for (int k = 0; k < 32; ++k) {
                 const float w = sycl::select_from_group(sg, v, k);
-                r1 += (w > v || (w == v && k < lane)) ? 1 : 0;
+                r1 += (int)(w > v) | ((int)(w == v) & (int)(k < lane));
             }
         }
         const bool anynan = live && sycl::any_of_group(sg, sycl::isnan(v));
@@ -3969,6 +4151,20 @@ struct RouteP {
                         rank += (w > v || (w == v && jb + k < i)) ? 1 : 0;
                     }
                 }
+            } else if constexpr (NC > 0) {
+#pragma unroll
+                for (int jb = 0; jb < NC; jb += 32) {
+                    const bool in = jb + lane < NC;
+                    const float u = in ? cv[jb + lane] : 0.0f;
+                    const int ui = in ? ci[jb + lane] : 0;
+#pragma unroll
+                    for (int k = 0; k < 32; ++k) {
+                        if (jb + k >= NC) break;
+                        const float w = sycl::select_from_group(sg, u, k);
+                        const int wi = sycl::select_from_group(sg, ui, k);
+                        rank += (int)(w > v) | ((int)(w == v) & (int)(wi < i));
+                    }
+                }
             } else {
                 const int nc = experts / 32 * topk;
                 for (int jb = 0; jb < nc; jb += 32) {
@@ -3979,7 +4175,7 @@ struct RouteP {
                     for (int k = 0; k < 32; ++k) {
                         const float w = sycl::select_from_group(sg, u, k);
                         const int wi = sycl::select_from_group(sg, ui, k);
-                        rank += (jb + k < nc && (w > v || (w == v && wi < i))) ? 1 : 0;
+                        rank += (int)(jb + k < nc) & ((int)(w > v) | ((int)(w == v) & (int)(wi < i)));
                     }
                 }
             }
@@ -3998,8 +4194,10 @@ struct RouteP {
     void operator()(sycl::nd_item<1> it, const float *logits, const float *bias, uint32_t *ids, float *prob,
                     float *lm) const {
         if (two && experts % 32 == 0 && experts <= 512 && (int)it.get_local_range(0) >= experts &&
-            topk * (experts / 32) <= 96 && topk <= 32)
+            topk * (experts / 32) <= 96 && topk <= 32) {
+            if (experts == 384 && topk == 6) return run_two<72>(it, logits, bias, ids, prob, lm);
             return run_two(it, logits, bias, ids, prob, lm);
+        }
         float *ls = lm, *lsb = lm + experts, *lp = lm + 2 * experts;
         const int i = (int)it.get_local_linear_id();
         if (i < topk) lp[i] = prob[i]; // RouteNorm reads what is there for a rank nobody took (NaN scores)
@@ -5252,6 +5450,18 @@ template <typename R> struct RoutePMRows {
         sycl::sub_group sg = it.get_sub_group();
         const unsigned r = (g - m) * (unsigned)(it.get_local_range(0) / 32) + sg.get_group_linear_id();
         if (r < rows.n()) rows.row(sg, sg.get_local_linear_id(), r);
+    }
+};
+// EngramGateW for m tokens: work-group 4 * t + j is token t's stream j
+template <unsigned S> struct EngramGateWM {
+    EngramGateP k;
+    unsigned m;
+    size_t ss, ks;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w,
+                                     uint32_t *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), t = g / 4;
+        if (t >= m) return;
+        k.run_wg<S>(it, (int)(g % 4), streams + t * ss, kvbuf + t * ks, gate_w, lm);
     }
 };
 // EngramGateP for m tokens: sub-group (work-group) 4 * t + j is token t's stream j

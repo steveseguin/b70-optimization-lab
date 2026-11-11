@@ -1,0 +1,172 @@
+diff -ru a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp	2026-11-11 00:46:58.826830039 -0500
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp	2026-11-11 00:47:45.069768095 -0500
+@@ -396,6 +396,7 @@
+     }
+ 
+     ~Backend41() {
++        if (xw_f) std::fclose(xw_f);
+         if (!tp_th.empty()) {
+             {
+                 std::lock_guard<std::mutex> lk(tp_mu);
+@@ -2496,6 +2497,41 @@
+     std::atomic<long> tp_mark{0};
+     long tp_stepn = 0;
+     int32_t tp_tok = 0;
++    // OWN_XWAIT=<file> (diagnostic): every card records, for each exchange of a one-token step, how long it waited
++    // for each peer's flag (XchgP / XchgPull, device clock); one line per (step, card, exchange) goes to <file>:
++    // "xw <step> <card> <k> <label> <spins x6> <ticks x6>", label = layer * 100 + phase * 10 + part (9: none).
++    // The card the others waited longest for arrived last. Off: no change to any launch.
++    static constexpr unsigned XW_N = 256;
++    const char *xw_path = getenv("OWN_XWAIT");
++    uint32_t *xw_d[TILES] = {};
++    unsigned xw_k[TILES] = {};
++    int xw_ph[TILES] = {};                // layer * 10 + phase of the exchanges being launched
++    std::vector<int> xw_lab[TILES];
++    std::vector<uint32_t> xw_h[TILES];
++    std::mutex xw_mu;
++    FILE *xw_f = nullptr;
++    template <typename X> void xw_arm(int c, X &x, int mode, int part) { // before the launch
++        if (!xw_path || !xw_d[c] || mode == 1 || xw_k[c] >= XW_N) return;
++        x.xw = xw_d[c];
++        x.xk = xw_k[c]++;
++        xw_lab[c].push_back(xw_ph[c] * 10 + (part < 0 ? 9 : part));
++    }
++    void xw_collect(int c) { // after the step's last wait on card c
++        if (!xw_path || !xw_d[c] || !xw_k[c]) return;
++        auto &h = xw_h[c];
++        h.resize((size_t)xw_k[c] * 16);
++        qs[c].memcpy(h.data(), xw_d[c], h.size() * 4).wait();
++        std::lock_guard<std::mutex> lk(xw_mu);
++        if (!xw_f && !(xw_f = std::fopen(xw_path, "w"))) throw std::runtime_error("OWN_XWAIT: cannot write the file");
++        for (unsigned k = 0; k < xw_k[c]; ++k) {
++            const uint32_t *r = h.data() + (size_t)k * 16;
++            if (!r[12]) continue;
++            std::fprintf(xw_f, "xw %ld %d %u %d", tp_stepn, c, k, xw_lab[c][k]);
++            for (int i = 0; i < 12; ++i) std::fprintf(xw_f, " %u", r[i]);
++            std::fprintf(xw_f, "\n");
++        }
++        std::fflush(xw_f);
++    }
+     bool tp_hostprof = getenv("OWN_TP_HOSTPROF") != nullptr; // host time per card thread: busy vs blocked
+     double tph_step[TILES] = {}, tph_wait[TILES] = {};
+     long tph_n = 0;
+@@ -2697,6 +2733,7 @@
+             xarena[c] = dalloc<float>(c, nf);
+             xcnt[c] = dalloc<uint32_t>(c, 16);
+             qs[c].memset(xcnt[c], 0, 64);
++            if (xw_path) xw_d[c] = dalloc<uint32_t>(c, (size_t)XW_N * 16); // OWN_XWAIT
+             xerr[c] = sycl::malloc_host<uint32_t>(4, ctxs[c]);
+             if (!xerr[c]) throw std::runtime_error("host error word");
+             std::memset(xerr[c], 0, 16);
+@@ -2778,6 +2815,7 @@
+         if (use_pull(part, nslot)) {
+             ops41sycl::XchgPull x{o.tp, c, off, stride, nslot, {}, {}, seq, XSPIN, mode};
+             x.lb = o.xpull_lb ? 1 : 0;
++            xw_arm(c, x, mode, part);
+             xbounds(part, x.b0, x.b1);
+             if (x.b0[c] != r0 || x.b1[c] != r1) throw std::runtime_error("exchange: rows do not match the part");
+             size_t nv = 0;
+@@ -2794,8 +2832,9 @@
+             kev(c, kname<ops41sycl::XchgPull>(), e);
+             return seq;
+         }
+-        launch_wg(c, 256, ops41sycl::XchgP{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode}, P[0], P[1], P[2],
+-                  P[3], P[4], P[5], xerr[c]);
++        ops41sycl::XchgP xp{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode};
++        xw_arm(c, xp, mode, part);
++        launch_wg(c, 256, xp, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]);
+         return seq;
+     }
+     // XP_OAD: the draft's output-a rows (hl[1]); XP_OAP: the target's in blocks of >= OWN_TP_HEADS_MIN (hl[2])
+@@ -2859,6 +2898,7 @@
+     // one layer = phases 0..5; a phase ends where the cards exchange (1-4)
+     void tp_phase(int L, int c, int ph) {
+         auto &s = sc[c];
++        xw_ph[c] = L * 10 + ph; // OWN_XWAIT label
+         const std::string p = "blk." + std::to_string(L) + ".";
+         const int cr = cr_of(L);
+         const bool yarn = cr > 0;
+@@ -3277,6 +3317,9 @@
+         x_ready[c] = false; // a step that failed part-way must not leave it set
+         fin_attn[c] = false;
+         xt[c].on = xt[c].pending = false;
++        xw_k[c] = 0; // OWN_XWAIT: this step's exchanges from slot 0
++        xw_lab[c].clear();
++        xw_ph[c] = 9; // before layer 0 (label 9x: the engram push / wait outside a phase)
+         auto eng = [&] {
+             const auto e0 = std::chrono::steady_clock::now();
+             tp_engram_upload(c);
+@@ -3303,6 +3346,7 @@
+         }
+         if (o.head && !skip_head) tp_head(c);
+         else twait(c);
++        xw_collect(c);
+         tph_step[c] += now_s() - t0;
+     }
+     void tp_worker(int c) {
+diff -ru a/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41.hpp
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41.hpp	2026-11-11 00:46:58.823242413 -0500
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41.hpp	2026-11-11 00:47:45.067745656 -0500
+@@ -9,6 +9,7 @@
+ #include "stage2/packet2/kernels/math.hpp"
+ #include "stage2/packet3/kernels/ops_v41.hpp"
+ #include <sycl/ext/oneapi/experimental/prefetch.hpp>
++#include <sycl/ext/oneapi/experimental/clock.hpp> // OWN_XWAIT (diagnostic): exchange wait clocks
+ 
+ namespace ops41sycl {
+ using iq3::Type;
+@@ -4497,6 +4498,21 @@
+     uint32_t seq;
+     long spin;
+     int mode = 0; // 0 push + wait, 1 push only, 2 wait only (see Backend41::xchg)
++    // OWN_XWAIT (diagnostic, null = off): record xk of the card's per-step ring xw (16 words per exchange):
++    // [t] = spin loads until peer t's flag was seen (0: it had arrived first), [6 + t] = sub-group clock ticks
++    // spent waiting for it, [12] = 1 when written. The peer the others wait longest for arrived last.
++    uint32_t *xw = nullptr;
++    unsigned xk = 0;
++    static uint64_t xw_clock() {
++        return sycl::ext::oneapi::experimental::clock<sycl::ext::oneapi::experimental::clock_scope::sub_group>();
++    }
++    static void xw_put(uint32_t *xw, unsigned xk, unsigned t, long s, uint64_t c0) {
++        uint32_t *r = xw + (size_t)xk * 16;
++        r[t] = (uint32_t)s;
++        const uint64_t d = xw_clock() - c0;
++        r[6 + t] = d > 0xffffffffull ? 0xffffffffu : (uint32_t)d;
++        r[12] = 1u;
++    }
+     static float *pick(int d, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5) {
+         return d == 0 ? p0 : d == 1 ? p1 : d == 2 ? p2 : d == 3 ? p3 : d == 4 ? p4 : p5;
+     }
+@@ -4528,8 +4544,10 @@
+             AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+             AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
+             long s = 0;
++            const uint64_t c0 = xw ? xw_clock() : 0;
+             if (!poison.load())
+                 while (f.load() < seq && ++s < spin) {}
++            if (xw) xw_put(xw, xk, t, s, c0);
+             if (s >= spin) {
+                 poison.store(1u);
+                 err[0] = 1u + t;
+@@ -5780,6 +5798,8 @@
+     uint32_t seq;
+     long spin;
+     int mode = 0;
++    uint32_t *xw = nullptr; // OWN_XWAIT (see XchgP)
++    unsigned xk = 0;
+     void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                     uint32_t *err) const {
+         using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+@@ -5797,8 +5817,11 @@
+             AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+             AR f(reinterpret_cast<uint32_t *>(mine)[16 * t]);
+             long s = 0;
++            const bool rec = xw && it.get_group_linear_id() == 0;
++            const uint64_t c0 = rec ? XchgP::xw_clock() : 0;
+             if (!poison.load())
+                 while (f.load() < seq && ++s < spin) {}
++            if (rec) XchgP::xw_put(xw, xk, t, s, c0);
+             if (s >= spin) {
+                 poison.store(1u);
+                 err[0] = 1u + t;

@@ -1649,6 +1649,51 @@ card 2: the router launch 21.71 -> 12.83 us on Q8_0 layers and 21.59 -> 11.94 on
 against 297.8 / 298.5 tok/s, its 256 answers the same at 79.37 / 79.68 against 73.96 / 74.33 (+7.3 %). No fault
 lines.
 
+## 33. The router's picks without branches, the engram gate over 16 sub-groups: plain answers 85.2 -> 86-87 tok/s, text identical; a new way of choosing the work (2026-11-11 00:00-01:10 EST)
+
+**Why the method changed.** The owner (2026-11-11): the lane had "started to move at a crawl, trial and error
+optimization". From here the work follows `2026-11-11-dsv41-speed-strategy.md`: a time-against-floor ledger for the
+whole step first (`2026-11-11-dsv41-step-budget.md`, `engine/tools/perf/dsv41_step_budget.py`), machine-code
+counts before variants (`engine/tools/perf/isa_census.py`), one-card benches on several cards at once
+(`pbench.sh`), several exact changes per gate. The two changes below were already bench-proven and close the
+small-launch levers in hand.
+
+**The router's picks (rp1-rp3, `tools/bench/bench_route_pick.cpp`, `round19-rp-r1..r3-out.txt`,
+`round18-scripts/rp-eg/rp1.sh`).** The two-stage pick of §32 alone, one card: 8.65 us median (V0). Its second stage
+looped over a runtime candidate count with a branch per comparison. With the count fixed at 72 (384 experts, top 6:
+12 sub-groups x 6) and both stages' tests written as integer sums of comparisons (`r += (w > v) | ((w == v) & (k <
+lane))`), V13: 2.71 us, the same ids and probabilities on all 2,048 sets of every variant (the §32 sweep's patterns).
+Default on (the `OWN_ROUTE_Q` path); other expert counts keep the runtime branch.
+
+**The engram gate (eg1-eg2, `tools/bench/bench_engram_ff.cpp`, `round19-eg-r1..r2-bench_engram_ff.txt`,
+`round18-scripts/rp-eg/`).** `EngramGateP` (layers 1 and 14) ran three serial double chains of 5,119 adds per stream
+on one sub-group: 96.14 us alone. The fast form is §32's bracket: the sums of squares, the dot and |dot| in four
+accumulators per lane, the corner evaluation of the scale and the gate, a bitwise compare, the chains when they
+disagree. Over one sub-group it was latency-bound (56.98 us); spread over a work-group of 16 sub-groups (each lane's
+partial sums through local memory, a fixed-order tree, the chains on sub-group 0 when needed): 8.65 us. Bulk check,
+14 patterns x 16,384 streams (random, magnitudes 2^+-28, sparse, one huge value, constant, an exactly cancelling
+dot, zero streams or keys, subnormals, ~1e30, an inf, a NaN, quantized ties, a nearly cancelling dot): 229,376
+streams, 0 differ; the chains ran for 24,894 (16,613 outside the inf / NaN sets). `OWN_ENG_FF` (default on; `=0` the
+old one-sub-group launch).
+
+**In the engine (tp83, g83, `round19-g83-summary.txt`, `round19-g83-pf_new-decode-profile-card2.txt`,
+`round18-scripts/g83/`).** Traces of blocks of 16 / 5 / one token byte-identical, also one token with `OWN_ENG_FF=0`
+and with `OWN_ROUTE_Q=0`; 40 answers the same. Prompt 1's 128 answers the same in every run: 86.03 / 87.11 tok/s
+against 85.34 / 85.02 on tp82 (85.94 / 85.72 with `OWN_ENG_FF=0`). Profile on card 2: the router launch 12.83 ->
+10.91 us on Q8_0 layers and 11.94 -> 10.91 on Q5_K layers (router group 0.984 -> 0.917 ms per step), the engram gate
+116.07 -> 12.06 us (engram group 0.456 -> 0.251 ms). Guessing on code 105.72 tok/s, analysis 118.71, the 3K document
+111.78 (g82: 104.22 / 117.05 / 112.65), all SAME as the plain runs. The 3K document read at 300.9 / 300.5 against
+299.5 / 300.5 tok/s, its 256 answers the same at 80.99 / 81.49 against 79.85 / 79.97. No fault lines.
+
+**What the ledger says next (`2026-11-11-dsv41-step-budget.md`).** One answer step is 11.73 ms; reading every byte
+once at 550 GB/s would take 4.69 ms on the slowest card (213 tok/s). Above that floor (mean card): routed experts
+2.11 ms (they run at 16-34 % of memory speed: instruction-bound), idle gaps between the 1,051 launches 1.10, small
+serial launches 1.06, dense matrices 1.01 (already at 60-100 % of memory speed), short-context attention 0.82,
+exchanges 0.80 (12.2 us each = two PCIe round trips, not waiting). The next levers: the expert kernels with packed
+logical lanes (one 8-weight grid entry per work-item, the same sums in the same order), launch chaining without
+barriers, the exchange transport (`2026-11-11-dsv41-ideas-local.md` L1, L3), bigger prompt blocks
+(`2026-11-11-dsv41-prefill-plan.md`).
+
 ## Reproduce
 
 ```bash

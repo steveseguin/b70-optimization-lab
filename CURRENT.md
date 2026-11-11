@@ -1,5 +1,15 @@
 # Current Workspace State
 
+**November 11, 2026 ~01:10 EST — DeepSeek V4.1 on six cards: plain answers 85.2 -> 86-87 tokens/s, text the same; the work now follows a time budget instead of trial and error.**
+- You asked for a smarter way to choose what to speed up. The plan is in [the strategy note](experiments/own-xpu-runtime/notes/2026-11-11-dsv41-speed-strategy.md). It does four things: measure where every millisecond goes against what the hardware could do, read the machine code before writing variants, run tests on several cards at once, and use our older code and other projects first.
+- The new time budget ([note](experiments/own-xpu-runtime/notes/2026-11-11-dsv41-step-budget.md)): one answer word takes 11.7 ms today. If every card read its weights once at full memory speed, it would take 4.7 ms (about 213 tokens/s), so 200 is just within reach. The biggest gaps: the expert weights (2.1 ms over what memory allows), time between kernels (1.1 ms), small steps (1.1 ms), card-to-card hand-overs (0.8 ms).
+- Two changes went in, with results identical bit for bit. The router's pick has no branches now (8.7 -> 2.7 µs alone). A gate step that ran as one long chain is now spread over 16 thread groups (96 -> 8.7 µs alone).
+- Measured on short chat: 86.0 / 87.1 tokens/s against 85.3 / 85.0 on the build before. 3K document: answers 81.0 / 81.5 against 79.9 / 80.0, reading about 300 as before. Guessing: code 105.7, analysis 118.7, 3K document 111.8, all the same as plain writing.
+- Two ideas tested and dropped: running a whole chain of weight steps as one long kernel, and launching steps back to back without waits. Both were slower. A launch costs only 0.1-0.3 µs between big steps, so launching isn't where the time goes.
+- In progress: a faster form of the expert kernels (each worker handles 8 weights instead of 1, same sums in the same order); a test of a faster card-to-card transport our older engine used; a per-launch timeline to find the 1.1 ms between kernels.
+- Still paused until you decide: long-document tests on all six cards (the machine resets). Short six-card tests and one-card tests continue.
+- Cards: nothing loaded. Details: [note section 33](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 10, 2026 ~23:55 EST — DeepSeek V4.1 on six cards: plain answers 78.1 -> 85.2 tokens/s (+9 %), guessing 3-4 % faster, text the same.**
 - Two small steps that run before every layer's work got faster, with results identical bit for bit:
   - The normalizing step (it scales each word's numbers by their size) now adds up its squares with a quicker method that comes with a proof of when it gives exactly the old answer; when it can't be sure (139 of 1.3 million test cases), it falls back to the old way. It also now spreads over more of the chip's cores. That step went from 14.9 to 8.2 microseconds.

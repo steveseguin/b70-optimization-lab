@@ -25,6 +25,9 @@
 #include <vector>
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/kernels/pack_v41.hpp"
+#ifdef OWN_PCS
+#include "pcs.hpp" // EU stall sampling (build with -DOWN_PCS -I pti/include -lpti_view; run as root)
+#endif
 using namespace ops41sycl;
 using Ty = iq3::Type;
 
@@ -105,6 +108,154 @@ template <unsigned NB, unsigned R> struct RoutedIQ2XXSR {
                 for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
                 if (lane == 0 && r0 + q < rows) om[slot * rows + r0 + q] = s;
             }
+        }
+    }
+};
+
+// ---- candidate 3 (2026-11-11, strategy K2 / local-survey L2): packed logical lanes. Item i of a row carries the
+// production kernel's lanes L = P i .. P i + P - 1 (one 8-weight grid entry when P = 8): the index byte, the table
+// read (one float4 per 4 weights), the sign byte, the chunk scale and the x loads are shared over its P lanes, and
+// each logical lane keeps its own sum, added in the same order (blocks, then groups g) with the same element
+// expression ((db * mag) ^ sign) * x. The end replays the xor butterfly: levels 16 .. P across items (shuffles,
+// own + partner as production), levels P / 2 .. 1 inside the item (lower lane first, only those feeding lane 0).
+// P rows per sub-group (32 / P items per row). STAB: the sign masks come from a 256 x 8 table in local memory
+// (one uint4 read per 4 weights) instead of a shift and a mask per weight.
+template <unsigned NB, unsigned P, bool STAB = false, bool PF = false> struct RoutedIQ2XXSK {
+    static_assert(P == 2 || P == 4 || P == 8, "P logical lanes per item");
+    // PF: block blk + 1's quant words, scale word and half are loaded while block blk is computed (pcs1: without it
+    // a third of the samples wait for these loads at the top of each block)
+    static constexpr unsigned TAB = STAB ? 4096 : 2048;
+    unsigned rows;
+    bool per_slot_x;
+    const uint8_t *w2 = nullptr;
+    float *out2 = nullptr;
+    unsigned nsl = 6, xtok = 0;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
+                                     float *out, float *tab) const {
+        for (unsigned k = it.get_local_linear_id(); k < 2048; k += (unsigned)it.get_local_range(0)) {
+            tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+            if constexpr (STAB) reinterpret_cast<uint32_t *>(tab)[2048 + k] = (((k >> 3) >> (k & 7)) & 1u) << 31;
+        }
+        sycl::group_barrier(it.get_group());
+        sycl::sub_group sg = it.get_sub_group();
+        constexpr unsigned IR = 32 / P; // items per row
+        const unsigned lane = sg.get_local_linear_id(), q = lane / IR, i = lane % IR;
+        const unsigned L0 = i * P, l8 = L0 >> 3, j0 = L0 & 7u;
+        constexpr size_t RB = ((size_t)NB * 70 + 15) & ~(size_t)15;
+        const unsigned stride = (unsigned)(it.get_global_range(0) / 32);
+        const unsigned ngr = (rows + P - 1) / P, nu = (w2 ? 2 : 1) * nsl * ngr;
+        for (unsigned u = packed_row_id(it); u < nu; u += stride) {
+            unsigned slot = u / ngr;
+            const unsigned r0 = (u % ngr) * P, rq = r0 + q, r = rq < rows ? rq : r0;
+            const uint8_t *wm = w;
+            float *om = out;
+            if (slot >= nsl) {
+                slot -= nsl;
+                wm = w2;
+                om = out2;
+            }
+            const uint8_t *row = wm + ((size_t)ids[slot] * rows + r) * RB;
+            const uint32_t *rw = reinterpret_cast<const uint32_t *>(row);
+            const uint32_t *scw = reinterpret_cast<const uint32_t *>(row + (size_t)NB * 64);
+            const uint16_t *dp = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 68);
+            const float *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0) + L0;
+            float acc[P];
+#pragma unroll
+            for (unsigned jj = 0; jj < P; ++jj) acc[jj] = 0;
+            sycl::uint4 nq[4];
+            uint32_t nsw = 0;
+            uint16_t nd = 0;
+            if constexpr (PF) {
+#pragma unroll
+                for (unsigned k = 0; k < 4; ++k) nq[k] = reinterpret_cast<const sycl::uint4 *>(rw)[k];
+                nsw = scw[0];
+                nd = dp[0];
+            }
+#pragma unroll 1
+            for (unsigned blk = 0; blk < NB; ++blk) {
+                float d;
+                uint32_t sw;
+                uint32_t wq[16];
+                if constexpr (PF) {
+                    d = iq3::half(nd);
+                    sw = nsw;
+#pragma unroll
+                    for (unsigned k = 0; k < 4; ++k)
+#pragma unroll
+                        for (unsigned e = 0; e < 4; ++e) wq[4 * k + e] = nq[k][e];
+                    const unsigned bn = blk + 1 < NB ? blk + 1 : blk;
+#pragma unroll
+                    for (unsigned k = 0; k < 4; ++k) nq[k] = reinterpret_cast<const sycl::uint4 *>(rw + (size_t)bn * 16)[k];
+                    nsw = scw[bn];
+                    nd = dp[bn];
+                } else {
+                    d = iq3::half(dp[blk]);
+                    sw = scw[blk];
+#pragma unroll
+                    for (unsigned k = 0; k < 4; ++k) {
+                        const sycl::uint4 v = reinterpret_cast<const sycl::uint4 *>(rw + (size_t)blk * 16)[k];
+                        wq[4 * k] = v[0];
+                        wq[4 * k + 1] = v[1];
+                        wq[4 * k + 2] = v[2];
+                        wq[4 * k + 3] = v[3];
+                    }
+                }
+#pragma unroll
+                for (unsigned g = 0; g < 8; ++g) {
+                    const uint32_t lo = wq[2 * g], es = wq[2 * g + 1];
+                    const float db = (d * (0.5f + float((sw >> (4 * g)) & 15u))) * 0.25f;
+                    const unsigned idx = (lo >> (8 * l8)) & 255u;
+                    const float *xg = xs + (size_t)blk * 256 + g * 32;
+                    float mg[P], xv[P];
+                    uint32_t sm[P];
+                    if constexpr (P == 2) {
+                        const sycl::float2 m = *reinterpret_cast<const sycl::float2 *>(tab + idx * 8 + j0);
+                        const sycl::float2 xx = *reinterpret_cast<const sycl::float2 *>(xg);
+                        mg[0] = m[0], mg[1] = m[1], xv[0] = xx[0], xv[1] = xx[1];
+                    } else {
+#pragma unroll
+                        for (unsigned k = 0; k < P / 4; ++k) {
+                            const sycl::float4 m = *reinterpret_cast<const sycl::float4 *>(tab + idx * 8 + j0 + 4 * k);
+                            const sycl::float4 xx = *reinterpret_cast<const sycl::float4 *>(xg + 4 * k);
+#pragma unroll
+                            for (unsigned e = 0; e < 4; ++e) mg[4 * k + e] = m[e], xv[4 * k + e] = xx[e];
+                        }
+                    }
+                    if constexpr (STAB) {
+                        const unsigned sbyte = (es >> (8 * l8)) & 255u;
+                        const uint32_t *st = reinterpret_cast<const uint32_t *>(tab) + 2048 + sbyte * 8 + j0;
+                        if constexpr (P == 2) {
+                            const sycl::uint2 v = *reinterpret_cast<const sycl::uint2 *>(st);
+                            sm[0] = v[0], sm[1] = v[1];
+                        } else {
+#pragma unroll
+                            for (unsigned k = 0; k < P / 4; ++k) {
+                                const sycl::uint4 v = reinterpret_cast<const sycl::uint4 *>(st)[k];
+#pragma unroll
+                                for (unsigned e = 0; e < 4; ++e) sm[4 * k + e] = v[e];
+                            }
+                        }
+                    } else {
+                        const uint32_t sb8 = es >> (8 * l8 + j0);
+#pragma unroll
+                        for (unsigned jj = 0; jj < P; ++jj) sm[jj] = (sb8 << (31 - jj)) & 0x80000000u;
+                    }
+#pragma unroll
+                    for (unsigned jj = 0; jj < P; ++jj) {
+                        const float v = sycl::bit_cast<float>(sycl::bit_cast<uint32_t>(db * mg[jj]) ^ sm[jj]);
+                        acc[jj] = acc[jj] + v * xv[jj];
+                    }
+                }
+            }
+#pragma unroll
+            for (unsigned wv = 16; wv >= P; wv >>= 1)
+#pragma unroll
+                for (unsigned jj = 0; jj < P; ++jj) acc[jj] += sycl::select_from_group(sg, acc[jj], lane ^ (wv / P));
+#pragma unroll
+            for (unsigned wv = P / 2; wv; wv >>= 1)
+#pragma unroll
+                for (unsigned jj = 0; jj < wv; ++jj) acc[jj] = acc[jj] + acc[jj + wv];
+            if (i == 0 && rq < rows) om[slot * rows + rq] = acc[0];
         }
     }
 };
@@ -331,6 +482,24 @@ template <unsigned NB, unsigned R> static void cand(sycl::queue &q, const Bank &
     std::fflush(stdout);
 }
 
+// any candidate KK against production KP: units = positions of KK (rows / R or rows / P per (matrix, slot))
+template <typename KP, typename KK> static void cand_k(sycl::queue &q, const Bank &b, size_t base_wg, unsigned per, const char *lbl) {
+    const size_t mats = b.down ? 1 : 2, npos = mats * 6 * b.rows, nunit = mats * 6 * ((b.rows + per - 1) / per);
+    size_t bad = 0, tot = 0;
+    for (unsigned s = 0; s < 4; ++s) {
+        const auto a = run_out<KP>(q, b, npos, base_wg, s), c = run_out<KK>(q, b, nunit, 0, s);
+        const size_t n = (size_t)6 * b.rows * mats;
+        for (size_t i = 0; i < n; ++i) bad += std::memcmp(&a[i], &c[i], 4) != 0;
+        tot += n;
+    }
+    std::printf("  %s %s: %s %zu of %zu differ |", lbl, b.down ? "down" : "pair", bad ? "FAIL" : "PASS", bad, tot);
+    g_fail += bad != 0;
+    std::printf(" prod wg%zu %.1f |", base_wg, time_k<KP>(q, b, npos, base_wg));
+    for (size_t wg : WGS) std::printf(" wg%zu %.1f", wg, time_k<KK>(q, b, nunit, wg));
+    std::printf(" us\n");
+    std::fflush(stdout);
+}
+
 template <unsigned NB> static void cand_pf(sycl::queue &q, const Bank &b) {
     using KP = RoutedIQ2XXSP<NB, ActF32>;
     using KF = RoutedIQ2XXSPF<NB>;
@@ -445,6 +614,9 @@ static void q2k_gate(sycl::queue &q) {
 
 int main(int argc, char **argv) {
     const int card = argc > 1 ? std::atoi(argv[1]) : 0;
+#ifdef OWN_PCS
+    if (!pcs::begin()) return 2;
+#endif
     std::vector<sycl::device> l0;
     for (auto &d : sycl::device::get_devices(sycl::info::device_type::gpu))
         if (d.get_platform().get_backend() == sycl::backend::ext_oneapi_level_zero) l0.push_back(d);
@@ -473,6 +645,22 @@ int main(int argc, char **argv) {
     q.memcpy(x, hx.data(), hx.size() * 4);
     q.memcpy(ids, hid.data(), hid.size() * 4).wait();
 
+#ifdef OWN_PCS
+    { // stall samples of production IQ2_XXS gate + up and the packed-lane forms, launched back to back
+        uint8_t *g = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 11);
+        uint8_t *u = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 12);
+        Bank bp{g, u, x, ids, o1, o2, PAIR_ROWS, false};
+        const size_t npos = 12 * PAIR_ROWS;
+        pcs::start();
+        for (int r = 0; r < 20; ++r) {
+            time_k<RoutedIQ2XXSP<20, ActF32>>(q, bp, npos, 128);
+            time_k<RoutedIQ2XXSK<20, 4, false, true>>(q, bp, npos / 4, 0);
+            time_k<RoutedIQ2XXSK<20, 8, false, true>>(q, bp, npos / 8, 0);
+        }
+        pcs::stop_print("Routed", 150, 24);
+        return 0;
+    }
+#endif
     if (want("q2k")) q2k_gate(q);
     // candidate first (IQ2_XXS), then the production sweep
     if (want("xxs")) {
@@ -480,6 +668,25 @@ int main(int argc, char **argv) {
         uint8_t *u = packed_bank<Ty::IQ2_XXS>(q, 5120, (size_t)NEXP * PAIR_ROWS, 12);
         Bank bp{g, u, x, ids, o1, o2, PAIR_ROWS, false};
         std::printf("IQ2_XXS candidates:\n");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 8, false, true>>(q, bp, 128, 8, "K8pf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 8, true, true>>(q, bp, 128, 8, "K8spf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, false, true>>(q, bp, 128, 4, "K4pf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4, true, true>>(q, bp, 128, 4, "K4spf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 2, false, true>>(q, bp, 128, 2, "K2pf");
+        cand_k<RoutedIQ2XXSP<20, ActF32>, RoutedIQ2XXSK<20, 4>>(q, bp, 128, 4, "K4");
+        if (getenv("K_ONLY")) {
+            sycl::free(g, q);
+            sycl::free(u, q);
+            uint8_t *d = packed_bank<Ty::IQ2_XXS>(q, 2304, (size_t)NEXP * DOWN_ROWS, 13);
+            Bank bd{d, nullptr, x, ids, o1, o2, DOWN_ROWS, true};
+            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 8, false, true>>(q, bd, 128, 8, "K8pf");
+            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 4, false, true>>(q, bd, 128, 4, "K4pf");
+            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 4, true, true>>(q, bd, 128, 4, "K4spf");
+            cand_k<RoutedIQ2XXSP<9, ActF32>, RoutedIQ2XXSK<9, 2, false, true>>(q, bd, 128, 2, "K2pf");
+            sycl::free(d, q);
+            std::printf("%s\n", g_fail ? "FAIL" : "PASS");
+            return g_fail ? 1 : 0;
+        }
         cand_pf<20>(q, bp);
         if (!getenv("PF_ONLY")) {
             cand<20, 2>(q, bp, 128);

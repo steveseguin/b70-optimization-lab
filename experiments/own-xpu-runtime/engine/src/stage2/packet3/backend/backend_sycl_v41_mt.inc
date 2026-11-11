@@ -928,7 +928,12 @@ void tpm_layer(int L, int c) {
         const int li = L == 1 ? 0 : 1;
         if (use_pull(XP_ENG, 2u * (unsigned)M) || xseq[c] == eng_seqm[c])
             xchg(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)M, te0[c], te1[c], 2, eng_seqm[c], XP_ENG);
-        if (mt_small) {
+        if (mt_small && ops41sycl::g_eng_ff) { // OWN_ENG_FF: EngramGateW per token (the same gates bit for bit)
+            launch_wgl<8 * 16 + 2>(c, (size_t)4 * M, 512,
+                                   ops41sycl::EngramGateWM<16>{ops41sycl::EngramGateP{g.h}, (unsigned)M, H4, 10 * H},
+                                   strm[c], (const float *)(xarena[c] + xengM + (size_t)li * 5 * H),
+                                   wp<float>(c, p + "engram_gate.weight"));
+        } else if (mt_small) {
             launch_sg(c, (size_t)4 * M, ops41sycl::EngramGatePM{ops41sycl::EngramGateP{g.h}, (unsigned)M, H4, 10 * H},
                       strm[c], (const float *)(xarena[c] + xengM + (size_t)li * 5 * H),
                       wp<float>(c, p + "engram_gate.weight"));
