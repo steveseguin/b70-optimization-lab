@@ -310,7 +310,7 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated ~08:37 EST)
 
-- Done (tg92, 2026-11-11 08:17-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
+- Done (tg92, 2026-11-11 08:02-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
   guessing SAME. Code 128.70 / 128.97, analysis 142.22 / 142.84; vocabulary list 130.0-130.7 / 144.9-145.0; 3K read
   469.1 (32: 426, 128: 444). Check ms by guesses (code d92): 0: 10.57, 1: 15.03-15.10, 2: 17.24, 3: 18.92-18.97,
   4: 21.86-21.94, 5: 23.71-23.77 against tp91's 10.45 / 14.44 / 16.92 / 19.19 / 22.60 / 25.30: the mix split from 2
