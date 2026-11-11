@@ -132,13 +132,13 @@ long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push
 // the expert-act pulls as XchgPull2's second region, and every card then runs every token's finish from the
 // gathered partials. A token's partials are HcDotsRows's rows (SkDotsWM's with OWN_MT_SKDOTS) on that token's
 // streams, which every card holds alike: the same code on the same inputs, run on one card instead of on all six.
-unsigned mt_dsplit_min = 16; // OWN_MT_DSPLIT_MIN=m: only in blocks of at least m tokens
+unsigned mt_dsplit_min = 2;  // OWN_MT_DSPLIT_MIN=m: only in blocks of at least m tokens (2 since tg91: checks too)
 int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own launches after the pulls (0), as riders
                              // in output-b's and shared down's launches (1), or 2 (default): 1 unless OWN_MT_WS (with a
                              // rider dense_m skips the weight-stationary forms, which have no WS_DOTS entries there)
-unsigned mt_skdots = 0;      // OWN_MT_SKDOTS=8 (or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
+unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
-unsigned mt_skdots_min = 16; // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens
+unsigned mt_skdots_min = 2;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (2 since tg91)
 // ---- the check path's fixed cost (ckpath-1, 2026-11-11; every switch off by default, each a bit-identical form)
 bool ck1 = true;          // OWN_CK1 (default on since tg90; =0: off): a check of the anchor alone (no guesses) runs as the one-token step (tpm_card_step1)
 unsigned mt_ride_min = 0; // OWN_MT_RIDE_MIN=m: OWN_MT_RIDE only in blocks of at least m tokens (smaller: dots in the norms' launches)
@@ -149,10 +149,10 @@ unsigned mt_ms_max = 16;  // OWN_MT_MS_MAX=m: OWN_MT_KVPAIR / OWN_MT_FIN_QB only
 unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at least m tokens (smaller: slot-major rows)
 bool ring_one = true;     // OWN_RING_ONE (default on since tg90; =0: off): commit_pending's ring moves in one launch (RingCommitN)
 bool dr_nowait = true;    // OWN_DR_NOWAIT (default on since tg90; =0: off): the draft step's embed does not wait for the card (no host buffer to protect)
-// ---- draft-head-1 (2026-11-11; every switch off by default; the draft only proposes, the check decides)
+// ---- draft-head-1 (2026-11-11; DR_ANCHOR_ARG and DR_WS on by default since tg91, the rest off; the draft only proposes, the check decides)
 unsigned dr_tgw = 0;      // OWN_DR_TGW=g (1..6): the draft step's plain dense rows (stages + head) in token groups of g, no row blocks
-bool dr_anchor_arg = false; // OWN_DR_ANCHOR_ARG=1: the Markov chain's row 0 takes the anchor as a kernel argument (no host copy)
-bool dr_ws = false;       // OWN_DR_WS=1: OWN_MT_WS's weight-stationary forms (WsTab) in the draft's steps too (same sums)
+bool dr_anchor_arg = true;  // OWN_DR_ANCHOR_ARG (default on since tg91; =0: off): the Markov chain's row 0 takes the anchor as a kernel argument (no host copy)
+bool dr_ws = true;        // OWN_DR_WS (default on since tg91; =0: off): OWN_MT_WS's weight-stationary forms (WsTab) in the draft's steps too (same sums)
 private:
 bool ck1_run = false;     // decode_verify_tp -> tpm_card_step: this check is one token and OWN_CK1 is on
 bool vck1 = false;        // the checked block ran as a one-token step (commit_block: nothing staged)

@@ -237,7 +237,7 @@ int main(int argc, char **argv) {
     // same bits; default 8 since tg89, =0: off): OWN_SMALLK_DOTS=8
     if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
     // prompt blocks: the stream mixes' dot rows split across the cards by tokens, gathered with the output-a and
-    // expert-act pulls (pcd-1, prefill plan item C; off): OWN_MT_DSPLIT=1; the cards' token weights per mix
+    // expert-act pulls (pcd-1, prefill plan item C; default on since tg91, =0: off): OWN_MT_DSPLIT; the cards' token weights per mix
     // OWN_MT_DSPLIT_WA / OWN_MT_DSPLIT_WF="w0,w1,w2,w3,w4,w5" (unset: attention 4 on the cards with fewer heads, else 1)
     if (const char *e = getenv("OWN_MT_DSPLIT")) opt.mt_dsplit = atoi(e) != 0;
     for (int k = 0; k < 2; ++k)
@@ -519,7 +519,7 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
         if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
         if (const char *e = getenv("OWN_MT_RFUSE")) be.mt_rfuse = atoi(e) != 0; // router + shared gate/up in one launch
-        // the stream mixes' dot rows in prompt blocks (pcd-1; off by default, each a bit-identical form)
+        // the stream mixes' dot rows in prompt blocks (pcd-1; DSPLIT + SKDOTS=8 from 2 tokens on by default since tg91, each a bit-identical form)
         if (const char *e = getenv("OWN_MT_DSPLIT_MIN")) be.mt_dsplit_min = (unsigned)atoi(e); // OWN_MT_DSPLIT from m tokens on
         if (const char *e = getenv("OWN_MT_DSPLIT_FIN")) be.mt_dsplit_fin = atoi(e);    // finishes: 0 own, 1 riding, 2 auto
         if (const char *e = getenv("OWN_MT_SKDOTS")) be.mt_skdots = (unsigned)atoi(e);  // dot rows as SkDotsWM<K> (8 or 4)
@@ -535,7 +535,7 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_EU_MIN")) be.mt_eu_min = (unsigned)atoi(e);     // OWN_MT_EU from m tokens on
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
-        // draft-head-1 (all off by default; the draft only proposes, the check keeps the answers)
+        // draft-head-1 (DR_ANCHOR_ARG + DR_WS on by default since tg91, the rest off; the draft only proposes, the check keeps the answers)
         if (const char *e = getenv("OWN_DR_TGW")) be.dr_tgw = (unsigned)atoi(e);          // the draft's dense rows in groups of g
         if (const char *e = getenv("OWN_DR_ANCHOR_ARG")) be.dr_anchor_arg = atoi(e) != 0; // the chain's anchor by value
         if (const char *e = getenv("OWN_DR_WS")) be.dr_ws = atoi(e) != 0;                 // OWN_MT_WS's table in the draft

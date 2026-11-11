@@ -300,7 +300,7 @@ public:
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
         int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
-        bool mt_dsplit = false; // OWN_MT_DSPLIT=1 (off; prefill plan item C): in prompt blocks the stream mixes' dot rows
+        bool mt_dsplit = true;  // OWN_MT_DSPLIT (default on since tg91; =0: off; prefill plan item C): in prompt blocks the stream mixes' dot rows
                                 // are split across the cards by tokens and gathered with the output-a and expert-act
                                 // pulls (backend_sycl_v41_mt.inc "OWN_MT_DSPLIT"); an option here because the arena
                                 // grows by the two partial regions (mt_arena_floats, before the tp setup)
