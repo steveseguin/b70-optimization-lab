@@ -139,6 +139,14 @@ Did not work (and why):
 - K2 expert kernels, packed logical lanes (`tools/bench/bench_routed_m1.cpp` `RoutedIQ2XXSK<NB, P, STAB, PF>`): v1
   bitwise PASS (18,432 pair outputs, 20,736 down) but slower (P = 8: 58 us, P = 4: 35.5 against production 33.5);
   stall samples show block-start load waits; v2 loads block blk + 1 while computing blk (running).
+- Found (gs1, `tools/bench/bench_grf_switch.cpp`, `round19-gs1-grf-switch-card3/4.txt`): **a 256-register kernel
+  between 128-register kernels costs ~2.9 us extra** (host clock; profiling gap 1.10 vs 0.12 us per launch): a
+  2.1 MB Q8_0 step followed by a tiny step is 6.86 us per pair with the tiny step at 128 registers and 9.80 us at
+  256. Local memory size changes cost nothing. In the plain step only `SparseSoftmaxPN` (38 per step) runs at 256
+  registers: ~0.11 ms per step (~1 %), fix = build it for 128 registers (or slim it). Checks and prompt blocks have
+  many more 256-register kernels (83 of 180 in `bench_dense_m16`'s dump): count the mode changes per block there.
+  Also seen: a chain of tiny kernels alone runs at ~2.0 us per launch (the card's launch rate), while a tiny
+  kernel right after a 6 us kernel adds only ~0.8 us (its setup overlaps the long kernel).
 - Done: S2 transport L1 (shared native context, direct stores): safe for host RAM, but no faster than today's
   setup; closed (scoreboard). Exchanges can only shrink by merging or hiding them.
 - Gaps: a per-launch timeline on all cards + who waits for whom (`OWN_TIMELINE`, `OWN_XWAIT`; helper writing the
