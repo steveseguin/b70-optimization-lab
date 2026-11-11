@@ -4337,6 +4337,422 @@ template <typename A> struct CompressPoolP {
     }
 };
 
+// ---- smallk (2026-11-11; benches /home/steve/dsv41-work/smallk/bench_smallk.cpp): one-work-group forms of four
+// latency-bound one-token launches. Each gives the production bits: the proofs below; bench-checked bit for bit on
+// real-shaped data including near-midpoint, inf / NaN / subnormal / zero inputs and every fallback forced.
+// OWN_SMALLK=1 selects them (backend o.smallk). Every kernel here is a 128-register kernel (no mode switch).
+[[gnu::always_inline]] inline void sk_put(uint32_t *lm, int w, double v) {
+    const uint64_t b = sycl::bit_cast<uint64_t>(v);
+    lm[2 * w] = (uint32_t)b;
+    lm[2 * w + 1] = (uint32_t)(b >> 32);
+}
+[[gnu::always_inline]] inline double sk_get(const uint32_t *lm, int w) {
+    return sycl::bit_cast<double>((uint64_t)lm[2 * w] | ((uint64_t)lm[2 * w + 1] << 32));
+}
+// RmsNormPS's scale with rs_fast's bracket split over the S sub-groups of ONE work-group: chunk c (256 elements)
+// on sub-group c % S, the float-float blocks of two chunks (<= 16 terms per lane) as rs_fast, the block (hi, lo)
+// added in double, the lane xor tree, the S partials in a fixed xor tree through local memory, then rs_fast's own
+// check. rs_fast's proof bounds |acc_chain - s| < 1.0e-12 E from (a) per block of k <= 16 terms the low sum's
+// rounding <= k (k + 1) u^2 E_b and (b) <= 25 double adds on any leaf-to-root path; it does not use which terms
+// share a block or the order of the double adds. Here a block still has <= 16 terms per lane and a path has
+// <= 2 ceil(ceil(C / S) / 2) + 5 + log2(S) <= 13 double adds: the same bound, the same check. When it fails (or s
+// is out of range) every sub-group runs RmsNormPS::acc_chain (the production chain). Output: the production
+// expression w * (x * rs). Only the chunks being summed are live; x and w are reloaded for the output (L1).
+template <unsigned N, unsigned S> struct SkNormSplit {
+    static_assert(N % 256 == 0 && S >= 1 && S <= 16);
+    static constexpr unsigned C = N / 256, MY = (C + S - 1) / S;
+    using PS = RmsNormPS<N, 4>; // rs_of / acc_chain do not depend on PS's S
+    [[gnu::always_inline]] static inline double partial(sycl::sub_group sg, unsigned lane, unsigned sgi,
+                                                         const sycl::vec<float, 8> *xv) {
+        double acc = 0;
+#pragma unroll
+        for (unsigned k2 = 0; k2 < MY; k2 += 2) {
+            float hi = 0, lo = 0;
+#pragma unroll
+            for (unsigned h = 0; h < 2; ++h) {
+                const unsigned k = k2 + h;
+                if (k >= MY || sgi + k * S >= C) continue;
+#pragma unroll
+                for (unsigned m = 0; m < 8; ++m) {
+                    const float a = xv[k][m];
+                    const float p = a * a;
+                    const float e = sycl::fma(a, a, -p);
+                    const float t = hi + p;
+                    const float z = t - hi;
+                    const float er = (hi - (t - z)) + (p - z);
+                    hi = t;
+                    lo = lo + (er + e);
+                }
+            }
+            acc = acc + double(hi);
+            acc = acc + double(lo);
+        }
+        for (int w_ = 16; w_; w_ >>= 1) acc += sycl::select_from_group(sg, acc, (int)lane ^ w_);
+        return acc;
+    }
+    // the S partials at lm words [w0, w0 + S) (lanes >= S add +0.0; no partial is -0.0), then rs_fast's check
+    [[gnu::always_inline]] static inline float finish(sycl::sub_group sg, unsigned lane, const uint32_t *lm, int w0,
+                                                      bool &ok) {
+        double a = lane < S ? sk_get(lm, w0 + (int)lane) : 0.0;
+#pragma unroll
+        for (unsigned w_ = 1; w_ < S; w_ <<= 1) a += sycl::select_from_group(sg, a, (int)(lane ^ w_));
+        const double acc = sycl::select_from_group(sg, a, 0);
+        const double D = 1.0 / sycl::sqrt(acc / N + 1e-20);
+        const float f = float(D);
+        const double fd = f, up = sycl::nextafter(f, INFINITY), dn = sycl::nextafter(f, 0.0f);
+        ok = acc > 1e-25 && acc < 1e30 && D * (1 + 4e-12) < fd + (up - fd) * 0.5 &&
+             D * (1 - 4e-12) > fd - (fd - dn) * 0.5;
+        return f;
+    }
+    // the whole norm on the S sub-groups of one work-group (every sub-group calls it: one barrier inside)
+    [[gnu::always_inline]] static inline void run(sycl::nd_item<1> it, unsigned sgi, uint32_t *lm, int w0, const float *x,
+                                                  const float *w, float *y) {
+        namespace ex = sycl::ext::oneapi::experimental;
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+#pragma unroll
+        for (unsigned k = 0; k < MY; ++k)
+            if (sgi + k * S < C)
+                ex::prefetch((void *)(w + (sgi + k * S) * 256 + lane * 8), ex::properties{ex::prefetch_hint_L1});
+        double p;
+        {
+            sycl::vec<float, 8> xv[MY];
+#pragma unroll
+            for (unsigned k = 0; k < MY; ++k)
+                if (sgi + k * S < C) xv[k] = sg_bloadN<8>(sg, x + (sgi + k * S) * 256);
+            p = partial(sg, lane, sgi, xv);
+        }
+        if (lane == 0) sk_put(lm, w0 + (int)sgi, p);
+        sycl::group_barrier(it.get_group());
+        bool ok;
+        float rs = finish(sg, lane, lm, w0, ok);
+        if (!ok) rs = PS::rs_of(PS::acc_chain(sg, lane, x));
+#pragma unroll
+        for (unsigned k = 0; k < MY; ++k)
+            if (sgi + k * S < C) {
+                const auto xv = sg_bloadN<8>(sg, x + (sgi + k * S) * 256);
+                const auto wv = sg_bloadN<8>(sg, w + (sgi + k * S) * 256);
+                sycl::vec<float, 8> o;
+#pragma unroll
+                for (unsigned m = 0; m < 8; ++m) o[m] = wv[m] * (xv[m] * rs);
+                sg.store<8>(sycl::address_space_cast<sycl::access::address_space::global_space,
+                                                     sycl::access::decorated::yes>(y + (sgi + k * S) * 256),
+                            o);
+            }
+    }
+};
+// RmsNormPS<N, *> as one work-group of S sub-groups (launch_wgl<2 S>(tile, 1, 32 S, ...); not in place).
+// N = 5120, S = 16: 7.3 -> 2.9 us (bench G1, after an 8 MB writer, cold weights)
+template <unsigned N, unsigned S> struct SkNormW {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y, uint32_t *lm) const {
+        SkNormSplit<N, S>::run(it, it.get_sub_group().get_group_linear_id(), lm, 0, x, w, y);
+    }
+};
+// the query-a 1280 norm and the key-value 512 norm in one work-group of 8 sub-groups (launch_wgl<16>(c, 1, 256, ...);
+// replaces RowsP<RowsPair<NormRows<1280, 4>, NormRows<512, 2>>> @wg64): sub-groups 0..4 the 1280 norm (one chunk
+// each, SkNormSplit<1280, 5>), 5..6 the 512 norm (SkNormSplit<512, 2>; production runs the 512 norm's chain, the
+// bracket gives the same scale by the proof above, chain fallback), 7 idle; one barrier. 4.1 -> 2.7 us (bench G3)
+struct SkNormPairW {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *qa, const float *wq, float *qn, const float *kv,
+                                     const float *wk, float *kvn, uint32_t *lm) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id(), sgi = sg.get_group_linear_id();
+        const bool is1 = sgi < 5, is2 = sgi >= 5 && sgi < 7;
+        const unsigned ch = is1 ? sgi : sgi - 5;
+        const float *x = is1 ? qa : kv, *w = is1 ? wq : wk;
+        float *y = is1 ? qn : kvn;
+        sycl::vec<float, 8> xv[1], wv[1];
+        if (is1 || is2) {
+            xv[0] = sg_bloadN<8>(sg, x + ch * 256);
+            wv[0] = sg_bloadN<8>(sg, w + ch * 256);
+            if (is1) sk_put(lm, (int)sgi, SkNormSplit<1280, 5>::partial(sg, lane, sgi, xv));
+            else sk_put(lm, (int)sgi, SkNormSplit<512, 2>::partial(sg, lane, ch, xv));
+        }
+        sycl::group_barrier(it.get_group());
+        if (!(is1 || is2)) return;
+        float rs;
+        bool ok = false;
+        if (is1) {
+            rs = SkNormSplit<1280, 5>::finish(sg, lane, lm, 0, ok);
+            if (!ok) rs = RmsNormPS<1280, 4>::rs_of(RmsNormPS<1280, 4>::acc_chain(sg, lane, qa));
+        } else {
+            rs = SkNormSplit<512, 2>::finish(sg, lane, lm, 5, ok);
+            if (!ok) rs = RmsNormPS<512, 2>::rs_of(RmsNormPS<512, 2>::acc_chain(sg, lane, kv));
+        }
+        sycl::vec<float, 8> o;
+#pragma unroll
+        for (unsigned m = 0; m < 8; ++m) o[m] = wv[0][m] * (xv[0][m] * rs);
+        sg.store<8>(sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(
+                        y + ch * 256),
+                    o);
+    }
+};
+// The stream mix's 25 dot rows (HcMixDotsP<5120, 8>: 24 fn rows + the streams' sum of squares, 8 segment partials
+// each) by a proven fast sum, one row per work-group of 16 sub-groups. The finish (HcMixFinishSG, both forms) sums
+// row r's partials in order, t_r = 0 + d0 + ... + d7, and uses only float(t_r) (r < 24) and
+// float(1 / sqrt(t_24 / N + 1e-20)) (r = 24), N = 20480.
+// Fast sum: every lane sums its products (chunk g = sgi + 16 k of the row's 80 chunks of 256) in float-float blocks
+// of K terms (p = b a, e = fma(b, a, -p) exact; TwoSum into (hi, lo), the low parts summed in float), each block's
+// (hi, lo) added in double, the lane xor tree, the 16 partials in a second xor tree through local memory: T;
+// E = the float sum of |p|. Bound for any data without overflow (u = 2^-24, v = 2^-53, E the exact sum of |b a|):
+// a block's low sum rounds by <= K (K + 1) u^2 E_b; <= 2 * 10 + 10 double adds on any path: <= gamma_30 E; the
+// production chain (80 terms per lane, 5 tree levels, 8 segment adds) has <= 79 + 5 + 7 roundings on any path:
+// |t_chain - s| <= gamma_91 E = 1.0103e-14 E; underflow adds < 6e-41 in all. So |T - t_chain| < CK E_up + 1e-38,
+// CK = 9.0e-14 (K = 4) / 2.8e-13 (K = 8), E_up = E_float (1 + 1e-5) (E_float is within 90 u of the sum of |p|).
+// Check (r < 24): |T| > 1e-30, E_up < 1e30 and (T - B, T + B) strictly between the two float midpoints around
+// float(T): then float(t_chain) == float(T). r = 24: RmsNormPS::rs_fast's check on D = 1 / sqrt(T / N + 1e-20)
+// (all terms >= 0 and E_up < 2 T, so D moves by < 3.5e-13 relative: inside the check's 4e-12).
+// Proven: the row writes d[8 r] = T, d[8 r + 1 .. 7] = +0.0 (then the finish's sum is exactly T, T != 0);
+// otherwise sub-groups 0..7 run HcMixDotsP::row (the production partials). The 200 partials then differ from
+// production's, the finish's outputs do not (bench: 0 of 91,200 outputs over 95 adversarial sets incl. exact
+// float ties, near-midpoint rows at 1e-6..1e-3 ulp, cancelling rows, inf / NaN / subnormal / huge; forced
+// fallbacks give the production partials bit for bit). Fallback rows: ~1 % of launches on real-ish data
+// (K = 8; 0.6 % at K = 4), 9 % (2.5 %) on N(0, 1) streams; a launch with one costs ~+6 us.
+template <unsigned K> struct SkDotsFF {
+    static constexpr unsigned SGS = 16, SEG = 8, N = 4 * 5120, NCH = N / 256, MY = (NCH + SGS - 1) / SGS;
+    static_assert(K == 4 || K == 8);
+    static constexpr double CK = K == 4 ? 9.0e-14 : 2.8e-13;
+    [[gnu::always_inline]] static inline bool check(unsigned r, double T, float E) {
+        const double Eu = double(E) * (1 + 1e-5);
+        if (!(Eu < 1e30)) return false; // also NaN / inf
+        const double B = CK * Eu + 1e-38;
+        if (r < 24) {
+            if (!(sycl::fabs(T) > 1e-30)) return false;
+            const float f = float(T);
+            const double fd = f;
+            const double mu = (fd + double(sycl::nextafter(f, INFINITY))) * 0.5;
+            const double md = (fd + double(sycl::nextafter(f, -INFINITY))) * 0.5;
+            return T - B > md && T + B < mu;
+        }
+        if (!(T > 1e-25 && T < 1e30 && Eu < 2 * T)) return false;
+        const double D = 1.0 / sycl::sqrt(T / N + 1e-20);
+        const float f = float(D);
+        const double fd = f, up = sycl::nextafter(f, INFINITY), dn = sycl::nextafter(f, 0.0f);
+        return D * (1 + 4e-12) < fd + (up - fd) * 0.5 && D * (1 - 4e-12) > fd - (fd - dn) * 0.5;
+    }
+    // row r on the 16 sub-groups of one work-group (one barrier); lm: 48 words
+    [[gnu::always_inline]] static inline void run(sycl::nd_item<1> it, unsigned sgi, uint32_t *lm, unsigned r,
+                                                  const float *streams, const float *fn, double *out) {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const float *fr = fn + (size_t)(r < 24 ? r : 0) * N;
+        double acc = 0;
+        float ef = 0;
+#pragma unroll
+        for (unsigned k = 0; k < MY; ++k) {
+            const unsigned g = sgi + k * SGS;
+            if (g < NCH) {
+                const auto a = sg_bloadN<8>(sg, streams + g * 256);
+                const auto b = r < 24 ? sg_bloadN<8>(sg, fr + g * 256) : a;
+#pragma unroll
+                for (unsigned h0 = 0; h0 < 8; h0 += K) {
+                    float hi = 0, lo = 0;
+#pragma unroll
+                    for (unsigned m = h0; m < h0 + K; ++m) {
+                        const float p = b[m] * a[m];
+                        const float e = sycl::fma(b[m], a[m], -p);
+                        const float t = hi + p;
+                        const float z = t - hi;
+                        const float er = (hi - (t - z)) + (p - z);
+                        hi = t;
+                        lo = lo + (er + e);
+                        ef = ef + sycl::fabs(p);
+                    }
+                    acc = acc + double(hi);
+                    acc = acc + double(lo);
+                }
+            }
+        }
+        for (int w = 16; w; w >>= 1) {
+            acc += sycl::select_from_group(sg, acc, (int)lane ^ w);
+            ef += sycl::select_from_group(sg, ef, (int)lane ^ w);
+        }
+        if (lane == 0) {
+            sk_put(lm, (int)sgi, acc);
+            lm[2 * SGS + sgi] = sycl::bit_cast<uint32_t>(ef);
+        }
+        sycl::group_barrier(it.get_group());
+        double T = lane < SGS ? sk_get(lm, (int)lane) : 0.0;
+        float E = lane < SGS ? sycl::bit_cast<float>(lm[2 * SGS + lane]) : 0.0f;
+        for (int w = 1; w < 32; w <<= 1) {
+            T += sycl::select_from_group(sg, T, (int)lane ^ w);
+            E += sycl::select_from_group(sg, E, (int)lane ^ w);
+        }
+        T = sycl::select_from_group(sg, T, 0);
+        E = sycl::select_from_group(sg, E, 0);
+        if (check(r, T, E)) {
+            if (sgi == 0 && lane < SEG) out[r * SEG + lane] = lane == 0 ? T : 0.0;
+            return;
+        }
+        if (sgi < SEG) HcMixDotsP<5120, 8>::row(sg, lane, r * SEG + sgi, streams, fn, out);
+    }
+};
+// the 5,120 pre-norm and the stream mix's dot rows in one launch (replaces RowsP<RowsPair<NormRows<5120, 4>,
+// HcDotsRows<5120, 8>>> @wg64): work-group 0 the norm (SkNormSplit<5120, 16>), work-groups 1..25 a dot row each.
+// launch_wgl<64>(c, 26, 512, ...). 7.7 -> 6.4 us (bench, K = 8, after an 8 MB writer, cold fn rows)
+template <unsigned K> struct SkNormDotsW {
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *x, const float *w, float *y, const float *streams,
+                                     const float *fn, double *out, uint32_t *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), sgi = it.get_sub_group().get_group_linear_id();
+        if (g == 0) {
+            SkNormSplit<5120, 16>::run(it, sgi, lm, 0, x, w, y);
+            return;
+        }
+        SkDotsFF<K>::run(it, sgi, lm, g - 1, streams, fn, out);
+    }
+};
+// CompressPoolP (r = 2, hd = 512) on one work-group of 512 items, one channel per item (launch_local<1024>(c, 512,
+// ...)): the per-channel softmax pool is CompressPoolP's expression (it is per channel already); the RMS
+// statistic's fast sum: one exact term double(t) t per item, the lane xor tree, the 16 partials in a fixed xor tree
+// (9 double adds on any path: |s - E| <= 9 v E, v = 2^-53; the production chain in channel order <= 511 v E), so
+// |chain - s| < 6e-14 E, far inside the norm check's 4e-12 margin (built for 1.0e-12 E); the check is rs_fast's
+// with N = hd; when it fails sub-group 0 runs the production chain from local memory and hands rs over.
+// tmp: 1024 floats (hd channels, then the partials' words, then rs). 37 -> 2.4 us (bench CP).
+template <typename A> struct SkCompressPoolW {
+    int r, hd; // 2, 512 (the host checks)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *kv_state, const float *score_state, const float *nw,
+                                     typename A::T *out, float *tmp) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const int i = (int)it.get_local_linear_id(), lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+        constexpr int R = 2, NSG = 16;
+        uint32_t *lm = reinterpret_cast<uint32_t *>(tmp + 512);
+        float mx = score_state[i];
+        for (int j = 1; j < R; ++j) mx = score_state[j * hd + i] > mx ? score_state[j * hd + i] : mx;
+        float sum = 0, a = 0;
+        for (int j = 0; j < R; ++j) sum += sycl::exp(score_state[j * hd + i] - mx);
+        for (int j = 0; j < R; ++j) a += kv_state[j * hd + i] * (sycl::exp(score_state[j * hd + i] - mx) / sum);
+        tmp[i] = a;
+        double acc = double(a) * double(a);
+        for (int w_ = 16; w_; w_ >>= 1) acc += sycl::select_from_group(sg, acc, lane ^ w_);
+        if (lane == 0) sk_put(lm, sgi, acc);
+        sycl::group_barrier(it.get_group());
+        double s2 = lane < NSG ? sk_get(lm, lane) : 0.0;
+#pragma unroll
+        for (int w_ = 1; w_ < NSG; w_ <<= 1) s2 += sycl::select_from_group(sg, s2, lane ^ w_);
+        s2 = sycl::select_from_group(sg, s2, 0);
+        const double D = 1.0 / sycl::sqrt(s2 / hd + 1e-20);
+        float rs = float(D);
+        const double fd = rs, up = sycl::nextafter(rs, INFINITY), dn = sycl::nextafter(rs, 0.0f);
+        const bool ok = s2 > 1e-25 && s2 < 1e30 && D * (1 + 4e-12) < fd + (up - fd) * 0.5 &&
+                        D * (1 - 4e-12) > fd - (fd - dn) * 0.5;
+        if (!ok) { // uniform: every item holds the same s2
+            if (sgi == 0) {
+                double sq = 0;
+                for (int k = 0; k < hd; ++k) sq += double(tmp[k]) * tmp[k];
+                if (lane == 0) lm[2 * NSG] = sycl::bit_cast<uint32_t>(float(1.0 / sycl::sqrt(sq / hd + 1e-20)));
+            }
+            sycl::group_barrier(it.get_group());
+            rs = sycl::bit_cast<float>(lm[2 * NSG]);
+        }
+        out[i] = A::wr(nw[i] * (a * rs));
+    }
+};
+// EngramGateW<S> (EngramGateP::run_wg<S>) at h = 5120 with (a) the per-lane term count a constant (the loops
+// unrolled; the same terms in the same order), (b) the sums of squares as fma(dh, dh, s): the product of two floats
+// is exact in double, so RN(s + dh dh) is the production's s + ph bit for bit (the same fast sums, the same verdict),
+// (c) the update's kv rows prefetched into L1 at the start (the same loads, earlier). The check, the chains
+// (fallback) and the update expressions: run_wg's code. lm: 8 S + 2 words. 11.4 -> 8.7 us (bench EG, S = 16).
+template <unsigned S> struct SkEngramGateW {
+    int h; // 5120 (the host checks)
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *streams, const float *kvbuf, const float *gate_w,
+                                     uint32_t *lm) const {
+        static_assert(S == 8 || S == 16);
+        const int j = (int)it.get_group_linear_id();
+        if (j >= 4) return;
+        sycl::sub_group sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+        const float eps = 1e-20f, clamp_v = 1e-6f;
+        const float *sr = streams + (size_t)j * h, *kr = kvbuf + (size_t)j * h, *gr = gate_w + (size_t)j * h;
+        const float *vr = kvbuf + (size_t)4 * h;
+        constexpr int PER = 5120 / (32 * (int)S);
+        namespace ex = sycl::ext::oneapi::experimental;
+#pragma unroll
+        for (int t = 0; t < PER; ++t)
+            ex::prefetch((void *)(vr + t * 32 * (int)S + 32 * sgi + lane), ex::properties{ex::prefetch_hint_L1});
+        double sh = 0, sk = 0, sd = 0, sa = 0;
+#pragma unroll
+        for (int t = 0; t < PER; ++t) {
+            const int ix = t * 32 * (int)S + 32 * sgi + lane;
+            const float hvt = sr[ix];
+            const float kvv = kr[ix], gw = gr[ix];
+            const double dh = double(hvt), dk = double(kvv);
+            const double pd = double(hvt) * gw * kvv;
+            sh = sycl::fma(dh, dh, sh);
+            sk = sycl::fma(dk, dk, sk);
+            sd += pd;
+            sa += sycl::fabs(pd);
+        }
+#pragma unroll
+        for (int w = 16; w; w >>= 1) {
+            sh += sycl::select_from_group(sg, sh, lane ^ w);
+            sk += sycl::select_from_group(sg, sk, lane ^ w);
+            sd += sycl::select_from_group(sg, sd, lane ^ w);
+            sa += sycl::select_from_group(sg, sa, lane ^ w);
+        }
+        if (lane == 0) {
+            sk_put(lm, 4 * sgi, sh);
+            sk_put(lm, 4 * sgi + 1, sk);
+            sk_put(lm, 4 * sgi + 2, sd);
+            sk_put(lm, 4 * sgi + 3, sa);
+        }
+        sycl::group_barrier(it.get_group());
+        float rstd = 0, fd = 0;
+        bool ok;
+        {
+            const int q = lane & 3, s0 = lane >> 2;
+            double a = s0 < (int)S ? sk_get(lm, 4 * s0 + q) : 0.0;
+            if constexpr (S == 16) a = a + sk_get(lm, 4 * (s0 + 8) + q);
+#pragma unroll
+            for (int w = 4; w <= 16; w *= 2) a += sycl::select_from_group(sg, a, lane ^ w);
+            const double sh2 = sycl::select_from_group(sg, a, 0), sk2 = sycl::select_from_group(sg, a, 1),
+                         sd2 = sycl::select_from_group(sg, a, 2), sa2 = sycl::select_from_group(sg, a, 3);
+            ok = sycl::isfinite(sh2) && sycl::isfinite(sk2) && sycl::isfinite(sd2) && sycl::isfinite(sa2);
+            if (ok) {
+                const double c = (double(h) + 64.0) * 1.2e-16;
+                const double wh = c * sh2, wk = c * sk2, wd = c * sa2;
+                const float r0 = EngramGateP::rstd_of(sh2 + wh, sk2 + wk, h, eps),
+                            r1 = EngramGateP::rstd_of(sycl::fmax(sh2 - wh, 0.0), sycl::fmax(sk2 - wk, 0.0), h, eps);
+                const float d0 = float(sd2 - wd), d1 = float(sd2 + wd);
+                ok = sycl::bit_cast<uint32_t>(r0) == sycl::bit_cast<uint32_t>(r1) &&
+                     sycl::bit_cast<uint32_t>(d0) == sycl::bit_cast<uint32_t>(d1);
+                rstd = r0;
+                fd = d0;
+            }
+        }
+        if (!ok && sgi == 0) { // the production chains
+            double hsq = 0, ksq = 0, dot = 0;
+            for (int i0 = 0; i0 < h; i0 += 32) {
+                const float hv2 = sr[i0 + lane], kvv = kr[i0 + lane], gw = gr[i0 + lane];
+                const double ph = double(hv2) * hv2, pk = double(kvv) * kvv, pd = double(hv2) * gw * kvv;
+#pragma unroll
+                for (int l2 = 0; l2 < 32; ++l2) {
+                    hsq += sycl::select_from_group(sg, ph, l2);
+                    ksq += sycl::select_from_group(sg, pk, l2);
+                }
+#pragma unroll
+                for (int l2 = 0; l2 < 32; ++l2) dot += sycl::select_from_group(sg, pd, l2);
+            }
+            if (lane == 0) {
+                lm[8 * S] = sycl::bit_cast<uint32_t>(EngramGateP::rstd_of(hsq, ksq, h, eps));
+                lm[8 * S + 1] = sycl::bit_cast<uint32_t>(float(dot));
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        if (!ok) {
+            rstd = sycl::bit_cast<float>(lm[8 * S]);
+            fd = sycl::bit_cast<float>(lm[8 * S + 1]);
+        }
+        const float d = fd * rstd / sycl::sqrt(float(h));
+        const float g = 1.0f / (1.0f + sycl::exp(-sycl::copysign(sycl::sqrt(sycl::fmax(sycl::fabs(d), clamp_v)), d)));
+        float *so = streams + (size_t)j * h;
+#pragma unroll
+        for (int t = 0; t < PER; ++t) {
+            const int ix = t * 32 * (int)S + 32 * sgi + lane;
+            so[ix] = so[ix] + g * vr[ix];
+        }
+    }
+};
+
 // ---- fused elementwise steps (fewer launches; each output keeps the exact
 // expression sequence of the kernels it replaces) ----------------------------
 

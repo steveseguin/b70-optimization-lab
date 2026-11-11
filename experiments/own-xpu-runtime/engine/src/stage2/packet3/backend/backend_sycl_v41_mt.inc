@@ -553,9 +553,9 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
 #define X(TY, KERN, NB)                                                                                    \
     if (e.type == iq3::Type::TY && cols == NB * 256) return go(std::type_identity<KERN<NB, Act>>{});
 #define X1(NB)                                                                                             \
-    if (e.type == iq3::Type::IQ1_S && cols == NB * 256) return go(std::type_identity<RoutedIQ1SP<NB, Act, true>>{});
-    X(IQ2_XXS, RoutedIQ2XXSP, 20) X(IQ2_S, RoutedIQ2SP, 20) X(IQ3_XXS, RoutedIQ3XXSP, 20) X(IQ2_XS, RoutedIQ2XSP, 20) X1(20)
-    X(IQ2_XXS, RoutedIQ2XXSP, 9) X(IQ2_S, RoutedIQ2SP, 9) X(IQ3_XXS, RoutedIQ3XXSP, 9) X(IQ2_XS, RoutedIQ2XSP, 9) X1(9)
+    if (e.type == iq3::Type::IQ1_S && cols == NB * 256) return go(std::type_identity<RoutedIQ1SPx<NB, Act>>{});
+    X(IQ2_XXS, RoutedIQ2XXSPx, 20) X(IQ2_S, RoutedIQ2SPx, 20) X(IQ3_XXS, RoutedIQ3XXSPx, 20) X(IQ2_XS, RoutedIQ2XSPx, 20) X1(20)
+    X(IQ2_XXS, RoutedIQ2XXSPx, 9) X(IQ2_S, RoutedIQ2SPx, 9) X(IQ3_XXS, RoutedIQ3XXSPx, 9) X(IQ2_XS, RoutedIQ2XSPx, 9) X1(9)
 #undef X1
 #undef X
     throw std::runtime_error("multi-token step: no packed routed kernel for " + wn);
@@ -1127,11 +1127,12 @@ void tpm_layer(int L, int c) {
                           ops41sycl::ScoreM<ops41sycl::SparseScoreHG<512, HG>>{{n_idx, nh, W, g.hd}, gpt, (unsigned)M, Q, 640, WS},
                           (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
             };
-            if (!o.att_m || o.att_hg == 4) score_m(std::integral_constant<unsigned, 4>{}); // (nh: 8 or 16)
+            const bool am = o.att_m && (unsigned)M <= o.att_m_max; // (tg88: blocks of 256 lost 1.7 % with them)
+            if (!am || o.att_hg == 4) score_m(std::integral_constant<unsigned, 4>{}); // (nh: 8 or 16)
             else if (o.att_hg == 2 && nh % 2 == 0) score_m(std::integral_constant<unsigned, 2>{});
             else score_m(std::integral_constant<unsigned, 1>{});
             if (n_idx < 640) {
-                if (!(o.att_m && o.att_pk && softmax_pk_m<160>(c, nh, n_idx, M, WS, sinks, ix, b.attn_w)))
+                if (!(am && o.att_pk && softmax_pk_m<160>(c, nh, n_idx, M, WS, sinks, ix, b.attn_w)))
                     launch_sg(c, (size_t)M * nh,
                               ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxPN<640>>{{nh, n_idx}, (unsigned)nh, (unsigned)M, 640, WS},
                               sinks, ix, b.attn_w);

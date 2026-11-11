@@ -115,6 +115,18 @@ Host and step structure (from tl85, 2026-11-11):
   wait ~14 us per layer in the output-a exchange (0.56 ms per step, tl85). The 12/12/12/12/8/8 split was measured
   before (e79): one-token steps lose (pair exchanges); stays closed unless a pair exchange gets cheap. Faster
   per-head attention shrinks the gap a little.
+- H3. (CLOSED by arithmetic, 2026-11-11 ~04:45) **Balance without splitting heads**: the replicated q_a + kv rows
+  (X ~17.5 us per layer) split over the cards with one extra pull (E ~11 us) before their norms. The light cards
+  have only ~13.8 us of slack per layer, so they would become the slow ones; the best split (16-head cards 31 %,
+  8-head cards 10 % each of X) leaves the critical cards S - X + 0.31 X + E = S - 1.1 us per layer: ~0.04 ms per
+  step. The extra exchange eats the gain. For prompt blocks (plan item D) X grows with the block and E barely,
+  so it stays a prompt-only item.
+- H4. **Cache prefetch during exchanges (`OWN_XL2`, in tp89)**: a 32-group prefetch kernel on the second queue,
+  released by the exchange's producer, pulls the next matrix (output-b, router + shared, shared down, next q_a + kv)
+  into the 24 MiB cache while the card waits. One compute engine: it overlaps only if queued with (not after) the
+  exchange and at the same register mode (128; xov grf bench); a cache-hot 5.6 MB GEMV is 9.8 us against 12.9.
+- H5. **The check path's fixed cost**: a check of one token costs 12.8 ms against a 10.9 ms plain step (tg88). Helper
+  (ckpath) comparing the two paths at M = 1; fixes as opt-in switches.
 
 Kernels (only where the budget says a kernel is far from its floor):
 - K1. One reusable proven-exact "fast serial sum" helper (bracket + fallback) for every remaining serial double
@@ -134,8 +146,8 @@ the in-step idle time (0.47 ms, tg87). What each lever is worth per step, from m
 
 | Lever | Above floor (per step) | Measured so far | Expected saving |
 |---|---|---|---|
-| Routed experts, fewer integer instructions per weight (routed helper, `routed-r2.patch`, card 0 bench, random + real blk.5 data, all PASS bit for bit) | 1.93 ms | gate+up pairs IQ1_S 46.7 -> 26.0 us, IQ2_S 46.1 -> 25.4, IQ2_XXS 31.7 -> 20.3; downs IQ2_S 22.8 -> 17.0, IQ2_XS 20.7 -> 15.8, IQ3_XXS 21.2 -> 18.1, IQ2_XXS 15.6 -> 12.6 | ~0.97 ms (the table's launch counts x the bench ratios) |
-| Small serial kernels by proven brackets (smallk helper, `smallk-1.patch`) | norms + mix dots 0.40 ms, engram gate | bench | ~0.21 ms |
+| Routed experts, fewer integer instructions per weight (routed helper, `routed-r2.patch` + `routed-r3.patch`, card 3 bench in the gate configuration: the stream mix's finish row rides in the gate+up launch; random rows at 6 / 12 slots, 16 / 256-token slot-major blocks, real rows, the finish row's outputs: all bit for bit) | 1.93 ms | gate+up IQ2_S 40.0 -> 27.6 us, IQ1_S 47.5 -> 27.4, IQ2_XXS 28.9 -> 24.0, IQ2_XS 44.4 -> 29.9, IQ3_XXS 44.0 -> 39.8; downs IQ2_S 21.9 -> 17.2, IQ3_XXS 22.8 -> 18.7, IQ2_XS 19.6 -> 15.1, IQ2_XXS 15.3 -> 12.6. r2 alone lost most of its gain with the finish row (it fell back to slow forms: IQ2_S 33.1); r3 runs the extra rows outside the row loop | ~0.8-1.0 ms; **tg89: plain 92.0 / 92.1 -> 95.4 / 97.5 tok/s (default since tp89); the checks did not gain (they run the expert-major `RoutedU` kernels; port = `routed-r4.patch`)** |
+| Small serial kernels by proven brackets (smallk helper, `smallk-1.patch`) | norms + mix dots 0.40 ms, engram gate | **tg89: 95.4 / 97.5 -> 99.6 / 99.7 tok/s on top of r3 (`OWN_SMALLK=1 OWN_SMALLK_DOTS=8`, default since tp90)** | ~0.21 ms (measured ~0.25-0.4) |
 | Idle copies off the card's queue (`OWN_ENG_CQ`, `OWN_PRE_K`, tg88) | 0.47 ms idle | engram rows 242 -> 75-80 us per step and card (trace mode) | ~0.2 ms |
 | Attention score + softmax per size (tp87) | 0.47 ms | done | 0.29 ms at short context |
 | Attention output `SparseOutJC` | 0.18 ms | one column per lane already; the slot sum is a fixed serial chain | small |
@@ -146,6 +158,14 @@ top: the check (2.47 tokens) costs 1.48x a one-token step, and the dense decode-
 0.73-1.61 ms off each check. 200 tok/s at ~2.6-2.8 tokens per cycle needs a ~13-14 ms cycle: a ~9 ms step, a
 check at ~1.3x and a draft under ~1.5 ms; or more tokens per cycle (copied guesses, `OWN_SPEC_NGRAM`, on
 repetitive text). After tp89 the next structural item is the exchanges.
+
+After tg89 (2026-11-11 05:04, tp89 with smallk): plain step ~10.0 ms (99.6 tok/s), one-token timeline busy 9.0 ms
+(was 10.44 in tg88). The guessing rounds did not move (code 118.5 -> 118.6 tok/s, analysis 130.6 -> 131.5, 3K
+117.8 -> 121.8; `round19-tg89/check-cost-by-guesses.txt`): a zero-guess check still costs 12.4 ms + the 2.2 ms
+draft, so **the check path's fixed cost grew to ~2.4 ms against the faster plain step**. Next, in this order:
+`ckpath-1.patch` (`OWN_CK1`: a zero-guess round runs the plain step + the draft's own rows; plus 6 launch-merging
+switches for small checks), `routed-r4.patch` (r3's instruction cuts in `RoutedU`), then `ws.patch` (dense rows
+decoded once per block) for both checks and prompt blocks.
 
 What a guessing round costs by its size (tg88 per-round logs, `round19-tg88/check-cost-by-guesses.txt`, code prompt;
 the analysis and 3K prompts within ~1 ms): check of 1 token 12.8 ms, 2 15.8, 3 18.4, 4 20.7, 5 24.4, 6 26.5; the
@@ -168,6 +188,8 @@ Worked (all bit-identical):
 | More sub-groups for serial per-head work; kernels built per size so they stay at 128 registers | one-token attention score `SparseScoreHG<512, 1>` + softmax `SparseSoftmaxP<n>` per slot count (ad4; tg86 2026-11-11, default since tp87) | prompt 1: 86.39 -> 88.11 tok/s mean of 2 (+2.0 %); 3K document 80.56 -> 81.98 (+1.8 %); traces identical, answers and guessing the same |
 | Pin small hot kernels to 128 registers (check the register mode in the machine code first) | the pull exchange built at 256 registers paid ~1 us of register-mode change before and after each of its 83 launches per step; `XPullK128` (same code, `grf_size<128>`) removes it (tl85 -> tg87 timelines) | +3.1 % plain (88.2 -> 91.0 tok/s) |
 | Read the draft side's code for leftovers when its output depends on something it should not | the draft picked its 3 experts from 384 router entries of which 256 were the target's leftovers (gm64's block-size dependence led to it) | guessing +6-10 % (code 105.9 -> 117.0, analysis 118.7 -> 130.0, with the exchange fix) |
+| Fewer integer instructions per weight in the expert kernels, extra rows outside the row loop (routed r2 + r3, tg89) | gate+up 1.1-1.7x and downs 1.2-1.3x faster on one card, bit for bit; every engine trace identical | plain +3.7-5.8 % (92.0 -> 95.4-97.5 tok/s) |
+| Proven brackets for the small serial kernels, one work-group forms (smallk-1, tg89) | norms, stream-mix dots, compressor, engram gate | plain +2-4 % on top (-> 99.6 tok/s) |
 | Small host copies off the card's queue (a second in-order queue per card, the launch waits by event) | `OWN_ENG_CQ` + `OWN_PRE_K` (tg88): engram rows 242 -> 70-80 us of host time per step; one-token timeline span 11.01 -> 10.75 ms, in-step idle 0.47 -> 0.30 ms | plain +0.3-0.5 % (91.77 -> 92.27 tok/s); default since tp89 |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
 | Packed weight rows for sub-group block loads | §p7-p10 era, 9 -> 28 tok/s | large |
@@ -186,6 +208,9 @@ Did not work (and why):
 | Guesses copied from earlier text when the last 3-4 tokens repeat (`OWN_SPEC_NGRAM`, tg88) | slower on every prompt: code 116.8 -> 106.5 / 107.1 tok/s, analysis 130.0 -> 110.9 / 119.5, 3K 118.1 -> 109.3. The copied runs are long (up to 8-16 tokens) and mostly wrong (15 of 127, 74 of 275 kept), and a check of 8 tokens costs 39.7 ms against 12.8 for one. Removed from the plan; the switch stays off. |
 | Prompt blocks of 256 tokens (mtx256, tg88) | the 3K read: 338 tok/s at 64, 306 at 256, 328 at 256 with the old expert groups of 6; the dense rows still decode each weight per 16-token group, so a bigger block only adds work (activations, groups). Blocks stay 64 until the rows decode once per block (`ws.patch`). Traces identical at 256. |
 | The faster one-token attention forms in big prompt blocks (`OWN_ATT_M`, tg88) | identical, but 301 against 306 tok/s at 256 (more sub-groups where there was already enough parallelism); since tp89 they apply only to blocks of up to 16 tokens (`OWN_ATT_M_MAX`): the guess checks |
+| Expert-kernel forms that did not pay (routed helper, 2026-11-11) | per-lane gathers (address math and wait chains cost more than the decode they save); fused 16-lane multiply / half-precision mixed add (the compiler splits them into 2-3 instructions); an 8-bit table for IQ1_S (slower); fully unrolled row pairs at 20 blocks (spills); row pairs for IQ1_S (instruction-bound, not load-bound); one sign-word formula miscompiles on the card while the host check passes (shift-and-xor parity used instead). 96 work-groups lose with the finish row on (r3 IQ2_S 27.6 -> 32.4 us). |
+| Cache prefetch of the next matrix during exchanges on the copy queue (`OWN_XL2=15`, H4, tg89) | plain 95.4 / 97.5 -> 82.7 / 82.8 tok/s. The engram copies waited behind the prefetch launches (80 -> 257 us), and the timeline shows a 11-15 us gap before every exchange (MoeCombineA -> XchgP 40 x 14.7 us, GemvQ8P -> XchgP/XchgPull 27 x 14-15 us): the prefetch submission sits between the producer and the exchange. Moved to its own queue (`pfq`, in the tree, untested); stays off unless a timeline shows no gap. |
+| Pull exchanges with 96 work-groups (`OWN_PAIR_WG=96`, tg89) | neutral for plain (96.4 / 96.8 vs 95.4 / 97.5), slower for the 3K read at 256-token blocks (t3k: 294.9 vs 320.3 tok/s) |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |

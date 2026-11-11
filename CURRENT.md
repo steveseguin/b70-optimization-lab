@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**November 11, 2026 ~05:15 EST — DeepSeek V4.1 on six cards: plain answers 92 -> 99.6 tokens/s; guessing unchanged at 118-132; text the same everywhere.**
+- Faster expert kernels (fewer instructions per weight) are now the default: plain answers 92.0 -> 95.4-97.5 tokens/s.
+- With the proven shortcuts for small serial steps on top: 99.6-99.7 tokens/s. They become the default in the next build.
+- Prompt reading: 333 -> 339 tokens/s on the 3,000-token document.
+- Guessing did not gain (code 118.6, analysis 131.5, the 3,000-token document 121.8 tokens/s). The checks of guessed words use a different set of expert kernels that did not get the faster code. A helper is porting it now.
+- Tried and dropped: having each card preload the next weights into its cache while it waits for the others. Plain answers fell to 82.7 tokens/s, because every card-to-card copy now started 11-15 µs late.
+- Every test gave identical traces (22 of 22) and the same answers (9 of 9 guessing runs word for word). No faults.
+- Next build (all tested before they become defaults):
+  - the faster expert code in the guess checks
+  - a check of zero guesses runs the plain one-word path (28 % of code rounds guess nothing and paid 12.4 ms instead of ~10)
+  - fewer launches inside every check (one helper's patch, seven switches, each off until tested)
+
 **November 11, 2026 ~04:20 EST — DeepSeek V4.1 on six cards: plain answers 92 tokens/s; two ideas tested and dropped; a time budget for every guessing round.**
 - Two small host-to-card copies at the start of each word now go on their own queue. The cards wait less at the start of each word: 0.30 ms instead of 0.47. Plain answers went 91.8 -> 92.3 tokens/s.
 - Tried and dropped:

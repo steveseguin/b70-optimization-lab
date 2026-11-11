@@ -230,7 +230,18 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
+    // smallk (2026-11-11, /home/steve/dsv41-work/smallk): one-work-group forms of the 5,120 norm, the q_a + kv norms,
+    // the compressor pool and the engram gate (the same bits; bench-checked incl. forced fallbacks); opt-in until gated
+    if (const char *e = getenv("OWN_SMALLK")) opt.smallk = atoi(e) != 0;
+    // the pre-norm + the stream mix's dot rows by a proven fast sum, block size K = 8 or 4 (the finish's outputs the
+    // same bits; opt-in): OWN_SMALLK_DOTS=8
+    if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
+    // OWN_XL2=bits: while a card waits in a one-token exchange, a prefetch launch on its second queue pulls the next
+    // matrix into the cache (1 output-b, 2 router + shared gate / up, 4 shared down, 8 next q_a + kv; 15 = all)
+    if (const char *e = getenv("OWN_XL2")) opt.xl2 = (unsigned)atoi(e) & 15u;
+    if (const char *e = getenv("OWN_XL2_MB")) opt.xl2_bytes = (size_t)std::max(1, atoi(e)) << 20;
+    if (const char *e = getenv("OWN_XL2_WG")) opt.xl2_wg = (unsigned)std::clamp(atoi(e), 1, 256);
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
     if (const char *e = getenv("OWN_DOWN_EX")) opt.down_ex = atoi(e) != 0;
     if (const char *e = getenv("OWN_EXP_PAIR")) opt.exp_pair = atoi(e) != 0;
@@ -238,9 +249,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ENG_DEV")) opt.eng_dev = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_EARLY")) opt.eng_early = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_LATE")) opt.eng_late = atoi(e) != 0;
+    // default on since tg88 (traces identical, plain answers +0.3-0.5 %): =0 turns each off
     if (const char *e = getenv("OWN_ENG_CQ")) opt.eng_cq = atoi(e) != 0; // engram row copies on a copy queue
-    if (const char *e = getenv("OWN_PRE_K")) opt.pre_k = atoi(e) != 0;
-    if (const char *e = getenv("OWN_HEAD_CQ")) opt.head_cq = atoi(e) != 0; // check argmax readback on the copy queue   // pre-mix weights by the broadcast launch
+    if (const char *e = getenv("OWN_PRE_K")) opt.pre_k = atoi(e) != 0;   // pre-mix weights by the broadcast launch
+    if (const char *e = getenv("OWN_HEAD_CQ")) opt.head_cq = atoi(e) != 0; // check argmax readback on the copy queue
     if (const char *e = getenv("OWN_TP_SPIN_US")) opt.tp_spin_us = atol(e);
     if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
@@ -264,7 +276,8 @@ int main(int argc, char **argv) {
     // outputs; tools/bench/bench_attn_dec.cpp 2026-11-11): opt-in until gated
     if (getenv("OWN_ATT_HG")) opt.att_hg = (unsigned)atoi(getenv("OWN_ATT_HG"));
     if (const char *e = getenv("OWN_ATT_PK")) opt.att_pk = atoi(e) != 0;
-    if (const char *e = getenv("OWN_ATT_M")) opt.att_m = atoi(e) != 0; // the attention forms in blocks too (opt-in) // default on (tg86: same answers, +2.4 %)
+    if (const char *e = getenv("OWN_ATT_M")) opt.att_m = atoi(e) != 0; // the attention forms in blocks too (default since tg88)
+    if (const char *e = getenv("OWN_ATT_M_MAX")) opt.att_m_max = (unsigned)atoi(e); // ... in blocks up to this size
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.

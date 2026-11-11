@@ -63,6 +63,7 @@
 #include "stage2/packet3/backend/trace_tags_v41.hpp"
 #include "stage2/packet3/kernels/pack_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41.hpp"
+#include "stage2/packet3/kernels/sycl_v41_routed_r2.hpp" // routed expert kernels, bitwise production's (r2)
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/step/plan_v41.hpp"
 #include <level_zero/ze_api.h>
@@ -80,6 +81,27 @@ struct XPullK128 {
     float *p0, *p1, *p2, *p3, *p4, *p5;
     uint32_t *err;
     void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+
+// OWN_XL2: a cache prefetch of up to three row ranges (64-byte lines), 128 registers (the exchange beside it is
+// XPullK128 / XchgP at 128: no register-mode change), few work-groups (one wave: a multi-wave launch dispatched
+// first would hold the exchange back until its last wave, xov). Reads nothing back, writes nothing.
+struct L2PfK128 {
+    const uint8_t *a0, *a1, *a2;
+    unsigned l0, l1, l2;
+    void operator()(sycl::nd_item<1> it) const {
+        namespace ex = sycl::ext::oneapi::experimental;
+        const unsigned n = l0 + l1 + l2, st = (unsigned)it.get_global_range(0);
+        for (unsigned i = (unsigned)it.get_global_linear_id(); i < n; i += st) {
+            const uint8_t *q = i < l0 ? a0 + (size_t)i * 64
+                               : i < l0 + l1 ? a1 + (size_t)(i - l0) * 64 : a2 + (size_t)(i - l0 - l1) * 64;
+            ex::prefetch((void *)q, ex::properties{ex::prefetch_hint_L3});
+        }
+    }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
@@ -248,7 +270,10 @@ public:
                                 // every (head, slot) sum the same; tools/bench/bench_attn_dec.cpp, 2026-11-11)
         bool att_pk = true;     // tp (default since tg86; OWN_ATT_PK=0: off): a trimmed list's softmax built for its slot count (SparseSoftmaxP<n>, 128
                                 // registers; OWN_ATT_PK) instead of SparseSoftmaxPN<640> (256 registers: mode changes)
-        bool att_m = false;     // tp: att_hg / att_pk also in multi-token blocks (guess checks, prompt blocks; OWN_ATT_M=1)
+        bool att_m = true;      // tp: att_hg / att_pk also in multi-token blocks (guess checks, prompt blocks; default since
+                                // tg88: traces identical; OWN_ATT_M=0: the old forms)
+        unsigned att_m_max = 16; // ... only in blocks of at most this many tokens (OWN_ATT_M_MAX; tg88: the 3K read in
+                                 // blocks of 256 301 against 306 tok/s without them)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
@@ -258,6 +283,18 @@ public:
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
+        bool smallk = false;    // OWN_SMALLK=1: one-work-group forms of the 5,120 norm, the q_a + kv norms, the
+                                // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
+        int smallk_dots = 0;    // OWN_SMALLK_DOTS=8 (or 4: the block size K): the pre-norm + the stream mix's dot
+                                // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
+        unsigned xl2 = 0;       // tp one-token steps: while a card waits in an exchange, a separate prefetch launch on its
+                                // second queue (cqs, released by the producer's event: both queued together, so they run
+                                // side by side, xov 2026-11-11) pulls the next matrix's rows into the card's cache. Bits
+                                // (OWN_XL2): 1 output-b rows at the output-a exchange, 2 router + shared gate / up at the
+                                // output-b exchange, 4 shared down at the expert act exchange, 8 the next layer's q_a + kv
+                                // at the ffn rows exchange. Reads weights only: values cannot change.
+        size_t xl2_bytes = (size_t)8 << 20; // ... at most this many bytes per exchange (OWN_XL2_MB)
+        unsigned xl2_wg = 32;   // ... work-groups of 256 items of the prefetch launch (OWN_XL2_WG)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
                                 // launch ends only when its prefetch work-groups do)
         bool fin_move = false;  // tp: stream mix finishes ride in output-b / expert gate+up launches (OWN_FIN_MOVE=1; slower)
@@ -266,14 +303,14 @@ public:
         bool eng_dev = true;    // tp: the 24 hashed engram rows go to each card as raw Q5_K bytes (copied from ordinary
                                 // host memory) and the card decodes them (EngRowsA: EmbedRowA's decode), not six host
                                 // decodes (OWN_ENG_DEV=0: host decode)
-        bool eng_cq = false;    // tp: the engram rows' host-to-card copies on a second in-order queue per card, the
+        bool eng_cq = true;     // tp (default since tg88; OWN_ENG_CQ=0: off): the engram rows' host-to-card copies on a second in-order queue per card, the
                                 // decode launch waiting for them by event (OWN_ENG_CQ=1, 2026-11-11): a small copy
                                 // from host memory runs on the host only after the card's queue drains (the
                                 // host thread waited for layer 0, then the card for the copy: tg87 timeline)
         bool head_cq = false;   // tp: a checked block's argmax readback on the copy queue after the draft's
                                 // injection is queued (OWN_HEAD_CQ=1; needs the draft)
-        bool pre_k = false;     // tp: the first pre-mix weights written by the broadcast launch (Broadcast4PA)
-                                // instead of a 16-byte host copy (OWN_PRE_K=1)
+        bool pre_k = true;      // tp: the first pre-mix weights written by the broadcast launch (Broadcast4PA)
+                                // instead of a 16-byte host copy (default since tg88; OWN_PRE_K=0: the copy)
         bool eng_early = true;  // tp: the engram rows' disk reads start sooner: the anchor's rows while the draft runs,
                                 // a block's other rows split over the card threads (each its share, then reads),
                                 // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=0: off)
@@ -353,7 +390,7 @@ public:
                                 sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
             else
                 qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
-            if (opt.eng_cq || opt.head_cq) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.eng_cq || opt.head_cq || opt.xl2) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
         }
         if (o.tp > 1) {
             // every kernel built for every card before the first step: a card still compiling a kernel at its
@@ -741,6 +778,7 @@ public:
         return n.c_str();
     }
     void kev(int tile, const char *name, const sycl::event &e) {
+        if (o.xl2) qlast[tile] = e; // OWN_XL2: the prefetch launch is released by the exchange's producer
         if (o.kprof && (o.tp <= 1 || tile == o.prof_card)) kevs.push_back({name, e}); // tp: one card's kernels
         if (tl_on[tile]) tl_add(tile, name, e); // OWN_TIMELINE window
     }
@@ -1175,6 +1213,7 @@ private:
         const XTail t = xt[c];
         xt[c].on = xt[c].pending = false;
         if (t.pending) xchg(c, t.off, t.stride, t.nslot, t.r0, t.r1, 0, 0, t.part);
+        xl2n[c] = 0; // (an exchange that ran inside its producer: no prefetch)
     }
     template <bool SG32, typename K, typename... A> void launch_xt(int c, sycl::nd_range<1> nr, K k, A... args) {
         const XTail t = xt[c];
@@ -1229,6 +1268,43 @@ private:
         if (!rb || !dp.packed) return {dp.p, dp.bytes};
         const size_t prb = pk41::packed_row_bytes(we(wn).type, (size_t)we(wn).cols);
         return {(const uint8_t *)dp.p + (size_t)ra * prb, (size_t)(rb - ra) * prb};
+    }
+    // OWN_XL2: rows armed for the next exchange of card c (xl2_arm before it; xchg() launches the prefetch)
+    sycl::event qlast[TILES];
+    Pf xl2p[TILES][3];
+    int xl2n[TILES] = {};
+    void xl2_arm(int c, unsigned bit, const std::string &wn, unsigned ra = 0, unsigned rb = 0) {
+        if (!(o.xl2 & bit) || xl2n[c] >= 3) return;
+        const auto it = wgt[c].find(wn);
+        if (it == wgt[c].end() || !it->second.p) return;
+        const auto &dp = it->second;
+        if (!rb || !dp.packed) xl2p[c][xl2n[c]++] = {dp.p, dp.bytes};
+        else {
+            const size_t prb = pk41::packed_row_bytes(we(wn).type, (size_t)we(wn).cols);
+            xl2p[c][xl2n[c]++] = {(const uint8_t *)dp.p + (size_t)ra * prb, (size_t)(rb - ra) * prb};
+        }
+    }
+    void xl2_fire(int c) {
+        const int n = xl2n[c];
+        xl2n[c] = 0;
+        const uint8_t *a[3] = {};
+        unsigned l[3] = {};
+        size_t left = o.xl2_bytes;
+        for (int i = 0; i < n && left; ++i) {
+            const size_t b = std::min(xl2p[c][i].bytes, left);
+            left -= b;
+            const uintptr_t a0 = (uintptr_t)xl2p[c][i].p & ~(uintptr_t)63;
+            a[i] = (const uint8_t *)a0;
+            l[i] = (unsigned)(((uintptr_t)xl2p[c][i].p + b - a0 + 63) / 64);
+        }
+        if (!l[0] && !l[1] && !l[2]) return;
+        const L2PfK128 k{a[0], a[1], a[2], l[0], l[1], l[2]};
+        const sycl::event dep = qlast[c];
+        const sycl::nd_range<1> nr((size_t)o.xl2_wg * 256, 256);
+        cqs[c].submit([&](sycl::handler &hh) {
+            hh.depends_on(dep);
+            hh.parallel_for(nr, k);
+        });
     }
     template <typename K, typename... A> void launch_sg_pf(int tile, size_t groups, Pf pf, K k, A... args) {
         if (!pf.p || !pf.bytes) return launch_sg(tile, groups, k, args...);
@@ -1409,6 +1485,18 @@ private:
         norm_rows_launch(c, ops41sycl::RowsP<R>{r}, r.n());
         return true;
     }
+    // smallk: the 5,120 pre-norm + the stream mix's 25 dot rows in one launch of 26 work-groups of 512 (the norm on
+    // one work-group, a dot row per work-group by a proven fast sum); norm_ex's conditions
+    bool norm_dots_sk(int c, const act_t *x, const std::string &wn, act_t *y, const std::string &prefix) {
+        const float *w = wp<float>(c, wn);
+        if (g.h != 5120 || HC_SEG != 8 || !o.small_fast || !al16(x) || !al16(w) || !al16(y) || x == y) return false;
+        const auto d = hc_dots(c, prefix);
+        if (o.smallk_dots == 4)
+            launch_wgl<64>(c, 26, 512, ops41sycl::SkNormDotsW<4>{}, (const float *)x, w, (float *)y, d.streams, d.fn, d.out);
+        else
+            launch_wgl<64>(c, 26, 512, ops41sycl::SkNormDotsW<8>{}, (const float *)x, w, (float *)y, d.streams, d.fn, d.out);
+        return true;
+    }
     // tp phase 0 in four launches (see tp_phase): shapes the fused forms are written for
     bool attn_in_diet(int c, const std::string &p) const {
         const auto &s = sc[c];
@@ -1520,11 +1608,11 @@ private:
         launch_rows<K::TAB>(tile, (size_t)6 * rows, MAXWG, K{rows, per_slot}, w, x, ids, y);               \
         return;                                                                                            \
     }
-            X(IQ2_XXS, RoutedIQ2XXSP, 20) X(IQ2_XXS, RoutedIQ2XXSP, 9)
-            X(IQ2_S, RoutedIQ2SP, 20) X(IQ2_S, RoutedIQ2SP, 9)
-            X(IQ3_XXS, RoutedIQ3XXSP, 20) X(IQ3_XXS, RoutedIQ3XXSP, 9)
-            X(IQ2_XS, RoutedIQ2XSP, 20) X(IQ2_XS, RoutedIQ2XSP, 9)
-            X(IQ1_S, RoutedIQ1SP, 20) X(IQ1_S, RoutedIQ1SP, 9)
+            X(IQ2_XXS, RoutedIQ2XXSPx, 20) X(IQ2_XXS, RoutedIQ2XXSPx, 9)
+            X(IQ2_S, RoutedIQ2SPx, 20) X(IQ2_S, RoutedIQ2SPx, 9)
+            X(IQ3_XXS, RoutedIQ3XXSPx, 20) X(IQ3_XXS, RoutedIQ3XXSPx, 9)
+            X(IQ2_XS, RoutedIQ2XSPx, 20) X(IQ2_XS, RoutedIQ2XSPx, 9)
+            X(IQ1_S, RoutedIQ1SPx, 20) X(IQ1_S, RoutedIQ1SPx, 9)
 #undef X
             throw std::runtime_error("packed routed kernel missing: " + wn);
         }
@@ -1590,11 +1678,11 @@ private:
         };
         using namespace ops41sycl;
         switch (ea.type) {
-        case iq3::Type::IQ2_XXS: return go(std::type_identity<RoutedIQ2XXSP<20, Act, EX>>{});
-        case iq3::Type::IQ2_S: return go(std::type_identity<RoutedIQ2SP<20, Act, EX>>{});
-        case iq3::Type::IQ3_XXS: return go(std::type_identity<RoutedIQ3XXSP<20, Act, EX>>{});
-        case iq3::Type::IQ2_XS: return go(std::type_identity<RoutedIQ2XSP<20, Act, EX>>{});
-        case iq3::Type::IQ1_S: return go(std::type_identity<RoutedIQ1SP<20, Act, true, EX>>{});
+        case iq3::Type::IQ2_XXS: return go(std::type_identity<RoutedIQ2XXSPx<20, Act, EX>>{});
+        case iq3::Type::IQ2_S: return go(std::type_identity<RoutedIQ2SPx<20, Act, EX>>{});
+        case iq3::Type::IQ3_XXS: return go(std::type_identity<RoutedIQ3XXSPx<20, Act, EX>>{});
+        case iq3::Type::IQ2_XS: return go(std::type_identity<RoutedIQ2XSPx<20, Act, EX>>{});
+        case iq3::Type::IQ1_S: return go(std::type_identity<RoutedIQ1SPx<20, Act, EX>>{});
         default: return false;
         }
     }
@@ -1615,11 +1703,11 @@ private:
             return true;
         };
         using namespace ops41sycl;
-        if (e.type == iq3::Type::IQ2_XXS) return go(std::type_identity<RoutedIQ2XXSP<9, Act, EX>>{});
-        if (e.type == iq3::Type::IQ2_S) return go(std::type_identity<RoutedIQ2SP<9, Act, EX>>{});
-        if (e.type == iq3::Type::IQ3_XXS) return go(std::type_identity<RoutedIQ3XXSP<9, Act, EX>>{});
-        if (e.type == iq3::Type::IQ2_XS) return go(std::type_identity<RoutedIQ2XSP<9, Act, EX>>{});
-        if (e.type == iq3::Type::IQ1_S) return go(std::type_identity<RoutedIQ1SP<9, Act, true, EX>>{});
+        if (e.type == iq3::Type::IQ2_XXS) return go(std::type_identity<RoutedIQ2XXSPx<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ2_S) return go(std::type_identity<RoutedIQ2SPx<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ3_XXS) return go(std::type_identity<RoutedIQ3XXSPx<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ2_XS) return go(std::type_identity<RoutedIQ2XSPx<9, Act, EX>>{});
+        if (e.type == iq3::Type::IQ1_S) return go(std::type_identity<RoutedIQ1SPx<9, Act, EX>>{});
         return false;
     }
     // expert down rows with the shared expert's down rows in the same launch
@@ -1663,6 +1751,10 @@ private:
         const float *w = wp<float>(tile, wn);
 #ifndef OWN41_ACT_BF16
         if (o.small_fast && al16(x) && al16(w) && al16(y) && x != y) { // several sub-groups: not in place
+            if (o.smallk && n == 5120) { // the bracket split over one work-group of 16 sub-groups (the same scale)
+                launch_wgl<32>(tile, 1, 512, ops41sycl::SkNormW<5120, 16>{}, (const float *)x, w, (float *)y);
+                return;
+            }
             switch (n) {
             case 512: launch_wg(tile, 64, ops41sycl::RmsNormPS<512, 2>{}, x, w, y); return;
             case 1280: launch_wg(tile, 128, ops41sycl::RmsNormPS<1280, 4>{}, x, w, y); return;
@@ -3154,6 +3246,7 @@ private:
     // same form on every card (use_pull decides from all cards' rows), stores (XchgP) or loads (XchgPull)
     uint32_t xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int mode = 0,
                   uint32_t seq = 0, int part = -1) {
+        if (xl2n[c]) xl2_fire(c); // OWN_XL2: queued with the exchange, released by its producer
         float *P[6] = {};
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
         if (mode != 2) seq = ++xseq[c];
@@ -3299,7 +3392,9 @@ private:
             }
             bool dots_done = false; // the mix's dot rows already ran (in the norm's launch)
             if (x_ready[c]) { // the previous FFN's hc_post already collapsed the streams into s.x (HcPostPreP)
-                if (ride && o.norm_dots && attn_in_diet(c, p))
+                if (ride && o.norm_dots && o.smallk_dots && attn_in_diet(c, p))
+                    dots_done = norm_dots_sk(c, s.x, p + "attn_norm.weight", s.xn, p + "hc_attn_");
+                if (!dots_done && ride && o.norm_dots && attn_in_diet(c, p))
                     dots_done = norm_ex(c, s.x, p + "attn_norm.weight", s.xn, hc_dots(c, p + "hc_attn_"));
                 if (!dots_done) rmsnorm(c, s.x, p + "attn_norm.weight", g.h, s.xn);
                 x_ready[c] = false;
@@ -3318,10 +3413,16 @@ private:
                                                : gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
                                                               s.kv, s.xn, hc_dots(c, p + "hc_attn_"));
                 if (!pair_ok) throw std::runtime_error("query-a / key-value pair launch: " + p);
-                using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
-                const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
-                            {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
-                norm_rows_launch(c, ops41sycl::RowsP<NR>{nr}, nr.n());
+                if (o.smallk) { // both norms in one work-group of 8 sub-groups (the same scales)
+                    launch_wgl<16>(c, 1, 256, ops41sycl::SkNormPairW{}, (const float *)s.qa,
+                                   wp<float>(c, p + "attn_q_a_norm.weight"), (float *)s.qn, (const float *)s.kv,
+                                   wp<float>(c, p + "attn_kv_a_norm.weight"), (float *)s.kvn);
+                } else {
+                    using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
+                    const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
+                                {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
+                    norm_rows_launch(c, ops41sycl::RowsP<NR>{nr}, nr.n());
+                }
                 prof("attn_q_a", c);
                 if (o.fin_move) { // the mix's finish rides in output-b's launch instead (case 2)
                     gemv_part_ex(c, p + "attn_q_b.weight", s.qn, s.q + qo,
@@ -3452,6 +3553,7 @@ private:
                           (unsigned)g.ototal / 8, r0 - ost0[c], r1 - ost0[c]);
             });
             prof("attn_o_a", c);
+            xl2_arm(c, 1, p + "attn_output_b.weight");
             end_xtail(c);
             prof("xchg", c);
             break;
@@ -3466,6 +3568,9 @@ private:
                 gemv_part(c, p + "attn_output_b.weight", s.oa, s.ob + td0[c]);
             }
             prof("attn_o_b", c);
+            xl2_arm(c, 2, p + "ffn_gate_inp.weight");
+            xl2_arm(c, 2, p + "ffn_gate_shexp.weight");
+            xl2_arm(c, 2, p + "ffn_up_shexp.weight");
             end_xtail(c);
             prof("xchg", c);
             break;
@@ -3479,7 +3584,10 @@ private:
                        (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
                        (const float *)s.pre_a, s.x);
                 prof("hc_post", c);
-                if (o.norm_dots) ffn_dots_done = norm_ex(c, s.x, p + "ffn_norm.weight", s.xn, hc_dots(c, p + "hc_ffn_"));
+                if (o.norm_dots && o.smallk_dots)
+                    ffn_dots_done = norm_dots_sk(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
+                if (o.norm_dots && !ffn_dots_done)
+                    ffn_dots_done = norm_ex(c, s.x, p + "ffn_norm.weight", s.xn, hc_dots(c, p + "hc_ffn_"));
                 if (!ffn_dots_done) rmsnorm(c, s.x, p + "ffn_norm.weight", g.h, s.xn);
             } else {
                 hc_post(c, s.post_a, s.comb_a, nullptr, nullptr);
@@ -3519,6 +3627,7 @@ private:
             launch(c, (size_t)7 * nm, 64, ops41sycl::SwigluBothS<Act>{6, nm, 10.0f, g.mid}, (const act_t *)s.expg,
                    (const act_t *)s.expu, s.act + tm0[c], (const float *)s.prob, (const act_t *)s.shg,
                    (const act_t *)s.shu, s.act + (size_t)6 * g.mid + tm0[c]);
+            xl2_arm(c, 4, p + "ffn_down_shexp.weight");
             end_xtail(c);
             prof("xchg", c);
             break;
@@ -3534,6 +3643,11 @@ private:
             launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
                    s.ob + td0[c]);
             prof("shared", c);
+            if ((o.xl2 & 8u) && L + 1 < o.layer_end) {
+                const std::string pn = "blk." + std::to_string(L + 1) + ".";
+                xl2_arm(c, 8, pn + "attn_q_a.weight");
+                xl2_arm(c, 8, pn + "attn_kv.weight");
+            }
             end_xtail(c);
             prof("xchg", c);
             break;
@@ -3575,10 +3689,16 @@ private:
             if (cpos(c) % 2 == 0) return;
             gpos = cpos(c) - 1;
             if (!o.small_fast || g.hd > 1024) throw std::runtime_error("tensor parallel: compressor pool form");
-            launch_local<1024>(c, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
-                               (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
-                               (const float *)(s.score_state + (size_t)si * 2 * g.hd),
-                               wp<float>(c, p + "attn_compressor_norm.weight"), s.latent);
+            if (o.smallk && g.hd == 512) // one channel per item, the statistic bracketed (the same outputs)
+                launch_local<1024>(c, 512, ops41sycl::SkCompressPoolW<Act>{2, g.hd},
+                                   (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
+                                   (const float *)(s.score_state + (size_t)si * 2 * g.hd),
+                                   wp<float>(c, p + "attn_compressor_norm.weight"), s.latent);
+            else
+                launch_local<1024>(c, 32, ops41sycl::CompressPoolP<Act>{2, g.hd},
+                                   (const float *)(s.kv_state + (size_t)si * 2 * g.hd),
+                                   (const float *)(s.score_state + (size_t)si * 2 * g.hd),
+                                   wp<float>(c, p + "attn_compressor_norm.weight"), s.latent);
         }
         gemv(c, p + "indexer.attn_k.weight", s.latent, s.kk);
         rmsnorm(c, s.kk, p + "indexer.k_norm.weight", 128, s.kk);
@@ -3662,7 +3782,10 @@ private:
             gemv(c, p + "engram_kv.weight", teng[c][li], sc[c].kvbuf);
         }
         if (!o.small_fast || g.h % 32) throw std::runtime_error("tensor parallel: engram gate form");
-        if (ops41sycl::g_eng_ff) // OWN_ENG_FF: the bracket over 16 sub-groups per stream (the same gate bit for bit)
+        if (ops41sycl::g_eng_ff && o.smallk && g.h == 5120) // run_wg<16> unrolled, fma squares, kv rows prefetched
+            launch_wgl<8 * 16 + 2>(c, 4, 512, ops41sycl::SkEngramGateW<16>{g.h}, streams[c], kv,
+                                   wp<float>(c, p + "engram_gate.weight"));
+        else if (ops41sycl::g_eng_ff) // OWN_ENG_FF: the bracket over 16 sub-groups per stream (the same gate bit for bit)
             launch_wgl<8 * 16 + 2>(c, 4, 512, ops41sycl::EngramGateW<16>{ops41sycl::EngramGateP{g.h}}, streams[c], kv,
                                    wp<float>(c, p + "engram_gate.weight"));
         else
