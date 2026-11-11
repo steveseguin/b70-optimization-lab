@@ -141,7 +141,7 @@ Host and step structure (from tl85, 2026-11-11):
 - H6. **Host hand-off**: ~0.25-0.35 ms of each step's gaps are thread hand-offs on the host (ckpath helper);
   `OWN_TP_SPIN_US=300` (the threads poll before sleeping) is an arm in tg90.
 - H8. **q_b offload: the light cards compute part of the heavy cards' q_b rows first and push them one way**
-  (idea, 2026-11-11 ~10:15, after xw92): the four 8-head cards wait ~22 us per layer at output-a (856-916 us per
+  (idea, 2026-11-11 ~10:10, after xw92): the four 8-head cards wait ~22 us per layer at output-a (856-916 us per
   step) while cards 2 / 5 run twice the q_b rows (8,192 x 1,280 Q8_0: 23.4 us against ~12.5) and twice the
   output-a rows (18.1 us against ~9.5). q_b's input (the normed q_a output) is replicated and bit-identical on every
   card, so a light neighbour can compute 4 of the heavy card's heads (2,048 rows, ~6 us) before its own q_b and push
@@ -222,7 +222,7 @@ Prompt reading:
   exchange (its input needs the finish), so `SkNormDotsW` 6.6 us becomes a norm alone (~3.5 us) plus a ~1 us
   partial step before the exchange: ~0.15-0.3 ms per plain step (1.5-3 %), more in checks of 2-6 tokens (the
   token split leaves cards idle there, the column split does not). Queued after K6 and the dense / attention work.
-- Closed 2026-11-11 ~10:45 by arithmetic: **tree guesses** (check a second draft candidate at the least certain
+- Closed 2026-11-11 ~10:34 by arithmetic: **tree guesses** (check a second draft candidate at the least certain
   position, tree attention mask). Every extra token in a check costs ~2 ms here (14 % of an analysis round: its
   experts are new bytes), and a second candidate rescues only the misses at that position (analysis: 13 of 40
   one-guess rounds miss the first guess; at a typical ~30 % top-2 hit rate that is +0.1 token per round for +2 ms).
