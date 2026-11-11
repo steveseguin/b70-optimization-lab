@@ -1,0 +1,63 @@
+tune91 OPTS=
+code_d_1 exit 0
+code_d_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_d_1: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 4.01s = 127.41 tok/s; draft 2.13 ms + check 15.85 ms per cycle; SAME AS the plain run
+code_hm2_1 exit 0
+code_hm2_1: tensor parallel heads per card (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm2_1: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 4.07s = 125.44 tok/s; draft 2.13 ms + check 16.14 ms per cycle; SAME AS the plain run
+code_hm2_1 GLOG_SAME
+code_hm4_1 exit 0
+code_hm4_1: tensor parallel heads per card (blocks of >= 4 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm4_1: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.99s = 128.03 tok/s; draft 2.13 ms + check 15.77 ms per cycle; SAME AS the plain run
+code_hm4_1 GLOG_SAME
+analysis_d_1 exit 0
+analysis_d_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_d_1: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.70s = 137.99 tok/s; draft 2.15 ms + check 18.41 ms per cycle; SAME AS the plain run
+analysis_hm2_1 exit 0
+analysis_hm2_1: tensor parallel heads per card (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm2_1: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.67s = 139.13 tok/s; draft 2.16 ms + check 18.24 ms per cycle; SAME AS the plain run
+analysis_hm2_1 GLOG_SAME
+analysis_hm4_1 exit 0
+analysis_hm4_1: tensor parallel heads per card (blocks of >= 4 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm4_1: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.64s = 140.43 tok/s; draft 2.15 ms + check 18.06 ms per cycle; SAME AS the plain run
+analysis_hm4_1 GLOG_SAME
+code_d_2 exit 0
+code_d_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_d_2: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 4.06s = 125.88 tok/s; draft 2.13 ms + check 16.07 ms per cycle; SAME AS the plain run
+code_hm2_2 exit 0
+code_hm2_2: tensor parallel heads per card (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm2_2: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 4.00s = 127.84 tok/s; draft 2.13 ms + check 15.79 ms per cycle; SAME AS the plain run
+code_hm2_2 GLOG_SAME
+code_hm4_2 exit 0
+code_hm4_2: tensor parallel heads per card (blocks of >= 4 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm4_2: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.99s = 128.19 tok/s; draft 2.13 ms + check 15.74 ms per cycle; SAME AS the plain run
+code_hm4_2 GLOG_SAME
+analysis_d_2 exit 0
+analysis_d_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_d_2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.66s = 139.77 tok/s; draft 2.15 ms + check 18.15 ms per cycle; SAME AS the plain run
+analysis_hm2_2 exit 0
+analysis_hm2_2: tensor parallel heads per card (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm2_2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.64s = 140.40 tok/s; draft 2.15 ms + check 18.07 ms per cycle; SAME AS the plain run
+analysis_hm2_2 GLOG_SAME
+analysis_hm4_2 exit 0
+analysis_hm4_2: tensor parallel heads per card (blocks of >= 4 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm4_2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.64s = 140.57 tok/s; draft 2.16 ms + check 18.04 ms per cycle; SAME AS the plain run
+analysis_hm4_2 GLOG_SAME
+code_hm3 exit 0
+code_hm3: tensor parallel heads per card (blocks of >= 3 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm3: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.97s = 128.58 tok/s; draft 2.14 ms + check 15.68 ms per cycle; SAME AS the plain run
+code_hm3 GLOG_SAME
+code_hm2dr exit 0
+code_hm2dr: tensor parallel heads per card (draft too) (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_hm2dr: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 4.00s = 127.87 tok/s; draft 2.16 ms + check 15.76 ms per cycle; SAME AS the plain run
+code_hm2dr GLOG_SAME
+analysis_hm3 exit 0
+analysis_hm3: tensor parallel heads per card (blocks of >= 3 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm3: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.63s = 140.65 tok/s; draft 2.15 ms + check 18.03 ms per cycle; SAME AS the plain run
+analysis_hm3 GLOG_SAME
+analysis_hm2dr exit 0
+analysis_hm2dr: tensor parallel heads per card (draft too) (blocks of >= 2 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_hm2dr: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.64s = 140.28 tok/s; draft 2.19 ms + check 18.05 ms per cycle; SAME AS the plain run
+analysis_hm2dr GLOG_SAME
+SAME count (of 16): 16
+ALLDONE
