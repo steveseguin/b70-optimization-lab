@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**November 11, 2026 14:02-14:09 EST — qb-off-2 hung both 16-head cards in gate tg97 (our software); probe passed.**
+- Arm h2qbm (`OWN_QB_OFF_M=4,3,3,4,3`, prompt blocks of 2): card 2 (0000:43:00.0) and card 5 (0000:e3:00.0) compute
+  jobs timed out at 14:02:21 / 14:02:22 (driver engine reset, devcoredump), run ended with DEVICE_LOST. The heavy
+  cards' q_b pull waited for helper flags that never came, with no in-kernel timeout first. Health probe (barrier +
+  all-reduce, six cards) passed 14:08. Evidence: /home/steve/dsv41-work/faults/fault-20261111T1407/. All default arms
+  before it were byte-identical. qb-off-2 sent back to its helper (qb-off-3); gate continued as tg97b at 14:09 without it.
+
 **November 11, 2026 13:39 EST — DeepSeek V4.1: tp97 build + gate tg97 started (systemd units build97, tg97).**
 - tp97 = tp96 with the tg96b winners as defaults (`OWN_ATT_T=1`, `OWN_MT_CK=1`, `OWN_MT_RUX=1 CAP=6`) + qb-off-2
   (`OWN_QB_OFF_M`, opt-in) + k7-2 (`OWN_K7`, opt-in; one-card bench PASS 13:38). eg-fold-1 closed (slower on one card).
