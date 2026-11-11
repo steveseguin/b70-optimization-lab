@@ -1,0 +1,38 @@
+=== tl_one_d
+steps [20, 21, 22, 23, 24, 25, 26, 27] span 9903 us, after the last exchange 174 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4168     3719      450 |                        3082  3114  3668  3135  3086  3694
+B o_b | output-b                     40      892      659      233 |                         627   627   611   636   610   594
+C ffn in+router+gate/up | act        40     3024     2570      453 |                        2478  2516  2451  2514  2489  2502
+D down+shared | ffn rows             40     1492     1229      263 |                        1176  1182  1161  1145  1164  1190
+E engram                              3      153      125       28 |                         115   108   109   115   113   116
+TOTAL                                       9903     8302     1427
+
+steps [20, 21, 22, 23, 24, 25, 26, 27]  (exchange ends before the last arrival: 10 of 7824 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg engram                    3 |     8    30    0 |    12    35    0 |    12    32    0 |     7    33    0 |     9    32    0 |     7    30    0  last: c0 8% c1 25% c2 17% c3 33% c4 12% c5 4%  lead med 0.5 us
+xchg expert act (pull)        40 |    92   463    0 |    55   436    0 |   119   443    0 |    56   445    0 |    82   461    0 |    68   458    0  last: c0 12% c1 30% c2 3% c3 30% c4 7% c5 18%  lead med 0.5 us
+xchg ffn rows                 40 |    53   265    0 |    47   270    0 |    68   247    0 |    83   278    0 |    65   256    0 |    39   248    0  last: c0 23% c1 21% c2 8% c3 2% c4 6% c5 40%  lead med 0.4 us
+xchg output-a (pull)          40 |   637   457    0 |   605   454    0 |    51   436    0 |   584   464    0 |   633   441    0 |    24   416    0  last: c1 2% c2 31% c3 5% c4 1% c5 62%  lead med 1.0 us
+xchg output-b                 40 |    32   231    0 |    32   239    0 |    48   221    0 |    23   244    0 |    50   231    0 |    65   222    0  last: c0 21% c1 17% c2 13% c3 38% c4 5% c5 6%  lead med 0.3 us
+TOTAL                            |   822  1447    0 |   750  1434    0 |   298  1379    0 |   754  1465    0 |   838  1422    0 |   204  1374    0
+
+=== tl_one
+steps [20, 21, 22, 23, 24, 25, 26, 27] span 9774 us, after the last exchange 171 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4004     3563      441 |                        2954  2957  3521  2956  2915  3537
+B o_b | output-b                     40      904      674      229 |                         645   626   605   636   614   599
+C ffn in+router+gate/up | act        40     3048     2588      461 |                        2504  2516  2470  2527  2479  2493
+D down+shared | ffn rows             40     1504     1245      259 |                        1186  1184  1172  1159  1172  1197
+E engram                              3      143      112       31 |                         105   109   106   104   103   103
+TOTAL                                       9774     8182     1421
+
+steps [20, 21, 22, 23, 24, 25, 26, 27]  (exchange ends before the last arrival: 8 of 7824 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg engram                    3 |     6    33    0 |     3    33    0 |     5    33    0 |     6    32    0 |     8    32    0 |     8    30    0  last: c0 25% c1 38% c2 17% c3 12% c5 8%  lead med 0.4 us
+xchg expert act (pull)        40 |    84   466    0 |    72   446    0 |   118   447    0 |    61   452    0 |   108   473    0 |    95   472    0  last: c0 17% c1 23% c2 3% c3 40% c4 5% c5 12%  lead med 0.5 us
+xchg ffn rows                 40 |    59   263    0 |    61   266    0 |    73   244    0 |    86   274    0 |    72   252    0 |    47   244    0  last: c0 21% c1 17% c2 8% c3 3% c4 5% c5 46%  lead med 0.4 us
+xchg output-a (pull)          40 |   608   450    0 |   606   445    0 |    41   422    0 |   607   457    0 |   648   435    0 |    26   415    0  last: c0 1% c1 3% c2 38% c3 2% c4 0% c5 56%  lead med 0.9 us
+xchg output-b                 40 |    30   225    0 |    48   238    0 |    69   222    0 |    39   244    0 |    60   226    0 |    76   221    0  last: c0 25% c1 16% c2 11% c3 36% c4 6% c5 8%  lead med 0.3 us
+TOTAL                            |   787  1438    0 |   790  1427    0 |   307  1367    0 |   798  1459    0 |   897  1419    0 |   251  1383    0
+

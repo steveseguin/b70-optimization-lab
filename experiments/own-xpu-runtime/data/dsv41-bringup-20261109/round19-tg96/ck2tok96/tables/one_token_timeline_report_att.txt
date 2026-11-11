@@ -1,0 +1,80 @@
+# OWN_TIMELINE tl_one.txt: 8 answer steps (20-27), cards 0,1,2,3,4,5, clocks: causal
+#   c0: cal mapping implausible (start - submit: p1 95682348.2 us, median 95685013.0 us)
+#   c1: cal mapping implausible (start - submit: p1 95682205.2 us, median 95684802.2 us)
+#   c2: cal mapping implausible (start - submit: p1 95682218.2 us, median 95684896.7 us)
+#   c3: cal mapping implausible (start - submit: p1 95682204.5 us, median 95684826.8 us)
+#   c4: cal mapping implausible (start - submit: p1 95682319.0 us, median 95684973.2 us)
+#   c5: cal mapping implausible (start - submit: p1 95682299.9 us, median 95685035.4 us)
+#   96 copy records left out (no profiling times)
+
+Device clock only, per card (us per step, mean; between = last launch end -> next step first start):
+card     span     busy  in-step idle  between (median)  launches
+c0     9769.3   9586.1         183.2             108.0       933
+c1     9770.3   9578.8         191.6             105.4       933
+c2     9769.4   9587.5         181.8             107.9       933
+c3     9768.3   9577.1         191.3             108.3       933
+c4     9770.2   9591.5         178.7             107.1       933
+c5     9770.3   9588.1         182.2             107.3       933
+Idle gaps of >= 0.5 us on average, by launch pair (per step and card: count, us each, us total):
+     1.0  28.64    28.6  Broadcast4PA<ActF32> -> HcPreA<ActF32>
+    15.0   0.99    14.8  RoutedIQ2SPe<20u, ActF32, NoRows> -> SwigluBothS<ActF32>
+    13.0   0.98    12.8  RoutePRows<RowsPair<HcFinishRows, RowsPair<De... -> RoutedIQ2SPe<20u, ActF32, NoRows>
+     1.0   5.43     5.4  EngRowsA<ActF32> -> EngRowsA<ActF32>
+     3.0   1.19     3.6  HcPreA<ActF32> -> SkNormW<5120u, 16u>
+     2.0   0.98     2.0  RoutePRows<RowsPair<HcFinishRows, RowsPair<De... -> RoutedIQ2SPe<20u, ActF32, NoRows>
+     3.0   0.60     1.8  SkNormW<5120u, 16u> -> RowsP<RowsPair<HcDotsRows<5120u, 8u>, RowsPai...
+     1.0   1.38     1.4  EmbedRowA<ActF32> -> Broadcast4PA<ActF32>
+  (these pairs: 70.3 us per step and card)
+
+#   cal vs causal alignment, per card (us, relative to the median card): c0 -89.3, c1 +53.5, c2 +40.9, c3 +48.1, c4 -59.8, c5 -40.9   (spread = the alignment uncertainty across cards)
+
+Step wall (first card thread begin -> last launch end): 9.779 ms mean (min 9.652, max 9.948)
+
+Per card, ms per step (mean over 8 steps):
+card     span    busy    idle hostlate (inwait)  devgap lead-in    tail    xchg launch
+c0      9.769   9.586   0.183   0.038   0.000   0.146   0.005   0.044   2.224    933
+c1      9.770   9.579   0.192   0.044   0.000   0.148   0.007   0.047   2.218    933
+c2      9.769   9.588   0.182   0.036   0.000   0.146   0.005   0.044   1.674    933
+c3      9.768   9.577   0.191   0.044   0.000   0.148   0.006   0.045   2.258    933
+c4      9.770   9.591   0.179   0.034   0.000   0.145   0.005   0.049   2.315    933
+c5      9.770   9.588   0.182   0.036   0.000   0.146   0.006   0.044   1.634    933
+
+Exchanges per step: kind, count, mean ms in the kernels per card; the card that STARTS the exchange last
+(its peers wait for it), share of exchanges, and by how much it trails the second-last (median us):
+  output-a              40.0  dur 1.059 1.051 0.463 1.064 1.083 0.441  last: c5 56%, c2 38%, c1 3%  by 0.9
+  expert act            40.0  dur 0.551 0.517 0.565 0.513 0.581 0.567  last: c3 40%, c1 23%, c0 17%  by 0.5
+  ffn rows              40.0  dur 0.322 0.327 0.317 0.360 0.324 0.291  last: c5 46%, c0 21%, c1 17%  by 0.4
+  output-b rows         40.0  dur 0.255 0.286 0.291 0.283 0.287 0.297  last: c3 36%, c0 25%, c1 15%  by 0.3
+  engram                 2.0  dur 0.035 0.033 0.034 0.035 0.036 0.034  last: c1 38%, c0 25%, c3 19%  by 0.4
+  engram (push)          1.0  dur 0.004 0.003 0.004 0.004 0.004 0.004
+  all exchanges, last to start: c5 30%, c3 20%, c0 16%, c2 15%, c1 15%, c4 4%
+
+Idle before each kernel type (us per step, mean card): host late / dev gap / launches per step
+      27.4      1.4    3.0  HcPreA<ActF32>
+       0.0     18.0   40.0  SwigluBothS<ActF32>
+       0.0     14.7   15.0  RoutedIQ2SPe<20u, ActF32, NoRows>
+       0.0     10.5   83.0  XchgPull
+       0.2     10.1   80.0  XchgP
+       0.0      9.6   77.0  SkNormDotsW<8u>
+       0.0      9.4   78.0  HcPostPreP<ActF32>
+       2.9      4.9   40.0  MoeCombineA<ActF32>
+       5.2      0.5    2.0  EngRowsA<ActF32>
+       0.0      5.6   47.0  GemvH16P<160u, ActF32>
+       0.0      5.2   40.0  RowsP<RopeRows<ActF32> >
+       0.0      5.0   40.0  SkNormPairW
+
+Largest 12 gaps (us): step card cause | before -> after
+     233.9  s23  c1  host late 232.7             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+     225.6  s23  c3  host late 224.6             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+     202.4  s23  c0  host late 201.4             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+     201.5  s23  c4  host late 200.3             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+     200.0  s23  c5  host late 198.9             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+     198.0  s23  c2  host late 197.0             | Broadcast4PA<ActF32> -> HcPreA<ActF32>
+      44.9  s26  c1  host late 43.9              | GemvQ8P<72u, ActF32> -> MoeCombineA<ActF32>
+      44.5  s26  c3  host late 43.0              | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      43.8  s26  c2  host late 42.1              | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      43.5  s26  c0  host late 42.1              | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      43.0  s26  c5  host late 41.2              | EngRowsA<ActF32> -> EngRowsA<ActF32>
+      42.4  s26  c4  host late 40.7              | EngRowsA<ActF32> -> EngRowsA<ActF32>
+
+Between steps (last card thread done -> first card thread starts the next): median 51.0 us, max 58.7 us

@@ -1,0 +1,40 @@
+steps [10021, 10025, 10026] span 10065 us, after the last exchange 58 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4081     3629      452 |                        2913  2970  3541  2929  3006  3604
+B o_b | output-b                     40      904      675      229 |                         633   628   622   624   640   585
+C ffn in+router+gate/up | act        40     3086     2631      455 |                        2469  2543  2521  2525  2560  2553
+D down+shared | ffn rows             40     1524     1256      268 |                        1174  1184  1204  1155  1192  1205
+E engram                              3      143      114       29 |                          95   100    99   110   103   102
+Z head+check | fc                     1      268      263        4 |                         247   259   250   248   252   260
+TOTAL                                      10065     8569     1438
+
+steps [10020, 10022, 10027] span 12580 us, after the last exchange 55 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4486     4032      454 |                        3306  3374  3967  3345  3410  3994
+B o_b | output-b                     40     1188      858      330 |                         827   840   806   827   834   800
+C ffn in+router+gate/up | act        40     4084     3580      504 |                        3379  3467  3452  3427  3498  3491
+D down+shared | ffn rows             40     2278     1891      387 |                        1763  1810  1782  1729  1770  1797
+E engram                              3      175      131       44 |                         108   118   111   125   118   116
+Z head+check | fc                     1      314      303       11 |                         270   295   271   274   287   295
+TOTAL                                      12580    10795     1731
+
+steps [10024] span 17210 us, after the last exchange 59 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     5222     4502      720 |                        3636  3707  4430  3609  3687  4477
+B o_b | output-b                     40     1843     1287      556 |                        1143  1244  1211  1141  1167  1233
+C ffn in+router+gate/up | act        40     5767     4934      833 |                        4698  4605  4752  4645  4618  4874
+D down+shared | ffn rows             40     3662     3099      562 |                        2776  2914  2935  2783  2911  2978
+E engram                              3      250      161       89 |                         148   158   161   152   159   156
+Z head+check | fc                     1      408      394       14 |                         337   390   376   340   385   394
+TOTAL                                      17210    14377     2774
+
+steps [10023] span 19860 us, after the last exchange 109 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     5902     5172      730 |                        4179  4222  5085  4162  4330  5105
+B o_b | output-b                     40     2148     1505      643 |                        1362  1444  1367  1370  1432  1487
+C ffn in+router+gate/up | act        40     6770     5908      862 |                        5402  5499  5451  5255  5748  5693
+D down+shared | ffn rows             40     4140     3502      638 |                        3212  3343  3242  3255  3380  3412
+E engram                              3      308      210       97 |                         178   185   183   191   206   201
+Z head+check | fc                     1      482      468       15 |                         380   447   468   389   429   405
+TOTAL                                      19860    16765     2986
+

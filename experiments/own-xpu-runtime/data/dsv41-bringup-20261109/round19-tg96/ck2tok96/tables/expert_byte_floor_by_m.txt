@@ -1,0 +1,15 @@
+layers 40; gate+up formats {'IQ1S': 10, 'IQ2XXS': 15, 'IQ2S': 15}; down formats {'Q2K': 1, 'IQ2XS': 6, 'IQ2XXS': 3, 'IQ2S': 15, 'IQ3XXS': 15}
+  M distinct      gu MB    down MB   floor us    d floor d distinct
+  1     6.00      250.7      159.8        746                      
+  2    10.48      439.6      279.6       1308       +561      +4.48
+  3    14.34      602.3      382.7       1791       +483      +3.86
+  4    17.80      747.8      474.9       2223       +432      +3.46
+  5    21.05      884.2      561.4       2628       +405      +3.25
+  6    24.03     1009.4      640.8       3000       +372      +2.98
+(pace card: down rows 864; floor = (gate+up + down bytes) / 550 GB/s; gate+up and down split: gu us = MB / bw)
+  M=1: gate+up 456 us, down 291 us
+  M=2: gate+up 799 us, down 508 us
+  M=3: gate+up 1095 us, down 696 us
+  M=4: gate+up 1360 us, down 864 us
+  M=5: gate+up 1608 us, down 1021 us
+  M=6: gate+up 1835 us, down 1165 us

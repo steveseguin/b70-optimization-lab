@@ -1,0 +1,50 @@
+== 1. pull exchanges in one round trip
+   M=1: 0.22 to 0.34 ms per check
+   M=2: 0.22 to 0.34 ms per check
+   M=3: 0.44 to 0.67 ms per check
+   M=4: 0.44 to 0.67 ms per check
+   M=5: 0.44 to 0.67 ms per check
+   M=6: 0.44 to 0.67 ms per check
+   per code round: 0.317 to 0.486 ms
+   per analysis round: 0.360 to 0.552 ms
+   one round trip = 2.7-4.1 us (two = 7.2 us = 10.9 us after arrival - 2.2 launch - 1.5 bytes)
+== 3. DSPLIT finishes as riders (WS_DOTS forms for o_b and shared down)
+   M=4: 0.38 to 0.66 ms per check
+   M=5: 0.36 to 0.64 ms per check
+   M=6: 0.36 to 0.64 ms per check
+   per code round: 0.092 to 0.161 ms
+   per analysis round: 0.166 to 0.292 ms
+   central (rider 1.3 us): M4 0.57, M5 0.55 ms
+== 2. heavy cards' q_b rows in the helpers' own q_b launches
+   M=1: 0.21 to 0.27 ms per check
+   M=2: 0.19 to 0.23 ms per check
+   M=3: 0.18 to 0.22 ms per check
+   M=4: 0.22 to 0.27 ms per check
+   M=5: 0.23 to 0.29 ms per check
+   M=6: 0.23 to 0.29 ms per check
+   per code round: 0.201 to 0.252 ms
+   per analysis round: 0.207 to 0.259 ms
+   M=1: 1.89 ns per row, best k = 4 heads per helper, 6.6 us per layer; M=2: 2.33 ns per row, best k = 3 heads per helper, 5.8 us per layer; M=3: 2.70 ns per row, best k = 2 heads per helper, 5.5 us per layer; M=4: 3.30 ns per row, best k = 2 heads per helper, 6.8 us per layer; M=5: 3.55 ns per row, best k = 2 heads per helper, 7.3 us per layer
+   (in separate helper launches, qb-off-1's form: ~3.8 ns per row + 5.3 us fixed + push per layer -> ~0)
+== 4. expert kernels, one-token path
+   M=1: 0.30 to 0.64 ms per check
+   per code round: 0.084 to 0.181 ms
+   per analysis round: 0.045 to 0.096 ms
+   measured 2132 us against a byte floor of 747 (2.85x)
+== 5. window append folded into the check attention launch
+   M=2: 0.05 to 0.09 ms per check
+   M=3: 0.05 to 0.09 ms per check
+   M=4: 0.05 to 0.09 ms per check
+   M=5: 0.05 to 0.09 ms per check
+   M=6: 0.05 to 0.09 ms per check
+   per code round: 0.039 to 0.062 ms
+   per analysis round: 0.046 to 0.073 ms
+== near neutral or closed by arithmetic
+   head split at M=2: 0.5 x 15.5 - P(7.3 .. 11.5) = +0.5 .. -3.8 us per layer = +0.02 .. -0.15 ms per check
+   head split at M=3: 0.5 x 18.4 - P(7.3 .. 11.5) = +1.9 .. -2.3 us per layer = +0.08 .. -0.09 ms per check
+   head split at M=4: 0.5 x 19.8 - P(7.3 .. 11.5) = +2.6 .. -1.6 us per layer = +0.10 .. -0.06 ms per check
+   head split at M=5: 0.5 x 21.8 - P(7.3 .. 11.5) = +3.6 .. -0.6 us per layer = +0.14 .. -0.02 ms per check
+   (defaults M=2: +5.6 .. +1.4 us per layer: tune91 / tg92 saw +1.2 % from 3-4 tokens before ck-2)
+   (defaults M=3: +9.1 .. +4.9 us per layer: tune91 / tg92 saw +1.2 % from 3-4 tokens before ck-2)
+   (defaults M=4: +4.9 .. +0.7 us per layer: tune91 / tg92 saw +1.2 % from 3-4 tokens before ck-2)
+   o_a quarter to a helper (one-token): heavy -4.7 us, helper after the heavy card's attention +20.1 us -> the helper is last; net -1.5 us per layer

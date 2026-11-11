@@ -1,0 +1,76 @@
+checks per size: M=2: 5, M=3: 5, M=4: 2, M=5: 1
+step span (us)                             12738   14925   17219   19860   slope  2366.1  steps  +2188  +2294  +2641
+
+pace cards: us per check
+role                                         M=2     M=3     M=4     M=5     slope/token  steps
+embed/broadcast                                6       8      10      12             2.1      +2     +2     +2
+engram rows/gate                             135     144     176     207            24.7      +9    +31    +32
+head norm+GEMV+argmax                        178     228     228     265            26.0     +50     -0    +37
+check-only: draft features/injection          88     112     100     133            12.3     +23    -12    +33
+mix collapse (HcPre/HcPostPre/HcPost)        144     151     161     187            13.7      +6    +11    +25
+attn pre-norm (+dots)                        133     136     160     224            29.7      +3    +24    +64
+q_a+kv rows (+dots)                          995    1112    1056    1199            55.5    +116    -56   +143
+q_a/kv norms                                 118     117     120     117            -0.1      -1     +3     -3
+q_b rows (+finish, rope)                    1102    1224    1274    1395            92.8    +122    +50   +121
+compressor+indexer                           159     168     171     177             5.7      +9     +3     +6
+attention core                               558     580     649     752            65.2     +22    +70   +103
+o_a rows                                     722     745     790     919            63.7     +23    +45   +130
+attn mix finish alone (DSPLIT)                 0       0     342     325           131.8      +0   +342    -17
+o_b rows                                     716     860     877    1032            96.4    +144    +16   +155
+ffn pre-norm (+dots)                         145     143     287     285            56.2      -2   +143     -2
+router rows (+dots)                          630     866     468     508           -76.3    +236   -397    +40
+router pick+finish+shared gate/up            451     571     534     637            52.3    +120    -37   +103
+ExpertGroupM                                 166     206     225     269            32.7     +39    +19    +44
+experts gate+up                             1997    2506    3105    3671           562.1    +509   +599   +567
+SwiGLU                                        78      79      80      81             1.0      +1     +1     +1
+experts down                                1367    1727    2158    2477           376.0    +360   +430   +319
+ffn mix finish alone (DSPLIT)                  0       0     327     328           131.0      +0   +327     +0
+shared down                                  278     329     354     412            42.6     +51    +25    +57
+MoE combine                                   84      90      90      93             2.8      +6     +1     +2
+xchg output-a (pull)                         483     514     774     793           119.1     +31   +260    +19
+xchg output-b                                369     626     616     706           100.0    +256    -10    +90
+xchg output-b [PushM]                        103       0       0       0           -31.0    -103     +0     +0
+xchg expert act (pull)                       595     647     922    1167           199.1     +52   +275   +245
+xchg ffn rows                                469     630     688     792           102.7    +161    +58   +104
+xchg ffn rows [PushM]                        102       0       0       0           -30.5    -102     +0     +0
+xchg engram                                   58      73      88     114            18.4     +16    +15    +26
+xchg check (draft fc)                         27      26      45      44             7.2      -0    +19     -1
+xchg check (draft fc) [PushM]                  3       0       0       0            -0.8      -3     +0     +0
+TOTAL busy                                 12459   14616   16874   19320          2284.1   +2157  +2258  +2446
+
+light cards: us per check
+role                                         M=2     M=3     M=4     M=5     slope/token  steps
+embed/broadcast                                6       8       9      12             2.1      +2     +2     +2
+engram rows/gate                             134     138     171     205            24.7      +4    +33    +34
+head norm+GEMV+argmax                        177     203     237     246            24.1     +25    +35     +9
+check-only: draft features/injection          87     110      99     133            12.9     +23    -11    +34
+mix collapse (HcPre/HcPostPre/HcPost)        137     145     152     167             9.8      +8     +7    +16
+attn pre-norm (+dots)                        129     132     285     291            63.9      +3   +153     +6
+q_a+kv rows (+dots)                          983    1105    1015    1173            48.0    +123    -91   +158
+q_a/kv norms                                 114     114     115     115             0.3      -1     +1     -0
+q_b rows (+finish, rope)                     721     781     734     813            23.0     +60    -47    +79
+compressor+indexer                           159     167     169     176             5.2      +7     +2     +8
+attention core                               545     570     568     735            56.7     +25     -2   +166
+o_a rows                                     499     487     552     655            53.3     -13    +66   +103
+attn mix finish alone (DSPLIT)                 0       0     315     320           127.5      +0   +315     +4
+o_b rows                                     725     851     845     997            80.9    +126     -7   +152
+ffn pre-norm (+dots)                         139     138     218     251            41.7      -1    +80    +33
+router rows (+dots)                          619     848     461     502           -73.9    +229   -387    +41
+router pick+finish+shared gate/up            448     569     528     631            50.7    +122    -41   +103
+ExpertGroupM                                 162     202     221     265            32.7     +40    +18    +44
+experts gate+up                             1959    2473    3031    3619           553.9    +514   +558   +588
+SwiGLU                                        79      79      80      87             2.5      +1     +1     +7
+experts down                                1339    1683    2048    2401           355.2    +345   +365   +353
+ffn mix finish alone (DSPLIT)                  0       0     319     321           128.3      +0   +319     +2
+shared down                                  273     323     357     408            44.0     +50    +34    +51
+MoE combine                                   80      85      85      88             2.5      +5     +0     +3
+xchg output-a (pull)                        1142    1293    1589    1680           191.1    +151   +296    +91
+xchg output-b                                354     577     677     745           127.5    +223   +100    +68
+xchg output-b [PushM]                         91       0       0       0           -27.3     -91     +0     +0
+xchg expert act (pull)                       668     763    1113    1325           231.9     +94   +350   +212
+xchg ffn rows                                516     646     787     830           108.0    +130   +141    +43
+xchg ffn rows [PushM]                         90       0       0       0           -27.1     -90     +0     +0
+xchg engram                                   57      75      92     117            19.5     +18    +17    +25
+xchg check (draft fc)                         27      65      50      71            11.9     +39    -15    +21
+xchg check (draft fc) [PushM]                  2       0       0       0            -0.7      -2     +0     +0
+TOTAL busy                                 12460   14629   16923   19379          2304.8   +2169  +2294  +2456

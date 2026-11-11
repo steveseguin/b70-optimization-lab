@@ -1,0 +1,58 @@
+pace cards 2+5 (us per step, launches; d = against ONEd)
+role                                     |     ONEd     n |   ONEatt     n      d
+embed/broadcast                          |        4     2 |        4     2     -0
+engram rows/gate                         |      111     6 |      111     6     -0
+head norm+GEMV+argmax                    |      167     3 |      167     3     -0
+mix collapse (HcPre/HcPostPre/HcPost)    |      103    83 |      104    83     +0
+attn pre-norm (+dots)                    |      256    40 |      254    40     -3
+q_a+kv rows (+dots)                      |      761    40 |      761    40     +0
+q_a/kv norms                             |      115    40 |      114    40     -0
+q_b rows (+finish, rope)                 |      937    80 |      939    80     +2
+compressor+indexer                       |      120    36 |      121    36     +0
+attention core                           |      614   160 |      460    40   -154
+o_a rows                                 |      745    40 |      744    40     -0
+o_b rows                                 |      617    40 |      615    40     -2
+ffn pre-norm (+dots)                     |      269    40 |      269    40     +0
+router rows (+dots)                      |      355    40 |      353    40     -2
+router pick+finish+shared gate/up        |      435    40 |      434    40     -1
+experts gate+up                          |     1267    40 |     1271    40     +3
+SwiGLU                                   |       50    40 |       50    40     +0
+experts down                             |      853    40 |      861    40     +7
+shared down                              |      245    40 |      245    40     -1
+MoE combine                              |       60    40 |       58    40     -2
+xchg output-a (pull)                     |      464    40 |      452    40    -11
+xchg output-b                            |      278    40 |      294    40    +16
+xchg expert act (pull)                   |      544    40 |      566    40    +22
+xchg ffn rows                            |      301    40 |      304    40     +3
+xchg engram                              |       41     3 |       38     3     -3
+TOTAL busy                               |     9711  1053 |     9588   933   -124
+
+light cards 0,1,3,4 (us per step, launches; d = against ONEd)
+role                                     |     ONEd     n |   ONEatt     n      d
+embed/broadcast                          |        4     2 |        4     2     -0
+engram rows/gate                         |      111     6 |      111     6     +0
+head norm+GEMV+argmax                    |      167     3 |      167     3     -1
+mix collapse (HcPre/HcPostPre/HcPost)    |      101    83 |      100    83     -0
+attn pre-norm (+dots)                    |      256    40 |      255    40     -1
+q_a+kv rows (+dots)                      |      763    40 |      761    40     -2
+q_a/kv norms                             |      113    40 |      114    40     +0
+q_b rows (+finish, rope)                 |      639    80 |      638    80     -1
+compressor+indexer                       |      120    36 |      121    36     +1
+attention core                           |      619   160 |      460    40   -158
+o_a rows                                 |      439    40 |      437    40     -2
+o_b rows                                 |      611    40 |      615    40     +4
+ffn pre-norm (+dots)                     |      267    40 |      268    40     +1
+router rows (+dots)                      |      350    40 |      349    40     -1
+router pick+finish+shared gate/up        |      435    40 |      437    40     +2
+experts gate+up                          |     1285    40 |     1288    40     +4
+SwiGLU                                   |       49    40 |       50    40     +1
+experts down                             |      843    40 |      849    40     +6
+shared down                              |      248    40 |      248    40     -0
+MoE combine                              |       59    40 |       57    40     -2
+xchg output-a (pull)                     |     1069    40 |     1064    40     -5
+xchg output-b                            |      270    40 |      278    40     +7
+xchg expert act (pull)                   |      523    40 |      541    40    +18
+xchg ffn rows                            |      329    40 |      333    40     +4
+xchg engram                              |       42     3 |       38     3     -3
+TOTAL busy                               |     9712  1053 |     9583   933   -129
+

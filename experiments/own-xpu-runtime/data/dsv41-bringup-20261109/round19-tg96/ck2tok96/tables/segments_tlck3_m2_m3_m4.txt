@@ -1,0 +1,30 @@
+steps [10044, 10047] span 12974 us, after the last exchange 56 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4548     4094      455 |                        3336  3437  3991  3360  3454  4087
+B o_b | output-b                     40     1187      882      304 |                         827   873   826   823   839   818
+C ffn in+router+gate/up | act        40     4333     3851      482 |                        3561  3676  3641  3583  3672  3814
+D down+shared | ffn rows             40     2382     1985      396 |                        1838  1920  1919  1817  1882  1918
+E engram                              3      173      122       50 |                         108   122   113   115   121   119
+Z head+check | fc                     1      295      285       10 |                         267   283   274   284   273   274
+TOTAL                                      12974    11220     1697
+
+steps [10042, 10045, 10046, 10048, 10049] span 14925 us, after the last exchange 62 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     4860     4377      483 |                        3499  3638  4277  3559  3613  4348
+B o_b | output-b                     40     1474      952      522 |                         891   922   852   883   880   866
+C ffn in+router+gate/up | act        40     5175     4643      532 |                        4330  4498  4443  4349  4492  4549
+D down+shared | ffn rows             40     2762     2248      514 |                        2105  2191  2132  2055  2114  2138
+E engram                              3      196      136       60 |                         109   125   120   118   126   131
+Z head+check | fc                     1      396      381       15 |                         292   369   365   316   345   373
+TOTAL                                      14925    12737     2127
+
+steps [10043] span 17228 us, after the last exchange 60 us
+segment                               n     wall last-arr    after | work before arriving:    c0    c1    c2    c3    c4    c5
+A attn in+attn+o_a | output-a        40     5289     4553      736 |                        3649  3725  4453  3676  3683  4535
+B o_b | output-b                     40     1881     1316      565 |                        1144  1227  1215  1159  1213  1277
+C ffn in+router+gate/up | act        40     5733     4931      802 |                        4656  4597  4749  4688  4672  4856
+D down+shared | ffn rows             40     3615     3063      552 |                        2809  2898  2876  2784  2899  2954
+E engram                              3      244      161       83 |                         149   153   161   153   156   160
+Z head+check | fc                     1      407      393       14 |                         344   393   336   338   331   343
+TOTAL                                      17228    14418     2751
+

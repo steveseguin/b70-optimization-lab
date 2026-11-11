@@ -360,6 +360,23 @@ Did not work (and why):
   timed out in every run (k7-2 in its bench). Next: tp97 with the three as defaults, plus k7-2, qb-off-2 (heavy
   cards' q_b rows shared in checks, est. 0.29-0.57 ms per check) and eg-fold-1 when their one-card checks pass.
   A CPU timeline study of the remaining 2-token overhead runs in `dsv41-work/ck2tok96/`.
+- Where a check's time goes after tp96 (CPU timeline study, `data/.../round19-tg96/ck2tok96/README.md`): a 2-token
+  check is +2.5 ms over a one-token step, almost all real work (experts ~1.3, exchanges +0.56, other rows ~0.7); each
+  token past two +2.3 ms (experts 41 % at 2.1x their bytes, exchanges ~20 % at ~3x). The 16-head cards still make
+  the others wait 0.58 ms per step, 0.8-0.9 ms per 4-5-token check. Ranked levers: (1) pulls in one round trip,
+  0.22-0.34 ms per step, 0.44-0.67 per check of 3-6 (helper `dsv41-work/xll/`, stale-read bench first); (2) q_b rows
+  riding the light cards' own q_b launch, 0.18-0.29 per check (qb-off-3); (3) the split finishes riding o_b and
+  shared down at 4-6 tokens, 0.36-0.66 per check, high confidence (helper `dsv41-work/dride/`); (4) expert kernels
+  on the one-token path, 2.85x their byte floor, 0.30-0.64 per step, low confidence; (5) WindowAppendM inside the
+  check attention launch, 0.05-0.09 per check (attn helper). Free re-tests for the next gate: `OWN_MT_DSPLIT_FIN=1`,
+  `OWN_TP_HEADS_MIN=4`.
+- Watch item (attn helper, 2026-11-11 ~13:45; probe `dsv41-work/attn/a2/xchk/`): oneAPI 2026.1 folds an
+  `atomic_fence` placed in every item right before a barrier into a work-group-scope fence (`fence.ugm.none.group`);
+  only the form "barrier, then item 0 fences + flag" (xchg_tail, attn-a2) keeps a real GPU-scope fence. XchgP's flag
+  hand-over, XchgPull and XchgPair use the folded form. They have been exact so far (they rely on launch boundaries
+  and the order of peer writes, not on those fences). Any new cross-work-group or cross-card hand-over inside one
+  launch must use the xchg_tail form plus L1-uncached data; a wrong or timed-out exchange should be checked against
+  this first.
 - Done (tg92, 2026-11-11 08:02-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
   guessing SAME. Code 128.70 / 128.97, analysis 142.22 / 142.84; vocabulary list 130.0-130.7 / 144.9-145.0; 3K read
   469.1 (32: 426, 128: 444). Check ms by guesses (code d92): 0: 10.57, 1: 15.03-15.10, 2: 17.24, 3: 18.92-18.97,

@@ -1,0 +1,40 @@
+steps [10021, 10025, 10026]  (exchange ends before the last arrival: 7 of 2952 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg check (draft fc)          1 |    16     5    2 |     4     4    2 |    14     5    2 |    15     5    2 |    12     4    2 |     4     4    2  last: c1 33% c5 67%  lead med 7.0 us
+xchg engram                    3 |    13    31    0 |    10    32    0 |    10    34    0 |     4    34    0 |     8    33    0 |     9    33    0  last: c0 11% c1 22% c3 22% c4 22% c5 22%  lead med 1.1 us
+xchg expert act (pull)        40 |   162   466    0 |    88   453    0 |   110   446    0 |   106   447    0 |    72   446    0 |    78   450    0  last: c0 1% c1 14% c2 11% c3 10% c4 29% c5 35%  lead med 0.6 us
+xchg ffn rows                 40 |    82   266    0 |    72   282    0 |    52   255    0 |   101   277    0 |    64   260    0 |    51   260    0  last: c0 8% c1 18% c2 28% c3 2% c4 12% c5 33%  lead med 0.5 us
+xchg output-a (pull)          40 |   717   463    0 |   659   455    0 |    88   439    0 |   700   457    0 |   623   451    0 |    25   405    0  last: c0 1% c1 1% c2 14% c3 2% c4 1% c5 82%  lead med 1.8 us
+xchg output-b                 40 |    41   227    0 |    47   238    0 |    52   225    0 |    51   234    0 |    34   232    0 |    90   225    0  last: c0 23% c1 17% c2 20% c3 12% c4 23% c5 5%  lead med 0.3 us
+TOTAL                            |  1032  1458    2 |   881  1466    2 |   326  1403    2 |   977  1454    2 |   813  1425    2 |   256  1377    2
+
+steps [10020, 10022, 10027]  (exchange ends before the last arrival: 10 of 2952 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg check (draft fc)          1 |    32    11    2 |     8    11    2 |    32    11    2 |    29    11    2 |    16    10    3 |     8    10    3  last: c1 33% c4 33% c5 33%  lead med 9.2 us
+xchg engram                    3 |    16    41    0 |     9    51    0 |    14    51    0 |     6    53    0 |     8    52    0 |    10    45    0  last: c2 22% c3 22% c4 56%  lead med 1.3 us
+xchg expert act (pull)        40 |   200   519    0 |   112   493    0 |   128   502    0 |   152   498    0 |    82   496    0 |    89   494    0  last: c0 4% c1 14% c2 11% c3 7% c4 22% c5 42%  lead med 0.9 us
+xchg ffn rows                 40 |   127   387   85 |    81   391   91 |   109   388  100 |   162   392   88 |   121   389   93 |    94   370  100  last: c0 8% c1 22% c2 19% c3 1% c4 12% c5 38%  lead med 0.6 us
+xchg output-a (pull)          40 |   726   470    0 |   658   455    0 |    66   435    0 |   687   458    0 |   623   452    0 |    38   424    0  last: c1 1% c2 41% c3 1% c4 2% c5 56%  lead med 1.4 us
+xchg output-b                 40 |    31   331   86 |    18   335   94 |    53   328  100 |    31   339   89 |    24   324   93 |    58   314  103  last: c0 11% c1 35% c2 8% c3 15% c4 27% c5 4%  lead med 0.3 us
+TOTAL                            |  1133  1759  173 |   886  1735  187 |   401  1715  203 |  1066  1751  180 |   873  1723  188 |   298  1659  206
+
+steps [10024]  (exchange ends before the last arrival: 1 of 984 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg check (draft fc)          1 |    57    15    0 |     4    14    0 |    18    15    0 |    54    16    0 |     9    14    0 |     0    11    0  last: c5 100%  lead med 3.5 us
+xchg engram                    3 |    12    86    0 |     2    85    0 |     0    94    0 |     9    88    0 |     2    88    0 |     5    82    0  last: c2 67% c4 33%  lead med 0.3 us
+xchg expert act (pull)        40 |   236   811    0 |   329   908    0 |   182   832    0 |   289   818    0 |   316   852    0 |    60   802    0  last: c0 10% c1 2% c2 8% c3 2% c5 78%  lead med 3.1 us
+xchg ffn rows                 40 |   324   577    0 |   186   562    0 |   164   564    0 |   316   552    0 |   188   540    0 |   122   520    0  last: c1 15% c2 20% c3 5% c4 15% c5 45%  lead med 1.8 us
+xchg output-a (pull)          40 |   866   705    0 |   795   763    0 |    72   712    0 |   893   719    0 |   814   711    0 |    24   708    0  last: c1 2% c2 40% c5 58%  lead med 1.5 us
+xchg output-b                 40 |   144   576    0 |    44   536    0 |    76   555    0 |   146   545    0 |   120   553    0 |    54   541    0  last: c1 30% c2 32% c5 38%  lead med 0.6 us
+TOTAL                            |  1639  2769    0 |  1359  2868    0 |   512  2773    0 |  1708  2737    0 |  1449  2757    0 |   265  2663    0
+
+steps [10023]  (exchange ends before the last arrival: 4 of 984 = alignment error)
+kind                           n | c0 wait/after/push | c1 wait/after/push | c2 wait/after/push | c3 wait/after/push | c4 wait/after/push | c5 wait/after/push
+xchg check (draft fc)          1 |    88    16    0 |    21    14    0 |     0    11    0 |    78    15    0 |    39    15    0 |    63    14    0  last: c2 100%  lead med 21.0 us
+xchg engram                    3 |    21    88    0 |    18   106    0 |    18   105    0 |    17   108    0 |     5   106    0 |     9    96    0  last: c0 33% c4 67%  lead med 3.2 us
+xchg expert act (pull)        40 |   506   858    0 |   409   936    0 |   457   848    0 |   653   877    0 |   160   900    0 |   215   814    0  last: c0 5% c1 8% c2 12% c3 2% c4 48% c5 25%  lead med 3.1 us
+xchg ffn rows                 40 |   290   644    0 |   159   606    0 |   261   661    0 |   247   625    0 |   122   625    0 |    90   571    0  last: c1 38% c3 2% c4 28% c5 32%  lead med 1.8 us
+xchg output-a (pull)          40 |   993   711    0 |   950   764    0 |    87   686    0 |  1010   720    0 |   842   730    0 |    67   746    0  last: c1 2% c2 38% c5 60%  lead med 2.6 us
+xchg output-b                 40 |   143   657    0 |    61   622    0 |   138   678    0 |   135   633    0 |    73   657    0 |    18   577    0  last: c1 22% c2 2% c4 8% c5 68%  lead med 0.9 us
+TOTAL                            |  2040  2974    0 |  1617  3048    0 |   962  2989    0 |  2141  2978    0 |  1241  3032    0 |   462  2819    0
+
