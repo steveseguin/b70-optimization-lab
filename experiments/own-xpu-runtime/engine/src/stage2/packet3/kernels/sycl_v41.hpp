@@ -2676,10 +2676,15 @@ template <unsigned R, unsigned T>
     const unsigned j = lane / T, t = lane % T;
     if (lane < R * T && r0 + j < rows && t < mt) y[t * ys + r0 + j] = a[0];
 }
-// OWN_MT_CK=1 (own_run_v41; default off): the guessing checks' blocks (2 .. 6 tokens) take WsTab's check picks
-// (WsPicks k2 .. k6, pa/ck bench_ck 2026-11-11: card 2's check shapes, cold weights, bit for bit the one-token
-// rows) where one is set; off: tg90's picks (c2 .. c6)
-inline bool g_ws_ck = false;
+// OWN_MT_CK (own_run_v41; default off): the guessing checks' blocks of M = 2 .. 6 tokens whose bit M - 2 is set in
+// g_ws_ck_mask take WsTab's check picks (WsPicks k2 .. k6 and the WS_PAIR pair forms; pa/ck bench_ck, pa/ck2
+// bench_rd 2026-11-11: card 2's check shapes, bit for bit the one-token rows) where one is set; elsewhere tg90's
+// picks (c2 .. c6). OWN_MT_CK=1: every size (0x1f); OWN_MT_CK=n (n != 1): the mask n; OWN_MT_CK_MS="2,4,5,6": those
+// sizes. g_ws_ckf_mask (OWN_MT_CK_FIN, default OWN_MT_CK's mask): the same for q_b's rows with the attention mix's
+// finish in their launch (WsTab<.., 1280, WS_DOTS>, OWN_MT_FIN_QB below OWN_MT_DSPLIT_MIN)
+inline unsigned g_ws_ck_mask = 0, g_ws_ckf_mask = 0;
+inline bool ws_ck_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ck_mask >> (mt - 2) & 1u); }
+inline bool ws_ckf_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ckf_mask >> (mt - 2) & 1u); }
 // a WS form's weight loads (WsF PF / 10): 0 = sub-group block reads; 1 = per-lane loads, L1 uncached (L3 cached),
 // so the streaming weights stop evicting the T tokens' activations from L1 (the same values)
 template <unsigned H> struct WsLd {
@@ -3019,16 +3024,16 @@ template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsTab {
 // 65-128 and 129-256 tokens (0: the engine's form). A prompt class takes a form only where the bench measured it
 // at least 3 % faster at every size tried in the class (9 / 12 / 16, 17 / 24 / 32, 33 / 48 / 64, 65 / 96 / 128,
 // 129 / 192 / 256): the class's first size is a T-form's worst case (a group of mostly spare tokens)
-// k2 .. k6: the checks' picks under OWN_MT_CK=1 (0: c2 .. c6)
+// k2 .. k6: the checks' picks under OWN_MT_CK (g_ws_ck_mask bit M - 2; 0: c2 .. c6)
 struct WsPicks {
     unsigned c2, c3, c4, c5, c6, c16, c32, c64, c128, c256, k2 = 0, k3 = 0, k4 = 0, k5 = 0, k6 = 0;
     unsigned at(unsigned mt) const {
         switch (ws_cls(mt)) {
-        case 2: return g_ws_ck && k2 ? k2 : c2;
-        case 3: return g_ws_ck && k3 ? k3 : c3;
-        case 4: return g_ws_ck && k4 ? k4 : c4;
-        case 5: return g_ws_ck && k5 ? k5 : c5;
-        case 6: return g_ws_ck && k6 ? k6 : c6;
+        case 2: return ws_ck_on(2) && k2 ? k2 : c2;
+        case 3: return ws_ck_on(3) && k3 ? k3 : c3;
+        case 4: return ws_ck_on(4) && k4 ? k4 : c4;
+        case 5: return ws_ck_on(5) && k5 ? k5 : c5;
+        case 6: return ws_ck_on(6) && k6 ? k6 : c6;
         case 16: return c16;
         case 32: return c32;
         case 64: return c64;
@@ -3105,6 +3110,18 @@ template <> struct WsTab<8, 1280, WS_PLAIN> {
         return 0;
     }
 };
+// OWN_MT_CK_FIN: Q8_0 q_b with the attention mix's finish in its launch (OWN_MT_FIN_QB: checks below 4 tokens at the
+// gate; the finish rows first, as before). Without these, a rider sent q_b to DenseRowsGR<G, 4> (no WS_DOTS entry):
+// pa/ck2 bench_rd, card 2, 8,192 rows (16 heads), us per launch SEQ, engine G R4 + finish -> WS + finish:
+// 2: 34.6 -> 25.4 (T2 R4), 3: 44.0 -> 28.4 (T3 R1), 4: 46.7 -> 32.0 (T2 R4), 5: 64.0 -> 31.9 (T5 R1), 6: 62.9 -> 34.2
+// (T6 R1); tg95b's timeline / profile: 36.4 (2) and 45.9 us (3) for the engine form
+template <> struct WsTab<8, 1280, WS_DOTS> {
+    using forms = WsList<WfX2R4, WfX3R1, WfX5R1, WfX6R1>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_ckf_on(mt) || rows < 4096 || rows > 8192) return 0;
+        return mt == 2 || mt == 4 ? WfX2R4::id : mt == 3 ? WfX3R1::id : mt == 5 ? WfX5R1::id : WfX6R1::id;
+    }
+};
 // Q8_0 5,120 columns alone: q_a (1,280 rows) and kv (512) keep 9-16 (q_a 0.97x at best, kv 0.75x) and the checks;
 // q_a 17-32 >= 1.18x, 33-64 >= 1.18x, 65-128 >= 1.49x, 256: 1418 -> 580; kv 17-128 >= 1.10x, 256: 544 -> 239
 template <> struct WsTab<8, 5120, WS_PLAIN> {
@@ -3128,9 +3145,10 @@ template <> struct WsTab<8, 5120, WS_DOTS> {
 template <> struct WsTab<8, 5120, WS_SHARED> {
     using forms = WsList<WfX8R2L, WfX4R4, WfC1R1, WfC1R2P5, WfC2R1P5, WfC3R1P5>;
     static unsigned pick(unsigned rows, unsigned mt) {
-        // OWN_MT_CK (SEQ / cold): 2: 9.5 / 11.9 -> 9.5 / 10.7, 3: 11.5 / 15.9 -> 10.2 / 14.1, 4: 10.6 / 14.9 -> 10.1 / 14.1,
-        // 5: 12.6 / 18.0 -> 10.9 / 16.8, 6: 12.6 / 18.1 -> 11.2 / 17.0
-        if (rows == 384) return WsPicks{0, 0, 0, 0, 0, X8R2L, 0, X8R2L, X8R2L, X4R4, C1R1, C2R1P5, C2R1P5, C3R1P5, C3R1P5}.at(mt);
+        // OWN_MT_CK (SEQ / cold): 4: 10.6 / 14.9 -> 10.1 / 14.1, 5: 12.6 / 18.0 -> 10.9 / 16.8, 6: 12.6 / 18.1 -> 11.2 / 17.0;
+        // with the FFN mix's finish rows (pa/ck2 bench_rd, SEQ): 2: G1 11.2 -> T2 R1 PF5 10.0 (ck's T1 R1: 11.5); 3: kept
+        // (T2 R1 PF5 10.2 against G3 11.5 in the bench, but tg95b's profile puts it near 15 us in the engine)
+        if (rows == 384) return WsPicks{0, 0, 0, 0, 0, X8R2L, 0, X8R2L, X8R2L, X4R4, C2R1P5, 0, C2R1P5, C3R1P5, C3R1P5}.at(mt);
         return 0;
     }
 };
@@ -3178,6 +3196,15 @@ template <> struct WsTab<6, 1280, WS_PLAIN> {
         if (rows >= 4096 && rows <= 8192)
             return WsPicks{WfK2R4::id, WfK3R1::id, WfK4R1::id, WfK5R1::id, WfK6R1::id, K16R2, K16R2, K16R2, K16R2, K16R2}.at(mt);
         return 0;
+    }
+};
+// OWN_MT_CK_FIN: Q6_K q_b with the attention mix's finish (as Q8_0's above; 8,192 rows, SEQ): 2: 36.8 -> 21.7 (T2 R1),
+// 3: 42.8 -> 23.8 (T3 R1), 4: 54.5 -> 25.7 (T4 R1), 5: 69.2 -> 29.6 (T5 R1), 6: 74.7 -> 31.5 (T6 R1); tg95b: 38.4 / 44.7 us
+template <> struct WsTab<6, 1280, WS_DOTS> {
+    using forms = WsList<WfK2R1, WfK3R1, WfK4R1, WfK5R1, WfK6R1>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_ckf_on(mt) || rows < 4096 || rows > 8192) return 0;
+        return mt == 2 ? WfK2R1::id : mt == 3 ? WfK3R1::id : mt == 4 ? WfK4R1::id : mt == 5 ? WfK5R1::id : WfK6R1::id;
     }
 };
 // Q6_K 5,120 columns alone (engine G4 R2; checks kept): q_a (1,280 rows) 9-64 >= 1.13x, 65-128 >= 1.14x,
@@ -3248,11 +3275,10 @@ template <> struct WsTab<6, 6144, WS_PLAIN> {
 template <> struct WsTab<5, 5120, WS_SHARED> {
     using forms = WsList<WfK2R1, WfK4R2, WfK8R2, WfK3R2>;
     static unsigned pick(unsigned rows, unsigned mt) {
-        // OWN_MT_CK (SEQ / cold): 3: 15.9 / 31.7 -> 10.6 / 15.2, 4: 11.9 / 16.1 -> 10.5 / 15.3, 5: 17.6 / 35.6 -> 16.4 / 19.0,
-        // 6: 17.8 / 35.7 -> 16.5 / 19.1 (2 kept)
+        // OWN_MT_CK (SEQ / cold): 4: 11.9 / 16.1 -> 10.5 / 15.3 (2 kept; 3, 5, 6 kept since pa/ck2: tg95b's profile
+        // gives T2 R1 ~16 us at 3 against G3 ~16, its timeline T3 R2 18.9 at 5 against G3 18.4)
         if (rows == 384)
-            return WsPicks{WfK2R1::id, 0, 0, 0, 0, K8R2, K4R2, K8R2, K8R2, K8R2, 0, WfK2R1::id, WfK2R1::id, WfK3R2::id,
-                           WfK3R2::id}.at(mt);
+            return WsPicks{WfK2R1::id, 0, 0, 0, 0, K8R2, K4R2, K8R2, K8R2, K8R2, 0, 0, WfK2R1::id, 0, 0}.at(mt);
         return 0;
     }
 };
@@ -3270,24 +3296,27 @@ template <> struct WsTab<5, 2304, WS_PLAIN> {
 // OWN_MT_CK: the q_a + kv pair launch (1,280 + 512 rows, gemv_pair_m) at checks in WS forms, one launch (pa/ck
 // bench_ck; us per launch, tp92's DenseRowsG pair -> this, SEQ / cold): 2: 20.9 / 22.3 -> 18.3 / 18.8,
 // 3: 20.7 / 22.6 -> 18.8 / 20.2, 4: 23.8 / 27.8 -> 21.2 / 25.2, 5: 30.0 / 34.7 -> 23.5 / 30.0, 6: 30.0 / 34.6 -> 23.4 / 30.1
+// pa/ck2 (bench_rd, SEQ): below 4 tokens the attention mix's dot rows ride this launch; with them G1 22.8 -> 20.0
+// (T2 R1 PF5 + T1 R1; ck's T2 R1 PF5 + T1 R2 PF5: 22.7) at 2, G3 25.3 -> 23.0 (T3 R1 + T3 R1; ck's: 26.8) at 3
 template <> struct WsTab<8, 5120, WS_PAIR> {
-    using forms = WsList<WsPF<WfC2R1P5, WfC1R2P5, 1>, WsPF<WfC3R1P5, WfC1R2P5, 2>, WsPF<WfC2R1P5, WfC2R1P5, 3>,
+    using forms = WsList<WsPF<WfC2R1P5, WfC1R1, 1>, WsPF<WfX3R1, WfX3R1, 2>, WsPF<WfC2R1P5, WfC2R1P5, 3>,
                          WsPF<WfC3R1P5, WfC2R1P5, 4>>;
     static unsigned pick(unsigned, unsigned) { return 0; }
     static unsigned pair(unsigned ra, unsigned rb, unsigned mt) {
-        if (!g_ws_ck || ra != 1280 || rb != 512) return 0;
+        if (!ws_ck_on(mt) || ra != 1280 || rb != 512) return 0;
         return mt == 2 ? 1 : mt == 3 ? 2 : mt == 4 ? 3 : mt == 5 || mt == 6 ? 4 : 0;
     }
 };
-// OWN_MT_CK: the Q6_K q_a + kv pair (SEQ / cold): 2: 21.1 / 23.9 -> 17.5 / 19.4, 3: 19.2 / 34.1 -> 17.8 / 21.2,
-// 5: 35.2 / 52.4 -> 29.3 / 32.0, 6: 35.6 / 52.7 -> 30.6 / 35.9 (4 kept: 0.92x in SEQ). With OWN_MT_RIDE=1 the dot
-// rows ride q_a below OWN_MT_SKDOTS_MIN and WS_DOTS's q_a forms refuse the pair first (the separate launches stay)
+// OWN_MT_CK: the Q6_K q_a + kv pair (pa/ck2 bench_rd, SEQ). Below 4 tokens, with the dot rows (gemv_pair_m keeps the
+// pair where WsTab::pair picks one, though q_a alone has a WS_DOTS form): q_a + dots and kv in two launches
+// 27.2 -> 22.9 (T2 R1 PF5 x2) at 2, 37.1 -> 26.6 (T3 R1 x2) at 3; alone: G2 26.6 -> 23.8 (T2 R1 PF5 x2) at 4, ck's
+// 30.5 / 30.9 (tg95b timeline 31.7 at 5) -> 26.4 (T3 R1 PF5 x2) at 5 / 6 (G3: 35.1 / 35.5)
 template <> struct WsTab<6, 5120, WS_PAIR> {
-    using forms = WsList<WsPF<WfD2R2P10, WfD2R2P10, 1>, WsPF<WfK3R2, WfK3R2, 2>, WsPF<WfD5R2P10, WfD2R2P10, 3>>;
+    using forms = WsList<WsPF<WfD2R1P5, WfD2R1P5, 1>, WsPF<WfK3R1, WfK3R1, 2>, WsPF<WfD3R1P5, WfD3R1P5, 3>>;
     static unsigned pick(unsigned, unsigned) { return 0; }
     static unsigned pair(unsigned ra, unsigned rb, unsigned mt) {
-        if (!g_ws_ck || ra != 1280 || rb != 512) return 0;
-        return mt == 2 ? 1 : mt == 3 || mt == 6 ? 2 : mt == 5 ? 3 : 0;
+        if (!ws_ck_on(mt) || ra != 1280 || rb != 512) return 0;
+        return mt == 2 || mt == 4 ? 1 : mt == 3 ? 2 : mt == 5 || mt == 6 ? 3 : 0;
     }
 };
 // ws_rows<DK, KIND>: f(DenseRowsWS rows) when WsTab picks a form for this launch; false: none (the engine's form).
@@ -3313,6 +3342,16 @@ inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, f
     }
 }
 
+// ws_pair_id<DK>(ra, rb, mt): WsTab WS_PAIR's pick for this pair (0: none)
+template <typename DK> inline unsigned ws_pair_id(unsigned ra, unsigned rb, unsigned mt) {
+    using O = WsOf<DK>;
+    if constexpr (O::fmt == 0) return 0;
+    else {
+        using Tab = WsTab<O::fmt, O::cols, WS_PAIR>;
+        if constexpr (!requires { Tab::pair(0u, 0u, 0u); }) return 0;
+        else return Tab::pair(ra, rb, mt);
+    }
+}
 // ws_pair_rows (OWN_MT_CK): f(RowsPair<A, B>) with the first matrix's rows (dka: ra rows, xn 0) in WsTab WS_PAIR's
 // FA and the second's (rb rows) in FB when WsTab::pair picks a pair form; false: none (gemv_pair_m's DenseRowsG pair).
 // cap: as ws_rows

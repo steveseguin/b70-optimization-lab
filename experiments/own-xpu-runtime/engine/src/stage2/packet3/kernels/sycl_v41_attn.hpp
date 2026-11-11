@@ -3,7 +3,9 @@
 // (sycl_v41.hpp; one token) and as ScoreM + SoftmaxM + OutMC<SparseOutJC> (blocks), the same ring row, window
 // list and concatenated list as WindowAppendP, the same weights (kept slots). Included after sycl_v41.hpp.
 // Bench: tools/bench/bench_attn_a1.cpp (production against these at the engine's shapes: 8 and 16 heads, 1-16
-// tokens, 128-640 slots, normal and peaky data with skipped slots, stale NaN / inf in the score array; memcmp).
+// tokens, 128-640 slots, normal and peaky data with skipped slots, stale NaN / inf in the score array; memcmp;
+// RACE=n (attn a2): the one launch n times per shape the way the engine runs it, two layers sharing the score
+// array, consecutive window steps on each layer's ring, every launch checked on the card).
 //
 // The float operations per output and their order are production's:
 //   score   (head, slot): acc += q[j] * bf16(k[j]) for j = 0 .. 511 in order, then acc * (1 / sqrt(float(hd)));
@@ -31,8 +33,8 @@
 //     (w * x AND 0x80000000) is +0 or -0 for every product, NaN included.
 //  4. bf16 -> f32 as one shift (low half of a word) or one and (high half): the bits ops41::bf16 makes.
 //  5. SparseOutF (bottom): 1 and 2 in one launch. The score tiles come first; each output work-group loads its
-//     row pieces while the tiles run, then waits on a device counter for them (see there). One token (WIN): the
-//     window append in the same launch: one launch per layer instead of four.
+//     row pieces while the tiles run, then waits on a device counter for them (attn a2: release / acquire at device
+//     scope, see there). One token (WIN): the window append in the same launch: one launch per layer instead of four.
 #pragma once
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 
@@ -337,12 +339,25 @@ template <typename K> struct OutMJ {
 
 // ---- one launch (SparseOutF): the score tiles and the output in the same launch -------------------------------
 // Work-groups [0, m * nst) are SparseScoreT<HD, 16, WIN>'s tiles (token t = grp / gpt, as SparseScoreT), then m *
-// nout output work-groups (SparseOutJE's split: 16 heads x a 32-column span; token t = og / nout). A tile stores
-// its scores, fences (release, device scope), and its item 0 adds 1 to the card's counter cnt[0]. An output work-
+// nout output work-groups (SparseOutJE's split: 16 heads x a 32-column span; token t = og / nout). An output work-
 // group first loads its list and every slot's 16-byte pieces of its columns (the rows do not depend on the
-// scores), stores them into local memory as bf16 pairs, then its item 0 waits until cnt[0] reaches `target` (the
-// host's running count: the counts of every earlier launch on this card plus this launch's m * nst), then the
-// work-group fences (acquire, device scope), reads the raw scores, runs att_softmax_regs and the output chain.
+// scores), stores them into local memory as bf16 pairs, then waits for the tiles, reads the raw scores, runs
+// att_softmax_regs and the output chain.
+// The hand-over of the scores (attn a2). a1 gave wrong outputs in the engine (gate tg95; the two-launch form, which
+// hands the scores over at a launch boundary, was identical): its tiles fenced in every item and then counted in
+// item 0 after a barrier, its output work-groups polled in item 0 and fenced in every item after a barrier. Neither
+// fence pairs with the atomic in its own item, and the compiler (oneAPI 2026.1, AOT bmg_g31) merged both into the
+// barriers' work-group fences: the ISA had no GPU-scope fence at all (fence.ugm.none.group only), so nothing ordered
+// a tile's score stores before its count, nor kept an output's Xe core from serving the score array from its L1
+// (not coherent across the card's cores inside a launch). a2 uses the pattern the memory model defines (as
+// xchg_tail's): a tile stores its scores past the L1 (write hint L1 uncached), barrier (every sub-group's stores
+// happen before item 0's next step), item 0 fences (release, device scope) and adds 1 to cnt[0]; an output work-
+// group's item 0 polls cnt[0] until `target` (the host's running count: every earlier launch's m * nst on this card
+// plus this launch's), fences (acquire, device scope), then the barrier hands that on to every item before the score
+// loads. Both fences stay GPU-scope in the ISA (fence.ugm.none.gpu, fence.ugm.invalidate.gpu: the L1 invalidated).
+// WIN: no load in the launch reads a row the launch writes (the token's own ring row, stored at the end): the own
+// slot's and the skipped slots' row loads read the query instead (their values are never used: the own row comes
+// from kv, a skipped slot's products are masked).
 // Progress: the tiles have the lower work-group ids; the card dispatches work-groups in id order, so every tile is
 // dispatched (and finishes) before any output work-group can wait for it, resident or not. A wait past `spin`
 // polls stores 1 into err[0] (host memory; the engine fails the step) and the launch goes on with what it read.
@@ -355,6 +370,14 @@ template <typename K> struct OutMJ {
 // SHG: heads per score tile, 16 or 8 (8: sub-groups 8-15 only load rows, so a 16-head card runs one score chain per
 // vector engine instead of two; twice the tiles). Which SHG and register file the engine launches: att_f_s8 / att_f_grf.
 // The kernel arguments: every pointer is a direct argument (SparseOutFK's fields; no pointer inside a struct).
+// a store past the L1 (write hint L1 uncached; the L3's default): data another work-group of the same launch will
+// load (SparseOutF's scores); the same bits as a plain store
+template <typename T> [[gnu::always_inline]] inline void att_st_l3(T *p, T v) {
+    namespace sx = sycl::ext::oneapi::experimental;
+    namespace ix = sycl::ext::intel::experimental;
+    sx::annotated_ptr<T, decltype(sx::properties{ix::write_hint<ix::cache_control<ix::cache_mode::uncached, sx::cache_level::L1>>})> a{p};
+    a[0] = v;
+}
 template <int K0, int K, typename T> [[gnu::always_inline]] inline void att_bload_k(sycl::sub_group sg, const T *p, T (&x)[K]) {
     if constexpr (K0 < K) { // x[k] of lane l = p[32 k + l], block loads of 8 / 4 / 2 / 1 elements
         constexpr int R = K - K0, C = R >= 8 ? 8 : R >= 4 ? 4 : R >= 2 ? 2 : 1;
@@ -412,9 +435,13 @@ template <unsigned HD, int NI, bool WIN = false, typename A = ActF32, unsigned S
             const bool act = g < SHG && h < heads; // (SHG 8: sub-groups 8-15 load rows only)
             const float *qh = qt + (size_t)(act ? h : 0) * HD;
             const int s0 = slot < 0 ? 0 : slot;
-            const uintptr_t ra = reinterpret_cast<uintptr_t>(s0 < wr ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - wr) * HD);
-            // 1. rows g and g + 16 of the 32 (block loads; WIN: the own row's load reads the ring's stale row, not
-            //    used), the query, then the rows into local memory (the own row from kv: WindowAppendP's
+            // WIN: the own slot (list entry WR - 1) and a skipped slot load the query's first 1 KB instead of a ring
+            // row (this launch stores the own ring row: no load may read it; neither value is used)
+            const bool nrow = WIN && (slot < 0 || i == WR - 1);
+            const uintptr_t ra = nrow ? reinterpret_cast<uintptr_t>(qt)
+                                      : reinterpret_cast<uintptr_t>(s0 < wr ? kvw + (size_t)s0 * HD : kvc + (size_t)(s0 - wr) * HD);
+            // 1. rows g and g + 16 of the 32 (block loads; WIN: the own row's load reads the query, not used), the
+            //    query, then the rows into local memory (the own row from kv: WindowAppendP's
             //    bf16b(rd(kv[2 w])) | bf16b(rd(kv[2 w + 1])) << 16, words 16 g + l by sub-group g)
             uint32_t rv[2][HD / 64];
 #pragma unroll
@@ -470,12 +497,14 @@ template <unsigned HD, int NI, bool WIN = false, typename A = ActF32, unsigned S
                     }
                 }
                 const float scale = 1.0f / sycl::sqrt(float(hd));
-                if (slot >= 0) sc[(size_t)h * NI + i] = acc * scale;
+                if (slot >= 0) att_st_l3(sc + (size_t)h * NI + i, acc * scale); // past the L1 (see the top)
             }
-            // 3. done: release this tile's scores, then count it
-            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
+            // 3. done: every sub-group's stores, then item 0 releases them (device scope) and counts the tile
             sycl::group_barrier(it.get_group());
-            if (lid == 0) AR(*cnt).fetch_add(1u);
+            if (lid == 0) {
+                sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
+                AR(*cnt).fetch_add(1u);
+            }
             return;
         }
         // ---- an output work-group: SparseOutJE<HD, NI, 16, true>'s arithmetic
@@ -537,7 +566,9 @@ template <unsigned HD, int NI, bool WIN = false, typename A = ActF32, unsigned S
             int sl;
             if constexpr (WIN) sl = win_slot(i);
             else sl = ix[i];
-            V4 x = *reinterpret_cast<const V4 *>(row_addr(sl) + 8 * pj);
+            // WIN: the own slot and a skipped slot read the query's bytes instead of a ring row (as the tiles)
+            const uint16_t *ra = (WIN && (sl < 0 || i == WR - 1)) ? reinterpret_cast<const uint16_t *>(q) + base : row_addr(sl);
+            V4 x = *reinterpret_cast<const V4 *>(ra + 8 * pj);
             if constexpr (WIN) {
                 const bool own = i == WR - 1;
 #pragma unroll
@@ -564,15 +595,15 @@ template <unsigned HD, int NI, bool WIN = false, typename A = ActF32, unsigned S
                 }
             }
         }
-        // 4. wait for this launch's score tiles
+        // 4. wait for this launch's score tiles: item 0 polls, acquires (device scope), then the barrier
         if (lid == 0) {
             AR c(*cnt);
             long s_ = 0;
             while ((int32_t)(c.load() - target) < 0 && ++s_ < spin) {}
             if (s_ >= spin) err[0] = 1u;
+            sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::device);
         }
         sycl::group_barrier(it.get_group());
-        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::device);
         // 5. the softmax on the raw scores (att_softmax_regs), then the chain (SparseOutJE's)
         const float *wh = score + t * ss + (size_t)(act ? h : 0) * NI;
         float cwl[K];

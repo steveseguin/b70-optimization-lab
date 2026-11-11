@@ -178,6 +178,13 @@ bool mt_fin_qb = true;    // OWN_MT_FIN_QB (default on since tg90 for blocks <= 
 unsigned mt_ms_max = 16;  // OWN_MT_MS_MAX=m: OWN_MT_KVPAIR / OWN_MT_FIN_QB only in blocks of at most m tokens (tg90: with OWN_MT_WS
                           // they slowed the 3K read at 64 / 256 from 416 / 397 to 390 / 373 tok/s; checks gained ~0.5 %)
 unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at least m tokens (smaller: slot-major rows)
+// ---- rux-1 (2026-11-11; off by default, a bit-identical form): row-tiled expert-major routed rows in prompt blocks
+// (ops41sycl::RoutedUT, kernels/sycl_v41_routed_rux.hpp: each x load feeds R rows of one expert; the same sums in the
+// same order per (slot, row) as RoutedU3 / RoutedU). OWN_MT_RUX=1 (with OWN_MT_EU): blocks of at least OWN_MT_RUX_MIN
+// tokens (16) run the RUX selectors (RoutedIQ*SUX) in place of RoutedIQ*SU; OWN_MT_RUX_CAP=c (0: off) lowers those
+// blocks' group cap to c (the groups change, no output does: a slot's sum does not depend on its group).
+bool mt_rux = false;
+unsigned mt_rux_min = 16, mt_rux_cap = 0;
 bool ring_one = true;     // OWN_RING_ONE (default on since tg90; =0: off): commit_pending's ring moves in one launch (RingCommitN)
 bool dr_nowait = true;    // OWN_DR_NOWAIT (default on since tg90; =0: off): the draft step's embed does not wait for the card (no host buffer to protect)
 // ---- draft-head-1 (2026-11-11; DR_ANCHOR_ARG and DR_WS on by default since tg91, the rest off; the draft only proposes, the check decides)
@@ -588,8 +595,11 @@ bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std:
         if (mt_ws && !dr_step) { // OWN_MT_WS: false where dense_m gives either matrix a weight-stationary form
             using O = ops41sycl::WsOf<DK>;
             constexpr unsigned KA = std::is_same_v<RD, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN : ops41sycl::WS_DOTS;
-            if (ops41sycl::WsTab<O::fmt, O::cols, KA>::pick(nra, mt) ||
-                ops41sycl::WsTab<O::fmt, O::cols, ops41sycl::WS_PLAIN>::pick(nrb, mt))
+            // (unless WS_PAIR picks a pair form, OWN_MT_CK: pa/ck2, Q6_K's pair with the dot rows in one launch beats
+            // q_a + dots and kv in two at 2 / 3 tokens)
+            if (!ops41sycl::ws_pair_id<DK>(nra, nrb, mt) &&
+                (ops41sycl::WsTab<O::fmt, O::cols, KA>::pick(nra, mt) ||
+                 ops41sycl::WsTab<O::fmt, O::cols, ops41sycl::WS_PLAIN>::pick(nrb, mt)))
                 return;
             // OWN_MT_CK: both matrices' rows in check forms (WsTab WS_PAIR), still one launch, the rider first
             if (ops41sycl::ws_pair_rows(dk, nrb, wpa, wpb, x, xs, ya, ysa, yb, ysb, mt, MTA, [&](const auto &pr) {
@@ -771,8 +781,22 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             k.out2 = y2;
             k.nsl = nsl;
             k.xtok = (unsigned)xtok;
+            if constexpr (requires { k.tile_nsl; }) k.tile_nsl = 6 * mt_rux_min; // RoutedUT: tiles from OWN_MT_RUX_MIN tokens
             launch_rows<K::TAB>(c, npos, maxwg, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
         };
+        if (mt_rux && (unsigned)mt_n >= mt_rux_min) { // OWN_MT_RUX: the row-tiled forms (MT 6 / 8 / 16 by the cap)
+#define XR(TY, KERN, NB)                                                                                     \
+    if (e.type == iq3::Type::TY && cols == NB * 256) {                                                       \
+        if (cap <= 6) return gu(std::type_identity<KERN<NB, 6>>{});                                          \
+        if (cap <= 8) return gu(std::type_identity<KERN<NB, 8>>{});                                          \
+        return gu(std::type_identity<KERN<NB, 16>>{});                                                       \
+    }
+            XR(IQ2_XXS, RoutedIQ2XXSUX, 20) XR(IQ2_S, RoutedIQ2SUX, 20) XR(IQ3_XXS, RoutedIQ3XXSUX, 20)
+            XR(IQ2_XS, RoutedIQ2XSUX, 20) XR(IQ1_S, RoutedIQ1SUX, 20) XR(IQ2_XXS, RoutedIQ2XXSUX, 9)
+            XR(IQ2_S, RoutedIQ2SUX, 9) XR(IQ3_XXS, RoutedIQ3XXSUX, 9) XR(IQ2_XS, RoutedIQ2XSUX, 9) XR(IQ1_S, RoutedIQ1SUX, 9)
+#undef XR
+            throw std::runtime_error("multi-token step: no row-tiled routed kernel for " + wn);
+        }
 #define XU(TY, KERN, NB, MB)                                                                                 \
     if (e.type == iq3::Type::TY && cols == NB * 256) {                                                       \
         if (cap <= 6) return gu(std::type_identity<KERN<NB, 6>>{});                                          \
@@ -1643,6 +1667,7 @@ void tpm_layer(int L, int c) {
         unsigned cap = big ? mt_eu_big : mt_eu;
         const auto &eg = we(p + "ffn_gate_exps.weight");
         if (cap > 8 && eg.type == iq3::Type::IQ2_S && eg.cols == 20 * 256) cap = 8; // RoutedU<IQ2_S, 16> spills there
+        if (mt_rux && (unsigned)M >= mt_rux_min && mt_rux_cap && cap > mt_rux_cap) cap = mt_rux_cap; // OWN_MT_RUX_CAP
         eu_cap_c[c] = cap;
         ops41sycl::ExpertGroupM k{6u * (unsigned)M, cap};
         k.heavy = big && mt_eu_heavy;

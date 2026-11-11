@@ -11,6 +11,16 @@
 // SparseScoreT's; the engine's attn_w keeps them), WIN: the ring, widx, the list; every shape and both data kinds
 // (normal; peaky q * 6 with 40 early window slots and 1/8 of the chosen rows skipped), stale scores NaN / inf / huge,
 // out and ry NaN before each run.
+// RACE=n (attn a2): the one launch (F) the way the engine runs it, which the checks above do not: n steps per shape,
+// each step two layers A and B (their own queries, sinks, lists and rings) that SHARE F's score array, so every F
+// launch finds the other layer's scores there (the engine's attn_w); every launch checked on the card, bit for bit,
+// against production run beside it on its own copies. One token (default; ONLY tags "rw h.. n.. p.."): consecutive
+// steps p0, p0 + 1, ... on each layer's ring with the window append (each step reads the ring rows earlier steps'
+// launches stored; p0 = 36 crosses the window's first wrap), the rings, widx and lists compared at the end. RACE_M=1,2,..
+// (tags "rb h.. n.. M.."): blocks with fixed lists instead. SPOIL=1: before every F launch a kernel on every Xe core
+// reads F's score array and the layer's ring; RFLUSH=1: the cache flush before every step; CONC=1 | 2: copy-engine
+// copies | streaming kernels on a second queue during each shape. (a1's F failed in the
+// engine, gate tg95, not in the checks above: they ran one launch after a fresh stale fill.)
 // Time: GPU time per launch and the chain (first start -> last end), median of IT runs, the card's cache flushed
 // before each run (the engine's rows come cold), after a 400 ms warm-up (an idle card runs ~2.5x slower at first).
 // NB=128 | 256: a one-work-group kernel of that register file right before and after each form (the engine's
@@ -467,6 +477,189 @@ int main() {
             }
         }
     };
+    if (const char *re = std::getenv("RACE")) { // (see the top)
+        const int N = std::max(1, std::atoi(re));
+        const bool spoil = std::getenv("SPOIL") != nullptr, rflush = std::getenv("RFLUSH") != nullptr;
+        // CONC=1: copy-engine traffic (128 MiB copies) on a second queue while each shape runs; CONC=2: streaming
+        // kernels on it (memory traffic beside the launches, as the engine's peer pushes and copies are)
+        const int conc = std::getenv("CONC") ? std::atoi(std::getenv("CONC")) : 0;
+        sycl::queue q2{q.get_context(), q.get_device(), sycl::property_list{sycl::property::queue::in_order{}}};
+        const size_t ncb = (size_t)32 << 20; // floats (128 MiB) per copy buffer
+        float *cb0 = conc ? sycl::malloc_device<float>(ncb, q) : nullptr, *cb1 = conc ? sycl::malloc_device<float>(ncb, q) : nullptr;
+        if (conc) {
+            q.fill(cb0, 1.0f, ncb).wait();
+            q.fill(cb1, 2.0f, ncb).wait();
+        }
+        std::vector<unsigned> rms;
+        if (const char *e = std::getenv("RACE_M"))
+            for (const char *c = e; *c;) {
+                rms.push_back((unsigned)std::atoi(c));
+                while (*c && *c != ',') ++c;
+                if (*c) ++c;
+            }
+        const bool win = rms.empty();
+        uint32_t *bad = sycl::malloc_device<uint32_t>(4, q);
+        float *wF = sycl::malloc_device<float>(nw, q), *wP = sycl::malloc_device<float>(nw, q);
+        float *oP = sycl::malloc_device<float>(nq, q), *yP = sycl::malloc_device<float>(nq, q);
+        float *oF = sycl::malloc_device<float>(nq, q), *yF = sycl::malloc_device<float>(nq, q);
+        constexpr int NKV = 64; // the steps' key rows (kv), per layer
+        float *kvs = sycl::malloc_device<float>((size_t)NKV * 2 * HD, q);
+        {
+            std::vector<float> hk((size_t)NKV * 2 * HD);
+            for (auto &x : hk) x = nd(rng);
+            q.memcpy(kvs, hk.data(), hk.size() * 4).wait();
+        }
+        struct Lay {
+            float *q, *sinks;
+            int32_t *ixP, *ixF, *cidx, *widxP, *widxF;
+            uint16_t *ringP, *ringF;
+        };
+        Lay ly[2];
+        for (Lay &l : ly) {
+            l.q = sycl::malloc_device<float>(nq, q);
+            l.sinks = sycl::malloc_device<float>(QH, q);
+            l.ixP = sycl::malloc_device<int32_t>(nix, q);
+            l.ixF = sycl::malloc_device<int32_t>(nix, q);
+            l.cidx = sycl::malloc_device<int32_t>(512, q);
+            l.widxP = sycl::malloc_device<int32_t>(128, q);
+            l.widxF = sycl::malloc_device<int32_t>(128, q);
+            l.ringP = sycl::malloc_device<uint16_t>((size_t)128 * HD, q);
+            l.ringF = sycl::malloc_device<uint16_t>((size_t)128 * HD, q);
+        }
+        auto cmp = [&](const float *a, const float *c, size_t n, uint32_t step) {
+            q.parallel_for(sycl::range<1>(n), [=](sycl::item<1> it) {
+                const size_t i = it.get_linear_id();
+                if (sycl::bit_cast<uint32_t>(a[i]) != sycl::bit_cast<uint32_t>(c[i])) {
+                    using ARu = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                                 sycl::access::address_space::global_space>;
+                    ARu(bad[0]).fetch_add(1u);
+                    ARu(bad[1]).fetch_min(step);
+                }
+            });
+        };
+        auto spoil_k = [&](const float *w, size_t nwf, const uint16_t *rg, size_t nrg) { // 128 work-groups: every core
+            q.parallel_for(sycl::nd_range<1>(128 * 256, 256), [=](sycl::nd_item<1> it) {
+                float s = 0;
+                uint32_t u = 0;
+                for (size_t i = it.get_local_linear_id(); i < nwf; i += 256) s += w[i];
+                for (size_t i = it.get_local_linear_id(); i < nrg; i += 256) u += rg[i];
+                if (s == 12345.f && u == 7u) fo[0] = s;
+            });
+        };
+        bool ok = true;
+        std::printf("RACE: %d steps x 2 layers per shape, F's score array shared by the layers%s%s; %s\n", N, spoil ? ", SPOIL" : "",
+                    rflush ? ", RFLUSH" : "", win ? "one token with the window append (consecutive steps)" : "blocks");
+        struct RS { int nh, n, a; };
+        std::vector<RS> rs;
+        for (int nh : win ? std::vector<int>{16, 8} : std::vector<int>{16, 12, 8})
+            for (int n : {128, 160, 288, 640})
+                if (win)
+                    for (int p0 : {36, 1000}) rs.push_back({nh, n, p0});
+                else
+                    for (unsigned M : rms) rs.push_back({nh, n, (int)M});
+        for (const RS &r : rs) {
+            char tag[64];
+            if (win) std::snprintf(tag, sizeof tag, "rw h%d n%d p%d", r.nh, r.n, r.a);
+            else std::snprintf(tag, sizeof tag, "rb h%d n%d M%d", r.nh, r.n, r.a);
+            if (only && !std::strstr(tag, only)) continue;
+            const unsigned M = win ? 1u : (unsigned)r.a;
+            const int W = win || M == 1 ? 128 : 128 + 256;
+            const int nc = win && r.n > 128 ? 512 : 0;
+            for (int L = 0; L < 2; ++L) {
+                Lay &l = ly[L];
+                std::vector<float> hq(nq), hs(QH);
+                for (auto &x : hq) x = nd(rng) * (L ? 6.f : 1.f);
+                for (auto &x : hs) x = nd(rng) * 2.f;
+                q.memcpy(l.q, hq.data(), nq * 4).wait();
+                q.memcpy(l.sinks, hs.data(), QH * 4).wait();
+                if (win) {
+                    std::vector<int32_t> hc(512, -1);
+                    if (r.n == 640) {
+                        std::vector<int> pc(CROWS);
+                        for (int i = 0; i < CROWS; ++i) pc[i] = i;
+                        std::shuffle(pc.begin(), pc.end(), rng);
+                        for (int i = 0; i < 512; ++i) hc[i] = (i % 8 == 5) ? -1 : 128 + pc[i];
+                    } else if (r.n > 128) {
+                        const int len = r.n - 128 - (int)(rng() % 32);
+                        for (int i = 0; i < 512; ++i) hc[i] = i < len ? 128 + i : -1;
+                    }
+                    q.memcpy(l.cidx, hc.data(), 512 * 4).wait();
+                    std::vector<uint16_t> rg((size_t)128 * HD);
+                    for (auto &x : rg) x = f2bf(nd(rng));
+                    q.memcpy(l.ringP, rg.data(), rg.size() * 2).wait();
+                    q.memcpy(l.ringF, rg.data(), rg.size() * 2).wait();
+                    q.fill(l.ixP, (int32_t)-7, nix).wait();
+                    q.fill(l.ixF, (int32_t)-7, nix).wait();
+                    q.fill(l.widxP, (int32_t)-7, 128).wait();
+                    q.fill(l.widxF, (int32_t)-7, 128).wait();
+                } else {
+                    std::vector<int32_t> hix;
+                    fill_lists({r.n, M, r.nh}, kinds[L], W, hix);
+                    q.memcpy(l.ixP, hix.data(), nix * 4).wait();
+                    q.memcpy(l.ixF, hix.data(), nix * 4).wait();
+                }
+            }
+            q.memcpy(wP, stale.data(), nw * 4).wait();
+            q.memcpy(wF, stale.data(), nw * 4).wait();
+            q.fill(oP, 0.f, nq).wait();
+            q.fill(oF, 0.f, nq).wait();
+            q.fill(yP, 0.f, nq).wait();
+            q.fill(yF, 0.f, nq).wait();
+            const uint32_t init[4] = {0u, 0xffffffffu, 0u, 0u};
+            q.memcpy(bad, init, 16).wait();
+            const size_t no = (size_t)(M - 1) * QS + (size_t)r.nh * HD; // the outputs written (token stride QS)
+            const auto t0 = std::chrono::steady_clock::now();
+            for (int r2 = 0; conc && r2 < 24; ++r2) {
+                if (conc == 1) q2.memcpy(r2 % 2 ? cb0 : cb1, r2 % 2 ? cb1 : cb0, ncb * 4);
+                else
+                    q2.parallel_for(sycl::nd_range<1>(64 * 256, 256), [=](sycl::nd_item<1> it) {
+                        for (size_t i = it.get_global_linear_id(); i < ncb; i += 64 * 256) cb1[i] = cb0[i] + 1.0f;
+                    });
+            }
+            for (int s = 0; s < N; ++s) {
+                if (rflush) lsg(1024, flush_k);
+                for (int L = 0; L < 2; ++L) {
+                    const Lay &l = ly[L];
+                    Bufs bp{l.q, l.sinks, wP, nullptr, oP, yP, b.cs, b.sn, win ? l.ringP : b.kvw, b.kvc, l.ixP};
+                    Bufs bf{l.q, l.sinks, wF, nullptr, oF, yF, b.cs, b.sn, win ? l.ringF : b.kvw, b.kvc, l.ixF};
+                    std::vector<sycl::event> ev;
+                    const float *kv = kvs + ((size_t)(s % NKV) * 2 + L) * HD;
+                    if (win) run_win(0, r.n, r.nh, r.a + s, bp, kv, l.cidx, l.widxP, ev);
+                    else run_form(0, r.n, M, r.nh, W, bp, ev);
+                    if (spoil) spoil_k(wF, (size_t)(M - 1) * WS + (size_t)r.nh * r.n, bf.kvw, (size_t)W * HD);
+                    if (win) run_win(3, r.n, r.nh, r.a + s, bf, kv, l.cidx, l.widxF, ev);
+                    else run_form(3, r.n, M, r.nh, W, bf, ev);
+                    cmp(oP, oF, no, (uint32_t)(2 * s + L));
+                    cmp(yP, yF, no, (uint32_t)(2 * s + L));
+                }
+            }
+            q.wait();
+            const double ms = std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - t0).count();
+            q2.wait();
+            uint32_t hb[4];
+            q.memcpy(hb, bad, 16).wait();
+            size_t sb = 0;
+            if (win) // the rings, widx and lists at the end
+                for (const Lay &l : ly) {
+                    std::vector<uint16_t> g0((size_t)128 * HD), g1((size_t)128 * HD);
+                    std::vector<int32_t> c0(640), c1(640), x0(128), x1(128);
+                    q.memcpy(g0.data(), l.ringP, g0.size() * 2).wait();
+                    q.memcpy(g1.data(), l.ringF, g1.size() * 2).wait();
+                    q.memcpy(c0.data(), l.ixP, 640 * 4).wait();
+                    q.memcpy(c1.data(), l.ixF, 640 * 4).wait();
+                    q.memcpy(x0.data(), l.widxP, 128 * 4).wait();
+                    q.memcpy(x1.data(), l.widxF, 128 * 4).wait();
+                    sb += (g0 != g1) + (c0 != c1) + (x0 != x1);
+                }
+            if (hb[0] || sb) ok = false;
+            std::printf("%-18s %s: %u output words differ (first at launch %d)%s  [%.0f ms]\n", tag, hb[0] || sb ? "FAIL" : "ok", hb[0],
+                        hb[0] ? (int)hb[1] : -1, sb ? ", rings / lists differ at the end" : "", ms);
+            std::fflush(stdout);
+        }
+        if (ferr()) ok = false;
+        std::printf(ok ? "PASS\n" : "FAIL\n");
+        return ok ? 0 : 1;
+    }
     if (std::getenv("OUT")) { // the output alone (weights from production's score + softmax): JC against JE<false>
         bool ok = true;
         std::printf("output only, us per launch (median of %d%s): JC, JE\n", IT, flush ? ", L2 flushed" : "");

@@ -58,6 +58,7 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <thread>
+#include <tuple>
 #include <unistd.h>
 #include <unordered_map>
 #include <vector>
@@ -68,7 +69,9 @@
 #include "stage2/packet3/kernels/sycl_v41_attn.hpp" // sparse attention in one or two launches, bitwise production's (attn a1)
 #include "stage2/packet3/kernels/sycl_v41_qboff.hpp" // query-b rows of the 16-head cards from their neighbours (qb-off-1)
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
+#include "stage2/packet3/kernels/sycl_v41_k7.hpp" // K7: the stream mix's dot partials carried by the h exchange (OWN_K7)
 #include "stage2/packet3/step/plan_v41.hpp"
+#include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -319,6 +322,11 @@ public:
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
         int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
+        unsigned k7 = 0;        // OWN_K7 (off by default; the finish's outputs the same bits; sycl_v41_k7.hpp): one-token tp
+                                // steps compute the stream mix's 25 dot partials over each card's own model rows before
+                                // the h exchange (XchgPK7), the norm then runs alone (SkNormK7). Bits: 1 the FFN mix
+                                // (output-b exchange), 2 the next attention mix (ffn-rows exchange); 3 both. Needs the
+                                // push h exchange, OWN_SMALLK_DOTS=8, OWN_NORM_DOTS, no OWN_XTAIL / OWN_XWAIT
         bool mt_dsplit = true;  // OWN_MT_DSPLIT (default on since tg91; =0: off; prefill plan item C): in prompt blocks the stream mixes' dot rows
                                 // are split across the cards by tokens and gathered with the output-a and expert-act
                                 // pulls (backend_sycl_v41_mt.inc "OWN_MT_DSPLIT"); an option here because the arena
@@ -1401,6 +1409,25 @@ private:
         });
         kev(tile, kname<K>(), e);
     }
+    // rux-1: a packed-row kernel with a local table whose register mode is pinned (K::GRF = 128 or 256; the
+    // row-tiled routed forms, ops41sycl::RoutedUT) instead of the build's automatic choice. Same launch as the
+    // lambda below; the arguments are this functor's own fields (direct kernel arguments).
+    template <typename K> static constexpr unsigned pinned_grf() {
+        if constexpr (requires { K::GRF; }) return K::GRF;
+        else return 0;
+    }
+    template <unsigned G, typename K, typename... A> struct RowsGrfK {
+        K k;
+        std::tuple<A...> a;
+        sycl::local_accessor<float, 1> lt;
+        void operator()(sycl::nd_item<1> it) const {
+            std::apply([&](auto... v) { k(it, v..., &lt[0]); }, a);
+        }
+        auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+            return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<G>,
+                                                               sycl::ext::oneapi::experimental::sub_group_size<32>};
+        }
+    };
     // packed-row kernels: 16 sub-groups (rows) per work-group, optional local
     // table; max_wg > 0 caps the work-groups (the routed kernels loop over rows)
     template <size_t SLM, size_t WG = 512, typename K, typename... A>
@@ -1412,7 +1439,10 @@ private:
         if constexpr (SLM == 0)
             if (xt[tile].on) return launch_xt<true>(tile, sycl::nd_range<1>(n, WG), k, args...);
         auto e = qs[tile].submit([&](sycl::handler &hh) {
-            if constexpr (SLM > 0) {
+            if constexpr (SLM > 0 && pinned_grf<K>() != 0) {
+                sycl::local_accessor<float, 1> lt(SLM, hh);
+                hh.parallel_for(sycl::nd_range<1>(n, WG), RowsGrfK<pinned_grf<K>(), K, A...>{k, {args...}, lt});
+            } else if constexpr (SLM > 0) {
                 sycl::local_accessor<float, 1> lt(SLM, hh);
                 hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
                     k(it, args..., &lt[0]);
@@ -1554,6 +1584,87 @@ private:
             launch_wgl<64>(c, 26, 512, ops41sycl::SkNormDotsW<4>{}, (const float *)x, w, (float *)y, d.streams, d.fn, d.out);
         else
             launch_wgl<64>(c, 26, 512, ops41sycl::SkNormDotsW<8>{}, (const float *)x, w, (float *)y, d.streams, d.fn, d.out);
+        return true;
+    }
+    // ---- K7 (OWN_K7, sycl_v41_k7.hpp): the stream mix's dot partials over each card's own model rows ride the h
+    // exchange (XchgPK7 in place of XchgP); after HcPostPreP the pre-norm runs alone beside the partials' sum and
+    // SkDotsFF's check (SkNormK7 in place of SkNormDotsW<8>). Site 1: layer L's FFN mix (output-b exchange, cases
+    // 2 -> 3); site 2: layer L + 1's attention mix (layer L's ffn-rows exchange, cases 4 -> 5 -> L + 1's case 0).
+    // Every condition below depends on options, shapes and identically made uploads only, so every card makes the
+    // same choice (a card waiting for a K7 flag its peer never raises would time out).
+    struct K7Arm {
+        bool on = false;
+        int site = 0, layer = -1;
+        const float *fn = nullptr, *post = nullptr, *comb = nullptr;
+    };
+    K7Arm k7a[TILES];   // the next h push exchange carries the partials of this mix
+    struct K7Pend {
+        int site = 0, layer = -1;
+        uint32_t seq = 0; // the K7 exchange's number: the flags SkNormK7 waits for
+    };
+    K7Pend k7p[TILES];  // a K7 exchange ran; its consumer (site, layer) takes SkNormK7
+    static_assert(ops41sycl::K7_OFF >= 128 + 16 * 6 && ops41sycl::K7_OFF + 6 * ops41sycl::K7_SLOT <= 1024 &&
+                      ops41sycl::K7_SLOT >= 4 * ops41sycl::K7_ROWS && ops41sycl::K7_OFF % 4 == 0 &&
+                      ops41sycl::K7_SLOT % 4 == 0,
+                  "K7 rows inside the arena's flags block, past the exchange flags (16 d), the poison word (96) and "
+                  "OWN_QB_OFF's flags (128 + 16 d + g); 16-byte records");
+    bool k7_x_ok() const {
+        return o.k7 && std::is_same_v<act_t, float> && o.tp >= 2 && o.tp <= 6 && !o.xtail && !use_pull(XP_H, 1) &&
+               !xw_path && o.smallk_dots == 8 && o.norm_dots && o.small_fast && g.h == 5120 && HC_SEG == 8;
+    }
+    bool k7_norm_ok(int c, const act_t *x, const std::string &wn, const act_t *y) const { // norm_dots_sk's conditions
+        const float *w = wp<float>(c, wn);
+        return g.h == 5120 && HC_SEG == 8 && o.small_fast && al16(x) && al16(w) && al16(y) && x != y;
+    }
+    bool k7_site1(int c, int L) const { // case 3's norm_dots_sk path
+        if (!(o.k7 & 1u) || !k7_x_ok() || !post_pre_ok()) return false;
+        const std::string p = "blk." + std::to_string(L) + ".";
+        return hc_rides(c, p + "hc_ffn_") && k7_norm_ok(c, sc[c].x, p + "ffn_norm.weight", sc[c].xn);
+    }
+    bool k7_site2(int c, int L) const { // case 5's HcPostPreP and the next layer's case 0 norm_dots_sk path
+        const int Ln = L + 1;
+        if (!(o.k7 & 2u) || !k7_x_ok() || !post_pre_ok() || Ln == 1 || Ln == 14 || Ln >= o.layer_end) return false;
+        const std::string pn = "blk." + std::to_string(Ln) + ".";
+        return hc_rides(c, pn + "hc_attn_") && wgt[c].at(pn + "attn_q_a.weight").packed && attn_in_diet(c, pn) &&
+               k7_norm_ok(c, sc[c].x, pn + "attn_norm.weight", sc[c].xn);
+    }
+    // the h push exchange with the armed mix's partials (xchg's push branch; mode 0, one slot)
+    uint32_t k7_xchg(int c, const ops41sycl::XchgP &xp, int part, float *const *P) {
+        const K7Arm a = k7a[c];
+        k7a[c].on = false;
+        if (part != XP_H || xp.mode != 0 || xp.nslot != 1 || xp.r1 <= xp.r0 || xp.r1 - xp.r0 > 4 * 256 ||
+            (xp.r1 - xp.r0) % 4 || xp.r0 % 4)
+            throw std::runtime_error("OWN_K7: the armed exchange is not the one-token h push exchange");
+        const int xk = xw_arm(c, xp.mode, part); // (-1: K7 is off with OWN_XWAIT)
+        if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)xp.mode};
+        float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+        uint32_t *err = xerr[c];
+        const float *st = (const float *)streams[c];
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<uint32_t, 1> lt(32, hh);
+            hh.parallel_for(sycl::nd_range<1>((size_t)(1 + ops41sycl::K7_ROWS) * 256, 256),
+                            ops41sycl::XchgPK7{xp, p0, p1, p2, p3, p4, p5, err, st, a.post, a.comb, a.fn, lt});
+        });
+        kev(c, kname<ops41sycl::XchgPK7>(), e);
+        k7p[c] = {a.site, a.layer, xp.seq};
+        return xp.seq;
+    }
+    // the pre-norm alone + the mix's rows from the gathered partials (in place of norm_dots_sk); after HcPostPreP
+    bool k7_norm(int c, const act_t *x, const std::string &wn, act_t *y, const std::string &prefix) {
+        const float *w = wp<float>(c, wn), *fn = wp<float>(c, prefix + "fn.weight");
+        const uint32_t seq = k7p[c].seq;
+        const float *st = (const float *)streams[c];
+        double *d25 = sc[c].d25;
+        float *mine = xarena[c];
+        uint32_t *err = xerr[c];
+        const int n = o.tp;
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<uint32_t, 1> lt(64, hh);
+            hh.parallel_for(sycl::nd_range<1>(2 * 512, 512),
+                            ops41sycl::SkNormK7{n, c, seq, XSPIN, 0u, (const float *)x, w, (float *)y, st, fn, d25,
+                                                mine, err, lt});
+        });
+        kev(c, kname<ops41sycl::SkNormK7>(), e);
         return true;
     }
     // tp phase 0 in four launches (see tp_phase): shapes the fused forms are written for
@@ -3468,6 +3579,9 @@ private:
         }
         for (int c = 0; c < N; ++c) qs[c].wait();
         tl_setup(); // OWN_TIMELINE
+        if (o.k7 && !k7_x_ok())
+            std::fprintf(stderr, "OWN_K7=%u: off (needs the push h exchange, OWN_SMALLK_DOTS=8, OWN_NORM_DOTS, no OWN_XTAIL "
+                                 "or OWN_XWAIT)\n", o.k7);
         if (xw_path && !(xw_f = std::fopen(xw_path, "w"))) throw std::runtime_error("OWN_XWAIT: cannot write the file");
         if (o.tp_threads)
             for (int c = 0; c < N; ++c) tp_th.emplace_back([this, c] { tp_worker(c); });
@@ -3535,6 +3649,7 @@ private:
         }
         if (xr2[c].on) throw std::runtime_error("OWN_MT_DSPLIT: a second region needs a pull exchange");
         const ops41sycl::XchgP xp{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode};
+        if (k7a[c].on) return k7_xchg(c, xp, part, P); // OWN_K7: this exchange carries a mix's dot partials
         const int xk = xw_arm(c, mode, part); // OWN_XWAIT slot (-1: none)
         if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)mode};
 #ifdef OWN41_XWAIT
@@ -3687,7 +3802,10 @@ private:
             }
             bool dots_done = false; // the mix's dot rows already ran (in the norm's launch)
             if (x_ready[c]) { // the previous FFN's hc_post already collapsed the streams into s.x (HcPostPreP)
-                if (ride && o.norm_dots && o.smallk_dots && attn_in_diet(c, p))
+                // OWN_K7: the previous layer's ffn-rows exchange brought this mix's partials
+                if (k7p[c].site == 2 && k7p[c].layer == L && ride && o.norm_dots && o.smallk_dots && attn_in_diet(c, p))
+                    dots_done = k7_norm(c, s.x, p + "attn_norm.weight", s.xn, p + "hc_attn_");
+                if (!dots_done && ride && o.norm_dots && o.smallk_dots && attn_in_diet(c, p))
                     dots_done = norm_dots_sk(c, s.x, p + "attn_norm.weight", s.xn, p + "hc_attn_");
                 if (!dots_done && ride && o.norm_dots && attn_in_diet(c, p))
                     dots_done = norm_ex(c, s.x, p + "attn_norm.weight", s.xn, hc_dots(c, p + "hc_attn_"));
@@ -3696,6 +3814,7 @@ private:
             } else {
                 pre_norm(c, (const float *)s.cur_pre, p + "attn_norm.weight");
             }
+            k7p[c].site = 0; // OWN_K7: the partials of a mix never outlive its consumer
             prof("hc_pre_norm", c);
             if (ride && attn_in_diet(c, p)) {
                 // four launches: query-a + key/value rows (+ the mix's dot rows); both norms; query-b rows
@@ -3897,7 +4016,10 @@ private:
             xl2_arm(c, 2, p + "ffn_gate_inp.weight");
             xl2_arm(c, 2, p + "ffn_gate_shexp.weight");
             xl2_arm(c, 2, p + "ffn_up_shexp.weight");
+            if (o.k7 && k7_site1(c, L)) // OWN_K7: the FFN mix's partials ride the output-b exchange
+                k7a[c] = {true, 1, L, wp<float>(c, p + "hc_ffn_fn.weight"), s.post_a, s.comb_a};
             end_xtail(c);
+            if (k7a[c].on) throw std::runtime_error("OWN_K7: the output-b exchange did not take the partials");
             prof("xchg", c);
             break;
         case 3: {
@@ -3910,7 +4032,9 @@ private:
                        (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
                        (const float *)s.pre_a, s.x);
                 prof("hc_post", c);
-                if (o.norm_dots && o.smallk_dots)
+                if (k7p[c].site == 1 && k7p[c].layer == L) // OWN_K7: the output-b exchange brought this mix's partials
+                    ffn_dots_done = k7_norm(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
+                if (!ffn_dots_done && o.norm_dots && o.smallk_dots)
                     ffn_dots_done = norm_dots_sk(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
                 if (o.norm_dots && !ffn_dots_done)
                     ffn_dots_done = norm_ex(c, s.x, p + "ffn_norm.weight", s.xn, hc_dots(c, p + "hc_ffn_"));
@@ -3924,6 +4048,7 @@ private:
                 }
                 pre_norm(c, (const float *)(o.hc_legacy ? s.pre_f : s.pre_a), p + "ffn_norm.weight");
             }
+            k7p[c].site = 0; // OWN_K7: the partials of a mix never outlive its consumer
             prof("hc_pre_norm", c);
             // with the expert gate + up launch the FFN mix's finish rides there (a long launch, finish first)
             const bool fin_pair = ride && o.fin_move && o.exp_pair &&
@@ -3974,7 +4099,11 @@ private:
                 xl2_arm(c, 8, pn + "attn_q_a.weight");
                 xl2_arm(c, 8, pn + "attn_kv.weight");
             }
+            if (o.k7 && k7_site2(c, L)) // OWN_K7: the next attention mix's partials ride the ffn-rows exchange
+                k7a[c] = {true, 2, L + 1, wp<float>(c, "blk." + std::to_string(L + 1) + ".hc_attn_fn.weight"), s.post_f,
+                          s.comb_f};
             end_xtail(c);
+            if (k7a[c].on) throw std::runtime_error("OWN_K7: the ffn-rows exchange did not take the partials");
             prof("xchg", c);
             break;
         }

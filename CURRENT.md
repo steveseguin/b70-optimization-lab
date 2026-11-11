@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**November 11, 2026 11:57-13:31 EST — DeepSeek V4.1 six cards: tp96 gates tg96 + tg96b, three new levers bitwise.**
+- New attention kernel (`OWN_ATT_T=1`, attn-a2), cheaper checks (`OWN_MT_CK=1`, ck-2) and faster prompt expert
+  kernels (`OWN_MT_RUX=1 OWN_MT_RUX_CAP=6`, rux-1): every trace identical, 38 / 38 guessing runs the same as plain.
+  Best now: plain 101.2 / 101.4 tok/s, guessing code 139.2 / 139.3 (was 133.0 / 133.4), analysis 153.8 / 153.6
+  (was 146.9 / 148.0), prose 117.3 (was 111.8), 3K read 497 tok/s (was 472). All three become defaults in tp97.
+  K7-1 timed out in every run (k7-2 being benched). Results: experiments/own-xpu-runtime/data/dsv41-bringup-20261109/round19-tg96/.
+
 **November 11, 2026 12:36-12:48 EST — card 5 (e3) copy-engine fault, our software; recovered, probe passed.**
 - A helper's queued one-card bench started in the ~1.5 s gap while one six-card gate (tg96) handed the cards to the
   next (tg96b), was stopped 0.8 s later when the gate came back, and its in-flight copy read freed memory ("Engine

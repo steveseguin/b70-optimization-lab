@@ -308,6 +308,9 @@ Worked (all bit-identical):
 | A candidate vocabulary for the draft's head (`OWN_DR_VOCAB`, 49,897 ids + the prompt's, draft-head-1, tg91) | draft -> 1.83 ms (1.78 with DR_WS); code 128.95 (129.62 with all), analysis 141.97 (142.40), prose 107.77 -> 108.09; the guesses and answers stayed the same on all four prompts, but the trimmed head can in principle pick a different guess, so it stays opt-in (draft-only, answers always checked by the target) | +0.8-2.6 %; opt-in |
 | Block-step norms in the one-token fast forms, one work-group per token (`OWN_MT_SKNORM=15`, `OWN_MT_HCPP=1`, skn-1, tg93) | checks: code 128.7-129.3 -> 132.6-132.8 tok/s, analysis 142.3-142.6 -> 147.1-147.2, 3K 127.6 -> 136.0; check 15.8 -> 15.3 ms (code) | +3.3 % guessing (+6.5 % on 3K); default from tp94 |
 | The mix split + SKDOTS only from 4 tokens (`OWN_MT_DSPLIT_MIN=4`, `OWN_MT_SKDOTS_MIN=4`, tune92) | 2-token checks 15.08 -> 14.58 ms; code 129.06 -> 130.24, analysis 142.70 -> 143.59 | +0.6-0.9 %; default from tp94 |
+| Attention scores and softmax in one launch with an uncached hand-over between work-groups (`OWN_ATT_T=1`, attn-a2, tg96b) | plain 99.5 / 97.9 -> 101.2 / 101.4 tok/s; writing after a 3K prompt 87.5 / 90.5 -> 92.9 / 93.0; checks -0.15 to -0.3 ms. a1 (cached hand-over) was not bitwise: L1 is not coherent across work-groups of one launch | +2-3 % plain, +3-6 % after long prompts; default in tp97 |
+| Check forms that keep the riders' fast paths at 2-6 tokens (`OWN_MT_CK=1`, ck-2, tg96b): q_b WS_DOTS picks under the mix finish, the ExpertGroupM / push launches folded | 2-token check 14.07 -> 13.37 ms (13.05 with ATT); code 133.0 / 133.4 -> 137.5 / 137.5, analysis 146.9 / 148.0 -> 152.1 / 152.5; with ATT: 139.2 / 139.3 and 153.8 / 153.6, prose 111.8 -> 117.3, after 3K 131.2 -> 142.2 | +3.4 % alone, +4.2-8.4 % with ATT; default in tp97 (all sizes; skipping 3-token checks is slower) |
+| Fewer instructions per weight in the prompt expert kernels (`OWN_MT_RUX=1 OWN_MT_RUX_CAP=6`, rux-1, tg96b; launches of >= 16 tokens) | 3K read 7.09 s -> 6.73 s (472 -> 497 tok/s); blocks of 128 / 256 add 0.1 / 0.4 % | +5.3 % prompt; default in tp97 |
 | Small host copies off the card's queue (a second in-order queue per card, the launch waits by event) | `OWN_ENG_CQ` + `OWN_PRE_K` (tg88): engram rows 242 -> 70-80 us of host time per step; one-token timeline span 11.01 -> 10.75 ms, in-step idle 0.47 -> 0.30 ms | plain +0.3-0.5 % (91.77 -> 92.27 tok/s); default since tp89 |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
 | Packed weight rows for sub-group block loads | §p7-p10 era, 9 -> 28 tok/s | large |
@@ -338,6 +341,8 @@ Did not work (and why):
 | The draft's rows at 5 work-groups per row (`OWN_DR_TGW=5`, tg91) | slower: code 127.28, analysis 139.06 |
 | Attention heads split between card pairs from 2 tokens on (`OWN_TP_HEADS_MIN=2`, tune91) | neutral: the pair exchange costs about what it saves at 2 tokens (check of 1 guess 14.54-14.64 -> 14.74-14.78 ms); from 3 / 4 tokens on it wins +1.2 % (scoreboard) |
 | q_b offload: the light cards compute 2-4 of each 16-head card's query heads first and push them (`OWN_QB_OFF=k`, qb-off-1, H8, tg95b) | bitwise, no gain (plain within noise; zero-guess checks 10.54 -> 10.56 ms). Timelines (qboff/qbdiag.py, tg93 vs tg95b zero-guess checks): the heavy cards were last at output-a by 13.1 us per layer (89 %); k = 4 saved them 6.7 us (q_b 23.7 -> 15.8) but cost each light card 13.1 us (rows 7.9, rope 1.0, push 4.0, gaps 0.4), so the light cards became last; layer -1.75 us. A row moved out of a big launch saves ~1.9 ns, the same row in a small helper launch costs ~3.8 ns, plus ~5.3 us fixed per layer: best case ~1 % (k = 2 / 3). The whole output-a imbalance is ~13 us per layer (~0.5 ms per step). Closed. |
+| K7-1: the stream mix's dot sums ride the exchanges (`OWN_K7`, tg96) | every run ended with "exchange timed out": the partial sums shared cache lines with other cards' slots and were read in the same launch that waited for them (stale L1, lost flags). k7-2 moves them like XchgP rows, read one launch later; bench pending |
+| Runtime switches on top of ck-2 (tg96b: `OWN_MT_XPUSH=0/2`, `OWN_XPULL_MIN=6912`, `OWN_MT_SKDOTS_MIN=2/3`, `OWN_MT_FIN_QB=0`) | within +-0.2 % of ck alone or slower (XPUSH=2 -3.9 %, FIN_QB=0 -0.9 %); the current values stay |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |
@@ -345,8 +350,15 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~10:30 EST)
+## Work in flight (2026-11-11, updated 13:35 EST)
 
+- Done (tg96 11:57-12:36 + tg96b to 13:31:22, tp96; `data/.../round19-tg96/`): attn-a2 (`OWN_ATT_T=1`), ck-2
+  (`OWN_MT_CK=1`) and rux-1 (`OWN_MT_RUX=1`) all bitwise (38 / 38 guessing SAME, 34 guess logs equal). Best now:
+  plain 101.2 / 101.4 tok/s, code 139.2 / 139.3, analysis 153.8 / 153.6, prose 117.3, guessing after 3K 142.2,
+  3K read 497 (6.73 s). Check ms by guesses (code, ATT + CK): 10.41 / 13.05 / 15.45 / 17.59 / 20.28 / 22.66. K7-1
+  timed out in every run (k7-2 in its bench). Next: tp97 with the three as defaults, plus k7-2, qb-off-2 (heavy
+  cards' q_b rows shared in checks, est. 0.29-0.57 ms per check) and eg-fold-1 when their one-card checks pass.
+  A CPU timeline study of the remaining 2-token overhead runs in `dsv41-work/ck2tok96/`.
 - Done (tg92, 2026-11-11 08:02-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
   guessing SAME. Code 128.70 / 128.97, analysis 142.22 / 142.84; vocabulary list 130.0-130.7 / 144.9-145.0; 3K read
   469.1 (32: 426, 128: 444). Check ms by guesses (code d92): 0: 10.57, 1: 15.03-15.10, 2: 17.24, 3: 18.92-18.97,

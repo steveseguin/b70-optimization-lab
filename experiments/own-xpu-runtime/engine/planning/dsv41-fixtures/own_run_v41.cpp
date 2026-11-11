@@ -240,6 +240,13 @@ int main(int argc, char **argv) {
     // the pre-norm + the stream mix's dot rows by a proven fast sum, block size K = 8 or 4 (the finish's outputs the
     // same bits; default 8 since tg89, =0: off): OWN_SMALLK_DOTS=8
     if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
+    // K7 (2026-11-11, /home/steve/dsv41-work/k7; off by default, the same bits): one-token steps compute the stream mix's
+    // dot partials over each card's own model rows before the h exchange that gathers them; OWN_K7=bits: 1 the FFN mix
+    // (output-b exchange), 2 the next attention mix (ffn-rows exchange), 3 both
+    if (const char *e = getenv("OWN_K7")) {
+        opt.k7 = (unsigned)atoi(e);
+        if (opt.k7 > 3) die("OWN_K7: 0..3");
+    }
     // prompt blocks: the stream mixes' dot rows split across the cards by tokens, gathered with the output-a and
     // expert-act pulls (pcd-1, prefill plan item C; default on since tg91, =0: off): OWN_MT_DSPLIT; the cards' token weights per mix
     // OWN_MT_DSPLIT_WA / OWN_MT_DSPLIT_WF="w0,w1,w2,w3,w4,w5" (unset: attention 4 on the cards with fewer heads, else 1)
@@ -507,8 +514,22 @@ int main(int argc, char **argv) {
         // weight-stationary dense rows for the matrix shapes and block sizes ops41sycl::WsTab lists (default on since
         // tg90: 3K read 353 -> 416 tok/s at blocks of 64; OWN_MT_WS=0: off)
         be.mt_ws = getenv("OWN_MT_WS") ? atoi(getenv("OWN_MT_WS")) != 0 : true;
-        // the guessing checks' blocks (2 .. 6 tokens) take WsTab's check picks (pa/ck bench_ck; OWN_MT_CK=1: on)
-        ops41sycl::g_ws_ck = getenv("OWN_MT_CK") && atoi(getenv("OWN_MT_CK")) != 0;
+        // the guessing checks' blocks (2 .. 6 tokens) take WsTab's check picks (pa/ck, pa/ck2): OWN_MT_CK=1 every block
+        // size, OWN_MT_CK=n (n != 1; 0x.. allowed) the sizes M whose bit M - 2 is set, OWN_MT_CK_MS="2,4,5,6" those
+        // sizes; OWN_MT_CK_FIN (the same forms; default: OWN_MT_CK's sizes): q_b's WS forms with the mix's finish
+        auto ck_mask = [](const char *v) {
+            const unsigned long n = strtoul(v, nullptr, 0);
+            return n == 1 ? 0x1fu : (unsigned)(n & 0x1fu);
+        };
+        if (const char *e = getenv("OWN_MT_CK")) ops41sycl::g_ws_ck_mask = ck_mask(e);
+        if (const char *e = getenv("OWN_MT_CK_MS")) {
+            unsigned m = 0;
+            for (const char *c = e; *c; ++c)
+                if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
+            ops41sycl::g_ws_ck_mask = m;
+        }
+        ops41sycl::g_ws_ckf_mask = ops41sycl::g_ws_ck_mask;
+        if (const char *e = getenv("OWN_MT_CK_FIN")) ops41sycl::g_ws_ckf_mask = ck_mask(e);
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
@@ -553,6 +574,11 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_FIN_QB")) be.mt_fin_qb = atoi(e) != 0;         // attention mix finish in q_b's launch
         if (const char *e = getenv("OWN_MT_MS_MAX")) be.mt_ms_max = (unsigned)atoi(e);    // KVPAIR / FIN_QB up to m tokens
         if (const char *e = getenv("OWN_MT_EU_MIN")) be.mt_eu_min = (unsigned)atoi(e);     // OWN_MT_EU from m tokens on
+        // rux-1 (off by default): row-tiled routed rows from OWN_MT_RUX_MIN tokens (16), group cap OWN_MT_RUX_CAP there (0: as set)
+        if (const char *e = getenv("OWN_MT_RUX")) be.mt_rux = atoi(e) != 0;
+        if (const char *e = getenv("OWN_MT_RUX_MIN")) be.mt_rux_min = (unsigned)std::max(1, atoi(e));
+        if (const char *e = getenv("OWN_MT_RUX_CAP")) be.mt_rux_cap = (unsigned)atoi(e);
+        if (be.mt_rux_cap > 16) die("OWN_MT_RUX_CAP: at most 16 slots per group");
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
         // draft-head-1 (DR_ANCHOR_ARG + DR_WS on by default since tg91, the rest off; the draft only proposes, the check keeps the answers)
