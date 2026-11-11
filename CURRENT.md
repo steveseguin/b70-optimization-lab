@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**November 11, 2026 ~10:30 EST — DeepSeek V4.1: build tp94 and its six-card check (tg94) queued.**
+**November 11, 2026 ~10:15 EST — DeepSeek V4.1: build tp94 queued; at 10:32 replaced by tp95 (tp94 + check rows + query-row offload, all switches off by default) and its six-card check tg95.**
 - tp94 = tp93 with the new defaults (norm kernels in checks, mixing share-out from 4 words) plus the attention helper's
   one-launch attention as a switch (`OWN_ATT_T=1`, off by default). One card bench: the attention per layer
   15.2 -> 8.3 us (one word), bit for bit in every check; expected ~+2.5 % plain, ~+1-1.5 % guessing.
