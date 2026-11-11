@@ -344,7 +344,11 @@ Did not work (and why):
   195 at 256). The decode is shared per expert group already; the per-slot x loads and FMA chains re-done for every
   row are what costs, and the dense WS rows show the same. Byte and FMA floors are far below. Helper (rux,
   2026-11-11): row tiles / x staged in local memory for the prompt expert kernels, bit for bit.
-- Queue: tune92 (mix-split thresholds, running), then tg93 (tp93 = tp92 + skn-1, opt-in).
+- Done (tune92, `data/.../round19-tune92/`): 24 / 24 SAME, guess logs equal. Means of 2 runs (code / analysis):
+  thresholds 2/2 (tp92 default) 129.06 / 142.70; 4/4 130.24 / 143.59; 3/3 130.00 / 143.46; 5/5 129.78 / 143.22;
+  DSPLIT 2 + SKDOTS 4 129.46 / 143.36; DSPLIT 4 + SKDOTS 2 129.19 / 142.84. Default from tp94: both from 4 tokens
+  (+0.6-0.9 %). Checks of 2 tokens: 15.08 -> 14.58 ms (code).
+- Running: tg93 (tp93 = tp92 + skn-1, opt-in; arms with SKN and SKN + thresholds 3/3, 4/4).
 
 ### Earlier entries (07:41)
 
