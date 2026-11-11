@@ -1,5 +1,25 @@
 # Current Workspace State
 
+**November 11, 2026 ~10:00 EST — DeepSeek V4.1 on six cards: guessing 133 (code) / 147 (analysis) / 136 (3,000-token document) tokens/s; text the same everywhere.**
+- New build tp93 passed every test (all traces identical, 20 of 20 guessing runs word for word the plain answers, no faults).
+- What helped: each check of guessed words ran its number-scaling steps (norms) with a slow general kernel. A helper rewrote them to use the fast single-word kernels, one per word, with the same bits.
+
+  | Prompt | Before (tokens/s) | Now (tokens/s) |
+  |---|---|---|
+  | Code | 128.7-129.3 | 133.1-133.2 |
+  | Analysis | 142.3-142.6 | 147.3-147.5 |
+  | Short story | 108.2 | 111.7 |
+  | 3,000-token document | 127.6 | 136.0 |
+
+- The best point for sharing out the mixing step is checks of 4 words or more (sweep of 24 runs, all the same text).
+- Both become the default in the next build.
+- Measured this morning:
+  - Brand-new text costs almost nothing extra (0-2 %): the disk reads for the lookup table overlap the card work.
+  - In plain answers the four lighter cards wait about 0.9 ms per word for the two cards that do twice the attention work. Fixing that needs extra card-to-card copies, so it is parked.
+  - Prompt reading: the expert weights take 46 % of the time, and the cost per word does not fall with bigger blocks. A helper is rewriting those kernels so each loaded input is reused.
+- Plain answers: about 98-99.5 tokens/s. Prompts: 471 tokens/s.
+- Helpers: attention (one launch instead of four per layer, ~600 -> ~360 us per word on one card), weights inside checks, prompt expert kernels.
+
 **November 11, 2026 ~08:37 EST — DeepSeek V4.1 on six cards: new build tp92 passed every test; guessing 129 (code) / 143 (analysis) tokens/s; prompts 469 tokens/s.**
 - tp92 turns on by default what tp91 tested: the shared-out mixing step (also inside checks) and the guesser's faster weight layout. All traces identical, all 20 guessing runs word for word the plain answers, no faults.
 - Guessing: code 128.7-129.0 tokens/s (was 128.0), analysis 142.2-142.8 (was 138.7). With "likely words only" (still off by default): code 130.0-130.7, analysis 144.9-145.0.

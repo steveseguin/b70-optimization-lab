@@ -278,6 +278,8 @@ Worked (all bit-identical):
 | Attention heads split between card pairs in checks of >= 3 / 4 tokens (`OWN_TP_HEADS_MIN=3` / `4`, tune91; the prompt blocks' XchgPair split) | code 126.6 (mean of 2 default runs) -> 128.6 (hm3) / 128.1 (hm4, 2 runs), analysis 138.9 -> 140.7 / 140.5; checks of 4-6 tokens 0.2-0.4 ms shorter; 16 of 16 SAME, guess logs equal | +1.2 %; candidate default for tp93 (tg92 checks hm3 again) |
 | The draft's matrices in the weight-stationary forms (`OWN_DR_WS=1`, draft-head-1, tg91) | draft 2.13 -> 1.96 ms per round; code 127.96 -> 128.41, analysis 138.74 -> 140.63 | +0.4-1.4 %; default in tp92 with `OWN_DR_ANCHOR_ARG=1` (the chain's anchor by value: 128.22 / 140.41) |
 | A candidate vocabulary for the draft's head (`OWN_DR_VOCAB`, 49,897 ids + the prompt's, draft-head-1, tg91) | draft -> 1.83 ms (1.78 with DR_WS); code 128.95 (129.62 with all), analysis 141.97 (142.40), prose 107.77 -> 108.09; the guesses and answers stayed the same on all four prompts, but the trimmed head can in principle pick a different guess, so it stays opt-in (draft-only, answers always checked by the target) | +0.8-2.6 %; opt-in |
+| Block-step norms in the one-token fast forms, one work-group per token (`OWN_MT_SKNORM=15`, `OWN_MT_HCPP=1`, skn-1, tg93) | checks: code 128.7-129.3 -> 132.6-132.8 tok/s, analysis 142.3-142.6 -> 147.1-147.2, 3K 127.6 -> 136.0; check 15.8 -> 15.3 ms (code) | +3.3 % guessing (+6.5 % on 3K); default from tp94 |
+| The mix split + SKDOTS only from 4 tokens (`OWN_MT_DSPLIT_MIN=4`, `OWN_MT_SKDOTS_MIN=4`, tune92) | 2-token checks 15.08 -> 14.58 ms; code 129.06 -> 130.24, analysis 142.70 -> 143.59 | +0.6-0.9 %; default from tp94 |
 | Small host copies off the card's queue (a second in-order queue per card, the launch waits by event) | `OWN_ENG_CQ` + `OWN_PRE_K` (tg88): engram rows 242 -> 70-80 us of host time per step; one-token timeline span 11.01 -> 10.75 ms, in-step idle 0.47 -> 0.30 ms | plain +0.3-0.5 % (91.77 -> 92.27 tok/s); default since tp89 |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
 | Packed weight rows for sub-group block loads | §p7-p10 era, 9 -> 28 tok/s | large |
@@ -348,7 +350,13 @@ Did not work (and why):
   thresholds 2/2 (tp92 default) 129.06 / 142.70; 4/4 130.24 / 143.59; 3/3 130.00 / 143.46; 5/5 129.78 / 143.22;
   DSPLIT 2 + SKDOTS 4 129.46 / 143.36; DSPLIT 4 + SKDOTS 2 129.19 / 142.84. Default from tp94: both from 4 tokens
   (+0.6-0.9 %). Checks of 2 tokens: 15.08 -> 14.58 ms (code).
-- Running: tg93 (tp93 = tp92 + skn-1, opt-in; arms with SKN and SKN + thresholds 3/3, 4/4).
+- Done (tg93, 2026-11-11 09:26-09:59, tp93 = tp92 + skn-1 opt-in; `data/.../round19-tg93/`, commit 44d35b860): all
+  traces identical, 20 / 20 SAME, guess logs equal. `OWN_MT_SKNORM=15 OWN_MT_HCPP=1`: code 128.66 / 129.34 -> 132.80
+  / 132.61, with thresholds 4/4 133.16 / 133.10; analysis 142.28 / 142.59 -> 147.12 / 147.19 (4/4: 147.51 / 147.30);
+  prose 108.15 -> 111.74; 3K guessing 127.63 -> 135.96; 3K read 468.0-469.0 -> 470.5-471.2; plain unchanged. Check
+  ms per round 15.8 -> 15.3 (code), 18.0 -> 17.3 (analysis). Defaults from tp94: SKNORM=15, HCPP=1, thresholds 4.
+- Next: tp94 = these defaults + the attention helper's one-launch attention (`SparseOutF`, opt-in) when its card-3
+  checks pass; then the ws helper's check rows and the rux prompt expert kernels.
 
 ### Earlier entries (07:41)
 
