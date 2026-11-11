@@ -187,8 +187,12 @@ Prompt reading:
   it can form its slice of the new streams and the 25 dot partials (and the norm's sum of squares) over those
   columns, and ride them in the same pull as a second region (pcd-1's `XchgPull2` pattern). The finish already
   accepts other partials with the same bits (bracket + fallback; the fallback has the full streams after the
-  exchange). Up to ~0.3-0.4 ms per plain step and per check, no extra exchange. Check first that the bracket's
-  bound holds for six card partials instead of 8 segments.
+  exchange). SkDotsFF's proof already covers any split of the sum: each card sends (T_c, E_c) from the same
+  float-float blocks, the receiver adds six doubles (a few more roundings in the bound) and runs the same check;
+  failing rows (~1 %) recompute production's partials from the gathered streams. The 5,120 norm stays after the
+  exchange (its input needs the finish), so `SkNormDotsW` 6.6 us becomes a norm alone (~3.5 us) plus a ~1 us
+  partial step before the exchange: ~0.15-0.3 ms per plain step (1.5-3 %), more in checks of 2-6 tokens (the
+  token split leaves cards idle there, the column split does not). Queued after K6 and the dense / attention work.
 - Closed 2026-11-11: storing `hc_*_fn` in 16 bits. Unlike the router (`ffn_gate_inp`, 100 % exact in bf16, already
   stored as upper halves), `hc_attn_fn` / `hc_ffn_fn` are true F32 (4-15 of 491,520 values per tensor exact in
   bf16, layers 0 / 1 / 20 checked). The norm weights are bf16-exact but tiny.
@@ -304,7 +308,24 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~07:41 EST)
+## Work in flight (2026-11-11, updated ~08:37 EST)
+
+- Done (tg92, 2026-11-11 08:17-08:34, tp92; `data/.../round19-tg92/`, commit 456b9bbc0): all traces identical, 20 / 20
+  guessing SAME. Code 128.70 / 128.97, analysis 142.22 / 142.84; vocabulary list 130.0-130.7 / 144.9-145.0; 3K read
+  469.1 (32: 426, 128: 444). Check ms by guesses (code d92): 0: 10.57, 1: 15.03-15.10, 2: 17.24, 3: 18.92-18.97,
+  4: 21.86-21.94, 5: 23.71-23.77 against tp91's 10.45 / 14.44 / 16.92 / 19.19 / 22.60 / 25.30: the mix split from 2
+  tokens costs +0.6 / +0.3 ms at 2 / 3 tokens and saves 0.25-1.5 ms at 4-6 (tune92 sweeps DSPLIT_MIN / SKDOTS_MIN).
+  The head split (`OWN_TP_HEADS_MIN=3`) lost here (128.04-128.16 vs 128.70-128.97): it does not stack with the mix
+  split; closed for now.
+- Found (tg91 + tg92): the 3K guessing run right after the plain 3K runs read 7.4 MiB of engram rows from disk (its
+  rejected guesses form n-grams never seen; 988 us per step against ~110 cached, ~0.9 ms per round on the check).
+  The table is 135 GB, so fresh text always reads cold rows; the gate prompts are warm. cold92 measures four
+  never-run prompts once cold and once warm. Lever if large: start each guessed token's row reads as soon as the
+  draft proposes it (the anchor's already start during the draft, `OWN_ENG_EARLY`), with more reads in flight.
+- Queue (systemd units, in order): xw92 (XWAIT diagnostic build of src92 + one plain run), pp92 (3K prompt kernel
+  profiles, cards 2 / 0, blocks 64 / 128 / 256), cold92, tune92.
+
+### Earlier entries (07:41)
 
 - Done (tg91, 2026-11-11 06:56-07:37, tp91; `data/.../round19-tg91/`): 23 of 23 prompt-1 traces and 6 of 6 3K traces identical, 26 of 26 guessing runs SAME AS the plain run, every guess log equal. Plain 97.8-99.3 tok/s. Prompt items C + SKDOTS: 3K read 469 tok/s. The 3K guessing run of the default (125.87) lost to its own outlier rounds: that run read 7.4 MiB of engram rows from disk (962 us per step against ~116 when cached), not a code change.
 - Done (tune91, 2026-11-11 07:38-07:47, tp91; `data/.../round19-tune91/`): 16 of 16 SAME, guess logs equal; the head

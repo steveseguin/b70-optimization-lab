@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 11, 2026 ~08:37 EST — DeepSeek V4.1 on six cards: new build tp92 passed every test; guessing 129 (code) / 143 (analysis) tokens/s; prompts 469 tokens/s.**
+- tp92 turns on by default what tp91 tested: the shared-out mixing step (also inside checks) and the guesser's faster weight layout. All traces identical, all 20 guessing runs word for word the plain answers, no faults.
+- Guessing: code 128.7-129.0 tokens/s (was 128.0), analysis 142.2-142.8 (was 138.7). With "likely words only" (still off by default): code 130.0-130.7, analysis 144.9-145.0.
+- Found: sharing out the mixing step costs time in checks of 2-3 words and saves time from 4 words up. A sweep of the threshold is queued (no rebuild needed).
+- Found: the model's lookup table is 135 GB and its rows come from disk the first time a piece of text is seen. On a document we had read before, the first guessing run still paid about 1 ms per round for this. A test on brand-new prompts is queued to measure what fresh text really costs.
+- The attention-head split for checks did not help in this build (it had looked like +1 % before); left off.
+- Queued on the cards: a diagnostic of how long each card waits for the others, prompt-reading profiles at three block sizes, the fresh-text test, then the threshold sweep. Three helpers are working on the weights inside checks, attention, and the per-check norms.
+
 **November 11, 2026 ~07:41 EST — DeepSeek V4.1 on six cards: prompts read at 469 tokens/s (was 416); guessing up to 142 tokens/s; text the same everywhere.**
 - Prompt reading: the 3,000-token document reads at 469 tokens/s, up from 416. Two changes, both on by default in the next build:
   - a small per-token mixing step in each prompt block is now shared out across the six cards: 416 -> 463
