@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**November 11, 2026 15:17:25 EST — host reset (fourth, same signature as 2026-11-10); probe passed after boot.**
+- During a helper's sustained six-card peer-traffic stress bench (one-trip pull study, `xll_bench --phase=check`,
+  runs xll-long-2..5 from 15:14:35, ~53 s each back to back). Boot 15:20:21. BERT records: fatal PCIe error on
+  0000:a7:00.0 (I210 `enp167s0`, the live LAN link), aer_uncor_status 0x4000 = completion timeout (severity bit set
+  = fatal), plus CPU 8 bank 5 MCE bea0000000000108. The I210 sits on root complex 0000:a0, the same as card 4
+  (0000:a3:00.0): heavy card traffic through that complex starves the NIC's completions.
+- After boot: six B70s on xe, no stray processes, stale xll card locks removed, six-card probe passed 15:57.
+  Evidence: /home/steve/dsv41-work/faults/host-reset-20261111T1517/. No sustained six-card stress from now on (short
+  gate runs only); 10K reads dropped from tg98. Fix options need the owner: make the I210's completion timeout
+  non-fatal or longer (setpci), or move the LAN link off root complex 0000:a0.
+- build98 + tg98 restarted 15:58.
+
 **November 11, 2026 15:17 EST — DeepSeek V4.1: tp98 build + gate tg98 queued (units build98, tg98).** tp98 = tp97 +
 qb-off-3 (`OWN_QB_OFF_M` hang fix: one poller per flag word, in-kernel timeout report) + dride-1 (`OWN_MT_DRIDE=1`:
 split finishes ride output-b / shared down at 4-6 tokens, one-card bench bitwise, ~0.6 ms per such check), both
