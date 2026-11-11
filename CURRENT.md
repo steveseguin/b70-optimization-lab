@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**November 11, 2026 13:39 EST — DeepSeek V4.1: tp97 build + gate tg97 started (systemd units build97, tg97).**
+- tp97 = tp96 with the tg96b winners as defaults (`OWN_ATT_T=1`, `OWN_MT_CK=1`, `OWN_MT_RUX=1 CAP=6`) + qb-off-2
+  (`OWN_QB_OFF_M`, opt-in) + k7-2 (`OWN_K7`, opt-in; one-card bench PASS 13:38). eg-fold-1 closed (slower on one card).
+  The build waits for free card locks; the gate takes the cards when it is done. Tree uncommitted until the gate passes.
+
 **November 11, 2026 11:57-13:31 EST — DeepSeek V4.1 six cards: tp96 gates tg96 + tg96b, three new levers bitwise.**
 - New attention kernel (`OWN_ATT_T=1`, attn-a2), cheaper checks (`OWN_MT_CK=1`, ck-2) and faster prompt expert
   kernels (`OWN_MT_RUX=1 OWN_MT_RUX_CAP=6`, rux-1): every trace identical, 38 / 38 guessing runs the same as plain.
