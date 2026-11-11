@@ -1,5 +1,24 @@
 # Current Workspace State
 
+**November 11, 2026 ~03:30 EST — DeepSeek V4.1 on six cards: guessing 117-130 tokens/s (was 106-119), plain answers 91 (was 88), a 3,000-token document reads at 339 tokens/s (was 300); text the same everywhere.**
+- The biggest gain was a bug fix. The small guessing model has 128 experts, but it was picking from 384 slots, and 256 of those held leftover numbers from the big model. Now it picks only from its own 128. It guesses better: 2.3 words kept per round instead of 2.0 on code, and 2.8 instead of 2.6 on analysis.
+  - Guessing speed: code 105.9 -> 117.0 tokens/s, analysis 118.7 -> 130.0, a 3,000-token document 112.1 -> 121.9.
+  - The answers are word for word the plain model's, 6 of 6 runs.
+- Plain answers: 88.2 -> 91.0 tokens/s. The card-to-card copy kernel ran in a "large register" mode, and the card paid about 1 µs to switch modes before and after each of its 83 runs per word. It now runs in the normal mode, with the same code and the same numbers.
+- Reading prompts: 300 -> 339 tokens/s on the 3,000-token document, from steps of 64 tokens instead of 16.
+- Also in: faster attention steps (+2 %). Tried and dropped: having the copy kernel preload the next weights while it waits (slower).
+- Every test gave identical traces (8 of 8), the same answers, and no faults. Committed and pushed as 43605b0b2.
+- What a guessing check costs, from a new per-kernel timeline: checking 2.5 words costs 1.48x one plain word. The extra cost is spread over the weights, experts, copies and attention.
+- Next build, all tested before they become defaults:
+  - Two small host-to-card copies run only after the card's queue empties. They move to their own queue.
+  - Checks get the faster attention steps.
+  - The guessing loop can copy guesses from earlier text when the last few words repeat.
+- Helpers are working on three things:
+  - expert kernels that use fewer instructions per weight (the largest gap left, about 1.9 ms of each word)
+  - prompt reading in steps of 256 tokens (patch written; compiling)
+  - weights unpacked once for several words at a time, for prompt reading and for checks
+- Still paused until you decide: long-document tests on all six cards. Cards: nothing loaded. Details: [strategy note](experiments/own-xpu-runtime/notes/2026-11-11-dsv41-speed-strategy.md).
+
 **November 11, 2026 ~01:10 EST — DeepSeek V4.1 on six cards: plain answers 85.2 -> 86-87 tokens/s, text the same; the work now follows a time budget instead of trial and error.**
 - You asked for a smarter way to choose what to speed up. The plan is in [the strategy note](experiments/own-xpu-runtime/notes/2026-11-11-dsv41-speed-strategy.md). It does four things: measure where every millisecond goes against what the hardware could do, read the machine code before writing variants, run tests on several cards at once, and use our older code and other projects first.
 - The new time budget ([note](experiments/own-xpu-runtime/notes/2026-11-11-dsv41-step-budget.md)): one answer word takes 11.7 ms today. If every card read its weights once at full memory speed, it would take 4.7 ms (about 213 tokens/s), so 200 is just within reach. The biggest gaps: the expert weights (2.1 ms over what memory allows), time between kernels (1.1 ms), small steps (1.1 ms), card-to-card hand-overs (0.8 ms).
