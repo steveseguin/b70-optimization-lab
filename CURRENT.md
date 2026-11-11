@@ -1,5 +1,21 @@
 # Current Workspace State
 
+**November 11, 2026 ~04:20 EST — DeepSeek V4.1 on six cards: plain answers 92 tokens/s; two ideas tested and dropped; a time budget for every guessing round.**
+- Two small host-to-card copies at the start of each word now go on their own queue. The cards wait less at the start of each word: 0.30 ms instead of 0.47. Plain answers went 91.8 -> 92.3 tokens/s.
+- Tried and dropped:
+  - **Copying guesses from earlier text** when the last few words repeat: slower on every prompt (code 117 -> 107 tokens/s). The copied guesses were long and mostly wrong.
+  - **Reading prompts 256 tokens at a time**: 306 tokens/s against 338 at 64. Blocks stay at 64 until the weights are unpacked once per block (a helper's patch for that is ready).
+- Where a guessing round's time goes:
+  - Checking even one guessed word costs 12.8 ms, against 10.9 ms for a plain word.
+  - Each extra guessed word adds about 2.7 ms.
+  - These are the two targets for guessing now.
+- Every test gave identical traces (23 of 23) and the same answers (13 of 13 guessing runs word for word). Committed and pushed.
+- At 03:30 a helper's one-card test wrote through a bad pointer and caused one card error. It was a bug in our test code; the helper fixed it. The health check afterwards passed on all six cards. Evidence: `experiments/own-xpu-runtime/data/dsv41-bringup-20261109/fault-20261111-0330-smallk-bench/`.
+- Building now (gate tg89):
+  - expert kernels with fewer instructions per weight (1.2-2x faster in one-card tests, identical results)
+  - small serial steps done by proven shortcuts (about 0.2 ms per word)
+  - the cards preloading the next weights into their cache while they wait for each other
+
 **November 11, 2026 ~03:30 EST — DeepSeek V4.1 on six cards: guessing 117-130 tokens/s (was 106-119), plain answers 91 (was 88), a 3,000-token document reads at 339 tokens/s (was 300); text the same everywhere.**
 - The biggest gain was a bug fix. The small guessing model has 128 experts, but it was picking from 384 slots, and 256 of those held leftover numbers from the big model. Now it picks only from its own 128. It guesses better: 2.3 words kept per round instead of 2.0 on code, and 2.8 instead of 2.6 on analysis.
   - Guessing speed: code 105.9 -> 117.0 tokens/s, analysis 118.7 -> 130.0, a 3,000-token document 112.1 -> 121.9.

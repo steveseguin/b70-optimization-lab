@@ -37,6 +37,7 @@
 #include <fcntl.h>
 #include <fstream>
 #include <map>
+#include <unordered_map>
 #include <sstream>
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -227,7 +228,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL")) opt.xpull = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
-    if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // 128: XPullK128 (opt-in)
+    if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
     if (const char *e = getenv("OWN_NORM_DOTS")) opt.norm_dots = atoi(e) != 0;
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     if (const char *e = getenv("OWN_FIN_MOVE")) opt.fin_move = atoi(e) != 0;
@@ -237,6 +238,9 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ENG_DEV")) opt.eng_dev = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_EARLY")) opt.eng_early = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_LATE")) opt.eng_late = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_CQ")) opt.eng_cq = atoi(e) != 0; // engram row copies on a copy queue
+    if (const char *e = getenv("OWN_PRE_K")) opt.pre_k = atoi(e) != 0;
+    if (const char *e = getenv("OWN_HEAD_CQ")) opt.head_cq = atoi(e) != 0; // check argmax readback on the copy queue   // pre-mix weights by the broadcast launch
     if (const char *e = getenv("OWN_TP_SPIN_US")) opt.tp_spin_us = atol(e);
     if (const char *e = getenv("OWN_DEV_INDEX")) opt.dev_index = atoi(e) != 0;
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
@@ -259,7 +263,8 @@ int main(int argc, char **argv) {
     // the score's heads per sub-group (4, 2 or 1) and the trimmed lists' softmax built per slot count (the same
     // outputs; tools/bench/bench_attn_dec.cpp 2026-11-11): opt-in until gated
     if (getenv("OWN_ATT_HG")) opt.att_hg = (unsigned)atoi(getenv("OWN_ATT_HG"));
-    if (const char *e = getenv("OWN_ATT_PK")) opt.att_pk = atoi(e) != 0; // default on (tg86: same answers, +2.4 %)
+    if (const char *e = getenv("OWN_ATT_PK")) opt.att_pk = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ATT_M")) opt.att_m = atoi(e) != 0; // the attention forms in blocks too (opt-in) // default on (tg86: same answers, +2.4 %)
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.
@@ -429,9 +434,15 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_TG")) be.mt_tg = (unsigned)atoi(e); // dense token groups per sub-group
         if (const char *e = getenv("OWN_MT_TG_MAX")) be.mt_tg_max = (unsigned)atoi(e);
         if (const char *e = getenv("OWN_MT_EU")) be.mt_eu = (unsigned)atoi(e); // expert-major routed rows (6)
+        // (with OWN_MT_EU) blocks of >= OWN_MT_EU_BIG_M tokens (128): groups of up to OWN_MT_EU_BIG slots (16; 0 off),
+        // heaviest first (OWN_MT_EU_HEAVY=0: ascending first slot)
+        if (const char *e = getenv("OWN_MT_EU_BIG")) be.mt_eu_big = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_EU_BIG_M")) be.mt_eu_big_m = (unsigned)atoi(e);
+        if (const char *e = getenv("OWN_MT_EU_HEAVY")) be.mt_eu_heavy = atoi(e) != 0;
+        if (be.mt_eu_big > 16) throw std::runtime_error("OWN_MT_EU_BIG: at most 16 slots per group");
         if (const char *e = getenv("OWN_MT_TGU")) be.mt_tgu = (unsigned)atoi(e); // unpacked rows in token groups
         // the per-block-size tables (OWN_MT_TGM / OWN_MT_TGR / OWN_MT_TGWM): an entry past MTF (16) tokens that no
-        // option names takes the MTF entry (blocks of up to MTX = 64 tokens pick their forms as a block of 16)
+        // option names takes the MTF entry (blocks of up to MTX tokens pick their forms as a block of 16)
         constexpr int MTX_ = own41::Backend41::MTX, MTF_ = own41::Backend41::MTF;
         bool set_tgm[MTX_ + 1] = {}, set_tgr[MTX_ + 1] = {}, set_tgwm[MTX_ + 1] = {};
         if (const char *e = getenv("OWN_MT_TGM")) { // per block size: "m:g,m:g"
@@ -630,10 +641,28 @@ int main(int argc, char **argv) {
             double t_draft = 0, t_check = 0;
             // OWN_SPEC_TAU=p: check only the leading guesses whose running product of the draft's probabilities
             // stays >= p (at least OWN_SPEC_KMIN, default 1; 0 = the anchor alone, a one-token block); OWN_SPEC_LOG=file: per round the 5 probabilities and
-            // the guesses kept
+            // then: guesses checked, guesses kept, draft ms, check ms, 1 if the guesses came from OWN_SPEC_NGRAM
             const float tau = getenv("OWN_SPEC_TAU") ? (float)atof(getenv("OWN_SPEC_TAU")) : 0.0f;
             const int kmin = getenv("OWN_SPEC_KMIN") ? std::max(0, atoi(getenv("OWN_SPEC_KMIN"))) : 1; // 0: a round may check no guess
             FILE *slog = getenv("OWN_SPEC_LOG") ? std::fopen(getenv("OWN_SPEC_LOG"), "w") : nullptr;
+            // OWN_SPEC_NGRAM=n (2..8; 2026-11-11): before each round the text's last n tokens (prompt + answer so
+            // far) are looked up in the text before them; on a match, the tokens that followed their most recent
+            // earlier occurrence are the round's guesses (up to OWN_SPEC_NGRAM_MAX, default 8, at most 63) and the
+            // draft does not run that round (its windows still get every checked block's features, so its later
+            // rounds see the same state). The check is the same full model: the answer cannot change.
+            const int ngram = getenv("OWN_SPEC_NGRAM") ? std::clamp(atoi(getenv("OWN_SPEC_NGRAM")), 0, 8) : 0;
+            const int ngmax = getenv("OWN_SPEC_NGRAM_MAX") ? std::clamp(atoi(getenv("OWN_SPEC_NGRAM_MAX")), 1, 63) : 8;
+            std::vector<int> txt(prompt);
+            txt.push_back(first);
+            std::unordered_map<uint64_t, int> ngix; // hash of the n tokens ending at e -> the latest such e
+            size_t ng_done = 0;                     // ends 0 .. ng_done - 1 are in ngix
+            auto ng_key = [&](size_t e) {
+                uint64_t h = 1469598103934665603ull;
+                for (int i = 0; i < ngram; ++i) h = (h ^ (uint64_t)(uint32_t)txt[e - i]) * 1099511628211ull;
+                return h;
+            };
+            long ng_rounds = 0, ng_guessed = 0, ng_kept = 0;
+            hist.assign((size_t)std::max(k, ngram ? ngmax : 0) + 2, 0);
             for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
             const auto io0 = host_io();
             const double ts0 = now();
@@ -642,16 +671,36 @@ int main(int argc, char **argv) {
                 float conf[own41::Backend41::DR_BLOCK];
                 const double ta = now();
                 int kk = std::min(k, ndecode - (int)out.size());
-                be.draft_tp(cur, d, kk, conf, token_map[cur]);
+                std::vector<int32_t> ngg; // the lookup's guesses (empty: the draft's)
+                if (ngram) {
+                    const size_t len = txt.size();
+                    for (; ng_done + 1 < len; ++ng_done)
+                        if (ng_done + 1 >= (size_t)ngram) ngix[ng_key(ng_done)] = (int)ng_done;
+                    if (len >= (size_t)ngram + 1) {
+                        const auto it = ngix.find(ng_key(len - 1));
+                        if (it != ngix.end()) {
+                            const size_t e = (size_t)it->second;
+                            bool eq = true;
+                            for (int i = 0; i < ngram && eq; ++i) eq = txt[e - i] == txt[len - 1 - i];
+                            const int lim = std::min(ngmax, ndecode - (int)out.size());
+                            for (size_t j = e + 1; eq && j < len && (int)ngg.size() < lim; ++j) ngg.push_back(txt[j]);
+                        }
+                    }
+                }
+                if (ngg.empty()) be.draft_tp(cur, d, kk, conf, token_map[cur]);
+                else
+                    for (int j = 0; j < own41::Backend41::DR_BLOCK; ++j) conf[j] = 0.0f;
                 const double tb = now();
-                if (tau > 0.0f) {
+                if (!ngg.empty()) {
+                    kk = (int)ngg.size();
+                } else if (tau > 0.0f) {
                     float run = 1.0f;
                     int kt = 0;
                     while (kt < kk && (run *= conf[kt]) >= tau) ++kt;
                     kk = std::max(std::min(kmin, kk), kt);
                 }
                 std::vector<int32_t> blk{cur};
-                for (int j = 0; j < kk; ++j) blk.push_back(d[j]);
+                for (int j = 0; j < kk; ++j) blk.push_back(ngg.empty() ? d[j] : ngg[j]);
                 for (int32_t t : blk) be.comp_ids.push_back(token_map[t]);
                 std::vector<int32_t> nx(blk.size());
                 be.decode_verify_tp(blk.data(), (int)blk.size(), nx.data());
@@ -659,11 +708,12 @@ int main(int argc, char **argv) {
                 while (n < (int)blk.size() && nx[n - 1] == blk[n]) ++n;
                 be.commit_block(n);
                 be.comp_ids.resize((size_t)be.pos);
+                const double tc = now();
                 t_draft += tb - ta;
-                t_check += now() - tb;
+                t_check += tc - tb;
                 if (slog) {
                     for (int j = 0; j < own41::Backend41::DR_BLOCK; ++j) std::fprintf(slog, "%.4f ", conf[j]);
-                    std::fprintf(slog, "%d %d\n", kk, n - 1);
+                    std::fprintf(slog, "%d %d %.3f %.3f %d\n", kk, n - 1, (tb - ta) * 1e3, (tc - tb) * 1e3, ngg.empty() ? 0 : 1);
                 }
                 const size_t o0 = out.size();
                 for (int j = 1; j < n; ++j) out.push_back(blk[j]);
@@ -673,6 +723,8 @@ int main(int argc, char **argv) {
                 guessed += kk;
                 accepted += n - 1;
                 ++hist[n - 1];
+                if (!ngg.empty()) ++ng_rounds, ng_guessed += kk, ng_kept += n - 1;
+                for (size_t j = o0; j < out.size(); ++j) txt.push_back(out[j]);
                 bool ended = false; // a kept guess can be the end of sentence: the text ends there, as a plain run's
                 for (size_t j = o0; eos >= 0 && j < out.size(); ++j)
                     if (out[j] == eos) { out.resize(j + 1); ended = true; break; }
@@ -710,8 +762,11 @@ int main(int argc, char **argv) {
                          ref.empty() ? "no reference" : same ? "SAME AS the plain run" : "DIFFERENT FROM the plain run");
             host_io_line(be, opt.tp, io0);
             std::fprintf(stderr, "kept guesses per cycle:");
-            for (int j = 0; j <= k; ++j) std::fprintf(stderr, " %d:%ld", j, hist[j]);
+            for (size_t j = 0; j + 1 < hist.size(); ++j) std::fprintf(stderr, " %zu:%ld", j, hist[j]);
             std::fprintf(stderr, "\n");
+            if (ngram)
+                std::fprintf(stderr, "lookup guesses (OWN_SPEC_NGRAM=%d, up to %d): %ld rounds, %ld of %ld guesses kept\n",
+                             ngram, ngmax, ng_rounds, ng_kept, ng_guessed);
             std::ofstream of(argv[3]);
             for (int t : out) of << t << "\n";
             return ref.empty() || same ? 0 : 3;

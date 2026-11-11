@@ -33,6 +33,7 @@ float *pkv[TILES][3] = {}, *psc[TILES][3] = {}; // the block's ratio-2 states pe
 bool mt_heads = false;
 float *tlogm[TILES] = {}, *tamvm[TILES] = {};
 int32_t *tamim[TILES] = {};
+sycl::event head_ev[TILES]; // OWN_HEAD_CQ: a checked block's argmax launch (its readback waits for it on the copy queue)
 std::vector<float> h_amvm[TILES];
 std::vector<int32_t> h_amim[TILES];
 long vpos0 = -1; // the position of a checked block's first token until commit_block
@@ -96,6 +97,12 @@ bool mt_ride = false;    // OWN_MT_RIDE=1: the stream mix's dot rows ride in q_a
 unsigned mt_rwg = 0;     // OWN_MT_RWG=n: row launches of at most n rows use one sub-group per work-group (rows_launch)
 bool mt_rfuse = false;   // OWN_MT_RFUSE=1: router top-k + FFN mix finish + shared gate/up rows in one launch
 unsigned mt_eu = 0;      // OWN_MT_EU=6: routed rows expert-major (RoutedU, groups of at most 6 slots; 0: slot-major)
+// with OWN_MT_EU, blocks of at least OWN_MT_EU_BIG_M tokens (128): groups of at most OWN_MT_EU_BIG slots (16; 0: as
+// OWN_MT_EU; 8 at most in layers whose gate / up rows are IQ2_S at 5,120 columns, where RoutedU<.., 16> spills), the
+// heaviest groups first unless OWN_MT_EU_HEAVY=0. The same sums: a slot's output does not depend on its group.
+unsigned mt_eu_big = 16, mt_eu_big_m = 128;
+bool mt_eu_heavy = true;
+unsigned eu_cap_c[TILES] = {}; // the cap card c's current layer was grouped with (tpm_layer's ExpertGroupM; routed_m)
 bool mt_idstat = false; // OWN_MT_IDSTAT=1: count distinct experts per block and layer on card 0 (diagnostic, waits)
 FILE *mt_iddump = nullptr; // OWN_MT_IDDUMP=<file> (with OWN_MT_IDSTAT=1): write each block's ids per layer
 long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push over many work-groups (OWN_MT_XPUSH=0: XchgP's one group)
@@ -519,6 +526,8 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
     const unsigned cols = (unsigned)e.cols;
     if (mt_eu) { // expert-major: the layer's groups (ExpertGroupM, tpm_layer) in place of the ids; grid for nu = nsl
         if (mt_eu > 6) throw std::runtime_error("OWN_MT_EU: groups of at most 6 slots (the kernels' MT)");
+        const unsigned cap = eu_cap_c[c]; // <= 6: the MT 6 kernels; else MT 16 (MT 8 for IQ2_S at 5,120 columns)
+        if (cap < 1 || cap > 16) throw std::runtime_error("OWN_MT_EU_BIG: groups of 1 .. 16 slots");
         auto gu = [&](auto kt) {
             using K = typename decltype(kt)::type;
             K k{rows, per_slot};
@@ -528,11 +537,16 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             k.xtok = (unsigned)xtok;
             launch_rows<K::TAB>(c, npos, maxwg, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
         };
-#define XU(TY, KERN, NB) \
-    if (e.type == iq3::Type::TY && cols == NB * 256) return gu(std::type_identity<KERN<NB, 6>>{});
-        XU(IQ2_XXS, RoutedIQ2XXSU, 20) XU(IQ2_S, RoutedIQ2SU, 20) XU(IQ3_XXS, RoutedIQ3XXSU, 20) XU(IQ2_XS, RoutedIQ2XSU, 20)
-        XU(IQ1_S, RoutedIQ1SU, 20) XU(IQ2_XXS, RoutedIQ2XXSU, 9) XU(IQ2_S, RoutedIQ2SU, 9) XU(IQ3_XXS, RoutedIQ3XXSU, 9)
-        XU(IQ2_XS, RoutedIQ2XSU, 9) XU(IQ1_S, RoutedIQ1SU, 9)
+#define XU(TY, KERN, NB, MB)                                                                                 \
+    if (e.type == iq3::Type::TY && cols == NB * 256) {                                                       \
+        if (cap <= 6) return gu(std::type_identity<KERN<NB, 6>>{});                                          \
+        if (cap <= MB) return gu(std::type_identity<KERN<NB, MB>>{});                                        \
+        throw std::runtime_error("multi-token step: expert groups of more than " #MB " slots for " + wn);   \
+    }
+        XU(IQ2_XXS, RoutedIQ2XXSU, 20, 16) XU(IQ2_S, RoutedIQ2SU, 20, 8) XU(IQ3_XXS, RoutedIQ3XXSU, 20, 16)
+        XU(IQ2_XS, RoutedIQ2XSU, 20, 16) XU(IQ1_S, RoutedIQ1SU, 20, 16) XU(IQ2_XXS, RoutedIQ2XXSU, 9, 16)
+        XU(IQ2_S, RoutedIQ2SU, 9, 16) XU(IQ3_XXS, RoutedIQ3XXSU, 9, 16) XU(IQ2_XS, RoutedIQ2XSU, 9, 16)
+        XU(IQ1_S, RoutedIQ1SU, 9, 16)
 #undef XU
         throw std::runtime_error("multi-token step: no expert-major routed kernel for " + wn);
     }
@@ -602,9 +616,22 @@ void tpm_engram_upload(int c) {
                     std::memcpy(raw + (size_t)(t * 24 + k) * l.bytes, eng_base[li] + (size_t)ids[k] * l.bytes, l.bytes);
             }
             const auto q0 = std::chrono::steady_clock::now();
-            qs[c].memcpy(tengrm[c][li], raw, (size_t)mt_n * 24 * l.bytes);
-            launch(c, (size_t)mt_n * 24 * 256, 256, ops41sycl::EngRowsA<Act>{(unsigned)mt_n * 24u},
-                   (const uint8_t *)tengrm[c][li], tengm[c][li]);
+            if (o.eng_cq) { // OWN_ENG_CQ: the copy on the card's copy queue, the decode launch waits for it by event
+                const sycl::event ce = cqs[c].memcpy(tengrm[c][li], raw, (size_t)mt_n * 24 * l.bytes);
+                const ops41sycl::EngRowsA<Act> k{(unsigned)mt_n * 24u};
+                const uint8_t *src = tengrm[c][li];
+                act_t *dst = tengm[c][li];
+                const size_t n = (size_t)mt_n * 24 * 256;
+                auto e = qs[c].submit([&](sycl::handler &hh) {
+                    hh.depends_on(ce);
+                    hh.parallel_for(sycl::nd_range<1>(n, 256), [=](sycl::nd_item<1> it) { k(it, src, dst); });
+                });
+                kev(c, kname<ops41sycl::EngRowsA<Act>>(), e);
+            } else {
+                qs[c].memcpy(tengrm[c][li], raw, (size_t)mt_n * 24 * l.bytes);
+                launch(c, (size_t)mt_n * 24 * 256, 256, ops41sycl::EngRowsA<Act>{(unsigned)mt_n * 24u},
+                       (const uint8_t *)tengrm[c][li], tengm[c][li]);
+            }
             eng_tq[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - q0).count();
             continue;
         }
@@ -629,8 +656,12 @@ void tpm_embed(int c, bool wait = true) {
         tok_set(c, t);
         const uint8_t *row = (const uint8_t *)wgt[c].at("token_embd.weight").p + (size_t)mt_toks[t] * wrb(te);
         launch(c, g.h, 32, ops41sycl::EmbedRowA<Act>{te.type, g.h}, row, sc[c].x);
-        launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
-        qs[c].memcpy(sc[c].cur_pre, k_pm1, 16);
+        if (o.pre_k) { // OWN_PRE_K: the pre-mix weights by the broadcast launch, no host copy
+            launch(c, g.h, 32, ops41sycl::Broadcast4PA<Act>{g.h}, (const act_t *)sc[c].x, streams[c], sc[c].cur_pre);
+        } else {
+            launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
+            qs[c].memcpy(sc[c].cur_pre, k_pm1, 16);
+        }
     }
     tok_end(c);
     if (wait) twait(c);
@@ -1087,18 +1118,28 @@ void tpm_layer(int L, int c) {
                       ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<128>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS}, sinks,
                       ix, b.attn_w);
         } else {
-            const unsigned gpt = (unsigned)((nh / 4) * (n_idx / 32));
-            launch_sg(c, (size_t)M * gpt,
-                      ops41sycl::ScoreM<ops41sycl::SparseScoreHG<512, 4>>{{n_idx, nh, W, g.hd}, gpt, (unsigned)M, Q, 640, WS},
-                      (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
-            if (n_idx < 640)
-                launch_sg(c, (size_t)M * nh,
-                          ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxPN<640>>{{nh, n_idx}, (unsigned)nh, (unsigned)M, 640, WS},
-                          sinks, ix, b.attn_w);
-            else
+            // OWN_ATT_HG / OWN_ATT_PK in blocks too (OWN_ATT_M=1, 2026-11-11; the one-token forms' bit-identical
+            // variants: heads per sub-group 1 / 2 / 4, the trimmed lists' softmax built per slot count)
+            auto score_m = [&](auto hgc) {
+                constexpr unsigned HG = decltype(hgc)::value;
+                const unsigned gpt = (unsigned)((nh / HG) * (n_idx / 32));
+                launch_sg(c, (size_t)M * gpt,
+                          ops41sycl::ScoreM<ops41sycl::SparseScoreHG<512, HG>>{{n_idx, nh, W, g.hd}, gpt, (unsigned)M, Q, 640, WS},
+                          (const act_t *)(b.q + qo), kvw, kvc, ix, b.attn_w);
+            };
+            if (!o.att_m || o.att_hg == 4) score_m(std::integral_constant<unsigned, 4>{}); // (nh: 8 or 16)
+            else if (o.att_hg == 2 && nh % 2 == 0) score_m(std::integral_constant<unsigned, 2>{});
+            else score_m(std::integral_constant<unsigned, 1>{});
+            if (n_idx < 640) {
+                if (!(o.att_m && o.att_pk && softmax_pk_m<160>(c, nh, n_idx, M, WS, sinks, ix, b.attn_w)))
+                    launch_sg(c, (size_t)M * nh,
+                              ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxPN<640>>{{nh, n_idx}, (unsigned)nh, (unsigned)M, 640, WS},
+                              sinks, ix, b.attn_w);
+            } else {
                 launch_sg(c, (size_t)M * nh,
                           ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<640>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS}, sinks,
                           ix, b.attn_w);
+            }
         }
         const float *cbm = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
         const float *sbm = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
@@ -1229,10 +1270,17 @@ void tpm_layer(int L, int c) {
         ids_unique += (long)(std::unique(hid.begin(), hid.end()) - hid.begin());
         if (L == 0) ++ids_blocks;
     }
-    if (mt_eu) // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
-        launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(6u * (unsigned)M),
-                                                  ops41sycl::ExpertGroupM{6u * (unsigned)M, mt_eu},
+    if (mt_eu) { // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
+        const bool big = mt_eu_big && (unsigned)M >= mt_eu_big_m;
+        unsigned cap = big ? mt_eu_big : mt_eu;
+        const auto &eg = we(p + "ffn_gate_exps.weight");
+        if (cap > 8 && eg.type == iq3::Type::IQ2_S && eg.cols == 20 * 256) cap = 8; // RoutedU<IQ2_S, 16> spills there
+        eu_cap_c[c] = cap;
+        ops41sycl::ExpertGroupM k{6u * (unsigned)M, cap};
+        k.heavy = big && mt_eu_heavy;
+        launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(6u * (unsigned)M), k,
                                                   (const uint32_t *)b.ids, egrp[c]);
+    }
     if (!shared_done) {
         gemv_m(c, p + "ffn_gate_shexp.weight", b.xn, H, b.shg, (size_t)g.mid);
         gemv_m(c, p + "ffn_up_shexp.weight", b.xn, H, b.shu, (size_t)g.mid);
@@ -1296,7 +1344,10 @@ void tpm_layer(int L, int c) {
 }
 // tp_head for every token of the block: collapse (unless phase 5 did) + norm, this card's logits rows, the
 // argmax candidates of each token to the host
-void tpm_head_all(int c) {
+// defer (OWN_HEAD_CQ, a checked block with the draft): only the launches; head_readback(c) copies the argmax
+// candidates to the host on the copy queue after the draft's injection is queued behind them (no idle card while
+// the host reads them back; tg87 check timeline: ~59 us per check)
+void tpm_head_all(int c, bool defer = false) {
     const int M = mt_n;
     const Scratch &b = scm[c][0];
     const size_t H = g.h, H4 = 4 * H;
@@ -1306,11 +1357,31 @@ void tpm_head_all(int c) {
     rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{b.x, wp<float>(c, "output_norm.weight"), b.xn}, H, H));
     const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
     gemv_m(c, "output.weight", b.xn, H, tlogm[c], (size_t)nl);
+    if (defer) {
+        const ops41sycl::ArgmaxP1OM ak{{nl, AM_CH, tv0[c], g.vocab}, (unsigned)G, (unsigned)M, (size_t)nl};
+        const float *lg = tlogm[c];
+        float *av = tamvm[c];
+        int32_t *ai = tamim[c];
+        head_ev[c] = qs[c].submit([&](sycl::handler &hh) {
+            hh.parallel_for(sycl::nd_range<1>((size_t)M * G * 32, 32),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { ak(it, lg, av, ai); });
+        });
+        kev(c, kname<ops41sycl::ArgmaxP1OM>(), head_ev[c]);
+        return;
+    }
     launch_sg(c, (size_t)M * G, ops41sycl::ArgmaxP1OM{{nl, AM_CH, tv0[c], g.vocab}, (unsigned)G, (unsigned)M, (size_t)nl},
               (const float *)tlogm[c], tamvm[c], tamim[c]);
     qs[c].memcpy(h_amvm[c].data(), tamvm[c], (size_t)M * G * 4);
     qs[c].memcpy(h_amim[c].data(), tamim[c], (size_t)M * G * 4);
     twait(c);
+}
+void head_readback(int c) {
+    const int M = mt_n, G = (tv1[c] - tv0[c] + AM_CH - 1) / AM_CH;
+    const sycl::event ea = head_ev[c];
+    auto e1 = cqs[c].submit([&](sycl::handler &hh) { hh.depends_on(ea); hh.memcpy(h_amvm[c].data(), tamvm[c], (size_t)M * G * 4); });
+    auto e2 = cqs[c].submit([&](sycl::handler &hh) { hh.depends_on(ea); hh.memcpy(h_amim[c].data(), tamim[c], (size_t)M * G * 4); });
+    e1.wait();
+    e2.wait();
 }
 void tpm_card_step(int c) {
     sc_keep[c] = sc[c];
@@ -1339,9 +1410,10 @@ void tpm_card_step(int c) {
             }
             tpm_layer(L, c);
         }
+        const bool hdefer = o.head_cq && o.dspark && o.head && mt_heads;
         if (o.head && mt_heads) {
             tok_end(c);
-            tpm_head_all(c);
+            tpm_head_all(c, hdefer);
         } else if (o.head && !skip_head) {
             tok_set(c, mt_n - 1);
             x_ready[c] = mx_ready[c];
@@ -1353,8 +1425,10 @@ void tpm_card_step(int c) {
         if (o.dspark && !mt_heads) { // a prompt block: every position is kept, into the draft's windows now
             dr_inject(c, mt_n, pos);
             twait(c);
-        } else if (o.dspark) // a checked block: staged in the block area, after the head (the host does not wait
+        } else if (o.dspark) { // a checked block: staged in the block area, after the head (the host does not wait
             dr_inject(c, mt_n, pos, true); // for it; this queue runs it before the next step's work)
+            if (hdefer) head_readback(c);
+        }
     } catch (...) {
         tok_end(c);
         throw;

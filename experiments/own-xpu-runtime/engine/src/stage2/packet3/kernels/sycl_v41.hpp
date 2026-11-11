@@ -5,11 +5,11 @@
 // the SC117 identity-v2 gates.
 #pragma once
 // Tokens per multi-token step (prompt block, checked block), at most: Backend41::MTX. Build with -DOWN41_MTX=n
-// (16 <= n <= 128; default 64). Only capacities follow it (the block kernels' per-token tables, the expert
+// (16 <= n <= 256; default 256). Only capacities follow it (the block kernels' per-token tables, the expert
 // groups' slot and group counts, the window ring's block area, the block buffers); no kernel's per-token
 // arithmetic depends on it.
 #ifndef OWN41_MTX
-#define OWN41_MTX 64
+#define OWN41_MTX 256
 #endif
 #ifndef OWN_RT_HOST_ONLY
 #include "stage2/packet194-expert-diet-engine/kernel_guard.hpp"
@@ -21,8 +21,10 @@ namespace ops41sycl {
 using iq3::Type;
 inline constexpr unsigned MT_MAX = OWN41_MTX;
 // >= 16: the one-sub-group block forms (DenseRowsM / GemvTM / HcDotsRowsM at 16 tokens) read 16 tokens' inputs;
-// <= 128: the block's window rows go to distinct ring rows (RingCommitM: position % 128)
-static_assert(MT_MAX >= 16 && MT_MAX <= 128, "OWN41_MTX: 16 .. 128 tokens per block step");
+// <= 256: the index kernels carry a per-token table int lens[MT_MAX] in their arguments (1 KiB at 256, under the
+// devices' 2 KiB kernel-argument limit with the other members; past 256 they would have to move to card memory).
+// (Past 128 tokens two block tokens share a ring row: RingCommitM / DraftKvRows write only the last 128.)
+static_assert(MT_MAX >= 16 && MT_MAX <= 256, "OWN41_MTX: 16 .. 256 tokens per block step");
 
 // SG32 butterfly in tree32 pairing order (width 1,2,4,8,16; i += 2w).
 inline float sg_tree32(sycl::sub_group sg, float v) {
@@ -1441,6 +1443,19 @@ template <typename A> struct Broadcast4A {
     int h;
     void operator()(sycl::nd_item<1> it, const typename A::T *x, typename A::T *streams) const {
         int i = it.get_global_linear_id();
+        if (i >= h) return;
+        typename A::T v = x[i];
+        for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = v;
+    }
+};
+// Broadcast4A plus the first stream mix's pre weights {1, 0, 0, 0} (items 0..3), which tp_embed copied from the
+// host before (OWN_PRE_K, 2026-11-11: a 16-byte copy from host memory runs on the host after the queue drains,
+// ~24 us of idle card per step in the tg87 timeline); the same values
+template <typename A> struct Broadcast4PA {
+    int h;
+    void operator()(sycl::nd_item<1> it, const typename A::T *x, typename A::T *streams, float *pre) const {
+        int i = it.get_global_linear_id();
+        if (i < 4) pre[i] = i == 0 ? 1.0f : 0.0f;
         if (i >= h) return;
         typename A::T v = x[i];
         for (int j = 0; j < 4; ++j) streams[(size_t)j * h + i] = v;
@@ -5597,12 +5612,14 @@ template <typename A> struct WindowAppendM {
         }
     }
 };
-// the block area's rows to their ring slots (after every token's attention of the layer)
+// the block area's rows to their ring slots (after every token's attention of the layer). A block of more than
+// win tokens commits its last win only: token t and t + win share slot (pos0 + t) % win, which one-token steps
+// leave holding the later position (both writing it would race).
 struct RingCommitM {
     int win, d, pos0, m;
     void operator()(sycl::nd_item<1> it, uint16_t *ring) const {
         const int g = (int)it.get_global_linear_id(), t = g / d, i = g % d;
-        if (t >= m) return;
+        if (t >= m || t + win < m) return;
         ring[(size_t)((pos0 + t) % win) * d + i] = ring[(size_t)(win + t) * d + i];
     }
 };
@@ -6209,63 +6226,96 @@ struct ArgmaxP1OM {
 //   grp[RUGrp::EXP + u] = the expert of group u, grp[RUGrp::CNT + u] = its slot count (1 .. cap)
 //   grp[RUGrp::SLOT + 16 u + i] = its i-th slot (ascending), i < count
 // An expert picked by more than cap slots gets ceil(count / cap) groups (cap = the MT of the kernel that reads
-// grp; a token picks distinct experts, so with cap >= M every expert is one group). Group order is ascending
-// first slot (it does not matter: every slot's output is written by exactly one group).
+// grp; a token picks distinct experts, so with cap >= M every expert is one group). Group order: ascending first
+// slot, or with ExpertGroupM::heavy slot count descending, then ascending first slot (the long groups first, so
+// they do not form the tail of the routed kernels' position loop). The order does not change any output: every
+// slot's output is written by exactly one group, and a slot's sum does not depend on its group.
 struct RUGrp {
     // groups (>= the slots of the largest block: 6 per token, MT_MAX tokens; 128 as before up to 21 tokens),
     // slots per group. Only the word offsets below follow MAXU (the writer and every reader use them).
     static constexpr unsigned MAXU = 6 * MT_MAX > 128 ? 6 * MT_MAX : 128, CAP = 16;
     static constexpr unsigned EXP = 4, CNT = EXP + MAXU, SLOT = CNT + MAXU, WORDS = SLOT + MAXU * CAP;
 };
-// One work-group of WG items (launch: nd_range(WG, WG), LM floats of local memory as the last argument, e.g.
-// launch_local<ExpertGroupM::LM>(c, ExpertGroupM::WG, ExpertGroupM{nsl, cap}, ids, grp)). Item s = slot s:
-// one O(nsl) scan of the ids staged in local memory gives its occurrence index among the slots of its expert
-// (before), the expert's total and the first slot of its chunk (head); a work-group scan ranks the heads.
+// One work-group (launch: nd_range(items(nsl), items(nsl)), LM floats of local memory as the last argument, e.g.
+// launch_local<ExpertGroupM::LM>(c, ExpertGroupM::items(nsl), ExpertGroupM{nsl, cap}, ids, grp)). Item i takes
+// slots i, i + items, ... (SPI at most; one each up to 1,024 slots). Per slot one O(nsl) scan of the ids staged
+// in local memory gives its occurrence index among the slots of its expert (before), the expert's total and the
+// first slot of its chunk (head); per chunk head a second O(nsl) scan of the heads' counts gives its rank.
 struct ExpertGroupM {
-    // WG >= the slots of the largest block (item s = slot s; 128 as before up to 21 tokens). Items s >= nsl
-    // take no part (first = false), so the groups and their order do not depend on WG.
-    static constexpr unsigned WG = 6 * MT_MAX > 128 ? (6 * MT_MAX + 31) / 32 * 32 : 128, LM = 2 * WG;
-    static_assert(WG <= 1024 && 6 * MT_MAX <= WG && 6 * MT_MAX <= RUGrp::MAXU, "a block's 6 M slots, one item and at most one group each");
-    unsigned nsl;      // slots, 1 .. the launch's items (items(nsl); 6 M <= 6 MT_MAX <= WG)
-    unsigned cap = 16; // slots per group at most, 1 .. RUGrp::CAP
+    // SMAX: the slots of the largest block (6 per token, MT_MAX tokens; 128 as before up to 21 tokens). Slots
+    // >= nsl and items past them take no part, so the groups and their order depend on neither WG nor the items.
+    static constexpr unsigned SMAX = 6 * MT_MAX > 128 ? 6 * MT_MAX : 128;
+    static constexpr unsigned WG = SMAX <= 1024 ? (SMAX + 31) / 32 * 32 : 1024, SPI = (SMAX + WG - 1) / WG;
+    static constexpr unsigned LM = 3 * SMAX; // ids, chunk counts (0: not a chunk head), head ranks
+    static_assert(SMAX <= RUGrp::MAXU && SPI * WG >= SMAX, "a block's 6 M slots, at most one group each");
+    unsigned nsl;        // slots, 1 .. SMAX
+    unsigned cap = 16;   // slots per group at most, 1 .. RUGrp::CAP
+    bool heavy = false;  // the group order (RUGrp): false = ascending first slot (as before); true = heaviest first
     // work-group size to launch for nsl slots: 128 up to 128 slots (the launch before blocks past 21 tokens),
-    // else nsl in whole sub-groups (local memory stays LM: le / lr at WG apart)
-    static size_t items(unsigned nsl) { return nsl <= 128 ? 128 : (size_t)(nsl + 31) / 32 * 32; }
+    // else nsl in whole sub-groups, at most WG (local memory stays LM)
+    static size_t items(unsigned nsl) {
+        return nsl <= 128 ? 128 : (size_t)((nsl + 31) / 32 * 32 < WG ? (nsl + 31) / 32 * 32 : WG);
+    }
     void operator()(sycl::nd_item<1> it, const uint32_t *ids, uint32_t *grp, float *lm) const {
-        uint32_t *le = reinterpret_cast<uint32_t *>(lm), *lr = le + WG;
-        const unsigned s = (unsigned)it.get_local_linear_id();
+        uint32_t *le = reinterpret_cast<uint32_t *>(lm), *lc = le + SMAX, *lr = lc + SMAX;
+        const unsigned li = (unsigned)it.get_local_linear_id(), nl = (unsigned)it.get_local_range(0);
         const unsigned cap = this->cap < 1 ? 1u : this->cap > RUGrp::CAP ? RUGrp::CAP : this->cap;
-        const bool on = s < nsl;
-        const uint32_t e = on ? ids[s] : 0u;
-        le[s] = e;
+        const unsigned ns = nsl < SMAX ? nsl : SMAX;
+        for (unsigned s = li; s < ns; s += nl) le[s] = ids[s];
         sycl::group_barrier(it.get_group());
-        unsigned before = 0, total = 0, head = s;
-        if (on) {
-            for (unsigned j = 0; j < nsl; ++j) {
+        unsigned before[SPI], head[SPI];
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            before[k] = 0;
+            head[k] = s;
+            if (s >= ns) continue;
+            const uint32_t e = le[s];
+            unsigned bf = 0, total = 0, hd = s;
+            for (unsigned j = 0; j < ns; ++j) {
                 const bool eq = le[j] == e;
                 if (eq && j < s) {
-                    if (before % cap == 0) head = j; // occurrence `before` of e starts a chunk
-                    ++before;
+                    if (bf % cap == 0) hd = j; // occurrence `bf` of e starts a chunk
+                    ++bf;
                 }
                 total += eq ? 1u : 0u;
             }
-            if (before % cap == 0) head = s;
+            if (bf % cap == 0) hd = s;
+            const unsigned left = total - bf;
+            lc[s] = bf % cap == 0 ? (left < cap ? left : cap) : 0u; // a chunk head: its group's slot count
+            before[k] = bf;
+            head[k] = hd;
         }
-        const bool first = on && before % cap == 0;
-        const unsigned rank = sycl::exclusive_scan_over_group(it.get_group(), first ? 1u : 0u, sycl::plus<unsigned>());
-        const unsigned nu = sycl::reduce_over_group(it.get_group(), first ? 1u : 0u, sycl::plus<unsigned>());
-        if (first) lr[s] = rank;
         sycl::group_barrier(it.get_group());
-        if (on) {
-            const unsigned u = lr[head], i = before % cap;
+        unsigned mine = 0;
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            if (s >= ns || lc[s] == 0) continue;
+            const unsigned n = lc[s];
+            unsigned rank = 0;
+            for (unsigned j = 0; j < ns; ++j) {
+                const unsigned cj = lc[j];
+                rank += heavy ? (unsigned)(cj > n) | ((unsigned)(cj == n) & (unsigned)(j < s))
+                              : (unsigned)(cj != 0) & (unsigned)(j < s);
+            }
+            lr[s] = rank;
+            ++mine;
+        }
+        const unsigned nu = sycl::reduce_over_group(it.get_group(), mine, sycl::plus<unsigned>());
+        sycl::group_barrier(it.get_group());
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            if (s >= ns) continue;
+            const unsigned u = lr[head[k]], i = before[k] % cap;
             grp[RUGrp::SLOT + u * RUGrp::CAP + i] = s;
-            if (first) {
-                const unsigned left = total - before;
-                grp[RUGrp::EXP + u] = e;
-                grp[RUGrp::CNT + u] = left < cap ? left : cap;
+            if (i == 0) {
+                grp[RUGrp::EXP + u] = le[s];
+                grp[RUGrp::CNT + u] = lc[s];
             }
         }
-        if (s == 0) grp[0] = nu;
+        if (li == 0) grp[0] = nu;
     }
 };
 

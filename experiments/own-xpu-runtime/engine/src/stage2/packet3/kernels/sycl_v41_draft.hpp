@@ -198,7 +198,9 @@ struct DraftIdx {
 };
 
 // The draft's key rows into a stage ring (BF16, rounded as the target's window rows): the block's rows at ring
-// rows 128 + t (blk), injected target rows at their window slot (pos0 + t) % 128. One item per element.
+// rows 128 + t (blk), injected target rows at their window slot (pos0 + t) % 128. One item per element. An
+// injection of more than 128 rows writes its last 128 only (rows t and t + 128 share a slot; one-token steps leave
+// the later one there).
 template <typename A> struct DraftKvRows {
     unsigned hd, m;
     int pos0;
@@ -206,7 +208,7 @@ template <typename A> struct DraftKvRows {
     void operator()(sycl::nd_item<1> it, const typename A::T *kv, uint16_t *ring) const {
         const size_t g = it.get_global_linear_id();
         const unsigned t = (unsigned)(g / hd), i = (unsigned)(g % hd);
-        if (t >= m) return;
+        if (t >= m || (!blk && t + 128u < m)) return;
         const size_t row = blk ? 128u + t : (size_t)((pos0 + (int)t) % 128);
         ring[row * hd + i] = ops41::bf16b(A::rd(kv[(size_t)t * hd + i]));
     }

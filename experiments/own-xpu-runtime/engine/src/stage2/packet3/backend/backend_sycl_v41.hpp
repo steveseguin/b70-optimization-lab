@@ -248,12 +248,14 @@ public:
                                 // every (head, slot) sum the same; tools/bench/bench_attn_dec.cpp, 2026-11-11)
         bool att_pk = true;     // tp (default since tg86; OWN_ATT_PK=0: off): a trimmed list's softmax built for its slot count (SparseSoftmaxP<n>, 128
                                 // registers; OWN_ATT_PK) instead of SparseSoftmaxPN<640> (256 registers: mode changes)
+        bool att_m = false;     // tp: att_hg / att_pk also in multi-token blocks (guess checks, prompt blocks; OWN_ATT_M=1)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
         unsigned xpull_min = 8192; // (OWN_XPULL_MIN)
         bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
-        unsigned xpull_grf = 0; // 128: XchgPull built for 128 registers (XPullK128; OWN_XPULL_GRF=128), else auto (256)
+        unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
+                                  // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool pf = false;        // tp: attention launches prefetch output-a/b rows into the cache (OWN_PF=1; slower: the
@@ -264,6 +266,14 @@ public:
         bool eng_dev = true;    // tp: the 24 hashed engram rows go to each card as raw Q5_K bytes (copied from ordinary
                                 // host memory) and the card decodes them (EngRowsA: EmbedRowA's decode), not six host
                                 // decodes (OWN_ENG_DEV=0: host decode)
+        bool eng_cq = false;    // tp: the engram rows' host-to-card copies on a second in-order queue per card, the
+                                // decode launch waiting for them by event (OWN_ENG_CQ=1, 2026-11-11): a small copy
+                                // from host memory runs on the host only after the card's queue drains (the
+                                // host thread waited for layer 0, then the card for the copy: tg87 timeline)
+        bool head_cq = false;   // tp: a checked block's argmax readback on the copy queue after the draft's
+                                // injection is queued (OWN_HEAD_CQ=1; needs the draft)
+        bool pre_k = false;     // tp: the first pre-mix weights written by the broadcast launch (Broadcast4PA)
+                                // instead of a 16-byte host copy (OWN_PRE_K=1)
         bool eng_early = true;  // tp: the engram rows' disk reads start sooner: the anchor's rows while the draft runs,
                                 // a block's other rows split over the card threads (each its share, then reads),
                                 // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=0: off)
@@ -343,6 +353,7 @@ public:
                                 sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
             else
                 qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.eng_cq || opt.head_cq) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
         }
         if (o.tp > 1) {
             // every kernel built for every card before the first step: a card still compiling a kernel at its
@@ -385,7 +396,7 @@ public:
         }
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
             if (o.tp > 1)
-                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps; MTX <= 128)
+                for (int t = 0; t < o.tp; ++t) // + a block area of MTX rows (multi-token steps; RingCommitM)
                     ring[t][L] = dalloc<uint16_t>(t, (size_t)(128 + MTX) * g.hd);
             else
                 ring[tile_of_layer(L)][L] = dalloc<uint16_t>(tile_of_layer(L), (size_t)128 * g.hd);
@@ -793,7 +804,7 @@ public:
     // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
     bool skip_head = false;
     // tp: token index inside a multi-token step (0 in one-token steps); the card's position is pos + tokoff
-    // tokens per multi-token step, at most (OWN41_MTX, default 64; was 16 until 2026-11-11). Only capacities
+    // tokens per multi-token step, at most (OWN41_MTX, default 256; 16 until 2026-11-11, then 64). Only capacities
     // follow it: block buffers, exchange regions, the ring's block area, the kernels' per-token tables.
     static constexpr int MTX = (int)ops41sycl::MT_MAX;
     // blocks of up to MTF tokens run the one-sub-group dense forms (DenseRowsM / GemvTM / HcDotsRowsM) built at
@@ -1001,6 +1012,7 @@ private:
     std::vector<sycl::context> ctxs;
     std::vector<sycl::device> devs;
     std::vector<sycl::queue> qs;
+    std::vector<sycl::queue> cqs; // OWN_ENG_CQ: one more in-order queue per card (same context), copies only
     std::vector<void *> owned[TILES];
     std::unordered_map<std::string, DevPtr> wgt[TILES]; // per card (tp: every card holds its slice)
     const WeightTab *W = nullptr;
@@ -1845,6 +1857,14 @@ private:
             return true;
         }
     }
+    // the block form (SoftmaxM over M tokens' rows, stride WS) of softmax_pk: the trimmed list's softmax built for
+    // its slot count, the same values as SoftmaxM<SparseSoftmaxPN<640>>{n} (OWN_ATT_PK, guess checks + prompt blocks)
+    template <int NI> bool softmax_pk_m(int c, int nh, int n, int M, size_t WS, const float *sinks, const int32_t *ix, float *w) {
+        if constexpr (NI >= 640) { return false; } else {
+            if (n != NI) return softmax_pk_m<NI + 32>(c, nh, n, M, WS, sinks, ix, w);
+            launch_sg(c, (size_t)M * nh, ops41sycl::SoftmaxM<ops41sycl::SparseSoftmaxP<NI>>{{nh}, (unsigned)nh, (unsigned)M, 640, WS},
+                      sinks, ix, w);
+            return true; } }
     // config.json compress_ratios, main layers: 0,0, 2 x18, 1 x20 (37-39 are ratio 1)
     int cr_of(int L) const { return L < 2 ? 0 : (L < 20 ? 2 : 1); }
 
@@ -3586,6 +3606,19 @@ private:
                 for (int k = 0; k < 24; ++k)
                     std::memcpy(raw + (size_t)k * l.bytes, eng_base[li] + (size_t)ids[k] * l.bytes, l.bytes);
                 const auto q0 = std::chrono::steady_clock::now();
+                if (o.eng_cq) { // the copy on the card's copy queue; the decode launch waits for it by event
+                    const sycl::event ce = cqs[c].memcpy(tengr[c][li], raw, (size_t)24 * l.bytes);
+                    const ops41sycl::EngRowsA<Act> k{24u};
+                    const uint8_t *src = tengr[c][li];
+                    act_t *dst = teng[c][li];
+                    auto e = qs[c].submit([&](sycl::handler &hh) {
+                        hh.depends_on(ce);
+                        hh.parallel_for(sycl::nd_range<1>((size_t)24 * 256, 256), [=](sycl::nd_item<1> it) { k(it, src, dst); });
+                    });
+                    kev(c, kname<ops41sycl::EngRowsA<Act>>(), e);
+                    eng_tq[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - q0).count();
+                    continue;
+                }
                 auto ce = qs[c].memcpy(tengr[c][li], raw, (size_t)24 * l.bytes);
                 if (tl_on[c]) tl_add(c, "copy: engram rows, host to card", ce);
                 launch(c, (size_t)24 * 256, 256, ops41sycl::EngRowsA<Act>{24u}, (const uint8_t *)tengr[c][li], teng[c][li]);
@@ -3639,10 +3672,14 @@ private:
         const auto &te = we("token_embd.weight");
         const uint8_t *row = (const uint8_t *)wgt[c].at("token_embd.weight").p + (size_t)token * wrb(te);
         launch(c, g.h, 32, ops41sycl::EmbedRowA<Act>{te.type, g.h}, row, sc[c].x);
-        launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
-        float pm[4] = {1, 0, 0, 0};
-        auto ce = qs[c].memcpy(sc[c].cur_pre, pm, 16);
-        if (tl_on[c]) tl_add(c, "copy: pre-mix, host to card", ce);
+        if (o.pre_k) {
+            launch(c, g.h, 32, ops41sycl::Broadcast4PA<Act>{g.h}, (const act_t *)sc[c].x, streams[c], sc[c].cur_pre);
+        } else {
+            launch(c, g.h, 32, ops41sycl::Broadcast4A<Act>{g.h}, (const act_t *)sc[c].x, streams[c]);
+            float pm[4] = {1, 0, 0, 0};
+            auto ce = qs[c].memcpy(sc[c].cur_pre, pm, 16);
+            if (tl_on[c]) tl_add(c, "copy: pre-mix, host to card", ce);
+        }
         if (wait) twait(c);
     }
     // final norm + this card's logits rows + its argmax candidates (to the host)
