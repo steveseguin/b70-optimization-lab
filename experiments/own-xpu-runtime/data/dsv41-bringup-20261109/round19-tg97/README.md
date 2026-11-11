@@ -17,8 +17,14 @@ tg97b 14:09-14:33 (ALLDONE).
   136.4, analysis 153.5 / 150.1). The sender's extra 2.7 us per exchange lands on the critical path. Stays off.
 - **A looser guess threshold is neutral overall.** TAU 0.45: code 141.7, analysis 149.4; TAU 0.40: 140.5 / 150.0,
   against 138.4-139.2 / 150.5-153.0 at 0.5. Code gains about 2 %, analysis loses about as much. TAU stays 0.5.
-- **The 3K read was 0.9 % slower on tp97** (493.2 / 492.7 against tp96 with the same settings 497.7 / 497.3, tp96
-  always first in its round). No setup line differs. tg97c repeats it with tp97 first.
+- **The 3K read is not slower on tp97.** The printed rate leaves out the first step. The whole read takes the same
+  time on both builds (tg97c, tp97 first: 6.80 / 6.81 s against 6.80 / 6.80 s), but tp97's first step is ~0.05 s
+  shorter and a later step pays that one-time cost instead, so its printed rate is 493 against 497. Compare whole
+  read times from now on.
+- **tg97c (14:34-14:47), two free runtime tests at checks:** `OWN_MT_DSPLIT_FIN=1` code 140.00 / 139.46 against
+  138.77 / 138.08, analysis 151.01 / 152.11 against 152.45 / 152.59: neutral (the table entries of the dride helper
+  are the real version). `OWN_TP_HEADS_MIN=4` code 138.36 / 137.40, analysis 148.84 / 151.57: slower, closed. All
+  six traces identical, 12 / 12 guessing SAME, 4 ANSWER256_SAME.
 
 ## Correctness
 
@@ -33,5 +39,5 @@ waited for the helpers' flags; no in-kernel timeout fired before the driver's jo
 
 ## Files
 
-`tg97-summary.txt`, `tg97b-summary.txt`, `spec/` (tg97b spec logs), `check-cost-by-guesses.txt`. Scripts in
+`tg97-summary.txt`, `tg97b-summary.txt`, `tg97c-summary.txt`, `spec/` (tg97b spec logs), `spec-tg97c/`, `check-cost-by-guesses.txt`. Scripts in
 `../round18-scripts/strategy/` (build97.sh, tg97.sh, tg97b.sh, tg97c.sh).

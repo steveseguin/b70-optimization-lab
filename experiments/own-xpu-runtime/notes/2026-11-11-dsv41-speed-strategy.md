@@ -357,8 +357,9 @@ Did not work (and why):
 - Done (tg97 13:56-14:07 + tg97b 14:09-14:33, tp97; `data/.../round19-tg97/`): the tp96 winners hold as defaults
   (every trace identical, 16 / 16 guessing SAME): plain 100.4 / 100.6, code 138.4 / 139.2, analysis 153.0 / 150.5,
   prose 117.2, after 3K 141.3. qb-off-2 hung both 16-head cards (driver job timeouts 14:02, probe passed; qb-off-3
-  with its helper). k7-2 bitwise but -1.5 % plain (closed). TAU 0.45 / 0.40 neutral. The 3K read 0.9 % slower than
-  tp96 with the same settings (tg97c checks the run order).
+  with its helper). k7-2 bitwise but -1.5 % plain (closed). TAU 0.45 / 0.40 neutral. The 3K read takes the same
+  whole time on tp96 and tp97 (6.80 s; the printed rate leaves out the first step, whose one-time cost moved).
+  tg97c: `OWN_MT_DSPLIT_FIN=1` neutral (code +1 %, analysis -0.5 %), `OWN_TP_HEADS_MIN=4` slower (closed).
 - Done (tg96 11:57-12:36 + tg96b to 13:31:22, tp96; `data/.../round19-tg96/`): attn-a2 (`OWN_ATT_T=1`), ck-2
   (`OWN_MT_CK=1`) and rux-1 (`OWN_MT_RUX=1`) all bitwise (38 / 38 guessing SAME, 34 guess logs equal). Best now:
   plain 101.2 / 101.4 tok/s, code 139.2 / 139.3, analysis 153.8 / 153.6, prose 117.3, guessing after 3K 142.2,
