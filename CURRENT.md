@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 10, 2026 ~20:40 EST — DeepSeek V4.1 on six cards: long documents answer a little faster again (69K tokens: 67.0 -> 67.9 tokens/s), text the same; the machine reset itself a second time (network chip, not a card).**
+- The step that picks the 512 earlier words each new word looks at now reads its scores once into the chip's fastest storage instead of four times from memory. That pick runs 2-4x faster on long documents, with the same picks bit for bit.
+- Measured, with the same answers everywhere: 19K-token document 69.5 tokens/s, 69K 67.9 (the build before, run right after: 67.0); guessing on the 34K document 97.0 (91.6 earlier today). Short chats unchanged (about 78).
+- Checks: traces byte-identical; 475,136 lists on a 10K-token prompt and 12,288 on the 34K document compared, 0 differences.
+- 19:43: the machine reset itself again, with the same record as at 15:16: the network chip (Intel I210 at a7:00.0) waited too long for a memory read, and the board's firmware treats that as fatal and resets the machine. This was 30 seconds into a 95K-token test. Both resets were during long-document tests, while the 24 hours before had none. The card health check passed afterwards. The 95K-token test will run again in the next gate.
+- New since that reset: card 0000:23's link has logged three small transmission errors that the hardware corrected itself (none in earlier boots; the link still runs at full speed). Test scripts now note these and keep going; anything worse still stops them.
+- Next, tested on one card: the attention output step, about 5 % of every answer word past ~640 tokens of context, runs 22 -> 12 µs per layer in a new form with identical results. It goes into the engine now.
+- Cards: nothing loaded. Details: [note section 30](experiments/own-xpu-runtime/notes/2026-11-09-dsv41-device-load-host-memory.md).
+
 **November 10, 2026 ~19:30 EST — DeepSeek V4.1 on six cards: long documents answer much faster (a 95,000-token document: 56.5 -> 65.2 tokens/s), short chats +2.8 %, text the same.** Three changes, now on by default:
 - On long documents, the step that picks which earlier words each new word looks at now scores only the rows that a cheaper pick a few layers earlier already allows, instead of all of them.
 - That pick's final listing runs as one sweep instead of many small rounds.

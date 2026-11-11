@@ -695,16 +695,27 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, sco, bl, &lt[0]); });
         });
         kev(c, kname<KS>(), e);
-        ops41sycl::TopKSelMC kt{};
-        for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
-        kt.m = (unsigned)M;
-        kt.ss = SS;
-        kt.cs = SS;
-        kt.bls = 2048 + 64;
-        kt.rwalk = o.topk_r;
         constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
-        launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kt, (const float *)b.score, (const uint8_t *)b.cand,
-                         (const int32_t *)blm[c], cidxm[c][slot]);
+        if (qsel_ok()) { // OWN_TOPK_Q
+            ops41sycl::TopKSelMCQ kq{};
+            for (int t = 0; t < M; ++t) kq.lens[t] = lens[t];
+            kq.m = (unsigned)M;
+            kq.ss = SS;
+            kq.cs = SS;
+            kq.bls = 2048 + 64;
+            launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kq, (const float *)b.score, (const uint8_t *)b.cand,
+                             (const int32_t *)blm[c], cidxm[c][slot]);
+        } else {
+            ops41sycl::TopKSelMC kt{};
+            for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+            kt.m = (unsigned)M;
+            kt.ss = SS;
+            kt.cs = SS;
+            kt.bls = 2048 + 64;
+            kt.rwalk = o.topk_r;
+            launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kt, (const float *)b.score, (const uint8_t *)b.cand,
+                             (const int32_t *)blm[c], cidxm[c][slot]);
+        }
         if (o.idx_cand == 2) idx_cand_check_m(L, c, si, M, lens, slot);
         return;
     }
@@ -735,23 +746,39 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
     }
     using KR = ops41sycl::TopKSelP<false>;
     constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+    // OWN_TOPK_Q: the register selects (the block select past 2,048 blocks, the rows' select from 4,096 rows)
+    const int qb = qsel_ok() && (lmax + 7) / 8 > 2048 ? ops41sycl::qsel_span((int)((lmax + 7) / 8)) : 0;
+    const int qr = qsel_ok() && lmax >= 4096 ? ops41sycl::qsel_span((int)lmax) : 0;
     if (L == 20) {
-        ops41sycl::TopKSelM<true> kb{};
-        for (int t = 0; t < M; ++t) kb.lens[t] = lens[t];
-        kb.m = (unsigned)M;
-        kb.ss = SS;
-        kb.cs = SS;
-        kb.bls = 2048 + 64;
-        launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blm[c]); // blm: OWN_IDX_CAND (else null)
+        auto blk = [&](auto kb) {
+            for (int t = 0; t < M; ++t) kb.lens[t] = lens[t];
+            kb.m = (unsigned)M;
+            kb.ss = SS;
+            kb.cs = SS;
+            kb.bls = 2048 + 64;
+            launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blm[c]); // blm: OWN_IDX_CAND (else null)
+        };
+        if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
+        else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
+        else blk(ops41sycl::TopKSelM<true>{});
     }
-    ops41sycl::TopKSelM<false> kt{};
-    for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
-    kt.m = (unsigned)M;
-    kt.mask = L > 20;
-    kt.ss = SS;
-    kt.cs = SS;
-    kt.rwalk = o.topk_r;
-    launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cidxm[c][slot]);
+    auto rws = [&](auto kt) {
+        for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+        kt.m = (unsigned)M;
+        kt.mask = L > 20;
+        kt.ss = SS;
+        kt.cs = SS;
+        launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cidxm[c][slot]);
+    };
+    if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
+    else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
+    else if (qr && qr <= 64) rws(ops41sycl::TopKSelMQ<64>{});
+    else if (qr && qr <= 96) rws(ops41sycl::TopKSelMQ<96>{});
+    else {
+        ops41sycl::TopKSelM<false> kt{};
+        kt.rwalk = o.topk_r;
+        rws(kt);
+    }
 }
 // OWN_IDX_CAND=2, blocks (one call in 37 per card): each token's candidate-only scores and list against the full score (score2m) and the
 // masked select over all its rows (list2m), bitwise; the block lists against the masks

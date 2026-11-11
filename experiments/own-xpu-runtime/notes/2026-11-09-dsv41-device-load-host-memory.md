@@ -1422,6 +1422,70 @@ every root port), kernel, GuC firmware and kernel command line are as before the
 `performance`. The host's engram row work per step is ~3 % slower (266-269 -> 272-281 us). Not explained; not
 a code change (tp68h and tp73 alternate within 1 %).
 
+## 30. The index's top-512 selects with every key read once into registers: 69K-token answers +1.3 %, text identical; a second host reset (network chip); the attention output 22 -> 12 us per layer in a bench (2026-11-10 19:30-20:40 EST)
+
+**Where a select's time goes (q1-q2, `round18-q1-select-forms.txt`, `round18-q2-select-parts.txt`,
+`round18-scripts/q-bench/`).** At 69K tokens the index's top-512 selects took ~0.56 ms of each answer step (r1
+profile: `TopKSelR<false>` 4 x 72.5 us, `TopKSelC` 4 x 48.8, the block `TopKSelP<true>` 77.7). `TopKSelR` taken
+apart at 69,000 normal scores (q2): its four radix passes over memory 68.6 us of 119.2 (54.4 without the local
+adds: the adds 14.2), its walk 27.8. Two forms that keep the passes over memory were slower at 69,000 rows (q1,
+plain): loads issued 8 at a time 120.2 us and the local adds folded per sub-group with a ballot 144.0-168.1,
+against `TopKSelR`'s 102.3.
+
+**The register selects (`OWN_TOPK_Q`, q3-q5, `round18-q3-select-registers.txt`, `round18-q4-test-topk-q.txt`,
+`round18-q5-test-topk-q-139k.txt`).** Each work-item of the select's one work-group loads its contiguous range of
+`qsel_span(n)` keys (a multiple of 8) into registers once; the four radix passes count from registers and the
+walk by ranges reads them there too (`TopKSelQ`, `TopKSelBQ` for the block select with the newest block at +inf
+and the mask, `TopKSelCQ` over the candidate rows; `TopKSelMQ` / `TopKSelMBQ` / `TopKSelMCQ` for prompt blocks and
+checks). The lists are the same bit for bit (`tools/bench/test_topk_q.cpp`: plain, masked, block and candidate
+selects on normal scores, heavy ties, +0 / -0, mostly -inf and NaNs of both signs, 600 to 139,000 rows; PASS).
+Times at 69,000 normal scores (q4): plain 101.0 -> 51.0 us, masked 124.3 -> 68.0, block 73.2 -> 24.0, candidate
+46.3 -> 18.7; at 95,497 rows 142.7 -> 61.2, 170.3 -> 83.8, 95.8 -> 26.7, 48.8 -> 18.7. Short lists are slower in
+registers (600 rows 42.0 -> 53.3), so the row selects use them from 4,096 rows to 98,304 (`TopKSelQ<96>`; past that
+`TopKSelR`), the block select past 2,048 blocks (up to 262,144 rows: `TopKSelBQ<32>`, first timed in q5 at 131,080 /
+139,000 rows: 128.3 -> 35.3 / 133.2 -> 36.1 us) and the candidate select always.
+
+**On by default (tp75, g75, `round18-g75-summary-partial.txt`, `round18-scripts/g75.sh`).** `own_run_v41` turns
+`OWN_TOPK_Q` on unless it is set to 0 (the only change from tp74). Traces of blocks of 16 / 5 / one token
+byte-identical, 40 answers the same; prompt 1's 128 answers the same at 78.40 / 77.98 tok/s against tp74's 78.03 /
+77.94 (alternated; a 36-token prompt never runs the new selects); the 10,621-token prompt with every one-token and
+block list compared with the host's (`OWN_DEV_INDEX_CHECK=1`): 475,136 lists, 0 mismatches; the 34K document with
+the candidate lists compared with the full masked select (`OWN_IDX_CAND=2`): 12,288 lists, 0 mismatches, 64
+answers the same. 19K document: read at 279.7 tok/s, 256 answers the same as e82 at 69.51 tok/s. 69K: 268.2 / 67.92
+against tp74's 267.9 / 67.04 in the next run (+1.3 % answers), the same 256 answers. The 95K run was cut by the host
+reset below; the guessing run on the 34K document was rerun after it (g75b,
+`round18-g75b-summary.txt`): 256 answers SAME as the plain run at 97.01 tok/s (e82: 91.59), draft 2.32 + check
+20.54 ms per round. No fault lines.
+
+**A second host reset (19:43, `round18-host-reset-20261110-1943.txt`).** About 30 s into g75's 95K run (the weights
+loaded, the prompt just started) the host reset itself again, with the same firmware record as at 15:16: a fatal
+PCIe completion timeout on the I210 network chip 0000:a7:00.0 (under root complex 0000:a0 with card 0000:a3) and a
+fatal machine check. The chip's settings (read only): link power saving off, the default completion timeout range
+(50 us - 50 ms), and a completion timeout marked fatal in its error severity register while the firmware handles
+PCIe errors itself (the kernel sees none), so one late read completion for the network chip resets the machine. Both
+resets came during long-document campaigns; the 24 hours before the first had none, with the same kinds of runs.
+The health probe afterwards passed (`round18-health-probe-20261110-2015.txt`). Since this reset card 0000:23's
+upstream port (0000:21:00.0) has logged corrected receiver errors (20:15:38 and 20:19:15 with no GPU work running,
+20:22:05 during g75b's weights upload; none in the two boots before; link at 32 GT/s x16, link power saving off). Campaign fault checks now note
+windows that hold only corrected records and go on (`round18-scripts/g75b.sh`); anything else still stops them.
+
+**The attention output (s1-s4, `tools/bench/bench_sparse_out.cpp`, `round18-s1..s4-*.txt`).** Past ~640 tokens
+every compressed layer's list is 640 slots, and `SparseOutJB<512, 1, 16>` took 22.1-22.5 us per layer in the
+engine (0.89 ms per answer step, about 5 % of the card's kernel time at 3K-69K tokens; 7.6 us on prompt 1's
+trimmed lists). One
+sub-group per (head, 64 columns), each walking all 640 slots. The bench compares out and ry bit for bit with it
+(softmax-like and signed weights, -1 slots with NaN weights, a -1 tail; 640 / 160 / 128 slots; 16 and 8 heads):
+- s1: 32 loads in flight, pipelined loads, and the rows staged through local memory (a work-group = 16, 8 or 4 heads
+  of a 64-column span): no gain, fewer heads per work-group slower. Memory latency is not what bounds it.
+- s2: a skipped slot adds -0.0f instead of being branched around (x + -0 == x for every float, +0 and -0 included),
+  with the rows in local memory as f32: 21.8-22.9 -> 13.5-14.7 us at 640 slots (the first case, run while the card
+  was still clocking up, left out). The same change on `SparseOutJB` alone: no gain.
+- s3: that form with one column per lane (`SparseOutJC<512, 16, 128>`: twice the work-groups, 16 of 32-column
+  spans): 21.8-22.9 -> 11.9-12.3 us at 640 slots, 5.8-6.1 -> 4.0-4.2 at 160, 4.9-5.1 -> 2.7-3.1 at 128.
+- s4: the same on 16-lane sub-groups: 13.9-20.0 us at 640 slots, slower.
+All forms bitwise equal on every case. Next: that form in the engine (`OWN_ATT_OUT_C`: one-token steps, prompt
+blocks and checks), gate g76.
+
 ## Reproduce
 
 ```bash
@@ -1438,6 +1502,8 @@ $ICPX -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I planning/dsv4
 # (since section 29, past 16,384 rows the index of layers 24-36 runs over layer 20's candidate rows only
 #  (OWN_IDX_CAND), the top-512 selects walk by ranges (OWN_TOPK_R) and below 512 compressed rows the attention
 #  runs over the live rows only (OWN_ATT_TRIM), all by default; =0 for the old forms)
+# (since section 30, the index's top-512 selects read every key into registers once from 4,096 rows on
+#  (OWN_TOPK_Q, default; =0 for the section 29 forms))
 export LD_LIBRARY_PATH=/opt/intel/oneapi/umf/latest/lib:/opt/intel/oneapi/compiler/latest/lib
 # reference: prompt ids -> 40 tokens, state dump, 3-step trace (KV rows BF16 like the engine;
 # add OWN_CONTRACT=1 and build with -fp-model=precise -ffp-contract=off for the device's summation order)
@@ -1484,7 +1550,8 @@ owner on 2026-11-09; if they are ever enabled again they take two cards at boot 
 6. Prompt reading (~293 tok/s at 3K, blocks of 16, section 28): the doubled attention groups are split between
    card pairs for blocks of >= 16 tokens, with 4-row blocks. Long documents (section 29): 246.7 -> 263.6 tok/s
    reading and 56.5 -> 65.2 tok/s answers at 95K tokens. Next: the index work that is left (layers 24-36 over
-   the candidate rows, 1.34 ms per answer step at 69K) split across the cards. Closed: the
+   the candidate rows, 1.34 ms per answer step at 69K; its selects ~0.3 ms faster since section 30) split across
+   the cards; the attention output step (section 30: 22 -> 12 us per layer in the bench, into the engine next). Closed: the
    split for checks and the draft (section 28: each pair exchange costs more than it saves at 2-6 tokens);
    cold reads of new documents (`OWN_ENG_AHEAD`, section 27).
 4. `compress_ratios`, window and top-k constants are hardcoded in three places; they belong in the profile.

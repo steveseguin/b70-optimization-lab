@@ -251,6 +251,8 @@ public:
                                 // 32 instead of all 640 slots (the others are skipped ones), the same sums (on in own_run_v41; OWN_ATT_TRIM=0 off)
         bool topk_r = false;    // dev_index / tpm_index: the top-k selects' final walk by ranges (TopKSelR), the same
                                 // lists (on in own_run_v41; OWN_TOPK_R=0 off)
+        bool topk_q = false;    // dev_index / tpm_index: the selects with every key loaded once into registers
+                                // (TopKSelQ / TopKSelBQ / TopKSelCQ; rows >= 4,096, blocks > 2,048), the same lists (OWN_TOPK_Q)
         int idx_cand = 0;       // dev_index, layers past 20 beyond 16,384 rows: score and select the layer-20 candidate
                                 // rows only (IndexerScoreBC + TopKSelC), the same lists (OWN_IDX_CAND=1; 2 also runs the
                                 // full score + select and compares scores and lists bitwise)
@@ -2025,6 +2027,8 @@ private:
     // index() for len > 512 on card t alone (tp, o.dev_index): the same scores, then the
     // candidate blocks (layer 20) and the top-512 by TopKSelP straight into this card's list.
     // Every card holds the indexer weights and its own keys, so each picks for itself.
+    // OWN_TOPK_Q, where the scores and masks are 8-aligned (per-token strides max_seq + 64)
+    bool qsel_ok() const { return o.topk_q && max_seq % 8 == 0; }
     long dcand_n[TILES] = {};
     bool dcand_ok[TILES] = {};
     // out: the list's destination (multi-token steps: one list per token; the token's own layer-20 mask in
@@ -2086,8 +2090,12 @@ private:
             int32_t *dst = cidx_mirror[t][slot];
             using KC = ops41sycl::TopKSelC;
             constexpr size_t SLMC = (size_t)KC::NSG * 256 + 8;
-            launch_local<SLMC>(t, KC::WG, KC{(int)len, 512, 128, 512, 8, o.topk_r}, (const float *)s.score,
-                               (const uint8_t *)s.cand, (const int32_t *)s.blist, dst);
+            if (qsel_ok())
+                launch_local<SLMC>(t, KC::WG, ops41sycl::TopKSelCQ<16>{(int)len, 512, 128, 512}, (const float *)s.score,
+                                   (const uint8_t *)s.cand, (const int32_t *)s.blist, dst);
+            else
+                launch_local<SLMC>(t, KC::WG, KC{(int)len, 512, 128, 512, 8, o.topk_r}, (const float *)s.score,
+                                   (const uint8_t *)s.cand, (const int32_t *)s.blist, dst);
             tile_cidx_ver[t][slot] = cidx_ver[slot];
             if (o.idx_cand == 2) idx_cand_check(L, t, si, len, dst);
             return;
@@ -2120,8 +2128,16 @@ private:
         if (L == 20) { // official select_candidate_blocks (block 8, top 2048, newest pinned)
             const int nb = (int)((len + 7) / 8);
             // (TopKSelR<true>, the block select by ranges, measured slower: test_topk_r, round 18 e86)
-            launch_local<SLM>(t, KB::WG, KB{nb, 2048, 0, 0, 0, 8, (int)len}, (const float *)s.score,
-                              (const uint8_t *)nullptr, (int32_t *)s.blist, s.cand); // blist: OWN_IDX_CAND (else null)
+            const KB kb{nb, 2048, 0, 0, 0, 8, (int)len};
+            if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 16)
+                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<16>{kb}, (const float *)s.score, (const uint8_t *)nullptr,
+                                  (int32_t *)s.blist, s.cand);
+            else if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 32)
+                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)s.score, (const uint8_t *)nullptr,
+                                  (int32_t *)s.blist, s.cand);
+            else
+                launch_local<SLM>(t, KB::WG, kb, (const float *)s.score, (const uint8_t *)nullptr, (int32_t *)s.blist,
+                                  s.cand); // blist: OWN_IDX_CAND (else null)
             dcand_n[t] = len;
             dcand_ok[t] = true;
         }
@@ -2130,7 +2146,13 @@ private:
             throw std::runtime_error("candidate mask missing (layer 20 not in range) beyond 16384 rows");
         int32_t *dst = out ? out : cidx_mirror[t][slot];
         const KR kr{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0};
-        if (o.topk_r)
+        const uint8_t *cin = mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr;
+        const int qc = qsel_ok() && len >= 4096 ? ops41sycl::qsel_span((int)len) : 0;
+        if (qc && qc <= 16) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<16>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 32) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<32>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 64) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<64>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 96) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<96>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
+        else if (o.topk_r)
             launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)s.score,
                               mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst, (uint8_t *)nullptr);
         else

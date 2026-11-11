@@ -247,6 +247,9 @@ int main(int argc, char **argv) {
     // round 18 e87 / r1 (=0 for the old forms)
     opt.topk_r = getenv("OWN_TOPK_R") ? atoi(getenv("OWN_TOPK_R")) != 0 : true;
     opt.att_trim = getenv("OWN_ATT_TRIM") ? atoi(getenv("OWN_ATT_TRIM")) != 0 : true;
+    // the selects with every key in registers (rows >= 4,096, blocks > 2,048; the same lists): default since round 18
+    // q4 / g75 (=0 for TopKSelR / TopKSelP / TopKSelC)
+    opt.topk_q = getenv("OWN_TOPK_Q") ? atoi(getenv("OWN_TOPK_Q")) != 0 : true;
     // one host thread per card; trace runs submit phase by phase from one thread
     // (OWN_TP_THREADS=1 keeps the threads in a trace run: untraced steps, e.g. prompt blocks, use them)
     opt.tp_threads = getenv("OWN_TP_THREADS") ? atoi(getenv("OWN_TP_THREADS")) != 0 : !getenv("OWN_TRACE");

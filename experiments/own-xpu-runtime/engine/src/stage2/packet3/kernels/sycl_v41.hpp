@@ -4453,6 +4453,277 @@ struct TopKSelC {
     }
 };
 
+// The top-k selects with every key loaded once into registers (OWN_TOPK_Q): item i takes the positions
+// [i c, (i + 1) c), c = ceil(n / 1,024) rounded up to a multiple of 8 (at most MAXC), loads them 8 at a time and
+// runs TopKSelP's four radix passes and TopKSelR's walk by ranges from its registers. The same threshold, the
+// same ties (the lowest positions equal to it) and the same lists as TopKSelP / TopKSelR / TopKSelC, without
+// TopKSelR's five passes over the scores in memory (2x faster from ~5,000 positions; slower below ~4,000:
+// tools/bench/test_topk_q.cpp). qsel_span(n) <= MAXC must hold.
+inline int qsel_span(int n) { return ((n + 1023) / 1024 + 7) / 8 * 8; }
+// TopKSelP's threshold over the keys kr[m], m < MAXC with ok(m) (T = the k-th key, rem = how many keys equal to
+// T are taken); hist / misc as TopKSelP's local memory
+template <int MAXC, typename OK>
+[[gnu::always_inline]] inline void qsel_threshold(sycl::nd_item<1> it, const uint32_t (&kr)[MAXC], OK ok, uint32_t k,
+                                                  uint32_t *hist, uint32_t *misc, uint32_t &T, uint32_t &rem) {
+    constexpr int WG = 1024, NSG = WG / 32;
+    auto g = it.get_group();
+    const int lid = (int)it.get_local_linear_id();
+    const int sgi = (int)it.get_sub_group().get_group_linear_id();
+    uint32_t prefix = 0, pmask = 0;
+    rem = k;
+    for (int pass = 0; pass < 4; ++pass) {
+        const int shift = 24 - 8 * pass;
+        for (int i = lid; i < NSG * 256; i += WG) hist[i] = 0;
+        sycl::group_barrier(g);
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m) && (kr[m] & pmask) == prefix)
+                sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::work_group,
+                                 sycl::access::address_space::local_space>(hist[sgi * 256 + ((kr[m] >> shift) & 255u)])
+                    .fetch_add(1u);
+        sycl::group_barrier(g);
+        uint32_t tot = 0; // item i < 256 holds bin 255 - i: the scan runs from the top bin down
+        if (lid < 256)
+            for (int s = 0; s < NSG; ++s) tot += hist[s * 256 + (255 - lid)];
+        const uint32_t inc = sycl::inclusive_scan_over_group(g, tot, sycl::plus<uint32_t>());
+        const uint32_t exc = inc - tot;
+        if (lid < 256 && exc < rem && rem <= inc) {
+            misc[0] = 255u - (uint32_t)lid;
+            misc[1] = exc;
+        }
+        sycl::group_barrier(g);
+        prefix |= misc[0] << shift;
+        pmask |= 255u << shift;
+        rem -= misc[1];
+        sycl::group_barrier(g);
+    }
+    T = prefix;
+}
+// TopKSelR<false> (plain or masked rows) from registers
+template <int MAXC> struct TopKSelQ {
+    using KP = TopKSelP<false>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, V = 8;
+    KP p;
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand_in, int32_t *out, uint8_t *, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n;
+        const bool all = p.k >= n;
+        const int c = qsel_span(n), j0 = sycl::min(n, lid * c), cnt = sycl::min(n, j0 + c) - j0;
+        const uint32_t KNEG = KP::okey(-INFINITY);
+        const bool masked = cand_in != nullptr && p.cand_n > 0;
+        uint32_t kr[MAXC];
+#pragma unroll
+        for (int v = 0; v < MAXC / V; ++v) {
+            const int m0 = v * V;
+            if (m0 < cnt) {
+                if (m0 + V <= cnt) {
+                    const auto x = *reinterpret_cast<const sycl::vec<float, V> *>(sc + j0 + m0);
+                    sycl::vec<uint8_t, V> f(1);
+                    if (masked) {
+                        if (j0 + m0 + V <= p.cand_n) f = *reinterpret_cast<const sycl::vec<uint8_t, V> *>(cand_in + j0 + m0);
+                        else
+#pragma unroll
+                            for (int u = 0; u < V; ++u) f[u] = j0 + m0 + u < p.cand_n ? cand_in[j0 + m0 + u] : 1;
+                    }
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = f[u] ? KP::okey(x[u]) : KNEG;
+                } else {
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = m0 + u < cnt ? KP::okey(p.val(sc, cand_in, j0 + m0 + u)) : 0u;
+                }
+            }
+        }
+        auto ok = [&](int m) { return m < cnt; };
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<MAXC>(it, kr, ok, (uint32_t)p.k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        uint32_t base = gtb + sycl::min(eqb, rem), eqs = eqb;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                if (sel) {
+                    if (base < (uint32_t)p.outn) out[base] = j0 + m + p.add;
+                    ++base;
+                }
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, ngt, sycl::plus<uint32_t>()) +
+                             sycl::min(sycl::reduce_over_group(g, neq, sycl::plus<uint32_t>()), rem);
+        for (int i = (int)tot + lid; i < p.outn; i += WG) out[i] = -1;
+    }
+};
+// TopKSelC (rwalk) from registers: position q = row bl[1 + q / 8] * 8 + q % 8 (bs = 8), c a multiple of 8, so
+// item i's positions are whole blocks (one 8-float load each); rows at or past `rows` take no part. The same
+// count of candidates above -inf first, and with fewer than k the same fallback (the masked TopKSelR<false> over
+// all rows). Same local memory.
+template <int MAXC> struct TopKSelCQ {
+    static constexpr int WG = 1024, NSG = WG / 32, V = 8;
+    int rows, k, add, outn;
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand, const int32_t *bl, int32_t *out,
+                    float *lm) const {
+        using KP = TopKSelP<false>;
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const uint32_t KNEG = KP::okey(-INFINITY);
+        const int n = bl[0] * V; // candidate positions
+        const int c = qsel_span(n), q0 = sycl::min(n, lid * c), cnt = sycl::min(n, q0 + c) - q0;
+        uint32_t kr[MAXC];
+        int nok[MAXC / V]; // block v of this item's range: its rows below `rows` (r0 .. r0 + nok[v])
+#pragma unroll
+        for (int v = 0; v < MAXC / V; ++v) {
+            nok[v] = 0;
+            if (v * V < cnt) {
+                const int r0 = bl[1 + (q0 + v * V) / V] * V;
+                nok[v] = sycl::clamp(rows - r0, 0, V);
+                if (nok[v] == V) {
+                    const auto x = *reinterpret_cast<const sycl::vec<float, V> *>(sc + r0);
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[v * V + u] = KP::okey(x[u]);
+                } else {
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[v * V + u] = u < nok[v] ? KP::okey(sc[r0 + u]) : 0u;
+                }
+            }
+        }
+        auto ok = [&](int m) { return m % V < nok[m / V]; };
+        uint32_t ca = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m) ca += (ok(m) && kr[m] > KNEG) ? 1u : 0u;
+        ca = sycl::reduce_over_group(g, ca, sycl::plus<uint32_t>());
+        if (ca < (uint32_t)k) { // too few: the masked select over all rows (TopKSelC's fallback)
+            TopKSelR<false>{KP{rows, k, add, outn, rows, 0, 0}}(it, sc, cand, out, nullptr, lm);
+            return;
+        }
+        uint32_t T = 0, rem = 0;
+        qsel_threshold<MAXC>(it, kr, ok, (uint32_t)k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                ngt += kr[m] > T ? 1u : 0u;
+                neq += kr[m] == T ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        uint32_t base = gtb + sycl::min(eqb, rem), eqs = eqb;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                const bool gt = kr[m] > T, eq = kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                if (sel) {
+                    if (base < (uint32_t)outn) out[base] = bl[1 + (q0 + m) / V] * V + m % V + add;
+                    ++base;
+                }
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, ngt, sycl::plus<uint32_t>()) +
+                             sycl::min(sycl::reduce_over_group(g, neq, sycl::plus<uint32_t>()), rem);
+        for (int i = (int)tot + lid; i < outn; i += WG) out[i] = -1;
+    }
+};
+// TopKSelP<true> (the block select: block keys = the largest score of each block of 8 rows, folded in row
+// order, the newest block +inf; mask rows and, with out, the flagged blocks in order) from registers: item i's
+// blocks [i c, (i + 1) c), one 8-float load per block. TopKSelR<true>'s walk (with the flag count when the
+// threshold is not above -inf). Same local memory.
+template <int MAXC> struct TopKSelBQ {
+    using KP = TopKSelP<true>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, BS = 8;
+    KP p; // n blocks, k, bs = 8, rows
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *, int32_t *out, uint8_t *cand_out, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n;
+        const bool all = p.k >= n;
+        const int c = qsel_span(n), j0 = sycl::min(n, lid * c), cnt = sycl::min(n, j0 + c) - j0;
+        const uint32_t KNEG = KP::okey(-INFINITY);
+        uint32_t kr[MAXC];
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (m < cnt) {
+                const int j = j0 + m;
+                float mx;
+                if (j == n - 1) mx = INFINITY;
+                else {
+                    const int a = j * BS;
+                    mx = -INFINITY; // std::max(m, v) per row, as the host folds it
+                    if (a + BS <= p.rows) {
+                        const auto x = *reinterpret_cast<const sycl::vec<float, BS> *>(sc + a);
+#pragma unroll
+                        for (int u = 0; u < BS; ++u) mx = mx < x[u] ? x[u] : mx;
+                    } else {
+                        for (int r = a; r < sycl::min(a + BS, p.rows); ++r) {
+                            const float v = sc[r];
+                            mx = mx < v ? v : mx;
+                        }
+                    }
+                }
+                kr[m] = KP::okey(mx);
+            }
+        auto ok = [&](int m) { return m < cnt; };
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<MAXC>(it, kr, ok, (uint32_t)p.k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        // flagged = selected and above -inf; with T > -inf every selected block is above it
+        const bool flags_eq_sel = all ? false : T > KNEG;
+        uint32_t fb = 0;
+        if (out && !flags_eq_sel) { // count the flags per range first
+            uint32_t eqs = eqb, nf = 0;
+#pragma unroll
+            for (int m = 0; m < MAXC; ++m)
+                if (ok(m)) {
+                    const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                    const bool sel = gt || (eq && eqs < rem);
+                    if (eq) ++eqs;
+                    nf += (sel && kr[m] > KNEG) ? 1u : 0u;
+                }
+            fb = sycl::exclusive_scan_over_group(g, nf, sycl::plus<uint32_t>());
+        } else {
+            fb = gtb + sycl::min(eqb, rem);
+        }
+        uint32_t eqs = eqb, nf = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                const int j = j0 + m;
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                const bool f = sel && kr[m] > KNEG;
+                const int a = j * BS;
+                if (a + BS <= p.rows) *reinterpret_cast<sycl::vec<uint8_t, BS> *>(cand_out + a) = sycl::vec<uint8_t, BS>(f ? 1 : 0);
+                else
+                    for (int r = a; r < sycl::min(a + BS, p.rows); ++r) cand_out[r] = f ? 1 : 0;
+                if (out && f) out[1 + fb + nf] = j;
+                nf += f ? 1u : 0u;
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, nf, sycl::plus<uint32_t>());
+        if (out && lid == 0) out[0] = (int32_t)tot;
+    }
+};
+
 // ArgmaxP1 over a card's slice of the logits: indices are reported as
 // off + i, and `none` (the full vocabulary size) when the span has no
 // non-NaN value above -inf, exactly as ArgmaxP1 would for the full vector.
@@ -4898,6 +5169,47 @@ struct TopKSelMC {
         if (t >= m || lens[t] <= 0) return;
         const TopKSelC k{lens[t], 512, 128, 512, 8, rwalk};
         k(it, sc + t * ss, cand + t * cs, bl + t * bls, out + (size_t)t * 512, lm);
+    }
+};
+// TopKSelM / TopKSelMC with the register selects (OWN_TOPK_Q; ss and cs multiples of 8): the plain / masked
+// select by TopKSelQ<MAXC> (MAXC >= qsel_span of every token's rows), the block select by TopKSelBQ<MAXC> (of its
+// blocks), the candidate select by TopKSelCQ<16>. The same lists.
+template <int MAXC> struct TopKSelMQ {
+    int lens[16];
+    unsigned m;
+    bool mask;
+    size_t ss, cs;
+    void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m || lens[t] <= 0) return;
+        const int len = lens[t];
+        const TopKSelP<false> k{len, 512, 128, 512, mask ? len : 0, 0, 0};
+        const uint8_t *ci = mask ? (const uint8_t *)(cand + t * cs) : (const uint8_t *)nullptr;
+        TopKSelQ<MAXC>{k}(it, sc + t * ss, ci, out + (size_t)t * 512, (uint8_t *)nullptr, lm);
+    }
+};
+template <int MAXC> struct TopKSelMBQ {
+    int lens[16];
+    unsigned m;
+    size_t ss, cs, bls = 0;
+    void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m || lens[t] <= 0) return;
+        const int len = lens[t];
+        const TopKSelP<true> k{(len + 7) / 8, 2048, 0, 0, 0, 8, len};
+        int32_t *o2 = out ? out + t * bls : (int32_t *)nullptr;
+        TopKSelBQ<MAXC>{k}(it, sc + t * ss, (const uint8_t *)nullptr, o2, cand + t * cs, lm);
+    }
+};
+struct TopKSelMCQ {
+    int lens[16];
+    unsigned m;
+    size_t ss, cs, bls;
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand, const int32_t *bl, int32_t *out,
+                    float *lm) const {
+        const unsigned t = (unsigned)it.get_group_linear_id();
+        if (t >= m || lens[t] <= 0) return;
+        TopKSelCQ<16>{lens[t], 512, 128, 512}(it, sc + t * ss, cand + t * cs, bl + t * bls, out + (size_t)t * 512, lm);
     }
 };
 // IndexerScoreBM over each token's layer-20 candidate rows (OWN_IDX_CAND): token t's gpt work-groups score its

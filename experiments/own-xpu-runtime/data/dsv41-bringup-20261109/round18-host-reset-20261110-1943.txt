@@ -1,0 +1,93 @@
+# Host reset 2026-11-10 ~19:43 EST (last journal line of boot -1: 19:43:17; files written until 19:43:43) during campaign g75's
+# 95K-token run x95k_q (tp75): its weights were loaded ("free after load" lines) and the prompt had just started.
+# Boot 0 started 19:45:47. No GPU fault line in boot -1. Second reset of the day; the same record as 15:16
+# (round18-host-reset-20261110-1516.txt): a fatal PCIe completion timeout on the I210 network chip 0000:a7:00.0.
+# The firmware's boot error record (BERT), journalctl -b 0 -k:
+BERT: Error records from previous boot:
+[Hardware Error]: event severity: fatal
+[Hardware Error]:  Error 0, type: fatal
+[Hardware Error]:  fru_text: PcieError
+[Hardware Error]:   section_type: PCIe error
+[Hardware Error]:   port_type: 0, PCIe end point
+[Hardware Error]:   version: 0.2
+[Hardware Error]:   command: 0x0000, status: 0x0010
+[Hardware Error]:   device_id: 0000:a7:00.0
+[Hardware Error]:   slot: 0
+[Hardware Error]:   secondary_bus: 0x00
+[Hardware Error]:   vendor_id: 0x8086, device_id: 0x1533
+[Hardware Error]:   class_code: 020000
+[Hardware Error]:   bridge: secondary_status: 0xb788, control: 0x0000
+[Hardware Error]:   aer_cor_status: 0x00000000, aer_cor_mask: 0x00003000
+[Hardware Error]:   aer_uncor_status: 0x00004000, aer_uncor_mask: 0x00000000
+[Hardware Error]:   aer_uncor_severity: 0x004f6031
+[Hardware Error]:   TLP Header: 00000000 00000000 00000000 00000000
+[Hardware Error]:  Error 1, type: fatal
+[Hardware Error]:  fru_text: Perr S0:T002:B05
+[Hardware Error]:   section_type: IA32/X64 processor error
+[Hardware Error]:   Local APIC_ID: 0x0
+[Hardware Error]:   CPUID Info:
+[Hardware Error]:   00000000: 00b00f21 00000000 00100800 00000000
+[Hardware Error]:   00000010: 76fa320b 00000000 178bfbff 00000000
+[Hardware Error]:   00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:   Error Information Structure 0:
+[Hardware Error]:    Error Structure Type: cache error
+[Hardware Error]:    Check Information: 0x000000000602001f
+[Hardware Error]:     Transaction Type: 2, Generic
+[Hardware Error]:     Operation: 0, generic error
+[Hardware Error]:     Level: 0
+[Hardware Error]:     Processor Context Corrupt: true
+[Hardware Error]:     Uncorrected: true
+[Hardware Error]:   Context Information Structure 0:
+[Hardware Error]:    Register Context Type: MSR Registers (Machine Check and other MSRs)
+[Hardware Error]:    Register Array Size: 0x0080
+[Hardware Error]:    MSR Address: 0xc0002051
+mce: [Hardware Error]: Machine check events logged
+[Hardware Error]:   Context Information Structure 1:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0010
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 00000010 00000000 100a30a0 fffffffe
+[Hardware Error]:   Context Information Structure 2:
+[Hardware Error]:    Register Context Type: Unclassified Data
+[Hardware Error]:    Register Array Size: 0x0040
+[Hardware Error]:    Register Array:
+[Hardware Error]:    00000000: 20029b00 000500b0 000e0108 9c200000
+[Hardware Error]:    00000010: 4a800003 00002774 07070000 ac008707
+[Hardware Error]:    00000020: 00000000 00000000 00000000 00000000
+[Hardware Error]:    00000030: 00000000 00000000 00000000 00000000
+BERT: Total records found: 1
+mce: [Hardware Error]: CPU 0: Machine Check: 0 Bank 5: bea0000000000108
+mce: [Hardware Error]: TSC 0 ADDR afff25ec MISC d0140ff600000000 PPIN 25136dc0f4dc00a SYND 4d000000 SYND1 3a30532072726550 SYND2 3530423a32303054 IPID 500b020029a00 
+mce: [Hardware Error]: PROCESSOR 2:b00f21 TIME 1794357936 SOCKET 0 APIC 0 microcode b00211e
+
+# The I210's PCIe settings now (sudo lspci -s a7:00.0 -vv, read only): link power saving off; the completion timeout
+# range is the default 50 us - 50 ms; a completion timeout is set FATAL in its error severity register (UESvrt CmpltTO+),
+# and the platform handles PCIe errors in firmware (_OSC: platform does not support [AER LTR DPC]), so a late read
+# completion for the network chip resets the whole machine.
+		LnkCap:	Port #2, Speed 2.5GT/s, Width x1, ASPM L0s L1, Exit Latency L0s <2us, L1 <16us
+		LnkCtl:	ASPM Disabled; RCB 64 bytes, Disabled- CommClk+
+		LnkSta:	Speed 2.5GT/s, Width x1
+		DevCap2: Completion Timeout: Range ABCD, TimeoutDis+ NROPrPrP- LTR-
+		DevCtl2: Completion Timeout: 50us to 50ms, TimeoutDis- LTR- 10BitTagReq- OBFF Disabled,
+		UESvrt:	DLP+ SDES+ TLP- FCP+ CmpltTO+ CmpltAbrt- UnxCmplt+ RxOF+ MalfTLP+ ECRC+ UnsupReq- ACSViol-
+# its root port a0:03.6:
+		LnkCtl:	ASPM Disabled; RCB 64 bytes, Disabled- CommClk+
+		DevCtl2: Completion Timeout: 65ms to 210ms, TimeoutDis- LTR- 10BitTagReq- OBFF Disabled, ARIFwd-
+
+# g75 marks (CLOCK_MONOTONIC s; the last journal line of boot -1 is at 15873.37):
+p10k_qchk start 14964.7284
+p10k_qchk end 15043.5156
+x34k_cchk start 15043.5408
+x34k_cchk end 15196.3827
+x19k_q start 15196.4116
+x19k_q end 15295.2557
+x69k_q start 15295.2815
+x69k_q end 15582.9229
+x69k_d start 15582.9439
+x69k_d end 15871.0662
+x95k_q start 15871.0922
+# boot list:
+ -3 30169673335c46dd8fa6d5c4ef7b34e5 Mon 2026-11-09 14:38:20 EST Mon 2026-11-09 15:03:34 EST
+ -2 bb9a9430f3134860bb218d3c18560fa4 Mon 2026-11-09 15:06:19 EST Tue 2026-11-10 15:16:37 EST
+ -1 4878d99da91b4569afa7c054302db78b Tue 2026-11-10 15:18:56 EST Tue 2026-11-10 19:43:17 EST
+  0 b1dcd89f99d84c56995a6c34ea1b4582 Tue 2026-11-10 19:45:47 EST Tue 2026-11-10 20:14:43 EST

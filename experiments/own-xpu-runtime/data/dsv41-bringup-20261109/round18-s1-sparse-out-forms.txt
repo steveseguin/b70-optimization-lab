@@ -1,0 +1,33 @@
+Intel(R) Arc(TM) Pro B70 Graphics: 256 compute units, local memory 128 KiB, max work-group 1024
+list                          n heads | A0 | B1 | C2 | S3 | S4 | S5 | S6 | S7 | S8   (median us; y = out and ry bitwise = A)
+softmax weights             640    16 |  28.5 y |  27.9 y |  32.5 y |  28.3 y |  35.8 y |  42.1 y |  40.8 y |  25.9 y |  34.7 y
+softmax weights             640     8 |  23.6 y |  23.5 y |  27.2 y |  22.8 y |  29.9 y |  35.3 y |  34.2 y |  19.6 y |  28.8 y
+softmax weights             160    16 |   6.5 y |   6.2 y |   7.1 y |   6.9 y |   9.1 y |  11.9 y |   9.8 y |   6.6 y |   8.3 y
+softmax weights             160     8 |   6.4 y |   6.1 y |   7.0 y |   6.8 y |   9.0 y |  11.5 y |   9.7 y |   6.2 y |   8.3 y
+softmax weights             128    16 |   5.4 y |   5.2 y |   5.8 y |   5.2 y |   6.6 y |   8.2 y |   7.4 y |   5.3 y |   6.2 y
+softmax weights             128     8 |   5.3 y |   5.1 y |   5.7 y |   5.2 y |   6.4 y |   8.0 y |   7.4 y |   4.7 y |   6.2 y
+signed weights, -1 slots    640    16 |  23.0 y |  22.6 y |  26.4 y |  22.7 y |  29.3 y |  34.3 y |  32.9 y |  21.2 y |  28.9 y
+signed weights, -1 slots    640     8 |  22.4 y |  22.7 y |  26.2 y |  21.9 y |  28.9 y |  34.3 y |  33.1 y |  19.4 y |  28.2 y
+signed weights, -1 slots    160    16 |   6.2 y |   6.1 y |   6.8 y |   6.7 y |   8.9 y |  11.8 y |   9.6 y |   6.5 y |   8.3 y
+signed weights, -1 slots    160     8 |   6.0 y |   5.9 y |   6.8 y |   6.8 y |   8.6 y |  11.2 y |   9.5 y |   6.2 y |   8.3 y
+signed weights, -1 slots    128    16 |   5.2 y |   5.0 y |   5.5 y |   5.0 y |   6.5 y |   8.1 y |   7.3 y |   5.1 y |   6.1 y
+signed weights, -1 slots    128     8 |   5.0 y |   5.0 y |   5.6 y |   5.2 y |   6.4 y |   7.9 y |   7.3 y |   4.8 y |   6.2 y
+list tail -1                640    16 |  23.3 y |  22.6 y |  25.6 y |  23.0 y |  29.5 y |  34.6 y |  33.0 y |  21.5 y |  28.9 y
+list tail -1                640     8 |  22.6 y |  22.4 y |  25.5 y |  22.5 y |  29.3 y |  34.6 y |  33.1 y |  19.6 y |  28.4 y
+list tail -1                160    16 |   6.5 y |   6.2 y |   7.1 y |   6.9 y |   9.1 y |  11.9 y |   9.8 y |   6.7 y |   8.3 y
+list tail -1                160     8 |   6.4 y |   6.2 y |   7.0 y |   6.8 y |   9.0 y |  11.5 y |   9.8 y |   6.2 y |   8.3 y
+list tail -1                128    16 |   5.3 y |   5.2 y |   5.8 y |   5.2 y |   6.6 y |   8.3 y |   7.5 y |   5.3 y |   6.4 y
+list tail -1                128     8 |   5.2 y |   5.1 y |   5.7 y |   5.4 y |   6.4 y |   8.0 y |   7.4 y |   4.8 y |   6.2 y
+forms:
+  A0 A SparseOutJB<512,1,16> (engine)
+  B1 B SparseOutJB<512,1,32>
+  C2 C SparseOutJB<512,1,16,pipe>
+  S3 S SparseOutJS<16,128>
+  S4 S SparseOutJS<8,128>
+  S5 S SparseOutJS<4,128>
+  S6 S SparseOutJS<4,64>
+  S7 S SparseOutJS<16,128,f32>
+  S8 S SparseOutJS<4,64,f32>
+PASS
+exit 0
+DONE

@@ -1,0 +1,52 @@
+Intel(R) Arc(TM) Pro B70 Graphics: 256 compute units, local memory 128 KiB, max work-group 1024
+list                          n heads | A0 | F1 | S2 | S3 | C4 | C5 | C6 | C7 | C8   (median us; y = out and ry bitwise = A)
+softmax weights             640    16 |  22.9 y |  22.3 y |  14.7 y |  16.7 y |  12.3 y |  15.9 y |  12.5 y |  14.3 y |  12.3 y
+softmax weights             640     8 |  22.9 y |  22.2 y |  14.2 y |  16.6 y |  12.0 y |  15.9 y |  12.4 y |  13.9 y |  12.0 y
+softmax weights             160    16 |   6.1 y |   5.8 y |   4.8 y |   4.9 y |   4.1 y |   5.4 y |   3.9 y |   4.5 y |   4.1 y
+softmax weights             160     8 |   6.1 y |   5.8 y |   4.6 y |   5.3 y |   4.0 y |   5.3 y |   3.8 y |   4.4 y |   4.0 y
+softmax weights             128    16 |   5.1 y |   4.9 y |   3.3 y |   4.0 y |   2.9 y |   3.6 y |   3.0 y |   4.1 y |   2.8 y
+softmax weights             128     8 |   5.1 y |   4.8 y |   3.5 y |   4.1 y |   2.7 y |   3.6 y |   2.9 y |   3.9 y |   2.7 y
+signed weights, -1 slots    640    16 |  22.1 y |  21.5 y |  14.7 y |  16.8 y |  12.2 y |  16.0 y |  12.6 y |  14.3 y |  12.2 y
+signed weights, -1 slots    640     8 |  22.0 y |  20.5 y |  14.1 y |  16.6 y |  12.1 y |  16.0 y |  12.5 y |  14.0 y |  12.1 y
+signed weights, -1 slots    160    16 |   5.9 y |   5.5 y |   4.7 y |   4.9 y |   4.1 y |   5.4 y |   4.0 y |   4.6 y |   4.1 y
+signed weights, -1 slots    160     8 |   5.8 y |   5.5 y |   4.6 y |   4.9 y |   4.2 y |   5.5 y |   3.8 y |   4.4 y |   4.2 y
+signed weights, -1 slots    128    16 |   4.9 y |   4.7 y |   3.4 y |   4.1 y |   3.1 y |   3.8 y |   3.1 y |   4.3 y |   3.0 y
+signed weights, -1 slots    128     8 |   4.9 y |   4.6 y |   3.6 y |   4.2 y |   2.7 y |   3.9 y |   3.0 y |   4.1 y |   2.8 y
+list tail -1                640    16 |  21.9 y |  20.9 y |  14.6 y |  16.6 y |  12.2 y |  15.8 y |  12.5 y |  14.0 y |  12.2 y
+list tail -1                640     8 |  21.8 y |  20.8 y |  14.1 y |  16.5 y |  11.9 y |  15.8 y |  12.4 y |  13.8 y |  11.9 y
+list tail -1                160    16 |   6.1 y |   5.7 y |   4.8 y |   5.0 y |   4.2 y |   5.4 y |   4.0 y |   4.6 y |   4.2 y
+list tail -1                160     8 |   6.0 y |   5.8 y |   4.6 y |   4.9 y |   4.1 y |   5.4 y |   3.8 y |   4.4 y |   4.1 y
+list tail -1                128    16 |   5.1 y |   4.9 y |   3.3 y |   4.0 y |   2.9 y |   3.8 y |   3.0 y |   4.1 y |   2.8 y
+list tail -1                128     8 |   5.1 y |   4.8 y |   3.5 y |   4.2 y |   2.7 y |   3.6 y |   3.0 y |   3.9 y |   2.7 y
+forms:
+  A0 A SparseOutJB<512,1,16> (engine)
+  F1 F SparseOutJBF<512,32> (no branch)
+  S2 S SparseOutJS<16,128,f32> no branch
+  S3 S SparseOutJS<16,64,f32> no branch
+  C4 C SparseOutJC<16,128> (column per lane)
+  C5 C SparseOutJC<8,128>
+  C6 C SparseOutJC<16,64>
+  C7 C SparseOutJC<16,256>
+  C8 C SparseOutJC<16,128,8>
+PASS
+exit 0
+FAULT: {1}[Hardware Error]: Hardware error from APEI Generic Hardware Error Source: 516
+FAULT: {1}[Hardware Error]: It has been corrected by h/w and requires no further action
+FAULT: {1}[Hardware Error]: event severity: corrected
+FAULT: {1}[Hardware Error]:  Error 0, type: corrected
+FAULT: {1}[Hardware Error]:  fru_text: PcieError
+FAULT: {1}[Hardware Error]:   section_type: PCIe error
+FAULT: {1}[Hardware Error]:   port_type: 5, upstream switch port
+FAULT: {1}[Hardware Error]:   version: 0.2
+FAULT: {1}[Hardware Error]:   command: 0x0007, status: 0x0011
+FAULT: {1}[Hardware Error]:   device_id: 0000:21:00.0
+FAULT: {1}[Hardware Error]:   slot: 0
+FAULT: {1}[Hardware Error]:   secondary_bus: 0x22
+FAULT: {1}[Hardware Error]:   vendor_id: 0x8086, device_id: 0xe2ff
+FAULT: {1}[Hardware Error]:   class_code: 060400
+FAULT: {1}[Hardware Error]:   bridge: secondary_status: 0x0000, control: 0x000a
+FAULT: {1}[Hardware Error]:   aer_cor_status: 0x00000001, aer_cor_mask: 0x00003000
+FAULT: {1}[Hardware Error]:   aer_uncor_status: 0x00000000, aer_uncor_mask: 0x00000000
+FAULT: {1}[Hardware Error]:   aer_uncor_severity: 0x004f6030
+FAULT: {1}[Hardware Error]:   TLP Header: 00000000 00000000 00000000 00000000
+DONE
