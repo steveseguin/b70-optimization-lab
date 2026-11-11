@@ -1,0 +1,53 @@
+device: Intel(R) Arc(TM) Pro B70 Graphics
+bitwise M=16  dsplit partials, attention split (tokens 1,2,1,1,6,5; 0 stray)
+bitwise M=16  dsplit finish (forms 1, 0), attention split
+bitwise M=16  dsplit partials, ffn split (tokens 3,2,3,3,2,3; 0 stray)
+bitwise M=16  dsplit finish (forms 1, 0), ffn split
+bitwise M=16  dsplit partials, WA=0,0,0,0,1,1 split (tokens 0,0,0,0,8,8; 0 stray)
+bitwise M=16  dsplit finish (forms 1, 0), WA=0,0,0,0,1,1 split
+bitwise M=16  skdots<8> finish (forms 1, 0) vs production (3 of 400 rows took the production fallback)
+bitwise M=16  skdots<8> shares = full launch
+bitwise M=16  skdots<4> finish (forms 1, 0) vs production (1 of 400 rows took the production fallback)
+bitwise M=16  skdots<4> shares = full launch
+bitwise M=64  dsplit partials, attention split (tokens 5,6,5,5,22,21; 0 stray)
+bitwise M=64  dsplit finish (forms 1, 0), attention split
+bitwise M=64  dsplit partials, ffn split (tokens 11,10,11,11,10,11; 0 stray)
+bitwise M=64  dsplit finish (forms 1, 0), ffn split
+bitwise M=64  dsplit partials, WA=0,0,0,0,1,1 split (tokens 0,0,0,0,32,32; 0 stray)
+bitwise M=64  dsplit finish (forms 1, 0), WA=0,0,0,0,1,1 split
+bitwise M=64  skdots<8> finish (forms 1, 0) vs production (6 of 1600 rows took the production fallback)
+bitwise M=64  skdots<8> shares = full launch
+bitwise M=64  skdots<4> finish (forms 1, 0) vs production (4 of 1600 rows took the production fallback)
+bitwise M=64  skdots<4> shares = full launch
+bitwise M=256 dsplit partials, attention split (tokens 21,22,21,21,86,85; 0 stray)
+bitwise M=256 dsplit finish (forms 1, 0), attention split
+bitwise M=256 dsplit partials, ffn split (tokens 43,42,43,43,42,43; 0 stray)
+bitwise M=256 dsplit finish (forms 1, 0), ffn split
+bitwise M=256 dsplit partials, WA=0,0,0,0,1,1 split (tokens 0,0,0,0,128,128; 0 stray)
+bitwise M=256 dsplit finish (forms 1, 0), WA=0,0,0,0,1,1 split
+bitwise M=256 skdots<8> finish (forms 1, 0) vs production (30 of 6400 rows took the production fallback)
+bitwise M=256 skdots<8> shares = full launch
+bitwise M=256 skdots<4> finish (forms 1, 0) vs production (16 of 6400 rows took the production fallback)
+bitwise M=256 skdots<4> shares = full launch
+-- M=16 (attention shares: 1 tokens on a 12-head card, 6 on an 8-head card; ffn share <= 3)
+   dot rows of  16 tokens: HcDotsRows alone     73.1 us   SkDotsWM<8>    47.2 us
+   dot rows of   1 tokens: HcDotsRows alone     11.2 us   SkDotsWM<8>     5.7 us
+   dot rows of   6 tokens: HcDotsRows alone     29.2 us   SkDotsWM<8>    20.2 us
+   dot rows of   3 tokens: HcDotsRows alone     20.0 us   SkDotsWM<8>     9.0 us
+   q_a Q8_0 1280x5120 G4: alone    62.9 us | + dots of 16 tokens   106.0 | + 1    61.4 | + 6    68.3 | + 3    59.3
+   finish rows of 16 tokens, own launch:    7.6 us
+-- M=64 (attention shares: 5 tokens on a 12-head card, 22 on an 8-head card; ffn share <= 11)
+   dot rows of  64 tokens: HcDotsRows alone    232.8 us   SkDotsWM<8>   137.1 us
+   dot rows of   5 tokens: HcDotsRows alone     20.1 us   SkDotsWM<8>    12.3 us
+   dot rows of  22 tokens: HcDotsRows alone     94.7 us   SkDotsWM<8>    50.9 us
+   dot rows of  11 tokens: HcDotsRows alone     63.6 us   SkDotsWM<8>    45.7 us
+   q_a Q8_0 1280x5120 G4: alone   213.5 us | + dots of 64 tokens   542.3 | + 5   282.5 | + 22   354.8 | + 11   286.6
+   finish rows of 64 tokens, own launch:    7.8 us
+-- M=256 (attention shares: 21 tokens on a 12-head card, 86 on an 8-head card; ffn share <= 43)
+   dot rows of 256 tokens: HcDotsRows alone    897.8 us   SkDotsWM<8>   450.6 us
+   dot rows of  21 tokens: HcDotsRows alone     90.5 us   SkDotsWM<8>    49.9 us
+   dot rows of  86 tokens: HcDotsRows alone    316.9 us   SkDotsWM<8>   152.6 us
+   dot rows of  43 tokens: HcDotsRows alone    161.9 us   SkDotsWM<8>    81.2 us
+   q_a Q8_0 1280x5120 G4: alone  1423.5 us | + dots of 256 tokens  2383.0 | + 21  1539.1 | + 86  1797.4 | + 43  1659.3
+   finish rows of 256 tokens, own launch:    8.5 us
+PASS

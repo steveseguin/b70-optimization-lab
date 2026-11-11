@@ -86,6 +86,18 @@ struct XPullK128 {
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
     }
 };
+// OWN_MT_DSPLIT: XPullK128 with a second region (ops41sycl::XchgPull2); the peer pointers are this functor's own
+// fields (direct kernel arguments), as in XPullK128
+struct XPullK128x2 {
+    ops41sycl::XchgPull2 x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
 
 // OWN_XL2: a cache prefetch of up to three row ranges (64-byte lines), 128 registers (the exchange beside it is
 // XPullK128 / XchgP at 128: no register-mode change), few work-groups (one wave: a multi-wave launch dispatched
@@ -288,6 +300,12 @@ public:
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
         int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
+        bool mt_dsplit = false; // OWN_MT_DSPLIT=1 (off; prefill plan item C): in prompt blocks the stream mixes' dot rows
+                                // are split across the cards by tokens and gathered with the output-a and expert-act
+                                // pulls (backend_sycl_v41_mt.inc "OWN_MT_DSPLIT"); an option here because the arena
+                                // grows by the two partial regions (mt_arena_floats, before the tp setup)
+        int dsplit_wa[6] = {}, dsplit_wf[6] = {}; // OWN_MT_DSPLIT_WA / OWN_MT_DSPLIT_WF="w0,...,w5": the cards' token
+                                // weights for the attention / FFN mix (all 0: the defaults, ds_split)
         unsigned xl2 = 0;       // tp one-token steps: while a card waits in an exchange, a separate prefetch launch on its
                                 // second queue (cqs, released by the producer's event: both queued together, so they run
                                 // side by side, xov 2026-11-11) pulls the next matrix's rows into the card's cache. Bits
@@ -3262,6 +3280,7 @@ private:
             size_t nv = 0;
             for (int d = 0; d < o.tp; ++d)
                 if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
+            if (xr2[c].on) return xchg_pull2(c, x, nv, mode, part, P); // OWN_MT_DSPLIT: a second region rides along
             const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
             float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
             uint32_t *err = xerr[c];
@@ -3289,6 +3308,7 @@ private:
             kev(c, kname<ops41sycl::XchgPull>(), e);
             return seq;
         }
+        if (xr2[c].on) throw std::runtime_error("OWN_MT_DSPLIT: a second region needs a pull exchange");
         const ops41sycl::XchgP xp{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode};
         const int xk = xw_arm(c, mode, part); // OWN_XWAIT slot (-1: none)
         if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)mode};

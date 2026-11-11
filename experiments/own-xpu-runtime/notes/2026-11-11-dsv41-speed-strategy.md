@@ -133,6 +133,11 @@ Host and step structure (from tl85, 2026-11-11):
 - H5. **The check path's fixed cost**: a check of one token costs 12.8 ms against a 10.9 ms plain step (tg88). Helper
   (ckpath) comparing the two paths at M = 1; fixes as opt-in switches (`ckpath-1.patch`, in tp90: `OWN_CK1`,
   `OWN_RING_ONE`, `OWN_DR_NOWAIT`, `OWN_MT_KVPAIR`, `OWN_MT_FIN_QB`, `OWN_MT_RIDE_MIN`, `OWN_MT_EU_MIN`).
+- H7. **The head split for checks, again** (2026-11-11 ~07:10, tg90 check timeline): the 16-head cards' non-exchange
+  work exceeds the 8-head cards' by ~0.6 ms at one token and ~0.33 ms per extra token (M = 5: 18.3-18.8 ms against
+  16.5-16.9); the light cards wait it out in the exchanges. The split (OWN_TP_HEADS 3,3,3,3,2,2 with pair exchanges,
+  today only for blocks of >= 16 tokens) lost for checks in §28, when the rest of a check cost more. Re-test from 2 / 3
+  / 4 tokens and for the draft (tune91, runtime switches only).
 - H6. **Host hand-off**: ~0.25-0.35 ms of each step's gaps are thread hand-offs on the host (ckpath helper);
   `OWN_TP_SPIN_US=300` (the threads poll before sleeping) is an arm in tg90.
 
@@ -210,6 +215,19 @@ exchanges and attention all grow by about a third per token (tg87 kbusy). The 5-
 at 155-174 tok/s; a round that always guesses 5 at today's keep rate would give ~3.3 tokens in ~28.7 ms = 115
 tok/s, so more guesses need a flatter check (decode-once dense rows, cheaper experts) before they pay.
 
+### The budget after tp90 (tg90, 2026-11-11 06:37)
+
+Plain step ~10.0 ms (99 tok/s). Guessing round = draft 2.1 ms + check. Check by guesses (code, median ms; all
+tg90 winners on): 0: 10.43 (the plain step's path), 1: 14.43, 2: 16.78, 3: 19.14, 4: 22.58, 5: 25.03. Two costs
+decide the next 50 %: (1) the block path's fixed cost from 2 tokens on, ~1.4-2 ms (check of 2 tokens ~13.9 ms of
+card time against 10.0 for one); (2) each further token ~2.4-2.5 ms on the critical card = experts 0.92, dense
+rows ~1.1, pull exchanges 0.71, the rest ~0.2 (`round19-tg90/ck-by-m-card2.txt`, checks of 2-5 tokens). The draft
+helper's model (`/home/steve/dsv41-work/draft/policy_model.out`): 1 ms off the empty check or off the draft = +6
+tok/s; 1 ms off each extra token = +11-20 tok/s once TAU is re-tuned; 200 tok/s needs ~1 ms per extra token and
+a draft under ~1 ms. Targets in flight: dense rows at 2-6 tokens (ws helper: floor ~0.1 ms per token), the
+exchange growth (an OWN_XWAIT build of a check timeline would split waiting from moving; the bytes explain only
+~0.15-0.2 ms per token), the draft (draft-head-1, ~0.5 ms), TAU 0.34-0.40 (+1-4 %).
+
 ## Scoreboard: strategies that worked, and ones that did not
 
 Worked (all bit-identical):
@@ -228,6 +246,9 @@ Worked (all bit-identical):
 | r3's decode in the expert-major check / prompt kernels (`routed-r4.patch`, tg90) | guessing code 118.6 -> 123.4 tok/s, analysis 131.5 -> 136.3, 3K 121.8 -> 122.6; 3K read 339 -> 353 at 64 | +4 % guessing, +4 % prompt |
 | A zero-guess check runs the plain one-token step (`OWN_CK1`, + `OWN_RING_ONE`, `OWN_DR_NOWAIT`, ckpath-1, tg90) | the 63 zero-guess code rounds: check 11.99 -> 10.43 ms (the plain step is ~10.0); all-empty rounds (TAU 1.01) 70.8 -> 80.3 tok/s | guessing +3.2 % code, +2.2 % analysis; default since tp91 |
 | q_a + kv in one launch and the mix finish in q_b's launch for small blocks (`OWN_MT_KVPAIR`, `OWN_MT_FIN_QB`, tg90) | checks: code 127.42 -> 128.15 tok/s, analysis 139.34 -> 139.75; but the 3K read with ws 416 -> 390 at 64 | +0.5 % guessing; default since tp91 for blocks of <= 16 tokens only (`OWN_MT_MS_MAX`) |
+| The prompt blocks' stream-mix dot rows split across the cards by tokens and gathered with the existing pulls, plus the one-token path's dot-row kernel for blocks (`OWN_MT_DSPLIT=1`, `OWN_MT_SKDOTS=8`, pcd-1 item C, tg91) | 3K read at blocks of 64: 416.3 -> 462.7 (DSPLIT) / 444.1 (SKDOTS) / 469.3 tok/s (both); in checks from 2 tokens on (`_MIN=2`): code 127.96 -> 128.81, analysis 138.74 -> 142.31 | prompt +12.7 %, guessing +0.7-2.6 %; default in tp92 |
+| The draft's matrices in the weight-stationary forms (`OWN_DR_WS=1`, draft-head-1, tg91) | draft 2.13 -> 1.96 ms per round; code 127.96 -> 128.41, analysis 138.74 -> 140.63 | +0.4-1.4 %; default in tp92 with `OWN_DR_ANCHOR_ARG=1` (the chain's anchor by value: 128.22 / 140.41) |
+| A candidate vocabulary for the draft's head (`OWN_DR_VOCAB`, 49,897 ids + the prompt's, draft-head-1, tg91) | draft -> 1.83 ms (1.78 with DR_WS); code 128.95 (129.62 with all), analysis 141.97 (142.40), prose 107.77 -> 108.09; the guesses and answers stayed the same on all four prompts, but the trimmed head can in principle pick a different guess, so it stays opt-in (draft-only, answers always checked by the target) | +0.8-2.6 %; opt-in |
 | Small host copies off the card's queue (a second in-order queue per card, the launch waits by event) | `OWN_ENG_CQ` + `OWN_PRE_K` (tg88): engram rows 242 -> 70-80 us of host time per step; one-token timeline span 11.01 -> 10.75 ms, in-step idle 0.47 -> 0.30 ms | plain +0.3-0.5 % (91.77 -> 92.27 tok/s); default since tp89 |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
 | Packed weight rows for sub-group block loads | §p7-p10 era, 9 -> 28 tok/s | large |
@@ -254,6 +275,8 @@ Did not work (and why):
 | Old small forms for checks (`OWN_MT_RIDE_MIN=7`, `OWN_MT_EU_MIN=7`, tg90) | neutral to slower (code 127.1-128.0 vs 128.2, together 127.4) |
 | 256-token prompt blocks after r4 + ws (tg90) | 396.6 vs 416.0 tok/s at 64; blocks stay at 64 |
 | Pull exchanges with 96 work-groups (`OWN_PAIR_WG=96`, tg89) | neutral for plain (96.4 / 96.8 vs 95.4 / 97.5), slower for the 3K read at 256-token blocks (t3k: 294.9 vs 320.3 tok/s) |
+| Lower guess-acceptance threshold (`OWN_SPEC_TAU` 0.34 / 0.40 against 0.5, tg91) | mixed: code 127.96 -> 131.77 / 131.08, analysis 138.74 -> 130.92 / 137.31 (more guesses tried, more thrown away; the check got 1-2 ms longer). TAU stays 0.5; revisit when each extra token is cheaper |
+| The draft's rows at 5 work-groups per row (`OWN_DR_TGW=5`, tg91) | slower: code 127.28, analysis 139.06 |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |
@@ -261,7 +284,13 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~06:40 EST)
+## Work in flight (2026-11-11, updated ~07:41 EST)
+
+- Done (tg91, 2026-11-11 06:56-07:37, tp91; `data/.../round19-tg91/`): 23 of 23 prompt-1 traces and 6 of 6 3K traces identical, 26 of 26 guessing runs SAME AS the plain run, every guess log equal. Plain 97.8-99.3 tok/s. Prompt items C + SKDOTS: 3K read 469 tok/s. The 3K guessing run of the default (125.87) lost to its own outlier rounds: that run read 7.4 MiB of engram rows from disk (962 us per step against ~116 when cached), not a code change.
+- Running: tune91 (head split for checks, `OWN_TP_HEADS_MIN` 2 / 3 / 4, and for the draft). Round 1 code: 127.41 default, 125.44 from 2 tokens, 128.03 from 4 (noise-sized so far).
+- Next: tp92 = tp91 + `OWN_MT_DSPLIT=1` and `OWN_MT_SKDOTS=8` from 2 tokens on, `OWN_DR_WS=1`, `OWN_DR_ANCHOR_ARG=1` as defaults (+ the head split if tune91 shows a win); then the ws helper's dense rows for checks and the attention helper's sparse attention.
+
+### Earlier entries
 
 - Done (tg90, 2026-11-11 05:51-06:37, tp90; `data/.../round19-tg90/`): 20 of 20 prompt-1 traces and 7 of 7 3K
   traces identical, 28 of 28 guessing runs SAME AS the plain run, guess counts unchanged. Results in the scoreboard.

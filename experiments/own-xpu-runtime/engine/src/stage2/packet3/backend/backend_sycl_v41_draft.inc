@@ -34,6 +34,13 @@ int32_t dr_toks[MTX] = {};
 bool dr_step = false;                   // the card threads run a draft step (tp_worker)
 int dr_rows = DR_BLOCK;                 // head rows of this draft step (draft_tp's nrows)
 unsigned xdrM = 0;                      // the Markov chain's argmax rows: DR_BLOCK rows of 6 cards x 4 floats
+// OWN_DR_VOCAB (dr_vocab_set, draft-head-1): the head over a candidate vocabulary; card c's rows ascending by id
+uint8_t *dvw[TILES] = {};               // packed output.weight rows (the same bytes as the full head's rows)
+uint16_t *dv2[TILES] = {};              // markov_w2 rows (BF16, 256 per row)
+int32_t *dvid[TILES] = {};              // the token id of each row
+float *dvlog[TILES] = {}, *dvamv[TILES] = {}; // its logits rows [DR_BLOCK][n], argmax chunks [DR_BLOCK][G]
+int32_t *dvami[TILES] = {};
+int dvn[TILES] = {};                    // rows on the card (0: the full head, the default)
 
 static constexpr size_t dr_arena_floats() { return (size_t)8 * 24; }
 void dr_alloc(int c) {
@@ -258,18 +265,33 @@ void dr_head(int c) {
     const size_t H = g.h;
     if (!mx_ready[c]) throw std::runtime_error("draft head: no collapse");
     rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{b.x, wp<float>(c, "dsp.output_norm.weight"), b.xn}, H, H));
-    const int nl = tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
-    gemv_m(c, "output.weight", b.xn, H, tlogm[c], (size_t)nl, 0, (unsigned)M);
-    qs[c].memcpy(dprev[c], dr_toks, 4);
-    const uint16_t *w1 = wp<uint16_t>(c, "dsp.markov_w1.weight"), *w2 = wp<uint16_t>(c, "dsp.markov_w2.weight");
+    const bool dv = dvn[c] > 0; // OWN_DR_VOCAB: this card's candidate rows only (dr_vocab_set)
+    const int nl = dv ? dvn[c] : tv1[c] - tv0[c], G = (nl + AM_CH - 1) / AM_CH;
+    float *lg = dv ? dvlog[c] : tlogm[c], *amv = dv ? dvamv[c] : tamvm[c];
+    int32_t *ami = dv ? dvami[c] : tamim[c];
+    if (dv) // gemv_m's kernel for the head (Q6_K, 5120 columns), on the copy
+        dense_m(c, ops41sycl::GemvQ6KP<20, Act>{(unsigned)nl, 0u}, dvw[c], b.xn, H, lg, (size_t)nl, (unsigned)M);
+    else
+        gemv_m(c, "output.weight", b.xn, H, lg, (size_t)nl, 0, (unsigned)M);
+    if (!dr_anchor_arg) qs[c].memcpy(dprev[c], dr_toks, 4); // (OWN_DR_ANCHOR_ARG: row 0 takes it by value)
+    const uint16_t *w1 = wp<uint16_t>(c, "dsp.markov_w1.weight"),
+                   *w2 = dv ? dv2[c] : wp<uint16_t>(c, "dsp.markov_w2.weight");
     for (int i = 0; i < M; ++i) {
-        float *li = tlogm[c] + (size_t)i * nl;
-        launch_sg(c, (size_t)nl, ops41draft::MarkovAdd{(unsigned)nl, (unsigned)g.vocab}, w2, w1, (const int32_t *)(dprev[c] + i), li);
-        launch_sg(c, (size_t)G, ops41sycl::ArgmaxP1OM{{nl, AM_CH, tv0[c], g.vocab}, (unsigned)G, 1u, (size_t)nl},
-                  (const float *)li, tamvm[c], tamim[c]);
+        float *li = lg + (size_t)i * nl;
+        if (i == 0 && dr_anchor_arg)
+            launch_sg(c, (size_t)nl, ops41draft::MarkovAddA{(unsigned)nl, (unsigned)g.vocab, (int)dr_toks[0]}, w2, w1, li);
+        else
+            launch_sg(c, (size_t)nl, ops41draft::MarkovAdd{(unsigned)nl, (unsigned)g.vocab}, w2, w1, (const int32_t *)(dprev[c] + i), li);
+        launch_sg(c, (size_t)G,
+                  ops41sycl::ArgmaxP1OM{{nl, AM_CH, dv ? 0 : tv0[c], dv ? nl : (int)g.vocab}, (unsigned)G, 1u, (size_t)nl},
+                  (const float *)li, amv, ami);
         const unsigned off = xdrM + (unsigned)i * 24;
-        launch_sg(c, 1, ops41draft::DraftBest{(unsigned)G}, (const float *)tamvm[c], (const int32_t *)tamim[c],
-                  xarena[c] + off + 4 * c);
+        if (dv)
+            launch_sg(c, 1, ops41draft::DraftBestMap{(unsigned)G, (unsigned)nl, (unsigned)g.vocab}, (const float *)amv,
+                      (const int32_t *)ami, (const int32_t *)dvid[c], xarena[c] + off + 4 * c);
+        else
+            launch_sg(c, 1, ops41draft::DraftBest{(unsigned)G}, (const float *)amv, (const int32_t *)ami,
+                      xarena[c] + off + 4 * c);
         launch_wgs<1>(c, 1, 512, ops41draft::DraftSumExp{(unsigned)nl}, (const float *)li, xarena[c] + off + 4 * c);
         xchg(c, off, 24, 1, 4u * c, 4u * c + 4, 0, 0, -1);
         launch(c, 32, 32, ops41draft::DraftPick{(unsigned)o.tp, 4}, (const float *)(xarena[c] + off), dprev[c] + i + 1,
@@ -346,4 +368,52 @@ void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = 
     if (conf)
         for (int i = 0; i < DR_BLOCK; ++i) conf[i] = i < nrows ? h_dconf[i] : 0.0f;
 }
+// OWN_DR_VOCAB (draft-head-1, off by default): the draft head over a candidate vocabulary instead of all
+// g.vocab ids. ids: any order; duplicates and ids outside the vocabulary are dropped; spread round-robin over
+// the cards in id order (each card about 1/tp of them, its rows ascending by id, so ArgmaxP1OM's and
+// DraftBestMap's lower-index tie rule is the full head's lower-id rule). Card c gets a packed copy of those
+// output.weight rows (pk41::pack_row of the file's rows, the bytes the upload packs) and the raw markov_w2
+// rows; dr_head then runs its gemv, Markov bias, argmax and sum over those rows only. A token outside the
+// set is never guessed and the confidence is over the set; the check is unchanged, so the answers are too.
+// Once, after upload() and before the first draft_tp. Card memory: about n / tp * (4208 + 512 + 4 + 20) bytes.
+void dr_vocab_set(std::vector<int32_t> ids) {
+    if (!o.dspark || o.tp < 2 || !W) throw std::runtime_error("dr_vocab_set: needs the draft, OWN_TP > 1, uploaded weights");
+    for (int c = 0; c < o.tp; ++c)
+        if (dvn[c]) throw std::runtime_error("dr_vocab_set: already set");
+    ids.erase(std::remove_if(ids.begin(), ids.end(), [&](int32_t v) { return v < 0 || v >= g.vocab; }), ids.end());
+    std::sort(ids.begin(), ids.end());
+    ids.erase(std::unique(ids.begin(), ids.end()), ids.end());
+    if (ids.size() < (size_t)o.tp) throw std::runtime_error("dr_vocab_set: fewer ids than cards");
+    const auto &eo = W->at("output.weight"), &e2 = W->at("dsp.markov_w2.weight");
+    if (eo.type != iq3::Type::Q6_K || eo.cols != (long)g.h || eo.rows != (long)g.vocab || !eo.ptr)
+        throw std::runtime_error("dr_vocab_set: output.weight is not Q6_K [vocab x h]");
+    if (e2.type != iq3::Type::BF16 || e2.cols != 256 || e2.rows != (long)g.vocab || !e2.ptr)
+        throw std::runtime_error("dr_vocab_set: dsp.markov_w2.weight is not BF16 [vocab x 256]");
+    const size_t rbo = W->row_bytes(eo), prb = pk41::packed_row_bytes(eo.type, (size_t)eo.cols), rb2 = W->row_bytes(e2);
+    std::vector<uint8_t> hw, h2;
+    std::vector<int32_t> hid;
+    for (int c = 0; c < o.tp; ++c) {
+        if (!wgt[c].at("output.weight").packed) throw std::runtime_error("dr_vocab_set: the head is not packed");
+        hid.clear();
+        for (size_t k = (size_t)c; k < ids.size(); k += (size_t)o.tp) hid.push_back(ids[k]);
+        const size_t n = hid.size(), G = (n + AM_CH - 1) / AM_CH;
+        hw.assign(n * prb, 0);
+        h2.resize(n * rb2);
+        for (size_t r = 0; r < n; ++r) { // (read through the weight table's file mapping: page cache, not RAM)
+            pk41::pack_row(eo.type, eo.ptr + (size_t)hid[r] * rbo, hw.data() + r * prb, (size_t)eo.cols);
+            std::memcpy(h2.data() + r * rb2, e2.ptr + (size_t)hid[r] * rb2, rb2);
+        }
+        dvw[c] = dalloc<uint8_t>(c, n * prb, false);
+        dv2[c] = dalloc<uint16_t>(c, n * 256, false);
+        dvid[c] = dalloc<int32_t>(c, n, false);
+        dvlog[c] = dalloc<float>(c, n * DR_BLOCK, false);
+        dvamv[c] = dalloc<float>(c, G * DR_BLOCK, false);
+        dvami[c] = dalloc<int32_t>(c, G * DR_BLOCK, false);
+        qs[c].memcpy(dvw[c], hw.data(), n * prb).wait();
+        qs[c].memcpy(dv2[c], h2.data(), n * rb2).wait();
+        qs[c].memcpy(dvid[c], hid.data(), n * 4).wait();
+        dvn[c] = (int)n;
+    }
+}
+int dr_vocab_rows(int c) const { return c >= 0 && c < TILES ? dvn[c] : 0; }
 private:

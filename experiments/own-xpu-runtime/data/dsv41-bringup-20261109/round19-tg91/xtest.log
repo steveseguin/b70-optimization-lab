@@ -1,0 +1,25 @@
+oa 16 (8192 x 16) + mix 16         tokens per card 1,2,1,1,6,5
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (54.4 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (37.0 us/iter incl. producer + check)
+   time: XchgPull    24.2 us/exchange, XchgPull2    29.0 (+4.8 us for 16 tokens' partials)
+act 16 (2304 x 112) + mix 16       tokens per card 3,2,3,3,2,3
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (52.1 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (53.4 us/iter incl. producer + check)
+   time: XchgPull    40.2 us/exchange, XchgPull2    44.6 (+4.5 us for 16 tokens' partials)
+oa 64 (8192 x 64) + mix 64         tokens per card 5,6,5,5,22,21
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (94.3 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (99.2 us/iter incl. producer + check)
+   time: XchgPull    78.7 us/exchange, XchgPull2    84.9 (+6.2 us for 64 tokens' partials)
+act 64 (2304 x 448) + mix 64       tokens per card 11,10,11,11,10,11
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (167.3 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (180.4 us/iter incl. producer + check)
+   time: XchgPull   147.0 us/exchange, XchgPull2   152.9 (+5.8 us for 64 tokens' partials)
+oa 256 (8192 x 256) + mix 256      tokens per card 21,22,21,21,86,85
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (349.1 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (391.7 us/iter incl. producer + check)
+   time: XchgPull   312.6 us/exchange, XchgPull2   325.5 (+12.8 us for 256 tokens' partials)
+act 256 (2304 x 1792) + mix 256    tokens per card 43,42,43,43,42,43
+   XPullK128x2 check 2000 iters: 0 wrong values, 0 timeouts (632.4 us/iter incl. producer + check)
+   lambda      check 2000 iters: 0 wrong values, 0 timeouts (705.9 us/iter incl. producer + check)
+   time: XchgPull   573.0 us/exchange, XchgPull2   587.2 (+14.2 us for 256 tokens' partials)
+PASS

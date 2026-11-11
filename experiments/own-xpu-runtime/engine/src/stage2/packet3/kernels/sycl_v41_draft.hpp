@@ -293,4 +293,50 @@ struct MarkovAdd {
     }
 };
 
+// ---- draft-head-1 (2026-11-11, every form behind an OWN_* switch, off by default) ----
+// OWN_DR_ANCHOR_ARG=1: MarkovAdd for row 0 with the anchor as a kernel argument (no host copy of it to the
+// card before the chain); the same sums as MarkovAdd with prev[0] = pv.
+struct MarkovAddA {
+    unsigned rows, vocab;
+    int pv;
+    void operator()(sycl::nd_item<1> it, const uint16_t *w2, const uint16_t *w1, float *logits) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        const unsigned r = (unsigned)(it.get_global_linear_id() / 32);
+        if (r >= rows) return;
+        const uint16_t *a = w2 + (size_t)r * 256, *b = w1 + (size_t)(pv >= 0 && (unsigned)pv < vocab ? pv : 0) * 256;
+        float sum = 0.0f;
+        for (unsigned k = lane; k < 256; k += 32)
+            sum += sycl::bit_cast<float>((uint32_t)a[k] << 16) * sycl::bit_cast<float>((uint32_t)b[k] << 16);
+        sum = sycl::reduce_over_group(sg, sum, sycl::plus<float>());
+        if (lane == 0) logits[r] += sum;
+    }
+};
+// OWN_DR_VOCAB: DraftBest over a candidate head's local rows (ids[] ascending, so the lower local index is the
+// lower token id, the full head's tie rule), then slot[1] = the token id of the best row (none -> vocab)
+struct DraftBestMap {
+    unsigned G, n, vocab;
+    void operator()(sycl::nd_item<1> it, const float *bvs, const int32_t *bis, const int32_t *ids, float *slot) const {
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        float bv = -INFINITY;
+        int bi = 0x7fffffff;
+        for (unsigned k = lane; k < G; k += 32) {
+            const float ov = bvs[k];
+            const int oi = bis[k];
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        for (unsigned w = 16; w; w >>= 1) {
+            const float ov = sycl::select_from_group(sg, bv, lane ^ w);
+            const int oi = sycl::select_from_group(sg, bi, lane ^ w);
+            if (ov > bv || (ov == bv && oi < bi)) { bv = ov; bi = oi; }
+        }
+        if (lane == 0) {
+            slot[0] = bv;
+            slot[1] = sycl::bit_cast<float>(bi >= 0 && (unsigned)bi < n ? ids[bi] : (int32_t)vocab);
+            slot[3] = 0.0f; // slot[2]: DraftSumExp
+        }
+    }
+};
+
 } // namespace ops41draft

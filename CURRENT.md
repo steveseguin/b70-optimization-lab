@@ -1,5 +1,26 @@
 # Current Workspace State
 
+**November 11, 2026 ~07:41 EST — DeepSeek V4.1 on six cards: prompts read at 469 tokens/s (was 416); guessing up to 142 tokens/s; text the same everywhere.**
+- Prompt reading: the 3,000-token document reads at 469 tokens/s, up from 416. Two changes, both on by default in the next build:
+  - a small per-token mixing step in each prompt block is now shared out across the six cards: 416 -> 463
+  - the same step uses the faster kernel from single-word answers: 463 -> 469
+- Guessing (word for word the plain answers in all 26 runs):
+
+  | Change | Code (tokens/s) | Analysis (tokens/s) |
+  |---|---|---|
+  | Before | 128.0 | 138.7 |
+  | Mixing step shared out, also inside checks | 128.8 | 142.3 |
+  | Guesser uses the faster weight layout | 128.4 | 140.6 |
+  | Guesser looks only at likely words | 129.6 | 142.4 |
+
+  - The guesser now takes 1.8-2.0 ms per round instead of 2.1.
+  - "Likely words only" stays switched off by default: it could in principle guess differently, even though it did not here.
+- Plain answers: about 98-99 tokens/s, unchanged.
+- Tried and dropped: guessing more boldly (helped code, hurt analysis: 131.8 vs 130.9) and spreading the guesser over more cores (slower).
+- The 3,000-token guessing run looked slower (125.9). That run had to read some of its lookup rows from disk. It was not a code change.
+- Running now: giving the two busiest cards less attention work during checks. First numbers are within noise.
+- Next build (tp92): the wins above on by default, then the helpers' faster weights and attention inside checks.
+
 **November 11, 2026 ~06:40 EST — DeepSeek V4.1 on six cards: guessing 128-140 tokens/s (was 118-132), prompts read at 416 tokens/s (was 339); text the same everywhere.**
 - Prompt reading: the 3,000-token document reads at 416 tokens/s, up from 339. Two changes:
   - the expert code from the last build, now also in prompt blocks: 339 -> 353

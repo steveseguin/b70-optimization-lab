@@ -236,6 +236,16 @@ int main(int argc, char **argv) {
     // the pre-norm + the stream mix's dot rows by a proven fast sum, block size K = 8 or 4 (the finish's outputs the
     // same bits; default 8 since tg89, =0: off): OWN_SMALLK_DOTS=8
     if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
+    // prompt blocks: the stream mixes' dot rows split across the cards by tokens, gathered with the output-a and
+    // expert-act pulls (pcd-1, prefill plan item C; off): OWN_MT_DSPLIT=1; the cards' token weights per mix
+    // OWN_MT_DSPLIT_WA / OWN_MT_DSPLIT_WF="w0,w1,w2,w3,w4,w5" (unset: attention 4 on the cards with fewer heads, else 1)
+    if (const char *e = getenv("OWN_MT_DSPLIT")) opt.mt_dsplit = atoi(e) != 0;
+    for (int k = 0; k < 2; ++k)
+        if (const char *e = getenv(k ? "OWN_MT_DSPLIT_WF" : "OWN_MT_DSPLIT_WA")) {
+            int *w = k ? opt.dsplit_wf : opt.dsplit_wa;
+            if (std::sscanf(e, "%d,%d,%d,%d,%d,%d", w, w + 1, w + 2, w + 3, w + 4, w + 5) != 6)
+                die("OWN_MT_DSPLIT_WA / _WF: six weights w0,...,w5");
+        }
     if (const char *e = getenv("OWN_PF")) opt.pf = atoi(e) != 0;
     // OWN_XL2=bits: while a card waits in a one-token exchange, a prefetch launch on its second queue pulls the next
     // matrix into the cache (1 output-b, 2 router + shared gate / up, 4 shared down, 8 next q_a + kv; 15 = all)
@@ -486,8 +496,9 @@ int main(int argc, char **argv) {
         // default since round 18 d4 / g78: blocks of 9-16 tokens (and larger ones, as 16) pick their dense forms per
         // matrix shape (OWN_MT_W16=0: off)
         be.mt_w16 = getenv("OWN_MT_W16") ? atoi(getenv("OWN_MT_W16")) != 0 : true;
-        // weight-stationary dense rows for the matrix shapes and block sizes ops41sycl::WsTab lists (OWN_MT_WS=1; off)
-        be.mt_ws = getenv("OWN_MT_WS") && atoi(getenv("OWN_MT_WS")) != 0;
+        // weight-stationary dense rows for the matrix shapes and block sizes ops41sycl::WsTab lists (default on since
+        // tg90: 3K read 353 -> 416 tok/s at blocks of 64; OWN_MT_WS=0: off)
+        be.mt_ws = getenv("OWN_MT_WS") ? atoi(getenv("OWN_MT_WS")) != 0 : true;
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
@@ -508,14 +519,53 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RIDE")) be.mt_ride = atoi(e) != 0; // mix dot rows inside q_a / router
         if (const char *e = getenv("OWN_MT_RWG")) be.mt_rwg = (unsigned)atoi(e); // small row launches spread over cores
         if (const char *e = getenv("OWN_MT_RFUSE")) be.mt_rfuse = atoi(e) != 0; // router + shared gate/up in one launch
-        // the check path's fixed cost (ckpath-1; all off by default, each a bit-identical form)
+        // the stream mixes' dot rows in prompt blocks (pcd-1; off by default, each a bit-identical form)
+        if (const char *e = getenv("OWN_MT_DSPLIT_MIN")) be.mt_dsplit_min = (unsigned)atoi(e); // OWN_MT_DSPLIT from m tokens on
+        if (const char *e = getenv("OWN_MT_DSPLIT_FIN")) be.mt_dsplit_fin = atoi(e);    // finishes: 0 own, 1 riding, 2 auto
+        if (const char *e = getenv("OWN_MT_SKDOTS")) be.mt_skdots = (unsigned)atoi(e);  // dot rows as SkDotsWM<K> (8 or 4)
+        if (be.mt_skdots && be.mt_skdots != 4 && be.mt_skdots != 8) die("OWN_MT_SKDOTS: 0, 4 or 8");
+        if (const char *e = getenv("OWN_MT_SKDOTS_MIN")) be.mt_skdots_min = (unsigned)atoi(e); // OWN_MT_SKDOTS from m tokens on
+        // the check path's fixed cost (ckpath-1; each a bit-identical form; CK1, KVPAIR, FIN_QB, RING_ONE, DR_NOWAIT on by
+        // default since tg90 (=0: off), KVPAIR / FIN_QB only for blocks of <= OWN_MT_MS_MAX=16 tokens)
         if (const char *e = getenv("OWN_CK1")) be.ck1 = atoi(e) != 0;                     // a one-token check as the plain step
         if (const char *e = getenv("OWN_MT_RIDE_MIN")) be.mt_ride_min = (unsigned)atoi(e); // OWN_MT_RIDE from m tokens on
         if (const char *e = getenv("OWN_MT_KVPAIR")) be.mt_kvpair = atoi(e) != 0;         // q_a + kv rows in one launch
         if (const char *e = getenv("OWN_MT_FIN_QB")) be.mt_fin_qb = atoi(e) != 0;         // attention mix finish in q_b's launch
+        if (const char *e = getenv("OWN_MT_MS_MAX")) be.mt_ms_max = (unsigned)atoi(e);    // KVPAIR / FIN_QB up to m tokens
         if (const char *e = getenv("OWN_MT_EU_MIN")) be.mt_eu_min = (unsigned)atoi(e);     // OWN_MT_EU from m tokens on
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
+        // draft-head-1 (all off by default; the draft only proposes, the check keeps the answers)
+        if (const char *e = getenv("OWN_DR_TGW")) be.dr_tgw = (unsigned)atoi(e);          // the draft's dense rows in groups of g
+        if (const char *e = getenv("OWN_DR_ANCHOR_ARG")) be.dr_anchor_arg = atoi(e) != 0; // the chain's anchor by value
+        if (const char *e = getenv("OWN_DR_WS")) be.dr_ws = atoi(e) != 0;                 // OWN_MT_WS's table in the draft
+        // OWN_DR_VOCAB=<file of "id [count]" lines, most useful first>: the draft head over its first
+        // OWN_DR_VOCAB_N ids (default 32768) plus the prompt's ids (OWN_DR_VOCAB_PROMPT=0: not those)
+        if (const char *vf = getenv("OWN_DR_VOCAB")) {
+            const long vn = getenv("OWN_DR_VOCAB_N") ? atol(getenv("OWN_DR_VOCAB_N")) : 32768;
+            const bool vp = !getenv("OWN_DR_VOCAB_PROMPT") || atoi(getenv("OWN_DR_VOCAB_PROMPT")) != 0;
+            std::ifstream vfs(vf);
+            if (!vfs) die("OWN_DR_VOCAB unreadable");
+            std::vector<int32_t> vids;
+            std::string line;
+            while ((long)vids.size() < vn && std::getline(vfs, line)) {
+                std::istringstream ls(line);
+                long long v;
+                if (ls >> v) vids.push_back((int32_t)v);
+            }
+            if (vids.empty()) die("OWN_DR_VOCAB: no ids");
+            const size_t nfile = vids.size();
+            if (vp)
+                for (int t : prompt) vids.push_back((int32_t)t);
+            be.dr_vocab_set(vids);
+            int vmin = 1 << 30, vmax = 0;
+            for (int c = 0; c < opt.tp; ++c) {
+                vmin = std::min(vmin, be.dr_vocab_rows(c));
+                vmax = std::max(vmax, be.dr_vocab_rows(c));
+            }
+            std::fprintf(stderr, "draft vocabulary: %zu ids from %s + %zu prompt tokens -> %d .. %d rows per card\n",
+                         nfile, vf, vp ? prompt.size() : (size_t)0, vmin, vmax);
+        }
 #endif
 
         // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----

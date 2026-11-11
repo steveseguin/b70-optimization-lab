@@ -5180,6 +5180,22 @@ template <unsigned K> struct SkNormDotsW {
         SkDotsFF<K>::run(it, sgi, lm, g - 1, streams, fn, out);
     }
 };
+// OWN_MT_SKDOTS (prompt blocks, 2026-11-11): SkDotsFF's 25 rows for m tokens: work-group g = token g / 25's row
+// g % 25 on its 16 sub-groups, token t's streams at streams + t * ss and partials at out + t * os. The same
+// per-row code as the one-token SkNormDotsW's dot work-groups (each token's row is that row on that token's
+// streams), so the finish's outputs are production's bit for bit (SkDotsFF's check; where it fails, the row
+// writes the production partials). launch_wgl<64>(c, m * 25, 512, ...): every work-group is one whole
+// (token, row), so the barrier inside SkDotsFF::run is reached by all of its items.
+template <unsigned K> struct SkDotsWM {
+    unsigned m;
+    size_t ss, os;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const float *streams, const float *fn, double *out,
+                                     uint32_t *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), t = g / 25, sgi = it.get_sub_group().get_group_linear_id();
+        if (t >= m) return; // (whole work-groups only; the launch has exactly m * 25)
+        SkDotsFF<K>::run(it, sgi, lm, g % 25, streams + t * ss, fn, out + t * os);
+    }
+};
 // CompressPoolP (r = 2, hd = 512) on one work-group of 512 items, one channel per item (launch_local<1024>(c, 512,
 // ...)): the per-channel softmax pool is CompressPoolP's expression (it is per channel already); the RMS
 // statistic's fast sum: one exact term double(t) t per item, the lane xor tree, the 16 partials in a fixed xor tree
@@ -6994,6 +7010,23 @@ struct XchgPull {
             for (int d = 0; d < 6; ++d)
                 if (h[d]) *reinterpret_cast<sycl::vec<float, 4> *>(dst + o[d]) = v[d];
         }
+    }
+};
+// OWN_MT_DSPLIT (prefill plan item C): XchgPull with a second region riding the same exchange. x runs exactly
+// as alone (publish, wait for every peer's flag, the acquire fence and barrier, region 1's copy); then the same
+// items copy region 2 (every peer's rows [c0[d], c1[d]) of nslot2 slots, stride2 floats, at arena offset off2) by
+// copy_seq. Region 2 is written by this card before the exchange (an earlier launch in its in-order queue, so
+// before the release that publishes it) and read by the peers after their acquire: region 1's guarantee. Pure
+// copies. Only scalars here: the peer pointers stay direct kernel arguments (XPullK128x2 / the lambda form).
+struct XchgPull2 {
+    XchgPull x;
+    unsigned off2, stride2, nslot2;
+    unsigned c0[6], c1[6]; // every card's region-2 rows (multiples of 4)
+    void operator()(sycl::nd_item<1> it, float *p0, float *p1, float *p2, float *p3, float *p4, float *p5,
+                    uint32_t *err) const {
+        x(it, p0, p1, p2, p3, p4, p5, err);
+        if (x.mode == 1) return; // (publish only: no wait, nothing to copy)
+        XchgPull::copy_seq(it, x.n, x.me, off2, stride2, nslot2, c0, c1, p0, p1, p2, p3, p4, p5);
     }
 };
 
