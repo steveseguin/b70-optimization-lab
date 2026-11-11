@@ -261,9 +261,9 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~07:40 EST)
+## Work in flight (2026-11-11, updated ~06:40 EST)
 
-- Done (tg90, 2026-11-11 06:10-07:35, tp90; `data/.../round19-tg90/`): 20 of 20 prompt-1 traces and 7 of 7 3K
+- Done (tg90, 2026-11-11 05:51-06:37, tp90; `data/.../round19-tg90/`): 20 of 20 prompt-1 traces and 7 of 7 3K
   traces identical, 28 of 28 guessing runs SAME AS the plain run, guess counts unchanged. Results in the scoreboard.
   Check cost by guesses with everything on (code, median ms): 0: 10.43, 1: 14.43, 2: 16.78, 3: 19.14, 4: 22.58,
   5: 25.03. The first guess still costs ~4 ms (the block path's fixed cost from M = 2 on), each further one ~2.4.

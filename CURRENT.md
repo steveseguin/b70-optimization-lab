@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**November 11, 2026 ~07:40 EST — DeepSeek V4.1 on six cards: guessing 128-140 tokens/s (was 118-132), prompts read at 416 tokens/s (was 339); text the same everywhere.**
+**November 11, 2026 ~06:40 EST — DeepSeek V4.1 on six cards: guessing 128-140 tokens/s (was 118-132), prompts read at 416 tokens/s (was 339); text the same everywhere.**
 - Prompt reading: the 3,000-token document reads at 416 tokens/s, up from 339. Two changes:
   - the expert code from the last build, now also in prompt blocks: 339 -> 353
   - unpacking each weight once per group of tokens instead of once per token: 353 -> 416
@@ -28,7 +28,7 @@
 - Next build: these settings on by default, plus two tested-before-default patches. One trims the guesser (it costs 2.2 ms per round). The other cuts the prompt reading's per-token mixing work (estimated +10-15 %).
 - Helpers are working on the weights inside checks and on attention.
 
-**November 11, 2026 ~05:15 EST — DeepSeek V4.1 on six cards: plain answers 92 -> 99.6 tokens/s; guessing unchanged at 118-132; text the same everywhere.**
+**November 11, 2026 ~05:08 EST — DeepSeek V4.1 on six cards: plain answers 92 -> 99.6 tokens/s; guessing unchanged at 118-132; text the same everywhere.**
 - Faster expert kernels (fewer instructions per weight) are now the default: plain answers 92.0 -> 95.4-97.5 tokens/s.
 - With the proven shortcuts for small serial steps on top: 99.6-99.7 tokens/s. They become the default in the next build.
 - Prompt reading: 333 -> 339 tokens/s on the 3,000-token document.
