@@ -1,0 +1,84 @@
+env: NEOReadDebugKeys=1 EnableDeferBacking=0 DisableIndirectAccess=1 ZE_AFFINITY_MASK=(unset) ZE_ENABLE_PCI_ID_DEVICE_ORDER=1
+card 0 0000:03:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 1 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 2 0000:43:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 3 0000:83:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 4 0000:a3:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 5 0000:e3:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+peer 0->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 0->2: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 0->3: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 0->4: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 0->5: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->2: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->3: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->4: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->5: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 2->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 2->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 2->3: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 2->4: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 2->5: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 3->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 3->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 3->2: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 3->4: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 3->5: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 4->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 4->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 4->2: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 4->3: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 4->5: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 5->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 5->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 5->2: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 5->3: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 5->4: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+[after setup] MemAvailable 11.69 GiB (-0.07 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 601820.1/0.0 cycles-ccs 601820.1/0.0 cycles-rcs 601820.1/0.0 cycles-vcs 601820.1/0.0 cycles-vecs 601820.1/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+  card 1 0000:23:00.0: cycles-bcs 601787.9/0.0 cycles-ccs 601787.9/0.0 cycles-rcs 601787.9/0.0 cycles-vcs 601787.9/0.0 cycles-vecs 601787.9/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+  card 2 0000:43:00.0: cycles-bcs 601786.5/0.0 cycles-ccs 601786.5/0.0 cycles-rcs 601786.5/0.0 cycles-vcs 601786.5/0.0 cycles-vecs 601786.5/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+  card 3 0000:83:00.0: cycles-bcs 601818.1/0.0 cycles-ccs 601818.1/0.0 cycles-rcs 601818.1/0.0 cycles-vcs 601818.1/0.0 cycles-vecs 601818.1/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+  card 4 0000:a3:00.0: cycles-bcs 601789.5/0.0 cycles-ccs 601789.5/0.0 cycles-rcs 601789.5/0.0 cycles-vcs 601789.5/0.0 cycles-vecs 601789.5/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+  card 5 0000:e3:00.0: cycles-bcs 601791.7/0.0 cycles-ccs 601791.7/0.0 cycles-rcs 601791.7/0.0 cycles-vcs 601791.7/0.0 cycles-vecs 601791.7/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 20.0/0.0 vram0 261.9/261.9
+ctx=ipc (IPC peers) flag=plain cap=1048576 total_cap=4194304 reps=5
+warm-up card 0: 0.9 ms
+warm-up card 1: 0.7 ms
+warm-up card 2: 0.7 ms
+warm-up card 3: 0.6 ms
+warm-up card 4: 0.6 ms
+warm-up card 5: 1.1 ms
+[after warm-up (peer arenas imported)] MemAvailable 11.68 GiB (-0.08 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 601820.3/0.0 cycles-ccs 601820.3/0.0 cycles-rcs 601820.3/0.0 cycles-vcs 601820.3/0.0 cycles-vecs 601820.3/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 1 0000:23:00.0: cycles-bcs 601788.1/0.0 cycles-ccs 601788.1/0.0 cycles-rcs 601788.1/0.0 cycles-vcs 601788.1/0.0 cycles-vecs 601788.1/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 2 0000:43:00.0: cycles-bcs 601786.7/0.0 cycles-ccs 601786.7/0.0 cycles-rcs 601786.7/0.0 cycles-vcs 601786.7/0.0 cycles-vecs 601786.7/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 3 0000:83:00.0: cycles-bcs 601818.3/0.0 cycles-ccs 601818.3/0.0 cycles-rcs 601818.3/0.0 cycles-vcs 601818.3/0.0 cycles-vecs 601818.3/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 4 0000:a3:00.0: cycles-bcs 601789.7/0.0 cycles-ccs 601789.7/0.0 cycles-rcs 601789.7/0.0 cycles-vcs 601789.7/0.0 cycles-vecs 601789.7/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 5 0000:e3:00.0: cycles-bcs 601791.9/0.0 cycles-ccs 601791.9/0.0 cycles-rcs 601791.9/0.0 cycles-vcs 601791.9/0.0 cycles-vecs 601791.9/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+smoke (persist push pair 0,1, 3456 B, one round trip): PASS (wrong 0, timeouts 0)
+form    how  topo cards           bytes  WGs  K1/K2        time per hop (pair/ring) or per all-gather round (a2a)
+fresh   push pair 0,1            3456 B  G=8  K= 100/500   one-way     5.49 us  (host     5.49)    0.63 GB/s  wrong 0  timeouts 0  max polls 312
+fresh   push pair 0,1            7296 B  G=8  K= 100/500   one-way     5.68 us  (host     5.68)    1.28 GB/s  wrong 0  timeouts 0  max polls 165
+fresh   push pair 0,1            9728 B  G=8  K= 100/500   one-way     5.71 us  (host     5.71)    1.70 GB/s  wrong 0  timeouts 0  max polls 186
+fresh   pull pair 0,1            3456 B  G=8  K= 100/500   one-way    10.73 us  (host    10.73)    0.32 GB/s  wrong 0  timeouts 0  max polls 153
+fresh   pull pair 0,1            7296 B  G=8  K= 100/500   one-way    11.26 us  (host    11.26)    0.65 GB/s  wrong 0  timeouts 0  max polls 156
+fresh   pull pair 0,1            9728 B  G=8  K= 100/500   one-way    11.26 us  (host    11.26)    0.86 GB/s  wrong 0  timeouts 0  max polls 155
+fresh   push a2a  0,1,2,3,4,5    3456 B  G=8  K= 100/500   round      13.71 us  (host    13.71)    1.26 GB/s  wrong 0  timeouts 0  max polls 533
+fresh   push a2a  0,1,2,3,4,5    7296 B  G=8  K= 100/500   round      10.89 us  (host    10.89)    3.35 GB/s  wrong 0  timeouts 0  max polls 163
+fresh   push a2a  0,1,2,3,4,5    9728 B  G=8  K= 100/500   round      13.80 us  (host    13.80)    3.53 GB/s  wrong 0  timeouts 0  max polls 146
+fresh   pull a2a  0,1,2,3,4,5    3456 B  G=8  K= 100/500   round      18.97 us  (host    18.97)    0.91 GB/s  wrong 0  timeouts 0  max polls 84
+fresh   pull a2a  0,1,2,3,4,5    7296 B  G=8  K= 100/500   round      18.97 us  (host    18.97)    1.92 GB/s  wrong 0  timeouts 0  max polls 83
+fresh   pull a2a  0,1,2,3,4,5    9728 B  G=8  K= 100/500   round      18.94 us  (host    18.94)    2.57 GB/s  wrong 0  timeouts 0  max polls 126
+[after runs] MemAvailable 11.60 GiB (-0.15 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 601842.6/0.0 cycles-ccs 601842.6/0.0 cycles-rcs 601842.6/0.0 cycles-vcs 601842.6/0.0 cycles-vecs 601842.6/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+  card 1 0000:23:00.0: cycles-bcs 601810.5/0.0 cycles-ccs 601810.5/0.0 cycles-rcs 601810.5/0.0 cycles-vcs 601810.5/0.0 cycles-vecs 601810.5/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+  card 2 0000:43:00.0: cycles-bcs 601809.1/0.0 cycles-ccs 601809.1/0.0 cycles-rcs 601809.1/0.0 cycles-vcs 601809.1/0.0 cycles-vecs 601809.1/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+  card 3 0000:83:00.0: cycles-bcs 601840.6/0.0 cycles-ccs 601840.6/0.0 cycles-rcs 601840.6/0.0 cycles-vcs 601840.6/0.0 cycles-vecs 601840.6/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+  card 4 0000:a3:00.0: cycles-bcs 601812.0/0.0 cycles-ccs 601812.0/0.0 cycles-rcs 601812.0/0.0 cycles-vcs 601812.0/0.0 cycles-vecs 601812.0/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+  card 5 0000:e3:00.0: cycles-bcs 601814.2/0.0 cycles-ccs 601814.2/0.0 cycles-rcs 601814.2/0.0 cycles-vcs 601814.2/0.0 cycles-vecs 601814.2/0.0 gtt 26.5/26.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.5/268.5
+VERDICT (ctx=ipc)
+  engine-shaped all-gather, 3456 B per card, one kernel per exchange: push 13.71 us vs pull (today) 18.97 us -> -5.26 us per exchange
+  engine-shaped all-gather, 9728 B per card, one kernel per exchange: push 13.80 us vs pull (today) 18.94 us -> -5.14 us per exchange
+TOTAL wrong values 0, timeouts 0, skipped waits 0, max polls in one wait 533 -> PASS
+exit 0

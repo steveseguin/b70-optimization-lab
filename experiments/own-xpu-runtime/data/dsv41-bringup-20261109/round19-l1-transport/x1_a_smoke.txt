@@ -1,0 +1,23 @@
+env: NEOReadDebugKeys=1 EnableDeferBacking=0 DisableIndirectAccess=1 ZE_AFFINITY_MASK=(unset) ZE_ENABLE_PCI_ID_DEVICE_ORDER=1
+card 0 0000:03:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+card 1 0000:23:00.0 Intel(R) Arc(TM) Pro B70 Graphics free 31.61 GiB
+peer 0->1: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+peer 1->0: zeDeviceCanAccessPeer=1 p2p access=1 atomics=0 | sycl access=1 atomics=0
+[after setup] MemAvailable 12.32 GiB (-0.03 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 598712.0/0.0 cycles-ccs 598712.0/0.0 cycles-rcs 598712.0/0.0 cycles-vcs 598712.0/0.0 cycles-vecs 598712.0/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 0.0/0.0 vram0 261.9/261.9
+  card 1 0000:23:00.0: cycles-bcs 598679.9/0.0 cycles-ccs 598679.9/0.0 cycles-rcs 598679.9/0.0 cycles-vcs 598679.9/0.0 cycles-vecs 598679.9/0.0 gtt 4.3/4.3 stolen 0.0/0.0 system 0.0/0.0 vram0 261.9/261.9
+ctx=shared (one SYCL context per card, same native context) flag=plain cap=1048576 total_cap=4194304 reps=3
+warm-up card 0: 0.9 ms
+warm-up card 1: 0.8 ms
+[after warm-up (peer arenas imported)] MemAvailable 12.31 GiB (-0.04 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 598712.2/0.0 cycles-ccs 598712.2/0.0 cycles-rcs 598712.2/0.0 cycles-vcs 598712.2/0.0 cycles-vecs 598712.2/0.0 gtt 10.5/10.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 1 0000:23:00.0: cycles-bcs 598680.1/0.0 cycles-ccs 598680.1/0.0 cycles-rcs 598680.1/0.0 cycles-vcs 598680.1/0.0 cycles-vecs 598680.1/0.0 gtt 10.5/10.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+smoke (persist push pair 0,1, 3456 B, one round trip): PASS (wrong 0, timeouts 0)
+form    how  topo cards           bytes  WGs  K1/K2        time per hop (pair/ring) or per all-gather round (a2a)
+persist push pair 0,1            3456 B  G=1  K= 200/2000  one-way     5.15 us  (host     5.15)    0.67 GB/s  wrong 0  timeouts 0  max polls 287
+[after runs] MemAvailable 12.31 GiB (-0.04 since start); xe fdinfo MiB total/resident:
+  card 0 0000:03:00.0: cycles-bcs 598715.7/0.0 cycles-ccs 598715.7/0.0 cycles-rcs 598715.7/0.0 cycles-vcs 598715.7/0.0 cycles-vecs 598715.7/0.0 gtt 10.5/10.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+  card 1 0000:23:00.0: cycles-bcs 598683.6/0.0 cycles-ccs 598683.6/0.0 cycles-rcs 598683.6/0.0 cycles-vcs 598683.6/0.0 cycles-vecs 598683.6/0.0 gtt 10.5/10.5 stolen 0.0/0.0 system 0.0/0.0 vram0 268.2/268.2
+VERDICT (ctx=shared)
+TOTAL wrong values 0, timeouts 0, skipped waits 0, max polls in one wait 287 -> PASS
+exit 0

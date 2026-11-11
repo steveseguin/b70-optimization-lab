@@ -123,6 +123,7 @@ Did not work (and why):
 | S1 as stated: one persistent kernel for the dense weight chain (pc1, 2026-11-11, `tools/bench/bench_persist_chain.cpp`) | separate launches already run a 16-layer x 6-stage Q8_0 chain (35.3 MB per layer, 12-head card shapes) at 74.1 us per layer = 475 GB/s, 79 % of the 603 GB/s measured read floor; persistent forms with 16 / 32 / 64 work-groups of 512 were 166 / 108 / 95 us per layer (too few loads in flight), reading the next rows early made it worse (154-371 us), 128 work-groups are not all resident (waits gave up safely). Launch gaps between dependent GEMVs are ~1 us on B70, not the problem. The engine's same matrices cost ~130 us per layer (card 2 profile: q_a + q_b + o_a + o_b + shared + router groups): the extra is in riders, small steps and launch structure inside those groups, not in launching. |
 | S3 / PDL emulation: launches on an out-of-order queue with no barriers, each kernel loading its weights then spinning on a counter (pc2, `bench_persist_chain` forms Q / Qi, 2026-11-11) | 215 / 184 us per layer against 74 for plain launches: one counter per stage, incremented by every sub-group, serializes the atomics; and there is little to win: `bench_launch_gap` (lg1) shows back-to-back dependent 6 us launches leave 0.12-0.28 us between them (an empty kernel costs ~1.6 us per launch). Launch gaps between big kernels are not where the 1.1 ms of idle time is. |
 | K2 as packed logical lanes for IQ2_XXS (`RoutedIQ2XXSK<NB, P, STAB, PF, XB>`, kb1-kb3 + pcs1/pcs1b, 2026-11-11) | every form bitwise PASS (18,432 gate+up and 20,736 down outputs), every form slower: gate+up production 33.4 us, P = 4 35.5, P = 8 58, P = 2 42-50; loading the next block early (PF) 40.5 / 68, the block's x up front (XB) 42.3, sign masks from a table (STAB) 41.8-49.3. The machine code has ~14-30 % fewer instructions per weight, but an item needs P x values per group that the one-weight form gets from one shared block read, so it either waits on per-lane x loads (sampler: a third of samples SbidStall on the multiply that consumes x) or holds them in registers and falls to the 256-register mode with half the threads. Production is issue-bound (busy 48 %, ALU pipe 22 %, send queue 17 %); the 3 float ops per weight are fixed by the order. Revisit only with x permuted by its producer so a block read hands each item its own P values. |
+| L1 transport: one shared native Level Zero context over the six cards (SC117's setup) for direct peer stores (`tools/bench/probe_shared_ctx_ram.cpp`, `tools/bench/xchg_direct_bench.cpp`, `data/.../round19-l1-transport/`, 2026-11-11) | safe but no faster. Host RAM: 6.02 GiB on six cards in one shared context moved MemAvailable by 0.05 GiB (also with peer residency, and with the default backing; peer copies correct), so the 1:1 host-RAM cost of §1 is the SYCL multi-card context, not Level Zero. Speed: the shared context and today's IPC peers give the same times to 0.1 us (pair one-way 0 B 2.36 vs 2.42 us, 3,456 B 5.20 vs 5.21, 9,728 B 6.38 vs 6.36). The fabric sets the cost: a flag one way ~2.4 us, a 3.4-9.7 KB push one way 5.5-5.7 us with 4+ work-groups; a six-card all-gather by push 10.5-14 us at 3.5-9.7 KB per card (noisy), against 11.89-13.53 us for the engine's own XchgPull of the one-token h exchange (e81b) and 12.2 us in the step ledger; all-to-all pushes of 64 KB collapse to ~9 GB/s total (208 us) while pulls keep 73 GB/s. The engine already pushes the tiny exchanges. What is left for exchanges: fewer of them (merge) or hide them behind weight reads. |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |
@@ -130,7 +131,7 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated ~01:10)
+## Work in flight (2026-11-11, updated ~01:45)
 
 - Done: g83 gate (router branch-free + engram gate over 16 sub-groups, §33): 85.2 -> 86-87 tok/s, bit-identical.
 - Done: the ledger (`2026-11-11-dsv41-step-budget.md`), our older code and other projects
@@ -138,8 +139,8 @@ Did not work (and why):
 - K2 expert kernels, packed logical lanes (`tools/bench/bench_routed_m1.cpp` `RoutedIQ2XXSK<NB, P, STAB, PF>`): v1
   bitwise PASS (18,432 pair outputs, 20,736 down) but slower (P = 8: 58 us, P = 4: 35.5 against production 33.5);
   stall samples show block-start load waits; v2 loads block blk + 1 while computing blk (running).
-- S2 transport (L1 of the local survey): a host-RAM probe and a direct-store exchange bench with one shared native
-  context and `EnableDeferBacking=0` (helper writing them; I run them).
+- Done: S2 transport L1 (shared native context, direct stores): safe for host RAM, but no faster than today's
+  setup; closed (scoreboard). Exchanges can only shrink by merging or hiding them.
 - Gaps: a per-launch timeline on all cards + who waits for whom (`OWN_TIMELINE`, `OWN_XWAIT`; helper writing the
   patch) - the 1.1 ms between kernels is not launch cost (lg1), so it must be waits or host-side delays.
 - Prompt: the plan's first steps (decode each shared weight once per 8-16 tokens; 64-token steps; measure the
