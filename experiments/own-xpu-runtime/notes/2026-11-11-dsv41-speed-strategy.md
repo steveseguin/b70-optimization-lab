@@ -410,6 +410,17 @@ Did not work (and why):
   checks (one-token path) 10.54 / 10.55 vs 10.52 / 10.60 ms; helper diagnosing (who reaches output-a last).
   Lesson: a one-card bench of a structural balance change cannot show the new critical path; run a six-card
   timeline before building the full patch.
+- Done (ck2tok, 2026-11-11 ~11:55, CPU analysis of the tg95b check timeline, `/home/steve/dsv41-work/ck2tok/README.md`):
+  1-token step 10.28 ms -> 2-token check 13.45 ms (+3.17) on the pace cards (2 / 5). New work: experts +1.05 ms
+  (10.5 distinct experts instead of 6), the rest ~0.7. Path overhead: q_b falls back to the GR R4 form when the
+  mix finish rides (no 1,280-column WS_DOTS entry; ~0.44 ms, ck-2 fixes it), exchanges +0.43 (165 -> 245 launches:
+  each 2-token push is two launches), ExpertGroupM +0.16, the 16-head cards' q_b share ~0.32 (they reach output-a
+  0.85 ms after the light cards at 2 tokens: 22.9 us per layer against 2.1 on a 1-token step), lost pairing /
+  riders / o_b ~0.2-0.3. For 3+ tokens the pull exchanges grow ~3.5 us per extra token each (~0.5 ms per token).
+  Fixes ranked: ck-2 (-0.45 at 2, -0.6 at 3); q_b offload in block checks (~3 heads, -0.2-0.4: in checks the
+  imbalance is 0.85 ms, unlike 1-token steps); one-launch 2-token push (runtime: OWN_MT_XPUSH=0 / 2,
+  OWN_XPULL_MIN=6912; -0.15-0.3); ExpertGroupM folded into gate+up (-0.14-0.22); OWN_MT_SKDOTS_MIN=2 (-0.1-0.2).
+  Expected 2-token check ~12.6 ms after all; the rest is expert bytes and the head imbalance. Runtime arms in tg96.
 - In flight (2026-11-11 ~10:30): tp94 built (defaults + attn) but not gated; tp95 = tp94 + ck building, gate tg95
   (both opt-in arms, traces at blocks 1-256 incl. 2-6 with CK, 3K traces, plain, 3K read, 22 guessing runs, profile +
   check timeline). Helpers: qboff (H8), k7 (K7), rux (prompt experts).
