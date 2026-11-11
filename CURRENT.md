@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**November 11, 2026 14:33 EST — DeepSeek V4.1 tp97 gate (tg97 + tg97b) done.** The tp96 winners are the defaults now
+(every trace identical, 16 / 16 guessing runs the same as plain): plain 100.4 / 100.6 tok/s, code 138.4 / 139.2,
+analysis 153.0 / 150.5. k7-2 (`OWN_K7`) bitwise but 1.5 % slower plain: off. qb-off-2 (`OWN_QB_OFF_M`) hangs: do not
+enable until qb-off-3. Results: experiments/own-xpu-runtime/data/dsv41-bringup-20261109/round19-tg97/. tg97c (free
+runtime tests) running from 14:34.
+
 **November 11, 2026 14:02-14:09 EST — qb-off-2 hung both 16-head cards in gate tg97 (our software); probe passed.**
 - Arm h2qbm (`OWN_QB_OFF_M=4,3,3,4,3`, prompt blocks of 2): card 2 (0000:43:00.0) and card 5 (0000:e3:00.0) compute
   jobs timed out at 14:02:21 / 14:02:22 (driver engine reset, devcoredump), run ended with DEVICE_LOST. The heavy

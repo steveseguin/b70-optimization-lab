@@ -1,14 +1,16 @@
-// k7-1 bench (2026-11-11, one card): OWN_K7's kernels (engine/src/stage2/packet3/kernels/sycl_v41_k7.hpp) against
+// k7-2 bench (2026-11-11, one card; k7-1's transport replaced, see sycl_v41_k7.hpp): OWN_K7's kernels (engine/src/stage2/packet3/kernels/sycl_v41_k7.hpp) against
 // production, bit for bit, and their times.
 //
 // Six cards on one card: six exchange arenas in the card's memory (the peer pointers p0..p5 of every launch), the
 // model rows split as the engine splits them (848 / 864 per card). For each input set:
-//   1. XchgPK7 for every card me = 0..5 in push-only mode (XchgP mode 1: no wait; the engine runs mode 0), each with
-//      only its own output rows in its arena: every arena then holds the whole output, every card's 25 partials,
-//      every peer's exchange flag and its 25 row flags (checked word by word; the partials also against a host
-//      emulation of K7Part's exact float / double operations).
-//   2. Every receiver R: HcPostPreP (production) on a copy of the old streams with R's gathered output, then
-//      SkNormK7 (R's arena) -> y, the 200 partials, the finish (HcMixFinishSG, both forms).
+//   1. XchgPK7 for every card me = 0..5 in push-only mode (XchgP mode 1: no h wait; the engine runs mode 0), each
+//      with only its own output rows in its arena (the launch's work-group 0 waits for its 25 local rows, copies the
+//      slot to every peer and raises the K7 flags): every arena then holds the whole output, every card's 25
+//      partials (all six slots, every word incl. the local flags), every peer's h flag and K7 flag (checked word by
+//      word; the partials also against a host emulation of K7Part's exact float / double operations).
+//   2. Every receiver R: HcPostPreK7 (HcPostPreP + the K7 flag wait) on a copy of the old streams with R's gathered
+//      output (new streams and x == production HcPostPreP's, bit for bit), then SkNormK7 (R's arena) -> y, the 200
+//      partials, the finish (HcMixFinishSG, both forms).
 //   3. Production on the same new streams: SkNormDotsW<8> (today's default: y, partials) and HcMixDotsP (the original
 //      partials), the finish of each.
 //   Required (any difference = failure): y == SkNormDotsW's y; the finish outputs == production's (both forms, all
@@ -16,13 +18,15 @@
 //   d[8r] = T, d[8r+1..7] = +0.0; a failing row production's 8 partials bit for bit); forced rows (every row, random
 //   masks) production's partials; with real rows the trace's own values (new streams, the norm output, the finish).
 //   Also reported: max |T - t_chain| / E_up over the rows with E_up >= 1e-20 and the number of rows outside the
-//   proof's bound |T - t_chain| <= 2.678e-13 E_up + 6e-41 (must be 0); the time-out path (poison word, error word).
+//   proof's bound |T - t_chain| <= 2.678e-13 E_up + 6e-41 (must be 0); the time-out path of HcPostPreK7's wait
+//   (poison word, error word, and HcPostPreP's outputs still production's).
 // Input sets: real (runs/ab1/base.trc steps 1-3, layers 0-39: the FFN mix after the output-b exchange and the next
 // attention mix after the ffn-rows exchange, exactly the 77 mixes per step OWN_K7 covers; fn / norm / finish
 // weights from the GGUF), random (real-like streams; random and real fn rows), exact float ties and near-ties placed
 // across cards, cancelling rows, tiny / huge / subnormal / zero / inf / NaN inputs.
 // Timing (GPU time per launch, median of REPS, cold: 256 MiB read first, then the launch's warm inputs re-read):
-//   XchgP vs XchgPK7 (both push-only into the six local arenas), SkNormDotsW<8> vs SkNormK7 vs SkNormW<5120, 16>.
+//   XchgP vs XchgPK7 (both push-only into the six local arenas), HcPostPreP vs HcPostPreK7 (flags already up),
+//   SkNormDotsW<8> vs SkNormK7 vs SkNormW<5120, 16>.
 // build: /home/steve/dsv41-work/k7/build_bench.sh; run: /home/steve/dsv41-work/k7/run_bench.sh TAG CARD
 // env REPS=31 NREAL=3 (trace steps) NRAND=24 SEED=1 NOTIME=1. Exit status 1 on any mismatch.
 #include <sycl/sycl.hpp>
@@ -308,15 +312,25 @@ static sycl::event post_pre(float *streams, const float *ob, float *x) { // HcPo
         HcPostPreP<ActF32>{(int)H}(it, streams, ob, po, co, nullptr, nullptr, mx, x);
     });
 }
-static sycl::event sknk7(int me, uint32_t seq, uint32_t force, const float *x, float *y, const float *streams, double *out,
-                         long spin = SPIN) {
-    const float *w = D.w, *fn = D.fn;
+// HcPostPreK7 as Backend41::k7_post_pre (launch(c, (nm + 1) * 64, 64, ...): no sub-group size required, as launch)
+static sycl::event post_pre_k7(int me, uint32_t seq, float *streams, const float *ob, float *x, long spin = SPIN) {
+    const float *po = D.post, *co = D.comb, *mx = D.mix;
     float *mine = D.ar[me];
     uint32_t *err = D.err;
+    const unsigned nm = H / 64;
+    const HcPostPreK7<ActF32> k{HcPostPreP<ActF32>{(int)H}, nm, (int)NC, me, seq, spin};
+    return D.q.submit([&](sycl::handler &hh) {
+        hh.parallel_for(sycl::nd_range<1>((size_t)(nm + 1) * 64, 64), [=](sycl::nd_item<1> it) {
+            k(it, streams, ob, po, co, (const float *)nullptr, (float *)nullptr, mx, x, mine, err);
+        });
+    });
+}
+static sycl::event sknk7(int me, uint32_t force, const float *x, float *y, const float *streams, double *out) {
+    const float *w = D.w, *fn = D.fn;
+    const float *mine = D.ar[me];
     return D.q.submit([&](sycl::handler &hh) {
         sycl::local_accessor<uint32_t, 1> lt(64, hh);
-        hh.parallel_for(sycl::nd_range<1>(2 * 512, 512),
-                        SkNormK7{(int)NC, me, seq, spin, force, x, w, y, streams, fn, out, mine, err, lt});
+        hh.parallel_for(sycl::nd_range<1>(2 * 512, 512), SkNormK7{(int)NC, force, x, w, y, streams, fn, out, mine, lt});
     });
 }
 static sycl::event skn_dots(const float *x, float *y, const float *streams, double *out) { // launch_wgl<64>(c, 26, 512, ...)
@@ -389,14 +403,16 @@ static int run_case(const Case &cs, std::mt19937_64 &rng) {
     D.q.memcpy(D.w, cs.w.data(), H * 4);
     D.q.memcpy(D.scale, cs.scale.data(), 12);
     D.q.memcpy(D.base, cs.base.data(), 96);
-    // arenas: 0xff everywhere (the pushes must write every word read), flags + poison + K7 row flags zero, the
-    // card's own rows
+    // arenas: 0xff everywhere (the pushes must write every word read), flags + poison + K7 row flags + K7 flags
+    // zero, the card's own rows
     static std::vector<uint32_t> fl0;
     if (fl0.empty()) {
         fl0.assign(OBOFF, 0xffffffffu);
         for (unsigned k = 0; k < 128; ++k) fl0[k] = 0;
-        for (unsigned d = 0; d < NC; ++d)
+        for (unsigned d = 0; d < NC; ++d) {
             for (unsigned r = 0; r < K7_ROWS; ++r) fl0[K7_OFF + K7_SLOT * d + 4 * r + 3] = 0;
+            fl0[K7_FLAG + 16 * d] = 0;
+        }
     }
     for (unsigned c = 0; c < NC; ++c) {
         D.q.memset(D.ar[c], 0xff, (size_t)ARENA * 4);
@@ -418,8 +434,11 @@ static int run_case(const Case &cs, std::mt19937_64 &rng) {
         for (unsigned d = 0; d < NC; ++d) {
             const uint32_t *sl = a.data() + K7_OFF + K7_SLOT * d;
             if (d != R && a[16 * d] != seq) fail("flags");
+            if (a[K7_FLAG + 16 * d] != (d != R ? seq : 0u)) fail("K7 flags");
             for (unsigned r = 0; r < 25; ++r)
-                if (sl[4 * r + 3] != (d != R ? seq : 0u)) { fail("row flags"); break; }
+                if (sl[4 * r + 3] != seq) { fail("row flags (copied with the slot)"); break; }
+            for (unsigned k = 4 * K7_ROWS; k < K7_SLOT; ++k)
+                if (sl[k] != 0xffffffffu) { fail("a slot's pad words written"); break; }
             for (unsigned r = 0; r < 25; ++r) {
                 double T;
                 float E;
@@ -435,7 +454,7 @@ static int run_case(const Case &cs, std::mt19937_64 &rng) {
         else
             for (unsigned d = 0; d < NC; ++d)
                 for (unsigned r = 0; r < 25; ++r)
-                    if (!beq(a.data() + K7_OFF + K7_SLOT * d + 4 * r, a0.data() + K7_OFF + K7_SLOT * d + 4 * r, 12))
+                    if (!beq(a.data() + K7_OFF + K7_SLOT * d + 4 * r, a0.data() + K7_OFF + K7_SLOT * d + 4 * r, 16))
                         { fail("slots differ between arenas"); d = NC; break; }
     }
     // 2. every receiver (R = 0 last: its new streams and x stay for production and the forced runs)
@@ -446,9 +465,13 @@ static int run_case(const Case &cs, std::mt19937_64 &rng) {
     std::vector<std::vector<float>> fks;
     for (int R = NC - 1; R >= 0; --R) {
         D.q.memcpy(D.snew, D.old, N * 4);
-        post_pre(D.snew, D.ar[R] + OBOFF, D.x);
-        sknk7(R, seq, 0, D.x, D.yk, D.snew, D.dk);
+        D.q.memcpy(D.snew2, D.old, N * 4);
+        post_pre(D.snew2, D.ar[R] + OBOFF, D.x2); // production's HcPostPreP
+        post_pre_k7(R, seq, D.snew, D.ar[R] + OBOFF, D.x);
+        sknk7(R, 0, D.x, D.yk, D.snew, D.dk);
         D.q.wait();
+        if (!beq(rd(D.snew, N).data(), rd(D.snew2, N).data(), N * 4) || !beq(rd(D.x, H).data(), rd(D.x2, H).data(), H * 4))
+            fail("HcPostPreK7's new streams / x vs HcPostPreP");
         dks.push_back(rd(D.dk, FS));
         const auto y = rd(D.yk, H);
         for (int f = 0; f < 2; ++f) finish(D.dk, f, fk[f]);
@@ -506,7 +529,7 @@ static int run_case(const Case &cs, std::mt19937_64 &rng) {
     // 4. forced fallbacks: every row, then two random masks (R = 0)
     for (int k = 0; k < 3; ++k) {
         const uint32_t force = k == 0 ? 0x1ffffffu : (uint32_t)(rng() & 0x1ffffffu);
-        sknk7(0, seq, force, D.x, D.yk, D.snew, D.dk);
+        sknk7(0, force, D.x, D.yk, D.snew, D.dk);
         D.q.wait();
         const auto d = rd(D.dk, FS);
         for (unsigned r = 0; r < 25; ++r) {
@@ -730,14 +753,21 @@ int main() {
                 "uses 2.8e-13); rows outside |T - t_chain| <= 2.678e-13 E_up + 6e-41: %ld; rows with E_up < 1e-20: %ld\n",
                 S.max_rel, S.max_rel_at.c_str(), S.out_of_bound, S.tiny_rows);
 
-    // ---- the timeout path: no peer flag reaches seq; the receiver must stop, set the poison word and err
+    // ---- the timeout path: no peer K7 flag reaches seq; HcPostPreK7 must stop, set the poison word and err, and
+    // its HcPostPreP work-groups still write production's outputs
     {
         std::memset(D.err, 0, 16);
-        sknk7(0, 0xfffffff0u, 0, D.x, D.yk, D.snew, D.dk, 2000);
+        D.q.memcpy(D.snew, D.old, N * 4);
+        D.q.memcpy(D.snew2, D.old, N * 4);
+        post_pre(D.snew2, D.ar[0] + OBOFF, D.x2);
+        post_pre_k7(0, 0xfffffff0u, D.snew, D.ar[0] + OBOFF, D.x, 2000);
         D.q.wait();
         const auto a = rd(reinterpret_cast<uint32_t *>(D.ar[0]), 128);
-        const bool ok = a[96] == 1u && D.err[0] >= 2 && D.err[0] <= NC;
-        std::printf("timeout path: poison %u, err %u -> %s\n", a[96], D.err[0], ok ? "ok" : "WRONG");
+        const bool same = beq(rd(D.snew, N).data(), rd(D.snew2, N).data(), N * 4) &&
+                          beq(rd(D.x, H).data(), rd(D.x2, H).data(), H * 4);
+        const bool ok = a[96] == 1u && D.err[0] >= 2 && D.err[0] <= NC && same;
+        std::printf("timeout path: poison %u, err %u, outputs %s -> %s\n", a[96], D.err[0], same ? "same" : "DIFFER",
+                    ok ? "ok" : "WRONG");
         if (!ok) ++g_fail;
         D.q.memset(D.ar[0] + 96, 0, 4).wait();
         std::memset(D.err, 0, 16);
@@ -770,13 +800,18 @@ int main() {
         auto txp = med([&] { warm(me); }, [&] { return xp_only(me, seq + 1); });
         auto tk7 = med([&] { warm(me); }, [&] { return k7x(me, seq + 1, 1); });
         // the receiving side reads the new streams the K7 launch left: re-run the post on snew2 each time
+        auto refill = [&] { D.q.memcpy(D.snew2, D.old, N * 4); };
+        auto tpp = med([&] { refill(); }, [&] { return post_pre(D.snew2, D.ar[0] + OBOFF, D.x2); });
+        auto tpk = med([&] { refill(); }, [&] { return post_pre_k7(0, seq, D.snew2, D.ar[0] + OBOFF, D.x2); });
         auto tsd = med([&] { warm(0); }, [&] { return skn_dots(D.x2, D.ysk, D.snew2, D.dsk); });
-        auto tsk = med([&] { warm(0); }, [&] { return sknk7(0, seq, 0, D.x2, D.yk, D.snew2, D.dk); });
+        auto tsk = med([&] { warm(0); }, [&] { return sknk7(0, 0, D.x2, D.yk, D.snew2, D.dk); });
         auto tsa = med([&] { warm(0); }, [&] { return skn_alone(D.x2, D.yw); });
-        auto tsf = med([&] { warm(0); }, [&] { return sknk7(0, seq, 1u << 7, D.x2, D.yk, D.snew2, D.dk); });
+        auto tsf = med([&] { warm(0); }, [&] { return sknk7(0, 1u << 7, D.x2, D.yk, D.snew2, D.dk); });
         std::printf("timing (us per launch, cold, median / p10 of %d):\n", g_reps);
         std::printf("  XchgP (push only, 6 local arenas)      %7.2f / %7.2f\n", txp.first, txp.second);
         std::printf("  XchgPK7 (the same + 25 partial rows)   %7.2f / %7.2f\n", tk7.first, tk7.second);
+        std::printf("  HcPostPreP (production)                %7.2f / %7.2f\n", tpp.first, tpp.second);
+        std::printf("  HcPostPreK7 (+ the K7 flag wait, up)   %7.2f / %7.2f\n", tpk.first, tpk.second);
         std::printf("  SkNormDotsW<8> (production)            %7.2f / %7.2f\n", tsd.first, tsd.second);
         std::printf("  SkNormK7 (norm + the partials' sum)    %7.2f / %7.2f\n", tsk.first, tsk.second);
         std::printf("  SkNormW<5120, 16> (the norm alone)     %7.2f / %7.2f\n", tsa.first, tsa.second);

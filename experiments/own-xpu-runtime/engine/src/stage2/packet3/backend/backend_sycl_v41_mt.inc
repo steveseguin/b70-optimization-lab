@@ -183,8 +183,9 @@ unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at lea
 // same order per (slot, row) as RoutedU3 / RoutedU). OWN_MT_RUX=1 (with OWN_MT_EU): blocks of at least OWN_MT_RUX_MIN
 // tokens (16) run the RUX selectors (RoutedIQ*SUX) in place of RoutedIQ*SU; OWN_MT_RUX_CAP=c (0: off) lowers those
 // blocks' group cap to c (the groups change, no output does: a slot's sum does not depend on its group).
-bool mt_rux = false;
-unsigned mt_rux_min = 16, mt_rux_cap = 0;
+// default since tp97 (tg96b: 3K read 472 -> 497 tok/s): OWN_MT_RUX=1, OWN_MT_RUX_CAP=6 (OWN_MT_RUX=0: off)
+bool mt_rux = true;
+unsigned mt_rux_min = 16, mt_rux_cap = 6;
 bool ring_one = true;     // OWN_RING_ONE (default on since tg90; =0: off): commit_pending's ring moves in one launch (RingCommitN)
 bool dr_nowait = true;    // OWN_DR_NOWAIT (default on since tg90; =0: off): the draft step's embed does not wait for the card (no host buffer to protect)
 // ---- draft-head-1 (2026-11-11; DR_ANCHOR_ARG and DR_WS on by default since tg91, the rest off; the draft only proposes, the check decides)
@@ -422,6 +423,7 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
     auto go = [&](const auto &d) {
         using D = std::decay_t<decltype(d)>;
         if constexpr (std::is_same_v<RD, ops41sycl::NoRows>) launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
+        else if constexpr (ops41sycl::is_qbm_heavy_v<RD>) qbm_heavy_launch(c, rider, d); // OWN_QB_OFF_M (qb-off-2)
         else {
             const ops41sycl::RowsPair<RD, D> rp{rider, d};
             launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<RD, D>>{rp});
@@ -444,7 +446,9 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
     // (ops41sycl::WsTab; the same sums per row and token, bit for bit). The draft's steps keep the general rules
     // unless OWN_DR_WS=1 (the same table there: at 5 tokens the draft's q_b rows and its full head).
     if ((dr_step ? dr_ws : mt_ws) && mt <= MTX) {
-        constexpr unsigned KIND = std::is_same_v<RD, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN : ops41sycl::WS_DOTS;
+        // (OWN_QB_OFF_M's QbmHeavy rider: the kind of the rider it carries)
+        constexpr unsigned KIND = std::is_same_v<ops41sycl::qbm_base_t<RD>, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN
+                                                                                               : ops41sycl::WS_DOTS;
         if (ops41sycl::ws_rows<DK, KIND>(dk, (const uint8_t *)w, x, xs, y, ys, mt, MTA, [&](const auto &d) { go(d); })) return;
     }
     if constexpr (requires { &DK::template rowgr<2, 2>; }) {
@@ -1403,12 +1407,34 @@ void tpm_layer(int L, int c) {
             launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
         }
     }
+    // OWN_QB_OFF_M (qb-off-2): a helper first computes and publishes its heavy neighbour's k heads for the block;
+    // a heavy card runs its other heads' rows with the pull of those k + k heads as the launch's first rows
+    int qbk = 0, qbr = 0;
+    uint32_t qbs = 0;
+#ifndef OWN41_ACT_BF16
+    qbk = qbm_k((unsigned)M);
+    qbr = qbk ? qbo[c].role : 0;
+    qbs = qbk ? ++qbm_seq[c] : 0u;
+    if (qbr == 2) qbm_send(c, p, b.qn, (unsigned)M, qbk, qbs);
+#endif
+    (void)qbs;
+    auto q_b = [&](const auto &rd) {
+#ifndef OWN41_ACT_BF16
+        if (qbr == 1) {
+            const unsigned qx = (unsigned)qbk * (unsigned)g.hd;
+            using B = std::decay_t<decltype(rd)>;
+            return qbm_q_b(c, p + "attn_q_b.weight", b.qn, b.q + qo + qx, qbr0 + qx, qbr1 - qx,
+                           ops41sycl::QbmHeavy<B>{rd, qbm_pull(c, b.q + qo, (unsigned)M, qbk, qbs)});
+        }
+#endif
+        gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, rd, qbr0, qbr1);
+    };
     if (fin_qb && !dsp) {
         tok_set(c, 0); // (hc_finish reads token 0's partials pointer: the block's base)
         const FR fin = tokr(hc_finish(c, p + "hc_attn_", b.pre_a, b.post_a, b.comb_a), FS, 4, 4, 16);
-        gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, fin, qbr0, qbr1);
+        q_b(fin);
     } else {
-        gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q, 0, 0, ops41sycl::NoRows{}, qbr0, qbr1);
+        q_b(ops41sycl::NoRows{});
     }
     if (pos < 0 || pos + M > max_seq) throw std::runtime_error("position beyond max_seq");
     if (mt_small) { // key and query rope, every token (positions pos .. pos + M - 1: 32 table entries apart)

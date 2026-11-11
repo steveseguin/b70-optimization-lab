@@ -341,7 +341,8 @@ Did not work (and why):
 | The draft's rows at 5 work-groups per row (`OWN_DR_TGW=5`, tg91) | slower: code 127.28, analysis 139.06 |
 | Attention heads split between card pairs from 2 tokens on (`OWN_TP_HEADS_MIN=2`, tune91) | neutral: the pair exchange costs about what it saves at 2 tokens (check of 1 guess 14.54-14.64 -> 14.74-14.78 ms); from 3 / 4 tokens on it wins +1.2 % (scoreboard) |
 | q_b offload: the light cards compute 2-4 of each 16-head card's query heads first and push them (`OWN_QB_OFF=k`, qb-off-1, H8, tg95b) | bitwise, no gain (plain within noise; zero-guess checks 10.54 -> 10.56 ms). Timelines (qboff/qbdiag.py, tg93 vs tg95b zero-guess checks): the heavy cards were last at output-a by 13.1 us per layer (89 %); k = 4 saved them 6.7 us (q_b 23.7 -> 15.8) but cost each light card 13.1 us (rows 7.9, rope 1.0, push 4.0, gaps 0.4), so the light cards became last; layer -1.75 us. A row moved out of a big launch saves ~1.9 ns, the same row in a small helper launch costs ~3.8 ns, plus ~5.3 us fixed per layer: best case ~1 % (k = 2 / 3). The whole output-a imbalance is ~13 us per layer (~0.5 ms per step). Closed. |
-| K7-1: the stream mix's dot sums ride the exchanges (`OWN_K7`, tg96) | every run ended with "exchange timed out": the partial sums shared cache lines with other cards' slots and were read in the same launch that waited for them (stale L1, lost flags). k7-2 moves them like XchgP rows, read one launch later; bench pending |
+| K7: the stream mix's dot sums ride the exchanges (`OWN_K7`; k7-1 tg96, k7-2 tg97b) | k7-1 timed out in every run (sums sharing cache lines with lines the receiver wrote, read in the launch that waited). k7-2 (XchgP-style transport, read one launch later) is bitwise in every trace but plain 100.4 / 100.6 -> 98.3 / 99.2 tok/s and guessing neutral: the sender's +2.7 us per exchange lands on the critical path. In the tree, off |
+| Looser guess threshold after the cheaper checks (`OWN_SPEC_TAU` 0.45 / 0.40, tg97b) | code 138.4-139.2 -> 141.7 / 140.5, analysis 150.5-153.0 -> 149.4 / 150.0: neutral on average; TAU stays 0.5 (a per-prompt-class rule might take the code gain) |
 | Runtime switches on top of ck-2 (tg96b: `OWN_MT_XPUSH=0/2`, `OWN_XPULL_MIN=6912`, `OWN_MT_SKDOTS_MIN=2/3`, `OWN_MT_FIN_QB=0`) | within +-0.2 % of ck alone or slower (XPUSH=2 -3.9 %, FIN_QB=0 -0.9 %); the current values stay |
 | eg-fold-1: the expert grouping (`ExpertGroupM`, its own launch in checks) folded into the gate + up launch (`OWN_MT_EGF`, `dsv41-work/egf/`, card 5 bench 13:34-13:35, bitwise) | slower: per check UF1 -0.35 / -0.68 / -0.92 / -1.08 / -1.59 ms and UF2 -0.03 / -0.04 / -0.01 / +0.01 / -0.25 ms at 2-6 tokens (IQ2_S and IQ1_S UF1 +14-65 us per layer; IQ2_XXS UF2 +1.7-9 us). Even free grouping would save only 0.11-0.30 ms per check. Closed |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
@@ -351,8 +352,13 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 13:35 EST)
+## Work in flight (2026-11-11, updated 14:36 EST)
 
+- Done (tg97 13:56-14:07 + tg97b 14:09-14:33, tp97; `data/.../round19-tg97/`): the tp96 winners hold as defaults
+  (every trace identical, 16 / 16 guessing SAME): plain 100.4 / 100.6, code 138.4 / 139.2, analysis 153.0 / 150.5,
+  prose 117.2, after 3K 141.3. qb-off-2 hung both 16-head cards (driver job timeouts 14:02, probe passed; qb-off-3
+  with its helper). k7-2 bitwise but -1.5 % plain (closed). TAU 0.45 / 0.40 neutral. The 3K read 0.9 % slower than
+  tp96 with the same settings (tg97c checks the run order).
 - Done (tg96 11:57-12:36 + tg96b to 13:31:22, tp96; `data/.../round19-tg96/`): attn-a2 (`OWN_ATT_T=1`), ck-2
   (`OWN_MT_CK=1`) and rux-1 (`OWN_MT_RUX=1`) all bitwise (38 / 38 guessing SAME, 34 guess logs equal). Best now:
   plain 101.2 / 101.4 tok/s, code 139.2 / 139.3, analysis 153.8 / 153.6, prose 117.3, guessing after 3K 142.2,

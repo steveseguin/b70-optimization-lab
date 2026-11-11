@@ -8,13 +8,25 @@
 // K7: before the exchange card c holds the new sublayer output for its own model rows [r0, r1) (848 / 864 of
 // 5,120) and the old streams in full, so it can form the new streams' 4 x (r1 - r0) values of those columns
 // (HcPostPreP's expression, the same floats) and the 25 dot partials over them (XchgPK7, work-groups 1..25,
-// beside XchgP's own work-group 0, which runs XchgP unchanged). Each partial work-group pushes its row's partial
-// to every card and raises that row's flag there. After HcPostPreP the receiving launch (SkNormK7) runs the
+// beside XchgP's own work-group 0). Transport (k7-2): the partials travel exactly as XchgP's rows do. Each partial
+// work-group stores its row into this card's own slot and raises the row's local flag; work-group 0 pushes the
+// output rows and raises the h flags (XchgP, push only), waits for its 25 local rows, copies the slot into every
+// peer's arena, fences, barriers and raises one K7 flag per peer (a word alone on its 64-byte line), then waits for
+// the peers' h flags (XchgP, wait only). The receiving card waits for the peers' K7 flags in one extra work-group
+// of its HcPostPreP launch (HcPostPreK7: HcPostPreP's work-groups run unchanged), and SkNormK7, the next launch,
+// reads the slots: no wait in the reading launch. After HcPostPreP the receiving launch (SkNormK7) runs the
 // norm alone on work-group 0 (SkNormSplit<5120, 16>, SkNormW's code) and on work-group 1 adds the six cards'
 // partials, runs SkDotsFF's check on the sum and, where it fails, writes production's partials from the
-// gathered streams (HcMixDotsP::row, as SkDotsFF's fallback). One card (bench_k7, cold, median): SkNormK7 3.4 us
-// against SkNormDotsW<8>'s 6.0 (the norm alone 2.4); XchgPK7 2.7 us over XchgP's push (hidden while XchgP waits
-// for its peers, ~5 us per exchange on every card in xw92).
+// gathered streams (HcMixDotsP::row, as SkDotsFF's fallback).
+// Why k7-1 failed on six cards (tg96, 2026-11-11: time-outs on every K7 run, the first traced step already off
+// at layer 1's FFN mix): it broke the two rules of xchg_direct_bench / OWN_QB_OFF. Its SkNormK7 polled per-row
+// flags and read (even prefetched into L1) the records in the same launch, so it could read the previous round's
+// cached lines; and its records, flags and slots shared 64-byte lines across senders and with this card's own
+// record stores and 125 atomic read-modify-write polls, so a line written back by the receiver could cover a peer's
+// newer words (flags included). One card cannot show either (all writes come from one GPU; the bench ran the
+// senders before the receivers). k7-2 keeps both rules: every line a peer writes is written by that peer only
+// (slots and flags line-aligned, the receiver never stores or polls a data line), flags alone on their lines and
+// polled with XchgP's own code, and the slots read only by a later launch than the wait.
 //
 // Why the finish's outputs are production's bit for bit. Notation: u = 2^-24, v = 2^-53, a row's terms x_i = b_i a_i
 // (b: the fn value, or a itself for the sum of squares; a: a new stream value, the float HcPostPreP stores),
@@ -39,19 +51,21 @@
 //
 // Arena words (floats of every card's exchange arena, inside the flags block [0, 1024): words 16 d = XchgP's
 // flags, 96 = the poison word, 128 + 16 d + g (g < 16) = OWN_QB_OFF's flags, sycl_v41_qboff.hpp): K7 uses words
-// [K7_OFF, K7_OFF + 6 K7_SLOT) = [256, 856): slot d (sender d) row r at K7_OFF + K7_SLOT d + 4 r: words 0, 1 =
-// T_d(r) (double), 2 = E_d(r) (float bits), 3 = the row's flag (the K7 exchange's number, stored after a system
-// release fence). Copied as 32-bit words, never as floats. Slot d is rewritten by d's next K7 exchange only after d
-// passed an exchange that waits for this card's flag, which this card publishes after its SkNormK7 (in-order
-// queue; between two K7 exchanges every card runs at least one waiting exchange): the reads always come first
-// (the argument the ob region's reuse rests on as well).
+// [K7_OFF, 1024) = [256, 1024): slot d (sender d) at K7_OFF + K7_SLOT d (112 words = 7 whole lines), row r's record
+// at + 4 r: words 0, 1 = T_d(r) (double), 2 = E_d(r) (float bits), 3 = the row's local flag (the exchange's
+// number; meaningful in the sender's own slot only, copied along); K7 flag of sender d at K7_FLAG + 16 d
+// (K7_FLAG = 928, one 64-byte line each, written only by d with d's exchange number after its slot copy). Copied
+// as 32-bit words, never as floats. Slot d of this card is rewritten by d's next K7 exchange only after d passed
+// an exchange that waits for this card's flag, which this card publishes after its SkNormK7 (in-order queue;
+// between two K7 exchanges every card runs at least one waiting exchange): the reads always come first (the
+// argument the ob region's reuse rests on as well).
 #pragma once
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 
 namespace ops41sycl {
 
-constexpr unsigned K7_OFF = 256, K7_SLOT = 100, K7_ROWS = 25;
+constexpr unsigned K7_OFF = 256, K7_SLOT = 112, K7_ROWS = 25, K7_FLAG = K7_OFF + 6 * K7_SLOT;
 
 // row r's partial over the columns [r0, r1) (multiples of 4, r1 - r0 <= 4 * 256) of the new streams, one work-group
 // of 256 items. Returns true on sub-group 0, whose lanes 0..7 then hold T (the row's double sum) and E (the float
@@ -140,12 +154,16 @@ struct K7Part {
     }
 };
 
-// The h exchange with the partials (replaces XchgP's launch_wg(c, 256, ...) at the K7 sites; 26 work-groups of 256):
-// work-group 0 runs XchgP (x, unchanged: push this card's rows, flags, wait for every peer's), work-group 1 + r row
-// r's partial (K7Part) over this card's rows [x.r0, x.r1) of the output in its own arena (x.off: the 5,120 output
-// floats); then lane d < n of its sub-group 0 stores the row's three words into card d's slot x.me (this card's own
-// arena too), a system release fence, and (d != me) the row's flag x.seq. No counter, no last work-group: every row
-// travels on its own. 128 registers, like XchgP; every pointer a direct kernel argument.
+// The h exchange with the partials (replaces XchgP's launch_wg(c, 256, ...) at the K7 sites; 26 work-groups of 256).
+// Work-group 1 + r: row r's partial (K7Part) over this card's rows [x.r0, x.r1) of the output in its own arena
+// (x.off: the 5,120 output floats); lane 0 stores the row's three words into this card's own slot x.me, a release
+// fence, then the row's local flag (word 3) = x.seq. Work-group 0: XchgP push only (x's rows into every peer, the h
+// flags), then items t < 25 wait for the local flags (this card's own memory, written by this launch), acquire,
+// barrier; items t < 100 read the slot's words (atomic loads: the lines were written by other work-groups of this
+// launch) and store them into every peer's slot x.me; system release fence, barrier, items t < n (t != me) store
+// x.seq into peer t's K7 flag K7_FLAG + 16 me (XchgP's flag code); then, for x.mode == 0, XchgP's wait for every
+// peer's h flag (mode 2, the same seq). x.mode == 1 (bench): no wait. 128 registers, like XchgP; every pointer a
+// direct kernel argument.
 struct XchgPK7 {
     XchgP x;
     float *p0, *p1, *p2, *p3, *p4, *p5;
@@ -156,28 +174,56 @@ struct XchgPK7 {
         using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
                                     sycl::access::address_space::global_space>;
         const unsigned g = (unsigned)it.get_group_linear_id();
+        float *mine = XchgP::pick(x.me, p0, p1, p2, p3, p4, p5);
+        uint32_t *own = reinterpret_cast<uint32_t *>(mine) + K7_OFF + K7_SLOT * (unsigned)x.me;
         if (g == 0) {
-            x(it, p0, p1, p2, p3, p4, p5, err);
+            XchgP xs = x;
+            xs.mode = 1; // push this card's rows + the h flags
+            xs(it, p0, p1, p2, p3, p4, p5, err);
+            const unsigned t = (unsigned)it.get_local_linear_id();
+            if (t < K7_ROWS) { // the 25 local rows (XchgP's wait form on this card's own words)
+                AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+                AR f(own[4 * t + 3]);
+                long s = 0;
+                if (!poison.load())
+                    while (f.load() < x.seq && ++s < x.spin) {}
+                if (s >= x.spin) {
+                    poison.store(1u);
+                    err[0] = 1u + (uint32_t)x.me;
+                }
+            }
+            sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if (t < 4 * K7_ROWS) {
+                const uint32_t v = AR(own[t]).load();
+                for (int d = 0; d < x.n; ++d)
+                    if (d != x.me)
+                        reinterpret_cast<uint32_t *>(XchgP::pick(d, p0, p1, p2, p3, p4, p5))[K7_OFF +
+                                                                                             K7_SLOT * (unsigned)x.me + t] = v;
+            }
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            sycl::group_barrier(it.get_group());
+            if ((int)t < x.n && (int)t != x.me)
+                AR(reinterpret_cast<uint32_t *>(XchgP::pick((int)t, p0, p1, p2, p3, p4, p5))[K7_FLAG + 16 * (unsigned)x.me])
+                    .store(x.seq);
+            if (x.mode == 0) {
+                XchgP xw = x;
+                xw.mode = 2; // wait for every peer's h flag (>= the same seq)
+                xw(it, p0, p1, p2, p3, p4, p5, err);
+            }
             return;
         }
         const unsigned r = g - 1;
-        float *mine = XchgP::pick(x.me, p0, p1, p2, p3, p4, p5);
         double T;
         float E;
         if (!K7Part::run(it, r, x.r0, x.r1, streams, mine + x.off, post, comb, fn, &lm[0], T, E)) return;
         sycl::sub_group sg = it.get_sub_group();
-        const int lane = (int)sg.get_local_linear_id();
-        T = sycl::select_from_group(sg, T, 0);
-        E = sycl::select_from_group(sg, E, 0);
-        uint32_t *rec = nullptr;
-        if (lane < x.n) {
-            rec = reinterpret_cast<uint32_t *>(XchgP::pick(lane, p0, p1, p2, p3, p4, p5)) + K7_OFF +
-                  K7_SLOT * (unsigned)x.me + 4 * r;
-            sk_put(rec, 0, T);
-            rec[2] = sycl::bit_cast<uint32_t>(E);
+        if (sg.get_local_linear_id() == 0) {
+            sk_put(own + 4 * r, 0, T);
+            own[4 * r + 2] = sycl::bit_cast<uint32_t>(E);
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            AR(own[4 * r + 3]).store(x.seq);
         }
-        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
-        if (lane < x.n && lane != x.me) AR(rec[3]).store(x.seq);
     }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
@@ -185,33 +231,61 @@ struct XchgPK7 {
     }
 };
 
-// The receiving side (replaces SkNormDotsW<8>'s launch_wgl<64>(c, 26, 512, ...); 2 work-groups of 512):
-// work-group 0 the 5,120 pre-norm (SkNormSplit<5120, 16>::run: SkNormW's and SkNormDotsW's work-group 0, the same
-// y). Work-group 1: item L < 25 (n - 1) polls one (row, peer) flag (XchgP's wait: poll, poison, err = 1 + that peer;
-// one round trip for all 125 instead of five in a row); items 128.. prefetch the six slots' and the 200 partials'
-// cache lines meanwhile (a hint only: the data is read after the acquire); every item the system acquire, one
-// barrier; then rows 0..23 on sub-group 0 and row 24 (the check with the double square root) on sub-group 1, in
-// parallel: add the n cards' T_d(r) (doubles) and E_d(r) (floats) in card order, SkDotsFF<8>::check; a pass
-// stores d[8 r] = T, d[8 r + 1 .. 7] = +0.0. After a second barrier the failing rows (and the rows in force, a
-// bench-only mask: 0 in the engine) run as HcMixDotsP::row on the gathered streams (sub-groups 0..7 one failing
-// row, 8..15 the next): production's partials; with no failing row the work-group ends there. mine: this card's
-// arena.
-struct SkNormK7 {
+// The receiving card's HcPostPreP launch at a K7 site (replaces launch(c, h, 64, HcPostPreP{h}, ...); nmain + 1
+// work-groups of 64): work-groups [0, nmain) run HcPostPreP exactly as launched alone (the same items, the same
+// global ids, the same code: the same new streams and pre-norm input); work-group nmain's items t < n (t != me)
+// wait for peer t's K7 flag (word K7_FLAG + 16 t of this card's arena >= seq; XchgP's wait: poll, poison,
+// err = 1 + t), acquire, barrier. The slots are read by SkNormK7, the next launch. mine: this card's arena.
+template <typename A> struct HcPostPreK7 {
+    HcPostPreP<A> k;
+    unsigned nmain;
     int n, me;
     uint32_t seq;
     long spin;
+    void operator()(sycl::nd_item<1> it, typename A::T *streams, const typename A::T *x, const float *post,
+                    const float *comb, const float *pre_src, float *pre_dst, const float *mix, typename A::T *out,
+                    float *mine, uint32_t *err) const {
+        if ((unsigned)it.get_group_linear_id() < nmain) {
+            k(it, streams, x, post, comb, pre_src, pre_dst, mix, out);
+            return;
+        }
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned t = (unsigned)it.get_local_linear_id();
+        if ((int)t < n && (int)t != me) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[K7_FLAG + 16 * t]);
+            long s = 0;
+            if (!poison.load())
+                while (f.load() < seq && ++s < spin) {}
+            if (s >= spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+    }
+};
+
+// The receiving side (replaces SkNormDotsW<8>'s launch_wgl<64>(c, 26, 512, ...); 2 work-groups of 512), the launch
+// after HcPostPreK7 (which waited for every peer's K7 flag): work-group 0 the 5,120 pre-norm (SkNormSplit<5120,
+// 16>::run: SkNormW's and SkNormDotsW's work-group 0, the same y). Work-group 1: rows 0..23 on sub-group 0 and
+// row 24 (the check with the double square root) on sub-group 1, in parallel: add the n cards' T_d(r) (doubles) and
+// E_d(r) (floats) in card order, SkDotsFF<8>::check; a pass stores d[8 r] = T, d[8 r + 1 .. 7] = +0.0. After a
+// barrier the failing rows (and the rows in force, a bench-only mask: 0 in the engine) run as HcMixDotsP::row on
+// the gathered streams (sub-groups 0..7 one failing row, 8..15 the next): production's partials; with no failing
+// row the work-group ends there. mine: this card's arena (the slots, read only here).
+struct SkNormK7 {
+    int n;
     uint32_t force;
     const float *x, *w;
     float *y;
     const float *streams, *fn;
     double *out;
-    float *mine;
-    uint32_t *err;
+    const float *mine;
     sycl::local_accessor<uint32_t, 1> lm; // 64 words
     void operator()(sycl::nd_item<1> it) const {
-        namespace ex = sycl::ext::oneapi::experimental;
-        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
-                                    sycl::access::address_space::global_space>;
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), sgi = sg.get_group_linear_id();
         uint32_t *l = &lm[0];
@@ -219,28 +293,7 @@ struct SkNormK7 {
             SkNormSplit<5120, 16>::run(it, sgi, l, 0, x, w, y);
             return;
         }
-        uint32_t *m32 = reinterpret_cast<uint32_t *>(mine);
-        const unsigned L = 32 * sgi + lane, np = (unsigned)n - 1;
-        constexpr unsigned SLOT_LINES = (6 * K7_SLOT * 4 + 63) / 64;
-        if (L >= 128 && L < 128 + SLOT_LINES)
-            ex::prefetch((void *)(m32 + K7_OFF + 16 * (L - 128)), ex::properties{ex::prefetch_hint_L1});
-        if (L >= 192 && L < 192 + K7_ROWS)
-            ex::prefetch((void *)(out + 8 * (L - 192)), ex::properties{ex::prefetch_hint_L1});
-        if (L < K7_ROWS * np) {
-            const unsigned r = L / np, k = L % np;
-            const int d = (int)k < me ? (int)k : (int)k + 1;
-            AR poison(m32[96]);
-            AR f(m32[K7_OFF + K7_SLOT * (unsigned)d + 4 * r + 3]);
-            long s = 0;
-            if (!poison.load())
-                while (f.load() < seq && ++s < spin) {}
-            if (s >= spin) {
-                poison.store(1u);
-                err[0] = 1u + (uint32_t)d;
-            }
-        }
-        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
-        sycl::group_barrier(it.get_group());
+        const uint32_t *m32 = reinterpret_cast<const uint32_t *>(mine);
         if (sgi < 2) {
             const bool row = sgi == 0 ? lane < 24 : lane == 0;
             const unsigned r = sgi == 0 ? lane : 24u;

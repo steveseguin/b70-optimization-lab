@@ -1,0 +1,68 @@
+tp97 build exit 0 in 1006 s
+start 2026-11-11 13:56:08
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.012 s/step, 83.18 tok/s
+h1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 107.6 us per step and card (slowest card 109.0 us; copy + decode launch calls 10.6 us)
+h2 exit 0
+h2 TRACE_IDENTICAL
+h2 IDS40_SAME
+h2: decode: 39 steps after the first, 0.012 s/step, 82.75 tok/s
+h2: host io during decode: 0.3 MiB read from disk, 11 major page faults; engram rows 77.1 us per step and card (slowest card 81.0 us; copy + decode launch calls 11.0 us)
+h3 exit 0
+h3 TRACE_IDENTICAL
+h3 IDS40_SAME
+h3: decode: 39 steps after the first, 0.012 s/step, 83.74 tok/s
+h3: host io during decode: 0.4 MiB read from disk, 8 major page faults; engram rows 73.7 us per step and card (slowest card 79.1 us; copy + decode launch calls 11.9 us)
+h4 exit 0
+h4 TRACE_IDENTICAL
+h4 IDS40_SAME
+h4: decode: 39 steps after the first, 0.012 s/step, 82.68 tok/s
+h4: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 83.2 us per step and card (slowest card 87.8 us; copy + decode launch calls 12.8 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.012 s/step, 83.50 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 79.0 us per step and card (slowest card 81.4 us; copy + decode launch calls 11.7 us)
+h6 exit 0
+h6 TRACE_IDENTICAL
+h6 IDS40_SAME
+h6: decode: 39 steps after the first, 0.012 s/step, 82.30 tok/s
+h6: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 111.6 us per step and card (slowest card 114.3 us; copy + decode launch calls 11.4 us)
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.012 s/step, 82.60 tok/s
+h16: host io during decode: 7.3 MiB read from disk, 7 major page faults; engram rows 100.9 us per step and card (slowest card 108.2 us; copy + decode launch calls 12.4 us)
+h64 exit 0
+h64 TRACE_IDENTICAL
+h64 IDS40_SAME
+h64: decode: 39 steps after the first, 0.012 s/step, 82.94 tok/s
+h64: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 101.6 us per step and card (slowest card 108.6 us; copy + decode launch calls 11.7 us)
+h256 exit 0
+h256 TRACE_IDENTICAL
+h256 IDS40_SAME
+h256: decode: 39 steps after the first, 0.012 s/step, 81.58 tok/s
+h256: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 105.0 us per step and card (slowest card 111.0 us; copy + decode launch calls 11.8 us)
+h5old exit 0
+h5old TRACE_IDENTICAL
+h5old IDS40_SAME
+h5old: decode: 39 steps after the first, 0.013 s/step, 78.64 tok/s
+h5old: host io during decode: 4.5 MiB read from disk, 6 major page faults; engram rows 371.6 us per step and card (slowest card 374.9 us; copy + decode launch calls 12.2 us)
+h64old exit 0
+h64old TRACE_IDENTICAL
+h64old IDS40_SAME
+h64old: decode: 39 steps after the first, 0.013 s/step, 78.70 tok/s
+h64old: host io during decode: 3.5 MiB read from disk, 1 major page faults; engram rows 147.7 us per step and card (slowest card 149.4 us; copy + decode launch calls 15.0 us)
+h2qbm exit 1
+h2qbm TRACE_DIFFERS
+h2qbm IDS40_DIFFER
+h2qbm: fatal: tensor-parallel block: card 0000:e3:00.0: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=3, state=0x29
+xe 0000:43:00.0: [drm] Tile0: GT0: Timedout job: seqno=4294967189, lrc_seqno=4294967189, guc_id=3, flags=0x20 in own_run_v41_tp9 [736998]
+xe 0000:43:00.0: [drm] Xe device coredump has been created
+FAULT: xe 0000:43:00.0: [drm] Tile0: GT0: Engine reset: engine_class=ccs, logical_mask: 0x1, guc_id=3, state=0x29
+FAULT: xe 0000:43:00.0: [drm] Tile0: GT0: Timedout job: seqno=4294967189, lrc_seqno=4294967189, guc_id=3, flags=0x20 in own_run_v41_tp9 [736998]
+FAULT: xe 0000:43:00.0: [drm] Xe device coredump has been created
+STOP_FAULT

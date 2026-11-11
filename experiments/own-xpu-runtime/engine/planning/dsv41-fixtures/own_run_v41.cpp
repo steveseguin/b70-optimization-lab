@@ -203,6 +203,18 @@ int main(int argc, char **argv) {
     // (0 = off: today's launches); OWN_QB_OFF_WG: work-groups of each push
     if (const char *e = getenv("OWN_QB_OFF")) opt.qb_off = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_QB_OFF_WG")) opt.qb_off_wg = (unsigned)atoi(e);
+    // qb-off-2: the same in blocks of 2..6 tokens (guessing checks, small prompt blocks): OWN_QB_OFF_M=k (every size)
+    // or k2,k3,k4,k5,k6 (one per block size; 0 = off for that size)
+    if (const char *e = getenv("OWN_QB_OFF_M")) {
+        unsigned v[5] = {}, n = 0;
+        for (const char *q = e; *q && n < 5;) {
+            v[n++] = (unsigned)strtoul(q, nullptr, 10);
+            q = strchr(q, ',');
+            if (!q) break;
+            ++q;
+        }
+        for (unsigned m = 2; m <= 6; ++m) opt.qb_off_m[m] = n == 1 ? v[0] : v[m - 2];
+    }
     if (const char *e = getenv("OWN_GPROF_CARD")) opt.prof_card = atoi(e);
     if (const char *e = getenv("OWN_HC_RIDE")) opt.hc_ride = atoi(e) != 0;
     if (const char *e = getenv("OWN_ROUTER16")) opt.router16 = atoi(e) != 0;

@@ -1,0 +1,66 @@
+Running as unit: probe-1407.service; invocation ID: ccc2ee7935194f1886202f49992e3b05
+Finished with result: success
+Main processes terminated with: code=exited/status=0
+Service runtime: 17.657s
+CPU time consumed: 30.306s
+Memory peak: 508.0K
+Memory swap peak: 0B
+probe exit 0
+Started probe-1407.service - /home/steve/b70-optimization-lab/scripts/check-qwen36-xpu-xccl-health.sh.
+[xpu-health] physical_devices=0,1,2,3,4,5
+[xpu-health] single-device smoke level_zero:0
+device_count 6
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 6
+selected_device 1
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:2
+device_count 6
+selected_device 2
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:3
+device_count 6
+selected_device 3
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:4
+device_count 6
+selected_device 4
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:5
+device_count 6
+selected_device 5
+ok 2097152.0
+[xpu-health] xccl_devices=0,1,2,3,4,5 nproc=6
+*****************************************
+Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed.
+*****************************************
+rank 3 init ok
+rank 0 init ok
+rank 2 init ok
+rank 4 init ok
+rank 5 init ok
+rank 1 init ok
+2026:11:11-14:08:39:738254 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:11:11-14:08:39:738254 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:11:11-14:08:39:738254 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:39:738259 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:39:738256 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:39:738258 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:39:738257 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:39:738255 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-14:08:40:738254:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 4 barrier ok
+rank 5 barrier ok
+rank 0 barrier ok
+rank 3 barrier ok
+rank 2 barrier ok
+rank 1 barrier ok
+rank 4 allreduce ok 6.0
+rank 5 allreduce ok 6.0
+rank 0 allreduce ok 6.0
+rank 1 allreduce ok 6.0
+rank 3 allreduce ok 6.0
+rank 2 allreduce ok 6.0
+probe-1407.service: Consumed 30.306s CPU time, 508.0K memory peak, 0B memory swap peak.

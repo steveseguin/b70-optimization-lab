@@ -2682,7 +2682,8 @@ template <unsigned R, unsigned T>
 // picks (c2 .. c6). OWN_MT_CK=1: every size (0x1f); OWN_MT_CK=n (n != 1): the mask n; OWN_MT_CK_MS="2,4,5,6": those
 // sizes. g_ws_ckf_mask (OWN_MT_CK_FIN, default OWN_MT_CK's mask): the same for q_b's rows with the attention mix's
 // finish in their launch (WsTab<.., 1280, WS_DOTS>, OWN_MT_FIN_QB below OWN_MT_DSPLIT_MIN)
-inline unsigned g_ws_ck_mask = 0, g_ws_ckf_mask = 0;
+// default since tp97 (tg96b: code 133.2 -> 137.5 tok/s): every size (OWN_MT_CK=0: off)
+inline unsigned g_ws_ck_mask = 0x1f, g_ws_ckf_mask = 0x1f;
 inline bool ws_ck_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ck_mask >> (mt - 2) & 1u); }
 inline bool ws_ckf_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ckf_mask >> (mt - 2) & 1u); }
 // a WS form's weight loads (WsF PF / 10): 0 = sub-group block reads; 1 = per-lane loads, L1 uncached (L3 cached),

@@ -269,6 +269,9 @@ public:
                                 // push them into its s.q; it runs only the other 16 - 2k heads' rows and waits for
                                 // the pushes in its query rope launch (sycl_v41_qboff.hpp). Whole groups only
         unsigned qb_off_wg = 2; // ... work-groups of each push (OWN_QB_OFF_WG, 1..4; each raises its own flag)
+        unsigned qb_off_m[7] = {}; // qb-off-2 (OWN_QB_OFF_M): k per block size M = 2..6 (tpm_layer; 0 = off): the
+                                // helpers compute k heads for the block first, the 16-head card pulls them inside
+                                // its own query-b launch (sycl_v41_qboff.hpp, QbmHeavyK). Whole groups only, k <= 4
         int prof_card = 0;      // tp: the card whose marks and kernels OWN_GPROF records (OWN_GPROF_CARD)
         bool hc_ride = true;    // tp: stream mix inside the next matrix launches (OWN_HC_RIDE=0: own launches)
         bool router16 = true;   // router rows (F32, every value exact in 16 bits) stored halved (OWN_ROUTER16=0: F32)
@@ -297,7 +300,7 @@ public:
                                 // tg88: traces identical; OWN_ATT_M=0: the old forms)
         unsigned att_m_max = 16; // ... only in blocks of at most this many tokens (OWN_ATT_M_MAX; tg88: the 3K read in
                                  // blocks of 256 301 against 306 tok/s without them)
-        bool att_t = false;     // tp: sparse attention in one or two launches (OWN_ATT_T=1; sycl_v41_attn.hpp, tools/
+        bool att_t = true;      // tp: sparse attention in one or two launches (default since tp97, tg96b; OWN_ATT_T=0: off; sycl_v41_attn.hpp, tools/
                                 // bench/bench_attn_a1.cpp), where OWN_ATT_OUT_C runs, not with OWN_PF. One launch
                                 // (SparseOutF: score tiles + the softmax + the output; one token: with the window
                                 // append) where att_f_on says so, else two (SparseScoreT tiles, then SparseOutJE with
@@ -608,7 +611,7 @@ public:
                 if (const std::string *xn = qbo_extra(kv.first, t)) {
                     Item x = it;
                     x.name = xn;
-                    x.sr0 = (unsigned)(qbo[t].h0 * g.hd), x.sr1 = (unsigned)(qbo[t].h1 * g.hd);
+                    x.sr0 = (unsigned)(qbo[t].hx0 * g.hd), x.sr1 = (unsigned)(qbo[t].hx1 * g.hd);
                     const size_t nx = (size_t)(x.sr1 - x.sr0);
                     if (!x.packed || e.experts || (long)x.sr1 > e.rows)
                         throw std::runtime_error("OWN_QB_OFF: query-b rows must be packed: " + kv.first);
@@ -1587,8 +1590,9 @@ private:
         return true;
     }
     // ---- K7 (OWN_K7, sycl_v41_k7.hpp): the stream mix's dot partials over each card's own model rows ride the h
-    // exchange (XchgPK7 in place of XchgP); after HcPostPreP the pre-norm runs alone beside the partials' sum and
-    // SkDotsFF's check (SkNormK7 in place of SkNormDotsW<8>). Site 1: layer L's FFN mix (output-b exchange, cases
+    // exchange (XchgPK7 in place of XchgP); the receiving card's HcPostPreP launch waits for them (HcPostPreK7: one
+    // extra work-group), then the pre-norm runs alone beside the partials' sum and SkDotsFF's check (SkNormK7 in
+    // place of SkNormDotsW<8>, the launch after the wait). Site 1: layer L's FFN mix (output-b exchange, cases
     // 2 -> 3); site 2: layer L + 1's attention mix (layer L's ffn-rows exchange, cases 4 -> 5 -> L + 1's case 0).
     // Every condition below depends on options, shapes and identically made uploads only, so every card makes the
     // same choice (a card waiting for a K7 flag its peer never raises would time out).
@@ -1600,14 +1604,15 @@ private:
     K7Arm k7a[TILES];   // the next h push exchange carries the partials of this mix
     struct K7Pend {
         int site = 0, layer = -1;
-        uint32_t seq = 0; // the K7 exchange's number: the flags SkNormK7 waits for
+        uint32_t seq = 0;    // the K7 exchange's number: the flags HcPostPreK7 waits for
+        bool waited = false; // HcPostPreK7 ran (SkNormK7 reads the slots only after it)
     };
     K7Pend k7p[TILES];  // a K7 exchange ran; its consumer (site, layer) takes SkNormK7
-    static_assert(ops41sycl::K7_OFF >= 128 + 16 * 6 && ops41sycl::K7_OFF + 6 * ops41sycl::K7_SLOT <= 1024 &&
-                      ops41sycl::K7_SLOT >= 4 * ops41sycl::K7_ROWS && ops41sycl::K7_OFF % 4 == 0 &&
-                      ops41sycl::K7_SLOT % 4 == 0,
-                  "K7 rows inside the arena's flags block, past the exchange flags (16 d), the poison word (96) and "
-                  "OWN_QB_OFF's flags (128 + 16 d + g); 16-byte records");
+    static_assert(ops41sycl::K7_OFF >= 128 + 16 * 6 && ops41sycl::K7_FLAG == ops41sycl::K7_OFF + 6 * ops41sycl::K7_SLOT &&
+                      ops41sycl::K7_FLAG + 16 * 6 <= 1024 && ops41sycl::K7_SLOT >= 4 * ops41sycl::K7_ROWS &&
+                      ops41sycl::K7_OFF % 16 == 0 && ops41sycl::K7_SLOT % 16 == 0 && ops41sycl::K7_FLAG % 16 == 0,
+                  "K7 slots and flags inside the arena's flags block, past the exchange flags (16 d), the poison word "
+                  "(96) and OWN_QB_OFF's flags (128 + 16 d + g); every slot and every K7 flag on whole 64-byte lines");
     bool k7_x_ok() const {
         return o.k7 && std::is_same_v<act_t, float> && o.tp >= 2 && o.tp <= 6 && !o.xtail && !use_pull(XP_H, 1) &&
                !xw_path && o.smallk_dots == 8 && o.norm_dots && o.small_fast && g.h == 5120 && HC_SEG == 8;
@@ -1646,23 +1651,30 @@ private:
                             ops41sycl::XchgPK7{xp, p0, p1, p2, p3, p4, p5, err, st, a.post, a.comb, a.fn, lt});
         });
         kev(c, kname<ops41sycl::XchgPK7>(), e);
-        k7p[c] = {a.site, a.layer, xp.seq};
+        k7p[c] = {a.site, a.layer, xp.seq, false};
         return xp.seq;
+    }
+    // the receiving card's HcPostPreP at a K7 site (cases 3 and 5): HcPostPreP's work-groups + one waiting for every
+    // peer's K7 flag of exchange k7p[c].seq (HcPostPreK7)
+    template <typename... A> void k7_post_pre(int c, A... args) {
+        const unsigned nm = (unsigned)((g.h + 63) / 64);
+        launch(c, (size_t)(nm + 1) * 64, 64,
+               ops41sycl::HcPostPreK7<Act>{ops41sycl::HcPostPreP<Act>{g.h}, nm, o.tp, c, k7p[c].seq, XSPIN}, args...,
+               xarena[c], xerr[c]);
+        k7p[c].waited = true;
     }
     // the pre-norm alone + the mix's rows from the gathered partials (in place of norm_dots_sk); after HcPostPreP
     bool k7_norm(int c, const act_t *x, const std::string &wn, act_t *y, const std::string &prefix) {
+        if (!k7p[c].waited) throw std::runtime_error("OWN_K7: the partials' slots read before HcPostPreK7's wait");
         const float *w = wp<float>(c, wn), *fn = wp<float>(c, prefix + "fn.weight");
-        const uint32_t seq = k7p[c].seq;
         const float *st = (const float *)streams[c];
         double *d25 = sc[c].d25;
-        float *mine = xarena[c];
-        uint32_t *err = xerr[c];
+        const float *mine = xarena[c];
         const int n = o.tp;
         auto e = qs[c].submit([&](sycl::handler &hh) {
             sycl::local_accessor<uint32_t, 1> lt(64, hh);
             hh.parallel_for(sycl::nd_range<1>(2 * 512, 512),
-                            ops41sycl::SkNormK7{n, c, seq, XSPIN, 0u, (const float *)x, w, (float *)y, st, fn, d25,
-                                                mine, err, lt});
+                            ops41sycl::SkNormK7{n, 0u, (const float *)x, w, (float *)y, st, fn, d25, mine, lt});
         });
         kev(c, kname<ops41sycl::SkNormK7>(), e);
         return true;
@@ -2882,6 +2894,8 @@ private:
     struct QbOff {
         int role = 0, to = -1, h0 = 0, h1 = 0, from[2] = {-1, -1};
         bool own_w = false;
+        int hx0 = 0, hx1 = 0; // a helper: the heads of its widest offload (max of OWN_QB_OFF and OWN_QB_OFF_M's k);
+                              // own_w: its own slice holds them, else its extra copy holds exactly these
     };
     QbOff qbo[TILES];
     size_t xq = 0;                    // arena offset (floats) of s.q while OWN_QB_OFF is on
@@ -2889,10 +2903,25 @@ private:
     uint32_t qbo_seq[TILES] = {};     // the layers run with OWN_QB_OFF so far (the same count on every card)
     int qbo_ord[TILES] = {0, 1, 2, 3, 4, 5}; // serial steps: phase 0's card order (helpers first when on)
     std::deque<std::string> qbo_names; // the extra copies' weight names (upload items point at them)
+    // OWN_QB_OFF_M (qb-off-2): a helper's staging (arena offset xqm, 6 tokens x the widest k heads) and the block
+    // layers run with it so far (the same count on every card: the flags' seq)
+    size_t xqm = 0;
+    uint32_t qbm_seq[TILES] = {};
+    bool qbm_any() const {
+        for (int m = 2; m <= 6; ++m)
+            if (o.qb_off_m[m]) return true;
+        return false;
+    }
+    int qbo_kx() const {
+        unsigned k = o.qb_off;
+        for (int m = 2; m <= 6; ++m) k = std::max(k, o.qb_off_m[m]);
+        return (int)k;
+    }
     static std::string qbo_wname(const std::string &qb) { return qb + "#qboff"; }
     // the helper's extra copy of its heavy neighbour's query-b rows (upload): the name, or nullptr when none
     const std::string *qbo_extra(const std::string &n, int t) {
-        if (!o.qb_off || o.tp <= 1 || qbo[t].role != 2 || qbo[t].own_w || n.rfind("dsp.", 0) == 0) return nullptr;
+        if (!(o.qb_off || qbm_any()) || o.tp <= 1 || qbo[t].role != 2 || qbo[t].own_w || n.rfind("dsp.", 0) == 0)
+            return nullptr;
         if (layer_of_name(n) < 0 || n.substr(n.find('.', 4) + 1) != "attn_q_b.weight") return nullptr; // (not the indexer's)
         qbo_names.push_back(qbo_wname(n));
         return &qbo_names.back();
@@ -3306,16 +3335,26 @@ private:
 #ifdef OWN41_ACT_BF16
         throw std::runtime_error("OWN_QB_OFF: f32 activations only");
 #else
-        const int N = o.tp, k = (int)o.qb_off;
+        // (OWN_QB_OFF_M: k per block size, the same roles; kx = the widest of all, which sizes the extra copies)
+        const int N = o.tp, k = (int)o.qb_off, kx = qbo_kx();
         if (hl[0].split) throw std::runtime_error("OWN_QB_OFF: one-token steps with whole attention groups only "
                                                   "(OWN_TP_HEADS needs OWN_TP_HEADS_MIN with it)");
         if (o.qb_off_wg < 1 || o.qb_off_wg > 4) throw std::runtime_error("OWN_QB_OFF_WG: 1 to 4");
         int mn = 1 << 30, mx = 0;
         for (int c = 0; c < N; ++c) mn = std::min(mn, thq1[c] - thq0[c]), mx = std::max(mx, thq1[c] - thq0[c]);
         if (N < 3 || mx == mn) throw std::runtime_error("OWN_QB_OFF: no card holds more heads than another");
-        if (2 * k >= mx || mn + k > mx)
+        if (2 * kx >= mx || mn + kx > mx)
             throw std::runtime_error("OWN_QB_OFF: at most " + std::to_string(std::min(mx - mn, (mx - 1) / 2)) +
                                      " heads per helper");
+        for (int m = 2; m <= 6; ++m) {
+            const int km = (int)o.qb_off_m[m];
+            if (!km) continue;
+            // the heavy card's rows stay in WsTab's 4,096 - 8,192-row picks; blocks in hl[0] (whole groups)
+            if ((mx - 2 * km) * g.hd < 4096) throw std::runtime_error("OWN_QB_OFF_M: at most 4 heads per helper");
+            if (o.tp_heads_min > 1 && (unsigned)m >= o.tp_heads_min)
+                throw std::runtime_error("OWN_QB_OFF_M: blocks of " + std::to_string(m) +
+                                         " tokens take OWN_TP_HEADS_MIN's layout");
+        }
         for (int c = 0; c < N; ++c) qbo[c] = QbOff{};
         for (int c = 0; c < N; ++c) {
             if (thq1[c] - thq0[c] != mx) continue;
@@ -3325,23 +3364,24 @@ private:
                     throw std::runtime_error("OWN_QB_OFF: card " + std::to_string(c) + " has no free light neighbour " +
                                              std::to_string(d));
             qbo[c] = {1, -1, thq0[c] + k, thq1[c] - k, {lft, rgt}, false};
-            qbo[lft] = {2, c, thq0[c], thq0[c] + k, {-1, -1}, false};
-            qbo[rgt] = {2, c, thq1[c] - k, thq1[c], {-1, -1}, false};
+            qbo[lft] = {2, c, thq0[c], thq0[c] + k, {-1, -1}, false, thq0[c], thq0[c] + kx};
+            qbo[rgt] = {2, c, thq1[c] - k, thq1[c], {-1, -1}, false, thq1[c] - kx, thq1[c]};
         }
         for (int c = 0; c < N; ++c)
-            if (qbo[c].role == 2) qbo[c].own_w = qst0[c] <= qbo[c].h0 && qbo[c].h1 <= qst1[c];
+            if (qbo[c].role == 2) qbo[c].own_w = qst0[c] <= qbo[c].hx0 && qbo[c].hx1 <= qst1[c];
         int n = 0;
-        for (int c = 0; c < N; ++c)
+        for (int c = 0; c < N && k; ++c) // (OWN_QB_OFF_M alone: one-token steps keep today's order)
             if (qbo[c].role == 2) qbo_ord[n++] = c;
-        for (int c = 0; c < N; ++c)
+        for (int c = 0; c < N && k; ++c)
             if (qbo[c].role != 2) qbo_ord[n++] = c;
-        std::fprintf(stderr, "query-b offload (OWN_QB_OFF=%d, %u push groups):", k, o.qb_off_wg);
+        std::fprintf(stderr, "query-b offload (OWN_QB_OFF=%d, %u push groups; blocks OWN_QB_OFF_M=%u,%u,%u,%u,%u):", k,
+                     o.qb_off_wg, o.qb_off_m[2], o.qb_off_m[3], o.qb_off_m[4], o.qb_off_m[5], o.qb_off_m[6]);
         for (int c = 0; c < N; ++c)
             if (qbo[c].role == 1)
-                std::fprintf(stderr, " card %d keeps heads %d-%d, card %d computes %d-%d (%s), card %d %d-%d (%s);", c,
-                             qbo[c].h0, qbo[c].h1 - 1, qbo[c].from[0], qbo[qbo[c].from[0]].h0, qbo[qbo[c].from[0]].h1 - 1,
+                std::fprintf(stderr, " card %d (heads %d-%d): card %d computes up to %d-%d (%s), card %d %d-%d (%s);", c,
+                             thq0[c], thq1[c] - 1, qbo[c].from[0], qbo[qbo[c].from[0]].hx0, qbo[qbo[c].from[0]].hx1 - 1,
                              qbo[qbo[c].from[0]].own_w ? "own rows" : "extra copy", qbo[c].from[1],
-                             qbo[qbo[c].from[1]].h0, qbo[qbo[c].from[1]].h1 - 1,
+                             qbo[qbo[c].from[1]].hx0, qbo[qbo[c].from[1]].hx1 - 1,
                              qbo[qbo[c].from[1]].own_w ? "own rows" : "extra copy");
         std::fprintf(stderr, "\n");
 #endif
@@ -3489,7 +3529,7 @@ private:
                 std::fprintf(stderr, "\n");
             }
         }
-        if (o.qb_off) qbo_setup();
+        if (o.qb_off || qbm_any()) qbo_setup();
         if (o.tp_w[0] > 0 || o.tp_vw[0] > 0) {
             std::fprintf(stderr, "tensor parallel rows per card (mid / model / vocab):");
             for (int c = 0; c < N; ++c)
@@ -3508,8 +3548,12 @@ private:
 #endif
         // OWN_QB_OFF: s.q of every card at the arena's end (16-float aligned), where the helpers store their rows
         if (o.qb_off) xq = (nf + 15) & ~(size_t)15;
-        const size_t nfq = o.qb_off ? xq + (size_t)g.qh * g.hd : nf;
-        if (o.qb_off && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
+        size_t nfq = o.qb_off ? xq + (size_t)g.qh * g.hd : nf;
+        if (qbm_any()) { // OWN_QB_OFF_M: a helper's staging after it (6 tokens x the widest k heads)
+            xqm = (nfq + 15) & ~(size_t)15;
+            nfq = xqm + (size_t)6 * qbo_kx() * g.hd;
+        }
+        if ((o.qb_off || qbm_any()) && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nfq);
             xcnt[c] = dalloc<uint32_t>(c, 16);
@@ -3746,9 +3790,11 @@ private:
             w = (const uint8_t *)dp.p +
                 (size_t)(q.h0 - qst0[c]) * g.hd * pk41::packed_row_bytes(e.type, (size_t)e.cols);
         } else {
-            const auto &dp = wgt[c].at(qbo_wname(wn));
-            if (!dp.packed || dp.nrows != nr) throw std::runtime_error("OWN_QB_OFF: extra query-b rows " + wn);
-            w = (const uint8_t *)dp.p;
+            const auto &dp = wgt[c].at(qbo_wname(wn)); // (heads [hx0, hx1), a superset of [h0, h1))
+            if (!dp.packed || dp.nrows != (unsigned)((q.hx1 - q.hx0) * g.hd) || q.h0 < q.hx0 || q.h1 > q.hx1)
+                throw std::runtime_error("OWN_QB_OFF: extra query-b rows " + wn);
+            w = (const uint8_t *)dp.p +
+                (size_t)(q.h0 - q.hx0) * g.hd * pk41::packed_row_bytes(e.type, (size_t)e.cols);
         }
         auto &s = sc[c];
         gemv_kp_ex(c, e, w, s.qn, qbst[c], nr, 0, (unsigned)e.cols, wn, ops41sycl::NoRows{});
@@ -3773,6 +3819,106 @@ private:
                                            (unsigned)q.from[0], (unsigned)q.from[1], o.qb_off_wg, seq, XSPIN};
         launch_rows<0>(c, (size_t)nk, 0, k, xarena[c], xerr[c]);
     }
+#ifndef OWN41_ACT_BF16
+    // ---- OWN_QB_OFF_M (qb-off-2): blocks of 2..6 tokens (tpm_layer's query-b) --------------------------------------
+    // k heads per helper for a block of M tokens (0: off; OWN_MT_SMALL's block forms only)
+    int qbm_k(unsigned M) const { return M >= 2 && M <= 6 && mt_small && o.tp > 1 ? (int)o.qb_off_m[M] : 0; }
+    // helper c, before its own query-b: the k heads of its heavy neighbour for the block's M tokens (rows inside its
+    // own slice when own_w, else its extra copy; the WS form of its own 4,096-row launch), into its arena staging
+    // xqm (token t at xqm + t * k * hd), then QbmFlag publishes them (seq into the heavy card's flag word)
+    void qbm_send(int c, const std::string &p, const act_t *qn, unsigned M, int k, uint32_t seq) {
+        const QbOff &q = qbo[c];
+        const int H = q.to;
+        const bool left = qbo[H].from[0] == c;
+        const int h0 = left ? thq0[H] : thq1[H] - k;
+        const std::string wn = p + "attn_q_b.weight";
+        const auto &e = we(wn);
+        const size_t prb = pk41::packed_row_bytes(e.type, (size_t)e.cols);
+        const unsigned rows = (unsigned)k * (unsigned)g.hd;
+        const uint8_t *w = nullptr;
+        if (q.own_w) {
+            const auto &dp = wgt[c].at(wn);
+            if (!dp.packed || h0 < qst0[c] || (unsigned)((h0 + k - qst0[c]) * g.hd) > dp.nrows)
+                throw std::runtime_error("OWN_QB_OFF_M: own query-b rows " + wn);
+            w = (const uint8_t *)dp.p + (size_t)(h0 - qst0[c]) * g.hd * prb;
+        } else {
+            const auto &dp = wgt[c].at(qbo_wname(wn));
+            if (!dp.packed || h0 < q.hx0 || h0 + k > q.hx1) throw std::runtime_error("OWN_QB_OFF_M: extra query-b rows " + wn);
+            w = (const uint8_t *)dp.p + (size_t)(h0 - q.hx0) * g.hd * prb;
+        }
+        act_t *y = (act_t *)(xarena[c] + xqm);
+        const size_t ys = (size_t)k * g.hd;
+        auto rows_of = [&](auto dk) {
+            const bool ok = mt_ws && ops41sycl::qbm_ws_rows(dk, 4096u, w, qn, (size_t)g.qrank, y, ys, M, (unsigned)MTA,
+                                                           [&](const auto &d) {
+                                                               using D = std::decay_t<decltype(d)>;
+                                                               launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
+                                                           });
+            if (!ok) throw std::runtime_error("OWN_QB_OFF_M: no weight-stationary form for " + wn + " (OWN_MT_WS)");
+        };
+        if (e.type == iq3::Type::Q8_0 && e.cols == 1280) rows_of(ops41sycl::GemvQ8P<40, Act>{rows, 0});
+        else if (e.type == iq3::Type::Q6_K && e.cols == 1280) rows_of(ops41sycl::GemvQ6KP<5, Act>{rows, 0});
+        else throw std::runtime_error("OWN_QB_OFF_M: query-b of 1,280 Q8_0 / Q6_K columns only: " + wn);
+        const ops41sycl::QbmFlag k1{128u + 16u * (unsigned)c + 8u, seq};
+        float *peer = (float *)xpeer[c][H];
+        auto ev = qs[c].submit([&](sycl::handler &hh) {
+            hh.parallel_for(sycl::nd_range<1>(32, 32),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k1(it, peer); });
+        });
+        kev(c, kname<ops41sycl::QbmFlag>(), ev);
+    }
+    // heavy card c: its pull rows for the block (into q = the block's query rows at the card's first head)
+    ops41sycl::QbmPull qbm_pull(int c, act_t *q, unsigned M, int k, uint32_t seq) const {
+        const QbOff &h = qbo[c];
+        const unsigned nh = (unsigned)(thq1[c] - thq0[c]), hd = (unsigned)g.hd;
+        ops41sycl::QbmPull pl{};
+        pl.q = q;
+        pl.qs = (size_t)g.qh * g.hd;
+        pl.d0[0] = 0, pl.d0[1] = (nh - (unsigned)k) * hd;
+        pl.soff = (unsigned)xqm, pl.sts = (unsigned)k * hd;
+        for (int s = 0; s < 2; ++s) {
+            pl.fw[s] = 128u + 16u * (unsigned)h.from[s] + 8u;
+            pl.from[s] = (unsigned)h.from[s];
+        }
+        pl.m = M, pl.k = (unsigned)k, pl.hd = hd, pl.seq = seq, pl.spin = XSPIN;
+        return pl;
+    }
+    // dense_m's launch for a QbmHeavy rider: the pull rows first, then RowsPair<B, D> (the launch dense_m would have
+    // made); the peer pointers stay direct kernel arguments. Forms outside the checks' WS picks (OWN_MT_WS=0, or
+    // no OWN_MT_CK_FIN pick under the finish): dense_m's usual launch, then the pull as its own launch (other rows of
+    // q; the rope launch follows both; after the rows, so the card does not idle for the helpers' flags first; same
+    // values, no new instantiations of the matrix rows)
+    template <typename B, typename D> void qbm_heavy_launch(int c, const ops41sycl::QbmHeavy<B> &h, const D &d) {
+        const QbOff &q = qbo[c];
+        const float *pa = (const float *)xpeer[c][q.from[0]], *pb = (const float *)xpeer[c][q.from[1]];
+        if constexpr (ops41sycl::qbm_ws_v<D>) {
+            using RP = ops41sycl::RowsPair<B, D>;
+            const ops41sycl::QbmHeavyK<RP> k{h.pull, RP{h.base, d}};
+            launch_rows<0>(c, (size_t)h.pull.n() + k.rows.n(), 0, k, xarena[c], pa, pb, xerr[c]);
+        } else {
+            if constexpr (std::is_same_v<B, ops41sycl::NoRows>) launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
+            else {
+                const ops41sycl::RowsPair<B, D> rp{h.base, d};
+                launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<B, D>>{rp});
+            }
+            launch_rows<0>(c, (size_t)h.pull.n(), 0, ops41sycl::QbmPullK{h.pull}, xarena[c], pa, pb, xerr[c]);
+        }
+    }
+    // the block's query-b rows of card c [ra, rb) into y (tpm_layer): dense_m's packed 1,280-column forms
+    template <typename RD>
+    void qbm_q_b(int c, const std::string &wn, const act_t *x, act_t *y, unsigned ra, unsigned rb, const RD &rd) {
+        const auto &e = we(wn);
+        const auto &dp = wgt[c].at(wn);
+        if (!dp.packed || e.cols != 1280 || ra >= rb || rb > dp.nrows)
+            throw std::runtime_error("OWN_QB_OFF_M: packed query-b rows of 1,280 columns expected: " + wn);
+        const void *wr = (const uint8_t *)dp.p + (size_t)ra * pk41::packed_row_bytes(e.type, (size_t)e.cols);
+        const size_t Q = (size_t)g.qh * g.hd;
+        if (e.type == iq3::Type::Q8_0) dense_m(c, ops41sycl::GemvQ8P<40, Act>{rb - ra, 0}, wr, x, (size_t)g.qrank, y, Q, 0, rd);
+        else if (e.type == iq3::Type::Q6_K)
+            dense_m(c, ops41sycl::GemvQ6KP<5, Act>{rb - ra, 0}, wr, x, (size_t)g.qrank, y, Q, 0, rd);
+        else throw std::runtime_error("OWN_QB_OFF_M: query-b of Q8_0 / Q6_K only: " + wn);
+    }
+#endif
     // one layer = phases 0..5; a phase ends where the cards exchange (1-4)
     void tp_phase(int L, int c, int ph) {
         auto &s = sc[c];
@@ -4028,9 +4174,13 @@ private:
             const bool ride = hc_rides(c, p + "hc_ffn_");
             bool ffn_dots_done = false; // the FFN mix's dot rows already ran (in the norm's launch)
             if (ride && post_pre_ok()) { // hc_post and the FFN's stream collapse in one launch
-                launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
-                       (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
-                       (const float *)s.pre_a, s.x);
+                if (k7p[c].site == 1 && k7p[c].layer == L) // OWN_K7: + the wait for the peers' partials
+                    k7_post_pre(c, streams[c], (const act_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a,
+                                (const float *)nullptr, (float *)nullptr, (const float *)s.pre_a, s.x);
+                else
+                    launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
+                           (const float *)s.post_a, (const float *)s.comb_a, (const float *)nullptr, (float *)nullptr,
+                           (const float *)s.pre_a, s.x);
                 prof("hc_post", c);
                 if (k7p[c].site == 1 && k7p[c].layer == L) // OWN_K7: the output-b exchange brought this mix's partials
                     ffn_dots_done = k7_norm(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
@@ -4112,9 +4262,13 @@ private:
             // unless the next layer adds its engram row first, or nothing follows
             const int Ln = L + 1;
             if (post_pre_ok() && Ln != 1 && Ln != 14 && (Ln < o.layer_end || o.head)) {
-                launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
-                       (const float *)s.post_f, (const float *)s.comb_f, (const float *)s.pre_f, s.cur_pre,
-                       (const float *)s.pre_f, s.x);
+                if (k7p[c].site == 2 && k7p[c].layer == Ln) // OWN_K7: + the wait for the peers' partials
+                    k7_post_pre(c, streams[c], (const act_t *)s.ob, (const float *)s.post_f, (const float *)s.comb_f,
+                                (const float *)s.pre_f, s.cur_pre, (const float *)s.pre_f, s.x);
+                else
+                    launch(c, (size_t)g.h, 64, ops41sycl::HcPostPreP<Act>{g.h}, streams[c], (const act_t *)s.ob,
+                           (const float *)s.post_f, (const float *)s.comb_f, (const float *)s.pre_f, s.cur_pre,
+                           (const float *)s.pre_f, s.x);
                 x_ready[c] = true;
             } else {
                 hc_post(c, s.post_f, s.comb_f, s.pre_f, s.cur_pre);

@@ -76,4 +76,128 @@ template <typename A> struct QbWaitRope {
     }
 };
 
+// ---- qb-off-2 (OWN_QB_OFF_M, 2026-11-11): the same offload in blocks of 2 .. 6 tokens (tpm_layer: guessing checks,
+// small prompt blocks). A helper runs the k heads' rows for the block in a launch of its own BEFORE its own query-b
+// (the same rows, the same WS form as its own 4,096-row launch: Backend41::qbm_send), into a staging region of its
+// arena (token t at soff + t * k * hd), then QbmFlag publishes them as XchgPull does (system-scope release, flag seq
+// into the heavy card's word fw = 128 + 16 * helper + 8; qb-off-1's push flags use + 0 .. 3). The heavy card's
+// query-b launch carries the pull as its first rows (QbmHeavyK): one sub-group per (helper, token, head) polls its
+// own flag word, acquires at system scope and copies the head's hd floats from the helper's staging into its query
+// buffer by loads (XchgPull's direction: peer loads run at 25-37 GB/s, peer stores at ~1 GB/s), while its other
+// sub-groups run its 16 - 2k heads' rows. Its rope launch comes after (in-order queue) and ropes all its heads as
+// today, so the pulled rows are read only by a later launch. No row's value changes: the helper's rows are the same
+// per-row code on the same packed bytes and the same replicated q_a norm output; the pull is a copy.
+// Overwrite safety: a helper writes layer L + 1's staging only after its output-a exchange of layer L, which waits
+// for the heavy card's flag, raised after that card's layer-L query-b launch (with the pull) in its in-order queue.
+struct QbmFlag {
+    unsigned fw; // flag word (uint32 index in the heavy card's arena)
+    uint32_t seq;
+    void operator()(sycl::nd_item<1> it, float *peer) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+        if (it.get_local_linear_id() == 0) AR(reinterpret_cast<uint32_t *>(peer)[fw]).store(seq);
+    }
+};
+// the heavy card's pull rows: row r = (side s = r / (m k), token t, head j); side 0 = the left helper (the card's
+// first k heads, at d0[0] in a token's query row), 1 = the right one (its last k, at d0[1])
+struct QbmPull {
+    float *q;          // this card's block query buffer (token t at q + t * qs)
+    size_t qs;
+    unsigned d0[2];    // float offsets of each side's first head in a token's row
+    unsigned soff, sts; // the helpers' staging: arena offset, floats per token (k * hd)
+    unsigned fw[2];    // this card's flag words for the two helpers
+    unsigned from[2];  // the helpers' card numbers (the error word)
+    unsigned m, k, hd;
+    uint32_t seq;
+    long spin;
+    unsigned n() const { return 2 * m * k; }
+    [[gnu::always_inline]] inline void row(unsigned lane, unsigned r, float *mine, const float *pl, const float *pr,
+                                           uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned s = r / (m * k), t = r % (m * k) / k, j = r % k;
+        AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+        AR f(reinterpret_cast<uint32_t *>(mine)[fw[s]]);
+        long n = 0;
+        if (!poison.load())
+            while (f.load() < seq && ++n < spin) {}
+        if (n >= spin) {
+            poison.store(1u);
+            if (lane == 0) err[0] = 1u + from[s];
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        const float *src = (s ? pr : pl) + soff + (size_t)t * sts + (size_t)j * hd;
+        float *dst = q + (size_t)t * qs + d0[s] + (size_t)j * hd;
+        for (unsigned i = lane; i < hd / 4; i += 32)
+            *reinterpret_cast<sycl::vec<float, 4> *>(dst + 4 * i) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + 4 * i);
+    }
+};
+// the heavy card's query-b rider (dense_m: rider type QbmHeavy<B>, B = the launch's own rider, NoRows or the mix's
+// finish rows; WsTab's launch kind follows B). Its n() / row() are B's, so a generic launch would run only B: the
+// backend launches it as QbmHeavyK (Backend41::qbm_heavy_launch, packed WS forms only)
+template <typename B> struct QbmHeavy {
+    B base;
+    QbmPull pull;
+    unsigned n() const { return base.n(); }
+    void row(sycl::sub_group sg, unsigned lane, unsigned r) const { base.row(sg, lane, r); }
+};
+template <typename T> inline constexpr bool is_qbm_heavy_v = false;
+template <typename B> inline constexpr bool is_qbm_heavy_v<QbmHeavy<B>> = true;
+template <typename T> struct QbmBase { using type = T; };
+template <typename B> struct QbmBase<QbmHeavy<B>> { using type = B; };
+template <typename T> using qbm_base_t = typename QbmBase<T>::type;
+// the WS forms of up to 6 tokens per group (the checks' forms; QbmHeavyK is built for these only)
+template <typename T> inline constexpr bool qbm_ws_v = false;
+template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF>
+inline constexpr bool qbm_ws_v<DenseRowsWS<W, T, R, XW, LOOP, PF>> = T <= 6;
+// the pull rows first, then the launch's rows (RP = RowsPair<B, D>, as dense_m's launch)
+template <typename RP> struct QbmHeavyK {
+    QbmPull pl;
+    RP rows;
+    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *mine, const float *pa, const float *pb, uint32_t *err) const {
+        unsigned r = packed_row_id(it);
+        sycl::sub_group sg = it.get_sub_group();
+        const unsigned lane = sg.get_local_linear_id();
+        if (r < pl.n()) {
+            pl.row(lane, r, mine, pa, pb, err);
+            return;
+        }
+        r -= pl.n();
+        if (r >= rows.n()) return;
+        rows.row(sg, lane, r);
+    }
+};
+// the pull alone (qbm_heavy_launch's fallback when the launch's form is not one of the checks' WS forms)
+struct QbmPullK {
+    QbmPull pl;
+    void operator()(sycl::nd_item<1> it, float *mine, const float *pa, const float *pb, uint32_t *err) const {
+        const unsigned r = packed_row_id(it);
+        if (r >= pl.n()) return;
+        pl.row(it.get_sub_group().get_local_linear_id(), r, mine, pa, pb, err);
+    }
+};
+// ws_rows<DK, WS_PLAIN> with the form WsTab picks for prows rows (the helper's 1,024 - 2,048 extra rows take the
+// form of its own 4,096-row launch; any form gives the same values)
+template <typename DK, typename F>
+inline bool qbm_ws_rows(const DK &dk, unsigned prows, const uint8_t *w, const float *x, size_t xs, float *y, size_t ys,
+                        unsigned mt, unsigned cap, F &&f) {
+    using O = WsOf<DK>;
+    using Tab = WsTab<O::fmt, O::cols, WS_PLAIN>;
+    if constexpr (O::fmt == 0) return false;
+    else {
+        const unsigned id = Tab::pick(prows, mt);
+        if (!id) return false;
+        return ws_each(typename Tab::forms{}, [&](auto fm) {
+            using FM = decltype(fm);
+            if (FM::id != id || dk.xn % FM::r || (mt + FM::t - 1) / FM::t * FM::t > cap) return false;
+            using WK = typename O::type;
+            f(DenseRowsWS<WK, FM::t, FM::r, FM::xw, FM::loop, FM::pf>{WK{dk.rows, dk.xn}, w, x, xs, y, ys, mt,
+                                                                        (mt + FM::t - 1) / FM::t});
+            return true;
+        });
+    }
+}
+
 } // namespace ops41sycl
