@@ -2686,6 +2686,12 @@ template <unsigned R, unsigned T>
 inline unsigned g_ws_ck_mask = 0x1f, g_ws_ckf_mask = 0x1f;
 inline bool ws_ck_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ck_mask >> (mt - 2) & 1u); }
 inline bool ws_ckf_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_ckf_mask >> (mt - 2) & 1u); }
+// OWN_MT_DRIDE (dride-1, own_run_v41; default off): in blocks of M = 2 .. 6 tokens whose bit M - 2 is set in
+// g_ws_dride_mask (OWN_MT_DRIDE=1: 4, 5 and 6), OWN_MT_DSPLIT's two mix finishes ride output-b's and shared down's
+// launches under OWN_MT_WS too, where the rider keeps the rows' weight-stationary form (WsTab<.., 8192 / 2304,
+// WS_DOTS>, ws_ride_keeps); off: the finishes run as their own launches there
+inline unsigned g_ws_dride_mask = 0;
+inline bool ws_dride_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_ws_dride_mask >> (mt - 2) & 1u); }
 // a WS form's weight loads (WsF PF / 10): 0 = sub-group block reads; 1 = per-lane loads, L1 uncached (L3 cached),
 // so the streaming weights stop evicting the T tokens' activations from L1 (the same values)
 template <unsigned H> struct WsLd {
@@ -3179,6 +3185,20 @@ template <> struct WsTab<8, 8192, WS_PLAIN> {
         return 0;
     }
 };
+// OWN_MT_DRIDE (dride-1): Q8_0 output-b with OWN_MT_DSPLIT's finish of the attention mix first in its launch (tpm_layer fride,
+// OWN_MT_DSPLIT_FIN=2 under OWN_MT_WS; with OWN_MT_DSPLIT_FIN=1 too). Without this entry the finish ran as its
+// own launch (or, with OWN_MT_DSPLIT_FIN=1, the rider sent the rows to the engine's DenseRowsG<G>).
+// dride bench (one card, 864 rows, us per layer at 4 / 5 / 6 tokens, all bitwise): lone finish + plain 25.6 /
+// 31.4 / 32.1; the plain form + the finish 16.6-17.4 / 19.9-20.8 / 20.1-21.4; engine G2 / G3 + the finish 18.8 /
+// 21.4 / 21.5.
+// Every size keeps the plain launch's form (WS_PLAIN's pick).
+template <> struct WsTab<8, 8192, WS_DOTS> {
+    using forms = WsList<WfX8R2L, WfX4R4, WfC1R1x1, WfC2R1P5, WfC3R2P15>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_dride_on(mt)) return 0;
+        return WsTab<8, 8192, WS_PLAIN>::pick(rows, mt);
+    }
+};
 // Q8_0 shared down (2,304 columns, ~864 rows; engine G4 R2): 16: 23.3 -> 15.7, every class >= 1.35x, 256: 313 -> 195
 template <> struct WsTab<8, 2304, WS_PLAIN> {
     using forms = WsList<WfX4R4, WfC2R1x1, WfC2R2P5>;
@@ -3187,6 +3207,19 @@ template <> struct WsTab<8, 2304, WS_PLAIN> {
         // 5: 10.3 / 12.6 -> 7.5 / 9.9, 6: 10.3 / 12.6 -> 7.5 / 9.9
         if (rows >= 768 && rows <= 1024) return WsPicks{0, 0, 0, 0, 0, X4R4, X4R4, X4R4, X4R4, X4R4, C2R1x1, C2R2P5, C2R2P5, C2R2P5, C2R2P5}.at(mt);
         return 0;
+    }
+};
+// OWN_MT_DRIDE (dride-1): Q8_0 shared down with OWN_MT_DSPLIT's finish of the FFN mix first in its launch (tpm_layer fride,
+// OWN_MT_DSPLIT_FIN=2 under OWN_MT_WS; with OWN_MT_DSPLIT_FIN=1 too). Without this entry the finish ran as its
+// own launch (or, with OWN_MT_DSPLIT_FIN=1, the rider sent the rows to the engine's DenseRowsG<G>).
+// dride bench (one card, 864 rows, us per layer at 4 / 5 / 6 tokens, all bitwise): lone finish + plain 14.1 /
+// 15.7 / 15.5; the plain form + the finish 8.3-8.5 / 9.8-10.0 / 9.8; engine G2 / G3 + the finish 11.0 / 12.5 / 12.4.
+// Every size keeps the plain launch's form (WS_PLAIN's pick).
+template <> struct WsTab<8, 2304, WS_DOTS> {
+    using forms = WsList<WfX4R4, WfC2R1x1, WfC2R2P5>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_dride_on(mt)) return 0;
+        return WsTab<8, 2304, WS_PLAIN>::pick(rows, mt);
     }
 };
 // Q6_K q_b (1,280 columns, 4,096-8,192 rows; engine G4, checks G R4): 16: 105 -> 47.6, 256: 1763 -> 705, every class
@@ -3258,6 +3291,20 @@ template <> struct WsTab<6, 8192, WS_PLAIN> {
         return 0;
     }
 };
+// OWN_MT_DRIDE (dride-1): Q6_K output-b with OWN_MT_DSPLIT's finish of the attention mix first in its launch (tpm_layer fride,
+// OWN_MT_DSPLIT_FIN=2 under OWN_MT_WS; with OWN_MT_DSPLIT_FIN=1 too). Without this entry the finish ran as its
+// own launch (or, with OWN_MT_DSPLIT_FIN=1, the rider sent the rows to the engine's DenseRowsG<G>).
+// dride bench (one card, 864 rows, us per layer at 4 / 5 / 6 tokens, all bitwise): lone finish + plain 29.0 /
+// 32.4 / 34.6; the plain form + the finish 19.7 (WS_PLAIN has no form at 4: both take the engine G2) / 23.0 /
+// 23.8-24.7; engine G3 + the finish 30.7 / 31.4 at 5 / 6.
+// Every size keeps the plain launch's form (WS_PLAIN's pick).
+template <> struct WsTab<6, 8192, WS_DOTS> {
+    using forms = WsList<WfK3R2, WfK5R2, WfK6R2, WfK8R2, WfK4R2>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_dride_on(mt)) return 0;
+        return WsTab<6, 8192, WS_PLAIN>::pick(rows, mt);
+    }
+};
 // Q6_K engram_kv (6,144 columns, ~4,266 rows; engine G R4, at 9-15 tokens G4): checks 85.4 -> 57.9, 108 -> 65.9,
 // 107 -> 72.2, 136 -> 94.8, 136 -> 99.4; 16: 246 -> 162, 9-64 >= 1.22x, 65-128 >= 1.36x, 129-256 kept (<= 1.01x)
 template <> struct WsTab<6, 6144, WS_PLAIN> {
@@ -3292,6 +3339,20 @@ template <> struct WsTab<5, 2304, WS_PLAIN> {
         if (rows >= 768 && rows <= 1024)
             return WsPicks{0, 0, 0, 0, 0, K8R2, K8R2, K8R2, K8R2, K8R2, D2R1P10, 0, WfK2R1::id, D3R2P15, D3R2P15}.at(mt);
         return 0;
+    }
+};
+// OWN_MT_DRIDE (dride-1): Q5_K shared down with OWN_MT_DSPLIT's finish of the FFN mix first in its launch (tpm_layer fride,
+// OWN_MT_DSPLIT_FIN=2 under OWN_MT_WS; with OWN_MT_DSPLIT_FIN=1 too). Without this entry the finish ran as its
+// own launch (or, with OWN_MT_DSPLIT_FIN=1, the rider sent the rows to the engine's DenseRowsG<G>).
+// dride bench (one card, 864 rows, us per layer at 4 / 5 / 6 tokens, all bitwise): lone finish + plain 15.6 /
+// 19.3 / 19.4; the plain form + the finish 10.3-10.4 / 9.0-9.3 / 9.0-9.1; engine G2 / G3 + the finish 11.3 /
+// 12.6 / 12.6. Faster bitwise riders not taken (they change the form): K4R2 8.1 at 4, K5R2 8.3 at 5.
+// Every size keeps the plain launch's form (WS_PLAIN's pick).
+template <> struct WsTab<5, 2304, WS_DOTS> {
+    using forms = WsList<WfK8R2, WfK2R1, WfD2R1P10, WfD3R2P15>;
+    static unsigned pick(unsigned rows, unsigned mt) {
+        if (!ws_dride_on(mt)) return 0;
+        return WsTab<5, 2304, WS_PLAIN>::pick(rows, mt);
     }
 };
 // OWN_MT_CK: the q_a + kv pair launch (1,280 + 512 rows, gemv_pair_m) at checks in WS forms, one launch (pa/ck
@@ -3352,6 +3413,15 @@ template <typename DK> inline unsigned ws_pair_id(unsigned ra, unsigned rb, unsi
         if constexpr (!requires { Tab::pair(0u, 0u, 0u); }) return 0;
         else return Tab::pair(ra, rb, mt);
     }
+}
+// ws_ride_keeps<DK>(rows, mt) (OWN_MT_DRIDE): a rider in this matrix's launch (dense_m: WsTab WS_DOTS) keeps its rows'
+// form: WS_DOTS picks a weight-stationary form (all of them sum each row and token as the one-token rows do), or
+// WS_PLAIN picks none, so both launches take the engine's form (dense_m's rules past the table are the same with a
+// rider but for OWN_MT_TGW_ROWS, which the caller checks)
+template <typename DK> inline bool ws_ride_keeps(unsigned rows, unsigned mt) {
+    using O = WsOf<DK>;
+    if constexpr (O::fmt == 0) return true;
+    else return WsTab<O::fmt, O::cols, WS_DOTS>::pick(rows, mt) != 0 || WsTab<O::fmt, O::cols, WS_PLAIN>::pick(rows, mt) == 0;
 }
 // ws_pair_rows (OWN_MT_CK): f(RowsPair<A, B>) with the first matrix's rows (dka: ra rows, xn 0) in WsTab WS_PAIR's
 // FA and the second's (rb rows) in FB when WsTab::pair picks a pair form; false: none (gemv_pair_m's DenseRowsG pair).

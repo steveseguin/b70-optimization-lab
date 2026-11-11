@@ -76,17 +76,32 @@ template <typename A> struct QbWaitRope {
     }
 };
 
-// ---- qb-off-2 (OWN_QB_OFF_M, 2026-11-11): the same offload in blocks of 2 .. 6 tokens (tpm_layer: guessing checks,
-// small prompt blocks). A helper runs the k heads' rows for the block in a launch of its own BEFORE its own query-b
-// (the same rows, the same WS form as its own 4,096-row launch: Backend41::qbm_send), into a staging region of its
-// arena (token t at soff + t * k * hd), then QbmFlag publishes them as XchgPull does (system-scope release, flag seq
-// into the heavy card's word fw = 128 + 16 * helper + 8; qb-off-1's push flags use + 0 .. 3). The heavy card's
-// query-b launch carries the pull as its first rows (QbmHeavyK): one sub-group per (helper, token, head) polls its
-// own flag word, acquires at system scope and copies the head's hd floats from the helper's staging into its query
-// buffer by loads (XchgPull's direction: peer loads run at 25-37 GB/s, peer stores at ~1 GB/s), while its other
-// sub-groups run its 16 - 2k heads' rows. Its rope launch comes after (in-order queue) and ropes all its heads as
-// today, so the pulled rows are read only by a later launch. No row's value changes: the helper's rows are the same
-// per-row code on the same packed bytes and the same replicated q_a norm output; the pull is a copy.
+// ---- qb-off-2 / qb-off-3 (OWN_QB_OFF_M, 2026-11-11): the same offload in blocks of 2 .. 6 tokens (tpm_layer:
+// guessing checks, small prompt blocks). A helper runs the k heads' rows for the block in a launch of its own BEFORE
+// its own query-b (the same rows, the same WS form as its own 4,096-row launch: Backend41::qbm_send), into a staging
+// region of its arena (token t at soff + t * k * hd), then QbmFlag raises the flag seq in the heavy card's word
+// fw = 128 + 16 * helper + 8 (qb-off-1's push flags use + 0 .. 3 of the same line, written by the same helper only).
+// The heavy card's query-b launch carries the pull as its first 2 g work-groups (QbmHeavyK; g = 1 .. 3 per helper):
+// they wait for their helper and copy its m tokens x k heads from the helper's staging into the query buffer by loads
+// (XchgPull's direction: peer loads run at 25-37 GB/s, peer stores at ~1 GB/s); the launch's other work-groups run
+// its 16 - 2k heads' rows (and the riding finish) exactly as dense_m would launch them. Its rope launch comes after
+// (in-order queue) and ropes all its heads as today. No row's value changes: the helper's rows are the same per-row
+// code on the same packed bytes and the same replicated q_a norm output; the pull copies 32-bit words.
+// The hand-over follows the forms production has proven (qb-off-3; qb-off-2 hung both 16-head cards in tg97):
+//   - one poller per flag word and work-group: item 0 of each pull work-group polls its side's word with XchgP's
+//     code, as each XchgPull work-group does (at most 3 pollers per word here, up to 64 there; a relaxed
+//     system-scope atomic load, which the compiler emits as atomic_or; poison word; err). qb-off-2 polled the same
+//     word from every lane of 2 * m * k sub-groups (256 lanes at M = 2, k = 4), a stream of atomic read-modify-writes
+//     on the one line the helper's flag store must reach, and slow enough per round that the XSPIN polls outlasted
+//     the driver's job timeout;
+//   - the release side as xchg_tail / attn-a2: barrier, then item 0 fences and stores (a fence placed in every item
+//     right before a barrier is folded into a work-group fence by oneAPI 2026.1); the acquire fence in the polling
+//     item itself, then the barrier hands it to the work-group;
+//   - the staging is read with L1-uncached loads, after the wait, and only from the helper's memory (nothing in the
+//     launch reads those lines before); no line is written by two cards (flag lines: the helper; staging: the
+//     helper; the query rows: the heavy card), and the heavy card never stores to a line a peer writes.
+// A wait past spin polls (XchgP's ~0.9 s, well inside the driver's ~5 s job timeout) sets the poison word and
+// err[0] = 1 + helper, err[2] = 1 + the flag word, err[3] = seq (the host's "query-b offload timed out" error).
 // Overwrite safety: a helper writes layer L + 1's staging only after its output-a exchange of layer L, which waits
 // for the heavy card's flag, raised after that card's layer-L query-b launch (with the pull) in its in-order queue.
 struct QbmFlag {
@@ -95,48 +110,79 @@ struct QbmFlag {
     void operator()(sycl::nd_item<1> it, float *peer) const {
         using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
                                     sycl::access::address_space::global_space>;
-        sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
         sycl::group_barrier(it.get_group());
-        if (it.get_local_linear_id() == 0) AR(reinterpret_cast<uint32_t *>(peer)[fw]).store(seq);
+        if (it.get_local_linear_id() == 0) {
+            sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
+            AR(reinterpret_cast<uint32_t *>(peer)[fw]).store(seq);
+        }
     }
 };
-// the heavy card's pull rows: row r = (side s = r / (m k), token t, head j); side 0 = the left helper (the card's
-// first k heads, at d0[0] in a token's query row), 1 = the right one (its last k, at d0[1])
+// a 32-bit load past the L1 (read hint L1 uncached; the L3's default): the helpers' staging
+[[gnu::always_inline]] inline uint32_t qbm_ld(const uint32_t *p) {
+    namespace sx = sycl::ext::oneapi::experimental;
+    namespace ix = sycl::ext::intel::experimental;
+    sx::annotated_ptr<uint32_t, decltype(sx::properties{ix::read_hint<ix::cache_control<ix::cache_mode::uncached, sx::cache_level::L1>>})>
+        a{const_cast<uint32_t *>(p)};
+    return a[0];
+}
+// the heavy card's pull: work-groups [s g, s g + g) take side s (0 = the left helper: the card's first k heads, at
+// d0[0] in a token's query row; 1 = the right one: its last k, at d0[1]); each waits for its helper's flag (one
+// polling item per work-group, as XchgPull's work-groups) and copies its share of the m tokens x k heads, J words per
+// item with every load issued before the first store: one PCIe read round trip per item (2.7-4.1 us, ck2tok96's
+// levers96.py), where qb-off-2's 4 dependent vec4 copies per lane cost 4
 struct QbmPull {
+    static constexpr unsigned J = 8;   // words per item and round (loads first, then stores)
+    static constexpr unsigned WG = 512; // items per work-group (launch_rows' default: 16 sub-groups)
     float *q;          // this card's block query buffer (token t at q + t * qs)
     size_t qs;
     unsigned d0[2];    // float offsets of each side's first head in a token's row
-    unsigned soff, sts; // the helpers' staging: arena offset, floats per token (k * hd)
+    unsigned soff;     // the helpers' staging: arena offset (token t at soff + t * k * hd)
     unsigned fw[2];    // this card's flag words for the two helpers
     unsigned from[2];  // the helpers' card numbers (the error word)
     unsigned m, k, hd;
+    unsigned g;        // work-groups per side: ceil(m k hd / (WG J)) (1 .. 3)
     uint32_t seq;
     long spin;
-    unsigned n() const { return 2 * m * k; }
-    [[gnu::always_inline]] inline void row(unsigned lane, unsigned r, float *mine, const float *pl, const float *pr,
-                                           uint32_t *err) const {
+    unsigned nwg() const { return 2 * g; }
+    void wg(sycl::nd_item<1> it, unsigned w, float *mine, const float *pl, const float *pr, uint32_t *err) const {
         using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
                                     sycl::access::address_space::global_space>;
-        const unsigned s = r / (m * k), t = r % (m * k) / k, j = r % k;
-        AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
-        AR f(reinterpret_cast<uint32_t *>(mine)[fw[s]]);
-        long n = 0;
-        if (!poison.load())
-            while (f.load() < seq && ++n < spin) {}
-        if (n >= spin) {
-            poison.store(1u);
-            if (lane == 0) err[0] = 1u + from[s];
+        const unsigned s = w / g, t = (unsigned)it.get_local_linear_id(), L = (unsigned)it.get_local_range(0);
+        if (t == 0) { // XchgP's wait, one item
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[fw[s]]);
+            long n = 0;
+            if (!poison.load())
+                while (f.load() < seq && ++n < spin) {}
+            if (n >= spin) {
+                poison.store(1u);
+                err[0] = 1u + from[s];
+                err[2] = 1u + fw[s];
+                err[3] = seq;
+            }
+            sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
         }
-        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
-        const float *src = (s ? pr : pl) + soff + (size_t)t * sts + (size_t)j * hd;
-        float *dst = q + (size_t)t * qs + d0[s] + (size_t)j * hd;
-        for (unsigned i = lane; i < hd / 4; i += 32)
-            *reinterpret_cast<sycl::vec<float, 4> *>(dst + 4 * i) = *reinterpret_cast<const sycl::vec<float, 4> *>(src + 4 * i);
+        sycl::group_barrier(it.get_group());
+        const uint32_t *src = reinterpret_cast<const uint32_t *>((s ? pr : pl) + soff);
+        const unsigned per = k * hd, n = m * per; // words per token (the staging's token stride), per side
+        for (unsigned b = w % g * L * J; b < n; b += g * L * J) { // one round when the host's g fits (WG = L)
+            uint32_t v[J];
+#pragma unroll
+            for (unsigned j = 0; j < J; ++j) {
+                const unsigned i = b + j * L + t;
+                v[j] = i < n ? qbm_ld(src + i) : 0u;
+            }
+#pragma unroll
+            for (unsigned j = 0; j < J; ++j) {
+                const unsigned i = b + j * L + t;
+                if (i < n) reinterpret_cast<uint32_t *>(q + (size_t)(i / per) * qs + d0[s])[i % per] = v[j];
+            }
+        }
     }
 };
 // the heavy card's query-b rider (dense_m: rider type QbmHeavy<B>, B = the launch's own rider, NoRows or the mix's
 // finish rows; WsTab's launch kind follows B). Its n() / row() are B's, so a generic launch would run only B: the
-// backend launches it as QbmHeavyK (Backend41::qbm_heavy_launch, packed WS forms only)
+// backend launches it as QbmHeavyK (Backend41::qbm_heavy_launch)
 template <typename B> struct QbmHeavy {
     B base;
     QbmPull pull;
@@ -152,30 +198,30 @@ template <typename T> using qbm_base_t = typename QbmBase<T>::type;
 template <typename T> inline constexpr bool qbm_ws_v = false;
 template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF>
 inline constexpr bool qbm_ws_v<DenseRowsWS<W, T, R, XW, LOOP, PF>> = T <= 6;
-// the pull rows first, then the launch's rows (RP = RowsPair<B, D>, as dense_m's launch)
+// work-groups [0, pl.nwg()) the pull, then the launch's rows (RP = RowsPair<B, D>, as dense_m's launch) from the
+// next work-group on: the same rows on the same sub-group positions within their work-groups as launched alone
+// (launch_rows: 16 sub-groups per work-group)
 template <typename RP> struct QbmHeavyK {
     QbmPull pl;
     RP rows;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, float *mine, const float *pa, const float *pb, uint32_t *err) const {
-        unsigned r = packed_row_id(it);
-        sycl::sub_group sg = it.get_sub_group();
-        const unsigned lane = sg.get_local_linear_id();
-        if (r < pl.n()) {
-            pl.row(lane, r, mine, pa, pb, err);
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g < pl.nwg()) {
+            pl.wg(it, g, mine, pa, pb, err);
             return;
         }
-        r -= pl.n();
+        const unsigned r = packed_row_id(it) - pl.nwg() * (unsigned)(it.get_local_range(0) / 32);
         if (r >= rows.n()) return;
-        rows.row(sg, lane, r);
+        sycl::sub_group sg = it.get_sub_group();
+        rows.row(sg, sg.get_local_linear_id(), r);
     }
 };
 // the pull alone (qbm_heavy_launch's fallback when the launch's form is not one of the checks' WS forms)
 struct QbmPullK {
     QbmPull pl;
     void operator()(sycl::nd_item<1> it, float *mine, const float *pa, const float *pb, uint32_t *err) const {
-        const unsigned r = packed_row_id(it);
-        if (r >= pl.n()) return;
-        pl.row(it.get_sub_group().get_local_linear_id(), r, mine, pa, pb, err);
+        const unsigned g = (unsigned)it.get_group_linear_id();
+        if (g < pl.nwg()) pl.wg(it, g, mine, pa, pb, err);
     }
 };
 // ws_rows<DK, WS_PLAIN> with the form WsTab picks for prows rows (the helper's 1,024 - 2,048 extra rows take the

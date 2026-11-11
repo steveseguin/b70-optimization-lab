@@ -135,7 +135,9 @@ long ids_picks = 0, ids_unique = 0, ids_blocks = 0; // block exchanges: the push
 unsigned mt_dsplit_min = 4;  // OWN_MT_DSPLIT_MIN=m: only in blocks of at least m tokens (4 since tune92: checks of 4-6 too; 2 loses at 2-3)
 int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own launches after the pulls (0), as riders
                              // in output-b's and shared down's launches (1), or 2 (default): 1 unless OWN_MT_WS (with a
-                             // rider dense_m skips the weight-stationary forms, which have no WS_DOTS entries there)
+                             // rider dense_m looks up WsTab WS_DOTS, which has no entries there unless OWN_MT_DRIDE);
+                             // with OWN_MT_DRIDE (dride-1) 1 also under OWN_MT_WS in the block sizes it names, wherever
+                             // the rider keeps the matrix's form (ops41sycl::ws_ride_keeps)
 unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
 unsigned mt_skdots_min = 4;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (4 since tune92)
@@ -1304,8 +1306,15 @@ void tpm_layer(int L, int c) {
         return tokr(f, FS, 4, 4, 16);
     };
     auto fride = [&](const std::string &wn) {
-        return (mt_dsplit_fin == 1 || (mt_dsplit_fin == 2 && !mt_ws)) && wgt[c].at(wn).packed &&
-               (!mt_tgw_rows || wgt[c].at(wn).nrows < mt_tgw_rows);
+        if (!wgt[c].at(wn).packed || (mt_tgw_rows && wgt[c].at(wn).nrows >= mt_tgw_rows)) return false;
+        if (mt_dsplit_fin == 1 || (mt_dsplit_fin == 2 && !mt_ws)) return true;
+        // OWN_MT_DRIDE (dride-1): under OWN_MT_WS too, where the rider keeps the matrix's form (WsTab WS_DOTS)
+        bool keep = false;
+        if (mt_dsplit_fin == 2 && ops41sycl::ws_dride_on((unsigned)M))
+            dense_kernel(c, wn, [&](auto dk, const uint8_t *) {
+                keep = ops41sycl::ws_ride_keeps<decltype(dk)>(dk.rows, (unsigned)M);
+            });
+        return keep;
     };
     dr_capture(L, c); // the draft's input features (layers 37 .. 39; read only)
     // ---- phase 0: pre-norm, mix, query/key rows, publish, index
@@ -1989,6 +1998,11 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     tp_join();
     mt_n = 0;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
+    for (int c = 0; c < o.tp; ++c) // OWN_QB_OFF_M's pull first (QbmPull: err[2] = 1 + flag word, err[3] = seq): the
+        if (xerr[c][2])            // helpers' exchanges then time out waiting for the heavy card
+            throw std::runtime_error("card " + pci[c] + ": query-b offload (OWN_QB_OFF_M) timed out waiting for card " +
+                                     std::to_string((int)xerr[c][0] - 1) + "'s flag (arena word " +
+                                     std::to_string(xerr[c][2] - 1) + ", seq " + std::to_string(xerr[c][3]) + ")");
     for (int c = 0; c < o.tp; ++c) {
         if (xerr[c][0])
             throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +

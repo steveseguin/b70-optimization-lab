@@ -352,7 +352,26 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 14:36 EST)
+## Work in flight (2026-11-11, updated 16:20 EST)
+
+- Host reset 15:17:25 (4th; a helper's back-to-back ~50 s six-card stress runs; `dsv41-work/faults/
+  host-reset-20261111T1517/`). New rule for every multi-card run: at most ~30 s of continuous peer traffic, then
+  >= 30 s idle, no stress loops; longer runs only inside the main thread's gates. tg98 lost its 10K reads.
+- Done (prompt97, CPU study, `data/.../round19-pp97/prompt97-study/`): the 3K read (6.80 s) is ~2.5x its hard
+  floor (separate multiply + add at 5.73 T/s per card = ~2.0 s, plus ~0.7 s of exchange bytes), not 5x (that
+  counted FMA, which rounds differently). Time: experts 2.7 s, other matrices 2.0, exchanges 1.0 (all exposed),
+  rest 1.0. Prompt pace = the 12-head 230 W cards (layout 12,12,12,12,8,8). Ranked levers (central saving, s):
+  (1) exchanges overlapped with compute (two half-blocks, mode-matched pulls or riders) 0.62, large;
+  (2) blocks of 256 done right (router 420 us at 256 vs 67 at 64, grouping, engram rows, q_a / q_b / o_a picks)
+  0.44; (3) faster prompt expert kernels 0.40, low confidence; (4) three lagging matrix kernels (router-type
+  weight-reusing form 0.14, 6 / 5-bit layers, a tp97 o_b slowdown 244 -> 317 us of an unchanged kernel) 0.30;
+  (5) no repeated q_a / kv rows on every card 0.23; (6) wider tiles 0.08; (7) parallel grouping kernel 0.08;
+  (8) head balance 0.06 (free test `OWN_MT_DSPLIT_WA=0,0,0,0,1,1`). All eight: ~4.6 s (~720 tok/s, 630-870).
+  Helper pb256 (card 2) took (2) + (4) + (7).
+- Ready for tp99: wa-1 v3 (`OWN_ATT_WA=1`, attn helper; first form bitwise but +50 us per check at short
+  context, v3 fixes the divergent index loads, bench queued after tg98) and xll-1 (`OWN_XLL=1`,
+  `OWN_XLL_QUICK=K`, one-trip pulls: ~1.8 M six-card exchanges, 6.2 G early reads, 0 wrong; predicted 0.05-0.3 ms
+  per step, up to 0.6 per check; `xll/verify.sh` = 4 short six-card steps queued after tg98).
 
 - Done (tg97 13:56-14:07 + tg97b 14:09-14:33, tp97; `data/.../round19-tg97/`): the tp96 winners hold as defaults
   (every trace identical, 16 / 16 guessing SAME): plain 100.4 / 100.6, code 138.4 / 139.2, analysis 153.0 / 150.5,

@@ -542,6 +542,20 @@ int main(int argc, char **argv) {
         }
         ops41sycl::g_ws_ckf_mask = ops41sycl::g_ws_ck_mask;
         if (const char *e = getenv("OWN_MT_CK_FIN")) ops41sycl::g_ws_ckf_mask = ck_mask(e);
+        // dride-1 (opt-in): OWN_MT_DSPLIT's two mix finishes ride output-b's and shared down's launches under OWN_MT_WS
+        // too, their weight-stationary forms kept (WsTab WS_DOTS; OWN_MT_DSPLIT_FIN=2, the default, or 1).
+        // OWN_MT_DRIDE=1: checks of 4, 5 and 6 tokens; OWN_MT_DRIDE=n (n != 1; 0x.. allowed): the sizes M = 2 .. 6
+        // whose bit M - 2 is set; OWN_MT_DRIDE_MS="4,6": those sizes
+        if (const char *e = getenv("OWN_MT_DRIDE")) {
+            const unsigned long n = strtoul(e, nullptr, 0);
+            ops41sycl::g_ws_dride_mask = n == 1 ? 0x1cu : (unsigned)(n & 0x1fu);
+        }
+        if (const char *e = getenv("OWN_MT_DRIDE_MS")) {
+            unsigned m = 0;
+            for (const char *c = e; *c; ++c)
+                if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
+            ops41sycl::g_ws_dride_mask = m;
+        }
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {

@@ -1,0 +1,92 @@
+# Lever estimates, 3K read (3,323 tokens), seconds off today's 6.80 s (tp97, blocks of 64, card 2 pace proxy)
+# FP32 rate 11.47 T ops/s = 5.73 T multiply-adds/s (a multiply then an add; no FMA, no DPAS); x port 8.28 TB/s; link 25 GB/s.
+
+Floors of the whole read on card 2 (s):
+  strict FP32 (every multiply-add at 5.73 T/s, nothing else): dense 0.918 + experts 0.824 + attention / index / norms 0.230 = 1.972 s -> today is 3.4x
+  + exchange bytes at 25 GB/s, not overlapped: 2.693 s -> 2.5x
+  today's tile shapes (dense x through the L1 port at R = 2: 1.309 s; expert decode per group: 1.807 s at 64, 1.253 s at 256 cap 16), exchanges hidden: 3.347 s at 64, 2.793 s at 256 -> 2.0x / 2.4x
+  (a "5x" figure comes from counting a multiply-add as one fused instruction: compute floor 0.99 s, 1.71 s with the exchange bytes -> 6.9x / 4.0x; the fused FMA rounds once, differently from the reference, and is not allowed)
+
+| rank | lever | kind | saving s (low / central / high) | 3K read after it alone | effort | confidence | bit-exact |
+|---|---|---|---|---|---|---|---|
+| 1 | E: exchanges overlapped (two 64-token halves in flight; pulls on a second queue in the register mode of the kernels beside them, or as riders inside them) | scheduling | 0.43 / **0.62** / 0.84 | 6.18 s (537 tok/s) | L | medium-low | yes |
+| 2 | Blocks of 256 done right (each role at its best per-token cost: 64-token dense forms looped over 256 tokens, weight-reusing engram / router forms, a parallel expert grouping) | mostly scheduling (form table), plus 2 kernels | 0.30 / **0.44** / 0.50 | 6.36 s (522 tok/s) | M | medium | yes |
+| 3 | Expert kernels (rux-2): spill-free two-row forms, four-row tiles at 128 registers, decode shared by more slots (cap 8-16 where registers allow) | kernel | 0.31 / **0.40** / 0.64 | 6.40 s (518 tok/s) | M-L | low | yes |
+| 4 | Dense forms that lag: a weight-reusing H16 form for router / compressor / indexer rows, Q6_K / Q5_K forms closer to Q8_0, undo the tp97 Q6 slowdown | kernel | 0.23 / **0.30** / 0.35 | 6.50 s (511 tok/s) | S-M | medium | yes |
+| 5 | D: replicated q_a + kv rows (and the indexer q_b) split across the six cards | kernel table + one new exchange per layer | 0.16 / **0.23** / 0.31 | 6.57 s (505 tok/s) | M-L | medium-low | yes |
+| 6 | Dense Q8_0 forms past the x-port cap (R = 4 x T = 8 tiles) | kernel | 0.03 / **0.08** / 0.15 | 6.72 s (494 tok/s) | M | low | yes |
+| 7 | Expert grouping kernel (ExpertGroupM) parallel | kernel | 0.05 / **0.08** / 0.09 | 6.72 s (494 tok/s) | S | medium-high | yes |
+| 8 | 12 / 8 head imbalance in prompt blocks | scheduling (runtime weights; layout) | 0.02 / **0.06** / 0.12 | 6.74 s (493 tok/s) | S | low | yes |
+
+All of them (treated as additive; they touch different time): 1.53 / 2.19 / 2.99 s -> 5.27 / 4.61 / 3.81 s (630 / 721 / 873 tok/s)
+
+## 1. E: exchanges overlapped (two 64-token halves in flight; pulls on a second queue in the register mode of the kernels beside them, or as riders inside them)
+   kind: scheduling; effort: L (700-900 lines of backend_sycl_v41_mt.inc: per-half state, every exchange moved to a second in-order queue, two pull builds 128 / 256); confidence: medium-low
+   bit-exact: arithmetic unchanged (halves = two consecutive 64-token blocks; traces are byte-identical across block sizes); the risk is ordering (a race gives wrong values or a hang), which the gate and xchg_pull_test catch
+   saving: 0.43 / 0.62 / 0.84 s
+   - card 2 exchange kernels: 1.027 s per read (243 launches per 64-block: 80 XchgPull2, 83 XchgPull, 80 XchgPair); byte + sync floor 0.721 s at 25 GB/s; nothing overlaps today, so all of it is on the critical path.
+   - hidden fraction 50-85 % (xov1: 74-95 % same register mode, 16 groups; 50-78 % at 64 groups; ~0 % across modes; the pulls here are 40-150 us beside 0.2-1 ms phases of the other half)
+   - cost 0.03-0.08 s: pull work-groups share threads (xov1 compute +1.6-5 % while overlapped), ~12.6K cross-queue barriers per read, two expert-group copies
+   - halves are 64-token halves of a 128-token block, so every kernel keeps today's 64-token cost; saving = 1.027 x hidden - cost
+
+## 2. Blocks of 256 done right (each role at its best per-token cost: 64-token dense forms looped over 256 tokens, weight-reusing engram / router forms, a parallel expert grouping)
+   kind: mostly scheduling (form table), plus 2 kernels; effort: M (WsTab picks at M = 256; engram WS form at 256; ExpertGroupM rewrite; H16 WS form shared with the dense-forms lever); confidence: medium
+   bit-exact: none: per-token arithmetic does not depend on the block size (gate already runs 256 / 129 / 255-token blocks TRACE_IDENTICAL)
+   saving: 0.30 / 0.44 / 0.50 s
+   - every role at the cheaper of its 64- and 256-token cost: 6.273 s of kernels vs 6.633 at 64 today and 6.667 at 256 today (card 2)
+   - the 256-token penalties to remove (ms per read): router rows +84, expert grouping +77, engram kv rows +44, q_a + kv rows +43, q_b rows +38, route pick + shared gate/up +33, o_a rows +27, compressor rows +20, stream post + pre (HcPostPrePMG etc.) +18, attention output +6
+   - causes: the form table picks T = 4, R = 4 dense forms at 256 (0.35 ps per mul-add vs 0.30 for the 64-token T = 8, R = 2 forms), the router / compressor / engram rows use forms without weight reuse (router 420 us per launch at 256 vs 67 at 64: x 6.2 for x 4 tokens), ExpertGroupM 336 us vs 47
+   - gaps: ~0.075 s fewer (unprofiled 256 reads ~0.04 s faster than 64 with 0.034 s more kernel time)
+   - saving = 0.360 kernels + 0.075 gaps; the range allows for the combination not being measured
+
+## 3. Expert kernels (rux-2): spill-free two-row forms, four-row tiles at 128 registers, decode shared by more slots (cap 8-16 where registers allow)
+   kind: kernel; effort: M-L (sycl_v41_routed_rux.hpp; bench_rux.cpp exists with the real 3K picks); confidence: low (the packed-lane K2 forms were all slower; rux-1 took -0.36 s in one step)
+   bit-exact: low risk: same decoded weights, same x addresses, same multiply-then-add order per output, same final butterfly (rux-1 argument); bench_rux checks every output bitwise
+   saving: 0.31 / 0.40 / 0.64 s
+   - routed gate+up + down: 2.716 s per read (41 % of kernel time); FP32 floor 0.824 s, + decode (7 instructions per weight per group of <= 6 slots) 0.984 s = issue floor 1.807 s; today at 67 % of it
+   - cap 16 instead of 6 at 64 tokens: decode 0.984 -> 0.826 s (needs forms that stay at 128 registers)
+   - x through the L1 port at R = 2: 1.14 s (below the issue floor: not the binding limit)
+   - at 75 / 80 / 85 % of the issue floor: 2.41 / 2.26 / 2.13 s -> saves 0.31 / 0.46 / 0.59 s
+   - at 256 the floor is lower (1.50 s cap 6, 1.25 s cap 16) and today's kernels run at 60 % of it: the same efficiency gain applies on top of the bigger-blocks lever
+
+## 4. Dense forms that lag: a weight-reusing H16 form for router / compressor / indexer rows, Q6_K / Q5_K forms closer to Q8_0, undo the tp97 Q6 slowdown
+   kind: kernel; effort: S-M (WsH16 forms exist for checks of 2-3 tokens; extend to T = 8, R = 2 and the 4,096-row indexer shape; Q6 / Q5 form tuning in bench_dense_ws; one IGC dump); confidence: medium (H16 part medium-high)
+   bit-exact: low risk: WS forms keep each output's column order and butterfly (1,560 bitwise checks for Q8 / Q6 / Q5); the H16 form needs its own bitwise bench against GemvH16P
+   saving: 0.23 / 0.30 / 0.35 s
+   - H16 rows (router, compressor, indexer proj in one kernel type; indexer q_b): 0.287 s per read; DenseRowsG reads x once per row (4 B per mul-add through the port): 3.1x / 5.2x the FP32 floor (0.082 s). A WS form with R = 2 rows per x read at the Q8 forms' 1.75x floor: 0.143 s -> saves 0.144 s at 64 (more at 256)
+   - Q6_K / Q5_K layers (13 of 40) take 0.220 s more than the same shapes at the Q8 per-launch time; their decode is heavier (6-bit split + 16-weight scales), so count 40-60 % of it: 0.088-0.132 s; the o_b Q6 form at 64 runs T = 4 (4.0x floor) while T = 8 is ~11 % faster per token at 128
+   - tp92 -> tp97 slowdown of unchanged Q6 forms (o_b WsQ6<32u> 244 -> 317 us, engram WsQ6<24u> 575 -> 670 us): 0.059 s; check register mode / spills in the IGC dump, pin the mode
+
+## 5. D: replicated q_a + kv rows (and the indexer q_b) split across the six cards
+   kind: kernel table + one new exchange per layer; effort: M-L (a third pull per layer, arena pointers for every q_a / kv reader, token strides at the norm / StatePack / publish sites; pcd README item D); confidence: medium-low
+   bit-exact: none in the arithmetic (each row still computed whole on one card, same order); the pull copies bits
+   saving: 0.16 / 0.23 / 0.31 s
+   - q_a + kv rows run whole on every card: 0.439 s per read on card 2 (2.1x their FP32 floor)
+   - split by 6 (213 / 85-row slices: fewer threads, 1.4-2.0x less efficient per row): 0.102-0.146 s
+   - one new pull per layer before the q_a / kv norms: 382 KB per 64-block and layer = 15.3 us + 2.5 us sync, plus 20-48 us of waiting (today's XchgPull on card 2 runs 48 us per launch above its floor); 2080 pulls per read
+   - net 0.156-0.258 s; the router (0.150 s) and compressor rows split for ~0 net (each needs its own pull), the indexer q_b for ~0.05 s before the H16 form and ~0 after it
+   - with E in place the new pull hides too: +0.05-0.1 s
+
+## 6. Dense Q8_0 forms past the x-port cap (R = 4 x T = 8 tiles)
+   kind: kernel; effort: M (bench_dense_ws variants, IGC register check); confidence: low
+   bit-exact: low risk if each lane keeps its column order and the final butterfly
+   saving: 0.03 / 0.08 / 0.15 s
+   - Q8_0 WS forms at 64 tokens: 0.30-0.35 ps per mul-add against 0.174 ps FP32 and 0.242 ps for the x port at R = 2 (each x float loaded once per 2 rows: 2 B per mul-add) -> they run at ~1.25x the port bound, not 2x the FP32 bound
+   - past the port needs R = 4 with T = 8 (port 0.121 ps, ALU 2.5 ops per mul-add = 0.218 ps): best case ~0.27 ps at 80 % of that -> ~10 % off the Q8 dense time (~1.2 s) = ~0.12 s; R = 4 x T = 8 needs ~80 registers per lane (256-register mode, half the threads), the existing T = 4, R = 4 forms run 0.35 ps
+   - T = 16 at R = 2 stays port-bound (no gain)
+
+## 7. Expert grouping kernel (ExpertGroupM) parallel
+   kind: kernel; effort: S (one kernel + test at 96-1,536 slots); confidence: medium-high
+   bit-exact: none: groups only decide which slots share one decode; each output and the combine's slot order are unchanged
+   saving: 0.05 / 0.08 / 0.09 s
+   - ExpertGroupM: 0.098 s per read at 64 (47 us x 40 per block, 72x a launch); 336 us per launch at 256 (+0.077 s, counted in the bigger-blocks lever)
+   - a parallel counting sort of 384-1,536 slots should run in ~10 us: saves 0.077 s at 64
+
+## 8. 12 / 8 head imbalance in prompt blocks
+   kind: scheduling (runtime weights; layout); effort: S (weights) / M (layout); confidence: low
+   bit-exact: none if every head stays whole on one card
+   saving: 0.02 / 0.06 / 0.12 s
+   - prompt blocks use 12,12,12,12,8,8 heads (OWN_TP_HEADS 3,3,3,3,2,2), not 16 / 8: cards 0 and 2 both hold 12
+   - 12-head cards carry ~133 us more per layer in q_b / attention / o_a / pair swap; the 8-head cards take more mix dot rows (OWN_MT_DSPLIT weights 1,1,1,1,4,4: ~32 us) -> ~101 us per layer = ~0.21 s per read of slack on cards 4 / 5
+   - evening it out (an 11,11,11,11,10,10 layout with generalised pair swaps, or more dots on cards 4 / 5) takes ~1/3 of it off the four heavy cards: 0.05-0.1 s; a free first test: OWN_MT_DSPLIT_WA=0,0,0,0,1,1 (~0.03 s)
+

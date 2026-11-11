@@ -3875,33 +3875,36 @@ private:
         pl.q = q;
         pl.qs = (size_t)g.qh * g.hd;
         pl.d0[0] = 0, pl.d0[1] = (nh - (unsigned)k) * hd;
-        pl.soff = (unsigned)xqm, pl.sts = (unsigned)k * hd;
+        pl.soff = (unsigned)xqm; // (qbm_send's staging: token t at xqm + t * k * hd)
         for (int s = 0; s < 2; ++s) {
             pl.fw[s] = 128u + 16u * (unsigned)h.from[s] + 8u;
             pl.from[s] = (unsigned)h.from[s];
         }
         pl.m = M, pl.k = (unsigned)k, pl.hd = hd, pl.seq = seq, pl.spin = XSPIN;
+        constexpr unsigned PER = ops41sycl::QbmPull::WG * ops41sycl::QbmPull::J; // words per work-group and round
+        pl.g = (M * (unsigned)k * hd + PER - 1) / PER;
         return pl;
     }
-    // dense_m's launch for a QbmHeavy rider: the pull rows first, then RowsPair<B, D> (the launch dense_m would have
-    // made); the peer pointers stay direct kernel arguments. Forms outside the checks' WS picks (OWN_MT_WS=0, or
-    // no OWN_MT_CK_FIN pick under the finish): dense_m's usual launch, then the pull as its own launch (other rows of
-    // q; the rope launch follows both; after the rows, so the card does not idle for the helpers' flags first; same
-    // values, no new instantiations of the matrix rows)
+    // dense_m's launch for a QbmHeavy rider: the pull's 2 g work-groups first, then RowsPair<B, D> (the launch dense_m
+    // would have made) from work-group 2 g on; the peer pointers stay direct kernel arguments. Forms outside the checks'
+    // WS picks (OWN_MT_WS=0, or no OWN_MT_CK_FIN pick under the finish): dense_m's usual launch, then the pull as its
+    // own launch (other rows of q; the rope launch follows both; after the rows, so the card does not idle for the
+    // helpers' flags first; same values, no new instantiations of the matrix rows)
     template <typename B, typename D> void qbm_heavy_launch(int c, const ops41sycl::QbmHeavy<B> &h, const D &d) {
         const QbOff &q = qbo[c];
         const float *pa = (const float *)xpeer[c][q.from[0]], *pb = (const float *)xpeer[c][q.from[1]];
+        const size_t PW = (size_t)h.pull.nwg() * (ops41sycl::QbmPull::WG / 32); // the pull's work-groups (launch_rows: 16 rows each)
         if constexpr (ops41sycl::qbm_ws_v<D>) {
             using RP = ops41sycl::RowsPair<B, D>;
             const ops41sycl::QbmHeavyK<RP> k{h.pull, RP{h.base, d}};
-            launch_rows<0>(c, (size_t)h.pull.n() + k.rows.n(), 0, k, xarena[c], pa, pb, xerr[c]);
+            launch_rows<0>(c, PW + k.rows.n(), 0, k, xarena[c], pa, pb, xerr[c]);
         } else {
             if constexpr (std::is_same_v<B, ops41sycl::NoRows>) launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
             else {
                 const ops41sycl::RowsPair<B, D> rp{h.base, d};
                 launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<B, D>>{rp});
             }
-            launch_rows<0>(c, (size_t)h.pull.n(), 0, ops41sycl::QbmPullK{h.pull}, xarena[c], pa, pb, xerr[c]);
+            launch_rows<0>(c, PW, 0, ops41sycl::QbmPullK{h.pull}, xarena[c], pa, pb, xerr[c]);
         }
     }
     // the block's query-b rows of card c [ra, rb) into y (tpm_layer): dense_m's packed 1,280-column forms
