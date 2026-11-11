@@ -396,6 +396,19 @@ Did not work (and why):
   3: 0.34, 4: 0.42, 5: 0.73, 6: 0.79; the extra token's cost in these launches 492 -> 388 us. 97 pick launches bitwise.
   Lesson: time forms back to back over cold weight copies ("SEQ"); a cache flush before each launch inflated K-quant
   forms up to 1.9x.
+- Done (tg95 traces + tg95b, 2026-11-11 10:50-11:28, tp95 = tp93 + default flips + attn-a1 + ck + qb-off-1, all
+  opt-in; `data/.../round19-tg95/`): the new defaults identical at blocks 1-256 (and the old forms). **ck and qb-off-1
+  identical everywhere** (traces 2-6 / 16 tokens, RIDE=0, k = 2 / 3 / 4, WG=1, 3K at 64; 16 / 16 guessing SAME, guess
+  logs equal). **attn-a1's one-launch form differs** (every ATT trace, first at layer 3 attn_o; the two-launch form
+  `OWN_ATT_F=0` identical): the output work-groups read the tiles' scores through the non-coherent L1 within the
+  launch and got the previous layer's (attn-a2 fixes it: uncached stores / loads, 16 counters; card-3 race bench).
+  Speed: ck in the engine wins less than on one card and loses at 3 tokens: check ms code M = 2 14.17 -> 13.89,
+  3 16.70 -> 16.85, 4 18.48 -> 17.90, 5 21.15 -> 20.4-20.7, 6 23.08 -> 22.57; guessing +0.5-1 % (code 132.88 /
+  130.57 -> 134.12 / 132.09, analysis 146.84 / 145.90 -> 146.27 / 147.26); ck-2 (per-size mask, M = 3 picks) asked.
+  **qb-off-1 gives nothing**: plain 96.98 / 97.89 vs k = 4 96.20 / 97.96 (k = 2 / 3 within noise), the zero-guess
+  checks (one-token path) 10.54 / 10.55 vs 10.52 / 10.60 ms; helper diagnosing (who reaches output-a last).
+  Lesson: a one-card bench of a structural balance change cannot show the new critical path; run a six-card
+  timeline before building the full patch.
 - In flight (2026-11-11 ~10:30): tp94 built (defaults + attn) but not gated; tp95 = tp94 + ck building, gate tg95
   (both opt-in arms, traces at blocks 1-256 incl. 2-6 with CK, 3K traces, plain, 3K read, 22 guessing runs, profile +
   check timeline). Helpers: qboff (H8), k7 (K7), rux (prompt experts).
