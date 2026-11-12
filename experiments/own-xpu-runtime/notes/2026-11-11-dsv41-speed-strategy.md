@@ -284,6 +284,29 @@ a draft under ~1 ms. Targets in flight: dense rows at 2-6 tokens (ws helper: flo
 exchange growth (an OWN_XWAIT build of a check timeline would split waiting from moving; the bytes explain only
 ~0.15-0.2 ms per token), the draft (draft-head-1, ~0.5 ms), TAU 0.34-0.40 (+1-4 %).
 
+### The one-token budget after tp101 (tg101 `tl_one_bg`, G128, 7 steps, 2026-11-11 22:50)
+
+Device time per step, ms (launches per step); card 2 (16 heads, the critical card) against card 0 (8 heads). Busy
+9.34 ms, span 9.50, gaps between launches 0.16; 932 launches per step on every card.
+
+| Part | card 2 | card 0 | Floor / what bounds it |
+|---|---|---|---|
+| Dense rows (Q8 / Q6 / Q5 rows with riders, BF16 indexer + compressor rows) | 3.95 | 3.34 | bytes ~2.2-2.6 ms; launch ramps |
+| Routed experts (2 launches per layer: gate + up, down; rows split over the six cards) | 1.90 | 1.88 | instructions (IQ grids): ~1.1 ms at the bench's instruction floor |
+| Pull exchanges (83) | 1.10 (13.2 us each) | 1.60 | card 2 arrives last, so its 13 us is transport (several PCIe trips); the light cards wait |
+| Push exchanges (80) | 0.59 (7.4 us each) | 0.59 | one-way ~2.4 us + launch |
+| Norm + mix dots (`SkNormDotsW` 77 x 6.6 us, `SkNormPairW` 40) | 0.62 | 0.62 | well under 0.1 by bytes (K4: fold into the consumer) |
+| Router rows (`RoutePRows` 40 x 10.7 us) | 0.43 | 0.44 | |
+| Attention (`SparseOutF` 40 x 10.8 us) | 0.43 | 0.46 | latency-bound |
+| Small launches (`HcPostPreP` 78, `MoeCombineA` 40, `SwigluBothS` 40, rope 40, ...) | ~0.35 | ~0.35 | 225 launches under 2 us take 0.27 ms in all |
+
+Launch sizes on card 2: 225 under 2 us (0.27 ms), 54 at 2-4 (0.15), 183 at 4-8 (1.17), 256 at 8-16 (2.94), 209 at
+16-32 (4.50), 4 longer (0.32). Read: there is no single big item left. 200 tok/s plain needs ~5 ms; with guessing
+at ~1.4x a ~7 ms step plus a check slope near 1 ms per extra token. The step's remaining levers: dense rows over their
+bytes (~1.4 ms on card 2, of which ~0.6 is the 16-head imbalance), experts over their instruction floor (~0.8 ms:
+L1 / L2 in flight), the pulls' trip count (~0.5 ms: xll-1 was the one-trip form, parked by the host events), the
+norm launches (~0.3 ms, K4), small-launch fusion (~0.2 ms), pushes folded into their producers (~0.2 ms).
+
 ## Scoreboard: strategies that worked, and ones that did not
 
 Worked (all bit-identical):
@@ -314,6 +337,7 @@ Worked (all bit-identical):
 | Small host copies off the card's queue (a second in-order queue per card, the launch waits by event) | `OWN_ENG_CQ` + `OWN_PRE_K` (tg88): engram rows 242 -> 70-80 us of host time per step; one-token timeline span 11.01 -> 10.75 ms, in-step idle 0.47 -> 0.30 ms | plain +0.3-0.5 % (91.77 -> 92.27 tok/s); default since tp89 |
 | The split mix finishes ride output-b's and shared down's launches in checks of 4-6 tokens, keeping their weight-stationary forms (`OWN_MT_DRIDE`, dride-1, tg98b) | checks of 4 / 5 / 6 tokens 17.88 / 20.47 / 22.71 -> 17.17 / 19.63 / 21.97 ms (code); code 138.7 / 139.4 -> 140.7 / 140.8 tok/s, analysis 152.7 / 153.8 -> 156.0 / 155.9, after 3K 136.7 -> 143.4 | +1.2-1.8 %, +4.9 % after a 3K prompt; default in tp99 |
 | Prompt blocks of 256 done right, kernel by kernel (pb-1, `OWN_PB=1`, tg100; default since tp102): 16-bit rows in weight-reusing forms, expert grouping by a counting sort, 6-bit forms without the private scale array, per-role form + token chunk at 65-256 tokens, every pick bench-checked bit for bit | 3K read 6.65 -> 5.68 s at blocks of 256 (6.73 at 64 before); router 450 -> 111 us, grouping 297 -> 30 us at 256 | **-15.6 % prompt time** |
+| One-wave launches for the 16-head cards' q_b / output-a rows in checks, the next weight segment loaded while the current one multiplies (pace-1, `OWN_MT_PACE=1`, tg102) | checks of 4 / 5 / 6 tokens -0.27 / -0.58 / -0.48 ms (code) | guessing +1.2-1.4 %, +4.7 % after a 3K prompt |
 | Window append per shape in checks (wa-2, `OWN_ATT_WA=2`, tg100; default since tp102) | checks of 2-6 tokens 0.15-0.37 ms cheaper (code) | +0.5 % short prompts, +4.1 % after a 3K prompt |
 | Copy the routed kernels' grid tables from a constant image instead of computing them per work-group (xperm-2, `-DOWN_R2_TAB_COPY=1`, tg101) + IQ2_S gate+up at 128 registers (`OWN_PAIR_G128=1`) | IQ1_S gate+up 27.3 -> 23.5 us | plain 101.5 -> 103.9 tok/s (+2.4 %); G128 pays only with the copy |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
@@ -360,7 +384,19 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 20:10 EST)
+## Work in flight (2026-11-11, updated 23:10 EST)
+
+- 23:05 tg102 + tg102b done (`data/.../round19-tg102/`): every trace identical without the overlap; pace-1 pays in
+  checks (4-6 tokens -0.26 to -0.58 ms; code 142.4 -> 144.1 tok/s, analysis 157.8 -> 159.9, after 3K 140.9 -> 147.5);
+  with the draft vocabulary code 144.72, analysis 162.43 (best so far). Plain 103-104 (G128 +0.4 % on the mean of
+  four runs each). px-1 not exact: the fused router read the block's first row instead of the half's
+  (`route_shared_m` `scm[c][0]`), so half B of each block never wrote its expert ids, probabilities or shared rows;
+  first differing record step 1 layer 2 `cidx` (runs/pxdbg). Fix px-1b (pb256 helper, 4 sites) -> tp103; the PX
+  read times (5.28 s) are not valid. Exact check without a rebuild (`OWN_MT_RFUSE=0`): PX identical twice, but 3K
+  5.81 / 5.84 s against 5.87 / 5.88 without PX: -1 % only (predicted ~-10 %); suspect the halves' 128-token forms;
+  pb256 helper asked for halves of 256 (blocks of 512) and a per-layer account first. Next tree tp103: px-1b, pace-1 and G128 on by default, pace-2 / L1 prefetch /
+  rux-2 as they land. New helper fl (card 1): fold the norm launches into their consumers (K4) and the tiny launches
+  into neighbours, predicted ~0.5 ms per step together.
 
 - 20:07 build tp100 = tp99 + qb-off compiled out (needs `-DOWN41_QBOFF_M`) + xperm-1 (`OWN_PAIR_G128=1`) + wa-2
   (`OWN_ATT_WA=2`, per-shape window-append choice) + pb-1 (`OWN_PB=1` = mask 0x1e, prompt blocks of 9-256: 16-bit
