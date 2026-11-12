@@ -372,9 +372,24 @@ public:
         // OWN_PX_GRF="a,b,..": the register mode of X1(A) X1(B) X2(A) X2(B) X3(A) X3(B) X4(A) X4(B) (128 / 256; 0: the
         // layer's routed-down mode, px_down_grf)
         unsigned px_grf[8] = {256, 256, 256, 128, 128, 0, 0, 128};
+        // px-move (OWN_PX_MOVE, opt-in; pb256/pxmove): a pull runs beside only the ONE qs launch queued right after it
+        // (the next qs launch starts after the pull's end: tg103 prompt timelines, 0 exceptions in 1,438 pulls), so
+        // queue three of them right before a long launch: bit 1 X2(B) and X3(A) right before the routed gate / up
+        // (after the expert groups) instead of before the groups; bit 2 X4(B) before half A's q_a rows (between phases
+        // 0a and 0b) instead of before A's attention (its register mode then defaults to 256, the rows' mode, as X1(A)
+        // in the same place of half B). Only the moment a pull is queued moves: the same launches, sums and exchange
+        // order. 0 (default): as without it.
+        unsigned px_move = 0;
+        // OWN_PX_WGS="a,b,..": work-groups of X1(A) X1(B) .. X4(B) (0: OWN_PX_WG; the copy does not depend on it)
+        unsigned px_wgs[8] = {};
         bool px_serial = false; // OWN_PX_SERIAL=1 (diagnostic): qs waits for each pull right after queueing it (no overlap)
         bool px_check = false;  // OWN_PX_CHECK=1 (diagnostic): after each block as halves, the numbers' order on every
                                 // exchange queue, the same pulls on every card, every flag word = its card's last number
+        // px-512 (OWN_PX_BIG=1, opt-in; needs OWN_PX=1): prompt blocks of up to 2 x MTX tokens, each run as two halves
+        // of at most MTX (every kernel launch still sees at most MTX tokens: the halves' layers, and the whole block's
+        // engram rows and draft injection in pieces of at most MTX); the block buffers and exchange regions hold
+        // 2 x MTX tokens (+ ~0.25 GiB per card at a 4K context). 0 (default): blocks of at most MTX, buffers as before.
+        bool px_big = false;
         unsigned xll = 0; // OWN_XLL (xll-1, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip
                           // (ops41sycl::XchgPullL: the rows travel in units of 16 / 64 bytes that carry the exchange
                           // number, read as soon as they are there); 16 or 64 (unit bytes; OWN_XLL=1: XLL_DEFAULT_U), 0: off
@@ -983,6 +998,12 @@ public:
     // sub-groups or launches. The block buffers hold MTA tokens (8 spare: token groups of G <= 9 read up to
     // ceil(mt / G) * G tokens' inputs and store only t < mt).
     static constexpr int MTF = 16, MTA = MTX + 8;
+    // px-512 (OWN_PX_BIG): blocks of up to MTB tokens (two OWN_PX halves of at most MTX); the block buffers and the
+    // exchange regions hold mtb_n() tokens (+ 8 spare: mtba_n()); without it MTX (+ 8) as before. The kernels' token
+    // capacities (MTX, MTA: the ring's block area, ws_rows' x capacity, the index tables) do not change.
+    static constexpr int MTB = 2 * MTX;
+    int mtb_n() const { return o.px_big ? MTB : MTX; }
+    size_t mtba_n() const { return (size_t)mtb_n() + 8; }
     long tokoff[TILES] = {};
     long cpos(int c) const { return pos + tokoff[c]; }
     void prof(const char *name, int t) {
@@ -1435,6 +1456,8 @@ private:
     sycl::event px_last[TILES];  // the last launch queued on xqs[c]
     unsigned px_g[TILES] = {};   // register mode of the next pull on xqs[c] (128 / 256; 0: as OWN_XPULL_GRF)
     unsigned px_n[TILES] = {};   // work-groups of the next pull on xqs[c] (0: xchg's count)
+    int px_pend[TILES] = {};     // OWN_PX_MOVE bit 1: the pull queued before the routed gate / up (2 * site + half + 1)
+    unsigned px_pend_g[TILES] = {}; // ... in this register mode
     long px_xn[TILES] = {};      // launches queued on xqs[c]
     static inline thread_local int px_tok = 0; // OWN_PX: the running half's first token in the block (its card thread;
                                                // 0 outside a half): the block's per-token views and regions move by it
@@ -3880,6 +3903,7 @@ private:
         }
         for (int c = 0; c < N; ++c) qs[c].wait();
         tl_setup(); // OWN_TIMELINE
+        if (o.px_big && (!o.px || o.tp < 2)) throw std::runtime_error("OWN_PX_BIG: needs OWN_PX=1 and OWN_TP > 1");
         if (o.k7 && !k7_x_ok())
             std::fprintf(stderr, "OWN_K7=%u: off (needs the push h exchange, OWN_SMALLK_DOTS=8, OWN_NORM_DOTS, no OWN_XTAIL "
                                  "or OWN_XWAIT)\n", o.k7);

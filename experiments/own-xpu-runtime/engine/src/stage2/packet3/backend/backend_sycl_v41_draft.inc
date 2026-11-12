@@ -53,7 +53,7 @@ void dr_alloc(int c) {
         qs[c].memset(dring[c][s], 0, (size_t)(DR_WIN + MTX) * g.hd * 2);
     }
     // (MTA tokens: dfeat and dmainn are the injection's dense-row inputs, see MTA)
-    dfeat[c] = dalloc<float>(c, (size_t)MTA * 3 * g.h);
+    dfeat[c] = dalloc<float>(c, mtba_n() * 3 * g.h); // (OWN_PX_BIG: the block's 2 x MTX rows)
     dmain[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
     dmainn[c] = dalloc<act_t>(c, (size_t)MTA * g.h);
     dkv[c] = dalloc<act_t>(c, (size_t)MTA * g.hd);
@@ -72,17 +72,20 @@ void dr_capture(int L, int c) {
 // rows 0 .. n - 1 of the block's features into every stage's window ring at positions p0 .. p0 + n - 1 (card
 // c's queue; needs mt_n == n for the token-row launches). staged: into the ring's block area (rows 128 + t)
 // instead, for a checked block: commit_pending moves the kept ones to their window rows.
-void dr_inject(int c, int n, long p0, bool staged = false) {
+// t0 (OWN_PX_BIG): rows t0 .. t0 + n - 1 of the block's features, through the feature-row region from row t0 on
+void dr_inject(int c, int n, long p0, bool staged = false, int t0 = 0) {
     if (n < 1 || n > MTX || mt_n != n) throw std::runtime_error("draft injection: rows");
     if (p0 < 0 || p0 + n > max_seq) throw std::runtime_error("draft injection: position beyond max_seq");
     const size_t H = g.h, hd = g.hd;
     const act_t *fcy = dmain[c];
+    const act_t *feat = (const act_t *)dfeat[c] + (size_t)t0 * 3 * H;
+    const unsigned fcM = xfcM + (unsigned)t0 * (unsigned)g.h;
     if (wgt[c].at("dsp.fc.weight").nrows == (unsigned)H) { // replicated (OWN_DR_FC_SPLIT=0): every card all rows
-        gemv_m(c, "dsp.fc.weight", (const act_t *)dfeat[c], 3 * H, dmain[c], H, 0, (unsigned)n);
+        gemv_m(c, "dsp.fc.weight", feat, 3 * H, dmain[c], H, 0, (unsigned)n);
     } else { // this card's model rows (attn_output_b's split), then all-gathered: the same row values
-        gemv_m(c, "dsp.fc.weight", (const act_t *)dfeat[c], 3 * H, xarena[c] + xfcM + td0[c], H, 0, (unsigned)n);
-        xchg_m(c, xfcM, (unsigned)g.h, (unsigned)n, td0[c], td1[c], 0, XP_H);
-        fcy = xarena[c] + xfcM;
+        gemv_m(c, "dsp.fc.weight", feat, 3 * H, xarena[c] + fcM + td0[c], H, 0, (unsigned)n);
+        xchg_m(c, fcM, (unsigned)g.h, (unsigned)n, td0[c], td1[c], 0, XP_H);
+        fcy = xarena[c] + fcM;
     }
     rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{fcy, wp<float>(c, "dsp.enc.output_norm.weight"), dmainn[c]}, H, H));
     for (int s = 0; s < DR_STAGES; ++s) {

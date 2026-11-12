@@ -22,7 +22,7 @@ struct MtN {
 MtN mt_n;
 long bpos() const { return pos + px_tok; } // the running block's (OWN_PX: half's) first position
 const int32_t *mt_toks = nullptr;
-Scratch scm[TILES][MTX] = {};    // per-token views of the block's buffers
+std::vector<Scratch> scm[TILES];  // per-token views of the block's buffers (mtb_n() tokens, mt_alloc)
 Scratch sc_keep[TILES] = {};
 act_t *strm[TILES] = {}, *streams_keep[TILES] = {};
 act_t *tengm[TILES][2] = {};
@@ -37,7 +37,7 @@ int32_t *blm[TILES] = {};        // OWN_IDX_CAND: per token the layer-20 block l
 float *score2m[TILES] = {};      // OWN_IDX_CAND=2: the full scores per token (stride max_seq + 64)
 int32_t *list2m[TILES] = {};     // OWN_IDX_CAND=2: the full select's lists (512 per token)
 uint32_t *egrp[TILES] = {};      // the layer's expert groups (RUGrp layout, mt_eu)
-long mlen[TILES][4][MTX] = {};   // rows of each kv source after token t's publish
+long mlen[TILES][4][MTB] = {};   // rows of each kv source after token t's publish
 unsigned xoaM = 0, xobM = 0, xactM = 0, xengM = 0, xfcM = 0; // xfcM: the draft's dsp.fc rows (dr_inject)
 unsigned xdsA = 0, xdsF = 0; // OWN_MT_DSPLIT: the partial regions (MTA tokens of 25 * HC_SEG doubles each)
 struct XR2 {                 // OWN_MT_DSPLIT: the second region of card c's next pull exchange (ds_arm; xchg clears it)
@@ -309,51 +309,55 @@ template <size_t SLM, typename K, typename... A> void launch_wgs(int c, size_t n
 
 // (every region holds MTA tokens: MTX + the token groups' spare reads, see MTA)
 size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones (+ the head outputs)
-    return (size_t)MTA * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
-           (size_t)MTA * (size_t)g.h + (size_t)MTA * (size_t)g.qh * (size_t)g.hd +
-           (o.mt_dsplit ? 4 + (size_t)2 * MTA * 50 * HC_SEG : 0); // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
+    const size_t A = mtba_n(); // (MTA; OWN_PX_BIG: 2 x MTX + 8)
+    return A * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
+           A * (size_t)g.h + A * (size_t)g.qh * (size_t)g.hd +
+           (o.mt_dsplit ? 4 + (size_t)2 * A * 50 * HC_SEG : 0); // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
 }
 void mt_offsets(size_t base) {
     if (base + mt_arena_floats() > (size_t)UINT32_MAX) throw std::runtime_error("multi-token step: arena offsets");
+    const unsigned A = (unsigned)mtba_n(); // (MTA; OWN_PX_BIG: 2 x MTX + 8)
     xoaM = (unsigned)base;
-    xobM = xoaM + MTA * (unsigned)g.ototal;
-    xactM = xobM + MTA * (unsigned)g.h;
-    xengM = xactM + MTA * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
-    xdrM = (xengM + MTA * 10 * (unsigned)g.h + 31u) & ~31u; // the draft's argmax rows, 128-byte aligned (draft.inc)
-    xfcM = xengM + MTA * 10 * (unsigned)g.h + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
+    xobM = xoaM + A * (unsigned)g.ototal;
+    xactM = xobM + A * (unsigned)g.h;
+    xengM = xactM + A * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
+    xdrM = (xengM + A * 10 * (unsigned)g.h + 31u) & ~31u; // the draft's argmax rows, 128-byte aligned (draft.inc)
+    xfcM = xengM + A * 10 * (unsigned)g.h + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
                                                // last layer's exchange on xobM with no exchange in between)
-    xhoM = xfcM + MTA * (unsigned)g.h;         // the head outputs (OWN_TP_HEADS), MTA tokens of qh * hd
+    xhoM = xfcM + A * (unsigned)g.h;           // the head outputs (OWN_TP_HEADS), A tokens of qh * hd
     if (o.mt_dsplit) { // OWN_MT_DSPLIT: the partial regions, 16-byte aligned (doubles; XchgPull's vec4 rows)
-        xdsA = (xhoM + MTA * (unsigned)g.qh * (unsigned)g.hd + 3u) & ~3u;
-        xdsF = xdsA + MTA * 50u * (unsigned)HC_SEG;
+        xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 3u) & ~3u;
+        xdsF = xdsA + A * 50u * (unsigned)HC_SEG;
     }
 }
 void mt_alloc(int c) {
     // per-token buffers of MTA tokens (token t at t * n; tokens >= MTX only take token groups' spare reads)
-    auto md = [&](size_t n) { return dalloc<act_t>(c, n * MTA); };
-    auto mf = [&](size_t n) { return dalloc<float>(c, n * MTA); };
+    const size_t TB = (size_t)mtb_n(), TA = mtba_n(); // (MTX, MTA; OWN_PX_BIG: 2 x MTX, + 8)
+    auto md = [&](size_t n) { return dalloc<act_t>(c, n * TA); };
+    auto mf = [&](size_t n) { return dalloc<float>(c, n * TA); };
     const size_t H = g.h, Q = (size_t)g.qh * g.hd, nm = (size_t)(tm1[c] - tm0[c]), nd = (size_t)(td1[c] - td0[c]);
     act_t *x = md(H), *xn = md(H), *qa = md(g.qrank), *qn = md(g.qrank), *q = md(Q), *kv = md(g.hd), *kvn = md(g.hd);
     act_t *qi = md(32 * 128), *wv = md(32);
-    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * MTX); // (index scores: only t < mt is read)
-    int64_t *lens = dalloc<int64_t>(c, MTX);
+    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * TB); // (index scores: only t < mt is read)
+    int64_t *lens = dalloc<int64_t>(c, TB);
     float *router = mf(g.experts), *prob = mf(6);
-    uint32_t *ids = dalloc<uint32_t>(c, 6 * MTX);
+    uint32_t *ids = dalloc<uint32_t>(c, 6 * TB);
     act_t *expg = md(6 * nm), *expu = md(6 * nm), *expd = md(6 * nd), *shg = md(g.mid), *shu = md(g.mid), *shd = md(H);
     float *of = mf(Q), *attn_w = mf((size_t)g.qh * 640);
     // (split attention groups: the head outputs in the arena, where the partner card reads them)
     act_t *obuf = any_split() ? (act_t *)(xarena[c] + xhoM) : md(Q), *cw = md(g.hd), *scg = md(g.hd), *latent = md(g.hd), *kk = md(128);
     float *pa = mf(4), *qa4 = mf(4), *ca = mf(16), *pf = mf(4), *qf = mf(4), *cf = mf(16), *cur = mf(4);
-    double *d25 = dalloc<double>(c, (size_t)25 * HC_SEG * MTX);
+    double *d25 = dalloc<double>(c, (size_t)25 * HC_SEG * TB);
     float *rs = mf(g.experts), *rsb = mf(g.experts);
-    int32_t *cat = dalloc<int32_t>(c, (size_t)640 * MTX), *widx = dalloc<int32_t>(c, (size_t)128 * MTX);
+    int32_t *cat = dalloc<int32_t>(c, (size_t)640 * TB), *widx = dalloc<int32_t>(c, (size_t)128 * TB);
     act_t *old = md(4 * H);
-    uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * MTX);
-    if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * MTX);
+    uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * TB);
+    if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * TB);
     // (score2m: one row of max_seq + 64 per token, as score; it was mf(... * MTX), i.e. MTX rows per token)
-    if (o.idx_cand == 2) { score2m[c] = dalloc<float>(c, ((size_t)max_seq + 64) * MTX); list2m[c] = dalloc<int32_t>(c, (size_t)512 * MTX); }
+    if (o.idx_cand == 2) { score2m[c] = dalloc<float>(c, ((size_t)max_seq + 64) * TB); list2m[c] = dalloc<int32_t>(c, (size_t)512 * TB); }
     strm[c] = md(4 * H);
-    for (int t = 0; t < MTX; ++t) {
+    scm[c].assign(TB, Scratch{});
+    for (int t = 0; t < (int)TB; ++t) {
         Scratch s = sc[c]; // kv_state, score_state, warm, eng_rows, kvbuf stay the card's own
         s.x = x + t * H; s.xn = xn + t * H;
         s.qa = qa + (size_t)t * g.qrank; s.qn = qn + (size_t)t * g.qrank; s.q = q + t * Q;
@@ -380,14 +384,14 @@ void mt_alloc(int c) {
         scm[c][t] = s;
     }
     for (int li = 0; li < 2; ++li) {
-        tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * MTA); // (engram_kv rows' input: MTA)
-        h_engm[c][li].resize((size_t)24 * g.engram_dim * MTX);
+        tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * TA); // (engram_kv rows' input: MTA)
+        h_engm[c][li].resize((size_t)24 * g.engram_dim * TB);
         if (o.eng_dev) {
-            tengrm[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176 * MTX);
-            h_engrm[c][li].resize((size_t)24 * 176 * MTX);
+            tengrm[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176 * TB);
+            h_engrm[c][li].resize((size_t)24 * 176 * TB);
         }
     }
-    for (int k = 0; k < 8; ++k) cidxm[c][k] = dalloc<int32_t>(c, (size_t)512 * MTX);
+    for (int k = 0; k < 8; ++k) cidxm[c][k] = dalloc<int32_t>(c, (size_t)512 * TB);
     egrp[c] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS);
     if (o.px) px_egrp[c][1] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS); // OWN_PX: half B's expert groups
     if (o.dspark) dr_alloc(c);
@@ -903,7 +907,7 @@ void tpm_engram_prefetch() {
 void tpm_engram_share(int c) {
     static const long page = sysconf(_SC_PAGESIZE);
     auto l = iq3::layout(iq3::Type::Q5_K);
-    const uint8_t *mine[2 * 24 * MTX];
+    const uint8_t *mine[2 * 24 * MTB];
     int nm = 0, r = 0;
     for (int li = 0; li < 2; ++li) {
         const int L = li == 0 ? 1 : 14;
@@ -1000,6 +1004,17 @@ void tpm_engram_kv(int c) {
     for (int li = 0; li < 2; ++li) {
         const int L = li == 0 ? 1 : 14;
         if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) continue;
+        if (mt_n > MTX) { // OWN_PX_BIG: in pieces of at most MTX tokens (each the launch of a plain block of that size)
+            const int MB = mt_n, h0 = MtN::half;
+            for (int t0 = 0; t0 < MB; t0 += MTX) {
+                const int n = std::min(MTX, MB - t0);
+                MtN::half = n;
+                gemv_m(c, "blk." + std::to_string(L) + ".engram_kv.weight", tengm[c][li] + (size_t)t0 * 24 * g.engram_dim,
+                       (size_t)24 * g.engram_dim, xarena[c] + xengM + (size_t)t0 * 10 * g.h + (size_t)li * 5 * g.h + te0[c],
+                       (size_t)10 * g.h, 0, (unsigned)n);
+            }
+            MtN::half = h0;
+        } else
         gemv_m(c, "blk." + std::to_string(L) + ".engram_kv.weight", tengm[c][li], (size_t)24 * g.engram_dim,
                xarena[c] + xengM + (size_t)li * 5 * g.h + te0[c], (size_t)10 * g.h);
         any = true;
@@ -1833,6 +1848,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         gemv_m(c, p + "ffn_gate_shexp.weight", b.xn, H, b.shg, (size_t)g.mid);
         gemv_m(c, p + "ffn_up_shexp.weight", b.xn, H, b.shu, (size_t)g.mid);
     }
+    if (px_run[c]) px_fire_pend(c); // OWN_PX_MOVE bit 1: a deferred pull beside the routed gate / up
     routed_m(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight", b.xn, H, b.ids, b.expg, b.expu, false);
     if (mt_small) {
         launch(c, (size_t)M * 7 * nm, 64,
@@ -2085,7 +2101,7 @@ void px_fire(int c, int site, int h, unsigned grf) {
     if (xr2[c].on) throw std::runtime_error("OWN_PX: a second region armed outside its exchange");
     d.on = false;
     xr2[c] = d.r2;
-    px_g[c] = grf, px_n[c] = o.px_wg;
+    px_g[c] = grf, px_n[c] = o.px_wgs[2 * site + h] ? o.px_wgs[2 * site + h] : o.px_wg; // (OWN_PX_WGS)
     xchg_m(c, d.off, d.stride, d.nslot, d.r0, d.r1, 0, d.part);
     px_g[c] = 0, px_n[c] = 0;
     px_xe[c][site][h] = px_last[c];
@@ -2095,6 +2111,19 @@ void px_fire(int c, int site, int h, unsigned grf) {
 void px_await(int c, int site, int h) {
     if (tl_path) tl_px_mark(c, 'w', site, h, 0); // OWN_TIMELINE_PROMPT
     px_wait(c, px_xe[c][site][h]);
+}
+// OWN_PX_MOVE bit 1: queue the pull right before the running half's routed gate / up (tpm_layer, phase 3b; px_layers
+// queues it after the phase if the phase did not); without the bit: now
+void px_defer(int c, int site, int h, unsigned grf) {
+    if (!(o.px_move & 1)) return px_fire(c, site, h, grf);
+    if (px_pend[c]) throw std::runtime_error("OWN_PX_MOVE: two pulls deferred");
+    px_pend[c] = 2 * site + h + 1, px_pend_g[c] = grf;
+}
+void px_fire_pend(int c) {
+    if (!px_pend[c]) return;
+    const int k = px_pend[c] - 1;
+    px_pend[c] = 0;
+    px_fire(c, k / 2, k % 2, px_pend_g[c]);
 }
 // the layer's routed-down register mode (tp100 / tp101 builds: the IQ2_XXS / IQ3_XXS down forms 256, the others 128)
 unsigned px_down_grf(int L) const {
@@ -2117,6 +2146,7 @@ void px_exit(int c) {
     if (px_q[c]) px_wait(c, px_last[c]); // qs[c] after everything on xqs[c]: the head and the draft's rows follow
     px_q[c] = px_run[c] = false;
     px_g[c] = px_n[c] = 0;
+    px_pend[c] = 0;
     xr2[c].on = false;
     MtN::half = 0;
     px_tok = 0;
@@ -2136,6 +2166,7 @@ bool px_ok(int mt) {
     if (o.xll || o.dev_index_check || o.idx_cand == 2 || xqs.size() < (size_t)o.tp)
         throw std::runtime_error("OWN_PX: not with OWN_XLL, OWN_DEV_INDEX_CHECK=1 or OWN_IDX_CAND=2");
     const unsigned h = (unsigned)mt / 2;
+    if (h > (unsigned)MTX) return false; // (OWN_PX_BIG: halves of at most MTX tokens)
     // every exchange of the halves' layers a pull (xchg's XchgPull / XchgPull2), the engram rows' too
     return use_pull(xp_oa_m(h), h) && use_pull(XP_H, h) && use_pull(XP_ACT, 7u * h) && use_pull(XP_ENG, 2u * (unsigned)mt);
 }
@@ -2151,6 +2182,7 @@ template <typename F> void px_layers(int c, F &&late) {
     px_cap[c][0] = px_cap[c][1] = eu_cap_c[c];
     px_sd[c][0] = px_sd[c][1] = false;
     px_hh[c] = 0;
+    px_pend[c] = 0;
     for (auto &a : px_x[c])
         for (auto &d : a) d.on = false;
     px_q[c] = px_run[c] = true;
@@ -2165,9 +2197,15 @@ template <typename F> void px_layers(int c, F &&late) {
             px_half(c, 0);
             if (L > L0) px_await(c, PX_X4, 0), tpm_layer(L - 1, c, PX_P5);
             if (L == 1 || L == 14) px_eng(c, MB);
-            tpm_layer(L, c, PX_P0A | PX_P0B);
-            if (L > L0) px_fire(c, PX_X4, 1, gr(7, L - 1));
-            tpm_layer(L, c, PX_P1 | PX_P1B);
+            if (L > L0 && (o.px_move & 2)) { // OWN_PX_MOVE bit 2: X4(B, L - 1) beside A's q_a rows
+                tpm_layer(L, c, PX_P0A);
+                px_fire(c, PX_X4, 1, gr(7, L - 1));
+                tpm_layer(L, c, PX_P0B | PX_P1 | PX_P1B);
+            } else {
+                tpm_layer(L, c, PX_P0A | PX_P0B);
+                if (L > L0) px_fire(c, PX_X4, 1, gr(7, L - 1));
+                tpm_layer(L, c, PX_P1 | PX_P1B);
+            }
             // half B: X1(A) beside B's q_a .. q_b rows
             px_half(c, 1);
             if (L > L0) px_await(c, PX_X4, 1), tpm_layer(L - 1, c, PX_P5);
@@ -2186,12 +2224,14 @@ template <typename F> void px_layers(int c, F &&late) {
             // X2(B) beside A's routed gate / up, X3(A) beside B's, X3(B) beside A's routed down
             px_half(c, 0);
             px_await(c, PX_X2, 0), tpm_layer(L, c, PX_P3A);
-            px_fire(c, PX_X2, 1, gr(3, L));
+            px_defer(c, PX_X2, 1, gr(3, L)); // (OWN_PX_MOVE bit 1: right before A's routed gate / up)
             tpm_layer(L, c, PX_P3B);
+            px_fire_pend(c);
             px_half(c, 1);
             px_await(c, PX_X2, 1), tpm_layer(L, c, PX_P3A);
-            px_fire(c, PX_X3, 0, gr(4, L));
+            px_defer(c, PX_X3, 0, gr(4, L)); // (OWN_PX_MOVE bit 1: right before B's routed gate / up)
             tpm_layer(L, c, PX_P3B);
+            px_fire_pend(c);
             px_fire(c, PX_X3, 1, gr(5, L));
             // X4(A) beside B's routed down
             px_half(c, 0);
@@ -2296,7 +2336,15 @@ void tpm_card_step(int c) {
         } else {
             twait(c);
         }
-        if (o.dspark && !mt_heads) { // a prompt block: every position is kept, into the draft's windows now
+        if (o.dspark && !mt_heads && mt_n > MTX) { // OWN_PX_BIG: in pieces of at most MTX rows, each a plain block's
+            const int MB = mt_n;                    // injection (its own feature-row region: no rewrite before peers read)
+            for (int t0 = 0; t0 < MB; t0 += MTX) {
+                MtN::half = std::min(MTX, MB - t0);
+                dr_inject(c, (int)mt_n, pos + t0, false, t0);
+            }
+            MtN::half = 0;
+            twait(c);
+        } else if (o.dspark && !mt_heads) { // a prompt block: every position is kept, into the draft's windows now
             dr_inject(c, mt_n, pos);
             twait(c);
         } else if (o.dspark) { // a checked block: staged in the block area, after the head (the host does not wait
@@ -2332,14 +2380,25 @@ void engram_ask_ahead() {
 }
 public:
 std::vector<int64_t> eng_ahead; // the prompt's tokens after the current block (engram vocabulary; OWN_ENG_AHEAD)
+// OWN_PX_BIG: of the next m prompt tokens, the count decode_block_tp runs as one block: m when it fits (at most
+// MTX, or an even block of two halves of OWN_PX_MIN .. MTX tokens), else MTX (an odd tail past MTX: MTX, then the
+// rest). Without OWN_PX_BIG: m (decode_block_tp refuses more than MTX, as before).
+int px_block_take(int m) const {
+    if (!o.px_big || m <= MTX) return m;
+    return m <= MTB && m % 2 == 0 && (unsigned)(m / 2) >= o.px_min ? m : MTX;
+}
 // mt tokens in one step (prompt reading); returns the next token after the last one (-1 without the head)
 int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (o.tp < 2 || tp_th.empty()) throw std::runtime_error("multi-token step needs OWN_TP > 1 with card threads");
-    if (mt < 1 || mt > MTX) throw std::runtime_error("multi-token step: 1.." + std::to_string(MTX) + " tokens (OWN41_MTX)");
+    if (mt < 1 || mt > mtb_n())
+        throw std::runtime_error("multi-token step: 1.." + std::to_string(mtb_n()) + " tokens (OWN41_MTX; OWN_PX_BIG: 2 x)");
     if (pos + mt > max_seq) throw std::runtime_error("position beyond max_seq");
     if (!o.diet || !o.small_fast || o.hc_legacy || !o.hc_ride || !o.rope_out || o.fin_move || o.xtail)
         throw std::runtime_error("multi-token step is written for the default options");
     px_blk = px_ok(mt); // OWN_PX: as two halves
+    if (mt > MTX && !px_blk) // OWN_PX_BIG
+        throw std::runtime_error("OWN_PX_BIG: a block of " + std::to_string(mt) + " tokens runs only as two OWN_PX halves "
+                                 "(even, halves of OWN_PX_MIN .. " + std::to_string(MTX) + ")");
     px_hn = px_blk ? mt / 2 : 0;
     mt_n = mt;
     mt_toks = toks;

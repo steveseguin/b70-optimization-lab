@@ -257,6 +257,28 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_PX")) opt.px = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_PX_MIN")) opt.px_min = std::max(1u, (unsigned)atoi(e));
     if (const char *e = getenv("OWN_PX_WG")) opt.px_wg = std::max(1u, std::min(64u, (unsigned)atoi(e)));
+    // px-move (opt-in, /home/steve/dsv41-work/pb256/pxmove/README.txt): OWN_PX_MOVE bit 1 X2(B) / X3(A) right before
+    // the routed gate / up, bit 2 X4(B) before half A's q_a rows (X4(B)'s register mode then 256 unless OWN_PX_GRF says);
+    // OWN_PX_WGS (eight work-group counts X1A .. X4B, 0 = OWN_PX_WG)
+    if (const char *e = getenv("OWN_PX_MOVE")) {
+        opt.px_move = (unsigned)atoi(e);
+        if (opt.px_move > 3) die("OWN_PX_MOVE: 0 .. 3");
+        if (opt.px_move & 2) opt.px_grf[7] = 256;
+    }
+    if (const char *e = getenv("OWN_PX_WGS")) {
+        unsigned v[8] = {}, n = 0;
+        for (const char *s = e; *s && n < 8;) {
+            v[n++] = (unsigned)strtoul(s, nullptr, 10);
+            const char *cm = std::strchr(s, ',');
+            if (!cm) break;
+            s = cm + 1;
+        }
+        if (n != 8) die("OWN_PX_WGS: eight values (X1A,X1B,X2A,X2B,X3A,X3B,X4A,X4B), each 0 .. 64");
+        for (unsigned k = 0; k < 8; ++k) {
+            if (v[k] > 64) die("OWN_PX_WGS: 0 .. 64");
+            opt.px_wgs[k] = v[k];
+        }
+    }
     if (const char *e = getenv("OWN_PX_GRF")) {
         unsigned v[8] = {}, n = 0;
         for (const char *s = e; *s && n < 8;) {
@@ -273,6 +295,8 @@ int main(int argc, char **argv) {
     }
     if (const char *e = getenv("OWN_PX_SERIAL")) opt.px_serial = atoi(e) != 0;
     if (const char *e = getenv("OWN_PX_CHECK")) opt.px_check = atoi(e) != 0;
+    // px-512 (opt-in): OWN_PX_BIG=1 with OWN_PX=1: OWN_PROMPT_BLOCK up to 2 x OWN41_MTX (512), each block two halves
+    if (const char *e = getenv("OWN_PX_BIG")) opt.px_big = atoi(e) != 0;
     // xll-1 (2026-11-11, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip; 1 = the default unit
     // (Options::XLL_DEFAULT_U bytes), 16 / 64: that unit, 0: off (the backend refuses anything else)
     if (const char *e = getenv("OWN_XLL")) opt.xll = atoi(e) == 1 ? (unsigned)own41::Backend41::Options::XLL_DEFAULT_U : (unsigned)atoi(e);
@@ -702,7 +726,7 @@ int main(int argc, char **argv) {
                 // only) while the cards run the current block
                 const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pblock);
                 for (size_t i = 0; i < prompt.size();) {
-                    const int m = (int)std::min<size_t>((size_t)pblock, prompt.size() - i);
+                    const int m = be.px_block_take((int)std::min<size_t>((size_t)pblock, prompt.size() - i)); // (OWN_PX_BIG)
                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);
 #ifndef OWN41_ACT_BF16
                     be.eng_ahead.clear();
