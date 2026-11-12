@@ -380,6 +380,32 @@ Did not work (and why):
   0.05 ms per cycle, with mixed sign (global placement changes every kernel's code by 1-2 %: some forms +10-30 %,
   Q8 G2R4 40-50 % faster). Placement only matters for the prompt WsQ6 forms, which pb-1's bit 8 avoids. Helper
   moved to the prompt exchange-overlap design (`pb256/README-overlap.txt`).
+- 21:50 tp102 queued (after tg101 + a health probe for the 21:24 card-5 bench fault): tp101 + draft slots padded +
+  pace-1 + pb-1 / wa-2 as defaults (`OWN_PB=0`, `OWN_ATT_WA=0` switch them off). pace-1 (attn helper,
+  `dsv41-work/attn/pace/`, `OWN_MT_PACE=1`, roles `OWN_MT_PACE_ROLES` 1 Q8 q_b / 2 Q6 q_b / 4 Q8 output-a):
+  persistent one-wave launches for the pace cards' q_b / output-a rows in checks, the next quant-word segment loaded
+  while the current one multiplies, the HcFinish rider in its own work-group. Card 3, real rows, us per launch:
+  q_b Q8 at 2-6 tokens 25.4 / 29.2 / 28.4 / 32.6 / 34.4 -> 21.4 / 21.9 / 20.9 / 21.6 / 23.0; q_b Q6 at 4-6 26.8 /
+  28.8 / 31.2 -> 22.9 / 25.1 / 27.2; output-a Q8 at 2 and 4-6 -1 to -2 us; 635 compares, 0 differ. Predicted per
+  check: 0.135 ms at 2 tokens, 0.20 at 3, 0.28 at 4, 0.41 at 5-6.
+- Expert-kernel time ledger (xperm helper, `dsv41-work/xperm/README-ledger.txt`): one-token IQ2_S gate+up, bench
+  29.6 us / engine 35.6. Launch + table fill 3.3 us; math ~15.5 (instruction floor 18.1); x reads 2.4 exposed
+  (52 MB from L1 per launch, 7x the weight bytes); reduction + write 1.4; weights not hidden 6.7. Each sub-group
+  loads its row words right before use, 4 dependent memory trips per row pair, all threads in lockstep. The engine
+  is +6 us over the bench, not from weight pages. Ranked: L1 prefetch of the rows ahead of use (~-0.21 ms per step,
+  ~-0.1 ms per extra check token, spread over kinds), L2 find the engine-over-bench gap (up to ~-0.24 ms per step),
+  L3 checks read x once for two rows (~-0.1 ms per extra token), L4 one reduction per row pair. L2 sampler run, then
+  L1 (`OWN_R2_PF`) next.
+- 21:30 rare stale read in the draft head's exchange (guess logs of every code / analysis / prose run since tg88,
+  same draft settings grouped): 2 odd rounds in ~50,000. tg100 code_w2_2 round 66 had a first confidence of 0.9049
+  where 107 other runs had 0.9759; tg93 prose_d93 round 182 differed in positions 2-3. Both times the guesses and the
+  text were the same; only how many guesses were tried could change. Suspect: the 6 cards' 4-float slots
+  (best, index, sum-exp) sit side by side, so each card's own slot writes share 64-byte lines with the slots its
+  peers push. That is k7-1's failure ("sums sharing cache lines with lines the receiver wrote"). Also, all six cards
+  have PCIe Relaxed Ordering on (DevCtl RlxdOrd+, read with lspci). Fix in the tree for tp102: each card's slot
+  padded to 32 floats (128 B), rows 128-byte aligned (`DR_SLOT`, draft.inc + mt_offsets). A helper
+  (`dsv41-work/linebench/`) audits every main-model exchange for line sharing / push-then-flag ordering and writes
+  a six-card stress bench of the pattern (4-float vs padded slots).
 - xperm-2 for tp101 (xperm helper, 20:20, `dsv41-work/xperm/xperm-2.patch`, compile switch `-DOWN_R2_TAB_COPY=1`): every work-group copies its 16-32 KB grid table from a compile-time constant image instead of computing it. Same bits (every image word checked). Card 5: IQ1_S gate+up 27.34 -> 23.50 us, IQ2_S gate+up (xperm-1) 30.09 -> 28.96, IQ2_S down 17.97 -> 16.88; about -73 us per one-token step (~0.7 %), and checks use the same fills. Also: the expert hot loops keep no private arrays, so the global placement costs them nothing. The helper is now writing a time ledger for the expert kernels (bytes, x traffic, launch ramp, latency, reduction) before any more variants.
 - tp100 audit (pb256 helper): guarding qb-off out moved the dense prompt module (img8) back to scratch (94 kernels, 0 global), so the default 6-bit prompt forms are fast again at 64 tokens (o_b ~245 us, not 317). pb-1's 9-64 token picks will gain ~0.1 s, not 0.24, and `OWN_PB=0x16` at 256 decides bit 8 there.
 - gp-a on img4 CLOSED (attn helper, 20:15, card 3, XPullK128 in both placements, 2000 launches per shape, copies

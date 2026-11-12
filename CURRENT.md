@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 11, 2026 21:24:59 EST — card 5 (0000:e3:00.0) software fault from a helper's one-card bench; card fine.**
+- `bench_led_led1pcs` (xperm helper's expert-ledger stall-sampler bench, pid 71280): 184 read faults on the compute
+  engine (CAT error, class ccs), engine reset, timed-out job, devcoredump, device lost (exit 134). Cause: the bench
+  copied its group tables asynchronously from temporary host vectors that were freed before the copies ran (glibc
+  free-list words landed in the table's expert count -> reads far past the weight bank). The engine has no such
+  pattern. Bench fixed (each copy waits before its vector is freed); not re-run yet.
+- After: no xe line since 21:28; gate tg101 started 21:39 on all six cards, first 12 traces identical. Evidence:
+  /home/steve/dsv41-work/faults/fault-20261111T2124/ (journal, devcoredump).
+- Same evening: tg100 (tp100) every trace identical; pb-1 3K read 6.65 -> 5.68 s at blocks of 256; the six-card
+  overlap check (xov2) hid 91 % of the exchange time; owner: do not skip big gains over host-reset fear.
+
 **November 11, 2026 ~17:59 EST — host FROZE (sixth event; with the I210 non-fatal setting); owner power-cycled 19:18.**
 - Journal stops 17:59:08, no error record. Gate tg99b had just started t3k_b64xa (3K read with `OWN_XLL=1`, log
   created 17:59:35). The non-fatal setting turned the self-reset into a hang: it is NOT re-applied (default
