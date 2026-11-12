@@ -378,6 +378,8 @@ Did not work (and why):
 | Exact restructured dequant for the routed experts ("T form": a table of signed magnitudes per 4-weight half group; xperm helper 2026-11-11 ~20:20, `dsv41-work/xperm/README.md` section 4) | the per-weight math d*s*g is exact in FP32 for IQ2_XXS / IQ2_XS / IQ2_S / IQ3_XXS / IQ1_S (every fp16 d, scale and grid value checked on the CPU; Q2_K is not exact), so any order gives the same bits, and the T form cuts the instructions per 64 weights 21-23 %. But on card 5 it is slower (IQ2_XXS 23.4 -> 28.7 us, IQ1_S 27.4 -> 31.1): the per-work-group table build and SLM bank conflicts; with both removed only 2 % faster. The integer ops are not the critical path of the expert kernels |
 | Private arrays back in scratch for the decode image (gp-1, img7) and the pull image (gp-a, img4) (pb256 / attn helpers, 2026-11-11 ~20:10) | A/B builds: placement changes every kernel's code by 1-2 % with mixed sign; under 0.05 ms per step or check. The real trigger is zero-initialized local arrays (program-scope private globals) |
 | Prefetching the routed experts' weight rows ahead of use (L1, `OWN_R2_PF`, xperm helper 2026-11-11 ~23:15, card 5; `dsv41-work/xperm/README-ledger.txt` sections 8-9) | bit-identical in every form, slower in every form and cache state: whole rows +5.9 to +9.5 us per one-token launch, first lines only +1.5 to +1.8 us, checks +1.4 to +13 us. Each prefetch message asks for 32 cache lines and costs the load pipeline about what the real loads do; the kernels have no idle memory time. The engine-over-bench gap (L2) is cold caches at kernel start (dependent table-fill reads), mostly removed by xperm-2; xperm-3 extends the copy to IQ2_XXS / IQ3_XXS (~13 us per step) |
+| pace-2: one-wave forms for every card's q_a + kv, output-b, shared down, shared gate + up at 2-6 tokens (`OWN_MT_PACE_ROLES=127`, tg103) | card 3 bench 1.05-1.4x per launch, 720 compares 0 differ, predicted 0.12-0.56 ms per check; in the engine checks moved -0.3 to +0.2 ms and guessing did not change (code 143.6 vs 143.8, analysis 159.4 vs 160.0). Saving rows on cards that are not on the critical path, or launches that wait at the next exchange anyway, does not shorten the check |
+| The overlap as built (px-1/1b, `OWN_PX=1`, tg103): two half-blocks, pulls on a second queue | exact, but 3K 5.68-5.71 s vs 5.71: a pull overlaps only the next compute launch (the launch after waits for the whole pull), three pulls sit before tiny launches, kernels beside a pull run 13-76 % slower; the six-card xov2 check (91 % hidden) used one long busy kernel per window, which hid this. Open: barrier style, launch order, halves of 256 |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |
@@ -387,6 +389,12 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 23:10 EST)
 
+- 00:34 tg103 done (`data/.../round19-tg103/`): 28 traces identical (the overlap now exact), 21 guessing runs the same
+  text, plain +0.3 % (xperm-3: 104.11 / 104.42 tok/s). Overlap neutral (3K 5.68-5.71 s vs 5.71): a pull overlaps only
+  the one compute launch queued after it (prompt timelines, 1,438 of 1,438 cases); one compute engine per card (Level
+  Zero ordinal 0, 1 engine), so the suspect is the compute-queue barrier before each pull; pb256 helper benches fire /
+  wait styles on card 2, then `OWN_PX_MOVE` + halves of 256 (`OWN_PX_BIG`) for tp104. pace-2 neutral (stays off).
+  TAU 0.40 mixed again (code +2.3 %, analysis -1.0 %).
 - 23:40 build tp103 = tp102 + px-1b (pb256: the halves' fused-router base, 4 sites) + `OWN_TIMELINE_PROMPT` (pb256:
   prompt-block timelines on both queues + `pb256/tlp/tools/tl_prompt.py`) + xperm-3 compiled in (IQ2_XXS / IQ3_XXS
   table copy, ~13 us per step) + pace-2 (attn: one-wave forms for every card's q_a + kv, output-b, shared down, shared
