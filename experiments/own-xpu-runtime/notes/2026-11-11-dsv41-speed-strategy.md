@@ -355,7 +355,40 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 18:05 EST)
+## Work in flight (2026-11-11, updated 20:10 EST)
+
+- 20:07 build tp100 = tp99 + qb-off compiled out (needs `-DOWN41_QBOFF_M`) + xperm-1 (`OWN_PAIR_G128=1`) + wa-2
+  (`OWN_ATT_WA=2`, per-shape window-append choice) + pb-1 (`OWN_PB=1` = mask 0x1e, prompt blocks of 9-256: 16-bit
+  rows in weight-reusing forms, expert grouping by counting sort, 6-bit forms without the private scale array,
+  per-role form + token chunk at 65-256; helper predicts card-2 kernel time per 3K read -0.49 s at 64, -0.94 at
+  128, -1.08 at 256). All opt-in. Gate tg100 (`dsv41-work/tg100.sh`) follows: traces for every arm and each pb bit
+  alone at 128 / 256, 3K traces, 3K reads back to back at 64 / 128 / 256, guessing with wa-1 / wa-2 / draft vocab /
+  all. Next: gp-1 / gp-a (explicit address spaces so the dense and XPull images keep scratch) and the exact
+  dequant study (xperm helper) for tp101.
+- Check budget after tp99 (CPU, tg99c `tl_ck` code checks 19-26, tools `dsv41-work/tools/ck_by_m.py` (fixed: it
+  imported dsv41_kbusy, which runs its own comparison at import) + `ck_groups.py` + `ck_cards.py` + `ck_names.py`).
+  Busy per check, every card: 1 token 9.8 ms, 2 tokens 12.4, 4 16.3, 5 18.9. On the pace card 5, per token
+  from 2 to 5: experts 1.03 ms, dense rows 0.56, exchanges 0.32, attention 0.14, other 0.12 (= 2.17). Light card 0:
+  experts 0.89, dense 0.42, exchanges 0.70 (its waits). Cards 2 / 5 do 0.64-0.79 ms more non-exchange work at 1
+  token and 1.2-1.8 ms at 5 (q_b / o_a rows of the two extra head groups + attention), and card 5's experts run
+  7 % slower than card 0's at 5 tokens (6.34 vs 5.90 ms; 2 % at 1 token). So the experts are the largest per-token
+  cost. The xperm helper's exact-dequant study is the lever for them. Next is the pace cards' q_b / o_a rows at
+  2-6 tokens: q_b Q8 34 us per launch at 5 tokens vs ~23 us one-token.
+- gp-1 on img7 CLOSED (pb256 helper, 20:10, card 2, A/B builds forcing the module's private arrays into scratch or
+  global, 99 configurations, hashes identical): the one-token step does not move (+-2 %), and checks move at most
+  0.05 ms per cycle, with mixed sign (global placement changes every kernel's code by 1-2 %: some forms +10-30 %,
+  Q8 G2R4 40-50 % faster). Placement only matters for the prompt WsQ6 forms, which pb-1's bit 8 avoids. Helper
+  moved to the prompt exchange-overlap design (`pb256/README-overlap.txt`).
+- gp-a on img4 CLOSED (attn helper, 20:15, card 3, XPullK128 in both placements, 2000 launches per shape, copies
+  checked word for word): global placement costs +0.3-0.5 us per pull, ~0.035 ms per one-token step (83 pulls).
+  Under the bar. The real trigger for img4 is not generic pointers. llvm-spirv writes a zero-initialized local array
+  (`uint32_t a[4] = {}`, `V4 w(0u)`) as a function-scope variable with an initializer, and IGC turns it into a
+  program-scope private global. Any module holding one keeps all its private arrays in global memory. Per tp99 image
+  (`dsv41-work/attn/gp/tools/spvinit.py`): img4 32, img5 8, img7 7, img10 12, img12 5; img8 0 (another trigger),
+  img11 0 (scratch). Fix written and parked (`dsv41-work/attn/gp/c/`: drop the SparseOutF initializers, build
+  XchgPullL::pack's words as values). Helper moved to the pace cards' q_b / o_a check rows at 2-6 tokens.
+- 19:18 boot after the 17:59 freeze: the I210 non-fatal setting is NOT re-applied (it turned the self-reset into a
+  hang); `OWN_XLL` banned (the last three host events coincided with one-trip pulls); helpers one card only.
 
 - Found (pb256 helper, 2026-11-11 ~18:00, ISA of tp92 / tp97 / tp99 + card-2 benches): **a kernel that accesses
   memory through a generic pointer (address space known only at run time: local-or-global, private-or-global) makes

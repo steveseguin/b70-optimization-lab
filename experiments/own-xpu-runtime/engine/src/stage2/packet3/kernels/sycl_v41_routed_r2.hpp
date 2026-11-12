@@ -1545,6 +1545,15 @@ using RoutedIQ2XXSPx = std::conditional_t<!r2_pairs_ok<EX>, RoutedIQ2XXSPb<NB, A
 template <unsigned NB, typename A, typename EX = NoRows> using RoutedIQ2XSPx = RoutedIQ2XSPb<NB, A, EX>;
 template <unsigned NB, typename A, typename EX = NoRows> using RoutedIQ3XXSPx = RoutedIQ3XXSPb<NB, A, EX>;
 template <unsigned NB, typename A, typename EX = NoRows> using RoutedIQ1SPx = RoutedIQ1SPb<NB, A, 3, EX>;
+// xperm-1 (2026-11-11): the IQ2_S gate + up e form pinned to 128 registers. The automatic choice builds
+// RoutedIQ2SPe<20> at 256 (half the threads per core, and a ~1 us register-mode change before and after each of its
+// 15 launches per step between 128-register neighbours, tp96 timeline). Same code (derived, nothing overridden):
+// the same instructions on the same values, so the same output bits; 128 registers without spills (machine code
+// checked: same mul / add / shl / bfn / table-load counts as the 256 build, no scratch). Backend41::launch_rows runs
+// K::GRF kernels through RowsGrfK (grf_size<128>). Opt-in: OWN_PAIR_G128=1 (Options::pair_g128).
+template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SPe128 : RoutedIQ2SPe<NB, A, EX> {
+    static constexpr unsigned GRF = 128;
+};
 
 #undef R2_PAIR_SCHED
 #undef R2_EX_ROWS

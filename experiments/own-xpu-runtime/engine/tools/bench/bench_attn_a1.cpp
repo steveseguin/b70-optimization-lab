@@ -91,7 +91,7 @@ static double span_us(const sycl::event &a, const sycl::event &b) {
 
 constexpr unsigned HD = 512, QH = 64;
 constexpr size_t QS = (size_t)QH * HD, WS = (size_t)QH * 640;
-constexpr int NVALS[] = {128, 160, 192, 288, 320, 384, 448, 512, 576, 640};
+constexpr int NVALS[] = {128, 160, 192, 224, 256, 288, 320, 352, 384, 416, 448, 480, 512, 544, 576, 640};
 constexpr int NNV = (int)(sizeof(NVALS) / sizeof(int));
 
 struct Bufs {
@@ -282,11 +282,24 @@ template <unsigned HG> sycl::event score_ta(int n, unsigned M, int nh, int p, in
     k.start_pos = p, k.nc = nc;
     return lwg<K::SLM>((size_t)M * K::groups(n, nh), K::WG, k, (const float *)b.q, b.kvw, (const uint16_t *)b.kvc, kv, ci, b.ix, b.w);
 }
+// attn wa-2: OWN_ATT_WA=2's table (backend att_wa_form, the same entries): 'F' form 2, 'T' form 3, '-' form 1
+static char wa2_form(int nh, int n, unsigned M) {
+    static const char *const tab[3][8] = { // [16 / 12 / 8 heads][M - 1]: n = 128, 160, ..., 640
+        {"FFFFFFF-------FFF", "FFFFFFF---FF-FFFF", "FFFFFFFFF-FF-TFFF", "FFFFFFFF--FF-FFFF",
+         "FFFFFFFFF---FFFFF", "FF---FF------FFFF", "FF-FFFFT--TTTFFFF", "FF-FFFFF-TTFFFFFF"},
+        {"FFFFFFF-------FFF", "FFFFFFF---F--FFFF", "FFFFFFF-F-FF-TFFF", "FFFFFFF---FF-FFFF",
+         "FFFFFFFF----TFFFF", "FF---FF------FFFF", "FF-FFFFTT-TTTFFFF", "FFFFFFFT-TTTTFFFF"},
+        {"FFFFFFF-------FFF", "FFFFFFF------FFFF", "FFFFFFF---FF-FFFF", "FFFFFFF------FFFF",
+         "FFFFFF-------FFFF", "FFFT---------FFFF", "FFTTTT----TTTFFFF", "FFTT-----TTTTTTTF"}};
+    if (n < 128 || n > 640 || n % 32 != 0 || M < 1 || M > 8) return '-';
+    return tab[nh >= 14 ? 0 : nh >= 10 ? 1 : 2][M - 1][(n - 128) / 32];
+}
 static void run_wa(int f, int n, unsigned M, int nh, int p, const Bufs &b, const float *kv, const int32_t *cidx,
                    std::vector<sycl::event> &ev) {
     const int nc = n > 128 ? 512 : 0;
     const int32_t *ci = nc ? cidx : (const int32_t *)nullptr;
     if (f == 5) f = wa_f_on(n, M) ? 2 : 3;
+    if (f == 6) f = wa2_form(nh, n, M) == 'F' ? 2 : wa2_form(nh, n, M) == 'T' ? 3 : 1; // (WA_TF=6: OWN_ATT_WA=2)
     if (f <= 1) {
         ev.push_back(wam(M, p, nc, b.kvw, kv, b.ix, ci));
         if (f == 0) run_form(0, n, M, nh, WA_W, b, ev);
@@ -734,7 +747,11 @@ int main() {
                         // (after the cache flush, the block's key rows and queries read once, as the engine's rope
                         // launches leave them in L2 just before; the rows, compressed rows and cidx stay cold.
                         // WA_COLD=1: kv and q cold too)
-                        const bool cold = std::getenv("WA_COLD") != nullptr;
+                        // WA_TF=2 | 3 | 6: the WA chain timed in that form (2 F, 3 T8 + JE, 6 OWN_ATT_WA=2's) instead of
+                        // the engine's OWN_ATT_WA=1 form;
+                        // WA_CIDX_HOT=1: the compressed lists read once after the flush too (an index-source layer)
+                        const bool cold = std::getenv("WA_COLD") != nullptr, chot = std::getenv("WA_CIDX_HOT") != nullptr;
+                        const int tf = std::getenv("WA_TF") ? std::atoi(std::getenv("WA_TF")) : 5;
                         auto touch = [&](const float *src, size_t cnt) {
                             q.parallel_for(sycl::nd_range<1>(64 * 256, 256), [=](sycl::nd_item<1> it) {
                                 float s = 0;
@@ -752,12 +769,13 @@ int main() {
                                         touch(kv, (size_t)M * HD);
                                         touch(b.q, (size_t)M * QS);
                                     }
+                                    if (chot) touch(reinterpret_cast<const float *>(cidx), (size_t)M * 512);
                                 } else if (r % 8 == 0) warm(2);
                                 std::vector<sycl::event> ev;
                                 sycl::event e0, e1;
                                 if (g_nb) e0 = nbk();
                                 if (k == 0) ev.push_back(wam(M, p, nc, b.kvw, kv, b.ix, nc ? cidx : nullptr));
-                                else run_wa(k == 1 ? 1 : 5, n, M, nh, p, b, kv, cidx, ev);
+                                else run_wa(k == 1 ? 1 : tf, n, M, nh, p, b, kv, cidx, ev);
                                 if (g_nb) e1 = nbk();
                                 q.wait();
                                 if (r >= 3) v.push_back(k == 0 ? evus(ev[0]) : g_nb ? span_us(e0, e1) : span_us(ev.front(), ev.back()));
@@ -765,7 +783,7 @@ int main() {
                             std::sort(v.begin(), v.end());
                             med[k] = v[v.size() / 2];
                         }
-                        std::printf("%-22s %-2s wam %5.2f | chain %6.2f -> %6.2f (%+.2f)\n", tag, wa_f_on(n, M) ? "F" : "T", med[0], med[1],
+                        std::printf("%-22s %-2s wam %5.2f | chain %6.2f -> %6.2f (%+.2f)\n", tag, (tf == 5 ? wa_f_on(n, M) : tf == 6 ? wa2_form(nh, n, M) == 'F' : tf == 2) ? "F" : tf == 6 && wa2_form(nh, n, M) == '-' ? "-" : "T", med[0], med[1],
                                     med[2], med[2] - med[1]);
                         std::fflush(stdout);
                     }

@@ -1428,7 +1428,10 @@ void tpm_layer(int L, int c) {
 #endif
     (void)qbs;
     auto q_b = [&](const auto &rd) {
-#ifndef OWN41_ACT_BF16
+#if !defined(OWN41_ACT_BF16) && defined(OWN41_QBOFF_M)
+        // qb-off-2/3 (OWN_QB_OFF_M, parked since tg98): built only with -DOWN41_QBOFF_M. Its QbmHeavyK kernels hold
+        // 8,960 bytes of private memory each, which pushed the whole module's private size past 256 KB per thread
+        // and moved 92 kernels' private arrays from scratch to global memory (pb256 helper, tp97 o_b Q6 244 -> 317 us)
         if (qbr == 1) {
             const unsigned qx = (unsigned)qbk * (unsigned)g.hd;
             using B = std::decay_t<decltype(rd)>;
@@ -1494,10 +1497,12 @@ void tpm_layer(int L, int c) {
             if (lm < 512) n_idx = att_trim_n(lm);
         }
         // (items per token: WindowAppendM's max(d, win + nc), whatever slots the attention reads)
-        // OWN_ATT_WA: its work inside the OWN_ATT_T launches below instead (att2's condition; the same rows and lists)
+        // OWN_ATT_WA: its work inside the OWN_ATT_T launches below instead (att_wa_form: 'F' one launch, 'T' score
+        // launch, '-' none; the same rows and lists)
         const act_t *wkv = (const act_t *)b.kvn;
         const int32_t *wci = (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr);
-        const bool wa = o.att_wa && o.att_t && o.att_out_c && (unsigned)M <= o.att_t_m_max && M <= 8; // (WA: up to 8)
+        const char waf = att_wa_form(nh, n_idx, (unsigned)M);
+        const bool wa = waf != '-';
         if (!wa)
             launch(c, (size_t)M * std::max(g.hd, 128 + nc), 64,
                    ops41sycl::WindowAppendM<Act>{128, g.hd, (int)pos, nc, M, MTX, (size_t)g.hd, 512, 640}, ring[c][L],
@@ -1510,7 +1515,7 @@ void tpm_layer(int L, int c) {
         // OWN_ATT_T: one launch (SparseOutF, at the output below) or score tiles + the output with the softmax
         // (blocks of up to OWN_ATT_T_M_MAX tokens, OUT_C on)
         const bool att2 = o.att_t && o.att_out_c && (unsigned)M <= o.att_t_m_max;
-        const bool att1 = att2 && att_f_on(nh, n_idx, (unsigned)M);
+        const bool att1 = att2 && (wa ? waf == 'F' : att_f_on(nh, n_idx, (unsigned)M)); // (wa: att2 holds)
         if (att1) {
         } else if (att2 && wa) {
             score_ta(c, nh, n_idx, W, (unsigned)M, Q, WS, (int)pos, nc, (const act_t *)(b.q + qo), ring[c][L], kvc, wkv, wci,
@@ -1716,10 +1721,17 @@ void tpm_layer(int L, int c) {
         if (cap > 8 && eg.type == iq3::Type::IQ2_S && eg.cols == 20 * 256) cap = 8; // RoutedU<IQ2_S, 16> spills there
         if (mt_rux && (unsigned)M >= mt_rux_min && mt_rux_cap && cap > mt_rux_cap) cap = mt_rux_cap; // OWN_MT_RUX_CAP
         eu_cap_c[c] = cap;
-        ops41sycl::ExpertGroupM k{6u * (unsigned)M, cap};
-        k.heavy = big && mt_eu_heavy;
-        launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(6u * (unsigned)M), k,
-                                                  (const uint32_t *)b.ids, egrp[c]);
+        if (ops41sycl::pb_on(4) && g.experts <= ops41sycl::ExpertGroupPM::EMAX) { // OWN_PB bit 4 (pb-1): the same groups
+            ops41sycl::ExpertGroupPM k{6u * (unsigned)M, cap};
+            k.heavy = big && mt_eu_heavy;
+            launch_local<ops41sycl::ExpertGroupPM::LM>(c, ops41sycl::ExpertGroupPM::items(6u * (unsigned)M), k,
+                                                       (const uint32_t *)b.ids, egrp[c]);
+        } else {
+            ops41sycl::ExpertGroupM k{6u * (unsigned)M, cap};
+            k.heavy = big && mt_eu_heavy;
+            launch_local<ops41sycl::ExpertGroupM::LM>(c, ops41sycl::ExpertGroupM::items(6u * (unsigned)M), k,
+                                                      (const uint32_t *)b.ids, egrp[c]);
+        }
     }
     if (!shared_done) {
         gemv_m(c, p + "ffn_gate_shexp.weight", b.xn, H, b.shg, (size_t)g.mid);

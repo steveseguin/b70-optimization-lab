@@ -298,6 +298,8 @@ public:
                                 // the engine 14.9 -> 8.2 us, plain answers +4.6 %). Default 64 since g81 (512: old)
         int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
         int pair_wg_iq1 = 0;    // gate+up work-groups for IQ1_S experts, 0 = pair_wg (OWN_PAIR_WG_IQ1)
+        bool pair_g128 = false; // xperm-1: one-token IQ2_S gate+up (e form, no extra rows) pinned to 128 registers
+                                // (RoutedIQ2SPe128; same code and outputs; OWN_PAIR_G128=1)
         bool dr_fc_split = true; // the draft's dsp.fc rows split across the cards + an exchange (OWN_DR_FC_SPLIT)
         bool dr_mxp = true; // the draft's MXFP4 experts packed (pk41 MXFP4) and run grouped by expert (OWN_DR_MXP)
         bool q2k_fast = true;    // layer 0's unpacked Q2_K expert rows through RoutedQ2KF (bitwise; OWN_Q2K_FAST)
@@ -324,9 +326,10 @@ public:
                                 // 256 registers: two register-mode changes)
         bool att_f = true;      // ... the one-launch form where it is faster (OWN_ATT_F=0: two launches only); its
                                 // registers and tile heads per shape (sycl_v41_attn.hpp att_f_grf / att_f_s8)
-        bool att_wa = false;    // ... blocks of up to 8 tokens: WindowAppendM's work inside that launch (SparseOutF) or
-                                // the score launch (SparseScoreT) instead of its own launch (OWN_ATT_WA=1, attn wa-1; the
-                                // same ring rows, lists and outputs bitwise)
+        unsigned att_wa = 0;    // ... blocks of up to 8 tokens: WindowAppendM's work inside that launch (SparseOutF) or
+                                // the score launch (SparseScoreT) instead of its own launch (the same ring rows, lists and
+                                // outputs bitwise). OWN_ATT_WA=1 (attn wa-1): in every such block, in att_f_on's form;
+                                // =2 (attn wa-2): per shape as att_wa_form says (one launch, score launch or not at all)
         bool xtail = false;     // tp: each exchange runs in its producer launch's last work-group (OWN_XTAIL=1; slower)
         bool xpull = true;      // tp: exchanges whose largest slice is >= xpull_min bytes copy by loads from the peers
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
@@ -1891,7 +1894,10 @@ private:
         using namespace ops41sycl;
         switch (ea.type) {
         case iq3::Type::IQ2_XXS: return go(std::type_identity<RoutedIQ2XXSPx<20, Act, EX>>{});
-        case iq3::Type::IQ2_S: return go(std::type_identity<RoutedIQ2SPx<20, Act, EX>>{});
+        case iq3::Type::IQ2_S:
+            if constexpr (std::is_same_v<EX, NoRows>)
+                if (o.pair_g128) return go(std::type_identity<RoutedIQ2SPe128<20, Act, EX>>{});
+            return go(std::type_identity<RoutedIQ2SPx<20, Act, EX>>{});
         case iq3::Type::IQ3_XXS: return go(std::type_identity<RoutedIQ3XXSPx<20, Act, EX>>{});
         case iq3::Type::IQ2_XS: return go(std::type_identity<RoutedIQ2XSPx<20, Act, EX>>{});
         case iq3::Type::IQ1_S: return go(std::type_identity<RoutedIQ1SPx<20, Act, EX>>{});
@@ -2176,6 +2182,25 @@ private:
     // one launch where it was faster on card 3 (bench_attn_a1: 8 / 12 / 16 heads, 128-640 slots, the cache flushed,
     // between 128-register kernels): one token and blocks of up to 4 always, blocks of 5-8 at 128-160 or 640 slots
     bool att_f_on(int, int n, unsigned M) const { return o.att_f && (M <= 4 || n <= 160 || n >= 640); }
+    // OWN_ATT_WA: the block's form with WindowAppendM's work: 'F' one launch (SparseOutF), 'T' score launch
+    // (SparseScoreT) + SparseOutJE, '-' none (WindowAppendM's own launch, then att_f_on's form). =1: every block of
+    // up to 8 tokens, att_f_on's form. =2 (attn wa-2): the form that was faster than WindowAppendM + att_f_on's form
+    // by >= 0.25 us per layer on card 3 (bench_attn_a1 WA=1, WA_TF=2 / 3: 16 / 12 / 8 heads x M 1-8 x 128-640
+    // slots, the cache flushed, between 128-register kernels; 608 slots as 576), else none
+    char att_wa_form(int nh, int n, unsigned M) const {
+        if (!o.att_wa || !o.att_t || !o.att_out_c || M > o.att_t_m_max || M > 8) return '-';
+        if (o.att_wa == 1) return att_f_on(nh, n, M) ? 'F' : 'T';
+        static const char *const tab[3][8] = { // [16 / 12 / 8 heads][M - 1]: n = 128, 160, ..., 640
+            {"FFFFFFF-------FFF", "FFFFFFF---FF-FFFF", "FFFFFFFFF-FF-TFFF", "FFFFFFFF--FF-FFFF",
+             "FFFFFFFFF---FFFFF", "FF---FF------FFFF", "FF-FFFFT--TTTFFFF", "FF-FFFFF-TTFFFFFF"},
+            {"FFFFFFF-------FFF", "FFFFFFF---F--FFFF", "FFFFFFF-F-FF-TFFF", "FFFFFFF---FF-FFFF",
+             "FFFFFFFF----TFFFF", "FF---FF------FFFF", "FF-FFFFTT-TTTFFFF", "FFFFFFFT-TTTTFFFF"},
+            {"FFFFFFF-------FFF", "FFFFFFF------FFFF", "FFFFFFF---FF-FFFF", "FFFFFFF------FFFF",
+             "FFFFFF-------FFFF", "FFFT---------FFFF", "FFTTTT----TTTFFFF", "FFTT-----TTTTTTTF"}};
+        if (n < 128 || n > 640 || n % 32 != 0 || M < 1) return '-';
+        const char f = tab[nh >= 14 ? 0 : nh >= 10 ? 1 : 2][M - 1][(n - 128) / 32];
+        return f == 'F' && !o.att_f ? '-' : f; // (OWN_ATT_F=0: no one launch)
+    }
     void score_t(int c, int nh, int n, int W, unsigned M, size_t Q, size_t WS, const act_t *q, const uint16_t *kvw,
                  const uint16_t *kvc, const int32_t *ix, float *w) {
         auto go = [&](auto hgc) {

@@ -2988,11 +2988,171 @@ template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsign
         k.template rowt<T, R, XW, LOOP, PF>(sg, lane, r0, w, x + t0 * xs, xs, y + t0 * ys, ys, mt - t0);
     }
 };
+// ---- pb-1 (2026-11-11, OWN_PB; /home/steve/dsv41-work/pb256/): prompt blocks of 128 / 256 tokens at the 64-token
+// per-token cost, H16 rows weight-stationary, Q6_K scales without private arrays. Bench: pb256/bench_pb.cpp (every
+// output memcmp against the production form of the same launch, real GGUF rows and random rows).
+//
+// DenseRowsWSC: DenseRowsWS's positions in token chunks. DenseRowsWS runs position p = (row block p / ng, token group
+// p % ng): in a block of 128 / 256 tokens the sub-groups resident on one Xe-core cover 2-4x fewer row blocks per
+// activation line than at 64 tokens, so each x line comes from L2 for fewer rows (pp97: the same T8 R2 form costs
+// 1.48x per token at 128). Here position p is chunk ch = p / (nrb * cg) (token groups ch * cg .. + cg - 1, the last
+// chunk shorter), then (row block, token group) inside the chunk as DenseRowsWS orders them: every chunk is laid out
+// as a DenseRowsWS launch of cg token groups. Every (row block, token group) pair is run once, by the same rowt call
+// with the same arguments as DenseRowsWS's position for it, so every output is the same bit for bit.
+template <typename W, unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0> struct DenseRowsWSC {
+    W k; // WsQ8 / WsQ6 / WsQ6S / WsQ5 / WsH16: rows and xn (xn % R == 0)
+    const uint8_t *w;
+    const float *x;
+    size_t xs;
+    float *y;
+    size_t ys;
+    unsigned mt, ng, cg; // cg: token groups per chunk (>= 1)
+    unsigned n() const { return (k.rows + R - 1) / R * ng; }
+    [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned p) const {
+        const unsigned nrb = (k.rows + R - 1) / R, per = nrb * cg, ch = p / per, q = p - ch * per, g0 = ch * cg;
+        const unsigned cw = ng - g0 < cg ? ng - g0 : cg, rb = q / cw;
+        const unsigned r0 = rb * R, t0 = (g0 + (q - rb * cw)) * T;
+        k.template rowt<T, R, XW, LOOP, PF>(sg, lane, r0, w, x + t0 * xs, xs, y + t0 * ys, ys, mt - t0);
+    }
+};
+// WsQ6S: WsQ6 with each segment's 16-weight scales formed at the start of the segment (registers dbs[R][NQS] with
+// constant indices) instead of all NB * 16 of them up front. WsQ6's dbs[R][NB / 2] stays in private memory when the
+// block loop is not fully unrolled (NB = 20 at T = 16, 24, 32: zeinfo private_size 2560 / 3072 / 4096 bytes in tp92
+// and tp97); those forms are the ones that slowed 10-30 % from tp92 to tp97 with unchanged source (o_b
+// WsQ6<32u> T4 R2 244 -> 317 us, engram WsQ6<24u> T8 R2 575 -> 670 us). Lane l of dbs[j][k] holds sub-block
+// s0 * 16 + 32 k + l's scale, formed by WsQ6's expression half(d) * float(int(scale)); sub-block si's scale is read
+// from register (si - s0 * 16) / 32, lane (si - s0 * 16) % 32 (+ 1 for lanes 16-31), the same value WsQ6 reads from
+// dbs[j][si / 32] lane si % 32. Everything else is WsQ6's code: the same values, products and order.
+// PF: WsQ6's PF + 100 (the form ids differ from WsQ6's).
+template <unsigned NB> struct WsQ6S {
+    unsigned rows, xn;
+    static constexpr size_t RB = ((size_t)NB * 210 + 15) & ~(size_t)15;
+    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0>
+    [[gnu::always_inline]] inline void rowt(sycl::sub_group sg, unsigned lane, unsigned r0, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        static_assert(XW == 1 && LOOP == 0);
+        constexpr unsigned P = PF % 100;
+        constexpr unsigned NS = NB * 16, SEG = P % 10 == 5 ? NB : KSeg<NB>::v, NQS = (SEG * 16 + 31) / 32;
+        using LD = WsLd<P / 10>;
+        static_assert(NB % SEG == 0);
+        const float *xr = xn ? x + (size_t)(r0 / xn) * NB * 256 : x;
+        const uint32_t *ql[R];
+        const uint16_t *qh[R];
+        const int8_t *scl[R];
+        const uint16_t *dp[R];
+#pragma unroll
+        for (unsigned j = 0; j < R; ++j) {
+            const uint8_t *row = w + (size_t)(r0 + j < rows ? r0 + j : r0) * RB;
+            ql[j] = reinterpret_cast<const uint32_t *>(row);
+            qh[j] = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 128);
+            scl[j] = reinterpret_cast<const int8_t *>(row + (size_t)NB * 192);
+            dp[j] = reinterpret_cast<const uint16_t *>(row + (size_t)NB * 208);
+        }
+        float sum[R * T];
+#pragma unroll
+        for (unsigned i = 0; i < R * T; ++i) sum[i] = 0;
+#pragma nounroll
+        for (unsigned s0 = 0; s0 < NB; s0 += SEG) {
+            float dbs[R][NQS];
+#pragma unroll
+            for (unsigned j = 0; j < R; ++j)
+#pragma unroll
+                for (unsigned k = 0; k < NQS; ++k) {
+                    const unsigned s1 = s0 * 16 + 32 * k + lane, si = s1 < NS ? s1 : NS - 1;
+                    dbs[j][k] = iq3::half(dp[j][si >> 4]) * float(int(scl[j][si]));
+                }
+            uint32_t qa[R][SEG], qb[R][SEG];
+#pragma unroll
+            for (unsigned j = 0; j < R; ++j)
+#pragma unroll
+                for (unsigned m = 0; m < SEG; ++m) {
+                    qa[j][m] = LD::words(sg, lane, ql[j] + (size_t)(s0 + m) * 32);
+                    qb[j][m] = LD::at(qh[j], (size_t)(s0 + m) * 32 + lane);
+                }
+#pragma unroll
+            for (unsigned m = 0; m < SEG; ++m) {
+                const unsigned b = s0 + m;
+                float v[R][8];
+#pragma unroll
+                for (unsigned c = 0; c < 8; ++c) {
+                    const unsigned h = c >> 2, cc = c & 3u;
+                    const unsigned sl = m * 16 + 2 * c; // sub-block b * 16 + 2 c, relative to the segment
+#pragma unroll
+                    for (unsigned j = 0; j < R; ++j) {
+                        const unsigned low = (qa[j][m] >> (8 * (2 * h + (cc & 1u)) + 4 * (cc >> 1))) & 15u;
+                        const unsigned high = (qb[j][m] >> (8 * h + 2 * cc)) & 3u;
+                        const float d0 = sycl::select_from_group(sg, dbs[j][sl / 32], sl % 32);
+                        const float d1 = sycl::select_from_group(sg, dbs[j][sl / 32], sl % 32 + 1);
+                        v[j][c] = (lane < 16 ? d0 : d1) * float(int(low | (high << 4)) - 32);
+                    }
+                }
+#pragma unroll
+                for (unsigned t = 0; t < T; ++t) {
+                    const auto xv = sg_bloadN<8>(sg, xr + t * xs + (size_t)b * 256);
+#pragma unroll
+                    for (unsigned c = 0; c < 8; ++c)
+#pragma unroll
+                        for (unsigned j = 0; j < R; ++j) sum[j * T + t] = sum[j * T + t] + v[j][c] * xv[c];
+                }
+            }
+        }
+        ws_reduce_store<R, T>(sg, lane, sum, r0, rows, y, ys, mt);
+    }
+};
+// WsH16: GemvH16P's rows (16-bit upper halves of F32 / BF16 weights, C chunks of 32 columns) for R rows x T tokens
+// per sub-group. GemvH16P::rowg's lane sum for (row, token): segments s ascending (256 columns: the sub-group block
+// read of 8 values per lane), element m ascending, sum = sum + float(w << 16) * x, from 0; then sg_tree32. Here
+// each segment's R rows' 8 values are converted once and the T tokens' activation blocks run past them; per
+// (row, token) the same additions in the same order, and ws_reduce_store's tree is sg_tree32's (WsQ8 / WsQ6 use it
+// against their sg_tree32 one-token rows). LOOP = 1: the segment loop not unrolled (same order).
+template <unsigned C> struct WsH16 {
+    unsigned rows, xn; // xn: unused (0)
+    template <unsigned T, unsigned R, unsigned XW, unsigned LOOP, unsigned PF = 0>
+    [[gnu::always_inline]] inline void rowt(sycl::sub_group sg, unsigned lane, unsigned r0, const uint8_t *w,
+                                            const float *x, size_t xs, float *y, size_t ys, unsigned mt) const {
+        static_assert(C % 8 == 0);
+        const uint16_t *rowp[R];
+#pragma unroll
+        for (unsigned j = 0; j < R; ++j)
+            rowp[j] = reinterpret_cast<const uint16_t *>(w) + (size_t)(r0 + j < rows ? r0 + j : r0) * C * 32;
+        float sum[R * T];
+#pragma unroll
+        for (unsigned i = 0; i < R * T; ++i) sum[i] = 0;
+        auto seg = [&](unsigned s) {
+            float wf[R][8];
+#pragma unroll
+            for (unsigned j = 0; j < R; ++j) {
+                const auto wv = sg_bloadN<8>(sg, rowp[j] + (size_t)s * 256);
+#pragma unroll
+                for (unsigned m = 0; m < 8; ++m) wf[j][m] = sycl::bit_cast<float>(uint32_t(wv[m]) << 16);
+            }
+#pragma unroll
+            for (unsigned t = 0; t < T; ++t) {
+                const auto xv = sg_bloadN<8>(sg, x + t * xs + (size_t)s * 256);
+#pragma unroll
+                for (unsigned m = 0; m < 8; ++m)
+#pragma unroll
+                    for (unsigned j = 0; j < R; ++j) sum[j * T + t] = sum[j * T + t] + wf[j][m] * xv[m];
+            }
+        };
+        if constexpr (LOOP == 0) {
+#pragma unroll
+            for (unsigned s = 0; s < C / 8; ++s) seg(s);
+        } else {
+#pragma nounroll
+            for (unsigned s = 0; s < C / 8; ++s) seg(s);
+        }
+        ws_reduce_store<R, T>(sg, lane, sum, r0, rows, y, ys, mt);
+    }
+};
 // the weight-stationary kernel of a packed dense kernel (void: none) and its format / columns
 template <typename DK> struct WsOf { using type = void; static constexpr unsigned fmt = 0, cols = 0; };
 template <unsigned C, typename A> struct WsOf<GemvQ8P<C, A>> { using type = WsQ8<C>; static constexpr unsigned fmt = 8, cols = 32 * C; };
 template <unsigned NB, typename A> struct WsOf<GemvQ6KP<NB, A>> { using type = WsQ6<NB>; static constexpr unsigned fmt = 6, cols = 256 * NB; };
 template <unsigned NB, typename A> struct WsOf<GemvQ5KP<NB, A>> { using type = WsQ5<NB>; static constexpr unsigned fmt = 5, cols = 256 * NB; };
+// pb-1 (OWN_PB bit 2): the H16 rows (router F32-as-upper-halves, BF16 compressor / indexer rows) have WS forms too;
+// WsPb<16, ..> picks nothing unless the switch is on, so ws_rows returns false for them as before
+template <unsigned C, typename A> struct WsOf<GemvH16P<C, A>> { using type = WsH16<C>; static constexpr unsigned fmt = 16, cols = 32 * C; };
 // a form: T tokens x R rows per sub-group, XW (Q8_0), LOOP (Q8_0), PF (WsQ8 / WsQ6 / WsQ5 rowt); id 0 = the
 // engine's form
 template <unsigned T, unsigned R, unsigned XW = 1, unsigned LOOP = 0, unsigned PF = 0> struct WsF {
@@ -3022,6 +3182,18 @@ constexpr unsigned ws_cls(unsigned mt) {
            : mt <= 256        ? 256
                               : 0;
 }
+// pb-1 (own_run_v41 OWN_PB=mask, OWN_PB=1: 0x1e; default 0: every launch as before). Prompt blocks with every dense
+// role at its best per-token form; each piece is its own bit and gives the production outputs bit for bit:
+//   2: the H16 rows (router, compressor kv / gate, indexer q_b) in WS forms (WsH16; WsPb<16, ..>)
+//   4: the expert grouping by a counting sort (ExpertGroupPM; backend tpm_layer)
+//   8: Q6_K forms with per-segment scales (WsQ6S, no private arrays): WsPb's picks of 9-64 token blocks and its S picks
+//   16: blocks of 65-256 tokens: WsPb's form and token chunk (DenseRowsWSC) for every Q8_0 / Q6_K / Q5_K role
+inline unsigned g_pb_mask = 0;
+inline bool pb_on(unsigned bit) { return (g_pb_mask & bit) != 0; }
+// a pb-1 pick: WsF form id (PF >= 100: WsQ6S) and the positions' token chunk (0: DenseRowsWS's order)
+struct PbPick {
+    unsigned id = 0, chunk = 0;
+};
 // WsTab<format, columns, launch kind>: forms = every form pick() can return; pick(rows on the card, tokens).
 template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsTab {
     using forms = WsList<>;
@@ -3355,6 +3527,12 @@ template <> struct WsTab<5, 2304, WS_DOTS> {
         return WsTab<5, 2304, WS_PLAIN>::pick(rows, mt);
     }
 };
+// pb-1 (OWN_PB bit 2): the H16 rows in prompt blocks of 9-256 tokens take WS forms (engine: DenseRowsG<GemvH16P, 4>,
+// x read once per row and 4 tokens); WsPb<16, ..> below picks them, WsTab has none (bit 2 off: as before)
+using WfH8R2 = WsF<8, 2, 1, 0>;
+using WfH4R4 = WsF<4, 4, 1, 0>;
+using WfH16R2 = WsF<16, 2, 1, 0>;
+using WfH8R4 = WsF<8, 4, 1, 0>;
 // OWN_MT_CK: the q_a + kv pair launch (1,280 + 512 rows, gemv_pair_m) at checks in WS forms, one launch (pa/ck
 // bench_ck; us per launch, tp92's DenseRowsG pair -> this, SEQ / cold): 2: 20.9 / 22.3 -> 18.3 / 18.8,
 // 3: 20.7 / 22.6 -> 18.8 / 20.2, 4: 23.8 / 27.8 -> 21.2 / 25.2, 5: 30.0 / 34.7 -> 23.5 / 30.0, 6: 30.0 / 34.6 -> 23.4 / 30.1
@@ -3384,6 +3562,190 @@ template <> struct WsTab<6, 5120, WS_PAIR> {
 // ws_rows<DK, KIND>: f(DenseRowsWS rows) when WsTab picks a form for this launch; false: none (the engine's form).
 // cap: the tokens the activation buffers hold (a last group's tokens past mt are read: T * ng <= cap)
 template <typename... Fs, typename G> inline bool ws_each(WsList<Fs...>, G &&g) { return (g(Fs{}) || ...); }
+// pb-1: the activation groups of a dense kernel (GemvH16P has none: 0)
+template <typename DK> inline unsigned ws_xn(const DK &dk) {
+    if constexpr (requires { dk.xn; }) return dk.xn;
+    else return 0;
+}
+// pb-1: the weight kernel of a form (PF >= 100: WsQ6S, OWN_PB bit 8), and two form lists joined
+template <typename WK, unsigned PF> struct WsWk { using type = WK; };
+template <unsigned NB, unsigned PF> requires(PF >= 100) struct WsWk<WsQ6<NB>, PF> { using type = WsQ6S<NB>; };
+template <typename A, typename B> struct WsCat;
+template <typename... As, typename... Bs> struct WsCat<WsList<As...>, WsList<Bs...>> { using type = WsList<As..., Bs...>; };
+using WfK4R2S = WsF<4, 2, 1, 0, 100>;
+using WfK8R2S = WsF<8, 2, 1, 0, 100>;
+using WfK16R2S = WsF<16, 2, 1, 0, 100>;
+// WsPb<format, columns, launch kind> (pb-1): forms = every form pick() can return; pick(rows on the card, tokens, seg):
+// the launch's form and token chunk ({}: WsTab's pick). ws_rows asks it for blocks of 65-256 tokens (OWN_PB bit 16;
+// the H16 rows: bit 2) and of 9-64 tokens with bit 8 (seg: WsQ6S forms allowed). Picks: pb256 bench PART_PICK (card 2,
+// real GGUF rows, us per launch, every candidate memcmp'd against the production form), README-pb1.txt.
+template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsPb {
+    using forms = WsList<>;
+    static PbPick pick(unsigned, unsigned, bool) { return {}; }
+};
+// bit 8 at 9-64 tokens (ws_cls 16 / 32 / 64): the fastest WsQ6S form per role and class, pb256 PART_PICK pks2 (card 2,
+// real rows, us per launch, WsQ6 forms with their arrays in scratch as in the bench; the S forms have none, so their
+// times hold in either placement). a16 / a32 / a64: the pick per class (0: WsTab's form, unchanged)
+inline PbPick ws_q6s_small(unsigned cl, PbPick a16, PbPick a32, PbPick a64) {
+    return cl <= 16 ? a16 : cl <= 32 ? a32 : cl <= 64 ? a64 : PbPick{};
+}
+// Tables: pb256 PART_PICK, card 2's real rows, us per launch (SEQ), production form -> pick, at 128 / 256 tokens
+// (WsQ6 forms timed with their scale arrays in scratch memory, as in the bench module; S = WsQ6S, ch = token chunk)
+// Q8_0 5,120 columns alone: q_a (1,280 rows) 402 -> 227 (X16R2 ch32) / 667 -> 489 (X16R2 ch64); kv (512) 153 -> 90.0
+// / 266 -> 184 (X16R2 ch32)
+template <> struct WsPb<8, 5120, WS_PLAIN> {
+    using forms = WsList<WfX16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        const unsigned cl = ws_cls(mt);
+        if (cl < 128) return {};
+        if (rows == 1280) return {X16R2, cl == 256 ? 64u : 32u};
+        if (rows == 512) return {X16R2, 32};
+        return {};
+    }
+};
+// Q8_0 shared gate + up (384 + 384 rows) in the router's launch: 234 -> 136 / 390 -> 281 (X16R2 ch32)
+template <> struct WsPb<8, 5120, WS_SHARED> {
+    using forms = WsList<WfX16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows != 384) return {};
+        return {X16R2, 32};
+    }
+};
+// Q8_0 q_b (1,280 columns, 6,144 rows): 314 -> 299 / 720 -> 626 (X16R2 ch32: WsTab's form, chunked)
+template <> struct WsPb<8, 1280, WS_PLAIN> {
+    using forms = WsList<WfX16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows < 4096 || rows > 8192) return {};
+        return {X16R2, 32};
+    }
+};
+// Q8_0 output-a (4,096 columns): 1,024 rows 197 -> 155 / 398 -> 310, 512 rows 97.1 -> 77.9 / 196 -> 155 (X16R2 ch32)
+template <> struct WsPb<8, 4096, WS_PLAIN> {
+    using forms = WsList<WfX16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows < 384 || rows > 1024) return {};
+        return {X16R2, 32};
+    }
+};
+// Q8_0 output-b (8,192 columns, 864 rows): 415 -> 277 (X8R2L ch32) / 724 -> 532 (X16R2 ch32)
+template <> struct WsPb<8, 8192, WS_PLAIN> {
+    using forms = WsList<WfX16R2, WfX8R2L>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        const unsigned cl = ws_cls(mt);
+        if (cl < 128 || rows < 768 || rows > 1024) return {};
+        return {cl == 128 ? X8R2L : X16R2, 32};
+    }
+};
+// Q8_0 shared down (2,304 columns, 864 rows): 104 -> 80.6 / 210 -> 144 (X16R2 ch32)
+template <> struct WsPb<8, 2304, WS_PLAIN> {
+    using forms = WsList<WfX16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows < 768 || rows > 1024) return {};
+        return {X16R2, 32};
+    }
+};
+// Q6_K 5,120 columns alone: q_a (1,280 rows) 267 -> 246 (K16R2 ch32; S 254) / 877 -> 493 (S 495); kv (512) 188 -> 97.7
+// (S 102) / 350 -> 194 (S 199). seg (bit 8): the S forms; at 9-64 tokens (16 / 32 / 64): q_a 50.4 -> 46.9 (T16 S) /
+// 90.7 -> 84.9 (T8 S) / 216 -> 144 (T8 S ch32); kv 18.0 (kept) / 35.6 -> 28.5 (T8 S) / 86.9 -> 51.7 (T16 S)
+template <> struct WsPb<6, 5120, WS_PLAIN> {
+    using forms = WsList<WfK16R2, WfK4R2S, WfK8R2S, WfK16R2S>;
+    static PbPick pick(unsigned rows, unsigned mt, bool seg) {
+        if (rows != 1280 && rows != 512) return {};
+        const unsigned cl = ws_cls(mt);
+        if (cl < 128) {
+            if (!seg) return {};
+            if (rows == 1280) return ws_q6s_small(cl, {WfK16R2S::id, 0}, {WfK8R2S::id, 0}, {WfK8R2S::id, 32});
+            return ws_q6s_small(cl, {}, {WfK8R2S::id, 0}, {WfK16R2S::id, 0});
+        }
+        return {seg ? WfK16R2S::id : K16R2, 32};
+    }
+};
+// Q6_K q_b (1,280 columns, 6,144 rows): 338 -> 312 / 783 -> 644 (K16R2 ch32: WsTab's form, chunked)
+template <> struct WsPb<6, 1280, WS_PLAIN> {
+    using forms = WsList<WfK16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows < 4096 || rows > 8192) return {};
+        return {K16R2, 32};
+    }
+};
+// Q6_K output-a (4,096 columns): 1,024 rows 253 -> 160 / 553 -> 316, 512 rows 127 -> 78.6 / 273 -> 160 (K16R2 ch32;
+// S within 1-2 %). seg (bit 8) at 9-64 tokens: 1,024 rows 28.3 -> 22.3 (T8 S) / 61.0 -> 40.6 (T16 S) / 100 -> 80.1
+// (T16 S ch32); 512 rows 14.9 (kept) / 29.3 -> 22.0 (T8 S) / 70.2 -> 40.8 (T16 S)
+template <> struct WsPb<6, 4096, WS_PLAIN> {
+    using forms = WsList<WfK16R2, WfK8R2S, WfK16R2S>;
+    static PbPick pick(unsigned rows, unsigned mt, bool seg) {
+        const unsigned cl = ws_cls(mt);
+        if (rows < 384 || rows > 1024) return {};
+        if (cl < 128) {
+            if (!seg || (rows != 1024 && rows != 512)) return {};
+            if (rows == 1024) return ws_q6s_small(cl, {WfK8R2S::id, 0}, {WfK16R2S::id, 0}, {WfK16R2S::id, 32});
+            return ws_q6s_small(cl, {}, {WfK8R2S::id, 0}, {WfK16R2S::id, 0});
+        }
+        return {K16R2, 32};
+    }
+};
+// Q6_K output-b (8,192 columns, 864 rows): 479 -> 307 (S ch32) / 988 -> 545 (S ch32; K16R2 ch32 585). seg (bit 8) at
+// 9-64 tokens: 41.6 -> 41.9 (T8 S: equal here, and free of the private array the engine module keeps in global
+// memory) / 88.4 -> 75.8 (T16 S) / 260 -> 155 (T16 S ch32)
+template <> struct WsPb<6, 8192, WS_PLAIN> {
+    using forms = WsList<WfK16R2, WfK4R2S, WfK8R2S, WfK16R2S>;
+    static PbPick pick(unsigned rows, unsigned mt, bool seg) {
+        if (rows < 768 || rows > 1024) return {};
+        const unsigned cl = ws_cls(mt);
+        if (cl < 128) return seg ? ws_q6s_small(cl, {WfK8R2S::id, 0}, {WfK16R2S::id, 0}, {WfK16R2S::id, 32}) : PbPick{};
+        return {seg ? WfK16R2S::id : K16R2, 32};
+    }
+};
+// Q6_K engram_kv (6,144 columns, 4,267 rows): 128 kept without seg (K16R2 1090 against 1111), S ch64 1108;
+// 256: 3695 (engine) -> 2081 (S ch64; K16R2 ch64 2152); seg at 9-64 tokens: 159 -> 159 (T8 S) / 310 -> 293 (T16 S) /
+// 656 -> 563 (T16 S)
+template <> struct WsPb<6, 6144, WS_PLAIN> {
+    using forms = WsList<WfK16R2, WfK8R2S, WfK16R2S>;
+    static PbPick pick(unsigned rows, unsigned mt, bool seg) {
+        const unsigned cl = ws_cls(mt);
+        if (rows < 4096 || rows > 4608) return {};
+        if (cl < 128) return seg ? ws_q6s_small(cl, {WfK8R2S::id, 0}, {WfK16R2S::id, 0}, {WfK16R2S::id, 0}) : PbPick{};
+        if (seg) return {WfK16R2S::id, 64};
+        return cl == 256 ? PbPick{K16R2, 64} : PbPick{};
+    }
+};
+// Q5_K shared gate + up (384 + 384 rows) in the router's launch: 260 -> 151 / 542 -> 303 (K16R2 ch32)
+template <> struct WsPb<5, 5120, WS_SHARED> {
+    using forms = WsList<WfK16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows != 384) return {};
+        return {K16R2, 32};
+    }
+};
+// Q5_K shared down (2,304 columns, 864 rows): 117 -> 91.8 / 267 -> 163 (K16R2 ch32)
+template <> struct WsPb<5, 2304, WS_PLAIN> {
+    using forms = WsList<WfK16R2>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        if (ws_cls(mt) < 128 || rows < 768 || rows > 1024) return {};
+        return {K16R2, 32};
+    }
+};
+// H16 (bit 2) 5,120 columns: router (384 rows) 16 kept (17.6 against 25.0), 32: 40.1 -> 25.7, 64: 67.8 -> 36.7,
+// 128: 189 -> 72.2, 256: 450 -> 111; compressor kv (512) 16 kept (20.8 / 25.1), 32: 41.4 -> 26.2, 64: 92.0 -> 38.8,
+// 128: 258 -> 75.1, 256: 607 -> 150 (H8R4; ch32 from 33 tokens). Indexer proj (32 rows) kept (15.9 against 22.5)
+template <> struct WsPb<16, 5120, WS_PLAIN> {
+    using forms = WsList<WfH8R4>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        const unsigned cl = ws_cls(mt);
+        if (rows < 64 || rows > 1024 || cl < 32) return {};
+        return {WfH8R4::id, cl >= 64 ? 32u : 0u};
+    }
+};
+// H16 1,280 columns: indexer q_b (4,096 rows) 16: 66.9 -> 24.9, 32: 131 -> 42.2, 64: 292 -> 81.5, 128: 635 -> 165,
+// 256: 1251 -> 345 (H8R4; ch32 from 33 tokens)
+template <> struct WsPb<16, 1280, WS_PLAIN> {
+    using forms = WsList<WfH8R4>;
+    static PbPick pick(unsigned rows, unsigned mt, bool) {
+        const unsigned cl = ws_cls(mt);
+        if (rows < 1024 || rows > 8192 || cl < 16) return {};
+        return {WfH8R4::id, cl >= 64 ? 32u : 0u};
+    }
+};
 template <typename DK, unsigned KIND, typename F>
 inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, float *y, size_t ys, unsigned mt,
                     unsigned cap, F &&f) {
@@ -3391,14 +3753,28 @@ inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, f
     using Tab = WsTab<O::fmt, O::cols, KIND>;
     if constexpr (O::fmt == 0) return false;
     else {
-        const unsigned id = Tab::pick(dk.rows, mt);
+        const unsigned xn = ws_xn(dk), cl = ws_cls(mt);
+        // OWN_PB (pb-1): WsPb's pick for 65-256 tokens (bit 16) and its WsQ6S picks for 9-64 tokens (bit 8); the H16
+        // rows: WsPb's pick for 9-256 tokens (bit 2); otherwise (or none there) WsTab's
+        using Pb = WsPb<O::fmt, O::cols, KIND>;
+        PbPick pp{};
+        if (O::fmt == 16 ? cl >= 16 && pb_on(2) : cl >= 128 ? pb_on(16) : cl >= 16 && pb_on(8)) pp = Pb::pick(dk.rows, mt, pb_on(8));
+        const unsigned id = pp.id ? pp.id : Tab::pick(dk.rows, mt);
         if (!id) return false;
-        return ws_each(typename Tab::forms{}, [&](auto fm) {
+        using L = typename WsCat<typename Tab::forms, typename Pb::forms>::type;
+        return ws_each(L{}, [&](auto fm) {
             using FM = decltype(fm);
-            if (FM::id != id || dk.xn % FM::r || (mt + FM::t - 1) / FM::t * FM::t > cap) return false;
-            using WK = typename O::type;
-            f(DenseRowsWS<WK, FM::t, FM::r, FM::xw, FM::loop, FM::pf>{WK{dk.rows, dk.xn}, w, x, xs, y, ys, mt,
-                                                                        (mt + FM::t - 1) / FM::t});
+            if (FM::id != id || xn % FM::r || (mt + FM::t - 1) / FM::t * FM::t > cap) return false;
+            using WK = typename WsWk<typename O::type, FM::pf>::type;
+            const unsigned ng = (mt + FM::t - 1) / FM::t;
+            if constexpr ((KIND == WS_PLAIN || KIND == WS_SHARED) && FM::t >= 4 && FM::r >= 2) {
+                if (pp.chunk && pp.chunk / FM::t < ng) { // (pb-1: token chunks of pp.chunk / T groups)
+                    f(DenseRowsWSC<WK, FM::t, FM::r, FM::xw, FM::loop, FM::pf>{WK{dk.rows, xn}, w, x, xs, y, ys, mt, ng,
+                                                                                 pp.chunk / FM::t});
+                    return true;
+                }
+            }
+            f(DenseRowsWS<WK, FM::t, FM::r, FM::xw, FM::loop, FM::pf>{WK{dk.rows, xn}, w, x, xs, y, ys, mt, ng});
             return true;
         });
     }
@@ -7721,6 +8097,140 @@ struct ExpertGroupM {
             grp[RUGrp::SLOT + u * RUGrp::CAP + i] = s;
             if (i == 0) {
                 grp[RUGrp::EXP + u] = le[s];
+                grp[RUGrp::CNT + u] = lc[s];
+            }
+        }
+        if (li == 0) grp[0] = nu;
+    }
+};
+// pb-1 (OWN_PB bit 4): ExpertGroupM's groups (every grp word it writes, with the same value; no other word) by a
+// counting sort instead of two O(nsl) scans per slot (47 us at 384 slots, 336 us at 1,536: one work-group, the rest
+// of the card idle). Same launch (items(nsl) items, one work-group, LM floats of local memory). Steps, each slot s:
+//   1-3 the experts' slot counts (local atomics: a count, order-free) and their exclusive prefix sums (offsets);
+//   4   s placed in its expert's bucket at offset + an atomic ticket (an order that may differ run to run);
+//   5   before = the bucket's entries < s (= ExpertGroupM's occurrence index of s, whatever the bucket's order),
+//       srt[offset + before] = s (the expert's slots ascending), chunk head <=> before % cap == 0, its count
+//       min(cap, total - before) (ExpertGroupM's lc);
+//   6   s's chunk head = srt[offset + before / cap * cap] (ExpertGroupM's head); the heads' ranks: ascending first slot
+//       = the heads before s (a work-group exclusive scan in slot order), or with heavy: heads with a larger count +
+//       heads with the same count and a smaller slot (count classes 1 .. cap: counts, offsets, buckets, then each
+//       head counts its class bucket's entries < s), ExpertGroupM's rank formula;
+//   7   the same stores as ExpertGroupM: grp[SLOT + 16 u + i] = s, grp[EXP + u], grp[CNT + u] at i == 0, grp[0] = nu.
+// Every value is an integer count or a slot id that does not depend on the atomics' order. Expert ids < EMAX (the
+// backend checks g.experts <= EMAX).
+struct ExpertGroupPM {
+    static constexpr unsigned SMAX = ExpertGroupM::SMAX, WG = ExpertGroupM::WG, SPI = ExpertGroupM::SPI;
+    static constexpr unsigned EMAX = 512, CB = RUGrp::CAP + 2;
+    static constexpr unsigned LM = 5 * SMAX + 3 * EMAX + 3 * CB; // le, bk, srt, lc, lr; ec, eo, ef; cc, co, cf
+    unsigned nsl;
+    unsigned cap = 16;
+    bool heavy = false;
+    static size_t items(unsigned nsl) { return ExpertGroupM::items(nsl); }
+    void operator()(sycl::nd_item<1> it, const uint32_t *ids, uint32_t *grp, float *lmf) const {
+        using LA = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::work_group,
+                                    sycl::access::address_space::local_space>;
+        uint32_t *le = reinterpret_cast<uint32_t *>(lmf), *bk = le + SMAX, *srt = bk + SMAX, *lc = srt + SMAX,
+                 *lr = lc + SMAX, *ec = lr + SMAX, *eo = ec + EMAX, *ef = eo + EMAX, *cc = ef + EMAX, *co = cc + CB,
+                 *cf = co + CB;
+        const auto g = it.get_group();
+        const unsigned li = (unsigned)it.get_local_linear_id(), nl = (unsigned)it.get_local_range(0);
+        const unsigned cap = this->cap < 1 ? 1u : this->cap > RUGrp::CAP ? RUGrp::CAP : this->cap;
+        const unsigned ns = nsl < SMAX ? nsl : SMAX;
+        // 1
+        for (unsigned s = li; s < ns; s += nl) le[s] = ids[s] % EMAX;
+        for (unsigned e = li; e < EMAX; e += nl) ec[e] = 0, ef[e] = 0;
+        for (unsigned e = li; e < CB; e += nl) cc[e] = 0, cf[e] = 0;
+        sycl::group_barrier(g);
+        // 2
+        for (unsigned s = li; s < ns; s += nl) LA(ec[le[s]]).fetch_add(1u);
+        sycl::group_barrier(g);
+        // 3: offsets (item li: experts li * EPI .. + EPI - 1)
+        {
+            const unsigned EPI = (EMAX + nl - 1) / nl;
+            unsigned part = 0;
+            for (unsigned k = 0; k < EPI; ++k) {
+                const unsigned e = li * EPI + k;
+                if (e < EMAX) part += ec[e];
+            }
+            unsigned base = sycl::exclusive_scan_over_group(g, part, sycl::plus<unsigned>());
+            for (unsigned k = 0; k < EPI; ++k) {
+                const unsigned e = li * EPI + k;
+                if (e < EMAX) eo[e] = base, base += ec[e];
+            }
+        }
+        sycl::group_barrier(g);
+        // 4
+        for (unsigned s = li; s < ns; s += nl) {
+            const unsigned e = le[s];
+            bk[eo[e] + LA(ef[e]).fetch_add(1u)] = s;
+        }
+        sycl::group_barrier(g);
+        // 5
+        unsigned before[SPI], head[SPI];
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            before[k] = 0;
+            head[k] = s;
+            if (s >= ns) continue;
+            const unsigned e = le[s], o = eo[e], n = ec[e];
+            unsigned bf = 0;
+            for (unsigned j = 0; j < n; ++j) bf += bk[o + j] < s ? 1u : 0u;
+            srt[o + bf] = s;
+            const unsigned left = n - bf;
+            lc[s] = bf % cap == 0 ? (left < cap ? left : cap) : 0u;
+            before[k] = bf;
+        }
+        sycl::group_barrier(g);
+        // 6
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            if (s < ns) head[k] = srt[eo[le[s]] + before[k] / cap * cap];
+        }
+        unsigned nu = 0;
+        if (!heavy) {
+#pragma unroll
+            for (unsigned k = 0; k < SPI; ++k) { // slots k nl .. k nl + nl - 1 in item order: slot order
+                const unsigned s = li + k * nl;
+                const unsigned f = s < ns && lc[s] != 0 ? 1u : 0u;
+                const unsigned ex = sycl::exclusive_scan_over_group(g, f, sycl::plus<unsigned>());
+                if (f) lr[s] = nu + ex;
+                nu += sycl::reduce_over_group(g, f, sycl::plus<unsigned>());
+            }
+        } else {
+            for (unsigned s = li; s < ns; s += nl)
+                if (lc[s]) LA(cc[lc[s]]).fetch_add(1u);
+            sycl::group_barrier(g);
+            if (li == 0) {
+                unsigned a = 0;
+                for (unsigned n = RUGrp::CAP; n >= 1; --n) co[n] = a, a += cc[n]; // heads with a larger count first
+                co[0] = a;                                                         // (all heads)
+            }
+            sycl::group_barrier(g);
+            for (unsigned s = li; s < ns; s += nl)
+                if (lc[s]) bk[co[lc[s]] + LA(cf[lc[s]]).fetch_add(1u)] = s;
+            sycl::group_barrier(g);
+            for (unsigned s = li; s < ns; s += nl) {
+                const unsigned n = lc[s];
+                if (!n) continue;
+                const unsigned o = co[n], m = cc[n];
+                unsigned r = 0;
+                for (unsigned j = 0; j < m; ++j) r += bk[o + j] < s ? 1u : 0u;
+                lr[s] = o + r;
+            }
+            nu = co[0];
+        }
+        sycl::group_barrier(g);
+        // 7
+#pragma unroll
+        for (unsigned k = 0; k < SPI; ++k) {
+            const unsigned s = li + k * nl;
+            if (s >= ns) continue;
+            const unsigned u = lr[head[k]], i = before[k] % cap;
+            grp[RUGrp::SLOT + u * RUGrp::CAP + i] = s;
+            if (i == 0) {
+                grp[RUGrp::EXP + u] = ids[s]; // (ExpertGroupM: its ids[s] copy)
                 grp[RUGrp::CNT + u] = lc[s];
             }
         }

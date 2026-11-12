@@ -206,6 +206,9 @@ int main(int argc, char **argv) {
     // qb-off-2: the same in blocks of 2..6 tokens (guessing checks, small prompt blocks): OWN_QB_OFF_M=k (every size)
     // or k2,k3,k4,k5,k6 (one per block size; 0 = off for that size)
     if (const char *e = getenv("OWN_QB_OFF_M")) {
+#ifndef OWN41_QBOFF_M
+        if (strtoul(e, nullptr, 10) != 0) die("OWN_QB_OFF_M: qb-off is parked and not built (build with -DOWN41_QBOFF_M)");
+#endif
         unsigned v[5] = {}, n = 0;
         for (const char *q = e; *q && n < 5;) {
             v[n++] = (unsigned)strtoul(q, nullptr, 10);
@@ -223,6 +226,7 @@ int main(int argc, char **argv) {
     // one-token norm launches: 64 (default since round 18 g81) / 128 / 512 (the old form) items per group
     if (const char *e = getenv("OWN_NORM_WG")) opt.norm_wg = atoi(e);
     if (const char *e = getenv("OWN_PAIR_WG_IQ1")) opt.pair_wg_iq1 = atoi(e);
+    if (const char *e = getenv("OWN_PAIR_G128")) opt.pair_g128 = atoi(e) != 0; // xperm-1: IQ2_S gate+up at 128 registers
     if (const char *e = getenv("OWN_DR_FC_SPLIT")) opt.dr_fc_split = atoi(e) != 0;
     if (const char *e = getenv("OWN_DR_MXP")) opt.dr_mxp = atoi(e) != 0;
     if (const char *e = getenv("OWN_TP_PIN")) { // "c0,..,c5[,m]": CPUs for the six card threads and the main thread
@@ -319,7 +323,7 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ATT_T_M_MAX")) opt.att_t_m_max = (unsigned)atoi(e); // ... in blocks up to this size
     if (const char *e = getenv("OWN_ATT_T_HG")) opt.att_t_hg = (unsigned)atoi(e); // ... two launches: score heads per work-group
     if (const char *e = getenv("OWN_ATT_F")) opt.att_f = atoi(e) != 0; // ... =0: two launches only
-    if (const char *e = getenv("OWN_ATT_WA")) opt.att_wa = atoi(e) != 0; // ... blocks: the window append inside them (attn wa-1)
+    if (const char *e = getenv("OWN_ATT_WA")) opt.att_wa = (unsigned)std::max(0, atoi(e)); // ... blocks: the window append inside them (1 attn wa-1: everywhere, 2 wa-2: per shape)
     // RMS norms of 1,280+ columns take their scale from a fast bracket of the double chain (the same scale bit for
     // bit; round 18 n1-n5, tools/bench/bench_norm_ff.cpp; default since g81); =0 for the chain only. Read before any
     // norm kernel is built.
@@ -554,6 +558,14 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_DRIDE")) {
             const unsigned long n = strtoul(e, nullptr, 0);
             ops41sycl::g_ws_dride_mask = n == 1 ? 0x1cu : (unsigned)(n & 0x1fu);
+        }
+        // pb-1 (opt-in, /home/steve/dsv41-work/pb256/README-pb1.txt): OWN_PB=mask (0x.. allowed; default 0 = off), each
+        // bit gives the production outputs bit for bit: 2 the H16 rows (router, compressor, indexer q_b) weight-stationary,
+        // 4 the parallel expert grouping, 8 Q6_K forms with per-segment scales (no private arrays), 16 blocks of 65-256
+        // tokens in per-role forms with the positions in token chunks; OWN_PB=1: 2 + 4 + 8 + 16 (0x1e)
+        if (const char *e = getenv("OWN_PB")) {
+            const unsigned long n = strtoul(e, nullptr, 0);
+            ops41sycl::g_pb_mask = n == 1 ? 0x1eu : (unsigned)(n & 0x1eu);
         }
         if (const char *e = getenv("OWN_MT_DRIDE_MS")) {
             unsigned m = 0;
