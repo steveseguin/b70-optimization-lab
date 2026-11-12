@@ -41,6 +41,18 @@
 #ifndef OWN_R2_TAB_COPY
 #define OWN_R2_TAB_COPY 0
 #endif
+// OWN_R2_TAB_COPY_XXS (xperm-3, 2026-11-11; compile-time, default 0, needs OWN_R2_TAB_COPY=1): the IQ2_XXS and
+// IQ3_XXS kernels (one-token gate+up and down, the checks' RU3 formats) copy their tables from constant images as
+// well (r2_tab_img.hpp, same bits, checked word by word on the CPU: xperm/p3/check/imgcheck_xxs.cpp). xperm-2 left
+// them computed because the warm bench showed no gain; the engine starts every routed launch on a cold cache, and a
+// cold bench (48 MB stream + a small kernel before each launch) reproduces xperm-2's engine gains within 0.6 us:
+// IQ2_XXS gate+up -0.42 us, IQ3_XXS down -0.26, IQ2_XXS down -0.86 (xperm/README-ledger.txt section 9).
+#ifndef OWN_R2_TAB_COPY_XXS
+#define OWN_R2_TAB_COPY_XXS 0
+#endif
+#if OWN_R2_TAB_COPY_XXS && !OWN_R2_TAB_COPY
+#error "OWN_R2_TAB_COPY_XXS needs OWN_R2_TAB_COPY=1"
+#endif
 #if OWN_R2_TAB_COPY
 #include "stage2/packet3/kernels/r2_tab_img.hpp"
 #endif
@@ -292,8 +304,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSPb {
     unsigned nsl = 6, xtok = 0;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq2_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -571,8 +587,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ3XXSPb {
     unsigned nsl = 6, xtok = 0;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq3_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float((iq3::iq3_grid[k >> 2] >> (8 * (k & 3))) & 255);
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -847,8 +867,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSPd {
     }
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq2_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -1124,8 +1148,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XXSPe {
     }
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq2_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -1160,8 +1188,12 @@ template <unsigned NB_> struct RU3IQ2XXS {
     static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NC = NB * 8, NS = (NC + 31) / 32;
     static_assert(NB <= 32);
     static void fill(const sycl::nd_item<1> &it, float *tab) {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq2_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xxs_grid, k >> 3, k & 7));
+#endif
     }
     struct Row {
         const uint32_t *rw;
@@ -1406,8 +1438,12 @@ template <unsigned NB_> struct RU3IQ3XXS {
     static constexpr size_t RB = ((size_t)NB * 98 + 15) & ~(size_t)15;
     static constexpr unsigned NC = NB * 8, NS = (NC + 31) / 32;
     static void fill(const sycl::nd_item<1> &it, float *tab) {
+#if OWN_R2_TAB_COPY_XXS
+        r2::tab_copy(it, r2tab::iq3_xxs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float((iq3::iq3_grid[k >> 2] >> (8 * (k & 3))) & 255);
+#endif
     }
     struct Row {
         const uint32_t *rw;

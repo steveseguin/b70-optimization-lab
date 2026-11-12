@@ -37,4 +37,14 @@ constexpr Img<8192> iq1s_tm3() {
 inline constexpr Img<4096> iq2_xs = grid8<4096>(iq3::iq2_xs_grid);
 inline constexpr Img<8192> iq2_s = grid8<8192>(iq3::iq2_s_grid);
 inline constexpr Img<8192> iq1_s3 = iq1s_tm3();
+#if OWN_R2_TAB_COPY_XXS
+// xperm-3: IQ2_XXS as grid8; IQ3_XXS tab[k] = float((grid[k >> 2] >> (8 * (k & 3))) & 255) (byte k & 3 of entry k >> 2)
+template <unsigned N> constexpr Img<N> grid4(const uint32_t *grid) {
+    Img<N> t{};
+    for (unsigned k = 0; k < N; ++k) t.v[k] = std::bit_cast<uint32_t>(float((grid[k >> 2] >> (8 * (k & 3))) & 255));
+    return t;
+}
+inline constexpr Img<2048> iq2_xxs = grid8<2048>(iq3::iq2_xxs_grid);
+inline constexpr Img<1024> iq3_xxs = grid4<1024>(iq3::iq3_grid);
+#endif
 } // namespace r2tab

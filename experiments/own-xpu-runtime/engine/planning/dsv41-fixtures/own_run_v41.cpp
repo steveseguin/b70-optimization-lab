@@ -593,10 +593,11 @@ int main(int argc, char **argv) {
         }
         // pace-1 (opt-in, /home/steve/dsv41-work/attn/pace/README.txt): the 16-head cards' q_b and output-a rows at checks
         // in persistent, pipelined launches (bit for bit). OWN_MT_PACE=1: every check size 2-6; OWN_MT_PACE=n (n != 1;
-        // 0x.. allowed) the sizes M whose bit M - 2 is set; default 0 = off. OWN_MT_PACE_ROLES (default 7): 1 Q8_0 q_b,
-        // 2 Q6_K q_b, 4 Q8_0 output-a
+        // 0x.. allowed) the sizes M whose bit M - 2 is set; default 0x1f (every size) since tp103; 0 = off. OWN_MT_PACE_ROLES (default 7): 1 Q8_0 q_b,
+        // 2 Q6_K q_b, 4 Q8_0 output-a; pace-2 (every card; /home/steve/dsv41-work/attn/pace2/README.txt): 8 the q_a + kv
+        // pair, 16 output-b, 32 shared down, 64 the shared expert's gate + up with the router (127: all)
         if (const char *e = getenv("OWN_MT_PACE")) ops41sycl::g_pace_mask = ck_mask(e);
-        if (const char *e = getenv("OWN_MT_PACE_ROLES")) ops41sycl::g_pace_roles = (unsigned)strtoul(e, nullptr, 0) & 7u;
+        if (const char *e = getenv("OWN_MT_PACE_ROLES")) ops41sycl::g_pace_roles = (unsigned)strtoul(e, nullptr, 0) & 127u;
         if (const char *e = getenv("OWN_MT_DRIDE_MS")) {
             unsigned m = 0;
             for (const char *c = e; *c; ++c)

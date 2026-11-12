@@ -377,6 +377,7 @@ Did not work (and why):
 | eg-fold-1: the expert grouping (`ExpertGroupM`, its own launch in checks) folded into the gate + up launch (`OWN_MT_EGF`, `dsv41-work/egf/`, card 5 bench 13:34-13:35, bitwise) | slower: per check UF1 -0.35 / -0.68 / -0.92 / -1.08 / -1.59 ms and UF2 -0.03 / -0.04 / -0.01 / +0.01 / -0.25 ms at 2-6 tokens (IQ2_S and IQ1_S UF1 +14-65 us per layer; IQ2_XXS UF2 +1.7-9 us). Even free grouping would save only 0.11-0.30 ms per check. Closed |
 | Exact restructured dequant for the routed experts ("T form": a table of signed magnitudes per 4-weight half group; xperm helper 2026-11-11 ~20:20, `dsv41-work/xperm/README.md` section 4) | the per-weight math d*s*g is exact in FP32 for IQ2_XXS / IQ2_XS / IQ2_S / IQ3_XXS / IQ1_S (every fp16 d, scale and grid value checked on the CPU; Q2_K is not exact), so any order gives the same bits, and the T form cuts the instructions per 64 weights 21-23 %. But on card 5 it is slower (IQ2_XXS 23.4 -> 28.7 us, IQ1_S 27.4 -> 31.1): the per-work-group table build and SLM bank conflicts; with both removed only 2 % faster. The integer ops are not the critical path of the expert kernels |
 | Private arrays back in scratch for the decode image (gp-1, img7) and the pull image (gp-a, img4) (pb256 / attn helpers, 2026-11-11 ~20:10) | A/B builds: placement changes every kernel's code by 1-2 % with mixed sign; under 0.05 ms per step or check. The real trigger is zero-initialized local arrays (program-scope private globals) |
+| Prefetching the routed experts' weight rows ahead of use (L1, `OWN_R2_PF`, xperm helper 2026-11-11 ~23:15, card 5; `dsv41-work/xperm/README-ledger.txt` sections 8-9) | bit-identical in every form, slower in every form and cache state: whole rows +5.9 to +9.5 us per one-token launch, first lines only +1.5 to +1.8 us, checks +1.4 to +13 us. Each prefetch message asks for 32 cache lines and costs the load pipeline about what the real loads do; the kernels have no idle memory time. The engine-over-bench gap (L2) is cold caches at kernel start (dependent table-fill reads), mostly removed by xperm-2; xperm-3 extends the copy to IQ2_XXS / IQ3_XXS (~13 us per step) |
 | Trusting one-card bench winners blindly | Q8_0 5120 / 4096-column forms lost inside the engine (riders, fewer rows, §31) |
 | L2 prefetch riders | a launch ends only when its prefetch groups do (§15-18) |
 | Fused softmax into the attention output | slower (§31 s6) |
@@ -386,6 +387,15 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 23:10 EST)
 
+- 23:40 build tp103 = tp102 + px-1b (pb256: the halves' fused-router base, 4 sites) + `OWN_TIMELINE_PROMPT` (pb256:
+  prompt-block timelines on both queues + `pb256/tlp/tools/tl_prompt.py`) + xperm-3 compiled in (IQ2_XXS / IQ3_XXS
+  table copy, ~13 us per step) + pace-2 (attn: one-wave forms for every card's q_a + kv, output-b, shared down, shared
+  gate + up with the router at 2-6 tokens, `OWN_MT_PACE_ROLES` 8 / 16 / 32 / 64, opt-in; card 3 bench 720 compares, 0
+  differ; predicted 0.12-0.56 ms per check, code +1 %, analysis +1.3-1.5 %) + defaults G128 and pace-1. Gate tg103
+  follows (`dsv41-work/tg103.sh`): 18 prompt-1 traces incl. pace-2 at 2-6 and the overlap at blocks of 36 (halves of
+  18: the old prompt-1 PX arms never ran halves), 3K traces incl. PX x3 with `OWN_PX_CHECK`, 3K reads base / PX / PX
+  serial / PX WG32 alternated x2 (pb256 predicts PX 5.28-5.45 s against 5.71; serial minus base >= 0.12 s decides
+  halves of 256), prompt timelines, guessing A / B / B + pace-2, vocabulary, TAU 0.40, one-token + check timelines.
 - 23:05 tg102 + tg102b done (`data/.../round19-tg102/`): every trace identical without the overlap; pace-1 pays in
   checks (4-6 tokens -0.26 to -0.58 ms; code 142.4 -> 144.1 tok/s, analysis 157.8 -> 159.9, after 3K 140.9 -> 147.5);
   with the draft vocabulary code 144.72, analysis 162.43 (best so far). Plain 103-104 (G128 +0.4 % on the mean of

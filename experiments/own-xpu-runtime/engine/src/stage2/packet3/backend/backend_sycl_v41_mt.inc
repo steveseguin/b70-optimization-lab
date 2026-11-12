@@ -636,6 +636,19 @@ bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std:
     dense_kernel(c, wa, [&](auto dk, const uint8_t *wpa) {
         using DK = decltype(dk);
         if (mt_ws && !dr_step) { // OWN_MT_WS: false where dense_m gives either matrix a weight-stationary form
+            // pace-2 (OWN_MT_PACE + OWN_MT_PACE_ROLES & 8, opt-in): both matrices in one persistent pipelined launch,
+            // the dot rows (2-3 tokens) on work-groups of their own (ops41sycl::pace_pair_rows; bit for bit)
+            if constexpr (std::is_same_v<act_t, float>)
+                if (ops41sycl::g_pace_mask && !xt[c].on &&
+                    ops41sycl::pace_pair_rows(dk, nra, nrb, wpa, wpb, x, xs, ya, ysa, yb, ysb, mt, rider, pace_cu(c),
+                                              [&](const auto &k, size_t nwg) {
+                                                  using K = std::decay_t<decltype(k)>;
+                                                  auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 512, 512), k);
+                                                  kev(c, kname<K>(), e);
+                                              })) {
+                    ok = true;
+                    return;
+                }
             using O = ops41sycl::WsOf<DK>;
             constexpr unsigned KA = std::is_same_v<RD, ops41sycl::NoRows> ? ops41sycl::WS_PLAIN : ops41sycl::WS_DOTS;
             // (unless WS_PAIR picks a pair form, OWN_MT_CK: pa/ck2, Q6_K's pair with the dot rows in one launch beats
@@ -700,7 +713,7 @@ bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fi
     if (eg.type != eu.type || eg.cols != eu.cols || !wgt[c].at(gn).packed || !wgt[c].at(un).packed) return false;
     if (wgt[c].at(gn).nrows != wgt[c].at(un).nrows || g.experts % 32 != 0 || g.experts > 512) return false;
     const unsigned mt = (unsigned)mt_n;
-    const Scratch &b = scm[c][0];
+    const Scratch &b = scm[c][px_tok]; // (OWN_PX: the half's rows; px_tok 0: the block's)
     const size_t H = g.h, FS = (size_t)25 * HC_SEG;
     const uint8_t *wu = (const uint8_t *)wgt[c].at(un).p;
     tok_set(c, 0);
@@ -724,6 +737,18 @@ bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fi
             const unsigned ng = (mt + G - 1) / G;
             go(D{dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, ng}, D{dk, wu, b.xn, H, b.shu, (size_t)g.mid, mt, ng});
         };
+        // pace-2 (OWN_MT_PACE + OWN_MT_PACE_ROLES & 64, opt-in): the router, the finish and both matrices' rows in one
+        // persistent pipelined launch (ops41sycl::pace_gu_rows; bit for bit)
+        if constexpr (std::is_same_v<act_t, float>)
+            if (ops41sycl::g_pace_mask && mt_ws && !dr_step && !xt[c].on &&
+                ops41sycl::pace_gu_rows(dk, wgt[c].at(gn).nrows, wg, wu, b.xn, H, b.shg, b.shu, (size_t)g.mid, mt, fin,
+                                        ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, (const float *)b.router, bias,
+                                        b.ids, b.prob, pace_cu(c), [&](const auto &k, size_t nwg) {
+                                            using K = std::decay_t<decltype(k)>;
+                                            auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 512, 512), k);
+                                            kev(c, kname<K>(), e);
+                                        }))
+                return;
         if (mt_ws && !dr_step) { // OWN_MT_WS (as dense_m): both matrices in the same form
             const bool ws = ops41sycl::ws_rows<DK, ops41sycl::WS_SHARED>(dk, wg, b.xn, H, b.shg, (size_t)g.mid, mt, MTA,
                                                                          [&](const auto &dg) {
@@ -753,7 +778,7 @@ void hc_dots_m(int c, const std::string &prefix) {
     using R = ops41sycl::HcDotsRowsM<5120, HC_SEG, MTF>;
     for (int t0 = 0; t0 < mt_n; t0 += MTF) {
         const R r{(const float *)(strm[c] + (size_t)t0 * 4 * g.h), (size_t)4 * g.h, wp<float>(c, prefix + "fn.weight"),
-                  scm[c][0].d25 + (size_t)t0 * 25 * HC_SEG, (size_t)25 * HC_SEG, (unsigned)std::min(MTF, mt_n - t0)};
+                  scm[c][px_tok].d25 + (size_t)t0 * 25 * HC_SEG, (size_t)25 * HC_SEG, (unsigned)std::min(MTF, mt_n - t0)};
         launch_rows<0>(c, r.n(), 0, ops41sycl::RowsP<R>{r});
     }
 }
@@ -1198,7 +1223,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
 long icc_m_n[TILES] = {};
 void idx_cand_check_m(int L, int c, int si, int M, const int *lens, int slot) {
     if (icc_m_n[c]++ % 37) return; // one block layer in 37 (a prompt's blocks would copy ~9 bytes per row each)
-    const Scratch &b = scm[c][0];
+    const Scratch &b = scm[c][px_tok]; // (OWN_PX excludes OWN_IDX_CAND=2; kept consistent)
     const size_t SS = (size_t)max_seq + 64;
     long lmax = 0;
     for (int t = 0; t < M; ++t) lmax = std::max<long>(lmax, lens[t]);
@@ -1387,7 +1412,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
             for (int t = 0; t < M; ++t) {
                 tok_set(c, t);
                 launch_sg(c, 4, ops41sycl::EngramGateP{g.h}, streams[c],
-                          (const float *)(xarena[c] + xengM + ((size_t)t * 2 + li) * 5 * H),
+                          (const float *)(xarena[c] + xengM + ((pt + (size_t)t) * 2 + li) * 5 * H),
                           wp<float>(c, p + "engram_gate.weight"));
             }
         }
@@ -2064,9 +2089,13 @@ void px_fire(int c, int site, int h, unsigned grf) {
     xchg_m(c, d.off, d.stride, d.nslot, d.r0, d.r1, 0, d.part);
     px_g[c] = 0, px_n[c] = 0;
     px_xe[c][site][h] = px_last[c];
+    if (tl_path) tl_px_mark(c, 'f', site, h, grf); // OWN_TIMELINE_PROMPT
     if (o.px_serial) px_wait(c, px_last[c]); // OWN_PX_SERIAL (diagnostic): no overlap, the same queues and order
 }
-void px_await(int c, int site, int h) { px_wait(c, px_xe[c][site][h]); }
+void px_await(int c, int site, int h) {
+    if (tl_path) tl_px_mark(c, 'w', site, h, 0); // OWN_TIMELINE_PROMPT
+    px_wait(c, px_xe[c][site][h]);
+}
 // the layer's routed-down register mode (tp100 / tp101 builds: the IQ2_XXS / IQ3_XXS down forms 256, the others 128)
 unsigned px_down_grf(int L) const {
     const auto t = we("blk." + std::to_string(L) + ".ffn_down_exps.weight").type;
@@ -2225,6 +2254,7 @@ void tpm_card_step(int c) {
     sc_keep[c] = sc[c];
     streams_keep[c] = streams[c];
     if (tl_path && mt_heads) tl_begin_ck(c); // OWN_TIMELINE_CHECKS
+    if (tl_path && !mt_heads && tl_pa > 0) tl_begin_pb(c); // OWN_TIMELINE_PROMPT
     try {
         commit_pending(c);
         x_ready[c] = false;
@@ -2278,7 +2308,7 @@ void tpm_card_step(int c) {
         throw;
     }
     tok_end(c);
-    if (tl_path && mt_heads) tl_end(c);
+    if (tl_path && (mt_heads || tl_pa > 0)) tl_end(c);
 }
 // OWN_ENG_AHEAD (prompt reading, with OWN_ENG_EARLY): the engram rows of the tokens after this block (eng_ahead,
 // in the engram vocabulary) asked from the disk while the cards run this block; only page-cache hints, so the
@@ -2325,6 +2355,7 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     const bool pxb = px_blk;
     px_blk = false;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
+    if (tl_path) tl_prompt_done(); // OWN_TIMELINE_PROMPT: clock pairs / the file (every card is done)
     if (pxb && o.px_check) px_check_block(); // OWN_PX_CHECK
     for (int c = 0; c < o.tp; ++c) // OWN_QB_OFF_M's pull first (QbmPull: err[2] = 1 + flag word, err[3] = seq): the
         if (xerr[c][2])            // helpers' exchanges then time out waiting for the heavy card

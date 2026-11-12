@@ -321,7 +321,7 @@ public:
                                 // the engine 14.9 -> 8.2 us, plain answers +4.6 %). Default 64 since g81 (512: old)
         int down_wg = 128;      // work-groups of the expert down launch (OWN_DOWN_WG)
         int pair_wg_iq1 = 0;    // gate+up work-groups for IQ1_S experts, 0 = pair_wg (OWN_PAIR_WG_IQ1)
-        bool pair_g128 = false; // xperm-1: one-token IQ2_S gate+up (e form, no extra rows) pinned to 128 registers
+        bool pair_g128 = true; // (default since tp103; OWN_PAIR_G128=0: off) xperm-1: one-token IQ2_S gate+up (e form, no extra rows) pinned to 128 registers
                                 // (RoutedIQ2SPe128; same code and outputs; OWN_PAIR_G128=1)
         bool dr_fc_split = true; // the draft's dsp.fc rows split across the cards + an exchange (OWN_DR_FC_SPLIT)
         bool dr_mxp = true; // the draft's MXFP4 experts packed (pk41 MXFP4) and run grouped by expert (OWN_DR_MXP)
@@ -1446,6 +1446,7 @@ private:
         });
         px_last[c] = e;
         ++px_xn[c];
+        if (tl_on[c]) tl_xq[c] = (int16_t)(px_g[c] ? px_g[c] : 1); // OWN_TIMELINE: on xqs[c] (its mode; 1: default)
         return e;
     }
     void px_wait(int c, const sycl::event &e) { (void)qs[c].ext_oneapi_submit_barrier({e}); }
@@ -3244,14 +3245,26 @@ private:
     // OWN_TIMELINE_CHECKS=a-b instead records the guessing checks number a..b (blocks with every position's head,
     // counted from 1 per run; steps 10000 + n in the file; the one-token window is then off), clock pairs after
     // checks a-1 and b (decode_verify_tp).
+    // OWN_TIMELINE_PROMPT=a-b (tl-prompt) instead records prompt blocks number a..b (decode_block_tp's blocks,
+    // counted from 1 per run; steps 20000 + n in the file; the one-token window and the checks are then off), clock
+    // pairs after blocks a-1 and b (a >= 2: two pairs). Every launch line then has a 14th column xq: 0 on qs[c],
+    // else on the exchange queue xqs[c] (OWN_PX) with the pull's register mode (128 / 256; 1: the default build).
+    // And per OWN_PX exchange site: px <step> <c> f <site> <half> <idx> <grf> (fired: idx = its launch) and
+    // px <step> <c> w <site> <half> <idx> 0 (qs[c] waits for it before launch idx; -1: none recorded after it);
+    // sites 0-3 = X1 output-a, X2 output-b, X3 act, X4 FFN rows. Analysis: pb256/tlp/tools/tl_prompt.py.
     // Do not combine with OWN_GPROF (its barriers become unrecorded gaps).
-    struct TLRec { const char *name; sycl::event e; int64_t host_ns; int step; int16_t xpart, xk; int8_t xmode; };
+    struct TLRec { const char *name; sycl::event e; int64_t host_ns; int step; int16_t xpart, xk; int8_t xmode; int16_t xq; };
+    struct TLPx { int step; size_t idx; char kind; int8_t site, half; int16_t grf; }; // OWN_TIMELINE_PROMPT: PX sites
     struct TLCal { int step, ok; uint64_t ticks; int64_t dev_ns, host_ns, lo, hi; };
     struct TLSpan { int step; int64_t a, b; };
     struct TLX { int16_t part = -1, xk = -1; int8_t mode = -1; };
     const char *tl_path = [] { const char *e = getenv("OWN_TIMELINE"); return e && *e ? e : nullptr; }();
     int tl_a = 20, tl_b = 27;
     int tl_ca = -1, tl_cb = -1; // OWN_TIMELINE_CHECKS
+    int tl_pa = -1, tl_pb = -1; // OWN_TIMELINE_PROMPT
+    long tl_pbn[TILES] = {};    // prompt blocks begun per card
+    int16_t tl_xq[TILES] = {};  // the next record's queue (px_submit)
+    std::vector<TLPx> tl_px[TILES];
     long tl_ckn[TILES] = {};    // checks begun per card
     bool tl_on[TILES] = {}, tl_done[TILES] = {};
     int tl_step[TILES] = {};
@@ -3272,8 +3285,9 @@ private:
     }
     void tl_add(int c, const char *name, const sycl::event &e) {
         const int64_t h = tl_now();
-        tl_rec[c].push_back({name, e, h, tl_step[c], tl_x[c].part, tl_x[c].xk, tl_x[c].mode});
+        tl_rec[c].push_back({name, e, h, tl_step[c], tl_x[c].part, tl_x[c].xk, tl_x[c].mode, tl_xq[c]});
         tl_x[c] = {};
+        tl_xq[c] = 0;
     }
     int64_t tl_dev_ns(int c, uint64_t ticks) const { // as the runtime turns kernel timestamps into ns
         const uint32_t b = tl_kbits[c];
@@ -3297,9 +3311,19 @@ private:
             tl_ca = a, tl_cb = n == 2 ? b : a;
             tl_a = tl_b = 1 << 30; // the one-token window off
         }
+        if (const char *e = getenv("OWN_TIMELINE_PROMPT")) { // tl-prompt
+            int a = 0, b = 0;
+            const int n = std::sscanf(e, "%d-%d", &a, &b);
+            if (n < 1 || a < 1 || (n == 2 && b < a))
+                throw std::runtime_error("OWN_TIMELINE_PROMPT: a-b (prompt blocks, 1 <= a <= b)");
+            if (tl_ca > 0) throw std::runtime_error("OWN_TIMELINE_PROMPT: not with OWN_TIMELINE_CHECKS");
+            tl_pa = a, tl_pb = n == 2 ? b : a;
+            tl_a = tl_b = 1 << 30; // the one-token window off (and the checks: tl_ca stays -1)
+        }
         if (!(tl_f = std::fopen(tl_path, "w"))) throw std::runtime_error("OWN_TIMELINE: cannot write the file");
         std::fprintf(tl_f, "# OWN_TIMELINE v1: answer steps %d-%d, %d cards, host clock CLOCK_MONOTONIC_RAW ns "
                      "(format: backend_sycl_v41.hpp; analysis: tools/perf/dsv41_timeline.py)\n", tl_a, tl_b, o.tp);
+        if (tl_pa > 0) std::fprintf(tl_f, "# OWN_TIMELINE_PROMPT: prompt blocks %d-%d (steps 20000 + n)\n", tl_pa, tl_pb);
         for (int c = 0; c < o.tp; ++c) {
             auto zd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
             ze_device_properties_t p{};
@@ -3356,6 +3380,37 @@ private:
             tl_st[c].reserve((size_t)(tl_cb - tl_ca + 1));
         }
         tl_t0[c] = tl_now();
+    }
+    void tl_begin_pb(int c) { // tpm_card_step's start for a prompt block (OWN_TIMELINE_PROMPT)
+        const long k = ++tl_pbn[c];
+        tl_step[c] = 20000 + (int)k;
+        tl_on[c] = !tl_done[c] && tl_pa > 0 && k >= tl_pa && k <= tl_pb;
+        if (!tl_on[c]) return;
+        if (tl_rec[c].empty()) { // ~3,000 launches per PX block of 256 (RFUSE=0: + 2 per token and layer)
+            tl_rec[c].reserve((size_t)16384 * (tl_pb - tl_pa + 1));
+            tl_px[c].reserve((size_t)1024 * (tl_pb - tl_pa + 1));
+            tl_hw[c].reserve((size_t)64 * (tl_pb - tl_pa + 1));
+            tl_st[c].reserve((size_t)(tl_pb - tl_pa + 1));
+        }
+        tl_t0[c] = tl_now();
+    }
+    void tl_prompt_done() { // decode_block_tp, main thread, after every card finished the block
+        if (tl_pa < 0) return;
+        const long k = tl_pbn[0];
+        if (k != tl_pa - 1 && k != tl_pb) return;
+        for (int c = 0; c < o.tp; ++c) {
+            if (tl_done[c]) continue;
+            tl_calibrate(c, 20000 + (int)k);
+            if (k == tl_pb) tl_flush(c);
+        }
+    }
+    // an OWN_PX site in the window: fired (its launch: the last record on xqs[c]) or waited for (before the next launch)
+    void tl_px_mark(int c, char kind, int site, int half, unsigned grf) {
+        if (!tl_on[c]) return;
+        size_t idx = tl_rec[c].size();
+        if (kind == 'f')
+            while (idx > 0 && tl_rec[c][idx - 1].xq == 0) --idx;
+        tl_px[c].push_back({tl_step[c], kind == 'f' ? idx - 1 : idx, kind, (int8_t)site, (int8_t)half, (int16_t)grf});
     }
     void tl_check_done() { // decode_verify_tp, main thread, after every card finished the check
         if (tl_ca < 0) return;
@@ -3441,19 +3496,28 @@ private:
         for (auto &w : tl_st[c]) std::fprintf(tl_f, "st %d %d %lld %lld\n", w.step, c, (long long)w.a, (long long)w.b);
         for (auto &w : tl_hw[c]) std::fprintf(tl_f, "hw %d %d %lld %lld\n", w.step, c, (long long)w.a, (long long)w.b);
         int step = -1, idx = 0;
+        std::vector<int> sidx(v.size()); // (OWN_TIMELINE_PROMPT: a record's index in its step, for the px lines)
         for (size_t i = 0; i < v.size(); ++i) {
             const auto &r = tl_rec[c][i];
             if (r.step != step) step = r.step, idx = 0;
-            std::fprintf(tl_f, "%d %d %d %d %lld %lld %lld %lld %lld %lld %d %d %d\n", r.step, c, idx++, tl_ids[r.name],
+            sidx[i] = idx;
+            std::fprintf(tl_f, "%d %d %d %d %lld %lld %lld %lld %lld %lld %d %d %d %d\n", r.step, c, idx++, tl_ids[r.name],
                          (long long)r.host_ns, conv(v[i].s), conv(v[i].e), (long long)v[i].s, (long long)v[i].e,
-                         (long long)v[i].sub, (int)r.xpart, (int)r.xmode, (int)r.xk);
+                         (long long)v[i].sub, (int)r.xpart, (int)r.xmode, (int)r.xk, (int)r.xq);
+        }
+        for (auto &m : tl_px[c]) {
+            const bool ok = m.idx < v.size() && tl_rec[c][m.idx].step == m.step;
+            std::fprintf(tl_f, "px %d %d %c %d %d %d %d\n", m.step, c, m.kind, (int)m.site, (int)m.half,
+                         ok ? sidx[m.idx] : -1, (int)m.grf);
         }
         std::fflush(tl_f);
-        std::fprintf(stderr, "OWN_TIMELINE: card %d: %zu launches of answer steps %d-%d -> %s (%zu clock pairs)\n", c,
-                     v.size(), tl_a, tl_b, tl_path, P.size());
+        std::fprintf(stderr, "OWN_TIMELINE: card %d: %zu launches of %s %d-%d -> %s (%zu clock pairs)\n", c, v.size(),
+                     tl_pa > 0 ? "prompt blocks" : "answer steps", tl_pa > 0 ? tl_pa : tl_a, tl_pa > 0 ? tl_pb : tl_b,
+                     tl_path, P.size());
         tl_rec[c] = {};
         tl_hw[c] = {};
         tl_st[c] = {};
+        tl_px[c] = {};
     }
     bool tp_hostprof = getenv("OWN_TP_HOSTPROF") != nullptr; // host time per card thread: busy vs blocked
     double tph_step[TILES] = {}, tph_wait[TILES] = {};
@@ -3859,7 +3923,10 @@ private:
                 if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
             if (xr2[c].on) return xchg_pull2(c, x, nv, mode, part, P); // OWN_MT_DSPLIT: a second region rides along
             const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
-            if (px_q[c]) return px_pull(c, x, nwg, mode, P); // OWN_PX: on the exchange queue
+            if (px_q[c]) { // OWN_PX: on the exchange queue
+                if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)-1, (int8_t)mode};
+                return px_pull(c, x, nwg, mode, P);
+            }
             float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
             uint32_t *err = xerr[c];
             const int xk = xw_arm(c, mode, part, true); // OWN_XWAIT slot (-1: none)
