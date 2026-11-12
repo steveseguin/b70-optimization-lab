@@ -936,6 +936,8 @@ int main(int argc, char **argv) {
         int n_prof = 0;
         if (gprof_dec) { be.gprof_collect(); be.gprof_t.clear(); be.gprof_n.clear(); be.kprof_t.clear(); be.kprof_n.clear(); }
         for (int step = 1; step < ndecode; ++step) {
+            // The prompt/state already produced the first output token.
+            if (forced.empty() && cur == eos) break;
             if (!forced.empty()) {
                 if (step - 1 >= (int)forced.size()) break;
                 cur = forced[step - 1];
