@@ -1,0 +1,53 @@
+[xpu-health] physical_devices=0,1,2,3,4,5
+[xpu-health] single-device smoke level_zero:0
+device_count 6
+selected_device 0
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:1
+device_count 6
+selected_device 1
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:2
+device_count 6
+selected_device 2
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:3
+device_count 6
+selected_device 3
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:4
+device_count 6
+selected_device 4
+ok 2097152.0
+[xpu-health] single-device smoke level_zero:5
+device_count 6
+selected_device 5
+ok 2097152.0
+[xpu-health] xccl_devices=0,1,2,3,4,5 nproc=6
+rank 2 init okrank 3 init okrank 5 init okrank 4 init ok
+
+
+
+rank 1 init ok
+rank 0 init ok
+2026:11:11-19:33:32: 6265 |CCL_WARN| value of CCL_ATL_TRANSPORT changed to be ofi (default:mpi)
+2026:11:11-19:33:32: 6265 |CCL_WARN| value of CCL_TOPO_P2P_ACCESS changed to be 1 (default:-1)
+2026:11:11-19:33:32: 6265 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:32: 6270 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:32: 6269 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:32: 6267 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:32: 6266 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:32: 6268 |CCL_WARN| could not get local_idx/count from environment variables, trying to get them from ATL
+2026:11:11-19:33:33: 6265:[0] |CCL_WARN| topology recognition shows PCIe connection between devices. If this is not correct, you can disable topology recognition, with CCL_TOPO_FABRIC_VERTEX_CONNECTION_CHECK=0. This will assume XeLinks across devices
+rank 5 barrier okrank 3 barrier okrank 0 barrier okrank 4 barrier okrank 2 barrier okrank 1 barrier ok
+
+
+
+
+
+rank 0 allreduce ok 6.0rank 3 allreduce ok 6.0rank 5 allreduce ok 6.0
+
+
+rank 4 allreduce ok 6.0rank 1 allreduce ok 6.0rank 2 allreduce ok 6.0
+
+

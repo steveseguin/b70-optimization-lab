@@ -1,0 +1,37 @@
+args: --phase=time --forms=x2,l64p2h3,l16p2h3,l64p0h3 --quick=0 --reps=5 --k1=40 --k2=200 --max-s=25
+start 2026-11-11 16:47:12
+xll_bench: 6 cards, phase time, forms x2,l64p2h3,l16p2h3,l64p0h3, seed 1, rounds 4000, riders 8, evict 96 MB, late 8.0 MB, quick 0
+card 0 0000:03:00.0 free 31.85 GiB
+card 1 0000:23:00.0 free 31.85 GiB
+card 2 0000:43:00.0 free 31.85 GiB
+card 3 0000:83:00.0 free 31.85 GiB
+card 4 0000:a3:00.0 free 31.75 GiB
+card 5 0000:e3:00.0 free 31.85 GiB
+arenas 3.50 MiB per card, peers opened by IPC handles; MemAvailable 12.95 GiB
+warm-up card 0: 6 ms
+warm-up card 1: 7 ms
+warm-up card 2: 6 ms
+warm-up card 3: 6 ms
+warm-up card 4: 5 ms
+warm-up card 5: 7 ms
+
+== time: us per round (producer + exchange) and per exchange (round - producer), medians of 5, K 40/200; late = card 2 streams 8.0 MB more in its producer
+shape                            cards  producer              x2         l64p2h3         l16p2h3         l64p0h3
+oa1 (8192 x 1, 2 + 5 have 2048)  toget      3.62  17.47 ( 13.85)  20.59 ( 16.96)  19.47 ( 15.85)  15.56 ( 11.94)
+oa1 (8192 x 1, 2 + 5 have 2048)  late       5.02  13.73 (  8.71)  20.13 ( 15.11)  20.43 ( 15.41)  15.75 ( 10.73)
+act1 (2304 x 7)                  toget      3.14  13.36 ( 10.22)  21.82 ( 18.68)  21.80 ( 18.66)  16.06 ( 12.92)
+act1 (2304 x 7)                  late       5.08  14.05 (  8.97)  20.96 ( 15.88)  22.10 ( 17.02)  16.38 ( 11.30)
+eng (25600 x 2)                  toget      2.58  20.76 ( 18.18)  26.10 ( 23.51)  31.58 ( 29.00)  16.82 ( 14.24)
+eng (25600 x 2)                  late       5.28  21.21 ( 15.93)  31.82 ( 26.54)  34.17 ( 28.90)  19.76 ( 14.48)
+act3 (2304 x 21)                 toget      2.63  16.42 ( 13.79)  25.67 ( 23.04)  31.43 ( 28.79)  16.26 ( 13.63)
+act3 (2304 x 21)                 late       5.28  16.97 ( 11.69)  27.18 ( 21.90)  32.60 ( 27.32)  19.39 ( 14.11)
+h3 (5120 x 3)                    toget      2.46  16.01 ( 13.54)  21.18 ( 18.71)  21.24 ( 18.78)  16.07 ( 13.60)
+h3 (5120 x 3)                    late       5.10  16.70 ( 11.60)  20.96 ( 15.86)  22.35 ( 17.26)  16.30 ( 11.20)
+oa4 + att-mix dsplit (4 tok)     toget      2.56  20.24 ( 17.68)  25.01 ( 22.45)  25.22 ( 22.65)  16.28 ( 13.72)
+oa4 + att-mix dsplit (4 tok)     late       5.30  21.05 ( 15.76)  27.63 ( 22.33)  27.09 ( 21.79)  17.83 ( 12.53)
+act4 + ffn-mix dsplit (4 tok)    toget      2.66  23.19 ( 20.52)  31.03 ( 28.37)  42.35 ( 39.69)  19.25 ( 16.59)
+act4 + ffn-mix dsplit (4 tok)    late       5.29  23.74 ( 18.45)  31.80 ( 26.51)  41.06 ( 35.77)  21.31 ( 16.02)
+(each cell: round us (exchange us = round - producer))
+
+TOTAL PASS (2.1 s)
+exit 0

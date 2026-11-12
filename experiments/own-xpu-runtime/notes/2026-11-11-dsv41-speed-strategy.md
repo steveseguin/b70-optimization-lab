@@ -355,7 +355,25 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 16:20 EST)
+## Work in flight (2026-11-11, updated 18:05 EST)
+
+- Found (pb256 helper, 2026-11-11 ~18:00, ISA of tp92 / tp97 / tp99 + card-2 benches): **a kernel that accesses
+  memory through a generic pointer (address space known only at run time: local-or-global, private-or-global) makes
+  the compiler put EVERY private array of its whole device image in global memory** instead of scratch (IGC's
+  ForcePrivateMemoryToGlobalOnGeneric behaviour). Same code, only the image differs: Q6 o_b 864 x 8192 247 -> 304 us
+  at 64 tokens (+23 %), 468 -> 582 at 128; kernels without private arrays unchanged. This is the tp97 slowdown of
+  the unchanged 6-bit kernels (QbmHeavyK joined the dense image), and the XPull image moved when SparseOutFK
+  (dynamic local memory) joined it in tp96. In tp99 only img11 keeps scratch; img7 (598 kernels: the routed decode
+  kernels, route_with_shared, DenseRowsWS<WsQ6>, DenseRowsGR<GemvQ6KP>, GemvQ8P GR) was global already in tp92.
+  Private size per thread is not the trigger (an 8,960-byte kernel does not move its image). Lever: explicit
+  address spaces in the generic-pointer kernels (never the IGC switch in a build); ~+20-25 % on launches with a
+  private array in a hot loop. Helper measuring the decode kernels in both placements, then gp-1.
+- Correction (xll helper): the torn-store positive control in `xll/verify.sh` (v1-2) counted nothing (the compiler
+  merged its four word stores into one 16-byte store), so it proved nothing; fixed in `xll_bench.cpp`, re-run
+  pending (`xll/check2.sh`). The 1.8 M real exchanges with 0 wrong / 0 torn stand.
+- Fifth host reset 17:17 (routine short gate runs); owner approved the I210 completion timeout as non-fatal +
+  17-64 s (`dsv41-work/i210-nonfatal.sh`, after every boot). tg99 traces before the reset all identical (defaults,
+  11 wa-1 arms, xll h1 / h4); tg99b resumed 17:55.
 
 - Host reset 15:17:25 (4th; a helper's back-to-back ~50 s six-card stress runs; `dsv41-work/faults/
   host-reset-20261111T1517/`). New rule for every multi-card run: at most ~30 s of continuous peer traffic, then

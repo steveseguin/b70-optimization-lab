@@ -1,0 +1,24 @@
+args: --phase=check --rounds=5000 --forms=torn16,torn64 --max-s=15
+start 2026-11-11 16:46:31
+xll_bench: 6 cards, phase check, forms torn16,torn64, seed 1, rounds 5000, riders 8, evict 96 MB, late 8.0 MB, quick 0
+card 0 0000:03:00.0 free 31.85 GiB
+card 1 0000:23:00.0 free 31.85 GiB
+card 2 0000:43:00.0 free 31.85 GiB
+card 3 0000:83:00.0 free 31.85 GiB
+card 4 0000:a3:00.0 free 31.75 GiB
+card 5 0000:e3:00.0 free 31.85 GiB
+arenas 3.50 MiB per card, peers opened by IPC handles; MemAvailable 12.78 GiB
+warm-up card 0: 4 ms
+warm-up card 1: 4 ms
+warm-up card 2: 3 ms
+warm-up card 3: 4 ms
+warm-up card 4: 4 ms
+warm-up card 5: 4 ms
+
+== check: 5000 exchanges per form
+form        exch     accepted      re-read   wrong  mixed16 mix16acc  mixed64  newer  verify  timeouts time
+torn16      5000    101576940     45674998       0        0        0        0      0       0         0 0.4s  (positive control: torn stores, must count)
+torn64      5000     20593090      8764927       0        0        0        0      0       0         0 0.4s  (positive control: torn stores, must count)
+
+TOTAL PASS (1.3 s)
+exit 0

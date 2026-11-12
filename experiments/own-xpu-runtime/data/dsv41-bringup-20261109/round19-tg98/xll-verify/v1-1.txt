@@ -1,0 +1,24 @@
+args: --phase=check --rounds=20000 --forms=l64p2h3,l16p2h3 --quick=3 --max-s=20
+start 2026-11-11 16:45:47
+xll_bench: 6 cards, phase check, forms l64p2h3,l16p2h3, seed 1, rounds 20000, riders 8, evict 96 MB, late 8.0 MB, quick 3
+card 0 0000:03:00.0 free 31.85 GiB
+card 1 0000:23:00.0 free 31.85 GiB
+card 2 0000:43:00.0 free 31.85 GiB
+card 3 0000:83:00.0 free 31.85 GiB
+card 4 0000:a3:00.0 free 31.75 GiB
+card 5 0000:e3:00.0 free 31.85 GiB
+arenas 3.50 MiB per card, peers opened by IPC handles; MemAvailable 12.95 GiB
+warm-up card 0: 4 ms
+warm-up card 1: 9 ms
+warm-up card 2: 7 ms
+warm-up card 3: 4 ms
+warm-up card 4: 7 ms
+warm-up card 5: 4 ms
+
+== check: 20000 exchanges per form
+form        exch     accepted      re-read   wrong  mixed16 mix16acc  mixed64  newer  verify  timeouts time
+l64p2h3    20000     82118465     34108679       0        0        0        0      0       0         0 1.7s
+l16p2h3    20000    411678530    168686991       0        0        0        0      0       0         0 1.7s
+
+TOTAL PASS (4.0 s)
+exit 0
