@@ -15,14 +15,13 @@ with `OWN_PAIR_G128=1 OWN_MT_PACE=1` (= tp103's defaults), B = tp103, C = tp103 
   21 guessing runs gave the same text as plain writing; all 13 guess logs equal.
 - **Plain writing +0.3 %** (xperm-3): A 103.66 / 104.23 tok/s, B 104.11 / 104.42.
 - **The overlap is exact now but saves nothing yet**: 3K read at 256 base 5.71 / 5.71 s, overlap 5.71 / 5.68, with 32
-  pull groups 5.70 / 5.70, one-queue 6.10 / 6.10; blocks of 128 5.92. The prompt timelines (pb256 helper, blocks 3-4)
-  show why: a pull overlaps only the one compute launch queued right after it; the launch after that waits for the
-  whole pull (0 exceptions in 1,438 cases). Three pulls sit in front of tiny launches and hide almost nothing (~0.41 s
-  per card over the read), and kernels beside a pull run 13-76 % slower (246 of 722 ms overlapped come back). Each
-  card exposes one compute engine (Level Zero: ordinal 0 compute with 1 engine, ordinal 1 copy), so a second engine
-  is not an option; the suspect is the barrier style the overlap uses (a barrier on the compute queue before each
-  pull). Next: a one-card bench of fire / wait styles, the launch-order move (`OWN_PX_MOVE`), halves of 256 (blocks of
-  512, `OWN_PX_BIG`).
+  pull groups 5.70 / 5.70, one-queue 6.10 / 6.10; blocks of 128 5.92. So the overlap hides ~0.4 s and running the
+  block as two 128-token halves costs ~0.4 s (0.21 s of it the 128-token forms). The prompt timelines first suggested
+  that a pull overlaps only the one compute launch after it; the pb256 helper's one-card bench (00:55) showed that is
+  an effect of queue profiling (timeline mode): without profiling, a pull overlaps its whole window in every fire /
+  wait style. Real limits: the halves' own cost and kernels running 13-76 % slower beside a pull. Each card exposes one
+  compute engine (Level Zero ordinal 0 with 1 engine, ordinal 1 copy). Next: halves of 256 (blocks of 512,
+  `OWN_PX_BIG`, predicted 5.44 s) and fewer pull work-groups per site (`OWN_PX_WGS`).
 - **pace-2 does not pay**: code 143.24 / 143.92 (C) against 143.83 / 143.68 (B), analysis 159.33 / 159.50 against
   160.05 / 159.90; checks of 2-6 tokens moved -0.3 to +0.2 ms. Stays off.
 - **Guessing, B**: code 143.83 / 143.68, analysis 160.05 / 159.90, prose 120.35, after 3K (blocks of 256) 147.14;
