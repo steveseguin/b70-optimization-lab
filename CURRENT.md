@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 11, 2026 ~17:59 EST — host FROZE (sixth event; with the I210 non-fatal setting); owner power-cycled 19:18.**
+- Journal stops 17:59:08, no error record. Gate tg99b had just started t3k_b64xa (3K read with `OWN_XLL=1`, log
+  created 17:59:35). The non-fatal setting turned the self-reset into a hang: it is NOT re-applied (default
+  004f6031 / 0000 after boot; script renamed i210-nonfatal.sh.DO-NOT-USE). The last three events (15:17, 17:17,
+  17:59) all coincided with xll one-trip-pull traffic: `OWN_XLL` is banned from every run.
+- Ports (owner asked): all four onboard NICs (X710 a5:00.0/.1, I210 a6:00.0, a7:00.0) sit on hub a0 with card 4.
+  USB controllers: 45:00.4 (hub 40, card 2), e5:00.4 (hub e0, card 5). Hub 60 has only the NVMe drives and one
+  empty root port (60:01.1, a free slot). Suggested: a USB-Ethernet adapter, or a PCIe NIC in the hub-60 slot.
+- Probe passed 19:36. Gate tg99c (rest of tp99's gate, no xll arms) from 19:34. Evidence:
+  /home/steve/dsv41-work/faults/freeze-20261111T1759/.
+
 **November 11, 2026 17:17 EST — host reset (FIFTH; second today); probe passed after boot; multi-card work paused.**
 - Same BERT signature: fatal PCIe completion timeout on 0000:a7:00.0 (I210 `enp167s0`, the LAN link) + CPU bank 5
   machine check. This time NOT under sustained traffic: gate tg99 (short trace runs), ~3 s into run h5xa's start
