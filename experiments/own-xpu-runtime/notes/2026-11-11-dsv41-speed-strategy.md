@@ -307,6 +307,16 @@ bytes (~1.4 ms on card 2, of which ~0.6 is the 16-head imbalance), experts over 
 L1 / L2 in flight), the pulls' trip count (~0.5 ms: xll-1 was the one-trip form, parked by the host events), the
 norm launches (~0.3 ms, K4), small-launch fusion (~0.2 ms), pushes folded into their producers (~0.2 ms).
 
+### The prompt budget at blocks of 256 (tg103 `tlp_base`, blocks 3-4, timeline mode, 2026-11-12 00:45)
+
+Card 2, ms per 256-token block (~430 ms in timeline mode; 13 blocks = the 5.7 s 3K read): routed experts 192 (45 %:
+gate + up `RoutedUT` 133, down `RoutedU3` 53, Q2_K 6.5), dense rows 125 (29 %: `DenseRowsWSC` 113, router 12),
+exchanges 74 (17 %: pulls 42 + 28, pair swaps 3.5), attention ~24 (6 %), the rest ~15. Against the exact-arithmetic
+ceiling (separate multiply and add, `-ffp-contract=off`: ~5.7 T pairs/s per card measured): dense rows run ~3.2 T
+pairs/s (~56 %), routed experts ~1.6 T (~28 %; ~4 tokens per expert at 256, the kernels scale with tokens, so bigger
+blocks do not amortize much). Levers: hide the exchanges (17 %, the overlap work), the prompt expert kernels (rux-2),
+then the dense rows.
+
 ## Scoreboard: strategies that worked, and ones that did not
 
 Worked (all bit-identical):
