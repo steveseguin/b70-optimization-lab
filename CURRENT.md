@@ -1,5 +1,28 @@
 # Current Workspace State
 
+**November 12, 2026 ~11:10 EST — host resets traced to stuck PCI config reads; iommu=pt reboot (owner approved).**
+- 09:24 reset (eighth event) = the SAME run as 01:14: tg104b's t3k_b300 (prompt blocks of 300 as overlapped halves
+  of 150), early in its prompt. Both BERTs: CPU 10 bank 5 core watchdog at the same kernel offset; resolved (kallsyms)
+  to pci_mmcfg_read / pci_conf1_read (11-11 15:17: the same pair). bpftrace: config reads come from the kernel's
+  PME scan of the cards' sleeping audio functions (~7/s) and from our run start's dma-buf attach. Reading: card-to-
+  card read traffic stalls the fabric past the core watchdog; IOMMU default domain was Translated (DMA-FQ).
+- t3k_b300 banned. tg104c (09:44-10:58) ran the rest: every trace identical, px-512 3K read 5.56 s vs 5.71 (-2.8 %),
+  results experiments/own-xpu-runtime/data/dsv41-bringup-20261109/round19-tg104/.
+- Owner approved iommu=pt + reboot after the test. Peer benches before: dsv41-work/runs/pt/bench-before.txt.
+  After the reboot the one-shot user unit dsv41-postboot-pt runs the probe, the benches again and gate tg105pt.
+  Evidence: /home/steve/dsv41-work/faults/reset-20261112T0924/.
+
+**November 12, 2026 01:13-01:16 EST — host reset (seventh event, sixth self-reset); probe passed after boot.**
+- BERT: fatal CPU 10 machine check bank 5 (status bea0000000000108, fru "Perr S0:T00B:B05"), no PCIe section this
+  time (like 11-10 20:51). Gate tg104 (tp104, prompt overlap at blocks of 512) was ~29 s into t3k_b300 (3K trace,
+  `OWN_PX_BIG=1`): the end of weight upload, the same phase as the 11-10 19:43 reset. Boot 01:16:23.
+- Reading all seven records: every one is bank 5 with IPID 0x...b0 type 5 = the core's execution unit, extended
+  error code 0 = core watchdog timeout (a core waited too long on one instruction). The stuck addresses differ
+  (user space, kernel text, the reserved firmware range near 0xa0000000-0xafffffff), so it is the platform's IO
+  paths stalling under six-card traffic, not one code path or one card.
+- Probe (six-card barrier + all-reduce) passed 09:20. tg104b (rest of tg104 from t3k_b300) started 09:23. Evidence:
+  /home/steve/dsv41-work/faults/reset-20261112T0113/ (bert.txt, journal-tail.txt, probe output).
+
 **November 11, 2026 21:24:59 EST — card 5 (0000:e3:00.0) software fault from a helper's one-card bench; card fine.**
 - `bench_led_led1pcs` (xperm helper's expert-ledger stall-sampler bench, pid 71280): 184 read faults on the compute
   engine (CAT error, class ccs), engine reset, timed-out job, devcoredump, device lost (exit 134). Cause: the bench

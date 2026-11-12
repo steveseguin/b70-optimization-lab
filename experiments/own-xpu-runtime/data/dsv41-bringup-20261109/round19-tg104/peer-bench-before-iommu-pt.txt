@@ -1,0 +1,94 @@
+pt-bench before start 10:59:56; cmdline: BOOT_IMAGE=/boot/vmlinuz-7.0.0-38-generic root=UUID=4a97d55c-fb8e-4508-9207-e5203f21175e ro quiet splash vt.handoff=7; card iommu domain: DMA-FQ
+built xchg_bw_bench 11:00:00
+== bw (16,64,160,640 KiB slices, 30 reps)
+6 cards
+push-mix   all  S=  16384 B nwg=  1      55.6 us/exchange    1.47 GB/s sent per card
+push-mix   all  S=  16384 B nwg=  5      57.3 us/exchange    1.43 GB/s sent per card
+push-mix   all  S=  16384 B nwg= 20      46.8 us/exchange    1.75 GB/s sent per card
+push-mix   all  S=  16384 B nwg= 64      55.3 us/exchange    1.48 GB/s sent per card
+push-dest  all  S=  16384 B nwg=  5      71.7 us/exchange    1.14 GB/s sent per card
+push-dest  all  S=  16384 B nwg= 20      73.4 us/exchange    1.12 GB/s sent per card
+push-dest  all  S=  16384 B nwg= 64      71.9 us/exchange    1.14 GB/s sent per card
+fence-one  all  S=  16384 B nwg=  5      74.1 us/exchange    1.11 GB/s sent per card
+fence-one  all  S=  16384 B nwg= 20      76.0 us/exchange    1.08 GB/s sent per card
+fence-one  all  S=  16384 B nwg= 64      75.3 us/exchange    1.09 GB/s sent per card
+pull       all  S=  16384 B nwg=  1      52.2 us/exchange    1.57 GB/s sent per card
+pull       all  S=  16384 B nwg= 20      19.2 us/exchange    4.26 GB/s sent per card
+pull       all  S=  16384 B nwg= 64      18.4 us/exchange    4.46 GB/s sent per card
+copy       all  S=  16384 B nwg=  0      24.6 us/exchange    3.33 GB/s sent per card
+push-mix   solo S=  16384 B nwg=  1      61.7 us/exchange    1.33 GB/s sent per card
+push-mix   solo S=  16384 B nwg= 64      60.2 us/exchange    1.36 GB/s sent per card
+push-dest  solo S=  16384 B nwg= 20      83.0 us/exchange    0.99 GB/s sent per card
+copy       solo S=  16384 B nwg=  0      10.5 us/exchange    7.82 GB/s sent per card
+push-mix   all  S=  65536 B nwg=  1     280.6 us/exchange    1.17 GB/s sent per card
+push-mix   all  S=  65536 B nwg=  5     282.9 us/exchange    1.16 GB/s sent per card
+push-mix   all  S=  65536 B nwg= 20     231.1 us/exchange    1.42 GB/s sent per card
+push-mix   all  S=  65536 B nwg= 64     268.4 us/exchange    1.22 GB/s sent per card
+push-dest  all  S=  65536 B nwg=  5     283.9 us/exchange    1.15 GB/s sent per card
+push-dest  all  S=  65536 B nwg= 20     308.8 us/exchange    1.06 GB/s sent per card
+push-dest  all  S=  65536 B nwg= 64     300.7 us/exchange    1.09 GB/s sent per card
+fence-one  all  S=  65536 B nwg=  5     302.6 us/exchange    1.08 GB/s sent per card
+fence-one  all  S=  65536 B nwg= 20     316.0 us/exchange    1.04 GB/s sent per card
+fence-one  all  S=  65536 B nwg= 64     298.4 us/exchange    1.10 GB/s sent per card
+pull       all  S=  65536 B nwg=  1     110.8 us/exchange    2.96 GB/s sent per card
+pull       all  S=  65536 B nwg= 20      11.6 us/exchange   28.31 GB/s sent per card
+pull       all  S=  65536 B nwg= 64      11.9 us/exchange   27.61 GB/s sent per card
+copy       all  S=  65536 B nwg=  0      13.0 us/exchange   25.29 GB/s sent per card
+push-mix   solo S=  65536 B nwg=  1     314.7 us/exchange    1.04 GB/s sent per card
+push-mix   solo S=  65536 B nwg= 64     312.7 us/exchange    1.05 GB/s sent per card
+push-dest  solo S=  65536 B nwg= 20     375.7 us/exchange    0.87 GB/s sent per card
+copy       solo S=  65536 B nwg=  0      13.3 us/exchange   24.63 GB/s sent per card
+push-mix   all  S= 163840 B nwg=  1     765.7 us/exchange    1.07 GB/s sent per card
+push-mix   all  S= 163840 B nwg=  5     764.2 us/exchange    1.07 GB/s sent per card
+push-mix   all  S= 163840 B nwg= 20     715.3 us/exchange    1.15 GB/s sent per card
+push-mix   all  S= 163840 B nwg= 64     713.2 us/exchange    1.15 GB/s sent per card
+push-dest  all  S= 163840 B nwg=  5     712.0 us/exchange    1.15 GB/s sent per card
+push-dest  all  S= 163840 B nwg= 20     784.0 us/exchange    1.04 GB/s sent per card
+push-dest  all  S= 163840 B nwg= 64     784.2 us/exchange    1.04 GB/s sent per card
+fence-one  all  S= 163840 B nwg=  5     743.6 us/exchange    1.10 GB/s sent per card
+fence-one  all  S= 163840 B nwg= 20     800.7 us/exchange    1.02 GB/s sent per card
+fence-one  all  S= 163840 B nwg= 64     784.2 us/exchange    1.04 GB/s sent per card
+pull       all  S= 163840 B nwg=  1     270.3 us/exchange    3.03 GB/s sent per card
+pull       all  S= 163840 B nwg= 20      25.3 us/exchange   32.40 GB/s sent per card
+pull       all  S= 163840 B nwg= 64      24.1 us/exchange   33.94 GB/s sent per card
+copy       all  S= 163840 B nwg=  0      25.7 us/exchange   31.89 GB/s sent per card
+push-mix   solo S= 163840 B nwg=  1     893.8 us/exchange    0.92 GB/s sent per card
+push-mix   solo S= 163840 B nwg= 64     870.3 us/exchange    0.94 GB/s sent per card
+push-dest  solo S= 163840 B nwg= 20     952.4 us/exchange    0.86 GB/s sent per card
+copy       solo S= 163840 B nwg=  0      21.8 us/exchange   37.54 GB/s sent per card
+push-mix   all  S= 655360 B nwg=  1    3302.2 us/exchange    0.99 GB/s sent per card
+push-mix   all  S= 655360 B nwg=  5    3250.8 us/exchange    1.01 GB/s sent per card
+push-mix   all  S= 655360 B nwg= 20    3207.0 us/exchange    1.02 GB/s sent per card
+push-mix   all  S= 655360 B nwg= 64    2967.4 us/exchange    1.10 GB/s sent per card
+push-dest  all  S= 655360 B nwg=  5    2873.8 us/exchange    1.14 GB/s sent per card
+push-dest  all  S= 655360 B nwg= 20    3173.9 us/exchange    1.03 GB/s sent per card
+push-dest  all  S= 655360 B nwg= 64    3238.4 us/exchange    1.01 GB/s sent per card
+fence-one  all  S= 655360 B nwg=  5    2948.6 us/exchange    1.11 GB/s sent per card
+fence-one  all  S= 655360 B nwg= 20    3215.9 us/exchange    1.02 GB/s sent per card
+fence-one  all  S= 655360 B nwg= 64    3251.5 us/exchange    1.01 GB/s sent per card
+pull       all  S= 655360 B nwg=  1    1068.7 us/exchange    3.07 GB/s sent per card
+pull       all  S= 655360 B nwg= 20     108.9 us/exchange   30.09 GB/s sent per card
+pull       all  S= 655360 B nwg= 64      84.6 us/exchange   38.73 GB/s sent per card
+copy       all  S= 655360 B nwg=  0     120.4 us/exchange   27.21 GB/s sent per card
+push-mix   solo S= 655360 B nwg=  1    3812.8 us/exchange    0.86 GB/s sent per card
+push-mix   solo S= 655360 B nwg= 64    3830.4 us/exchange    0.86 GB/s sent per card
+push-dest  solo S= 655360 B nwg= 20    3774.1 us/exchange    0.87 GB/s sent per card
+copy       solo S= 655360 B nwg=  0      64.2 us/exchange   51.01 GB/s sent per card
+push-mix   all  S= 655360 B nwg= 20    3227.7 us/exchange    1.02 GB/s sent per card
+values after push-mix: 0 wrong
+exit 0
+== direct ipc g16 (a2a, pair; 3456/7296/9728 B)
+exit 0
+VERDICT (ctx=ipc)
+  engine-shaped all-gather, 3456 B per card, one kernel per exchange: push 14.10 us vs pull (today) 19.36 us -> -5.26 us per exchange
+  engine-shaped all-gather, 9728 B per card, one kernel per exchange: push 14.22 us vs pull (today) 19.34 us -> -5.12 us per exchange
+TOTAL wrong values 0, timeouts 0, skipped waits 0, max polls in one wait 334 -> PASS
+== direct shared (default shapes)
+exit 0
+VERDICT (ctx=shared)
+  direct store, card to card, 9,728 B, no launch: 6.38 us one way -> TOO SLOW (bar ~4 us; SC117 four-card host 1.6 us at 10 KB)
+  engine-shaped all-gather, 3456 B per card, one kernel per exchange: push 10.31 us vs pull (today) 18.73 us -> -8.42 us per exchange
+  engine-shaped all-gather, 9728 B per card, one kernel per exchange: push 17.62 us vs pull (today) 26.43 us -> -8.81 us per exchange
+TOTAL wrong values 0, timeouts 0, skipped waits 0, max polls in one wait 1772 -> PASS
+pt-bench before DONE 11:00:24
+pre-pt exit 0 11:00:24

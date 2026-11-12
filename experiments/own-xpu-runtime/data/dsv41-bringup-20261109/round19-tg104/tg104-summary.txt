@@ -1,0 +1,396 @@
+tp104 build exit 0 in 1216 s
+start 2026-11-12 01:06:30
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.012 s/step, 84.75 tok/s
+h1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 104.4 us per step and card (slowest card 107.1 us; copy + decode launch calls 10.8 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.012 s/step, 85.67 tok/s
+h5: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 76.2 us per step and card (slowest card 79.5 us; copy + decode launch calls 10.9 us)
+h64 exit 0
+h64 TRACE_IDENTICAL
+h64 IDS40_SAME
+h64: decode: 39 steps after the first, 0.012 s/step, 82.54 tok/s
+h64: host io during decode: 7.4 MiB read from disk, 10 major page faults; engram rows 106.6 us per step and card (slowest card 112.5 us; copy + decode launch calls 11.6 us)
+h256 exit 0
+h256 TRACE_IDENTICAL
+h256 IDS40_SAME
+h256: decode: 39 steps after the first, 0.012 s/step, 85.74 tok/s
+h256: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 77.9 us per step and card (slowest card 80.7 us; copy + decode launch calls 12.0 us)
+h4 exit 0
+h4 TRACE_IDENTICAL
+h4 IDS40_SAME
+h4: decode: 39 steps after the first, 0.012 s/step, 82.32 tok/s
+h4: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 106.5 us per step and card (slowest card 108.8 us; copy + decode launch calls 11.6 us)
+h36px exit 0
+h36px TRACE_IDENTICAL
+h36px IDS40_SAME
+h36px: decode: 39 steps after the first, 0.012 s/step, 85.01 tok/s
+h36px: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 106.5 us per step and card (slowest card 109.3 us; copy + decode launch calls 11.4 us)
+h512px exit 0
+h512px TRACE_IDENTICAL
+h512px IDS40_SAME
+h512px: decode: 39 steps after the first, 0.012 s/step, 85.44 tok/s
+h512px: host io during decode: 5.8 MiB read from disk, 0 major page faults; engram rows 119.6 us per step and card (slowest card 123.1 us; copy + decode launch calls 12.0 us)
+h36mv exit 0
+h36mv TRACE_IDENTICAL
+h36mv IDS40_SAME
+h36mv: decode: 39 steps after the first, 0.012 s/step, 84.47 tok/s
+h36mv: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 104.6 us per step and card (slowest card 108.7 us; copy + decode launch calls 11.7 us)
+gate 1: defaults identical; PXOK=1
+t3k_b256 exit 0
+t3k_b256: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b256: tile 0 card 0000:03:00.0: 3.98 GiB free after load
+t3k_b256: tile 1 card 0000:23:00.0: 3.81 GiB free after load
+t3k_b256: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+t3k_b256: tile 3 card 0000:83:00.0: 3.81 GiB free after load
+t3k_b256: tile 4 card 0000:a3:00.0: 3.81 GiB free after load
+t3k_b256: tile 5 card 0000:e3:00.0: 3.62 GiB free after load
+t3k_b256: prompt: 3323 tokens read on the cards in 5.73s (586.1 tok/s; first step 0.50s incl. kernel build), first token 2581
+t3k_b256: decode: 39 steps after the first, 0.013 s/step, 74.19 tok/s
+t3k_b256: host io during decode: 5.4 MiB read from disk, 3 major page faults; engram rows 386.0 us per step and card (slowest card 388.1 us; copy + decode launch calls 14.8 us)
+t3k_b256 TRACE_IDENTICAL
+t3k_b256 IDS40_SAME
+t3k_b512px1 exit 0
+t3k_b512px1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512px1: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512px1: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512px1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512px1: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512px1: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512px1: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512px1: prompt: 3323 tokens read on the cards in 5.59s (601.3 tok/s; first step 0.91s incl. kernel build), first token 2581
+t3k_b512px1: decode: 39 steps after the first, 0.013 s/step, 76.64 tok/s
+t3k_b512px1: host io during decode: 0.7 MiB read from disk, 8 major page faults; engram rows 291.1 us per step and card (slowest card 294.0 us; copy + decode launch calls 11.2 us)
+t3k_b512px1: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512px1 TRACE_IDENTICAL
+t3k_b512px1 IDS40_SAME
+t3k_b512px2 exit 0
+t3k_b512px2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512px2: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512px2: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512px2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512px2: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512px2: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512px2: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512px2: prompt: 3323 tokens read on the cards in 5.64s (601.5 tok/s; first step 0.96s incl. kernel build), first token 2581
+t3k_b512px2: decode: 39 steps after the first, 0.013 s/step, 76.38 tok/s
+t3k_b512px2: host io during decode: 5.3 MiB read from disk, 0 major page faults; engram rows 380.6 us per step and card (slowest card 384.1 us; copy + decode launch calls 14.7 us)
+t3k_b512px2: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512px2 TRACE_IDENTICAL
+t3k_b512px2 IDS40_SAME
+t3k_b512pxs exit 0
+t3k_b512pxs: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512pxs: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512pxs: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512pxs: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512pxs: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512pxs: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512pxs: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512pxs: prompt: 3323 tokens read on the cards in 5.99s (565.2 tok/s; first step 1.01s incl. kernel build), first token 2581
+t3k_b512pxs: decode: 39 steps after the first, 0.013 s/step, 74.78 tok/s
+t3k_b512pxs: host io during decode: 6.0 MiB read from disk, 11 major page faults; engram rows 396.2 us per step and card (slowest card 398.2 us; copy + decode launch calls 12.0 us)
+t3k_b512pxs: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512pxs TRACE_IDENTICAL
+t3k_b512pxs IDS40_SAME
+t3k_b301 exit 0
+t3k_b301: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b301: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b301: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b301: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b301: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b301: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b301: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b301: prompt: 3323 tokens read on the cards in 5.76s (589.0 tok/s; first step 0.55s incl. kernel build), first token 2581
+t3k_b301: decode: 39 steps after the first, 0.013 s/step, 75.15 tok/s
+t3k_b301: host io during decode: 5.4 MiB read from disk, 2 major page faults; engram rows 395.0 us per step and card (slowest card 396.6 us; copy + decode launch calls 14.7 us)
+t3k_b301: OWN_PX_CHECK: 8 blocks as halves, 0 bad
+t3k_b301 TRACE_IDENTICAL
+t3k_b301 IDS40_SAME
+---- tg104b resumes 09:23:29 (tg104 stopped by the 01:13 host reset during t3k_b300)
+start 2026-11-12 09:23:30
+gate 1 (carried over): defaults identical; PXOK=1
+---- tg104c resumes 09:41:47 (09:24 reset during t3k_b300 again; b300 dropped)
+start 2026-11-12 09:41:47
+gate 1 (carried over): defaults identical; PXOK=1
+t3k_b256big exit 0
+t3k_b256big: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b256big: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b256big: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b256big: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b256big: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b256big: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b256big: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b256big: prompt: 3323 tokens read on the cards in 5.75s (592.1 tok/s; first step 0.57s incl. kernel build), first token 2581
+t3k_b256big: decode: 39 steps after the first, 0.013 s/step, 75.32 tok/s
+t3k_b256big: host io during decode: 5.9 MiB read from disk, 10 major page faults; engram rows 448.0 us per step and card (slowest card 453.0 us; copy + decode launch calls 14.6 us)
+t3k_b256big: OWN_PX_CHECK: 8 blocks as halves, 0 bad
+t3k_b256big TRACE_IDENTICAL
+t3k_b256big IDS40_SAME
+t3k_b512w8 exit 0
+t3k_b512w8: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512w8: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512w8: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512w8: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512w8: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512w8: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512w8: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512w8: prompt: 3323 tokens read on the cards in 5.72s (592.1 tok/s; first step 0.97s incl. kernel build), first token 2581
+t3k_b512w8: decode: 39 steps after the first, 0.013 s/step, 79.51 tok/s
+t3k_b512w8: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 51.5 us per step and card (slowest card 53.1 us; copy + decode launch calls 11.6 us)
+t3k_b512w8: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512w8 TRACE_IDENTICAL
+t3k_b512w8 IDS40_SAME
+t3k_b512w4 exit 0
+t3k_b512w4: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512w4: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512w4: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512w4: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512w4: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512w4: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512w4: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512w4: prompt: 3323 tokens read on the cards in 5.78s (577.9 tok/s; first step 0.91s incl. kernel build), first token 2581
+t3k_b512w4: decode: 39 steps after the first, 0.013 s/step, 79.43 tok/s
+t3k_b512w4: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.4 us per step and card (slowest card 55.3 us; copy + decode launch calls 11.3 us)
+t3k_b512w4: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512w4 TRACE_IDENTICAL
+t3k_b512w4 IDS40_SAME
+t3k_b512mv exit 0
+t3k_b512mv: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+t3k_b512mv: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+t3k_b512mv: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+t3k_b512mv: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+t3k_b512mv: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+t3k_b512mv: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+t3k_b512mv: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+t3k_b512mv: prompt: 3323 tokens read on the cards in 5.55s (600.6 tok/s; first step 0.87s incl. kernel build), first token 2581
+t3k_b512mv: decode: 39 steps after the first, 0.013 s/step, 78.91 tok/s
+t3k_b512mv: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.5 us per step and card (slowest card 54.4 us; copy + decode launch calls 11.5 us)
+t3k_b512mv: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+t3k_b512mv TRACE_IDENTICAL
+t3k_b512mv IDS40_SAME
+gate 2: PXOK=1
+warm exit 0
+warm SPEED128_SAME
+warm: decode: 127 steps after the first, 0.010 s/step, 102.92 tok/s
+warm: host io during decode: 22.2 MiB read from disk, 0 major page faults; engram rows 101.9 us per step and card (slowest card 104.0 us; copy + decode launch calls 9.7 us)
+a_1 exit 0
+a_1 SPEED128_SAME
+a_1: decode: 127 steps after the first, 0.010 s/step, 103.56 tok/s
+a_1: host io during decode: 0.6 MiB read from disk, 16 major page faults; engram rows 79.8 us per step and card (slowest card 80.2 us; copy + decode launch calls 9.8 us)
+b_1 exit 0
+b_1 SPEED128_SAME
+b_1: decode: 127 steps after the first, 0.010 s/step, 103.48 tok/s
+b_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 79.5 us per step and card (slowest card 80.5 us; copy + decode launch calls 9.9 us)
+p3k_base256_1 exit 0
+p3k_base256_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_base256_1: tile 0 card 0000:03:00.0: 3.98 GiB free after load
+p3k_base256_1: tile 1 card 0000:23:00.0: 3.81 GiB free after load
+p3k_base256_1: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+p3k_base256_1: tile 3 card 0000:83:00.0: 3.81 GiB free after load
+p3k_base256_1: tile 4 card 0000:a3:00.0: 3.81 GiB free after load
+p3k_base256_1: tile 5 card 0000:e3:00.0: 3.62 GiB free after load
+p3k_base256_1: prompt: 3323 tokens read on the cards in 5.71s (585.1 tok/s; first step 0.47s incl. kernel build), first token 2581
+p3k_base256_1: decode: 255 steps after the first, 0.011 s/step, 92.23 tok/s
+p3k_base256_1: host io during decode: 28.8 MiB read from disk, 1 major page faults; engram rows 441.7 us per step and card (slowest card 443.9 us; copy + decode launch calls 9.8 us)
+p3k_base256_1 ANSWER256_SAME
+p3k_px256_1 exit 0
+p3k_px256_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px256_1: tile 0 card 0000:03:00.0: 3.98 GiB free after load
+p3k_px256_1: tile 1 card 0000:23:00.0: 3.81 GiB free after load
+p3k_px256_1: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+p3k_px256_1: tile 3 card 0000:83:00.0: 3.81 GiB free after load
+p3k_px256_1: tile 4 card 0000:a3:00.0: 3.81 GiB free after load
+p3k_px256_1: tile 5 card 0000:e3:00.0: 3.62 GiB free after load
+p3k_px256_1: prompt: 3323 tokens read on the cards in 5.67s (589.4 tok/s; first step 0.47s incl. kernel build), first token 2581
+p3k_px256_1: decode: 255 steps after the first, 0.010 s/step, 95.58 tok/s
+p3k_px256_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 51.8 us per step and card (slowest card 53.0 us; copy + decode launch calls 9.5 us)
+p3k_px256_1 ANSWER256_SAME
+p3k_px512_1 exit 0
+p3k_px512_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512_1: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512_1: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512_1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512_1: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512_1: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512_1: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512_1: prompt: 3323 tokens read on the cards in 5.56s (601.9 tok/s; first step 0.88s incl. kernel build), first token 2581
+p3k_px512_1: decode: 255 steps after the first, 0.010 s/step, 95.68 tok/s
+p3k_px512_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 50.1 us per step and card (slowest card 52.3 us; copy + decode launch calls 9.5 us)
+p3k_px512_1 ANSWER256_SAME
+p3k_px512s_1 exit 0
+p3k_px512s_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512s_1: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512s_1: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512s_1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512s_1: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512s_1: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512s_1: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512s_1: prompt: 3323 tokens read on the cards in 5.93s (563.8 tok/s; first step 0.94s incl. kernel build), first token 2581
+p3k_px512s_1: decode: 255 steps after the first, 0.011 s/step, 94.85 tok/s
+p3k_px512s_1: host io during decode: 5.3 MiB read from disk, 2 major page faults; engram rows 134.1 us per step and card (slowest card 136.7 us; copy + decode launch calls 9.7 us)
+p3k_px512s_1 ANSWER256_SAME
+p3k_px512w8_1 exit 0
+p3k_px512w8_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512w8_1: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512w8_1: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512w8_1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512w8_1: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512w8_1: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512w8_1: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512w8_1: prompt: 3323 tokens read on the cards in 5.67s (590.1 tok/s; first step 0.90s incl. kernel build), first token 2581
+p3k_px512w8_1: decode: 255 steps after the first, 0.011 s/step, 92.36 tok/s
+p3k_px512w8_1: host io during decode: 28.8 MiB read from disk, 4 major page faults; engram rows 450.8 us per step and card (slowest card 453.5 us; copy + decode launch calls 9.8 us)
+p3k_px512w8_1 ANSWER256_SAME
+p3k_px512w4_1 exit 0
+p3k_px512w4_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512w4_1: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512w4_1: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512w4_1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512w4_1: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512w4_1: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512w4_1: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512w4_1: prompt: 3323 tokens read on the cards in 5.80s (577.4 tok/s; first step 0.93s incl. kernel build), first token 2581
+p3k_px512w4_1: decode: 255 steps after the first, 0.011 s/step, 94.74 tok/s
+p3k_px512w4_1: host io during decode: 5.3 MiB read from disk, 1 major page faults; engram rows 129.7 us per step and card (slowest card 131.4 us; copy + decode launch calls 9.8 us)
+p3k_px512w4_1 ANSWER256_SAME
+p3k_base256_2 exit 0
+p3k_base256_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_base256_2: tile 0 card 0000:03:00.0: 3.98 GiB free after load
+p3k_base256_2: tile 1 card 0000:23:00.0: 3.81 GiB free after load
+p3k_base256_2: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+p3k_base256_2: tile 3 card 0000:83:00.0: 3.81 GiB free after load
+p3k_base256_2: tile 4 card 0000:a3:00.0: 3.81 GiB free after load
+p3k_base256_2: tile 5 card 0000:e3:00.0: 3.62 GiB free after load
+p3k_base256_2: prompt: 3323 tokens read on the cards in 5.73s (585.4 tok/s; first step 0.49s incl. kernel build), first token 2581
+p3k_base256_2: decode: 255 steps after the first, 0.010 s/step, 95.45 tok/s
+p3k_base256_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 50.7 us per step and card (slowest card 51.9 us; copy + decode launch calls 9.5 us)
+p3k_base256_2 ANSWER256_SAME
+p3k_px256_2 exit 0
+p3k_px256_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px256_2: tile 0 card 0000:03:00.0: 3.98 GiB free after load
+p3k_px256_2: tile 1 card 0000:23:00.0: 3.81 GiB free after load
+p3k_px256_2: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+p3k_px256_2: tile 3 card 0000:83:00.0: 3.81 GiB free after load
+p3k_px256_2: tile 4 card 0000:a3:00.0: 3.81 GiB free after load
+p3k_px256_2: tile 5 card 0000:e3:00.0: 3.62 GiB free after load
+p3k_px256_2: prompt: 3323 tokens read on the cards in 5.69s (588.8 tok/s; first step 0.48s incl. kernel build), first token 2581
+p3k_px256_2: decode: 255 steps after the first, 0.010 s/step, 95.49 tok/s
+p3k_px256_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.2 us per step and card (slowest card 54.3 us; copy + decode launch calls 9.6 us)
+p3k_px256_2 ANSWER256_SAME
+p3k_px512_2 exit 0
+p3k_px512_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512_2: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512_2: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512_2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512_2: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512_2: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512_2: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512_2: prompt: 3323 tokens read on the cards in 5.55s (601.6 tok/s; first step 0.87s incl. kernel build), first token 2581
+p3k_px512_2: decode: 255 steps after the first, 0.010 s/step, 95.61 tok/s
+p3k_px512_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 51.9 us per step and card (slowest card 52.9 us; copy + decode launch calls 9.8 us)
+p3k_px512_2 ANSWER256_SAME
+p3k_px512s_2 exit 0
+p3k_px512s_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512s_2: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512s_2: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512s_2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512s_2: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512s_2: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512s_2: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512s_2: prompt: 3323 tokens read on the cards in 5.92s (564.1 tok/s; first step 0.93s incl. kernel build), first token 2581
+p3k_px512s_2: decode: 255 steps after the first, 0.011 s/step, 92.42 tok/s
+p3k_px512s_2: host io during decode: 28.8 MiB read from disk, 1 major page faults; engram rows 452.6 us per step and card (slowest card 455.1 us; copy + decode launch calls 9.9 us)
+p3k_px512s_2 ANSWER256_SAME
+p3k_px512w8_2 exit 0
+p3k_px512w8_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512w8_2: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512w8_2: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512w8_2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512w8_2: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512w8_2: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512w8_2: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512w8_2: prompt: 3323 tokens read on the cards in 5.68s (589.7 tok/s; first step 0.91s incl. kernel build), first token 2581
+p3k_px512w8_2: decode: 255 steps after the first, 0.010 s/step, 95.61 tok/s
+p3k_px512w8_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 50.2 us per step and card (slowest card 52.0 us; copy + decode launch calls 9.8 us)
+p3k_px512w8_2 ANSWER256_SAME
+p3k_px512w4_2 exit 0
+p3k_px512w4_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512w4_2: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512w4_2: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512w4_2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512w4_2: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512w4_2: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512w4_2: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512w4_2: prompt: 3323 tokens read on the cards in 5.78s (578.0 tok/s; first step 0.92s incl. kernel build), first token 2581
+p3k_px512w4_2: decode: 255 steps after the first, 0.010 s/step, 95.36 tok/s
+p3k_px512w4_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 50.4 us per step and card (slowest card 53.3 us; copy + decode launch calls 9.6 us)
+p3k_px512w4_2 ANSWER256_SAME
+p3k_px512mv exit 0
+p3k_px512mv: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_px512mv: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+p3k_px512mv: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+p3k_px512mv: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_px512mv: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+p3k_px512mv: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+p3k_px512mv: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+p3k_px512mv: prompt: 3323 tokens read on the cards in 5.56s (600.3 tok/s; first step 0.87s incl. kernel build), first token 2581
+p3k_px512mv: decode: 255 steps after the first, 0.010 s/step, 95.69 tok/s
+p3k_px512mv: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 50.7 us per step and card (slowest card 52.1 us; copy + decode launch calls 9.7 us)
+p3k_px512mv ANSWER256_SAME
+code_b exit 0
+code_b: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+code_b: tile 0 card 0000:03:00.0: 2.64 GiB free after load
+code_b: tile 1 card 0000:23:00.0: 2.46 GiB free after load
+code_b: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+code_b: tile 3 card 0000:83:00.0: 2.46 GiB free after load
+code_b: tile 4 card 0000:a3:00.0: 2.46 GiB free after load
+code_b: tile 5 card 0000:e3:00.0: 2.24 GiB free after load
+code_b: prompt: 82 tokens read on the cards in 0.23s (365.7 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_b: spec decode: 511 tokens in 223 cycles (2.29 per cycle; 288 of 365 guesses kept, 78.9 %) in 3.57s = 143.25 tok/s; draft 1.93 ms + check 14.07 ms per cycle; SAME AS the plain run
+code_b: host io during decode: 92.2 MiB read from disk, 60 major page faults; engram rows 278.4 us per step and card (slowest card 279.7 us; copy + decode launch calls 12.2 us)
+code_b: kept guesses per cycle: 0:74 1:75 2:38 3:17 4:9 5:10
+code_b_vs_w2_1 GLOG_SAME
+analysis_b exit 0
+analysis_b: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+analysis_b: tile 0 card 0000:03:00.0: 2.64 GiB free after load
+analysis_b: tile 1 card 0000:23:00.0: 2.46 GiB free after load
+analysis_b: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+analysis_b: tile 3 card 0000:83:00.0: 2.46 GiB free after load
+analysis_b: tile 4 card 0000:a3:00.0: 2.46 GiB free after load
+analysis_b: tile 5 card 0000:e3:00.0: 2.24 GiB free after load
+analysis_b: prompt: 113 tokens read on the cards in 0.27s (500.1 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_b: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 440 guesses kept, 75.5 %) in 3.21s = 159.05 tok/s; draft 1.94 ms + check 15.91 ms per cycle; SAME AS the plain run
+analysis_b: host io during decode: 73.6 MiB read from disk, 18 major page faults; engram rows 367.3 us per step and card (slowest card 368.8 us; copy + decode launch calls 12.8 us)
+analysis_b: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_b_vs_w2_1 GLOG_SAME
+p3k_spec_b exit 0
+p3k_spec_b: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_spec_b: tile 0 card 0000:03:00.0: 2.64 GiB free after load
+p3k_spec_b: tile 1 card 0000:23:00.0: 2.46 GiB free after load
+p3k_spec_b: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+p3k_spec_b: tile 3 card 0000:83:00.0: 2.46 GiB free after load
+p3k_spec_b: tile 4 card 0000:a3:00.0: 2.46 GiB free after load
+p3k_spec_b: tile 5 card 0000:e3:00.0: 2.24 GiB free after load
+p3k_spec_b: prompt: 3323 tokens read on the cards in 5.77s (579.6 tok/s; first step 0.48s incl. kernel build), first token 2581
+p3k_spec_b: spec decode: 255 tokens in 95 cycles (2.68 per cycle; 161 of 211 guesses kept, 76.3 %) in 1.79s = 142.52 tok/s; draft 1.91 ms + check 16.92 ms per cycle; SAME AS the plain run
+p3k_spec_b: host io during decode: 7.4 MiB read from disk, 0 major page faults; engram rows 895.7 us per step and card (slowest card 898.5 us; copy + decode launch calls 14.0 us)
+p3k_spec_b: kept guesses per cycle: 0:26 1:28 2:17 3:8 4:5 5:11
+p3k_spec_bpx exit 0
+p3k_spec_bpx: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_spec_bpx: tile 0 card 0000:03:00.0: 2.30 GiB free after load
+p3k_spec_bpx: tile 1 card 0000:23:00.0: 2.13 GiB free after load
+p3k_spec_bpx: tile 2 card 0000:43:00.0: 1.73 GiB free after load
+p3k_spec_bpx: tile 3 card 0000:83:00.0: 2.13 GiB free after load
+p3k_spec_bpx: tile 4 card 0000:a3:00.0: 2.13 GiB free after load
+p3k_spec_bpx: tile 5 card 0000:e3:00.0: 1.91 GiB free after load
+p3k_spec_bpx: prompt: 3323 tokens read on the cards in 5.60s (596.2 tok/s; first step 0.88s incl. kernel build), first token 2581
+p3k_spec_bpx: spec decode: 255 tokens in 95 cycles (2.68 per cycle; 161 of 211 guesses kept, 76.3 %) in 1.73s = 147.39 tok/s; draft 1.92 ms + check 16.29 ms per cycle; SAME AS the plain run
+p3k_spec_bpx: host io during decode: 5.3 MiB read from disk, 8 major page faults; engram rows 197.1 us per step and card (slowest card 198.2 us; copy + decode launch calls 13.5 us)
+p3k_spec_bpx: kept guesses per cycle: 0:26 1:28 2:17 3:8 4:5 5:11
+p3k_spec_bpx_vs_b GLOG_SAME
+guessing SAME count: 4
+ALLDONE

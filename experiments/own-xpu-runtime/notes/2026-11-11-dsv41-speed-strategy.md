@@ -398,7 +398,22 @@ Did not work (and why):
 | Split checks / draft across card pairs | each pair exchange costs more than it saves (§28) |
 | Trial-and-error variant sweeps | slow; the stall sampler or machine code answers in one run |
 
-## Work in flight (2026-11-11, updated 23:10 EST)
+## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
+
+- 11:10 (2026-11-12) **Host resets: the stuck instruction found; iommu=pt reboot (owner approved).** tg104's
+  t3k_b300 (blocks of 300 = overlapped halves of 150) reset the host twice (01:14, 09:24), early in its prompt; no
+  other run did. Every reset's BERT (8 events) is a core watchdog (bank 5, EX, extended code 0); the two newest and
+  11-11 15:17 resolve to `pci_mmcfg_read` / `pci_conf1_read`: a CPU waiting on a PCI config read (kernel PME scan of
+  the cards' sleeping audio functions ~7/s; our run start's dma-buf attach). So card-to-card READ traffic stalls the
+  fabric past the core watchdog (long reads, xll, PX overlap; decode pushes never did). IOMMU was Translated (DMA-FQ).
+  b300 banned; tg104c ran the rest (`data/.../round19-tg104/`): all identical, **px-512 3K 5.56 s vs 5.71 (-2.8 %)**,
+  steady state -11 % per token, first 512 block 0.87 s; w8 / w4 worse, move ~0, serial 5.93. Peer benches before
+  the reboot (`dsv41-work/runs/pt/bench-before.txt`): EU stores into a peer ~1.0-1.1 GB/s per card, pulls 39 GB/s
+  (64 work-groups, 640 KiB), copy engine 27 GB/s (all six at once; 51 alone). After the reboot the one-shot unit
+  `dsv41-postboot-pt` runs the probe, the benches and gate tg105pt (same tp104: traces, plain, 3K reads base / px-512
+  / stores `OWN_XPULL=0`, guessing with and without stores). **If stores get fast with pt, the exchange design flips
+  to pushes (posted writes: no read round trip, and no read traffic to stall the fabric).** The copy engine at
+  27-51 GB/s is the other transport to try for big prompt slices (no EU time, posted writes).
 
 - 00:34 tg103 done (`data/.../round19-tg103/`): 28 traces identical (the overlap now exact), 21 guessing runs the same
   text, plain +0.3 % (xperm-3: 104.11 / 104.42 tok/s). Overlap neutral (3K 5.68-5.71 s vs 5.71): a pull overlaps only
