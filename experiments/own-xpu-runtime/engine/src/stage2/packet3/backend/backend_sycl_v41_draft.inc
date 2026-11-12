@@ -33,7 +33,7 @@ float h_dconf[8] = {};
 int32_t dr_toks[MTX] = {};
 bool dr_step = false;                   // the card threads run a draft step (tp_worker)
 int dr_rows = DR_BLOCK;                 // head rows of this draft step (draft_tp's nrows)
-unsigned xdrM = 0;                      // the Markov chain's argmax rows: DR_BLOCK rows of 6 cards x 4 floats
+unsigned xdrM = 0;                      // the Markov chain's argmax rows: 8 rows of 6 cards x DR_SLOT floats (4 used)
 // OWN_DR_VOCAB (dr_vocab_set, draft-head-1): the head over a candidate vocabulary; card c's rows ascending by id
 uint8_t *dvw[TILES] = {};               // packed output.weight rows (the same bytes as the full head's rows)
 uint16_t *dv2[TILES] = {};              // markov_w2 rows (BF16, 256 per row)
@@ -42,7 +42,11 @@ float *dvlog[TILES] = {}, *dvamv[TILES] = {}; // its logits rows [DR_BLOCK][n], 
 int32_t *dvami[TILES] = {};
 int dvn[TILES] = {};                    // rows on the card (0: the full head, the default)
 
-static constexpr size_t dr_arena_floats() { return (size_t)8 * 24; }
+// Each card's 4-float slot sits alone in a 128-byte line (DR_SLOT floats, rows 128-byte aligned): with 4-float
+// slots side by side, a card's own slot writes shared lines with the slots its peers push, and in 2 of ~50,000
+// draft rounds (tg93 prose, tg100 code) a peer's slot read back stale (a different confidence, same guess).
+static constexpr unsigned DR_SLOT = 32, DR_ROW = 6 * DR_SLOT;
+static constexpr size_t dr_arena_floats() { return (size_t)8 * DR_ROW + DR_SLOT; } // + alignment of xdrM
 void dr_alloc(int c) {
     for (int s = 0; s < DR_STAGES; ++s) {
         dring[c][s] = dalloc<uint16_t>(c, (size_t)(DR_WIN + MTX) * g.hd);
@@ -285,16 +289,16 @@ void dr_head(int c) {
         launch_sg(c, (size_t)G,
                   ops41sycl::ArgmaxP1OM{{nl, AM_CH, dv ? 0 : tv0[c], dv ? nl : (int)g.vocab}, (unsigned)G, 1u, (size_t)nl},
                   (const float *)li, amv, ami);
-        const unsigned off = xdrM + (unsigned)i * 24;
+        const unsigned off = xdrM + (unsigned)i * DR_ROW;
         if (dv)
             launch_sg(c, 1, ops41draft::DraftBestMap{(unsigned)G, (unsigned)nl, (unsigned)g.vocab}, (const float *)amv,
-                      (const int32_t *)ami, (const int32_t *)dvid[c], xarena[c] + off + 4 * c);
+                      (const int32_t *)ami, (const int32_t *)dvid[c], xarena[c] + off + DR_SLOT * c);
         else
             launch_sg(c, 1, ops41draft::DraftBest{(unsigned)G}, (const float *)amv, (const int32_t *)ami,
-                      xarena[c] + off + 4 * c);
-        launch_wgs<1>(c, 1, 512, ops41draft::DraftSumExp{(unsigned)nl}, (const float *)li, xarena[c] + off + 4 * c);
-        xchg(c, off, 24, 1, 4u * c, 4u * c + 4, 0, 0, -1);
-        launch(c, 32, 32, ops41draft::DraftPick{(unsigned)o.tp, 4}, (const float *)(xarena[c] + off), dprev[c] + i + 1,
+                      xarena[c] + off + DR_SLOT * c);
+        launch_wgs<1>(c, 1, 512, ops41draft::DraftSumExp{(unsigned)nl}, (const float *)li, xarena[c] + off + DR_SLOT * c);
+        xchg(c, off, DR_ROW, 1, DR_SLOT * c, DR_SLOT * c + 4, 0, 0, -1);
+        launch(c, 32, 32, ops41draft::DraftPick{(unsigned)o.tp, DR_SLOT}, (const float *)(xarena[c] + off), dprev[c] + i + 1,
                dconf[c] + i);
     }
     if (c == 0) {

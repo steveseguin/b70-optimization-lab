@@ -3188,7 +3188,7 @@ constexpr unsigned ws_cls(unsigned mt) {
 //   4: the expert grouping by a counting sort (ExpertGroupPM; backend tpm_layer)
 //   8: Q6_K forms with per-segment scales (WsQ6S, no private arrays): WsPb's picks of 9-64 token blocks and its S picks
 //   16: blocks of 65-256 tokens: WsPb's form and token chunk (DenseRowsWSC) for every Q8_0 / Q6_K / Q5_K role
-inline unsigned g_pb_mask = 0;
+inline unsigned g_pb_mask = 0x1eu; // default since tp102 (tg100: 3K read 6.65 -> 5.68 s at blocks of 256); OWN_PB=0: off
 inline bool pb_on(unsigned bit) { return (g_pb_mask & bit) != 0; }
 // a pb-1 pick: WsF form id (PF >= 100: WsQ6S) and the positions' token chunk (0: DenseRowsWS's order)
 struct PbPick {

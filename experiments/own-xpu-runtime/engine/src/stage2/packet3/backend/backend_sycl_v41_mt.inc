@@ -8,7 +8,19 @@
 // token by token: token t's window append follows token t-1's attention, so the
 // 128-row ring never runs ahead of a reader.
 
-int mt_n = 0;                    // tokens in the running block (0: one-token steps)
+// tokens in the running block (0: one-token steps). OWN_PX: while a card thread runs a half (px_layers), every read
+// of mt_n on that thread gives the half's count (MtN::half), so the layer code runs the half as a block of that size
+struct MtN {
+    int v = 0;
+    static inline thread_local int half = 0;
+    operator int() const { return half ? half : v; }
+    MtN &operator=(int n) {
+        v = n;
+        return *this;
+    }
+};
+MtN mt_n;
+long bpos() const { return pos + px_tok; } // the running block's (OWN_PX: half's) first position
 const int32_t *mt_toks = nullptr;
 Scratch scm[TILES][MTX] = {};    // per-token views of the block's buffers
 Scratch sc_keep[TILES] = {};
@@ -262,6 +274,18 @@ uint32_t xchg_pull2(int c, const ops41sycl::XchgPull &x, size_t nv, int mode, in
     const int xk = xw_arm(c, mode, part, true);
     if (xk >= 0) throw std::runtime_error("OWN_MT_DSPLIT: no OWN_XWAIT record form");
     if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)xk, (int8_t)mode};
+    if (px_q[c]) { // OWN_PX: on the exchange queue, px_g[c]'s register mode, px_n[c] work-groups
+        const size_t nw = mode != 1 && px_n[c] ? px_n[c] : nwg;
+        const unsigned gr = px_g[c] ? px_g[c] : o.xpull_grf == 128 ? 128u : 256u;
+        const sycl::nd_range<1> xq(nw * 256, 256);
+        const sycl::event e = px_submit(c, [&](sycl::handler &hh) {
+            if (gr == 256) hh.parallel_for(xq, XPullK256x2{x2, p0, p1, p2, p3, p4, p5, err});
+            else hh.parallel_for(xq, XPullK128x2{x2, p0, p1, p2, p3, p4, p5, err});
+        });
+        kev(c, kname<ops41sycl::XchgPull2>(), e);
+        px_note(c, x.seq, 1, mode);
+        return x.seq;
+    }
     const sycl::nd_range<1> xr(nwg * 256, 256);
     auto e = o.xpull_grf == 128 ? qs[c].parallel_for(xr, XPullK128x2{x2, p0, p1, p2, p3, p4, p5, err})
                                 : qs[c].submit([&](sycl::handler &hh) {
@@ -295,8 +319,8 @@ void mt_offsets(size_t base) {
     xobM = xoaM + MTA * (unsigned)g.ototal;
     xactM = xobM + MTA * (unsigned)g.h;
     xengM = xactM + MTA * 7 * (unsigned)g.mid; // [token][engram layer] rows of 5 * h
-    xdrM = xengM + MTA * 10 * (unsigned)g.h;   // the draft's argmax rows (backend_sycl_v41_draft.inc)
-    xfcM = xdrM + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
+    xdrM = (xengM + MTA * 10 * (unsigned)g.h + 31u) & ~31u; // the draft's argmax rows, 128-byte aligned (draft.inc)
+    xfcM = xengM + MTA * 10 * (unsigned)g.h + (unsigned)dr_arena_floats(); // the draft's feature rows (its own region: dr_inject can follow the
                                                // last layer's exchange on xobM with no exchange in between)
     xhoM = xfcM + MTA * (unsigned)g.h;         // the head outputs (OWN_TP_HEADS), MTA tokens of qh * hd
     if (o.mt_dsplit) { // OWN_MT_DSPLIT: the partial regions, 16-byte aligned (doubles; XchgPull's vec4 rows)
@@ -365,6 +389,7 @@ void mt_alloc(int c) {
     }
     for (int k = 0; k < 8; ++k) cidxm[c][k] = dalloc<int32_t>(c, (size_t)512 * MTX);
     egrp[c] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS);
+    if (o.px) px_egrp[c][1] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS); // OWN_PX: half B's expert groups
     if (o.dspark) dr_alloc(c);
     for (int k = 0; k < 3; ++k) {
         pkv[c][k] = dalloc<float>(c, (size_t)(MTX + 1) * g.hd);
@@ -379,10 +404,10 @@ void mt_alloc(int c) {
         h_amim[c].resize((size_t)G * MTX);
     }
 }
-void tok_set(int c, int t) {
-    sc[c] = scm[c][t];
+void tok_set(int c, int t) { // (OWN_PX: t counts from the running half's first token, px_tok; strm[c] is the half's)
+    sc[c] = scm[c][px_tok + t];
     streams[c] = strm[c] + (size_t)t * 4 * g.h;
-    tokoff[c] = t;
+    tokoff[c] = px_tok + t;
 }
 void tok_end(int c) {
     sc[c] = sc_keep[c];
@@ -444,6 +469,18 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
         }
         go(ops41sycl::DenseRowsG<DK, G>{dk, (const uint8_t *)w, x, xs, y, ys, mt, (mt + G - 1) / G});
     };
+    // pace-1 (OWN_MT_PACE, opt-in): the 16-head cards' q_b (8,192 rows) and output-a (2,048 rows, two groups) at checks
+    // of 2-6 tokens in persistent, pipelined launches (ops41sycl::pace_rows: the same sums as ws_rows' forms, bit for
+    // bit; the attention mix's finish on its own work-group). Not in the draft's steps, not with an exchange tail.
+    if constexpr (std::is_same_v<act_t, float> && !ops41sycl::is_qbm_heavy_v<RD>)
+        if (ops41sycl::g_pace_mask && !dr_step && mt_ws && !xt[c].on && ops41sycl::pace_on(mt))
+            if (ops41sycl::pace_rows<DK>(dk, (const uint8_t *)w, x, xs, y, ys, mt, rider, pace_cu(c),
+                                         [&](const auto &k, size_t nwg) {
+                                             using K = std::decay_t<decltype(k)>;
+                                             auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 512, 512), k);
+                                             kev(c, kname<K>(), e);
+                                         }))
+                return;
     // OWN_MT_WS: the (matrix shape, block size) pairs bench_dense_ws measured faster than the forms below
     // (ops41sycl::WsTab; the same sums per row and token, bit for bit). The draft's steps keep the general rules
     // unless OWN_DR_WS=1 (the same table there: at 5 tokens the draft's q_b rows and its full head).
@@ -950,7 +987,8 @@ void tpm_engram_kv(int c) {
 // that starts odd). The same kernels' rows per published row; mlen = rows after each token.
 void tpm_publish(int L, int c, int si, bool yarn) {
     const int M = mt_n;
-    const Scratch &b = scm[c][0];
+    const long pos = bpos(); // (OWN_PX: the half's first position; else the member pos)
+    const Scratch &b = scm[c][px_tok];
     const std::string p = "blk." + std::to_string(L) + ".";
     const size_t hd = (size_t)g.hd;
     if (g.hd != 512 || !o.small_fast) throw std::runtime_error("multi-token publish: form");
@@ -970,7 +1008,7 @@ void tpm_publish(int L, int c, int si, bool yarn) {
         np = (unsigned)M;
         gpos0 = pos;
         pstep = 1;
-        for (int t = 0; t < M; ++t) mlen[c][si][t] = tl0 + t + 1;
+        for (int t = 0; t < M; ++t) mlen[c][si][px_tok + t] = tl0 + t + 1;
     } else {
         gemv_m(c, p + "attn_compressor_gate.weight", b.xn, g.h, b.scg, hd);
         const size_t so = (size_t)si * 2 * hd;
@@ -982,7 +1020,7 @@ void tpm_publish(int L, int c, int si, bool yarn) {
         long n_ = tl0;
         for (int t = 0; t < M; ++t) {
             if ((pos + t) % 2 == 1) ++n_;
-            mlen[c][si][t] = n_;
+            mlen[c][si][px_tok + t] = n_;
         }
         if ((pos + M - 1) % 2 == 0) { // the last token is even: its state carries to the next step (slot 0)
             qs[c].memcpy(sc[c].kv_state + so, pkv[c][si] + (size_t)M * hd, hd * 4);
@@ -1015,21 +1053,25 @@ void tpm_publish(int L, int c, int si, bool yarn) {
 // has at most 512 rows take all of them in order, the others score + select on the card
 void tpm_index(int L, int c, int si, bool yarn, int slot) {
     const int M = mt_n;
-    const Scratch &b = scm[c][0];
+    const long pos = bpos(); // (OWN_PX: the half's first position; else the member pos)
+    const Scratch &b = scm[c][px_tok];
+    // (OWN_PX: the half's tokens' lists and layer-20 block lists; px_tok 0: the block's)
+    int32_t *const cix = cidxm[c][slot] + (size_t)px_tok * 512;
+    int32_t *const blh = blm[c] ? blm[c] + (size_t)px_tok * (2048 + 64) : nullptr;
     const std::string p = "blk." + std::to_string(L) + ".";
     ops41sycl::CidxFillM cf{};
     cf.m = (unsigned)M;
     int lens[MTX] = {}, nshort = 0, nlong = 0;
     long lmax = 0;
     for (int t = 0; t < M; ++t) {
-        const long len = mlen[c][si][t];
+        const long len = mlen[c][si][px_tok + t];
         if (len > (long)INT32_MAX / 2) throw std::runtime_error("multi-token index: rows");
         cf.lens[t] = len <= 512 ? (int)len : -1;
         lens[t] = len > 512 ? (int)len : 0;
         (len <= 512 ? nshort : nlong)++;
         lmax = std::max(lmax, len);
     }
-    if (nshort) launch(c, (size_t)M * 512, 64, cf, cidxm[c][slot]);
+    if (nshort) launch(c, (size_t)M * 512, 64, cf, cix);
     if (!nlong) return;
     sync_rows(c, si);
     gemv_m(c, p + "indexer.attn_q_b.weight", b.qn, g.qrank, b.qi, 4096);
@@ -1058,7 +1100,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
         k.bls = 2048 + 64;
         const act_t *qi = b.qi, *wv = b.wv;
         const uint16_t *ik = ik_mirror[c][si];
-        const int32_t *bl = blm[c];
+        const int32_t *bl = blh;
         float *sco = b.score;
         auto e = qs[c].submit([&](sycl::handler &hh) {
             sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
@@ -1075,7 +1117,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
             kq.cs = SS;
             kq.bls = 2048 + 64;
             launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kq, (const float *)b.score, (const uint8_t *)b.cand,
-                             (const int32_t *)blm[c], cidxm[c][slot]);
+                             (const int32_t *)blh, cix);
         } else {
             ops41sycl::TopKSelMC kt{};
             for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
@@ -1085,7 +1127,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
             kt.bls = 2048 + 64;
             kt.rwalk = o.topk_r;
             launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kt, (const float *)b.score, (const uint8_t *)b.cand,
-                             (const int32_t *)blm[c], cidxm[c][slot]);
+                             (const int32_t *)blh, cix);
         }
         if (o.idx_cand == 2) idx_cand_check_m(L, c, si, M, lens, slot);
         return;
@@ -1127,7 +1169,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
             kb.ss = SS;
             kb.cs = SS;
             kb.bls = 2048 + 64;
-            launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blm[c]); // blm: OWN_IDX_CAND (else null)
+            launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blh); // blm: OWN_IDX_CAND (else null)
         };
         if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
         else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
@@ -1139,7 +1181,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
         kt.mask = L > 20;
         kt.ss = SS;
         kt.cs = SS;
-        launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cidxm[c][slot]);
+        launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cix);
     };
     if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
     else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
@@ -1227,15 +1269,19 @@ void idx_cand_check_m(int L, int c, int si, int M, const int *lens, int slot) {
 // the block's output-a rows (layout h: oa_run) and their all-gather; wb: the first output-a row the card holds
 void oa_m(int c, const std::string &p, const HeadLay &h, int part, unsigned wb) {
     const unsigned M = (unsigned)mt_n, per = (unsigned)g.ototal / 8;
-    const Scratch &b = scm[c][0];
+    const Scratch &b = scm[c][px_tok];
+    const unsigned oaM = xoaM + (unsigned)px_tok * (unsigned)g.ototal; // (OWN_PX: the half's slots)
     oa_run(c, h, M, [&](unsigned r0, unsigned r1) {
         gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)(r0 / per) * g.oin, (size_t)g.qh * g.hd,
-               xarena[c] + xoaM + r0, (size_t)g.ototal, per, 0, ops41sycl::NoRows{}, r0 - wb, r1 - wb);
+               xarena[c] + oaM + r0, (size_t)g.ototal, per, 0, ops41sycl::NoRows{}, r0 - wb, r1 - wb);
     });
-    xchg_m(c, xoaM, (unsigned)g.ototal, M, h.oa0[c], h.oa1[c], 0, part);
+    xsite(c, PX_X1, oaM, (unsigned)g.ototal, M, h.oa0[c], h.oa1[c], part);
 }
-void tpm_layer(int L, int c) {
+// seg (OWN_PX): which pieces of the layer run (PX_ALL: the whole layer, as always without OWN_PX); px_layers runs a
+// half's pieces in its own order. Every piece's launches are the whole layer's, in the same order.
+void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     const int M = mt_n;
+    const long pos = bpos(); // (OWN_PX: the half's first position; else the member pos)
     const std::string p = "blk." + std::to_string(L) + ".";
     const int cr = cr_of(L);
     const bool yarn = cr > 0;
@@ -1244,8 +1290,13 @@ void tpm_layer(int L, int c) {
     const int nh = hla.hq1[c] - hla.hq0[c];
     const size_t qo = (size_t)hla.hq0[c] * g.hd, H = g.h;
     const unsigned qbr0 = (unsigned)((hla.hq0[c] - qst0[c]) * g.hd), qbr1 = (unsigned)((hla.hq1[c] - qst0[c]) * g.hd);
-    const Scratch &b = scm[c][0]; // token 0's views are the bases of the block's arrays
+    const Scratch &b = scm[c][px_tok]; // token 0's views are the bases of the block's arrays (OWN_PX: the half's)
     const size_t H4 = 4 * H, Q = (size_t)g.qh * g.hd, FS = (size_t)25 * HC_SEG;
+    // the block's exchange regions from this block's (OWN_PX: half's) first token on (px_tok 0: the regions' starts)
+    const size_t pt = (size_t)px_tok;
+    const unsigned oaM = xoaM + (unsigned)(pt * g.ototal), obM = xobM + (unsigned)(pt * H),
+                   actM = xactM + (unsigned)(pt * 7 * g.mid), dsA = xdsA + (unsigned)(pt * 50 * HC_SEG),
+                   dsF = xdsF + (unsigned)(pt * 50 * HC_SEG);
     if (g.hd != 512) throw std::runtime_error("multi-token step: head dim");
     using NR5 = ops41sycl::NormRows<5120, 4>;
     // the mix's dot rows, one sub-group per (token, row): HcDotsRowsM's one sub-group for all tokens left the
@@ -1316,20 +1367,21 @@ void tpm_layer(int L, int c) {
             });
         return keep;
     };
-    dr_capture(L, c); // the draft's input features (layers 37 .. 39; read only)
+    if (seg & PX_P0A) dr_capture(L, c); // the draft's input features (layers 37 .. 39; read only)
     // ---- phase 0: pre-norm, mix, query/key rows, publish, index
-    if (L == 1 || L == 14) {
+    if ((seg & PX_P0A) && (L == 1 || L == 14)) {
         const int li = L == 1 ? 0 : 1;
-        if (use_pull(XP_ENG, 2u * (unsigned)M) || xseq[c] == eng_seqm[c])
+        // (OWN_PX: px_layers pulls the whole block's rows once, before half A's gate: px_eng)
+        if (!px_run[c] && (use_pull(XP_ENG, 2u * (unsigned)M) || xseq[c] == eng_seqm[c]))
             xchg(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)M, te0[c], te1[c], 2, eng_seqm[c], XP_ENG);
         if (mt_small && ops41sycl::g_eng_ff) { // OWN_ENG_FF: EngramGateW per token (the same gates bit for bit)
             launch_wgl<8 * 16 + 2>(c, (size_t)4 * M, 512,
                                    ops41sycl::EngramGateWM<16>{ops41sycl::EngramGateP{g.h}, (unsigned)M, H4, 10 * H},
-                                   strm[c], (const float *)(xarena[c] + xengM + (size_t)li * 5 * H),
+                                   strm[c], (const float *)(xarena[c] + xengM + pt * 10 * H + (size_t)li * 5 * H),
                                    wp<float>(c, p + "engram_gate.weight"));
         } else if (mt_small) {
             launch_sg(c, (size_t)4 * M, ops41sycl::EngramGatePM{ops41sycl::EngramGateP{g.h}, (unsigned)M, H4, 10 * H},
-                      strm[c], (const float *)(xarena[c] + xengM + (size_t)li * 5 * H),
+                      strm[c], (const float *)(xarena[c] + xengM + pt * 10 * H + (size_t)li * 5 * H),
                       wp<float>(c, p + "engram_gate.weight"));
         } else {
             for (int t = 0; t < M; ++t) {
@@ -1340,11 +1392,12 @@ void tpm_layer(int L, int c) {
             }
         }
     }
+    if (seg & PX_P0A) {
     if (mt_small) { // collapse (unless the last phase 5 did) + norm, with the mix's dot rows in the norm's launch
         if (!mx_ready[c])
             launch(c, (size_t)M * H, 32, ops41sycl::HcPreAM<Act>{g.h, (unsigned)M, H4, 4, H}, (const act_t *)strm[c],
                    (const float *)b.cur_pre, b.x);
-        if (sknd(b.x, p + "attn_norm.weight", b.xn, p + "hc_attn_", xdsA, dA0, dA1)) {
+        if (sknd(b.x, p + "attn_norm.weight", b.xn, p + "hc_attn_", dsA, dA0, dA1)) {
             // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
         } else {
             if (ride || skd) { // the dot rows ride in q_a's launch below (OWN_MT_SKDOTS: their own launch)
@@ -1353,8 +1406,8 @@ void tpm_layer(int L, int c) {
             } else
                 rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
                                    tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H),
-                                   dmix(p + "hc_attn_", xdsA, dA0, dA1)});
-            if (skd) skmix(p + "hc_attn_", xdsA, dA0, dA1);
+                                   dmix(p + "hc_attn_", dsA, dA0, dA1)});
+            if (skd) skmix(p + "hc_attn_", dsA, dA0, dA1);
         }
     } else {
         for (int t = 0; t < M; ++t) {
@@ -1370,14 +1423,16 @@ void tpm_layer(int L, int c) {
         }
     }
     mx_ready[c] = false;
+    } // (PX_P0A)
+    if (seg & PX_P0B) {
     // OWN_MT_KVPAIR: q_a + kv rows (+ the dot rows) in one launch, each matrix in the token groups dense_m gives it
     const bool kvp = mt_small && mt_kvpair && (unsigned)M <= mt_ms_max &&
                      (rd ? gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
-                                       dmix(p + "hc_attn_", xdsA, dA0, dA1))
+                                       dmix(p + "hc_attn_", dsA, dA0, dA1))
                            : gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
                                          ops41sycl::NoRows{}));
     if (!kvp) {
-        if (mt_small && rd) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dmix(p + "hc_attn_", xdsA, dA0, dA1));
+        if (mt_small && rd) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dmix(p + "hc_attn_", dsA, dA0, dA1));
         else gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank);
         gemv_m(c, p + "attn_kv.weight", b.xn, H, b.kv, g.hd);
     }
@@ -1487,20 +1542,22 @@ void tpm_layer(int L, int c) {
             else dev_index(L, c, si, yarn, len, out);
         }
     }
+    } // (PX_P0B)
     // ---- phase 1: attention; output-a rows for all tokens
+    if (seg & PX_P1) {
     if (mt_small) { // every token at once: the block's key rows wait in the ring's block area until all have read
         const int nc = cr ? 512 : 0, W = 128 + MTX;
         int n_idx = 128 + nc;
         if (cr && o.att_trim) { // OWN_ATT_TRIM: every token's list below 512 rows: up to the longest, rounded up
             long lm = 0;
-            for (int t = 0; t < M; ++t) lm = std::max<long>(lm, mlen[c][si][t]);
+            for (int t = 0; t < M; ++t) lm = std::max<long>(lm, mlen[c][si][px_tok + t]);
             if (lm < 512) n_idx = att_trim_n(lm);
         }
         // (items per token: WindowAppendM's max(d, win + nc), whatever slots the attention reads)
         // OWN_ATT_WA: its work inside the OWN_ATT_T launches below instead (att_wa_form: 'F' one launch, 'T' score
         // launch, '-' none; the same rows and lists)
         const act_t *wkv = (const act_t *)b.kvn;
-        const int32_t *wci = (const int32_t *)(cr ? cidxm[c][isrc_for(L)] : nullptr);
+        const int32_t *wci = (const int32_t *)(cr ? cidxm[c][isrc_for(L)] + pt * 512 : nullptr);
         const char waf = att_wa_form(nh, n_idx, (unsigned)M);
         const bool wa = waf != '-';
         if (!wa)
@@ -1637,21 +1694,30 @@ void tpm_layer(int L, int c) {
             launch_sg(c, (size_t)nh * g.hd / 64, so, kvw, kvc, ix, (const float *)s.attn_w, s.of + qo);
         }
     }
-    if (dsp) ds_arm(c, xdsA, dA0, dA1); // OWN_MT_DSPLIT: the attention mix's partials ride the output-a pull
-    oa_m(c, p, hla, xp_oa_m((unsigned)M), ost0[c]);
-    // ---- phase 2: output-b rows (OWN_MT_DSPLIT: + the attention mix's finish, riding or before)
-    if (dsp && fride(p + "attn_output_b.weight"))
-        gemv_m(c, p + "attn_output_b.weight", xarena[c] + xoaM, (size_t)g.ototal, xarena[c] + xobM + td0[c], H, 0, 0,
-               fmix(p + "hc_attn_", xdsA, b.pre_a, b.post_a, b.comb_a));
-    else {
-        if (dsp) rows_launch(c, fmix(p + "hc_attn_", xdsA, b.pre_a, b.post_a, b.comb_a));
-        gemv_m(c, p + "attn_output_b.weight", xarena[c] + xoaM, (size_t)g.ototal, xarena[c] + xobM + td0[c], H);
+    } // (PX_P1)
+    if (seg & PX_P1B) {
+        if (dsp) ds_arm(c, dsA, dA0, dA1); // OWN_MT_DSPLIT: the attention mix's partials ride the output-a pull
+        oa_m(c, p, hla, xp_oa_m((unsigned)M), ost0[c]);
     }
-    xchg_m(c, xobM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], 0, XP_H);
+    // ---- phase 2: output-b rows (OWN_MT_DSPLIT: + the attention mix's finish, riding or before)
+    if (seg & (PX_P2A | PX_P2B)) {
+        const bool fr = dsp && fride(p + "attn_output_b.weight");
+        if ((seg & PX_P2A) && dsp && !fr) rows_launch(c, fmix(p + "hc_attn_", dsA, b.pre_a, b.post_a, b.comb_a));
+        if (seg & PX_P2B) {
+            if (fr)
+                gemv_m(c, p + "attn_output_b.weight", xarena[c] + oaM, (size_t)g.ototal, xarena[c] + obM + td0[c], H, 0, 0,
+                       fmix(p + "hc_attn_", dsA, b.pre_a, b.post_a, b.comb_a));
+            else
+                gemv_m(c, p + "attn_output_b.weight", xarena[c] + oaM, (size_t)g.ototal, xarena[c] + obM + td0[c], H);
+            xsite(c, PX_X2, obM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], XP_H);
+        }
+    }
     // ---- phase 3: stream post + FFN pre-norm, router, shared and routed gate/up, SwiGLU
     const float *bias = wp<float>(c, p + "exp_probs_b.bias");
     const int nm = tm1[c] - tm0[c], nd = td1[c] - td0[c];
     bool shared_done = false; // the shared expert's gate + up already ran with the router (route_shared_m)
+    const size_t A7 = (size_t)7 * g.mid;
+    if (seg & PX_P3A) {
     if (mt_small) {
         hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H}, // (OWN_MT_HCPP)
                     strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
@@ -1662,17 +1728,17 @@ void tpm_layer(int L, int c) {
             if (dsp && dF0[c] == dF1[c]) // (OWN_MT_DSPLIT, no tokens here: no rows to launch beside the unpacked router)
                 gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
             else
-                gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts, 0, 0, dmix(p + "hc_ffn_", xdsF, dF0, dF1));
+                gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts, 0, 0, dmix(p + "hc_ffn_", dsF, dF0, dF1));
         } else {
-            if (sknd(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", xdsF, dF0, dF1)) {
+            if (sknd(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", dsF, dF0, dF1)) {
                 // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
             } else if (skd) { // OWN_MT_SKDOTS: the norm, then the dot rows' own launch
                 if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
                     rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
-                skmix(p + "hc_ffn_", xdsF, dF0, dF1);
+                skmix(p + "hc_ffn_", dsF, dF0, dF1);
             } else {
                 rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
-                                   tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dmix(p + "hc_ffn_", xdsF, dF0, dF1)});
+                                   tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dmix(p + "hc_ffn_", dsF, dF0, dF1)});
             }
             gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
         }
@@ -1714,6 +1780,11 @@ void tpm_layer(int L, int c) {
         ids_unique += (long)(std::unique(hid.begin(), hid.end()) - hid.begin());
         if (L == 0) ++ids_blocks;
     }
+    px_sd[c][px_hh[c]] = shared_done; // (OWN_PX: the half's phase 3b reads it)
+    } else {
+        shared_done = px_sd[c][px_hh[c]];
+    } // (PX_P3A)
+    if (seg & PX_P3B) {
     if (mt_eu && (unsigned)M >= mt_eu_min) { // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
         const bool big = mt_eu_big && (unsigned)M >= mt_eu_big_m;
         unsigned cap = big ? mt_eu_big : mt_eu;
@@ -1738,7 +1809,6 @@ void tpm_layer(int L, int c) {
         gemv_m(c, p + "ffn_up_shexp.weight", b.xn, H, b.shu, (size_t)g.mid);
     }
     routed_m(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight", b.xn, H, b.ids, b.expg, b.expu, false);
-    const size_t A7 = (size_t)7 * g.mid;
     if (mt_small) {
         launch(c, (size_t)M * 7 * nm, 64,
                ops41sycl::SwigluBothSM<Act>{6, nm, 10.0f, g.mid, (unsigned)M, (size_t)6 * nm, A7, 6, (size_t)g.mid, A7},
@@ -1753,15 +1823,17 @@ void tpm_layer(int L, int c) {
                    s.act + (size_t)6 * g.mid + tm0[c]);
         }
     }
-    if (dsp) ds_arm(c, xdsF, dF0, dF1); // OWN_MT_DSPLIT: the FFN mix's partials ride the expert-act pull
-    xchg_m(c, xactM, (unsigned)g.mid, 7u * (unsigned)M, tm0[c], tm1[c], 0, XP_ACT);
+    if (dsp) ds_arm(c, dsF, dF0, dF1); // OWN_MT_DSPLIT: the FFN mix's partials ride the expert-act pull
+    xsite(c, PX_X3, actM, (unsigned)g.mid, 7u * (unsigned)M, tm0[c], tm1[c], XP_ACT);
+    } // (PX_P3B)
     // ---- phase 4: routed and shared down, combine (OWN_MT_DSPLIT: + the FFN mix's finish, riding or before)
+    if (seg & PX_P4) {
     routed_m(c, p + "ffn_down_exps.weight", std::string(), b.act, A7, b.ids, b.expd, nullptr, true);
     if (dsp && fride(p + "ffn_down_shexp.weight"))
         gemv_m(c, p + "ffn_down_shexp.weight", b.act + (size_t)6 * g.mid, A7, b.shd, H, 0, 0,
-               fmix(p + "hc_ffn_", xdsF, b.pre_f, b.post_f, b.comb_f));
+               fmix(p + "hc_ffn_", dsF, b.pre_f, b.post_f, b.comb_f));
     else {
-        if (dsp) rows_launch(c, fmix(p + "hc_ffn_", xdsF, b.pre_f, b.post_f, b.comb_f));
+        if (dsp) rows_launch(c, fmix(p + "hc_ffn_", dsF, b.pre_f, b.post_f, b.comb_f));
         gemv_m(c, p + "ffn_down_shexp.weight", b.act + (size_t)6 * g.mid, A7, b.shd, H);
     }
     if (mt_small) {
@@ -1774,8 +1846,10 @@ void tpm_layer(int L, int c) {
             launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd, s.ob + td0[c]);
         }
     }
-    xchg_m(c, xobM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], 0, XP_H);
+    xsite(c, PX_X4, obM, (unsigned)g.h, (unsigned)M, td0[c], td1[c], XP_H);
+    } // (PX_P4)
     // ---- phase 5: stream post (+ the next attention's collapse)
+    if (!(seg & PX_P5)) return;
     const int Ln = L + 1;
     const bool pp = post_pre_ok() && Ln != 1 && Ln != 14 && (Ln < o.layer_end || o.head);
     if (mt_small) {
@@ -1927,6 +2001,225 @@ void tpm_card_step1(int c) {
     tok_end(c);
     if (tl_path) tl_end(c);
 }
+// ---- px-1 (OWN_PX=1, opt-in; /home/steve/dsv41-work/pb256/README-overlap.txt section 3) ------------------------
+// A prompt block of B tokens (even, B / 2 >= OWN_PX_MIN; not a check) runs as two halves A (tokens 0 .. B/2 - 1) and
+// B (B/2 .. B - 1), layer by layer, each half a block of B/2 tokens at its positions: tpm_layer's own launches, sums
+// and order for that block size (px_half: the half's token views, stream rows, regions, expert groups; mt_n and the
+// position read the half's on this card thread). The four per-layer pulls (X1 output-a, X2 output-b, X3 expert act,
+// X4 FFN rows) are held by xsite and queued by px_fire on the exchange queue xqs[c] where they run beside the other
+// half's work in their own register mode (px_layers' order, every card the same); qs[c] waits for one (px_wait)
+// only before its consumer. Every exchange of the layer loop (also the pair swaps and the engram rows) is on xqs[c],
+// in the host's order, so the numbers are published in order as before. Regions: each half its own token slots.
+enum : unsigned {
+    PX_P0A = 1,   // engram gate, collapse + pre-norm + the mix's dot rows (the draft's capture)
+    PX_P0B = 2,   // q_a, kv, their norms, q_b, rope, publish, index
+    PX_P1 = 4,    // attention (window append .. ring commit)
+    PX_P1B = 8,   // output-a rows (+ pair swaps); X1 held
+    PX_P2A = 16,  // the attention mix's finish (OWN_MT_DSPLIT, when it does not ride output-b)
+    PX_P2B = 32,  // output-b rows; X2 held
+    PX_P3A = 64,  // post + FFN pre-norm + dots, router (+ shared gate / up with OWN_MT_RFUSE)
+    PX_P3B = 128, // expert groups, shared gate / up, routed gate / up, SwiGLU; X3 held
+    PX_P4 = 256,  // routed down, the FFN mix's finish, shared down, combine; X4 held
+    PX_P5 = 512,  // stream post (+ the next layer's collapse)
+    PX_ALL = 1023
+};
+enum { PX_X1 = 0, PX_X2 = 1, PX_X3 = 2, PX_X4 = 3 };
+struct PxX { // a held exchange (xchg_m's arguments and the armed second region)
+    bool on = false;
+    unsigned off = 0, stride = 0, nslot = 0, r0 = 0, r1 = 0;
+    int part = 0;
+    XR2 r2;
+};
+PxX px_x[TILES][4][2];
+sycl::event px_xe[TILES][4][2];   // a fired exchange's launch on xqs[c]
+bool px_blk = false;              // this block runs as halves (decode_block_tp: px_ok)
+int px_hn = 0;                    // ... of this many tokens
+bool px_run[TILES] = {};          // card c is inside px_layers (tpm_layer holds the four exchanges)
+int px_hh[TILES] = {};            // the running half
+bool px_mx[TILES][2] = {}, px_sd[TILES][2] = {}; // per half: mx_ready, shared_done (phase 3a -> 3b)
+unsigned px_cap[TILES][2] = {};   // per half: eu_cap_c
+uint32_t *px_egrp[TILES][2] = {}; // per half: the expert groups (A's are read by its routed down after B's grouping)
+act_t *px_strm0[TILES] = {};
+float *px_dfeat0[TILES] = {};
+long px_blocks = 0, px_bad = 0;
+// an exchange site of tpm_layer: today's xchg_m, or (inside px_layers) held for px_fire
+void xsite(int c, int site, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int part) {
+    if (!px_run[c]) {
+        xchg_m(c, off, stride, nslot, r0, r1, 0, part);
+        return;
+    }
+    PxX &d = px_x[c][site][px_hh[c]];
+    if (d.on) throw std::runtime_error("OWN_PX: an exchange held twice");
+    d.on = true, d.off = off, d.stride = stride, d.nslot = nslot, d.r0 = r0, d.r1 = r1, d.part = part, d.r2 = xr2[c];
+    xr2[c].on = false;
+}
+// queue half h's exchange of the site on xqs[c] now, in register mode grf, OWN_PX_WG work-groups
+void px_fire(int c, int site, int h, unsigned grf) {
+    PxX &d = px_x[c][site][h];
+    if (!d.on) throw std::runtime_error("OWN_PX: no exchange held");
+    if (xr2[c].on) throw std::runtime_error("OWN_PX: a second region armed outside its exchange");
+    d.on = false;
+    xr2[c] = d.r2;
+    px_g[c] = grf, px_n[c] = o.px_wg;
+    xchg_m(c, d.off, d.stride, d.nslot, d.r0, d.r1, 0, d.part);
+    px_g[c] = 0, px_n[c] = 0;
+    px_xe[c][site][h] = px_last[c];
+    if (o.px_serial) px_wait(c, px_last[c]); // OWN_PX_SERIAL (diagnostic): no overlap, the same queues and order
+}
+void px_await(int c, int site, int h) { px_wait(c, px_xe[c][site][h]); }
+// the layer's routed-down register mode (tp100 / tp101 builds: the IQ2_XXS / IQ3_XXS down forms 256, the others 128)
+unsigned px_down_grf(int L) const {
+    const auto t = we("blk." + std::to_string(L) + ".ffn_down_exps.weight").type;
+    return t == iq3::Type::IQ2_XXS || t == iq3::Type::IQ3_XXS ? 256u : 128u;
+}
+// card c's views for half h (saving the other half's per-half values)
+void px_half(int c, int h) {
+    const int k = px_hh[c];
+    px_mx[c][k] = mx_ready[c], px_cap[c][k] = eu_cap_c[c];
+    px_hh[c] = h;
+    mx_ready[c] = px_mx[c][h], eu_cap_c[c] = px_cap[c][h];
+    MtN::half = px_hn;
+    px_tok = h * px_hn;
+    strm[c] = px_strm0[c] + (size_t)px_tok * 4 * g.h;
+    if (px_dfeat0[c]) dfeat[c] = px_dfeat0[c] + (size_t)px_tok * 3 * g.h;
+    egrp[c] = px_egrp[c][h];
+}
+void px_exit(int c) {
+    if (px_q[c]) px_wait(c, px_last[c]); // qs[c] after everything on xqs[c]: the head and the draft's rows follow
+    px_q[c] = px_run[c] = false;
+    px_g[c] = px_n[c] = 0;
+    xr2[c].on = false;
+    MtN::half = 0;
+    px_tok = 0;
+    strm[c] = px_strm0[c];
+    if (px_dfeat0[c]) dfeat[c] = px_dfeat0[c];
+    egrp[c] = px_egrp[c][0];
+}
+// the engram rows' pull (the whole block's, once, as tpm_layer's at layers 1 / 14), before half A's gate
+void px_eng(int c, int MB) {
+    if (!(use_pull(XP_ENG, 2u * (unsigned)MB) || xseq[c] == eng_seqm[c])) return;
+    xchg(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)MB, te0[c], te1[c], 2, eng_seqm[c], XP_ENG);
+    px_wait(c, px_last[c]);
+}
+// whether this block runs as halves (main thread, before the card threads start; the same on every card)
+bool px_ok(int mt) {
+    if (!o.px || o.tp < 2 || mt_heads || ck1_run || !mt_small || mt % 2 || (unsigned)(mt / 2) < o.px_min) return false;
+    if (o.xll || o.dev_index_check || o.idx_cand == 2 || xqs.size() < (size_t)o.tp)
+        throw std::runtime_error("OWN_PX: not with OWN_XLL, OWN_DEV_INDEX_CHECK=1 or OWN_IDX_CAND=2");
+    const unsigned h = (unsigned)mt / 2;
+    // every exchange of the halves' layers a pull (xchg's XchgPull / XchgPull2), the engram rows' too
+    return use_pull(xp_oa_m(h), h) && use_pull(XP_H, h) && use_pull(XP_ACT, 7u * h) && use_pull(XP_ENG, 2u * (unsigned)mt);
+}
+// the layer loop of a block as halves (tpm_card_step; late: OWN_ENG_LATE's engram rows before layer 1)
+template <typename F> void px_layers(int c, F &&late) {
+    const int MB = mt_n, L0 = o.layer_begin, LN = o.layer_end; // (the block's count: no half yet)
+    if (MB != 2 * px_hn) throw std::runtime_error("OWN_PX: halves");
+    auto gr = [&](int k, int L) { return o.px_grf[k] ? o.px_grf[k] : px_down_grf(L); };
+    px_strm0[c] = strm[c];
+    px_dfeat0[c] = o.dspark ? dfeat[c] : nullptr;
+    px_egrp[c][0] = egrp[c];
+    px_mx[c][0] = px_mx[c][1] = mx_ready[c];
+    px_cap[c][0] = px_cap[c][1] = eu_cap_c[c];
+    px_sd[c][0] = px_sd[c][1] = false;
+    px_hh[c] = 0;
+    for (auto &a : px_x[c])
+        for (auto &d : a) d.on = false;
+    px_q[c] = px_run[c] = true;
+    try {
+        for (int L = L0; L < LN; ++L) {
+            if (o.eng_late && L == 1) { // the whole block's engram rows (publish on xqs[c] after the rows' launch)
+                MtN::half = 0;
+                px_tok = 0;
+                late();
+            }
+            // half A: the last layer's post, this layer's rows up to the attention; X4(B, L - 1) beside A's attention
+            px_half(c, 0);
+            if (L > L0) px_await(c, PX_X4, 0), tpm_layer(L - 1, c, PX_P5);
+            if (L == 1 || L == 14) px_eng(c, MB);
+            tpm_layer(L, c, PX_P0A | PX_P0B);
+            if (L > L0) px_fire(c, PX_X4, 1, gr(7, L - 1));
+            tpm_layer(L, c, PX_P1 | PX_P1B);
+            // half B: X1(A) beside B's q_a .. q_b rows
+            px_half(c, 1);
+            if (L > L0) px_await(c, PX_X4, 1), tpm_layer(L - 1, c, PX_P5);
+            tpm_layer(L, c, PX_P0A);
+            px_fire(c, PX_X1, 0, gr(0, L));
+            tpm_layer(L, c, PX_P0B | PX_P1 | PX_P1B);
+            // X1(B) beside A's output-b rows, X2(A) beside B's
+            px_half(c, 0);
+            px_await(c, PX_X1, 0), tpm_layer(L, c, PX_P2A);
+            px_fire(c, PX_X1, 1, gr(1, L));
+            tpm_layer(L, c, PX_P2B);
+            px_half(c, 1);
+            px_await(c, PX_X1, 1), tpm_layer(L, c, PX_P2A);
+            px_fire(c, PX_X2, 0, gr(2, L));
+            tpm_layer(L, c, PX_P2B);
+            // X2(B) beside A's routed gate / up, X3(A) beside B's, X3(B) beside A's routed down
+            px_half(c, 0);
+            px_await(c, PX_X2, 0), tpm_layer(L, c, PX_P3A);
+            px_fire(c, PX_X2, 1, gr(3, L));
+            tpm_layer(L, c, PX_P3B);
+            px_half(c, 1);
+            px_await(c, PX_X2, 1), tpm_layer(L, c, PX_P3A);
+            px_fire(c, PX_X3, 0, gr(4, L));
+            tpm_layer(L, c, PX_P3B);
+            px_fire(c, PX_X3, 1, gr(5, L));
+            // X4(A) beside B's routed down
+            px_half(c, 0);
+            px_await(c, PX_X3, 0), tpm_layer(L, c, PX_P4);
+            px_fire(c, PX_X4, 0, gr(6, L));
+            px_half(c, 1);
+            px_await(c, PX_X3, 1), tpm_layer(L, c, PX_P4);
+        }
+        px_fire(c, PX_X4, 1, gr(7, LN - 1));
+        px_half(c, 0);
+        px_await(c, PX_X4, 0), tpm_layer(LN - 1, c, PX_P5);
+        px_half(c, 1);
+        px_await(c, PX_X4, 1), tpm_layer(LN - 1, c, PX_P5);
+    } catch (...) {
+        px_exit(c);
+        throw;
+    }
+    px_exit(c); // (mx_ready[c]: half B's, whose last token the head reads)
+}
+// OWN_PX_CHECK (diagnostic, after a block as halves; every card done): the launches on each card's exchange queue
+// published their numbers in increasing order, every card queued the same pulls (number, mode) in the same order,
+// and every card's flag word of each peer holds that peer's last number (no lower number stored after a higher one)
+void px_check_block() {
+    ++px_blocks;
+    std::string bad;
+    std::vector<uint64_t> pulls0;
+    for (int c = 0; c < o.tp; ++c) {
+        std::vector<uint64_t> pulls;
+        uint32_t last = 0;
+        for (uint64_t v : px_log[c]) {
+            const uint32_t seq = (uint32_t)(v >> 8);
+            const int kind = (int)(v >> 2) & 63, mode = (int)(v & 3);
+            if (mode != 2) { // (a wait-only launch, mode 2, publishes nothing: the engram rows' pull, a pair swap's wait)
+                if (seq <= last)
+                    bad += " card " + std::to_string(c) + " number " + std::to_string(seq) + " after " + std::to_string(last) + ";";
+                last = seq;
+            }
+            if (kind != 2) pulls.push_back(v);
+        }
+        if (c == 0) pulls0 = pulls;
+        else if (pulls != pulls0) bad += " card " + std::to_string(c) + " pulls differ from card 0's;";
+        px_log[c].clear();
+        std::vector<uint32_t> fl(97);
+        qs[c].memcpy(fl.data(), xarena[c], 97 * 4).wait();
+        for (int t = 0; t < o.tp; ++t)
+            if (t != c && fl[16 * t] != xseq[t])
+                bad += " card " + std::to_string(c) + " flag of card " + std::to_string(t) + " " + std::to_string(fl[16 * t]) +
+                       " (last " + std::to_string(xseq[t]) + ");";
+        if (fl[96]) bad += " card " + std::to_string(c) + " poisoned;";
+    }
+    if (!bad.empty()) {
+        ++px_bad;
+        std::fprintf(stderr, "OWN_PX_CHECK: block %ld BAD:%s\n", px_blocks, bad.c_str());
+    } else if ((px_blocks & (px_blocks - 1)) == 0) {
+        std::fprintf(stderr, "OWN_PX_CHECK: %ld blocks as halves, %ld bad\n", px_blocks, px_bad);
+    }
+}
 void tpm_card_step(int c) {
     if (ck1_run) return tpm_card_step1(c); // OWN_CK1: a one-token check
     sc_keep[c] = sc[c];
@@ -1948,6 +2241,12 @@ void tpm_card_step(int c) {
         if (o.layer_begin != 0) throw std::runtime_error("multi-token step needs every layer");
         tpm_embed(c, !o.eng_late); // late: the rows' copy comes after layer 0's launches; the step's end waits
         if (!o.eng_late) tpm_engram_kv(c);
+        if (px_blk) // OWN_PX: the layers as two halves
+            px_layers(c, [&] {
+                eng();
+                tpm_engram_kv(c);
+            });
+        else
         for (int L = o.layer_begin; L < o.layer_end; ++L) {
             if (o.eng_late && L == 1) { // the host reads the rows while the card runs the embed and layer 0
                 eng();
@@ -2010,6 +2309,8 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (pos + mt > max_seq) throw std::runtime_error("position beyond max_seq");
     if (!o.diet || !o.small_fast || o.hc_legacy || !o.hc_ride || !o.rope_out || o.fin_move || o.xtail)
         throw std::runtime_error("multi-token step is written for the default options");
+    px_blk = px_ok(mt); // OWN_PX: as two halves
+    px_hn = px_blk ? mt / 2 : 0;
     mt_n = mt;
     mt_toks = toks;
     if (!o.eng_early) tpm_engram_prefetch();
@@ -2021,7 +2322,10 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (o.eng_early && !eng_ahead.empty() && (long)comp_ids.size() == pos + mt) engram_ask_ahead();
     tp_join();
     mt_n = 0;
+    const bool pxb = px_blk;
+    px_blk = false;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
+    if (pxb && o.px_check) px_check_block(); // OWN_PX_CHECK
     for (int c = 0; c < o.tp; ++c) // OWN_QB_OFF_M's pull first (QbmPull: err[2] = 1 + flag word, err[3] = seq): the
         if (xerr[c][2])            // helpers' exchanges then time out waiting for the heavy card
             throw std::runtime_error("card " + pci[c] + ": query-b offload (OWN_QB_OFF_M) timed out waiting for card " +

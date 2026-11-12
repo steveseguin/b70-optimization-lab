@@ -249,6 +249,30 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
+    // px-1 (opt-in, /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks as two halves with every exchange of
+    // their layers on a second queue per card, each pull beside the other half's work. OWN_PX=1 (default 0: off, the
+    // queue is not created); OWN_PX_MIN (halves of >= 128 tokens), OWN_PX_WG (16 work-groups per pull), OWN_PX_GRF
+    // (eight register modes X1A,X1B,X2A,X2B,X3A,X3B,X4A,X4B: 128 / 256, 0 = the layer's routed-down mode), OWN_PX_SERIAL=1
+    // (diagnostic: no overlap), OWN_PX_CHECK=1 (diagnostic: each block's exchange numbers and flag words checked)
+    if (const char *e = getenv("OWN_PX")) opt.px = (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_PX_MIN")) opt.px_min = std::max(1u, (unsigned)atoi(e));
+    if (const char *e = getenv("OWN_PX_WG")) opt.px_wg = std::max(1u, std::min(64u, (unsigned)atoi(e)));
+    if (const char *e = getenv("OWN_PX_GRF")) {
+        unsigned v[8] = {}, n = 0;
+        for (const char *s = e; *s && n < 8;) {
+            v[n++] = (unsigned)strtoul(s, nullptr, 10);
+            const char *cm = std::strchr(s, ',');
+            if (!cm) break;
+            s = cm + 1;
+        }
+        if (n != 8) die("OWN_PX_GRF: eight values (X1A,X1B,X2A,X2B,X3A,X3B,X4A,X4B), each 128, 256 or 0");
+        for (unsigned k = 0; k < 8; ++k) {
+            if (v[k] != 0 && v[k] != 128 && v[k] != 256) die("OWN_PX_GRF: 128, 256 or 0");
+            opt.px_grf[k] = v[k];
+        }
+    }
+    if (const char *e = getenv("OWN_PX_SERIAL")) opt.px_serial = atoi(e) != 0;
+    if (const char *e = getenv("OWN_PX_CHECK")) opt.px_check = atoi(e) != 0;
     // xll-1 (2026-11-11, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip; 1 = the default unit
     // (Options::XLL_DEFAULT_U bytes), 16 / 64: that unit, 0: off (the backend refuses anything else)
     if (const char *e = getenv("OWN_XLL")) opt.xll = atoi(e) == 1 ? (unsigned)own41::Backend41::Options::XLL_DEFAULT_U : (unsigned)atoi(e);
@@ -559,7 +583,7 @@ int main(int argc, char **argv) {
             const unsigned long n = strtoul(e, nullptr, 0);
             ops41sycl::g_ws_dride_mask = n == 1 ? 0x1cu : (unsigned)(n & 0x1fu);
         }
-        // pb-1 (opt-in, /home/steve/dsv41-work/pb256/README-pb1.txt): OWN_PB=mask (0x.. allowed; default 0 = off), each
+        // pb-1 (opt-in, /home/steve/dsv41-work/pb256/README-pb1.txt): OWN_PB=mask (0x.. allowed; default 0x1e since tp102, 0 = off), each
         // bit gives the production outputs bit for bit: 2 the H16 rows (router, compressor, indexer q_b) weight-stationary,
         // 4 the parallel expert grouping, 8 Q6_K forms with per-segment scales (no private arrays), 16 blocks of 65-256
         // tokens in per-role forms with the positions in token chunks; OWN_PB=1: 2 + 4 + 8 + 16 (0x1e)
@@ -567,6 +591,12 @@ int main(int argc, char **argv) {
             const unsigned long n = strtoul(e, nullptr, 0);
             ops41sycl::g_pb_mask = n == 1 ? 0x1eu : (unsigned)(n & 0x1eu);
         }
+        // pace-1 (opt-in, /home/steve/dsv41-work/attn/pace/README.txt): the 16-head cards' q_b and output-a rows at checks
+        // in persistent, pipelined launches (bit for bit). OWN_MT_PACE=1: every check size 2-6; OWN_MT_PACE=n (n != 1;
+        // 0x.. allowed) the sizes M whose bit M - 2 is set; default 0 = off. OWN_MT_PACE_ROLES (default 7): 1 Q8_0 q_b,
+        // 2 Q6_K q_b, 4 Q8_0 output-a
+        if (const char *e = getenv("OWN_MT_PACE")) ops41sycl::g_pace_mask = ck_mask(e);
+        if (const char *e = getenv("OWN_MT_PACE_ROLES")) ops41sycl::g_pace_roles = (unsigned)strtoul(e, nullptr, 0) & 7u;
         if (const char *e = getenv("OWN_MT_DRIDE_MS")) {
             unsigned m = 0;
             for (const char *c = e; *c; ++c)

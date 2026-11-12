@@ -73,6 +73,7 @@
 #include "stage2/packet3/step/plan_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
+#include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -102,6 +103,28 @@ struct XPullK128x2 {
     void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+// OWN_PX: XPullK128 / XPullK128x2 built for 256 registers (the exchange queue's pulls that run beside 256-register
+// work: a 128- and a 256-register launch never share a card). The same code, the same copy.
+struct XPullK256 {
+    ops41sycl::XchgPull x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+struct XPullK256x2 {
+    ops41sycl::XchgPull2 x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>,
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
     }
 };
@@ -326,7 +349,7 @@ public:
                                 // 256 registers: two register-mode changes)
         bool att_f = true;      // ... the one-launch form where it is faster (OWN_ATT_F=0: two launches only); its
                                 // registers and tile heads per shape (sycl_v41_attn.hpp att_f_grf / att_f_s8)
-        unsigned att_wa = 0;    // ... blocks of up to 8 tokens: WindowAppendM's work inside that launch (SparseOutF) or
+        unsigned att_wa = 2;    // (default 2 since tp102, tg100; OWN_ATT_WA=0: off) ... blocks of up to 8 tokens: WindowAppendM's work inside that launch (SparseOutF) or
                                 // the score launch (SparseScoreT) instead of its own launch (the same ring rows, lists and
                                 // outputs bitwise). OWN_ATT_WA=1 (attn wa-1): in every such block, in att_f_on's form;
                                 // =2 (attn wa-2): per shape as att_wa_form says (one launch, score launch or not at all)
@@ -337,6 +360,21 @@ public:
         bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
         unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
+        // px-1 (OWN_PX=1, opt-in; /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks of 2 x OWN_PX_MIN tokens
+        // or more (even counts; not checks) run as two halves layer by layer (backend_sycl_v41_mt.inc px_layers), every
+        // exchange of their layer loop on a second in-order queue per card (xqs, same context), in the same order with
+        // the same numbers, each queued where it runs beside the other half's work in its own register mode. Each half
+        // is a block of half the tokens at its positions (the same kernels and sums). 0 (default): off, every launch as
+        // without it (xqs not even created).
+        unsigned px = 0;
+        unsigned px_min = 128; // OWN_PX_MIN: halves of at least this many tokens
+        unsigned px_wg = 16;   // OWN_PX_WG: work-groups of the four per-layer pulls on xqs (the copy does not depend on it)
+        // OWN_PX_GRF="a,b,..": the register mode of X1(A) X1(B) X2(A) X2(B) X3(A) X3(B) X4(A) X4(B) (128 / 256; 0: the
+        // layer's routed-down mode, px_down_grf)
+        unsigned px_grf[8] = {256, 256, 256, 128, 128, 0, 0, 128};
+        bool px_serial = false; // OWN_PX_SERIAL=1 (diagnostic): qs waits for each pull right after queueing it (no overlap)
+        bool px_check = false;  // OWN_PX_CHECK=1 (diagnostic): after each block as halves, the numbers' order on every
+                                // exchange queue, the same pulls on every card, every flag word = its card's last number
         unsigned xll = 0; // OWN_XLL (xll-1, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip
                           // (ops41sycl::XchgPullL: the rows travel in units of 16 / 64 bytes that carry the exchange
                           // number, read as soon as they are there); 16 or 64 (unit bytes; OWN_XLL=1: XLL_DEFAULT_U), 0: off
@@ -466,6 +504,13 @@ public:
                 qs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
             if (opt.eng_cq || opt.head_cq) cqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
             if (opt.xl2) pfq.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            if (opt.px) { // OWN_PX: in order, profiled like qs (OWN_GPROF: the pulls' own times)
+                if (opt.gprof || tl_path)
+                    xqs.emplace_back(cm.at(a), devs[a],
+                                     sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
+                else
+                    xqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
+            }
         }
         if (o.tp > 1) {
             // every kernel built for every card before the first step: a card still compiling a kernel at its
@@ -1141,6 +1186,7 @@ private:
     std::vector<sycl::queue> cqs; // OWN_ENG_CQ: one more in-order queue per card (same context), copies only
     std::vector<sycl::queue> pfq; // OWN_XL2: the prefetch launches' own queue per card (tg89: on cqs they held the
                                   // engram copies back, 80 -> 257 us per step, and plain answers lost 14 %)
+    std::vector<sycl::queue> xqs; // OWN_PX: the exchange queue per card (same context; px_submit)
     std::vector<void *> owned[TILES];
     std::unordered_map<std::string, DevPtr> wgt[TILES]; // per card (tp: every card holds its slice)
     const WeightTab *W = nullptr;
@@ -1295,6 +1341,12 @@ private:
         int part = -1;
     };
     XTail xt[TILES];
+    // pace-1 (OWN_MT_PACE): the card's compute units (the persistent launches' sub-group count), read once
+    unsigned pace_cu_[TILES] = {};
+    unsigned pace_cu(int c) {
+        if (!pace_cu_[c]) pace_cu_[c] = qs[c].get_device().get_info<sycl::info::device::max_compute_units>();
+        return pace_cu_[c];
+    }
     uint32_t *xcnt[TILES] = {};
     uint32_t *xlcnt[TILES] = {}; // OWN_XLL: the exchange's work-groups whose units are out (device counter, zeroed)
     size_t xlb = 0;              // OWN_XLL: the outboxes' start in the arena (floats; the same on every card)
@@ -1374,6 +1426,48 @@ private:
     }
     // OWN_XL2: rows armed for the next exchange of card c (xl2_arm before it; xchg() launches the prefetch)
     sycl::event qlast[TILES];
+    // ---- OWN_PX (px-1): the exchange queue xqs[c]. While px_q[c] (backend_sycl_v41_mt.inc px_layers) every exchange
+    // launch of card c goes to xqs[c] (xchg's pulls, xchg_pull2, pair_x), each after everything queued on qs[c] so far
+    // (a barrier event of qs[c]); qs[c] waits for one only by a barrier on its event (px_wait) before its consumer.
+    // One in-order queue holds all of a card's exchanges, in the host's order: the flags are published in number order
+    // as before. No exchange kernel, flag or number changes; no compute launch waits inside a kernel.
+    bool px_q[TILES] = {};
+    sycl::event px_last[TILES];  // the last launch queued on xqs[c]
+    unsigned px_g[TILES] = {};   // register mode of the next pull on xqs[c] (128 / 256; 0: as OWN_XPULL_GRF)
+    unsigned px_n[TILES] = {};   // work-groups of the next pull on xqs[c] (0: xchg's count)
+    long px_xn[TILES] = {};      // launches queued on xqs[c]
+    static inline thread_local int px_tok = 0; // OWN_PX: the running half's first token in the block (its card thread;
+                                               // 0 outside a half): the block's per-token views and regions move by it
+    template <typename F> sycl::event px_submit(int c, F &&f) {
+        const sycl::event dep = qs[c].ext_oneapi_submit_barrier();
+        sycl::event e = xqs[c].submit([&](sycl::handler &hh) {
+            hh.depends_on(dep);
+            f(hh);
+        });
+        px_last[c] = e;
+        ++px_xn[c];
+        return e;
+    }
+    void px_wait(int c, const sycl::event &e) { (void)qs[c].ext_oneapi_submit_barrier({e}); }
+    // a pull (XchgPull, xchg's form) on xqs[c] in px_g[c]'s register mode with px_n[c] work-groups (mode 1: one)
+    uint32_t px_pull(int c, const ops41sycl::XchgPull &x, size_t nwg, int mode, float *const *P) {
+        if (mode != 1 && px_n[c]) nwg = px_n[c];
+        const unsigned gr = px_g[c] ? px_g[c] : o.xpull_grf == 128 ? 128u : 256u;
+        const sycl::nd_range<1> xr(nwg * 256, 256);
+        float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+        uint32_t *err = xerr[c];
+        const sycl::event e = px_submit(c, [&](sycl::handler &hh) {
+            if (gr == 256) hh.parallel_for(xr, XPullK256{x, p0, p1, p2, p3, p4, p5, err});
+            else hh.parallel_for(xr, XPullK128{x, p0, p1, p2, p3, p4, p5, err});
+        });
+        kev(c, kname<ops41sycl::XchgPull>(), e);
+        px_note(c, x.seq, 0, mode);
+        return x.seq;
+    }
+    std::vector<uint64_t> px_log[TILES]; // OWN_PX_CHECK: (number << 8 | kind << 2 | mode) of every launch on xqs[c]
+    void px_note(int c, uint32_t seq, int kind, int mode) { // kind: 0 XchgPull, 1 XchgPull2, 2 XchgPair
+        if (o.px_check) px_log[c].push_back((uint64_t)seq << 8 | (uint64_t)kind << 2 | (uint64_t)mode);
+    }
     Pf xl2p[TILES][3];
     int xl2n[TILES] = {};
     void xl2_arm(int c, unsigned bit, const std::string &wn, unsigned ra = 0, unsigned rb = 0) {
@@ -3476,24 +3570,29 @@ private:
         if (h.la[c] < h.lb[c]) f(h.la[c], h.lb[c]);
         if (!h.np[c]) return;
         pair_x(c, h, nslot, seq, 2);
+        if (px_q[c]) px_wait(c, px_last[c]); // OWN_PX: the split rows read the partner's head outputs
         for (int k = 0; k < h.np[c]; ++k) f(h.sa[c][k], h.sb[c][k]);
     }
     void pair_x(int c, const HeadLay &h, unsigned nslot, uint32_t seq, int mode) {
         float *P[6] = {};
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
+        // (OWN_PX: a half's head outputs from its first token on, px_tok; 0 otherwise)
         ops41sycl::XchgPair x{h.np[c], c, {h.pd[c][0], h.pd[c][1]}, {h.pb0[c][0], h.pb0[c][1]}, {h.pb1[c][0], h.pb1[c][1]},
-                              xhoM, (unsigned)g.qh * (unsigned)g.hd, nslot, seq, XSPIN, mode};
+                              xhoM + (unsigned)px_tok * (unsigned)g.qh * (unsigned)g.hd, (unsigned)g.qh * (unsigned)g.hd,
+                              nslot, seq, XSPIN, mode};
         size_t nv = 0;
         for (int k = 0; k < h.np[c]; ++k) nv += (size_t)nslot * ((h.pb1[c][k] - h.pb0[c][k]) / 4);
         const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 1, 64);
         float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
         uint32_t *err = xerr[c];
-        auto e = qs[c].submit([&](sycl::handler &hh) {
+        auto body = [&](sycl::handler &hh) { // (one kernel for both queues)
             hh.parallel_for(sycl::nd_range<1>(nwg * 256, 256), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
                 x(it, p0, p1, p2, p3, p4, p5, err);
             });
-        });
+        };
+        auto e = px_q[c] ? px_submit(c, body) : qs[c].submit(body); // OWN_PX: on the exchange queue
         kev(c, kname<ops41sycl::XchgPair>(), e);
+        if (px_q[c]) px_note(c, seq, 2, mode);
     }
 
     // rows of tensor n held by card c (all rows unless tp splits it)
@@ -3760,6 +3859,7 @@ private:
                 if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
             if (xr2[c].on) return xchg_pull2(c, x, nv, mode, part, P); // OWN_MT_DSPLIT: a second region rides along
             const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
+            if (px_q[c]) return px_pull(c, x, nwg, mode, P); // OWN_PX: on the exchange queue
             float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
             uint32_t *err = xerr[c];
             const int xk = xw_arm(c, mode, part, true); // OWN_XWAIT slot (-1: none)
@@ -3787,6 +3887,7 @@ private:
             return seq;
         }
         if (xr2[c].on) throw std::runtime_error("OWN_MT_DSPLIT: a second region needs a pull exchange");
+        if (px_q[c]) throw std::runtime_error("OWN_PX: a store exchange (XchgP) inside the halves' layers");
         const ops41sycl::XchgP xp{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, mode};
         if (k7a[c].on) return k7_xchg(c, xp, part, P); // OWN_K7: this exchange carries a mix's dot partials
         const int xk = xw_arm(c, mode, part); // OWN_XWAIT slot (-1: none)
