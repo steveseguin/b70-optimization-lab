@@ -35,6 +35,15 @@
 #include <type_traits>
 #include <utility>
 #include "stage2/packet3/kernels/sycl_v41.hpp"
+// xperm-2: OWN_R2_TAB_COPY=1 (compile-time, -DOWN_R2_TAB_COPY=1) fills the IQ2_S / IQ2_XS / IQ1_S routed kernels' SLM
+// grid tables by copying constant images (r2_tab_img.hpp) instead of computing every entry. Same table bits, so the
+// same outputs. Default 0 (the code below is then exactly as before).
+#ifndef OWN_R2_TAB_COPY
+#define OWN_R2_TAB_COPY 0
+#endif
+#if OWN_R2_TAB_COPY
+#include "stage2/packet3/kernels/r2_tab_img.hpp"
+#endif
 
 namespace ops41sycl {
 namespace r2 {
@@ -214,6 +223,28 @@ template <unsigned NB> [[gnu::always_inline]] inline float blk_d4(sycl::sub_grou
     const float s2 = sycl::select_from_group(sg, dv, b2), s3 = sycl::select_from_group(sg, dv, b3);
     return lane < 16 ? (lane < 8 ? s0 : s1) : (lane < 24 ? s2 : s3);
 }
+#if OWN_R2_TAB_COPY
+// xperm-2: copy a work-group's SLM table from its constant image (r2_tab_img.hpp; the same bits as the fill loop)
+template <unsigned N> [[gnu::always_inline]] inline void tab_copy(const sycl::nd_item<1> &it, const r2tab::Img<N> &img,
+                                                                  float *tab) {
+    constexpr unsigned CB = 8; // loads in flight per item (16: no better between 128-register neighbours)
+    uint32_t *d = reinterpret_cast<uint32_t *>(tab);
+    const unsigned id = it.get_local_linear_id(), ls = (unsigned)it.get_local_range(0);
+    for (unsigned k0 = 0; k0 < N; k0 += CB * ls) {
+        uint32_t v[CB];
+#pragma unroll
+        for (unsigned i = 0; i < CB; ++i) {
+            const unsigned k = k0 + i * ls + id;
+            v[i] = k < N ? img.v[k] : 0u;
+        }
+#pragma unroll
+        for (unsigned i = 0; i < CB; ++i) {
+            const unsigned k = k0 + i * ls + id;
+            if (k < N) d[k] = v[i];
+        }
+    }
+}
+#endif
 } // namespace r2
 
 // production's row loop (OWN41_ROUTED_ROWS_BEGIN / END, sycl_v41.hpp) with the extra rows taken out of it: with
@@ -317,8 +348,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SPb {
     unsigned nsl = 6, xtok = 0;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_s, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -383,8 +418,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2XSPb {
     unsigned nsl = 6, xtok = 0;
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_xs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xs_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -456,6 +495,10 @@ template <unsigned NB, typename A, int TM = 3, typename EX = NoRows> struct Rout
                                      float *out, float *tab) const {
         uint8_t *ubt = reinterpret_cast<uint8_t *>(tab);
         int16_t *sbt = reinterpret_cast<int16_t *>(tab);
+#if OWN_R2_TAB_COPY
+        if constexpr (!U8 && TM == 3) r2::tab_copy(it, r2tab::iq1_s3, tab);
+        else
+#endif
         for (unsigned k = it.get_local_linear_id(); k < 16384; k += (unsigned)it.get_local_range(0)) {
             const int c = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, k >> 3, k & 7))));
             if constexpr (U8) ubt[k] = uint8_t(c + 1);
@@ -689,8 +732,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SPd {
     }
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_s, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -958,8 +1005,12 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ2SPe {
     }
     [[gnu::flatten]] void operator()(sycl::nd_item<1> it, const uint8_t *w, const float *x, const uint32_t *ids,
                                      float *out, float *tab) const {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_s, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+#endif
         sycl::group_barrier(it.get_group());
         sycl::sub_group sg = it.get_sub_group();
         const unsigned lane = sg.get_local_linear_id(), hs = lane & 1u;
@@ -1169,8 +1220,12 @@ template <unsigned NB_> struct RU3IQ2S {
     static constexpr size_t RB = ((size_t)NB * 82 + 15) & ~(size_t)15;
     static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NWM = NB * 4, NC = NB * 8, NS = (NC + 31) / 32;
     static void fill(const sycl::nd_item<1> &it, float *tab) {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_s, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_s_grid, k >> 3, k & 7));
+#endif
     }
     struct Row {
         const uint32_t *rw;
@@ -1228,8 +1283,12 @@ template <unsigned NB_> struct RU3IQ2XS {
     static constexpr size_t RB = ((size_t)NB * 74 + 15) & ~(size_t)15;
     static constexpr unsigned NW = NB * 16, NR = (NW + 31) / 32, NWS = NB * 2, NC = NB * 8, NS = (NC + 31) / 32;
     static void fill(const sycl::nd_item<1> &it, float *tab) {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq2_xs, tab);
+#else
         for (unsigned k = it.get_local_linear_id(); k < TAB; k += (unsigned)it.get_local_range(0))
             tab[k] = float(grid64_byte(iq3::iq2_xs_grid, k >> 3, k & 7));
+#endif
     }
     struct Row {
         const uint32_t *rw;
@@ -1288,11 +1347,15 @@ template <unsigned NB_> struct RU3IQ1S {
     static constexpr size_t RB = ((size_t)NB * 50 + 15) & ~(size_t)15;
     static constexpr unsigned NC = NB * 8, NS = (NC + 31) / 32, NWQ = NB * 8, NWH = NB * 4;
     static void fill(const sycl::nd_item<1> &it, float *tab) {
+#if OWN_R2_TAB_COPY
+        r2::tab_copy(it, r2tab::iq1_s3, tab);
+#else
         int16_t *sbt = reinterpret_cast<int16_t *>(tab);
         for (unsigned k = it.get_local_linear_id(); k < 16384; k += (unsigned)it.get_local_range(0)) {
             const int c = int(int8_t(uint8_t(grid64_byte(iq3::iq1_s_grid, k >> 3, k & 7))));
             sbt[k] = int16_t(c == 0 ? 0 : c > 0 ? 0x3F80 : 0xBF80); // float(c) >> 16
         }
+#endif
     }
     struct Row {
         const uint32_t *rw;
