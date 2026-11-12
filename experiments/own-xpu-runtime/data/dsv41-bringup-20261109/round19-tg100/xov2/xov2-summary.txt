@@ -1,0 +1,35 @@
+d128 exit 0 (2026-11-11 21:18:24)
+d128: busy kernels: 4096 groups; 703 iterations (128 registers) / 471 (256) for ~300 us
+d128: half 128 check, two queues, E16 (designed modes, 16 groups)     : 0 wrong values, 0 timeouts (60 layers)
+d128: half 128 per layer: compute only   7651.0 us; one queue: T64   9152.8 (pulls 1501.8), E16   9421.5 (pulls 1770.5)
+d128: half 128 two queues E16 (designed modes, 16 groups)     :   7781.4 us per layer, exposed  130.4 us -> hidden  91.3 % of T64's one-queue pulls
+d128: half 128 two queues E64 (designed modes, 64 groups)     :   8177.5 us per layer, exposed  526.4 us -> hidden  64.9 % of T64's one-queue pulls
+d128: half 128 two queues T64 (all pulls 128 regs, 64 groups) :   8490.3 us per layer, exposed  839.3 us -> hidden  44.1 % of T64's one-queue pulls
+d128: half 128 per site (E16): all pulls serial on the second queue   9437.1 us per layer
+d128: half 128 site X1 output-a : in line  376.9 us per layer (both halves), overlapping alone   9105.0 -> hidden  88.1 %
+d128: half 128 site X2 output-b : in line  340.2 us per layer (both halves), overlapping alone   9125.9 -> hidden  91.5 %
+d128: half 128 site X3 act      : in line  740.8 us per layer (both halves), overlapping alone   8733.0 -> hidden  95.1 %
+d128: half 128 site X4 FFN rows : in line  333.5 us per layer (both halves), overlapping alone   9132.2 -> hidden  91.4 %
+d128: PASS
+DECISION: half 128 two queues E16 (designed modes, 16 groups)     :   7781.4 us per layer, exposed  130.4 us -> hidden  91.3 % of T64's one-queue pulls
+d64 exit 0 (2026-11-11 21:19:00)
+d64: busy kernels: 4096 groups; 898 iterations (128 registers) / 470 (256) for ~300 us
+d64: half  64 check, two queues, E16 (designed modes, 16 groups)     : 0 wrong values, 0 timeouts (60 layers)
+d64: half  64 per layer: compute only   4730.0 us; one queue: T64   5491.9 (pulls  761.9), E16   5622.6 (pulls  892.6)
+d64: half  64 two queues E16 (designed modes, 16 groups)     :   4800.5 us per layer, exposed   70.5 us -> hidden  90.7 % of T64's one-queue pulls
+d64: half  64 two queues E64 (designed modes, 64 groups)     :   4993.7 us per layer, exposed  263.7 us -> hidden  65.4 % of T64's one-queue pulls
+d64: half  64 two queues T64 (all pulls 128 regs, 64 groups) :   5160.2 us per layer, exposed  430.2 us -> hidden  43.5 % of T64's one-queue pulls
+d64: half  64 per site (E16): all pulls serial on the second queue   5635.7 us per layer
+d64: half  64 site X1 output-a : in line  198.0 us per layer (both halves), overlapping alone   5467.3 -> hidden  85.0 %
+d64: half  64 site X2 output-b : in line  173.5 us per layer (both halves), overlapping alone   5478.2 -> hidden  90.8 %
+d64: half  64 site X3 act      : in line  366.2 us per layer (both halves), overlapping alone   5289.8 -> hidden  94.5 %
+d64: half  64 site X4 FFN rows : in line  174.9 us per layer (both halves), overlapping alone   5475.6 -> hidden  91.5 %
+d64: PASS
+c exit 0 (2026-11-11 21:19:34)
+c: busy kernels: 4096 groups; 849 iterations (128 registers) / 471 (256) for ~300 us
+c: half 128 check, two queues, T64 (all pulls 128 regs, 64 groups) : 0 wrong values, 0 timeouts (60 layers)
+c: half 128 check, one queue,  T64 (all pulls 128 regs, 64 groups) : 0 wrong values, 0 timeouts (30 layers)
+c: half  64 check, two queues, T64 (all pulls 128 regs, 64 groups) : 0 wrong values, 0 timeouts (60 layers)
+c: half  64 check, one queue,  T64 (all pulls 128 regs, 64 groups) : 0 wrong values, 0 timeouts (30 layers)
+c: PASS
+ALLDONE
