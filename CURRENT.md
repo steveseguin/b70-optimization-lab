@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 12, 2026 16:05 EST — host reset (ninth event) with iommu=pt: the change did not fix it.**
+- iommu=pt in since the planned reboot 11:01-11:03 (gate tg105pt: all traces identical, speeds unchanged: plain
+  104.0 / 104.2, 3K 5.74 s at 256 and 5.56 at px-512, guessing 143.4 / 158.6; card stores still ~1 GB/s). Kept.
+- One controlled retry of t3k_b300 (PX halves of 150): first passed, second reset the host after 4 prompt blocks
+  (BERT CPU 3 bank 5 core watchdog in pci_conf1_read). b300 = 3 resets in 4 runs; banned for good; static bug hunt.
+- Owner approved 18:55: the cards' unused audio functions + their bridges kept awake (power/control=on,
+  dsv41-work/cards-audio-awake.sh): the kernel's PME config-read polling of them stopped. Not persistent.
+  Evidence: /home/steve/dsv41-work/faults/reset-20261112T1605/.
+
 **November 12, 2026 ~11:10 EST — host resets traced to stuck PCI config reads; iommu=pt reboot (owner approved).**
 - 09:24 reset (eighth event) = the SAME run as 01:14: tg104b's t3k_b300 (prompt blocks of 300 as overlapped halves
   of 150), early in its prompt. Both BERTs: CPU 10 bank 5 core watchdog at the same kernel offset; resolved (kallsyms)

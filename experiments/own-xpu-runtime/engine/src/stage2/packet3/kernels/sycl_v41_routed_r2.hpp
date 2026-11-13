@@ -56,6 +56,29 @@
 #if OWN_R2_TAB_COPY
 #include "stage2/packet3/kernels/r2_tab_img.hpp"
 #endif
+// OWN_R2_XORP (xperm-4, 2026-11-12; compile-time, default 0): the routed kernels' lane-sum butterflies (R2_ROWS_END,
+// R2_PAIR_SCHED's red, RoutedU3) as five permute_group_by_xor additions (xor 16, 8, 4, 2, 1) in place of
+// select_from_group(lane ^ w). IGC recognises the chain as a sub-group reduction and lowers it as halving adds (lanes
+// 0-15 + 16-31, then + 8, + 4, + 2, + 1): the butterfly's own tree at lane 0, operand order included, so the same sum
+// (xperm/README-ledger.txt sections 11-12: bitwise on real rows, isa/l34-p5). The select form does the xor-16 step by
+// indirect register moves and full-width adds at every level. Checks' RoutedU3 -1.7 .. -6.5 % per launch, one-token
+// Pe / Pd / Pb -0.1 .. -1.8 us (card 5). The bits rest on that lowering; a compiler that lowered the reduction in
+// another order would change them (the gate's trace identity catches it). Default 0 = the code exactly as before.
+#ifndef OWN_R2_XORP
+#define OWN_R2_XORP 0
+#endif
+#if OWN_R2_XORP
+#define R2_XSUM(v_)                                                                                       \
+    do {                                                                                                  \
+        v_ = v_ + sycl::permute_group_by_xor(sg, v_, 16u);                                                \
+        v_ = v_ + sycl::permute_group_by_xor(sg, v_, 8u);                                                 \
+        v_ = v_ + sycl::permute_group_by_xor(sg, v_, 4u);                                                 \
+        v_ = v_ + sycl::permute_group_by_xor(sg, v_, 2u);                                                 \
+        v_ = v_ + sycl::permute_group_by_xor(sg, v_, 1u);                                                 \
+    } while (0)
+#else
+#define R2_XSUM(v_) for (int w_ = 16; w_; w_ >>= 1) v_ += sycl::select_from_group(sg, v_, (int)lane ^ w_)
+#endif
 
 namespace ops41sycl {
 namespace r2 {
@@ -287,7 +310,7 @@ template <unsigned N> [[gnu::always_inline]] inline void tab_copy(const sycl::nd
         const float *xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0); \
         float sum = 0;
 #define R2_ROWS_END                                                                               \
-        for (int w_ = 16; w_; w_ >>= 1) sum += sycl::select_from_group(sg, sum, (int)lane ^ w_); \
+        R2_XSUM(sum);                                                                             \
         if (lane == 0) om_[slot * rows + r] = sum;                                                \
     }
 
@@ -666,7 +689,7 @@ template <unsigned NB, typename A, typename EX = NoRows> struct RoutedIQ3XXSPb {
         xs = x + (size_t)(slot / 6) * xtok + (per_slot_x ? (size_t)(slot % 6) * NB * 256 : 0);            \
     };                                                                                                    \
     auto red = [&](float s_) {                                                                            \
-        for (int w_ = 16; w_; w_ >>= 1) s_ += sycl::select_from_group(sg, s_, (int)lane ^ w_);            \
+        R2_XSUM(s_);                                                                                      \
         return s_;                                                                                        \
     };                                                                                                    \
     for (unsigned q_ = p0; q_ < npair; q_ += P) {                                                         \
@@ -1603,7 +1626,7 @@ template <typename F, unsigned MT, typename EX = NoRows, unsigned SPT = 6, bool 
                     r2::sfor<TWO ? 2 : 1>([&](auto hk) {
                         constexpr unsigned h = decltype(hk)::value;
                         float s = sum[h][i];
-                        for (int w_ = 16; w_; w_ >>= 1) s += sycl::select_from_group(sg, s, (int)lane ^ w_);
+                        R2_XSUM(s);
                         if (lane == 0) om[slot * rows + r + h] = s;
                     });
                 }

@@ -400,6 +400,17 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 19:20 (2026-11-12) **iommu=pt did not fix the resets; b300 3 of 4; no out-of-range access in the code.** tg105pt
+  (after pt): all identical, speeds unchanged, card stores still ~1 GB/s (the store slowness is the cards', not the
+  IOMMU's). b300 retried under pt: pass, then reset (16:05, pci_conf1_read again). Static hunt
+  (`dsv41-work/b300hunt/FINDINGS.md`): every pull of halves of 150 stays in range with more headroom than 512 / 256;
+  unique to 150: token groups of 16 leave 10 spare tokens whose reads touch half B's slots while its pulls write them
+  (local, harmless), the 25-per-card even split, engram pieces 256 + 44. Side lever: the engram pull is copied twice
+  per block (layers 1 and 14, ~49 MiB per card each), dropping the second changes nothing. Mitigations now: owner OK'd
+  the cards' audio functions kept awake (PME config-read polling ~7/s -> ~1/s, USB 45:00.4 left); the gates' GPU
+  sampler is off (120 card-register reads/s). Next build tp105 = tp104 + xorP compiled in + fl-1 (`OWN_FL`) +
+  `OWN_U3_NOPAIR` + sw (`OWN_MT_SW`), gate tg105 (`dsv41-work/tp105-readiness.md`); tg105v = draft vocabulary on all
+  five prompts.
 - 11:10 (2026-11-12) **Host resets: the stuck instruction found; iommu=pt reboot (owner approved).** tg104's
   t3k_b300 (blocks of 300 = overlapped halves of 150) reset the host twice (01:14, 09:24), early in its prompt; no
   other run did. Every reset's BERT (8 events) is a core watchdog (bank 5, EX, extended code 0); the two newest and

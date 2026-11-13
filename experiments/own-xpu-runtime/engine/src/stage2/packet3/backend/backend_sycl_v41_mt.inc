@@ -200,6 +200,12 @@ unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at lea
 // default since tp97 (tg96b: 3K read 472 -> 497 tok/s): OWN_MT_RUX=1, OWN_MT_RUX_CAP=6 (OWN_MT_RUX=0: off)
 bool mt_rux = true;
 unsigned mt_rux_min = 16, mt_rux_cap = 6;
+// OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 0; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
+// MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
+// Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
+// same; compiled in, the unused pair code costs IQ2_XXS gate+up 1.4-2.1 %, IQ2_XS down 1.5-2.1 %, IQ2_XXS down
+// 1.0-1.6 % per launch (card 5, M 2-6; xperm/README-ledger.txt section 11 A).
+bool u3_nopair = false;
 bool ring_one = true;     // OWN_RING_ONE (default on since tg90; =0: off): commit_pending's ring moves in one launch (RingCommitN)
 bool dr_nowait = true;    // OWN_DR_NOWAIT (default on since tg90; =0: off): the draft step's embed does not wait for the card (no host buffer to protect)
 // ---- draft-head-1 (2026-11-11; DR_ANCHOR_ARG and DR_WS on by default since tg91, the rest off; the draft only proposes, the check decides)
@@ -477,7 +483,8 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
     // of 2-6 tokens in persistent, pipelined launches (ops41sycl::pace_rows: the same sums as ws_rows' forms, bit for
     // bit; the attention mix's finish on its own work-group). Not in the draft's steps, not with an exchange tail.
     if constexpr (std::is_same_v<act_t, float> && !ops41sycl::is_qbm_heavy_v<RD>)
-        if (ops41sycl::g_pace_mask && !dr_step && mt_ws && !xt[c].on && ops41sycl::pace_on(mt))
+        if (((ops41sycl::g_pace_sw & 1u) ? ops41sycl::pace_sw_on(mt) : ops41sycl::g_pace_mask && ops41sycl::pace_on(mt)) &&
+            !dr_step && mt_ws && !xt[c].on) // (OWN_MT_SW & 1: the switch-counted table at 2-6 tokens)
             if (ops41sycl::pace_rows<DK>(dk, (const uint8_t *)w, x, xs, y, ys, mt, rider, pace_cu(c),
                                          [&](const auto &k, size_t nwg) {
                                              using K = std::decay_t<decltype(k)>;
@@ -643,7 +650,7 @@ bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std:
             // pace-2 (OWN_MT_PACE + OWN_MT_PACE_ROLES & 8, opt-in): both matrices in one persistent pipelined launch,
             // the dot rows (2-3 tokens) on work-groups of their own (ops41sycl::pace_pair_rows; bit for bit)
             if constexpr (std::is_same_v<act_t, float>)
-                if (ops41sycl::g_pace_mask && !xt[c].on &&
+                if ((ops41sycl::g_pace_mask || (ops41sycl::g_pace_sw & 1u)) && !xt[c].on &&
                     ops41sycl::pace_pair_rows(dk, nra, nrb, wpa, wpb, x, xs, ya, ysa, yb, ysb, mt, rider, pace_cu(c),
                                               [&](const auto &k, size_t nwg) {
                                                   using K = std::decay_t<decltype(k)>;
@@ -744,7 +751,7 @@ bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fi
         // pace-2 (OWN_MT_PACE + OWN_MT_PACE_ROLES & 64, opt-in): the router, the finish and both matrices' rows in one
         // persistent pipelined launch (ops41sycl::pace_gu_rows; bit for bit)
         if constexpr (std::is_same_v<act_t, float>)
-            if (ops41sycl::g_pace_mask && mt_ws && !dr_step && !xt[c].on &&
+            if ((ops41sycl::g_pace_mask || (ops41sycl::g_pace_sw & 1u)) && mt_ws && !dr_step && !xt[c].on &&
                 ops41sycl::pace_gu_rows(dk, wgt[c].at(gn).nrows, wg, wu, b.xn, H, b.shg, b.shu, (size_t)g.mid, mt, fin,
                                         ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, (const float *)b.router, bias,
                                         b.ids, b.prob, pace_cu(c), [&](const auto &k, size_t nwg) {
@@ -868,6 +875,13 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             XR(IQ2_S, RoutedIQ2SUX, 9) XR(IQ3_XXS, RoutedIQ3XXSUX, 9) XR(IQ2_XS, RoutedIQ2XSUX, 9) XR(IQ1_S, RoutedIQ1SUX, 9)
 #undef XR
             throw std::runtime_error("multi-token step: no row-tiled routed kernel for " + wn);
+        }
+        if (u3_nopair && cap <= 6) { // OWN_U3_NOPAIR: no pair code where it cannot run (same sums)
+#define XN(TY, F, NB)                                                                                        \
+    if (e.type == iq3::Type::TY && cols == NB * 256 && nsl < RoutedU3<F<NB>, 6, NoRows, 6, true>::PAIR_NSL)  \
+        return gu(std::type_identity<RoutedU3<F<NB>, 6, NoRows, 6, false>>{});
+            XN(IQ2_XXS, RU3IQ2XXS, 20) XN(IQ2_XXS, RU3IQ2XXS, 9) XN(IQ2_XS, RU3IQ2XS, 20) XN(IQ2_XS, RU3IQ2XS, 9)
+#undef XN
         }
 #define XU(TY, KERN, NB, MB)                                                                                 \
     if (e.type == iq3::Type::TY && cols == NB * 256) {                                                       \

@@ -70,6 +70,7 @@
 #include "stage2/packet3/kernels/sycl_v41_qboff.hpp" // query-b rows of the 16-head cards from their neighbours (qb-off-1)
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/kernels/sycl_v41_k7.hpp" // K7: the stream mix's dot partials carried by the h exchange (OWN_K7)
+#include "stage2/packet3/kernels/sycl_v41_fl.hpp" // fl-1: one-token norms folded into their consumers (OWN_FL)
 #include "stage2/packet3/step/plan_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
@@ -403,6 +404,11 @@ public:
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
         int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
+        unsigned fl = 0;        // fl-1 (OWN_FL=bits, off by default; the same bits; sycl_v41_fl.hpp, bench
+                                // /home/steve/dsv41-work/fl): one-token tp steps fold a launch into the next one.
+                                // 1: the FFN pre-norm + the mix's dot rows (SkNormDotsW<8>) into the router launch
+                                // (every router work-group forms the norm itself); 2: MoeCombineA into the shared
+                                // expert's down rows. Each falls back to today's launches outside its shapes (fl_*)
         unsigned k7 = 0;        // OWN_K7 (off by default; the finish's outputs the same bits; sycl_v41_k7.hpp): one-token tp
                                 // steps compute the stream mix's 25 dot partials over each card's own model rows before
                                 // the h exchange (XchgPK7), the norm then runs alone (SkNormK7). Bits: 1 the FFN mix
@@ -1625,6 +1631,22 @@ private:
     void gemv_kp(int tile, const WeightTab::E &e, const void *w, const act_t *x, act_t *y, unsigned rows, unsigned xn,
                  unsigned cols, const std::string &wn) {
         const auto *wb = (const uint8_t *)w;
+        // OWN_MT_SW & 2 (opt-in): the 16-head cards' one-token output-a rows (2,048 x 4,096, two groups) in a
+        // 128-register pace launch (ops41sycl::pace1_rows; bit for bit GemvQ8P / GemvQ6KP's rows)
+        if constexpr (std::is_same_v<act_t, float>)
+            if ((ops41sycl::g_pace_sw & 2u) && cols == 4096 && rows == 2048 && !dr_step && !xt[tile].on) {
+                auto f = [&](const auto &k, size_t nwg) {
+                    using K = std::decay_t<decltype(k)>;
+                    auto ev = qs[tile].parallel_for(sycl::nd_range<1>(nwg * 512, 512), k);
+                    kev(tile, kname<K>(), ev);
+                };
+                if (e.type == iq3::Type::Q8_0 &&
+                    ops41sycl::pace1_rows(ops41sycl::GemvQ8P<128, Act>{rows, xn}, wb, x, y, ops41sycl::NoRows{}, pace_cu(tile), f))
+                    return;
+                if (e.type == iq3::Type::Q6_K &&
+                    ops41sycl::pace1_rows(ops41sycl::GemvQ6KP<16, Act>{rows, xn}, wb, x, y, ops41sycl::NoRows{}, pace_cu(tile), f))
+                    return;
+            }
 #define X(KERN, NB)                                                                                        \
     if (cols == NB * 256) {                                                                                \
         launch_rows<0>(tile, rows, 0, ops41sycl::KERN<NB, Act>{rows, xn}, wb, x, y);                       \
@@ -1644,6 +1666,16 @@ private:
     // come first so a long one starts at once. Every row runs the same per-row code as alone.
     template <typename DK, typename EX>
     void launch_dense_ex(int tile, DK dk, const uint8_t *w, const act_t *x, act_t *y, EX ex) {
+        // OWN_MT_SW & 2 (opt-in): the 16-head cards' one-token q_b rows with their riders in a 128-register pace
+        // launch (ops41sycl::pace1_rows; bit for bit DK's rows). Not in the draft's steps, not with an exchange tail.
+        if constexpr (std::is_same_v<act_t, float>)
+            if ((ops41sycl::g_pace_sw & 2u) && !dr_step && !xt[tile].on &&
+                ops41sycl::pace1_rows(dk, w, x, y, ex, pace_cu(tile), [&](const auto &k, size_t nwg) {
+                    using K = std::decay_t<decltype(k)>;
+                    auto e = qs[tile].parallel_for(sycl::nd_range<1>(nwg * 512, 512), k);
+                    kev(tile, kname<K>(), e);
+                }))
+                return;
         using R = ops41sycl::RowsPair<EX, ops41sycl::DenseRows<DK>>;
         launch_rows<0>(tile, ex.n() + dk.rows, 0, ops41sycl::RowsP<R>{R{ex, ops41sycl::DenseRows<DK>{dk, w, x, y}}});
     }
@@ -1739,6 +1771,74 @@ private:
         else
             launch_wgl<64>(c, 26, 512, ops41sycl::SkNormDotsW<8>{}, (const float *)x, w, (float *)y, d.streams, d.fn, d.out);
         return true;
+    }
+    // ---- fl-1 (OWN_FL, sycl_v41_fl.hpp; bench /home/steve/dsv41-work/fl/bench_fl.cpp, every output word compared,
+    // forced chain fallbacks included): one-token launches folded into the launch that reads their output. Each
+    // fl_* launches nothing and returns false outside the benched shapes and options; the caller then runs today's
+    // launches. Every condition depends on options, shapes and uploads only (the same choice on every card).
+    template <typename K> void fl_norm_launch(int c, const K &k, size_t xsn) {
+        const size_t ng = k.groups();
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<uint32_t, 1> lm(64, hh);
+            sycl::local_accessor<float, 1> xs(xsn ? xsn : 1, hh);
+            hh.parallel_for(sycl::nd_range<1>(ng * 512, 512), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                k(it, &lm[0], xs.template get_multi_ptr<sycl::access::decorated::yes>());
+            });
+        });
+        kev(c, kname<K>(), e);
+    }
+    // FlNormK<N, S, ND dot work-groups, K = 8, MODE 0> over x (norm weight w, normalized vector y), riders ri, rows rw
+    template <unsigned N, unsigned S, unsigned ND, typename RI, typename RW>
+    void fl_norm(int c, const float *x, const float *w, float *y, const ops41sycl::HcDotsRows<5120, HC_SEG> *d, RI ri,
+                 RW rw) {
+        using K = ops41sycl::FlNormK<N, S, ND, 8, 0, RI, RW>;
+        const K k{x, w, y, d ? d->streams : nullptr, d ? d->fn : nullptr, d ? d->out : nullptr, ri, rw};
+        fl_norm_launch(c, k, N);
+    }
+    bool fl_ok(int c, unsigned bit) const {
+        return (o.fl & bit) && !xt[c].on && o.small_fast && g.h == 5120 && HC_SEG == 8;
+    }
+    // bit 1 (case 3, in norm_dots_sk's place): the FFN pre-norm + the mix's 25 dot rows (SkNormDotsW<8>'s work-groups
+    // 1..25 as work-groups 0..24) + the router rows (gemv's packed F32 launch, GemvH16P<160>'s row body), the norm
+    // formed by every router work-group
+    bool fl_f1(int c, const std::string &p) {
+        auto &s = sc[c];
+        if (!fl_ok(c, 1u) || !o.norm_dots || o.smallk_dots != 8) return false;
+        const float *w = wp<float>(c, p + "ffn_norm.weight");
+        if (!al16(s.x) || !al16(w) || !al16(s.xn) || s.x == s.xn) return false;
+        const std::string wn = p + "ffn_gate_inp.weight";
+        const auto &e = we(wn);
+        const auto &dp = wgt[c].at(wn);
+        if (!dp.packed || e.type != iq3::Type::F32 || e.cols != 5120) return false;
+        const auto d = hc_dots(c, p + "hc_ffn_");
+        fl_norm<5120, 16, 25>(c, (const float *)s.x, w, (float *)s.xn, &d, ops41sycl::NoRows{},
+                              ops41sycl::FlH16Rows<160>{(unsigned)e.rows, (const uint8_t *)dp.p, s.router});
+        return true;
+    }
+    // bit 2 (case 4, without OWN_DOWN_EX's form): the shared expert's down rows (gemv_part's launch: Q8_0 or Q5_K,
+    // 2,304 columns) with MoeCombineA's output after each row; fl_d1 launches through launch_rows (an armed xtail
+    // rides it as it rode MoeCombineA)
+    bool fl_d1_ok(int c, const std::string &p, int nd) {
+        if (!(o.fl & 2u) || o.xtail || nd <= 0) return false; // (OWN_XTAIL: not benched)
+        const std::string wn = p + "ffn_down_shexp.weight";
+        const auto &e = we(wn);
+        const auto &dp = wgt[c].at(wn);
+        return dp.packed && e.cols == 2304 && (int)dp.nrows == nd && g.mid == 2304 &&
+               (e.type == iq3::Type::Q8_0 || e.type == iq3::Type::Q5_K);
+    }
+    void fl_d1(int c, const std::string &p, int nd, act_t *out) {
+        auto &s = sc[c];
+        const std::string wn = p + "ffn_down_shexp.weight";
+        const auto &e = we(wn);
+        const auto &dp = wgt[c].at(wn);
+        const auto *w = (const uint8_t *)dp.p;
+        const act_t *xs = s.act + (size_t)6 * g.mid;
+        if (e.type == iq3::Type::Q8_0)
+            launch_rows<0>(c, (size_t)nd, 0, ops41sycl::FlDownComb<ops41sycl::GemvQ8P<72, Act>, 6>{{(unsigned)nd, 0}}, w,
+                           xs, s.shd, (const act_t *)s.expd, out);
+        else
+            launch_rows<0>(c, (size_t)nd, 0, ops41sycl::FlDownComb<ops41sycl::GemvQ5KP<9, Act>, 6>{{(unsigned)nd, 0}}, w,
+                           xs, s.shd, (const act_t *)s.expd, out);
     }
     // ---- K7 (OWN_K7, sycl_v41_k7.hpp): the stream mix's dot partials over each card's own model rows ride the h
     // exchange (XchgPK7 in place of XchgP); the receiving card's HcPostPreP launch waits for them (HcPostPreK7: one
@@ -4505,6 +4605,7 @@ private:
             // next hc_post, so its dot rows ride in the router launch, its finish with the shared rows
             const bool ride = hc_rides(c, p + "hc_ffn_");
             bool ffn_dots_done = false; // the FFN mix's dot rows already ran (in the norm's launch)
+            bool fl_router = false;     // fl-1 bit 1: the router rows ran too (in the norm's launch)
             if (ride && post_pre_ok()) { // hc_post and the FFN's stream collapse in one launch
                 if (k7p[c].site == 1 && k7p[c].layer == L) // OWN_K7: + the wait for the peers' partials
                     k7_post_pre(c, streams[c], (const act_t *)s.ob, (const float *)s.post_a, (const float *)s.comb_a,
@@ -4516,6 +4617,7 @@ private:
                 prof("hc_post", c);
                 if (k7p[c].site == 1 && k7p[c].layer == L) // OWN_K7: the output-b exchange brought this mix's partials
                     ffn_dots_done = k7_norm(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
+                if (!ffn_dots_done && o.norm_dots && o.smallk_dots) ffn_dots_done = fl_router = fl_f1(c, p);
                 if (!ffn_dots_done && o.norm_dots && o.smallk_dots)
                     ffn_dots_done = norm_dots_sk(c, s.x, p + "ffn_norm.weight", s.xn, p + "hc_ffn_");
                 if (o.norm_dots && !ffn_dots_done)
@@ -4536,7 +4638,8 @@ private:
             const bool fin_pair = ride && o.fin_move && o.exp_pair &&
                                   routed_pair_fits(c, p + "ffn_gate_exps.weight", p + "ffn_up_exps.weight");
             if (ride) {
-                if (ffn_dots_done) gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
+                if (fl_router) {
+                } else if (ffn_dots_done) gemv(c, p + "ffn_gate_inp.weight", s.xn, s.router, true);
                 else gemv_ex(c, p + "ffn_gate_inp.weight", s.xn, s.router, hc_dots(c, p + "hc_ffn_"));
                 if (fin_pair) route_shared_tp(c, p);
                 else route_shared_tp(c, p, hc_finish(c, p + "hc_ffn_", s.pre_f, s.post_f, s.comb_f));
@@ -4567,14 +4670,18 @@ private:
         }
         case 4: {
             const int nd = td1[c] - td0[c];
+            bool fl_comb = false; // fl-1 bit 2: MoeCombineA rides the shared down rows
             if (!o.down_ex || !down_with_shared(c, p)) {
                 routed_gemv(c, p + "ffn_down_exps.weight", s.act, s.ids, s.expd, true);
                 prof("exp_down", c);
-                gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
+                fl_comb = fl_d1_ok(c, p, nd);
+                if (!fl_comb) gemv_part(c, p + "ffn_down_shexp.weight", s.act + (size_t)6 * g.mid, s.shd);
             }
             arm_xtail(c, xob, (unsigned)g.h, 1, td0[c], td1[c], XP_H);
-            launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
-                   s.ob + td0[c]);
+            if (fl_comb) fl_d1(c, p, nd, s.ob + td0[c]);
+            else
+                launch(c, nd, 32, ops41sycl::MoeCombineA<Act>{6, nd}, (const act_t *)s.expd, (const act_t *)s.shd,
+                       s.ob + td0[c]);
             prof("shared", c);
             if ((o.xl2 & 8u) && L + 1 < o.layer_end) {
                 const std::string pn = "blk." + std::to_string(L + 1) + ".";

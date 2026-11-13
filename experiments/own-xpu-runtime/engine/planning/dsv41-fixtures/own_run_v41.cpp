@@ -308,6 +308,13 @@ int main(int argc, char **argv) {
     // the pre-norm + the stream mix's dot rows by a proven fast sum, block size K = 8 or 4 (the finish's outputs the
     // same bits; default 8 since tg89, =0: off): OWN_SMALLK_DOTS=8
     if (const char *e = getenv("OWN_SMALLK_DOTS")) opt.smallk_dots = atoi(e);
+    // fl-1 (2026-11-11, /home/steve/dsv41-work/fl; off by default, the same bits): one-token tp steps fold a launch into
+    // the next one; OWN_FL=bits: 1 the FFN pre-norm + the mix's dot rows into the router launch, 2 MoeCombineA into the
+    // shared expert's down rows (3: both)
+    if (const char *e = getenv("OWN_FL")) {
+        opt.fl = (unsigned)atoi(e);
+        if (opt.fl > 3) die("OWN_FL: 0..3");
+    }
     // K7 (2026-11-11, /home/steve/dsv41-work/k7; off by default, the same bits): one-token steps compute the stream mix's
     // dot partials over each card's own model rows before the h exchange that gathers them; OWN_K7=bits: 1 the FFN mix
     // (output-b exchange), 2 the next attention mix (ffn-rows exchange), 3 both
@@ -622,6 +629,10 @@ int main(int argc, char **argv) {
         // pair, 16 output-b, 32 shared down, 64 the shared expert's gate + up with the router (127: all)
         if (const char *e = getenv("OWN_MT_PACE")) ops41sycl::g_pace_mask = ck_mask(e);
         if (const char *e = getenv("OWN_MT_PACE_ROLES")) ops41sycl::g_pace_roles = (unsigned)strtoul(e, nullptr, 0) & 127u;
+        // OWN_MT_SW (opt-in, /home/steve/dsv41-work/attn/sw/README.txt; 0x.. allowed): 1 the checks' forms re-picked with
+        // the register-mode change counted (~1.7 us per 256-register launch; replaces OWN_MT_PACE's tables at 2-6
+        // tokens), 2 the 16-head cards' one-token q_b and output-a in 128-register pace forms; 3 both. Bit for bit.
+        if (const char *e = getenv("OWN_MT_SW")) ops41sycl::g_pace_sw = (unsigned)strtoul(e, nullptr, 0) & 3u;
         if (const char *e = getenv("OWN_MT_DRIDE_MS")) {
             unsigned m = 0;
             for (const char *c = e; *c; ++c)
@@ -677,6 +688,7 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RUX_MIN")) be.mt_rux_min = (unsigned)std::max(1, atoi(e));
         if (const char *e = getenv("OWN_MT_RUX_CAP")) be.mt_rux_cap = (unsigned)atoi(e);
         if (be.mt_rux_cap > 16) die("OWN_MT_RUX_CAP: at most 16 slots per group");
+        if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
         // draft-head-1 (DR_ANCHOR_ARG + DR_WS on by default since tg91, the rest off; the draft only proposes, the check keeps the answers)

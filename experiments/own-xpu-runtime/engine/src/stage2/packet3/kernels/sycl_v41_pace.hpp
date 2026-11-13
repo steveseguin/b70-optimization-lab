@@ -31,6 +31,16 @@ namespace ops41sycl {
 // the shared expert's gate + up with the router (127: all)
 inline unsigned g_pace_mask = 0x1f, g_pace_roles = 7; // pace-1 on at every check size since tp103 (tg102: -0.27 to -0.58 ms at 4-6 tokens); OWN_MT_PACE=0: off
 inline bool pace_on(unsigned mt) { return mt >= 2 && mt <= 6 && (g_pace_mask >> (mt - 2) & 1u); }
+// OWN_MT_SW (opt-in; /home/steve/dsv41-work/attn/sw/README.txt): a 256-register kernel launched between 128-register
+// ones costs ~1.7 us of register-mode changes on the card (0.94 us device gaps before and after it against 0.10;
+// tg103's check timeline: pace-2's 256-register forms added 120 of them per check and ate its kernel savings).
+// Bit 1: the checks' (2-6 tokens) q_b / output-a / output-b / shared down / q_a + kv / shared gate + up forms picked
+// by bench time + 1.7 us per 256-register launch (the engine's form too), replacing pace-1 / pace-2's tables for these
+// shapes (pace_sw_*; no pick: ws_rows / the engine's forms); bit 2: the 16-head cards' one-token q_b and output-a in
+// 128-register pace forms (pace1_rows). Every pick is bit for bit the form it replaces (bench_sw / bench_pace1t /
+// bench_pace / bench_pace2 memcmp every output and the riders').
+inline unsigned g_pace_sw = 0;
+inline bool pace_sw_on(unsigned mt) { return (g_pace_sw & 1u) && mt >= 2 && mt <= 6; }
 
 // Q8_0 (WsQ8<C>'s layout): T tokens x R rows per position, rowt LOOP 0's products (XW words per word_group) in
 // segments of SW quant words; the R rows' chunk scales come with segment 0 and are kept for the row block.
@@ -729,6 +739,109 @@ inline bool pace_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs,
             f(PaceKN<RD, P, GRF, decltype(pick)::sp>{rd, p, nsg, rw}, (size_t)(rw + nsg) / 16);
             return true;
         };
+        // OWN_MT_SW & 1: the switch-counted table (replaces pace-1 / pace-2's below for these shapes)
+        if (g_pace_sw & 1u) {
+            auto gox = [&](auto pick) -> bool { // go2 with grouped x (output-a's groups of 1,024 rows)
+                using P = typename decltype(pick)::p;
+                constexpr unsigned GRF = decltype(pick)::grf;
+                if (xn % P::r) return false;
+                const unsigned ng = (mt + P::t - 1) / P::t;
+                P p{};
+                p.m[0] = PaceMat{w, y, ys, dk.rows, (dk.rows + P::r - 1) / P::r * ng};
+                p.x = x, p.xs = xs, p.xn = xn, p.mt = mt, p.ng = ng;
+                unsigned rw = 0;
+                if constexpr (!std::is_same_v<RD, NoRows>) rw = (rd.n() + 15) / 16 * 16;
+                const unsigned wave = cu * (GRF == 256 ? 4u : 8u) / 16 * 16, nsg = decltype(pick)::mode == 2 ? wave - rw : wave;
+                f(PaceKN<RD, P, GRF, decltype(pick)::sp>{rd, p, nsg, rw}, (size_t)(rw + nsg) / 16);
+                return true;
+            };
+            (void)gox;
+            if constexpr (O::fmt == 8 && O::cols == 1280) { // q_b (16 heads: 8,192 rows, 8 heads: 4,096)
+                if (xn) return false;
+                if (dk.rows == 8192) {
+                    switch (mt) {
+                    case 2: return go(PaceSel<PaceSQ8<40, 2, 3, 1, 2>, 256>{});
+                    case 3: return go(PaceSel<PaceSQ8<40, 3, 3, 1, 1>, 256>{});
+                    case 4: return go(PaceSel<PaceSQ8<40, 4, 1, 1, 1>, 128>{});
+                    case 5: return go(PaceSel<PaceSQ8<40, 5, 1, 1, 1>, 128>{});
+                    case 6: return go(PaceSel<PaceSQ8<40, 6, 1, 1, 1>, 128>{});
+                    default: return false;
+                    }
+                }
+                if (dk.rows == 4096) {
+                    return false; // (no pick: the engine's forms)
+                }
+                return false;
+            } else if constexpr (O::fmt == 6 && O::cols == 1280) {
+                if (xn) return false;
+                if (dk.rows == 8192) {
+                    switch (mt) {
+                    case 4: return go(PaceSel<PaceSQ6<5, 4, 1, 1>, 128>{});
+                    case 5: return go(PaceSel<PaceSQ6<5, 5, 1, 1>, 128>{});
+                    case 6: return go(PaceSel<PaceSQ6<5, 6, 1, 1>, 128>{});
+                    default: return false;
+                    }
+                }
+                return false;
+            } else if constexpr (O::fmt == 8 && O::cols == 4096) { // output-a (groups of 1,024 rows)
+                if (xn != 1024) return false;
+                if (dk.rows == 2048) {
+                    switch (mt) {
+                    case 2: return go(PaceSel<PaceSQ8<128, 2, 1, 1, 1>, 128>{});
+                    case 4: return go(PaceSel<PaceSQ8<128, 4, 1, 1, 1>, 128>{});
+                    case 5: return go(PaceSel<PaceSQ8<128, 5, 1, 1, 1>, 128>{});
+                    case 6: return go(PaceSel<PaceSQ8<128, 6, 2, 1, 1>, 256>{});
+                    default: return false;
+                    }
+                }
+                return false;
+            } else if constexpr (O::fmt == 6 && O::cols == 4096) {
+                if (xn != 1024) return false;
+                if (dk.rows == 2048) {
+                    return false; // (no pick: the engine's forms)
+                }
+                if (dk.rows == 1024) {
+                    return false; // (no pick: the engine's forms)
+                }
+                return false;
+            } else if constexpr (O::cols == 8192 && (O::fmt == 8 || O::fmt == 6)) { // output-b (848 / 864 rows)
+                if (xn || dk.rows < 768 || dk.rows > 1024) return false;
+                if constexpr (O::fmt == 8) {
+                    switch (mt) {
+                    case 2: return go2(PaceSel2<PaceSQ8N<256, 2, 1, 1, 2>, 128, 0>{});
+                    case 5: return go2(PaceSel2<PaceSQ8N<256, 5, 1, 2, 2>, 256, 2>{});
+                    case 6: return go2(PaceSel2<PaceSQ8N<256, 6, 1, 1, 1>, 256, 2>{});
+                    default: return false;
+                    }
+                } else {
+                    switch (mt) {
+                    case 2: return go2(PaceSel2<PaceSQ6N<32, 2, 1, 2>, 256, 2>{});
+                    case 3: return go2(PaceSel2<PaceSQ6N<32, 3, 1, 1>, 256, 2>{});
+                    case 4: return go2(PaceSel2<PaceSQ6N<32, 4, 1, 1>, 256, 2>{});
+                    case 5: return go2(PaceSel2<PaceSQ6N<32, 5, 1, 1>, 256, 2>{});
+                    default: return false;
+                    }
+                }
+            } else if constexpr (O::cols == 2304 && (O::fmt == 8 || O::fmt == 5)) { // shared down (848 / 864 rows)
+                if (xn || dk.rows < 768 || dk.rows > 1024) return false;
+                if constexpr (O::fmt == 8) {
+                    switch (mt) {
+                    case 3: return go2(PaceSel2<PaceSQ8N<72, 3, 1, 1, 1>, 128, 1>{});
+                    case 4: return go2(PaceSel2<PaceSQ8N<72, 4, 1, 1, 1>, 128, 0>{});
+                    case 5: return go2(PaceSel2<PaceSQ8N<72, 5, 1, 1, 1>, 128, 0>{});
+                    case 6: return go2(PaceSel2<PaceSQ8N<72, 6, 1, 1, 1>, 128, 2>{});
+                    default: return false;
+                    }
+                } else {
+                    switch (mt) {
+                    case 4: return go2(PaceSel2<PaceSQ5N<9, 2, 1, 1>, 128, 2>{});
+                    case 5: return go2(PaceSel2<PaceSQ5N<9, 3, 1, 1>, 128, 2>{});
+                    case 6: return go2(PaceSel2<PaceSQ5N<9, 3, 1, 1>, 128, 2>{});
+                    default: return false;
+                    }
+                }
+            } else return false;
+        }
         if constexpr (O::fmt == 8 && O::cols == 1280) { // q_b, 16 heads
             if (!(g_pace_roles & 1u) || dk.rows != 8192 || xn) return false;
             switch (mt) {
@@ -810,7 +923,8 @@ inline bool pace_pair_rows(const DK &dk, unsigned nra, unsigned nrb, const uint8
     constexpr bool rd_ok = std::is_same_v<RD, NoRows> || std::is_same_v<RD, TokRows<HcDotsRows<5120, 8>>>;
     if constexpr (!rd_ok || O::cols != 5120 || (O::fmt != 8 && O::fmt != 6)) return false;
     else {
-        if (!(g_pace_roles & 8u) || !pace_on(mt) || nra != 1280 || nrb != 512 || ws_xn(dk)) return false;
+        if (nra != 1280 || nrb != 512 || ws_xn(dk)) return false;
+        if ((g_pace_sw & 1u) ? !pace_sw_on(mt) : !(g_pace_roles & 8u) || !pace_on(mt)) return false;
         auto go = [&](auto pick) -> bool {
             using P = typename decltype(pick)::p;
             constexpr unsigned GRF = decltype(pick)::grf;
@@ -825,6 +939,22 @@ inline bool pace_pair_rows(const DK &dk, unsigned nra, unsigned nrb, const uint8
             f(PaceKN<RD, P, GRF, decltype(pick)::sp>{rd, p, nsg, rw}, (size_t)(rw + nsg) / 16);
             return true;
         };
+        if (g_pace_sw & 1u) { // OWN_MT_SW & 1: the switch-counted table
+            if constexpr (O::fmt == 8) {
+                switch (mt) {
+                case 4: return go(PaceSel2<PaceSQ8N<160, 4, 1, 1, 1, 2>, 128, 0>{});
+                case 5: return go(PaceSel2<PaceSQ8N<160, 5, 1, 1, 1, 2>, 128, 1>{});
+                case 6: return go(PaceSel2<PaceSQ8N<160, 6, 2, 1, 1, 2>, 256, 0>{});
+                default: return false;
+                }
+            } else {
+                switch (mt) {
+                case 4: return go(PaceSel2<PaceSQ6N<20, 4, 1, 1, 2>, 256, 1>{});
+                case 5: return go(PaceSel2<PaceSQ6N<20, 5, 1, 1, 2>, 256, 2>{});
+                default: return false;
+                }
+            }
+        }
         if constexpr (O::fmt == 8) {
             switch (mt) {
             case 4: return go(PaceSel2<PaceSQ8N<160, 4, 2, 1, 1, 2>, 256, 0>{});
@@ -852,7 +982,8 @@ inline bool pace_gu_rows(const DK &dk, unsigned rows, const uint8_t *wg, const u
     using O = WsOf<DK>;
     if constexpr (O::cols != 5120 || (O::fmt != 8 && O::fmt != 5)) return false;
     else {
-        if (!(g_pace_roles & 64u) || !pace_on(mt) || rows != 384 || ws_xn(dk) || fin.n() > 16) return false;
+        if (rows != 384 || ws_xn(dk) || fin.n() > 16) return false;
+        if ((g_pace_sw & 1u) ? !pace_sw_on(mt) : !(g_pace_roles & 64u) || !pace_on(mt)) return false;
         auto go = [&](auto pick) -> bool {
             using P = typename decltype(pick)::p;
             constexpr unsigned GRF = decltype(pick)::grf;
@@ -869,6 +1000,22 @@ inline bool pace_gu_rows(const DK &dk, unsigned rows, const uint8_t *wg, const u
               (size_t)mt + (rw + nsg) / 16);
             return true;
         };
+        if (g_pace_sw & 1u) { // OWN_MT_SW & 1: the switch-counted table
+            if constexpr (O::fmt == 8) {
+                switch (mt) {
+                case 2: return go(PaceSel2<PaceSQ8N<160, 1, 1, 1, 1, 2>, 128, 2>{});
+                case 3: return go(PaceSel2<PaceSQ8N<160, 2, 1, 1, 1, 2>, 128, 2>{});
+                default: return false;
+                }
+            } else {
+                switch (mt) {
+                case 3: return go(PaceSel2<PaceSQ5N<20, 3, 1, 2, 2>, 256, 2>{});
+                case 5: return go(PaceSel2<PaceSQ5N<20, 5, 1, 2, 2>, 256, 2>{});
+                case 6: return go(PaceSel2<PaceSQ5N<20, 6, 1, 2, 2>, 256, 2>{});
+                default: return false;
+                }
+            }
+        }
         if constexpr (O::fmt == 8) {
             switch (mt) {
             case 2: return go(PaceSel2<PaceSQ8N<160, 2, 2, 1, 1, 2>, 256, 2>{});
@@ -887,6 +1034,56 @@ inline bool pace_gu_rows(const DK &dk, unsigned rows, const uint8_t *wg, const u
             default: return false;
             }
         }
+    }
+}
+// ---- OWN_MT_SW & 2: the 16-head cards' one-token q_b and output-a in 128-register pace forms --------------------
+// q_b (8,192 x 1,280: tp_phase case 0's gemv_part_ex with the attention mix's finish and the key's rope riding, or the
+// rope alone under OWN_FIN_MOVE) and output-a (2,048 x 4,096 in two groups: oa_run's gemv_part) in PaceKN with T = 1
+// (one resident wave, the next segment or row block loaded while the current one multiplies; the riders on a
+// work-group of their own at the front). The one-token step runs no 256-register kernel, so only 128-register forms
+// can pay. Bit for bit GemvQ8P / GemvQ6KP's rows (per lane the same products in the same order, sg_tree32's
+// reduction); bench_pace1t.cpp memcmps every output and the riders' (the finish's pre / post / comb, the roped key).
+template <typename RD>
+inline constexpr bool pace1_rd_ok = std::is_same_v<RD, NoRows> || std::is_same_v<RD, RopeRows<ActF32>> ||
+                                    std::is_same_v<RD, RowsPair<HcFinishRows, RopeRows<ActF32>>>;
+// pace1_rows(dk, w, x, y, rd, cu, f): the one-token pick for this matrix and rider, launched through f(kernel,
+// work-groups of 512); false: none (the engine's launch as before). cu: the card's compute units.
+template <typename DK, typename RD, typename F>
+inline bool pace1_rows(const DK &dk, const uint8_t *w, const float *x, float *y, const RD &rd, unsigned cu, F &&f) {
+    using O = WsOf<DK>;
+    if constexpr (!pace1_rd_ok<RD> || (O::fmt != 8 && O::fmt != 6)) return false;
+    else {
+        if constexpr (!std::is_same_v<RD, NoRows>)
+            if (rd.n() > 16) return false;
+        const unsigned xn = ws_xn(dk);
+        auto go = [&](auto pick) -> bool {
+            using P = typename decltype(pick)::p;
+            constexpr unsigned GRF = decltype(pick)::grf;
+            if (xn % P::r) return false;
+            P p{};
+            p.m[0] = PaceMat{w, y, (size_t)dk.rows, dk.rows, (dk.rows + P::r - 1) / P::r};
+            p.x = x, p.xs = 0, p.xn = xn, p.mt = 1, p.ng = 1;
+            unsigned rw = 0;
+            if constexpr (!std::is_same_v<RD, NoRows>) rw = (rd.n() + 15) / 16 * 16;
+            const unsigned wave = cu * (GRF == 256 ? 4u : 8u) / 16 * 16, nsg = decltype(pick)::mode == 2 ? wave - rw : wave;
+            f(PaceKN<RD, P, GRF, decltype(pick)::sp>{rd, p, nsg, rw}, (size_t)(rw + nsg) / 16);
+            return true;
+        };
+        if constexpr (O::cols == 1280) { // q_b, 16 heads
+            if (dk.rows != 8192 || xn) return false;
+            if constexpr (O::fmt == 8) {
+                return go(PaceSel2<PaceSQ8N<40, 1, 1, 1, 1>, 128, 2>{});
+            } else {
+                return false; // (kept: no 128-register form faster)
+            }
+        } else if constexpr (O::cols == 4096 && std::is_same_v<RD, NoRows>) { // output-a, two groups of 1,024 rows
+            if (dk.rows != 2048 || xn != 1024) return false;
+            if constexpr (O::fmt == 8) {
+                return go(PaceSel2<PaceSQ8N<128, 1, 2, 1, 1>, 128, 1>{});
+            } else {
+                return go(PaceSel2<PaceSQ6N<16, 1, 1, 1>, 128, 1>{});
+            }
+        } else return false;
     }
 }
 } // namespace ops41sycl
