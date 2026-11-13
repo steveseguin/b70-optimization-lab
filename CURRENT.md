@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 12, 2026 22:58 EST — DeepSeek tp106 gated; card-to-card writes can be fast (one peer at a time).**
+- tp106 (dcf06e199) = ck2 + defaults OWN_FL=3, OWN_U3_NOPAIR=1, OWN_MT_EU_HEAVY=0: every trace identical; plain 105.8;
+  guessing code ~147 / analysis ~163.5, +0.6-1.1 % more with OWN_CK2 (default from tp107, 2ef2e47d6); 3K read 5.45 s
+  (px-512). Results round19-tg105h, round19-tg106. One draft-side one-off guess difference (answers same; ck2rep clean).
+- Benches (round19-ce): EU stores into a peer are ~1 GB/s only when a card writes to several peers at once; one peer at
+  a time 41 GB/s per card (pulls 36). Flags never arrive before data. Helpers: bcs (prompt exchanges on the copy
+  engine), xchg2 (decode / check exchanges as one-peer-at-a-time pushes), rux4 (prompt expert kernels, card 2).
+
 **November 12, 2026 21:33 EST — DeepSeek: copy engine chosen for prompt exchanges; one driver engine reset (ours).**
 - Guess-count rule study (round19-costk): the 0.5 cutoff is within ~0.5 % of the best rule; closed.
 - Transport benches (round19-ce): card-to-card EU stores ~1 GB/s whatever the cache hints; each card's copy engine
