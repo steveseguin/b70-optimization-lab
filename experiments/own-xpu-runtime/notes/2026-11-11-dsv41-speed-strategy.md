@@ -400,6 +400,13 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 21:25 (2026-11-12) **Copy engine = the prompt-exchange transport** (`data/.../round19-ce/`). EU stores into a peer
+  stay ~1 GB/s with every store cache hint; the copy-only queue group (1 engine per card) pushes own slice -> five
+  peers at 27-30 GB/s all six at once, values exact, and runs beside compute (20 MiB per card push adds ~0.14 ms to a
+  4.26 ms memory-bound kernel). Helper **bcs** (`dsv41-work/bcs/`, six-card runs only through `bcs/six.sh`):
+  `OWN_PX_BCS=1`, PX exchanges as copy-engine pushes + flag writes, consumers poll local flags; target 3K < 5.1 s
+  (from 5.56). Helper **ck2** done: `ck2-1.patch` (`OWN_CK2`, M = 2 / 3 checks -0.17 / -0.24 ms, ~+0.7 % guessing,
+  8,100 buffers identical on one card), joins tp106.
 - 21:07 (2026-11-12) **Cost-aware guess count (Codex point 1): closed, the 0.5 cutoff is within ~0.5 % of the best
   rule that uses the draft's confidences** (`data/.../round19-costk/`). All-guesses-checked runs (tau0, five prompts,
   vocabulary, all SAME) + offline simulator: cutoff 0.5 = 148.8, cost-aware calibrated on held-out prompts 148.2-148.6,

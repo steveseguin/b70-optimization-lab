@@ -1,0 +1,25 @@
+build start 21:13:49
+Compilation from IR - skipping loading of FCL
+Build succeeded.
+built 21:13:52
+== bcs 21:13:52
+card0 group 0: compute copy engines 1
+card0 group 1: copy engines 1
+6 cards, copy group ordinal 1 (1 engines)
+bcs-push       S=   65536 B       12.1 us per round   27.18 GB/s sent per card
+sycl-memcpy    S=   65536 B       14.9 us per round   22.01 GB/s sent per card
+busy-alone     S=   65536 B     4269.7 us per round    0.00 GB/s sent per card
+busy+bcs-push  S=   65536 B     4252.9 us per round    0.08 GB/s sent per card
+values S=65536: 0 wrong
+bcs-push       S=  655360 B      113.4 us per round   28.89 GB/s sent per card
+sycl-memcpy    S=  655360 B      118.2 us per round   27.72 GB/s sent per card
+busy-alone     S=  655360 B     4259.4 us per round    0.00 GB/s sent per card
+busy+bcs-push  S=  655360 B     4273.6 us per round    0.77 GB/s sent per card
+values S=655360: 0 wrong
+bcs-push       S= 4194304 B      699.9 us per round   29.96 GB/s sent per card
+sycl-memcpy    S= 4194304 B      771.4 us per round   27.19 GB/s sent per card
+busy-alone     S= 4194304 B     4254.0 us per round    0.00 GB/s sent per card
+busy+bcs-push  S= 4194304 B     4391.5 us per round    4.78 GB/s sent per card
+values S=4194304: 0 wrong
+exit 0
+DONE 21:13:53
