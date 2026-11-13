@@ -1,0 +1,33 @@
+start 2026-11-12 21:09:16 card level_zero:2 bin bench_rux3_h1 env: ONLY=s20,xxs20,1s20 NOCHECK_P2=1 TPE=4 RM=128,256,512 ALL_ORDER=1
+card 0 Intel(R) Arc(TM) Pro B70 Graphics, free 31.8 GiB
+real ids: /home/steve/dsv41-work/runs/u84/p3k-ids-per-layer.txt
+IQ2_S    pair weights: real blk.30, 384 experts (0.4 s) | bitwise vs prod6 (cap 6): PASS, 0 of 38928384 differ
+  tpe  4 (256 tokens)          1536 slots | ship6    3374.8 us  2.197 us/slot (4.00 slots/group)
+    MT6 ship     all    3431.1 (  +1.7%)  2.234 us/slot | split: A      0.0 ( 0.0% of slots,  0.000 us/slot) + B   3422.1 =    3422.1 (  +1.4%)
+  real  128 tokens              768 slots | ship6    1521.0 us  1.981 us/slot (3.73 slots/group)
+    MT6 ship     all    1595.0 (  +4.9%)  2.077 us/slot | split: A    822.0 (63.1% of slots,  1.697 us/slot) + B    773.4 =    1595.5 (  +4.9%)
+  real  256 tokens             1536 slots | ship6    2960.0 us  1.927 us/slot (4.28 slots/group)
+    MT6 ship     all    3085.2 (  +4.2%)  2.009 us/slot | split: A   1959.6 (72.8% of slots,  1.754 us/slot) + B   1147.4 =    3107.0 (  +5.0%)
+  real  512 tokens             3072 slots | ship6    5759.1 us  1.875 us/slot (4.95 slots/group)
+    MT6 ship     all    5851.8 (  +1.6%)  1.905 us/slot | split: A   4444.7 (83.5% of slots,  1.732 us/slot) + B   1334.3 =    5779.0 (  +0.3%)
+IQ2_XXS  pair weights: real blk.12, 384 experts (0.4 s) | bitwise vs prod6 (cap 6): PASS, 0 of 38928384 differ
+  tpe  4 (256 tokens)          1536 slots | ship6    3069.8 us  1.999 us/slot (4.00 slots/group)
+    MT6 ship     all    3092.9 (  +0.8%)  2.014 us/slot | split: A      0.0 ( 0.0% of slots,  0.000 us/slot) + B   3063.9 =    3063.9 (  -0.2%)
+  real  128 tokens              768 slots | ship6    1460.5 us  1.902 us/slot (3.73 slots/group)
+    MT6 ship     all    1503.8 (  +3.0%)  1.958 us/slot | split: A    758.1 (63.1% of slots,  1.565 us/slot) + B    746.1 =    1504.2 (  +3.0%)
+  real  256 tokens             1536 slots | ship6    2831.4 us  1.843 us/slot (4.28 slots/group)
+    MT6 ship     all    2937.9 (  +3.8%)  1.913 us/slot | split: A   1839.9 (72.8% of slots,  1.646 us/slot) + B   1114.5 =    2954.5 (  +4.3%)
+  real  512 tokens             3072 slots | ship6    5378.3 us  1.751 us/slot (4.95 slots/group)
+    MT6 ship     all    5593.8 (  +4.0%)  1.821 us/slot | split: A   4264.0 (83.5% of slots,  1.661 us/slot) + B   1303.8 =    5567.8 (  +3.5%)
+IQ1_S    pair weights: real blk.5, 384 experts (0.2 s) | bitwise vs prod6 (cap 6): PASS, 0 of 38928384 differ
+  tpe  4 (256 tokens)          1536 slots | ship6    3207.3 us  2.088 us/slot (4.00 slots/group)
+    MT6 ship     all    3289.7 (  +2.6%)  2.142 us/slot | split: A      0.0 ( 0.0% of slots,  0.000 us/slot) + B   3275.1 =    3275.1 (  +2.1%)
+  real  128 tokens              768 slots | ship6    1424.9 us  1.855 us/slot (3.73 slots/group)
+    MT6 ship     all    1454.9 (  +2.1%)  1.894 us/slot | split: A    742.7 (63.1% of slots,  1.533 us/slot) + B    718.4 =    1461.1 (  +2.5%)
+  real  256 tokens             1536 slots | ship6    2817.3 us  1.834 us/slot (4.28 slots/group)
+    MT6 ship     all    2923.8 (  +3.8%)  1.903 us/slot | split: A   1835.9 (72.8% of slots,  1.643 us/slot) + B   1088.7 =    2924.7 (  +3.8%)
+  real  512 tokens             3072 slots | ship6    5369.1 us  1.748 us/slot (4.95 slots/group)
+    MT6 ship     all    5694.3 (  +6.1%)  1.854 us/slot | split: A   4305.3 (83.5% of slots,  1.678 us/slot) + B   1266.6 =    5571.9 (  +3.8%)
+PASS
+exit 0
+journal clean

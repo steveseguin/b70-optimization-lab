@@ -1,0 +1,328 @@
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41_ck2.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41_ck2.hpp
+new file mode 100644
+index 0000000..fc5f814
+--- /dev/null
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/kernels/sycl_v41_ck2.hpp
+@@ -0,0 +1,183 @@
++// ck2-1 (2026-11-12, OWN_CK2; /home/steve/dsv41-work/ck2/README.md): the guessing checks' FFN chain at 2-3 tokens.
++// Bench: ck2/src/bench_ck2.cpp (every output word compared against the engine's launches, real GGUF rows).
++//   FlNormKM<M, RF, MODE>: the FFN pre-norm, the mix's dot rows and the router rows of an M-token block in ONE launch
++//     (fl-1's FlNormK, which does this for one token, made M-token). The engine uses FlNormKM<2, 1, 1> (OWN_CK2_FORMS
++//     bit 1): 13.0 us against today's 17.0 (SkNormWM 2.5 + router with HcDotsRows riding 14.4; card 3, bench).
++//   RowsDotsK<D>: a rows launch with the mix's dot rows as SkDotsFF work-groups in place of the HcDotsRows sub-group
++//     rows riding it (OWN_CK2_FORMS bit 2): router at 3 tokens 19.3 -> 14.0 us.
++//
++// Today a check block of 2-3 tokens runs, per layer, SkNormWM<5120, 16> (one work-group per token: the FFN pre-norm)
++// and then the router rows DenseRowsG<GemvH16P<160>, G> with the mix's 25 dot rows riding as TokRows<HcDotsRows>
++// sub-group rows (a serial double chain per (token, row, segment)); 2-3 us + 15-21 us on card 2 (tl105). FlNormKM:
++//   work-groups [0, 25 nd): SkDotsFF<8>::run for (token g / 25, row g % 25) -- SkDotsWM<8>'s work-group code (the
++//     one-token path's and the M >= 4 blocks' dot rows, OWN_MT_SKDOTS): its partial words differ from HcDotsRows'
++//     where its proof holds, the finish's outputs do not (SkDotsFF's comment; the bench compares the finish outputs);
++//     where the proof fails the row writes HcMixDotsP's production partials.
++//   work-groups [25 nd, ...): every work-group forms the M tokens' norm scales itself (SkNormSplit<5120, 16>::partial
++//     on its 16 sub-groups for each token, ONE barrier, SkNormSplit::finish per token on every sub-group, the
++//     production chain RmsNormPS::acc_chain where the check fails: SkNormSplit::run's code per token, so the same
++//     float rs as SkNormWM's work-group t), forms x * rs * w (w * (x * rs), SkNormSplit::run's expression) into local
++//     memory (MODE 0) or at every load (MODE 1, FlXF), work-group 0 also stores the normalized vectors to y (the
++//     shared / routed experts read them), then runs router positions:
++//       RF 0: position p = (row p / M, token p % M): fl_h16_sum<160> (GemvH16P<160>::row's lane chain and sg_tree32 on
++//             that token's normalized vector);
++//       RF 1: position p = row p, the M tokens' chains side by side (GemvH16P::rowg<M>'s loop: one weight conversion,
++//             then sum[t] = sum[t] + w * x_t[m] per token in the same order; sg_tree32 per token).
++//     Either way every (row, token) logit is GemvH16P<160>::row's expression in its order: the production
++//     DenseRowsG<GemvH16P<160>, G>'s rowg<G> (any G) gives the same per-token chain.
++//   (rfirst = 1 numbers the router work-groups first; RF 0 / MODE 0 forms and M >= 3 lose in the bench: README.)
++// Built with -fp-model=precise -ffp-contract=off as the engine (no contraction appears or vanishes).
++#pragma once
++#include "stage2/packet3/kernels/sycl_v41.hpp"
++#include "stage2/packet3/kernels/sycl_v41_fl.hpp"
++
++namespace ops41sycl {
++
++template <unsigned M, unsigned RF, unsigned MODE> struct FlNormKM {
++    static_assert(M >= 1 && M <= 6 && RF <= 1 && MODE <= 1);
++    static constexpr unsigned N = 5120, S = 16, C = N / 256, SGS = 16, K = 8, RC = 160;
++    using SP = SkNormSplit<N, S>;
++    const float *x, *nw;      // the pre-norm's input (token t at x + t * xs) and weight
++    float *y;                 // the normalized vectors (token t at y + t * ys)
++    size_t xs, ys;
++    const float *streams, *fn; // the mix's dot rows: nd tokens, token t's streams at streams + t * ss
++    double *dout;              // token t's 25 * 8 partials at dout + t * os
++    size_t ss, os;
++    unsigned nd;
++    const uint8_t *w; // the router's packed rows (GemvH16P<160>'s layout)
++    float *ry;        // logits: token t's row r at ry[t * rys + r]
++    size_t rys;
++    unsigned rows;
++    unsigned rfirst = 0; // 1: the router work-groups first, then the dot rows' (only the work-group numbering changes)
++    static constexpr size_t lm_words() { return 2 * S * M > 64 ? 2 * S * M : 64; }
++    static constexpr size_t xl_floats() { return MODE == 0 ? (size_t)M * N : 1; }
++    size_t npos() const { return RF == 0 ? (size_t)rows * M : (size_t)rows; }
++    size_t groups() const { return (size_t)nd * 25 + (npos() + SGS - 1) / SGS; }
++    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, uint32_t *lm, FlLocalP xl) const {
++        const unsigned g0 = (unsigned)it.get_group_linear_id(), nrw = (unsigned)((npos() + SGS - 1) / SGS);
++        const unsigned g = rfirst ? (g0 < nrw ? g0 + nd * 25 : g0 - nrw) : g0; // (dot work-groups first in g)
++        sycl::sub_group sg = it.get_sub_group();
++        const unsigned sgi = sg.get_group_linear_id(), lane = sg.get_local_linear_id();
++        if (g < nd * 25) {
++            const unsigned t = g / 25;
++            SkDotsFF<K>::run(it, sgi, lm, g % 25, streams + t * ss, fn, dout + t * os);
++            return;
++        }
++        const unsigned wg = g - nd * 25;
++        // the M scales: SkNormSplit::run's partial / finish / chain per token, one barrier for all M
++#pragma unroll
++        for (unsigned t = 0; t < M; ++t) {
++            sycl::vec<float, 8> xv[SP::MY];
++#pragma unroll
++            for (unsigned k = 0; k < SP::MY; ++k)
++                if (sgi + k * S < C) xv[k] = sg_bloadN<8>(sg, x + t * xs + (sgi + k * S) * 256);
++            const double p = SP::partial(sg, lane, sgi, xv);
++            if (lane == 0) sk_put(lm, (int)(t * S + sgi), p);
++        }
++        sycl::group_barrier(it.get_group());
++        float rs[M];
++#pragma unroll
++        for (unsigned t = 0; t < M; ++t) {
++            bool ok;
++            rs[t] = SP::finish(sg, lane, lm, (int)(t * S), ok);
++            if (!ok) rs[t] = SP::PS::rs_of(SP::PS::acc_chain(sg, lane, x + t * xs));
++        }
++#pragma unroll
++        for (unsigned t = 0; t < M; ++t)
++#pragma unroll
++            for (unsigned k = 0; k < (C + SGS - 1) / SGS; ++k) {
++                const unsigned c = sgi + k * SGS;
++                if (c < C && (MODE == 0 || wg == 0)) {
++                    const auto xv = sg_bloadN<8>(sg, x + t * xs + c * 256);
++                    const auto wv = sg_bloadN<8>(sg, nw + c * 256);
++                    sycl::vec<float, 8> o;
++#pragma unroll
++                    for (unsigned m = 0; m < 8; ++m) o[m] = wv[m] * (xv[m] * rs[t]);
++                    if constexpr (MODE == 0) sg.store<8>(xl + (std::ptrdiff_t)(t * N + c * 256), o);
++                    if (wg == 0)
++                        sg.store<8>(sycl::address_space_cast<sycl::access::address_space::global_space,
++                                                             sycl::access::decorated::yes>(y + t * ys + c * 256),
++                                    o);
++                }
++            }
++        if constexpr (MODE == 0) sycl::group_barrier(it.get_group());
++        const size_t p = (size_t)wg * SGS + sgi;
++        if (p >= npos()) return;
++        if constexpr (RF == 0) {
++            const unsigned r = (unsigned)(p / M), t = (unsigned)(p % M);
++            float s;
++            if constexpr (MODE == 0) s = fl_h16_sum<RC>(sg, r, w, FlXL{xl + (std::ptrdiff_t)(t * N)});
++            else {
++                float rst = rs[0]; // (constant indices: rs stays in registers)
++#pragma unroll
++                for (unsigned k = 1; k < M; ++k) rst = t == k ? rs[k] : rst;
++                s = fl_h16_sum<RC>(sg, r, w, FlXF{x + t * xs, nw, rst});
++            }
++            if (lane == 0) ry[t * rys + r] = s;
++        } else {
++            const unsigned r = (unsigned)p;
++            const uint16_t *row = reinterpret_cast<const uint16_t *>(w) + (size_t)r * RC * 32;
++            float sum[M];
++#pragma unroll
++            for (unsigned t = 0; t < M; ++t) sum[t] = 0;
++#pragma unroll
++            for (unsigned s = 0; s < RC / 8; ++s) {
++                const auto wv = sg_bloadN<8>(sg, row + (size_t)s * 256);
++                sycl::vec<float, 8> xv[M];
++#pragma unroll
++                for (unsigned t = 0; t < M; ++t) {
++                    if constexpr (MODE == 0) xv[t] = FlXL{xl + (std::ptrdiff_t)(t * N)}.template ld<8>(sg, (size_t)s * 256);
++                    else xv[t] = FlXF{x + t * xs, nw, rs[t]}.template ld<8>(sg, (size_t)s * 256);
++                }
++#pragma unroll
++                for (unsigned m = 0; m < 8; ++m) {
++                    const float wf = sycl::bit_cast<float>(uint32_t(wv[m]) << 16);
++#pragma unroll
++                    for (unsigned t = 0; t < M; ++t) sum[t] = sum[t] + wf * xv[t][m];
++                }
++            }
++#pragma unroll
++            for (unsigned t = 0; t < M; ++t) sum[t] = sg_tree32(sg, sum[t]);
++            if (lane == 0) {
++#pragma unroll
++                for (unsigned t = 0; t < M; ++t) ry[t * rys + r] = sum[t];
++            }
++        }
++    }
++};
++
++// ck2-2: a rows launch (any RowsP rows D: today's router rows DenseRowsG<GemvH16P<160>, G>, the q_a + kv pair's
++// RowsPair<DenseRowsWS, DenseRowsWS>, ...) with the mix's dot rows as SkDotsFF<8> work-groups (SkDotsWM<8>'s, the
++// one-token path's) in place of the TokRows<HcDotsRows<5120, 8>> sub-group rows riding today (RowsP<RowsPair<HD, D>>).
++// Work-groups [0, nrw) are RowsP<D>'s (16 rows each, the same packed_row_id mapping: every row runs D::row as in its
++// own launch), work-groups [nrw, nrw + 25 nd) SkDotsWM<8>'s work-group q (token q / 25's row q % 25). The partial words
++// of a dot row differ from HcDotsRows' where SkDotsFF's proof holds, the finish's outputs do not (SkDotsFF's comment;
++// the engine's OWN_MT_SKDOTS path). The dot rows' inputs and the rows' inputs are written by launches before this one.
++template <typename D> struct RowsDotsK {
++    D d;
++    const float *streams, *fn;
++    double *dout;
++    size_t ss, os; // per-token strides: streams (floats), partials (doubles)
++    unsigned nd;   // tokens with dot rows (their streams / partials from token 0 of the pointers)
++    static constexpr size_t lm_words() { return 64; }
++    unsigned nrw() const { return (d.n() + 15) / 16; }
++    size_t groups() const { return (size_t)nrw() + (size_t)nd * 25; }
++    [[gnu::flatten]] void operator()(sycl::nd_item<1> it, uint32_t *lm) const {
++        const unsigned g = (unsigned)it.get_group_linear_id(), nr = nrw();
++        sycl::sub_group sg = it.get_sub_group();
++        if (g < nr) {
++            const unsigned r = packed_row_id(it);
++            if (r >= d.n()) return;
++            d.row(sg, sg.get_local_linear_id(), r);
++            return;
++        }
++        const unsigned q = g - nr, t = q / 25;
++        SkDotsFF<8>::run(it, sg.get_group_linear_id(), lm, q % 25, streams + t * ss, fn, dout + t * os);
++    }
++};
++// the RowsDotsK launch replacing RowsP<RowsPair<TokRows<HcDotsRows<5120, 8>>, D>>{{hd, d}}
++template <typename D> inline RowsDotsK<D> rows_dots(const TokRows<HcDotsRows<5120, 8>> &hd, const D &d) {
++    return RowsDotsK<D>{d, hd.r.streams, hd.r.fn, hd.r.out, hd.st[0], hd.st[1], hd.m};
++}
++
++} // namespace ops41sycl
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
+index 106bcb1..c04d2f3 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
+@@ -75,6 +75,7 @@
+ #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
+ #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
+ #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
++#include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
+ #include <level_zero/ze_api.h>
+ #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
+ #include <sycl/ext/oneapi/backend/level_zero.hpp>
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+index 35ee750..ab3f1b4 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+@@ -153,6 +153,49 @@ int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own lau
+ unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
+                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
+ unsigned mt_skdots_min = 4;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (4 since tune92)
++// ---- ck2-1 (2026-11-12; off by default, each a bit-identical form; kernels/sycl_v41_ck2.hpp, bench and numbers
++// /home/steve/dsv41-work/ck2/README.md): OWN_CK2=mask over block sizes 2 .. 6 (bit m - 2; OWN_CK2=1: 2 and 3 tokens),
++// OWN_CK2_FORMS=bits (default 3): 1 a block of 2 tokens runs its FFN pre-norm, the FFN mix's dot rows and the router
++// rows in ONE launch (FlNormKM<2, 1, 1>, fl-1's FlNormK for 2 tokens) instead of the norm launch + the router rows
++// with the HcDotsRows rows riding; 2 the router rows' TokRows<HcDotsRows> rider (blocks of 2-3 tokens: the FFN mix's
++// dot rows) runs as SkDotsFF<8> work-groups in the router's launch (RowsDotsK; SkDotsWM<8>'s rows, the one-token
++// path's) instead of sub-group rows. The rows, normalized vectors and the mixes' finish outputs are the same bits (the dot
++// rows' partial words differ where SkDotsFF's proof holds, as under OWN_MT_SKDOTS).
++unsigned mt_ck2 = 0, mt_ck2_forms = 3;
++bool ck2_on(int c, unsigned bit) const {
++    return (mt_ck2_forms & bit) && mt_n >= 2 && mt_n <= 6 && ((mt_ck2 >> (mt_n - 2)) & 1u) && mt_small && !dr_step &&
++           !xt[c].on;
++}
++// OWN_CK2 bit 2: the router's rows d (dense_m's form for GemvH16P<160>) with the dot rows rider hd as RowsDotsK;
++// false (nothing launched) for other matrices and riders (the q_a + kv pair loses with it: README section 5)
++template <typename DK, typename RD, typename D> bool ck2_dots(int c, const RD &hd, const D &d) {
++    if constexpr (!std::is_same_v<RD, ops41sycl::TokRows<ops41sycl::HcDotsRows<5120, 8>>> ||
++                  !std::is_same_v<DK, ops41sycl::GemvH16P<160, Act>>)
++        return false;
++    else {
++        if (!ck2_on(c, 2u)) return false;
++        const auto k = ops41sycl::rows_dots(hd, d);
++        using K = std::decay_t<decltype(k)>;
++        auto e = qs[c].submit([&](sycl::handler &hh) {
++            sycl::local_accessor<uint32_t, 1> lm(K::lm_words(), hh);
++            hh.parallel_for(sycl::nd_range<1>(k.groups() * 512, 512),
++                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, &lm[0]); });
++        });
++        kev(c, kname<K>(), e);
++        return true;
++    }
++}
++// OWN_CK2 bit 1: FlNormKM's launch (its local memory: the norm partials' words, MODE 0's normalized vectors)
++template <typename K> void ck2_launch(int c, const K &k) {
++    auto e = qs[c].submit([&](sycl::handler &hh) {
++        sycl::local_accessor<uint32_t, 1> lm(K::lm_words(), hh);
++        sycl::local_accessor<float, 1> xl(K::xl_floats(), hh);
++        hh.parallel_for(sycl::nd_range<1>(k.groups() * 512, 512), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
++            k(it, &lm[0], xl.template get_multi_ptr<sycl::access::decorated::yes>());
++        });
++    });
++    kev(c, kname<K>(), e);
++}
+ // ---- skn-1 (2026-11-11; off by default, each a bit-identical form): the one-token path's one-work-group norms
+ // (smallk) for the m tokens of a block, one work-group per token (ops41sycl::SkNormWM / SkNormPairWM / SkNormDotsWM /
+ // SkCompressPoolWM). OWN_MT_SKNORM=mask: 1 the 5,120 norms that run alone (pre-norms beside riding or SKDOTS dot rows,
+@@ -461,7 +504,7 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
+         using D = std::decay_t<decltype(d)>;
+         if constexpr (std::is_same_v<RD, ops41sycl::NoRows>) launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
+         else if constexpr (ops41sycl::is_qbm_heavy_v<RD>) qbm_heavy_launch(c, rider, d); // OWN_QB_OFF_M (qb-off-2)
+-        else {
++        else if (!ck2_dots<DK>(c, rider, d)) { // (OWN_CK2 bit 2: the router's dot rows as work-groups)
+             const ops41sycl::RowsPair<RD, D> rp{rider, d};
+             launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<RD, D>>{rp});
+         }
+@@ -1402,6 +1445,25 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
+             launch_wgl<64>(c, ng, 512, ops41sycl::SkNormDotsWM<8>{(unsigned)M, nt, H, H, H4, FS}, x, w, y, sv, fn, out);
+         return true;
+     };
++    // OWN_CK2 bit 1 (ck2-1): a block of 2 tokens' FFN pre-norm (x -> y, both tokens), its mix's dot rows (this card's
++    // tokens under OWN_MT_DSPLIT, into the same partials as skmix / dmix) and the router rows (GemvH16P<160>'s rows,
++    // both tokens' chains on one sub-group) in ONE launch, FlNormKM<2, 1, 1>; false: not taken (nothing launched)
++    auto ck2n = [&](const float *x, const std::string &wn, float *y, const std::string &prefix, unsigned xr,
++                    const unsigned *t0, const unsigned *t1) {
++        if (M != 2 || !ck2_on(c, 1u) || HC_SEG != 8) return false;
++        const float *w = wp<float>(c, wn);
++        if (!al16(x) || !al16(w) || !al16(y) || x == y) return false;
++        const std::string rn = p + "ffn_gate_inp.weight";
++        const auto &e = we(rn);
++        const auto &dp = wgt[c].at(rn);
++        if (!dp.packed || e.type != iq3::Type::F32 || e.cols != 5120 || dp.nrows != (unsigned)e.rows) return false;
++        const unsigned u0 = dsp ? t0[c] : 0u, nt = dsp ? t1[c] - t0[c] : (unsigned)M;
++        const float *sv = (const float *)strm[c] + u0 * H4, *fn = wp<float>(c, prefix + "fn.weight");
++        double *out = (dsp ? (double *)(xarena[c] + xr) : b.d25) + u0 * FS;
++        ck2_launch(c, ops41sycl::FlNormKM<2, 1, 1>{x, w, y, H, H, sv, fn, out, H4, FS, nt, (const uint8_t *)dp.p,
++                                                  (float *)b.router, (size_t)g.experts, dp.nrows});
++        return true;
++    };
+     // OWN_MT_DSPLIT: a mix's finish for every token from the gathered partials (production's finish rows; only the
+     // partials pointer differs), and whether it rides in the launch of matrix wn
+     auto fmix = [&](const std::string &prefix, unsigned xr, float *pre, float *post, float *comb) {
+@@ -1776,7 +1838,9 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
+         hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H}, // (OWN_MT_HCPP)
+                     strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
+                     (float *)nullptr, (const float *)b.pre_a, b.x);
+-        if (rd) { // the dot rows ride in the router's launch
++        if (ck2n(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", dsF, dF0, dF1)) {
++            // OWN_CK2 bit 1: the pre-norm, the dot rows and the router rows in one launch
++        } else if (rd) { // the dot rows ride in the router's launch
+             if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
+                 rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
+             if (dsp && dF0[c] == dF1[c]) // (OWN_MT_DSPLIT, no tokens here: no rows to launch beside the unpacked router)
+diff --git a/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp b/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
+index 6e2bcf7..9cb67f9 100644
+--- a/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
++++ b/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
+@@ -639,6 +639,22 @@ int main(int argc, char **argv) {
+                 if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
+             ops41sycl::g_ws_dride_mask = m;
+         }
++        // ck2-1 (opt-in, /home/steve/dsv41-work/ck2/README.md; each a bit-identical form): OWN_CK2_FORMS=bits (default 3):
++        // 1 a 2-token block's FFN pre-norm + the mix's dot rows + the router rows in one launch (ops41sycl::FlNormKM),
++        // 2 the mixes' dot rows riding a dense launch (router, q_a + kv) as SkDotsFF work-groups in it (RowsDotsK).
++        // OWN_CK2=1: blocks of 2 and 3 tokens; OWN_CK2=n (n != 1; 0x.. allowed) the sizes M = 2 .. 6 whose bit M - 2 is set;
++        // OWN_CK2_MS="2,3": those sizes
++        if (const char *e = getenv("OWN_CK2")) {
++            const unsigned long n = strtoul(e, nullptr, 0);
++            be.mt_ck2 = n == 1 ? 0x3u : (unsigned)(n & 0x1fu);
++        }
++        if (const char *e = getenv("OWN_CK2_FORMS")) be.mt_ck2_forms = (unsigned)strtoul(e, nullptr, 0) & 3u;
++        if (const char *e = getenv("OWN_CK2_MS")) {
++            unsigned m = 0;
++            for (const char *c = e; *c; ++c)
++                if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
++            be.mt_ck2 = m;
++        }
+         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
+         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
+             for (const char *s = e; *s;) {
