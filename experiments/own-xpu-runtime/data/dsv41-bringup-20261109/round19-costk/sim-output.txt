@@ -1,0 +1,47 @@
+calibration: cumprod bin -> observed P(first j guesses right), by position j (n)
+0.0-0.1 0.00(  1) 0.03( 39) 0.03(177) 0.02(381) 0.01(556)
+0.1-0.2 0.20( 10) 0.15( 94) 0.07(179) 0.07(185) 0.02(122)
+0.2-0.3 0.30( 33) 0.21(105) 0.15(122) 0.10( 82) 0.12( 74)
+0.3-0.4 0.34( 56) 0.20(112) 0.22( 88) 0.13( 55) 0.07( 46)
+0.4-0.5 0.42( 90) 0.30( 97) 0.23( 69) 0.19( 52) 0.09( 34)
+0.5-0.6 0.55( 83) 0.45( 71) 0.32( 47) 0.27( 26) 0.24( 21)
+0.6-0.7 0.58( 76) 0.51( 81) 0.40( 52) 0.37( 41) 0.40( 25)
+0.7-0.8 0.67( 66) 0.57( 60) 0.59( 49) 0.50( 36) 0.53( 17)
+0.8-0.9 0.74( 84) 0.62( 79) 0.57( 56) 0.77( 26) 0.69( 13)
+0.9-1.0 0.94(442) 0.93(203) 0.90(102) 0.89( 57) 0.85( 33)
+
+TAU sweep (sim tok/s):
+  tau 0.00 code  136.7 analysis  140.1 prose   94.6 docs  125.9 ops  120.8  mean  123.6
+  tau 0.20 code  155.0 analysis  156.7 prose  116.1 docs  145.1 ops  139.8  mean  142.6
+  tau 0.30 code  157.1 analysis  159.2 prose  119.6 docs  149.2 ops  142.7  mean  145.6
+  tau 0.40 code  157.2 analysis  162.7 prose  122.3 docs  151.6 ops  145.7  mean  147.9
+  tau 0.45 code  155.3 analysis  162.1 prose  123.6 docs  152.9 ops  145.6  mean  147.9
+  tau 0.50 code  155.7 analysis  164.6 prose  123.7 docs  154.5 ops  145.4  mean  148.8
+  tau 0.55 code  153.0 analysis  164.6 prose  123.8 docs  153.7 ops  144.1  mean  147.8
+  tau 0.60 code  150.6 analysis  165.1 prose  124.4 docs  152.1 ops  142.9  mean  147.0
+  tau 0.70 code  146.4 analysis  164.7 prose  124.4 docs  146.9 ops  136.9  mean  143.9
+  tau 0.80 code  141.4 analysis  160.5 prose  119.0 docs  141.4 ops  134.7  mean  139.4
+  tau 1.01 code   84.7 analysis   84.7 prose   84.7 docs   84.7 ops   84.7  mean   84.7
+
+cost-aware, raw cumprod as P:
+  lam 0.12 code  156.8 analysis  158.4 prose  117.8 docs  147.3 ops  141.9  mean  144.4
+  lam 0.14 code  157.5 analysis  159.7 prose  119.3 docs  148.9 ops  143.8  mean  145.9
+  lam 0.16 code  157.9 analysis  159.7 prose  121.1 docs  150.6 ops  144.1  mean  146.7
+  lam 0.18 code  155.8 analysis  160.9 prose  122.6 docs  151.0 ops  145.0  mean  147.1
+  lam 0.20 code  155.5 analysis  161.7 prose  122.9 docs  151.1 ops  143.4  mean  146.9
+  lam 0.22 code  154.7 analysis  162.6 prose  123.7 docs  152.0 ops  142.9  mean  147.2
+cost-aware, calibrated on all five (in-sample):
+  lam 0.12 code  158.3 analysis  164.9 prose  122.7 docs  152.0 ops  145.7  mean  148.7
+  lam 0.14 code  156.4 analysis  166.0 prose  123.8 docs  153.6 ops  146.7  mean  149.3
+  lam 0.16 code  155.4 analysis  165.6 prose  123.6 docs  154.0 ops  145.9  mean  148.9
+  lam 0.18 code  155.4 analysis  165.6 prose  123.6 docs  154.0 ops  145.9  mean  148.9
+  lam 0.20 code  153.8 analysis  166.5 prose  123.5 docs  153.4 ops  144.4  mean  148.3
+cost-aware, calibrated leave-one-prompt-out (held-out prompt scored):
+  lam 0.12 code  156.8 analysis  164.9 prose  122.3 docs  151.3 ops  145.7  mean  148.2
+  lam 0.14 code  156.2 analysis  165.3 prose  122.6 docs  152.2 ops  146.4  mean  148.5
+  lam 0.16 code  155.4 analysis  165.1 prose  123.2 docs  153.2 ops  145.9  mean  148.6
+  lam 0.18 code  152.9 analysis  165.4 prose  123.6 docs  153.1 ops  144.1  mean  147.8
+  lam 0.20 code  147.2 analysis  165.0 prose  123.7 docs  152.6 ops  142.2  mean  146.1
+
+oracle (check exactly the guesses that will be kept): code  185.2 analysis  188.4 prose  146.3 docs  176.5 ops  171.8  mean  173.6
+best per-position cutoffs in-sample [0.35, 0.5, 0.3, 0.65, 0.5] mean 149.7 code  158.1 analysis  167.0 prose  122.9 docs  154.3 ops  146.3
