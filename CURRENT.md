@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 12, 2026 21:35 EST — DeepSeek: copy engine chosen for prompt exchanges; one driver engine reset (ours).**
+- Guess-count rule study (round19-costk): the 0.5 cutoff is within ~0.5 % of the best rule; closed.
+- Transport benches (round19-ce): card-to-card EU stores ~1 GB/s whatever the cache hints; each card's copy engine
+  pushes at 27-30 GB/s beside compute, hand-off ~7-8 us (EU pushes 3-6 us for small messages). Helper bcs builds
+  `OWN_PX_BCS` (prompt exchanges as copy-engine pushes). Helper ck2 done (`ck2-1.patch`, ~+0.7 % guessing).
+- 21:27:49 xe a3:00.0 ccs engine reset when I killed my hung latency bench mid-spin (bench bug: it polled a flag in
+  the peer's memory). Probe passed 21:28. Evidence /home/steve/dsv41-work/faults/engine-reset-20261112T2127/.
+
 **November 12, 2026 20:28 EST — DeepSeek V4.1 tp105 gated: plain 106.1 tok/s with OWN_FL=3; guessing +1 %.**
 - tg105 (19:40-20:22): every trace identical (xorP compiled in; FL / NOPAIR / SW arms). Plain 104.0 -> 106.1 tok/s
   with `OWN_FL=3`; guessing code ~145.5, analysis ~161.5 (+0.7-1.3 %); SW1 slower (off). tg105v: the draft vocabulary

@@ -32,3 +32,21 @@ Values exact at every size. **The copy engine runs beside compute:** a 20 MiB-pe
 Prompt exchanges move to copy-engine pushes as an opt-in (`OWN_PX_BCS`, helper bcs, `dsv41-work/bcs/`): no EU
 time, true overlap with compute (one compute engine per card limited the EU-pull overlap), and posted writes instead
 of peer reads (the reset suspect). EU-store pushes stay out for bulk data.
+
+## sync + lat (`bcs_sync.cpp` / `sync.txt`, `bcs_lat.cpp` / `lat2.txt`, 21:30-21:33)
+
+- **Kernel -> copy-engine ordering works three ways** (one card, kernel still running when the copy is queued, copy
+  waited ~1 ms, all values right): the kernel's SYCL event's native handle as the copy's wait event; an own Level
+  Zero event signalled on the SYCL queue's native immediate command list; the native handle of
+  `ext_oneapi_submit_barrier()`.
+- **Hand-off latency, one way** (pairs 0-1 / 2-3 / 4-5 at once, 2,000 round trips, payload then flag, the receiver
+  polls a flag in its own memory): copy engine 7.9 / 7.6 / 7.1 / 7.6 us at 256 B / 4 / 16 / 64 KiB; EU stores into
+  the peer 3.3 / 5.4 / 5.1 / 6.3 us. So the copy engine is for bulk prompt slices; small decode / check exchanges stay
+  on the EU paths.
+- Polling a flag in the PEER's memory never saw the update (the bench's "pull" mode timed out): flags must be polled
+  in local memory, written by the peer (as the engine's XchgPull does).
+- Open: EU stores to one peer moved 64 KiB in ~6 us one way here (>= 10 GB/s), against ~1 GB/s in the all-gather
+  bench (`xchg_ce_bench`: five peers, SIMD32, back-to-back rounds). Not explained yet; does not change today's plan.
+- 21:27:49 driver engine reset on card a3:00.0 when I killed an earlier hung version of `bcs_lat` mid-spin (my
+  bench's bug above; evidence `dsv41-work/faults/engine-reset-20261112T2127/`, probe passed 21:28). The bench now
+  skips every later wait after one timeout.
