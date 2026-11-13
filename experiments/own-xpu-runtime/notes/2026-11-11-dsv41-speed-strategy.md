@@ -400,6 +400,12 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 00:17 (2026-11-13) **tp107 gated (tg107, `data/.../round19-tg107/`): copy-engine prompt pushes exact and -8 %.** Every
+  trace identical (stage 1, 3K x4, a 10K prompt: px-512 + copy engine = blocks of 256), every answer the same. 3K read
+  px-512 5.46 / 5.53 -> `OWN_PX_BCS=1` 5.07 / 5.03 s (256 + BCS 5.28); 10K 17.78 -> 16.45 s (647 tok/s). Plain and
+  guessing unchanged (106.4; code 147.1, analysis 164.7). `OWN_PX_BCS` default 1 from tp108 (forced off without
+  `OWN_PX`). The prompt's card-to-card reads are now only the pair swaps (resets pointed at read traffic). Prompt
+  budget left (card 2, per 256 tokens, tg103): experts ~45 %, dense rows ~29 %: rux4 (expert pipelining) next.
 - 22:54 (2026-11-12) **EU pushes are slow only when a card writes to several peers at once** (`data/.../round19-ce/`
   sg / sq / ord). One peer at a time (five launches, card c -> c + p): 41 GB/s per card at 640 KiB with all six (pulls
   36), 20 at 64 KiB; five peers at once (today's push forms): ~1 GB/s even alone. Flag-after-data ordering holds

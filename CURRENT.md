@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 13, 2026 00:17 EST — DeepSeek tp107 gated: prompt reads 8 % faster with the copy engine; default next.**
+- tg107 (23:57-00:15, round19-tg107): every trace identical (incl. a 10K prompt), every answer the same, no fault.
+  Copy-engine prompt pushes (`OWN_PX_BCS=1`): 3K read 5.46 / 5.53 -> 5.07 / 5.03 s, 10K 17.78 -> 16.45 s. Plain 106.0 /
+  106.4 (unchanged), guessing code 147.1 / analysis 164.7 (unchanged; one host-side outlier 143.8).
+- `OWN_PX_BCS` default 1 in the sources for tp108 (459c9d8db; forced off without `OWN_PX`). Prompt mode to use:
+  `OWN_PROMPT_BLOCK=512 OWN_PX=1 OWN_PX_BIG=1`. Helpers still running: xchg2 (decode exchanges as one-peer pushes),
+  rux4 (prompt expert kernels); tp108 builds when they land.
+
 **November 12, 2026 22:55 EST — DeepSeek tp106 gated; card-to-card writes can be fast (one peer at a time).**
 - tp106 (dcf06e199) = ck2 + defaults OWN_FL=3, OWN_U3_NOPAIR=1, OWN_MT_EU_HEAVY=0: every trace identical; plain 105.8;
   guessing code ~147 / analysis ~163.5, +0.6-1.1 % more with OWN_CK2 (default from tp107, 2ef2e47d6); 3K read 5.45 s
