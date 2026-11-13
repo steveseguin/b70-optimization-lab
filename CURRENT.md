@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**November 12, 2026 22:58 EST — DeepSeek tp106 gated; card-to-card writes can be fast (one peer at a time).**
+**November 12, 2026 22:55 EST — DeepSeek tp106 gated; card-to-card writes can be fast (one peer at a time).**
 - tp106 (dcf06e199) = ck2 + defaults OWN_FL=3, OWN_U3_NOPAIR=1, OWN_MT_EU_HEAVY=0: every trace identical; plain 105.8;
   guessing code ~147 / analysis ~163.5, +0.6-1.1 % more with OWN_CK2 (default from tp107, 2ef2e47d6); 3K read 5.45 s
   (px-512). Results round19-tg105h, round19-tg106. One draft-side one-off guess difference (answers same; ck2rep clean).
