@@ -395,6 +395,23 @@ public:
         // 4 expert activations of 2-3 tokens by XchgQ (pull), 5 output-a of 3-6 tokens by XchgQ (pull; not with
         // OWN_MT_DSPLIT's second region). 0: off (today's forms)
         unsigned xpush2 = 0x0Fu; // OWN_XPUSH2 (xchg2-1): default on since tp109; 0 = the tp108 exchanges
+        // qkv-1 (2026-11-13, opt-in; /home/steve/dsv41-work/qkv/README.md, plan item D): each card computes only its
+        // share of the q_a + kv rows (rows [qkr0, qkr1) of the 1,792 concatenated rows, 16-row units, equal shares)
+        // into the arena region xqk (token t at xqk + t * 1,792: q_a rows, then kv rows), the shares are all-gathered
+        // (exchange part XP_QKV; with OWN_XPUSH2 an XchgP below qkv_xq tokens, an XchgQ from there up to 6 tokens;
+        // larger blocks the pull, use_pull) and both norms read the gathered rows there. Every row is computed by the
+        // same row code over the same packed row bytes and the same activations as in today's launch, only on one
+        // card (Backend41::qkv_share1 / qkv_share_m / qkv_share_big). Bits (OWN_QKV_SPLIT): 2 one-token steps, 4 blocks
+        // of 2-6 tokens (checks, small prompt blocks), 8 prompt blocks of more than 6 tokens; none in OWN_PX halves or
+        // the draft's block steps. OWN_QKV_SPLIT=1: all (14), the default since tp110 (qsp110: plain +1.8 %, guessing
+        // +1.8-1.9 %, same answers). 0: off, the arena and every launch as before.
+        unsigned qkv_split = 14;
+        unsigned qkv_xq = 5;   // OWN_QKV_XQ: blocks of at least this many tokens gather by XchgQ, smaller ones by XchgP
+        unsigned qkv_wg = 128; // OWN_QKV_WG: items per work-group of the share launch, 128 or 512 (a row is a sub-group
+                               // either way; a sixth of the rows in work-groups of 16 rows leaves cores idle)
+        unsigned qkv_form = 1; // OWN_QKV_FORM (blocks of 2-6 tokens): the share's rows as DenseRowsG<1> (1) or
+                               // DenseRowsG<2> (2) pairs (bench_qkv: G1 the fastest share form at 2-6 tokens; every
+                               // form sums each row and token as the one-token rows do, bit for bit)
         unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         // px-1 (OWN_PX=1, opt-in; /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks of 2 x OWN_PX_MIN tokens
@@ -1963,6 +1980,52 @@ private:
             return false;
         return true;
     }
+    // qkv-1 (OWN_QKV_SPLIT): whether this step's q_a + kv rows are split by card (bit 2 one-token steps, bit 4 blocks
+    // of 2-6 tokens, bit 8 larger blocks up to the arena's qk_slots; the same answer on every card: options, shapes
+    // and uploads only)
+    bool qkv_on(int c, const std::string &p, unsigned mt) const {
+        if (!o.qkv_split || o.tp < 2 || !xqk || !mt || mt > qk_slots) return false;
+        if (!(o.qkv_split & (mt == 1 ? 2u : mt <= 6 ? 4u : 8u))) return false;
+        const auto &ea = we(p + "attn_q_a.weight"), &eb = we(p + "attn_kv.weight");
+        const auto &da = wgt[c].at(p + "attn_q_a.weight"), &db = wgt[c].at(p + "attn_kv.weight");
+        return da.packed && db.packed && ea.type == eb.type && ea.cols == 5120 && eb.cols == 5120 &&
+               da.nrows == (unsigned)g.qrank && db.nrows == (unsigned)g.hd &&
+               (ea.type == iq3::Type::Q8_0 || ea.type == iq3::Type::Q6_K);
+    }
+    // this card's rows of the 1,792 as (q_a rows [a0, a1), kv rows [b0, b1)): the matrices' row ranges inside its share
+    void qkv_rows(int c, unsigned &a0, unsigned &a1, unsigned &b0, unsigned &b1) const {
+        const unsigned R = (unsigned)g.qrank;
+        a0 = std::min(qkr0[c], R), a1 = std::min(qkr1[c], R);
+        b0 = std::max(qkr0[c], R) - R, b1 = std::max(qkr1[c], R) - R;
+    }
+    template <size_t WG, typename K> void qkv_launch(int c, size_t rows, const K &k) { launch_rows<0, WG>(c, rows, 0, k); }
+    template <typename K> void qkv_launch_wg(int c, size_t rows, const K &k) {
+        if (o.qkv_wg == 128) qkv_launch<128>(c, rows, k);
+        else qkv_launch<512>(c, rows, k);
+    }
+#ifndef OWN41_ACT_BF16
+    // qkv-1, one-token step: the card's q_a rows [a0, a1) and kv rows [b0, b1) in gemv_pair_ex's launch form (rider
+    // first, then RowsPair<DenseRows<DK>, DenseRows<DK>>: each row one sub-group running DK::row over the same packed
+    // row bytes and the same x as gemv_pair_ex's full launch, so the same bits), its outputs at the arena slot xqk
+    // (q_a row r at xqk + r, kv row r at xqk + 1,280 + r), where the exchange gathers every card's rows
+    template <typename EX> void qkv_share1(int c, const std::string &p, const act_t *x, EX ex) {
+        const auto &ea = we(p + "attn_q_a.weight");
+        const auto &da = wgt[c].at(p + "attn_q_a.weight"), &db = wgt[c].at(p + "attn_kv.weight");
+        unsigned a0, a1, b0, b1;
+        qkv_rows(c, a0, a1, b0, b1);
+        const size_t RB = pk41::packed_row_bytes(ea.type, (size_t)ea.cols);
+        const uint8_t *wa = (const uint8_t *)da.p + (size_t)a0 * RB, *wb = (const uint8_t *)db.p + (size_t)b0 * RB;
+        float *ya = xarena[c] + xqk + a0, *yb = xarena[c] + xqk + g.qrank + b0;
+        auto go = [&](auto dka, auto dkb) {
+            using D = ops41sycl::DenseRows<decltype(dka)>;
+            using R = ops41sycl::RowsPair<EX, ops41sycl::RowsPair<D, D>>;
+            const R r{ex, {D{dka, wa, x, ya}, D{dkb, wb, x, yb}}};
+            qkv_launch_wg(c, r.n(), ops41sycl::RowsP<R>{r});
+        };
+        if (ea.type == iq3::Type::Q8_0) go(ops41sycl::GemvQ8P<160, Act>{a1 - a0, 0}, ops41sycl::GemvQ8P<160, Act>{b1 - b0, 0});
+        else go(ops41sycl::GemvQ6KP<20, Act>{a1 - a0, 0}, ops41sycl::GemvQ6KP<20, Act>{b1 - b0, 0}); // (qkv_on: Q6_K)
+    }
+#endif
     // a one-token norm launch in work-groups of o.norm_wg items (OWN_NORM_WG; the rows are sub-groups either way)
     template <typename K> void norm_rows_launch(int c, K k, size_t rows) {
         if (o.norm_wg == 64) launch_rows<0, 64>(c, rows, 0, k);
@@ -3443,6 +3506,12 @@ private:
     // layers run with it so far (the same count on every card: the flags' seq)
     size_t xqm = 0;
     uint32_t qbm_seq[TILES] = {};
+    // qkv-1 (OWN_QKV_SPLIT): the gathered q_a + kv rows (arena offset xqk, qk_slots slots of QKN floats) and each
+    // card's rows
+    static constexpr unsigned QKN = 1792; // q_a rows (qrank 1,280) + kv rows (hd 512)
+    size_t xqk = 0;
+    unsigned qk_slots = 0;
+    unsigned qkr0[TILES] = {}, qkr1[TILES] = {};
     bool qbm_any() const {
         for (int m = 2; m <= 6; ++m)
             if (o.qb_off_m[m]) return true;
@@ -4105,6 +4174,30 @@ private:
             if ((thq1[c] - thq0[c]) % 4) throw std::runtime_error("tensor parallel: heads per card % 4");
             if (tm1[c] <= tm0[c] || td1[c] <= td0[c] || tv1[c] <= tv0[c] || te1[c] <= te0[c])
                 throw std::runtime_error("tensor parallel: a card without rows (OWN_TP_WEIGHTS)");
+            if (o.qkv_split) { // qkv-1: equal shares of the 1,792 q_a + kv rows (16-row units: 64-byte lines of their own)
+                static const int eq[6] = {};
+                const auto [a, b] = split((int)QKN, c, 16, eq);
+                qkr0[c] = (unsigned)a, qkr1[c] = (unsigned)b;
+            }
+        }
+        if (o.qkv_split) {
+            const char *why = g.qrank + g.hd != (int)QKN || g.h != 5120 ? "model shape"
+                              : o.k7                                  ? "OWN_K7"
+                              : o.xtail                               ? "OWN_XTAIL"
+                              : o.xll                                 ? "OWN_XLL"
+                              : !o.dev_index ? "OWN_DEV_INDEX=0: a serial step's host top-k would wait behind the gather"
+                                                                      : nullptr;
+            if (why) {
+                std::fprintf(stderr, "OWN_QKV_SPLIT: off (%s)\n", why);
+                o.qkv_split = 0;
+            } else {
+                if (o.qkv_wg != 512 && o.qkv_wg != 128) throw std::runtime_error("OWN_QKV_WG: 128 or 512");
+                if (o.qkv_form != 1 && o.qkv_form != 2) throw std::runtime_error("OWN_QKV_FORM: 1 or 2");
+                std::fprintf(stderr, "OWN_QKV_SPLIT=%u: q_a + kv rows per card", o.qkv_split);
+                for (int c = 0; c < N; ++c) std::fprintf(stderr, " [%u, %u)", qkr0[c], qkr1[c]);
+                std::fprintf(stderr, "; XchgQ from %u tokens, work-groups of %u, block form %u\n", o.qkv_xq, o.qkv_wg,
+                             o.qkv_form);
+            }
         }
         {
             int nz = 0, sum = 0;
@@ -4160,6 +4253,13 @@ private:
             nfq = xqm + (size_t)6 * qbo_kx() * g.hd;
         }
         if ((o.qb_off || qbm_any()) && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
+        if (o.qkv_split) { // qkv-1: the gathered q_a + kv rows, 64-byte aligned: 8 slots (blocks of up to 6 tokens),
+                           // with bit 8 one per token of the largest block (mtba_n)
+            qk_slots = (o.qkv_split & 8u) ? (unsigned)mtba_n() : 8u;
+            xqk = (nfq + 15) & ~(size_t)15;
+            nfq = xqk + (size_t)qk_slots * QKN;
+            if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QKV_SPLIT: arena offsets");
+        }
         if (o.xll && xw_path) {
             std::fprintf(stderr, "OWN_XLL: off (OWN_XWAIT's exchanges record their waits; XchgPull)\n");
             o.xll = 0;
@@ -4383,6 +4483,10 @@ private:
         } else if (part == XP_ACT) {
             if (nslot == 7) return (m & 4u) ? 2 : 0;
             if (nslot == 14 || nslot == 21) return (m & 16u) ? 2 : 0;
+        } else if (part == XP_QKV) { // qkv-1: 1.2 KB per token and card (304 rows; xchg2's xlat at that size: XchgP
+                                     // from 1 to ~4 tokens, the peer-ordered XchgQ past it). Reuse: both norms read
+                                     // the gathered rows before the card's next exchange (output-a's)
+            if (nslot >= 1 && nslot <= 6) return nslot >= o.qkv_xq ? 2 : 1;
         }
         return 0;
     }
@@ -4441,7 +4545,7 @@ private:
         return x.seq;
     }
     // XP_OAD: the draft's output-a rows (hl[1]); XP_OAP: the target's in blocks of >= OWN_TP_HEADS_MIN (hl[2])
-    enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3, XP_OAD = 4, XP_OAP = 5 };
+    enum { XP_OA = 0, XP_H = 1, XP_ACT = 2, XP_ENG = 3, XP_OAD = 4, XP_OAP = 5, XP_QKV = 6 }; // (XP_QKV: qkv-1)
     void xbounds(int part, unsigned *b0, unsigned *b1) const {
         for (int d = 0; d < 6; ++d) {
             b0[d] = b1[d] = 0;
@@ -4453,6 +4557,7 @@ private:
             case XP_H: b0[d] = td0[d], b1[d] = td1[d]; break;
             case XP_ACT: b0[d] = tm0[d], b1[d] = tm1[d]; break;
             case XP_ENG: b0[d] = te0[d], b1[d] = te1[d]; break;
+            case XP_QKV: b0[d] = qkr0[d], b1[d] = qkr1[d]; break; // (qkv-1: OWN_QKV_SPLIT)
             default: throw std::runtime_error("exchange part");
             }
             if ((b1[d] - b0[d]) % 4 || b0[d] % 4) throw std::runtime_error("exchange rows not multiples of 4");
@@ -4698,19 +4803,32 @@ private:
                 if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
                 const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
                 const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
-                const bool pair_ok = dots_done ? gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
-                                                              s.kv, s.xn, ops41sycl::NoRows{})
-                                               : gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
-                                                              s.kv, s.xn, hc_dots(c, p + "hc_attn_"));
-                if (!pair_ok) throw std::runtime_error("query-a / key-value pair launch: " + p);
+                // qkv-1 (OWN_QKV_SPLIT bit 2): this card's share of the q_a + kv rows (+ the dot rows) into the arena,
+                // the all-gather, then both norms read every card's rows there; off: today's pair launch into s.qa / s.kv
+                const float *qa_in = (const float *)s.qa, *kv_in = (const float *)s.kv;
+#ifndef OWN41_ACT_BF16
+                if (qkv_on(c, p, 1u)) {
+                    if (dots_done) qkv_share1(c, p, s.xn, ops41sycl::NoRows{});
+                    else qkv_share1(c, p, s.xn, hc_dots(c, p + "hc_attn_"));
+                    xchg(c, (unsigned)xqk, QKN, 1u, qkr0[c], qkr1[c], 0, 0, XP_QKV);
+                    qa_in = xarena[c] + xqk, kv_in = qa_in + g.qrank;
+                } else
+#endif
+                {
+                    const bool pair_ok = dots_done ? gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
+                                                                  s.kv, s.xn, ops41sycl::NoRows{})
+                                                   : gemv_pair_ex(c, p + "attn_q_a.weight", s.qa, p + "attn_kv.weight",
+                                                                  s.kv, s.xn, hc_dots(c, p + "hc_attn_"));
+                    if (!pair_ok) throw std::runtime_error("query-a / key-value pair launch: " + p);
+                }
                 if (o.smallk) { // both norms in one work-group of 8 sub-groups (the same scales)
-                    launch_wgl<16>(c, 1, 256, ops41sycl::SkNormPairW{}, (const float *)s.qa,
-                                   wp<float>(c, p + "attn_q_a_norm.weight"), (float *)s.qn, (const float *)s.kv,
+                    launch_wgl<16>(c, 1, 256, ops41sycl::SkNormPairW{}, qa_in,
+                                   wp<float>(c, p + "attn_q_a_norm.weight"), (float *)s.qn, kv_in,
                                    wp<float>(c, p + "attn_kv_a_norm.weight"), (float *)s.kvn);
                 } else {
                     using NR = ops41sycl::RowsPair<ops41sycl::NormRows<1280, 4>, ops41sycl::NormRows<512, 2>>;
-                    const NR nr{{s.qa, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
-                                {s.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
+                    const NR nr{{qa_in, wp<float>(c, p + "attn_q_a_norm.weight"), s.qn},
+                                {kv_in, wp<float>(c, p + "attn_kv_a_norm.weight"), s.kvn}};
                     norm_rows_launch(c, ops41sycl::RowsP<NR>{nr}, nr.n());
                 }
                 prof("attn_q_a", c);

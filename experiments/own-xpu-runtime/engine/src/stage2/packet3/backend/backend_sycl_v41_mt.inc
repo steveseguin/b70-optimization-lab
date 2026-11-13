@@ -683,6 +683,46 @@ template <typename F> bool dense_kernel(int c, const std::string &wn, F &&f) {
 #undef XQ
     return false;
 }
+// qkv-1 (OWN_QKV_SPLIT bit 4, blocks of 2-6 tokens): this card's q_a rows [a0, a1) and kv rows [b0, b1) for mt tokens
+// in ONE launch, the rider first, then RowsPair<DenseRowsG<DK, G>, DenseRowsG<DK, G>> (G = OWN_QKV_FORM: 1 or 2) over
+// the share's packed rows; token t's outputs at the arena slot xqk + t * QKN (q_a rows, then kv rows), where the
+// exchange gathers every card's rows. Each (row, token) is rowg<G>'s sum, the same as the one-token rows' and every
+// WS / pair form's (bench_qkv: all six shares in G1 / G2 / WS_PAIR forms against gemv_pair_m's launch, bit for bit)
+template <typename RD> void qkv_share_m(int c, const std::string &p, const act_t *x, size_t xs, unsigned mt, const RD &rider) {
+    const auto &ea = we(p + "attn_q_a.weight");
+    const auto &da = wgt[c].at(p + "attn_q_a.weight"), &db = wgt[c].at(p + "attn_kv.weight");
+    unsigned a0, a1, b0, b1;
+    qkv_rows(c, a0, a1, b0, b1);
+    const size_t RB = pk41::packed_row_bytes(ea.type, (size_t)ea.cols);
+    const uint8_t *wa = (const uint8_t *)da.p + (size_t)a0 * RB, *wb = (const uint8_t *)db.p + (size_t)b0 * RB;
+    float *ya = xarena[c] + xqk + a0, *yb = xarena[c] + xqk + g.qrank + b0;
+    auto go = [&](auto dka, auto dkb, auto gc) {
+        constexpr unsigned G = decltype(gc)::value;
+        using D = ops41sycl::DenseRowsG<decltype(dka), G>;
+        using P = ops41sycl::RowsPair<D, D>;
+        using R = ops41sycl::RowsPair<RD, P>;
+        const unsigned ng = (mt + G - 1) / G;
+        const R r{rider, P{D{dka, wa, x, xs, ya, QKN, mt, ng}, D{dkb, wb, x, xs, yb, QKN, mt, ng}}};
+        qkv_launch_wg(c, r.n(), ops41sycl::RowsP<R>{r});
+    };
+    auto form = [&](auto dka, auto dkb) {
+        if (o.qkv_form == 2) go(dka, dkb, std::integral_constant<unsigned, 2>{});
+        else go(dka, dkb, std::integral_constant<unsigned, 1>{});
+    };
+    if (ea.type == iq3::Type::Q8_0) form(ops41sycl::GemvQ8P<160, Act>{a1 - a0, 0}, ops41sycl::GemvQ8P<160, Act>{b1 - b0, 0});
+    else form(ops41sycl::GemvQ6KP<20, Act>{a1 - a0, 0}, ops41sycl::GemvQ6KP<20, Act>{b1 - b0, 0}); // (qkv_on: Q6_K)
+}
+// qkv-1 (OWN_QKV_SPLIT bit 8, blocks of more than 6 tokens): this card's q_a rows [a0, a1) and kv rows [b0, b1) through
+// gemv_m's row ranges (the production call's own form rules for the share's row count; every dense form sums each
+// (row, token) as the one-token rows do), outputs at the arena slots xqk + t * QKN as qkv_share_m's. A card whose
+// share lies in one matrix launches once, the card holding both (card 4 of 6) twice.
+void qkv_share_big(int c, const std::string &p, const act_t *x, size_t xs) {
+    unsigned a0, a1, b0, b1;
+    qkv_rows(c, a0, a1, b0, b1);
+    if (a1 > a0) gemv_m(c, p + "attn_q_a.weight", x, xs, xarena[c] + xqk + a0, QKN, 0, 0, ops41sycl::NoRows{}, a0, a1);
+    if (b1 > b0)
+        gemv_m(c, p + "attn_kv.weight", x, xs, xarena[c] + xqk + g.qrank + b0, QKN, 0, 0, ops41sycl::NoRows{}, b0, b1);
+}
 // OWN_MT_KVPAIR: two packed matrices of one kernel that read the same activations (q_a and kv) in ONE launch,
 // rider rows first, then a's rows, then b's (RowsPair: a row's code does not depend on its launch). Each matrix
 // runs in the plain token groups dense_m would give it (DenseRowsG<DK, mt_tg_of>); false, nothing launched,
@@ -1456,6 +1496,14 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     // OWN_MT_DSPLIT (dsp: this card's tokens' dot rows only, into the arena; the finishes after the pulls) and
     // OWN_MT_SKDOTS (skd: the dot rows as SkDotsWM launches; rd: whether HcDotsRows rows still ride q_a / the router)
     const bool dsp = ds_on((unsigned)M), skd = mt_small && mt_skdots && (unsigned)M >= mt_skdots_min, rd = ride && !skd;
+    // qkv-1 (OWN_QKV_SPLIT bits 4 and 8): this card's share of the q_a + kv rows, all-gathered before both norms (qsp).
+    // The attention mix's dot rows then leave q_a's launch for the pre-norm's as SkDotsWM rows (skdA, rdA: what
+    // OWN_MT_SKDOTS does from OWN_MT_SKDOTS_MIN tokens on; the finish's outputs the same bits): in a sixth of the rows
+    // their double chains would set the launch's length (bench_qkv: 2 tokens 5.7 -> 11.8 us, 3 tokens 6.0 -> 16.6).
+    // With OWN_MT_DSPLIT (blocks of >= 4 tokens) nothing else changes: skd is already on there, the dot rows of the
+    // card's tokens go to the arena as before, the norms run in the DSPLIT branch, and ds_arm comes after this exchange
+    const bool qsp = mt_small && mt_skdots && !dr_step && !px_run[c] && qkv_on(c, p, (unsigned)M);
+    const bool skdA = skd || qsp, rdA = ride && !skdA;
     unsigned dA0[6] = {}, dA1[6] = {}, dF0[6] = {}, dF1[6] = {}; // OWN_MT_DSPLIT: the cards' tokens per mix
     if (dsp) ds_split((unsigned)M, true, hla, dA0, dA1), ds_split((unsigned)M, false, hla, dF0, dF1);
     // a mix's dot rows: all tokens' into the token buffers (production), or this card's tokens' into the arena region
@@ -1478,9 +1526,9 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     };
     // OWN_MT_SKNORM bit 2 (with skd): the pre-norm (x -> y, all M tokens) and skmix's SkDotsWM rows (the same tokens,
     // streams, fn rows and partials pointers) in one launch, SkNormDotsWM; false: not taken (norm launch + skmix)
-    auto sknd = [&](const float *x, const std::string &wn, float *y, const std::string &prefix, unsigned xr,
-                    const unsigned *t0, const unsigned *t1) {
-        if (!skd || !skn_on(2) || HC_SEG != 8) return false;
+    auto sknd = [&](bool on, const float *x, const std::string &wn, float *y, const std::string &prefix, unsigned xr,
+                    const unsigned *t0, const unsigned *t1) { // (on: skd, or skdA for the attention mix)
+        if (!on || !skn_on(2) || HC_SEG != 8) return false;
         const float *w = wp<float>(c, wn);
         if (!al16(x) || !al16(w) || !al16(y) || x == y) return false;
         const unsigned u0 = dsp ? t0[c] : 0u, nt = dsp ? t1[c] - t0[c] : (unsigned)M;
@@ -1561,17 +1609,17 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         if (!mx_ready[c])
             launch(c, (size_t)M * H, 32, ops41sycl::HcPreAM<Act>{g.h, (unsigned)M, H4, 4, H}, (const act_t *)strm[c],
                    (const float *)b.cur_pre, b.x);
-        if (sknd(b.x, p + "attn_norm.weight", b.xn, p + "hc_attn_", dsA, dA0, dA1)) {
+        if (sknd(skdA, b.x, p + "attn_norm.weight", b.xn, p + "hc_attn_", dsA, dA0, dA1)) {
             // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
         } else {
-            if (ride || skd) { // the dot rows ride in q_a's launch below (OWN_MT_SKDOTS: their own launch)
+            if (ride || skdA) { // the dot rows ride in q_a's launch below (OWN_MT_SKDOTS: their own launch)
                 if (!skn_norm5(c, b.x, wp<float>(c, p + "attn_norm.weight"), b.xn, H, H))
                     rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H));
             } else
                 rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
                                    tokr(NR5{b.x, wp<float>(c, p + "attn_norm.weight"), b.xn}, H, H),
                                    dmix(p + "hc_attn_", dsA, dA0, dA1)});
-            if (skd) skmix(p + "hc_attn_", dsA, dA0, dA1);
+            if (skdA) skmix(p + "hc_attn_", dsA, dA0, dA1);
         }
     } else {
         for (int t = 0; t < M; ++t) {
@@ -1590,13 +1638,22 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     } // (PX_P0A)
     if (seg & PX_P0B) {
     // OWN_MT_KVPAIR: q_a + kv rows (+ the dot rows) in one launch, each matrix in the token groups dense_m gives it
-    const bool kvp = mt_small && mt_kvpair && (unsigned)M <= mt_ms_max &&
-                     (rd ? gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
-                                       dmix(p + "hc_attn_", dsA, dA0, dA1))
-                           : gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
-                                         ops41sycl::NoRows{}));
-    if (!kvp) {
-        if (mt_small && rd) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dmix(p + "hc_attn_", dsA, dA0, dA1));
+    // qkv-1 (qsp): the share (no dot rows: skdA), the gather, and the norms below read the arena slots (stride QKN)
+    const float *qa_in = (const float *)b.qa, *kv_in = (const float *)b.kv;
+    size_t qxs = g.qrank, kxs = g.hd;
+    if (qsp) {
+        if (M <= 6) qkv_share_m(c, p, b.xn, H, (unsigned)M, ops41sycl::NoRows{});
+        else qkv_share_big(c, p, b.xn, H);
+        xchg(c, (unsigned)xqk, QKN, (unsigned)M, qkr0[c], qkr1[c], 0, 0, XP_QKV);
+        qa_in = xarena[c] + xqk, kv_in = qa_in + g.qrank, qxs = kxs = QKN;
+    }
+    const bool kvp = !qsp && mt_small && mt_kvpair && (unsigned)M <= mt_ms_max &&
+                     (rdA ? gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
+                                        dmix(p + "hc_attn_", dsA, dA0, dA1))
+                          : gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
+                                        ops41sycl::NoRows{}));
+    if (!qsp && !kvp) {
+        if (mt_small && rdA) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dmix(p + "hc_attn_", dsA, dA0, dA1));
         else gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank);
         gemv_m(c, p + "attn_kv.weight", b.xn, H, b.kv, g.hd);
     }
@@ -1610,21 +1667,20 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     if (mt_small && (fin_qb || dsp)) { // both norms (OWN_MT_DSPLIT: the finish after the output-a pull)
         const float *wq = wp<float>(c, p + "attn_q_a_norm.weight"), *wk = wp<float>(c, p + "attn_kv_a_norm.weight");
         // OWN_MT_SKNORM bit 4: SkNormPairW per token (SkNormPairWM), its conditions as the one-token path's
-        if (skn_on(4) && g.qrank == 1280 && g.hd == 512 && al16(b.qa) && al16(b.qn) && al16(b.kv) && al16(b.kvn) &&
-            al16(wq) && al16(wk) && b.qa != b.qn && b.kv != b.kvn)
-            launch_wgl<16>(c, (size_t)M, 256, ops41sycl::SkNormPairWM{(unsigned)M, (size_t)g.qrank, (size_t)g.qrank,
-                                                                       (size_t)g.hd, (size_t)g.hd},
-                           (const float *)b.qa, wq, (float *)b.qn, (const float *)b.kv, wk, (float *)b.kvn);
+        if (skn_on(4) && g.qrank == 1280 && g.hd == 512 && al16(qa_in) && al16(b.qn) && al16(kv_in) && al16(b.kvn) &&
+            al16(wq) && al16(wk) && qa_in != (const float *)b.qn && kv_in != (const float *)b.kvn)
+            launch_wgl<16>(c, (size_t)M, 256, ops41sycl::SkNormPairWM{(unsigned)M, qxs, (size_t)g.qrank, kxs, (size_t)g.hd},
+                           qa_in, wq, (float *)b.qn, kv_in, wk, (float *)b.kvn);
         else {
             using R = ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>;
-            rows_launch(c, R{tokr(N1{b.qa, wq, b.qn}, g.qrank, g.qrank), tokr(N2{b.kv, wk, b.kvn}, g.hd, g.hd)});
+            rows_launch(c, R{tokr(N1{qa_in, wq, b.qn}, qxs, g.qrank), tokr(N2{kv_in, wk, b.kvn}, kxs, g.hd)});
         }
     } else if (mt_small) { // the mix's finish + both norms
         tok_set(c, 0);
         using R = ops41sycl::RowsPair<FR, ops41sycl::RowsPair<ops41sycl::TokRows<N1>, ops41sycl::TokRows<N2>>>;
         rows_launch(c, R{tokr(hc_finish(c, p + "hc_attn_", b.pre_a, b.post_a, b.comb_a), FS, 4, 4, 16),
-                         {tokr(N1{b.qa, wp<float>(c, p + "attn_q_a_norm.weight"), b.qn}, g.qrank, g.qrank),
-                          tokr(N2{b.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), b.kvn}, g.hd, g.hd)}});
+                         {tokr(N1{qa_in, wp<float>(c, p + "attn_q_a_norm.weight"), b.qn}, qxs, g.qrank),
+                          tokr(N2{kv_in, wp<float>(c, p + "attn_kv_a_norm.weight"), b.kvn}, kxs, g.hd)}});
     } else {
         using NR = ops41sycl::RowsPair<N1, N2>;
         for (int t = 0; t < M; ++t) {
@@ -1896,7 +1952,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
             else
                 gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts, 0, 0, dmix(p + "hc_ffn_", dsF, dF0, dF1));
         } else {
-            if (sknd(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", dsF, dF0, dF1)) {
+            if (sknd(skd, b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", dsF, dF0, dF1)) {
                 // OWN_MT_SKNORM bit 2: the norm and the SKDOTS rows in one launch
             } else if (skd) { // OWN_MT_SKDOTS: the norm, then the dot rows' own launch
                 if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)

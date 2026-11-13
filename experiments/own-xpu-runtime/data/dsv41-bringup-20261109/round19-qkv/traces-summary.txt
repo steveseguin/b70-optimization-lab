@@ -1,0 +1,98 @@
+h1s1 start 04:37:06 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_PROMPT_BLOCK=1 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_QKV_SPLIT=1
+h1s1 exit 0
+h1s1 TRACE_IDENTICAL
+h1s1 IDS40_SAME
+h1s1: OWN_XPUSH2: exchange classes 0xf
+h1s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h1s1: prompt: 36 tokens read on the cards in 0.39s (112.8 tok/s; first step 0.08s incl. kernel build), first token 671
+h1s1: decode: 39 steps after the first, 0.011 s/step, 90.10 tok/s
+h1s1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 108.4 us per step and card (slowest card 114.9 us; copy + decode launch calls 10.1 us)
+h2s1 start 04:41:05 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3,6:3 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_PROMPT_BLOCK=2 OWN_QKV_SPLIT=1
+h2s1 exit 0
+h2s1 TRACE_IDENTICAL
+h2s1 IDS40_SAME
+h2s1: OWN_XPUSH2: exchange classes 0xf
+h2s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h2s1: prompt: 36 tokens read on the cards in 0.30s (180.3 tok/s; first step 0.11s incl. kernel build), first token 671
+h2s1: decode: 39 steps after the first, 0.011 s/step, 87.79 tok/s
+h2s1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 105.5 us per step and card (slowest card 109.7 us; copy + decode launch calls 11.5 us)
+h3s1 start 05:04:24 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3,6:3 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_PROMPT_BLOCK=3 OWN_QKV_SPLIT=1
+h3s1 exit 0
+h3s1 TRACE_IDENTICAL
+h3s1 IDS40_SAME
+h3s1: OWN_XPUSH2: exchange classes 0xf
+h3s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h3s1: prompt: 36 tokens read on the cards in 0.29s (226.6 tok/s; first step 0.15s incl. kernel build), first token 671
+h3s1: decode: 39 steps after the first, 0.011 s/step, 87.65 tok/s
+h3s1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 109.6 us per step and card (slowest card 113.8 us; copy + decode launch calls 11.3 us)
+h5s1 start 05:08:34 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_PROMPT_BLOCK=5 OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_QKV_SPLIT=1
+h5s1 exit 0
+h5s1 TRACE_IDENTICAL
+h5s1 IDS40_SAME
+h5s1: OWN_XPUSH2: exchange classes 0xf
+h5s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h5s1: prompt: 36 tokens read on the cards in 0.26s (275.3 tok/s; first step 0.14s incl. kernel build), first token 671
+h5s1: decode: 39 steps after the first, 0.011 s/step, 88.85 tok/s
+h5s1: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 113.3 us per step and card (slowest card 116.1 us; copy + decode launch calls 11.6 us)
+h4s1 start 05:12:33 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3,6:3 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_PROMPT_BLOCK=4 OWN_QKV_SPLIT=1
+h4s1 exit 0
+h4s1 TRACE_IDENTICAL
+h4s1 IDS40_SAME
+h4s1: OWN_XPUSH2: exchange classes 0xf
+h4s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h4s1: prompt: 36 tokens read on the cards in 0.21s (269.0 tok/s; first step 0.09s incl. kernel build), first token 671
+h4s1: decode: 39 steps after the first, 0.011 s/step, 88.89 tok/s
+h4s1: host io during decode: 0.4 MiB read from disk, 0 major page faults; engram rows 83.0 us per step and card (slowest card 85.1 us; copy + decode launch calls 11.6 us)
+h6s1 start 05:16:32 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_TGM=1:1,2:1,3:3,4:2,5:3,6:3 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_PROMPT_BLOCK=6 OWN_QKV_SPLIT=1
+h6s1 exit 0
+h6s1 TRACE_IDENTICAL
+h6s1 IDS40_SAME
+h6s1: OWN_XPUSH2: exchange classes 0xf
+h6s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h6s1: prompt: 36 tokens read on the cards in 0.19s (318.0 tok/s; first step 0.09s incl. kernel build), first token 671
+h6s1: decode: 39 steps after the first, 0.011 s/step, 88.29 tok/s
+h6s1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 76.4 us per step and card (slowest card 80.6 us; copy + decode launch calls 11.8 us)
+h64s1 start 05:24:31 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=64 OWN_QKV_SPLIT=1
+h64s1 exit 0
+h64s1 TRACE_IDENTICAL
+h64s1 IDS40_SAME
+h64s1: OWN_XPUSH2: exchange classes 0xf
+h64s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h64s1: prompt: 36 tokens read on the cards in 0.13s (0.0 tok/s; first step 0.13s incl. kernel build), first token 671
+h64s1: decode: 39 steps after the first, 0.011 s/step, 89.96 tok/s
+h64s1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 77.3 us per step and card (slowest card 80.8 us; copy + decode launch calls 10.9 us)
+h256s1 start 05:32:35 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=256 OWN_QKV_SPLIT=1
+h256s1 exit 0
+h256s1 TRACE_IDENTICAL
+h256s1 IDS40_SAME
+h256s1: OWN_XPUSH2: exchange classes 0xf
+h256s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+h256s1: prompt: 36 tokens read on the cards in 0.14s (0.0 tok/s; first step 0.14s incl. kernel build), first token 671
+h256s1: decode: 39 steps after the first, 0.011 s/step, 90.51 tok/s
+h256s1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 77.3 us per step and card (slowest card 78.7 us; copy + decode launch calls 11.1 us)
+t3k64s1 start 05:40:39 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 t3k OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=64 OWN_QKV_SPLIT=1
+t3k64s1 exit 0
+t3k64s1 TRACE_IDENTICAL
+t3k64s1 IDS40_SAME
+t3k64s1: OWN_XPUSH2: exchange classes 0xf
+t3k64s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+t3k64s1: prompt: 3323 tokens read on the cards in 5.90s (569.1 tok/s; first step 0.18s incl. kernel build), first token 2581
+t3k64s1: decode: 39 steps after the first, 0.012 s/step, 81.26 tok/s
+t3k64s1: host io during decode: 0.5 MiB read from disk, 11 major page faults; engram rows 54.0 us per step and card (slowest card 55.8 us; copy + decode launch calls 11.5 us)
+t3k256s1 start 05:48:49 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 t3k OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=256 OWN_QKV_SPLIT=1
+t3k256s1 exit 0
+t3k256s1 TRACE_IDENTICAL
+t3k256s1 IDS40_SAME
+t3k256s1: OWN_XPUSH2: exchange classes 0xf
+t3k256s1: OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+t3k256s1: prompt: 3323 tokens read on the cards in 5.23s (640.7 tok/s; first step 0.44s incl. kernel build), first token 2581
+t3k256s1: decode: 39 steps after the first, 0.012 s/step, 81.50 tok/s
+t3k256s1: host io during decode: 0.1 MiB read from disk, 3 major page faults; engram rows 51.9 us per step and card (slowest card 53.8 us; copy + decode launch calls 11.4 us)
+h1s0 start 05:57:04 /home/steve/dsv41-work/qkv/bin/own_run_v41_qkv1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_PROMPT_BLOCK=1 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_QKV_SPLIT=0
+h1s0 exit 0
+h1s0 TRACE_IDENTICAL
+h1s0 IDS40_SAME
+h1s0: OWN_XPUSH2: exchange classes 0xf
+h1s0: prompt: 36 tokens read on the cards in 0.44s (111.0 tok/s; first step 0.12s incl. kernel build), first token 671
+h1s0: decode: 39 steps after the first, 0.011 s/step, 90.25 tok/s
+h1s0: host io during decode: 6.8 MiB read from disk, 0 major page faults; engram rows 108.5 us per step and card (slowest card 112.3 us; copy + decode launch calls 10.3 us)

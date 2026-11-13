@@ -253,6 +253,17 @@ int main(int argc, char **argv) {
     if (opt.xpush2)
         if (const char *m = getenv("OWN_XPUSH2_MASK")) opt.xpush2 = (unsigned)strtoul(m, nullptr, 0);
     if (opt.xpush2) std::fprintf(stderr, "OWN_XPUSH2: exchange classes 0x%x\n", opt.xpush2);
+    // qkv-1 (default on since tp110, qsp110; /home/steve/dsv41-work/qkv/README.md): the q_a + kv rows split by card and all-gathered before their
+    // norms. OWN_QKV_SPLIT=bits: 2 one-token steps, 4 blocks of 2-6 tokens, 8 larger (prompt) blocks; =1: all (14).
+    // OWN_QKV_XQ (XchgQ from this many tokens, default 5), OWN_QKV_WG (128 / 512), OWN_QKV_FORM (blocks of 2-6 tokens:
+    // 1 = DenseRowsG<1>, 2 = DenseRowsG<2>)
+    if (const char *e = getenv("OWN_QKV_SPLIT")) {
+        const unsigned v = (unsigned)strtoul(e, nullptr, 0);
+        opt.qkv_split = v == 1 ? 14u : v & 14u;
+    }
+    if (const char *e = getenv("OWN_QKV_XQ")) opt.qkv_xq = (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_QKV_WG")) opt.qkv_wg = (unsigned)atoi(e);
+    if (const char *e = getenv("OWN_QKV_FORM")) opt.qkv_form = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
     // px-1 (opt-in, /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks as two halves with every exchange of
