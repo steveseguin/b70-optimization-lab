@@ -400,6 +400,7 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 02:55 (2026-11-13) **New helper qkv (card 3): plan item D for one-token steps and checks** (pcd README "D", H3): every card reads the whole q_a + kv rows (8.3 MB per layer, 332 MB per step); split them by output row six ways and all-gather the ~1,792 floats per token with an XPUSH2-class push. Closed in H3 when an exchange cost ~11-13 us; XPUSH2 pushes are ~6-8 us. Estimate ~-0.28 ms per one-token step (q_a launch 23 -> ~9 us, + ~6 us push), more in checks (q_a + kv 24-29 us at 2-6 tokens); prompt blocks later. Ledger first, opt-in `OWN_QKV_SPLIT`. tp109 = HEAD + rux5 when it lands (build109.sh, tg109.sh ready: traces incl. RUX5 arms, plain tp108+XP+RX / tp109 / +RUX5, guessing, 3K / 10K, then check-by-tokens and one-token timelines for the next budget).
 - 02:27 (2026-11-13) **tp108 gated (tg108, `data/.../round19-tg108/`): 18 traces identical; XPUSH2 +3 % writing, RUX4
   -5 % prompt.** Plain 106.1 -> 109.2 tok/s, guessing code 147.8 -> 152.4, analysis 164.3 -> 169.2 (checks -0.4 /
   -0.5 ms); 3K read 5.07 -> 4.82 s, 10K 16.37 -> 15.65 s. Both default in the tp109 sources (67696759d); tp109 builds
