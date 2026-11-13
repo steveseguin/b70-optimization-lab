@@ -7932,6 +7932,36 @@ struct XchgPushD {
         if (it.get_local_linear_id() == 0) sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::system);
     }
 };
+// bcs-1 (OWN_PX_BCS, Backend41::bcs_wait): the reading side of a copy-engine push exchange. Card t's copy engine
+// writes its rows into this card's arena, then its push number into this card's copy flag word fw + 16 t (own
+// 64-byte line, written only by card t). Item t < n (t != me) polls that LOCAL word until it holds >= seq (the
+// numbers rise: one in-order copy list per sender); the poison word 96 is polled too, so a card that already timed
+// out stops at once. A wait past `spin` polls poisons this card and records 1 + t in err[0] (the host fails the
+// step), as XchgPull. Then a system-scope acquire and a barrier. Nothing of the rows is read here: the rows are read
+// by later launches of the same in-order queue (no line of a region enters this launch's caches).
+struct XchgWaitB {
+    int n, me;
+    unsigned fw;
+    uint32_t seq;
+    long spin;
+    void operator()(sycl::nd_item<1> it, float *mine, uint32_t *err) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::system,
+                                    sycl::access::address_space::global_space>;
+        const unsigned t = (unsigned)it.get_local_linear_id();
+        if ((int)t < n && (int)t != me) {
+            AR poison(reinterpret_cast<uint32_t *>(mine)[96]);
+            AR f(reinterpret_cast<uint32_t *>(mine)[fw + 16 * t]);
+            long s = 0;
+            while (f.load() < seq && !poison.load() && ++s < spin) {}
+            if (s >= spin) {
+                poison.store(1u);
+                err[0] = 1u + t;
+            }
+        }
+        sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::system);
+        sycl::group_barrier(it.get_group());
+    }
+};
 
 // ---- the block's compressor publish (backend_sycl_v41_mt.inc tpm_publish) -----------------------------
 // ratio-2 states of the block: row 1 + t = token t's (f32, ToF32A's values), row 0 = the carried even state

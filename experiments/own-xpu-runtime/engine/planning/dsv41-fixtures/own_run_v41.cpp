@@ -297,6 +297,10 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_PX_CHECK")) opt.px_check = atoi(e) != 0;
     // px-512 (opt-in): OWN_PX_BIG=1 with OWN_PX=1: OWN_PROMPT_BLOCK up to 2 x OWN41_MTX (512), each block two halves
     if (const char *e = getenv("OWN_PX_BIG")) opt.px_big = atoi(e) != 0;
+    // bcs-1 (opt-in, /home/steve/dsv41-work/bcs/README.md): OWN_PX_BCS=1 with OWN_PX=1: the halves' exchanges as
+    // copy-engine pushes (each card's copy engine writes its rows into every peer; a small wait launch before the reader)
+    if (const char *e = getenv("OWN_PX_BCS")) opt.px_bcs = (unsigned)atoi(e);
+    if (opt.px_bcs > 2) die("OWN_PX_BCS: 0, 1 or 2");
     // xll-1 (2026-11-11, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip; 1 = the default unit
     // (Options::XLL_DEFAULT_U bytes), 16 / 64: that unit, 0: off (the backend refuses anything else)
     if (const char *e = getenv("OWN_XLL")) opt.xll = atoi(e) == 1 ? (unsigned)own41::Backend41::Options::XLL_DEFAULT_U : (unsigned)atoi(e);

@@ -361,7 +361,7 @@ size_t mt_arena_floats() const { // the block's exchange regions, after the one-
     const size_t A = mtba_n(); // (MTA; OWN_PX_BIG: 2 x MTX + 8)
     return A * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
            A * (size_t)g.h + A * (size_t)g.qh * (size_t)g.hd +
-           (o.mt_dsplit ? 4 + (size_t)2 * A * 50 * HC_SEG : 0); // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
+           (o.mt_dsplit ? (o.px_bcs ? 16 : 4) + (size_t)2 * A * 50 * HC_SEG : 0); // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
 }
 void mt_offsets(size_t base) {
     if (base + mt_arena_floats() > (size_t)UINT32_MAX) throw std::runtime_error("multi-token step: arena offsets");
@@ -376,6 +376,7 @@ void mt_offsets(size_t base) {
     xhoM = xfcM + A * (unsigned)g.h;           // the head outputs (OWN_TP_HEADS), A tokens of qh * hd
     if (o.mt_dsplit) { // OWN_MT_DSPLIT: the partial regions, 16-byte aligned (doubles; XchgPull's vec4 rows)
         xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 3u) & ~3u;
+        if (o.px_bcs) xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 15u) & ~15u; // (OWN_PX_BCS: 64-byte lines)
         xdsF = xdsA + A * 50u * (unsigned)HC_SEG;
     }
 }
@@ -1076,7 +1077,15 @@ void tpm_engram_kv(int c) {
                xarena[c] + xengM + (size_t)li * 5 * g.h + te0[c], (size_t)10 * g.h);
         any = true;
     }
-    if (any) eng_seqm[c] = xchg_m(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)mt_n, te0[c], te1[c], 1, XP_ENG);
+    if (any && bcs_blk()) { // OWN_PX_BCS: the block's rows pushed once by the copy engine (px_eng waits at layer 1)
+        unsigned b0[6], b1[6];
+        xbounds(XP_ENG, b0, b1);
+        if (b0[c] != (unsigned)te0[c] || b1[c] != (unsigned)te1[c]) throw std::runtime_error("exchange: engram rows");
+        eng_seqm[c] = bcs_push(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)mt_n, (unsigned)te0[c], (unsigned)te1[c],
+                               (const XR2 *)nullptr);
+        bcs_eng_pend[c] = true;
+    } else if (any)
+        eng_seqm[c] = xchg_m(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)mt_n, te0[c], te1[c], 1, XP_ENG);
 }
 
 // publish_tp for every token of the block: ratio 1 (layer 20) publishes every position, ratio 2 the odd ones
@@ -2151,6 +2160,9 @@ struct PxX { // a held exchange (xchg_m's arguments and the armed second region)
 };
 PxX px_x[TILES][4][2];
 sycl::event px_xe[TILES][4][2];   // a fired exchange's launch on xqs[c]
+uint32_t px_bs[TILES][4][2] = {}; // OWN_PX_BCS: a fired exchange's push number (bcs_push)
+bool bcs_eng_pend[TILES] = {};    // OWN_PX_BCS: the block's engram rows pushed, not yet waited for
+bool bcs_blk() const { return o.px_bcs && px_blk; } // OWN_PX_BCS: this block's halves push on the copy engines
 bool px_blk = false;              // this block runs as halves (decode_block_tp: px_ok)
 int px_hn = 0;                    // ... of this many tokens
 bool px_run[TILES] = {};          // card c is inside px_layers (tpm_layer holds the four exchanges)
@@ -2171,6 +2183,16 @@ void xsite(int c, int site, unsigned off, unsigned stride, unsigned nslot, unsig
     if (d.on) throw std::runtime_error("OWN_PX: an exchange held twice");
     d.on = true, d.off = off, d.stride = stride, d.nslot = nslot, d.r0 = r0, d.r1 = r1, d.part = part, d.r2 = xr2[c];
     xr2[c].on = false;
+    if (bcs_blk() && o.px_bcs == 1) bcs_fire(c, site, px_hh[c]); // OWN_PX_BCS=1: pushed right after its producer
+}
+// OWN_PX_BCS: push the held exchange (the rows + the armed second region) on the copy engine; px_await waits for it
+void bcs_fire(int c, int site, int h) {
+    PxX &d = px_x[c][site][h];
+    unsigned b0[6], b1[6];
+    xbounds(d.part, b0, b1);
+    if (b0[c] != d.r0 || b1[c] != d.r1) throw std::runtime_error("exchange: rows do not match the part");
+    px_bs[c][site][h] = bcs_push(c, d.off, d.stride, d.nslot, d.r0, d.r1, &d.r2);
+    if (o.px_serial) bcs_wait(c, px_bs[c][site][h]); // (diagnostic: no overlap)
 }
 // queue half h's exchange of the site on xqs[c] now, in register mode grf, OWN_PX_WG work-groups
 void px_fire(int c, int site, int h, unsigned grf) {
@@ -2178,6 +2200,10 @@ void px_fire(int c, int site, int h, unsigned grf) {
     if (!d.on) throw std::runtime_error("OWN_PX: no exchange held");
     if (xr2[c].on) throw std::runtime_error("OWN_PX: a second region armed outside its exchange");
     d.on = false;
+    if (bcs_blk()) { // OWN_PX_BCS: =1 pushed already (xsite), =2 pushed here (the pull's place)
+        if (o.px_bcs != 1) bcs_fire(c, site, h);
+        return;
+    }
     xr2[c] = d.r2;
     px_g[c] = grf, px_n[c] = o.px_wgs[2 * site + h] ? o.px_wgs[2 * site + h] : o.px_wg; // (OWN_PX_WGS)
     xchg_m(c, d.off, d.stride, d.nslot, d.r0, d.r1, 0, d.part);
@@ -2187,6 +2213,7 @@ void px_fire(int c, int site, int h, unsigned grf) {
     if (o.px_serial) px_wait(c, px_last[c]); // OWN_PX_SERIAL (diagnostic): no overlap, the same queues and order
 }
 void px_await(int c, int site, int h) {
+    if (bcs_blk()) return bcs_wait(c, px_bs[c][site][h]); // OWN_PX_BCS: the copy flags, right before the reader
     if (tl_path) tl_px_mark(c, 'w', site, h, 0); // OWN_TIMELINE_PROMPT
     px_wait(c, px_xe[c][site][h]);
 }
@@ -2233,7 +2260,13 @@ void px_exit(int c) {
     egrp[c] = px_egrp[c][0];
 }
 // the engram rows' pull (the whole block's, once, as tpm_layer's at layers 1 / 14), before half A's gate
+// (OWN_PX_BCS: the push's wait at the first of the two layers; the rows stay in place for the second: no new copy)
 void px_eng(int c, int MB) {
+    if (bcs_blk()) {
+        if (bcs_eng_pend[c]) bcs_wait(c, eng_seqm[c]);
+        bcs_eng_pend[c] = false;
+        return;
+    }
     if (!(use_pull(XP_ENG, 2u * (unsigned)MB) || xseq[c] == eng_seqm[c])) return;
     xchg(c, xengM, 5u * (unsigned)g.h, 2u * (unsigned)MB, te0[c], te1[c], 2, eng_seqm[c], XP_ENG);
     px_wait(c, px_last[c]);
@@ -2332,20 +2365,24 @@ template <typename F> void px_layers(int c, F &&late) {
 // OWN_PX_CHECK (diagnostic, after a block as halves; every card done): the launches on each card's exchange queue
 // published their numbers in increasing order, every card queued the same pulls (number, mode) in the same order,
 // and every card's flag word of each peer holds that peer's last number (no lower number stored after a higher one)
+// OWN_PX_BCS: the pushes (kind 3, their own numbers bseq) rise on every card and are the same on every card; every
+// card's copy flag of each peer holds that peer's last push number; the pull flags hold no number past the last one
+// (the pair swaps publish to their partners only, so a pull flag may be older)
 void px_check_block() {
     ++px_blocks;
     std::string bad;
     std::vector<uint64_t> pulls0;
     for (int c = 0; c < o.tp; ++c) {
         std::vector<uint64_t> pulls;
-        uint32_t last = 0;
+        uint32_t last = 0, lastb = 0;
         for (uint64_t v : px_log[c]) {
             const uint32_t seq = (uint32_t)(v >> 8);
             const int kind = (int)(v >> 2) & 63, mode = (int)(v & 3);
+            uint32_t &lk = kind == 3 ? lastb : last; // (OWN_PX_BCS: the pushes count on their own)
             if (mode != 2) { // (a wait-only launch, mode 2, publishes nothing: the engram rows' pull, a pair swap's wait)
-                if (seq <= last)
-                    bad += " card " + std::to_string(c) + " number " + std::to_string(seq) + " after " + std::to_string(last) + ";";
-                last = seq;
+                if (seq <= lk)
+                    bad += " card " + std::to_string(c) + " number " + std::to_string(seq) + " after " + std::to_string(lk) + ";";
+                lk = seq;
             }
             if (kind != 2) pulls.push_back(v);
         }
@@ -2354,6 +2391,19 @@ void px_check_block() {
         px_log[c].clear();
         std::vector<uint32_t> fl(97);
         qs[c].memcpy(fl.data(), xarena[c], 97 * 4).wait();
+        if (o.px_bcs) {
+            std::vector<uint32_t> fb(16 * 6);
+            qs[c].memcpy(fb.data(), xarena[c] + xbf, 16 * 6 * 4).wait();
+            for (int t = 0; t < o.tp; ++t) {
+                if (t == c) continue;
+                if (fl[16 * t] > xseq[t])
+                    bad += " card " + std::to_string(c) + " flag of card " + std::to_string(t) + " " + std::to_string(fl[16 * t]) +
+                           " past " + std::to_string(xseq[t]) + ";";
+                if (fb[16 * t] != bseq[t])
+                    bad += " card " + std::to_string(c) + " copy flag of card " + std::to_string(t) + " " +
+                           std::to_string(fb[16 * t]) + " (last push " + std::to_string(bseq[t]) + ");";
+            }
+        } else
         for (int t = 0; t < o.tp; ++t)
             if (t != c && fl[16 * t] != xseq[t])
                 bad += " card " + std::to_string(c) + " flag of card " + std::to_string(t) + " " + std::to_string(fl[16 * t]) +
@@ -2474,6 +2524,7 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (!o.diet || !o.small_fast || o.hc_legacy || !o.hc_ride || !o.rope_out || o.fin_move || o.xtail)
         throw std::runtime_error("multi-token step is written for the default options");
     px_blk = px_ok(mt); // OWN_PX: as two halves
+    if (px_blk && o.px_bcs) bcs_block_start(); // OWN_PX_BCS (every card idle here)
     if (mt > MTX && !px_blk) // OWN_PX_BIG
         throw std::runtime_error("OWN_PX_BIG: a block of " + std::to_string(mt) + " tokens runs only as two OWN_PX halves "
                                  "(even, halves of OWN_PX_MIN .. " + std::to_string(MTX) + ")");

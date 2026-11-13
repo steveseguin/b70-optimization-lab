@@ -79,6 +79,7 @@
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
+#include <variant>
 
 namespace own41 {
 
@@ -127,6 +128,18 @@ struct XPullK256x2 {
     void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+// OWN_PX_BCS (bcs-1): the copy flags' wait (ops41sycl::XchgWaitB) on qs at 128 registers, one sub-group of 32; the
+// arena and the error word are direct kernel arguments
+struct XWaitBK128 {
+    ops41sycl::XchgWaitB x;
+    float *mine;
+    uint32_t *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, mine, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
     }
 };
@@ -392,6 +405,17 @@ public:
         // engram rows and draft injection in pieces of at most MTX); the block buffers and exchange regions hold
         // 2 x MTX tokens (+ ~0.25 GiB per card at a 4K context). 0 (default): blocks of at most MTX, buffers as before.
         bool px_big = false;
+        // bcs-1 (OWN_PX_BCS=1, opt-in; needs OWN_PX=1; /home/steve/dsv41-work/bcs/README.md): in a block run as halves
+        // the four per-layer exchanges (X1 output-a + the attention partials, X2 output-b, X3 expert act + the FFN
+        // partials, X4 FFN rows) and the engram rows travel as PUSHES on each card's copy engine (Level Zero copy-only
+        // queue group, an in-order immediate list): after the rows' producer (an own event signalled on qs[c]'s native
+        // list), the card's rows go into every peer's arena at the same offsets (2D region copies), then the exchange
+        // number into each peer's copy flag word (arena word xbf + 16 c, its own 64-byte line). The reader waits for
+        // its LOCAL copy flags in a one-work-group launch on qs right before the first launch that reads the rows
+        // (XchgWaitB). The engram rows are pushed once per block (no second copy at layer 14). The pair swaps stay
+        // XchgPair pulls on xqs. No sum changes (copies only). 1: each push queued right after its producer (xsite);
+        // 2 (diagnostic): at the place px_layers queues the pull. 0 (default): off, nothing created.
+        unsigned px_bcs = 0;
         unsigned xll = 0; // OWN_XLL (xll-1, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip
                           // (ops41sycl::XchgPullL: the rows travel in units of 16 / 64 bytes that carry the exchange
                           // number, read as soon as they are there); 16 or 64 (unit bytes; OWN_XLL=1: XLL_DEFAULT_U), 0: off
@@ -629,6 +653,15 @@ public:
         } catch (...) {}
         if (tl_f) std::fclose(tl_f);
         if (xw_f) std::fclose(xw_f);
+        if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
+            try { bcs_drain(); } catch (...) {}
+            for (int c = 0; c < TILES; ++c) {
+                for (auto &e : bcs_ev[c]) if (e) zeEventDestroy(e);
+                if (bcs_pool[c]) zeEventPoolDestroy(bcs_pool[c]);
+                if (bcs_cl[c]) zeCommandListDestroy(bcs_cl[c]);
+                if (bcs_rl[c]) zeCommandListDestroy(bcs_rl[c]);
+            }
+        }
         for (int c = 0; c < TILES; ++c) // peers' arenas opened in this card's context
             for (int d = 0; d < TILES; ++d)
                 if (c != d && xpeer[c][d])
@@ -1496,8 +1529,168 @@ private:
         return x.seq;
     }
     std::vector<uint64_t> px_log[TILES]; // OWN_PX_CHECK: (number << 8 | kind << 2 | mode) of every launch on xqs[c]
-    void px_note(int c, uint32_t seq, int kind, int mode) { // kind: 0 XchgPull, 1 XchgPull2, 2 XchgPair
+    void px_note(int c, uint32_t seq, int kind, int mode) { // kind: 0 XchgPull, 1 XchgPull2, 2 XchgPair, 3 bcs push
         if (o.px_check) px_log[c].push_back((uint64_t)seq << 8 | (uint64_t)kind << 2 | (uint64_t)mode);
+    }
+    // ---- bcs-1 (OWN_PX_BCS; /home/steve/dsv41-work/bcs/README.md): the halves' exchanges as copy-engine pushes ----
+    // Per card: bcs_cl, an in-order immediate command list on the copy-only queue group (the copy engine); bcs_ql, qs[c]'s
+    // own native immediate list (the SYCL in-order queue's; own events are signalled on it in queue order); bcs_rl, a
+    // compute-engine list used only to unblock a stuck copy list at the end (bcs_drain); BNE own events reused round
+    // robin; bcs_tbl[i] = i (the copy engine fills only 1-byte patterns, so a push number is copied from this table).
+    // Push numbers bseq[c] count the pushes (the same on every card: every card pushes at the same host-order places);
+    // they restart at 1 when the table would run out, at a block start with every card idle (bcs_block_start).
+    // The copy flags: arena words xbf + 16 d (sender d), one 64-byte line each, written only by d's copy engine.
+    static constexpr int BNE = 64;
+    static constexpr uint32_t BTBL = 1u << 20;
+    ze_command_list_handle_t bcs_cl[TILES] = {}, bcs_ql[TILES] = {}, bcs_rl[TILES] = {};
+    ze_event_pool_handle_t bcs_pool[TILES] = {};
+    ze_event_handle_t bcs_ev[TILES][BNE] = {};
+    unsigned bcs_ei[TILES] = {};
+    uint32_t *bcs_tbl[TILES] = {};
+    uint32_t bseq[TILES] = {};
+    long bcs_pushes[TILES] = {};
+    size_t xbf = 0; // arena word of the copy flags (OWN_PX_BCS)
+    static void zcheck(ze_result_t r, const char *what) {
+        if (r != ZE_RESULT_SUCCESS) {
+            char b[96];
+            std::snprintf(b, sizeof b, "OWN_PX_BCS: %s failed (0x%x)", what, (unsigned)r);
+            throw std::runtime_error(b);
+        }
+    }
+    void bcs_setup() {
+#ifdef OWN41_ACT_BF16
+        throw std::runtime_error("OWN_PX_BCS: written for F32 activations (the pushes copy 4-byte elements)");
+#endif
+        for (int c = 0; c < o.tp; ++c) {
+            auto zx = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]);
+            auto zd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+            uint32_t ng = 0;
+            zcheck(zeDeviceGetCommandQueueGroupProperties(zd, &ng, nullptr), "queue groups");
+            std::vector<ze_command_queue_group_properties_t> gp(ng);
+            for (auto &x : gp) x = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_GROUP_PROPERTIES};
+            zcheck(zeDeviceGetCommandQueueGroupProperties(zd, &ng, gp.data()), "queue groups");
+            int co = -1, cc = -1;
+            for (uint32_t i = 0; i < ng; ++i) {
+                const bool comp = gp[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COMPUTE,
+                           cp = gp[i].flags & ZE_COMMAND_QUEUE_GROUP_PROPERTY_FLAG_COPY;
+                if (cp && !comp && co < 0) co = (int)i;
+                if (comp && cc < 0) cc = (int)i;
+            }
+            if (co < 0 || cc < 0) throw std::runtime_error("OWN_PX_BCS: card " + pci[c] + " has no copy-only queue group");
+            ze_command_queue_desc_t qd = {ZE_STRUCTURE_TYPE_COMMAND_QUEUE_DESC, nullptr, (uint32_t)co, 0, ZE_COMMAND_QUEUE_FLAG_IN_ORDER,
+                                          ZE_COMMAND_QUEUE_MODE_ASYNCHRONOUS, ZE_COMMAND_QUEUE_PRIORITY_NORMAL};
+            zcheck(zeCommandListCreateImmediate(zx, zd, &qd, &bcs_cl[c]), "copy list");
+            ze_command_queue_desc_t rd = qd;
+            rd.ordinal = (uint32_t)cc, rd.flags = 0;
+            zcheck(zeCommandListCreateImmediate(zx, zd, &rd, &bcs_rl[c]), "rescue list");
+            auto nq = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(qs[c]);
+            if (!std::holds_alternative<ze_command_list_handle_t>(nq))
+                throw std::runtime_error("OWN_PX_BCS: the SYCL queue is not an immediate command list");
+            bcs_ql[c] = std::get<ze_command_list_handle_t>(nq);
+            ze_event_pool_desc_t pd = {ZE_STRUCTURE_TYPE_EVENT_POOL_DESC, nullptr, 0, (uint32_t)BNE};
+            zcheck(zeEventPoolCreate(zx, &pd, 1, &zd, &bcs_pool[c]), "event pool");
+            for (int i = 0; i < BNE; ++i) {
+                ze_event_desc_t ed = {ZE_STRUCTURE_TYPE_EVENT_DESC, nullptr, (uint32_t)i, ZE_EVENT_SCOPE_FLAG_DEVICE,
+                                      ZE_EVENT_SCOPE_FLAG_DEVICE};
+                zcheck(zeEventCreate(bcs_pool[c], &ed, &bcs_ev[c][i]), "event");
+            }
+            bcs_tbl[c] = dalloc<uint32_t>(c, BTBL);
+            uint32_t *tb = bcs_tbl[c];
+            qs[c].parallel_for(sycl::range<1>(BTBL), [=](sycl::id<1> i) { tb[i] = (uint32_t)i[0]; });
+            if ((uintptr_t)xarena[c] % 64) throw std::runtime_error("OWN_PX_BCS: arena not 64-byte aligned");
+            qs[c].wait();
+        }
+        // every pushed row range starts and ends on a 64-byte line (16 floats): a line of a region is written by one card
+        bool ok = xbf % 16 == 0 && g.ototal % 16 == 0 && g.h % 16 == 0 && g.mid % 16 == 0 && (5 * g.h) % 16 == 0;
+#ifndef OWN41_ACT_BF16
+        for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF}) ok &= v % 16 == 0;
+        ok &= (50u * (unsigned)HC_SEG) % 16 == 0;
+#endif
+        for (int d = 0; d < o.tp; ++d) {
+            ok &= td0[d] % 16 == 0 && td1[d] % 16 == 0 && tm0[d] % 16 == 0 && tm1[d] % 16 == 0 && te0[d] % 16 == 0 &&
+                  te1[d] % 16 == 0;
+            for (const HeadLay &h : hl) ok &= h.oa0[d] % 16 == 0 && h.oa1[d] % 16 == 0;
+        }
+        if (!ok) throw std::runtime_error("OWN_PX_BCS: an exchange region or row range is not 64-byte aligned");
+        std::fprintf(stderr, "OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word %zu)\n", xbf);
+    }
+    // (main thread, every card idle) restart the push numbers before the table runs out: every card's copy flags to 0
+    void bcs_block_start() {
+        if (bseq[0] + 4096u < BTBL) return;
+        for (int c = 0; c < o.tp; ++c) zcheck(zeCommandListHostSynchronize(bcs_cl[c], 5000000000ull), "copy list idle");
+        for (int c = 0; c < o.tp; ++c) {
+            qs[c].memset(xarena[c] + xbf, 0, 16 * 6 * sizeof(float)).wait();
+            bseq[c] = 0;
+        }
+    }
+    // card c's rows [r0, r1) of nslot slots (stride floats apart) at arena offset off, and (r2) its tokens [c0[c], c1[c])
+    // of a second region (nslot 1), into every peer's arena at the same offsets on c's copy engine, after everything
+    // queued on qs[c] so far (own event signalled in qs's order); then the push number into each peer's copy flag word
+    // (after the rows: one in-order list); then the event is reset for its next use. Returns the number.
+    template <typename R2> uint32_t bcs_push(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1,
+                                             const R2 *r2) {
+        const uint32_t seq = ++bseq[c];
+        if (seq >= BTBL) throw std::runtime_error("OWN_PX_BCS: push numbers past the table");
+        ze_event_handle_t ev = bcs_ev[c][bcs_ei[c]++ % BNE];
+        ze_command_list_handle_t cl = bcs_cl[c];
+        zcheck(zeCommandListAppendSignalEvent(bcs_ql[c], ev), "signal on the queue");
+        zcheck(zeCommandListAppendWaitOnEvents(cl, 1, &ev), "copy list wait");
+        const uint32_t w = (r1 - r0) * 4, pitch = stride * 4;
+        const bool two = r2 && r2->on && r2->c1[c] > r2->c0[c];
+        for (int k = 1; k < o.tp; ++k) {
+            const int d = (c + k) % o.tp; // (each card starts with a different peer)
+            float *P = (float *)xpeer[c][d];
+            if (w) {
+                if (nslot == 1) {
+                    zcheck(zeCommandListAppendMemoryCopy(cl, P + off + r0, xarena[c] + off + r0, w, nullptr, 0, nullptr), "copy");
+                } else {
+                    const ze_copy_region_t rg = {0, 0, 0, w, nslot, 1};
+                    zcheck(zeCommandListAppendMemoryCopyRegion(cl, P + off + r0, &rg, pitch, pitch * nslot, xarena[c] + off + r0,
+                                                               &rg, pitch, pitch * nslot, nullptr, 0, nullptr),
+                           "region copy");
+                }
+            }
+            if (two)
+                zcheck(zeCommandListAppendMemoryCopy(cl, P + r2->off + r2->c0[c], xarena[c] + r2->off + r2->c0[c],
+                                                     (size_t)(r2->c1[c] - r2->c0[c]) * 4, nullptr, 0, nullptr),
+                       "second region copy");
+        }
+        for (int k = 1; k < o.tp; ++k) {
+            const int d = (c + k) % o.tp;
+            zcheck(zeCommandListAppendMemoryCopy(cl, (uint32_t *)xpeer[c][d] + xbf + 16 * c, bcs_tbl[c] + seq, 4, nullptr, 0,
+                                                 nullptr),
+                   "flag copy");
+        }
+        zcheck(zeCommandListAppendEventReset(cl, ev), "event reset");
+        ++bcs_pushes[c];
+        px_note(c, seq, 3, 0);
+        return seq;
+    }
+    // qs[c] waits (one 32-item launch) until every peer's copy flag holds >= seq; the rows are read by the launches after
+    void bcs_wait(int c, uint32_t seq) {
+        const XWaitBK128 k{ops41sycl::XchgWaitB{o.tp, c, (unsigned)xbf, seq, XSPIN}, xarena[c], xerr[c]};
+        auto e = qs[c].parallel_for(sycl::nd_range<1>(32, 32), k);
+        kev(c, kname<ops41sycl::XchgWaitB>(), e);
+    }
+    // every copy list idle (end of the run): a list still busy after 3 s gets every own event signalled and every card
+    // poisoned from the rescue lists (each spinning wait stops at once), then 5 s more
+    void bcs_drain() {
+        bool stuck = false;
+        for (int c = 0; c < o.tp; ++c)
+            if (bcs_cl[c] && zeCommandListHostSynchronize(bcs_cl[c], 3000000000ull) != ZE_RESULT_SUCCESS) stuck = true;
+        if (!stuck) return;
+        std::fprintf(stderr, "OWN_PX_BCS: a copy list still busy after 3 s: signalling its events, poisoning every card\n");
+        const uint32_t one = 1;
+        for (int c = 0; c < o.tp; ++c) {
+            if (!bcs_rl[c]) continue;
+            zeCommandListAppendMemoryFill(bcs_rl[c], (uint32_t *)xarena[c] + 96, &one, 4, 4, nullptr, 0, nullptr);
+            for (int i = 0; i < BNE; ++i) zeCommandListAppendSignalEvent(bcs_rl[c], bcs_ev[c][i]);
+        }
+        for (int c = 0; c < o.tp; ++c) {
+            if (bcs_rl[c]) zeCommandListHostSynchronize(bcs_rl[c], 5000000000ull);
+            if (bcs_cl[c] && zeCommandListHostSynchronize(bcs_cl[c], 5000000000ull) != ZE_RESULT_SUCCESS)
+                std::fprintf(stderr, "OWN_PX_BCS: card %d's copy list STILL busy\n", c);
+        }
     }
     Pf xl2p[TILES][3];
     int xl2n[TILES] = {};
@@ -3930,6 +4123,12 @@ private:
             nfq = xll_ob(nfq) + 64;
             if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_XLL: arena offsets");
         }
+        if (o.px_bcs) { // OWN_PX_BCS: the copy flags (sender d at xbf + 16 d, one 64-byte line each), past everything else
+            if (!o.px || o.tp < 2) throw std::runtime_error("OWN_PX_BCS: needs OWN_PX=1 and OWN_TP > 1");
+            xbf = (nfq + 15) & ~(size_t)15;
+            nfq = xbf + 16 * 6 + 16;
+            if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_PX_BCS: arena offsets");
+        }
         for (int c = 0; c < N; ++c) {
             xarena[c] = dalloc<float>(c, nfq);
             xcnt[c] = dalloc<uint32_t>(c, 16);
@@ -4003,6 +4202,7 @@ private:
             }
         }
         for (int c = 0; c < N; ++c) qs[c].wait();
+        if (o.px_bcs) bcs_setup(); // OWN_PX_BCS: copy lists, own events, the number table (after the arenas are mapped)
         tl_setup(); // OWN_TIMELINE
         if (o.px_big && (!o.px || o.tp < 2)) throw std::runtime_error("OWN_PX_BIG: needs OWN_PX=1 and OWN_TP > 1");
         if (o.k7 && !k7_x_ok())

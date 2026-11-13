@@ -1,0 +1,51 @@
+2026-11-12 22:51:17 t512a (t512 own_run_v41_bcs OWN_PX_BCS=1) exit 0
+  t512a: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+  t512a: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+  t512a: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+  t512a: prompt: 3323 tokens read on the cards in 5.03s (662.7 tok/s; first step 0.78s incl. kernel build), first token 2581
+  t512a: decode: 39 steps after the first, 0.013 s/step, 78.17 tok/s
+  t512a: host io during decode: 6.0 MiB read from disk, 12 major page faults; engram rows 180.9 us per step and card (slowest card 182.2 us; copy + decode launch calls 14.8 us)
+  t512a TRACE_IDENTICAL
+  t512a IDS40_SAME
+2026-11-12 22:55:00 t256a (t256 own_run_v41_bcs OWN_PX_BCS=1) exit 0
+  t256a: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+  t256a: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+  t256a: OWN_PX_CHECK: 8 blocks as halves, 0 bad
+  t256a: prompt: 3323 tokens read on the cards in 5.28s (633.0 tok/s; first step 0.43s incl. kernel build), first token 2581
+  t256a: decode: 39 steps after the first, 0.012 s/step, 80.36 tok/s
+  t256a: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 49.0 us per step and card (slowest card 52.5 us; copy + decode launch calls 12.1 us)
+  t256a TRACE_IDENTICAL
+  t256a IDS40_SAME
+2026-11-12 22:58:36 s512off1 (s512 own_run_v41_bcs OWN_PX_BCS=0 OWN_MT_EU_HEAVY=0) exit 0
+  s512off1: prompt: 3323 tokens read on the cards in 5.42s (617.5 tok/s; first step 0.87s incl. kernel build), first token 2581
+  s512off1: decode: 255 steps after the first, 0.010 s/step, 95.48 tok/s
+  s512off1: host io during decode: 34.8 MiB read from disk, 23 major page faults; engram rows 255.3 us per step and card (slowest card 256.9 us; copy + decode launch calls 10.0 us)
+  s512off1 ANSWER256_SAME
+2026-11-12 23:01:45 s512on1 (s512 own_run_v41_bcs OWN_PX_BCS=1 OWN_MT_EU_HEAVY=0) exit 0
+  s512on1: OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 62133808)
+  s512on1: prompt: 3323 tokens read on the cards in 5.02s (664.2 tok/s; first step 0.78s incl. kernel build), first token 2581
+  s512on1: decode: 255 steps after the first, 0.010 s/step, 97.21 tok/s
+  s512on1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.6 us per step and card (slowest card 53.9 us; copy + decode launch calls 10.0 us)
+  s512on1 ANSWER256_SAME
+2026-11-12 23:05:06 s512off2 (s512 own_run_v41_bcs OWN_PX_BCS=0 OWN_MT_EU_HEAVY=0) exit 0
+  s512off2: prompt: 3323 tokens read on the cards in 5.41s (617.4 tok/s; first step 0.86s incl. kernel build), first token 2581
+  s512off2: decode: 255 steps after the first, 0.010 s/step, 97.39 tok/s
+  s512off2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.9 us per step and card (slowest card 55.3 us; copy + decode launch calls 10.1 us)
+  s512off2 ANSWER256_SAME
+2026-11-12 23:08:15 s512on2 (s512 own_run_v41_bcs OWN_PX_BCS=1 OWN_MT_EU_HEAVY=0) exit 0
+  s512on2: OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 62133808)
+  s512on2: prompt: 3323 tokens read on the cards in 5.01s (664.3 tok/s; first step 0.78s incl. kernel build), first token 2581
+  s512on2: decode: 255 steps after the first, 0.010 s/step, 97.13 tok/s
+  s512on2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.0 us per step and card (slowest card 55.0 us; copy + decode launch calls 10.0 us)
+  s512on2 ANSWER256_SAME
+2026-11-12 23:11:41 s256off1 (s256 own_run_v41_bcs OWN_PX_BCS=0 OWN_MT_EU_HEAVY=0) exit 0
+  s256off1: prompt: 3323 tokens read on the cards in 5.58s (600.5 tok/s; first step 0.47s incl. kernel build), first token 2581
+  s256off1: decode: 255 steps after the first, 0.010 s/step, 97.58 tok/s
+  s256off1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.8 us per step and card (slowest card 55.2 us; copy + decode launch calls 10.1 us)
+  s256off1 ANSWER256_SAME
+2026-11-12 23:34:31 s256on1 (s256 own_run_v41_bcs OWN_PX_BCS=1 OWN_MT_EU_HEAVY=0) exit 0
+  s256on1: OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 31585840)
+  s256on1: prompt: 3323 tokens read on the cards in 5.26s (634.3 tok/s; first step 0.43s incl. kernel build), first token 2581
+  s256on1: decode: 255 steps after the first, 0.010 s/step, 96.97 tok/s
+  s256on1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.2 us per step and card (slowest card 54.6 us; copy + decode launch calls 9.7 us)
+  s256on1 ANSWER256_SAME
