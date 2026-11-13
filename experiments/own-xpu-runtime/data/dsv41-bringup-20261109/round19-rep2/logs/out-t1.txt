@@ -1,0 +1,47 @@
+device Intel(R) Arc(TM) Pro B70 Graphics, 256 compute units
+free card memory 31.84 GiB
+dot rows per card: [0, 4) [4, 8) [8, 12) [12, 16) [16, 20) [20, 25)
+X: XchgP2 / XchgQ2 indexing, 4 cases x 6 cards x 6 buffers: 0 differ; err word 0
+layer 0: shared type 8; hc_ffn_scale 3, base 24 values; router row 10240 B, 8 copies
+
+== layer 0 (shared type 8), finish form 1 ==
+bitwise layer 0: 4 sets; rows with production partials (SkDotsFF fallback) 1 of 100
+timing A layer 0 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T A   L0  full          4.48
+  T A   L0  share      max   4.38  shares:   4.38   4.38   4.38   4.38   4.38   4.38
+  T A   L0  norm          2.50
+timing B layer 0 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T B   L0  full         11.88
+  T B   L0  Bd         max  10.62  shares:  10.62  10.62  10.62  10.62  10.62  10.62
+  T B   L0  Bdr        max   5.52  shares:   5.52   5.52   5.52   5.52   5.52   5.42
+  T B   L0  B0           10.52
+timing C layer 0 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T C   L0  withfin       9.17
+  T C   L0  nofin         9.06
+timing D layer 0 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T D   L0  plain         4.17
+  T D   L0  withfin       7.81
+  T D   L0  finalone      6.25
+layer 27: shared type 13; hc_ffn_scale 3, base 24 values; router row 10240 B, 8 copies
+
+== layer 27 (shared type 13), finish form 1 ==
+bitwise layer 27: 4 sets; rows with production partials (SkDotsFF fallback) 0 of 100
+timing A layer 27 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T A   L27 full          4.48
+  T A   L27 share      max   4.38  shares:   4.38   4.38   4.38   4.38   4.38   4.38
+  T A   L27 norm          2.50
+timing B layer 27 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T B   L27 full         11.77
+  T B   L27 Bd         max  10.21  shares:  10.10  10.21  10.21  10.00  10.00  10.00
+  T B   L27 Bdr        max   5.52  shares:   5.42   5.42   5.52   5.52   5.52   5.42
+  T B   L27 B0            9.58
+timing C layer 27 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T C   L27 withfin       9.38
+  T C   L27 nofin         9.48
+timing D layer 27 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T D   L27 plain         5.00
+  T D   L27 withfin       7.40
+  T D   L27 finalone      6.25
+
+ALL: 416 comparisons, 0 failing -> PASS
+exit 0

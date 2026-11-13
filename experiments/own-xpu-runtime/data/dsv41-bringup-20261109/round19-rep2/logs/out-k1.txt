@@ -1,0 +1,24 @@
+device Intel(R) Arc(TM) Pro B70 Graphics
+free card memory 31.84 GiB
+
+== layer 3: checks of 2-3 tokens ==
+bitwise M=2: 21 comparisons so far, 0 differ
+timing KA2 layer 3 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T KA2 L3  A full          6.04
+  T KA2 L3  A share      max   4.69  shares:   4.69   4.69   4.69   4.69   4.69   4.69
+  T KA2 L3  A norm only     2.60
+timing KF2 layer 3 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T KF2 L3  F full         12.92
+  T KF2 L3  F no dots      11.77
+bitwise M=3: 63 comparisons so far, 0 differ
+timing KA3 layer 3 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T KA3 L3  A full          8.02
+  T KA3 L3  A share      max   4.69  shares:   4.69   4.69   4.69   4.69   4.69   4.69
+  T KA3 L3  A norm only     2.60
+timing KF3 layer 3 (5 rounds x 39 reps, 8 copies, kernel us, median):
+  T KF3 L3  F full         13.75
+  T KF3 L3  F share      max  10.73  shares:  10.62  10.62  10.52  10.62  10.52  10.73
+  T KF3 L3  F no dots      10.21
+
+ALL: 63 comparisons, 0 differ: PASS
+exit 0
