@@ -1,5 +1,12 @@
 # Current Workspace State
 
+**November 13, 2026 00:31 EST — host reset (tenth event) at a long-document run's start; probe passed; continuing.**
+- 00:21:55: lc107 (long-context status on tp107) passed x19k (read 29.7 s, was 66.9; writing 91.4 tok/s, was 69.1;
+  answer same), then the host reset as x34k's first prompt block began. BERT: CPU 0 bank 5 core watchdog, ADDR in
+  the firmware range, no PCIe section; iommu=pt and the cards' audio functions awake were both in. Probe passed 00:26.
+  Owner: audio functions awake again for this boot (done 00:31), keep going, a USB Ethernet adapter may be added
+  (use it if it appears). Evidence /home/steve/dsv41-work/faults/reset-20261113T0022/.
+
 **November 13, 2026 00:17 EST — DeepSeek tp107 gated: prompt reads 8 % faster with the copy engine; default next.**
 - tg107 (23:57-00:15, round19-tg107): every trace identical (incl. a 10K prompt), every answer the same, no fault.
   Copy-engine prompt pushes (`OWN_PX_BCS=1`): 3K read 5.46 / 5.53 -> 5.07 / 5.03 s, 10K 17.78 -> 16.45 s. Plain 106.0 /
