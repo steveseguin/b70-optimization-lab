@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**November 12, 2026 21:35 EST — DeepSeek: copy engine chosen for prompt exchanges; one driver engine reset (ours).**
+**November 12, 2026 21:33 EST — DeepSeek: copy engine chosen for prompt exchanges; one driver engine reset (ours).**
 - Guess-count rule study (round19-costk): the 0.5 cutoff is within ~0.5 % of the best rule; closed.
 - Transport benches (round19-ce): card-to-card EU stores ~1 GB/s whatever the cache hints; each card's copy engine
   pushes at 27-30 GB/s beside compute, hand-off ~7-8 us (EU pushes 3-6 us for small messages). Helper bcs builds
