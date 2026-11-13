@@ -400,6 +400,11 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 00:45 (2026-11-13) **Long-context status on tp107 (lc107 / lc107b, `data/.../round19-lc107/`)**, px-512 + copy engine:
+  read 19K / 34K / 69K / 95K in 29.7 / 56.1 / 120.1 / 173.8 s (628 -> 549 tok/s; tp73 66.9 / 123.3 / 255.9 / 362.3),
+  writing 91.4 / 91.7 / 87.3 / 87.1 tok/s (tp73 69.1 / 68.4 / 67.2 / 65.2), guessing 138.6 (19K) / 125.8 (69K); all
+  answers the same. The long-context gap is now mostly the guessing (fewer kept guesses, checks +1-1.5 ms) and the
+  read's ~13 % slope (attention + indexer over the context). Host reset (tenth) at lc107's x34k start, 00:22.
 - 00:17 (2026-11-13) **tp107 gated (tg107, `data/.../round19-tg107/`): copy-engine prompt pushes exact and -8 %.** Every
   trace identical (stage 1, 3K x4, a 10K prompt: px-512 + copy engine = blocks of 256), every answer the same. 3K read
   px-512 5.46 / 5.53 -> `OWN_PX_BCS=1` 5.07 / 5.03 s (256 + BCS 5.28); 10K 17.78 -> 16.45 s (647 tok/s). Plain and

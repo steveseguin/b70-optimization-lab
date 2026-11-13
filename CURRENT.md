@@ -1,5 +1,10 @@
 # Current Workspace State
 
+**November 13, 2026 00:45 EST — DeepSeek long documents on tp107: reading ~2.1x faster, writing 87-91 tok/s.**
+- 95K-token document read in 174 s (was 362), writing 87 tok/s (was 65), guessing after 69K 126 tok/s; all answers
+  the same (round19-lc107). Helpers rux4 (prompt experts, card 2) and xchg2 (decode exchanges) restarted after the
+  reset; tp108 = copy-engine default + their patches.
+
 **November 13, 2026 00:31 EST — host reset (tenth event) at a long-document run's start; probe passed; continuing.**
 - 00:21:55: lc107 (long-context status on tp107) passed x19k (read 29.7 s, was 66.9; writing 91.4 tok/s, was 69.1;
   answer same), then the host reset as x34k's first prompt block began. BERT: CPU 0 bank 5 core watchdog, ADDR in
