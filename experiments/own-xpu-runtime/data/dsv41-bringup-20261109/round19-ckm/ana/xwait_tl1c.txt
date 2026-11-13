@@ -1,0 +1,61 @@
+steps 100 unmatched 0
+
+Per check (median over checks), exchange time per card split into WAIT (for the last card to arrive) and MOVE (after it arrived), us
+M  n     c0:tot/wait/move      c1:tot/wait/move      c2:tot/wait/move      c3:tot/wait/move      c4:tot/wait/move      c5:tot/wait/move    
+1  32    2322/    0/ 2322     2217/164865316/    0     1684/170987510/    0     2306/8008267/    0     2262/135637354/    0     1568/126329910/    0   
+2  30    2534/  981/ 1583     2359/  748/ 1608     2069/  488/ 1574     2592/ 1062/ 1579     2488/  863/ 1637     1928/  399/ 1537   
+3  20    3215/ 1307/ 1960     2891/  928/ 1999     2502/  605/ 1924     3242/ 1275/ 1959     2961/  951/ 2000     2342/  479/ 1905   
+4   6    4040/ 1575/ 2520     3871/ 1211/ 2681     3403/  936/ 2464     4073/ 1535/ 2560     3869/ 1188/ 2671     3214/  738/ 2494   
+5   8    4474/ 1737/ 2756     4063/ 1187/ 2871     3653/  944/ 2780     4640/ 1737/ 2891     4124/ 1269/ 2899     3439/  712/ 2736   
+6   4    5405/ 2571/ 2854     4611/ 1514/ 3052     4394/ 1487/ 2925     5444/ 2441/ 3026     4525/ 1455/ 3089     3627/  668/ 2958   
+
+exchange end spread across cards (median per check of the per-instance max-min end, us): {1: 834088.37, 2: 1.12, 3: 1.51, 4: 1.66, 5: 1.59, 6: 1.52}
+
+Who arrives last (instances per check) and by how much it trails the second-last (sum per check, us)
+M=1: c0 205.0x 8008300us  c1   0.0x      0us  c2   0.0x      0us  c3   0.0x      0us  c4   0.0x      0us  c5   0.0x      0us
+M=2: c0  15.8x     36us  c1  49.0x     92us  c2  36.1x     41us  c3   8.6x     30us  c4  36.9x     57us  c5  57.5x    116us
+M=3: c0  18.8x     42us  c1  48.1x     94us  c2  33.6x     42us  c3   9.3x     34us  c4  34.6x     70us  c5  59.5x    104us
+M=4: c0   8.5x     37us  c1  46.7x    125us  c2  31.3x     98us  c3   9.3x     37us  c4  51.0x    137us  c5  57.2x    180us
+M=5: c0   6.9x     36us  c1  54.0x    117us  c2  29.6x    116us  c3   8.2x     34us  c4  35.8x     90us  c5  69.5x    210us
+M=6: c0   1.8x     10us  c1  51.2x    127us  c2   5.8x     44us  c3   3.0x     14us  c4  61.5x    150us  c5  80.8x    368us
+
+Per exchange part: wait / move per check (us), card by card
+M=1     other: c0     0/   18 (  2)  c1 1608432/    0 (  2)  c2 1668208/    0 (  2)  c3 78132/    0 (  2)  c4 1323299/    0 (  2)  c5 1232522/    0 (  2)
+M=1     out-a: c0     0/ 1051 ( 40)  c1 32168830/    0 ( 40)  c2 33363330/    0 ( 40)  c3 1562607/    0 ( 40)  c4 26465971/    0 ( 40)  c5 24649621/    0 ( 40)
+M=1      rows: c0     0/  648 ( 80)  c1 64337715/    0 ( 80)  c2 66727855/    0 ( 80)  c3 3125216/    0 ( 80)  c4 52932008/    0 ( 80)  c5 49300518/    0 ( 80)
+M=1       act: c0     0/  422 ( 40)  c1 32168796/    0 ( 40)  c2 33363901/    0 ( 40)  c3 1562555/    0 ( 40)  c4 26465944/    0 ( 40)  c5 24650177/    0 ( 40)
+M=1    engram: c0     0/   47 (  3)  c1 2412656/    0 (  3)  c2 2502292/    0 (  3)  c3 117195/    0 (  3)  c4 1984935/    0 (  3)  c5 1848770/    0 (  3)
+M=1         6: c0     0/  225 ( 40)  c1 32168835/    0 ( 40)  c2 33363930/    0 ( 40)  c3 1562595/    0 ( 40)  c4 26465991/    0 ( 40)  c5 24650276/    0 ( 40)
+M=2     out-a: c0   542/  265 ( 40)  c1   494/  284 ( 40)  c2    69/  268 ( 40)  c3   550/  267 ( 40)  c4   512/  272 ( 40)  c5    53/  262 ( 40)
+M=2      rows: c0   182/  515 ( 81)  c1   100/  531 ( 81)  c2   226/  528 ( 81)  c3   259/  517 ( 81)  c4   186/  539 ( 81)  c5   178/  526 ( 81)
+M=2       act: c0   190/  521 ( 40)  c1   129/  510 ( 40)  c2   152/  491 ( 40)  c3   188/  495 ( 40)  c4   141/  528 ( 40)  c5    86/  486 ( 40)
+M=2    engram: c0    30/   42 (  3)  c1    18/   53 (  3)  c2    12/   52 (  3)  c3    28/   51 (  3)  c4    20/   51 (  3)  c5    18/   48 (  3)
+M=2         6: c0    83/  223 ( 40)  c1    41/  234 ( 40)  c2    67/  229 ( 40)  c3    64/  217 ( 40)  c4    41/  223 ( 40)  c5    72/  197 ( 40)
+M=3     out-a: c0   677/  503 ( 40)  c1   591/  491 ( 40)  c2    45/  455 ( 40)  c3   659/  484 ( 40)  c4   610/  483 ( 40)  c5    28/  444 ( 40)
+M=3      rows: c0   271/  541 ( 81)  c1   148/  558 ( 81)  c2   286/  547 ( 81)  c3   333/  543 ( 81)  c4   171/  551 ( 81)  c5   193/  539 ( 81)
+M=3       act: c0   207/  592 ( 40)  c1   104/  568 ( 40)  c2   162/  531 ( 40)  c3   206/  557 ( 40)  c4   142/  594 ( 40)  c5   113/  548 ( 40)
+M=3    engram: c0    38/   62 (  3)  c1    24/   68 (  3)  c2    51/   73 (  3)  c3    33/   71 (  3)  c4    17/   69 (  3)  c5    67/   70 (  3)
+M=3         6: c0    78/  275 ( 40)  c1    53/  310 ( 40)  c2    92/  302 ( 40)  c3    73/  289 ( 40)  c4    55/  303 ( 40)  c5    98/  292 ( 40)
+M=4     out-a: c0   675/  737 ( 40)  c1   622/  771 ( 40)  c2    84/  703 ( 40)  c3   675/  747 ( 40)  c4   597/  765 ( 40)  c5    39/  749 ( 40)
+M=4      rows: c0   472/  534 ( 81)  c1   196/  568 ( 81)  c2   452/  544 ( 81)  c3   479/  554 ( 81)  c4   215/  555 ( 81)  c5   345/  533 ( 81)
+M=4       act: c0   278/  796 ( 40)  c1   295/  887 ( 40)  c2   175/  758 ( 40)  c3   275/  788 ( 40)  c4   276/  910 ( 40)  c5   128/  765 ( 40)
+M=4    engram: c0    32/   75 (  3)  c1    19/   80 (  3)  c2    29/   87 (  3)  c3    29/   88 (  3)  c4    18/   88 (  3)  c5    29/   82 (  3)
+M=4         6: c0   108/  355 ( 40)  c1    59/  377 ( 40)  c2   189/  373 ( 40)  c3    76/  362 ( 40)  c4    54/  381 ( 40)  c5   201/  362 ( 40)
+M=5     out-a: c0   751/  761 ( 40)  c1   701/  787 ( 40)  c2   106/  727 ( 40)  c3   776/  786 ( 40)  c4   697/  793 ( 40)  c5    19/  769 ( 40)
+M=5      rows: c0   507/  788 ( 81)  c1   270/  779 ( 81)  c2   442/  819 ( 81)  c3   409/  784 ( 81)  c4   271/  777 ( 81)  c5   298/  758 ( 81)
+M=5       act: c0   296/  861 ( 40)  c1   140/  923 ( 40)  c2   232/  871 ( 40)  c3   432/  955 ( 40)  c4   194/  942 ( 40)  c5   129/  857 ( 40)
+M=5    engram: c0    38/   87 (  3)  c1    27/  104 (  3)  c2    54/  109 (  3)  c3    45/  110 (  3)  c4    32/  105 (  3)  c5    61/  102 (  3)
+M=5         6: c0   108/  257 ( 40)  c1    61/  257 ( 40)  c2    56/  274 ( 40)  c3    96/  253 ( 40)  c4    70/  264 ( 40)  c5   203/  257 ( 40)
+M=6     out-a: c0  1104/  747 ( 40)  c1   987/  776 ( 40)  c2   181/  721 ( 40)  c3  1120/  788 ( 40)  c4   950/  815 ( 40)  c5    20/  762 ( 40)
+M=6      rows: c0   722/  799 ( 81)  c1   269/  825 ( 81)  c2   595/  804 ( 81)  c3   625/  810 ( 81)  c4   219/  797 ( 81)  c5   276/  805 ( 81)
+M=6       act: c0   536/  937 ( 40)  c1   185/ 1086 ( 40)  c2   382/ 1003 ( 40)  c3   518/ 1030 ( 40)  c4   229/ 1091 ( 40)  c5    99/  991 ( 40)
+M=6    engram: c0    41/   98 (  3)  c1    20/  123 (  3)  c2    13/  123 (  3)  c3    39/  128 (  3)  c4    16/  126 (  3)  c5     4/  123 (  3)
+M=6         6: c0   165/  271 ( 40)  c1    40/  274 ( 40)  c2   278/  273 ( 40)  c3   138/  273 ( 40)  c4    40/  274 ( 40)  c5   261/  275 ( 40)
+
+Longest launch before the exchange on the last-arriving card, weighted by its lead over the second-last (us per check)
+M=1: 1054798 GemvQ8P<256u, ActF32>; 1025456 RowsP<RowsPair<RowsPair<HcFinishRows, RopeRows<ActF32> >, DenseRows<GemvQ8P<40u, ActF32> >; 783742 RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, DenseRows<GemvQ8P<160u,; 585968 RoutedUQ<RU3IQ3XXS<9u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>; 585967 RoutedUQ<RU3IQ2S<9u>, 1u, 1u, 4u, 1u, 0u, 128u, 0u, true>; 585966 RoutedUQ<RU3IQ2S<20u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>; 584720 RoutedUQ<RU3IQ2XXS<20u>, 1u, 2u, 8u, 2u, 0u, 128u, 0u, true>; 507841 GemvQ6KP<32u, ActF32>
+M=2: 49 RoutedUQ<RU3IQ2S<20u>, 2u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 37 RoutedUQ<RU3IQ2XXS<20u>, 2u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 31 PaceK<TokRows<HcFinishRows>, PaceSQ8<40u, 2u, 3u, 1u, 2u>, 256u>; 30 RoutedUQ<RU3IQ1S<20u>, 2u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 27 RowsP<DenseRowsWS<WsQ8<256u>, 1u, 1u, 1u, 0u, 0u> >; 26 RoutedUQ<RU3IQ3XXS<9u>, 2u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 22 RoutedUQ<RU3IQ2S<9u>, 2u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 19 SkNormDotsWM<8u>
+M=3: 52 RoutedUQ<RU3IQ2XXS<20u>, 3u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 49 RoutedUQ<RU3IQ2S<20u>, 3u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 33 RoutedUQ<RU3IQ3XXS<9u>, 3u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 33 RoutedUQ<RU3IQ2S<9u>, 3u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 30 RowsP<DenseRowsWS<WsQ8<256u>, 2u, 1u, 2u, 0u, 5u> >; 30 SkNormDotsWM<8u>; 29 PaceK<TokRows<HcFinishRows>, PaceSQ8<40u, 3u, 3u, 1u, 1u>, 256u>; 22 RoutedUQ<RU3IQ1S<20u>, 3u, 1u, 8u, 1u, 0u, 128u, 0u, false>
+M=4: 80 RoutedUQ<RU3IQ2S<9u>, 4u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 74 RoutedUQ<RU3IQ2S<20u>, 4u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 71 RoutedUQ<RU3IQ2XXS<20u>, 4u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 56 RoutedUQ<RU3IQ3XXS<9u>, 4u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 52 PaceK<NoRows, PaceSQ8<40u, 4u, 1u, 1u, 1u>, 128u>; 45 RoutedUQ<RU3IQ1S<20u>, 4u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 35 RowsP<RowsPair<TokRows<HcFinishRows>, DenseRowsWS<WsQ8<256u>, 2u, 1u, 2u, 0u, 5u> > >; 24 PaceK<NoRows, PaceSQ6<5u, 4u, 2u, 1u>, 256u>
+M=5: 86 RoutedUQ<RU3IQ2S<9u>, 5u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 79 RoutedUQ<RU3IQ2S<20u>, 5u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 57 RoutedUQ<RU3IQ3XXS<9u>, 5u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 46 PaceK<NoRows, PaceSQ8<40u, 5u, 1u, 1u, 1u>, 128u>; 39 RoutedUQ<RU3IQ2XXS<20u>, 5u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 37 RoutedUQ<RU3IQ1S<20u>, 5u, 1u, 8u, 1u, 0u, 128u, 0u, false>; 33 RowsP<RowsPair<TokRows<HcFinishRows>, DenseRowsWS<WsQ8<256u>, 3u, 2u, 2u, 0u, 15u> > >; 29 PaceK<NoRows, PaceSQ6<5u, 5u, 2u, 1u>, 256u>
+M=6: 101 RoutedUQ<RU3IQ2S<9u>, 6u, 1u, 8u, 0u, 0u, 128u, 0u, false>; 98 PaceK<NoRows, PaceSQ8<40u, 6u, 1u, 1u, 1u>, 128u>; 78 PaceK<NoRows, PaceSQ6<5u, 6u, 2u, 1u>, 256u>; 76 RoutedUQ<RU3IQ2XXS<20u>, 6u, 1u, 8u, 0u, 0u, 128u, 0u, false>; 73 RoutedUQ<RU3IQ2S<20u>, 6u, 1u, 8u, 0u, 0u, 128u, 0u, false>; 51 RoutedUQ<RU3IQ3XXS<9u>, 6u, 1u, 8u, 0u, 0u, 128u, 0u, false>; 41 RowsP<RowsPair<TokRows<HcFinishRows>, DenseRowsWS<WsQ8<256u>, 3u, 2u, 2u, 0u, 15u> > >; 28 RoutedUQ<RU3IQ1S<20u>, 6u, 1u, 8u, 0u, 0u, 128u, 0u, false>
