@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 12, 2026 20:50 EST — DeepSeek V4.1 tp105 gated: plain 106.1 tok/s with OWN_FL=3; guessing +1 %.**
+- tg105 (19:40-20:22): every trace identical (xorP compiled in; FL / NOPAIR / SW arms). Plain 104.0 -> 106.1 tok/s
+  with `OWN_FL=3`; guessing code ~145.5, analysis ~161.5 (+0.7-1.3 %); SW1 slower (off). tg105v: the draft vocabulary
+  +1 % on four of five prompts (joins BEST). 3K read 5.70 s at 256, 5.59 with px-512. Results round19-tg105 /
+  round19-tg105v / round19-tl105 (check budget: slope 1.87 ms per extra token; 1 -> 2 tokens +1.4 ms dense rows).
+- Helpers (one card each, read/design first): ck2 (card 3, 2-3-token dense forms for checks), rux3 (card 2, prompt
+  routed experts at more tokens per expert). No host reset since 16:05 (cards' audio functions awake since 18:55).
+
 **November 12, 2026 16:05 EST — host reset (ninth event) with iommu=pt: the change did not fix it.**
 - iommu=pt in since the planned reboot 11:01-11:03 (gate tg105pt: all traces identical, speeds unchanged: plain
   104.0 / 104.2, 3K 5.74 s at 256 and 5.56 at px-512, guessing 143.4 / 158.6; card stores still ~1 GB/s). Kept.
