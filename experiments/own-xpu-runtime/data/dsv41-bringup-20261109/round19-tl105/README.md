@@ -16,7 +16,7 @@ Device busy per check, ms (card 2; card 0 within 0.1 except dense -0.5 and excha
 | total | 8.82 | 11.83 | 13.79 | 15.25 | 17.45 | 18.77 | 1.87 |
 
 Checks per M: 32 / 30 / 20 / 6 / 8 / 4. Read: the slope is now 1.87 ms per extra token (was ~2.5 at tp90), half of it
-experts (mostly new experts' bytes and decode; a bandwidth floor is not measured). The step from 1 to 2 tokens costs +3.0 ms, of which dense
+experts (byte floor ~0.74 ms per extra token: 6 new experts x 40 layers = 2.45 GB, 409 MB per card at 550 GB/s, from data/dsv41-directory.tsv; measured 0.92 = ~80 % of the floor). The step from 1 to 2 tokens costs +3.0 ms, of which dense
 rows +1.4 (one-token GEMV forms -> weight-stationary forms + PaceK) against ~0.3 per later token: the "ck2" helper
 works on 2-3-token forms of the one-token GEMVs (`dsv41-work/ck2/`), target ~-1 ms at M = 2-3 (~-0.75 ms per cycle,
 ~+5 % guessing).

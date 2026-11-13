@@ -418,7 +418,7 @@ Did not work (and why):
 - 20:28 (2026-11-12) **tp105 gated (tg105, all identical): `OWN_FL=3` plain 104.0 -> 106.1 tok/s (+2 %), xorP +0.5 %,
   guessing +0.7-1.3 %; SW1 slower (off), SW2 nothing on top of FL; FL + NOPAIR become defaults; draft vocabulary
   joins BEST (tg105v +1 %).** Check budget on tp105 (`data/.../round19-tl105/`): one token 8.8 ms busy, two 11.8,
-  slope 1.87 ms per extra token (experts 0.92 (measured slope; a floor not proven), exchanges 0.48, dense 0.32, norms 0.12); the 1 -> 2
+  slope 1.87 ms per extra token (experts 0.92 (byte floor ~0.74: 6 new experts x 40 layers = 2.45 GB per token, 409 MB per card at 550 GB/s; so ~80 % of the floor, ~0.18 ms left), exchanges 0.48, dense 0.32, norms 0.12); the 1 -> 2
   token step adds +1.4 ms of dense rows (GEMV -> weight-stationary forms + PaceK). Helpers: **ck2** (card 3, 2-3-token
   GEMV forms, target -1 ms at M = 2-3, ~+5 % guessing) and **rux3** (card 2, prompt routed experts at 8-64 tokens per
   expert: 45 % of prompt time at ~28 % of the exact ceiling).
