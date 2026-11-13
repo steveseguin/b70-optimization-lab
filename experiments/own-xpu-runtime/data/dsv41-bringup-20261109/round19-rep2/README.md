@@ -2,6 +2,9 @@
 
 Status (keep current): **DONE 11:35 -- stopped at the measured ledger (sections 4-5): no option reaches the 0.15 ms (one token) / 0.2 ms (check) line. No engine build, no six-card runs, no speed A/B. `rep2-1.patch` = record only (syntax-checked, never built for the GPU or run; its FFN part measured to lose).**
 
+Second task (11:40, coordinator): a faster per-row form for the dot rows on one card: `dots/README.md`. **DONE 12:49:
+stopped at the line (a perfect same-bits form saves at most ~0.12 ms per step; best form found, T1, 0.012 ms; no patch).**
+
 ## In plain words
 
 Every card still reads two sets of the same rows in every layer: the router rows (`ffn_gate_inp`, 384 x 5,120, 16-bit

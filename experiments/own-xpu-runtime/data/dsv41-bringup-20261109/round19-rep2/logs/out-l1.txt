@@ -1,0 +1,60 @@
+device Intel(R) Arc(TM) Pro B70 Graphics, 256 compute units, cache 24.0 MiB, fp64 1, max clock 2800 MHz
+free card memory 31.84 GiB
+
+(1) dependent-op latency, ns per op (one sub-group; median of 9; (t(2304) - t(256)) / 2048):
+  L f32 add                                      26.65 ns
+  L f64 add                                      87.58 ns
+  L f64 mul                                      87.53 ns
+  L f64 div                                     927.38 ns
+  L f64 sqrt                                    203.91 ns
+  L f64 xor1 shuffle+add                         51.78 ns
+  L f32 xor1 shuffle+add                         18.92 ns
+  L f2d+add                                      35.76 ns
+  L TwoSum element (f32)                         21.11 ns
+  L barrier round trip (2 barriers, 16 sg)      144.30 ns
+  L f64 xor16 shuffle+add                       122.17 ns
+  L f64 broadcast+add                            44.30 ns
+
+fn rows 1966080 B x 39 copies; read-floor buffer 14 x 5.90 MB
+bitwise: 16 comparisons, 0 differ
+
+timing (5 rounds x 39 reps, kernel us: median [p10 p90]):
+  T BW1@32       cold    4.38  [  4.27   4.48]
+  T BW1@32       hot     1.77  [  1.77   2.08]
+  T BW3@32       cold   10.94  [ 10.83  11.04]
+  T BW3@32       hot     2.81  [  2.71   2.92]
+  T BW1@64       cold    4.17  [  3.85   4.38]
+  T BW1@64       hot     1.77  [  1.67   1.88]
+  T BW3@64       cold   10.73  [ 10.62  10.94]
+  T BW3@64       hot     2.40  [  2.29   2.60]
+  T BW1@128      cold    4.38  [  3.96   4.48]
+  T BW1@128      hot     1.88  [  1.77   1.98]
+  T BW3@128      cold   10.94  [ 10.83  11.15]
+  T BW3@128      hot     2.40  [  2.29   2.60]
+  T BW1@256      cold    4.38  [  3.85   4.58]
+  T BW1@256      hot     2.08  [  1.88   2.29]
+  T BW3@256      cold   10.83  [ 10.62  11.04]
+  T BW3@256      hot     2.60  [  2.50   2.81]
+  T DT0x1        cold    4.38  [  3.33   4.79]
+  T DT0x1        hot     3.33  [  3.23   3.33]
+  T DT1x1        cold    3.44  [  3.44   3.85]
+  T DT1x1        hot     3.54  [  3.44   3.65]
+  T Dx1          cold    8.85  [  8.75   9.06]
+  T Dx1          hot     8.85  [  8.75   8.86]
+  T DTx1         cold    8.64  [  8.44   9.58]
+  T DTx1         hot     8.44  [  8.44   8.54]
+  T DT0x25       cold    5.10  [  5.00   5.31]
+  T DT0x25       hot     3.54  [  3.44   3.65]
+  T DT1x25       cold    5.21  [  5.10   5.42]
+  T DT1x25       hot     3.65  [  3.65   3.85]
+  T Dx25         cold   10.52  [ 10.52  10.62]
+  T Dx25         hot     9.06  [  8.96   9.17]
+  T DTx25        cold   10.21  [ 10.11  10.31]
+  T DTx25        hot     8.75  [  8.65   8.85]
+  T A            cold   11.15  [ 10.94  11.46]
+  T A            hot     9.69  [  9.58  10.00]
+  T AT           cold   10.83  [ 10.73  11.15]
+  T AT           hot     9.38  [  9.27   9.69]
+
+ALL: 16 comparisons, 0 differ: PASS
+exit 0
