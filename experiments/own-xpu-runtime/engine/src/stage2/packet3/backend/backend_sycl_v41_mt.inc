@@ -161,7 +161,7 @@ unsigned mt_skdots_min = 4;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least 
 // dot rows) runs as SkDotsFF<8> work-groups in the router's launch (RowsDotsK; SkDotsWM<8>'s rows, the one-token
 // path's) instead of sub-group rows. The rows, normalized vectors and the mixes' finish outputs are the same bits (the dot
 // rows' partial words differ where SkDotsFF's proof holds, as under OWN_MT_SKDOTS).
-unsigned mt_ck2 = 0, mt_ck2_forms = 3;
+unsigned mt_ck2 = 0x3, mt_ck2_forms = 3; // blocks of 2-3 tokens by default since tp107 (tg106: +0.6-1.1 % guessing, identical); OWN_CK2=0: off
 bool ck2_on(int c, unsigned bit) const {
     return (mt_ck2_forms & bit) && mt_n >= 2 && mt_n <= 6 && ((mt_ck2 >> (mt_n - 2)) & 1u) && mt_small && !dr_step &&
            !xt[c].on;
