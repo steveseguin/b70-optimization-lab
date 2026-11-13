@@ -1,5 +1,20 @@
 # Current Workspace State
 
+**November 13, 2026 09:35 EST — host reset at 06:02 (new error kind), Wi-Fi now the network, probe passed; continuing.**
+- 06:02:13 host reset ~40 s into helper idxsplit's first 34K read with the index split on (`OWN_IDX_SPLIT=1`).
+  The record differs from the ten earlier resets (bank 5 core watchdogs): MCA bank 30 (`Perr S0:T002:B1E`, status
+  baa000000005080b, IPID 1002e1f003400), reset reason "an uncorrected error caused a data fabric sync flood event".
+  Evidence `dsv41-work/faults/reset-20261113T0602/`. idxsplit is stopped until a code audit of every cross-card
+  write at long context; its long runs then go control (off) first. Probe passed 09:13.
+- 09:23 a second restart left no error record and no reset reason (power cycle while the network was switched).
+  Probe passed 09:32. Card audio power setting not re-applied this boot (no owner answer yet).
+- Network: the owner's Tenda USB Wi-Fi (AIC8800, a69c:8d80) is now the only link: `wlxe865d47e3a48`, 192.168.2.138,
+  RubyPuppy 5 GHz; ethernet enp167s0 unplugged. Driver from /usr/src/AIC8800 patched for kernel 7.0 (`in_irq` ->
+  `in_hardirq`) and registered with DKMS as aic8800/1.0-k7 (rebuilds on new kernels; came back by itself after 09:23).
+  Wi-Fi route metric 50.
+- Running: qkv speed A/B (`dsv41-work/qsp110.sh`, split off/on, RUX5 on); helpers rux6 (prompt expert forms -> engine
+  patch) and idxsplit (audit, then long documents).
+
 **November 13, 2026 04:13 EST — software fault on card 1 (helper bench), probe passed; continuing.**
 - 04:09 helper rux6's first test kernel read from bad addresses (its inline loads took a shared address the
   compiler placed 16 bytes into a register): page faults, CAT errors, one engine reset by the driver, device
