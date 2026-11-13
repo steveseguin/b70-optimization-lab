@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 13, 2026 11:50 EST — DeepSeek tp110 gated: plain 111, guessing code 158 / analysis 176; index split -9 % at 34K.**
+- tg110 (round19-tg110): tp110 = tp109 + RUX5 default + the q_a + kv rows split by card (helper qkv, `OWN_QKV_SPLIT`
+  default on). Every trace identical, every answer the same, no fault. Plain 108.8-109.3 -> 111.1-111.6 tok/s; guessing
+  code 155.1 -> 157.3-158.1, analysis 173.5 -> 174.8-176.0; 3K read 4.8 s and 10K 15.7 s unchanged.
+- Helper idxsplit (index lists split by tokens in prompt reads, opt-in `OWN_IDX_SPLIT=1`): code audit after the 06:02
+  reset found no out-of-range access; long documents x19k 28.47 -> 26.64 s, x34k 53.48 -> 48.57 s, same answers, no
+  fault; x95k pair running.
+- Helper rep2: splitting the router / hc dot rows by card does not pay (launch length is one row's work, not bytes);
+  now looking at a faster per-row form (FFN pre-norm launch 11.9 us vs 2.5 us for the norm alone). Helper rux6
+  (prompt expert kernels, `OWN_RUX6`): engine patch built, traces at 64 / 256 identical, 3K traces next.
+
 **November 13, 2026 09:35 EST — host reset at 06:02 (new error kind), Wi-Fi now the network, probe passed; continuing.**
 - 06:02:13 host reset ~40 s into helper idxsplit's first 34K read with the index split on (`OWN_IDX_SPLIT=1`).
   The record differs from the ten earlier resets (bank 5 core watchdogs): MCA bank 30 (`Perr S0:T002:B1E`, status
