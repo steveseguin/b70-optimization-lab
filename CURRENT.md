@@ -1,5 +1,11 @@
 # Current Workspace State
 
+**November 13, 2026 02:27 EST — DeepSeek tp108 gated: writing +3 % (plain 109, guessing 152 / 169), prompts -5 %.**
+- tg108 (02:06-02:26, round19-tg108): every trace identical, every answer the same, no fault. Peer-ordered pushes
+  (`OWN_XPUSH2`, helper xchg2): plain 106.1 -> 109.2 tok/s, guessing code 147.8 -> 152.4, analysis 164.3 -> 169.2.
+  Pipelined prompt expert kernels (`OWN_RUX4`, helper rux4): 3K read 5.07 -> 4.82 s, 10K 16.37 -> 15.65 s.
+- Both default from tp109 (sources 67696759d). Helper rux5: the same kernel method for the writing-time experts.
+
 **November 13, 2026 00:45 EST — DeepSeek long documents on tp107: reading ~2.1x faster, writing 87-91 tok/s.**
 - 95K-token document read in 174 s (was 362), writing 87 tok/s (was 65), guessing after 69K 126 tok/s; all answers
   the same (round19-lc107). Helpers rux4 (prompt experts, card 2) and xchg2 (decode exchanges) restarted after the

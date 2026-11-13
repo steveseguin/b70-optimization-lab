@@ -400,6 +400,10 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 02:27 (2026-11-13) **tp108 gated (tg108, `data/.../round19-tg108/`): 18 traces identical; XPUSH2 +3 % writing, RUX4
+  -5 % prompt.** Plain 106.1 -> 109.2 tok/s, guessing code 147.8 -> 152.4, analysis 164.3 -> 169.2 (checks -0.4 /
+  -0.5 ms); 3K read 5.07 -> 4.82 s, 10K 16.37 -> 15.65 s. Both default in the tp109 sources (67696759d); tp109 builds
+  with rux5 (rux4's method on the one-token / check expert kernels) when it lands.
 - 01:45 (2026-11-13) **rux4 done (`data/.../round19-rux4/`): prompt routed experts -5 to -18 % per launch, bitwise**
   (IQ2_XXS gate+up -18.4 %, IQ1_S -12.4, IQ2_S -7.8; downs -5 to -10 %): a sub-block's grid gathers issued back to
   back (plain loads), 4-row tiles at 256 registers capped at 64 work-groups for IQ2_XXS / IQ3_XXS. Predicted card 2
