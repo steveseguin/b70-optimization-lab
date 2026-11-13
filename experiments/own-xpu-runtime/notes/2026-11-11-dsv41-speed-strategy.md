@@ -400,6 +400,12 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 22:56 (2026-11-12) **EU pushes are slow only when a card writes to several peers at once** (`data/.../round19-ce/`
+  sg / sq / ord). One peer at a time (five launches, card c -> c + p): 41 GB/s per card at 640 KiB with all six (pulls
+  36), 20 at 64 KiB; five peers at once (today's push forms): ~1 GB/s even alone. Flag-after-data ordering holds
+  (0 early words, copy engine and EU stores). tg106 (`round19-tg106/`): tp106 identical, CK2 +0.6-1.1 % guessing
+  (default in tp107), 3K 5.45 s. Helper **xchg2**: peer-ordered pushes at decode / check sizes against today's pulls
+  (13.2 us) and pushes (7.4 us).
 - 21:16 (2026-11-12) **Copy engine = the prompt-exchange transport** (`data/.../round19-ce/`). EU stores into a peer
   stay ~1 GB/s with every store cache hint; the copy-only queue group (1 engine per card) pushes own slice -> five
   peers at 27-30 GB/s all six at once, values exact, and runs beside compute (20 MiB per card push adds ~0.14 ms to a

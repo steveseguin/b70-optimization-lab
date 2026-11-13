@@ -50,3 +50,21 @@ of peer reads (the reset suspect). EU-store pushes stay out for bulk data.
 - 21:27:49 driver engine reset on card a3:00.0 when I killed an earlier hung version of `bcs_lat` mid-spin (my
   bench's bug above; evidence `dsv41-work/faults/engine-reset-20261112T2127/`, probe passed 21:28). The bench now
   skips every later wait after one timeout.
+
+## ord + sg + sq (22:47-22:53): why EU pushes were slow, and the fix
+
+- **Ordering holds** (`bcs_ord.cpp`, `ord.txt`): the receiver checked one word per 64-byte line of the payload the
+  moment it saw the flag, 4 KiB to 1 MiB, 50-2,000 rounds per size: 0 words missing, for copy-engine pushes and for
+  EU stores + system fence + flag.
+- **The slowness is concurrent destinations** (`xchg_sg.cpp`, `sg.txt`): EU stores from one card into ONE peer:
+  4.0 / 16.8 us for 64 / 640 KiB alone (16-40 GB/s), 9 GB/s per card with all six sending in a ring; into FIVE peers at
+  once: ~0.87-1.1 GB/s, even with only one card sending. Sub-group size 16 or 32 and waiting between rounds change
+  nothing.
+- **One destination at a time is fast** (`xchg_sq.cpp`, `sq.txt`): five launches per exchange, each writing this card's
+  slice to one peer (card c to c + p in launch p, so each card receives from one sender at a time): **41 GB/s per card
+  at 640 KiB with all six cards** (pulls 36), 20-21 at 64 KiB (pulls 26), 6.4 at 16 KiB (pulls 7.6); values exact.
+  One launch whose work-groups walk the peers in order is still slow (1.2 GB/s at 640 KiB): work-groups drift apart
+  and the card again writes to several peers at once.
+- Reading: all-gathers can be one-way posted writes at full speed if each card targets one peer at a time. That is
+  the transport for the exchanges that are pulls today (no peer reads: the host-reset suspect), and an alternative to
+  the copy engine for prompt slices (the copy engine still frees the EUs and overlaps compute).
