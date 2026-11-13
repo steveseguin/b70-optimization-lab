@@ -717,6 +717,8 @@ int main(int argc, char **argv) {
         // rux4-1 (default on since tp109; tg108: traces identical, 3K read -5 %): the OWN_MT_RUX blocks' cap-6 routed
         // launches on the pipelined forms (same bits); OWN_RUX4=0: today's forms
         if (const char *e = getenv("OWN_RUX4")) be.rux4 = atoi(e) != 0;
+        // rux5-1 (off by default): OWN_RUX5=1: one-token and 2-6-token check routed launches on the gathers-first forms (same bits)
+        if (const char *e = getenv("OWN_RUX5")) be.rux5 = atoi(e) != 0;
         if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait

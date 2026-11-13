@@ -74,6 +74,7 @@
 #include "stage2/packet3/step/plan_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux4.hpp" // software-pipelined prompt-block routed rows (rux4-1, OWN_RUX4)
+#include "stage2/packet3/kernels/sycl_v41_routed_rux5.hpp" // one-token / check routed rows, gathers first (rux5-1, OWN_RUX5)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
@@ -2253,6 +2254,18 @@ private:
             // 128 work-groups (2,048 sub-groups): best for every format and shape in
             // the 2026-11-09 kernel bench (each fills its local table once); o.down_wg for the down rows
             const size_t MAXWG = per_slot ? o.down_wg : 128;
+            if (rux5) { // OWN_RUX5: one-token down rows on the pipelined forms (Rux5Pick1; R = 0: today's kernel below)
+#define X5(TY, NB)                                                                                         \
+    if constexpr (ops41sycl::Rux5Pick1<iq3::Type::TY, NB>::R != 0)                                         \
+        if (e.type == iq3::Type::TY && cols == NB * 256) {                                                 \
+            using K = ops41sycl::Rux5Q1<iq3::Type::TY, NB>;                                                \
+            const size_t mw = K::WGCAP && (!MAXWG || MAXWG > K::WGCAP) ? K::WGCAP : MAXWG;                 \
+            launch_rows<K::TAB>(tile, (size_t)6 * rows, mw, K{rows, per_slot}, w, x, ids, y);              \
+            return;                                                                                        \
+        }
+                X5(IQ2_XXS, 9) X5(IQ2_S, 9) X5(IQ3_XXS, 9) X5(IQ2_XS, 9) X5(IQ1_S, 9)
+#undef X5
+            }
 #define X(TY, KERN, NB)                                                                                    \
     if (e.type == iq3::Type::TY && cols == NB * 256) {                                                     \
         using K = ops41sycl::KERN<NB, Act>;                                                                \
@@ -2324,10 +2337,21 @@ private:
             K k{rows, false, ex};
             k.w2 = (const uint8_t *)db.p;
             k.out2 = yb;
-            launch_rows<K::TAB>(tile, (size_t)12 * rows + ex.n(), MAXWG, k, w, x, ids, ya);
+            size_t mw = MAXWG; // OWN_RUX5: a pipelined form's own work-group cap (RoutedUQ::WGCAP, 0: none)
+            if constexpr (requires { K::WGCAP; })
+                if (K::WGCAP && (!mw || mw > K::WGCAP)) mw = K::WGCAP;
+            launch_rows<K::TAB>(tile, (size_t)12 * rows + ex.n(), mw, k, w, x, ids, ya);
             return true;
         };
         using namespace ops41sycl;
+        if constexpr (std::is_same_v<EX, NoRows>)
+            if (rux5) { // OWN_RUX5: one-token gate + up on the pipelined forms (Rux5Pick1; R = 0: today's kernel below)
+#define X5(TY)                                                                                             \
+    if constexpr (Rux5Pick1<iq3::Type::TY, 20>::R != 0)                                                    \
+        if (ea.type == iq3::Type::TY) return go(std::type_identity<Rux5Q1<iq3::Type::TY, 20>>{});
+                X5(IQ2_XXS) X5(IQ2_S) X5(IQ3_XXS) X5(IQ2_XS) X5(IQ1_S)
+#undef X5
+            }
         switch (ea.type) {
         case iq3::Type::IQ2_XXS: return go(std::type_identity<RoutedIQ2XXSPx<20, Act, EX>>{});
         case iq3::Type::IQ2_S:
