@@ -26,3 +26,12 @@ checks 15.6 / 16.2 ms). Card memory: at least 2.59 GiB free per card after load 
 
 `lc107-summary.txt` (x19k), `lc107b-summary.txt`, `lc107b-marks.txt`, `spec/` (guess logs). Scripts in
 `../round18-scripts/strategy/` (lc107.sh, lc107b.sh).
+
+## Decode profile at 3K vs 69K (lp107, card 2, `OWN_GPROF=2`, tp107, 64 answer tokens, answers same)
+
+GPU time per step 9.64 ms at 3K, 10.21 ms at 69K (+0.57): index scoring `IndexerScoreB` / `BC` +0.37, top-k
+selection (`TopKSelQ` / `CQ` / `BQ`) +0.32; nothing else grows. (Round 18 at 69K: top-k 1.66 + index 0.99 ms; the
+candidate lists and the new selection forms removed most of it.) The timed runs' 3K -> 69K gap (10.3 -> 11.46 ms per
+step) is the 0.57 ms plus the engram rows read from disk for the long documents' answers (532 us per step at 69K
+against 54 us warm at 3K). So long-document writing has no big lever of its own left; long-document reading gains
+from the prompt kernels (rux4) like short prompts. Files: `lp107-*-decode-profile-card2.txt`, `lp107-summary.txt`.
