@@ -75,6 +75,7 @@
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
+#include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -404,7 +405,7 @@ public:
                                 // compressor pool and the engram gate (sycl_v41.hpp "smallk"; the same bits)
         int smallk_dots = 8;    // OWN_SMALLK_DOTS=8 (default since tg89; 4: the block size K; 0: off): the pre-norm + the stream mix's dot
                                 // rows as SkNormDotsW<K> (the finish's outputs the same bits; the partials differ)
-        unsigned fl = 0;        // fl-1 (OWN_FL=bits, off by default; the same bits; sycl_v41_fl.hpp, bench
+        unsigned fl = 3;        // fl-1 (OWN_FL=bits, 3 by default since tp106 (tg105: +2 % plain); the same bits; sycl_v41_fl.hpp, bench
                                 // /home/steve/dsv41-work/fl): one-token tp steps fold a launch into the next one.
                                 // 1: the FFN pre-norm + the mix's dot rows (SkNormDotsW<8>) into the router launch
                                 // (every router work-group forms the norm itself); 2: MoeCombineA into the shared

@@ -132,7 +132,7 @@ unsigned mt_eu = 0;      // OWN_MT_EU=6: routed rows expert-major (RoutedU, grou
 // OWN_MT_EU; 8 at most in layers whose gate / up rows are IQ2_S at 5,120 columns, where RoutedU<.., 16> spills), the
 // heaviest groups first unless OWN_MT_EU_HEAVY=0. The same sums: a slot's output does not depend on its group.
 unsigned mt_eu_big = 16, mt_eu_big_m = 128;
-bool mt_eu_heavy = true;
+bool mt_eu_heavy = false; // default off since tp106 (rux3 + tg105h: plain order, 3K read -1.5 % px-512, -2.4 % at 256; traces identical)
 unsigned eu_cap_c[TILES] = {}; // the cap card c's current layer was grouped with (tpm_layer's ExpertGroupM; routed_m)
 bool mt_idstat = false; // OWN_MT_IDSTAT=1: count distinct experts per block and layer on card 0 (diagnostic, waits)
 FILE *mt_iddump = nullptr; // OWN_MT_IDDUMP=<file> (with OWN_MT_IDSTAT=1): write each block's ids per layer
@@ -153,6 +153,49 @@ int mt_dsplit_fin = 2;       // OWN_MT_DSPLIT_FIN: the finishes as their own lau
 unsigned mt_skdots = 8;      // OWN_MT_SKDOTS=8 (default since tg91; or 4; 0: off): the blocks' dot rows as SkDotsWM<K> launches (the
                              // one-token path's SkDotsFF rows, its default since tg89) instead of HcDotsRows rows
 unsigned mt_skdots_min = 4;  // OWN_MT_SKDOTS_MIN=m: only in blocks of at least m tokens (4 since tune92)
+// ---- ck2-1 (2026-11-12; off by default, each a bit-identical form; kernels/sycl_v41_ck2.hpp, bench and numbers
+// /home/steve/dsv41-work/ck2/README.md): OWN_CK2=mask over block sizes 2 .. 6 (bit m - 2; OWN_CK2=1: 2 and 3 tokens),
+// OWN_CK2_FORMS=bits (default 3): 1 a block of 2 tokens runs its FFN pre-norm, the FFN mix's dot rows and the router
+// rows in ONE launch (FlNormKM<2, 1, 1>, fl-1's FlNormK for 2 tokens) instead of the norm launch + the router rows
+// with the HcDotsRows rows riding; 2 the router rows' TokRows<HcDotsRows> rider (blocks of 2-3 tokens: the FFN mix's
+// dot rows) runs as SkDotsFF<8> work-groups in the router's launch (RowsDotsK; SkDotsWM<8>'s rows, the one-token
+// path's) instead of sub-group rows. The rows, normalized vectors and the mixes' finish outputs are the same bits (the dot
+// rows' partial words differ where SkDotsFF's proof holds, as under OWN_MT_SKDOTS).
+unsigned mt_ck2 = 0, mt_ck2_forms = 3;
+bool ck2_on(int c, unsigned bit) const {
+    return (mt_ck2_forms & bit) && mt_n >= 2 && mt_n <= 6 && ((mt_ck2 >> (mt_n - 2)) & 1u) && mt_small && !dr_step &&
+           !xt[c].on;
+}
+// OWN_CK2 bit 2: the router's rows d (dense_m's form for GemvH16P<160>) with the dot rows rider hd as RowsDotsK;
+// false (nothing launched) for other matrices and riders (the q_a + kv pair loses with it: README section 5)
+template <typename DK, typename RD, typename D> bool ck2_dots(int c, const RD &hd, const D &d) {
+    if constexpr (!std::is_same_v<RD, ops41sycl::TokRows<ops41sycl::HcDotsRows<5120, 8>>> ||
+                  !std::is_same_v<DK, ops41sycl::GemvH16P<160, Act>>)
+        return false;
+    else {
+        if (!ck2_on(c, 2u)) return false;
+        const auto k = ops41sycl::rows_dots(hd, d);
+        using K = std::decay_t<decltype(k)>;
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<uint32_t, 1> lm(K::lm_words(), hh);
+            hh.parallel_for(sycl::nd_range<1>(k.groups() * 512, 512),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { k(it, &lm[0]); });
+        });
+        kev(c, kname<K>(), e);
+        return true;
+    }
+}
+// OWN_CK2 bit 1: FlNormKM's launch (its local memory: the norm partials' words, MODE 0's normalized vectors)
+template <typename K> void ck2_launch(int c, const K &k) {
+    auto e = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<uint32_t, 1> lm(K::lm_words(), hh);
+        sycl::local_accessor<float, 1> xl(K::xl_floats(), hh);
+        hh.parallel_for(sycl::nd_range<1>(k.groups() * 512, 512), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+            k(it, &lm[0], xl.template get_multi_ptr<sycl::access::decorated::yes>());
+        });
+    });
+    kev(c, kname<K>(), e);
+}
 // ---- skn-1 (2026-11-11; off by default, each a bit-identical form): the one-token path's one-work-group norms
 // (smallk) for the m tokens of a block, one work-group per token (ops41sycl::SkNormWM / SkNormPairWM / SkNormDotsWM /
 // SkCompressPoolWM). OWN_MT_SKNORM=mask: 1 the 5,120 norms that run alone (pre-norms beside riding or SKDOTS dot rows,
@@ -200,12 +243,12 @@ unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at lea
 // default since tp97 (tg96b: 3K read 472 -> 497 tok/s): OWN_MT_RUX=1, OWN_MT_RUX_CAP=6 (OWN_MT_RUX=0: off)
 bool mt_rux = true;
 unsigned mt_rux_min = 16, mt_rux_cap = 6;
-// OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 0; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
+// OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
 // same; compiled in, the unused pair code costs IQ2_XXS gate+up 1.4-2.1 %, IQ2_XS down 1.5-2.1 %, IQ2_XXS down
 // 1.0-1.6 % per launch (card 5, M 2-6; xperm/README-ledger.txt section 11 A).
-bool u3_nopair = false;
+bool u3_nopair = true; // default on since tp106 (tg105: identical, faster checks)
 bool ring_one = true;     // OWN_RING_ONE (default on since tg90; =0: off): commit_pending's ring moves in one launch (RingCommitN)
 bool dr_nowait = true;    // OWN_DR_NOWAIT (default on since tg90; =0: off): the draft step's embed does not wait for the card (no host buffer to protect)
 // ---- draft-head-1 (2026-11-11; DR_ANCHOR_ARG and DR_WS on by default since tg91, the rest off; the draft only proposes, the check decides)
@@ -461,7 +504,7 @@ void dense_m(int c, DK dk, const void *w, const act_t *x, size_t xs, act_t *y, s
         using D = std::decay_t<decltype(d)>;
         if constexpr (std::is_same_v<RD, ops41sycl::NoRows>) launch_rows<0>(c, d.n(), 0, ops41sycl::RowsP<D>{d});
         else if constexpr (ops41sycl::is_qbm_heavy_v<RD>) qbm_heavy_launch(c, rider, d); // OWN_QB_OFF_M (qb-off-2)
-        else {
+        else if (!ck2_dots<DK>(c, rider, d)) { // (OWN_CK2 bit 2: the router's dot rows as work-groups)
             const ops41sycl::RowsPair<RD, D> rp{rider, d};
             launch_rows<0>(c, rp.n(), 0, ops41sycl::RowsP<ops41sycl::RowsPair<RD, D>>{rp});
         }
@@ -1402,6 +1445,25 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
             launch_wgl<64>(c, ng, 512, ops41sycl::SkNormDotsWM<8>{(unsigned)M, nt, H, H, H4, FS}, x, w, y, sv, fn, out);
         return true;
     };
+    // OWN_CK2 bit 1 (ck2-1): a block of 2 tokens' FFN pre-norm (x -> y, both tokens), its mix's dot rows (this card's
+    // tokens under OWN_MT_DSPLIT, into the same partials as skmix / dmix) and the router rows (GemvH16P<160>'s rows,
+    // both tokens' chains on one sub-group) in ONE launch, FlNormKM<2, 1, 1>; false: not taken (nothing launched)
+    auto ck2n = [&](const float *x, const std::string &wn, float *y, const std::string &prefix, unsigned xr,
+                    const unsigned *t0, const unsigned *t1) {
+        if (M != 2 || !ck2_on(c, 1u) || HC_SEG != 8) return false;
+        const float *w = wp<float>(c, wn);
+        if (!al16(x) || !al16(w) || !al16(y) || x == y) return false;
+        const std::string rn = p + "ffn_gate_inp.weight";
+        const auto &e = we(rn);
+        const auto &dp = wgt[c].at(rn);
+        if (!dp.packed || e.type != iq3::Type::F32 || e.cols != 5120 || dp.nrows != (unsigned)e.rows) return false;
+        const unsigned u0 = dsp ? t0[c] : 0u, nt = dsp ? t1[c] - t0[c] : (unsigned)M;
+        const float *sv = (const float *)strm[c] + u0 * H4, *fn = wp<float>(c, prefix + "fn.weight");
+        double *out = (dsp ? (double *)(xarena[c] + xr) : b.d25) + u0 * FS;
+        ck2_launch(c, ops41sycl::FlNormKM<2, 1, 1>{x, w, y, H, H, sv, fn, out, H4, FS, nt, (const uint8_t *)dp.p,
+                                                  (float *)b.router, (size_t)g.experts, dp.nrows});
+        return true;
+    };
     // OWN_MT_DSPLIT: a mix's finish for every token from the gathered partials (production's finish rows; only the
     // partials pointer differs), and whether it rides in the launch of matrix wn
     auto fmix = [&](const std::string &prefix, unsigned xr, float *pre, float *post, float *comb) {
@@ -1776,7 +1838,9 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H}, // (OWN_MT_HCPP)
                     strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
                     (float *)nullptr, (const float *)b.pre_a, b.x);
-        if (rd) { // the dot rows ride in the router's launch
+        if (ck2n(b.x, p + "ffn_norm.weight", b.xn, p + "hc_ffn_", dsF, dF0, dF1)) {
+            // OWN_CK2 bit 1: the pre-norm, the dot rows and the router rows in one launch
+        } else if (rd) { // the dot rows ride in the router's launch
             if (!skn_norm5(c, b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn, H, H)) // (OWN_MT_SKNORM bit 1)
                 rows_launch(c, tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H));
             if (dsp && dF0[c] == dF1[c]) // (OWN_MT_DSPLIT, no tokens here: no rows to launch beside the unpacked router)

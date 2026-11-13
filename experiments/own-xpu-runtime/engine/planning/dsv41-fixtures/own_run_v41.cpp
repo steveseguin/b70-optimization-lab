@@ -639,6 +639,22 @@ int main(int argc, char **argv) {
                 if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
             ops41sycl::g_ws_dride_mask = m;
         }
+        // ck2-1 (opt-in, /home/steve/dsv41-work/ck2/README.md; each a bit-identical form): OWN_CK2_FORMS=bits (default 3):
+        // 1 a 2-token block's FFN pre-norm + the mix's dot rows + the router rows in one launch (ops41sycl::FlNormKM),
+        // 2 the mixes' dot rows riding a dense launch (router, q_a + kv) as SkDotsFF work-groups in it (RowsDotsK).
+        // OWN_CK2=1: blocks of 2 and 3 tokens; OWN_CK2=n (n != 1; 0x.. allowed) the sizes M = 2 .. 6 whose bit M - 2 is set;
+        // OWN_CK2_MS="2,3": those sizes
+        if (const char *e = getenv("OWN_CK2")) {
+            const unsigned long n = strtoul(e, nullptr, 0);
+            be.mt_ck2 = n == 1 ? 0x3u : (unsigned)(n & 0x1fu);
+        }
+        if (const char *e = getenv("OWN_CK2_FORMS")) be.mt_ck2_forms = (unsigned)strtoul(e, nullptr, 0) & 3u;
+        if (const char *e = getenv("OWN_CK2_MS")) {
+            unsigned m = 0;
+            for (const char *c = e; *c; ++c)
+                if (*c >= '2' && *c <= '6') m |= 1u << (*c - '2');
+            be.mt_ck2 = m;
+        }
         if (const char *e = getenv("OWN_MT_TGW_ROWS")) be.mt_tgw_rows = (unsigned)atoi(e); // head: own token groups
         if (const char *e = getenv("OWN_MT_TGWM")) { // per block size: "m:g,m:g" the head's token group (1-6)
             for (const char *s = e; *s;) {
