@@ -28,6 +28,7 @@ jobs:
           --report "$RUNNER_TEMP/pages-report.json"
           --max-bytes 900000000
       - name: Retain the file inventory and historical-link warnings
+        if: ${{ !cancelled() }}
         uses: actions/upload-artifact@v4
         with:
           name: pages-inventory

@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-      - name: Test staged artifact and closeout checks
-        run: python3 -B -m unittest tools/test_repository_hygiene.py
+      - name: Test staged artifacts, closeouts and Pages
+        run: python3 -B -m unittest tools/test_repository_hygiene.py tools/test_stage_pages.py
       - name: Flag large artifacts and reject generated caches or incomplete closeouts
         run: python3 -B tools/check-repository-hygiene.py --event-json "$GITHUB_EVENT_PATH"
