@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 13, 2026 04:13 EST — software fault on card 1 (helper bench), probe passed; continuing.**
+- 04:09 helper rux6's first test kernel read from bad addresses (its inline loads took a shared address the
+  compiler placed 16 bytes into a register): page faults, CAT errors, one engine reset by the driver, device
+  coredump. Evidence in `dsv41-work/faults/fault-20261113T0409-card1/` (journal, coredump, run log). Health probe
+  (all six cards, barrier + allreduce) passed at 04:12. The helper fixes its forms and checks the machine code first.
+- Prompt budgets (round19-tlp109): 34K into a document the index scoring adds 128 ms per 512-token piece, computed
+  on all six cards for every token: helper idxsplit splits it by tokens (predicted -12 % at 32K, ~-25 % near 95K).
+
 **November 13, 2026 03:49 EST — DeepSeek tp109 gated: guessing +2-3 % (code 155, analysis 173.5); budgets refreshed.**
 - tg109 (03:29-03:49, round19-tg109): every trace identical, every answer the same, no fault. Writing-time expert
   kernels (`OWN_RUX5`, helper rux5): checks -0.26 to -0.81 ms, guessing code 152.1 -> 155.1, analysis 169.1 -> 173.5;
