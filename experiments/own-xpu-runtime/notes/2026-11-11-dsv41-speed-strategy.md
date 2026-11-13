@@ -400,6 +400,13 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
+- 01:45 (2026-11-13) **rux4 done (`data/.../round19-rux4/`): prompt routed experts -5 to -18 % per launch, bitwise**
+  (IQ2_XXS gate+up -18.4 %, IQ1_S -12.4, IQ2_S -7.8; downs -5 to -10 %): a sub-block's grid gathers issued back to
+  back (plain loads), 4-row tiles at 256 registers capped at 64 work-groups for IQ2_XXS / IQ3_XXS. Predicted card 2
+  -270 ms per 3K read (~4.8 s). Lost: next-block prefetch, x up front, R=3, R=4 E=4, 6/8-row tiles. tp108 sources
+  (6e07c32e4) = BCS default + rux4-1 (`OWN_RUX4`) + xchg2-1 (`OWN_XPUSH2`; bench: one-token output-a 10.3 -> 5.8 us,
+  act 10.9 -> 8.1, 2-4-token h 13.5-13.7 -> 7.9-8.4), both opt-in; build108 + gate tg108 running. New helper rux5:
+  rux4's method on the one-token and check expert kernels (card 2).
 - 00:45 (2026-11-13) **Long-context status on tp107 (lc107 / lc107b, `data/.../round19-lc107/`)**, px-512 + copy engine:
   read 19K / 34K / 69K / 95K in 29.7 / 56.1 / 120.1 / 173.8 s (628 -> 549 tok/s; tp73 66.9 / 123.3 / 255.9 / 362.3),
   writing 91.4 / 91.7 / 87.3 / 87.1 tok/s (tp73 69.1 / 68.4 / 67.2 / 65.2), guessing 138.6 (19K) / 125.8 (69K); all
