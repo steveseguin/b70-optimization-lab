@@ -400,7 +400,7 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
-- 22:56 (2026-11-12) **EU pushes are slow only when a card writes to several peers at once** (`data/.../round19-ce/`
+- 22:54 (2026-11-12) **EU pushes are slow only when a card writes to several peers at once** (`data/.../round19-ce/`
   sg / sq / ord). One peer at a time (five launches, card c -> c + p): 41 GB/s per card at 640 KiB with all six (pulls
   36), 20 at 64 KiB; five peers at once (today's push forms): ~1 GB/s even alone. Flag-after-data ordering holds
   (0 early words, copy engine and EU stores). tg106 (`round19-tg106/`): tp106 identical, CK2 +0.6-1.1 % guessing
