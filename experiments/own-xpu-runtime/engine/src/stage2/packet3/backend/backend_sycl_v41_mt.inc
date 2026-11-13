@@ -249,7 +249,7 @@ unsigned mt_rux_min = 16, mt_rux_cap = 6;
 // slot i + 1's x read before slot i's products and 64 work-groups (Rux4Pick); per (slot, row) the same sums in the
 // same order as RoutedIQ*SUX). Bench (card 2, 256-token blocks): -5 .. -18 % per launch, -270 ms of card 2's routed
 // time per 3K read; /home/steve/dsv41-work/rux4/README.md. Formats without a pick (Rux4Pick R = 0) keep RoutedIQ*SUX.
-bool rux4 = false;
+bool rux4 = true; // OWN_RUX4 (rux4-1): default on since tp109; false = the tp108 prompt routed forms
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the

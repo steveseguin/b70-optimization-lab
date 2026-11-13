@@ -393,7 +393,7 @@ public:
         // at 2, pulls from 3), 2 expert activations of one token by XchgQ (pull), 3 output-a of 2 tokens by XchgQ (pull),
         // 4 expert activations of 2-3 tokens by XchgQ (pull), 5 output-a of 3-6 tokens by XchgQ (pull; not with
         // OWN_MT_DSPLIT's second region). 0: off (today's forms)
-        unsigned xpush2 = 0;
+        unsigned xpush2 = 0x0Fu; // OWN_XPUSH2 (xchg2-1): default on since tp109; 0 = the tp108 exchanges
         unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         // px-1 (OWN_PX=1, opt-in; /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks of 2 x OWN_PX_MIN tokens

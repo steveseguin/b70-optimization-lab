@@ -247,12 +247,12 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_XTAIL")) opt.xtail = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL")) opt.xpull = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_MIN")) opt.xpull_min = (unsigned)atoi(e);
-    if (const char *e = getenv("OWN_XPUSH2")) // xchg2-1: decode / check exchanges as peer-ordered pushes (opt-in)
-        if (atoi(e) != 0) {
-            opt.xpush2 = 0x0Fu;
-            if (const char *m = getenv("OWN_XPUSH2_MASK")) opt.xpush2 = (unsigned)strtoul(m, nullptr, 0);
-            std::fprintf(stderr, "OWN_XPUSH2: exchange classes 0x%x\n", opt.xpush2);
-        }
+    // xchg2-1: decode / check exchanges as peer-ordered pushes; default on (classes 0x0F) since tp109 (tg108: traces
+    // identical, plain +3 %, guessing +3 %); OWN_XPUSH2=0: today's pulls / pushes; OWN_XPUSH2_MASK: the classes
+    if (const char *e = getenv("OWN_XPUSH2")) opt.xpush2 = atoi(e) != 0 ? 0x0Fu : 0u;
+    if (opt.xpush2)
+        if (const char *m = getenv("OWN_XPUSH2_MASK")) opt.xpush2 = (unsigned)strtoul(m, nullptr, 0);
+    if (opt.xpush2) std::fprintf(stderr, "OWN_XPUSH2: exchange classes 0x%x\n", opt.xpush2);
     if (const char *e = getenv("OWN_XPULL_LB")) opt.xpull_lb = atoi(e) != 0;
     if (const char *e = getenv("OWN_XPULL_GRF")) opt.xpull_grf = (unsigned)atoi(e); // default 128 (XPullK128); 0: auto (256)
     // px-1 (opt-in, /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks as two halves with every exchange of
@@ -714,7 +714,8 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_MT_RUX_MIN")) be.mt_rux_min = (unsigned)std::max(1, atoi(e));
         if (const char *e = getenv("OWN_MT_RUX_CAP")) be.mt_rux_cap = (unsigned)atoi(e);
         if (be.mt_rux_cap > 16) die("OWN_MT_RUX_CAP: at most 16 slots per group");
-        // rux4-1 (off by default): OWN_RUX4=1: the OWN_MT_RUX blocks' cap-6 routed launches on the pipelined forms (same bits)
+        // rux4-1 (default on since tp109; tg108: traces identical, 3K read -5 %): the OWN_MT_RUX blocks' cap-6 routed
+        // launches on the pipelined forms (same bits); OWN_RUX4=0: today's forms
         if (const char *e = getenv("OWN_RUX4")) be.rux4 = atoi(e) != 0;
         if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
