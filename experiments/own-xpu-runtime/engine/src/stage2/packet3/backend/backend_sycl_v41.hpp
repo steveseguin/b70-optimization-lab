@@ -530,6 +530,14 @@ public:
         int idx_cand = 0;       // dev_index, layers past 20 beyond 16,384 rows: score and select the layer-20 candidate
                                 // rows only (IndexerScoreBC + TopKSelC), the same lists (OWN_IDX_CAND=1; 2 also runs the
                                 // full score + select and compares scores and lists bitwise)
+        unsigned idx_split = 1; // idxsplit-1 (OWN_IDX_SPLIT, default 1 since tp111: x95k read -15 %; backend_sycl_v41_mt.inc "idxsplit-1"): prompt blocks'
+                                // index lists split across the cards by tokens and gathered (1: the indexer's q_b rows,
+                                // rope, proj rows, scores and selects of the card's tokens only; 2: scores and selects
+                                // only, the q_b / rope / proj rows of every token as before; 0: off, nothing changes)
+        unsigned idx_split_min = 32; // ... for blocks (OWN_PX: halves) of at least this many tokens (OWN_IDX_SPLIT_MIN)
+        int idx_split_w[6] = {};     // ... the cards' token weights (OWN_IDX_SPLIT_W="w0,...,w5"; all 0: equal shares)
+        bool idx_split_check = false; // ... diagnostic (OWN_IDX_SPLIT_CHECK=1): also the full index of every token into
+                                // separate lists, compared bitwise with the gathered ones (and the card's q / proj rows)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -542,6 +550,14 @@ public:
     Backend41(const flash41::Plan41 &plan, int max_seq, Options opt)
         : g(plan.g), max_seq(max_seq), o(std::move(opt)) {
         if (!o.px || o.tp < 2) o.px_bcs = 0; // OWN_PX_BCS (default 1) acts only with OWN_PX: without it nothing is created
+        if (o.idx_split) { // idxsplit-1 (OWN_IDX_SPLIT): the lists travel through the arena (f32 build, several cards)
+            if (o.idx_split > 2) throw std::invalid_argument("OWN_IDX_SPLIT: 0, 1 or 2");
+            if (o.tp < 2) o.idx_split = 0;
+            else if (o.xll || o.idx_cand == 2 || o.dev_index_check)
+                throw std::invalid_argument("OWN_IDX_SPLIT: not with OWN_XLL, OWN_IDX_CAND=2 or OWN_DEV_INDEX_CHECK=1");
+            if (o.idx_split_min < 2) o.idx_split_min = 2;
+        }
+        if (!o.idx_split) o.idx_split_check = false;
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
@@ -694,6 +710,12 @@ public:
         } catch (...) {}
         if (tl_f) std::fclose(tl_f);
         if (xw_f) std::fclose(xw_f);
+#ifndef OWN41_ACT_BF16
+        if (o.idx_split_check) // OWN_IDX_SPLIT_CHECK: the totals
+            for (int c = 0; c < o.tp; ++c)
+                std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK total: card %d: %ld exchanges, %ld lists compared, %ld differ; "
+                                     "%ld own q/proj rows, %ld differ\n", c, ixc_n[c], ixc_lists[c], ixc_bad[c], ixc_qrows[c], ixc_qbad[c]);
+#endif
         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
             try { bcs_drain(); } catch (...) {}
             for (int c = 0; c < TILES; ++c) {
@@ -1645,7 +1667,7 @@ private:
         // every pushed row range starts and ends on a 64-byte line (16 floats): a line of a region is written by one card
         bool ok = xbf % 16 == 0 && g.ototal % 16 == 0 && g.h % 16 == 0 && g.mid % 16 == 0 && (5 * g.h) % 16 == 0;
 #ifndef OWN41_ACT_BF16
-        for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF}) ok &= v % 16 == 0;
+        for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF, xidxM}) ok &= v % 16 == 0; // (xidxM: OWN_IDX_SPLIT, 0 when off)
         ok &= (50u * (unsigned)HC_SEG) % 16 == 0;
 #endif
         for (int d = 0; d < o.tp; ++d) {

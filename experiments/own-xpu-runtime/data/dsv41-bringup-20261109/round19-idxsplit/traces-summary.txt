@@ -1,0 +1,89 @@
+a64 start 05:20:30 /home/steve/dsv41-work/idxsplit/bin/own_run_v41_is1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=64 OWN_IDX_SPLIT=1
+a64 exit 0
+a64 TRACE_IDENTICAL
+a64 IDS40_SAME
+a64: prompt: 36 tokens read on the cards in 0.14s (0.0 tok/s; first step 0.14s incl. kernel build), first token 671
+a64: decode: 39 steps after the first, 0.011 s/step, 89.65 tok/s
+a64: host io during decode: 6.9 MiB read from disk, 0 major page faults; engram rows 110.0 us per step and card (slowest card 113.0 us; copy + decode launch calls 11.0 us)
+a256 start 05:28:31 /home/steve/dsv41-work/idxsplit/bin/own_run_v41_is1 trace OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=256 OWN_IDX_SPLIT=1
+a256 exit 0
+a256 TRACE_IDENTICAL
+a256 IDS40_SAME
+a256: prompt: 36 tokens read on the cards in 0.20s (0.0 tok/s; first step 0.20s incl. kernel build), first token 671
+a256: decode: 39 steps after the first, 0.011 s/step, 88.15 tok/s
+a256: host io during decode: 7.6 MiB read from disk, 16 major page faults; engram rows 114.2 us per step and card (slowest card 117.0 us; copy + decode launch calls 11.8 us)
+k512c start 05:36:33 /home/steve/dsv41-work/idxsplit/bin/own_run_v41_is1 t3k OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=512 OWN_PX=1 OWN_PX_BIG=1 OWN_PX_CHECK=1 OWN_IDX_SPLIT=1 OWN_IDX_SPLIT_CHECK=1
+k512c exit 0
+k512c TRACE_IDENTICAL
+k512c IDS40_SAME
+k512c: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 1 exchanges, 256 lists compared, 0 differ; 43 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 1 exchanges, 256 lists compared, 0 differ; 42 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 1 exchanges, 256 lists compared, 0 differ; 43 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 1 exchanges, 256 lists compared, 0 differ; 43 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 1 exchanges, 256 lists compared, 0 differ; 43 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 1 exchanges, 256 lists compared, 0 differ; 42 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 2 exchanges, 512 lists compared, 0 differ; 86 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 2 exchanges, 512 lists compared, 0 differ; 86 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 2 exchanges, 512 lists compared, 0 differ; 84 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 2 exchanges, 512 lists compared, 0 differ; 86 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 2 exchanges, 512 lists compared, 0 differ; 86 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 2 exchanges, 512 lists compared, 0 differ; 84 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 4 exchanges, 1024 lists compared, 0 differ; 172 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 4 exchanges, 1024 lists compared, 0 differ; 168 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 4 exchanges, 1024 lists compared, 0 differ; 172 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 4 exchanges, 1024 lists compared, 0 differ; 172 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 4 exchanges, 1024 lists compared, 0 differ; 168 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 4 exchanges, 1024 lists compared, 0 differ; 172 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 8 exchanges, 2048 lists compared, 0 differ; 336 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 8 exchanges, 2048 lists compared, 0 differ; 344 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 8 exchanges, 2048 lists compared, 0 differ; 344 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 8 exchanges, 2048 lists compared, 0 differ; 344 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 8 exchanges, 2048 lists compared, 0 differ; 336 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 8 exchanges, 2048 lists compared, 0 differ; 344 own q/proj rows, 0 differ
+k512c: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 16 exchanges, 4096 lists compared, 0 differ; 672 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 16 exchanges, 4096 lists compared, 0 differ; 688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 16 exchanges, 4096 lists compared, 0 differ; 688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 16 exchanges, 4096 lists compared, 0 differ; 688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 16 exchanges, 4096 lists compared, 0 differ; 672 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 16 exchanges, 4096 lists compared, 0 differ; 688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 32 exchanges, 8192 lists compared, 0 differ; 1344 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 32 exchanges, 8192 lists compared, 0 differ; 1376 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 32 exchanges, 8192 lists compared, 0 differ; 1376 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 32 exchanges, 8192 lists compared, 0 differ; 1376 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 32 exchanges, 8192 lists compared, 0 differ; 1344 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 32 exchanges, 8192 lists compared, 0 differ; 1376 own q/proj rows, 0 differ
+k512c: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+k512c: OWN_IDX_SPLIT_CHECK: card 3: 64 exchanges, 16384 lists compared, 0 differ; 2752 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 4: 64 exchanges, 16384 lists compared, 0 differ; 2688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 0: 64 exchanges, 16384 lists compared, 0 differ; 2752 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 5: 64 exchanges, 16384 lists compared, 0 differ; 2752 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 1: 64 exchanges, 16384 lists compared, 0 differ; 2688 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK: card 2: 64 exchanges, 16384 lists compared, 0 differ; 2752 own q/proj rows, 0 differ
+k512c: prompt: 3323 tokens read on the cards in 4.84s (689.3 tok/s; first step 0.76s incl. kernel build), first token 2581
+k512c: decode: 39 steps after the first, 0.013 s/step, 79.96 tok/s
+k512c: host io during decode: 5.9 MiB read from disk, 13 major page faults; engram rows 103.2 us per step and card (slowest card 105.1 us; copy + decode launch calls 13.9 us)
+k512c: OWN_IDX_SPLIT_CHECK total: card 0: 82 exchanges, 20952 lists compared, 0 differ; 3518 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK total: card 1: 82 exchanges, 20952 lists compared, 0 differ; 3444 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK total: card 2: 82 exchanges, 20952 lists compared, 0 differ; 3518 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK total: card 3: 82 exchanges, 20952 lists compared, 0 differ; 3510 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK total: card 4: 82 exchanges, 20952 lists compared, 0 differ; 3444 own q/proj rows, 0 differ
+k512c: OWN_IDX_SPLIT_CHECK total: card 5: 82 exchanges, 20952 lists compared, 0 differ; 3518 own q/proj rows, 0 differ
+k512 start 05:44:45 /home/steve/dsv41-work/idxsplit/bin/own_run_v41_is1 t3k OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=512 OWN_PX=1 OWN_PX_BIG=1 OWN_PX_CHECK=1 OWN_IDX_SPLIT=1
+k512 exit 0
+k512 TRACE_IDENTICAL
+k512 IDS40_SAME
+k512: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+k512: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+k512: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+k512: prompt: 3323 tokens read on the cards in 4.75s (709.8 tok/s; first step 0.79s incl. kernel build), first token 2581
+k512: decode: 39 steps after the first, 0.012 s/step, 82.38 tok/s
+k512: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 53.4 us per step and card (slowest card 54.6 us; copy + decode launch calls 12.0 us)
+k256 start 05:52:54 /home/steve/dsv41-work/idxsplit/bin/own_run_v41_is1 t3k OWN_TP=6 OWN_TP_THREADS=1 OWN_MT_TG=4 OWN_MT_TG_MAX=16 OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1 OWN_MT_TGR=16:4,1:4 OWN_MT_TGR_ROWS=0 OWN_PROMPT_BLOCK=256 OWN_IDX_SPLIT=1
+k256 exit 0
+k256 TRACE_IDENTICAL
+k256 IDS40_SAME
+k256: prompt: 3323 tokens read on the cards in 5.31s (637.0 tok/s; first step 0.50s incl. kernel build), first token 2581
+k256: decode: 39 steps after the first, 0.012 s/step, 81.82 tok/s
+k256: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.6 us per step and card (slowest card 54.9 us; copy + decode launch calls 11.7 us)

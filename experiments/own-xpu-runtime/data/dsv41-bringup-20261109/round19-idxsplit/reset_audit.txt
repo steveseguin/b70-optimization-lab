@@ -1,0 +1,48 @@
+== arena (floats; 4-byte words)
+production (OWN_IDX_SPLIT=0): xbf 62133808  arena 62133920 floats = 248535680 bytes
+idxsplit-1 (OWN_IDX_SPLIT=1): xidxM 62133792 (previous region ends 62133792)  idx region end 64230944  nf 64230976  xbf 64230976  arena 64231088 floats = 256924352 bytes
+  logged flag word, lc107b x34k_px (production binary): 62133808  == computed
+  logged flag word, is1 k512 (OWN_IDX_SPLIT=1): 64230976  == computed
+  logged flag word, is1 x34k_on (OWN_IDX_SPLIT=1): 64230976  == computed
+  idx region inside the arena, before the copy flags: True (slack 32 floats); 64-byte aligned: True; largest float offset 64231087 < 2^32: True; bytes < 2^31: True
+  slot k = [xidxM + k*262144, +262144) floats; slot 7 ends at 64230944 == idx end
+
+== x19k: 18692 prompt tokens, max_seq 19456, score/cand row stride SS 19520, 37 blocks {512: 36, 260: 1}
+  block 512: halves of 256; split True; shares [43, 42, 43, 43, 42, 43] (largest 43); push bytes per peer <= 88064
+  block 260: halves of 130; split True; shares [22, 21, 22, 22, 21, 22] (largest 22); push bytes per peer <= 45056
+  bcs_push: largest destination end 64230944 (idx region end 64230944): inside; source = the same offsets in the own arena
+  cidxm / CidxFillM / selects' lists: largest int index 262144 <= slot 262144: True
+  scores: rows < T_ = 18720 < SS 19520: True; buffer SS*TB = 9994240 floats (39976960 bytes), largest index 9993439 < 9994240: True
+  candidate masks (bytes): largest index 9993411 < 9994240: True
+  block lists (blm, 2112 ints per token): out[0..2048] -> largest index 1081280 < 1081344: True; IndexerScoreBCM reads b[1 + i/8], i < 128*128 -> b[2048]
+  IndexerScoreBM: gpt 147 (block's lmax), share grid <= 43*gpt*128 = 809088 items (full half: 4816896); row j = (grp % gpt)*128 + lid <= 18815 (int)
+  register selects: qr = qsel_span(lmax) = 24 (<= 96: TopKSelMQ, else TopKSelM), qb (layer 20) = qsel_span(blocks 2337) = 8 (<= 32: TopKSelMBQ)
+  rope tables: P = max_seq = 19456 positions; largest entry read (pos+u0+un-1)*32+31 <= 598143 < 622592
+  ik mirror rows (layer 20: max_seq + 2 = 19458): largest row read 18691
+
+== x34k: 33815 prompt tokens, max_seq 34816, score/cand row stride SS 34880, 67 blocks {512: 66, 23: 1}
+  block 512: halves of 256; split True; shares [43, 42, 43, 43, 42, 43] (largest 43); push bytes per peer <= 88064
+  block 23: plain; split False; shares [4, 4, 4, 3, 4, 4] (largest 4); push bytes per peer <= 8192
+  bcs_push: largest destination end 64230944 (idx region end 64230944): inside; source = the same offsets in the own arena
+  cidxm / CidxFillM / selects' lists: largest int index 262144 <= slot 262144: True
+  scores: rows < T_ = 33824 < SS 34880: True; buffer SS*TB = 17858560 floats (71434240 bytes), largest index 17857503 < 17858560: True
+  candidate masks (bytes): largest index 17857494 < 17858560: True
+  block lists (blm, 2112 ints per token): out[0..2048] -> largest index 1081280 < 1081344: True; IndexerScoreBCM reads b[1 + i/8], i < 128*128 -> b[2048]
+  IndexerScoreBM: gpt 265 (block's lmax), share grid <= 43*gpt*128 = 1458560 items (full half: 8683520); row j = (grp % gpt)*128 + lid <= 33919 (int)
+  register selects: qr = qsel_span(lmax) = 40 (<= 96: TopKSelMQ, else TopKSelM), qb (layer 20) = qsel_span(blocks 4227) = 8 (<= 32: TopKSelMBQ)
+  rope tables: P = max_seq = 34816 positions; largest entry read (pos+u0+un-1)*32+31 <= 1082079 < 1114112
+  ik mirror rows (layer 20: max_seq + 2 = 34818): largest row read 33814
+
+== x95k: 95497 prompt tokens, max_seq 96256, score/cand row stride SS 96320, 188 blocks {512: 186, 256: 1, 9: 1}
+  block 512: halves of 256; split True; shares [43, 42, 43, 43, 42, 43] (largest 43); push bytes per peer <= 88064
+  block 256: halves of 128; split True; shares [21, 22, 21, 21, 22, 21] (largest 22); push bytes per peer <= 45056
+  block 9: plain; split False; shares [2, 1, 2, 1, 2, 1] (largest 2); push bytes per peer <= 4096
+  bcs_push: largest destination end 64230944 (idx region end 64230944): inside; source = the same offsets in the own arena
+  cidxm / CidxFillM / selects' lists: largest int index 262144 <= slot 262144: True
+  scores: rows < T_ = 95520 < SS 96320: True; buffer SS*TB = 49315840 floats (197263360 bytes), largest index 49315039 < 49315840: True
+  candidate masks (bytes): largest index 49315016 < 49315840: True
+  block lists (blm, 2112 ints per token): out[0..2048] -> largest index 1081280 < 1081344: True; IndexerScoreBCM reads b[1 + i/8], i < 128*128 -> b[2048]
+  IndexerScoreBM: gpt 747 (block's lmax), share grid <= 43*gpt*128 = 4111488 items (full half: 24477696); row j = (grp % gpt)*128 + lid <= 95615 (int)
+  register selects: qr = qsel_span(lmax) = 96 (<= 96: TopKSelMQ, else TopKSelM), qb (layer 20) = qsel_span(blocks 11938) = 16 (<= 32: TopKSelMBQ)
+  rope tables: P = max_seq = 96256 positions; largest entry read (pos+u0+un-1)*32+31 <= 3055903 < 3080192
+  ik mirror rows (layer 20: max_seq + 2 = 96258): largest row read 95496

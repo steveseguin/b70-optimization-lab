@@ -1,0 +1,586 @@
+diff --git a/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp b/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
+index 4613f4f..ff47a27 100644
+--- a/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
++++ b/experiments/own-xpu-runtime/engine/planning/dsv41-fixtures/own_run_v41.cpp
+@@ -367,6 +367,20 @@ int main(int argc, char **argv) {
+     // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
+     // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
+     opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
++    // idxsplit-1 (opt-in; /home/steve/dsv41-work/idxsplit/README.md): prompt blocks' index lists split across the cards by
++    // tokens and gathered (the same lists): OWN_IDX_SPLIT=1 (the indexer's q_b / rope / proj rows, scores and selects of
++    // the card's tokens), 2 (scores and selects only); OWN_IDX_SPLIT_MIN (blocks / halves of at least this many tokens,
++    // default 32), OWN_IDX_SPLIT_W="w0,...,w5" (the cards' token weights; unset: equal), OWN_IDX_SPLIT_CHECK=1 (diagnostic:
++    // also the full index, every list compared bitwise)
++    if (const char *e = getenv("OWN_IDX_SPLIT")) opt.idx_split = (unsigned)atoi(e);
++    if (opt.idx_split > 2) die("OWN_IDX_SPLIT: 0, 1 or 2");
++    if (const char *e = getenv("OWN_IDX_SPLIT_MIN")) opt.idx_split_min = (unsigned)std::max(2, atoi(e));
++    if (const char *e = getenv("OWN_IDX_SPLIT_W")) {
++        int *w = opt.idx_split_w;
++        if (std::sscanf(e, "%d,%d,%d,%d,%d,%d", w, w + 1, w + 2, w + 3, w + 4, w + 5) != 6)
++            die("OWN_IDX_SPLIT_W: six weights w0,...,w5");
++    }
++    if (const char *e = getenv("OWN_IDX_SPLIT_CHECK")) opt.idx_split_check = atoi(e) != 0;
+     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
+     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
+     // round 18 e87 / r1 (=0 for the old forms)
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
+index 76db79a..125ba61 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41.hpp
+@@ -513,6 +513,14 @@ public:
+         int idx_cand = 0;       // dev_index, layers past 20 beyond 16,384 rows: score and select the layer-20 candidate
+                                 // rows only (IndexerScoreBC + TopKSelC), the same lists (OWN_IDX_CAND=1; 2 also runs the
+                                 // full score + select and compares scores and lists bitwise)
++        unsigned idx_split = 0; // idxsplit-1 (OWN_IDX_SPLIT, opt-in; backend_sycl_v41_mt.inc "idxsplit-1"): prompt blocks'
++                                // index lists split across the cards by tokens and gathered (1: the indexer's q_b rows,
++                                // rope, proj rows, scores and selects of the card's tokens only; 2: scores and selects
++                                // only, the q_b / rope / proj rows of every token as before; 0: off, nothing changes)
++        unsigned idx_split_min = 32; // ... for blocks (OWN_PX: halves) of at least this many tokens (OWN_IDX_SPLIT_MIN)
++        int idx_split_w[6] = {};     // ... the cards' token weights (OWN_IDX_SPLIT_W="w0,...,w5"; all 0: equal shares)
++        bool idx_split_check = false; // ... diagnostic (OWN_IDX_SPLIT_CHECK=1): also the full index of every token into
++                                // separate lists, compared bitwise with the gathered ones (and the card's q / proj rows)
+     };
+     struct DevPtr {
+         void *p = nullptr;
+@@ -525,6 +533,14 @@ public:
+     Backend41(const flash41::Plan41 &plan, int max_seq, Options opt)
+         : g(plan.g), max_seq(max_seq), o(std::move(opt)) {
+         if (!o.px || o.tp < 2) o.px_bcs = 0; // OWN_PX_BCS (default 1) acts only with OWN_PX: without it nothing is created
++        if (o.idx_split) { // idxsplit-1 (OWN_IDX_SPLIT): the lists travel through the arena (f32 build, several cards)
++            if (o.idx_split > 2) throw std::invalid_argument("OWN_IDX_SPLIT: 0, 1 or 2");
++            if (o.tp < 2) o.idx_split = 0;
++            else if (o.xll || o.idx_cand == 2 || o.dev_index_check)
++                throw std::invalid_argument("OWN_IDX_SPLIT: not with OWN_XLL, OWN_IDX_CAND=2 or OWN_DEV_INDEX_CHECK=1");
++            if (o.idx_split_min < 2) o.idx_split_min = 2;
++        }
++        if (!o.idx_split) o.idx_split_check = false;
+         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
+             throw std::invalid_argument("layer range");
+         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
+@@ -677,6 +693,12 @@ public:
+         } catch (...) {}
+         if (tl_f) std::fclose(tl_f);
+         if (xw_f) std::fclose(xw_f);
++#ifndef OWN41_ACT_BF16
++        if (o.idx_split_check) // OWN_IDX_SPLIT_CHECK: the totals
++            for (int c = 0; c < o.tp; ++c)
++                std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK total: card %d: %ld exchanges, %ld lists compared, %ld differ; "
++                                     "%ld own q/proj rows, %ld differ\n", c, ixc_n[c], ixc_lists[c], ixc_bad[c], ixc_qrows[c], ixc_qbad[c]);
++#endif
+         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
+             try { bcs_drain(); } catch (...) {}
+             for (int c = 0; c < TILES; ++c) {
+@@ -1628,7 +1650,7 @@ private:
+         // every pushed row range starts and ends on a 64-byte line (16 floats): a line of a region is written by one card
+         bool ok = xbf % 16 == 0 && g.ototal % 16 == 0 && g.h % 16 == 0 && g.mid % 16 == 0 && (5 * g.h) % 16 == 0;
+ #ifndef OWN41_ACT_BF16
+-        for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF}) ok &= v % 16 == 0;
++        for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF, xidxM}) ok &= v % 16 == 0; // (xidxM: OWN_IDX_SPLIT, 0 when off)
+         ok &= (50u * (unsigned)HC_SEG) % 16 == 0;
+ #endif
+         for (int d = 0; d < o.tp; ++d) {
+diff --git a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+index 2087091..535504a 100644
+--- a/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
++++ b/experiments/own-xpu-runtime/engine/src/stage2/packet3/backend/backend_sycl_v41_mt.inc
+@@ -375,7 +375,8 @@ size_t mt_arena_floats() const { // the block's exchange regions, after the one-
+     const size_t A = mtba_n(); // (MTA; OWN_PX_BIG: 2 x MTX + 8)
+     return A * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
+            A * (size_t)g.h + A * (size_t)g.qh * (size_t)g.hd +
+-           (o.mt_dsplit ? (o.px_bcs ? 16 : 4) + (size_t)2 * A * 50 * HC_SEG : 0); // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
++           (o.mt_dsplit ? (o.px_bcs ? 16 : 4) + (size_t)2 * A * 50 * HC_SEG : 0) + // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
++           (o.idx_split ? 16 + (size_t)8 * 512 * mtb_n() : 0); // OWN_IDX_SPLIT: the 8 index slots' lists (xidxM, cidxm)
+ }
+ void mt_offsets(size_t base) {
+     if (base + mt_arena_floats() > (size_t)UINT32_MAX) throw std::runtime_error("multi-token step: arena offsets");
+@@ -393,6 +394,10 @@ void mt_offsets(size_t base) {
+         if (o.px_bcs) xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 15u) & ~15u; // (OWN_PX_BCS: 64-byte lines)
+         xdsF = xdsA + A * 50u * (unsigned)HC_SEG;
+     }
++    if (o.idx_split) { // OWN_IDX_SPLIT: the 8 index slots' lists (cidxm[c][k] = arena + xidxM + k * 512 * mtb_n()), 64-byte lines
++        const unsigned e = o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG : xhoM + A * (unsigned)g.qh * (unsigned)g.hd;
++        xidxM = (e + 15u) & ~15u;
++    }
+ }
+ void mt_alloc(int c) {
+     // per-token buffers of MTA tokens (token t at t * n; tokens >= MTX only take token groups' spare reads)
+@@ -455,7 +460,13 @@ void mt_alloc(int c) {
+             h_engrm[c][li].resize((size_t)24 * 176 * TB);
+         }
+     }
+-    for (int k = 0; k < 8; ++k) cidxm[c][k] = dalloc<int32_t>(c, (size_t)512 * TB);
++    for (int k = 0; k < 8; ++k) // (OWN_IDX_SPLIT: in the arena, where the peers' shares land)
++        cidxm[c][k] = o.idx_split ? (int32_t *)(xarena[c] + xidxM + (size_t)k * 512 * TB) : dalloc<int32_t>(c, (size_t)512 * TB);
++    if (o.idx_split_check) { // OWN_IDX_SPLIT_CHECK: the full index's lists, the card's own q / proj rows
++        ixl2[c] = dalloc<int32_t>(c, (size_t)512 * TB);
++        ixq2[c] = dalloc<act_t>(c, (size_t)4096 * TB);
++        ixw2[c] = dalloc<act_t>(c, (size_t)32 * TB);
++    }
+     egrp[c] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS);
+     if (o.px) px_egrp[c][1] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS); // OWN_PX: half B's expert groups
+     if (o.dspark) dr_alloc(c);
+@@ -1196,7 +1207,9 @@ void tpm_publish(int L, int c, int si, bool yarn) {
+ }
+ // every token's index list at once (dev_index's steps, one launch each for the block): tokens whose source
+ // has at most 512 rows take all of them in order, the others score + select on the card
+-void tpm_index(int L, int c, int si, bool yarn, int slot) {
++// (split, OWN_IDX_SPLIT: the scores and selects (OWN_IDX_SPLIT=1: also the q_b / rope / proj rows) of this card's
++// tokens ix_split only, then its lists pushed / published to every peer; ix_wait gathers the others: idxsplit-1 below)
++void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
+     const int M = mt_n;
+     const long pos = bpos(); // (OWN_PX: the half's first position; else the member pos)
+     const Scratch &b = scm[c][px_tok];
+@@ -1216,128 +1229,316 @@ void tpm_index(int L, int c, int si, bool yarn, int slot) {
+         (len <= 512 ? nshort : nlong)++;
+         lmax = std::max(lmax, len);
+     }
+-    if (nshort) launch(c, (size_t)M * 512, 64, cf, cix);
+-    if (!nlong) return;
++    // (split with long tokens: this card's tokens [ua[c], ub[c]) only, also their fills; the peers' lists, short
++    // ones too, arrive by the exchange, so no 64-byte line of the lists is written by two engines)
++    unsigned ua[6] = {}, ub[6] = {};
++    const bool sx = split && nlong > 0;
++    if (sx) ix_split((unsigned)M, ua, ub);
++    if (nshort && sx) {
++        ops41sycl::CidxFillM co = cf;
++        for (int t = 0; t < M; ++t)
++            if ((unsigned)t < ua[c] || (unsigned)t >= ub[c]) co.lens[t] = -1;
++        launch(c, (size_t)M * 512, 64, co, cix);
++    } else if (nshort) {
++        launch(c, (size_t)M * 512, 64, cf, cix);
++    }
++    if (!nlong) return; // (split: no exchange either; every card the same)
+     sync_rows(c, si);
+-    gemv_m(c, p + "indexer.attn_q_b.weight", b.qn, g.qrank, b.qi, 4096);
+-    {
+-        const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
+-        const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+-        rows_launch(c, tokr(ops41sycl::RopeRows<Act>{b.qi, cb, sbp, 32u, 128u, false}, 4096, 32));
+-    }
+-    gemv_m(c, p + "indexer.proj.weight", b.xn, g.h, b.wv, 32);
+     const size_t SS = (size_t)max_seq + 64; // per-token score / candidate stride (mt_alloc)
+     // OWN_IDX_CAND: past layer 20, when every long token has more rows than candidates, only each token's
+     // layer-20 candidate rows are scored and selected (the others are -inf in the masked select)
++    // (decided from every token of the block, as the selects' forms below: the same launches for any share)
+     bool ccm = o.idx_cand && L > 20;
+     for (int t = 0; t < M && ccm; ++t)
+         if (lens[t] > 0 && lens[t] <= 2048 * 8) ccm = false;
+-    if (ccm) {
+-        using KS = ops41sycl::IndexerScoreBCM<Act>;
+-        constexpr size_t WG = 128;
+-        KS k{};
+-        for (int t = 0; t < M; ++t) k.lens[t] = lens[t];
+-        k.m = (unsigned)M;
+-        k.gpt = (unsigned)(2048 * 8 / WG);
+-        k.qs = 4096;
+-        k.ws = 32;
+-        k.ss = SS;
+-        k.bls = 2048 + 64;
+-        const act_t *qi = b.qi, *wv = b.wv;
+-        const uint16_t *ik = ik_mirror[c][si];
+-        const int32_t *bl = blh;
+-        float *sco = b.score;
+-        auto e = qs[c].submit([&](sycl::handler &hh) {
+-            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+-            hh.parallel_for(sycl::nd_range<1>((size_t)M * k.gpt * WG, WG),
+-                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, sco, bl, &lt[0]); });
+-        });
+-        kev(c, kname<KS>(), e);
+-        constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
+-        if (qsel_ok()) { // OWN_TOPK_Q
+-            ops41sycl::TopKSelMCQ kq{};
+-            for (int t = 0; t < M; ++t) kq.lens[t] = lens[t];
+-            kq.m = (unsigned)M;
+-            kq.ss = SS;
+-            kq.cs = SS;
+-            kq.bls = 2048 + 64;
+-            launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kq, (const float *)b.score, (const uint8_t *)b.cand,
+-                             (const int32_t *)blh, cix);
++    // OWN_TOPK_Q: the register selects (the block select past 2,048 blocks, the rows' select from 4,096 rows)
++    const int qb = qsel_ok() && (lmax + 7) / 8 > 2048 ? ops41sycl::qsel_span((int)((lmax + 7) / 8)) : 0;
++    const int qr = qsel_ok() && lmax >= 4096 ? ops41sycl::qsel_span((int)lmax) : 0;
++    // the indexer's query rows, rope and head weights of tokens [u0, u0 + un) into qd / wd (token t at + t * 4096 / 32)
++    auto qrows = [&](unsigned u0, unsigned un, act_t *qd, act_t *wd) {
++        if (!un) return;
++        gemv_m(c, p + "indexer.attn_q_b.weight", b.qn + (size_t)u0 * g.qrank, g.qrank, qd + (size_t)u0 * 4096, 4096, 0, un);
++        {
++            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)(pos + (long)u0) * 32;
++            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)(pos + (long)u0) * 32;
++            rows_launch(c, ops41sycl::TokRows<ops41sycl::RopeRows<Act>>{
++                               ops41sycl::RopeRows<Act>{qd + (size_t)u0 * 4096, cb, sbp, 32u, 128u, false}, un, {4096, 32, 0, 0}});
++        }
++        gemv_m(c, p + "indexer.proj.weight", b.xn + (size_t)u0 * g.h, g.h, wd + (size_t)u0 * 32, 32, 0, un);
++    };
++    // the scores and selects of tokens [u0, u0 + un) (queries qd / wd as qrows), lists into out + t * 512; every
++    // pointer is token t's of the block (score, candidates, block lists), every kernel as for the whole block
++    auto score_sel = [&](unsigned u0, unsigned un, const act_t *qd, const act_t *wd, int32_t *out) {
++        if (!un) return;
++        const int *ln = lens + u0;
++        const act_t *qi = qd + (size_t)u0 * 4096, *wv = wd + (size_t)u0 * 32;
++        float *const sco = b.score + (size_t)u0 * SS;
++        uint8_t *const cnd = b.cand + (size_t)u0 * SS;
++        int32_t *const bl0 = blh ? blh + (size_t)u0 * (2048 + 64) : nullptr; // (null without OWN_IDX_CAND)
++        int32_t *const ox = out + (size_t)u0 * 512;
++        if (ccm) {
++            using KS = ops41sycl::IndexerScoreBCM<Act>;
++            constexpr size_t WG = 128;
++            KS k{};
++            for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
++            k.m = un;
++            k.gpt = (unsigned)(2048 * 8 / WG);
++            k.qs = 4096;
++            k.ws = 32;
++            k.ss = SS;
++            k.bls = 2048 + 64;
++            const uint16_t *ik = ik_mirror[c][si];
++            const int32_t *bl = bl0;
++            float *scw = sco;
++            auto e = qs[c].submit([&](sycl::handler &hh) {
++                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
++                hh.parallel_for(sycl::nd_range<1>((size_t)un * k.gpt * WG, WG),
++                                [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, scw, bl, &lt[0]); });
++            });
++            kev(c, kname<KS>(), e);
++            constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
++            if (qsel_ok()) { // OWN_TOPK_Q
++                ops41sycl::TopKSelMCQ kq{};
++                for (unsigned t = 0; t < un; ++t) kq.lens[t] = ln[t];
++                kq.m = un;
++                kq.ss = SS;
++                kq.cs = SS;
++                kq.bls = 2048 + 64;
++                launch_wgs<SLMC>(c, (size_t)un, ops41sycl::TopKSelC::WG, kq, (const float *)sco, (const uint8_t *)cnd,
++                                 (const int32_t *)bl0, ox);
++            } else {
++                ops41sycl::TopKSelMC kt{};
++                for (unsigned t = 0; t < un; ++t) kt.lens[t] = ln[t];
++                kt.m = un;
++                kt.ss = SS;
++                kt.cs = SS;
++                kt.bls = 2048 + 64;
++                kt.rwalk = o.topk_r;
++                launch_wgs<SLMC>(c, (size_t)un, ops41sycl::TopKSelC::WG, kt, (const float *)sco, (const uint8_t *)cnd,
++                                 (const int32_t *)bl0, ox);
++            }
++            return;
++        }
++        if (o.idx_r == 2 || o.idx_r == 4) {
++            long ll[MTX] = {};
++            for (unsigned t = 0; t < un; ++t) ll[t] = ln[t];
++            idx_score_r(c, o.idx_r, (int)un, ll, qi, wv, ik_mirror[c][si], sco, 4096, 32, SS);
+         } else {
+-            ops41sycl::TopKSelMC kt{};
+-            for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+-            kt.m = (unsigned)M;
++            using KS = ops41sycl::IndexerScoreBM<Act>;
++            constexpr size_t WG = 128;
++            const unsigned gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG); // (the block's longest)
++            KS k{};
++            for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
++            k.m = un;
++            k.gpt = gpt;
++            k.qs = 4096;
++            k.ws = 32;
++            k.ss = SS;
++            const uint16_t *ik = ik_mirror[c][si];
++            float *scw = sco;
++            auto e = qs[c].submit([&](sycl::handler &hh) {
++                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
++                hh.parallel_for(sycl::nd_range<1>((size_t)un * gpt * WG, WG),
++                                [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, scw, &lt[0]); });
++            });
++            kev(c, kname<KS>(), e);
++        }
++        using KR = ops41sycl::TopKSelP<false>;
++        constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
++        if (L == 20) {
++            auto blk = [&](auto kb) {
++                for (unsigned t = 0; t < un; ++t) kb.lens[t] = ln[t];
++                kb.m = un;
++                kb.ss = SS;
++                kb.cs = SS;
++                kb.bls = 2048 + 64;
++                launch_wgs<SLM>(c, (size_t)un, KR::WG, kb, (const float *)sco, cnd, bl0); // blm: OWN_IDX_CAND (else null)
++            };
++            if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
++            else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
++            else blk(ops41sycl::TopKSelM<true>{});
++        }
++        auto rws = [&](auto kt) {
++            for (unsigned t = 0; t < un; ++t) kt.lens[t] = ln[t];
++            kt.m = un;
++            kt.mask = L > 20;
+             kt.ss = SS;
+             kt.cs = SS;
+-            kt.bls = 2048 + 64;
++            launch_wgs<SLM>(c, (size_t)un, KR::WG, kt, (const float *)sco, cnd, ox);
++        };
++        if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
++        else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
++        else if (qr && qr <= 64) rws(ops41sycl::TopKSelMQ<64>{});
++        else if (qr && qr <= 96) rws(ops41sycl::TopKSelMQ<96>{});
++        else {
++            ops41sycl::TopKSelM<false> kt{};
+             kt.rwalk = o.topk_r;
+-            launch_wgs<SLMC>(c, (size_t)M, ops41sycl::TopKSelC::WG, kt, (const float *)b.score, (const uint8_t *)b.cand,
+-                             (const int32_t *)blh, cix);
++            rws(kt);
+         }
+-        if (o.idx_cand == 2) idx_cand_check_m(L, c, si, M, lens, slot);
++    };
++    if (!split) { // every token (as always)
++        qrows(0, (unsigned)M, b.qi, b.wv);
++        score_sel(0, (unsigned)M, b.qi, b.wv, cix);
++        if (ccm && o.idx_cand == 2) idx_cand_check_m(L, c, si, M, lens, slot);
+         return;
+     }
+-    if (o.idx_r == 2 || o.idx_r == 4) {
+-        long ll[MTX] = {};
+-        for (int t = 0; t < M; ++t) ll[t] = lens[t];
+-        idx_score_r(c, o.idx_r, M, ll, b.qi, b.wv, ik_mirror[c][si], b.score, 4096, 32, SS);
++    // ---- idxsplit-1: this card's tokens, then the lists to every peer
++    IxPend &q = ixp[c];
++    if (q.kind) throw std::runtime_error("OWN_IDX_SPLIT: an index exchange left pending");
++    const unsigned u0 = ua[c], un = ub[c] - ua[c];
++    const bool oq = o.idx_split == 1; // the q_b / rope / proj rows of the card's tokens only
++    if (o.idx_split_check) { // diagnostic: the full index first (every token, lists into ixl2), then the card's share
++        int32_t *l2 = ixl2[c] + (size_t)px_tok * 512;
++        if (nshort) launch(c, (size_t)M * 512, 64, cf, l2);
++        qrows(0, (unsigned)M, b.qi, b.wv);
++        score_sel(0, (unsigned)M, b.qi, b.wv, l2);
++        act_t *q2 = oq ? ixq2[c] + (size_t)px_tok * 4096 : b.qi, *w2 = oq ? ixw2[c] + (size_t)px_tok * 32 : b.wv;
++        if (oq) qrows(u0, un, q2, w2);
++        score_sel(u0, un, q2, w2, cix);
+     } else {
+-        using KS = ops41sycl::IndexerScoreBM<Act>;
+-        constexpr size_t WG = 128;
+-        const unsigned gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
+-        KS k{};
+-        for (int t = 0; t < M; ++t) k.lens[t] = lens[t];
+-        k.m = (unsigned)M;
+-        k.gpt = gpt;
+-        k.qs = 4096;
+-        k.ws = 32;
+-        k.ss = SS;
+-        const act_t *qi = b.qi, *wv = b.wv;
+-        const uint16_t *ik = ik_mirror[c][si];
+-        float *sco = b.score;
+-        auto e = qs[c].submit([&](sycl::handler &hh) {
+-            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+-            hh.parallel_for(sycl::nd_range<1>((size_t)M * gpt * WG, WG),
+-                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, sco, &lt[0]); });
+-        });
+-        kev(c, kname<KS>(), e);
++        if (oq) qrows(u0, un, b.qi, b.wv);
++        else qrows(0, (unsigned)M, b.qi, b.wv);
++        score_sel(u0, un, b.qi, b.wv, cix);
++    }
++    q.off = xidxM + (unsigned)slot * 512u * (unsigned)mtb_n() + (unsigned)px_tok * 512u;
++    for (int d = 0; d < 6; ++d) q.a[d] = ua[d], q.b[d] = ub[d];
++    q.m = (unsigned)M, q.pt = (unsigned)px_tok, q.slot = slot, q.L = L;
++    if (px_run[c]) { // OWN_PX_BCS (ix_on): the card's lists on its copy engine into every peer, after the selects
++        q.kind = 1;
++        q.seq = bcs_push(c, q.off, 512u, 1u, ua[c] * 512u, ub[c] * 512u, (const XR2 *)nullptr);
++    } else { // a plain block: published now (XchgPull mode 1), every peer's pulled at ix_wait (mode 2)
++        q.kind = 2;
++        q.seq = ix_pull(c, q.off, ua, ub, 1, 0);
+     }
+-    using KR = ops41sycl::TopKSelP<false>;
+-    constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+-    // OWN_TOPK_Q: the register selects (the block select past 2,048 blocks, the rows' select from 4,096 rows)
+-    const int qb = qsel_ok() && (lmax + 7) / 8 > 2048 ? ops41sycl::qsel_span((int)((lmax + 7) / 8)) : 0;
+-    const int qr = qsel_ok() && lmax >= 4096 ? ops41sycl::qsel_span((int)lmax) : 0;
+-    if (L == 20) {
+-        auto blk = [&](auto kb) {
+-            for (int t = 0; t < M; ++t) kb.lens[t] = lens[t];
+-            kb.m = (unsigned)M;
+-            kb.ss = SS;
+-            kb.cs = SS;
+-            kb.bls = 2048 + 64;
+-            launch_wgs<SLM>(c, (size_t)M, KR::WG, kb, (const float *)b.score, b.cand, blh); // blm: OWN_IDX_CAND (else null)
+-        };
+-        if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
+-        else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
+-        else blk(ops41sycl::TopKSelM<true>{});
+-    }
+-    auto rws = [&](auto kt) {
+-        for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+-        kt.m = (unsigned)M;
+-        kt.mask = L > 20;
+-        kt.ss = SS;
+-        kt.cs = SS;
+-        launch_wgs<SLM>(c, (size_t)M, KR::WG, kt, (const float *)b.score, b.cand, cix);
+-    };
+-    if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
+-    else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
+-    else if (qr && qr <= 64) rws(ops41sycl::TopKSelMQ<64>{});
+-    else if (qr && qr <= 96) rws(ops41sycl::TopKSelMQ<96>{});
+-    else {
+-        ops41sycl::TopKSelM<false> kt{};
+-        kt.rwalk = o.topk_r;
+-        rws(kt);
++}
++// ---- idxsplit-1 (OWN_IDX_SPLIT, opt-in; /home/steve/dsv41-work/idxsplit/README.md) ------------------------------------
++// Prompt blocks (OWN_PX: halves) of at least OWN_IDX_SPLIT_MIN tokens, not checks: at each index layer (2, 8, 14, 20,
++// 24, 28, 32, 36) card c computes the index of its tokens [t0[c], t1[c]) only (ix_split: a fixed partition of the
++// block's / half's tokens, the same at every layer, so the layer-20 candidate masks and block lists, which only the
++// same token reads at layers 24-36, stay on the card that made them). OWN_IDX_SPLIT=1: the indexer's q_b rows, their
++// rope, the proj rows, the scores and the selects; =2: the scores and selects (q_b / rope / proj for every token as
++// before). Then the card's lists (512 ints per token, in the arena: cidxm[c][slot] = arena + xidxM + slot * 512 * TB)
++// go to every peer at the same offsets: OWN_PX_BCS halves by a copy-engine push (bcs_push, waited for by XchgWaitB,
++// as the X1..X4 rows), plain blocks by XchgPull (mode 1 publish after the selects, mode 2 wait + copy at ix_wait).
++// tpm_layer runs the publish and this index before the attention's q_b rows and rope (independent buffers), so the
++// exchange runs beside those; ix_wait sits right before the attention, the first reader of the lists.
++// Bits: every token's list comes from the same kernels (the same struct, the same per-token inputs: its query rows,
++// weights, score row, candidate row, block list, the same rows of the card's key mirror, which every card holds
++// whole) as before; a kernel's per-token work never reads another token's data (work-groups t * gpt .. for token t;
++// one work-group per token in the selects), and the forms are chosen from the whole block (lmax, ccm, qb, qr) as
++// before, so a share is the whole block's launch restricted to some tokens. OWN_IDX_SPLIT=1 runs gemv_m / RopeRows
++// for fewer tokens: every dense form computes each token's row with the same sums whatever the token count (the
++// property every block size already relies on; OWN_IDX_SPLIT_CHECK compares these rows bitwise too). The copies move
++// bytes only. So every card's lists are the bits it computed before, and so is everything after them.
++// Hazards (each list region is written once per block per half, read by that half's attention at the index layer
++// and the layers up to the next index layer): (BCS) a push into a peer starts after the producer and lands before
++// the peer's XchgWaitB passes; the next push into the same region is a block later, after every card's last
++// exchange of this block (X4 of the last layer: every card's readers are done); the source slice is rewritten only
++// in the next block (block end: every queue and copy list drained). (pulls) XchgPull's rule: a card rewrites its
++// slice only after later exchanges whose flags every peer raised after its copy. The copy flags / exchange numbers
++// stay the same on every card (every card pushes / publishes at the same host-order places, also when it has no
++// tokens). Short tokens (<= 512 rows) of a split layer: each card fills its own tokens' lists, the rest arrive with
++// the exchange (CidxFill's lists: the same bytes whichever card makes them).
++struct IxPend {
++    int kind = 0; // 0 none, 1 copy-engine push (seq: push number), 2 pull (seq: exchange number)
++    uint32_t seq = 0;
++    unsigned off = 0, a[6] = {}, b[6] = {}, m = 0, pt = 0;
++    int slot = 0, L = 0;
++};
++IxPend ixp[TILES];
++unsigned xidxM = 0;                  // OWN_IDX_SPLIT: arena offset of the 8 index slots' lists (mt_offsets)
++int32_t *ixl2[TILES] = {};           // OWN_IDX_SPLIT_CHECK: the full index's lists (mtb_n() tokens)
++act_t *ixq2[TILES] = {}, *ixw2[TILES] = {}; // ... the card's own query / proj rows (OWN_IDX_SPLIT=1)
++long ixc_n[TILES] = {}, ixc_lists[TILES] = {}, ixc_bad[TILES] = {}, ixc_qrows[TILES] = {}, ixc_qbad[TILES] = {};
++// card d's tokens [t0[d], t1[d]) of a block (OWN_PX: half) of M tokens (OWN_IDX_SPLIT_W weights; unset: equal)
++void ix_split(unsigned M, unsigned *t0, unsigned *t1) const {
++    long w[6] = {}, W = 0;
++    bool set = false;
++    for (int d = 0; d < o.tp; ++d) set |= o.idx_split_w[d] > 0;
++    for (int d = 0; d < o.tp; ++d) W += w[d] = set ? std::max(o.idx_split_w[d], 0) : 1;
++    long cw = 0;
++    unsigned prev = 0;
++    for (int d = 0; d < 6; ++d) {
++        t0[d] = t1[d] = 0;
++        if (d >= o.tp) continue;
++        cw += w[d];
++        const unsigned e = d == o.tp - 1 ? M : (unsigned)std::min<long>(M, ((long)M * cw + W / 2) / W);
++        t0[d] = prev;
++        t1[d] = prev = std::max(prev, e);
+     }
+ }
++// whether card c's index layers of the running block (OWN_PX: half) of M tokens run split (host state the same on
++// every card: options, block size, whether the block runs as halves on the copy engines)
++bool ix_on(int c, unsigned M) const {
++    if (!o.idx_split || !mt_small || mt_heads || o.dev_index_check || M < o.idx_split_min || M > (unsigned)MTX) return false;
++    if (qbm_any()) return false;
++    return px_run[c] ? bcs_blk() : !px_q[c]; // (OWN_PX without OWN_PX_BCS: not split)
++}
++// the lists' pull (plain blocks): XchgPull over every card's tokens [a[d], b[d]) x 512 words at arena offset off;
++// mode 1 publishes (a new exchange number), mode 2 waits for number seq and copies
++uint32_t ix_pull(int c, unsigned off, const unsigned *a, const unsigned *b, int mode, uint32_t seq) {
++    float *P[6] = {};
++    for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
++    if (mode != 2) seq = ++xseq[c];
++    ops41sycl::XchgPull x{o.tp, c, off, 0u, 1u, {}, {}, seq, XSPIN, mode};
++    x.lb = o.xpull_lb ? 1 : 0;
++    size_t nv = 0;
++    for (int d = 0; d < 6; ++d) x.b0[d] = a[d] * 512u, x.b1[d] = b[d] * 512u;
++    for (int d = 0; d < o.tp; ++d)
++        if (d != c) nv += (x.b1[d] - x.b0[d]) / 4;
++    const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
++    if (tl_on[c]) tl_x[c] = {(int16_t)-1, (int16_t)-1, (int8_t)mode};
++    auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 256, 256), XPullK128{x, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]});
++    kev(c, kname<ops41sycl::XchgPull>(), e);
++    return seq;
++}
++// before the attention of a split index layer: every peer's lists in place (OWN_IDX_SPLIT_CHECK: compared)
++void ix_wait(int c) {
++    IxPend &q = ixp[c];
++    if (!q.kind) return; // (no long token: nothing was split; every card the same)
++    if (q.kind == 1) bcs_wait(c, q.seq);
++    else ix_pull(c, q.off, q.a, q.b, 2, q.seq);
++    q.kind = 0;
++    if (o.idx_split_check) ix_check(c, q);
++}
++// OWN_IDX_SPLIT_CHECK: the gathered lists of every token against the full index's (ixl2), and (OWN_IDX_SPLIT=1) the
++// card's own query / proj rows against the full ones, bitwise (host; the card waits)
++void ix_check(int c, const IxPend &q) {
++    const size_t n = (size_t)q.m * 512;
++    std::vector<int32_t> a(n), r(n);
++    qs[c].memcpy(a.data(), cidxm[c][q.slot] + (size_t)q.pt * 512, n * 4);
++    qs[c].memcpy(r.data(), ixl2[c] + (size_t)q.pt * 512, n * 4).wait();
++    long bad = 0, first = -1;
++    for (unsigned t = 0; t < q.m; ++t)
++        if (std::memcmp(a.data() + (size_t)t * 512, r.data() + (size_t)t * 512, 2048)) {
++            if (first < 0) first = t;
++            ++bad;
++        }
++    long qbad = 0, qn = 0;
++    const unsigned u0 = q.a[c], un = q.b[c] - q.a[c];
++    if (o.idx_split == 1 && un) {
++        const Scratch &b = scm[c][q.pt];
++        std::vector<act_t> x((size_t)un * 4096), y((size_t)un * 4096), v((size_t)un * 32), w((size_t)un * 32);
++        qs[c].memcpy(x.data(), b.qi + (size_t)u0 * 4096, x.size() * sizeof(act_t));
++        qs[c].memcpy(y.data(), ixq2[c] + ((size_t)q.pt + u0) * 4096, y.size() * sizeof(act_t));
++        qs[c].memcpy(v.data(), b.wv + (size_t)u0 * 32, v.size() * sizeof(act_t));
++        qs[c].memcpy(w.data(), ixw2[c] + ((size_t)q.pt + u0) * 32, w.size() * sizeof(act_t)).wait();
++        for (unsigned t = 0; t < un; ++t) {
++            ++qn;
++            if (std::memcmp(x.data() + (size_t)t * 4096, y.data() + (size_t)t * 4096, 4096 * sizeof(act_t)) ||
++                std::memcmp(v.data() + (size_t)t * 32, w.data() + (size_t)t * 32, 32 * sizeof(act_t)))
++                ++qbad;
++        }
++    }
++    const long k = ++ixc_n[c];
++    ixc_lists[c] += q.m, ixc_bad[c] += bad, ixc_qrows[c] += qn, ixc_qbad[c] += qbad;
++    if (bad || qbad)
++        std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK: card %d layer %d (%u tokens from %u): %ld lists DIFFER (first token %ld), "
++                             "%ld of %ld own q/proj rows differ\n", c, q.L, q.m, q.pt, bad, first, qbad, qn);
++    else if ((k & (k - 1)) == 0)
++        std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK: card %d: %ld exchanges, %ld lists compared, %ld differ; %ld own q/proj rows, %ld differ\n",
++                     c, k, ixc_lists[c], ixc_bad[c], ixc_qrows[c], ixc_qbad[c]);
++}
+ // OWN_IDX_CAND=2, blocks (one call in 37 per card): each token's candidate-only scores and list against the full score (score2m) and the
+ // masked select over all its rows (list2m), bitwise; the block lists against the masks
+ long icc_m_n[TILES] = {};
+@@ -1635,6 +1836,14 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
+             launch_rows<0>(c, nr.n(), 0, ops41sycl::RowsP<NR>{nr});
+         }
+     }
++    // idxsplit-1 (OWN_IDX_SPLIT): the publish and this card's share of the index before q_b and the rope, so the
++    // lists' exchange runs beside them (ix_wait below, before the attention). The same launches, each reading what it
++    // read before (publish / index: xn, qn, the published rows; q_b / rope: qn, q, kvn): only their queue order moves
++    const bool ixe = cr && index_slot(L) >= 0 && ix_on(c, (unsigned)M);
++    if (ixe) {
++        if (is_kv_source(L)) tpm_publish(L, c, si, yarn);
++        tpm_index(L, c, si, yarn, index_slot(L), true);
++    }
+     // OWN_QB_OFF_M (qb-off-2): a helper first computes and publishes its heavy neighbour's k heads for the block;
+     // a heavy card runs its other heads' rows with the pull of those k + k heads as the launch's first rows
+     int qbk = 0, qbr = 0;
+@@ -1686,6 +1895,9 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
+                            ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{{s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
+         }
+     }
++    if (ixe) {
++        ix_wait(c); // (OWN_IDX_SPLIT) every card's lists of the block (half) in place before the attention reads them
++    } else {
+     if (cr && is_kv_source(L) && mt_small)
+         tpm_publish(L, c, si, yarn);
+     else if (cr && is_kv_source(L))
+@@ -1706,6 +1918,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
+             else dev_index(L, c, si, yarn, len, out);
+         }
+     }
++    } // (ixe)
+     } // (PX_P0B)
+     // ---- phase 1: attention; output-a rows for all tokens
+     if (seg & PX_P1) {

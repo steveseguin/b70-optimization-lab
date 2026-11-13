@@ -378,6 +378,20 @@ int main(int argc, char **argv) {
     // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
     // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
     opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
+    // idxsplit-1 (opt-in; /home/steve/dsv41-work/idxsplit/README.md): prompt blocks' index lists split across the cards by
+    // tokens and gathered (the same lists): OWN_IDX_SPLIT=1 (the indexer's q_b / rope / proj rows, scores and selects of
+    // the card's tokens), 2 (scores and selects only); OWN_IDX_SPLIT_MIN (blocks / halves of at least this many tokens,
+    // default 32), OWN_IDX_SPLIT_W="w0,...,w5" (the cards' token weights; unset: equal), OWN_IDX_SPLIT_CHECK=1 (diagnostic:
+    // also the full index, every list compared bitwise)
+    if (const char *e = getenv("OWN_IDX_SPLIT")) opt.idx_split = (unsigned)atoi(e);
+    if (opt.idx_split > 2) die("OWN_IDX_SPLIT: 0, 1 or 2");
+    if (const char *e = getenv("OWN_IDX_SPLIT_MIN")) opt.idx_split_min = (unsigned)std::max(2, atoi(e));
+    if (const char *e = getenv("OWN_IDX_SPLIT_W")) {
+        int *w = opt.idx_split_w;
+        if (std::sscanf(e, "%d,%d,%d,%d,%d,%d", w, w + 1, w + 2, w + 3, w + 4, w + 5) != 6)
+            die("OWN_IDX_SPLIT_W: six weights w0,...,w5");
+    }
+    if (const char *e = getenv("OWN_IDX_SPLIT_CHECK")) opt.idx_split_check = atoi(e) != 0;
     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
     // round 18 e87 / r1 (=0 for the old forms)
