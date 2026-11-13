@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 13, 2026 03:49 EST — DeepSeek tp109 gated: guessing +2-3 % (code 155, analysis 173.5); budgets refreshed.**
+- tg109 (03:29-03:49, round19-tg109): every trace identical, every answer the same, no fault. Writing-time expert
+  kernels (`OWN_RUX5`, helper rux5): checks -0.26 to -0.81 ms, guessing code 152.1 -> 155.1, analysis 169.1 -> 173.5;
+  plain 109 and prompt reads (3K 4.8 s, 10K 15.7 s) unchanged. Default from tp110 (sources e004ace38).
+- Budget (one-token step, card 2, 8.9 ms): dense rows 4.6 (~82 % of their bytes), experts 1.9 (bytes 0.74, issue ~1.1),
+  exchanges 1.3 (160 x ~8 us), rest 1.0. Checks: 9.6 ms + ~2.0 ms per guess. Helpers: qkv (split the replicated
+  q_a + kv rows, card 3), rux6 (prompt experts: decode / products split inside a work-group, card 1).
+
 **November 13, 2026 02:27 EST — DeepSeek tp108 gated: writing +3 % (plain 109, guessing 152 / 169), prompts -5 %.**
 - tg108 (02:06-02:26, round19-tg108): every trace identical, every answer the same, no fault. Peer-ordered pushes
   (`OWN_XPUSH2`, helper xchg2): plain 106.1 -> 109.2 tok/s, guessing code 147.8 -> 152.4, analysis 164.3 -> 169.2.
