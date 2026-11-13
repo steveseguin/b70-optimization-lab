@@ -400,7 +400,7 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
-- 21:25 (2026-11-12) **Copy engine = the prompt-exchange transport** (`data/.../round19-ce/`). EU stores into a peer
+- 21:16 (2026-11-12) **Copy engine = the prompt-exchange transport** (`data/.../round19-ce/`). EU stores into a peer
   stay ~1 GB/s with every store cache hint; the copy-only queue group (1 engine per card) pushes own slice -> five
   peers at 27-30 GB/s all six at once, values exact, and runs beside compute (20 MiB per card push adds ~0.14 ms to a
   4.26 ms memory-bound kernel). Helper **bcs** (`dsv41-work/bcs/`, six-card runs only through `bcs/six.sh`):
