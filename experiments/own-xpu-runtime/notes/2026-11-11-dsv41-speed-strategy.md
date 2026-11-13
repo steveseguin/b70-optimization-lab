@@ -400,7 +400,7 @@ Did not work (and why):
 
 ## Work in flight (2026-11-11, updated 2026-11-12 11:10 EST)
 
-- 20:45 (2026-11-12) **tp105 gated (tg105, all identical): `OWN_FL=3` plain 104.0 -> 106.1 tok/s (+2 %), xorP +0.5 %,
+- 20:28 (2026-11-12) **tp105 gated (tg105, all identical): `OWN_FL=3` plain 104.0 -> 106.1 tok/s (+2 %), xorP +0.5 %,
   guessing +0.7-1.3 %; SW1 slower (off), SW2 nothing on top of FL; FL + NOPAIR become defaults; draft vocabulary
   joins BEST (tg105v +1 %).** Check budget on tp105 (`data/.../round19-tl105/`): one token 8.8 ms busy, two 11.8,
   slope 1.87 ms per extra token (experts 0.92 at their floor, exchanges 0.48, dense 0.32, norms 0.12); the 1 -> 2

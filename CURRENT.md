@@ -1,6 +1,6 @@
 # Current Workspace State
 
-**November 12, 2026 20:50 EST — DeepSeek V4.1 tp105 gated: plain 106.1 tok/s with OWN_FL=3; guessing +1 %.**
+**November 12, 2026 20:28 EST — DeepSeek V4.1 tp105 gated: plain 106.1 tok/s with OWN_FL=3; guessing +1 %.**
 - tg105 (19:40-20:22): every trace identical (xorP compiled in; FL / NOPAIR / SW arms). Plain 104.0 -> 106.1 tok/s
   with `OWN_FL=3`; guessing code ~145.5, analysis ~161.5 (+0.7-1.3 %); SW1 slower (off). tg105v: the draft vocabulary
   +1 % on four of five prompts (joins BEST). 3K read 5.70 s at 256, 5.59 with px-512. Results round19-tg105 /

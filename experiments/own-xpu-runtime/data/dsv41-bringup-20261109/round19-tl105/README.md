@@ -1,4 +1,4 @@
-# tl105: check budget by tokens on tp105 (2026-11-12 20:30)
+# tl105: check budget by tokens on tp105 (2026-11-12 ~20:10)
 
 tp105 with `OWN_FL=3 OWN_U3_NOPAIR=1` + draft vocabulary, code prompt, timeline of checks 20-119 (single queue:
 per-kernel times are valid). `dsv41_ck_by_m.py tl_ck.txt tl_ck-spec.txt 19 <card>` (first index 19, not 20: with
