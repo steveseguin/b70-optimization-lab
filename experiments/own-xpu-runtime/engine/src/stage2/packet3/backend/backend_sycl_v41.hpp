@@ -405,7 +405,8 @@ public:
         // engram rows and draft injection in pieces of at most MTX); the block buffers and exchange regions hold
         // 2 x MTX tokens (+ ~0.25 GiB per card at a 4K context). 0 (default): blocks of at most MTX, buffers as before.
         bool px_big = false;
-        // bcs-1 (OWN_PX_BCS=1, opt-in; needs OWN_PX=1; /home/steve/dsv41-work/bcs/README.md): in a block run as halves
+        // bcs-1 (OWN_PX_BCS, default 1 since tp108 (tg107: traces identical, 3K read -8 %, 10K -7.5 %); acts only with
+        // OWN_PX=1; /home/steve/dsv41-work/bcs/README.md): in a block run as halves
         // the four per-layer exchanges (X1 output-a + the attention partials, X2 output-b, X3 expert act + the FFN
         // partials, X4 FFN rows) and the engram rows travel as PUSHES on each card's copy engine (Level Zero copy-only
         // queue group, an in-order immediate list): after the rows' producer (an own event signalled on qs[c]'s native
@@ -414,8 +415,8 @@ public:
         // its LOCAL copy flags in a one-work-group launch on qs right before the first launch that reads the rows
         // (XchgWaitB). The engram rows are pushed once per block (no second copy at layer 14). The pair swaps stay
         // XchgPair pulls on xqs. No sum changes (copies only). 1: each push queued right after its producer (xsite);
-        // 2 (diagnostic): at the place px_layers queues the pull. 0 (default): off, nothing created.
-        unsigned px_bcs = 0;
+        // 2 (diagnostic): at the place px_layers queues the pull. 0: off, nothing created (the pulls as in tp106).
+        unsigned px_bcs = 1;
         unsigned xll = 0; // OWN_XLL (xll-1, /home/steve/dsv41-work/xll): the pull exchanges in one PCIe round trip
                           // (ops41sycl::XchgPullL: the rows travel in units of 16 / 64 bytes that carry the exchange
                           // number, read as soon as they are there); 16 or 64 (unit bytes; OWN_XLL=1: XLL_DEFAULT_U), 0: off
@@ -501,6 +502,7 @@ public:
 
     Backend41(const flash41::Plan41 &plan, int max_seq, Options opt)
         : g(plan.g), max_seq(max_seq), o(std::move(opt)) {
+        if (!o.px || o.tp < 2) o.px_bcs = 0; // OWN_PX_BCS (default 1) acts only with OWN_PX: without it nothing is created
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
