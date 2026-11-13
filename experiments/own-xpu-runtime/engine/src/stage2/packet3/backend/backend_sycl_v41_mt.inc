@@ -255,7 +255,7 @@ bool rux4 = true; // OWN_RUX4 (rux4-1): default on since tp109; false = the tp10
 // OWN_MT_RUX_MIN) on RoutedUQ (ops41sycl::Rux5Q1 / Rux5QK, kernels/sycl_v41_routed_rux5.hpp: rux4's gathers-first
 // form, one-token through the slot ids). Formats without a pick (R = 0) keep today's kernels;
 // /home/steve/dsv41-work/rux5/README.md.
-bool rux5 = false;
+bool rux5 = true; // OWN_RUX5 (rux5-1): default on since tp110 (tg109: checks -0.3..-0.5 ms, guessing +2-3 %); false = the tp109 forms
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
