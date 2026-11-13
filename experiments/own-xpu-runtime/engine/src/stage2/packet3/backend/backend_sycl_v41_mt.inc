@@ -243,6 +243,13 @@ unsigned mt_eu_min = 0;   // OWN_MT_EU_MIN=m: OWN_MT_EU only in blocks of at lea
 // default since tp97 (tg96b: 3K read 472 -> 497 tok/s): OWN_MT_RUX=1, OWN_MT_RUX_CAP=6 (OWN_MT_RUX=0: off)
 bool mt_rux = true;
 unsigned mt_rux_min = 16, mt_rux_cap = 6;
+// rux4-1 (2026-11-13; off by default, bit-identical): OWN_RUX4=1 runs the OWN_MT_RUX blocks' cap-6 routed launches
+// on the pipelined RoutedUP (ops41sycl::RoutedIQ*SUP, kernels/sycl_v41_routed_rux4.hpp: each sub-block's grid gathers
+// first, then the values, then the multiply-adds; per format 2-row tiles at 128 registers or 4-row tiles at 256 with
+// slot i + 1's x read before slot i's products and 64 work-groups (Rux4Pick); per (slot, row) the same sums in the
+// same order as RoutedIQ*SUX). Bench (card 2, 256-token blocks): -5 .. -18 % per launch, -270 ms of card 2's routed
+// time per 3K read; /home/steve/dsv41-work/rux4/README.md. Formats without a pick (Rux4Pick R = 0) keep RoutedIQ*SUX.
+bool rux4 = false;
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
@@ -260,7 +267,8 @@ bool ck1_run = false;     // decode_verify_tp -> tpm_card_step: this check is on
 bool vck1 = false;        // the checked block ran as a one-token step (commit_block: nothing staged)
 // xchg for a block: the stores by XchgPushM, then XchgP without slots for the release, flags and wait
 uint32_t xchg_m(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, int mode, int part) {
-    if (!mt_xpush || use_pull(part, nslot)) return xchg(c, off, stride, nslot, r0, r1, mode, 0, part);
+    if (!mt_xpush || use_pull(part, nslot) || x2_form(c, part, nslot, mode)) // (OWN_XPUSH2: xchg's XchgQ / XchgP)
+        return xchg(c, off, stride, nslot, r0, r1, mode, 0, part);
     if ((r1 - r0) % 4) throw std::runtime_error("multi-token exchange: rows not a multiple of 4");
     const size_t nv = (size_t)nslot * ((r1 - r0) / 4);
     const size_t nwg = std::max<size_t>(1, std::min<size_t>(64, (nv + 2047) / 2048));
@@ -905,9 +913,20 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             k.nsl = nsl;
             k.xtok = (unsigned)xtok;
             if constexpr (requires { k.tile_nsl; }) k.tile_nsl = 6 * mt_rux_min; // RoutedUT: tiles from OWN_MT_RUX_MIN tokens
-            launch_rows<K::TAB>(c, npos, maxwg, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
+            size_t mw = maxwg; // OWN_RUX4: a pipelined form's own work-group cap (RoutedUP::WGCAP, 0: none)
+            if constexpr (requires { K::WGCAP; })
+                if (K::WGCAP && (!mw || mw > K::WGCAP)) mw = K::WGCAP;
+            launch_rows<K::TAB>(c, npos, mw, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
         };
         if (mt_rux && (unsigned)mt_n >= mt_rux_min) { // OWN_MT_RUX: the row-tiled forms (MT 6 / 8 / 16 by the cap)
+            if (rux4 && cap <= 6) { // OWN_RUX4: the pipelined forms at MT 6 (R = 0 picks: the same kernel as below)
+#define XP(TY, KERN, NB) \
+    if (e.type == iq3::Type::TY && cols == NB * 256) return gu(std::type_identity<KERN<NB, 6>>{});
+                XP(IQ2_XXS, RoutedIQ2XXSUP, 20) XP(IQ2_S, RoutedIQ2SUP, 20) XP(IQ3_XXS, RoutedIQ3XXSUP, 20)
+                XP(IQ2_XS, RoutedIQ2XSUP, 20) XP(IQ1_S, RoutedIQ1SUP, 20) XP(IQ2_XXS, RoutedIQ2XXSUP, 9)
+                XP(IQ2_S, RoutedIQ2SUP, 9) XP(IQ3_XXS, RoutedIQ3XXSUP, 9) XP(IQ2_XS, RoutedIQ2XSUP, 9) XP(IQ1_S, RoutedIQ1SUP, 9)
+#undef XP
+            }
 #define XR(TY, KERN, NB)                                                                                     \
     if (e.type == iq3::Type::TY && cols == NB * 256) {                                                       \
         if (cap <= 6) return gu(std::type_identity<KERN<NB, 6>>{});                                          \

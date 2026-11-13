@@ -73,9 +73,11 @@
 #include "stage2/packet3/kernels/sycl_v41_fl.hpp" // fl-1: one-token norms folded into their consumers (OWN_FL)
 #include "stage2/packet3/step/plan_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
+#include "stage2/packet3/kernels/sycl_v41_routed_rux4.hpp" // software-pipelined prompt-block routed rows (rux4-1, OWN_RUX4)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
+#include "stage2/packet3/kernels/sycl_v41_xchg2.hpp" // decode / check exchanges as peer-ordered pushes (xchg2-1, OWN_XPUSH2)
 #include <level_zero/ze_api.h>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <sycl/ext/oneapi/backend/level_zero.hpp>
@@ -92,6 +94,18 @@ struct XPullK128 {
     float *p0, *p1, *p2, *p3, *p4, *p5;
     uint32_t *err;
     void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, err); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
+                                                           sycl::ext::oneapi::experimental::sub_group_size<32>};
+    }
+};
+// xchg2-1 (OWN_XPUSH2): the peer-ordered push exchange (ops41sycl::XchgQ) at 128 registers, SIMD32, as XPullK128; the
+// peer pointers and the card's counter words are this functor's own fields (direct kernel arguments)
+struct XQK128 {
+    ops41sycl::XchgQ x;
+    float *p0, *p1, *p2, *p3, *p4, *p5;
+    uint32_t *cnt, *err;
+    void operator()(sycl::nd_item<1> it) const { x(it, p0, p1, p2, p3, p4, p5, cnt, err); }
     auto get(sycl::ext::oneapi::experimental::properties_tag) const {
         return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<128>,
                                                            sycl::ext::oneapi::experimental::sub_group_size<32>};
@@ -373,6 +387,13 @@ public:
                                 // (ops41sycl::XchgPull; stores into a peer run at ~1 GB/s here) (OWN_XPULL=0: stores)
         unsigned xpull_min = 8192; // (OWN_XPULL_MIN)
         bool xpull_lb = false;  // XchgPull::copy_lb, every peer's loads of a round first (OWN_XPULL_LB=1; slower, e81d)
+        // xchg2-1 (2026-11-12, opt-in; bench /home/steve/dsv41-work/xchg2/bench/xlat.cpp): decode / check exchanges as
+        // posted writes into one peer at a time (Backend41::x2_form). OWN_XPUSH2=1: classes 0x0F; OWN_XPUSH2_MASK=m:
+        // bit 0 output-a of one token by XchgP (was a pull), 1 h rows of blocks of 2-6 tokens by XchgQ (were XchgPushM
+        // at 2, pulls from 3), 2 expert activations of one token by XchgQ (pull), 3 output-a of 2 tokens by XchgQ (pull),
+        // 4 expert activations of 2-3 tokens by XchgQ (pull), 5 output-a of 3-6 tokens by XchgQ (pull; not with
+        // OWN_MT_DSPLIT's second region). 0: off (today's forms)
+        unsigned xpush2 = 0;
         unsigned xpull_grf = 128; // 128 (default since tg87: +3.1 %, same traces): XchgPull built for 128 registers (XPullK128),
                                   // no register-mode change around each pull exchange; OWN_XPULL_GRF=0: auto (256)
         // px-1 (OWN_PX=1, opt-in; /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks of 2 x OWN_PX_MIN tokens
@@ -1411,6 +1432,7 @@ private:
         return pace_cu_[c];
     }
     uint32_t *xcnt[TILES] = {};
+    uint32_t *x2cnt[TILES] = {}; // OWN_XPUSH2: XchgQ's counters (words 0 and 16; every launch leaves them 0)
     uint32_t *xlcnt[TILES] = {}; // OWN_XLL: the exchange's work-groups whose units are out (device counter, zeroed)
     size_t xlb = 0;              // OWN_XLL: the outboxes' start in the arena (floats; the same on every card)
     // OWN_XLL: the outbox of the region at arena offset off: a 17/16 margin over the units' own growth (W / D words
@@ -4135,6 +4157,7 @@ private:
             xarena[c] = dalloc<float>(c, nfq);
             xcnt[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(xcnt[c], 0, 64);
+            if (o.xpush2) x2cnt[c] = dalloc<uint32_t>(c, 32); // OWN_XPUSH2: XchgQ's phase / done counters (zeroed)
             if (o.xll) {
                 xlcnt[c] = dalloc<uint32_t>(c, 16);
                 qs[c].memset(xlcnt[c], 0, 64);
@@ -4239,7 +4262,14 @@ private:
         float *P[6] = {};
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
         if (mode != 2) seq = ++xseq[c];
-        if (use_pull(part, nslot)) {
+        const int f2 = x2_form(c, part, nslot, mode); // OWN_XPUSH2: 1 XchgP, 2 XchgQ in place of today's form
+        if (f2) {
+            unsigned b0[6], b1[6];
+            xbounds(part, b0, b1);
+            if (b0[c] != r0 || b1[c] != r1) throw std::runtime_error("OWN_XPUSH2: rows do not match the part");
+        }
+        if (f2 == 2) return xq_xchg(c, off, stride, nslot, r0, r1, seq, part, P);
+        if (!f2 && use_pull(part, nslot)) {
             ops41sycl::XchgPull x{o.tp, c, off, stride, nslot, {}, {}, seq, XSPIN, mode};
             x.lb = o.xpull_lb ? 1 : 0;
             xbounds(part, x.b0, x.b1);
@@ -4301,6 +4331,47 @@ private:
         }
 #endif
         launch_wg(c, 256, xp, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]);
+        return seq;
+    }
+    // xchg2-1 (OWN_XPUSH2): which exchanges leave today's form, the same on every card (host arithmetic of the part,
+    // the slot count and settings every card shares): 0 today's form, 1 XchgP (one group stores into all peers: the
+    // fastest below ~30 KB per receiver), 2 XchgQ (four groups, one peer at a time). Measured on six cards
+    // (xchg2/bench/xlat.cpp, chain producer -> exchange -> consumer, us per exchange): output-a of one token XchgP
+    // 5.6-5.8 vs pull 9.5-10.3; h rows of 2-6 tokens XchgQ 7.4-11.3 vs XchgPushM 11.0-13.7 (2) / pulls 12.5-15.2;
+    // expert activations of one token XchgQ 7.6-8.1 vs pull 9.6-10.9; output-a of 2 tokens 7.5-8.1 vs 9.9-11.1.
+    // Only plain all-gathers (mode 0) on the card's own queue: not OWN_PX's exchange queue, not with OWN_MT_DSPLIT's
+    // second region, OWN_XLL, OWN_XTAIL, OWN_K7 or OWN_XWAIT. Reuse: every region these exchanges write into a peer
+    // is read by that peer before its next exchange's producer (one-token step: output-a by output-b, act by the
+    // routed / shared down rows, h by the stream post; blocks and draft stages alike: oaM / xoaM by output-b, actM /
+    // xactM by the down rows, obM / xobM / fcM by the stream post or the norm), so the peer raises its next flag only
+    // after reading them, and this card stores only after waiting for that flag: XchgP's rule for today's pushes.
+    int x2_form(int c, int part, unsigned nslot, int mode) const {
+        if (!o.xpush2 || mode != 0 || o.tp < 2 || o.tp > 6 || px_q[c] || xr2[c].on || o.xll || o.xtail || k7a[c].on ||
+            xw_path)
+            return 0;
+        const unsigned m = o.xpush2;
+        if (part == XP_OA && !hl[0].split) {
+            if (nslot == 1) return (m & 1u) ? 1 : 0;
+            if (nslot == 2) return (m & 8u) ? 2 : 0;
+            if (nslot <= 6) return (m & 32u) ? 2 : 0;
+        } else if (part == XP_H) {
+            if (nslot >= 2 && nslot <= 6) return (m & 2u) ? 2 : 0;
+        } else if (part == XP_ACT) {
+            if (nslot == 7) return (m & 4u) ? 2 : 0;
+            if (nslot == 14 || nslot == 21) return (m & 16u) ? 2 : 0;
+        }
+        return 0;
+    }
+    // OWN_XPUSH2: XchgQ on the card's queue, four groups of 256; the groups keep to one peer at a time (lock) when an
+    // item has more than one vec4 per peer (bench: without it the groups drift apart onto several peers)
+    uint32_t xq_xchg(int c, unsigned off, unsigned stride, unsigned nslot, unsigned r0, unsigned r1, uint32_t seq, int part,
+                     float *const *P) {
+        const size_t G = 4, tot = (size_t)nslot * ((r1 - r0) / 4);
+        const ops41sycl::XchgQ xq{o.tp, c, off, stride, nslot, r0, r1, seq, XSPIN, tot > G * 256 ? 1u : 0u};
+        if (tl_on[c]) tl_x[c] = {(int16_t)part, (int16_t)-1, (int8_t)0};
+        auto e = qs[c].parallel_for(sycl::nd_range<1>(G * 256, 256),
+                                    XQK128{xq, P[0], P[1], P[2], P[3], P[4], P[5], x2cnt[c], xerr[c]});
+        kev(c, kname<ops41sycl::XchgQ>(), e);
         return seq;
     }
     template <typename X>
