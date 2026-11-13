@@ -1,0 +1,45 @@
+card 2: 2 steps, busy 850.05 ms, span 856.37 ms, launches 3983
+  experts                  368.24 ms    480 launches
+  dense rows (+riders)     251.69 ms    698 launches
+  attention+index          151.41 ms    194 launches
+  small/other               39.11 ms   1564 launches
+  norms+mix                 29.59 ms    566 launches
+  exchanges                 10.01 ms    481 launches
+  top families:
+    329255.5 us   158 x 2083.90  RoutedUP
+    250982.0 us   674 x 372.38  RowsP:DenseRowsWSC
+     70132.3 us     8 x 8766.54  IndexerScoreBM
+     58073.2 us     8 x 7259.15  IndexerScoreBCM
+     32033.3 us    80 x 400.42  OutM
+     24981.3 us    80 x 312.27  RoutePMRows
+     18626.5 us    80 x 232.83  ScoreM
+     15044.2 us   160 x  94.03  SkDotsWM
+     11341.4 us   156 x  72.70  HcPostPrePMG
+      9471.9 us     2 x 4735.96  RoutedQ2KF
+      7808.5 us   160 x  48.80  XchgPair
+      2552.7 us   162 x  15.76  RowsP:TokRows+NormRows
+      2200.4 us   321 x   6.85  XchgWaitB
+      2065.5 us     8 x 258.19  TopKSelMCQ
+      1948.6 us    80 x  24.36  ExpertGroupPM
+      1844.9 us    80 x  23.06  SoftmaxM
+      1679.0 us     8 x 209.87  TopKSelMQ
+      1634.2 us   160 x  10.21  RowsP:TokRows+HcFinishRows
+      1501.0 us    80 x  18.76  SwigluBothSM
+      1081.2 us    80 x  13.51  MoeCombineAM
+      1044.0 us     4 x 261.00  EngramGateWM
+       710.3 us    24 x  29.59  RowsP:DenseRowsG+GemvH16P
+       624.9 us    80 x   7.81  SkNormPairWM
+       608.7 us   512 x   1.19  EmbedRowA
+       433.3 us     2 x 216.64  TopKSelMBQ
+       422.6 us   512 x   0.83  Broadcast4PA
+       397.4 us    80 x   4.97  WindowAppendM
+       345.2 us   104 x   3.32  RowsP:TokRows+RopeRows
+       329.2 us     6 x  54.87  HcPreAM
+       295.1 us     4 x  73.78  HcPostPM
+card 0: 2 steps, busy 850.32 ms, span 856.47 ms, launches 3983
+  experts                  336.08 ms    480 launches
+  dense rows (+riders)     226.22 ms    698 launches
+  attention+index          134.86 ms    194 launches
+  exchanges                 89.96 ms    481 launches
+  small/other               34.87 ms   1564 launches
+  norms+mix                 28.33 ms    566 launches

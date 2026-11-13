@@ -30,6 +30,6 @@ for c in [int(x) for x in sys.argv[2:]]:
     for k in acc: cats[cat(k)] += acc[k] / n; ccnt[cat(k)] += cnt[k] / n
     print(f'card {c}: {n} steps, busy {sum(acc.values())/n/1000:.2f} ms, span {sum(span)/len(span)/1000:.2f} ms, launches {sum(cnt.values())/n:.0f}')
     for k, v in sorted(cats.items(), key=lambda kv: -kv[1]): print(f'  {k:24s} {v/1000:6.2f} ms  {ccnt[k]:5.0f} launches')
-    if c == int(sys.argv[2]):
+    if c == int(sys.argv[2]) or os.environ.get("ALLTOP"):
         print('  top families:')
-        for k, v in sorted(acc.items(), key=lambda kv: -kv[1])[:22]: print(f'    {v/n:8.1f} us {cnt[k]/n:5.0f} x {v/cnt[k]:6.2f}  {k[:70]}')
+        for k, v in sorted(acc.items(), key=lambda kv: -kv[1])[:int(os.environ.get("TOPN","22"))]: print(f'    {v/n:8.1f} us {cnt[k]/n:5.0f} x {v/cnt[k]:6.2f}  {k[:70]}')

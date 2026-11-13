@@ -1,0 +1,52 @@
+card 2: 2 steps, busy 719.35 ms, span 725.28 ms, launches 3984
+  experts                  364.22 ms    480 launches
+  dense rows (+riders)     247.82 ms    698 launches
+  small/other               36.87 ms   1564 launches
+  norms+mix                 30.50 ms    566 launches
+  attention+index           29.00 ms    196 launches
+  exchanges                 10.95 ms    481 launches
+  top families:
+    325658.0 us   158 x 2061.13  RoutedUP
+    247111.9 us   674 x 366.63  RowsP:DenseRowsWSC
+     29897.3 us    80 x 373.72  OutM
+     24734.5 us    80 x 309.18  RoutePMRows
+     18138.9 us    80 x 226.74  ScoreM
+     14429.1 us   160 x  90.18  SkDotsWM
+     12154.6 us   156 x  77.91  HcPostPrePMG
+      9332.0 us     2 x 4665.99  RoutedQ2KF
+      9217.9 us    16 x 576.12  IndexerScoreBM
+      8779.0 us   160 x  54.87  XchgPair
+      3272.8 us   162 x  20.20  RowsP:TokRows+NormRows
+      2167.0 us   321 x   6.75  XchgWaitB
+      1947.4 us    80 x  24.34  ExpertGroupPM
+      1777.5 us    80 x  22.22  SoftmaxM
+      1627.7 us   160 x  10.17  RowsP:TokRows+HcFinishRows
+      1483.5 us    80 x  18.54  SwigluBothSM
+      1234.9 us    18 x  68.61  TopKSelM
+      1069.5 us    80 x  13.37  MoeCombineAM
+      1024.5 us     4 x 256.12  EngramGateWM
+       703.4 us    24 x  29.31  RowsP:DenseRowsG+GemvH16P
+       611.2 us    80 x   7.64  SkNormPairWM
+       598.5 us   512 x   1.17  EmbedRowA
+       427.6 us   512 x   0.84  Broadcast4PA
+       398.9 us    80 x   4.99  WindowAppendM
+       341.1 us   104 x   3.28  RowsP:TokRows+RopeRows
+       322.4 us     6 x  53.74  HcPreAM
+       306.4 us     4 x  76.60  HcPostPM
+       231.1 us    80 x   2.89  RingCommitM
+       229.6 us     2 x 114.82  EngRowsA
+        39.3 us     6 x   6.55  SkCompressPoolWM
+card 0: 2 steps, busy 719.55 ms, span 725.38 ms, launches 3984
+  experts                  328.19 ms    480 launches
+  dense rows (+riders)     222.19 ms    698 launches
+  exchanges                 82.17 ms    481 launches
+  small/other               32.38 ms   1564 launches
+  norms+mix                 29.18 ms    566 launches
+  attention+index           25.43 ms    196 launches
+card 4: 2 steps, busy 720.34 ms, span 725.32 ms, launches 3744
+  experts                  348.64 ms    480 launches
+  dense rows (+riders)     206.73 ms    618 launches
+  exchanges                 79.56 ms    321 launches
+  norms+mix                 39.34 ms    566 launches
+  small/other               24.70 ms   1564 launches
+  attention+index           21.37 ms    196 launches
