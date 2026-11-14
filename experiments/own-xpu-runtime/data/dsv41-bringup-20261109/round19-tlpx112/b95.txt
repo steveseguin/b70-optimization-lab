@@ -1,0 +1,73 @@
+card 2: 2 steps, busy 889.07 ms, span 895.43 ms, launches 3999
+  experts                  373.54 ms    480 launches
+  dense rows (+riders)     262.98 ms    698 launches
+  exchanges                108.75 ms    497 launches
+  attention+index           70.74 ms    194 launches
+  small/other               41.82 ms   1564 launches
+  norms+mix                 31.24 ms    566 launches
+  top families:
+    262497.2 us   674 x 389.46  RowsP:DenseRowsWSC
+    255537.9 us   128 x 1996.39  RoutedUX
+     76228.7 us    30 x 2540.96  RoutedUP
+     71703.1 us   160 x 448.14  XchgPair
+     37645.4 us     8 x 4705.67  IndexerScoreBM
+     37045.2 us   337 x 109.93  XchgWaitB
+     34382.1 us    80 x 429.78  OutM
+     27060.0 us    80 x 338.25  RoutePMRows
+     19848.6 us    80 x 248.11  ScoreM
+     15667.0 us   160 x  97.92  SkDotsWM
+     11923.5 us   156 x  76.43  HcPostPrePMG
+     10806.4 us     8 x 1350.80  IndexerScoreBCM
+      9984.1 us     2 x 4992.06  RoutedQ2KF
+      2947.6 us   162 x  18.19  RowsP:TokRows+NormRows
+      1976.9 us    80 x  24.71  ExpertGroupPM
+      1959.4 us    80 x  24.49  SoftmaxM
+      1725.1 us   160 x  10.78  RowsP:TokRows+HcFinishRows
+      1597.0 us    80 x  19.96  SwigluBothSM
+      1284.4 us     8 x 160.55  TopKSelMQ
+      1155.7 us    80 x  14.45  MoeCombineAM
+      1105.2 us     4 x 276.30  EngramGateWM
+       674.5 us    80 x   8.43  SkNormPairWM
+       647.5 us   512 x   1.26  EmbedRowA
+       541.5 us     8 x  67.69  TopKSelMCQ
+       485.2 us    24 x  20.21  RowsP:DenseRowsG+GemvH16P
+       445.2 us   512 x   0.87  Broadcast4PA
+       421.7 us    80 x   5.27  WindowAppendM
+       332.3 us   104 x   3.20  RowsP:TokRows+RopeRows
+       323.1 us     6 x  53.85  HcPreAM
+       299.1 us     4 x  74.78  HcPostPM
+card 0: 2 steps, busy 887.99 ms, span 895.45 ms, launches 3999
+  experts                  369.04 ms    480 launches
+  dense rows (+riders)     260.54 ms    698 launches
+  exchanges                115.49 ms    497 launches
+  attention+index           70.27 ms    194 launches
+  small/other               41.49 ms   1564 launches
+  norms+mix                 31.16 ms    566 launches
+card 1: 2 steps, busy 888.87 ms, span 895.41 ms, launches 3999
+  experts                  365.35 ms    480 launches
+  dense rows (+riders)     257.51 ms    698 launches
+  exchanges                125.68 ms    497 launches
+  attention+index           68.19 ms    194 launches
+  small/other               40.87 ms   1564 launches
+  norms+mix                 31.27 ms    566 launches
+card 3: 2 steps, busy 888.84 ms, span 895.55 ms, launches 3999
+  experts                  419.14 ms    480 launches
+  dense rows (+riders)     295.84 ms    698 launches
+  attention+index           78.46 ms    194 launches
+  small/other               46.58 ms   1564 launches
+  norms+mix                 40.00 ms    566 launches
+  exchanges                  8.84 ms    497 launches
+card 4: 2 steps, busy 890.39 ms, span 895.40 ms, launches 3759
+  experts                  348.49 ms    480 launches
+  dense rows (+riders)     216.38 ms    618 launches
+  exchanges                199.84 ms    337 launches
+  attention+index           58.72 ms    194 launches
+  norms+mix                 39.50 ms    566 launches
+  small/other               27.48 ms   1564 launches
+card 5: 2 steps, busy 889.41 ms, span 895.36 ms, launches 3759
+  experts                  360.60 ms    480 launches
+  dense rows (+riders)     219.92 ms    618 launches
+  exchanges                178.76 ms    337 launches
+  attention+index           61.64 ms    194 launches
+  norms+mix                 40.15 ms    566 launches
+  small/other               28.35 ms   1564 launches
