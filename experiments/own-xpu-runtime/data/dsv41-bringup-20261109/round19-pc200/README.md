@@ -7,7 +7,7 @@ Unprofiled, no sampler. Every answer the same as the references; no fault or cor
 
 | run | uncapped (tg111, tp111) | 200 W (pc200) | change |
 |---|---|---|---|
-| plain answers (128) | 110.90 / 111.01 tok/s | 110.18 / 107.92 | -1 .. -3 % |
+| plain answers (128) | 110.90 / 111.01 tok/s | 110.18 / 107.92 (tg112, same cap: 111.12 / 110.87 on tp111) | ~0 % (107.92 = an outlier, its host engram reads took 385 us per step against ~80) |
 | guessing, code | 157.54 | 152.62 | -3.1 % |
 | guessing, analysis | 174.93 | 169.46 | -3.1 % |
 | 3K read | 4.78 / 4.89 s | 5.33 / 5.31 s | +10 % time (-11 % tok/s) |
@@ -15,7 +15,7 @@ Unprofiled, no sampler. Every answer the same as the references; no fault or cor
 | 10K read | 15.09 s | 17.06 s | +13 % time |
 | answers after the 10K read | 96.87 tok/s | 94.73 | -2 % |
 
-In plain words: writing answers barely notices the cap (it waits on memory, not on arithmetic); reading prompts does
+In plain words: writing answers barely notices the cap (plain ~0 %, guessing -3 %) (it waits on memory, not on arithmetic); reading prompts does
 (10-13 % slower), because the prompt kernels are arithmetic-heavy and the cards slow their clocks at the lower power.
 This matches the uncapped profile (round19-tlp109 px512): the two 275 W cards ran the same prompt kernels ~10 % faster
 than the 230 W cards (card 0 experts 328 vs card 2 364 ms per piece, dense rows 222 vs 248; card 0 then waits 82 ms in
