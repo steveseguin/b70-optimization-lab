@@ -1,5 +1,16 @@
 # Current Workspace State
 
+**November 13, 2026 20:45 EST — owner test: all six cards capped at 200 W to see whether the host resets stop.**
+- Owner (20:35): "you can try to lower the power on all the GPUs, and see if that helps. maybe 175w limit? ... or 200w
+  even". Set 20:44:12 through the xe hwmon `power1_cap` (was 275 W on cards 03 / 83, 230 W on the other four; peak
+  limit `power1_crit` 550 / 460 W unchanged). Log `dsv41-work/faults/powercap-20261113.txt`. Not persistent: re-apply
+  after a reboot while the test runs. Speeds before and after 20:44 are not comparable; a capped baseline follows.
+- Diagnosis so far (owner asked): no RAM exhaustion (4.8 GB free at 13:20), no memory errors, no power events in the BMC
+  log; one DDR5 stick on a 12-channel board; BIOS 10.06 (2025-05); all cards PCIe 5.0 x16, two on MCIO cables; the
+  bus-23 card's link logged 9 corrected errors on Nov 9-10, none since. Owner options given: BIOS / BMC update, more
+  DIMMs, PSU / circuit check, Gen4 slots.
+- rux6-1 A/B (round19-rux6): 3K read -2 %, 10K -0.6 %, exact. Head placement on the big cards (round19-hsw111): no gain.
+
 **November 13, 2026 19:40 EST — host reset 13:20 (bank 5 again) froze the session for 5 h; tp111 gated before it.**
 - tg111 (round19-tg111, finished 13:07): tp111 = tp110 + index split default. All identical; x95k read 166.3 -> 140.7 s,
   x34k 48.6 s, 10K 15.8 -> 15.1 s; plain / guessing unchanged. tp111 is the base.

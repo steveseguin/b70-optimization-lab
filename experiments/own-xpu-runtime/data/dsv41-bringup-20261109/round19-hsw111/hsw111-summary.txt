@@ -1,0 +1,89 @@
+start 2026-11-13 19:41:11
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.011 s/step, 90.46 tok/s
+h1: host io during decode: 6.8 MiB read from disk, 2 major page faults; engram rows 105.9 us per step and card (slowest card 112.3 us; copy + decode launch calls 10.8 us)
+h4 exit 0
+h4 TRACE_IDENTICAL
+h4 IDS40_SAME
+h4: decode: 39 steps after the first, 0.011 s/step, 88.32 tok/s
+h4: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 76.3 us per step and card (slowest card 78.5 us; copy + decode launch calls 11.4 us)
+h64 exit 0
+h64 TRACE_IDENTICAL
+h64 IDS40_SAME
+h64: decode: 39 steps after the first, 0.011 s/step, 90.99 tok/s
+h64: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 69.2 us per step and card (slowest card 72.2 us; copy + decode launch calls 11.4 us)
+warm exit 0
+warm SPEED128_SAME
+warm: decode: 127 steps after the first, 0.009 s/step, 109.88 tok/s
+warm: host io during decode: 15.5 MiB read from disk, 1 major page faults; engram rows 164.5 us per step and card (slowest card 165.6 us; copy + decode launch calls 9.8 us)
+s0_1 exit 0
+s0_1 SPEED128_SAME
+s0_1: decode: 127 steps after the first, 0.009 s/step, 111.01 tok/s
+s0_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 76.4 us per step and card (slowest card 77.8 us; copy + decode launch calls 9.6 us)
+s1_1 exit 0
+s1_1 SPEED128_SAME
+s1_1: decode: 127 steps after the first, 0.009 s/step, 111.42 tok/s
+s1_1: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 75.8 us per step and card (slowest card 78.0 us; copy + decode launch calls 9.9 us)
+s0_2 exit 0
+s0_2 SPEED128_SAME
+s0_2: decode: 127 steps after the first, 0.009 s/step, 111.02 tok/s
+s0_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 80.8 us per step and card (slowest card 81.8 us; copy + decode launch calls 9.8 us)
+s1_2 exit 0
+s1_2 SPEED128_SAME
+s1_2: decode: 127 steps after the first, 0.009 s/step, 111.05 tok/s
+s1_2: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 74.9 us per step and card (slowest card 76.2 us; copy + decode launch calls 9.6 us)
+gap 19:45:06
+code_s0a exit 0
+code_s0a: prompt: 82 tokens read on the cards in 0.22s (385.2 tok/s; first step 0.17s incl. kernel build), first token 2581
+code_s0a: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.26s = 156.93 tok/s; draft 1.74 ms + check 12.73 ms per cycle; SAME AS the plain run
+code_s0a: host io during decode: 91.3 MiB read from disk, 32 major page faults; engram rows 279.9 us per step and card (slowest card 282.1 us; copy + decode launch calls 12.3 us)
+code_s0a: kept guesses per cycle: 0:77 1:74 2:38 3:18 4:8 5:10
+code_s0a_vs_v1 GLOG_SAME
+code_s1a exit 0
+code_s1a: prompt: 82 tokens read on the cards in 0.22s (379.3 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_s1a: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.31s = 154.34 tok/s; draft 1.72 ms + check 13.00 ms per cycle; SAME AS the plain run
+code_s1a: host io during decode: 0.4 MiB read from disk, 1 major page faults; engram rows 526.2 us per step and card (slowest card 527.9 us; copy + decode launch calls 12.9 us)
+code_s1a: kept guesses per cycle: 0:77 1:74 2:38 3:18 4:8 5:10
+code_s1a_vs_v1 GLOG_SAME
+code_s1b exit 0
+code_s1b: prompt: 82 tokens read on the cards in 0.22s (378.6 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_s1b: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.24s = 157.95 tok/s; draft 1.72 ms + check 12.65 ms per cycle; SAME AS the plain run
+code_s1b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 110.2 us per step and card (slowest card 113.0 us; copy + decode launch calls 12.7 us)
+code_s1b: kept guesses per cycle: 0:77 1:74 2:38 3:18 4:8 5:10
+code_s1b_vs_v1 GLOG_SAME
+code_s0b exit 0
+code_s0b: prompt: 82 tokens read on the cards in 0.22s (384.7 tok/s; first step 0.17s incl. kernel build), first token 2581
+code_s0b: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.24s = 157.61 tok/s; draft 1.73 ms + check 12.68 ms per cycle; SAME AS the plain run
+code_s0b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 112.1 us per step and card (slowest card 113.2 us; copy + decode launch calls 12.5 us)
+code_s0b: kept guesses per cycle: 0:77 1:74 2:38 3:18 4:8 5:10
+code_s0b_vs_v1 GLOG_SAME
+gap 19:50:38
+analysis_s0a exit 0
+analysis_s0a: prompt: 113 tokens read on the cards in 0.26s (535.0 tok/s; first step 0.17s incl. kernel build), first token 2581
+analysis_s0a: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 2.91s = 175.45 tok/s; draft 1.75 ms + check 14.43 ms per cycle; SAME AS the plain run
+analysis_s0a: host io during decode: 73.5 MiB read from disk, 9 major page faults; engram rows 319.0 us per step and card (slowest card 320.2 us; copy + decode launch calls 12.8 us)
+analysis_s0a: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_s0a_vs_v1 GLOG_SAME
+analysis_s1a exit 0
+analysis_s1a: prompt: 113 tokens read on the cards in 0.27s (511.9 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_s1a: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 2.95s = 173.40 tok/s; draft 1.74 ms + check 14.63 ms per cycle; SAME AS the plain run
+analysis_s1a: host io during decode: 0.3 MiB read from disk, 0 major page faults; engram rows 408.6 us per step and card (slowest card 410.1 us; copy + decode launch calls 13.1 us)
+analysis_s1a: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_s1a_vs_v1 GLOG_SAME
+analysis_s1b exit 0
+analysis_s1b: prompt: 113 tokens read on the cards in 0.27s (511.0 tok/s; first step 0.18s incl. kernel build), first token 2581
+analysis_s1b: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 2.89s = 176.54 tok/s; draft 1.74 ms + check 14.34 ms per cycle; SAME AS the plain run
+analysis_s1b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 117.0 us per step and card (slowest card 118.1 us; copy + decode launch calls 13.1 us)
+analysis_s1b: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_s1b_vs_v1 GLOG_SAME
+analysis_s0b exit 0
+analysis_s0b: prompt: 113 tokens read on the cards in 0.26s (536.4 tok/s; first step 0.17s incl. kernel build), first token 2581
+analysis_s0b: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 2.92s = 175.18 tok/s; draft 1.77 ms + check 14.44 ms per cycle; SAME AS the plain run
+analysis_s0b: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 115.9 us per step and card (slowest card 118.5 us; copy + decode launch calls 12.9 us)
+analysis_s0b: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_s0b_vs_v1 GLOG_SAME
+gap 19:56:10
+guessing SAME count: 8
+ALLDONE
