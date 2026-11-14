@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**November 13, 2026 19:40 EST — host reset 13:20 (bank 5 again) froze the session for 5 h; tp111 gated before it.**
+- tg111 (round19-tg111, finished 13:07): tp111 = tp110 + index split default. All identical; x95k read 166.3 -> 140.7 s,
+  x34k 48.6 s, 10K 15.8 -> 15.1 s; plain / guessing unchanged. tp111 is the base.
+- 13:20 host self-reset (BERT CPU 10 bank 5 bea0000001000108, ADDR 1ffffffb843d4a3 = kernel text; reset reason
+  "uncorrected error ... data fabric sync flood"), at the start of rux6's 3K speed run with OWN_RUX6=0 (production
+  expert kernels) right after its five traces passed. Evidence `dsv41-work/faults/reset-20261113T1320/`. The machine
+  came back 13:22 but the session did not: cards idle until the owner's restart at 18:40 (clean, no record). Probe
+  passed 19:38. Audio-awake not re-applied (it was on for the 06:02 reset too).
+- Helpers ckm and rep2 closed their levers before the reset (round19-ckm, round19-rep2): the decode step and the check
+  slope are near their floors apart from the routed experts. Running now: rux6 3K/10K A/B (`rx6ab.sh`) and the head
+  placement A/B (`hsw111.sh`: the 16-head groups on the 550 W cards 0 and 3).
+
 **November 13, 2026 11:50 EST — DeepSeek tp110 gated: plain 111, guessing code 158 / analysis 176; index split -9 % at 34K.**
 - tg110 (round19-tg110): tp110 = tp109 + RUX5 default + the q_a + kv rows split by card (helper qkv, `OWN_QKV_SPLIT`
   default on). Every trace identical, every answer the same, no fault. Plain 108.8-109.3 -> 111.1-111.6 tok/s; guessing
