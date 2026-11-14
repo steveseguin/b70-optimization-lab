@@ -264,6 +264,13 @@ bool rux5 = true; // OWN_RUX5 (rux5-1): default on since tp110 (tg109: checks -0
 // pick's. Formats without a rux6 pick (IQ2_XXS gate + up) keep rux4's / today's kernels;
 // /home/steve/dsv41-work/rux6/README.md.
 bool rux6 = true; // OWN_RUX6 (rux6-1): default on since tp112 (rx6ab: 3K read -2 %, exact); false = rux4's picks without prefetches
+// rux7-1 (2026-11-13; off by default, bit-identical): OWN_RUX7 bit 1 runs layer 0's Q2_K routed down rows (GGUF layout, not
+// packed) in the OWN_MT_RUX blocks (>= OWN_MT_RUX_MIN tokens, cap-6 groups) on the layer's expert groups (ops41sycl::Rux7Q2K =
+// RoutedQ2KG, kernels/sycl_v41_routed_rux7.hpp: each row block read and its values formed once per group, every slot's x
+// block read once for the tile's rows) instead of RoutedQ2KF (one sub-group per slot and row). Per (slot, row) the same
+// values, products and sums in the same order and the same butterfly; /home/steve/dsv41-work/rux7/README.md.
+// Bit 2 (with bit 1): the same form without its x prefetch (Rux7Q2KPick<9, 0>; the A/B of the prefetch in the engine).
+unsigned rux7 = 1; // OWN_RUX7 (rux7-1): bit 1 = the Q2_K down form above (+ bit 2: no x prefetch); default 1 since tp113 (rux7 ab1: 3K -0.9 %, 10K -1.5 %, exact); 0 = tp112
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
@@ -384,7 +391,8 @@ size_t mt_arena_floats() const { // the block's exchange regions, after the one-
     return A * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
            A * (size_t)g.h + A * (size_t)g.qh * (size_t)g.hd +
            (o.mt_dsplit ? (o.px_bcs ? 16 : 4) + (size_t)2 * A * 50 * HC_SEG : 0) + // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
-           (o.idx_split ? 16 + (size_t)8 * 512 * mtb_n() : 0); // OWN_IDX_SPLIT: the 8 index slots' lists (xidxM, cidxm)
+           (o.idx_split ? 16 + (size_t)8 * 512 * mtb_n() : 0) + // OWN_IDX_SPLIT: the 8 index slots' lists (xidxM, cidxm)
+           (o.prt ? 16 + (size_t)2 * prt_rs() : 0); // OWN_PRT: the router's ids and weights (xrtM)
 }
 void mt_offsets(size_t base) {
     if (base + mt_arena_floats() > (size_t)UINT32_MAX) throw std::runtime_error("multi-token step: arena offsets");
@@ -406,6 +414,12 @@ void mt_offsets(size_t base) {
         const unsigned e = o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG : xhoM + A * (unsigned)g.qh * (unsigned)g.hd;
         xidxM = (e + 15u) & ~15u;
     }
+    if (o.prt) { // prt-1 (OWN_PRT): the router's ids (6 per token) then weights (6 per token), prt_rs() words each, 64-byte lines
+        const unsigned e = o.idx_split    ? xidxM + 8u * 512u * (unsigned)mtb_n()
+                           : o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG
+                                         : xhoM + A * (unsigned)g.qh * (unsigned)g.hd;
+        xrtM = (e + 15u) & ~15u;
+    }
 }
 void mt_alloc(int c) {
     // per-token buffers of MTA tokens (token t at t * n; tokens >= MTX only take token groups' spare reads)
@@ -417,8 +431,9 @@ void mt_alloc(int c) {
     act_t *qi = md(32 * 128), *wv = md(32);
     float *score = dalloc<float>(c, ((size_t)max_seq + 64) * TB); // (index scores: only t < mt is read)
     int64_t *lens = dalloc<int64_t>(c, TB);
-    float *router = mf(g.experts), *prob = mf(6);
-    uint32_t *ids = dalloc<uint32_t>(c, 6 * TB);
+    // (OWN_PRT: ids and weights in the arena, where the peers' shares land; token t at 6 t as before)
+    float *router = mf(g.experts), *prob = o.prt ? xarena[c] + xrtM + prt_rs() : mf(6);
+    uint32_t *ids = o.prt ? (uint32_t *)(xarena[c] + xrtM) : dalloc<uint32_t>(c, 6 * TB);
     act_t *expg = md(6 * nm), *expu = md(6 * nm), *expd = md(6 * nd), *shg = md(g.mid), *shu = md(g.mid), *shd = md(H);
     float *of = mf(Q), *attn_w = mf((size_t)g.qh * 640);
     // (split attention groups: the head outputs in the arena, where the partner card reads them)
@@ -834,16 +849,23 @@ bool gemv_pair_m(int c, const std::string &wa, act_t *ya, size_t ysa, const std:
 }
 // OWN_MT_RFUSE: the block's router top-k (a work-group per token), the FFN mix's finish and the shared expert's
 // gate + up rows in ONE launch (the one-token path's route_with_shared). False (nothing launched) when the gate
-// and up matrices are not the same packed kernel.
-bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fin = true) {
-    const std::string gn = p + "ffn_gate_shexp.weight", un = p + "ffn_up_shexp.weight";
-    const auto &eg = we(gn), &eu = we(un);
-    if (eg.type != eu.type || eg.cols != eu.cols || !wgt[c].at(gn).packed || !wgt[c].at(un).packed) return false;
-    if (wgt[c].at(gn).nrows != wgt[c].at(un).nrows || g.experts % 32 != 0 || g.experts > 512) return false;
+// and up matrices are not the same packed kernel. (prt-1, OWN_PRT bit 1: the top-k of tokens [u0, u0 + un) only,
+// the work-groups' logits / ids / weights pointers moved to token u0; the finish and shared rows of every token)
+bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fin = true, unsigned u0 = 0,
+                    unsigned un = ~0u) {
+    const std::string gn = p + "ffn_gate_shexp.weight", un_ = p + "ffn_up_shexp.weight";
+    const auto &eg = we(gn), &eu = we(un_);
+    if (eg.type != eu.type || eg.cols != eu.cols || !wgt[c].at(gn).packed || !wgt[c].at(un_).packed) return false;
+    if (wgt[c].at(gn).nrows != wgt[c].at(un_).nrows || g.experts % 32 != 0 || g.experts > 512) return false;
     const unsigned mt = (unsigned)mt_n;
     const Scratch &b = scm[c][px_tok]; // (OWN_PX: the half's rows; px_tok 0: the block's)
     const size_t H = g.h, FS = (size_t)25 * HC_SEG;
-    const uint8_t *wu = (const uint8_t *)wgt[c].at(un).p;
+    const uint8_t *wu = (const uint8_t *)wgt[c].at(un_).p;
+    const unsigned rm = un == ~0u ? mt : un; // (OWN_PRT bit 1: the top-k work-groups of the card's tokens)
+    const bool full = u0 == 0 && rm == mt;
+    const float *rlog = (const float *)b.router + (size_t)u0 * g.experts;
+    uint32_t *rids = b.ids + (size_t)6 * u0;
+    float *rprob = b.prob + (size_t)6 * u0;
     tok_set(c, 0);
     using FR = ops41sycl::TokRows<ops41sycl::HcFinishRows>;
     FR fin = tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16);
@@ -855,9 +877,8 @@ bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fi
             using DG = std::decay_t<decltype(dg)>;
             using RX = ops41sycl::RowsPair<FR, ops41sycl::RowsPair<DG, DG>>;
             const RX rx{fin, {dg, du}};
-            const ops41sycl::RoutePMRows<RX> k{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, mt, rx};
-            launch_wgs<2 * 1024 + 6>(c, (size_t)mt + (rx.n() + 15) / 16, 512, k, (const float *)b.router, bias, b.ids,
-                                     b.prob);
+            const ops41sycl::RoutePMRows<RX> k{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, rm, rx};
+            launch_wgs<2 * 1024 + 6>(c, (size_t)rm + (rx.n() + 15) / 16, 512, k, rlog, bias, rids, rprob);
         };
         auto split = [&](auto gc) {
             constexpr unsigned G = decltype(gc)::value;
@@ -868,7 +889,7 @@ bool route_shared_m(int c, const std::string &p, const float *bias, bool with_fi
         // pace-2 (OWN_MT_PACE + OWN_MT_PACE_ROLES & 64, opt-in): the router, the finish and both matrices' rows in one
         // persistent pipelined launch (ops41sycl::pace_gu_rows; bit for bit)
         if constexpr (std::is_same_v<act_t, float>)
-            if ((ops41sycl::g_pace_mask || (ops41sycl::g_pace_sw & 1u)) && mt_ws && !dr_step && !xt[c].on &&
+            if (full && (ops41sycl::g_pace_mask || (ops41sycl::g_pace_sw & 1u)) && mt_ws && !dr_step && !xt[c].on &&
                 ops41sycl::pace_gu_rows(dk, wgt[c].at(gn).nrows, wg, wu, b.xn, H, b.shg, b.shu, (size_t)g.mid, mt, fin,
                                         ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts, (const float *)b.router, bias,
                                         b.ids, b.prob, pace_cu(c), [&](const auto &k, size_t nwg) {
@@ -921,6 +942,24 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
         if (!wn2.empty()) throw std::runtime_error("multi-token step: unpacked expert pair " + wn);
         const unsigned rows = dp.nrows, cols = (unsigned)e.cols;
 #ifndef OWN41_ACT_BF16
+        // OWN_RUX7 bit 1 (rux7-1): the prompt blocks' Q2_K down rows on the layer's expert groups (tpm_layer's grouping,
+        // shared with the gate + up launch), as the packed formats' row-tiled forms; checks and one-token steps keep RoutedQ2KF
+        if ((rux7 & 1u) && e.type == iq3::Type::Q2_K && cols == 9 * 256 && per_slot && mt_eu && (unsigned)mt_n >= mt_eu_min &&
+            mt_rux && (unsigned)mt_n >= mt_rux_min && eu_cap_c[c] >= 1 && eu_cap_c[c] <= 6) {
+            auto q2kg = [&](auto kt) {
+                using K = typename decltype(kt)::type;
+                K k{rows, per_slot};
+                k.nsl = nsl0;
+                k.xtok = (unsigned)xtok;
+                k.tile_nsl = 6 * mt_rux_min;
+                size_t mw = (size_t)o.down_wg;
+                if (K::WGCAP && (!mw || mw > K::WGCAP)) mw = K::WGCAP;
+                launch_rows<K::TAB>(c, (size_t)nsl0 * rows, mw, k, (const uint8_t *)wp(c, wn), x, (const uint32_t *)egrp[c], y);
+            };
+            if (rux7 & 2u) q2kg(std::type_identity<ops41sycl::Rux7Q2K<9, ops41sycl::Rux7Q2KPick<9, 0>>>{});
+            else q2kg(std::type_identity<ops41sycl::Rux7Q2K<9>>{});
+            return;
+        }
         if (o.q2k_fast && e.type == iq3::Type::Q2_K && (cols == 9 * 256 || cols == 20 * 256)) { // as routed_gemv
             if (cols == 9 * 256)
                 launch_sg(c, (size_t)nsl0 * rows, ops41sycl::RoutedQ2KF<9>{rows, cols, per_slot, nsl0, (unsigned)xtok},
@@ -1595,6 +1634,141 @@ void ix_check(int c, const IxPend &q) {
         std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK: card %d: %ld exchanges, %ld lists compared, %ld differ; %ld own q/proj rows, %ld differ\n",
                      c, k, ixc_lists[c], ixc_bad[c], ixc_qrows[c], ixc_qbad[c]);
 }
+// ---- prt-1 (OWN_PRT, opt-in; /home/steve/dsv41-work/prt/README.md) --------------------------------------------------
+// Prompt blocks (OWN_PX: halves) of OWN_PRT_MIN..MTX tokens, not checks / draft steps: work that every card repeated
+// for every token runs for the card's tokens [t0[c], t1[c]) only (prt_split: whole units of 16 tokens, OWN_PRT_W
+// weights, the same partition at every layer), then the card's rows go to every peer at the same arena offsets
+// (bits copied). Bit 1, the router (phase 3a): the logits (ffn_gate_inp rows) and the top-k (RoutePMRows / RoutePM
+// work-groups) of the card's tokens; ids and weights live in the arena (xrtM: ids, then weights, prt_rs() words each,
+// token t at 6 t); gathered before phase 3b's expert groups. Bit 2, q_a + kv (OWN_PX halves, end of phase 0a): both
+// matrices' rows of the card's tokens into qkv-1's arena slots (xqk + t * QKN), gathered before phase 0b's norms,
+// which read the slots (stride QKN) as qkv-1's. OWN_PX_BCS=1 halves push on the copy engine (bcs_push, XchgWaitB at
+// the reader); plain blocks (bit 1 only) publish with XchgPull mode 1 and pull with mode 2. px_layers runs phase 0a
+// (bit 2) / phase 3a (bit 1) of both halves before the next phase of either, so each gather runs beside the other
+// half's work (bits 4 / 8, diagnostic: the old order, each gather waited for right after its push).
+// Bits: every dense form computes each (row, token) with the same sums whatever the token count (the property every
+// block size relies on; idxsplit-1 / qkv-1 shares are the same kind of call); RouteP of token t reads only token t's
+// logits and writes only token t's ids / weights; the copies move bytes. Hazards: README section 3 (the bcs-1 chain;
+// the next producer of a card's slice runs after a wait for an exchange that every peer pushed after reading it).
+struct PrtPend {
+    int kind = 0; // 0 none, 1 copy-engine push (seq: push number), 2 pull (seq: exchange number)
+    uint32_t seq = 0;
+    unsigned off = 0, a[6] = {}, b[6] = {}; // (pulls: arena offset, every card's words [a[d], b[d]) of each slot)
+};
+PrtPend prt_r[TILES][2], prt_q[TILES][2]; // per card and half (plain blocks: [0]): the router's, q_a + kv's
+unsigned xrtM = 0;                        // OWN_PRT: arena offset of the router's ids (then weights, + prt_rs())
+size_t prt_rs() const { return ((size_t)6 * mtba_n() + 15) & ~(size_t)15; } // words per slot (6 per token, MTA tokens)
+// card d's tokens [t0[d], t1[d]) of a block (OWN_PX: half) of M tokens: whole units of 16 tokens (the last card's
+// share ends at M), cumulative rounding of the OWN_PRT_W weights (all 0 over the tp cards: equal)
+void prt_split(unsigned M, unsigned *t0, unsigned *t1) const {
+    const unsigned U = (M + 15) / 16;
+    long W = 0;
+    for (int d = 0; d < o.tp; ++d) W += std::max(o.prt_w[d], 0);
+    long cw = 0;
+    unsigned prev = 0;
+    for (int d = 0; d < 6; ++d) {
+        t0[d] = t1[d] = 0;
+        if (d >= o.tp) continue;
+        cw += W ? std::max(o.prt_w[d], 0) : 1;
+        const long WW = W ? W : o.tp;
+        const unsigned e = d == o.tp - 1 ? U : (unsigned)std::min<long>(U, ((long)U * cw + WW / 2) / WW);
+        t0[d] = std::min(16u * prev, M);
+        prev = std::max(prev, e);
+        t1[d] = std::min(16u * prev, M);
+    }
+}
+// whether card c's block (OWN_PX: half) of M tokens runs OWN_PRT's splits (host state the same on every card:
+// options, block size, whether the block runs as halves on the copy engines). The router / q_a launches must carry
+// no rider: the dot rows in their own launches (OWN_MT_SKDOTS from OWN_MT_SKDOTS_MIN tokens on; no OWN_MT_RIDE rows)
+bool prt_on(int c, unsigned M) const {
+    if (!o.prt || !mt_small || mt_heads || dr_step || M < o.prt_min || M > (unsigned)MTX) return false;
+    if (qbm_any() || mt_idstat || !mt_skdots || M < mt_skdots_min) return false;
+    return px_run[c] ? bcs_blk() && o.px_bcs == 1 && M % 16 == 0 : !px_q[c];
+}
+// bit 2: card c's half of M tokens at layer prefix p runs q_a + kv by tokens (OWN_PX halves only; qkv_on's matrix
+// conditions; xqk holds a slot per token of the largest block)
+bool prt_qkv_on(int c, const std::string &p, unsigned M) const {
+    if (!(o.prt & 2u) || !xqk || qk_slots < (unsigned)mtba_n() || !px_run[c] || !prt_on(c, M)) return false;
+    const auto &ea = we(p + "attn_q_a.weight"), &eb = we(p + "attn_kv.weight");
+    const auto &da = wgt[c].at(p + "attn_q_a.weight"), &db = wgt[c].at(p + "attn_kv.weight");
+    return da.packed && db.packed && ea.type == eb.type && ea.cols == 5120 && eb.cols == 5120 &&
+           da.nrows == (unsigned)g.qrank && db.nrows == (unsigned)g.hd && g.qrank + g.hd == (int)QKN &&
+           (ea.type == iq3::Type::Q8_0 || ea.type == iq3::Type::Q6_K);
+}
+// the router rows' pull (plain blocks): XchgPull over every card's words [a[d], b[d]) of both slots (ids, weights) at
+// arena offset q.off; mode 1 publishes (a new exchange number), mode 2 waits for number seq and copies
+uint32_t prt_pull(int c, const PrtPend &q, int mode, uint32_t seq) {
+    float *P[6] = {};
+    for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
+    if (mode != 2) seq = ++xseq[c];
+    ops41sycl::XchgPull x{o.tp, c, q.off, (unsigned)prt_rs(), 2u, {}, {}, seq, XSPIN, mode};
+    x.lb = o.xpull_lb ? 1 : 0;
+    size_t nv = 0;
+    for (int d = 0; d < 6; ++d) x.b0[d] = q.a[d], x.b1[d] = q.b[d];
+    for (int d = 0; d < o.tp; ++d)
+        if (d != c) nv += 2 * ((x.b1[d] - x.b0[d]) / 4);
+    const size_t nwg = mode == 1 ? 1 : std::clamp<size_t>((nv + 511) / 512, 4, 64);
+    if (tl_on[c]) tl_x[c] = {(int16_t)-1, (int16_t)-1, (int8_t)mode};
+    auto e = qs[c].parallel_for(sycl::nd_range<1>(nwg * 256, 256), XPullK128{x, P[0], P[1], P[2], P[3], P[4], P[5], xerr[c]});
+    kev(c, kname<ops41sycl::XchgPull>(), e);
+    return seq;
+}
+// bit 1, after the card's top-k: its ids / weights rows to every peer (every card at the same host-order place, also
+// with no tokens: the push / exchange numbers stay the same on every card)
+void prt_route_send(int c, unsigned M) {
+    if (xr2[c].on) throw std::runtime_error("OWN_PRT: a second region armed before the router exchange");
+    unsigned t0[6], t1[6];
+    prt_split(M, t0, t1);
+    PrtPend &q = prt_r[c][px_run[c] ? px_hh[c] : 0];
+    if (q.kind) throw std::runtime_error("OWN_PRT: a router exchange left pending");
+    q.off = xrtM + 6u * (unsigned)px_tok;
+    if (px_run[c]) { // OWN_PX_BCS=1 (prt_on): the card's rows of both slots on its copy engine, after the top-k
+        q.kind = 1;
+        q.seq = bcs_push(c, q.off, (unsigned)prt_rs(), 2u, 6u * t0[c], 6u * t1[c], (const XR2 *)nullptr);
+        return;
+    }
+    for (int d = 0; d < 6; ++d) q.a[d] = 6u * t0[d], q.b[d] = 6u * t1[d];
+    q.b[o.tp - 1] = (q.b[o.tp - 1] + 3u) & ~3u; // (XchgPull: multiples of 4 words; the 2 extra words are token M's)
+    q.kind = 2;
+    q.seq = prt_pull(c, q, 1, 0);
+}
+// bit 1, before phase 3b's first reader (the expert groups): every peer's router rows in place
+void prt_route_wait(int c) {
+    PrtPend &q = prt_r[c][px_run[c] ? px_hh[c] : 0];
+    if (!q.kind) throw std::runtime_error("OWN_PRT: no router exchange to wait for");
+    if (q.kind == 1) bcs_wait(c, q.seq);
+    else prt_pull(c, q, 2, q.seq);
+    q.kind = 0;
+}
+// bit 2, end of phase 0a (the pre-norm's xn of every token done): the card's tokens' q_a + kv rows into the arena
+// slots, then pushed to every peer (one contiguous range of whole slots)
+void prt_qkv_send(int c, const std::string &p, unsigned M, const act_t *xn) {
+#ifndef OWN41_ACT_BF16
+    unsigned t0[6], t1[6];
+    prt_split(M, t0, t1);
+    const unsigned u0 = t0[c], un = t1[c] - t0[c];
+    const size_t pt = (size_t)px_tok, H = g.h;
+    float *y = xarena[c] + xqk + (pt + u0) * QKN;
+    if (un) {
+        gemv_m(c, p + "attn_q_a.weight", xn + (size_t)u0 * H, H, y, QKN, 0, un);
+        gemv_m(c, p + "attn_kv.weight", xn + (size_t)u0 * H, H, y + g.qrank, QKN, 0, un);
+    }
+    PrtPend &q = prt_q[c][px_hh[c]];
+    if (q.kind) throw std::runtime_error("OWN_PRT: a q_a + kv exchange left pending");
+    q.kind = 1;
+    q.seq = bcs_push(c, (unsigned)(xqk + pt * QKN), QKN, 1u, u0 * QKN, t1[c] * QKN, (const XR2 *)nullptr);
+#else
+    (void)c, (void)p, (void)M, (void)xn;
+    throw std::runtime_error("OWN_PRT: F32 activations only");
+#endif
+}
+// bit 2, start of phase 0b: every peer's q_a + kv rows in place
+void prt_q_wait(int c) {
+    PrtPend &q = prt_q[c][px_hh[c]];
+    if (q.kind != 1) throw std::runtime_error("OWN_PRT: no q_a + kv exchange to wait for");
+    bcs_wait(c, q.seq);
+    q.kind = 0;
+}
 // OWN_IDX_CAND=2, blocks (one call in 37 per card): each token's candidate-only scores and list against the full score (score2m) and the
 // masked select over all its rows (list2m), bitwise; the block lists against the masks
 long icc_m_n[TILES] = {};
@@ -1720,6 +1894,10 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     // With OWN_MT_DSPLIT (blocks of >= 4 tokens) nothing else changes: skd is already on there, the dot rows of the
     // card's tokens go to the arena as before, the norms run in the DSPLIT branch, and ds_arm comes after this exchange
     const bool qsp = mt_small && mt_skdots && !dr_step && !px_run[c] && qkv_on(c, p, (unsigned)M);
+    // prt-1 (OWN_PRT): bit 1 the router of this card's tokens (rsp), bit 2 q_a + kv of its tokens in OWN_PX halves
+    // (qpx; skd is on wherever prt_on is, so no dot rows ride the router / q_a launches)
+    const bool rsp = (o.prt & 1u) && prt_on(c, (unsigned)M), qpx = prt_qkv_on(c, p, (unsigned)M);
+    if ((rsp || qpx) && !skd) throw std::runtime_error("OWN_PRT: dot rows riding");
     const bool skdA = skd || qsp, rdA = ride && !skdA;
     unsigned dA0[6] = {}, dA1[6] = {}, dF0[6] = {}, dF1[6] = {}; // OWN_MT_DSPLIT: the cards' tokens per mix
     if (dsp) ds_split((unsigned)M, true, hla, dA0, dA1), ds_split((unsigned)M, false, hla, dF0, dF1);
@@ -1852,6 +2030,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         }
     }
     mx_ready[c] = false;
+    if (qpx) prt_qkv_send(c, p, (unsigned)M, b.xn); // prt-1 bit 2: the card's tokens' q_a + kv rows, pushed
     } // (PX_P0A)
     if (seg & PX_P0B) {
     // OWN_MT_KVPAIR: q_a + kv rows (+ the dot rows) in one launch, each matrix in the token groups dense_m gives it
@@ -1864,12 +2043,16 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         xchg(c, (unsigned)xqk, QKN, (unsigned)M, qkr0[c], qkr1[c], 0, 0, XP_QKV);
         qa_in = xarena[c] + xqk, kv_in = qa_in + g.qrank, qxs = kxs = QKN;
     }
-    const bool kvp = !qsp && mt_small && mt_kvpair && (unsigned)M <= mt_ms_max &&
+    if (qpx) { // prt-1 bit 2: every card's rows in the half's slots (pushed at the end of phase 0a)
+        prt_q_wait(c);
+        qa_in = xarena[c] + xqk + pt * QKN, kv_in = qa_in + g.qrank, qxs = kxs = QKN;
+    }
+    const bool kvp = !qsp && !qpx && mt_small && mt_kvpair && (unsigned)M <= mt_ms_max &&
                      (rdA ? gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
                                         dmix(p + "hc_attn_", dsA, dA0, dA1))
                           : gemv_pair_m(c, p + "attn_q_a.weight", b.qa, g.qrank, p + "attn_kv.weight", b.kv, g.hd, b.xn, H,
                                         ops41sycl::NoRows{}));
-    if (!qsp && !kvp) {
+    if (!qsp && !qpx && !kvp) {
         if (mt_small && rdA) gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank, 0, 0, dmix(p + "hc_attn_", dsA, dA0, dA1));
         else gemv_m(c, p + "attn_q_a.weight", b.xn, H, b.qa, g.qrank);
         gemv_m(c, p + "attn_kv.weight", b.xn, H, b.kv, g.hd);
@@ -2167,6 +2350,12 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     bool shared_done = false; // the shared expert's gate + up already ran with the router (route_shared_m)
     const size_t A7 = (size_t)7 * g.mid;
     if (seg & PX_P3A) {
+    unsigned ru0 = 0, ru1 = (unsigned)M; // prt-1 bit 1 (rsp): this card's tokens of the router
+    if (rsp) {
+        unsigned t0[6], t1[6];
+        prt_split((unsigned)M, t0, t1);
+        ru0 = t0[c], ru1 = t1[c];
+    }
     if (mt_small) {
         hcpp_launch(c, ops41sycl::HcPostPrePM<Act>{g.h, (unsigned)M, H4, H, 4, 16, 0, 0, 4, H}, // (OWN_MT_HCPP)
                     strm[c], (const act_t *)b.ob, (const float *)b.post_a, (const float *)b.comb_a, (const float *)nullptr,
@@ -2191,15 +2380,23 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
                 rows_launch(c, ops41sycl::RowsPair<ops41sycl::TokRows<NR5>, HD>{
                                    tokr(NR5{b.x, wp<float>(c, p + "ffn_norm.weight"), b.xn}, H, H), dmix(p + "hc_ffn_", dsF, dF0, dF1)});
             }
-            gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
+            if (!rsp) gemv_m(c, p + "ffn_gate_inp.weight", b.xn, H, b.router, (size_t)g.experts);
+            else if (ru1 > ru0) // prt-1 bit 1: the logits of this card's tokens
+                gemv_m(c, p + "ffn_gate_inp.weight", b.xn + (size_t)ru0 * H, H, b.router + (size_t)ru0 * g.experts,
+                       (size_t)g.experts, 0, ru1 - ru0);
         }
-        shared_done = mt_rfuse && route_shared_m(c, p, bias, !dsp); // (OWN_MT_DSPLIT: the finish after the act pull)
+        // (OWN_MT_DSPLIT: the finish after the act pull; prt-1 bit 1: the top-k of this card's tokens)
+        shared_done = mt_rfuse && route_shared_m(c, p, bias, !dsp, ru0, ru1 - ru0);
         if (!shared_done) {
-            launch_wgs<2 * 1024 + 6>(c, (size_t)M, 512, ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts},
-                                     (const float *)b.router, bias, b.ids, b.prob);
+            if (ru1 > ru0)
+                launch_wgs<2 * 1024 + 6>(c, (size_t)(ru1 - ru0), 512,
+                                         ops41sycl::RoutePM{ops41sycl::RouteP{g.experts, 6}, (size_t)g.experts},
+                                         (const float *)b.router + (size_t)ru0 * g.experts, bias, b.ids + (size_t)6 * ru0,
+                                         b.prob + (size_t)6 * ru0);
             tok_set(c, 0);
             if (!dsp) rows_launch(c, tokr(hc_finish(c, p + "hc_ffn_", b.pre_f, b.post_f, b.comb_f), FS, 4, 4, 16));
         }
+        if (rsp) prt_route_send(c, (unsigned)M); // prt-1 bit 1: this card's ids / weights to every peer
     } else {
         for (int t = 0; t < M; ++t) {
             tok_set(c, t);
@@ -2236,6 +2433,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         shared_done = px_sd[c][px_hh[c]];
     } // (PX_P3A)
     if (seg & PX_P3B) {
+    if (rsp) prt_route_wait(c); // prt-1 bit 1: every card's ids / weights in place before their first reader
     if (mt_eu && (unsigned)M >= mt_eu_min) { // the slots' expert groups for the expert-major routed rows (gate / up and down share them)
         const bool big = mt_eu_big && (unsigned)M >= mt_eu_big_m;
         unsigned cap = big ? mt_eu_big : mt_eu;
@@ -2573,6 +2771,7 @@ void px_half(int c, int h) {
 }
 void px_exit(int c) {
     if (px_q[c]) px_wait(c, px_last[c]); // qs[c] after everything on xqs[c]: the head and the draft's rows follow
+    for (int h = 0; h < 2; ++h) prt_r[c][h] = prt_q[c][h] = PrtPend{}; // (prt-1: nothing pending past the block)
     px_q[c] = px_run[c] = false;
     px_g[c] = px_n[c] = 0;
     px_pend[c] = 0;
@@ -2621,6 +2820,9 @@ template <typename F> void px_layers(int c, F &&late) {
     for (auto &a : px_x[c])
         for (auto &d : a) d.on = false;
     px_q[c] = px_run[c] = true;
+    for (int h = 0; h < 2; ++h) prt_r[c][h] = prt_q[c][h] = PrtPend{};
+    // prt-1 (OWN_PRT bit 1, without the diagnostic bit 8): phase 3a of both halves before phase 3b of either
+    const bool rro = (o.prt & 1u) && !(o.prt & 8u) && prt_on(c, (unsigned)px_hn);
     try {
         for (int L = L0; L < LN; ++L) {
             if (o.eng_late && L == 1) { // the whole block's engram rows (publish on xqs[c] after the rows' launch)
@@ -2628,6 +2830,23 @@ template <typename F> void px_layers(int c, F &&late) {
                 px_tok = 0;
                 late();
             }
+            // prt-1 (OWN_PRT bit 2, without the diagnostic bit 4): phase 0a of both halves (each with its share of
+            // the q_a + kv rows, pushed) before phase 0b of either, so each half's gather runs beside other work
+            if (!(o.prt & 4u) && prt_qkv_on(c, "blk." + std::to_string(L) + ".", (unsigned)px_hn)) {
+                px_half(c, 0);
+                if (L > L0) px_await(c, PX_X4, 0), tpm_layer(L - 1, c, PX_P5);
+                if (L == 1 || L == 14) px_eng(c, MB);
+                tpm_layer(L, c, PX_P0A);
+                if (L > L0) px_fire(c, PX_X4, 1, gr(7, L - 1));
+                px_half(c, 1);
+                if (L > L0) px_await(c, PX_X4, 1), tpm_layer(L - 1, c, PX_P5);
+                tpm_layer(L, c, PX_P0A);
+                px_half(c, 0);
+                tpm_layer(L, c, PX_P0B | PX_P1 | PX_P1B);
+                px_half(c, 1);
+                px_fire(c, PX_X1, 0, gr(0, L));
+                tpm_layer(L, c, PX_P0B | PX_P1 | PX_P1B);
+            } else {
             // half A: the last layer's post, this layer's rows up to the attention; X4(B, L - 1) beside A's attention
             px_half(c, 0);
             if (L > L0) px_await(c, PX_X4, 0), tpm_layer(L - 1, c, PX_P5);
@@ -2647,6 +2866,7 @@ template <typename F> void px_layers(int c, F &&late) {
             tpm_layer(L, c, PX_P0A);
             px_fire(c, PX_X1, 0, gr(0, L));
             tpm_layer(L, c, PX_P0B | PX_P1 | PX_P1B);
+            } // (prt-1 bit 2's order)
             // X1(B) beside A's output-b rows, X2(A) beside B's
             px_half(c, 0);
             px_await(c, PX_X1, 0), tpm_layer(L, c, PX_P2A);
@@ -2657,6 +2877,19 @@ template <typename F> void px_layers(int c, F &&late) {
             px_fire(c, PX_X2, 0, gr(2, L));
             tpm_layer(L, c, PX_P2B);
             // X2(B) beside A's routed gate / up, X3(A) beside B's, X3(B) beside A's routed down
+            if (rro) { // prt-1 bit 1: A 3a (router share pushed), B 3a, A 3b (router wait first), B 3b
+                px_half(c, 0);
+                px_await(c, PX_X2, 0), tpm_layer(L, c, PX_P3A);
+                px_half(c, 1);
+                px_fire(c, PX_X2, 1, gr(3, L));
+                px_await(c, PX_X2, 1), tpm_layer(L, c, PX_P3A);
+                px_half(c, 0);
+                tpm_layer(L, c, PX_P3B);
+                px_half(c, 1);
+                px_fire(c, PX_X3, 0, gr(4, L));
+                tpm_layer(L, c, PX_P3B);
+                px_fire(c, PX_X3, 1, gr(5, L));
+            } else {
             px_half(c, 0);
             px_await(c, PX_X2, 0), tpm_layer(L, c, PX_P3A);
             px_defer(c, PX_X2, 1, gr(3, L)); // (OWN_PX_MOVE bit 1: right before A's routed gate / up)
@@ -2668,6 +2901,7 @@ template <typename F> void px_layers(int c, F &&late) {
             tpm_layer(L, c, PX_P3B);
             px_fire_pend(c);
             px_fire(c, PX_X3, 1, gr(5, L));
+            } // (prt-1 bit 1's order)
             // X4(A) beside B's routed down
             px_half(c, 0);
             px_await(c, PX_X3, 0), tpm_layer(L, c, PX_P4);

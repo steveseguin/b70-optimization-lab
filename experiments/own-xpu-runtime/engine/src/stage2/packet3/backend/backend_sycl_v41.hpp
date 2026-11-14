@@ -76,6 +76,7 @@
 #include "stage2/packet3/kernels/sycl_v41_routed_rux4.hpp" // software-pipelined prompt-block routed rows (rux4-1, OWN_RUX4)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux5.hpp" // one-token / check routed rows, gathers first (rux5-1, OWN_RUX5)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux6.hpp" // prompt-block routed rows + x prefetches (rux6-1, OWN_RUX6)
+#include "stage2/packet3/kernels/sycl_v41_routed_rux7.hpp" // prompt-block Q2_K routed down on the expert groups (rux7-1, OWN_RUX7)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
@@ -539,6 +540,15 @@ public:
         int idx_split_w[6] = {};     // ... the cards' token weights (OWN_IDX_SPLIT_W="w0,...,w5"; all 0: equal shares)
         bool idx_split_check = false; // ... diagnostic (OWN_IDX_SPLIT_CHECK=1): also the full index of every token into
                                 // separate lists, compared bitwise with the gathered ones (and the card's q / proj rows)
+        // prt-1 (OWN_PRT=bits, opt-in; /home/steve/dsv41-work/prt/README.md; backend_sycl_v41_mt.inc "prt-1"): prompt
+        // blocks' (OWN_PX: halves') work that every card repeated, split across the cards by tokens and gathered (bits
+        // copied): 1 the router (logits + top-k; ids and weights move into the arena), 2 the q_a + kv rows of OWN_PX
+        // halves (plain blocks: qkv-1's row split); diagnostic 4 / 8: bit 2's / bit 1's gather waited for right after
+        // its push (px_layers' old phase order). 0: off, nothing changes (not even the arena). Default 3 since tp113
+        // (prt ab1 / ab3 under the 200 W cap: 3K 5.24-5.31 -> 4.90-4.94 s, 10K 17.24 -> 15.81, x34k 56.06 -> 52.41, exact)
+        unsigned prt = 3;
+        unsigned prt_min = 64;               // ... blocks / halves of at least this many tokens (OWN_PRT_MIN, >= 8)
+        int prt_w[6] = {3, 2, 2, 3, 3, 3};   // ... the cards' token weights over 16-token units (OWN_PRT_W)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -559,6 +569,21 @@ public:
             if (o.idx_split_min < 2) o.idx_split_min = 2;
         }
         if (!o.idx_split) o.idx_split_check = false;
+        if (o.prt) { // prt-1 (OWN_PRT): the router rows travel through the arena (f32 build, several cards)
+            if (o.prt > 15) throw std::invalid_argument("OWN_PRT: bits 1 (router), 2 (q_a + kv of OWN_PX halves), 4 / 8");
+#ifdef OWN41_ACT_BF16
+            throw std::invalid_argument("OWN_PRT: F32 activations only");
+#endif
+            if (o.tp < 2 || !(o.prt & 3u)) o.prt = 0;
+            else if (o.xll) throw std::invalid_argument("OWN_PRT: not with OWN_XLL");
+            if (o.prt_min < 8) o.prt_min = 8; // (blocks of 2 tokens: OWN_CK2's router rows)
+            int ws = 0;
+            for (int d = 0; d < 6; ++d) {
+                if (o.prt_w[d] < 0) throw std::invalid_argument("OWN_PRT_W: weights >= 0");
+                ws += o.prt_w[d];
+            }
+            if (ws <= 0) throw std::invalid_argument("OWN_PRT_W: a positive weight");
+        }
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
@@ -1669,6 +1694,7 @@ private:
         bool ok = xbf % 16 == 0 && g.ototal % 16 == 0 && g.h % 16 == 0 && g.mid % 16 == 0 && (5 * g.h) % 16 == 0;
 #ifndef OWN41_ACT_BF16
         for (unsigned v : {xoaM, xobM, xactM, xengM, xdsA, xdsF, xidxM}) ok &= v % 16 == 0; // (xidxM: OWN_IDX_SPLIT, 0 when off)
+        ok &= xrtM % 16 == 0 && prt_rs() % 16 == 0 && xqk % 16 == 0; // (OWN_PRT's router region; qkv-1 / OWN_PRT bit 2's xqk)
         ok &= (50u * (unsigned)HC_SEG) % 16 == 0;
 #endif
         for (int d = 0; d < o.tp; ++d) {
@@ -4222,6 +4248,16 @@ private:
                              o.qkv_form);
             }
         }
+        if (o.prt) { // prt-1 (OWN_PRT): bit 2 needs qkv-1's arena slots of 1,792 floats (model shape)
+            if ((o.prt & 2u) && (g.qrank + g.hd != (int)QKN || g.h != 5120)) {
+                std::fprintf(stderr, "OWN_PRT bit 2 (q_a + kv): off (model shape)\n");
+                o.prt &= ~2u;
+            }
+            std::fprintf(stderr, "OWN_PRT=%u:%s%s%s; blocks / halves of %u..%d tokens; token weights %d,%d,%d,%d,%d,%d (16-token units)\n",
+                         o.prt, (o.prt & 1u) ? " router by tokens" : "", (o.prt & 2u) ? " q_a + kv by tokens (OWN_PX halves)" : "",
+                         (o.prt & 12u) ? " (diagnostic: old phase order)" : "",
+                         o.prt_min, MTX, o.prt_w[0], o.prt_w[1], o.prt_w[2], o.prt_w[3], o.prt_w[4], o.prt_w[5]);
+        }
         {
             int nz = 0, sum = 0;
             for (int d = 0; d < N; ++d) nz += o.tp_heads[d] > 0, sum += o.tp_heads[d];
@@ -4276,9 +4312,9 @@ private:
             nfq = xqm + (size_t)6 * qbo_kx() * g.hd;
         }
         if ((o.qb_off || qbm_any()) && nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QB_OFF: arena offsets");
-        if (o.qkv_split) { // qkv-1: the gathered q_a + kv rows, 64-byte aligned: 8 slots (blocks of up to 6 tokens),
-                           // with bit 8 one per token of the largest block (mtba_n)
-            qk_slots = (o.qkv_split & 8u) ? (unsigned)mtba_n() : 8u;
+        if (o.qkv_split || (o.prt & 2u)) { // qkv-1: the gathered q_a + kv rows, 64-byte aligned: 8 slots (blocks of up to 6 tokens),
+                           // with bit 8 one per token of the largest block (mtba_n); prt-1 bit 2 (OWN_PRT): also mtba_n
+            qk_slots = (o.qkv_split & 8u) || (o.prt & 2u) ? (unsigned)mtba_n() : 8u;
             xqk = (nfq + 15) & ~(size_t)15;
             nfq = xqk + (size_t)qk_slots * QKN;
             if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QKV_SPLIT: arena offsets");

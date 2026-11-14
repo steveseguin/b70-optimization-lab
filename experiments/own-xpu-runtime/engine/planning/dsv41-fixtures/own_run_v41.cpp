@@ -392,6 +392,19 @@ int main(int argc, char **argv) {
             die("OWN_IDX_SPLIT_W: six weights w0,...,w5");
     }
     if (const char *e = getenv("OWN_IDX_SPLIT_CHECK")) opt.idx_split_check = atoi(e) != 0;
+    // prt-1 (opt-in; /home/steve/dsv41-work/prt/README.md): prompt blocks' (OWN_PX: halves') replicated work split across
+    // the cards by tokens and gathered (the same bits): OWN_PRT bits 1 (the router: logits + top-k), 2 (the q_a + kv
+    // rows of OWN_PX halves), 3 both (+ diagnostic bits 4 / 8: bit 2's / bit 1's gather waited for right after its
+    // push, the old phase order); OWN_PRT_MIN (blocks / halves of at least this many tokens, default 64, at least 8),
+    // OWN_PRT_W="w0,...,w5" (the cards' token weights over 16-token units; default 3,2,2,3,3,3)
+    if (const char *e = getenv("OWN_PRT")) opt.prt = (unsigned)atoi(e);
+    if (opt.prt > 15) die("OWN_PRT: bits 1 (the router), 2 (the q_a + kv rows of OWN_PX halves), 4 / 8 (diagnostic: old order)");
+    if (const char *e = getenv("OWN_PRT_MIN")) opt.prt_min = (unsigned)std::max(8, atoi(e));
+    if (const char *e = getenv("OWN_PRT_W")) {
+        int *w = opt.prt_w;
+        if (std::sscanf(e, "%d,%d,%d,%d,%d,%d", w, w + 1, w + 2, w + 3, w + 4, w + 5) != 6)
+            die("OWN_PRT_W: six weights w0,...,w5");
+    }
     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
     // round 18 e87 / r1 (=0 for the old forms)
@@ -748,6 +761,10 @@ int main(int argc, char **argv) {
         // of the x blocks ahead of use (same bits)
         if (const char *e = getenv("OWN_RUX6")) be.rux6 = atoi(e) != 0;
         if (be.rux6) std::fprintf(stderr, "OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)\n");
+        // rux7-1 (off by default; same bits): OWN_RUX7 bit 1 = layer 0's Q2_K routed down in prompt blocks on the expert groups
+        // (bit 2 with it: the same form without its x prefetch)
+        if (const char *e = getenv("OWN_RUX7")) be.rux7 = (unsigned)strtoul(e, nullptr, 0);
+        if (be.rux7) std::fprintf(stderr, "OWN_RUX7=%u: prompt-block Q2_K routed down on the expert groups (rux7-1)\n", be.rux7);
         if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
