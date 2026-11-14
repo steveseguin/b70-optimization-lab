@@ -1,5 +1,13 @@
 # Current Workspace State
 
+**November 13, 2026 21:30 EST — 200 W cap costs ~3 % on writing, 10-13 % on prompt reading (round19-pc200).**
+- tp111 at 200 W against tg111 (uncapped): plain 110.2 / 107.9 vs 110.9 / 111.0 tok/s; guessing code 152.6 vs 157.5,
+  analysis 169.5 vs 174.9; 3K read 5.33 / 5.31 vs 4.78 / 4.89 s; 10K 17.06 vs 15.09 s. All answers the same, no fault.
+- Prompt kernels are power-limited: uncapped, the 275 W cards ran them ~10 % faster than the 230 W cards (tlp109).
+  Raising the 230 W cards to 275 W is a likely prompt lever (owner decision, after the reset question).
+- `dsv41-work/powercap.sh 200` re-applies the cap after a boot. tp112 (rux6 default) built, gate tg112 running (gate 1
+  identical). Helper prt: the prompt router split by tokens (`OWN_PRT`).
+
 **November 13, 2026 20:45 EST — owner test: all six cards capped at 200 W to see whether the host resets stop.**
 - Owner (20:35): "you can try to lower the power on all the GPUs, and see if that helps. maybe 175w limit? ... or 200w
   even". Set 20:44:12 through the xe hwmon `power1_cap` (was 275 W on cards 03 / 83, 230 W on the other four; peak
