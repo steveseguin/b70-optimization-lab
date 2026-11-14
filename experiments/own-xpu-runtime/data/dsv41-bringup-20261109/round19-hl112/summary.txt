@@ -1,0 +1,60 @@
+t3k_L1 start 2026-11-13 23:59:30
+t3k_L1 exit 0
+t3k_L1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 8 12<->5 12<->4
+t3k_L1: prompt: 3323 tokens read on the cards in 5.08s (666.0 tok/s; first step 0.86s incl. kernel build), first token 2581
+t3k_L1: decode: 39 steps after the first, 0.013 s/step, 78.67 tok/s
+t3k_L1: host io during decode: 5.9 MiB read from disk, 11 major page faults; engram rows 98.5 us per step and card (slowest card 102.8 us; copy + decode launch calls 14.6 us)
+t3k_L1 TRACE_IDENTICAL
+t3k_L1 IDS40_SAME
+t3k_L2 start 2026-11-14 00:29:20
+t3k_L2 exit 0
+t3k_L2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 8<->2,4 12<->3 8
+t3k_L2: prompt: 3323 tokens read on the cards in 5.08s (661.3 tok/s; first step 0.83s incl. kernel build), first token 2581
+t3k_L2: decode: 39 steps after the first, 0.012 s/step, 80.24 tok/s
+t3k_L2: host io during decode: 5.3 MiB read from disk, 0 major page faults; engram rows 103.3 us per step and card (slowest card 110.6 us; copy + decode launch calls 11.7 us)
+t3k_L2 TRACE_IDENTICAL
+t3k_L2 IDS40_SAME
+gate: identical arms: L1 L2
+p3k_D_1 start 2026-11-14 00:33:25
+p3k_D_1 exit 0
+p3k_D_1: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_D_1: prompt: 3323 tokens read on the cards in 5.23s (631.1 tok/s; first step 0.78s incl. kernel build), first token 2581
+p3k_D_1: decode: 255 steps after the first, 0.010 s/step, 100.22 tok/s
+p3k_D_1: host io during decode: 28.8 MiB read from disk, 0 major page faults; engram rows 154.8 us per step and card (slowest card 156.5 us; copy + decode launch calls 9.9 us)
+p3k_D_1 ANSWER256_SAME
+p3k_L1_2 start 2026-11-14 00:53:19
+p3k_L1_2 exit 0
+p3k_L1_2: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 8 12<->5 12<->4
+p3k_L1_2: prompt: 3323 tokens read on the cards in 5.01s (664.7 tok/s; first step 0.78s incl. kernel build), first token 2581
+p3k_L1_2: decode: 255 steps after the first, 0.010 s/step, 100.89 tok/s
+p3k_L1_2: host io during decode: 0.6 MiB read from disk, 19 major page faults; engram rows 51.7 us per step and card (slowest card 53.3 us; copy + decode launch calls 9.9 us)
+p3k_L1_2 ANSWER256_SAME
+p3k_L2_3 start 2026-11-14 00:57:27
+p3k_L2_3 exit 0
+p3k_L2_3: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 8<->2,4 12<->3 8
+p3k_L2_3: prompt: 3323 tokens read on the cards in 5.00s (662.2 tok/s; first step 0.76s incl. kernel build), first token 2581
+p3k_L2_3: decode: 255 steps after the first, 0.010 s/step, 100.97 tok/s
+p3k_L2_3: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.8 us per step and card (slowest card 54.2 us; copy + decode launch calls 9.7 us)
+p3k_L2_3 ANSWER256_SAME
+p3k_L2_4 start 2026-11-14 01:09:00
+p3k_L2_4 exit 0
+p3k_L2_4: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 8<->2,4 12<->3 8
+p3k_L2_4: prompt: 3323 tokens read on the cards in 5.04s (660.8 tok/s; first step 0.78s incl. kernel build), first token 2581
+p3k_L2_4: decode: 255 steps after the first, 0.010 s/step, 100.19 tok/s
+p3k_L2_4: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 51.9 us per step and card (slowest card 55.1 us; copy + decode launch calls 9.7 us)
+p3k_L2_4 ANSWER256_SAME
+p3k_L1_5 start 2026-11-14 01:23:17
+p3k_L1_5 exit 0
+p3k_L1_5: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 8 12<->5 12<->4
+p3k_L1_5: prompt: 3323 tokens read on the cards in 5.06s (665.2 tok/s; first step 0.83s incl. kernel build), first token 2581
+p3k_L1_5: decode: 255 steps after the first, 0.010 s/step, 99.64 tok/s
+p3k_L1_5: host io during decode: 29.5 MiB read from disk, 19 major page faults; engram rows 172.9 us per step and card (slowest card 177.3 us; copy + decode launch calls 9.6 us)
+p3k_L1_5 ANSWER256_SAME
+p3k_D_6 start 2026-11-14 01:27:25
+p3k_D_6 exit 0
+p3k_D_6: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+p3k_D_6: prompt: 3323 tokens read on the cards in 5.26s (628.1 tok/s; first step 0.78s incl. kernel build), first token 2581
+p3k_D_6: decode: 255 steps after the first, 0.010 s/step, 99.41 tok/s
+p3k_D_6: host io during decode: 5.2 MiB read from disk, 0 major page faults; engram rows 217.9 us per step and card (slowest card 219.8 us; copy + decode launch calls 10.2 us)
+p3k_D_6 ANSWER256_SAME
+ALLDONE
