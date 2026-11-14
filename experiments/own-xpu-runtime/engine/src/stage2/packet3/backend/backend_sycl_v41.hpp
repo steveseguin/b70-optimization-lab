@@ -75,6 +75,7 @@
 #include "stage2/packet3/kernels/sycl_v41_routed_rux.hpp" // row-tiled prompt-block routed rows (rux-1, OWN_MT_RUX)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux4.hpp" // software-pipelined prompt-block routed rows (rux4-1, OWN_RUX4)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux5.hpp" // one-token / check routed rows, gathers first (rux5-1, OWN_RUX5)
+#include "stage2/packet3/kernels/sycl_v41_routed_rux6.hpp" // prompt-block routed rows + x prefetches (rux6-1, OWN_RUX6)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)

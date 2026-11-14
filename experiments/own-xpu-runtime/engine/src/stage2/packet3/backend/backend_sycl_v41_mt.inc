@@ -256,6 +256,14 @@ bool rux4 = true; // OWN_RUX4 (rux4-1): default on since tp109; false = the tp10
 // form, one-token through the slot ids). Formats without a pick (R = 0) keep today's kernels;
 // /home/steve/dsv41-work/rux5/README.md.
 bool rux5 = true; // OWN_RUX5 (rux5-1): default on since tp110 (tg109: checks -0.3..-0.5 ms, guessing +2-3 %); false = the tp109 forms
+// rux6-1 (2026-11-13; off by default, bit-identical): OWN_RUX6=1 runs the OWN_MT_RUX blocks' cap-6 routed launches of
+// the formats with a rux6 pick (ops41sycl::Rux6Pick) on RoutedUX (Rux6Q, kernels/sycl_v41_routed_rux6.hpp): rux4's pick
+// (the same code: tiles, decode, x reads, products, reduction and stores) plus prefetches of the x blocks ahead of use
+// (gate + up pairs: one sub-group per slot, the sub-group block prefetch into L1, 4 blocks ahead; downs: the SYCL
+// prefetch extension (L3), 1-2 blocks ahead). A prefetch moves no value into a register: every output float is the
+// pick's. Formats without a rux6 pick (IQ2_XXS gate + up) keep rux4's / today's kernels;
+// /home/steve/dsv41-work/rux6/README.md.
+bool rux6 = true; // OWN_RUX6 (rux6-1): default on since tp112 (rx6ab: 3K read -2 %, exact); false = rux4's picks without prefetches
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
 // Below PAIR_NSL the pair branch never runs (npair = 0, every row through the single-row job), so the sums are the
@@ -976,6 +984,14 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             launch_rows<K::TAB>(c, npos, mw, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
         };
         if (mt_rux && (unsigned)mt_n >= mt_rux_min) { // OWN_MT_RUX: the row-tiled forms (MT 6 / 8 / 16 by the cap)
+            if (rux6 && cap <= 6) { // OWN_RUX6: rux4's picks + x prefetches (rux6_has false: the forms below)
+#define X6(TY, NB)                                                                                           \
+    if constexpr (rux6_has<iq3::Type::TY, NB>)                                                               \
+        if (e.type == iq3::Type::TY && cols == NB * 256) return gu(std::type_identity<Rux6Q<iq3::Type::TY, NB>>{});
+                X6(IQ2_XXS, 20) X6(IQ2_S, 20) X6(IQ3_XXS, 20) X6(IQ2_XS, 20) X6(IQ1_S, 20)
+                X6(IQ2_XXS, 9) X6(IQ2_S, 9) X6(IQ3_XXS, 9) X6(IQ2_XS, 9) X6(IQ1_S, 9)
+#undef X6
+            }
             if (rux4 && cap <= 6) { // OWN_RUX4: the pipelined forms at MT 6 (R = 0 picks: the same kernel as below)
 #define XP(TY, KERN, NB) \
     if (e.type == iq3::Type::TY && cols == NB * 256) return gu(std::type_identity<KERN<NB, 6>>{});

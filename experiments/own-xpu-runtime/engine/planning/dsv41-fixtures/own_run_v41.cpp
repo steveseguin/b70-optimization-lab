@@ -744,6 +744,10 @@ int main(int argc, char **argv) {
         if (const char *e = getenv("OWN_RUX4")) be.rux4 = atoi(e) != 0;
         // rux5-1 (default on since tp110, tg109): one-token and 2-6-token check routed launches on the gathers-first forms (same bits); OWN_RUX5=0: the tp109 forms
         if (const char *e = getenv("OWN_RUX5")) be.rux5 = atoi(e) != 0;
+        // rux6-1 (default on since tp112, rx6ab; OWN_RUX6=0 restores tp111): the prompt blocks' cap-6 routed launches of rux4's picks with prefetches
+        // of the x blocks ahead of use (same bits)
+        if (const char *e = getenv("OWN_RUX6")) be.rux6 = atoi(e) != 0;
+        if (be.rux6) std::fprintf(stderr, "OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)\n");
         if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
         if (const char *e = getenv("OWN_DR_NOWAIT")) be.dr_nowait = atoi(e) != 0;         // the draft's embed without a wait
