@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**November 14, 2026 11:30 EST — power-cap test over (resets at 200 W and 175 W); an idle hang; tp113 gate at default power.**
+- 02:03 host reset (bank 5, 13th) during tg113's t3k_c1 at 200 W; 175 W applied 10:26; ~10:29 reset (14th, bank 5
+  bea0000000000108) 0.2 s into t3k_c2 while it opened the six cards. Then 10:31-10:53 the host HUNG with nothing of ours
+  running (idle desktop; no reset record; the only odd lines: a dma_buf_vmap warning in gnome-shell at login and a
+  failing screen update every minute, in no other boot). Owner power-cycled ~10:56. Evidence `dsv41-work/faults/
+  reset-20261114T1029/`, `hang-20261114T1053/`. Lower card power does not stop the resets: test over, cards back at
+  their own limits (230 W; 275 W on 03 / 83), no cap re-applied.
+- tp113 (prt-1 + rux7-1 defaults): gate 1 and 3K traces at blocks 512 / 256 / C1 / C2 / U2 all identical. tg113c (default
+  power, from 11:08) runs the rest; at default power cards 0 / 3 are the fast cards, so it tries prt weights that give
+  them more tokens (U1 4,2,2,4,2,2; U2 5,2,2,5,1,1). tp114 (tp113 + idxsplit-3 + skip39-1, both opt-in) builds in its
+  gaps (`dsv41-work/tp114-vs-543b796ca.patch`).
+
 **November 13, 2026 21:30 EST — 200 W cap costs ~3 % on writing, 10-13 % on prompt reading (round19-pc200).**
 - tp111 at 200 W against tg111 (uncapped): plain 110.2 / 107.9 vs 110.9 / 111.0 tok/s; guessing code 152.6 vs 157.5,
   analysis 169.5 vs 174.9; 3K read 5.33 / 5.31 vs 4.78 / 4.89 s; 10K 17.06 vs 15.09 s. All answers the same, no fault.
