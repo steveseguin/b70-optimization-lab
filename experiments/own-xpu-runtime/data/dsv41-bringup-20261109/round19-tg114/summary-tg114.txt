@@ -1,0 +1,192 @@
+tp114 build exit 0 in 1342 s
+start 2026-11-14 12:09:24
+h1 exit 0
+h1 TRACE_IDENTICAL
+h1 IDS40_SAME
+h1: decode: 39 steps after the first, 0.011 s/step, 89.51 tok/s
+h1: host io during decode: 6.8 MiB read from disk, 1 major page faults; engram rows 116.3 us per step and card (slowest card 118.9 us; copy + decode launch calls 10.2 us)
+h5 exit 0
+h5 TRACE_IDENTICAL
+h5 IDS40_SAME
+h5: decode: 39 steps after the first, 0.011 s/step, 87.81 tok/s
+h5: host io during decode: 0.1 MiB read from disk, 0 major page faults; engram rows 396.5 us per step and card (slowest card 399.5 us; copy + decode launch calls 11.7 us)
+h16 exit 0
+h16 TRACE_IDENTICAL
+h16 IDS40_SAME
+h16: decode: 39 steps after the first, 0.012 s/step, 84.68 tok/s
+h16: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 822.4 us per step and card (slowest card 822.9 us; copy + decode launch calls 11.8 us)
+h64 exit 0
+h64 TRACE_IDENTICAL
+h64 IDS40_SAME
+h64: decode: 39 steps after the first, 0.011 s/step, 90.35 tok/s
+h64: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 80.3 us per step and card (slowest card 84.9 us; copy + decode launch calls 11.7 us)
+h256 exit 0
+h256 TRACE_IDENTICAL
+h256 IDS40_SAME
+h256: decode: 39 steps after the first, 0.011 s/step, 88.28 tok/s
+h256: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 78.2 us per step and card (slowest card 81.8 us; copy + decode launch calls 11.5 us)
+t3k_off exit 0
+t3k_off: prompt: 3323 tokens read on the cards in 4.30s (777.7 tok/s; first step 0.69s incl. kernel build), first token 2581
+t3k_off: decode: 39 steps after the first, 0.013 s/step, 79.26 tok/s
+t3k_off: host io during decode: 5.4 MiB read from disk, 2 major page faults; engram rows 100.6 us per step and card (slowest card 104.6 us; copy + decode launch calls 14.7 us)
+t3k_off TRACE_IDENTICAL
+t3k_off IDS40_SAME
+gate 1: switches off identical (= tp113)
+h5c exit 0
+h5c TRACE_IDENTICAL
+h5c IDS40_SAME
+h5c: decode: 39 steps after the first, 0.012 s/step, 86.24 tok/s
+h5c: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 596.7 us per step and card (slowest card 599.3 us; copy + decode launch calls 11.7 us)
+h5c: OWN_SKIP39_CHECK: prompt blocks without the prompt's last token: layer 39 runs in full, its kept key rows again into shadow buffers, compared bitwise on the card (skip39-1)
+h5c: OWN_SKIP39_CHECK: layer 39, 7 prompt blocks, 35 kept rows per card; differing ring / key-row words per card: 0/0 0/0 0/0 0/0 0/0 0/0 -> ALL SAME
+h5c CHECK_OK
+h16c exit 0
+h16c TRACE_IDENTICAL
+h16c IDS40_SAME
+h16c: decode: 39 steps after the first, 0.011 s/step, 90.08 tok/s
+h16c: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 78.2 us per step and card (slowest card 80.2 us; copy + decode launch calls 10.9 us)
+h16c: OWN_SKIP39_CHECK: prompt blocks without the prompt's last token: layer 39 runs in full, its kept key rows again into shadow buffers, compared bitwise on the card (skip39-1)
+h16c: OWN_SKIP39_CHECK: layer 39, 2 prompt blocks, 32 kept rows per card; differing ring / key-row words per card: 0/0 0/0 0/0 0/0 0/0 0/0 -> ALL SAME
+h16c CHECK_OK
+p3kc exit 0
+p3kc: prompt: 3323 tokens read on the cards in 4.28s (777.4 tok/s; first step 0.67s incl. kernel build), first token 2581
+p3kc: decode: 63 steps after the first, 0.010 s/step, 95.66 tok/s
+p3kc: host io during decode: 3.8 MiB read from disk, 2 major page faults; engram rows 225.0 us per step and card (slowest card 228.6 us; copy + decode launch calls 10.8 us)
+p3kc ANSWER64_SAME
+p3kc: OWN_SKIP39_CHECK: prompt blocks without the prompt's last token: layer 39 runs in full, its kept key rows again into shadow buffers, compared bitwise on the card (skip39-1)
+p3kc: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+p3kc: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+p3kc: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+p3kc: OWN_SKIP39_CHECK: layer 39, 6 prompt blocks, 768 kept rows per card; differing ring / key-row words per card: 0/0 0/0 0/0 0/0 0/0 0/0 -> ALL SAME
+p3kc: OWN_IDX_DSPLIT=3: card 0: 504 one-token / 0 block index layers split (from 513 rows); check: 1381728 score rows compared (504 token-layers), 0 differ
+p3kc CHECK_OK
+p38c exit 0
+p38c: prompt: 3080 tokens read on the cards in 3.93s (786.3 tok/s; first step 0.67s incl. kernel build), first token 11
+p38c: decode: 63 steps after the first, 0.010 s/step, 97.60 tok/s
+p38c: host io during decode: 7.0 MiB read from disk, 2 major page faults; engram rows 377.7 us per step and card (slowest card 378.7 us; copy + decode launch calls 10.5 us)
+p38c: OWN_SKIP39_CHECK: prompt blocks without the prompt's last token: layer 39 runs in full, its kept key rows again into shadow buffers, compared bitwise on the card (skip39-1)
+p38c: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+p38c: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+p38c: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+p38c: OWN_SKIP39_CHECK: layer 39, 6 prompt blocks, 768 kept rows per card; differing ring / key-row words per card: 0/0 0/0 0/0 0/0 0/0 0/0 -> ALL SAME
+p38c CHECK_OK
+p10kc exit 0
+p10kc: prompt: 10621 tokens read on the cards in 13.64s (782.6 tok/s; first step 0.72s incl. kernel build), first token 2581
+p10kc: decode: 63 steps after the first, 0.010 s/step, 95.77 tok/s
+p10kc: host io during decode: 5.7 MiB read from disk, 0 major page faults; engram rows 364.8 us per step and card (slowest card 366.3 us; copy + decode launch calls 10.8 us)
+p10kc ANSWER64_SAME
+p10kc: OWN_SKIP39_CHECK: prompt blocks without the prompt's last token: layer 39 runs in full, its kept key rows again into shadow buffers, compared bitwise on the card (skip39-1)
+p10kc: OWN_PX_CHECK: 1 blocks as halves, 0 bad
+p10kc: OWN_PX_CHECK: 2 blocks as halves, 0 bad
+p10kc: OWN_PX_CHECK: 4 blocks as halves, 0 bad
+p10kc: OWN_PX_CHECK: 8 blocks as halves, 0 bad
+p10kc: OWN_PX_CHECK: 16 blocks as halves, 0 bad
+p10kc: OWN_SKIP39_CHECK: layer 39, 21 prompt blocks, 2688 kept rows per card; differing ring / key-row words per card: 0/0 0/0 0/0 0/0 0/0 0/0 -> ALL SAME
+p10kc: OWN_IDX_DSPLIT=3: card 0: 315 one-token / 0 block index layers split (from 8192 rows); check: 3360640 score rows compared (315 token-layers), 0 differ
+p10kc CHECK_OK
+gate 2: on-card checks all same
+gap 12:15:10
+h5s exit 0
+h5s TRACE_IDENTICAL
+h5s IDS40_SAME
+h5s: decode: 39 steps after the first, 0.011 s/step, 89.31 tok/s
+h5s: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 78.2 us per step and card (slowest card 79.5 us; copy + decode launch calls 11.4 us)
+h16s exit 0
+h16s TRACE_IDENTICAL
+h16s IDS40_SAME
+h16s: decode: 39 steps after the first, 0.011 s/step, 90.19 tok/s
+h16s: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 79.6 us per step and card (slowest card 81.1 us; copy + decode launch calls 11.1 us)
+h64s exit 0
+h64s TRACE_IDENTICAL
+h64s IDS40_SAME
+h64s: decode: 39 steps after the first, 0.011 s/step, 90.14 tok/s
+h64s: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 79.7 us per step and card (slowest card 83.6 us; copy + decode launch calls 10.9 us)
+h256s exit 0
+h256s TRACE_IDENTICAL
+h256s IDS40_SAME
+h256s: decode: 39 steps after the first, 0.011 s/step, 90.17 tok/s
+h256s: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 80.0 us per step and card (slowest card 83.8 us; copy + decode launch calls 11.3 us)
+t3k_s512 exit 0
+t3k_s512: prompt: 3323 tokens read on the cards in 4.23s (796.7 tok/s; first step 0.70s incl. kernel build), first token 2581
+t3k_s512: decode: 39 steps after the first, 0.012 s/step, 82.57 tok/s
+t3k_s512: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 54.2 us per step and card (slowest card 56.2 us; copy + decode launch calls 11.7 us)
+t3k_s512 TRACE_IDENTICAL
+t3k_s512 IDS40_SAME
+t3k_s256 exit 0
+t3k_s256: prompt: 3323 tokens read on the cards in 4.95s (679.0 tok/s; first step 0.43s incl. kernel build), first token 2581
+t3k_s256: decode: 39 steps after the first, 0.012 s/step, 81.43 tok/s
+t3k_s256: host io during decode: 0.0 MiB read from disk, 0 major page faults; engram rows 52.7 us per step and card (slowest card 54.7 us; copy + decode launch calls 11.4 us)
+t3k_s256 TRACE_IDENTICAL
+t3k_s256 IDS40_SAME
+t3k_on512 exit 0
+t3k_on512: prompt: 3323 tokens read on the cards in 4.19s (796.6 tok/s; first step 0.66s incl. kernel build), first token 2581
+t3k_on512: decode: 39 steps after the first, 0.013 s/step, 79.66 tok/s
+t3k_on512: host io during decode: 0.1 MiB read from disk, 0 major page faults; engram rows 292.9 us per step and card (slowest card 294.7 us; copy + decode launch calls 11.7 us)
+t3k_on512 TRACE_IDENTICAL
+t3k_on512 IDS40_SAME
+t38_off exit 0
+t38_off: prompt: 3080 tokens read on the cards in 3.93s (788.7 tok/s; first step 0.67s incl. kernel build), first token 11
+t38_off: decode: 39 steps after the first, 0.013 s/step, 79.25 tok/s
+t38_off: host io during decode: 2.6 MiB read from disk, 0 major page faults; engram rows 542.6 us per step and card (slowest card 544.5 us; copy + decode launch calls 12.3 us)
+t38_on exit 0
+t38_on: prompt: 3080 tokens read on the cards in 3.82s (809.9 tok/s; first step 0.65s incl. kernel build), first token 11
+t38_on: decode: 39 steps after the first, 0.013 s/step, 79.58 tok/s
+t38_on: host io during decode: 3.1 MiB read from disk, 0 major page faults; engram rows 312.3 us per step and card (slowest card 315.9 us; copy + decode launch calls 11.6 us)
+t38 TRACE_IDENTICAL_OFF_ON
+t38 IDS40_SAME_OFF_ON
+gate 3: skip-on traces identical
+gap 12:23:12
+p3k_off_1 exit 0
+p3k_off_1: prompt: 3323 tokens read on the cards in 4.27s (781.0 tok/s; first step 0.67s incl. kernel build), first token 2581
+p3k_off_1: decode: 255 steps after the first, 0.010 s/step, 99.87 tok/s
+p3k_off_1: host io during decode: 31.7 MiB read from disk, 1 major page faults; engram rows 190.9 us per step and card (slowest card 195.6 us; copy + decode launch calls 9.5 us)
+p3k_off_1 ANSWER256_SAME
+p3k_sk_1 exit 0
+p3k_sk_1: prompt: 3323 tokens read on the cards in 4.18s (796.8 tok/s; first step 0.66s incl. kernel build), first token 2581
+p3k_sk_1: decode: 255 steps after the first, 0.010 s/step, 101.35 tok/s
+p3k_sk_1: host io during decode: 0.1 MiB read from disk, 0 major page faults; engram rows 86.5 us per step and card (slowest card 88.4 us; copy + decode launch calls 9.5 us)
+p3k_sk_1 ANSWER256_SAME
+p3k_on_1 exit 0
+p3k_on_1: prompt: 3323 tokens read on the cards in 4.19s (795.2 tok/s; first step 0.65s incl. kernel build), first token 2581
+p3k_on_1: decode: 255 steps after the first, 0.010 s/step, 101.37 tok/s
+p3k_on_1: host io during decode: 2.4 MiB read from disk, 0 major page faults; engram rows 87.8 us per step and card (slowest card 88.8 us; copy + decode launch calls 9.7 us)
+p3k_on_1 ANSWER256_SAME
+p3k_off_2 exit 0
+p3k_off_2: prompt: 3323 tokens read on the cards in 4.31s (776.8 tok/s; first step 0.69s incl. kernel build), first token 2581
+p3k_off_2: decode: 255 steps after the first, 0.010 s/step, 100.10 tok/s
+p3k_off_2: host io during decode: 31.7 MiB read from disk, 5 major page faults; engram rows 194.6 us per step and card (slowest card 195.6 us; copy + decode launch calls 9.5 us)
+p3k_off_2 ANSWER256_SAME
+p3k_sk_2 exit 0
+p3k_sk_2: prompt: 3323 tokens read on the cards in 4.20s (796.4 tok/s; first step 0.67s incl. kernel build), first token 2581
+p3k_sk_2: decode: 255 steps after the first, 0.010 s/step, 101.42 tok/s
+p3k_sk_2: host io during decode: 2.5 MiB read from disk, 0 major page faults; engram rows 88.2 us per step and card (slowest card 89.8 us; copy + decode launch calls 9.5 us)
+p3k_sk_2 ANSWER256_SAME
+p3k_on_2 exit 0
+p3k_on_2: prompt: 3323 tokens read on the cards in 4.19s (795.7 tok/s; first step 0.66s incl. kernel build), first token 2581
+p3k_on_2: decode: 255 steps after the first, 0.010 s/step, 100.12 tok/s
+p3k_on_2: host io during decode: 31.6 MiB read from disk, 2 major page faults; engram rows 192.3 us per step and card (slowest card 195.8 us; copy + decode launch calls 9.6 us)
+p3k_on_2 ANSWER256_SAME
+p10k_off exit 0
+p10k_off: prompt: 10621 tokens read on the cards in 13.63s (782.4 tok/s; first step 0.71s incl. kernel build), first token 2581
+p10k_off: decode: 63 steps after the first, 0.010 s/step, 97.31 tok/s
+p10k_off: host io during decode: 5.4 MiB read from disk, 0 major page faults; engram rows 359.9 us per step and card (slowest card 361.1 us; copy + decode launch calls 10.4 us)
+p10k_off ANSWER64_SAME
+p10k_on exit 0
+p10k_on: prompt: 10621 tokens read on the cards in 13.27s (801.0 tok/s; first step 0.65s incl. kernel build), first token 2581
+p10k_on: decode: 63 steps after the first, 0.010 s/step, 96.91 tok/s
+p10k_on: host io during decode: 3.2 MiB read from disk, 0 major page faults; engram rows 402.0 us per step and card (slowest card 403.8 us; copy + decode launch calls 11.2 us)
+p10k_on ANSWER64_SAME
+gap 12:31:28
+code_on exit 0
+code_on: prompt: 82 tokens read on the cards in 0.23s (375.8 tok/s; first step 0.18s incl. kernel build), first token 2581
+code_on: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.24s = 157.62 tok/s; draft 1.73 ms + check 12.68 ms per cycle; SAME AS the plain run
+code_on: host io during decode: 90.3 MiB read from disk, 8 major page faults; engram rows 283.3 us per step and card (slowest card 284.2 us; copy + decode launch calls 12.2 us)
+code_on: kept guesses per cycle: 0:77 1:74 2:38 3:18 4:8 5:10
+code_on_vs_v1 GLOG_SAME
+analysis_on exit 0
+analysis_on: prompt: 113 tokens read on the cards in 0.26s (533.1 tok/s; first step 0.17s incl. kernel build), first token 2581
+analysis_on: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 2.92s = 174.98 tok/s; draft 1.76 ms + check 14.46 ms per cycle; SAME AS the plain run
+analysis_on: host io during decode: 72.2 MiB read from disk, 9 major page faults; engram rows 320.6 us per step and card (slowest card 322.0 us; copy + decode launch calls 12.8 us)
+analysis_on: kept guesses per cycle: 0:50 1:43 2:32 3:15 4:20 5:20
+analysis_on_vs_v1 GLOG_SAME
+gap 12:35:54

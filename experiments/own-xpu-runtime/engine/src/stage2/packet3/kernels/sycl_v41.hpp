@@ -7375,6 +7375,34 @@ struct RingCommitM {
         ring[(size_t)((pos0 + t) % win) * d + i] = ring[(size_t)(win + t) * d + i];
     }
 };
+// skip39-1 (OWN_SKIP39): a block's kept key rows (tokens t = 0 .. m - 1 at positions pos0 + t, m <= win: no slot is
+// written twice) straight into their ring slots: WindowAppendM's store (bf16b of the row as read) and RingCommitM's
+// copy in one launch, the same bits
+template <typename A> struct RingRowsM {
+    int win, d, pos0, m;
+    size_t ks; // per-token stride of the key rows
+    void operator()(sycl::nd_item<1> it, uint16_t *ring, const typename A::T *kv) const {
+        const int g = (int)it.get_global_linear_id(), t = g / d, i = g % d;
+        if (t >= m) return;
+        ring[(size_t)((pos0 + t) % win) * d + i] = ops41::bf16b(A::rd(kv[(size_t)t * ks + i]));
+    }
+};
+// skip39-1 (OWN_SKIP39_CHECK, diagnostic): the kept tokens' shadow ring slots (ring2) and normalized + roped key rows
+// (kv2, token t at t * d) against the full layer's (ring; kv, token t at t * d), bitwise; the differing words are
+// counted in bad[0] (ring slots) and bad[1] (key rows)
+template <typename A> struct Skip39CmpM {
+    int win, d, pos0, m;
+    void operator()(sycl::nd_item<1> it, const uint16_t *ring, const uint16_t *ring2, const typename A::T *kv,
+                    const typename A::T *kv2, uint32_t *bad) const {
+        const int g = (int)it.get_global_linear_id(), t = g / d, i = g % d;
+        if (t >= m) return;
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                    sycl::access::address_space::global_space>;
+        const size_t s = (size_t)((pos0 + t) % win) * d + i, k = (size_t)t * d + i;
+        if (ring[s] != ring2[s]) AR(bad[0]).fetch_add(1u);
+        if (sycl::bit_cast<uint32_t>(A::rd(kv[k])) != sycl::bit_cast<uint32_t>(A::rd(kv2[k]))) AR(bad[1]).fetch_add(1u);
+    }
+};
 // RingCommitM for up to MAXR rings of the same shape in ONE launch (commit_pending, OWN_RING_ONE=1): items
 // k * m * d .. (k + 1) * m * d - 1 move ring k's rows exactly as RingCommitM moves them (a copy: no arithmetic)
 struct RingCommitN {

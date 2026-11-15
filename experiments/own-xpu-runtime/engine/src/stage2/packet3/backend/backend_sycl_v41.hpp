@@ -438,7 +438,10 @@ public:
         unsigned px_move = 0;
         // OWN_PX_WGS="a,b,..": work-groups of X1(A) X1(B) .. X4(B) (0: OWN_PX_WG; the copy does not depend on it)
         unsigned px_wgs[8] = {};
-        bool px_serial = false; // OWN_PX_SERIAL=1 (diagnostic): qs waits for each pull right after queueing it (no overlap)
+        // OWN_PX_SERIAL: qs waits for each pull right after queueing it (no overlap; the same queues, order and bits).
+        // Default 1 since tp115: the host-stability workaround (2026-11-14 / 15: 54 fresh six-card starts, no reset, with
+        // the six CPU root links at Gen4; /home/steve/diagnostics/serial-exchange-20261114T2248). 0 = tp114's overlap.
+        bool px_serial = true;
         bool px_check = false;  // OWN_PX_CHECK=1 (diagnostic): after each block as halves, the numbers' order on every
                                 // exchange queue, the same pulls on every card, every flag word = its card's last number
         // px-512 (OWN_PX_BIG=1, opt-in; needs OWN_PX=1): prompt blocks of up to 2 x MTX tokens, each run as two halves
@@ -549,6 +552,18 @@ public:
         unsigned prt = 3;
         unsigned prt_min = 64;               // ... blocks / halves of at least this many tokens (OWN_PRT_MIN, >= 8)
         int prt_w[6] = {3, 2, 2, 3, 3, 3};   // ... the cards' token weights over 16-token units (OWN_PRT_W)
+        unsigned idx_dsplit = 3; // idxsplit-2 (OWN_IDX_DSPLIT, default 3 since tp115; 0 = off): one-token steps (dev_index), layers 2, 8, 14, 20 from
+                                // idx_dsplit_min rows: each card scores rows [r0, r1) of the token (ixd_bounds), an XchgPull
+                                // gathers them (arena offset xscD), the unchanged selects read every row there
+        long idx_dsplit_min = 8192; // ... from this many rows (OWN_IDX_DSPLIT_MIN, at least 513)
+        bool idx_dsplit_check = false; // ... diagnostic (OWN_IDX_DSPLIT_CHECK=1): also the full score, compared bitwise
+        // skip39-1 (OWN_SKIP39=1, opt-in; /home/steve/dsv41-work/skip39/README.md; backend_sycl_v41_mt.inc "skip39-1"):
+        // a prompt block that does not hold the prompt's last token runs the model's last layer for the rows that
+        // outlive the block only (the draft's capture, and the window ring's last 128 key rows), none of its other
+        // work and none of its exchanges. OWN_SKIP39_CHECK=1 (diagnostic): the full layer runs as without the skip and
+        // the skip's kept rows are computed again into shadow buffers and compared bitwise on the card (one count read
+        // after the prompt)
+        bool skip39 = true, skip39_check = false; // (default on since tp115; OWN_SKIP39=0 = off)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -584,6 +599,18 @@ public:
             }
             if (ws <= 0) throw std::invalid_argument("OWN_PRT_W: a positive weight");
         }
+        if (o.idx_dsplit) { // idxsplit-2 (OWN_IDX_DSPLIT): the scores travel through the arena (f32 build, several cards)
+            if (o.idx_dsplit > 3) throw std::invalid_argument("OWN_IDX_DSPLIT: 0..3 (bits 1 one-token steps, 2 blocks of <= 6)");
+            if (o.tp < 2) o.idx_dsplit = 0;
+            else if (o.xll || o.dev_index_check) { // (default on since tp115: off quietly in these diagnostic modes)
+                std::fprintf(stderr, "OWN_IDX_DSPLIT: off (not with OWN_XLL or OWN_DEV_INDEX_CHECK=1)\n");
+                o.idx_dsplit = 0;
+            }
+#ifdef OWN41_ACT_BF16
+            o.idx_dsplit = 0;
+#endif
+        }
+        if (!o.idx_dsplit) o.idx_dsplit_check = false;
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
@@ -742,6 +769,16 @@ public:
                 std::fprintf(stderr, "OWN_IDX_SPLIT_CHECK total: card %d: %ld exchanges, %ld lists compared, %ld differ; "
                                      "%ld own q/proj rows, %ld differ\n", c, ixc_n[c], ixc_lists[c], ixc_bad[c], ixc_qrows[c], ixc_qbad[c]);
 #endif
+        if (o.idx_dsplit) // idxsplit-2 (OWN_IDX_DSPLIT): how many index layers ran split (and the check's totals)
+            for (int c = 0; c < o.tp; ++c) {
+                if (ixd_cnt[c]) { // OWN_IDX_DSPLIT_CHECK: the differing rows, counted on the card (queues drained above)
+                    uint32_t h = 0;
+                    try { qs[c].memcpy(&h, ixd_cnt[c], 4).wait(); ixd_bad[c] = (long)h; } catch (...) { ixd_bad[c] = -1; }
+                }
+                std::fprintf(stderr, "OWN_IDX_DSPLIT=%u: card %d: %ld one-token / %ld block index layers split (from %ld rows); "
+                                     "check: %ld score rows compared (%ld token-layers), %ld differ\n", o.idx_dsplit, c,
+                             ixd_calls[c], ixm_calls[c], o.idx_dsplit_min, ixd_rows[c], ixd_chk[c], ixd_bad[c]);
+            }
         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
             try { bcs_drain(); } catch (...) {}
             for (int c = 0; c < TILES; ++c) {
@@ -3221,8 +3258,11 @@ private:
             if (o.idx_cand == 2) idx_cand_check(L, t, si, len, dst);
             return;
         }
+        float *sco = s.score; // the scores the selects read (idxsplit-2: every card's rows, gathered in the arena)
         if (o.score_b && (o.idx_r == 2 || o.idx_r == 4)) { // the same sums, R rows per item
             idx_score_r(t, o.idx_r, 1, &len, s.qi, s.wv, ik_mirror[t][si], s.score, 0, 0, 0);
+        } else if (o.score_b && ixd_on(t, len, out)) { // idxsplit-2: this card's rows, then every card's (ixd_score)
+            sco = ixd_score(t, si, len, T_);
         } else if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
             using KS = ops41sycl::IndexerScoreB<Act>;
             constexpr size_t WG = 128;
@@ -3251,13 +3291,13 @@ private:
             // (TopKSelR<true>, the block select by ranges, measured slower: test_topk_r, round 18 e86)
             const KB kb{nb, 2048, 0, 0, 0, 8, (int)len};
             if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 16)
-                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<16>{kb}, (const float *)s.score, (const uint8_t *)nullptr,
+                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<16>{kb}, (const float *)sco, (const uint8_t *)nullptr,
                                   (int32_t *)s.blist, s.cand);
             else if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 32)
-                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)s.score, (const uint8_t *)nullptr,
+                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)sco, (const uint8_t *)nullptr,
                                   (int32_t *)s.blist, s.cand);
             else
-                launch_local<SLM>(t, KB::WG, kb, (const float *)s.score, (const uint8_t *)nullptr, (int32_t *)s.blist,
+                launch_local<SLM>(t, KB::WG, kb, (const float *)sco, (const uint8_t *)nullptr, (int32_t *)s.blist,
                                   s.cand); // blist: OWN_IDX_CAND (else null)
             dcand_n[t] = len;
             dcand_ok[t] = true;
@@ -3269,18 +3309,138 @@ private:
         const KR kr{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0};
         const uint8_t *cin = mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr;
         const int qc = qsel_ok() && len >= 4096 ? ops41sycl::qsel_span((int)len) : 0;
-        if (qc && qc <= 16) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<16>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
-        else if (qc && qc <= 32) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<32>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
-        else if (qc && qc <= 64) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<64>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
-        else if (qc && qc <= 96) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<96>{kr}, (const float *)s.score, cin, dst, (uint8_t *)nullptr);
+        if (qc && qc <= 16) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<16>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 32) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<32>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 64) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<64>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
+        else if (qc && qc <= 96) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<96>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else if (o.topk_r)
-            launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)s.score,
+            launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)sco,
                               mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst, (uint8_t *)nullptr);
         else
-            launch_local<SLM>(t, KR::WG, kr, (const float *)s.score, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr,
+            launch_local<SLM>(t, KR::WG, kr, (const float *)sco, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr,
                               dst, (uint8_t *)nullptr);
         if (!out) tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
         if (o.dev_index_check) dev_index_check(L, t, len, mask, dst);
+    }
+    // ---- idxsplit-2 (OWN_IDX_DSPLIT, opt-in; /home/steve/dsv41-work/idxsplit/README.md section 8) -------------------------
+    // One-token steps (dev_index, not the candidate-only layers past 20): from o.idx_dsplit_min rows each card scores its
+    // rows [r0, r1) of the token (ixd_bounds: shares of 32-row multiples in card order, the same on every card: T_ is) into
+    // the arena (xscD + row), an XchgPull (mode 0, nslot 1) copies every peer's rows to the same offsets, and the selects
+    // (unchanged: TopKSelBQ / TopKSelP<true> at layer 20, the rows' select at every layer) read all rows there.
+    // Bits: the share is IndexerScoreB's own launch (the same struct and kernel) with the key rows and scores moved by r0
+    // rows and len / T_ as the share's: item j' scores row r0 + j' from the same query, weights and key row with the same
+    // sums (IndexerScoreB::run per row), rows [len, T_) get -inf as before (len' = min(len, r1) - r0, T_' = r1 - r0, r1 <=
+    // T_). The pull copies bytes. So the selects read the scores dev_index wrote before, bit for bit (OWN_IDX_DSPLIT_CHECK
+    // compares every row with the full launch's).
+    // Reuse: a card rewrites its rows at the next split layer (>= 4 layers later); each peer copied them in this layer's
+    // pull, before raising its flag of this layer's output-a exchange, which this card waits for first (XchgPull's rule).
+    // The exchange numbers stay the same on every card (ixd_on depends on len, options and px_q only: the same on all).
+    bool ixd_on(int t, long len, const int32_t *out) const {
+        return (o.idx_dsplit & 1u) && o.tp > 1 && !out && len >= o.idx_dsplit_min && !o.dev_index_check && !px_q[t] && xscD;
+    }
+    void ixd_bounds(long T_, unsigned *b0, unsigned *b1) const {
+        const unsigned T = (unsigned)T_, per = ((T + (unsigned)o.tp - 1) / (unsigned)o.tp + 31u) / 32u * 32u;
+        for (int d = 0; d < 6; ++d) {
+            b0[d] = b1[d] = 0;
+            if (d >= o.tp) continue;
+            b0[d] = std::min(T, (unsigned)d * per);
+            b1[d] = std::min(T, (unsigned)(d + 1) * per);
+        }
+    }
+    float *ixd_score(int t, int si, long len, int T_) {
+        auto &s = sc[t];
+        float *sco = xarena[t] + xscD;
+        unsigned b0[6], b1[6];
+        ixd_bounds(T_, b0, b1);
+        const unsigned r0 = b0[t], r1 = b1[t];
+        if (r1 > r0) {
+            using KS = ops41sycl::IndexerScoreB<Act>;
+            constexpr size_t WG = 128;
+            const int Tp = (int)(r1 - r0), lp = (int)std::clamp<long>(len - (long)r0, 0, Tp);
+            const size_t n = ((size_t)Tp + WG - 1) / WG * WG;
+            const KS k{lp, Tp};
+            const act_t *qi = s.qi, *wv = s.wv;
+            const uint16_t *ik = ik_mirror[t][si] + (size_t)r0 * 128;
+            float *so = sco + r0;
+            auto e = qs[t].submit([&](sycl::handler &hh) {
+                sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+                hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                    k(it, qi, ik, wv, so, &lt[0]);
+                });
+            });
+            kev(t, kname<KS>(), e);
+        }
+        ixd_pull(t, (unsigned)xscD, 0u, 1u, b0, b1);
+        ++ixd_calls[t];
+        if (o.idx_dsplit_check) ixd_check(t, si, len, T_);
+        return sco;
+    }
+    // XchgPull (mode 0) of every card's rows [b0[d], b1[d]) of nslot slots (stride floats apart) at arena offset off, on
+    // the card's queue (as xchg's pull)
+    void ixd_pull(int c, unsigned off, unsigned stride, unsigned nslot, const unsigned *b0, const unsigned *b1) {
+#ifndef OWN41_ACT_BF16
+        if (px_q[c] || o.xll) throw std::runtime_error("OWN_IDX_DSPLIT: the pull runs on the card's queue only");
+        float *P[6] = {};
+        for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
+        const uint32_t seq = ++xseq[c];
+        ops41sycl::XchgPull x{o.tp, c, off, stride, nslot, {}, {}, seq, XSPIN, 0};
+        x.lb = o.xpull_lb ? 1 : 0;
+        size_t nv = 0;
+        for (int d = 0; d < 6; ++d) x.b0[d] = b0[d], x.b1[d] = b1[d];
+        for (int d = 0; d < o.tp; ++d) {
+            if ((b1[d] - b0[d]) % 4 || b0[d] % 4) throw std::runtime_error("OWN_IDX_DSPLIT: rows not multiples of 4");
+            if (d != c) nv += (size_t)nslot * ((x.b1[d] - x.b0[d]) / 4);
+        }
+        const size_t nwg = std::clamp<size_t>((nv + 511) / 512, 4, 64);
+        float *p0 = P[0], *p1 = P[1], *p2 = P[2], *p3 = P[3], *p4 = P[4], *p5 = P[5];
+        uint32_t *err = xerr[c];
+        if (tl_on[c]) tl_x[c] = {(int16_t)-1, (int16_t)-1, (int8_t)0};
+        const sycl::nd_range<1> xr(nwg * 256, 256);
+        auto e = o.xpull_grf == 128 ? qs[c].parallel_for(xr, XPullK128{x, p0, p1, p2, p3, p4, p5, err})
+                                    : qs[c].submit([&](sycl::handler &hh) {
+                                          hh.parallel_for(xr, [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                                              x(it, p0, p1, p2, p3, p4, p5, err);
+                                          });
+                                      });
+        kev(c, kname<ops41sycl::XchgPull>(), e);
+#else
+        (void)c, (void)off, (void)stride, (void)nslot, (void)b0, (void)b1;
+        throw std::runtime_error("OWN_IDX_DSPLIT: f32 build only");
+#endif
+    }
+    // OWN_IDX_DSPLIT_CHECK: the full launch (dev_index's IndexerScoreB) into s.score, every row [0, T_) compared bitwise
+    // with the gathered ones on the card (ixd_cmp: no host wait, so the traced steps, which one host thread submits card
+    // after card, do not stall a card's exchange on a peer not yet submitted; the total is read at the end)
+    void ixd_check(int t, int si, long len, int T_) {
+        auto &s = sc[t];
+        using KS = ops41sycl::IndexerScoreB<Act>;
+        constexpr size_t WG = 128;
+        const size_t n = ((size_t)T_ + WG - 1) / WG * WG;
+        const KS k{(int)len, T_};
+        const act_t *qi = s.qi, *wv = s.wv;
+        const uint16_t *ik = ik_mirror[t][si];
+        float *so = s.score;
+        qs[t].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+            hh.parallel_for(sycl::nd_range<1>(n, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                k(it, qi, ik, wv, so, &lt[0]);
+            });
+        });
+        ixd_cmp(t, s.score, xarena[t] + xscD, (size_t)T_);
+        ++ixd_chk[t];
+        ixd_rows[t] += T_;
+    }
+    // the rows [0, T) of a and b compared bit for bit on card c's queue; the differing ones counted into ixd_cnt[c][0]
+    void ixd_cmp(int c, const float *a, const float *b, size_t T) {
+        if (!ixd_cnt[c] || !T) return;
+        const uint32_t *ua = (const uint32_t *)a, *ub = (const uint32_t *)b;
+        uint32_t *cnt = ixd_cnt[c];
+        qs[c].parallel_for(sycl::nd_range<1>((T + 255) / 256 * 256, 256), [=](sycl::nd_item<1> it) {
+            const size_t j = it.get_global_linear_id();
+            if (j < T && ua[j] != ub[j])
+                sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                 sycl::access::address_space::global_space>(cnt[0]).fetch_add(1u);
+        });
     }
     // OWN_IDX_CAND=2: the candidate-only score and list against the full score (into score2) and the masked
     // select over all rows (into list2), bitwise: the candidate rows' scores and the 512 entries
@@ -3560,6 +3720,10 @@ private:
     static constexpr unsigned QKN = 1792; // q_a rows (qrank 1,280) + kv rows (hd 512)
     size_t xqk = 0;
     unsigned qk_slots = 0;
+    // idxsplit-2 (OWN_IDX_DSPLIT): the one-token index scores' arena offset; per card: split index layers, check totals
+    size_t xscD = 0, xscM = 0; // (xscM: bit 2, blocks of up to 6 tokens, backend_sycl_v41_mt.inc ixm_score)
+    long ixd_calls[TILES] = {}, ixm_calls[TILES] = {}, ixd_chk[TILES] = {}, ixd_rows[TILES] = {}, ixd_bad[TILES] = {};
+    uint32_t *ixd_cnt[TILES] = {}; // OWN_IDX_DSPLIT_CHECK: differing score rows, counted on the card (ixd_cmp)
     unsigned qkr0[TILES] = {}, qkr1[TILES] = {};
     bool qbm_any() const {
         for (int m = 2; m <= 6; ++m)
@@ -4258,6 +4422,11 @@ private:
                          (o.prt & 12u) ? " (diagnostic: old phase order)" : "",
                          o.prt_min, MTX, o.prt_w[0], o.prt_w[1], o.prt_w[2], o.prt_w[3], o.prt_w[4], o.prt_w[5]);
         }
+        if (o.skip39 || o.skip39_check) // skip39-1
+            std::fprintf(stderr, "OWN_SKIP39%s: prompt blocks without the prompt's last token: layer %d %s (skip39-1)\n",
+                         o.skip39_check ? "_CHECK" : "", o.layer_end - 1,
+                         o.skip39_check ? "runs in full, its kept key rows again into shadow buffers, compared bitwise on the card"
+                                        : "runs its kept key rows only");
         {
             int nz = 0, sum = 0;
             for (int d = 0; d < N; ++d) nz += o.tp_heads[d] > 0, sum += o.tp_heads[d];
@@ -4319,6 +4488,16 @@ private:
             nfq = xqk + (size_t)qk_slots * QKN;
             if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_QKV_SPLIT: arena offsets");
         }
+        if (o.idx_dsplit) { // idxsplit-2 (OWN_IDX_DSPLIT): the one-token index scores, max_seq + 64 rows (+ 128 spare;
+                            // the shares end at T_ = rows rounded up to 32 <= max_seq + 31), 64-byte aligned
+            xscD = (nfq + 15) & ~(size_t)15;
+            nfq = xscD + (size_t)max_seq + 64 + 128;
+            if (o.idx_dsplit & 2u) { // bit 2: blocks of up to 6 tokens, token t's rows at xscM + t * (max_seq + 64)
+                xscM = (nfq + 15) & ~(size_t)15;
+                nfq = xscM + (size_t)6 * ((size_t)max_seq + 64) + 128;
+            }
+            if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_IDX_DSPLIT: arena offsets");
+        }
         if (o.xll && xw_path) {
             std::fprintf(stderr, "OWN_XLL: off (OWN_XWAIT's exchanges record their waits; XchgPull)\n");
             o.xll = 0;
@@ -4348,6 +4527,7 @@ private:
             }
             attc[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(attc[c], 0, 64);
+            if (o.idx_dsplit_check) ixd_cnt[c] = dalloc<uint32_t>(c, 16); // (zeroed)
             if (xw_path) { // OWN_XWAIT ring (zeroed)
 #ifndef OWN41_XWAIT
                 throw std::runtime_error("OWN_XWAIT needs the diagnostic build (icpx ... -DOWN41_XWAIT): the exchange "

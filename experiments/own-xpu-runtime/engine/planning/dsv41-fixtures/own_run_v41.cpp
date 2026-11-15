@@ -269,8 +269,8 @@ int main(int argc, char **argv) {
     // px-1 (opt-in, /home/steve/dsv41-work/pb256/README-overlap.txt): prompt blocks as two halves with every exchange of
     // their layers on a second queue per card, each pull beside the other half's work. OWN_PX=1 (default 0: off, the
     // queue is not created); OWN_PX_MIN (halves of >= 128 tokens), OWN_PX_WG (16 work-groups per pull), OWN_PX_GRF
-    // (eight register modes X1A,X1B,X2A,X2B,X3A,X3B,X4A,X4B: 128 / 256, 0 = the layer's routed-down mode), OWN_PX_SERIAL=1
-    // (diagnostic: no overlap), OWN_PX_CHECK=1 (diagnostic: each block's exchange numbers and flag words checked)
+    // (eight register modes X1A,X1B,X2A,X2B,X3A,X3B,X4A,X4B: 128 / 256, 0 = the layer's routed-down mode), OWN_PX_SERIAL (default 1 since tp115,
+    // the host-stability workaround: no exchange overlap; 0 = tp114 overlap), OWN_PX_CHECK=1 (diagnostic: each block's exchange numbers and flag words checked)
     if (const char *e = getenv("OWN_PX")) opt.px = (unsigned)atoi(e);
     if (const char *e = getenv("OWN_PX_MIN")) opt.px_min = std::max(1u, (unsigned)atoi(e));
     if (const char *e = getenv("OWN_PX_WG")) opt.px_wg = std::max(1u, std::min(64u, (unsigned)atoi(e)));
@@ -312,6 +312,11 @@ int main(int argc, char **argv) {
     }
     if (const char *e = getenv("OWN_PX_SERIAL")) opt.px_serial = atoi(e) != 0;
     if (const char *e = getenv("OWN_PX_CHECK")) opt.px_check = atoi(e) != 0;
+    // skip39-1 (default on since tp115, OWN_SKIP39=0 = off; /home/steve/dsv41-work/skip39/README.md): prompt blocks that do not hold the prompt's
+    // last token run the last layer's kept key rows only (the same answers); OWN_SKIP39_CHECK=1 (diagnostic): the full
+    // layer runs, the kept rows are computed again and compared bitwise on the card (one line after the prompt)
+    if (const char *e = getenv("OWN_SKIP39")) opt.skip39 = atoi(e) != 0;
+    if (const char *e = getenv("OWN_SKIP39_CHECK")) opt.skip39_check = atoi(e) != 0;
     // px-512 (opt-in): OWN_PX_BIG=1 with OWN_PX=1: OWN_PROMPT_BLOCK up to 2 x OWN41_MTX (512), each block two halves
     if (const char *e = getenv("OWN_PX_BIG")) opt.px_big = atoi(e) != 0;
     // bcs-1 (default 1 since tp108; OWN_PX_BCS=0 off; /home/steve/dsv41-work/bcs/README.md): with OWN_PX=1 the halves' exchanges as
@@ -405,6 +410,15 @@ int main(int argc, char **argv) {
         if (std::sscanf(e, "%d,%d,%d,%d,%d,%d", w, w + 1, w + 2, w + 3, w + 4, w + 5) != 6)
             die("OWN_PRT_W: six weights w0,...,w5");
     }
+    // idxsplit-2 (default OWN_IDX_DSPLIT=3 since tp115, 0 = off; /home/steve/dsv41-work/idxsplit/README.md section 8): the one-token steps' index scores split
+    // across the cards by rows (each card scores rows [r0, r1) of the step's token, an XchgPull gathers every card's rows,
+    // the unchanged selects run on every card over all rows: the same lists). OWN_IDX_DSPLIT bits: 1 one-token steps, 2
+    // blocks of up to 6 tokens (checks); layers scoring all rows (not the candidate-only ones past 20), from
+    // OWN_IDX_DSPLIT_MIN rows (default 8192); OWN_IDX_DSPLIT_CHECK=1 (diagnostic: also the full score, compared bitwise)
+    if (const char *e = getenv("OWN_IDX_DSPLIT")) opt.idx_dsplit = (unsigned)atoi(e);
+    if (opt.idx_dsplit > 3) die("OWN_IDX_DSPLIT: 0..3 (bit 1 one-token steps, bit 2 blocks of up to 6 tokens)");
+    if (const char *e = getenv("OWN_IDX_DSPLIT_MIN")) opt.idx_dsplit_min = std::max(513L, atol(e));
+    if (const char *e = getenv("OWN_IDX_DSPLIT_CHECK")) opt.idx_dsplit_check = atoi(e) != 0;
     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
     // round 18 e87 / r1 (=0 for the old forms)
@@ -847,6 +861,7 @@ int main(int argc, char **argv) {
             }
             be.skip_head = false;
 #ifndef OWN41_ACT_BF16
+            be.skip39_report(); // skip39-1 (OWN_SKIP39 / OWN_SKIP39_CHECK; nothing without them)
             if (be.mt_idstat && be.ids_picks)
                 std::fprintf(stderr, "expert picks: %ld blocks, %ld picks, %ld distinct per (block, layer) summed (%.1f %%)\n",
                              be.ids_blocks, be.ids_picks, be.ids_unique, 100.0 * be.ids_unique / be.ids_picks);

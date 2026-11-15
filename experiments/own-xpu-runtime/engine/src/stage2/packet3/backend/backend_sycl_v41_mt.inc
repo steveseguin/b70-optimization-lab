@@ -492,6 +492,14 @@ void mt_alloc(int c) {
     }
     egrp[c] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS);
     if (o.px) px_egrp[c][1] = dalloc<uint32_t>(c, ops41sycl::RUGrp::WORDS); // OWN_PX: half B's expert groups
+    if (o.skip39_check) { // skip39-1 check: the shadow rows of up to S39_WIN tokens (+ 8: the dense forms' spare reads)
+        const size_t ST = (size_t)S39_WIN + 8;
+        s39_xn[c] = dalloc<act_t>(c, ST * H);
+        s39_kv[c] = dalloc<act_t>(c, ST * g.hd);
+        s39_kvn[c] = dalloc<act_t>(c, ST * g.hd);
+        s39_ring[c] = dalloc<uint16_t>(c, (size_t)S39_WIN * g.hd);
+        s39_bad[c] = dalloc<uint32_t>(c, 4); // (zeroed)
+    }
     if (o.dspark) dr_alloc(c);
     for (int k = 0; k < 3; ++k) {
         pkv[c][k] = dalloc<float>(c, (size_t)(MTX + 1) * g.hd);
@@ -1361,13 +1369,18 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         }
         gemv_m(c, p + "indexer.proj.weight", b.xn + (size_t)u0 * g.h, g.h, wd + (size_t)u0 * 32, 32, 0, un);
     };
+    // idxsplit-2 (OWN_IDX_DSPLIT bit 2): blocks of up to 6 tokens (checks), not the candidate-only layers: each card
+    // scores its rows of every token into the arena (xscM + t * SS + row), gathered by one pull (ixm_score); the
+    // selects read the scores there (sbase)
+    const bool ms = !split && ixm_on(c, (unsigned)M, lmax, ccm);
+    float *const sbase = ms ? xarena[c] + xscM : b.score;
     // the scores and selects of tokens [u0, u0 + un) (queries qd / wd as qrows), lists into out + t * 512; every
     // pointer is token t's of the block (score, candidates, block lists), every kernel as for the whole block
     auto score_sel = [&](unsigned u0, unsigned un, const act_t *qd, const act_t *wd, int32_t *out) {
         if (!un) return;
         const int *ln = lens + u0;
         const act_t *qi = qd + (size_t)u0 * 4096, *wv = wd + (size_t)u0 * 32;
-        float *const sco = b.score + (size_t)u0 * SS;
+        float *const sco = sbase + (size_t)u0 * SS;
         uint8_t *const cnd = b.cand + (size_t)u0 * SS;
         int32_t *const bl0 = blh ? blh + (size_t)u0 * (2048 + 64) : nullptr; // (null without OWN_IDX_CAND)
         int32_t *const ox = out + (size_t)u0 * 512;
@@ -1418,6 +1431,8 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             long ll[MTX] = {};
             for (unsigned t = 0; t < un; ++t) ll[t] = ln[t];
             idx_score_r(c, o.idx_r, (int)un, ll, qi, wv, ik_mirror[c][si], sco, 4096, 32, SS);
+        } else if (ms) { // idxsplit-2: this card's rows of every token, then every card's
+            ixm_score(c, si, un, ln, qi, wv, lmax, sco, SS);
         } else {
             using KS = ops41sycl::IndexerScoreBM<Act>;
             constexpr size_t WG = 128;
@@ -1534,6 +1549,76 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
 // stay the same on every card (every card pushes / publishes at the same host-order places, also when it has no
 // tokens). Short tokens (<= 512 rows) of a split layer: each card fills its own tokens' lists, the rest arrive with
 // the exchange (CidxFill's lists: the same bytes whichever card makes them).
+// ---- idxsplit-2, bit 2 (OWN_IDX_DSPLIT; the one-token part and the reasoning: backend_sycl_v41.hpp "idxsplit-2") ------
+// Blocks of 1-6 tokens outside the prompt halves (checks), layers whose tokens score all rows (not the candidate-only
+// layers past 20), from o.idx_dsplit_min rows (the block's longest): each card runs IndexerScoreBM over its rows [r0, r1)
+// of every token (ixd_bounds of the block's longest row count rounded up to 32: the same on every card) with the key rows
+// and the score rows moved by r0 and lens[t]' = min(lens[t], r1) - r0 (<= 0: the token's work-groups return), so each row
+// gets IndexerScoreBM's own sums and the rows [lens[t], lens[t] rounded up to 32) their -inf (r0, r1 multiples of 32, or
+// r1 = T); then an XchgPull (mode 0, nslot M, stride SS) copies every peer's rows of every token to the same offsets
+// (xscM + t * SS + row) and the unchanged selects read them there. Reuse: as the one-token part (next write at the next
+// split layer, after this layer's output-a exchange). Exchange numbers: the decision is host state every card shares.
+bool ixm_on(int c, unsigned M, long lmax, bool ccm) const {
+    return (o.idx_dsplit & 2u) && o.tp > 1 && xscM && M >= 1 && M <= 6 && !ccm && lmax >= o.idx_dsplit_min &&
+           !(o.idx_r == 2 || o.idx_r == 4) && !px_q[c] && !px_run[c] && !o.dev_index_check && !qbm_any();
+}
+void ixm_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco, size_t SS) {
+    unsigned b0[6], b1[6];
+    ixd_bounds((lmax + 31) / 32 * 32, b0, b1);
+    const unsigned r0 = b0[c], r1 = b1[c];
+    if (r1 > r0) {
+        using KS = ops41sycl::IndexerScoreBM<Act>;
+        constexpr size_t WG = 128;
+        KS k{};
+        for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t] > (int)r0 ? std::min(ln[t], (int)r1) - (int)r0 : 0;
+        k.m = un;
+        k.gpt = (unsigned)(((size_t)(r1 - r0) + WG - 1) / WG);
+        k.qs = 4096;
+        k.ws = 32;
+        k.ss = SS;
+        const uint16_t *ik = ik_mirror[c][si] + (size_t)r0 * 128;
+        float *so = sco + r0;
+        auto e = qs[c].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+            hh.parallel_for(sycl::nd_range<1>((size_t)un * k.gpt * WG, WG),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, so, &lt[0]); });
+        });
+        kev(c, kname<KS>(), e);
+    }
+    if (SS % 4) throw std::runtime_error("OWN_IDX_DSPLIT: the score stride is not a multiple of 4");
+    ixd_pull(c, (unsigned)(sco - xarena[c]), (unsigned)SS, un, b0, b1); // (sco: token u0's rows; u0 = 0 today)
+    ++ixm_calls[c];
+    if (o.idx_dsplit_check) ixm_check(c, si, un, ln, qi, wv, lmax, sco, SS);
+}
+// OWN_IDX_DSPLIT_CHECK: the full launch (tpm_index's IndexerScoreBM) into the block's score rows, every token's rows
+// [0, lens[t] rounded up to 32) compared bitwise with the gathered ones (on the card: diagnostic only)
+void ixm_check(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, const float *sco,
+               size_t SS) {
+    const Scratch &b = scm[c][px_tok];
+    using KS = ops41sycl::IndexerScoreBM<Act>;
+    constexpr size_t WG = 128;
+    KS k{};
+    for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
+    k.m = un;
+    k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
+    k.qs = 4096;
+    k.ws = 32;
+    k.ss = SS;
+    const uint16_t *ik = ik_mirror[c][si];
+    float *so = b.score;
+    qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * k.gpt * WG, WG),
+                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, so, &lt[0]); });
+    });
+    for (unsigned t = 0; t < un; ++t) { // compared on the card (ixd_cmp: no host wait; the total is read at the end)
+        if (ln[t] <= 0) continue;
+        const size_t T = (size_t)(ln[t] + 31) / 32 * 32;
+        ixd_cmp(c, b.score + t * SS, sco + t * SS, T);
+        ++ixd_chk[c];
+        ixd_rows[c] += (long)T;
+    }
+}
 struct IxPend {
     int kind = 0; // 0 none, 1 copy-engine push (seq: push number), 2 pull (seq: exchange number)
     uint32_t seq = 0;
@@ -2030,6 +2115,9 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         }
     }
     mx_ready[c] = false;
+    // skip39-1 check (OWN_SKIP39_CHECK): the skip's kept rows of this block (half) into the shadow buffers, from the
+    // layer input x as collapsed above (nothing before phase 3a's post rewrites x); compared after the layer
+    if (s39_blk && o.skip39_check && L == o.layer_end - 1) s39_rows(c, L, true);
     if (qpx) prt_qkv_send(c, p, (unsigned)M, b.xn); // prt-1 bit 2: the card's tokens' q_a + kv rows, pushed
     } // (PX_P0A)
     if (seg & PX_P0B) {
@@ -2823,12 +2911,26 @@ template <typename F> void px_layers(int c, F &&late) {
     for (int h = 0; h < 2; ++h) prt_r[c][h] = prt_q[c][h] = PrtPend{};
     // prt-1 (OWN_PRT bit 1, without the diagnostic bit 8): phase 3a of both halves before phase 3b of either
     const bool rro = (o.prt & 1u) && !(o.prt & 8u) && prt_on(c, (unsigned)px_hn);
+    bool s39d = false; // skip39-1: the last layer ran as its kept rows (none of its exchanges, no post of it)
     try {
         for (int L = L0; L < LN; ++L) {
             if (o.eng_late && L == 1) { // the whole block's engram rows (publish on xqs[c] after the rows' launch)
                 MtN::half = 0;
                 px_tok = 0;
                 late();
+            }
+            // skip39-1 (OWN_SKIP39): layer L - 1's post of each half (its X4 as always), then layer L's kept rows of
+            // that half (s39_layer: the draft's capture + the ring's kept key rows; no exchange); every card the same
+            if (s39_skip() && L == LN - 1 && L > L0) {
+                px_half(c, 0);
+                px_await(c, PX_X4, 0), tpm_layer(L - 1, c, PX_P5);
+                s39_layer(L, c);
+                px_fire(c, PX_X4, 1, gr(7, L - 1));
+                px_half(c, 1);
+                px_await(c, PX_X4, 1), tpm_layer(L - 1, c, PX_P5);
+                s39_layer(L, c);
+                s39d = true;
+                break;
             }
             // prt-1 (OWN_PRT bit 2, without the diagnostic bit 4): phase 0a of both halves (each with its share of
             // the q_a + kv rows, pushed) before phase 0b of either, so each half's gather runs beside other work
@@ -2909,11 +3011,13 @@ template <typename F> void px_layers(int c, F &&late) {
             px_half(c, 1);
             px_await(c, PX_X3, 1), tpm_layer(L, c, PX_P4);
         }
-        px_fire(c, PX_X4, 1, gr(7, LN - 1));
-        px_half(c, 0);
-        px_await(c, PX_X4, 0), tpm_layer(LN - 1, c, PX_P5);
-        px_half(c, 1);
-        px_await(c, PX_X4, 1), tpm_layer(LN - 1, c, PX_P5);
+        if (!s39d) {
+            px_fire(c, PX_X4, 1, gr(7, LN - 1));
+            px_half(c, 0);
+            px_await(c, PX_X4, 0), tpm_layer(LN - 1, c, PX_P5);
+            px_half(c, 1);
+            px_await(c, PX_X4, 1), tpm_layer(LN - 1, c, PX_P5);
+        }
     } catch (...) {
         px_exit(c);
         throw;
@@ -2975,6 +3079,116 @@ void px_check_block() {
         std::fprintf(stderr, "OWN_PX_CHECK: %ld blocks as halves, %ld bad\n", px_blocks, px_bad);
     }
 }
+// ---- skip39-1 (OWN_SKIP39=1, opt-in; /home/steve/dsv41-work/skip39/README.md) ----------------------------------------
+// A prompt block that does not hold the prompt's last token (decode_block_tp with skip_head; not a check, not a draft
+// step; the head on: own_run_v41.cpp's prompt loop) has no reader of the model's last layer Lz's outputs: the head runs
+// for the prompt's last token only, the next block starts from its own embed (streams, cur_pre), and the draft's
+// features are the streams at the INPUTS of layers 37 .. 39 (dr_capture, before layer Lz touches them). What layer Lz
+// leaves behind is its window ring's slots only (Lz is neither a kv source nor an index layer: no compressed rows, no
+// index keys, no ratio-2 state, no row counts); of a block of MB tokens the ring keeps the last min(128, MB) rows
+// (RingCommitM commits only those; the block area is rewritten before any later read). So such a block's layer Lz
+// runs only the draft's capture (every token) and, for the kept tokens, the collapse (if layer Lz - 1's post did not
+// run it), the pre-norm, the kv rows, their norm, the rope and the ring slots (RingRowsM: WindowAppendM's store and
+// RingCommitM's copy in one launch). Every value is the full layer's: each kernel's per-token sums do not depend on
+// the block's token count (the property every block size relies on; prt-1's shares are the same kind of call). No
+// exchange of layer Lz runs on any card (the choice is host state, the same on every card), so the exchange numbers
+// and push numbers stay matched; the block still ends with every card's twait before the next block starts.
+// OWN_SKIP39_CHECK=1 (diagnostic): the full layer runs as without the skip; its phase 0a also runs the skip's kept
+// rows into shadow buffers (from the same x, after the collapse), and after the layer loop Skip39CmpM compares the
+// shadow ring slots and key rows with the full layer's bitwise on the card (counts in s39_bad[c], read once by
+// skip39_report after the prompt: no host wait inside a step).
+static constexpr int S39_WIN = 128; // the window ring's slots (WindowAppendM / RingCommitM's win)
+bool s39_blk = false;               // this block runs skip39-1 (decode_block_tp, main thread)
+long s39_skips = 0, s39_checks = 0; // blocks whose last layer was skipped / checked
+long s39_rows_n = 0;                // kept rows (per card) over those blocks (card 0's thread counts)
+act_t *s39_xn[TILES] = {}, *s39_kv[TILES] = {}, *s39_kvn[TILES] = {}; // OWN_SKIP39_CHECK: shadow rows (S39_WIN + 8 tokens)
+uint16_t *s39_ring[TILES] = {};     // ... shadow ring slots
+uint32_t *s39_bad[TILES] = {};      // ... differing words: [0] ring slots, [1] key rows
+// whether this block qualifies (main thread, before the card threads start; host state only)
+bool s39_ok() const {
+    const int Lz = o.layer_end - 1;
+    return (o.skip39 || o.skip39_check) && o.head && skip_head && !mt_heads && !ck1_run && !dr_step && mt_small &&
+           o.layer_begin == 0 && o.layer_end == g.layers && Lz >= 1 && !is_kv_source(Lz) && index_slot(Lz) < 0 &&
+           Lz != 1 && Lz != 14 && !mt_idstat; // (mt_idstat: the diagnostic counts every layer)
+}
+bool s39_skip() const { return s39_blk && !o.skip39_check; } // (OWN_SKIP39_CHECK: the full layer runs)
+// the running block's (OWN_PX: half's) kept tokens of layer L: collapse if needed, pre-norm, kv rows, their norm and
+// rope, ring slots. shadow (OWN_SKIP39_CHECK): the same launches into the shadow buffers, the block's x read only.
+void s39_rows(int c, int L, bool shadow) {
+    const int M = mt_n;                                                // (OWN_PX: the half's count)
+    const long MB = px_run[c] ? 2L * px_hn : (long)M, tb0 = px_run[c] ? px_tok : 0; // the block's count, the half's first token
+    const long k0 = std::max<long>(0, MB - S39_WIN);                   // the block's first token whose ring row stays
+    const long a = std::max(k0, tb0), e = tb0 + M;
+    if (a >= e) return; // (OWN_PX half A of a block of 2 x 128 tokens or more: no kept rows)
+    const unsigned n = (unsigned)(e - a);
+    const size_t H = g.h, hd = g.hd, so = (size_t)(a - k0);
+    const Scratch &bt = scm[c][a];
+    const std::string p = "blk." + std::to_string(L) + ".";
+    act_t *x = bt.x, *xn = shadow ? s39_xn[c] + so * H : bt.xn, *kv = shadow ? s39_kv[c] + so * hd : bt.kv,
+          *kvn = shadow ? s39_kvn[c] + so * hd : bt.kvn;
+    uint16_t *rg = shadow ? s39_ring[c] : ring[c][L];
+    if (shadow && (!xn || !rg)) throw std::runtime_error("OWN_SKIP39_CHECK: no shadow buffers");
+    const long p0 = pos + a;
+    const bool yarn = cr_of(L) > 0;
+    const int h0 = MtN::half;
+    MtN::half = (int)n; // (tokr, skn_norm5 and the dense forms: n tokens from token a on)
+    try {
+        if (!shadow && !mx_ready[c]) // the collapse (layer L - 1's post did not run it; tpm_layer's HcPreAM)
+            launch(c, (size_t)n * H, 32, ops41sycl::HcPreAM<Act>{g.h, n, 4 * H, 4, H},
+                   (const act_t *)(strm[c] + (size_t)(a - tb0) * 4 * H), (const float *)bt.cur_pre, x);
+        const float *wn = wp<float>(c, p + "attn_norm.weight");
+        if (!skn_norm5(c, x, wn, xn, H, H)) // (OWN_MT_SKNORM bit 1; else tpm_layer's NormRows rows)
+            rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{x, wn, xn}, H, H));
+        gemv_m(c, p + "attn_kv.weight", xn, H, kv, hd, 0, n);
+        rows_launch(c, tokr(ops41sycl::NormRows<512, 2>{kv, wp<float>(c, p + "attn_kv_a_norm.weight"), kvn}, hd, hd));
+        const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)p0 * 32;
+        const float *sb = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)p0 * 32;
+        rows_launch(c, tokr(ops41sycl::RopeRows<Act>{kvn, cb, sb, 1u, (unsigned)g.hd, false}, hd, 32));
+        launch(c, (size_t)n * hd, 64, ops41sycl::RingRowsM<Act>{S39_WIN, g.hd, (int)p0, (int)n, hd}, rg, (const act_t *)kvn);
+    } catch (...) {
+        MtN::half = h0;
+        throw;
+    }
+    MtN::half = h0;
+    if (c == 0) s39_rows_n += n;
+}
+// layer L of a skip39-1 block for the running block (OWN_PX: half): the draft's capture, the kept rows
+void s39_layer(int L, int c) {
+    if (L < 1 || !ring[c][L]) throw std::runtime_error("OWN_SKIP39: layer");
+    dr_capture(L, c); // the draft's features at layer L's input (layers 37 .. 39; every token)
+    s39_rows(c, L, false);
+    mx_ready[c] = false; // (as phase 0a leaves it)
+}
+// OWN_SKIP39_CHECK, after the block's layer loop (OWN_PX: halves done): the shadow rows of the block's kept tokens
+// against the full layer's ring slots and key rows (counts on the card)
+void s39_compare(int c) {
+    const int MB = mt_n, L = o.layer_end - 1, k0 = std::max(0, MB - S39_WIN), n = MB - k0;
+    if (n <= 0 || !s39_bad[c]) return;
+    launch(c, (size_t)n * g.hd, 64, ops41sycl::Skip39CmpM<Act>{S39_WIN, g.hd, (int)(pos + k0), n}, (const uint16_t *)ring[c][L],
+           (const uint16_t *)s39_ring[c], (const act_t *)scm[c][k0].kvn, (const act_t *)s39_kvn[c], s39_bad[c]);
+}
+public:
+// skip39-1: one line after the prompt (OWN_SKIP39_CHECK: the cards' counts, read once with every card idle)
+void skip39_report() {
+    if (!o.skip39 && !o.skip39_check) return;
+    if (!o.skip39_check) {
+        std::fprintf(stderr, "OWN_SKIP39: layer %d ran only its kept key rows in %ld prompt blocks (%ld rows per card)\n",
+                     o.layer_end - 1, s39_skips, s39_rows_n);
+        return;
+    }
+    unsigned long long tot = 0;
+    std::string per;
+    for (int c = 0; c < o.tp; ++c) {
+        uint32_t h[4] = {};
+        if (s39_bad[c]) qs[c].memcpy(h, s39_bad[c], sizeof h).wait();
+        tot += (unsigned long long)h[0] + h[1];
+        per += " " + std::to_string(h[0]) + "/" + std::to_string(h[1]);
+    }
+    std::fprintf(stderr, "OWN_SKIP39_CHECK: layer %d, %ld prompt blocks, %ld kept rows per card; differing ring / key-row "
+                         "words per card:%s -> %s\n",
+                 o.layer_end - 1, s39_checks, s39_rows_n, per.c_str(), tot ? "MISMATCH" : "ALL SAME");
+}
+private:
 void tpm_card_step(int c) {
     if (ck1_run) return tpm_card_step1(c); // OWN_CK1: a one-token check
     sc_keep[c] = sc[c];
@@ -3008,8 +3222,13 @@ void tpm_card_step(int c) {
                 eng();
                 tpm_engram_kv(c);
             }
+            if (s39_skip() && L == o.layer_end - 1) { // skip39-1 (OWN_SKIP39): the last layer's kept rows only
+                s39_layer(L, c);
+                continue;
+            }
             tpm_layer(L, c);
         }
+        if (s39_blk && o.skip39_check) s39_compare(c); // skip39-1 check: the shadow rows against the full layer's
         const bool hdefer = o.head_cq && o.dspark && o.head && mt_heads;
         if (o.head && mt_heads) {
             tok_end(c);
@@ -3089,6 +3308,8 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     px_hn = px_blk ? mt / 2 : 0;
     mt_n = mt;
     mt_toks = toks;
+    s39_blk = s39_ok(); // skip39-1 (OWN_SKIP39 / OWN_SKIP39_CHECK): this block's last layer (host state: every card the same)
+    if (s39_blk) ++(o.skip39_check ? s39_checks : s39_skips);
     if (!o.eng_early) tpm_engram_prefetch();
     eng_t0 = o.eng_early && eng_anchor_asked ? 1 : 0;
     eng_anchor_asked = false;
@@ -3098,6 +3319,7 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     if (o.eng_early && !eng_ahead.empty() && (long)comp_ids.size() == pos + mt) engram_ask_ahead();
     tp_join();
     mt_n = 0;
+    s39_blk = false;
     const bool pxb = px_blk;
     px_blk = false;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
