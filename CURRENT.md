@@ -1,5 +1,17 @@
 # Current Workspace State
 
+**November 15, 2026 16:52 EST — bounded SMT-off stability test st1 running (Claude); git repaired.**
+- Owner relayed Codex's advice (more SMT-off stability testing before more optimizations) with "please continue
+  optimizing". st1 = fresh tp115 starts in the current diagnostic config (SMT off, Gen4 x16, OWN_PX_SERIAL=1, normal
+  power, BIOS 11.02; `stable/preflight.sh` before every case, now also checks SMT), both prompt head layouts (default
+  and 4,2,2,4,2,2), prompts of 36 / 82-113 / 3K / 10K / 34K / 95K tokens, plain and guessing answers, every output
+  checked against its reference; up to 9 cycles of 10 cases, no new launch after 105 min. First fault / mismatch /
+  non-zero exit = STOP, no retry / reset / reboot; summary, marks and a kernel-log follower synced to disk continuously.
+  Evidence `/home/steve/dsv41-work/runs/st1-smtoff-20261115T1652/`. It doubles as the default vs 4,2,2,4,2,2 speed A/B in the stable mode.
+- The 10:32 reset left the commit of round19-c115 as empty git objects (HEAD unreadable). Repaired: empties moved to
+  `/home/steve/diagnostics/git-empty-objects-20261115/`, main back to f501d6a52, index rebuilt, c115 page and the
+  Codex CURRENT entries re-committed (2ccbabe5d, b14db3810), fsck clean, pushed.
+
 **November 15, 2026 15:57 EST — approved SMT-disabled comparison complete; all12 cases matched.**
 
 - Firmware SMT is Disabled. BIOS11.02 remains; all8physical cores are present as8logical CPUs.
