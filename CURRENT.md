@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**November 15, 2026 18:50 EST — st1 stopped by a host reset at 16:56 (SMT off); this time a GPU failed first.**
+- st1 passed 4 fresh starts (3K default / 4,2,2,4,2,2, 10K both, all outputs exact), then reset the host 1.4 min into
+  case 5 (x34k, default layout). SMT-off config held: Gen4 x16, serial exchange, normal power, BIOS 11.02.
+- The synced kernel-log follower (and the journal) caught the start: 16:56:26.387 GPU e3:00.0 (card 5) GuC crash dump +
+  exception, reset failed (GRDOM_FULL timeout), card declared WEDGED; 16:56:27.1 port a2:02.0 (GPU a3:00.0's board,
+  card 4) "Unable to change power state from D3hot to D0, device inaccessible"; 16:56:31.75 GPU a3:00.0 MMIO reads
+  0xFFFFFFFF (off the bus) during a job-timeout handler; then the fatal reset (BERT CPU 2 bank 5 bea0000000000108,
+  data-fabric sync flood). The engine aborted in the Level Zero driver (drm_neo.cpp:284). Neither card is an MCIO
+  card (those are 23 / 43). First reset with GPU-side errors recorded before the host died.
+- Recovery boot 16:58: Wi-Fi failed to start (AIC8800 MM_SET_STACK_START_REQ), host unreachable; owner restart 18:36.
+- Evidence `/home/steve/diagnostics/reset-20261115T1656/`. Not declared fixed or blamed on a part. Gen4 re-applied
+  while idle (18:4x); no six-card launch since. Six-card work held; kernel work continues on single cards.
+
 **November 15, 2026 16:52 EST — bounded SMT-off stability test st1 running (Claude); git repaired.**
 - Owner relayed Codex's advice (more SMT-off stability testing before more optimizations) with "please continue
   optimizing". st1 = fresh tp115 starts in the current diagnostic config (SMT off, Gen4 x16, OWN_PX_SERIAL=1, normal
