@@ -1,5 +1,140 @@
 # Current Workspace State
 
+**November 15, 2026 15:57 EST — approved SMT-disabled comparison complete; all12 cases matched.**
+
+- Firmware SMT is Disabled. BIOS11.02 remains; all8physical cores are present as8logical CPUs.
+  The deliberate restart completed; Wi-Fi/SSH returned. Gen4x16 and normal GPU caps are verified.
+- Six small GPU checks, default/H1 model loads and one fullH1 trace+40ID gate passed. The following
+ 12 fresh model cases covered normal/H1 layouts at3K/34K/95K twice each; all768 output IDs matched.
+  Active process time19.76minutes, wall23.02minutes including gaps and the monitor correction.
+- Firstcase was initially stopped by a checker misreading "0 bad". The model exited0 with exact IDs
+  and clean kernel. Original STOP/result preserved, source-accurate parser fixed, remaining11 cases
+  completed without repeating the first. No machine-check/GPU/PCIe fault or unexpected reset occurred.
+- This does not establish long-term stability or a specific AMD erratum/component cause. Keep SMT off,
+  Gen4, serial1 and normal caps as the current diagnostic configuration. Vendor mitigation confirmation
+  remains outstanding; support draft updated but unsent. No additional reboot or GPU test is queued.
+- GPUs and PCI observer idle; temporary probes/instance and local management address removed.
+  `six.active=smt-off-remaining11-20261115T1534` holds old campaigns. Log-only next-boot collector remains
+  armed; it neither resets nor launches GPU work. Git corruption is preserved.
+- [Completed report](/home/steve/diagnostics/smt-off-remaining11-20261115T1534/REPORT.txt) and
+  [all12 results](/home/steve/diagnostics/smt-off-remaining11-20261115T1534/combined-12-summary.json).
+
+**November 15, 2026 15:35 EST — SMT-disabled comparison running; initial gates passed.**
+
+- Firmware SMT Disabled verified after the authorized restart; BIOS11.02,8physical/8logical CPUs,
+  Gen4x16 and normal GPU limits retained. Six small GPU qualifications, default/H1 model loads and
+  full H1 3K trace+40ID check passed with no fault. No further restart is queued.
+- The bounded12case comparison covers default/H1 at3K/34K/95K, two repeats,64 reference-checked IDs.
+  Its first default3K case exited0 with exact64IDs, but an overbroad checker misread "0 bad" as error.
+  Original failure result/STOP are preserved; source-accurate parser correction and adjudication are saved.
+- Remaining11 cases run once in /home/steve/diagnostics/smt-off-remaining11-20261115T1534/;
+  firstcase is not repeated. Unit smt-off-remaining11-20261115.service; targeted PCI observer is active.
+  `six.active=smt-off-remaining11-20261115T1534`. First actual fault/mismatch blocks later launches,
+  with no busy-worker kill, reset, retry or automatic extension. Observation timeout marks STOP only.
+- Current control is diagnostic; passing checks do not establish root cause or a permanent fix.
+
+**November 15, 2026 15:27 EST — firmware SMT disabled and verified; comparison tests running.**
+
+- Owner-approved graceful restart completed. New boot fd7bc74a began at15:09:43; BIOS11.02 is unchanged.
+  Firmware CbsCpuSmtCtrl=Disabled, Linux SMT inactive, all8physical cores present as8logical CPUs.
+  Linux's SMT control reads "notsupported" because firmware disabled it; this is expected here.
+- BIOS comparison found SMT plus removal of the AIC USB flash boot-device entry and its inventory/map
+  entries. Ubuntu and EFI Shell remain; other CPU/power/memory/PCIe attributes are unchanged. No extra
+  BIOS writes were made. Wi-Fi/SSH work and no new machine-check/GPU fault was logged.
+- Authorized runtime Gen4 restored on all six root links; normal caps verified by GPU BDF (two275W,
+  four230W). Six64MiB/1-second local qualifications passed. Default model LOAD_ONLY is running, followed
+  after review by H1 LOAD_ONLY and one exact H1 trace check. Same pinned binaries and references.
+- `six.active=smt-off-model-20261115T1525` blocks old campaigns. No further reboot/reset or retry loop.
+  New log-only next-boot collector preserves an unexpected failure; it starts no GPU work.
+- Evidence /home/steve/diagnostics/smt-off-model-20261115T1525/; firmware change and verified boot records
+  /home/steve/diagnostics/smt-off-20261115T1459/. This is a diagnostic control, not a confirmed fix.
+
+**November 15, 2026 15:04 EST — owner-approved firmware SMT disable staged; deliberate restart next.**
+
+- Owner approved the proposed SMT-disabled BIOS/reboot comparison with "do that then".
+- Board BIOS registry11.2.0 exposes writable CbsCpuSmtCtrl. One supported Redfish PATCH staged
+  Auto -> Disabled; readback confirms no other pending setting differences. Live SMT remains on until restart.
+- All GPU work/compilers idle; `six.active=smt-off-20261115T1459` blocks old campaigns. Evidence and
+  original BIOS attributes are saved. One deliberate graceful restart is authorized; no retry/reset loop.
+- New read-only postboot collector records CPU topology, BIOS, kernel and network state. It starts no GPU work.
+  Expected after restart: same BIOS11.02,8physical cores/8logical CPUs,SMT inactive. Verify actual BIOS settings,
+  restore authorized runtimeGen4 while idle, then use fresh bounded diagnostic outputs. Do not infer a fix from a pass.
+- [Continuation instructions](/home/steve/diagnostics/smt-off-20261115T1459/CONTINUE.txt).
+  Evidence directory /home/steve/diagnostics/smt-off-20261115T1459/; private credentials must not be shared.
+  Re-enabling SMT later requires a power cycle per the board registry; restoration is not queued.
+
+**November 15, 2026 14:46 EST — isolation tests complete; no defective component or fix confirmed.**
+
+- All six cards passed 28 GiB local memory/integer tests individually and together; all six also passed
+  28 GiB host uploads and full verification individually and together. Both MCIO cards passed.
+- Actual tp115 model load-only cases passed once with normal and H1 head layouts. One full H1 3K/40-token
+  check then passed with exact reference trace and IDs. Added logging/tracing changes timing; this does not
+  clear intermittent faults or establish that the changed layout caused the earlier crash.
+- Targeted PCI configuration tracing captured 61,351 paired calls, all returning zero, with no lost records,
+  missed return probes or buffer overruns. Longest call 5.573 ms includes lock/scheduling time. No bad device
+  identified. Trace collector and all GPU tests are inactive; own probes/instance were removed.
+- CPU lead remains: bank 5 is EX watchdog. Exact processor revision is affected by AMD errata 1593/1625,
+  but their triggers and mitigation status in BIOS11.02 are unconfirmed. A support draft and concrete
+  firmware-SMT-disabled control plan are prepared. Neither SMT change nor reboot is queued or performed.
+- `six.active=model-load-isolation-20261115` remains held. BIOS/Gen4/normal power/SMT-on unchanged;
+  no automatic reset or retry loop. Existing log-only next-boot collector remains armed. Git damage preserved.
+- [Investigation report](/home/steve/diagnostics/model-load-isolation-20261115/REPORT.txt),
+  [support draft](/home/steve/diagnostics/model-load-isolation-20261115/vendor-support-draft.txt),
+  [next control plan](/home/steve/diagnostics/model-load-isolation-20261115/next-cpu-control-plan.txt).
+
+**November 15, 2026 14:31 EST — all local GPU memory/compute cases passed; host uploads running.**
+
+- Six separate 28 GiB / 60-second cases passed, followed by six independent 28 GiB / 180-second workers together,
+  completed at 14:26:22. All checked data and integer results matched; no fault or reset. These tests do not exercise
+  peer traffic, model matrix kernels or prove maximum-power stability. Neither MCIO card was isolated as faulty.
+- The next diagnostic uses one 16 MiB pinned host staging buffer per worker to upload and verify 28 GiB on each GPU.
+  Small qualification passed. Six sequential uploads are running; concurrent uploads require all six to pass first.
+  Build and source hashes, durable phase logs and exact process maps are saved under
+  `/home/steve/diagnostics/no-peer-upload-20261115/`. `six.active=no-peer-upload-20261115` retains exclusive ownership.
+- CPU evidence correction: IPID 0x000500b020029a00 identifies SMCA_EX, status XEC0 execution-unit watchdog;
+  this is not by itself proof of failed PCIe hardware. AMD revision guide 58251 rev1.30 lists SMT-related watchdog
+  errata 1593 and 1625 for this exact CPUID 00B00F21 (Turin-Zen5-C1). Their precise triggers are unproven here;
+  public documentation does not establish whether BIOS11.02/microcode0xb002162 mitigates them.
+- BIOS, Gen4 links, power limits and SMT remain as before. No reset, retry loop or busy-worker kill is scheduled.
+  Existing log-only postboot collector remains armed. Old model campaigns remain blocked; Git corruption preserved.
+
+**November 15, 2026 14:15 EST — single-card local-memory/compute isolation qualified; six individual cases starting.**
+
+- The prepared independent diagnostic compiled successfully (icpx AOT bmg_g31, source/hash/build receipts saved).
+  Its64MiB/1second qualification on03:00.0 passed full data/integer checks and normal teardown; no new fault.
+- Next are six separate28GiB/60second cases, one GPU at a time, followed only after review by six independent
+  concurrent workers. No peer IPC/mappings, remote flags or sharedUSM. Enumeration still touches driver metadata
+  for all cards, so failure before SELECTED cannot identify a specific GPU. Integer/VRAM exposure is not a full
+  model/XMX/maximum-power test; passes cannot clear all hardware paths.
+- BIOS11.02 boot040ec23b remains. Authorized Gen4 root links restored while idle after this reboot; normal
+  caps unchanged (two275W,four230W). Durable per-case intent/phase/result logs and process maps are recorded.
+  First fault creates sharedSTOP, blocks new launches and skips postfault device reads. No hard kill/retry/reset.
+- `six.active=no-peer-isolation-20261115T1410` holds other work. A temporary log-only next-boot collector is
+  enabled; it schedules no reboot/test. Old sm1/c115/model campaigns stay held. Git corruption is preserved.
+- Evidence `/home/steve/diagnostics/no-peer-isolation-20261115T1410/`; runner stages smoke/singles/aggregate are
+  invoked separately after predecessor gates pass. Source review found no necessary correction before smoke.
+
+**November 15, 2026 13:56 EST — fatal reset during sm1's first head-layout test; GPU work held.**
+
+- c115 completed23 cases at10:31 with zero exits and matching-reference results. sm1 then launched
+  `t3k_h1` at about10:31:53: `OWN_TP_HEADS=4,2,2,4,2,2 OWN_TP_HEADS_MIN=16`, a3K trace test.
+  No saved evidence shows the later profiler/router-weight/speed stages were reached. c115's `h1` meant prompt-block1,
+  not this changed layout. Same tp115 binary; no new kernel bodies versus tp114.
+- Claude's saved live tool response confirms Gen4x16 x6, normal power and clean preflight immediately
+  before the test; stable.env and tp115 both retain serial1. No evidence of Gen5/overlap being enabled.
+- BMC fault event10:33:47; recovery10:34:09 records reset0x88000800, fatal CPU0bank5 statusbea0000000000108.
+  This is the same fatal reset class; exact initial hang time/cause remains unknown. The changed layout
+  is associated with the failure, not proven causal. Bounded source review found no concrete bounds/order bug.
+- Recovery Wi-Fi initialization failed(-110); Linux kept logging until13:34. Power cycle13:34:58/13:35:00
+  led to current boot040ec23b... at13:36:48 with working Wi-Fi. No current-boot GPU test was launched.
+- sm1 logs/marks/summary are zero bytes; its buffered logging and missing process maps prevent phase attribution.
+  Git HEAD7fac34dca also references an empty object; preserved, not repaired. Do not infer a badSSD from this.
+- The workaround has now failed with this changed workload. Prior54 +c11523 passing starts remain valid
+  observations, not proof of a reliable fix or hardware health. Do not blindly repeat sm1 or enable Gen5/overlap.
+- No model/compiler active. `six.active=freeze-audit-20261115T135022` holds helpers. No restart, device setting
+  change or test is queued; current root link rates were not read/reapplied after reboot.
+- [Incident report](/home/steve/diagnostics/freeze-20261115T135022/REPORT.txt). Source snapshots, full boot logs, BMC events and recovered Claude actions saved.
+
 **November 15, 2026 10:15 EST — stable mode adopted for all six-card work; tp115 builds with it as the default.**
 - Owner (09:3x): incorporate Codex's workaround so kernel work can proceed reliably. Reviewed: `OWN_PX_SERIAL=1`
   makes each card's compute queue spin after every prompt-exchange push until all peers' copies landed (no overlap,
