@@ -1,5 +1,308 @@
 # Current Workspace State
 
+**November 15, 2026 00:55 EST — conservative mode passed 54 fresh starts; stability test finished.**
+
+- The additional 40 cases passed, bringing the total to 54 (27 each at 34K/95K),
+  each 256 output IDs exactly matching the saved reference. 118.4 minutes of active model
+  work, from November 14 22:49:49 to November 15 00:53:45 EST including gaps. No new
+  GPU/PCIe/CPU/IOMMU fault signature or reset; same boot 03ee67c4 throughout.
+- Tested `OWN_PX_SERIAL=1`, same pinned tp114 binary, new opt-ins OFF, BIOS 11.02,
+  six Gen4x16 CPU root links and normal caps (two 275W, four 230W). Gen4 remains
+  runtime-only and is lost at reboot. Other peer paths remain; this is not a no-peer test.
+- Median prompt throughput 655.6/643.9 tok/s; decode 95.87/88.27 tok/s.
+  Prompt throughput is about 13% below prior successful default-mode controls.
+- This supports a provisional workload workaround. Exact cause and hardware health remain
+  unresolved: serial waits change software ordering and hardware load timing. Repeated two-prompt
+  coverage does not qualify all options/workloads. No component replacement is established.
+- Model test and log monitor are inactive/successful; no GPU worker/compiler remains. The temporary
+  next-boot collector is disarmed/disabled. No more tests, resets or reboots are queued.
+  `six.active=extended-40-20261114T2326` is retained; old campaigns/rux8 remain held.
+- Further model work must retain the conservative settings pending a deliberate review. No production
+  default changed. On a new fault, preserve evidence and qualify the source-only local/no-peer fallback
+  before use; do not repeat this unchanged batch. No hardware swap is yet justified by an isolated defect.
+- [Completed report](/home/steve/diagnostics/serial-exchange-20261114T2248/extended-40-20261114T2326/REPORT.txt) and [all 54 checked results](/home/steve/diagnostics/serial-exchange-20261114T2248/extended-40-20261114T2326/summary.json).
+
+**November 14, 2026 23:26 EST — extended conservative-mode stability test running.**
+- Owner authorized the next step after fourteen passing starts. Forty additional fresh full-model processes
+  alternate 34K/95K prompts, each256 reference-checked IDs. Expected about88minutes, for about2hours active
+  testing and54 starts total if complete. Same binary, OWN_PX_SERIAL=1, BIOS11.02, Gen4x16, normal caps.
+- Live unit `serial-exchange-extended-20261114T2326.service`; evidence
+  `/home/steve/diagnostics/serial-exchange-20261114T2248/extended-40-20261114T2326/`.
+  First fault blocks later launches; no automatic retry/reset/reboot or hard kill; process maps saved every5s.
+- Current boot03ee67c4... unchanged, no new kernel fault before launch. Guard transferred from completed
+  confirmation-12 to extended-40-20261114T2326 and retained after completion. Other GPU work stays blocked.
+- Companion `stability-log-monitor-20261114T2342.service` also watches AMD-Vi/IOMMU faults, CPU lockups,
+  RCU stalls and kernel BUG/panic signatures. It only writes STOP to prevent later starts; no worker signals.
+- A temporary log-only next-boot collector is enabled: `stability-postboot-capture-20261114.service`.
+  It reads boot/kernel/network logs if the boot changes; no device probes, GPU launches or recovery actions.
+- This remains stability evidence only: no confirmed root cause or defective component. On failure, save
+  evidence and move to reviewed per-card local/high-memory isolation, not another unchanged model campaign.
+
+**November 14, 2026 23:22 EST — serial-exchange candidate passed 14 starts; tests finished, GPUs idle.**
+- OWN_PX_SERIAL=1 completed fourteen fresh model starts in 31 minutes: seven 34K and seven 95K prompts,
+  each 256 output IDs exactly matching the existing reference. No new kernel fault or reset; normal exits.
+- Same pinned tp114 binary, BIOS11.02, all-six Gen4x16, normal caps and new opt-ins OFF. The setting adds
+  waits after principal prompt transfers; other peer paths remain. Gen4 is runtime-only and lost at reboot.
+- Median prompt throughput 655.7 / 644.0 tok/s, about 13% below prior successful default-mode controls;
+  decode 95.78 / 88.30 tok/s, similar to those controls. Diagnostic measurements only.
+- This is a provisional workaround, not a root-cause finding or proof of repaired hardware. Reduced overlap
+  changes load timing as well as software scheduling. No specific GPU, cable, adapter, PSU, board or CPU is blamed.
+- Both serial-test units are inactive/successful. No model worker or compiler remains; no further test/reset/
+  reboot is queued. `six.active=confirmation-12` is retained to block helpers. Old campaigns/rux8 stay stopped.
+- Further model stability work should retain this conservative mode; do not silently restore default overlap.
+  Exact conditions and limitation: `/home/steve/diagnostics/serial-exchange-20261114T2248/REPORT.txt`.
+- If it fails, preserve new evidence and move to heavy local per-card, then independent aggregate no-peer work.
+  Source-only fallback `/home/steve/diagnostics/local-load-prep-20261114/` is uncompiled/untested; qualify first.
+
+**November 14, 2026 22:55 EST — both serial-exchange model checks passed; bounded confirmation running.**
+- OWN_PX_SERIAL=1 passed fresh 34K and 95K prompts, each 256 exact output IDs, with no new kernel fault.
+  Prompt reading was 51.52s / 148.22s (about 13% lower throughput than the previous successful default-mode
+  controls); decode 96.02 / 88.44 tok/s. These two passes do not establish a fix.
+- Live unit `serial-exchange-confirm-20261114T2255.service`: twelve fresh processes alternating the same
+  34K/95K cases, each once. Same pinned tp114 binary, BIOS11.02, all-six Gen4, normal caps; new opt-ins OFF.
+  First fault blocks all later launches; no automatic retry/reset/reboot or hard kill. Process maps saved.
+- Evidence `/home/steve/diagnostics/serial-exchange-20261114T2248/confirmation-12/`. Guard ownership transferred
+  from completed `first-two` to `confirmation-12`; helpers and prior optimization campaigns remain held.
+- If all fourteen starts pass, treat this only as a provisional workload workaround; no component is cleared
+  or blamed. If it fails, preserve evidence and move to heavy local per-card / no-peer aggregate isolation.
+
+**November14,2026 22:50EST — targeted real-model comparison: principal exchanges serialized.**
+- Owner asks how to solve the continuing failures. Existing diagnostic OWN_PX_SERIAL=1 adds an immediate
+  GPU-side wait after each principal prompt exchange, reducing its overlap with subsequent compute. Same
+  tp114 binary/math/placement/normal caps, optionalskip39/indexsplit OFF, BCS transport unchanged. Engram,
+  PRT/index-list, pair and decode paths retain their own scheduling; this is not a global no-peer mode.
+- All-six Gen4x16 reapplied22:48:25 to match latestfailedBIOS11.02 baseline; bothends verified, no newfault
+  or power/ASPM/clock change. Currentboot03ee67c4... unchanged. Current-boot symbols and child process maps
+  are captured so a subsequent reported user-space address can be resolved if present.
+- Live unit `serial-exchange-first-20261114T2250.service`: exactly34K then95K, each256IDs against same refs.
+  First-fault stop, no unchanged retry/reset/reboot; faulted runs skip further PCI/hwmon reads. Source/runner
+  reviews found no blocker. Only successful exact-output cases justify a separately planned confirmation.
+- Evidence `/home/steve/diagnostics/serial-exchange-20261114T2248/first-two/`. No fix or stability claim yet;
+  the other full-model campaigns and rux8 remain stopped. This campaign owns six.active, retained afterdone.
+
+**November14,2026 22:38EST —77small isolation cases passed; exact reset cause unresolved, GPUs idle.**
+- After the BIOS11.02 fatal reset,36compute-capable-queue local/host/peer-pull checks,36dedicated-copy-engine
+  local/host/peer-push checks and5six-card gated concurrent-copy arrangements all passed. Each used16MiB/
+  16rounds with full byte checks. All15pairs/both directions covered. No new GPU/PCIe/MCE fault or reset.
+- These omit full-model VRAM/compute/power use and its GPU peer polling, producer-event chains and region
+  copies. They do NOT establish healthy hardware or identify a defective GPU/cable. BIOS+Gen4 failed remedies;
+  driver/runtime interaction and hardware under full load both remain possible. No default was promoted.
+- All probes finished. No GPU worker/compiler, further test or reboot is queued. Full-model/rux8 STOPs retained;
+  `six.active` now belongs to `concurrent-copy-isolation-20261114T2233` and is deliberately held against helpers.
+- Current boot03ee67c4... remains BIOS11.02, Gen5x16 root links after owner's restart, unchanged normal caps.
+  Detailed outcome: `/home/steve/diagnostics/freeze-20261114T2215/FOLLOWUP.txt`; per-case evidence in its3listeddirs.
+- Next work needs a discriminating high-load/per-card or reduced communication test; do not rerun unchanged
+  full-model campaigns or imply a specific physical replacement is confirmed.
+
+**November14,2026 22:30EST — basic36cases passed; dedicated copy-engine isolation running.**
+- Six local card checks plus15host-staged/15peer-pull pair cases all passed by22:27:59, no mismatch/reset/fault.
+  This was low-load16MiB/16rounds, regular compute-capable queues(ordinal0 flags7); not hardware clearance.
+- Model BCS instead uses COPY&&!COMPUTE in-order immediate lists and source-side pushes. An isolated native
+  diagnostic extends the existing probe to that queue/list class and push direction, retaining handles and
+  full source/destination byte checks. No model/optimization code changed. Source review passed; native build
+  completed after priorGPUjobs ended, while a short owned build lock replaced six.active; no overlapping GPUwork.
+- Live unit `copy-engine-isolation-20261114T2230.service`, evidence `/home/steve/diagnostics/copy-engine-isolation-20261114T2227/`.
+  Six local cases, then host control and peer push for each15pairs, each once; first-fault stop without further
+  hardware reads or retry/reset/reboot. Same boot/Gen5/normal caps, no setting writes. No fullmodel is queued.
+- Basic results: `/home/steve/diagnostics/pair-isolation-20261114T2219/summary.json`. Exact defect remains unproven.
+
+**November14,2026 22:20EST — independent per-card/per-pair transfer isolation running.**
+- Live user unit `pair-isolation-20261114T2220.service`, evidence `/home/steve/diagnostics/pair-isolation-20261114T2219/`.
+  Six single-device local cases, then a host-staged control and direct peer-copy case for each of15pairs;
+  each once,16MiB buffers/16rounds, retained IPC handles. Native LevelZero probe, no model kernels/peer flags.
+- All devices are enumerated, but contexts/allocations/copy commands only target the selected card/pair.
+  Thus an enumeration failure cannot identify the selected card; a pass cannot clear full-load hardware.
+- Current boot/root links remain at their reboot-default Gen5x16, normal caps; no link/power/ASPM/clock writes.
+  Probe records phase, selected BDFs, full data comparison, process maps and kernel logs. First failure stops
+  subsequent launches and skips hardware status reads; no automatic kill/retry/driver reset/reboot.
+- This campaign owns six.active and retains it for review. Full-model tests and optimizations remain stopped.
+
+**November14,2026 22:17EST — BIOS11.02 also failed; full-model campaigns stopped.**
+- Five full-model starts passed; sixth start r05_x34k_off at21:51:53 failed after model upload. Its preflight
+  confirms BIOS11.02 boot, six Gen4x16 root links, normal caps and both new tp114 opt-ins OFF.
+- Recovery21:54:46 recorded the same fatal bank5/data-fabric reset, CPU13, microcode0xb002162. Latest error
+  address0x703721b1106a is not resolved: test-boot kernel symbols were saved, but this user-range address
+  requires the lost process map. Do not relabel this event pci_conf1_read from an earlier incident.
+- Recovery Wi-Fi initialization failed(-110) while Linux logged until22:02:49; owner then manually restarted.
+  Current boot03ee67c4-9eda-4449-a1c5-bea4cca16c72 began22:05:23, BIOS11.02 remains and Wi-Fi works.
+- Gen4 and BIOS update are both failed remedies. STOP added to confirmation; all full-model campaigns/rux8
+  remain blocked, no GPU/compiler active, six.active retained. No specific component is proved defective.
+- Next: independent per-card/per-pair bounded transfer isolation, first-fault stop, no unchanged full-model
+  retry and no automatic reboot/driver reset. Evidence `/home/steve/diagnostics/freeze-20261114T2215/REPORT.txt`.
+
+**November 14, 2026 21:44 EST — first BIOS11.02 baseline passed; 16-run confirmation started.**
+- All30 retained-handle peer-copy directions passed. First34K baseline completed21:43:11, all256 IDs exact,
+  prompt44.54s and decode96.32tok/s; no GPU/PCIe/machine-check fault. This is only one full model start.
+- Live user unit `bios1102-confirm-20261114T2144.service` runs16 fresh unchanged baselines alternating34K/95K.
+  All-six Gen4, normal caps, same binary and both optional tp114 changes off. Same conditions as the failed
+  preflash campaign except BIOS/microcode. No other GPU job/compiler, automatic retry/reset/reboot or new
+  optimization. Stop future launches on first fault. Campaign owns six.active and retains it after completion.
+- Evidence: `/home/steve/diagnostics/bios1102-validation-20261114T2139/confirmation-20261114T2143/`.
+  Firmware benefit and the original exact defective component remain unproven pending validation.
+
+**November 14, 2026 21:42 EST — BIOS11.02 boot verified; controlled validation started.**
+- Current boot `f0afb59c-7916-4937-887e-6ae3a372a8ec` began21:28:48 after the planned restart. BIOS11.02
+  and CPU microcode0xb002162 verified (previous0xb00211e). Wi-Fi/SSH work; six GPUs detected at normal caps.
+  Kernel records the planned software reset, with no new fatal processor, GPU or PCIe error.
+- All68 selected common BIOS controls preserved (MCIO widths/speeds, ASPM, IOMMU, SATA, UEFI, secure boot,
+  exposed CPU/power settings). Boot entries were rebuilt and Ubuntu boots. Newly exposed firmware settings
+  and removed Power Supply Idle Control are documented; Auto is not proof of identical firmware behavior.
+- All six root links reapplied to Gen4 x16 at21:40:58, both ends verified, no power/ASPM/clock change. This
+  keeps the link condition of the failed preflash run. Current-boot symbols were saved before GPU tests.
+- Live user unit `bios1102-first-20261114T2142.service`: one retained-handle peer-health probe then one
+  unchanged 34K baseline; first-fault stop, no automatic retry/reset/reboot. Runner owns six.active when
+  admitted; other campaigns/prototypes remain held. No optimization/default change is being tested.
+- Evidence: `/home/steve/diagnostics/bios1102-validation-20261114T2139/`; BIOS improvement is still unproven.
+
+**November 14, 2026 21:21 EST — BIOS11.02 flash completed; authorized graceful restart scheduled.**
+- BMC task9 reports Completed / OK, end time21:20:00 EST. Official image flashed once with BIOS settings
+  preservation. The authorized graceful restart is scheduled with shutdown -r +1; its exact time is in planned-reboot.json.
+- A one-shot read-only startup capture is enabled: `bios-update-postboot-capture-20261114.service`.
+  It records BIOS version, GPU enumeration and network/SSH logs; it starts no GPU work and changes no hardware.
+- Next: verify BIOS11.02, preserved settings/boot order, all six GPUs, normal caps and access before a fresh
+  bounded test. Runtime Gen4 was lost at the earlier reboot; don't claim it remains applied. Both old
+  optimization campaigns, the failed Gen4 confirmation and rux8 stay stopped; retain `six.active`.
+- Flash proof and startup results: `/home/steve/diagnostics/freeze-20261114T2114/firmware-update/`.
+  The all-six Gen4 failure is confirmed; firmware effectiveness and the exact defective component remain unknown.
+
+**November 14, 2026 21:18 EST — BIOS flash in progress; do not power off/reboot.**
+- Official BIOS11.02 image accepted at 21:18:00 (HTTP202), task9 running. Controller explicitly reports
+  BIOS Flashing; Config2 preserves BIOS settings, Action2 keeps idle host running. BMC is unchanged.
+- No automatic reboot is scheduled. Wait for explicit task completion before the authorized planned restart.
+  Status and POST records: `/home/steve/diagnostics/freeze-20261114T2114/firmware-update/`.
+- GPU work remains held. This is the first firmware POST; an earlier local invocation without its required
+  argument exited before any network request and is recorded separately.
+
+**November 14, 2026 21:17 EST — all-six Gen4 also failed; proceeding to the authorized BIOS update.**
+- Seven fresh model runs passed (first baseline plus six confirmation cases). The eighth start at 15:54:27
+  failed during prompt work; its preflight confirms all six root links at Gen4 x16, normal GPU caps and
+  both new tp114 options disabled. All-six Gen4 did not prevent the fatal reset.
+- Recovery at 15:57:36 recorded the same fatal bank-5/data-fabric reset signature. Wi-Fi initialization
+  failed afterward (-110), while Linux logged through 21:01:39. A later power cycle at 21:02 preceded the
+  current boot `f0d0a89d-1ecd-4696-80c7-7f54d27bfa32`, started 21:04:25. Wi-Fi now works.
+- No specific bad card/cable/PSU/CPU is identified. The latest error address is not mapped using another
+  boot's symbols. Evidence: `/home/steve/diagnostics/freeze-20261114T2114/REPORT.txt`.
+- The failed campaign has STOP set; no model/compiler is running; its `six.active` guard remains. Gen4
+  runtime settings reset at reboot. No BIOS flash had started before the incident; BIOS remains 10.06.
+- Owner's existing step-2 authorization and renewed "continue" cover BIOS11.02. Fresh controller identity,
+  BIOS settings, boot order and normal power inventory are saved. One-shot Action2/Config2 (preserve settings,
+  idle running host) update is prepared under the incident's `firmware-update/`; it never retries or reboots.
+  Only explicit firmware completion permits the separately announced planned restart. No automatic GPU
+  launches are armed for the next boot. BIOS update is a diagnostic step, not a confirmed cure.
+
+**November 14, 2026 15:42 EST — owner authorized steps 1 and 2; all-six Gen4 first baseline passed, confirmation running.**
+- Owner: "Do allt hat then"; "you can do the 1 and 2 steps yourself" (Gen4 testing and BIOS update).
+  Physical cable/card substitutions remain the owner's action after localization. No further approval is
+  needed for the already authorized link trial or properly prepared BIOS update.
+- At 15:37:36, all six CPU-to-GPU root links changed from Gen5 x16 to Gen4 x16 through the kernel bandwidth
+  controls; both ends verified, no new fault, no GPU power/ASPM/clock change. Current boot remains f63f8053….
+- Retained-handle 64 KiB transfers passed all 30 directions; the first unchanged x34k_off model run then
+  passed all 256 IDs at 15:41:04 (44.48 s prompt, 95.57 tok/s decode), no new fault. This is not a stability verdict.
+- Live unit `all-six-gen4-confirm-20261114T154222.service`: 16 preregistered fresh baseline runs alternating
+  34K/95K, both tp114 opt-ins off, fixed normal power, first-fault stop and no retry/reset/reboot. Evidence:
+  `/home/steve/diagnostics/all-six-gen4-proposal-20261114T145322/confirmation-20261114T154222/`.
+  Campaign owns `six.active`; no builds or other GPU work may overlap. Initial runner-generation syntax error
+  occurred before any probe/model launched, was fixed, and is recorded under first-baseline/setup-note.txt.
+- BIOS 11.02 preparation is read-only while this comparison runs. ASRock documents BMC webUI/Redfish update;
+  actual BMC1.06 access and settings preservation are being checked. No firmware has yet been flashed.
+
+**November 14, 2026 14:55 EST — cause/fix review; all-six Gen4 isolation prepared, not applied.**
+- The latest record indicates a core stalled during PCI configuration access, followed by the recurring
+  watchdog/data-fabric reset; it does not identify a bad CPU or other specific component. Hardware, firmware
+  and driver/runtime interaction remain possible. Both new tp114 options were off in the failed run.
+- Read-only preflight passed for all six root-link speed controls. Proposed one-shot isolation and exact
+  checked change script: `/home/steve/diagnostics/all-six-gen4-proposal-20261114T145322/PLAN.txt`.
+  This expands the earlier one-link trial, so approval is pending. All links remain Gen5; model launches held.
+- Official ASRock BIOS 11.02 archive downloaded for inspection only (installed 10.06); it contains a 32 MiB
+  ROM and no release notes. Stored under `diagnostics/freeze-20261114T142938/firmware-review/`. No firmware
+  was executed/flashed and no confirmed fix for this exact event is claimed.
+
+**November 14, 2026 14:32 EST — another fatal reset during the repeat; Wi-Fi failed on recovery; owner then rebooted.**
+- The repeated 34K candidate-on run passed at 14:09:07 (43.33 s prompt, all 256 IDs exact). The following
+  candidate-off baseline finished uploading but never completed its prompt. Both new tp114 changes were off;
+  its preflight still recorded root20 at Gen4 x16, other roots Gen5, normal card limits. No rux8 code had run.
+- Last test-boot journal entry: 14:10:06. The 14:12 recovery boot logged the recurring fatal bank-5 error and
+  data-fabric sync-flood reset. Its recorded CPU address maps, using symbols saved during the interrupted test boot,
+  to `pci_conf1_read+0xe4`; this identifies the operation, not the target PCI device or defective component.
+- Recovery Wi-Fi initialization timed out (-110, MM_SET_STACK_START_REQ), while sshd listened and Linux logged
+  through 14:22:40. The owner manually rebooted after losing SSH; current boot began 14:26:13 and Wi-Fi works.
+  Thus the records show an automatic fatal reset followed by failed networking, then the owner's manual reboot.
+- The single-link Gen4 trial did not prevent the event after ten successful model runs. All root links are
+  Gen5 again after reboot; no link setting was reapplied. No GPU job, compiler or prototype is running. STOP
+  files block both campaigns and rux8; the stale campaign-owned `six.active` remains to block helpers.
+- Evidence: `/home/steve/diagnostics/freeze-20261114T142938/REPORT.txt`. First-pass timings remain recorded;
+  the repeat is interrupted and no new default is promoted. Further model launches are held for isolation,
+  not automatically retried. Exact hardware cause is still unresolved.
+
+**November 14, 2026 14:08 EST — tp114's interrupted stage passed; reversed-order repeat running.**
+- All six long-document comparisons completed at 14:07:29: all 1,536 output IDs matched the saved references,
+  both speculative answers matched plain decoding, and no new kernel entry occurred during the campaign.
+  Both arms retained normal card limits and the same single MCIO Gen4 link; boot ID is unchanged.
+- First-pass off/on results: 34K prompt 44.16/43.30 s, writing 97.42/98.24 tok/s; 95K prompt 128.13/124.87 s,
+  writing 91.41/93.66 tok/s; speculative writing after 95K 124.63/129.79 tok/s. These are first-pair timings,
+  not a repeated speed verdict or proof that the hardware problem is fixed.
+- Live unit `tg114-gen4-repeat-20261114T135746.service` runs the same six cases with each pair reversed,
+  in `/home/steve/dsv41-work/runs/tg114-gen4-repeat-20261114T135746/`. It checks the successful predecessor,
+  unchanged boot/link/power state and every 256-token answer. No retry/reset/reboot is configured.
+- Next lever: an isolated IQ2_S expert activation-sharing prototype is written in
+  `/home/steve/dsv41-work/rux8-scratch-20261114/`; source review only so far. It must compile without spills,
+  pass float-for-float checks, and show a material kernel gain before any engine integration. No compilation
+  runs beside the active speed tests. Repeating old rux7 tile choices was closed on insufficient upside.
+
+**November 14, 2026 13:54 EST — owner requested continuation; tp114's six unfinished long-document comparisons resumed.**
+- The earlier tg114 gate completed its trace, short-prompt and short speculative checks before the reset. Its
+  unfinished stage is now running in fresh processes: 34K and 95K plain off/on, then 95K speculative on/off.
+  Both arms use the same tp114 binary and normal card limits, with only the MCIO5/MCIO4 root link held at Gen4.
+  Each checks all 256 output IDs against the saved plain reference and stops further launches on a failed gate
+  or new GPU/PCIe/machine-check fault. No automatic reboot, driver reset or retry is configured.
+- Live user unit: `tg114-gen4-resume-20261114T135313.service`; evidence and runner:
+  `/home/steve/dsv41-work/runs/tg114-gen4-resume-20261114T135313/`. The reviewed pre-boot empty `six.active`
+  marker was replaced with this campaign's ownership token; it is released only when all six cases pass.
+  The 34K baseline passed at 13:55 (44.16 s prompt, 97.42 tok/s decode); candidate-on is in progress.
+- Source review found no new long-context bounds or ordering blocker in skip39 / index-score split; this is
+  not a hardware clearance. No production default has been changed. Fresh Gen4 comparisons must not be
+  mixed with the earlier all-Gen5 or capped-power timings to claim a speedup.
+
+**November 14, 2026 13:44 EST — remote Gen4 trial: three matching long-prompt runs passed; one MCIO link remains at Gen4.**
+- Kernel `pcie_bwctrl` exposes `PCIe_Port_Link_Speed_0000:20:01.1` at thermal cooling_device18. A single state-1
+  write at 13:37:25 changed the MCIO5/MCIO4 link (GPU 23:00.0) from 32 GT/s x16 to 16 GT/s x16; both ends verified.
+  Other five GPU root links remain 32 GT/s x16. No reboot, driver reset, BIOS flash, GPU power-cap or ASPM change.
+  This is a live diagnostic setting, not a persistent BIOS setting or proven fix.
+- Small retained-handle peer copies passed all 30 directions. Three fresh tp114 processes then ran the same
+  `tg114 x34k_off` configuration (33,815-token prompt, TP6/PX/512-token blocks, 256 output IDs), each exit 0 and
+  all IDs exactly matching `runs/e82/x34k_plain-ids.txt`. No GPU/PCIe/machine-check fault or reboot in the test window.
+  The selected link held Gen4 x16 throughout; sustained/peak GPU power limits read back unchanged. All test
+  processes have exited, and no more launches are queued. Three successful starts do not establish stability
+  or identify a defective part. Recheck the setting after any reboot/device reinitialization.
+- Between model runs, the journal recorded a Wi-Fi roaming failure at 13:42:33–35 followed by successful
+  reconnection on 2.4 GHz; Linux stayed running. This can cause a brief SSH interruption independently of a reset.
+  An output_poll_execute workqueue warning also recurred at 13:40:49. No network setting was changed.
+- Evidence `/home/steve/diagnostics/mcio-gen4-20261114T133604/REPORT.txt`. No automatic retry/reboot was used;
+  the older proposed BIOS procedure below was superseded for this trial by Linux's existing bandwidth control.
+
+**November 14, 2026 13:24 EST — stability audit: another fatal reset confirmed; cause unresolved; one no-peer model control passed.**
+- The 12:42 recovery boot recorded another bank-5 execution-unit watchdog and data-fabric sync-flood reset.
+  The preceding tg114 `x34k_off` run retained peer traffic; “off” disabled only its two optional new changes.
+  Wi-Fi then failed initialization (`MM_SET_STACK_START_REQ`, -110) although sshd started and Linux kept logging.
+- Correction to the earlier idle-hang account below: both the 02:05 and 10:31 recovery boots likewise had failed
+  Wi-Fi startup while Linux continued running. The owner checked SSH, not the local console. These records do
+  not establish an independent 10:53 idle whole-machine hang. Lower sustained GPU caps did not prevent resets,
+  but do not rule out PSU/cabling/transient power faults. The Seasonic powers both MCIO adapters and their GPUs.
+- Controls: small CPU-staged transfers passed; small peer copies passed all 30 directions when IPC export handles
+  were retained. A diagnostic that released handles per pair produced incorrect data; production already retains
+  handles, so that mismatch is not a model-reset diagnosis. Peer access is advertised, peer atomics are not;
+  the runtime's peer flag stores merit review, but their involvement in any fatal reset is unproven.
+- 13:21: one existing tp114 run with `OWN_TP=1 OWN_PX=0 OWN_PROMPT_BLOCK=1` used all six GPUs, staged cross-card
+  state through RAM, and skipped peer imports. A 36-token prompt plus four outputs passed (IDs matched the saved
+  reference), exit 0, no new kernel entries/reset. This short control changes placement, memory use and concurrency;
+  it is not a stability or full-quality qualification. No production source, power, firmware or boot setting changed.
+- Evidence and exact controls: `/home/steve/diagnostics/freeze-20261114T125829/REPORT.txt`; earlier audit and software
+  review: `/home/steve/diagnostics/freeze-audit-20261114T112032/`. No automatic retry/reset or background tracer was
+  installed. The stale pre-crash `dsv41-work/six.active` file was left untouched; optimization campaigns were not resumed.
+- Firmware slot records plus sysfs map MCIO GPUs to 23:00.0 (MCIO5/MCIO4 group) and 43:00.0 (MCIO2/MCIO1 group).
+  The November 9–10 corrected receive errors at 21:00.0 therefore affected an MCIO path, but do not prove the latest
+  reset's cause. A one-group Gen4 comparison is prepared in the incident's `next-isolation-test.txt`, not performed.
+
 **November 14, 2026 11:30 EST — power-cap test over (resets at 200 W and 175 W); an idle hang; tp113 gate at default power.**
 - 02:03 host reset (bank 5, 13th) during tg113's t3k_c1 at 200 W; 175 W applied 10:26; ~10:29 reset (14th, bank 5
   bea0000000000108) 0.2 s into t3k_c2 while it opened the six cards. Then 10:31-10:53 the host HUNG with nothing of ours
