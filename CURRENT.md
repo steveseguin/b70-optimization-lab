@@ -1,5 +1,18 @@
 # Current Workspace State
 
+**November 15, 2026 10:15 EST — stable mode adopted for all six-card work; tp115 builds with it as the default.**
+- Owner (09:3x): incorporate Codex's workaround so kernel work can proceed reliably. Reviewed: `OWN_PX_SERIAL=1`
+  makes each card's compute queue spin after every prompt-exchange push until all peers' copies landed (no overlap,
+  same queues / order / bits; 54/54 exact starts), plus the six GPU root links at Gen4 x16 (runtime-only cooling-device
+  setting) on BIOS 11.02. Cost ~13 % prompt reading; writing ~same. Not a root cause.
+- Incorporated: `dsv41-work/stable/` (`gen4.sh --apply` after every boot, `preflight.sh` before six-card work,
+  `stable.env`), repo copy `data/dsv41-bringup-20261109/stable-mode/`. tp115 sources (e067ce62d) = tp114 +
+  `OWN_PX_SERIAL` default 1 + skip39-1 and idxsplit-3 default on (both exact in tg114). Gate c115 (stable mode) builds
+  and runs it; then sm1: a stable-mode per-card budget and 3K / 10K A/Bs of loads moved to the two 275 W cards (every
+  exchange is now a barrier, so the slowest card sets each segment).
+- Results banked: round19-tg113 (tp113 exact; 3K 4.73 -> 4.30-4.47 s, 10K 14.95 -> 13.66 s), round19-tg114 (tp114
+  switches exact; 3K -2.5 %, x95k read -2.5 %, answers at 95K +2.5 %, guessing at 95K +4 %).
+
 **November 15, 2026 00:55 EST — conservative mode passed 54 fresh starts; stability test finished.**
 
 - The additional 40 cases passed, bringing the total to 54 (27 each at 34K/95K),
