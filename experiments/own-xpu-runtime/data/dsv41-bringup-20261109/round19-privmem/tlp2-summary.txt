@@ -1,0 +1,21 @@
+tlp2 start 2026-11-16 15:03:04 source own_run_v41_tp122 boot 7e1ee92b binary d7212687c2be1eb5
+smt active 0, cpus 8, bios 11.02
+tlp_p3k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+tlp_p3k: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+tlp_p3k: prompt: 3323 tokens read on the cards in 5.29s (626.7 tok/s; first step 0.81s incl. kernel build), first token 2581
+tlp_p3k: decode: 7 steps after the first, 0.011 s/step, 86.99 tok/s
+tlp_p3k: host io during decode: 1.6 MiB read from disk, 0 major page faults; engram rows 1262.7 us per step and card (slowest card 1270.5 us; copy + decode launch calls 23.2 us)
+tlp_p3k exit 0 (case 1)
+tlp_p3k IDS8_SAME
+tlp_x200k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+tlp_x200k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+tlp_x200k: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+tlp_x200k: prompt: 194000 tokens read on the cards in 301.57s (643.4 tok/s; first step 0.86s incl. kernel build), first token 2581
+tlp_x200k: decode: 7 steps after the first, 0.013 s/step, 75.74 tok/s
+tlp_x200k: host io during decode: 2.3 MiB read from disk, 20 major page faults; engram rows 240.1 us per step and card (slowest card 248.1 us; copy + decode launch calls 24.4 us)
+tlp_x200k: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.756 2.583 2.227 2.583 2.593 2.410; host MemAvailable 6173 MiB
+tlp_x200k: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.720 2.547 2.191 2.547 2.558 2.375; host MemAvailable 6162 MiB
+tlp_x200k: tpd-mem: position 138752 (block of 512, step 272): free GiB per card 2.684 2.510 2.154 2.511 2.530 2.346; host MemAvailable 6110 MiB
+tlp_x200k exit 0 (case 2)
+tlp_x200k IDS8_SAME
+ALLDONE 2026-11-16 15:09:14: 2 fresh starts

@@ -110,6 +110,21 @@ No slow block this time, so the gate never had to hold anyone; it cost nothing m
 tpd-3's new summary line, answer steps (per step and card): x95k 22.8 minor page faults and **5.2 sleeps** inside the
 engram reads (484 us); x200k 18.3 and 4.2 (459 us); p3k 19.2 and 2.2 (140 us). The sleeps are waits for the disk.
 
+## Where long-context READING time goes (tlp2, 2026-11-16 15:03-15:09, tp122)
+
+Prompt-block timelines (two 512-token blocks, every card) at the start of the 3K read and at ~189K of the 194K read
+(`tlp2-cmp-p3k-x200k.txt`). Card 2's GPU time per block: **733 ms at 3K, 821 ms at ~189K (+89 ms)**, of which
+**`IndexerScoreBM` +65 ms** and `IndexerScoreBCM` +9 ms (the candidate-only layers, fixed 16,384 rows per token);
+the selects together ~+3.5 ms, the sparse attention +2.8 ms. So the reading cost that grows with the context is the
+index scores of layers 2 / 8 / 14 (half the positions) and 20 (all of them): each card scores its ~43 tokens of a
+half against every row. The kernel runs at ~44 % of the cards' FP32 instruction rate: its sums are a fixed order of
+separate multiplies and adds (the build has `-ffp-contract=off`), so neither fused multiply-adds nor the matrix
+units can give the same bits; the room is in the memory side (each token reads all 256 B key rows itself) and the
+per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it bit for bit): the existing
+4-rows-per-item form (`OWN_IDX_RP`, +2.4 % reading at 95K in round 18 but never used for prompt halves) and the
+groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
+the caches).
+
 ## c122: dtopk-1 gated (2026-11-16 14:08-15:02, tp122 = tp121 ac7d505ac5, built with `-exclude_ir`)
 
 dtopk-1 (`dtopk-README.md`): at one-token steps past 32,768 index rows, each card picks the top 512 of its own share
@@ -193,5 +208,5 @@ Two levers follow:
   bench119.sh kvb1.sh c118q.sh build118q.sh chainq119c.sh chainq120.sh chainq120b.sh build120.sh kvb2.sh c120.sh
   ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c c122.sh dtb1.sh chainq122.sh build122.sh
   zebin_sizes.py chainq123.sh tlp2.sh ck1m.sh chainq124.sh mk1m.py dec.py kern_isa.py
-  zebin-tp120-tp122.txt`, `ew1-*`, `c122-*`, `dtb1-*`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
+  zebin-tp120-tp122.txt build123.sh tsx1.sh c123.sh chainq125.sh`, `tlp2-*`, `ew1-*`, `c122-*`, `dtb1-*`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
   5dc319d3d5 privmem-2).

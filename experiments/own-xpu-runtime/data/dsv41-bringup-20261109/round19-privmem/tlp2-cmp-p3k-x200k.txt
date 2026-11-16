@@ -1,0 +1,48 @@
+== card 2: busy per step A 732.587 ms, B 821.211 ms, B - A +88.624 ms
+    ms A     ms B      B-A n/step A      B  launch
+   1.743   67.106  +65.363     16.0    8.0  IndexerScoreBM
+   0.000    9.431   +9.431      0.0    8.0  IndexerScoreBCM
+  27.400   30.208   +2.808     78.0   78.0  OutM<SparseOutJB<512u, 1u, 16u, false> >
+  67.402   69.454   +2.052     30.0   30.0  RoutedUP<RU3IQ2XXS<20u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u>
+  15.734   17.096   +1.362     54.0   54.0  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsWSC<W...
+   0.000    1.349   +1.349      0.0    6.0  TopKSelMQ<96>
+   0.282    1.515   +1.234     16.0    2.0  TopKSelM<false>
+  46.671   47.783   +1.111     30.0   30.0  RoutedUX<RU3IQ3XXS<9u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u, 2u, 1u, ...
+  30.668   31.623   +0.955     54.0   54.0  RowsP<DenseRowsWSC<WsQ8<40u>, 16u, 2u, 2u, 0u, 0u> >
+  41.974   42.836   +0.862     20.0   20.0  RoutedUX<RU3IQ1S<20u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 4u, 1u, 0u...
+  29.951   30.775   +0.824     54.0   54.0  RowsP<DenseRowsWSC<WsQ8<256u>, 16u, 2u, 2u, 0u, 0u> >
+  11.034   11.714   +0.679    156.0  156.0  XchgPair
+  16.269   16.905   +0.636     74.0   74.0  ScoreM<SparseScoreHG<512u, 4u> >
+   7.985    8.545   +0.560     24.0   24.0  RoutePMRows<RowsPair<TokRows<HcFinishRows>, RowsPair<DenseRowsWSC<W...
+  14.175   14.664   +0.490     24.0   24.0  RowsP<DenseRowsWSC<WsQ6<5u>, 16u, 2u, 1u, 0u, 0u> >
+   0.000    0.487   +0.487      0.0    8.0  TopKSelMCQ
+  13.853   14.298   +0.445     12.0   12.0  RoutedUX<RU3IQ2XS<9u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 1u, 2u, 0u...
+  36.671   37.072   +0.401     28.0   28.0  RoutedUX<RU3IQ2S<9u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 1u, 2u, 0u,...
+  68.044   68.432   +0.389     28.0   28.0  RoutedUX<RU3IQ2S<20u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 4u, 1u, 0u...
+  10.743   11.129   +0.386    156.0  156.0  SkDotsWM<8u>
+   7.872    8.208   +0.337      6.0    6.0  RoutedUX<RU3IQ2XXS<9u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u, 1u, 1u, ...
+   0.000    0.295   +0.295      0.0    2.0  TopKSelMBQ<32>
+== mean over cards: busy per step A 732.884 ms, B 821.879 ms, B - A +88.995 ms
+    ms A     ms B      B-A n/step A      B  launch
+   1.753   63.949  +62.196     16.0    8.0  IndexerScoreBM
+   0.000    9.017   +9.017      0.0    8.0  IndexerScoreBCM
+ 175.736  180.358   +4.622    797.0  797.0  XchgWaitB
+  23.806   26.429   +2.623     78.0   78.0  OutM<SparseOutJB<512u, 1u, 16u, false> >
+  14.063   15.550   +1.487     74.0   74.0  ScoreM<SparseScoreHG<512u, 4u> >
+  66.224   67.684   +1.460     30.0   30.0  RoutedUP<RU3IQ2XXS<20u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u>
+   0.000    1.292   +1.292      0.0    6.0  TopKSelMQ<96>
+   0.280    1.436   +1.156     16.0    2.0  TopKSelM<false>
+  45.423   46.070   +0.647     30.0   30.0  RoutedUX<RU3IQ3XXS<9u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u, 2u, 1u, ...
+  41.900   42.492   +0.592     20.0   20.0  RoutedUX<RU3IQ1S<20u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 4u, 1u, 0u...
+  29.618   30.148   +0.530     54.0   54.0  RowsP<DenseRowsWSC<WsQ8<256u>, 16u, 2u, 2u, 0u, 0u> >
+  26.671   27.194   +0.523     54.0   54.0  RowsP<DenseRowsWSC<WsQ8<40u>, 16u, 2u, 2u, 0u, 0u> >
+   0.000    0.470   +0.470      0.0    8.0  TopKSelMCQ
+   7.772    8.168   +0.396      6.0    6.0  RoutedUX<RU3IQ2XXS<9u>, 6u, 4u, 8u, 1u, 0u, 0u, 256u, 64u, 1u, 1u, ...
+  13.568   13.957   +0.388     12.0   12.0  RoutedUX<RU3IQ2XS<9u>, 6u, 2u, 8u, 0u, 0u, 0u, 128u, 0u, 1u, 2u, 0u...
+  12.343   12.662   +0.319     24.0   24.0  RowsP<DenseRowsWSC<WsQ6<5u>, 16u, 2u, 1u, 0u, 0u> >
+   0.000    0.288   +0.288      0.0    2.0  TopKSelMBQ<32>
+  13.718   13.958   +0.240     24.0   24.0  RowsP<DenseRowsWSC<WsQ6S<32u>, 16u, 2u, 1u, 0u, 100u> >
+  13.644   13.851   +0.207    156.0  156.0  SkDotsWM<8u>
+   7.384    7.556   +0.172    108.0  108.0  RowsP<DenseRowsWS<WsQ8<160u>, 8u, 2u, 2u, 1u, 0u> >
+   8.935    9.094   +0.159     54.0   54.0  RowsP<DenseRowsWSC<WsQ8<72u>, 16u, 2u, 2u, 0u, 0u> >
+  14.031   14.178   +0.147     40.0   40.0  RowsP<DenseRowsWSC<WsQ6<16u>, 16u, 2u, 1u, 0u, 0u> >
