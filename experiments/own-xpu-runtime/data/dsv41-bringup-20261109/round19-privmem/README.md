@@ -110,6 +110,28 @@ No slow block this time, so the gate never had to hold anyone; it cost nothing m
 tpd-3's new summary line, answer steps (per step and card): x95k 22.8 minor page faults and **5.2 sleeps** inside the
 engram reads (484 us); x200k 18.3 and 4.2 (459 us); p3k 19.2 and 2.2 (140 us). The sleeps are waits for the disk.
 
+## c122: dtopk-1 gated (2026-11-16 14:08-15:02, tp122 = tp121 ac7d505ac5, built with `-exclude_ir`)
+
+dtopk-1 (`dtopk-README.md`): at one-token steps past 32,768 index rows, each card picks the top 512 of its own share
+of the scores, the six candidate lists are exchanged, and every card merges them. The pick is the same as from all
+the scores at once because the order is total (score, then position); no score rows travel between cards any more.
+
+1. One card, `test_dtopk` (`dtb1-*`): **PASS (441 cases)** incl. ties, +0/-0, -inf and NaN at 194K / 352K / 705K.
+2. Six cards, `OWN_IDX_DTOPK=2` (on + the old selects into shadow buffers, compared on the card): 10,710 lists at 3K
+   (thresholds lowered to 513), 7,650 at 95K, 30,690 at 194K: **0 differ**; answers identical.
+3. On (`OWN_IDX_DTOPK=1`), answers identical to the references:
+
+| context | writing before | writing with dtopk-1 | reading |
+|---|---|---|---|
+| 3K (below the threshold: off) | | 99.75 tok/s | 677.4 tok/s |
+| 194K | 90.94 (same binary, `=0`) | **95.85** | 645 |
+| 388K | 76.90 (tp115, lc2) | **92.40** | 613.8 |
+| 705K | 64.40 (c118p) | **89.68** | 571.7 (c118p 571.6) |
+
+Writing now loses only ~10 % from 3K to 705K (it lost ~35 %). Kernel code against tp120 (`zebin-tp120-tp122.txt`):
+every shared kernel the same size, differing in 8-11 bytes (a build stamp; tp118p -> tp120 had real changes), plus the
+new kernels; the images shrank from 250.3 to 196.7 MiB (no SPIR-V). `malloc_trim` after the load frees ~170-210 MiB.
+
 ## ew1: the drive kept awake (2026-11-16 13:25-13:44, tp120, x95k plain, 256 answers each, all identical)
 
 | run | writing | engram rows per step and card | reading |
@@ -170,5 +192,6 @@ Two levers follow:
 - Scripts: `pr4.sh pr5.sh pr6.sh c118.sh c118p.sh build118p.sh chainq118c.sh chainq118p.sh hold119.sh chainq119b.sh
   bench119.sh kvb1.sh c118q.sh build118q.sh chainq119c.sh chainq120.sh chainq120b.sh build120.sh kvb2.sh c120.sh
   ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c c122.sh dtb1.sh chainq122.sh build122.sh
-  zebin_sizes.py chainq123.sh tlp2.sh`, `ew1-*`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
+  zebin_sizes.py chainq123.sh tlp2.sh ck1m.sh chainq124.sh mk1m.py dec.py kern_isa.py
+  zebin-tp120-tp122.txt`, `ew1-*`, `c122-*`, `dtb1-*`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
   5dc319d3d5 privmem-2).

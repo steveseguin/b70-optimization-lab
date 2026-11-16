@@ -1,0 +1,75 @@
+Intel(R) Arc(TM) Pro B70 Graphics
+scores                   n | rows masked part | l20: rows blist marks | host | us: today rows blocks | dtopk s1 rows merge, s1 blocks merge
+n 300: T 320, shares of 64 rows (last [320, 320)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal                 300 | y    y      y    | y    y     y     | y    |      7.9     8.5 |    13.8   15.4,    15.1   22.6
+few values (ties)      300 | y    y      y    | y    y     y     | y   
+all +0 / -0            300 | y    y      y    | y    y     y     | y   
+ties at threshold      300 | y    y      y    | y    y     y     | y   
++-0 at threshold       300 | y    y      y    | y    y     y     | y   
+mostly -inf            300 | y    y      y    | y    y     y     | y   
+with NaNs              300 | y    y      y    | y    y     y     | y   
+n 513: T 544, shares of 96 rows (last [480, 544)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal                 513 | y    y      y    | y    y     y     | y    |     23.2     8.4 |    13.2   34.8,    13.8   25.4
+few values (ties)      513 | y    y      y    | y    y     y     | y   
+all +0 / -0            513 | y    y      y    | y    y     y     | y   
+ties at threshold      513 | y    y      y    | y    y     y     | y   
++-0 at threshold       513 | y    y      y    | y    y     y     | y   
+mostly -inf            513 | y    y      y    | y    y     y     | y   
+with NaNs              513 | y    y      y    | y    y     y     | y   
+n 600: T 608, shares of 128 rows (last [608, 608)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal                 600 | y    y      y    | y    y     y     | y    |     10.5     3.9 |     5.6   15.8,     6.2   12.8
+few values (ties)      600 | y    y      y    | y    y     y     | y   
+all +0 / -0            600 | y    y      y    | y    y     y     | y   
+ties at threshold      600 | y    y      y    | y    y     y     | y   
++-0 at threshold       600 | y    y      y    | y    y     y     | y   
+mostly -inf            600 | y    y      y    | y    y     y     | y   
+with NaNs              600 | y    y      y    | y    y     y     | y   
+n 8192: T 8192, shares of 1376 rows (last [6880, 8192)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal                8192 | y    y      y    | y    y     y     | y    |     15.0     4.5 |    14.9   16.9,     6.6   12.8
+few values (ties)     8192 | y    y      y    | y    y     y     | y   
+all +0 / -0           8192 | y    y      y    | y    y     y     | y   
+ties at threshold     8192 | y    y      y    | y    y     y     | y   
++-0 at threshold      8192 | y    y      y    | y    y     y     | y   
+mostly -inf           8192 | y    y      y    | y    y     y     | y   
+with NaNs             8192 | y    y      y    | y    y     y     | y   
+n 50000: T 50016, shares of 8352 rows (last [41760, 50016)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal               50000 | y    y      y    | y    y     y     | y    |     40.4    19.7 |    16.5   17.0,     7.1   24.1
+few values (ties)    50000 | y    y      y    | y    y     y     | y   
+all +0 / -0          50000 | y    y      y    | y    y     y     | y   
+ties at threshold    50000 | y    y      y    | y    y     y     | y   
++-0 at threshold     50000 | y    y      y    | y    y     y     | y   
+mostly -inf          50000 | y    y      y    | y    y     y     | y   
+with NaNs            50000 | y    y      y    | y    y     y     | y   
+n 97000: T 97024, shares of 16192 rows (last [80960, 97024)); rows: 1 groups/card, 512 pairs/card, merge over 3072 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 5120 floats
+normal               97000 | y    y      y    | y    y     y     | y    |     61.4    27.1 |    18.4   17.2,     8.0   25.4
+few values (ties)    97000 | y    y      y    | y    y     y     | y   
+all +0 / -0          97000 | y    y      y    | y    y     y     | y   
+ties at threshold    97000 | y    y      y    | y    y     y     | y   
++-0 at threshold     97000 | y    y      y    | y    y     y     | y   
+mostly -inf          97000 | y    y      y    | y    y     y     | y   
+with NaNs            97000 | y    y      y    | y    y     y     | y   
+n 194000: T 194016, shares of 32352 rows (last [161760, 194016)); rows: 2 groups/card, 1024 pairs/card, merge over 6144 (span 8); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 6144 floats
+normal              194000 | y    y      y    | y    y     y     | y    |    278.2    45.5 |    18.6   18.3,    18.0   25.5
+few values (ties)   194000 | y    y      y    | y    y     y     | y   
+all +0 / -0         194000 | y    y      y    | y    y     y     | y   
+ties at threshold   194000 | y    y      y    | y    y     y     | y   
++-0 at threshold    194000 | y    y      y    | y    y     y     | y   
+mostly -inf         194000 | y    y      y    | y    y     y     | y   
+with NaNs           194000 | y    y      y    | y    y     y     | y   
+n 352000: T 352000, shares of 58688 rows (last [293440, 352000)); rows: 4 groups/card, 2048 pairs/card, merge over 12288 (span 16); layer 20: + 1 block groups/card, 2048 pairs/card, merge over 12288 (span 16), chunk 8192 floats
+normal              352000 | y    y      y    | y    y     y     | y    |    490.5   323.0 |    18.5   23.2,    23.1   25.4
+few values (ties)   352000 | y    y      y    | y    y     y     | y   
+all +0 / -0         352000 | y    y      y    | y    y     y     | y   
+ties at threshold   352000 | y    y      y    | y    y     y     | y   
++-0 at threshold    352000 | y    y      y    | y    y     y     | y   
+mostly -inf         352000 | y    y      y    | y    y     y     | y   
+with NaNs           352000 | y    y      y    | y    y     y     | y   
+n 705000: T 705024, shares of 117504 rows (last [587520, 705024)); rows: 8 groups/card, 4096 pairs/card, merge over 24576 (span 24); layer 20: + 2 block groups/card, 4096 pairs/card, merge over 24576 (span 24), chunk 16384 floats
+normal              705000 | y    y      y    | y    y     y     | y    |   1038.3   640.1 |    18.6   34.8,    23.4   38.9
+few values (ties)   705000 | y    y      y    | y    y     y     | y   
+all +0 / -0         705000 | y    y      y    | y    y     y     | y   
+ties at threshold   705000 | y    y      y    | y    y     y     | y   
++-0 at threshold    705000 | y    y      y    | y    y     y     | y   
+mostly -inf         705000 | y    y      y    | y    y     y     | y   
+with NaNs           705000 | y    y      y    | y    y     y     | y   
+PASS (441 cases)

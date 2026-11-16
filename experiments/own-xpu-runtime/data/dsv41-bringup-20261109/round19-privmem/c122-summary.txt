@@ -1,0 +1,140 @@
+c122 start 2026-11-16 14:08:08 source tp122: source commit ac7d505ac5 boot 7e1ee92b binary d7212687c2be1eb5
+smt active 0, cpus 8, bios 11.02
+p3k_dt2: OWN_IDX_DTOPK=2: idxsplit-2's one-token layers select by candidates from 513 rows (layer 20 past 2,048 blocks), + the gather and the full selects into shadows, compared on the card; candidate area at arena float 65198448, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p3k_dt2: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k_dt2: malloc_trim after the load: host MemAvailable 5345 -> 5536 MiB
+p3k_dt2: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_dt2: prompt: 3323 tokens read on the cards in 4.98s (681.5 tok/s; first step 0.86s incl. kernel build), first token 2581
+p3k_dt2: decode: 255 steps after the first, 0.010 s/step, 95.64 tok/s
+p3k_dt2: host io during decode: 43.7 MiB read from disk, 15 major page faults; engram rows 124.6 us per step and card (slowest card 127.1 us; copy + decode launch calls 10.0 us)
+p3k_dt2: OWN_IDX_DTOPK=2: card 0: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2: card 1: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2: card 2: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2: card 3: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2: card 4: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2: card 5: 1785 one-token index layers by candidates (0 with layer 20's blocks); check: 1785 lists compared (1785 made), 0 differ; 0 layer-20 block lists + marks compared (0 made), 0 differ
+p3k_dt2: OWN_IDX_DTOPK=2 check: 10710 lists compared, 0 differ -> ALL SAME
+p3k_dt2 exit 0 (case 1)
+p3k_dt2 IDS256_SAME
+p3k_dt2 DTOPK_ALL_SAME
+x95k_dt2: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.03 GiB less per card)
+x95k_dt2: OWN_IDX_DTOPK=2: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks), + the gather and the full selects into shadows, compared on the card; candidate area at arena float 65843568, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+x95k_dt2: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.19 GiB less per card
+x95k_dt2: malloc_trim after the load: host MemAvailable 5226 -> 5436 MiB
+x95k_dt2: tile 2 card 0000:43:00.0: 2.80 GiB free after load
+x95k_dt2: prompt: 95497 tokens read on the cards in 144.26s (662.1 tok/s; first step 0.79s incl. kernel build), first token 2581
+x95k_dt2: decode: 255 steps after the first, 0.011 s/step, 91.76 tok/s
+x95k_dt2: host io during decode: 51.4 MiB read from disk, 27 major page faults; engram rows 146.8 us per step and card (slowest card 148.6 us; copy + decode launch calls 10.0 us)
+x95k_dt2: OWN_IDX_DTOPK=2: card 0: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2: card 1: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2: card 2: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2: card 3: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2: card 4: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2: card 5: 1020 one-token index layers by candidates (255 with layer 20's blocks); check: 1020 lists compared (1020 made), 0 differ; 255 layer-20 block lists + marks compared (255 made), 0 differ
+x95k_dt2: OWN_IDX_DTOPK=2 check: 7650 lists compared, 0 differ -> ALL SAME
+x95k_dt2: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 3.093 2.920 2.563 2.920 2.930 2.746; host MemAvailable 6181 MiB
+x95k_dt2: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 3.058 2.885 2.528 2.885 2.895 2.711; host MemAvailable 6147 MiB
+x95k_dt2 exit 0 (case 2)
+x95k_dt2 IDS256_SAME
+x95k_dt2 DTOPK_ALL_SAME
+x200k_dt2: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+x200k_dt2: OWN_IDX_DTOPK=2: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks), + the gather and the full selects into shadows, compared on the card; candidate area at arena float 66538864, 36864 floats (at max_seq: 2 + 1 work-groups per card, 1024 + 2048 pairs)
+x200k_dt2: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+x200k_dt2: malloc_trim after the load: host MemAvailable 4404 -> 4591 MiB
+x200k_dt2: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+x200k_dt2: prompt: 194000 tokens read on the cards in 300.66s (645.3 tok/s; first step 0.80s incl. kernel build), first token 2581
+x200k_dt2: decode: 1023 steps after the first, 0.011 s/step, 88.17 tok/s
+x200k_dt2: host io during decode: 177.6 MiB read from disk, 91 major page faults; engram rows 108.6 us per step and card (slowest card 112.9 us; copy + decode launch calls 9.8 us)
+x200k_dt2: OWN_IDX_DTOPK=2: card 0: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2: card 1: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2: card 2: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2: card 3: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2: card 4: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2: card 5: 4092 one-token index layers by candidates (1023 with layer 20's blocks); check: 4092 lists compared (4092 made), 0 differ; 1023 layer-20 block lists + marks compared (1023 made), 0 differ
+x200k_dt2: OWN_IDX_DTOPK=2 check: 30690 lists compared, 0 differ -> ALL SAME
+x200k_dt2: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.754 2.581 2.225 2.581 2.591 2.407; host MemAvailable 6048 MiB
+x200k_dt2: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.719 2.546 2.190 2.546 2.556 2.372; host MemAvailable 6217 MiB
+x200k_dt2 exit 0 (case 3)
+x200k_dt2 IDS1024_SAME
+x200k_dt2 DTOPK_ALL_SAME
+p3k_dt1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65198448, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p3k_dt1: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k_dt1: malloc_trim after the load: host MemAvailable 5385 -> 5570 MiB
+p3k_dt1: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_dt1: prompt: 3323 tokens read on the cards in 4.95s (677.4 tok/s; first step 0.80s incl. kernel build), first token 2581
+p3k_dt1: decode: 255 steps after the first, 0.010 s/step, 99.75 tok/s
+p3k_dt1: host io during decode: 42.3 MiB read from disk, 6 major page faults; engram rows 131.5 us per step and card (slowest card 134.4 us; copy + decode launch calls 10.1 us)
+p3k_dt1: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_dt1 exit 0 (case 4)
+p3k_dt1 IDS256_SAME
+x200k_dt0: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+x200k_dt0: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+x200k_dt0: malloc_trim after the load: host MemAvailable 5269 -> 5467 MiB
+x200k_dt0: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+x200k_dt0: prompt: 194000 tokens read on the cards in 300.76s (645.0 tok/s; first step 0.79s incl. kernel build), first token 2581
+x200k_dt0: decode: 1023 steps after the first, 0.011 s/step, 90.94 tok/s
+x200k_dt0: host io during decode: 178.3 MiB read from disk, 16 major page faults; engram rows 108.0 us per step and card (slowest card 109.7 us; copy + decode launch calls 9.8 us)
+x200k_dt0: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.755 2.581 2.225 2.582 2.591 2.408; host MemAvailable 6151 MiB
+x200k_dt0: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.720 2.546 2.190 2.547 2.556 2.373; host MemAvailable 6160 MiB
+x200k_dt0 exit 0 (case 5)
+x200k_dt0 IDS1024_SAME
+x200k_dt1: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+x200k_dt1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 66538864, 36864 floats (at max_seq: 2 + 1 work-groups per card, 1024 + 2048 pairs)
+x200k_dt1: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+x200k_dt1: malloc_trim after the load: host MemAvailable 5274 -> 5456 MiB
+x200k_dt1: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+x200k_dt1: prompt: 194000 tokens read on the cards in 300.72s (645.1 tok/s; first step 0.80s incl. kernel build), first token 2581
+x200k_dt1: decode: 1023 steps after the first, 0.010 s/step, 95.85 tok/s
+x200k_dt1: host io during decode: 175.8 MiB read from disk, 20 major page faults; engram rows 106.6 us per step and card (slowest card 108.9 us; copy + decode launch calls 9.7 us)
+x200k_dt1: OWN_IDX_DTOPK=1: card 0: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: OWN_IDX_DTOPK=1: card 1: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: OWN_IDX_DTOPK=1: card 2: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: OWN_IDX_DTOPK=1: card 3: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: OWN_IDX_DTOPK=1: card 4: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: OWN_IDX_DTOPK=1: card 5: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x200k_dt1: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.755 2.581 2.225 2.582 2.591 2.407; host MemAvailable 6163 MiB
+x200k_dt1: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.720 2.546 2.190 2.547 2.556 2.373; host MemAvailable 6164 MiB
+x200k_dt1 exit 0 (case 6)
+x200k_dt1 IDS1024_SAME
+x400k_dt1: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.17 GiB less per card)
+x400k_dt1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 67900784, 49152 floats (at max_seq: 4 + 1 work-groups per card, 2048 + 2048 pairs)
+x400k_dt1: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.77 GiB less per card
+x400k_dt1: malloc_trim after the load: host MemAvailable 5130 -> 5296 MiB
+x400k_dt1: tile 2 card 0000:43:00.0: 1.80 GiB free after load
+x400k_dt1: prompt: 388251 tokens read on the cards in 632.54s (613.8 tok/s; first step 0.81s incl. kernel build), first token 2581
+x400k_dt1: decode: 1023 steps after the first, 0.011 s/step, 92.40 tok/s
+x400k_dt1: host io during decode: 161.8 MiB read from disk, 39 major page faults; engram rows 97.3 us per step and card (slowest card 100.5 us; copy + decode launch calls 9.6 us)
+x400k_dt1: OWN_IDX_DTOPK=1: card 0: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: OWN_IDX_DTOPK=1: card 1: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: OWN_IDX_DTOPK=1: card 2: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: OWN_IDX_DTOPK=1: card 3: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: OWN_IDX_DTOPK=1: card 4: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: OWN_IDX_DTOPK=1: card 5: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x400k_dt1: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.091 1.917 1.561 1.918 1.927 1.744; host MemAvailable 6053 MiB
+x400k_dt1: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.056 1.882 1.526 1.883 1.892 1.709; host MemAvailable 6129 MiB
+x400k_dt1 exit 0 (case 7)
+x400k_dt1 IDS1024_SAME
+x700k_dt1: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.32 GiB less per card)
+x700k_dt1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 70115696, 98304 floats (at max_seq: 8 + 2 work-groups per card, 4096 + 4096 pairs)
+x700k_dt1: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 1.40 GiB less per card
+x700k_dt1: malloc_trim after the load: host MemAvailable 5103 -> 5292 MiB
+x700k_dt1: tile 2 card 0000:43:00.0: 0.72 GiB free after load
+x700k_dt1: prompt: 704773 tokens read on the cards in 1232.58s (571.7 tok/s; first step 0.80s incl. kernel build), first token 2581
+x700k_dt1: decode: 1023 steps after the first, 0.011 s/step, 89.68 tok/s
+x700k_dt1: host io during decode: 178.6 MiB read from disk, 17 major page faults; engram rows 107.5 us per step and card (slowest card 109.3 us; copy + decode launch calls 9.8 us)
+x700k_dt1: OWN_IDX_DTOPK=1: card 0: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: OWN_IDX_DTOPK=1: card 1: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: OWN_IDX_DTOPK=1: card 2: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: OWN_IDX_DTOPK=1: card 3: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: OWN_IDX_DTOPK=1: card 4: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: OWN_IDX_DTOPK=1: card 5: 4092 one-token index layers by candidates (1023 with layer 20's blocks)
+x700k_dt1: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 1.011 0.837 0.481 0.838 0.847 0.664; host MemAvailable 6013 MiB
+x700k_dt1: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 0.976 0.803 0.446 0.803 0.812 0.629; host MemAvailable 6036 MiB
+x700k_dt1 exit 0 (case 8)
+x700k_dt1 IDS1024_SAME
+ALLDONE 2026-11-16 15:01:44: 8 fresh starts identical to their references

@@ -5,8 +5,11 @@
 # SAME + distinct-rows counts); (4) guessing at 194K with the shard, soft. Stops at 200K (prompt reads pull rows from
 # the peers until the push form exists). Stable mode, preflight before each start, synced logs; first fault, non-zero
 # exit or difference = STOP (soft cases recorded).
+{ [ -e /home/steve/dsv41-work/defer-120c ] || [ -e /home/steve/dsv41-work/defer-122 ]; } && { echo "$(date '+%F %T') $(basename $0) deferred (defer-120c / defer-122: a later queue runs it)" >> /home/steve/dsv41-work/chainq118.txt; exit 0; }
 set -u
 W=/home/steve/dsv41-work; L=/home/steve/b70-optimization-lab; B=$W/own_run_v41_tp120
+c122s=$(ls -td $W/runs/c122-*/ 2>/dev/null | head -1)
+[ -x $W/own_run_v41_tp122 ] && [ -n "$c122s" ] && grep -q "^ALLDONE" ${c122s}summary.txt && B=$W/own_run_v41_tp122
 TS=$(date +%Y%m%dT%H%M); D=$W/runs/ckvs2-$TS; mkdir -p $D
 sum=$D/summary.txt; marks=$D/marks.txt
 say() { echo "$*" >> $sum; sync -f $sum 2>/dev/null || sync; }
@@ -28,7 +31,7 @@ journalctl -k -f -o short-precise > $D/kernel-follow.txt 2>&1 & JF=$!
     sleep 0.5; done >> $D/mem2.txt ) & MS2=$!
 trap 'kill $JF $SY $MS $MS2 2>/dev/null; rm -f $W/six.active; sync' EXIT
 source $W/stable/stable.env
-say "ckvs2 start $(date '+%F %T') source $(grep "source commit" $W/build-tp120.log | tail -1) boot $(cut -c1-8 /proc/sys/kernel/random/boot_id) binary $(sha256sum $B | cut -c1-16)"
+say "ckvs2 start $(date '+%F %T') source $(basename $B) boot $(cut -c1-8 /proc/sys/kernel/random/boot_id) binary $(sha256sum $B | cut -c1-16)"
 say "smt active $(cat /sys/devices/system/cpu/smt/active), cpus $(nproc), bios $(cat /sys/class/dmi/id/bios_version)"
 J='fault response|cat error|engine reset|coredump has been created|gt reset|timedout job|exec queue reset|suspend fence|vm worker error|reset started|PCIe Bus Error|AER:|Hardware Error|Machine check|watchdog: BUG|rcu_sched self-detected|AMD-Vi: Event|wedged|inaccessible|GuC'
 stop() { say "STOP $*"; say "STOPPED $(date '+%F %T')"; exit 1; }
@@ -99,6 +102,8 @@ spec code code $K OWN_KV_PUSH=0
 spec analysis analysis $K OWN_KV_PUSH=0
 run x95k $x95 256 $(mx $x95 256) $W/runs/e82/x95k_plain-ids.txt 256 $PL $P5 $K
 x200=$W/prompts/lc/x200k-ids.txt; run x200k $x200 1024 $(mx $x200 1024) $W/runs/lc1-20261115T1936/x200k_def-ids.txt 1024 $PL $P5 $K
+# (4b) the shard with dtopk-1 on (ck1m's mode a), against the same reference (tp122 only: tp120 ignores the switch)
+run x200k_dt $x200 1024 $(mx $x200 1024) $W/runs/lc1-20261115T1936/x200k_def-ids.txt 1024 $PL $P5 $K OWN_IDX_DTOPK=1
 say "GATE_PASSED $(date '+%F %T'): $n starts identical to their references"
 R2=$W/runs/lc1-20261115T1936/x200k_def-ids.txt
 soft s200k $x200 1024 $(mx $x200 1024) $R2 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC $K OWN_SPEC_LOG=$D/s200k-spec.txt OWN_VERIFY_REF=$R2
