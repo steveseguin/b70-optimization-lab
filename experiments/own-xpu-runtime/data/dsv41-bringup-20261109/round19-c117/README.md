@@ -25,7 +25,8 @@ tokens, two modes) never started.
   0.19 + 0.03 GiB at 95K (the log lines). Free after load: 2.81 GiB (x95k), 2.47 GiB (x200k), **1.07 GiB (s200k)**:
   guessing at 194K takes **1.40 GiB** more than plain answers at the same length. pr2 shows where: the draft alone
   (g_draft) 1.07 GiB, the guessing kernel shapes alone (g_tg) 2.47 GiB, and a 95K prompt with room for 195,584
-  positions (g_s95big) 1.07 GiB, so the draft's share follows the maximum context, not the prompt. The tp115 binary on
+  positions (g_s95big) 1.07 GiB, so the draft's share does not depend on the prompt length; with c115's 95K pair
+  (s95 vs x95k, 1.38-1.39 GiB) it is a fixed ~1.4 GiB per card (the draft model's weights), not a per-token cost. The tp115 binary on
   the s200k case (pr1) had 0.60 GiB free on card 2: 0.47 GiB less, = 0.39 + 0.08.
 - s200k failed 145 s after its start (`marks.txt`), before any prompt line (the plain x200k read took 301 s): exit 1
   with "card 0000:03:00.0: card-to-card exchange timed out waiting for card 1" (`s200k.log`). No kernel log line
