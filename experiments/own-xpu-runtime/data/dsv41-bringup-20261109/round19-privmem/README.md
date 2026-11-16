@@ -110,6 +110,21 @@ No slow block this time, so the gate never had to hold anyone; it cost nothing m
 tpd-3's new summary line, answer steps (per step and card): x95k 22.8 minor page faults and **5.2 sleeps** inside the
 engram reads (484 us); x200k 18.3 and 4.2 (459 us); p3k 19.2 and 2.2 (140 us). The sleeps are waits for the disk.
 
+## ew1: the drive kept awake (2026-11-16 13:25-13:44, tp120, x95k plain, 256 answers each, all identical)
+
+| run | writing | engram rows per step and card | reading |
+|---|---|---|---|
+| base / base again | 91.59 / 91.46 tok/s | 478 / 489 us | 661.3 / 661.1 tok/s |
+| `OWN_ENG_WARM=1000` | **94.15** | **114 us** | 661.3 |
+| `OWN_ENG_SPREAD=1` | 91.56 | 529 us (the requests now count here) | 661.2 |
+| both | **94.61** | 153 us | 660.9 |
+| both + `OWN_ENG_GATE=3` (the gate on one-token steps too) | 94.36 | 154 us | 661.0 |
+| code guessing base / both | 147.58 / 147.70 | | |
+
+Writing +3.4 % at 95K with both, for 9.5 MiB of 4 KiB reads over the answers; nothing changes in what the engine
+computes. Both are on by default from tp121 ac7d505ac5 (tp122). The gate on one-token steps costs ~0.25 % and no
+answer-step stall has been seen, so it stays opt-in.
+
 ## Host memory: what the 6.2 GB is (`hostmem-FINDINGS.md`, a helper's read-only study)
 
 ~4.7 GiB of the engine's ~6.2-6.9 GB anonymous host memory are the GPU runtime's copies of our kernel images: per
@@ -155,5 +170,5 @@ Two levers follow:
 - Scripts: `pr4.sh pr5.sh pr6.sh c118.sh c118p.sh build118p.sh chainq118c.sh chainq118p.sh hold119.sh chainq119b.sh
   bench119.sh kvb1.sh c118q.sh build118q.sh chainq119c.sh chainq120.sh chainq120b.sh build120.sh kvb2.sh c120.sh
   ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c c122.sh dtb1.sh chainq122.sh build122.sh
-  zebin_sizes.py`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
+  zebin_sizes.py chainq123.sh tlp2.sh`, `ew1-*`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
   5dc319d3d5 privmem-2).
