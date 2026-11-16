@@ -1,0 +1,48 @@
+== card 2: busy per step A 9.581 ms, B 10.690 ms, B - A +1.109 ms
+    ms A     ms B      B-A n/step A      B  launch
+   0.000    0.244   +0.244      0.0    3.0  TopKSelQ<96>
+   0.051    0.260   +0.209      3.0    7.0  XchgPull
+   0.119    0.324   +0.204      8.0    1.0  TopKSelR<false>
+   0.000    0.145   +0.145      0.0    4.0  IndexerScoreBC
+   1.228    1.321   +0.093    160.0  160.0  XchgP
+   0.000    0.091   +0.091      0.0    4.0  TopKSelCQ<16>
+   0.000    0.044   +0.044      0.0    1.0  TopKSelBQ<32>
+   0.354    0.396   +0.042     40.0   40.0  XchgQ
+   0.534    0.547   +0.013     40.0   40.0  FlNormK<5120u, 16u, 25u, 8u, 0u, NoRows, FlH16Rows<160u> >
+   0.165    0.177   +0.012      8.0    4.0  IndexerScoreB
+   0.433    0.438   +0.005     27.0   27.0  GemvQ8P<256u, ActF32>
+   0.116    0.120   +0.004     40.0   40.0  SkNormPairW
+   0.251    0.255   +0.004     37.0   37.0  SkNormDotsW<8u>
+   0.109    0.112   +0.003      6.0    6.0  RoutedUQ<RU3IQ2XS<9u>, 1u, 1u, 8u, 1u, 1u, 128u, 0u, true>
+   0.321    0.324   +0.003     15.0   15.0  RoutedUQ<RU3IQ2S<9u>, 1u, 1u, 4u, 1u, 0u, 128u, 0u, true>
+   0.319    0.322   +0.003     15.0   15.0  RoutedUQ<RU3IQ3XXS<9u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>
+   0.035    0.037   +0.002     40.0   40.0  RowsP<RopeRows >
+   0.167    0.169   +0.002     24.0   24.0  RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, ...
+   0.089    0.091   +0.002      2.0    2.0  GemvQ6KP<24u, ActF32>
+   0.628    0.630   +0.002     27.0   27.0  RowsP<RowsPair<RowsPair<HcFinishRows, RopeRows >, DenseRows<GemvQ8P...
+   0.110    0.112   +0.001     13.0   13.0  RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ6KP<20u, ActF32> >, ...
+   0.428    0.429   +0.001     15.0   15.0  RoutedUQ<RU3IQ2S<20u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>
+== mean over cards: busy per step A 9.584 ms, B 10.750 ms, B - A +1.166 ms
+    ms A     ms B      B-A n/step A      B  launch
+   0.049    0.330   +0.282      3.0    7.0  XchgPull
+   0.000    0.247   +0.247      0.0    3.0  TopKSelQ<96>
+   0.120    0.323   +0.204      8.0    1.0  TopKSelR<false>
+   0.000    0.147   +0.147      0.0    4.0  IndexerScoreBC
+   0.000    0.091   +0.091      0.0    4.0  TopKSelCQ<16>
+   1.667    1.728   +0.061    160.0  160.0  XchgP
+   0.000    0.045   +0.045      0.0    1.0  TopKSelBQ<32>
+   0.336    0.366   +0.030     40.0   40.0  XchgQ
+   0.165    0.179   +0.014      8.0    4.0  IndexerScoreB
+   0.533    0.542   +0.009     40.0   40.0  FlNormK<5120u, 16u, 25u, 8u, 0u, NoRows, FlH16Rows<160u> >
+   0.686    0.692   +0.007     38.0   38.0  SparseOutF<512u, 640, true, ActF32, 16u, false>
+   0.497    0.502   +0.005     27.0   27.0  RowsP<RowsPair<RowsPair<HcFinishRows, RopeRows >, DenseRows<GemvQ8P...
+   0.366    0.370   +0.004     15.0   15.0  RoutedUQ<RU3IQ2XXS<20u>, 1u, 2u, 8u, 2u, 0u, 128u, 0u, true>
+   0.318    0.322   +0.004     15.0   15.0  RoutedUQ<RU3IQ3XXS<9u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>
+   0.251    0.255   +0.004     37.0   37.0  SkNormDotsW<8u>
+   0.164    0.167   +0.003     24.0   24.0  RowsP<RowsPair<NoRows, RowsPair<DenseRows<GemvQ8P<160u, ActF32> >, ...
+   0.250    0.252   +0.002     10.0   10.0  RoutedUQ<RU3IQ1S<20u>, 1u, 1u, 8u, 2u, 0u, 128u, 0u, true>
+   0.099    0.101   +0.002     13.0   13.0  FlDownComb<GemvQ5KP<9u, ActF32>, 6u>
+   0.115    0.117   +0.002     40.0   40.0  SkNormPairW
+   0.301    0.303   +0.002     27.0   27.0  RoutePRows<RowsPair<HcFinishRows, RowsPair<DenseRows<GemvQ8P<160u, ...
+   0.434    0.436   +0.002     27.0   27.0  GemvQ8P<256u, ActF32>
+   0.204    0.206   +0.002     13.0   13.0  GemvQ6KP<16u, ActF32>

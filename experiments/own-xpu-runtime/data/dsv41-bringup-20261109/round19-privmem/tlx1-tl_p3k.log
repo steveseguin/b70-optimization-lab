@@ -1,0 +1,105 @@
+OWN_XPUSH2: exchange classes 0xf
+store: 1042 tensors
+host MemAvailable 13520 MiB (floor 2560 MiB)
+OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+OWN_PRT=3: router by tokens q_a + kv by tokens (OWN_PX halves); blocks / halves of 64..256 tokens; token weights 3,2,2,3,3,3 (16-token units)
+OWN_SKIP39: prompt blocks without the prompt's last token: layer 39 runs its kept key rows only (skip39-1)
+tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 65198448)
+tile 0 -> card 0000:03:00.0, 31.06 GiB free
+tile 1 -> card 0000:23:00.0, 31.06 GiB free
+tile 2 -> card 0000:43:00.0, 31.06 GiB free
+tile 3 -> card 0000:83:00.0, 31.06 GiB free
+tile 4 -> card 0000:a3:00.0, 31.06 GiB free
+tile 5 -> card 0000:e3:00.0, 31.06 GiB free
+upload: 175.1 GB in 26.8s (6.53 GB/s); host MemAvailable 3843 MiB
+packed rows: 2892 tensors, 170.61 GB on the cards
+tile 0 card 0000:03:00.0: 3.66 GiB free after load
+tile 1 card 0000:23:00.0: 3.49 GiB free after load
+tile 2 card 0000:43:00.0: 3.13 GiB free after load
+tile 3 card 0000:83:00.0: 3.49 GiB free after load
+tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)
+OWN_RUX7=1: prompt-block Q2_K routed down on the expert groups (rux7-1)
+OWN_SKIP39: layer 39 ran only its kept key rows in 6 prompt blocks (768 rows per card)
+prompt: 3323 tokens read on the cards in 4.93s (678.4 tok/s; first step 0.79s incl. kernel build), first token 2581
+tok 1 -> 1309 (0.020s) | top5: 1309:36.1996 477:22.1841 2997:22.0473 4844:20.4583 611:20.4193
+tok 2 -> 3287 (0.010s) | top5: 3287:32.5428 1733:26.8561 304:24.4463 1309:23.3693 2310:23.0700
+tok 3 -> 28 (0.010s)
+tok 4 -> 1733 (0.010s)
+tok 5 -> 4940 (0.010s)
+tok 6 -> 305 (0.010s)
+tok 7 -> 2310 (0.010s)
+tok 8 -> 3818 (0.010s)
+tok 9 -> 1473 (0.010s)
+tok 10 -> 2239 (0.010s)
+tok 11 -> 7027 (0.010s)
+tok 12 -> 295 (0.010s)
+tok 13 -> 834 (0.010s)
+tok 14 -> 3107 (0.010s)
+tok 15 -> 10175 (0.010s)
+tok 16 -> 1660 (0.010s)
+tok 17 -> 16 (0.010s)
+tok 18 -> 21017 (0.010s)
+tok 19 -> 15490 (0.011s)
+tok 20 -> 582 (0.010s)
+tok 21 -> 81443 (0.010s)
+tok 22 -> 4 (0.010s)
+tok 23 -> 538 (0.010s)
+tok 24 -> 4940 (0.010s)
+tok 25 -> 16 (0.010s)
+tok 26 -> 983 (0.010s)
+OWN_TIMELINE: card 0: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+OWN_TIMELINE: card 1: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+OWN_TIMELINE: card 2: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+OWN_TIMELINE: card 3: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+OWN_TIMELINE: card 4: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+OWN_TIMELINE: card 5: 7424 launches of answer steps 20-27 -> /home/steve/dsv41-work/runs/tlx1-20261116T1205/tl_p3k.txt (2 clock pairs)
+tok 27 -> 734 (0.321s)
+tok 28 -> 260 (0.023s)
+tok 29 -> 40006 (0.012s)
+tok 30 -> 10259 (0.011s)
+tok 31 -> 362 (0.011s)
+tok 32 -> 101332 (0.010s)
+tok 33 -> 38775 (0.010s)
+tok 34 -> 58495 (0.010s)
+tok 35 -> 55 (0.010s)
+tok 36 -> 19861 (0.010s)
+tok 37 -> 7314 (0.010s)
+tok 38 -> 16 (0.011s)
+tok 39 -> 21017 (0.011s)
+tok 40 -> 5784 (0.010s)
+tok 41 -> 3818 (0.010s)
+tok 42 -> 1473 (0.010s)
+tok 43 -> 2239 (0.010s)
+tok 44 -> 7027 (0.010s)
+tok 45 -> 17 (0.010s)
+tok 46 -> 105017 (0.010s)
+tok 47 -> 9802 (0.010s)
+tok 48 -> 16 (0.010s)
+tok 49 -> 29034 (0.011s)
+tok 50 -> 366 (0.010s)
+tok 51 -> 15281 (0.010s)
+tok 52 -> 7027 (0.010s)
+tok 53 -> 28 (0.010s)
+tok 54 -> 4022 (0.010s)
+tok 55 -> 2958 (0.010s)
+tok 56 -> 554 (0.010s)
+tok 57 -> 10166 (0.010s)
+tok 58 -> 2499 (0.010s)
+tok 59 -> 14 (0.010s)
+tok 60 -> 554 (0.010s)
+tok 61 -> 55679 (0.010s)
+tok 62 -> 38775 (0.010s)
+tok 63 -> 29 (0.010s)
+decode: 63 steps after the first, 0.015 s/step, 64.69 tok/s
+host io during decode: 9.7 MiB read from disk, 22 major page faults; engram rows 260.9 us per step and card (slowest card 263.6 us; copy + decode launch calls 12.3 us)
+OWN_IDX_DSPLIT=3: card 0: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 1: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 2: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 3: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 4: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 5: 0 one-token / 0 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+kernels built for 6 cards in 2.9s

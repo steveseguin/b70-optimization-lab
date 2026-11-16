@@ -1,6 +1,6 @@
 #!/bin/bash
 # tp120 build: tp118p (privmem-1 + tpd-2) + kvshard-1 + KvGather six members + kvshard push (OWN_KV_PUSH, default on
-# with OWN_KV_SHARD) + privmem-2; worktree tp120 (72c9b8acce: + eng-gate-1 + tpd-3). Benches: test_kv_push, bench_attn_a1_kvs120, test_topk_shard120.
+# with OWN_KV_SHARD) + privmem-2; worktree tp120 (fe2eae1ab2: + eng-gate-1 + tpd-3 + eng-warm-1 + eng-spread-1). Benches: test_kv_push, bench_attn_a1_kvs120, test_topk_shard120.
 W=/home/steve/dsv41-work; E=$W/tp114src/experiments/own-xpu-runtime/engine
 export PATH=/opt/intel/oneapi/compiler/latest/bin:$PATH
 L=$W/build-tp120.log
@@ -12,7 +12,7 @@ GPU="-fsycl-targets=intel_gpu_bmg_g31 -Xsycl-target-backend=intel_gpu_bmg_g31"
 while [ -e $W/six.active ]; do sleep 20; done
 : > $L
 rc=8
-for C in 72c9b8acce; do
+for C in fe2eae1ab2; do
   rm -rf $W/src120; mkdir -p $W/src120/tools
   git -C $W/tp120 archive $C:experiments/own-xpu-runtime/engine src planning tools/bench | tar -x -C $W/src120 || { echo "tp120 build exit 9 (source export $C)" >> $L; exit 9; }
   if ! (cd $W/src120 && nice -n 5 icpx $F -I planning/dsv41-fixtures -I src -fsyntax-only planning/dsv41-fixtures/own_run_v41.cpp >> $L 2>&1); then

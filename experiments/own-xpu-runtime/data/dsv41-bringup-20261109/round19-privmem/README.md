@@ -88,6 +88,32 @@ run out their device spins. Same launches in the same order, same values. **tpd-
 slow-block line the share step's time, the thread's major/minor page faults, its voluntary/forced context switches
 and the gate wait, so the next stall shows which of these it was. Gate `c120` ends with this x700k_off case.
 
+## Where long-context writing time goes (tlx1, timelines of answer steps 20-27, tp118p)
+
+Writing slows from 99 tok/s at 3K to 87.6 at 194K and 64.4 at 705K (c118p). Per-launch GPU time per answer step
+(`tlx1-cmp-p3k-x200k.txt`, made by `tlcmp.py`; the timeline files themselves are 5 MB each and stay out of git), card
+2, 194K against 3K: busy +1.11 ms, of which the index selects +0.58 ms (`TopKSelQ<96>` x3 0.24 ms, layer 20's rows
+select `TopKSelR` 0.32 ms: one work-group over every row), the gathering of every card's scores +0.21-0.28 ms
+(`XchgPull`, 7 pulls per step against 3), candidate scoring `IndexerScoreBC` +0.15 ms. And outside the GPU time: each
+card's GPU sits **idle 375 us per step** waiting for the host's engram rows (end of layer 0 -> the rows' decode 286 us,
+between the two engram layers 89 us); at 3K the same read hides under layer 0. The 388K timeline run was stopped by
+the third host-thread stall of the day (card 1, 1.27 s at position 59,392), before eng-gate-1 existed.
+
+Two levers follow:
+
+1. **dtopk-1** (in writing, worktree tp121): every card picks the top 512 of its own sixth of the rows and the cards
+   merge 6 x 512 candidates, instead of every card gathering every score and searching all of them alone. Exact by
+   construction (the order "score descending, lower row first" is total, so the global top 512 is inside the union
+   of the parts' top 512). At 705K the four split layers search 350K-705K rows each with one work-group today.
+2. **The engram rows' disk reads.** CPU bench `madv.c` / `madv2.c` on the engram shard (48 cold rows, as one answer
+   step): back to back 90 us of requests + 153 us of waiting; after a 10 ms pause 90 + 376; after 30 ms 86 + 649,
+   also with the CPU kept busy, so it is the **NVMe drive's power state**, not the CPU's; after a 10 ms pause with one
+   4 KiB read every 1 ms, 95 + 149. Answer steps are 10-16 ms apart and ~34 of a step's 48 rows come from the disk at
+   194K (137.7 MiB read in 1,024 steps). **eng-warm-1** (`OWN_ENG_WARM=1000`: one 4 KiB O_DIRECT read of the shard
+   every 1 ms during the answers; no system setting changed) and **eng-spread-1** (`OWN_ENG_SPREAD=1`: the card
+   threads ask for their share of the rows at step start, not the main thread for all 48, ~90 us, before it wakes
+   them) are in tp120 fe2eae1ab2, default off; A/B `ew1` after the gate `c120`.
+
 ## Files
 
 - `pr4-*`, `pr5-*`, `pr6-*`: summaries and logs; `pr6-smaps-plain.txt`: the engine's host memory map 150 s in.
@@ -97,5 +123,5 @@ and the gate wait, so the next stall shows which of these it was. Gate `c120` en
 - `privmem-check-tp118.txt`, `privmem-check-tp118p.txt`, `privmem_check.py`: per-kernel private memory.
 - Scripts: `pr4.sh pr5.sh pr6.sh c118.sh c118p.sh build118p.sh chainq118c.sh chainq118p.sh hold119.sh chainq119b.sh
   bench119.sh kvb1.sh c118q.sh build118q.sh chainq119c.sh chainq120.sh chainq120b.sh build120.sh kvb2.sh c120.sh
-  ckvs2.sh tlx1.sh tlcmp.py`. Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
+  ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c`, `tlx1-*`. Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
   5dc319d3d5 privmem-2).
