@@ -92,7 +92,7 @@ void dr_inject(int c, int n, long p0, bool staged = false, int t0 = 0) {
         const std::string p = "dsp.blk." + std::to_string(s) + ".";
         gemv_m(c, p + "attn_kv.weight", dmainn[c], H, dkv[c], hd, 0, (unsigned)n);
         rows_launch(c, tokr(ops41sycl::NormRows<512, 2>{dkv[c], wp<float>(c, p + "attn_kv_a_norm.weight"), dkvn[c]}, hd, hd));
-        rows_launch(c, tokr(ops41sycl::RopeRows<Act>{dkvn[c], cos_base[c] + (size_t)p0 * 32, sin_base[c] + (size_t)p0 * 32,
+        rows_launch(c, tokr(ops41sycl::RopeRows<Act>{dkvn[c], rope_t(c, false, false, p0), rope_t(c, false, true, p0),
                                                      1u, (unsigned)g.hd, false},
                             hd, 32));
         launch(c, (size_t)n * hd, 64, ops41draft::DraftKvRows<Act>{(unsigned)g.hd, (unsigned)n, (int)p0, staged},
@@ -184,7 +184,7 @@ void dr_stage(int s, int c) {
                           tokr(N2{b.kv, wp<float>(c, p + "attn_kv_a_norm.weight"), b.kvn}, g.hd, g.hd)}});
     }
     gemv_m(c, p + "attn_q_b.weight", b.qn, g.qrank, b.q + qo, Q);
-    const float *cb = cos_base[c] + (size_t)pos * 32, *sbp = sin_base[c] + (size_t)pos * 32;
+    const float *cb = rope_t(c, false, false, pos), *sbp = rope_t(c, false, true, pos);
     {
         using RR = ops41sycl::TokRows<ops41sycl::RopeRows<Act>>;
         rows_launch(c, ops41sycl::RowsPair<RR, RR>{
@@ -369,7 +369,8 @@ void draft_tp(int32_t anchor, int32_t *out, int nrows = DR_BLOCK, float *conf = 
     for (int c = 0; c < o.tp; ++c)
         if (xerr[c][0])
             throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
-                                     std::to_string((int)xerr[c][0] - 1));
+                                     std::to_string((int)xerr[c][0] - 1) + " (draft step at position " + std::to_string(pos) +
+                                     "; " + tpd_report() + ")");
     for (int i = 0; i < DR_BLOCK; ++i) // a token outside the vocabulary (never from a sane chain) becomes 0
         out[i] = i < nrows && h_dprev[i + 1] >= 0 && h_dprev[i + 1] < g.vocab ? h_dprev[i + 1] : 0;
     if (conf)

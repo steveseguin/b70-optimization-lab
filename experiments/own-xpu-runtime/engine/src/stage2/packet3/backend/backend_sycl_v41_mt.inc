@@ -33,8 +33,67 @@ int eng_t0 = 0;                   // OWN_ENG_EARLY: the block's first token whos
 bool eng_anchor_asked = false;    // OWN_ENG_EARLY: draft_tp asked for the anchor's rows (position pos)
 unsigned eng_sink[TILES] = {};
 int32_t *cidxm[TILES][8] = {};   // one 512-row list per token per index slot
+// privmem-1 (2026-11-16): the index kernels' per-token tables in card memory (kernels LensPut, sycl_v41.hpp): LSL
+// slots of MTX ints per card, each holding the table qs[c] wrote last into it; a table equal to a slot's (the same
+// n values) is not written again (a block step's index layers share theirs). Every writer and reader of a slot is
+// on qs[c], in order, from the card's thread: a slot is rewritten only after every earlier reader ran.
+static constexpr int LSL = 16;
+int *lensd[TILES] = {};
+int lens_h[TILES][LSL][MTX] = {};  // the values written (the first lens_hn of them)
+unsigned lens_hn[TILES][LSL] = {}; // 0: empty
+unsigned lens_next[TILES] = {};
+long lens_puts[TILES] = {};        // LensPut launches (diagnostic)
+// privmem-2: the kernels' LensT: up to LT_IN tokens in the arguments, else lens_dev's slot
+ops41sycl::LensT lens_arg(int c, const int *v, unsigned n) {
+    ops41sycl::LensT r{};
+    if (n <= ops41sycl::LT_IN) {
+        for (unsigned t = 0; t < n; ++t) r.v[t] = v[t];
+        return r;
+    }
+    r.p = lens_dev(c, v, n);
+    return r;
+}
+const int *lens_dev(int c, const int *v, unsigned n) {
+    if (n > (unsigned)MTX) throw std::runtime_error("lens_dev: more than MTX tokens");
+    if (!lensd[c]) throw std::runtime_error("lens_dev: no table slots (mt_alloc)");
+    if (!n) return lensd[c]; // (no reader indexes it)
+    for (int k = 0; k < LSL; ++k)
+        if (lens_hn[c][k] == n && std::memcmp(lens_h[c][k], v, n * sizeof(int)) == 0) return lensd[c] + (size_t)k * MTX;
+    const int k = (int)(lens_next[c]++ % LSL);
+    ops41sycl::LensPut lp{};
+    std::memcpy(lp.v, v, n * sizeof(int));
+    std::memcpy(lens_h[c][k], v, n * sizeof(int));
+    lens_hn[c][k] = n;
+    int *dst = lensd[c] + (size_t)k * MTX;
+    // (not launch(): a pending exchange tail stays with the kernel that carries it today)
+    auto e = qs[c].submit([&](sycl::handler &hh) {
+        hh.parallel_for(sycl::nd_range<1>(16, 16), [=](sycl::nd_item<1> it) { lp(it, dst); });
+    });
+    kev(c, kname<ops41sycl::LensPut>(), e);
+    ++lens_puts[c];
+    return dst;
+}
 int32_t *blm[TILES] = {};        // OWN_IDX_CAND: per token the layer-20 block list (2048 + 64 ints each)
 float *score2m[TILES] = {};      // OWN_IDX_CAND=2: the full scores per token (stride max_seq + 64)
+// idxrows-1 (OWN_IDX_ROWS): the compact block index scores / candidate marks (ixr_R rows per half region), or off
+float *ixr_score[TILES] = {};
+uint8_t *ixr_cand[TILES] = {};
+unsigned ixr_R = 0;
+bool ixr_on = false;
+// the rows per half region a card's block index can need: its idxsplit-1 token share of any block / half of
+// OWN_IDX_SPLIT_MIN .. MTX tokens, a whole block below OWN_IDX_SPLIT_MIN, a check (<= 8); 0 = the MTB-row layout
+// (every mode where a whole block or half of up to MTX tokens scores on every card: no split, its diagnostics,
+// OWN_IDX_CAND=2's comparison, halves without the copy engines)
+unsigned ixr_rows() const {
+    if (!o.idx_rows || !o.idx_split || o.idx_split_check || o.idx_cand == 2 || o.dev_index_check || o.tp < 2) return 0;
+    if (o.px && !o.px_bcs) return 0;
+    unsigned r = std::max(o.idx_split_min > 1 ? o.idx_split_min - 1 : 1u, 8u), a[6], b[6];
+    for (unsigned m = std::max(o.idx_split_min, 2u); m <= (unsigned)MTX; ++m) {
+        ix_split(m, a, b);
+        for (int d = 0; d < o.tp && d < 6; ++d) r = std::max(r, b[d] - a[d]);
+    }
+    return (o.px ? 2 : 1) * r < (unsigned)mtb_n() ? r : 0;
+}
 int32_t *list2m[TILES] = {};     // OWN_IDX_CAND=2: the full select's lists (512 per token)
 uint32_t *egrp[TILES] = {};      // the layer's expert groups (RUGrp layout, mt_eu)
 long mlen[TILES][4][MTB] = {};   // rows of each kv source after token t's publish
@@ -429,7 +488,9 @@ void mt_alloc(int c) {
     const size_t H = g.h, Q = (size_t)g.qh * g.hd, nm = (size_t)(tm1[c] - tm0[c]), nd = (size_t)(td1[c] - td0[c]);
     act_t *x = md(H), *xn = md(H), *qa = md(g.qrank), *qn = md(g.qrank), *q = md(Q), *kv = md(g.hd), *kvn = md(g.hd);
     act_t *qi = md(32 * 128), *wv = md(32);
-    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * TB); // (index scores: only t < mt is read)
+    // (idxrows-1: SR rows, half A's region rows [0, R), half B's [R, 2R); else TB rows, token t at row t)
+    const size_t XR = ixr_rows(), SR = XR ? (o.px ? 2 : 1) * XR : TB;
+    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * SR); // (index scores: only t < mt is read)
     int64_t *lens = dalloc<int64_t>(c, TB);
     // (OWN_PRT: ids and weights in the arena, where the peers' shares land; token t at 6 t as before)
     float *router = mf(g.experts), *prob = o.prt ? xarena[c] + xrtM + prt_rs() : mf(6);
@@ -443,7 +504,11 @@ void mt_alloc(int c) {
     float *rs = mf(g.experts), *rsb = mf(g.experts);
     int32_t *cat = dalloc<int32_t>(c, (size_t)640 * TB), *widx = dalloc<int32_t>(c, (size_t)128 * TB);
     act_t *old = md(4 * H);
-    uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * TB);
+    uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * SR);
+    ixr_R = (unsigned)XR, ixr_on = XR != 0, ixr_score[c] = score, ixr_cand[c] = cand;
+    if (c == 0 && XR)
+        std::fprintf(stderr, "OWN_IDX_ROWS: block index score rows per card %zu (2 x %zu) of %zu: %.2f GiB less per card\n", SR,
+                     XR, TB, (double)((TB - SR) * ((size_t)max_seq + 64) * 5) / (1u << 30));
     if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * TB);
     // (score2m: one row of max_seq + 64 per token, as score; it was mf(... * MTX), i.e. MTX rows per token)
     if (o.idx_cand == 2) { score2m[c] = dalloc<float>(c, ((size_t)max_seq + 64) * TB); list2m[c] = dalloc<int32_t>(c, (size_t)512 * TB); }
@@ -455,7 +520,7 @@ void mt_alloc(int c) {
         s.qa = qa + (size_t)t * g.qrank; s.qn = qn + (size_t)t * g.qrank; s.q = q + t * Q;
         s.kv = kv + (size_t)t * g.hd; s.kvn = kvn + (size_t)t * g.hd;
         s.qi = qi + (size_t)t * 4096; s.wv = wv + (size_t)t * 32;
-        s.score = score + (size_t)t * ((size_t)max_seq + 64); s.lens = lens + t;
+        s.score = (size_t)t < SR ? score + (size_t)t * ((size_t)max_seq + 64) : nullptr; s.lens = lens + t; // (idxrows-1: tpm_index's regions)
         s.router = router + (size_t)t * g.experts; s.ids = ids + 6 * t; s.prob = prob + 6 * t;
         s.expg = expg + t * 6 * nm; s.expu = expu + t * 6 * nm; s.expd = expd + t * 6 * nd;
         s.shg = shg + (size_t)t * g.mid; s.shu = shu + (size_t)t * g.mid; s.shd = shd + t * H;
@@ -468,7 +533,7 @@ void mt_alloc(int c) {
         s.rs = rs + (size_t)t * g.experts; s.rsb = rsb + (size_t)t * g.experts;
         s.idxs_cat = cat + (size_t)t * 640; s.widx = widx + (size_t)t * 128;
         s.old = old + t * 4 * H;
-        s.cand = cand + (size_t)t * ((size_t)max_seq + 64);
+        s.cand = (size_t)t < SR ? cand + (size_t)t * ((size_t)max_seq + 64) : nullptr;
         s.oa = xarena[c] + xoaM + (size_t)t * g.ototal;
         s.ob = xarena[c] + xobM + (size_t)t * H;
         s.act = xarena[c] + xactM + (size_t)t * 7 * g.mid;
@@ -485,6 +550,7 @@ void mt_alloc(int c) {
     }
     for (int k = 0; k < 8; ++k) // (OWN_IDX_SPLIT: in the arena, where the peers' shares land)
         cidxm[c][k] = o.idx_split ? (int32_t *)(xarena[c] + xidxM + (size_t)k * 512 * TB) : dalloc<int32_t>(c, (size_t)512 * TB);
+    lensd[c] = dalloc<int>(c, (size_t)LSL * MTX); // privmem-1: the index kernels' per-token tables
     if (o.idx_split_check) { // OWN_IDX_SPLIT_CHECK: the full index's lists, the card's own q / proj rows
         ixl2[c] = dalloc<int32_t>(c, (size_t)512 * TB);
         ixq2[c] = dalloc<act_t>(c, (size_t)4096 * TB);
@@ -1143,7 +1209,11 @@ void tpm_engram_share(int c) {
 }
 void tpm_engram_upload(int c) {
     auto l = iq3::layout(iq3::Type::Q5_K);
-    if (o.eng_early) tpm_engram_share(c);
+    if (o.eng_early) {
+        const auto s0 = std::chrono::steady_clock::now();
+        tpm_engram_share(c);
+        eng_tsh[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - s0).count();
+    }
     const size_t per = (size_t)24 * g.engram_dim;
     for (int li = 0; li < 2; ++li) {
         const int L = li == 0 ? 1 : 14;
@@ -1252,7 +1322,6 @@ void tpm_publish(int L, int c, int si, bool yarn) {
     const size_t hd = (size_t)g.hd;
     if (g.hd != 512 || !o.small_fast) throw std::runtime_error("multi-token publish: form");
     const long tl0 = tlen[c][si];
-    const float *ct = yarn ? cos_yarn[c] : cos_base[c], *st = yarn ? sin_yarn[c] : sin_base[c];
     unsigned np;   // rows published
     long gpos0;    // position of the first
     size_t pstep;  // positions between them
@@ -1301,11 +1370,18 @@ void tpm_publish(int L, int c, int si, bool yarn) {
     gemv_m(c, p + "indexer.attn_k.weight", b.latent, hd, b.kk, 128, 0, np);
     launch_sg(c, np, ops41sycl::RmsNormA<Act>{128}, (const act_t *)b.kk, wp<float>(c, p + "indexer.k_norm.weight"), b.kk);
     using RR = ops41sycl::TokRows<ops41sycl::RopeRows<Act>>;
-    const float *cb = ct + (size_t)gpos0 * 32, *sb = st + (size_t)gpos0 * 32;
+    if (rwin && np && (long)pstep * (np - 1) > RW_NEED) throw std::runtime_error("OWN_ROPE_WIN: a block's rope rows span beyond the window margin");
+    const float *cb = rope_t(c, yarn, false, gpos0), *sb = rope_t(c, yarn, true, gpos0); // (ropewin-1: rows on from gpos0)
     rows_launch(c, ops41sycl::RowsPair<RR, RR>{RR{{b.kk, cb, sb, 1u, 128u, false}, np, {128, 32 * pstep, 0, 0}},
                                                RR{{b.latent, cb, sb, 1u, (unsigned)g.hd, false}, np, {hd, 32 * pstep, 0, 0}}});
-    launch(c, (size_t)np * std::max(g.hd, 128), 64, ops41sycl::PubAppendAM<Act>{g.hd, 128, (int)tl0, np},
-           (const act_t *)b.latent, (const act_t *)b.kk, ckv_mirror[c][si], ik_mirror[c][si]);
+    if (o.kv_shard) // kvshard-1: the rows into their tail slots, their owners' chunks (OWN_KV_SHARD=2: and the mirror)
+        launch(c, (size_t)np * std::max(g.hd, 128), 64,
+               ops41sycl::PubAppendSM<Act>{g.hd, 128, (int)tl0, np, o.kv_shard_r, (unsigned)o.tp, (unsigned)c, o.kv_tail},
+               (const act_t *)b.latent, (const act_t *)b.kk, kvs_tail[c][si], kvs_chunk[c] + kvs_coff[si] * hd,
+               o.kv_shard == 2 ? ckv_mirror[c][si] : (uint16_t *)nullptr, ik_mirror[c][si]);
+    else
+        launch(c, (size_t)np * std::max(g.hd, 128), 64, ops41sycl::PubAppendAM<Act>{g.hd, 128, (int)tl0, np},
+               (const act_t *)b.latent, (const act_t *)b.kk, ckv_mirror[c][si], ik_mirror[c][si]);
     tlen[c][si] = tl0 + np;
 }
 // every token's index list at once (dev_index's steps, one launch each for the block): tokens whose source
@@ -1322,12 +1398,12 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
     const std::string p = "blk." + std::to_string(L) + ".";
     ops41sycl::CidxFillM cf{};
     cf.m = (unsigned)M;
-    int lens[MTX] = {}, nshort = 0, nlong = 0;
+    int lens[MTX] = {}, cfl[MTX] = {}, nshort = 0, nlong = 0;
     long lmax = 0;
     for (int t = 0; t < M; ++t) {
         const long len = mlen[c][si][px_tok + t];
         if (len > (long)INT32_MAX / 2) throw std::runtime_error("multi-token index: rows");
-        cf.lens[t] = len <= 512 ? (int)len : -1;
+        cfl[t] = len <= 512 ? (int)len : -1;
         lens[t] = len > 512 ? (int)len : 0;
         (len <= 512 ? nshort : nlong)++;
         lmax = std::max(lmax, len);
@@ -1339,15 +1415,26 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
     if (sx) ix_split((unsigned)M, ua, ub);
     if (nshort && sx) {
         ops41sycl::CidxFillM co = cf;
-        for (int t = 0; t < M; ++t)
-            if ((unsigned)t < ua[c] || (unsigned)t >= ub[c]) co.lens[t] = -1;
+        int col[MTX] = {};
+        for (int t = 0; t < M; ++t) col[t] = (unsigned)t < ua[c] || (unsigned)t >= ub[c] ? -1 : cfl[t];
+        co.lens = lens_arg(c, col, (unsigned)M);
         launch(c, (size_t)M * 512, 64, co, cix);
     } else if (nshort) {
+        cf.lens = lens_arg(c, cfl, (unsigned)M);
         launch(c, (size_t)M * 512, 64, cf, cix);
     }
     if (!nlong) return; // (split: no exchange either; every card the same)
     sync_rows(c, si);
     const size_t SS = (size_t)max_seq + 64; // per-token score / candidate stride (mt_alloc)
+    // idxrows-1 (OWN_IDX_ROWS): this half's region of the compact rows (half B's from row R), the card's first row
+    // its share's first token (split) or token 0 (a whole block: below OWN_IDX_SPLIT_MIN, a check); the same
+    // partition at every index layer, so the layer-20 candidate marks stay in the rows the same token reads later
+    const unsigned rb = ixr_on && sx ? ua[c] : 0u;
+    float *const rsc = ixr_on ? ixr_score[c] + (size_t)(px_tok ? ixr_R : 0u) * SS : b.score;
+    uint8_t *const rcd = ixr_on ? ixr_cand[c] + (size_t)(px_tok ? ixr_R : 0u) * SS : b.cand;
+    if (ixr_on && (sx ? ub[c] - ua[c] : (unsigned)M) > ixr_R)
+        throw std::runtime_error("OWN_IDX_ROWS: a block's index needs more than " + std::to_string(ixr_R) +
+                                 " score rows (OWN_IDX_ROWS=0)");
     // OWN_IDX_CAND: past layer 20, when every long token has more rows than candidates, only each token's
     // layer-20 candidate rows are scored and selected (the others are -inf in the masked select)
     // (decided from every token of the block, as the selects' forms below: the same launches for any share)
@@ -1362,8 +1449,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         if (!un) return;
         gemv_m(c, p + "indexer.attn_q_b.weight", b.qn + (size_t)u0 * g.qrank, g.qrank, qd + (size_t)u0 * 4096, 4096, 0, un);
         {
-            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)(pos + (long)u0) * 32;
-            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)(pos + (long)u0) * 32;
+            const float *cb = rope_t(c, yarn, false, pos + (long)u0), *sbp = rope_t(c, yarn, true, pos + (long)u0);
             rows_launch(c, ops41sycl::TokRows<ops41sycl::RopeRows<Act>>{
                                ops41sycl::RopeRows<Act>{qd + (size_t)u0 * 4096, cb, sbp, 32u, 128u, false}, un, {4096, 32, 0, 0}});
         }
@@ -1373,22 +1459,22 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
     // scores its rows of every token into the arena (xscM + t * SS + row), gathered by one pull (ixm_score); the
     // selects read the scores there (sbase)
     const bool ms = !split && ixm_on(c, (unsigned)M, lmax, ccm);
-    float *const sbase = ms ? xarena[c] + xscM : b.score;
+    float *const sbase = ms ? xarena[c] + xscM : rsc;
     // the scores and selects of tokens [u0, u0 + un) (queries qd / wd as qrows), lists into out + t * 512; every
     // pointer is token t's of the block (score, candidates, block lists), every kernel as for the whole block
     auto score_sel = [&](unsigned u0, unsigned un, const act_t *qd, const act_t *wd, int32_t *out) {
         if (!un) return;
         const int *ln = lens + u0;
         const act_t *qi = qd + (size_t)u0 * 4096, *wv = wd + (size_t)u0 * 32;
-        float *const sco = sbase + (size_t)u0 * SS;
-        uint8_t *const cnd = b.cand + (size_t)u0 * SS;
+        float *const sco = sbase + (size_t)(u0 - rb) * SS; // (idxsplit-2's arena rows: rb 0, a whole block)
+        uint8_t *const cnd = rcd + (size_t)(u0 - rb) * SS;
         int32_t *const bl0 = blh ? blh + (size_t)u0 * (2048 + 64) : nullptr; // (null without OWN_IDX_CAND)
         int32_t *const ox = out + (size_t)u0 * 512;
         if (ccm) {
             using KS = ops41sycl::IndexerScoreBCM<Act>;
             constexpr size_t WG = 128;
             KS k{};
-            for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
+            k.lens = lens_arg(c, ln, un);
             k.m = un;
             k.gpt = (unsigned)(2048 * 8 / WG);
             k.qs = 4096;
@@ -1407,7 +1493,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
             if (qsel_ok()) { // OWN_TOPK_Q
                 ops41sycl::TopKSelMCQ kq{};
-                for (unsigned t = 0; t < un; ++t) kq.lens[t] = ln[t];
+                kq.lens = lens_arg(c, ln, un);
                 kq.m = un;
                 kq.ss = SS;
                 kq.cs = SS;
@@ -1416,7 +1502,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
                                  (const int32_t *)bl0, ox);
             } else {
                 ops41sycl::TopKSelMC kt{};
-                for (unsigned t = 0; t < un; ++t) kt.lens[t] = ln[t];
+                kt.lens = lens_arg(c, ln, un);
                 kt.m = un;
                 kt.ss = SS;
                 kt.cs = SS;
@@ -1438,7 +1524,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             constexpr size_t WG = 128;
             const unsigned gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG); // (the block's longest)
             KS k{};
-            for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
+            k.lens = lens_arg(c, ln, un);
             k.m = un;
             k.gpt = gpt;
             k.qs = 4096;
@@ -1457,7 +1543,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
         if (L == 20) {
             auto blk = [&](auto kb) {
-                for (unsigned t = 0; t < un; ++t) kb.lens[t] = ln[t];
+                kb.lens = lens_arg(c, ln, un);
                 kb.m = un;
                 kb.ss = SS;
                 kb.cs = SS;
@@ -1469,7 +1555,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             else blk(ops41sycl::TopKSelM<true>{});
         }
         auto rws = [&](auto kt) {
-            for (unsigned t = 0; t < un; ++t) kt.lens[t] = ln[t];
+            kt.lens = lens_arg(c, ln, un);
             kt.m = un;
             kt.mask = L > 20;
             kt.ss = SS;
@@ -1570,7 +1656,9 @@ void ixm_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const
         using KS = ops41sycl::IndexerScoreBM<Act>;
         constexpr size_t WG = 128;
         KS k{};
-        for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t] > (int)r0 ? std::min(ln[t], (int)r1) - (int)r0 : 0;
+        int cl[MTX] = {};
+        for (unsigned t = 0; t < un; ++t) cl[t] = ln[t] > (int)r0 ? std::min(ln[t], (int)r1) - (int)r0 : 0;
+        k.lens = lens_arg(c, cl, un);
         k.m = un;
         k.gpt = (unsigned)(((size_t)(r1 - r0) + WG - 1) / WG);
         k.qs = 4096;
@@ -1598,7 +1686,7 @@ void ixm_check(int c, int si, unsigned un, const int *ln, const act_t *qi, const
     using KS = ops41sycl::IndexerScoreBM<Act>;
     constexpr size_t WG = 128;
     KS k{};
-    for (unsigned t = 0; t < un; ++t) k.lens[t] = ln[t];
+    k.lens = lens_arg(c, ln, un);
     k.m = un;
     k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
     k.qs = 4096;
@@ -1867,7 +1955,7 @@ void idx_cand_check_m(int L, int c, int si, int M, const int *lens, int slot) {
         using KS = ops41sycl::IndexerScoreBM<Act>;
         constexpr size_t WG = 128;
         KS k{};
-        for (int t = 0; t < M; ++t) k.lens[t] = lens[t];
+        k.lens = lens_arg(c, lens, (unsigned)M);
         k.m = (unsigned)M;
         k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG - 1) / WG);
         k.qs = 4096;
@@ -1885,7 +1973,7 @@ void idx_cand_check_m(int L, int c, int si, int M, const int *lens, int slot) {
     using KR = ops41sycl::TopKSelP<false>;
     constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
     ops41sycl::TopKSelM<false> kt{};
-    for (int t = 0; t < M; ++t) kt.lens[t] = lens[t];
+    kt.lens = lens_arg(c, lens, (unsigned)M);
     kt.m = (unsigned)M;
     kt.mask = true;
     kt.ss = SS;
@@ -2221,8 +2309,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     }
     if (pos < 0 || pos + M > max_seq) throw std::runtime_error("position beyond max_seq");
     if (mt_small) { // key and query rope, every token (positions pos .. pos + M - 1: 32 table entries apart)
-        const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
-        const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+        const float *cb = rope_t(c, yarn, false, pos), *sbp = rope_t(c, yarn, true, pos);
         using RR = ops41sycl::TokRows<ops41sycl::RopeRows<Act>>;
         rows_launch(c, ops41sycl::RowsPair<RR, RR>{
                            tokr(ops41sycl::RopeRows<Act>{b.kvn, cb, sbp, 1u, (unsigned)g.hd, false}, g.hd, 32),
@@ -2231,8 +2318,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         for (int t = 0; t < M; ++t) {
             tok_set(c, t);
             auto &s = sc[c];
-            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
-            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
+            const float *cb = rope_t(c, yarn, false, cpos(c)), *sbp = rope_t(c, yarn, true, cpos(c));
             launch_rows<0>(c, 1, 0, ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{{s.kvn, cb, sbp, 1u, (unsigned)g.hd, false}});
             launch_rows<0>(c, (size_t)nh, 0,
                            ops41sycl::RowsP<ops41sycl::RopeRows<Act>>{{s.q + qo, cb, sbp, (unsigned)nh, (unsigned)g.hd, false}});
@@ -2265,6 +2351,16 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     } // (PX_P0B)
     // ---- phase 1: attention; output-a rows for all tokens
     if (seg & PX_P1) {
+    // kvshard-1 (OWN_KV_SHARD): at an index layer every token's listed rows into the staging rows (the block's token
+    // px_tok + t at rows (px_tok + t) * 512 ...), after every list is final (OWN_IDX_SPLIT: ix_wait above); this and
+    // the layers up to the next index layer read them through the slot lists. kvshard push (OWN_KV_PUSH): in halves
+    // (px_layers on the copy engines) the owners push their rows instead (kvs_fetch_push: the same staged bytes per
+    // slot); blocks outside the halves pull (KvGather)
+    if (o.kv_shard && cr && index_slot(L) >= 0) {
+        const int32_t *kl = cidxm[c][isrc_for(L)] + (size_t)px_tok * 512;
+        if (kvs_push_on(c)) kvs_fetch_push(c, si, kl, (unsigned)M, (size_t)px_tok * 512);
+        else kvs_fetch(c, si, kl, (unsigned)M, (size_t)px_tok * 512, 1);
+    }
     if (mt_small) { // every token at once: the block's key rows wait in the ring's block area until all have read
         const int nc = cr ? 512 : 0, W = 128 + MTX;
         int n_idx = 128 + nc;
@@ -2277,14 +2373,14 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         // OWN_ATT_WA: its work inside the OWN_ATT_T launches below instead (att_wa_form: 'F' one launch, 'T' score
         // launch, '-' none; the same rows and lists)
         const act_t *wkv = (const act_t *)b.kvn;
-        const int32_t *wci = (const int32_t *)(cr ? cidxm[c][isrc_for(L)] + pt * 512 : nullptr);
+        const int32_t *wci = (const int32_t *)(cr ? (o.kv_shard ? kvs_sl[c] : cidxm[c][isrc_for(L)]) + pt * 512 : nullptr);
         const char waf = att_wa_form(nh, n_idx, (unsigned)M);
         const bool wa = waf != '-';
         if (!wa)
             launch(c, (size_t)M * std::max(g.hd, 128 + nc), 64,
                    ops41sycl::WindowAppendM<Act>{128, g.hd, (int)pos, nc, M, MTX, (size_t)g.hd, 512, 640}, ring[c][L],
                    wkv, b.idxs_cat, wci);
-        const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
+        const uint16_t *kvw = ring[c][L], *kvc = cr ? (o.kv_shard ? kvs_stg[c] : ckv_mirror[c][si]) : ring[c][L];
         if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("multi-token step: kv alignment");
         const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
         const size_t WS = (size_t)g.qh * 640;
@@ -2332,8 +2428,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
                           ix, b.attn_w);
             }
         }
-        const float *cbm = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)pos * 32;
-        const float *sbm = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)pos * 32;
+        const float *cbm = rope_t(c, yarn, false, pos), *sbm = rope_t(c, yarn, true, pos);
         // OWN_ATT_OUT_C: blocks of up to 8 tokens only (guess checks); from 12 tokens on (prompt reading, 16) the
         // 32 KiB of local memory per work-group leaves too few of them resident and OutM<JB> is faster (round18 s5:
         // 16 heads, 640 slots: M = 1..6 15.8-20.9 us vs 23.3-29.6, M = 8 24.3 vs 24.4, M = 16 44.9 vs 30.8)
@@ -2378,13 +2473,13 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
         if (cr) {
             launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 512},
                    ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
-                   (const int32_t *)(cidxm[c][isrc_for(L)] + (size_t)t * 512));
+                   (const int32_t *)((o.kv_shard ? kvs_sl[c] : cidxm[c][isrc_for(L)]) + (size_t)t * 512));
             n_idx += 512;
         } else {
             launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 0},
                    ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
         }
-        const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
+        const uint16_t *kvw = ring[c][L], *kvc = cr ? (o.kv_shard ? kvs_stg[c] : ckv_mirror[c][si]) : ring[c][L];
         if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("multi-token step: kv alignment");
         const float *sinks = wp<float>(c, p + "attn_sinks.weight") + hla.hq0[c];
         const int32_t *ix = (const int32_t *)s.idxs_cat;
@@ -2397,8 +2492,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
                       (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
             launch_sg(c, nh, ops41sycl::SparseSoftmaxP<640>{nh}, sinks, ix, s.attn_w);
         }
-        const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
-        const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
+        const float *cb = rope_t(c, yarn, false, cpos(c)), *sbp = rope_t(c, yarn, true, cpos(c));
         if (o.att_out_c) { // OWN_ATT_OUT_C
             using SC = ops41sycl::SparseOutJC<512, 16, 128>;
             SC so{n_idx, nh, 128};
@@ -3141,8 +3235,7 @@ void s39_rows(int c, int L, bool shadow) {
             rows_launch(c, tokr(ops41sycl::NormRows<5120, 4>{x, wn, xn}, H, H));
         gemv_m(c, p + "attn_kv.weight", xn, H, kv, hd, 0, n);
         rows_launch(c, tokr(ops41sycl::NormRows<512, 2>{kv, wp<float>(c, p + "attn_kv_a_norm.weight"), kvn}, hd, hd));
-        const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)p0 * 32;
-        const float *sb = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)p0 * 32;
+        const float *cb = rope_t(c, yarn, false, p0), *sb = rope_t(c, yarn, true, p0);
         rows_launch(c, tokr(ops41sycl::RopeRows<Act>{kvn, cb, sb, 1u, (unsigned)g.hd, false}, hd, 32));
         launch(c, (size_t)n * hd, 64, ops41sycl::RingRowsM<Act>{S39_WIN, g.hd, (int)p0, (int)n, hd}, rg, (const act_t *)kvn);
     } catch (...) {
@@ -3203,9 +3296,14 @@ void tpm_card_step(int c) {
         mx_ready[c] = false;
         auto eng = [&] {
             const auto e0 = std::chrono::steady_clock::now();
+            rusage r0{}, r1{};
+            getrusage(RUSAGE_THREAD, &r0);
             tpm_engram_upload(c);
+            getrusage(RUSAGE_THREAD, &r1);
+            eng_ru_add(c, r0, r1);
             eng_t[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - e0).count();
             ++eng_n[c];
+            if (o.eng_gate & 1u) eng_gate(c); // eng-gate-1, blocks: every card's rows read before any launches past layer 0
         };
         if (!o.eng_late) eng();
         if (o.layer_begin != 0) throw std::runtime_error("multi-token step needs every layer");
@@ -3229,6 +3327,7 @@ void tpm_card_step(int c) {
             tpm_layer(L, c);
         }
         if (s39_blk && o.skip39_check) s39_compare(c); // skip39-1 check: the shadow rows against the full layer's
+        tpd_lend[c] = now_s(); // tpd-1: every layer launched
         const bool hdefer = o.head_cq && o.dspark && o.head && mt_heads;
         if (o.head && mt_heads) {
             tok_end(c);
@@ -3323,6 +3422,8 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     const bool pxb = px_blk;
     px_blk = false;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
+    tpd_check(mt_heads ? "checked block" : "block", mt);
+    if (!mt_heads) tpd_mem(mt);
     if (tl_path) tl_prompt_done(); // OWN_TIMELINE_PROMPT: clock pairs / the file (every card is done)
     if (pxb && o.px_check) px_check_block(); // OWN_PX_CHECK
     for (int c = 0; c < o.tp; ++c) // OWN_QB_OFF_M's pull first (QbmPull: err[2] = 1 + flag word, err[3] = seq): the
@@ -3333,7 +3434,9 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     for (int c = 0; c < o.tp; ++c) {
         if (xerr[c][0])
             throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
-                                     std::to_string((int)xerr[c][0] - 1));
+                                     std::to_string((int)xerr[c][0] - 1) + " (block at position " + std::to_string(pos) +
+                                     " of " + std::to_string(mt) + " tokens, step " + std::to_string(tp_stepn) + "; " +
+                                     tpd_report() + ")");
         if (xerr[c][1]) throw std::runtime_error("card " + pci[c] + ": attention (one launch) timed out waiting for its score tiles");
     }
     const int32_t next = o.head && !skip_head ? tp_argmax() : -1;

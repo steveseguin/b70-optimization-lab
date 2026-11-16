@@ -66,11 +66,53 @@ static std::pair<long, long> host_io() {
     getrusage(RUSAGE_SELF, &ru);
     return {rb, ru.ru_majflt};
 }
+// eng-warm-1 (OWN_ENG_WARM=us, default 0 = off; 2026-11-16): while the answers run, one 4 KiB O_DIRECT read of the
+// engram shard every us microseconds (a random page into a private buffer; nothing the engine reads). Between answer
+// steps (~10-16 ms apart) the NVMe drive drops into a power-saving state and the next step's cold row reads (~34 of
+// its 48 rows at 194K) wait ~340-650 us instead of ~150 (engbench/madv2.c, 48 cold rows: back to back 153 us, after a
+// 10 ms pause 376, after 30 ms 649 even with the CPU kept busy, after 10 ms with one 4 KiB read every 1 ms 149).
+// The values cannot change.
+static std::atomic<long> g_warm_reads{0};
+struct EngWarm {
+    std::thread th;
+    std::atomic<bool> quit{false};
+    explicit EngWarm(const char *path) {
+        const long us = getenv("OWN_ENG_WARM") ? atol(getenv("OWN_ENG_WARM")) : 0;
+        if (us <= 0) return;
+        const int fd = open(path, O_RDONLY | O_DIRECT);
+        if (fd < 0) { perror("OWN_ENG_WARM: open"); return; }
+        th = std::thread([this, fd, us] {
+            cpu_set_t cs; // any CPU (the main thread, whose pin this thread would inherit, polls)
+            CPU_ZERO(&cs);
+            for (int i = 0; i < CPU_SETSIZE && i < (int)sysconf(_SC_NPROCESSORS_ONLN); ++i) CPU_SET(i, &cs);
+            pthread_setaffinity_np(pthread_self(), sizeof cs, &cs);
+            struct stat st;
+            fstat(fd, &st);
+            const uint64_t pages = (uint64_t)st.st_size / 4096;
+            void *buf = nullptr;
+            if (pages == 0 || posix_memalign(&buf, 4096, 4096)) { close(fd); return; }
+            uint64_t x = 0x9e3779b97f4a7c15ull;
+            while (!quit.load(std::memory_order_relaxed)) {
+                x ^= x << 13; x ^= x >> 7; x ^= x << 17;
+                if (pread(fd, buf, 4096, (off_t)((x % pages) * 4096)) == 4096) g_warm_reads.fetch_add(1);
+                std::this_thread::sleep_for(std::chrono::microseconds(us));
+            }
+            free(buf);
+            close(fd);
+        });
+    }
+    ~EngWarm() {
+        if (!th.joinable()) return;
+        quit = true;
+        th.join();
+    }
+};
 static void host_io_line(own41::Backend41 &be, int tp, std::pair<long, long> io0) {
     const auto io1 = host_io();
     double tsum = 0, tmax = 0, tq = 0;
-    long nsum = 0;
+    long nsum = 0, ru[4] = {};
     for (int c = 0; c < std::max(1, tp); ++c) {
+        for (int k = 0; k < 4; ++k) ru[k] += be.eng_ru[c][k]; // tpd-3 (reset with eng_t: the answer steps only)
         tq += be.eng_tq[c];
         tsum += be.eng_t[c];
         nsum += be.eng_n[c];
@@ -80,6 +122,14 @@ static void host_io_line(own41::Backend41 &be, int tp, std::pair<long, long> io0
                  "per step and card (slowest card %.1f us; copy + decode launch calls %.1f us)\n",
                  (io1.first - io0.first) / 1048576.0, io1.second - io0.second, nsum ? 1e6 * tsum / nsum : 0.0, 1e6 * tmax,
                  nsum ? 1e6 * tq / nsum : 0.0);
+    if (const long w = g_warm_reads.exchange(0)) // eng-warm-1: its reads are in the MiB above
+        std::fprintf(stderr, "OWN_ENG_WARM: %ld reads of 4 KiB (%.1f MiB) kept the drive awake\n", w, w / 256.0);
+    // tpd-3: inside the engram reads of the answer steps, per read and card: page faults that
+    // read the disk / that only mapped a cached page, and context switches (own: the thread slept, e.g. on a page
+    // under I/O or a lock; forced: preempted)
+    if (nsum) std::fprintf(stderr, "engram reads: per read and card %.2f major + %.2f minor page faults, %.2f own + %.2f forced "
+                           "context switches (%ld reads)\n", (double)ru[0] / nsum, (double)ru[1] / nsum,
+                           (double)ru[2] / nsum, (double)ru[3] / nsum, nsum);
 }
 
 // GGUF single-tensor table locator (from the validated CPU runner).
@@ -371,6 +421,8 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_ENG_DEV")) opt.eng_dev = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_EARLY")) opt.eng_early = atoi(e) != 0;
     if (const char *e = getenv("OWN_ENG_LATE")) opt.eng_late = atoi(e) != 0;
+    if (const char *e = getenv("OWN_ENG_GATE")) opt.eng_gate = (unsigned)atoi(e); // eng-gate-1: bit 1 blocks, bit 2 one-token steps
+    if (const char *e = getenv("OWN_ENG_SPREAD")) opt.eng_spread = atoi(e) != 0; // eng-spread-1: card threads ask for their rows
     // default on since tg88 (traces identical, plain answers +0.3-0.5 %): =0 turns each off
     if (const char *e = getenv("OWN_ENG_CQ")) opt.eng_cq = atoi(e) != 0; // engram row copies on a copy queue
     if (const char *e = getenv("OWN_PRE_K")) opt.pre_k = atoi(e) != 0;   // pre-mix weights by the broadcast launch
@@ -383,6 +435,8 @@ int main(int argc, char **argv) {
     // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
     // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
     opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
+    if (const char *e = getenv("OWN_IDX_ROWS")) opt.idx_rows = (unsigned)atoi(e); // idxrows-1 (default 1)
+    if (const char *e = getenv("OWN_ROPE_WIN")) opt.rope_win = (unsigned)atoi(e); // ropewin-1 (default 1)
     // idxsplit-1 (opt-in; /home/steve/dsv41-work/idxsplit/README.md): prompt blocks' index lists split across the cards by
     // tokens and gathered (the same lists): OWN_IDX_SPLIT=1 (the indexer's q_b / rope / proj rows, scores and selects of
     // the card's tokens), 2 (scores and selects only); OWN_IDX_SPLIT_MIN (blocks / halves of at least this many tokens,
@@ -419,6 +473,17 @@ int main(int argc, char **argv) {
     if (opt.idx_dsplit > 3) die("OWN_IDX_DSPLIT: 0..3 (bit 1 one-token steps, bit 2 blocks of up to 6 tokens)");
     if (const char *e = getenv("OWN_IDX_DSPLIT_MIN")) opt.idx_dsplit_min = std::max(513L, atol(e));
     if (const char *e = getenv("OWN_IDX_DSPLIT_CHECK")) opt.idx_dsplit_check = atoi(e) != 0;
+    // kvshard-1 (opt-in; /home/steve/dsv41-work/kvshard/README.md): the compressed KV rows stored by owner (chunks of
+    // OWN_KV_SHARD_R rows, default 2048, round robin over the six cards) + the newest OWN_KV_TAIL rows (default 4096) on
+    // every card; the listed rows copied into staging rows before the attention (the same bits). OWN_KV_SHARD=1 on,
+    // 2 on + check (full mirrors kept, every staged row compared on the card, counts at exit)
+    if (const char *e = getenv("OWN_KV_SHARD")) opt.kv_shard = (unsigned)std::max(0, atoi(e));
+    if (const char *e = getenv("OWN_KV_SHARD_R")) opt.kv_shard_r = (unsigned)std::max(0, atoi(e));
+    if (const char *e = getenv("OWN_KV_TAIL")) opt.kv_tail = (unsigned)std::max(0, atoi(e));
+    // kvshard push (default 1 with OWN_KV_SHARD; /home/steve/dsv41-work/kvshard/README-push.md): in OWN_PX prompt halves
+    // the rows come as copy-engine pushes from their owners (no card-to-card reads while reading a prompt); needs
+    // OWN_PX=1 with OWN_PX_BCS (refused otherwise). OWN_KV_PUSH=0: kvshard-1's pulls everywhere
+    if (const char *e = getenv("OWN_KV_PUSH")) opt.kv_push = (unsigned)std::max(0, atoi(e));
     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
     // round 18 e87 / r1 (=0 for the old forms)
@@ -427,6 +492,7 @@ int main(int argc, char **argv) {
     // the selects with every key in registers (rows >= 4,096, blocks > 2,048; the same lists): default since round 18
     // q4 / g75 (=0 for TopKSelR / TopKSelP / TopKSelC)
     opt.topk_q = getenv("OWN_TOPK_Q") ? atoi(getenv("OWN_TOPK_Q")) != 0 : true;
+    opt.topk_m = getenv("OWN_TOPK_M") && atoi(getenv("OWN_TOPK_M")) != 0; // topk-m (opt-in until gated)
     // the attention output from local memory, a column per lane (the same outputs): default since round 18 s3 / g76
     // (=0 for SparseOutJB)
     opt.att_out_c = getenv("OWN_ATT_OUT_C") ? atoi(getenv("OWN_ATT_OUT_C")) != 0 : true;
@@ -984,8 +1050,10 @@ int main(int argc, char **argv) {
             };
             long ng_rounds = 0, ng_guessed = 0, ng_kept = 0;
             hist.assign((size_t)std::max(k, ngram ? ngmax : 0) + 2, 0);
-            for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
+            for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0, std::fill(be.eng_ru[c], be.eng_ru[c] + 4, 0L);
             const auto io0 = host_io();
+            g_warm_reads = 0;
+            EngWarm warm(eng_path); // eng-warm-1 (OWN_ENG_WARM): the answers' rounds
             const double ts0 = now();
             while ((int)out.size() < ndecode) {
                 int32_t d[own41::Backend41::DR_BLOCK];
@@ -1099,8 +1167,10 @@ int main(int argc, char **argv) {
         int cur = out_ids[0];
         double t_dec = 0;
         int n_timed = 0;
-        for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0;
+        for (int c = 0; c < own41::Backend41::TILES; ++c) be.eng_t[c] = be.eng_tq[c] = 0, be.eng_n[c] = 0, std::fill(be.eng_ru[c], be.eng_ru[c] + 4, 0L);
         const auto io0p = host_io();
+        g_warm_reads = 0;
+        EngWarm warm(eng_path); // eng-warm-1 (OWN_ENG_WARM): the answer steps
         // OWN_GPROF_DECODE=1: the profile counts the answer steps only (the prompt blocks' kernels and the first
         // answer step are dropped; without it a prompt's kernels are divided over the answer steps)
         const bool gprof_dec = opt.gprof && getenv("OWN_GPROF_DECODE") && atoi(getenv("OWN_GPROF_DECODE")) > 0;
@@ -1197,6 +1267,73 @@ int main(int argc, char **argv) {
         }
         std::ofstream of(argv[3]);
         for (int t : out_ids) of << t << "\n";
+        of.close();
+        // turns-1 (OWN_TURNS=a.txt[,b.txt...]; plain answers, OWN_TP > 1, OWN_PROMPT_BLOCK > 1): follow-up turns in
+        // the same context, nothing read again. Turn k reads [the last answer token (not read yet), file k's ids] as
+        // more prompt from the current position (the same blocks as a prompt), then writes up to OWN_TURN_N answers
+        // (default ndecode; stops at OWN_EOS) to <out_ids>.turn<k>. Its bits are a fresh run's on the whole history
+        // (prompt, every answer, every follow-up): block boundaries change no bits (checked: c-turns gates).
+        if (const char *tl = getenv("OWN_TURNS"); tl && *tl) {
+            if (opt.tp < 2 || !opt.head || !forced.empty() || opt.gprof) die("OWN_TURNS: OWN_TP > 1, the whole model, no OWN_FORCE / OWN_GPROF");
+            const int pb = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
+            if (pb < 2) die("OWN_TURNS needs OWN_PROMPT_BLOCK > 1");
+            const int tn = getenv("OWN_TURN_N") ? atoi(getenv("OWN_TURN_N")) : ndecode;
+            const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pb);
+            const std::string all = tl;
+            int last = out_ids.back(), turn = 1;
+            for (size_t k0 = 0; k0 < all.size();) {
+                size_t k1 = all.find(',', k0);
+                if (k1 == std::string::npos) k1 = all.size();
+                const std::string fn = all.substr(k0, k1 - k0);
+                k0 = k1 + 1;
+                if (fn.empty()) continue;
+                ++turn;
+                std::vector<int32_t> q{(int32_t)last};
+                {
+                    std::ifstream f(fn);
+                    long v;
+                    while (f >> v) q.push_back((int32_t)v);
+                }
+                if (q.size() < 2) die("OWN_TURNS: no ids in " + fn);
+                const double t0 = now();
+                int nx = -1;
+                for (size_t i = 0; i < q.size();) {
+                    const int m = be.px_block_take((int)std::min<size_t>((size_t)pb, q.size() - i));
+                    for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[q[i + k]]);
+#ifndef OWN41_ACT_BF16
+                    be.eng_ahead.clear();
+                    for (size_t k = i + m; k < q.size() && (long)(k - i - m) < ahead; ++k) be.eng_ahead.push_back(token_map[q[k]]);
+#endif
+                    be.trace_on = false;
+                    be.skip_head = i + m < q.size();
+                    nx = be.decode_block_tp(q.data() + i, m);
+                    i += m;
+                }
+                be.skip_head = false;
+#ifndef OWN41_ACT_BF16
+                be.eng_ahead.clear();
+#endif
+                const double tr = now() - t0;
+                std::vector<int> ans{nx};
+                int cu = nx;
+                double td = 0;
+                int nt = 0;
+                for (int st = 1; st < tn && !(cu == eos); ++st) {
+                    be.comp_ids.push_back(token_map[cu]);
+                    be.trace_on = false;
+                    const double t1 = now();
+                    const int n2 = be.decode_step(cu);
+                    td += now() - t1, ++nt;
+                    ans.push_back(n2);
+                    cu = n2;
+                }
+                std::fprintf(stderr, "turn %d: %zu tokens read in %.2fs (%.1f tok/s), context %zu tokens; %zu answers, %.2f tok/s\n",
+                             turn, q.size(), tr, q.size() / tr, be.comp_ids.size(), ans.size(), nt ? nt / td : 0.0);
+                std::ofstream ot(std::string(argv[3]) + ".turn" + std::to_string(turn));
+                for (int t : ans) ot << t << "\n";
+                last = ans.back();
+            }
+        }
     } catch (const std::exception &ex) {
         std::fprintf(stderr, "fatal: %s\n", ex.what());
         return 1;

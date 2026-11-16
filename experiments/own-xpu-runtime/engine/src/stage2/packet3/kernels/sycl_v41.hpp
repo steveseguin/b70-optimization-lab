@@ -23,8 +23,8 @@ namespace ops41sycl {
 using iq3::Type;
 inline constexpr unsigned MT_MAX = OWN41_MTX;
 // >= 16: the one-sub-group block forms (DenseRowsM / GemvTM / HcDotsRowsM at 16 tokens) read 16 tokens' inputs;
-// <= 256: the index kernels carry a per-token table int lens[MT_MAX] in their arguments (1 KiB at 256, under the
-// devices' 2 KiB kernel-argument limit with the other members; past 256 they would have to move to card memory).
+// <= 256: LensPut carries a per-token table int v[MT_MAX] in its arguments (1 KiB at 256, under the devices' 2 KiB
+// kernel-argument limit with the other members); the index kernels read it from card memory (lens pointers).
 // (Past 128 tokens two block tokens share a ring row: RingCommitM / DraftKvRows write only the last 128.)
 static_assert(MT_MAX >= 16 && MT_MAX <= 256, "OWN41_MTX: 16 .. 256 tokens per block step");
 
@@ -7038,6 +7038,290 @@ template <int MAXC> struct TopKSelBQ {
     }
 };
 
+// topk-m (OWN_TOPK_M): the selects past the register forms' reach (TopKSelQ: n <= 98,304 rows; TopKSelBQ: 32,768
+// blocks), in two launches instead of TopKSelR / TopKSelP's one work-group passes over memory. (1) TopKSelM1 /
+// TopKSelMB1: G work-groups, group g over the positions [g R, (g + 1) R) (R = 1,024 C, C per item from registers,
+// TopKSelQ's loads), keeps its own top k by the same order (order key descending, the lower position first) with
+// qsel_threshold and writes them in ascending position order to ck / ci at g k: order key and position; the slots
+// past its count get key 0 (below every score's order key: scores are never NaN) and position -1. (2) TopKSelQ2 /
+// TopKSelQB2: one group selects the top k of the G k candidates from registers (qsel_threshold, TopKSelQ's walk and
+// ties) and writes their positions. Exact: one total order, so every member of the global top k is in its group's
+// top k; the candidates are in ascending position order, so the ties taken (the lowest positions equal to the
+// threshold) and the output order are TopKSelP's; with n >= k valid keys no key-0 slot is ever taken. The block form
+// (layer 20; keys = a block's largest score over 8 rows, the newest block +inf) also zeroes every block's rows in (1)
+// and flags the rows of the kept blocks above -inf in (2), with TopKSelBQ's list (out[0] = count, then the blocks).
+template <int C> struct TopKSelM1 {
+    using KP = TopKSelP<false>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, V = 8, R = WG * C;
+    KP p; // n, k, cand_n (add / outn: TopKSelQ2's)
+    void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand_in, uint32_t *ck, int32_t *ci, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id(), gid = (int)it.get_group_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n, g0 = gid * R, ng = sycl::min(n - g0, R);
+        const int j0 = sycl::min(n, g0 + lid * C), cnt = sycl::min(n, j0 + C) - j0;
+        const uint32_t KNEG = KP::okey(-INFINITY);
+        const bool masked = cand_in != nullptr && p.cand_n > 0;
+        uint32_t kr[C];
+#pragma unroll
+        for (int v = 0; v < C / V; ++v) {
+            const int m0 = v * V;
+            if (m0 < cnt) {
+                if (m0 + V <= cnt) {
+                    const auto x = *reinterpret_cast<const sycl::vec<float, V> *>(sc + j0 + m0);
+                    sycl::vec<uint8_t, V> f(1);
+                    if (masked) {
+                        if (j0 + m0 + V <= p.cand_n) f = *reinterpret_cast<const sycl::vec<uint8_t, V> *>(cand_in + j0 + m0);
+                        else
+#pragma unroll
+                            for (int u = 0; u < V; ++u) f[u] = j0 + m0 + u < p.cand_n ? cand_in[j0 + m0 + u] : 1;
+                    }
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = f[u] ? KP::okey(x[u]) : KNEG;
+                } else {
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = m0 + u < cnt ? KP::okey(p.val(sc, cand_in, j0 + m0 + u)) : 0u;
+                }
+            }
+        }
+        auto ok = [&](int m) { return m < cnt; };
+        const uint32_t k = (uint32_t)p.k;
+        const bool all = p.k >= ng;
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<C>(it, kr, ok, k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < C; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        uint32_t base = gtb + sycl::min(eqb, rem), eqs = eqb;
+        uint32_t *const gk = ck + (size_t)gid * k;
+        int32_t *const gi = ci + (size_t)gid * k;
+#pragma unroll
+        for (int m = 0; m < C; ++m)
+            if (ok(m)) {
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                if (sel) {
+                    if (base < k) gk[base] = kr[m], gi[base] = j0 + m;
+                    ++base;
+                }
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, ngt, sycl::plus<uint32_t>()) +
+                             sycl::min(sycl::reduce_over_group(g, neq, sycl::plus<uint32_t>()), rem);
+        for (uint32_t i = tot + (uint32_t)lid; i < k; i += WG) gk[i] = 0u, gi[i] = -1;
+    }
+};
+// (2) rows: the top k of the p.n = G k candidates; out[i] = ci[...] + add in ascending position order, then -1
+template <int MAXC> struct TopKSelQ2 {
+    using KP = TopKSelP<false>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, V = 8;
+    KP p;
+    void operator()(sycl::nd_item<1> it, const uint32_t *ck, const int32_t *ci, int32_t *out, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n;
+        const bool all = p.k >= n;
+        const int c = qsel_span(n), j0 = sycl::min(n, lid * c), cnt = sycl::min(n, j0 + c) - j0;
+        uint32_t kr[MAXC];
+#pragma unroll
+        for (int v = 0; v < MAXC / V; ++v) {
+            const int m0 = v * V;
+            if (m0 < cnt) {
+                if (m0 + V <= cnt) {
+                    const auto x = *reinterpret_cast<const sycl::vec<uint32_t, V> *>(ck + j0 + m0);
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = x[u];
+                } else {
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = m0 + u < cnt ? ck[j0 + m0 + u] : 0u;
+                }
+            }
+        }
+        auto ok = [&](int m) { return m < cnt; };
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<MAXC>(it, kr, ok, (uint32_t)p.k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        uint32_t base = gtb + sycl::min(eqb, rem), eqs = eqb;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                if (sel) {
+                    if (base < (uint32_t)p.outn) out[base] = ci[j0 + m] + p.add;
+                    ++base;
+                }
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, ngt, sycl::plus<uint32_t>()) +
+                             sycl::min(sycl::reduce_over_group(g, neq, sycl::plus<uint32_t>()), rem);
+        for (int i = (int)tot + lid; i < p.outn; i += WG) out[i] = -1;
+    }
+};
+// (1) blocks (layer 20): p.n blocks of 8 rows over p.rows scores, the newest (p.n - 1) +inf; zeroes the rows
+template <int C> struct TopKSelMB1 {
+    using KP = TopKSelP<true>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, BS = 8, R = WG * C;
+    KP p;
+    void operator()(sycl::nd_item<1> it, const float *sc, uint32_t *ck, int32_t *ci, uint8_t *cand_out, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id(), gid = (int)it.get_group_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n, g0 = gid * R, ng = sycl::min(n - g0, R);
+        const int j0 = sycl::min(n, g0 + lid * C), cnt = sycl::min(n, j0 + C) - j0;
+        uint32_t kr[C];
+#pragma unroll
+        for (int m = 0; m < C; ++m)
+            if (m < cnt) {
+                const int j = j0 + m;
+                float mx;
+                const int a = j * BS;
+                if (j == n - 1) mx = INFINITY;
+                else {
+                    mx = -INFINITY; // std::max(m, v) per row, as the host folds it
+                    if (a + BS <= p.rows) {
+                        const auto x = *reinterpret_cast<const sycl::vec<float, BS> *>(sc + a);
+#pragma unroll
+                        for (int u = 0; u < BS; ++u) mx = mx < x[u] ? x[u] : mx;
+                    } else {
+                        for (int r = a; r < sycl::min(a + BS, p.rows); ++r) {
+                            const float v = sc[r];
+                            mx = mx < v ? v : mx;
+                        }
+                    }
+                }
+                kr[m] = KP::okey(mx);
+                if (a + BS <= p.rows) *reinterpret_cast<sycl::vec<uint8_t, BS> *>(cand_out + a) = sycl::vec<uint8_t, BS>(0);
+                else
+                    for (int r = a; r < sycl::min(a + BS, p.rows); ++r) cand_out[r] = 0;
+            }
+        auto ok = [&](int m) { return m < cnt; };
+        const uint32_t k = (uint32_t)p.k;
+        const bool all = p.k >= ng;
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<C>(it, kr, ok, k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < C; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        uint32_t base = gtb + sycl::min(eqb, rem), eqs = eqb;
+        uint32_t *const gk = ck + (size_t)gid * k;
+        int32_t *const gi = ci + (size_t)gid * k;
+#pragma unroll
+        for (int m = 0; m < C; ++m)
+            if (ok(m)) {
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                if (sel) {
+                    if (base < k) gk[base] = kr[m], gi[base] = j0 + m;
+                    ++base;
+                }
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, ngt, sycl::plus<uint32_t>()) +
+                             sycl::min(sycl::reduce_over_group(g, neq, sycl::plus<uint32_t>()), rem);
+        for (uint32_t i = tot + (uint32_t)lid; i < k; i += WG) gk[i] = 0u, gi[i] = -1;
+    }
+};
+// (2) blocks: the top k of the p.n = G k candidate blocks (p.rows: the score rows); flags and list as TopKSelBQ
+template <int MAXC> struct TopKSelQB2 {
+    using KP = TopKSelP<true>;
+    static constexpr int WG = KP::WG, NSG = KP::NSG, V = 8, BS = 8;
+    KP p;
+    void operator()(sycl::nd_item<1> it, const uint32_t *ck, const int32_t *ci, int32_t *out, uint8_t *cand_out, float *lm) const {
+        auto g = it.get_group();
+        const int lid = (int)it.get_local_linear_id();
+        uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
+        const int n = p.n;
+        const bool all = p.k >= n;
+        const int c = qsel_span(n), j0 = sycl::min(n, lid * c), cnt = sycl::min(n, j0 + c) - j0;
+        const uint32_t KNEG = KP::okey(-INFINITY);
+        uint32_t kr[MAXC];
+#pragma unroll
+        for (int v = 0; v < MAXC / V; ++v) {
+            const int m0 = v * V;
+            if (m0 < cnt) {
+                if (m0 + V <= cnt) {
+                    const auto x = *reinterpret_cast<const sycl::vec<uint32_t, V> *>(ck + j0 + m0);
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = x[u];
+                } else {
+#pragma unroll
+                    for (int u = 0; u < V; ++u) kr[m0 + u] = m0 + u < cnt ? ck[j0 + m0 + u] : 0u;
+                }
+            }
+        }
+        auto ok = [&](int m) { return m < cnt; };
+        uint32_t T = 0, rem = 0;
+        if (!all) qsel_threshold<MAXC>(it, kr, ok, (uint32_t)p.k, hist, misc, T, rem);
+        uint32_t ngt = 0, neq = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                ngt += (all || kr[m] > T) ? 1u : 0u;
+                neq += (!all && kr[m] == T) ? 1u : 0u;
+            }
+        const uint32_t gtb = sycl::exclusive_scan_over_group(g, ngt, sycl::plus<uint32_t>());
+        const uint32_t eqb = sycl::exclusive_scan_over_group(g, neq, sycl::plus<uint32_t>());
+        // flagged = selected and above -inf; with T > -inf every selected block is above it
+        const bool flags_eq_sel = all ? false : T > KNEG;
+        uint32_t fb = 0;
+        if (out && !flags_eq_sel) { // count the flags per range first
+            uint32_t eqs = eqb, nf = 0;
+#pragma unroll
+            for (int m = 0; m < MAXC; ++m)
+                if (ok(m)) {
+                    const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                    const bool sel = gt || (eq && eqs < rem);
+                    if (eq) ++eqs;
+                    nf += (sel && kr[m] > KNEG) ? 1u : 0u;
+                }
+            fb = sycl::exclusive_scan_over_group(g, nf, sycl::plus<uint32_t>());
+        } else {
+            fb = gtb + sycl::min(eqb, rem);
+        }
+        uint32_t eqs = eqb, nf = 0;
+#pragma unroll
+        for (int m = 0; m < MAXC; ++m)
+            if (ok(m)) {
+                const bool gt = all || kr[m] > T, eq = !all && kr[m] == T;
+                const bool sel = gt || (eq && eqs < rem);
+                if (eq) ++eqs;
+                const bool f = sel && kr[m] > KNEG;
+                if (f) {
+                    const int j = ci[j0 + m], a = j * BS;
+                    if (a + BS <= p.rows) *reinterpret_cast<sycl::vec<uint8_t, BS> *>(cand_out + a) = sycl::vec<uint8_t, BS>(1);
+                    else
+                        for (int r = a; r < sycl::min(a + BS, p.rows); ++r) cand_out[r] = 1;
+                    if (out) out[1 + fb + nf] = j;
+                }
+                nf += f ? 1u : 0u;
+            }
+        const uint32_t tot = sycl::reduce_over_group(g, nf, sycl::plus<uint32_t>());
+        if (out && lid == 0) out[0] = (int32_t)tot;
+    }
+};
+
 // ArgmaxP1 over a card's slice of the logits: indices are reported as
 // off + i, and `none` (the full vocabulary size) when the span has no
 // non-NaN value above -inf, exactly as ArgmaxP1 would for the full vector.
@@ -7479,10 +7763,42 @@ template <typename K> struct OutMC {
     }
 };
 
+// LensPut (privmem-1, 2026-11-16): a per-token table into card memory, every index a constant (one item stores all
+// MT_MAX values). The index kernels below used to carry the table by value (int lens[MT_MAX]) and read lens[t] at a
+// run-time t: the compiler then copies the whole argument block into private memory per lane, and the driver keeps
+// a private buffer per kernel for every hardware thread: ~1.1 KiB x 32 lanes x 2048 threads = ~70 MiB of card
+// memory per kernel (SIMD16 forms ~35 MiB), each taken at its first launch and kept: ~0.94 GiB per card over 17
+// kernels after the load-time free-memory figure (pr5: plain 3.33 -> 2.28 GiB free by position 65,536). Same
+// values read, same results.
+// privmem-2 (2026-11-16): LensPut is a launch (~8-10 us of a small step's critical path; guessing rounds change the
+// tables every round: -0.6 / -2.0 % code / analysis in c118p). Blocks of up to LT_IN tokens (guess checks, draft
+// steps) carry the table in the kernel's arguments instead, read by a select chain over constant indices (no
+// private memory); longer blocks (prompts) read it from card memory (one LensPut per block and table).
+inline constexpr unsigned LT_IN = 16;
+struct LensT {
+    const int *p;   // card memory (Backend41::lens_dev) when the block has more than LT_IN tokens, else null
+    int v[LT_IN];   // the values when p is null (constant indices only)
+    int operator[](unsigned t) const {
+        if (p) return p[t];
+        int r = 0;
+#pragma unroll
+        for (unsigned i = 0; i < LT_IN; ++i) r = t == i ? v[i] : r;
+        return r;
+    }
+};
+struct LensPut {
+    int v[MT_MAX];
+    void operator()(sycl::nd_item<1> it, int *out) const {
+        if (it.get_global_linear_id() != 0) return;
+#pragma unroll
+        for (unsigned i = 0; i < MT_MAX; ++i) out[i] = v[i];
+    }
+};
+
 // ---- the block's index lists (backend_sycl_v41_mt.inc tpm_index): per-token row counts lens[t] ----------
 // CidxFill for the tokens with lens[t] in [0, 512] (others: lens[t] < 0, left alone): list t at out + t * 512
 struct CidxFillM {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     void operator()(sycl::nd_item<1> it, int32_t *out) const {
         const unsigned g = (unsigned)it.get_global_linear_id(), t = g / 512, i = g % 512;
@@ -7493,7 +7809,7 @@ struct CidxFillM {
 // IndexerScoreB for every token with lens[t] > 0: work-groups t * gpt .. are token t's (rows j = (group %
 // gpt) * WG + local id); its query, weights and scores at the one-token pointers + t * strides
 template <typename A> struct IndexerScoreBM {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m, gpt;
     size_t qs, ws, ss;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -7512,7 +7828,7 @@ template <typename A> struct IndexerScoreBM {
 // scores bit for bit. gpt = groups per token over R * WG rows.
 template <typename A, int R> struct IndexerScoreBMR {
     static constexpr int H = 32, DK = 128, CH = 16;
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m, gpt;
     size_t qs, ws, ss;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -7568,7 +7884,7 @@ template <typename A, int R> struct IndexerScoreBMR {
 // lens[t] rows, the candidate mask to cand + t * cs. Else: n = lens[t], top 512 (+128) to out + t * 512,
 // masked by cand + t * cs (cand_n = lens[t]) when mask.
 template <bool BLOCK> struct TopKSelM {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     bool mask;
     size_t ss, cs;
@@ -7593,7 +7909,7 @@ template <bool BLOCK> struct TopKSelM {
 // TopKSelM<false> with the mask, over each token's candidate rows (TopKSelC; OWN_IDX_CAND): token t's block list
 // at bl + t * bls, its scores at sc + t * ss, its mask at cand + t * cs (cand_n == its rows), its list at out + 512 t
 struct TopKSelMC {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     size_t ss, cs, bls;
     bool rwalk = false; // OWN_TOPK_R (TopKSelC::rwalk)
@@ -7609,7 +7925,7 @@ struct TopKSelMC {
 // select by TopKSelQ<MAXC> (MAXC >= qsel_span of every token's rows), the block select by TopKSelBQ<MAXC> (of its
 // blocks), the candidate select by TopKSelCQ<16>. The same lists.
 template <int MAXC> struct TopKSelMQ {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     bool mask;
     size_t ss, cs;
@@ -7623,7 +7939,7 @@ template <int MAXC> struct TopKSelMQ {
     }
 };
 template <int MAXC> struct TopKSelMBQ {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     size_t ss, cs, bls = 0;
     void operator()(sycl::nd_item<1> it, const float *sc, uint8_t *cand, int32_t *out, float *lm) const {
@@ -7636,7 +7952,7 @@ template <int MAXC> struct TopKSelMBQ {
     }
 };
 struct TopKSelMCQ {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m;
     size_t ss, cs, bls;
     void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand, const int32_t *bl, int32_t *out,
@@ -7649,7 +7965,7 @@ struct TopKSelMCQ {
 // IndexerScoreBM over each token's layer-20 candidate rows (OWN_IDX_CAND): token t's gpt work-groups score its
 // rows bl[t * bls + 1 + i / 8] * 8 + i % 8 with IndexerScoreB::run (IndexerScoreBC per token)
 template <typename A> struct IndexerScoreBCM {
-    int lens[MT_MAX];
+    LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m, gpt;
     size_t qs, ws, ss, bls;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
@@ -8037,6 +8353,290 @@ template <typename A> struct PubAppendAM {
         const int i = (int)(gg % (size_t)per), row = row0 + (int)g;
         if (i < hd) ckv[(size_t)row * hd + i] = ops41::bf16b(A::rd(latent[(size_t)g * hd + i]));
         if (i < ik) ikm[(size_t)row * ik + i] = ops41::bf16b(A::rd(kk[(size_t)g * ik + i]));
+    }
+};
+
+// ---- kvshard-1 (OWN_KV_SHARD; backend_sycl_v41.hpp "kvshard-1", /home/steve/dsv41-work/kvshard/README.md) ----------
+// The compressed KV rows of a source are stored by owner instead of on every card: row r belongs to card
+// kvs_owner(r) = (r / R) % N, at row kvs_local(r) = (r / (N R)) R + r % R of that card's chunk of the source; every
+// card also keeps the newest TT rows of each source in a ring (row r at slot r % TT). Before the attention reads a
+// list, KvGather copies the listed rows into staging rows in list order (entry (t, j) of token t at staging row
+// so + t * 512 + j) and writes the slot list the attention reads instead (the same entry: -1 stays -1, a row becomes
+// 128 + its staging row). The attention kernels address a compressed row only as kvc + (slot - window rows) * hd and
+// skip slots < 0 (sycl_v41_attn.hpp's top; K SparseScore* / SparseOut*), so with kvc = the staging rows every launch
+// reads the same 1,024 bytes in the same slots as with the full copy: the same outputs, bit for bit.
+inline long kvs_owner(long r, unsigned R, unsigned N) { return (r / (long)R) % (long)N; }
+inline long kvs_local(long r, unsigned R, unsigned N) { return (r / ((long)R * (long)N)) * (long)R + r % (long)R; }
+// PubAppendA with the shard's stores: the row's BF16 words (the same bf16b of the activation value) into its tail
+// slot (tail: that slot's row), into the owner's chunk row (own: that row on the owner card, null on the others)
+// and, OWN_KV_SHARD=2, into the full mirror's row (mir: null otherwise); the index-key row exactly as PubAppendA
+template <typename A> struct PubAppendS {
+    int hd, ik, row;
+    void operator()(sycl::nd_item<1> it, const typename A::T *latent, const typename A::T *kk, uint16_t *tail,
+                    uint16_t *own, uint16_t *mir, uint16_t *ikm) const {
+        const int i = (int)it.get_global_linear_id();
+        if (i < hd) {
+            const uint16_t v = ops41::bf16b(A::rd(latent[i]));
+            tail[i] = v;
+            if (own) own[i] = v;
+            if (mir) mir[i] = v;
+        }
+        if (i < ik) ikm[(size_t)row * ik + i] = ops41::bf16b(A::rd(kk[i]));
+    }
+};
+// PubAppendAM with the shard's stores: rows row0 .. row0 + n - 1 (latent g at latent + g * hd, key at kk + g * ik)
+// into their tail slots (tail: the source's ring of TT rows), the rows card `card` owns into its chunk of the source
+// (chunk: its row 0), OWN_KV_SHARD=2 every row into the full mirror (mir: its row 0; null otherwise). n <= TT / 2
+// (the backend's OWN_KV_TAIL >= 2 x 512): no slot is written twice.
+template <typename A> struct PubAppendSM {
+    int hd, ik, row0;
+    unsigned n, R, N, card, TT;
+    void operator()(sycl::nd_item<1> it, const typename A::T *latent, const typename A::T *kk, uint16_t *tail,
+                    uint16_t *chunk, uint16_t *mir, uint16_t *ikm) const {
+        const int per = sycl::max(hd, ik);
+        const size_t gg = it.get_global_linear_id();
+        const unsigned g = (unsigned)(gg / (size_t)per);
+        if (g >= n) return;
+        const int i = (int)(gg % (size_t)per);
+        const long row = (long)row0 + (long)g;
+        if (i < hd) {
+            const uint16_t v = ops41::bf16b(A::rd(latent[(size_t)g * hd + i]));
+            tail[(size_t)(row % (long)TT) * hd + i] = v;
+            if (kvs_owner(row, R, N) == (long)card) chunk[(size_t)kvs_local(row, R, N) * hd + i] = v;
+            if (mir) mir[(size_t)row * hd + i] = v;
+        }
+        if (i < ik) ikm[(size_t)row * ik + i] = ops41::bf16b(A::rd(kk[(size_t)g * ik + i]));
+    }
+};
+// The listed rows of m tokens (token t's 512 entries at cidx + t * 512) into the staging rows: entry e = t * 512 + j
+// to staging row so + e, its slot to sl[so + e] (v < 128 stays v: -1 skips; 0 .. 127 never occur in a compressed
+// list, and would address the window as before; a row r = v - 128 becomes 128 + so + e). Rows r >= tail0 come from
+// this card's tail ring (slot r % TT), the others from their owner's chunk (ch[d]: card d's chunk of the source, a
+// peer's through its IPC mapping; the backend keeps tail0 = rows - TT + 512, so a row read from a chunk was written
+// at least a finished step earlier and never rewritten since: no handshake). One work-group of WG items per entry,
+// one 32-bit word each (hd = 512: 256 words).
+struct KvGather {
+    static constexpr unsigned WG = 256;
+    // the six chunks as separate members chosen by a select chain (privmem-1: an array indexed at run time copies the
+    // argument block into private memory per lane, and peer pointers stay plain kernel arguments, as in the pulls)
+    const uint16_t *ch0, *ch1, *ch2, *ch3, *ch4, *ch5;
+    void set_ch(unsigned d, const uint16_t *p) {
+        if (d == 0) ch0 = p; else if (d == 1) ch1 = p; else if (d == 2) ch2 = p;
+        else if (d == 3) ch3 = p; else if (d == 4) ch4 = p; else ch5 = p;
+    }
+    const uint16_t *chunk(unsigned d) const {
+        return d == 0 ? ch0 : d == 1 ? ch1 : d == 2 ? ch2 : d == 3 ? ch3 : d == 4 ? ch4 : ch5;
+    }
+    unsigned hd, m, R, N, TT;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const uint16_t *tail, uint16_t *stg, int32_t *sl) const {
+        const size_t e = it.get_group_linear_id();
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        if (e >= (size_t)m * 512) return;
+        const int32_t v = cidx[e];
+        const size_t srow = so + e;
+        if (w == 0) sl[srow] = v < 128 ? v : (int32_t)(128 + srow);
+        if (v < 128) return;
+        const long r = (long)v - 128;
+        const uint16_t *src = r >= tail0 ? tail + (size_t)(r % (long)TT) * hd
+                                         : chunk((unsigned)kvs_owner(r, R, N)) + (size_t)kvs_local(r, R, N) * hd;
+        const uint32_t *s32 = reinterpret_cast<const uint32_t *>(src);
+        uint32_t *d32 = reinterpret_cast<uint32_t *>(stg + srow * hd);
+        for (unsigned x = w; x < hd / 2; x += WG) d32[x] = s32[x];
+    }
+};
+// OWN_KV_SHARD=2 (check): KvGather's staged rows (same m, so, cidx) against the full mirror's rows (mir: the
+// source's rows as without the shard), bitwise, on the card. Per launch in cw (uint32): [0] rows compared, [1]
+// differing 32-bit words, [2] rows staged from the tail, [3] from this card's chunk, [4] from the peers' chunks, [5]
+// distinct rows of the launch (mark: one word per row of the source, stamp: this launch's number, never 0);
+// KvStageFold adds them into the totals after the launch.
+struct KvStageCmp {
+    static constexpr unsigned WG = 256;
+    unsigned hd, m, R, N, TT, card, stamp;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const uint16_t *stg, const uint16_t *mir, uint32_t *mark,
+                    uint32_t *cw) const {
+        cmp(it, cidx, (const int32_t *)nullptr, stg, mir, mark, cw);
+    }
+    // sl null: KvGather's layout (entry e at staging row so + e); sl set (kvshard push, KvStageCmpP): entry e at the
+    // staging row its slot names, sl[so + e] - 128. With sl the slot list itself is checked too: a skipped entry's
+    // slot must be the entry (else 1 word counted), a row's slot must name a row of this fetch's staging rows (else
+    // every word of the row counted, nothing read)
+    void cmp(sycl::nd_item<1> it, const int32_t *cidx, const int32_t *sl, const uint16_t *stg, const uint16_t *mir,
+             uint32_t *mark, uint32_t *cw) const {
+        using AR = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                    sycl::access::address_space::global_space>;
+        const size_t e = it.get_group_linear_id();
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        if (e >= (size_t)m * 512) return;
+        const int32_t v = cidx[e];
+        if (v < 128) {
+            if (sl && w == 0 && sl[so + e] != v) AR(cw[1]).fetch_add(1u);
+            return;
+        }
+        const long r = (long)v - 128;
+        const long srow = sl ? (long)sl[so + e] - 128 : (long)(so + e);
+        uint32_t bad = 0;
+        if (srow < (long)so || srow >= (long)(so + (size_t)m * 512)) {
+            bad = w == 0 ? hd / 2 : 0u;
+        } else {
+            const uint32_t *a = reinterpret_cast<const uint32_t *>(stg + (size_t)srow * hd);
+            const uint32_t *b = reinterpret_cast<const uint32_t *>(mir + (size_t)r * hd);
+            for (unsigned x = w; x < hd / 2; x += WG) bad += a[x] != b[x] ? 1u : 0u;
+        }
+        if (bad) AR(cw[1]).fetch_add(bad);
+        if (w == 0) {
+            AR(cw[0]).fetch_add(1u);
+            AR(cw[r >= tail0 ? 2 : kvs_owner(r, R, N) == (long)card ? 3 : 4]).fetch_add(1u);
+            if (AR(mark[r]).exchange(stamp) != stamp) AR(cw[5]).fetch_add(1u);
+        }
+    }
+};
+// ... one item: the launch's words cw[0..5] added into ct[0..5] (64-bit totals) and zeroed, ct[6] = the largest
+// distinct-row count of one launch, ct[7] = launches
+struct KvStageFold {
+    void operator()(sycl::nd_item<1> it, uint32_t *cw, uint64_t *ct) const {
+        if (it.get_global_linear_id() != 0) return;
+        const uint64_t u = (uint64_t)cw[5];
+        if (u > ct[6]) ct[6] = u;
+        ct[7] += 1u;
+        for (int k = 0; k < 6; ++k) {
+            ct[k] += (uint64_t)cw[k];
+            cw[k] = 0u;
+        }
+    }
+};
+// OWN_KV_SHARD=2 with the push form: KvStageCmp over the staging rows the slot lists name (sl[so + e] - 128)
+struct KvStageCmpP {
+    static constexpr unsigned WG = KvStageCmp::WG;
+    KvStageCmp k;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const int32_t *sl, const uint16_t *stg, const uint16_t *mir,
+                    uint32_t *mark, uint32_t *cw) const {
+        k.cmp(it, cidx, sl, stg, mir, mark, cw);
+    }
+};
+
+// ---- kvshard push (OWN_KV_PUSH; backend_sycl_v41.hpp "kvshard push", /home/steve/dsv41-work/kvshard/README-push.md) --
+// In prompt halves the rows a card does not hold travel as copy-engine PUSHES from their owners instead of KvGather's
+// pulls. For that the half's staging rows (m tokens' lists, from row so) are laid out by CLASS instead of by entry:
+// class d < N = the listed rows card d owns that are read from its chunk (r < tail0), class N = the rows read from the
+// tail ring (r >= tail0); class 0's rows first, then class 1's, ..., class N's; inside a class in entry order (token
+// t, then entry j), one staging row per list entry (no de-duplication: a row listed twice is staged twice). Then the
+// rows card d owns are ONE contiguous run of staging rows [so + base[d], so + base[d] + n[d]), at the same rows on
+// every card (the lists, tail0, R and N are the same on every card), which d fills from its own chunk and pushes into
+// every peer's staging rows with one copy per peer (the backend's kvs_push). The slot list maps entry e to its row as
+// KvGather's does (-1 stays -1, a row becomes 128 + its staging row), so the attention reads the same 1,024 bytes in
+// the same slots as with KvGather or the full copy: the same outputs, bit for bit. Four launches per half and index
+// layer on every card: KvPushCount, KvPushScan (+ the host reads hb), KvPushSlots, KvPushCopy.
+inline constexpr unsigned KVP_K = 8; // class words per token (classes 0 .. N, N + 1 <= KVP_K; the rest stay empty)
+// the class of list value v (-1: no row, v < 128)
+inline int kvp_class(int32_t v, long tail0, unsigned R, unsigned N) {
+    if (v < 128) return -1;
+    const long r = (long)v - 128;
+    return r >= tail0 ? (int)N : (int)kvs_owner(r, R, N);
+}
+// (1) token t's entries of each class into tb[t * KVP_K + k] (k = 0 .. KVP_K - 1). One work-group of WG items per
+// token, item w holds entries 2w and 2w + 1.
+struct KvPushCount {
+    static constexpr unsigned WG = 256;
+    unsigned m, R, N;
+    long tail0;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, uint32_t *tb) const {
+        const unsigned t = (unsigned)it.get_group_linear_id(), w = (unsigned)it.get_local_linear_id();
+        if (t >= m) return; // (the whole work-group: no group call is left by part of it)
+        auto g = it.get_group();
+        const size_t e0 = (size_t)t * 512 + 2 * (size_t)w;
+        const int k0 = kvp_class(cidx[e0], tail0, R, N), k1 = kvp_class(cidx[e0 + 1], tail0, R, N);
+#pragma unroll
+        for (int k = 0; k < (int)KVP_K; ++k) {
+            const uint32_t x = (k0 == k ? 1u : 0u) + (k1 == k ? 1u : 0u);
+            const uint32_t n = sycl::reduce_over_group(g, x, sycl::plus<uint32_t>());
+            if (w == 0) tb[(size_t)t * KVP_K + k] = n;
+        }
+    }
+};
+// (2) one work-group (token t at item t % WG, rounds of WG tokens), in place: tb[t * KVP_K + k] = base[k] + the
+// class-k entries of tokens 0 .. t - 1 (token t's first class-k staging row, counted from so), base[k] = the entries
+// of classes 0 .. k - 1; hb[k] = base[k], hb[KVP_K + k] = class k's entries (hb[KVP_K - 1] + hb[2 KVP_K - 1] = every
+// row entry of the half). The host reads hb (the push's size and place).
+struct KvPushScan {
+    static constexpr unsigned WG = 256;
+    unsigned m;
+    void operator()(sycl::nd_item<1> it, uint32_t *tb, uint32_t *hb) const {
+        auto g = it.get_group();
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        uint32_t base = 0;
+        for (unsigned k = 0; k < KVP_K; ++k) {
+            uint32_t carry = 0;
+            for (unsigned t0 = 0; t0 < m; t0 += WG) { // (the same trip count on every item)
+                const unsigned t = t0 + w;
+                const uint32_t x = t < m ? tb[(size_t)t * KVP_K + k] : 0u;
+                const uint32_t ex = sycl::exclusive_scan_over_group(g, x, sycl::plus<uint32_t>());
+                const uint32_t cs = sycl::reduce_over_group(g, x, sycl::plus<uint32_t>());
+                if (t < m) tb[(size_t)t * KVP_K + k] = base + carry + ex; // (only this item reads / writes token t's words)
+                carry += cs;
+            }
+            if (w == 0) {
+                hb[k] = base;
+                hb[KVP_K + k] = carry;
+            }
+            base += carry;
+        }
+    }
+};
+// (3) every entry's slot: its rank among its token's entries of its class (entries before it in entry order), its
+// staging row so + tb[t * KVP_K + k] + rank, the slot 128 + that row into sl[so + e]; v < 128 stays v (as
+// KvGather). One work-group of WG items per token, item w holds entries 2w and 2w + 1.
+struct KvPushSlots {
+    static constexpr unsigned WG = 256;
+    unsigned m, R, N;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const uint32_t *tb, int32_t *sl) const {
+        const unsigned t = (unsigned)it.get_group_linear_id(), w = (unsigned)it.get_local_linear_id();
+        if (t >= m) return; // (the whole work-group)
+        auto g = it.get_group();
+        const size_t e0 = (size_t)t * 512 + 2 * (size_t)w;
+        const int32_t v0 = cidx[e0], v1 = cidx[e0 + 1];
+        const int k0 = kvp_class(v0, tail0, R, N), k1 = kvp_class(v1, tail0, R, N);
+        uint32_t q0 = 0, q1 = 0;
+#pragma unroll
+        for (int k = 0; k < (int)KVP_K; ++k) {
+            const uint32_t x = (k0 == k ? 1u : 0u) + (k1 == k ? 1u : 0u);
+            const uint32_t s = sycl::exclusive_scan_over_group(g, x, sycl::plus<uint32_t>());
+            if (k0 == k) q0 = s;
+            if (k1 == k) q1 = s + (k0 == k ? 1u : 0u);
+        }
+        const uint32_t *tt = tb + (size_t)t * KVP_K;
+        sl[so + e0] = k0 < 0 ? v0 : (int32_t)(128 + so + (size_t)tt[k0] + q0);
+        sl[so + e0 + 1] = k1 < 0 ? v1 : (int32_t)(128 + so + (size_t)tt[k1] + q1);
+    }
+};
+// (4) the rows this card stages itself, into the staging row its slot names (after KvPushSlots): rows r >= tail0 from
+// its tail ring (slot r % TT), rows it owns (kvs_owner(r) == card) from its chunk of the source (own: row 0 of it,
+// this card's memory); every other row arrives in its owner's push. One work-group of WG items per entry (as
+// KvGather), one 32-bit word each.
+struct KvPushCopy {
+    static constexpr unsigned WG = 256;
+    unsigned hd, m, R, N, TT, card;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const int32_t *sl, const uint16_t *tail, const uint16_t *own,
+                    uint16_t *stg) const {
+        const size_t e = it.get_group_linear_id();
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        if (e >= (size_t)m * 512) return;
+        const int32_t v = cidx[e];
+        if (v < 128) return;
+        const long r = (long)v - 128;
+        const bool tl = r >= tail0;
+        if (!tl && kvs_owner(r, R, N) != (long)card) return;
+        const uint16_t *src = tl ? tail + (size_t)(r % (long)TT) * hd : own + (size_t)kvs_local(r, R, N) * hd;
+        const uint32_t *s32 = reinterpret_cast<const uint32_t *>(src);
+        uint32_t *d32 = reinterpret_cast<uint32_t *>(stg + (size_t)(sl[so + e] - 128) * hd);
+        for (unsigned x = w; x < hd / 2; x += WG) d32[x] = s32[x];
     }
 };
 

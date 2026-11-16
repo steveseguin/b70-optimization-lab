@@ -45,6 +45,7 @@
 #include <cstring>
 #include <ctime>
 #include <condition_variable>
+#include <sys/resource.h>
 #include <cxxabi.h>
 #include <deque>
 #include <fcntl.h>
@@ -519,6 +520,17 @@ public:
                                 // not 240 serial requests on the main thread; no read-around on the table (OWN_ENG_EARLY=0: off)
         long tp_spin_us = 0;    // tp: the main thread and the card threads poll for each other's hand-off for up to this
                                 // many us before sleeping on the condition variable (OWN_TP_SPIN_US; 0 = sleep at once)
+        // eng-gate-1 (OWN_ENG_GATE, 2026-11-16): after its engram row read each card thread waits on the host until every
+        // card thread has read its rows, then launches past layer 0 (bit 1: blocks - prompt blocks / halves, checks; bit
+        // 2: one-token steps). A card thread held up on the host (c118 x200k: 1.56 s, c118p x700k_off: 1.66 s with 0.001 s
+        // in the copy calls; the other cards ~0.03 s) then holds every card's launches back instead of leaving its peers'
+        // exchange spins (OWN41 XSPIN, ~0.9 s) to time out. Same launches in the same order, same values. 0: off
+        unsigned eng_gate = 1;
+        // eng-spread-1 (OWN_ENG_SPREAD=1, default 0, 2026-11-16): one-token steps: each card thread asks the page cache
+        // for its share of the step's 48 engram rows (row r of the 48 when r % tp == card) as its first act, instead of
+        // the main thread asking for all 48 before it wakes the card threads (~2 us per cold row: ~90 us before any card
+        // starts). Page-cache hints only: the values cannot change
+        bool eng_spread = false;
         bool eng_late = true;   // tp: the engram rows are fetched and pushed after layer 0's launches (the card runs the
                                 // embed and layer 0 meanwhile; layers 1 and 14 need them), not before the embed (OWN_ENG_LATE=0: before)
         bool dev_index = true;  // tp: past 512 rows every card picks its own top-512 on the card (TopKSelP), no host
@@ -530,6 +542,9 @@ public:
                                 // 32 instead of all 640 slots (the others are skipped ones), the same sums (on in own_run_v41; OWN_ATT_TRIM=0 off)
         bool topk_r = false;    // dev_index / tpm_index: the top-k selects' final walk by ranges (TopKSelR), the same
                                 // lists (on in own_run_v41; OWN_TOPK_R=0 off)
+        bool topk_m = false;    // topk-m (OWN_TOPK_M): dev_index's selects past the register forms' reach (rows > 98,304,
+                                // blocks > 32,768: long contexts) in two launches, many work-groups then one (TopKSelM1 +
+                                // TopKSelQ2, TopKSelMB1 + TopKSelQB2), the same lists, flags and block list (needs OWN_TOPK_Q)
         bool topk_q = false;    // dev_index / tpm_index: the selects with every key loaded once into registers
                                 // (TopKSelQ / TopKSelBQ / TopKSelCQ; rows >= 4,096, blocks > 2,048), the same lists (OWN_TOPK_Q)
         int idx_cand = 0;       // dev_index, layers past 20 beyond 16,384 rows: score and select the layer-20 candidate
@@ -543,6 +558,14 @@ public:
         int idx_split_w[6] = {};     // ... the cards' token weights (OWN_IDX_SPLIT_W="w0,...,w5"; all 0: equal shares)
         bool idx_split_check = false; // ... diagnostic (OWN_IDX_SPLIT_CHECK=1): also the full index of every token into
                                 // separate lists, compared bitwise with the gathered ones (and the card's q / proj rows)
+        unsigned rope_win = 1;  // ropewin-1 (OWN_ROPE_WIN, default 1; 0 = off): past 32,768 positions the cards keep a
+                                // 16,384-position window of the rope tables (cos / sin, yarn / base), refilled from
+                                // the host (the same float values) when a position nears its edge, not max_seq rows:
+                                // 512 B less card memory per context position. Layout only; the same arithmetic.
+        unsigned idx_rows = 1;  // idxrows-1 (OWN_IDX_ROWS, default 1; 0 = off): with idxsplit-1 the block index scores and
+                                // candidate marks (max_seq + 64 per token row) hold only the rows a card can score - its
+                                // token share of a half, or a whole small block / check - per half, not MTB rows: ~2.1 KB
+                                // less card memory per context token (longer contexts). Layout only; the same arithmetic.
         // prt-1 (OWN_PRT=bits, opt-in; /home/steve/dsv41-work/prt/README.md; backend_sycl_v41_mt.inc "prt-1"): prompt
         // blocks' (OWN_PX: halves') work that every card repeated, split across the cards by tokens and gathered (bits
         // copied): 1 the router (logits + top-k; ids and weights move into the arena), 2 the q_a + kv rows of OWN_PX
@@ -564,6 +587,23 @@ public:
         // the skip's kept rows are computed again into shadow buffers and compared bitwise on the card (one count read
         // after the prompt)
         bool skip39 = true, skip39_check = false; // (default on since tp115; OWN_SKIP39=0 = off)
+        // kvshard-1 (OWN_KV_SHARD, opt-in, default 0 = off; /home/steve/dsv41-work/kvshard/README.md; "kvshard-1" below):
+        // the compressed KV rows stored by owner (rows of kv_shard_r per chunk, round robin over the six cards) plus the
+        // newest kv_tail rows of each source on every card, instead of every row on every card; before the attention
+        // the listed rows are copied into staging rows in list order (ops41sycl::KvGather; peers' rows pulled), the same
+        // bits. 1 = on; 2 = on + check (the full mirrors kept as well, every staged row compared with its mirror row on
+        // the card, counts printed at exit). Six cards, the whole model, the lists made on the cards; not with OWN_XLL
+        // or a loaded state.
+        unsigned kv_shard = 0;
+        unsigned kv_shard_r = 2048; // OWN_KV_SHARD_R: rows per ownership chunk (a multiple of 8)
+        unsigned kv_tail = 4096;    // OWN_KV_TAIL: newest rows of each source on every card (at least 2 x 512)
+        // kvshard push (OWN_KV_PUSH, default 1 with OWN_KV_SHARD; /home/steve/dsv41-work/kvshard/README-push.md; "kvshard
+        // push" below): in OWN_PX prompt halves the rows a card does not hold come as copy-engine PUSHES from their
+        // owners (each owner's listed rows one run of the staging rows, pushed into every peer's staging rows on the
+        // OWN_PX_BCS copy lists, the push number into the peers' copy flags after the rows) instead of KvGather's pulls;
+        // one-token steps and blocks outside the halves (checks, a prompt's short last block) still pull. Needs OWN_PX=1
+        // with OWN_PX_BCS=1 or 2 (refused otherwise). 0 = kvshard-1's pulls everywhere.
+        unsigned kv_push = 1;
     };
     struct DevPtr {
         void *p = nullptr;
@@ -611,6 +651,33 @@ public:
 #endif
         }
         if (!o.idx_dsplit) o.idx_dsplit_check = false;
+        if (!o.kv_shard) o.kv_push = 0; // (kvshard push: nothing to push without the shard)
+        if (o.kv_shard) { // kvshard-1 (OWN_KV_SHARD): the configurations the shard does not handle are refused
+            if (o.kv_shard > 2) throw std::invalid_argument("OWN_KV_SHARD: 0 (off), 1 (on) or 2 (on + check)");
+#ifdef OWN41_ACT_BF16
+            throw std::invalid_argument("OWN_KV_SHARD: F32 activations only (tensor parallel)");
+#endif
+            if (o.tp != 6) throw std::invalid_argument("OWN_KV_SHARD: needs OWN_TP=6 (six owners)");
+            if (o.xll) throw std::invalid_argument("OWN_KV_SHARD: not with OWN_XLL");
+            if (!o.dev_index)
+                throw std::invalid_argument("OWN_KV_SHARD: needs OWN_DEV_INDEX=1 (the lists made on every card)");
+            if (o.layer_begin != 0 || o.layer_end != g.layers)
+                throw std::invalid_argument("OWN_KV_SHARD: the whole model only (no OWN_LAYERS)");
+            if (g.hd != 512) throw std::invalid_argument("OWN_KV_SHARD: compressed rows of 512 expected");
+            if (o.kv_shard_r < 8 || o.kv_shard_r % 8)
+                throw std::invalid_argument("OWN_KV_SHARD_R: rows per chunk, a multiple of 8 (a layer-20 block never spans two)");
+            if (o.kv_tail < 2 * (unsigned)MTB)
+                throw std::invalid_argument("OWN_KV_TAIL: at least " + std::to_string(2 * MTB) + " rows");
+            // kvshard push (OWN_KV_PUSH): the halves' pushes ride the OWN_PX_BCS copy lists and copy flags (px_bcs is 0
+            // here without OWN_PX or with one card: the first line above)
+            if (o.kv_push > 1) throw std::invalid_argument("OWN_KV_PUSH: 0 (pulls everywhere) or 1 (prompt halves push)");
+            if (o.kv_push && !o.px_bcs)
+                throw std::invalid_argument("OWN_KV_PUSH=1 (the default with OWN_KV_SHARD): the prompt halves' rows go as "
+                                            "copy-engine pushes, so it needs OWN_PX=1 with OWN_PX_BCS=1 or 2 (OWN_KV_PUSH=0: "
+                                            "kvshard-1's pulls everywhere)");
+            if (o.kv_push && (unsigned)o.tp + 1 > ops41sycl::KVP_K)
+                throw std::invalid_argument("OWN_KV_PUSH: at most " + std::to_string(ops41sycl::KVP_K - 1) + " owners");
+        }
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
@@ -697,9 +764,10 @@ public:
             streams[t] = dalloc<act_t>(t, 4 * (size_t)g.h);
             for (int s = 0; s < 4; ++s) {
                 size_t rows = s == 3 ? rows_c1 : rows_c2; // layer 20 publishes at ratio 1
-                ckv_mirror[t][s] = dalloc<uint16_t>(t, rows * g.hd);
+                if (o.kv_shard != 1) ckv_mirror[t][s] = dalloc<uint16_t>(t, rows * g.hd); // (OWN_KV_SHARD=1: no full copy)
                 ik_mirror[t][s] = dalloc<uint16_t>(t, rows * 128);
             }
+            if (o.kv_shard) kvs_alloc(t); // kvshard-1: the card's chunks, tails, staging rows
             for (int s = 0; s < 8; ++s) {
                 cidx_mirror[t][s] = dalloc<int32_t>(t, 512);
                 std::vector<int32_t> neg(512, -1);
@@ -723,7 +791,7 @@ public:
         h_streams.resize(4 * (size_t)g.h);
         for (int s = 0; s < 4; ++s) {
             size_t rows = s == 3 ? rows_c1 : rows_c2;
-            h_ckv[s].reserve(rows * g.hd);
+            if (!o.kv_shard) h_ckv[s].reserve(rows * g.hd); // (kvshard-1: no host rows: load_state / segments refused)
             h_ik[s].reserve(rows * 128);
         }
         for (auto &slot : h_cidx)
@@ -779,6 +847,7 @@ public:
                                      "check: %ld score rows compared (%ld token-layers), %ld differ\n", o.idx_dsplit, c,
                              ixd_calls[c], ixm_calls[c], o.idx_dsplit_min, ixd_rows[c], ixd_chk[c], ixd_bad[c]);
             }
+        if (o.kv_shard) kvs_report(); // kvshard-1: the fetch counts (OWN_KV_SHARD=2: the check's, read once here)
         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
             try { bcs_drain(); } catch (...) {}
             for (int c = 0; c < TILES; ++c) {
@@ -792,6 +861,14 @@ public:
             for (int d = 0; d < TILES; ++d)
                 if (c != d && xpeer[c][d])
                     zeMemCloseIpcHandle(sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]), xpeer[c][d]);
+        for (int c = 0; c < TILES; ++c) // kvshard-1: peers' chunks opened in this card's context
+            for (int d = 0; d < TILES; ++d)
+                if (c != d && kvs_peer[c][d])
+                    zeMemCloseIpcHandle(sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]), kvs_peer[c][d]);
+        for (int c = 0; c < TILES; ++c) // kvshard push: peers' staging rows opened in this card's context (copy lists
+            for (int d = 0; d < TILES; ++d) // drained above: bcs_drain)
+                if (c != d && kvs_speer[c][d])
+                    zeMemCloseIpcHandle(sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]), kvs_speer[c][d]);
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
             if (xerr[t]) sycl::free(xerr[t], ctxs[t]);
@@ -1215,6 +1292,7 @@ public:
     }
     // segment mode: a row published by a source layer outside the range
     void append_published(int si, const float *ckv_row, const float *ik_row) {
+        if (o.kv_shard) throw std::runtime_error("OWN_KV_SHARD: not with host-published rows (segment mode)");
         std::vector<uint16_t> kvr(g.hd), ikr(128);
         for (int i = 0; i < g.hd; ++i) kvr[i] = ops41::bf16b(ckv_row[i]);
         for (int i = 0; i < 128; ++i) ikr[i] = ops41::bf16b(ik_row[i]);
@@ -1243,6 +1321,24 @@ public:
         }
     }
 
+    // eng-spread-1: card c's share (r % tp == c of the 48 rows, both engram layers) of engram_prefetch's requests
+    void engram_ask_share(int c) {
+        static const long page = sysconf(_SC_PAGESIZE);
+        auto l = iq3::layout(iq3::Type::Q5_K);
+        const long p_ = cpos(c);
+        if ((long)comp_ids.size() <= p_) return;
+        for (int li = 0, r = 0; li < 2; ++li) {
+            const int L = li == 0 ? 1 : 14;
+            if (L < o.layer_begin || L >= o.layer_end || !eng_base[li]) { r += 24; continue; }
+            int64_t ids[24];
+            engram_hash((int)p_, li, ids);
+            for (int k = 0; k < 24; ++k, ++r) {
+                if (r % o.tp != c) continue;
+                const uintptr_t a = (uintptr_t)(eng_base[li] + (size_t)ids[k] * l.bytes), a0 = a & ~(uintptr_t)(page - 1);
+                madvise((void *)a0, (size_t)(a + l.bytes - a0), MADV_WILLNEED);
+            }
+        }
+    }
     // decode one token; returns the next token id (-1 when the head is not loaded)
     int32_t decode_step(int32_t token) {
         if (o.tp > 1) return decode_step_tp(token);
@@ -1315,6 +1411,8 @@ public:
                     const std::vector<std::vector<float>> &ckv,   // [4][rows*512]
                     const std::vector<std::vector<float>> &ik,    // [4][rows*128]
                     const float kv_state[4][1024], const float score_state[4][1024]) {
+        if (o.kv_shard) // kvshard-1: the hand-off's rows are not split by owner (no shard of a loaded state yet)
+            throw std::runtime_error("OWN_KV_SHARD: not with a loaded state (load_state)");
         pos = pos_;
         std::vector<uint16_t> tmp;
         auto up16 = [&](void *dst, const float *src, size_t n, int t) {
@@ -1378,11 +1476,91 @@ private:
     std::unordered_map<std::string, DevPtr> wgt[TILES]; // per card (tp: every card holds its slice)
     const WeightTab *W = nullptr;
     act_t *streams[TILES] = {};
-    uint16_t *ckv_mirror[TILES][4] = {};
+    uint16_t *ckv_mirror[TILES][4] = {}; // (OWN_KV_SHARD=1: not allocated)
     uint16_t *ik_mirror[TILES][4] = {};
     int32_t *cidx_mirror[TILES][8] = {};
+    // kvshard-1 (OWN_KV_SHARD): card c's chunks of the four sources in one allocation (source s from row kvs_coff[s],
+    // kvs_nloc[s] rows), mapped into every peer's context (kvs_peer[c][d]: card d's allocation as card c reads it;
+    // [c][c] its own); the newest kv_tail rows of each source (slot r % kv_tail); the staging rows (mtb_n() tokens x 512
+    // rows: token t's list entry j at row t * 512 + j; one-token steps use token 0's) and their slot lists (same index);
+    // OWN_KV_SHARD=2: one mark word per row (distinct rows per list), the check's per-launch words and 64-bit totals
+    // ([0..15] one-token steps, [16..31] blocks: KvStageFold's layout)
+    uint16_t *kvs_chunk[TILES] = {}, *kvs_tail[TILES][4] = {}, *kvs_stg[TILES] = {};
+    void *kvs_peer[TILES][TILES] = {};
+    int32_t *kvs_sl[TILES] = {};
+    uint32_t *kvs_mark[TILES] = {}, *kvs_cw[TILES] = {};
+    uint64_t *kvs_ct[TILES] = {};
+    uint32_t kvs_stamp[TILES] = {};
+    size_t kvs_coff[4] = {}, kvs_nloc[4] = {};
+    long kvs_n1[TILES] = {}, kvs_nm[TILES] = {}; // fetch launches: one-token steps, blocks pulled (KvGather)
+    // kvshard push (OWN_KV_PUSH): every card's staging rows mapped into every peer's context (kvs_speer[c][d]: card d's
+    // staging as card c's copy engine writes it; [c][c] its own); per card the class words of a half's tokens (kvp_tb:
+    // mtb_n() x KVP_K) and the half's class bases + counts (kvp_hb on the card, 2 x KVP_K words; kvp_h the host's copy,
+    // read once per half and index layer); host counts: halves pushed, rows staged (all / from the tail / own chunk),
+    // rows this card pushed to each peer and the largest such run
+    void *kvs_speer[TILES][TILES] = {};
+    uint32_t *kvp_tb[TILES] = {}, *kvp_hb[TILES] = {};
+    uint32_t kvp_h[TILES][2 * ops41sycl::KVP_K] = {};
+    long kvs_np[TILES] = {};
+    unsigned long long kvp_all[TILES] = {}, kvp_tl[TILES] = {}, kvp_own[TILES] = {}, kvp_max[TILES] = {};
     uint16_t *ring[TILES][40] = {}; // window ring per card per layer
     float *cos_yarn[TILES] = {}, *sin_yarn[TILES] = {}, *cos_base[TILES] = {}, *sin_base[TILES] = {};
+    // ropewin-1 (OWN_ROPE_WIN): the window [rw0[c], rw0[c] + RW) of every table on card c (rwin). When a position
+    // comes within RW_NEED of the window's edge, the next window (start: the position - RW_BACK) is filled into the
+    // card's OTHER device copy (two per card, k = rwh[c]) on its in-order queue and becomes current: a row pointer
+    // taken from the old window earlier in the same step still reads the old copy, untouched until the refill after
+    // next (>= RW - RW_BACK - RW_NEED = 10,240 positions on), by then long done. A pointer's rows (its position + up
+    // to RW_NEED) lie inside the window it was taken from. Each device copy has its host buffer, reused only after
+    // that copy's previous upload finished.
+    static constexpr long RW = 16384, RW_BACK = 4096, RW_NEED = 2048;
+    bool rwin = false;
+    long rw0[TILES] = {};
+    int rwh[TILES] = {};
+    float *rwdev[TILES][2] = {}; // 4 tables x RW x 32 floats each: cos yarn, sin yarn, cos base, sin base
+    std::vector<float> rwbuf[TILES][2];
+    sycl::event rwev[TILES][2];
+    bool rwev_on[TILES][2] = {};
+    std::vector<double> rwf[2]; // the 32 frequencies, [0] base, [1] yarn (build_rope_tables)
+    std::atomic<long> rw_fills{0}; // (card threads)
+    void rope_fill(float *c, float *sn, int yarn, long p0, long n) const { // positions p0 .. p0 + n - 1
+        const std::vector<double> &f = rwf[yarn ? 1 : 0];
+        for (long q = 0; q < n; ++q) {
+            const int p = (int)(p0 + q);
+            for (int i = 0; i < 32; ++i) {
+                c[(size_t)q * 32 + i] = (float)std::cos(p * f[i]);
+                sn[(size_t)q * 32 + i] = (float)std::sin(p * f[i]);
+            }
+        }
+    }
+    void rope_ensure(int c, long p) {
+        if (!rwin) return;
+        const long lo = std::max(0L, p - RW_NEED), hi = std::min((long)max_seq, p + RW_NEED);
+        if (rw0[c] >= 0 && lo >= rw0[c] && hi <= rw0[c] + RW) return;
+        long w0 = std::max(0L, p - RW_BACK);
+        if (w0 + RW > (long)max_seq) w0 = (long)max_seq - RW;
+        const int k = rw0[c] < 0 ? 0 : rwh[c] ^ 1;
+        if (rwev_on[c][k]) rwev[c][k].wait(); // (that copy's last upload: >= 10,240 positions ago)
+        std::vector<float> &b = rwbuf[c][k];
+        b.resize((size_t)4 * RW * 32);
+        float *cy = b.data(), *sy = cy + (size_t)RW * 32, *cbs = sy + (size_t)RW * 32, *sbs = cbs + (size_t)RW * 32;
+        rope_fill(cy, sy, 1, w0, RW);
+        rope_fill(cbs, sbs, 0, w0, RW);
+        float *d = rwdev[c][k];
+        rwev[c][k] = qs[c].memcpy(d, b.data(), b.size() * 4); // (in order after every launch already on the queue)
+        rwev_on[c][k] = true;
+        cos_yarn[c] = d, sin_yarn[c] = d + (size_t)RW * 32, cos_base[c] = d + (size_t)2 * RW * 32;
+        sin_base[c] = d + (size_t)3 * RW * 32;
+        rw0[c] = w0, rwh[c] = k;
+        ++rw_fills;
+    }
+    // position p's row of a rope table on card c (sn: sine; yarn: the yarn tables); a kernel reads it and up to
+    // RW_NEED positions on
+    const float *rope_t(int c, bool yarn, bool sn, long p) {
+        if (p < 0 || p >= (long)max_seq) throw std::runtime_error("rope: position beyond max_seq");
+        rope_ensure(c, p);
+        const float *t = sn ? (yarn ? sin_yarn[c] : sin_base[c]) : (yarn ? cos_yarn[c] : cos_base[c]);
+        return t + (size_t)(rwin ? p - rw0[c] : p) * 32;
+    }
     float *logits_ = nullptr;
     int32_t *tok_out_ = nullptr;
     static constexpr int AM_CH = 512; // argmax pass-1 span per sub-group
@@ -1408,6 +1586,15 @@ private:
     double eng_t[TILES] = {};                // host time in the engram row upload per card (seconds; the caller resets)
     long eng_n[TILES] = {};
     double eng_tq[TILES] = {};               // of which OWN_ENG_DEV's copy + decode launch calls
+    double eng_tsh[TILES] = {};              // tpd-3: of eng_t, OWN_ENG_EARLY's share (the madvise calls + the touch)
+    long eng_ru[TILES][4] = {};              // tpd-3: during the engram reads, the card thread's major / minor page faults,
+                                             // voluntary / forced context switches (getrusage RUSAGE_THREAD)
+    void eng_ru_add(int c, const rusage &a, const rusage &b) {
+        eng_ru[c][0] += b.ru_majflt - a.ru_majflt;
+        eng_ru[c][1] += b.ru_minflt - a.ru_minflt;
+        eng_ru[c][2] += b.ru_nvcsw - a.ru_nvcsw;
+        eng_ru[c][3] += b.ru_nivcsw - a.ru_nivcsw;
+    }
   private:
     std::vector<uint8_t> cand_host; // layer-20 candidate mask of the current step
     bool cand_valid = false;
@@ -1468,6 +1655,9 @@ private:
         act_t *old, *eng_rows, *kvbuf;
         uint8_t *cand;                  // dev_index: layer-20 candidate mask of the current step
         int32_t *blist = nullptr;       // OWN_IDX_CAND: [0] = flagged layer-20 blocks, [1 + i] = the blocks in order
+        uint32_t *tkm_k = nullptr;      // topk-m (OWN_TOPK_M): the first launch's candidates, order keys ...
+        int32_t *tkm_i = nullptr;       // ... and positions (tkm_cap each)
+        size_t tkm_cap = 0;
         float *score2 = nullptr;        // OWN_IDX_CAND=2: the full score for the comparison
         int32_t *list2 = nullptr;       // OWN_IDX_CAND=2: the full select's list
     };
@@ -1506,6 +1696,12 @@ private:
         s.eng_rows = md((size_t)24 * g.engram_dim); s.kvbuf = md((size_t)5 * g.h);
         s.cand = dalloc<uint8_t>(t, (size_t)max_seq + 64);
         if (o.idx_cand) s.blist = dalloc<int32_t>(t, 2048 + 64);
+        if (o.topk_m) { // topk-m: G k candidates, rows (C 16: 16,384 positions per group, k 512) or blocks (C 8, k 2048)
+            const size_t nr = (size_t)max_seq + 64, nb = (nr + 7) / 8;
+            s.tkm_cap = std::max((nr + 16383) / 16384 * 512, (nb + 8191) / 8192 * 2048) + 64;
+            s.tkm_k = dalloc<uint32_t>(t, s.tkm_cap);
+            s.tkm_i = dalloc<int32_t>(t, s.tkm_cap);
+        }
         if (o.idx_cand == 2) { s.score2 = mf((size_t)max_seq + 64); s.list2 = dalloc<int32_t>(t, 512); }
     }
 
@@ -1882,6 +2078,16 @@ private:
     }
     // one work-group of `items` (a multiple of 32) with SLM floats of local
     // memory passed as the last argument
+    // (topk-m) groups work-groups of wg items, SLM floats of local memory each
+    template <size_t SLM, typename K, typename... A> void launch_local_g(int tile, size_t groups, size_t wg, K k, A... args) {
+        auto e = qs[tile].submit([&](sycl::handler &hh) {
+            sycl::local_accessor<float, 1> lt(SLM, hh);
+            hh.parallel_for(sycl::nd_range<1>(groups * wg, wg), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] {
+                k(it, args..., &lt[0]);
+            });
+        });
+        kev(tile, kname<K>(), e);
+    }
     template <size_t SLM, typename K, typename... A> void launch_local(int tile, size_t items, K k, A... args) {
         auto e = qs[tile].submit([&](sycl::handler &hh) {
             sycl::local_accessor<float, 1> lt(SLM, hh);
@@ -2602,10 +2808,8 @@ private:
     }
     void rope(int tile, act_t *x, int rows, int d, long p_, bool yarn, bool inv) {
         if (p_ < 0 || p_ >= max_seq) throw std::runtime_error("position beyond max_seq");
-        const float *cb = yarn ? cos_yarn[tile] : cos_base[tile];
-        const float *sb = yarn ? sin_yarn[tile] : sin_base[tile];
-        launch(tile, (size_t)rows * 32, 32, ops41sycl::RopePairsA<Act>{(unsigned)rows, (unsigned)d, 64u, inv}, x,
-               cb + (size_t)p_ * 32, sb + (size_t)p_ * 32);
+        const float *cb = rope_t(tile, yarn, false, p_), *sb = rope_t(tile, yarn, true, p_);
+        launch(tile, (size_t)rows * 32, 32, ops41sycl::RopePairsA<Act>{(unsigned)rows, (unsigned)d, 64u, inv}, x, cb, sb);
     }
 
     // ---- trace --------------------------------------------------------------
@@ -3014,8 +3218,7 @@ private:
         trf(L, TT_ATTN_O, t, s.of, (size_t)g.qh * g.hd);
         if (o.small_fast) { // one launch (test_small_v41_device.cpp)
             if (pos < 0 || pos >= max_seq) throw std::runtime_error("position beyond max_seq");
-            const float *cb = (yarn ? cos_yarn[t] : cos_base[t]) + (size_t)pos * 32;
-            const float *sbp = (yarn ? sin_yarn[t] : sin_base[t]) + (size_t)pos * 32;
+            const float *cb = rope_t(t, yarn, false, pos), *sbp = rope_t(t, yarn, true, pos);
             launch(t, (size_t)g.qh * g.hd, 64, ops41sycl::ToActRopeA<Act>{(unsigned)g.qh, (unsigned)g.hd, 64u, true},
                    (const float *)s.of, s.obuf, cb, sbp);
         } else {
@@ -3202,7 +3405,9 @@ private:
             constexpr int RR = decltype(rc)::value;
             using KS = ops41sycl::IndexerScoreBMR<Act, RR>;
             KS k{};
-            for (int i = 0; i < m; ++i) k.lens[i] = lens[i] > 0 ? (int)lens[i] : 0;
+            int li[MTX] = {};
+            for (int i = 0; i < m; ++i) li[i] = lens[i] > 0 ? (int)lens[i] : 0;
+            k.lens = lens_arg(c, li, (unsigned)m);
             k.m = (unsigned)m;
             k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG * RR - 1) / (WG * RR));
             k.qs = qsz, k.ws = wsz, k.ss = ssz;
@@ -3296,6 +3501,8 @@ private:
             else if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 32)
                 launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)sco, (const uint8_t *)nullptr,
                                   (int32_t *)s.blist, s.cand);
+            else if (qsel_ok() && o.topk_m && nb > 2048)
+                topk_mb(t, kb, (const float *)sco, (int32_t *)s.blist, s.cand);
             else
                 launch_local<SLM>(t, KB::WG, kb, (const float *)sco, (const uint8_t *)nullptr, (int32_t *)s.blist,
                                   s.cand); // blist: OWN_IDX_CAND (else null)
@@ -3313,6 +3520,7 @@ private:
         else if (qc && qc <= 32) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<32>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else if (qc && qc <= 64) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<64>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else if (qc && qc <= 96) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<96>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
+        else if (qc && o.topk_m) topk_mr(t, kr, (const float *)sco, cin, dst);
         else if (o.topk_r)
             launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)sco,
                               mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst, (uint8_t *)nullptr);
@@ -3503,6 +3711,44 @@ private:
     // OWN_DEV_INDEX_CHECK=1: every dev_index list (and layer-20 mask) against index()'s host selection
     std::vector<uint8_t> chk_cand[TILES][MTX]; // per card and token of the step
     std::atomic<long> chk_calls{0}, chk_bad{0};
+    // topk-m (OWN_TOPK_M; ops41sycl::TopKSelM1): the rows' select in two launches (n > 98,304)
+    void topk_mr(int t, const ops41sycl::TopKSelP<false> &kr, const float *sco, const uint8_t *cin, int32_t *dst) {
+        using M1 = ops41sycl::TopKSelM1<16>;
+        constexpr size_t SLM = (size_t)M1::NSG * 256 + 8;
+        auto &s = sc[t];
+        const int G = (kr.n + M1::R - 1) / M1::R, n2 = G * kr.k;
+        if (kr.k != 512 || (size_t)n2 > s.tkm_cap) throw std::runtime_error("OWN_TOPK_M: candidates beyond the scratch");
+        launch_local_g<SLM>(t, (size_t)G, M1::WG, M1{kr}, sco, cin, s.tkm_k, s.tkm_i);
+        ops41sycl::TopKSelP<false> k2 = kr;
+        k2.n = n2, k2.cand_n = 0;
+        const int qc = ops41sycl::qsel_span(n2);
+        const uint32_t *ck = s.tkm_k;
+        const int32_t *ci = s.tkm_i;
+        if (qc <= 16) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQ2<16>{k2}, ck, ci, dst);
+        else if (qc <= 32) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQ2<32>{k2}, ck, ci, dst);
+        else if (qc <= 64) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQ2<64>{k2}, ck, ci, dst);
+        else if (qc <= 96) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQ2<96>{k2}, ck, ci, dst);
+        else throw std::runtime_error("OWN_TOPK_M: more candidates than one group holds");
+    }
+    // ... the layer-20 block select (nb > 32,768 blocks): zeroed rows, then the kept blocks' flags and list
+    void topk_mb(int t, const ops41sycl::TopKSelP<true> &kb, const float *sco, int32_t *blist, uint8_t *cand) {
+        using M1 = ops41sycl::TopKSelMB1<8>;
+        constexpr size_t SLM = (size_t)M1::NSG * 256 + 8;
+        auto &s = sc[t];
+        const int G = (kb.n + M1::R - 1) / M1::R, n2 = G * kb.k;
+        if (kb.k != 2048 || kb.bs != 8 || (size_t)n2 > s.tkm_cap) throw std::runtime_error("OWN_TOPK_M: block candidates beyond the scratch");
+        launch_local_g<SLM>(t, (size_t)G, M1::WG, M1{kb}, sco, s.tkm_k, s.tkm_i, cand);
+        ops41sycl::TopKSelP<true> k2 = kb;
+        k2.n = n2;
+        const int qc = ops41sycl::qsel_span(n2);
+        const uint32_t *ck = s.tkm_k;
+        const int32_t *ci = s.tkm_i;
+        if (qc <= 16) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQB2<16>{k2}, ck, ci, blist, cand);
+        else if (qc <= 32) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQB2<32>{k2}, ck, ci, blist, cand);
+        else if (qc <= 64) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQB2<64>{k2}, ck, ci, blist, cand);
+        else if (qc <= 96) launch_local<SLM>(t, M1::WG, ops41sycl::TopKSelQB2<96>{k2}, ck, ci, blist, cand);
+        else throw std::runtime_error("OWN_TOPK_M: more block candidates than one group holds");
+    }
     void dev_index_check(int L, int t, long len, bool mask, const int32_t *dst) {
         auto &s = sc[t];
         std::vector<float> hs(len);
@@ -3773,7 +4019,86 @@ private:
     // hand-offs: the caller sets the step up, tp_go starts every card thread on it, tp_join waits for all of them
     // (OWN_TP_SPIN_US: both sides poll first; the generation and the count change under tp_mu or are read under it
     // before sleeping, so a wake-up is never lost)
+    // tpd-1 (2026-11-16, always on, two clock reads per card per step): per card thread, for the last step, the
+    // wake-up after tp_go, its engram row read, the end of its launches (block steps) and its end, as seconds after
+    // tp_go. A block with a late card prints a line (OWN_TPD_SLOW seconds, default 0.25; the first 40) and every
+    // exchange time-out reports them: a card thread stalled on the host (page faults, scheduling) shows as a late
+    // wake-up / long engram read / late launch end on that card; a card stalled on the device does not
+    double tpd_go = 0, tpd_wake[TILES] = {}, tpd_eng[TILES] = {}, tpd_lend[TILES] = {}, tpd_end[TILES] = {};
+    double tpd_engq[TILES] = {}; // of tpd_eng: the copy and decode launch calls (eng_tq), the rest = the host's row reads
+    double tpd_engs[TILES] = {}, tpd_gate[TILES] = {}; // tpd-3: of tpd_eng, the share; the eng-gate-1 wait (not in tpd_eng)
+    long tpd_ru[TILES][4] = {};  // tpd-3: eng_ru over the step
+    int tpd_lines = 0;
+    // free card memory, GiB per card (the driver's count, no device access): the time-out report and the periodic
+    // tpd-mem line (OWN_TPD_MEM=n: every n blocks, default 16, 0 off; printed when a card's free memory moved by
+    // 32 MiB or more since the last line). A card whose memory runs out has buffers moved to host memory by the driver
+    std::string tpd_free() const {
+        std::string r;
+        char b[48];
+        for (int c = 0; c < o.tp; ++c) {
+            std::snprintf(b, sizeof b, "%s%.3f", c ? " " : "", free_bytes(c) / 1073741824.0);
+            r += b;
+        }
+        return r;
+    }
+    long tpd_mblk = 0;
+    double tpd_mlast[TILES] = {};
+    void tpd_mem(int ntok) {
+        static const long every = getenv("OWN_TPD_MEM") ? atol(getenv("OWN_TPD_MEM")) : 16;
+        if (every <= 0 || ++tpd_mblk % every) return;
+        bool moved = tpd_mblk == every;
+        double f[TILES] = {};
+        for (int c = 0; c < o.tp; ++c) {
+            f[c] = free_bytes(c) / 1073741824.0;
+            if (std::fabs(f[c] - tpd_mlast[c]) >= 32.0 / 1024) moved = true;
+        }
+        if (!moved) return;
+        std::string r;
+        char b[48];
+        for (int c = 0; c < o.tp; ++c) {
+            tpd_mlast[c] = f[c];
+            std::snprintf(b, sizeof b, "%s%.3f", c ? " " : "", f[c]);
+            r += b;
+        }
+        std::fprintf(stderr, "tpd-mem: position %ld (block of %d, step %ld): free GiB per card %s; host MemAvailable %ld MiB\n",
+                     pos, ntok, tp_stepn, r.c_str(), meminfo_kb("MemAvailable") / 1024);
+    }
+    std::string tpd_report() const {
+        std::string r = "free GiB per card " + tpd_free() + "; host MemAvailable " +
+                        std::to_string(meminfo_kb("MemAvailable") / 1024) + " MiB; ";
+        char b[360];
+        for (int c = 0; c < o.tp; ++c) {
+            std::snprintf(b, sizeof b,
+                          "%scard %d: woke +%.3f s, engram rows %.3f s (copy+decode calls %.3f, share %.3f; faults %ld major "
+                          "%ld minor, switches %ld own %ld forced; then gate %.3f s), launches done +%.3f s, done +%.3f s",
+                          c ? "; " : "", c, tpd_wake[c] - tpd_go, tpd_eng[c], tpd_engq[c], tpd_engs[c], tpd_ru[c][0],
+                          tpd_ru[c][1], tpd_ru[c][2], tpd_ru[c][3], tpd_gate[c],
+                          tpd_lend[c] > 0 ? tpd_lend[c] - tpd_go : -1.0, tpd_end[c] - tpd_go);
+            r += b;
+        }
+        return r;
+    }
+    void tpd_check(const char *what, int ntok) {
+        static const double lim = getenv("OWN_TPD_SLOW") ? atof(getenv("OWN_TPD_SLOW")) : 0.25;
+        if (tpd_lines >= 40) return;
+        double wk = 0, en = 0, ld = 0;
+        for (int c = 0; c < o.tp; ++c) {
+            wk = std::max(wk, tpd_wake[c] - tpd_go);
+            en = std::max(en, tpd_eng[c]);
+            if (tpd_lend[c] > 0) ld = std::max(ld, tpd_lend[c] - tpd_go);
+        }
+        if (wk < lim && en < lim && ld < 2.5 * lim) return;
+        ++tpd_lines;
+        std::fprintf(stderr, "tpd: slow %s at position %ld (%d tokens, step %ld): %s\n", what, pos, ntok, tp_stepn,
+                     tpd_report().c_str());
+    }
     void tp_go() {
+        tpd_go = now_s();
+        for (int c = 0; c < o.tp; ++c) tpd_lend[c] = 0;
+        {
+            std::lock_guard<std::mutex> lk(eg_mu); // eng-gate-1: no card thread is in the gate here (a failed step's count)
+            eg_cnt = 0;
+        }
         {
             std::lock_guard<std::mutex> lk(tp_mu);
             tp_err.clear();
@@ -3801,6 +4126,37 @@ private:
     }
     std::string tp_err;
     std::atomic<bool> tp_abort{false};
+    // eng-gate-1 (OWN_ENG_GATE): every card thread of the step arrives once per step (after its engram reads); the
+    // last one opens the gate. Waits poll (OWN_TP_SPIN_US), then sleep in 20 ms slices; a failed card (tp_abort)
+    // ends the wait with an error. No time limit: a late host delays launches only, the cards wait in no spin
+    std::mutex eg_mu;
+    std::condition_variable eg_cv;
+    std::atomic<long> eg_gen{0};
+    int eg_cnt = 0;              // under eg_mu
+    double eg_wait[TILES] = {};  // seconds each card thread spent in the gate (tpd-3)
+    long eg_n = 0;               // gates opened
+    void eng_gate(int c) {
+        const double t0 = now_s();
+        long g;
+        {
+            std::lock_guard<std::mutex> lk(eg_mu);
+            g = eg_gen.load();
+            if (++eg_cnt == o.tp) {
+                eg_cnt = 0;
+                ++eg_n;
+                eg_gen.fetch_add(1);
+                eg_cv.notify_all();
+                eg_wait[c] += now_s() - t0;
+                return;
+            }
+        }
+        if (!tp_poll(o.tp_spin_us, [&] { return eg_gen.load() != g || tp_abort.load(); })) {
+            std::unique_lock<std::mutex> lk(eg_mu);
+            while (eg_gen.load() == g && !tp_abort.load()) eg_cv.wait_for(lk, std::chrono::milliseconds(20));
+        }
+        eg_wait[c] += now_s() - t0;
+        if (eg_gen.load() == g) throw std::runtime_error("engram gate (OWN_ENG_GATE): another card thread failed");
+    }
     std::atomic<long> tp_mark{0};
     long tp_stepn = 0;
     int32_t tp_tok = 0;
@@ -4590,6 +4946,7 @@ private:
             }
         }
         for (int c = 0; c < N; ++c) qs[c].wait();
+        if (o.kv_shard) kvs_map(); // kvshard-1: every card's chunks mapped into every peer's context
         if (o.px_bcs) bcs_setup(); // OWN_PX_BCS: copy lists, own events, the number table (after the arenas are mapped)
         tl_setup(); // OWN_TIMELINE
         if (o.px_big && (!o.px || o.tp < 2)) throw std::runtime_error("OWN_PX_BIG: needs OWN_PX=1 and OWN_TP > 1");
@@ -5040,8 +5397,7 @@ private:
                 // four launches: query-a + key/value rows (+ the mix's dot rows); both norms; query-b rows
                 // (+ the mix's finish + the key's rope); the query's rope
                 if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
-                const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
-                const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
+                const float *cb = rope_t(c, yarn, false, cpos(c)), *sbp = rope_t(c, yarn, true, cpos(c));
                 // qkv-1 (OWN_QKV_SPLIT bit 2): this card's share of the q_a + kv rows (+ the dot rows) into the arena,
                 // the all-gather, then both norms read every card's rows there; off: today's pair launch into s.qa / s.kv
                 const float *qa_in = (const float *)s.qa, *kv_in = (const float *)s.kv;
@@ -5147,10 +5503,13 @@ private:
                 if (!lead && host_work && !tp_th.empty()) tp_wait_mark(tp_stepn * 64 + L + 1);
                 sync_rows(c, si);
                 sync_cidx(c, isrc_for(L));
+                // kvshard-1 (OWN_KV_SHARD): at an index layer the list's rows into the staging rows (token 0's); this
+                // and the layers up to the next index layer read them through the slot list
+                if (o.kv_shard && index_slot(L) >= 0) kvs_fetch(c, si, cidx_mirror[c][isrc_for(L)], 1u, 0, 0);
                 if (!att2)
                     launch(c, (size_t)std::max(g.hd, 512), 64, ops41sycl::WindowAppendP<Act>{128, g.hd, (int)cpos(c), 512},
                            ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat,
-                           (const int32_t *)cidx_mirror[c][isrc_for(L)]);
+                           o.kv_shard ? (const int32_t *)kvs_sl[c] : (const int32_t *)cidx_mirror[c][isrc_for(L)]);
                 n_idx += 512;
                 // OWN_ATT_TRIM: below 512 compressed rows the list is rows 0..len-1, then -1: the attention runs
                 // over the window and the first len rounded up to 32 (the slots left out are skipped ones)
@@ -5160,7 +5519,10 @@ private:
                        ring[c][L], (const act_t *)s.kvn, s.widx, s.idxs_cat, (const int32_t *)nullptr);
             }
             const bool att1 = att2 && att_f_on(nh, n_idx, 1); // ... in one launch (below, at the output)
-            const uint16_t *kvw = ring[c][L], *kvc = cr ? ckv_mirror[c][si] : ring[c][L];
+            const uint16_t *kvw = ring[c][L], *kvc = cr ? (o.kv_shard ? kvs_stg[c] : ckv_mirror[c][si]) : ring[c][L];
+            // (kvshard-1: the list the attention reads is the staging rows' slot list)
+            const int32_t *cl = !cr ? (const int32_t *)nullptr
+                                    : o.kv_shard ? (const int32_t *)kvs_sl[c] : (const int32_t *)cidx_mirror[c][isrc_for(L)];
             if (!al16(kvw) || !al16(kvc)) throw std::runtime_error("tensor parallel: kv alignment");
             const float *sinks = wp<float>(c, p + "attn_sinks.weight") + thq0[c];
             const int32_t *ix = (const int32_t *)s.idxs_cat;
@@ -5170,8 +5532,7 @@ private:
             if (att1) {
             } else if (att2) {
                 score_tw(c, nh, n_idx, (int)cpos(c), cr ? 512 : 0, (const act_t *)(s.q + qo), ring[c][L], kvc,
-                         (const act_t *)s.kvn, cr ? (const int32_t *)cidx_mirror[c][isrc_for(L)] : (const int32_t *)nullptr,
-                         s.widx, s.idxs_cat, s.attn_w);
+                         (const act_t *)s.kvn, cl, s.widx, s.idxs_cat, s.attn_w);
             } else if (n_idx == 128) {
                 launch_sg_pf(c, (size_t)nh * n_idx / 32, pfa, ops41sycl::SparseScoreP<512>{n_idx, nh, 128, g.hd},
                              (const act_t *)(s.q + qo), kvw, kvc, ix, s.attn_w);
@@ -5191,12 +5552,10 @@ private:
                     launch_sg(c, nh, ops41sycl::SparseSoftmaxPN<640>{nh, n_idx}, sinks, ix, s.attn_w);
             }
             if (cpos(c) < 0 || cpos(c) >= max_seq) throw std::runtime_error("position beyond max_seq");
-            const float *cb = (yarn ? cos_yarn[c] : cos_base[c]) + (size_t)cpos(c) * 32;
-            const float *sbp = (yarn ? sin_yarn[c] : sin_base[c]) + (size_t)cpos(c) * 32;
+            const float *cb = rope_t(c, yarn, false, cpos(c)), *sbp = rope_t(c, yarn, true, cpos(c));
             if (att1) { // OWN_ATT_T, one launch: the window append, score, softmax and output (attn_w: raw scores)
                 out_f<128, true>(c, nh, n_idx, 128, 1, 0, 0, (const act_t *)(s.q + qo), ring[c][L], kvc, s.idxs_cat,
-                                 (const act_t *)s.kvn,
-                                 cr ? (const int32_t *)cidx_mirror[c][isrc_for(L)] : (const int32_t *)nullptr, s.widx,
+                                 (const act_t *)s.kvn, cl, s.widx,
                                  (int)cpos(c), cr ? 512 : 0, sinks, s.attn_w, s.of + qo,
                                  o.rope_out ? (float *)(s.obuf + qo) : nullptr, cb, sbp);
             } else if (att2) { // OWN_ATT_T, two launches: the softmax in this one (attn_w: the raw scores)
@@ -5372,7 +5731,262 @@ private:
         }
         }
     }
-    // publish() on card c, appending to its own mirrors (same kernels, same BF16 rounding)
+    // ---- kvshard-1 (OWN_KV_SHARD; Options::kv_shard; /home/steve/dsv41-work/kvshard/README.md) ----------------------
+    // Row r of source s belongs to card ops41sycl::kvs_owner(r) = (r / R) % 6 (R = kv_shard_r) at row kvs_local(r) of
+    // that card's chunk; every card keeps the newest kv_tail rows of each source too. Publishing (publish_tp,
+    // tpm_publish) writes a row's tail slot on every card and its chunk row on its owner. At an index layer, once the
+    // lists are final (one-token steps: tp_phase phase 1; blocks: tpm_layer PX_P1), kvs_fetch copies every listed row
+    // into the staging rows in list order and writes the slot lists the attention reads instead of the lists; the
+    // layers up to the next index layer read the same lists over the same source, so they reuse the staging rows.
+    // Rows at or past kvs_tail0 are read from the tail, older rows from their owner's chunk (peers' pulled through the
+    // IPC mapping, no handshake): an older row was published at least kv_tail - 512 rows earlier (a finished step or
+    // block; every card has passed that step's exchanges since), and a row is rewritten (commit_block after a rejected
+    // guess) only while it is within 512 rows of the newest (a block publishes at most MTB = 512 rows per source), so
+    // a chunk row read is final; and the tail slots of rows at or past kvs_tail0 hold those rows: the rows a rejected
+    // block wrote past the kept length land in slots of rows below rows - kv_tail + 512.
+    long kvs_tail0(int c, int si) const { return std::max(0L, tlen[c][si] - (long)o.kv_tail + (long)MTB); }
+    // card t's allocations (constructor): chunks (rows per source rounded up to whole rounds of 6 R), tails, staging
+    void kvs_alloc(int t) {
+        const size_t rows_c2 = (size_t)max_seq / 2 + 2, rows_c1 = (size_t)max_seq + 2, R = o.kv_shard_r, N = (size_t)o.tp;
+        size_t rows = 0;
+        for (int s = 0; s < 4; ++s) {
+            const size_t cap = s == 3 ? rows_c1 : rows_c2; // (the mirrors' rows: layer 20 publishes at ratio 1)
+            kvs_nloc[s] = (cap + N * R - 1) / (N * R) * R;
+            kvs_coff[s] = rows;
+            rows += kvs_nloc[s];
+        }
+        kvs_chunk[t] = dalloc<uint16_t>(t, rows * g.hd);
+        for (int s = 0; s < 4; ++s) kvs_tail[t][s] = dalloc<uint16_t>(t, (size_t)o.kv_tail * g.hd);
+        const size_t TB = (size_t)mtb_n();
+        kvs_stg[t] = dalloc<uint16_t>(t, TB * 512 * g.hd);
+        kvs_sl[t] = dalloc<int32_t>(t, TB * 512);
+        if (o.kv_shard == 2) {
+            kvs_mark[t] = dalloc<uint32_t>(t, rows_c1); // (zeroed: no launch's stamp is 0)
+            kvs_cw[t] = dalloc<uint32_t>(t, 16);
+            kvs_ct[t] = dalloc<uint64_t>(t, 48); // ([0..15] one-token, [16..31] blocks pulled, [32..47] halves pushed)
+        }
+        if (o.kv_push) { // kvshard push: the class words and the half's bases + counts
+            kvp_tb[t] = dalloc<uint32_t>(t, TB * ops41sycl::KVP_K);
+            kvp_hb[t] = dalloc<uint32_t>(t, 2 * ops41sycl::KVP_K);
+        }
+        if (t == 0)
+            std::fprintf(stderr, "OWN_KV_SHARD=%u: per card %s GiB of chunks (%zu rows per chunk, %zu owners) + %s GiB of tails "
+                                 "(%u rows x 4) + %s GiB of staging rows (%zu tokens x 512)%s; %s\n",
+                         o.kv_shard, gib(rows * g.hd * 2).c_str(), R, N, gib((size_t)4 * o.kv_tail * g.hd * 2).c_str(), o.kv_tail,
+                         gib(TB * 512 * g.hd * 2).c_str(), TB,
+                         o.kv_shard == 2 ? "; check: the full mirrors kept, every staged row compared" : "; no full mirrors",
+                         o.kv_push ? "OWN_KV_PUSH=1: prompt halves push the rows on the copy engines, the rest pulls"
+                                   : "OWN_KV_PUSH=0: every fetch pulls");
+    }
+    // every card's chunk allocation mapped into every other card's context (tp_setup, after the arenas': the peers'
+    // access was checked there)
+    void kvs_map() {
+        const int N = o.tp;
+        for (int d = 0; d < N; ++d) {
+            auto zxd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[d]);
+            ze_ipc_mem_handle_t h;
+            if (zeMemGetIpcHandle(zxd, kvs_chunk[d], &h) != ZE_RESULT_SUCCESS)
+                throw std::runtime_error("OWN_KV_SHARD: zeMemGetIpcHandle failed on card " + pci[d]);
+            for (int c = 0; c < N; ++c) {
+                if (c == d) { kvs_peer[c][d] = kvs_chunk[d]; continue; }
+                auto zxc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]);
+                auto zdc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+                void *ptr = nullptr;
+                if (zeMemOpenIpcHandle(zxc, zdc, h, 0, &ptr) != ZE_RESULT_SUCCESS || !ptr)
+                    throw std::runtime_error("OWN_KV_SHARD: zeMemOpenIpcHandle failed: card " + pci[c] + " <- " + pci[d]);
+                kvs_peer[c][d] = ptr;
+                touch(c, ptr);
+            }
+        }
+        // kvshard push (OWN_KV_PUSH): every card's staging rows into every peer's context too (the copy lists' targets)
+        for (int d = 0; d < N && o.kv_push; ++d) {
+            auto zxd = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[d]);
+            ze_ipc_mem_handle_t h;
+            if (zeMemGetIpcHandle(zxd, kvs_stg[d], &h) != ZE_RESULT_SUCCESS)
+                throw std::runtime_error("OWN_KV_PUSH: zeMemGetIpcHandle (staging rows) failed on card " + pci[d]);
+            for (int c = 0; c < N; ++c) {
+                if (c == d) { kvs_speer[c][d] = kvs_stg[d]; continue; }
+                auto zxc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(ctxs[c]);
+                auto zdc = sycl::get_native<sycl::backend::ext_oneapi_level_zero>(devs[c]);
+                void *ptr = nullptr;
+                if (zeMemOpenIpcHandle(zxc, zdc, h, 0, &ptr) != ZE_RESULT_SUCCESS || !ptr)
+                    throw std::runtime_error("OWN_KV_PUSH: zeMemOpenIpcHandle (staging rows) failed: card " + pci[c] + " <- " + pci[d]);
+                kvs_speer[c][d] = ptr;
+                touch(c, ptr);
+            }
+        }
+        for (int c = 0; c < N; ++c) qs[c].wait();
+    }
+    // the listed rows of m tokens of source si (token t's list at cl + t * 512) into card c's staging rows from row so
+    // on and their slots into kvs_sl[c] + so (one launch); OWN_KV_SHARD=2: the check's compare and fold after it
+    // (set 0: one-token steps' totals, 1: blocks'). Every launch on card c's queue, no host wait.
+    void kvs_fetch(int c, int si, const int32_t *cl, unsigned m, size_t so, int set) {
+        ops41sycl::KvGather k{};
+        for (int d = 0; d < o.tp; ++d) k.set_ch((unsigned)d, (const uint16_t *)kvs_peer[c][d] + kvs_coff[si] * g.hd);
+        k.hd = (unsigned)g.hd, k.m = m, k.R = o.kv_shard_r, k.N = (unsigned)o.tp, k.TT = o.kv_tail;
+        k.tail0 = kvs_tail0(c, si);
+        k.so = so;
+        if (so + (size_t)m * 512 > (size_t)mtb_n() * 512) throw std::runtime_error("OWN_KV_SHARD: staging rows");
+        launch(c, (size_t)m * 512 * ops41sycl::KvGather::WG, ops41sycl::KvGather::WG, k, cl,
+               (const uint16_t *)kvs_tail[c][si], kvs_stg[c], kvs_sl[c]);
+        ++(set ? kvs_nm[c] : kvs_n1[c]);
+        if (o.kv_shard != 2) return;
+        kvs_check(c, si, cl, m, so, k.tail0, set, (const int32_t *)nullptr);
+    }
+    // OWN_KV_SHARD=2: a fetch's staged rows (m lists at cl, staging rows from so) against the full mirror on the card,
+    // folded into totals set (0 one-token steps, 1 blocks pulled, 2 halves pushed). sl null: KvGather's layout (entry e
+    // at row so + e: KvStageCmp, as kvshard-1); sl = the push form's slot lists (KvStageCmpP: the row each slot names)
+    void kvs_check(int c, int si, const int32_t *cl, unsigned m, size_t so, long tail0, int set, const int32_t *sl) {
+        if (++kvs_stamp[c] == 0u) kvs_stamp[c] = 1u; // (the marks start at 0: no launch's number)
+        const ops41sycl::KvStageCmp q{(unsigned)g.hd, m, o.kv_shard_r, (unsigned)o.tp, o.kv_tail, (unsigned)c, kvs_stamp[c],
+                                      tail0, so};
+        if (!sl)
+            launch(c, (size_t)m * 512 * ops41sycl::KvStageCmp::WG, ops41sycl::KvStageCmp::WG, q, cl,
+                   (const uint16_t *)kvs_stg[c], (const uint16_t *)ckv_mirror[c][si], kvs_mark[c], kvs_cw[c]);
+        else
+            launch(c, (size_t)m * 512 * ops41sycl::KvStageCmpP::WG, ops41sycl::KvStageCmpP::WG, ops41sycl::KvStageCmpP{q}, cl,
+                   sl, (const uint16_t *)kvs_stg[c], (const uint16_t *)ckv_mirror[c][si], kvs_mark[c], kvs_cw[c]);
+        launch(c, 1, 1, ops41sycl::KvStageFold{}, kvs_cw[c], kvs_ct[c] + 16 * set);
+    }
+    // ---- kvshard push (OWN_KV_PUSH; Options::kv_push; /home/steve/dsv41-work/kvshard/README-push.md) -----------------
+    // In OWN_PX prompt halves (px_layers, OWN_PX_BCS copy lists) the rows a card does not hold come as copy-engine
+    // pushes from their owners instead of KvGather's pulls: no card reads another card's memory while reading a prompt
+    // (the prompt path's rule since tp107; the host resets of 11-10..14 came with card-to-card reads). One-token steps
+    // and blocks outside the halves keep KvGather. Every card takes the same branch at the same host-order place.
+    bool kvs_push_on(int c) const { return o.kv_push && px_run[c] && bcs_blk(); }
+    // A half's fetch at an index layer (tpm_layer PX_P1; m tokens' lists at cl, the same on every card after ix_wait;
+    // staging rows from so). On qs[c]: KvPushCount + KvPushScan (the staging rows laid out by class: class d < 6 = the
+    // rows card d owns (r < tail0), class 6 = the tail's; base / count per class into kvp_hb), the copy of kvp_hb to
+    // the host, KvPushSlots (every entry's slot), KvPushCopy (the tail's rows and this card's own rows into their
+    // staging rows). The host waits for its copy of kvp_hb (the one host wait: a copy engine copies sizes the host
+    // gives it), then kvs_push queues the push of this card's run [so + base[c], so + base[c] + n[c]) into every
+    // peer's staging rows at the same rows (after KvPushCopy: an own event signalled on qs in its order; the flags
+    // after the rows), and qs[c] waits right away until every peer's push of this half has landed (bcs_wait:
+    // XchgWaitB on the copy flags) before the attention reads the staging rows. OWN_PX_SERIAL=1 or not, nothing runs
+    // on qs[c] between its push and that wait: the push never runs beside this card's compute (as the serial
+    // exchanges). OWN_KV_SHARD=2: every staged row compared with the mirror after the wait (set 2).
+    // Hazards: (a) peer d's push into this card's half-h staging rows at index layer L2 vs this card's attention of
+    // half h at the layers before L2 reading them: d pushes after its qs passed its wait for this card's X1 of half h
+    // at layer L2 - 1 (every layer has X1 per half), which this card signals after that attention; (b) this card's
+    // run read by its copy engine vs this card's next KvPushCopy into it (next index layer): every peer saw the flag
+    // (after the rows) before its attention, which comes before its X1 of that layer, which this card waits for
+    // before it gets there; (c) halves A and B use disjoint staging rows (so = px_tok * 512); one-token steps after
+    // the block start after every push landed (b). The push numbers are bseq's (one per half and index layer on every
+    // card at the same host-order place: the same numbers everywhere; OWN_PX_CHECK sees them as kind 3 pushes).
+    void kvs_fetch_push(int c, int si, const int32_t *cl, unsigned m, size_t so) {
+        constexpr unsigned K = ops41sycl::KVP_K;
+        if (!m || so + (size_t)m * 512 > (size_t)mtb_n() * 512 || m > (unsigned)mtb_n())
+            throw std::runtime_error("OWN_KV_PUSH: staging rows");
+        const unsigned R = o.kv_shard_r, N = (unsigned)o.tp, hd = (unsigned)g.hd;
+        const long tail0 = kvs_tail0(c, si);
+        uint32_t *tb = kvp_tb[c];
+        launch(c, (size_t)m * ops41sycl::KvPushCount::WG, ops41sycl::KvPushCount::WG, ops41sycl::KvPushCount{m, R, N, tail0},
+               cl, tb);
+        launch(c, ops41sycl::KvPushScan::WG, ops41sycl::KvPushScan::WG, ops41sycl::KvPushScan{m}, tb, kvp_hb[c]);
+        sycl::event eh = qs[c].memcpy(kvp_h[c], kvp_hb[c], sizeof kvp_h[c]);
+        launch(c, (size_t)m * ops41sycl::KvPushSlots::WG, ops41sycl::KvPushSlots::WG,
+               ops41sycl::KvPushSlots{m, R, N, tail0, so}, cl, (const uint32_t *)tb, kvs_sl[c]);
+        launch(c, (size_t)m * 512 * ops41sycl::KvPushCopy::WG, ops41sycl::KvPushCopy::WG,
+               ops41sycl::KvPushCopy{hd, m, R, N, o.kv_tail, (unsigned)c, tail0, so}, cl, (const int32_t *)kvs_sl[c],
+               (const uint16_t *)kvs_tail[c][si], (const uint16_t *)kvs_chunk[c] + kvs_coff[si] * g.hd, kvs_stg[c]);
+        { // (KvPushSlots / KvPushCopy keep the card busy meanwhile; counted as twait counts a host wait)
+            const int64_t tw0 = tl_on[c] ? tl_now() : 0;
+            const double t0 = tp_hostprof ? now_s() : 0.0;
+            eh.wait();
+            if (tp_hostprof) tph_wait[c] += now_s() - t0;
+            if (tw0) tl_hw[c].push_back({tl_step[c], tw0, tl_now()});
+        }
+        const uint32_t *h = kvp_h[c];
+        bool ok = h[0] == 0;
+        for (unsigned k = 0; k < K; ++k) { // the classes tile [0, rows) in order, inside the half's staging rows
+            const uint64_t end = (uint64_t)h[k] + h[K + k];
+            ok &= end <= (uint64_t)m * 512 && (k + 1 < K ? end == h[k + 1] : true) && (k > N ? h[K + k] == 0 : true);
+        }
+        if (!ok) {
+            char b[160];
+            std::snprintf(b, sizeof b, "OWN_KV_PUSH: card %d: the class bases / counts read back are not a layout (base 0 %u, "
+                                       "own %u + %u, last %u + %u)", c, h[0], h[c], h[K + c], h[K - 1], h[2 * K - 1]);
+            throw std::runtime_error(b);
+        }
+        const uint32_t seq = kvs_push(c, so + h[c], h[K + c]);
+        bcs_wait(c, seq);
+        ++kvs_np[c];
+        const unsigned long long all = (unsigned long long)h[K - 1] + h[2 * K - 1];
+        kvp_all[c] += all, kvp_tl[c] += h[K + N], kvp_own[c] += h[K + c];
+        kvp_max[c] = std::max<unsigned long long>(kvp_max[c], h[K + c]);
+        if (o.kv_shard == 2) kvs_check(c, si, cl, m, so, tail0, 2, (const int32_t *)kvs_sl[c]);
+    }
+    // card c's staging rows [r0, r0 + n) into every peer's staging rows at the same rows on c's copy engine (bcs_push's
+    // pattern: after everything queued on qs[c] so far, through an own event signalled on qs's native list in its
+    // order; one in-order copy list), then the push number into each peer's copy flag word (arena word xbf + 16 c,
+    // after the rows: the same list), then the event reset for its next use. n = 0 (no listed row of c's): the flags
+    // only (every card pushes at the same places: the numbers stay the same everywhere). Returns the number.
+    uint32_t kvs_push(int c, size_t r0, size_t n) {
+        const uint32_t seq = ++bseq[c];
+        if (seq >= BTBL) throw std::runtime_error("OWN_PX_BCS: push numbers past the table");
+        if (r0 + n > (size_t)mtb_n() * 512) throw std::runtime_error("OWN_KV_PUSH: a push past the staging rows");
+        ze_event_handle_t ev = bcs_ev[c][bcs_ei[c]++ % BNE];
+        ze_command_list_handle_t cl = bcs_cl[c];
+        zcheck(zeCommandListAppendSignalEvent(bcs_ql[c], ev), "signal on the queue");
+        zcheck(zeCommandListAppendWaitOnEvents(cl, 1, &ev), "copy list wait");
+        const size_t hd = (size_t)g.hd, bytes = n * hd * sizeof(uint16_t);
+        for (int k = 1; k < o.tp; ++k) {
+            const int d = (c + k) % o.tp; // (each card starts with a different peer)
+            if (bytes)
+                zcheck(zeCommandListAppendMemoryCopy(cl, (uint16_t *)kvs_speer[c][d] + r0 * hd, kvs_stg[c] + r0 * hd, bytes,
+                                                     nullptr, 0, nullptr),
+                       "kv rows copy");
+        }
+        for (int k = 1; k < o.tp; ++k) {
+            const int d = (c + k) % o.tp;
+            zcheck(zeCommandListAppendMemoryCopy(cl, (uint32_t *)xpeer[c][d] + xbf + 16 * c, bcs_tbl[c] + seq, 4, nullptr, 0,
+                                                 nullptr),
+                   "flag copy");
+        }
+        zcheck(zeCommandListAppendEventReset(cl, ev), "event reset");
+        ++bcs_pushes[c];
+        px_note(c, seq, 3, 0);
+        return seq;
+    }
+    // at exit (the destructor, queues drained): fetch counts; OWN_KV_SHARD=2: the check's totals, read once
+    void kvs_report() {
+        long bad = 0;
+        for (int c = 0; c < o.tp; ++c) {
+            std::fprintf(stderr, "OWN_KV_SHARD=%u: card %d: %ld one-token / %ld block fetches pulled, %ld halves pushed\n",
+                         o.kv_shard, c, kvs_n1[c], kvs_nm[c], kvs_np[c]);
+            if (o.kv_push && kvs_np[c]) {
+                const double a = kvp_all[c] ? (double)kvp_all[c] : 1.0;
+                std::fprintf(stderr, "OWN_KV_PUSH: card %d: %llu rows staged in %ld halves (tail %.1f %%, own chunk %.1f %%, "
+                                     "peers' pushes %.1f %%); pushed %llu rows to each of %d peers (%s GiB out in all), "
+                                     "%llu rows at most per half\n",
+                             c, kvp_all[c], kvs_np[c], 100.0 * (double)kvp_tl[c] / a, 100.0 * (double)kvp_own[c] / a,
+                             100.0 * (double)(kvp_all[c] - kvp_tl[c] - kvp_own[c]) / a, kvp_own[c], o.tp - 1,
+                             gib((size_t)kvp_own[c] * (size_t)g.hd * 2 * (size_t)(o.tp - 1)).c_str(), kvp_max[c]);
+            }
+            if (o.kv_shard != 2 || !kvs_ct[c]) continue;
+            uint64_t h[48] = {};
+            try {
+                qs[c].memcpy(h, kvs_ct[c], sizeof h).wait();
+            } catch (...) {
+                std::fprintf(stderr, "OWN_KV_SHARD=2: card %d: the counts could not be read\n", c);
+                ++bad;
+                continue;
+            }
+            for (int set = 0; set < 3; ++set) {
+                const uint64_t *v = h + 16 * set;
+                std::fprintf(stderr, "OWN_KV_SHARD=2 check: card %d %s: %llu lists, %llu rows compared (tail %llu, own chunk "
+                                     "%llu, peers %llu), %llu words differ; distinct rows per list %.1f on average, %llu at most\n",
+                             c, set == 2 ? "halves pushed" : set ? "blocks pulled" : "one-token", (unsigned long long)v[7],
+                             (unsigned long long)v[0], (unsigned long long)v[2], (unsigned long long)v[3],
+                             (unsigned long long)v[4], (unsigned long long)v[1], v[7] ? (double)v[5] / (double)v[7] : 0.0,
+                             (unsigned long long)v[6]);
+                bad += v[1] != 0;
+            }
+        }
+        if (o.kv_shard == 2) std::fprintf(stderr, "OWN_KV_SHARD=2 check: %s\n", bad ? "MISMATCH" : "ALL SAME");
+    }
+    // publish() on card c, appending to its own mirrors (same kernels, same BF16 rounding; kvshard-1: its tail, the
+    // owner's chunk)
     void publish_tp(int L, int c, int si, bool yarn) {
         auto &s = sc[c];
         const std::string p = "blk." + std::to_string(L) + ".";
@@ -5409,8 +6023,18 @@ private:
         rope(c, s.latent, 1, g.hd, gpos, yarn, false);
         const size_t cap = si == 3 ? (size_t)max_seq + 2 : (size_t)max_seq / 2 + 2;
         if ((size_t)tlen[c][si] + 1 > cap) throw std::runtime_error("compressed cache full (max_seq)");
-        launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::PubAppendA<Act>{g.hd, 128, (int)tlen[c][si]},
-               (const act_t *)s.latent, (const act_t *)s.kk, ckv_mirror[c][si], ik_mirror[c][si]);
+        if (o.kv_shard) { // kvshard-1: the row into its tail slot, its owner's chunk (OWN_KV_SHARD=2: and the mirror)
+            const long r = tlen[c][si];
+            const size_t hd = (size_t)g.hd;
+            uint16_t *own = ops41sycl::kvs_owner(r, o.kv_shard_r, (unsigned)o.tp) == (long)c
+                                ? kvs_chunk[c] + (kvs_coff[si] + (size_t)ops41sycl::kvs_local(r, o.kv_shard_r, (unsigned)o.tp)) * hd
+                                : (uint16_t *)nullptr;
+            uint16_t *mir = o.kv_shard == 2 ? ckv_mirror[c][si] + (size_t)r * hd : (uint16_t *)nullptr;
+            launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::PubAppendS<Act>{g.hd, 128, (int)r}, (const act_t *)s.latent,
+                   (const act_t *)s.kk, kvs_tail[c][si] + (size_t)(r % (long)o.kv_tail) * hd, own, mir, ik_mirror[c][si]);
+        } else
+            launch(c, (size_t)std::max(g.hd, 128), 64, ops41sycl::PubAppendA<Act>{g.hd, 128, (int)tlen[c][si]},
+                   (const act_t *)s.latent, (const act_t *)s.kk, ckv_mirror[c][si], ik_mirror[c][si]);
         ++tlen[c][si];
     }
     // engram rows for this step's two engram layers: decoded and uploaded at step start
@@ -5549,11 +6173,17 @@ private:
         x_ready[c] = false; // a step that failed part-way must not leave it set
         fin_attn[c] = false;
         xt[c].on = xt[c].pending = false;
+        if (o.eng_spread) engram_ask_share(c); // eng-spread-1: this card's share of the step's row requests
         auto eng = [&] {
             const auto e0 = std::chrono::steady_clock::now();
+            rusage r0{}, r1{};
+            getrusage(RUSAGE_THREAD, &r0);
             tp_engram_upload(c);
+            getrusage(RUSAGE_THREAD, &r1);
+            eng_ru_add(c, r0, r1);
             eng_t[c] += std::chrono::duration<double>(std::chrono::steady_clock::now() - e0).count();
             ++eng_n[c];
+            if (o.eng_gate & 2u) eng_gate(c); // eng-gate-1, one-token steps
         };
         if (!o.eng_late) eng();
         if (o.layer_begin == 0) tp_embed(c, tp_tok, !o.eng_late); // late: the rows' copy is later, nothing to wait for
@@ -5587,6 +6217,10 @@ private:
             }
             if (tp_quit) return;
             seen = tp_gen.load();
+            tpd_wake[c] = now_s();
+            const double tpd_e0 = eng_t[c], tpd_q0 = eng_tq[c], tpd_s0 = eng_tsh[c], tpd_g0 = eg_wait[c];
+            long tpd_r0[4];
+            for (int k = 0; k < 4; ++k) tpd_r0[k] = eng_ru[c][k];
             try {
                 if (dr_step) dr_card_step(c);
                 else if (mt_n > 0) tpm_card_step(c);
@@ -5596,6 +6230,12 @@ private:
                 std::lock_guard<std::mutex> lk(tp_mu);
                 if (tp_err.empty()) tp_err = "card " + pci[c] + ": " + e.what();
             }
+            tpd_eng[c] = eng_t[c] - tpd_e0;
+            tpd_engq[c] = eng_tq[c] - tpd_q0;
+            tpd_engs[c] = eng_tsh[c] - tpd_s0;
+            tpd_gate[c] = eg_wait[c] - tpd_g0;
+            for (int k = 0; k < 4; ++k) tpd_ru[c][k] = eng_ru[c][k] - tpd_r0[k];
+            tpd_end[c] = now_s();
             if (tp_left.fetch_sub(1) == 1) {
                 std::lock_guard<std::mutex> lk(tp_mu);
                 tp_done_cv.notify_all();
@@ -5632,7 +6272,8 @@ private:
             tra(L, TT_KV, 0, s.kvn, g.hd);
             break;
         case 1:
-            if (cr_of(L)) tri(L, TT_CIDX, 0, s.idxs_cat + 128, 512);
+            if (cr_of(L)) // (kvshard-1: the list itself; the attention's list holds the staging rows' slots)
+                tri(L, TT_CIDX, 0, o.kv_shard ? (const int32_t *)cidx_mirror[0][isrc_for(L)] : (const int32_t *)(s.idxs_cat + 128), 512);
             for (int c = 0; c < o.tp; ++c) src[c] = sc[c].of;
             tr_gather(L, TT_ATTN_O, thq0, thq1, g.hd, (size_t)g.qh * g.hd, false, src);
             tra(L, TT_ATTN_OA, 0, s.oa, g.ototal);
@@ -5702,7 +6343,7 @@ private:
 #include "backend_sycl_v41_mt.inc"
 #include "backend_sycl_v41_draft.inc"
     int32_t decode_step_tp(int32_t token) {
-        engram_prefetch();
+        if (!o.eng_spread || tp_th.empty() || tracing()) engram_prefetch();
         ++tp_stepn;
         tp_tok = token;
         if (!tp_th.empty() && !tracing()) { // traced steps run phase by phase from this thread (workers parked)
@@ -5721,7 +6362,8 @@ private:
                                          " (1 + d: card d's rows never came; 0x100 + d: a newer unit of card d; 0x200 / 0x300 + d: card d's flag never came)");
             if (xerr[c][0])
                 throw std::runtime_error("card " + pci[c] + ": card-to-card exchange timed out waiting for card " +
-                                         std::to_string((int)xerr[c][0] - 1));
+                                         std::to_string((int)xerr[c][0] - 1) + " (one-token step at position " +
+                                         std::to_string(pos) + ", step " + std::to_string(tp_stepn) + "; " + tpd_report() + ")");
             if (xerr[c][1]) throw std::runtime_error("card " + pci[c] + ": attention (one launch) timed out waiting for its score tiles");
         }
         if (xw_path) // OWN_XWAIT records of this step (main thread: every card is done)
@@ -5807,7 +6449,7 @@ private:
         // 16, beta 32/1, orig 65536) and base. Exact copy of the CPU runner.
         int P = max_seq;
         std::vector<float> cy((size_t)P * 32), sy((size_t)P * 32), cb((size_t)P * 32), sb((size_t)P * 32);
-        auto fill = [&](std::vector<float> &c, std::vector<float> &s, int yarn) {
+        auto fill = [&](std::vector<float> &c, std::vector<float> &s, int yarn, bool rows = true) {
             const int dim = 64;
             double base = yarn ? 160000.0 : 10000.0;
             std::vector<double> f(dim / 2);
@@ -5825,12 +6467,30 @@ private:
                     f[i] = f[i] / factor * (1 - smooth) + f[i] * smooth;
                 }
             }
+            rwf[yarn ? 1 : 0] = f; // (ropewin-1: rope_fill's frequencies)
+            if (!rows) return;
             for (int p = 0; p < P; ++p)
                 for (int i = 0; i < 32; ++i) {
                     c[(size_t)p * 32 + i] = (float)std::cos(p * f[i]);
                     s[(size_t)p * 32 + i] = (float)std::sin(p * f[i]);
                 }
         };
+        rwin = o.rope_win && (long)P > 2 * RW; // ropewin-1 (OWN_ROPE_WIN)
+        if (rwin) {
+            fill(cy, sy, 1, false);
+            fill(cb, sb, 0, false);
+            for (int t = 0; t < TILES; ++t) {
+                if (!active[t]) continue;
+                rwdev[t][0] = dalloc<float>(t, (size_t)4 * RW * 32, false);
+                rwdev[t][1] = dalloc<float>(t, (size_t)4 * RW * 32, false);
+                rw0[t] = -1;
+                rope_ensure(t, 0);
+                qs[t].wait();
+            }
+            std::fprintf(stderr, "OWN_ROPE_WIN: rope tables as a %ld-position window per card, two copies (%.2f GiB less per card)\n",
+                         RW, (double)((size_t)P - 2 * RW) * 32 * 4 * 4 / (1u << 30));
+            return;
+        }
         fill(cy, sy, 1);
         fill(cb, sb, 0);
         for (int t = 0; t < TILES; ++t) {

@@ -1,3 +1,5 @@
+// Build + run (from experiments/own-xpu-runtime/engine; kvshard step 0 is KVS=1): icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -Xsycl-target-backend=intel_gpu_bmg_g31 "-options -ze-intel-enable-auto-large-GRF-mode" -O2 -std=c++20 -fp-model=precise -ffp-contract=off -Wno-deprecated-declarations -I src tools/bench/bench_attn_a1.cpp -o bench_attn_a1 && KVS=1 ONEAPI_DEVICE_SELECTOR=level_zero:1 ./bench_attn_a1
+//
 // attn a1 (2026-11-11): the engine's sparse attention at its one-token and guess-check shapes against
 // sycl_v41_attn.hpp, one card. Production: WindowAppendP + SparseScoreHG<512, 1> (SparseScoreP<512> at 128 slots) +
 // SparseSoftmaxP<n> + SparseOutJC<512, 16, 128> (with the rope'd ry); blocks ScoreM / SoftmaxM / OutMC<JC>.
@@ -35,7 +37,7 @@
 // neighbours are 128-register kernels: a 256-register launch between them costs two register-mode changes); the
 // chain then runs from the first neighbour's start to the second's end.
 // Env: ONLY=substring of the shape tag, IT (default 60), MS=1,2,4,6,8 (token counts), NOFLUSH=1, NOCHECK=1, NOTIME=1,
-// WIN=1, OUT=1, FGRF=0 (the engine's register file and tile heads per shape, att_f_grf / att_f_s8; or 128 | 256 with
+// WIN=1, OUT=1, KVS=1 (kvshard: the staging rows against the full rows, KVS_R / KVS_TT; see its block in main), FGRF=0 (the engine's register file and tile heads per shape, att_f_grf / att_f_s8; or 128 | 256 with
 // SHG=16 | 8: SparseOutF's score tiles of 16 or 8 heads), NB. Build: icpx -fsycl -fsycl-targets=intel_gpu_bmg_g31 -Xsycl-target-backend=intel_gpu_bmg_g31
 // "-options -ze-intel-enable-auto-large-GRF-mode" -O2 -std=c++20 -fp-model=precise -ffp-contract=off -I src.
 #include <sycl/sycl.hpp>
@@ -319,6 +321,10 @@ static uint16_t f2bf(float f) { // round to nearest even (finite values)
     std::memcpy(&u, &f, 4);
     return (uint16_t)((u + 0x7fff + ((u >> 16) & 1)) >> 16);
 }
+// kvshard (KVS=1): the row that owner d's chunk row l holds (the inverse of ops41sycl::kvs_owner / kvs_local)
+static long kvs_global_(size_t l, unsigned d, unsigned R, unsigned N) {
+    return (long)(l / R) * (long)N * (long)R + (long)d * (long)R + (long)(l % R);
+}
 
 int main() {
     sycl::queue q{sycl::gpu_selector_v, sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}}};
@@ -425,6 +431,238 @@ int main() {
             for (int h = 0; h < nh; ++h) bad += std::memcmp(&a[t * QS + (size_t)h * HD], &c[t * QS + (size_t)h * HD], HD * 4) != 0;
         return bad;
     };
+    // KVS=1 (kvshard step 0, 2026-11-16; /home/steve/dsv41-work/kvshard/README.md): the attention over the full
+    // compressed rows with the real lists (reference) against the same launches over the staging rows that
+    // ops41sycl::KvGather fills from six owners' chunks + a tail ring (all on this card; KVS_R rows per chunk, default
+    // 64 so every list spans every owner; KVS_TT tail rows, default 1024; rows from rows - TT + 512 on come from the
+    // ring, older ones from the chunks; the ring's other slots and the chunks' rows that the ring serves hold NaN
+    // patterns, so a row taken from the wrong place shows) with KvGather's slot lists. One token with the window
+    // append (WIN's forms 0-3; 16 / 8 heads; p 1000 / 60 / 127 / 0) and blocks (WA's forms 0-4 at MS tokens, default
+    // 2,4,8, and form 0 at 16 tokens; 16 / 12 / 8 heads; p 1000 / 125 / 60 / 0); every slot count above 128; normal
+    // and peaky (q * 6, 1/8 of the 640-slot lists skipped); the lists hold random rows (sorted below 640 slots, as a
+    // select leaves them). Bitwise: out, ry, the kept slots' weights, the ring, widx, the attention lists (the staging
+    // slots where the reference has rows) and KvGather's slot lists. KvStageCmp (OWN_KV_SHARD=2's check) must count
+    // 0 differing words, and its rows compared / from the tail / own chunk / peers' chunks and distinct rows must
+    // match the host's counts. Time: KvGather alone per shape, best of the two kinds (one card: the peers' rows are
+    // local here; no cache flush).
+    if (std::getenv("KVS")) {
+        const unsigned KR = std::getenv("KVS_R") ? (unsigned)std::atoi(std::getenv("KVS_R")) : 64u;
+        const unsigned TT = std::getenv("KVS_TT") ? (unsigned)std::atoi(std::getenv("KVS_TT")) : 1024u;
+        constexpr unsigned NO = 6; // owners
+        if (KR < 8 || KR % 8 || TT < 1024) {
+            std::printf("KVS_R: a multiple of 8; KVS_TT: at least 1024 (two blocks of 512)\n");
+            return 2;
+        }
+        const long len = CROWS, tail0 = std::max(0L, len - (long)TT + 512);
+        std::vector<uint16_t> full((size_t)CROWS * HD);
+        q.memcpy(full.data(), b.kvc, full.size() * 2).wait();
+        const size_t nloc = (size_t)((len + (long)NO * KR - 1) / ((long)NO * KR)) * KR;
+        uint16_t *ch[NO];
+        for (unsigned d = 0; d < NO; ++d) { // owner d's chunk (rows past the end: NaN, never read)
+            std::vector<uint16_t> c(nloc * HD, (uint16_t)0x7fc1);
+            for (size_t l = 0; l < nloc; ++l) {
+                const long r = kvs_global_(l, d, KR, NO);
+                if (r < tail0) std::memcpy(&c[l * HD], &full[(size_t)r * HD], HD * 2);
+                else if (r < len) std::fill(c.begin() + (long)(l * HD), c.begin() + (long)((l + 1) * HD), (uint16_t)0x7fc2);
+            }
+            ch[d] = sycl::malloc_device<uint16_t>(nloc * HD, q);
+            q.memcpy(ch[d], c.data(), c.size() * 2).wait();
+        }
+        uint16_t *tail = sycl::malloc_device<uint16_t>((size_t)TT * HD, q);
+        {
+            std::vector<uint16_t> t((size_t)TT * HD, (uint16_t)0x7fc3);
+            for (long r = tail0; r < len; ++r) std::memcpy(&t[(size_t)(r % TT) * HD], &full[(size_t)r * HD], HD * 2);
+            q.memcpy(tail, t.data(), t.size() * 2).wait();
+        }
+        uint16_t *stg = sycl::malloc_device<uint16_t>((size_t)MMAX * 512 * HD, q);
+        int32_t *sl = sycl::malloc_device<int32_t>((size_t)MMAX * 512, q);
+        uint32_t *mark = sycl::malloc_device<uint32_t>((size_t)CROWS, q), *cw = sycl::malloc_device<uint32_t>(16, q);
+        uint64_t *ct = sycl::malloc_device<uint64_t>(16, q);
+        q.fill(mark, 0u, (size_t)CROWS).wait();
+        q.fill(cw, 0u, 16).wait();
+        float *kv = sycl::malloc_device<float>((size_t)MMAX * HD, q);
+        int32_t *cidx = sycl::malloc_device<int32_t>((size_t)MMAX * 512, q), *widx = sycl::malloc_device<int32_t>(128, q);
+        const size_t nrg = (size_t)WMAX * HD;
+        std::vector<uint16_t> ringall(nrg);
+        q.memcpy(ringall.data(), b.kvw, nrg * 2).wait();
+        uint32_t stamp = 0;
+        bool ok = true;
+        // KvGather of M tokens' lists (host hc, token t at t * 512; on the card at cidx) into stg / sl, KvStageCmp
+        // against the full rows and KvStageFold, as OWN_KV_SHARD=2 runs them; the counts against the host's.
+        // Returns KvGather's time.
+        auto gather = [&](unsigned M, const std::vector<int32_t> &hc, const char *tag) -> double {
+            q.fill(stg, (uint16_t)0x7fc4, (size_t)MMAX * 512 * HD).wait();
+            q.fill(sl, (int32_t)-7, (size_t)MMAX * 512).wait();
+            q.fill(ct, (uint64_t)0, 16).wait();
+            KvGather k{};
+            for (unsigned d = 0; d < NO; ++d) k.set_ch(d, ch[d]);
+            k.hd = HD, k.m = M, k.R = KR, k.N = NO, k.TT = TT, k.tail0 = tail0, k.so = 0;
+            const int32_t *ci_ = cidx;
+            const uint16_t *t_ = tail, *f_ = b.kvc;
+            uint16_t *s_ = stg;
+            int32_t *l_ = sl;
+            uint32_t *m_ = mark, *w_ = cw;
+            uint64_t *c_ = ct;
+            sycl::event eg = q.parallel_for(sycl::nd_range<1>((size_t)M * 512 * KvGather::WG, KvGather::WG),
+                                            [=](sycl::nd_item<1> it) { k(it, ci_, t_, s_, l_); });
+            if (++stamp == 0u) stamp = 1u;
+            const KvStageCmp kc{HD, M, KR, NO, TT, 0u, stamp, tail0, (size_t)0};
+            q.parallel_for(sycl::nd_range<1>((size_t)M * 512 * KvStageCmp::WG, KvStageCmp::WG),
+                           [=](sycl::nd_item<1> it) { kc(it, ci_, (const uint16_t *)s_, f_, m_, w_); });
+            const KvStageFold kf{};
+            q.parallel_for(sycl::nd_range<1>(1, 1), [=](sycl::nd_item<1> it) { kf(it, w_, c_); });
+            uint64_t h[16];
+            q.memcpy(h, ct, sizeof h).wait();
+            uint64_t n = 0, nt = 0, no = 0, np = 0;
+            std::vector<int32_t> rows;
+            for (unsigned t = 0; t < M; ++t)
+                for (int j = 0; j < 512; ++j) {
+                    const int32_t v = hc[(size_t)t * 512 + j];
+                    if (v < 128) continue;
+                    const long r = (long)v - 128;
+                    ++n;
+                    rows.push_back((int32_t)r);
+                    if (r >= tail0) ++nt;
+                    else if (kvs_owner(r, KR, NO) == 0) ++no;
+                    else ++np;
+                }
+            std::sort(rows.begin(), rows.end());
+            const uint64_t u = (uint64_t)(std::unique(rows.begin(), rows.end()) - rows.begin());
+            if (h[1] || h[0] != n || h[2] != nt || h[3] != no || h[4] != np || h[5] != u || h[6] != u || h[7] != 1) {
+                ok = false;
+                std::printf("  %s: KvStageCmp %llu words differ; rows %llu / %llu, tail %llu / %llu, own %llu / %llu, peers %llu / "
+                            "%llu, distinct %llu %llu / %llu, launches %llu\n",
+                            tag, (unsigned long long)h[1], (unsigned long long)h[0], (unsigned long long)n, (unsigned long long)h[2],
+                            (unsigned long long)nt, (unsigned long long)h[3], (unsigned long long)no, (unsigned long long)h[4],
+                            (unsigned long long)np, (unsigned long long)h[5], (unsigned long long)h[6], (unsigned long long)u,
+                            (unsigned long long)h[7]);
+            }
+            return evus(eg);
+        };
+        // token t's compressed list: 640 slots: 512 distinct random rows in random order (1/8 skipped: peaky kind);
+        // 160 .. 608: len_t (within 31 of n - 128) random rows ascending, then -1; 128: none
+        auto kvs_lists = [&](int n, unsigned M, int skip8, std::vector<int32_t> &hc) {
+            hc.assign((size_t)MMAX * 512, -1);
+            std::vector<int> pc(CROWS);
+            for (unsigned t = 0; t < M; ++t) {
+                int32_t *c = hc.data() + (size_t)t * 512;
+                for (int i = 0; i < CROWS; ++i) pc[i] = i;
+                std::shuffle(pc.begin(), pc.end(), rng);
+                if (n == 640) {
+                    for (int i = 0; i < 512; ++i) c[i] = (skip8 && i % 8 == 5) ? -1 : 128 + pc[i];
+                } else if (n > 128) {
+                    const int ln = n - 128 - (int)(rng() % 32);
+                    std::sort(pc.begin(), pc.begin() + ln);
+                    for (int i = 0; i < 512; ++i) c[i] = i < ln ? 128 + pc[i] : -1;
+                }
+            }
+        };
+        // the attention list the staging run must leave: the reference's, with the staging slot (shifted as the
+        // reference's row is: WindowAppendM's + mtx) where the reference has a compressed row
+        auto kvs_cat = [&](const std::vector<int32_t> &rc, const std::vector<int32_t> &hc, unsigned M) {
+            std::vector<int32_t> x = rc;
+            for (unsigned t = 0; t < M; ++t)
+                for (int j = 0; j < 512; ++j) {
+                    const int32_t v = hc[(size_t)t * 512 + j], s = v < 128 ? v : 128 + (int32_t)(t * 512 + j);
+                    int32_t &e = x[(size_t)t * 640 + 128 + j];
+                    if (e >= 0) e = e - v + s;
+                }
+            return x;
+        };
+        Bufs bsh = b;
+        bsh.kvc = stg;
+        std::vector<unsigned> ml = {1u};
+        for (unsigned m : std::getenv("MS") ? ms : std::vector<unsigned>{2u, 4u, 8u})
+            if (m > 1 && m < 16 && std::find(ml.begin(), ml.end(), m) == ml.end()) ml.push_back(m);
+        ml.push_back(16u);
+        std::printf("kvshard: attention over the staging rows vs the full rows (R %u, tail %u rows, rows < %ld from the chunks); "
+                    "KvGather us per shape\n", KR, TT, tail0);
+        for (unsigned M : ml)
+            for (int nh : {16, 12, 8}) {
+                if (M == 1 && nh == 12) continue;
+                for (int n : NVALS) {
+                    if (n == 128) continue; // (no compressed rows)
+                    for (int p : {1000, 125, 60, 127, 0}) {
+                        if (p == (M == 1 ? 125 : 127)) continue;
+                        char tag[64];
+                        std::snprintf(tag, sizeof tag, "kvs h%d n%d M%u p%d", nh, n, M, p);
+                        if (only && !std::strstr(tag, only)) continue;
+                        double tg = 1e30;
+                        for (int kind = 0; kind < 2; ++kind) {
+                            std::vector<float> hq(nq), hs(QH), hk((size_t)MMAX * HD);
+                            for (auto &x : hq) x = nd(rng) * (kind ? 6.f : 1.f);
+                            for (auto &x : hs) x = nd(rng) * 2.f;
+                            for (auto &x : hk) x = nd(rng);
+                            std::vector<int32_t> hc;
+                            kvs_lists(n, M, kind, hc);
+                            q.memcpy(b.q, hq.data(), nq * 4).wait();
+                            q.memcpy(b.sinks, hs.data(), QH * 4).wait();
+                            q.memcpy(kv, hk.data(), hk.size() * 4).wait();
+                            q.memcpy(cidx, hc.data(), hc.size() * 4).wait();
+                            tg = std::min(tg, gather(M, hc, tag));
+                            {
+                                std::vector<int32_t> dsl((size_t)M * 512);
+                                q.memcpy(dsl.data(), sl, dsl.size() * 4).wait();
+                                for (size_t e = 0; e < dsl.size(); ++e) {
+                                    const int32_t v = hc[e], s = v < 128 ? v : 128 + (int32_t)e;
+                                    if (dsl[e] != s) {
+                                        ok = false;
+                                        std::printf("  %s: KvGather's slot list differs at entry %zu (%d, want %d)\n", tag, e, dsl[e], s);
+                                        break;
+                                    }
+                                }
+                            }
+                            const size_t mw = (size_t)M * WS, mq = (size_t)M * QS, mx = (size_t)M * 640;
+                            auto reset = [&]() {
+                                q.memcpy(b.kvw, ringall.data(), nrg * 2);
+                                q.memcpy(b.w, stale.data(), mw * 4);
+                                q.memcpy(b.w2, stale.data(), mw * 4);
+                                q.fill(b.ix, (int32_t)-7, nix);
+                                q.fill(widx, (int32_t)-7, 128);
+                                q.fill(b.out, std::nanf(""), mq);
+                                q.fill(b.ry, std::nanf(""), mq).wait();
+                            };
+                            const int nforms = M == 1 ? 4 : M > 8 ? 1 : 5;
+                            for (int f = 0; f < nforms; ++f) {
+                                std::vector<float> rw[2], ro[2], rr[2];
+                                std::vector<uint16_t> rg[2];
+                                std::vector<int32_t> rc[2], rx[2];
+                                for (int s = 0; s < 2; ++s) { // 0: the full rows + lists; 1: the staging rows + slot lists
+                                    reset();
+                                    std::vector<sycl::event> ev;
+                                    const Bufs &bb = s ? bsh : b;
+                                    const int32_t *cl = s ? (const int32_t *)sl : (const int32_t *)cidx;
+                                    if (M == 1) run_win(f, n, nh, p, bb, kv, cl, widx, ev);
+                                    else run_wa(f, n, M, nh, p, bb, kv, cl, ev);
+                                    q.wait();
+                                    rw[s].resize(nw), ro[s].resize(nq), rr[s].resize(nq), rg[s].resize(nrg), rc[s].resize(nix), rx[s].resize(128);
+                                    q.memcpy(rw[s].data(), f ? b.w2 : b.w, mw * 4).wait(); // (production's softmax, the others' wout)
+                                    q.memcpy(ro[s].data(), b.out, mq * 4).wait();
+                                    q.memcpy(rr[s].data(), b.ry, mq * 4).wait();
+                                    q.memcpy(rg[s].data(), b.kvw, nrg * 2).wait();
+                                    q.memcpy(rc[s].data(), b.ix, mx * 4).wait();
+                                    q.memcpy(rx[s].data(), widx, 128 * 4).wait();
+                                }
+                                const size_t bw = kept_equal(rw[0], rw[1], rc[0], M, nh, n), bo = out_equal(ro[0], ro[1], M, nh),
+                                             by = out_equal(rr[0], rr[1], M, nh);
+                                const bool brg = rg[0] != rg[1], bcat = rc[1] != kvs_cat(rc[0], hc, M), bwx = M == 1 && rx[0] != rx[1];
+                                if (bw || bo || by || brg || bcat || bwx) {
+                                    ok = false;
+                                    std::printf("  %s %s form %d: weights %zu out heads %zu ry heads %zu differ%s%s%s\n", tag,
+                                                kind ? "peaky" : "normal", f, bw, bo, by, brg ? ", ring differs" : "",
+                                                bcat ? ", lists differ" : "", bwx ? ", widx differs" : "");
+                                }
+                            }
+                        }
+                        std::printf("%-26s KvGather %6.2f us\n", tag, tg);
+                        std::fflush(stdout);
+                    }
+                }
+            }
+        if (ferr()) ok = false;
+        std::printf(ok ? "PASS\n" : "FAIL\n");
+        return ok ? 0 : 1;
+    }
     if (std::getenv("WIN")) {
         bool ok = true;
         float *kv = sycl::malloc_device<float>(HD, q);
