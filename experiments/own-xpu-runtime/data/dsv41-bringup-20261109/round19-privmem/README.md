@@ -88,6 +88,37 @@ run out their device spins. Same launches in the same order, same values. **tpd-
 slow-block line the share step's time, the thread's major/minor page faults, its voluntary/forced context switches
 and the gate wait, so the next stall shows which of these it was. Gate `c120` ends with this x700k_off case.
 
+## c120: tp120 gated (2026-11-16 12:50-13:25)
+
+tp120 (fe2eae1ab2) = tp118p + privmem-2 + kvshard-1 and its push form (opt-in) + eng-gate-1 + tpd-3 + eng-warm-1 /
+eng-spread-1 (opt-in). One-card benches first (`kvb2-summary.txt`): the push form's test PASS (54 cases; its four
+launches 233 us against KvGather's 447 us at M 256 on one card), the kvshard-1 benches PASS. Then c120, 10 fresh
+starts, every one identical to its reference (`c120-summary.txt`):
+
+| case | reading | writing | note |
+|---|---|---|---|
+| p3k / p10k / plain | | | IDS256 / IDS64 / IDS128 SAME |
+| code, guessing (x2) | | 147.21 / 147.51 tok/s | c118p 147.33, c117 148.24; GLOG SAME |
+| analysis, guessing (x2) | | 165.81 / 165.77 tok/s | c118p 163.16, c117 166.45: privmem-2 took back the LensPut cost |
+| x95k | 661.9 tok/s | 91.37 | |
+| x200k | 645.2 | 87.59 | IDS1024 SAME |
+| x700k, skip39 + idxsplit off | 559.3 | 58.79 | IDS1024 SAME as c118p's x700k_def (64.40 tok/s with idxsplit on) |
+
+No slow block this time, so the gate never had to hold anyone; it cost nothing measurable (x95k reading 661.9 against
+662.2). The engine source is on main as e74ba9f8b5.
+
+tpd-3's new summary line, answer steps (per step and card): x95k 22.8 minor page faults and **5.2 sleeps** inside the
+engram reads (484 us); x200k 18.3 and 4.2 (459 us); p3k 19.2 and 2.2 (140 us). The sleeps are waits for the disk.
+
+## Host memory: what the 6.2 GB is (`hostmem-FINDINGS.md`, a helper's read-only study)
+
+~4.7 GiB of the engine's ~6.2-6.9 GB anonymous host memory are the GPU runtime's copies of our kernel images: per
+SYCL context (one per card) three copies of every image plus one of its SPIR-V. Verified byte-exact for the two
+biggest per-card mappings (401,972 kB = 3 x image 9 + its SPIR-V; 196,440 kB = 3 x image 10), and they appear during
+`get_kernel_bundle`. Every MiB of kernel image costs ~18 MiB of host RAM. Next build (tp122): ocloc `-exclude_ir`
+(no SPIR-V in the images: ~1.3 GiB), `h_engm` only when it is read (144 MiB), `malloc_trim(0)` after the load.
+Later: compile out kernels production never launches.
+
 ## Where long-context writing time goes (tlx1, timelines of answer steps 20-27, tp118p)
 
 Writing slows from 99 tok/s at 3K to 87.6 at 194K and 64.4 at 705K (c118p). Per-launch GPU time per answer step
@@ -123,5 +154,6 @@ Two levers follow:
 - `privmem-check-tp118.txt`, `privmem-check-tp118p.txt`, `privmem_check.py`: per-kernel private memory.
 - Scripts: `pr4.sh pr5.sh pr6.sh c118.sh c118p.sh build118p.sh chainq118c.sh chainq118p.sh hold119.sh chainq119b.sh
   bench119.sh kvb1.sh c118q.sh build118q.sh chainq119c.sh chainq120.sh chainq120b.sh build120.sh kvb2.sh c120.sh
-  ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c`, `tlx1-*`. Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
+  ckvs2.sh tlx1.sh tlcmp.py ew1.sh chainq120c.sh madv.c madv2.c c122.sh dtb1.sh chainq122.sh build122.sh
+  zebin_sizes.py`, `tlx1-*`, `c120-*`, `kvb2-*`, `dtopk-README.md` (the helper's dtopk-1 write-up). Source: worktree `/home/steve/dsv41-work/tp118p` (069121f625 privmem-1, 5d6c2ae46a tpd-2,
   5dc319d3d5 privmem-2).

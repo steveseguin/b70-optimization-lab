@@ -1,0 +1,88 @@
+c120 start 2026-11-16 12:50:12 source tp120: source commit fe2eae1ab2 boot 7e1ee92b binary 32c9f2f577ef469f
+smt active 0, cpus 8, bios 11.02
+p3k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k: prompt: 3323 tokens read on the cards in 5.04s (682.7 tok/s; first step 0.92s incl. kernel build), first token 2581
+p3k: decode: 255 steps after the first, 0.010 s/step, 99.50 tok/s
+p3k: host io during decode: 36.3 MiB read from disk, 11 major page faults; engram rows 140.4 us per step and card (slowest card 142.1 us; copy + decode launch calls 9.6 us)
+p3k exit 0 (case 1)
+p3k IDS256_SAME
+p10k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.03 GiB less per card
+p10k: tile 2 card 0000:43:00.0: 3.08 GiB free after load
+p10k: prompt: 10621 tokens read on the cards in 16.06s (684.5 tok/s; first step 1.30s incl. kernel build), first token 2581
+p10k: decode: 63 steps after the first, 0.010 s/step, 95.79 tok/s
+p10k: host io during decode: 10.1 MiB read from disk, 112 major page faults; engram rows 120.3 us per step and card (slowest card 125.0 us; copy + decode launch calls 10.9 us)
+p10k: tpd: slow block at position 0 (512 tokens, step 1): free GiB per card 3.409 3.236 2.879 3.236 3.245 3.062; host MemAvailable 5138 MiB; card 0: woke +0.000 s, engram rows 0.425 s (copy+decode calls 0.006, share 0.284; faults 4553 major 1959 minor, switches 6079 own 6 forced; then gate 0.000 s), launches done +0.608 s, done +1.295 s; card 1: woke +0.000 s, engram rows 0.427 s (copy+decode calls 0.006, share 0.284; faults 4562 major 1971 minor, switches 6049 own 4 forced; then gate 0.000 s), launches done +0.608 s, done +1.295 s; card 2: woke +0.000 s, engram rows 0.428 s (copy+decode calls 0.003, share 0.270; faults 4623 major 1737 minor, switches 6103 own 4 forced; then gate 0.003 s), launche
+p10k: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 3.373 3.199 2.843 3.200 3.209 3.026; host MemAvailable 4987 MiB
+p10k exit 0 (case 2)
+p10k IDS64_SAME
+plain: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+plain: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+plain: prompt: 36 tokens read on the cards in 0.21s (0.0 tok/s; first step 0.21s incl. kernel build), first token 671
+plain: decode: 127 steps after the first, 0.009 s/step, 107.09 tok/s
+plain: host io during decode: 23.5 MiB read from disk, 25 major page faults; engram rows 101.3 us per step and card (slowest card 104.4 us; copy + decode launch calls 9.9 us)
+plain exit 0 (case 3)
+plain IDS128_SAME
+code: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+code: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+code: prompt: 82 tokens read on the cards in 0.29s (355.0 tok/s; first step 0.24s incl. kernel build), first token 2581
+code: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.47s = 147.21 tok/s; draft 1.83 ms + check 13.59 ms per cycle; SAME AS the plain run
+code: host io during decode: 94.6 MiB read from disk, 57 major page faults; engram rows 270.1 us per step and card (slowest card 272.5 us; copy + decode launch calls 12.2 us)
+code exit 0 (case 4)
+code IDS511_SAME
+code GLOG_SAME
+analysis: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+analysis: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+analysis: prompt: 113 tokens read on the cards in 0.51s (470.3 tok/s; first step 0.41s incl. kernel build), first token 2581
+analysis: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 3.08s = 165.81 tok/s; draft 1.82 ms + check 15.30 ms per cycle; SAME AS the plain run
+analysis: host io during decode: 77.0 MiB read from disk, 68 major page faults; engram rows 294.0 us per step and card (slowest card 299.7 us; copy + decode launch calls 12.5 us)
+analysis exit 0 (case 5)
+analysis IDS511_SAME
+analysis GLOG_SAME
+code2: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+code2: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+code2: prompt: 82 tokens read on the cards in 0.26s (356.5 tok/s; first step 0.21s incl. kernel build), first token 2581
+code2: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.46s = 147.51 tok/s; draft 1.81 ms + check 13.58 ms per cycle; SAME AS the plain run
+code2: host io during decode: 94.8 MiB read from disk, 83 major page faults; engram rows 266.6 us per step and card (slowest card 269.2 us; copy + decode launch calls 11.9 us)
+code2 exit 0 (case 6)
+code2 IDS511_SAME
+code2 GLOG_SAME
+analysis2: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+analysis2: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+analysis2: prompt: 113 tokens read on the cards in 0.34s (477.6 tok/s; first step 0.24s incl. kernel build), first token 2581
+analysis2: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 3.08s = 165.77 tok/s; draft 1.85 ms + check 15.28 ms per cycle; SAME AS the plain run
+analysis2: host io during decode: 76.4 MiB read from disk, 34 major page faults; engram rows 324.2 us per step and card (slowest card 326.7 us; copy + decode launch calls 12.7 us)
+analysis2 exit 0 (case 7)
+analysis2 IDS511_SAME
+analysis2 GLOG_SAME
+x95k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.03 GiB less per card)
+x95k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.19 GiB less per card
+x95k: tile 2 card 0000:43:00.0: 2.81 GiB free after load
+x95k: prompt: 95497 tokens read on the cards in 144.31s (661.9 tok/s; first step 0.80s incl. kernel build), first token 2581
+x95k: decode: 255 steps after the first, 0.011 s/step, 91.37 tok/s
+x95k: host io during decode: 43.3 MiB read from disk, 3 major page faults; engram rows 483.6 us per step and card (slowest card 485.4 us; copy + decode launch calls 10.2 us)
+x95k: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 3.095 2.922 2.565 2.922 2.932 2.748; host MemAvailable 4676 MiB
+x95k: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 3.060 2.887 2.531 2.887 2.897 2.713; host MemAvailable 4778 MiB
+x95k exit 0 (case 8)
+x95k IDS256_SAME
+x200k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+x200k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+x200k: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+x200k: prompt: 194000 tokens read on the cards in 300.69s (645.2 tok/s; first step 0.80s incl. kernel build), first token 2581
+x200k: decode: 1023 steps after the first, 0.011 s/step, 87.59 tok/s
+x200k: host io during decode: 139.3 MiB read from disk, 6 major page faults; engram rows 458.8 us per step and card (slowest card 459.7 us; copy + decode launch calls 9.9 us)
+x200k: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 2.756 2.583 2.227 2.583 2.593 2.409; host MemAvailable 4290 MiB
+x200k: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 2.722 2.548 2.192 2.549 2.558 2.374; host MemAvailable 4662 MiB
+x200k exit 0 (case 9)
+x200k IDS1024_SAME
+x700k_off: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.32 GiB less per card)
+x700k_off: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 1.40 GiB less per card
+x700k_off: tile 2 card 0000:43:00.0: 0.74 GiB free after load
+x700k_off: prompt: 704773 tokens read on the cards in 1260.04s (559.3 tok/s; first step 0.82s incl. kernel build), first token 2581
+x700k_off: decode: 1023 steps after the first, 0.017 s/step, 58.79 tok/s
+x700k_off: host io during decode: 141.1 MiB read from disk, 5 major page faults; engram rows 559.8 us per step and card (slowest card 563.3 us; copy + decode launch calls 10.2 us)
+x700k_off: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 1.031 0.858 0.502 0.858 0.868 0.685; host MemAvailable 4584 MiB
+x700k_off: tpd-mem: position 24064 (block of 512, step 48): free GiB per card 0.996 0.823 0.467 0.823 0.833 0.649; host MemAvailable 4640 MiB
+x700k_off exit 0 (case 10)
+x700k_off IDS1024_SAME
+ALLDONE 2026-11-16 13:24:45: 10 fresh starts identical to their references
