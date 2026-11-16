@@ -1,0 +1,62 @@
+c117 start 2026-11-15 21:08:09 boot 7e1ee92b binary 5137c6e294a6bb24
+smt active 0, cpus 8, bios 11.02
+p3k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k: prompt: 3323 tokens read on the cards in 4.93s (680.0 tok/s; first step 0.80s incl. kernel build), first token 2581
+p3k: decode: 255 steps after the first, 0.010 s/step, 98.37 tok/s
+p3k: host io during decode: 34.4 MiB read from disk, 12 major page faults; engram rows 153.0 us per step and card (slowest card 154.4 us; copy + decode launch calls 9.8 us)
+p3k exit 0 (case 1)
+p3k IDS256_SAME
+p10k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.03 GiB less per card
+p10k: tile 2 card 0000:43:00.0: 3.08 GiB free after load
+p10k: prompt: 10621 tokens read on the cards in 15.59s (685.6 tok/s; first step 0.85s incl. kernel build), first token 2581
+p10k: decode: 63 steps after the first, 0.010 s/step, 96.01 tok/s
+p10k: host io during decode: 10.2 MiB read from disk, 16 major page faults; engram rows 264.7 us per step and card (slowest card 267.6 us; copy + decode launch calls 11.3 us)
+p10k exit 0 (case 2)
+p10k IDS64_SAME
+plain: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+plain: tile 2 card 0000:43:00.0: 3.45 GiB free after load
+plain: prompt: 36 tokens read on the cards in 0.16s (0.0 tok/s; first step 0.16s incl. kernel build), first token 671
+plain: decode: 127 steps after the first, 0.009 s/step, 107.63 tok/s
+plain: host io during decode: 22.8 MiB read from disk, 0 major page faults; engram rows 106.0 us per step and card (slowest card 107.1 us; copy + decode launch calls 10.0 us)
+plain exit 0 (case 3)
+plain IDS128_SAME
+code: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+code: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+code: prompt: 82 tokens read on the cards in 0.24s (355.5 tok/s; first step 0.19s incl. kernel build), first token 2581
+code: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.45s = 148.24 tok/s; draft 1.79 ms + check 13.53 ms per cycle; SAME AS the plain run
+code: host io during decode: 94.3 MiB read from disk, 64 major page faults; engram rows 279.0 us per step and card (slowest card 283.7 us; copy + decode launch calls 11.9 us)
+code exit 0 (case 4)
+code IDS511_SAME
+code GLOG_SAME
+analysis: OWN_IDX_ROWS: block index score rows per card 43 (2 x 43) of 256: 0.00 GiB less per card
+analysis: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+analysis: prompt: 113 tokens read on the cards in 0.29s (477.1 tok/s; first step 0.19s incl. kernel build), first token 2581
+analysis: spec decode: 511 tokens in 180 cycles (2.84 per cycle; 332 of 441 guesses kept, 75.3 %) in 3.07s = 166.45 tok/s; draft 1.81 ms + check 15.25 ms per cycle; SAME AS the plain run
+analysis: host io during decode: 76.4 MiB read from disk, 37 major page faults; engram rows 327.9 us per step and card (slowest card 330.9 us; copy + decode launch calls 12.3 us)
+analysis exit 0 (case 5)
+analysis IDS511_SAME
+analysis GLOG_SAME
+x95k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.03 GiB less per card)
+x95k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.19 GiB less per card
+x95k: tile 2 card 0000:43:00.0: 2.81 GiB free after load
+x95k: prompt: 95497 tokens read on the cards in 144.47s (661.4 tok/s; first step 0.86s incl. kernel build), first token 2581
+x95k: decode: 255 steps after the first, 0.011 s/step, 91.49 tok/s
+x95k: host io during decode: 44.1 MiB read from disk, 3 major page faults; engram rows 502.6 us per step and card (slowest card 507.7 us; copy + decode launch calls 10.2 us)
+x95k exit 0 (case 6)
+x95k IDS256_SAME
+x200k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+x200k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+x200k: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+x200k: prompt: 194000 tokens read on the cards in 301.18s (644.1 tok/s; first step 0.80s incl. kernel build), first token 2581
+x200k: decode: 1023 steps after the first, 0.011 s/step, 87.66 tok/s
+x200k: host io during decode: 140.2 MiB read from disk, 11 major page faults; engram rows 504.2 us per step and card (slowest card 505.9 us; copy + decode launch calls 10.0 us)
+x200k exit 0 (case 7)
+x200k IDS1024_SAME
+s200k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+s200k: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.39 GiB less per card
+s200k: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+s200k: fatal: card 0000:03:00.0: card-to-card exchange timed out waiting for card 1
+s200k exit 1 (case 8)
+STOP s200k exit 1
+STOPPED 2026-11-15 21:22:12

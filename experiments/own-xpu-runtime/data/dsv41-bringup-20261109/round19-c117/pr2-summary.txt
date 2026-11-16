@@ -1,0 +1,21 @@
+pr2 start 2026-11-16 09:25:33 boot 7e1ee92b binary 5137c6e294a6bb24
+smt active 0, cpus 8, bios 11.02
+g_s95big: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+g_s95big: prompt: 95497 tokens read on the cards in 146.03s (654.4 tok/s; first step 0.87s incl. kernel build), first token 2581
+g_s95big: spec decode: 63 tokens in 21 cycles (3.00 per cycle; 43 of 53 guesses kept, 81.1 %) in 0.44s = 144.08 tok/s; draft 1.86 ms + check 18.96 ms per cycle; SAME AS the plain run
+g_s95big: host io during decode: 15.2 MiB read from disk, 89 major page faults; engram rows 603.2 us per step and card (slowest card 665.2 us; copy + decode launch calls 25.4 us)
+g_s95big exit 0 (case 1)
+g_s95big IDS64_SAME
+g_draft: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+g_draft: prompt: 194000 tokens read on the cards in 304.77s (636.6 tok/s; first step 0.81s incl. kernel build), first token 2581
+g_draft: spec decode: 63 tokens in 19 cycles (3.32 per cycle; 45 of 53 guesses kept, 84.9 %) in 0.50s = 125.75 tok/s; draft 2.16 ms + check 24.21 ms per cycle; SAME AS the plain run
+g_draft: host io during decode: 14.9 MiB read from disk, 75 major page faults; engram rows 478.5 us per step and card (slowest card 494.5 us; copy + decode launch calls 18.9 us)
+g_draft exit 0 (case 2)
+g_draft IDS64_SAME
+g_tg: tile 2 card 0000:43:00.0: 2.47 GiB free after load
+g_tg: prompt: 194000 tokens read on the cards in 301.16s (644.2 tok/s; first step 0.80s incl. kernel build), first token 2581
+g_tg: decode: 63 steps after the first, 0.012 s/step, 86.02 tok/s
+g_tg: host io during decode: 11.5 MiB read from disk, 1 major page faults; engram rows 672.7 us per step and card (slowest card 673.8 us; copy + decode launch calls 10.9 us)
+g_tg exit 0 (case 3)
+g_tg IDS64_SAME
+ALLDONE 2026-11-16 09:39:50: 3 probes

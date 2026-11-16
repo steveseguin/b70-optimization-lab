@@ -1,0 +1,18 @@
+pr3 start 2026-11-16 09:40:03 boot 7e1ee92b binary 5137c6e294a6bb24
+smt active 0, cpus 8, bios 11.02
+r_full: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+r_full: prompt: 194000 tokens read on the cards in 305.02s (636.0 tok/s; first step 0.80s incl. kernel build), first token 2581
+r_full: spec decode: 63 tokens in 19 cycles (3.32 per cycle; 45 of 54 guesses kept, 83.3 %) in 0.48s = 131.49 tok/s; draft 1.89 ms + check 23.32 ms per cycle; SAME AS the plain run
+r_full: host io during decode: 15.5 MiB read from disk, 90 major page faults; engram rows 361.1 us per step and card (slowest card 367.2 us; copy + decode launch calls 17.8 us)
+r_full exit 0 (case 1)
+r_full IDS64_SAME
+r_novoc: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+r_novoc: fatal: card 0000:23:00.0: card-to-card exchange timed out waiting for card 5
+r_novoc exit 1 (case 2)
+r_full2: tile 2 card 0000:43:00.0: 1.07 GiB free after load
+r_full2: prompt: 194000 tokens read on the cards in 304.76s (636.6 tok/s; first step 0.80s incl. kernel build), first token 2581
+r_full2: spec decode: 63 tokens in 19 cycles (3.32 per cycle; 45 of 54 guesses kept, 83.3 %) in 0.43s = 147.00 tok/s; draft 1.87 ms + check 20.68 ms per cycle; SAME AS the plain run
+r_full2: host io during decode: 15.0 MiB read from disk, 59 major page faults; engram rows 564.4 us per step and card (slowest card 574.1 us; copy + decode launch calls 18.2 us)
+r_full2 exit 0 (case 3)
+r_full2 IDS64_SAME
+ALLDONE 2026-11-16 09:55:35: 3 probes

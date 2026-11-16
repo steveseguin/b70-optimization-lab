@@ -1,0 +1,26 @@
+OWN_XPUSH2: exchange classes 0xf
+store: 1120 tensors
+host MemAvailable 13609 MiB (floor 2560 MiB)
+OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+OWN_PRT=3: router by tokens q_a + kv by tokens (OWN_PX halves); blocks / halves of 64..256 tokens; token weights 3,2,2,3,3,3 (16-token units)
+OWN_SKIP39: prompt blocks without the prompt's last token: layer 39 runs its kept key rows only (skip39-1)
+tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 66538864)
+tile 0 -> card 0000:03:00.0, 29.89 GiB free
+tile 1 -> card 0000:23:00.0, 29.89 GiB free
+tile 2 -> card 0000:43:00.0, 29.89 GiB free
+tile 3 -> card 0000:83:00.0, 29.89 GiB free
+tile 4 -> card 0000:a3:00.0, 29.89 GiB free
+tile 5 -> card 0000:e3:00.0, 29.89 GiB free
+upload: 183.6 GB in 25.2s (7.28 GB/s); host MemAvailable 3853 MiB
+packed rows: 3096 tensors, 178.59 GB on the cards
+tile 0 card 0000:03:00.0: 1.17 GiB free after load
+tile 1 card 0000:23:00.0: 1.00 GiB free after load
+tile 2 card 0000:43:00.0: 0.60 GiB free after load
+tile 3 card 0000:83:00.0: 1.00 GiB free after load
+tile 4 card 0000:a3:00.0: 1.00 GiB free after load
+tile 5 card 0000:e3:00.0: 0.78 GiB free after load
+OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)
+OWN_RUX7=1: prompt-block Q2_K routed down on the expert groups (rux7-1)
+draft vocabulary: 49897 ids from /home/steve/dsv41-work/draft/vocab/cand-c32k-dict.txt + 194000 prompt tokens -> 8333 .. 8334 rows per card
+kernels built for 6 cards in 2.9s

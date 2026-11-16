@@ -1,0 +1,40 @@
+[New LWP 73368]
+
+This GDB supports auto-downloading debuginfo from the following URLs:
+  <https://debuginfod.ubuntu.com>
+Enable debuginfod for this session? (y or [n]) [answered N; input not from terminal]
+Debuginfod has been disabled.
+To make this setting permanent, add 'set debuginfod enabled off' to .gdbinit.
+[Thread debugging using libthread_db enabled]
+Using host libthread_db library "/lib/x86_64-linux-gnu/libthread_db.so.1".
+0x00007be0fa31106d in ?? () from /lib/x86_64-linux-gnu/libze_intel_gpu.so.1
+warning: File "/opt/intel/oneapi/compiler/2026.1/lib/libsycl.so.9.0.0-gdb.py" auto-loading has been declined by your `auto-load safe-path' set to "$debugdir:$datadir/auto-load".
+To enable execution of this file add
+	add-auto-load-safe-path /opt/intel/oneapi/compiler/2026.1/lib/libsycl.so.9.0.0-gdb.py
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+To completely disable this security protection add
+	set auto-load safe-path /
+line to your configuration file "/home/steve/.config/gdb/gdbinit".
+For more information about this security protection see the
+"Auto-loading safe path" section in the GDB manual.  E.g., run from the shell:
+	info "(gdb)Auto-loading safe path"
+
+Thread 2 (Thread 0x7be0e89ff6c0 (LWP 73368) "own_run_v41_tp1"):
+#0  0x00007c28d2498e31 in __futex_abstimed_wait_common64 (private=0, cancel=true, abstime=0x0, op=393, expected=0, futex_word=0x2bdf4b34) at ./nptl/futex-internal.c:57
+#1  __futex_abstimed_wait_common (cancel=true, private=0, abstime=0x0, clockid=0, expected=0, futex_word=0x2bdf4b34) at ./nptl/futex-internal.c:87
+#2  __GI___futex_abstimed_wait_cancelable64 (futex_word=futex_word@entry=0x2bdf4b34, expected=expected@entry=0, clockid=clockid@entry=0, abstime=abstime@entry=0x0, private=private@entry=0) at ./nptl/futex-internal.c:139
+#3  0x00007c28d249b8ad in __pthread_cond_wait_common (abstime=0x0, clockid=0, mutex=0x2bdf4b38, cond=0x2bdf4b08) at ./nptl/pthread_cond_wait.c:503
+#4  ___pthread_cond_wait (cond=0x2bdf4b08, mutex=0x2bdf4b38) at ./nptl/pthread_cond_wait.c:627
+#5  0x00007be0fa71a69a in ?? () from /lib/x86_64-linux-gnu/libze_intel_gpu.so.1
+#6  0x00007c28d249cb64 in start_thread (arg=<optimized out>) at ./nptl/pthread_create.c:447
+#7  0x00007c28d2529e8c in clone3 () at ../sysdeps/unix/sysv/linux/x86_64/clone3.S:78
+
+Thread 1 (Thread 0x7c28d2bec080 (LWP 73301) "own_run_v41_tp1"):
+#0  0x00007be0fa31106d in ?? () from /lib/x86_64-linux-gnu/libze_intel_gpu.so.1
+#1  0x00007be0fdd913e9 in v2::ur_queue_immediate_in_order_t::queueFinish() () from /opt/intel/oneapi/compiler/latest/lib/libur_adapter_level_zero_v2.so.0
+#2  0x00007be0fdd68218 in ur::level_zero::urQueueFinish(ur_queue_handle_t_*) () from /opt/intel/oneapi/compiler/latest/lib/libur_adapter_level_zero_v2.so.0
+#3  0x00007c28d1b61f43 in urQueueFinish () from /opt/intel/oneapi/compiler/latest/lib/libur_loader.so.0
+#4  0x00007c28d2ab7efa in sycl::_V1::detail::queue_impl::wait(sycl::_V1::detail::code_location const&) () from /opt/intel/oneapi/compiler/latest/lib/libsycl.so.9
+#5  0x000000000043673e in own41::Backend41::~Backend41() ()
+#6  0x000000000041c0a3 in main ()
+[Inferior 1 (process 73301) detached]
