@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <cstring>
 #include <fcntl.h>
+#include <malloc.h>
 #include <fstream>
 #include <map>
 #include <unordered_map>
@@ -66,7 +67,7 @@ static std::pair<long, long> host_io() {
     getrusage(RUSAGE_SELF, &ru);
     return {rb, ru.ru_majflt};
 }
-// eng-warm-1 (OWN_ENG_WARM=us, default 0 = off; 2026-11-16): while the answers run, one 4 KiB O_DIRECT read of the
+// eng-warm-1 (OWN_ENG_WARM=us, default 1000 since ew1, 0 = off; 2026-11-16; ew1 x95k: 91.53 -> 94.15 tok/s, both 94.61): while the answers run, one 4 KiB O_DIRECT read of the
 // engram shard every us microseconds (a random page into a private buffer; nothing the engine reads). Between answer
 // steps (~10-16 ms apart) the NVMe drive drops into a power-saving state and the next step's cold row reads (~34 of
 // its 48 rows at 194K) wait ~340-650 us instead of ~150 (engbench/madv2.c, 48 cold rows: back to back 153 us, after a
@@ -77,7 +78,7 @@ struct EngWarm {
     std::thread th;
     std::atomic<bool> quit{false};
     explicit EngWarm(const char *path) {
-        const long us = getenv("OWN_ENG_WARM") ? atol(getenv("OWN_ENG_WARM")) : 0;
+        const long us = getenv("OWN_ENG_WARM") ? atol(getenv("OWN_ENG_WARM")) : 1000; // default on since ew1
         if (us <= 0) return;
         const int fd = open(path, O_RDONLY | O_DIRECT);
         if (fd < 0) { perror("OWN_ENG_WARM: open"); return; }
@@ -473,6 +474,16 @@ int main(int argc, char **argv) {
     if (opt.idx_dsplit > 3) die("OWN_IDX_DSPLIT: 0..3 (bit 1 one-token steps, bit 2 blocks of up to 6 tokens)");
     if (const char *e = getenv("OWN_IDX_DSPLIT_MIN")) opt.idx_dsplit_min = std::max(513L, atol(e));
     if (const char *e = getenv("OWN_IDX_DSPLIT_CHECK")) opt.idx_dsplit_check = atoi(e) != 0;
+    // dtopk-1 (opt-in; /home/steve/dsv41-work/dtopk/README.md): idxsplit-2's one-token index layers select by candidates
+    // (each card keeps the top 512 of its own rows, layer 20 past 2,048 blocks also the top 2,048 blocks; the (value,
+    // row) pairs are exchanged instead of every card's scores, and every card merges them into the same list, block
+    // list and marks): OWN_IDX_DTOPK=1 on, 2 on + check (idxsplit-2's gather and the unchanged selects as well, into
+    // shadow buffers, compared bitwise on the card; "OWN_IDX_DTOPK=2 check: ... -> ALL SAME" at exit). Needs
+    // OWN_IDX_DSPLIT bit 1 (the default 3 has it).
+    if (const char *e = getenv("OWN_IDX_DTOPK")) opt.idx_dtopk = (unsigned)atoi(e);
+    if (opt.idx_dtopk > 2) die("OWN_IDX_DTOPK: 0 (off), 1 (on) or 2 (on + check)");
+    // ... from OWN_IDX_DTOPK_MIN rows (default 32768; below it the gather + full selects; OWN_IDX_DSPLIT_MIN still applies)
+    if (const char *e = getenv("OWN_IDX_DTOPK_MIN")) opt.idx_dtopk_min = std::max(0L, atol(e));
     // kvshard-1 (opt-in; /home/steve/dsv41-work/kvshard/README.md): the compressed KV rows stored by owner (chunks of
     // OWN_KV_SHARD_R rows, default 2048, round robin over the six cards) + the newest OWN_KV_TAIL rows (default 4096) on
     // every card; the listed rows copied into staging rows before the attention (the same bits). OWN_KV_SHARD=1 on,
@@ -586,6 +597,15 @@ int main(int argc, char **argv) {
                      be.uploaded_bytes / 1e9, now() - t0, be.uploaded_bytes / 1e9 / (now() - t0),
                      own41::meminfo_kb("MemAvailable") / 1024);
         std::fprintf(stderr, "packed rows: %zu tensors, %.2f GB on the cards\n", be.packed_tensors, be.packed_bytes / 1e9);
+        // hostmem-1 (2026-11-16, OWN_MALLOC_TRIM=0 to skip): give the heap's free pages back after the load (the upload's
+        // staging, the rope tables' build vectors); nothing live is touched. The host runs with ~0.2 GB free beside the
+        // engine, and a card thread held up ~1.3-1.7 s on the host stopped three long runs on 2026-11-16
+        if (!getenv("OWN_MALLOC_TRIM") || atoi(getenv("OWN_MALLOC_TRIM")) != 0) {
+            const long a0 = own41::meminfo_kb("MemAvailable") / 1024;
+            malloc_trim(0);
+            std::fprintf(stderr, "malloc_trim after the load: host MemAvailable %ld -> %ld MiB\n", a0,
+                         own41::meminfo_kb("MemAvailable") / 1024);
+        }
         for (int t = 0; t < own41::Backend41::TILES; ++t)
             if (be.tile_active(t))
                 std::fprintf(stderr, "tile %d card %s: %.2f GiB free after load\n", t, be.tile_pci(t).c_str(),

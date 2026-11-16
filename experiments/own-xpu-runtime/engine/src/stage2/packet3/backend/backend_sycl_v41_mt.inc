@@ -542,7 +542,7 @@ void mt_alloc(int c) {
     }
     for (int li = 0; li < 2; ++li) {
         tengm[c][li] = dalloc<act_t>(c, (size_t)24 * g.engram_dim * TA); // (engram_kv rows' input: MTA)
-        h_engm[c][li].resize((size_t)24 * g.engram_dim * TB);
+        if (!o.eng_dev) h_engm[c][li].resize((size_t)24 * g.engram_dim * TB); // hostmem-1: read only without eng_dev (144 MiB)
         if (o.eng_dev) {
             tengrm[c][li] = dalloc<uint8_t>(c, (size_t)24 * 176 * TB);
             h_engrm[c][li].resize((size_t)24 * 176 * TB);

@@ -526,11 +526,11 @@ public:
         // in the copy calls; the other cards ~0.03 s) then holds every card's launches back instead of leaving its peers'
         // exchange spins (OWN41 XSPIN, ~0.9 s) to time out. Same launches in the same order, same values. 0: off
         unsigned eng_gate = 1;
-        // eng-spread-1 (OWN_ENG_SPREAD=1, default 0, 2026-11-16): one-token steps: each card thread asks the page cache
+        // eng-spread-1 (OWN_ENG_SPREAD, default 1 since ew1, 2026-11-16): one-token steps: each card thread asks the page cache
         // for its share of the step's 48 engram rows (row r of the 48 when r % tp == card) as its first act, instead of
         // the main thread asking for all 48 before it wakes the card threads (~2 us per cold row: ~90 us before any card
         // starts). Page-cache hints only: the values cannot change
-        bool eng_spread = false;
+        bool eng_spread = true; // default on since ew1 (with eng-warm-1: 94.15 -> 94.61 tok/s at 95K; alone no change)
         bool eng_late = true;   // tp: the engram rows are fetched and pushed after layer 0's launches (the card runs the
                                 // embed and layer 0 meanwhile; layers 1 and 14 need them), not before the embed (OWN_ENG_LATE=0: before)
         bool dev_index = true;  // tp: past 512 rows every card picks its own top-512 on the card (TopKSelP), no host
@@ -580,6 +580,15 @@ public:
                                 // gathers them (arena offset xscD), the unchanged selects read every row there
         long idx_dsplit_min = 8192; // ... from this many rows (OWN_IDX_DSPLIT_MIN, at least 513)
         bool idx_dsplit_check = false; // ... diagnostic (OWN_IDX_DSPLIT_CHECK=1): also the full score, compared bitwise
+        // dtopk-1 (OWN_IDX_DTOPK, opt-in, default 0 = off; /home/steve/dsv41-work/dtopk/README.md; "dtopk-1" below): the
+        // one-token layers idxsplit-2 splits select by candidates instead of gathering every card's scores: each card
+        // keeps the top 512 of its own rows (layer 20 also the top 2,048 blocks of 8 rows), the (value, row) pairs travel
+        // through the arena (one XchgPull, xscK), every card merges them into the same list (block list, marks): the
+        // same bits. 1 = on; 2 = on + check (idxsplit-2's gather and the unchanged selects as well, into shadow lists,
+        // compared bitwise on the card; one line at exit). Needs OWN_IDX_DSPLIT bit 1 (off quietly without it).
+        unsigned idx_dtopk = 0;
+        long idx_dtopk_min = 32768; // ... from this many rows (OWN_IDX_DTOPK_MIN; below it idxsplit-2's gather + full selects,
+                                    // which cost less there: an estimate, dtopk README; the check at 3K needs it at 513)
         // skip39-1 (OWN_SKIP39=1, opt-in; /home/steve/dsv41-work/skip39/README.md; backend_sycl_v41_mt.inc "skip39-1"):
         // a prompt block that does not hold the prompt's last token runs the model's last layer for the rows that
         // outlive the block only (the draft's capture, and the window ring's last 128 key rows), none of its other
@@ -651,6 +660,13 @@ public:
 #endif
         }
         if (!o.idx_dsplit) o.idx_dsplit_check = false;
+        if (o.idx_dtopk) { // dtopk-1 (OWN_IDX_DTOPK): the selects of idxsplit-2's one-token layers by candidates
+            if (o.idx_dtopk > 2) throw std::invalid_argument("OWN_IDX_DTOPK: 0 (off), 1 (on) or 2 (on + check)");
+            if (!(o.idx_dsplit & 1u)) {
+                std::fprintf(stderr, "OWN_IDX_DTOPK: off (needs OWN_IDX_DSPLIT bit 1: the one-token score split)\n");
+                o.idx_dtopk = 0;
+            }
+        }
         if (!o.kv_shard) o.kv_push = 0; // (kvshard push: nothing to push without the shard)
         if (o.kv_shard) { // kvshard-1 (OWN_KV_SHARD): the configurations the shard does not handle are refused
             if (o.kv_shard > 2) throw std::invalid_argument("OWN_KV_SHARD: 0 (off), 1 (on) or 2 (on + check)");
@@ -847,6 +863,7 @@ public:
                                      "check: %ld score rows compared (%ld token-layers), %ld differ\n", o.idx_dsplit, c,
                              ixd_calls[c], ixm_calls[c], o.idx_dsplit_min, ixd_rows[c], ixd_chk[c], ixd_bad[c]);
             }
+        if (o.idx_dtopk) dtk_report(); // dtopk-1: layers by candidates (OWN_IDX_DTOPK=2: the check's counts, read once here)
         if (o.kv_shard) kvs_report(); // kvshard-1: the fetch counts (OWN_KV_SHARD=2: the check's, read once here)
         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
             try { bcs_drain(); } catch (...) {}
@@ -3467,6 +3484,7 @@ private:
         if (o.score_b && (o.idx_r == 2 || o.idx_r == 4)) { // the same sums, R rows per item
             idx_score_r(t, o.idx_r, 1, &len, s.qi, s.wv, ik_mirror[t][si], s.score, 0, 0, 0);
         } else if (o.score_b && ixd_on(t, len, out)) { // idxsplit-2: this card's rows, then every card's (ixd_score)
+            if (dtk_on(L, len)) return dtk_index(L, t, si, len, T_, slot); // dtopk-1: candidates, not every card's scores
             sco = ixd_score(t, si, len, T_);
         } else if (o.score_b) { // the same sums, keys read once (IndexerScoreB)
             using KS = ops41sycl::IndexerScoreB<Act>;
@@ -3489,23 +3507,8 @@ private:
                    (const uint16_t *)ik_mirror[t][si], (const act_t *)s.wv, (const int64_t *)s.lens, s.score);
         }
         using KR = ops41sycl::TopKSelP<false>;
-        using KB = ops41sycl::TopKSelP<true>;
-        constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
         if (L == 20) { // official select_candidate_blocks (block 8, top 2048, newest pinned)
-            const int nb = (int)((len + 7) / 8);
-            // (TopKSelR<true>, the block select by ranges, measured slower: test_topk_r, round 18 e86)
-            const KB kb{nb, 2048, 0, 0, 0, 8, (int)len};
-            if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 16)
-                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<16>{kb}, (const float *)sco, (const uint8_t *)nullptr,
-                                  (int32_t *)s.blist, s.cand);
-            else if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 32)
-                launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)sco, (const uint8_t *)nullptr,
-                                  (int32_t *)s.blist, s.cand);
-            else if (qsel_ok() && o.topk_m && nb > 2048)
-                topk_mb(t, kb, (const float *)sco, (int32_t *)s.blist, s.cand);
-            else
-                launch_local<SLM>(t, KB::WG, kb, (const float *)sco, (const uint8_t *)nullptr, (int32_t *)s.blist,
-                                  s.cand); // blist: OWN_IDX_CAND (else null)
+            dev_sel_blocks(t, len, (const float *)sco, (int32_t *)s.blist, s.cand); // blist: OWN_IDX_CAND (else null)
             dcand_n[t] = len;
             dcand_ok[t] = true;
         }
@@ -3515,6 +3518,34 @@ private:
         int32_t *dst = out ? out : cidx_mirror[t][slot];
         const KR kr{(int)len, 512, 128, 512, mask ? (int)(out ? len : dcand_n[t]) : 0, 0, 0};
         const uint8_t *cin = mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr;
+        dev_sel_rows(t, kr, (const float *)sco, cin, dst);
+        if (!out) tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
+        if (o.dev_index_check) dev_index_check(L, t, len, mask, dst);
+    }
+    // dev_index's selects over all rows of one token (also dtopk-1's check, into its shadow buffers): the block select of
+    // layer 20 (marks into cand, the flagged blocks into blist when not null) ...
+    void dev_sel_blocks(int t, long len, const float *sco, int32_t *blist, uint8_t *cand) {
+        using KB = ops41sycl::TopKSelP<true>;
+        constexpr size_t SLM = (size_t)KB::NSG * 256 + 8;
+        const int nb = (int)((len + 7) / 8);
+        // (TopKSelR<true>, the block select by ranges, measured slower: test_topk_r, round 18 e86)
+        const KB kb{nb, 2048, 0, 0, 0, 8, (int)len};
+        if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 16)
+            launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<16>{kb}, (const float *)sco, (const uint8_t *)nullptr,
+                              (int32_t *)blist, cand);
+        else if (qsel_ok() && nb > 2048 && ops41sycl::qsel_span(nb) <= 32)
+            launch_local<SLM>(t, KB::WG, ops41sycl::TopKSelBQ<32>{kb}, (const float *)sco, (const uint8_t *)nullptr,
+                              (int32_t *)blist, cand);
+        else if (qsel_ok() && o.topk_m && nb > 2048)
+            topk_mb(t, kb, (const float *)sco, (int32_t *)blist, cand);
+        else
+            launch_local<SLM>(t, KB::WG, kb, (const float *)sco, (const uint8_t *)nullptr, (int32_t *)blist, cand);
+    }
+    // ... and the rows' top 512 (kr: kr.n = the token's rows; cin: the layer-20 mask past layer 20, else null)
+    void dev_sel_rows(int t, const ops41sycl::TopKSelP<false> &kr, const float *sco, const uint8_t *cin, int32_t *dst) {
+        using KR = ops41sycl::TopKSelP<false>;
+        constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
+        const long len = kr.n;
         const int qc = qsel_ok() && len >= 4096 ? ops41sycl::qsel_span((int)len) : 0;
         if (qc && qc <= 16) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<16>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else if (qc && qc <= 32) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<32>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
@@ -3522,13 +3553,9 @@ private:
         else if (qc && qc <= 96) launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelQ<96>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else if (qc && o.topk_m) topk_mr(t, kr, (const float *)sco, cin, dst);
         else if (o.topk_r)
-            launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)sco,
-                              mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dst, (uint8_t *)nullptr);
+            launch_local<SLM>(t, KR::WG, ops41sycl::TopKSelR<false>{kr}, (const float *)sco, cin, dst, (uint8_t *)nullptr);
         else
-            launch_local<SLM>(t, KR::WG, kr, (const float *)sco, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr,
-                              dst, (uint8_t *)nullptr);
-        if (!out) tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
-        if (o.dev_index_check) dev_index_check(L, t, len, mask, dst);
+            launch_local<SLM>(t, KR::WG, kr, (const float *)sco, cin, dst, (uint8_t *)nullptr);
     }
     // ---- idxsplit-2 (OWN_IDX_DSPLIT, opt-in; /home/steve/dsv41-work/idxsplit/README.md section 8) -------------------------
     // One-token steps (dev_index, not the candidate-only layers past 20): from o.idx_dsplit_min rows each card scores its
@@ -3555,7 +3582,8 @@ private:
             b1[d] = std::min(T, (unsigned)(d + 1) * per);
         }
     }
-    float *ixd_score(int t, int si, long len, int T_) {
+    // (gather false, dtopk-1: this card's rows only, no pull; the same launch)
+    float *ixd_score(int t, int si, long len, int T_, bool gather = true) {
         auto &s = sc[t];
         float *sco = xarena[t] + xscD;
         unsigned b0[6], b1[6];
@@ -3578,6 +3606,7 @@ private:
             });
             kev(t, kname<KS>(), e);
         }
+        if (!gather) return sco;
         ixd_pull(t, (unsigned)xscD, 0u, 1u, b0, b1);
         ++ixd_calls[t];
         if (o.idx_dsplit_check) ixd_check(t, si, len, T_);
@@ -3649,6 +3678,202 @@ private:
                 sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
                                  sycl::access::address_space::global_space>(cnt[0]).fetch_add(1u);
         });
+    }
+    // ---- dtopk-1 (OWN_IDX_DTOPK, opt-in; /home/steve/dsv41-work/dtopk/README.md) -----------------------------------------
+    // idxsplit-2's one-token layers (ixd_on) without gathering every card's scores. Each card scores its rows [r0, r1)
+    // as before (ixd_score's launch, gather false), then
+    //  (1) keeps the top 512 of its rows below len (TopKSelD1<16>: gr work-groups of 16,384 rows; past layer 20 with
+    //      the layer-20 mask, as the masked select) and at layer 20 also the top 2,048 of its blocks of 8 rows
+    //      (TopKSelDB1<8>: gb work-groups of 8,192 blocks; the newest block +inf on its share only; every card zeroes its
+    //      whole mask s.cand[0, len) in this launch), as (value, global index) pairs in its chunk of the arena's
+    //      candidate area (xscK + c u: [row values | row indices | block values | block indices], nr / nb pairs each);
+    //  (2) one XchgPull (mode 0, nslot 1) copies every card's chunk [d u, (d + 1) u) to every card;
+    //  (3) merges the tp x nb block candidates (layer 20: TopKSelDQB -> s.blist, the kept rows' flags in s.cand) and the
+    //      tp x nr row candidates (TopKSelDQ -> the slot's list), each one work-group (qsel_span of the count <= 96).
+    // Same bits: sycl_v41.hpp "dtopk-1" (the exactness argument; the README has it in full). Layer 20 runs this only past
+    // 2,048 blocks (len > 16,384: below that every block is kept, and dev_index's own path, with the gather, stays).
+    // The geometry (shares, groups, chunk size u) comes from T_ and the options only: the same on every card, so every
+    // card runs one pull per such layer (the same exchange count as idxsplit-2) with the same rows.
+    // Reuse: a card writes its chunk at a later layer of this kind only (>= 4 layers on); every peer copied the chunk in
+    // this layer's pull before raising its flag of this layer's later exchanges, which this card waits for first
+    // (XchgPull's rule, as the score rows). The chunk layout changes with T_ between layers; a card's own writes and its
+    // pull's writes land in its own arena only, after those exchanges, and peers read only the writer's own chunk.
+    // OWN_IDX_DTOPK=2: also idxsplit-2's gather (a second pull, xscD) and the unchanged selects (dev_sel_blocks /
+    // dev_sel_rows) into shadow buffers, compared bitwise on the card (dtk_cmp; no host wait), counts read at exit.
+    static constexpr int DTK_K = 512, DTK_KB = 2048;
+    using DtkR1 = ops41sycl::TopKSelD1<16>; // 16,384 rows per work-group
+    using DtkB1 = ops41sycl::TopKSelDB1<8>; // 8,192 blocks (65,536 rows) per work-group
+    struct DtkGeo {
+        unsigned b0[6], b1[6]; // the score shares (ixd_bounds)
+        unsigned per = 0;      // the largest share's rows
+        int gr = 0, gb = 0;    // stage 1's work-groups per card: rows, blocks (0 without blocks)
+        unsigned nr = 0, nb = 0, u = 0; // pairs per card: rows (gr x 512), blocks (gb x 2048); chunk floats (2 nr + 2 nb)
+    };
+    DtkGeo dtk_geo(int T_, bool blocks) const {
+        DtkGeo q{};
+        ixd_bounds(T_, q.b0, q.b1);
+        for (int d = 0; d < o.tp; ++d) q.per = std::max(q.per, q.b1[d] - q.b0[d]);
+        q.gr = std::max(1, (int)((q.per + DtkR1::R - 1) / DtkR1::R));
+        q.nr = (unsigned)q.gr * DTK_K;
+        if (blocks) {
+            const unsigned pb = (q.per + 7) / 8;
+            q.gb = std::max(1, (int)((pb + DtkB1::R - 1) / DtkB1::R));
+            q.nb = (unsigned)q.gb * DTK_KB;
+        }
+        q.u = 2 * q.nr + 2 * q.nb;
+        return q;
+    }
+    // (with ixd_on) from idx_dtopk_min rows: layers 2 / 8 / 14 and past 20, layer 20 past 2,048 blocks; depends on len and
+    // the options only (the same on every card)
+    bool dtk_on(int L, long len) const {
+        return o.idx_dtopk && xscK && len >= o.idx_dtopk_min && (L != 20 || (len + 7) / 8 > DTK_KB);
+    }
+    void dtk_index(int L, int t, int si, long len, int T_, int slot) {
+        auto &s = sc[t];
+        const bool l20 = L == 20;
+        const bool mask = L > 20 && dcand_ok[t]; // (dev_index's rule with out == nullptr)
+        if (L > 20 && !dcand_ok[t] && len > 2048 * 8)
+            throw std::runtime_error("candidate mask missing (layer 20 not in range) beyond 16384 rows");
+        int32_t *dst = cidx_mirror[t][slot];
+        const DtkGeo q = dtk_geo(T_, l20);
+        if (q.u > dtk_umax) throw std::runtime_error("OWN_IDX_DTOPK: more rows than the candidate area was made for");
+        const float *sco = ixd_score(t, si, len, T_, false); // this card's rows (xscD + row)
+        const unsigned r0 = q.b0[t], r1 = q.b1[t];
+        const int lp = (int)std::clamp<long>(len - (long)r0, 0, (long)(r1 - r0)); // its rows below len
+        float *kb = xarena[t] + xscK, *mine = kb + (size_t)t * q.u;
+        constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
+        const int cn = mask ? (int)std::clamp<long>(dcand_n[t] - (long)r0, 0, lp) : 0; // its rows under the mask
+        launch_local_g<SLM>(t, (size_t)q.gr, DtkR1::WG, DtkR1{{lp, DTK_K, 0, 0, cn, 0, 0}, (int)r0}, sco + r0,
+                            mask ? (const uint8_t *)(s.cand + r0) : (const uint8_t *)nullptr, mine, mine + q.nr);
+        if (l20) {
+            const int nbl = (lp + 7) / 8, bb0 = (int)(r0 / 8), last = (int)((len + 7) / 8) - 1;
+            const int newest = last >= bb0 && last < bb0 + nbl ? last - bb0 : -1;
+            launch_local_g<SLM>(t, (size_t)q.gb, DtkB1::WG, DtkB1{{nbl, DTK_KB, 0, 0, 0, 8, lp}, bb0, newest, (int)len},
+                                sco + r0, mine + 2 * q.nr, mine + 2 * q.nr + q.nb, s.cand);
+        }
+        unsigned c0[6] = {}, c1[6] = {};
+        for (int d = 0; d < o.tp; ++d) c0[d] = (unsigned)d * q.u, c1[d] = (unsigned)(d + 1) * q.u;
+        ixd_pull(t, (unsigned)xscK, 0u, 1u, c0, c1);
+        if (l20) {
+            dtk_merge_blocks(t, q, len, (int32_t *)s.blist, s.cand); // blist: OWN_IDX_CAND (else null)
+            dcand_n[t] = len;
+            dcand_ok[t] = true;
+        }
+        dtk_merge_rows(t, q, dst);
+        tile_cidx_ver[t][slot] = cidx_ver[slot]; // the list is on the card: nothing for sync_cidx to copy
+        ++ixd_calls[t];
+        ++dtk_calls[t];
+        if (l20) ++dtk_blk[t];
+        if (o.idx_dtopk == 2) dtk_check(L, t, si, len, T_, mask, dst);
+    }
+    // (3) one work-group over the tp x nr row candidates: the list (+128, then -1 up to 512)
+    void dtk_merge_rows(int t, const DtkGeo &q, int32_t *dst) {
+        constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
+        const int n = o.tp * (int)q.nr, qc = ops41sycl::qsel_span(n);
+        const float *kb = xarena[t] + xscK, *cv = kb, *ci = kb + q.nr;
+        auto go = [&](auto mc) {
+            constexpr int M = decltype(mc)::value;
+            launch_local<SLM>(t, 1024, ops41sycl::TopKSelDQ<M>{n, (int)q.nr, q.u, DTK_K, 128, 512}, cv, ci, dst);
+        };
+        if (qc <= 16) go(std::integral_constant<int, 16>{});
+        else if (qc <= 32) go(std::integral_constant<int, 32>{});
+        else if (qc <= 64) go(std::integral_constant<int, 64>{});
+        else if (qc <= 96) go(std::integral_constant<int, 96>{});
+        else throw std::runtime_error("OWN_IDX_DTOPK: more row candidates than one work-group holds");
+    }
+    // (3) layer 20: one work-group over the tp x nb block candidates: the kept rows' flags, the block list
+    void dtk_merge_blocks(int t, const DtkGeo &q, long len, int32_t *blist, uint8_t *cand) {
+        constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
+        const int n = o.tp * (int)q.nb, qc = ops41sycl::qsel_span(n);
+        const float *kb = xarena[t] + xscK, *cv = kb + 2 * q.nr, *ci = kb + 2 * q.nr + q.nb;
+        auto go = [&](auto mc) {
+            constexpr int M = decltype(mc)::value;
+            launch_local<SLM>(t, 1024, ops41sycl::TopKSelDQB<M>{n, (int)q.nb, q.u, DTK_KB, (int)len}, cv, ci, blist, cand);
+        };
+        if (qc <= 16) go(std::integral_constant<int, 16>{});
+        else if (qc <= 32) go(std::integral_constant<int, 32>{});
+        else if (qc <= 64) go(std::integral_constant<int, 64>{});
+        else if (qc <= 96) go(std::integral_constant<int, 96>{});
+        else throw std::runtime_error("OWN_IDX_DTOPK: more block candidates than one work-group holds");
+    }
+    // OWN_IDX_DTOPK=2: idxsplit-2's gather of every card's score rows (a second pull: the same on every card) and the
+    // unchanged selects into the shadow list / block list / marks, compared with dtopk-1's on the card
+    void dtk_check(int L, int t, int si, long len, int T_, bool mask, const int32_t *dst) {
+        auto &s = sc[t];
+        unsigned b0[6], b1[6];
+        ixd_bounds(T_, b0, b1);
+        ixd_pull(t, (unsigned)xscD, 0u, 1u, b0, b1);
+        if (o.idx_dsplit_check) ixd_check(t, si, len, T_);
+        const float *sco = xarena[t] + xscD;
+        const bool l20 = L == 20;
+        int32_t *bl2 = l20 && s.blist ? dtk_bl2[t] : nullptr; // (as dtopk-1: a block list only with OWN_IDX_CAND)
+        if (l20) dev_sel_blocks(t, len, sco, bl2, dtk_cd2[t]);
+        const ops41sycl::TopKSelP<false> kr{(int)len, 512, 128, 512, mask ? (int)dcand_n[t] : 0, 0, 0};
+        dev_sel_rows(t, kr, sco, mask ? (const uint8_t *)s.cand : (const uint8_t *)nullptr, dtk_l2[t]);
+        dtk_cmp(t, dst, dtk_l2[t], bl2 ? (const int32_t *)s.blist : nullptr, bl2, l20 ? (const uint8_t *)s.cand : nullptr,
+                l20 ? (const uint8_t *)dtk_cd2[t] : nullptr, l20 ? len : 0);
+        ++dtk_chk[t];
+        if (l20) ++dtk_chkb[t];
+    }
+    // one work-group on card c: the lists la / lb (512 entries), the block lists ba / bb (null: none; the count, then
+    // that many blocks) and the marks ca / cb (ncand bytes); dtk_cnt[c]: [0] lists compared, [1] lists differing, [2]
+    // layer-20 results (block list + marks) compared, [3] differing
+    void dtk_cmp(int c, const int32_t *la, const int32_t *lb, const int32_t *ba, const int32_t *bb, const uint8_t *ca,
+                 const uint8_t *cb, long ncand) {
+        uint32_t *cnt = dtk_cnt[c];
+        if (!cnt) return;
+        const uint32_t blk = (ba || ca) ? 1u : 0u;
+        qs[c].parallel_for(sycl::nd_range<1>(1024, 1024), [=](sycl::nd_item<1> it) {
+            auto g = it.get_group();
+            const int lid = (int)it.get_local_linear_id();
+            uint32_t dl = 0, db = 0;
+            for (int i = lid; i < 512; i += 1024) dl += la[i] != lb[i] ? 1u : 0u;
+            if (ba) {
+                const int32_t na = ba[0], nb = bb[0];
+                if (lid == 0 && na != nb) db += 1u;
+                const int m = sycl::clamp(na, 0, 2048);
+                for (int i = lid; i < m; i += 1024) db += ba[1 + i] != bb[1 + i] ? 1u : 0u;
+            }
+            if (ca)
+                for (long j = lid; j < ncand; j += 1024) db += ca[j] != cb[j] ? 1u : 0u;
+            dl = sycl::reduce_over_group(g, dl, sycl::plus<uint32_t>());
+            db = sycl::reduce_over_group(g, db, sycl::plus<uint32_t>());
+            if (lid == 0) {
+                using A = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                           sycl::access::address_space::global_space>;
+                A(cnt[0]).fetch_add(1u);
+                A(cnt[1]).fetch_add(dl ? 1u : 0u);
+                A(cnt[2]).fetch_add(blk);
+                A(cnt[3]).fetch_add(blk && db ? 1u : 0u);
+            }
+        });
+    }
+    // at exit (the destructor, queues drained): layers by candidates per card; OWN_IDX_DTOPK=2: the check's counts
+    void dtk_report() {
+        long n = 0, bad = 0;
+        bool lost = false;
+        for (int c = 0; c < o.tp; ++c) {
+            std::fprintf(stderr, "OWN_IDX_DTOPK=%u: card %d: %ld one-token index layers by candidates (%ld with layer 20's "
+                                 "blocks)", o.idx_dtopk, c, dtk_calls[c], dtk_blk[c]);
+            if (o.idx_dtopk == 2) {
+                uint32_t h[4] = {};
+                try {
+                    if (dtk_cnt[c]) qs[c].memcpy(h, dtk_cnt[c], sizeof h).wait();
+                    else lost = true;
+                } catch (...) {
+                    lost = true;
+                }
+                std::fprintf(stderr, "; check: %u lists compared (%ld made), %u differ; %u layer-20 block lists + marks "
+                                     "compared (%ld made), %u differ", h[0], dtk_chk[c], h[1], h[2], dtk_chkb[c], h[3]);
+                if ((long)h[0] != dtk_chk[c] || (long)h[2] != dtk_chkb[c]) lost = true; // (a comparison never ran)
+                n += (long)h[0] + (long)h[2];
+                bad += (long)h[1] + (long)h[3];
+            }
+            std::fprintf(stderr, "\n");
+        }
+        if (o.idx_dtopk == 2)
+            std::fprintf(stderr, "OWN_IDX_DTOPK=2 check: %ld lists compared, %ld differ -> %s\n", n, bad,
+                         bad || lost ? "MISMATCH" : n ? "ALL SAME" : "NOTHING COMPARED");
     }
     // OWN_IDX_CAND=2: the candidate-only score and list against the full score (into score2) and the masked
     // select over all rows (into list2), bitwise: the candidate rows' scores and the 512 entries
@@ -3970,6 +4195,14 @@ private:
     size_t xscD = 0, xscM = 0; // (xscM: bit 2, blocks of up to 6 tokens, backend_sycl_v41_mt.inc ixm_score)
     long ixd_calls[TILES] = {}, ixm_calls[TILES] = {}, ixd_chk[TILES] = {}, ixd_rows[TILES] = {}, ixd_bad[TILES] = {};
     uint32_t *ixd_cnt[TILES] = {}; // OWN_IDX_DSPLIT_CHECK: differing score rows, counted on the card (ixd_cmp)
+    // dtopk-1 (OWN_IDX_DTOPK): the candidate area's arena offset (0: off); per card: layers by candidates (of them with
+    // layer 20's blocks), the check's comparisons made (rows, layer 20), its counts on the card (dtk_cmp) and shadows
+    size_t xscK = 0;
+    unsigned dtk_umax = 0; // (the chunk floats reserved per card: the geometry at max_seq)
+    long dtk_calls[TILES] = {}, dtk_blk[TILES] = {}, dtk_chk[TILES] = {}, dtk_chkb[TILES] = {};
+    uint32_t *dtk_cnt[TILES] = {};
+    int32_t *dtk_l2[TILES] = {}, *dtk_bl2[TILES] = {};
+    uint8_t *dtk_cd2[TILES] = {};
     unsigned qkr0[TILES] = {}, qkr1[TILES] = {};
     bool qbm_any() const {
         for (int m = 2; m <= 6; ++m)
@@ -4854,6 +5087,23 @@ private:
             }
             if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_IDX_DSPLIT: arena offsets");
         }
+        if (o.idx_dtopk) { // dtopk-1 (OWN_IDX_DTOPK): the candidate area, o.tp chunks of the largest layer's pairs (rows
+                           // up to max_seq: layer 20's, with its blocks), 64-byte aligned
+            const DtkGeo q = dtk_geo((int)(((size_t)max_seq + 31) / 32 * 32), true);
+            if ((size_t)max_seq + 64 >= ((size_t)1 << 24))
+                throw std::invalid_argument("OWN_IDX_DTOPK: the row indices travel as floats (exact below 2^24 rows)");
+            if (ops41sycl::qsel_span(o.tp * (int)q.nr) > 96 || ops41sycl::qsel_span(o.tp * (int)q.nb) > 96)
+                throw std::invalid_argument("OWN_IDX_DTOPK: max_seq beyond one merge work-group (96 x 1,024 candidates)");
+            xscK = (nfq + 15) & ~(size_t)15;
+            dtk_umax = q.u;
+            nfq = xscK + (size_t)o.tp * q.u + 64;
+            if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_IDX_DTOPK: arena offsets");
+            std::fprintf(stderr, "OWN_IDX_DTOPK=%u: idxsplit-2's one-token layers select by candidates from %ld rows (layer "
+                                 "20 past 2,048 blocks)%s; candidate area at arena float %zu, %zu floats (at max_seq: %d + %d "
+                                 "work-groups per card, %u + %u pairs)\n", o.idx_dtopk, std::max(o.idx_dtopk_min, o.idx_dsplit_min),
+                         o.idx_dtopk == 2 ? ", + the gather and the full selects into shadows, compared on the card" : "",
+                         xscK, (size_t)o.tp * q.u, q.gr, q.gb, q.nr, q.nb);
+        }
         if (o.xll && xw_path) {
             std::fprintf(stderr, "OWN_XLL: off (OWN_XWAIT's exchanges record their waits; XchgPull)\n");
             o.xll = 0;
@@ -4884,6 +5134,12 @@ private:
             attc[c] = dalloc<uint32_t>(c, 16);
             qs[c].memset(attc[c], 0, 64);
             if (o.idx_dsplit_check) ixd_cnt[c] = dalloc<uint32_t>(c, 16); // (zeroed)
+            if (o.idx_dtopk == 2) { // dtopk-1 check: the counts (zeroed), the full selects' list, block list and marks
+                dtk_cnt[c] = dalloc<uint32_t>(c, 16);
+                dtk_l2[c] = dalloc<int32_t>(c, 512 + 64);
+                dtk_bl2[c] = dalloc<int32_t>(c, 2048 + 64);
+                dtk_cd2[c] = dalloc<uint8_t>(c, (size_t)max_seq + 64);
+            }
             if (xw_path) { // OWN_XWAIT ring (zeroed)
 #ifndef OWN41_XWAIT
                 throw std::runtime_error("OWN_XWAIT needs the diagnostic build (icpx ... -DOWN41_XWAIT): the exchange "
