@@ -1,0 +1,30 @@
+pr6 start 2026-11-16 11:10:55 boot 7e1ee92b binary e29b80b6381b9746
+smt active 0, cpus 8, bios 11.02
+m_plain95: tile 2 card 0000:43:00.0: 2.80 GiB free after load
+m_plain95: prompt: 95497 tokens read on the cards in 144.64s (660.7 tok/s; first step 0.88s incl. kernel build), first token 2581
+m_plain95: decode: 63 steps after the first, 0.011 s/step, 90.00 tok/s
+m_plain95: host io during decode: 13.7 MiB read from disk, 16 major page faults; engram rows 539.9 us per step and card (slowest card 542.0 us; copy + decode launch calls 10.9 us)
+m_plain95: tile 0 card 0000:03:00.0: 3.33 GiB free after load
+m_plain95: tile 1 card 0000:23:00.0: 3.16 GiB free after load
+m_plain95: tile 2 card 0000:43:00.0: 2.80 GiB free after load
+m_plain95: tile 3 card 0000:83:00.0: 3.16 GiB free after load
+m_plain95: tile 4 card 0000:a3:00.0: 3.16 GiB free after load
+m_plain95: tile 5 card 0000:e3:00.0: 2.98 GiB free after load
+m_plain95: tpd-mem: position 0 (block of 512, step 1): free GiB per card 3.136 2.963 2.606 2.963 2.972 2.789; host MemAvailable 4545 MiB
+m_plain95: tpd-mem: position 95488 (block of 9, step 188): free GiB per card 3.102 2.929 2.573 2.930 2.939 2.755; host MemAvailable 4683 MiB
+m_plain95 exit 0 (case 1)
+m_plain95 IDS64_SAME
+m_spec95: tile 2 card 0000:43:00.0: 1.41 GiB free after load
+m_spec95: prompt: 95497 tokens read on the cards in 146.43s (652.2 tok/s; first step 0.80s incl. kernel build), first token 2581
+m_spec95: spec decode: 63 tokens in 21 cycles (3.00 per cycle; 43 of 53 guesses kept, 81.1 %) in 0.42s = 150.61 tok/s; draft 1.96 ms + check 17.95 ms per cycle; SAME AS the plain run
+m_spec95: host io during decode: 14.1 MiB read from disk, 41 major page faults; engram rows 538.9 us per step and card (slowest card 547.8 us; copy + decode launch calls 17.4 us)
+m_spec95: tile 0 card 0000:03:00.0: 1.97 GiB free after load
+m_spec95: tile 1 card 0000:23:00.0: 1.80 GiB free after load
+m_spec95: tile 2 card 0000:43:00.0: 1.41 GiB free after load
+m_spec95: tile 3 card 0000:83:00.0: 1.80 GiB free after load
+m_spec95: tile 4 card 0000:a3:00.0: 1.80 GiB free after load
+m_spec95: tile 5 card 0000:e3:00.0: 1.58 GiB free after load
+m_spec95: tpd-mem: position 0 (block of 512, step 1): free GiB per card 1.730 1.557 1.165 1.557 1.567 1.347; host MemAvailable 4760 MiB
+m_spec95 exit 0 (case 2)
+m_spec95 IDS64_SAME
+ALLDONE 2026-11-16 11:16:56: 2 probes

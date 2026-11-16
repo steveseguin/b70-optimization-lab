@@ -1,0 +1,29 @@
+OWN_XPUSH2: exchange classes 0xf
+store: 1042 tensors
+host MemAvailable 13687 MiB (floor 2560 MiB)
+OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.32 GiB less per card)
+OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+OWN_PRT=3: router by tokens q_a + kv by tokens (OWN_PX halves); blocks / halves of 64..256 tokens; token weights 3,2,2,3,3,3 (16-token units)
+tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 1.40 GiB less per card
+OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 65169072)
+tile 0 -> card 0000:03:00.0, 28.67 GiB free
+tile 1 -> card 0000:23:00.0, 28.67 GiB free
+tile 2 -> card 0000:43:00.0, 28.67 GiB free
+tile 3 -> card 0000:83:00.0, 28.67 GiB free
+tile 4 -> card 0000:a3:00.0, 28.67 GiB free
+tile 5 -> card 0000:e3:00.0, 28.67 GiB free
+upload: 175.1 GB in 24.2s (7.25 GB/s); host MemAvailable 3825 MiB
+packed rows: 2892 tensors, 170.61 GB on the cards
+tile 0 card 0000:03:00.0: 1.27 GiB free after load
+tile 1 card 0000:23:00.0: 1.10 GiB free after load
+tile 2 card 0000:43:00.0: 0.74 GiB free after load
+tile 3 card 0000:83:00.0: 1.10 GiB free after load
+tile 4 card 0000:a3:00.0: 1.10 GiB free after load
+tile 5 card 0000:e3:00.0: 0.91 GiB free after load
+OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)
+OWN_RUX7=1: prompt-block Q2_K routed down on the expert groups (rux7-1)
+tpd-mem: position 7680 (block of 512, step 16): free GiB per card 1.074 0.901 0.545 0.901 0.911 0.728; host MemAvailable 4476 MiB
+tpd: slow block at position 94720 (512 tokens, step 186): free GiB per card 1.074 0.901 0.544 0.901 0.911 0.727; host MemAvailable 4435 MiB; card 0: woke +0.000 s, engram rows 0.028 s (copy+decode calls 0.000), launches done +0.079 s, done +1.833 s; card 1: woke +0.000 s, engram rows 0.024 s (copy+decode calls 0.001), launches done +0.086 s, done +1.872 s; card 2: woke +0.000 s, engram rows 0.028 s (copy+decode calls 0.000), launches done +0.062 s, done +1.833 s; card 3: woke +0.000 s, engram rows 1.661 s (copy+decode calls 0.001), launches done +1.683 s, done +2.392 s; card 4: woke +0.000 s, engram rows 0.031 s (copy+decode calls 0.001), launches done +0.064 s, done +1.819 s; card 5: woke +0.000 s, engram rows 0.032 s (copy+decode calls 0.001), launches done +0.061 s, done +1.785 s
+fatal: card 0000:03:00.0: card-to-card exchange timed out waiting for card 3 (block at position 94720 of 512 tokens, step 186; free GiB per card 1.074 0.901 0.544 0.901 0.911 0.727; host MemAvailable 4435 MiB; card 0: woke +0.000 s, engram rows 0.028 s (copy+decode calls 0.000), launches done +0.079 s, done +1.833 s; card 1: woke +0.000 s, engram rows 0.024 s (copy+decode calls 0.001), launches done +0.086 s, done +1.872 s; card 2: woke +0.000 s, engram rows 0.028 s (copy+decode calls 0.000), launches done +0.062 s, done +1.833 s; card 3: woke +0.000 s, engram rows 1.661 s (copy+decode calls 0.001), launches done +1.683 s, done +2.392 s; card 4: woke +0.000 s, engram rows 0.031 s (copy+decode calls 0.001), launches done +0.064 s, done +1.819 s; card 5: woke +0.000 s, engram rows 0.032 s (copy+decode calls 0.001), launches done +0.061 s, done +1.785 s)
+kernels built for 6 cards in 2.8s

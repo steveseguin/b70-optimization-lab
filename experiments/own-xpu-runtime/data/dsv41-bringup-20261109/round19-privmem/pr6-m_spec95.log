@@ -1,0 +1,40 @@
+OWN_XPUSH2: exchange classes 0xf
+store: 1120 tensors
+host MemAvailable 13655 MiB (floor 2560 MiB)
+OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.03 GiB less per card)
+OWN_QKV_SPLIT=14: q_a + kv rows per card [0, 288) [288, 592) [592, 896) [896, 1184) [1184, 1488) [1488, 1792); XchgQ from 5 tokens, work-groups of 128, block form 1
+OWN_PRT=3: router by tokens q_a + kv by tokens (OWN_PX halves); blocks / halves of 64..256 tokens; token weights 3,2,2,3,3,3 (16-token units)
+OWN_SKIP39: prompt blocks without the prompt's last token: layer 39 runs its kept key rows only (skip39-1)
+tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 0.19 GiB less per card
+OWN_PX_BCS: copy-engine pushes for the halves' exchanges (flags at arena word 65850736)
+tile 0 -> card 0000:03:00.0, 30.69 GiB free
+tile 1 -> card 0000:23:00.0, 30.69 GiB free
+tile 2 -> card 0000:43:00.0, 30.69 GiB free
+tile 3 -> card 0000:83:00.0, 30.69 GiB free
+tile 4 -> card 0000:a3:00.0, 30.69 GiB free
+tile 5 -> card 0000:e3:00.0, 30.69 GiB free
+upload: 183.6 GB in 25.2s (7.28 GB/s); host MemAvailable 3877 MiB
+packed rows: 3096 tensors, 178.59 GB on the cards
+tile 0 card 0000:03:00.0: 1.97 GiB free after load
+tile 1 card 0000:23:00.0: 1.80 GiB free after load
+tile 2 card 0000:43:00.0: 1.41 GiB free after load
+tile 3 card 0000:83:00.0: 1.80 GiB free after load
+tile 4 card 0000:a3:00.0: 1.80 GiB free after load
+tile 5 card 0000:e3:00.0: 1.58 GiB free after load
+OWN_RUX6: prompt-block routed launches with x prefetches (rux6-1)
+OWN_RUX7=1: prompt-block Q2_K routed down on the expert groups (rux7-1)
+draft vocabulary: 49897 ids from /home/steve/dsv41-work/draft/vocab/cand-c32k-dict.txt + 95497 prompt tokens -> 8324 .. 8325 rows per card
+tpd-mem: position 0 (block of 512, step 1): free GiB per card 1.730 1.557 1.165 1.557 1.567 1.347; host MemAvailable 4760 MiB
+OWN_SKIP39: layer 39 ran only its kept key rows in 187 prompt blocks (23936 rows per card)
+prompt: 95497 tokens read on the cards in 146.43s (652.2 tok/s; first step 0.80s incl. kernel build), first token 2581
+spec decode: 63 tokens in 21 cycles (3.00 per cycle; 43 of 53 guesses kept, 81.1 %) in 0.42s = 150.61 tok/s; draft 1.96 ms + check 17.95 ms per cycle; SAME AS the plain run
+host io during decode: 14.1 MiB read from disk, 41 major page faults; engram rows 538.9 us per step and card (slowest card 547.8 us; copy + decode launch calls 17.4 us)
+kept guesses per cycle: 0:4 1:6 2:5 3:1 4:1 5:4
+OWN_IDX_DSPLIT=3: card 0: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 1: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 2: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 3: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 4: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+OWN_IDX_DSPLIT=3: card 5: 16 one-token / 68 block index layers split (from 8192 rows); check: 0 score rows compared (0 token-layers), 0 differ
+kernels built for 6 cards in 3.0s

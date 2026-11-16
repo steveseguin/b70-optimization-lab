@@ -1,0 +1,15 @@
+pr4 start 2026-11-16 10:19:32 boot 7e1ee92b binary e905e98023ec1d99
+smt active 0, cpus 8, bios 11.02
+q300: tile 2 card 0000:43:00.0: 0.71 GiB free after load
+q300: fatal: tensor-parallel block: card 0000:43:00.0: level_zero backend failed with error: 20 (UR_RESULT_ERROR_DEVICE_LOST)
+q300: tile 0 card 0000:03:00.0: 1.28 GiB free after load
+q300: tile 1 card 0000:23:00.0: 1.11 GiB free after load
+q300: tile 2 card 0000:43:00.0: 0.71 GiB free after load
+q300: tile 3 card 0000:83:00.0: 1.11 GiB free after load
+q300: tile 4 card 0000:a3:00.0: 1.11 GiB free after load
+q300: tile 5 card 0000:e3:00.0: 0.89 GiB free after load
+q300 exit 1 (case 1)
+STOP q300 kernel: Nov 16 10:20:07.854548 steve-TURIND8-2L2T kernel: xe 0000:43:00.0: [drm] VM worker error: -12
+Nov 16 10:22:34.660876 steve-TURIND8-2L2T kernel: xe 0000:43:00.0: [drm] exec queue reset detected
+Nov 16 10:22:34.661120 steve-TURIND8-2L2T kernel: xe 0000:43:00.0: [drm] exec queue reset detected
+STOPPED 2026-11-16 10:22:47
