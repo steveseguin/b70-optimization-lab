@@ -1,0 +1,8 @@
+2026-11-15 16:56 reset (SMT off, Gen4 x16, OWN_PX_SERIAL=1, default power, BIOS 11.02), st1 case 5 c1_x34k_def,
+~78 s after launch, during prompt reading (kernels built, no prompt line).
+Order: 16:56:26.387 e3:00.0 GuC crash dump + exception -> reset failed (GRDOM_FULL -ETIMEDOUT) -> wedged;
+16:56:27.125 a2:02.0 (a3:00.0's board bridge) D3hot->D0 failed, inaccessible; 16:56:31.75 a3:00.0 MMIO 0xFFFFFFFF;
+then fatal reset: BERT CPU 2 bank 5 bea0000000000108, FRU text "Perr S0:T00A:B05".
+FRU text across the 11 bank-5 records in the last 25 boots: T002 x4, T00A, T00B, T00C, T010, T013, T01C x2 (different cores).
+BMC SEL: only "Unknown asserted" at 16:57:58 (Generator 0x21, data a20084), as at 10:33:47. PSU sensors: no reading.
+Not declared fixed; cause not established.
