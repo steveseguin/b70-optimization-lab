@@ -6,3 +6,7 @@ then fatal reset: BERT CPU 2 bank 5 bea0000000000108, FRU text "Perr S0:T00A:B05
 FRU text across the 11 bank-5 records in the last 25 boots: T002 x4, T00A, T00B, T00C, T010, T013, T01C x2 (different cores).
 BMC SEL: only "Unknown asserted" at 16:57:58 (Generator 0x21, data a20084), as at 10:33:47. PSU sensors: no reading.
 Not declared fixed; cause not established.
+Order caveat (added 19:3x): log order = when the driver NOTICED, not what failed first. a3's job-timeout handler ran at
+16:56:31.75 (xe job timeout ~5 s), so a3's job was already stuck by ~16:56:26.7; a2:02.0 (a3's board bridge) was found
+inaccessible at 16:56:27.1 only because runtime PM touched it. Card 4 (a3) may have dropped off the bus first and card 5's
+GuC exception be the knock-on effect of its copy engine reading card 4's memory. Which one failed first is not known.
