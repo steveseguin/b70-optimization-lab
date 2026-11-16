@@ -20,3 +20,9 @@ root cause: fewer overlapping transfers could avoid a software race or marginal 
 Use: every six-card launcher sources `stable.env` and runs `preflight.sh` before work (BIOS, links, power, a clean
 kernel log, memory; read-only; never while an engine runs: link reads are PCI config reads). Speeds compare only
 within the stable mode. Not covered by the 54 starts (gated in c115): guessing, skip39 / index split, short prompts.
+
+Acknowledged faults (2026-11-16): `preflight.sh` reads this boot's kernel log from the newest line of
+`faults-acked.txt` for the boot on ("YYYY-MM-DD HH:MM:SS boot-id-8 reason"), so a fault we caused and understood does
+not block every later start until a reboot, while any later fault line still does. Only for our own software faults
+(the first: pr4's deliberate card-memory squeeze, xe "VM worker error: -12" = out of card memory, exec queue resets on
+one card, no GT reset), never for anything that looks like hardware. Checks also SMT off (since 2026-11-15 15:09).
