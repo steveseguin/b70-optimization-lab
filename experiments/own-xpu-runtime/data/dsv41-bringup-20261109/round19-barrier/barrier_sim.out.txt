@@ -1,0 +1,124 @@
+# barrier_sim.py output (prompt /home/steve/dsv41-work/runs/tlp109/tlp_px512.txt, decode /home/steve/dsv41-work/runs/tg109/tl_one.txt)
+
+## 1. Data and boundaries
+pieces [20003, 20004], cards [0, 1, 2, 3, 4, 5]
+  piece 20003 card 0: 3986 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.94 ms
+  piece 20003 card 1: 3986 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.91 ms
+  piece 20003 card 2: 3986 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.84 ms
+  piece 20003 card 3: 3986 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.91 ms
+  piece 20003 card 4: 3746 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.88 ms
+  piece 20003 card 5: 3746 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 723.91 ms
+  piece 20004 card 0: 3983 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.82 ms
+  piece 20004 card 1: 3983 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.78 ms
+  piece 20004 card 2: 3983 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.72 ms
+  piece 20004 card 3: 3983 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.79 ms
+  piece 20004 card 4: 3743 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.76 ms
+  piece 20004 card 5: 3743 launches, pushes {'ENG': 1, 'X1': 80, 'X2': 80, 'X3': 80, 'X4': 80}, waits 321, output-a groups 80, span 726.78 ms
+push sequence (site, layer, half) identical on all six cards in both pieces: True
+XchgWaitB floor (p25 of 3852 launches) 1.04 us (p10 1.04, median 1.25); XchgPair publish median 2.81 us; pair pull floor (p10 of 640 waits) 86.2 us (min 81.9, median 154.3)
+copy fit to the push bench: -11.4 us + 178.7 us per MiB per peer (Gen5); stable-mode scale --bw 1.40
+  bench 0.84 MiB x5: 137.5 us, fit 138.7 us
+  bench 1.50 MiB x5: 260.4 us, fit 256.6 us
+  bench 2.62 MiB x5: 442.8 us, fit 456.7 us
+  bench 0.13 MiB x5: 21.3 us, fit 11.8 us
+  bench 16.70 MiB x5: 2974.0 us, fit 2972.2 us
+copies per push at the current split (MiB per peer -> us at bw 1.40):
+  card 0: X1 396, X2 196, X3 678, X4 196, ENG 4147
+  card 1: X1 396, X2 196, X3 678, X4 196, ENG 4162
+  card 2: X1 396, X2 200, X3 678, X4 200, ENG 4162
+  card 3: X1 396, X2 196, X3 678, X4 196, ENG 4147
+  card 4: X1 271, X2 196, X3 678, X4 196, ENG 4162
+  card 5: X1 271, X2 200, X3 678, X4 200, ENG 4162
+
+## 2. Per card and piece: compute busy (no exchange kernels) by family category, ms
+piece 20003
+  card            experts       dense rows  attention+index        norms+mix      small/other   busy  | profile: span  XchgWaitB  XchgPair
+  0                328.88           216.73            57.04            32.29             2.07   637.01 |        723.94      23.04     58.03
+  1                363.23           239.73            64.58            33.83             2.25   703.62 |        723.91       5.28      9.01
+  2                364.34           241.64            65.09            33.96             2.32   707.34 |        723.84       1.81      8.85
+  3                341.63           224.96            60.02            33.52             2.14   662.26 |        723.91       9.81     45.85
+  4                349.82           200.66            45.55            42.51             2.17   640.71 |        723.88      78.16      0.00
+  5                358.25           204.94            46.55            42.92             2.23   654.88 |        723.91      64.19      0.00
+piece 20004
+  card            experts       dense rows  attention+index        norms+mix      small/other   busy  | profile: span  XchgWaitB  XchgPair
+  0                327.51           216.37            59.70            32.05             2.11   637.74 |        726.82      32.61     50.66
+  1                360.97           239.21            67.59            34.09             2.30   704.17 |        726.78       7.64      8.87
+  2                364.11           241.33            68.12            33.60             2.30   709.47 |        726.72       2.53      8.71
+  3                339.50           224.50            62.63            33.40             2.13   662.17 |        726.79       9.83     48.49
+  4                347.46           200.66            48.16            42.41             2.16   640.84 |        726.76      80.97      0.00
+  5                358.11           205.19            49.46            42.75             2.25   657.75 |        726.78      64.22      0.00
+
+## 3. Model check: overlap mode (OWN_PX_SERIAL=0, Gen5 copies as in the profiled run) vs the profile
+  piece 20003: model 717.28 ms, profile span 723.84-723.94 ms; waits per card model / profile (XchgWaitB + XchgPair) ms:
+    c0 72.8/81.1  c1 6.2/14.3  c2 2.4/10.7  c3 47.5/55.7  c4 76.2/78.2  c5 62.1/64.2
+  piece 20004: model 719.57 ms, profile span 726.72-726.82 ms; waits per card model / profile (XchgWaitB + XchgPair) ms:
+    c0 74.4/83.3  c1 7.9/16.5  c2 2.6/11.2  c3 49.9/58.3  c4 78.4/81.0  c5 61.5/64.2
+
+## 4. Stable mode (OWN_PX_SERIAL=1): barrier model, copies at bw 1.40
+  piece 20003: model 842.29 ms = sum of segment maxima 722.36 + barriers (slowest copy + wait floor) 122.36 + pair waits / other -2.43
+           sum of segment means 672.39 ms; slowest card total busy 707.34 ms (card 2); mean card busy 667.64
+           imbalance (sum max - sum mean) 49.97 ms = 5.9 % of the piece; copies + waits 122.36 ms = 14.5 %; stable / overlap model 1.174
+           of which segment-level (sum max - slowest card total) 15.02 ms, card-total (slowest - mean) 39.70 ms
+  piece 20004: model 844.23 ms = sum of segment maxima 724.00 + barriers (slowest copy + wait floor) 122.36 + pair waits / other -2.13
+           sum of segment means 673.44 ms; slowest card total busy 709.47 ms (card 2); mean card busy 668.69
+           imbalance (sum max - sum mean) 50.56 ms = 6.0 % of the piece; copies + waits 122.36 ms = 14.5 %; stable / overlap model 1.173
+           of which segment-level (sum max - slowest card total) 14.53 ms, card-total (slowest - mean) 40.78 ms
+  measured 3K reads: tp114 overlap, Gen5 (dsv41 lane note) 4.19 s; tp115 stable, def heads (st1 c1_p3k_def) 4.93 s; tp115 stable, heads 4,2,2,4,2,2 (st1 c1_p3k_h1) 5.82 s; tp115 stable / tp114 overlap 1.177
+  sensitivity: copies at bw 1.00 -> stable model 807.41 ms per piece, stable / overlap 1.124; vs bw 1.40: -35.85 ms (-4.3 %)
+  sensitivity: copies at bw 1.20 -> stable model 825.33 ms per piece, stable / overlap 1.149; vs bw 1.40: -17.93 ms (-2.1 %)
+  copy time per piece by exchange (slowest sender, bw 1.40), ms: ENG 4.16, X1 31.70, X2 15.97, X3 54.22, X4 15.97; stable - overlap model 124.84 ms (14.8 % of the stable piece)
+
+## 5. Where the imbalance sits (stable mode, both pieces summed; ms)
+  segment type (ends at)                                  n   sum max  sum mean  max-mean  share  max card (by excess ms)
+  X1 attention block (post, q_a/kv, q_b, attention, output-a) 160    503.04    450.82     52.22  51.9%  c2 37.8, c1 14.4
+      the max card's excess over the mean by family: out_a +16.20, attn +15.89, q_b +14.57, pair +4.75, qakv +4.25
+  X3 FFN in (router, shared + routed gate/up, SwiGLU)     160    528.37    499.50     28.87  28.7%  c2 11.2, c1 8.8, c5 4.1, c3 2.1, c4 1.7, c0 0.9
+      the max card's excess over the mean by family: exp_up +26.48, sh_gateup +1.47, norms +0.41, router +0.30, exp_group +0.15
+  X4 FFN out (routed + shared down)                       160    300.69    286.61     14.08  14.0%  c2 10.0, c1 2.9, c5 1.0, c3 0.1, c4 0.1
+      the max card's excess over the mean by family: exp_down +12.75, sh_down +1.22, norms +0.06, combine +0.06
+  X2 output-b rows                                        160     97.52     92.92      4.60   4.6%  c2 2.8, c1 1.1, c5 0.6, c4 0.0
+      the max card's excess over the mean by family: out_b +4.51, norms +0.08
+  ENG engram rows (whole piece, once)                       2     16.39     15.65      0.75   0.7%  c2 0.7
+      the max card's excess over the mean by family: engram +0.72, eng_get +0.01, norms +0.01
+  END last post                                             2      0.35      0.34      0.01   0.0%  c5 0.0, c1 0.0
+      the max card's excess over the mean by family: norms +0.01
+
+## 6. (a) prompt heads OWN_TP_HEADS=4,2,2,4,2,2 (16/8/8/16/8/8, no pair swaps), per piece
+  stable model, current heads 3,3,3,3,2,2: 843.26 ms
+  heads 4,2,2,4,2,2, head-scaled kernels x (heads ratio)^1.00: 872.15 ms (+3.4 %)
+  heads 4,2,2,4,2,2, head-scaled kernels x (heads ratio)^1.14: 879.71 ms (+4.3 %)
+  head-scaled kernels, cards 4+5 (8 heads) / cards 1+2 (12 heads): 0.637 -> exponent 1.11; per card ms per piece: c0 133.5, c1 149.8, c2 151.3, c3 140.4, c4 94.4, c5 97.5
+  overlap mode (for reference): current 718.42 ms, heads 4,2,2,4,2,2 716.42 ms (-0.3 %)
+  rough tp115 emulation (OWN_PRT=3: q_a + kv and router rows by token weights 3,2,2,3,3,3, their gathers as barriers):
+    current heads 811.16 ms; heads 4,2,2,4,2,2 848.43 ms (+4.6 %; measured 3K read +18.1 %); heads 4,2,2,4,2,2 with token weights 2,3,3,2,3,3 848.55 ms (+4.6 %)
+  measured loss / model loss: 5.3 (linear, tp109 structure), 3.9 (rough tp115 emulation)
+
+## 7. (b) row weights OWN_TP_WEIGHTS (expert / shared / output-b / engram rows), prompt and decode
+  decode model (one-token steps 20-27, barriers at the 163 exchanges): 8.745 ms per step; profile span 8.948 ms
+  decode weighted kernels per step, us (tm / td / te): c0 1501/1719/89; c1 1528/1755/90; c2 1522/1761/90; c3 1536/1767/90; c4 1508/1744/91; c5 1521/1750/90
+  heads 3,3,3,3,2,2: equal rows 843.26 ms -> best OWN_TP_WEIGHTS=34,31,31,33,32,32 837.46 ms per piece (-0.7 %), 385 evaluations; decode 8.745 -> 8.827 ms per step (+0.9 %)
+    rows per card at these weights: td [896, 816, 832, 864, 848, 864], tm [400, 368, 368, 400, 384, 384], te [4496, 4112, 4112, 4384, 4240, 4256]
+    break-even: 71 one-token answer steps per 512-token prompt piece (prompt gain 5.80 ms / decode cost 0.0820 ms per step)
+  heads 4,2,2,4,2,2: equal rows 872.15 ms -> best OWN_TP_WEIGHTS=34,31,31,33,32,32 865.76 ms per piece (-0.7 %), 385 evaluations; decode 8.745 -> 8.827 ms per step (+0.9 %)
+    rows per card at these weights: td [896, 816, 832, 864, 848, 864], tm [400, 368, 368, 400, 384, 384], te [4496, 4112, 4112, 4384, 4240, 4256]
+    break-even: 78 one-token answer steps per 512-token prompt piece (prompt gain 6.39 ms / decode cost 0.0820 ms per step)
+  decode-only best OWN_TP_WEIGHTS=32,32,32,32,32,32: 8.745 ms per step (+0.0 %); prompt piece then 843.26 ms (+0.0 %)
+  joint best for 20 answer steps per prompt piece: OWN_TP_WEIGHTS=34,32,31,33,32,32 piece 837.49 ms (-5.77), step 8.803 ms (+0.0584)
+  joint best for 80 answer steps per prompt piece: OWN_TP_WEIGHTS=33,32,32,33,32,32 piece 840.73 ms (-2.53), step 8.756 ms (+0.0117)
+
+## 8. (c) every prompt head layout with 2-4 units per card (stable model, equal rows)
+  90 layouts; best 8 and the current / H1:
+    3,3,2,3,3,2  843.05 ms (-0.0 %)  pairs [[1], [0], [], [4], [3], []]
+    3,3,3,3,2,2  843.26 ms (+0.0 %)  pairs [[1], [0], [3], [2], [], []]
+    3,2,3,3,3,2  843.75 ms (+0.1 %)  pairs [[1], [0, 2], [1], [4], [3], []]
+    2,3,3,3,3,2  844.47 ms (+0.1 %)  pairs [[], [2], [1], [4], [3], []]
+    3,3,3,2,3,2  844.47 ms (+0.1 %)  pairs [[1], [0], [3], [2, 4], [3], []]
+    3,3,2,3,2,3  845.72 ms (+0.3 %)  pairs [[1], [0], [], [4], [3, 5], [4]]
+    3,2,3,3,2,3  846.52 ms (+0.4 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]]
+    2,3,3,3,2,3  846.84 ms (+0.4 %)  pairs [[], [2], [1], [4], [3, 5], [4]]
+    3,3,3,3,2,2  843.26 ms (+0.0 %) rank 2
+    4,2,2,4,2,2  872.15 ms (+3.4 %) rank 42
+
+## 9. (c) prompt-only token weights OWN_PRT_W under the rough tp115 emulation (indicative only)
+  heads 3,3,3,3,2,2: 1506 weight vectors; OWN_PRT_W=3,2,2,3,3,3 811.16 ms; best: 3,3,3,3,2,2 805.22 (-0.7 %); 3,3,4,3,2,1 807.03 (-0.5 %); 3,3,4,3,1,2 807.11 (-0.5 %); 4,3,3,3,2,1 807.14 (-0.5 %)
+  heads 4,2,2,4,2,2: 1506 weight vectors; OWN_PRT_W=3,2,2,3,3,3 848.43 ms; best: 3,3,3,3,2,2 842.50 (-0.7 %); 3,3,3,4,2,1 844.22 (-0.5 %); 3,3,3,4,1,2 844.35 (-0.5 %); 4,3,3,3,2,1 844.42 (-0.5 %)

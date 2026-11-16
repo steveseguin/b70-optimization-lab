@@ -1,0 +1,73 @@
+# barrier_heads.py output (stable mode, copies x1.4; prompt /home/steve/dsv41-work/runs/tlp109/tlp_px512.txt; decode /home/steve/dsv41-work/runs/tg109/tl_one.txt)
+
+## A. Which kernel families scale with heads (prompt profile, ms per piece, mean of the two pieces)
+  family              c0       c1       c2       c3       c4       c5   (c4+c5)/(c1+c2)  [8 / 12 heads, all 230 W]
+  attn             43.61    49.43    49.81    45.81    30.84    31.59   0.629
+  combine           1.02     1.03     1.07     1.00     1.02     1.05   0.985
+  compress          2.41     2.64     2.69     2.50     2.42     2.47   0.918
+  embed             0.90     1.02     1.03     0.93     0.98     1.00   0.968
+  eng_get           0.21     0.24     0.23     0.21     0.22     0.23   0.956
+  engram            6.94     7.81     7.89     7.26     7.53     7.73   0.972
+  exp_down        119.46   130.79   132.27   123.31   126.02   130.15   0.974
+  exp_group         1.71     1.93     1.95     1.78     1.86     1.90   0.968
+  exp_up          182.76   202.23   202.72   190.14   194.50   199.34   0.973
+  index            14.76    16.65    16.79    15.51    16.01    16.41   0.969
+  kv                0.98     1.03     1.06     0.99     0.97     1.01   0.951
+  norms            32.17    33.96    33.78    33.46    42.46    42.84   1.259
+  out_a            47.25    52.36    52.95    49.95    32.46    34.05   0.632
+  out_b            42.61    47.20    47.62    44.28    45.69    46.77   0.975
+  q_b              42.69    48.05    48.51    44.67    31.05    31.84   0.651
+  qakv             51.01    55.78    56.06    51.74    56.48    56.52   1.010
+  router           10.12    10.60    10.66    10.30    10.62    10.84   1.009
+  sh_down          13.51    15.04    15.11    14.04    14.41    14.84   0.970
+  sh_gateup        21.90    24.61    24.73    22.92    23.76    24.28   0.974
+  swiglu            1.34     1.50     1.48     1.41     1.48     1.46   0.985
+  head-scaled families together (q_b + attn + out_a), cards 4+5 / 1+2: 0.637; the same-work families exp_up+exp_down+out_b+qakv+index+sh_gateup+sh_down: 0.977 (card speed); head cost 8 / 12 heads = 0.637 / 0.977 = 0.652 (linear 0.667)
+  decode (one-token profile, us per step; 8-head cards 0,1,3,4 / 16-head cards 2,5): q_b 600.4 / 897.5 (+37.14 per head); out_a 434.4 / 744.9 (+38.81 per head); attn 390.2 / 377.3 (-1.61 per head)
+  decode pair-wait stand-in: median per-instance XchgP on the last card 6.77 us; decode model 8.745 ms per step (today, whole groups); profile span 8.948
+
+## B. Check: heads 12,12,12,12,8,8 in the per-head model = section 4 of barrier_sim.out.txt
+  stable model 843.26 ms per piece; heads 16,8,8,16,8,8 linear 872.15 ms (+3.4 %)
+
+## C. The 16-head cost f16 implied by st1 (fit: model loss of 16,8,8,16,8,8 = measured loss)
+  tp109 structure        target +18.1 % (3K read): f16 = 2.23 x the 12-head cost (linear: 1.33)
+  tp109 structure        target +19.2 % (3K without first step): f16 = 2.30 x the 12-head cost (linear: 1.33)
+  tp109 structure        target +18.7 % (10K without first step): f16 = 2.27 x the 12-head cost (linear: 1.33)
+  rough tp115 emulation  target +18.1 % (3K read): f16 = 2.11 x the 12-head cost (linear: 1.33)
+  rough tp115 emulation  target +19.2 % (3K without first step): f16 = 2.18 x the 12-head cost (linear: 1.33)
+  rough tp115 emulation  target +18.7 % (10K without first step): f16 = 2.15 x the 12-head cost (linear: 1.33)
+  used below (S): f(8) = 0.652, f(12) = 1, f(16) = 2.30, piecewise linear; f(13) = 1.32, f(14) = 1.65, f(15) = 1.97
+
+## D. Layouts (8-16 heads per card, sum 64), stable model ms per 512-token piece; decode ms per one-token step
+  today: prompt L 843.26 / S 843.26 ms; decode keeps whole groups 8,8,16,8,8,16: 8.745 ms (any prompt layout leaves it so)
+  12,12,12,12,8,8      L  843.26 ( +0.0 %)  S  843.26 ( +0.0 %)  decode with this layout 8.746 (+0.0 %)  pairs [[1], [0], [3], [2], [], []] (today)
+  16,8,8,16,8,8        L  872.15 ( +3.4 %)  S 1004.95 (+19.2 %)  decode with this layout 8.742 (-0.0 %)  pairs [[], [], [], [], [], []] (H1, measured +18.1 %)
+  12,10,10,12,10,10    L  825.74 ( -2.1 %)  S  826.43 ( -2.0 %)  decode with this layout 8.731 (-0.2 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] (coordinator example)
+  11,11,11,11,10,10    L  837.15 ( -0.7 %)  S  836.74 ( -0.8 %)  decode with this layout 8.675 (-0.8 %)  pairs [[1], [0, 2], [1, 3], [2, 4], [3, 5], [4]] (coordinator example)
+  10,10,10,10,12,12    L  847.00 ( +0.4 %)  S  850.29 ( +0.8 %)  decode with this layout 8.735 (-0.1 %)  pairs [[1], [0, 2], [1, 3], [2], [5], [4]] 
+  11,11,10,11,11,10    L  830.29 ( -1.5 %)  S  831.56 ( -1.4 %)  decode with this layout 8.673 (-0.8 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] 
+  8,8,16,8,8,16        L  899.10 ( +6.6 %)  S 1046.44 (+24.1 %)  decode with this layout 8.745 (+0.0 %)  pairs [[], [], [], [], [], []] (the decode layout)
+  granularity 4, 90 layouts, best by L:
+  12,12,8,12,12,8      L  843.05 ( -0.0 %)  S  844.70 ( +0.2 %)  decode with this layout 8.736 (-0.1 %)  pairs [[1], [0], [], [4], [3], []] 
+  12,12,12,12,8,8      L  843.26 ( +0.0 %)  S  843.26 ( +0.0 %)  decode with this layout 8.746 (+0.0 %)  pairs [[1], [0], [3], [2], [], []] 
+  12,8,12,12,12,8      L  843.75 ( +0.1 %)  S  845.38 ( +0.3 %)  decode with this layout 8.743 (-0.0 %)  pairs [[1], [0, 2], [1], [4], [3], []] 
+  8,12,12,12,12,8      L  844.47 ( +0.1 %)  S  845.88 ( +0.3 %)  decode with this layout 8.746 (+0.0 %)  pairs [[], [2], [1], [4], [3], []] 
+  granularity 4, 90 layouts, best by S:
+  12,12,12,12,8,8      L  843.26 ( +0.0 %)  S  843.26 ( +0.0 %)  decode with this layout 8.746 (+0.0 %)  pairs [[1], [0], [3], [2], [], []] 
+  12,12,8,12,12,8      L  843.05 ( -0.0 %)  S  844.70 ( +0.2 %)  decode with this layout 8.736 (-0.1 %)  pairs [[1], [0], [], [4], [3], []] 
+  12,8,12,12,12,8      L  843.75 ( +0.1 %)  S  845.38 ( +0.3 %)  decode with this layout 8.743 (-0.0 %)  pairs [[1], [0, 2], [1], [4], [3], []] 
+  8,12,12,12,12,8      L  844.47 ( +0.1 %)  S  845.88 ( +0.3 %)  decode with this layout 8.746 (+0.0 %)  pairs [[], [2], [1], [4], [3], []] 
+  granularity 2, 951 layouts, best by L:
+  12,10,10,12,10,10    L  825.74 ( -2.1 %)  S  826.43 ( -2.0 %)  decode with this layout 8.731 (-0.2 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] 
+  12,12,10,10,10,10    L  833.19 ( -1.2 %)  S  833.87 ( -1.1 %)  decode with this layout 8.730 (-0.2 %)  pairs [[1], [0], [3], [2, 4], [3, 5], [4]] 
+  14,10,10,10,10,10    L  833.46 ( -1.2 %)  S  887.45 ( +5.2 %)  decode with this layout 8.857 (+1.3 %)  pairs [[1], [0], [3], [2, 4], [3, 5], [4]] 
+  12,12,8,12,10,10     L  834.95 ( -1.0 %)  S  835.12 ( -1.0 %)  decode with this layout 8.732 (-0.2 %)  pairs [[1], [0], [], [4], [3, 5], [4]] 
+  granularity 2, 951 layouts, best by S:
+  12,10,10,12,10,10    L  825.74 ( -2.1 %)  S  826.43 ( -2.0 %)  decode with this layout 8.731 (-0.2 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] 
+  12,12,10,10,10,10    L  833.19 ( -1.2 %)  S  833.87 ( -1.1 %)  decode with this layout 8.730 (-0.2 %)  pairs [[1], [0], [3], [2, 4], [3, 5], [4]] 
+  12,12,8,12,10,10     L  834.95 ( -1.0 %)  S  835.12 ( -1.0 %)  decode with this layout 8.732 (-0.2 %)  pairs [[1], [0], [], [4], [3, 5], [4]] 
+  12,12,10,12,8,10     L  835.31 ( -0.9 %)  S  835.34 ( -0.9 %)  decode with this layout 8.739 (-0.1 %)  pairs [[1], [0], [3], [2, 4], [3, 5], [4]] 
+  granularity 1, best by L (one-head moves from the best granularity-2 layouts and today):
+  12,10,10,12,10,10    L  825.74 ( -2.1 %)  S  826.43 ( -2.0 %)  decode with this layout 8.731 (-0.2 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] 
+  granularity 1, best by S (one-head moves from the best granularity-2 layouts and today):
+  12,10,10,12,10,10    L  825.74 ( -2.1 %)  S  826.43 ( -2.0 %)  decode with this layout 8.731 (-0.2 %)  pairs [[1], [0, 2], [1], [4], [3, 5], [4]] 
