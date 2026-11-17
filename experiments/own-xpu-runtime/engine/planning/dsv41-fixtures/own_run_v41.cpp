@@ -433,6 +433,12 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
     if (const char *e = getenv("OWN_IDX_R")) opt.idx_r = (unsigned)atoi(e);
+    // idxrp-1 (2026-11-16): the prompt halves' index scores with 2 or 4 rows per item (OWN_IDX_RP, 0 = one) and the
+    // groups numbered row group first (OWN_IDX_RMAJ=1); the same sums (tools/bench/test_index_score_px.cpp)
+    if (const char *e = getenv("OWN_IDX_RP")) opt.idx_rp = (unsigned)atoi(e);
+    if (opt.idx_rp != 0 && opt.idx_rp != 2 && opt.idx_rp != 4) die("OWN_IDX_RP: 0, 2 or 4");
+    if (const char *e = getenv("OWN_IDX_RMAJ")) opt.idx_rmaj = atoi(e) != 0;
+    if (opt.idx_rp || opt.idx_rmaj) std::fprintf(stderr, "OWN_IDX_RP=%u OWN_IDX_RMAJ=%d: prompt halves' index scores (idxrp-1)\n", opt.idx_rp, (int)opt.idx_rmaj);
     // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
     // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
     opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
@@ -474,7 +480,7 @@ int main(int argc, char **argv) {
     if (opt.idx_dsplit > 3) die("OWN_IDX_DSPLIT: 0..3 (bit 1 one-token steps, bit 2 blocks of up to 6 tokens)");
     if (const char *e = getenv("OWN_IDX_DSPLIT_MIN")) opt.idx_dsplit_min = std::max(513L, atol(e));
     if (const char *e = getenv("OWN_IDX_DSPLIT_CHECK")) opt.idx_dsplit_check = atoi(e) != 0;
-    // dtopk-1 (opt-in; /home/steve/dsv41-work/dtopk/README.md): idxsplit-2's one-token index layers select by candidates
+    // dtopk-1 (default on since c122, OWN_IDX_DTOPK=0 off; /home/steve/dsv41-work/dtopk/README.md): idxsplit-2's one-token index layers select by candidates
     // (each card keeps the top 512 of its own rows, layer 20 past 2,048 blocks also the top 2,048 blocks; the (value,
     // row) pairs are exchanged instead of every card's scores, and every card merges them into the same list, block
     // list and marks): OWN_IDX_DTOPK=1 on, 2 on + check (idxsplit-2's gather and the unchanged selects as well, into

@@ -1513,10 +1513,13 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             }
             return;
         }
-        if (o.idx_r == 2 || o.idx_r == 4) {
+        const unsigned rp = split ? o.idx_rp : 0u; // idxrp-1 (OWN_IDX_RP / OWN_IDX_RMAJ: prompt halves only)
+        const bool rmj = split && o.idx_rmaj;
+        if (o.idx_r == 2 || o.idx_r == 4 || rp == 2 || rp == 4) {
             long ll[MTX] = {};
             for (unsigned t = 0; t < un; ++t) ll[t] = ln[t];
-            idx_score_r(c, o.idx_r, (int)un, ll, qi, wv, ik_mirror[c][si], sco, 4096, 32, SS);
+            idx_score_r(c, (o.idx_r == 2 || o.idx_r == 4) ? o.idx_r : rp, (int)un, ll, qi, wv, ik_mirror[c][si], sco, 4096, 32,
+                        SS, rmj);
         } else if (ms) { // idxsplit-2: this card's rows of every token, then every card's
             ixm_score(c, si, un, ln, qi, wv, lmax, sco, SS);
         } else {
@@ -1530,6 +1533,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
             k.qs = 4096;
             k.ws = 32;
             k.ss = SS;
+            k.rmaj = rmj ? 1u : 0u;
             const uint16_t *ik = ik_mirror[c][si];
             float *scw = sco;
             auto e = qs[c].submit([&](sycl::handler &hh) {

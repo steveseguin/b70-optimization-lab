@@ -538,6 +538,11 @@ public:
         bool dev_index_check = false; // dev_index lists checked against the host selection (OWN_DEV_INDEX_CHECK=1)
         bool score_b = true;    // dev_index: IndexerScoreB, keys read once, same sums (OWN_SCORE_B=0: IndexerScoreA)
         unsigned idx_r = 0;     // dev_index / tpm_index: IndexerScoreBMR with 2 or 4 rows per item, same sums (OWN_IDX_R)
+        // idxrp-1 (2026-11-16): the prompt halves' (split) index scores only: IndexerScoreBMR with 2 or 4 rows per
+        // item (OWN_IDX_RP; 0 = IndexerScoreBM), and the groups numbered row group first (OWN_IDX_RMAJ=1: the
+        // tokens of a row group run together and share the key rows in the caches); the same sums either way
+        unsigned idx_rp = 0;
+        bool idx_rmaj = false;
         bool att_trim = false;  // tp attention below 512 compressed rows: the window + the first rows rounded up to
                                 // 32 instead of all 640 slots (the others are skipped ones), the same sums (on in own_run_v41; OWN_ATT_TRIM=0 off)
         bool topk_r = false;    // dev_index / tpm_index: the top-k selects' final walk by ranges (TopKSelR), the same
@@ -586,7 +591,7 @@ public:
         // through the arena (one XchgPull, xscK), every card merges them into the same list (block list, marks): the
         // same bits. 1 = on; 2 = on + check (idxsplit-2's gather and the unchanged selects as well, into shadow lists,
         // compared bitwise on the card; one line at exit). Needs OWN_IDX_DSPLIT bit 1 (off quietly without it).
-        unsigned idx_dtopk = 0;
+        unsigned idx_dtopk = 1; // default on since c122 (exact: 49,050 lists 0 differ; 705K writing 64.4 -> 89.7 tok/s)
         long idx_dtopk_min = 32768; // ... from this many rows (OWN_IDX_DTOPK_MIN; below it idxsplit-2's gather + full selects,
                                     // which cost less there: an estimate, dtopk README; the check at 3K needs it at 513)
         // skip39-1 (OWN_SKIP39=1, opt-in; /home/steve/dsv41-work/skip39/README.md; backend_sycl_v41_mt.inc "skip39-1"):
@@ -3414,7 +3419,7 @@ private:
     // IndexerScoreBMR<R> for m tokens (token t: lens[t] rows, query qi + t * qsz, weights wv + t * wsz, scores
     // sco + t * ssz); lens[t] <= 0 skips the token
     void idx_score_r(int c, unsigned R, int m, const long *lens, const act_t *qi, const act_t *wv, const uint16_t *ik,
-                     float *sco, size_t qsz, size_t wsz, size_t ssz) {
+                     float *sco, size_t qsz, size_t wsz, size_t ssz, bool rmaj = false) {
         constexpr size_t WG = 128;
         long lmax = 0;
         for (int i = 0; i < m; ++i) lmax = std::max(lmax, lens[i]);
@@ -3428,6 +3433,7 @@ private:
             k.m = (unsigned)m;
             k.gpt = (unsigned)((((lmax + 31) / 32 * 32) + WG * RR - 1) / (WG * RR));
             k.qs = qsz, k.ws = wsz, k.ss = ssz;
+            k.rmaj = rmaj ? 1u : 0u;
             auto e = qs[c].submit([&](sycl::handler &hh) {
                 sycl::local_accessor<float, 1> lt(32 * 128 + 32, hh);
                 hh.parallel_for(sycl::nd_range<1>((size_t)m * k.gpt * WG, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {

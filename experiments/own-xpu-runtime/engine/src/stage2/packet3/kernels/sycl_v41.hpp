@@ -8147,17 +8147,21 @@ struct CidxFillM {
 };
 // IndexerScoreB for every token with lens[t] > 0: work-groups t * gpt .. are token t's (rows j = (group %
 // gpt) * WG + local id); its query, weights and scores at the one-token pointers + t * strides
+// rmaj (OWN_IDX_RMAJ, 2026-11-16): groups numbered row group first (group g: token g % m, row group g / m), so the
+// groups that run together read the same key rows for different tokens (cache reuse); every sum as before.
 template <typename A> struct IndexerScoreBM {
     LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m, gpt;
     size_t qs, ws, ss;
+    unsigned rmaj = 0;
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
                     float *score, float *lq) const {
-        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = rmaj ? grp % m : grp / gpt,
+                       gi = rmaj ? grp / m : grp % gpt;
         if (t >= m || lens[t] <= 0) return; // the whole work-group: before the kernel's barrier
         const int len = lens[t];
         const IndexerScoreB<A> kk{len, (len + 31) / 32 * 32};
-        const int j = (int)((grp % gpt) * (unsigned)it.get_local_range(0) + (unsigned)it.get_local_linear_id());
+        const int j = (int)(gi * (unsigned)it.get_local_range(0) + (unsigned)it.get_local_linear_id());
         kk.run(it, j, q + t * qs, k, w + t * ws, score + t * ss, lq);
     }
 };
@@ -8170,9 +8174,11 @@ template <typename A, int R> struct IndexerScoreBMR {
     LensT lens; // per-token table (LensT: in the arguments up to LT_IN tokens, else card memory)
     unsigned m, gpt;
     size_t qs, ws, ss;
+    unsigned rmaj = 0; // (as IndexerScoreBM's: row group first)
     void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
                     float *score, float *lq) const {
-        const unsigned grp = (unsigned)it.get_group_linear_id(), t = grp / gpt;
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = rmaj ? grp % m : grp / gpt,
+                       gi = rmaj ? grp / m : grp % gpt;
         if (t >= m || lens[t] <= 0) return; // the whole work-group: before the barrier
         const int len = lens[t], T_ = (len + 31) / 32 * 32;
         const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(0);
@@ -8181,7 +8187,7 @@ template <typename A, int R> struct IndexerScoreBMR {
         for (int i = lid; i < H; i += nl) lq[H * DK + i] = A::rd(wt[i]);
         sycl::group_barrier(it.get_group());
         float *sc = score + t * ss;
-        const int j0 = (int)(grp % gpt) * nl * R + lid;
+        const int j0 = (int)gi * nl * R + lid;
         float d[R][H];
 #pragma unroll
         for (int r = 0; r < R; ++r)
