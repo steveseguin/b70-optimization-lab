@@ -82,7 +82,11 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
 nice -n 10 python3 -I $W/privmem_check.py $B 2>&1 | head -1 | sed "s/^/privmem: /" >> $sum
-IF=0; grep -q "source commit 10f1b390ab" $W/build-tp129.log && [ -x $W/test_idxfilt_tp129 ] && IF=1
+IF=0; grep -qE "source commit (a16a2b5f18|f5f7041c74)" $W/build-tp129.log && [ -x $W/test_idxfilt_tp129 ] && IF=1
+IFK=0; [ $IF = 1 ] && grep -q "source commit a16a2b5f18" $W/build-tp129.log && IFK=1 # idxfilt-2c (the checks) in this build
+GS="$SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600"
+E=$(grep -h "s1m_all levers:" $W/chainq118.txt $(ls -td $W/runs/c128b-*/ 2>/dev/null | head -1)summary.txt 2>/dev/null | tail -1 | sed 's/.*s1m_all levers://; s/ none//')
+say "idxfilt-2c in this build: $IFK; c128b's 1M levers:${E:- none}"
 say "idxfilt-1 in this build: $IF"
 PYN=/home/steve/.venvs/neural-worker/bin/python3
 tif() { local name=$1; shift; pre; env "$@" ONEAPI_DEVICE_SELECTOR=level_zero:1 timeout 1500 $W/test_idxfilt_tp129 > $D/$name.log 2>&1
@@ -93,6 +97,11 @@ if [ $IF = 1 ]; then
   tif tif_c6 BENCH_M=6 BENCH_LENS=33000,166000 || IF=0
   tif tif_c3 BENCH_M=3 BENCH_LENS=166000 || IF=0
 fi
+# the defaults (tp129: the batched check launches on): 3K, plain, guessing code / analysis (GLOG)
+run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
+run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL
+spec code code
+spec analysis analysis
 x95=$W/prompts/xl/x95k-ids.txt; R95=$W/runs/e82/x95k_plain-ids.txt
 x200=$W/prompts/lc/x200k-ids.txt; R200=$W/runs/lc1-20261115T1936/x200k_def-ids.txt
 # 2. the dump (card 0, the first one-token step past 190,000 rows; 2 tokens written), then the bench / analysis on it
@@ -111,15 +120,29 @@ if [ $IF = 1 ]; then
   run x95k_f2 $x95 256 $(mx $x95 256) $R95 256 $PL $P5 OWN_IDX_FILT=2 OWN_IDX_FILT_MIN=8192
   grep -h "OWN_IDX_FILT" $D/x95k_f2.log | cut -c1-260 | sed "s/^/x95k_f2: /" >> $sum
   grep -q "OWN_IDX_FILT=2 check: [1-9][0-9]* lists compared, 0 differ -> ALL SAME" $D/x95k_f2.log || stop "x95k_f2: the filter check did not end ALL SAME"
+  # 3b. idxfilt-2c check mode: guessing at 194K, both filters from small sizes, every list against the exact path
+  if [ $IFK = 1 ]; then
+    run s200k_f2 $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_f2-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_FILT=2 OWN_IDX_FILT_MIN=8192 OWN_IDX_FILT_CK=1 OWN_IDX_FILT_CK_MIN=4096
+    grep -h "OWN_IDX_FILT" $D/s200k_f2.log | cut -c1-260 | sed "s/^/s200k_f2: /" >> $sum
+    grep -q "OWN_IDX_FILT=2 check: [1-9][0-9]* lists compared, 0 differ -> ALL SAME" $D/s200k_f2.log || stop "s200k_f2: the filter check did not end ALL SAME"
+    grep -q "SAME AS the plain" $D/s200k_f2.log || stop "s200k_f2: no SAME AS the plain line"
+  fi
   # 4. speed: default and filter at 95K (same session), filter at 194K against R200
   run x95k_b $x95 256 $(mx $x95 256) $R95 256 $PL $P5
   run x95k_f $x95 256 $(mx $x95 256) $R95 256 $PL $P5 OWN_IDX_FILT=1
   grep -h "OWN_IDX_FILT=1: card 0" $D/x95k_f.log | sed "s/^/x95k_f: /" >> $sum
   run x200k_f $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 OWN_IDX_FILT=1
   grep -h "OWN_IDX_FILT=1: card 0" $D/x200k_f.log | sed "s/^/x200k_f: /" >> $sum
-  # 5. 1M read with the filter (kvshard; c127 s1m_dk read 562.9 tok/s)
+  if [ $IFK = 1 ]; then # guessing at 194K: default (c128 s200k_mb 129.95 tok/s, check 16.52 ms) vs both filters
+    run s200k_b $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_b-spec.txt OWN_VERIFY_REF=$R200
+    run s200k_fk $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_fk-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_FILT=1 OWN_IDX_FILT_CK=1
+    grep -q "SAME AS the plain" $D/s200k_fk.log || stop "s200k_fk: no SAME AS the plain line"
+  fi
+  # 5. 1M read + guessing with the filters and c128b's levers (c127 s1m_dk: read 562.9 tok/s, writing 130.66 tok/s)
   x1m=$W/prompts/lc/x1m-ids.txt; A=$(ls -td $W/runs/ck1m-*/ | head -1)x1m_a-ids.txt
-  run x1m_f $x1m 256 $(mx $x1m 256) $A 256 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_IDX_FILT=1
-  grep -h "free after load\|OWN_IDX_FILT=1: card" $D/x1m_f.log | head -10 | cut -c1-200 | sed "s/^/x1m_f: /" >> $sum
+  FK=""; [ $IFK = 1 ] && FK="OWN_IDX_FILT_CK=1"
+  soft s1m_f $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s1m_f-spec.txt OWN_VERIFY_REF=$A $E OWN_IDX_FILT=1 $FK
+  grep -h "free after load\|OWN_IDX_FILT=1: card" $D/s1m_f.log | head -10 | cut -c1-200 | sed "s/^/s1m_f: /" >> $sum
+  grep -q "^s1m_f IDS1024_SAME" $sum && grep -q "^s1m_f SAME_AS_PLAIN" $sum || stop "s1m_f: not identical (or did not run): see its log"
 fi
 say "ALLDONE $(date '+%F %T'): $n fresh starts identical to their references"

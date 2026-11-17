@@ -1,6 +1,6 @@
 #!/bin/bash
 # tp129 build (2026-11-17 05:xx): candidates in order, the first that builds wins; the filter bench first
-# tp129: 10f1b390ab = tp128 (2f159ba705) + kvdedup-2 check-sized only (cdc6e8d6e4) + OWN_IDX_DUMP (8ff2ab3400, diagnostic) + idxfilt-1 (OWN_IDX_FILT opt-in: the matrix-engine pre-filter with a proven bound, prompt halves) + test_idxfilt; fallback 8ff2ab3400 (no idxfilt)
+# tp129: a16a2b5f18 = f5f7041c74 + idxfilt-2c (OWN_IDX_FILT_CK, the checks); f5f7041c74 = 57dc1806d3 + idxfilt-2 (T + X2, one select); ef1af6eda7 = tp128 (2f159ba705) + kvdedup-2 check-sized only (cdc6e8d6e4) + OWN_IDX_DUMP (8ff2ab3400, diagnostic) + idxfilt-1 (OWN_IDX_FILT opt-in: the matrix-engine pre-filter with a proven bound, prompt halves) + test_idxfilt; fallback 8ff2ab3400 (no idxfilt); 57dc1806d3 = ef1af6eda7 + the batched check launches on by default
 W=/home/steve/dsv41-work
 export PATH=/opt/intel/oneapi/compiler/latest/bin:$PATH
 L=$W/build-tp129.log
@@ -12,13 +12,13 @@ GPU="-fsycl-targets=intel_gpu_bmg_g31 -Xsycl-target-backend=intel_gpu_bmg_g31"
 while [ -e $W/six.active ]; do sleep 20; done
 : > $L
 rc=8
-for C in 10f1b390ab 8ff2ab3400; do
+for C in a16a2b5f18 f5f7041c74 57dc1806d3 8ff2ab3400; do
   rm -rf $W/src129; mkdir -p $W/src129/tools
   git -C $W/tp121 archive $C:experiments/own-xpu-runtime/engine src planning tools/bench | tar -x -C $W/src129 || { echo "tp129 build exit 9 (source export $C)" >> $L; exit 9; }
   if ! (cd $W/src129 && nice -n 5 icpx $F -I planning/dsv41-fixtures -I src -fsyntax-only planning/dsv41-fixtures/own_run_v41.cpp >> $L 2>&1); then
     echo "tp129: syntax check failed at $C" >> $L; continue; fi
   echo "tp129: source commit $C" >> $L
-  if [ $C = 10f1b390ab ]; then # the filter bench first (small: its device errors show in minutes)
+  if [ $C = a16a2b5f18 ] || [ $C = f5f7041c74 ] || [ $C = 57dc1806d3 ]; then # the filter bench first (small: its device errors show in minutes)
     if (cd $W/src129 && nice -n 5 icpx -fsycl $GPU "-exclude_ir -options -ze-intel-enable-auto-large-GRF-mode" -O2 -std=c++20 -fp-model=precise -ffp-contract=off -Wno-deprecated-declarations -I src tools/bench/test_idxfilt.cpp -o $W/test_idxfilt_tp129 >> $L 2>&1); then
       echo "tp129: bench test_idxfilt_tp129 built" >> $L
     else

@@ -61,3 +61,46 @@ filter against R200, x1m read with the filter + kvshard against x1m_a.
 The one-token (dtopk-1) and check (dtopk-2) paths: the same pre-filter per stage-1 work-group (each work-group's
 512th largest `LO` from its own stage-1 list is a valid threshold for its rows, so its candidates and the merge stay
 the same), keys read once for all of a check's tokens.
+
+## First bench (tif0, 2026-11-17 05:20-05:27, card 1, idle cards; logs in `tif0/`)
+
+43 tokens (one card's prompt share), random data, `test_idxfilt_tp129` from 57dc1806d3. Every case PASS: the bound
+never missed (largest |exact - midpoint| / E 0.0013-0.0015: the bound is ~700x loose, the proof's margins), every
+list, block list and mark identical. Times in ms (min of 5):
+
+| ratio, rows | exact BM | exact S2 rmaj | filter F2 rt2 | select on LO | IdxFiltX | rows left per token (rows / blocks' rows) |
+|---|---|---|---|---|---|---|
+| 1, 95K | 5.98 | 3.97 | 1.13 | 0.60 | 10.04 | 554 / 17,368 |
+| 1, 352K | 23.41 | 14.87 | 4.05 | 3.00 | 43.58 | 558 / 17,670 |
+| 1, 993K | 70.45 | 43.46 | 11.75 | 8.97 | 118.81 | 564 / 17,804 |
+| 2, 95K | 2.95 | 2.00 | 0.72 | 0.20 | 1.02 | 549 |
+| 2, 352K | 11.62 | 7.43 | 2.16 | 0.82 | 1.13 | 557 |
+| 2, 993K | 32.13 | 21.47 | 5.86 | 3.09 | 1.67 | 563 |
+
+The matrix-engine score is 3.7x faster than today's exact form and leaves ~560 rows of up to 993K per token, but the
+first form lost it all to IdxFiltX (one work-group per token, each item scoring its rows alone, and at layer 20 every
+row of ~2,200 candidate blocks) and to the extra select.
+
+## idxfilt-2 (f5f7041c74) and the checks (idxfilt-2c, a16a2b5f18)
+
+- **No select on LO.** Any value that at least K rows provably reach is a valid threshold. The K-th largest of the
+  per-8-row maxima of LO is one (the maxima are LO values of distinct rows, and the K-th largest of a subset is at
+  most the K-th largest of the whole), and the KB-th largest of the same maxima serves the blocks (each maximum is
+  the LO key of a distinct block). `IdxFiltS` writes the maxima (a sub-group max per tile, `cm`); `IdxFiltT` (one
+  work-group per token, TopKSelP's radix select over ceil(len / 8) values) writes both thresholds.
+- **Exact scores spread over the card.** `IdxFiltX2`: a work-group per 4,096 rows of a token (2 blocks of 8 per
+  item); flags, a group scan gathers the flagged rows, the query goes to local memory as [dim][head], each sub-group
+  of 16 scores one row at a time (lane l = heads l and 16 + l, each over the 128 dims in order, the key values by
+  shuffles; then the weighted sum over the heads in order) = `IndexerScoreB::run`'s sums, bit for bit.
+- **Layer 20: only the rows that can hold a block's key.** In a candidate block (largest HI >= the block threshold),
+  a row is scored exactly only if its HI reaches the block's largest LO: the row with the block's largest exact
+  score has HI >= its score >= that largest LO, every other row keeps LO < the largest LO <= the key, so the key
+  (the largest of the 8 stored values) is exact.
+- One select after X2 (the unchanged one). The bench now also checks every row's bits after X2 (each must be its
+  exact score or its LO, nothing else).
+- **Checks (idxfilt-2c, `OWN_IDX_FILT_CK=1`):** dtopk-2 scores each card's share without a gather; the filter runs on
+  the share (thresholds from the share: a card's K-th largest exact score is at most the overall K-th largest, so a
+  row left at LO is still strictly below every row the overall select keeps), then dtopk-2's stage 1, exchange and
+  merge unchanged (they keep the top k of the stored values, which are then the exact scores'). `OWN_IDX_FILT=2`
+  runs dtopk-2 again on exact shares into shadows and compares on the card.
+- One-token steps: not filtered (one token reads each key row once: memory-bound either way).
