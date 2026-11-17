@@ -569,25 +569,51 @@ static void pk_shape(sycl::queue &q, const char *label, const char *tensor, int 
 static void part_pick(sycl::queue &q) {
     using A = ActF32;
     // today's picks first (X16R2 / K16R2 / K16R2S), then the R4 forms
+#ifdef NO_R4 // (obpad: today's picks only; c131 closed the R4 forms)
+    using Q8L = WsList<WfX16R2>;
+    using Q8LS = WsList<WfX16R2>;
+    using Q6L = WsList<WfK16R2, WfK16R2S>;
+    using Q5L = WsList<WfK16R2>;
+#else
     using Q8L = WsList<WfX16R2, WsF<8, 4, 2, 0>, WsF<8, 4, 1, 1>, WsF<8, 4, 1, 0>>; // (R x T <= 32: ws_reduce_store)
     using Q8LS = WsList<WfX16R2, WsF<8, 4, 2, 0>, WsF<8, 4, 1, 0>>; // (1,280 / 2,304 columns: no LOOP form)
     using Q6L = WsList<WfK16R2, WfK16R2S, WsF<8, 4>, WsF<8, 4, 1, 0, 100>>;
     using Q5L = WsList<WfK16R2, WsF<8, 4>>;
+#endif
     using HL = WsList<WfH8R4>;
     pk_shape<WS_PLAIN>(q, "q8 q_a 1280x5120", "blk.2.attn_q_a.weight", 8, 5120, 1280, 0, GemvQ8P<160, A>{1280, 0}, 5120, 1280, Q8L{});
     pk_shape<WS_PLAIN>(q, "q8 kv 512x5120", "blk.2.attn_kv.weight", 8, 5120, 512, 0, GemvQ8P<160, A>{512, 0}, 5120, 512, Q8L{});
     pk_shape<WS_PLAIN>(q, "q8 q_b 6144x1280", "blk.2.attn_q_b.weight", 8, 1280, 6144, 12288, GemvQ8P<40, A>{6144, 0}, 1280, 6144, Q8LS{});
     pk_shape<WS_PLAIN>(q, "q8 o_a 1024x4096", "blk.2.attn_output_a.weight", 8, 4096, 1024, 2048, GemvQ8P<128, A>{1024, 0}, 4096, 1024, Q8L{});
     pk_shape<WS_PLAIN>(q, "q8 o_a 512x4096", "blk.2.attn_output_a.weight", 8, 4096, 512, 3072, GemvQ8P<128, A>{512, 0}, 4096, 512, Q8L{});
+    // the engine's x stride for output-a: a token's head outputs qh * hd = 32,768 floats (128 KiB) apart (oa_m), not
+    // packed: the same rows and forms with that stride (x groups of 1,024 rows read 4,096 columns at group offsets)
+    pk_shape<WS_PLAIN>(q, "q8 o_a 1024x4096 xs32768", "blk.2.attn_output_a.weight", 8, 4096, 1024, 2048, GemvQ8P<128, A>{1024, 0}, 32768, 1024, Q8L{});
+    // obpad-1: the same rows at padded strides (today's picks only)
+    pk_shape<WS_PLAIN>(q, "q8 o_a 1024x4096 xs32784", "blk.2.attn_output_a.weight", 8, 4096, 1024, 2048, GemvQ8P<128, A>{1024, 0}, 32784, 1024, WsList<WfX16R2>{});
+    pk_shape<WS_PLAIN>(q, "q8 o_a 1024x4096 xs32832", "blk.2.attn_output_a.weight", 8, 4096, 1024, 2048, GemvQ8P<128, A>{1024, 0}, 32832, 1024, WsList<WfX16R2>{});
+    pk_shape<WS_PLAIN>(q, "q8 o_a 1024x4096 xs33024", "blk.2.attn_output_a.weight", 8, 4096, 1024, 2048, GemvQ8P<128, A>{1024, 0}, 33024, 1024, WsList<WfX16R2>{});
+    pk_shape<WS_PLAIN>(q, "q8 o_a 512x4096 xs32768", "blk.2.attn_output_a.weight", 8, 4096, 512, 3072, GemvQ8P<128, A>{512, 0}, 32768, 512, WsList<WfX16R2>{});
+    pk_shape<WS_PLAIN>(q, "q8 o_a 512x4096 xs32832", "blk.2.attn_output_a.weight", 8, 4096, 512, 3072, GemvQ8P<128, A>{512, 0}, 32832, 512, WsList<WfX16R2>{});
     pk_shape<WS_PLAIN>(q, "q8 o_b 864x8192", "blk.2.attn_output_b.weight", 8, 8192, 864, 1728, GemvQ8P<256, A>{864, 0}, 8192, 5120, Q8L{});
+    // obpad: output-b's x (the gathered output-a rows, g.ototal = 8,192 floats = 32 KiB per token) at padded strides
+    pk_shape<WS_PLAIN>(q, "q8 o_b 864x8192 xs8208", "blk.2.attn_output_b.weight", 8, 8192, 864, 1728, GemvQ8P<256, A>{864, 0}, 8208, 5120, WsList<WfX16R2>{});
+    pk_shape<WS_PLAIN>(q, "q8 o_b 864x8192 xs8256", "blk.2.attn_output_b.weight", 8, 8192, 864, 1728, GemvQ8P<256, A>{864, 0}, 8256, 5120, WsList<WfX16R2>{});
     pk_shape<WS_SHARED>(q, "q8 sh gate 384x5120 (pair)", "blk.2.ffn_gate_shexp.weight", 8, 5120, 384, 768, GemvQ8P<160, A>{384, 0}, 5120, 384, Q8L{});
     pk_shape<WS_PLAIN>(q, "q8 sh down 864x2304", "blk.2.ffn_down_shexp.weight", 8, 2304, 864, 1728, GemvQ8P<72, A>{864, 0}, 2304, 5120, Q8LS{});
     pk_shape<WS_PLAIN>(q, "q6 q_a 1280x5120", "blk.30.attn_q_a.weight", 6, 5120, 1280, 0, GemvQ6KP<20, A>{1280, 0}, 5120, 1280, Q6L{});
     pk_shape<WS_PLAIN>(q, "q6 kv 512x5120", "blk.30.attn_kv.weight", 6, 5120, 512, 0, GemvQ6KP<20, A>{512, 0}, 5120, 512, Q6L{});
-    pk_shape<WS_PLAIN>(q, "q6 q_b 6144x1280", "blk.30.attn_q_b.weight", 6, 1280, 6144, 12288, GemvQ6KP<5, A>{6144, 0}, 1280, 6144, WsList<WfK16R2, WsF<8, 4>>{});
+    pk_shape<WS_PLAIN>(q, "q6 q_b 6144x1280", "blk.30.attn_q_b.weight", 6, 1280, 6144, 12288, GemvQ6KP<5, A>{6144, 0}, 1280, 6144, Q5L{});
     pk_shape<WS_PLAIN>(q, "q6 o_a 1024x4096", "blk.30.attn_output_a.weight", 6, 4096, 1024, 2048, GemvQ6KP<16, A>{1024, 0}, 4096, 1024, Q6L{});
     pk_shape<WS_PLAIN>(q, "q6 o_a 512x4096", "blk.30.attn_output_a.weight", 6, 4096, 512, 3072, GemvQ6KP<16, A>{512, 0}, 4096, 512, Q6L{});
+    pk_shape<WS_PLAIN>(q, "q6 o_a 1024x4096 xs32768", "blk.30.attn_output_a.weight", 6, 4096, 1024, 2048, GemvQ6KP<16, A>{1024, 0}, 32768, 1024, Q6L{});
+    pk_shape<WS_PLAIN>(q, "q6 o_a 1024x4096 xs32784", "blk.30.attn_output_a.weight", 6, 4096, 1024, 2048, GemvQ6KP<16, A>{1024, 0}, 32784, 1024, WsList<WfK16R2S, WfK16R2>{});
+    pk_shape<WS_PLAIN>(q, "q6 o_a 1024x4096 xs32832", "blk.30.attn_output_a.weight", 6, 4096, 1024, 2048, GemvQ6KP<16, A>{1024, 0}, 32832, 1024, WsList<WfK16R2S, WfK16R2>{});
+    pk_shape<WS_PLAIN>(q, "q6 o_a 1024x4096 xs33024", "blk.30.attn_output_a.weight", 6, 4096, 1024, 2048, GemvQ6KP<16, A>{1024, 0}, 33024, 1024, WsList<WfK16R2S, WfK16R2>{});
     pk_shape<WS_PLAIN>(q, "q6 o_b 864x8192", "blk.30.attn_output_b.weight", 6, 8192, 864, 1728, GemvQ6KP<32, A>{864, 0}, 8192, 5120, Q6L{});
+    // obpad: output-b's x (the gathered output-a rows, g.ototal = 8,192 floats = 32 KiB per token) at padded strides
+    pk_shape<WS_PLAIN>(q, "q6 o_b 864x8192 xs8208", "blk.30.attn_output_b.weight", 6, 8192, 864, 1728, GemvQ6KP<32, A>{864, 0}, 8208, 5120, WsList<WfK16R2S, WfK16R2>{});
+    pk_shape<WS_PLAIN>(q, "q6 o_b 864x8192 xs8256", "blk.30.attn_output_b.weight", 6, 8192, 864, 1728, GemvQ6KP<32, A>{864, 0}, 8256, 5120, WsList<WfK16R2S, WfK16R2>{});
     pk_shape<WS_PLAIN>(q, "q6 engram 4267x6144", "blk.1.engram_kv.weight", 6, 6144, 4267, 8534, GemvQ6KP<24, A>{4267, 0}, 6144, 4267, Q6L{});
     pk_shape<WS_SHARED>(q, "q5 sh gate 384x5120 (pair)", "blk.30.ffn_gate_shexp.weight", 5, 5120, 384, 768, GemvQ5KP<20, A>{384, 0}, 5120, 384, Q5L{});
     pk_shape<WS_PLAIN>(q, "q5 sh down 864x2304", "blk.30.ffn_down_shexp.weight", 5, 2304, 864, 1728, GemvQ5KP<9, A>{864, 0}, 2304, 5120, Q5L{});
