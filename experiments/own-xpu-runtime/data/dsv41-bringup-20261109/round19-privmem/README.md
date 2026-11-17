@@ -125,6 +125,28 @@ per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it b
 groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
 the caches).
 
+## c125: kvdedup-1 and exact ropedev-1 gated (2026-11-16 22:34-23:44, tp125 = 3c77277c87)
+
+`c125-summary.txt`: **8 fresh starts identical to their references.**
+
+| case | switches | result |
+|---|---|---|
+| p3k_dd | kvshard check mode + dedup | ALL SAME (every staged row = the full mirror), 91.0 x fewer staged rows |
+| p3k_dd32 | the same, tail 1024, chunks of 32 rows (all six owners push) | ALL SAME |
+| x95k_rd | rope fill on the card | identical; read 665.1 tok/s; 0 fix-ups below 96K positions (0.1 s) |
+| x95k_dd | kvshard check mode + dedup | ALL SAME over 389.7M entries; 12.8 x fewer rows (10,142 distinct per half list) |
+| x200k_rd | rope fill on the card | identical; read 650.4 tok/s, writing 95.69 |
+| x200k_dd | kvshard + dedup | identical; **read 635.8 tok/s** (563.3 without dedup, 650.4 without kvshard); 10.1 x fewer rows; card 0 out **736 -> 61 GiB** |
+| x700k_rd | rope fill on the card | identical (704,773 tokens); read 591.7 tok/s, writing 89.63 |
+| x1m_rd | kvshard + dedup + rope fill | identical to x1m_a (993,166 tokens); **read 500.3 -> 550.8 tok/s**, writing 86.49; the 2 rope fix-ups at 887,541 / 889,359 as the bench found; 7.4 x fewer rows |
+
+Attach trace (`faults/attachtrace-20261116-d.txt`, uprobe on urEnqueueUSMMemcpy + kprobe dma_buf_dynamic_attach): in
+the rope-fill cases no 8 MiB rope copy and no dma-buf attach after the first minute (the 6 / 44 / 61 rope-sized copies
+are the load-time compare reading each window back once); attaches only at start (~250) and at exit (~75). The cases
+without the rope fill still copy the window from host memory mid-run (x200k_dd: 92 copies after the first minute).
+Next: tp126 = both on by default + idxrows-2 (the two halves share one region of index score rows, ~172 MB less per
+card at 1M), gate c126.
+
 ## tp124 gated, the rope bench, and two changes for tp125 (2026-11-16 21:26-22:15)
 
 **c124** (`c124-summary.txt`, tp124 = b7a16b5e7e: idxrp-1 on by default, hostfloor-1, ropedev-1 opt-in): 6 fresh
