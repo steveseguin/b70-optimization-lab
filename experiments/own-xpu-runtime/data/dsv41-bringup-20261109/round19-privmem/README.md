@@ -136,6 +136,16 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+## Guessing at 1M works: 104.5 tok/s writing, identical (ck1m3 s1m, 2026-11-17 01:22-01:53)
+
+`ck1m3-summary.txt` (tp126, `OWN_KV_SHARD=1`, prompt heads 3,3,2,3,3,2, the DSpark draft, 993,166 tokens):
+**1024 answers identical to x1m_a (IDS1024_SAME) and SAME AS the plain run**; reading 1829.0 s (543.0 tok/s; 550.8
+without the draft, c125); **writing 104.46 tok/s** (plain at 1M: 85.68-86.49), 3.21 tokens per cycle, 83.8 % of
+guesses kept, draft 2.06 ms + check 28.63 ms per cycle. No fault line. Card memory (`ck1m3-vram-s1m.txt`, KiB in VRAM
+per card): cards 2 / 5 reached 33,394,016 KiB when writing started (+39.5 MiB: the check kernels' private memory),
+**~12 MiB short of full**. Too thin to keep: privmem-3 / -4 (tp127) remove most of the hidden private memory; until
+then 1M + guessing should use `OWN_TP_HEADS_MIN=1` (m1, +0.35 GiB on cards 2 / 5).
+
 ### s1m (1M + guessing) loaded with 0.38 GiB on cards 2 / 5; privmem-3 found (2026-11-17 01:2x)
 
 s1m (tp126, kvshard, heads 3,3,2,3,3,2, the draft): free after load 0.77 0.60 **0.38** 0.77 0.60 **0.38** GiB, just
