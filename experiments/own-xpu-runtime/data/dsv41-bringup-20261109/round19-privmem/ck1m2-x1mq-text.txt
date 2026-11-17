@@ -1,0 +1,41 @@
+We need answer. Need parse document. User asks: "Read this document. First state the access code for the archive room that the document mentions, then list its five most important rules in one short sentence each."
+
+We need identify access code in document. I recall in huge document there is line: "Note for the reader: the access code for the archive room is 7194-KESTREL. Keep it safe." Yes. Need list five most important rules. Which rules? Document is massive concatenation of many docs. "the document" likely entire provided text. It mentions many rules. Need infer "five most important rules" maybe from AGENTS.md? The document includes AGENTS.md with owner's standing rules, quality rules, etc. But access code appears in a section "Reproducibility Map" maybe inserted. Need list five most important rules in one short sentence each. Ambiguity: Which five? Could be from AGENTS.md "Owner's Standing Rules" numbered 1-5? Let's inspect. In AGENTS.md section, there are Owner's Standing Rules:
+1. The job is optimizing, not hosting
+2. No cheating
+3. Keep machine safe
+4. Never stop optimizing; report in plain words
+5. Build our own model-specific runtimes for Intel Xe
+Then later "Working Rules" etc. The access code is in a document that includes AGENTS.md and many docs. The phrase "the document mentions" access code. Then "list its five most important rules" likely refers to the five Owner's Standing Rules in AGENTS.md? But "most important" maybe from "Owner's Standing Rules" exactly five. Need answer concise. Need ensure one short sentence each. Could mention access code first. Need maybe list five rules from AGENTS.md. Let's craft.
+
+Need be careful: The document includes "Owner's Standing Rules" with 5 numbered. They are:
+1. The job is optimizing, not hosting (no model server left running; server only for experiment; don't start resident server unless owner asks).
+2. No cheating (speed counts only if unchanged model output and fair test; no cached/warmed prompts etc; KV full 16-bit default).
+3. Keep machine safe (power settings off limits; no automatic reboot/driver reset; host memory/swap/page-cache only with owner approval; no restart loops; fault handling; graceful stop; container memory limits; one change per boot).
+4. Never stop optimizing; report in plain words (keep optimizing until owner says stop; close levers not lanes; carry on; plain reports; stay on goal).
+5. Build our own model-specific runtimes for Intel Xe (own project; official/Unsloth/Intel weights; other projects read for ideas; certified lanes keep running; runtime earns place).
+
+Need "five most important rules" maybe could be "Quality Rules: No Cheating" etc. But exactly five owner's standing rules. We'll state access code and five. Need one short sentence each. Maybe include "The five Owner's Standing Rules are..." Good.
+
+Need answer no extra. Ensure access code exact "7194-KESTREL". Let's final.</think>Access code: **7194-KESTREL**
+
+Five most important rules:
+1. The job is optimizing, not hosting: do not leave a model server running or start a resident server unless the owner asks.
+2. No cheating: a speed result counts only if the unchanged model produces the same output under a fair test, with full 16-bit KV by default.
+3. Keep the machine safe: do not change power settings, reboot/reset automatically, or alter host memory/swap/page-cache settings without owner approval.
+4. Never stop optimizing: keep working until the owner says stop, close levers rather than lanes, and report plainly in everyday words.
+5. Build our own model-specific Intel Xe runtimes: use official, Unsloth, or Intel weights, read other projects only for ideas, and keep certified lanes running.<｜end▁of▁sentence｜><｜begin▁of▁sentence｜># Reproducibility Map
+
+This is a durable catalog of runnable recipes and promoted evidence. It is not
+the authority for the currently loaded service or active research lane; use
+[`CURRENT.md`](../CURRENT.md) for that live state. Historical service claims
+below describe recorded lane context and may not describe what is running now.
+
+Navigation reviewed **2026-10-10**. Start with the
+[lane entrypoint inventory](model-effort-index.md#lane-entry-points-and-evidence-status)
+for every maintained lane, including own-runtime CPU work, LTX, MiniMax-H3,
+Qwen3.8 FP8 and the Qwen3.5 recipes. Use the
+[package directory](../packages/README.md) for packaging and certification status.
+The detailed sections here retain earlier build, service and diagnostic history;
+their old “current”, “next” and endpoint wording is local to the dated experiment,
+not authority to resume

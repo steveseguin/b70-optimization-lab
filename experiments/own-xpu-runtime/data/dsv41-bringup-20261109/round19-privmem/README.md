@@ -125,6 +125,17 @@ per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it b
 groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
 the caches).
 
+## 1M: the engine reads the far context correctly (ck1m2, 2026-11-16 23:44 - 2026-11-17 00:37, tp125 + switches)
+
+`ck1m2-summary-partial.txt` (OWN_KV_SHARD=1 OWN_KV_DEDUP=1 OWN_ROPE_DEV=1):
+- **x700k_ks: identical to the reference made without the shard** (1024 answers, 704,773 tokens): kvshard + dedup
+  exact at 704K (ckvs2 had checked kvshard to 200K). Read 578.3 tok/s (591.7 without the shard), writing 87.55.
+- **x1mq: the 1M prompt with the task repeated after the document (993,210 tokens): the answer gives the planted
+  code 7194-KESTREL (2 % into the document, ~970K tokens before the question) and a sensible five-rule summary**
+  (`ck1m2-x1mq-text.txt`). Read 550.5 tok/s, writing 85.68. So x1m_a's answer, which ignored the task stated only at
+  the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
+  put the question at the end.
+
 ## c125: kvdedup-1 and exact ropedev-1 gated (2026-11-16 22:34-23:44, tp125 = 3c77277c87)
 
 `c125-summary.txt`: **8 fresh starts identical to their references.**
