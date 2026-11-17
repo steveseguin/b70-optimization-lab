@@ -26,7 +26,8 @@ journalctl -k -f -o short-precise > $D/kernel-follow.txt 2>&1 & JF=$!
     r=$([ -n "$e" ] && awk '/VmRSS/ {print int($2/1024)}' /proc/$e/status 2>/dev/null)
     echo "$(date +%T.%N | cut -c1-10) $(awk '/^(MemFree|Cached|AnonPages|Mapped|Shmem|Unevictable|Dirty|Writeback|PageTables|SUnreclaim):/ {printf "%s %d ", $1, $2/1024}' /proc/meminfo)rss ${r:-0} $(awk '{for (i=1;i<=NF;i++) if ($i ~ /^total=/) {sub("total=","",$i); printf "%s ", $i}}' /proc/pressure/memory /proc/pressure/io /proc/pressure/cpu)"
     sleep 0.5; done >> $D/mem2.txt ) & MS2=$!
-trap 'kill $JF $SY $MS $MS2 2>/dev/null; rm -f $W/six.active; sync' EXIT
+systemd-run --user --unit=vram-c127-$TS $W/vramlog.sh $D/vram.txt 8 >/dev/null 2>&1
+trap 'touch $D/vram.txt.stop; kill $JF $SY $MS $MS2 2>/dev/null; rm -f $W/six.active; sync' EXIT
 source $W/stable/stable.env
 say "c127 start $(date '+%F %T') source $(grep "source commit" $W/build-tp127.log | tail -1) boot $(cut -c1-8 /proc/sys/kernel/random/boot_id) binary $(sha256sum $B | cut -c1-16)"
 say "smt active $(cat /sys/devices/system/cpu/smt/active), cpus $(nproc), bios $(cat /sys/class/dmi/id/bios_version)"
@@ -95,7 +96,28 @@ run x200k_b0 $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 OWN_IDX_BC=0
 run x200k_ks $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600
 grep -q "OWN_KV_DEDUP=1: prompt halves" $D/x200k_ks.log || stop "x200k_ks: no kvdedup-1 start line (default)"
 grep -h "OWN_KV_DEDUP=1: card 0\|OWN_KV_PUSH: card 0" $D/x200k_ks.log | cut -c1-260 | sed "s/^/x200k_ks: /" >> $sum
+# s200k: guessing at 194K (card memory from the start of writing: the check kernels' private memory, privmem-3)
+run s200k $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_SPEC_LOG=$D/s200k-spec.txt OWN_VERIFY_REF=$R200
+grep -q "SAME AS the plain" $D/s200k.log || stop "s200k: no SAME AS the plain line"
+# dtopk-2 (OWN_IDX_DTOPK_M, opt-in in tp127): checks' split index layers by candidates. s200k_dk2: the check mode (the
+# gather and the unchanged selects as well, every token's list / block list / marks compared on the card) must end
+# "-> ALL SAME" with the answers identical; then s200k_dk (on) against s200k for speed, and the 1M guessing case uses it
+soft s200k_dk2 $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_SPEC_LOG=$D/s200k_dk2-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_DTOPK_M=2
+grep -h "OWN_IDX_DTOPK_M" $D/s200k_dk2.log | head -9 | cut -c1-260 | sed "s/^/s200k_dk2: /" >> $sum
+DK=0
+grep -q "OWN_IDX_DTOPK_M=2 check: [1-9][0-9]* lists compared, 0 differ -> ALL SAME" $D/s200k_dk2.log && grep -q "^s200k_dk2 IDS1024_SAME" $sum && grep -q "^s200k_dk2 SAME_AS_PLAIN" $sum && DK=1
+say "dtopk-2 check at 194K: $([ $DK = 1 ] && echo PASS || echo FAIL)"
+if [ $DK = 1 ]; then
+  run s200k_dk $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_SPEC_LOG=$D/s200k_dk-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_DTOPK_M=1
+  grep -q "SAME AS the plain" $D/s200k_dk.log || stop "s200k_dk: no SAME AS the plain line"
+fi
 x1m=$W/prompts/lc/x1m-ids.txt; A=$(ls -td $W/runs/ck1m-*/ | head -1)x1m_a-ids.txt
-run x1m_ks $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600
+if [ $DK = 1 ]; then # 1M + guessing + dtopk-2 (ck1m3 s1m without it: writing 104.46 tok/s, check 28.63 ms per cycle)
+  soft s1m_dk $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_SPEC_LOG=$D/s1m_dk-spec.txt OWN_VERIFY_REF=$A OWN_IDX_DTOPK_M=1
+  grep -h "free after load\|need .* GiB\|OWN_IDX_DTOPK_M" $D/s1m_dk.log | head -10 | cut -c1-220 | sed "s/^/s1m_dk: /" >> $sum
+  grep -q "^s1m_dk IDS1024_SAME" $sum && grep -q "^s1m_dk SAME_AS_PLAIN" $sum || stop "s1m_dk: not identical (or did not run): see its log"
+else
+  run x1m_ks $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600
+fi
 grep -h "hostfloor" $D/*.log | cut -c1-200 | sed "s/^/hostfloor: /" >> $sum
 say "ALLDONE $(date '+%F %T'): $n fresh starts identical to their references"

@@ -136,6 +136,22 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+## Checks at long context: dtopk-2 (2026-11-17 02:0x)
+
+`check-cost-1m-vs-3k.txt` (spec logs of s1m and code_d): a one-token step costs 11.78 ms at 993K against 9.62 short
+(+2.2 ms), but **a check of 2 tokens costs 23.43 ms against 13.38 (+10 ms)** and each further token ~4.0 ms against ~1.8.
+The run's report: 1,060 block index layers split (265 checks x layers 2 / 8 / 14 / 20), 216 one-token layers by
+candidates (dtopk-1). So the checks still take idxsplit-2's gather: every card pulls every peer's score rows of every
+token (~8 MB per token and card at 993K over the four layers) and selects each token's list in one work-group over up
+to 993K rows. dtopk-1 removed exactly this from the one-token step (705K writing 64.4 -> 89.7 tok/s, c122).
+
+dtopk-2 (85d7bb0a8c, `OWN_IDX_DTOPK_M`, opt-in): the check's split layers 2-20 run dtopk-1 per token (its stage-1
+kernels over the card's own rows, one pull of every token's candidates, its merges into the same outputs the unchanged
+selects write). The same kernels on the same scores give each token dtopk-1's list, block list and marks: the same
+bits as the full selects. `=2` runs the gather and the unchanged selects as well and compares every token's results
+on the card. In tp127; c127 runs the check mode at 194K with guessing (`s200k_dk2`, must end ALL SAME), the speed case
+`s200k_dk`, then 1M + guessing with it (`s1m_dk`).
+
 ## Guessing at 1M works: 104.5 tok/s writing, identical (ck1m3 s1m, 2026-11-17 01:22-01:53)
 
 `ck1m3-summary.txt` (tp126, `OWN_KV_SHARD=1`, prompt heads 3,3,2,3,3,2, the DSpark draft, 993,166 tokens):
