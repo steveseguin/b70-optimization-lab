@@ -39,7 +39,7 @@ J='fault response|cat error|engine reset|coredump has been created|gt reset|time
 stop() { say "STOP $*"; say "STOPPED $(date '+%F %T')"; exit 1; }
 pre() { local o; o=$($W/stable/preflight.sh 2>&1) || stop "preflight: $o"; }
 G="OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1"
-PL="OWN_TP=6 OWN_PROMPT_BLOCK=64 OWN_MT_TG=4 OWN_MT_TG_MAX=16 $G OWN_HOST_FLOOR_MIB=2560"
+PL="OWN_TP=6 OWN_PROMPT_BLOCK=64 OWN_MT_TG=4 OWN_MT_TG_MAX=16 $G OWN_HOST_FLOOR_MIB=2048"  # 2048 for the 1M starts (2026-11-16 20:39: the runtime's ~5 GB start-up dip went below 2560 before the upload at 1M)
 P5="OWN_PROMPT_BLOCK=512 OWN_PX=1 OWN_PX_BIG=1"
 VOC="OWN_DR_VOCAB=$W/draft/vocab/cand-c32k-dict.txt OWN_DR_VOCAB_N=60000"
 DSP=/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf

@@ -125,6 +125,25 @@ per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it b
 groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
 the caches).
 
+## First ~1M context (ck1m, 2026-11-16 20:51-21:25, tp123 + idxrp switches, OWN_KV_SHARD=1)
+
+**ckvs2 first** (`ckvs2-summary.txt`, 20:08-20:38): the kvshard push form (every card keeps only its share of the
+compressed KV rows; prompt halves push rows on the copy engines, the rest pulls) **12 fresh starts identical** to
+their references (3K / 10K / 95K / 200K, check mode, guessing at 194K). Costs reading time: 95K 659.5 -> 568.1 tok/s,
+194K 645.3 -> 563.2; writing unchanged (93.6 / 91.8 tok/s); guessing at 194K 124.52 tok/s, the same answers.
+
+**x1m_a** (`ck1m-summary.txt`): the 1M prompt (`mk1m.py`: the x700k template around a longer document, the code
+planted at 2 %) **993,166 tokens read on the cards in 1985.3 s (500.3 tok/s), then 1024 answer tokens at 85.80 tok/s**;
+no fault; card free memory 1.2-1.7 GiB, host MemAvailable ~3.6 GB. The first start (20:39) was refused before the
+upload: host MemAvailable under the 2560 MiB floor in the runtime's start-up spike (driver counters: 2.2 GB of system
+memory for ~1.3 s after the kernels are built); the floor for the 1M cases is 2048 and tp124 waits out the spike.
+**But the answer (`ck1m-x1m_a-text.txt`) never sees the task at the start of the prompt** ("Read this document. First
+state the access code ..."): it describes the end of the dump and finds no task, while every 700K run with the same
+template quotes the task and the code (7194-KESTREL). Not settled: the engine past 704K / with kvshard, or the model
+near its 1,048,576-position limit. ck1m2 (queued): x700k with kvshard against the 700K reference (exact?), the 1M
+prompt with the task repeated after the document (`x1mq`), and the second select path (dtopk off, skip39 off) against
+x1m_a. x1m_b did not start (the same floor).
+
 ## idxrp-1 gated (tsx1 18:45 + c123 18:46-19:23, 2026-11-16, tp123 = a9a9944a3e)
 
 `test_index_score_px` (one card, one card's 43 tokens of a half, `tsx1-idxpx.log`): every variant's scores bit for
