@@ -82,8 +82,9 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
 nice -n 10 python3 -I $W/privmem_check.py $B 2>&1 | head -1 | sed "s/^/privmem: /" >> $sum
-IF=0; grep -qE "source commit (a16a2b5f18|f5f7041c74)" $W/build-tp129.log && [ -x $W/test_idxfilt_tp129 ] && IF=1
-IFK=0; [ $IF = 1 ] && grep -q "source commit a16a2b5f18" $W/build-tp129.log && IFK=1 # idxfilt-2c (the checks) in this build
+IF=0; grep -qE "source commit (501bc070ce|a16a2b5f18|f5f7041c74)" $W/build-tp129.log && [ -x $W/test_idxfilt_tp129 ] && IF=1
+IFK=0; [ $IF = 1 ] && grep -qE "source commit (501bc070ce|a16a2b5f18)" $W/build-tp129.log && IFK=1 # idxfilt-2c (the checks) in this build
+DL=0; grep -q "source commit 501bc070ce" $W/build-tp129.log && DL=1 # drlast-1 (OWN_DR_LAST) in this build
 GS="$SPEC OWN_SPEC_TAU=0.5 $VOC OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600"
 E=$(grep -h "s1m_all levers:" $W/chainq118.txt $(ls -td $W/runs/c128b-*/ 2>/dev/null | head -1)summary.txt 2>/dev/null | tail -1 | sed 's/.*s1m_all levers://; s/ none//')
 say "idxfilt-2c in this build: $IFK; c128b's 1M levers:${E:- none}"
@@ -102,6 +103,27 @@ run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
 run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL
 spec code code
 spec analysis analysis
+# drlast-1: the same guesses (GLOG against the reference) with the draft's prompt work cut to the last 128 positions
+if [ $DL = 1 ]; then
+  # (the short prompts are under 128 tokens: nothing to skip; the 3K document: 6 of 7 blocks skip)
+  run p3k_s $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_SPEC_LOG=$D/p3k_s-spec.txt
+  run p3k_dl $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_DR_LAST=1 OWN_SPEC_LOG=$D/p3k_dl-spec.txt
+  grep -h "OWN_DR_LAST" $D/p3k_dl.log | sed "s/^/p3k_dl: /" >> $sum
+  cmp -s <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/p3k_dl-spec.txt) <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/p3k_s-spec.txt) && say "p3k_dl GLOG_SAME as p3k_s" || stop "p3k_dl GLOG_DIFFER from p3k_s"
+fi
+# tpw (OWN_TP_WEIGHTS=30,29,29,30,29,29; no code change): output-row units 54,53,53,54,53,53 instead of 53,53,54,53,53,54
+# (one 195 MiB unit from cards 2 / 5, which had 0.39 GiB less free at every context, to cards 0 / 3; mid rows stay 24
+# units each). Every row is still summed whole by one card: the same answers and guesses are expected. Recorded, not a stop
+TW="OWN_TP_WEIGHTS=30,29,29,30,29,29"; TWOK=1
+soft p3k_w $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5 $TW
+grep -h "rows per card (mid\|free after load" $D/p3k_w.log | tr '\n' ' ' | cut -c1-400 | sed "s/^/p3k_w: /" >> $sum; echo >> $sum
+grep -q "^p3k_w IDS256_SAME" $sum || TWOK=0
+soft plain_w $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL $TW
+grep -q "^plain_w IDS128_SAME" $sum || TWOK=0
+soft code_w $PP/code-ids.txt 512 4096 $W/runs/e57/code_plain-ids.txt 511 $PL $SPEC OWN_SPEC_TAU=0.5 $VOC OWN_SPEC_LOG=$D/code_w-spec.txt OWN_VERIFY_REF=$W/runs/e57/code_plain-ids.txt $TW
+grep -q "^code_w IDS511_SAME" $sum && grep -q "^code_w SAME_AS_PLAIN" $sum || TWOK=0
+cmp -s <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/code_w-spec.txt) <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $W/runs/tg105v/code_v1-spec.txt) && say "code_w GLOG_SAME" || { say "code_w GLOG_DIFFER"; TWOK=0; }
+say "tpw identity at 3K / plain / guessing: $([ $TWOK = 1 ] && echo PASS || echo FAIL)"
 x95=$W/prompts/xl/x95k-ids.txt; R95=$W/runs/e82/x95k_plain-ids.txt
 x200=$W/prompts/lc/x200k-ids.txt; R200=$W/runs/lc1-20261115T1936/x200k_def-ids.txt
 # 2. the dump (card 0, the first one-token step past 190,000 rows; 2 tokens written), then the bench / analysis on it
@@ -137,12 +159,27 @@ if [ $IF = 1 ]; then
     run s200k_b $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_b-spec.txt OWN_VERIFY_REF=$R200
     run s200k_fk $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_fk-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_FILT=1 OWN_IDX_FILT_CK=1
     grep -q "SAME AS the plain" $D/s200k_fk.log || stop "s200k_fk: no SAME AS the plain line"
+    if [ $TWOK = 1 ]; then # tpw at 194K: speed and card memory against s200k_fk (same guess log expected)
+      soft s200k_w $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_w-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_FILT=1 OWN_IDX_FILT_CK=1 $TW
+      grep -h "free after load" $D/s200k_w.log | tr '\n' ' ' | cut -c1-400 | sed "s/^/s200k_w: /" >> $sum; echo >> $sum
+      cmp -s <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/s200k_w-spec.txt) <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/s200k_fk-spec.txt) && say "s200k_w GLOG_SAME as s200k_fk" || say "s200k_w GLOG_DIFFER from s200k_fk"
+    fi
+    if [ $DL = 1 ]; then # + drlast-1: the same guess log as s200k_fk
+      run s200k_dl $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_dl-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_FILT=1 OWN_IDX_FILT_CK=1 OWN_DR_LAST=1
+      cmp -s <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/s200k_dl-spec.txt) <(awk '{print $1,$2,$3,$4,$5,$6,$7}' $D/s200k_fk-spec.txt) && say "s200k_dl GLOG_SAME as s200k_fk" || stop "s200k_dl GLOG_DIFFER from s200k_fk"
+    fi
   fi
-  # 5. 1M read + guessing with the filters and c128b's levers (c127 s1m_dk: read 562.9 tok/s, writing 130.66 tok/s)
+  # 4b. ledger1m item 4: kvshard's fixed ~20 ms per block, split by kernel (prompt-block timelines near 189K, with and
+  # without OWN_KV_SHARD, same binary; perf/tlcmp.py launch by launch)
+  run tl_x200 $x200 8 $(mx $x200 8) $R200 8 $PL $P5 OWN_TIMELINE=$D/tl_x200.txt OWN_TIMELINE_PROMPT=370-371
+  run tl_x200ks $x200 8 $(mx $x200 8) $R200 8 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_TIMELINE=$D/tl_x200ks.txt OWN_TIMELINE_PROMPT=370-371
+  python3 -I $W/perf/tlcmp.py $D/tl_x200.txt $D/tl_x200ks.txt 2 > $D/cmp-x200-ks.txt 2>&1
+  # 5. 1M READ with the filter, without the draft (c128b's 1M + guessing run filled cards 2 and 5 at the first answer
+  # steps: a card-to-card wait timed out; this build's filter adds ~128 MiB per card there, so guessing at 1M waits for
+  # tp130's memory cuts). Plain answers against the plain reference (tp125 c125 plain 1M read: 550.8 tok/s, 86.5 writing)
   x1m=$W/prompts/lc/x1m-ids.txt; A=$(ls -td $W/runs/ck1m-*/ | head -1)x1m_a-ids.txt
-  FK=""; [ $IFK = 1 ] && FK="OWN_IDX_FILT_CK=1"
-  soft s1m_f $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s1m_f-spec.txt OWN_VERIFY_REF=$A $E OWN_IDX_FILT=1 $FK
-  grep -h "free after load\|OWN_IDX_FILT=1: card" $D/s1m_f.log | head -10 | cut -c1-200 | sed "s/^/s1m_f: /" >> $sum
-  grep -q "^s1m_f IDS1024_SAME" $sum && grep -q "^s1m_f SAME_AS_PLAIN" $sum || stop "s1m_f: not identical (or did not run): see its log"
+  soft s1m_fp $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 OWN_KV_SHARD=1 OWN_HOST_FLOOR_MIB=1600 OWN_IDX_FILT=1
+  grep -h "free after load\|OWN_IDX_FILT=1: card" $D/s1m_fp.log | head -10 | cut -c1-200 | sed "s/^/s1m_fp: /" >> $sum
+  grep -q "^s1m_fp IDS1024_SAME" $sum || stop "s1m_fp: not identical (or did not run): see its log"
 fi
 say "ALLDONE $(date '+%F %T'): $n fresh starts identical to their references"
