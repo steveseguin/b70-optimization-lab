@@ -1,4 +1,5 @@
 #!/bin/bash
+echo "$(date "+%F %T") tm1p.sh skipped (2026-11-17 03:xx: dtopk-1 covers the one-token selects topk-m targeted; lp1p g400k times 388K)" >> /home/steve/dsv41-work/chainq118.txt; exit 0
 # tm1p (2026-11-16): tm1 on tp118p (= tp118 + privmem-1 + tpd-2; c118p its gate), else unchanged.
 # tm1 (2026-11-15): topk-m (OWN_TOPK_M=1, in tp118 when it built from 98a7e74211): the one-token index selects past
 # the register forms' reach in two launches. 388,251 tokens: ratio-2 sources 194K rows (rows form) and layer 20's
@@ -14,6 +15,10 @@ B=$W/own_run_v41_tp118p
 # c118p x700k_off and tlx1 x400k) when it built and its gate c120 passed; else tp118p as before
 c120s=$(ls -td $W/runs/c120-*/ 2>/dev/null | head -1)
 if [ -x $W/own_run_v41_tp120 ] && grep -q "tp120 build exit 0" $W/build-tp120.log 2>/dev/null && [ -n "$c120s" ] && grep -q "^ALLDONE" ${c120s}summary.txt; then B=$W/own_run_v41_tp120; fi
+c126s=$(ls -td $W/runs/c126-*/ 2>/dev/null | head -1)  # (2026-11-17: the newest gated engine)
+if [ -x $W/own_run_v41_tp126 ] && [ -n "$c126s" ] && grep -q "^ALLDONE" ${c126s}summary.txt; then B=$W/own_run_v41_tp126; fi
+c127s=$(ls -td $W/runs/c127-*/ 2>/dev/null | head -1)
+if [ -x $W/own_run_v41_tp127 ] && [ -n "$c127s" ] && grep -q "^ALLDONE" ${c127s}summary.txt; then B=$W/own_run_v41_tp127; fi
 TS=$(date +%Y%m%dT%H%M); D=$W/runs/tm1p-$TS; mkdir -p $D
 sum=$D/summary.txt; marks=$D/marks.txt
 say() { echo "$*" >> $sum; sync -f $sum 2>/dev/null || sync; }
