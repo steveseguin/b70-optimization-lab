@@ -77,6 +77,8 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   f=$(grep -iE "$J" $D/$name-kernel.txt | head -3); [ -n "$f" ] && stop "$name kernel: $f"
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
+# privmem-3 (when tp127 built from ce1d349e19): private memory per card if every kernel ran (tp126: 640 kernels, 2,071 MiB)
+nice -n 10 python3 -I $W/privmem_check.py $B 2>&1 | head -1 | sed "s/^/privmem: /" >> $sum
 run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
 grep -q "heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 12<->4 12<->3 8" $D/p3k.log || stop "p3k: no hl232 head line (default)"
 run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL

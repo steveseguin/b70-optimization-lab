@@ -136,6 +136,22 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+### s1m (1M + guessing) loaded with 0.38 GiB on cards 2 / 5; privmem-3 found (2026-11-17 01:2x)
+
+s1m (tp126, kvshard, heads 3,3,2,3,3,2, the draft): free after load 0.77 0.60 **0.38** 0.77 0.60 **0.38** GiB, just
+over the load guard's 384 MiB; 0.068 on cards 2 / 5 after the first blocks. A card-memory log from the engine's driver
+handles (`/proc/PID/fdinfo`, `drm-total-vram0`, every 10 s, `vram-s1m.txt` in the run folder) showed steps of exactly
+9.5 and 10.0 MiB on every card: kernels taking their private memory at their first launch, as the selections switch
+form with length (TopKSelMQ<16/32/64/96> at 16K / 32K / 64K / 96K rows, TopKSelMBQ / TopKSelM for layer 20's blocks).
+
+`privmem-check-tp126.txt`, `privmem-rowsp-tp126.txt` (zeinfo of the binary): 640 kernels with private memory, 2,071
+MiB per card if all ran. **551 of them are row launches with TokRows (64-272 B/lane, 1,757 MiB)**; the same row kinds
+without TokRows have 16 B/lane. TokRows::row passed a pointer into its by-value stride array (`tok_at(r, t, st)`), so
+the compiler kept the whole launch argument (TokRows and the rows riding with it) in private memory for every lane.
+The check sizes of guessing (2-6 tokens) run only after the prompt, so their private memory arrives when writing
+starts, after the load guard has been passed. privmem-3 (ce1d349e19): the strides as four plain members, passed by
+value (same pointers, same values); first candidate of the tp127 build, c127 records privmem_check of the binary.
+
 ### c126 passed; hl232 and m1 measured (2026-11-17 00:59-01:23)
 
 `c126-summary.txt`: tp126 (kvdedup-1 + ropedev-1 on by default, idxrows-2) **7 fresh starts identical**: 3K read
