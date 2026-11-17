@@ -15,6 +15,8 @@ c123s=$(ls -td $W/runs/c123-*/ 2>/dev/null | head -1)
 [ -x $W/own_run_v41_tp123 ] && [ -n "$c123s" ] && grep -q "^ALLDONE" ${c123s}summary.txt && B=$W/own_run_v41_tp123
 c124s=$(ls -td $W/runs/c124-*/ 2>/dev/null | head -1)
 [ -x $W/own_run_v41_tp124 ] && [ -n "$c124s" ] && grep -q "^ALLDONE" ${c124s}summary.txt && B=$W/own_run_v41_tp124
+c125s=$(ls -td $W/runs/c125-*/ 2>/dev/null | head -1)
+[ -x $W/own_run_v41_tp125 ] && [ -n "$c125s" ] && grep -q "^ALLDONE" ${c125s}summary.txt && B=$W/own_run_v41_tp125
 TS=$(date +%Y%m%dT%H%M); D=$W/runs/ck1m2-$TS; mkdir -p $D
 sum=$D/summary.txt; marks=$D/marks.txt
 say() { echo "$*" >> $sum; sync -f $sum 2>/dev/null || sync; }
@@ -42,7 +44,7 @@ J='fault response|cat error|engine reset|coredump has been created|gt reset|time
 stop() { say "STOP $*"; say "STOPPED $(date '+%F %T')"; exit 1; }
 pre() { local o; o=$($W/stable/preflight.sh 2>&1) || stop "preflight: $o"; }
 G="OWN_MT_EU=6 OWN_MT_TGU=2 OWN_MT_RIDE=1 OWN_MT_RWG=128 OWN_MT_RFUSE=1 OWN_HC_FIN=1"
-PL="OWN_TP=6 OWN_PROMPT_BLOCK=64 OWN_MT_TG=4 OWN_MT_TG_MAX=16 $G OWN_HOST_FLOOR_MIB=2048"  # 2048 for the 1M starts (2026-11-16 20:39: the runtime's ~5 GB start-up dip went below 2560 before the upload at 1M)
+PL="OWN_TP=6 OWN_PROMPT_BLOCK=64 OWN_MT_TG=4 OWN_MT_TG_MAX=16 $G OWN_HOST_FLOOR_MIB=1600"  # 1600 (2026-11-16 22:15): x700k_ks at 2048 fell 1 MiB under it in the upload (page tables grow ~15 MB/s while loading; kvshard ~1 GB more); 1.6 GiB = the owner-approved guard for research launches  # 2048 for the 1M starts (2026-11-16 20:39: the runtime's ~5 GB start-up dip went below 2560 before the upload at 1M)
 P5="OWN_PROMPT_BLOCK=512 OWN_PX=1 OWN_PX_BIG=1"
 VOC="OWN_DR_VOCAB=$W/draft/vocab/cand-c32k-dict.txt OWN_DR_VOCAB_N=60000"
 DSP=/mnt/fast-ai/llm-models/DeepSeek-V4.1-Flash-1017-GGUF/dspark-DeepSeek-V4.1-Flash-1017-Q8_0.gguf
@@ -86,6 +88,9 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
 K="OWN_KV_SHARD=1"; [ "$B" = "$W/own_run_v41_tp123" ] && K="$K $(cat $W/idxrp-var.txt 2>/dev/null)"
+# tp125 gated with kvdedup-1 + ropedev-1 identical at 1M (c125 x1m_rd): use them (fewer card-to-card copies, no rope host copies)
+[ "$B" = "$W/own_run_v41_tp125" ] && grep -q "^x1m_rd IDS1024_SAME" ${c125s}summary.txt && grep -q "kvdedup-1 cases on" ${c125s}summary.txt && K="$K OWN_KV_DEDUP=1 OWN_ROPE_DEV=1"
+say "engine $B, switches: $K"
 x700=$W/prompts/lc/x700k-ids.txt
 run x700k_ks $x700 1024 $(mx $x700 1024) /home/steve/dsv41-work/runs/c118p-20261116T1117/x700k_def-ids.txt 1024 $PL $P5 $K
 x1mq=$W/prompts/lc/x1mq-ids.txt

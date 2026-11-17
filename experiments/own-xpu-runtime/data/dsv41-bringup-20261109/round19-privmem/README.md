@@ -125,6 +125,29 @@ per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it b
 groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
 the caches).
 
+## tp124 gated, the rope bench, and two changes for tp125 (2026-11-16 21:26-22:15)
+
+**c124** (`c124-summary.txt`, tp124 = b7a16b5e7e: idxrp-1 on by default, hostfloor-1, ropedev-1 opt-in): 6 fresh
+starts identical (p3k, plain, guessing code 147.93 / analysis 166.13 tok/s, x95k, x200k). x95k read 663.2 tok/s,
+writing 95.50; x200k read 651.4 tok/s, writing 95.33.
+
+**tsx2** (`tsx2-rope.log`): the rope window computed on the card in double differs from the host's glibc tables in
+**2 of 134,217,728 floats** over 1,048,576 positions (base p 887,541 slot 5 sin; yarn p 889,359 slot 20 cos; one
+float step each). Not exact, so ropedev-1 was not tried in c124. tp125 (7b06b0b089) makes it exact by
+construction: at load every window of [0, max_seq) is computed on a card and compared with the host's own
+`rope_fill`; the differing floats become fix-ups (`RopeFixD`) written after every refill.
+
+**kvdedup-1** (tp125, 3c77277c87, opt-in `OWN_KV_DEDUP=1`; design in `kvshard/README-push.md`): with memory
+sharing every token of a 256-token half staged its own copy of its 512 listed rows (131,072 rows, 128 MiB per half
+and index layer); at 194K card 0 pushed 736 GiB to its peers. Now each distinct row is staged and pushed once and the
+slot lists name that copy (the attention reads the same bytes). Gate c125: check mode at 3K and 95K, 194K, 1M.
+
+**ck1m2 first try** (`ck1m2-first-summary.txt`): x700k with sharing stopped in the weight upload, host
+MemAvailable 1 MiB under the 2048 MiB floor. Host page tables grow ~15 MB/s during every upload (to ~0.6 GB) and
+sharing adds ~1 GB of host memory not visible in the usual counters (200K after the upload: 3,465 MiB with sharing,
+5,104-5,432 without). The long sharing cases now use a 1,600 MiB floor (the owner-approved research guard).
+Queue chainq131: build tp125 -> c125 -> ck1m2 -> lp1p, ab2p, tm1p.
+
 ## First ~1M context (ck1m, 2026-11-16 20:51-21:25, tp123 + idxrp switches, OWN_KV_SHARD=1)
 
 **ckvs2 first** (`ckvs2-summary.txt`, 20:08-20:38): the kvshard push form (every card keeps only its share of the

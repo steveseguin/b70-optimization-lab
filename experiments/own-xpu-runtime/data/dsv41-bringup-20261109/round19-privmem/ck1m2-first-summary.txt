@@ -1,0 +1,21 @@
+ck1m2 start 2026-11-16 22:00:28 source own_run_v41_tp124 boot 22dad665 binary eb3f85df0b757000
+smt active 0, cpus 8, bios 11.02
+x700k_ks: OWN_KV_SHARD=1: per card 0.28 GiB of chunks (2048 rows per chunk, 6 owners) + 0.02 GiB of tails (4096 rows x 4) + 0.25 GiB of staging rows (512 tokens x 512); no full mirrors; OWN_KV_PUSH=1: prompt halves push the rows on the copy engines, the rest pulls
+x700k_ks: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.32 GiB less per card)
+x700k_ks: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 70115696, 98304 floats (at max_seq: 8 + 2 work-groups per card, 4096 + 4096 pairs)
+x700k_ks: OWN_IDX_ROWS: block index score rows per card 86 (2 x 43) of 512: 1.40 GiB less per card
+x700k_ks: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+x700k_ks: OWN_KV_SHARD=1: card 0: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks: OWN_KV_SHARD=1: card 1: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks: OWN_KV_SHARD=1: card 2: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks: OWN_KV_SHARD=1: card 3: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks: OWN_KV_SHARD=1: card 4: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks: OWN_KV_SHARD=1: card 5: 0 one-token / 0 block fetches pulled, 0 halves pushed
+x700k_ks exit 1 (case 1)
+STOP x700k_ks exit 1
+STOPPED 2026-11-16 22:00:55
