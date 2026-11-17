@@ -136,6 +136,17 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+## privmem-3 was the wrong cause; privmem-4 worked (tp127 privmem_check, 2026-11-17 02:3x)
+
+`privmem-check-tp127.txt`: 635 kernels with private memory, 2,007 MiB per card if all ran (tp126: 640, 2,071).
+**privmem-3 (TokRows strides by value) changed nothing that mattered**: 422 of the TokRows row kernels were already at
+16 B/lane; the heavy ones (120-272 B/lane, ~110 kernels) are the dense-row forms with many columns per lane paired
+with a TokRows rider, and their size follows the column count: `DenseRowsGR<GemvQ6KP<32>>` 272 B, `<24>` 208, `<20>`
+176, `<16>` 144, `GemvQ8P<480>` 120-240, all SIMD32: **register spills**, not argument copies. (The change stays: same
+values.) **privmem-4 worked**: XchgPull, XPullK128 / 256 (x2), ixd_pull and xchg are gone from the list (~75 MiB per
+card, kernels every run launches); left: XchgPullL (OWN_XLL only, banned, never launched) and pair_x (7.5 MiB).
+Next: whether the spilled GR forms run in checks (lp1p's profiled guessing cases name them) before touching them.
+
 ## Checks at long context: dtopk-2 (2026-11-17 02:0x)
 
 `check-cost-1m-vs-3k.txt` (spec logs of s1m and code_d): a one-token step costs 11.78 ms at 993K against 9.62 short
