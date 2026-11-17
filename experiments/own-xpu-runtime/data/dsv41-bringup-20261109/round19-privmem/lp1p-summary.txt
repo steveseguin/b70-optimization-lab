@@ -1,0 +1,36 @@
+lp1p start 2026-11-17 03:46:26 boot 22dad665 binary own_run_v41_tp127 7b4541baa584bc0a
+smt active 0, cpus 8, bios 11.02
+g95k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.03 GiB less per card)
+g95k: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.21 GiB less per card
+g95k: tile 2 card 0000:43:00.0: 2.99 GiB free after load
+g95k: prompt: 95497 tokens read on the cards in 148.49s (643.2 tok/s; first step 0.82s incl. kernel build), first token 2581
+g95k: decode: 127 steps after the first, 0.013 s/step, 79.84 tok/s
+g95k: host io during decode: 30.6 MiB read from disk, 1 major page faults; engram rows 161.4 us per step and card (slowest card 212.3 us; copy + decode launch calls 11.4 us)
+g95k exit 0 (case 1)
+g95k IDS128_SAME
+g400k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.17 GiB less per card)
+g400k: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.84 GiB less per card
+g400k: tile 2 card 0000:43:00.0: 2.04 GiB free after load
+g400k: prompt: 388251 tokens read on the cards in 633.70s (612.7 tok/s; first step 0.83s incl. kernel build), first token 2581
+g400k: decode: 127 steps after the first, 0.013 s/step, 79.40 tok/s
+g400k: host io during decode: 28.6 MiB read from disk, 3 major page faults; engram rows 156.8 us per step and card (slowest card 189.2 us; copy + decode launch calls 12.0 us)
+g400k exit 0 (case 2)
+g400k IDS128_SAME
+guessing profiles with: OWN_IDX_DTOPK_M=1
+gscode: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 43 (2 x 43) of 256: 0.00 GiB less per card
+gscode: tile 2 card 0000:43:00.0: 2.25 GiB free after load
+gscode: prompt: 82 tokens read on the cards in 0.25s (311.3 tok/s; first step 0.19s incl. kernel build), first token 2581
+gscode: spec decode: 255 tokens in 117 cycles (2.18 per cycle; 138 of 168 guesses kept, 82.1 %) in 2.83s = 90.08 tok/s; draft 1.98 ms + check 13.49 ms per cycle; SAME AS the plain run
+gscode: host io during decode: 59.4 MiB read from disk, 45 major page faults; engram rows 261.9 us per step and card (slowest card 271.1 us; copy + decode launch calls 13.8 us)
+gscode exit 0 (case 3)
+gscode IDS255_SAME
+gs200k: OWN_KV_SHARD=1: per card 0.08 GiB of chunks (2048 rows per chunk, 6 owners) + 0.02 GiB of tails (4096 rows x 4) + 0.25 GiB of staging rows (512 tokens x 512); no full mirrors; OWN_KV_PUSH=1: prompt halves push the rows on the copy engines, the rest pulls
+gs200k: OWN_ROPE_WIN: rope tables as a 16384-position window per card, two copies (0.08 GiB less per card)
+gs200k: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.42 GiB less per card
+gs200k: tile 2 card 0000:43:00.0: 1.39 GiB free after load
+gs200k: prompt: 194000 tokens read on the cards in 317.77s (610.6 tok/s; first step 0.90s incl. kernel build), first token 2581
+gs200k: spec decode: 255 tokens in 96 cycles (2.66 per cycle; 160 of 195 guesses kept, 82.1 %) in 2.84s = 89.64 tok/s; draft 2.15 ms + check 18.24 ms per cycle; SAME AS the plain run
+gs200k: host io during decode: 52.7 MiB read from disk, 34 major page faults; engram rows 274.2 us per step and card (slowest card 284.7 us; copy + decode launch calls 14.3 us)
+gs200k exit 0 (case 4)
+gs200k IDS256_SAME
+ALLDONE 2026-11-17 04:07:04: 4 fresh starts, exits 0, identical, no fault line

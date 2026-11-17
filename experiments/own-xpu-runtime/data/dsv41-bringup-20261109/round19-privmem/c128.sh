@@ -78,7 +78,20 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
 nice -n 10 python3 -I $W/privmem_check.py $B 2>&1 | head -1 | sed "s/^/privmem: /" >> $sum
-MB=0; grep -q "source commit 0e4e3353ee" $W/build-tp128.log && MB=1
+MB=0; grep -qE "source commit (2f159ba705|e7848e2564|0e4e3353ee)" $W/build-tp128.log && MB=1
+CR=0; grep -qE "source commit (2f159ba705|e7848e2564)" $W/build-tp128.log && CR=1
+KD=0; grep -q "source commit 2f159ba705" $W/build-tp128.log && KD=1
+say "kvdedup-2 (OWN_KV_DEDUP_CK) in this build: $KD"
+say "idxbc-2 (OWN_IDX_CK_R) in this build: $CR"
+# idxbc-2's bench first (one card, the cards idle): check-sized index scores (2-6 tokens) at one card's share of a
+# 1M (166K / 83K rows) and a 194K (32K / 16K) check, every form against IndexerScoreBM bit for bit
+if [ $CR = 1 ] && [ -x $W/test_index_score_px_tp128 ]; then
+  for m in 2 4 6; do
+    pre; ONEAPI_DEVICE_SELECTOR=level_zero:1 BENCH_M=$m BENCH_LENS=33000,166000 timeout 300 $W/test_index_score_px_tp128 > $D/tsx-m$m.log 2>&1
+    say "tsx m=$m: $(tail -1 $D/tsx-m$m.log)"; grep -E "^[12] " $D/tsx-m$m.log | sed "s/^/tsx m=$m: /" >> $sum
+    tail -1 $D/tsx-m$m.log | grep -q "^PASS" || stop "tsx m=$m: the bench did not pass"
+  done
+fi
 say "batched form (OWN_IDX_DTOPK_MB) in this build: $MB"
 run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
 run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL
@@ -102,5 +115,17 @@ grep -q "SAME AS the plain" $D/s200k_d.log || stop "s200k_d: no SAME AS the plai
 if [ $MB = 1 ]; then
   run s200k_mb $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_mb-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_DTOPK_MB=1
   grep -q "SAME AS the plain" $D/s200k_mb.log || stop "s200k_mb: no SAME AS the plain line"
+fi
+if [ $CR = 1 ]; then # idxbc-2 with guessing at 194K: identical, and its check cost against s200k_d
+  run s200k_r2 $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_r2-spec.txt OWN_VERIFY_REF=$R200 OWN_IDX_CK_R=2
+  grep -q "SAME AS the plain" $D/s200k_r2.log || stop "s200k_r2: no SAME AS the plain line"
+  grep -h "OWN_IDX_CK_R" $D/s200k_r2.log | head -1 | sed "s/^/s200k_r2: /" >> $sum
+fi
+if [ $KD = 1 ]; then # kvdedup-2: the check mode (every staged row through its slot against the full mirror) with guessing
+  run s200k_kd2 $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_kd2-spec.txt OWN_VERIFY_REF=$R200 OWN_KV_DEDUP_CK=1 OWN_KV_SHARD=2
+  grep -q "OWN_KV_SHARD=2 check: ALL SAME" $D/s200k_kd2.log || stop "s200k_kd2: the kvshard check did not end ALL SAME"
+  grep -h "OWN_KV_SHARD=2 check: card 0\|OWN_KV_SHARD=2 check: ALL" $D/s200k_kd2.log | cut -c1-260 | sed "s/^/s200k_kd2: /" >> $sum
+  run s200k_kd $x200 1024 $(mx $x200 1024) $R200 1024 $PL $P5 $GS OWN_SPEC_LOG=$D/s200k_kd-spec.txt OWN_VERIFY_REF=$R200 OWN_KV_DEDUP_CK=1
+  grep -q "SAME AS the plain" $D/s200k_kd.log || stop "s200k_kd: no SAME AS the plain line"
 fi
 say "ALLDONE $(date '+%F %T'): $n fresh starts identical to their references"

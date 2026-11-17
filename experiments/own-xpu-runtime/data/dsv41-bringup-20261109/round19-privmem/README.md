@@ -136,6 +136,21 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+## ab2p and lp1p on tp127 (2026-11-17 03:40-04:07)
+
+**ab2p** (`ab2p-summary.txt`, 10K read, two rounds each, alternating, all identical): defaults 687.3 / 687.0 tok/s;
+`OWN_PRT=1` 653.2 / 653.5; `OWN_MT_DSPLIT=0` 638.5 / 637.4; both 602.8 / 603.0. The exchange-saving splits pay even in
+the serial (stable) mode: defaults stay; lever closed.
+
+**lp1p** (`lp1p-*-profile.txt`, card 2, `OWN_GPROF=2`): plain writing profiled at 95K 79.84 tok/s and at 388K 79.40
+(profiling slows both alike): plain one-token steps hardly grow from 95K to 388K. Guessing cycles (dtopk-2 on), per
+check token, 194K against the code prompt (5.67 -> 6.13 ms): KvGather +0.32 ms (kvshard's pulled rows; checks stage
+every token's 512 rows, though consecutive tokens list mostly the same rows), SparseOutF over 512 + window rows +0.29
+(fixed past 512 rows), IndexerScoreBM +0.15 (grows with the rows: ~0.7 at 993K), IndexerScoreBCM +0.13 (fixed past
+16K), dtopk-2's selects TopKSelD1 + DQ + DQB +0.19, XchgPull2 +0.13. Levers in tp128 (all opt-in, gated in c128):
+dtopk-2 batched launches (`OWN_IDX_DTOPK_MB`), idxbc-2 (`OWN_IDX_CK_R`: the checks' scores in idxbc-1's broadcast
+form), kvdedup-2 (`OWN_KV_DEDUP_CK`: a row several tokens list is staged once; the later entries' slots name it).
+
 ## c127 passed: 1M writing with guessing 104.5 -> 130.7 tok/s (dtopk-2), identical (2026-11-17 02:30-03:40)
 
 `c127-summary.txt` (tp127 = 85d7bb0a8c): 12 fresh starts, all identical to their references, no fault line.
