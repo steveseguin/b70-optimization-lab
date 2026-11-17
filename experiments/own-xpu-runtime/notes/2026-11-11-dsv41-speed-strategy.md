@@ -351,6 +351,7 @@ Worked (all bit-identical):
 | Window append per shape in checks (wa-2, `OWN_ATT_WA=2`, tg100; default since tp102) | checks of 2-6 tokens 0.15-0.37 ms cheaper (code) | +0.5 % short prompts, +4.1 % after a 3K prompt |
 | Copy the routed kernels' grid tables from a constant image instead of computing them per work-group (xperm-2, `-DOWN_R2_TAB_COPY=1`, tg101) + IQ2_S gate+up at 128 registers (`OWN_PAIR_G128=1`) | IQ1_S gate+up 27.3 -> 23.5 us | plain 101.5 -> 103.9 tok/s (+2.4 %); G128 pays only with the copy |
 | Riders: independent small work inside a big launch | mix dots in the norm launch, shared rows with the router (§14-18) | several % |
+| Checks select by candidates at long context (dtopk-2, `OWN_IDX_DTOPK_M`, c127; default from tp128): each card keeps its own top 512 per token, only the candidates travel (dtopk-1 per token) | 1M + guessing: writing 104.46 -> 130.66 tok/s, check 28.63 -> 22.38 ms per cycle; 194K 125.6 -> 127.5; check mode 32,610 lists 0 differ | +25 % at 1M |
 | Packed weight rows for sub-group block loads | §p7-p10 era, 9 -> 28 tok/s | large |
 | Pull exchanges for big slices, push for tiny ones | prompt 91 -> 179 tok/s (§21) | large |
 | Keep idle cards warm | 5.3 -> 9.1 tok/s (early) | large |
