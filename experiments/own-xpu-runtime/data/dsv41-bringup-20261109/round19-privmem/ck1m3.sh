@@ -4,6 +4,7 @@
 # 1.44 GiB free after load, ~1.20 while reading (tp125). tp126 adds idxrows-2 (~0.17 GiB per card at 1M). s1m: the
 # 1M prompt with guessing, kvshard (de-dup and the card rope fill by default in tp126), against x1m_a (1024 answers,
 # SAME AS the plain run). A refusal for card memory at load is recorded (soft), the free-memory lines kept.
+# hl232 first: the prompt-block head split 3,3,2,3,3,2 (card 2 holds half a group fewer rows), A/B at 3K / 10K.
 set -u
 W=/home/steve/dsv41-work; L=/home/steve/b70-optimization-lab; B=$W/own_run_v41_tp120
 c122s=$(ls -td $W/runs/c122-*/ 2>/dev/null | head -1)
@@ -78,6 +79,14 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   pre; memwait; n=$((n+1)); t0=$(date '+%F %T')
   echo "$name start $(date '+%T.%N' | cut -c1-12)" >> $marks; sync -f $marks
   env "$@" OWN_PROMPT=$pr OWN_EOS=-1 $B - $nt $D/$name-ids.txt $m > $D/$name.log 2>&1; rc=$?
+  # the start race (ck1m2 x1m_b): the runtime's post-build host spike inside the upload's first seconds ends the load
+  # (no card work yet; hostfloor-2 pauses instead, from tp127): once more after 30 s
+  if [ $rc -ne 0 ] && grep -q "fell below the floor during upload" $D/$name.log && ! grep -q "prompt:" $D/$name.log; then
+    mv $D/$name.log $D/$name-try1.log; say "$name: host floor at the upload's start (try 1 kept as $name-try1.log), once more"
+    sleep 30; memwait; pre
+    echo "$name start2 $(date '+%T.%N' | cut -c1-12)" >> $marks; sync -f $marks
+    env "$@" OWN_PROMPT=$pr OWN_EOS=-1 $B - $nt $D/$name-ids.txt $m > $D/$name.log 2>&1; rc=$?
+  fi
   echo "$name end $(date '+%T.%N' | cut -c1-12) rc $rc" >> $marks; sync -f $marks
   journalctl -k --since "$t0" -o short-precise > $D/$name-kernel.txt 2>&1
   grep -h "prompt:\|decode:\|spec decode\|tile 2 card.*free after load\|rror\|fatal\|timed out\|MISMATCH\|DIFFER" $D/$name.log | cut -c1-1500 | sed "s/^/$name: /" >> $sum
@@ -90,7 +99,32 @@ K="OWN_KV_SHARD=1"; [ "$B" = "$W/own_run_v41_tp123" ] && K="$K $(cat $W/idxrp-va
 # tp125 gated with kvdedup-1 + ropedev-1 identical at 1M (c125 x1m_rd): use them (fewer card-to-card copies, no rope host copies)
 [ "$B" = "$W/own_run_v41_tp125" ] && grep -q "^x1m_rd IDS1024_SAME" ${c125s}summary.txt && grep -q "kvdedup-1 cases on" ${c125s}summary.txt && K="$K OWN_KV_DEDUP=1 OWN_ROPE_DEV=1"
 say "engine $B, switches: $K"
+# hl232 (2026-11-17): prompt-block heads 3,3,2,3,3,2 instead of 3,3,3,3,2,2. Cards hold the q_b / output-a rows of both
+# layouts (whole groups for one-token steps, the head split for blocks of >= 16), so card 2 holds 2.5 groups today
+# (heads 16-35) and 2 with this split (16-31); card 3 drops to 1.5. Same sums per head and output-a row (only which card
+# computes them). A/B interleaved at 3K and 10K (identical answers required, a difference stops); s1m uses the split
+# when both are identical.
+H232="OWN_TP_HEADS=3,3,2,3,3,2 OWN_TP_HEADS_MIN=16"
+run p3k_d $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
+run p3k_h $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5 $H232
+run p10k_h $W/prompts/p10k-ids.txt 64 16384 $W/runs/tg107/p10k_bcs-ids.txt 64 $PL $P5 $K $H232
+run p10k_d $W/prompts/p10k-ids.txt 64 16384 $W/runs/tg107/p10k_bcs-ids.txt 64 $PL $P5 $K
+# m1 (2026-11-17): the same split for one-token steps and checks too (OWN_TP_HEADS_MIN=1: no second layout, so no
+# duplicated rows: card 2 holds 8 heads instead of 20, card 5 8 instead of 16). Costs pair swaps in one-token steps
+# and checks. Exactness + speed at 3K plain and in guessing (code); s1m_m1 below only if s1m is refused for card memory.
+M1="OWN_TP_HEADS=3,3,2,3,3,2 OWN_TP_HEADS_MIN=1"
+run p3k_m1 $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5 $M1
+spec code_m1 code $M1
+spec code_d code
+grep -h "heads per card\|free after load" $D/p3k_h.log $D/p3k_d.log $D/p3k_m1.log | cut -c1-200 | sed "s/^/hl232: /" >> $sum
+HS=""; grep -q "^p3k_h IDS256_SAME" $sum && grep -q "^p10k_h IDS64_SAME" $sum && HS="$H232"
+say "s1m head split: ${HS:-default}"
 x1m=$W/prompts/lc/x1m-ids.txt; A=$(ls -td $W/runs/ck1m-*/ | head -1)x1m_a-ids.txt
-soft s1m $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC $K OWN_SPEC_LOG=$D/s1m-spec.txt OWN_VERIFY_REF=$A
+soft s1m $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC $K $HS OWN_SPEC_LOG=$D/s1m-spec.txt OWN_VERIFY_REF=$A
 grep -h "free after load\|need .* GiB\|tpd-mem\|OWN_IDX_ROWS\|OWN_KV_DEDUP=1: card 0" $D/s1m.log | head -16 | cut -c1-220 | sed "s/^/s1m: /" >> $sum
+if grep -q "not enough free card memory" $D/s1m.log && grep -q "^p3k_m1 IDS256_SAME" $sum && grep -q "^code_m1 GLOG_SAME" $sum; then
+  grep -h "not enough free card memory" $D/s1m.log | cut -c1-400 | sed "s/^/s1m refused: /" >> $sum
+  soft s1m_m1 $x1m 1024 $(mx $x1m 1024) $A 1024 $PL $P5 $SPEC OWN_SPEC_TAU=0.5 $VOC $K $M1 OWN_SPEC_LOG=$D/s1m_m1-spec.txt OWN_VERIFY_REF=$A
+  grep -h "free after load\|not enough free card memory\|OWN_IDX_ROWS" $D/s1m_m1.log | head -10 | cut -c1-300 | sed "s/^/s1m_m1: /" >> $sum
+fi
 say "ALLDONE $(date '+%F %T'): $n fresh starts"

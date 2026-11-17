@@ -136,6 +136,26 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+### x1m_b did not load: a start race on host memory (hostfloor-2)
+
+x1m_b (dtopk + skip39 off, against x1m_a) ended 7 s after its start, before any card work: "host MemAvailable fell
+below the floor during upload". mem.txt: 13.7 GB at the start, AnonPages +5.2 GB while the six contexts' kernels
+load, then the runtime's post-build spike (~2 GB for a second or two) fell inside the upload's first seconds: 1,638
+MiB sampled at 00:36:40.2 (floor 1,600), back to 6.1 GB 0.5 s later. x1mq's start dipped to 1,906 the same way and
+passed. Fix in the source (0e832319e5, from tp127): a dip during the upload pauses the copies up to 15 s (nothing is
+allocated meanwhile) and prints "hostfloor-2: ... paused N times"; a dip that does not pass still ends the load.
+ck1m3 retries such a start once after 30 s (tp126 has no pause).
+
+### Next: guessing at 1M needs ~0.2 GiB more on card 2 (ck1m3)
+
+The draft costs 1.40 GiB per card (s200k vs x200k: 183.6 vs 175.1 GB uploaded; its window ring is 128 rows, so no
+context term). At 1M card 2 had 1.44 GiB free after load (x1m_rd), card 5 1.62; the load guard keeps 384 MiB. tp126's
+idxrows-2 gives ~0.16. Card 2 holds the q_b / output-a rows of both attention layouts (whole groups for one-token
+steps, 12 heads for prompt blocks: heads 16-35 = 2.5 groups, ~0.19 GiB per half group). ck1m3: (1) hl232 = prompt
+heads 3,3,2,3,3,2 (card 2: heads 16-31, 2 groups), A/B at 3K / 10K, then s1m (1M + guessing) with it; (2) m1 =
+the same split for every step (`OWN_TP_HEADS_MIN=1`: no second layout, card 2 / 5 hold 8 heads), exactness + speed
+at 3K and in guessing, used for s1m_m1 only if s1m is refused for card memory.
+
 ## c125: kvdedup-1 and exact ropedev-1 gated (2026-11-16 22:34-23:44, tp125 = 3c77277c87)
 
 `c125-summary.txt`: **8 fresh starts identical to their references.**
