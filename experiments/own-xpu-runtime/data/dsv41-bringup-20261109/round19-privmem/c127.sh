@@ -1,5 +1,6 @@
 #!/bin/bash
-# c127 (2026-11-17): gate of tp127 = tp126 + hostfloor-2 + idxbc-1 on by default, every case WITHOUT switches:
+# c127 (2026-11-17): gate of tp127 = tp126 + hostfloor-2 + idxbc-1 on by default + hl232 (prompt heads 3,3,2,3,3,2
+# by default), every case WITHOUT switches:
 # p3k, plain, guessing code / analysis (GLOG), x95k (the idxbc-1 start line), x200k against R200 and the same with
 # OWN_IDX_BC=0 (speed A/B), x200k with OWN_KV_SHARD=1 against R200, then x1m with OWN_KV_SHARD=1 against x1m_a (1M read
 # with idxbc-1: c125 x1m_rd read 550.8 tok/s). Stable mode, preflight, first fault / difference = STOP. (c126 was the
@@ -77,6 +78,7 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
 run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
+grep -q "heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 12<->4 12<->3 8" $D/p3k.log || stop "p3k: no hl232 head line (default)"
 run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL
 spec code code
 spec analysis analysis

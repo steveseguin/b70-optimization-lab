@@ -136,6 +136,22 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+### c126 passed; hl232 and m1 measured (2026-11-17 00:59-01:23)
+
+`c126-summary.txt`: tp126 (kvdedup-1 + ropedev-1 on by default, idxrows-2) **7 fresh starts identical**: 3K read
+683.3 tok/s / writing 100.40, x95k 665.2, x200k 649.8 / 95.56, x200k with kvshard 635.7 / 91.51.
+
+`ck1m3-summary-partial.txt`, all identical to their references, A/B in one session:
+
+| arm | 3K read | 3K writing | 10K read | guessing (code) | free GiB after load at 3K, cards 0-5 |
+|---|---|---|---|---|---|
+| default 3,3,3,3,2,2 (MIN 16) | 680.9 | 99.95 | 664.5 | 146.75 | 3.66 3.49 **3.13** 3.49 3.49 3.30 |
+| hl232: 3,3,2,3,3,2 (MIN 16) | 682.3 | 99.91 | 666.9 | - | 3.66 3.49 **3.30** 3.66 3.49 3.30 |
+| m1: 3,3,2,3,3,2, MIN 1 (no second layout) | 680.3 | 97.87 | - | 146.85 (GLOG same) | 3.66 3.66 3.65 3.66 3.66 3.65 |
+
+hl232 frees 0.17 GiB on card 2 (and card 3) at no cost: default in tp127 (84453b5c74). m1 frees 0.35-0.52 GiB on
+the tight cards; plain writing -2 %, guessing unchanged: a launch option for runs that need the memory (guessing at 1M).
+
 ### idxbc-1: the prompt index scores 18-21 % faster, bit for bit (c126 tsx3, 2026-11-17 01:01)
 
 `c126-tsx3-idxbc.log` (bench test_index_score_px, card 1, one card's 43 tokens of a half): IndexerScoreBMS keeps the

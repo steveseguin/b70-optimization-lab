@@ -1,0 +1,184 @@
+ck1m3 start 2026-11-17 01:18:15 source own_run_v41_tp126 boot 22dad665 binary a7db68f7d819ea51
+smt active 0, cpus 8, bios 11.02
+engine /home/steve/dsv41-work/own_run_v41_tp126, switches: OWN_KV_SHARD=1
+p3k_d: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65198448, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p3k_d: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k_d: malloc_trim after the load: host MemAvailable 5521 -> 5704 MiB
+p3k_d: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+p3k_d: prompt: 3323 tokens read on the cards in 4.92s (680.9 tok/s; first step 0.79s incl. kernel build), first token 2581
+p3k_d: decode: 255 steps after the first, 0.010 s/step, 99.95 tok/s
+p3k_d: host io during decode: 42.5 MiB read from disk, 1 major page faults; engram rows 131.4 us per step and card (slowest card 133.5 us; copy + decode launch calls 12.7 us)
+p3k_d: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_d exit 0 (case 1)
+p3k_d IDS256_SAME
+p3k_h: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65198448, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p3k_h: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k_h: malloc_trim after the load: host MemAvailable 5510 -> 5701 MiB
+p3k_h: tile 2 card 0000:43:00.0: 3.30 GiB free after load
+p3k_h: prompt: 3323 tokens read on the cards in 4.92s (682.3 tok/s; first step 0.80s incl. kernel build), first token 2581
+p3k_h: decode: 255 steps after the first, 0.010 s/step, 99.91 tok/s
+p3k_h: host io during decode: 43.7 MiB read from disk, 27 major page faults; engram rows 102.9 us per step and card (slowest card 105.3 us; copy + decode launch calls 13.2 us)
+p3k_h: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_h exit 0 (case 2)
+p3k_h IDS256_SAME
+p10k_h: OWN_KV_SHARD=1: per card 0.01 GiB of chunks (2048 rows per chunk, 6 owners) + 0.02 GiB of tails (4096 rows x 4) + 0.25 GiB of staging rows (512 tokens x 512); no full mirrors; OWN_KV_PUSH=1: prompt halves push the rows on the copy engines, the rest pulls
+p10k_h: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65284464, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p10k_h: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.04 GiB less per card
+p10k_h: malloc_trim after the load: host MemAvailable 3914 -> 4106 MiB
+p10k_h: tile 2 card 0000:43:00.0: 3.02 GiB free after load
+p10k_h: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4820 MiB
+p10k_h: prompt: 10621 tokens read on the cards in 16.03s (666.9 tok/s; first step 0.87s incl. kernel build), first token 2581
+p10k_h: decode: 63 steps after the first, 0.011 s/step, 94.33 tok/s
+p10k_h: host io during decode: 7.7 MiB read from disk, 0 major page faults; engram rows 216.9 us per step and card (slowest card 220.0 us; copy + decode launch calls 13.8 us)
+p10k_h: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_h: OWN_KV_SHARD=1: card 0: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 0: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 21.3 %, peers' pushes 11.9 %); pushed 218766 rows to each of 5 peers (1.04 GiB out in all), 1863 rows at most per half
+p10k_h: OWN_KV_SHARD=1: card 1: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 1: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 9.4 %, peers' pushes 23.7 %); pushed 97201 rows to each of 5 peers (0.46 GiB out in all), 1559 rows at most per half
+p10k_h: OWN_KV_SHARD=1: card 2: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 2: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 2.1 %, peers' pushes 31.0 %); pushed 21284 rows to each of 5 peers (0.10 GiB out in all), 684 rows at most per half
+p10k_h: OWN_KV_SHARD=1: card 3: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 3: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.3 %, peers' pushes 32.8 %); pushed 3499 rows to each of 5 peers (0.02 GiB out in all), 367 rows at most per half
+p10k_h: OWN_KV_SHARD=1: card 4: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 4: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.0 %, peers' pushes 33.1 %); pushed 0 rows to each of 5 peers (0.00 GiB out in all), 0 rows at most per half
+p10k_h: OWN_KV_SHARD=1: card 5: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_h: OWN_KV_PUSH: card 5: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.0 %, peers' pushes 33.1 %); pushed 0 rows to each of 5 peers (0.00 GiB out in all), 0 rows at most per half
+p10k_h: tpd: slow block at position 0 (512 tokens, step 1): free GiB per card 3.172 2.999 2.822 3.172 2.999 2.822; host MemAvailable 4973 MiB; card 0: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.002, share 0.013; faults 0 major 119 minor, switches 51 own 3 forced; then gate 0.000 s), launches done +0.818 s, done +0.873 s; card 1: woke +0.000 s, engram rows 0.031 s (copy+decode calls 0.003, share 0.020; faults 1 major 5420 minor, switches 280 own 5 forced; then gate 0.002 s), launches done +0.818 s, done +0.873 s; card 2: woke +0.000 s, engram rows 0.035 s (copy+decode calls 0.003, share 0.020; faults 15 major 6548 minor, switches 445 own 0 forced; then gate 0.002 s), launches done +0.818
+p10k_h: tpd: slow block at position 512 (512 tokens, step 2): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4950 MiB; card 0: woke +0.000 s, engram rows 0.017 s (copy+decode calls 0.001, share 0.012; faults 0 major 3845 minor, switches 109 own 0 forced; then gate 0.000 s), launches done +0.708 s, done +0.761 s; card 1: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.001, share 0.011; faults 0 major 3161 minor, switches 99 own 0 forced; then gate 0.000 s), launches done +0.708 s, done +0.761 s; card 2: woke +0.000 s, engram rows 0.016 s (copy+decode calls 0.001, share 0.012; faults 0 major 3538 minor, switches 133 own 0 forced; then gate 0.001 s), launches done +0.7
+p10k_h: tpd: slow block at position 1024 (512 tokens, step 3): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4904 MiB; card 0: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.001, share 0.013; faults 0 major 2690 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.720 s, done +0.772 s; card 1: woke +0.000 s, engram rows 0.016 s (copy+decode calls 0.000, share 0.014; faults 0 major 2663 minor, switches 0 own 1 forced; then gate 0.000 s), launches done +0.720 s, done +0.772 s; card 2: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.014; faults 0 major 2822 minor, switches 0 own 1 forced; then gate 0.000 s), launches done +0.719 s
+p10k_h: tpd: slow block at position 1536 (512 tokens, step 4): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4877 MiB; card 0: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.001, share 0.012; faults 0 major 2261 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.716 s, done +0.768 s; card 1: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.013; faults 0 major 2261 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.716 s, done +0.768 s; card 2: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.013; faults 0 major 2428 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.716 s
+p10k_h: tpd: slow block at position 2048 (512 tokens, step 5): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4862 MiB; card 0: woke +0.000 s, engram rows 0.016 s (copy+decode calls 0.000, share 0.014; faults 0 major 3375 minor, switches 29 own 3 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 1: woke +0.000 s, engram rows 0.016 s (copy+decode calls 0.000, share 0.015; faults 0 major 3122 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 2: woke +0.000 s, engram rows 0.016 s (copy+decode calls 0.000, share 0.013; faults 0 major 3798 minor, switches 52 own 0 forced; then gate 0.000 s), launches done +0.709
+p10k_h: tpd: slow block at position 2560 (512 tokens, step 6): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4858 MiB; card 0: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.012; faults 0 major 2534 minor, switches 38 own 0 forced; then gate 0.000 s), launches done +0.710 s, done +0.762 s; card 1: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.013; faults 0 major 2290 minor, switches 0 own 1 forced; then gate 0.000 s), launches done +0.710 s, done +0.762 s; card 2: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.011; faults 0 major 2698 minor, switches 31 own 1 forced; then gate 0.000 s), launches done +0.710
+p10k_h: tpd: slow block at position 3072 (512 tokens, step 7): free GiB per card 3.146 2.972 2.796 3.146 2.973 2.796; host MemAvailable 4857 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 907 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.711 s, done +0.762 s; card 1: woke +0.000 s, engram rows 0.012 s (copy+decode calls 0.000, share 0.010; faults 0 major 900 minor, switches 0 own 2 forced; then gate 0.000 s), launches done +0.711 s, done +0.762 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 1166 minor, switches 1 own 0 forced; then gate 0.001 s), launches done +0.711 s, 
+p10k_h: tpd: slow block at position 3584 (512 tokens, step 8): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4850 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.011; faults 0 major 1227 minor, switches 1 own 0 forced; then gate 0.001 s), launches done +0.708 s, done +0.760 s; card 1: woke +0.000 s, engram rows 0.012 s (copy+decode calls 0.001, share 0.011; faults 0 major 1224 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.708 s, done +0.760 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1582 minor, switches 10 own 0 forced; then gate 0.001 s), launches done +0.708 
+p10k_h: tpd: slow block at position 4096 (512 tokens, step 9): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4849 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 866 minor, switches 2 own 0 forced; then gate 0.000 s), launches done +0.705 s, done +0.757 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 845 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.705 s, done +0.757 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 1142 minor, switches 10 own 0 forced; then gate 0.000 s), launches done +0.705 s,
+p10k_h: tpd: slow block at position 4608 (512 tokens, step 10): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4845 MiB; card 0: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 635 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.708 s, done +0.760 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 540 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.708 s, done +0.760 s; card 2: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 1177 minor, switches 4 own 0 forced; then gate 0.001 s), launches done +0.708 s,
+p10k_h: tpd: slow block at position 5120 (512 tokens, step 11): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4849 MiB; card 0: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 542 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 495 minor, switches 0 own 1 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 824 minor, switches 3 own 1 forced; then gate 0.000 s), launches done +0.709 s, 
+p10k_h: tpd: slow block at position 5632 (512 tokens, step 12): free GiB per card 3.136 2.963 2.787 3.137 2.963 2.787; host MemAvailable 4846 MiB; card 0: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 414 minor, switches 0 own 3 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 1: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 363 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.709 s, done +0.761 s; card 2: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.001, share 0.008; faults 0 major 929 minor, switches 3 own 0 forced; then gate 0.000 s), launches done +0.709 s, 
+p10k_h exit 0 (case 3)
+p10k_h IDS64_SAME
+p10k_d: OWN_KV_SHARD=1: per card 0.01 GiB of chunks (2048 rows per chunk, 6 owners) + 0.02 GiB of tails (4096 rows x 4) + 0.25 GiB of staging rows (512 tokens x 512); no full mirrors; OWN_KV_PUSH=1: prompt halves push the rows on the copy engines, the rest pulls
+p10k_d: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65284464, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p10k_d: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.04 GiB less per card
+p10k_d: malloc_trim after the load: host MemAvailable 3896 -> 4079 MiB
+p10k_d: tile 2 card 0000:43:00.0: 2.84 GiB free after load
+p10k_d: tpd-mem: position 7680 (block of 512, step 16): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4864 MiB
+p10k_d: prompt: 10621 tokens read on the cards in 16.09s (664.5 tok/s; first step 0.87s incl. kernel build), first token 2581
+p10k_d: decode: 63 steps after the first, 0.011 s/step, 94.23 tok/s
+p10k_d: host io during decode: 11.6 MiB read from disk, 19 major page faults; engram rows 128.8 us per step and card (slowest card 131.5 us; copy + decode launch calls 13.9 us)
+p10k_d: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p10k_d: OWN_KV_SHARD=1: card 0: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 0: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 21.3 %, peers' pushes 11.9 %); pushed 218766 rows to each of 5 peers (1.04 GiB out in all), 1863 rows at most per half
+p10k_d: OWN_KV_SHARD=1: card 1: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 1: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 9.4 %, peers' pushes 23.7 %); pushed 97201 rows to each of 5 peers (0.46 GiB out in all), 1559 rows at most per half
+p10k_d: OWN_KV_SHARD=1: card 2: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 2: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 2.1 %, peers' pushes 31.0 %); pushed 21284 rows to each of 5 peers (0.10 GiB out in all), 684 rows at most per half
+p10k_d: OWN_KV_SHARD=1: card 3: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 3: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.3 %, peers' pushes 32.8 %); pushed 3499 rows to each of 5 peers (0.02 GiB out in all), 367 rows at most per half
+p10k_d: OWN_KV_SHARD=1: card 4: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 4: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.0 %, peers' pushes 33.1 %); pushed 0 rows to each of 5 peers (0.00 GiB out in all), 0 rows at most per half
+p10k_d: OWN_KV_SHARD=1: card 5: 504 one-token / 8 block fetches pulled, 336 halves pushed
+p10k_d: OWN_KV_PUSH: card 5: 1028965 rows staged in 336 halves (tail 66.9 %, own chunk 0.0 %, peers' pushes 33.1 %); pushed 0 rows to each of 5 peers (0.00 GiB out in all), 0 rows at most per half
+p10k_d: tpd: slow block at position 0 (512 tokens, step 1): free GiB per card 3.172 2.999 2.640 2.999 3.008 2.822; host MemAvailable 5003 MiB; card 0: woke +0.000 s, engram rows 0.022 s (copy+decode calls 0.002, share 0.020; faults 0 major 1001 minor, switches 151 own 2 forced; then gate 0.000 s), launches done +0.818 s, done +0.872 s; card 1: woke +0.000 s, engram rows 0.028 s (copy+decode calls 0.002, share 0.021; faults 0 major 4661 minor, switches 191 own 0 forced; then gate 0.002 s), launches done +0.818 s, done +0.872 s; card 2: woke +0.000 s, engram rows 0.035 s (copy+decode calls 0.002, share 0.023; faults 0 major 7298 minor, switches 234 own 0 forced; then gate 0.002 s), launches done +0.81
+p10k_d: tpd: slow block at position 512 (512 tokens, step 2): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4985 MiB; card 0: woke +0.001 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.012; faults 0 major 2242 minor, switches 0 own 2 forced; then gate 0.000 s), launches done +0.705 s, done +0.758 s; card 1: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.013; faults 0 major 2246 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.706 s, done +0.758 s; card 2: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.013; faults 0 major 2344 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.705 s,
+p10k_d: tpd: slow block at position 1024 (512 tokens, step 3): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4956 MiB; card 0: woke +0.000 s, engram rows 0.018 s (copy+decode calls 0.001, share 0.013; faults 0 major 3583 minor, switches 98 own 12 forced; then gate 0.001 s), launches done +0.722 s, done +0.775 s; card 1: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.014; faults 0 major 1380 minor, switches 62 own 40 forced; then gate 0.000 s), launches done +0.723 s, done +0.774 s; card 2: woke +0.000 s, engram rows 0.018 s (copy+decode calls 0.000, share 0.013; faults 0 major 4153 minor, switches 106 own 3 forced; then gate 0.001 s), launches done +0
+p10k_d: tpd: slow block at position 1536 (512 tokens, step 4): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4937 MiB; card 0: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.012; faults 0 major 2268 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.718 s, done +0.770 s; card 1: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.012; faults 0 major 2267 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.718 s, done +0.770 s; card 2: woke +0.000 s, engram rows 0.014 s (copy+decode calls 0.000, share 0.013; faults 0 major 2434 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.718 s
+p10k_d: tpd: slow block at position 2048 (512 tokens, step 5): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4902 MiB; card 0: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.013; faults 0 major 3293 minor, switches 25 own 0 forced; then gate 0.001 s), launches done +0.709 s, done +0.761 s; card 1: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.013; faults 0 major 3313 minor, switches 19 own 0 forced; then gate 0.001 s), launches done +0.709 s, done +0.761 s; card 2: woke +0.000 s, engram rows 0.015 s (copy+decode calls 0.000, share 0.014; faults 0 major 3457 minor, switches 19 own 0 forced; then gate 0.001 s), launches done +0.70
+p10k_d: tpd: slow block at position 2560 (512 tokens, step 6): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4888 MiB; card 0: woke +0.000 s, engram rows 0.013 s (copy+decode calls 0.000, share 0.012; faults 0 major 2379 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.713 s, done +0.766 s; card 1: woke +0.000 s, engram rows 0.013 s (copy+decode calls 0.000, share 0.012; faults 0 major 2388 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.713 s, done +0.765 s; card 2: woke +0.000 s, engram rows 0.013 s (copy+decode calls 0.000, share 0.012; faults 0 major 2527 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.713 s
+p10k_d: tpd: slow block at position 3072 (512 tokens, step 7): free GiB per card 3.146 2.972 2.613 2.973 2.982 2.796; host MemAvailable 4888 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 920 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.711 s, done +0.762 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 921 minor, switches 0 own 1 forced; then gate 0.001 s), launches done +0.711 s, done +0.762 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1013 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.711 s, 
+p10k_d: tpd: slow block at position 3584 (512 tokens, step 8): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4886 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1219 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.713 s, done +0.765 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1224 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.713 s, done +0.765 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1332 minor, switches 0 own 0 forced; then gate 0.001 s), launches done +0.713 s
+p10k_d: tpd: slow block at position 4096 (512 tokens, step 9): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4881 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 987 minor, switches 8 own 0 forced; then gate 0.001 s), launches done +0.711 s, done +0.763 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 1024 minor, switches 14 own 0 forced; then gate 0.001 s), launches done +0.711 s, done +0.763 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.010; faults 0 major 1056 minor, switches 11 own 0 forced; then gate 0.001 s), launches done +0.711 
+p10k_d: tpd: slow block at position 4608 (512 tokens, step 10): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4882 MiB; card 0: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 656 minor, switches 0 own 1 forced; then gate 0.000 s), launches done +0.714 s, done +0.766 s; card 1: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 745 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.714 s, done +0.766 s; card 2: woke +0.000 s, engram rows 0.011 s (copy+decode calls 0.000, share 0.009; faults 0 major 731 minor, switches 1 own 0 forced; then gate 0.000 s), launches done +0.714 s, 
+p10k_d: tpd: slow block at position 5120 (512 tokens, step 11): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4878 MiB; card 0: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 636 minor, switches 9 own 0 forced; then gate 0.001 s), launches done +0.711 s, done +0.764 s; card 1: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 687 minor, switches 9 own 0 forced; then gate 0.001 s), launches done +0.712 s, done +0.764 s; card 2: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.000, share 0.009; faults 0 major 693 minor, switches 8 own 0 forced; then gate 0.001 s), launches done +0.712 s, 
+p10k_d: tpd: slow block at position 5632 (512 tokens, step 12): free GiB per card 3.136 2.963 2.604 2.963 2.973 2.787; host MemAvailable 4879 MiB; card 0: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.001, share 0.009; faults 0 major 458 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.713 s, done +0.764 s; card 1: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.001, share 0.009; faults 0 major 494 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.713 s, done +0.764 s; card 2: woke +0.000 s, engram rows 0.010 s (copy+decode calls 0.001, share 0.009; faults 0 major 504 minor, switches 0 own 0 forced; then gate 0.000 s), launches done +0.713 s, 
+p10k_d exit 0 (case 4)
+p10k_d IDS64_SAME
+p3k_m1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 65198448, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+p3k_m1: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 86 (2 x 43) of 512: 0.01 GiB less per card
+p3k_m1: malloc_trim after the load: host MemAvailable 5503 -> 5686 MiB
+p3k_m1: tile 2 card 0000:43:00.0: 3.65 GiB free after load
+p3k_m1: prompt: 3323 tokens read on the cards in 4.98s (680.3 tok/s; first step 0.85s incl. kernel build), first token 2581
+p3k_m1: decode: 255 steps after the first, 0.010 s/step, 97.87 tok/s
+p3k_m1: host io during decode: 38.9 MiB read from disk, 16 major page faults; engram rows 95.1 us per step and card (slowest card 100.2 us; copy + decode launch calls 13.0 us)
+p3k_m1: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+p3k_m1 exit 0 (case 5)
+p3k_m1 IDS256_SAME
+code_m1: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 33140080, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+code_m1: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 43 (2 x 43) of 256: 0.00 GiB less per card
+code_m1: malloc_trim after the load: host MemAvailable 6277 -> 6467 MiB
+code_m1: tile 2 card 0000:43:00.0: 2.59 GiB free after load
+code_m1: prompt: 82 tokens read on the cards in 0.30s (356.9 tok/s; first step 0.25s incl. kernel build), first token 2581
+code_m1: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.48s = 146.85 tok/s; draft 1.82 ms + check 13.64 ms per cycle; SAME AS the plain run
+code_m1: host io during decode: 106.8 MiB read from disk, 67 major page faults; engram rows 267.3 us per step and card (slowest card 273.8 us; copy + decode launch calls 16.2 us)
+code_m1: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_m1 exit 0 (case 6)
+code_m1 IDS511_SAME
+code_m1 GLOG_SAME
+code_d: OWN_IDX_DTOPK=1: idxsplit-2's one-token layers select by candidates from 32768 rows (layer 20 past 2,048 blocks); candidate area at arena float 33140080, 30720 floats (at max_seq: 1 + 1 work-groups per card, 512 + 2048 pairs)
+code_d: OWN_IDX_ROWS=2: block index score rows per card 43, candidate rows 43 (2 x 43) of 256: 0.00 GiB less per card
+code_d: malloc_trim after the load: host MemAvailable 6497 -> 6689 MiB
+code_d: tile 2 card 0000:43:00.0: 2.07 GiB free after load
+code_d: prompt: 82 tokens read on the cards in 0.26s (354.4 tok/s; first step 0.21s incl. kernel build), first token 2581
+code_d: spec decode: 511 tokens in 225 cycles (2.27 per cycle; 286 of 365 guesses kept, 78.4 %) in 3.48s = 146.75 tok/s; draft 1.84 ms + check 13.64 ms per cycle; SAME AS the plain run
+code_d: host io during decode: 105.1 MiB read from disk, 10 major page faults; engram rows 264.3 us per step and card (slowest card 267.9 us; copy + decode launch calls 16.0 us)
+code_d: OWN_IDX_DTOPK=1: card 0: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d: OWN_IDX_DTOPK=1: card 1: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d: OWN_IDX_DTOPK=1: card 2: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d: OWN_IDX_DTOPK=1: card 3: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d: OWN_IDX_DTOPK=1: card 4: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d: OWN_IDX_DTOPK=1: card 5: 0 one-token index layers by candidates (0 with layer 20's blocks)
+code_d exit 0 (case 7)
+code_d IDS511_SAME
+code_d GLOG_SAME
+hl232: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 8 12<->4 12<->3 8
+hl232: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+hl232: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+hl232: tile 2 card 0000:43:00.0: 3.30 GiB free after load
+hl232: tile 3 card 0000:83:00.0: 3.66 GiB free after load
+hl232: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+hl232: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+hl232: tensor parallel heads per card (blocks of >= 16 tokens): 12<->1 12<->0 12<->3 12<->2 8 8
+hl232: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+hl232: tile 1 card 0000:23:00.0: 3.49 GiB free after load
+hl232: tile 2 card 0000:43:00.0: 3.13 GiB free after load
+hl232: tile 3 card 0000:83:00.0: 3.49 GiB free after load
+hl232: tile 4 card 0000:a3:00.0: 3.49 GiB free after load
+hl232: tile 5 card 0000:e3:00.0: 3.30 GiB free after load
+hl232: tensor parallel heads per card: 12<->1 12<->0 8 12<->4 12<->3 8
+hl232: tile 0 card 0000:03:00.0: 3.66 GiB free after load
+hl232: tile 1 card 0000:23:00.0: 3.66 GiB free after load
+hl232: tile 2 card 0000:43:00.0: 3.65 GiB free after load
+hl232: tile 3 card 0000:83:00.0: 3.66 GiB free after load
+hl232: tile 4 card 0000:a3:00.0: 3.66 GiB free after load
+hl232: tile 5 card 0000:e3:00.0: 3.65 GiB free after load
+s1m head split: OWN_TP_HEADS=3,3,2,3,3,2 OWN_TP_HEADS_MIN=16
