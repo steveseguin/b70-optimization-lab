@@ -136,6 +136,32 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+## c127 passed: 1M writing with guessing 104.5 -> 130.7 tok/s (dtopk-2), identical (2026-11-17 02:30-03:40)
+
+`c127-summary.txt` (tp127 = 85d7bb0a8c): 12 fresh starts, all identical to their references, no fault line.
+- 3K / plain / guessing unchanged by privmem-4's pull unroll: 3K read 685.5 tok/s (c126 683.3), writing 99.38 (100.40),
+  plain 108.73 (108.56), code guessing 148.38 (146.85).
+- idxbc-1 at 194K: read 656.3 tok/s against 653.6 with `OWN_IDX_BC=0` (+0.4 %).
+- **dtopk-2 check mode at 194K with guessing: 32,610 lists / block lists + marks compared on the card, 0 differ**;
+  answers identical, SAME AS the plain run. 194K guessing 125.60 -> 127.47 tok/s (check 17.16 -> 16.89 ms per cycle).
+- **1M + guessing + dtopk-2 (`s1m_dk`): 993,166 tokens read in 1764.6 s (562.9 tok/s; ck1m3 s1m 543.0), writing
+  130.66 tok/s (s1m 104.46), check 22.38 ms per cycle (28.63)**, 1024 answers identical, SAME AS the plain run.
+  Card 2's peak card memory 33,393,108 KiB (s1m 33,394,016).
+
+Check cost by guesses (median ms; `c127-*-spec.txt`, `ck1m3-s1m-spec.txt`):
+
+| | 0 | 1 | 2 | 3 | 4 | 5 |
+|---|---|---|---|---|---|---|
+| 993K before (s1m) | 11.78 | 23.43 | 26.14 | 30.80 | 35.24 | 39.59 |
+| 993K dtopk-2 (s1m_dk) | 11.69 | 17.24 | 19.38 | 23.39 | 27.16 | 31.18 |
+| 194K dtopk-2 (s200k_dk) | 10.99 | 15.67 | 16.94 | 20.20 | 23.19 | 26.20 |
+| short, code (c127) | 9.46 | 13.23 | 13.66 | 15.92 | 17.51 | 20.12 |
+
+Left at 1M: each checked token ~1.8 ms more than at 3K (0.9 at 194K). The index score alone is ~0.6 ms per token and
+card at 993K even at the exact-arithmetic ceiling (413K rows x 8,192 products), and the checks' score kernel is still
+IndexerScoreBM (idxbc-1's broadcast form serves the prompt halves only); dtopk-2's per-token launches (6 x 2-4 per
+layer) are what the batched form (tp128, `OWN_IDX_DTOPK_MB`) merges. lp1p's profiled 194K guessing case will split it.
+
 ## privmem-3 was the wrong cause; privmem-4 worked (tp127 privmem_check, 2026-11-17 02:3x)
 
 `privmem-check-tp127.txt`: 635 kernels with private memory, 2,007 MiB per card if all ran (tp126: 640, 2,071).
