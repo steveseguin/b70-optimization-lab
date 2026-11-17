@@ -76,6 +76,16 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   f=$(grep -iE "$J" $D/$name-kernel.txt | head -3); [ -n "$f" ] && stop "$name kernel: $f"
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
+# tsx3 (idxbc-1 bench, one card, recorded only): IndexerScoreBMS (query values by sub-group broadcast) against
+# IndexerScoreBM bit for bit, GPU times at 95K-993K rows; a kernel fault line still stops everything
+if [ -x $W/test_index_score_px ] && grep -q "tp126: bench test_index_score_px built" $W/build-tp126.log; then
+  pre; t0=$(date '+%F %T'); echo "tsx3 start $(date '+%T.%N' | cut -c1-12)" >> $marks
+  ONEAPI_DEVICE_SELECTOR=level_zero:1 timeout 1200 $W/test_index_score_px > $D/tsx3.log 2>&1; rc=$?
+  echo "tsx3 end $(date '+%T.%N' | cut -c1-12) rc $rc" >> $marks
+  journalctl -k --since "$t0" -o short-precise > $D/tsx3-kernel.txt 2>&1
+  f=$(grep -iE "$J" $D/tsx3-kernel.txt | head -3); [ -n "$f" ] && stop "tsx3 kernel: $f"
+  say "tsx3 exit $rc: $(tail -1 $D/tsx3.log)"; tail -15 $D/tsx3.log | cut -c1-220 | sed "s/^/tsx3: /" >> $sum
+else say "tsx3 skipped (bench not built)"; fi
 run p3k $W/prompts/p3k-ids.txt 256 4096 $W/runs/e52/p3kplain-ids.txt 256 $PL $P5
 run plain $P1 128 4096 $W/runs/ab1/base-speed-ids.txt 128 $PL
 spec code code
