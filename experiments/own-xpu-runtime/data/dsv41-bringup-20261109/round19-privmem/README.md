@@ -136,6 +136,17 @@ the caches).
   the start, was the model (2-bit weights, near its 1,048,576-position limit), not the engine: for prompts near 1M,
   put the question at the end.
 
+### idxbc-1: the prompt index scores 18-21 % faster, bit for bit (c126 tsx3, 2026-11-17 01:01)
+
+`c126-tsx3-idxbc.log` (bench test_index_score_px, card 1, one card's 43 tokens of a half): IndexerScoreBMS keeps the
+query values in registers (each lane loads one value per 16-dim chunk; products take value ii from lane ii by a
+sub-group broadcast) instead of reading shared memory for every product. Same products, same order: **PASS bit for bit
+in all 10 cases**. ms per launch, today's form (R2 rmaj) -> S2 rmaj: 993K rows 55.11 -> 43.46 (ratio 1, layer 20),
+27.37 -> 22.33 (ratio 2, layers 2 / 8 / 14); 95K 4.73 -> 4.28. ~8.1 T ops/s (~71 % of the exact-arithmetic ceiling).
+The index scores are ~3/4 of what long context adds to reading (at 993K ~137 ms per half and card of a ~1.1 s
+block): ~3 % on a full 1M read. tp127 (af53c5d4d6) = tp126 + hostfloor-2 + idxbc-1 on by default (`OWN_IDX_BC=0`:
+off); gate c127 after ck1m3, with a 1M read.
+
 ### x1m_b did not load: a start race on host memory (hostfloor-2)
 
 x1m_b (dtopk + skip39 off, against x1m_a) ended 7 s after its start, before any card work: "host MemAvailable fell
