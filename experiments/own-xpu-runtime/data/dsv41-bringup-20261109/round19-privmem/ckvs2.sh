@@ -10,6 +10,8 @@ set -u
 W=/home/steve/dsv41-work; L=/home/steve/b70-optimization-lab; B=$W/own_run_v41_tp120
 c122s=$(ls -td $W/runs/c122-*/ 2>/dev/null | head -1)
 [ -x $W/own_run_v41_tp122 ] && [ -n "$c122s" ] && grep -q "^ALLDONE" ${c122s}summary.txt && B=$W/own_run_v41_tp122
+c123s=$(ls -td $W/runs/c123-*/ 2>/dev/null | head -1)
+[ -x $W/own_run_v41_tp123 ] && [ -n "$c123s" ] && grep -q "^ALLDONE" ${c123s}summary.txt && B=$W/own_run_v41_tp123
 TS=$(date +%Y%m%dT%H%M); D=$W/runs/ckvs2-$TS; mkdir -p $D
 sum=$D/summary.txt; marks=$D/marks.txt
 say() { echo "$*" >> $sum; sync -f $sum 2>/dev/null || sync; }

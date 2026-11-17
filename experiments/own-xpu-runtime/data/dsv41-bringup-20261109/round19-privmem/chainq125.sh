@@ -10,7 +10,7 @@ chk() { local s=$1 st=$2
   if grep -qE "^STOP .*kernel:" $s 2>/dev/null && ! grep -q "VM worker error: -12" $s; then say "kernel fault line in $st: queue stopped"; exit 1; fi; }
 step() { sleep 10; say "starting $1"; bash $W/$1.sh; local s=$(ls -td $W/runs/$1-*/ 2>/dev/null | head -1)summary.txt
   say "$1 ended: $(tail -1 $s 2>/dev/null | cut -c1-200)"; chk $s $1; }
-while systemctl --user is-active -q chainq124; do sleep 20; done
+while systemctl --user is-active -q chainq124 || systemctl --user is-active -q chainq124b; do sleep 20; done
 rm -f $W/defer-122 $W/idxrp-var.txt
 say "chainq125: building tp123"
 bash $W/build123.sh

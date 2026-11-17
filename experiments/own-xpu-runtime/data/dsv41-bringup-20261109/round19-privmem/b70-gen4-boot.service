@@ -1,0 +1,13 @@
+[Unit]
+Description=B70 stable mode: six card root links at Gen4 x16 (owner OK 2026-11-16)
+After=systemd-modules-load.service systemd-udev-settle.service
+Wants=systemd-udev-settle.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/b70-gen4-boot.sh
+RemainAfterExit=yes
+TimeoutStartSec=300
+
+[Install]
+WantedBy=multi-user.target

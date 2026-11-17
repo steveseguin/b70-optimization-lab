@@ -10,6 +10,8 @@ set -u
 W=/home/steve/dsv41-work; L=/home/steve/b70-optimization-lab; B=$W/own_run_v41_tp120
 c122s=$(ls -td $W/runs/c122-*/ 2>/dev/null | head -1)
 [ -x $W/own_run_v41_tp122 ] && [ -n "$c122s" ] && grep -q "^ALLDONE" ${c122s}summary.txt && B=$W/own_run_v41_tp122
+c123s=$(ls -td $W/runs/c123-*/ 2>/dev/null | head -1)
+[ -x $W/own_run_v41_tp123 ] && [ -n "$c123s" ] && grep -q "^ALLDONE" ${c123s}summary.txt && B=$W/own_run_v41_tp123
 TS=$(date +%Y%m%dT%H%M); D=$W/runs/ck1m-$TS; mkdir -p $D
 sum=$D/summary.txt; marks=$D/marks.txt
 say() { echo "$*" >> $sum; sync -f $sum 2>/dev/null || sync; }
@@ -80,7 +82,7 @@ soft() { local name=$1 pr=$2 nt=$3 m=$4 ref=$5 rn=$6; shift 6; local t0 rc f
   f=$(grep -iE "$J" $D/$name-kernel.txt | head -3); [ -n "$f" ] && stop "$name kernel: $f"
   [ $rc -eq 0 ] && { cmp -s <(head -$rn $D/$name-ids.txt) <(head -$rn $ref) && say "$name IDS${rn}_SAME" || say "$name IDS${rn}_DIFFER"; }
   grep -q "SAME AS the plain" $D/$name.log && say "$name SAME_AS_PLAIN" || say "$name no SAME AS the plain line"; }
-x1m=$W/prompts/lc/x1m-ids.txt; K="OWN_KV_SHARD=1"
+x1m=$W/prompts/lc/x1m-ids.txt; K="OWN_KV_SHARD=1"; [ "$B" = "$W/own_run_v41_tp123" ] && K="$K $(cat $W/idxrp-var.txt 2>/dev/null)"
 run x1m_a $x1m 1024 $(mx $x1m 1024) - 0 $PL $P5 $K OWN_IDX_DTOPK=1
 python3 -I $W/prompts/lc/dec.py $D/x1m_a-ids.txt 1024 > $D/x1m_a-text.txt 2>&1
 grep -q "7194-KESTREL" $D/x1m_a-text.txt && say "x1m_a: the answer names the planted code" || say "x1m_a: planted code NOT in the first 1024 answer tokens"

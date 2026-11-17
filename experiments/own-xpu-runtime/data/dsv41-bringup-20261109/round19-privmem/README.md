@@ -125,6 +125,40 @@ per-group query loads. idxrp-1 (tp123, opt-in, `test_index_score_px` checks it b
 groups numbered row group first (`OWN_IDX_RMAJ`: the tokens of a row group run together and share the key rows in
 the caches).
 
+## idxrp-1 gated (tsx1 18:45 + c123 18:46-19:23, 2026-11-16, tp123 = a9a9944a3e)
+
+`test_index_score_px` (one card, one card's 43 tokens of a half, `tsx1-idxpx.log`): every variant's scores bit for
+bit equal to `IndexerScoreBM`'s in all 10 cases (PASS). ms, min of 5:
+
+| ratio | rows | BM | BM rmaj | R2 | R2 rmaj | R4 | R4 rmaj |
+|---|---|---|---|---|---|---|---|
+| 1 (layer 20) | 95,000 | 5.94 | 5.46 | 5.21 | 4.74 | 5.34 | 5.31 |
+| 1 | 705,000 | 50.09 | 45.70 | 43.80 | **39.46** | 42.75 | 40.20 |
+| 1 | 993,000 | 70.64 | 63.83 | 60.66 | 54.85 | 59.17 | 55.84 |
+| 2 (layers 2/8/14) | 705,000 | 25.01 | 22.94 | 22.36 | 19.68 | 21.54 | 20.32 |
+
+Picked: `OWN_IDX_RP=2 OWN_IDX_RMAJ=1` (-21 % at 705K). c123 (`c123-summary.txt`): 8 fresh starts identical to their
+references (p3k, plain, spec code / analysis, x95k with the dtopk default, x200k with and without the pick, x700k with
+it). **705K read 571.6 -> 591.1 tok/s** (c118p x700k_def 1232.79 s -> 1192.26 s), writing 89.72 tok/s, 1024 answers
+identical; 194K 645.3 -> 651.5 tok/s.
+
+## Host events 2026-11-16 and what changed
+
+* **15:15:50 self-reset** in ckvs2's "plain" start, ~26 s in = the weight upload (README in
+  `dsv41-work/faults/reset-20261116T1515/`): BERT CPU 6 bank 5 bea0000000000108, ADDR = `pci_conf1_read+0xe4`
+  (a core stuck in a PCI config read), reset reason "data fabric sync flood". 80 six-card starts in stable mode before it.
+* **17:17 freeze, idle** (2 h after that boot, nothing running, no BERT): the links were back at Gen5 (the session died
+  with the host, nothing re-applied Gen4). The only other idle hang (11-14 10:53) was at Gen5 too.
+* **Boot unit** `b70-gen4-boot.service` (`b70-gen4-boot.sh` here): at every boot, after the six cards are bound,
+  Gen4 x16 on the six root links and the cards' audio functions + their bridges kept awake (owner OK for every boot).
+* **Config-read trace** (bpftrace on `pci_conf1_read` / `pci_mmcfg_read`, 20:07-): during a run the only steady
+  conf1 reads were the kernel's PME scan of the six card bridges 02/22/42/82/a2/e2:02.0 (+ USB 45:00.4), one per
+  device per second; after audio-awake (20:28:22) only the USB one is left. Run starts: ~500 mmcfg reads
+  (`pci_p2pdma_distance_many` from dma-buf attaches) in the first ~5 s, before the upload. **Every run past ~50K
+  tokens attaches again ~107 s after its start, mid-prompt** (~120-130 reads): dma-buf imports by the runtime inside
+  `ur_command_list_manager::appendUSMMemcpy` (the card threads, 5 to 10 per card), i.e. the first copy of some
+  peer pointer. Being moved to the start.
+
 ## c122: dtopk-1 gated (2026-11-16 14:08-15:02, tp122 = tp121 ac7d505ac5, built with `-exclude_ir`)
 
 dtopk-1 (`dtopk-README.md`): at one-token steps past 32,768 index rows, each card picks the top 512 of its own share
