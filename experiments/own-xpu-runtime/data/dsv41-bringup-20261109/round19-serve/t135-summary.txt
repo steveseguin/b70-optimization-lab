@@ -1,0 +1,21 @@
+[reset] ready in 31.7 s
+[reset] code: read 82 in 0.440 s, 512 tokens in 3.495 s (146.5 tok/s), cycles 225, kept 286/365, end max
+[reset] code 512 vs plain CLI: SAME
+[reset] turn 2: read 11 in 0.037 s, 128 tokens in 0.575 s (222.6 tok/s), cycles 27, kept 101/111, end max
+[reset] fresh read of the whole conversation (after reset): read 604 in 0.923 s, 128 tokens in 0.569 s (225.0 tok/s), cycles 27, kept 101/111, end max
+[reset] turn 2 (continued) vs a fresh read: SAME
+[reset] p3k (reset True): read 3323 in 5.060 s, 256 tokens in 1.673 s (153.0 tok/s), cycles 95, kept 161/211, end max
+[reset] p3k 256 vs plain CLI: SAME
+[reset] analysis (reset True): read 113 in 0.211 s, 512 tokens in 3.054 s (167.6 tok/s), cycles 180, kept 332/441, end max
+[reset] analysis 512 vs plain CLI: SAME
+[reset] x34k (reset True): read 33815 in 51.581 s, 256 tokens in 1.914 s (133.8 tok/s), cycles 107, kept 148/186, end max
+[reset] x34k 256 vs plain CLI: SAME
+[reset] x200k (reset True): read 194000 in 302.320 s, 1024 tokens in 7.859 s (130.3 tok/s), cycles 429, kept 595/771, end max
+[reset] x200k 1024 vs plain CLI: SAME
+[reset] code again (reset True): read 82 in 0.165 s, 512 tokens in 3.452 s (148.3 tok/s), cycles 225, kept 286/365, end max
+[reset] code 512 again vs plain CLI: SAME
+[reset] with EOS stop: read 82 in 0.162 s, 1376 tokens in 7.669 s (179.4 tok/s), cycles 418, kept 957/1104, end eos; last token 1
+[reset] EOS-stopped answer = plain CLI up to its EOS: DIFFER at None (got 1376, ref 512)
+[reset] stop request after 8: read 11 in 0.038 s, 10 tokens in 0.067 s (149.3 tok/s), cycles 3, kept 6/13, end stop
+[reset] engine exit 0; results {'code': True, 'turn2': True, 'p3k': True, 'analysis': True, 'x34k': True, 'x200k': True, 'code2': True, 'eos_prefix': False}
+t_engine exit 0

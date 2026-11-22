@@ -1,0 +1,330 @@
+2026-11-16 09:55:35 pr3 done; building tp118
+2026-11-16 09:57:05 pr3 done; building tp118
+2026-11-16 10:19:21 built: tp118: source commit 0e826cc908
+2026-11-16 10:19:22 switch: chainq118 stopped after the build; chainq118b (pr4 first)
+2026-11-16 10:19:32 starting pr4
+2026-11-16 10:22:48 pr4 ended: STOPPED 2026-11-16 10:22:47
+2026-11-16 10:22:48 hardware-side stop in pr4: queue stopped
+2026-11-16 10:24:36 starting pr5
+2026-11-16 10:24:37 pr5 ended: STOPPED 2026-11-16 10:24:37
+2026-11-16 10:24:37 preflight stop in pr5: queue stopped
+2026-11-16 10:25:16 starting pr5
+2026-11-16 10:31:12 pr5 ended: ALLDONE 2026-11-16 10:31:12: 2 probes
+2026-11-16 10:31:22 starting c118
+2026-11-16 10:41:51 c118 ended: STOPPED 2026-11-16 10:41:51
+2026-11-16 10:42:01 starting tm1
+2026-11-16 10:42:05 tm1 ended: STOP a lock is held: build-tp118p
+2026-11-16 10:42:15 starting ct1
+2026-11-16 10:42:20 ct1 ended: STOP a lock is held: build-tp118p
+2026-11-16 10:42:30 starting lp1
+2026-11-16 10:42:34 lp1 ended: STOP a lock is held: build-tp118p
+2026-11-16 10:42:44 starting ab2
+2026-11-16 10:42:44 ab2 ended: STOP a lock is held: build-tp118p
+2026-11-16 10:42:44 queue done
+2026-11-16 11:10:44 tp118p built: tp118p build exit 0 in 1342 s
+privmem_check own_run_v41_tp118p: 623 kernels with private memory, 1932 MiB per card if all launched; 0 at 30 MiB or more
+2026-11-16 11:10:55 starting pr6
+2026-11-16 11:16:56 pr6 ended: ALLDONE 2026-11-16 11:16:56: 2 probes
+2026-11-16 11:17:06 starting c118p
+2026-11-16 11:17:08 hold-tp119 set (c118p running; tm1p..ab2p skip, chainq119 next)
+2026-11-16 12:04:32 c118p ended: STOPPED 2026-11-16 12:04:32
+2026-11-16 12:04:42 starting tm1p
+2026-11-16 12:04:42 tm1p ended: STOP a lock is held: hold-tp119
+2026-11-16 12:04:52 starting ct1p
+2026-11-16 12:04:52 ct1p ended: STOP a lock is held: hold-tp119
+2026-11-16 12:05:02 starting lp1p
+2026-11-16 12:05:02 lp1p ended: STOP a lock is held: hold-tp119
+2026-11-16 12:05:12 starting ab2p
+2026-11-16 12:05:12 ab2p ended: STOP a lock is held: hold-tp119
+2026-11-16 12:05:12 queue done
+2026-11-16 12:05:26 starting tlx1
+2026-11-16 12:13:41 tlx1 ended: STOPPED 2026-11-16 12:13:41
+2026-11-16 12:13:41 chainq120: building tp120
+2026-11-16 12:22:07 chainq120b stopped during the tp120 build (8 min in) to rebuild from fe2eae1ab2 (+ eng-warm-1, eng-spread-1)
+2026-11-16 12:22:35 chainq120: building tp120
+2026-11-16 12:46:59 tp120 built; 3 of 3 benches
+privmem_check own_run_v41_tp120: 640 kernels with private memory, 2069 MiB per card if all launched; 0 at 30 MiB or more
+    11.0 MiB  176 B/lane simd32  TopKSelMC
+    10.5 MiB  168 B/lane simd32  TopKSelM
+    10.5 MiB  168 B/lane simd32  TopKSelM
+2026-11-16 12:47:10 starting kvb2
+2026-11-16 12:50:02 kvb2 ended: ALLDONE 2026-11-16 12:50:02
+2026-11-16 12:50:02 kvb2: 9 of 5 PASS
+2026-11-16 12:50:12 starting c120
+2026-11-16 13:24:45 c120 ended: ALLDONE 2026-11-16 13:24:45: 10 fresh starts identical to their references
+2026-11-16 13:24:55 starting ew1
+2026-11-16 13:43:40 ew1 ended: ALLDONE 2026-11-16 13:43:40: 8 fresh starts
+2026-11-16 13:43:40 ckvs2 skipped (kvb2 0, c120 ALLDONE 2026-11-16 13:24:45: 10 fresh starts identical to their references)
+2026-11-16 13:43:50 starting tm1p
+2026-11-16 13:43:50 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 13:43:50 tm1p ended: STOP a lock is held: hold-tp119
+2026-11-16 13:44:00 starting ct1p
+2026-11-16 13:44:00 ct1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 13:44:00 ct1p ended: STOP a lock is held: hold-tp119
+2026-11-16 13:44:10 starting lp1p
+2026-11-16 13:44:10 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 13:44:10 lp1p ended: STOP a lock is held: hold-tp119
+2026-11-16 13:44:20 starting ab2p
+2026-11-16 13:44:20 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 13:44:20 ab2p ended: STOP a lock is held: hold-tp119
+2026-11-16 13:44:20 queue done
+2026-11-16 13:44:39 chainq122: building tp122
+2026-11-16 14:07:45 tp122 built
+privmem_check own_run_v41_tp122: 640 kernels with private memory, 2069 MiB per card if all launched; 0 at 30 MiB or more
+    11.0 MiB  176 B/lane simd32  TopKSelMC
+    10.5 MiB  168 B/lane simd32  TopKSelM
+    10.5 MiB  168 B/lane simd32  TopKSelM
+    10.5 MiB  168 B/lane simd32  TopKSelMCQ
+    10.0 MiB  160 B/lane simd32  TopKSelMBQ
+2026-11-16 14:07:46 zebin compare tp120 -> tp122:   ISA differs: _ZTSN9ops41sycl6PaceKNINS_7TokRowsINS_12HcFinishRowsEEENS_8PaceSQ8NILj72ELj2ELj1ELj1ELj3ELj1EEELj256ELb1EEE   ISA differs: _ZTSN9ops41sycl6PaceKNINS_7TokRowsINS_12HcFinishRowsEEENS_8PaceSQ8NILj72ELj3ELj1ELj1ELj3ELj1EEELj256ELb1EEE   ISA differs: _ZTSN9ops41sycl6PaceKNINS_7TokRowsINS_1
+2026-11-16 14:07:56 starting dtb1
+2026-11-16 14:07:58 dtb1 ended: ALLDONE 2026-11-16 14:07:58
+2026-11-16 14:08:08 starting c122
+2026-11-16 15:01:44 c122 ended: ALLDONE 2026-11-16 15:01:44: 8 fresh starts identical to their references
+2026-11-16 15:01:54 starting ckvs2
+2026-11-16 15:01:54 ckvs2.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 15:01:54 ckvs2 ended: 
+2026-11-16 15:02:04 starting tm1p
+2026-11-16 15:02:04 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 15:02:04 tm1p ended: STOP a lock is held: hold-tp119
+2026-11-16 15:02:14 starting ct1p
+2026-11-16 15:02:14 ct1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 15:02:14 ct1p ended: STOP a lock is held: hold-tp119
+2026-11-16 15:02:24 starting lp1p
+2026-11-16 15:02:24 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 15:02:24 lp1p ended: STOP a lock is held: hold-tp119
+2026-11-16 15:02:34 starting ab2p
+2026-11-16 15:02:34 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 15:02:34 ab2p ended: STOP a lock is held: hold-tp119
+2026-11-16 15:02:34 queue done
+2026-11-16 15:03:04 starting tlp2
+2026-11-16 15:09:14 tlp2 ended: ALLDONE 2026-11-16 15:09:14: 2 fresh starts
+2026-11-16 15:09:24 starting ckvs2
+2026-11-16 18:21:35 starting ckvs2
+2026-11-16 18:21:35 ckvs2.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 18:21:35 ckvs2 ended: p10k IDS64_SAME
+2026-11-16 18:21:35 ck1m skipped: ckvs2 did not pass
+2026-11-16 18:21:45 starting tm1p
+2026-11-16 18:21:45 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 18:21:45 tm1p ended: STOP a lock is held: hold-tp119
+2026-11-16 18:21:55 starting ct1p
+2026-11-16 18:21:55 ct1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 18:21:55 ct1p ended: STOP a lock is held: hold-tp119
+2026-11-16 18:22:05 starting lp1p
+2026-11-16 18:22:05 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 18:22:05 lp1p ended: STOP a lock is held: hold-tp119
+2026-11-16 18:22:15 starting ab2p
+2026-11-16 18:22:15 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 18:22:15 ab2p ended: STOP a lock is held: hold-tp119
+2026-11-16 18:22:15 queue done
+2026-11-16 18:22:27 chainq125: building tp123
+2026-11-16 18:45:17 tp123 built: tp123: source commit a9a9944a3e tp123: bench test_dtopk built tp123: bench test_index_score_px built 
+privmem_check own_run_v41_tp123: 640 kernels with private memory, 2071 MiB per card if all launched; 0 at 30 MiB or more
+    11.0 MiB  176 B/lane simd32  TopKSelMC
+    10.5 MiB  168 B/lane simd32  TopKSelM
+2026-11-16 18:45:28 starting tsx1
+2026-11-16 18:46:12 tsx1 ended: ALLDONE 2026-11-16 18:46:12
+idxrp at 705K: BM 50.09 ms, best OWN_IDX_RP=2 OWN_IDX_RMAJ=1 39.46 ms
+2026-11-16 18:46:22 starting c123
+2026-11-16 19:23:19 c123 ended: ALLDONE 2026-11-16 19:23:19: 8 fresh starts identical to their references
+2026-11-16 19:23:29 starting tm1p
+2026-11-16 19:34:43 tm1p ended: STOPPED 2026-11-16 19:34:43
+2026-11-16 19:34:53 starting ct1p
+2026-11-16 20:08:01 ct1p ended: ALLDONE 2026-11-16 20:08:01: 8 fresh starts, exits 0, all identical, no fault line
+2026-11-16 20:08:11 starting lp1p
+2026-11-16 20:08:11 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 20:08:11 lp1p ended: STOP a lock is held: hold-tp119
+2026-11-16 20:08:21 starting ab2p
+2026-11-16 20:08:21 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 20:08:21 ab2p ended: STOP a lock is held: hold-tp119
+2026-11-16 20:08:21 queue done
+2026-11-16 20:08:45 starting ckvs2
+2026-11-16 20:38:53 ckvs2 ended: ALLDONE 2026-11-16 20:38:53: 12 fresh starts
+2026-11-16 20:39:03 starting ck1m
+2026-11-16 20:39:09 ck1m ended: STOPPED 2026-11-16 20:39:09
+2026-11-16 20:39:19 starting tm1p
+2026-11-16 20:51:02 tm1p ended: STOPPED 2026-11-16 20:51:02
+2026-11-16 20:51:12 starting lp1p
+2026-11-16 20:51:12 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 20:51:12 lp1p ended: no new summary (deferred or did not start)
+2026-11-16 20:51:22 starting ab2p
+2026-11-16 20:51:22 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 20:51:22 ab2p ended: no new summary (deferred or did not start)
+2026-11-16 20:51:22 chainq126 done
+2026-11-16 20:51:42 starting ck1m
+2026-11-16 21:25:37 ck1m ended: STOPPED 2026-11-16 21:25:37
+2026-11-16 21:25:47 starting lp1p
+2026-11-16 21:25:47 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 21:25:47 lp1p ended: no new summary (deferred or did not start)
+2026-11-16 21:25:57 starting ab2p
+2026-11-16 21:25:57 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 21:25:57 ab2p ended: no new summary (deferred or did not start)
+2026-11-16 21:25:57 chainq127 done
+2026-11-16 21:26:08 chainq128: building tp124
+2026-11-16 21:48:40 tp124 built: tp124: source commit b7a16b5e7e tp124: bench test_rope_fill built tp124 build exit 0 in 1352 s 
+2026-11-16 21:48:50 starting tsx2
+2026-11-16 21:48:51 tsx2 ended: ALLDONE 2026-11-16 21:48:51
+2026-11-16 21:49:01 starting c124
+2026-11-16 21:59:47 c124 ended: ALLDONE 2026-11-16 21:59:47: 6 fresh starts identical to their references
+2026-11-16 21:59:57 starting lp1p
+2026-11-16 21:59:57 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 21:59:57 lp1p ended: no new summary (deferred or did not start)
+2026-11-16 22:00:07 starting ab2p
+2026-11-16 22:00:07 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 22:00:07 ab2p ended: no new summary (deferred or did not start)
+2026-11-16 22:00:17 starting tm1p
+2026-11-16 22:00:17 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-16 22:00:17 tm1p ended: no new summary (deferred or did not start)
+2026-11-16 22:00:17 chainq128 done
+2026-11-16 22:00:28 starting ck1m2
+2026-11-16 22:00:55 ck1m2 ended: STOPPED 2026-11-16 22:00:55
+2026-11-16 22:00:55 chainq130: building tp125
+2026-11-16 22:12:04 chainq131: building tp125
+2026-11-16 22:34:35 tp125 built: tp125: source commit 3c77277c87 tp125 build exit 0 in 1351 s 
+2026-11-16 22:34:46 starting c125
+2026-11-16 23:44:36 c125 ended: ALLDONE 2026-11-16 23:44:36: 8 fresh starts identical to their references
+2026-11-16 23:44:46 starting ck1m2
+2026-11-17 00:36:40 ck1m2 ended: ALLDONE 2026-11-17 00:36:40: 3 fresh starts
+2026-11-17 00:36:50 starting lp1p
+2026-11-17 00:36:50 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 00:36:50 lp1p ended: no new summary (deferred or did not start)
+2026-11-17 00:37:00 starting ab2p
+2026-11-17 00:37:01 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 00:37:01 ab2p ended: no new summary (deferred or did not start)
+2026-11-17 00:37:11 starting tm1p
+2026-11-17 00:37:11 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 00:37:11 tm1p ended: no new summary (deferred or did not start)
+2026-11-17 00:37:11 chainq131 done
+2026-11-17 00:37:15 chainq132: building tp126
+2026-11-17 01:00:03 tp126 built: tp126: source commit 866df22e15 tp126 build exit 0 in 1368 s 
+2026-11-17 01:00:13 starting c126
+2026-11-17 01:17:29 c126 ended: ALLDONE 2026-11-17 01:17:29: 7 fresh starts identical to their references
+2026-11-17 01:17:39 starting ab2p
+2026-11-17 01:17:39 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:17:39 ab2p ended: no new summary (deferred or did not start)
+2026-11-17 01:17:49 starting lp1p
+2026-11-17 01:17:49 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:17:49 lp1p ended: no new summary (deferred or did not start)
+2026-11-17 01:17:59 starting tm1p
+2026-11-17 01:17:59 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:17:59 tm1p ended: no new summary (deferred or did not start)
+2026-11-17 01:17:59 chainq132 done
+2026-11-17 01:18:15 starting ck1m3
+2026-11-17 01:53:51 ck1m3 ended: ALLDONE 2026-11-17 01:53:51: 8 fresh starts
+2026-11-17 01:54:01 starting ab2p
+2026-11-17 01:54:01 ab2p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:54:01 ab2p ended: no new summary (deferred or did not start)
+2026-11-17 01:54:11 starting lp1p
+2026-11-17 01:54:11 lp1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:54:11 lp1p ended: no new summary (deferred or did not start)
+2026-11-17 01:54:21 starting tm1p
+2026-11-17 01:54:21 tm1p.sh deferred (defer-120c / defer-122: a later queue runs it)
+2026-11-17 01:54:21 tm1p ended: no new summary (deferred or did not start)
+2026-11-17 01:54:21 chainq133 done
+2026-11-17 01:54:31 chainq134: building tp127
+2026-11-17 01:56:25 chainq134 restarted: first build failed its syntax check at 4597df2f15 / ce1d349e19 (two TokRows initializers missed); fixed in b6e2b838f5
+2026-11-17 01:56:25 chainq134: building tp127
+2026-11-17 02:07:49 chainq134 restarted again: tp127 now also carries dtopk-2 (85d7bb0a8c, opt-in; c127 checks it at 194K and uses it at 1M)
+2026-11-17 02:07:49 chainq134: building tp127
+2026-11-17 02:30:28 tp127 built: tp127: source commit 85d7bb0a8c tp127 build exit 0 in 1359 s
+2026-11-17 02:30:38 starting c127
+2026-11-17 03:40:02 c127 ended: ALLDONE 2026-11-17 03:40:02: 12 fresh starts identical to their references
+2026-11-17 03:40:12 starting ab2p
+2026-11-17 03:46:16 ab2p ended: ALLDONE 2026-11-17 03:46:16: 8 fresh starts, exits 0, identical, no fault line
+2026-11-17 03:46:26 starting lp1p
+2026-11-17 04:07:04 lp1p ended: ALLDONE 2026-11-17 04:07:04: 4 fresh starts, exits 0, identical, no fault line
+2026-11-17 04:07:14 starting tm1p
+2026-11-17 04:07:14 tm1p.sh skipped (2026-11-17 03:xx: dtopk-1 covers the one-token selects topk-m targeted; lp1p g400k times 388K)
+2026-11-17 04:07:14 tm1p ended: no new summary (deferred or did not start)
+2026-11-17 04:07:14 chainq134 done
+2026-11-17 04:07:30 chainq135: building tp128
+2026-11-17 04:09:46 chainq135 restarted: tp128 also carries kvdedup-2 (2f159ba705, opt-in)
+2026-11-17 04:09:46 chainq135: building tp128
+2026-11-17 04:32:33 tp128 built: tp128: source commit 2f159ba705 tp128 build exit 0 in 1367 s
+2026-11-17 04:32:43 starting c128
+2026-11-17 04:57:17 chainq136 stopped (it only waited): chainq137 = build tp129 -> c128b -> c129
+2026-11-17 05:15:34 c128 ended: ALLDONE 2026-11-17 05:15:34: 12 fresh starts identical to their references
+2026-11-17 05:15:34 chainq135 done
+2026-11-17 05:15:37 chainq137: building tp129
+2026-11-17 05:20:45 chainq138 not started; filter bench run by hand (tif0: 95K / 352K / 993K PASS, bound misses 0, lists same; F2 3.8x faster than exact at 993K, but X 119 ms at layer 20 and the extra select 9 ms: X2 rewrite next); c128b started directly (cards idle)
+2026-11-17 05:27:26 chainq139 started: after c128b, the idxfilt-2 bench (f5f7041c74) on card 1; if PASS: build tp129 -> c129
+2026-11-17 05:32:50 chainq139 stopped (only waiting); chainq140 = after c128b: the idxfilt-2 bench (a16a2b5f18) on card 1; if PASS: build tp129 (a16a2b5f18: + idxfilt-2c for the checks) -> c129 (adds s200k_f2 check mode, s200k_b vs s200k_fk, 1M guessing s1m_f with both filters)
+2026-11-17 05:46:01 chainq140 stopped (only waiting); chainq141 = the same with 501bc070ce (+ drlast-1, OWN_DR_LAST); c129 adds p3k_s / p3k_dl and s200k_dl guess-log comparisons
+2026-11-17 05:58:02 c128b ended: STOPPED 2026-11-17 05:57:53
+2026-11-17 05:58:08 tif1: bench built from 501bc070ce
+2026-11-17 05:58:29 tif1 p (m 43, 95000,352000,993000): exit 0, PASS (6 cases)
+2026-11-17 05:58:32 tif1 c6 (m 6, 33000,166000): exit 0, PASS (4 cases)
+2026-11-17 05:58:35 tif1 c3 (m 3, 166000): exit 0, PASS (2 cases)
+2026-11-17 05:58:35 chainq141: building tp129
+2026-11-17 06:06:35 c128b s1m_all FAILED at the 2nd check step (card 0 timed out waiting for card 5; cards 2+5 at 5 MiB free; read 537.6 tok/s vs c127 562.9): 1M + guessing is over the cards' memory with the new check kernels; c129's 1M case changed to s1m_fp (filter, no draft); tif1 bench PASS (993K: filter+T+X2+sel 20.6 vs exact+sel 50.8 ms, 0 bad rows)
+2026-11-17 06:14:10 c129 edited before start: tpw cases (OWN_TP_WEIGHTS=30,29,29,30,29,29: output-row units 54,53,53,54,53,53, one 195 MiB unit from cards 2/5 to 0/3; p3k_w / plain_w / code_w identity, s200k_w speed) - cards 2/5 hold 0.39 GiB more at every context (one extra output-row unit + two attention groups)
+2026-11-17 06:16:09 chainq142 queued: after chainq141 -> build tp130 (13ec276571 idxmem-1 + allocmap-1) + rux9 bench -> c130 (rux9 gate, identity, am1m memory map, s1m_w 1M + guessing + all levers + tpw if passed)
+2026-11-17 06:21:39 tp129 built: tp129: source commit 501bc070ce; tp129 build exit 0 in 1384 s
+2026-11-17 06:21:49 starting c129
+2026-11-17 06:28:33 chainq143 queued: after chainq142 -> build tp131 (b956f44c23 = rux9-1 OWN_RUX9 + idxfilt-3 OWN_IDX_FILT_SEL, both opt-in; test_idxfilt with TopKSelF) -> c131 (TopKSelF bench, identity, rux9 engine A/B at 34K with c130's fastest form, idxfilt-3 check at 95K + 194K A/B, 1M read with all prompt levers, 1M + guessing if c130 s1m_w passed)
+2026-11-17 06:28:48 c129 partial: tpw (OWN_TP_WEIGHTS=30,29,29,30,29,29) identity PASS (p3k_w IDS256 / plain_w / code_w GLOG_SAME); free after load 3K: 3.66/3.49/3.30/3.66/3.49/3.30 -> 3.47/3.49/3.49/3.47/3.49/3.49 GiB (smallest +0.19 GiB); 3K read 684.8 vs 683.1 tok/s (same); drlast p3k_dl GLOG_SAME as p3k_s (3K: 6 blocks skipped, 683.9 vs 676.6 tok/s = no gain at 3K, its target is long prompts)
+2026-11-17 06:35:17 tp131 candidates now 029e51952b (= b956f44c23 + idxfilt-4 OWN_IDX_FILT_BC: candidate layers 24-36 by the pre-filter, checks too) first; c131 adds tif bcf lines (BCM vs filter on the layer-20 block lists, 43 + 6 tokens), x200k_fsb read A/B, s200k_f2b guessing check mode ALL SAME
+2026-11-17 06:36:39 c129 x95k_f2 (OWN_IDX_FILT=2 from 8192 rows, engine check mode): 325632 lists + 87552 block lists/marks compared, 0 differ -> ALL SAME, IDS256_SAME; tif_d2..d20 on the real 194K dump PASS (rows exact 2388 at L20)
+2026-11-17 06:40:31 rux9-2 45387d19dc (OWN_RUX9_TY mask: 1 IQ2_S default, 2 IQ2_XXS, 4 IQ1_S; bench weights 30/12/5 layers): build131 builds bench_rux9_f7 (-DRUX4_FMT=7) first and puts 45387d19dc first only if it builds; c131 gates each extra type (bitwise + >=15 % on the chosen form) then p3k_r9t / code_r9t / x34k_r9t
+2026-11-17 06:41:36 c129 ended: STOPPED 2026-11-17 06:41:36
+2026-11-17 06:41:36 chainq141 done
+2026-11-17 06:41:40 chainq142: chainq141 ended; c129: STOPPED 2026-11-17 06:41:36
+2026-11-17 06:41:40 chainq142: building tp130 + rux9 bench
+2026-11-17 06:44:10 c129 STOPPED at s200k_f2 (guessing 194K, OWN_IDX_FILT=2 + OWN_IDX_FILT_CK=1 from 4096): prompt lists all same, but 18 layer-20 block lists/marks per card differ in the CHECKS (idxfilt-2c; 1087 check L20 token lists per card); answers still SAME AS the plain run. OWN_IDX_FILT_CK removed from c130 s1m_w / c131 s1m_w2 / s200k_f2b until found
+2026-11-17 06:49:09 tp131 first candidate now 1aa7220758 (= rux9-1 + idxfilt-3/4 + rux9-2 behind -DOWN_RUX9_TY (added only if bench_rux9_f7 builds) + ifldiag-1 OWN_IFL_DIAG); c131 adds s200k_dg (c129's failing s200k_f2 case + OWN_IFL_DIAG=1, soft) right after identity
+2026-11-17 06:56:23 CORRECTION: c129's '18 block lists + marks differ' is the shared filter counter (prompt + checks: 35601 L20 compares, ~30K of them prompt), so the 18 may be in the 194K PROMPT filter (idxfilt-2, past x95k's 95K), not the checks. ifldiag-1 extended to the prompt compare (stored vs exact rows by kind: rescored-but-different sums / LO above exact / LO+2E below exact)
+2026-11-17 06:59:48 (on the correction: every card counted exactly 18 while the prompt compares differ per card (35601 vs 34874 lists) and each card's prompt filter covers different tokens; the checks' merged lists are the same on every card -> the 18 are most likely the CHECKS after all. The extended diag covers both.)
+2026-11-17 07:05:06 tp130 built: tp130: source commit 13ec276571; tp130 build exit 0 in 1384 s; rux9 bench build exit 0 rux9 sendcheck: TOTAL 14 files: sends 7544 ok 2521 unk 12 erl 0 FAIL 0 prefetch 56 2d 0 scratch 123 -> PASS 
+2026-11-17 07:05:17 starting c130
+2026-11-17 07:05:56 tp131 first candidate now a00da671bf (ifldiag-1b: the diag also at the prompt's L20 compare, rows by kind); syntax check passed (capped, during tp130's bench build)
+2026-11-17 07:06:12 c130 rux9 bench: exact PASS (bitwise vs ship6, 384 real experts), but NO speed gain: best S9 R2 E4/4 x1 xb2 wg1024 -0.2..-1.2 % vs the shipped form over 3 timings (x-staging in local memory does not help: the prompt expert kernel is not bound by x loads). rux9 lane CLOSED (c131's >=15 % picker will not pick it)
+2026-11-17 07:18:53 densews (dense-row study, densews/README.md): prompt dense rows are x-read bound at R=2 (2 B of x per pair; model 3.61 T vs measured 3.54-3.61). pb-1 never tried T8/T16 x R4 for Q8/Q6/Q5. densews/bench_r4.cpp (bench_pb PART_PICK with R4 candidates) built by build131 against src131, run as c131 step 1b on card 1 (MS 256/192/129). Also: build131 no longer builds the rux9 f7 bench (rux9 closed); s200k_dg now 1024 tokens as c129's s200k_f2
+2026-11-17 07:35:42 c130 ended: ALLDONE 2026-11-17 07:35:42: 6 fresh starts identical to their references
+2026-11-17 07:35:42 chainq142 done
+2026-11-17 07:35:58 chainq143: chainq142 ended; c130: ALLDONE 2026-11-17 07:35:42: 6 fresh starts identical to their references
+2026-11-17 07:35:58 chainq143: building tp131 (rux9-1 + idxfilt-3)
+2026-11-17 07:50 c130 ALLDONE (6 fresh starts identical): s1m_w 1M + guessing with OWN_IDX_FILT=1 (prompt filter), OWN_DR_LAST=1, OWN_TP_WEIGHTS=30,29,29,30,29,29: read 993166 tokens in 1602.25 s (619.9 tok/s; c127 s1m_dk 1764.6 s / 562.9), writing 1023 tokens 138.68 tok/s (3.21 per cycle, draft 1.84 + check 21.28 ms; c127 130.66), IDS1024_SAME, SAME AS plain. Cards 0.18-0.21 GiB free after the prompt. rux9 closed. pb-2 (OWN_PB_PICKS, R4 forms behind -DOWN_PB_R4) committed for tp132 after c131's densews bench; T16 R4 impossible (ws_reduce_store: R x T <= 32), bench and lists now T8 R4 only
+2026-11-17 08:01:32 tp131 built: tp131: bench test_idxfilt_tp131 built tp131: source commit a00da671bf (flags: no OWN_RUX9_TY) ; tp131 build exit 0 in 1414 s
+2026-11-17 08:01:43 starting c131
+2026-11-17 08:12:16 c131 densews bench: 408 bitwise, 0 differ. T8 R4 forms SLOWER than today's T16 R2 picks on every packed role (+2..+84 %; spills 0.6-10 KB) -> R4 CLOSED. But o_a at the engine's x stride (32768 floats = 128 KiB per token): T16 R2 393.6 us vs 296.6 packed (Q8 1024 rows M=256, +33 %), Q6 392.6 vs 311.1 (+26 %); T8R4 at that stride 361.0 (-8 % vs T16R2 there). Lever: obpad-1 (pad the prompt head-output stride) ~ -11 ms per 741 ms block on card 2
+2026-11-17 08:51:11 c131 so far: tif_p/tif_c6 PASS; densews 408 bitwise (R4 closed); identity p3k/plain/code 147.2/analysis 164.3 SAME; s200k_dg 108 check diffs, 0 IFLDIAG lines (marks-only checks: fixed in ifldiag-1c); x95k_f2s ALL SAME (SEL+BC in check mode); 194K read: filter 295.61 s, +SEL 295.34, +SEL+BC 293.97 (-0.5 %), all IDS64_SAME; s200k_f2b (guessing 194K, filter check + BC) ALL SAME, 133.99 tok/s, 2.66/cycle, check 17.99 ms
+2026-11-17 09:05:09 c131 s1m_fps (filter + SEL + BC + kvshard, no TW): 1606.23 s (618.3 tok/s) IDS1024_SAME vs c130 s1m_w 1602.25 (filter + kvshard + TW): SEL+BC no visible gain at 1M (bench 7.0 -> 1.7 ms selects per half not on the critical path); next s1m_w2
+2026-11-17 09:05:32 c131 ended: STOPPED 2026-11-17 09:05:32
+2026-11-17 09:05:32 chainq143 done
+2026-11-17 09:06:00 chainq144: chainq143 ended; c131: STOPPED 2026-11-17 09:05:32
+2026-11-17 09:06:00 chainq144: building tp132 (obpad-1 + ifldiag-1c)
+2026-11-17 09:30:55 tp132 built: tp132: source commit 0c13b65e7e ; tp132 build exit 0 in 1425 s obpad bench build exit 0 
+2026-11-17 09:31:05 starting c132
+2026-11-17 10:51:34 FREEZE 09:36:42 (boot 22dad665): c132 x34k_b (tp132 defaults, no pad) card a3:00.0 GT0 trace + 'failed to get forcewake for coredump' + CT write status -1 -> host froze; owner restarted 10:29. c132 before it: obpad bench 174 bitwise, OWN_OB_PAD=64 o_a -25 %; p3k/code/p3k_ob/plain_ob/code_ob/analysis_ob all SAME (+GLOG). OWNER 10:3x: pause optimizing; serve DeepSeek on the LAN (thinking, guessing, max context, auto-restart). Queue (chainq145) gone with the boot; not re-queued.
+2026-11-17 12:03:00 FREEZE 11:22:52 (boot 692b7b01): BERT fatal bank 5 bea0000000000108 (Perr S0:T002:B05, cache error, core 0) = the earlier core-watchdog signature; ~25 s into the first serve-1 engine start (t134: tp134 + config.json 1M env, model upload). Boot ba1a827d (11:24-11:58) ran nothing of ours and ended with no record (owner restart or idle hang). The freeze emptied 13 git objects (the reset-1 commit) + build135.sh + all test logs: objects removed, tp121 HEAD back to a87c5c0498, reset-1 recommitted as 702af143ee from the intact working files; evidence runs/freeze-20261117-1122/. Stale six.active/build lock removed, gen4 ok, preflight ok. tp135 (serve-1 + reset-1) build started 12:02:20; then ONE engine start for all serve tests (reset avoids restarts)
+2026-11-17 12:33:14 t135 (tp135 = serve-1 + reset-1, config.json env, max_ctx 994304, ONE engine start 12:25:54, ready 31.7 s): ALL SAME vs the CLI references after in-engine resets (0.003-0.005 s):
+  [reset] code: read 82 in 0.440 s, 512 tokens in 3.495 s (146.5 tok/s), cycles 225, kept 286/365, end max
+  [reset] code 512 vs plain CLI: SAME
+  [reset] turn 2: read 11 in 0.037 s, 128 tokens in 0.575 s (222.6 tok/s), cycles 27, kept 101/111, end max
+  [reset] fresh read of the whole conversation (after reset): read 604 in 0.923 s, 128 tokens in 0.569 s (225.0 tok/s), cycles 27, kept 101/111, end max
+  [reset] turn 2 (continued) vs a fresh read: SAME
+  [reset] p3k (reset True): read 3323 in 5.060 s, 256 tokens in 1.673 s (153.0 tok/s), cycles 95, kept 161/211, end max
+  [reset] p3k 256 vs plain CLI: SAME
+  [reset] analysis (reset True): read 113 in 0.211 s, 512 tokens in 3.054 s (167.6 tok/s), cycles 180, kept 332/441, end max
+  [reset] analysis 512 vs plain CLI: SAME
+  [reset] x34k (reset True): read 33815 in 51.581 s, 256 tokens in 1.914 s (133.8 tok/s), cycles 107, kept 148/186, end max
+  [reset] x34k 256 vs plain CLI: SAME
+  [reset] x200k (reset True): read 194000 in 302.320 s, 1024 tokens in 7.859 s (130.3 tok/s), cycles 429, kept 595/771, end max
+  [reset] x200k 1024 vs plain CLI: SAME
+  [reset] code again (reset True): read 82 in 0.165 s, 512 tokens in 3.452 s (148.3 tok/s), cycles 225, kept 286/365, end max
+  [reset] code 512 again vs plain CLI: SAME
+  [reset] with EOS stop: read 82 in 0.162 s, 1376 tokens in 7.669 s (179.4 tok/s), cycles 418, kept 957/1104, end eos; last token 1
+  [reset] EOS-stopped answer = plain CLI up to its EOS: DIFFER at None (got 1376, ref 512)
+  [reset] stop request after 8: read 11 in 0.038 s, 10 tokens in 0.067 s (149.3 tok/s), cycles 3, kept 6/13, end stop
+  (eos_prefix DIFFER = test artifact: the ref has 512 ids, no mismatch in them; the EOS answer is 1376 long). No fault; six.active released.
+2026-11-17 13:05:52 serve restarts at 1M kvshard failed 5x (12:34-12:56: host floor during upload, low point 1.28 GB; Shmem +1.1 GB runtime staging while six cards upload). t135b (no kvshard 512K): refused, card 0 29.28 needed / 29.19 free (desktop on 03:00.0). t135c (kvshard 512K): ALL SAME (code/turn2/p3k/analysis/x34k/x200k 302.8 s 130.4 tok/s/code again), load low point 2.2 GB, 3.6 GB after upload. uppar-1 (OWN_UP_PAR) 267262e9db -> tp136 build queued
+2026-11-22 11:00 (written after a session gap; times from journal/mem records) serve-lane events 11-17 13:30 .. 11-18 22:17:
+  13:29:56 t136a (tp136, 1M, OWN_UP_PAR=2) -> host FROZE during the upload (mem.txt last 13:30:56; BERT next boot CPU 5 Bank 5 bea0000000000108 Perr S0:T012:B05). Next boot 13:32 the server preflight refused on that replayed record -> preflight-serve.sh now acknowledges ONLY the previous boot's machine-check lines printed in the first 30 s of a boot (stable/faults-acked.txt), any other fault line still blocks.
+  16:33 boot: server 1M load OK (31 s, 2024 MiB after upload). Measured while loaded: nr_gpu_active 5728 MiB (driver host pages), fdinfo per card system 317+63 MB, shared-gtt 4.85 GB = imported peer VRAM (not host).
+  18:59:10 t136k (tp136, 1M, OWN_PREBUILD=0 klazy-1, OWN_UP_PAR=3): engine RSS only 358-454 MiB during load (vs ~5 GB with prebuild; MemAvailable ~6.6-7.0 GB vs ~2.4 during upload), driver pages +4965 MiB within 0.5 s at the arena allocation; host FROZE ~40 s into the upload (mem.txt last 18:59:51; BERT CPU 0 Bank 5, Perr S0:T002:B05).
+  => both OWN_UP_PAR<6 starts froze (2/2) during the upload; full-parallel starts that day: 1 freeze (11:22) in ~20. uppar-1 NOT used (default 6 stays).
+  19:01:59 server back by itself (ack worked), 1M ready 19:02:29. 22:17 host froze with the server IDLE (next boot BERT: PcieError records at 0000:21:00.0 = upstream switch port of card 23:00.0; preflight refused on "AER: 0000:21:00.0: no pci_dev found" in that boot, correct).
+  11-18 00:07 Codex (owner-approved) installed GuC 70.83.0 + approved reboot; boot 00:11 GuC fetch -EINVAL, cards unbound all day; 22:14 corrected firmware; boot 22:16: all 12 GTs GuC 70.83.0, trial service PASS, server 1M ready 22:17:00 (31.2 s). Up since then, no freeze (server idle, 0 requests).
+2026-11-22 16:20 t136k6 (tp136 1M, OWN_PREBUILD=0, full-parallel upload, started 10:54:02, 7 s after the server's engine stopped 10:53:55): host FROZE ~25 s in, during the upload (mem.txt last 10:54:27.6; BERT next boot CPU 0 Bank 5 bea0000001000108 Perr S0:T002:B05; first freeze after the GuC 70.83.0 update). Server back by itself 10:57:03. Then 15:59 host hang with the server IDLE since 10:57 (0 requests; no BERT/fault record in the next boot); server back 16:02:57.
+  Since 11-17 13:30 every test load started outside a boot froze (13:30 UP_PAR=2, 18:59 UP_PAR=3, 10:54 klazy) while every boot-time server load passed (16:33, 19:01, 22:16, 10:56, 16:02). Owner reported the crashes; NO MORE TEST LOADS on the cards. The server loads once per boot only.
+2026-11-22 16:21 owner OK: BMC hardware watchdog ON (ipmi_watchdog: /etc/modules-load.d/ipmi-watchdog.conf + /etc/modprobe.d/ipmi-watchdog.conf action=reset timeout=180; systemd /etc/systemd/system.conf.d/watchdog.conf RuntimeWatchdogSec=3min, RebootWatchdogSec=10min; ipmitool: SMS/OS, Started/Running, Hard Reset, 180 s) + kernel.panic=10 (/etc/sysctl.d/90-panic-reboot.conf). A hang now resets the host within ~3 min; the server starts by itself. t_http on the live server (no reload) 16:1x: 12/12 PASS incl. code_identity_http (512 tokens = reference).

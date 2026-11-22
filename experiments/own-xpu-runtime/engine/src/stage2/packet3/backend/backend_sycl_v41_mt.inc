@@ -80,6 +80,10 @@ float *ixr_score[TILES] = {};
 uint8_t *ixr_cand[TILES] = {};
 unsigned ixr_R = 0;
 bool ixr_on = false;
+bool ixr_shared = false; // idxrows-2 (OWN_IDX_ROWS=2, default since tp126): halves A and B share one region of SCORE rows
+                         // (each half's scores are read only by its own selects, issued right after them on the same
+                         // in-order queue, before the other half's scoring); the candidate marks stay per half (layer 20's
+                         // marks are read again at layers 24-36)
 // the rows per half region a card's block index can need: its idxsplit-1 token share of any block / half of
 // OWN_IDX_SPLIT_MIN .. MTX tokens, a whole block below OWN_IDX_SPLIT_MIN, a check (<= 8); 0 = the MTB-row layout
 // (every mode where a whole block or half of up to MTX tokens scores on every card: no split, its diagnostics,
@@ -151,7 +155,7 @@ bool mt_small = true; // the per-token small launches as one launch per block (O
 private:
 // rows of R for every token of the block, token t's pointers moved by t * the strides (TokRows)
 template <typename R> ops41sycl::TokRows<R> tokr(R r, size_t s0, size_t s1 = 0, size_t s2 = 0, size_t s3 = 0) const {
-    return {r, (unsigned)mt_n, {s0, s1, s2, s3}};
+    return {r, (unsigned)mt_n, s0, s1, s2, s3};
 }
 // small row launches (norms, mix finishes, rope of a few tokens) as one sub-group per work-group when there
 // are at most mt_rwg rows (OWN_MT_RWG): 16 rows in one 512-wide group all ran on one core
@@ -329,6 +333,14 @@ bool rux6 = true; // OWN_RUX6 (rux6-1): default on since tp112 (rx6ab: 3K read -
 // block read once for the tile's rows) instead of RoutedQ2KF (one sub-group per slot and row). Per (slot, row) the same
 // values, products and sums in the same order and the same butterfly; /home/steve/dsv41-work/rux7/README.md.
 // Bit 2 (with bit 1): the same form without its x prefetch (Rux7Q2KPick<9, 0>; the A/B of the prefetch in the engine).
+// rux9-1 (2026-11-17; opt-in, bit-identical by construction, gated by /home/steve/dsv41-work/rux9's bench): OWN_RUX9=v runs
+// the OWN_MT_RUX blocks' cap-6 IQ2_S gate + up launches (20 blocks: the biggest prompt expert kernel, ~26 % of card 2's
+// routed time) on ops41sycl::RoutedS9 (kernels/sycl_v41_routed_rux9.hpp): 1024-item work-groups, each slot's x blocks
+// copied once into local memory (two buffers, one barrier per stage) and read from there by all 64 rows of the job;
+// the decode, the products, their order and the reduction are Rux6Q's. v = 1 A1 (2 rows, E 4), 2 A1w (+ rows ahead),
+// 3 A3 (next slot's x read early), 4 B1 (1 row per sub-group); 0 = Rux6Q
+unsigned rux9 = 0;
+unsigned rux9_ty = 1; // OWN_RUX9_TY (rux9-2): the gate + up types on RoutedS9 by bit: 1 IQ2_S, 2 IQ2_XXS, 4 IQ1_S
 unsigned rux7 = 1; // OWN_RUX7 (rux7-1): bit 1 = the Q2_K down form above (+ bit 2: no x prefetch); default 1 since tp113 (rux7 ab1: 3K -0.9 %, 10K -1.5 %, exact); 0 = tp112
 // OWN_U3_NOPAIR (xperm-4, 2026-11-12; default 1 since tp106; a bit-identical form): IQ2_XXS / IQ2_XS expert-major blocks on the
 // MT 6 kernels with fewer than RoutedU3::PAIR_NSL slots (16 tokens: the checks) run RoutedU3 without the row-pair code.
@@ -448,7 +460,7 @@ template <size_t SLM, typename K, typename... A> void launch_wgs(int c, size_t n
 size_t mt_arena_floats() const { // the block's exchange regions, after the one-token ones (+ the head outputs)
     const size_t A = mtba_n(); // (MTA; OWN_PX_BIG: 2 x MTX + 8)
     return A * ((size_t)g.ototal + (size_t)g.h + 7 * (size_t)g.mid + 10 * (size_t)g.h) + dr_arena_floats() +
-           A * (size_t)g.h + A * (size_t)g.qh * (size_t)g.hd +
+           A * (size_t)g.h + A * obs() + // (obpad-1: the head outputs' stride)
            (o.mt_dsplit ? (o.px_bcs ? 16 : 4) + (size_t)2 * A * 50 * HC_SEG : 0) + // OWN_MT_DSPLIT: xdsA, xdsF (+ alignment)
            (o.idx_split ? 16 + (size_t)8 * 512 * mtb_n() : 0) + // OWN_IDX_SPLIT: the 8 index slots' lists (xidxM, cidxm)
            (o.prt ? 16 + (size_t)2 * prt_rs() : 0); // OWN_PRT: the router's ids and weights (xrtM)
@@ -465,18 +477,18 @@ void mt_offsets(size_t base) {
                                                // last layer's exchange on xobM with no exchange in between)
     xhoM = xfcM + A * (unsigned)g.h;           // the head outputs (OWN_TP_HEADS), A tokens of qh * hd
     if (o.mt_dsplit) { // OWN_MT_DSPLIT: the partial regions, 16-byte aligned (doubles; XchgPull's vec4 rows)
-        xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 3u) & ~3u;
-        if (o.px_bcs) xdsA = (xhoM + A * (unsigned)g.qh * (unsigned)g.hd + 15u) & ~15u; // (OWN_PX_BCS: 64-byte lines)
+        xdsA = (xhoM + A * (unsigned)obs() + 3u) & ~3u;
+        if (o.px_bcs) xdsA = (xhoM + A * (unsigned)obs() + 15u) & ~15u; // (OWN_PX_BCS: 64-byte lines)
         xdsF = xdsA + A * 50u * (unsigned)HC_SEG;
     }
     if (o.idx_split) { // OWN_IDX_SPLIT: the 8 index slots' lists (cidxm[c][k] = arena + xidxM + k * 512 * mtb_n()), 64-byte lines
-        const unsigned e = o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG : xhoM + A * (unsigned)g.qh * (unsigned)g.hd;
+        const unsigned e = o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG : xhoM + A * (unsigned)obs();
         xidxM = (e + 15u) & ~15u;
     }
     if (o.prt) { // prt-1 (OWN_PRT): the router's ids (6 per token) then weights (6 per token), prt_rs() words each, 64-byte lines
         const unsigned e = o.idx_split    ? xidxM + 8u * 512u * (unsigned)mtb_n()
                            : o.mt_dsplit ? xdsF + A * 50u * (unsigned)HC_SEG
-                                         : xhoM + A * (unsigned)g.qh * (unsigned)g.hd;
+                                         : xhoM + A * (unsigned)obs();
         xrtM = (e + 15u) & ~15u;
     }
 }
@@ -485,12 +497,13 @@ void mt_alloc(int c) {
     const size_t TB = (size_t)mtb_n(), TA = mtba_n(); // (MTX, MTA; OWN_PX_BIG: 2 x MTX, + 8)
     auto md = [&](size_t n) { return dalloc<act_t>(c, n * TA); };
     auto mf = [&](size_t n) { return dalloc<float>(c, n * TA); };
-    const size_t H = g.h, Q = (size_t)g.qh * g.hd, nm = (size_t)(tm1[c] - tm0[c]), nd = (size_t)(td1[c] - td0[c]);
+    const size_t H = g.h, Q = obs(), nm = (size_t)(tm1[c] - tm0[c]), nd = (size_t)(td1[c] - td0[c]);
     act_t *x = md(H), *xn = md(H), *qa = md(g.qrank), *qn = md(g.qrank), *q = md(Q), *kv = md(g.hd), *kvn = md(g.hd);
     act_t *qi = md(32 * 128), *wv = md(32);
     // (idxrows-1: SR rows, half A's region rows [0, R), half B's [R, 2R); else TB rows, token t at row t)
     const size_t XR = ixr_rows(), SR = XR ? (o.px ? 2 : 1) * XR : TB;
-    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * SR); // (index scores: only t < mt is read)
+    const size_t SRS = XR && o.idx_rows >= 2 ? XR : SR; // idxrows-2: one score region for both halves
+    float *score = dalloc<float>(c, ((size_t)max_seq + 64) * SRS); // (index scores: only t < mt is read)
     int64_t *lens = dalloc<int64_t>(c, TB);
     // (OWN_PRT: ids and weights in the arena, where the peers' shares land; token t at 6 t as before)
     float *router = mf(g.experts), *prob = o.prt ? xarena[c] + xrtM + prt_rs() : mf(6);
@@ -505,10 +518,11 @@ void mt_alloc(int c) {
     int32_t *cat = dalloc<int32_t>(c, (size_t)640 * TB), *widx = dalloc<int32_t>(c, (size_t)128 * TB);
     act_t *old = md(4 * H);
     uint8_t *cand = dalloc<uint8_t>(c, ((size_t)max_seq + 64) * SR);
-    ixr_R = (unsigned)XR, ixr_on = XR != 0, ixr_score[c] = score, ixr_cand[c] = cand;
+    ixr_R = (unsigned)XR, ixr_on = XR != 0, ixr_shared = SRS != SR, ixr_score[c] = score, ixr_cand[c] = cand;
     if (c == 0 && XR)
-        std::fprintf(stderr, "OWN_IDX_ROWS: block index score rows per card %zu (2 x %zu) of %zu: %.2f GiB less per card\n", SR,
-                     XR, TB, (double)((TB - SR) * ((size_t)max_seq + 64) * 5) / (1u << 30));
+        std::fprintf(stderr, "OWN_IDX_ROWS=%u: block index score rows per card %zu, candidate rows %zu (2 x %zu) of %zu: %.2f GiB "
+                             "less per card\n", o.idx_rows, SRS, SR, XR, TB,
+                     (double)((TB - SRS) * ((size_t)max_seq + 64) * 4 + (TB - SR) * ((size_t)max_seq + 64)) / (1u << 30));
     if (o.idx_cand) blm[c] = dalloc<int32_t>(c, (size_t)(2048 + 64) * TB);
     // (score2m: one row of max_seq + 64 per token, as score; it was mf(... * MTX), i.e. MTX rows per token)
     if (o.idx_cand == 2) { score2m[c] = dalloc<float>(c, ((size_t)max_seq + 64) * TB); list2m[c] = dalloc<int32_t>(c, (size_t)512 * TB); }
@@ -520,7 +534,7 @@ void mt_alloc(int c) {
         s.qa = qa + (size_t)t * g.qrank; s.qn = qn + (size_t)t * g.qrank; s.q = q + t * Q;
         s.kv = kv + (size_t)t * g.hd; s.kvn = kvn + (size_t)t * g.hd;
         s.qi = qi + (size_t)t * 4096; s.wv = wv + (size_t)t * 32;
-        s.score = (size_t)t < SR ? score + (size_t)t * ((size_t)max_seq + 64) : nullptr; s.lens = lens + t; // (idxrows-1: tpm_index's regions)
+        s.score = (size_t)t < SRS ? score + (size_t)t * ((size_t)max_seq + 64) : nullptr; s.lens = lens + t; // (idxrows-1/2: tpm_index's regions)
         s.router = router + (size_t)t * g.experts; s.ids = ids + 6 * t; s.prob = prob + 6 * t;
         s.expg = expg + t * 6 * nm; s.expu = expu + t * 6 * nm; s.expd = expd + t * 6 * nd;
         s.shg = shg + (size_t)t * g.mid; s.shu = shu + (size_t)t * g.mid; s.shd = shd + t * H;
@@ -1097,6 +1111,40 @@ void routed_m(int c, const std::string &wn, const std::string &wn2, const act_t 
             launch_rows<K::TAB>(c, npos, mw, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
         };
         if (mt_rux && (unsigned)mt_n >= mt_rux_min) { // OWN_MT_RUX: the row-tiled forms (MT 6 / 8 / 16 by the cap)
+#ifndef OWN41_ACT_BF16
+            // rux9-2 (OWN_RUX9_TY): the types by bit, 1 IQ2_S (default), 2 IQ2_XXS, 4 IQ1_S (the bench's 20-block formats)
+            const unsigned r9t = e.type == iq3::Type::IQ2_S ? 1u : e.type == iq3::Type::IQ2_XXS ? 2u : e.type == iq3::Type::IQ1_S ? 4u : 0u;
+            if (rux9 && (rux9_ty & r9t) && cap <= 6 && w2 && !per_slot && cols == 20 * 256) { // rux9-1 (OWN_RUX9)
+                auto g9 = [&](auto kt) {
+                    using K = typename decltype(kt)::type;
+                    if (rows % K::RRV) throw std::runtime_error("OWN_RUX9: rows not a multiple of the rows per sub-group: " + wn);
+                    K k{rows, per_slot};
+                    k.w2 = w2;
+                    k.out2 = y2;
+                    k.nsl = nsl;
+                    k.xtok = (unsigned)xtok;
+                    launch_rows<K::TAB, K::WG>(c, npos, K::WGCAP, k, (const uint8_t *)dp.p, x, (const uint32_t *)egrp[c], y);
+                };
+                auto f9 = [&](auto ft) {
+                    using F9 = typename decltype(ft)::type;
+                    switch (rux9) {
+                    case 1: return g9(std::type_identity<RoutedS9<F9, 6, 2, 4, 4, 0, 2, 1024, 0, 0>>{}); // A1
+                    case 2: return g9(std::type_identity<RoutedS9<F9, 6, 2, 4, 4, 0, 2, 1024, 0, 2>>{}); // A1w
+                    case 3: return g9(std::type_identity<RoutedS9<F9, 6, 2, 4, 4, 1, 2, 1024, 0, 0>>{}); // A3
+                    case 4: return g9(std::type_identity<RoutedS9<F9, 6, 1, 8, 8, 1, 2, 1024, 0, 0>>{}); // B1
+                    default: throw std::runtime_error("OWN_RUX9: 1 (A1), 2 (A1w), 3 (A3) or 4 (B1)");
+                    }
+                };
+                // (the IQ2_XXS / IQ1_S forms only in builds with -DOWN_RUX9_TY: the build adds it when the rux9 bench
+                // compiles them, -DRUX4_FMT=7)
+#ifdef OWN_RUX9_TY
+                if (r9t == 2) return f9(std::type_identity<typename ops41sycl::rux6::Fmt<iq3::Type::IQ2_XXS, 20>::T>{});
+                if (r9t == 4) return f9(std::type_identity<typename ops41sycl::rux6::Fmt<iq3::Type::IQ1_S, 20>::T>{});
+#endif
+                if (r9t != 1) throw std::runtime_error("OWN_RUX9_TY: this build has the IQ2_S form only (no -DOWN_RUX9_TY)");
+                return f9(std::type_identity<typename ops41sycl::rux6::Fmt<iq3::Type::IQ2_S, 20>::T>{});
+            }
+#endif
             if (rux6 && cap <= 6) { // OWN_RUX6: rux4's picks + x prefetches (rux6_has false: the forms below)
 #define X6(TY, NB)                                                                                           \
     if constexpr (rux6_has<iq3::Type::TY, NB>)                                                               \
@@ -1372,8 +1420,8 @@ void tpm_publish(int L, int c, int si, bool yarn) {
     using RR = ops41sycl::TokRows<ops41sycl::RopeRows<Act>>;
     if (rwin && np && (long)pstep * (np - 1) > RW_NEED) throw std::runtime_error("OWN_ROPE_WIN: a block's rope rows span beyond the window margin");
     const float *cb = rope_t(c, yarn, false, gpos0), *sb = rope_t(c, yarn, true, gpos0); // (ropewin-1: rows on from gpos0)
-    rows_launch(c, ops41sycl::RowsPair<RR, RR>{RR{{b.kk, cb, sb, 1u, 128u, false}, np, {128, 32 * pstep, 0, 0}},
-                                               RR{{b.latent, cb, sb, 1u, (unsigned)g.hd, false}, np, {hd, 32 * pstep, 0, 0}}});
+    rows_launch(c, ops41sycl::RowsPair<RR, RR>{RR{{b.kk, cb, sb, 1u, 128u, false}, np, 128, 32 * pstep, 0, 0},
+                                               RR{{b.latent, cb, sb, 1u, (unsigned)g.hd, false}, np, hd, 32 * pstep, 0, 0}});
     if (o.kv_shard) // kvshard-1: the rows into their tail slots, their owners' chunks (OWN_KV_SHARD=2: and the mirror)
         launch(c, (size_t)np * std::max(g.hd, 128), 64,
                ops41sycl::PubAppendSM<Act>{g.hd, 128, (int)tl0, np, o.kv_shard_r, (unsigned)o.tp, (unsigned)c, o.kv_tail},
@@ -1430,7 +1478,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
     // its share's first token (split) or token 0 (a whole block: below OWN_IDX_SPLIT_MIN, a check); the same
     // partition at every index layer, so the layer-20 candidate marks stay in the rows the same token reads later
     const unsigned rb = ixr_on && sx ? ua[c] : 0u;
-    float *const rsc = ixr_on ? ixr_score[c] + (size_t)(px_tok ? ixr_R : 0u) * SS : b.score;
+    float *const rsc = ixr_on ? ixr_score[c] + (size_t)(px_tok && !ixr_shared ? ixr_R : 0u) * SS : b.score; // (idxrows-2: shared)
     uint8_t *const rcd = ixr_on ? ixr_cand[c] + (size_t)(px_tok ? ixr_R : 0u) * SS : b.cand;
     if (ixr_on && (sx ? ub[c] - ua[c] : (unsigned)M) > ixr_R)
         throw std::runtime_error("OWN_IDX_ROWS: a block's index needs more than " + std::to_string(ixr_R) +
@@ -1451,7 +1499,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         {
             const float *cb = rope_t(c, yarn, false, pos + (long)u0), *sbp = rope_t(c, yarn, true, pos + (long)u0);
             rows_launch(c, ops41sycl::TokRows<ops41sycl::RopeRows<Act>>{
-                               ops41sycl::RopeRows<Act>{qd + (size_t)u0 * 4096, cb, sbp, 32u, 128u, false}, un, {4096, 32, 0, 0}});
+                               ops41sycl::RopeRows<Act>{qd + (size_t)u0 * 4096, cb, sbp, 32u, 128u, false}, un, 4096, 32, 0, 0});
         }
         gemv_m(c, p + "indexer.proj.weight", b.xn + (size_t)u0 * g.h, g.h, wd + (size_t)u0 * 32, 32, 0, un);
     };
@@ -1471,6 +1519,11 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         int32_t *const bl0 = blh ? blh + (size_t)u0 * (2048 + 64) : nullptr; // (null without OWN_IDX_CAND)
         int32_t *const ox = out + (size_t)u0 * 512;
         if (ccm) {
+          // idxfilt-4 (OWN_IDX_FILT_BC): the filter in place of the exact candidate scores (the selects unchanged);
+          // with OWN_IDX_FILT=2 the exact scores again and the selects into the shadows, compared (counts [4], [5])
+          const bool fb = o.idx_filt_bc && lmax >= o.idx_filt_min;
+          if (fb) ifl_bc(c, si, un, ln, qi, wv, sco, SS, bl0);
+          auto bcm = [&]() {
             using KS = ops41sycl::IndexerScoreBCM<Act>;
             constexpr size_t WG = 128;
             KS k{};
@@ -1490,6 +1543,9 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
                                 [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { k(it, qi, ik, wv, scw, bl, &lt[0]); });
             });
             kev(c, kname<KS>(), e);
+          };
+          if (!fb) bcm();
+          auto selc = [&](int32_t *oxs) {
             constexpr size_t SLMC = (size_t)ops41sycl::TopKSelC::NSG * 256 + 8;
             if (qsel_ok()) { // OWN_TOPK_Q
                 ops41sycl::TopKSelMCQ kq{};
@@ -1499,7 +1555,7 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
                 kq.cs = SS;
                 kq.bls = 2048 + 64;
                 launch_wgs<SLMC>(c, (size_t)un, ops41sycl::TopKSelC::WG, kq, (const float *)sco, (const uint8_t *)cnd,
-                                 (const int32_t *)bl0, ox);
+                                 (const int32_t *)bl0, oxs);
             } else {
                 ops41sycl::TopKSelMC kt{};
                 kt.lens = lens_arg(c, ln, un);
@@ -1509,19 +1565,46 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
                 kt.bls = 2048 + 64;
                 kt.rwalk = o.topk_r;
                 launch_wgs<SLMC>(c, (size_t)un, ops41sycl::TopKSelC::WG, kt, (const float *)sco, (const uint8_t *)cnd,
-                                 (const int32_t *)bl0, ox);
+                                 (const int32_t *)bl0, oxs);
             }
-            return;
+          };
+          selc(ox);
+          if (fb) {
+            ++iflb_calls[c], iflb_tok[c] += un;
+            if (o.idx_filt == 2) {
+                bcm();
+                selc(ifl_ox2[c]);
+                for (unsigned u = 0; u < un; ++u)
+                    dtk_cmp(c, ox + (size_t)u * 512, ifl_ox2[c] + (size_t)u * 512, nullptr, nullptr, nullptr, nullptr, 0,
+                            ifl_cnt[c] + 4);
+            }
+          }
+          return;
         }
         const unsigned rp = split ? o.idx_rp : 0u; // idxrp-1 (OWN_IDX_RP / OWN_IDX_RMAJ: prompt halves only)
         const bool rmj = split && o.idx_rmaj;
-        if (o.idx_r == 2 || o.idx_r == 4 || rp == 2 || rp == 4) {
+        // dtopk-2 (OWN_IDX_DTOPK_M): a check's split layers 2-20 by candidates, every token as dtopk-1's one token; the
+        // check mode (=2) goes on to the gather and the unchanged selects below and compares at the end
+        const bool dk = ms && dtkm_on(L, un, ln);
+        if (dk) {
+            dtkm_index(L, c, si, un, ln, qi, wv, lmax, sco, cnd, bl0, ox, SS);
+            if (o.idx_dtopk_m != 2) return;
+        }
+        // idxfilt-2 (OWN_IDX_FILT): prompt halves' split layers from idx_filt_min rows (layer 20 with its block lists):
+        // the pre-filter's lower bounds into the scores, thresholds from their per-8-row maxima (IdxFiltT), exact scores
+        // where a row can still be kept or hold a block's key (IdxFiltX2); then the selects below, once
+        const bool ff = o.idx_filt && split && !ms && !dk && L <= 20 && lmax >= o.idx_filt_min && (L != 20 || bl0);
+        if (ff) {
+            ifl_score(c, si, un, ln, qi, wv, lmax, sco, SS);
+            ifl_exact(c, si, un, ln, qi, wv, lmax, sco, SS, L == 20);
+            ++ifl_calls[c], ifl_tok[c] += un;
+        } else if (o.idx_r == 2 || o.idx_r == 4 || rp == 2 || rp == 4) {
             long ll[MTX] = {};
             for (unsigned t = 0; t < un; ++t) ll[t] = ln[t];
             idx_score_r(c, (o.idx_r == 2 || o.idx_r == 4) ? o.idx_r : rp, (int)un, ll, qi, wv, ik_mirror[c][si], sco, 4096, 32,
                         SS, rmj);
-        } else if (ms) { // idxsplit-2: this card's rows of every token, then every card's
-            ixm_score(c, si, un, ln, qi, wv, lmax, sco, SS);
+        } else if (ms) { // idxsplit-2: this card's rows of every token, then every card's (dtopk-2's check: the gather only)
+            ixm_score(c, si, un, ln, qi, wv, lmax, sco, SS, dk ? 2u : 3u);
         } else {
             using KS = ops41sycl::IndexerScoreBM<Act>;
             constexpr size_t WG = 128;
@@ -1545,36 +1628,83 @@ void tpm_index(int L, int c, int si, bool yarn, int slot, bool split = false) {
         }
         using KR = ops41sycl::TopKSelP<false>;
         constexpr size_t SLM = (size_t)KR::NSG * 256 + 8;
-        if (L == 20) {
-            auto blk = [&](auto kb) {
+        // the selects (marks into cd, block lists into bo, lists into oo; idxfilt-1's check: its shadows)
+        auto sels = [&](uint8_t *cd, int32_t *bo, int32_t *oo) {
+            if (L == 20) {
+                auto blk = [&](auto kb) {
+                    kb.lens = lens_arg(c, ln, un);
+                    kb.m = un;
+                    kb.ss = SS;
+                    kb.cs = SS;
+                    kb.bls = 2048 + 64;
+                    launch_wgs<SLM>(c, (size_t)un, KR::WG, kb, (const float *)sco, cd, bo); // blm: OWN_IDX_CAND (else null)
+                };
+                if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
+                else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
+                else blk(ops41sycl::TopKSelM<true>{});
+            }
+            auto rws = [&](auto kt) {
+                kt.lens = lens_arg(c, ln, un);
+                kt.m = un;
+                kt.mask = L > 20;
+                kt.ss = SS;
+                kt.cs = SS;
+                launch_wgs<SLM>(c, (size_t)un, KR::WG, kt, (const float *)sco, cd, oo);
+            };
+            if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
+            else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
+            else if (qr && qr <= 64) rws(ops41sycl::TopKSelMQ<64>{});
+            else if (qr && qr <= 96) rws(ops41sycl::TopKSelMQ<96>{});
+            else {
+                ops41sycl::TopKSelM<false> kt{};
+                kt.rwalk = o.topk_r;
+                rws(kt);
+            }
+        };
+        if (ff && o.idx_filt_sel) { // idxfilt-3 (OWN_IDX_FILT_SEL): the selects over the rows at or above the thresholds
+            const float *thr = ifl_thr[c];
+            if (L == 20) {
+                ops41sycl::TopKSelF<true> kb{};
                 kb.lens = lens_arg(c, ln, un);
                 kb.m = un;
                 kb.ss = SS;
                 kb.cs = SS;
                 kb.bls = 2048 + 64;
-                launch_wgs<SLM>(c, (size_t)un, KR::WG, kb, (const float *)sco, cnd, bl0); // blm: OWN_IDX_CAND (else null)
-            };
-            if (qb && qb <= 16) blk(ops41sycl::TopKSelMBQ<16>{});
-            else if (qb && qb <= 32) blk(ops41sycl::TopKSelMBQ<32>{});
-            else blk(ops41sycl::TopKSelM<true>{});
+                launch_wgs<decltype(kb)::SLM>(c, (size_t)un, decltype(kb)::WG, kb, (const float *)sco, thr, cnd, bl0);
+            }
+            ops41sycl::TopKSelF<false> kr{};
+            kr.lens = lens_arg(c, ln, un);
+            kr.m = un;
+            kr.ss = SS;
+            kr.cs = SS;
+            launch_wgs<decltype(kr)::SLM>(c, (size_t)un, decltype(kr)::WG, kr, (const float *)sco, thr, cnd, ox);
+            ++ifl_sel_calls[c];
+        } else {
+            sels(cnd, bl0, ox);
         }
-        auto rws = [&](auto kt) {
-            kt.lens = lens_arg(c, ln, un);
-            kt.m = un;
-            kt.mask = L > 20;
-            kt.ss = SS;
-            kt.cs = SS;
-            launch_wgs<SLM>(c, (size_t)un, KR::WG, kt, (const float *)sco, cnd, ox);
-        };
-        if (qr && qr <= 16) rws(ops41sycl::TopKSelMQ<16>{});
-        else if (qr && qr <= 32) rws(ops41sycl::TopKSelMQ<32>{});
-        else if (qr && qr <= 64) rws(ops41sycl::TopKSelMQ<64>{});
-        else if (qr && qr <= 96) rws(ops41sycl::TopKSelMQ<96>{});
-        else {
-            ops41sycl::TopKSelM<false> kt{};
-            kt.rwalk = o.topk_r;
-            rws(kt);
+        if (ff) {
+            if (o.idx_filt == 2) { // check: every row exact (the R-row form), the unchanged selects into the shadows
+                if (SS > (size_t)max_seq + 64) throw std::runtime_error("OWN_IDX_FILT=2: score stride past the shadows");
+                long ll[MTX] = {};
+                for (unsigned t = 0; t < un; ++t) ll[t] = ln[t];
+                const bool dg = o.ifl_diag && L == 20 && bl0; // ifldiag-1: the filtered pass's stored values
+                const std::vector<float> s1 = dg ? ifl_diag_cap(c, un, sco, SS, 0u, (unsigned)((lmax + 31) / 32 * 32))
+                                                 : std::vector<float>{};
+                idx_score_r(c, (o.idx_r == 2 || o.idx_r == 4) ? o.idx_r : (rp == 2 || rp == 4) ? rp : 2u, (int)un, ll, qi,
+                            wv, ik_mirror[c][si], sco, 4096, 32, SS, rmj);
+                int32_t *b2 = bl0 ? ifl_bl2[c] : nullptr;
+                sels(ifl_cd2[c], b2, ifl_ox2[c]);
+                for (unsigned u = 0; u < un; ++u)
+                    dtk_cmp(c, ox + (size_t)u * 512, ifl_ox2[c] + (size_t)u * 512,
+                            L == 20 && bl0 ? bl0 + (size_t)u * (2048 + 64) : nullptr,
+                            L == 20 && bl0 ? b2 + (size_t)u * (2048 + 64) : nullptr, L == 20 ? cnd + (size_t)u * SS : nullptr,
+                            L == 20 ? ifl_cd2[c] + (size_t)u * SS : nullptr, ln[u] > 0 ? ln[u] : 0, ifl_cnt[c]);
+                if (dg)
+                    ifl_diag_report(L, c, un, ln, sco, SS, bl0, b2, cnd, ifl_cd2[c], s1, 0u, (unsigned)((lmax + 31) / 32 * 32),
+                                    "prompt");
+            }
         }
+        if (dk) dtkm_cmp(L, c, un, ln, ox, bl0, cnd, SS); // dtopk-2 check: its shadows against these selects
     };
     if (!split) { // every token (as always)
         qrows(0, (unsigned)M, b.qi, b.wv);
@@ -1652,11 +1782,18 @@ bool ixm_on(int c, unsigned M, long lmax, bool ccm) const {
     return (o.idx_dsplit & 2u) && o.tp > 1 && xscM && M >= 1 && M <= 6 && !ccm && lmax >= o.idx_dsplit_min &&
            !(o.idx_r == 2 || o.idx_r == 4) && !px_q[c] && !px_run[c] && !o.dev_index_check && !qbm_any();
 }
-void ixm_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco, size_t SS) {
+// part (dtopk-2): bit 1 this card's scores, bit 2 the gather (3: both, as always)
+void ixm_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco, size_t SS,
+               unsigned part = 3u) {
     unsigned b0[6], b1[6];
     ixd_bounds((lmax + 31) / 32 * 32, b0, b1);
     const unsigned r0 = b0[c], r1 = b1[c];
-    if (r1 > r0) {
+    if ((part & 1u) && r1 > r0 && (o.idx_ck_r == 2 || o.idx_ck_r == 4)) { // idxbc-2 (OWN_IDX_CK_R): the R-row form
+        long cl[MTX] = {};
+        for (unsigned t = 0; t < un; ++t) cl[t] = ln[t] > (int)r0 ? std::min(ln[t], (int)r1) - (int)r0 : 0;
+        idx_score_r(c, o.idx_ck_r, (int)un, cl, qi, wv, ik_mirror[c][si] + (size_t)r0 * 128, sco + r0, 4096, 32, SS,
+                    o.idx_ck_rmaj);
+    } else if ((part & 1u) && r1 > r0) {
         using KS = ops41sycl::IndexerScoreBM<Act>;
         constexpr size_t WG = 128;
         KS k{};
@@ -1678,9 +1815,447 @@ void ixm_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const
         kev(c, kname<KS>(), e);
     }
     if (SS % 4) throw std::runtime_error("OWN_IDX_DSPLIT: the score stride is not a multiple of 4");
-    ixd_pull(c, (unsigned)(sco - xarena[c]), (unsigned)SS, un, b0, b1); // (sco: token u0's rows; u0 = 0 today)
-    ++ixm_calls[c];
-    if (o.idx_dsplit_check) ixm_check(c, si, un, ln, qi, wv, lmax, sco, SS);
+    if (part & 2u) ixd_pull(c, (unsigned)(sco - xarena[c]), (unsigned)SS, un, b0, b1); // (sco: token u0's rows; u0 = 0 today)
+    if (part & 1u) ++ixm_calls[c];
+    if (o.idx_dsplit_check && (part & 2u)) ixm_check(c, si, un, ln, qi, wv, lmax, sco, SS);
+}
+// idxfilt-1 (OWN_IDX_FILT; sycl_v41_idxfilt.hpp): un tokens' lower bounds LO = s~ - E for rows [0, round32(lmax)) into
+// sco (token t at + t * SS; rows past a token's length -inf as the exact kernels), the row norms into ifl_n2[c] and the
+// bound factors into ifl_ac[c] (IdxFiltQ + IdxFiltS, two BF16 passes)
+// (r0: the rows start at key row r0, sco and ln relative to it: idxfilt-2c's share of a card)
+// idxmem-1: the most tokens one filtered call can have on a card: a split block's or half's share (OWN_IDX_SPLIT_MIN ..
+// MTX tokens; ix_split), a whole block below OWN_IDX_SPLIT_MIN, a check (dtopk-2: <= 6); ixr_rows' bound, in every mode
+unsigned ifl_cap() const {
+    unsigned r = std::max(o.idx_split_min > 1 ? o.idx_split_min - 1 : 1u, 8u), a[6], b[6];
+    for (unsigned m = std::max(o.idx_split_min, 2u); m <= (unsigned)MTX; ++m) {
+        ix_split(m, a, b);
+        for (int d = 0; d < o.tp && d < 6; ++d) r = std::max(r, b[d] - a[d]);
+    }
+    return std::min(r, (unsigned)MTX);
+}
+void ifl_score(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco, size_t SS,
+               size_t r0 = 0) {
+    if (un > ifl_tcap) throw std::runtime_error("OWN_IDX_FILT: " + std::to_string(un) + " tokens, rows for " + std::to_string(ifl_tcap));
+    ops41sycl::IdxFiltQ<Act> kq{};
+    kq.qs = 4096, kq.ws = 32, kq.two = true;
+    uint16_t *bh = ifl_bh[c], *bl = ifl_bl[c];
+    float *ac = ifl_ac[c], *n2 = ifl_n2[c];
+    auto e1 = qs[c].submit([&](sycl::handler &hh) {
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * ops41sycl::IdxFiltQ<Act>::WG, ops41sycl::IdxFiltQ<Act>::WG),
+                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { kq(it, qi, wv, bh, bl, ac); });
+    });
+    kev(c, kname<ops41sycl::IdxFiltQ<Act>>(), e1);
+    using KS = ops41sycl::IdxFiltS<Act, 2>;
+    KS ks{};
+    ks.lens = lens_arg(c, ln, un);
+    ks.m = un;
+    ks.nr = (unsigned)((lmax + 31) / 32 * 32);
+    ks.ss = SS, ks.ws = 32, ks.two = true;
+    ks.cm = ifl_cm[c], ks.cms = ifl_cms;
+    if ((size_t)ks.nr > (size_t)max_seq + 64) throw std::runtime_error("OWN_IDX_FILT: rows past the norms");
+    const uint16_t *ik = ik_mirror[c][si] + r0 * 128;
+    const size_t ng = (ks.nr + KS::ROWS - 1) / KS::ROWS;
+    auto e2 = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(KS::SLM, hh);
+        hh.parallel_for(sycl::nd_range<1>(ng * KS::WG, KS::WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+            ks(it, ik, bh, bl, ac, wv, sco, n2, &lt[0]);
+        });
+    });
+    kev(c, kname<KS>(), e2);
+}
+// idxfilt-4 (OWN_IDX_FILT_BC): the candidate layers' filter: the queries' BF16 parts and bound factors (IdxFiltQ), LO of
+// every candidate row (IdxFiltSC), the threshold (IdxFiltTC: the 512th largest LO among them), the exact scores of the
+// rows with HI at or above it (IdxFiltXC); bl: token u's block list at bl + u * (2048 + 64)
+void ifl_bc(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, float *sco, size_t SS,
+            const int32_t *bl) {
+    if (un > ifl_tcap) throw std::runtime_error("OWN_IDX_FILT_BC: " + std::to_string(un) + " tokens, rows for " + std::to_string(ifl_tcap));
+    if (!bl) throw std::runtime_error("OWN_IDX_FILT_BC: no block lists");
+    ops41sycl::IdxFiltQ<Act> kq{};
+    kq.qs = 4096, kq.ws = 32, kq.two = true;
+    uint16_t *bh = ifl_bh[c], *bq = ifl_bl[c];
+    float *ac = ifl_ac[c], *n2 = ifl_n2[c], *thr = ifl_thr[c];
+    auto e1 = qs[c].submit([&](sycl::handler &hh) {
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * ops41sycl::IdxFiltQ<Act>::WG, ops41sycl::IdxFiltQ<Act>::WG),
+                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] { kq(it, qi, wv, bh, bq, ac); });
+    });
+    kev(c, kname<ops41sycl::IdxFiltQ<Act>>(), e1);
+    const uint16_t *ik = ik_mirror[c][si];
+    using KS = ops41sycl::IdxFiltSC<Act, 1>;
+    KS ks{};
+    ks.lens = lens_arg(c, ln, un);
+    ks.m = un;
+    ks.gpt = (2048 + KS::BPG - 1) / KS::BPG;
+    ks.ss = SS, ks.ws = 32, ks.bls = 2048 + 64;
+    auto e2 = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(KS::SLM, hh);
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * ks.gpt * KS::WG, KS::WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+            ks(it, ik, bh, bq, ac, wv, bl, sco, n2, &lt[0]);
+        });
+    });
+    kev(c, kname<KS>(), e2);
+    ops41sycl::IdxFiltTC<> kt{};
+    kt.lens = lens_arg(c, ln, un);
+    kt.m = un;
+    kt.ss = SS, kt.bls = 2048 + 64;
+    launch_wgs<ops41sycl::IdxFiltTC<>::SLM>(c, (size_t)un, ops41sycl::IdxFiltTC<>::WG, kt, (const float *)sco, bl, thr);
+    using KX = ops41sycl::IdxFiltXC<Act, 2>;
+    KX kx{};
+    kx.lens = lens_arg(c, ln, un);
+    kx.m = un;
+    kx.ns = (2048 + KX::SB - 1) / KX::SB;
+    kx.ss = SS, kx.qs = 4096, kx.ws = 32, kx.bls = 2048 + 64;
+    auto e3 = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(KX::SLM, hh);
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * kx.ns * KX::WG, KX::WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+            kx(it, qi, ik, wv, ac, n2, thr, bl, sco, &lt[0]);
+        });
+    });
+    kev(c, kname<KX>(), e3);
+}
+// idxfilt-2: the thresholds from the filter's per-8-row maxima (IdxFiltT: the 512th largest, and the 2048th at layer
+// 20 (blk)), then every row that can still be kept, or hold the largest score of a block that can be kept, gets its
+// exact score in sco (IdxFiltX2, 2 blocks of 8 rows per item, 4096 rows per work-group)
+void ifl_exact(int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco, size_t SS,
+               bool blk, size_t r0 = 0) {
+    if (un > ifl_tcap) throw std::runtime_error("OWN_IDX_FILT: " + std::to_string(un) + " tokens, rows for " + std::to_string(ifl_tcap));
+    using KT = ops41sycl::IdxFiltT<>;
+    KT kt{};
+    kt.lens = lens_arg(c, ln, un);
+    kt.m = un;
+    kt.cms = ifl_cms;
+    kt.blk = blk;
+    const float *cm = ifl_cm[c];
+    float *thr = ifl_thr[c];
+    auto e1 = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(KT::SLM, hh);
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * KT::WG, KT::WG),
+                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(32)]] { kt(it, cm, thr, &lt[0]); });
+    });
+    kev(c, kname<KT>(), e1);
+    using KX = ops41sycl::IdxFiltX2<Act, 2>;
+    KX kx{};
+    kx.lens = lens_arg(c, ln, un);
+    kx.m = un;
+    kx.ns = (unsigned)((lmax + KX::SR - 1) / KX::SR);
+    kx.ss = SS, kx.qs = 4096, kx.ws = 32;
+    const uint16_t *ik = ik_mirror[c][si] + r0 * 128;
+    const float *ac = ifl_ac[c], *n2 = ifl_n2[c];
+    auto e2 = qs[c].submit([&](sycl::handler &hh) {
+        sycl::local_accessor<float, 1> lt(KX::SLM, hh);
+        hh.parallel_for(sycl::nd_range<1>((size_t)un * kx.ns * KX::WG, KX::WG),
+                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+                            kx(it, qi, ik, wv, ac, n2, thr, sco, &lt[0]);
+                        });
+    });
+    kev(c, kname<KX>(), e2);
+}
+// ---- dtopk-2 (OWN_IDX_DTOPK_M; the method and its exactness: backend_sycl_v41.hpp "dtopk-1") --------------------------
+// A check block's split index layers (ixm_on: 1-6 tokens, every token scores all its rows; layers 2 / 8 / 14 / 20 where
+// every token has dtopk-1's row counts) without gathering every card's score rows of every token: ixm_score's own rows
+// only (the shares of the block's longest row count, as always), then per token u dtopk-1's stage 1 over this card's
+// rows below lens[u] (TopKSelD1<16>; layer 20 also TopKSelDB1<8> over its blocks, which zeroes the token's marks
+// [0, lens[u]) as dtopk-1 does), into token u's area at xscKM + u * (o.tp * q.u), this card's chunk at + c * q.u; one
+// XchgPull (nslot = the block's tokens, stride o.tp * q.u) copies every peer's chunk of every token; then per token
+// dtopk-1's merges (TopKSelDQB: block list + marks; TopKSelDQ: the list) into the outputs the unchanged selects write
+// (token u's list at ox + u * 512, block list bl0 + u * (2048 + 64), marks cnd + u * SS). Each token's list, block list
+// and marks are dtopk-1's for that token's scores: the same bits as the full selects (dtopk-1's argument, per token).
+// The geometry (dtk_geo of the longest row count rounded to 32) and the decision (dtkm_on: every token's row count) are
+// host state every card shares: one pull per such layer on every card, as idxsplit-2's gather it replaces. Reuse: as
+// dtopk-1's area (the next write at the next such layer, after this layer's later exchanges).
+bool dtkm_on(int L, unsigned un, const int *ln) const {
+    if (!o.idx_dtopk_m || !xscKM || L > 20 || un < 1 || un > 6) return false;
+    for (unsigned u = 0; u < un; ++u)
+        if (!dtk_on(L, (long)ln[u])) return false;
+    return true;
+}
+// idxfilt-2c (OWN_IDX_FILT_CK): dtopk-2 with this card's share scored by the pre-filter (ifl_score / ifl_exact over
+// rows [r0, r1), lengths relative to r0, thresholds from the share). Exact: a card's K-th largest score is at most the
+// overall K-th largest (its rows are a subset), so every row left at its LO is strictly below every row the overall
+// select can keep; the selected blocks are candidates on their cards likewise; dtopk-2's stage 1 + merge keep the
+// top k of the stored values, which are then the exact scores' (the argument of idxfilt-1, per card). With
+// OWN_IDX_FILT=2: dtopk-2 again on exact shares into idxfilt's shadows, compared on the card.
+void dtkm_index(int L, int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco,
+                uint8_t *cnd, int32_t *bl0, int32_t *ox, size_t SS) {
+    const int T_ = (int)((lmax + 31) / 32 * 32);
+    const bool flt = o.idx_filt_ck && L <= 20 && (long)T_ / o.tp >= o.idx_filt_ck_min; // (the same on every card)
+    const bool chk = o.idx_dtopk_m == 2, l20 = L == 20;
+    dtkm_core(L, c, si, un, ln, qi, wv, lmax, sco, cnd, bl0, ox, SS, flt, nullptr, nullptr, nullptr);
+    if (flt && o.idx_filt == 2) {
+        if (SS > (size_t)max_seq + 64) throw std::runtime_error("OWN_IDX_FILT=2: score stride past the shadows");
+        int32_t *b2 = bl0 ? ifl_bl2[c] : nullptr;
+        // ifldiag-1: the first pass's share scores and thresholds, kept on the host
+        const bool dg = o.ifl_diag && l20; // (checks: often marks only, no block list)
+        std::vector<float> s1;
+        unsigned g0 = 0, g1 = 0;
+        const DtkGeo qg = dtk_geo(T_, true);
+        const size_t TUg = (size_t)o.tp * qg.u;
+        std::vector<float> kb1;
+        if (dg) {
+            g0 = qg.b0[c], g1 = qg.b1[c];
+            s1 = ifl_diag_cap(c, un, sco, SS, g0, g1);
+            kb1.resize((size_t)un * TUg); // the pulled stage-1 candidates of every card (pass 1)
+            qs[c].memcpy(kb1.data(), xarena[c] + xscKM, kb1.size() * 4).wait();
+        }
+        dtkm_core(L, c, si, un, ln, qi, wv, lmax, sco, cnd, bl0, ox, SS, false, ifl_ox2[c], b2, ifl_cd2[c]);
+        if (dg) { // ifldiag-1c: every card's block candidates (value, index) after the pull, pass 1 vs pass 2
+            std::vector<float> kb2(kb1.size());
+            qs[c].memcpy(kb2.data(), xarena[c] + xscKM, kb2.size() * 4).wait();
+            for (unsigned u = 0; u < un; ++u)
+                for (int d = 0; d < o.tp; ++d) {
+                    const float *p1 = kb1.data() + u * TUg + (size_t)d * qg.u + 2 * qg.nr, *p2 = kb2.data() + u * TUg + (size_t)d * qg.u + 2 * qg.nr;
+                    long nd = 0, f = -1;
+                    for (unsigned i = 0; i < qg.nb; ++i)
+                        if (std::memcmp(p1 + i, p2 + i, 4) || std::memcmp(p1 + qg.nb + i, p2 + qg.nb + i, 4)) nd += 1, f = f < 0 ? (long)i : f;
+                    if (nd && ifl_kbd_shown[c] < 40) {
+                        ++ifl_kbd_shown[c];
+                        std::fprintf(stderr, "IFLDIAG kb L%d card %d token %u/%u len %d: card %d's block candidates differ in %ld of %u "
+                                             "(first %ld: pass 1 %.9g @ %.0f, pass 2 %.9g @ %.0f)\n", L, c, u, un, ln[u], d, nd, qg.nb, f,
+                                     p1[f], p1[qg.nb + f], p2[f], p2[qg.nb + f]);
+                    }
+                }
+        }
+        int32_t *const lo1 = chk ? dtkm_l2[c] : ox;
+        int32_t *const bo1 = bl0 ? (chk ? dtkm_bl2[c] : bl0) : nullptr;
+        uint8_t *const co1 = chk ? dtkm_cd2[c] : cnd;
+        for (unsigned u = 0; u < un; ++u)
+            dtk_cmp(c, lo1 + (size_t)u * 512, ifl_ox2[c] + (size_t)u * 512, bo1 ? bo1 + (size_t)u * (2048 + 64) : nullptr,
+                    b2 ? b2 + (size_t)u * (2048 + 64) : nullptr, l20 ? co1 + (size_t)u * SS : nullptr,
+                    l20 ? ifl_cd2[c] + (size_t)u * SS : nullptr, ln[u] > 0 ? ln[u] : 0, ifl_cnt[c]);
+        if (dg) ifl_diag_report(L, c, un, ln, sco, SS, bo1, b2, co1, ifl_cd2[c], s1, g0, g1, "check");
+    }
+}
+// ifldiag-1: after a layer-20 filter compare (the prompt's, or a check's share), a new difference on this card: per
+// differing token, the block counts, the blocks in one list only, and over the token's rows in [g0, g1) (s1: the
+// filtered pass's stored values, rows from g0; sco now: the exact ones; n2 / ac: the filter's norms (rows from g0) and
+// bound factors), the rows whose stored value is not the exact one, by kind: exact-like (|d| <= 8 ulp: a rescored row
+// whose sums differ from the reference's), LO above exact (lower bound broken), LO + 2E below exact (upper bound
+// broken); the first few of each kind, and the 8 rows of the first differing blocks
+uint32_t ifl_diag_seen[TILES] = {};
+int ifl_kbd_shown[TILES] = {};
+std::vector<float> ifl_diag_cap(int c, unsigned un, const float *sco, size_t SS, unsigned g0, unsigned g1) {
+    std::vector<float> v((size_t)un * (g1 > g0 ? g1 - g0 : 0));
+    qs[c].wait();
+    for (unsigned u = 0; u < un && g1 > g0; ++u)
+        qs[c].memcpy(v.data() + (size_t)u * (g1 - g0), sco + (size_t)u * SS + g0, (size_t)(g1 - g0) * 4);
+    qs[c].wait();
+    return v;
+}
+void ifl_diag_report(int L, int c, unsigned un, const int *ln, const float *sco, size_t SS, const int32_t *bA, const int32_t *bB,
+                     const uint8_t *cA, const uint8_t *cB, const std::vector<float> &s1, unsigned g0, unsigned g1,
+                     const char *where) {
+    uint32_t h[16] = {};
+    qs[c].memcpy(h, ifl_cnt[c], sizeof h).wait();
+    if (h[3] == ifl_diag_seen[c]) return;
+    ifl_diag_seen[c] = h[3];
+    const size_t BL = 2048 + 64, G = g1 > g0 ? g1 - g0 : 0;
+    std::vector<int32_t> a((size_t)un * BL, 0), b((size_t)un * BL, 0);
+    std::vector<float> th((size_t)2 * un), ac(un), n2(G);
+    if (bA && bB) qs[c].memcpy(a.data(), bA, a.size() * 4), qs[c].memcpy(b.data(), bB, b.size() * 4);
+    qs[c].memcpy(th.data(), ifl_thr[c], th.size() * 4);
+    qs[c].memcpy(ac.data(), ifl_ac[c], ac.size() * 4);
+    if (G) qs[c].memcpy(n2.data(), ifl_n2[c], G * 4);
+    qs[c].wait();
+    std::vector<float> s2(G);
+    for (unsigned u = 0; u < un; ++u) {
+        const long len = ln[u];
+        if (len <= 0) continue;
+        std::vector<uint8_t> ma((size_t)len), mb((size_t)len);
+        qs[c].memcpy(ma.data(), cA + (size_t)u * SS, (size_t)len);
+        qs[c].memcpy(mb.data(), cB + (size_t)u * SS, (size_t)len).wait();
+        const int32_t *pa = a.data() + (size_t)u * BL, *pb = b.data() + (size_t)u * BL;
+        const int na = std::clamp(pa[0], 0, 2048), nb = std::clamp(pb[0], 0, 2048);
+        long md = 0, m0 = -1;
+        for (long r = 0; r < len; ++r)
+            if (ma[r] != mb[r]) md += 1, m0 = m0 < 0 ? r : m0;
+        const bool ld = pa[0] != pb[0] || std::memcmp(pa + 1, pb + 1, (size_t)std::min(na, nb) * 4) != 0;
+        if (!ld && !md) continue;
+        std::set<int> A(pa + 1, pa + 1 + na), Bs(pb + 1, pb + 1 + nb);
+        if (!bA || !bB) { // marks only: the blocks with a marked row, from each pass's marks
+            A.clear(), Bs.clear();
+            for (long r = 0; r < len; ++r) {
+                if (ma[r]) A.insert((int)(r / 8));
+                if (mb[r]) Bs.insert((int)(r / 8));
+            }
+        }
+        std::vector<int> onlyA, onlyB;
+        for (int x : A) if (!Bs.count(x)) onlyA.push_back(x);
+        for (int x : Bs) if (!A.count(x)) onlyB.push_back(x);
+        std::fprintf(stderr, "IFLDIAG %s L%d card %d token %u/%u len %ld rows [%u, %u) Lr %.9g Lb %.9g ac %.9g: blocks %d / %d "
+                             "(filtered / exact), %zu only filtered, %zu only exact; marks differ %ld rows (first %ld)\n",
+                     where, L, c, u, un, len, g0, g1, th[2 * u], th[2 * u + 1], ac[u], bA && bB ? pa[0] : (int)A.size(),
+                     bA && bB ? pb[0] : (int)Bs.size(), onlyA.size(), onlyB.size(), md, m0);
+        { // the differing marks as row ranges (first 8), and per range whether its block is marked in each pass
+            int shown_r = 0;
+            for (long r = 0; r < len && shown_r < 8;) {
+                if (ma[r] == mb[r]) { ++r; continue; }
+                long e = r;
+                while (e < len && ma[e] != mb[e] && ma[e] == ma[r]) ++e;
+                std::fprintf(stderr, "IFLDIAG   marks rows [%ld, %ld): filtered %d exact %d (block %ld..%ld)\n", r, e, ma[r], mb[r], r / 8, (e - 1) / 8);
+                ++shown_r, r = e;
+            }
+        }
+        if (!G) continue;
+        qs[c].memcpy(s2.data(), sco + (size_t)u * SS + g0, G * 4).wait();
+        const float *v1 = s1.data() + (size_t)u * G;
+        const long hiR = std::min<long>(len, (long)g1) - (long)g0;
+        long neq = 0, nx = 0, nlo = 0, nhi = 0, nok = 0, shown = 0;
+        for (long r = 0; r < hiR; ++r) {
+            const float x1 = v1[r], x2 = s2[r];
+            if (std::memcmp(&x1, &x2, 4) == 0) { ++neq; continue; }
+            const float E = ac[u] * n2[r] + 1e-30f, d = x2 - x1;
+            const float ulp = std::max(std::fabs(x2), 1e-30f) * 1.2e-7f;
+            int kind = std::fabs(d) <= 8 * ulp ? 1 : d < 0 ? 2 : d > 2 * E ? 3 : 0;
+            (kind == 1 ? nx : kind == 2 ? nlo : kind == 3 ? nhi : nok) += 1;
+            if (kind && shown < 12) {
+                ++shown;
+                std::fprintf(stderr, "IFLDIAG   row %ld (block %ld) %s: stored %.9g exact %.9g E %.9g n2 %.9g\n", r + (long)g0,
+                             (r + (long)g0) / 8, kind == 1 ? "exact-like (sums differ)" : kind == 2 ? "LO above exact" : "LO + 2E below exact",
+                             x1, x2, E, n2[r]);
+            }
+        }
+        std::fprintf(stderr, "IFLDIAG   rows [%u, %ld): %ld same, %ld LO within bounds, %ld exact-like, %ld LO above exact, %ld LO + 2E below exact\n",
+                     g0, (long)g0 + hiR, neq, nok, nx, nlo, nhi);
+        int bs = 0;
+        for (int pass = 0; pass < 2; ++pass)
+            for (int x : pass ? onlyB : onlyA) {
+                const long b0 = (long)x * 8 - (long)g0;
+                if (b0 < 0 || b0 >= hiR || bs >= 6) continue;
+                ++bs;
+                std::string ln1, ln2;
+                char t[64];
+                float k1 = -INFINITY, k2 = -INFINITY, bmh = -INFINITY;
+                for (long r = b0; r < std::min(b0 + 8, hiR); ++r) {
+                    std::snprintf(t, sizeof t, " %.9g", v1[r]), ln1 += t;
+                    std::snprintf(t, sizeof t, " %.9g", s2[r]), ln2 += t;
+                    k1 = std::max(k1, v1[r]), k2 = std::max(k2, s2[r]);
+                    bmh = std::max(bmh, v1[r] + 2 * (ac[u] * n2[r] + 1e-30f));
+                }
+                std::fprintf(stderr, "IFLDIAG   block %d only %s%s: key stored %.9g exact %.9g, largest stored+2E %.9g\n"
+                                     "IFLDIAG     stored:%s\nIFLDIAG     exact: %s\n",
+                             x, pass ? "exact" : "filtered", (long)x == (len + 7) / 8 - 1 ? " (newest)" : "", k1, k2, bmh,
+                             ln1.c_str(), ln2.c_str());
+            }
+    }
+}
+// dtopk-2's index layer (flt: this card's share by the pre-filter; lo_o / bo_o / co_o: outputs in place of the usual)
+void dtkm_core(int L, int c, int si, unsigned un, const int *ln, const act_t *qi, const act_t *wv, long lmax, float *sco,
+               uint8_t *cnd, int32_t *bl0, int32_t *ox, size_t SS, bool flt, int32_t *lo_o, int32_t *bo_o, uint8_t *co_o) {
+    const bool l20 = L == 20, chk = o.idx_dtopk_m == 2;
+    const int T_ = (int)((lmax + 31) / 32 * 32); // (ixm_score's shares: ixd_bounds of this)
+    const DtkGeo q = dtk_geo(T_, l20);
+    if (q.u > dtk_umax) throw std::runtime_error("OWN_IDX_DTOPK_M: more rows than the candidate area was made for");
+    const unsigned r0 = q.b0[c], r1 = q.b1[c];
+    if (flt) { // idxfilt-2c: this card's share by the pre-filter
+        int lnl[MTX] = {};
+        long ml = 0;
+        for (unsigned u = 0; u < un; ++u)
+            lnl[u] = (int)std::clamp<long>((long)ln[u] - (long)r0, 0, (long)(r1 - r0)), ml = std::max<long>(ml, lnl[u]);
+        if (ml > 0) {
+            ifl_score(c, si, un, lnl, qi, wv, ml, sco + r0, SS, r0);
+            ifl_exact(c, si, un, lnl, qi, wv, ml, sco + r0, SS, l20, r0);
+        }
+        ++iflk_calls[c], iflk_tok[c] += un;
+    } else {
+        ixm_score(c, si, un, ln, qi, wv, lmax, sco, SS, 1u); // this card's rows of every token, no gather
+    }
+    const size_t TU = (size_t)o.tp * q.u; // one token's area: every card's chunk
+    float *const kb = xarena[c] + xscKM;
+    // (check: into the shadows; the unchanged selects write the outputs)
+    int32_t *const lo = lo_o ? lo_o : chk ? dtkm_l2[c] : ox;
+    int32_t *const bo = bl0 ? (bo_o ? bo_o : chk ? dtkm_bl2[c] : bl0) : nullptr;
+    uint8_t *const co = co_o ? co_o : chk ? dtkm_cd2[c] : cnd;
+    constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
+    if (o.idx_dtopk_mb && un > 1) { // OWN_IDX_DTOPK_MB: every token in one launch per kernel (the same groups' work)
+        ops41sycl::DtkTok6 lpv{}, nbv{}, nwv{}, lnv{};
+        for (unsigned u = 0; u < un; ++u) {
+            const long len = ln[u];
+            const int lp = (int)std::clamp<long>(len - (long)r0, 0, (long)(r1 - r0));
+            const int nbl = (lp + 7) / 8, bb0 = (int)(r0 / 8), last = (int)((len + 7) / 8) - 1;
+            lpv.v[u] = lp, nbv.v[u] = nbl, nwv.v[u] = last >= bb0 && last < bb0 + nbl ? last - bb0 : -1, lnv.v[u] = (int)len;
+        }
+        float *mine = kb + (size_t)c * q.u; // (token 0's chunk; token u's at + u * TU)
+        const float *s0 = sco + r0;
+        launch_local_g<SLM>(c, (size_t)q.gr * un, DtkR1::WG,
+                            ops41sycl::TopKSelD1M<16>{DtkR1{{0, DTK_K, 0, 0, 0, 0, 0}, (int)r0}, (unsigned)q.gr, lpv, SS, TU}, s0,
+                            mine, mine + q.nr);
+        if (l20)
+            launch_local_g<SLM>(c, (size_t)q.gb * un, DtkB1::WG,
+                                ops41sycl::TopKSelDB1M<8>{DtkB1{{0, DTK_KB, 0, 0, 0, 8, 0}, (int)(r0 / 8), -1, 0}, (unsigned)q.gb,
+                                                          nbv, lpv, nwv, lnv, SS, TU, SS},
+                                s0, mine + 2 * q.nr, mine + 2 * q.nr + q.nb, co);
+        unsigned c0[6] = {}, c1[6] = {};
+        for (int d = 0; d < o.tp; ++d) c0[d] = (unsigned)d * q.u, c1[d] = (unsigned)(d + 1) * q.u;
+        ixd_pull(c, (unsigned)xscKM, (unsigned)TU, un, c0, c1);
+        if (l20) {
+            const int n = o.tp * (int)q.nb, qc = ops41sycl::qsel_span(n);
+            auto go = [&](auto mc) {
+                constexpr int M = decltype(mc)::value;
+                launch_local_g<SLM>(c, un, 1024,
+                                    ops41sycl::TopKSelDQBM<M>{ops41sycl::TopKSelDQB<M>{n, (int)q.nb, q.u, DTK_KB, 0}, lnv, TU,
+                                                              (size_t)(2048 + 64), SS},
+                                    (const float *)(kb + 2 * q.nr), (const float *)(kb + 2 * q.nr + q.nb), bo, co);
+            };
+            if (qc <= 16) go(std::integral_constant<int, 16>{});
+            else if (qc <= 32) go(std::integral_constant<int, 32>{});
+            else if (qc <= 64) go(std::integral_constant<int, 64>{});
+            else if (qc <= 96) go(std::integral_constant<int, 96>{});
+            else throw std::runtime_error("OWN_IDX_DTOPK_M: more block candidates than one work-group holds");
+        }
+        {
+            const int n = o.tp * (int)q.nr, qc = ops41sycl::qsel_span(n);
+            auto go = [&](auto mc) {
+                constexpr int M = decltype(mc)::value;
+                launch_local_g<SLM>(c, un, 1024,
+                                    ops41sycl::TopKSelDQM<M>{ops41sycl::TopKSelDQ<M>{n, (int)q.nr, q.u, DTK_K, 128, 512}, TU,
+                                                             (size_t)512},
+                                    (const float *)kb, (const float *)(kb + q.nr), lo);
+            };
+            if (qc <= 16) go(std::integral_constant<int, 16>{});
+            else if (qc <= 32) go(std::integral_constant<int, 32>{});
+            else if (qc <= 64) go(std::integral_constant<int, 64>{});
+            else if (qc <= 96) go(std::integral_constant<int, 96>{});
+            else throw std::runtime_error("OWN_IDX_DTOPK_M: more row candidates than one work-group holds");
+        }
+        ++dtkm_calls[c];
+        dtkm_tok[c] += (long)un;
+        return;
+    }
+    for (unsigned u = 0; u < un; ++u) {
+        const long len = ln[u];
+        const int lp = (int)std::clamp<long>(len - (long)r0, 0, (long)(r1 - r0)); // its rows below len
+        float *mine = kb + (size_t)u * TU + (size_t)c * q.u;
+        const float *su = sco + (size_t)u * SS + r0;
+        launch_local_g<SLM>(c, (size_t)q.gr, DtkR1::WG, DtkR1{{lp, DTK_K, 0, 0, 0, 0, 0}, (int)r0}, su,
+                            (const uint8_t *)nullptr, mine, mine + q.nr);
+        if (l20) {
+            const int nbl = (lp + 7) / 8, bb0 = (int)(r0 / 8), last = (int)((len + 7) / 8) - 1;
+            const int newest = last >= bb0 && last < bb0 + nbl ? last - bb0 : -1;
+            launch_local_g<SLM>(c, (size_t)q.gb, DtkB1::WG, DtkB1{{nbl, DTK_KB, 0, 0, 0, 8, lp}, bb0, newest, (int)len}, su,
+                                mine + 2 * q.nr, mine + 2 * q.nr + q.nb, co + (size_t)u * SS);
+        }
+    }
+    unsigned c0[6] = {}, c1[6] = {};
+    for (int d = 0; d < o.tp; ++d) c0[d] = (unsigned)d * q.u, c1[d] = (unsigned)(d + 1) * q.u;
+    ixd_pull(c, (unsigned)xscKM, (unsigned)TU, un, c0, c1);
+    for (unsigned u = 0; u < un; ++u) {
+        const float *ku = kb + (size_t)u * TU;
+        if (l20) dtk_merge_blocks(c, q, (long)ln[u], bo ? bo + (size_t)u * (2048 + 64) : nullptr, co + (size_t)u * SS, ku);
+        dtk_merge_rows(c, q, lo + (size_t)u * 512, ku);
+    }
+    ++dtkm_calls[c];
+    dtkm_tok[c] += (long)un;
+}
+// dtopk-2 check (OWN_IDX_DTOPK_M=2): every token's shadow list (block list, marks) against the unchanged selects'
+void dtkm_cmp(int L, int c, unsigned un, const int *ln, const int32_t *ox, const int32_t *bl0, const uint8_t *cnd, size_t SS) {
+    const bool l20 = L == 20;
+    for (unsigned u = 0; u < un; ++u) {
+        const int32_t *ba = l20 && bl0 ? bl0 + (size_t)u * (2048 + 64) : nullptr;
+        const int32_t *bb = ba ? dtkm_bl2[c] + (size_t)u * (2048 + 64) : nullptr;
+        dtk_cmp(c, ox + (size_t)u * 512, dtkm_l2[c] + (size_t)u * 512, ba, bb, l20 ? cnd + (size_t)u * SS : nullptr,
+                l20 ? dtkm_cd2[c] + (size_t)u * SS : nullptr, l20 ? (long)ln[u] : 0, dtkm_cnt[c]);
+        ++dtkm_chk[c];
+        if (l20) ++dtkm_chkb[c];
+    }
 }
 // OWN_IDX_DSPLIT_CHECK: the full launch (tpm_index's IndexerScoreBM) into the block's score rows, every token's rows
 // [0, lens[t] rounded up to 32) compared bitwise with the gathered ones (on the card: diagnostic only)
@@ -2025,7 +2600,7 @@ void oa_m(int c, const std::string &p, const HeadLay &h, int part, unsigned wb) 
     const Scratch &b = scm[c][px_tok];
     const unsigned oaM = xoaM + (unsigned)px_tok * (unsigned)g.ototal; // (OWN_PX: the half's slots)
     oa_run(c, h, M, [&](unsigned r0, unsigned r1) {
-        gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)(r0 / per) * g.oin, (size_t)g.qh * g.hd,
+        gemv_m(c, p + "attn_output_a.weight", b.obuf + (size_t)(r0 / per) * g.oin, obs(),
                xarena[c] + oaM + r0, (size_t)g.ototal, per, 0, ops41sycl::NoRows{}, r0 - wb, r1 - wb);
     });
     xsite(c, PX_X1, oaM, (unsigned)g.ototal, M, h.oa0[c], h.oa1[c], part);
@@ -2044,7 +2619,7 @@ void tpm_layer(int L, int c, unsigned seg = PX_ALL) {
     const size_t qo = (size_t)hla.hq0[c] * g.hd, H = g.h;
     const unsigned qbr0 = (unsigned)((hla.hq0[c] - qst0[c]) * g.hd), qbr1 = (unsigned)((hla.hq1[c] - qst0[c]) * g.hd);
     const Scratch &b = scm[c][px_tok]; // token 0's views are the bases of the block's arrays (OWN_PX: the half's)
-    const size_t H4 = 4 * H, Q = (size_t)g.qh * g.hd, FS = (size_t)25 * HC_SEG;
+    const size_t H4 = 4 * H, Q = obs(), FS = (size_t)25 * HC_SEG; // (obpad-1: the rows' stride)
     // the block's exchange regions from this block's (OWN_PX: half's) first token on (px_tok 0: the regions' starts)
     const size_t pt = (size_t)px_tok;
     const unsigned oaM = xoaM + (unsigned)(pt * g.ototal), obM = xobM + (unsigned)(pt * H),
@@ -3197,6 +3772,8 @@ void px_check_block() {
 // skip39_report after the prompt: no host wait inside a step).
 static constexpr int S39_WIN = 128; // the window ring's slots (WindowAppendM / RingCommitM's win)
 bool s39_blk = false;               // this block runs skip39-1 (decode_block_tp, main thread)
+bool dr_skip = false;               // drlast-1: this prompt block skips the draft's capture and injection
+long dr_skipped = 0;
 long s39_skips = 0, s39_checks = 0; // blocks whose last layer was skipped / checked
 long s39_rows_n = 0;                // kept rows (per card) over those blocks (card 0's thread counts)
 act_t *s39_xn[TILES] = {}, *s39_kv[TILES] = {}, *s39_kvn[TILES] = {}; // OWN_SKIP39_CHECK: shadow rows (S39_WIN + 8 tokens)
@@ -3265,6 +3842,31 @@ void s39_compare(int c) {
            (const uint16_t *)s39_ring[c], (const act_t *)scm[c][k0].kvn, (const act_t *)s39_kvn[c], s39_bad[c]);
 }
 public:
+// allocmap-1 (OWN_ALLOC_LOG=1): per card the device bytes allocated so far, by backend source line (lines of 4 MiB or
+// more, largest first; a line inside a helper lambda stands for all its callers)
+void alloc_report(const char *when) const {
+    if (!getenv("OWN_ALLOC_LOG") || atoi(getenv("OWN_ALLOC_LOG")) == 0) return;
+    for (int c = 0; c < o.tp; ++c) {
+        std::vector<std::pair<size_t, std::string>> v;
+        size_t small = 0;
+        for (const auto &[ln, e] : dal_line[c]) {
+            if (e.first >= ((size_t)4 << 20)) v.push_back({e.first, ln});
+            else small += e.first;
+        }
+        std::sort(v.rbegin(), v.rend());
+        std::string r;
+        char b[96];
+        for (const auto &[by, ln] : v) {
+            std::snprintf(b, sizeof b, " %s %.1f(%ld)", ln.c_str(), by / 1048576.0, dal_line[c].at(ln).second);
+            r += b;
+        }
+        std::fprintf(stderr, "alloc %s: card %d: %.3f GiB by dalloc, free %.3f GiB; MiB(count) by line:%s; smaller lines %.1f MiB\n",
+                     when, c, dal_all[c] / 1073741824.0, free_bytes(c) / 1073741824.0, r.c_str(), small / 1048576.0);
+    }
+}
+void dr_last_report() const { // drlast-1 (OWN_DR_LAST): after the prompt
+    if (o.dr_last) std::fprintf(stderr, "OWN_DR_LAST=1: %ld prompt blocks skipped the draft's capture and injection\n", dr_skipped);
+}
 // skip39-1: one line after the prompt (OWN_SKIP39_CHECK: the cards' counts, read once with every card idle)
 void skip39_report() {
     if (!o.skip39 && !o.skip39_check) return;
@@ -3344,7 +3946,8 @@ void tpm_card_step(int c) {
         } else {
             twait(c);
         }
-        if (o.dspark && !mt_heads && mt_n > MTX) { // OWN_PX_BIG: in pieces of at most MTX rows, each a plain block's
+        if (dr_skip) { // drlast-1: no draft rows of this block survive the prompt (twait ran above: skip_head)
+        } else if (o.dspark && !mt_heads && mt_n > MTX) { // OWN_PX_BIG: in pieces of at most MTX rows, each a plain block's
             const int MB = mt_n;                    // injection (its own feature-row region: no rewrite before peers read)
             for (int t0 = 0; t0 < MB; t0 += MTX) {
                 MtN::half = std::min(MTX, MB - t0);
@@ -3412,6 +4015,9 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     mt_n = mt;
     mt_toks = toks;
     s39_blk = s39_ok(); // skip39-1 (OWN_SKIP39 / OWN_SKIP39_CHECK): this block's last layer (host state: every card the same)
+    // drlast-1 (OWN_DR_LAST): a prompt block wholly before the draft's kept positions (host state: every card the same)
+    dr_skip = o.dspark && o.dr_last && !mt_heads && dr_keep_from >= 0 && pos + mt <= dr_keep_from;
+    if (dr_skip) ++dr_skipped;
     if (s39_blk) ++(o.skip39_check ? s39_checks : s39_skips);
     if (!o.eng_early) tpm_engram_prefetch();
     eng_t0 = o.eng_early && eng_anchor_asked ? 1 : 0;
@@ -3423,6 +4029,7 @@ int32_t decode_block_tp(const int32_t *toks, int mt) {
     tp_join();
     mt_n = 0;
     s39_blk = false;
+    dr_skip = false;
     const bool pxb = px_blk;
     px_blk = false;
     if (!tp_err.empty()) throw std::runtime_error("tensor-parallel block: " + tp_err);
@@ -3512,5 +4119,68 @@ void commit_block(int n) {
     pend_n = n;
     pos = vpos0 + n;
     vpos0 = -1;
+}
+// reset-1 (2026-11-17, serve-1's new conversations): back to position 0 without reloading. Every value a later step
+// reads before writing (positions, kv source lengths, the commit's pending rows, the host index state, the ids the
+// engram rows hash) is set to its value after the load, and the cards' per-sequence stores (window rings, the
+// draft's rings, the compressors' carried states, the index mirrors, the kv chunks and tails) are cleared as the
+// load left them. Not touched: the exchanges' sequence numbers and flag words (monotonic; peers hold the last
+// values), tp_stepn, the lens cache, the rope window, weights and tables. Main thread, between requests (no step
+// running); a card with a failed exchange refuses (restart the process).
+void reset_sequence() {
+    if (o.tp < 2 || tp_th.empty()) throw std::runtime_error("reset_sequence: OWN_TP > 1 with card threads");
+    if (vpos0 >= 0) throw std::runtime_error("reset_sequence: a checked block is not committed");
+    for (int c = 0; c < o.tp; ++c)
+        if (xerr[c] && (xerr[c][0] || xerr[c][1] || xerr[c][2]))
+            throw std::runtime_error("reset_sequence: card " + pci[c] + " has a failed exchange: restart the process");
+    for (int c = 0; c < o.tp; ++c) { // every queue idle
+        if (c < (int)xqs.size()) xqs[c].wait();
+        if (c < (int)cqs.size()) cqs[c].wait();
+        if (c < (int)pfq.size()) pfq[c].wait();
+        if (o.px_bcs && bcs_cl[c]) zcheck(zeCommandListHostSynchronize(bcs_cl[c], 5000000000ull), "reset: copy list idle");
+        qs[c].wait();
+    }
+    const size_t hd = g.hd, rows_c2 = (size_t)max_seq / 2 + 2, rows_c1 = (size_t)max_seq + 2;
+    for (int c = 0; c < o.tp; ++c) {
+        for (int L = o.layer_begin; L < o.layer_end; ++L)
+            if (ring[c][L]) qs[c].memset(ring[c][L], 0, (size_t)(128 + MTX) * hd * 2);
+        if (o.dspark)
+            for (int s = 0; s < DR_STAGES; ++s)
+                if (dring[c][s]) qs[c].memset(dring[c][s], 0, (size_t)(DR_WIN + MTX) * hd * 2);
+        qs[c].memset(sc[c].kv_state, 0, (size_t)4 * 2 * hd * 4);
+        qs[c].memset(sc[c].score_state, 0, (size_t)4 * 2 * hd * 4);
+        for (int s = 0; s < 8; ++s) launch(c, 512, 64, ops41sycl::CidxFill{0, 512}, cidx_mirror[c][s]); // 512 x -1
+        for (int s = 0; s < 4; ++s) {
+            const size_t rows = s == 3 ? rows_c1 : rows_c2;
+            if (ik_mirror[c][s]) qs[c].memset(ik_mirror[c][s], 0, rows * 128 * 2);
+            if (ckv_mirror[c][s]) qs[c].memset(ckv_mirror[c][s], 0, rows * hd * 2);
+            if (o.kv_shard && kvs_tail[c][s]) qs[c].memset(kvs_tail[c][s], 0, (size_t)o.kv_tail * hd * 2);
+        }
+        if (o.kv_shard && kvs_chunk[c]) qs[c].memset(kvs_chunk[c], 0, (size_t)(kvs_coff[3] + kvs_nloc[3]) * hd * 2);
+    }
+    for (int c = 0; c < o.tp; ++c) qs[c].wait();
+    pos = 0;
+    std::memset(src_len, 0, sizeof src_len);
+    std::memset(tlen, 0, sizeof tlen);
+    std::memset(synced, 0, sizeof synced);
+    std::memset(mlen, 0, sizeof mlen);
+    for (int s = 0; s < 4; ++s) h_ckv[s].clear(), h_ik[s].clear();
+    for (auto &slot : h_cidx)
+        for (auto &v : slot) v.assign(512, -1);
+    std::memset(cidx_ver, 0, sizeof cidx_ver);
+    std::memset(tile_cidx_ver, 0, sizeof tile_cidx_ver);
+    cand_host.clear();
+    cand_valid = false;
+    for (int c = 0; c < TILES; ++c) {
+        pend[c] = false, dcand_ok[c] = false, dcand_n[c] = 0;
+        x_ready[c] = fin_attn[c] = mx_ready[c] = false, tokoff[c] = 0, bcs_eng_pend[c] = false;
+    }
+    vpos0 = -1, pend_p0 = 0, pend_n = 0, pend_state = false, vck1 = ck1_run = false, mt_heads = false;
+    eng_t0 = 0, eng_anchor_asked = false;
+    px_blk = s39_blk = dr_skip = dr_step = false;
+    comp_ids.clear();
+    eng_ahead.clear();
+    dr_keep_from = -1;
+    skip_head = false;
 }
 private:

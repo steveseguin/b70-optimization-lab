@@ -64,7 +64,7 @@ void dr_alloc(int c) {
 }
 // the target's block features at layer L's input (tpm_layer, before the layer touches the streams)
 void dr_capture(int L, int c) {
-    if (!o.dspark || L < 37 || L > 39) return;
+    if (!o.dspark || L < 37 || L > 39 || dr_skip) return; // (drlast-1: a block whose draft rows never survive)
     const size_t H = g.h;
     launch(c, (size_t)mt_n * H, 64, ops41draft::StreamMeanM{(unsigned)g.h, (unsigned)mt_n, (unsigned)(L - 37), 4 * H, 3 * H},
            (const float *)strm[c], dfeat[c]);
@@ -157,7 +157,7 @@ void dr_stage(int s, int c) {
     const int nh = hly.hq1[c] - hly.hq0[c];
     const size_t qo = (size_t)hly.hq0[c] * g.hd, H = g.h;
     const Scratch &b = scm[c][0];
-    const size_t H4 = 4 * H, Q = (size_t)g.qh * g.hd, FS = (size_t)25 * HC_SEG;
+    const size_t H4 = 4 * H, Q = obs(), FS = (size_t)25 * HC_SEG; // (obpad-1: the rows' stride)
     using NR5 = ops41sycl::NormRows<5120, 4>;
     using HD = ops41sycl::TokRows<ops41sycl::HcDotsRows<5120, HC_SEG>>;
     auto dots = [&](const std::string &prefix) {

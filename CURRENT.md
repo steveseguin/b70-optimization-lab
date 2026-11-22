@@ -1,5 +1,14 @@
 # Current Workspace State
 
+**November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
+- Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
+  byte-identical; build/download/install scripts; stable-mode host settings + BMC watchdog; OpenAI-compatible server;
+  docs/OPTIMIZATIONS.md, docs/STABILITY.md).
+- Engine sources here now = 267262e9db (tp136: tp135 + uppar-1, default unchanged); server-era records in
+  `experiments/own-xpu-runtime/data/dsv41-bringup-20261109/round19-serve/`.
+- Serving rule: load once per boot (boot loads 5/5 passed; test loads while up 3/3 froze the host). BMC watchdog on
+  since 2026-11-22 16:21; the server re-acknowledges a freeze's replayed BERT record and comes back by itself.
+
 **November 15, 2026 18:50 EST — st1 stopped by a host reset at 16:56 (SMT off); this time a GPU failed first.**
 - st1 passed 4 fresh starts (3K default / 4,2,2,4,2,2, 10K both, all outputs exact), then reset the host 1.4 min into
   case 5 (x34k, default layout). SMT-off config held: Gen4 x16, serial exchange, normal power, BIOS 11.02.

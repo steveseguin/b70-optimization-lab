@@ -466,7 +466,7 @@ int main() {
             std::vector<float> ref;
             for (int ff = 1; ff >= 0; --ff) {
                 sent(ya, (size_t)MMAX * H * 4);
-                rows(q, T5{N5{x, w5, ya, ff != 0}, m, {H, H, 0, 0}}).wait();
+                rows(q, T5{N5{x, w5, ya, ff != 0}, m, H, H, 0, 0}).wait();
                 auto r = down(q, ya, (size_t)MMAX * H);
                 if (ff) ref = r;
                 else report(same(r, ref), "N5 production ff=0 vs ff=1", m);
@@ -484,7 +484,7 @@ int main() {
                 double *oa = da + (size_t)u0 * FS, *ob = db + (size_t)u0 * FS;
                 sent(ya, (size_t)MMAX * H * 4), sent(yb, (size_t)MMAX * H * 4);
                 sent(da, (size_t)MMAX * FS * 8), sent(db, (size_t)MMAX * FS * 8);
-                rows(q, T5{N5{x, w5, ya}, m, {H, H, 0, 0}});
+                rows(q, T5{N5{x, w5, ya}, m, H, H, 0, 0});
                 if (nt) wgl<64>(q, (size_t)nt * 25, 512, SkDotsWM<8>{nt, H4, FS}, sv, (const float *)fn, oa);
                 q.wait();
                 wgl<64>(q, m + (size_t)nt * 25, 512, SkNormDotsWM<8>{m, nt, H, H, H4, FS}, (const float *)x,
@@ -516,7 +516,7 @@ int main() {
             std::vector<float> rq, rk;
             for (int ff = 1; ff >= 0; --ff) {
                 sent(qna, (size_t)MMAX * QR * 4), sent(kna, (size_t)MMAX * HDIM * 4);
-                rows(q, TP{T1{N1{qa, wq, qna, ff != 0}, m, {QR, QR, 0, 0}}, T2{N2{kv, wk, kna, ff != 0}, m, {HDIM, HDIM, 0, 0}}}).wait();
+                rows(q, TP{T1{N1{qa, wq, qna, ff != 0}, m, QR, QR, 0, 0}, T2{N2{kv, wk, kna, ff != 0}, m, HDIM, HDIM, 0, 0}}).wait();
                 auto a = down(q, qna, (size_t)MMAX * QR), b = down(q, kna, (size_t)MMAX * HDIM);
                 if (ff) rq = a, rk = b;
                 else report(same(a, rq) && same(b, rk), "NP production ff=0 vs ff=1", m);
@@ -530,7 +530,7 @@ int main() {
             ++nchk;
             // N512 (compressor ratio 1): kv-shaped tokens into kna / knb
             sent(kna, (size_t)MMAX * HDIM * 4), sent(knb, (size_t)MMAX * HDIM * 4);
-            rows(q, T2{N2{kv, wc, kna}, m, {HDIM, HDIM, 0, 0}}).wait();
+            rows(q, T2{N2{kv, wc, kna}, m, HDIM, HDIM, 0, 0}).wait();
             wgl<4>(q, m, 64, SkNormWM<512, 2>{m, HDIM, HDIM}, (const float *)kv, (const float *)wc, knb).wait();
             report(same(down(q, knb, (size_t)MMAX * HDIM), down(q, kna, (size_t)MMAX * HDIM)), "SkNormWM<512,2> vs N512", m, ex);
             ++nchk;
@@ -661,9 +661,9 @@ int main() {
             fill_block(hq, QR, m, set, nf);
             fill_block(hk, HDIM, m, set, nf);
             up(q, x, hx), up(q, qa, hq), up(q, kv, hk);
-            const F n5p = [&] { return one(rows(q, T5{N5{x, w5, ya}, m, {H, H, 0, 0}})); };
+            const F n5p = [&] { return one(rows(q, T5{N5{x, w5, ya}, m, H, H, 0, 0})); };
             const F n5n = [&] { return one(wgl<32>(q, m, 512, SkNormWM<5120, 16>{m, H, H}, (const float *)x, (const float *)w5, yb)); };
-            const F npp = [&] { return one(rows(q, TP{T1{N1{qa, wq, qna}, m, {QR, QR, 0, 0}}, T2{N2{kv, wk, kna}, m, {HDIM, HDIM, 0, 0}}})); };
+            const F npp = [&] { return one(rows(q, TP{T1{N1{qa, wq, qna}, m, QR, QR, 0, 0}, T2{N2{kv, wk, kna}, m, HDIM, HDIM, 0, 0}})); };
             const F npn = [&] {
                 return one(wgl<16>(q, m, 256, SkNormPairWM{m, QR, QR, HDIM, HDIM}, (const float *)qa, (const float *)wq, qnb,
                                    (const float *)kv, (const float *)wk, knb));
@@ -681,7 +681,7 @@ int main() {
                 std::snprintf(nm, sizeof nm, "N5 + SkDotsWM<8> of %u tokens", nt);
                 row(m, nm,
                     [&] {
-                        auto a = rows(q, T5{N5{x, w5, ya}, m, {H, H, 0, 0}});
+                        auto a = rows(q, T5{N5{x, w5, ya}, m, H, H, 0, 0});
                         auto b = wgl<64>(q, (size_t)nt * 25, 512, SkDotsWM<8>{nt, H4, FS}, (const float *)st, (const float *)fn, da);
                         return std::make_pair(a, b);
                     },
@@ -698,7 +698,7 @@ int main() {
                 row(m, nm, d, d);
             }
             row(m, "NP (q_a 1280 + kv 512)", npp, npn);
-            row(m, "N512 (compressor ratio 1)", [&] { return one(rows(q, T2{N2{kv, wc, kna}, m, {HDIM, HDIM, 0, 0}})); },
+            row(m, "N512 (compressor ratio 1)", [&] { return one(rows(q, T2{N2{kv, wc, kna}, m, HDIM, HDIM, 0, 0})); },
                 [&] { return one(wgl<4>(q, m, 64, SkNormWM<512, 2>{m, HDIM, HDIM}, (const float *)kv, (const float *)wc, knb)); });
             const unsigned np = (m + 1) / 2;
             char nm[64];

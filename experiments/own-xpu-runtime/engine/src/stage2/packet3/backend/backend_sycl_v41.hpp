@@ -53,7 +53,9 @@
 #include <map>
 #include <mutex>
 #include <pthread.h>
+#include <source_location>
 #include <sched.h>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <sys/mman.h>
@@ -68,6 +70,7 @@
 #include "stage2/packet3/kernels/sycl_v41.hpp"
 #include "stage2/packet3/kernels/sycl_v41_routed_r2.hpp" // routed expert kernels, bitwise production's (r2)
 #include "stage2/packet3/kernels/sycl_v41_attn.hpp" // sparse attention in one or two launches, bitwise production's (attn a1)
+#include "stage2/packet3/kernels/sycl_v41_idxfilt.hpp" // matrix-engine pre-filter of the index scores (idxfilt-1, OWN_IDX_FILT)
 #include "stage2/packet3/kernels/sycl_v41_qboff.hpp" // query-b rows of the 16-head cards from their neighbours (qb-off-1)
 #include "stage2/packet3/kernels/sycl_v41_draft.hpp"
 #include "stage2/packet3/kernels/sycl_v41_k7.hpp" // K7: the stream mix's dot partials carried by the h exchange (OWN_K7)
@@ -78,6 +81,7 @@
 #include "stage2/packet3/kernels/sycl_v41_routed_rux5.hpp" // one-token / check routed rows, gathers first (rux5-1, OWN_RUX5)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux6.hpp" // prompt-block routed rows + x prefetches (rux6-1, OWN_RUX6)
 #include "stage2/packet3/kernels/sycl_v41_routed_rux7.hpp" // prompt-block Q2_K routed down on the expert groups (rux7-1, OWN_RUX7)
+#include "stage2/packet3/kernels/sycl_v41_routed_rux9.hpp" // prompt-block routed rows, x staged once in local memory (rux9-1, OWN_RUX9)
 #include "stage2/packet3/kernels/sycl_v41_xll.hpp" // the pull exchange in one PCIe round trip (xll-1, OWN_XLL)
 #include "stage2/packet3/kernels/sycl_v41_pace.hpp" // the 16-head cards' q_b / output-a rows at checks (pace-1, OWN_MT_PACE)
 #include "stage2/packet3/kernels/sycl_v41_ck2.hpp" // checks' FFN norm + dots + router in one launch, dot rows as work-groups (ck2-1, OWN_CK2)
@@ -307,6 +311,7 @@ public:
         bool head = true;                    // output norm + logits + argmax
         std::vector<int> devices;            // SYCL gpu indices for the ACTIVE tiles, ascending tile order
         long host_floor_mib = 3072;          // abort the load below this MemAvailable
+        int up_par = 6;                      // uppar-1 (OWN_UP_PAR, 2026-11-17): cards uploading weights at once (1..6)
         bool hc_legacy = false;              // pre-2026-11-09 FFN pre-mix (A/B only)
         bool generic_kernels = false;        // runtime-type gemv kernels (A/B against the specialized ones)
         bool packed = true;                  // packed device rows + packed kernels where available (pack_v41.hpp)
@@ -469,6 +474,11 @@ public:
         unsigned xll_quick = 0; // OWN_XLL_QUICK: re-reads at once of a late peer's units before its flag is waited for
                                 // (each one PCIe read round trip of the pending units; 0: the flag after the first read)
         bool dspark = false; // the DSpark draft's weights ("dsp." names) are loaded: draft buffers, feature capture
+        // drlast-1 (OWN_DR_LAST=1, opt-in): a prompt block that ends before the prompt's last 128 positions skips the
+        // draft's feature capture and injection (dr_keep_from): each window-ring row p % 128 is rewritten by every
+        // later position and depends only on its own position's features, so after the prompt the rings hold the
+        // same rows (the last 128 positions all run) and the draft guesses the same
+        bool dr_last = false;
         bool norm_dots = true;  // tp: stream-mix dot rows ride in the pre-norm's launch (OWN_NORM_DOTS=0: in q_a / router)
         bool smallk = true;     // (default since tg89: traces identical, plain 96.4 -> 99.6 tok/s; OWN_SMALLK=0: off)
                                 // one-work-group forms of the 5,120 norm, the q_a + kv norms, the
@@ -541,8 +551,14 @@ public:
         // idxrp-1 (2026-11-16): the prompt halves' (split) index scores only: IndexerScoreBMR with 2 or 4 rows per
         // item (OWN_IDX_RP; 0 = IndexerScoreBM), and the groups numbered row group first (OWN_IDX_RMAJ=1: the
         // tokens of a row group run together and share the key rows in the caches); the same sums either way
-        unsigned idx_rp = 0;
-        bool idx_rmaj = false;
+        unsigned idx_rp = 2; // default since tp124 (c123: identical, 705K read 571.6 -> 591.1 tok/s)
+        // idxbc-1 (2026-11-17, OWN_IDX_BC; default on since tp127, =0: IndexerScoreBMR): idx_score_r's launches
+        // (OWN_IDX_R / OWN_IDX_RP) on IndexerScoreBMS (the query values by sub-group broadcast instead of a shared-memory
+        // read per product; the same products and sums in the same order). Bench test_index_score_px (c126 tsx3, card
+        // 1, 43 tokens): PASS bit for bit in all 10 cases; at 993K rows 55.11 -> 43.46 ms (ratio 1), 27.37 -> 22.33
+        // (ratio 2), -18..-21 % at 95K-993K
+        bool idx_bc = true;
+        bool idx_rmaj = true;
         bool att_trim = false;  // tp attention below 512 compressed rows: the window + the first rows rounded up to
                                 // 32 instead of all 640 slots (the others are skipped ones), the same sums (on in own_run_v41; OWN_ATT_TRIM=0 off)
         bool topk_r = false;    // dev_index / tpm_index: the top-k selects' final walk by ranges (TopKSelR), the same
@@ -567,7 +583,12 @@ public:
                                 // 16,384-position window of the rope tables (cos / sin, yarn / base), refilled from
                                 // the host (the same float values) when a position nears its edge, not max_seq rows:
                                 // 512 B less card memory per context position. Layout only; the same arithmetic.
-        unsigned idx_rows = 1;  // idxrows-1 (OWN_IDX_ROWS, default 1; 0 = off): with idxsplit-1 the block index scores and
+        unsigned rope_dev = 1;  // default since tp126 (c125: 95K / 200K / 700K / 1M identical; =0: host copies). ropedev-1 (OWN_ROPE_DEV=1): the window refills computed on the card (RopeFillD, the
+                                // host's double expression) instead of an 8 MiB copy from ordinary host memory (the
+                                // runtime shares such a copy's temporary host allocation with the five other cards:
+                                // dma-buf attaches and PCI config reads in the middle of a run)
+        unsigned idx_rows = 2;  // idxrows-2 since tp126 (=2: also the two halves share one region of score rows, ~172 MB
+                                // less per card at 1M; =1: idxrows-1 alone). idxrows-1 (OWN_IDX_ROWS, 0 = off): with idxsplit-1 the block index scores and
                                 // candidate marks (max_seq + 64 per token row) hold only the rows a card can score - its
                                 // token share of a half, or a whole small block / check - per half, not MTB rows: ~2.1 KB
                                 // less card memory per context token (longer contexts). Layout only; the same arithmetic.
@@ -594,6 +615,63 @@ public:
         unsigned idx_dtopk = 1; // default on since c122 (exact: 49,050 lists 0 differ; 705K writing 64.4 -> 89.7 tok/s)
         long idx_dtopk_min = 32768; // ... from this many rows (OWN_IDX_DTOPK_MIN; below it idxsplit-2's gather + full selects,
                                     // which cost less there: an estimate, dtopk README; the check at 3K needs it at 513)
+        // dtopk-2 (OWN_IDX_DTOPK_M, opt-in; backend_sycl_v41_mt.inc "dtopk-2"): the checks' index layers that idxsplit-2
+        // splits (blocks of 1-6 tokens, layers 2 / 8 / 14 / 20) select by candidates as dtopk-1 does for one token, per
+        // token with dtopk-1's kernels, instead of gathering every card's score rows of every token and selecting each
+        // token's list in one work-group (at 993K: a 2-token check 23.4 ms against 13.4 at 3K; ck1m3 s1m spec log).
+        // 1 = on; 2 = on + check (the gather and the unchanged selects as well, the candidates' results into shadows,
+        // compared bitwise on the card; one line at exit). Needs dtopk-1 and OWN_IDX_DSPLIT bit 2 (off quietly without).
+        unsigned idx_dtopk_m = 1; // default on since c127 (194K check mode: 32,610 lists, 0 differ; =0: off)
+        bool idx_dtopk_mb = true; // ... with every token in one launch per kernel (OWN_IDX_DTOPK_MB; the same work per group; default since tp129: c128 check mode 95K / 194K 7,170 + 32,610 lists ALL SAME, 194K guessing 127.2 -> 130.0 tok/s; =0 off)
+        // idxbc-2 (OWN_IDX_CK_R=2 / 4, opt-in; OWN_IDX_CK_RMAJ=1: row groups first): the checks' split index scores
+        // (ixm_score: the card's share of every token's rows) in idx_score_r's R-row form (with idx_bc: idxbc-1's
+        // sub-group broadcast) instead of IndexerScoreBM: the same sums, bit for bit (test_index_score_px)
+        unsigned idx_ck_r = 0;
+        bool idx_ck_rmaj = false;
+        // kvdedup-2 (OWN_KV_DEDUP_CK=1, opt-in): kvshard's pulled blocks (checks, KvGather with 2-6 tokens) stage a row
+        // that several tokens list once (the later entries' slots name the first one's staging row): fewer peer reads
+        bool kv_dedup_ck = false;
+        // idxfilt-0 (OWN_IDX_DUMP=prefix, diagnostic): card 0's index inputs of the first one-token step with at least
+        // OWN_IDX_DUMP_MIN rows, per index layer (dev_index's idx_dump_layer); the run is otherwise unchanged
+        const char *idx_dump = nullptr;
+        long idx_dump_min = 0;
+        // idxfilt-1 (OWN_IDX_FILT=1, opt-in; 2 = check): prompt halves' split index layers (2, 8, 14, 20) from
+        // idx_filt_min rows: the matrix-engine pre-filter's lower bounds (sycl_v41_idxfilt.hpp, a proven bound), the
+        // selects on them, exact scores for every row that can still be kept, the selects again: the same lists,
+        // block lists and marks (2: also every row exact and the unchanged selects into shadows, compared)
+        unsigned idx_filt = 0;
+        long idx_filt_min = 32768;
+        // idxfilt-3 (OWN_IDX_FILT_SEL=1, opt-in): after idxfilt-2's exact scores, the selects over only the rows (layer
+        // 20: block keys) at or above the filter's thresholds (TopKSelF, sycl_v41_idxfilt.hpp): the same lists, block
+        // lists and marks; one read of the scores in place of five. OWN_IDX_FILT=2 checks it
+        bool idx_filt_sel = false;
+        // idxfilt-4 (OWN_IDX_FILT_BC=1, opt-in): the index layers past 20 (24 / 28 / 32 / 36: each token's layer-20
+        // candidate rows, OWN_IDX_CAND) by the same pre-filter (IdxFiltSC / IdxFiltTC / IdxFiltXC) from idx_filt_min
+        // rows: the same lists; OWN_IDX_FILT=2 checks it (its own counts)
+        bool idx_filt_bc = false;
+        // ifldiag-1 (OWN_IFL_DIAG=1, diagnostic): with OWN_IDX_FILT=2, every layer-20 filter compare (the prompt's, and
+        // with OWN_IDX_FILT_CK the checks') keeps the filtered pass's stored values on the host, and a new block-list /
+        // marks difference prints the token, the thresholds, the stored-vs-exact rows by kind and the differing blocks
+        // (slow: host copies of every token's rows per layer-20 call; host memory: tokens x rows x 4 bytes)
+        bool ifl_diag = false;
+        // obpad-1 (OWN_OB_PAD=floats, opt-in, default 0): the multi-token steps' query / attention-output / head-output
+        // rows (q, of, obuf, the arena's head outputs) qh * hd + pad floats apart per token instead of qh * hd (= 32,768:
+        // 128 KiB, every token's row on the same cache sets). Output-a reads 16 tokens' rows per weight decode: bench
+        // (densews, c131) T16 R2 Q8 1,024 rows at 256 tokens 393.6 us at the 128 KiB stride vs 296.6 packed. Layout only:
+        // every value and sum is the same
+        unsigned ob_pad = 0;
+        // klazy-1 (OWN_PREBUILD=0, opt-in): skip building every kernel image for every card before the first step; each
+        // kernel's image loads at its first launch. With a build split per kernel (-fsycl-device-code-split=per_kernel)
+        // only the launched kernels' code is loaded: the runtime keeps ~3 host copies of every loaded image per card
+        // (hostmem/FINDINGS.md: ~18 MiB of host RAM per MiB of image) plus one on the card. A load takes ~1 ms per
+        // kernel at its first launch, well inside the exchanges' ~0.9 s spin. Same code, same launches, same values
+        bool prebuild = true;
+        // idxfilt-2c (OWN_IDX_FILT_CK=1, opt-in): the same pre-filter in the checks' split index layers (dtopk-2), each
+        // card over its own share of the rows (its thresholds from its share: a card's 512th largest is never above the
+        // overall 512th), from idx_filt_ck_min rows per card (the longest row count / the cards); with OWN_IDX_FILT=2
+        // also every share exact, dtopk-2 into shadows, compared
+        unsigned idx_filt_ck = 0;
+        long idx_filt_ck_min = 16384;
         // skip39-1 (OWN_SKIP39=1, opt-in; /home/steve/dsv41-work/skip39/README.md; backend_sycl_v41_mt.inc "skip39-1"):
         // a prompt block that does not hold the prompt's last token runs the model's last layer for the rows that
         // outlive the block only (the draft's capture, and the window ring's last 128 key rows), none of its other
@@ -618,6 +696,12 @@ public:
         // one-token steps and blocks outside the halves (checks, a prompt's short last block) still pull. Needs OWN_PX=1
         // with OWN_PX_BCS=1 or 2 (refused otherwise). 0 = kvshard-1's pulls everywhere.
         unsigned kv_push = 1;
+        // kvdedup-1 (OWN_KV_DEDUP=1, with the push form): a half's staging rows hold every distinct listed row once (the
+        // tokens of a half list mostly the same rows: one staged + pushed copy instead of one per list entry); the slot
+        // lists name that copy, so the attention reads the same bytes (kernels KvDd*). Needs OWN_KV_SHARD_R % 32 == 0
+        unsigned kv_dedup = 1; // default since tp126 with the push form (c125: check mode 3K / 95K ALL SAME, 194K 563.3 -> 635.8
+                               // tok/s, 10.1 x fewer rows, card 0 736 -> 61 GiB out); off by itself without the push form or
+                               // with OWN_KV_SHARD_R % 32 != 0 (=0: one staging row per list entry)
     };
     struct DevPtr {
         void *p = nullptr;
@@ -672,6 +756,13 @@ public:
                 o.idx_dtopk = 0;
             }
         }
+        if (o.idx_dtopk_m) { // dtopk-2 (OWN_IDX_DTOPK_M): the checks' split index layers by candidates
+            if (o.idx_dtopk_m > 2) throw std::invalid_argument("OWN_IDX_DTOPK_M: 0 (off), 1 (on) or 2 (on + check)");
+            if (!o.idx_dtopk || !(o.idx_dsplit & 2u)) {
+                std::fprintf(stderr, "OWN_IDX_DTOPK_M: off (needs OWN_IDX_DTOPK and OWN_IDX_DSPLIT bit 2: the checks' score split)\n");
+                o.idx_dtopk_m = 0;
+            }
+        }
         if (!o.kv_shard) o.kv_push = 0; // (kvshard push: nothing to push without the shard)
         if (o.kv_shard) { // kvshard-1 (OWN_KV_SHARD): the configurations the shard does not handle are refused
             if (o.kv_shard > 2) throw std::invalid_argument("OWN_KV_SHARD: 0 (off), 1 (on) or 2 (on + check)");
@@ -699,6 +790,8 @@ public:
             if (o.kv_push && (unsigned)o.tp + 1 > ops41sycl::KVP_K)
                 throw std::invalid_argument("OWN_KV_PUSH: at most " + std::to_string(ops41sycl::KVP_K - 1) + " owners");
         }
+        if (o.kv_dedup > 1) throw std::invalid_argument("OWN_KV_DEDUP: 0 (off) or 1 (on)");
+        if (!o.kv_push || o.kv_shard_r % 32) o.kv_dedup = 0; // (tp126: the default needs the push form and whole bitmap words)
         if (o.layer_begin < 0 || o.layer_end > g.layers || o.layer_begin > o.layer_end)
             throw std::invalid_argument("layer range");
         if (o.tp > 1) { // the first tp cards hold every layer of the range (and the head)
@@ -756,14 +849,28 @@ public:
                     xqs.emplace_back(cm.at(a), devs[a], sycl::property::queue::in_order{});
             }
         }
-        if (o.tp > 1) {
+        auto rss_mib = [] {
+            long v = 0;
+            if (FILE *f = std::fopen("/proc/self/status", "r")) {
+                char ln[256];
+                while (std::fgets(ln, sizeof ln, f))
+                    if (std::sscanf(ln, "VmRSS: %ld", &v) == 1) break;
+                std::fclose(f);
+            }
+            return v / 1024;
+        };
+        if (o.tp > 1 && !o.prebuild)
+            std::printf("OWN_PREBUILD=0 (klazy-1): kernels load at their first launch; host RSS %ld MiB, MemAvailable %ld MiB\n",
+                        rss_mib(), meminfo_kb("MemAvailable") / 1024);
+        if (o.tp > 1 && o.prebuild) {
             // every kernel built for every card before the first step: a card still compiling a kernel at its
             // first launch while a peer already waits in an exchange times that exchange out (a new binary
             // with a cold compiler cache). One card at a time: the first fills the driver's cache.
             const double t0 = now_s();
             for (int t = 0; t < o.tp; ++t)
                 (void)sycl::get_kernel_bundle<sycl::bundle_state::executable>(ctxs[t], {devs[t]});
-            std::printf("kernels built for %d cards in %.1fs\n", o.tp, now_s() - t0);
+            std::printf("kernels built for %d cards in %.1fs (host RSS %ld MiB, MemAvailable %ld MiB)\n", o.tp, now_s() - t0,
+                        rss_mib(), meminfo_kb("MemAvailable") / 1024);
         }
         for (int t = 0; t < TILES; ++t) {
             if (!active[t]) continue;
@@ -869,6 +976,8 @@ public:
                              ixd_calls[c], ixm_calls[c], o.idx_dsplit_min, ixd_rows[c], ixd_chk[c], ixd_bad[c]);
             }
         if (o.idx_dtopk) dtk_report(); // dtopk-1: layers by candidates (OWN_IDX_DTOPK=2: the check's counts, read once here)
+        if (o.idx_dtopk_m) dtkm_report(); // dtopk-2: the checks' layers by candidates (and the check's counts)
+        if (o.idx_filt || o.idx_filt_ck) ifl_report(); // idxfilt: the pre-filter's layers (and the check's counts)
         if (o.kv_shard) kvs_report(); // kvshard-1: the fetch counts (OWN_KV_SHARD=2: the check's, read once here)
         if (o.px_bcs) { // OWN_PX_BCS: every copy list idle before the arenas they write are closed and freed
             try { bcs_drain(); } catch (...) {}
@@ -1007,9 +1116,22 @@ public:
                                      " refusing to load (overcommit would spill into host RAM)");
         const long floor_kb = o.host_floor_mib * 1024;
         auto host_low = [&] { return meminfo_kb("MemAvailable") < floor_kb; };
-        if (host_low())
-            throw std::runtime_error("host MemAvailable is already below the " +
-                                     std::to_string(o.host_floor_mib) + " MiB floor");
+        if (host_low()) {
+            // hostfloor-1 (2026-11-16): the runtime holds ~2.2 GB of system memory for a second or two after the six
+            // contexts' kernels are built (driver counters: 2,173 -> 671 MiB); a 1M start met the floor inside that
+            // spike (ck1m 20:39). Wait up to 15 s for it to pass before refusing.
+            const auto w0 = std::chrono::steady_clock::now();
+            const long a0 = meminfo_kb("MemAvailable") / 1024;
+            while (host_low() && std::chrono::steady_clock::now() - w0 < std::chrono::seconds(15))
+                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+            const double ws = std::chrono::duration<double>(std::chrono::steady_clock::now() - w0).count();
+            if (host_low())
+                throw std::runtime_error("host MemAvailable is already below the " +
+                                         std::to_string(o.host_floor_mib) + " MiB floor (waited 15 s)");
+            std::fprintf(stderr, "hostfloor-1: host MemAvailable %ld MiB under the %ld MiB floor before the upload; "
+                                 "%ld MiB after waiting %.1f s\n", a0, o.host_floor_mib,
+                         meminfo_kb("MemAvailable") / 1024, ws);
+        }
         // allocate the arenas (exact sizes), checking host memory between chunks
         std::vector<uint8_t *> chunks[TILES];
         for (int t = 0; t < TILES; ++t)
@@ -1030,12 +1152,30 @@ public:
         std::atomic<bool> stop{false};
         std::mutex err_mu;
         std::string err;
+        int up_pauses = 0;       // hostfloor-2: copies paused for a host-memory dip (all cards)
+        double up_pause_max = 0; // the longest pause (s)
         auto fail = [&](const std::string &m) {
             std::lock_guard<std::mutex> lk(err_mu);
             if (err.empty()) err = m;
             stop = true;
         };
+        // uppar-1 (OWN_UP_PAR): at most up_par cards copy at once. Every card's copies hold ~0.2 GB of runtime staging
+        // in host memory while they run (Shmem +1.1 GB with six; t135c), the low point of a 1M load; fewer cards at a
+        // time keep it lower. The bytes on the cards are the same.
+        std::mutex up_mu;
+        std::condition_variable up_cv;
+        int up_running = 0;
+        const int up_max = std::clamp(o.up_par, 1, TILES);
         auto worker = [&](int t) {
+            {
+                std::unique_lock<std::mutex> lk(up_mu);
+                up_cv.wait(lk, [&] { return up_running < up_max || stop; });
+                ++up_running;
+            }
+            struct UpRelease {
+                std::mutex &m; std::condition_variable &cv; int &n;
+                ~UpRelease() { { std::lock_guard<std::mutex> lk(m); --n; } cv.notify_all(); }
+            } up_release{up_mu, up_cv, up_running};
             uint8_t *stage = (uint8_t *)aligned_alloc(4096, PIECE + 8192);
             uint8_t *pstage = (uint8_t *)aligned_alloc(4096, PIECE + PIECE / 8 + 65536); // packed rows
             if (!stage || !pstage) { free(stage); free(pstage); return fail("staging alloc"); }
@@ -1075,7 +1215,22 @@ public:
                         }
                         d += n;
                         done += n;
-                        if (host_low()) fail("host MemAvailable fell below the floor during upload");
+                        // hostfloor-2 (2026-11-17): a dip pauses this card's copies (up to 15 s) instead of ending
+                        // the load at once. The runtime's ~2 GB for a second or two after the kernel build can fall
+                        // inside the upload's first seconds (ck1m2 x1m_b 00:36:40: 13.7 GB -> 1.64 GB in 6 s, back
+                        // within ~1 s in the starts that passed). Nothing is allocated while paused; a dip that
+                        // does not pass still ends the load.
+                        if (host_low()) {
+                            const auto w0 = std::chrono::steady_clock::now();
+                            while (host_low() && !stop && std::chrono::steady_clock::now() - w0 < std::chrono::seconds(15))
+                                std::this_thread::sleep_for(std::chrono::milliseconds(100));
+                            const double ws = std::chrono::duration<double>(std::chrono::steady_clock::now() - w0).count();
+                            if (host_low()) fail("host MemAvailable fell below the floor during upload (waited " +
+                                                 std::to_string((int)ws) + " s)");
+                            std::lock_guard<std::mutex> lk(err_mu);
+                            ++up_pauses;
+                            up_pause_max = std::max(up_pause_max, ws);
+                        }
                     }
                   }
                   if (stop) break;
@@ -1104,12 +1259,39 @@ public:
         for (int fd : dfd) if (fd >= 0) close(fd);
         for (int fd : bfd) if (fd >= 0) close(fd);
         if (!err.empty()) throw std::runtime_error(err);
+        if (up_pauses)
+            std::fprintf(stderr, "hostfloor-2: the upload's copies paused %d times for host MemAvailable under the %ld MiB "
+                                 "floor (longest %.1f s)\n", up_pauses, o.host_floor_mib, up_pause_max);
         for (int t = 0; t < TILES; ++t)
             for (const auto &it : items[t]) {
                 wgt[t][*it.name] = {chunks[t][it.chunk] + it.off, it.bytes, t, it.packed, it.sr0, it.sr1 - it.sr0};
                 if (it.packed) { ++packed_tensors; packed_bytes += it.bytes; }
             }
         uploaded_bytes = total;
+        if (getenv("OWN_ALLOC_LOG") && atoi(getenv("OWN_ALLOC_LOG")) != 0) { // allocmap-1: weight bytes per card by kind
+            std::map<std::string, std::vector<size_t>> by; // kind (the name without its blk.N.) -> bytes per card
+            for (int t = 0; t < TILES; ++t)
+                for (const auto &it : items[t]) {
+                    std::string k = *it.name;
+                    const size_t b = k.find("blk."), e = b == std::string::npos ? b : k.find('.', b + 4);
+                    if (e != std::string::npos) k = k.substr(0, b) + k.substr(e + 1);
+                    auto &v = by[k];
+                    v.resize(TILES);
+                    v[t] += it.bytes;
+                }
+            std::string r;
+            char s[64];
+            for (const auto &[k, v] : by) {
+                size_t lo = SIZE_MAX, hi = 0;
+                for (int t = 0; t < TILES; ++t)
+                    if (active[t]) lo = std::min(lo, v[t]), hi = std::max(hi, v[t]);
+                if (hi < ((size_t)16 << 20) && hi - lo < ((size_t)4 << 20)) continue; // (small and even)
+                r += " " + k + ":";
+                for (int t = 0; t < TILES; ++t)
+                    if (active[t]) { std::snprintf(s, sizeof s, "%s%.0f", r.back() == ':' ? "" : "/", v[t] / 1048576.0); r += s; }
+            }
+            std::fprintf(stderr, "alloc weights MiB per card by kind (16 MiB or more, or uneven by 4 MiB):%s\n", r.c_str());
+        }
     }
     size_t uploaded_bytes = 0;
     size_t packed_tensors = 0, packed_bytes = 0;
@@ -1254,6 +1436,9 @@ public:
     // tp: the step's head (final norm, output rows, argmax) is skipped; a prompt token whose
     // next word nobody reads (every prompt token but the last). decode_step returns -1 then.
     bool skip_head = false;
+    // drlast-1: the first position whose draft window rows survive the prompt (the driver's prompt loop sets it to the
+    // prompt's end - 128; -1 = every block runs the draft's capture and injection)
+    long dr_keep_from = -1;
     // tp: token index inside a multi-token step (0 in one-token steps); the card's position is pos + tokoff
     // tokens per multi-token step, at most (OWN41_MTX, default 256; 16 until 2026-11-11, then 64). Only capacities
     // follow it: block buffers, exchange regions, the ring's block area, the kernels' per-token tables.
@@ -1522,7 +1707,14 @@ private:
     // rows this card pushed to each peer and the largest such run
     void *kvs_speer[TILES][TILES] = {};
     uint32_t *kvp_tb[TILES] = {}, *kvp_hb[TILES] = {};
-    uint32_t kvp_h[TILES][2 * ops41sycl::KVP_K] = {};
+    uint32_t kvp_h[TILES][2 * ops41sycl::KVP_K + 2] = {}; // (+ [2 K]: kvdedup-1's list entries with a row)
+    // kvdedup-1 (OWN_KV_DEDUP) per card: the half's row bitmap (kvd_nw words: every source's rows), per word the
+    // chunk's earlier words' counts below / at or past tail0, per chunk (kvd_nq) the totals and the bases, the entry
+    // counter, rowof (staging row -> row, mtb_n() x 512); kvd_ent / kvd_all: entries and distinct rows staged
+    uint32_t *kvd_bm[TILES] = {}, *kvd_wpc[TILES] = {}, *kvd_wpt[TILES] = {}, *kvd_cc[TILES] = {}, *kvd_ct[TILES] = {},
+             *kvd_cb[TILES] = {}, *kvd_tq[TILES] = {}, *kvd_en[TILES] = {}, *kvd_row[TILES] = {};
+    unsigned kvd_nw = 0, kvd_nq = 0;
+    unsigned long long kvd_ent[TILES] = {};
     long kvs_np[TILES] = {};
     unsigned long long kvp_all[TILES] = {}, kvp_tl[TILES] = {}, kvp_own[TILES] = {}, kvp_max[TILES] = {};
     uint16_t *ring[TILES][40] = {}; // window ring per card per layer
@@ -1543,6 +1735,10 @@ private:
     sycl::event rwev[TILES][2];
     bool rwev_on[TILES][2] = {};
     std::vector<double> rwf[2]; // the 32 frequencies, [0] base, [1] yarn (build_rope_tables)
+    double *rwfd[TILES] = {};   // ropedev-1: 32 yarn then 32 base frequencies on card c
+    uint32_t *rfx_pos[TILES] = {}, *rfx_idx[TILES] = {}; // ropedev-1 fix-ups (RopeFixD), the same list on every card
+    float *rfx_val[TILES] = {};
+    unsigned rfx_n = 0;
     std::atomic<long> rw_fills{0}; // (card threads)
     void rope_fill(float *c, float *sn, int yarn, long p0, long n) const { // positions p0 .. p0 + n - 1
         const std::vector<double> &f = rwf[yarn ? 1 : 0];
@@ -1561,6 +1757,18 @@ private:
         long w0 = std::max(0L, p - RW_BACK);
         if (w0 + RW > (long)max_seq) w0 = (long)max_seq - RW;
         const int k = rw0[c] < 0 ? 0 : rwh[c] ^ 1;
+        if (o.rope_dev) { // ropedev-1: filled by a launch on the in-order queue, after every launch that reads the old copy
+            float *d = rwdev[c][k];
+            launch(c, (size_t)RW * 32, 256, ops41sycl::RopeFillD{(int)w0, (unsigned)RW}, (const double *)rwfd[c], d);
+            if (rfx_n)
+                launch(c, rfx_n, 64, ops41sycl::RopeFixD{(int)w0, (unsigned)RW, rfx_n}, (const uint32_t *)rfx_pos[c],
+                       (const uint32_t *)rfx_idx[c], (const float *)rfx_val[c], d);
+            cos_yarn[c] = d, sin_yarn[c] = d + (size_t)RW * 32, cos_base[c] = d + (size_t)2 * RW * 32;
+            sin_base[c] = d + (size_t)3 * RW * 32;
+            rw0[c] = w0, rwh[c] = k;
+            ++rw_fills;
+            return;
+        }
         if (rwev_on[c][k]) rwev[c][k].wait(); // (that copy's last upload: >= 10,240 positions ago)
         std::vector<float> &b = rwbuf[c][k];
         b.resize((size_t)4 * RW * 32);
@@ -1626,11 +1834,23 @@ private:
         std::snprintf(s, sizeof s, "%.2f", b / 1073741824.0);
         return s;
     }
-    template <typename T> T *dalloc(int t, size_t count, bool zero = true) {
+    // allocmap-1 (OWN_ALLOC_LOG=1): every dalloc's bytes summed per card and source line (alloc_report prints them)
+    std::map<std::string, std::pair<size_t, long>> dal_line[TILES]; // key: file tail + line (hpp:1234, mt:567, draft:89)
+    size_t dal_all[TILES] = {};
+    template <typename T>
+    T *dalloc(int t, size_t count, bool zero = true, std::source_location sl = std::source_location::current()) {
         T *p = sycl::malloc_device<T>(count, qs[t]);
         if (!p)
             throw std::runtime_error("device allocation of " + gib(count * sizeof(T)) + " GiB failed on card " +
                                      pci[t]);
+        static const bool alog = getenv("OWN_ALLOC_LOG") && atoi(getenv("OWN_ALLOC_LOG")) != 0;
+        if (alog) {
+            const std::string f = sl.file_name();
+            const char *k = f.find("_mt.inc") != std::string::npos ? "mt" : f.find("_draft.inc") != std::string::npos ? "draft" : "hpp";
+            auto &e = dal_line[t][std::string(k) + ":" + std::to_string(sl.line())];
+            e.first += count * sizeof(T), ++e.second;
+            dal_all[t] += count * sizeof(T);
+        }
         owned[t].push_back(p);
         if (zero) qs[t].memset(p, 0, count * sizeof(T));
         touch(t, p);
@@ -3423,9 +3643,10 @@ private:
         constexpr size_t WG = 128;
         long lmax = 0;
         for (int i = 0; i < m; ++i) lmax = std::max(lmax, lens[i]);
-        auto go = [&](auto rc) {
+        auto go = [&](auto rc, auto bc) {
             constexpr int RR = decltype(rc)::value;
-            using KS = ops41sycl::IndexerScoreBMR<Act, RR>;
+            using KS = std::conditional_t<decltype(bc)::value, ops41sycl::IndexerScoreBMS<Act, RR>,
+                                          ops41sycl::IndexerScoreBMR<Act, RR>>;
             KS k{};
             int li[MTX] = {};
             for (int i = 0; i < m; ++i) li[i] = lens[i] > 0 ? (int)lens[i] : 0;
@@ -3442,8 +3663,35 @@ private:
             });
             kev(c, kname<KS>(), e);
         };
-        if (R == 4) go(std::integral_constant<int, 4>{});
-        else go(std::integral_constant<int, 2>{});
+        if (o.idx_bc) {
+            if (R == 4) go(std::integral_constant<int, 4>{}, std::true_type{});
+            else go(std::integral_constant<int, 2>{}, std::true_type{});
+        } else if (R == 4) go(std::integral_constant<int, 4>{}, std::false_type{});
+        else go(std::integral_constant<int, 2>{}, std::false_type{});
+    }
+    // OWN_IDX_DUMP (diagnostic, idxfilt-0): card t's index inputs of layer L's first one-token step with at least
+    // idx_dump_min rows into <prefix>.L<L>.bin: int64 L, len, sizeof(act_t); the query (32 x 128 act_t, after rope),
+    // the head weights (32 act_t), the key rows [0, len) (len x 128 BF16 words). The host waits for the card here.
+    bool idx_dumped[64] = {};
+    void idx_dump_layer(int L, int t, int si, long len) {
+        idx_dumped[L] = true;
+        auto &s = sc[t];
+        std::vector<act_t> hq(32 * 128), hw(32);
+        std::vector<uint16_t> hk((size_t)len * 128);
+        qs[t].wait();
+        qs[t].memcpy(hq.data(), s.qi, hq.size() * sizeof(act_t));
+        qs[t].memcpy(hw.data(), s.wv, hw.size() * sizeof(act_t));
+        qs[t].memcpy(hk.data(), ik_mirror[t][si], hk.size() * 2).wait();
+        const std::string fn = std::string(o.idx_dump) + ".L" + std::to_string(L) + ".bin";
+        FILE *f = std::fopen(fn.c_str(), "wb");
+        if (!f) throw std::runtime_error("OWN_IDX_DUMP: cannot write " + fn);
+        const int64_t h[3] = {L, len, (int64_t)sizeof(act_t)};
+        std::fwrite(h, 8, 3, f);
+        std::fwrite(hq.data(), sizeof(act_t), hq.size(), f);
+        std::fwrite(hw.data(), sizeof(act_t), hw.size(), f);
+        std::fwrite(hk.data(), 2, hk.size(), f);
+        std::fclose(f);
+        std::fprintf(stderr, "OWN_IDX_DUMP: layer %d, %ld rows -> %s\n", L, len, fn.c_str());
     }
     void dev_index(int L, int t, int si, bool yarn, long len, int32_t *out = nullptr) {
         auto &s = sc[t];
@@ -3453,6 +3701,7 @@ private:
         gemv(t, p + "indexer.attn_q_b.weight", s.qn, s.qi);
         rope(t, s.qi, 32, 128, cpos(t), yarn, false);
         gemv(t, p + "indexer.proj.weight", s.xn, s.wv);
+        if (o.idx_dump && t == 0 && L <= 20 && !idx_dumped[L] && len >= o.idx_dump_min) idx_dump_layer(L, t, si, len);
         const int T_ = (int)((len + 31) / 32 * 32);
         // OWN_IDX_CAND: past layer 20 with the step's mask over all rows and more rows than candidates, only the
         // candidate rows are scored and selected (the others are -inf in the masked select)
@@ -3773,10 +4022,10 @@ private:
         if (o.idx_dtopk == 2) dtk_check(L, t, si, len, T_, mask, dst);
     }
     // (3) one work-group over the tp x nr row candidates: the list (+128, then -1 up to 512)
-    void dtk_merge_rows(int t, const DtkGeo &q, int32_t *dst) {
+    void dtk_merge_rows(int t, const DtkGeo &q, int32_t *dst, const float *base = nullptr) { // (base: dtopk-2's token area)
         constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
         const int n = o.tp * (int)q.nr, qc = ops41sycl::qsel_span(n);
-        const float *kb = xarena[t] + xscK, *cv = kb, *ci = kb + q.nr;
+        const float *kb = base ? base : xarena[t] + xscK, *cv = kb, *ci = kb + q.nr;
         auto go = [&](auto mc) {
             constexpr int M = decltype(mc)::value;
             launch_local<SLM>(t, 1024, ops41sycl::TopKSelDQ<M>{n, (int)q.nr, q.u, DTK_K, 128, 512}, cv, ci, dst);
@@ -3788,10 +4037,10 @@ private:
         else throw std::runtime_error("OWN_IDX_DTOPK: more row candidates than one work-group holds");
     }
     // (3) layer 20: one work-group over the tp x nb block candidates: the kept rows' flags, the block list
-    void dtk_merge_blocks(int t, const DtkGeo &q, long len, int32_t *blist, uint8_t *cand) {
+    void dtk_merge_blocks(int t, const DtkGeo &q, long len, int32_t *blist, uint8_t *cand, const float *base = nullptr) {
         constexpr size_t SLM = (size_t)DtkR1::NSG * 256 + 8;
         const int n = o.tp * (int)q.nb, qc = ops41sycl::qsel_span(n);
-        const float *kb = xarena[t] + xscK, *cv = kb + 2 * q.nr, *ci = kb + 2 * q.nr + q.nb;
+        const float *kb = base ? base : xarena[t] + xscK, *cv = kb + 2 * q.nr, *ci = kb + 2 * q.nr + q.nb;
         auto go = [&](auto mc) {
             constexpr int M = decltype(mc)::value;
             launch_local<SLM>(t, 1024, ops41sycl::TopKSelDQB<M>{n, (int)q.nb, q.u, DTK_KB, (int)len}, cv, ci, blist, cand);
@@ -3825,8 +4074,8 @@ private:
     // that many blocks) and the marks ca / cb (ncand bytes); dtk_cnt[c]: [0] lists compared, [1] lists differing, [2]
     // layer-20 results (block list + marks) compared, [3] differing
     void dtk_cmp(int c, const int32_t *la, const int32_t *lb, const int32_t *ba, const int32_t *bb, const uint8_t *ca,
-                 const uint8_t *cb, long ncand) {
-        uint32_t *cnt = dtk_cnt[c];
+                 const uint8_t *cb, long ncand, uint32_t *cnts = nullptr) {
+        uint32_t *cnt = cnts ? cnts : dtk_cnt[c]; // (dtopk-2's check: its own counts)
         if (!cnt) return;
         const uint32_t blk = (ba || ca) ? 1u : 0u;
         qs[c].parallel_for(sycl::nd_range<1>(1024, 1024), [=](sycl::nd_item<1> it) {
@@ -3879,6 +4128,32 @@ private:
         }
         if (o.idx_dtopk == 2)
             std::fprintf(stderr, "OWN_IDX_DTOPK=2 check: %ld lists compared, %ld differ -> %s\n", n, bad,
+                         bad || lost ? "MISMATCH" : n ? "ALL SAME" : "NOTHING COMPARED");
+    }
+    void dtkm_report() { // dtopk-2 (OWN_IDX_DTOPK_M)
+        long n = 0, bad = 0;
+        bool lost = false;
+        for (int c = 0; c < o.tp; ++c) {
+            std::fprintf(stderr, "OWN_IDX_DTOPK_M=%u: card %d: %ld check index layers by candidates (%ld token lists)",
+                         o.idx_dtopk_m, c, dtkm_calls[c], dtkm_tok[c]);
+            if (o.idx_dtopk_m == 2) {
+                uint32_t h[4] = {};
+                try {
+                    if (dtkm_cnt[c]) qs[c].memcpy(h, dtkm_cnt[c], sizeof h).wait();
+                    else lost = true;
+                } catch (...) {
+                    lost = true;
+                }
+                std::fprintf(stderr, "; check: %u lists compared (%ld made), %u differ; %u layer-20 block lists + marks "
+                                     "compared (%ld made), %u differ", h[0], dtkm_chk[c], h[1], h[2], dtkm_chkb[c], h[3]);
+                if ((long)h[0] != dtkm_chk[c] || (long)h[2] != dtkm_chkb[c]) lost = true;
+                n += (long)h[0] + (long)h[2];
+                bad += (long)h[1] + (long)h[3];
+            }
+            std::fprintf(stderr, "\n");
+        }
+        if (o.idx_dtopk_m == 2)
+            std::fprintf(stderr, "OWN_IDX_DTOPK_M=2 check: %ld lists compared, %ld differ -> %s\n", n, bad,
                          bad || lost ? "MISMATCH" : n ? "ALL SAME" : "NOTHING COMPARED");
     }
     // OWN_IDX_CAND=2: the candidate-only score and list against the full score (into score2) and the masked
@@ -4209,6 +4484,48 @@ private:
     uint32_t *dtk_cnt[TILES] = {};
     int32_t *dtk_l2[TILES] = {}, *dtk_bl2[TILES] = {};
     uint8_t *dtk_cd2[TILES] = {};
+    // dtopk-2 (OWN_IDX_DTOPK_M): the checks' candidate area (6 tokens x o.tp chunks), counts, check shadows (6 tokens)
+    size_t xscKM = 0;
+    long dtkm_calls[TILES] = {}, dtkm_tok[TILES] = {}, dtkm_chk[TILES] = {}, dtkm_chkb[TILES] = {};
+    uint32_t *dtkm_cnt[TILES] = {};
+    // idxfilt-1 (OWN_IDX_FILT): per card the queries' BF16 hi / lo B matrices (MTX tokens), bound factors, row norms;
+    // the check's counts and shadows; prompt index layers by the pre-filter
+    uint16_t *ifl_bh[TILES] = {}, *ifl_bl[TILES] = {};
+    float *ifl_ac[TILES] = {}, *ifl_n2[TILES] = {}, *ifl_cm[TILES] = {}, *ifl_thr[TILES] = {};
+    size_t ifl_cms = 0; // idxfilt-2: the per-8-row maxima's stride per token (max_seq / 8 + 64)
+    unsigned ifl_tcap = 0; // idxmem-1: tokens per filtered call at most (ifl_cap; the per-token buffers' rows)
+    uint32_t *ifl_cnt[TILES] = {};
+    int32_t *ifl_ox2[TILES] = {}, *ifl_bl2[TILES] = {};
+    uint8_t *ifl_cd2[TILES] = {};
+    long ifl_calls[TILES] = {}, ifl_tok[TILES] = {}, iflk_calls[TILES] = {}, iflk_tok[TILES] = {};
+    long ifl_sel_calls[TILES] = {}; // idxfilt-3 (OWN_IDX_FILT_SEL): the layers' survivors-only selects per card
+    long iflb_calls[TILES] = {}, iflb_tok[TILES] = {}; // idxfilt-4 (OWN_IDX_FILT_BC): the candidate layers by the filter
+    void ifl_report() {
+        long bad = 0, n = 0;
+        for (int c = 0; c < o.tp; ++c) {
+            uint32_t h[16] = {};
+            if (ifl_cnt[c]) qs[c].memcpy(h, ifl_cnt[c], sizeof h).wait();
+            std::fprintf(stderr, "OWN_IDX_FILT=%u: card %d: %ld prompt index layers by the pre-filter (%ld token lists; %ld "
+                         "with the survivors-only selects), %ld check index layers (%ld token lists)%s",
+                         o.idx_filt, c, ifl_calls[c], ifl_tok[c], ifl_sel_calls[c], iflk_calls[c], iflk_tok[c],
+                         ifl_cnt[c] ? "" : "\n");
+            if (ifl_cnt[c])
+                std::fprintf(stderr, "; check: %u lists compared, %u differ; %u block lists + marks compared, %u differ\n",
+                             h[0], h[1], h[2], h[3]);
+            n += h[0], bad += (long)h[1] + (long)h[3];
+            if (o.idx_filt_bc) {
+                std::fprintf(stderr, "OWN_IDX_FILT_BC=1: card %d: %ld candidate index layers by the pre-filter (%ld token lists)%s",
+                             c, iflb_calls[c], iflb_tok[c], ifl_cnt[c] ? "" : "\n");
+                if (ifl_cnt[c]) std::fprintf(stderr, "; check: %u lists compared, %u differ\n", h[4], h[5]);
+                n += h[4], bad += (long)h[5];
+            }
+        }
+        if (o.idx_filt == 2)
+            std::fprintf(stderr, "OWN_IDX_FILT=2 check: %ld lists compared, %ld differ -> %s\n", n, bad,
+                         n && !bad ? "ALL SAME" : "MISMATCH");
+    }
+    int32_t *dtkm_l2[TILES] = {}, *dtkm_bl2[TILES] = {};
+    uint8_t *dtkm_cd2[TILES] = {};
     unsigned qkr0[TILES] = {}, qkr1[TILES] = {};
     bool qbm_any() const {
         for (int m = 2; m <= 6; ++m)
@@ -4232,6 +4549,8 @@ private:
     const HeadLay &lay_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? hl[2] : hl[0]; }
     int xp_oa_m(unsigned M) const { return o.tp_heads_min > 1 && M >= o.tp_heads_min ? 5 /* XP_OAP */ : 0 /* XP_OA */; }
     bool any_split() const { return hl[0].split || hl[1].split || hl[2].split; }
+    // obpad-1: a token's q / of / obuf row stride in the multi-token steps (and the arena's head outputs)
+    size_t obs() const { return (size_t)g.qh * g.hd + o.ob_pad; }
     unsigned xhoM = 0; // arena offset of the head outputs (MTX tokens x qh * hd floats) when a layout splits groups
     int tm0[TILES] = {}, tm1[TILES] = {}, td0[TILES] = {}, td1[TILES] = {}, tv0[TILES] = {}, tv1[TILES] = {};
     unsigned xoa = 0, xob = 0, xact = 0, xeng = 0;
@@ -4884,7 +5203,7 @@ private:
         for (int d = 0; d < o.tp; ++d) P[d] = (float *)xpeer[c][d];
         // (OWN_PX: a half's head outputs from its first token on, px_tok; 0 otherwise)
         ops41sycl::XchgPair x{h.np[c], c, {h.pd[c][0], h.pd[c][1]}, {h.pb0[c][0], h.pb0[c][1]}, {h.pb1[c][0], h.pb1[c][1]},
-                              xhoM + (unsigned)px_tok * (unsigned)g.qh * (unsigned)g.hd, (unsigned)g.qh * (unsigned)g.hd,
+                              xhoM + (unsigned)px_tok * (unsigned)obs(), (unsigned)obs(),
                               nslot, seq, XSPIN, mode};
         size_t nv = 0;
         for (int k = 0; k < h.np[c]; ++k) nv += (size_t)nslot * ((h.pb1[c][k] - h.pb0[c][k]) / 4);
@@ -5109,6 +5428,18 @@ private:
                                  "work-groups per card, %u + %u pairs)\n", o.idx_dtopk, std::max(o.idx_dtopk_min, o.idx_dsplit_min),
                          o.idx_dtopk == 2 ? ", + the gather and the full selects into shadows, compared on the card" : "",
                          xscK, (size_t)o.tp * q.u, q.gr, q.gb, q.nr, q.nb);
+            if (o.idx_dtopk_m && xscM) { // dtopk-2: one such area per token of a check block (up to 6), token-major
+                xscKM = (nfq + 15) & ~(size_t)15;
+                nfq = xscKM + (size_t)6 * o.tp * q.u + 64;
+                if (nfq > (size_t)UINT32_MAX) throw std::runtime_error("OWN_IDX_DTOPK_M: arena offsets");
+                std::fprintf(stderr, "OWN_IDX_DTOPK_M=%u: checks' split index layers (blocks of 1-6 tokens, layers 2-20) select "
+                                     "by candidates, per token as dtopk-1%s; candidate area at arena float %zu, %zu floats\n",
+                             o.idx_dtopk_m, o.idx_dtopk_m == 2 ? ", + the gather and the full selects, compared on the card" : "",
+                             xscKM, (size_t)6 * o.tp * q.u);
+            } else if (o.idx_dtopk_m) {
+                std::fprintf(stderr, "OWN_IDX_DTOPK_M: off (no idxsplit-2 block score area)\n");
+                o.idx_dtopk_m = 0;
+            }
         }
         if (o.xll && xw_path) {
             std::fprintf(stderr, "OWN_XLL: off (OWN_XWAIT's exchanges record their waits; XchgPull)\n");
@@ -5145,6 +5476,31 @@ private:
                 dtk_l2[c] = dalloc<int32_t>(c, 512 + 64);
                 dtk_bl2[c] = dalloc<int32_t>(c, 2048 + 64);
                 dtk_cd2[c] = dalloc<uint8_t>(c, (size_t)max_seq + 64);
+            }
+            if (o.idx_filt || o.idx_filt_ck) { // idxfilt: the queries' BF16 parts, bound factors, row norms, maxima,
+                                              // thresholds (=2: the check's shadows)
+                // idxmem-1: rows for ifl_cap() tokens (a card's split share, a check), not MTX: the maxima were
+                // MTX x max_seq / 8 floats (128 MiB per card at 1M, where 1M + guessing had no room)
+                const size_t T = ifl_tcap = ifl_cap();
+                ifl_bh[c] = dalloc<uint16_t>(c, T * 4096);
+                ifl_bl[c] = dalloc<uint16_t>(c, T * 4096);
+                ifl_ac[c] = dalloc<float>(c, T + 16);
+                ifl_n2[c] = dalloc<float>(c, (size_t)max_seq + 64);
+                ifl_cms = (size_t)max_seq / 8 + 64;
+                ifl_cm[c] = dalloc<float>(c, T * ifl_cms);
+                ifl_thr[c] = dalloc<float>(c, T * 2 + 16);
+                if (o.idx_filt == 2) {
+                    ifl_cnt[c] = dalloc<uint32_t>(c, 16);
+                    ifl_ox2[c] = dalloc<int32_t>(c, T * 512 + 64);
+                    ifl_bl2[c] = dalloc<int32_t>(c, T * (2048 + 64) + 64);
+                    ifl_cd2[c] = dalloc<uint8_t>(c, T * ((size_t)max_seq + 64) + 64);
+                }
+            }
+            if (o.idx_dtopk_m == 2) { // dtopk-2 check: the counts (zeroed), 6 tokens' shadow lists, block lists and marks
+                dtkm_cnt[c] = dalloc<uint32_t>(c, 16);
+                dtkm_l2[c] = dalloc<int32_t>(c, (size_t)6 * 512 + 64);
+                dtkm_bl2[c] = dalloc<int32_t>(c, (size_t)6 * (2048 + 64) + 64);
+                dtkm_cd2[c] = dalloc<uint8_t>(c, (size_t)6 * ((size_t)max_seq + 64) + 64);
             }
             if (xw_path) { // OWN_XWAIT ring (zeroed)
 #ifndef OWN41_XWAIT
@@ -5563,7 +5919,7 @@ private:
         const unsigned nh = (unsigned)(thq1[c] - thq0[c]), hd = (unsigned)g.hd;
         ops41sycl::QbmPull pl{};
         pl.q = q;
-        pl.qs = (size_t)g.qh * g.hd;
+        pl.qs = obs(); // (obpad-1: the block's q rows)
         pl.d0[0] = 0, pl.d0[1] = (nh - (unsigned)k) * hd;
         pl.soff = (unsigned)xqm; // (qbm_send's staging: token t at xqm + t * k * hd)
         for (int s = 0; s < 2; ++s) {
@@ -5605,7 +5961,7 @@ private:
         if (!dp.packed || e.cols != 1280 || ra >= rb || rb > dp.nrows)
             throw std::runtime_error("OWN_QB_OFF_M: packed query-b rows of 1,280 columns expected: " + wn);
         const void *wr = (const uint8_t *)dp.p + (size_t)ra * pk41::packed_row_bytes(e.type, (size_t)e.cols);
-        const size_t Q = (size_t)g.qh * g.hd;
+        const size_t Q = obs(); // (obpad-1: the block's q rows)
         if (e.type == iq3::Type::Q8_0) dense_m(c, ops41sycl::GemvQ8P<40, Act>{rb - ra, 0}, wr, x, (size_t)g.qrank, y, Q, 0, rd);
         else if (e.type == iq3::Type::Q6_K)
             dense_m(c, ops41sycl::GemvQ6KP<5, Act>{rb - ra, 0}, wr, x, (size_t)g.qrank, y, Q, 0, rd);
@@ -6029,7 +6385,20 @@ private:
         }
         if (o.kv_push) { // kvshard push: the class words and the half's bases + counts
             kvp_tb[t] = dalloc<uint32_t>(t, TB * ops41sycl::KVP_K);
-            kvp_hb[t] = dalloc<uint32_t>(t, 2 * ops41sycl::KVP_K);
+            kvp_hb[t] = dalloc<uint32_t>(t, 2 * ops41sycl::KVP_K + 2);
+        }
+        if (o.kv_dedup) { // kvdedup-1: rows_c1 bounds every source's rows (layer 20's mirror rows, ratio 1)
+            kvd_nw = (unsigned)((rows_c1 + 31) / 32);
+            kvd_nq = (unsigned)((rows_c1 + R - 1) / R);
+            kvd_bm[t] = dalloc<uint32_t>(t, kvd_nw);
+            kvd_wpc[t] = dalloc<uint32_t>(t, kvd_nw);
+            kvd_wpt[t] = dalloc<uint32_t>(t, kvd_nw);
+            kvd_cc[t] = dalloc<uint32_t>(t, kvd_nq);
+            kvd_ct[t] = dalloc<uint32_t>(t, kvd_nq);
+            kvd_cb[t] = dalloc<uint32_t>(t, kvd_nq);
+            kvd_tq[t] = dalloc<uint32_t>(t, kvd_nq);
+            kvd_en[t] = dalloc<uint32_t>(t, 4);
+            kvd_row[t] = dalloc<uint32_t>(t, TB * 512);
         }
         if (t == 0)
             std::fprintf(stderr, "OWN_KV_SHARD=%u: per card %s GiB of chunks (%zu rows per chunk, %zu owners) + %s GiB of tails "
@@ -6088,12 +6457,15 @@ private:
         k.hd = (unsigned)g.hd, k.m = m, k.R = o.kv_shard_r, k.N = (unsigned)o.tp, k.TT = o.kv_tail;
         k.tail0 = kvs_tail0(c, si);
         k.so = so;
+        // kvdedup-2 (OWN_KV_DEDUP_CK): a row listed again is staged once; check-sized blocks only (the search is over the
+        // earlier tokens' entries: a pulled prompt block of up to 512 tokens would search up to 261K entries per entry)
+        k.dd = o.kv_dedup_ck && m > 1 && m <= 8 ? 1u : 0u;
         if (so + (size_t)m * 512 > (size_t)mtb_n() * 512) throw std::runtime_error("OWN_KV_SHARD: staging rows");
         launch(c, (size_t)m * 512 * ops41sycl::KvGather::WG, ops41sycl::KvGather::WG, k, cl,
                (const uint16_t *)kvs_tail[c][si], kvs_stg[c], kvs_sl[c]);
         ++(set ? kvs_nm[c] : kvs_n1[c]);
         if (o.kv_shard != 2) return;
-        kvs_check(c, si, cl, m, so, k.tail0, set, (const int32_t *)nullptr);
+        kvs_check(c, si, cl, m, so, k.tail0, set, k.dd ? (const int32_t *)kvs_sl[c] : (const int32_t *)nullptr); // (kvdedup-2: by slot)
     }
     // OWN_KV_SHARD=2: a fetch's staged rows (m lists at cl, staging rows from so) against the full mirror on the card,
     // folded into totals set (0 one-token steps, 1 blocks pulled, 2 halves pushed). sl null: KvGather's layout (entry e
@@ -6142,15 +6514,38 @@ private:
         const unsigned R = o.kv_shard_r, N = (unsigned)o.tp, hd = (unsigned)g.hd;
         const long tail0 = kvs_tail0(c, si);
         uint32_t *tb = kvp_tb[c];
+        sycl::event eh;
+        if (o.kv_dedup) { // kvdedup-1: one staging row per distinct listed row (kernels KvDd*: the same slots' bytes)
+            const unsigned nw = kvd_nw, nq = kvd_nq;
+            launch(c, nw, 256, ops41sycl::KvDdZero{nw}, kvd_bm[c], kvd_en[c]);
+            launch(c, (size_t)m * 512, 256, ops41sycl::KvDdMark{m, nw}, cl, kvd_bm[c], kvd_en[c]);
+            launch(c, (size_t)nq * ops41sycl::KvDdChunk::WG, ops41sycl::KvDdChunk::WG, ops41sycl::KvDdChunk{R, nw, tail0},
+                   (const uint32_t *)kvd_bm[c], kvd_wpc[c], kvd_wpt[c], kvd_cc[c], kvd_ct[c]);
+            launch(c, ops41sycl::KvDdScan::WG, ops41sycl::KvDdScan::WG, ops41sycl::KvDdScan{nq, N}, (const uint32_t *)kvd_cc[c],
+                   (const uint32_t *)kvd_ct[c], kvd_cb[c], kvd_tq[c], (const uint32_t *)kvd_en[c], kvp_hb[c]);
+            eh = qs[c].memcpy(kvp_h[c], kvp_hb[c], sizeof kvp_h[c]);
+            launch(c, (size_t)m * 512, 256, ops41sycl::KvDdSlots{m, R, nw, tail0, so}, cl, (const uint32_t *)kvd_bm[c],
+                   (const uint32_t *)kvd_wpc[c], (const uint32_t *)kvd_wpt[c], (const uint32_t *)kvd_cb[c],
+                   (const uint32_t *)kvd_tq[c], kvs_sl[c]);
+            launch(c, nw, 256, ops41sycl::KvDdRows{m, R, N, (unsigned)c, nw, tail0, so}, (const uint32_t *)kvd_bm[c],
+                   (const uint32_t *)kvd_wpc[c], (const uint32_t *)kvd_wpt[c], (const uint32_t *)kvd_cb[c],
+                   (const uint32_t *)kvd_tq[c], kvd_row[c]);
+            constexpr unsigned G = 1024;
+            launch(c, (size_t)G * ops41sycl::KvDdCopy::WG, ops41sycl::KvDdCopy::WG,
+                   ops41sycl::KvDdCopy{hd, m, R, N, o.kv_tail, (unsigned)c, G, so}, (const uint32_t *)kvp_hb[c],
+                   (const uint32_t *)kvd_row[c], (const uint16_t *)kvs_tail[c][si],
+                   (const uint16_t *)kvs_chunk[c] + kvs_coff[si] * g.hd, kvs_stg[c]);
+        } else {
         launch(c, (size_t)m * ops41sycl::KvPushCount::WG, ops41sycl::KvPushCount::WG, ops41sycl::KvPushCount{m, R, N, tail0},
                cl, tb);
         launch(c, ops41sycl::KvPushScan::WG, ops41sycl::KvPushScan::WG, ops41sycl::KvPushScan{m}, tb, kvp_hb[c]);
-        sycl::event eh = qs[c].memcpy(kvp_h[c], kvp_hb[c], sizeof kvp_h[c]);
+        eh = qs[c].memcpy(kvp_h[c], kvp_hb[c], sizeof kvp_h[c]);
         launch(c, (size_t)m * ops41sycl::KvPushSlots::WG, ops41sycl::KvPushSlots::WG,
                ops41sycl::KvPushSlots{m, R, N, tail0, so}, cl, (const uint32_t *)tb, kvs_sl[c]);
         launch(c, (size_t)m * 512 * ops41sycl::KvPushCopy::WG, ops41sycl::KvPushCopy::WG,
                ops41sycl::KvPushCopy{hd, m, R, N, o.kv_tail, (unsigned)c, tail0, so}, cl, (const int32_t *)kvs_sl[c],
                (const uint16_t *)kvs_tail[c][si], (const uint16_t *)kvs_chunk[c] + kvs_coff[si] * g.hd, kvs_stg[c]);
+        }
         { // (KvPushSlots / KvPushCopy keep the card busy meanwhile; counted as twait counts a host wait)
             const int64_t tw0 = tl_on[c] ? tl_now() : 0;
             const double t0 = tp_hostprof ? now_s() : 0.0;
@@ -6175,6 +6570,7 @@ private:
         ++kvs_np[c];
         const unsigned long long all = (unsigned long long)h[K - 1] + h[2 * K - 1];
         kvp_all[c] += all, kvp_tl[c] += h[K + N], kvp_own[c] += h[K + c];
+        kvd_ent[c] += h[2 * K]; // (kvdedup-1: the list entries those rows stand for; 0 without it)
         kvp_max[c] = std::max<unsigned long long>(kvp_max[c], h[K + c]);
         if (o.kv_shard == 2) kvs_check(c, si, cl, m, so, tail0, 2, (const int32_t *)kvs_sl[c]);
     }
@@ -6224,6 +6620,10 @@ private:
                              c, kvp_all[c], kvs_np[c], 100.0 * (double)kvp_tl[c] / a, 100.0 * (double)kvp_own[c] / a,
                              100.0 * (double)(kvp_all[c] - kvp_tl[c] - kvp_own[c]) / a, kvp_own[c], o.tp - 1,
                              gib((size_t)kvp_own[c] * (size_t)g.hd * 2 * (size_t)(o.tp - 1)).c_str(), kvp_max[c]);
+                if (o.kv_dedup)
+                    std::fprintf(stderr, "OWN_KV_DEDUP=1: card %d: %llu list entries with a row staged as %llu distinct rows "
+                                         "(%.1f x fewer)\n",
+                                 c, kvd_ent[c], kvp_all[c], kvd_ent[c] / a);
             }
             if (o.kv_shard != 2 || !kvs_ct[c]) continue;
             uint64_t h[48] = {};
@@ -6706,6 +7106,64 @@ private:
                wp<float>(t, p + "engram_gate.weight"));
     }
 
+    // ropedev-1 at load (before the upload: the start's host copies are done while the cards are quiet): the
+    // frequencies to every card; then every window of [0, max_seq) computed on the first card (RopeFillD) and compared
+    // float for float with the host's own rope_fill; each difference becomes a fix-up (the host's value) that RopeFixD
+    // writes after every refill. The refills then equal the host's tables by construction (test_rope_fill: 2 of
+    // 134,217,728 floats differ over 1,048,576 positions).
+    void rope_dev_setup() {
+        const double t0 = now_s();
+        std::vector<double> f64(rwf[1]); // yarn then base
+        f64.insert(f64.end(), rwf[0].begin(), rwf[0].end());
+        int tv = -1;
+        for (int t = 0; t < TILES; ++t) {
+            if (!active[t]) continue;
+            if (tv < 0) tv = t;
+            rwfd[t] = dalloc<double>(t, 64, false);
+            qs[t].memcpy(rwfd[t], f64.data(), 64 * sizeof(double)).wait();
+        }
+        const size_t W4 = (size_t)4 * RW * 32;
+        float *scr = sycl::malloc_device<float>(W4, qs[tv]);
+        if (!scr) throw std::runtime_error("OWN_ROPE_DEV: scratch allocation failed");
+        std::vector<float> dv(W4), hv(W4);
+        std::vector<uint32_t> fpos, fidx;
+        std::vector<float> fval;
+        long done = 0; // positions [0, done) compared
+        while (done < (long)max_seq) {
+            const long w0 = std::min(done, (long)max_seq - RW);
+            launch(tv, (size_t)RW * 32, 256, ops41sycl::RopeFillD{(int)w0, (unsigned)RW}, (const double *)rwfd[tv], scr);
+            qs[tv].memcpy(dv.data(), scr, W4 * 4).wait();
+            float *cy = hv.data(), *sy = cy + (size_t)RW * 32, *cbs = sy + (size_t)RW * 32, *sbs = cbs + (size_t)RW * 32;
+            rope_fill(cy, sy, 1, w0, RW);
+            rope_fill(cbs, sbs, 0, w0, RW);
+            for (size_t k = 0; k < W4; ++k) {
+                const long pos = w0 + (long)((k % ((size_t)RW * 32)) / 32);
+                if (pos < done || std::memcmp(&dv[k], &hv[k], 4) == 0) continue;
+                fpos.push_back((uint32_t)pos);
+                fidx.push_back((uint32_t)(k / ((size_t)RW * 32) * 32 + k % 32));
+                fval.push_back(hv[k]);
+            }
+            done = w0 + RW;
+        }
+        sycl::free(scr, qs[tv]);
+        rfx_n = (unsigned)fpos.size();
+        const size_t m = std::max<size_t>(rfx_n, 1);
+        fpos.resize(m), fidx.resize(m), fval.resize(m);
+        for (int t = 0; t < TILES; ++t) {
+            if (!active[t]) continue;
+            rfx_pos[t] = dalloc<uint32_t>(t, m, false);
+            rfx_idx[t] = dalloc<uint32_t>(t, m, false);
+            rfx_val[t] = dalloc<float>(t, m, false);
+            qs[t].memcpy(rfx_pos[t], fpos.data(), m * 4);
+            qs[t].memcpy(rfx_idx[t], fidx.data(), m * 4);
+            qs[t].memcpy(rfx_val[t], fval.data(), m * 4).wait();
+        }
+        std::fprintf(stderr, "OWN_ROPE_DEV: every rope window of %d positions computed on card %s and compared with the "
+                             "host's: %u floats differ, written by fix-ups (%.1f s)\n", max_seq, pci[tv].c_str(), rfx_n,
+                     now_s() - t0);
+        for (unsigned j = 0; j < rfx_n && j < 8; ++j)
+            std::fprintf(stderr, "OWN_ROPE_DEV: fix-up position %u table %u slot %u\n", fpos[j], fidx[j] >> 5, fidx[j] & 31u);
+    }
     void build_rope_tables() {
         // cos/sin for 32 pair slots per position; yarn (theta 160000, factor
         // 16, beta 32/1, orig 65536) and base. Exact copy of the CPU runner.
@@ -6741,6 +7199,7 @@ private:
         if (rwin) {
             fill(cy, sy, 1, false);
             fill(cb, sb, 0, false);
+            if (o.rope_dev) rope_dev_setup();
             for (int t = 0; t < TILES; ++t) {
                 if (!active[t]) continue;
                 rwdev[t][0] = dalloc<float>(t, (size_t)4 * RW * 32, false);

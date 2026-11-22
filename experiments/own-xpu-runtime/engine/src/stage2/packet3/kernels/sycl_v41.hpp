@@ -1483,6 +1483,41 @@ template <typename A> struct EngRowsA {
     }
 };
 
+// ropedev-1 (2026-11-16): a rope window filled on the card, the host's expression (build_rope_tables / rope_fill):
+// (float)cos and (float)sin of (double)p * f[i] in double; bit for bit with glibc's for all 1,048,576 positions per
+// tools/bench/test_rope_fill.cpp. f: 32 yarn then 32 base frequencies (a device buffer). out: four tables of n x 32
+// floats (cos yarn, sin yarn, cos base, sin base) for positions p0 .. p0 + n - 1.
+struct RopeFillD {
+    int p0;
+    unsigned n;
+    void operator()(sycl::nd_item<1> it, const double *f, float *out) const {
+        const unsigned k = (unsigned)it.get_global_linear_id();
+        if (k >= n * 32u) return;
+        const int p = p0 + (int)(k / 32u);
+        const unsigned i = k % 32u;
+        const size_t tn = (size_t)n * 32;
+        const double xy = p * f[i], xb = p * f[32 + i];
+        out[k] = (float)sycl::cos(xy);
+        out[tn + k] = (float)sycl::sin(xy);
+        out[2 * tn + k] = (float)sycl::cos(xb);
+        out[3 * tn + k] = (float)sycl::sin(xb);
+    }
+};
+// ropedev-1's fix-ups: the few floats where the card's double cos / sin rounds differently from the host's (found at
+// load by comparing every window with the host's own tables): entry j = position fpos[j], slot fidx[j] (table * 32 +
+// pair slot, tables as RopeFillD's), the host's value fval[j]; written over RopeFillD's output when inside its window
+struct RopeFixD {
+    int p0;
+    unsigned n, m;
+    void operator()(sycl::nd_item<1> it, const uint32_t *fpos, const uint32_t *fidx, const float *fval, float *out) const {
+        const unsigned j = (unsigned)it.get_global_linear_id();
+        if (j >= m) return;
+        const long q = (long)fpos[j] - p0;
+        if (q < 0 || q >= (long)n) return;
+        out[(size_t)(fidx[j] >> 5) * n * 32 + (size_t)q * 32 + (fidx[j] & 31u)] = fval[j];
+    }
+};
+
 // ---- kernels over packed rows (layouts: pack_v41.hpp) ------------------------
 // Same float operations in the same order as lane_sum_t / GemvT / RoutedGemvT
 // (bit-identical outputs, gated per format in test_ops_v41_device.cpp), but:
@@ -3194,6 +3229,24 @@ inline bool pb_on(unsigned bit) { return (g_pb_mask & bit) != 0; }
 struct PbPick {
     unsigned id = 0, chunk = 0;
 };
+// pb-2 (OWN_PB_PICKS, own_run_v41; densews/README.md; default none): picks for prompt blocks (ws_cls 128 / 256) in
+// place of WsPb's, per (format, columns, launch kind, rows on the card): the four-row forms (WsR4F below: one x read
+// feeds 4 rows, half the x bytes per pair of the T16 R2 picks) or any other form of WsPb's / WsTab's lists. Every
+// form sums each (row, token) as the one-token rows do: the same bits (densews/bench_r4.cpp, memcmp per launch). The
+// R4 forms are compiled only with -DOWN_PB_R4 (kernel images: host memory per context); without it an entry naming
+// one is refused at start.
+struct PbOvr {
+    unsigned fmt = 0, cols = 0, kind = 0, rows = 0, id = 0, chunk = 0;
+};
+inline PbOvr g_pb_ovr[32];
+inline unsigned g_pb_novr = 0;
+inline PbPick pb_ovr(unsigned fmt, unsigned cols, unsigned kind, unsigned rows) {
+    for (unsigned i = 0; i < g_pb_novr; ++i) {
+        const PbOvr &e = g_pb_ovr[i];
+        if (e.fmt == fmt && e.cols == cols && e.kind == kind && e.rows == rows) return {e.id, e.chunk};
+    }
+    return {};
+}
 // WsTab<format, columns, launch kind>: forms = every form pick() can return; pick(rows on the card, tokens).
 template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsTab {
     using forms = WsList<>;
@@ -3746,6 +3799,27 @@ template <> struct WsPb<16, 1280, WS_PLAIN> {
         return {WfH8R4::id, cl >= 64 ? 32u : 0u};
     }
 };
+// pb-2: the four-row candidates per format (T8: R x T <= 32, ws_reduce_store's one sum per lane) (Q8_0 LOOP forms need columns % 1,024 == 0; Q6_K S forms not at 1,280
+// columns), only in prompt-launch kinds and only with -DOWN_PB_R4
+template <unsigned FMT, unsigned COLS, unsigned KIND> struct WsR4F { using type = WsList<>; };
+#ifdef OWN_PB_R4
+template <unsigned COLS, unsigned KIND> requires(KIND == WS_PLAIN || KIND == WS_SHARED) struct WsR4F<8, COLS, KIND> {
+    using type = std::conditional_t<COLS % 1024 == 0, WsList<WsF<8, 4, 2, 0>, WsF<8, 4, 1, 1>, WsF<8, 4, 1, 0>>,
+                                    WsList<WsF<8, 4, 2, 0>, WsF<8, 4, 1, 0>>>;
+};
+template <unsigned COLS, unsigned KIND> requires(KIND == WS_PLAIN || KIND == WS_SHARED) struct WsR4F<6, COLS, KIND> {
+    using type = std::conditional_t<COLS == 1280, WsList<WsF<8, 4>>, WsList<WsF<8, 4>, WsF<8, 4, 1, 0, 100>>>;
+};
+template <unsigned COLS, unsigned KIND> requires(KIND == WS_PLAIN || KIND == WS_SHARED) struct WsR4F<5, COLS, KIND> {
+    using type = WsList<WsF<8, 4>>;
+};
+#endif
+// pb-2: is form id in this launch's lists (OWN_PB_PICKS' check at start)
+template <unsigned FMT, unsigned COLS, unsigned KIND> inline bool pb_has(unsigned id) {
+    using L = typename WsCat<typename WsCat<typename WsTab<FMT, COLS, KIND>::forms, typename WsPb<FMT, COLS, KIND>::forms>::type,
+                             typename WsR4F<FMT, COLS, KIND>::type>::type;
+    return ws_each(L{}, [&](auto fm) { return decltype(fm)::id == id; });
+}
 template <typename DK, unsigned KIND, typename F>
 inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, float *y, size_t ys, unsigned mt,
                     unsigned cap, F &&f) {
@@ -3759,9 +3833,11 @@ inline bool ws_rows(const DK &dk, const uint8_t *w, const float *x, size_t xs, f
         using Pb = WsPb<O::fmt, O::cols, KIND>;
         PbPick pp{};
         if (O::fmt == 16 ? cl >= 16 && pb_on(2) : cl >= 128 ? pb_on(16) : cl >= 16 && pb_on(8)) pp = Pb::pick(dk.rows, mt, pb_on(8));
+        if (cl >= 128 && g_pb_novr) // pb-2 (OWN_PB_PICKS)
+            if (const PbPick po = pb_ovr(O::fmt, O::cols, KIND, dk.rows); po.id) pp = po;
         const unsigned id = pp.id ? pp.id : Tab::pick(dk.rows, mt);
         if (!id) return false;
-        using L = typename WsCat<typename Tab::forms, typename Pb::forms>::type;
+        using L = typename WsCat<typename WsCat<typename Tab::forms, typename Pb::forms>::type, typename WsR4F<O::fmt, O::cols, KIND>::type>::type;
         return ws_each(L{}, [&](auto fm) {
             using FM = decltype(fm);
             if (FM::id != id || xn % FM::r || (mt + FM::t - 1) / FM::t * FM::t > cap) return false;
@@ -7363,10 +7439,15 @@ template <int C> struct TopKSelD1 {
     KP p;
     int gbase;
     void operator()(sycl::nd_item<1> it, const float *sc, const uint8_t *cand_in, float *ov, float *oi, float *lm) const {
+        run(it, (int)it.get_group_linear_id(), p.n, sc, cand_in, ov, oi, lm);
+    }
+    // (dtopk-2's batched launch: work-group gid of one token's launch over that token's n rows: the same work)
+    [[gnu::always_inline]] inline void run(sycl::nd_item<1> it, const int gid, const int n, const float *sc,
+                                           const uint8_t *cand_in, float *ov, float *oi, float *lm) const {
         auto g = it.get_group();
-        const int lid = (int)it.get_local_linear_id(), gid = (int)it.get_group_linear_id();
+        const int lid = (int)it.get_local_linear_id();
         uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
-        const int n = p.n, g0 = gid * R, ng = sycl::min(n - g0, R);
+        const int g0 = gid * R, ng = sycl::min(n - g0, R);
         const int j0 = sycl::min(n, g0 + lid * C), cnt = sycl::min(n, j0 + C) - j0;
         const uint32_t KNEG = KP::okey(-INFINITY);
         const bool masked = cand_in != nullptr && p.cand_n > 0;
@@ -7434,18 +7515,25 @@ template <int C> struct TopKSelDB1 {
     KP p;
     int gbase, newest, zn;
     void operator()(sycl::nd_item<1> it, const float *sc, float *ov, float *oi, uint8_t *cz, float *lm) const {
+        run(it, (int)it.get_group_linear_id(), (int)it.get_group_range(0), p.n, p.rows, newest, zn, sc, ov, oi, cz, lm);
+    }
+    // (dtopk-2's batched launch: work-group gid of ngr in one token's launch, that token's n blocks over rows_ rows,
+    // its newest block and mask length zn_: the same work, the same mask bytes zeroed by the same items)
+    [[gnu::always_inline]] inline void run(sycl::nd_item<1> it, const int gid, const int ngr, const int n, const int rows_,
+                                           const int newest_, const int zn_, const float *sc, float *ov, float *oi, uint8_t *cz,
+                                           float *lm) const {
         auto g = it.get_group();
-        const int lid = (int)it.get_local_linear_id(), gid = (int)it.get_group_linear_id();
+        const int lid = (int)it.get_local_linear_id();
         uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
         {
-            const size_t gl = it.get_global_linear_id(), gs = it.get_global_range(0), z = (size_t)zn;
+            const size_t gl = (size_t)gid * it.get_local_range(0) + (size_t)lid, gs = (size_t)ngr * it.get_local_range(0), z = (size_t)zn_;
             for (size_t i = gl * 16; i < z; i += gs * 16) {
                 if (i + 16 <= z) *reinterpret_cast<sycl::vec<uint8_t, 16> *>(cz + i) = sycl::vec<uint8_t, 16>(0);
                 else
                     for (size_t r = i; r < z; ++r) cz[r] = 0;
             }
         }
-        const int n = p.n, g0 = gid * R, ng = sycl::min(n - g0, R);
+        const int g0 = gid * R, ng = sycl::min(n - g0, R);
         const int j0 = sycl::min(n, g0 + lid * C), cnt = sycl::min(n, j0 + C) - j0;
         uint32_t kr[C];
 #pragma unroll
@@ -7453,16 +7541,16 @@ template <int C> struct TopKSelDB1 {
             if (m < cnt) {
                 const int j = j0 + m;
                 float mx;
-                if (j == newest) mx = INFINITY;
+                if (j == newest_) mx = INFINITY;
                 else {
                     const int a = j * BS;
                     mx = -INFINITY; // std::max(m, v) per row, as the host folds it
-                    if (a + BS <= p.rows) {
+                    if (a + BS <= rows_) {
                         const auto x = *reinterpret_cast<const sycl::vec<float, BS> *>(sc + a);
 #pragma unroll
                         for (int u = 0; u < BS; ++u) mx = mx < x[u] ? x[u] : mx;
                     } else {
-                        for (int r = a; r < sycl::min(a + BS, p.rows); ++r) {
+                        for (int r = a; r < sycl::min(a + BS, rows_); ++r) {
                             const float v = sc[r];
                             mx = mx < v ? v : mx;
                         }
@@ -7548,7 +7636,7 @@ template <int MAXC> struct TopKSelDQ {
     unsigned u;
     int k, add, outn;
     size_t at(int q) const { const int d = q / nc; return (size_t)d * u + (size_t)(q - d * nc); }
-    void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, float *lm) const {
+    [[gnu::always_inline]] inline void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, float *lm) const {
         auto g = it.get_group();
         const int lid = (int)it.get_local_linear_id();
         uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
@@ -7597,7 +7685,8 @@ template <int MAXC> struct TopKSelDQB {
     unsigned u;
     int k, rows;
     size_t at(int q) const { const int d = q / nc; return (size_t)d * u + (size_t)(q - d * nc); }
-    void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, uint8_t *cand_out, float *lm) const {
+    [[gnu::always_inline]] inline void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, uint8_t *cand_out,
+                                                  float *lm) const {
         auto g = it.get_group();
         const int lid = (int)it.get_local_linear_id();
         uint32_t *hist = reinterpret_cast<uint32_t *>(lm), *misc = hist + NSG * 256;
@@ -7692,38 +7781,45 @@ struct ArgmaxP1O {
 // Token t's pointers are the one-token pointers + t * stride (the block's per-token buffers are laid
 // out at fixed strides); every item runs the one-token kernel's code on them, so every value is the
 // one-token step's value. Tokens at or past m do nothing.
-template <unsigned N, unsigned S> inline NormRows<N, S> tok_at(NormRows<N, S> r, unsigned t, const size_t *st) {
-    r.x += t * st[0];
-    r.y += t * st[1];
+// privmem-3 (2026-11-17): the strides by value (s0..s3), not through a pointer to TokRows' by-value array: taking
+// that address made the compiler copy the whole launch argument (the TokRows and the rows riding with it) into
+// private memory for every lane, 64-272 B/lane in 551 kernels (tp126 privmem_check: 1,757 MiB per card if all ran;
+// the driver keeps each kernel's private buffer from its first launch). Same pointers, same values.
+template <unsigned N, unsigned S>
+[[gnu::always_inline]] inline NormRows<N, S> tok_at(NormRows<N, S> r, unsigned t, size_t s0, size_t s1, size_t, size_t) {
+    r.x += t * s0;
+    r.y += t * s1;
     return r;
 }
-template <typename A> inline RopeRows<A> tok_at(RopeRows<A> r, unsigned t, const size_t *st) {
-    r.x += t * st[0];
-    r.cosb += t * st[1]; // consecutive positions: 32 table entries apart
-    r.sinb += t * st[1];
+template <typename A>
+[[gnu::always_inline]] inline RopeRows<A> tok_at(RopeRows<A> r, unsigned t, size_t s0, size_t s1, size_t, size_t) {
+    r.x += t * s0;
+    r.cosb += t * s1; // consecutive positions: 32 table entries apart
+    r.sinb += t * s1;
     return r;
 }
-template <unsigned H, unsigned SEG> inline HcDotsRows<H, SEG> tok_at(HcDotsRows<H, SEG> r, unsigned t, const size_t *st) {
-    r.streams += t * st[0];
-    r.out += t * st[1];
+template <unsigned H, unsigned SEG>
+[[gnu::always_inline]] inline HcDotsRows<H, SEG> tok_at(HcDotsRows<H, SEG> r, unsigned t, size_t s0, size_t s1, size_t, size_t) {
+    r.streams += t * s0;
+    r.out += t * s1;
     return r;
 }
-inline HcFinishRows tok_at(HcFinishRows r, unsigned t, const size_t *st) {
-    r.d += t * st[0];
-    r.pre += t * st[1];
-    r.post += t * st[2];
-    r.comb += t * st[3];
+[[gnu::always_inline]] inline HcFinishRows tok_at(HcFinishRows r, unsigned t, size_t s0, size_t s1, size_t s2, size_t s3) {
+    r.d += t * s0;
+    r.pre += t * s1;
+    r.post += t * s2;
+    r.comb += t * s3;
     return r;
 }
 // m tokens of a rows type R (token-major: rows t * R::n() .. (t + 1) * R::n() - 1 are token t's)
 template <typename R> struct TokRows {
     R r;
     unsigned m;
-    size_t st[4];
+    size_t s0, s1, s2, s3; // per-token strides (privmem-3: plain members, read by value)
     unsigned n() const { return m * r.n(); }
     [[gnu::always_inline]] inline void row(sycl::sub_group sg, unsigned lane, unsigned i) const {
         const unsigned n0 = r.n();
-        tok_at(r, i / n0, st).row(sg, lane, i % n0);
+        tok_at(r, i / n0, s0, s1, s2, s3).row(sg, lane, i % n0);
     }
 };
 // HcPostPreP for m tokens: items t * h .. (t + 1) * h - 1 are token t's (pre_src / pre_dst may be null)
@@ -8134,6 +8230,59 @@ struct LensPut {
     }
 };
 
+// ---- dtopk-2's batched launches (OWN_IDX_DTOPK_MB): a check's tokens (up to 6) in one launch per kernel; work-group
+// u * ngr + g does what work-group g of token u's own launch did (the same pointers, counts, mask bytes): the same bits
+// as the per-token launches. Per-token values are read by select chains over constant indices (no private copies).
+struct DtkTok6 {
+    int v[6];
+    [[gnu::always_inline]] inline int operator[](unsigned t) const {
+        int r = 0;
+#pragma unroll
+        for (unsigned i = 0; i < 6; ++i) r = t == i ? v[i] : r;
+        return r;
+    }
+};
+template <int C> struct TopKSelD1M { // stage 1, rows: token u's scores at sc + u * ss, pairs at ov / oi + u * us
+    TopKSelD1<C> k;
+    unsigned ngr;
+    DtkTok6 n;
+    size_t ss, us;
+    void operator()(sycl::nd_item<1> it, const float *sc, float *ov, float *oi, float *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), u = g / ngr;
+        k.run(it, (int)(g - u * ngr), n[u], sc + u * ss, (const uint8_t *)nullptr, ov + u * us, oi + u * us, lm);
+    }
+};
+template <int C> struct TopKSelDB1M { // stage 1, layer 20's blocks: token u's marks at cz + u * cs
+    TopKSelDB1<C> k;
+    unsigned ngr;
+    DtkTok6 n, rows, newest, zn;
+    size_t ss, us, cs;
+    void operator()(sycl::nd_item<1> it, const float *sc, float *ov, float *oi, uint8_t *cz, float *lm) const {
+        const unsigned g = (unsigned)it.get_group_linear_id(), u = g / ngr;
+        k.run(it, (int)(g - u * ngr), (int)ngr, n[u], rows[u], newest[u], zn[u], sc + u * ss, ov + u * us, oi + u * us,
+              cz + u * cs, lm);
+    }
+};
+template <int MAXC> struct TopKSelDQM { // stage 3, rows: work-group u = token u's merge (its area at + u * us)
+    TopKSelDQ<MAXC> k;
+    size_t us, os;
+    void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, float *lm) const {
+        const unsigned u = (unsigned)it.get_group_linear_id();
+        k(it, cv + u * us, ci + u * us, out + u * os, lm);
+    }
+};
+template <int MAXC> struct TopKSelDQBM { // stage 3, blocks: token u's block list (null: none) and marks
+    TopKSelDQB<MAXC> k;
+    DtkTok6 rows;
+    size_t us, bs, cs;
+    void operator()(sycl::nd_item<1> it, const float *cv, const float *ci, int32_t *out, uint8_t *cand_out, float *lm) const {
+        const unsigned u = (unsigned)it.get_group_linear_id();
+        TopKSelDQB<MAXC> q = k;
+        q.rows = rows[u];
+        q(it, cv + u * us, ci + u * us, out ? out + u * bs : out, cand_out + u * cs, lm);
+    }
+};
+
 // ---- the block's index lists (backend_sycl_v41_mt.inc tpm_index): per-token row counts lens[t] ----------
 // CidxFill for the tokens with lens[t] in [0, 512] (others: lens[t] < 0, left alone): list t at out + t * 512
 struct CidxFillM {
@@ -8210,6 +8359,71 @@ template <typename A, int R> struct IndexerScoreBMR {
 #pragma unroll
                     for (int r = 0; r < R; ++r) d[r][hh] += qv * kf[r][ii];
                 }
+        }
+#pragma unroll
+        for (int r = 0; r < R; ++r) {
+            const int j = j0 + r * nl;
+            if (j >= len) {
+                if (j < T_) sc[j] = -INFINITY;
+                continue;
+            }
+            float s = 0;
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh) s += (d[r][hh] > 0 ? d[r][hh] : 0) * lq[H * DK + hh];
+            sc[j] = s;
+        }
+    }
+};
+// idxbc-1 (2026-11-17, bench test_index_score_px): IndexerScoreBMR with the query values held in registers instead
+// of read from shared memory per product. Per head and chunk of 16 dims each lane loads ONE query value (dim i0 + its
+// lane) and the products take value ii from lane ii by a sub-group broadcast with a constant lane (a register region
+// on this GPU, no instruction). Each row's 32 head sums take the same products in the same order (dims 0..127), then
+// the same weighted sum over the heads: the same scores bit for bit. Needs sub-groups of 16 (CH).
+template <typename A, int R> struct IndexerScoreBMS {
+    static constexpr int H = 32, DK = 128, CH = 16;
+    LensT lens;
+    unsigned m, gpt;
+    size_t qs, ws, ss;
+    unsigned rmaj = 0;
+    void operator()(sycl::nd_item<1> it, const typename A::T *q, const uint16_t *k, const typename A::T *w,
+                    float *score, float *lq) const {
+        const unsigned grp = (unsigned)it.get_group_linear_id(), t = rmaj ? grp % m : grp / gpt,
+                       gi = rmaj ? grp / m : grp % gpt;
+        if (t >= m || lens[t] <= 0) return; // the whole work-group: before the barrier
+        const int len = lens[t], T_ = (len + 31) / 32 * 32;
+        const int lid = (int)it.get_local_linear_id(), nl = (int)it.get_local_range(0);
+        const typename A::T *qt = q + t * qs, *wt = w + t * ws;
+        for (int i = lid; i < H * DK; i += nl) lq[i] = A::rd(qt[i]);
+        for (int i = lid; i < H; i += nl) lq[H * DK + i] = A::rd(wt[i]);
+        sycl::group_barrier(it.get_group());
+        auto sg = it.get_sub_group();
+        const int sl = (int)sg.get_local_linear_id();
+        float *sc = score + t * ss;
+        const int j0 = (int)gi * nl * R + lid;
+        float d[R][H];
+#pragma unroll
+        for (int r = 0; r < R; ++r)
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh) d[r][hh] = 0;
+        for (int i0 = 0; i0 < DK; i0 += CH) {
+            float kf[R][CH];
+#pragma unroll
+            for (int r = 0; r < R; ++r) {
+                const int j = j0 + r * nl;
+                const uint16_t *kr = k + (size_t)(j < len ? j : 0) * DK + i0;
+#pragma unroll
+                for (int ii = 0; ii < CH; ++ii) kf[r][ii] = ops41::bf16(kr[ii]);
+            }
+#pragma unroll
+            for (int hh = 0; hh < H; ++hh) {
+                const float ql = lq[hh * DK + i0 + sl]; // this lane's dim of the chunk
+#pragma unroll
+                for (int ii = 0; ii < CH; ++ii) {
+                    const float qv = sycl::group_broadcast(sg, ql, ii);
+#pragma unroll
+                    for (int r = 0; r < R; ++r) d[r][hh] += qv * kf[r][ii];
+                }
+            }
         }
 #pragma unroll
         for (int r = 0; r < R; ++r) {
@@ -8382,14 +8596,18 @@ struct XchgPull {
     // copy: items over (peer, slot, vec4); peers in order 0..n-1 without me; item gid takes the indices k of peer d
     // with (base_d + k) % T == gid (base_d: the counts of the peers before d)
     // copy_seq: peer after peer (the default)
-    static void copy_seq(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride, unsigned nslot,
-                         const unsigned *b0, const unsigned *b1, float *p0, float *p1, float *p2, float *p3,
-                         float *p4, float *p5) {
+    // privmem-4 (2026-11-17): the peer loop unrolled over the six slots (d < n, d != me: the same peers in the same
+    // order), so b0[d] / b1[d] are fixed positions of the launch argument; the run-time index made the compiler keep
+    // the argument in private memory (13-15 MiB per pull kernel and card, tp126 privmem_check)
+    [[gnu::always_inline]] static inline void copy_seq(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride,
+                                                       unsigned nslot, const unsigned *b0, const unsigned *b1, float *p0,
+                                                       float *p1, float *p2, float *p3, float *p4, float *p5) {
         float *mine = XchgP::pick(me, p0, p1, p2, p3, p4, p5);
         const size_t T = it.get_global_range(0);
         size_t base = 0;
-        for (int d = 0; d < n; ++d) {
-            if (d == me) continue;
+#pragma unroll
+        for (int d = 0; d < 6; ++d) {
+            if (d >= n || d == me) continue;
             const unsigned n4 = (b1[d] - b0[d]) / 4;
             const size_t cnt = (size_t)nslot * n4;
             const float *src = XchgP::pick(d, p0, p1, p2, p3, p4, p5) + off;
@@ -8405,7 +8623,7 @@ struct XchgPull {
     }
     // copy_lb: the same elements on the same items, in rounds: round r loads index k0_d + r * T of every peer
     // first, then stores them (tried 2026-11-10: slower; the copy's cost is one PCIe read round trip either way)
-    static void copy_lb(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride, unsigned nslot,
+    [[gnu::always_inline]] static inline void copy_lb(sycl::nd_item<1> it, int n, int me, unsigned off, unsigned stride, unsigned nslot,
                         const unsigned *b0, const unsigned *b1, float *p0, float *p1, float *p2, float *p3,
                         float *p4, float *p5) {
         float *dst = XchgP::pick(me, p0, p1, p2, p3, p4, p5) + off;
@@ -8775,12 +8993,31 @@ struct KvGather {
     unsigned hd, m, R, N, TT;
     long tail0;
     size_t so;
+    // kvdedup-2 (dd = 1; OWN_KV_DEDUP_CK, blocks of 2-6 tokens): an entry whose row an earlier token of the launch lists
+    // too takes that first entry's staging row (its slot names it) and copies nothing: the attention reads the same
+    // 1,024 bytes in the same slot positions, bit for bit; the first entry e' of a row (the smallest) has no earlier one,
+    // so it copies. Tokens' lists hold distinct rows, so only earlier tokens' entries [0, t * 512) are searched.
+    unsigned dd = 0;
     void operator()(sycl::nd_item<1> it, const int32_t *cidx, const uint16_t *tail, uint16_t *stg, int32_t *sl) const {
         const size_t e = it.get_group_linear_id();
         const unsigned w = (unsigned)it.get_local_linear_id();
         if (e >= (size_t)m * 512) return;
         const int32_t v = cidx[e];
         const size_t srow = so + e;
+        if (dd && v >= 128 && e >= 512) { // (uniform per work-group: e and v are the group's)
+            const unsigned t0 = (unsigned)(e / 512) * 512u;
+            uint32_t f = 0xffffffffu;
+            for (unsigned i = w; i < t0; i += WG)
+                if (cidx[i] == v) {
+                    f = i;
+                    break;
+                }
+            f = sycl::reduce_over_group(it.get_group(), f, sycl::minimum<uint32_t>());
+            if (f != 0xffffffffu) {
+                if (w == 0) sl[srow] = (int32_t)(128 + so + f);
+                return;
+            }
+        }
         if (w == 0) sl[srow] = v < 128 ? v : (int32_t)(128 + srow);
         if (v < 128) return;
         const long r = (long)v - 128;
@@ -8982,6 +9219,189 @@ struct KvPushCopy {
         const uint32_t *s32 = reinterpret_cast<const uint32_t *>(src);
         uint32_t *d32 = reinterpret_cast<uint32_t *>(stg + (size_t)(sl[so + e] - 128) * hd);
         for (unsigned x = w; x < hd / 2; x += WG) d32[x] = s32[x];
+    }
+};
+
+// ---- kvdedup-1 (OWN_KV_DEDUP=1, with the push form; backend kvs_fetch_push) -----------------------------------------
+// The push form above stages one row per list ENTRY: a half of 256 tokens stages 131,072 rows (128 MiB) at every
+// index layer although its tokens list mostly the same rows. Here the half's staging rows hold every DISTINCT listed
+// row once: the same classes in the same order (class d < N: rows card d owns below tail0, class N: rows at or past
+// tail0), inside a class the distinct rows in increasing row order. Each entry's slot names its row's one staging
+// row, so the attention reads the same 1,024 bytes through the same slot list positions: the same outputs, bit for
+// bit. The layout is a function of the half's set of listed rows (a bitmap; atomics only set bits), tail0, R and N:
+// the same on every card. Launches per half and index layer: KvDdZero, KvDdMark, KvDdChunk, KvDdScan (+ the host
+// reads hb), KvDdSlots, KvDdRows, KvDdCopy. Needs R % 32 == 0 (a bitmap word inside one chunk).
+// bits of word wi (rows wi * 32 ..) at or past tail0 (the tail class)
+inline uint32_t kvd_tmask(size_t wi, long tail0) {
+    const long r0 = (long)wi * 32;
+    if (r0 >= tail0) return ~0u;
+    if (r0 + 32 <= tail0) return 0u;
+    return ~0u << (unsigned)(tail0 - r0);
+}
+// row r's staging row (from so) = its rank among the half's distinct rows of its class + the class base (cb / tq hold
+// the bases plus the earlier chunks' counts, wpc / wpt the chunk's earlier words' counts); r < nw * 32
+inline uint32_t kvd_rank(uint32_t r, unsigned R, long tail0, const uint32_t *bm, const uint32_t *wpc,
+                         const uint32_t *wpt, const uint32_t *cb, const uint32_t *tq) {
+    const size_t wi = r >> 5;
+    const unsigned j = r & 31u;
+    const uint32_t q = r / R, tm = kvd_tmask(wi, tail0), below = bm[wi] & ((1u << j) - 1u);
+    return (long)r >= tail0 ? tq[q] + wpt[wi] + (uint32_t)sycl::popcount(below & tm)
+                            : cb[q] + wpc[wi] + (uint32_t)sycl::popcount(below & ~tm);
+}
+// (0) the bitmap (nw words) and ent[0..1] to zero
+struct KvDdZero {
+    unsigned nw;
+    void operator()(sycl::nd_item<1> it, uint32_t *bm, uint32_t *ent) const {
+        const size_t i = it.get_global_linear_id();
+        if (i < nw) bm[i] = 0u;
+        if (i == 0) ent[0] = 0u, ent[1] = 0u;
+    }
+};
+// (1) every listed row's bit; ent[0] += entries with a row, ent[1] = 1 for a row at or past nw * 32 (the host's layout
+// check then fails: KvDdScan breaks hb[0])
+struct KvDdMark {
+    unsigned m, nw;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, uint32_t *bm, uint32_t *ent) const {
+        using ARD = sycl::atomic_ref<uint32_t, sycl::memory_order::relaxed, sycl::memory_scope::device,
+                                     sycl::access::address_space::global_space>;
+        const size_t e = it.get_global_linear_id();
+        uint32_t has = 0;
+        if (e < (size_t)m * 512) {
+            const int32_t v = cidx[e];
+            if (v >= 128) {
+                const uint32_t r = (uint32_t)(v - 128);
+                if ((size_t)(r >> 5) < (size_t)nw) ARD(bm[r >> 5]).fetch_or(1u << (r & 31u));
+                else ARD(ent[1]).store(1u);
+                has = 1;
+            }
+        }
+        const uint32_t n = sycl::reduce_over_group(it.get_group(), has, sycl::plus<uint32_t>());
+        if (it.get_local_linear_id() == 0 && n) ARD(ent[0]).fetch_add(n);
+    }
+};
+// (2) one work-group per chunk q (R rows = R / 32 words): per word the chunk's earlier words' set bits below tail0
+// (wpc) and at or past it (wpt); per chunk the totals (cc, ct)
+struct KvDdChunk {
+    static constexpr unsigned WG = 64;
+    unsigned R, nw;
+    long tail0;
+    void operator()(sycl::nd_item<1> it, const uint32_t *bm, uint32_t *wpc, uint32_t *wpt, uint32_t *cc, uint32_t *ct) const {
+        auto g = it.get_group();
+        const unsigned q = (unsigned)it.get_group_linear_id(), w = (unsigned)it.get_local_linear_id(), RW = R / 32;
+        uint32_t carc = 0, cart = 0;
+        for (unsigned i0 = 0; i0 < RW; i0 += WG) { // (the same trip count on every item)
+            const unsigned i = i0 + w;
+            const size_t wi = (size_t)q * RW + i;
+            const bool in = i < RW && wi < (size_t)nw;
+            const uint32_t b = in ? bm[wi] : 0u, tm = in ? kvd_tmask(wi, tail0) : 0u;
+            const uint32_t nc = (uint32_t)sycl::popcount(b & ~tm), nt = (uint32_t)sycl::popcount(b & tm);
+            const uint32_t exc = sycl::exclusive_scan_over_group(g, nc, sycl::plus<uint32_t>());
+            const uint32_t ext = sycl::exclusive_scan_over_group(g, nt, sycl::plus<uint32_t>());
+            const uint32_t sc = sycl::reduce_over_group(g, nc, sycl::plus<uint32_t>());
+            const uint32_t st = sycl::reduce_over_group(g, nt, sycl::plus<uint32_t>());
+            if (in) wpc[wi] = carc + exc, wpt[wi] = cart + ext;
+            carc += sc, cart += st;
+        }
+        if (w == 0) cc[q] = carc, ct[q] = cart;
+    }
+};
+// (3) one work-group: class k < N = chunks q with q % N == k in increasing q (cc), class N = every chunk's tail part
+// (ct); cb[q] / tq[q] = the class base + the class's earlier chunks' rows; hb as KvPushScan's (bases, counts) and
+// hb[2 KVP_K] = the half's entries with a row
+struct KvDdScan {
+    static constexpr unsigned WG = 256;
+    unsigned Q, N;
+    void operator()(sycl::nd_item<1> it, const uint32_t *cc, const uint32_t *ct, uint32_t *cb, uint32_t *tq,
+                    const uint32_t *ent, uint32_t *hb) const {
+        auto g = it.get_group();
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        uint32_t base = 0;
+        for (unsigned k = 0; k < KVP_K; ++k) {
+            uint32_t carry = 0;
+            if (k <= N) // (uniform)
+                for (unsigned q0 = 0; q0 < Q; q0 += WG) {
+                    const unsigned q = q0 + w;
+                    const bool in = q < Q && (k == N || q % N == k);
+                    const uint32_t x = in ? (k == N ? ct[q] : cc[q]) : 0u;
+                    const uint32_t ex = sycl::exclusive_scan_over_group(g, x, sycl::plus<uint32_t>());
+                    const uint32_t cs = sycl::reduce_over_group(g, x, sycl::plus<uint32_t>());
+                    if (in) (k == N ? tq : cb)[q] = base + carry + ex;
+                    carry += cs;
+                }
+            if (w == 0) hb[k] = base, hb[KVP_K + k] = carry;
+            base += carry;
+        }
+        if (w == 0) {
+            hb[2 * KVP_K] = ent[0];
+            if (ent[1]) hb[0] = 0xffffffffu;
+        }
+    }
+};
+// (4) every entry's slot: 128 + so + its row's rank (v < 128 stays v)
+struct KvDdSlots {
+    unsigned m, R, nw;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const int32_t *cidx, const uint32_t *bm, const uint32_t *wpc, const uint32_t *wpt,
+                    const uint32_t *cb, const uint32_t *tq, int32_t *sl) const {
+        const size_t e = it.get_global_linear_id();
+        if (e >= (size_t)m * 512) return;
+        const int32_t v = cidx[e];
+        if (v < 128) {
+            sl[so + e] = v;
+            return;
+        }
+        const uint32_t r = (uint32_t)(v - 128);
+        sl[so + e] = (size_t)(r >> 5) < (size_t)nw ? (int32_t)(128 + so + kvd_rank(r, R, tail0, bm, wpc, wpt, cb, tq)) : -1;
+    }
+};
+// (5) one item per word: the rows this card stages itself (the chunks it owns below tail0, every row at or past it)
+// into rowof[so + rank]
+struct KvDdRows {
+    unsigned m, R, N, card, nw;
+    long tail0;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const uint32_t *bm, const uint32_t *wpc, const uint32_t *wpt, const uint32_t *cb,
+                    const uint32_t *tq, uint32_t *rowof) const {
+        const size_t wi = it.get_global_linear_id();
+        if (wi >= (size_t)nw) return;
+        const uint32_t b = bm[wi];
+        if (!b) return;
+        const uint32_t q = (uint32_t)(wi * 32 / R), tm = kvd_tmask(wi, tail0), lim = m * 512u;
+        const bool mine = q % N == card;
+        uint32_t nc = cb[q] + wpc[wi], nt = tq[q] + wpt[wi];
+        for (unsigned j = 0; j < 32; ++j) {
+            if (!((b >> j) & 1u)) continue;
+            const uint32_t r = (uint32_t)(wi * 32 + j);
+            if ((tm >> j) & 1u) {
+                if (nt < lim) rowof[so + nt] = r;
+                ++nt;
+            } else {
+                if (mine && nc < lim) rowof[so + nc] = r;
+                ++nc;
+            }
+        }
+    }
+};
+// (6) the rows this card stages itself (hb on the card: its class and the tail class) from its chunk / tail ring into
+// staging row so + slot; G work-groups striding over them, one 32-bit word per item
+struct KvDdCopy {
+    static constexpr unsigned WG = 256;
+    unsigned hd, m, R, N, TT, card, G;
+    size_t so;
+    void operator()(sycl::nd_item<1> it, const uint32_t *hb, const uint32_t *rowof, const uint16_t *tail,
+                    const uint16_t *own, uint16_t *stg) const {
+        const unsigned w = (unsigned)it.get_local_linear_id();
+        const uint32_t b0 = hb[card], n0 = hb[KVP_K + card], b1 = hb[N], n1 = hb[KVP_K + N], lim = m * 512u;
+        for (size_t i = it.get_group_linear_id(); i < (size_t)n0 + n1; i += G) {
+            const size_t s = i < n0 ? (size_t)b0 + i : (size_t)b1 + (i - n0);
+            if (s >= lim) continue; // (a broken layout: the host's check throws after its wait)
+            const uint32_t r = rowof[so + s];
+            const uint16_t *src = i >= n0 ? tail + (size_t)(r % TT) * hd : own + (size_t)kvs_local(r, R, N) * hd;
+            const uint32_t *s32 = reinterpret_cast<const uint32_t *>(src);
+            uint32_t *d32 = reinterpret_cast<uint32_t *>(stg + (so + s) * hd);
+            for (unsigned x = w; x < hd / 2; x += WG) d32[x] = s32[x];
+        }
     }
 };
 

@@ -124,7 +124,7 @@ static void split(unsigned M, const long *w, unsigned *t0, unsigned *t1) {
     }
 }
 static HD dots_of(const float *streams, const float *fn, double *out, unsigned t0, unsigned t1) {
-    return HD{HcDotsRows<5120, 8>{streams + t0 * H4, fn, out + (size_t)t0 * FS}, t1 - t0, {H4, FS, 0, 0}};
+    return HD{HcDotsRows<5120, 8>{streams + t0 * H4, fn, out + (size_t)t0 * FS}, t1 - t0, H4, FS, 0, 0};
 }
 struct Fin { // a finish's outputs (pre 4, post 4, comb 16 floats per token)
     float *pre, *post, *comb;
@@ -134,7 +134,7 @@ static std::vector<float> fin_run(sycl::queue &q, const Fin &o, const double *d,
     q.memset(o.pre, 0xff, MMAX * 24 * 4).wait(); // (pre, post, comb are one allocation)
     HcMixFinishSG k{(int)H, 8};
     k.form = form;
-    rows(q, FR{HcFinishRows{k, d, scale, base, o.pre, o.post, o.comb}, M, {FS, 4, 4, 16}}).wait();
+    rows(q, FR{HcFinishRows{k, d, scale, base, o.pre, o.post, o.comb}, M, FS, 4, 4, 16}).wait();
     std::vector<float> h(MMAX * 24);
     q.memcpy(h.data(), o.pre, h.size() * 4).wait();
     return h;
@@ -279,7 +279,7 @@ int main() {
                     qa0, M, qm, n12, q12, n8, q8, fmax, qf);
         HcMixFinishSG k{(int)H, 8};
         k.form = 1;
-        const FR fr{HcFinishRows{k, dref, scale, base, fin.pre, fin.post, fin.comb}, M, {FS, 4, 4, 16}};
+        const FR fr{HcFinishRows{k, dref, scale, base, fin.pre, fin.post, fin.comb}, M, FS, 4, 4, 16};
         std::printf("   finish rows of %u tokens, own launch: %6.1f us\n", M, med(q, [&] { return rows(q, fr); }));
         std::fflush(stdout);
     }

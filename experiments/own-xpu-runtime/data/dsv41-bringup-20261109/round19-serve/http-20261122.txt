@@ -1,0 +1,15 @@
+ready {'status': 'ready', 'detail': '', 'model': 'deepseek-v4.1-flash', 'context': 994304, 'held_conversation_tokens': 0, 'busy': False, 'waiting': 0, 'requests': 0, 'new_conversations': 0, 'restarts_for_new_conversation': 0, 'last_load_s': 31.189218521118164}
+PASS chat_nothink 'Hello there, my friend!' (read 10 in 0.39 s, 7 at 76.92 tok/s)
+PASS followup_nothink_continues 'Bonjour mon ami, ça va !' (read 8 in 0.03 s, 9 at 95.74 tok/s)
+PASS stream_think reasoning 57 chars, content '391' (read 44 in 0.10 s, 21 at 187.5 tok/s)
+PASS followup_think_continues '23' (read 11 in 0.04 s, 35 at 204.68 tok/s)
+PASS third_turn_think_continues '391' (read 11 in 0.03 s, 18 at 197.8 tok/s)
+PASS tokenizer_roundtrip_code 
+PASS code_identity_http 512 ref tokens, 512 answered (read 82 in 0.17 s, 512 at 148.75 tok/s)
+PASS tool_call {"id": "call_992b7bf79f7c442389df4f20", "type": "function", "function": {"name": "multiply", "arguments": "{\"a\": 1234, \"b\": 5678}"}} (read 318 in 0.52 s, 67 at 190.34 tok/s)
+PASS tool_result_answer '1234 × 5678 = **7,006,652**' (read 15 in 0.04 s, 16 at 186.05 tok/s)
+PASS stop_string '1, 2, 3, 4, 5, 6, '
+PASS client_leaves free after 1.3 s
+PASS two_clients 'Blue.' | 'Apple.'
+health {'status': 'ready', 'detail': '', 'model': 'deepseek-v4.1-flash', 'context': 994304, 'held_conversation_tokens': 11, 'busy': False, 'waiting': 0, 'requests': 12, 'new_conversations': 7, 'restarts_for_new_conversation': 0, 'last_load_s': 31.189218521118164}
+SUMMARY ALL PASS

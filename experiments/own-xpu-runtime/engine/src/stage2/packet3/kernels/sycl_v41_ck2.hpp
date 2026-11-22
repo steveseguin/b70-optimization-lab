@@ -177,7 +177,7 @@ template <typename D> struct RowsDotsK {
 };
 // the RowsDotsK launch replacing RowsP<RowsPair<TokRows<HcDotsRows<5120, 8>>, D>>{{hd, d}}
 template <typename D> inline RowsDotsK<D> rows_dots(const TokRows<HcDotsRows<5120, 8>> &hd, const D &d) {
-    return RowsDotsK<D>{d, hd.r.streams, hd.r.fn, hd.r.out, hd.st[0], hd.st[1], hd.m};
+    return RowsDotsK<D>{d, hd.r.streams, hd.r.fn, hd.r.out, hd.s0, hd.s1, hd.m};
 }
 
 } // namespace ops41sycl

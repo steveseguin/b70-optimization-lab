@@ -45,6 +45,10 @@
 #include <sys/stat.h>
 #include <tuple>
 #include <unistd.h>
+#include <poll.h>
+#include <memory>
+#include <deque>
+#include <algorithm>
 #include <vector>
 #include "stage2/packet3/backend/backend_sycl_v41.hpp"
 
@@ -230,6 +234,7 @@ int main(int argc, char **argv) {
     opt.kprof = opt.gprof && atoi(getenv("OWN_GPROF")) >= 2;
     if (const char *e = getenv("OWN_SMALL")) opt.small_fast = atoi(e) != 0;
     if (const char *e = getenv("OWN_HOST_FLOOR_MIB")) opt.host_floor_mib = atol(e);
+    if (const char *e = getenv("OWN_UP_PAR")) opt.up_par = atoi(e); // uppar-1: cards uploading at once (default 6)
     if (const char *e = getenv("OWN_LAYERS"))
         if (sscanf(e, "%d:%d", &opt.layer_begin, &opt.layer_end) != 2) die("OWN_LAYERS=a:b");
     opt.head = opt.layer_end == 40;
@@ -433,17 +438,21 @@ int main(int argc, char **argv) {
     if (const char *e = getenv("OWN_DEV_INDEX_CHECK")) opt.dev_index_check = atoi(e) != 0;
     if (const char *e = getenv("OWN_SCORE_B")) opt.score_b = atoi(e) != 0;
     if (const char *e = getenv("OWN_IDX_R")) opt.idx_r = (unsigned)atoi(e);
-    // idxrp-1 (2026-11-16): the prompt halves' index scores with 2 or 4 rows per item (OWN_IDX_RP, 0 = one) and the
+    // idxrp-1 (2026-11-16; default OWN_IDX_RP=2 OWN_IDX_RMAJ=1 since tp124, c123): the prompt halves' index scores with 2 or 4 rows per item (OWN_IDX_RP, 0 = one) and the
     // groups numbered row group first (OWN_IDX_RMAJ=1); the same sums (tools/bench/test_index_score_px.cpp)
     if (const char *e = getenv("OWN_IDX_RP")) opt.idx_rp = (unsigned)atoi(e);
     if (opt.idx_rp != 0 && opt.idx_rp != 2 && opt.idx_rp != 4) die("OWN_IDX_RP: 0, 2 or 4");
     if (const char *e = getenv("OWN_IDX_RMAJ")) opt.idx_rmaj = atoi(e) != 0;
     if (opt.idx_rp || opt.idx_rmaj) std::fprintf(stderr, "OWN_IDX_RP=%u OWN_IDX_RMAJ=%d: prompt halves' index scores (idxrp-1)\n", opt.idx_rp, (int)opt.idx_rmaj);
+    if (const char *e = getenv("OWN_IDX_BC")) opt.idx_bc = atoi(e) != 0;
+    if (opt.idx_bc) std::fprintf(stderr, "OWN_IDX_BC=1: the R-row index scores by sub-group broadcast (idxbc-1; default since tp127)\n");
     // the index of layers 24-36 over layer 20's candidate rows past 16,384 rows (the same lists): default since
     // round 18 e84/e85 (OWN_IDX_CAND=0: all rows; 2: also the full one, compared bitwise)
     opt.idx_cand = getenv("OWN_IDX_CAND") ? atoi(getenv("OWN_IDX_CAND")) : 1;
-    if (const char *e = getenv("OWN_IDX_ROWS")) opt.idx_rows = (unsigned)atoi(e); // idxrows-1 (default 1)
+    if (const char *e = getenv("OWN_IDX_ROWS")) opt.idx_rows = (unsigned)atoi(e); // idxrows-1/2 (default 2 since tp126)
     if (const char *e = getenv("OWN_ROPE_WIN")) opt.rope_win = (unsigned)atoi(e); // ropewin-1 (default 1)
+    if (const char *e = getenv("OWN_ROPE_DEV")) opt.rope_dev = (unsigned)atoi(e); // ropedev-1 (opt-in): window refills on the card
+    if (opt.rope_dev) std::fprintf(stderr, "OWN_ROPE_DEV=%u: rope window refills computed on the card (ropedev-1; default since tp126)\n", opt.rope_dev);
     // idxsplit-1 (opt-in; /home/steve/dsv41-work/idxsplit/README.md): prompt blocks' index lists split across the cards by
     // tokens and gathered (the same lists): OWN_IDX_SPLIT=1 (the indexer's q_b / rope / proj rows, scores and selects of
     // the card's tokens), 2 (scores and selects only); OWN_IDX_SPLIT_MIN (blocks / halves of at least this many tokens,
@@ -488,6 +497,67 @@ int main(int argc, char **argv) {
     // OWN_IDX_DSPLIT bit 1 (the default 3 has it).
     if (const char *e = getenv("OWN_IDX_DTOPK")) opt.idx_dtopk = (unsigned)atoi(e);
     if (opt.idx_dtopk > 2) die("OWN_IDX_DTOPK: 0 (off), 1 (on) or 2 (on + check)");
+    // dtopk-2 (default on since c127; OWN_IDX_DTOPK_M=0 off): the checks' split index layers (blocks of 1-6 tokens, layers 2-20) by candidates as well, per token;
+    // OWN_IDX_DTOPK_M=1 on, 2 on + check (the gather and the unchanged selects too, compared on the card; "OWN_IDX_DTOPK_M=2
+    // check: ... -> ALL SAME" at exit)
+    if (const char *e = getenv("OWN_IDX_DTOPK_M")) opt.idx_dtopk_m = (unsigned)atoi(e);
+    if (opt.idx_dtopk_m > 2) die("OWN_IDX_DTOPK_M: 0 (off), 1 (on) or 2 (on + check)");
+    // ... OWN_IDX_DTOPK_MB (default 1 since tp129; 0 = one launch per token): the check's tokens in one launch per kernel (work-group u * groups + g = token u's group g)
+    if (const char *e = getenv("OWN_IDX_DTOPK_MB")) opt.idx_dtopk_mb = atoi(e) != 0;
+    // idxbc-2 (opt-in): the checks' split index scores in the R-row form (2 / 4 rows per item; with OWN_IDX_BC, the
+    // default, by sub-group broadcast); OWN_IDX_CK_RMAJ=1 numbers the row groups first. The same sums, bit for bit.
+    if (const char *e = getenv("OWN_IDX_CK_R")) opt.idx_ck_r = (unsigned)atoi(e);
+    if (opt.idx_ck_r != 0 && opt.idx_ck_r != 2 && opt.idx_ck_r != 4) die("OWN_IDX_CK_R: 0 (IndexerScoreBM), 2 or 4");
+    if (const char *e = getenv("OWN_IDX_CK_RMAJ")) opt.idx_ck_rmaj = atoi(e) != 0;
+    // kvdedup-2 (opt-in): kvshard's pulled blocks (checks) stage a row listed by several tokens once (by slot; the
+    // same bytes in the same slots)
+    if (const char *e = getenv("OWN_KV_DEDUP_CK")) opt.kv_dedup_ck = atoi(e) != 0;
+    // idxfilt-0 (diagnostic): card 0's index inputs (query, head weights, key rows) of the first one-token step with
+    // at least OWN_IDX_DUMP_MIN rows, per index layer, into OWN_IDX_DUMP.L<layer>.bin
+    if (const char *e = getenv("OWN_IDX_DUMP")) opt.idx_dump = e;
+    if (const char *e = getenv("OWN_IDX_DUMP_MIN")) opt.idx_dump_min = atol(e);
+    // idxfilt-2 (opt-in): prompt halves' split index layers from OWN_IDX_FILT_MIN rows (default 32768) by the
+    // matrix-engine pre-filter with a proven bound; the same lists (2: also every row exact and the unchanged selects,
+    // compared: "OWN_IDX_FILT=2 check: ... -> ALL SAME")
+    if (const char *e = getenv("OWN_DR_LAST")) opt.dr_last = atoi(e) != 0;
+    if (opt.dr_last) std::fprintf(stderr, "OWN_DR_LAST=1: prompt blocks before the prompt's last 128 positions skip the draft's capture and injection (drlast-1)\n");
+    if (const char *e = getenv("OWN_IDX_FILT")) opt.idx_filt = (unsigned)atoi(e);
+    if (opt.idx_filt > 2) die("OWN_IDX_FILT: 0 (off), 1 or 2 (check)");
+    if (const char *e = getenv("OWN_IDX_FILT_MIN")) opt.idx_filt_min = atol(e);
+    // idxfilt-3 (opt-in; same lists): the filtered layers' selects over only the rows at or above the thresholds
+    if (const char *e = getenv("OWN_IDX_FILT_SEL")) opt.idx_filt_sel = atoi(e) != 0;
+    if (opt.idx_filt_sel && !opt.idx_filt) die("OWN_IDX_FILT_SEL=1 needs OWN_IDX_FILT=1 or 2");
+    // idxfilt-4 (opt-in; same lists): the index layers past 20 (the layer-20 candidate rows) by the same pre-filter
+    if (const char *e = getenv("OWN_IDX_FILT_BC")) opt.idx_filt_bc = atoi(e) != 0;
+    if (const char *e = getenv("OWN_IFL_DIAG")) opt.ifl_diag = atoi(e) != 0; // ifldiag-1 (diagnostic)
+    // obpad-1 (opt-in): the multi-token steps' q / attention-output / head-output rows qh * hd + OWN_OB_PAD floats apart
+    if (const char *e = getenv("OWN_PREBUILD")) opt.prebuild = atoi(e) != 0; // klazy-1
+    if (const char *e = getenv("OWN_OB_PAD")) {
+        opt.ob_pad = (unsigned)atoi(e);
+        if (opt.ob_pad % 16 || opt.ob_pad > 4096) die("OWN_OB_PAD: a multiple of 16 floats, at most 4096");
+        if (opt.ob_pad) std::fprintf(stderr, "OWN_OB_PAD=%u: the block's head rows %u floats apart (obpad-1)\n", opt.ob_pad, 32768 + opt.ob_pad);
+    }
+    if (opt.idx_filt_bc && !opt.idx_filt) die("OWN_IDX_FILT_BC=1 needs OWN_IDX_FILT=1 or 2");
+    if (opt.idx_filt_bc)
+        std::fprintf(stderr, "OWN_IDX_FILT_BC=1: the candidate index layers (24-36) from %ld rows by the pre-filter (idxfilt-4)\n",
+                     opt.idx_filt_min);
+    if (opt.idx_filt_sel)
+        std::fprintf(stderr, "OWN_IDX_FILT_SEL=1: the filtered layers' selects over the rows at or above the filter's "
+                             "thresholds only (idxfilt-3)\n");
+    // idxfilt-2c (opt-in): the same pre-filter in the checks' split index layers (dtopk-2), each card over its share,
+    // from OWN_IDX_FILT_CK_MIN rows per card (default 16384); OWN_IDX_FILT=2 also checks it
+    if (const char *e = getenv("OWN_IDX_FILT_CK")) opt.idx_filt_ck = (unsigned)atoi(e) ? 1u : 0u;
+    if (const char *e = getenv("OWN_IDX_FILT_CK_MIN")) opt.idx_filt_ck_min = atol(e);
+    if (opt.idx_filt_ck)
+        std::fprintf(stderr, "OWN_IDX_FILT_CK=1: the checks' split index layers from %ld rows per card by the pre-filter, each "
+                             "card over its share (idxfilt-2c)\n", opt.idx_filt_ck_min);
+    if (opt.idx_filt)
+        std::fprintf(stderr, "OWN_IDX_FILT=%u: prompt halves' split index layers from %ld rows by the matrix-engine "
+                             "pre-filter, thresholds from its per-8-row maxima, exact scores in parallel (idxfilt-2)%s\n", opt.idx_filt, opt.idx_filt_min, opt.idx_filt == 2 ? ", check mode" : "");
+    if (opt.kv_dedup_ck) std::fprintf(stderr, "OWN_KV_DEDUP_CK=1: kvshard's pulled blocks stage a row several tokens list once (kvdedup-2)\n");
+    if (opt.idx_ck_r) std::fprintf(stderr, "OWN_IDX_CK_R=%u: the checks' split index scores, %u rows per item%s%s (idxbc-2)\n",
+                                   opt.idx_ck_r, opt.idx_ck_r, opt.idx_bc ? ", sub-group broadcast" : "",
+                                   opt.idx_ck_rmaj ? ", row groups first" : "");
     // ... from OWN_IDX_DTOPK_MIN rows (default 32768; below it the gather + full selects; OWN_IDX_DSPLIT_MIN still applies)
     if (const char *e = getenv("OWN_IDX_DTOPK_MIN")) opt.idx_dtopk_min = std::max(0L, atol(e));
     // kvshard-1 (opt-in; /home/steve/dsv41-work/kvshard/README.md): the compressed KV rows stored by owner (chunks of
@@ -501,6 +571,10 @@ int main(int argc, char **argv) {
     // the rows come as copy-engine pushes from their owners (no card-to-card reads while reading a prompt); needs
     // OWN_PX=1 with OWN_PX_BCS (refused otherwise). OWN_KV_PUSH=0: kvshard-1's pulls everywhere
     if (const char *e = getenv("OWN_KV_PUSH")) opt.kv_push = (unsigned)std::max(0, atoi(e));
+    // kvdedup-1 (opt-in): with the push form, a half's staging rows hold every distinct listed row once (the slot lists
+    // name that copy: the same bytes for the attention; far fewer rows copied and pushed card to card)
+    if (const char *e = getenv("OWN_KV_DEDUP")) opt.kv_dedup = (unsigned)std::max(0, atoi(e));
+    if (opt.kv_dedup && opt.kv_shard && opt.kv_push && opt.kv_shard_r % 32 == 0) std::fprintf(stderr, "OWN_KV_DEDUP=%u: prompt halves stage + push each distinct row once (kvdedup-1; default since tp126)\n", opt.kv_dedup);
     // the top-512 picks' last walk by ranges of rows (plain, masked and candidate selects; the same lists) and,
     // below 512 compressed rows, attention over the window + the live rows only (the same sums): defaults since
     // round 18 e87 / r1 (=0 for the old forms)
@@ -583,9 +657,12 @@ int main(int argc, char **argv) {
 #ifndef OWN41_ACT_BF16
         // default since 2026-11-10 (note section 28, e81): six cards split the attention heads 12, 12, 12, 12, 8, 8
         // for blocks of >= 16 tokens (prompt reading); one-token steps, checks and the draft keep whole groups.
-        // OWN_TP_HEADS=0 keeps whole groups everywhere.
+        // OWN_TP_HEADS=0 keeps whole groups everywhere. Since tp127 (hl232, ck1m3 2026-11-17): 12, 12, 8, 12, 12, 8.
+        // Cards hold the q_b / output-a rows of both layouts; with 3,3,3,3,2,2 card 2 held heads 16-35 (2.5 groups),
+        // with 3,3,2,3,3,2 heads 16-31 (2 groups, as cards 1, 4, 5): +0.17 GiB free on card 2 (3.13 -> 3.30 at 3K),
+        // the same answers, 3K read 680.9 -> 682.3 tok/s, 10K 664.5 -> 666.9.
         if (opt.tp == 6 && !opt.xtail && !getenv("OWN_TP_HEADS")) {
-            const int dh[6] = {3, 3, 3, 3, 2, 2};
+            const int dh[6] = {3, 3, 2, 3, 3, 2};
             for (int c = 0; c < 6; ++c) opt.tp_heads[c] = dh[c];
             if (!getenv("OWN_TP_HEADS_MIN")) opt.tp_heads_min = 16;
         }
@@ -616,6 +693,7 @@ int main(int argc, char **argv) {
             if (be.tile_active(t))
                 std::fprintf(stderr, "tile %d card %s: %.2f GiB free after load\n", t, be.tile_pci(t).c_str(),
                              be.free_bytes(t) / 1073741824.0);
+        be.alloc_report("after load"); // allocmap-1 (OWN_ALLOC_LOG=1)
         if (opt.tp_pin[6] >= 0) { // OWN_TP_PIN's seventh entry: the main thread, after the upload's threads are gone
             cpu_set_t cs;
             CPU_ZERO(&cs);
@@ -648,7 +726,10 @@ int main(int argc, char **argv) {
         float kv_state[4][1024], score_state[4][1024];
         int first = -1;
         std::vector<int> prompt;
-        if (const char *pp = getenv("OWN_PROMPT")) {
+        const bool serve = getenv("OWN_SERVE") && atoi(getenv("OWN_SERVE")) != 0; // serve-1 (requests on stdin)
+        if (serve) {
+            if (opt.layer_begin != 0 || !opt.head) die("OWN_SERVE needs the whole model (no OWN_LAYERS)");
+        } else if (const char *pp = getenv("OWN_PROMPT")) {
             std::ifstream pf2(pp);
             long long v;
             while (pf2 >> v) prompt.push_back((int)v);
@@ -776,6 +857,41 @@ int main(int argc, char **argv) {
             const unsigned long n = strtoul(e, nullptr, 0);
             ops41sycl::g_pb_mask = n == 1 ? 0x1eu : (unsigned)(n & 0x1eu);
         }
+        // pb-2 (opt-in, /home/steve/dsv41-work/densews/README.md): OWN_PB_PICKS="fmt:cols:kind:rows:T:R:XW:LOOP:PF:chunk,..."
+        // (kind 0 plain, 2 the shared gate + up pair): prompt blocks of 65-256 tokens take that form for that matrix
+        // (bit for bit the one-token rows); an entry whose form the build lacks (the R4 forms need -DOWN_PB_R4) stops here
+        if (const char *e = getenv("OWN_PB_PICKS")) {
+            std::string v(e);
+            size_t a0 = 0;
+            while (a0 < v.size()) {
+                size_t b0 = v.find(',', a0);
+                if (b0 == std::string::npos) b0 = v.size();
+                unsigned f[10] = {};
+                if (std::sscanf(v.substr(a0, b0 - a0).c_str(), "%u:%u:%u:%u:%u:%u:%u:%u:%u:%u", &f[0], &f[1], &f[2], &f[3], &f[4], &f[5],
+                                &f[6], &f[7], &f[8], &f[9]) != 10 || ops41sycl::g_pb_novr >= 32)
+                    die("OWN_PB_PICKS: entries fmt:cols:kind:rows:T:R:XW:LOOP:PF:chunk, at most 32");
+                const unsigned id = f[4] | f[5] << 8 | f[6] << 12 | f[7] << 14 | f[8] << 16; // (WsF::id)
+                bool have = false;
+                using namespace ops41sycl;
+                if (f[0] == 8 && f[1] == 5120) have = f[2] == 0 ? pb_has<8, 5120, WS_PLAIN>(id) : pb_has<8, 5120, WS_SHARED>(id);
+                else if (f[0] == 8 && f[1] == 1280 && f[2] == 0) have = pb_has<8, 1280, WS_PLAIN>(id);
+                else if (f[0] == 8 && f[1] == 4096 && f[2] == 0) have = pb_has<8, 4096, WS_PLAIN>(id);
+                else if (f[0] == 8 && f[1] == 8192 && f[2] == 0) have = pb_has<8, 8192, WS_PLAIN>(id);
+                else if (f[0] == 8 && f[1] == 2304 && f[2] == 0) have = pb_has<8, 2304, WS_PLAIN>(id);
+                else if (f[0] == 6 && f[1] == 5120 && f[2] == 0) have = pb_has<6, 5120, WS_PLAIN>(id);
+                else if (f[0] == 6 && f[1] == 1280 && f[2] == 0) have = pb_has<6, 1280, WS_PLAIN>(id);
+                else if (f[0] == 6 && f[1] == 4096 && f[2] == 0) have = pb_has<6, 4096, WS_PLAIN>(id);
+                else if (f[0] == 6 && f[1] == 8192 && f[2] == 0) have = pb_has<6, 8192, WS_PLAIN>(id);
+                else if (f[0] == 6 && f[1] == 6144 && f[2] == 0) have = pb_has<6, 6144, WS_PLAIN>(id);
+                else if (f[0] == 5 && f[1] == 5120 && f[2] == 2) have = pb_has<5, 5120, WS_SHARED>(id);
+                else if (f[0] == 5 && f[1] == 2304 && f[2] == 0) have = pb_has<5, 2304, WS_PLAIN>(id);
+                if (!have) die("OWN_PB_PICKS: no such form in this build for " + v.substr(a0, b0 - a0) + " (R4 forms: -DOWN_PB_R4)");
+                if (f[9] && (f[9] % f[4] || f[9] > 256)) die("OWN_PB_PICKS: the chunk must be a multiple of T, at most 256");
+                g_pb_ovr[g_pb_novr++] = PbOvr{f[0], f[1], f[2], f[3], id, f[9]};
+                a0 = b0 + 1;
+            }
+            std::fprintf(stderr, "OWN_PB_PICKS (pb-2): %u picks for prompt blocks of 65-256 tokens: %s\n", ops41sycl::g_pb_novr, e);
+        }
         // pace-1 (opt-in, /home/steve/dsv41-work/attn/pace/README.txt): the 16-head cards' q_b and output-a rows at checks
         // in persistent, pipelined launches (bit for bit). OWN_MT_PACE=1: every check size 2-6; OWN_MT_PACE=n (n != 1;
         // 0x.. allowed) the sizes M whose bit M - 2 is set; default 0x1f (every size) since tp103; 0 = off. OWN_MT_PACE_ROLES (default 7): 1 Q8_0 q_b,
@@ -870,6 +986,10 @@ int main(int argc, char **argv) {
         // rux7-1 (off by default; same bits): OWN_RUX7 bit 1 = layer 0's Q2_K routed down in prompt blocks on the expert groups
         // (bit 2 with it: the same form without its x prefetch)
         if (const char *e = getenv("OWN_RUX7")) be.rux7 = (unsigned)strtoul(e, nullptr, 0);
+        // rux9-1 (opt-in; same bits): OWN_RUX9=1..4 = IQ2_S gate + up prompt rows on RoutedS9 form A1 / A1w / A3 / B1
+        if (const char *e = getenv("OWN_RUX9")) be.rux9 = (unsigned)strtoul(e, nullptr, 0);
+        if (const char *e = getenv("OWN_RUX9_TY")) be.rux9_ty = (unsigned)strtoul(e, nullptr, 0); // rux9-2: 1 IQ2_S, 2 IQ2_XXS, 4 IQ1_S
+        if (be.rux9) std::fprintf(stderr, "OWN_RUX9=%u OWN_RUX9_TY=%u: prompt-block gate + up (types by bit: 1 IQ2_S, 2 IQ2_XXS, 4 IQ1_S) on RoutedS9 (x staged once in local memory; rux9-1/2)\n", be.rux9, be.rux9_ty);
         if (be.rux7) std::fprintf(stderr, "OWN_RUX7=%u: prompt-block Q2_K routed down on the expert groups (rux7-1)\n", be.rux7);
         if (const char *e = getenv("OWN_U3_NOPAIR")) be.u3_nopair = atoi(e) != 0;         // checks' IQ2_XXS / IQ2_XS without pair code
         if (const char *e = getenv("OWN_RING_ONE")) be.ring_one = atoi(e) != 0;           // commit_pending in one launch
@@ -907,6 +1027,215 @@ int main(int argc, char **argv) {
         }
 #endif
 
+        // ---- serve-1 (OWN_SERVE=1, 2026-11-17): requests on stdin, tokens on stdout, one conversation kept --------
+        // Protocol (lines; the engine's own stdout lines never start with "@@"):
+        //   in  G <id> <max_new> <nstop> <stop ids...> <n> <ids...>   the whole conversation so far as token ids
+        //   in  S <id>                                               stop that request after the current cycle
+        //   in  Q (or end of input)                                  quit
+        //   out @@READY <max_ctx>                                    loaded, waiting
+        //   out @@P <id> <read> <secs>                               the new part of the prompt is read
+        //   out @@T <id> <tok> [<tok>...]                           answer tokens as they are decided
+        //   out @@D <id> <eos|max|stop> <read> <gen> <read_s> <gen_s> <cycles> <guessed> <kept> <context>
+        //   out @@R <id>                                             a new conversation: the held one is cleared (reset-1)
+        //   out @@E <id> <reason>                                    refused (the state is unchanged)
+        // The engine keeps the conversation it has read: the processed tokens (hist) and the last answer token,
+        // which is decided but not read yet (pend). A request that extends hist + pend is read from there (the server
+        // sends the exact ids, never re-tokenized answers); any other request is a new conversation: reset-1 clears
+        // the held one (Backend41::reset_sequence, @@R) and reads it from position 0 (OWN_SERVE_RESET=0: refused
+        // with @@E history instead; the server then restarts the engine). The answer is the model's greedy text: guessing (OWN_SPEC) checks every guess, and a stop
+        // token or the token limit inside a kept run ends the commit there (commit_block(a)), so the context
+        // holds exactly the tokens sent + the tokens answered. Block boundaries change no bits, so every answer
+        // is a fresh run's on the whole conversation.
+        if (serve) {
+#ifdef OWN41_ACT_BF16
+            die("OWN_SERVE: the f32-activation build");
+#else
+            if (opt.tp < 2) die("OWN_SERVE: OWN_TP > 1");
+            const int pb = getenv("OWN_PROMPT_BLOCK") ? atoi(getenv("OWN_PROMPT_BLOCK")) : 0;
+            if (pb < 2) die("OWN_SERVE needs OWN_PROMPT_BLOCK > 1");
+            const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pb);
+            const char *sv = getenv("OWN_SPEC");
+            if (sv && !opt.dspark) die("OWN_SPEC needs OWN_DSPARK");
+            const int K = sv ? std::max(1, std::min(atoi(sv), (int)own41::Backend41::DR_BLOCK)) : 0;
+            const float tau = getenv("OWN_SPEC_TAU") ? (float)atof(getenv("OWN_SPEC_TAU")) : 0.0f;
+            const int kmin = getenv("OWN_SPEC_KMIN") ? std::max(0, atoi(getenv("OWN_SPEC_KMIN"))) : 1;
+            const bool reset_ok = !getenv("OWN_SERVE_RESET") || atoi(getenv("OWN_SERVE_RESET")) != 0; // reset-1
+            std::vector<int> hist; // tokens read (be.pos of them)
+            int pendt = -1;        // the last answer token: decided, not read
+            std::string ibuf;
+            bool in_eof = false;
+            std::deque<std::string> lines;
+            // the next input line: waits up to ms (-1: no limit); false on timeout or end of input
+            auto next_line = [&](std::string &ln, int ms) -> bool {
+                for (;;) {
+                    if (!lines.empty()) { ln = lines.front(); lines.pop_front(); return true; }
+                    const size_t nl = ibuf.find('\n');
+                    if (nl != std::string::npos) { lines.push_back(ibuf.substr(0, nl)); ibuf.erase(0, nl + 1); continue; }
+                    if (in_eof) return false;
+                    pollfd pf{0, POLLIN, 0};
+                    const int r = poll(&pf, 1, ms);
+                    if (r < 0 && errno == EINTR) continue;
+                    if (r <= 0) return false;
+                    char b[65536];
+                    const ssize_t n = read(0, b, sizeof b);
+                    if (n <= 0) { in_eof = true; continue; }
+                    ibuf.append(b, (size_t)n);
+                }
+            };
+            auto out = [](const std::string &l) { std::fputs(l.c_str(), stdout); std::fputc('\n', stdout); std::fflush(stdout); };
+            out("@@READY " + std::to_string(max_ctx));
+            std::fprintf(stderr, "serve-1: ready, context %d tokens, prompt blocks %d, guessing %d (tau %.2f)\n", max_ctx, pb, K, tau);
+            std::string ln;
+            while (next_line(ln, -1)) {
+                std::istringstream is(ln);
+                std::string cmd;
+                is >> cmd;
+                if (cmd == "Q") break;
+                if (cmd == "S") continue; // (a stop for a request that already ended)
+                if (cmd != "G") { out("@@E - unknown-command"); continue; }
+                std::string id;
+                long max_new = 0, nstop = 0, n = 0;
+                is >> id >> max_new >> nstop;
+                std::vector<int> stops;
+                for (long i = 0; i < nstop && is; ++i) { long v; is >> v; stops.push_back((int)v); }
+                is >> n;
+                std::vector<int> ids;
+                ids.reserve((size_t)std::max(0L, n));
+                for (long i = 0; i < n && is; ++i) { long v; is >> v; ids.push_back((int)v); }
+                if (!is || (long)ids.size() != n || n < 1 || max_new < 1) { out("@@E " + id + " bad-request"); continue; }
+                bool bad_id = false;
+                for (int v : ids) bad_id |= v < 0 || v >= (int)token_map.size();
+                if (bad_id) { out("@@E " + id + " bad-token"); continue; }
+                size_t h = hist.size();
+                bool ext = ids.size() >= h + (pendt >= 0 ? 1 : 0) && std::equal(hist.begin(), hist.end(), ids.begin());
+                if (ext && pendt >= 0) ext = ids[h] == pendt;
+                if (!ext && (long)ids.size() + max_new + 8 > max_ctx) { out("@@E " + id + " context " + std::to_string(max_ctx)); continue; }
+                if (!ext && !reset_ok) { out("@@E " + id + " history " + std::to_string(h)); continue; }
+                if (!ext && h > 0) { // reset-1: a new conversation from position 0, the model stays loaded
+                    const double tz = now();
+                    be.reset_sequence();
+                    std::fprintf(stderr, "serve-1: new conversation: reset from %zu tokens in %.3fs\n", h + 1, now() - tz);
+                    hist.clear();
+                    pendt = -1;
+                    h = 0;
+                    out("@@R " + id);
+                }
+                std::vector<int32_t> q(ids.begin() + (long)h, ids.end());
+                if (q.empty()) { out("@@E " + id + " nothing-to-read"); continue; }
+                if ((long)h + (long)q.size() + max_new + 8 > max_ctx) { out("@@E " + id + " context " + std::to_string(max_ctx)); continue; }
+                auto is_stop = [&](int t) { return std::find(stops.begin(), stops.end(), t) != stops.end(); };
+                // read the new part
+                const double t0 = now();
+                int nx = -1;
+                be.dr_keep_from = std::max<long>(0, be.pos + (long)q.size() - 128); // drlast-1 (OWN_DR_LAST)
+                for (size_t i = 0; i < q.size();) {
+                    const int m = be.px_block_take((int)std::min<size_t>((size_t)pb, q.size() - i));
+                    for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[q[i + k]]);
+                    be.eng_ahead.clear();
+                    for (size_t k = i + m; k < q.size() && (long)(k - i - m) < ahead; ++k) be.eng_ahead.push_back(token_map[q[k]]);
+                    be.trace_on = false;
+                    be.skip_head = i + m < q.size();
+                    nx = be.decode_block_tp(q.data() + i, m);
+                    i += m;
+                }
+                be.dr_keep_from = -1;
+                be.skip_head = false;
+                be.eng_ahead.clear();
+                hist.insert(hist.end(), q.begin(), q.end());
+                pendt = -1;
+                const double tr = now() - t0;
+                {
+                    char b[160];
+                    std::snprintf(b, sizeof b, "@@P %s %zu %.3f", id.c_str(), q.size(), tr);
+                    out(b);
+                }
+                // answer
+                const double ts0 = now();
+                long ngen = 1, cycles = 0, guessed = 0, kept = 0;
+                std::string reason;
+                int cur = nx;
+                out("@@T " + id + " " + std::to_string(cur));
+                if (is_stop(cur)) reason = "eos";
+                else if (ngen >= max_new) reason = "max";
+                std::unique_ptr<EngWarm> warm;
+                if (reason.empty()) warm = std::make_unique<EngWarm>(eng_path); // eng-warm-1 during the answer
+                while (reason.empty()) {
+                    // a stop request between cycles
+                    std::string sl;
+                    while (next_line(sl, 0)) {
+                        std::istringstream ss(sl);
+                        std::string c2, i2;
+                        ss >> c2 >> i2;
+                        if (c2 == "S" && i2 == id) reason = "stop";
+                        else if (c2 == "Q") { reason = "stop"; in_eof = true; }
+                        else lines.push_back(sl); // (a later request: kept in order)
+                    }
+                    if (!reason.empty()) break;
+                    const long room = max_new - ngen;
+                    std::vector<int32_t> blk{cur};
+                    if (K > 0) {
+                        int32_t d[own41::Backend41::DR_BLOCK];
+                        float conf[own41::Backend41::DR_BLOCK];
+                        int kk = (int)std::min<long>(K, room);
+                        be.draft_tp(cur, d, kk, conf, token_map[cur]);
+                        if (tau > 0.0f) {
+                            float run = 1.0f;
+                            int kt = 0;
+                            while (kt < kk && (run *= conf[kt]) >= tau) ++kt;
+                            kk = std::max(std::min(kmin, kk), kt);
+                        }
+                        for (int j = 0; j < kk; ++j) blk.push_back(d[j]);
+                    }
+                    for (int32_t t : blk) be.comp_ids.push_back(token_map[t]);
+                    std::vector<int32_t> nxv(blk.size());
+                    int nk = 1; // kept block tokens: cur + the agreed guesses
+                    if (K > 0) { // (a round with no guess is a one-token check: the draft keeps its rows)
+                        be.decode_verify_tp(blk.data(), (int)blk.size(), nxv.data());
+                        while (nk < (int)blk.size() && nxv[nk - 1] == blk[nk]) ++nk;
+                    } else {
+                        nxv[0] = be.decode_step(cur); // (no guessing: a plain step reads cur)
+                    }
+                    // the new tokens: the kept guesses, then the model's own next token
+                    std::vector<int> nw;
+                    for (int j = 1; j < nk; ++j) nw.push_back(blk[j]);
+                    nw.push_back(nxv[nk - 1]);
+                    int a = (int)std::min<long>((long)nw.size(), room);
+                    for (int j = 0; j < a; ++j)
+                        if (is_stop(nw[j])) { a = j + 1; break; }
+                    if (K > 0) be.commit_block(a); // blk[0 .. a-1] read; nw[a-1] = blk[a] or nxv[nk-1] pending
+                    be.comp_ids.resize((size_t)be.pos);
+                    for (int j = 0; j < a; ++j) hist.push_back(blk[j]);
+                    ++cycles;
+                    guessed += (long)blk.size() - 1;
+                    kept += std::min(nk - 1, a);
+                    std::string tl = "@@T " + id;
+                    for (int j = 0; j < a; ++j) tl += " " + std::to_string(nw[j]);
+                    out(tl);
+                    ngen += a;
+                    cur = nw[a - 1];
+                    if (is_stop(cur)) reason = "eos";
+                    else if (ngen >= max_new) reason = "max";
+                }
+                warm.reset();
+                pendt = cur;
+                if ((long)hist.size() != be.pos) {
+                    out("@@E " + id + " internal-position");
+                    die("serve-1: the kept tokens (" + std::to_string(hist.size()) + ") and the position (" +
+                        std::to_string(be.pos) + ") differ");
+                }
+                {
+                    char b[320];
+                    std::snprintf(b, sizeof b, "@@D %s %s %zu %ld %.3f %.3f %ld %ld %ld %zu", id.c_str(), reason.c_str(), q.size(), ngen, tr,
+                                  now() - ts0, cycles, guessed, kept, hist.size() + 1);
+                    out(b);
+                }
+                std::fprintf(stderr, "serve-1: request %s: read %zu in %.2fs, %ld answer tokens in %.2fs (%ld cycles, %ld of %ld guesses kept), %s, context %zu\n",
+                             id.c_str(), q.size(), tr, ngen, now() - ts0, cycles, kept, guessed, reason.c_str(), hist.size() + 1);
+            }
+            std::fprintf(stderr, "serve-1: input closed, exiting\n");
+            return 0;
+#endif
+        }
         // ---- prompt on the cards (OWN_PROMPT): one decode step per prompt token ----
         const int eos = getenv("OWN_EOS") ? atoi(getenv("OWN_EOS")) : 1;
         const bool prompt_head = getenv("OWN_PROMPT_HEAD") && atoi(getenv("OWN_PROMPT_HEAD")) != 0;
@@ -920,6 +1249,7 @@ int main(int argc, char **argv) {
                 // OWN_ENG_EARLY): the engram rows of the next n prompt tokens are asked from the disk (page-cache hints
                 // only) while the cards run the current block
                 const long ahead = getenv("OWN_ENG_AHEAD") ? atol(getenv("OWN_ENG_AHEAD")) : std::max(16, pblock);
+                be.dr_keep_from = std::max<long>(0, be.pos + (long)prompt.size() - 128); // drlast-1 (OWN_DR_LAST)
                 for (size_t i = 0; i < prompt.size();) {
                     const int m = be.px_block_take((int)std::min<size_t>((size_t)pblock, prompt.size() - i)); // (OWN_PX_BIG)
                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[prompt[i + k]]);
@@ -937,6 +1267,9 @@ int main(int argc, char **argv) {
                     if (i == 0) { t_first = now() - t1; first_n = (size_t)m; }
                     i += m;
                 }
+                be.dr_keep_from = -1;
+                be.dr_last_report();
+                be.alloc_report("after the prompt"); // allocmap-1 (OWN_ALLOC_LOG=1)
 #ifndef OWN41_ACT_BF16
                 be.eng_ahead.clear();
 #endif
@@ -1323,6 +1656,7 @@ int main(int argc, char **argv) {
                 if (q.size() < 2) die("OWN_TURNS: no ids in " + fn);
                 const double t0 = now();
                 int nx = -1;
+                be.dr_keep_from = std::max<long>(0, be.pos + (long)q.size() - 128); // drlast-1 (OWN_DR_LAST)
                 for (size_t i = 0; i < q.size();) {
                     const int m = be.px_block_take((int)std::min<size_t>((size_t)pb, q.size() - i));
                     for (int k = 0; k < m; ++k) be.comp_ids.push_back(token_map[q[i + k]]);
@@ -1335,6 +1669,7 @@ int main(int argc, char **argv) {
                     nx = be.decode_block_tp(q.data() + i, m);
                     i += m;
                 }
+                be.dr_keep_from = -1;
                 be.skip_head = false;
 #ifndef OWN41_ACT_BF16
                 be.eng_ahead.clear();
