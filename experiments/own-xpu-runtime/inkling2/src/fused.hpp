@@ -48,6 +48,7 @@ struct PrepArgs {
     const float *Kr, *Vr, *dynK, *dynV, *k_conv, *v_conv;
     const float *st_in; float *st_out; // this application's states (K at 0, V at kd)
     float *Kx, *Vx; sycl::half *Kc, *Vc;
+    int vld;              // > 0: V cache transposed, Vc[(kvh*hd + c) * vld + position] (attn_pv_t)
     float eps, kv_scale;
     const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
 };
@@ -98,7 +99,8 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 }
                 size_t i = (size_t)t * kd + c;
                 (isv ? a.Vx : a.Kx)[i] = x;
-                (isv ? a.Vc : a.Kc)[(size_t)a.pos0 * kd + i] = sycl::half(x);
+                if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + a.pos0 + t] = sycl::half(x);
+                else (isv ? a.Vc : a.Kc)[(size_t)a.pos0 * kd + i] = sycl::half(x);
                 if (t == a.ntok - 1) conv_save(a.st_out, off, c, win);
                 return;
             }
@@ -250,6 +252,168 @@ inline sycl::event attn_softmax_norm(sycl::queue &q, const float *sink, int pos0
 }
 // attn_pv_gate with 16 channels per work-group (more groups in flight) and the loads of 16 keys issued before their
 // products are added (still one by one, j ascending)
+// attn_pv_gate2 with U keys per batch (more loads in flight: the kernel waits once per batch) and P read once per
+// 16 keys per sub-group (lane l loads key 16b + l; the products take it with select_from_group); each channel still
+// adds j ascending from 0, so the result equals attn_pv_gate2's
+template <int U>
+inline sycl::event attn_pv_gate_u(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
+                                  int nkvh, int hd, int win, const float *gate, float *out) {
+    constexpr int PW = 16;
+    static_assert(U % PW == 0);
+    const int nd = hd / PW;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * hd), sycl::range<1>(PW)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)it.get_local_id(0);
+        int g = (int)it.get_group(0), gh = g / nd, t = gh / nh, hh = gh % nh;
+        int d = (g % nd) * PW + lane;
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)gh * ldp;
+        const int kd = nkvh * hd;
+        const sycl::half *vc = V + kvh * hd + d;
+        float acc = 0.0f;
+        int j = lo;
+        for (; j + U - 1 <= p; j += U) {
+            float pl[U / PW];
+            sycl::half vv[U];
+#pragma unroll
+            for (int b = 0; b < U / PW; ++b) pl[b] = pr[j - lo + PW * b + lane];
+#pragma unroll
+            for (int u = 0; u < U; ++u) vv[u] = vc[(size_t)(j + u) * kd];
+#pragma unroll
+            for (int u = 0; u < U; ++u) acc += sycl::select_from_group(sg, pl[u / PW], u % PW) * (float)vv[u];
+        }
+        for (; j <= p; ++j) acc += pr[j - lo] * (float)vc[(size_t)j * kd];
+        size_t i = (size_t)t * nh * hd + hh * hd + d;
+        out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+    });
+}
+// attn_pv_gate2 on the transposed value cache Vt[(kvh*hd + c) * vld + j] (a channel's values over the keys are
+// contiguous): lane = channel, 8 keys per 16-byte load, U keys per batch, P as attn_pv_gate_u. Each channel adds j
+// ascending from 0 (the keys before the first multiple of 8 one at a time): the result equals attn_pv_gate2's
+template <int U>
+inline sycl::event attn_pv_t(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok, int nh,
+                             int nkvh, int hd, int win, const float *gate, float *out) {
+    constexpr int PW = 16;
+    static_assert(U % PW == 0);
+    using HV = sycl::vec<sycl::half, 8>;
+    const int nd = hd / PW;
+    if (vld % 8) throw std::runtime_error("attn_pv_t: stride not a multiple of 8");
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * hd), sycl::range<1>(PW)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)it.get_local_id(0);
+        int g = (int)it.get_group(0), gh = g / nd, t = gh / nh, hh = gh % nh;
+        const int d = (g % nd) * PW + lane;
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)gh * ldp;
+        const sycl::half *row = Vt + (size_t)(kvh * hd + d) * vld;
+        float acc = 0.0f;
+        int j = lo;
+        for (; j <= p && (j & 7); ++j) acc += pr[j - lo] * (float)row[j];
+        for (; j + U - 1 <= p; j += U) {
+            float pl[U / PW];
+            HV vv[U / 8];
+#pragma unroll
+            for (int b = 0; b < U / PW; ++b) pl[b] = pr[j - lo + PW * b + lane];
+#pragma unroll
+            for (int b = 0; b < U / 8; ++b) vv[b] = *(const HV *)(row + j + 8 * b);
+#pragma unroll
+            for (int u = 0; u < U; ++u) acc += sycl::select_from_group(sg, pl[u / PW], u % PW) * (float)vv[u / 8][u % 8];
+        }
+        for (; j <= p; ++j) acc += pr[j - lo] * (float)row[j];
+        size_t i = (size_t)t * nh * hd + hh * hd + d;
+        out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+    });
+}
+// attn_pv_gate2 with sub-group block reads of V (one message per key: the 16 lanes' channels are 16 consecutive halves
+// at one sub-group-uniform address, so no per-lane address arithmetic) and U keys per batch; P as attn_pv_gate_u.
+// Each channel adds j ascending from 0: the result equals attn_pv_gate2's
+template <int U>
+inline sycl::event attn_pv_blk(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
+                               int nkvh, int hd, int win, const float *gate, float *out) {
+    constexpr int PW = 16;
+    static_assert(U % PW == 0);
+    const int nd = hd / PW;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * hd), sycl::range<1>(PW)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)it.get_local_id(0);
+        int g = (int)it.get_group(0), gh = g / nd, t = gh / nh, hh = gh % nh;
+        const int d0 = (g % nd) * PW;
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)gh * ldp;
+        const int kd = nkvh * hd;
+        const uint16_t *vb = (const uint16_t *)(V + kvh * hd + d0); // sub-group uniform
+        auto vrow = [&](int j) {
+            uint16_t u = sg.load(sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(
+                const_cast<uint16_t *>(vb + (size_t)j * kd)));
+            return (float)sycl::bit_cast<sycl::half>(u);
+        };
+        float acc = 0.0f;
+        int j = lo;
+        for (; j + U - 1 <= p; j += U) {
+            float pl[U / PW], vv[U];
+#pragma unroll
+            for (int b = 0; b < U / PW; ++b) pl[b] = pr[j - lo + PW * b + lane];
+#pragma unroll
+            for (int u = 0; u < U; ++u) vv[u] = vrow(j + u);
+#pragma unroll
+            for (int u = 0; u < U; ++u) acc += sycl::select_from_group(sg, pl[u / PW], u % PW) * vv[u];
+        }
+        for (; j <= p; ++j) acc += pr[j - lo] * vrow(j);
+        size_t i = (size_t)t * nh * hd + hh * hd + d0 + lane;
+        out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+    });
+}
+// attn_pv_gate2 with C consecutive channels per lane (one C-half vector load per key and lane; a sub-group covers
+// 16C channels of one head) and U keys per batch, P as attn_pv_gate_u; each channel adds j ascending from 0
+template <int C, int U>
+inline sycl::event attn_pv_wide(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
+                                int nkvh, int hd, int win, const float *gate, float *out) {
+    constexpr int PW = 16;
+    static_assert(U % PW == 0);
+    using HV = sycl::vec<sycl::half, C>;
+    const int nd = hd / (PW * C);
+    if (hd % (PW * C)) throw std::runtime_error("attn_pv_wide: head size");
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * nd * PW), sycl::range<1>(PW)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)it.get_local_id(0);
+        int g = (int)it.get_group(0), gh = g / nd, t = gh / nh, hh = gh % nh;
+        int d = (g % nd) * PW * C + lane * C;
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)gh * ldp;
+        const int kd = nkvh * hd;
+        const sycl::half *vc = V + kvh * hd + d;
+        float acc[C];
+        for (int c = 0; c < C; ++c) acc[c] = 0.0f;
+        int j = lo;
+        for (; j + U - 1 <= p; j += U) {
+            float pl[U / PW];
+            HV vv[U];
+#pragma unroll
+            for (int b = 0; b < U / PW; ++b) pl[b] = pr[j - lo + PW * b + lane];
+#pragma unroll
+            for (int u = 0; u < U; ++u) vv[u] = *(const HV *)(vc + (size_t)(j + u) * kd);
+#pragma unroll
+            for (int u = 0; u < U; ++u) {
+                const float pu = sycl::select_from_group(sg, pl[u / PW], u % PW);
+#pragma unroll
+                for (int c = 0; c < C; ++c) acc[c] += pu * (float)vv[u][c];
+            }
+        }
+        for (; j <= p; ++j) {
+            const float pu = pr[j - lo];
+            HV v = *(const HV *)(vc + (size_t)j * kd);
+            for (int c = 0; c < C; ++c) acc[c] += pu * (float)v[c];
+        }
+        for (int c = 0; c < C; ++c) {
+            size_t i = (size_t)t * nh * hd + hh * hd + d + c;
+            out[i] = acc[c] * (1.0f / (1.0f + sycl::exp(-gate[i])));
+        }
+    });
+}
 inline sycl::event attn_pv_gate2(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
                                  int nkvh, int hd, int win, const float *gate, float *out) {
     constexpr int PW = 16, U = 16;

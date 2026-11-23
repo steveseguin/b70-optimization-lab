@@ -25,7 +25,8 @@ struct Engine {
     std::vector<float> logits; // host copy: vocab floats per returned token
 
     // persistent state
-    std::vector<sycl::half *> Kc, Vc; // per application [cap][n_kv_head*head_dim]
+    std::vector<sycl::half *> Kc, Vc; // per application [cap][n_kv_head*head_dim]; Vc transposed when vld > 0
+    int vld = 0;                      // V cache [n_kv_head*head_dim][vld] (INK_VT=0: [cap][n_kv_head*head_dim])
     float *conv = nullptr;            // two copies (previous call, this call) of [n_app][6656*3], channel-major
     int conv_n = 0;                   // floats per application
     int cpar = 0;                     // which copy holds the state of the previous call
@@ -48,6 +49,7 @@ struct Engine {
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
     bool ctl_batch = true;
     bool route_sg = true;
+    int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
     // below the tile threshold: INK_DEC=0 reads the file layout
     std::vector<WView> gu_dec, dn_dec;      // expert routing with one sub-group per token (INK_ROUTE_SG=0: one work-group)
@@ -85,7 +87,11 @@ struct Engine {
         const int kd = h.n_head_kv * h.head_dim;
         const size_t KD = (size_t)kd * T;
         Kc.resize(h.n_app); Vc.resize(h.n_app);
-        for (int a = 0; a < h.n_app; ++a) { Kc[a] = d.alloc<sycl::half>((size_t)cap * kd); Vc[a] = d.alloc<sycl::half>((size_t)cap * kd); }
+        if (!std::getenv("INK_VT") || std::atoi(std::getenv("INK_VT"))) vld = (cap + 15) / 16 * 16;
+        for (int a = 0; a < h.n_app; ++a) {
+            Kc[a] = d.alloc<sycl::half>((size_t)cap * kd);
+            Vc[a] = d.alloc<sycl::half>((size_t)(vld ? vld : cap) * kd);
+        }
         conv_n = (2 * kd + 2 * h.n_embd) * (h.n_conv - 1);
         conv = d.alloc_zero<float>((size_t)2 * conv_n * h.n_app);
         ids = d.alloc<int32_t>(T);
@@ -138,6 +144,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_LOOP_PRE")) loop_pre = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
         {
             const bool dec = !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC"));
             auto mk = [&](const W &w) {
@@ -502,7 +509,7 @@ struct Engine {
                 a.full = !swa; a.tau = tau;
                 a.Q = Q; a.q_clip = f32(l.q_clip); a.qk_clip = h.qk_clip;
                 a.Kr = Kr; a.Vr = Vr; a.dynK = dynK; a.dynV = dynV; a.k_conv = f32(l.k_conv); a.v_conv = f32(l.v_conv);
-                a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il];
+                a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = vld;
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tab;
                 pr("attn_prep", fz::attn_prep(d.q, a));
@@ -513,9 +520,17 @@ struct Engine {
             dump.put(d, nm("Rcur", il), Rc, h.n_rel, nh, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form), then the output gate
             const int win = swa ? h.n_swa : 0;
-            pr("attn_scores", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
-            pr("attn_softmax", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
-            pr("attn_pv", fz::attn_pv_gate2(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, gate, att));
+            pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
+            if (vld) { // transposed cache: 32 keys per batch below 1024 keys, 64 from there (bench_attn, card 2)
+                const int p = pos0 + ntok - 1, keys = win > 0 ? std::min(win, p + 1) : p + 1;
+                auto pv = keys >= 1024 ? fz::attn_pv_t<64> : fz::attn_pv_t<32>;
+                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));
+            } else {
+                auto pv = pv_u == 128 ? fz::attn_pv_gate_u<128> : pv_u == 64 ? fz::attn_pv_gate_u<64> : pv_u == 32 ? fz::attn_pv_gate_u<32>
+                        : fz::attn_pv_gate2;
+                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, gate, att));
+            }
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
             mm(l.wo, att, ob, ntok);
             const bool bstart = ip % h.res_block == 0;
