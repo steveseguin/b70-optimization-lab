@@ -23,6 +23,12 @@
   against the high-precision reference (5-token final 7.80e-06). Gate for changes: `scripts/check-exact.sh`.
   Next: fuse the ~2,000 small launches, one launch for the six matrices that share the attention input, honest
   (cache-busting) kernel timing, then a prompt matrix kernel and DSpark guessing.
+- 23:20: writing **65.2-65.4 tok/s** (15.1 ms per step), prompt **294.8 tok/s** (3,127 tokens,
+  was 72.1), writing at 3K context 52.4 tok/s (was 12.97); every step bit-identical to the strict baseline. Big
+  levers: parallel attention, NVFP4/Q6_K decodes through bit tricks, token-parallel expert tiles for steps >= 128
+  tokens (README). Gate now has 4 checks (card D = 300-token one-step prompt through the tile kernels). DSpark
+  guessing measured with the reference: ~2.0-3.2 tokens per round, not worth it on this MoE (README). Next: the rest
+  of the prompt step (dense matrices ~0.57 s and attention ~0.25 s of a 512-token step), small-launch fusion.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

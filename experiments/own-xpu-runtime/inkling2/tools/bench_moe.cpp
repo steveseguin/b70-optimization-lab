@@ -1,0 +1,206 @@
+// bench_moe: time the grouped expert kernels of steps with several tokens (moe_group.hpp) on the model's NVFP4
+// expert tensors, and check every layout against the first kernels (GroupedPair / GroupedRows) bit for bit.
+//   bench_moe <model.gguf> <card> <tokens>...
+// Routing: each token picks 8 distinct experts from a skewed distribution (fixed seed). Each timed launch uses the
+// next of layers 0-19 (all NVFP4), so the weights come from memory. BENCH_ITERS (default 20).
+#include "../src/moe_group.hpp"
+#include <random>
+
+int main(int argc, char **argv) {
+    using namespace ink;
+    if (argc < 4) { std::fprintf(stderr, "usage: bench_moe <model.gguf> <card> <tokens>...\n"); return 2; }
+    try {
+        GGUF g(argv[1]);
+        Device d(std::atoi(argv[2]));
+        Weights w;
+        w.upload(d, g, false);
+        auto views = planarize(d, g, w, false);
+        const int iters = std::getenv("BENCH_ITERS") ? std::atoi(std::getenv("BENCH_ITERS")) : 20;
+        constexpr int NL = 20, NE = 128, KU = 8, E = 2304, NFF = 1152;
+        std::vector<WView> gu(NL), dn(NL);
+        for (int l = 0; l < NL; ++l) {
+            gu[l] = views.at("blk." + std::to_string(l) + ".ffn_gate_up_exps.weight");
+            dn[l] = views.at("blk." + std::to_string(l) + ".ffn_down_exps.weight");
+            if (gu[l].kind != K_NVFP4P || dn[l].kind != K_NVFP4P) throw std::runtime_error("layer " + std::to_string(l) + " is not NVFP4");
+        }
+        for (int a = 3; a < argc; ++a) {
+            const int ntok = std::atoi(argv[a]), K = ntok * KU;
+            std::mt19937 rng(11 + ntok);
+            std::vector<double> wexp(NE);
+            for (int e = 0; e < NE; ++e) wexp[e] = 1.0 / (5.0 + (e * 53) % NE); // skewed popularity
+            std::vector<int32_t> hid(K);
+            for (int t = 0; t < ntok; ++t) {
+                std::vector<double> ww = wexp;
+                for (int k = 0; k < KU; ++k) {
+                    std::discrete_distribution<int> dd(ww.begin(), ww.end());
+                    int e = dd(rng);
+                    ww[e] = 0.0;
+                    hid[(size_t)t * KU + k] = e;
+                }
+            }
+            std::normal_distribution<float> nd(0.0f, 1.0f);
+            std::vector<float> hx((size_t)ntok * E), hh((size_t)K * NFF);
+            for (auto &v : hx) v = nd(rng);
+            for (auto &v : hh) v = nd(rng) * 0.1f;
+            float *x = d.alloc<float>(hx.size()), *hb = d.alloc<float>(hh.size());
+            float *hout0 = d.alloc<float>((size_t)K * NFF), *hout1 = d.alloc<float>((size_t)K * NFF);
+            float *y0 = d.alloc<float>((size_t)K * E), *y1 = d.alloc<float>((size_t)K * E);
+            int32_t *ids = d.alloc<int32_t>(K);
+            d.put(x, hx.data(), hx.size());
+            d.put(hb, hh.data(), hh.size());
+            d.put(ids, hid.data(), hid.size());
+            MoeGroups grp;
+            grp.alloc(d, NE, K);
+            moe_group(d.q, ids, K, NE, grp).wait();
+            int na = 0;
+            d.get(&na, grp.count, 1);
+            const int amax = std::min(NE, K);
+            const size_t gub = gu[0].rb * (size_t)gu[0].t->ne[1], dnb = dn[0].rb * (size_t)dn[0].t->ne[1];
+            const double bytes_gu = (double)gub * na, bytes_dn = (double)dnb * na;
+            std::printf("tokens %d: %d slots, %d experts used, gate_up %.1f MB, down %.1f MB per launch\n", ntok, K, na,
+                        bytes_gu / 1e6, bytes_dn / 1e6);
+            auto timeit = [&](auto &&launch) {
+                for (int i = 0; i < 2; ++i) launch(i);
+                d.q.wait();
+                double t0 = now_s();
+                for (int i = 0; i < iters; ++i) launch(i + 1);
+                d.q.wait();
+                double us = (now_s() - t0) / iters * 1e6;
+                launch(0);
+                d.q.wait();
+                return us;
+            };
+            std::vector<float> h0((size_t)K * NFF), h1((size_t)K * NFF), z0((size_t)K * E), z1((size_t)K * E);
+            auto cmp = [](const std::vector<float> &u, const std::vector<float> &v) {
+                for (size_t i = 0; i < u.size(); ++i) if (std::memcmp(&u[i], &v[i], 4)) return (long)i;
+                return -1L;
+            };
+            // gate_up + SITU
+            auto pair_run = [&](GTune gt, float *hout) {
+                return timeit([&](int i) {
+                    const WView &v = gu[i % NL];
+                    SituOp so{nullptr, ids, 8.0f, 4.0f, hout, NFF};
+                    grouped_pair(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, amax, x, E, KU, so, gt.sgw, gt);
+                });
+            };
+            double us0 = pair_run(GTune{0, 8, 2}, hout0);
+            d.get(h0.data(), hout0, h0.size());
+            std::printf("  gate_up  first kernel          sg2  %9.1f us  %6.1f GB/s\n", us0, bytes_gu / us0 / 1e3);
+            auto gp = [&](int np, int mb, bool big, int sgw) {
+                d.q.memset(hout1, 0, h1.size() * 4).wait();
+                double us = pair_run(GTune{np, mb, sgw, big}, hout1);
+                d.get(h1.data(), hout1, h1.size());
+                long bad = cmp(h0, h1);
+                std::printf("  gate_up  np%d mb%-2d %s      sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s\n", np, mb, big ? "grf256" : "grf128", sgw,
+                            us, bytes_gu / us / 1e3, us0 / us, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            };
+            const int tiles = MoeGroups::max_tiles(NE, K);
+            int nt = 0;
+            d.get(&nt, grp.ntiles, 1);
+            std::printf("  %d tiles of up to 16 slots (%.0f %% of lanes used)\n", nt, 100.0 * K / (16.0 * nt));
+            auto gpt = [&](int ng, bool big, int sgw) {
+                d.q.memset(hout1, 0, h1.size() * 4).wait();
+                GTune gt{ng, 8, sgw, big, true, tiles};
+                double us = pair_run(gt, hout1);
+                d.get(h1.data(), hout1, h1.size());
+                long bad = cmp(h0, h1);
+                std::printf("  gate_up  token-par %2d rows %s sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s\n", 2 * ng, big ? "grf256" : "grf128", sgw,
+                            us, bytes_gu / us / 1e3, us0 / us, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            };
+#define INK_B(NG, BIG) for (int sgw : {1, 2, 4}) gpt(NG, BIG, sgw);
+            INK_TSP_COMBOS(INK_B)
+#undef INK_B
+            // transposed tiles
+            float *Xt = d.alloc<float>((size_t)tiles * E * MOE_TS), *Ht = d.alloc<float>((size_t)tiles * NFF * MOE_TS);
+            double ug = timeit([&](int) { tile_gather(d.q, grp, tiles, x, E, KU, E, Xt); });
+            std::printf("  tile_gather x (%d x %d)                %9.1f us\n", tiles, E, ug);
+            std::vector<int32_t> hts(tiles), htn(tiles), hsl(K);
+            d.get(hts.data(), grp.tile_s0, nt); d.get(htn.data(), grp.tile_n, nt); d.get(hsl.data(), grp.slots, K);
+            auto gptt = [&](int ng, bool big, bool il, int sgw) {
+                TTune tt{ng, sgw, big, il};
+                d.q.memset(hout1, 0, h1.size() * 4).wait();
+                double us = timeit([&](int i) {
+                    const WView &v = gu[i % NL];
+                    SituOp so{nullptr, ids, 8.0f, 4.0f, hout1, NFF};
+                    slot_pair_t(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, nullptr, tt);
+                });
+                d.get(h1.data(), hout1, h1.size());
+                long bad = cmp(h0, h1);
+                // the same with the activation written to the transposed tiles
+                double ust = timeit([&](int i) {
+                    const WView &v = gu[i % NL];
+                    SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
+                    slot_pair_t(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, Ht, tt);
+                });
+                std::vector<float> ht((size_t)nt * NFF * MOE_TS);
+                d.get(ht.data(), Ht, ht.size());
+                long badt = -1;
+                for (int t = 0; t < nt && badt < 0; ++t)
+                    for (int l = 0; l < htn[t] && badt < 0; ++l) {
+                        int sl = hsl[hts[t] + l];
+                        for (int r = 0; r < NFF; ++r)
+                            if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + l], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
+                    }
+                std::printf("  gate_up  tiles %2d rows %s %s sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s | to tiles %9.1f us  %s\n", 2 * ng,
+                            big ? "grf256" : "grf128", il ? "il" : "  ", sgw, us, bytes_gu / us / 1e3, us0 / us,
+                            bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str(), ust, badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
+            };
+#define INK_B(NG, BIG, IL) for (int sgw : {1, 2, 4}) gptt(NG, BIG, IL, sgw);
+            INK_TTP_COMBOS(INK_B)
+#undef INK_B
+            if (std::getenv("BENCH_ALL")) {
+#define INK_B(NP, MB, BIG) for (int sgw : {1, 2, 4}) gp(NP, MB, BIG, sgw);
+            INK_GP_COMBOS(INK_B)
+#undef INK_B
+            }
+            // down
+            auto rows_run = [&](GTune gt, float *y) {
+                return timeit([&](int i) { grouped_rows(d.q, dn[i % NL], grp, amax, hb, NFF, y, E, gt.sgw, gt); });
+            };
+            double ud0 = rows_run(GTune{0, 8, 2}, y0);
+            d.get(z0.data(), y0, z0.size());
+            std::printf("  down     first kernel          sg2  %9.1f us  %6.1f GB/s\n", ud0, bytes_dn / ud0 / 1e3);
+            auto gr = [&](int r, int mb, bool big, int sgw) {
+                d.q.memset(y1, 0, z1.size() * 4).wait();
+                double us = rows_run(GTune{r, mb, sgw, big}, y1);
+                d.get(z1.data(), y1, z1.size());
+                long bad = cmp(z0, z1);
+                std::printf("  down     R%d mb%-2d %s       sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s\n", r, mb, big ? "grf256" : "grf128", sgw,
+                            us, bytes_dn / us / 1e3, ud0 / us, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            };
+            auto grt = [&](int r, bool big, int sgw) {
+                d.q.memset(y1, 0, z1.size() * 4).wait();
+                double us = rows_run(GTune{r, 8, sgw, big, true, tiles}, y1);
+                d.get(z1.data(), y1, z1.size());
+                long bad = cmp(z0, z1);
+                std::printf("  down     token-par %2d rows %s sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s\n", r, big ? "grf256" : "grf128", sgw,
+                            us, bytes_dn / us / 1e3, ud0 / us, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            };
+#define INK_B(R, BIG) for (int sgw : {1, 2, 4}) grt(R, BIG, sgw);
+            INK_TSR_COMBOS(INK_B)
+#undef INK_B
+            tile_gather(d.q, grp, tiles, hb, NFF, 0, NFF, Ht).wait();
+            auto grtt = [&](int r, bool big, bool il, int sgw) {
+                d.q.memset(y1, 0, z1.size() * 4).wait();
+                double us = timeit([&](int i) { slot_rows_t(d.q, dn[i % NL], grp, tiles, Ht, y1, E, TTune{r, sgw, big, il}); });
+                d.get(z1.data(), y1, z1.size());
+                long bad = cmp(z0, z1);
+                std::printf("  down     tiles %2d rows %s %s sg%d  %9.1f us  %6.1f GB/s  x%.2f  %s\n", r, big ? "grf256" : "grf128",
+                            il ? "il" : "  ", sgw, us, bytes_dn / us / 1e3, ud0 / us, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            };
+#define INK_B(R, BIG, IL) for (int sgw : {1, 2, 4}) grtt(R, BIG, IL, sgw);
+            INK_TTR_COMBOS(INK_B)
+#undef INK_B
+            if (std::getenv("BENCH_ALL")) {
+#define INK_B(R, MB, BIG) for (int sgw : {1, 2, 4}) gr(R, MB, BIG, sgw);
+            INK_GR_COMBOS(INK_B)
+#undef INK_B
+            }
+            for (void *p : {(void *)x, (void *)hb, (void *)hout0, (void *)hout1, (void *)y0, (void *)y1, (void *)ids, (void *)Xt, (void *)Ht}) d.release(p);
+        }
+    } catch (std::exception &ex) {
+        std::fprintf(stderr, "error: %s\n", ex.what());
+        return 1;
+    }
+    return 0;
+}

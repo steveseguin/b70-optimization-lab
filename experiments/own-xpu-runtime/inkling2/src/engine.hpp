@@ -43,6 +43,9 @@ struct Engine {
     float *tau_all = nullptr;  // log-scaled position factor of every position
     int32_t *next_id = nullptr;
     MoeGroups grp;             // slots grouped by expert (steps of several tokens)
+    float *Xt = nullptr, *Ht = nullptr; // transposed tiles of the token-parallel expert kernels (moe_group.hpp)
+    int tile_bound = 0;
+    int tile_min = 128;        // steps of at least this many tokens use the token-parallel kernels (INK_TILE_MIN)
     int n_logit_rows = 1;      // logits rows the last step left in lg
     bool host_logits = true;   // copy the logits to the host after each step (false: next_token() reads them on the card)
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
@@ -96,6 +99,12 @@ struct Engine {
         }
         next_id = d.alloc<int32_t>(1);
         grp.alloc(d, h.n_expert, T * h.n_used);
+        if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
+        if (T >= tile_min) {
+            tile_bound = MoeGroups::max_tiles(h.n_expert, T * h.n_used);
+            Xt = d.alloc<float>((size_t)tile_bound * h.n_embd * MOE_TS);
+            Ht = d.alloc<float>((size_t)tile_bound * h.n_ff * MOE_TS);
+        }
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
@@ -335,6 +344,13 @@ struct Engine {
                 if (ntok == 1) {
                     pr("moe_gate_up", gemv_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
                     pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
+                } else if (ntok >= tile_min && Xt && gw.kind == K_NVFP4P && l.down.kind == K_NVFP4P) {
+                    // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
+                    const int tiles = MoeGroups::max_tiles(h.n_expert, K);
+                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
+                    pr("moe_gate_up", slot_pair_t(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, tiles, Xt, so, Ht, TTune{2, 1}));
+                    pr("moe_down", slot_rows_t(d.q, l.down.view(), grp, tiles, Ht, yk, E, TTune{2, 1}));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));

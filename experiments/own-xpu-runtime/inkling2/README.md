@@ -49,6 +49,37 @@ reading a 3,127-token prompt 43.3 s (72.1 tok/s). The CPU reference: 6.29 tok/s 
 | parallel expert routing | 25.81 tok/s | 37.1 ms | top 8 of 128 picked by one work-group per token (was 275 µs per call) |
 | planar weights | 41.31 tok/s | 21.9 ms | regrouped Q8_0 / NVFP4 / Q6_K rows, R rows per sub-group (output head 4.86 -> 0.97 ms) |
 | strict build + split mix + 4-bit decode | 48.15 tok/s | 18.8 ms | FP4 values and scales decoded from bits; depth mix in two parallel launches |
+| fused attention prep and tails | 49.77 tok/s | | Q/K/V/R preparation in one launch, attention and FFN tails fused |
+| mix + norm, paired controls | 53.46 tok/s | | depth mix and its norm in one pass; gain/forget rows and SITU gate/up rows in one sub-group |
+| argmax on the card | 55.75 tok/s | | next token picked on the card, positions precomputed |
+| parallel attention | 58.04-60.46 tok/s | | scores one key per thread across many work-groups, P.V 16 channels per group |
+| NVFP4 through half bits | 61.22-64.50 tok/s | | an E2M1 code placed in a half's bits is the value x 2^-15 exactly; two codes per 32-bit op |
+| Q6_K four values per op | 65.17-65.42 tok/s | 15.1 ms | 6-bit codes of four values assembled with one shift/mask; output head 939 -> 720 µs |
+
+Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identical in every row):
+
+| version | prompt | writing at 3K context | what changed |
+|---|---|---|---|
+| first | 72.1 tok/s | 12.97 tok/s | |
+| grouped experts + batched products | 162.8 tok/s | 20.59 tok/s | each chosen expert decoded once per 8 slots; R rows x M tokens per sub-group |
+| parallel attention | 172.0 tok/s | 47.64 tok/s | as above (attention was 23.5 of 44 ms per step at 3K) |
+| token-parallel expert tiles | 294.8 tok/s | 52.41 tok/s | steps of >= 128 tokens: one expert's slots across the 16 lanes (below) |
+
+Token-parallel expert tiles (`src/moe_group.hpp`, `tools/bench_moe.cpp`): in a step of many tokens, a sub-group takes
+up to 16 slots that chose the same expert, one per lane, and each lane computes its slot's whole product. The weights
+are decoded once per sub-group (lane l decodes byte l of a chunk) and read back by index from the register, which
+costs nothing extra. To keep the bits of the lane-per-chunk kernels, each lane replays their fixed order: the 16
+virtual lanes' chunk sums in bit-reversed order, combined in the same pairs as the xor butterfly (v with v + 8, + 4,
++ 2, + 1). The inputs of a tile are transposed (column-major across the 16 lanes) so each chunk is read with four
+sub-group block reads, and the gate|up kernel writes its output straight into the down kernel's transposed layout.
+bench_moe, one layer at 512 tokens: gate|up 18.76 -> 8.84 ms, down 9.37 -> 3.63-3.86 ms, all outputs bit-identical;
+the old kernels stay faster below ~128 tokens per step (fewer slots per expert leave lanes idle). Checked in
+`scripts/check-exact.sh` (card D): a 300-token one-step prompt, all 426 dumped tensors equal to the grouped kernels'.
+
+DSpark guessing (the reference's `llama-speculative-simple`, CPU, greedy): code prompt 52 % of 3 guesses accepted
+(~2.6 tokens per round), 31 % of 7 (~3.2); haiku prompt 34 % of 3 (~2.0), 19 % of 7 (~2.3). Checking 4 tokens at once
+costs 34.7 ms against 15.1 ms for one (each extra token wakes other experts), so guessing would break even at best on
+code and lose on prose. Set aside.
 
 Every row was checked bit for bit against the row before it, except the strict build, which became a new
 baseline. Default icpx builds use the fast floating-point model: the compiler may regroup sums and use approximate

@@ -304,12 +304,13 @@ template <class D, class Op> struct GemvPair {
 // ops::situ for slot k, row i, from the gate and up values
 struct SituOp {
     const float *escale; const int32_t *ids; float beta, lb; float *hout; int nff;
-    void operator()(int k, int i, float g, float u) const {
+    float act(int k, float g, float u) const {
         if (escale) { float s = escale[ids[k]]; g = g * s; u = u * s; }
         float a = (sycl::tanh(g * (1.0f / beta)) * beta) * (1.0f / (1.0f + sycl::exp(-g)));
         if (lb > 0.0f) u = sycl::tanh(u * (1.0f / lb)) * lb;
-        hout[(size_t)k * nff + i] = a * u;
+        return a * u;
     }
+    void operator()(int k, int i, float g, float u) const { hout[(size_t)k * nff + i] = act(k, g, u); }
 };
 // ops::control_out for token k, channel i, from the gain and forget values
 struct CtlOp {
