@@ -1,0 +1,53 @@
+Qwen3.6-35B-A3B GPTQ-Int4 — dual-B70 vLLM-XPU TP2, raw benchmark output.
+Image: docker.io/intel/llm-scaler-vllm:0.31.0-b1-experimental (vLLM 0.31.0+xpu.llmscaler)
+Served model: tp2-test | 256 output tokens/request, ignore_eos, warm engine.
+
+== A. Client-side ThreadPool sweep (POST /v1/completions) ==
+Aggregate decode throughput and per-stream decode rate:
+
+  concurrency   aggregate tok/s   per-stream tok/s
+  1             10.6              10.6
+  24            399               16.6
+  48            765               15.9
+  64            985               15.4
+  96            1268              13.2
+
+Near-linear to concurrency 64 (per-stream barely drops); knee ~64-96.
+Single-stream (10.6 tok/s) is below a single-card Int4 decode of the same
+family — expected TP2 cross-card communication overhead. The win is aggregate
+throughput at concurrency and fitting a model too large to prefer on one card.
+
+== B. Independent re-measure: lmx speed-test matrix run ==
+LocalMaxxing CLI sustained-decode method, benchVersion 0.7.7, 256 max-tokens, ctx 0.
+engine: vllm | engineVersion: 0.31.0+xpu.llmscaler | quantization: GPTQ-Int4
+
+  Aggregate decode tok/s
+  ctx \ conc     1       24              48              64              96
+  0              16.1    391.0 (23/24)   718.8 (46/48)   932.5 (62/64)   1217.4
+
+  Client request latency p50/p90 (ms), ctx 0:
+  conc 1  : 15.9k / 15.9k
+  conc 24 : 15.8k / 15.9k
+  conc 48 : 17.0k / 17.x
+  conc 64 : 17.6k / 18.1k
+  conc 96 : 20.8k / 21.x
+
+Submitted to LocalMaxxing as an inference matrix:
+  https://www.localmaxxing.com/en/inference-benchmarks/cmwsasd8k008vqh01im51npfg
+
+== C. Engine init / readiness (0.31.0-b1-experimental) ==
+init engine (profile, create kv cache, warmup model) ~= 60 s
+native qwen3_5_moe_text Qwen-Triton warmup runs
+KV cache: 14.58 GiB/worker, 873,033 tokens, 106x max concurrency reported
+-> "Application startup complete"
+-> GET /health  -> 200
+-> GET /v1/models -> {"id":"tp2-test", ...}
+
+== D. Contrast: same command on intel/llm-scaler-vllm:1.5 (vLLM 0.26.1) ==
+init engine (profile, create kv cache, warmup model) took 60.60 s   # completes
+(APIServer pid=1 prints nothing further)
+GET /health -> 000  (forever)
+"Application startup complete" never prints.
+Reproducible and independent of: port (8000 vs 8001), GPU contention (both B70s
+free), VLLM_ENABLE_V1_MULTIPROCESSING=0 (no effect).
+--disable-frontend-multiprocessing does not exist in this vLLM (v1).
