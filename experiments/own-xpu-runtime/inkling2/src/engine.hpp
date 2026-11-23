@@ -101,6 +101,12 @@ struct Engine {
     bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-4 tokens use the 8-slot grouped expert kernels
     int sb_np = 1, sb_dr = 2; // NVFP4 small steps: gate|up row pairs (INK_SB_NP), down rows (INK_SB_DR) per sub-group
     float *fxls = nullptr;  // the feed-forward input of 2-4 tokens in lane order (SB_MAX rows)
+    // checking guesses (check / accept): every token but the last of the step also writes its convolution states,
+    // token t at cst + t * n_app * conv_n (all applications); the choice after each row goes to cids
+    float *cst = nullptr;
+    int32_t *cids = nullptr;
+    bool keep_states = false;
+    int chk_n = 0;          // tokens of the last check
     // INK_XL=0: matrix inputs in the plain layout only (else lane order where the producer writes it, gemv2.hpp)
     bool xl_on = !std::getenv("INK_XL") || std::atoi(std::getenv("INK_XL"));
     int dn_sgw = std::getenv("INK_DN_SGW") ? std::atoi(std::getenv("INK_DN_SGW")) : 1; // lane-order down: sub-groups per group
@@ -266,6 +272,8 @@ struct Engine {
         if (const char *e = std::getenv("INK_SB_SGW")) sb_sgw = std::atoi(e);
         ainl = d.alloc<float>(3 * SB_MAX * xlane_floats(h.n_embd));
         fxls = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
+        cst = d.alloc<float>((size_t)(SB_MAX - 1) * h.n_app * conv_n);
+        cids = d.alloc<int32_t>(SB_MAX);
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_DR")) sb_dr = std::atoi(e);
@@ -287,7 +295,7 @@ struct Engine {
             tab_inv = d.alloc<float>(lbuf.size() * T);
             tab_sc = d.alloc<float>(lbuf.size() * T * (size_t)mix_nqa);
         }
-        lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
+        lg = d.alloc<float>((size_t)h.vocab_padded * std::max(all_logits ? T : 1, SB_MAX));
     }
 
     void reset() {
@@ -601,6 +609,8 @@ struct Engine {
             // this call reads the state of the previous call and writes its own (two copies)
             const float *st_in = conv + ((size_t)cpar * h.n_app + il) * conv_n;
             float *st_out = conv + ((size_t)(cpar ^ 1) * h.n_app + il) * conv_n;
+            float *st_tok = keep_states ? cst + (size_t)il * conv_n : nullptr;
+            const size_t sst = (size_t)h.n_app * conv_n;
             if (ntok == 1 && multi_proj) { // one launch for the matrices that read the attention inputs (multi.hpp)
                 MultiJobs mj;
                 const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
@@ -645,7 +655,7 @@ struct Engine {
                 a.full = !swa; a.tau = tau;
                 a.Q = Q; a.q_clip = f32(l.q_clip); a.qk_clip = h.qk_clip;
                 a.Kr = Kr; a.Vr = Vr; a.dynK = dynK; a.dynV = dynV; a.k_conv = f32(l.k_conv); a.v_conv = f32(l.v_conv);
-                a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = kvl[il]; a.km = kmask[il];
+                a.st_in = st_in; a.st_out = st_out; a.st_tok = st_tok; a.sst = sst; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = kvl[il]; a.km = kmask[il];
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
                 pr("attn_prep", fz::attn_prep(d.q, a));
@@ -705,7 +715,7 @@ struct Engine {
             mm(l.wo, att, ob, ntok);
             const bool bstart = ip % h.res_block == 0;
             pr("attn_tail", fz::attn_tail(d.q, ob, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
-                                          attn_out, bstart ? nullptr : inpSA, ffn_inp, E, ntok));
+                                          attn_out, bstart ? nullptr : inpSA, ffn_inp, E, ntok, st_tok, sst));
             const float *fi;
             if (bstart) { blocks.push_back(inpSA); fi = attn_out; }
             else {
@@ -789,7 +799,7 @@ struct Engine {
             }
             float *lo = lbuf[il + 1];
             pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                        f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok));
+                                        f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst));
             dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;
@@ -843,6 +853,33 @@ struct Engine {
         return v;
     }
     void step_next() { step(nullptr, 1); }
+    // checking guesses: one step of tok[0..n) (the last chosen token, then n - 1 guesses; n <= SB_MAX) that scores
+    // every row and keeps every token's convolution states. Returns the greedy choice after each token (row i: the
+    // token that follows tok[i]); steps of 1-4 tokens give each row the one-token values, so the choices are the
+    // one-token text's. Then accept(a).
+    std::vector<int32_t> check(const int32_t *tok, int n) {
+        if (n < 1 || n > SB_MAX || n > T) throw std::runtime_error("check: 1 to " + std::to_string(SB_MAX) + " tokens");
+        const bool al = all_logits, hl = host_logits;
+        all_logits = true; host_logits = false; keep_states = true;
+        step(tok, n);
+        all_logits = al; host_logits = hl; keep_states = false;
+        pr("argmax", ops::argmax_rows(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, cids));
+        std::vector<int32_t> r(n);
+        d.get(r.data(), cids, n);
+        chk_n = n;
+        return r;
+    }
+    // keep the first a tokens of the last check (1 <= a <= n): the next step writes the later positions again, and
+    // the convolution states become those after token a - 1
+    void accept(int a) {
+        if (a < 1 || a > chk_n) throw std::runtime_error("accept: 1 to " + std::to_string(chk_n) + " tokens");
+        if (a < chk_n) {
+            n_past -= chk_n - a;
+            const size_t ns = (size_t)m.hp.n_app * conv_n;
+            d.q.memcpy(conv + (size_t)cpar * ns, cst + (size_t)(a - 1) * ns, sizeof(float) * ns);
+        }
+        chk_n = 0;
+    }
     int argmax_last() const {
         const int V = m.hp.vocab;
         const float *l = logits.data() + logits.size() - V;

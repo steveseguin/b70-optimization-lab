@@ -481,6 +481,21 @@ inline sycl::event moe_combine(sycl::queue &q, const float *y, const float *esca
 // greedy choice: out[0] = the first index of the largest of x[0..n) (the host loop `if (x[i] > x[b]) b = i`).
 // One work-group: per-thread first maximum over a strided slice, the work-group maximum, then the lowest index among
 // the threads that hold it.
+// argmax() of each of nrows rows (row r at x + r * ld), one work-group per row: the same choice per row
+inline sycl::event argmax_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out) {
+    constexpr int AW = 1024;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {
+        const int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
+        const float *xr = x + (size_t)r * ld;
+        float bv = -INFINITY;
+        int bi = n;
+        for (int i = l; i < n; i += AW)
+            if (bi == n || xr[i] > bv) { bv = xr[i]; bi = i; }
+        float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        if (l == 0) out[r] = idx;
+    });
+}
 inline sycl::event argmax(sycl::queue &q, const float *x, int n, int32_t *out) {
     constexpr int AW = 1024;
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>(AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {

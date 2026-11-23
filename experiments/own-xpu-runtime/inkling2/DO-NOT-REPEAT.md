@@ -30,6 +30,7 @@ paragraphs named in the Evidence column (card in brackets). Re-open only under t
 | Global-pointer cast (`gptr`) in the mix and the three-input norm | Mix 9.69 -> 9.92 µs, three-input norm 2.86 -> 2.87, step 11.157 both (`INK_PROF`, sb4 vs sb5, card 3) | 2026-11-23 | |
 | Multi-token job picked by reference with a run-time index (`m.j[k]`) instead of the fixed-index copy `pick_job` | One-token attention inputs 40.9 -> 44.0 µs: the global cast is lost | 2026-11-23 sb9 vs sb8 `INK_PROF` (card 2) | |
 | Multi-vector kernel slowness chased with a larger register file, the job table in card memory, one row count per kernel, the job's fields broadcast from one lane | No change; the cause was generic pointers from the job table (`gptr`) | 2026-11-23 bench_gemv (card 2) | |
+| Prompt-lookup guesses (the last 2-4 tokens seen before) on fresh text with 2 or 3 guesses per check | Code 256 tokens: plain 87.10-87.16 tok/s, 1 guess 88.42-88.51, 2 guesses 86.77-86.87, 3 guesses 83.48-83.59 (card 2) | 2026-11-23 `INK_SPEC` | Text that repeats its input (edits, quotes) |
 | Small-step experts with one code path for every token count; two gate\|up row pairs or four down rows per sub-group | 4 tokens: gate\|up 149.0 / down 92.1 µs vs 124.3 / 79.3 with per-count code; 2 tokens: two pairs 82.6 vs 76.1, four down rows 49.3 vs 46.7 | 2026-11-23 `INK_PROF` (card 2) | |
 
 Measurement cautions (not ideas, but they decide results):

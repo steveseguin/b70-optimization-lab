@@ -88,6 +88,61 @@ int main(int argc, char **argv) {
         std::ofstream gen_out;
         std::vector<float> gen_row;
         if (const char *gp = std::getenv("INK_SAVE_GEN")) { gen_out.open(gp, std::ios::binary); gen_row.resize(e.m.hp.vocab); }
+        // INK_SPEC=<k> (1-3): guess up to k tokens by prompt lookup (the most recent earlier occurrence of the last
+        // INK_SPEC_MAXN .. INK_SPEC_MINN tokens of the text so far; the tokens that followed it) and check them in one
+        // step with the chosen token (Engine::check / accept). The text is the one-token text: each row's scores are
+        // bit-identical to a one-token step's.
+        const int spec = std::getenv("INK_SPEC") ? std::atoi(std::getenv("INK_SPEC")) : 0;
+        if (spec > 0 && !host_argmax && n_gen > 0) {
+            if (spec > Engine::SB_MAX - 1) throw std::runtime_error("INK_SPEC: at most " + std::to_string(Engine::SB_MAX - 1));
+            const int maxn = std::getenv("INK_SPEC_MAXN") ? std::atoi(std::getenv("INK_SPEC_MAXN")) : 4;
+            const int minn = std::getenv("INK_SPEC_MINN") ? std::atoi(std::getenv("INK_SPEC_MINN")) : 2;
+            std::vector<int32_t> hist = tok; // prompt, then every chosen token
+            auto save_rows = [&](int nrows) {
+                for (int r = 0; r < nrows; ++r) {
+                    d.get(gen_row.data(), e.lg + (size_t)r * e.m.hp.vocab_padded, gen_row.size());
+                    gen_out.write((const char *)gen_row.data(), (std::streamsize)gen_row.size() * 4);
+                }
+            };
+            if (gen_out.is_open()) { d.q.wait(); d.get(gen_row.data(), e.lg + (size_t)(e.n_logit_rows - 1) * e.m.hp.vocab_padded, gen_row.size());
+                                     gen_out.write((const char *)gen_row.data(), (std::streamsize)gen_row.size() * 4); }
+            int x = e.next_token();
+            out.push_back(x); hist.push_back(x);
+            long checks = 0, plain = 0, guessed = 0, kept = 0;
+            while (x != e.m.hp.eos && (int)out.size() < n_gen) {
+                std::vector<int32_t> g;
+                const int H = (int)hist.size();
+                for (int nn = std::min(maxn, H - 1); nn >= minn && g.empty(); --nn)
+                    for (int st = H - nn - 1; st >= 0; --st) {
+                        if (!std::equal(hist.begin() + st, hist.begin() + st + nn, hist.end() - nn)) continue;
+                        for (int j = st + nn; j < H && (int)g.size() < spec; ++j) g.push_back(hist[j]);
+                        break;
+                    }
+                const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
+                if ((int)g.size() > room) g.resize(std::max(0, room));
+                if (g.empty()) {
+                    e.step(&x, 1);
+                    if (gen_out.is_open()) { d.q.wait(); save_rows(1); }
+                    x = e.next_token();
+                    out.push_back(x); hist.push_back(x);
+                    ++plain;
+                    continue;
+                }
+                std::vector<int32_t> tk(1, x);
+                tk.insert(tk.end(), g.begin(), g.end());
+                const std::vector<int32_t> y = e.check(tk.data(), (int)tk.size());
+                int a = 0; // guesses that match the model's choices
+                while (a < (int)g.size() && g[a] == y[a] && y[a] != e.m.hp.eos) ++a;
+                e.accept(a + 1);
+                if (gen_out.is_open()) save_rows(a + 1);
+                for (int r = 0; r <= a && (int)out.size() < n_gen; ++r) { out.push_back(y[r]); hist.push_back(y[r]); }
+                x = out.back();
+                ++checks; guessed += (long)g.size(); kept += a;
+            }
+            std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps\n", checks, guessed, kept,
+                         guessed ? 100.0 * kept / guessed : 0.0, plain);
+            n_gen = 0; // done: the loop below does nothing
+        }
         for (int i = 0; i < n_gen; ++i) {
             if (gen_out.is_open()) {
                 d.q.wait();

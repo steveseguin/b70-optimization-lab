@@ -81,6 +81,9 @@
   pointers read from job tables are "generic" until cast to global. Each chosen expert is decoded once for all tokens
   that chose it. Bit-identical in steps of 1-4 tokens; gate 6/6. Next: state rollback for rejected guesses, then a
   guesser (prompt lookup first, then the DSpark drafter on the card).
+- Nov 23 ~14:50: guess checking works and is exact (`INK_SPEC`): text and every chosen scores row equal plain
+  generation byte for byte; rejected guesses roll back the convolution states from per-token slots. With prompt
+  lookup as the guesser, fresh code gains only 1.5 % (1 guess); the DSpark drafter is next. Gate now 9 checks.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

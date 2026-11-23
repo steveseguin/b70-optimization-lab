@@ -48,6 +48,7 @@ struct PrepArgs {
     float *Q; const float *q_clip; float qk_clip;
     const float *Kr, *Vr, *dynK, *dynV, *k_conv, *v_conv;
     const float *st_in; float *st_out; // this application's states (K at 0, V at kd)
+    float *st_tok = nullptr; size_t sst = 0; // checking guesses: token t < ntok - 1 also writes its state at st_tok + t * sst
     float *Kx, *Vx; sycl::half *Kc, *Vc;
     int vld;              // > 0: V cache transposed, Vc[(kvh*hd + c) * vld + position] (attn_pv_t)
     int km = 0x7fffffff;  // cache slot of a position: position & km (windowed layers: a ring of km + 1 positions)
@@ -106,6 +107,7 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + slot] = sycl::half(x);
                 else (isv ? a.Vc : a.Kc)[(size_t)slot * kd + c] = sycl::half(x);
                 if (t == a.ntok - 1) conv_save(a.st_out, off, c, win);
+                else if (a.st_tok) conv_save(a.st_tok + (size_t)t * a.sst, off, c, win);
                 return;
             }
             g -= 2 * nk;
@@ -137,7 +139,8 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
 
 // attn_out = convolution of ob (ops::convolve, no dynamic taps); ffn_inp = inpSA + attn_out (if inpSA)
 inline sycl::event attn_tail(sycl::queue &q, const float *ob, const float *st_in, float *st_out, int off, const float *w,
-                             float scale, float *attn_out, const float *inpSA, float *ffn_inp, int E, int ntok) {
+                             float scale, float *attn_out, const float *inpSA, float *ffn_inp, int E, int ntok,
+                             float *st_tok = nullptr, size_t sst = 0) {
     return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)E), [=](sycl::id<2> id) {
         int t = (int)id[0], c = (int)id[1];
         float win[4];
@@ -147,6 +150,7 @@ inline sycl::event attn_tail(sycl::queue &q, const float *ob, const float *st_in
         attn_out[i] = o;
         if (inpSA) ffn_inp[i] = inpSA[i] + o;
         if (t == ntok - 1) conv_save(st_out, off, c, win);
+        else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
     });
 }
 
@@ -190,7 +194,7 @@ inline float combine(const float *y, const float *escale, const int32_t *ids, co
 // are combined again by each thread (the same values), so tokens need no second pass.
 inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w, int nu,
                             const float *st_in, float *st_out, int off, const float *cw, float scale, float *ffn_out,
-                            const float *fi, float *out, int E, int ntok) {
+                            const float *fi, float *out, int E, int ntok, float *st_tok = nullptr, size_t sst = 0) {
     return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)E), [=](sycl::id<2> id) {
         int t = (int)id[0], c = (int)id[1];
         float win[4];
@@ -203,6 +207,7 @@ inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale,
         ffn_out[i] = o;
         out[i] = fi[i] + o;
         if (t == ntok - 1) conv_save(st_out, off, c, win);
+        else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
     });
 }
 

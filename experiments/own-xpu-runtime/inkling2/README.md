@@ -190,6 +190,19 @@ the prompt's last 8 tokens, card 2): 1 / 2 / 3 / 4 tokens 11.42 / 15.65-15.67 / 
 Every sum keeps gemv1_rows' order: steps of 2, 3 and 4 tokens give last scores bit-identical to one-token steps on
 two prompts (48 and 36 tokens); gate 6/6.
 
+Checking guesses (`Engine::check` / `accept`, `ink_run` with `INK_SPEC=<1-3>`): one step runs the last chosen token
+and up to 3 guessed tokens, scores every row, and the card picks the greedy token of each row (`ops::argmax_rows`).
+Guesses are kept while they equal the model's choices. Rolling back is exact: the windowed key rings already hold a
+window plus a whole step, so `n_past` goes back; for the convolution states (the last 3 inputs of each channel in
+every application, 3.8 MB) every token of a checking step but the last also writes its state to its own slot, and a
+rejection copies the last kept token's slot back. The guesser for now is prompt lookup (the most recent earlier
+occurrence of the last 4, 3 or 2 tokens; `INK_SPEC_MAXN`, `INK_SPEC_MINN`). Text and every chosen scores row equal
+plain generation byte for byte (code 256 and haiku 128 tokens with 1, 2 and 3 guesses, card 2; gate checks 7-9). On
+fresh text it rarely has a guess: code 256 tokens 87.10-87.16 tok/s plain, 88.42-88.51 with 1 guess (52 checks, 27
+of 52 guesses kept, 176 steps without a guess), 86.77-86.87 with 2, 83.48-83.59 with 3. A one-token step is
+unchanged (11.36-11.43 ms). The guesser that should pay is the DSpark drafter (52 % of 3 guesses kept on code with
+the reference).
+
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
 (unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,
