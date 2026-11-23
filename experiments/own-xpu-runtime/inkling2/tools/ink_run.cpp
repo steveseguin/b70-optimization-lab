@@ -30,13 +30,17 @@ int main(int argc, char **argv) {
         e.prof.collect(); // the prompt
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
         std::vector<int> out;
+        // INK_HOST_ARGMAX=1: copy every step's logits to the host and choose there (the first version's loop)
+        const bool host_argmax = std::getenv("INK_HOST_ARGMAX") && std::atoi(std::getenv("INK_HOST_ARGMAX"));
+        e.host_logits = host_argmax;
         for (int i = 0; i < n_gen; ++i) {
-            int b = e.argmax_last();
+            int b = host_argmax ? e.argmax_last() : e.next_token();
             out.push_back(b);
             if (b == e.m.hp.eos) break;
             if (i + 1 == n_gen) break;
             e.all_logits = false;
-            e.feed({b});
+            if (host_argmax) e.feed({b});
+            else e.step_next();
             e.prof.collect();
         }
         double t2 = now_s();

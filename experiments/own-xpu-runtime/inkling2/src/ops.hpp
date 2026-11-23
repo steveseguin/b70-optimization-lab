@@ -391,4 +391,21 @@ inline sycl::event moe_combine(sycl::queue &q, const float *y, const float *esca
     });
 }
 
+// greedy choice: out[0] = the first index of the largest of x[0..n) (the host loop `if (x[i] > x[b]) b = i`).
+// One work-group: per-thread first maximum over a strided slice, the work-group maximum, then the lowest index among
+// the threads that hold it.
+inline sycl::event argmax(sycl::queue &q, const float *x, int n, int32_t *out) {
+    constexpr int AW = 1024;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>(AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {
+        int l = (int)it.get_local_id(0);
+        float bv = -INFINITY;
+        int bi = n;
+        for (int i = l; i < n; i += AW)
+            if (bi == n || x[i] > bv) { bv = x[i]; bi = i; }
+        float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        if (l == 0) out[0] = idx;
+    });
+}
+
 } // namespace ink::ops

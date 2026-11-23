@@ -58,6 +58,26 @@ struct Q8_0P {
         float d = h2f(row + cols + 2 * c);
         for (int i = 0; i < 32; ++i) o[i] = (int8_t)q[i] * d;
     }
+    // the same decode split in two: load() issues the loads, dec() computes from registers (for kernels that load
+    // every chunk of a lane before using any)
+    struct Pre { sycl::vec<uint32_t, 4> a, b; uint16_t d; };
+    static void load(const uint8_t *row, int cols, int c, Pre &p) {
+        p.a = *(const sycl::vec<uint32_t, 4> *)(row + 32 * c);
+        p.b = *(const sycl::vec<uint32_t, 4> *)(row + 32 * c + 16);
+        std::memcpy(&p.d, row + cols + 2 * c, 2);
+    }
+    static void dec(const Pre &p, float *o) {
+        uint8_t hb[2];
+        std::memcpy(hb, &p.d, 2);
+        float d = h2f(hb);
+        for (int i = 0; i < 4; ++i) {
+            uint32_t wa = p.a[i], wb = p.b[i];
+            for (int k = 0; k < 4; ++k) {
+                o[4 * i + k] = (int8_t)(uint8_t)(wa >> (8 * k)) * d;
+                o[16 + 4 * i + k] = (int8_t)(uint8_t)(wb >> (8 * k)) * d;
+            }
+        }
+    }
     // one block b of a row: file {d, qs[32]} at src + 34 b
     static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) {
         const uint8_t *s = src + 34 * b;
@@ -86,6 +106,26 @@ struct NVFP4P {
                 // value * d is exact (at most 6 significant bits), so (float)v * d equals formats.hpp's v0 * d
                 int m0 = (int)((FP4_MAG >> ((b & 7) * 4)) & 0xF), m1 = (int)((FP4_MAG >> (((b >> 4) & 7) * 4)) & 0xF);
                 int v0 = (b & 8) ? -m0 : m0, v1 = (b & 0x80) ? -m1 : m1; // -0 stays +0, as in kvalues_mxfp4
+                ob[j] = (float)v0 * d;
+                ob[j + 8] = (float)v1 * d;
+            }
+        }
+    }
+    struct Pre { sycl::vec<uint32_t, 2> a, b; uint16_t dd; };
+    static void load(const uint8_t *row, int cols, int c, Pre &p) {
+        p.a = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c);
+        p.b = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c + 8);
+        std::memcpy(&p.dd, row + cols / 2 + 2 * c, 2);
+    }
+    static void dec(const Pre &p, float *o) {
+        uint32_t w[4] = {p.a[0], p.a[1], p.b[0], p.b[1]};
+        for (int k = 0; k < 2; ++k) {
+            float d = ue4m3_bits((uint8_t)(p.dd >> (8 * k)));
+            float *ob = o + 16 * k;
+            for (int j = 0; j < 8; ++j) {
+                uint32_t b = (w[2 * k + j / 4] >> (8 * (j % 4))) & 0xFF;
+                int m0 = (int)((FP4_MAG >> ((b & 7) * 4)) & 0xF), m1 = (int)((FP4_MAG >> (((b >> 4) & 7) * 4)) & 0xF);
+                int v0 = (b & 8) ? -m0 : m0, v1 = (b & 0x80) ? -m1 : m1;
                 ob[j] = (float)v0 * d;
                 ob[j + 8] = (float)v1 * d;
             }
