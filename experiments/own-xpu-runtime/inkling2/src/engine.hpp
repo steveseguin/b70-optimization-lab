@@ -111,7 +111,8 @@ struct Engine {
     int feat_vis[3] = {-1, -1, -1};
     // steps of 1-4 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
     // (INK_OUT_LANE=0 off); argmax scratch of the two-launch argmax (ops::argmax_rows2)
-    bool out_lane = true;
+    bool out_lane = true, att_share = true;
+    int att_share_min = 4096; // INK_ATT_SHARE_MIN: keys from which checks share key reads
     float *finl = nullptr, *amx_v = nullptr;
     int32_t *amx_i = nullptr;
     std::function<void(int, int)> on_step;
@@ -287,6 +288,8 @@ struct Engine {
         finl = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
         amx_v = d.alloc<float>((size_t)SB_MAX * ops::ARGMAX_G); amx_i = d.alloc<int32_t>((size_t)SB_MAX * ops::ARGMAX_G);
         if (const char *e = std::getenv("INK_OUT_LANE")) out_lane = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_ATT_SHARE")) att_share = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_ATT_SHARE_MIN")) att_share_min = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_DR")) sb_dr = std::atoi(e);
@@ -693,6 +696,10 @@ struct Engine {
             // writing steps (<= 16 tokens, transposed cache): scores 3 heads per key, softmax sums only (the maximum
             // from the scores' sub-group maxima), P.V normalizes as it reads; the same values as the general kernels
             const bool fast = !tiles && dec_attn && ntok <= 16 && vld > 0 && nh == 3 * nkvh;
+            // steps of 2-4 tokens (checks): keys and values read once for all tokens (INK_ATT_SHARE=0 off), only in the
+            // layers without a window (every token's keys start at 0; 31K checks: scores 375 -> 166 us, P.V 393 -> 212)
+            // (short contexts: too few work-groups, code checks at ~400 keys P.V 7.7 -> 18.4 us; even at 3K; from 4,096)
+            const bool share = fast && att_share && ntok >= 2 && ntok <= 4 && pos0 + ntok > att_share_min;
             // in chunks of prow query tokens: the score buffer P holds prow rows of the whole context (each row's
             // values do not depend on the other rows of its step)
             for (int q0 = 0; q0 < ntok; q0 += prow) {
@@ -704,6 +711,9 @@ struct Engine {
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel,
                                                                                              f32(l.rel_bias), h.n_rel, qp, nc, nh, nkvh, hd,
                                                                                              h.rel_extent, win, kscale, P, ldp, kmask[il]));
+                else if (share && win == 0 && q0 == 0 && nc == ntok)
+                    pr("attn_scores_full", fz::attn_scores_gt<3, 4>(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, kscale, P, ldp,
+                                                                    wmax, nsgmax, kmask[il]));
                 else if (fast)
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_g<3>(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent,
                                                                                       win, kscale, P, ldp, wmax, nsgmax, kmask[il]));
@@ -727,6 +737,10 @@ struct Engine {
                     if (tiles)
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<8, 3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
                                                                                        nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il]));
+                    else if (share && nt >= 2 && win == 0) // windowed: too few blocks per launch (31K checks 15 -> 29 us)
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part_t<3, 4>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
+                                                                                       nt, nh, nkvh, hd, win, pvpart, nblk,
+                                                                                       pinv + (size_t)c0 * nh, kmask[il]));
                     else
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
                                                                                   nt, nh, nkvh, hd, win, pvpart, nblk, fast ? pinv : nullptr,

@@ -310,6 +310,66 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
         }
     });
 }
+// attn_scores_g for steps of 2..NT tokens of a layer without a window: one thread per key for all tokens of the step
+// (the key's row read once, not once per token). Each row's dot products, scale, table entry and sub-group maxima are
+// attn_scores_g's (every token's keys start at 0, so the sub-groups cover the same keys)
+template <int G, int NT>
+inline sycl::event attn_scores_gt(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
+                                  int nkvh, int hd, int ext, float scale, float *P, int ldp, float *wmax, int nsgmax,
+                                  int km = 0x7fffffff) {
+    constexpr int PW = 16, WG = 64;
+    using HV = sycl::vec<sycl::half, 8>;
+    if (hd != 128 || nh != nkvh * G || ntok < 1 || ntok > NT) throw std::runtime_error("attn_scores_gt: unsupported shape");
+    const int pl = pos0 + ntok - 1, maxk = pl + 1;
+    const int nb = (maxk + WG - 1) / WG;
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nkvh, (size_t)nb * WG), sycl::range<2>(1, WG)),
+                          [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int kvh = (int)it.get_group(0);
+        const int j = (int)it.get_global_id(1);
+        if (j - lane > pl) return; // the whole sub-group is past the last position
+        const int jc = sycl::min(j, pl);
+        const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
+        float s[NT][G];
+#pragma unroll
+        for (int t = 0; t < NT; ++t)
+#pragma unroll
+            for (int gi = 0; gi < G; ++gi) s[t][gi] = 0.0f;
+#pragma unroll
+        for (int d0 = 0; d0 < 128; d0 += PW) {
+            const HV k0 = *(const HV *)(kr + d0), k1 = *(const HV *)(kr + d0 + 8);
+            float qv[NT][G];
+#pragma unroll
+            for (int t = 0; t < NT; ++t)
+#pragma unroll
+                for (int gi = 0; gi < G; ++gi)
+                    qv[t][gi] = t < ntok ? Q[((size_t)t * nh + kvh * G + gi) * hd + d0 + lane] : 0.0f;
+#pragma unroll
+            for (int u = 0; u < PW; ++u) {
+                const float kf = (float)(u < 8 ? k0[u] : k1[u - 8]);
+#pragma unroll
+                for (int t = 0; t < NT; ++t)
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) s[t][gi] = mac(s[t][gi], sycl::select_from_group(sg, qv[t][gi], u), kf);
+            }
+        }
+#pragma unroll
+        for (int t = 0; t < NT; ++t) {
+            if (t >= ntok) break;
+            const int p = pos0 + t, dist = p - j;
+#pragma unroll
+            for (int gi = 0; gi < G; ++gi) {
+                const size_t row = (size_t)t * nh + kvh * G + gi;
+                float v = s[t][gi] * scale;
+                if (dist < ext) v = v + tab[row * ext + dist];
+                if (j <= p) P[row * ldp + j] = v;
+                const float m = sycl::reduce_over_group(sg, j <= p ? v : -INFINITY, sycl::maximum<float>());
+                if (lane == 0 && j - lane <= p) wmax[row * nsgmax + j / PW] = m;
+            }
+        }
+    });
+}
 // P.V in blocks of PVB key positions (the summation order since 2026-11-23): part[(row * nblk + b) * hd + c] = the sum
 // over the keys of block b (positions [PVB*b, PVB*(b+1)) within the row's [lo, p]) of P * V, j ascending from 0.0f;
 // a lane = a channel and the G heads of its KV head (the values are read once). b counts from the block of the
@@ -365,6 +425,82 @@ inline sycl::event attn_pv_bo_part(sycl::queue &q, const float *P, int ldp, cons
         }
 #pragma unroll
         for (int gi = 0; gi < G; ++gi) part[(((size_t)t * nh + kvh * G + gi) * nblk + b) * hd + c] = acc[gi];
+    });
+}
+// attn_pv_bo_part for steps of 2..NT tokens: one work-group per (KV head, block) for all tokens of the step (the
+// block's values read once, not once per token). Each token keeps its own keys [max(lo, kb), min(p, kb + PVB - 1)]
+// ascending from 0.0f and attn_pv_bo_part's products (P times the row's 1 / total, then mac): the same parts
+template <int G, int NT>
+inline sycl::event attn_pv_bo_part_t(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok,
+                                     int nh, int nkvh, int hd, int win, float *part, int nblk, const float *inv,
+                                     int km = 0x7fffffff) {
+    constexpr int PW = 16;
+    using HV = sycl::vec<sycl::half, 16>;
+    if (nh != nkvh * G || vld % 16 || ntok < 1 || ntok > NT) throw std::runtime_error("attn_pv_bo_part_t: unsupported shape");
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nkvh * nblk, (size_t)hd), sycl::range<2>(1, (size_t)hd)),
+                          [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
+        auto sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id();
+        const int gid = (int)it.get_group(0), b = gid % nblk, kvh = gid / nblk;
+        const int c = (int)it.get_local_id(1);
+        const int lo0 = win > 0 ? sycl::max(0, pos0 - win + 1) : 0, b0 = lo0 / PVB;
+        const int kb = (b0 + b) * PVB;
+        const sycl::half *row = Vt + (size_t)(kvh * hd + c) * vld;
+        int ja[NT], jb[NT];
+        bool whole = true;
+        int jmin = kb + PVB, jmax = kb - 1;
+        float acc[NT][G], ps[NT][G];
+        const float *pr[NT][G];
+#pragma unroll
+        for (int t = 0; t < NT; ++t) {
+            const int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+            ja[t] = sycl::max(lo, kb); jb[t] = sycl::min(p, kb + PVB - 1);
+            if (t < ntok) {
+                whole = whole && ja[t] == kb && jb[t] == kb + PVB - 1;
+                jmin = sycl::min(jmin, ja[t]); jmax = sycl::max(jmax, jb[t]);
+            } else { ja[t] = 1; jb[t] = 0; }
+#pragma unroll
+            for (int gi = 0; gi < G; ++gi) {
+                acc[t][gi] = 0.0f;
+                const int tt = t < ntok ? t : 0;
+                pr[t][gi] = P + ((size_t)tt * nh + kvh * G + gi) * ldp - lo;
+                ps[t][gi] = inv[(size_t)tt * nh + kvh * G + gi];
+            }
+        }
+        if (whole) {
+#pragma unroll
+            for (int j0 = 0; j0 < PVB; j0 += PW) {
+                const HV v = *(const HV *)(row + ((kb + j0) & km));
+                float pv[NT][G];
+#pragma unroll
+                for (int t = 0; t < NT; ++t)
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) pv[t][gi] = t < ntok ? pr[t][gi][kb + j0 + lane] * ps[t][gi] : 0.0f;
+#pragma unroll
+                for (int u = 0; u < PW; ++u) {
+                    const float vf = (float)v[u];
+#pragma unroll
+                    for (int t = 0; t < NT; ++t)
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi)
+                            if (t < ntok) acc[t][gi] = mac(acc[t][gi], sycl::select_from_group(sg, pv[t][gi], u), vf);
+                }
+            }
+        } else {
+            for (int j = jmin; j <= jmax; ++j) {
+                const float vf = (float)row[j & km];
+#pragma unroll
+                for (int t = 0; t < NT; ++t)
+                    if (j >= ja[t] && j <= jb[t])
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi) acc[t][gi] = mac(acc[t][gi], (pr[t][gi][j] * ps[t][gi]), vf);
+            }
+        }
+#pragma unroll
+        for (int t = 0; t < NT; ++t)
+            if (t < ntok)
+#pragma unroll
+                for (int gi = 0; gi < G; ++gi) part[(((size_t)t * nh + kvh * G + gi) * nblk + b) * hd + c] = acc[t][gi];
     });
 }
 template <int UB>

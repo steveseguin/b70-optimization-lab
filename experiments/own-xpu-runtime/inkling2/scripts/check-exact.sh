@@ -7,7 +7,8 @@
 #     tokens, so the token-parallel expert kernels run (steps >= 128 tokens); every tensor must equal the baseline's
 #     (made with INK_TILE_MIN=100000, i.e. the grouped kernels)
 #   card E: the 3127-token prompt (prompts/long) and 16 greedy tokens (context 4200): the logits rows of all 16 steps
-#     (INK_SAVE_GEN) must equal the baseline's bit for bit (long context: windowed and full attention past 1024 keys)
+#     (INK_SAVE_GEN) must equal the baseline's bit for bit (long context: windowed and full attention past 1024 keys);
+#     then the same with the drafter's guesses and the checks' shared key reads at any length (INK_ATT_SHARE_MIN=0)
 #   card A, then: haiku 64 and code 128 with guesses checked in steps of 2-4 tokens (INK_SPEC=3, prompt lookup):
 #     ids and every chosen logits row must equal the one-token baseline's; then haiku 64 with the DSpark drafter's
 #     guesses (INK_DRAFT, INK_SPEC=3): ids and every chosen logits row
@@ -30,7 +31,8 @@ INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /de
   INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/dspark-haiku.ids" 2> "$out/dspark-haiku.err"; } &
 INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
 "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err" &
-INK_SAVE_GEN=$out/long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/long16.ids" 2> "$out/long16.err" &
+{ INK_SAVE_GEN=$out/long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/long16.ids" 2> "$out/long16.err"
+  INK_ATT_SHARE_MIN=0 INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/dspark-long16.ids" 2> "$out/dspark-long16.err"; } &
 wait
 rc=0
 if [ ! -d "$base" ]; then
@@ -55,6 +57,9 @@ PY
     if [ -f "$base/long16.gen" ]; then
         if cmp -s "$base/long16.gen" "$out/long16.gen"; then echo "PASS long: logits rows of all 16 steps after 3127 tokens bit-identical"
         else echo "FAIL long: step logits differ ($(cmp "$base/long16.gen" "$out/long16.gen" | head -1))"; rc=1; fi
+        if cmp -s "$base/long16.gen" "$out/dspark-long16.gen" && cmp -s "$base/long16.ids" "$out/dspark-long16.ids"; then
+            echo "PASS dspark long: checks after 3127 tokens with shared key reads, ids and every chosen row identical ($(grep -h '\[spec\] [0-9]* checks' "$out/dspark-long16.err" | cut -d' ' -f2-8 | tr -d '()'))"
+        else echo "FAIL dspark long: ids or chosen rows differ"; rc=1; fi
     fi
     for n in haiku code; do
         if cmp -s "$base/$n.ids" "$out/spec-$n.ids"; then echo "PASS spec $n: ids identical ($(grep -h '\[spec\]' "$out/spec-$n.err" | cut -d' ' -f2-8 | tr -d '()'))"

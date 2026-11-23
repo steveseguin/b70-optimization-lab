@@ -94,6 +94,10 @@
 - Nov 23 ~16:00: the number of guesses per check is chosen each round from the drafter's own confidence (it tracks
   the keep rate well): code **118.4 tok/s** (plain 88.2, +34 %), haiku 96.9 (88.6, +9 %), after a 3K prompt 98.2
   (83.2, +18 %), card 2, same text. Next: the drafter's long-context attention (its drafting time grows with context).
+- Nov 23 ~17:05: long contexts with guessing: the drafter's attention now splits the keys over the card (4.9 -> 0.45
+  ms per launch after 31K) and the model's checks read the long-range keys once for all tokens in the check (from
+  4,096 keys, same rows). After a 31K prompt **97.3 tok/s** (plain 70.5, +38 %; guessing was 60.0 before), after 8K
+  113.8 (plain 80.1). Gate now 11 checks.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

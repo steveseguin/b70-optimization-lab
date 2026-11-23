@@ -88,6 +88,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
 | DSpark drafter guesses (card 2) | | code 256 tokens 109.68 tok/s with 2 guesses (plain 87.70), haiku 128 94.66 (plain 88.05) | the drafter on the card, guesses checked exactly (below) |
 | guesses per check chosen from the drafter's probabilities (card 2) | | code 118.41 tok/s (plain 88.22), haiku 96.94 (88.60), 3K prompt 98.22 (83.20) | `INK_SPEC=3`, adaptive count (below) |
+| drafter attention by key spans; checks read long-range keys once for all tokens (card 2) | | after 31K: 97.25 tok/s with guesses (plain 70.48; before 59.97); after 8K 113.75 (plain 80.05); 3K 105.32 | below |
 | control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
@@ -232,6 +233,17 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   `INK_SPEC_COST`). Card 2, `INK_SPEC=3`: code 256 tokens 88.22 tok/s plain -> 109.92 with 2 fixed guesses ->
   **118.41** adaptive; haiku 128 88.60 -> 94.85 -> **96.94**; the 3,127-token prompt + 256 tokens 83.20 -> 95.31 ->
   **98.22**. Same ids as plain in all.
+- Long contexts. The drafter's middle layer attends to every earlier position; its first kernel (one work-group per
+  query row) read each key 24 times: 4.86 ms per launch after 31K, so guessing was slower than plain (59.97 vs 70.48
+  tok/s). `Drafter::attend_split` gives each work-group a span of keys of one key head for all 24 rows that use it
+  (running max / sum / P.V per row, then a combine launch): same guesses, 0.45 ms average per launch, 31K **87.14**
+  tok/s. The target's checks then read the long-range layers' keys and values once per token: `attn_scores_full` 375
+  µs and `attn_pv_full` 393 per layer for ~2.7 tokens against 134 / 139 for one. `fz::attn_scores_gt` (one thread
+  per key for all tokens) and `fz::attn_pv_bo_part_t` (one work-group per key head and block for all tokens) keep
+  each row's order (dot products by dimension from 0.0f; P.V by key per block): 166 and 212 µs, 31K **97.25** tok/s
+  (+38 % over plain), the same rows as one-token steps (gate check 6, `INK_ATT_SHARE_MIN=0`). Only in layers without
+  a window and from 4,096 keys (`INK_ATT_SHARE_MIN`): the windowed layers' P.V went 15 -> 29 µs (too few blocks per
+  launch), and short contexts lose the same way (code at ~400 keys P.V 7.7 -> 18.4 µs; 3K and 8K even).
 - The check step's output rows: the final norm writes lane-order rows for steps of 1-4 tokens; 4 rows 1,291 ->
   944 µs (multi_m), one row 676 -> 655 (bench_gemv, card 3). Greedy choice in two launches (`ops::argmax_rows2`,
   same index; one work-group per row took 56-63 µs).

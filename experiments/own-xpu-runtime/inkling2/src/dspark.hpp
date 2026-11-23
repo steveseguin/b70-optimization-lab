@@ -38,6 +38,11 @@ struct Drafter {
     int32_t *gids;
     float *yl = nullptr, *amv = nullptr, *ams = nullptr, *gp = nullptr; int32_t *ami = nullptr; // argmax scratch; guess probabilities
     std::vector<float> probs; // the last draft's guess probabilities (the drafter's own softmax)
+    // split attention (INK_DSP_SPLIT=0: one work-group per query row): work-groups of (key head, key span) for all
+    // 24 rows of a key head, partial softmax sums combined by a second launch
+    bool split = true;
+    static constexpr int NR = B * (HQ / HKV), CH = 128, NCH = 64; // rows per key head; keys per pass; spans per head
+    float *pO = nullptr, *pM = nullptr, *pL = nullptr;
     float *hl = nullptr, *attl = nullptr, *gl = nullptr; // the 8 slots' product inputs in lane order (xlane.hpp)
     bool fold = true;       // INK_DSP_FOLD=0: each guess passes y_i + Wh z + bh through W_lm (the reference's way)
     int r_last = -1; // the row of rrows that holds r(P0 - 1)
@@ -128,6 +133,9 @@ struct Drafter {
         amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G); ams = d.alloc<float>(ops::ARGMAX_G);
         gp = d.alloc<float>(B);
         if (const char *ev = std::getenv("INK_DSP_FOLD")) fold = std::atoi(ev) != 0;
+        if (const char *ev = std::getenv("INK_DSP_SPLIT")) split = std::atoi(ev) != 0;
+        pO = d.alloc<float>((size_t)HKV * NR * (NCH + 1) * HD);
+        pM = d.alloc<float>((size_t)HKV * NR * (NCH + 1)); pL = d.alloc<float>((size_t)HKV * NR * (NCH + 1));
         if (fold) make_fold();
         e.on_step = [this](int pos0, int n) { inject(pos0, n); };
     }
@@ -381,6 +389,7 @@ struct Drafter {
 
     // non-causal attention of the 8 block slots of layer l: context keys lo..P0-1 (cache) then the 8 block keys
     void attend(int l, int P0) {
+        if (split) { attend_split(l, P0); return; }
         const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
         const int nctx = P0 - lo, nk = nctx + B;
         const sycl::half *K = Kc[l], *Vv = Vc[l];
@@ -436,6 +445,126 @@ struct Drafter {
                 sycl::group_barrier(it.get_group());
                 if (half == 0) att_[(size_t)t * la + xlane_at(hq * HD + dd)] = (acc + pv[dd]) / sum;
             });
+        }));
+    }
+
+    // attend() by key spans: work-group (key head kvh, span c) scores the NR = 24 rows of kvh (row r = slot r / 3,
+    // query head kvh * 3 + r % 3) against its keys in passes of CH, keeping a running max / sum / P.V per row; thread
+    // (key or dimension li % 128, rows 12 * (li / 128) ..+12). The combine launch merges the spans per row.
+    void attend_split(int l, int P0) {
+        constexpr int G = HQ / HKV, WG = 256, RH = NR / 2;
+        const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
+        const int nctx = P0 - lo, nk = nctx + B;
+        const int span = CH * std::max(1, (nk + CH * NCH - 1) / (CH * NCH)), nch = (nk + span - 1) / span;
+        const sycl::half *K = Kc[l], *Vv = Vc[l];
+        const float *q_ = q, *k_ = k, *v_ = v;
+        float *pO_ = pO, *pM_ = pM, *pL_ = pL, *att_ = attl;
+        const size_t la = xlane_floats(HQ * HD);
+        const int km = kmask[l], kd_ = kd;
+        const float scale = 1.0f / std::sqrt((float)HD);
+        e.pr("dsp_attn", d.q.submit([&](sycl::handler &hd) {
+            sycl::local_accessor<float, 1> qs(NR * HD, hd), ps(NR * CH, hd), rs(3 * NR, hd);
+            hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * nch * WG), sycl::range<1>(WG)),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+                const int gi = (int)it.get_group(0), kvh = gi / nch, c = gi % nch, li = (int)it.get_local_id(0);
+                const int ki = li % CH, rg = li / CH;
+                const auto sg = it.get_sub_group();
+                const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), nsg = WG / SG;
+                for (int i = li; i < NR * HD; i += WG) {
+                    const int r = i / HD, dd = i % HD;
+                    qs[i] = q_[((size_t)(r / G) * HQ + kvh * G + r % G) * HD + dd] * scale;
+                }
+                if (li < NR) { rs[li] = -INFINITY; rs[NR + li] = 0.0f; }
+                float acc[RH];
+#pragma unroll
+                for (int r = 0; r < RH; ++r) acc[r] = 0.0f;
+                const int j0 = c * span, j1 = sycl::min(nk, j0 + span);
+                for (int sb = j0; sb < j1; sb += CH) {
+                    const int nkc = sycl::min(CH, j1 - sb);
+                    sycl::group_barrier(it.get_group());
+                    // scores of key sb + ki for rows rg * 12 ..+12
+                    {
+                        float sv[RH];
+#pragma unroll
+                        for (int r = 0; r < RH; ++r) sv[r] = 0.0f;
+                        if (ki < nkc) {
+                            const int j = sb + ki;
+                            const bool cache = j < nctx;
+                            const sycl::half *kp = K + (size_t)((lo + j) & km) * kd_ + kvh * HD;
+                            const float *kf = k_ + ((size_t)(j - nctx) * HKV + kvh) * HD;
+                            for (int d0 = 0; d0 < HD; d0 += 32) {
+                                float kv[32];
+                                if (cache) {
+#pragma unroll
+                                    for (int u = 0; u < 4; ++u) {
+                                        const sycl::vec<sycl::half, 8> h8 = *reinterpret_cast<const sycl::vec<sycl::half, 8> *>(kp + d0 + 8 * u);
+#pragma unroll
+                                        for (int w = 0; w < 8; ++w) kv[8 * u + w] = (float)h8[w];
+                                    }
+                                } else {
+#pragma unroll
+                                    for (int w = 0; w < 32; ++w) kv[w] = kf[d0 + w];
+                                }
+#pragma unroll
+                                for (int r = 0; r < RH; ++r) {
+                                    const float *qr = &qs[(rg * RH + r) * HD + d0];
+#pragma unroll
+                                    for (int w = 0; w < 32; ++w) sv[r] += qr[w] * kv[w];
+                                }
+                            }
+                        }
+#pragma unroll
+                        for (int r = 0; r < RH; ++r) ps[(rg * RH + r) * CH + ki] = ki < nkc ? sv[r] : -INFINITY;
+                    }
+                    sycl::group_barrier(it.get_group());
+                    // running max and sum per row; rs[2 NR + r] = the factor for the P.V sums so far
+                    for (int r = sgi; r < NR; r += nsg) {
+                        float m = -INFINITY;
+                        for (int i = ln; i < CH; i += SG) m = sycl::max(m, ps[r * CH + i]);
+                        m = sycl::reduce_over_group(sg, m, sycl::maximum<float>());
+                        const float mo = rs[r], mn = sycl::max(mo, m);
+                        float su = 0.0f;
+                        for (int i = ln; i < CH; i += SG) {
+                            const float pv = sycl::exp(ps[r * CH + i] - mn);
+                            ps[r * CH + i] = pv;
+                            su += pv;
+                        }
+                        su = sycl::reduce_over_group(sg, su, sycl::plus<float>());
+                        if (ln == 0) {
+                            const float f = sycl::exp(mo - mn);
+                            rs[r] = mn; rs[NR + r] = rs[NR + r] * f + su; rs[2 * NR + r] = f;
+                        }
+                    }
+                    sycl::group_barrier(it.get_group());
+                    // P.V for dimension ki, rows rg * 12 ..+12
+#pragma unroll
+                    for (int r = 0; r < RH; ++r) acc[r] *= rs[2 * NR + rg * RH + r];
+                    for (int kk = 0; kk < nkc; ++kk) {
+                        const int j = sb + kk;
+                        const float vv = j < nctx ? (float)Vv[(size_t)((lo + j) & km) * kd_ + kvh * HD + ki]
+                                                  : v_[((size_t)(j - nctx) * HKV + kvh) * HD + ki];
+#pragma unroll
+                        for (int r = 0; r < RH; ++r) acc[r] += ps[(rg * RH + r) * CH + kk] * vv;
+                    }
+                }
+#pragma unroll
+                for (int r = 0; r < RH; ++r) pO_[(((size_t)kvh * NR + rg * RH + r) * nch + c) * HD + ki] = acc[r];
+                if (li < NR) { pM_[((size_t)kvh * NR + li) * nch + c] = rs[li]; pL_[((size_t)kvh * NR + li) * nch + c] = rs[NR + li]; }
+            });
+        }));
+        e.pr("dsp_attn_comb", d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * NR * HD), sycl::range<1>(HD)),
+                                                [=](sycl::nd_item<1> it) {
+            const int gi = (int)it.get_group(0), kvh = gi / NR, r = gi % NR, dd = (int)it.get_local_id(0);
+            const float *m = pM_ + (size_t)gi * nch, *lsum = pL_ + (size_t)gi * nch, *o = pO_ + (size_t)gi * nch * HD;
+            float mx = -INFINITY;
+            for (int cc = 0; cc < nch; ++cc) mx = sycl::max(mx, m[cc]);
+            float su = 0.0f, ov = 0.0f;
+            for (int cc = 0; cc < nch; ++cc) {
+                const float f = sycl::exp(m[cc] - mx);
+                su += lsum[cc] * f;
+                ov += o[(size_t)cc * HD + dd] * f;
+            }
+            att_[(size_t)(r / G) * la + xlane_at((kvh * G + r % G) * HD + dd)] = ov / su;
         }));
     }
 };
