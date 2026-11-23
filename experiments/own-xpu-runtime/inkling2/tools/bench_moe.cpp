@@ -5,6 +5,7 @@
 // next of layers 0-19 (all NVFP4), so the weights come from memory. BENCH_ITERS (default 20).
 #include "../src/tok_tiles.hpp"
 #include <random>
+#include <functional>
 
 int main(int argc, char **argv) {
     using namespace ink;
@@ -22,6 +23,104 @@ int main(int argc, char **argv) {
             gu[l] = views.at("blk." + std::to_string(l) + ".ffn_gate_up_exps.weight");
             dn[l] = views.at("blk." + std::to_string(l) + ".ffn_down_exps.weight");
             if (gu[l].kind != K_NVFP4P || dn[l].kind != K_NVFP4P) throw std::runtime_error("layer " + std::to_string(l) + " is not NVFP4");
+        }
+        if (std::getenv("BENCH_DECODE")) { // one-token expert kernels: 8 experts from one layer vs from all 20 layers
+            std::mt19937 rng(5);
+            std::vector<int32_t> hid(16 * KU);
+            for (int st = 0; st < 16; ++st)
+                for (int k = 0; k < KU; ++k) hid[st * KU + k] = ((st * KU + k) * 37 + 11) % NE;
+            int32_t *ids = d.alloc<int32_t>(hid.size());
+            d.put(ids, hid.data(), hid.size());
+            std::vector<float> hx(E);
+            std::normal_distribution<float> nd(0.0f, 1.0f);
+            for (auto &v : hx) v = nd(rng);
+            float *x = d.alloc<float>(E), *hb = d.alloc<float>((size_t)KU * NFF), *y = d.alloc<float>((size_t)KU * E);
+            d.put(x, hx.data(), E);
+            d.q.memset(hb, 0, (size_t)KU * NFF * 4).wait();
+            const size_t gub = gu[0].rb * (size_t)gu[0].t->ne[1];
+            for (int nl : {1, 4, 20}) {
+                auto run = [&](int i) {
+                    const WView &v = gu[(i / 16) % nl];
+                    SituOp so{nullptr, ids + (i % 16) * KU, 8.0f, 4.0f, hb, NFF};
+                    gemv_pair(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, ids + (i % 16) * KU, KU, x, E, 1, so, 2);
+                };
+                auto rund = [&](int i) { gemv_routed_v(d.q, dn[(i / 16) % nl], ids + (i % 16) * KU, KU, hb, NFF, 1, y, E, Tune{2, 2}); };
+                for (int pass = 0; pass < 2; ++pass) {
+                    std::function<void(int)> f = pass ? std::function<void(int)>(rund) : std::function<void(int)>(run);
+                    for (int i = 0; i < 32; ++i) f(i);
+                    d.q.wait();
+                    const int it = 640;
+                    double t0 = now_s();
+                    for (int i = 0; i < it; ++i) f(i);
+                    d.q.wait();
+                    std::printf("decode %s, experts from %2d layer(s): %7.2f us per launch\n", pass ? "down   " : "gate_up", nl, (now_s() - t0) / it * 1e6);
+                }
+            }
+            // light load between the expert kernels: one work-group spinning about n iterations
+            float *tmp = d.alloc<float>(4096);
+            auto spin = [&](int n) {
+                d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>(16), sycl::range<1>(16)), [=](sycl::nd_item<1> it) {
+                    float v = x[it.get_local_id(0)];
+                    for (int k = 0; k < n; ++k) v = v * 0.999f + 0.001f;
+                    tmp[it.get_local_id(0)] = v;
+                });
+            };
+            for (int n : {20000, 100000}) {
+                const int it2 = 300;
+                double t0 = now_s();
+                for (int i = 0; i < it2; ++i) spin(n);
+                d.q.wait();
+                double us_s = (now_s() - t0) / it2 * 1e6;
+                for (int pass = 0; pass < 2; ++pass) {
+                    t0 = now_s();
+                    for (int i = 0; i < it2; ++i) {
+                        spin(n);
+                        const WView &v = gu[(i / 16) % 20];
+                        SituOp so{nullptr, ids + (i % 16) * KU, 8.0f, 4.0f, hb, NFF};
+                        if (pass == 0) gemv_pair(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, ids + (i % 16) * KU, KU, x, E, 1, so, 2);
+                        else gemv_routed_v(d.q, dn[(i / 16) % 20], ids + (i % 16) * KU, KU, hb, NFF, 1, y, E, Tune{2, 2});
+                    }
+                    d.q.wait();
+                    double us_b = (now_s() - t0) / it2 * 1e6;
+                    std::printf("light load: spin %.1f us alone; spin + %s %.1f us -> %s share %.2f us\n", us_s, pass ? "down" : "gate_up", us_b,
+                                pass ? "down" : "gate_up", us_b - us_s);
+                }
+            }
+            // context: the gate_up kernel alone vs. each launch after a small one-work-group kernel (as in the engine)
+            auto tiny = [&]() {
+                d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>(256), sycl::range<1>(256)), [=](sycl::nd_item<1> it) {
+                    float v = x[it.get_local_id(0)];
+                    v = sycl::reduce_over_group(it.get_group(), v, sycl::plus<float>());
+                    tmp[it.get_local_id(0)] = v;
+                });
+            };
+            auto gu1 = [&](int i) {
+                const WView &v = gu[(i / 16) % 20];
+                SituOp so{nullptr, ids + (i % 16) * KU, 8.0f, 4.0f, hb, NFF};
+                gemv_pair(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, ids + (i % 16) * KU, KU, x, E, 1, so, 2);
+            };
+            const int it = 640;
+            for (int rep = 0; rep < 2; ++rep) {
+                double t0 = now_s();
+                for (int i = 0; i < it; ++i) tiny();
+                d.q.wait();
+                double ut = (now_s() - t0) / it * 1e6;
+                t0 = now_s();
+                for (int i = 0; i < it; ++i) gu1(i);
+                d.q.wait();
+                double ug = (now_s() - t0) / it * 1e6;
+                t0 = now_s();
+                for (int i = 0; i < it; ++i) { tiny(); gu1(i); }
+                d.q.wait();
+                double ub = (now_s() - t0) / it * 1e6;
+                t0 = now_s();
+                for (int i = 0; i < it; ++i) { tiny(); tiny(); tiny(); tiny(); gu1(i); }
+                d.q.wait();
+                double u4 = (now_s() - t0) / it * 1e6;
+                std::printf("context: tiny %.2f us, gate_up %.2f us, tiny+gate_up %.2f us (gate_up share %.2f), 4 tiny+gate_up %.2f (share %.2f)\n",
+                            ut, ug, ub, ub - ut, u4, u4 - 4 * ut);
+            }
+            return 0;
         }
         for (int a = 3; a < argc; ++a) {
             const int ntok = std::atoi(argv[a]), K = ntok * KU;

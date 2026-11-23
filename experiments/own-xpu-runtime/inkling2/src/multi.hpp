@@ -81,6 +81,48 @@ struct CtlMulti {
         if (sg.get_local_linear_id() == 0) g.op(0, r, va, vb);
     }
 };
+// the same products with one work-item per row (rows of at most 16 chunks of 32, e.g. the 64 values of loop_gain):
+// the work-item computes the 16 virtual lanes' sums of gemv_pair_row (lane l: chunks l, l+16, ...; lanes past the
+// last chunk hold +0) and their xor butterfly (offsets 8, 4, 2, 1) in registers, the same additions as sg_sum
+struct CtlRows {
+    CtlJobs m;
+    void operator()(sycl::nd_item<1> it) const {
+        const int s = (int)it.get_global_id(0);
+        if (s >= m.nsg) return;
+        int k = 0;
+        for (int i = 1; i < 4; ++i) if (i < m.nj && m.j[i].sg0 <= s) k = i;
+        const CJob &g = m.j[k];
+        const int r = s - g.sg0, nc = g.cols / 32;
+        using D = pl::Raw<fmt::F<G_F32>>;
+        float va[SG], vb[SG];
+        for (int l = 0; l < SG; ++l) { va[l] = 0.0f; vb[l] = 0.0f; }
+        for (int c = 0; c < nc; ++c) {
+            float xs[32];
+            load_x32(g.x + 32 * c, xs);
+            for (int j = 0; j < 2; ++j) {
+                float o[32];
+                D::decode32((j ? g.B : g.A) + (size_t)r * g.rb, g.cols, c, o);
+                float sm = 0.0f;
+                for (int i = 0; i < 32; ++i) sm += o[i] * xs[i];
+                if (j) vb[c % SG] += sm; else va[c % SG] += sm;
+            }
+        }
+        for (int off = SG / 2; off > 0; off >>= 1) {
+            float ta[SG], tb[SG];
+            for (int l = 0; l < SG; ++l) { ta[l] = va[l] + va[l ^ off]; tb[l] = vb[l] + vb[l ^ off]; }
+            for (int l = 0; l < SG; ++l) { va[l] = ta[l]; vb[l] = tb[l]; }
+        }
+        g.op(0, r, va[0], vb[0]);
+    }
+};
+inline bool ctl_rows_ok(const CtlJobs &m) {
+    for (int i = 0; i < m.nj; ++i) if (m.j[i].cols > 32 * SG) return false;
+    return true;
+}
+inline sycl::event ctl_rows(sycl::queue &q, const CtlJobs &m, int wg = 64) {
+    int ngr = (m.nsg + wg - 1) / wg;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * wg), sycl::range<1>((size_t)wg)), CtlRows{m});
+}
 inline sycl::event ctl_multi(sycl::queue &q, const CtlJobs &m, int sgw = 2) {
     int ngr = (m.nsg + sgw - 1) / sgw;
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)), CtlMulti{m, sgw});

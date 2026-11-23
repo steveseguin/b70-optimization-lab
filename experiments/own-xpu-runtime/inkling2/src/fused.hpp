@@ -49,12 +49,14 @@ struct PrepArgs {
     const float *st_in; float *st_out; // this application's states (K at 0, V at kd)
     float *Kx, *Vx; sycl::half *Kc, *Vc;
     float eps, kv_scale;
-    float *R; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab;
+    const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
 };
 
 inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
     if (a.hd != PREP_WG || a.nr > SG || a.ext % PREP_WG) throw std::runtime_error("attn_prep: unsupported shape");
-    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, ngroups = nq + 2 * nk + nq;
+    // R rows: ext / PREP_WG groups per row, one table entry per thread (each group clips the row itself; the first
+    // writes it to Rc)
+    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nch = a.ext / PREP_WG, ngroups = nq + 2 * nk + nq * nch;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(PREP_WG / SG, h), rs(SG, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngroups * PREP_WG), sycl::range<1>(PREP_WG)),
@@ -102,25 +104,25 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
             }
             g -= 2 * nk;
             { // R: clip with the per-head scale, the positions, then the bias table (ops::rel_table)
+                const int ch = g % nch;
+                g /= nch;
                 int t = g / a.nh, hh = g % a.nh;
-                float *row = a.R + (size_t)g * a.nr;
+                const float *row = a.R + (size_t)g * a.nr;
                 float v = l < a.nr ? row[l] * a.rel_clip[(size_t)hh * a.nr + l] : 0.0f;
                 float norm = sycl::sqrt(wg_sum<PREP_WG>(it, v * v, &slm[0])) * 1.0f + 1e-6f;
                 float f = sycl::clamp(a.rel_clip_thr / norm, 0.0f, 1.0f);
                 if (l < a.nr) {
                     float x = v * f;
                     if (a.full) x = x * a.tau[t];
-                    row[l] = x;
+                    if (ch == 0) a.Rc[(size_t)g * a.nr + l] = x;
                     rs[l] = x;
                 }
                 sycl::group_barrier(it.get_group());
-                float *tb = a.tab + (size_t)g * a.ext;
-                for (int dd = l; dd < a.ext; dd += PREP_WG) {
-                    const float *b = a.rel_bias + (size_t)dd * a.nr;
-                    float s = 0.0f;
-                    for (int i = 0; i < a.nr; ++i) s += b[i] * rs[i];
-                    tb[dd] = s;
-                }
+                const int dd = ch * PREP_WG + l;
+                const float *b = a.rel_bias + (size_t)dd * a.nr;
+                float s = 0.0f;
+                for (int i = 0; i < a.nr; ++i) s += b[i] * rs[i];
+                a.tab[(size_t)g * a.ext + dd] = s;
             }
         });
     });
@@ -401,6 +403,159 @@ inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, co
             }
         });
     });
+}
+
+// mix with the scores of the saved states (blocks) read from a table: a block's state never changes after it is
+// saved, so its rms scale and its dot products with every mix query are computed once, when it is saved (role B,
+// below), in mix_scores' order. The current state's scale and score are computed by each output work-group
+// (role A), again in mix_scores' order, then the softmax and the output (mix_out) or output + norm (mix_out_norm)
+// as those kernels do: results equal mix_scores + mix_out / mix_out_norm bit for bit.
+struct MixF {
+    const float *st[MIX_MAX]; int ns = 0;  // st[ns-1] = the current state, st[s < ns-1] = blocks (ggml order)
+    int slot[MIX_MAX];                     // table slot of st[s], s < ns-1
+    const float *query = nullptr; int nq = 0, qi0 = 0; // this call's queries (rows of query); table index of row 0
+    float *tinv = nullptr, *tsc = nullptr; int T = 0, NQA = 0; // tinv[slot*T + t], tsc[(slot*T + t)*NQA + qi]
+    int mk_slot = -1;                      // >= 0: also save the current state at this slot (role B)
+    const uint64_t *qall = nullptr;        // the NQA query rows' addresses
+};
+template <int MAXV>
+inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, const NormOut *nop, float eps, int n, int ntok) {
+    // every loop has a constant trip count and is unrolled, so a thread's loads are issued together (these kernels run
+    // as a few work-groups, nothing else hides their latency); the additions keep mix_scores' / mix_out's order
+    constexpr int QG = 8;
+    if (n > MAXV * OPS_WG || a.nq > 3 || a.ns < 1 || a.ns > MIX_MAX) throw std::runtime_error("mix_fused: unsupported shape");
+    const NormOut no = nop ? *nop : NormOut{};
+    const bool norm = nop != nullptr;
+    const int nA = a.nq * ntok, ngq = (a.NQA + QG - 1) / QG, nB = a.mk_slot >= 0 ? ntok * ngq : 0;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h), slmq(QG * (OPS_WG / SG), h);
+        h.parallel_for(ops::rows_range(nA + nB), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), l = (int)it.get_local_id(0);
+            auto sg = it.get_sub_group();
+            constexpr int nsg = OPS_WG / SG;
+            const int sid = (int)sg.get_group_linear_id();
+            const int cs = a.ns - 1;
+            const int t = g < nA ? g % ntok : (g - nA) / ngq;
+            const float *x = a.st[cs] + (size_t)t * ld;
+            float xv[MAXV], qv0[MAXV], wv[MAXV];
+            const int j = g < nA ? g / ntok : 0;
+            const float *qp0 = a.query ? a.query + (size_t)j * n : x;
+            const float *w = norm ? no.w[j] : nullptr;
+#pragma unroll
+            for (int u = 0; u < MAXV; ++u) {
+                int i = l + OPS_WG * u;
+                xv[u] = i < n ? x[i] : 0.0f;
+                qv0[u] = i < n ? qp0[i] : 0.0f;
+                wv[u] = (w && i < n) ? w[i] : 0.0f;
+            }
+            float acc = 0.0f;
+#pragma unroll
+            for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) acc += xv[u] * xv[u];
+            float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+            const float cis = 1.0f / sycl::sqrt(tot / n + 1e-6f);
+            if (g >= nA) { // role B: the current state's scale and its dots with every query, into the table
+                const int qg = (g - nA) % ngq;
+                const size_t row = (size_t)a.mk_slot * a.T + t;
+                if (l == 0 && qg == 0) a.tinv[row] = cis;
+                const int nqg = sycl::min(QG, a.NQA - qg * QG);
+                float dd[QG];
+#pragma unroll
+                for (int j = 0; j < QG; ++j) {
+                    const float *qp = (const float *)a.qall[sycl::min(qg * QG + j, a.NQA - 1)];
+                    float qv[MAXV];
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) { int i = l + OPS_WG * u; qv[u] = i < n ? qp[i] : 0.0f; }
+                    float d0 = 0.0f;
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) d0 += (xv[u] * cis) * qv[u];
+                    dd[j] = d0;
+                }
+#pragma unroll
+                for (int j = 0; j < QG; ++j) {
+                    float v = j < nqg ? sg_sum(sg, dd[j]) : 0.0f;
+                    if (sg.get_local_linear_id() == 0) slmq[j * nsg + sid] = v;
+                }
+                sycl::group_barrier(it.get_group());
+                if (l < nqg) {
+                    float tt = 0.0f;
+                    for (int i = 0; i < nsg; ++i) tt += slmq[l * nsg + i];
+                    a.tsc[row * a.NQA + qg * QG + l] = tt;
+                }
+                return;
+            }
+            // role A: output j for token t (mix_out_norm's group order)
+            float iv[MIX_MAX], scr[MIX_MAX];
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) {
+                iv[s] = 0.0f; scr[s] = 0.0f;
+                if (s < cs) {
+                    const size_t row = (size_t)a.slot[s] * a.T + t;
+                    iv[s] = a.tinv[row];
+                    scr[s] = a.tsc[row * a.NQA + a.qi0 + j];
+                }
+            }
+            {
+                float dd = 0.0f;
+#pragma unroll
+                for (int u = 0; u < MAXV; ++u) if (l + OPS_WG * u < n) dd += (xv[u] * cis) * qv0[u];
+                float v = sg_sum(sg, dd);
+                if (sg.get_local_linear_id() == 0) slmq[sid] = v;
+            }
+            sycl::group_barrier(it.get_group());
+            float csc = 0.0f;
+            for (int i = 0; i < nsg; ++i) csc += slmq[i];
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) if (s == cs) { iv[s] = cis; scr[s] = csc; }
+            float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) if (s < a.ns) mx = sycl::fmax(mx, scr[s] * scale);
+            float p[MIX_MAX], sum = 0.0f;
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) { p[s] = 0.0f; if (s < a.ns) { p[s] = sycl::exp(scr[s] * scale - mx); sum += p[s]; } }
+            float isum = 1.0f / sum;
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) p[s] *= isum;
+            float ov[MAXV];
+#pragma unroll
+            for (int u = 0; u < MAXV; ++u) ov[u] = 0.0f;
+#pragma unroll
+            for (int s = 0; s < MIX_MAX; ++s) {
+                if (s < cs) { // the current state is in registers
+                    const float *xs = a.st[s] + (size_t)t * ld;
+                    float sv[MAXV];
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) { int i = l + OPS_WG * u; sv[u] = i < n ? xs[i] : 0.0f; }
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) ov[u] += (sv[u] * iv[s]) * p[s];
+                } else if (s == cs) {
+#pragma unroll
+                    for (int u = 0; u < MAXV; ++u) ov[u] += (xv[u] * iv[s]) * p[s];
+                }
+            }
+            float ss = 0.0f;
+#pragma unroll
+            for (int u = 0; u < MAXV; ++u) {
+                int i = l + OPS_WG * u;
+                if (i < n) {
+                    if (out) out[((size_t)j * ntok + t) * n + i] = ov[u];
+                    ss += ov[u] * ov[u];
+                }
+            }
+            if (!norm) return;
+            float tot2 = wg_sum<OPS_WG>(it, ss, &slm[0]);
+            float rs = 1.0f / sycl::sqrt(tot2 / n + eps);
+            float *yr = no.y[j] + (size_t)t * n;
+#pragma unroll
+            for (int u = 0; u < MAXV; ++u) {
+                int i = l + OPS_WG * u;
+                if (i < n) yr[i] = w ? (ov[u] * rs) * wv[u] : ov[u] * rs;
+            }
+        });
+    });
+}
+inline sycl::event mix_fused(sycl::queue &q, MixF a, size_t ld, float *out, const NormOut *nop, float eps, int n, int ntok) {
+    if (n <= 9 * OPS_WG) return mix_fused_v<9>(q, a, ld, out, nop, eps, n, ntok);
+    return mix_fused_v<12>(q, a, ld, out, nop, eps, n, ntok);
 }
 // up to 4 ops::rms_norm calls of the same row length in one launch (each with its own input, output and weight)
 struct NormJob { const float *x; float *y; const float *w; int ldx, ldy; };

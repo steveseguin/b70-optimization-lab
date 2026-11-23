@@ -34,7 +34,7 @@ struct Engine {
     std::vector<float *> lbuf;        // lbuf[0] = normed embedding, lbuf[il+1] = l_out of application il
     float *mixb = nullptr, *inp[3] = {}, *msg[4] = {}, *mm2[2] = {};
     float *Q = nullptr, *Kr = nullptr, *Vr = nullptr, *Kx = nullptr, *Vx = nullptr, *dynK = nullptr, *dynV = nullptr;
-    float *R = nullptr, *sinks = nullptr, *tab = nullptr, *P = nullptr, *att = nullptr, *gate = nullptr;
+    float *R = nullptr, *Rc = nullptr, *sinks = nullptr, *tab = nullptr, *P = nullptr, *att = nullptr, *gate = nullptr;
     float *ob = nullptr, *attn_out = nullptr, *ffn_inp = nullptr, *fx = nullptr, *ctl_h = nullptr, *ctl_z = nullptr;
     float *ctl_g = nullptr, *ctl_f = nullptr, *ctl_y = nullptr, *rlog = nullptr, *wts = nullptr, *gu = nullptr;
     float *hb = nullptr, *yk = nullptr, *moe = nullptr, *ffn_out = nullptr, *tau = nullptr, *fin = nullptr, *lg = nullptr;
@@ -47,6 +47,10 @@ struct Engine {
     float *lmix_inv = nullptr, *lmix_sc = nullptr, *lmix_out = nullptr;
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
     bool ctl_batch = true;
+    bool route_sg = true;
+    // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
+    // below the tile threshold: INK_DEC=0 reads the file layout
+    std::vector<WView> gu_dec, dn_dec;      // expert routing with one sub-group per token (INK_ROUTE_SG=0: one work-group)
     float *ctl_h3 = nullptr, *ctl_z3 = nullptr;
     float *tau_all = nullptr;  // log-scaled position factor of every position
     int32_t *next_id = nullptr;
@@ -61,6 +65,16 @@ struct Engine {
     int n_logit_rows = 1;      // logits rows the last step left in lg
     bool host_logits = true;   // copy the logits to the host after each step (false: next_token() reads them on the card)
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
+    // saved states' mix scores in a table (fz::mix_fused): INK_MIX_TAB=0 computes every state's score in each mix
+    bool mix_tab = true;
+    int mix_nqa = 0, qi_out = -1;
+    std::vector<int> qi_attn, qi_ffn;
+    uint64_t *mix_qall = nullptr;
+    float *tab_inv = nullptr, *tab_sc = nullptr;
+    int slot_of(const float *p) const {
+        for (size_t k = 0; k < lbuf.size(); ++k) if (lbuf[k] == p) return (int)k;
+        return -1;
+    }
 
     Engine(Device &dev, const GGUF &gg, const Weights &wt, int capacity, int ubatch = 512, bool every_logit = false,
            const std::map<std::string, WView> *views = nullptr)
@@ -84,7 +98,7 @@ struct Engine {
         Q = d.alloc<float>(QD); att = d.alloc<float>(QD); gate = d.alloc<float>(QD);
         Kr = d.alloc<float>(KD); Vr = d.alloc<float>(KD); Kx = d.alloc<float>(KD); Vx = d.alloc<float>(KD);
         dynK = d.alloc<float>((size_t)T * h.n_head_kv * h.n_conv); dynV = d.alloc<float>((size_t)T * h.n_head_kv * h.n_conv);
-        R = d.alloc<float>((size_t)h.n_rel * h.n_head * T);
+        R = d.alloc<float>((size_t)h.n_rel * h.n_head * T); Rc = d.alloc<float>((size_t)h.n_rel * h.n_head * T);
         sinks = d.alloc<float>((size_t)h.n_head * T);
         tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
         ldp = cap;
@@ -123,6 +137,21 @@ struct Engine {
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         if (const char *e = std::getenv("INK_LOOP_PRE")) loop_pre = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
+        {
+            const bool dec = !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC"));
+            auto mk = [&](const W &w) {
+                WView v = w.view();
+                if (!dec || !w || v.kind != K_RAW || dec_kind(*w.t) == K_RAW) return v;
+                v.kind = dec_kind(*w.t);
+                v.rb = dec_stride(*w.t);
+                uint8_t *b = d.alloc<uint8_t>(v.rb * (size_t)w.t->rows());
+                dec_repack(d.q, *w.t, w.p, b).wait();
+                v.p = b;
+                return v;
+            };
+            for (const Layer &l : m.L) { gu_dec.push_back(mk(l.gate_up)); dn_dec.push_back(mk(l.down)); }
+        }
         if (h.passes > 1 && m.loop_res_query && m.loop_kv_res_query) {
             const int nr = (int)m.loop_res_query.t->rows();
             if (nr != 2 * h.loop_len() || (int)m.loop_kv_res_query.t->rows() != nr) loop_pre = false;
@@ -134,6 +163,25 @@ struct Engine {
             }
         } else loop_pre = false;
         ctl_h3 = d.alloc<float>((size_t)3 * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * h.gate_rank);
+        if (const char *e = std::getenv("INK_MIX_TAB")) mix_tab = std::atoi(e) != 0;
+        if (mix_v1) mix_tab = false;
+        if (mix_tab) { // every mix query row of the model (attention, MoE, output), in one index
+            std::vector<uint64_t> qa;
+            auto add = [&](const W &w) {
+                if (!w) return -1;
+                const int i0 = (int)qa.size();
+                for (int64_t r = 0; r < w.t->rows(); ++r) qa.push_back((uint64_t)(uintptr_t)(f32(w) + (size_t)r * h.n_embd));
+                return i0;
+            };
+            qi_attn.resize(m.L.size()); qi_ffn.resize(m.L.size());
+            for (size_t ip = 0; ip < m.L.size(); ++ip) { qi_attn[ip] = add(m.L[ip].attn_res_query); qi_ffn[ip] = add(m.L[ip].ffn_res_query); }
+            qi_out = add(m.output_res_query);
+            mix_nqa = (int)qa.size();
+            mix_qall = d.alloc<uint64_t>(qa.size());
+            d.put(mix_qall, qa.data(), qa.size());
+            tab_inv = d.alloc<float>(lbuf.size() * T);
+            tab_sc = d.alloc<float>(lbuf.size() * T * (size_t)mix_nqa);
+        }
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
 
@@ -153,7 +201,9 @@ struct Engine {
         default: return w.t->ne[0] <= 64 ? Tune{2, 2} : Tune{1, 4}; // F32 / BF16 in the file layout
         }
     }
-    static Tune tune_routed(const W &) { return Tune{2, 2}; }
+    static Tune tune_routed(const WView &v) { // IQ4 copies: one row per sub-group (their decode is the longer part)
+        return (v.kind == K_IQ4_NLP || v.kind == K_IQ4_XSP) ? Tune{1, 2} : Tune{2, 2};
+    }
     // several vectors: blocks of mr vectors per sub-group (bench_gemv BENCH_M=8, card 3, 2026-11-22)
     static Tune tune_m(const W &w) {
         switch (w.kind) {
@@ -212,8 +262,39 @@ struct Engine {
     }
     std::string nm(const char *s, int il) const { return std::string(s) + "-" + std::to_string(il); }
 
+    // the table form of a mix (fz::mix_fused) when every block has a table slot and the query has a table index;
+    // mk >= 0: also save cur at table slot mk
+    bool mix_f(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, int qi0, int mk,
+               float *out, const fz::NormOut *no, int n, const char *label) {
+        if (!mix_tab || qi0 < 0) return false;
+        fz::MixF a;
+        const int nb = (int)blocks.size();
+        if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
+        for (int s = 0; s < nb; ++s) {
+            a.st[s] = blocks[nb - 1 - s];
+            a.slot[s] = slot_of(a.st[s]);
+            if (a.slot[s] < 0) return false;
+        }
+        a.st[nb] = cur;
+        a.ns = nb + 1;
+        a.query = query; a.nq = nq; a.qi0 = qi0;
+        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall;
+        pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok));
+        return true;
+    }
+    // save cur's scale and query scores at table slot mk (role B of mix_fused alone)
+    void save_state(const float *cur, int mk) {
+        if (!mix_tab || mk < 0) return;
+        fz::MixF a;
+        a.st[0] = cur; a.ns = 1; a.nq = 0;
+        a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall;
+        pr("mix_save", fz::mix_fused(d.q, a, m.hp.n_embd, nullptr, nullptr, m.hp.eps, m.hp.n_embd, n_tok));
+    }
     // mix(blocks, cur, query) with nq queries (inkling2.cpp:221); results query-major in out
-    void mix(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, float *out, int n) {
+    void mix(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, float *out, int n,
+             int qi0 = -1, int mk = -1) {
+        if (mix_f(blocks, cur, query, nq, qi0, mk, out, nullptr, n, "mix_out")) return;
+        save_state(cur, mk);
         ops::MixArgs a;
         int nb = (int)blocks.size();
         if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
@@ -225,7 +306,10 @@ struct Engine {
         pr("mix_out", ops::mix_out(d.q, a, m.hp.n_embd, nq, mix_inv, mix_sc, out, n, n_tok));
     }
     // mix() followed by rms_norm (eps of the model) of each query's result: no.y[j] = norm(mix_j) * no.w[j]
-    void mix_norm(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, fz::NormOut no, int n) {
+    void mix_norm(const std::vector<const float *> &blocks, const float *cur, const float *query, int nq, fz::NormOut no, int n,
+                  int qi0 = -1, int mk = -1) {
+        if (mix_f(blocks, cur, query, nq, qi0, mk, nullptr, &no, n, "mix_norm")) return;
+        save_state(cur, mk);
         ops::MixArgs a;
         int nb = (int)blocks.size();
         if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
@@ -250,6 +334,11 @@ struct Engine {
             pr("ctl_out", dense_pair_t(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, dt));
             return;
         }
+        if (n == 1 && ctl_batch && ctl_multi_ok(ga.view(), fo.view())) {
+            CtlJobs cj;
+            ctl_add(cj, ga.view(), fo.view(), ctl_z, CtlOp{cur, mg, y, E});
+            if (ctl_rows_ok(cj)) { pr("ctl_out", ctl_rows(d.q, cj)); return; }
+        }
         pr("ctl_out", gemv_pair(d.q, ga.view(), fo.p, 0, E, nullptr, n, ctl_z, h.gate_rank, 0, CtlOp{cur, mg, y, E}, 2));
     }
 
@@ -272,7 +361,7 @@ struct Engine {
         CtlJobs cj;
         for (int j = 0; j < 3; ++j)
             ctl_add(cj, l.loop_gain[j].view(), l.loop_forget[j].view(), ctl_z3 + (size_t)j * h.gate_rank, CtlOp{in[j], mg[j], msg[j], E});
-        pr("ctl_out", ctl_multi(d.q, cj, 2));
+        pr("ctl_out", ctl_rows_ok(cj) ? ctl_rows(d.q, cj) : ctl_multi(d.q, cj, 2));
         return true;
     }
 
@@ -338,9 +427,12 @@ struct Engine {
                 }
             }
             const float *inpSA = cur;
+            // a block starts here: cur is saved (its mix scores into the table) by the attention mix, or alone
+            const int mk = (ip % h.res_block == 0 && mix_tab) ? slot_of(cur) : -1;
             // attention inputs (inkling2.cpp:418-444)
             const float *in[3] = {cur, cur, cur};
             bool normed = false;
+            if (!l.attn_res_query) save_state(cur, mk);
             if (l.attn_res_query) {
                 int nq = (int)l.attn_res_query.t->rows();
                 if (!mg[0] && (!swa || nq == 1)) { // the norm follows the mix directly: one kernel for both
@@ -350,11 +442,11 @@ struct Engine {
                         no.y[0] = inp[0]; no.y[1] = inp[1]; no.y[2] = inp[2];
                         no.w[0] = f32(l.q_inp_norm); no.w[1] = f32(l.k_inp_norm); no.w[2] = f32(l.v_inp_norm);
                     }
-                    mix_norm(blocks, cur, f32(l.attn_res_query), nq, no, E);
+                    mix_norm(blocks, cur, f32(l.attn_res_query), nq, no, E, qi_attn.empty() ? -1 : qi_attn[ip], mk);
                     for (int j = 0; j < 3; ++j) in[j] = inp[swa ? 0 : j];
                     normed = true;
                 } else {
-                    mix(blocks, cur, f32(l.attn_res_query), nq, mixb, E);
+                    mix(blocks, cur, f32(l.attn_res_query), nq, mixb, E, qi_attn.empty() ? -1 : qi_attn[ip], mk);
                     for (int j = 0; j < 3; ++j) in[j] = mixb + (size_t)(swa ? 0 : j) * ntok * E;
                 }
             }
@@ -412,13 +504,13 @@ struct Engine {
                 a.Kr = Kr; a.Vr = Vr; a.dynK = dynK; a.dynV = dynV; a.k_conv = f32(l.k_conv); a.v_conv = f32(l.v_conv);
                 a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il];
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
-                a.R = R; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tab;
+                a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tab;
                 pr("attn_prep", fz::attn_prep(d.q, a));
             }
             dump.put(d, nm("Qcur", il), Q, hd, nh, ntok);
             dump.put(d, nm("Kcur", il), Kx, hd, nkvh, ntok);
             dump.put(d, nm("Vcur", il), Vx, hd, nkvh, ntok);
-            dump.put(d, nm("Rcur", il), R, h.n_rel, nh, ntok);
+            dump.put(d, nm("Rcur", il), Rc, h.n_rel, nh, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form), then the output gate
             const int win = swa ? h.n_swa : 0;
             pr("attn_scores", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
@@ -438,25 +530,28 @@ struct Engine {
             dump.put(d, nm("ffn_inp", il), fi, E, ntok);
             // MoE (inkling2.cpp:609-634)
             if (mg[3]) {
-                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E);
+                mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
                 control(fx, mg[3], l, 3, ctl_y);
                 dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
                 pr("rms_norm", ops::rms_norm(d.q, ctl_y, fx, f32(l.ffn_norm), E, ntok, h.eps));
             } else {
                 fz::NormOut no{};
                 no.y[0] = fx; no.w[0] = f32(l.ffn_norm);
-                mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E);
+                mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
             }
             mm(l.gate_inp, fx, rlog, ntok);
             const int K = ntok * h.n_used;
-            pr("moe_route", ops::moe_route(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used, h.expert_scale, eids, wts, ntok));
+            pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
+                                                                              h.expert_scale, eids, wts, ntok));
             {   // gate and up rows of each chosen expert in one sub-group, then SITU (gate rows 0..nff-1, up nff..2nff-1)
                 const W &gw = l.gate_up;
                 const size_t es = gw.rb * (size_t)gw.t->ne[1];
                 const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
+                const WView &gv = gu_dec[ip], &dv = dn_dec[ip];
+                const size_t gs = gv.rb * (size_t)gw.t->ne[1];
                 if (ntok == 1) {
-                    pr("moe_gate_up", gemv_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
-                    pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
+                    pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
+                    pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, h.n_ff, 1, yk, E, tune_routed(dv)));
                 } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
                     // (tok_tiles.hpp, any expert format; bench_moe 512 tokens: NVFP4 gate|up 18.7 -> 8.8 ms, down
@@ -469,8 +564,8 @@ struct Engine {
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
-                    pr("moe_gate_up", grouped_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, amax, fx, E, h.n_used, so, 2));
-                    pr("moe_down", grouped_rows(d.q, l.down.view(), grp, amax, hb, h.n_ff, yk, E, 2));
+                    pr("moe_gate_up", grouped_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fx, E, h.n_used, so, 2));
+                    pr("moe_down", grouped_rows(d.q, dv, grp, amax, hb, h.n_ff, yk, E, 2));
                 }
             }
             float *lo = lbuf[il + 1];
@@ -484,7 +579,7 @@ struct Engine {
         {
             fz::NormOut no{};
             no.y[0] = fin; no.w[0] = f32(m.output_norm);
-            mix_norm(blocks, cur, f32(m.output_res_query), 1, no, E);
+            mix_norm(blocks, cur, f32(m.output_res_query), 1, no, E, qi_out);
         }
         dump.put(d, "result_norm", fin, E, ntok);
         const int nl = all_logits ? ntok : 1;

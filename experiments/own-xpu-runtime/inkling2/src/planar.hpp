@@ -183,6 +183,151 @@ struct Q6_KP {
 };
 
 // the file's own layout through the same interface
+// ---- decode copies of the 4/5-bit expert formats of layers 20-23 (one-token and few-token kernels; the prompt tiles
+// keep the file layout). A row: nib[cols/2] (chunk c at 16c: byte j = code j | code j+16 << 4) | high bits (Q5: 32 bits
+// per chunk, bit k = bit 4 of value k) | per-chunk scales | per-256 scales; row stride rounded up to 16. Decoded values
+// are formats.hpp's (same operations, same order).
+//   Q5_0P  : nib | hb[cols/8] | d[cols/32] (half)
+//   IQ4_NLP: nib | d[cols/32] (half)
+//   IQ4_XSP: nib | ls[cols/32] (int8, ls - 32) | d[cols/256] (half)
+//   Q4_KP  : nib | sm[cols/32][2] (6-bit scale, min) | dm[cols/256][2] (half d, dmin)
+//   Q5_KP  : nib | hb[cols/8] | sm[cols/32][2] | dm[cols/256][2]
+struct Nib32 {
+    uint32_t w[4];
+    void load(const uint8_t *p) {
+        sycl::vec<uint32_t, 4> v = *(const sycl::vec<uint32_t, 4> *)p;
+        for (int k = 0; k < 4; ++k) w[k] = v[k];
+    }
+    int code(int i) const { return i < 16 ? (int)((w[i >> 2] >> (8 * (i & 3))) & 0xF) : (int)((w[(i - 16) >> 2] >> (8 * (i & 3) + 4)) & 0xF); }
+};
+// kvalues_iq4nl as four words of int8 (fmt::kv_nl)
+inline int kv_nl_sel(int i) {
+    const uint32_t w = (i & 8) ? ((i & 4) ? 0x71594535u : 0x26190D01u) : ((i & 4) ? 0xF6EADDCFu : 0xBFAD9881u);
+    return (int8_t)(uint8_t)(w >> (8 * (i & 3)));
+}
+inline uint16_t ld16(const uint8_t *p) { uint16_t v; std::memcpy(&v, p, 2); return v; }
+inline float h2f16(uint16_t b) { sycl::half h; std::memcpy(&h, &b, 2); return (float)h; }
+inline void put_nib(uint8_t *dst, const int *code) { // 32 codes -> 16 bytes
+    for (int j = 0; j < 16; ++j) dst[j] = (uint8_t)(code[j] | (code[j + 16] << 4));
+}
+inline size_t round16(size_t b) { return (b + 15) / 16 * 16; }
+
+struct Q5_0P {
+    static constexpr uint32_t TYPE = G_Q5_0;
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        Nib32 n; n.load(row + 16 * c);
+        uint32_t hb; std::memcpy(&hb, row + cols / 2 + 4 * c, 4);
+        float d = h2f16(ld16(row + cols / 2 + cols / 8 + 2 * c));
+        for (int k = 0; k < 32; ++k) {
+            int32_t x = (n.code(k) | (int)(((hb >> k) & 1u) << 4)) - 16;
+            o[k] = x * d;
+        }
+    }
+    static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) {
+        const uint8_t *s = src + 22 * b;
+        int code[32];
+        for (int j = 0; j < 16; ++j) { code[j] = s[6 + j] & 0xF; code[j + 16] = s[6 + j] >> 4; }
+        put_nib(dst + 16 * b, code);
+        for (int i = 0; i < 4; ++i) dst[cols / 2 + 4 * b + i] = s[2 + i];
+        dst[cols / 2 + cols / 8 + 2 * b] = s[0];
+        dst[cols / 2 + cols / 8 + 2 * b + 1] = s[1];
+    }
+    static int blocks(int cols) { return cols / 32; }
+    static size_t stride(int cols) { return round16((size_t)cols / 32 * 22); }
+};
+struct IQ4_NLP {
+    static constexpr uint32_t TYPE = G_IQ4_NL;
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        Nib32 n; n.load(row + 16 * c);
+        float d = h2f16(ld16(row + cols / 2 + 2 * c));
+        for (int k = 0; k < 32; ++k) o[k] = d * kv_nl_sel(n.code(k));
+    }
+    static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) {
+        const uint8_t *s = src + 18 * b;
+        int code[32];
+        for (int j = 0; j < 16; ++j) { code[j] = s[2 + j] & 0xF; code[j + 16] = s[2 + j] >> 4; }
+        put_nib(dst + 16 * b, code);
+        dst[cols / 2 + 2 * b] = s[0];
+        dst[cols / 2 + 2 * b + 1] = s[1];
+    }
+    static int blocks(int cols) { return cols / 32; }
+    static size_t stride(int cols) { return round16((size_t)cols / 32 * 18); }
+};
+struct IQ4_XSP {
+    static constexpr uint32_t TYPE = G_IQ4_XS;
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        Nib32 n; n.load(row + 16 * c);
+        int ls = (int8_t)row[cols / 2 + c];
+        float d = h2f16(ld16(row + cols / 2 + cols / 32 + 2 * (c >> 3)));
+        float dl = d * ls;
+        for (int k = 0; k < 32; ++k) o[k] = dl * kv_nl_sel(n.code(k));
+    }
+    static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) { // b: 256-value block
+        const uint8_t *s = src + 136 * b;
+        uint16_t sh = (uint16_t)s[2] | ((uint16_t)s[3] << 8);
+        for (int ib = 0; ib < 8; ++ib) {
+            const int c = 8 * b + ib;
+            const uint8_t *qs = s + 8 + 16 * ib;
+            int code[32];
+            for (int j = 0; j < 16; ++j) { code[j] = qs[j] & 0xF; code[j + 16] = qs[j] >> 4; }
+            put_nib(dst + 16 * c, code);
+            int ls = ((s[4 + ib / 2] >> 4 * (ib % 2)) & 0xf) | (((sh >> 2 * ib) & 3) << 4);
+            dst[cols / 2 + c] = (uint8_t)(int8_t)(ls - 32);
+        }
+        dst[cols / 2 + cols / 32 + 2 * b] = s[0];
+        dst[cols / 2 + cols / 32 + 2 * b + 1] = s[1];
+    }
+    static int blocks(int cols) { return cols / 256; }
+    static size_t stride(int cols) { return round16((size_t)cols / 2 + cols / 32 + cols / 128); }
+};
+template <bool Q5> struct QK_P { // Q4_K (Q5 = false) and Q5_K
+    static constexpr uint32_t TYPE = Q5 ? G_Q5_K : G_Q4_K;
+    static constexpr int HB = Q5 ? 8 : 0; // cols / HB bytes of high bits
+    static size_t off_sm(int cols) { return (size_t)cols / 2 + (Q5 ? cols / 8 : 0); }
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        Nib32 n; n.load(row + 16 * c);
+        uint32_t hb = 0;
+        if constexpr (Q5) std::memcpy(&hb, row + cols / 2 + 4 * c, 4);
+        const size_t sm = off_sm(cols);
+        uint16_t scm = ld16(row + sm + 2 * c);
+        uint32_t dm; std::memcpy(&dm, row + sm + cols / 16 + 4 * (c >> 3), 4);
+        float d = h2f16((uint16_t)dm), mn = h2f16((uint16_t)(dm >> 16));
+        uint8_t sc = (uint8_t)scm, m = (uint8_t)(scm >> 8);
+        float d1 = d * sc, m1 = mn * m;
+        for (int k = 0; k < 32; ++k) {
+            int q = n.code(k);
+            if constexpr (Q5) q += ((hb >> k) & 1u) ? 16 : 0;
+            o[k] = d1 * q - m1;
+        }
+    }
+    static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) { // b: 256-value block
+        const int BY = Q5 ? 176 : 144;
+        const uint8_t *s = src + (size_t)BY * b;
+        const size_t sm = off_sm(cols);
+        for (int ib = 0; ib < 8; ++ib) {
+            const int c = 8 * b + ib;
+            const uint8_t *ql = s + (Q5 ? 48 : 16) + 32 * (ib / 2);
+            int code[32];
+            uint32_t hb = 0;
+            for (int l = 0; l < 32; ++l) {
+                code[l] = (ib & 1) ? (ql[l] >> 4) : (ql[l] & 0xF);
+                if (Q5 && (s[16 + l] & (1u << ib))) hb |= 1u << l;
+            }
+            put_nib(dst + 16 * c, code);
+            if (Q5) for (int i = 0; i < 4; ++i) dst[cols / 2 + 4 * c + i] = (uint8_t)(hb >> (8 * i));
+            uint8_t sc, m;
+            fmt::scale_min_k4(ib, s + 4, sc, m);
+            dst[sm + 2 * c] = sc;
+            dst[sm + 2 * c + 1] = m;
+        }
+        for (int i = 0; i < 4; ++i) dst[sm + cols / 16 + 4 * b + i] = s[i];
+    }
+    static int blocks(int cols) { return cols / 256; }
+    static size_t stride(int cols) { return round16(off_sm(cols) + cols / 16 + cols / 64); }
+};
+using Q4_KP = QK_P<false>;
+using Q5_KP = QK_P<true>;
+
 template <class FT> struct Raw {
     static void decode32(const uint8_t *row, int, int c, float *o) { FT::decode32(row, c, o); }
 };

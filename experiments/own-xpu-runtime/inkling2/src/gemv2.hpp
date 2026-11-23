@@ -335,7 +335,7 @@ struct CtlOp {
 };
 
 // a weight as the kernels see it: layout kind, pointer, row stride
-enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3 };
+enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3, K_Q5_0P = 4, K_IQ4_NLP = 5, K_IQ4_XSP = 6, K_Q4_KP = 7, K_Q5_KP = 8 };
 struct WView {
     const Tensor *t = nullptr;
     const uint8_t *p = nullptr;
@@ -348,6 +348,11 @@ template <class Fn> inline void with_decoder(const WView &w, Fn &&f) {
     case K_Q8_0P: f.template operator()<pl::Q8_0P>(); return;
     case K_NVFP4P: f.template operator()<pl::NVFP4P>(); return;
     case K_Q6_KP: f.template operator()<pl::Q6_KP>(); return;
+    case K_Q5_0P: f.template operator()<pl::Q5_0P>(); return;
+    case K_IQ4_NLP: f.template operator()<pl::IQ4_NLP>(); return;
+    case K_IQ4_XSP: f.template operator()<pl::IQ4_XSP>(); return;
+    case K_Q4_KP: f.template operator()<pl::Q4_KP>(); return;
+    case K_Q5_KP: f.template operator()<pl::Q5_KP>(); return;
     default: fmt::dispatch(w.t->type, [&]<class FT>() { f.template operator()<pl::Raw<FT>>(); });
     }
 }
@@ -530,6 +535,40 @@ inline sycl::event planar_repack(sycl::queue &q, const Tensor &t, const uint8_t 
     }
 }
 
+// decode copies (planar.hpp) of the expert formats of layers 20-23: kind, row stride, repack (K_RAW: none)
+inline int dec_kind(const Tensor &t) {
+    switch (t.type) {
+    case G_Q5_0: return K_Q5_0P;
+    case G_IQ4_NL: return K_IQ4_NLP;
+    case G_IQ4_XS: return K_IQ4_XSP;
+    case G_Q4_K: return K_Q4_KP;
+    case G_Q5_K: return K_Q5_KP;
+    default: return K_RAW;
+    }
+}
+inline size_t dec_stride(const Tensor &t) {
+    const int cols = (int)t.ne[0];
+    switch (t.type) {
+    case G_Q5_0: return pl::Q5_0P::stride(cols);
+    case G_IQ4_NL: return pl::IQ4_NLP::stride(cols);
+    case G_IQ4_XS: return pl::IQ4_XSP::stride(cols);
+    case G_Q4_K: return pl::Q4_KP::stride(cols);
+    case G_Q5_K: return pl::Q5_KP::stride(cols);
+    default: return t.row_bytes();
+    }
+}
+inline sycl::event dec_repack(sycl::queue &q, const Tensor &t, const uint8_t *src, uint8_t *dst) {
+    const size_t nrows = (size_t)t.rows(), rb = dec_stride(t);
+    const int cols = (int)t.ne[0];
+    switch (t.type) {
+    case G_Q5_0: return pl::repack<pl::Q5_0P>(q, src, t.row_bytes(), dst, rb, cols, nrows);
+    case G_IQ4_NL: return pl::repack<pl::IQ4_NLP>(q, src, t.row_bytes(), dst, rb, cols, nrows);
+    case G_IQ4_XS: return pl::repack<pl::IQ4_XSP>(q, src, t.row_bytes(), dst, rb, cols, nrows);
+    case G_Q4_K: return pl::repack<pl::Q4_KP>(q, src, t.row_bytes(), dst, rb, cols, nrows);
+    case G_Q5_K: return pl::repack<pl::Q5_KP>(q, src, t.row_bytes(), dst, rb, cols, nrows);
+    default: throw std::runtime_error("dec_repack: unsupported type");
+    }
+}
 // regroup every Q8_0 / NVFP4 / Q6_K weight used by the products into its planar layout (not the token embedding,
 // which get_rows reads in the file layout). Q8_0 and NVFP4 in place (through a scratch copy on the card); Q6_K into a
 // new buffer with a padded row stride (its file copy stays in the arena). Returns every tensor's view.

@@ -46,12 +46,14 @@ int main(int argc, char **argv) {
                 d.q.memcpy(b, Wraw, tb).wait();
                 raw_copies.push_back(b);
             }
-            if (planar_kind(*t) != K_RAW) {
-                vp.kind = planar_kind(*t);
-                vp.rb = planar_stride(*t);
+            const bool use_dec = std::getenv("BENCH_DEC") && std::atoi(std::getenv("BENCH_DEC")) && dec_kind(*t) != K_RAW;
+            if (planar_kind(*t) != K_RAW || use_dec) {
+                vp.kind = use_dec ? dec_kind(*t) : planar_kind(*t);
+                vp.rb = use_dec ? dec_stride(*t) : planar_stride(*t);
                 for (int c = 0; c < ncopy; ++c) {
                     uint8_t *b = d.alloc<uint8_t>(vp.rb * nrows);
-                    planar_repack(d.q, *t, Wraw, b).wait();
+                    if (use_dec) dec_repack(d.q, *t, Wraw, b).wait();
+                    else planar_repack(d.q, *t, Wraw, b).wait();
                     pl_copies.push_back(b);
                 }
                 vp.p = pl_copies[0];

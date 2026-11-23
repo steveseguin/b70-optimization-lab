@@ -324,6 +324,53 @@ inline sycl::event attn_pv(sycl::queue &q, const float *P, int ldp, const sycl::
 
 // ---- experts (llama-graph.cpp build_moe_ffn) ----------------------------------------------------------------
 // per token: p = sigmoid(logit); top nu of p + bias (ties: lower index first); w = p[sel] / (sum + 1e-20) * wscale
+// moe_route with one sub-group per token: lane l holds experts l, l+16, ..., the picks as moe_route's (largest
+// selection score, lowest index among equal ones: max and min are exact in any order), weights as moe_route's
+inline sycl::event moe_route_sg(sycl::queue &q, const float *logits, const float *bias, int ne, int nu, float wscale,
+                                int32_t *ids, float *wts, int ntok) {
+    constexpr int PER = 8;
+    if (ne > PER * SG || nu > 16) throw std::runtime_error("moe_route_sg: more than 128 experts or 16 picks");
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * SG), sycl::range<1>(SG)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg = it.get_sub_group();
+        int t = (int)it.get_group(0), lane = (int)sg.get_local_linear_id();
+        float p[PER], sel[PER];
+        for (int u = 0; u < PER; ++u) {
+            int e = lane + SG * u;
+            p[u] = 0.0f; sel[u] = -INFINITY;
+            if (e < ne) {
+                p[u] = 1.0f / (1.0f + sycl::exp(-logits[(size_t)t * ne + e]));
+                sel[u] = bias ? p[u] + bias[e] : p[u];
+            }
+        }
+        int pick[16];
+        for (int k = 0; k < nu; ++k) {
+            float lm = sel[0];
+            int lu = 0;
+            for (int u = 1; u < PER; ++u) if (sel[u] > lm) { lm = sel[u]; lu = u; }
+            float m = sycl::reduce_over_group(sg, lm, sycl::maximum<float>());
+            int le = lane + SG * lu;
+            int b = sycl::reduce_over_group(sg, (le < ne && lm == m) ? le : PER * SG, sycl::minimum<int>());
+            for (int u = 0; u < PER; ++u) if (lane + SG * u == b) sel[u] = -INFINITY;
+            pick[k] = b;
+        }
+        float w[16];
+        for (int k = 0; k < nu; ++k) {
+            const int b = pick[k], bu = b / SG;
+            float pv = p[0];
+            for (int u = 1; u < PER; ++u) if (u == bu) pv = p[u];
+            w[k] = sycl::select_from_group(sg, pv, b % SG);
+        }
+        if (lane == 0) {
+            int32_t *ix = ids + (size_t)t * nu;
+            float *wo = wts + (size_t)t * nu;
+            float s = 0.0f;
+            for (int k = 0; k < nu; ++k) { ix[k] = pick[k]; s += w[k]; }
+            s = s * 1.0f + 1e-20f;
+            for (int k = 0; k < nu; ++k) wo[k] = (w[k] / s) * wscale;
+        }
+    });
+}
 inline sycl::event moe_route(sycl::queue &q, const float *logits, const float *bias, int ne, int nu, float wscale,
                              int32_t *ids, float *wts, int ntok) {
     // one work-group per token, one thread per expert; each of the nu picks is the largest remaining score, the lowest
