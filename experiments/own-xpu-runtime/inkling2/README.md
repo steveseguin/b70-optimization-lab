@@ -84,7 +84,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | fused multiply-add, baseline v3 (card 3) | 642.7-643.2 tok/s; 31K prompt 530.6 (was 446.6, card 2) | short 12.28 ms, 3K 13.18 (was 12.31-12.36, 13.35; card 4) | every sum of products through `mac()` (below) |
 | reads issued together, weights warmed (card 3) | | short 11.61-11.63 ms (was 12.31-12.33 for the build before) | small kernels without a branch around each read; the mix warms L2 (below) |
 | expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
-| long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24) | full layers' softmax and block sums past 16K keys (below) |
+| long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24); 403K: 24.87 tok/s (was 23.53, card 5) | full layers' softmax and block sums past 16K keys (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -155,7 +155,8 @@ one work-group of 128 threads, which waits for each round of reads. Past 16K key
 (the maxima 16), then 8, then one by one; every sum keeps its order. `BENCH_SM=1 bench_attn <card> <pos> 0` (card 3,
 all variants identical to the 8-per-round kernel): 400K keys softmax 268 -> 159 µs, block sum 246 -> 132; 200K 98 -> 64
 and 137 -> 67; 32 or 128 per round are no better. In the engine at 100K (card 3, `INK_PROF`): softmax 60.4 -> 36.2 µs,
-block sum 64.1 -> 37.2 per full layer, step 21.24 -> 20.78 ms; the 32 written tokens unchanged. Short rows (the
+block sum 64.1 -> 37.2 per full layer, step 21.24 -> 20.78 ms; the 32 written tokens unchanged. The 403K needle test
+(card 5): writing 23.53 -> 24.87 tok/s, prompt 173.0 -> 173.3, the 258-token answer identical. Short rows (the
 windowed layers) keep 8 per round and the one-by-one tail: bigger rounds or a predicated last round made them slower.
 
 Plain reads (`bench_read <card>`, card 2, back-to-back launches over different buffers): 8 MB 14.2 µs (564 GB/s),
