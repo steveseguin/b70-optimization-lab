@@ -3,7 +3,7 @@
 // Timing reads from memory, not from the cache: each variant cycles through copies of the weight (at least 256 MB in
 // all), and expert tensors cycle through 16 sets of 8 experts (all 128 once). 3-D expert tensors are timed in the
 // routed form (8 experts, one token). BENCH_ITERS (default 200); BENCH_FILE=1 also times the file layout.
-#include "../src/gemv2.hpp"
+#include "../src/tok_tiles.hpp"
 #include <random>
 
 int main(int argc, char **argv) {
@@ -77,8 +77,12 @@ int main(int argc, char **argv) {
                 return us;
             };
             auto idp = [&](int i) { return ids + (size_t)(i % NS) * K; };
+            // more than 8 vectors: the reference is the engine's multi-vector path (GemvMR, 8 vectors per block; checked
+            // bit-identical to gemv for blocks of 1-8), on the planar layout when there is one
+            const Tune tbase{2, 2, false, 8, vp.kind == K_Q6_KP};
             double us0 = routed ? timeit([&](int i) { gemv_routed(d.q, *t, Wraw, idp(i), K, x, cols, 0, y0, rows); })
-                                : timeit([&](int i) { gemv(d.q, *t, raw_copies[i % raw_copies.size()], x, cols, y0, rows, K); });
+                         : K <= 8 ? timeit([&](int i) { gemv(d.q, *t, raw_copies[i % raw_copies.size()], x, cols, y0, rows, K); })
+                                  : timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; gemv_v(d.q, u, x, cols, y0, rows, K, tbase); });
             d.get(h0.data(), y0, h0.size());
             std::printf("%-30s %-6s %6d x %-5d x%d %7.2f MB  %2d copies  base       %8.2f us %6.1f GB/s\n", t->name.c_str(),
                         type_name(t->type), rows, cols, K, bytes / 1e6, ncopy, us0, bytes / us0 / 1e3);
@@ -96,6 +100,22 @@ int main(int argc, char **argv) {
                             bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
             };
             if (!routed && K > 1) { // vector blocks
+                { // token-parallel tiles (tok_tiles.hpp)
+                    float *Xd = d.alloc<float>((size_t)((K + 15) / 16) * cols * 16);
+                    double ug = timeit([&](int) { dense_gather(d.q, x, cols, K, cols, Xd); });
+                    std::printf("%-30s dense_gather %8.2f us\n", "", ug);
+                    for (int R : {1, 2, 4}) for (int sgw : {1, 2}) {
+                        d.q.memset(y1, 0, h1.size() * 4).wait();
+                        double us = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; dense_t(d.q, u, K, Xd, y1, rows, DTune{R, sgw}); });
+                        d.get(h1.data(), y1, h1.size());
+                        long bad = -1;
+                        for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                        std::printf("%-30s %-11s R%d sg%d     %28s %8.2f us %6.1f GB/s  %s\n", "", "tiles", R, sgw, "", us,
+                                    bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                    }
+                    d.release(Xd);
+                }
+                if (K > 8) continue;
                 run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{1, 4, false, 0});
                 for (int mr : {2, 4, 8}) {
                     if (K % mr) continue;

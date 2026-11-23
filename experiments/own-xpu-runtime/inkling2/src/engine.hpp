@@ -6,7 +6,7 @@
 #include "dump.hpp"
 #include "model.hpp"
 #include "fused.hpp"
-#include "moe_group.hpp"
+#include "tok_tiles.hpp"
 #include "ops.hpp"
 #include <cmath>
 
@@ -46,6 +46,9 @@ struct Engine {
     float *Xt = nullptr, *Ht = nullptr; // transposed tiles of the token-parallel expert kernels (moe_group.hpp)
     int tile_bound = 0;
     int tile_min = 128;        // steps of at least this many tokens use the token-parallel kernels (INK_TILE_MIN)
+    float *Xd = nullptr;       // transposed tiles of the dense token-parallel kernels (tok_tiles.hpp)
+    int dense_min = 16;        // steps of at least this many tokens use them for the dense matrices (INK_DENSE_MIN)
+    static constexpr int XD_COLS = 4608; // widest dense input (loop down: 2 x 2304)
     int n_logit_rows = 1;      // logits rows the last step left in lg
     bool host_logits = true;   // copy the logits to the host after each step (false: next_token() reads them on the card)
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
@@ -105,6 +108,8 @@ struct Engine {
             Xt = d.alloc<float>((size_t)tile_bound * h.n_embd * MOE_TS);
             Ht = d.alloc<float>((size_t)tile_bound * h.n_ff * MOE_TS);
         }
+        if (const char *e = std::getenv("INK_DENSE_MIN")) dense_min = std::atoi(e);
+        if (T >= dense_min) Xd = d.alloc<float>((size_t)((T + MOE_TS - 1) / MOE_TS) * XD_COLS * MOE_TS);
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
@@ -136,9 +141,29 @@ struct Engine {
         }
     }
     // y[t] = W x[t] for ntok vectors: one launch for the whole blocks of vectors, one for the rest
+    // dense token-parallel kernels for this matrix at ntok tokens? (tools/bench_gemv BENCH_M=16..512, card 3,
+    // 2026-11-22: Q8_0 / Q6_K / F32 2.5-4x from 16 tokens; F32 rows of 2304 need >= 128 tokens; few rows lose)
+    bool dense_tiles(const W &w, int ntok, DTune &dt) const {
+        if (!Xd || ntok < dense_min || w.t->ne[0] > XD_COLS || w.t->rows() < 64) return false;
+        switch (w.kind) {
+        case K_Q8_0P: dt = DTune{ntok >= 64 ? 2 : 1, 1}; return true;
+        case K_Q6_KP: dt = DTune{ntok >= 64 ? 2 : 1, 1}; return true;
+        case K_RAW:
+            if (w.t->type == G_F32) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
+            if (w.t->type == G_BF16) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
+            return false;
+        default: return false;
+        }
+    }
     void mm(const W &w, const float *x, float *y, int ntok) {
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
         if (ntok == 1) { pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, 1, tune(w))); return; }
+        DTune dt;
+        if (dense_tiles(w, ntok, dt)) {
+            pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
+            pr(wlabel(w), dense_t(d.q, w.view(), ntok, Xd, y, rows, dt));
+            return;
+        }
         Tune tm = tune_m(w);
         int nfull = ntok / tm.mr * tm.mr, rem = ntok - nfull;
         if (nfull) pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, nfull, tm));
@@ -196,6 +221,12 @@ struct Engine {
         mm(l.loop_down[mod], ctl_h, ctl_z, n);
         const W &ga = l.loop_gain[mod], &fo = l.loop_forget[mod];
         if (ga.t->type != fo.t->type || ga.rb != fo.rb || ga.kind != fo.kind) throw std::runtime_error("engine: gain/forget layouts differ");
+        DTune dt;
+        if (n > 1 && dense_tiles(ga, n, dt)) {
+            pr("dense_gather", dense_gather(d.q, ctl_z, h.gate_rank, n, h.gate_rank, Xd));
+            pr("ctl_out", dense_pair_t(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, dt));
+            return;
+        }
         pr("ctl_out", gemv_pair(d.q, ga.view(), fo.p, 0, E, nullptr, n, ctl_z, h.gate_rank, 0, CtlOp{cur, mg, y, E}, 2));
     }
 

@@ -15,47 +15,64 @@ struct MoeGroups {
     int32_t *exp = nullptr;   // [ne] expert of group a
     int32_t *off = nullptr;   // [ne + 1] first slot index (in slots) of group a; off[A] = K
     int32_t *slots = nullptr; // [K] slots, grouped
+    int32_t *ecount = nullptr;                                    // [ne] slots per expert (scratch)
     int32_t *ntiles = nullptr;                                    // [1] tiles T
     int32_t *tile_exp = nullptr, *tile_s0 = nullptr, *tile_n = nullptr; // [ne + K / 16] expert, first slot index, slots
     void alloc(Device &d, int ne, int kmax) {
         count = d.alloc<int32_t>(1); exp = d.alloc<int32_t>(ne); off = d.alloc<int32_t>(ne + 1); slots = d.alloc<int32_t>(kmax);
+        ecount = d.alloc<int32_t>(ne);
         int tmax = max_tiles(ne, kmax);
         ntiles = d.alloc<int32_t>(1); tile_exp = d.alloc<int32_t>(tmax); tile_s0 = d.alloc<int32_t>(tmax); tile_n = d.alloc<int32_t>(tmax);
     }
     static int max_tiles(int ne, int k) { return ne + k / MOE_TS; }
 };
 
-// one work-group, one thread per expert (ne <= 128)
+// Two passes, one work-group per expert in each. 1: the expert's slot count. 2: its offsets from the counts of the
+// lower experts, its slots in ascending order (a work-group scan over blocks of slots), its group entry and tiles.
+// Same output as the first one-work-group version: groups by ascending expert, ascending slots inside a group.
 inline sycl::event moe_group(sycl::queue &q, const int32_t *ids, int K, int ne, MoeGroups g) {
-    constexpr int GW = 128;
-    if (ne > GW) throw std::runtime_error("moe_group: more than 128 experts");
-    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>(GW), sycl::range<1>(GW)), [=](sycl::nd_item<1> it) {
-        int e = (int)it.get_local_id(0);
+    constexpr int GW = 256;
+    q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ne * GW), sycl::range<1>(GW)), [=](sycl::nd_item<1> it) {
+        const int e = (int)it.get_group(0), l = (int)it.get_local_id(0);
+        int c = 0;
+        for (int s = l; s < K; s += GW) c += ids[s] == e;
+        c = sycl::reduce_over_group(it.get_group(), c, sycl::plus<int>());
+        if (l == 0) g.ecount[e] = c;
+    });
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ne * GW), sycl::range<1>(GW)), [=](sycl::nd_item<1> it) {
+        const int e = (int)it.get_group(0), l = (int)it.get_local_id(0);
         auto grp = it.get_group();
-        int cnt = 0;
-        if (e < ne)
-            for (int s = 0; s < K; ++s) cnt += ids[s] == e;
-        int start = sycl::exclusive_scan_over_group(grp, cnt, sycl::plus<int>());
-        int act = cnt > 0 ? 1 : 0;
-        int a = sycl::exclusive_scan_over_group(grp, act, sycl::plus<int>());
-        int na = sycl::reduce_over_group(grp, act, sycl::plus<int>());
-        if (act) { g.exp[a] = e; g.off[a] = start; }
-        if (e == 0) { g.count[0] = na; g.off[na] = K; }
-        if (cnt) {
-            int j = start;
-            for (int s = 0; s < K; ++s)
-                if (ids[s] == e) g.slots[j++] = s;
+        int ps = 0, pa = 0, pt = 0, ta = 0, tt = 0;
+        for (int f = l; f < ne; f += GW) {
+            int c = g.ecount[f], act = c > 0 ? 1 : 0, nt = (c + MOE_TS - 1) / MOE_TS;
+            if (f < e) { ps += c; pa += act; pt += nt; }
+            ta += act; tt += nt;
         }
-        // tiles of up to 16 slots of one expert
-        int nt = (cnt + MOE_TS - 1) / MOE_TS;
-        int t0 = sycl::exclusive_scan_over_group(grp, nt, sycl::plus<int>());
-        int ntt = sycl::reduce_over_group(grp, nt, sycl::plus<int>());
-        for (int t = 0; t < nt; ++t) {
+        const int start = sycl::reduce_over_group(grp, ps, sycl::plus<int>());
+        const int a = sycl::reduce_over_group(grp, pa, sycl::plus<int>());
+        const int t0 = sycl::reduce_over_group(grp, pt, sycl::plus<int>());
+        const int na = sycl::reduce_over_group(grp, ta, sycl::plus<int>());
+        const int ntt = sycl::reduce_over_group(grp, tt, sycl::plus<int>());
+        const int cnt = g.ecount[e];
+        if (l == 0) {
+            if (cnt) { g.exp[a] = e; g.off[a] = start; }
+            if (e == 0) { g.count[0] = na; g.off[na] = K; g.ntiles[0] = ntt; }
+        }
+        if (!cnt) return; // the same for the whole work-group
+        int base = start;
+        for (int s0 = 0; s0 < K; s0 += GW) {
+            const int s = s0 + l;
+            const int m = (s < K && ids[s] == e) ? 1 : 0;
+            const int r = sycl::exclusive_scan_over_group(grp, m, sycl::plus<int>());
+            if (m) g.slots[base + r] = s;
+            base += sycl::reduce_over_group(grp, m, sycl::plus<int>());
+        }
+        const int nt = (cnt + MOE_TS - 1) / MOE_TS;
+        for (int t = l; t < nt; t += GW) {
             g.tile_exp[t0 + t] = e;
             g.tile_s0[t0 + t] = start + t * MOE_TS;
             g.tile_n[t0 + t] = sycl::min(MOE_TS, cnt - t * MOE_TS);
         }
-        if (e == 0) g.ntiles[0] = ntt;
     });
 }
 
