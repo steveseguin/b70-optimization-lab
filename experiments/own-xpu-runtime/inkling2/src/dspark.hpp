@@ -36,7 +36,8 @@ struct Drafter {
     float *cvec = nullptr;  // W_lm bh [Vp]
     sycl::ext::oneapi::bfloat16 *Pt = nullptr; // (W_lm Wh)^T [R][Vp]: the correction of latent z is sum_j z_j Pt[j]
     int32_t *gids;
-    float *yl = nullptr, *amv = nullptr; int32_t *ami = nullptr; // y in lane order; argmax scratch
+    float *yl = nullptr, *amv = nullptr, *ams = nullptr, *gp = nullptr; int32_t *ami = nullptr; // argmax scratch; guess probabilities
+    std::vector<float> probs; // the last draft's guess probabilities (the drafter's own softmax)
     float *hl = nullptr, *attl = nullptr, *gl = nullptr; // the 8 slots' product inputs in lane order (xlane.hpp)
     bool fold = true;       // INK_DSP_FOLD=0: each guess passes y_i + Wh z + bh through W_lm (the reference's way)
     int r_last = -1; // the row of rrows that holds r(P0 - 1)
@@ -124,7 +125,8 @@ struct Drafter {
         hl = d.alloc<float>((size_t)B * xlane_floats(E));
         attl = d.alloc<float>((size_t)B * xlane_floats(HQ * HD));
         gl = d.alloc<float>((size_t)B * xlane_floats((int)L[0].gate.t->rows()));
-        amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G);
+        amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G); ams = d.alloc<float>(ops::ARGMAX_G);
+        gp = d.alloc<float>(B);
         if (const char *ev = std::getenv("INK_DSP_FOLD")) fold = std::atoi(ev) != 0;
         if (fold) make_fold();
         e.on_step = [this](int pos0, int n) { inject(pos0, n); };
@@ -364,10 +366,12 @@ struct Drafter {
                 e.mm(e.m.output, hs, lgd, 1);
                 e.pr("dsp_softcap", ops::softcap(d.q, lgd, (size_t)Vp, 30.0f));
             }
-            e.pr("dsp_argmax", ops::argmax_rows2(d.q, lgd, Vp, V, 1, gids + (i - 1), amv, ami));
+            e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vp, V, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams));
         }
         std::vector<int32_t> r(n);
         d.get(r.data(), gids, n);
+        probs.resize(n);
+        d.get(probs.data(), gp, n);
         return r;
     }
 

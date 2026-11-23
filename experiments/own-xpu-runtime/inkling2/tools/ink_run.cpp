@@ -118,6 +118,17 @@ int main(int argc, char **argv) {
             const int32_t *xdev = e.ids; // the last chosen token on the card (the drafter's anchor)
             out.push_back(x); hist.push_back(x);
             long checks = 0, plain = 0, guessed = 0, kept = 0;
+            // INK_SPEC_ADAPT (default 1 with the drafter): draft INK_SPEC guesses, then check the count k (0..INK_SPEC)
+            // with the most expected tokens per ms: keep chance of guess j from the drafter's probability (tenths;
+            // measured 2026-11-23 on code, haiku and a 3K prompt: 0.9+ kept 283 of 304, 0.8+ 35 of 57, ...), step costs
+            // INK_SPEC_COST (ms, steps of 1..4 tokens; card 2 bench 11.4 / 14.9 / 17.4 / 20.4)
+            const bool adapt = dr && (!std::getenv("INK_SPEC_ADAPT") || std::atoi(std::getenv("INK_SPEC_ADAPT")));
+            const float qk[10] = {0.10f, 0.10f, 0.12f, 0.20f, 0.33f, 0.36f, 0.44f, 0.53f, 0.61f, 0.93f};
+            double cost[4] = {11.4, 14.9, 17.4, 20.4};
+            if (const char *ce = std::getenv("INK_SPEC_COST"))
+                std::sscanf(ce, "%lf,%lf,%lf,%lf", &cost[0], &cost[1], &cost[2], &cost[3]);
+            long kchose[4] = {};
+            long pb_n[10] = {}, pb_k[10] = {}; // guesses and kept guesses by the drafter's probability (tenths), first rejection ends a check
             double tdraft = 0;
             while (x != e.m.hp.eos && (int)out.size() < n_gen) {
                 std::vector<int32_t> g;
@@ -137,6 +148,17 @@ int main(int argc, char **argv) {
                             break;
                         }
                 if ((int)g.size() > room) g.resize(std::max(0, room));
+                if (adapt && !g.empty()) {
+                    double best = 1.0 / cost[0], ex = 1.0, pr = 1.0;
+                    int bk = 0;
+                    for (int j = 0; j < (int)g.size(); ++j) {
+                        pr *= qk[std::min(9, (int)(dr->probs[j] * 10.0f))];
+                        ex += pr;
+                        if (ex / cost[j + 1] > best) { best = ex / cost[j + 1]; bk = j + 1; }
+                    }
+                    g.resize(bk);
+                    ++kchose[bk];
+                }
                 if (g.empty()) {
                     e.step(&x, 1);
                     if (gen_out.is_open()) { d.q.wait(); save_rows(1); }
@@ -151,6 +173,12 @@ int main(int argc, char **argv) {
                 const std::vector<int32_t> y = e.check(tk.data(), (int)tk.size());
                 int a = 0; // guesses that match the model's choices
                 while (a < (int)g.size() && g[a] == y[a] && y[a] != e.m.hp.eos) ++a;
+                if (dr)
+                    for (int j = 0; j <= a && j < (int)g.size(); ++j) { // guesses the check decided (up to the first rejection)
+                        const int b = std::min(9, (int)(dr->probs[j] * 10.0f));
+                        ++pb_n[b];
+                        if (j < a) ++pb_k[b];
+                    }
                 e.accept(a + 1);
                 if (dr) dr->r_last = a; // r(P0') = the row of the last kept token
                 xdev = e.cids + a;
@@ -162,6 +190,12 @@ int main(int argc, char **argv) {
             }
             std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps; %.2f tokens per check; drafting %.3f s\n",
                          checks, guessed, kept, guessed ? 100.0 * kept / guessed : 0.0, plain, checks ? 1.0 + (double)kept / checks : 0.0, tdraft);
+            if (dr) {
+                if (adapt) std::fprintf(stderr, "[spec] guesses checked per round: 0 x%ld, 1 x%ld, 2 x%ld, 3 x%ld\n", kchose[0], kchose[1], kchose[2], kchose[3]);
+                std::fprintf(stderr, "[spec] kept by the drafter's probability:");
+                for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
+                std::fprintf(stderr, "\n");
+            }
             n_gen = 0; // done: the loop below does nothing
         }
         for (int i = 0; i < n_gen; ++i) {

@@ -87,6 +87,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24); 403K: 24.87 tok/s (was 23.53, card 5) | full layers' softmax and block sums past 16K keys (below) |
 | job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
 | DSpark drafter guesses (card 2) | | code 256 tokens 109.68 tok/s with 2 guesses (plain 87.70), haiku 128 94.66 (plain 88.05) | the drafter on the card, guesses checked exactly (below) |
+| guesses per check chosen from the drafter's probabilities (card 2) | | code 118.41 tok/s (plain 88.22), haiku 96.94 (88.60), 3K prompt 98.22 (83.20) | `INK_SPEC=3`, adaptive count (below) |
 | control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
@@ -224,6 +225,13 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   BF16, 0.15 s) and each guess reads that table (189 µs) instead of the 380 MB output layer; the guess slots' output
   products share one read (`gemv_multi_m`, 793 µs for 3); the 8-slot products take lane-order inputs in blocks of 8
   (ffn_gate 81 µs, ffn_down 103; the tile kernels took 116 and 212; the first version's blocks 172 for ffn_gate).
+- How many guesses to check (`INK_SPEC_ADAPT`, default on with the drafter): the drafter makes 3 and gives each its
+  own softmax probability (`ops::argmax_p_rows`). Its probability tracks the keep rate: guesses at 0.9+ were kept 283
+  of 304 times (code, haiku, 3K prompt), 0.8-0.9 35 of 57, below 0.5 10-37 %. Each round checks the count k (0-3)
+  with the most expected tokens per ms (keep chance from those buckets, step costs 11.4 / 14.9 / 17.4 / 20.4 ms,
+  `INK_SPEC_COST`). Card 2, `INK_SPEC=3`: code 256 tokens 88.22 tok/s plain -> 109.92 with 2 fixed guesses ->
+  **118.41** adaptive; haiku 128 88.60 -> 94.85 -> **96.94**; the 3,127-token prompt + 256 tokens 83.20 -> 95.31 ->
+  **98.22**. Same ids as plain in all.
 - The check step's output rows: the final norm writes lane-order rows for steps of 1-4 tokens; 4 rows 1,291 ->
   944 µs (multi_m), one row 676 -> 655 (bench_gemv, card 3). Greedy choice in two launches (`ops::argmax_rows2`,
   same index; one work-group per row took 56-63 µs).

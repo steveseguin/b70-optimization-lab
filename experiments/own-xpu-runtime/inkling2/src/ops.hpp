@@ -509,6 +509,38 @@ inline sycl::event argmax_rows2(sycl::queue &q, const float *x, size_t ld, int n
         if (l == 0) out[r] = idx;
     });
 }
+// argmax_rows2 that also gives the chosen value's softmax probability (1 / sum_i exp(x_i - max)) per row;
+// ps: nrows * ARGMAX_G scratch sums. For guessers: how sure the guess is
+inline sycl::event argmax_p_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out, float *prob, float *pv,
+                                 int32_t *pi, float *ps) {
+    constexpr int AW = 256, AG = ARGMAX_G;
+    const int span = (n + AG - 1) / AG;
+    q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AG * AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {
+        const int g = (int)it.get_group(0), r = g / AG, a = g % AG, l = (int)it.get_local_id(0);
+        const float *xr = x + (size_t)r * ld;
+        const int lo = a * span, hi = sycl::min(n, lo + span);
+        float bv = -INFINITY, bs = 0.0f;
+        int bi = n;
+        for (int i = lo + l; i < hi; i += AW) {
+            const float v = xr[i];
+            if (bi == n || v > bv) { bs = (bi == n ? 0.0f : bs * sycl::exp(bv - v)) + 1.0f; bv = v; bi = i; }
+            else bs += sycl::exp(v - bv);
+        }
+        const float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        const int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        const float sm = sycl::reduce_over_group(it.get_group(), bi < n ? bs * sycl::exp(bv - m) : 0.0f, sycl::plus<float>());
+        if (l == 0) { pv[g] = m; pi[g] = idx; ps[g] = sm; }
+    });
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AG), sycl::range<1>(AG)), [=](sycl::nd_item<1> it) {
+        const int r = (int)it.get_group(0), l = (int)it.get_local_id(0), g = r * AG + l;
+        const float bv = pv[g];
+        const int bi = pi[g];
+        const float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        const int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        const float sm = sycl::reduce_over_group(it.get_group(), bi < n ? ps[g] * sycl::exp(bv - m) : 0.0f, sycl::plus<float>());
+        if (l == 0) { out[r] = idx; prob[r] = 1.0f / sm; }
+    });
+}
 // argmax() of each of nrows rows (row r at x + r * ld), one work-group per row: the same choice per row
 inline sycl::event argmax_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out) {
     constexpr int AW = 1024;
