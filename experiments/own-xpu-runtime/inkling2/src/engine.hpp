@@ -36,6 +36,8 @@ struct Engine {
     float *hb = nullptr, *yk = nullptr, *moe = nullptr, *ffn_out = nullptr, *tau = nullptr, *fin = nullptr, *lg = nullptr;
     int32_t *eids = nullptr;
     int ldp = 0;
+    float *mix_inv = nullptr, *mix_sc = nullptr;
+    bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
 
     Engine(Device &dev, const GGUF &gg, const Weights &wt, int capacity, int ubatch = 512, bool every_logit = false,
            const std::map<std::string, WView> *views = nullptr)
@@ -73,6 +75,7 @@ struct Engine {
         yk = d.alloc<float>((size_t)h.n_used * T * h.n_embd);
         moe = d.alloc<float>(E); ffn_out = d.alloc<float>(E);
         tau = d.alloc<float>(T); fin = d.alloc<float>(E);
+        mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
 
@@ -120,7 +123,9 @@ struct Engine {
         for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s];
         a.st[nb] = cur;
         a.ns = nb + 1;
-        pr("mix", ops::mix(d.q, a, m.hp.n_embd, query, nq, out, n, n_tok));
+        if (mix_v1) { pr("mix", ops::mix(d.q, a, m.hp.n_embd, query, nq, out, n, n_tok)); return; }
+        pr("mix_scores", ops::mix_scores(d.q, a, m.hp.n_embd, query, nq, mix_inv, mix_sc, n, n_tok));
+        pr("mix_out", ops::mix_out(d.q, a, m.hp.n_embd, nq, mix_inv, mix_sc, out, n, n_tok));
     }
     // control(cur, msg, layer, module) (inkling2.cpp:237) into y
     void control(const float *cur, const float *mg, const Layer &l, int mod, float *y) {

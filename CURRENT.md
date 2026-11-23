@@ -18,6 +18,11 @@
   apart, worst intermediate 1.03e-04; the normal CPU reference is 1.38e-02 from it. Greedy answers branch from the
   normal reference only at near-ties. First, unoptimized speed: writing 19.57 tok/s (12.97 at 3K context), prompt
   72 tok/s. Next: speed (launch count, fused kernels, prompt matrix kernels, guessing with the DSpark drafter).
+- 21:50: writing **48.15 tok/s** (from 19.57; 18.8 ms per step, 2,629 launches): parallel expert routing, planar
+  weight rows, bit-decoded FP4, split depth mix. Builds now strict IEEE (`scripts/build.sh`); new baseline checked
+  against the high-precision reference (5-token final 7.80e-06). Gate for changes: `scripts/check-exact.sh`.
+  Next: fuse the ~2,000 small launches, one launch for the six matrices that share the attention input, honest
+  (cache-busting) kernel timing, then a prompt matrix kernel and DSpark guessing.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -17,6 +17,12 @@ the model's math, never used as our code).
 - `tools/test_formats.cpp`, `tools/test_gemv.cpp`: checks against the reference library; `tools/ref_dump.cpp`: saves
   the reference's intermediate tensors; `tools/compare_dumps.py`: lines two dumps up; `tools/detok.py`: ids to text;
   `tools/ink_load.cpp`: card list and upload test.
+- `src/planar.hpp`, `src/gemv2.hpp`: card-side regrouped ("planar") rows for Q8_0, NVFP4 and Q6_K and the products
+  over them (same per-value arithmetic, aligned vector loads); `tools/bench_gemv.cpp` times variants and checks each
+  one bit for bit against the first kernels.
+- `scripts/build.sh <tool>`: the one build command (strict IEEE single precision on the card, see below).
+- `scripts/check-exact.sh <ink_run>`: the gate for every engine change, three cards in parallel: all 426 dumped
+  tensors of a 5-token prompt and the greedy ids of two prompts must equal `/home/steve/inkling-work/baseline`.
 - `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 1-5).
 - `patches/oracle-f32-activations.patch`: a high-precision build of the reference for checking (F32 activations and
   double sums for every weight type; run with `GGML_CPU_F32_ACT=1 REF_FA=0 REF_NO_REPACK=1`). Never shipped.
@@ -34,3 +40,23 @@ prompt's branch the reference disagrees with itself between its prompt and decod
 
 Speed of this first, unoptimized version (one card): writing 19.57 tok/s (short prompt), 12.97 tok/s at 3K context;
 reading a 3,127-token prompt 43.3 s (72.1 tok/s). The CPU reference: 6.29 tok/s writing, 126.4 s for the same prompt.
+
+## Speed work (2026-11-22)
+
+| version | writing (short prompt) | per step | what changed |
+|---|---|---|---|
+| first | 19.57 tok/s | | |
+| parallel expert routing | 25.81 tok/s | 37.1 ms | top 8 of 128 picked by one work-group per token (was 275 µs per call) |
+| planar weights | 41.31 tok/s | 21.9 ms | regrouped Q8_0 / NVFP4 / Q6_K rows, R rows per sub-group (output head 4.86 -> 0.97 ms) |
+| strict build + split mix + 4-bit decode | 48.15 tok/s | 18.8 ms | FP4 values and scales decoded from bits; depth mix in two parallel launches |
+
+Every row was checked bit for bit against the row before it, except the strict build, which became a new
+baseline. Default icpx builds use the fast floating-point model: the compiler may regroup sums and use approximate
+division and square roots, so two kernels with the same written arithmetic gave different bits (the split depth mix
+differed from the one-launch mix). `scripts/build.sh` uses `-fp-model=precise -ffp-contract=off` with correctly
+rounded division and square root, and the two mixes then agree bit for bit. New baseline against the high-precision
+reference: final scores 7.80e-06 apart on the 5-token prompt (was 1.38e-05), worst of 378 tensors 1.08e-04; on a
+141-token prompt the median position is 3.70e-05 apart (fast build 7.90e-05). Greedy ids: the haiku prompt is
+unchanged; the coding answer changes at token 102, where the reference prefers its word by only 0.027 (27.668 vs
+27.642) and the strict build by -0.014 the other way.
+

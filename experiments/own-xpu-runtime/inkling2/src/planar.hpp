@@ -36,6 +36,20 @@ inline int fp4_int(int nib) {
     return (nib & 8) ? -v : v;
 }
 
+// ue4m3 (formats.hpp) without ldexp: every UE4M3 value times 0.5 is exactly representable, so building the float from
+// its bits gives the same value. e > 0: (8 + m) * 2^(e - 11) = 2^(e - 8) * (1 + m/8): exponent field e + 119,
+// mantissa m << 20. e = 0: m * 2^-10 (exact). 0 and 0x7F are 0.
+inline float ue4m3_bits(uint8_t x) {
+    int e = (x >> 3) & 0xF, m = x & 0x7;
+    uint32_t u = e ? ((uint32_t)(e + 119) << 23) | ((uint32_t)m << 20) : 0u;
+    float f;
+    std::memcpy(&f, &u, 4);
+    if (e == 0) f = (float)m * 0x1p-10f;
+    return (x == 0x7F) ? 0.0f : f;
+}
+// E2M1 magnitudes 0 1 2 3 4 6 8 12 packed four bits each
+constexpr uint32_t FP4_MAG = 0xC8643210u;
+
 struct Q8_0P {
     static constexpr uint32_t TYPE = G_Q8_0;
     static void decode32(const uint8_t *row, int cols, int c, float *o) {
@@ -62,15 +76,18 @@ struct NVFP4P {
         uint8_t q[16];
         load_bytes<8>(row + 16 * c, q);
         load_bytes<8>(row + 16 * c + 8, q + 8);
-        const uint8_t *dp = row + cols / 2 + 2 * c;
+        uint16_t dd;
+        std::memcpy(&dd, row + cols / 2 + 2 * c, 2);
         for (int k = 0; k < 2; ++k) {
-            float d = fmt::ue4m3(dp[k]);
+            float d = ue4m3_bits((uint8_t)(dd >> (8 * k)));
             float *ob = o + 16 * k;
             for (int j = 0; j < 8; ++j) {
-                uint8_t b = q[8 * k + j];
-                int8_t v0 = (int8_t)fp4_int(b & 0x0F), v1 = (int8_t)fp4_int(b >> 4);
-                ob[j] = v0 * d;
-                ob[j + 8] = v1 * d;
+                uint32_t b = q[8 * k + j];
+                // value * d is exact (at most 6 significant bits), so (float)v * d equals formats.hpp's v0 * d
+                int m0 = (int)((FP4_MAG >> ((b & 7) * 4)) & 0xF), m1 = (int)((FP4_MAG >> (((b >> 4) & 7) * 4)) & 0xF);
+                int v0 = (b & 8) ? -m0 : m0, v1 = (b & 0x80) ? -m1 : m1; // -0 stays +0, as in kvalues_mxfp4
+                ob[j] = (float)v0 * d;
+                ob[j + 8] = (float)v1 * d;
             }
         }
     }

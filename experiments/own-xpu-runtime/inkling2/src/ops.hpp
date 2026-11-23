@@ -121,6 +121,51 @@ inline sycl::event mix(sycl::queue &q, MixArgs a, size_t ld, const float *query,
     });
 }
 
+// mix in two launches with the same arithmetic as mix() (bit-identical), parallel over states and then over the output:
+//  mix_scores: one work-group per (token, state): inv[t][s] (rms scale) and sc[t][j][s] (state . query j), the same
+//              strided sums and work-group reduction as mix();
+//  mix_out:    softmax over the states (same order as mix()), out[j][t][i] = sum_s (x_s[i] * inv_s) * p_s.
+// sc: [ntok][nq][MIX_MAX], inv: [ntok][MIX_MAX]
+inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float *query, int nq, float *inv, float *sc,
+                              int n, int ntok) {
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
+        h.parallel_for(rows_range(ntok * a.ns), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), t = g / a.ns, s = g % a.ns, l = (int)it.get_local_id(0);
+            const float *x = a.st[s] + (size_t)t * ld;
+            float acc = 0.0f;
+            for (int i = l; i < n; i += OPS_WG) acc += x[i] * x[i];
+            float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+            float is = 1.0f / sycl::sqrt(tot / n + 1e-6f);
+            if (l == 0) inv[(size_t)t * MIX_MAX + s] = is;
+            for (int j = 0; j < nq; ++j) {
+                const float *qv = query + (size_t)j * n;
+                float d = 0.0f;
+                for (int i = l; i < n; i += OPS_WG) d += (x[i] * is) * qv[i];
+                float dt = wg_sum<OPS_WG>(it, d, &slm[0]);
+                if (l == 0) sc[((size_t)t * nq + j) * MIX_MAX + s] = dt;
+            }
+        });
+    });
+}
+inline sycl::event mix_out(sycl::queue &q, MixArgs a, size_t ld, int nq, const float *inv, const float *sc, float *out,
+                           int n, int ntok) {
+    return q.parallel_for(sycl::range<3>((size_t)nq, (size_t)ntok, (size_t)n), [=](sycl::id<3> id) {
+        int j = (int)id[0], t = (int)id[1], i = (int)id[2];
+        const float *scr = sc + ((size_t)t * nq + j) * MIX_MAX;
+        const float *iv = inv + (size_t)t * MIX_MAX;
+        float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
+        for (int s = 0; s < a.ns; ++s) mx = sycl::fmax(mx, scr[s] * scale);
+        float p[MIX_MAX], sum = 0.0f;
+        for (int s = 0; s < a.ns; ++s) { p[s] = sycl::exp(scr[s] * scale - mx); sum += p[s]; }
+        float isum = 1.0f / sum;
+        for (int s = 0; s < a.ns; ++s) p[s] *= isum;
+        float acc = 0.0f;
+        for (int s = 0; s < a.ns; ++s) acc += (a.st[s][(size_t)t * ld + i] * iv[s]) * p[s];
+        out[((size_t)j * ntok + t) * n + i] = acc;
+    });
+}
+
 // embedding rows: y[t] = decoded row ids[t] of W (any format), n values per row
 inline sycl::event get_rows(sycl::queue &q, const Tensor &t, const uint8_t *W, const int32_t *ids, float *y, int ntok) {
     sycl::event e;
