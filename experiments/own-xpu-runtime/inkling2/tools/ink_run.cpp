@@ -59,7 +59,16 @@ int main(int argc, char **argv) {
         // INK_HOST_ARGMAX=1: copy every step's logits to the host and choose there (the first version's loop)
         const bool host_argmax = std::getenv("INK_HOST_ARGMAX") && std::atoi(std::getenv("INK_HOST_ARGMAX"));
         e.host_logits = host_argmax;
+        // INK_SAVE_GEN=<file>: every step's last logits row (the prompt's, then each generated token's), F32, appended
+        std::ofstream gen_out;
+        std::vector<float> gen_row;
+        if (const char *gp = std::getenv("INK_SAVE_GEN")) { gen_out.open(gp, std::ios::binary); gen_row.resize(e.m.hp.vocab); }
         for (int i = 0; i < n_gen; ++i) {
+            if (gen_out.is_open()) {
+                d.q.wait();
+                d.get(gen_row.data(), e.lg + (size_t)(e.n_logit_rows - 1) * e.m.hp.vocab_padded, gen_row.size());
+                gen_out.write((const char *)gen_row.data(), (std::streamsize)gen_row.size() * 4);
+            }
             int b = host_argmax ? e.argmax_last() : e.next_token();
             out.push_back(b);
             if (b == e.m.hp.eos) break;

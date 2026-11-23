@@ -7,6 +7,7 @@
 #include "model.hpp"
 #include "fused.hpp"
 #include "tok_tiles.hpp"
+#include "multi.hpp"
 #include "ops.hpp"
 #include <cmath>
 
@@ -48,6 +49,7 @@ struct Engine {
     int tile_min = 128;        // steps of at least this many tokens use the token-parallel kernels (INK_TILE_MIN)
     float *Xd = nullptr;       // transposed tiles of the dense token-parallel kernels (tok_tiles.hpp)
     int dense_min = 16;        // steps of at least this many tokens use them for the dense matrices (INK_DENSE_MIN)
+    bool multi_proj = true;    // one-token steps: the attention-input matrices in one launch (INK_MULTI=0: one each)
     static constexpr int XD_COLS = 4608; // widest dense input (loop down: 2 x 2304)
     int n_logit_rows = 1;      // logits rows the last step left in lg
     bool host_logits = true;   // copy the logits to the host after each step (false: next_token() reads them on the card)
@@ -109,6 +111,7 @@ struct Engine {
             Ht = d.alloc<float>((size_t)tile_bound * h.n_ff * MOE_TS);
         }
         if (const char *e = std::getenv("INK_DENSE_MIN")) dense_min = std::atoi(e);
+        if (const char *e = std::getenv("INK_MULTI")) multi_proj = std::atoi(e) != 0;
         if (T >= dense_min) Xd = d.alloc<float>((size_t)((T + MOE_TS - 1) / MOE_TS) * XD_COLS * MOE_TS);
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
@@ -315,13 +318,28 @@ struct Engine {
             // this call reads the state of the previous call and writes its own (two copies)
             const float *st_in = conv + ((size_t)cpar * h.n_app + il) * conv_n;
             float *st_out = conv + ((size_t)(cpar ^ 1) * h.n_app + il) * conv_n;
-            mm(l.wq, in[0], Q, ntok);
-            mm(l.wk, in[1], Kr, ntok);
-            mm(l.wv, in[2], Vr, ntok);
-            if (!swa) { mm(l.k_conv_proj, in[1], dynK, ntok); mm(l.v_conv_proj, in[2], dynV, ntok); }
-            mm(l.rel, in[0], R, ntok);
-            mm(l.sink, in[0], sinks, ntok);
-            mm(l.wgate, in[0], gate, ntok);
+            if (ntok == 1 && multi_proj) { // one launch for the matrices that read the attention inputs (multi.hpp)
+                MultiJobs mj;
+                const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
+                const float *xs[8] = {in[0], in[1], in[2], in[1], in[2], in[0], in[0], in[0]};
+                float *ys[8] = {Q, Kr, Vr, dynK, dynV, R, sinks, gate};
+                bool ok = true;
+                for (int k = 0; k < 8; ++k) if (ws[k] && !multi_ok(ws[k]->view())) ok = false;
+                if (ok) {
+                    for (int k = 0; k < 8; ++k) if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], std::min(tune(*ws[k]).R, 2));
+                    pr("w:attn_in", gemv_multi(d.q, mj, 2));
+                } else {
+                    for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], xs[k], ys[k], ntok);
+                }
+            } else {
+                mm(l.wq, in[0], Q, ntok);
+                mm(l.wk, in[1], Kr, ntok);
+                mm(l.wv, in[2], Vr, ntok);
+                if (!swa) { mm(l.k_conv_proj, in[1], dynK, ntok); mm(l.v_conv_proj, in[2], dynV, ntok); }
+                mm(l.rel, in[0], R, ntok);
+                mm(l.sink, in[0], sinks, ntok);
+                mm(l.wgate, in[0], gate, ntok);
+            }
             {   // convolutions, clips, positions, cache store, bias table (one launch)
                 fz::PrepArgs a{};
                 a.ntok = ntok; a.pos0 = pos0; a.nh = nh; a.nkvh = nkvh; a.hd = hd; a.nr = h.n_rel; a.ext = h.rel_extent;

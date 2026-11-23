@@ -1,7 +1,8 @@
 #!/bin/bash
 # check-exact.sh <ink_run binary> [baseline dir]: the exactness gate for an engine change, four cards in parallel.
 #   card A: the 5-token prompt with INK_DUMP; every dumped tensor must equal the baseline's bit for bit
-#   card B: greedy 64 tokens of prompts/haiku; card C: greedy 128 tokens of prompts/code; ids must equal the baseline's
+#   card B: greedy 64 tokens of prompts/haiku; card C: greedy 128 tokens of prompts/code; ids must equal the baseline's,
+#     and card B's logits rows of all 64 steps (INK_SAVE_GEN: the one-token path) must equal the baseline's bit for bit
 #   card D: the 300-token prompt (prompts/p300 = first 300 tokens of prompts/long) with INK_DUMP: one step of 300
 #     tokens, so the token-parallel expert kernels run (steps >= 128 tokens); every tensor must equal the baseline's
 #     (made with INK_TILE_MIN=100000, i.e. the grouped kernels)
@@ -17,7 +18,7 @@ out=$(mktemp -d "$W/check.XXXXXX")
 mkdir -p "$out/s5" "$out/p300"
 INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /dev/null 2> "$out/p300.err" &
 INK_DUMP=$out/s5 "$S" "$cA" "$bin" "$M" "$cA" "$W/ref-dumps/smoke5.tokens" 1 > /dev/null 2> "$out/s5.err" &
-"$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
+INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
 "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err" &
 wait
 rc=0
@@ -40,6 +41,10 @@ PY
     for n in haiku code; do
         if cmp -s "$base/$n.ids" "$out/$n.ids"; then echo "PASS $n: ids identical"; else echo "FAIL $n: ids differ"; rc=1; fi
     done
+    if [ -f "$base/haiku.gen" ]; then
+        if cmp -s "$base/haiku.gen" "$out/haiku.gen"; then echo "PASS haiku: logits rows of all 64 steps bit-identical ($(stat -c %s "$out/haiku.gen") bytes)"
+        else echo "FAIL haiku: step logits differ ($(cmp "$base/haiku.gen" "$out/haiku.gen" | head -1))"; rc=1; fi
+    fi
 fi
 for n in haiku code; do grep -h "generated" "$out/$n.err" | sed "s/^/$n: /"; done
 grep -h "^error" "$out"/*.err && rc=1

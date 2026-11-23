@@ -21,6 +21,30 @@ inline void load_x32(const float *xv, float *xs) {
     }
 }
 
+// rows r0..r0+R-1 of W times x into y (one sub-group); shared by Gemv1R and the multi-matrix launch (multi.hpp)
+template <class D, int R>
+inline void gemv1_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows, int cols, const float *x, float *y, int r0) {
+    int lane = (int)sg.get_local_linear_id();
+    float acc[R];
+    for (int k = 0; k < R; ++k) acc[k] = 0.0f;
+    const int nc = cols / 32;
+    for (int c = lane; c < nc; c += SG) {
+        float xs[32];
+        load_x32(x + 32 * c, xs);
+        for (int k = 0; k < R; ++k) {
+            if (r0 + k >= rows) break;
+            float o[32];
+            D::decode32(W + (size_t)(r0 + k) * rb, cols, c, o);
+            float s = 0.0f;
+            for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+            acc[k] += s;
+        }
+    }
+    for (int k = 0; k < R; ++k) {
+        float v = sg_sum(sg, acc[k]);
+        if (lane == 0 && r0 + k < rows) y[r0 + k] = v;
+    }
+}
 template <class D, int R> struct Gemv1R {
     const uint8_t *W; size_t rb; int rows, cols;
     const float *x;
@@ -30,26 +54,7 @@ template <class D, int R> struct Gemv1R {
         auto sg = it.get_sub_group();
         int r0 = ((int)it.get_group(0) * sgw + (int)sg.get_group_linear_id()) * R;
         if (r0 >= rows) return;
-        int lane = (int)sg.get_local_linear_id();
-        float acc[R];
-        for (int k = 0; k < R; ++k) acc[k] = 0.0f;
-        const int nc = cols / 32;
-        for (int c = lane; c < nc; c += SG) {
-            float xs[32];
-            load_x32(x + 32 * c, xs);
-            for (int k = 0; k < R; ++k) {
-                if (r0 + k >= rows) break;
-                float o[32];
-                D::decode32(W + (size_t)(r0 + k) * rb, cols, c, o);
-                float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
-                acc[k] += s;
-            }
-        }
-        for (int k = 0; k < R; ++k) {
-            float v = sg_sum(sg, acc[k]);
-            if (lane == 0 && r0 + k < rows) y[r0 + k] = v;
-        }
+        gemv1_rows<D, R>(sg, W, rb, rows, cols, x, y, r0);
     }
 };
 
