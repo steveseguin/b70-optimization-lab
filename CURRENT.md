@@ -71,6 +71,10 @@
   the mix warms the next attention weights into L2, gate|up epilogue trimmed. Same bits; gate 6/6.
 - Nov 23 ~12:00: writing 11.56 -> 11.39 ms per token (~88 tok/s, card 3): the expert products read their input in
   "lane order" (4 cache lines per load instead of 16). Same bits; gate 6/6. Closed ideas: `inkling2/DO-NOT-REPEAT.md`.
+- Nov 23 ~15:00: long-context writing 21.24 -> 20.78 ms per token at 100K (card 3): the full layers' softmax and
+  block sums read 64 values per round past 16K keys (60 -> 36 µs and 64 -> 37 µs per layer). Same 33 tokens at 100K;
+  gate 6/6. A 48-token prompt gives bit-identical last scores in steps of 1, 2, 3, 4, 8, 16 or 48 tokens, so checked
+  guesses (drafting) can be exact; small multi-token steps are still slow (2 tokens 19.5 ms, 4 tokens 27.4).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -84,6 +84,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | fused multiply-add, baseline v3 (card 3) | 642.7-643.2 tok/s; 31K prompt 530.6 (was 446.6, card 2) | short 12.28 ms, 3K 13.18 (was 12.31-12.36, 13.35; card 4) | every sum of products through `mac()` (below) |
 | reads issued together, weights warmed (card 3) | | short 11.61-11.63 ms (was 12.31-12.33 for the build before) | small kernels without a branch around each read; the mix warms L2 (below) |
 | expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
+| long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24) | full layers' softmax and block sums past 16K keys (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -148,6 +149,22 @@ At 403,372 tokens (one card, 404,000 positions; a needle test, prompts/needle.to
 with two one-line notes hidden at 3 % and 55 % and the question at the end) the prompt reads at 173.0 tok/s (2,332 s;
 the build before these long-prompt kernels: 83.4 tok/s, 4,835 s) and writing runs at 23.5 tok/s. The model answers
 "Vault code: 7351-QX-4829; meeting room: Juniper-12." (both right; its thinking names the sections they sat in).
+
+Long rows (2026-11-23): the writing step's softmax (`attn_softmax_sum`) and block sums (`attn_pv_bo_sum`) give a row
+one work-group of 128 threads, which waits for each round of reads. Past 16K keys they now issue 64 reads per round
+(the maxima 16), then 8, then one by one; every sum keeps its order. `BENCH_SM=1 bench_attn <card> <pos> 0` (card 3,
+all variants identical to the 8-per-round kernel): 400K keys softmax 268 -> 159 µs, block sum 246 -> 132; 200K 98 -> 64
+and 137 -> 67; 32 or 128 per round are no better. In the engine at 100K (card 3, `INK_PROF`): softmax 60.4 -> 36.2 µs,
+block sum 64.1 -> 37.2 per full layer, step 21.24 -> 20.78 ms; the 32 written tokens unchanged. Short rows (the
+windowed layers) keep 8 per round and the one-by-one tail: bigger rounds or a predicated last round made them slower.
+
+Plain reads (`bench_read <card>`, card 2, back-to-back launches over different buffers): 8 MB 14.2 µs (564 GB/s),
+12 MB 21.1, 21 MB 36.2, 24 MB 41.2 (583 GB/s), 380 MB 631 (602 GB/s). Against these the one-token products are at
+gate|up 54.4 µs for 23.9 MB, down 29.2 for 11.9 MB, attention input 43.6 for 21.1 MB, attention output 17.2 for 7.5 MB
+(`INK_PROF`, card 2): ~1.6 ms of the 11.42 ms step above the plain-read time, the rest of the step is ~700 small kernels.
+
+Step size does not change the results: a 48-token prompt's last scores are bit-identical in steps of 1, 2, 3, 4, 8,
+16 or 48 tokens (`INK_UBATCH`, `INK_SAVE_LOGITS`), so guesses checked in one step give exactly the one-token text.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

@@ -362,8 +362,9 @@ inline sycl::event attn_pv_bo_part(sycl::queue &q, const float *P, int ldp, cons
         for (int gi = 0; gi < G; ++gi) part[(((size_t)t * nh + kvh * G + gi) * nblk + b) * hd + c] = acc[gi];
     });
 }
-inline sycl::event attn_pv_bo_sum(sycl::queue &q, const float *part, int nblk, int pos0, int ntok, int nh, int hd, int win,
-                                  const float *gate, float *out) {
+template <int UB>
+inline sycl::event attn_pv_bo_sum_u(sycl::queue &q, const float *part, int nblk, int pos0, int ntok, int nh, int hd, int win,
+                                    const float *gate, float *out) {
     return q.parallel_for(sycl::range<1>((size_t)ntok * nh * hd), [=](sycl::id<1> i) {
         const int c = (int)(i[0] % hd), row = (int)(i[0] / hd), t = row / nh;
         const int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
@@ -372,23 +373,43 @@ inline sycl::event attn_pv_bo_sum(sycl::queue &q, const float *part, int nblk, i
         const float *pp = part + (size_t)row * nblk * hd + c;
         int b = lo / PVB - b0;
         const int bh = p / PVB - b0;
-        for (; b + 7 <= bh; b += 8) { // loads 8 at a time, added in order
-            float v[8];
+        // loads UB at a time, then 8, then one by one, added in order
+        for (; b + UB - 1 <= bh; b += UB) {
+            float v[UB];
 #pragma unroll
-            for (int u = 0; u < 8; ++u) v[u] = pp[(size_t)(b + u) * hd];
+            for (int u = 0; u < UB; ++u) v[u] = pp[(size_t)(b + u) * hd];
 #pragma unroll
-            for (int u = 0; u < 8; ++u) acc += v[u];
+            for (int u = 0; u < UB; ++u) acc += v[u];
         }
+        if constexpr (UB > 8)
+            for (; b + 7 <= bh; b += 8) {
+                float v[8];
+#pragma unroll
+                for (int u = 0; u < 8; ++u) v[u] = pp[(size_t)(b + u) * hd];
+#pragma unroll
+                for (int u = 0; u < 8; ++u) acc += v[u];
+            }
         for (; b <= bh; ++b) acc += pp[(size_t)b * hd];
         out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
     });
 }
+// blocks added UB at a time: 64 past 128 blocks (16K keys), else 8 (2026-11-23, bench_attn BENCH_SM, card 3: 400K
+// keys 246 -> 132 us, 200K 137 -> 67; 32 or 128 at a time much less)
+inline sycl::event attn_pv_bo_sum(sycl::queue &q, const float *part, int nblk, int pos0, int ntok, int nh, int hd, int win,
+                                  const float *gate, float *out) {
+    if (nblk > 128) return attn_pv_bo_sum_u<64>(q, part, nblk, pos0, ntok, nh, hd, win, gate, out);
+    return attn_pv_bo_sum_u<8>(q, part, nblk, pos0, ntok, nh, hd, win, gate, out);
+}
 // attn_softmax_norm for steps whose scores came from attn_scores_g with wmax: the maximum from the sub-group maxima
 // (the same value: a maximum does not depend on the grouping), the same lane-strided sums of exponentials (loads
 // issued 8 at a time) and work-group sum; P keeps the exponentials and inv[row] = 1 / total (attn_pv_ti multiplies)
-inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const float *wmax, int nsgmax, int pos0, int ntok, int nh,
-                                    int win, float *P, int ldp, float *inv) {
-    constexpr int AW = ops::ATT_WG, UN = 8;
+// Rows of one work-group of AW threads: the loops issue their reads UN (the maxima MU) at a time, then 8, then one by
+// one; the sums keep their order (j ascending per thread). Rows past 16K keys take 64 / 16 at a time (2026-11-23,
+// bench_attn BENCH_SM, card 3: 400K keys 268 -> 159 us, 200K 98 -> 64; 32 or 128 at a time are no better than 8).
+template <int UN, int MU>
+inline sycl::event attn_softmax_sum_u(sycl::queue &q, const float *sink, const float *wmax, int nsgmax, int pos0, int ntok, int nh,
+                                      int win, float *P, int ldp, float *inv) {
+    constexpr int AW = ops::ATT_WG;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(AW / SG, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * AW), sycl::range<1>(AW)),
@@ -397,8 +418,15 @@ inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const flo
             int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
             const int nsg = (p - lo + 1 + SG - 1) / SG;
             float *pr = P + (size_t)g * ldp;
+            const float *wm = wmax + (size_t)g * nsgmax;
             float mx = -INFINITY;
-            for (int i = l; i < nsg; i += AW) mx = sycl::fmax(mx, wmax[(size_t)g * nsgmax + i]);
+            for (int i0 = l; i0 < nsg; i0 += MU * AW) { // a maximum does not depend on the order
+                float v[MU];
+#pragma unroll
+                for (int u = 0; u < MU; ++u) v[u] = wm[sycl::min(i0 + u * AW, nsg - 1)];
+#pragma unroll
+                for (int u = 0; u < MU; ++u) if (i0 + u * AW < nsg) mx = sycl::fmax(mx, v[u]);
+            }
             mx = sycl::reduce_over_group(it.get_group(), mx, sycl::maximum<float>());
             float sk = sink[(size_t)t * nh + hh];
             mx = sycl::fmax(mx, sk);
@@ -415,6 +443,18 @@ inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const flo
                     acc += e;
                 }
             }
+            if constexpr (UN > 8) // then 8 at a time
+                for (; j + 7 * AW <= p; j += 8 * AW) {
+                    float v[8];
+#pragma unroll
+                    for (int u = 0; u < 8; ++u) v[u] = pr[j - lo + u * AW];
+#pragma unroll
+                    for (int u = 0; u < 8; ++u) {
+                        float e = sycl::exp(v[u] - mx);
+                        pr[j - lo + u * AW] = e;
+                        acc += e;
+                    }
+                }
             for (; j <= p; j += AW) {
                 float e = sycl::exp(pr[j - lo] - mx);
                 pr[j - lo] = e;
@@ -424,6 +464,12 @@ inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const flo
             if (l == 0) inv[g] = 1.0f / tot;
         });
     });
+}
+inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const float *wmax, int nsgmax, int pos0, int ntok, int nh,
+                                    int win, float *P, int ldp, float *inv) {
+    const int pl = pos0 + ntok - 1, maxk = win > 0 ? std::min(win, pl + 1) : pl + 1;
+    if (maxk > 16384) return attn_softmax_sum_u<64, 16>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv);
+    return attn_softmax_sum_u<8, 1>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv);
 }
 // ops::attn_softmax after the scores: the same maximum, the same lane-strided sums of exponentials and work-group sum
 inline sycl::event attn_softmax_norm(sycl::queue &q, const float *sink, int pos0, int ntok, int nh, int win, float *P, int ldp) {

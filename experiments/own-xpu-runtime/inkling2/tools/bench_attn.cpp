@@ -15,6 +15,73 @@ int main(int argc, char **argv) {
         const int ntok = argc > 4 ? std::atoi(argv[4]) : 1;
         const int nh = 24, nkvh = 8, hd = 128, kd = nkvh * hd, cap = pos + ntok + 64, ldp = cap;
         const int iters = std::getenv("BENCH_ITERS") ? std::atoi(std::getenv("BENCH_ITERS")) : 200;
+        if (std::getenv("BENCH_SM")) { // one writing step's softmax (attn_softmax_sum_u) and block sum (attn_pv_bo_sum_u)
+            const int p = pos, lo = win > 0 ? std::max(0, p - win + 1) : 0, n = p - lo + 1, nsgmax = (cap + 15) / 16;
+            std::mt19937 rng(5);
+            std::normal_distribution<float> nd(0.0f, 3.0f);
+            std::vector<float> hP((size_t)nh * ldp, 0.0f), hw((size_t)nh * nsgmax, -INFINITY), hs(nh);
+            for (int r = 0; r < nh; ++r) {
+                for (int j = 0; j < n; ++j) hP[(size_t)r * ldp + j] = nd(rng);
+                for (int j = 0; j < n; ++j) { float &m = hw[(size_t)r * nsgmax + j / 16]; m = std::max(m, hP[(size_t)r * ldp + j]); }
+                hs[r] = nd(rng);
+            }
+            float *P0 = d.alloc<float>(hP.size()), *P1 = d.alloc<float>(hP.size()), *wm = d.alloc<float>(hw.size()), *sk = d.alloc<float>(nh);
+            float *inv0 = d.alloc<float>(nh), *inv1 = d.alloc<float>(nh);
+            d.put(P0, hP.data(), hP.size()); d.put(wm, hw.data(), hw.size()); d.put(sk, hs.data(), nh);
+            auto tm = [&](auto &&f) {
+                for (int i = 0; i < 3; ++i) f();
+                d.q.wait();
+                double t0 = now_s();
+                for (int i = 0; i < iters; ++i) f();
+                d.q.wait();
+                return (now_s() - t0) / iters * 1e6;
+            };
+            std::vector<float> r0(hP.size()), r1(hP.size()), i0(nh), i1(nh);
+            auto run_sm = [&](const char *name, auto &&f) { // check on a fresh copy, then time (P keeps changing: timing only)
+                d.q.memcpy(P1, P0, hP.size() * 4).wait();
+                f(P1, inv1); d.q.wait();
+                d.get(r1.data(), P1, r1.size()); d.get(i1.data(), inv1, nh);
+                const bool same = !std::memcmp(r0.data(), r1.data(), r0.size() * 4) && !std::memcmp(i0.data(), i1.data(), nh * 4);
+                d.q.memcpy(P1, P0, hP.size() * 4).wait();
+                double us = tm([&] { f(P1, inv1); });
+                std::printf("  softmax %-14s %8.2f us %7.1f GB/s  %s\n", name, us, 2.0 * nh * n * 4 / us / 1e3, same ? "same" : "DIFF");
+            };
+            { // reference: the 8-at-a-time kernel on a fresh copy
+                float *Pr = d.alloc<float>(hP.size());
+                d.q.memcpy(Pr, P0, hP.size() * 4).wait();
+                fz::attn_softmax_sum_u<8, 1>(d.q, sk, wm, nsgmax, p, 1, nh, win, Pr, ldp, inv0).wait();
+                d.get(r0.data(), Pr, r0.size()); d.get(i0.data(), inv0, nh);
+                d.release(Pr);
+            }
+            std::printf("pos %d win %d: %d keys per row\n", pos, win, n);
+            run_sm("<8,1>", [&](float *P, float *iv) { fz::attn_softmax_sum_u<8, 1>(d.q, sk, wm, nsgmax, p, 1, nh, win, P, ldp, iv); });
+            run_sm("<32,16>", [&](float *P, float *iv) { fz::attn_softmax_sum_u<32, 16>(d.q, sk, wm, nsgmax, p, 1, nh, win, P, ldp, iv); });
+            run_sm("<64,16>", [&](float *P, float *iv) { fz::attn_softmax_sum_u<64, 16>(d.q, sk, wm, nsgmax, p, 1, nh, win, P, ldp, iv); });
+            run_sm("<128,16>", [&](float *P, float *iv) { fz::attn_softmax_sum_u<128, 16>(d.q, sk, wm, nsgmax, p, 1, nh, win, P, ldp, iv); });
+            run_sm("<64,64>", [&](float *P, float *iv) { fz::attn_softmax_sum_u<64, 64>(d.q, sk, wm, nsgmax, p, 1, nh, win, P, ldp, iv); });
+            // block sums
+            const int lo0 = lo, nblk = p / fz::PVB - lo0 / fz::PVB + 1;
+            std::vector<float> hpart((size_t)nh * nblk * hd), hg((size_t)nh * hd);
+            for (auto &v : hpart) v = nd(rng);
+            for (auto &v : hg) v = nd(rng);
+            float *part = d.alloc<float>(hpart.size()), *gt = d.alloc<float>(hg.size()), *o0 = d.alloc<float>(hg.size()), *o1 = d.alloc<float>(hg.size());
+            d.put(part, hpart.data(), hpart.size()); d.put(gt, hg.data(), hg.size());
+            std::vector<float> s0(hg.size()), s1(hg.size());
+            fz::attn_pv_bo_sum_u<8>(d.q, part, nblk, p, 1, nh, hd, win, gt, o0).wait();
+            d.get(s0.data(), o0, s0.size());
+            auto run_bs = [&](const char *name, auto &&f) {
+                d.q.memset(o1, 0, hg.size() * 4).wait();
+                double us = tm([&] { f(); });
+                d.get(s1.data(), o1, s1.size());
+                std::printf("  block sum %-12s %8.2f us %7.1f GB/s  %s\n", name, us, (double)hpart.size() * 4 / us / 1e3,
+                            !std::memcmp(s0.data(), s1.data(), s0.size() * 4) ? "same" : "DIFF");
+            };
+            run_bs("<8>", [&] { fz::attn_pv_bo_sum_u<8>(d.q, part, nblk, p, 1, nh, hd, win, gt, o1); });
+            run_bs("<32>", [&] { fz::attn_pv_bo_sum_u<32>(d.q, part, nblk, p, 1, nh, hd, win, gt, o1); });
+            run_bs("<64>", [&] { fz::attn_pv_bo_sum_u<64>(d.q, part, nblk, p, 1, nh, hd, win, gt, o1); });
+            run_bs("<128>", [&] { fz::attn_pv_bo_sum_u<128>(d.q, part, nblk, p, 1, nh, hd, win, gt, o1); });
+            return 0;
+        }
         if (std::getenv("BENCH_TILE")) { // prompt steps: attn_scores (+ table) vs attn_scores_tile, attn_pv_t vs attn_pv_tile
             const int nr = 16, ext = 1024, G = nh / nkvh, it2 = std::getenv("BENCH_ITERS") ? iters : 10;
             const float scale = 1.0f / std::sqrt((float)hd);
