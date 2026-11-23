@@ -42,6 +42,14 @@
   its table, 88 -> 13.5 ms per 1024-token step). Bit-identical, gate 6/6. `step()` now refuses steps larger than its
   buffers (a 1024-token bench step on 512-token buffers had page-faulted card 3; the driver reset the queue).
   Prompt time is now ~58 % expert kernels (~3.1 TMAC/s vs 4.6 for the attention tiles): next target.
+- Nov 23 ~05:30: long context. A 31,270-token prompt reads at 481 tok/s (card 3). Writing at 31K: 19.4-20.0 ->
+  17.4-18.1 ms per step (card 2; 3K: 13.35-13.50 -> 13.23-13.38) with three same-bits changes for writing steps:
+  scores 3 heads per key read (`attn_scores_g`), softmax sums only with the maximum from the scores' sub-group
+  maxima (`attn_softmax_sum`, full layers 146 -> 21 µs), P.V normalizes as it reads (`attn_pv_ti`). Gate 6/6.
+  Left at 31K: P.V of the full layers, 400 µs each (3.2 of 17.3 ms): the key-by-key order allows only 192 threads;
+  a block order (keys summed in blocks of 128 positions, then the blocks) measured 352 -> 221 µs in bench_attn but
+  changes the sums (a new baseline, checked against the reference). Fused multiply-add measured: attention tiles
+  1.5-1.8x, expert tiles ~1.2x (also a new baseline).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

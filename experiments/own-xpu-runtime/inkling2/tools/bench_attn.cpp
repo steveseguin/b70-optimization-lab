@@ -88,7 +88,7 @@ int main(int argc, char **argv) {
             (void)G;
             return 0;
         }
-        const int ncopy = 16; // V caches cycled so reads come from memory
+        const int ncopy = std::getenv("BENCH_NCOPY") ? std::atoi(std::getenv("BENCH_NCOPY")) : 16; // V caches cycled so reads come from memory
         std::mt19937 rng(3);
         std::normal_distribution<float> nd(0.0f, 1.0f);
         std::uniform_real_distribution<float> ud(0.0f, 1.0f);
@@ -156,7 +156,52 @@ int main(int argc, char **argv) {
             runt("t<32>", fz::attn_pv_t<32>);
             runt("t<64>", fz::attn_pv_t<64>);
             runt("t<128>", fz::attn_pv_t<128>);
+            runt("tp<16>", fz::attn_pv_tp<16>);
+            runt("tp<32>", fz::attn_pv_tp<32>);
+            runt("tp<64>", fz::attn_pv_tp<64>);
+            runt("t2", fz::attn_pv_t2);
+            { // block order (different sums: timing only)
+                const int lo0 = win > 0 ? std::max(0, pos0 - win + 1) : 0, nblk = (pos0 + ntok - 1) / fz::PVB - lo0 / fz::PVB + 1;
+                float *part = d.alloc<float>((size_t)ntok * nh * nblk * hd);
+                runt("block order (new sums)", [&](sycl::queue &qq, const float *P_, int ldp_, const sycl::half *Vt_, int vld_, int p0, int nt, int nh_,
+                                     int nkvh_, int hd_, int win_, const float *G_, float *o_) {
+                    fz::attn_pv_bo_part<3>(qq, P_, ldp_, Vt_, vld_, p0, nt, nh_, nkvh_, hd_, win_, part, nblk);
+                    return fz::attn_pv_bo_sum(qq, part, nblk, p0, nt, nh_, hd_, win_, G_, o_);
+                });
+                d.release(part);
+            }
         }
+        { // one-token scores: attn_scores vs attn_scores_g<3> (K cycled over the 16 copies, table random)
+            const int ext = 1024;
+            std::vector<float> hq((size_t)ntok * nh * hd), htb((size_t)ntok * nh * ext);
+            for (auto &v : hq) v = nd(rng) * 0.3f;
+            for (auto &v : htb) v = nd(rng);
+            float *Qd = d.alloc<float>(hq.size()), *Tb = d.alloc<float>(htb.size());
+            d.put(Qd, hq.data(), hq.size()); d.put(Tb, htb.data(), htb.size());
+            const size_t np = (size_t)ntok * nh * ldp;
+            float *S0 = d.alloc<float>(np), *S1 = d.alloc<float>(np);
+            d.q.memset(S0, 0, np * 4).wait(); d.q.memset(S1, 0, np * 4).wait();
+            const float scale = 1.0f / std::sqrt((float)hd);
+            auto ts = [&](auto f, float *S) {
+                for (int i = 0; i < 4; ++i) f(i, S);
+                d.q.wait();
+                double t0 = now_s();
+                for (int i = 0; i < iters; ++i) f(i + 1, S);
+                d.q.wait();
+                return (now_s() - t0) / iters * 1e6;
+            };
+            double a0 = ts([&](int i, float *S) { fz::attn_scores(d.q, Qd, V[i % ncopy], Tb, pos0, ntok, nh, nkvh, hd, ext, win, scale, S, ldp); }, S0);
+            double a1 = ts([&](int i, float *S) { fz::attn_scores_g<3>(d.q, Qd, V[i % ncopy], Tb, pos0, ntok, nh, nkvh, hd, ext, win, scale, S, ldp); }, S1);
+            fz::attn_scores(d.q, Qd, V[0], Tb, pos0, ntok, nh, nkvh, hd, ext, win, scale, S0, ldp);
+            fz::attn_scores_g<3>(d.q, Qd, V[0], Tb, pos0, ntok, nh, nkvh, hd, ext, win, scale, S1, ldp);
+            d.q.wait();
+            std::vector<float> x(np), y(np);
+            d.get(x.data(), S0, np); d.get(y.data(), S1, np);
+            long bad = -1;
+            for (size_t i = 0; i < np; ++i) if (std::memcmp(&x[i], &y[i], 4)) { bad = (long)i; break; }
+            std::printf("  scores                 %8.2f us\n  scores_g<3>            %8.2f us  %s\n", a0, a1, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+        }
+        if (std::getenv("BENCH_T_ONLY")) return 0;
         run("blk<16>", fz::attn_pv_blk<16>);
         run("blk<32>", fz::attn_pv_blk<32>);
         run("blk<64>", fz::attn_pv_blk<64>);

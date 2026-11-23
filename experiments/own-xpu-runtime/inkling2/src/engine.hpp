@@ -53,6 +53,11 @@ struct Engine {
     // steps of at least att_tile tokens: attention scores and P.V as register tiles (attn_tiles.hpp, the bias computed
     // in place); INK_ATT_TILE (0 = never)
     int att_tile = 16;
+    // writing steps: attn_scores_g + attn_softmax_sum + attn_pv_ti (INK_DEC_ATTN, default on); wmax: per row
+    // (16 tokens x heads) the sub-group maxima of the scores, nsgmax per row; pinv: per row 1 / softmax total
+    bool dec_attn = true;
+    float *wmax = nullptr, *pinv = nullptr;
+    int nsgmax = 0;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
     // below the tile threshold: INK_DEC=0 reads the file layout
@@ -113,6 +118,9 @@ struct Engine {
         tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
         ldp = cap;
         P = d.alloc<float>((size_t)ldp * h.n_head * T);
+        nsgmax = cap / 16 + 2;
+        wmax = d.alloc<float>((size_t)16 * h.n_head * nsgmax);
+        pinv = d.alloc<float>((size_t)16 * h.n_head);
         ob = d.alloc<float>(E); attn_out = d.alloc<float>(E); ffn_inp = d.alloc<float>(E); fx = d.alloc<float>(E);
         ctl_h = d.alloc<float>(2 * E); ctl_z = d.alloc<float>((size_t)h.gate_rank * T);
         ctl_g = d.alloc<float>(E); ctl_f = d.alloc<float>(E); ctl_y = d.alloc<float>(E);
@@ -150,6 +158,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
         if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
+        if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
             const bool dec = !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC"));
             auto mk = [&](const W &w) {
@@ -528,18 +537,25 @@ struct Engine {
             dump.put(d, nm("Rcur", il), Rc, h.n_rel, nh, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form), then the output gate
             const int win = swa ? h.n_swa : 0;
+            // writing steps (<= 16 tokens, transposed cache): scores 3 heads per key, softmax sums only (the maximum
+            // from the scores' sub-group maxima), P.V normalizes as it reads; the same values as the general kernels
+            const bool fast = !tiles && dec_attn && ntok <= 16 && vld > 0 && nh == 3 * nkvh;
             if (tiles)
                 pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, pos0,
                                                                                          ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            else if (fast)
+                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_g<3>(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent,
+                                                                                  win, kscale, P, ldp, wmax, nsgmax));
             else
                 pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
-            pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
+            if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sinks, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, pinv));
+            else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
             if (tiles) {
                 pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));
             } else if (vld) { // transposed cache: 32 keys per batch below 1024 keys, 64 from there (bench_attn, card 2)
                 const int p = pos0 + ntok - 1, keys = win > 0 ? std::min(win, p + 1) : p + 1;
-                auto pv = keys >= 1024 ? fz::attn_pv_t<64> : fz::attn_pv_t<32>;
-                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));
+                auto pv = keys >= 1024 ? fz::attn_pv_ti<64> : fz::attn_pv_ti<32>;
+                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att, fast ? pinv : nullptr));
             } else {
                 auto pv = pv_u == 128 ? fz::attn_pv_gate_u<128> : pv_u == 64 ? fz::attn_pv_gate_u<64> : pv_u == 32 ? fz::attn_pv_gate_u<32>
                         : fz::attn_pv_gate2;
