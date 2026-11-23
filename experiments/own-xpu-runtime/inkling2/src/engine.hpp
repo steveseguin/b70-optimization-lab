@@ -112,7 +112,7 @@ struct Engine {
         const int64_t rows = w.t->rows();
         switch (w.kind) {
         case K_Q8_0P: return rows <= 1024 ? Tune{1, 4} : Tune{2, 2};
-        case K_Q6_KP: return rows > 100000 ? Tune{1, 2} : Tune{2, 2};
+        case K_Q6_KP: return Tune{2, 2}; // output too since the 4-values-at-a-time decode (720 vs 802 us)
         default: return w.t->ne[0] <= 64 ? Tune{2, 2} : Tune{1, 4}; // F32 / BF16 in the file layout
         }
     }

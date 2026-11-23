@@ -156,11 +156,17 @@ struct Q6_KP {
         load_bytes<32>(row + cols / 2 + 64 * sb + 32 * n, qh);
         const int8_t *sc = (const int8_t *)(row + cols / 2 + cols / 4) + 16 * sb + 8 * n + 2 * w;
         float d = h2f(row + cols / 2 + cols / 4 + cols / 16 + 2 * sb);
-        // o[l] = d * sc[is + 2w] * q, evaluated as (d * sc) * q like formats.hpp
+        // o[l] = d * sc[is + 2w] * q, evaluated as (d * sc) * q like formats.hpp; the 6-bit codes of four values are
+        // assembled in one 32-bit operation, and q = code - 32 is exact as a float
         const int lo_shift = (w >> 1) * 4, hi_shift = 2 * w;
-        for (int l = 0; l < 32; ++l) {
-            int q = (((ql[l] >> lo_shift) & 0xF) | (((qh[l] >> hi_shift) & 3) << 4)) - 32;
-            o[l] = d * sc[l >> 4] * (int8_t)q;
+        const float ds[2] = {d * (float)sc[0], d * (float)sc[1]};
+        for (int i = 0; i < 8; ++i) {
+            uint32_t wl, wh;
+            std::memcpy(&wl, ql + 4 * i, 4);
+            std::memcpy(&wh, qh + 4 * i, 4);
+            uint32_t q6 = ((wl >> lo_shift) & 0x0F0F0F0Fu) | (((wh >> hi_shift) & 0x03030303u) << 4);
+            sycl::vec<uint8_t, 4> qb = sycl::bit_cast<sycl::vec<uint8_t, 4>>(q6);
+            for (int b = 0; b < 4; ++b) o[4 * i + b] = ds[i >> 2] * ((float)qb[b] - 32.0f);
         }
     }
     // one super-block b (256 values): file {ql[128], qh[64], sc[16], d} at src + 210 b
