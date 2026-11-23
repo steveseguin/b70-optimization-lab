@@ -1,5 +1,19 @@
 # Current Workspace State
 
+**November 22, 2026 21:05 EST — new lane: Inkling-2-Mini on one card, our own engine; DeepSeek server paused.**
+- Owner: pause the DeepSeek LAN server and see how fast our own engine can run Unsloth's `UD-IQ4_XS` of
+  Inkling-2-Mini (Thinking Machines, 2026-11-20; 26.2B MoE, 5.4B used per token, middle 12 layers run 3 times).
+  `dsv41-server` stopped at ~21:00 (unit still enabled: a reboot brings it back and it claims the six cards).
+- Model: `unsloth/Inkling-2-Mini-GGUF` rev 45fd0876, `UD-IQ4_XS` (15.73 GB, sha256 = HF LFS) + DSpark Q8_0 drafter,
+  in `/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/`. Layers 0-19 keep the official NVFP4 experts in every Unsloth
+  quant; IQ4_XS reads ~3.88 GB per token (one-card writing ceiling ~157 tok/s at 608 GB/s).
+- Reference: Unsloth llama.cpp release `b12588-mix-c0c3de8` source tarball (sha256 92ee8439..., = the release asset
+  digest), CPU build in `/home/steve/inkling-work/ref-src/` (mainline needs unmerged PR #32704). CPU greedy works
+  (5.6 tok/s).
+- Engine: `experiments/own-xpu-runtime/inkling2/` (new, single card). So far: GGUF reader, card/upload layer
+  (15.72 GB onto card 1 in 2.3 s), decoders for all 10 weight formats (bit-identical to ggml's dequantization),
+  matrix-vector kernels (repeatable bit for bit, independent of batch), reference tensor dumper `tools/ref_dump.cpp`.
+
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
   byte-identical; build/download/install scripts; stable-mode host settings + BMC watchdog; OpenAI-compatible server;
