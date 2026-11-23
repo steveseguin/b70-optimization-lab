@@ -3,7 +3,7 @@
 //   bench_moe <model.gguf> <card> <tokens>...
 // Routing: each token picks 8 distinct experts from a skewed distribution (fixed seed). Each timed launch uses the
 // next of layers 0-19 (all NVFP4), so the weights come from memory. BENCH_ITERS (default 20).
-#include "../src/moe_group.hpp"
+#include "../src/tok_tiles.hpp"
 #include <random>
 
 int main(int argc, char **argv) {
@@ -148,6 +148,24 @@ int main(int argc, char **argv) {
 #define INK_B(NG, BIG, IL) for (int sgw : {1, 2, 4}) gptt(NG, BIG, IL, sgw);
             INK_TTP_COMBOS(INK_B)
 #undef INK_B
+            for (int ng : {1, 2}) { // generic tile kernels (tok_tiles.hpp)
+                double us = timeit([&](int i) {
+                    const WView &v = gu[i % NL];
+                    SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
+                    slot_pair_g(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, Ht, ng);
+                });
+                std::vector<float> ht((size_t)nt * NFF * MOE_TS);
+                d.get(ht.data(), Ht, ht.size());
+                long badt = -1;
+                for (int t = 0; t < nt && badt < 0; ++t)
+                    for (int l = 0; l < htn[t] && badt < 0; ++l) {
+                        int sl = hsl[hts[t] + l];
+                        for (int r = 0; r < NFF; ++r)
+                            if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + l], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
+                    }
+                std::printf("  gate_up  generic tiles %d rows  to tiles %9.1f us  x%.2f  %s\n", 2 * ng, us, us0 / us,
+                            badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
+            }
             if (std::getenv("BENCH_ALL")) {
 #define INK_B(NP, MB, BIG) for (int sgw : {1, 2, 4}) gp(NP, MB, BIG, sgw);
             INK_GP_COMBOS(INK_B)
@@ -191,6 +209,49 @@ int main(int argc, char **argv) {
 #define INK_B(R, BIG, IL) for (int sgw : {1, 2, 4}) grtt(R, BIG, IL, sgw);
             INK_TTR_COMBOS(INK_B)
 #undef INK_B
+            for (int r : {1, 2}) {
+                d.q.memset(y1, 0, z1.size() * 4).wait();
+                double us = timeit([&](int i) { slot_rows_g(d.q, dn[i % NL], grp, tiles, Ht, y1, E, r); });
+                d.get(z1.data(), y1, z1.size());
+                long bad = cmp(z0, z1);
+                std::printf("  down     generic tiles %d rows           %9.1f us  x%.2f  %s\n", r, us, ud0 / us,
+                            bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            }
+            // layers 20-23 (file-layout formats): first kernels vs generic tiles
+            for (int l = 20; l < 24; ++l) {
+                {
+                    const Tensor *tg = g.find("blk." + std::to_string(l) + ".ffn_gate_up_exps.weight");
+                    const Tensor *td = g.find("blk." + std::to_string(l) + ".ffn_down_exps.weight");
+                    WView vg{tg, w[tg->name], tg->row_bytes(), K_RAW}, vd{td, w[td->name], td->row_bytes(), K_RAW};
+                    const size_t eg = vg.rb * (size_t)tg->ne[1];
+                    d.q.memset(hout0, 0, h0.size() * 4).wait();
+                    double ua = timeit([&](int) { SituOp so{nullptr, ids, 8.0f, 4.0f, hout0, NFF};
+                                                  grouped_pair(d.q, vg, vg.p + (size_t)NFF * vg.rb, eg, NFF, grp, amax, x, E, KU, so, 2); });
+                    d.get(h0.data(), hout0, h0.size());
+                    double ub = timeit([&](int) { SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
+                                                  slot_pair_g(d.q, vg, vg.p + (size_t)NFF * vg.rb, eg, NFF, grp, tiles, Xt, so, Ht, 2); });
+                    std::vector<float> ht((size_t)nt * NFF * MOE_TS);
+                    d.get(ht.data(), Ht, ht.size());
+                    long badt = -1;
+                    for (int t = 0; t < nt && badt < 0; ++t)
+                        for (int ll = 0; ll < htn[t] && badt < 0; ++ll) {
+                            int sl = hsl[hts[t] + ll];
+                            for (int r = 0; r < NFF; ++r)
+                                if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + ll], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
+                        }
+                    d.q.memset(y0, 0, z0.size() * 4).wait();
+                    double uc = timeit([&](int) { grouped_rows(d.q, vd, grp, amax, hb, NFF, y0, E, 2); });
+                    d.get(z0.data(), y0, z0.size());
+                    tile_gather(d.q, grp, tiles, hb, NFF, 0, NFF, Ht).wait();
+                    d.q.memset(y1, 0, z1.size() * 4).wait();
+                    double ud = timeit([&](int) { slot_rows_g(d.q, vd, grp, tiles, Ht, y1, E, 2); });
+                    d.get(z1.data(), y1, z1.size());
+                    long badd = cmp(z0, z1);
+                    std::printf("  layer %d %s/%s: gate_up %9.1f -> %9.1f us %s   down %9.1f -> %9.1f us %s\n", l, type_name(tg->type),
+                                type_name(td->type), ua, ub, badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str(), uc, ud,
+                                badd < 0 ? "same" : ("DIFF at " + std::to_string(badd)).c_str());
+                }
+            }
             if (std::getenv("BENCH_ALL")) {
 #define INK_B(R, MB, BIG) for (int sgw : {1, 2, 4}) gr(R, MB, BIG, sgw);
             INK_GR_COMBOS(INK_B)

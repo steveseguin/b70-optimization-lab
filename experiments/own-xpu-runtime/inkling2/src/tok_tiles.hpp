@@ -67,6 +67,86 @@ template <> struct LaneDec<pl::Raw<fmt::F<G_BF16>>> { // fmt::bf2f, as F<G_BF16>
         hi = fmt::bf2f(r[16 + lane]);
     }
 };
+// the file-layout formats of layers 20-23's experts: each value with the expression of formats.hpp's decode32
+template <> struct LaneDec<pl::Raw<fmt::F<G_Q5_0>>> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int j, float &lo, float &hi) {
+        const uint8_t *b = row + 22 * c;
+        float d = fmt::h2f(b);
+        uint32_t qh = (uint32_t)b[2] | ((uint32_t)b[3] << 8) | ((uint32_t)b[4] << 16) | ((uint32_t)b[5] << 24);
+        uint8_t q = b[6 + j];
+        uint8_t xh0 = ((qh >> (j + 0)) << 4) & 0x10;
+        uint8_t xh1 = ((qh >> (j + 12))) & 0x10;
+        int32_t x0 = ((q & 0x0F) | xh0) - 16;
+        int32_t x1 = ((q >> 4) | xh1) - 16;
+        lo = x0 * d;
+        hi = x1 * d;
+    }
+};
+template <> struct LaneDec<pl::Raw<fmt::F<G_IQ4_NL>>> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int j, float &lo, float &hi) {
+        const uint8_t *b = row + 18 * c;
+        float d = fmt::h2f(b);
+        uint8_t q = b[2 + j];
+        lo = d * fmt::kv_nl(q & 0xf);
+        hi = d * fmt::kv_nl(q >> 4);
+    }
+};
+template <> struct LaneDec<pl::Raw<fmt::F<G_IQ4_XS>>> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int j, float &lo, float &hi) {
+        const uint8_t *b = row + 136 * (c >> 3);
+        int ib = c & 7;
+        float d = fmt::h2f(b);
+        uint16_t sh = (uint16_t)b[2] | ((uint16_t)b[3] << 8);
+        const uint8_t *sl = b + 4, *qs = b + 8 + 16 * ib;
+        int ls = ((sl[ib / 2] >> 4 * (ib % 2)) & 0xf) | (((sh >> 2 * ib) & 3) << 4);
+        float dl = d * (ls - 32);
+        uint8_t q = qs[j];
+        lo = dl * fmt::kv_nl(q & 0xf);
+        hi = dl * fmt::kv_nl(q >> 4);
+    }
+};
+template <> struct LaneDec<pl::Raw<fmt::F<G_Q4_K>>> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int l, float &lo, float &hi) {
+        const uint8_t *b = row + 144 * (c >> 3);
+        int ib = c & 7;
+        float d = fmt::h2f(b), mn = fmt::h2f(b + 2);
+        uint8_t sc, m;
+        fmt::scale_min_k4(ib, b + 4, sc, m);
+        float d1 = d * sc, m1 = mn * m;
+        const uint8_t *q = b + 16 + 32 * (ib / 2);
+        if (ib & 1) { lo = d1 * (q[l] >> 4) - m1; hi = d1 * (q[16 + l] >> 4) - m1; }
+        else { lo = d1 * (q[l] & 0xF) - m1; hi = d1 * (q[16 + l] & 0xF) - m1; }
+    }
+};
+template <> struct LaneDec<pl::Raw<fmt::F<G_Q5_K>>> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int, int c, int l, float &lo, float &hi) {
+        const uint8_t *b = row + 176 * (c >> 3);
+        int ib = c & 7;
+        float d = fmt::h2f(b), mn = fmt::h2f(b + 2);
+        uint8_t sc, m;
+        fmt::scale_min_k4(ib, b + 4, sc, m);
+        float d1 = d * sc, m1 = mn * m;
+        const uint8_t *qh = b + 16, *ql = b + 48 + 32 * (ib / 2);
+        uint8_t u = (uint8_t)(1u << ib);
+        if (ib & 1) {
+            lo = d1 * ((ql[l] >> 4) + (qh[l] & u ? 16 : 0)) - m1;
+            hi = d1 * ((ql[16 + l] >> 4) + (qh[16 + l] & u ? 16 : 0)) - m1;
+        } else {
+            lo = d1 * ((ql[l] & 0xF) + (qh[l] & u ? 16 : 0)) - m1;
+            hi = d1 * ((ql[16 + l] & 0xF) + (qh[16 + l] & u ? 16 : 0)) - m1;
+        }
+    }
+};
 template <> struct LaneDec<pl::NVFP4P> { // lane l decodes byte l: values 16k + b (low code) and 16k + 8 + b (high)
     static constexpr int src(int i) { return 8 * (i >> 4) + (i & 7); }
     static constexpr bool hi(int i) { return (i >> 3) & 1; }
@@ -175,6 +255,98 @@ template <class D, class Op, int NP> struct DensePairT {
                 if (r0 + j < rows) op(tok, r0 + j, res[j], res[NP + j]);
     }
 };
+
+// ---- expert tiles for any decoder (moe_group.hpp's tiles and transposed inputs) ---------------------------------
+// gate|up rows of the tile's expert; TOUT: the activation goes to Ht[(t * rows + r) * 16 + lane], else op(...)
+template <class D, class Op, int NG, bool TOUT> struct SlotPairG {
+    const uint8_t *A, *B; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *Xt;
+    Op op;
+    float *Ht;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        auto sg = it.get_sub_group();
+        const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * NG;
+        if (r0 >= rows) return;
+        const int lane = (int)sg.get_local_linear_id();
+        const int cnt = g.tile_n[t];
+        const size_t eo = (size_t)g.tile_exp[t] * estride;
+        const uint8_t *rp[2 * NG];
+        for (int j = 0; j < NG; ++j) {
+            int r = sycl::min(r0 + j, rows - 1);
+            rp[j] = A + eo + (size_t)r * rb;
+            rp[NG + j] = B + eo + (size_t)r * rb;
+        }
+        float res[2 * NG];
+        tile_dots<D, 2 * NG>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res);
+        const int slot = g.slots[g.tile_s0[t] + sycl::min(lane, cnt - 1)];
+        for (int j = 0; j < NG; ++j) {
+            if (r0 + j >= rows) break;
+            if constexpr (TOUT) Ht[((size_t)t * rows + r0 + j) * MOE_TS + lane] = lane < cnt ? op.act(slot, res[j], res[NG + j]) : 0.0f;
+            else if (lane < cnt) op(slot, r0 + j, res[j], res[NG + j]);
+        }
+    }
+};
+template <class D, int R> struct SlotRowsG {
+    const uint8_t *W; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *Xt;
+    float *y; int ldy;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        auto sg = it.get_sub_group();
+        const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * R;
+        if (r0 >= rows) return;
+        const int lane = (int)sg.get_local_linear_id();
+        const int cnt = g.tile_n[t];
+        const uint8_t *base = W + (size_t)g.tile_exp[t] * estride;
+        const uint8_t *rp[R];
+        for (int j = 0; j < R; ++j) rp[j] = base + (size_t)sycl::min(r0 + j, rows - 1) * rb;
+        float res[R];
+        tile_dots<D, R>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res);
+        if (lane < cnt) {
+            const int slot = g.slots[g.tile_s0[t] + lane];
+            for (int j = 0; j < R; ++j)
+                if (r0 + j < rows) y[(size_t)slot * ldy + r0 + j] = res[j];
+        }
+    }
+};
+// ng = gate rows per sub-group (pair) or rows (down): 1 or 2
+template <class Op>
+inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
+                               const float *Xt, Op op, float *Ht, int ng = 2) {
+    const int cols = (int)a.t->ne[0], sgw = 1;
+    sycl::event e;
+    with_decoder(a, [&]<class D>() {
+        auto go = [&]<int NG>() {
+            int ngr = (rows + NG - 1) / NG;
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            if (Ht) e = q.parallel_for(nr, SlotPairG<D, Op, NG, true>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw});
+            else e = q.parallel_for(nr, SlotPairG<D, Op, NG, false>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw});
+        };
+        if (ng == 1) go.template operator()<1>(); else go.template operator()<2>();
+    });
+    return e;
+}
+inline sycl::event slot_rows_g(sycl::queue &q, const WView &w, MoeGroups g, int tiles, const float *Xt, float *y, int ldy, int r = 2) {
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = 1;
+    const size_t estride = w.rb * (size_t)rows;
+    sycl::event e;
+    with_decoder(w, [&]<class D>() {
+        auto go = [&]<int R>() {
+            int ngr = (rows + R - 1) / R;
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            e = q.parallel_for(nr, SlotRowsG<D, R>{w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw});
+        };
+        if (r == 1) go.template operator()<1>(); else go.template operator()<2>();
+    });
+    return e;
+}
 
 struct DTune { int R = 2, sgw = 1; };
 inline sycl::event dense_t(sycl::queue &q, const WView &w, int M, const float *Xd, float *y, int ldy, DTune dt = {}) {

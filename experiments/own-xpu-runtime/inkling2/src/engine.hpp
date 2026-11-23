@@ -375,13 +375,15 @@ struct Engine {
                 if (ntok == 1) {
                     pr("moe_gate_up", gemv_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
                     pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
-                } else if (ntok >= tile_min && Xt && gw.kind == K_NVFP4P && l.down.kind == K_NVFP4P) {
+                } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
+                    // (tok_tiles.hpp, any expert format; bench_moe 512 tokens: NVFP4 gate|up 18.7 -> 8.8 ms, down
+                    // 10.4 -> 4.3; layers 20-23 gate|up 25-42 -> 8-14.5, down 17-19 -> 3.7-4.1)
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
-                    pr("moe_gate_up", slot_pair_t(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, tiles, Xt, so, Ht, TTune{2, 1}));
-                    pr("moe_down", slot_rows_t(d.q, l.down.view(), grp, tiles, Ht, yk, E, TTune{2, 1}));
+                    pr("moe_gate_up", slot_pair_g(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, tiles, Xt, so, Ht, 2));
+                    pr("moe_down", slot_rows_g(d.q, l.down.view(), grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
