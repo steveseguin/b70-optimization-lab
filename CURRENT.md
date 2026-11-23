@@ -30,6 +30,14 @@
   guessing measured with the reference: ~2.0-3.2 tokens per round, not worth it on this MoE (README). Next: the rest
   of the prompt step (dense matrices ~0.57 s and attention ~0.25 s of a 512-token step), small-launch fusion.
 
+- Nov 23 01:40: writing **80.2-82.4 tok/s** (12.26 ms per step, card 2), at 3K context **71.7 tok/s** (13.95 ms;
+  was 52.4), prompt **468.4-468.8 tok/s** on card 3 (cards differ ~8 %: compare on one card). All bit-identical; gate
+  `scripts/check-exact.sh` now 6 checks on cards 1-5 (card E: 3,127-token prompt + 16 steps' score rows). Levers
+  since 23:20: dense/expert tiles for every format (prompt), one launch for the attention inputs, the looped layers'
+  mixes once per pass, saved-state mix scores, decode copies of layers 20-23's experts, transposed value cache
+  (README rows). Next: the ~4 ms of small kernels per step (mixes ~1 ms, controls ~1 ms), expert kernels at
+  ~470/385 GB/s, attention scores at long context.
+
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
   byte-identical; build/download/install scripts; stable-mode host settings + BMC watchdog; OpenAI-compatible server;
