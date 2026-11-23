@@ -61,7 +61,7 @@ PY
         else echo "FAIL spec $n: ids differ"; rc=1; fi
     done
     if cmp -s "$base/haiku.ids" "$out/dspark-haiku.ids" && cmp -s "$base/haiku.gen" "$out/dspark-haiku.gen"; then
-        echo "PASS dspark haiku: ids and every chosen logits row identical ($(grep -h '\[spec\]' "$out/dspark-haiku.err" | cut -d' ' -f2-8 | tr -d '()'))"
+        echo "PASS dspark haiku: ids and every chosen logits row identical ($(grep -h '\[spec\] [0-9]* checks' "$out/dspark-haiku.err" | cut -d' ' -f2-8 | tr -d '()'))"
     else echo "FAIL dspark haiku: ids or chosen logits rows differ"; rc=1; fi
     if [ -f "$base/haiku.gen" ]; then
         if cmp -s "$base/haiku.gen" "$out/spec-haiku.gen"; then echo "PASS spec haiku: every chosen logits row bit-identical"
