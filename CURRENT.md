@@ -37,6 +37,11 @@
   mixes once per pass, saved-state mix scores, decode copies of layers 20-23's experts, transposed value cache
   (README rows). Next: the ~4 ms of small kernels per step (mixes ~1 ms, controls ~1 ms), expert kernels at
   ~470/385 GB/s, attention scores at long context.
+- Nov 23 ~04:30: prompt **531.7-532.8 tok/s** (card 3; was 468.4-468.8): steps of >= 16 tokens run attention as
+  register tiles (`src/attn_tiles.hpp`; scores 2.3-3.8x, P.V 2.9-4.3x, bias computed in place so `attn_prep` drops
+  its table, 88 -> 13.5 ms per 1024-token step). Bit-identical, gate 6/6. `step()` now refuses steps larger than its
+  buffers (a 1024-token bench step on 512-token buffers had page-faulted card 3; the driver reset the queue).
+  Prompt time is now ~58 % expert kernels (~3.1 TMAC/s vs 4.6 for the attention tiles): next target.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

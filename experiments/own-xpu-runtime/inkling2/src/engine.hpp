@@ -5,6 +5,7 @@
 #pragma once
 #include "dump.hpp"
 #include "model.hpp"
+#include "attn_tiles.hpp"
 #include "fused.hpp"
 #include "tok_tiles.hpp"
 #include "multi.hpp"
@@ -49,6 +50,9 @@ struct Engine {
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
     bool ctl_batch = true;
     bool route_sg = true;
+    // steps of at least att_tile tokens: attention scores and P.V as register tiles (attn_tiles.hpp, the bias computed
+    // in place); INK_ATT_TILE (0 = never)
+    int att_tile = 16;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
     // below the tile threshold: INK_DEC=0 reads the file layout
@@ -145,6 +149,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
+        if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
         {
             const bool dec = !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC"));
             auto mk = [&](const W &w) {
@@ -381,6 +386,8 @@ struct Engine {
         const int pos0 = n_past;
         n_tok = ntok;
         if (pos0 + ntok > cap) throw std::runtime_error("engine: context full");
+        if (ntok < 1 || ntok > T) // the buffers hold T tokens: a bigger step writes past them (a card page fault)
+            throw std::runtime_error("engine: step of " + std::to_string(ntok) + " tokens, buffers hold " + std::to_string(T));
         if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
         tau = tau_all + pos0;
         // embedding and token norm (inkling2.cpp:347-352)
@@ -503,6 +510,7 @@ struct Engine {
                 mm(l.sink, in[0], sinks, ntok);
                 mm(l.wgate, in[0], gate, ntok);
             }
+            const bool tiles = att_tile > 0 && ntok >= att_tile && vld > 0 && nh == 3 * nkvh && h.n_rel == 16;
             {   // convolutions, clips, positions, cache store, bias table (one launch)
                 fz::PrepArgs a{};
                 a.ntok = ntok; a.pos0 = pos0; a.nh = nh; a.nkvh = nkvh; a.hd = hd; a.nr = h.n_rel; a.ext = h.rel_extent;
@@ -511,7 +519,7 @@ struct Engine {
                 a.Kr = Kr; a.Vr = Vr; a.dynK = dynK; a.dynV = dynV; a.k_conv = f32(l.k_conv); a.v_conv = f32(l.v_conv);
                 a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = vld;
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
-                a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tab;
+                a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
                 pr("attn_prep", fz::attn_prep(d.q, a));
             }
             dump.put(d, nm("Qcur", il), Q, hd, nh, ntok);
@@ -520,9 +528,15 @@ struct Engine {
             dump.put(d, nm("Rcur", il), Rc, h.n_rel, nh, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form), then the output gate
             const int win = swa ? h.n_swa : 0;
-            pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            if (tiles)
+                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, pos0,
+                                                                                         ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            else
+                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
             pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
-            if (vld) { // transposed cache: 32 keys per batch below 1024 keys, 64 from there (bench_attn, card 2)
+            if (tiles) {
+                pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));
+            } else if (vld) { // transposed cache: 32 keys per batch below 1024 keys, 64 from there (bench_attn, card 2)
                 const int p = pos0 + ntok - 1, keys = win > 0 ? std::min(win, p + 1) : p + 1;
                 auto pv = keys >= 1024 ? fz::attn_pv_t<64> : fz::attn_pv_t<32>;
                 pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));

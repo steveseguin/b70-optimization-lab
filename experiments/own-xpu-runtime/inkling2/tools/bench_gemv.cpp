@@ -38,7 +38,8 @@ int main(int argc, char **argv) {
             const uint8_t *Wraw = w[t->name];
             // copies of the weight in each layout: dense tensors get enough copies for 256 MB
             const size_t tb = t->bytes;
-            const int ncopy = routed ? 1 : (int)std::min<size_t>(64, std::max<size_t>(1, ((size_t)256 << 20) / tb + 1));
+            const bool hot = std::getenv("BENCH_HOT") && std::atoi(std::getenv("BENCH_HOT")); // one copy: reads hit the cache
+            const int ncopy = (routed || hot) ? 1 : (int)std::min<size_t>(64, std::max<size_t>(1, ((size_t)256 << 20) / tb + 1));
             WView vr{t, Wraw, t->row_bytes(), K_RAW}, vp = vr;
             std::vector<const uint8_t *> raw_copies{Wraw}, pl_copies;
             for (int c = 1; c < ncopy && file_too; ++c) {

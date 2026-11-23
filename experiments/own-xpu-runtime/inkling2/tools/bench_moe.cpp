@@ -38,6 +38,38 @@ int main(int argc, char **argv) {
             d.put(x, hx.data(), E);
             d.q.memset(hb, 0, (size_t)KU * NFF * 4).wait();
             const size_t gub = gu[0].rb * (size_t)gu[0].t->ne[1];
+            { // launch cost vs size: K slots (experts) per launch, experts from 20 layers; x has 2 rows (slots 8+ use row 1)
+                float *x2 = d.alloc<float>(2 * E), *hb2 = d.alloc<float>((size_t)16 * NFF), *y2 = d.alloc<float>((size_t)16 * E);
+                d.put(x2, hx.data(), E); d.put(x2 + E, hx.data(), E);
+                d.q.memset(hb2, 0, (size_t)16 * NFF * 4).wait();
+                int32_t *ids16 = d.alloc<int32_t>(16 * 16);
+                std::vector<int32_t> h16(16 * 16);
+                for (int i = 0; i < 256; ++i) h16[i] = (i * 37 + 11) % NE;
+                d.put(ids16, h16.data(), h16.size());
+                for (int K : {1, 2, 4, 8, 16}) {
+                    const int it = 640;
+                    auto g = [&](int i) {
+                        const WView &v = gu[(i / 16) % 20];
+                        SituOp so{nullptr, ids16 + (i % 16) * 16, 8.0f, 4.0f, hb2, NFF};
+                        gemv_pair(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, ids16 + (i % 16) * 16, K, x2, E, KU, so, 2);
+                    };
+                    Tune dtu{2, 2};
+                    if (const char *e = std::getenv("BENCH_DT")) std::sscanf(e, "%d,%d", &dtu.R, &dtu.sgw);
+                    auto dn2 = [&](int i) { gemv_routed_v(d.q, dn[(i / 16) % 20], ids16 + (i % 16) * 16, K, hb2, NFF, 1, y2, E, dtu); };
+                    for (int i = 0; i < 32; ++i) { g(i); dn2(i); }
+                    d.q.wait();
+                    double t0 = now_s();
+                    for (int i = 0; i < it; ++i) g(i);
+                    d.q.wait();
+                    double ug = (now_s() - t0) / it * 1e6;
+                    t0 = now_s();
+                    for (int i = 0; i < it; ++i) dn2(i);
+                    d.q.wait();
+                    double ud = (now_s() - t0) / it * 1e6;
+                    std::printf("K=%2d slots: gate_up %7.2f us (%.1f GB/s), down %7.2f us (%.1f GB/s)\n", K, ug,
+                                K * 23.89e6 / 8 / ug / 1e3, ud, K * 11.94e6 / 8 / ud / 1e3);
+                }
+            }
             for (int nl : {1, 4, 20}) {
                 auto run = [&](int i) {
                     const WView &v = gu[(i / 16) % nl];

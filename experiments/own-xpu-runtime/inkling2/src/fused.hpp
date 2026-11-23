@@ -51,13 +51,14 @@ struct PrepArgs {
     int vld;              // > 0: V cache transposed, Vc[(kvh*hd + c) * vld + position] (attn_pv_t)
     float eps, kv_scale;
     const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
+    // tab null: Rc only (attn_scores_tile computes the bias itself)
 };
 
 inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
     if (a.hd != PREP_WG || a.nr > SG || a.ext % PREP_WG) throw std::runtime_error("attn_prep: unsupported shape");
     // R rows: ext / PREP_WG groups per row, one table entry per thread (each group clips the row itself; the first
     // writes it to Rc)
-    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nch = a.ext / PREP_WG, ngroups = nq + 2 * nk + nq * nch;
+    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nch = a.tab ? a.ext / PREP_WG : 1, ngroups = nq + 2 * nk + nq * nch;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(PREP_WG / SG, h), rs(SG, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngroups * PREP_WG), sycl::range<1>(PREP_WG)),
@@ -119,6 +120,7 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                     if (ch == 0) a.Rc[(size_t)g * a.nr + l] = x;
                     rs[l] = x;
                 }
+                if (!a.tab) return; // the same for the whole group
                 sycl::group_barrier(it.get_group());
                 const int dd = ch * PREP_WG + l;
                 const float *b = a.rel_bias + (size_t)dd * a.nr;

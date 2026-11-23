@@ -2,6 +2,7 @@
 // every variant against attn_pv_gate2 bit for bit.   bench_attn <card> [pos] [win (0 = full)] [ntok]
 #include <cmath>
 #include "../src/engine.hpp"
+#include "../src/attn_tiles.hpp"
 #include <random>
 #include <functional>
 
@@ -14,6 +15,79 @@ int main(int argc, char **argv) {
         const int ntok = argc > 4 ? std::atoi(argv[4]) : 1;
         const int nh = 24, nkvh = 8, hd = 128, kd = nkvh * hd, cap = pos + ntok + 64, ldp = cap;
         const int iters = std::getenv("BENCH_ITERS") ? std::atoi(std::getenv("BENCH_ITERS")) : 200;
+        if (std::getenv("BENCH_TILE")) { // prompt steps: attn_scores (+ table) vs attn_scores_tile, attn_pv_t vs attn_pv_tile
+            const int nr = 16, ext = 1024, G = nh / nkvh, it2 = std::getenv("BENCH_ITERS") ? iters : 10;
+            const float scale = 1.0f / std::sqrt((float)hd);
+            std::mt19937 rng(7);
+            std::normal_distribution<float> nd(0.0f, 1.0f);
+            auto rnd = [&](size_t n, float sc) { std::vector<float> v(n); for (auto &x : v) x = nd(rng) * sc; return v; };
+            auto hq = rnd((size_t)ntok * nh * hd, 0.3f), hrc = rnd((size_t)ntok * nh * nr, 0.5f), hrb = rnd((size_t)ext * nr, 0.5f);
+            auto hs = rnd((size_t)ntok * nh, 1.0f), hg = rnd((size_t)ntok * nh * hd, 1.0f);
+            std::vector<sycl::half> hk((size_t)cap * kd), hv((size_t)cap * kd);
+            for (auto &x : hk) x = (sycl::half)nd(rng);
+            for (auto &x : hv) x = (sycl::half)nd(rng);
+            const int vld = (cap + 15) / 16 * 16;
+            std::vector<sycl::half> ht((size_t)kd * vld, (sycl::half)0.0f);
+            for (int j = 0; j < cap; ++j) for (int c = 0; c < kd; ++c) ht[(size_t)c * vld + j] = hv[(size_t)j * kd + c];
+            float *Q = d.alloc<float>(hq.size()), *Rc = d.alloc<float>(hrc.size()), *Rb = d.alloc<float>(hrb.size());
+            float *Sk = d.alloc<float>(hs.size()), *Gt = d.alloc<float>(hg.size()), *tab = d.alloc<float>((size_t)ntok * nh * ext);
+            sycl::half *K = d.alloc<sycl::half>(hk.size()), *Vt = d.alloc<sycl::half>(ht.size());
+            d.put(Q, hq.data(), hq.size()); d.put(Rc, hrc.data(), hrc.size()); d.put(Rb, hrb.data(), hrb.size());
+            d.put(Sk, hs.data(), hs.size()); d.put(Gt, hg.data(), hg.size()); d.put(K, hk.data(), hk.size()); d.put(Vt, ht.data(), ht.size());
+            // the table as attn_prep builds it
+            d.q.parallel_for(sycl::range<2>((size_t)ntok * nh, ext), [=](sycl::id<2> i) {
+                const float *b = Rb + i[1] * nr, *r = Rc + i[0] * nr;
+                float s = 0.0f;
+                for (int k = 0; k < nr; ++k) s += b[k] * r[k];
+                tab[i[0] * ext + i[1]] = s;
+            }).wait();
+            const size_t np = (size_t)ntok * nh * ldp;
+            float *P0 = d.alloc<float>(np), *P1 = d.alloc<float>(np);
+            float *o0 = d.alloc<float>(hg.size()), *o1 = d.alloc<float>(hg.size());
+            auto tm = [&](auto f) {
+                f(); d.q.wait();
+                double t0 = now_s();
+                for (int i = 0; i < it2; ++i) f();
+                d.q.wait();
+                return (now_s() - t0) / it2 * 1e6;
+            };
+            auto same = [&](float *a, float *b, size_t n) {
+                std::vector<float> x(n), y(n);
+                d.get(x.data(), a, n); d.get(y.data(), b, n);
+                for (size_t i = 0; i < n; ++i) if (std::memcmp(&x[i], &y[i], 4)) return std::string("DIFF at ") + std::to_string(i);
+                return std::string("same");
+            };
+            const int pl = pos + ntok - 1;
+            const double keys = win > 0 ? (double)std::min(win, pl + 1) : (pos + ntok / 2.0);
+            const double gmac = (double)ntok * nh * keys * hd / 1e9;
+            std::printf("pos %d win %d ntok %d: ~%.0f keys per query, %.2f GMAC per kernel\n", pos, win, ntok, keys, gmac);
+            d.q.memset(P0, 0x7f, np * 4).wait();
+            double us0 = tm([&] { fz::attn_scores(d.q, Q, K, tab, pos, ntok, nh, nkvh, hd, ext, win, scale, P0, ldp); });
+            std::printf("  scores (table)         %9.1f us %6.2f TMAC/s\n", us0, gmac / us0 * 1e3);
+            auto sct = [&](const char *name, auto f) {
+                d.q.memset(P1, 0x7f, np * 4).wait();
+                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp); });
+                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(P0, P1, np).c_str());
+            };
+            sct("scores_tile<4,3,4>", fz::attn_scores_tile<4, 3, 4>);
+            sct("scores_tile<8,3,4>", fz::attn_scores_tile<8, 3, 4>);
+            sct("scores_tile<8,3,8>", fz::attn_scores_tile<8, 3, 8>);
+            sct("scores_tile<16,3,4>", fz::attn_scores_tile<16, 3, 4>);
+            fz::attn_softmax_norm(d.q, Sk, pos, ntok, nh, win, P0, ldp).wait();
+            auto pv0 = (win > 0 ? std::min(win, pl + 1) : pl + 1) >= 1024 ? fz::attn_pv_t<64> : fz::attn_pv_t<32>;
+            double u1 = tm([&] { pv0(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o0); });
+            std::printf("  pv_t                   %9.1f us %6.2f TMAC/s\n", u1, gmac / u1 * 1e3);
+            auto pvt = [&](const char *name, auto f) {
+                d.q.memset(o1, 0, hg.size() * 4).wait();
+                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1); });
+                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
+            };
+            pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
+            pvt("pv_tile<8,3>", fz::attn_pv_tile<8, 3>);
+            pvt("pv_tile<16,3>", fz::attn_pv_tile<16, 3>);
+            (void)G;
+            return 0;
+        }
         const int ncopy = 16; // V caches cycled so reads come from memory
         std::mt19937 rng(3);
         std::normal_distribution<float> nd(0.0f, 1.0f);
