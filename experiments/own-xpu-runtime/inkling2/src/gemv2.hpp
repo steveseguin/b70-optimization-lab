@@ -8,6 +8,7 @@
 #pragma once
 #include "gemv.hpp"
 #include "planar.hpp"
+#include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <map>
 
 namespace ink {
@@ -79,6 +80,64 @@ template <class D, int M> struct GemvM {
             float v = sg_sum(sg, acc[m]);
             if (lane == 0) y[(size_t)m * ldy + r] = v;
         }
+    }
+};
+
+// M vectors and R rows per sub-group, 16-byte input loads shared by the R rows; group(0) = block of M vectors (the
+// vectors of block b start at x + b*M*ldx), group(1) = block of sgw*R rows. Each (row, vector) sum is Gemv1R's.
+template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
+    const uint8_t *W; size_t rb; int rows, cols;
+    const float *x; int ldx;
+    float *y; int ldy;
+    int sgw;
+    // R = 4: the large register file (256 registers per thread, half the threads per core)
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        if constexpr (R >= 4) return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>};
+        else return sycl::ext::oneapi::experimental::properties{};
+    }
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        auto sg = it.get_sub_group();
+        int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * R;
+        if (r0 >= rows) return;
+        int lane = (int)sg.get_local_linear_id();
+        const size_t vb = (size_t)it.get_group(0) * M;
+        const float *xb = x + vb * ldx;
+        float acc[R][M];
+        for (int k = 0; k < R; ++k) for (int m = 0; m < M; ++m) acc[k][m] = 0.0f;
+        const int nc = cols / 32;
+        for (int c = lane; c < nc; c += SG) {
+            float o[R][32];
+            for (int k = 0; k < R; ++k)
+                if (r0 + k < rows) D::decode32(W + (size_t)(r0 + k) * rb, cols, c, o[k]);
+            if constexpr (INTERLEAVE) {
+                // the R*M chunk sums advance together, four terms at a time (each still in index order)
+                float s[R][M];
+                for (int k = 0; k < R; ++k) for (int m = 0; m < M; ++m) s[k][m] = 0.0f;
+                for (int i4 = 0; i4 < 8; ++i4) {
+                    for (int m = 0; m < M; ++m) {
+                        sycl::vec<float, 4> xv = *(const sycl::vec<float, 4> *)(xb + (size_t)m * ldx + 32 * c + 4 * i4);
+                        for (int j = 0; j < 4; ++j)
+                            for (int k = 0; k < R; ++k) s[k][m] += o[k][4 * i4 + j] * xv[j];
+                    }
+                }
+                for (int k = 0; k < R; ++k) for (int m = 0; m < M; ++m) acc[k][m] += s[k][m];
+            } else {
+                for (int m = 0; m < M; ++m) {
+                    float xs[32];
+                    load_x32(xb + (size_t)m * ldx + 32 * c, xs);
+                    for (int k = 0; k < R; ++k) {
+                        float s = 0.0f;
+                        for (int i = 0; i < 32; ++i) s += o[k][i] * xs[i];
+                        acc[k][m] += s;
+                    }
+                }
+            }
+        }
+        for (int k = 0; k < R; ++k)
+            for (int m = 0; m < M; ++m) {
+                float v = sg_sum(sg, acc[k][m]);
+                if (lane == 0 && r0 + k < rows) y[(vb + m) * ldy + r0 + k] = v;
+            }
     }
 };
 
@@ -281,7 +340,12 @@ template <class Fn> inline void with_decoder(const WView &w, Fn &&f) {
 }
 
 // launch tuning per call: R rows per sub-group and sub-groups per work-group (from tools/bench_gemv)
-struct Tune { int R = 4, sgw = 4; bool pre = false; }; // pre: the preload kernels (if the layout has them)
+struct Tune {
+    int R = 4, sgw = 4;
+    bool pre = false; // the preload kernels (if the layout has them)
+    int mr = 0;       // M > 1: blocks of mr vectors per sub-group (GemvMR); 0 = GemvM
+    bool il = false;  // GemvMR: interleave the chunk sums of all rows and vectors
+};
 
 inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ldx, float *y, int ldy, int M, Tune tu = {}) {
     sycl::event e;
@@ -327,6 +391,34 @@ inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ld
             case 8: go.template operator()<8>(); break;
             default: throw std::runtime_error("gemv: R must be 1, 2, 4 or 8");
             }
+            return;
+        }
+        if (tu.mr) { // nb blocks of tu.mr vectors (M = nb * tu.mr), R rows per sub-group
+            const int MM = tu.mr, nb = M / MM, R = tu.R, sgw = tu.sgw;
+            if (M % MM) throw std::runtime_error("gemv: M not a multiple of the vector block");
+            auto go = [&]<int RR, int MB>() {
+                int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
+                sycl::nd_range<2> nr2(sycl::range<2>((size_t)nb, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+                if (tu.il) e = q.parallel_for(nr2, GemvMR<D, RR, MB, true>{w.p, w.rb, rows, cols, x, ldx, y, ldy, sgw});
+                else e = q.parallel_for(nr2, GemvMR<D, RR, MB>{w.p, w.rb, rows, cols, x, ldx, y, ldy, sgw});
+            };
+            auto gm = [&]<int RR>() {
+                switch (MM) {
+                case 1: go.template operator()<RR, 1>(); break;
+                case 2: go.template operator()<RR, 2>(); break;
+                case 3: go.template operator()<RR, 3>(); break;
+                case 4: go.template operator()<RR, 4>(); break;
+                case 5: go.template operator()<RR, 5>(); break;
+                case 6: go.template operator()<RR, 6>(); break;
+                case 7: go.template operator()<RR, 7>(); break;
+                case 8: go.template operator()<RR, 8>(); break;
+                default: throw std::runtime_error("gemv: vector block must be 1..8");
+                }
+            };
+            if (R == 1) gm.template operator()<1>();
+            else if (R == 2) gm.template operator()<2>();
+            else if (R == 4) gm.template operator()<4>();
+            else throw std::runtime_error("gemv: R must be 1, 2 or 4 with vector blocks");
             return;
         }
         sycl::nd_range<1> nr(sycl::range<1>((size_t)((rows + GEMV_ROWS - 1) / GEMV_ROWS) * GEMV_ROWS * SG),

@@ -16,23 +16,24 @@ int main(int argc, char **argv) {
         w.upload(d, g, false);
         const int iters = std::getenv("BENCH_ITERS") ? std::atoi(std::getenv("BENCH_ITERS")) : 200;
         const bool file_too = std::getenv("BENCH_FILE") && std::atoi(std::getenv("BENCH_FILE"));
+        const int BM = std::getenv("BENCH_M") ? std::atoi(std::getenv("BENCH_M")) : 1; // vectors per product (dense)
         std::mt19937 rng(7);
         for (int a = 3; a < argc; ++a) {
             const Tensor *t = g.find(argv[a]);
             if (!t) { std::fprintf(stderr, "no tensor %s\n", argv[a]); continue; }
             const bool routed = t->ne[2] > 1;
-            const int cols = (int)t->ne[0], rows = (int)t->ne[1], K = routed ? 8 : 1, NS = routed ? 16 : 1;
+            const int cols = (int)t->ne[0], rows = (int)t->ne[1], K = routed ? 8 : BM, NS = routed ? 16 : 1;
             const size_t nrows = (size_t)t->rows();
-            const size_t bytes = t->row_bytes() * (size_t)rows * K; // bytes read per product
-            std::vector<float> hx(cols);
+            const size_t bytes = t->row_bytes() * (size_t)rows * (routed ? K : 1); // bytes read per product
+            std::vector<float> hx((size_t)cols * (routed ? 1 : K));
             std::normal_distribution<float> nd(0.0f, 1.0f);
             for (auto &v : hx) v = nd(rng);
             std::vector<int32_t> hid((size_t)K * NS);
             for (int s = 0; s < NS; ++s)
                 for (int k = 0; k < K; ++k) hid[(size_t)s * K + k] = routed ? (int)(((s * K + k) * 37 + 11) % t->ne[2]) : 0;
-            float *x = d.alloc<float>(cols), *y0 = d.alloc<float>((size_t)rows * K), *y1 = d.alloc<float>((size_t)rows * K);
+            float *x = d.alloc<float>(hx.size()), *y0 = d.alloc<float>((size_t)rows * K), *y1 = d.alloc<float>((size_t)rows * K);
             int32_t *ids = d.alloc<int32_t>(hid.size());
-            d.put(x, hx.data(), cols);
+            d.put(x, hx.data(), hx.size());
             d.put(ids, hid.data(), hid.size());
             const uint8_t *Wraw = w[t->name];
             // copies of the weight in each layout: dense tensors get enough copies for 256 MB
@@ -77,7 +78,7 @@ int main(int argc, char **argv) {
             };
             auto idp = [&](int i) { return ids + (size_t)(i % NS) * K; };
             double us0 = routed ? timeit([&](int i) { gemv_routed(d.q, *t, Wraw, idp(i), K, x, cols, 0, y0, rows); })
-                                : timeit([&](int i) { gemv(d.q, *t, raw_copies[i % raw_copies.size()], x, cols, y0, rows, 1); });
+                                : timeit([&](int i) { gemv(d.q, *t, raw_copies[i % raw_copies.size()], x, cols, y0, rows, K); });
             d.get(h0.data(), y0, h0.size());
             std::printf("%-30s %-6s %6d x %-5d x%d %7.2f MB  %2d copies  base       %8.2f us %6.1f GB/s\n", t->name.c_str(),
                         type_name(t->type), rows, cols, K, bytes / 1e6, ncopy, us0, bytes / us0 / 1e3);
@@ -86,14 +87,23 @@ int main(int argc, char **argv) {
                 double us;
                 try {
                     us = routed ? timeit([&](int i) { WView u = v; gemv_routed_v(d.q, u, idp(i), K, x, cols, 0, y1, rows, tu); })
-                                : timeit([&](int i) { WView u = v; u.p = copies[i % copies.size()]; gemv_v(d.q, u, x, cols, y1, rows, 1, tu); });
+                                : timeit([&](int i) { WView u = v; u.p = copies[i % copies.size()]; gemv_v(d.q, u, x, cols, y1, rows, K, tu); });
                 } catch (std::exception &ex) { std::printf("%-30s %s: %s\n", "", lname, ex.what()); return; }
                 d.get(h1.data(), y1, h1.size());
                 long bad = -1;
                 for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
-                std::printf("%-30s %-11s R%d sg%d %32s %8.2f us %6.1f GB/s  %s\n", "", lname, tu.R, tu.sgw, "", us,
+                std::printf("%-30s %-11s R%d sg%d mr%d %28s %8.2f us %6.1f GB/s  %s\n", "", lname, tu.R, tu.sgw, tu.mr, "", us,
                             bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
             };
+            if (!routed && K > 1) { // vector blocks
+                run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{1, 4, false, 0});
+                for (int mr : {2, 4, 8}) {
+                    if (K % mr) continue;
+                    for (int R : {1, 2, 4}) for (int sgw : {2, 4}) run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{R, sgw, false, mr});
+                    for (int R : {1, 2}) for (int sgw : {2, 4}) run(vp.kind ? "planar-il" : "file-il", vp, pl_copies, Tune{R, sgw, false, mr, true});
+                }
+                continue;
+            }
             if (file_too && vp.kind != K_RAW)
                 for (int R : {1, 2, 4}) for (int sgw : {2, 4}) run("file", vr, raw_copies, Tune{R, sgw});
             for (int R : {1, 2, 4}) for (int sgw : {2, 4}) run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{R, sgw});

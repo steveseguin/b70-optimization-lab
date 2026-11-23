@@ -6,6 +6,7 @@
 #include "dump.hpp"
 #include "model.hpp"
 #include "fused.hpp"
+#include "moe_group.hpp"
 #include "ops.hpp"
 #include <cmath>
 
@@ -41,6 +42,7 @@ struct Engine {
     float *mix_inv = nullptr, *mix_sc = nullptr;
     float *tau_all = nullptr;  // log-scaled position factor of every position
     int32_t *next_id = nullptr;
+    MoeGroups grp;             // slots grouped by expert (steps of several tokens)
     int n_logit_rows = 1;      // logits rows the last step left in lg
     bool host_logits = true;   // copy the logits to the host after each step (false: next_token() reads them on the card)
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
@@ -93,6 +95,7 @@ struct Engine {
             d.put(tau_all, tv.data(), cap);
         }
         next_id = d.alloc<int32_t>(1);
+        grp.alloc(d, h.n_expert, T * h.n_used);
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
@@ -114,11 +117,27 @@ struct Engine {
         }
     }
     static Tune tune_routed(const W &) { return Tune{2, 2}; }
-    // y[t] = W x[t] for ntok vectors, eight per launch
+    // several vectors: blocks of mr vectors per sub-group (bench_gemv BENCH_M=8, card 3, 2026-11-22)
+    static Tune tune_m(const W &w) {
+        switch (w.kind) {
+        case K_Q8_0P: return Tune{2, 2, false, 8, false};
+        case K_Q6_KP: return Tune{2, 2, false, 8, true};
+        case K_NVFP4P: return Tune{2, 2, false, 8, false};
+        default: return Tune{1, 4, false, 4, true};
+        }
+    }
+    // y[t] = W x[t] for ntok vectors: one launch for the whole blocks of vectors, one for the rest
     void mm(const W &w, const float *x, float *y, int ntok) {
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
-        for (int t0 = 0; t0 < ntok; t0 += 8)
-            pr(wlabel(w), gemv_v(d.q, w.view(), x + (size_t)t0 * cols, cols, y + (size_t)t0 * rows, rows, std::min(8, ntok - t0), tune(w)));
+        if (ntok == 1) { pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, 1, tune(w))); return; }
+        Tune tm = tune_m(w);
+        int nfull = ntok / tm.mr * tm.mr, rem = ntok - nfull;
+        if (nfull) pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, nfull, tm));
+        if (rem) {
+            Tune tr = tm;
+            tr.mr = rem;
+            pr(wlabel(w), gemv_v(d.q, w.view(), x + (size_t)nfull * cols, cols, y + (size_t)nfull * rows, rows, rem, tr));
+        }
     }
     const float *f32(const W &w) const {
         if (!w) return nullptr;
@@ -280,8 +299,9 @@ struct Engine {
             dump.put(d, nm("Rcur", il), R, h.n_rel, nh, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form), then the output gate
             const int win = swa ? h.n_swa : 0;
-            pr("attn_softmax", ops::attn_softmax(d.q, Q, Kc[il], tab, sinks, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
-            pr("attn_pv", fz::attn_pv_gate(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, gate, att));
+            pr("attn_scores", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            pr("attn_softmax", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
+            pr("attn_pv", fz::attn_pv_gate2(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, gate, att));
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
             mm(l.wo, att, ob, ntok);
             const bool bstart = ip % h.res_block == 0;
@@ -311,10 +331,17 @@ struct Engine {
             {   // gate and up rows of each chosen expert in one sub-group, then SITU (gate rows 0..nff-1, up nff..2nff-1)
                 const W &gw = l.gate_up;
                 const size_t es = gw.rb * (size_t)gw.t->ne[1];
-                pr("moe_gate_up", gemv_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, eids, K, fx, E, h.n_used,
-                                            SituOp{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff}, 2));
+                const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
+                if (ntok == 1) {
+                    pr("moe_gate_up", gemv_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
+                    pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
+                } else { // several tokens: each chosen expert decoded once per 8 slots
+                    const int amax = std::min(h.n_expert, K);
+                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    pr("moe_gate_up", grouped_pair(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, amax, fx, E, h.n_used, so, 2));
+                    pr("moe_down", grouped_rows(d.q, l.down.view(), grp, amax, hb, h.n_ff, yk, E, 2));
+                }
             }
-            pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
             float *lo = lbuf[il + 1];
             pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
                                         f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok));

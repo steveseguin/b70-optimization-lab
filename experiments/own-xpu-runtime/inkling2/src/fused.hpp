@@ -189,6 +189,89 @@ inline sycl::event attn_pv_gate(sycl::queue &q, const float *P, int ldp, const s
     });
 }
 
+// ---- attention, split for parallelism (same arithmetic as ops::attn_softmax and attn_pv_gate) -----------------
+// attn_scores: s_j = (q . k_j) * scale (+ tab[p - j] if p - j < ext) into P[(t*nh + h)*ldp + j - lo], one key per
+// thread (the dot product in d order, as ops::attn_softmax), keys of a (t, h) spread over many work-groups.
+constexpr int SC_WG = 64;
+inline sycl::event attn_scores(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
+                               int nkvh, int hd, int ext, int win, float scale, float *P, int ldp) {
+    if (hd != 128) throw std::runtime_error("attn_scores: head size 128 only");
+    const int pl = pos0 + ntok - 1, maxk = win > 0 ? sycl::min(win, pl + 1) : pl + 1;
+    const int nb = (maxk + SC_WG - 1) / SC_WG;
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)ntok * nh, (size_t)nb * SC_WG), sycl::range<2>(1, SC_WG)),
+                          [=](sycl::nd_item<2> it) {
+        int g = (int)it.get_group(0), t = g / nh, hh = g % nh;
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        int j = lo + (int)it.get_global_id(1);
+        if (j > p) return;
+        const float *qv = Q + (size_t)g * hd;
+        const sycl::half *kr = K + (size_t)j * nkvh * hd + kvh * hd;
+        float s = 0.0f;
+        for (int d8 = 0; d8 < 16; ++d8) {
+            sycl::vec<sycl::half, 8> kv = *(const sycl::vec<sycl::half, 8> *)(kr + 8 * d8);
+            sycl::vec<float, 4> q0 = *(const sycl::vec<float, 4> *)(qv + 8 * d8), q1 = *(const sycl::vec<float, 4> *)(qv + 8 * d8 + 4);
+            for (int i = 0; i < 4; ++i) s += q0[i] * (float)kv[i];
+            for (int i = 0; i < 4; ++i) s += q1[i] * (float)kv[4 + i];
+        }
+        s = s * scale;
+        int dist = p - j;
+        if (dist < ext) s = s + tab[(size_t)g * ext + dist];
+        P[(size_t)g * ldp + j - lo] = s;
+    });
+}
+// ops::attn_softmax after the scores: the same maximum, the same lane-strided sums of exponentials and work-group sum
+inline sycl::event attn_softmax_norm(sycl::queue &q, const float *sink, int pos0, int ntok, int nh, int win, float *P, int ldp) {
+    constexpr int AW = ops::ATT_WG;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(AW / SG, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * AW), sycl::range<1>(AW)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), t = g / nh, hh = g % nh, l = (int)it.get_local_id(0);
+            int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+            float *pr = P + (size_t)g * ldp;
+            float mx = -INFINITY;
+            for (int j = lo + l; j <= p; j += AW) mx = sycl::fmax(mx, pr[j - lo]);
+            mx = sycl::reduce_over_group(it.get_group(), mx, sycl::maximum<float>());
+            float sk = sink[(size_t)t * nh + hh];
+            mx = sycl::fmax(mx, sk);
+            float acc = 0.0f;
+            for (int j = lo + l; j <= p; j += AW) {
+                float e = sycl::exp(pr[j - lo] - mx);
+                pr[j - lo] = e;
+                acc += e;
+            }
+            float tot = wg_sum<AW>(it, acc, &slm[0]) + sycl::exp(sk - mx);
+            float inv = 1.0f / tot;
+            for (int j = lo + l; j <= p; j += AW) pr[j - lo] = pr[j - lo] * inv;
+        });
+    });
+}
+// attn_pv_gate with 16 channels per work-group (more groups in flight) and the loads of 16 keys issued before their
+// products are added (still one by one, j ascending)
+inline sycl::event attn_pv_gate2(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
+                                 int nkvh, int hd, int win, const float *gate, float *out) {
+    constexpr int PW = 16, U = 16;
+    const int nd = hd / PW;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * hd), sycl::range<1>(PW)), [=](sycl::nd_item<1> it) {
+        int g = (int)it.get_group(0), gh = g / nd, t = gh / nh, hh = gh % nh;
+        int d = (g % nd) * PW + (int)it.get_local_id(0);
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)gh * ldp;
+        const int kd = nkvh * hd;
+        const sycl::half *vc = V + kvh * hd + d;
+        float acc = 0.0f;
+        int j = lo;
+        for (; j + U - 1 <= p; j += U) {
+            float pv[U], vv[U];
+            for (int u = 0; u < U; ++u) { pv[u] = pr[j - lo + u]; vv[u] = (float)vc[(size_t)(j + u) * kd]; }
+            for (int u = 0; u < U; ++u) acc += pv[u] * vv[u];
+        }
+        for (; j <= p; ++j) acc += pr[j - lo] * (float)vc[(size_t)j * kd];
+        size_t i = (size_t)t * nh * hd + hh * hd + d;
+        out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
+    });
+}
+
 // ---- depth mix + norm ---------------------------------------------------------------------------------------
 using ops::MixArgs;
 using ops::MIX_MAX;

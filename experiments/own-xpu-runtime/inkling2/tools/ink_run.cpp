@@ -27,8 +27,34 @@ int main(int argc, char **argv) {
         double t0 = now_s();
         e.feed(tok);
         double t1 = now_s();
+        if (const char *sp = std::getenv("INK_SAVE_LOGITS")) { // the prompt's last logits row, F32
+            std::ofstream o(sp, std::ios::binary);
+            const int V = e.m.hp.vocab;
+            o.write((const char *)(e.logits.data() + e.logits.size() - V), (std::streamsize)V * 4);
+        }
         e.prof.collect(); // the prompt
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+        if (const char *bs = std::getenv("INK_BENCH_STEP")) { // time steps of k tokens after the prompt: "k1,k2,..."
+            e.host_logits = false;
+            std::string list = bs;
+            size_t p0 = 0;
+            while (p0 < list.size()) {
+                size_t p1 = list.find(',', p0);
+                if (p1 == std::string::npos) p1 = list.size();
+                int k = std::atoi(list.substr(p0, p1 - p0).c_str());
+                p0 = p1 + 1;
+                std::vector<int32_t> tk(k, tok.back());
+                const int reps = 6;
+                e.step(tk.data(), k); d.q.wait(); // warm
+                e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+                double a0 = now_s();
+                for (int r = 0; r < reps; ++r) { e.step(tk.data(), k); d.q.wait(); e.prof.collect(); }
+                double ms = (now_s() - a0) / reps * 1e3;
+                std::fprintf(stderr, "[bench] step of %d tokens: %.2f ms (%.2f ms per token), at position %d\n", k, ms, ms / k, e.n_past);
+                if (e.prof.on) { e.prof.report(stderr); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0; }
+            }
+            return 0;
+        }
         std::vector<int> out;
         // INK_HOST_ARGMAX=1: copy every step's logits to the host and choose there (the first version's loop)
         const bool host_argmax = std::getenv("INK_HOST_ARGMAX") && std::atoi(std::getenv("INK_HOST_ARGMAX"));
