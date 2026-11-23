@@ -86,6 +86,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
 | long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24); 403K: 24.87 tok/s (was 23.53, card 5) | full layers' softmax and block sums past 16K keys (below) |
 | job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
+| DSpark drafter guesses (card 2) | | code 256 tokens 109.68 tok/s with 2 guesses (plain 87.70), haiku 128 94.66 (plain 88.05) | the drafter on the card, guesses checked exactly (below) |
 | control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
@@ -205,8 +206,27 @@ occurrence of the last 4, 3 or 2 tokens; `INK_SPEC_MAXN`, `INK_SPEC_MINN`). Text
 plain generation byte for byte (code 256 and haiku 128 tokens with 1, 2 and 3 guesses, card 2; gate checks 7-9). On
 fresh text it rarely has a guess: code 256 tokens 87.10-87.16 tok/s plain, 88.42-88.51 with 1 guess (52 checks, 27
 of 52 guesses kept, 176 steps without a guess), 86.77-86.87 with 2, 83.48-83.59 with 3. A one-token step is
-unchanged (11.36-11.43 ms). The guesser that should pay is the DSpark drafter (52 % of 3 guesses kept on code with
-the reference).
+unchanged (11.36-11.43 ms).
+
+DSpark drafter (`src/dspark.hpp`, `INK_DRAFT=<dspark-Inkling-2-Mini-Q8_0.gguf> INK_SPEC=<1-3>`; graph and references
+in `/home/steve/inkling-work/notes/dspark-spec.md`). Unsloth's 318M drafter for this model, on the same card: the
+target copies the stream entering visits 5, 23 and 41 and its final normed rows into a feature buffer every step;
+the drafter turns each row into context keys/values for its 3 layers (`inject`), and each round runs an 8-slot
+block (the last chosen token, then 7 mask slots; non-causal; layers 0 and 2 see the 1024 positions before, layer 1
+all) and a chained head that makes one guess at a time from the previous one. Its numbers only decide which guesses
+the target keeps; the text is the one-token text (gate check 10: ids and every chosen scores row). Keep rate on code
+57.5 % of 3 guesses (the reference build: 52 %).
+- Speed (card 2, 256 code tokens / 128 haiku tokens): plain 87.70 / 88.05 tok/s; 1 guess 99.32 / 89.23 (77.6 / 59.5 %
+  kept); 2 guesses **109.68 / 94.66** (68.4 / 51.2 %, 2.36 / 2.02 tokens per check); 3 guesses 108.00 / 88.25 (57.5
+  / 40.1 %).
+- Drafting, ~2.5 ms per round with 2 guesses: the head's correction goes through the output layer only via a
+  256-wide latent, so (W_lm Wh)^T is computed once at load (the engine's own products over Wh's 256 columns, 103 MB
+  BF16, 0.15 s) and each guess reads that table (189 µs) instead of the 380 MB output layer; the guess slots' output
+  products share one read (`gemv_multi_m`, 793 µs for 3); the 8-slot products take lane-order inputs in blocks of 8
+  (ffn_gate 81 µs, ffn_down 103; the tile kernels took 116 and 212; the first version's blocks 172 for ffn_gate).
+- The check step's output rows: the final norm writes lane-order rows for steps of 1-4 tokens; 4 rows 1,291 ->
+  944 µs (multi_m), one row 676 -> 655 (bench_gemv, card 3). Greedy choice in two launches (`ops::argmax_rows2`,
+  same index; one work-group per row took 56-63 µs).
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

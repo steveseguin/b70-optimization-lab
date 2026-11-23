@@ -105,6 +105,16 @@ struct Engine {
     // token t at cst + t * n_app * conv_n (all applications); the choice after each row goes to cids
     float *cst = nullptr;
     int32_t *cids = nullptr;
+    // guesser hooks (dspark.hpp): feat [4][T][n_embd] gets the stream entering visits feat_vis[0..2] and the final normed
+    // rows of every step; on_step(pos0, ntok) runs after each step's launches
+    float *feat = nullptr;
+    int feat_vis[3] = {-1, -1, -1};
+    // steps of 1-4 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
+    // (INK_OUT_LANE=0 off); argmax scratch of the two-launch argmax (ops::argmax_rows2)
+    bool out_lane = true;
+    float *finl = nullptr, *amx_v = nullptr;
+    int32_t *amx_i = nullptr;
+    std::function<void(int, int)> on_step;
     bool keep_states = false;
     int chk_n = 0;          // tokens of the last check
     // INK_XL=0: matrix inputs in the plain layout only (else lane order where the producer writes it, gemv2.hpp)
@@ -274,6 +284,9 @@ struct Engine {
         fxls = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
         cst = d.alloc<float>((size_t)(SB_MAX - 1) * h.n_app * conv_n);
         cids = d.alloc<int32_t>(SB_MAX);
+        finl = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
+        amx_v = d.alloc<float>((size_t)SB_MAX * ops::ARGMAX_G); amx_i = d.alloc<int32_t>((size_t)SB_MAX * ops::ARGMAX_G);
+        if (const char *e = std::getenv("INK_OUT_LANE")) out_lane = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_DR")) sb_dr = std::atoi(e);
@@ -560,6 +573,9 @@ struct Engine {
                 }
             }
             const float *inpSA = cur;
+            if (feat)
+                for (int j = 0; j < 3; ++j)
+                    if (il == feat_vis[j]) d.q.memcpy(feat + (size_t)j * T * E, cur, sizeof(float) * (size_t)ntok * E);
             // a block starts here: cur is saved (its mix scores into the table) by the attention mix, or alone
             const int mk = (ip % h.res_block == 0 && mix_tab) ? slot_of(cur) : -1;
             // attention inputs (inkling2.cpp:418-444)
@@ -815,17 +831,32 @@ struct Engine {
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;
         }
-        // output (inkling2.cpp:643-669)
+        // output (inkling2.cpp:643-669); steps of 1-4 tokens: lane-order rows for the output kernels (bench_gemv card 3:
+        // one row 676 -> 655 us, 3 rows multi_m 777 us, the interleaved blocks took ~1290 in the engine at 4)
+        const bool ol = out_lane && ntok <= SB_MAX && multi_ok(m.output.view());
         {
             fz::NormOut no{};
             no.y[0] = fin; no.w[0] = f32(m.output_norm);
+            if (ol) no.yl[0] = finl;
             mix_norm(blocks, cur, f32(m.output_res_query), 1, no, E, qi_out);
         }
         dump.put(d, "result_norm", fin, E, ntok);
         const int nl = all_logits ? ntok : 1;
         const float *xl = all_logits ? fin : fin + (size_t)(ntok - 1) * E;
-        mm(m.output, xl, lg, nl);
+        if (ol) {
+            const int lx = (int)xlane_floats(E);
+            const float *x1 = finl + (all_logits ? 0 : (size_t)(ntok - 1) * lx);
+            if (nl == 1) pr(wlabel(m.output), gemv_v(d.q, m.output.view(), x1, lx, lg, h.vocab_padded, 1, Tune{1, 1}, true));
+            else {
+                MultiJobs mj;
+                multi_add(mj, m.output.view(), x1, lg, 1, lx, h.vocab_padded);
+                pr(wlabel(m.output), gemv_multi_m(d.q, mj, nl, true, 1));
+            }
+        } else
+            mm(m.output, xl, lg, nl);
         pr("softcap", ops::softcap(d.q, lg, (size_t)nl * h.vocab_padded, h.softcap));
+        if (feat) d.q.memcpy(feat + (size_t)3 * T * E, fin, sizeof(float) * (size_t)ntok * E);
+        if (on_step) on_step(pos0, ntok);
         n_logit_rows = nl;
         if (!host_logits && !dump.want("result_output")) {
             n_past += ntok;
@@ -858,7 +889,7 @@ struct Engine {
     // argmax_last()); it becomes ids[0] for step(nullptr, 1) and is returned to the host
     int next_token() {
         const float *row = lg + (size_t)(n_logit_rows - 1) * m.hp.vocab_padded;
-        pr("argmax", ops::argmax(d.q, row, m.hp.vocab, ids));
+        pr("argmax", ops::argmax_rows2(d.q, row, m.hp.vocab_padded, m.hp.vocab, 1, ids, amx_v, amx_i));
         int32_t v;
         d.get(&v, ids, 1);
         return v;
@@ -874,7 +905,7 @@ struct Engine {
         all_logits = true; host_logits = false; keep_states = true;
         step(tok, n);
         all_logits = al; host_logits = hl; keep_states = false;
-        pr("argmax", ops::argmax_rows(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, cids));
+        pr("argmax", ops::argmax_rows2(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, cids, amx_v, amx_i));
         std::vector<int32_t> r(n);
         d.get(r.data(), cids, n);
         chk_n = n;

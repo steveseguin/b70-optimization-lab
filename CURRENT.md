@@ -87,6 +87,10 @@
 - Nov 23 ~14:45: checking steps cheaper again (control modules batched): 2 / 3 / 4 tokens 14.92 / 17.36 / 20.39 ms
   (card 2), one token unchanged, gate 9/9. DSpark drafter spec written from the reference source
   (`/home/steve/inkling-work/notes/dspark-spec.md`): 3 layers + a chained head; implementing it on the card next.
+- Nov 23 ~15:45: **DSpark guessing works, exact**: the drafter runs on the same card and its guesses are checked by
+  the model, so the text is unchanged (gate check 10). Code 87.7 -> **109.7 tok/s** (+25 %), a haiku 88.1 -> 94.7
+  (+7.5 %), with 2 guesses per check (card 2). Gate results folders are now removed when all pass (40 old ones,
+  ~45 GB, filled the disk at ~15:35; deleted).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

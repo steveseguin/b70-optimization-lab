@@ -481,6 +481,34 @@ inline sycl::event moe_combine(sycl::queue &q, const float *y, const float *esca
 // greedy choice: out[0] = the first index of the largest of x[0..n) (the host loop `if (x[i] > x[b]) b = i`).
 // One work-group: per-thread first maximum over a strided slice, the work-group maximum, then the lowest index among
 // the threads that hold it.
+// argmax() of nrows rows (row r at x + r * ld) in two launches: AG work-groups per row each find the first largest
+// value of their span, then one work-group per row takes the first largest of those (spans in order), so the index is
+// argmax()'s. pv / pi: nrows * ARGMAX_G scratch values
+constexpr int ARGMAX_G = 64;
+inline sycl::event argmax_rows2(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out, float *pv, int32_t *pi) {
+    constexpr int AW = 256, AG = ARGMAX_G;
+    const int span = (n + AG - 1) / AG;
+    q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AG * AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {
+        const int g = (int)it.get_group(0), r = g / AG, a = g % AG, l = (int)it.get_local_id(0);
+        const float *xr = x + (size_t)r * ld;
+        const int lo = a * span, hi = sycl::min(n, lo + span);
+        float bv = -INFINITY;
+        int bi = n;
+        for (int i = lo + l; i < hi; i += AW)
+            if (bi == n || xr[i] > bv) { bv = xr[i]; bi = i; }
+        const float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        const int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        if (l == 0) { pv[g] = m; pi[g] = idx; }
+    });
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AG), sycl::range<1>(AG)), [=](sycl::nd_item<1> it) {
+        const int r = (int)it.get_group(0), l = (int)it.get_local_id(0), g = r * AG + l;
+        const float bv = pv[g];
+        const int bi = pi[g];
+        const float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
+        const int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
+        if (l == 0) out[r] = idx;
+    });
+}
 // argmax() of each of nrows rows (row r at x + r * ld), one work-group per row: the same choice per row
 inline sycl::event argmax_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out) {
     constexpr int AW = 1024;

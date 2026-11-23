@@ -2,7 +2,8 @@
 //   ink_run <model.gguf> <card> <tokens.txt> [n_gen] [ctx]
 // Prints "ids: ..." (generated ids, stops at the end-of-turn token) like tools/ref_gen.cpp, timings on stderr.
 // INK_DUMP=<dir> saves the reference's named tensors for the prompt (one step: prompt <= INK_UBATCH tokens).
-#include "../src/engine.hpp"
+#include "../src/dspark.hpp"
+#include <memory>
 #include <fstream>
 
 int main(int argc, char **argv) {
@@ -36,6 +37,13 @@ int main(int argc, char **argv) {
             if (tok.size() < 16) throw std::runtime_error("INK_BENCH_REAL needs a prompt of at least 16 tokens");
             tail.assign(tok.end() - 8, tok.end());
             tok.resize(tok.size() - 8);
+        }
+        // INK_DRAFT=<dspark gguf>: the DSpark drafter guesses for INK_SPEC (it reads every step's rows from here on)
+        std::unique_ptr<Drafter> dr;
+        if (const char *dp = std::getenv("INK_DRAFT")) {
+            const double tl = now_s();
+            dr = std::make_unique<Drafter>(e, dp);
+            std::fprintf(stderr, "[ink] DSpark drafter loaded in %.2f s\n", now_s() - tl);
         }
         double t0 = now_s();
         e.feed(tok);
@@ -107,23 +115,33 @@ int main(int argc, char **argv) {
             if (gen_out.is_open()) { d.q.wait(); d.get(gen_row.data(), e.lg + (size_t)(e.n_logit_rows - 1) * e.m.hp.vocab_padded, gen_row.size());
                                      gen_out.write((const char *)gen_row.data(), (std::streamsize)gen_row.size() * 4); }
             int x = e.next_token();
+            const int32_t *xdev = e.ids; // the last chosen token on the card (the drafter's anchor)
             out.push_back(x); hist.push_back(x);
             long checks = 0, plain = 0, guessed = 0, kept = 0;
+            double tdraft = 0;
             while (x != e.m.hp.eos && (int)out.size() < n_gen) {
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
-                for (int nn = std::min(maxn, H - 1); nn >= minn && g.empty(); --nn)
-                    for (int st = H - nn - 1; st >= 0; --st) {
-                        if (!std::equal(hist.begin() + st, hist.begin() + st + nn, hist.end() - nn)) continue;
-                        for (int j = st + nn; j < H && (int)g.size() < spec; ++j) g.push_back(hist[j]);
-                        break;
-                    }
                 const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
+                if (dr) {
+                    if (room > 0) {
+                        const double td = now_s();
+                        g = dr->draft(e.n_past, xdev, std::min(spec, room));
+                        tdraft += now_s() - td;
+                    }
+                } else
+                    for (int nn = std::min(maxn, H - 1); nn >= minn && g.empty(); --nn)
+                        for (int st = H - nn - 1; st >= 0; --st) {
+                            if (!std::equal(hist.begin() + st, hist.begin() + st + nn, hist.end() - nn)) continue;
+                            for (int j = st + nn; j < H && (int)g.size() < spec; ++j) g.push_back(hist[j]);
+                            break;
+                        }
                 if ((int)g.size() > room) g.resize(std::max(0, room));
                 if (g.empty()) {
                     e.step(&x, 1);
                     if (gen_out.is_open()) { d.q.wait(); save_rows(1); }
                     x = e.next_token();
+                    xdev = e.ids;
                     out.push_back(x); hist.push_back(x);
                     ++plain;
                     continue;
@@ -134,13 +152,16 @@ int main(int argc, char **argv) {
                 int a = 0; // guesses that match the model's choices
                 while (a < (int)g.size() && g[a] == y[a] && y[a] != e.m.hp.eos) ++a;
                 e.accept(a + 1);
+                if (dr) dr->r_last = a; // r(P0') = the row of the last kept token
+                xdev = e.cids + a;
                 if (gen_out.is_open()) save_rows(a + 1);
                 for (int r = 0; r <= a && (int)out.size() < n_gen; ++r) { out.push_back(y[r]); hist.push_back(y[r]); }
                 x = out.back();
                 ++checks; guessed += (long)g.size(); kept += a;
+                e.prof.collect(); // one profile step per round (INK_PROF)
             }
-            std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps\n", checks, guessed, kept,
-                         guessed ? 100.0 * kept / guessed : 0.0, plain);
+            std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps; %.2f tokens per check; drafting %.3f s\n",
+                         checks, guessed, kept, guessed ? 100.0 * kept / guessed : 0.0, plain, checks ? 1.0 + (double)kept / checks : 0.0, tdraft);
             n_gen = 0; // done: the loop below does nothing
         }
         for (int i = 0; i < n_gen; ++i) {
