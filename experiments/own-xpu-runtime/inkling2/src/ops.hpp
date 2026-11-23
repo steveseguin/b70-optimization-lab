@@ -5,6 +5,7 @@
 // Formulas follow src/models/inkling2.cpp of the reference tree (cited per op).
 #pragma once
 #include "gemv.hpp"
+#include "xlane.hpp"
 
 namespace ink::ops {
 
@@ -28,16 +29,19 @@ inline sycl::nd_range<1> rows_range(int nrows) {
 
 // y = x / sqrt(mean(x^2) + eps) [* w]   (ggml_rms_norm, then build_norm's multiply by the weight)
 // rows of n floats; x and y may be the same buffer; w may be null
+// yl: also each row in lane order (xlane.hpp) at yl + r * xlane_floats(n); y null: only that copy
 inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const float *w, int n, int nrows, float eps,
-                            int ldx = -1, int ldy = -1) {
+                            int ldx = -1, int ldy = -1, float *yl = nullptr) {
     if (ldx < 0) ldx = n;
     if (ldy < 0) ldy = n;
+    const size_t lxl = xlane_floats(n);
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
         h.parallel_for(rows_range(nrows), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
             int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
             const float *xr = x + (size_t)r * ldx;
-            float *yr = y + (size_t)r * ldy;
+            float *yr = y ? y + (size_t)r * ldy : nullptr;
+            float *ylr = yl ? yl + (size_t)r * lxl : nullptr;
             constexpr int MV = 9; // rows of up to 9 * OPS_WG: unrolled, the reads go out together (same additions)
             if (n <= MV * OPS_WG) {
                 float xv[MV], wv[MV];
@@ -55,7 +59,11 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
 #pragma unroll
                 for (int u = 0; u < MV; ++u) {
                     const int i = l + OPS_WG * u;
-                    if (i < n) yr[i] = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
+                    if (i < n) {
+                        const float v = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
+                        if (yr) yr[i] = v;
+                        if (ylr) ylr[xlane_at(i)] = v;
+                    }
                 }
                 return;
             }
@@ -63,7 +71,11 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
             for (int i = l; i < n; i += OPS_WG) s = mac(s, xr[i], xr[i]);
             float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
             float scale = 1.0f / sycl::sqrt(tot / n + eps);
-            for (int i = l; i < n; i += OPS_WG) yr[i] = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
+            for (int i = l; i < n; i += OPS_WG) {
+                const float v = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
+                if (yr) yr[i] = v;
+                if (ylr) ylr[xlane_at(i)] = v;
+            }
         });
     });
 }

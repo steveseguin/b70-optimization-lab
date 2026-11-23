@@ -69,6 +69,8 @@
   finds both notes hidden at 3 % and 55 % of the document (needle test).
   Short-context writing 12.32 -> 11.62 ms per token (~86 tok/s, card 3): small kernels issue their reads together,
   the mix warms the next attention weights into L2, gate|up epilogue trimmed. Same bits; gate 6/6.
+- Nov 23 ~12:00: writing 11.56 -> 11.39 ms per token (~88 tok/s, card 3): the expert products read their input in
+  "lane order" (4 cache lines per load instead of 16). Same bits; gate 6/6. Closed ideas: `inkling2/DO-NOT-REPEAT.md`.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -8,6 +8,7 @@
 #pragma once
 #include "gemv.hpp"
 #include "planar.hpp"
+#include "xlane.hpp"
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 #include <map>
 
@@ -20,9 +21,36 @@ inline void load_x32(const float *xv, float *xs) {
         xs[4 * i] = v[0]; xs[4 * i + 1] = v[1]; xs[4 * i + 2] = v[2]; xs[4 * i + 3] = v[3];
     }
 }
+// x in lane order (xlane.hpp): chunk c's 32 values
+inline void load_x32_lane(const float *xl, int c, float *xs) {
+    using V = sycl::vec<float, 4>;
+    const float *p = xl + (size_t)(c >> 4) * 512 + (size_t)(c & 15) * 4;
+    for (int q = 0; q < 8; ++q) {
+        V v = *(const V *)(p + 64 * q);
+        xs[4 * q] = v[0]; xs[4 * q + 1] = v[1]; xs[4 * q + 2] = v[2]; xs[4 * q + 3] = v[3];
+    }
+}
+// F32 weights with each row in lane order (xlane.hpp): the 16 lanes' weight loads side by side too (rows padded to
+// xlane_floats(cols) floats; the padding is never read). Same values in the same registers as the file layout.
+namespace pl {
+struct F32L {
+    static void decode32(const uint8_t *row, int, int c, float *o) { load_x32_lane((const float *)row, c, o); }
+};
+} // namespace pl
+inline sycl::event f32_lane_repack(sycl::queue &q, const float *src, float *dst, int rows, int cols) {
+    const size_t lx = xlane_floats(cols);
+    return q.parallel_for(sycl::range<2>((size_t)rows, (size_t)cols), [=](sycl::id<2> i) {
+        dst[i[0] * lx + xlane_at((int)i[1])] = src[i[0] * cols + i[1]];
+    });
+}
+// chunk c of x, plain (x = the vector) or lane order (xl)
+inline void load_xc(const float *x, int c, float *xs, bool xl) {
+    if (xl) load_x32_lane(x, c, xs);
+    else load_x32(x + 32 * c, xs);
+}
 
 // rows r0..r0+R-1 of W times x into y (one sub-group); shared by Gemv1R and the multi-matrix launch (multi.hpp)
-template <class D, int R>
+template <class D, int R, bool XL = false> // XL: x in lane order
 inline void gemv1_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows, int cols, const float *x, float *y, int r0) {
     int lane = (int)sg.get_local_linear_id();
     float acc[R];
@@ -30,7 +58,7 @@ inline void gemv1_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows
     const int nc = cols / 32;
     for (int c = lane; c < nc; c += SG) {
         float xs[32];
-        load_x32(x + 32 * c, xs);
+        load_xc(x, c, xs, XL);
         for (int k = 0; k < R; ++k) {
             if (r0 + k >= rows) break;
             float o[32];
@@ -45,7 +73,7 @@ inline void gemv1_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows
         if (lane == 0 && r0 + k < rows) y[r0 + k] = v;
     }
 }
-template <class D, int R> struct Gemv1R {
+template <class D, int R, bool XL = false> struct Gemv1R {
     const uint8_t *W; size_t rb; int rows, cols;
     const float *x;
     float *y;
@@ -54,7 +82,7 @@ template <class D, int R> struct Gemv1R {
         auto sg = it.get_sub_group();
         int r0 = ((int)it.get_group(0) * sgw + (int)sg.get_group_linear_id()) * R;
         if (r0 >= rows) return;
-        gemv1_rows<D, R>(sg, W, rb, rows, cols, x, y, r0);
+        gemv1_rows<D, R, XL>(sg, W, rb, rows, cols, x, y, r0);
     }
 };
 
@@ -147,7 +175,7 @@ template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
 };
 
 // routed: y[k*ldy + r] = W_{ids[k]} row r . x row (xdiv ? k / xdiv : 0); group(0) = k, group(1) = block of sgw*R rows
-template <class D, int R> struct GemvRoutedR {
+template <class D, int R, bool XL = false> struct GemvRoutedR { // XL: x in lane order
     const uint8_t *W; size_t rb, estride; int rows, cols;
     const int32_t *ids;
     const float *x; int ldx, xdiv;
@@ -166,7 +194,7 @@ template <class D, int R> struct GemvRoutedR {
         const int nc = cols / 32;
         for (int c = lane; c < nc; c += SG) {
             float xs[32];
-            load_x32(xv0 + 32 * c, xs);
+            load_xc(xv0, c, xs, XL);
             for (int j = 0; j < R; ++j) {
                 if (r0 + j >= rows) break;
                 float o[32];
@@ -275,14 +303,14 @@ template <class D> constexpr bool has_pre = requires { typename D::Pre; };
 // then op(k, r, a_r, b_r) on the pair. group(0) = slot k: routed (A and B offset by ids[k] * estride) or token k (ids
 // null); x row = xdiv ? k / xdiv : k. Used for the expert gate|up rows + SITU and the loop gain|forget rows + control.
 // one row of two matrices (rows ra, rbp) times xv0 in one sub-group; shared by GemvPair and multi.hpp's CtlMulti
-template <class D>
+template <class D, bool XL = false>
 inline void gemv_pair_row(sycl::sub_group sg, const uint8_t *ra, const uint8_t *rbp, int cols, const float *xv0, float &va, float &vb) {
     int lane = (int)sg.get_local_linear_id();
     float acc[2] = {0.0f, 0.0f};
     const int nc = cols / 32;
     for (int c = lane; c < nc; c += SG) {
         float xs[32];
-        load_x32(xv0 + 32 * c, xs);
+        load_xc(xv0, c, xs, XL);
         for (int j = 0; j < 2; ++j) {
             float o[32];
             D::decode32(j ? rbp : ra, cols, c, o);
@@ -293,7 +321,7 @@ inline void gemv_pair_row(sycl::sub_group sg, const uint8_t *ra, const uint8_t *
     }
     va = sg_sum(sg, acc[0]); vb = sg_sum(sg, acc[1]);
 }
-template <class D, class Op> struct GemvPair {
+template <class D, class Op, bool XL = false> struct GemvPair { // XL: x in lane order
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     const int32_t *ids;
     const float *x; int ldx, xdiv;
@@ -312,7 +340,7 @@ template <class D, class Op> struct GemvPair {
         float pre = 0.0f;
         if constexpr (requires { op.pre(k); }) pre = op.pre(k);
         float va, vb;
-        gemv_pair_row<D>(sg, ra, rbp, cols, xv0, va, vb);
+        gemv_pair_row<D, XL>(sg, ra, rbp, cols, xv0, va, vb);
         if constexpr (requires { op.pre(k); }) op.post(sg, lane, k, r, va, vb, pre);
         else if (lane == 0) op(k, r, va, vb);
     }
@@ -320,13 +348,15 @@ template <class D, class Op> struct GemvPair {
 // ops::situ for slot k, row i, from the gate and up values
 struct SituOp {
     const float *escale; const int32_t *ids; float beta, lb; float *hout; int nff;
+    int ldo = 0; // > 0: slot k's output in lane order (xlane_at) at hout + k * ldo, for a lane-order down product
+    size_t at(int k, int i) const { return ldo ? (size_t)k * ldo + xlane_at(i) : (size_t)k * nff + i; }
     float act(int k, float g, float u) const {
         if (escale) { float s = escale[ids[k]]; g = g * s; u = u * s; }
         float a = (sycl::tanh(g * (1.0f / beta)) * beta) * (1.0f / (1.0f + sycl::exp(-g)));
         if (lb > 0.0f) u = sycl::tanh(u * (1.0f / lb)) * lb;
         return a * u;
     }
-    void operator()(int k, int i, float g, float u) const { hout[(size_t)k * nff + i] = act(k, g, u); }
+    void operator()(int k, int i, float g, float u) const { hout[at(k, i)] = act(k, g, u); }
     // act() with the slot's expert scale read ahead (GemvPair): the same operations
     float pre(int k) const { return escale ? escale[ids[k]] : 1.0f; }
     // the two tanh in one pass: lane 0 takes the gate's, lane 1 the up value's (each lane computes the same function
@@ -338,7 +368,7 @@ struct SituOp {
         if (lane == 0) {
             float a = (th * beta) * (1.0f / (1.0f + sycl::exp(-g)));
             if (lb > 0.0f) u = thu * lb;
-            hout[(size_t)k * nff + i] = a * u;
+            hout[at(k, i)] = a * u;
         }
     }
 };
@@ -353,7 +383,8 @@ struct CtlOp {
 };
 
 // a weight as the kernels see it: layout kind, pointer, row stride
-enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3, K_Q5_0P = 4, K_IQ4_NLP = 5, K_IQ4_XSP = 6, K_Q4_KP = 7, K_Q5_KP = 8 };
+enum Kind { K_RAW = 0, K_Q8_0P = 1, K_NVFP4P = 2, K_Q6_KP = 3, K_Q5_0P = 4, K_IQ4_NLP = 5, K_IQ4_XSP = 6, K_Q4_KP = 7, K_Q5_KP = 8,
+            K_F32L = 9 };
 struct WView {
     const Tensor *t = nullptr;
     const uint8_t *p = nullptr;
@@ -371,6 +402,7 @@ template <class Fn> inline void with_decoder(const WView &w, Fn &&f) {
     case K_IQ4_XSP: f.template operator()<pl::IQ4_XSP>(); return;
     case K_Q4_KP: f.template operator()<pl::Q4_KP>(); return;
     case K_Q5_KP: f.template operator()<pl::Q5_KP>(); return;
+    case K_F32L: f.template operator()<pl::F32L>(); return;
     default: fmt::dispatch(w.t->type, [&]<class FT>() { f.template operator()<pl::Raw<FT>>(); });
     }
 }
@@ -383,7 +415,9 @@ struct Tune {
     bool il = false;  // GemvMR: interleave the chunk sums of all rows and vectors
 };
 
-inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ldx, float *y, int ldy, int M, Tune tu = {}) {
+// xl: x in lane order (one vector, M = 1, not the preload kernels)
+inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ldx, float *y, int ldy, int M, Tune tu = {},
+                          bool xl = false) {
     sycl::event e;
     int rows = (int)w.t->rows(), cols = (int)w.t->ne[0];
     if (cols % 32) throw std::runtime_error("gemv: row length not a multiple of 32: " + w.t->name);
@@ -392,6 +426,7 @@ inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ld
             int R = tu.R, sgw = tu.sgw;
             if constexpr (has_pre<D>) {
                 if (tu.pre) {
+                    if (xl) throw std::runtime_error("gemv: preload kernel with x in lane order");
                     int ncl = (cols / 32 + SG - 1) / SG;
                     auto gp = [&]<int RR, int NC>() {
                         int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
@@ -417,8 +452,9 @@ inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ld
             }
             auto go = [&]<int RR>() {
                 int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
-                e = q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)),
-                                   Gemv1R<D, RR>{w.p, w.rb, rows, cols, x, y, sgw});
+                const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+                if (xl) e = q.parallel_for(nr, Gemv1R<D, RR, true>{w.p, w.rb, rows, cols, x, y, sgw});
+                else e = q.parallel_for(nr, Gemv1R<D, RR>{w.p, w.rb, rows, cols, x, y, sgw});
             };
             switch (R) {
             case 1: go.template operator()<1>(); break;
@@ -470,7 +506,7 @@ inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ld
 }
 
 inline sycl::event gemv_routed_v(sycl::queue &q, const WView &w, const int32_t *ids, int K, const float *x, int ldx,
-                                 int x_div, float *y, int ldy, Tune tu = {}) {
+                                 int x_div, float *y, int ldy, Tune tu = {}, bool xl = false) {
     sycl::event e;
     int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1];
     size_t estride = w.rb * (size_t)rows;
@@ -478,6 +514,7 @@ inline sycl::event gemv_routed_v(sycl::queue &q, const WView &w, const int32_t *
         int sgw = tu.sgw;
         if constexpr (has_pre<D>) {
             if (tu.pre) {
+                if (xl) throw std::runtime_error("gemv_routed: preload kernel with x in lane order");
                 int ncl = (cols / 32 + SG - 1) / SG;
                 auto gp = [&]<int RR, int NC>() {
                     int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
@@ -500,7 +537,8 @@ inline sycl::event gemv_routed_v(sycl::queue &q, const WView &w, const int32_t *
         auto go = [&]<int RR>() {
             int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
             sycl::nd_range<2> nr(sycl::range<2>((size_t)K, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
-            e = q.parallel_for(nr, GemvRoutedR<D, RR>{w.p, w.rb, estride, rows, cols, ids, x, ldx, x_div, y, ldy, sgw});
+            if (xl) e = q.parallel_for(nr, GemvRoutedR<D, RR, true>{w.p, w.rb, estride, rows, cols, ids, x, ldx, x_div, y, ldy, sgw});
+            else e = q.parallel_for(nr, GemvRoutedR<D, RR>{w.p, w.rb, estride, rows, cols, ids, x, ldx, x_div, y, ldy, sgw});
         };
         switch (tu.R) {
         case 1: go.template operator()<1>(); break;
@@ -516,13 +554,14 @@ inline sycl::event gemv_routed_v(sycl::queue &q, const WView &w, const int32_t *
 // launch GemvPair: nslot slots, rows per matrix, A/B views of the same layout; sgw sub-groups per work-group
 template <class Op> inline sycl::event gemv_pair(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows,
                                                  const int32_t *ids, int nslot, const float *x, int ldx, int xdiv, Op op,
-                                                 int sgw = 2) {
+                                                 int sgw = 2, bool xl = false) {
     sycl::event e;
     int cols = (int)a.t->ne[0];
     with_decoder(a, [&]<class D>() {
         int ngr = (rows + sgw - 1) / sgw;
         sycl::nd_range<2> nr(sycl::range<2>((size_t)nslot, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
-        e = q.parallel_for(nr, GemvPair<D, Op>{a.p, B, a.rb, estride, rows, cols, ids, x, ldx, xdiv, op, sgw});
+        if (xl) e = q.parallel_for(nr, GemvPair<D, Op, true>{a.p, B, a.rb, estride, rows, cols, ids, x, ldx, xdiv, op, sgw});
+        else e = q.parallel_for(nr, GemvPair<D, Op>{a.p, B, a.rb, estride, rows, cols, ids, x, ldx, xdiv, op, sgw});
     });
     return e;
 }

@@ -22,7 +22,9 @@ int main(int argc, char **argv) {
             const Tensor *t = g.find(argv[a]);
             if (!t) { std::fprintf(stderr, "no tensor %s\n", argv[a]); continue; }
             const bool routed = t->ne[2] > 1;
-            const int cols = (int)t->ne[0], rows = (int)t->ne[1], K = routed ? 8 : BM, NS = routed ? 16 : 1;
+            const int cols = (int)t->ne[0], rows = (int)t->ne[1], K = routed ? 8 : BM;
+            // BENCH_NS: expert sets cycled (default 16 = all 128 experts once; 1 = the same 8, read from the cache)
+            const int NS = routed ? (std::getenv("BENCH_NS") ? std::atoi(std::getenv("BENCH_NS")) : 16) : 1;
             const size_t nrows = (size_t)t->rows();
             const size_t bytes = t->row_bytes() * (size_t)rows * (routed ? K : 1); // bytes read per product
             std::vector<float> hx((size_t)cols * (routed ? 1 : K));
@@ -102,6 +104,47 @@ int main(int argc, char **argv) {
                 std::printf("%-30s %-11s R%d sg%d mr%d %28s %8.2f us %6.1f GB/s  %s\n", "", lname, tu.R, tu.sgw, tu.mr, "", us,
                             bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
             };
+            if (!routed && K == 1 && std::getenv("BENCH_XONLY")) { // one vector: plain vs lane-order x (gemv_v)
+                std::vector<float> hxl(xlane_floats(cols), 0.0f);
+                for (int i = 0; i < cols; ++i) hxl[xlane_at(i)] = hx[i];
+                float *xl = d.alloc<float>(hxl.size());
+                d.put(xl, hxl.data(), hxl.size());
+                for (int rep = 0; rep < 2; ++rep)
+                    for (int R : {1, 2, 4}) for (int sgw : {1, 2, 4}) {
+                        const Tune tu{R, sgw};
+                        d.q.memset(y1, 0, h1.size() * 4).wait();
+                        double up = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; gemv_v(d.q, u, x, cols, y1, rows, 1, tu); });
+                        double ux = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; gemv_v(d.q, u, xl, cols, y1, rows, 1, tu, true); });
+                        d.get(h1.data(), y1, h1.size());
+                        long bad = -1;
+                        for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                        std::printf("%-30s R%d sg%d: plain x %8.2f us %6.1f GB/s, lane-order x %8.2f us %6.1f GB/s  %s\n", "", R, sgw,
+                                    up, bytes / up / 1e3, ux, bytes / ux / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                    }
+                if (t->type == G_F32) { // F32 weights in lane order too (pl::F32L)
+                    const size_t lx = xlane_floats(cols);
+                    std::vector<float *> lc;
+                    for (size_t c = 0; c < raw_copies.size(); ++c) {
+                        float *b = d.alloc<float>(lx * nrows);
+                        f32_lane_repack(d.q, (const float *)raw_copies[c], b, (int)nrows, cols).wait();
+                        lc.push_back(b);
+                    }
+                    WView vl{t, (const uint8_t *)lc[0], lx * 4, K_F32L};
+                    for (int R : {1, 2}) for (int sgw : {1, 2, 4}) {
+                        const Tune tu{R, sgw};
+                        d.q.memset(y1, 0, h1.size() * 4).wait();
+                        double ul = timeit([&](int i) { WView u = vl; u.p = (const uint8_t *)lc[i % lc.size()]; gemv_v(d.q, u, xl, cols, y1, rows, 1, tu, true); });
+                        d.get(h1.data(), y1, h1.size());
+                        long bad = -1;
+                        for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                        std::printf("%-30s R%d sg%d: lane-order x and weights %8.2f us %6.1f GB/s  %s\n", "", R, sgw, ul, bytes / ul / 1e3,
+                                    bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                    }
+                    for (float *b : lc) d.release(b);
+                }
+                d.release(xl);
+                continue;
+            }
             if (!routed && K > 1) { // vector blocks
                 { // token-parallel tiles (tok_tiles.hpp)
                     float *Xd = d.alloc<float>((size_t)((K + 15) / 16) * cols * 16);
@@ -126,6 +169,48 @@ int main(int argc, char **argv) {
                     for (int R : {1, 2}) for (int sgw : {2, 4}) run(vp.kind ? "planar-il" : "file-il", vp, pl_copies, Tune{R, sgw, false, mr, true});
                 }
                 continue;
+            }
+            if (routed && vp.kind != K_RAW) { // x in lane order (xlane.hpp), interleaved with the plain kernel
+                // BENCH_XDIV=1: each slot its own vector (copies of x), as the engine's down product
+                const int xd = std::getenv("BENCH_XDIV") ? std::atoi(std::getenv("BENCH_XDIV")) : 0;
+                const size_t lxl = xlane_floats(cols);
+                std::vector<float> hxl(lxl * K, 0.0f), hxp((size_t)cols * K);
+                for (int k = 0; k < K; ++k)
+                    for (int i = 0; i < cols; ++i) { hxl[k * lxl + xlane_at(i)] = hx[i]; hxp[(size_t)k * cols + i] = hx[i]; }
+                float *xl = d.alloc<float>(hxl.size()), *xp = d.alloc<float>(hxp.size());
+                d.put(xl, hxl.data(), hxl.size());
+                d.put(xp, hxp.data(), hxp.size());
+                for (int rep = 0; rep < 2; ++rep)
+                    for (int R : {1, 2, 4}) for (int sgw : {1, 2, 4}) {
+                        const Tune tu{R, sgw};
+                        d.q.memset(y1, 0, h1.size() * 4).wait();
+                        double up = timeit([&](int i) { gemv_routed_v(d.q, vp, idp(i), K, xp, cols, xd, y1, rows, tu); });
+                        double ux = timeit([&](int i) { gemv_routed_v(d.q, vp, idp(i), K, xl, (int)lxl, xd, y1, rows, tu, true); });
+                        d.get(h1.data(), y1, h1.size());
+                        long bad = -1;
+                        for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                        std::printf("%-30s R%d sg%d: plain x %8.2f us %6.1f GB/s, lane-order x %8.2f us %6.1f GB/s  %s\n", "", R, sgw,
+                                    up, bytes / up / 1e3, ux, bytes / ux / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                    }
+                if (rows % 2 == 0) { // the gate|up pair kernel, plain and lane-order x
+                    struct StoreOp2 { float *y; int n; void operator()(int k, int r, float a, float b) const { y[(size_t)k * 2 * n + r] = a; y[(size_t)k * 2 * n + n + r] = b; } };
+                    const int half = rows / 2;
+                    const size_t es = vp.rb * (size_t)rows;
+                    std::vector<float> hp((size_t)rows * K);
+                    for (int rep = 0; rep < 2; ++rep)
+                        for (int sgw : {1, 2}) {
+                            double up = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, StoreOp2{y1, half}, sgw); });
+                            d.get(hp.data(), y1, hp.size());
+                            double ux = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, xl, 0, K, StoreOp2{y1, half}, sgw, true); });
+                            d.get(h1.data(), y1, h1.size());
+                            const bool same = !std::memcmp(hp.data(), h1.data(), hp.size() * 4);
+                            std::printf("%-30s pair sg%d: plain x %8.2f us %6.1f GB/s, lane-order x %8.2f us %6.1f GB/s  %s\n", "", sgw,
+                                        up, bytes / up / 1e3, ux, bytes / ux / 1e3, same ? "same" : "DIFF");
+                        }
+                }
+                d.release(xl);
+                d.release(xp);
+                if (std::getenv("BENCH_XONLY")) continue;
             }
             if (routed && rows % 2 == 0 && vp.kind != K_RAW) { // the engine's gate|up pair kernel: rows r and r + rows/2
                 // (far, the file's order) or rows 2r and 2r + 1 (adjacent, an interleaved layout); timing only

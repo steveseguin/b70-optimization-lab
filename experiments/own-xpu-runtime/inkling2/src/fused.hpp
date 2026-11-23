@@ -842,7 +842,7 @@ inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float 
 // ops::mix_out for a whole row per work-group, then ops::rms_norm of the row (the same strided sums, the same weight
 // multiply): yn[j] (token-major, ntok rows of n) = rms_norm(mix row) * w[j]; out (if not null) gets the mix itself
 // (query-major as ops::mix_out). Rows up to 12 * 256 values.
-struct NormOut { float *y[3]; const float *w[3]; };
+struct NormOut { float *y[3]; const float *w[3]; float *yl[3]; }; // yl[j]: output j in lane order (xlane.hpp) too (y[j] null: only)
 inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, const float *inv, const float *sc, float *out,
                                 NormOut no, float eps, int n, int ntok) {
     constexpr int MAXV = 12;
@@ -872,12 +872,15 @@ inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, co
             }
             float tot = wg_sum<OPS_WG>(it, ss, &slm[0]);
             float rs = 1.0f / sycl::sqrt(tot / n + eps);
-            float *yr = no.y[j] + (size_t)t * n;
+            float *yr = no.y[j] ? no.y[j] + (size_t)t * n : nullptr;
+            float *ylr = no.yl[j] ? no.yl[j] + (size_t)t * xlane_floats(n) : nullptr;
             const float *w = no.w[j];
             for (int u = 0; u < MAXV; ++u) {
                 int i = l + OPS_WG * u;
                 if (i >= n) break;
-                yr[i] = w ? (xv[u] * rs) * w[i] : xv[u] * rs;
+                const float v = w ? (xv[u] * rs) * w[i] : xv[u] * rs;
+                if (yr) yr[i] = v;
+                if (ylr) ylr[xlane_at(i)] = v;
             }
         });
     });
@@ -1069,11 +1072,16 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
             if (!norm) return;
             float tot2 = wg_sum<OPS_WG>(it, ss, &slm[0]);
             float rs = 1.0f / sycl::sqrt(tot2 / n + eps);
-            float *yr = no.y[j] + (size_t)t * n;
+            float *yr = no.y[j] ? no.y[j] + (size_t)t * n : nullptr;
+            float *ylr = no.yl[j] ? no.yl[j] + (size_t)t * xlane_floats(n) : nullptr;
 #pragma unroll
             for (int u = 0; u < MAXV; ++u) {
                 int i = l + OPS_WG * u;
-                if (i < n) yr[i] = w ? (ov[u] * rs) * wv[u] : ov[u] * rs;
+                if (i < n) {
+                    const float v = w ? (ov[u] * rs) * wv[u] : ov[u] * rs;
+                    if (yr) yr[i] = v;
+                    if (ylr) ylr[xlane_at(i)] = v;
+                }
             }
         });
     });

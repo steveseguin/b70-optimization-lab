@@ -83,6 +83,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | one copy of layers 20-23's experts (card 3) | 542.2-542.5 tok/s (was 532.7-534.4) | | prompt tiles read the decode copies; file layout never uploaded (below) |
 | fused multiply-add, baseline v3 (card 3) | 642.7-643.2 tok/s; 31K prompt 530.6 (was 446.6, card 2) | short 12.28 ms, 3K 13.18 (was 12.31-12.36, 13.35; card 4) | every sum of products through `mac()` (below) |
 | reads issued together, weights warmed (card 3) | | short 11.61-11.63 ms (was 12.31-12.33 for the build before) | small kernels without a branch around each read; the mix warms L2 (below) |
+| expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -160,6 +161,16 @@ this card (reads of weights nobody needs cost their full time), and warm work-gr
 they save. Bench caution: a card under continuous big reads boosts to 2,800 MHz and the short power limit (PL2) pulls
 it to ~2,333 MHz within a second or two, so a kernel timed late in a bench_gemv run is ~9 % slower than the same kernel
 timed first; compare variants interleaved. Writing itself stays at 2,667-2,800 MHz.
+Lane order (`src/xlane.hpp`): the matrix kernels give chunk c (32 values) of a row to lane c % 16, so each float4 load
+of the input vector by 16 lanes touched 16 cache lines (lane stride 128 bytes). For 4-bit expert weights (18 bytes per
+chunk against 128 of input) those loads, not the weights, set the pace. In lane order the 16 lanes' float4 sit side by
+side; the same values reach the same registers, so every sum is unchanged. For one token, SITU writes the down
+product's inputs in lane order and the norms before the experts write theirs only in lane order (the router reads it
+too). bench_gemv (card 3, each expert its own input): down 33.1 -> 26.6 µs at one row per sub-group, gate|up pair
+51.9 -> 48.7; in the engine (`INK_PROF`) down 31.5 -> 29.0, gate|up 56.4 -> 53.9-54.3, router 5.02 -> 4.88, the norms
++0.8-1.1 µs for the scattered stores; step 11.54-11.58 -> 11.38-11.40 ms (`INK_BENCH_STEP`, alternated). `INK_XL=0`
+turns it off. Not used where it does not pay: the Q8_0 attention products gain 0.3-0.5 µs each (their weights are
+8 bits, so the input is a smaller share of the reads), about what their norms would lose writing the copy.
 
 The cards are not equally fast: card 3 reads the 3,127-token prompt ~8 % faster than cards 2 and 4 (448.5 vs
 413.6-416.0 tok/s for the same build), so speeds are compared on one card.

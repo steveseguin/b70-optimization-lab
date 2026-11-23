@@ -90,6 +90,10 @@ struct Engine {
     // (A warm kernel on a second queue does not run beside the main queue on this card: reads nobody needs cost their
     // full time, 2026-11-23.)
     int warm_on = 1;
+    float *fxl = nullptr; // the feed-forward input of one token in lane order
+    // INK_XL=0: matrix inputs in the plain layout only (else lane order where the producer writes it, gemv2.hpp)
+    bool xl_on = !std::getenv("INK_XL") || std::atoi(std::getenv("INK_XL"));
+    int dn_sgw = std::getenv("INK_DN_SGW") ? std::atoi(std::getenv("INK_DN_SGW")) : 1; // lane-order down: sub-groups per group
     bool split_on = !std::getenv("INK_SPLIT") || std::atoi(std::getenv("INK_SPLIT")); // gemv_split for few F32 rows
     int warm_wg = 12;
     int gu_sgw = std::getenv("INK_GU_SGW") ? std::atoi(std::getenv("INK_GU_SGW")) : 1; // gate|up pair kernel, one token (1 < 2 by ~0.5 us)
@@ -183,7 +187,7 @@ struct Engine {
         ctl_g = d.alloc<float>(E); ctl_f = d.alloc<float>(E); ctl_y = d.alloc<float>(E);
         rlog = d.alloc<float>((size_t)h.n_expert * T);
         eids = d.alloc<int32_t>((size_t)h.n_used * T); wts = d.alloc<float>((size_t)h.n_used * T);
-        gu = d.alloc<float>((size_t)h.n_used * T * 2 * h.n_ff); hb = d.alloc<float>((size_t)h.n_used * T * h.n_ff);
+        gu = d.alloc<float>((size_t)h.n_used * T * 2 * h.n_ff); hb = d.alloc<float>((size_t)h.n_used * std::max((size_t)T * h.n_ff, xlane_floats(h.n_ff)));
         yk = d.alloc<float>((size_t)h.n_used * T * h.n_embd);
         moe = d.alloc<float>(E); ffn_out = d.alloc<float>(E);
         fin = d.alloc<float>(E);
@@ -246,6 +250,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_WARM_WG")) warm_wg = std::max(1, std::atoi(e));
         if (const char *e = std::getenv("INK_WARM_MB")) warm_bytes = (size_t)(std::atof(e) * 1048576.0);
         warm_sink = d.alloc<uint32_t>(16);
+        fxl = d.alloc<float>(xlane_floats(h.n_embd));
         if (mix_v1) mix_tab = false;
         if (mix_tab) { // every mix query row of the model (attention, MoE, output), in one index
             std::vector<uint64_t> qa;
@@ -668,17 +673,20 @@ struct Engine {
             }
             dump.put(d, nm("ffn_inp", il), fi, E, ntok);
             // MoE (inkling2.cpp:609-634)
+            // one token: the norm writes the input only in lane order (fxl), which the router and gate|up read
+            float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
             if (mg[3]) {
                 mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
                 control(fx, mg[3], l, 3, ctl_y);
                 dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
-                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fx, f32(l.ffn_norm), E, ntok, h.eps));
+                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fxl1));
             } else {
                 fz::NormOut no{};
-                no.y[0] = fx; no.w[0] = f32(l.ffn_norm);
+                no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fxl1;
                 mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
             }
-            mm(l.gate_inp, fx, rlog, ntok);
+            if (fxl1) pr(wlabel(l.gate_inp), gemv_v(d.q, l.gate_inp.view(), fxl1, E, rlog, (int)l.gate_inp.t->rows(), 1, tune(l.gate_inp), true));
+            else mm(l.gate_inp, fx, rlog, ntok);
             const int K = ntok * h.n_used;
             pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
                                                                               h.expert_scale, eids, wts, ntok));
@@ -687,7 +695,13 @@ struct Engine {
                 const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
                 const WView &gv = gu_dec[ip], &dv = dn_dec[ip];
                 const size_t gs = gv.rb * (size_t)gw.t->ne[1];
-                if (ntok == 1) {
+                if (ntok == 1 && xl_on) { // SITU writes the down product's inputs in lane order (gemv2.hpp xlane_at)
+                    SituOp sl = so;
+                    sl.ldo = (int)xlane_floats(h.n_ff);
+                    pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fxl, (int)xlane_floats(E),
+                                                h.n_used, sl, gu_sgw, true));
+                    pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, sl.ldo, 1, yk, E, Tune{1, dn_sgw}, true));
+                } else if (ntok == 1) {
                     pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, gu_sgw));
                     pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, h.n_ff, 1, yk, E, tune_routed(dv)));
                 } else if (ntok >= tile_min && Xt) {

@@ -14,6 +14,12 @@ paragraphs named in the Evidence column (card in brackets). Re-open only under t
 | Preload ("planar-pre") matrix kernels | Slower (register pressure): attn_output 15.1 -> 30.3 µs, gate|up routed 50.8 -> 99.7 µs | bench_gemv rows "planar-pre" | |
 | Gate|up pair kernel with the gate and up rows adjacent (interleaved layout) | No gain: 49.0 vs 49.9 µs far vs adjacent | bench_gemv "pair" rows, 2026-11-23 (card 2) | |
 | Four-wide state reads in the mix without removing the per-state branch | No gain (10.0 -> 10.4 µs). The branch around each read and its use was the cost; removing it gave 10.0 -> 9.0 | 2026-11-23 stage timing (card 2) | |
+| Feed-forward tail (combine, convolution, residual) folded into the one-token down products: the last of each row block's 8 work-groups runs it (a counter per block) | Identical values but 31 -> 57 µs per launch (179 µs with a device-scope barrier in every work-group): the release fence in each of 4,608 work-groups costs far more than the 4.2 µs launch it removes | 2026-11-23 INK_PROF (card 3) | |
+| Attention-input launch with other rows per sub-group (INK_AIN_R 1/2) or sub-groups per group (1/2/4) | Default (tune R capped at 2, 2 sub-groups) fastest: 2.08 ms per step vs 2.18-2.42 | 2026-11-23 INK_PROF (card 3) | |
+| The mix kernel reading every state's first float4 together with the table entries | 9.0 -> 9.9 µs (register pressure) | 2026-11-23 INK_PROF (card 3) | |
+| Gate\|up with gate and up rows in two sub-groups of one work-group (value handed over in local memory), lane-order input | 48.8 vs 47.7 µs for the two-row pair kernel with lane-order input | 2026-11-23 bench_gemv (card 3) | |
+| Lane-order input for the Q8_0 attention products | 0.3-0.5 µs each (q 16.0 -> 15.4-15.6, output 15.1 -> 14.8, k 6.6 -> 6.2): about what the norms lose writing the copy (+0.8-1.1 µs) | 2026-11-23 bench_gemv (card 3) | Producers that write lane order for free |
+| F32 weights stored in lane order (pl::F32L) for the router and loop down products | Router 4.31 -> 3.94 µs, loop down 5.9 -> 5.3 (bench): ~0.03 ms per step, for ~85 MB of extra copies (the prompt path needs the file layout) | 2026-11-23 bench_gemv (card 3) | The prompt kernels read F32L too (one copy) |
 | Speculative decoding with the DSpark drafter | Deferred: a step of 2 tokens costs 20.27 ms vs 12.38 for 1 (4: 28.53, 8: 45.15), so even high acceptance gains <= ~1.2x | 2026-11-22/23 step bench | Multi-token steps get much cheaper (e.g. 2-token step < 15 ms) |
 
 Measurement cautions (not ideas, but they decide results):
