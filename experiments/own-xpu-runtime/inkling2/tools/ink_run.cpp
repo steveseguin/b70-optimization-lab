@@ -16,7 +16,9 @@ int main(int argc, char **argv) {
         { std::ifstream f(argv[3]); long v; while (f >> v) tok.push_back((int32_t)v); }
         int n_gen = argc > 4 ? std::atoi(argv[4]) : 0;
         int ctx = argc > 5 ? std::atoi(argv[5]) : (int)(tok.size() + n_gen + 16);
-        int ub = std::getenv("INK_UBATCH") ? std::atoi(std::getenv("INK_UBATCH")) : 512;
+        // prompt steps of 1,024 tokens up to 300,000 positions (fuller expert tiles: 31K prompt 599 -> 617 tok/s on card 3,
+        // 8K +4.7 %, the same bits; +1.09 GiB, so the longest contexts keep 512: one card holds 420K positions)
+        int ub = std::getenv("INK_UBATCH") ? std::atoi(std::getenv("INK_UBATCH")) : (ctx <= 300000 ? 1024 : 512);
         Weights w;
         // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
         bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
@@ -54,6 +56,7 @@ int main(int argc, char **argv) {
             o.write((const char *)(e.logits.data() + e.logits.size() - V), (std::streamsize)V * 4);
         }
         e.prof.collect(); // the prompt
+        if (e.prof.on && std::getenv("INK_PROF_PROMPT")) { std::fprintf(stderr, "[prof] the prompt:\n"); e.prof.report(stderr); }
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
         if (const char *bs = std::getenv("INK_BENCH_STEP")) { // time steps of k tokens after the prompt: "k1,k2,..."
             e.host_logits = false;
@@ -130,6 +133,17 @@ int main(int argc, char **argv) {
             long kchose[4] = {};
             long pb_n[10] = {}, pb_k[10] = {}; // guesses and kept guesses by the drafter's probability (tenths), first rejection ends a check
             double tdraft = 0;
+            // INK_DRAFT_LOG=<file> with INK_ORACLE=<ids of the plain run>: draft 7 guesses each round and log their
+            // probabilities and how many lead the plain text, then check as usual (study of longer checks)
+            std::vector<int> oracle;
+            FILE *dlog = nullptr;
+            if (dr && std::getenv("INK_DRAFT_LOG") && std::getenv("INK_ORACLE")) {
+                std::ifstream of(std::getenv("INK_ORACLE"));
+                std::string w;
+                of >> w; // "ids:"
+                for (int v; of >> v;) oracle.push_back(v);
+                dlog = std::fopen(std::getenv("INK_DRAFT_LOG"), "w");
+            }
             while (x != e.m.hp.eos && (int)out.size() < n_gen) {
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
@@ -137,7 +151,19 @@ int main(int argc, char **argv) {
                 if (dr) {
                     if (room > 0) {
                         const double td = now_s();
-                        g = dr->draft(e.n_past, xdev, std::min(spec, room));
+                        if (dlog) {
+                            const int o0 = (int)out.size(), nd = std::min(7, (int)oracle.size() - o0);
+                            if (nd > 0) {
+                                g = dr->draft(e.n_past, xdev, nd);
+                                int m = 0;
+                                while (m < nd && g[m] == oracle[o0 + m]) ++m;
+                                std::fprintf(dlog, "%d", m);
+                                for (int j = 0; j < nd; ++j) std::fprintf(dlog, " %.4f", dr->probs[j]);
+                                std::fprintf(dlog, "\n");
+                                g.resize(std::min(spec, (int)g.size()));
+                            }
+                        } else
+                            g = dr->draft(e.n_past, xdev, std::min(spec, room));
                         tdraft += now_s() - td;
                     }
                 } else
@@ -196,6 +222,7 @@ int main(int argc, char **argv) {
                 for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
                 std::fprintf(stderr, "\n");
             }
+            if (dlog) std::fclose(dlog);
             n_gen = 0; // done: the loop below does nothing
         }
         for (int i = 0; i < n_gen; ++i) {

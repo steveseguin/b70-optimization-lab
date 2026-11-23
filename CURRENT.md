@@ -98,6 +98,10 @@
   ms per launch after 31K) and the model's checks read the long-range keys once for all tokens in the check (from
   4,096 keys, same rows). After a 31K prompt **97.3 tok/s** (plain 70.5, +38 %; guessing was 60.0 before), after 8K
   113.8 (plain 80.1). Gate now 11 checks.
+- Nov 23 ~18:30: prompt reading +4-6 % (8K 645 -> 684 tok/s on card 3, same bits): gate|up expert tiles decode the
+  4-bit weights through small tables, and prompt steps are 1,024 tokens up to 300,000 positions. Measured and closed:
+  checks of 5+ tokens (more guesses; at most +4-6 % on code, losses elsewhere), one weight row per lane in the prompt
+  expert kernels (2x slower), loading weights first (slower).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

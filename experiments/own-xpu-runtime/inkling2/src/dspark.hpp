@@ -15,7 +15,7 @@
 namespace ink {
 
 struct Drafter {
-    static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, RING = 2048, AWG = 256;
+    static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, AWG = 256;
     Engine &e;
     Device &d;
     GGUF g;
@@ -102,9 +102,10 @@ struct Drafter {
         const auto &swp = g.arr<std::vector<int64_t>>(pat);
         for (int l = 0; l < NL; ++l) {
             const bool win = swp.at(l) != 0;
-            const int slots = win ? RING : cap;
-            if (win && RING < WIN + T + B) throw std::runtime_error("dspark: ring too small for the step size");
-            kmask[l] = win ? RING - 1 : 0x7fffffff;
+            int ring = 1; // a power of two holding the window, a step and a block
+            while (ring < WIN + T + B) ring *= 2;
+            const int slots = win ? ring : cap;
+            kmask[l] = win ? ring - 1 : 0x7fffffff;
             Kc[l] = d.alloc<sycl::half>((size_t)slots * kd);
             Vc[l] = d.alloc<sycl::half>((size_t)slots * kd);
         }
@@ -311,11 +312,16 @@ struct Drafter {
         const float *ctx = rrows + (size_t)r_last * E;
         if (fold) { // W_lm y_i of slots 1..n, one read of W_lm (lane-order rows: multi_m, bench_gemv card 3 3 rows 777 us)
             const int lx = (int)xlane_floats(E);
-            if (n == 1) e.pr("dsp_base", gemv_v(d.q, e.m.output.view(), yl + lx, lx, base, Vp, 1, Tune{1, 1}, true));
-            else {
-                MultiJobs mj;
-                multi_add(mj, e.m.output.view(), yl + lx, base, 1, lx, Vp);
-                e.pr("dsp_base", gemv_multi_m(d.q, mj, n, true, 1));
+            for (int i0 = 0; i0 < n; i0 += 4) { // up to 4 rows per read (gemv_multi_m)
+                const int ni = std::min(4, n - i0);
+                const float *xi = yl + (size_t)(1 + i0) * lx;
+                float *bi = base + (size_t)i0 * Vp;
+                if (ni == 1) e.pr("dsp_base", gemv_v(d.q, e.m.output.view(), xi, lx, bi, Vp, 1, Tune{1, 1}, true));
+                else {
+                    MultiJobs mj;
+                    multi_add(mj, e.m.output.view(), xi, bi, 1, lx, Vp);
+                    e.pr("dsp_base", gemv_multi_m(d.q, mj, ni, true, 1));
+                }
             }
         }
         for (int i = 1; i <= n; ++i) {

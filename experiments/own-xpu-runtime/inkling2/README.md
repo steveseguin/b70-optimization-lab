@@ -88,6 +88,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
 | DSpark drafter guesses (card 2) | | code 256 tokens 109.68 tok/s with 2 guesses (plain 87.70), haiku 128 94.66 (plain 88.05) | the drafter on the card, guesses checked exactly (below) |
 | guesses per check chosen from the drafter's probabilities (card 2) | | code 118.41 tok/s (plain 88.22), haiku 96.94 (88.60), 3K prompt 98.22 (83.20) | `INK_SPEC=3`, adaptive count (below) |
+| gate|up tiles decode NVFP4 through tables; prompt steps of 1,024 tokens (card 3) | 8K 641.6-645.7 -> 683.3-685.4 tok/s; 3K 670.6 (was 643); 31K 599.0 -> 616.8 (card 2 with the drafter: 570.6, was ~539) | | same bits (below) |
 | drafter attention by key spans; checks read long-range keys once for all tokens (card 2) | | after 31K: 97.25 tok/s with guesses (plain 70.48; before 59.97); after 8K 113.75 (plain 80.05); 3K 105.32 | below |
 | control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
 
@@ -141,6 +142,17 @@ two are equally close (each closer at about half the positions in every layer; f
 the same top token as the reference at 97.0 vs 97.3 % of positions, one position). The coding prompt's answer changes
 at token 102, the near-tie described below. Speed: prompt +19 % (3,127 tokens 542 -> 643 tok/s on card 3; 31,270
 tokens 447 -> 531 on card 2); a 512-token step's expert gate|up 357 -> 304 ms.
+
+Prompt expert tiles, what limits them (2026-11-23, `bench_moe` 512 tokens, card 3): gate|up 6.7 ms and down 3.5
+per launch, ~30 % of the card's plain multiply-add rate. Builds with parts removed (wrong results, timing only):
+without the cross-lane weight selects 6.71 (the constant-index selects are free), without the input reads 6.16,
+without the weight reads and decoding 3.41. The weight side is the cost, but not its arithmetic: decoding through
+tables in local memory (the 16 code values, the 256 scale bytes; the same floats) takes gate|up to 6.35-6.40 and
+makes down slower (3.66-3.69), so only gate|up uses it (`INK_TILE_LUT`; 8K prompt +2.3 %). Loading each virtual
+lane's weight bytes first: 6.9-8.3. One weight row per lane with the tokens in a loop (the same bits): 13.3-13.9 /
+4.4-7.1 ms (each lane reads 16 bytes of a different row per chunk, and the fixed order visits a row's chunks 16
+apart). Prompt steps of 1,024 tokens fill the 16-slot tiles better: the default up to 300,000 positions (+1.09 GiB;
+longer contexts keep 512); 2,048 adds only 0.6 % more.
 
 Long prompts (2026-11-23): at very long contexts the score buffer holds only 16 query rows (420K positions), and the
 block kernels re-read the value cache once per token. `attn_pv_tile_part` (`src/attn_tiles.hpp`) splits the tiles by
@@ -244,6 +256,11 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   (+38 % over plain), the same rows as one-token steps (gate check 6, `INK_ATT_SHARE_MIN=0`). Only in layers without
   a window and from 4,096 keys (`INK_ATT_SHARE_MIN`): the windowed layers' P.V went 15 -> 29 µs (too few blocks per
   launch), and short contexts lose the same way (code at ~400 keys P.V 7.7 -> 18.4 µs; 3K and 8K even).
+- How many guesses at most: a study mode drafts 7 guesses per round and logs how many lead the plain run's text
+  (`INK_DRAFT_LOG=<file> INK_ORACLE=<plain ids>`); `tools/spec-sim.py` replays guess-count rules on those logs. Up to 4
+  guesses: code +4 %, haiku / 3K / 8K texts even; up to 5: code +6 %, the others -1 to -2 % (checks of 5+ tokens
+  touch many more experts: ~2.8 ms per extra token). Not built (checks of 5-8 tokens would need the small-step
+  kernels widened; today they fall to the prompt path at 34.8-46.4 ms).
 - The check step's output rows: the final norm writes lane-order rows for steps of 1-4 tokens; 4 rows 1,291 ->
   944 µs (multi_m), one row 676 -> 655 (bench_gemv, card 3). Greedy choice in two launches (`ops::argmax_rows2`,
   same index; one work-group per row took 56-63 µs).

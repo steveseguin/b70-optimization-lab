@@ -222,9 +222,33 @@ template <> struct LaneDec<pl::NVFP4P> { // lane l decodes byte l: values 16k + 
     }
 };
 
-// res[j] for rows rp[0..NR-1] and this lane's token, inputs xt (the tile, transposed)
-template <class D, int NR>
-inline void tile_dots(sycl::sub_group sg, const uint8_t *const *rp, int cols, const float *xt, int lane, float *res) {
+// NVFP4 through tables in local memory (the gate|up expert tiles of prompt steps): lut[i] (i < 16) = the value of code
+// i with d = 1 as nvfp4_one makes it, lut[16 + x] = ue4m3_bits(x) * 32768.0f for every byte x: the same floats.
+// bench_moe 512 tokens (card 3): gate|up 4 rows 6.71-6.76 -> 6.35-6.40 ms; down 2 rows 3.52 -> 3.66-3.69 (not used)
+constexpr int NV4_LUT = 16 + 256;
+using LocalF = sycl::multi_ptr<float, sycl::access::address_space::local_space, sycl::access::decorated::yes>;
+inline void nv4_lut_fill(sycl::nd_item<2> it, LocalF lut) {
+    const int n = (int)it.get_local_range(1);
+    for (int i = (int)it.get_local_id(1); i < NV4_LUT; i += n) {
+        float v;
+        if (i < 16) v = (float)sycl::bit_cast<sycl::half>((uint16_t)((((uint32_t)i & 7u) << 9) | (((uint32_t)i & 8u) << 12)));
+        else v = pl::ue4m3_bits((uint8_t)(i - 16)) * 32768.0f;
+        lut[i] = v;
+    }
+    sycl::group_barrier(it.get_group());
+}
+struct LaneDecLut { // LaneDec<NVFP4P> through the tables
+    static void get(const uint8_t *row, int cols, int c, int lane, float &lo, float &hi, LocalF lut) {
+        const uint32_t byte = row[16 * c + lane];
+        const float d = lut[16 + row[cols / 2 + 2 * c + (lane >> 3)]];
+        lo = lut[byte & 15u] * d;
+        hi = lut[byte >> 4] * d;
+    }
+};
+
+// res[j] for rows rp[0..NR-1] and this lane's token, inputs xt (the tile, transposed); LUT: NVFP4 through the tables
+template <class D, int NR, bool LUT = false>
+inline void tile_dots(sycl::sub_group sg, const uint8_t *const *rp, int cols, const float *xt, int lane, float *res, LocalF lut = {}) {
     using LD = LaneDec<D>;
     const int nc = cols / 32;
     float st[NR][4];
@@ -243,7 +267,11 @@ inline void tile_dots(sycl::sub_group sg, const uint8_t *const *rp, int cols, co
                 for (int k = 0; k < 8; ++k) xs[8 * q + k] = v8[k];
             }
             float lo[NR], hi[NR], s[NR];
-            for (int j = 0; j < NR; ++j) { LD::get(rp[j], cols, c, lane, lo[j], hi[j]); s[j] = 0.0f; }
+            for (int j = 0; j < NR; ++j) {
+                if constexpr (LUT) LaneDecLut::get(rp[j], cols, c, lane, lo[j], hi[j], lut);
+                else LD::get(rp[j], cols, c, lane, lo[j], hi[j]);
+                s[j] = 0.0f;
+            }
             for (int j = 0; j < NR; ++j)
                 for (int i = 0; i < 32; ++i)
                     s[j] = mac(s[j], sycl::select_from_group(sg, LD::hi(i) ? hi[j] : lo[j], LD::src(i)), xs[i]);
@@ -322,14 +350,17 @@ template <class D, class Op, int NP> struct DensePairT {
 
 // ---- expert tiles for any decoder (moe_group.hpp's tiles and transposed inputs) ---------------------------------
 // gate|up rows of the tile's expert; TOUT: the activation goes to Ht[(t * rows + r) * 16 + lane], else op(...)
-template <class D, class Op, int NG, bool TOUT> struct SlotPairG {
+template <class D, class Op, int NG, bool TOUT, bool LUT = false> struct SlotPairG {
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     MoeGroups g;
     const float *Xt;
     Op op;
     float *Ht;
     int sgw;
+    sycl::local_accessor<float, 1> lut;
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        LocalF lp{};
+        if constexpr (LUT) { lp = lut.get_multi_ptr<sycl::access::decorated::yes>(); nv4_lut_fill(it, lp); }
         const int t = (int)it.get_group(0);
         if (t >= g.ntiles[0]) return;
         auto sg = it.get_sub_group();
@@ -345,7 +376,7 @@ template <class D, class Op, int NG, bool TOUT> struct SlotPairG {
             rp[NG + j] = B + eo + (size_t)r * rb;
         }
         float res[2 * NG];
-        tile_dots<D, 2 * NG>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res);
+        tile_dots<D, 2 * NG, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res, lp);
         const int slot = g.slots[g.tile_s0[t] + sycl::min(lane, cnt - 1)];
         for (int j = 0; j < NG; ++j) {
             if (r0 + j >= rows) break;
@@ -380,6 +411,8 @@ template <class D, int R> struct SlotRowsG {
         }
     }
 };
+// INK_TILE_LUT=0: NVFP4 gate|up tiles decode without the tables
+inline bool tile_lut = [] { const char *e = std::getenv("INK_TILE_LUT"); return !e || std::atoi(e) != 0; }();
 // ng = gate rows per sub-group (pair) or rows (down): 1 or 2
 template <class Op>
 inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
@@ -390,8 +423,16 @@ inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B,
         auto go = [&]<int NG>() {
             int ngr = (rows + NG - 1) / NG;
             sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
-            if (Ht) e = q.parallel_for(nr, SlotPairG<D, Op, NG, true>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw});
-            else e = q.parallel_for(nr, SlotPairG<D, Op, NG, false>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw});
+            constexpr bool L = std::is_same_v<D, pl::NVFP4P>;
+            const bool lut = L && tile_lut;
+            e = q.submit([&](sycl::handler &h) {
+                sycl::local_accessor<float, 1> la(lut ? NV4_LUT : 1, h);
+                if (lut) {
+                    if (Ht) h.parallel_for(nr, SlotPairG<D, Op, NG, true, L>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+                    else h.parallel_for(nr, SlotPairG<D, Op, NG, false, L>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+                } else if (Ht) h.parallel_for(nr, SlotPairG<D, Op, NG, true>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+                else h.parallel_for(nr, SlotPairG<D, Op, NG, false>{a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+            });
         };
         if (ng == 1) go.template operator()<1>(); else go.template operator()<2>();
     });
