@@ -77,6 +77,38 @@ struct DecPair {
     }
 };
 
+// V4: an E2M1 code c moved into the exponent/mantissa bits of a half (c&7 << 9, sign c&8 << 12) is the value
+// kvalues_mxfp4[c] * 2^-15 exactly (codes 0-1 land on half subnormals); converted to float and multiplied by
+// d * 2^15 it gives kvalues_mxfp4[c] * d, the same float as formats.hpp. Two codes per 32-bit operation.
+struct DecHalf {
+    static inline void pair(uint32_t w, int sh, float d, float &a, float &b) {
+        uint32_t bits = ((sh >= 0 ? (w << sh) : (w >> -sh)) & 0x0E000E00u) | ((sh + 3 >= 0 ? (w << (sh + 3)) : (w >> -(sh + 3))) & 0x80008000u);
+        sycl::vec<sycl::half, 2> h = sycl::bit_cast<sycl::vec<sycl::half, 2>>(bits);
+        a = (float)h[0] * d;
+        b = (float)h[1] * d;
+    }
+    static void decode32(const uint8_t *row, int cols, int c, float *o, float, const float *) {
+        sycl::vec<uint32_t, 2> qa = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c);
+        sycl::vec<uint32_t, 2> qb = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c + 8);
+        uint32_t w[4] = {qa[0], qa[1], qb[0], qb[1]};
+        uint16_t dd;
+        std::memcpy(&dd, row + cols / 2 + 2 * c, 2);
+        for (int k = 0; k < 2; ++k) {
+            float d = pl::ue4m3_bits((uint8_t)(dd >> (8 * k))) * 32768.0f;
+            float *ob = o + 16 * k;
+            for (int h = 0; h < 2; ++h) {
+                uint32_t x = w[2 * k + h];
+                int j0 = 4 * h;
+                // bytes j0..j0+3 of the block: low codes -> ob[j0 + byte], high codes -> ob[8 + j0 + byte]
+                pair(x, 9, d, ob[j0 + 0], ob[j0 + 2]);      // low codes of bytes 0, 2
+                pair(x, 5, d, ob[8 + j0 + 0], ob[8 + j0 + 2]); // high codes of bytes 0, 2
+                pair(x, 1, d, ob[j0 + 1], ob[j0 + 3]);      // low codes of bytes 1, 3
+                pair(x, -3, d, ob[8 + j0 + 1], ob[8 + j0 + 3]); // high codes of bytes 1, 3
+            }
+        }
+    }
+};
+
 template <class D> struct PairV {
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     const int32_t *ids;
@@ -261,6 +293,7 @@ int main(int argc, char **argv) {
             run.template operator()<DecBits>("float bits");
             run.template operator()<DecShuf>("sub-group shuffle table");
             run.template operator()<DecPair>("byte-pair table (global)");
+            run.template operator()<DecHalf>("half bits");
             {
                 d.q.memset(h1, 0, r1.size() * 4).wait();
                 double us = timeit([&](int i) {

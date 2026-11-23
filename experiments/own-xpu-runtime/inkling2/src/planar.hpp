@@ -91,25 +91,41 @@ struct Q8_0P {
 
 struct NVFP4P {
     static constexpr uint32_t TYPE = G_NVFP4;
-    // rows of 1152 values have an 8-byte aligned stride: 8-byte loads always
-    static void decode32(const uint8_t *row, int cols, int c, float *o) {
-        uint8_t q[16];
-        load_bytes<8>(row + 16 * c, q);
-        load_bytes<8>(row + 16 * c + 8, q + 8);
-        uint16_t dd;
-        std::memcpy(&dd, row + cols / 2 + 2 * c, 2);
+    // An E2M1 code c moved into the exponent/mantissa bits of a half ((c & 7) << 9, sign (c & 8) << 12) is exactly
+    // kvalues_mxfp4[c] * 2^-15 (codes 0 and 1 land on half subnormals). Converted to float and multiplied by
+    // d * 2^15 it is kvalues_mxfp4[c] * d: exact (at most 6 significant bits), the same float as formats.hpp's v * d.
+    // Code 8 (-0) gives -0 * d = -0 where formats.hpp has +0; a product sum that starts at +0 never tells them apart.
+    // Two codes per 32-bit operation; bench_fp4 checks it bit for bit (2026-11-22: gate|up 62.3 -> 50.5 us).
+    static inline void pair(uint32_t w, int sh, float d, float &a, float &b) {
+        uint32_t m = sh >= 0 ? (w << sh) : (w >> -sh);
+        uint32_t s = sh + 3 >= 0 ? (w << (sh + 3)) : (w >> -(sh + 3));
+        uint32_t bits = (m & 0x0E000E00u) | (s & 0x80008000u);
+        sycl::vec<sycl::half, 2> h = sycl::bit_cast<sycl::vec<sycl::half, 2>>(bits);
+        a = (float)h[0] * d;
+        b = (float)h[1] * d;
+    }
+    static void decode_words(const uint32_t *w, uint16_t dd, float *o) {
         for (int k = 0; k < 2; ++k) {
-            float d = ue4m3_bits((uint8_t)(dd >> (8 * k)));
+            float d = ue4m3_bits((uint8_t)(dd >> (8 * k))) * 32768.0f;
             float *ob = o + 16 * k;
-            for (int j = 0; j < 8; ++j) {
-                uint32_t b = q[8 * k + j];
-                // value * d is exact (at most 6 significant bits), so (float)v * d equals formats.hpp's v0 * d
-                int m0 = (int)((FP4_MAG >> ((b & 7) * 4)) & 0xF), m1 = (int)((FP4_MAG >> (((b >> 4) & 7) * 4)) & 0xF);
-                int v0 = (b & 8) ? -m0 : m0, v1 = (b & 0x80) ? -m1 : m1; // -0 stays +0, as in kvalues_mxfp4
-                ob[j] = (float)v0 * d;
-                ob[j + 8] = (float)v1 * d;
+            for (int hh = 0; hh < 2; ++hh) {
+                uint32_t x = w[2 * k + hh];
+                int j0 = 4 * hh; // bytes j0..j0+3 of the block: low codes -> ob[j0 + byte], high -> ob[8 + j0 + byte]
+                pair(x, 9, d, ob[j0 + 0], ob[j0 + 2]);
+                pair(x, 5, d, ob[8 + j0 + 0], ob[8 + j0 + 2]);
+                pair(x, 1, d, ob[j0 + 1], ob[j0 + 3]);
+                pair(x, -3, d, ob[8 + j0 + 1], ob[8 + j0 + 3]);
             }
         }
+    }
+    // rows of 1152 values have an 8-byte aligned stride: 8-byte loads always
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        sycl::vec<uint32_t, 2> qa = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c);
+        sycl::vec<uint32_t, 2> qb = *(const sycl::vec<uint32_t, 2> *)(row + 16 * c + 8);
+        uint32_t w[4] = {qa[0], qa[1], qb[0], qb[1]};
+        uint16_t dd;
+        std::memcpy(&dd, row + cols / 2 + 2 * c, 2);
+        decode_words(w, dd, o);
     }
     struct Pre { sycl::vec<uint32_t, 2> a, b; uint16_t dd; };
     static void load(const uint8_t *row, int cols, int c, Pre &p) {
@@ -119,17 +135,7 @@ struct NVFP4P {
     }
     static void dec(const Pre &p, float *o) {
         uint32_t w[4] = {p.a[0], p.a[1], p.b[0], p.b[1]};
-        for (int k = 0; k < 2; ++k) {
-            float d = ue4m3_bits((uint8_t)(p.dd >> (8 * k)));
-            float *ob = o + 16 * k;
-            for (int j = 0; j < 8; ++j) {
-                uint32_t b = (w[2 * k + j / 4] >> (8 * (j % 4))) & 0xFF;
-                int m0 = (int)((FP4_MAG >> ((b & 7) * 4)) & 0xF), m1 = (int)((FP4_MAG >> (((b >> 4) & 7) * 4)) & 0xF);
-                int v0 = (b & 8) ? -m0 : m0, v1 = (b & 0x80) ? -m1 : m1;
-                ob[j] = (float)v0 * d;
-                ob[j + 8] = (float)v1 * d;
-            }
-        }
+        decode_words(w, p.dd, o);
     }
     // one block b (64 values) of a row: file {d[4], qs[32]} at src + 36 b
     static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) {
