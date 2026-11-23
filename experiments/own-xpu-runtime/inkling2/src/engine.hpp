@@ -9,6 +9,7 @@
 #include "fused.hpp"
 #include "tok_tiles.hpp"
 #include "multi.hpp"
+#include "warm.hpp"
 #include "ops.hpp"
 #include <cmath>
 
@@ -83,6 +84,39 @@ struct Engine {
     bool mix_v1 = std::getenv("INK_MIX_V1") && std::atoi(std::getenv("INK_MIX_V1")); // the one-launch mix (slower)
     // saved states' mix scores in a table (fz::mix_fused): INK_MIX_TAB=0 computes every state's score in each mix
     bool mix_tab = true;
+    // warm (INK_WARM=0 off): in one-token steps the attention mix (fz::mix_fused, latency-bound) carries INK_WARM_WG
+    // extra work-groups (default 12) that read the first INK_WARM_MB (default 3) of the attention input weights into
+    // L2, so the matrix kernel after it finds them there (card 3: 12.14 -> 11.99 ms per token; values unchanged).
+    // (A warm kernel on a second queue does not run beside the main queue on this card: reads nobody needs cost their
+    // full time, 2026-11-23.)
+    int warm_on = 1;
+    int warm_wg = 12;
+    int gu_sgw = std::getenv("INK_GU_SGW") ? std::atoi(std::getenv("INK_GU_SGW")) : 1; // gate|up pair kernel, one token (1 < 2 by ~0.5 us)
+    uint32_t *warm_sink = nullptr;
+    void warm_add(fz::WarmSet &s, const W &w) { if (w) s.add(w.p, w.rb * (size_t)w.t->rows()); }
+    fz::WarmSet attn_in_set(int il) {
+        const HParams &h = m.hp;
+        fz::WarmSet s;
+        if (il >= h.n_app) return s;
+        const Layer &l = m.L[h.phys(il)];
+        warm_add(s, l.wq); warm_add(s, l.wk); warm_add(s, l.wv);
+        if (!h.swa[il]) { warm_add(s, l.k_conv_proj); warm_add(s, l.v_conv_proj); }
+        warm_add(s, l.rel); warm_add(s, l.sink); warm_add(s, l.wgate);
+        return s;
+    }
+    fz::Warm pend; // carried by the next mix_fused launch
+    size_t warm_bytes = (size_t)3 << 20;
+    // the attention input weights of the current application, warmed in turn by kernels before their product (now
+    // the mix only: warm work-groups in the norms after it cost more than they saved, 2026-11-23)
+    fz::WarmSet wsrc;
+    size_t wcur = 0;
+    fz::Warm take_warm(size_t bytes) {
+        if (!warm_on || n_tok != 1 || wcur >= (size_t)64 << 20) return {};
+        fz::Warm w{fz::warm_range(wsrc, wcur, bytes), warm_wg, warm_sink};
+        wcur += bytes;
+        if (!w.s.k) w.nwg = 0;
+        return w;
+    }
     int mix_nqa = 0, qi_out = -1;
     std::vector<int> qi_attn, qi_ffn;
     uint64_t *mix_qall = nullptr;
@@ -207,6 +241,10 @@ struct Engine {
         } else loop_pre = false;
         ctl_h3 = d.alloc<float>((size_t)3 * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * h.gate_rank);
         if (const char *e = std::getenv("INK_MIX_TAB")) mix_tab = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_WARM")) warm_on = std::atoi(e);
+        if (const char *e = std::getenv("INK_WARM_WG")) warm_wg = std::max(1, std::atoi(e));
+        if (const char *e = std::getenv("INK_WARM_MB")) warm_bytes = (size_t)(std::atof(e) * 1048576.0);
+        warm_sink = d.alloc<uint32_t>(16);
         if (mix_v1) mix_tab = false;
         if (mix_tab) { // every mix query row of the model (attention, MoE, output), in one index
             std::vector<uint64_t> qa;
@@ -322,7 +360,9 @@ struct Engine {
         a.ns = nb + 1;
         a.query = query; a.nq = nq; a.qi0 = qi0;
         a.tinv = tab_inv; a.tsc = tab_sc; a.T = T; a.NQA = mix_nqa; a.mk_slot = mk; a.qall = mix_qall;
-        pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok));
+        if (!pend.sink) pend.sink = warm_sink;
+        pr(label, fz::mix_fused(d.q, a, m.hp.n_embd, out, no, m.hp.eps, n, n_tok, pend));
+        pend = {};
         return true;
     }
     // save cur's scale and query scores at table slot mk (role B of mix_fused alone)
@@ -478,6 +518,7 @@ struct Engine {
             const float *in[3] = {cur, cur, cur};
             bool normed = false;
             if (!l.attn_res_query) save_state(cur, mk);
+            if (warm_on && ntok == 1) { wsrc = attn_in_set(il); wcur = 0; pend = take_warm(warm_bytes); }
             if (l.attn_res_query) {
                 int nq = (int)l.attn_res_query.t->rows();
                 if (!mg[0] && (!swa || nq == 1)) { // the norm follows the mix directly: one kernel for both
@@ -637,7 +678,7 @@ struct Engine {
                 const WView &gv = gu_dec[ip], &dv = dn_dec[ip];
                 const size_t gs = gv.rb * (size_t)gw.t->ne[1];
                 if (ntok == 1) {
-                    pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, 2));
+                    pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, gu_sgw));
                     pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, h.n_ff, 1, yk, E, tune_routed(dv)));
                 } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile

@@ -38,6 +38,27 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
             int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
             const float *xr = x + (size_t)r * ldx;
             float *yr = y + (size_t)r * ldy;
+            constexpr int MV = 9; // rows of up to 9 * OPS_WG: unrolled, the reads go out together (same additions)
+            if (n <= MV * OPS_WG) {
+                float xv[MV], wv[MV];
+#pragma unroll
+                for (int u = 0; u < MV; ++u) {
+                    const int i = l + OPS_WG * u;
+                    xv[u] = i < n ? xr[i] : 0.0f;
+                    wv[u] = (w && i < n) ? w[i] : 0.0f;
+                }
+                float s = 0.0f;
+#pragma unroll
+                for (int u = 0; u < MV; ++u) if (l + OPS_WG * u < n) s = mac(s, xv[u], xv[u]);
+                float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
+                float scale = 1.0f / sycl::sqrt(tot / n + eps);
+#pragma unroll
+                for (int u = 0; u < MV; ++u) {
+                    const int i = l + OPS_WG * u;
+                    if (i < n) yr[i] = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
+                }
+                return;
+            }
             float s = 0.0f;
             for (int i = l; i < n; i += OPS_WG) s = mac(s, xr[i], xr[i]);
             float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
@@ -334,13 +355,20 @@ inline sycl::event moe_route_sg(sycl::queue &q, const float *logits, const float
                           [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
         auto sg = it.get_sub_group();
         int t = (int)it.get_group(0), lane = (int)sg.get_local_linear_id();
-        float p[PER], sel[PER];
+        float p[PER], sel[PER], lg[PER], bs[PER];
+#pragma unroll
+        for (int u = 0; u < PER; ++u) { // the reads first (clamped index past ne), so they go out together
+            const int e = sycl::min(lane + SG * u, ne - 1);
+            lg[u] = logits[(size_t)t * ne + e];
+            bs[u] = bias ? bias[e] : 0.0f;
+        }
+#pragma unroll
         for (int u = 0; u < PER; ++u) {
             int e = lane + SG * u;
             p[u] = 0.0f; sel[u] = -INFINITY;
             if (e < ne) {
-                p[u] = 1.0f / (1.0f + sycl::exp(-logits[(size_t)t * ne + e]));
-                sel[u] = bias ? p[u] + bias[e] : p[u];
+                p[u] = 1.0f / (1.0f + sycl::exp(-lg[u]));
+                sel[u] = bias ? p[u] + bs[u] : p[u];
             }
         }
         int pick[16];

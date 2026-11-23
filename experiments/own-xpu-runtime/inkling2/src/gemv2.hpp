@@ -308,9 +308,13 @@ template <class D, class Op> struct GemvPair {
         size_t eo = ids ? (size_t)ids[k] * estride : 0;
         const uint8_t *ra = A + eo + (size_t)r * rb, *rbp = B + eo + (size_t)r * rb;
         const float *xv0 = x + (size_t)(xdiv ? k / xdiv : k) * ldx;
+        // what the epilogue reads from memory, read now so its latency hides under the row's reads
+        float pre = 0.0f;
+        if constexpr (requires { op.pre(k); }) pre = op.pre(k);
         float va, vb;
         gemv_pair_row<D>(sg, ra, rbp, cols, xv0, va, vb);
-        if (lane == 0) op(k, r, va, vb);
+        if constexpr (requires { op.pre(k); }) op.post(sg, lane, k, r, va, vb, pre);
+        else if (lane == 0) op(k, r, va, vb);
     }
 };
 // ops::situ for slot k, row i, from the gate and up values
@@ -323,6 +327,20 @@ struct SituOp {
         return a * u;
     }
     void operator()(int k, int i, float g, float u) const { hout[(size_t)k * nff + i] = act(k, g, u); }
+    // act() with the slot's expert scale read ahead (GemvPair): the same operations
+    float pre(int k) const { return escale ? escale[ids[k]] : 1.0f; }
+    // the two tanh in one pass: lane 0 takes the gate's, lane 1 the up value's (each lane computes the same function
+    // of its own argument, so the values are act()'s); lane 0 stores
+    void post(sycl::sub_group sg, int lane, int k, int i, float g, float u, float s) const {
+        if (escale) { g = g * s; u = u * s; }
+        const float th = sycl::tanh(lane == 1 ? u * (1.0f / lb) : g * (1.0f / beta));
+        const float thu = sycl::select_from_group(sg, th, 1);
+        if (lane == 0) {
+            float a = (th * beta) * (1.0f / (1.0f + sycl::exp(-g)));
+            if (lb > 0.0f) u = thu * lb;
+            hout[(size_t)k * nff + i] = a * u;
+        }
+    }
 };
 // ops::control_out for token k, channel i, from the gain and forget values
 struct CtlOp {

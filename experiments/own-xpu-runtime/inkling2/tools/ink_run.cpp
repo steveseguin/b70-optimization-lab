@@ -51,10 +51,16 @@ int main(int argc, char **argv) {
                 const int reps = 6;
                 e.step(tk.data(), k); d.q.wait(); // warm
                 e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
-                double a0 = now_s();
-                for (int r = 0; r < reps; ++r) { e.step(tk.data(), k); d.q.wait(); e.prof.collect(); }
+                double a0 = now_s(), host = 0;
+                for (int r = 0; r < reps; ++r) {
+                    const double h0 = now_s();
+                    e.step(tk.data(), k);
+                    host += now_s() - h0; // the host's time to submit the step's launches
+                    d.q.wait(); e.prof.collect();
+                }
                 double ms = (now_s() - a0) / reps * 1e3;
-                std::fprintf(stderr, "[bench] step of %d tokens: %.2f ms (%.2f ms per token), at position %d\n", k, ms, ms / k, e.n_past);
+                std::fprintf(stderr, "[bench] step of %d tokens: %.2f ms (%.2f ms per token), at position %d; host submits in %.2f ms\n", k, ms,
+                             ms / k, e.n_past, host / reps * 1e3);
                 if (e.prof.on) { e.prof.report(stderr); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0; }
             }
             return 0;

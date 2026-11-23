@@ -65,6 +65,9 @@
 - Nov 23 ~06:00: long prompts no longer slow down when the score buffer must be small (16 rows at 420K): value sums
   of small chunks run as tiles split by key blocks (100K keys x 16 tokens 6.6 -> 1.4 ms), score tiles share key blocks
   through L2 past 16K keys. 31K prompt with 16-row chunks 434 -> 543 tok/s; same bits; gate 6/6.
+- Nov 23 ~08:30: one card reads a 403K-token prompt at 160.6 tok/s (was 83.4) and writes at 23.1 tok/s there.
+  Short-context writing 12.32 -> 11.62 ms per token (~86 tok/s, card 3): small kernels issue their reads together,
+  the mix warms the next attention weights into L2, gate|up epilogue trimmed. Same bits; gate 6/6.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -127,6 +127,60 @@ int main(int argc, char **argv) {
                 }
                 continue;
             }
+            if (routed && rows % 2 == 0 && vp.kind != K_RAW) { // the engine's gate|up pair kernel: rows r and r + rows/2
+                // (far, the file's order) or rows 2r and 2r + 1 (adjacent, an interleaved layout); timing only
+                struct StoreOp { float *y; int n; void operator()(int k, int r, float a, float b) const { y[(size_t)k * 2 * n + r] = a; y[(size_t)k * 2 * n + n + r] = b; } };
+                const int half = rows / 2;
+                const size_t es = vp.rb * (size_t)rows;
+                for (int sgw : {1, 2, 4}) {
+                    double uf = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, StoreOp{y1, half}, sgw); });
+                    WView va = vp; va.rb = 2 * vp.rb;
+                    double ua = timeit([&](int i) { gemv_pair(d.q, va, vp.p + vp.rb, es, half, idp(i), K, x, cols, K, StoreOp{y1, half}, sgw); });
+                    std::printf("%-30s pair sg%d: rows far %8.2f us %6.1f GB/s, adjacent %8.2f us %6.1f GB/s\n", "", sgw, uf, bytes / uf / 1e3, ua, bytes / ua / 1e3);
+                }
+                float *esc = d.alloc<float>(t->ne[2]);
+                d.q.fill(esc, 1.0f, t->ne[2]).wait();
+                for (int sgw : {1, 2}) {
+                    double us = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K,
+                                                              SituOp{esc, idp(i), 10.0f, 10.0f, y1, half}, sgw); });
+                    std::printf("%-30s pair sg%d with SITU: %8.2f us %6.1f GB/s\n", "", sgw, us, bytes / us / 1e3);
+                }
+                struct CheapOp { // SituOp's reads and store with a product for the math (timing only)
+                    const float *escale; const int32_t *ids; float *hout; int nff;
+                    float pre(int k) const { return escale[ids[k]]; }
+                    void post(sycl::sub_group, int lane, int k, int i, float g, float u, float s) const {
+                        if (lane == 0) hout[(size_t)k * nff + i] = (g * s) * (u * s);
+                    }
+                };
+                for (int sgw : {1, 2}) {
+                    double us = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K,
+                                                              CheapOp{esc, idp(i), y1, half}, sgw); });
+                    std::printf("%-30s pair sg%d, product for SITU: %8.2f us %6.1f GB/s\n", "", sgw, us, bytes / us / 1e3);
+                }
+                struct NoReadOp { // the product without the scale read
+                    float *hout; int nff;
+                    void operator()(int k, int i, float g, float u) const { hout[(size_t)k * nff + i] = g * u; }
+                };
+                struct ReadStoreOp { // StoreOp's two stores plus the scale read
+                    const float *escale; const int32_t *ids; float *y; int n;
+                    float pre(int k) const { return escale[ids[k]]; }
+                    void post(sycl::sub_group, int lane, int k, int r, float a, float b, float s) const {
+                        if (lane == 0) { y[(size_t)k * 2 * n + r] = a * s; y[(size_t)k * 2 * n + n + r] = b; }
+                    }
+                };
+                {
+                    double u1 = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, NoReadOp{y1, half}, 1); });
+                    double u2 = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, ReadStoreOp{esc, idp(i), y1, half}, 1); });
+                    std::printf("%-30s pair sg1: product, no scale read %8.2f us; two stores + scale read %8.2f us\n", "", u1, u2);
+                    for (int rep = 0; rep < 2; ++rep) {
+                        double u3 = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, StoreOp{y1, half}, 1); });
+                        double u4 = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K,
+                                                                  SituOp{esc, idp(i), 10.0f, 10.0f, y1, half}, 1); });
+                        double u5 = timeit([&](int i) { gemv_pair(d.q, vp, vp.p + (size_t)half * vp.rb, es, half, idp(i), K, x, cols, K, NoReadOp{y1, half}, 1); });
+                        std::printf("%-30s pair sg1 again: two stores %8.2f us, SITU %8.2f us, product %8.2f us\n", "", u3, u4, u5);
+                    }
+                }
+            }
             if (file_too && vp.kind != K_RAW)
                 for (int R : {1, 2, 4}) for (int sgw : {2, 4}) run("file", vr, raw_copies, Tune{R, sgw});
             for (int R : {1, 2, 4}) for (int sgw : {2, 4}) run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{R, sgw});

@@ -82,6 +82,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | ring caches, unrolled block sums (card 2) | | 31K: 15.5-16.0 ms | windowed layers keep 2,048 positions; full layers' block sums 92 -> 23 µs |
 | one copy of layers 20-23's experts (card 3) | 542.2-542.5 tok/s (was 532.7-534.4) | | prompt tiles read the decode copies; file layout never uploaded (below) |
 | fused multiply-add, baseline v3 (card 3) | 642.7-643.2 tok/s; 31K prompt 530.6 (was 446.6, card 2) | short 12.28 ms, 3K 13.18 (was 12.31-12.36, 13.35; card 4) | every sum of products through `mac()` (below) |
+| reads issued together, weights warmed (card 3) | | short 11.61-11.63 ms (was 12.31-12.33 for the build before) | small kernels without a branch around each read; the mix warms L2 (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -141,6 +142,22 @@ once for all of them) and leaves the blocks' sum to `attn_pv_bo_sum`: the same v
 tokens 6.6 -> 1.4 ms; x 64 tokens 6.4 -> 4.6 ms against the tiles). The prompt score tiles run query blocks fastest
 from 16K keys (100K x 512 tokens 34.8 -> 31.8 ms). A 31,270-token prompt with 16-row chunks: 434 -> 543 tok/s, the
 same speed as 176-row chunks; logits bit-identical to the FMA reference build in both cases.
+
+At 403,372 tokens (one card, 403,500 positions; a needle test, prompts/needle.tokens) the prompt reads at 160.6
+tok/s (2,512 s; the build before these long-prompt kernels: 83.4 tok/s, 4,835 s) and writing runs at 23.1 tok/s.
+
+Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
+of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
+(unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,
+expert routing 6.1 -> 4.3, the mix 10.0 -> 9.0 (`INK_PROF`, card 3). The gate|up kernel reads the expert scale
+before the row and evaluates its two tanh in one pass (lanes 0 and 1), one sub-group per work-group.
+Warm weights: the attention mix (fz::mix_fused) carries 12 extra work-groups that read the first 3 MB of the next
+attention input weights into L2 (`src/warm.hpp`; INK_WARM=0 off, INK_WARM_WG, INK_WARM_MB); the attention input
+product 47.7 -> 43.4 µs, step 11.80 -> 11.66 ms. A warm kernel on a second queue does not run beside the main queue on
+this card (reads of weights nobody needs cost their full time), and warm work-groups in the 2-3 µs norms cost more than
+they save. Bench caution: a card under continuous big reads boosts to 2,800 MHz and the short power limit (PL2) pulls
+it to ~2,333 MHz within a second or two, so a kernel timed late in a bench_gemv run is ~9 % slower than the same kernel
+timed first; compare variants interleaved. Writing itself stays at 2,667-2,800 MHz.
 
 The cards are not equally fast: card 3 reads the 3,127-token prompt ~8 % faster than cards 2 and 4 (448.5 vs
 413.6-416.0 tok/s for the same build), so speeds are compared on one card.
