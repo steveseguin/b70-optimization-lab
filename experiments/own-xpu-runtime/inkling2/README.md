@@ -86,6 +86,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
 | long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24); 403K: 24.87 tok/s (was 23.53, card 5) | full layers' softmax and block sums past 16K keys (below) |
 | job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
+| control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -189,6 +190,10 @@ the prompt's last 8 tokens, card 2): 1 / 2 / 3 / 4 tokens 11.42 / 15.65-15.67 / 
   (`INK_SB_NP=2`) 82.6 at 2 tokens, four down rows (`INK_SB_DR=4`) 49.3.
 Every sum keeps gemv1_rows' order: steps of 2, 3 and 4 tokens give last scores bit-identical to one-token steps on
 two prompts (48 and 36 tokens); gate 6/6.
+- The loop control modules (`Engine::control_multi`): for 1-4 tokens, the norms, the down products and the
+  gain|forget outputs of all modules and tokens take three launches (one-token kernels: `gemv_multi_m` with plain
+  inputs, `CtlRows` with a token per group of rows). Was one set of three per module and step: steps of 2 / 3 / 4
+  tokens 15.69-15.73 / 18.27-18.30 / 21.42-21.52 -> 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (card 2); same bits.
 
 Checking guesses (`Engine::check` / `accept`, `ink_run` with `INK_SPEC=<1-3>`): one step runs the last chosen token
 and up to 3 guessed tokens, scores every row, and the card picks the greedy token of each row (`ops::argmax_rows`).

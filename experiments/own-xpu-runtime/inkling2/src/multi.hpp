@@ -128,11 +128,13 @@ template <int M, bool XL> struct GemvMultiM {
 inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool xl, int sgw = 2) {
     const int ngr = (m.nsg + sgw - 1) / sgw;
     const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
-    if (!xl) throw std::runtime_error("gemv_multi_m: x in lane order only");
-    switch (M) {
-    case 2: return q.parallel_for(nr, GemvMultiM<2, true>{m, sgw});
-    case 3: return q.parallel_for(nr, GemvMultiM<3, true>{m, sgw});
-    case 4: return q.parallel_for(nr, GemvMultiM<4, true>{m, sgw});
+    switch (M * 2 + (xl ? 1 : 0)) {
+    case 4: return q.parallel_for(nr, GemvMultiM<2, false>{m, sgw});
+    case 5: return q.parallel_for(nr, GemvMultiM<2, true>{m, sgw});
+    case 6: return q.parallel_for(nr, GemvMultiM<3, false>{m, sgw});
+    case 7: return q.parallel_for(nr, GemvMultiM<3, true>{m, sgw});
+    case 8: return q.parallel_for(nr, GemvMultiM<4, false>{m, sgw});
+    case 9: return q.parallel_for(nr, GemvMultiM<4, true>{m, sgw});
     default: throw std::runtime_error("gemv_multi_m: 2 to 4 vectors");
     }
 }
@@ -190,8 +192,8 @@ inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) {
 
 // the control outputs of several modules in one launch (engine control(), the gain and forget products with CtlOp):
 // one row per sub-group, gemv_pair_row as GemvPair; F32 weights in the file layout (loop_gain / loop_forget)
-struct CJob { const uint8_t *A, *B; size_t rb; int rows, cols; const float *x; CtlOp op; int sg0; };
-struct CtlJobs { CJob j[4]; int nj = 0, nsg = 0; };
+struct CJob { const uint8_t *A, *B; size_t rb; int rows, cols; const float *x; CtlOp op; int sg0; int ldx = 0; };
+struct CtlJobs { CJob j[4]; int nj = 0, nsg = 0; int nt = 1; }; // nt tokens (CtlRows): token t reads x + t * ldx
 inline bool ctl_multi_ok(const WView &a, const WView &b) {
     return a.kind == K_RAW && b.kind == K_RAW && a.t->type == G_F32 && b.t->type == G_F32 && a.rb == b.rb;
 }
@@ -219,22 +221,25 @@ struct CtlMulti {
 };
 // the same products with one work-item per row (rows of at most 16 chunks of 32, e.g. the 64 values of loop_gain):
 // the work-item computes the 16 virtual lanes' sums of gemv_pair_row (lane l: chunks l, l+16, ...; lanes past the
-// last chunk hold +0) and their xor butterfly (offsets 8, 4, 2, 1) in registers, the same additions as sg_sum
+// last chunk hold +0) and their xor butterfly (offsets 8, 4, 2, 1) in registers, the same additions as sg_sum.
+// m.nt > 1: work-item s takes token s / nsg (the same per-row operations for each token)
 struct CtlRows {
     CtlJobs m;
     void operator()(sycl::nd_item<1> it) const {
-        const int s = (int)it.get_global_id(0);
-        if (s >= m.nsg) return;
+        const int s0 = (int)it.get_global_id(0);
+        if (s0 >= m.nsg * m.nt) return;
+        const int t = s0 / m.nsg, s = s0 - t * m.nsg;
         int k = 0;
         for (int i = 1; i < 4; ++i) if (i < m.nj && m.j[i].sg0 <= s) k = i;
         const CJob &g = m.j[k];
         const int r = s - g.sg0, nc = g.cols / 32;
+        const float *xt = g.x + (size_t)t * g.ldx;
         using D = pl::Raw<fmt::F<G_F32>>;
         float va[SG], vb[SG];
         for (int l = 0; l < SG; ++l) { va[l] = 0.0f; vb[l] = 0.0f; }
         for (int c = 0; c < nc; ++c) {
             float xs[32];
-            load_x32(g.x + 32 * c, xs);
+            load_x32(xt + 32 * c, xs);
             for (int j = 0; j < 2; ++j) {
                 float o[32];
                 D::decode32((j ? g.B : g.A) + (size_t)r * g.rb, g.cols, c, o);
@@ -248,7 +253,7 @@ struct CtlRows {
             for (int l = 0; l < SG; ++l) { ta[l] = va[l] + va[l ^ off]; tb[l] = vb[l] + vb[l ^ off]; }
             for (int l = 0; l < SG; ++l) { va[l] = ta[l]; vb[l] = tb[l]; }
         }
-        g.op(0, r, va[0], vb[0]);
+        g.op(t, r, va[0], vb[0]);
     }
 };
 inline bool ctl_rows_ok(const CtlJobs &m) {
@@ -256,7 +261,7 @@ inline bool ctl_rows_ok(const CtlJobs &m) {
     return true;
 }
 inline sycl::event ctl_rows(sycl::queue &q, const CtlJobs &m, int wg = 64) {
-    int ngr = (m.nsg + wg - 1) / wg;
+    int ngr = (m.nsg * m.nt + wg - 1) / wg;
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * wg), sycl::range<1>((size_t)wg)), CtlRows{m});
 }
 inline sycl::event ctl_multi(sycl::queue &q, const CtlJobs &m, int sgw = 2) {

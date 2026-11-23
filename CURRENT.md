@@ -76,14 +76,17 @@
   (card 5, same answer). Same 33 tokens at 100K;
   gate 6/6. A 48-token prompt gives bit-identical last scores in steps of 1, 2, 3, 4, 8, 16 or 48 tokens, so checked
   guesses (drafting) can be exact; small multi-token steps are still slow (2 tokens 19.5 ms, 4 tokens 27.4).
-- Nov 23 ~14:10: steps of 2-4 tokens much cheaper, for checking guesses (card 2, real tokens): 2 / 3 / 4 tokens
+- Nov 23 ~13:50: steps of 2-4 tokens much cheaper, for checking guesses (card 2, real tokens): 2 / 3 / 4 tokens
   15.65 / 18.26 / 21.42 ms (were 20.14 / 24.09 / 28.61); one token 11.62 -> 11.42 ms. Cause of a slow kernel family:
   pointers read from job tables are "generic" until cast to global. Each chosen expert is decoded once for all tokens
   that chose it. Bit-identical in steps of 1-4 tokens; gate 6/6. Next: state rollback for rejected guesses, then a
   guesser (prompt lookup first, then the DSpark drafter on the card).
-- Nov 23 ~14:50: guess checking works and is exact (`INK_SPEC`): text and every chosen scores row equal plain
+- Nov 23 ~14:30: guess checking works and is exact (`INK_SPEC`): text and every chosen scores row equal plain
   generation byte for byte; rejected guesses roll back the convolution states from per-token slots. With prompt
   lookup as the guesser, fresh code gains only 1.5 % (1 guess); the DSpark drafter is next. Gate now 9 checks.
+- Nov 23 ~14:45: checking steps cheaper again (control modules batched): 2 / 3 / 4 tokens 14.92 / 17.36 / 20.39 ms
+  (card 2), one token unchanged, gate 9/9. DSpark drafter spec written from the reference source
+  (`/home/steve/inkling-work/notes/dspark-spec.md`): 3 layers + a chained head; implementing it on the card next.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

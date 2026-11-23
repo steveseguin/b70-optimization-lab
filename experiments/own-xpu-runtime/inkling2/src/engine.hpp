@@ -260,7 +260,7 @@ struct Engine {
                 lmix_out = d.alloc<float>((size_t)loop_nq * E);
             }
         } else loop_pre = false;
-        ctl_h3 = d.alloc<float>((size_t)3 * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * h.gate_rank);
+        ctl_h3 = d.alloc<float>((size_t)3 * SB_MAX * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * SB_MAX * h.gate_rank);
         if (const char *e = std::getenv("INK_MIX_TAB")) mix_tab = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_WARM")) warm_on = std::atoi(e);
         if (const char *e = std::getenv("INK_WARM_WG")) warm_wg = std::max(1, std::atoi(e));
@@ -466,26 +466,33 @@ struct Engine {
         pr("ctl_out", gemv_pair(d.q, ga.view(), fo.p, 0, E, nullptr, n, ctl_z, h.gate_rank, 0, CtlOp{cur, mg, y, E}, 2));
     }
 
-    // control() of modules 0..2 for one token in three launches (norms, down products, gain|forget outputs into msg[j]);
-    // false (nothing launched) when a weight's format has no multi kernel
-    bool control3(const float *const in[3], const float *const mg[4], const Layer &l) {
+    // control() of modules mods[0..nm) (nm <= 3) for n_tok <= SB_MAX tokens in three launches (norms, down products,
+    // gain|forget outputs into out[j]); false (nothing launched) when a weight's format has no multi kernel. Each
+    // (token, row) sum is the one-token kernels' (gemv1_rows / gemvM_rows, CtlRows), so the values are control()'s.
+    bool control_multi(int nm, const int *mods, const float *const *in, const float *const *mg, float *const *out, const Layer &l) {
         const HParams &h = m.hp;
-        const int E = h.n_embd;
-        for (int j = 0; j < 3; ++j)
-            if (!multi_ok(l.loop_down[j].view()) || !ctl_multi_ok(l.loop_gain[j].view(), l.loop_forget[j].view())) return false;
-        fz::NormJob jobs[6];
-        for (int j = 0; j < 3; ++j) {
-            jobs[2 * j] = {in[j], ctl_h3 + (size_t)j * 2 * E, nullptr, E, 2 * E};
-            jobs[2 * j + 1] = {mg[j], ctl_h3 + (size_t)j * 2 * E + E, nullptr, E, 2 * E};
-        }
-        pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 6, E, 1, 1e-6f));
-        MultiJobs mj; // (gemv_split is slower for these three: multi.hpp split_ok)
-        for (int j = 0; j < 3; ++j) multi_add(mj, l.loop_down[j].view(), ctl_h3 + (size_t)j * 2 * E, ctl_z3 + (size_t)j * h.gate_rank, 1);
-        pr("w:loop_down3", gemv_multi(d.q, mj, 2));
+        const int E = h.n_embd, n = n_tok, R = h.gate_rank;
+        if (nm < 1 || nm > 3 || n < 1 || n > SB_MAX) return false;
         CtlJobs cj;
-        for (int j = 0; j < 3; ++j)
-            ctl_add(cj, l.loop_gain[j].view(), l.loop_forget[j].view(), ctl_z3 + (size_t)j * h.gate_rank, CtlOp{in[j], mg[j], msg[j], E});
-        pr("ctl_out", ctl_rows_ok(cj) ? ctl_rows(d.q, cj) : ctl_multi(d.q, cj, 2));
+        for (int j = 0; j < nm; ++j) {
+            const int k = mods[j];
+            if (!multi_ok(l.loop_down[k].view()) || !ctl_multi_ok(l.loop_gain[k].view(), l.loop_forget[k].view())) return false;
+            ctl_add(cj, l.loop_gain[k].view(), l.loop_forget[k].view(), ctl_z3 + (size_t)j * SB_MAX * R, CtlOp{in[j], mg[j], out[j], E});
+            cj.j[j].ldx = R;
+        }
+        cj.nt = n;
+        if (n > 1 && !ctl_rows_ok(cj)) return false; // (ctl_multi takes one token)
+        fz::NormJob jobs[6];
+        for (int j = 0; j < nm; ++j) {
+            jobs[2 * j] = {in[j], ctl_h3 + (size_t)j * SB_MAX * 2 * E, nullptr, E, 2 * E};
+            jobs[2 * j + 1] = {mg[j], ctl_h3 + (size_t)j * SB_MAX * 2 * E + E, nullptr, E, 2 * E};
+        }
+        pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2 * nm, E, n, 1e-6f));
+        MultiJobs mj; // (gemv_split is slower for these three: multi.hpp split_ok)
+        for (int j = 0; j < nm; ++j)
+            multi_add(mj, l.loop_down[mods[j]].view(), ctl_h3 + (size_t)j * SB_MAX * 2 * E, ctl_z3 + (size_t)j * SB_MAX * R, 1, 2 * E, R);
+        pr(nm == 3 ? "w:loop_down3" : "w:loop_down1", n == 1 ? gemv_multi(d.q, mj, 2) : gemv_multi_m(d.q, mj, n, false, 2));
+        pr("ctl_out", n > 1 || ctl_rows_ok(cj) ? ctl_rows(d.q, cj) : ctl_multi(d.q, cj, 2));
         return true;
     }
 
@@ -584,7 +591,8 @@ struct Engine {
                 }
             }
             if (mg[0]) {
-                if (ntok == 1 && ctl_batch && control3(in, mg, l)) {
+                static constexpr int m012[3] = {0, 1, 2};
+                if (ctl_batch && control_multi(3, m012, in, mg, msg, l)) {
                 } else {
                     for (int j = 0; j < 3; ++j) control(in[j], mg[j], l, j, msg[j]);
                 }
@@ -731,7 +739,10 @@ struct Engine {
             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
             if (mg[3]) {
                 mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
-                control(fx, mg[3], l, 3, ctl_y);
+                static constexpr int m3[1] = {3};
+                const float *fx1[1] = {fx}, *mg3[1] = {mg[3]};
+                float *cy1[1] = {ctl_y};
+                if (!(ntok > 1 && ctl_batch && control_multi(1, m3, fx1, mg3, cy1, l))) control(fx, mg[3], l, 3, ctl_y);
                 dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
                 pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fyl));
             } else {
