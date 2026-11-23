@@ -274,6 +274,25 @@ template <class D> constexpr bool has_pre = requires { typename D::Pre; };
 // two rows at once, from two matrices of the same shape (or two row ranges of one), each with Gemv1R's arithmetic,
 // then op(k, r, a_r, b_r) on the pair. group(0) = slot k: routed (A and B offset by ids[k] * estride) or token k (ids
 // null); x row = xdiv ? k / xdiv : k. Used for the expert gate|up rows + SITU and the loop gain|forget rows + control.
+// one row of two matrices (rows ra, rbp) times xv0 in one sub-group; shared by GemvPair and multi.hpp's CtlMulti
+template <class D>
+inline void gemv_pair_row(sycl::sub_group sg, const uint8_t *ra, const uint8_t *rbp, int cols, const float *xv0, float &va, float &vb) {
+    int lane = (int)sg.get_local_linear_id();
+    float acc[2] = {0.0f, 0.0f};
+    const int nc = cols / 32;
+    for (int c = lane; c < nc; c += SG) {
+        float xs[32];
+        load_x32(xv0 + 32 * c, xs);
+        for (int j = 0; j < 2; ++j) {
+            float o[32];
+            D::decode32(j ? rbp : ra, cols, c, o);
+            float s = 0.0f;
+            for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+            acc[j] += s;
+        }
+    }
+    va = sg_sum(sg, acc[0]); vb = sg_sum(sg, acc[1]);
+}
 template <class D, class Op> struct GemvPair {
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     const int32_t *ids;
@@ -289,20 +308,8 @@ template <class D, class Op> struct GemvPair {
         size_t eo = ids ? (size_t)ids[k] * estride : 0;
         const uint8_t *ra = A + eo + (size_t)r * rb, *rbp = B + eo + (size_t)r * rb;
         const float *xv0 = x + (size_t)(xdiv ? k / xdiv : k) * ldx;
-        float acc[2] = {0.0f, 0.0f};
-        const int nc = cols / 32;
-        for (int c = lane; c < nc; c += SG) {
-            float xs[32];
-            load_x32(xv0 + 32 * c, xs);
-            for (int j = 0; j < 2; ++j) {
-                float o[32];
-                D::decode32(j ? rbp : ra, cols, c, o);
-                float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
-                acc[j] += s;
-            }
-        }
-        float va = sg_sum(sg, acc[0]), vb = sg_sum(sg, acc[1]);
+        float va, vb;
+        gemv_pair_row<D>(sg, ra, rbp, cols, xv0, va, vb);
         if (lane == 0) op(k, r, va, vb);
     }
 };

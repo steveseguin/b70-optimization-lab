@@ -41,6 +41,13 @@ struct Engine {
     int32_t *eids = nullptr;
     int ldp = 0;
     float *mix_inv = nullptr, *mix_sc = nullptr;
+    // the loop mixes of a whole pass at its start (their states are fixed for the pass): INK_LOOP_PRE=0 one per layer
+    bool loop_pre = true;
+    int loop_nq = 0;
+    float *lmix_inv = nullptr, *lmix_sc = nullptr, *lmix_out = nullptr;
+    // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
+    bool ctl_batch = true;
+    float *ctl_h3 = nullptr, *ctl_z3 = nullptr;
     float *tau_all = nullptr;  // log-scaled position factor of every position
     int32_t *next_id = nullptr;
     MoeGroups grp;             // slots grouped by expert (steps of several tokens)
@@ -114,6 +121,19 @@ struct Engine {
         if (const char *e = std::getenv("INK_MULTI")) multi_proj = std::atoi(e) != 0;
         if (T >= dense_min) Xd = d.alloc<float>((size_t)((T + MOE_TS - 1) / MOE_TS) * XD_COLS * MOE_TS);
         mix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX); mix_sc = d.alloc<float>((size_t)T * 3 * ops::MIX_MAX);
+        if (const char *e = std::getenv("INK_LOOP_PRE")) loop_pre = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
+        if (h.passes > 1 && m.loop_res_query && m.loop_kv_res_query) {
+            const int nr = (int)m.loop_res_query.t->rows();
+            if (nr != 2 * h.loop_len() || (int)m.loop_kv_res_query.t->rows() != nr) loop_pre = false;
+            if (loop_pre) {
+                loop_nq = 2 * nr;
+                lmix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX);
+                lmix_sc = d.alloc<float>((size_t)T * loop_nq * ops::MIX_MAX);
+                lmix_out = d.alloc<float>((size_t)loop_nq * E);
+            }
+        } else loop_pre = false;
+        ctl_h3 = d.alloc<float>((size_t)3 * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * h.gate_rank);
         lg = d.alloc<float>((size_t)h.vocab_padded * (all_logits ? T : 1));
     }
 
@@ -233,6 +253,29 @@ struct Engine {
         pr("ctl_out", gemv_pair(d.q, ga.view(), fo.p, 0, E, nullptr, n, ctl_z, h.gate_rank, 0, CtlOp{cur, mg, y, E}, 2));
     }
 
+    // control() of modules 0..2 for one token in three launches (norms, down products, gain|forget outputs into msg[j]);
+    // false (nothing launched) when a weight's format has no multi kernel
+    bool control3(const float *const in[3], const float *const mg[4], const Layer &l) {
+        const HParams &h = m.hp;
+        const int E = h.n_embd;
+        for (int j = 0; j < 3; ++j)
+            if (!multi_ok(l.loop_down[j].view()) || !ctl_multi_ok(l.loop_gain[j].view(), l.loop_forget[j].view())) return false;
+        fz::NormJob jobs[6];
+        for (int j = 0; j < 3; ++j) {
+            jobs[2 * j] = {in[j], ctl_h3 + (size_t)j * 2 * E, nullptr, E, 2 * E};
+            jobs[2 * j + 1] = {mg[j], ctl_h3 + (size_t)j * 2 * E + E, nullptr, E, 2 * E};
+        }
+        pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 6, E, 1, 1e-6f));
+        MultiJobs mj;
+        for (int j = 0; j < 3; ++j) multi_add(mj, l.loop_down[j].view(), ctl_h3 + (size_t)j * 2 * E, ctl_z3 + (size_t)j * h.gate_rank, 1);
+        pr("w:loop_down3", gemv_multi(d.q, mj, 2));
+        CtlJobs cj;
+        for (int j = 0; j < 3; ++j)
+            ctl_add(cj, l.loop_gain[j].view(), l.loop_forget[j].view(), ctl_z3 + (size_t)j * h.gate_rank, CtlOp{in[j], mg[j], msg[j], E});
+        pr("ctl_out", ctl_multi(d.q, cj, 2));
+        return true;
+    }
+
     int n_tok = 0;
 
     // one step of ntok <= T tokens at positions n_past..; logits for the last token (or all, if all_logits)
@@ -267,14 +310,31 @@ struct Engine {
                         bank_last = cur;
                         blocks = prelude_blocks;
                         cur = prelude_cur;
+                        if (loop_pre) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
+                            ops::MixArgs a;
+                            const int nb = (int)bank.size();
+                            if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
+                            for (int s = 0; s < nb; ++s) a.st[s] = bank[nb - 1 - s];
+                            a.st[nb] = bank_last;
+                            a.ns = nb + 1;
+                            const int nr = loop_nq / 2;
+                            pr("loop_mix_scores", fz::mix_scores_many(d.q, a, E, f32(m.loop_res_query), nr, f32(m.loop_kv_res_query), nr,
+                                                                      lmix_inv, lmix_sc, E, ntok));
+                            pr("loop_mix_out", ops::mix_out(d.q, a, E, loop_nq, lmix_inv, lmix_sc, lmix_out, E, ntok));
+                        }
                     }
                 }
                 if (pass > 0) {
                     const int row = 2 * (ip - h.core_start);
-                    mix(bank, bank_last, f32(m.loop_res_query) + (size_t)row * E, 2, mm2[0], E);
-                    mix(bank, bank_last, f32(m.loop_kv_res_query) + (size_t)row * E, 2, mm2[1], E);
                     const size_t S = (size_t)ntok * E;
-                    mg[0] = mm2[0]; mg[3] = mm2[0] + S; mg[1] = mm2[1]; mg[2] = mm2[1] + S;
+                    if (loop_pre) {
+                        const float *res = lmix_out + (size_t)row * S, *kv = lmix_out + (size_t)(loop_nq / 2 + row) * S;
+                        mg[0] = res; mg[3] = res + S; mg[1] = kv; mg[2] = kv + S;
+                    } else {
+                        mix(bank, bank_last, f32(m.loop_res_query) + (size_t)row * E, 2, mm2[0], E);
+                        mix(bank, bank_last, f32(m.loop_kv_res_query) + (size_t)row * E, 2, mm2[1], E);
+                        mg[0] = mm2[0]; mg[3] = mm2[0] + S; mg[1] = mm2[1]; mg[2] = mm2[1] + S;
+                    }
                 }
             }
             const float *inpSA = cur;
@@ -299,7 +359,11 @@ struct Engine {
                 }
             }
             if (mg[0]) {
-                for (int j = 0; j < 3; ++j) { control(in[j], mg[j], l, j, msg[j]); in[j] = msg[j]; }
+                if (ntok == 1 && ctl_batch && control3(in, mg, l)) {
+                } else {
+                    for (int j = 0; j < 3; ++j) control(in[j], mg[j], l, j, msg[j]);
+                }
+                for (int j = 0; j < 3; ++j) in[j] = msg[j];
                 dump.put(d, nm("loop_q_inp", il), msg[0], E, ntok);
             }
             if (normed) {

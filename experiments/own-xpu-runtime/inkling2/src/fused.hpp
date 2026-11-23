@@ -278,6 +278,52 @@ using ops::MIX_MAX;
 using ops::OPS_WG;
 // ops::mix_scores with the nq query dot products in one pass over the state (each with its own accumulator, so the
 // same per-query order) and their work-group sums behind one barrier pair (each the same order as wg_sum)
+// mix_scores for many queries at once (the loop mixes of a whole pass: their states are fixed for the pass): work-group
+// (t, s, group of 8 queries), each query's dot product in mix_scores' order; queries j < nqa at qa + j*n, then qb.
+// Results at sc[((t * NQ + j) * MIX_MAX + s] (NQ = nqa + nqb), as mix_scores with nq = NQ; inv as mix_scores.
+inline sycl::event mix_scores_many(sycl::queue &q, MixArgs a, size_t ld, const float *qa, int nqa, const float *qb, int nqb,
+                                   float *inv, float *sc, int n, int ntok) {
+    constexpr int QG = 8;
+    const int NQ = nqa + nqb, ngq = (NQ + QG - 1) / QG;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h), slmq(QG * (OPS_WG / SG), h);
+        h.parallel_for(ops::rows_range(ntok * a.ns * ngq), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), qg = g % ngq, ts = g / ngq, t = ts / a.ns, s = ts % a.ns, l = (int)it.get_local_id(0);
+            const float *x = a.st[s] + (size_t)t * ld;
+            float acc = 0.0f;
+            for (int i = l; i < n; i += OPS_WG) acc += x[i] * x[i];
+            float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+            float is = 1.0f / sycl::sqrt(tot / n + 1e-6f);
+            if (l == 0 && qg == 0) inv[(size_t)t * MIX_MAX + s] = is;
+            const float *qp[QG];
+            for (int j = 0; j < QG; ++j) {
+                int jj = qg * QG + j;
+                qp[j] = jj < nqa ? qa + (size_t)jj * n : qb + (size_t)(jj - nqa) * n;
+            }
+            const int nqg = sycl::min(QG, NQ - qg * QG);
+            float dd[QG];
+            for (int j = 0; j < QG; ++j) dd[j] = 0.0f;
+            for (int i = l; i < n; i += OPS_WG) {
+                float xi = x[i] * is;
+                for (int j = 0; j < QG; ++j)
+                    if (j < nqg) dd[j] += xi * qp[j][i];
+            }
+            auto sg = it.get_sub_group();
+            constexpr int nsg = OPS_WG / SG;
+            int sid = (int)sg.get_group_linear_id();
+            for (int j = 0; j < QG; ++j) {
+                float v = j < nqg ? sg_sum(sg, dd[j]) : 0.0f;
+                if (sg.get_local_linear_id() == 0) slmq[j * nsg + sid] = v;
+            }
+            sycl::group_barrier(it.get_group());
+            if (l < nqg) {
+                float tt = 0.0f;
+                for (int i = 0; i < nsg; ++i) tt += slmq[l * nsg + i];
+                sc[((size_t)t * NQ + qg * QG + l) * MIX_MAX + s] = tt;
+            }
+        });
+    });
+}
 inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float *query, int nq, float *inv, float *sc,
                               int n, int ntok) {
     if (nq > 3) throw std::runtime_error("mix_scores: at most 3 queries");
@@ -359,8 +405,8 @@ inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, co
 // up to 4 ops::rms_norm calls of the same row length in one launch (each with its own input, output and weight)
 struct NormJob { const float *x; float *y; const float *w; int ldx, ldy; };
 inline sycl::event rms_norm_multi(sycl::queue &q, const NormJob *jobs, int njobs, int n, int nrows, float eps) {
-    if (njobs < 1 || njobs > 4) throw std::runtime_error("rms_norm_multi: 1 to 4 jobs");
-    struct J4 { NormJob j[4]; } jb{};
+    if (njobs < 1 || njobs > 8) throw std::runtime_error("rms_norm_multi: 1 to 8 jobs");
+    struct J4 { NormJob j[8]; } jb{};
     for (int i = 0; i < njobs; ++i) jb.j[i] = jobs[i];
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
