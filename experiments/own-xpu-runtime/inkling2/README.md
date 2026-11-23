@@ -134,6 +134,14 @@ the same top token as the reference at 97.0 vs 97.3 % of positions, one position
 at token 102, the near-tie described below. Speed: prompt +19 % (3,127 tokens 542 -> 643 tok/s on card 3; 31,270
 tokens 447 -> 531 on card 2); a 512-token step's expert gate|up 357 -> 304 ms.
 
+Long prompts (2026-11-23): at very long contexts the score buffer holds only 16 query rows (420K positions), and the
+block kernels re-read the value cache once per token. `attn_pv_tile_part` (`src/attn_tiles.hpp`) splits the tiles by
+128-key blocks instead (8 queries x 3 heads x one block per work-group, query blocks fastest so a value block is read
+once for all of them) and leaves the blocks' sum to `attn_pv_bo_sum`: the same values (bench_attn 100K keys x 16
+tokens 6.6 -> 1.4 ms; x 64 tokens 6.4 -> 4.6 ms against the tiles). The prompt score tiles run query blocks fastest
+from 16K keys (100K x 512 tokens 34.8 -> 31.8 ms). A 31,270-token prompt with 16-row chunks: 434 -> 543 tok/s, the
+same speed as 176-row chunks; logits bit-identical to the FMA reference build in both cases.
+
 The cards are not equally fast: card 3 reads the 3,127-token prompt ~8 % faster than cards 2 and 4 (448.5 vs
 413.6-416.0 tok/s for the same build), so speeds are compared on one card.
 

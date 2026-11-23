@@ -62,6 +62,9 @@
 - Nov 23 ~05:30: fused multiply-add adopted as **baseline v3** (one rounding per term; as close to the reference as
   v2, matrix kernels closer on 12 of 17 types). Prompt **643 tok/s** at 3K (card 3, was 542), **531 tok/s** at 31K
   (card 2, was 447); writing unchanged (~81 tok/s short). Gate 6/6 against v3; `baseline-v2` kept.
+- Nov 23 ~06:00: long prompts no longer slow down when the score buffer must be small (16 rows at 420K): value sums
+  of small chunks run as tiles split by key blocks (100K keys x 16 tokens 6.6 -> 1.4 ms), score tiles share key blocks
+  through L2 past 16K keys. 31K prompt with 16-row chunks 434 -> 543 tok/s; same bits; gate 6/6.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

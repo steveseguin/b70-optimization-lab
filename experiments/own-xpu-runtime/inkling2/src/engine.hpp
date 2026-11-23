@@ -581,8 +581,11 @@ struct Engine {
                                                                                  kscale, P, ldp, kmask[il]));
                 if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv));
                 else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sc, qp, nc, nh, win, P, ldp));
-                // P.V in the block order (fused.hpp attn_pv_bo_part): tiles from 64 tokens, else the block kernels 16 tokens at a time
-                if (tiles && nc >= 64) {
+                // P.V in the block order (fused.hpp attn_pv_bo_part): the tiles for chunks of >= 64 tokens (but past 32K keys
+                // only from 128, bench_attn 100K x 64 tokens: tiles 6.4 ms, split by blocks 4.6); else 16 tokens at a time,
+                // through the tiles split by key blocks (prompt steps; 100K x 16: 6.6 -> 1.4 ms) or the block kernels
+                // (writing steps), then the blocks' sum
+                if (tiles && nc >= 64 && (nc >= 128 || win > 0 || qp + nc <= 32768)) {
                     pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc, ac,
                                                                                 kmask[il]));
                     continue;
@@ -590,8 +593,13 @@ struct Engine {
                 for (int c0 = 0; c0 < nc; c0 += 16) {
                     const int nt = std::min(16, nc - c0), p0 = qp + c0;
                     const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
-                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0, nt, nh,
-                                                                              nkvh, hd, win, pvpart, nblk, fast ? pinv : nullptr, kmask[il]));
+                    if (tiles)
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<8, 3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
+                                                                                       nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il]));
+                    else
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
+                                                                                  nt, nh, nkvh, hd, win, pvpart, nblk, fast ? pinv : nullptr,
+                                                                                  kmask[il]));
                     pr(swa ? "attn_pv_sum" : "attn_pv_sum_full", fz::attn_pv_bo_sum(d.q, pvpart, nblk, p0, nt, nh, hd, win,
                                                                                     gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
                 }

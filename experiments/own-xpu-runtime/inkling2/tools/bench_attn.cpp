@@ -39,7 +39,7 @@ int main(int argc, char **argv) {
             d.q.parallel_for(sycl::range<2>((size_t)ntok * nh, ext), [=](sycl::id<2> i) {
                 const float *b = Rb + i[1] * nr, *r = Rc + i[0] * nr;
                 float s = 0.0f;
-                for (int k = 0; k < nr; ++k) s += b[k] * r[k];
+                for (int k = 0; k < nr; ++k) s = mac(s, b[k], r[k]);
                 tab[i[0] * ext + i[1]] = s;
             }).wait();
             const size_t np = (size_t)ntok * nh * ldp;
@@ -90,6 +90,14 @@ int main(int argc, char **argv) {
             };
             pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
             pvt("pv_tile<8,3>", fz::attn_pv_tile<8, 3>);
+            {
+                d.q.memset(o1, 0, hg.size() * 4).wait();
+                double us = tm([&] {
+                    fz::attn_pv_tile_part<8, 3>(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk);
+                    fz::attn_pv_bo_sum(d.q, part, nblk, pos, ntok, nh, hd, win, Gt, o1);
+                });
+                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", "pv_tile_part<8,3>+sum", us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
+            }
             { // unnormalized P + inv (the writing-step softmax) through the block kernels: P0 / total * total
                 std::vector<float> hinv((size_t)ntok * nh, 1.0f);
                 float *inv = d.alloc<float>(hinv.size());
