@@ -1,14 +1,16 @@
 // attn_tiles.hpp: the attention scores and P.V of steps of many tokens (prompts) as register tiles. A work-group takes
 // MT queries x the G query heads of one KV head (NR = MT*G rows); a lane keeps NR running sums, so every cache value
 // it loads serves NR rows, and a row's values come in as one 16-lane load that each product takes with a
-// constant-index select_from_group (a register region, no data movement). Every sum keeps the order of the one-token
-// kernels of fused.hpp (attn_scores: d ascending from 0.0f, then the scale, then the bias; attn_pv_t: keys ascending
-// from 0.0f), so the results are the same bits.
+// constant-index select_from_group (a register region, no data movement). Every sum keeps the order of the
+// writing-step kernels of fused.hpp (attn_scores: d ascending from 0.0f, then the scale, then the bias; P.V: the
+// block order of attn_pv_bo_part / attn_pv_bo_sum: within a block of PVB key positions keys ascending from 0.0f,
+// then the blocks ascending from 0.0f), so the results are the same bits.
 //  - A block's rows cover slightly different key ranges (each query's window ends at its own position). Keys outside a
 //    row's [lo, p] add a product of zero to that row (P.V) or are not stored (scores). A zero product leaves a sum
 //    unchanged: the sums start at +0.0f and never become -0.0f (round to nearest gives +0 for x + (-x)), and the cache
 //    values are finite, so 0 * v is +-0 and s + (+-0) == s.
-//  - Only positions up to the step's last are read (the cache past it is not written yet).
+//  - Only positions up to the step's last are read (the cache past it is not written yet). A position's cache slot is
+//    position & km (windowed layers keep a ring; km + 1 is a multiple of PVB, so 16-key reads never wrap).
 #pragma once
 #include "fused.hpp"
 
@@ -21,7 +23,7 @@ namespace ink::fz {
 template <int MT, int G, int SGW>
 inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
                                     int nr, int pos0, int ntok, int nh, int nkvh, int hd, int ext, int win, float scale, float *P,
-                                    int ldp) {
+                                    int ldp, int km = 0x7fffffff) {
     constexpr int PW = 16, NR = MT * G, KB = PW * SGW, NRL = 16;
     using HV = sycl::vec<sycl::half, 8>;
     if (hd != 128 || nh != nkvh * G || nr != NRL) throw std::runtime_error("attn_scores_tile: unsupported shape");
@@ -40,7 +42,7 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
         const int jb = (lof & ~15) + (int)it.get_group(1) * KB + sgi * PW;
         if (jb > pl) return;
         const int j = jb + lane, jc = sycl::min(j, pl);
-        const sycl::half *kr = K + (size_t)jc * nkvh * hd + kvh * hd;
+        const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
         float acc[NR];
 #pragma unroll
         for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
@@ -100,7 +102,7 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
 // out = acc * (1 / (1 + exp(-gate))) as attn_pv_t
 template <int MT, int G>
 inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok, int nh,
-                                int nkvh, int hd, int win, const float *gate, float *out) {
+                                int nkvh, int hd, int win, const float *gate, float *out, int km = 0x7fffffff) {
     constexpr int PW = 16, NR = MT * G;
     using HV = sycl::vec<sycl::half, 8>;
     if (nh != nkvh * G || hd % PW || vld % 16) throw std::runtime_error("attn_pv_tile: unsupported shape");
@@ -120,11 +122,16 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
             pp[m] = m < tn ? pf + m : -1; // rows past the step take nothing
             lo[m] = win > 0 ? sycl::max(0, pf + m - win + 1) : 0;
         }
-        float acc[NR];
+        float acc[NR], tot[NR]; // acc: the current block of PVB positions; tot: the blocks so far, in order
 #pragma unroll
-        for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
+        for (int a = 0; a < NR; ++a) { acc[a] = 0.0f; tot[a] = 0.0f; }
+        auto flush = [&] {
+#pragma unroll
+            for (int a = 0; a < NR; ++a) { tot[a] += acc[a]; acc[a] = 0.0f; }
+        };
         int j = lof & ~15;
         for (; j + 15 <= pl; j += 16) {
+            if ((j & (PVB - 1)) == 0) flush();
             float pv[NR];
             const int jj = j + lane;
 #pragma unroll
@@ -136,7 +143,7 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
                     pv[m * G + gi] = ok ? pr[jj - lo[m]] : 0.0f;
                 }
             }
-            const HV v0 = *(const HV *)(row + j), v1 = *(const HV *)(row + j + 8);
+            const HV v0 = *(const HV *)(row + (j & km)), v1 = *(const HV *)(row + (j & km) + 8);
 #pragma unroll
             for (int u = 0; u < PW; ++u) {
                 const float vf = (float)(u < 8 ? v0[u] : v1[u - 8]);
@@ -145,7 +152,8 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
             }
         }
         for (; j <= pl; ++j) {
-            const float vf = (float)row[j];
+            if ((j & (PVB - 1)) == 0) flush();
+            const float vf = (float)row[j & km];
 #pragma unroll
             for (int m = 0; m < MT; ++m) {
                 const bool ok = j >= lo[m] && j <= pp[m];
@@ -156,13 +164,14 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
                 }
             }
         }
+        flush();
 #pragma unroll
         for (int m = 0; m < MT; ++m) {
             if (m >= tn) break;
 #pragma unroll
             for (int gi = 0; gi < G; ++gi) {
                 const size_t i = ((size_t)(t0 + m) * nh + kvh * G + gi) * hd + c;
-                out[i] = acc[m * G + gi] * (1.0f / (1.0f + sycl::exp(-gate[i])));
+                out[i] = tot[m * G + gi] * (1.0f / (1.0f + sycl::exp(-gate[i])));
             }
         }
     });

@@ -50,6 +50,11 @@
   a block order (keys summed in blocks of 128 positions, then the blocks) measured 352 -> 221 µs in bench_attn but
   changes the sums (a new baseline, checked against the reference). Fused multiply-add measured: attention tiles
   1.5-1.8x, expert tiles ~1.2x (also a new baseline).
+- Nov 23 ~09:00: block-order P.V adopted as **baseline v2** (more accurate per kernel: 31K keys 3.4e-07 vs 3.1e-06
+  against double precision; old baseline kept as `baseline-v1`). Writing at 31K **15.5-16.0 ms per step** (card 2;
+  was 17.5-18.1; 3K and short unchanged). Windowed layers' caches are now 2,048-position rings (~4.5 GiB freed at
+  31K, same bits). Gate 6/6 against v2. Next: the score buffer P (512 tokens x 24 heads x context, 1.5 GB at 31K)
+  is now the memory limit for long prompts: split prompt attention into query chunks.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

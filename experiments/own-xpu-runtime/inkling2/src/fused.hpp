@@ -49,6 +49,7 @@ struct PrepArgs {
     const float *st_in; float *st_out; // this application's states (K at 0, V at kd)
     float *Kx, *Vx; sycl::half *Kc, *Vc;
     int vld;              // > 0: V cache transposed, Vc[(kvh*hd + c) * vld + position] (attn_pv_t)
+    int km = 0x7fffffff;  // cache slot of a position: position & km (windowed layers: a ring of km + 1 positions)
     float eps, kv_scale;
     const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
     // tab null: Rc only (attn_scores_tile computes the bias itself)
@@ -100,8 +101,9 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 }
                 size_t i = (size_t)t * kd + c;
                 (isv ? a.Vx : a.Kx)[i] = x;
-                if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + a.pos0 + t] = sycl::half(x);
-                else (isv ? a.Vc : a.Kc)[(size_t)a.pos0 * kd + i] = sycl::half(x);
+                const int slot = (a.pos0 + t) & a.km;
+                if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + slot] = sycl::half(x);
+                else (isv ? a.Vc : a.Kc)[(size_t)slot * kd + c] = sycl::half(x);
                 if (t == a.ntok - 1) conv_save(a.st_out, off, c, win);
                 return;
             }
@@ -200,7 +202,7 @@ inline sycl::event attn_pv_gate(sycl::queue &q, const float *P, int ldp, const s
 // thread (the dot product in d order, as ops::attn_softmax), keys of a (t, h) spread over many work-groups.
 constexpr int SC_WG = 64;
 inline sycl::event attn_scores(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
-                               int nkvh, int hd, int ext, int win, float scale, float *P, int ldp) {
+                               int nkvh, int hd, int ext, int win, float scale, float *P, int ldp, int km = 0x7fffffff) {
     if (hd != 128) throw std::runtime_error("attn_scores: head size 128 only");
     const int pl = pos0 + ntok - 1, maxk = win > 0 ? sycl::min(win, pl + 1) : pl + 1;
     const int nb = (maxk + SC_WG - 1) / SC_WG;
@@ -211,7 +213,7 @@ inline sycl::event attn_scores(sycl::queue &q, const float *Q, const sycl::half 
         int j = lo + (int)it.get_global_id(1);
         if (j > p) return;
         const float *qv = Q + (size_t)g * hd;
-        const sycl::half *kr = K + (size_t)j * nkvh * hd + kvh * hd;
+        const sycl::half *kr = K + (size_t)(j & km) * nkvh * hd + kvh * hd;
         float s = 0.0f;
         for (int d8 = 0; d8 < 16; ++d8) {
             sycl::vec<sycl::half, 8> kv = *(const sycl::vec<sycl::half, 8> *)(kr + 8 * d8);
@@ -231,7 +233,7 @@ inline sycl::event attn_scores(sycl::queue &q, const float *Q, const sycl::half 
 template <int G>
 inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
                                  int nkvh, int hd, int ext, int win, float scale, float *P, int ldp, float *wmax = nullptr,
-                                 int nsgmax = 0) {
+                                 int nsgmax = 0, int km = 0x7fffffff) {
     constexpr int PW = 16, WG = 64;
     using HV = sycl::vec<sycl::half, 8>;
     if (hd != 128 || nh != nkvh * G) throw std::runtime_error("attn_scores_g: unsupported shape");
@@ -246,7 +248,7 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
         const int j = lo + (int)it.get_global_id(1);
         if (j - lane > p) return; // the whole sub-group is past the position
         const int jc = sycl::min(j, p);
-        const sycl::half *kr = K + (size_t)jc * nkvh * hd + kvh * hd;
+        const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
         const float *qb = Q + ((size_t)t * nh + kvh * G) * hd;
         float s[G];
 #pragma unroll
@@ -278,14 +280,15 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
         }
     });
 }
-// P.V in blocks of PVB key positions (prototype of a new summation order): part[(row * nblk + b) * hd + c] = the sum
+// P.V in blocks of PVB key positions (the summation order since 2026-11-23): part[(row * nblk + b) * hd + c] = the sum
 // over the keys of block b (positions [PVB*b, PVB*(b+1)) within the row's [lo, p]) of P * V, j ascending from 0.0f;
 // a lane = a channel and the G heads of its KV head (the values are read once). b counts from the block of the
 // earliest lo of the step. attn_pv_bo_sum then adds the blocks in order from 0.0f and applies the gate
 constexpr int PVB = 128;
 template <int G>
 inline sycl::event attn_pv_bo_part(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok, int nh,
-                                   int nkvh, int hd, int win, float *part, int nblk) {
+                                   int nkvh, int hd, int win, float *part, int nblk, const float *inv = nullptr,
+                                   int km = 0x7fffffff) {
     constexpr int PW = 16;
     using HV = sycl::vec<sycl::half, 16>;
     if (nh != nkvh * G || vld % 16) throw std::runtime_error("attn_pv_bo_part: unsupported shape");
@@ -303,15 +306,19 @@ inline sycl::event attn_pv_bo_part(sycl::queue &q, const float *P, int ldp, cons
         for (int gi = 0; gi < G; ++gi) acc[gi] = 0.0f;
         const sycl::half *row = Vt + (size_t)(kvh * hd + c) * vld;
         const float *pr[G];
+        float ps[G]; // unnormalized P (attn_softmax_sum): times the row's 1 / total (x * 1.0f == x)
 #pragma unroll
-        for (int gi = 0; gi < G; ++gi) pr[gi] = P + ((size_t)t * nh + kvh * G + gi) * ldp - lo;
+        for (int gi = 0; gi < G; ++gi) {
+            pr[gi] = P + ((size_t)t * nh + kvh * G + gi) * ldp - lo;
+            ps[gi] = inv ? inv[(size_t)t * nh + kvh * G + gi] : 1.0f;
+        }
         if (ja == kb && jb == kb + PVB - 1) { // a whole block: 16 keys per read, P as 16-lane reads
 #pragma unroll
             for (int j0 = 0; j0 < PVB; j0 += PW) {
-                const HV v = *(const HV *)(row + kb + j0);
+                const HV v = *(const HV *)(row + ((kb + j0) & km));
                 float pv[G];
 #pragma unroll
-                for (int gi = 0; gi < G; ++gi) pv[gi] = pr[gi][kb + j0 + lane];
+                for (int gi = 0; gi < G; ++gi) pv[gi] = pr[gi][kb + j0 + lane] * ps[gi];
 #pragma unroll
                 for (int u = 0; u < PW; ++u) {
                     const float vf = (float)v[u];
@@ -321,9 +328,9 @@ inline sycl::event attn_pv_bo_part(sycl::queue &q, const float *P, int ldp, cons
             }
         } else {
             for (int j = ja; j <= jb; ++j) {
-                const float vf = (float)row[j];
+                const float vf = (float)row[j & km];
 #pragma unroll
-                for (int gi = 0; gi < G; ++gi) acc[gi] += pr[gi][j] * vf;
+                for (int gi = 0; gi < G; ++gi) acc[gi] += (pr[gi][j] * ps[gi]) * vf;
             }
         }
 #pragma unroll
@@ -337,7 +344,17 @@ inline sycl::event attn_pv_bo_sum(sycl::queue &q, const float *part, int nblk, i
         const int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
         const int lo0 = win > 0 ? sycl::max(0, pos0 - win + 1) : 0, b0 = lo0 / PVB;
         float acc = 0.0f;
-        for (int b = lo / PVB - b0; b <= p / PVB - b0; ++b) acc += part[((size_t)row * nblk + b) * hd + c];
+        const float *pp = part + (size_t)row * nblk * hd + c;
+        int b = lo / PVB - b0;
+        const int bh = p / PVB - b0;
+        for (; b + 7 <= bh; b += 8) { // loads 8 at a time, added in order
+            float v[8];
+#pragma unroll
+            for (int u = 0; u < 8; ++u) v[u] = pp[(size_t)(b + u) * hd];
+#pragma unroll
+            for (int u = 0; u < 8; ++u) acc += v[u];
+        }
+        for (; b <= bh; ++b) acc += pp[(size_t)b * hd];
         out[i] = acc * (1.0f / (1.0f + sycl::exp(-gate[i])));
     });
 }

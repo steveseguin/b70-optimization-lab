@@ -28,6 +28,9 @@ struct Engine {
     // persistent state
     std::vector<sycl::half *> Kc, Vc; // per application [cap][n_kv_head*head_dim]; Vc transposed when vld > 0
     int vld = 0;                      // V cache [n_kv_head*head_dim][vld] (INK_VT=0: [cap][n_kv_head*head_dim])
+    static constexpr int PVB_RING_MIN = 128;
+    int ring_w = 0;                   // windowed applications' ring size (positions)
+    std::vector<int> kvl, kmask;      // per application: V cache stride, cache slot mask
     float *conv = nullptr;            // two copies (previous call, this call) of [n_app][6656*3], channel-major
     int conv_n = 0;                   // floats per application
     int cpar = 0;                     // which copy holds the state of the previous call
@@ -57,6 +60,7 @@ struct Engine {
     // (16 tokens x heads) the sub-group maxima of the scores, nsgmax per row; pinv: per row 1 / softmax total
     bool dec_attn = true;
     float *wmax = nullptr, *pinv = nullptr;
+    float *pvpart = nullptr; // attn_pv_bo_part's block sums: 16 tokens x heads x (cap / PVB + 2) blocks x head_dim
     int nsgmax = 0;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
@@ -97,9 +101,18 @@ struct Engine {
         const size_t KD = (size_t)kd * T;
         Kc.resize(h.n_app); Vc.resize(h.n_app);
         if (!std::getenv("INK_VT") || std::atoi(std::getenv("INK_VT"))) vld = (cap + 15) / 16 * 16;
+        // windowed applications keep a ring of ring_w positions (slot = position & (ring_w - 1)): a step reads at most
+        // window + T - 1 keys plus the rounding down to a block of PVB, so ring_w >= window + T + PVB holds them all
+        // (INK_RING=0: every cache holds the whole context)
+        ring_w = PVB_RING_MIN;
+        while (ring_w < h.n_swa + T + fz::PVB) ring_w <<= 1;
+        const bool ring = vld && !(std::getenv("INK_RING") && !std::atoi(std::getenv("INK_RING"))) && ring_w < cap;
+        kvl.assign(h.n_app, vld); kmask.assign(h.n_app, 0x7fffffff);
         for (int a = 0; a < h.n_app; ++a) {
-            Kc[a] = d.alloc<sycl::half>((size_t)cap * kd);
-            Vc[a] = d.alloc<sycl::half>((size_t)(vld ? vld : cap) * kd);
+            const bool r = ring && h.swa[a];
+            if (r) { kvl[a] = ring_w; kmask[a] = ring_w - 1; }
+            Kc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : cap) * kd);
+            Vc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : (vld ? vld : cap)) * kd);
         }
         conv_n = (2 * kd + 2 * h.n_embd) * (h.n_conv - 1);
         conv = d.alloc_zero<float>((size_t)2 * conv_n * h.n_app);
@@ -121,6 +134,9 @@ struct Engine {
         nsgmax = cap / 16 + 2;
         wmax = d.alloc<float>((size_t)16 * h.n_head * nsgmax);
         pinv = d.alloc<float>((size_t)16 * h.n_head);
+        pvpart = d.alloc<float>((size_t)16 * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
+        if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
+            throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
         ob = d.alloc<float>(E); attn_out = d.alloc<float>(E); ffn_inp = d.alloc<float>(E); fx = d.alloc<float>(E);
         ctl_h = d.alloc<float>(2 * E); ctl_z = d.alloc<float>((size_t)h.gate_rank * T);
         ctl_g = d.alloc<float>(E); ctl_f = d.alloc<float>(E); ctl_y = d.alloc<float>(E);
@@ -526,7 +542,7 @@ struct Engine {
                 a.full = !swa; a.tau = tau;
                 a.Q = Q; a.q_clip = f32(l.q_clip); a.qk_clip = h.qk_clip;
                 a.Kr = Kr; a.Vr = Vr; a.dynK = dynK; a.dynV = dynV; a.k_conv = f32(l.k_conv); a.v_conv = f32(l.v_conv);
-                a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = vld;
+                a.st_in = st_in; a.st_out = st_out; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = kvl[il]; a.km = kmask[il];
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
                 pr("attn_prep", fz::attn_prep(d.q, a));
@@ -542,24 +558,29 @@ struct Engine {
             const bool fast = !tiles && dec_attn && ntok <= 16 && vld > 0 && nh == 3 * nkvh;
             if (tiles)
                 pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, pos0,
-                                                                                         ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+                                                                                         ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp, kmask[il]));
             else if (fast)
                 pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_g<3>(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent,
-                                                                                  win, kscale, P, ldp, wmax, nsgmax));
+                                                                                  win, kscale, P, ldp, wmax, nsgmax, kmask[il]));
             else
-                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp, kmask[il]));
             if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sinks, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, pinv));
             else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
-            if (tiles) {
-                pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att));
-            } else if (vld) { // transposed cache: 32 keys per batch below 1024 keys, 64 from there (bench_attn, card 2)
-                const int p = pos0 + ntok - 1, keys = win > 0 ? std::min(win, p + 1) : p + 1;
-                auto pv = keys >= 1024 ? fz::attn_pv_ti<64> : fz::attn_pv_ti<32>;
-                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], vld, pos0, ntok, nh, nkvh, hd, win, gate, att, fast ? pinv : nullptr));
+            // P.V in the block order (fused.hpp attn_pv_bo_part): tiles from 64 tokens, else the block kernels 16 tokens at a time
+            if (tiles && ntok >= 64) {
+                pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], pos0, ntok, nh, nkvh, hd, win, gate, att, kmask[il]));
             } else {
-                auto pv = pv_u == 128 ? fz::attn_pv_gate_u<128> : pv_u == 64 ? fz::attn_pv_gate_u<64> : pv_u == 32 ? fz::attn_pv_gate_u<32>
-                        : fz::attn_pv_gate2;
-                pr(swa ? "attn_pv" : "attn_pv_full", pv(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, gate, att));
+                for (int c0 = 0; c0 < ntok; c0 += 16) {
+                    const int nt = std::min(16, ntok - c0), p0 = pos0 + c0;
+                    const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
+                    const float *pin = fast ? pinv : nullptr;
+                    {
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0, nt, nh,
+                                                                                  nkvh, hd, win, pvpart, nblk, pin, kmask[il]));
+                        pr(swa ? "attn_pv_sum" : "attn_pv_sum_full", fz::attn_pv_bo_sum(d.q, pvpart, nblk, p0, nt, nh, hd, win,
+                                                                                        gate + (size_t)c0 * nh * hd, att + (size_t)c0 * nh * hd));
+                    }
+                }
             }
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
             mm(l.wo, att, ob, ntok);

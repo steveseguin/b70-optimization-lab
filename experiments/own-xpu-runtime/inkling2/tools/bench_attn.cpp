@@ -21,7 +21,8 @@ int main(int argc, char **argv) {
             std::mt19937 rng(7);
             std::normal_distribution<float> nd(0.0f, 1.0f);
             auto rnd = [&](size_t n, float sc) { std::vector<float> v(n); for (auto &x : v) x = nd(rng) * sc; return v; };
-            auto hq = rnd((size_t)ntok * nh * hd, 0.3f), hrc = rnd((size_t)ntok * nh * nr, 0.5f), hrb = rnd((size_t)ext * nr, 0.5f);
+            const float qsc = std::getenv("BENCH_QSC") ? (float)std::atof(std::getenv("BENCH_QSC")) : 0.3f; // larger = sharper P
+            auto hq = rnd((size_t)ntok * nh * hd, qsc), hrc = rnd((size_t)ntok * nh * nr, 0.5f), hrb = rnd((size_t)ext * nr, 0.5f);
             auto hs = rnd((size_t)ntok * nh, 1.0f), hg = rnd((size_t)ntok * nh * hd, 1.0f);
             std::vector<sycl::half> hk((size_t)cap * kd), hv((size_t)cap * kd);
             for (auto &x : hk) x = (sycl::half)nd(rng);
@@ -66,7 +67,7 @@ int main(int argc, char **argv) {
             std::printf("  scores (table)         %9.1f us %6.2f TMAC/s\n", us0, gmac / us0 * 1e3);
             auto sct = [&](const char *name, auto f) {
                 d.q.memset(P1, 0x7f, np * 4).wait();
-                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp); });
+                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(P0, P1, np).c_str());
             };
             sct("scores_tile<4,3,4>", fz::attn_scores_tile<4, 3, 4>);
@@ -74,17 +75,55 @@ int main(int argc, char **argv) {
             sct("scores_tile<8,3,8>", fz::attn_scores_tile<8, 3, 8>);
             sct("scores_tile<16,3,4>", fz::attn_scores_tile<16, 3, 4>);
             fz::attn_softmax_norm(d.q, Sk, pos, ntok, nh, win, P0, ldp).wait();
-            auto pv0 = (win > 0 ? std::min(win, pl + 1) : pl + 1) >= 1024 ? fz::attn_pv_t<64> : fz::attn_pv_t<32>;
-            double u1 = tm([&] { pv0(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o0); });
-            std::printf("  pv_t                   %9.1f us %6.2f TMAC/s\n", u1, gmac / u1 * 1e3);
+            // the reference: the block-order kernels (attn_pv_bo_part + attn_pv_bo_sum) over the whole step
+            const int lo0 = win > 0 ? std::max(0, pos - win + 1) : 0, nblk = pl / fz::PVB - lo0 / fz::PVB + 1;
+            float *part = d.alloc<float>((size_t)ntok * nh * nblk * hd);
+            double u1 = tm([&] {
+                fz::attn_pv_bo_part<3>(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk);
+                fz::attn_pv_bo_sum(d.q, part, nblk, pos, ntok, nh, hd, win, Gt, o0);
+            });
+            std::printf("  pv block kernels       %9.1f us %6.2f TMAC/s\n", u1, gmac / u1 * 1e3);
             auto pvt = [&](const char *name, auto f) {
                 d.q.memset(o1, 0, hg.size() * 4).wait();
-                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1); });
+                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
             };
             pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
             pvt("pv_tile<8,3>", fz::attn_pv_tile<8, 3>);
-            pvt("pv_tile<16,3>", fz::attn_pv_tile<16, 3>);
+            { // unnormalized P + inv (the writing-step softmax) through the block kernels: P0 / total * total
+                std::vector<float> hinv((size_t)ntok * nh, 1.0f);
+                float *inv = d.alloc<float>(hinv.size());
+                d.put(inv, hinv.data(), hinv.size());
+                fz::attn_pv_bo_part<3>(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk, inv);
+                fz::attn_pv_bo_sum(d.q, part, nblk, pos, ntok, nh, hd, win, Gt, o1).wait();
+                std::printf("  pv block kernels, inv = 1   %s\n", same(o0, o1, hg.size()).c_str());
+            }
+            if (std::getenv("BENCH_ACC")) { // accuracy: block order (o0) and key-by-key (attn_pv_t, baseline v1) vs double
+                fz::attn_pv_t<16>(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1).wait();
+                std::vector<float> hp(np), a0(hg.size()), a1(hg.size());
+                d.get(hp.data(), P0, np); d.get(a0.data(), o0, a0.size()); d.get(a1.data(), o1, a1.size());
+                double e0 = 0, e1 = 0, rr = 0, m0 = 0, m1 = 0;
+                int w0 = 0, w1 = 0;
+                for (int t = 0; t < ntok; ++t)
+                    for (int h = 0; h < nh; ++h) {
+                        const int p = pos + t, lo = win > 0 ? std::max(0, p - win + 1) : 0, kvh = h / G;
+                        double r0 = 0, r1 = 0, rn = 0;
+                        for (int c = 0; c < hd; ++c) {
+                            double s = 0;
+                            for (int j = lo; j <= p; ++j)
+                                s += (double)hp[((size_t)t * nh + h) * ldp + j - lo] * (double)(float)hv[(size_t)j * kd + kvh * hd + c];
+                            const size_t i = ((size_t)t * nh + h) * hd + c;
+                            s *= 1.0 / (1.0 + std::exp(-(double)hg[i]));
+                            r0 += (a0[i] - s) * (a0[i] - s); r1 += (a1[i] - s) * (a1[i] - s); rn += s * s;
+                        }
+                        e0 += r0; e1 += r1; rr += rn;
+                        const double q0 = std::sqrt(r0 / rn), q1 = std::sqrt(r1 / rn);
+                        m0 = std::max(m0, q0); m1 = std::max(m1, q1);
+                        w0 += q0 < q1; w1 += q1 < q0;
+                    }
+                std::printf("  accuracy vs double: block order rel %.3e (row max %.3e), key by key rel %.3e (row max %.3e); "
+                            "rows closer: block %d, key by key %d\n", std::sqrt(e0 / rr), m0, std::sqrt(e1 / rr), m1, w0, w1);
+            }
             (void)G;
             return 0;
         }

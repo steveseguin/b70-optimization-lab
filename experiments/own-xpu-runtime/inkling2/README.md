@@ -22,7 +22,9 @@ the model's math, never used as our code).
   one bit for bit against the first kernels.
 - `scripts/build.sh <tool>`: the one build command (strict IEEE single precision on the card, see below).
 - `scripts/check-exact.sh <ink_run>`: the gate for every engine change, three cards in parallel: all 426 dumped
-  tensors of a 5-token prompt and the greedy ids of two prompts must equal `/home/steve/inkling-work/baseline`.
+  tensors of a 5-token prompt and the greedy ids of two prompts must equal `/home/steve/inkling-work/baseline`
+  (6 checks on cards 1-5); `scripts/make-baseline.sh <ink_run> <dir>` makes a new baseline through the general kernels
+  (only after a sum order change that was checked against the high-precision reference).
 - `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 1-5).
 - `patches/oracle-f32-activations.patch`: a high-precision build of the reference for checking (F32 activations and
   double sums for every weight type; run with `GGML_CPU_F32_ACT=1 REF_FA=0 REF_NO_REPACK=1`). Never shipped.
@@ -76,12 +78,35 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | transposed value cache (card 3) | 468.4-468.8 tok/s | 71.7 tok/s | 3K writing step 13.95 ms (card 2) |
 | attention tiles (card 3) | 531.7-532.8 tok/s | | steps of >= 16 tokens: 8 queries x 3 heads per tile, bias in place (below) |
 | writing-step attention (card 2) | | 31K: 17.4-18.1 ms per step (was 19.4-20.0) | scores 3 heads per key read; softmax sums only; P.V normalizes as it reads |
+| block-order P.V, baseline v2 (card 2) | 494.1-496.1 tok/s (card 5, unchanged) | 31K: 16.1-16.7 ms (was 17.5-18.1) | keys summed in blocks of 128 positions, then the blocks (below) |
+| ring caches, unrolled block sums (card 2) | | 31K: 15.5-16.0 ms | windowed layers keep 2,048 positions; full layers' block sums 92 -> 23 µs |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
 701 µs; full-attention scores 12266 -> 3199 µs and P.V 9113 -> 3106 µs (4.6 TMAC/s). A lane keeps the 24 sums of 8
 queries x 3 heads; each sum keeps its order (dimensions or keys ascending from 0); keys outside a row's range add
 exact zeros. 16 queries per tile spill registers and run ~8x slower.
+
+Block order, baseline v2 (2026-11-23, `attn_pv_bo_part` / `attn_pv_bo_sum` in `src/fused.hpp`, the tiles of
+`src/attn_tiles.hpp`): every P.V sum adds the keys of each block of 128 absolute positions in order from 0, then the
+block sums in order from 0. A one-token step can then use one thread per (head, block, channel) instead of one per
+(head, channel): full-layer P.V at 31K 400 -> 139 µs. This changes the bits, so it is a new baseline
+(`/home/steve/inkling-work/baseline`, made by `scripts/make-baseline.sh <ink_run>` through the general kernels; the
+old one is kept as `baseline-v1`). Accuracy against double precision (`BENCH_ACC=1 BENCH_TILE=1 bench_attn`, random
+data): 31,000 keys 3.3-3.4e-07 relative vs 2.8-3.1e-06 for the key-by-key order, 8,000 keys 2.4-2.6e-07 vs
+1.2-1.5e-06, the 1,024 window 1.8-2.1e-07 vs 5.4-5.5e-07, prompt steps 2.2e-07 vs 5.7-6.3e-07; the block order is
+closer on every row. Against the high-precision reference on a 300-token prompt, layers 0-5 are as close as v1
+(each order closer at 82-89 of the 171 positions that differ); at the last layer v1 happens to be closer (final scores
+median 4.21e-03 vs 3.47e-03, the same top token as the reference at 97.33 % of positions for both): a rounding
+difference of 8e-08 at layer 0 doubles about every layer whichever order made it, so per-kernel accuracy is the
+measure. The ids of the gate prompts did not change.
+
+Ring caches (`INK_RING=0` turns them off): the 40 windowed layer applications keep only the last 2,048 positions
+(the smallest power of two >= window + step + 128), slot = position & 2047; every cache read and write goes through
+that mask, and a 16-key read never wraps because 2,048 is a multiple of the 128-position block. At 31,400 positions
+this frees ~4.5 GiB; logits of 4 steps after the 31,270-token prompt are bit-identical with and without the rings.
+A one-launch P.V (the last work-group adds the blocks) measured slower than the two launches at every length
+(31,000 keys 199 vs 157 µs, 3,134 with the window 10.2 vs 8.9 µs) and was dropped.
 
 The cards are not equally fast: card 3 reads the 3,127-token prompt ~8 % faster than cards 2 and 4 (448.5 vs
 413.6-416.0 tok/s for the same build), so speeds are compared on one card.
