@@ -70,12 +70,16 @@ int main(int argc, char **argv) {
     llama_backend_init();
     llama_model_params mp = llama_model_default_params();
     mp.n_gpu_layers = 0;
+    // REF_NO_REPACK=1: keep the weights in their file layout (the CPU repacked kernels bypass type_traits)
+    if (std::getenv("REF_NO_REPACK")) mp.use_extra_bufts = false;
     llama_model *model = llama_model_load_from_file(argv[1], mp);
     if (!model) { std::fprintf(stderr, "model load failed\n"); return 1; }
     llama_context_params cp = llama_context_default_params();
     cp.n_ctx = (uint32_t)std::max<size_t>(toks.size() + 16, 512);
     cp.n_batch = cp.n_ubatch = (uint32_t)toks.size();
     cp.n_threads = cp.n_threads_batch = 8;
+    // REF_FA=0: no flash attention (the dense path keeps the bias mask in F32)
+    if (const char *e = std::getenv("REF_FA")) cp.flash_attn_type = std::atoi(e) ? LLAMA_FLASH_ATTN_TYPE_ENABLED : LLAMA_FLASH_ATTN_TYPE_DISABLED;
     cp.cb_eval = cb;
     cp.cb_eval_user_data = &c;
     llama_context *ctx = llama_init_from_model(model, cp);

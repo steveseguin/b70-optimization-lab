@@ -62,13 +62,13 @@ template <class FT> sycl::event gemv_t(sycl::queue &q, const uint8_t *W, size_t 
     }
 }
 
-// Routed (expert) form: for k in [0, K): y[k*ldy + r] = sum_c W_{ids[k]}[r][c] * x[(xk ? k : 0)*ldx + c], with
+// Routed (expert) form: for k in [0, K): y[k*ldy + r] = sum_c W_{ids[k]}[r][c] * x[(xdiv ? k / xdiv : 0)*ldx + c], with
 // expert e's matrix at W + e * estride and ids read on the card (no host round trip). Same per-row sum order as
 // GemvKernel, so a routed row equals the plain kernel's row for the same expert and vector, bit for bit.
 template <class FT> struct GemvRoutedKernel {
     const uint8_t *W; size_t rb, estride; int rows, cols;
     const int32_t *ids;
-    const float *x; int ldx; bool xk;
+    const float *x; int ldx; int xdiv;
     float *y; int ldy;
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
         auto sg = it.get_sub_group();
@@ -77,7 +77,7 @@ template <class FT> struct GemvRoutedKernel {
         if (r >= rows) return;
         int lane = (int)sg.get_local_linear_id();
         const uint8_t *row = W + (size_t)ids[k] * estride + (size_t)r * rb;
-        const float *xv0 = x + (size_t)(xk ? k : 0) * ldx;
+        const float *xv0 = x + (size_t)(xdiv ? k / xdiv : 0) * ldx;
         float acc = 0.0f;
         const int nc = cols / 32;
         for (int c = lane; c < nc; c += SG) {
@@ -93,16 +93,17 @@ template <class FT> struct GemvRoutedKernel {
     }
 };
 
-// a 3-D expert tensor t (ne = [cols, rows, n_expert]); K vectors, one expert id each
+// a 3-D expert tensor t (ne = [cols, rows, n_expert]); K vectors, one expert id each; vector k reads x row
+// k / x_div (x_div 1: one row per k; 8: one row per token of 8 routed slots; 0: one shared row)
 inline sycl::event gemv_routed(sycl::queue &q, const Tensor &t, const uint8_t *W, const int32_t *ids, int K,
-                               const float *x, int ldx, bool x_per_k, float *y, int ldy) {
+                               const float *x, int ldx, int x_div, float *y, int ldy) {
     sycl::event e;
     int cols = (int)t.ne[0], rows = (int)t.ne[1];
     size_t rb = t.row_bytes(), estride = rb * (size_t)rows;
     sycl::nd_range<2> nr(sycl::range<2>((size_t)K, (size_t)((rows + GEMV_ROWS - 1) / GEMV_ROWS) * GEMV_ROWS * SG),
                          sycl::range<2>(1, GEMV_ROWS * SG));
     fmt::dispatch(t.type, [&]<class FT>() {
-        e = q.parallel_for(nr, GemvRoutedKernel<FT>{W, rb, estride, rows, cols, ids, x, ldx, x_per_k, y, ldy});
+        e = q.parallel_for(nr, GemvRoutedKernel<FT>{W, rb, estride, rows, cols, ids, x, ldx, x_div, y, ldy});
     });
     return e;
 }

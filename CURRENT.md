@@ -13,6 +13,11 @@
 - Engine: `experiments/own-xpu-runtime/inkling2/` (new, single card). So far: GGUF reader, card/upload layer
   (15.72 GB onto card 1 in 2.3 s), decoders for all 10 weight formats (bit-identical to ggml's dequantization),
   matrix-vector kernels (repeatable bit for bit, independent of batch), reference tensor dumper `tools/ref_dump.cpp`.
+- 21:20: **full forward pass works on one card** (`src/engine.hpp`, `tools/ink_run`). Against a high-precision build
+  of the reference (F32 activations, double sums; `patches/oracle-f32-activations.patch`): final scores 1.38e-05
+  apart, worst intermediate 1.03e-04; the normal CPU reference is 1.38e-02 from it. Greedy answers branch from the
+  normal reference only at near-ties. First, unoptimized speed: writing 19.57 tok/s (12.97 at 3K context), prompt
+  72 tok/s. Next: speed (launch count, fused kernels, prompt matrix kernels, guessing with the DSpark drafter).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

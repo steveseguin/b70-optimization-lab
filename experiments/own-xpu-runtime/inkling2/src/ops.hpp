@@ -1,0 +1,340 @@
+// ops.hpp: the element-wise and per-row operations of the Inkling-2 forward pass (everything except the weight
+// products, attention and the experts). All F32. Each row is handled by one work-group of OPS_WG threads; a row sum is
+// per-thread strided partial sums, then a fixed xor butterfly in each sub-group, then the sub-group totals added in
+// sub-group order: the result depends only on the row length, never on timing or on other rows.
+// Formulas follow src/models/inkling2.cpp of the reference tree (cited per op).
+#pragma once
+#include "gemv.hpp"
+
+namespace ink::ops {
+
+constexpr int OPS_WG = 256;
+
+template <int WG> inline float wg_sum(sycl::nd_item<1> it, float v, float *slm) {
+    auto sg = it.get_sub_group();
+    v = sg_sum(sg, v);
+    int nsg = WG / SG, sid = (int)sg.get_group_linear_id();
+    if (sg.get_local_linear_id() == 0) slm[sid] = v;
+    sycl::group_barrier(it.get_group());
+    float t = 0.0f;
+    for (int i = 0; i < nsg; ++i) t += slm[i];
+    sycl::group_barrier(it.get_group());
+    return t;
+}
+
+inline sycl::nd_range<1> rows_range(int nrows) {
+    return sycl::nd_range<1>(sycl::range<1>((size_t)nrows * OPS_WG), sycl::range<1>(OPS_WG));
+}
+
+// y = x / sqrt(mean(x^2) + eps) [* w]   (ggml_rms_norm, then build_norm's multiply by the weight)
+// rows of n floats; x and y may be the same buffer; w may be null
+inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const float *w, int n, int nrows, float eps,
+                            int ldx = -1, int ldy = -1) {
+    if (ldx < 0) ldx = n;
+    if (ldy < 0) ldy = n;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
+        h.parallel_for(rows_range(nrows), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
+            const float *xr = x + (size_t)r * ldx;
+            float *yr = y + (size_t)r * ldy;
+            float s = 0.0f;
+            for (int i = l; i < n; i += OPS_WG) s += xr[i] * xr[i];
+            float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
+            float scale = 1.0f / sycl::sqrt(tot / n + eps);
+            for (int i = l; i < n; i += OPS_WG) yr[i] = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
+        });
+    });
+}
+
+// clip (inkling2.cpp:207): x [* s]; then x * clamp(thr / (sqrt(sum(x^2)) + 1e-6), 0, 1), per row of n
+// s has n * (rows per token) values, indexed by (row % srows) * n + i (the per-head scale), or is null
+inline sycl::event clip(sycl::queue &q, float *x, const float *s, int srows, int n, int nrows, float thr) {
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
+        h.parallel_for(rows_range(nrows), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
+            float *xr = x + (size_t)r * n;
+            const float *sr = s ? s + (size_t)(r % srows) * n : nullptr;
+            float acc = 0.0f;
+            for (int i = l; i < n; i += OPS_WG) {
+                float v = sr ? xr[i] * sr[i] : xr[i];
+                acc += v * v;
+            }
+            float norm = sycl::sqrt(wg_sum<OPS_WG>(it, acc, &slm[0])) * 1.0f + 1e-6f;
+            float f = sycl::clamp(thr / norm, 0.0f, 1.0f);
+            for (int i = l; i < n; i += OPS_WG) {
+                float v = sr ? xr[i] * sr[i] : xr[i];
+                xr[i] = v * f;
+            }
+        });
+    });
+}
+
+// mix (inkling2.cpp:221): attention over depth. states = [blocks[nb-1], ..., blocks[0], cur], each rms-normed
+// (eps 1e-6, no weight); for each query j: p = softmax_s(states_s . query_j / sqrt(n)); out_j = sum_s p_s * states_s.
+// states[s] points at the n floats of state s for token 0; tokens are ld apart. One work-group per (token, query).
+// out: query-major, out + (j*ntok + t)*n, so each query's result is a contiguous [ntok][n] buffer. Max states: MIX_MAX.
+constexpr int MIX_MAX = 12;
+struct MixArgs {
+    const float *st[MIX_MAX]; // in ggml order: st[0] = blocks[nb-1], ..., st[nb-1] = blocks[0], st[nb] = cur
+    int ns = 0;
+};
+inline sycl::event mix(sycl::queue &q, MixArgs a, size_t ld, const float *query, int nq, float *out, int n, int ntok) {
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(OPS_WG / SG, h);
+        sycl::local_accessor<float, 1> inv(MIX_MAX, h), sc(MIX_MAX, h);
+        h.parallel_for(rows_range(ntok * nq), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), t = g / nq, j = g % nq, l = (int)it.get_local_id(0);
+            const float *qv = query + (size_t)j * n;
+            // rms scale of every state, then the scores
+            for (int s = 0; s < a.ns; ++s) {
+                const float *x = a.st[s] + (size_t)t * ld;
+                float acc = 0.0f;
+                for (int i = l; i < n; i += OPS_WG) acc += x[i] * x[i];
+                float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+                if (l == 0) inv[s] = 1.0f / sycl::sqrt(tot / n + 1e-6f);
+            }
+            sycl::group_barrier(it.get_group());
+            for (int s = 0; s < a.ns; ++s) {
+                const float *x = a.st[s] + (size_t)t * ld;
+                float is = inv[s], acc = 0.0f;
+                for (int i = l; i < n; i += OPS_WG) acc += (x[i] * is) * qv[i];
+                float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
+                if (l == 0) sc[s] = tot;
+            }
+            sycl::group_barrier(it.get_group());
+            // softmax over the states (ggml_soft_max_ext with scale 1/sqrt(n)), in state order
+            float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
+            for (int s = 0; s < a.ns; ++s) mx = sycl::fmax(mx, sc[s] * scale);
+            float p[MIX_MAX], sum = 0.0f;
+            for (int s = 0; s < a.ns; ++s) { p[s] = sycl::exp(sc[s] * scale - mx); sum += p[s]; }
+            float isum = 1.0f / sum;
+            for (int s = 0; s < a.ns; ++s) p[s] *= isum;
+            float *o = out + ((size_t)j * ntok + t) * n;
+            for (int i = l; i < n; i += OPS_WG) {
+                float acc = 0.0f;
+                for (int s = 0; s < a.ns; ++s) acc += (a.st[s][(size_t)t * ld + i] * inv[s]) * p[s];
+                o[i] = acc;
+            }
+        });
+    });
+}
+
+// embedding rows: y[t] = decoded row ids[t] of W (any format), n values per row
+inline sycl::event get_rows(sycl::queue &q, const Tensor &t, const uint8_t *W, const int32_t *ids, float *y, int ntok) {
+    sycl::event e;
+    int n = (int)t.ne[0];
+    size_t rb = t.row_bytes();
+    int nc = n / 32;
+    fmt::dispatch(t.type, [&]<class FT>() {
+        e = q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)nc), [=](sycl::id<2> i) {
+            float o[32];
+            FT::decode32(W + (size_t)ids[i[0]] * rb, (int)i[1], o);
+            float *yr = y + (size_t)i[0] * n + 32 * i[1];
+            for (int k = 0; k < 32; ++k) yr[k] = o[k];
+        });
+    });
+    return e;
+}
+
+// y = a + b (rows contiguous)
+inline sycl::event add(sycl::queue &q, const float *a, const float *b, float *y, size_t n) {
+    return q.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) { y[i] = a[i] + b[i]; });
+}
+// y = x * sigmoid(g)  (inkling2.cpp:595, the attention output gate)
+inline sycl::event mul_sigmoid(sycl::queue &q, float *x, const float *g, size_t n) {
+    return q.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) { x[i] = x[i] * (1.0f / (1.0f + sycl::exp(-g[i]))); });
+}
+// control (inkling2.cpp:237) final step: y = (1 - tanh(f)) * cur + tanh(g) * msg  (f, g: the forget and gain rows)
+inline sycl::event control_out(sycl::queue &q, const float *cur, const float *msg, const float *f, const float *g,
+                               float *y, size_t n) {
+    return q.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) {
+        float fo = sycl::tanh(f[i]), ga = sycl::tanh(g[i]);
+        y[i] = (fo * -1.0f + 1.0f) * cur[i] + ga * msg[i];
+    });
+}
+// x *= s[t] for vectors of n floats per token (the log-scaled positions, inkling2.cpp:461)
+inline sycl::event scale_rows(sycl::queue &q, float *x, const float *s, int n, int ntok) {
+    return q.parallel_for(sycl::range<1>((size_t)n * ntok), [=](sycl::id<1> i) { x[i] = x[i] * s[i / n]; });
+}
+// final logits: cap * tanh(x / cap)  (inkling2.cpp:659)
+inline sycl::event softcap(sycl::queue &q, float *x, size_t n, float cap) {
+    return q.parallel_for(sycl::range<1>(n), [=](sycl::id<1> i) { x[i] = sycl::tanh(x[i] * (1.0f / cap)) * cap; });
+}
+
+// ---- short convolution (inkling2.cpp:250-292, ssm_conv ops.cpp:10003) -------------------------------------
+// x: this call's conv inputs [ntok][C]; st: this application's state, channel-major st[(off + c)*3 + k], k = 0 the
+// oldest of the 3 inputs before this call; w: [C][4], tap i0 multiplies x(t - 3 + i0); dyn (or null): [ntok][H*4],
+// dyn[t*H*4 + h*4 + lag] multiplies x(t - lag) for the channels of head h (C/H each).
+// y = (x + conv) * (1/sqrt((dyn ? 2 : 1)*4 + 1)). Reads the state only; conv_store writes it afterwards.
+inline sycl::event convolve(sycl::queue &q, const float *x, const float *st, int off, const float *w, const float *dyn,
+                            int H, float *y, int C, int ntok) {
+    const float scale = 1.0f / std::sqrt((float)((dyn ? 2 : 1) * 4 + 1));
+    return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)C), [=](sycl::id<2> id) {
+        int t = (int)id[0], c = (int)id[1];
+        auto at = [&](int tt) { return tt >= 0 ? x[(size_t)tt * C + c] : st[(size_t)(off + c) * 3 + (3 + tt)]; };
+        float win[4];
+        for (int i = 0; i < 4; ++i) win[i] = at(t - 3 + i);
+        float s = 0.0f;
+        for (int i = 0; i < 4; ++i) s += win[i] * w[c * 4 + i];
+        if (dyn) {
+            int h = c / (C / H);
+            const float *dt = dyn + (size_t)t * H * 4 + h * 4;
+            for (int lag = 0; lag < 4; ++lag) s = s + win[3 - lag] * dt[lag];
+        }
+        y[(size_t)t * C + c] = (win[3] + s) * scale;
+    });
+}
+// the state after this call: the last 3 of [old state | x]
+inline sycl::event conv_store(sycl::queue &q, const float *x, float *st, int off, int C, int ntok) {
+    return q.parallel_for(sycl::range<1>((size_t)C), [=](sycl::id<1> id) {
+        int c = (int)id[0];
+        float *s = st + (size_t)(off + c) * 3;
+        float v[3];
+        for (int k = 0; k < 3; ++k) {
+            int tt = ntok - 3 + k;
+            v[k] = tt >= 0 ? x[(size_t)tt * C + c] : s[3 + tt];
+        }
+        for (int k = 0; k < 3; ++k) s[k] = v[k];
+    });
+}
+
+// ---- attention -----------------------------------------------------------------------------------------
+// store K/V rows of this call into the 16-bit cache at positions pos0..pos0+ntok-1 (rows of n halves)
+inline sycl::event kv_store(sycl::queue &q, const float *x, sycl::half *cache, int pos0, int n, int ntok) {
+    return q.parallel_for(sycl::range<1>((size_t)n * ntok), [=](sycl::id<1> i) {
+        cache[(size_t)pos0 * n + i] = sycl::half(x[i]);
+    });
+}
+// relative bias table (inkling2.cpp:514): tab[(t*nh + h)*ext + d] = sum_r R[(t*nh + h)*nr + r] * rb[d*nr + r]
+inline sycl::event rel_table(sycl::queue &q, const float *R, const float *rb, int nr, int ext, float *tab, int nh, int ntok) {
+    return q.parallel_for(sycl::range<2>((size_t)ntok * nh, (size_t)ext), [=](sycl::id<2> id) {
+        const float *r = R + id[0] * nr, *b = rb + id[1] * nr;
+        float s = 0.0f;
+        for (int i = 0; i < nr; ++i) s += b[i] * r[i];
+        tab[id[0] * ext + id[1]] = s;
+    });
+}
+// scores and softmax for query t (position pos0 + t), head h: keys j in [lo, p] (lo = p - win + 1 for a window),
+// s_j = (q . k_j) * scale + tab[p - j] (only for p - j < ext), p_j = exp(s_j) / (exp(sink) + sum exp(s_k)).
+// P: [ntok][nh][ldp], P[.. + (j - lo)] = p_j. One work-group per (t, h).
+constexpr int ATT_WG = 128;
+inline sycl::event attn_softmax(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const float *sink,
+                                int pos0, int ntok, int nh, int nkvh, int hd, int ext, int win, float scale,
+                                float *P, int ldp) {
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm(ATT_WG / SG, h), qs(hd, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * ATT_WG), sycl::range<1>(ATT_WG)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int g = (int)it.get_group(0), t = g / nh, hh = g % nh, l = (int)it.get_local_id(0);
+            int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+            const float *qv = Q + (size_t)g * hd;
+            for (int d = l; d < hd; d += ATT_WG) qs[d] = qv[d];
+            sycl::group_barrier(it.get_group());
+            const float *tb = tab + (size_t)g * ext;
+            float *pr = P + (size_t)g * ldp;
+            int kd = nkvh * hd;
+            float mx = -INFINITY;
+            for (int j = lo + l; j <= p; j += ATT_WG) {
+                const sycl::half *kr = K + (size_t)j * kd + kvh * hd;
+                float s = 0.0f;
+                for (int d = 0; d < hd; ++d) s += qs[d] * (float)kr[d];
+                s = s * scale;
+                int dist = p - j;
+                if (dist < ext) s = s + tb[dist];
+                pr[j - lo] = s;
+                mx = sycl::fmax(mx, s);
+            }
+            // work-group max (exact in any order)
+            mx = sycl::reduce_over_group(it.get_group(), mx, sycl::maximum<float>());
+            float sk = sink[(size_t)t * nh + hh];
+            mx = sycl::fmax(mx, sk);
+            float acc = 0.0f;
+            for (int j = lo + l; j <= p; j += ATT_WG) {
+                float e = sycl::exp(pr[j - lo] - mx);
+                pr[j - lo] = e;
+                acc += e;
+            }
+            float tot = wg_sum<ATT_WG>(it, acc, &slm[0]) + sycl::exp(sk - mx);
+            float inv = 1.0f / tot;
+            for (int j = lo + l; j <= p; j += ATT_WG) pr[j - lo] = pr[j - lo] * inv;
+        });
+    });
+}
+// out[t][h*hd + d] = sum_j P[t][h][j - lo] * v_j[kvh*hd + d], j ascending. One work-group of hd threads per (t, h).
+inline sycl::event attn_pv(sycl::queue &q, const float *P, int ldp, const sycl::half *V, int pos0, int ntok, int nh,
+                           int nkvh, int hd, int win, float *out) {
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * hd), sycl::range<1>((size_t)hd)),
+                          [=](sycl::nd_item<1> it) {
+        int g = (int)it.get_group(0), t = g / nh, hh = g % nh, d = (int)it.get_local_id(0);
+        int kvh = hh / (nh / nkvh), p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
+        const float *pr = P + (size_t)g * ldp;
+        int kd = nkvh * hd;
+        float acc = 0.0f;
+        for (int j = lo; j <= p; ++j) acc += pr[j - lo] * (float)V[(size_t)j * kd + kvh * hd + d];
+        out[(size_t)t * nh * hd + hh * hd + d] = acc;
+    });
+}
+
+// ---- experts (llama-graph.cpp build_moe_ffn) ----------------------------------------------------------------
+// per token: p = sigmoid(logit); top nu of p + bias (ties: lower index first); w = p[sel] / (sum + 1e-20) * wscale
+inline sycl::event moe_route(sycl::queue &q, const float *logits, const float *bias, int ne, int nu, float wscale,
+                             int32_t *ids, float *wts, int ntok) {
+    return q.parallel_for(sycl::range<1>((size_t)ntok), [=](sycl::id<1> id) {
+        int t = (int)id[0];
+        const float *lg = logits + (size_t)t * ne;
+        float p[128], sel[128];
+        for (int e = 0; e < ne; ++e) {
+            p[e] = 1.0f / (1.0f + sycl::exp(-lg[e]));
+            sel[e] = bias ? p[e] + bias[e] : p[e];
+        }
+        int32_t *ix = ids + (size_t)t * nu;
+        float *w = wts + (size_t)t * nu;
+        for (int k = 0; k < nu; ++k) {
+            int b = -1;
+            for (int e = 0; e < ne; ++e) {
+                bool taken = false;
+                for (int m = 0; m < k; ++m) taken |= ix[m] == e;
+                if (!taken && (b < 0 || sel[e] > sel[b])) b = e;
+            }
+            ix[k] = b;
+            w[k] = p[b];
+        }
+        float s = 0.0f;
+        for (int k = 0; k < nu; ++k) s += w[k];
+        s = s * 1.0f + 1e-20f;
+        for (int k = 0; k < nu; ++k) w[k] = (w[k] / s) * wscale;
+    });
+}
+// SITU (llama-graph.cpp LLM_FFN_SITU): gu rows [K][2*nff] (gate | up), each times the slot's expert scale (if any);
+// h = (beta*tanh(g/beta)) * sigmoid(g) * (lb*tanh(u/lb))
+inline sycl::event situ(sycl::queue &q, const float *gu, const float *escale, const int32_t *ids, int nff, float beta,
+                        float lb, float *hout, int K) {
+    return q.parallel_for(sycl::range<2>((size_t)K, (size_t)nff), [=](sycl::id<2> id) {
+        int k = (int)id[0], i = (int)id[1];
+        float g = gu[(size_t)k * 2 * nff + i], u = gu[(size_t)k * 2 * nff + nff + i];
+        if (escale) { float s = escale[ids[k]]; g = g * s; u = u * s; }
+        float a = (sycl::tanh(g * (1.0f / beta)) * beta) * (1.0f / (1.0f + sycl::exp(-g)));
+        if (lb > 0.0f) u = sycl::tanh(u * (1.0f / lb)) * lb;
+        hout[(size_t)k * nff + i] = a * u;
+    });
+}
+// out[t] = sum_k (y[t*nu + k] * escale[id]) * w[t*nu + k], k ascending
+inline sycl::event moe_combine(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w,
+                               int nu, int n, float *out, int ntok) {
+    return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)n), [=](sycl::id<2> id) {
+        int t = (int)id[0], i = (int)id[1];
+        float acc = 0.0f;
+        for (int k = 0; k < nu; ++k) {
+            int s = t * nu + k;
+            float v = y[(size_t)s * n + i];
+            if (escale) v = v * escale[ids[s]];
+            v = v * w[s];
+            acc = k == 0 ? v : acc + v;
+        }
+        out[(size_t)t * n + i] = acc;
+    });
+}
+
+} // namespace ink::ops
