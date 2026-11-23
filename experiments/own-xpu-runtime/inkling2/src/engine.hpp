@@ -90,7 +90,17 @@ struct Engine {
     // (A warm kernel on a second queue does not run beside the main queue on this card: reads nobody needs cost their
     // full time, 2026-11-23.)
     int warm_on = 1;
+    bool route_stats = std::getenv("INK_ROUTE_STATS") && std::atoi(std::getenv("INK_ROUTE_STATS"));
     float *fxl = nullptr; // the feed-forward input of one token in lane order
+    // steps of 2-4 tokens (INK_SB=0 off): the attention inputs in lane order (3 inputs x SB_MAX tokens), read by one
+    // multi-matrix launch for all tokens (multi.hpp gemv_multi_m)
+    static constexpr int SB_MAX = 4;
+    bool sb_on = true;
+    int sb_r = 2, sb_sgw = 2; // rows per sub-group (INK_SB_R), sub-groups per work-group (INK_SB_SGW)
+    float *ainl = nullptr;
+    bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-4 tokens use the 8-slot grouped expert kernels
+    int sb_np = 1, sb_dr = 2; // NVFP4 small steps: gate|up row pairs (INK_SB_NP), down rows (INK_SB_DR) per sub-group
+    float *fxls = nullptr;  // the feed-forward input of 2-4 tokens in lane order (SB_MAX rows)
     // INK_XL=0: matrix inputs in the plain layout only (else lane order where the producer writes it, gemv2.hpp)
     bool xl_on = !std::getenv("INK_XL") || std::atoi(std::getenv("INK_XL"));
     int dn_sgw = std::getenv("INK_DN_SGW") ? std::atoi(std::getenv("INK_DN_SGW")) : 1; // lane-order down: sub-groups per group
@@ -187,7 +197,7 @@ struct Engine {
         ctl_g = d.alloc<float>(E); ctl_f = d.alloc<float>(E); ctl_y = d.alloc<float>(E);
         rlog = d.alloc<float>((size_t)h.n_expert * T);
         eids = d.alloc<int32_t>((size_t)h.n_used * T); wts = d.alloc<float>((size_t)h.n_used * T);
-        gu = d.alloc<float>((size_t)h.n_used * T * 2 * h.n_ff); hb = d.alloc<float>((size_t)h.n_used * std::max((size_t)T * h.n_ff, xlane_floats(h.n_ff)));
+        gu = d.alloc<float>((size_t)h.n_used * T * 2 * h.n_ff); hb = d.alloc<float>((size_t)h.n_used * T * std::max((size_t)h.n_ff, xlane_floats(h.n_ff)));
         yk = d.alloc<float>((size_t)h.n_used * T * h.n_embd);
         moe = d.alloc<float>(E); ffn_out = d.alloc<float>(E);
         fin = d.alloc<float>(E);
@@ -251,6 +261,14 @@ struct Engine {
         if (const char *e = std::getenv("INK_WARM_MB")) warm_bytes = (size_t)(std::atof(e) * 1048576.0);
         warm_sink = d.alloc<uint32_t>(16);
         fxl = d.alloc<float>(xlane_floats(h.n_embd));
+        if (const char *e = std::getenv("INK_SB")) sb_on = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_SB_R")) sb_r = std::atoi(e);
+        if (const char *e = std::getenv("INK_SB_SGW")) sb_sgw = std::atoi(e);
+        ainl = d.alloc<float>(3 * SB_MAX * xlane_floats(h.n_embd));
+        fxls = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
+        if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
+        if (const char *e = std::getenv("INK_SB_DR")) sb_dr = std::atoi(e);
         if (mix_v1) mix_tab = false;
         if (mix_tab) { // every mix query row of the model (attention, MoE, output), in one index
             std::vector<uint64_t> qa;
@@ -532,6 +550,10 @@ struct Engine {
             // attention inputs (inkling2.cpp:418-444)
             const float *in[3] = {cur, cur, cur};
             bool normed = false;
+            // a step of 2-4 tokens: the norms also write their outputs in lane order (inl), for gemv_multi_m
+            const bool sb = sb_on && multi_proj && ntok >= 2 && ntok <= SB_MAX;
+            const size_t sbs = (size_t)SB_MAX * xlane_floats(E);
+            const float *inl[3] = {nullptr, nullptr, nullptr};
             if (!l.attn_res_query) save_state(cur, mk);
             if (warm_on && ntok == 1) { wsrc = attn_in_set(il); wcur = 0; pend = take_warm(warm_bytes); }
             if (l.attn_res_query) {
@@ -543,8 +565,10 @@ struct Engine {
                         no.y[0] = inp[0]; no.y[1] = inp[1]; no.y[2] = inp[2];
                         no.w[0] = f32(l.q_inp_norm); no.w[1] = f32(l.k_inp_norm); no.w[2] = f32(l.v_inp_norm);
                     }
+                    if (sb) for (int j = 0; j < (swa ? 1 : 3); ++j) no.yl[j] = ainl + j * sbs;
                     mix_norm(blocks, cur, f32(l.attn_res_query), nq, no, E, qi_attn.empty() ? -1 : qi_attn[ip], mk);
                     for (int j = 0; j < 3; ++j) in[j] = inp[swa ? 0 : j];
+                    if (sb) for (int j = 0; j < 3; ++j) inl[j] = ainl + (swa ? 0 : j) * sbs;
                     normed = true;
                 } else {
                     mix(blocks, cur, f32(l.attn_res_query), nq, mixb, E, qi_attn.empty() ? -1 : qi_attn[ip], mk);
@@ -561,15 +585,17 @@ struct Engine {
             }
             if (normed) {
             } else if (swa && !mg[0]) {
-                pr("rms_norm", ops::rms_norm(d.q, in[0], inp[0], f32(l.attn_norm), E, ntok, h.eps));
+                pr("rms_norm", ops::rms_norm(d.q, in[0], inp[0], f32(l.attn_norm), E, ntok, h.eps, -1, -1, sb ? ainl : nullptr));
                 in[0] = in[1] = in[2] = inp[0];
+                if (sb) inl[0] = inl[1] = inl[2] = ainl;
             } else {
                 const float *wn[3] = {f32(l.attn_norm), f32(l.attn_norm), f32(l.attn_norm)};
                 if (!swa) { wn[0] = f32(l.q_inp_norm); wn[1] = f32(l.k_inp_norm); wn[2] = f32(l.v_inp_norm); }
                 fz::NormJob jobs[3];
-                for (int j = 0; j < 3; ++j) jobs[j] = {in[j], inp[j], wn[j], E, E};
+                for (int j = 0; j < 3; ++j) jobs[j] = {in[j], inp[j], wn[j], E, E, sb ? ainl + j * sbs : nullptr};
                 pr("rms_norm3", fz::rms_norm_multi(d.q, jobs, 3, E, ntok, h.eps));
                 in[0] = inp[0]; in[1] = inp[1]; in[2] = inp[2];
+                if (sb) for (int j = 0; j < 3; ++j) inl[j] = ainl + j * sbs;
             }
             // projections, convolutions, clips (inkling2.cpp:446-463)
             // this call reads the state of the previous call and writes its own (two copies)
@@ -587,6 +613,21 @@ struct Engine {
                     pr("w:attn_in", gemv_multi(d.q, mj, 2));
                 } else {
                     for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], xs[k], ys[k], ntok);
+                }
+            } else if (sb && inl[0] && multi_proj) { // 2-4 tokens: the same matrices in one launch, inputs in lane order
+                MultiJobs mj;
+                const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
+                const float *xs[8] = {inl[0], inl[1], inl[2], inl[1], inl[2], inl[0], inl[0], inl[0]};
+                float *ys[8] = {Q, Kr, Vr, dynK, dynV, R, sinks, gate};
+                bool ok = true;
+                for (int k = 0; k < 8; ++k) if (ws[k] && !multi_ok(ws[k]->view())) ok = false;
+                if (ok) {
+                    const int lx = (int)xlane_floats(E);
+                    for (int k = 0; k < 8; ++k)
+                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], std::min(tune(*ws[k]).R, sb_r), lx, (int)ws[k]->t->rows());
+                    pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw));
+                } else {
+                    for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
                 }
             } else {
                 mm(l.wq, in[0], Q, ntok);
@@ -675,14 +716,17 @@ struct Engine {
             // MoE (inkling2.cpp:609-634)
             // one token: the norm writes the input only in lane order (fxl), which the router and gate|up read
             float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
+            // 2-4 tokens: the norm writes the input in lane order too (fxls), for the small-step expert kernels
+            const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
+            float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
             if (mg[3]) {
                 mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
                 control(fx, mg[3], l, 3, ctl_y);
                 dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
-                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fxl1));
+                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fyl));
             } else {
                 fz::NormOut no{};
-                no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fxl1;
+                no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fyl;
                 mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
             }
             if (fxl1) pr(wlabel(l.gate_inp), gemv_v(d.q, l.gate_inp.view(), fxl1, E, rlog, (int)l.gate_inp.t->rows(), 1, tune(l.gate_inp), true));
@@ -690,6 +734,13 @@ struct Engine {
             const int K = ntok * h.n_used;
             pr("moe_route", (route_sg ? ops::moe_route_sg : ops::moe_route)(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used,
                                                                               h.expert_scale, eids, wts, ntok));
+            if (route_stats && ntok > 1) { // INK_ROUTE_STATS=1: distinct experts of the step's tokens per layer (stderr)
+                std::vector<int32_t> hv(K);
+                d.q.wait();
+                d.get(hv.data(), eids, K);
+                std::sort(hv.begin(), hv.end());
+                std::fprintf(stderr, "[route] ntok %d app %d distinct %ld\n", ntok, il, (long)(std::unique(hv.begin(), hv.end()) - hv.begin()));
+            }
             {   // gate and up rows of each chosen expert in one sub-group, then SITU (gate rows 0..nff-1, up nff..2nff-1)
                 const W &gw = l.gate_up;
                 const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
@@ -704,6 +755,21 @@ struct Engine {
                 } else if (ntok == 1) {
                     pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, gu_sgw));
                     pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, h.n_ff, 1, yk, E, tune_routed(dv)));
+                } else if (sbm) { // 2-4 tokens: each chosen expert decoded once for its slots, inputs in lane order
+                    const int amax = std::min(h.n_expert, K);
+                    SituOp sl = so;
+                    sl.ldo = (int)xlane_floats(h.n_ff);
+                    pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                    if (gv.kind == K_NVFP4P && sb_np > 0) // several rows per sub-group, 8 values decoded at a time
+                        pr("moe_gate_up", grouped_pair_t(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fxls,
+                                                         (int)xlane_floats(E), h.n_used, sl, ntok, sb_np, gu_sgw));
+                    else
+                        pr("moe_gate_up", grouped_pair_s(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, amax, fxls,
+                                                         (int)xlane_floats(E), h.n_used, sl, ntok, gu_sgw));
+                    if (dv.kind == K_NVFP4P && sb_dr > 0)
+                        pr("moe_down", grouped_rows_t(d.q, dv, grp, amax, hb, sl.ldo, yk, E, ntok, sb_dr, dn_sgw));
+                    else
+                        pr("moe_down", grouped_rows_s(d.q, dv, grp, amax, hb, sl.ldo, yk, E, ntok, dn_sgw));
                 } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
                     // (tok_tiles.hpp, any expert format; bench_moe 512 tokens: NVFP4 gate|up 18.7 -> 8.8 ms, down

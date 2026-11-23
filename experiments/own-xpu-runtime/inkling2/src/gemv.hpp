@@ -12,6 +12,11 @@ namespace ink {
 constexpr int SG = 16;      // sub-group size
 constexpr int GEMV_ROWS = 8; // rows (sub-groups) per work-group
 
+// a pointer read from a job table is generic (its address space unknown to the compiler): cast it to global memory so
+// its loads skip the run-time address-space check (bench_gemv q at 4 vectors from a job table 26.4 -> 20.7 us, card 2)
+template <class T> inline T *gptr(T *p) {
+    return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p).get();
+}
 inline float sg_sum(sycl::sub_group sg, float v) {
     for (int o = SG / 2; o > 0; o >>= 1) v += sycl::permute_group_by_xor(sg, v, o);
     return v;

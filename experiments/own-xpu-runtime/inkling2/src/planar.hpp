@@ -137,6 +137,19 @@ struct NVFP4P {
         uint32_t w[4] = {p.a[0], p.a[1], p.b[0], p.b[1]};
         decode_words(w, p.dd, o);
     }
+    // values 8b .. 8b+7 of the chunk whose words decode_words takes (the same pair() operations, so the same floats):
+    // b = 2k + hi, scale k; the low (hi 0) or high (hi 1) codes of words 2k and 2k+1
+    static inline void dec8(const uint32_t *w, uint16_t dd, int b, float *o) {
+        const int k = b >> 1, hi = b & 1;
+        const float d = ue4m3_bits((uint8_t)(dd >> (8 * k))) * 32768.0f;
+        const int s0 = hi ? 5 : 9, s1 = hi ? -3 : 1;
+#pragma unroll
+        for (int hh = 0; hh < 2; ++hh) {
+            const uint32_t x = w[2 * k + hh];
+            pair(x, s0, d, o[4 * hh + 0], o[4 * hh + 2]);
+            pair(x, s1, d, o[4 * hh + 1], o[4 * hh + 3]);
+        }
+    }
     // one block b (64 values) of a row: file {d[4], qs[32]} at src + 36 b
     static void repack_block(const uint8_t *src, uint8_t *dst, int cols, int b) {
         const uint8_t *s = src + 36 * b;

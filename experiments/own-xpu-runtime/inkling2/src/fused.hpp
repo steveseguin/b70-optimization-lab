@@ -1138,7 +1138,7 @@ inline sycl::event mix_fused(sycl::queue &q, MixF a, size_t ld, float *out, cons
     return mix_fused_v<12>(q, a, ld, out, nop, eps, n, ntok, wm);
 }
 // up to 4 ops::rms_norm calls of the same row length in one launch (each with its own input, output and weight)
-struct NormJob { const float *x; float *y; const float *w; int ldx, ldy; };
+struct NormJob { const float *x; float *y; const float *w; int ldx, ldy; float *yl = nullptr; }; // yl: row r in lane order too
 // rows of at most 9 * OPS_WG values: the loops are unrolled, so a thread's reads go out together (same order of
 // additions); wm: warm work-groups (warm.hpp) after the rows' work-groups
 inline sycl::event rms_norm_multi(sycl::queue &q, const NormJob *jobs, int njobs, int n, int nrows, float eps, const Warm &wm = {}) {
@@ -1158,6 +1158,7 @@ inline sycl::event rms_norm_multi(sycl::queue &q, const NormJob *jobs, int njobs
             const NormJob &jj = jb.j[jn];
             const float *xr = jj.x + (size_t)r * jj.ldx;
             float *yr = jj.y + (size_t)r * jj.ldy;
+            float *ylr = jj.yl ? jj.yl + (size_t)r * xlane_floats(n) : nullptr;
             const float *w = jj.w;
             if (unr) {
                 float xv[MV], wv[MV];
@@ -1175,7 +1176,11 @@ inline sycl::event rms_norm_multi(sycl::queue &q, const NormJob *jobs, int njobs
 #pragma unroll
                 for (int u = 0; u < MV; ++u) {
                     const int i = l + OPS_WG * u;
-                    if (i < n) yr[i] = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
+                    if (i < n) {
+                        const float v = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
+                        yr[i] = v;
+                        if (ylr) ylr[xlane_at(i)] = v;
+                    }
                 }
                 return;
             }
@@ -1183,7 +1188,11 @@ inline sycl::event rms_norm_multi(sycl::queue &q, const NormJob *jobs, int njobs
             for (int i = l; i < n; i += OPS_WG) s = mac(s, xr[i], xr[i]);
             float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
             float scale = 1.0f / sycl::sqrt(tot / n + eps);
-            for (int i = l; i < n; i += OPS_WG) yr[i] = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
+            for (int i = l; i < n; i += OPS_WG) {
+                const float v = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
+                yr[i] = v;
+                if (ylr) ylr[xlane_at(i)] = v;
+            }
         });
     });
 }

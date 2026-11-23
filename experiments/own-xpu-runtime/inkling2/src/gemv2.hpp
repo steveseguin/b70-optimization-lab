@@ -118,7 +118,7 @@ template <class D, int M> struct GemvM {
 
 // M vectors and R rows per sub-group, 16-byte input loads shared by the R rows; group(0) = block of M vectors (the
 // vectors of block b start at x + b*M*ldx), group(1) = block of sgw*R rows. Each (row, vector) sum is Gemv1R's.
-template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
+template <class D, int R, int M, bool INTERLEAVE = false, bool XL = false> struct GemvMR { // XL: each vector in lane order
     const uint8_t *W; size_t rb; int rows, cols;
     const float *x; int ldx;
     float *y; int ldy;
@@ -157,7 +157,7 @@ template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
             } else {
                 for (int m = 0; m < M; ++m) {
                     float xs[32];
-                    load_x32(xb + (size_t)m * ldx + 32 * c, xs);
+                    load_xc(xb + (size_t)m * ldx, c, xs, XL);
                     for (int k = 0; k < R; ++k) {
                         float s = 0.0f;
                         for (int i = 0; i < 32; ++i) s = mac(s, o[k][i], xs[i]);
@@ -415,7 +415,7 @@ struct Tune {
     bool il = false;  // GemvMR: interleave the chunk sums of all rows and vectors
 };
 
-// xl: x in lane order (one vector, M = 1, not the preload kernels)
+// xl: x in lane order (xlane.hpp; M = 1, or vector blocks (tu.mr) with ldx = xlane_floats(cols); not the preload kernels)
 inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ldx, float *y, int ldy, int M, Tune tu = {},
                           bool xl = false) {
     sycl::event e;
@@ -471,7 +471,9 @@ inline sycl::event gemv_v(sycl::queue &q, const WView &w, const float *x, int ld
             auto go = [&]<int RR, int MB>() {
                 int nsg = (rows + RR - 1) / RR, ngr = (nsg + sgw - 1) / sgw;
                 sycl::nd_range<2> nr2(sycl::range<2>((size_t)nb, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+                if (tu.il && xl) throw std::runtime_error("gemv: interleaved vector blocks with x in lane order");
                 if (tu.il) e = q.parallel_for(nr2, GemvMR<D, RR, MB, true>{w.p, w.rb, rows, cols, x, ldx, y, ldy, sgw});
+                else if (xl) e = q.parallel_for(nr2, GemvMR<D, RR, MB, false, true>{w.p, w.rb, rows, cols, x, ldx, y, ldy, sgw});
                 else e = q.parallel_for(nr2, GemvMR<D, RR, MB>{w.p, w.rb, rows, cols, x, ldx, y, ldy, sgw});
             };
             auto gm = [&]<int RR>() {

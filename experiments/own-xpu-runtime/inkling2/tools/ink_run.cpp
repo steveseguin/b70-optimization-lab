@@ -28,6 +28,15 @@ int main(int argc, char **argv) {
         Engine e(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
         std::fprintf(stderr, "[ink] context %d positions, card memory in use %.2f of %.2f GiB (score rows %d)\n", ctx,
                      d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow);
+        // INK_BENCH_REAL=1 with INK_BENCH_STEP: the steps take the prompt's last 8 tokens (fed without them), each repeat
+        // at the same positions: consecutive real tokens choose their experts as in a check of guesses
+        const bool bench_real = std::getenv("INK_BENCH_STEP") && std::getenv("INK_BENCH_REAL") && std::atoi(std::getenv("INK_BENCH_REAL"));
+        std::vector<int32_t> tail;
+        if (bench_real) {
+            if (tok.size() < 16) throw std::runtime_error("INK_BENCH_REAL needs a prompt of at least 16 tokens");
+            tail.assign(tok.end() - 8, tok.end());
+            tok.resize(tok.size() - 8);
+        }
         double t0 = now_s();
         e.feed(tok);
         double t1 = now_s();
@@ -48,8 +57,13 @@ int main(int argc, char **argv) {
                 int k = std::atoi(list.substr(p0, p1 - p0).c_str());
                 p0 = p1 + 1;
                 std::vector<int32_t> tk(k, tok.back());
-                const int reps = 6;
+                if (bench_real) {
+                    if (k > 8) throw std::runtime_error("INK_BENCH_REAL: steps of at most 8 tokens");
+                    tk.assign(tail.begin(), tail.begin() + k);
+                }
+                const int reps = 6, base = e.n_past;
                 e.step(tk.data(), k); d.q.wait(); // warm
+                if (bench_real) e.n_past = base;
                 e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
                 double a0 = now_s(), host = 0;
                 for (int r = 0; r < reps; ++r) {
@@ -57,6 +71,7 @@ int main(int argc, char **argv) {
                     e.step(tk.data(), k);
                     host += now_s() - h0; // the host's time to submit the step's launches
                     d.q.wait(); e.prof.collect();
+                    if (bench_real) e.n_past = base;
                 }
                 double ms = (now_s() - a0) / reps * 1e3;
                 std::fprintf(stderr, "[bench] step of %d tokens: %.2f ms (%.2f ms per token), at position %d; host submits in %.2f ms\n", k, ms,

@@ -6,7 +6,7 @@
 
 namespace ink {
 
-struct GJob { const uint8_t *W; size_t rb; int rows, cols, kind, type, R; const float *x; float *y; int sg0; };
+struct GJob { const uint8_t *W; size_t rb; int rows, cols, kind, type, R; const float *x; float *y; int sg0, ldx, ldy; };
 constexpr int MULTI_MAX = 8;
 struct MultiJobs { GJob j[MULTI_MAX]; int nj = 0, nsg = 0; };
 
@@ -14,28 +14,35 @@ inline bool multi_ok(const WView &w) {
     if (w.kind == K_Q8_0P || w.kind == K_Q6_KP) return true;
     return w.kind == K_RAW && (w.t->type == G_BF16 || w.t->type == G_Q5_K || w.t->type == G_F32);
 }
-// add a job; R = rows per sub-group (1 or 2)
-inline void multi_add(MultiJobs &m, const WView &w, const float *x, float *y, int R) {
+// add a job; R = rows per sub-group (1 or 2); ldx / ldy: vector strides of x and y (gemv_multi_m, several vectors)
+inline void multi_add(MultiJobs &m, const WView &w, const float *x, float *y, int R, int ldx = 0, int ldy = 0) {
     if (m.nj >= MULTI_MAX) throw std::runtime_error("multi: too many jobs");
     GJob &g = m.j[m.nj++];
     g.W = w.p; g.rb = w.rb; g.rows = (int)w.t->rows(); g.cols = (int)w.t->ne[0]; g.kind = w.kind; g.type = (int)w.t->type;
-    g.R = R; g.x = x; g.y = y; g.sg0 = m.nsg;
+    g.R = R; g.x = x; g.y = y; g.sg0 = m.nsg; g.ldx = ldx; g.ldy = ldy;
     m.nsg += (g.rows + R - 1) / R;
+}
+// the job of sub-group s, copied out with constant indexes (unrolled). Taken by reference with a run-time index, the
+// pointers lose what gptr gives them: the one-token attention inputs ran at 44 us instead of 41
+inline GJob pick_job(const MultiJobs &m, int s) {
+    GJob g = m.j[0];
+#pragma unroll
+    for (int i = 1; i < MULTI_MAX; ++i)
+        if (i < m.nj && m.j[i].sg0 <= s) g = m.j[i];
+    return g;
 }
 struct GemvMulti {
     MultiJobs m;
     int sgw;
     template <class D> static void run(sycl::sub_group sg, const GJob &g, int r0) {
-        if (g.R == 1) gemv1_rows<D, 1>(sg, g.W, g.rb, g.rows, g.cols, g.x, g.y, r0);
-        else gemv1_rows<D, 2>(sg, g.W, g.rb, g.rows, g.cols, g.x, g.y, r0);
+        if (g.R == 1) gemv1_rows<D, 1>(sg, gptr(g.W), g.rb, g.rows, g.cols, gptr(g.x), gptr(g.y), r0);
+        else gemv1_rows<D, 2>(sg, gptr(g.W), g.rb, g.rows, g.cols, gptr(g.x), gptr(g.y), r0);
     }
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<1> it) const {
         auto sg = it.get_sub_group();
         const int s = (int)it.get_group(0) * sgw + (int)sg.get_group_linear_id();
         if (s >= m.nsg) return;
-        int k = 0;
-        for (int i = 1; i < MULTI_MAX; ++i) if (i < m.nj && m.j[i].sg0 <= s) k = i;
-        const GJob &g = m.j[k];
+        const GJob g = pick_job(m, s);
         const int r0 = (s - g.sg0) * g.R;
         switch (g.kind) {
         case K_Q8_0P: run<pl::Q8_0P>(sg, g, r0); break;
@@ -50,6 +57,84 @@ struct GemvMulti {
 inline sycl::event gemv_multi(sycl::queue &q, const MultiJobs &m, int sgw = 2) {
     int ngr = (m.nsg + sgw - 1) / sgw;
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)), GemvMulti{m, sgw});
+}
+// rows r0..r0+R-1 times M vectors (vector m at x + m * ldx, lane order if XL) into y + m * ldy (one sub-group): every
+// (row, vector) sum is gemv1_rows' (chunks l, l+16, ... per lane, each chunk's 32 products in index order, the lane
+// sums in chunk order, the same butterfly), so a step of M tokens gives each token the one-token values bit for bit.
+// Rows past the end read the last row (no branch around the reads) and are not stored.
+template <class D, int R, int M, bool XL>
+[[clang::always_inline]] inline void gemvM_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows, int cols, const float *x,
+                                                int ldx, float *y, int ldy, int r0) {
+    const int lane = (int)sg.get_local_linear_id();
+    float acc[R][M];
+#pragma unroll
+    for (int k = 0; k < R; ++k)
+#pragma unroll
+        for (int m = 0; m < M; ++m) acc[k][m] = 0.0f;
+    const int nc = cols / 32;
+    for (int c = lane; c < nc; c += SG) {
+        float o[R][32];
+#pragma unroll
+        for (int k = 0; k < R; ++k) D::decode32(W + (size_t)sycl::min(r0 + k, rows - 1) * rb, cols, c, o[k]);
+#pragma unroll
+        for (int m = 0; m < M; ++m) {
+            float xs[32];
+            load_xc(x + (size_t)m * ldx, c, xs, XL);
+#pragma unroll
+            for (int k = 0; k < R; ++k) {
+                float s = 0.0f;
+                for (int i = 0; i < 32; ++i) s = mac(s, o[k][i], xs[i]);
+                acc[k][m] += s;
+            }
+        }
+    }
+#pragma unroll
+    for (int k = 0; k < R; ++k)
+#pragma unroll
+        for (int m = 0; m < M; ++m) {
+            const float v = sg_sum(sg, acc[k][m]);
+            if (lane == 0 && r0 + k < rows) y[(size_t)m * ldy + r0 + k] = v;
+        }
+}
+// GemvMulti for M vectors (2..4): the attention input matrices of a step of a few tokens in one launch. The job's
+// pointers come from an array chosen at run time, so the compiler sees them as generic; gptr (gemv.hpp) makes the
+// loads global (without it M = 4, R 2 took 26.4 us, with it 20.7)
+template <int M, bool XL> struct GemvMultiM {
+    MultiJobs m;
+    int sgw;
+    template <class D> static void run(sycl::sub_group sg, const GJob &g, int r0) {
+        const uint8_t *W = gptr(g.W);
+        const float *x = gptr(g.x);
+        float *y = gptr(g.y);
+        if (g.R == 1) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+        else gemvM_rows<D, 2, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+    }
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<1> it) const {
+        auto sg = it.get_sub_group();
+        const int s = (int)it.get_group(0) * sgw + (int)sg.get_group_linear_id();
+        if (s >= m.nsg) return;
+        const GJob g = pick_job(m, s);
+        const int r0 = (s - g.sg0) * g.R;
+        switch (g.kind) {
+        case K_Q8_0P: run<pl::Q8_0P>(sg, g, r0); break;
+        case K_Q6_KP: run<pl::Q6_KP>(sg, g, r0); break;
+        default:
+            if (g.type == G_BF16) run<pl::Raw<fmt::F<G_BF16>>>(sg, g, r0);
+            else if (g.type == G_F32) run<pl::Raw<fmt::F<G_F32>>>(sg, g, r0);
+            else run<pl::Raw<fmt::F<G_Q5_K>>>(sg, g, r0);
+        }
+    }
+};
+inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool xl, int sgw = 2) {
+    const int ngr = (m.nsg + sgw - 1) / sgw;
+    const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+    if (!xl) throw std::runtime_error("gemv_multi_m: x in lane order only");
+    switch (M) {
+    case 2: return q.parallel_for(nr, GemvMultiM<2, true>{m, sgw});
+    case 3: return q.parallel_for(nr, GemvMultiM<3, true>{m, sgw});
+    case 4: return q.parallel_for(nr, GemvMultiM<4, true>{m, sgw});
+    default: throw std::runtime_error("gemv_multi_m: 2 to 4 vectors");
+    }
 }
 
 // F32 matrices with few rows (the loop controls' down products, the expert router): in gemv1_rows each lane walks its

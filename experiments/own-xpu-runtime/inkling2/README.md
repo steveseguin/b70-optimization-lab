@@ -85,6 +85,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | reads issued together, weights warmed (card 3) | | short 11.61-11.63 ms (was 12.31-12.33 for the build before) | small kernels without a branch around each read; the mix warms L2 (below) |
 | expert inputs in lane order (card 3) | | short 11.38-11.40 ms (was 11.54-11.58) | gate\|up and down products read their input 4 cache lines per load, not 16 (below) |
 | long rows 64 reads per round (card 3) | | 100K: 20.78 ms (was 21.24); 403K: 24.87 tok/s (was 23.53, card 5) | full layers' softmax and block sums past 16K keys (below) |
+| job pointers as global, small steps (card 2) | | short 11.42 ms (was 11.61-11.62); steps of 2 / 3 / 4 tokens 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were 20.14-20.15 / 24.09-24.16 / 28.61-28.75) | pointers read from job tables cast to global; 2-4 token steps with one launch per kind (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -166,6 +167,28 @@ gate|up 54.4 µs for 23.9 MB, down 29.2 for 11.9 MB, attention input 43.6 for 21
 
 Step size does not change the results: a 48-token prompt's last scores are bit-identical in steps of 1, 2, 3, 4, 8,
 16 or 48 tokens (`INK_UBATCH`, `INK_SAVE_LOGITS`), so guesses checked in one step give exactly the one-token text.
+
+Pointers read from a job table (2026-11-23): a kernel that takes its matrix, input and output pointers from an array
+in its arguments sees them as generic pointers, and loads through generic pointers are slow. `gptr()` (gemv.hpp)
+casts them to global. The one-token attention inputs (multi.hpp GemvMulti): 43.3 -> 40.9 µs, step 11.34-11.36 ->
+11.13 ms (`INK_PROF`, card 3). The job must be copied out with fixed indexes (`pick_job`); taken by reference with a
+run-time index the gain is lost (44.0 µs). The same cast in the mix and the three-input norm gave nothing (mix 9.69 ->
+9.92 µs, step equal) and is not used. Before the cause was found, a larger register file, the job table in card
+memory, one row count per kernel and broadcasting the job's fields from one lane all changed nothing.
+
+Small steps of 2-4 tokens (checking guesses), `INK_SB=0` off. Real tokens (`INK_BENCH_REAL=1 INK_BENCH_STEP=1,2,3,4`,
+the prompt's last 8 tokens, card 2): 1 / 2 / 3 / 4 tokens 11.42 / 15.65-15.67 / 18.26-18.29 / 21.42-21.56 ms (were
+11.61-11.62 / 20.14-20.15 / 24.09-24.16 / 28.61-28.75). The norms also write their outputs in lane order and:
+- the eight attention input matrices run as one launch for all tokens (multi.hpp `gemv_multi_m`, each matrix row read
+  once for every token);
+- the experts (moe_group.hpp): each chosen expert's rows are decoded once for all the tokens that chose it
+  (`GroupedPairS` / `GroupedRowsS`; NVFP4 layers `GroupedPairT` / `GroupedRowsT`, 8 values decoded at a time
+  (`NVFP4P::dec8`), each work-group runs the code for its own token count). 4 tokens choose ~20 distinct experts per
+  layer, not 32 (`INK_ROUTE_STATS=1`). Gate|up / down per layer (`INK_PROF`): 2 tokens 76.1 / 46.7 µs, 3 tokens 96.5 /
+  62.7, 4 tokens 124.3 / 79.3; with one code for all counts 4 tokens took 149.0 / 92.1; two row pairs per sub-group
+  (`INK_SB_NP=2`) 82.6 at 2 tokens, four down rows (`INK_SB_DR=4`) 49.3.
+Every sum keeps gemv1_rows' order: steps of 2, 3 and 4 tokens give last scores bit-identical to one-token steps on
+two prompts (48 and 36 tokens); gate 6/6.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

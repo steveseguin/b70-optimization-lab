@@ -4,6 +4,7 @@
 // all), and expert tensors cycle through 16 sets of 8 experts (all 128 once). 3-D expert tensors are timed in the
 // routed form (8 experts, one token). BENCH_ITERS (default 200); BENCH_FILE=1 also times the file layout.
 #include "../src/tok_tiles.hpp"
+#include "../src/multi.hpp"
 #include <random>
 
 int main(int argc, char **argv) {
@@ -162,6 +163,49 @@ int main(int argc, char **argv) {
                     d.release(Xd);
                 }
                 if (K > 8) continue;
+                if (vp.kind != K_RAW) { // vector blocks with each vector in lane order (xlane.hpp), against the plain kernel
+                    const size_t lxl = xlane_floats(cols);
+                    std::vector<float> hxl(lxl * K, 0.0f);
+                    for (int k = 0; k < K; ++k) for (int i = 0; i < cols; ++i) hxl[k * lxl + xlane_at(i)] = hx[(size_t)k * cols + i];
+                    float *xl = d.alloc<float>(hxl.size());
+                    d.put(xl, hxl.data(), hxl.size());
+                    for (int rep = 0; rep < 2; ++rep)
+                        for (int mr : {1, 2, 4, 8}) {
+                            if (K % mr) continue;
+                            for (int R : {1, 2, 4}) for (int sgw : {1, 2}) {
+                                const Tune tu{R, sgw, false, mr};
+                                d.q.memset(y1, 0, h1.size() * 4).wait();
+                                double ul;
+                                try {
+                                    ul = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; gemv_v(d.q, u, xl, (int)lxl, y1, rows, K, tu, true); });
+                                } catch (std::exception &ex) { std::printf("%-30s lane: %s\n", "", ex.what()); continue; }
+                                d.get(h1.data(), y1, h1.size());
+                                long bad = -1;
+                                for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                                std::printf("%-30s %-11s R%d sg%d mr%d %28s %8.2f us %6.1f GB/s  %s\n", "", "lane-x", R, sgw, mr, "", ul,
+                                            bytes / ul / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                            }
+                        }
+                    if (K <= 4 && multi_ok(vp)) { // the multi-matrix kernel (multi.hpp gemv_multi_m) with this matrix alone
+                        for (int rep = 0; rep < 2; ++rep)
+                            for (int R : {1, 2}) for (int sgw : {1, 2}) {
+                                d.q.memset(y1, 0, h1.size() * 4).wait();
+                                double ul = timeit([&](int i) {
+                                    WView u = vp; u.p = pl_copies[i % pl_copies.size()];
+                                    MultiJobs mj;
+                                    multi_add(mj, u, xl, y1, R, (int)lxl, rows);
+                                    gemv_multi_m(d.q, mj, K, true, sgw);
+                                });
+                                d.get(h1.data(), y1, h1.size());
+                                long bad = -1;
+                                for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
+                                std::printf("%-30s %-11s R%d sg%d     %28s %8.2f us %6.1f GB/s  %s\n", "", "multi_m", R, sgw, "", ul,
+                                            bytes / ul / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                            }
+                    }
+                    d.release(xl);
+                    if (std::getenv("BENCH_XONLY")) continue;
+                }
                 run(vp.kind ? "planar" : "file", vp, pl_copies, Tune{1, 4, false, 0});
                 for (int mr : {2, 4, 8}) {
                     if (K % mr) continue;

@@ -637,6 +637,333 @@ inline sycl::event launch_rows_p(sycl::queue &q, const WView &w, MoeGroups g, in
 }
 // the (np, mb, big) combinations that exist as kernels
 #define INK_GP_COMBOS(X) X(1, 8, false) X(1, 16, false) X(2, 4, false) X(2, 8, false) X(2, 8, true) X(4, 4, false) X(4, 4, true) X(4, 8, true)
+// Steps of 2-4 tokens (MB = the step's tokens; a token chooses an expert at most once, so a group has at most MB
+// slots): each chosen expert's rows decoded once for all of its slots, inputs in lane order (xlane.hpp). Slots past
+// the group's count repeat its last slot and are not stored (no branch around the reads). Per (row, slot) the sums
+// are gemv_pair_row's / GemvRoutedR's (chunks l, l+16, ... per lane in order, the same butterfly), and the epilogue
+// is GemvPair's (op.pre / op.post), so every slot gets the one-token values bit for bit.
+template <class D, class Op, int MB> struct GroupedPairS {
+    const uint8_t *A, *B; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *x; int ldx, xdiv; // slot k reads the lane-order row x + (k / xdiv) * ldx
+    Op op;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int a = (int)it.get_group(0);
+        if (a >= g.count[0]) return;
+        auto sg = it.get_sub_group();
+        const int r = (int)it.get_group(1) * sgw + (int)sg.get_group_linear_id();
+        if (r >= rows) return;
+        const int lane = (int)sg.get_local_linear_id();
+        const size_t eo = (size_t)g.exp[a] * estride;
+        const uint8_t *ra = A + eo + (size_t)r * rb, *rbp = B + eo + (size_t)r * rb;
+        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
+        int sl[MB];
+        const float *xv[MB];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            sl[m] = g.slots[s0 + sycl::min(m, cnt - 1)];
+            xv[m] = x + (size_t)(sl[m] / xdiv) * ldx;
+        }
+        float pre[MB];
+        if constexpr (requires { op.pre(0); })
+#pragma unroll
+            for (int m = 0; m < MB; ++m) pre[m] = op.pre(sl[m]);
+        float acc[2][MB];
+#pragma unroll
+        for (int j = 0; j < 2; ++j)
+#pragma unroll
+            for (int m = 0; m < MB; ++m) acc[j][m] = 0.0f;
+        const int nc = cols / 32;
+        for (int c = lane; c < nc; c += SG) {
+            float o[2][32];
+            D::decode32(ra, cols, c, o[0]);
+            D::decode32(rbp, cols, c, o[1]);
+#pragma unroll
+            for (int m = 0; m < MB; ++m) {
+                float xs[32];
+                load_x32_lane(xv[m], c, xs);
+#pragma unroll
+                for (int j = 0; j < 2; ++j) {
+                    float sm = 0.0f;
+                    for (int i = 0; i < 32; ++i) sm = mac(sm, o[j][i], xs[i]);
+                    acc[j][m] += sm;
+                }
+            }
+        }
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            const float va = sg_sum(sg, acc[0][m]), vb = sg_sum(sg, acc[1][m]);
+            if (m < cnt) { // the same for the whole sub-group
+                if constexpr (requires { op.pre(0); }) op.post(sg, lane, sl[m], r, va, vb, pre[m]);
+                else if (lane == 0) op(sl[m], r, va, vb);
+            }
+        }
+    }
+};
+// one row of the group's expert for all of its slots: y[slot * ldy + r] (slot k reads the lane-order row x + k * ldx)
+template <class D, int MB> struct GroupedRowsS {
+    const uint8_t *W; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *x; int ldx;
+    float *y; int ldy;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int a = (int)it.get_group(0);
+        if (a >= g.count[0]) return;
+        auto sg = it.get_sub_group();
+        const int r = (int)it.get_group(1) * sgw + (int)sg.get_group_linear_id();
+        if (r >= rows) return;
+        const int lane = (int)sg.get_local_linear_id();
+        const uint8_t *row = W + (size_t)g.exp[a] * estride + (size_t)r * rb;
+        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
+        int sl[MB];
+        const float *xv[MB];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            sl[m] = g.slots[s0 + sycl::min(m, cnt - 1)];
+            xv[m] = x + (size_t)sl[m] * ldx;
+        }
+        float acc[MB];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) acc[m] = 0.0f;
+        const int nc = cols / 32;
+        for (int c = lane; c < nc; c += SG) {
+            float o[32];
+            D::decode32(row, cols, c, o);
+#pragma unroll
+            for (int m = 0; m < MB; ++m) {
+                float xs[32];
+                load_x32_lane(xv[m], c, xs);
+                float sm = 0.0f;
+                for (int i = 0; i < 32; ++i) sm = mac(sm, o[i], xs[i]);
+                acc[m] += sm;
+            }
+        }
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            const float v = sg_sum(sg, acc[m]);
+            if (m < cnt && lane == 0) y[(size_t)sl[m] * ldy + r] = v;
+        }
+    }
+};
+// The NVFP4 layers' small steps with NP gate|up row pairs (GroupedPairT) or R rows (GroupedRowsT) per sub-group, so
+// each input value loaded serves several rows: a lane keeps its rows' raw words (16 bytes + 2 scale bytes per row)
+// and decodes 8 values at a time (NVFP4P::dec8), each (row, slot) chunk sum still running over i = 0..31 in order.
+// (GroupedRowsS at 4 tokens: input reads ~28x the weight bytes, down 114 us where one token takes 29.)
+template <int NR> struct Nv4Rows { uint32_t w[NR][4]; uint16_t dd[NR]; };
+template <int NR> inline void nv4_load(Nv4Rows<NR> &q, const uint8_t *const *row, int cols, int c) {
+#pragma unroll
+    for (int k = 0; k < NR; ++k) {
+        const sycl::vec<uint32_t, 2> a = *(const sycl::vec<uint32_t, 2> *)(row[k] + 16 * c);
+        const sycl::vec<uint32_t, 2> b = *(const sycl::vec<uint32_t, 2> *)(row[k] + 16 * c + 8);
+        q.w[k][0] = a[0]; q.w[k][1] = a[1]; q.w[k][2] = b[0]; q.w[k][3] = b[1];
+        std::memcpy(&q.dd[k], row[k] + cols / 2 + 2 * c, 2);
+    }
+}
+// chunk c's sums of NR rows x MB lane-order inputs, added to acc (s per chunk from 0, i ascending, as decode32 + mac)
+template <int NR, int MB> inline void nv4_chunk(const Nv4Rows<NR> &q, const float *const *xv, int c, float (&acc)[NR][MB]) {
+    float s[NR][MB];
+#pragma unroll
+    for (int k = 0; k < NR; ++k)
+#pragma unroll
+        for (int m = 0; m < MB; ++m) s[k][m] = 0.0f;
+#pragma unroll
+    for (int b = 0; b < 4; ++b) {
+        float xs[MB][8];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            const float *p = xv[m] + (size_t)(c >> 4) * 512 + (size_t)(c & 15) * 4 + 128 * b; // lane order: q = 2b, 2b+1
+            const sycl::float4 v0 = *(const sycl::float4 *)p, v1 = *(const sycl::float4 *)(p + 64);
+            xs[m][0] = v0[0]; xs[m][1] = v0[1]; xs[m][2] = v0[2]; xs[m][3] = v0[3];
+            xs[m][4] = v1[0]; xs[m][5] = v1[1]; xs[m][6] = v1[2]; xs[m][7] = v1[3];
+        }
+#pragma unroll
+        for (int k = 0; k < NR; ++k) {
+            float o[8];
+            pl::NVFP4P::dec8(q.w[k], q.dd[k], b, o);
+#pragma unroll
+            for (int m = 0; m < MB; ++m)
+#pragma unroll
+                for (int i = 0; i < 8; ++i) s[k][m] = mac(s[k][m], o[i], xs[m][i]);
+        }
+    }
+#pragma unroll
+    for (int k = 0; k < NR; ++k)
+#pragma unroll
+        for (int m = 0; m < MB; ++m) acc[k][m] += s[k][m];
+}
+// MAXS: the step's tokens (a group's most slots); each group runs the body for its own slot count (the same for the
+// whole work-group, so the branch does not diverge): 4-token steps average 1.6 slots per chosen expert
+template <class Op, int MAXS, int NP> struct GroupedPairT {
+    const uint8_t *A, *B; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *x; int ldx, xdiv;
+    Op op;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int a = (int)it.get_group(0);
+        if (a >= g.count[0]) return;
+        auto sg = it.get_sub_group();
+        const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * NP;
+        if (r0 >= rows) return;
+        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
+        if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+        else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
+        else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
+        else body<MAXS>(sg, a, r0, s0, cnt);
+    }
+    template <int MB> void body(sycl::sub_group sg, int a, int r0, int s0, int cnt) const {
+        const int lane = (int)sg.get_local_linear_id();
+        const size_t eo = (size_t)g.exp[a] * estride;
+        const uint8_t *row[2 * NP]; // gate rows r0.., then up rows r0.. (clamped: rows past the end never stored)
+#pragma unroll
+        for (int p = 0; p < NP; ++p) {
+            const size_t ro = eo + (size_t)sycl::min(r0 + p, rows - 1) * rb;
+            row[p] = A + ro; row[NP + p] = B + ro;
+        }
+        int sl[MB];
+        const float *xv[MB];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            sl[m] = g.slots[s0 + sycl::min(m, cnt - 1)];
+            xv[m] = x + (size_t)(sl[m] / xdiv) * ldx;
+        }
+        float pre[MB];
+        if constexpr (requires { op.pre(0); })
+#pragma unroll
+            for (int m = 0; m < MB; ++m) pre[m] = op.pre(sl[m]);
+        float acc[2 * NP][MB];
+#pragma unroll
+        for (int k = 0; k < 2 * NP; ++k)
+#pragma unroll
+            for (int m = 0; m < MB; ++m) acc[k][m] = 0.0f;
+        const int nc = cols / 32;
+        for (int c = lane; c < nc; c += SG) {
+            Nv4Rows<2 * NP> q;
+            nv4_load<2 * NP>(q, row, cols, c);
+            nv4_chunk<2 * NP, MB>(q, xv, c, acc);
+        }
+#pragma unroll
+        for (int p = 0; p < NP; ++p)
+#pragma unroll
+            for (int m = 0; m < MB; ++m) {
+                const float va = sg_sum(sg, acc[p][m]), vb = sg_sum(sg, acc[NP + p][m]);
+                if (m < cnt && r0 + p < rows) { // the same for the whole sub-group
+                    if constexpr (requires { op.pre(0); }) op.post(sg, lane, sl[m], r0 + p, va, vb, pre[m]);
+                    else if (lane == 0) op(sl[m], r0 + p, va, vb);
+                }
+            }
+    }
+};
+template <int MAXS, int R> struct GroupedRowsT {
+    const uint8_t *W; size_t rb, estride; int rows, cols;
+    MoeGroups g;
+    const float *x; int ldx;
+    float *y; int ldy;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int a = (int)it.get_group(0);
+        if (a >= g.count[0]) return;
+        auto sg = it.get_sub_group();
+        const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * R;
+        if (r0 >= rows) return;
+        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
+        if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+        else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
+        else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
+        else body<MAXS>(sg, a, r0, s0, cnt);
+    }
+    template <int MB> void body(sycl::sub_group sg, int a, int r0, int s0, int cnt) const {
+        const int lane = (int)sg.get_local_linear_id();
+        const uint8_t *row[R];
+#pragma unroll
+        for (int k = 0; k < R; ++k) row[k] = W + (size_t)g.exp[a] * estride + (size_t)sycl::min(r0 + k, rows - 1) * rb;
+        int sl[MB];
+        const float *xv[MB];
+#pragma unroll
+        for (int m = 0; m < MB; ++m) {
+            sl[m] = g.slots[s0 + sycl::min(m, cnt - 1)];
+            xv[m] = x + (size_t)sl[m] * ldx;
+        }
+        float acc[R][MB];
+#pragma unroll
+        for (int k = 0; k < R; ++k)
+#pragma unroll
+            for (int m = 0; m < MB; ++m) acc[k][m] = 0.0f;
+        const int nc = cols / 32;
+        for (int c = lane; c < nc; c += SG) {
+            Nv4Rows<R> q;
+            nv4_load<R>(q, row, cols, c);
+            nv4_chunk<R, MB>(q, xv, c, acc);
+        }
+#pragma unroll
+        for (int k = 0; k < R; ++k)
+#pragma unroll
+            for (int m = 0; m < MB; ++m) {
+                const float v = sg_sum(sg, acc[k][m]);
+                if (m < cnt && lane == 0 && r0 + k < rows) y[(size_t)sl[m] * ldy + r0 + k] = v;
+            }
+    }
+};
+template <class Op> inline sycl::event grouped_pair_t(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows,
+                                                      MoeGroups g, int amax, const float *xl, int ldx, int xdiv, Op op, int MB,
+                                                      int NP, int sgw = 1) {
+    if (a.kind != K_NVFP4P) throw std::runtime_error("grouped_pair_t: NVFP4 only");
+    const int cols = (int)a.t->ne[0], nsg = (rows + NP - 1) / NP, ngr = (nsg + sgw - 1) / sgw;
+    const sycl::nd_range<2> nr(sycl::range<2>((size_t)amax, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+#define INK_GPT(MM, PP) \
+    if (MB == MM && NP == PP) return q.parallel_for(nr, GroupedPairT<Op, MM, PP>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw});
+    INK_GPT(2, 1) INK_GPT(2, 2) INK_GPT(3, 1) INK_GPT(3, 2) INK_GPT(4, 1) INK_GPT(4, 2)
+#undef INK_GPT
+    throw std::runtime_error("grouped_pair_t: 2-4 slots, 1-2 row pairs");
+}
+inline sycl::event grouped_rows_t(sycl::queue &q, const WView &w, MoeGroups g, int amax, const float *xl, int ldx, float *y, int ldy,
+                                  int MB, int R, int sgw = 1) {
+    if (w.kind != K_NVFP4P) throw std::runtime_error("grouped_rows_t: NVFP4 only");
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], nsg = (rows + R - 1) / R, ngr = (nsg + sgw - 1) / sgw;
+    const size_t estride = w.rb * (size_t)rows;
+    const sycl::nd_range<2> nr(sycl::range<2>((size_t)amax, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+#define INK_GRT(MM, RR) \
+    if (MB == MM && R == RR) return q.parallel_for(nr, GroupedRowsT<MM, RR>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw});
+    INK_GRT(2, 1) INK_GRT(2, 2) INK_GRT(2, 4) INK_GRT(3, 2) INK_GRT(3, 4) INK_GRT(4, 2) INK_GRT(4, 4)
+#undef INK_GRT
+    throw std::runtime_error("grouped_rows_t: 2-4 slots, 1-4 rows");
+}
+
+template <class Op> inline sycl::event grouped_pair_s(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows,
+                                                      MoeGroups g, int amax, const float *xl, int ldx, int xdiv, Op op, int MB,
+                                                      int sgw = 1) {
+    sycl::event e;
+    const int cols = (int)a.t->ne[0], ngr = (rows + sgw - 1) / sgw;
+    const sycl::nd_range<2> nr(sycl::range<2>((size_t)amax, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+    with_decoder(a, [&]<class D>() {
+        switch (MB) {
+        case 2: e = q.parallel_for(nr, GroupedPairS<D, Op, 2>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
+        case 3: e = q.parallel_for(nr, GroupedPairS<D, Op, 3>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
+        case 4: e = q.parallel_for(nr, GroupedPairS<D, Op, 4>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
+        default: throw std::runtime_error("grouped_pair_s: 2 to 4 slots per expert");
+        }
+    });
+    return e;
+}
+inline sycl::event grouped_rows_s(sycl::queue &q, const WView &w, MoeGroups g, int amax, const float *xl, int ldx, float *y, int ldy,
+                                  int MB, int sgw = 1) {
+    sycl::event e;
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], ngr = (rows + sgw - 1) / sgw;
+    const size_t estride = w.rb * (size_t)rows;
+    const sycl::nd_range<2> nr(sycl::range<2>((size_t)amax, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+    with_decoder(w, [&]<class D>() {
+        switch (MB) {
+        case 2: e = q.parallel_for(nr, GroupedRowsS<D, 2>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
+        case 3: e = q.parallel_for(nr, GroupedRowsS<D, 3>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
+        case 4: e = q.parallel_for(nr, GroupedRowsS<D, 4>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
+        default: throw std::runtime_error("grouped_rows_s: 2 to 4 slots per expert");
+        }
+    });
+    return e;
+}
+
 // token-parallel: (rows per sub-group, large register file)
 #define INK_TSP_COMBOS(X) X(2, false) X(4, false) X(4, true) X(8, true)
 #define INK_TSR_COMBOS(X) X(4, false) X(8, false) X(8, true) X(16, true)

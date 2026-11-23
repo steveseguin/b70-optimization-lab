@@ -71,11 +71,16 @@
   the mix warms the next attention weights into L2, gate|up epilogue trimmed. Same bits; gate 6/6.
 - Nov 23 ~12:00: writing 11.56 -> 11.39 ms per token (~88 tok/s, card 3): the expert products read their input in
   "lane order" (4 cache lines per load instead of 16). Same bits; gate 6/6. Closed ideas: `inkling2/DO-NOT-REPEAT.md`.
-- Nov 23 ~15:00: long-context writing 21.24 -> 20.78 ms per token at 100K (card 3): the full layers' softmax and
+- Nov 23 ~10:50: long-context writing 21.24 -> 20.78 ms per token at 100K (card 3): the full layers' softmax and
   block sums read 64 values per round past 16K keys (60 -> 36 µs and 64 -> 37 µs per layer); at 403K 23.5 -> 24.9 tok/s
   (card 5, same answer). Same 33 tokens at 100K;
   gate 6/6. A 48-token prompt gives bit-identical last scores in steps of 1, 2, 3, 4, 8, 16 or 48 tokens, so checked
   guesses (drafting) can be exact; small multi-token steps are still slow (2 tokens 19.5 ms, 4 tokens 27.4).
+- Nov 23 ~14:10: steps of 2-4 tokens much cheaper, for checking guesses (card 2, real tokens): 2 / 3 / 4 tokens
+  15.65 / 18.26 / 21.42 ms (were 20.14 / 24.09 / 28.61); one token 11.62 -> 11.42 ms. Cause of a slow kernel family:
+  pointers read from job tables are "generic" until cast to global. Each chosen expert is decoded once for all tokens
+  that chose it. Bit-identical in steps of 1-4 tokens; gate 6/6. Next: state rollback for rejected guesses, then a
+  guesser (prompt lookup first, then the DSpark drafter on the card).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
