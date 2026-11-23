@@ -81,6 +81,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | block-order P.V, baseline v2 (card 2) | 494.1-496.1 tok/s (card 5, unchanged) | 31K: 16.1-16.7 ms (was 17.5-18.1) | keys summed in blocks of 128 positions, then the blocks (below) |
 | ring caches, unrolled block sums (card 2) | | 31K: 15.5-16.0 ms | windowed layers keep 2,048 positions; full layers' block sums 92 -> 23 µs |
 | one copy of layers 20-23's experts (card 3) | 542.2-542.5 tok/s (was 532.7-534.4) | | prompt tiles read the decode copies; file layout never uploaded (below) |
+| fused multiply-add, baseline v3 (card 3) | 642.7-643.2 tok/s; 31K prompt 530.6 (was 446.6, card 2) | short 12.28 ms, 3K 13.18 (was 12.31-12.36, 13.35; card 4) | every sum of products through `mac()` (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -119,6 +120,19 @@ buffer and keeps only its decode copy. Card memory at 4,200 positions 19.12 -> 1
 KiB (the 8 full-attention caches 32 KiB, score rows and block sums the rest), so one card holds 420,000 positions
 (30.29 of 31.89 GiB). `Device::alloc` refuses to pass the card's size minus `INK_MEM_RESERVE_MB` (default 1024):
 xe does not fail an over-large allocation, it moves card memory out to host RAM.
+
+Fused multiply-add, baseline v3 (2026-11-23): every sum of products in the kernels (74 sites: matrix products,
+attention scores and P.V, norms, mixes, convolutions) adds its terms through `mac()` (`src/formats.hpp`), one
+rounding per term; every kernel that computes the same sum uses it at the same place, so all paths still agree (gate
+6/6 against `baseline`, made through the alternative paths with `scripts/make-baseline.sh`). Decoders and elementwise
+formulas are unchanged. `INK_CFLAGS=-DINK_NO_FMA scripts/build.sh ...` builds the old arithmetic, which reproduces
+baseline v2 (`baseline-v2`) bit for bit. Accuracy: matrix products against double precision (`test_gemv`, worst error
+/ sum of term sizes) lower on 12 of 17 tensor types (e.g. NVFP4 gate|up 1.92e-08 -> 1.63e-08, IQ4_NL 2.85e-08 ->
+2.36e-08); P.V at 31,000 keys 3.31e-07 -> 3.20e-07; against the high-precision reference on the 300-token prompt the
+two are equally close (each closer at about half the positions in every layer; final scores median 4.21e-03 -> 3.80e-03,
+the same top token as the reference at 97.0 vs 97.3 % of positions, one position). The coding prompt's answer changes
+at token 102, the near-tie described below. Speed: prompt +19 % (3,127 tokens 542 -> 643 tok/s on card 3; 31,270
+tokens 447 -> 531 on card 2); a 512-token step's expert gate|up 357 -> 304 ms.
 
 The cards are not equally fast: card 3 reads the 3,127-token prompt ~8 % faster than cards 2 and 4 (448.5 vs
 413.6-416.0 tok/s for the same build), so speeds are compared on one card.

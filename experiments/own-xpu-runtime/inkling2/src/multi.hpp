@@ -103,7 +103,7 @@ struct CtlRows {
                 float o[32];
                 D::decode32((j ? g.B : g.A) + (size_t)r * g.rb, g.cols, c, o);
                 float sm = 0.0f;
-                for (int i = 0; i < 32; ++i) sm += o[i] * xs[i];
+                for (int i = 0; i < 32; ++i) sm = mac(sm, o[i], xs[i]);
                 if (j) vb[c % SG] += sm; else va[c % SG] += sm;
             }
         }

@@ -60,7 +60,7 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
             for (int u = 0; u < PW; ++u) {
                 const float kf = (float)(u < 8 ? k0[u] : k1[u - 8]);
 #pragma unroll
-                for (int a = 0; a < NR; ++a) acc[a] += sycl::select_from_group(sg, ql[a], u) * kf;
+                for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, ql[a], u), kf);
             }
         }
 #pragma unroll
@@ -87,7 +87,7 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
                     for (int i = 0; i < NRL / 4; ++i) {
                         const sycl::vec<float, 4> r = *(const sycl::vec<float, 4> *)(rc + 4 * i);
 #pragma unroll
-                        for (int k = 0; k < 4; ++k) tb += b[i][k] * r[k];
+                        for (int k = 0; k < 4; ++k) tb = mac(tb, b[i][k], r[k]);
                     }
                     s = s + tb;
                 }
@@ -148,7 +148,7 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
             for (int u = 0; u < PW; ++u) {
                 const float vf = (float)(u < 8 ? v0[u] : v1[u - 8]);
 #pragma unroll
-                for (int a = 0; a < NR; ++a) acc[a] += sycl::select_from_group(sg, pv[a], u) * vf;
+                for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, pv[a], u), vf);
             }
         }
         for (; j <= pl; ++j) {
@@ -160,7 +160,7 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
 #pragma unroll
                 for (int gi = 0; gi < G; ++gi) {
                     const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    acc[m * G + gi] += (ok ? pr[j - lo[m]] : 0.0f) * vf;
+                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? pr[j - lo[m]] : 0.0f), vf);
                 }
             }
         }

@@ -38,7 +38,7 @@ template <class FT, int M> struct GemvKernel {
             for (int m = 0; m < M; ++m) {
                 const float *xv = x + (size_t)m * ldx + 32 * c;
                 float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xv[i];
+                for (int i = 0; i < 32; ++i) s = mac(s, o[i], xv[i]);
                 acc[m] += s;
             }
         }
@@ -85,7 +85,7 @@ template <class FT> struct GemvRoutedKernel {
             FT::decode32(row, c, o);
             const float *xv = xv0 + 32 * c;
             float s = 0.0f;
-            for (int i = 0; i < 32; ++i) s += o[i] * xv[i];
+            for (int i = 0; i < 32; ++i) s = mac(s, o[i], xv[i]);
             acc += s;
         }
         float v = sg_sum(sg, acc);

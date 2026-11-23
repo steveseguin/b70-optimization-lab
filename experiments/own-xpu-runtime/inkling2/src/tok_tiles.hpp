@@ -246,7 +246,7 @@ inline void tile_dots(sycl::sub_group sg, const uint8_t *const *rp, int cols, co
             for (int j = 0; j < NR; ++j) { LD::get(rp[j], cols, c, lane, lo[j], hi[j]); s[j] = 0.0f; }
             for (int j = 0; j < NR; ++j)
                 for (int i = 0; i < 32; ++i)
-                    s[j] += sycl::select_from_group(sg, LD::hi(i) ? hi[j] : lo[j], LD::src(i)) * xs[i];
+                    s[j] = mac(s[j], sycl::select_from_group(sg, LD::hi(i) ? hi[j] : lo[j], LD::src(i)), xs[i]);
             for (int j = 0; j < NR; ++j) acc[j] += s[j];
         }
         for (int j = 0; j < NR; ++j) {

@@ -39,7 +39,7 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
             const float *xr = x + (size_t)r * ldx;
             float *yr = y + (size_t)r * ldy;
             float s = 0.0f;
-            for (int i = l; i < n; i += OPS_WG) s += xr[i] * xr[i];
+            for (int i = l; i < n; i += OPS_WG) s = mac(s, xr[i], xr[i]);
             float tot = wg_sum<OPS_WG>(it, s, &slm[0]);
             float scale = 1.0f / sycl::sqrt(tot / n + eps);
             for (int i = l; i < n; i += OPS_WG) yr[i] = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
@@ -59,7 +59,7 @@ inline sycl::event clip(sycl::queue &q, float *x, const float *s, int srows, int
             float acc = 0.0f;
             for (int i = l; i < n; i += OPS_WG) {
                 float v = sr ? xr[i] * sr[i] : xr[i];
-                acc += v * v;
+                acc = mac(acc, v, v);
             }
             float norm = sycl::sqrt(wg_sum<OPS_WG>(it, acc, &slm[0])) * 1.0f + 1e-6f;
             float f = sycl::clamp(thr / norm, 0.0f, 1.0f);
@@ -91,7 +91,7 @@ inline sycl::event mix(sycl::queue &q, MixArgs a, size_t ld, const float *query,
             for (int s = 0; s < a.ns; ++s) {
                 const float *x = a.st[s] + (size_t)t * ld;
                 float acc = 0.0f;
-                for (int i = l; i < n; i += OPS_WG) acc += x[i] * x[i];
+                for (int i = l; i < n; i += OPS_WG) acc = mac(acc, x[i], x[i]);
                 float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
                 if (l == 0) inv[s] = 1.0f / sycl::sqrt(tot / n + 1e-6f);
             }
@@ -99,7 +99,7 @@ inline sycl::event mix(sycl::queue &q, MixArgs a, size_t ld, const float *query,
             for (int s = 0; s < a.ns; ++s) {
                 const float *x = a.st[s] + (size_t)t * ld;
                 float is = inv[s], acc = 0.0f;
-                for (int i = l; i < n; i += OPS_WG) acc += (x[i] * is) * qv[i];
+                for (int i = l; i < n; i += OPS_WG) acc = mac(acc, (x[i] * is), qv[i]);
                 float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
                 if (l == 0) sc[s] = tot;
             }
@@ -114,7 +114,7 @@ inline sycl::event mix(sycl::queue &q, MixArgs a, size_t ld, const float *query,
             float *o = out + ((size_t)j * ntok + t) * n;
             for (int i = l; i < n; i += OPS_WG) {
                 float acc = 0.0f;
-                for (int s = 0; s < a.ns; ++s) acc += (a.st[s][(size_t)t * ld + i] * inv[s]) * p[s];
+                for (int s = 0; s < a.ns; ++s) acc = mac(acc, (a.st[s][(size_t)t * ld + i] * inv[s]), p[s]);
                 o[i] = acc;
             }
         });
@@ -134,14 +134,14 @@ inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float 
             int g = (int)it.get_group(0), t = g / a.ns, s = g % a.ns, l = (int)it.get_local_id(0);
             const float *x = a.st[s] + (size_t)t * ld;
             float acc = 0.0f;
-            for (int i = l; i < n; i += OPS_WG) acc += x[i] * x[i];
+            for (int i = l; i < n; i += OPS_WG) acc = mac(acc, x[i], x[i]);
             float tot = wg_sum<OPS_WG>(it, acc, &slm[0]);
             float is = 1.0f / sycl::sqrt(tot / n + 1e-6f);
             if (l == 0) inv[(size_t)t * MIX_MAX + s] = is;
             for (int j = 0; j < nq; ++j) {
                 const float *qv = query + (size_t)j * n;
                 float d = 0.0f;
-                for (int i = l; i < n; i += OPS_WG) d += (x[i] * is) * qv[i];
+                for (int i = l; i < n; i += OPS_WG) d = mac(d, (x[i] * is), qv[i]);
                 float dt = wg_sum<OPS_WG>(it, d, &slm[0]);
                 if (l == 0) sc[((size_t)t * nq + j) * MIX_MAX + s] = dt;
             }
@@ -161,7 +161,7 @@ inline sycl::event mix_out(sycl::queue &q, MixArgs a, size_t ld, int nq, const f
         float isum = 1.0f / sum;
         for (int s = 0; s < a.ns; ++s) p[s] *= isum;
         float acc = 0.0f;
-        for (int s = 0; s < a.ns; ++s) acc += (a.st[s][(size_t)t * ld + i] * iv[s]) * p[s];
+        for (int s = 0; s < a.ns; ++s) acc = mac(acc, (a.st[s][(size_t)t * ld + i] * iv[s]), p[s]);
         out[((size_t)j * ntok + t) * n + i] = acc;
     });
 }
@@ -222,7 +222,7 @@ inline sycl::event convolve(sycl::queue &q, const float *x, const float *st, int
         float win[4];
         for (int i = 0; i < 4; ++i) win[i] = at(t - 3 + i);
         float s = 0.0f;
-        for (int i = 0; i < 4; ++i) s += win[i] * w[c * 4 + i];
+        for (int i = 0; i < 4; ++i) s = mac(s, win[i], w[c * 4 + i]);
         if (dyn) {
             int h = c / (C / H);
             const float *dt = dyn + (size_t)t * H * 4 + h * 4;
@@ -257,7 +257,7 @@ inline sycl::event rel_table(sycl::queue &q, const float *R, const float *rb, in
     return q.parallel_for(sycl::range<2>((size_t)ntok * nh, (size_t)ext), [=](sycl::id<2> id) {
         const float *r = R + id[0] * nr, *b = rb + id[1] * nr;
         float s = 0.0f;
-        for (int i = 0; i < nr; ++i) s += b[i] * r[i];
+        for (int i = 0; i < nr; ++i) s = mac(s, b[i], r[i]);
         tab[id[0] * ext + id[1]] = s;
     });
 }
@@ -284,7 +284,7 @@ inline sycl::event attn_softmax(sycl::queue &q, const float *Q, const sycl::half
             for (int j = lo + l; j <= p; j += ATT_WG) {
                 const sycl::half *kr = K + (size_t)j * kd + kvh * hd;
                 float s = 0.0f;
-                for (int d = 0; d < hd; ++d) s += qs[d] * (float)kr[d];
+                for (int d = 0; d < hd; ++d) s = mac(s, qs[d], (float)kr[d]);
                 s = s * scale;
                 int dist = p - j;
                 if (dist < ext) s = s + tb[dist];
@@ -317,7 +317,7 @@ inline sycl::event attn_pv(sycl::queue &q, const float *P, int ldp, const sycl::
         const float *pr = P + (size_t)g * ldp;
         int kd = nkvh * hd;
         float acc = 0.0f;
-        for (int j = lo; j <= p; ++j) acc += pr[j - lo] * (float)V[(size_t)j * kd + kvh * hd + d];
+        for (int j = lo; j <= p; ++j) acc = mac(acc, pr[j - lo], (float)V[(size_t)j * kd + kvh * hd + d]);
         out[(size_t)t * nh * hd + hh * hd + d] = acc;
     });
 }

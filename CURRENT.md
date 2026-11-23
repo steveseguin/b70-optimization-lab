@@ -59,6 +59,9 @@
   chunks; 420K after dropping the duplicate file-layout copy of layers 20-23's experts, 2.57 GB). Prompt **542.2-542.5
   tok/s** (card 3; prompt tiles on the decode copies). All same bits, gate 6/6. Card allocations now refuse to pass
   the card's memory (xe would move memory out to host RAM instead of failing).
+- Nov 23 ~05:30: fused multiply-add adopted as **baseline v3** (one rounding per term; as close to the reference as
+  v2, matrix kernels closer on 12 of 17 types). Prompt **643 tok/s** at 3K (card 3, was 542), **531 tok/s** at 31K
+  (card 2, was 447); writing unchanged (~81 tok/s short). Gate 6/6 against v3; `baseline-v2` kept.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

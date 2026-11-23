@@ -7,6 +7,20 @@
 #include <cstdint>
 #include <sycl/sycl.hpp>
 
+namespace ink {
+// every sum of products in the kernels adds its terms through mac(): one rounding per term (fused multiply-add,
+// baseline v3); every kernel that computes the same sum uses it at the same place, so the paths still agree bit for
+// bit. Built with -DINK_NO_FMA: a rounded product, then the addition (baselines v1, v2).
+inline float mac(float acc, float a, float b) {
+#ifdef INK_NO_FMA
+    const float p = a * b;
+    return acc + p;
+#else
+    return sycl::fma(a, b, acc);
+#endif
+}
+} // namespace ink
+
 namespace ink::fmt {
 
 inline float h2f(const uint8_t *p) { // little-endian IEEE half

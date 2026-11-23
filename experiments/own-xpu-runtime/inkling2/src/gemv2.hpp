@@ -36,7 +36,7 @@ inline void gemv1_rows(sycl::sub_group sg, const uint8_t *W, size_t rb, int rows
             float o[32];
             D::decode32(W + (size_t)(r0 + k) * rb, cols, c, o);
             float s = 0.0f;
-            for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+            for (int i = 0; i < 32; ++i) s = mac(s, o[i], xs[i]);
             acc[k] += s;
         }
     }
@@ -77,7 +77,7 @@ template <class D, int M> struct GemvM {
             for (int m = 0; m < M; ++m) {
                 const float *xv = x + (size_t)m * ldx + 32 * c;
                 float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xv[i];
+                for (int i = 0; i < 32; ++i) s = mac(s, o[i], xv[i]);
                 acc[m] += s;
             }
         }
@@ -122,7 +122,7 @@ template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
                     for (int m = 0; m < M; ++m) {
                         sycl::vec<float, 4> xv = *(const sycl::vec<float, 4> *)(xb + (size_t)m * ldx + 32 * c + 4 * i4);
                         for (int j = 0; j < 4; ++j)
-                            for (int k = 0; k < R; ++k) s[k][m] += o[k][4 * i4 + j] * xv[j];
+                            for (int k = 0; k < R; ++k) s[k][m] = mac(s[k][m], o[k][4 * i4 + j], xv[j]);
                     }
                 }
                 for (int k = 0; k < R; ++k) for (int m = 0; m < M; ++m) acc[k][m] += s[k][m];
@@ -132,7 +132,7 @@ template <class D, int R, int M, bool INTERLEAVE = false> struct GemvMR {
                     load_x32(xb + (size_t)m * ldx + 32 * c, xs);
                     for (int k = 0; k < R; ++k) {
                         float s = 0.0f;
-                        for (int i = 0; i < 32; ++i) s += o[k][i] * xs[i];
+                        for (int i = 0; i < 32; ++i) s = mac(s, o[k][i], xs[i]);
                         acc[k][m] += s;
                     }
                 }
@@ -172,7 +172,7 @@ template <class D, int R> struct GemvRoutedR {
                 float o[32];
                 D::decode32(base + (size_t)(r0 + j) * rb, cols, c, o);
                 float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+                for (int i = 0; i < 32; ++i) s = mac(s, o[i], xs[i]);
                 acc[j] += s;
             }
         }
@@ -215,7 +215,7 @@ template <class D, int R, int NCL> struct Gemv1P {
                 float o[32];
                 D::dec(pre[j][k], o);
                 float s = 0.0f;
-                for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+                for (int i = 0; i < 32; ++i) s = mac(s, o[i], xs[i]);
                 acc[k] += s;
             }
         }
@@ -259,7 +259,7 @@ template <class D, int R, int NCL> struct GemvRoutedP {
                 float o[32];
                 D::dec(pre[j][i], o);
                 float s = 0.0f;
-                for (int q = 0; q < 32; ++q) s += o[q] * xs[q];
+                for (int q = 0; q < 32; ++q) s = mac(s, o[q], xs[q]);
                 acc[i] += s;
             }
         }
@@ -287,7 +287,7 @@ inline void gemv_pair_row(sycl::sub_group sg, const uint8_t *ra, const uint8_t *
             float o[32];
             D::decode32(j ? rbp : ra, cols, c, o);
             float s = 0.0f;
-            for (int i = 0; i < 32; ++i) s += o[i] * xs[i];
+            for (int i = 0; i < 32; ++i) s = mac(s, o[i], xs[i]);
             acc[j] += s;
         }
     }

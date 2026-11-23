@@ -111,7 +111,7 @@ template <class D, class Op> struct GroupedPair {
                     load_x32(x + (size_t)(xdiv ? sl[m] / xdiv : sl[m]) * ldx + 32 * c, xs);
                     for (int j = 0; j < 2; ++j) {
                         float s = 0.0f;
-                        for (int i = 0; i < 32; ++i) s += o[j][i] * xs[i];
+                        for (int i = 0; i < 32; ++i) s = mac(s, o[j][i], xs[i]);
                         acc[j][m] += s;
                     }
                 }
@@ -158,7 +158,7 @@ template <class D, int R> struct GroupedRows {
                     for (int j = 0; j < R; ++j) {
                         if (r0 + j >= rows) break;
                         float s = 0.0f;
-                        for (int i = 0; i < 32; ++i) s += o[j][i] * xs[i];
+                        for (int i = 0; i < 32; ++i) s = mac(s, o[j][i], xs[i]);
                         acc[j][m] += s;
                     }
                 }
@@ -262,7 +262,7 @@ template <class D, class Op, int NP, int MB, bool BIG> struct GroupedPairP : Grf
                         float xs[8];
                         load_x8(xr[m] + 32 * c + 8 * p, xs);
                         for (int j = 0; j < NR; ++j)
-                            for (int i = 0; i < 8; ++i) s[j][m] += o[j][i] * xs[i];
+                            for (int i = 0; i < 8; ++i) s[j][m] = mac(s[j][m], o[j][i], xs[i]);
                     }
                 }
                 for (int j = 0; j < NR; ++j) for (int m = 0; m < MB; ++m) acc[j][m] += s[j][m];
@@ -319,7 +319,7 @@ template <class D, int R, int MB, bool BIG> struct GroupedRowsP : GrfProps<BIG> 
                         float xs[8];
                         load_x8(xr[m] + 32 * c + 8 * p, xs);
                         for (int j = 0; j < R; ++j)
-                            for (int i = 0; i < 8; ++i) s[j][m] += o[j][i] * xs[i];
+                            for (int i = 0; i < 8; ++i) s[j][m] = mac(s[j][m], o[j][i], xs[i]);
                     }
                 }
                 for (int j = 0; j < R; ++j) for (int m = 0; m < MB; ++m) acc[j][m] += s[j][m];
@@ -373,9 +373,9 @@ template <int NR> inline void slot_dots(sycl::sub_group sg, const uint8_t *const
             for (int j = 0; j < NR; ++j) { nvfp4_lane2(rp[j], cols, c, bl, nib, lo[j], hi[j]); s[j] = 0.0f; }
             // the rows' sums interleaved (independent chains), each still over i = 0..31 in order
             for (int i = 0; i < 16; ++i)
-                for (int j = 0; j < NR; ++j) s[j] += sycl::select_from_group(sg, lo[j], i) * xs[i];
+                for (int j = 0; j < NR; ++j) s[j] = mac(s[j], sycl::select_from_group(sg, lo[j], i), xs[i]);
             for (int i = 0; i < 16; ++i)
-                for (int j = 0; j < NR; ++j) s[j] += sycl::select_from_group(sg, hi[j], i) * xs[16 + i];
+                for (int j = 0; j < NR; ++j) s[j] = mac(s[j], sycl::select_from_group(sg, hi[j], i), xs[16 + i]);
             for (int j = 0; j < NR; ++j) acc[j] += s[j];
         }
         for (int j = 0; j < NR; ++j) {
@@ -497,11 +497,11 @@ inline void slot_dots_t(sycl::sub_group sg, const uint8_t *const *rp, int cols, 
             if constexpr (IL) {
                 for (int i = 0; i < 32; ++i)
                     for (int j = 0; j < NR; ++j)
-                        s[j] += sycl::select_from_group(sg, ((i >> 3) & 1) ? hi[j] : lo[j], 8 * (i >> 4) + (i & 7)) * xs[i];
+                        s[j] = mac(s[j], sycl::select_from_group(sg, ((i >> 3) & 1) ? hi[j] : lo[j], 8 * (i >> 4) + (i & 7)), xs[i]);
             } else {
                 for (int j = 0; j < NR; ++j)
                     for (int i = 0; i < 32; ++i)
-                        s[j] += sycl::select_from_group(sg, ((i >> 3) & 1) ? hi[j] : lo[j], 8 * (i >> 4) + (i & 7)) * xs[i];
+                        s[j] = mac(s[j], sycl::select_from_group(sg, ((i >> 3) & 1) ? hi[j] : lo[j], 8 * (i >> 4) + (i & 7)), xs[i]);
             }
             for (int j = 0; j < NR; ++j) acc[j] += s[j];
         }

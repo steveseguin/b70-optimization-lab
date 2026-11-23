@@ -3,6 +3,7 @@
 #   -fp-model=precise, correctly rounded fp32 division and square root on the card, no multiply-add contraction.
 # Every kernel then follows IEEE single precision op by op, so two kernels with the same arithmetic give the same bits
 # whatever the code around them (the default fast model let one kernel's sqrt/div differ from another's).
+# INK_CFLAGS: extra compiler flags (e.g. -DINK_NO_FMA: products rounded before the addition, baselines v1/v2).
 set -eu
 here=$(cd "$(dirname "$0")/.." && pwd)
 tool=$1
@@ -15,6 +16,6 @@ case $tool in test_formats|test_gemv) R=${INK_REF:-/home/steve/inkling-work/ref-
     extra=(-I "$R/ggml/include" "$R/build/ggml/src/libggml-base.a" "$(gcc -print-file-name=libgomp.so)" -lpthread -lm) ;;
 esac
 icpx -fsycl -O2 -std=c++20 -fp-model=precise -ffp-contract=off -foffload-fp32-prec-div -foffload-fp32-prec-sqrt \
-    -Wno-overriding-option -fsycl-targets=intel_gpu_bmg_g31 "$here/tools/$tool.cpp" "${extra[@]}" -o "$out" 2>&1 \
+    -Wno-overriding-option -fsycl-targets=intel_gpu_bmg_g31 ${INK_CFLAGS:-} "$here/tools/$tool.cpp" "${extra[@]}" -o "$out" 2>&1 \
     | grep -vE "Compilation from IR|Build succeeded|^$" || true
 [ -x "$out" ] && echo "built $out"
