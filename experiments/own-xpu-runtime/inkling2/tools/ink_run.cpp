@@ -17,13 +17,17 @@ int main(int argc, char **argv) {
         int ctx = argc > 5 ? std::atoi(argv[5]) : (int)(tok.size() + n_gen + 16);
         int ub = std::getenv("INK_UBATCH") ? std::atoi(std::getenv("INK_UBATCH")) : 512;
         Weights w;
-        w.upload(d, g);
-        bool dumping = std::getenv("INK_DUMP") != nullptr;
         // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
-        std::map<std::string, WView> views;
         bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
+        // expert tensors with a decode copy (layers 20-23) stay off the card in the file layout (planarize makes the copy)
+        if (planar && dec_on()) w.upload(d, g, true, [](const Tensor &t) { return dec_target(t); });
+        else w.upload(d, g);
+        bool dumping = std::getenv("INK_DUMP") != nullptr;
+        std::map<std::string, WView> views;
         if (planar) views = planarize(d, g, w);
         Engine e(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
+        std::fprintf(stderr, "[ink] context %d positions, card memory in use %.2f of %.2f GiB (score rows %d)\n", ctx,
+                     d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow);
         double t0 = now_s();
         e.feed(tok);
         double t1 = now_s();

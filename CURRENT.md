@@ -55,6 +55,10 @@
   was 17.5-18.1; 3K and short unchanged). Windowed layers' caches are now 2,048-position rings (~4.5 GiB freed at
   31K, same bits). Gate 6/6 against v2. Next: the score buffer P (512 tokens x 24 heads x context, 1.5 GB at 31K)
   is now the memory limit for long prompts: split prompt attention into query chunks.
+- Nov 23 ~11:00: one card now holds a **420,000-position context** (was ~80K before the rings; 300K after query
+  chunks; 420K after dropping the duplicate file-layout copy of layers 20-23's experts, 2.57 GB). Prompt **542.2-542.5
+  tok/s** (card 3; prompt tiles on the decode copies). All same bits, gate 6/6. Card allocations now refuse to pass
+  the card's memory (xe would move memory out to host RAM instead of failing).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

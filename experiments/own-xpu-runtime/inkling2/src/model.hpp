@@ -92,11 +92,12 @@ struct Model {
             W w;
             w.t = g.find(n);
             if (!w.t) { if (need) throw std::runtime_error("model: missing " + n); return w; }
-            w.p = wt[n];
-            w.rb = w.t->row_bytes();
-            if (views) {
+            if (views) { // (tensors left off the card by the upload exist only here)
                 const WView &v = views->at(n);
                 w.p = v.p; w.rb = v.rb; w.kind = v.kind;
+            } else {
+                w.p = wt[n];
+                w.rb = w.t->row_bytes();
             }
             return w;
         };

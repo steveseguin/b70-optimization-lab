@@ -557,6 +557,12 @@ inline size_t dec_stride(const Tensor &t) {
     default: return t.row_bytes();
     }
 }
+// decode copies on (INK_DEC=0: the few-token kernels read the file layout); dec_target: an expert tensor that gets one
+inline bool dec_on() { return !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC")); }
+inline bool dec_target(const Tensor &t) {
+    const std::string sfx = "_exps.weight";
+    return dec_kind(t) != K_RAW && t.name.size() > sfx.size() && t.name.compare(t.name.size() - sfx.size(), sfx.size(), sfx) == 0;
+}
 inline sycl::event dec_repack(sycl::queue &q, const Tensor &t, const uint8_t *src, uint8_t *dst) {
     const size_t nrows = (size_t)t.rows(), rb = dec_stride(t);
     const int cols = (int)t.ne[0];
@@ -576,6 +582,7 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
     std::map<std::string, WView> v;
     size_t scratch_bytes = 0;
     for (auto &t : g.tensors) {
+        if (!w.has(t.name)) continue; // left in the file: decode copy below
         v[t.name] = WView{&t, w[t.name], t.row_bytes(), K_RAW};
         if (t.name != "token_embd.weight" && planar_kind(t) != K_RAW && t.type != G_Q6_K)
             scratch_bytes = std::max<size_t>(scratch_bytes, t.bytes);
@@ -602,9 +609,30 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
         ++n;
     }
     if (scratch) d.release(scratch);
+    // tensors the upload left in the file (Weights::upload skip = dec_target): only their decode copy goes on the card
+    size_t fb = 0, nd = 0, dec_bytes = 0;
+    for (auto &t : g.tensors)
+        if (!w.has(t.name)) {
+            if (!dec_target(t)) throw std::runtime_error("planarize: " + t.name + " is not on the card and has no decode copy");
+            fb = std::max<size_t>(fb, t.bytes);
+        }
+    if (fb) {
+        uint8_t *file = d.alloc<uint8_t>(fb);
+        for (auto &t : g.tensors) {
+            if (w.has(t.name)) continue;
+            const size_t rb = dec_stride(t);
+            uint8_t *dst = d.alloc<uint8_t>(rb * (size_t)t.rows());
+            w.fetch(d, g, t, file);
+            dec_repack(d.q, t, file, dst).wait();
+            v[t.name] = WView{&t, dst, rb, dec_kind(t)};
+            ++nd;
+            dec_bytes += rb * (size_t)t.rows();
+        }
+        d.release(file);
+    }
     if (verbose)
-        std::fprintf(stderr, "[ink] planar layout for %zu tensors in %.2f s (%.2f GB extra for Q6_K rows)\n", n, now_s() - t0,
-                     extra / 1e9);
+        std::fprintf(stderr, "[ink] planar layout for %zu tensors, decode copies only for %zu (%.2f GB), %.2f s (%.2f GB extra for Q6_K rows)\n",
+                     n, nd, dec_bytes / 1e9, now_s() - t0, extra / 1e9);
     return v;
 }
 

@@ -45,6 +45,7 @@ struct Engine {
     float *hb = nullptr, *yk = nullptr, *moe = nullptr, *ffn_out = nullptr, *tau = nullptr, *fin = nullptr, *lg = nullptr;
     int32_t *eids = nullptr;
     int ldp = 0;
+    int prow = 0; // score rows (tokens) P holds; a step's attention runs in chunks of prow tokens
     float *mix_inv = nullptr, *mix_sc = nullptr;
     // the loop mixes of a whole pass at its start (their states are fixed for the pass): INK_LOOP_PRE=0 one per layer
     bool loop_pre = true;
@@ -130,7 +131,12 @@ struct Engine {
         sinks = d.alloc<float>((size_t)h.n_head * T);
         tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
         ldp = cap;
-        P = d.alloc<float>((size_t)ldp * h.n_head * T);
+        { // score rows: as many tokens as fit INK_P_MB MiB (default 512), a multiple of 16, at least 16, at most T
+            const double mb = std::getenv("INK_P_MB") ? std::atof(std::getenv("INK_P_MB")) : 512.0;
+            const long rows = (long)(mb * 1048576.0 / ((double)ldp * h.n_head * 4.0));
+            prow = (int)std::min<long>(T, std::max<long>(16, rows / 16 * 16));
+        }
+        P = d.alloc<float>((size_t)ldp * h.n_head * prow);
         nsgmax = cap / 16 + 2;
         wmax = d.alloc<float>((size_t)16 * h.n_head * nsgmax);
         pinv = d.alloc<float>((size_t)16 * h.n_head);
@@ -176,7 +182,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
-            const bool dec = !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC"));
+            const bool dec = dec_on();
             auto mk = [&](const W &w) {
                 WView v = w.view();
                 if (!dec || !w || v.kind != K_RAW || dec_kind(*w.t) == K_RAW) return v;
@@ -556,30 +562,38 @@ struct Engine {
             // writing steps (<= 16 tokens, transposed cache): scores 3 heads per key, softmax sums only (the maximum
             // from the scores' sub-group maxima), P.V normalizes as it reads; the same values as the general kernels
             const bool fast = !tiles && dec_attn && ntok <= 16 && vld > 0 && nh == 3 * nkvh;
-            if (tiles)
-                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, pos0,
-                                                                                         ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp, kmask[il]));
-            else if (fast)
-                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_g<3>(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent,
-                                                                                  win, kscale, P, ldp, wmax, nsgmax, kmask[il]));
-            else
-                pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Q, Kc[il], tab, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp, kmask[il]));
-            if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sinks, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, pinv));
-            else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sinks, pos0, ntok, nh, win, P, ldp));
-            // P.V in the block order (fused.hpp attn_pv_bo_part): tiles from 64 tokens, else the block kernels 16 tokens at a time
-            if (tiles && ntok >= 64) {
-                pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], pos0, ntok, nh, nkvh, hd, win, gate, att, kmask[il]));
-            } else {
-                for (int c0 = 0; c0 < ntok; c0 += 16) {
-                    const int nt = std::min(16, ntok - c0), p0 = pos0 + c0;
+            // in chunks of prow query tokens: the score buffer P holds prow rows of the whole context (each row's
+            // values do not depend on the other rows of its step)
+            for (int q0 = 0; q0 < ntok; q0 += prow) {
+                const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
+                const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
+                const float *tc = tab + (size_t)q0 * nh * h.rel_extent;
+                float *ac = att + (size_t)q0 * nh * hd;
+                if (tiles)
+                    pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel,
+                                                                                             f32(l.rel_bias), h.n_rel, qp, nc, nh, nkvh, hd,
+                                                                                             h.rel_extent, win, kscale, P, ldp, kmask[il]));
+                else if (fast)
+                    pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_g<3>(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent,
+                                                                                      win, kscale, P, ldp, wmax, nsgmax, kmask[il]));
+                else
+                    pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, win,
+                                                                                 kscale, P, ldp, kmask[il]));
+                if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv));
+                else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sc, qp, nc, nh, win, P, ldp));
+                // P.V in the block order (fused.hpp attn_pv_bo_part): tiles from 64 tokens, else the block kernels 16 tokens at a time
+                if (tiles && nc >= 64) {
+                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc, ac,
+                                                                                kmask[il]));
+                    continue;
+                }
+                for (int c0 = 0; c0 < nc; c0 += 16) {
+                    const int nt = std::min(16, nc - c0), p0 = qp + c0;
                     const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
-                    const float *pin = fast ? pinv : nullptr;
-                    {
-                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0, nt, nh,
-                                                                                  nkvh, hd, win, pvpart, nblk, pin, kmask[il]));
-                        pr(swa ? "attn_pv_sum" : "attn_pv_sum_full", fz::attn_pv_bo_sum(d.q, pvpart, nblk, p0, nt, nh, hd, win,
-                                                                                        gate + (size_t)c0 * nh * hd, att + (size_t)c0 * nh * hd));
-                    }
+                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part<3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0, nt, nh,
+                                                                              nkvh, hd, win, pvpart, nblk, fast ? pinv : nullptr, kmask[il]));
+                    pr(swa ? "attn_pv_sum" : "attn_pv_sum_full", fz::attn_pv_bo_sum(d.q, pvpart, nblk, p0, nt, nh, hd, win,
+                                                                                    gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
                 }
             }
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
@@ -611,7 +625,6 @@ struct Engine {
                                                                               h.expert_scale, eids, wts, ntok));
             {   // gate and up rows of each chosen expert in one sub-group, then SITU (gate rows 0..nff-1, up nff..2nff-1)
                 const W &gw = l.gate_up;
-                const size_t es = gw.rb * (size_t)gw.t->ne[1];
                 const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
                 const WView &gv = gu_dec[ip], &dv = dn_dec[ip];
                 const size_t gs = gv.rb * (size_t)gw.t->ne[1];
@@ -621,12 +634,13 @@ struct Engine {
                 } else if (ntok >= tile_min && Xt) {
                     // many tokens: tiles of 16 slots of one expert, one slot per lane, weights decoded once per tile
                     // (tok_tiles.hpp, any expert format; bench_moe 512 tokens: NVFP4 gate|up 18.7 -> 8.8 ms, down
-                    // 10.4 -> 4.3; layers 20-23 gate|up 25-42 -> 8-14.5, down 17-19 -> 3.7-4.1)
+                    // 10.4 -> 4.3; layers 20-23 on their decode copies (the only copy when ink_run skips the file
+                    // layout) gate|up 25-42 -> 8.2-8.9, down 17-19 -> 3.9-4.1)
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
-                    pr("moe_gate_up", slot_pair_g(d.q, gw.view(), gw.p + (size_t)h.n_ff * gw.rb, es, h.n_ff, grp, tiles, Xt, so, Ht, 2));
-                    pr("moe_down", slot_rows_g(d.q, l.down.view(), grp, tiles, Ht, yk, E, 2));
+                    pr("moe_gate_up", slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
+                    pr("moe_down", slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));

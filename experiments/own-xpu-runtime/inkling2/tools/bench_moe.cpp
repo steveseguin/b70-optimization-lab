@@ -378,6 +378,34 @@ int main(int argc, char **argv) {
                     double ud = timeit([&](int) { slot_rows_g(d.q, vd, grp, tiles, Ht, y1, E, 2); });
                     d.get(z1.data(), y1, z1.size());
                     long badd = cmp(z0, z1);
+                    { // the same tiles on the decode copies (gemv2.hpp dec_repack): same bits as the file layout's
+                        auto mkd = [&](const Tensor *t, const WView &v) {
+                            WView o = v;
+                            if (dec_kind(*t) == K_RAW) return o;
+                            o.kind = dec_kind(*t); o.rb = dec_stride(*t);
+                            uint8_t *b = d.alloc<uint8_t>(o.rb * (size_t)t->rows());
+                            dec_repack(d.q, *t, v.p, b).wait();
+                            o.p = b;
+                            return o;
+                        };
+                        WView dg = mkd(tg, vg), dd = mkd(td, vd);
+                        const size_t egd = dg.rb * (size_t)tg->ne[1];
+                        std::vector<float> ht1((size_t)nt * NFF * MOE_TS);
+                        double ue = timeit([&](int) { SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
+                                                      slot_pair_g(d.q, dg, dg.p + (size_t)NFF * dg.rb, egd, NFF, grp, tiles, Xt, so, Ht, 2); });
+                        d.get(ht1.data(), Ht, ht1.size());
+                        const bool sg_same = std::memcmp(ht1.data(), ht.data(), ht.size() * 4) == 0;
+                        tile_gather(d.q, grp, tiles, hb, NFF, 0, NFF, Ht).wait();
+                        std::vector<float> z2(z1.size());
+                        d.q.memset(y1, 0, z1.size() * 4).wait();
+                        double uf = timeit([&](int) { slot_rows_g(d.q, dd, grp, tiles, Ht, y1, E, 2); });
+                        d.get(z2.data(), y1, z2.size());
+                        const bool sd_same = std::memcmp(z2.data(), z1.data(), z1.size() * 4) == 0;
+                        std::printf("  layer %d decode copies: gate_up tiles %9.1f us %s   down tiles %9.1f us %s\n", l, ue,
+                                    sg_same ? "same" : "DIFF", uf, sd_same ? "same" : "DIFF");
+                        if (dg.p != vg.p) d.release((void *)dg.p);
+                        if (dd.p != vd.p) d.release((void *)dd.p);
+                    }
                     std::printf("  layer %d %s/%s: gate_up %9.1f -> %9.1f us %s   down %9.1f -> %9.1f us %s\n", l, type_name(tg->type),
                                 type_name(td->type), ua, ub, badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str(), uc, ud,
                                 badd < 0 ? "same" : ("DIFF at " + std::to_string(badd)).c_str());

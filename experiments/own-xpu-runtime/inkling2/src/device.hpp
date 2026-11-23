@@ -3,6 +3,7 @@
 // uploaded in PIECE-sized copies from a plain (not pinned) host buffer: single copies of 512 MiB or more read the
 // runtime's temporary host mapping and faulted on these cards (lab note gpu-fault-20260916).
 #pragma once
+#include <functional>
 #include "gguf.hpp"
 #include <chrono>
 #include <cstdio>
@@ -75,7 +76,8 @@ struct Device {
     int index = -1;
     std::string pci;
     std::vector<void *> owned;
-    size_t allocated = 0;
+    std::vector<size_t> owned_bytes; // the size of each owned allocation
+    size_t allocated = 0;            // bytes in use (alloc minus release)
 
     explicit Device(int idx) : index(idx) {
         auto all = cards();
@@ -104,11 +106,19 @@ struct Device {
         return dev.get_info<sycl::ext::intel::info::device::free_memory>();
     }
 
+    // xe does not fail an allocation past the card's memory: it moves memory out to host RAM. alloc() refuses to go
+    // past the card's size minus INK_MEM_RESERVE_MB (default 1024) instead.
     template <class T = uint8_t> T *alloc(size_t count) {
         size_t bytes = count * sizeof(T);
+        static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 1024) << 20;
+        const size_t limit = total_mem() > reserve ? total_mem() - reserve : 0;
+        if (allocated + bytes > limit)
+            throw std::runtime_error("device: " + std::to_string(bytes >> 20) + " MiB more would pass the card's memory (" +
+                                     std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) + " MiB)");
         void *p = sycl::malloc_device(bytes ? bytes : 1, dev, ctx);
         if (!p) throw std::runtime_error("device: allocation of " + std::to_string(bytes) + " bytes failed");
         owned.push_back(p);
+        owned_bytes.push_back(bytes);
         allocated += bytes;
         return (T *)p;
     }
@@ -117,6 +127,8 @@ struct Device {
         auto it = std::find(owned.begin(), owned.end(), p);
         if (it == owned.end()) throw std::runtime_error("device: release of a pointer it does not own");
         sycl::free(p, ctx);
+        allocated -= owned_bytes[it - owned.begin()];
+        owned_bytes.erase(owned_bytes.begin() + (it - owned.begin()));
         owned.erase(it);
     }
     template <class T> T *alloc_zero(size_t count) {
@@ -136,13 +148,16 @@ struct Weights {
     size_t bytes = 0;
     double seconds = 0;
 
-    void upload(Device &d, const GGUF &g, bool verbose = true) {
+    // skip: tensors left in the file (their card layout is made elsewhere from fetch(), e.g. planarize's decode copies)
+    void upload(Device &d, const GGUF &g, bool verbose = true, const std::function<bool(const Tensor &)> &skip = {}) {
         double t0 = now_s();
         // place tensors into arenas in file order
         struct Slot { const Tensor *t; size_t arena, off; };
         std::vector<Slot> slots;
         std::vector<size_t> arena_sz;
+        size_t nskip = 0, skipped = 0;
         for (auto &t : g.tensors) {
+            if (skip && skip(t)) { ++nskip; skipped += t.bytes; continue; }
             size_t padded = (t.bytes + 255) & ~(size_t)255;
             if (padded > ARENA) throw std::runtime_error("weights: tensor larger than an arena: " + t.name);
             if (arena_sz.empty() || arena_sz.back() + padded > ARENA) arena_sz.push_back(0);
@@ -151,17 +166,30 @@ struct Weights {
         }
         std::vector<uint8_t *> arenas;
         for (size_t s : arena_sz) arenas.push_back(d.alloc<uint8_t>(s));
-        // two staging buffers so a read overlaps the previous copy
+        std::vector<std::pair<const Tensor *, uint8_t *>> list;
+        for (auto &s : slots) list.push_back({s.t, arenas[s.arena] + s.off});
+        copy_in(d, g, list);
+        for (auto &s : slots) ptr[s.t->name] = arenas[s.arena] + s.off;
+        seconds = now_s() - t0;
+        if (verbose)
+            std::fprintf(stderr, "[ink] uploaded %zu tensors, %.2f GB in %zu arenas, %.1f s (%.2f GB/s)%s\n", slots.size(),
+                         bytes / 1e9, arenas.size(), seconds, bytes / 1e9 / seconds,
+                         nskip ? (", " + std::to_string(nskip) + " tensors (" + std::to_string(skipped / 1000000) +
+                                  " MB) left for their own layout").c_str() : "");
+    }
+    // one tensor's file bytes to dst on the card (waits)
+    void fetch(Device &d, const GGUF &g, const Tensor &t, uint8_t *dst) { copy_in(d, g, {{&t, dst}}); }
+    // file bytes of each tensor to its card address: two staging buffers so a read overlaps the previous copy
+    void copy_in(Device &d, const GGUF &g, const std::vector<std::pair<const Tensor *, uint8_t *>> &list) {
         uint8_t *stage[2] = {(uint8_t *)aligned_alloc(4096, PIECE + 8192), (uint8_t *)aligned_alloc(4096, PIECE + 8192)};
         if (!stage[0] || !stage[1]) throw std::runtime_error("weights: staging allocation failed");
         int dfd = ::open(g.path.c_str(), O_RDONLY | O_DIRECT); // bulk reads bypass the page cache when possible
         sycl::event pending[2];
         int cur = 0;
-        for (auto &s : slots) {
-            uint8_t *dst = arenas[s.arena] + s.off;
-            uint64_t fbase = g.data_off + s.t->off;
-            for (size_t done = 0; done < s.t->bytes;) {
-                size_t n = std::min(PIECE, (size_t)s.t->bytes - done);
+        for (auto &[t, dst] : list) {
+            uint64_t fbase = g.data_off + t->off;
+            for (size_t done = 0; done < t->bytes;) {
+                size_t n = std::min(PIECE, (size_t)t->bytes - done);
                 pending[cur].wait(); // the buffer we are about to fill is free again
                 uint64_t fo = fbase + done, a0 = fo & ~(uint64_t)4095;
                 size_t lead = (size_t)(fo - a0), want = (lead + n + 4095) & ~(size_t)4095;
@@ -176,17 +204,12 @@ struct Weights {
                 bytes += n;
                 cur ^= 1;
             }
-            ptr[s.t->name] = dst;
         }
         pending[0].wait();
         pending[1].wait();
         if (dfd >= 0) ::close(dfd);
         free(stage[0]);
         free(stage[1]);
-        seconds = now_s() - t0;
-        if (verbose)
-            std::fprintf(stderr, "[ink] uploaded %zu tensors, %.2f GB in %zu arenas, %.1f s (%.2f GB/s)\n", slots.size(),
-                         bytes / 1e9, arenas.size(), seconds, bytes / 1e9 / seconds);
     }
     uint8_t *operator[](const std::string &n) const {
         auto it = ptr.find(n);

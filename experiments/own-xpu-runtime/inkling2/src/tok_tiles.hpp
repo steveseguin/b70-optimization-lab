@@ -147,6 +147,70 @@ template <> struct LaneDec<pl::Raw<fmt::F<G_Q5_K>>> {
         }
     }
 };
+// the decode copies of the same formats (planar.hpp Q5_0P ... Q5_KP): lane l reads byte l of the chunk's 16 nibble
+// bytes (codes l and l + 16); every value with the same expression as the file-layout decoders above
+template <> struct LaneDec<pl::Q5_0P> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int cols, int c, int l, float &lo, float &hi) {
+        const uint8_t q = row[16 * c + l];
+        uint32_t hb;
+        std::memcpy(&hb, row + cols / 2 + 4 * c, 4);
+        const float d = pl::h2f16(pl::ld16(row + cols / 2 + cols / 8 + 2 * c));
+        const int32_t x0 = ((q & 0x0F) | (int)(((hb >> l) & 1u) << 4)) - 16;
+        const int32_t x1 = ((q >> 4) | (int)(((hb >> (l + 16)) & 1u) << 4)) - 16;
+        lo = x0 * d;
+        hi = x1 * d;
+    }
+};
+template <> struct LaneDec<pl::IQ4_NLP> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int cols, int c, int l, float &lo, float &hi) {
+        const uint8_t q = row[16 * c + l];
+        const float d = pl::h2f16(pl::ld16(row + cols / 2 + 2 * c));
+        lo = d * fmt::kv_nl(q & 0xf);
+        hi = d * fmt::kv_nl(q >> 4);
+    }
+};
+template <> struct LaneDec<pl::IQ4_XSP> {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int cols, int c, int l, float &lo, float &hi) {
+        const uint8_t q = row[16 * c + l];
+        const int ls = (int8_t)row[cols / 2 + c];
+        const float d = pl::h2f16(pl::ld16(row + cols / 2 + cols / 32 + 2 * (c >> 3)));
+        const float dl = d * ls;
+        lo = dl * fmt::kv_nl(q & 0xf);
+        hi = dl * fmt::kv_nl(q >> 4);
+    }
+};
+template <bool Q5> struct LaneDecQK {
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int cols, int c, int l, float &lo, float &hi) {
+        using P = pl::QK_P<Q5>;
+        const uint8_t q = row[16 * c + l];
+        const size_t sm = P::off_sm(cols);
+        const uint16_t scm = pl::ld16(row + sm + 2 * c);
+        uint32_t dm;
+        std::memcpy(&dm, row + sm + cols / 16 + 4 * (c >> 3), 4);
+        const float d = pl::h2f16((uint16_t)dm), mn = pl::h2f16((uint16_t)(dm >> 16));
+        const uint8_t sc = (uint8_t)scm, m = (uint8_t)(scm >> 8);
+        const float d1 = d * sc, m1 = mn * m;
+        int q0 = q & 0xF, q1 = q >> 4;
+        if constexpr (Q5) {
+            uint32_t hb;
+            std::memcpy(&hb, row + cols / 2 + 4 * c, 4);
+            q0 += ((hb >> l) & 1u) ? 16 : 0;
+            q1 += ((hb >> (l + 16)) & 1u) ? 16 : 0;
+        }
+        lo = d1 * q0 - m1;
+        hi = d1 * q1 - m1;
+    }
+};
+template <> struct LaneDec<pl::Q4_KP> : LaneDecQK<false> {};
+template <> struct LaneDec<pl::Q5_KP> : LaneDecQK<true> {};
 template <> struct LaneDec<pl::NVFP4P> { // lane l decodes byte l: values 16k + b (low code) and 16k + 8 + b (high)
     static constexpr int src(int i) { return 8 * (i >> 4) + (i & 7); }
     static constexpr bool hi(int i) { return (i >> 3) & 1; }
