@@ -281,30 +281,39 @@ inline sycl::event attn_pv(sycl::queue &q, const float *P, int ldp, const sycl::
 // per token: p = sigmoid(logit); top nu of p + bias (ties: lower index first); w = p[sel] / (sum + 1e-20) * wscale
 inline sycl::event moe_route(sycl::queue &q, const float *logits, const float *bias, int ne, int nu, float wscale,
                              int32_t *ids, float *wts, int ntok) {
-    return q.parallel_for(sycl::range<1>((size_t)ntok), [=](sycl::id<1> id) {
-        int t = (int)id[0];
-        const float *lg = logits + (size_t)t * ne;
-        float p[128], sel[128];
-        for (int e = 0; e < ne; ++e) {
-            p[e] = 1.0f / (1.0f + sycl::exp(-lg[e]));
-            sel[e] = bias ? p[e] + bias[e] : p[e];
-        }
-        int32_t *ix = ids + (size_t)t * nu;
-        float *w = wts + (size_t)t * nu;
-        for (int k = 0; k < nu; ++k) {
-            int b = -1;
-            for (int e = 0; e < ne; ++e) {
-                bool taken = false;
-                for (int m = 0; m < k; ++m) taken |= ix[m] == e;
-                if (!taken && (b < 0 || sel[e] > sel[b])) b = e;
+    // one work-group per token, one thread per expert; each of the nu picks is the largest remaining score, the lowest
+    // expert index among equal scores (the same choice as a serial first-strictly-greater scan)
+    constexpr int RW = 128;
+    if (ne > RW || nu > 16) throw std::runtime_error("moe_route: more than 128 experts or 16 picks");
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> pl(RW, h);
+        sycl::local_accessor<int, 1> pick(16, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * RW), sycl::range<1>(RW)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            int t = (int)it.get_group(0), e = (int)it.get_local_id(0);
+            auto grp = it.get_group();
+            float p = 0.0f, sel = -INFINITY;
+            if (e < ne) {
+                p = 1.0f / (1.0f + sycl::exp(-logits[(size_t)t * ne + e]));
+                sel = bias ? p + bias[e] : p;
             }
-            ix[k] = b;
-            w[k] = p[b];
-        }
-        float s = 0.0f;
-        for (int k = 0; k < nu; ++k) s += w[k];
-        s = s * 1.0f + 1e-20f;
-        for (int k = 0; k < nu; ++k) w[k] = (w[k] / s) * wscale;
+            pl[e] = p;
+            for (int k = 0; k < nu; ++k) {
+                float m = sycl::reduce_over_group(grp, sel, sycl::maximum<float>());
+                int b = sycl::reduce_over_group(grp, (e < ne && sel == m) ? e : RW, sycl::minimum<int>());
+                if (e == b) sel = -INFINITY;
+                if (e == 0) pick[k] = b;
+            }
+            sycl::group_barrier(grp);
+            if (e == 0) {
+                int32_t *ix = ids + (size_t)t * nu;
+                float *w = wts + (size_t)t * nu;
+                float s = 0.0f;
+                for (int k = 0; k < nu; ++k) { ix[k] = pick[k]; w[k] = pl[pick[k]]; s += w[k]; }
+                s = s * 1.0f + 1e-20f;
+                for (int k = 0; k < nu; ++k) w[k] = (w[k] / s) * wscale;
+            }
+        });
     });
 }
 // SITU (llama-graph.cpp LLM_FFN_SITU): gu rows [K][2*nff] (gate | up), each times the slot's expert scale (if any);

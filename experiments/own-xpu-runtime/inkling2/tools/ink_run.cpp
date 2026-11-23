@@ -19,10 +19,16 @@ int main(int argc, char **argv) {
         Weights w;
         w.upload(d, g);
         bool dumping = std::getenv("INK_DUMP") != nullptr;
-        Engine e(d, g, w, ctx, ub, dumping);
+        // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
+        std::map<std::string, WView> views;
+        bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
+        if (planar) views = planarize(d, g, w);
+        Engine e(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
         double t0 = now_s();
         e.feed(tok);
         double t1 = now_s();
+        e.prof.collect(); // the prompt
+        e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
         std::vector<int> out;
         for (int i = 0; i < n_gen; ++i) {
             int b = e.argmax_last();
@@ -31,6 +37,7 @@ int main(int argc, char **argv) {
             if (i + 1 == n_gen) break;
             e.all_logits = false;
             e.feed({b});
+            e.prof.collect();
         }
         double t2 = now_s();
         std::printf("ids:");
@@ -38,6 +45,7 @@ int main(int argc, char **argv) {
         std::printf("\n");
         std::fprintf(stderr, "[ink] prompt %zu tokens %.3f s (%.1f tok/s); generated %zu in %.3f s (%.2f tok/s)\n", tok.size(),
                      t1 - t0, tok.size() / (t1 - t0), out.size(), t2 - t1, out.size() > 1 ? (out.size() - 1) / (t2 - t1) : 0.0);
+        e.prof.report(stderr);
     } catch (std::exception &ex) {
         std::fprintf(stderr, "error: %s\n", ex.what());
         return 1;

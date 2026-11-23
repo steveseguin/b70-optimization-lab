@@ -17,7 +17,7 @@ int main(int argc, char **argv) {
     std::normal_distribution<float> nd(0.0f, 1.0f);
     bool ok = true;
     for (auto &t : g.tensors) {
-        if (t.ne.size() < 2 || t.ne[0] % 32 || t.type == G_I32) continue;
+        if (t.n_dims < 2 || t.ne[0] % 32 || t.type == G_I32) continue;
         if (++seen[t.type] > 2) continue;
         int cols = (int)t.ne[0], rows = (int)std::min<int64_t>(t.rows(), 4096); // first 4096 rows (an expert slice)
         size_t rb = t.row_bytes();

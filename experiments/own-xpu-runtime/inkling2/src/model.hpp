@@ -1,7 +1,7 @@
 // model.hpp: Inkling-2 hyperparameters, the 48-application schedule over 24 physical layers, and the weights on
 // the card. Everything is read from the GGUF metadata (keys as in src/models/inkling2.cpp load_arch_hparams).
 #pragma once
-#include "device.hpp"
+#include "gemv2.hpp"
 #include <cmath>
 
 namespace ink {
@@ -67,7 +67,11 @@ struct HParams {
 };
 
 // one physical layer's tensors (pointers into the card arenas plus the tensor descriptions)
-struct W { const Tensor *t = nullptr; const uint8_t *p = nullptr; explicit operator bool() const { return t; } };
+struct W {
+    const Tensor *t = nullptr; const uint8_t *p = nullptr; size_t rb = 0; int kind = 0;
+    explicit operator bool() const { return t; }
+    WView view() const { return WView{t, p, rb, kind}; }
+};
 struct Layer {
     W wq, wk, wv, wo, wgate, q_clip, sink, rel, rel_bias, rel_clip;
     W k_conv, v_conv, attn_post_conv, ffn_post_conv;
@@ -81,13 +85,19 @@ struct Model {
     std::vector<Layer> L;
     W tok_embd, tok_norm, output, output_norm, output_res_query, loop_res_query, loop_kv_res_query;
 
-    void bind(const GGUF &g, const Weights &wt) {
+    // views: the card layout of each tensor (planarize()); without it, every tensor in the file layout
+    void bind(const GGUF &g, const Weights &wt, const std::map<std::string, WView> *views = nullptr) {
         hp.load(g);
         auto get = [&](const std::string &n, bool need = true) {
             W w;
             w.t = g.find(n);
             if (!w.t) { if (need) throw std::runtime_error("model: missing " + n); return w; }
             w.p = wt[n];
+            w.rb = w.t->row_bytes();
+            if (views) {
+                const WView &v = views->at(n);
+                w.p = v.p; w.rb = v.rb; w.kind = v.kind;
+            }
             return w;
         };
         tok_embd = get("token_embd.weight");

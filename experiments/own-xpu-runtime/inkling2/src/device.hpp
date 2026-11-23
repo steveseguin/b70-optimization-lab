@@ -10,10 +10,51 @@
 #include <fcntl.h>
 #include <string>
 #include <sycl/sycl.hpp>
+#include <algorithm>
+#include <map>
 #include <unistd.h>
 #include <vector>
 
 namespace ink {
+
+// per-label GPU time of the launches of a run (INK_PROF=1); add() is a no-op when off
+struct Prof {
+    bool on = std::getenv("INK_PROF") && std::atoi(std::getenv("INK_PROF"));
+    std::vector<std::pair<std::string, sycl::event>> ev;
+    struct Row { double ms = 0; long n = 0; };
+    std::map<std::string, Row> rows;
+    double busy_ms = 0, span_ms = 0;
+    long steps = 0;
+    void add(const std::string &label, sycl::event e) { if (on) ev.emplace_back(label, e); }
+    void clear() { ev.clear(); }
+    // fold the launches since the last collect into the table (after the queue has drained)
+    void collect() {
+        if (!on || ev.empty()) return;
+        uint64_t first = UINT64_MAX, last = 0;
+        for (auto &[l, e] : ev) {
+            uint64_t a = e.get_profiling_info<sycl::info::event_profiling::command_start>();
+            uint64_t b = e.get_profiling_info<sycl::info::event_profiling::command_end>();
+            rows[l].ms += (b - a) * 1e-6; rows[l].n++;
+            busy_ms += (b - a) * 1e-6;
+            first = std::min(first, a); last = std::max(last, b);
+        }
+        span_ms += (last - first) * 1e-6;
+        steps++;
+        ev.clear();
+    }
+    void report(FILE *f) const {
+        if (!steps) return;
+        std::vector<std::pair<std::string, Row>> v(rows.begin(), rows.end());
+        std::sort(v.begin(), v.end(), [](auto &a, auto &b) { return a.second.ms > b.second.ms; });
+        long launches = 0;
+        for (auto &r : v) launches += r.second.n;
+        std::fprintf(f, "[prof] %ld steps: span %.3f ms/step, kernels busy %.3f ms/step, %.1f launches/step\n", steps,
+                     span_ms / steps, busy_ms / steps, (double)launches / steps);
+        for (auto &[l, r] : v)
+            std::fprintf(f, "[prof] %-28s %8.3f ms/step %6.1f launches/step %8.2f us each\n", l.c_str(), r.ms / steps,
+                         (double)r.n / steps, 1e3 * r.ms / r.n);
+    }
+};
 
 inline double now_s() {
     return std::chrono::duration<double>(std::chrono::steady_clock::now().time_since_epoch()).count();
@@ -42,7 +83,11 @@ struct Device {
             throw std::runtime_error("device: card " + std::to_string(idx) + " not found (" + std::to_string(all.size()) + " GPUs)");
         dev = all[idx];
         ctx = sycl::context(dev);
-        q = sycl::queue(ctx, dev, sycl::property::queue::in_order{});
+        // INK_PROF=1: kernel timestamps for the profiler (the queue stays in order)
+        if (std::getenv("INK_PROF") && std::atoi(std::getenv("INK_PROF")))
+            q = sycl::queue(ctx, dev, sycl::property_list{sycl::property::queue::in_order{}, sycl::property::queue::enable_profiling{}});
+        else
+            q = sycl::queue(ctx, dev, sycl::property::queue::in_order{});
         if (dev.has(sycl::aspect::ext_intel_pci_address)) pci = dev.get_info<sycl::ext::intel::info::device::pci_address>();
     }
     ~Device() {
@@ -66,6 +111,13 @@ struct Device {
         owned.push_back(p);
         allocated += bytes;
         return (T *)p;
+    }
+    // free one allocation made by alloc()
+    void release(void *p) {
+        auto it = std::find(owned.begin(), owned.end(), p);
+        if (it == owned.end()) throw std::runtime_error("device: release of a pointer it does not own");
+        sycl::free(p, ctx);
+        owned.erase(it);
     }
     template <class T> T *alloc_zero(size_t count) {
         T *p = alloc<T>(count);

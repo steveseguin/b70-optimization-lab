@@ -37,9 +37,10 @@ struct Engine {
     int32_t *eids = nullptr;
     int ldp = 0;
 
-    Engine(Device &dev, const GGUF &gg, const Weights &wt, int capacity, int ubatch = 512, bool every_logit = false)
+    Engine(Device &dev, const GGUF &gg, const Weights &wt, int capacity, int ubatch = 512, bool every_logit = false,
+           const std::map<std::string, WView> *views = nullptr)
         : d(dev), g(gg), T(ubatch), cap(capacity), all_logits(every_logit) {
-        m.bind(g, wt);
+        m.bind(g, wt, views);
         const HParams &h = m.hp;
         const size_t E = (size_t)h.n_embd * T, QD = (size_t)h.n_head * h.head_dim * T;
         const int kd = h.n_head_kv * h.head_dim;
@@ -80,16 +81,34 @@ struct Engine {
         d.q.memset(conv, 0, sizeof(float) * (size_t)conv_n * m.hp.n_app).wait();
     }
 
+    // launch shapes per layout (tools/bench_gemv, card 3, 2026-11-22): rows per sub-group R, sub-groups per group
+    static Tune tune(const W &w) {
+        switch (w.kind) {
+        case K_Q8_0P: return {2, 2};
+        case K_Q6_KP: return w.t->rows() > 100000 ? Tune{1, 2} : Tune{2, 2};
+        default: return {2, 4};
+        }
+    }
+    static Tune tune_routed(const W &w) { return w.kind == K_NVFP4P ? Tune{1, 2} : Tune{2, 2}; }
     // y[t] = W x[t] for ntok vectors, eight per launch
     void mm(const W &w, const float *x, float *y, int ntok) {
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
         for (int t0 = 0; t0 < ntok; t0 += 8)
-            gemv(d.q, *w.t, w.p, x + (size_t)t0 * cols, cols, y + (size_t)t0 * rows, rows, std::min(8, ntok - t0));
+            pr(wlabel(w), gemv_v(d.q, w.view(), x + (size_t)t0 * cols, cols, y + (size_t)t0 * rows, rows, std::min(8, ntok - t0), tune(w)));
     }
     const float *f32(const W &w) const {
         if (!w) return nullptr;
         if (w.t->type != G_F32) throw std::runtime_error("engine: expected F32 tensor " + w.t->name);
         return (const float *)w.p;
+    }
+    Prof prof;
+    void pr(const std::string &label, sycl::event e) { prof.add(label, e); }
+    static std::string wlabel(const W &w) {
+        const std::string &n = w.t->name;
+        size_t a = n.rfind(".weight");
+        std::string s = n.substr(0, a);
+        if (s.compare(0, 4, "blk.") == 0) s = s.substr(s.find('.', 4) + 1);
+        return "w:" + s;
     }
     std::string nm(const char *s, int il) const { return std::string(s) + "-" + std::to_string(il); }
 
@@ -101,18 +120,18 @@ struct Engine {
         for (int s = 0; s < nb; ++s) a.st[s] = blocks[nb - 1 - s];
         a.st[nb] = cur;
         a.ns = nb + 1;
-        ops::mix(d.q, a, m.hp.n_embd, query, nq, out, n, n_tok);
+        pr("mix", ops::mix(d.q, a, m.hp.n_embd, query, nq, out, n, n_tok));
     }
     // control(cur, msg, layer, module) (inkling2.cpp:237) into y
     void control(const float *cur, const float *mg, const Layer &l, int mod, float *y) {
         const HParams &h = m.hp;
         int n = n_tok, E = h.n_embd;
-        ops::rms_norm(d.q, cur, ctl_h, nullptr, E, n, 1e-6f, E, 2 * E);
-        ops::rms_norm(d.q, mg, ctl_h + E, nullptr, E, n, 1e-6f, E, 2 * E);
+        pr("rms_norm", ops::rms_norm(d.q, cur, ctl_h, nullptr, E, n, 1e-6f, E, 2 * E));
+        pr("rms_norm", ops::rms_norm(d.q, mg, ctl_h + E, nullptr, E, n, 1e-6f, E, 2 * E));
         mm(l.loop_down[mod], ctl_h, ctl_z, n);
         mm(l.loop_gain[mod], ctl_z, ctl_g, n);
         mm(l.loop_forget[mod], ctl_z, ctl_f, n);
-        ops::control_out(d.q, cur, mg, ctl_f, ctl_g, y, (size_t)n * E);
+        pr("control_out", ops::control_out(d.q, cur, mg, ctl_f, ctl_g, y, (size_t)n * E));
     }
 
     int n_tok = 0;
@@ -136,8 +155,8 @@ struct Engine {
             d.put(tau, tv.data(), ntok);
         }
         // embedding and token norm (inkling2.cpp:347-352)
-        ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok);
-        ops::rms_norm(d.q, lbuf[0], lbuf[0], f32(m.tok_norm), E, ntok, h.eps);
+        pr("get_rows", ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok));
+        pr("rms_norm", ops::rms_norm(d.q, lbuf[0], lbuf[0], f32(m.tok_norm), E, ntok, h.eps));
 
         std::vector<const float *> blocks, prelude_blocks, bank;
         const float *cur = lbuf[0], *prelude_cur = nullptr, *bank_last = nullptr;
@@ -181,14 +200,14 @@ struct Engine {
                 dump.put(d, nm("loop_q_inp", il), msg[0], E, ntok);
             }
             if (swa && mg[0]) {
-                for (int j = 0; j < 3; ++j) { ops::rms_norm(d.q, in[j], inp[j], f32(l.attn_norm), E, ntok, h.eps); in[j] = inp[j]; }
+                for (int j = 0; j < 3; ++j) { pr("rms_norm", ops::rms_norm(d.q, in[j], inp[j], f32(l.attn_norm), E, ntok, h.eps)); in[j] = inp[j]; }
             } else if (swa) {
-                ops::rms_norm(d.q, in[0], inp[0], f32(l.attn_norm), E, ntok, h.eps);
+                pr("rms_norm", ops::rms_norm(d.q, in[0], inp[0], f32(l.attn_norm), E, ntok, h.eps));
                 in[0] = in[1] = in[2] = inp[0];
             } else {
-                ops::rms_norm(d.q, in[0], inp[0], f32(l.q_inp_norm), E, ntok, h.eps);
-                ops::rms_norm(d.q, in[1], inp[1], f32(l.k_inp_norm), E, ntok, h.eps);
-                ops::rms_norm(d.q, in[2], inp[2], f32(l.v_inp_norm), E, ntok, h.eps);
+                pr("rms_norm", ops::rms_norm(d.q, in[0], inp[0], f32(l.q_inp_norm), E, ntok, h.eps));
+                pr("rms_norm", ops::rms_norm(d.q, in[1], inp[1], f32(l.k_inp_norm), E, ntok, h.eps));
+                pr("rms_norm", ops::rms_norm(d.q, in[2], inp[2], f32(l.v_inp_norm), E, ntok, h.eps));
                 in[0] = inp[0]; in[1] = inp[1]; in[2] = inp[2];
             }
             // projections, convolutions, clips (inkling2.cpp:446-463)
@@ -197,18 +216,18 @@ struct Engine {
             mm(l.wk, in[1], Kr, ntok);
             mm(l.wv, in[2], Vr, ntok);
             if (!swa) { mm(l.k_conv_proj, in[1], dynK, ntok); mm(l.v_conv_proj, in[2], dynV, ntok); }
-            ops::convolve(d.q, Kr, st, 0, f32(l.k_conv), swa ? nullptr : dynK, nkvh, Kx, kd, ntok);
-            ops::convolve(d.q, Vr, st, kd, f32(l.v_conv), swa ? nullptr : dynV, nkvh, Vx, kd, ntok);
-            ops::conv_store(d.q, Kr, st, 0, kd, ntok);
-            ops::conv_store(d.q, Vr, st, kd, kd, ntok);
+            pr("convolve", ops::convolve(d.q, Kr, st, 0, f32(l.k_conv), swa ? nullptr : dynK, nkvh, Kx, kd, ntok));
+            pr("convolve", ops::convolve(d.q, Vr, st, kd, f32(l.v_conv), swa ? nullptr : dynV, nkvh, Vx, kd, ntok));
+            pr("conv_store", ops::conv_store(d.q, Kr, st, 0, kd, ntok));
+            pr("conv_store", ops::conv_store(d.q, Vr, st, kd, kd, ntok));
             mm(l.rel, in[0], R, ntok);
-            ops::clip(d.q, Q, f32(l.q_clip), nh, hd, nh * ntok, h.qk_clip);
-            ops::clip(d.q, Kx, nullptr, 1, hd, nkvh * ntok, h.qk_clip);
-            ops::rms_norm(d.q, Vx, Vx, nullptr, hd, nkvh * ntok, h.eps);
-            ops::clip(d.q, R, f32(l.rel_clip), nh, h.n_rel, nh * ntok, h.rel_clip);
+            pr("clip", ops::clip(d.q, Q, f32(l.q_clip), nh, hd, nh * ntok, h.qk_clip));
+            pr("clip", ops::clip(d.q, Kx, nullptr, 1, hd, nkvh * ntok, h.qk_clip));
+            pr("rms_norm", ops::rms_norm(d.q, Vx, Vx, nullptr, hd, nkvh * ntok, h.eps));
+            pr("clip", ops::clip(d.q, R, f32(l.rel_clip), nh, h.n_rel, nh * ntok, h.rel_clip));
             if (!swa) {
-                ops::scale_rows(d.q, Q, tau, nh * hd, ntok);
-                ops::scale_rows(d.q, R, tau, nh * h.n_rel, ntok);
+                pr("scale_rows", ops::scale_rows(d.q, Q, tau, nh * hd, ntok));
+                pr("scale_rows", ops::scale_rows(d.q, R, tau, nh * h.n_rel, ntok));
             }
             dump.put(d, nm("Qcur", il), Q, hd, nh, ntok);
             dump.put(d, nm("Kcur", il), Kx, hd, nkvh, ntok);
@@ -216,24 +235,24 @@ struct Engine {
             dump.put(d, nm("Rcur", il), R, h.n_rel, nh, ntok);
             mm(l.sink, in[0], sinks, ntok);
             // attention with the relative bias and the sink (spec 4.7, banded form)
-            ops::kv_store(d.q, Kx, Kc[il], pos0, kd, ntok);
-            ops::kv_store(d.q, Vx, Vc[il], pos0, kd, ntok);
-            ops::rel_table(d.q, R, f32(l.rel_bias), h.n_rel, h.rel_extent, tab, nh, ntok);
+            pr("kv_store", ops::kv_store(d.q, Kx, Kc[il], pos0, kd, ntok));
+            pr("kv_store", ops::kv_store(d.q, Vx, Vc[il], pos0, kd, ntok));
+            pr("rel_table", ops::rel_table(d.q, R, f32(l.rel_bias), h.n_rel, h.rel_extent, tab, nh, ntok));
             const int win = swa ? h.n_swa : 0;
-            ops::attn_softmax(d.q, Q, Kc[il], tab, sinks, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp);
-            ops::attn_pv(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, att);
+            pr("attn_softmax", ops::attn_softmax(d.q, Q, Kc[il], tab, sinks, pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp));
+            pr("attn_pv", ops::attn_pv(d.q, P, ldp, Vc[il], pos0, ntok, nh, nkvh, hd, win, att));
             // output gate, wo, post conv (inkling2.cpp:595-597)
             mm(l.wgate, in[0], gate, ntok);
-            ops::mul_sigmoid(d.q, att, gate, (size_t)ntok * nh * hd);
+            pr("mul_sigmoid", ops::mul_sigmoid(d.q, att, gate, (size_t)ntok * nh * hd));
             mm(l.wo, att, ob, ntok);
-            ops::convolve(d.q, ob, st, 2 * kd, f32(l.attn_post_conv), nullptr, 1, attn_out, E, ntok);
-            ops::conv_store(d.q, ob, st, 2 * kd, E, ntok);
+            pr("convolve", ops::convolve(d.q, ob, st, 2 * kd, f32(l.attn_post_conv), nullptr, 1, attn_out, E, ntok));
+            pr("conv_store", ops::conv_store(d.q, ob, st, 2 * kd, E, ntok));
             // block start or residual (inkling2.cpp:600-605)
             const float *fi;
             if (ip % h.res_block == 0) { blocks.push_back(inpSA); fi = attn_out; }
             else {
                 dump.put(d, nm("attn_out", il), attn_out, E, ntok);
-                ops::add(d.q, inpSA, attn_out, ffn_inp, (size_t)ntok * E);
+                pr("add", ops::add(d.q, inpSA, attn_out, ffn_inp, (size_t)ntok * E));
                 fi = ffn_inp;
             }
             dump.put(d, nm("ffn_inp", il), fi, E, ntok);
@@ -241,30 +260,30 @@ struct Engine {
             mix(blocks, fi, f32(l.ffn_res_query), 1, fx, E);
             const float *xm = fx;
             if (mg[3]) { control(fx, mg[3], l, 3, ctl_y); xm = ctl_y; dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok); }
-            ops::rms_norm(d.q, xm, fx, f32(l.ffn_norm), E, ntok, h.eps);
+            pr("rms_norm", ops::rms_norm(d.q, xm, fx, f32(l.ffn_norm), E, ntok, h.eps));
             mm(l.gate_inp, fx, rlog, ntok);
             const int K = ntok * h.n_used;
-            ops::moe_route(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used, h.expert_scale, eids, wts, ntok);
-            gemv_routed(d.q, *l.gate_up.t, l.gate_up.p, eids, K, fx, E, h.n_used, gu, 2 * h.n_ff);
-            ops::situ(d.q, gu, f32(l.gate_up_s), eids, h.n_ff, h.situ_beta, h.situ_linear_beta, hb, K);
-            gemv_routed(d.q, *l.down.t, l.down.p, eids, K, hb, h.n_ff, 1, yk, E);
-            ops::moe_combine(d.q, yk, f32(l.down_s), eids, wts, h.n_used, E, moe, ntok);
-            ops::convolve(d.q, moe, st, 2 * kd + E, f32(l.ffn_post_conv), nullptr, 1, ffn_out, E, ntok);
-            ops::conv_store(d.q, moe, st, 2 * kd + E, E, ntok);
+            pr("moe_route", ops::moe_route(d.q, rlog, f32(l.exp_probs_b), h.n_expert, h.n_used, h.expert_scale, eids, wts, ntok));
+            pr("moe_gate_up", gemv_routed_v(d.q, l.gate_up.view(), eids, K, fx, E, h.n_used, gu, 2 * h.n_ff, tune_routed(l.gate_up)));
+            pr("situ", ops::situ(d.q, gu, f32(l.gate_up_s), eids, h.n_ff, h.situ_beta, h.situ_linear_beta, hb, K));
+            pr("moe_down", gemv_routed_v(d.q, l.down.view(), eids, K, hb, h.n_ff, 1, yk, E, tune_routed(l.down)));
+            pr("moe_combine", ops::moe_combine(d.q, yk, f32(l.down_s), eids, wts, h.n_used, E, moe, ntok));
+            pr("convolve", ops::convolve(d.q, moe, st, 2 * kd + E, f32(l.ffn_post_conv), nullptr, 1, ffn_out, E, ntok));
+            pr("conv_store", ops::conv_store(d.q, moe, st, 2 * kd + E, E, ntok));
             dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
             float *lo = lbuf[il + 1];
-            ops::add(d.q, fi, ffn_out, lo, (size_t)ntok * E);
+            pr("add", ops::add(d.q, fi, ffn_out, lo, (size_t)ntok * E));
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;
         }
         // output (inkling2.cpp:643-669)
         mix(blocks, cur, f32(m.output_res_query), 1, fin, E);
-        ops::rms_norm(d.q, fin, fin, f32(m.output_norm), E, ntok, h.eps);
+        pr("rms_norm", ops::rms_norm(d.q, fin, fin, f32(m.output_norm), E, ntok, h.eps));
         dump.put(d, "result_norm", fin, E, ntok);
         const int nl = all_logits ? ntok : 1;
         const float *xl = all_logits ? fin : fin + (size_t)(ntok - 1) * E;
         mm(m.output, xl, lg, nl);
-        ops::softcap(d.q, lg, (size_t)nl * h.vocab_padded, h.softcap);
+        pr("softcap", ops::softcap(d.q, lg, (size_t)nl * h.vocab_padded, h.softcap));
         logits.resize((size_t)nl * h.vocab);
         d.q.wait();
         for (int t = 0; t < nl; ++t)

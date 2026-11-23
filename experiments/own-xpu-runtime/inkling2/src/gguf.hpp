@@ -53,7 +53,8 @@ inline const char *type_name(uint32_t t) {
 struct Tensor {
     std::string name;
     uint32_t type = 0;
-    std::vector<int64_t> ne; // ggml order: ne[0] is the contiguous (row) dimension
+    std::vector<int64_t> ne; // ggml order, always 4 entries (unused = 1): ne[0] is the contiguous (row) dimension
+    int n_dims = 0;
     uint64_t off = 0;        // from the start of the data section
     uint64_t bytes = 0;
     int64_t nel() const { int64_t n = 1; for (auto d : ne) n *= d; return n; }
@@ -179,7 +180,9 @@ struct GGUF {
             Tensor &t = tensors[k];
             t.name = rs();
             uint32_t nd = rd<uint32_t>();
-            t.ne.resize(nd);
+            if (nd < 1 || nd > 4) throw std::runtime_error("gguf: tensor with " + std::to_string(nd) + " dimensions");
+            t.n_dims = (int)nd;
+            t.ne.assign(4, 1); // always four entries, ggml style: unused dimensions are 1
             for (uint32_t d = 0; d < nd; ++d) t.ne[d] = (int64_t)rd<uint64_t>();
             t.type = rd<uint32_t>();
             t.off = rd<uint64_t>();

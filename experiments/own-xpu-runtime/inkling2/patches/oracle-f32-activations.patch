@@ -48,3 +48,17 @@
      // needed to initialize ggml_time
      {
          struct ggml_init_params params = { 0, NULL, false };
+--- a/ggml/src/ggml-cpu/tiled/tiled.cpp	2026-11-20 17:55:39.000000000 -0500
++++ b/ggml/src/ggml-cpu/tiled/tiled.cpp	2026-11-22 21:27:58.015926456 -0500
+@@ -1167,6 +1167,11 @@
+                                             int64_t cur_a = 0,
+                                             int64_t cne1 = 0,
+                                             char * scratch = NULL) {
++    // INKLING ORACLE: GGML_CPU_F32_ACT=1 sends every product through vec_dot (the tiled kernels expect Q8_K activations)
++    static const int ink_f32_act = getenv("GGML_CPU_F32_ACT") ? atoi(getenv("GGML_CPU_F32_ACT")) : 0;
++    if (ink_f32_act) {
++        return false;
++    }
+     switch (dst->src[0]->type) {
+         case GGML_TYPE_Q6_K:
+             return tiled_matmul_dispatch<block_q6_K, 16, false, 32, true>(params, dst, expert_rows, cur_a, cne1, scratch);
