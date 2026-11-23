@@ -10,6 +10,71 @@
 | Safe to merge as documentation | yes |
 | Eligible for `repro/` or `results/` | no until `B70-tested` |
 
+## Maintainer Review (2026-11-22)
+
+Maintainer section, added after merging [PR #86](https://github.com/steveseguin/b70-optimization-lab/pull/86).
+The contributor's text below is unchanged.
+
+| Field | Value |
+| --- | --- |
+| Evidence level | `community-reported` (unchanged) |
+| Patch review status | read, no execution |
+| Tested in reference lab | no; blocked by model identity and local infrastructure, not tested and failed |
+| Claims entry | none; the model has no accepted identity (see below) |
+
+**Checked here:**
+- All four files were read in full. The launcher starts a public Intel image with the model mounted read-only.
+  It downloads and runs nothing else. No secrets, tokens or LAN identifiers.
+- The LocalMaxxing link resolves (HTTP 200). Its contents were not compared with this entry.
+- The arithmetic:
+  - In every row of the ThreadPool table, per-stream = aggregate / concurrency, to the rounding shown.
+  - At concurrency 24 to 96, the `lmx` aggregates are 2.0-6.0 % below the ThreadPool ones.
+  - The `lmx` p50 latencies agree with its own aggregates (256 x concurrency / p50) within 3 %.
+
+**Not run here, and why:**
+- **Model identity.** The model is a local GPTQ-Int4 export with no source repo, revision, quantization recipe
+  or file hashes (`README.md:50`). Under `AGENTS.md`, another GPTQ checkpoint would not be the same comparison.
+- **Images.** Neither image is on the reference host (19.7 GB each), and both are identified only by tag, not by
+  digest (`README.md:48`).
+- **Host.** The reference host has 15 GiB of host RAM. The contributor reports that the two workers stage about
+  20.8 GiB of shards each. The host's B70s were also serving another model, which is loaded only at boot.
+- **No lab evidence either way on `1.5`.** The lab has no record of `intel/llm-scaler-vllm:1.5` on B70. Its
+  `B70-tested` vLLM TP2 entries used `0.21.0-b1` (`dominick253-qwen36-27b-fp8-tp2-docker`) and a pinned digest
+  (`dominick253-qwen36-35b-fp8-b2-tp2`).
+
+**Known issues found in review:**
+1. **The single-stream figure conflicts with the contributor's own second measurement.**
+   - The ThreadPool sweep gives 10.6 tok/s at concurrency 1 (`README.md:96`, `reported/bench.txt:9`).
+   - `lmx` gives 16.1 tok/s at concurrency 1 (`reported/bench.txt:26`), and its 15.9 s p50 for 256 tokens
+     (`reported/bench.txt:29`) is the same 16.1 tok/s.
+   - The ThreadPool per-stream rate is also higher at concurrency 24 (16.6) than at 1 (10.6).
+   - So "single-stream ~10.6 tok/s, TP2 communication overhead" (`README.md:35`, and the Claim and Known Issues sections below)
+     is not supported as stated. The ThreadPool concurrency-1 row may include a cold first request.
+2. **Unexplained marks.** The `(23/24)`, `(46/48)` and `(62/64)` marks in `reported/bench.txt:26` are not
+   explained. If they count completed requests, those aggregates cover fewer streams than the column heading.
+3. **Summary, not raw output.** `reported/bench.txt` is titled raw output but is a summary. Two latency cells are
+   truncated (`17.x`, `21.x`), and there is no client script, JSON or server log.
+4. **Host-specific card mask.** `vllm-qwen36-35b-a3b-tp2.sh:22` hard-codes `ZE_AFFINITY_MASK=1,2`, because the
+   contributor's B60 is device 0. A host with only two B70s needs `0,1`, and the script does not let the
+   environment override it. The container also runs `--privileged`.
+
+**Needed to raise the evidence level:**
+- the model's source and revision, or its quantization recipe and file hashes;
+- image digests for both tags;
+- the client script with its JSON output;
+- the `1.5` server log around the hang;
+- an explanation of the concurrency-1 row and the `(n/m)` marks.
+
+```text
+Contribution: llm-scaler-vllm 0.31.0-b1-experimental serves dual-B70 TP2 Qwen3.6-35B-A3B GPTQ-Int4 where 1.5
+              hangs after engine init; aggregate throughput sweep to concurrency 96
+Contributor: bosd (https://github.com/bosd)
+Status: acknowledged
+Validated effect: not measured
+Evidence: community/bosd-qwen36-35b-a3b-tp2/
+Included in: none
+```
+
 ## Provenance
 
 - Contributor: bosd

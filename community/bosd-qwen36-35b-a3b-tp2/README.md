@@ -1,5 +1,11 @@
 # Qwen3.6-35B-A3B GPTQ-Int4 — dual-B70 vLLM TP2 serving: the `0.31.0-b1-experimental` image clears the post-init APIServer hang
 
+> **Maintainer note (2026-11-22).** Community submission, not reproduced in the reference lab. The model is a
+> local GPTQ export with no published source, so it could not be re-run here. Read [`STATUS.md`](STATUS.md) first.
+> Its maintainer review lists what was checked and one inconsistency in the single-stream number.
+
+---
+
 **Evidence level: community-reported** (measured on a community B70 host, not the reference lab).
 
 ## TL;DR
