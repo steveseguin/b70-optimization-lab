@@ -143,8 +143,10 @@ tokens 6.6 -> 1.4 ms; x 64 tokens 6.4 -> 4.6 ms against the tiles). The prompt s
 from 16K keys (100K x 512 tokens 34.8 -> 31.8 ms). A 31,270-token prompt with 16-row chunks: 434 -> 543 tok/s, the
 same speed as 176-row chunks; logits bit-identical to the FMA reference build in both cases.
 
-At 403,372 tokens (one card, 403,500 positions; a needle test, prompts/needle.tokens) the prompt reads at 160.6
-tok/s (2,512 s; the build before these long-prompt kernels: 83.4 tok/s, 4,835 s) and writing runs at 23.1 tok/s.
+At 403,372 tokens (one card, 404,000 positions; a needle test, prompts/needle.tokens: 1.3M characters of lab notes
+with two one-line notes hidden at 3 % and 55 % and the question at the end) the prompt reads at 173.0 tok/s (2,332 s;
+the build before these long-prompt kernels: 83.4 tok/s, 4,835 s) and writing runs at 23.5 tok/s. The model answers
+"Vault code: 7351-QX-4829; meeting room: Juniper-12." (both right; its thinking names the sections they sat in).
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

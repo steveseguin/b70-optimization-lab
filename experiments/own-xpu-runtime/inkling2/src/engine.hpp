@@ -90,6 +90,7 @@ struct Engine {
     // (A warm kernel on a second queue does not run beside the main queue on this card: reads nobody needs cost their
     // full time, 2026-11-23.)
     int warm_on = 1;
+    bool split_on = !std::getenv("INK_SPLIT") || std::atoi(std::getenv("INK_SPLIT")); // gemv_split for few F32 rows
     int warm_wg = 12;
     int gu_sgw = std::getenv("INK_GU_SGW") ? std::atoi(std::getenv("INK_GU_SGW")) : 1; // gate|up pair kernel, one token (1 < 2 by ~0.5 us)
     uint32_t *warm_sink = nullptr;
@@ -311,7 +312,16 @@ struct Engine {
     }
     void mm(const W &w, const float *x, float *y, int ntok) {
         int cols = (int)w.t->ne[0], rows = (int)w.t->rows();
-        if (ntok == 1) { pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, 1, tune(w))); return; }
+        if (ntok == 1) {
+            if (split_on && split_ok(w.view())) { // few F32 rows: chunks split across sub-groups (multi.hpp gemv_split)
+                SplitJobs sj;
+                split_add(sj, w.view(), x, y);
+                pr(wlabel(w), gemv_split(d.q, sj));
+                return;
+            }
+            pr(wlabel(w), gemv_v(d.q, w.view(), x, cols, y, rows, 1, tune(w)));
+            return;
+        }
         DTune dt;
         if (dense_tiles(w, ntok, dt)) {
             pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
@@ -438,7 +448,7 @@ struct Engine {
             jobs[2 * j + 1] = {mg[j], ctl_h3 + (size_t)j * 2 * E + E, nullptr, E, 2 * E};
         }
         pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 6, E, 1, 1e-6f));
-        MultiJobs mj;
+        MultiJobs mj; // (gemv_split is slower for these three: multi.hpp split_ok)
         for (int j = 0; j < 3; ++j) multi_add(mj, l.loop_down[j].view(), ctl_h3 + (size_t)j * 2 * E, ctl_z3 + (size_t)j * h.gate_rank, 1);
         pr("w:loop_down3", gemv_multi(d.q, mj, 2));
         CtlJobs cj;

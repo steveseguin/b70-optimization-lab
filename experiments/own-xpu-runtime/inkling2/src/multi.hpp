@@ -52,6 +52,57 @@ inline sycl::event gemv_multi(sycl::queue &q, const MultiJobs &m, int sgw = 2) {
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)), GemvMulti{m, sgw});
 }
 
+// F32 matrices with few rows (the loop controls' down products, the expert router): in gemv1_rows each lane walks its
+// 5-9 chunks of 32 values one after another, waiting for each. Here a work-group takes one row and its sub-group j
+// computes the chunk lane l would take on its j-th turn (c = l + 16 j, the same 32-term sum); lane l of sub-group 0
+// then adds those sums in turn from 0.0f and the sub-group sums as before: gemv1_rows' values bit for bit.
+struct SplitJob { const float *W; int rows, cols; const float *x; float *y; int wg0; };
+struct SplitJobs { SplitJob j[4]; int nj = 0, nwg = 0, J = 1; };
+// Used where it pays (INK_PROF, card 3): one loop down product (64 x 4608) 7.15 -> 5.72 µs; not for the router
+// (128 x 2304: 4.77 -> 5.51) or the three loop down products in one launch (3.5 MB, already at the memory's pace:
+// 9.76 -> 10.80), hence rows <= 64 and rows of >= 4096 values.
+inline bool split_ok(const WView &w) {
+    return w.kind == K_RAW && w.t->type == G_F32 && w.t->rows() <= 64 && w.t->ne[0] >= 4096 && w.t->ne[0] % 32 == 0 &&
+           w.t->ne[0] <= 32 * SG * 16;
+}
+inline void split_add(SplitJobs &m, const WView &w, const float *x, float *y) {
+    if (m.nj >= 4 || !split_ok(w)) throw std::runtime_error("gemv_split: unsupported job");
+    SplitJob &g = m.j[m.nj++];
+    g.W = (const float *)w.p; g.rows = (int)w.t->rows(); g.cols = (int)w.t->ne[0]; g.x = x; g.y = y; g.wg0 = m.nwg;
+    m.nwg += g.rows;
+    m.J = std::max(m.J, (g.cols / 32 + SG - 1) / SG);
+}
+inline sycl::event gemv_split(sycl::queue &q, const SplitJobs &m) {
+    const int J = m.J;
+    const SplitJobs jm = m;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> slm((size_t)J * SG, h);
+        h.parallel_for(sycl::nd_range<1>((size_t)jm.nwg * J * SG, (size_t)J * SG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            auto sg = it.get_sub_group();
+            const int g = (int)it.get_group(0), j = (int)sg.get_group_linear_id(), lane = (int)sg.get_local_linear_id();
+            int k = 0;
+            for (int i = 1; i < 4; ++i) if (i < jm.nj && jm.j[i].wg0 <= g) k = i;
+            const SplitJob &jb = jm.j[k];
+            const int r = g - jb.wg0, nc = jb.cols / 32, c = lane + SG * j;
+            if (c < nc) {
+                float xs[32], o[32];
+                load_x32(jb.x + 32 * c, xs);
+                fmt::F<G_F32>::decode32((const uint8_t *)(jb.W + (size_t)r * jb.cols), c, o);
+                float sum = 0.0f;
+                for (int i = 0; i < 32; ++i) sum = mac(sum, o[i], xs[i]);
+                slm[j * SG + lane] = sum;
+            }
+            sycl::group_barrier(it.get_group());
+            if (j == 0) {
+                float acc = 0.0f;
+                for (int jj = 0; jj < J; ++jj) if (lane + SG * jj < nc) acc += slm[jj * SG + lane];
+                const float v = sg_sum(sg, acc);
+                if (lane == 0) jb.y[r] = v;
+            }
+        });
+    });
+}
+
 // the control outputs of several modules in one launch (engine control(), the gain and forget products with CtlOp):
 // one row per sub-group, gemv_pair_row as GemvPair; F32 weights in the file layout (loop_gain / loop_forget)
 struct CJob { const uint8_t *A, *B; size_t rb; int rows, cols; const float *x; CtlOp op; int sg0; };
