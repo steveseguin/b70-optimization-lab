@@ -155,16 +155,18 @@ inline sycl::event dsp_attn_span(sycl::queue &dq, const float *q_, const float *
 // 8-key tiles from the cache, B = Q^T in local memory, rows padded to 32), the running max / sum per row as
 // dsp_attn_span, P (fp16, local memory) times V (B = 16 keys x 16 dims from the cache; a sub-group = 16 dims, the
 // 24 rows as three 8-row accumulators rescaled per row each pass). Same partial layout as dsp_attn_span
-inline sycl::event dsp_block_to_cache(sycl::queue &dq, const float *k_, const float *v_, sycl::half *K, sycl::half *Vv, int pos, int kd_) {
+inline sycl::event dsp_block_to_cache(sycl::queue &dq, const float *k_, const float *v_, sycl::half *K, sycl::half *Vv, int pos, int kd_,
+                                      int km = 0x7fffffff) {
     constexpr int B = 8;
     return dq.parallel_for(sycl::range<1>((size_t)B * kd_), [=](sycl::id<1> i) {
         const size_t r = i[0] / kd_, cc = i[0] % kd_;
-        K[(size_t)(pos + r) * kd_ + cc] = (sycl::half)k_[i[0]];
-        Vv[(size_t)(pos + r) * kd_ + cc] = (sycl::half)v_[i[0]];
+        K[(size_t)((pos + (int)r) & km) * kd_ + cc] = (sycl::half)k_[i[0]];
+        Vv[(size_t)((pos + (int)r) & km) * kd_ + cc] = (sycl::half)v_[i[0]];
     });
 }
+// keys j at cache slot (lo + j) & km: lo a multiple of 128 and the ring (km + 1) a multiple of 128, so no 128-key pass wraps
 inline sycl::event dsp_attn_span_x(sycl::queue &dq, const float *q_, const sycl::half *K, const sycl::half *Vv, int nk, int kd_,
-                                   int span, int nch, float *pO_, float *pM_, float *pL_) {
+                                   int span, int nch, float *pO_, float *pM_, float *pL_, int lo = 0, int km = 0x7fffffff) {
     namespace jm = sycl::ext::oneapi::experimental::matrix;
     namespace jmi = sycl::ext::intel::experimental::matrix;
     using hf = sycl::half;
@@ -197,7 +199,7 @@ inline sycl::event dsp_attn_span_x(sycl::queue &dq, const float *q_, const sycl:
                     jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16> s0, s1;
                     jm::joint_matrix_fill(sg, s0, 0.0f);
                     jm::joint_matrix_fill(sg, s1, 0.0f);
-                    const hf *kr = K + (size_t)(sb + 16 * sgi + 8 * mt) * kd_ + kvh * HD;
+                    const hf *kr = K + (size_t)((lo + sb + 16 * sgi + 8 * mt) & km) * kd_ + kvh * HD;
 #pragma unroll
                     for (int k = 0; k < HD / 16; ++k) {
                         jm::joint_matrix<sycl::sub_group, hf, jm::use::a, 8, 16, jm::layout::row_major> a;
@@ -233,7 +235,7 @@ inline sycl::event dsp_attn_span_x(sycl::queue &dq, const float *q_, const sycl:
 #pragma unroll
                 for (int mt = 0; mt < 3; ++mt)
                     jmi::joint_matrix_apply(sg, acc[mt], [&](float &x, size_t row, size_t) { x *= rs[2 * NR + mt * 8 + (int)row]; });
-                const hf *vr = Vv + (size_t)sb * kd_ + kvh * HD + 16 * sgi;
+                const hf *vr = Vv + (size_t)((lo + sb) & km) * kd_ + kvh * HD + 16 * sgi;
 #pragma unroll
                 for (int k0 = 0; k0 < CH; k0 += 16) {
                     jm::joint_matrix<sycl::sub_group, hf, jm::use::b, 16, 16, jm::layout::row_major> vb;
@@ -419,6 +421,15 @@ struct Drafter {
     float eps, theta;
     sycl::half *Kc[NL] = {}, *Vc[NL] = {};
     int kmask[NL];
+    bool full_l[NL] = {}; // the layer without a window (it sees every position, or the last win_full of them)
+    // INK_DSP_WIN: the full layer keeps only the last win_full positions in a ring (0: all of them; default what a
+    // 16,384-slot ring holds beside a step, ~15K). Only the guesses change past that many positions (the drafter's
+    // numbers never reach the text)
+    int win_full = 0;
+    int lo_of(int l, int P0) const {
+        if (!full_l[l]) return std::max(0, P0 - WIN);
+        return win_full ? std::max(0, P0 - win_full) / 128 * 128 : 0;
+    }
     float *cb = nullptr, *kc = nullptr, *vc = nullptr, *rrows = nullptr;
     float *x, *hh, *q, *k, *v, *att, *ao, *gt, *upb, *y, *sc, *cat, *uu, *s, *z, *eh, *hs, *lgd;
     float *Xt = nullptr;    // the tile kernels' gathered inputs (one tile of 16 slots, up to the widest input)
@@ -533,12 +544,21 @@ struct Drafter {
         // context caches: layer 1 every position, layers 0 and 2 a ring (a window plus a step and more)
         const char *pat = "dflash.attention.sliding_window_pattern";
         const auto &swp = g.arr<std::vector<int64_t>>(pat);
+        // default: a ring of 16,384 slots (64 MiB) once the full cache would be larger (100K prompt, 256 tokens with
+        // guessing: 2.54 tokens per check seeing every position, 2.49 / 2.46 / 2.53 with 64K / 32K / 8K; drafting 0.32 ->
+        // 0.24 s with 8K; the text identical, as always)
+        win_full = cap + B + CH > 16384 ? 16384 - (128 + T + B + CH) : 0;
+        if (const char *ev = std::getenv("INK_DSP_WIN")) win_full = std::max(0, std::atoi(ev));
+        if (win_full >= cap) win_full = 0;
         for (int l = 0; l < NL; ++l) {
             const bool win = swp.at(l) != 0;
+            full_l[l] = !win;
             int ring = 1; // a power of two holding the window, a step and a block
             while (ring < WIN + T + B) ring *= 2;
-            const int slots = win ? ring : cap + B + CH; // the full layer: room for the block rows and one pass past them
-            kmask[l] = win ? ring - 1 : 0x7fffffff;
+            int ringf = 128; // the full layer's ring: the window from a multiple of 128, a step, a block and one pass past
+            while (ringf < win_full + 128 + T + B + CH) ringf *= 2;
+            const int slots = win ? ring : win_full ? ringf : cap + B + CH; // the full layer: room for the block rows and one pass past them
+            kmask[l] = win ? ring - 1 : win_full ? ringf - 1 : 0x7fffffff;
             Kc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
             Vc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
         }
@@ -551,8 +571,8 @@ struct Drafter {
         att = d.alloc<float>((size_t)B * HQ * HD); ao = d.alloc<float>((size_t)B * E);
         const int F = (int)L[0].gate.t->rows();
         gt = d.alloc<float>((size_t)B * F); upb = d.alloc<float>((size_t)B * F);
-        sc_keys = (size_t)cap + B;
-        sc = d.alloc<float>((size_t)B * HQ * sc_keys);
+        sc_keys = (size_t)cap + B; // (attend(): INK_DSP_SPLIT=0 only)
+        sc = split == 0 ? d.alloc<float>((size_t)B * HQ * sc_keys) : nullptr;
         cat = d.alloc<float>((size_t)2 * R + 2 * E); uu = d.alloc<float>(3 * R); s = d.alloc<float>(R); z = d.alloc<float>(R);
         eh = d.alloc<float>(E); hs = d.alloc<float>(E); lgd = d.alloc<float>(Vp);
         gids = d.alloc<int32_t>(B);
@@ -727,14 +747,19 @@ struct Drafter {
     }
 
     // n guesses (n <= B - 1) for positions P0 + 1.. after the token t0 (on the card) at P0; returns them
-    std::vector<int32_t> draft(int P0, const int32_t *t0, int n) {
+    // (t0h: the same token on the host, for an engine whose embedding table stays in host memory)
+    std::vector<int32_t> draft(int P0, const int32_t *t0, int n, int32_t t0h = -1) {
         if (n < 1 || n > B - 1) throw std::runtime_error("dspark: 1 to 7 guesses");
         if (r_last < 0) throw std::runtime_error("dspark: no context row (nothing injected)");
         if (P0 + B > cap) throw std::runtime_error("dspark: context full");
         const HParams &h = e.m.hp;
         const int E_ = E, F = (int)L[0].gate.t->rows();
         // slot 0: the target's normed embedding of t0; slots 1..7: the mask embedding
-        e.pr("dsp_embd", ops::get_rows(d.q, *e.m.tok_embd.t, e.m.tok_embd.p, t0, x, 1));
+        if (e.m.tok_embd.p) e.pr("dsp_embd", ops::get_rows(d.q, *e.m.tok_embd.t, e.m.tok_embd.p, t0, x, 1));
+        else {
+            if (t0h < 0) throw std::runtime_error("dspark: the engine's embedding table is in host memory: pass t0 on the host");
+            e.embed(&t0h, 1, x);
+        }
         e.pr("dsp_embd", ops::rms_norm(d.q, x, x, e.f32(e.m.tok_norm), E, 1, h.eps));
         {
             float *x_ = x;
@@ -912,7 +937,7 @@ struct Drafter {
     void attend(int l, int P0) {
         if (split == 2) { attend_split2(l, P0); return; }
         if (split == 1) { attend_split(l, P0); return; }
-        const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
+        const int lo = lo_of(l, P0);
         const int nctx = P0 - lo, nk = nctx + B;
         const sycl::half *K = Kc[l], *Vv = Vc[l];
         const float *q_ = q, *k_ = k, *v_ = v;
@@ -921,7 +946,7 @@ struct Drafter {
         const size_t sk = sc_keys;
         const int km = kmask[l], kd_ = kd;
         const float scale = 1.0f / std::sqrt((float)HD);
-        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
+        e.pr(full_l[l] ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
             sycl::local_accessor<float, 1> slm(HD, hd);
             hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)B * HQ * AWG), sycl::range<1>(AWG)),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
@@ -999,17 +1024,17 @@ struct Drafter {
     // each product takes its value with a constant-index select; P.V: thread = dimension for all 24 rows, the rows'
     // probabilities come in 16 keys at a time the same way. Running max / sum per row as attend_split, same combine
     void attend_split2(int l, int P0) {
-        const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
+        const int lo = lo_of(l, P0);
         const int nctx = P0 - lo, nk = nctx + B;
         const int span = CH * std::max(1, (nk + CH * NCH - 1) / (CH * NCH)), nch = (nk + span - 1) / span;
-        if (attn_var == 4 && kmask[l] == 0x7fffffff) { // the matrix engines (the full layer)
-            e.pr("dsp_block_kv", dsp_block_to_cache(d.q, k, v, Kc[l], Vc[l], P0, kd));
-            e.pr("dsp_attn_full", dsp_attn_span_x(d.q, q, Kc[l], Vc[l], nk, kd, span, nch, pO, pM, pL));
+        if (attn_var == 4 && full_l[l]) { // the matrix engines (the full layer)
+            e.pr("dsp_block_kv", dsp_block_to_cache(d.q, k, v, Kc[l], Vc[l], P0, kd, kmask[l]));
+            e.pr("dsp_attn_full", dsp_attn_span_x(d.q, q, Kc[l], Vc[l], nk, kd, span, nch, pO, pM, pL, lo, kmask[l]));
             attn_combine(nch);
             return;
         }
         auto go = [&](auto f) { return f(d.q, q, k, v, Kc[l], Vc[l], lo, nctx, kmask[l], kd, span, nch, pO, pM, pL); };
-        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn",
+        e.pr(full_l[l] ? "dsp_attn_full" : "dsp_attn",
              attn_var >= 3 ? go(dsp_attn_span<3>) : attn_var == 2 ? go(dsp_attn_span<2>) : attn_var == 1 ? go(dsp_attn_span<1>)
                                                                                          : go(dsp_attn_span<0>));
         attn_combine(nch);
@@ -1020,7 +1045,7 @@ struct Drafter {
     // (key or dimension li % 128, rows 12 * (li / 128) ..+12). The combine launch merges the spans per row.
     void attend_split(int l, int P0) {
         constexpr int G = HQ / HKV, WG = 256, RH = NR / 2;
-        const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
+        const int lo = lo_of(l, P0);
         const int nctx = P0 - lo, nk = nctx + B;
         const int span = CH * std::max(1, (nk + CH * NCH - 1) / (CH * NCH)), nch = (nk + span - 1) / span;
         const sycl::half *K = Kc[l], *Vv = Vc[l];
@@ -1029,7 +1054,7 @@ struct Drafter {
         const size_t la = xlane_floats(HQ * HD);
         const int km = kmask[l], kd_ = kd;
         const float scale = 1.0f / std::sqrt((float)HD);
-        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
+        e.pr(full_l[l] ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
             sycl::local_accessor<float, 1> qs(NR * HD, hd), ps(NR * CH, hd), rs(3 * NR, hd);
             hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * nch * WG), sycl::range<1>(WG)),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {

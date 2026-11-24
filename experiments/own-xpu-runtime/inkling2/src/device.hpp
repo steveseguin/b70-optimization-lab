@@ -125,9 +125,11 @@ struct Device {
     }
 
     // xe does not fail an allocation past the card's memory: it moves memory out to host RAM. alloc() refuses to go
-    // past the card's size minus INK_MEM_RESERVE_MB (default 1024) instead.
+    // past the card's size minus INK_MEM_RESERVE_MB (default 512; was 1024) instead. The runtime itself holds ~0.26 GiB
+    // beside our allocations (driver free memory at the end of runs from 3K to 515K positions, with and without the
+    // drafter), so 512 MiB leaves ~0.25 GiB untouched (515K needle prompt: 0.50 GiB free at the end)
     size_t limit() const {
-        static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 1024) << 20;
+        static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 512) << 20;
         return total_mem() > reserve ? total_mem() - reserve : 0;
     }
     template <class T = uint8_t> T *alloc(size_t count) {
@@ -138,6 +140,9 @@ struct Device {
                                      std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) + " MiB)");
         void *p = sycl::malloc_device(bytes ? bytes : 1, dev, ctx);
         if (!p) throw std::runtime_error("device: allocation of " + std::to_string(bytes) + " bytes failed");
+        static const long log_mib = std::getenv("INK_MEM_LOG") ? std::atol(std::getenv("INK_MEM_LOG")) : -1; // allocations >= this many MiB
+        if (log_mib >= 0 && (long)(bytes >> 20) >= log_mib)
+            std::fprintf(stderr, "[mem] %8.1f MiB  (in use %8.1f MiB)\n", bytes / 1048576.0, (allocated + bytes) / 1048576.0);
         owned.push_back(p);
         owned_bytes.push_back(bytes);
         allocated += bytes;

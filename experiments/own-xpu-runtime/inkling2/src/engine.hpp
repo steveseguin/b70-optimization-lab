@@ -51,6 +51,10 @@ struct Engine {
     float *mix_inv = nullptr, *mix_sc = nullptr;
     // the loop mixes of a whole pass at its start (their states are fixed for the pass): INK_LOOP_PRE=0 one per layer
     bool loop_pre = true;
+    // steps of up to this many tokens compute the pass's loop mixes in two launches (writing steps and checks: fewer
+    // launches); longer steps mix per layer into mm2 (the same values), so lmix_out holds 48 x lp_tok tokens, not 48 x T
+    // (216 MiB at 512-token steps; INK_LOOP_PRE_TOK)
+    int lp_tok = 16;
     int loop_nq = 0;
     float *lmix_inv = nullptr, *lmix_sc = nullptr, *lmix_out = nullptr;
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
@@ -182,6 +186,12 @@ struct Engine {
         : d(dev), g(gg), T(ubatch), cap(capacity), all_logits(every_logit) {
         m.bind(g, wt, views);
         const HParams &h = m.hp;
+        if (!m.tok_embd.p) { // the embedding table stays in host memory (embed())
+            const Tensor &t = *m.tok_embd.t;
+            if (t.ne[0] % 32) throw std::runtime_error("engine: embedding rows must hold whole blocks of 32");
+            embd_tab.resize(t.bytes);
+            g.read_at(embd_tab.data(), t.bytes, g.data_off + t.off);
+        }
         const size_t E = (size_t)h.n_embd * T, QD = (size_t)h.n_head * h.head_dim * T;
         const int kd = h.n_head_kv * h.head_dim;
         const size_t KD = (size_t)kd * T;
@@ -314,9 +324,11 @@ struct Engine {
             if (nr != 2 * h.loop_len() || (int)m.loop_kv_res_query.t->rows() != nr) loop_pre = false;
             if (loop_pre) {
                 loop_nq = 2 * nr;
-                lmix_inv = d.alloc<float>((size_t)T * ops::MIX_MAX);
-                lmix_sc = d.alloc<float>((size_t)T * loop_nq * ops::MIX_MAX);
-                lmix_out = d.alloc<float>((size_t)loop_nq * E);
+                if (const char *e = std::getenv("INK_LOOP_PRE_TOK")) lp_tok = std::atoi(e);
+                lp_tok = std::max(1, std::min(T, lp_tok));
+                lmix_inv = d.alloc<float>((size_t)lp_tok * ops::MIX_MAX);
+                lmix_sc = d.alloc<float>((size_t)lp_tok * loop_nq * ops::MIX_MAX);
+                lmix_out = d.alloc<float>((size_t)loop_nq * lp_tok * h.n_embd);
             }
         } else loop_pre = false;
         ctl_h3 = d.alloc<float>((size_t)3 * SB_MAX * 2 * h.n_embd); ctl_z3 = d.alloc<float>((size_t)3 * SB_MAX * h.gate_rank);
@@ -448,6 +460,33 @@ struct Engine {
     }
     Prof prof;
     void pr(const std::string &label, sycl::event e) { prof.add(label, e); }
+    // the token embedding table in host memory (ink_run leaves it off the card: m.tok_embd.p null; INK_EMBD_HOST=0 keeps
+    // it there): each step's rows are decoded on the host with the kernel's expressions (F<type>::decode32: Q8_0 y = q * d,
+    // one multiply) into one of two staging buffers and copied to the card in queue order
+    std::vector<uint8_t> embd_tab;
+    std::vector<float> embd_stage[2];
+    sycl::event embd_ev[2];
+    int embd_k = 0;
+    int32_t last_tok = -1; // the host's copy of next_token()'s choice (ids[0] for step(nullptr, 1))
+    void embed(const int32_t *tok, int ntok, float *dst) {
+        const Tensor &t = *m.tok_embd.t;
+        const int n = (int)t.ne[0], nc = n / 32;
+        const size_t rb = t.row_bytes();
+        const int64_t rows = (int64_t)t.rows();
+        std::vector<float> &st = embd_stage[embd_k];
+        embd_ev[embd_k].wait(); // the copy that last read this buffer
+        st.resize((size_t)ntok * n);
+        fmt::dispatch(t.type, [&]<class FT>() {
+            for (int i = 0; i < ntok; ++i) {
+                if (tok[i] < 0 || tok[i] >= rows) throw std::runtime_error("engine: token id " + std::to_string(tok[i]) + " out of range");
+                const uint8_t *row = embd_tab.data() + (size_t)tok[i] * rb;
+                for (int c = 0; c < nc; ++c) FT::decode32(row, c, st.data() + (size_t)i * n + 32 * c);
+            }
+        });
+        embd_ev[embd_k] = d.q.memcpy(dst, st.data(), sizeof(float) * (size_t)ntok * n);
+        pr("get_rows", embd_ev[embd_k]);
+        embd_k ^= 1;
+    }
     static std::string wlabel(const W &w) {
         const std::string &n = w.t->name;
         size_t a = n.rfind(".weight");
@@ -585,7 +624,11 @@ struct Engine {
         if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
         tau = tau_all + pos0;
         // embedding and token norm (inkling2.cpp:347-352)
-        pr("get_rows", ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok));
+        if (m.tok_embd.p) pr("get_rows", ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok));
+        else {
+            if (!tok && (ntok != 1 || last_tok < 0)) throw std::runtime_error("engine: step(nullptr) needs next_token() first");
+            embed(tok ? tok : &last_tok, ntok, lbuf[0]);
+        }
         pr("rms_norm", ops::rms_norm(d.q, lbuf[0], lbuf[0], f32(m.tok_norm), E, ntok, h.eps));
 
         std::vector<const float *> blocks, prelude_blocks, bank;
@@ -607,7 +650,7 @@ struct Engine {
                         bank_last = cur;
                         blocks = prelude_blocks;
                         cur = prelude_cur;
-                        if (loop_pre) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
+                        if (loop_pre && ntok <= lp_tok) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
                             ops::MixArgs a;
                             const int nb = (int)bank.size();
                             if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
@@ -624,7 +667,7 @@ struct Engine {
                 if (pass > 0) {
                     const int row = 2 * (ip - h.core_start);
                     const size_t S = (size_t)ntok * E;
-                    if (loop_pre) {
+                    if (loop_pre && ntok <= lp_tok) {
                         const float *res = lmix_out + (size_t)row * S, *kv = lmix_out + (size_t)(loop_nq / 2 + row) * S;
                         mg[0] = res; mg[3] = res + S; mg[1] = kv; mg[2] = kv + S;
                     } else {
@@ -1047,6 +1090,7 @@ struct Engine {
         pr("argmax", ops::argmax_rows2(d.q, row, m.hp.vocab_padded, m.hp.vocab, 1, ids, amx_v, amx_i));
         int32_t v;
         d.get(&v, ids, 1);
+        last_tok = v;
         return v;
     }
     void step_next() { step(nullptr, 1); }

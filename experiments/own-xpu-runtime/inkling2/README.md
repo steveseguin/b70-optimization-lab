@@ -25,7 +25,8 @@ the model's math, never used as our code).
   tensors of a 5-token prompt and the greedy ids of two prompts must equal `/home/steve/inkling-work/baseline`
   (6 checks on cards 1-5); `scripts/make-baseline.sh <ink_run> <dir>` makes a new baseline through the general kernels
   (only after a sum order change that was checked against the high-precision reference).
-- `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 1-5).
+- `scripts/on-card.sh <card> <cmd>`: runs one job on one card under that card's lock (cards 1-5; refuses card 0 and an
+  empty card).
 - `patches/oracle-f32-activations.patch`: a high-precision build of the reference for checking (F32 activations and
   double sums for every weight type; run with `GGML_CPU_F32_ACT=1 REF_FA=0 REF_NO_REPACK=1`). Never shipped.
 - `notes/inkling2-forward.md`: the model's forward pass as the reference computes it, with file and line citations.
@@ -128,7 +129,7 @@ decoders with the same per-value expressions (bench_moe: same bits, gate|up 13.2
 layers 20-22), and `ink_run` leaves those 8 tensors (2.57 GB) in the file: `planarize` fetches each into a scratch
 buffer and keeps only its decode copy. Card memory at 4,200 positions 19.12 -> 16.56 GiB; each position costs ~34
 KiB (the 8 full-attention caches 32 KiB, score rows and block sums the rest), so one card holds 420,000 positions
-(30.29 of 31.89 GiB). `Device::alloc` refuses to pass the card's size minus `INK_MEM_RESERVE_MB` (default 1024):
+(30.29 of 31.89 GiB). `Device::alloc` refuses to pass the card's size minus `INK_MEM_RESERVE_MB` (default 1024; 512 since 2026-11-24):
 xe does not fail an over-large allocation, it moves card memory out to host RAM.
 
 Fused multiply-add, baseline v3 (2026-11-23): every sum of products in the kernels (74 sites: matrix products,
@@ -496,6 +497,36 @@ layers still use P, and they store each row from its window's start (column j - 
 layers' prompt attention runs in one chunk per step), speed level (card 3 706.3 vs 703.4 tok/s prompt, 55.81 vs 55.84
 writing; logits of 64 steps identical on cards 3 and 4). One card now holds 480,000 positions (30.71 of 31.89 GiB;
 500,000 refused), was 420,000. Gate 11/11.
+
+Longest context on one card (2026-11-24): 521,000 positions (was 480,000), from four changes, each gated (11/11) and
+each leaving speed level (same card, both orders):
+- The token embedding table stays in host memory (`Engine::embed`; `INK_EMBD_HOST=0` = on the card): each step's
+  rows are decoded on the host with the kernel's expression (Q8_0: q * d, one multiply) and copied in queue order; the
+  host already reads every chosen token back, and the drafter takes its anchor token on the host too. -0.46 GiB.
+- The loop layers' 48 mixes per pass are precomputed only for steps of up to 16 tokens (`INK_LOOP_PRE_TOK`): longer
+  steps mix per layer (the same values). -216 MiB at 512-token steps, -432 MiB at 1,024.
+- `INK_MEM_RESERVE_MB` default 1024 -> 512: the runtime holds ~0.26 GiB beside our allocations (driver free memory at
+  the end of runs from 3K to 515K positions, with and without the drafter), so 512 MiB leaves ~0.25 GiB untouched.
+- `ink_run` and the engine report the driver's free memory at the start and at the end; `INK_MEM_LOG=<MiB>` lists
+  every allocation of at least that size.
+Needle tests (two one-line notes in lab notes, the question at the end, 512 tokens allowed): 470,949 tokens on card 3
+read in 1,310.6 s (359.3 tok/s; the 403K test on 2026-11-23 read at 173.0), writing 24.64 tok/s; 514,670 tokens on
+card 2 (515,198 positions, 0.50 GiB free at the end) read in 1,644.2 s (313.0 tok/s), writing 22.98 tok/s. Both answer
+"Vault code: 7351-QX-4829; meeting room: Juniper-12." (their thinking names the sections the notes sat in).
+
+The drafter at long contexts: its full layer kept every position (4 KiB each) and a score buffer only the one-row path
+uses held 768 B more per position. The buffer is now allocated only for that path (`INK_DSP_SPLIT=0`), and the full
+layer keeps a ring of 16,384 slots (`INK_DSP_WIN`, default ~15K positions; 0 = every position): 64 MiB instead of 2.3
+GiB at 471K. Guesses only, the text cannot change: 100K prompt, 256 tokens, tokens per check 2.54 (every position) /
+2.49 (64K) / 2.46 (32K) / 2.53 (8K), drafting 0.32 -> 0.24 s with 8K, text identical in all four. 31K prompt, 256
+tokens, same card both orders: the default ring 2.61 tokens per check vs 2.59, writing 103.02 -> 105.50 tok/s (card 4)
+and 101.57 -> 104.60 (card 5), text identical.
+With the ring, guessing fits beside a 471K context (drafter +0.55 GiB): the 470,949-token needle on card 3 writes
+at 41.00 tok/s against 24.64 without guesses (2.34 tokens per check), ids identical to the plain run.
+
+`check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
+(`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
+`card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

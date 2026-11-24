@@ -152,6 +152,12 @@
 - Nov 24 ~10:03: done: every full-layer step below 128 tokens computes scores in place, P rows are the window wide,
   block sums keep 4 full-context rows past 128K: one card holds 480K positions (was 420K), 100K memory -2.8 GiB, speed
   level, logits identical. Next: token embedding table on the host (0.49 GB), a 470K needle prompt.
+- Nov 24 ~11:30: one card holds 521K positions (embedding table on the host, loop mixes precomputed only for short
+  steps, memory margin 1024 -> 512 MiB after measuring the runtime's ~0.26 GiB). Needle tests: 471K tokens read at
+  359 tok/s (was 173 at 403K), 515K at 313 tok/s; both answers right. Drafter's full layer now a 16K ring (64 MiB,
+  not 2.3 GiB at 471K): guesses as good or better, writing +2-3 % at 31K; after the 471K prompt guessing writes 41.0
+  tok/s vs 24.6, same ids. Gate now needs five distinct cards (four
+  listed had sent two short checks to card 0).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

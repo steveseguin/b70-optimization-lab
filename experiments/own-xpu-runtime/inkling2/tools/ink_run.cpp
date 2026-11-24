@@ -25,14 +25,20 @@ int main(int argc, char **argv) {
         // expert tensors with a decode copy (layers 20-23) stay off the card in the file layout (planarize makes the copy)
         // Q6_K weights stay off too (only their padded planar copy goes on the card; INK_Q6K_SKIP=0: both, as before)
         const bool q6skip = !std::getenv("INK_Q6K_SKIP") || std::atoi(std::getenv("INK_Q6K_SKIP"));
-        if (planar && dec_on()) w.upload(d, g, true, [q6skip](const Tensor &t) { return dec_target(t) || (q6skip && q6k_target(t)); });
+        // the token embedding table stays in host memory (0.49 GB; Engine::embed decodes each step's rows on the host with
+        // the kernel's expressions; INK_EMBD_HOST=0: on the card)
+        const bool embd_host = planar && (!std::getenv("INK_EMBD_HOST") || std::atoi(std::getenv("INK_EMBD_HOST")));
+        const auto host_t = [embd_host](const Tensor &t) { return embd_host && t.name == "token_embd.weight"; };
+        if (planar && dec_on())
+            w.upload(d, g, true, [q6skip, host_t](const Tensor &t) { return dec_target(t) || (q6skip && q6k_target(t)) || host_t(t); });
+        else if (embd_host) w.upload(d, g, true, host_t);
         else w.upload(d, g);
         bool dumping = std::getenv("INK_DUMP") != nullptr;
         std::map<std::string, WView> views;
-        if (planar) views = planarize(d, g, w);
+        if (planar) views = planarize(d, g, w, true, host_t);
         Engine e(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
-        std::fprintf(stderr, "[ink] context %d positions, card memory in use %.2f of %.2f GiB (score rows %d)\n", ctx,
-                     d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow);
+        std::fprintf(stderr, "[ink] context %d positions, card memory in use %.2f of %.2f GiB (score rows %d; driver: %.2f GiB free)\n",
+                     ctx, d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow, d.free_mem() / 1073741824.0);
         // INK_BENCH_REAL=1 with INK_BENCH_STEP: the steps take the prompt's last 8 tokens (fed without them), each repeat
         // at the same positions: consecutive real tokens choose their experts as in a check of guesses
         const bool bench_real = std::getenv("INK_BENCH_STEP") && std::getenv("INK_BENCH_REAL") && std::atoi(std::getenv("INK_BENCH_REAL"));
@@ -157,7 +163,7 @@ int main(int argc, char **argv) {
                         if (dlog) {
                             const int o0 = (int)out.size(), nd = std::min(7, (int)oracle.size() - o0);
                             if (nd > 0) {
-                                g = dr->draft(e.n_past, xdev, nd);
+                                g = dr->draft(e.n_past, xdev, nd, x);
                                 int m = 0;
                                 while (m < nd && g[m] == oracle[o0 + m]) ++m;
                                 std::fprintf(dlog, "%d", m);
@@ -166,7 +172,7 @@ int main(int argc, char **argv) {
                                 g.resize(std::min(spec, (int)g.size()));
                             }
                         } else
-                            g = dr->draft(e.n_past, xdev, std::min(spec, room));
+                            g = dr->draft(e.n_past, xdev, std::min(spec, room), x);
                         tdraft += now_s() - td;
                     }
                 } else
@@ -250,6 +256,8 @@ int main(int argc, char **argv) {
         std::fprintf(stderr, "[ink] prompt %zu tokens %.3f s (%.1f tok/s); generated %zu in %.3f s (%.2f tok/s)\n", tok.size(),
                      t1 - t0, tok.size() / (t1 - t0), out.size(), t2 - t1, out.size() > 1 ? (out.size() - 1) / (t2 - t1) : 0.0);
         e.prof.report(stderr);
+        std::fprintf(stderr, "[ink] at the end: driver reports %.2f GiB free (card memory in use %.2f GiB)\n", d.free_mem() / 1073741824.0,
+                     d.allocated / 1073741824.0);
     } catch (std::exception &ex) {
         std::fprintf(stderr, "error: %s\n", ex.what());
         return 1;

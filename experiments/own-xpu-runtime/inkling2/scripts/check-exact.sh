@@ -22,6 +22,8 @@ M=${INK_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/Inkling-2-Mini-UD-IQ4
 DR=${INK_DRAFT_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/dspark-Inkling-2-Mini-Q8_0.gguf}
 S=$(cd "$(dirname "$0")" && pwd)/on-card.sh
 read -r cA cB cC cD cE <<< "${INK_CHECK_CARDS:-1 2 3 4 5}"
+# five distinct cards (a missing one would run its checks on card 0)
+[ -n "$cE" ] && [ $(printf '%s\n' $cA $cB $cC $cD $cE | sort -u | wc -l) -eq 5 ] || { echo "check-exact: INK_CHECK_CARDS needs five distinct cards"; exit 2; }
 out=$(mktemp -d "$W/check.XXXXXX")
 mkdir -p "$out/s5" "$out/p300"
 INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /dev/null 2> "$out/p300.err" &
