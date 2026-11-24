@@ -23,7 +23,9 @@ int main(int argc, char **argv) {
         // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
         bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
         // expert tensors with a decode copy (layers 20-23) stay off the card in the file layout (planarize makes the copy)
-        if (planar && dec_on()) w.upload(d, g, true, [](const Tensor &t) { return dec_target(t); });
+        // Q6_K weights stay off too (only their padded planar copy goes on the card; INK_Q6K_SKIP=0: both, as before)
+        const bool q6skip = !std::getenv("INK_Q6K_SKIP") || std::atoi(std::getenv("INK_Q6K_SKIP"));
+        if (planar && dec_on()) w.upload(d, g, true, [q6skip](const Tensor &t) { return dec_target(t) || (q6skip && q6k_target(t)); });
         else w.upload(d, g);
         bool dumping = std::getenv("INK_DUMP") != nullptr;
         std::map<std::string, WView> views;

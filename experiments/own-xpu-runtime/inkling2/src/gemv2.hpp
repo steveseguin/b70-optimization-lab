@@ -618,6 +618,9 @@ inline size_t dec_stride(const Tensor &t) {
 }
 // decode copies on (INK_DEC=0: the few-token kernels read the file layout); dec_target: an expert tensor that gets one
 inline bool dec_on() { return !std::getenv("INK_DEC") || std::atoi(std::getenv("INK_DEC")); }
+// q6k_target: a Q6_K weight (planar copy with a padded row stride); the upload can leave it in the file so that only
+// the planar copy goes on the card (planarize fetches it through a scratch buffer: ~0.45 GB less card memory)
+inline bool q6k_target(const Tensor &t) { return t.type == G_Q6_K && t.name != "token_embd.weight"; }
 inline bool dec_target(const Tensor &t) {
     const std::string sfx = "_exps.weight";
     return dec_kind(t) != K_RAW && t.name.size() > sfx.size() && t.name.compare(t.name.size() - sfx.size(), sfx.size(), sfx) == 0;
@@ -677,13 +680,24 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
     size_t fb = 0, nd = 0, dec_bytes = 0;
     for (auto &t : g.tensors)
         if (!w.has(t.name) && !(own && own(t))) {
-            if (!dec_target(t)) throw std::runtime_error("planarize: " + t.name + " is not on the card and has no decode copy");
+            if (!dec_target(t) && !q6k_target(t))
+                throw std::runtime_error("planarize: " + t.name + " is not on the card and has no decode copy");
             fb = std::max<size_t>(fb, t.bytes);
         }
     if (fb) {
         uint8_t *file = d.alloc<uint8_t>(fb);
         for (auto &t : g.tensors) {
             if (w.has(t.name) || (own && own(t))) continue;
+            if (q6k_target(t)) { // the planar copy only (the same bytes as from the arena copy)
+                const size_t rb = planar_stride(t);
+                uint8_t *dst = d.alloc<uint8_t>(rb * (size_t)t.rows());
+                w.fetch(d, g, t, file);
+                planar_repack(d.q, t, file, dst).wait();
+                v[t.name] = WView{&t, dst, rb, K_Q6_KP};
+                extra += rb * (size_t)t.rows();
+                ++n;
+                continue;
+            }
             const size_t rb = dec_stride(t);
             uint8_t *dst = d.alloc<uint8_t>(rb * (size_t)t.rows());
             w.fetch(d, g, t, file);

@@ -480,6 +480,14 @@ Dense products by weight format (`INK_PROF_TYPES=1` adds the format to profile l
 of 1,024 tokens, attn_q's shape): Q8_0 928 µs, Q6_K 1,703, Q5_K 7,660 through the generic multi-vector kernel ->
 2,550 as tiles (layer 22's attn_q is the only Q5_K dense matrix; `INK_Q5K_TILES=0` = before; gate 11/11, the 300-token
 dumps cover it): 3K prompt 3.595 -> 3.573 s.
+Writing steps without scores in memory (2026-11-24, `attn_flash_dec`, `INK_FLASH_DEC=0` = before): a work-group
+computes one block's scores into local memory with `attn_scores_gt`'s expressions (the relative-bias table), then runs
+`attn_flash_part`'s code on them, so P is neither written nor read and the keys and values are read in one launch.
+Writing (same card, both orders, logits of all 64 steps identical): after 100K 53.41 -> 54.91 tok/s (card 4), 53.07 ->
+54.60 (card 5); after 31K 70.04 -> 71.07 (card 1), 72.22 -> 73.33 (card 3); prompts level. Before (100K, card 3,
+`INK_PROF`): scores 408 µs + parts 440 + fold 46 per layer, the keys and values each at ~500 GB/s. Gate 11/11 (spec
+checks of 2-16 rows included). Q6_K weights now stay off the card's upload (only the padded planar copy goes on:
+`INK_Q6K_SKIP=0` = both copies): 0.41 GiB less card memory (100K: 23.41 -> 23.00 GiB).
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

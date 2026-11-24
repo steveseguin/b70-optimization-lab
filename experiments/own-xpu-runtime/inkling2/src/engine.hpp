@@ -75,6 +75,7 @@ struct Engine {
     // (pml: each block's maximum and sum) and attn_flash_sum. Every path gives the same values.
     bool q5k_tiles = !std::getenv("INK_Q5K_TILES") || std::atoi(std::getenv("INK_Q5K_TILES")) != 0;
     bool flash = true;
+    bool flash_dec = true; // INK_FLASH_DEC=0: steps without tiles keep scores in P (attn_scores_gt / _g + attn_flash_part)
     int flash_min = 128;
     float *pml = nullptr;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
@@ -279,6 +280,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
         if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
+        if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
             const bool dec = dec_on();
@@ -775,7 +777,10 @@ struct Engine {
                 const bool tsm = tiles && tile_sm && win == 0;
                 // prompt score tiles: 4 sub-groups per work-group for layers without a window, 8 for the windowed ones
                 // (bench_attn card 3: full 100K x 64 3,323 -> 3,209 us, 3K x 512 856 -> 818; windowed 464 vs 558 with 4)
-                if (tiles && win == 0)
+                // writing steps and steps without tiles (the relative-bias table filled): scores inside attn_flash_dec
+                const bool fdec = fl && flash_dec && !tiles;
+                if (fdec) {
+                } else if (tiles && win == 0)
                     pr("attn_scores_full", fz::attn_scores_tile<8, 3, 4>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel, f32(l.rel_bias),
                                                                         h.n_rel, qp, nc, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp,
                                                                         kmask[il], tsm ? wmax : nullptr, nsgmax));
@@ -799,7 +804,14 @@ struct Engine {
                     for (int c0 = 0; c0 < nc; c0 += pst) {
                         const int nt = std::min(pst, nc - c0), p0 = qp + c0, nblk = (p0 + nt - 1) / fz::PVB + 1;
                         const float *Pc = P + (size_t)c0 * nh * ldp;
-                        if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
+                        const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tc + (size_t)c0 * nh * h.rel_extent;
+                        if (fdec && nt == 1)
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, h.rel_extent,
+                                                                       kscale, pvpart, pml, nblk, kmask[il]));
+                        else if (fdec)
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 4>(d.q, Qd, Kc[il], td, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, h.rel_extent,
+                                                                       kscale, pvpart, pml, nblk, kmask[il]));
+                        else if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
                                                                                 nblk, kmask[il]));
                         else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml, nblk,
                                                                         kmask[il]));

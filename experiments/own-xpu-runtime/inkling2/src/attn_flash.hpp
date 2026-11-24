@@ -365,6 +365,144 @@ inline sycl::event attn_flash_part(sycl::queue &q, const float *P, int ldp, cons
     });
 }
 
+// attn_flash_part with the block's scores computed in the work-group (local memory) instead of read from P: the
+// writing steps and steps without prompt tiles, whose scores attn_scores_gt / attn_scores_g give as (d ascending from
+// 0.0f) * scale, plus tab[row][dist] within ext (the relative-bias table attn_prep fills when there are no tiles). P is
+// then neither written nor read (keys and values each read once per block; the same values). Sub-group s computes the
+// scores of keys kb + 16 s + lane for the NT x G rows, then every sub-group runs attn_flash_part's code on them.
+template <int G, int NT>
+inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const sycl::half *Vt, int vld,
+                                  int pos0, int ntok, int nh, int nkvh, int hd, int ext, float scale, float *part, float *pml, int nblk,
+                                  int km = 0x7fffffff) {
+    constexpr int PW = 16, KG = PVB / PW, NR = NT * G, HD = 128;
+    using HV8 = sycl::vec<sycl::half, 8>;
+    using HV = sycl::vec<sycl::half, 16>;
+    if (hd != HD || nh != nkvh * G || vld % 16 || HD / PW != KG) throw std::runtime_error("attn_flash_dec: unsupported shape");
+    const int nrg = (ntok + NT - 1) / NT;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> sx(NR * PVB, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nrg * nkvh * nblk, (size_t)HD), sycl::range<2>(1, (size_t)HD)),
+                       [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
+            auto sg = it.get_sub_group();
+            const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id(), c = (int)it.get_local_id(1);
+            const int gid = (int)it.get_group(0), b = gid % nblk, kvh = (gid / nblk) % nkvh, rg = gid / nblk / nkvh;
+            const int kb = b * PVB, pmax = pos0 + ntok - 1;
+            int pp[NT];
+#pragma unroll
+            for (int t = 0; t < NT; ++t) {
+                const int tt = rg * NT + t;
+                pp[t] = tt < ntok ? pos0 + tt : -1;
+            }
+            { // the scores of this sub-group's 16 keys (attn_scores_gt's expressions)
+                const int g0 = kb + sgi * PW, j = g0 + lane;
+                if (g0 <= pmax) {
+                    const int jc = sycl::min(j, pmax);
+                    const sycl::half *kr = K + (size_t)(jc & km) * nkvh * HD + kvh * HD;
+                    float s[NT][G];
+#pragma unroll
+                    for (int t = 0; t < NT; ++t)
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi) s[t][gi] = 0.0f;
+#pragma unroll
+                    for (int d0 = 0; d0 < HD; d0 += PW) {
+                        const HV8 k0 = *(const HV8 *)(kr + d0), k1 = *(const HV8 *)(kr + d0 + 8);
+                        float qv[NT][G];
+#pragma unroll
+                        for (int t = 0; t < NT; ++t) {
+                            const int tt = sycl::min(rg * NT + t, ntok - 1);
+#pragma unroll
+                            for (int gi = 0; gi < G; ++gi) qv[t][gi] = Q[((size_t)tt * nh + kvh * G + gi) * HD + d0 + lane];
+                        }
+#pragma unroll
+                        for (int u = 0; u < PW; ++u) {
+                            const float kf = (float)(u < 8 ? k0[u] : k1[u - 8]);
+#pragma unroll
+                            for (int t = 0; t < NT; ++t)
+#pragma unroll
+                                for (int gi = 0; gi < G; ++gi) s[t][gi] = mac(s[t][gi], sycl::select_from_group(sg, qv[t][gi], u), kf);
+                        }
+                    }
+#pragma unroll
+                    for (int t = 0; t < NT; ++t) {
+                        const int dist = pp[t] - j;
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi) {
+                            const size_t row = (size_t)(rg * NT + t) * nh + kvh * G + gi;
+                            float v = s[t][gi] * scale;
+                            if (j <= pp[t] && dist < ext) v = v + tab[row * ext + dist];
+                            sx[(t * G + gi) * PVB + sgi * PW + lane] = v; // read only where j <= pp[t]
+                        }
+                    }
+                }
+            }
+            sycl::group_barrier(it.get_group());
+            const sycl::half *vrow = Vt + (size_t)(kvh * HD + c) * vld;
+            float mb[NT][G], ls[NT][G], acc[NT][G];
+#pragma unroll
+            for (int t = 0; t < NT; ++t)
+#pragma unroll
+                for (int gi = 0; gi < G; ++gi) {
+                    float mx = -INFINITY;
+#pragma unroll
+                    for (int g = 0; g < KG; ++g) {
+                        const int j = kb + g * PW + lane;
+                        if (j <= pp[t]) mx = sycl::fmax(mx, sx[(t * G + gi) * PVB + g * PW + lane]);
+                    }
+                    mb[t][gi] = sycl::reduce_over_group(sg, mx, sycl::maximum<float>());
+                    ls[t][gi] = 0.0f;
+                    acc[t][gi] = 0.0f;
+                }
+            for (int g = 0; g < KG; ++g) {
+                const int g0 = kb + g * PW, j = g0 + lane;
+                if (g0 > pmax) break;
+                float ev[NT][G];
+#pragma unroll
+                for (int t = 0; t < NT; ++t)
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) {
+                        const float e = j <= pp[t] ? sycl::exp(sx[(t * G + gi) * PVB + g * PW + lane] - mb[t][gi]) : 0.0f;
+                        ev[t][gi] = e;
+                        ls[t][gi] = ls[t][gi] + e;
+                    }
+                if (g0 + PW - 1 <= pmax) {
+                    const HV v = *(const HV *)(vrow + (g0 & km));
+#pragma unroll
+                    for (int u = 0; u < PW; ++u) {
+                        const float vf = (float)v[u];
+#pragma unroll
+                        for (int t = 0; t < NT; ++t)
+#pragma unroll
+                            for (int gi = 0; gi < G; ++gi) acc[t][gi] = mac(acc[t][gi], sycl::select_from_group(sg, ev[t][gi], u), vf);
+                    }
+                } else {
+                    for (int u = 0; u <= pmax - g0; ++u) {
+                        const float vf = (float)vrow[(g0 + u) & km];
+#pragma unroll
+                        for (int t = 0; t < NT; ++t)
+#pragma unroll
+                            for (int gi = 0; gi < G; ++gi) acc[t][gi] = mac(acc[t][gi], sycl::select_from_group(sg, ev[t][gi], u), vf);
+                    }
+                }
+            }
+#pragma unroll
+            for (int t = 0; t < NT; ++t) {
+                if (pp[t] < kb) continue;
+#pragma unroll
+                for (int gi = 0; gi < G; ++gi) {
+                    float x = ls[t][gi];
+                    x = x + sycl::permute_group_by_xor(sg, x, 8);
+                    x = x + sycl::permute_group_by_xor(sg, x, 4);
+                    x = x + sycl::permute_group_by_xor(sg, x, 2);
+                    x = x + sycl::permute_group_by_xor(sg, x, 1);
+                    const size_t r = ((size_t)(rg * NT + t) * nh + kvh * G + gi) * nblk + b;
+                    part[r * HD + c] = acc[t][gi];
+                    if (c == 0) { pml[2 * r] = mb[t][gi]; pml[2 * r + 1] = x; }
+                }
+            }
+        });
+    });
+}
+
 // attn_flash_part's blocks folded into the state, a work-group per row (lane = channel, hd = 128 lanes): in chunks of
 // 128 blocks, a work-group scan gives each block the state's maximum before and after it (a maximum is exact in any
 // order, so these are the values the blocks one after another give), lane b computes block b's two factors, then every
