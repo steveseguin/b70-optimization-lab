@@ -573,6 +573,15 @@ Writing with the drafter (same card, both orders, ids identical; `INK_SPEC=7` ag
 Gate 12/12; new checks: haiku with 7 guesses checked every round (steps of 8 tokens, every chosen logits row), and
 code with 0-7 guesses.
 The drafter seeing all 200K positions (`INK_DSP_WIN=0`) kept a few more guesses but wrote slower (DO-NOT-REPEAT).
+Prompt step, small products (2026-11-24, INK_PROF 3K prompt, card 3: 3,428 ms of kernels, of which experts 2,011,
+dense matrices ~715, windowed attention 203, the rest ~460):
+- The attention inputs' products now run grouped by input, and the dense tiles gather each input once (`xd_keep`,
+  `INK_XD_KEEP=0` = before). The windowed layers' 6 products share one input. 1,968 -> 1,424 gathers, 58.0 -> 45.5 ms.
+- F32 / BF16 tiles from 64 tokens take 4 rows per sub-group and 32 sub-groups (`INK_DENSE_RF`, `1,1` = before; the
+  same values): the loop down products 137-140 -> 66-69 us per launch, the expert router 86.9 -> 34.0.
+Prompts (same card, both orders, the prompt's logits row identical): 100K 666.8 -> 671.6 tok/s (card 1) and 661.6 ->
+670.8 (card 5); 31K 862.5 / 858.4 -> 867.8 / 867.6 (card 3) and 806.8 / 801.7 -> 820.3 / 812.7 (card 4); 3K 802.9-813.0
+-> 818.9-822.2 (card 2). Gate 12/12.
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

@@ -171,6 +171,10 @@
   reads its slots 4-7 and drafts guesses 4-7 only after a strong 3-guess chain, which the host decides. `INK_SPEC=7`.
   Short prompts: code +4.3-4.9 %, prose +3.0-3.2 %, 3K prompt -0.8 %. Closed: the drafter seeing all 200K positions
   (slower), value prefetch in the check kernel, 2 rows per sub-group at 5-8 vectors.
+- Nov 24 ~16:35: prompts +0.7-1.5 % (100K 666.8 -> 671.6 tok/s card 1, 31K +0.8-1.5 %, 3K +1.0 %, logits identical,
+  gate 12/12). Each attention input is now gathered once for the dense tiles, and the F32 products take 4 rows per
+  sub-group (loop down products 2x faster, router 2.5x). Prompt budget (3K, card 3): experts 59 %, dense matrices
+  21 %, windowed attention 6 %, small kernels 13 %.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

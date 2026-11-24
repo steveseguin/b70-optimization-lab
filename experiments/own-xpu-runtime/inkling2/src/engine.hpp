@@ -97,6 +97,10 @@ struct Engine {
     int tile_bound = 0;
     int tile_min = 128;        // steps of at least this many tokens use the token-parallel kernels (INK_TILE_MIN)
     float *Xd = nullptr;       // transposed tiles of the dense token-parallel kernels (tok_tiles.hpp)
+    // INK_XD_KEEP (default 1): products of one input in a row gather it into Xd once (the attention inputs of a prompt
+    // step: 8 products of 3 inputs, or of 1 in the windowed layers); xd_src is the input Xd holds while xd_keep is set
+    bool xd_keep_on = true, xd_keep = false;
+    const float *xd_src = nullptr; int xd_n = 0, xd_cols = 0;
     int dense_min = 16;        // steps of at least this many tokens use them for the dense matrices (INK_DENSE_MIN)
     bool multi_proj = true;    // one-token steps: the attention-input matrices in one launch (INK_MULTI=0: one each)
     static constexpr int XD_COLS = 4608; // widest dense input (loop down: 2 x 2304)
@@ -354,6 +358,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_OUT_LANE")) out_lane = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE")) att_share = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_TILE_SM")) tile_sm = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_XD_KEEP")) xd_keep_on = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_EXP")) pv_exp = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE_MIN")) att_share_min = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
@@ -422,8 +427,17 @@ struct Engine {
         case K_Q8_0P: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
         case K_Q6_KP: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
         case K_RAW:
-            if (w.t->type == G_F32) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
-            if (w.t->type == G_BF16) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
+            // INK_DENSE_RF=<rows>,<sub-groups> (F32 / BF16 tiles from 64 tokens, the same values; default 4 rows, 32
+            // sub-groups. INK_PROF 3K prompt, card 3: loop down products 137-140 -> 66-69 us, router 86.9 -> 34.0; 1,1 = before)
+            if (w.t->type == G_F32 || w.t->type == G_BF16) {
+                static const DTune rf = [] {
+                    DTune t{4, 32};
+                    if (const char *e = std::getenv("INK_DENSE_RF")) std::sscanf(e, "%d,%d", &t.R, &t.sgw);
+                    return t;
+                }();
+                dt = ntok >= 64 ? rf : DTune{1, 1};
+                return w.t->ne[0] <= 64 || ntok >= 128;
+            }
             // Q5_K (attn_q of layer 22, file layout): ran the generic multi-vector kernel in prompt steps
             if (w.t->type == G_Q5_K && q5k_tiles) { dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true; }
             return false;
@@ -444,7 +458,10 @@ struct Engine {
         }
         DTune dt;
         if (dense_tiles(w, ntok, dt)) {
-            pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
+            if (!(xd_keep && x == xd_src && ntok == xd_n && cols == xd_cols)) {
+                pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
+                xd_src = xd_keep ? x : nullptr; xd_n = ntok; xd_cols = cols;
+            }
             pr(wlabel(w), dense_t(d.q, w.view(), ntok, Xd, y, rows, dt));
             return;
         }
@@ -773,13 +790,17 @@ struct Engine {
                     for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
                 }
             } else {
+                // grouped by input, each gathered once for the dense tiles (xd_keep; the inputs do not change here)
+                xd_keep = xd_keep_on; xd_src = nullptr;
                 mm(l.wq, in[0], Q, ntok);
-                mm(l.wk, in[1], Kr, ntok);
-                mm(l.wv, in[2], Vr, ntok);
-                if (!swa) { mm(l.k_conv_proj, in[1], dynK, ntok); mm(l.v_conv_proj, in[2], dynV, ntok); }
                 mm(l.rel, in[0], R, ntok);
                 mm(l.sink, in[0], sinks, ntok);
                 mm(l.wgate, in[0], gate, ntok);
+                mm(l.wk, in[1], Kr, ntok);
+                if (!swa) mm(l.k_conv_proj, in[1], dynK, ntok);
+                mm(l.wv, in[2], Vr, ntok);
+                if (!swa) mm(l.v_conv_proj, in[2], dynV, ntok);
+                xd_keep = false; xd_src = nullptr;
             }
             const bool tiles = att_tile > 0 && ntok >= att_tile && vld > 0 && nh == 3 * nkvh && h.n_rel == 16;
             {   // convolutions, clips, positions, cache store, bias table (one launch)
