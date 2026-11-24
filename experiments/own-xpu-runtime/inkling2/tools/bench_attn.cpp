@@ -190,8 +190,20 @@ int main(int argc, char **argv) {
                 d.q.memcpy(ofl, o1, hg.size() * 4).wait();
                 fl("flash<8,3,2>", fz::attn_flash_tile<8, 3, 2>);
                 fl("flash<8,3,1>", fz::attn_flash_tile<8, 3, 1>);
-                fl("flash<4,3,4>", fz::attn_flash_tile<4, 3, 4>);
-                fl("flash<2,3,4>", fz::attn_flash_tile<2, 3, 4>);
+                if (const char *e = std::getenv("BENCH_KM")) { // keys and values from a ring of BENCH_KM keys (fits the cache)
+                    const int km = std::atoi(e) - 1;
+                    double us = tm([&] { fz::attn_flash_tile<8, 3, 1>(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, km); });
+                    std::printf("  flash<8,3,1> ring of %d keys  %9.1f us %7.3f J %4.0f W\n", km + 1, us, ej, ej / us * 1e6);
+                    us = tm([&] { fz::attn_flash_tile<4, 3, 2>(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, km); });
+                    std::printf("  flash<4,3,2> ring of %d keys  %9.1f us %7.3f J %4.0f W\n", km + 1, us, ej, ej / us * 1e6);
+                }
+                fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                fl("flash<8,3,1> PQ", fz::attn_flash_tile<8, 3, 1, 5>);
+                fl("flash<8,3,1> PO (per-lane Q, constant offsets)", fz::attn_flash_tile<8, 3, 1, 20>);
+                fl("flash<8,3,1> PS", fz::attn_flash_tile<8, 3, 1, 12>);
+                fl("flash<8,3,1> PQS", fz::attn_flash_tile<8, 3, 1, 13>);
+                fl("flash<8,3,1> POS", fz::attn_flash_tile<8, 3, 1, 28>);
+                fl("flash<8,3,1>", fz::attn_flash_tile<8, 3, 1>);
                 { // the writing-step kernels: scores in P (tile), attn_flash_part + attn_flash_sum, rows in pieces of BENCH_PROWS
                     const int nblk = pl / fz::PVB + 1, pst = std::getenv("BENCH_PROWS") ? std::atoi(std::getenv("BENCH_PROWS")) : 16;
                     float *part = d.alloc<float>((size_t)pst * nh * nblk * hd), *pml = d.alloc<float>((size_t)pst * nh * nblk * 2);

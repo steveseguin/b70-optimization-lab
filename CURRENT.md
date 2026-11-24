@@ -142,6 +142,10 @@
   (200K +5 %). All paths agree bit for bit (gate 11/11 against the new `baseline`; fused vs block-part prompts
   identical at 3K and 100K); as accurate as v3 (high-precision reference: same top token 98.0 vs 97.0 %). Gate
   prompts' ids unchanged; `INK_FLASH=0` = v3 (`baseline-v3`).
+- Nov 24 ~09:10: same values, small prompt gains: the fused attention loads the next key group's exponentials one
+  group ahead so the compiler interleaves the 24 sums (100K +1.2-2.1 %, 31K +0.6-1.4 %); layer 22's Q5_K attn_q runs
+  as tiles (7.66 -> 2.55 ms per 1,024-token step). Gate 11/11. Found: the fused kernel is not memory-bound (cache
+  ring test), the release compiler ignores accumulator settings, Q6_K dense tiles are 1.8x slower than Q8_0.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

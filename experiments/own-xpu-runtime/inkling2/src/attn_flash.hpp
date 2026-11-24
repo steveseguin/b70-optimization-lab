@@ -21,7 +21,11 @@ namespace ink::fz {
 // row maxima per sub-group beside them; then sub-group s turns rows [s RS, s RS + RS) into exponentials, l_b and the
 // state's factors; then every sub-group does P.V for its channels (lane = channel, exponentials selected from local
 // memory as attn_pv_tile_xs does). Three barriers per block.
-template <int MT, int G, int CPL>
+// VAR (same arithmetic, same order; code shape only): 1 = Q by sub-group block loads (one scalar address per query, the
+// rest constant offsets), 16 = Q per lane with constant offsets from one base per query, 2 = P.V of
+// full blocks unrolled, 4 = the next key group's exponentials loaded one group ahead, 8 = local-memory reads of the
+// exponentials as sub-group block loads
+template <int MT, int G, int CPL, int VAR = 0>
 inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
                                    int nr, const float *sink, const sycl::half *Vt, int vld, int pos0, int ntok, int nh, int nkvh,
                                    int hd, int ext, float scale, const float *gate, float *out, int km = 0x7fffffff) {
@@ -82,8 +86,16 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
 #pragma unroll
                         for (int m = 0; m < MT; ++m) {
                             const int t = t0 + sycl::min(m, tn - 1);
+                            const float *qm = Q + ((size_t)t * nh + kvh * G) * HD + d0; // one row base per query
 #pragma unroll
-                            for (int gi = 0; gi < G; ++gi) ql[m * G + gi] = Q[((size_t)t * nh + kvh * G + gi) * hd + d0 + lane];
+                            for (int gi = 0; gi < G; ++gi) {
+                                if constexpr (VAR & 1)
+                                    ql[m * G + gi] = sg.load(sycl::address_space_cast<sycl::access::address_space::global_space,
+                                                                                      sycl::access::decorated::yes>(
+                                        const_cast<float *>(qm + gi * HD)));
+                                else if constexpr (VAR & 16) ql[m * G + gi] = qm[gi * HD + lane];
+                                else ql[m * G + gi] = Q[((size_t)t * nh + kvh * G + gi) * hd + d0 + lane];
+                            }
                         }
 #pragma unroll
                         for (int u = 0; u < PW; ++u) {
@@ -168,10 +180,13 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
 #pragma unroll
                     for (int a = 0; a < NR; ++a) ab[k][a] = 0.0f;
                 const int kend = sycl::min(PVB, pl - jb + 1), gfull = kend / PW;
-                for (int g = 0; g < gfull; ++g) {
-                    float pv[NR];
-#pragma unroll
-                    for (int a = 0; a < NR; ++a) pv[a] = sx[a * PVB + g * PW + lane];
+                auto ldx = [&](int a, int g) -> float {
+                    if constexpr (VAR & 8)
+                        return sg.load(sycl::address_space_cast<sycl::access::address_space::local_space, sycl::access::decorated::yes>(
+                            &sx[a * PVB + g * PW]));
+                    else return sx[a * PVB + g * PW + lane];
+                };
+                auto pv_group = [&](int g, const float *pv) {
                     HV v0[CPL], v1[CPL];
 #pragma unroll
                     for (int k = 0; k < CPL; ++k) {
@@ -186,6 +201,36 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
 #pragma unroll
                             for (int a = 0; a < NR; ++a) ab[k][a] = mac(ab[k][a], sycl::select_from_group(sg, pv[a], u), vf);
                         }
+                    }
+                };
+                if constexpr (VAR & 4) {
+                    float pv[NR];
+                    if (gfull > 0)
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) pv[a] = ldx(a, 0);
+                    for (int g = 0; g < gfull; ++g) {
+                        float pn[NR];
+                        const int gn = sycl::min(g + 1, gfull - 1);
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) pn[a] = ldx(a, gn);
+                        pv_group(g, pv);
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) pv[a] = pn[a];
+                    }
+                } else if ((VAR & 2) && gfull == KG) {
+#pragma unroll
+                    for (int g = 0; g < KG; ++g) {
+                        float pv[NR];
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) pv[a] = ldx(a, g);
+                        pv_group(g, pv);
+                    }
+                } else {
+                    for (int g = 0; g < gfull; ++g) {
+                        float pv[NR];
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) pv[a] = ldx(a, g);
+                        pv_group(g, pv);
                     }
                 }
                 if (gfull * PW < kend) { // the last keys present one at a time (no value past the step's last position read)

@@ -464,8 +464,22 @@ same card, both orders): 200K 403.9 -> 507.4 tok/s (card 4), 397.2 -> 499.3 (car
 581.1 -> 645.7 (card 4); 31K 743.9 -> 785.2 (card 1), 796.3 -> 839.8 (card 3); 3K level (803.4 / 802.4, 857.8 /
 862.6). Writing: at 200K 38.04 -> 39.96 tok/s, at 100K 52.75 -> 53.06, after the code prompt level (89.90-89.95 /
 89.51-90.01). Fused-tile shapes: `<8,3,1>` 23.1 ms at 100K x 256, `<4,3,2>` 25.4, `<8,3,2>` 49.2, `<4,3,4>` 46.8,
-`<2,3,4>` 67.4 (the last three spill or starve). Next for this path: fewer barriers per block (double-buffered local
-memory), and `prow` (the score rows P holds) can shrink now that long prompts no longer keep full-layer scores.
+`<2,3,4>` 67.4 (the last three spill or starve). `prow` (the score rows P holds) can shrink now that long prompts no
+longer keep full-layer scores.
+Fused-kernel code shape (2026-11-24, same values: every variant "vs ref same", gate 11/11). The kernel is not limited
+by memory: keys and values from a 2,048-key ring that fits the cache take 22.9 vs 23.1 ms (100K x 256). Its machine
+code (`IGC_ShaderDumpEnable`) showed the compiler turning P.V's 24 independent sums into one 16-long dependent chain
+per row in acc0 (the slow pattern: bench_fma 1 chain = 5.0 TMAC/s); loading the next key group's exponentials one
+group ahead (`attn_flash_tile` VAR 4) makes it interleave them: 100K x 256 23.1 -> 20.7-21.1 ms, 3K x 1,024 4.0 ->
+3.6-3.7 ms; prompts (same card, both orders, logits identical) 100K 649.2 -> 656.7 (card 4), 637.7 -> 651.1 (card 5),
+31K 787.8 -> 792.5 (card 1), 842.3 -> 854.0 (card 3), 3K level. The block loop is now ~59 % multiply-adds: per block
+a sub-group issues 192 Q loads at ~5 instructions each (64-bit addresses), 512 half-to-float moves (two per value) and
+24 sub-group maxima. Closed (DO-NOT-REPEAT): two score buffers, Q block loads, constant Q offsets, local block loads,
+unrolling, compiler settings against the accumulator chains.
+Dense products by weight format (`INK_PROF_TYPES=1` adds the format to profile labels; 3K prompt, card 3, per launch
+of 1,024 tokens, attn_q's shape): Q8_0 928 µs, Q6_K 1,703, Q5_K 7,660 through the generic multi-vector kernel ->
+2,550 as tiles (layer 22's attn_q is the only Q5_K dense matrix; `INK_Q5K_TILES=0` = before; gate 11/11, the 300-token
+dumps cover it): 3K prompt 3.595 -> 3.573 s.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

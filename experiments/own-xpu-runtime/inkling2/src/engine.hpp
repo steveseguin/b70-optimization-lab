@@ -73,6 +73,7 @@ struct Engine {
     // (attn_flash.hpp; INK_FLASH=0 = baseline v3's softmax over the whole row). Steps of at least flash_min tokens
     // (INK_FLASH_MIN) in one launch that keeps the scores in local memory; else the scores in P, then attn_flash_part
     // (pml: each block's maximum and sum) and attn_flash_sum. Every path gives the same values.
+    bool q5k_tiles = !std::getenv("INK_Q5K_TILES") || std::atoi(std::getenv("INK_Q5K_TILES")) != 0;
     bool flash = true;
     int flash_min = 128;
     float *pml = nullptr;
@@ -392,6 +393,8 @@ struct Engine {
         case K_RAW:
             if (w.t->type == G_F32) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
             if (w.t->type == G_BF16) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
+            // Q5_K (attn_q of layer 22, file layout): ran the generic multi-vector kernel in prompt steps
+            if (w.t->type == G_Q5_K && q5k_tiles) { dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true; }
             return false;
         default: return false;
         }
@@ -435,7 +438,8 @@ struct Engine {
         size_t a = n.rfind(".weight");
         std::string s = n.substr(0, a);
         if (s.compare(0, 4, "blk.") == 0) s = s.substr(s.find('.', 4) + 1);
-        return "w:" + s;
+        static const bool types = std::getenv("INK_PROF_TYPES") != nullptr; // profile labels with the weight format
+        return types ? "w:" + s + ":" + type_name(w.t->type) : "w:" + s;
     }
     std::string nm(const char *s, int il) const { return std::string(s) + "-" + std::to_string(il); }
 
@@ -758,7 +762,7 @@ struct Engine {
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
             const bool fl = flash && win == 0, fl_tile = fl && tiles && ntok >= flash_min;
             if (fl_tile)
-                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
+                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 4>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
                                                                   ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
             for (int q0 = 0; q0 < (winf || fl_tile ? 0 : ntok); q0 += prow) {
                 const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
