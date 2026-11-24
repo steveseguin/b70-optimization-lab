@@ -309,6 +309,26 @@ the target keeps; the text is the one-token text (gate check 10: ids and every c
   944 µs (multi_m), one row 676 -> 655 (bench_gemv, card 3). Greedy choice in two launches (`ops::argmax_rows2`,
   same index; one work-group per row took 56-63 µs).
 
+Windowed attention of the small steps in one launch (2026-11-23 evening, `fz::attn_win_fused`, `INK_ATT_WINF=0` off):
+the windowed layers (window 1,024) of steps of 1-4 tokens ran four kernels (scores, softmax sums, P.V block parts,
+block sum; 23.7 µs per layer at 3K in `INK_PROF`). One work-group of 1,024 threads per (token, KV head) keeps its 3 rows'
+window in local memory and repeats every value: the dot products in d order with the same 16-lane q reads, the
+maximum with the sink, the 128-thread lane-strided exponential sums with the sub-group xor sums and the 8 partials in
+order, the block parts (P times 1 / total, keys ascending from 0 per block of 128) and the blocks in order times the
+gate. A window that does not start at a block boundary touches 9 blocks; the two partial ends hold 128 keys together,
+so one thread takes both (one pass of 1,024 threads). For 1-2 tokens 2 work-groups per KV head split the channels of
+P.V (each computes the scores and softmax itself), so the value reads spread over twice the cores. The partial blocks
+of the P.V parts (`attn_pv_bo_part`, every layer) read 16 keys per load except in the two edge groups (they read one
+2-byte value per key; same order). `bench_attn` (`BENCH_WINF=1`, card 3, ring of 2,048, bit-identical to the four
+kernels): full window 1 token 18.75 (four kernels, old partial blocks) -> 16.0 (new partial blocks) -> 15.2 µs (fused,
+2 splits); 4 tokens 25.1 -> 22.3 -> 18.1 (fused); 400 keys 1 token 10.4 -> 7.5, 4 tokens 12.0 -> 8.4. Not better: one
+head per work-group (1 token 22.0 µs; 2-4 tokens 39-58, more work-groups than cores), 4 channel splits, 32-byte key
+reads (no change). Steps (`INK_BENCH_STEP`, card 3, 3,119 positions) 1 / 2 / 3 / 4 tokens 11.84-11.91 / 15.58-15.66 /
+19.09-19.21 / 21.91-21.92 -> 11.53-11.55 / 15.34-15.36 / 18.84-18.87 / 21.45-21.53 ms (partial blocks alone 11.76 /
+15.51 / 19.05 / 21.73). With the drafter, same guesses kept and ids identical: code 122.05-122.34 -> 123.41-124.20
+tok/s, haiku 109.28-109.40 -> 111.25-111.48 (card 2), 3K 107.54-108.29 -> 110.45-110.73 (card 4), 31K 101.79-101.86
+-> 103.74-103.95 (card 5); after a 100K prompt 60.51 -> 62.11 tok/s (card 2), plain 53.50 (card 4). Gate 11/11.
+
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
 (unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,

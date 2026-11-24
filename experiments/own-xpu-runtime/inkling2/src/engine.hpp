@@ -704,7 +704,19 @@ struct Engine {
             const bool share = fast && att_share && ntok >= 2 && ntok <= 4 && pos0 + ntok > att_share_min;
             // in chunks of prow query tokens: the score buffer P holds prow rows of the whole context (each row's
             // values do not depend on the other rows of its step)
-            for (int q0 = 0; q0 < ntok; q0 += prow) {
+            // windowed layers, steps of 1-4 tokens: the four kernels below in one launch (fused.hpp attn_win_fused, the same
+            // values; INK_ATT_WINF=0 off). 2 work-groups per KV head split the channels for 1-2 tokens (bench_attn card 3,
+            // full window: 1 token 16.0 -> 15.2 us, 4 tokens 22.3 -> 18.1; 400 keys 10.4 -> 7.5, 12.0 -> 8.4)
+            const bool winf = fast && win > 0 && win <= 1024 && ntok <= 4 && fz::att_win_fused_on();
+            if (winf) {
+                if (ntok <= 2)
+                    pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
+                                                              h.rel_extent, win, kscale, kmask[il], att));
+                else
+                    pr("attn_win", fz::attn_win_fused<3, 3, 1>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
+                                                              h.rel_extent, win, kscale, kmask[il], att));
+            }
+            for (int q0 = 0; q0 < (winf ? 0 : ntok); q0 += prow) {
                 const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
                 const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
                 const float *tc = tab + (size_t)q0 * nh * h.rel_extent;

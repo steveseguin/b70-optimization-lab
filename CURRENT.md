@@ -112,6 +112,10 @@
   haiku 107.4, 3K 106.1, 31K 101.3), same guesses kept, ids identical. Gate 11/11.
 - Nov 23 ~21:45: the drafter's 8-slot products on the matrix engines (no extra card memory): code 122.0 tok/s
   (card 2), haiku 108.9, 3K 107.3, 31K 102.9, 100K 61.6; same guesses kept, ids identical. Gate 11/11.
+- Nov 23 ~22:50: windowed attention of the 1-4-token steps in one launch (same values) + 16-key reads in partial
+  P.V blocks: one-token step 11.88 -> 11.54 ms; code 123.8 tok/s, haiku 111.4, 3K 110.6, 31K 103.9, 100K 62.1;
+  ids identical.
+  Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

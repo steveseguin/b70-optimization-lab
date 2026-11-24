@@ -203,6 +203,76 @@ int main(int argc, char **argv) {
             return 0;
         }
         const int ncopy = std::getenv("BENCH_NCOPY") ? std::atoi(std::getenv("BENCH_NCOPY")) : 16; // V caches cycled so reads come from memory
+        if (std::getenv("BENCH_WINF")) { // windowed writing steps: the four kernels vs attn_win_fused (ring of 2,048 keys)
+            const int ext = 1024, RW = 2048, km = RW - 1, wn = win > 0 ? win : 1024, nsgmax = RW / 16 + 2;
+            std::mt19937 rq(11);
+            std::normal_distribution<float> nq(0.0f, 0.3f);
+            const int nt = ntok;
+            std::vector<float> hq((size_t)nt * nh * hd), htb((size_t)nt * nh * ext), hsk((size_t)nt * nh), hgt((size_t)nt * nh * hd);
+            for (auto &x : hq) x = nq(rq);
+            for (auto &x : htb) x = nq(rq);
+            for (auto &x : hsk) x = nq(rq) * 4.0f;
+            for (auto &x : hgt) x = nq(rq) * 3.0f;
+            std::vector<sycl::half> hk((size_t)RW * kd), hvt((size_t)kd * RW);
+            for (auto &x : hk) x = (sycl::half)nq(rq);
+            for (auto &x : hvt) x = (sycl::half)(nq(rq) * 3.0f);
+            float *Qd = d.alloc<float>(hq.size()), *Tb = d.alloc<float>(htb.size()), *Sk = d.alloc<float>(hsk.size()), *Gt = d.alloc<float>(hgt.size());
+            d.put(Qd, hq.data(), hq.size()); d.put(Tb, htb.data(), htb.size()); d.put(Sk, hsk.data(), hsk.size()); d.put(Gt, hgt.data(), hgt.size());
+            std::vector<sycl::half *> Kx, Vx;
+            for (int c = 0; c < ncopy; ++c) {
+                Kx.push_back(d.alloc<sycl::half>(hk.size())); d.put(Kx.back(), hk.data(), hk.size());
+                Vx.push_back(d.alloc<sycl::half>(hvt.size())); d.put(Vx.back(), hvt.data(), hvt.size());
+            }
+            const int ldp2 = RW;
+            float *P0 = d.alloc<float>((size_t)nt * nh * ldp2), *W0 = d.alloc<float>((size_t)nt * nh * nsgmax), *inv = d.alloc<float>((size_t)nt * nh);
+            const int lo0 = std::max(0, pos - wn + 1), nblk = (pos + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
+            float *part = d.alloc<float>((size_t)nt * nh * nblk * hd);
+            float *o0 = d.alloc<float>((size_t)nt * nh * hd), *o1 = d.alloc<float>((size_t)nt * nh * hd);
+            const float scale = 1.0f / std::sqrt((float)hd);
+            auto chain = [&](int i) {
+                fz::attn_scores_g<3>(d.q, Qd, Kx[i % ncopy], Tb, pos, nt, nh, nkvh, hd, ext, wn, scale, P0, ldp2, W0, nsgmax, km);
+                fz::attn_softmax_sum(d.q, Sk, W0, nsgmax, pos, nt, nh, wn, P0, ldp2, inv);
+                fz::attn_pv_bo_part<3>(d.q, P0, ldp2, Vx[i % ncopy], RW, pos, nt, nh, nkvh, hd, wn, part, nblk, inv, km);
+                fz::attn_pv_bo_sum(d.q, part, nblk, pos, nt, nh, hd, wn, Gt, o0);
+            };
+            auto fused = [&](int i) { fz::attn_win_fused<3, 3>(d.q, Qd, Kx[i % ncopy], Tb, Vx[i % ncopy], RW, Sk, Gt, pos, nt, nh, nkvh, hd, ext, wn, scale, km, o1); };
+            auto fused1 = [&](int i) { fz::attn_win_fused<3, 3, 2>(d.q, Qd, Kx[i % ncopy], Tb, Vx[i % ncopy], RW, Sk, Gt, pos, nt, nh, nkvh, hd, ext, wn, scale, km, o1); };
+            auto fused4 = [&](int i) { fz::attn_win_fused<3, 3, 4>(d.q, Qd, Kx[i % ncopy], Tb, Vx[i % ncopy], RW, Sk, Gt, pos, nt, nh, nkvh, hd, ext, wn, scale, km, o1); };
+            auto tm = [&](auto &&f) {
+                for (int i = 0; i < 4; ++i) f(i);
+                d.q.wait();
+                double t0 = now_s();
+                for (int i = 0; i < iters; ++i) f(i + 1);
+                d.q.wait();
+                const double us = (now_s() - t0) / iters * 1e6;
+                f(0); d.q.wait();
+                return us;
+            };
+            for (int rep = 0; rep < 3; ++rep) {
+                d.q.memset(o0, 0, (size_t)nt * nh * hd * 4).wait(); d.q.memset(o1, 0xff, (size_t)nt * nh * hd * 4).wait();
+                std::vector<float> a0((size_t)nt * nh * hd), a1(a0.size());
+                auto cmp = [&]() {
+                    d.get(a0.data(), o0, a0.size()); d.get(a1.data(), o1, a1.size());
+                    long bad = -1;
+                    for (size_t r = 0; r < a0.size(); ++r) if (std::memcmp(&a0[r], &a1[r], 4)) { bad = (long)r; break; }
+                    d.q.memset(o1, 0xff, a1.size() * 4).wait();
+                    return bad < 0 ? std::string("same") : "DIFF at " + std::to_string(bad);
+                };
+                const double u0 = tm(chain), u1 = tm(fused);
+                const std::string c1 = cmp();
+                const double u2 = tm(fused1);
+                const std::string c2 = cmp();
+                const double u4 = tm(fused4);
+                const std::string c4 = cmp();
+                std::printf("window %d, position %d, %d token(s): four kernels %8.2f us, fused %8.2f us %s, 2 splits %8.2f us %s, 4 splits %8.2f us %s\n", wn, pos, nt,
+                            u0, u1, c1.c_str(), u2, c2.c_str(), u4, c4.c_str());
+                if (rep == 2) for (int dbg : {1, 2, 3}) {
+                    const double ud = tm([&](int i) { fz::attn_win_fused<3, 3>(d.q, Qd, Kx[i % ncopy], Tb, Vx[i % ncopy], RW, Sk, Gt, pos, nt, nh, nkvh, hd, ext, wn, scale, km, o1, dbg); });
+                    std::printf("  fused 3 heads, %s: %8.2f us\n", dbg == 1 ? "no P.V" : dbg == 2 ? "no scores" : "softmax only", ud);
+                }
+            }
+            return 0;
+        }
         if (std::getenv("BENCH_KVF")) { // writing-step scores (attn_scores_g<3>, attn_scores_gt<3,4>): work-group order kvh-outer vs kvh-fastest
             const int ext = 1024, nsgmax = cap / 16 + 2;
             std::mt19937 rq(7);
