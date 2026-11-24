@@ -190,13 +190,15 @@ int main(int argc, char **argv) {
             const double bytes_gu = (double)gub * na, bytes_dn = (double)dnb * na;
             std::printf("tokens %d: %d slots, %d experts used, gate_up %.1f MB, down %.1f MB per launch\n", ntok, K, na,
                         bytes_gu / 1e6, bytes_dn / 1e6);
+            double ej = 0.0; // the last timeit()'s card energy per launch (J)
             auto timeit = [&](auto &&launch) {
                 for (int i = 0; i < 2; ++i) launch(i);
                 d.q.wait();
-                double t0 = now_s();
+                const double e0 = d.energy_j(), t0 = now_s();
                 for (int i = 0; i < iters; ++i) launch(i + 1);
                 d.q.wait();
                 double us = (now_s() - t0) / iters * 1e6;
+                ej = (d.energy_j() - e0) / iters;
                 launch(0);
                 d.q.wait();
                 return us;
@@ -317,8 +319,8 @@ int main(int argc, char **argv) {
                             for (int r = 0; r < NFF; ++r)
                                 if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + l], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
                         }
-                    std::printf("  gate_up  sgw %2d %s %d rows %s  %9.1f us  %s\n", sw, pair ? "pairs    " : "two tiles", 2 * ng,
-                                big ? "grf256" : "grf128", us,
+                    std::printf("  gate_up  sgw %2d %s %d rows %s  %9.1f us %6.3f J %4.0f W  %s\n", sw, pair ? "pairs    " : "two tiles", 2 * ng,
+                                big ? "grf256" : "grf128", us, ej, ej / us * 1e6,
                                 badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
                 }
                 tile_sgw2 = 32;
@@ -406,8 +408,8 @@ int main(int argc, char **argv) {
                     double us = timeit([&](int i) { slot_rows_g2(d.q, dn[i % NL], grp, tiles, Ht, y1, E, r, pair, big, lut); });
                     d.get(z1.data(), y1, z1.size());
                     long bad = cmp(z0, z1);
-                    std::printf("  down     sgw %2d %s %d rows lut %s  %9.1f us  %s\n", sw, pair ? "pairs    " : "two tiles", r,
-                                big ? "grf256" : "grf128", us,
+                    std::printf("  down     sgw %2d %s %d rows lut %s  %9.1f us %6.3f J %4.0f W  %s\n", sw, pair ? "pairs    " : "two tiles", r,
+                                big ? "grf256" : "grf128", us, ej, ej / us * 1e6,
                                 bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
                 }
                 {

@@ -3,6 +3,8 @@
 // uploaded in PIECE-sized copies from a plain (not pinned) host buffer: single copies of 512 MiB or more read the
 // runtime's temporary host mapping and faulted on these cards (lab note gpu-fault-20260916).
 #pragma once
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include "gguf.hpp"
 #include <chrono>
@@ -100,6 +102,22 @@ struct Device {
 
     std::string name() const { return dev.get_info<sycl::info::device::name>(); }
     size_t total_mem() const { return dev.get_info<sycl::info::device::global_mem_size>(); }
+    // the card's energy counter in joules (hwmon energy1_input of its PCI device, read-only), -1 if there is none. Under
+    // the card's power limit (~275 W, clock 2.3-2.8 GHz) a long run's speed follows energy per result, not stalls
+    double energy_j() const {
+        static const std::string path = [this] {
+            if (!dev.has(sycl::aspect::ext_intel_pci_address)) return std::string();
+            const std::string dir = "/sys/bus/pci/devices/" + dev.get_info<sycl::ext::intel::info::device::pci_address>() + "/hwmon";
+            std::error_code ec;
+            for (const auto &e : std::filesystem::directory_iterator(dir, ec))
+                if (std::filesystem::exists(e.path() / "energy1_input")) return (e.path() / "energy1_input").string();
+            return std::string();
+        }();
+        if (path.empty()) return -1.0;
+        std::ifstream f(path);
+        unsigned long long uj = 0;
+        return (f >> uj) ? (double)uj * 1e-6 : -1.0;
+    }
     // free card memory; needs ZES_ENABLE_SYSMAN=1, else returns 0
     size_t free_mem() const {
         if (!dev.has(sycl::aspect::ext_intel_free_memory)) return 0;

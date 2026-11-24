@@ -112,12 +112,15 @@ int main(int argc, char **argv) {
             const size_t np = (size_t)ntok * nh * ldp;
             float *P0 = d.alloc<float>(np), *P1 = d.alloc<float>(np);
             float *o0 = d.alloc<float>(hg.size()), *o1 = d.alloc<float>(hg.size());
+            double ej = 0.0; // the last tm()'s card energy per launch (J)
             auto tm = [&](auto f) {
                 f(); d.q.wait();
-                double t0 = now_s();
+                const double e0 = d.energy_j(), t0 = now_s();
                 for (int i = 0; i < it2; ++i) f();
                 d.q.wait();
-                return (now_s() - t0) / it2 * 1e6;
+                const double t = now_s() - t0;
+                ej = (d.energy_j() - e0) / it2;
+                return t / it2 * 1e6;
             };
             auto same = [&](float *a, float *b, size_t n) {
                 std::vector<float> x(n), y(n);
@@ -132,15 +135,24 @@ int main(int argc, char **argv) {
             d.q.memset(P0, 0x7f, np * 4).wait();
             double us0 = tm([&] { fz::attn_scores(d.q, Q, K, tab, pos, ntok, nh, nkvh, hd, ext, win, scale, P0, ldp); });
             std::printf("  scores (table)         %9.1f us %6.2f TMAC/s\n", us0, gmac / us0 * 1e3);
+            // BENCH_WMAX=1: the tiles also write the maxima per 16 keys (the engine's prompt tiles without a window)
+            const bool bwm = std::getenv("BENCH_WMAX") && win == 0;
+            const int nsgw = cap / 16 + 2;
+            float *wmb = bwm ? d.alloc<float>((size_t)ntok * nh * nsgw) : nullptr;
             auto sct = [&](const char *name, auto f) {
                 d.q.memset(P1, 0x7f, np * 4).wait();
-                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff, nullptr, 0); });
-                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(P0, P1, np).c_str());
+                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff, wmb, bwm ? nsgw : 0); });
+                std::printf("  %-22s %9.1f us %6.2f TMAC/s %7.3f J %4.0f W  %s\n", name, us, gmac / us * 1e3, ej, ej / us * 1e6,
+                            same(P0, P1, np).c_str());
             };
             sct("scores_tile<4,3,4>", fz::attn_scores_tile<4, 3, 4>);
             sct("scores_tile<8,3,4>", fz::attn_scores_tile<8, 3, 4>);
             sct("scores_tile<8,3,8>", fz::attn_scores_tile<8, 3, 8>);
-            sct("scores_tile<16,3,4>", fz::attn_scores_tile<16, 3, 4>);
+            sct("scores_tile<4,3,8>", fz::attn_scores_tile<4, 3, 8>);
+            sct("scores_tile<4,3,2>", fz::attn_scores_tile<4, 3, 2>);
+            sct("scores_tile<2,3,4>", fz::attn_scores_tile<2, 3, 4>);
+            sct("scores_tile<2,3,8>", fz::attn_scores_tile<2, 3, 8>);
+            sct("scores_tile<6,3,4>", fz::attn_scores_tile<6, 3, 4>);
             fz::attn_softmax_norm(d.q, Sk, pos, ntok, nh, win, P0, ldp).wait();
             // the reference: the block-order kernels (attn_pv_bo_part + attn_pv_bo_sum) over the whole step
             const int lo0 = win > 0 ? std::max(0, pos - win + 1) : 0, nblk = pl / fz::PVB - lo0 / fz::PVB + 1;
@@ -174,7 +186,8 @@ int main(int argc, char **argv) {
                 auto pvx = [&](const char *name, auto f) {
                     d.q.memset(o1, 0, hg.size() * 4).wait();
                     double us = tm([&] { f(d.q, Ps, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, inv2, mx); });
-                    std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
+                    std::printf("  %-22s %9.1f us %6.2f TMAC/s %7.3f J %4.0f W  %s\n", name, us, gmac / us * 1e3, ej, ej / us * 1e6,
+                                same(o0, o1, hg.size()).c_str());
                 };
                 pvx("pv_tile<4,3,2> EX", fz::attn_pv_tile<4, 3, 2, true>);
                 pvx("pv_tile<2,3,4> EX", fz::attn_pv_tile<2, 3, 4, true>);

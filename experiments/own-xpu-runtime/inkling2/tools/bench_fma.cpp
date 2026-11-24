@@ -6,6 +6,10 @@
 
 using namespace ink;
 
+// BENCH_FMA_ENERGY=1: each case runs ~3 s and reports the card's energy per multiply-add of one lane (pJ) and its power
+static const Device *g_dev = nullptr;
+static int g_reps = 5;
+static double g_pj = 0.0, g_w = 0.0;
 template <int K, int WG> double run(sycl::queue &q, float *out, int groups, int iters) {
     auto go = [&] {
         q.parallel_for(sycl::nd_range<1>((size_t)groups * WG, WG), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
@@ -31,10 +35,12 @@ template <int K, int WG> double run(sycl::queue &q, float *out, int groups, int 
         });
     };
     go(); q.wait();
-    const double t0 = now_s();
-    for (int r = 0; r < 5; ++r) go();
+    const double e0 = g_dev->energy_j(), t0 = now_s();
+    for (int r = 0; r < g_reps; ++r) go();
     q.wait();
-    const double t = (now_s() - t0) / 5;
+    const double t = (now_s() - t0) / g_reps;
+    g_pj = (g_dev->energy_j() - e0) / g_reps / ((double)groups * WG * iters * 16 * K) * 1e12;
+    g_w = (g_dev->energy_j() - e0) / (t * g_reps);
     return (double)groups * WG * iters * 16 * K / t / 1e12; // T multiply-adds per second
 }
 
@@ -65,10 +71,12 @@ template <int K, int WG> double run_tile(sycl::queue &q, float *out, int groups,
         });
     };
     go(); q.wait();
-    const double t0 = now_s();
-    for (int r = 0; r < 5; ++r) go();
+    const double e0 = g_dev->energy_j(), t0 = now_s();
+    for (int r = 0; r < g_reps; ++r) go();
     q.wait();
-    const double t = (now_s() - t0) / 5;
+    const double t = (now_s() - t0) / g_reps;
+    g_pj = (g_dev->energy_j() - e0) / g_reps / ((double)groups * WG * iters * 16 * K) * 1e12;
+    g_w = (g_dev->energy_j() - e0) / (t * g_reps);
     return (double)groups * WG * iters * 16 * K / t / 1e12;
 }
 
@@ -76,6 +84,18 @@ int main(int argc, char **argv) {
     Device d(argc > 1 ? std::atoi(argv[1]) : 1);
     const int groups16 = 32 * 64 * 8, iters = 256;
     float *out = d.alloc<float>((size_t)groups16 * 16);
+    g_dev = &d;
+    if (std::getenv("BENCH_FMA_ENERGY")) {
+        g_reps = 2000;
+#define E(name, expr) { const double r = expr; std::printf("%-28s %6.2f TMAC/s %6.1f pJ per lane multiply-add %5.0f W\n", name, r, g_pj, g_w); }
+        E("K 4 WG 128", (run<4, 128>(d.q, out, groups16 / 8, iters)))
+        E("K 16 WG 128", (run<16, 128>(d.q, out, groups16 / 8, iters)))
+        E("K 32 WG 128", (run<32, 128>(d.q, out, groups16 / 8, iters)))
+        E("tile pattern K 4 WG 128", (run_tile<4, 128>(d.q, out, groups16 / 8, iters)))
+        E("tile pattern K 16 WG 128", (run_tile<16, 128>(d.q, out, groups16 / 8, iters)))
+        E("tile pattern K 24 WG 128", (run_tile<24, 128>(d.q, out, groups16 / 8, iters)))
+        return 0;
+    }
 #define R(K) std::printf("K %2d  WG 16: %5.2f  WG 128: %5.2f  WG 256: %5.2f TMAC/s\n", K, run<K, 16>(d.q, out, groups16, iters), \
                          run<K, 128>(d.q, out, groups16 / 8, iters), run<K, 256>(d.q, out, groups16 / 16, iters));
     R(1) R(2) R(4) R(8) R(16) R(24) R(32)

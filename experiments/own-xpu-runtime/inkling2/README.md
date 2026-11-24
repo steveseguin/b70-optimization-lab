@@ -408,6 +408,23 @@ prompt was 189 s: experts 62 s, the full-attention layers 76 s (scores 25.0, P.V
   (card 2); 3K level (860.0 / 859.7). Under load the cards run at ~2,350-2,500 MHz of 2,800, held by the short-term
   power limit (`throttle/reason_pl2`), so fewer instructions per result also keep the clock up.
 
+Energy, not time, decides a long prompt (2026-11-24). `Device::energy_j()` reads the card's energy counter (hwmon
+`energy1_input`, read-only); bench_attn, bench_moe and bench_fma (`BENCH_FMA_ENERGY=1`) print J per launch. A prompt
+keeps the card at its power limit (clock 2.35-2.65 GHz), so a kernel that only waits less (same work) gains nothing
+in the engine: score tiles with 4 queries past 34K keys were 11-18 % faster alone (100K x 256 rows 17,982 -> 14,773
+µs) but used only 6 % less energy (5.10 -> 4.81 J), and the 100K prompt did not change (574.2 vs 575.2 tok/s card 1,
+609.4 vs 616.0 card 3, 574.0 vs 580.9 card 4, 572.9 vs 571.3 card 5; logits identical). The floor (card 3): a lane's
+fp32 multiply-add costs 17 pJ (16 chains, 11.3 TMAC/s, 190 W: not at the limit) and 22 pJ with the tiles' broadcast
+pattern (10.5 TMAC/s, 235 W); the NVFP4 expert tiles cost ~57 pJ (gate|up 1,024 tokens 2.47-2.53 J for 43.5 G) and
+the full-attention score tiles ~65 pJ (5.10 J for 78.5 G). Reading the code bytes as sub-group block reads (no
+per-lane 64-bit addresses) changed neither time nor energy (2.50-2.54 vs 2.47-2.53 J).
+Expert gate|up energy budget (card 3, 1,024 tokens, bench-only builds with `-DINK_ABL`, wrong values on purpose):
+full 7,415-7,522 µs / 2.458-2.501 J; without the NVFP4 decode (constant weights) 6,231-6,235 µs / 1.913-1.920 J;
+without the input loads (each chunk reuses the first chunk's inputs) 6,344 µs / 2.067 J; without both 6,223 µs /
+1.872 J. So the multiply-add core (broadcasts, sums, the butterfly) holds three quarters of the energy; decode and
+loads overlap with it. A compile-time chunk count (72 / 36 chunks, no loop-exit tests) was level (2.457-2.468 vs
+2.466-2.501 J). The `INK_ABL` switches were removed again after the measurement.
+
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
 (unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,

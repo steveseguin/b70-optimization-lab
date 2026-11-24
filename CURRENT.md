@@ -131,6 +131,11 @@
   maxima, P.V computes the exponentials once per work-group (same values): 100K 512.7 -> 577.0 tok/s (card 4), 504.5
   -> 574.4 (card 5); 31K +3.0-3.6 %; 3K level; 200K 338.5 -> 366.0 (+ drafter fits, 28.47 GiB). Gate 11/11; 100K and
   200K logits rows identical. Closed: interleaved rows, 4-sum tile pairs, product table for NVFP4 decode.
+- Nov 24 ~05:00: measurement only (no engine change): the card holds a 275 W limit during a prompt, so kernels are
+  now judged by energy per launch (bench_attn / bench_moe / bench_fma print J). Expert gate|up (1,024 tokens):
+  2.46-2.50 J, of which decoding the 4-bit weights ~0.55 J and input loads ~0.40 J (overlapping), the multiply-add
+  core 1.87 J; floor 17-22 pJ per lane multiply-add. Closed: score tiles 4 queries past 34K (faster alone, same
+  energy, prompt level), code bytes by block read, chunk count fixed at compile time.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
