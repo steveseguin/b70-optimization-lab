@@ -158,6 +158,12 @@
   not 2.3 GiB at 471K): guesses as good or better, writing +2-3 % at 31K; after the 471K prompt guessing writes 41.0
   tok/s vs 24.6, same ids. Gate now needs five distinct cards (four
   listed had sent two short checks to card 0).
+- Nov 24 ~12:50: long prompts +1.3-2.4 % (same values, gate 11/11): the fused full-attention kernel takes each
+  block's maximum per sub-group for its own rows (3 reductions, not 24) plus two shapes closed alone this morning
+  (`INK_FLASH_LEAN=0` = before). 200K 555.8 -> 566.5 tok/s (card 3), 518.8 -> 531.3 (card 4); 100K 655.3 -> 663.8
+  (card 1), 649.9 -> 661.6 (card 5); logits rows identical. Budget of that kernel: score products and P.V products
+  ~8.8 ms each of 20.7 (each ~79 % of peak alone), the rest 4.0. Closed: 256 registers, Q in local memory, rescale
+  lane loads (more energy), far-block mask skip, 8-row / paired dense Q8_0 tiles (DO-NOT-REPEAT).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

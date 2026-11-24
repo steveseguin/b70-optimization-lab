@@ -71,13 +71,15 @@ int main(int argc, char **argv) {
             }
             std::vector<float> h0((size_t)rows * K), h1((size_t)rows * K);
             // launch(i): the i-th product (copy i % ncopy, expert set i % NS); the check uses i = 0
+            double ej = 0.0; // the last timeit()'s card energy per launch (J)
             auto timeit = [&](auto &&launch) {
                 for (int i = 0; i < 4; ++i) launch(i);
                 d.q.wait();
-                double t0 = now_s();
+                const double e0 = d.energy_j(), t0 = now_s();
                 for (int i = 0; i < iters; ++i) launch(i + 1);
                 d.q.wait();
                 double us = (now_s() - t0) / iters * 1e6;
+                ej = (d.energy_j() - e0) / iters;
                 launch(0);
                 d.q.wait();
                 return us;
@@ -151,14 +153,19 @@ int main(int argc, char **argv) {
                     float *Xd = d.alloc<float>((size_t)((K + 15) / 16) * cols * 16);
                     double ug = timeit([&](int) { dense_gather(d.q, x, cols, K, cols, Xd); });
                     std::printf("%-30s dense_gather %8.2f us\n", "", ug);
-                    for (int R : {1, 2, 4}) for (int sgw : {1, 2}) {
+                    std::vector<DTune> dts;
+                    if (std::getenv("BENCH_DT2")) // the engine's (4 rows, 32 sub-groups) against 8 rows and pairs of tiles, twice
+                        for (int rep = 0; rep < 2; ++rep)
+                            for (DTune t : {DTune{4, 32}, DTune{8, 32}, DTune{2, 32, true}, DTune{4, 32, true}, DTune{4, 16, true}}) dts.push_back(t);
+                    else for (int R : {1, 2, 4}) for (int sgw : {1, 2}) dts.push_back(DTune{R, sgw});
+                    for (DTune dtn : dts) {
                         d.q.memset(y1, 0, h1.size() * 4).wait();
-                        double us = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; dense_t(d.q, u, K, Xd, y1, rows, DTune{R, sgw}); });
+                        double us = timeit([&](int i) { WView u = vp; u.p = pl_copies[i % pl_copies.size()]; dense_t(d.q, u, K, Xd, y1, rows, dtn); });
                         d.get(h1.data(), y1, h1.size());
                         long bad = -1;
                         for (size_t r = 0; r < h1.size(); ++r) if (std::memcmp(&h0[r], &h1[r], 4)) { bad = (long)r; break; }
-                        std::printf("%-30s %-11s R%d sg%d     %28s %8.2f us %6.1f GB/s  %s\n", "", "tiles", R, sgw, "", us,
-                                    bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+                        std::printf("%-30s %-11s R%d sg%d%s %28s %8.2f us %7.4f J %6.1f GB/s  %s\n", "", "tiles", dtn.R, dtn.sgw, dtn.pair ? " pair" : "",
+                                    "", us, ej, bytes / us / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
                     }
                     d.release(Xd);
                 }

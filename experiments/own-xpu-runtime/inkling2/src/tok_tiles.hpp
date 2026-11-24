@@ -376,6 +376,32 @@ template <class D, int R> struct DenseT {
                 if (r0 + j < rows) y[(size_t)tok * ldy + r0 + j] = res[j];
     }
 };
+// DenseT for two tiles per sub-group (tile_dots2: each decoded weight serves 32 tokens, 2 R sums per lane; each token's
+// sums in tile_dots' order, the same values)
+template <class D, int R> struct DenseT2 {
+    const uint8_t *W; size_t rb; int rows, cols, M, tiles;
+    const float *Xd;
+    float *y; int ldy;
+    int sgw;
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int t0 = 2 * (int)it.get_group(0), t1 = sycl::min(t0 + 1, tiles - 1);
+        auto sg = it.get_sub_group();
+        const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * R;
+        if (r0 >= rows) return;
+        const int lane = (int)sg.get_local_linear_id();
+        const uint8_t *rp[R];
+        for (int j = 0; j < R; ++j) rp[j] = W + (size_t)sycl::min(r0 + j, rows - 1) * rb;
+        float res0[R], res1[R];
+        tile_dots2<D, R>(sg, rp, cols, Xd + (size_t)t0 * cols * MOE_TS, Xd + (size_t)t1 * cols * MOE_TS, lane, res0, res1);
+        const int tok0 = t0 * MOE_TS + lane, tok1 = (t0 + 1) * MOE_TS + lane;
+        if (tok0 < M)
+            for (int j = 0; j < R; ++j)
+                if (r0 + j < rows) y[(size_t)tok0 * ldy + r0 + j] = res0[j];
+        if (tok1 < M)
+            for (int j = 0; j < R; ++j)
+                if (r0 + j < rows) y[(size_t)tok1 * ldy + r0 + j] = res1[j];
+    }
+};
 // rows r of A and of B for every token, then op(token, r, a, b) (gemv_pair with one matrix pair, ids = nullptr)
 template <class D, class Op, int NP> struct DensePairT {
     const uint8_t *A, *B; size_t rb; int rows, cols, M;
@@ -666,13 +692,18 @@ inline sycl::event slot_rows_g2(sycl::queue &q, const WView &w, MoeGroups g, int
     else gp.template operator()<2>();
     return e;
 }
-struct DTune { int R = 2, sgw = 1; };
+struct DTune { int R = 2, sgw = 1; bool pair = false; }; // pair: two tiles per sub-group (DenseT2)
 inline sycl::event dense_t(sycl::queue &q, const WView &w, int M, const float *Xd, float *y, int ldy, DTune dt = {}) {
     sycl::event e;
     const int rows = (int)w.t->rows(), cols = (int)w.t->ne[0], tiles = (M + MOE_TS - 1) / MOE_TS;
     with_decoder(w, [&]<class D>() {
         auto go = [&]<int R>() {
             int nsg = (rows + R - 1) / R, ngr = (nsg + dt.sgw - 1) / dt.sgw;
+            if (dt.pair) {
+                sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)ngr * dt.sgw * SG), sycl::range<2>(1, (size_t)dt.sgw * SG));
+                e = q.parallel_for(nr, DenseT2<D, R>{w.p, w.rb, rows, cols, M, tiles, Xd, y, ldy, dt.sgw});
+                return;
+            }
             sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * dt.sgw * SG), sycl::range<2>(1, (size_t)dt.sgw * SG));
             e = q.parallel_for(nr, DenseT<D, R>{w.p, w.rb, rows, cols, M, Xd, y, ldy, dt.sgw});
         };
@@ -680,7 +711,8 @@ inline sycl::event dense_t(sycl::queue &q, const WView &w, int M, const float *X
         case 1: go.template operator()<1>(); break;
         case 2: go.template operator()<2>(); break;
         case 4: go.template operator()<4>(); break;
-        default: throw std::runtime_error("dense_t: R must be 1, 2 or 4");
+        case 8: go.template operator()<8>(); break;
+        default: throw std::runtime_error("dense_t: R must be 1, 2, 4 or 8");
         }
     });
     return e;

@@ -477,6 +477,17 @@ group ahead (`attn_flash_tile` VAR 4) makes it interleave them: 100K x 256 23.1 
 a sub-group issues 192 Q loads at ~5 instructions each (64-bit addresses), 512 half-to-float moves (two per value) and
 24 sub-group maxima. Closed (DO-NOT-REPEAT): two score buffers, Q block loads, constant Q offsets, local block loads,
 unrolling, compiler settings against the accumulator chains.
+Lean prompt attention (2026-11-24, `attn_flash_tile` VAR 1052, `INK_FLASH_LEAN=0` = before). Budget first
+(bench_attn `BENCH_BUDGET`: builds that drop one part, wrong values on purpose; card 3, 100K keys x 256 rows, 20.7 ms
+/ 6.0 J in all): score products 8.8 ms, P.V products 8.9 ms (each alone ~79 % of the multiply-add peak), everything
+else (maxima, exponentials, barriers) 4.0 ms / 0.70 J, of which the exponentials 1.15 ms; loading Q once instead of
+per block is slower (22.3 ms: 24 more live registers). Each sub-group now takes the block maximum of its own 3 rows
+from the scores in local memory (3 sub-group reductions per block, not 24; a maximum is the same in any order), and
+the two shapes closed alone (constant Q offsets, local block loads of the exponentials) come back with it: 20.46-21.05
+ms / 5.86-6.21 J -> 20.06-20.12 ms / 5.53-5.60 J, vs ref same. Prompts (same card, both orders, logits rows and ids
+identical): 200K 555.8 -> 566.5 tok/s (card 3), 518.8 -> 531.3 (card 4); 100K 655.3 -> 663.8 (card 1), 649.9 -> 661.6
+(card 5). Not kept (DO-NOT-REPEAT): 256 registers, Q in local memory, the rescale factors as 3 lane loads (faster
+alone, more energy), skipping the masks of far blocks; 8 rows or tile pairs for the dense Q8_0 prompt tiles.
 Dense products by weight format (`INK_PROF_TYPES=1` adds the format to profile labels; 3K prompt, card 3, per launch
 of 1,024 tokens, attn_q's shape): Q8_0 928 µs, Q6_K 1,703, Q5_K 7,660 through the generic multi-vector kernel ->
 2,550 as tiles (layer 22's attn_q is the only Q5_K dense matrix; `INK_Q5K_TILES=0` = before; gate 11/11, the 300-token

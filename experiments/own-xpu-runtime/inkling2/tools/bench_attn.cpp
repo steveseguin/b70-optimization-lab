@@ -197,13 +197,40 @@ int main(int argc, char **argv) {
                     us = tm([&] { fz::attn_flash_tile<4, 3, 2>(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, km); });
                     std::printf("  flash<4,3,2> ring of %d keys  %9.1f us %7.3f J %4.0f W\n", km + 1, us, ej, ej / us * 1e6);
                 }
-                fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
-                fl("flash<8,3,1> PQ", fz::attn_flash_tile<8, 3, 1, 5>);
-                fl("flash<8,3,1> PO (per-lane Q, constant offsets)", fz::attn_flash_tile<8, 3, 1, 20>);
-                fl("flash<8,3,1> PS", fz::attn_flash_tile<8, 3, 1, 12>);
-                fl("flash<8,3,1> PQS", fz::attn_flash_tile<8, 3, 1, 13>);
-                fl("flash<8,3,1> POS", fz::attn_flash_tile<8, 3, 1, 28>);
-                fl("flash<8,3,1>", fz::attn_flash_tile<8, 3, 1>);
+                if (std::getenv("BENCH_RMX")) { // exact variants on top of POS + rows' max (1052), alternating
+                    for (int r = 0; r < 2; ++r) {
+                        fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                        fl("flash<8,3,1> POS rows' max", fz::attn_flash_tile<8, 3, 1, 1052>);
+                        fl("  + Q in local memory", fz::attn_flash_tile<8, 3, 1, 1052 - 16 + 2048>);
+                        fl("  + rescale lane loads", fz::attn_flash_tile<8, 3, 1, 1052 + 4096>);
+                        fl("  + far blocks", fz::attn_flash_tile<8, 3, 1, 1052 + 8192>);
+                        fl("  + lane loads + far", fz::attn_flash_tile<8, 3, 1, 1052 + 4096 + 8192>);
+                        fl("  + all three", fz::attn_flash_tile<8, 3, 1, 1052 - 16 + 2048 + 4096 + 8192>);
+                    }
+                } else if (std::getenv("BENCH_BUDGET")) { // timing only: pieces of the engine's variant removed (wrong values)
+                    for (int r = 0; r < 2; ++r) {
+                        fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                        fl("  Q loaded once", fz::attn_flash_tile<8, 3, 1, 4 + 64>);
+                        fl("  no P.V products", fz::attn_flash_tile<8, 3, 1, 4 + 128>);
+                        fl("  no score products", fz::attn_flash_tile<8, 3, 1, 4 + 256>);
+                        fl("  no exponentials", fz::attn_flash_tile<8, 3, 1, 4 + 512>);
+                        fl("  no products at all", fz::attn_flash_tile<8, 3, 1, 4 + 128 + 256>);
+                    }
+                } else if (std::getenv("BENCH_GRF")) { // the large register file (VAR 32), alternating with the engine's variant
+                    for (int r = 0; r < 2; ++r) {
+                        fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                        fl("flash<8,3,1> P grf256", fz::attn_flash_tile<8, 3, 1, 36>);
+                        fl("flash<16,3,1> P grf256", fz::attn_flash_tile<16, 3, 1, 36>);
+                    }
+                } else {
+                    fl("flash<8,3,1> P", fz::attn_flash_tile<8, 3, 1, 4>);
+                    fl("flash<8,3,1> PQ", fz::attn_flash_tile<8, 3, 1, 5>);
+                    fl("flash<8,3,1> PO (per-lane Q, constant offsets)", fz::attn_flash_tile<8, 3, 1, 20>);
+                    fl("flash<8,3,1> PS", fz::attn_flash_tile<8, 3, 1, 12>);
+                    fl("flash<8,3,1> PQS", fz::attn_flash_tile<8, 3, 1, 13>);
+                    fl("flash<8,3,1> POS", fz::attn_flash_tile<8, 3, 1, 28>);
+                    fl("flash<8,3,1>", fz::attn_flash_tile<8, 3, 1>);
+                }
                 { // the writing-step kernels: scores in P (tile), attn_flash_part + attn_flash_sum, rows in pieces of BENCH_PROWS
                     const int nblk = pl / fz::PVB + 1, pst = std::getenv("BENCH_PROWS") ? std::atoi(std::getenv("BENCH_PROWS")) : 16;
                     float *part = d.alloc<float>((size_t)pst * nh * nblk * hd), *pml = d.alloc<float>((size_t)pst * nh * nblk * 2);

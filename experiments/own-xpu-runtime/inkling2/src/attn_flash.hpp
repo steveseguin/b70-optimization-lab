@@ -16,6 +16,16 @@
 
 namespace ink::fz {
 
+// a kernel body F launched with the large register file when BIG (256 registers per thread, half the threads per core)
+template <class F, bool BIG> struct FlashK {
+    F f;
+    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const { f(it); }
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        if constexpr (BIG) return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>};
+        else return sycl::ext::oneapi::experimental::properties{};
+    }
+};
+
 // a work-group = MT queries x the G heads of one KV head (NR rows) x all 128 channels (CPL per lane, NSG sub-groups);
 // per block: the sub-groups compute the scores of KG / NSG groups of 16 keys each (lane = key) into local memory, the
 // row maxima per sub-group beside them; then sub-group s turns rows [s RS, s RS + RS) into exponentials, l_b and the
@@ -24,7 +34,12 @@ namespace ink::fz {
 // VAR (same arithmetic, same order; code shape only): 1 = Q by sub-group block loads (one scalar address per query, the
 // rest constant offsets), 16 = Q per lane with constant offsets from one base per query, 2 = P.V of
 // full blocks unrolled, 4 = the next key group's exponentials loaded one group ahead, 8 = local-memory reads of the
-// exponentials as sub-group block loads
+// exponentials as sub-group block loads, 32 = the large register file (256 per thread); timing only (wrong values,
+// bench_attn BENCH_BUDGET): 64 = the query rows loaded once, 128 = no P.V multiply-adds, 256 = no score products,
+// 512 = no exponentials; 1024 = each sub-group takes the block maximum of its own rows from the scores in local memory
+// (3 sub-group reductions instead of 24; a maximum is the same in any order); 2048 = the query rows in local memory
+// (loaded once per work-group); 4096 = the block's rescale factors as 3 lane loads (broadcast from lanes, not 48 loads);
+// 8192 = blocks whose keys are all in the past and past the relative-bias distances skip the masks (the same values)
 template <int MT, int G, int CPL, int VAR = 0>
 inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
                                    int nr, const float *sink, const sycl::half *Vt, int vld, int pos0, int ntok, int nh, int nkvh,
@@ -36,9 +51,8 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
     if (hd != HD || nh != nkvh * G || nr != NRL || vld % 16) throw std::runtime_error("attn_flash_tile: unsupported shape");
     const int nqb = (ntok + MT - 1) / MT;
     return q.submit([&](sycl::handler &h) {
-        sycl::local_accessor<float, 1> sx(NR * PVB, h), smx(NR * NSG, h), sab(3 * NR, h);
-        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nqb * nkvh, (size_t)NL), sycl::range<2>(1, (size_t)NL)),
-                       [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
+        sycl::local_accessor<float, 1> sx(NR * PVB, h), smx(NR * NSG, h), sab(3 * NR, h), sq((VAR & 2048) ? NR * HD : 1, h);
+        auto body = [=](sycl::nd_item<2> it) {
             auto sg = it.get_sub_group();
             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
             const int qb = (int)it.get_group(0) / nkvh, kvh = (int)it.get_group(0) % nkvh, c0 = (int)it.get_local_id(1);
@@ -60,8 +74,20 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                 L[r] = 1.0f;
             }
             const int nb = pl / PVB + 1;
+            float qh[NR];
+            if constexpr ((VAR & 64) != 0)
+#pragma unroll
+                for (int a = 0; a < NR; ++a) qh[a] = Q[((size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G) * hd + lane];
+            if constexpr ((VAR & 2048) != 0) {
+                for (int i = (int)it.get_local_id(1); i < NR * HD; i += NL) {
+                    const int a = i / HD;
+                    sq[i] = Q[((size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G) * hd + i % HD];
+                }
+                sycl::group_barrier(it.get_group());
+            }
             for (int b = 0; b < nb; ++b) {
                 const int jb = b * PVB;
+                const bool far = (VAR & 8192) != 0 && jb + PVB - 1 + ext <= pf;
                 // scores of this sub-group's key groups, all rows
                 float rmx[NR];
 #pragma unroll
@@ -81,8 +107,17 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                     for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
 #pragma unroll
                     for (int d0 = 0; d0 < 128; d0 += PW) {
+                        if constexpr ((VAR & 256) != 0) break;
                         const HV k0 = *(const HV *)(kr + d0), k1 = *(const HV *)(kr + d0 + 8);
                         float ql[NR];
+                        if constexpr ((VAR & 64) != 0)
+#pragma unroll
+                            for (int a = 0; a < NR; ++a) ql[a] = qh[a];
+                        else if constexpr ((VAR & 2048) != 0)
+#pragma unroll
+                            for (int a = 0; a < NR; ++a)
+                                ql[a] = sg.load(sq.template get_multi_ptr<sycl::access::decorated::yes>() + a * HD + d0);
+                        else
 #pragma unroll
                         for (int m = 0; m < MT; ++m) {
                             const int t = t0 + sycl::min(m, tn - 1);
@@ -103,6 +138,15 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
 #pragma unroll
                             for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, ql[a], u), kf);
                         }
+                    }
+                    if (far) { // every key before every row and past the bias distances: in = m < tn, rel = false
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) {
+                            const float s = a / G < tn ? acc[a] * scale : -INFINITY;
+                            sx[a * PVB + g * PW + lane] = s;
+                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
+                        }
+                        continue;
                     }
 #pragma unroll
                     for (int m = 0; m < MT; ++m) {
@@ -133,28 +177,37 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                             }
                             s = in ? s : -INFINITY;
                             sx[a * PVB + g * PW + lane] = s;
-                            rmx[a] = sycl::fmax(rmx[a], s);
+                            if constexpr ((VAR & 1024) == 0) rmx[a] = sycl::fmax(rmx[a], s);
                         }
                     }
                 }
+                if constexpr ((VAR & 1024) == 0)
 #pragma unroll
-                for (int a = 0; a < NR; ++a) {
-                    const float mg = sycl::reduce_over_group(sg, rmx[a], sycl::maximum<float>());
-                    if (lane == 0) smx[a * NSG + sgi] = mg;
-                }
+                    for (int a = 0; a < NR; ++a) {
+                        const float mg = sycl::reduce_over_group(sg, rmx[a], sycl::maximum<float>());
+                        if (lane == 0) smx[a * NSG + sgi] = mg;
+                    }
                 sycl::group_barrier(it.get_group());
                 // this sub-group's rows: exponentials, l_b, the state
 #pragma unroll
                 for (int r = 0; r < RS; ++r) {
                     const int a = sgi * RS + r;
-                    float mb = -INFINITY;
+                    float mb = -INFINITY, sv[KG];
+                    if constexpr ((VAR & 1024) != 0) {
 #pragma unroll
-                    for (int i = 0; i < NSG; ++i) mb = sycl::fmax(mb, smx[a * NSG + i]);
+                        for (int g = 0; g < KG; ++g) {
+                            sv[g] = sx[a * PVB + g * PW + lane];
+                            mb = sycl::fmax(mb, sv[g]);
+                        }
+                        mb = sycl::reduce_over_group(sg, mb, sycl::maximum<float>());
+                    } else
+#pragma unroll
+                        for (int i = 0; i < NSG; ++i) mb = sycl::fmax(mb, smx[a * NSG + i]);
                     float ls = 0.0f;
 #pragma unroll
                     for (int g = 0; g < KG; ++g) {
-                        const float s = sx[a * PVB + g * PW + lane];
-                        const float e = s == -INFINITY ? 0.0f : sycl::exp(s - mb);
+                        const float s = (VAR & 1024) ? sv[g] : sx[a * PVB + g * PW + lane];
+                        const float e = s == -INFINITY ? 0.0f : (VAR & 512) ? s - mb : sycl::exp(s - mb);
                         sx[a * PVB + g * PW + lane] = e;
                         ls = ls + e;
                     }
@@ -187,6 +240,7 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                     else return sx[a * PVB + g * PW + lane];
                 };
                 auto pv_group = [&](int g, const float *pv) {
+                    if constexpr ((VAR & 128) != 0) return;
                     HV v0[CPL], v1[CPL];
 #pragma unroll
                     for (int k = 0; k < CPL; ++k) {
@@ -246,9 +300,15 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                         }
                     }
                 }
+                constexpr int NXR = (2 * NR + PW - 1) / PW;
+                float xr[NXR];
+                if constexpr ((VAR & 4096) != 0)
+#pragma unroll
+                    for (int i = 0; i < NXR; ++i) xr[i] = sab[i * PW + lane];
 #pragma unroll
                 for (int a = 0; a < NR; ++a) {
-                    const float al = sab[a], be = sab[NR + a];
+                    const float al = (VAR & 4096) ? sycl::select_from_group(sg, xr[a / PW], a % PW) : sab[a];
+                    const float be = (VAR & 4096) ? sycl::select_from_group(sg, xr[(NR + a) / PW], (NR + a) % PW) : sab[NR + a];
 #pragma unroll
                     for (int k = 0; k < CPL; ++k) A[k][a] = mac(A[k][a] * al, ab[k][a], be);
                 }
@@ -271,7 +331,9 @@ inline sycl::event attn_flash_tile(sycl::queue &q, const float *Q, const sycl::h
                     }
                 }
             }
-        });
+        };
+        const sycl::nd_range<2> ndr(sycl::range<2>((size_t)nqb * nkvh, (size_t)NL), sycl::range<2>(1, (size_t)NL));
+        h.parallel_for(ndr, FlashK<decltype(body), (VAR & 32) != 0>{body});
     });
 }
 

@@ -81,6 +81,7 @@ struct Engine {
     bool q5k_tiles = !std::getenv("INK_Q5K_TILES") || std::atoi(std::getenv("INK_Q5K_TILES")) != 0;
     bool flash = true;
     bool flash_dec = true; // INK_FLASH_DEC=0: steps below flash_min keep scores in P (attn_scores_* + attn_flash_part)
+    bool flash_lean = true; // INK_FLASH_LEAN=0: the prompt kernel without constant Q offsets, local block loads, rows' maxima
     int dec_rows = 16;     // rows per attn_flash_dec launch (its parts buffer holds this many rows of the whole context)
     int flash_min = 128;
     float *pml = nullptr;
@@ -228,6 +229,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
         if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_FLASH_LEAN")) flash_lean = std::atoi(e) != 0;
         dec_rows = cap <= 131072 ? 16 : 4; // long contexts: 4 rows (a 16-row check takes 4 launches; 1.5 -> 0.4 KB per position)
         if (const char *e = std::getenv("INK_DEC_ROWS")) dec_rows = std::max(1, std::min(16, std::atoi(e)));
         // P's row stride: the window (the windowed kernels store column j - lo of each row) when the layers without a
@@ -819,7 +821,13 @@ struct Engine {
             // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
             const bool fl = flash && win == 0, fl_tile = fl && tiles && ntok >= flash_min;
-            if (fl_tile)
+            // lean (VAR 1052; bench_attn card 3, 100K keys x 256 rows: 20.46-21.05 -> 20.06-20.12 ms, 5.86-6.21 -> 5.53-5.60
+            // J, values the same): Q rows at constant offsets, the exponentials as local block loads, each sub-group the
+            // block maximum of its own 3 rows (3 reductions, not 24)
+            if (fl_tile && flash_lean)
+                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 1052>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il],
+                                                                     pos0, ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
+            else if (fl_tile)
                 pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 4>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
                                                                   ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
             for (int q0 = 0; q0 < (winf || fl_tile ? 0 : ntok); q0 += prow) {
