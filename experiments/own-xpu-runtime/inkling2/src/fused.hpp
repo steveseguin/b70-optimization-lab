@@ -729,9 +729,11 @@ inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::ha
 // Rows of one work-group of AW threads: the loops issue their reads UN (the maxima MU) at a time, then 8, then one by
 // one; the sums keep their order (j ascending per thread). Rows past 16K keys take 64 / 16 at a time (2026-11-23,
 // bench_attn BENCH_SM, card 3: 400K keys 268 -> 159 us, 200K 98 -> 64; 32 or 128 at a time are no better than 8).
-template <int UN, int MU>
+// mout: write each row's maximum there and leave P's scores in place (no exponentials written; P.V computes them
+// with the same expression, attn_pv_tile EX); the total and inv are the same
+template <int UN, int MU, bool NW = false>
 inline sycl::event attn_softmax_sum_u(sycl::queue &q, const float *sink, const float *wmax, int nsgmax, int pos0, int ntok, int nh,
-                                      int win, float *P, int ldp, float *inv) {
+                                      int win, float *P, int ldp, float *inv, float *mout = nullptr) {
     constexpr int AW = ops::ATT_WG;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> slm(AW / SG, h);
@@ -762,7 +764,7 @@ inline sycl::event attn_softmax_sum_u(sycl::queue &q, const float *sink, const f
 #pragma unroll
                 for (int u = 0; u < UN; ++u) {
                     float e = sycl::exp(v[u] - mx);
-                    pr[j - lo + u * AW] = e;
+                    if constexpr (!NW) pr[j - lo + u * AW] = e;
                     acc += e;
                 }
             }
@@ -774,23 +776,30 @@ inline sycl::event attn_softmax_sum_u(sycl::queue &q, const float *sink, const f
 #pragma unroll
                     for (int u = 0; u < 8; ++u) {
                         float e = sycl::exp(v[u] - mx);
-                        pr[j - lo + u * AW] = e;
+                        if constexpr (!NW) pr[j - lo + u * AW] = e;
                         acc += e;
                     }
                 }
             for (; j <= p; j += AW) {
                 float e = sycl::exp(pr[j - lo] - mx);
-                pr[j - lo] = e;
+                if constexpr (!NW) pr[j - lo] = e;
                 acc += e;
             }
             float tot = wg_sum<AW>(it, acc, &slm[0]) + sycl::exp(sk - mx);
-            if (l == 0) inv[g] = 1.0f / tot;
+            if (l == 0) {
+                inv[g] = 1.0f / tot;
+                if constexpr (NW) mout[g] = mx;
+            }
         });
     });
 }
 inline sycl::event attn_softmax_sum(sycl::queue &q, const float *sink, const float *wmax, int nsgmax, int pos0, int ntok, int nh,
-                                    int win, float *P, int ldp, float *inv) {
+                                    int win, float *P, int ldp, float *inv, float *mout = nullptr) {
     const int pl = pos0 + ntok - 1, maxk = win > 0 ? std::min(win, pl + 1) : pl + 1;
+    if (mout) {
+        if (maxk > 16384) return attn_softmax_sum_u<64, 16, true>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv, mout);
+        return attn_softmax_sum_u<8, 1, true>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv, mout);
+    }
     if (maxk > 16384) return attn_softmax_sum_u<64, 16>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv);
     return attn_softmax_sum_u<8, 1>(q, sink, wmax, nsgmax, pos0, ntok, nh, win, P, ldp, inv);
 }

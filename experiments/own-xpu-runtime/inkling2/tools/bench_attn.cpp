@@ -152,9 +152,38 @@ int main(int argc, char **argv) {
             std::printf("  pv block kernels       %9.1f us %6.2f TMAC/s\n", u1, gmac / u1 * 1e3);
             auto pvt = [&](const char *name, auto f) {
                 d.q.memset(o1, 0, hg.size() * 4).wait();
-                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, nullptr); });
+                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, nullptr, nullptr); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
             };
+            if (std::getenv("BENCH_PVEX")) { // the prompt-tile softmax (maxima from the score tile) then P.V, exponentials
+                // written by the softmax (the reference) or computed by P.V as it reads (EX), several P.V shapes
+                const int nsgm = cap / 16 + 2;
+                float *wm = d.alloc<float>((size_t)ntok * nh * nsgm), *inv = d.alloc<float>((size_t)ntok * nh);
+                float *inv2 = d.alloc<float>((size_t)ntok * nh), *mx = d.alloc<float>((size_t)ntok * nh);
+                float *Ps = d.alloc<float>(np);
+                fz::attn_scores_tile<8, 3, 4>(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, Ps, ldp, 0x7fffffff, wm, nsgm).wait();
+                d.q.memcpy(P1, Ps, np * 4).wait();
+                double us_sm = tm([&] { fz::attn_softmax_sum(d.q, Sk, wm, nsgm, pos, ntok, nh, win, P1, ldp, inv); }); // P1: exps
+                fz::attn_scores_tile<8, 3, 4>(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff, wm, nsgm).wait();
+                fz::attn_softmax_sum(d.q, Sk, wm, nsgm, pos, ntok, nh, win, P1, ldp, inv).wait();
+                double us_sx = tm([&] { fz::attn_softmax_sum(d.q, Sk, wm, nsgm, pos, ntok, nh, win, Ps, ldp, inv2, mx); });
+                std::printf("  softmax writing exps %9.1f us, only maxima %9.1f us  (1 / totals %s)\n", us_sm, us_sx,
+                            same(inv, inv2, (size_t)ntok * nh).c_str());
+                double ur = tm([&] { fz::attn_pv_tile<4, 3, 2>(d.q, P1, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o0, 0x7fffffff, inv); });
+                std::printf("  pv_tile<4,3,2> (exps)  %9.1f us %6.2f TMAC/s\n", ur, gmac / ur * 1e3);
+                auto pvx = [&](const char *name, auto f) {
+                    d.q.memset(o1, 0, hg.size() * 4).wait();
+                    double us = tm([&] { f(d.q, Ps, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, inv2, mx); });
+                    std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
+                };
+                pvx("pv_tile<4,3,2> EX", fz::attn_pv_tile<4, 3, 2, true>);
+                pvx("pv_tile<2,3,4> EX", fz::attn_pv_tile<2, 3, 4, true>);
+                pvx("pv_tile_xs<4,3,2>", fz::attn_pv_tile_xs<4, 3, 2>);
+                pvx("pv_tile_xs<2,3,4>", fz::attn_pv_tile_xs<2, 3, 4>);
+                pvx("pv_tile_xs<4,3,4>", fz::attn_pv_tile_xs<4, 3, 4>);
+                pvx("pv_tile_xs<8,3,2>", fz::attn_pv_tile_xs<8, 3, 2>);
+                return 0;
+            }
             pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
             pvt("pv_tile<8,3>", fz::attn_pv_tile<8, 3>);
             pvt("pv_tile<4,3,2>", fz::attn_pv_tile<4, 3, 2>);
@@ -163,7 +192,7 @@ int main(int argc, char **argv) {
             auto pvp = [&](const char *name, auto f) {
                 d.q.memset(o1, 0, hg.size() * 4).wait();
                 double us = tm([&] {
-                    f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk, 0x7fffffff, nullptr);
+                    f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk, 0x7fffffff, nullptr, nullptr);
                     fz::attn_pv_bo_sum(d.q, part, nblk, pos, ntok, nh, hd, win, Gt, o1);
                 });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());

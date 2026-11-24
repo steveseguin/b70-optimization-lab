@@ -22,21 +22,17 @@ int main(int argc, char **argv) {
             sycl::local_accessor<float, 1> la(NV4_LUT, hd);
             hd.parallel_for(nr, SlotPairG2<pl::NVFP4P, SituOp, 2, true, true, true, false>{{}, A, A, 0, 0, 1152, 2304, g, cf, so, f, 1, la});
         });
-        q.submit([&](sycl::handler &hd) { // the engine's gate|up (two tiles, 4 rows) and its two-chunk variant
+        q.submit([&](sycl::handler &hd) { // the engine's gate|up (two tiles, 4 rows)
             sycl::local_accessor<float, 1> la(NV4_LUT, hd);
-            hd.parallel_for(nr, SlotPairG2<pl::NVFP4P, SituOp, 2, true, true, false, false, false>{{}, A, A, 0, 0, 1152, 2304, g, cf, so, f, 1, la});
+            hd.parallel_for(nr, SlotPairG2<pl::NVFP4P, SituOp, 2, true, true, false, false>{{}, A, A, 0, 0, 1152, 2304, g, cf, so, f, 1, la});
         });
-        q.submit([&](sycl::handler &hd) {
+        q.submit([&](sycl::handler &hd) { // gate|up 8 rows (NG 4), one tile at a time
             sycl::local_accessor<float, 1> la(NV4_LUT, hd);
-            hd.parallel_for(nr, SlotPairG2<pl::NVFP4P, SituOp, 2, true, true, false, false, true>{{}, A, A, 0, 0, 1152, 2304, g, cf, so, f, 1, la});
+            hd.parallel_for(nr, SlotPairG2<pl::NVFP4P, SituOp, 4, true, true, false, false>{{}, A, A, 0, 0, 1152, 2304, g, cf, so, f, 1, la});
         });
-        q.submit([&](sycl::handler &hd) { // the engine's down (4 rows, tables) and its two-chunk variant
+        q.submit([&](sycl::handler &hd) { // the engine's down (4 rows, tables)
             sycl::local_accessor<float, 1> la(NV4_LUT, hd);
-            hd.parallel_for(nr, SlotRowsG2<pl::NVFP4P, 4, false, false, true, false>{{}, A, 0, 0, 2304, 1152, g, cf, f, 2304, 1, la});
-        });
-        q.submit([&](sycl::handler &hd) {
-            sycl::local_accessor<float, 1> la(NV4_LUT, hd);
-            hd.parallel_for(nr, SlotRowsG2<pl::NVFP4P, 4, false, false, true, true>{{}, A, 0, 0, 2304, 1152, g, cf, f, 2304, 1, la});
+            hd.parallel_for(nr, SlotRowsG2<pl::NVFP4P, 4, false, false, true>{{}, A, 0, 0, 2304, 1152, g, cf, f, 2304, 1, la});
         });
         q.parallel_for(nr, SlotRowsG<pl::NVFP4P, 2>{A, 0, 0, 2304, 1152, g, cf, f, 2304, 1});
         fz::attn_scores_tile<8, 3, 4>(q, cf, h, cf, cf, 16, 0, 64, 24, 8, 128, 1024, 0, 1.0f, f, 1024);

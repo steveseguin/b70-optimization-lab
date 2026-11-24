@@ -108,10 +108,13 @@ struct Device {
 
     // xe does not fail an allocation past the card's memory: it moves memory out to host RAM. alloc() refuses to go
     // past the card's size minus INK_MEM_RESERVE_MB (default 1024) instead.
+    size_t limit() const {
+        static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 1024) << 20;
+        return total_mem() > reserve ? total_mem() - reserve : 0;
+    }
     template <class T = uint8_t> T *alloc(size_t count) {
         size_t bytes = count * sizeof(T);
-        static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 1024) << 20;
-        const size_t limit = total_mem() > reserve ? total_mem() - reserve : 0;
+        const size_t limit = this->limit();
         if (allocated + bytes > limit)
             throw std::runtime_error("device: " + std::to_string(bytes >> 20) + " MiB more would pass the card's memory (" +
                                      std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) + " MiB)");

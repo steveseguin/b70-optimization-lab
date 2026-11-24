@@ -119,7 +119,8 @@ this frees ~4.5 GiB; logits of 4 steps after the 31,270-token prompt are bit-ide
 A one-launch P.V (the last work-group adds the blocks) measured slower than the two launches at every length
 (31,000 keys 199 vs 157 µs, 3,134 with the window 10.2 vs 8.9 µs) and was dropped.
 
-Context length on one card (2026-11-23): the score buffer P now holds a bounded number of query rows (`INK_P_MB`,
+Context length on one card (2026-11-23; the row count is now chosen from free card memory, see "Long prompts" below):
+the score buffer P now holds a bounded number of query rows (`INK_P_MB`,
 default 512 MiB; a step's attention runs in chunks of that many tokens, the same bits: 16- and 48-row chunks at 3K
 and the default 176 rows at 31K reproduce the unchunked logits). Layers 20-23's experts were on the card twice (the
 file layout for prompt tiles, decode copies for the rest); the prompt tiles now read the decode copies through lane
@@ -381,6 +382,31 @@ What holds the FP32 tile kernels back (2026-11-24, `tools/bench_fma.cpp`, `tools
   3; best 4 rows 7,448 / 3,940 µs): two chunks at a time 10,075 / 6,108 (8 sums, no spills, 59 % multiply-adds),
   8 rows with 256 registers 9,515, two chunks with 256 registers 9,834 / 5,672. With 128 registers the compiler has
   4 accumulator registers (`numAcc=4`; 8 with 256) and chains the 4 rows' sums through them.
+  The rows interleaved in the source (value outer, row inner) change nothing (8 rows 11,405 vs 11,006); pairs of
+  tiles with 2 rows (4 sums, the weights decoded once for 32 tokens) 11,922 / 6,272 vs 7,439 / 3,933; one table of
+  the 4,096 code x scale products (the same floats, 2 lookups and no multiplications) 7,902 / 4,119-4,133 vs
+  7,537-7,600 / 3,937-3,974 (the fill of 16 KiB per work-group costs more).
+
+Long prompts, attention in larger chunks and the exponentials computed once (2026-11-24, card 3/4/5). At 100K the
+prompt was 189 s: experts 62 s, the full-attention layers 76 s (scores 25.0, P.V 28.1 + block sums 7.1, softmax
+15.4: reading and writing the score rows P, ~500 GB/s). Three changes, the same values throughout:
+- Score rows from free card memory: P holds as many rows as 512 MiB, or up to 256 (`INK_P_ROWS`) while the card keeps
+  6 GiB (`INK_P_FREE_GB`) for the later allocations and the drafter (`INK_P_MB` still sets it outright). At 100K 48 ->
+  256 rows: keys and values read 5x less often, and from 128 rows P.V runs without block parts. 100K, `INK_P_ROWS`:
+  128 rows 532.5 / 521.7 tok/s, 256 555.3 / 549.7, 512 542.0 / 539.4 (cards 4 / 5; 48 rows 513.2 / 504.5). 200K gets
+  128 rows (27.02 GiB in use, the drafter fits: 28.47): 338.5 -> 366.0 tok/s, logits rows identical; past ~300K the
+  512 MiB floor as before (one card still holds 420K positions).
+- The softmax of the prompt tiles writes no exponentials, only each row's maximum (`attn_softmax_sum` mout) next to
+  1 / total; P.V computes exp(score - maximum) * (1 / total) as it reads, the softmax's own expression (`INK_PV_EXP=0`
+  off). 100K x 256 rows (bench_attn `BENCH_PVEX`): softmax 9,860 -> 4,315 µs.
+- In P.V each of the 4 sub-groups of a work-group computed all 12 rows' exponentials (+28 % P.V: 11,379 -> 14,265
+  µs); `attn_pv_tile_xs` lets sub-group s compute rows 3s..3s+2 into local memory (two buffers, one barrier per 16
+  keys): 11,743 µs. Softmax + P.V at 100K x 256 21,239 -> 16,058 µs, 31K x 256 6,578 -> 4,883. Other shapes with the
+  exponentials on read: <2,3,4> 13,103 (each computed twice), xs<2,3,4> 13,364, xs<4,3,4> 41,259, xs<8,3,2> 34,467.
+- Prompt reading, the same card (ids identical, logits rows after 100K bit-identical to the old engine): 100K 512.7 ->
+  577.0 tok/s (card 4), 504.5 -> 574.4 (card 5); 31K 774.2 -> 797.6 (card 3), 723.2 -> 747.7 (card 1), 718.1 -> 744.3
+  (card 2); 3K level (860.0 / 859.7). Under load the cards run at ~2,350-2,500 MHz of 2,800, held by the short-term
+  power limit (`throttle/reason_pl2`), so fewer instructions per result also keep the clock up.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

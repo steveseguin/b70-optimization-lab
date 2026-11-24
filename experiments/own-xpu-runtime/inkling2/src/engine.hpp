@@ -62,6 +62,7 @@ struct Engine {
     // (16 tokens x heads) the sub-group maxima of the scores, nsgmax per row; pinv: per row 1 / softmax total
     bool dec_attn = true;
     float *wmax = nullptr, *pinv = nullptr;
+    float *pmaxb = nullptr; // per row the softmax maximum (prompt tiles with pv_exp)
     float *pvpart = nullptr; // attn_pv_bo_part's block sums: pv_rows tokens x heads x (cap / PVB + 2) blocks x head_dim
     // prompt chunks past 32K keys: the block-split P.V tiles take up to 64 score rows per launch (INK_PV_ROWS; 16 = one
     // launch per 16 rows as before). Each row's block sums do not depend on the other rows: the same values.
@@ -115,6 +116,9 @@ struct Engine {
     // steps of 1-4 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
     // (INK_OUT_LANE=0 off); argmax scratch of the two-launch argmax (ops::argmax_rows2)
     bool out_lane = true, att_share = true, tile_sm = true;
+    // prompt tiles of layers without a window: the softmax writes only each row's maximum and 1 / total, P.V computes the
+    // exponentials as it reads the scores (INK_PV_EXP=0 off; the same values, P written once less)
+    bool pv_exp = true;
     int att_share_min = 4096; // INK_ATT_SHARE_MIN: keys from which checks share key reads
     float *finl = nullptr, *amx_v = nullptr;
     int32_t *amx_i = nullptr;
@@ -200,9 +204,19 @@ struct Engine {
         sinks = d.alloc<float>((size_t)h.n_head * T);
         tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
         ldp = cap;
-        { // score rows: as many tokens as fit INK_P_MB MiB (default 512), a multiple of 16, at least 16, at most T
-            const double mb = std::getenv("INK_P_MB") ? std::atof(std::getenv("INK_P_MB")) : 512.0;
-            const long rows = (long)(mb * 1048576.0 / ((double)ldp * h.n_head * 4.0));
+        { // score rows (a multiple of 16, at least 16, at most T): as many as fit INK_P_MB MiB if set; else as many as fit
+            // 512 MiB, or more, up to INK_P_ROWS (default 256), while the card keeps INK_P_FREE_GB (default 6) GiB for the
+            // allocations after this one and the drafter. Long prompts then run their attention in fewer, larger chunks
+            // (the keys and values read fewer times; from 128 rows P.V needs no block parts), the same values
+            const double row_b = (double)ldp * h.n_head * 4.0;
+            long rows;
+            if (const char *e = std::getenv("INK_P_MB")) rows = (long)(std::atof(e) * 1048576.0 / row_b);
+            else {
+                const long want = std::getenv("INK_P_ROWS") ? std::atol(std::getenv("INK_P_ROWS")) : 256;
+                const double keep = (std::getenv("INK_P_FREE_GB") ? std::atof(std::getenv("INK_P_FREE_GB")) : 6.0) * 1073741824.0;
+                const double room = (double)d.limit() - (double)d.allocated - keep;
+                rows = std::max((long)(512.0 * 1048576.0 / row_b), std::min(want, room > 0 ? (long)(room / row_b) : 0L));
+            }
             prow = (int)std::min<long>(T, std::max<long>(16, rows / 16 * 16));
         }
         P = d.alloc<float>((size_t)ldp * h.n_head * prow);
@@ -210,6 +224,7 @@ struct Engine {
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
         pinv = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
+        pmaxb = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
         pv_rows = cap > 32768 ? std::max(16, std::min(prow, 64)) : 16;
         if (const char *e = std::getenv("INK_PV_ROWS")) pv_rows = std::max(16, std::min(prow, std::atoi(e))) / 16 * 16;
         pvpart = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
@@ -296,6 +311,7 @@ struct Engine {
         if (const char *e = std::getenv("INK_OUT_LANE")) out_lane = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE")) att_share = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_TILE_SM")) tile_sm = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_PV_EXP")) pv_exp = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE_MIN")) att_share_min = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
@@ -756,7 +772,9 @@ struct Engine {
                 else
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, win,
                                                                                  kscale, P, ldp, kmask[il]));
-                if (fast || tsm) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv));
+                const bool pex = tsm && pv_exp;
+                if (fast || tsm) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv,
+                                                                                                   pex ? pmaxb : nullptr));
                 else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sc, qp, nc, nh, win, P, ldp));
                 // P.V in the block order (fused.hpp attn_pv_bo_part): the tiles for chunks of >= 64 tokens (but past 32K keys
                 // only from 128, bench_attn 100K x 64 tokens: tiles 6.4 ms, split by blocks 4.6); else 16 tokens at a time,
@@ -765,15 +783,25 @@ struct Engine {
                 if (tiles && nc >= 64 && (nc >= 128 || win > 0 || qp + nc <= 32768)) {
                     // 4 queries x 3 heads per work-group, 2 channels per lane (bench_attn card 3, the same bits: 31K x 176
                     // 5,530 -> 3,273 us, 3K x 512 1,132 -> 802, windowed 31K x 512 497 -> 355)
-                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<4, 3, 2>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc,
-                                                                                   ac, kmask[il], tsm ? pinv : nullptr));
+                    // pv_exp: the 4 sub-groups share the exponentials (each computes 3 of the 12 rows; bench_attn BENCH_PVEX card 3,
+                    // softmax + P.V at 100K x 256 rows 21,239 -> 16,058 us, 31K 6,578 -> 4,883; the same bits)
+                    if (pex)
+                        pr("attn_pv_full", fz::attn_pv_tile_xs<4, 3, 2>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc, ac, kmask[il],
+                                                                        pinv, pmaxb));
+                    else
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<4, 3, 2>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc,
+                                                                                       ac, kmask[il], tsm ? pinv : nullptr));
                     continue;
                 }
                 const int pstep = tiles ? pv_rows : 16;
                 for (int c0 = 0; c0 < nc; c0 += pstep) {
                     const int nt = std::min(pstep, nc - c0), p0 = qp + c0;
                     const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
-                    if (tiles)
+                    if (tiles && pex)
+                        pr("attn_pv_full", fz::attn_pv_tile_part<4, 3, 4, true>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0, nt, nh,
+                                                                                nkvh, hd, win, pvpart, nblk, kmask[il], pinv + (size_t)c0 * nh,
+                                                                                pmaxb + (size_t)c0 * nh));
+                    else if (tiles)
                         // 4 channels per lane (100K x 16: 1,687 -> 1,474 us, the same bits); pv_rows rows per launch (100K: 48
                         // rows in one launch 4 x 1,474 -> 4,870 us per 64 rows)
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<4, 3, 4>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il],

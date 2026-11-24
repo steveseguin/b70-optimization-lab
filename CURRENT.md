@@ -127,6 +127,10 @@
   not adopted); its graph-replay idea is not needed here (card busy 99 % of a step). Gate 11/11.
 - Nov 24 ~01:12: dense prompt products 4 rows x 32 sub-groups (same values): prompt +3-6 %, 3K 811.4 -> 858.4 tok/s
   (card 3), 31K 739.4 -> 770.3, 100K 495.9 -> 513.0 (card 4); 100K logits rows bit-identical. Gate 11/11.
+- Nov 24 ~03:04: long prompts: score rows from free card memory (256 at 100K, 128 at 200K), softmax writes only
+  maxima, P.V computes the exponentials once per work-group (same values): 100K 512.7 -> 577.0 tok/s (card 4), 504.5
+  -> 574.4 (card 5); 31K +3.0-3.6 %; 3K level; 200K 338.5 -> 366.0 (+ drafter fits, 28.47 GiB). Gate 11/11; 100K and
+  200K logits rows identical. Closed: interleaved rows, 4-sum tile pairs, product table for NVFP4 decode.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

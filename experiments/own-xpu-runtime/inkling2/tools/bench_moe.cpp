@@ -297,17 +297,16 @@ int main(int argc, char **argv) {
                 std::printf("  gate_up  generic tiles %d rows  to tiles %9.1f us  x%.2f  %s\n", 2 * ng, us, us0 / us,
                             badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
             }
-            for (int sw : {16, 32}) { // sub-groups per work-group (tile_sgw2): 4 / 8 / 2 rows, two chunks at a time (c2)
+            for (int sw : {16, 32}) { // sub-groups per work-group (tile_sgw2): 4 / 8 rows, 128 / 256 registers
                 tile_sgw2 = sw;
-                for (int k = 0; k < 6; ++k) { // (rows/2, two chunks, 256 registers)
-                    const int ngs[6] = {2, 2, 2, 4, 4, 2}; const bool c2s[6] = {false, false, true, false, true, true},
-                                                                       bgs[6] = {false, true, true, true, true, false};
-                    const int ng = ngs[k]; const bool c2 = c2s[k], big = bgs[k], pair = false;
+                for (int k = 0; k < 4; ++k) { // the last: pairs of tiles x 2 rows (4 sums per lane, weights decoded once for both)
+                    const int ngs[4] = {2, 4, 4, 1}; const bool bgs[4] = {false, false, true, false};
+                    const int ng = ngs[k]; const bool big = bgs[k], pair = k == 3;
                     d.q.memset(Ht, 0, (size_t)tiles * NFF * MOE_TS * 4).wait();
                     double us = timeit([&](int i) {
                         const WView &v = gu[i % NL];
                         SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
-                        slot_pair_g2(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, Ht, ng, pair, big, c2);
+                        slot_pair_g2(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, Ht, ng, pair, big);
                     });
                     std::vector<float> ht((size_t)nt * NFF * MOE_TS);
                     d.get(ht.data(), Ht, ht.size());
@@ -318,7 +317,7 @@ int main(int argc, char **argv) {
                             for (int r = 0; r < NFF; ++r)
                                 if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + l], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
                         }
-                    std::printf("  gate_up  sgw %2d %s %d rows %s  %9.1f us  %s\n", sw, c2 ? "chunks x2 " : "two tiles ", 2 * ng,
+                    std::printf("  gate_up  sgw %2d %s %d rows %s  %9.1f us  %s\n", sw, pair ? "pairs    " : "two tiles", 2 * ng,
                                 big ? "grf256" : "grf128", us,
                                 badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
                 }
@@ -400,14 +399,14 @@ int main(int argc, char **argv) {
             }
             for (int sw : {16, 32}) {
                 tile_sgw2 = sw;
-                for (int k = 0; k < 5; ++k) {
-                    const int rs[5] = {4, 4, 4, 2, 4}; const bool c2s[5] = {false, false, true, true, true}, bgs[5] = {false, true, true, true, false};
-                    const int r = rs[k]; const bool lut = true, c2 = c2s[k], big = bgs[k];
+                for (int k = 0; k < 5; ++k) { // the last two: pairs of tiles x 2 / 1 rows
+                    const int rs[5] = {4, 8, 4, 2, 1}; const bool bgs[5] = {false, false, true, false, false};
+                    const int r = rs[k]; const bool lut = true, big = bgs[k], pair = k >= 3;
                     d.q.memset(y1, 0, z1.size() * 4).wait();
-                    double us = timeit([&](int i) { slot_rows_g2(d.q, dn[i % NL], grp, tiles, Ht, y1, E, r, false, big, lut, c2); });
+                    double us = timeit([&](int i) { slot_rows_g2(d.q, dn[i % NL], grp, tiles, Ht, y1, E, r, pair, big, lut); });
                     d.get(z1.data(), y1, z1.size());
                     long bad = cmp(z0, z1);
-                    std::printf("  down     sgw %2d %s %d rows lut %s  %9.1f us  %s\n", sw, c2 ? "chunks x2" : "two tiles", r,
+                    std::printf("  down     sgw %2d %s %d rows lut %s  %9.1f us  %s\n", sw, pair ? "pairs    " : "two tiles", r,
                                 big ? "grf256" : "grf128", us,
                                 bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
                 }
