@@ -146,9 +146,12 @@
   group ahead so the compiler interleaves the 24 sums (100K +1.2-2.1 %, 31K +0.6-1.4 %); layer 22's Q5_K attn_q runs
   as tiles (7.66 -> 2.55 ms per 1,024-token step). Gate 11/11. Found: the fused kernel is not memory-bound (cache
   ring test), the release compiler ignores accumulator settings, Q6_K dense tiles are 1.8x slower than Q8_0.
-- Nov 24 ~09:55: writing steps compute full-layer scores inside the block kernel (`attn_flash_dec`): writing after
+- Nov 24 ~09:38: writing steps compute full-layer scores inside the block kernel (`attn_flash_dec`): writing after
   100K +2.8-2.9 %, after 31K +1.5 %, logits identical; Q6_K file copies off the card (-0.41 GiB). Next: windowed
   scores in a window-wide buffer instead of a context-wide one, fewer part rows, for longer context on one card.
+- Nov 24 ~10:03: done: every full-layer step below 128 tokens computes scores in place, P rows are the window wide,
+  block sums keep 4 full-context rows past 128K: one card holds 480K positions (was 420K), 100K memory -2.8 GiB, speed
+  level, logits identical. Next: token embedding table on the host (0.49 GB), a 470K needle prompt.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

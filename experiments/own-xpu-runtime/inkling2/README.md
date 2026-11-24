@@ -488,6 +488,14 @@ Writing (same card, both orders, logits of all 64 steps identical): after 100K 5
 `INK_PROF`): scores 408 µs + parts 440 + fold 46 per layer, the keys and values each at ~500 GB/s. Gate 11/11 (spec
 checks of 2-16 rows included). Q6_K weights now stay off the card's upload (only the padded planar copy goes on:
 `INK_Q6K_SKIP=0` = both copies): 0.41 GiB less card memory (100K: 23.41 -> 23.00 GiB).
+Then all full-layer steps below the fused prompt tile (`INK_FLASH_MIN`, 128 tokens) take `attn_flash_dec`; with tiles it
+adds the relative bias from `Rc` and `rel_bias` as `attn_scores_tile` does (i ascending, the same bits). Only the windowed
+layers still use P, and they store each row from its window's start (column j - lo), so P's rows are the window wide
+(1,024) instead of the context, and the block-sum buffer keeps full-context rows only for `INK_DEC_ROWS` rows (16 up to
+128K positions, else 4). Card memory at 100K 23.00 -> 20.23 GiB (score rows 256 -> 1,024 per chunk, so the windowed
+layers' prompt attention runs in one chunk per step), speed level (card 3 706.3 vs 703.4 tok/s prompt, 55.81 vs 55.84
+writing; logits of 64 steps identical on cards 3 and 4). One card now holds 480,000 positions (30.71 of 31.89 GiB;
+500,000 refused), was 420,000. Gate 11/11.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first

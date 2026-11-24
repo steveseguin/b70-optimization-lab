@@ -367,17 +367,20 @@ inline sycl::event attn_flash_part(sycl::queue &q, const float *P, int ldp, cons
 
 // attn_flash_part with the block's scores computed in the work-group (local memory) instead of read from P: the
 // writing steps and steps without prompt tiles, whose scores attn_scores_gt / attn_scores_g give as (d ascending from
-// 0.0f) * scale, plus tab[row][dist] within ext (the relative-bias table attn_prep fills when there are no tiles). P is
+// 0.0f) * scale, plus tab[row][dist] within ext (the relative-bias table attn_prep fills when there are no tiles; with
+// tab null, the same term from Rc and rel_bias as attn_flash_tile / attn_scores_tile compute it). P is
 // then neither written nor read (keys and values each read once per block; the same values). Sub-group s computes the
 // scores of keys kb + 16 s + lane for the NT x G rows, then every sub-group runs attn_flash_part's code on them.
 template <int G, int NT>
-inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const sycl::half *Vt, int vld,
+inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const float *Rc,
+                                  const float *rel_bias, int nr, const sycl::half *Vt, int vld,
                                   int pos0, int ntok, int nh, int nkvh, int hd, int ext, float scale, float *part, float *pml, int nblk,
                                   int km = 0x7fffffff) {
-    constexpr int PW = 16, KG = PVB / PW, NR = NT * G, HD = 128;
+    constexpr int PW = 16, KG = PVB / PW, NR = NT * G, HD = 128, NRL = 16;
     using HV8 = sycl::vec<sycl::half, 8>;
     using HV = sycl::vec<sycl::half, 16>;
-    if (hd != HD || nh != nkvh * G || vld % 16 || HD / PW != KG) throw std::runtime_error("attn_flash_dec: unsupported shape");
+    if (hd != HD || nh != nkvh * G || vld % 16 || HD / PW != KG || (!tab && (nr != NRL || !Rc || !rel_bias)))
+        throw std::runtime_error("attn_flash_dec: unsupported shape");
     const int nrg = (ntok + NT - 1) / NT;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> sx(NR * PVB, h);
@@ -429,7 +432,21 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
                         for (int gi = 0; gi < G; ++gi) {
                             const size_t row = (size_t)(rg * NT + t) * nh + kvh * G + gi;
                             float v = s[t][gi] * scale;
-                            if (j <= pp[t] && dist < ext) v = v + tab[row * ext + dist];
+                            if (j <= pp[t] && dist < ext) {
+                                if (tab) v = v + tab[row * ext + dist];
+                                else {
+                                    const float *br = rel_bias + (size_t)dist * NRL, *rc = Rc + row * NRL;
+                                    float tb = 0.0f;
+#pragma unroll
+                                    for (int i = 0; i < NRL / 4; ++i) {
+                                        const sycl::vec<float, 4> bb = *(const sycl::vec<float, 4> *)(br + 4 * i);
+                                        const sycl::vec<float, 4> r = *(const sycl::vec<float, 4> *)(rc + 4 * i);
+#pragma unroll
+                                        for (int k = 0; k < 4; ++k) tb = mac(tb, bb[k], r[k]);
+                                    }
+                                    v = v + tb;
+                                }
+                            }
                             sx[(t * G + gi) * PVB + sgi * PW + lane] = v; // read only where j <= pp[t]
                         }
                     }

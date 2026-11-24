@@ -71,11 +71,13 @@ struct Engine {
     int nsgmax = 0;
     // baseline v4 (2026-11-24): attention of the layers without a window in blocks of PVB keys with a running maximum
     // (attn_flash.hpp; INK_FLASH=0 = baseline v3's softmax over the whole row). Steps of at least flash_min tokens
-    // (INK_FLASH_MIN) in one launch that keeps the scores in local memory; else the scores in P, then attn_flash_part
-    // (pml: each block's maximum and sum) and attn_flash_sum. Every path gives the same values.
+    // (INK_FLASH_MIN) in one launch that keeps the scores in local memory; else attn_flash_dec (each block's scores in
+    // local memory, its maximum and sum in pml) and attn_flash_sum. Every path gives the same values. With both on, only
+    // the windowed layers use P, whose rows start at each row's window: P rows are the window wide, not the context
     bool q5k_tiles = !std::getenv("INK_Q5K_TILES") || std::atoi(std::getenv("INK_Q5K_TILES")) != 0;
     bool flash = true;
-    bool flash_dec = true; // INK_FLASH_DEC=0: steps without tiles keep scores in P (attn_scores_gt / _g + attn_flash_part)
+    bool flash_dec = true; // INK_FLASH_DEC=0: steps below flash_min keep scores in P (attn_scores_* + attn_flash_part)
+    int dec_rows = 16;     // rows per attn_flash_dec launch (its parts buffer holds this many rows of the whole context)
     int flash_min = 128;
     float *pml = nullptr;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
@@ -213,7 +215,15 @@ struct Engine {
         R = d.alloc<float>((size_t)h.n_rel * h.n_head * T); Rc = d.alloc<float>((size_t)h.n_rel * h.n_head * T);
         sinks = d.alloc<float>((size_t)h.n_head * T);
         tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
-        ldp = cap;
+        if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
+        if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
+        dec_rows = cap <= 131072 ? 16 : 4; // long contexts: 4 rows (a 16-row check takes 4 launches; 1.5 -> 0.4 KB per position)
+        if (const char *e = std::getenv("INK_DEC_ROWS")) dec_rows = std::max(1, std::min(16, std::atoi(e)));
+        // P's row stride: the window (the windowed kernels store column j - lo of each row) when the layers without a
+        // window keep their scores in local memory, else the context (their rows store column j)
+        const bool p_win = flash && flash_dec && h.n_swa > 0;
+        ldp = p_win ? (h.n_swa + 15) / 16 * 16 : cap;
         { // score rows (a multiple of 16, at least 16, at most T): as many as fit INK_P_MB MiB if set; else as many as fit
             // 512 MiB, or more, up to INK_P_ROWS (default 256), while the card keeps INK_P_FREE_GB (default 6) GiB for the
             // allocations after this one and the drafter. Long prompts then run their attention in fewer, larger chunks
@@ -230,15 +240,21 @@ struct Engine {
             prow = (int)std::min<long>(T, std::max<long>(16, rows / 16 * 16));
         }
         P = d.alloc<float>((size_t)ldp * h.n_head * prow);
-        nsgmax = cap / 16 + 2;
+        nsgmax = ldp / 16 + 2;
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
         pinv = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
         pmaxb = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
         pv_rows = cap > 32768 ? std::max(16, std::min(prow, 64)) : 16;
         if (const char *e = std::getenv("INK_PV_ROWS")) pv_rows = std::max(16, std::min(prow, std::atoi(e))) / 16 * 16;
-        pvpart = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
-        pml = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * 2);
+        { // block parts: rows x heads x blocks (attn_flash_dec: dec_rows rows of the whole context; the windowed layers'
+            // P.V: pv_rows or 16 rows of a window's blocks); without p_win every path may take pv_rows of the context
+            const size_t r16 = (size_t)std::max(16, pv_rows), ctx_b = (size_t)(cap / fz::PVB + 2);
+            const size_t pr_n = p_win ? std::max((size_t)dec_rows * ctx_b, r16 * ((ldp + r16) / fz::PVB + 3)) : r16 * ctx_b;
+            const size_t ml_n = p_win ? (size_t)dec_rows * ctx_b : r16 * ctx_b;
+            pvpart = d.alloc<float>(pr_n * h.n_head * h.head_dim);
+            pml = d.alloc<float>(ml_n * h.n_head * 2);
+        }
         if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
             throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
         ob = d.alloc<float>(E); attn_out = d.alloc<float>(E); ffn_inp = d.alloc<float>(E); fx = d.alloc<float>(E);
@@ -278,9 +294,6 @@ struct Engine {
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
         if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
-        if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
-        if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
-        if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
             const bool dec = dec_on();
@@ -777,8 +790,9 @@ struct Engine {
                 const bool tsm = tiles && tile_sm && win == 0;
                 // prompt score tiles: 4 sub-groups per work-group for layers without a window, 8 for the windowed ones
                 // (bench_attn card 3: full 100K x 64 3,323 -> 3,209 us, 3K x 512 856 -> 818; windowed 464 vs 558 with 4)
-                // writing steps and steps without tiles (the relative-bias table filled): scores inside attn_flash_dec
-                const bool fdec = fl && flash_dec && !tiles;
+                // layers without a window, steps below the fused tile: scores inside attn_flash_dec (the relative-bias
+                // table when the step has no tiles, else Rc and rel_bias as attn_flash_tile)
+                const bool fdec = fl && flash_dec;
                 if (fdec) {
                 } else if (tiles && win == 0)
                     pr("attn_scores_full", fz::attn_scores_tile<8, 3, 4>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel, f32(l.rel_bias),
@@ -800,17 +814,18 @@ struct Engine {
                                                                                  kscale, P, ldp, kmask[il]));
                 const bool pex = tsm && pv_exp;
                 if (fl) { // baseline v4: block parts (maximum, sum, P.V) then the blocks folded in order, 16 or pv_rows rows at a time
-                    const int pst = tiles ? pv_rows : 16;
+                    const int pst = fdec ? dec_rows : tiles ? pv_rows : 16;
                     for (int c0 = 0; c0 < nc; c0 += pst) {
                         const int nt = std::min(pst, nc - c0), p0 = qp + c0, nblk = (p0 + nt - 1) / fz::PVB + 1;
                         const float *Pc = P + (size_t)c0 * nh * ldp;
-                        const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tc + (size_t)c0 * nh * h.rel_extent;
+                        const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tiles ? nullptr : tc + (size_t)c0 * nh * h.rel_extent;
+                        const float *Rd = Rc + (size_t)(q0 + c0) * nh * h.n_rel;
                         if (fdec && nt == 1)
-                            pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, h.rel_extent,
-                                                                       kscale, pvpart, pml, nblk, kmask[il]));
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
+                                                                       nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
                         else if (fdec)
-                            pr("attn_pv_full", fz::attn_flash_dec<3, 4>(d.q, Qd, Kc[il], td, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, h.rel_extent,
-                                                                       kscale, pvpart, pml, nblk, kmask[il]));
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 4>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
+                                                                       nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
                         else if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
                                                                                 nblk, kmask[il]));
                         else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml, nblk,
