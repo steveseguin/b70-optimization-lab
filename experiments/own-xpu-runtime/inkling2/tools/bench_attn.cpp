@@ -3,6 +3,7 @@
 #include <cmath>
 #include "../src/engine.hpp"
 #include "../src/attn_tiles.hpp"
+#include "../src/attn_flash.hpp"
 #include <random>
 #include <functional>
 
@@ -167,6 +168,109 @@ int main(int argc, char **argv) {
                 double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, nullptr, nullptr); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
             };
+            if (std::getenv("BENCH_FLASH") && win == 0) { // attn_flash.hpp (blocks with a running maximum) vs the chain
+                const int nsgm = cap / 16 + 2;
+                float *wm = d.alloc<float>((size_t)ntok * nh * nsgm), *inv = d.alloc<float>((size_t)ntok * nh);
+                float *mx = d.alloc<float>((size_t)ntok * nh), *orf = d.alloc<float>(hg.size()), *ofl = d.alloc<float>(hg.size());
+                double uc = tm([&] {
+                    fz::attn_scores_tile<8, 3, 4>(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff, wm, nsgm);
+                    fz::attn_softmax_sum(d.q, Sk, wm, nsgm, pos, ntok, nh, win, P1, ldp, inv, mx);
+                    fz::attn_pv_tile_xs<4, 3, 2>(d.q, P1, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o0, 0x7fffffff, inv, mx);
+                });
+                std::printf("  chain (scores, softmax, P.V) %9.1f us %7.3f J\n", uc, ej);
+                const bool ref = !std::getenv("BENCH_NOREF");
+                if (ref) fz::attn_flash_ref(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, orf).wait();
+                auto fl = [&](const char *name, auto f) {
+                    d.q.memset(o1, 0, hg.size() * 4).wait();
+                    double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, Sk, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, Gt, o1, 0x7fffffff); });
+                    std::printf("  %-28s %9.1f us %7.3f J %4.0f W  vs ref %s\n", name, us, ej, ej / us * 1e6,
+                                ref ? same(orf, o1, hg.size()).c_str() : "-");
+                };
+                fl("flash<4,3,2>", fz::attn_flash_tile<4, 3, 2>);
+                d.q.memcpy(ofl, o1, hg.size() * 4).wait();
+                fl("flash<8,3,2>", fz::attn_flash_tile<8, 3, 2>);
+                fl("flash<8,3,1>", fz::attn_flash_tile<8, 3, 1>);
+                fl("flash<4,3,4>", fz::attn_flash_tile<4, 3, 4>);
+                fl("flash<2,3,4>", fz::attn_flash_tile<2, 3, 4>);
+                { // the writing-step kernels: scores in P (tile), attn_flash_part + attn_flash_sum, rows in pieces of BENCH_PROWS
+                    const int nblk = pl / fz::PVB + 1, pst = std::getenv("BENCH_PROWS") ? std::atoi(std::getenv("BENCH_PROWS")) : 16;
+                    float *part = d.alloc<float>((size_t)pst * nh * nblk * hd), *pml = d.alloc<float>((size_t)pst * nh * nblk * 2);
+                    fz::attn_scores_tile<8, 3, 4>(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp).wait();
+                    auto ps = [&](auto fpart) {
+                        for (int c0 = 0; c0 < ntok; c0 += pst) {
+                            const int nt = std::min(pst, ntok - c0), nbk = (pos + c0 + nt - 1) / fz::PVB + 1;
+                            fpart(P1 + (size_t)c0 * nh * ldp, pos + c0, nt, part, pml, nbk);
+                            fz::attn_flash_sum(d.q, part, pml, nbk, pos + c0, nt, nh, hd, Sk + (size_t)c0 * nh, Gt + (size_t)c0 * nh * hd,
+                                               o1 + (size_t)c0 * nh * hd);
+                        }
+                    };
+                    auto pt = [&](const char *name, auto fpart) {
+                        d.q.memset(o1, 0, hg.size() * 4).wait();
+                        double us = tm([&] { ps(fpart); });
+                        std::printf("  %-28s %9.1f us (%d rows per piece)  vs ref %s\n", name, us, pst, ref ? same(orf, o1, hg.size()).c_str() : "-");
+                    };
+                    { // the writing steps' current kernels after the scores: softmax (sums), block parts (per token, or 4 tokens at
+                      // once), block sums; and the new ones alone
+                        float *wm2 = d.alloc<float>((size_t)ntok * nh * nsgm), *pv2 = d.alloc<float>((size_t)pst * nh * nblk * hd);
+                        float *Pw = d.alloc<float>(np);
+                        fz::attn_scores_tile<8, 3, 4>(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, Pw, ldp, 0x7fffffff, wm2, nsgm).wait();
+                        auto old = [&](bool t4) {
+                            for (int c0 = 0; c0 < ntok; c0 += 4) {
+                                const int nt = std::min(4, ntok - c0), nbk = (pos + c0 + nt - 1) / fz::PVB + 1;
+                                float *Pc = Pw + (size_t)c0 * nh * ldp;
+                                fz::attn_softmax_sum(d.q, Sk + (size_t)c0 * nh, wm2 + (size_t)c0 * nh * nsgm, nsgm, pos + c0, nt, nh, win, Pc, ldp, inv);
+                                if (t4) fz::attn_pv_bo_part_t<3, 4>(d.q, Pc, ldp, Vt, vld, pos + c0, nt, nh, nkvh, hd, win, pv2, nbk, inv);
+                                else fz::attn_pv_bo_part<3>(d.q, Pc, ldp, Vt, vld, pos + c0, nt, nh, nkvh, hd, win, pv2, nbk, inv);
+                                fz::attn_pv_bo_sum(d.q, pv2, nbk, pos + c0, nt, nh, hd, win, Gt + (size_t)c0 * nh * hd, o1 + (size_t)c0 * nh * hd);
+                            }
+                        };
+                        double uo = tm([&] { old(false); });
+                        double uo4 = tm([&] { old(true); });
+                        std::printf("  current writing kernels (softmax, block parts, sums), 4 rows per piece: %.1f us, 4 tokens at once %.1f us\n", uo, uo4);
+                        const int nt = std::min(4, ntok), nbk = (pos + nt - 1) / fz::PVB + 1;
+                        double up1 = tm([&] { fz::attn_flash_part<3, 1>(d.q, P1, ldp, Vt, vld, pos, nt, nh, nkvh, hd, part, pml, nbk); });
+                        double up4 = tm([&] { fz::attn_flash_part<3, 4>(d.q, P1, ldp, Vt, vld, pos, nt, nh, nkvh, hd, part, pml, nbk); });
+                        double us = tm([&] { fz::attn_flash_sum(d.q, part, pml, nbk, pos, nt, nh, hd, Sk, Gt, o1); });
+                        std::printf("  first %d rows: flash part<3,1> %.1f us, part<3,4> %.1f us, sum %.1f us\n", nt, up1, up4, us);
+                    }
+                    pt("flash part<3,1> + sum", [&](const float *Pc, int p0, int nt, float *pa, float *pm, int nbk) {
+                        fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vt, vld, p0, nt, nh, nkvh, hd, pa, pm, nbk); });
+                    pt("flash part<3,4> + sum", [&](const float *Pc, int p0, int nt, float *pa, float *pm, int nbk) {
+                        fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vt, vld, p0, nt, nh, nkvh, hd, pa, pm, nbk); });
+                }
+                { // accuracy on sample rows against double precision: the chain (o0) and flash<4,3,2> (ofl)
+                    std::vector<float> c3(hg.size()), c4(hg.size());
+                    d.get(c3.data(), o0, hg.size()); d.get(c4.data(), ofl, hg.size());
+                    double e3 = 0, e4 = 0, s3 = 0, s4 = 0, mref = 0; long n = 0;
+                    for (int t : {0, ntok / 2, ntok - 1})
+                        for (int hh : {0, 7, 13, 23}) {
+                            const int p = pos + t, kvh = hh / G, row = t * nh + hh;
+                            std::vector<double> sc(p + 1);
+                            double M = hs[row];
+                            for (int j = 0; j <= p; ++j) {
+                                double a = 0;
+                                for (int dd = 0; dd < hd; ++dd) a += (double)hq[(size_t)row * hd + dd] * (double)(float)hk[(size_t)j * kd + kvh * hd + dd];
+                                a *= scale;
+                                if (p - j < ext) for (int i = 0; i < nr; ++i) a += (double)hrb[(size_t)(p - j) * nr + i] * hrc[(size_t)row * nr + i];
+                                sc[j] = a; M = std::max(M, a);
+                            }
+                            double den = std::exp(hs[row] - M);
+                            for (int j = 0; j <= p; ++j) { sc[j] = std::exp(sc[j] - M); den += sc[j]; }
+                            for (int c = 0; c < hd; ++c) {
+                                double o = 0;
+                                for (int j = 0; j <= p; ++j) o += sc[j] * (double)(float)hv[(size_t)j * kd + kvh * hd + c];
+                                const size_t i = (size_t)row * hd + c;
+                                o = o / den / (1.0 + std::exp(-(double)hg[i]));
+                                mref = std::max(mref, std::fabs(o));
+                                e3 = std::max(e3, std::fabs(c3[i] - o)); e4 = std::max(e4, std::fabs(c4[i] - o));
+                                s3 += (c3[i] - o) * (c3[i] - o); s4 += (c4[i] - o) * (c4[i] - o); ++n;
+                            }
+                        }
+                    std::printf("  vs double (12 rows, max |out| %.3g): chain max err %.3g rms %.3g; flash max err %.3g rms %.3g\n", mref, e3,
+                                std::sqrt(s3 / n), e4, std::sqrt(s4 / n));
+                }
+                return 0;
+            }
             if (std::getenv("BENCH_PVEX")) { // the prompt-tile softmax (maxima from the score tile) then P.V, exponentials
                 // written by the softmax (the reference) or computed by P.V as it reads (EX), several P.V shapes
                 const int nsgm = cap / 16 + 2;

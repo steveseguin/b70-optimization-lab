@@ -6,6 +6,7 @@
 #include "dump.hpp"
 #include "model.hpp"
 #include "attn_tiles.hpp"
+#include "attn_flash.hpp"
 #include "fused.hpp"
 #include "tok_tiles.hpp"
 #include "multi.hpp"
@@ -68,6 +69,13 @@ struct Engine {
     // launch per 16 rows as before). Each row's block sums do not depend on the other rows: the same values.
     int pv_rows = 16;
     int nsgmax = 0;
+    // baseline v4 (2026-11-24): attention of the layers without a window in blocks of PVB keys with a running maximum
+    // (attn_flash.hpp; INK_FLASH=0 = baseline v3's softmax over the whole row). Steps of at least flash_min tokens
+    // (INK_FLASH_MIN) in one launch that keeps the scores in local memory; else the scores in P, then attn_flash_part
+    // (pml: each block's maximum and sum) and attn_flash_sum. Every path gives the same values.
+    bool flash = true;
+    int flash_min = 128;
+    float *pml = nullptr;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
     // below the tile threshold: INK_DEC=0 reads the file layout
@@ -228,6 +236,7 @@ struct Engine {
         pv_rows = cap > 32768 ? std::max(16, std::min(prow, 64)) : 16;
         if (const char *e = std::getenv("INK_PV_ROWS")) pv_rows = std::max(16, std::min(prow, std::atoi(e))) / 16 * 16;
         pvpart = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
+        pml = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * 2);
         if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
             throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
         ob = d.alloc<float>(E); attn_out = d.alloc<float>(E); ffn_inp = d.alloc<float>(E); fx = d.alloc<float>(E);
@@ -267,6 +276,8 @@ struct Engine {
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
         if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
+        if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
             const bool dec = dec_on();
@@ -743,7 +754,13 @@ struct Engine {
                     pr("attn_win", fz::attn_win_fused<3, 3, 1>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
                                                               h.rel_extent, win, kscale, kmask[il], att));
             }
-            for (int q0 = 0; q0 < (winf ? 0 : ntok); q0 += prow) {
+            // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
+            // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
+            const bool fl = flash && win == 0, fl_tile = fl && tiles && ntok >= flash_min;
+            if (fl_tile)
+                pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
+                                                                  ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
+            for (int q0 = 0; q0 < (winf || fl_tile ? 0 : ntok); q0 += prow) {
                 const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
                 const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
                 const float *tc = tab + (size_t)q0 * nh * h.rel_extent;
@@ -773,6 +790,20 @@ struct Engine {
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, win,
                                                                                  kscale, P, ldp, kmask[il]));
                 const bool pex = tsm && pv_exp;
+                if (fl) { // baseline v4: block parts (maximum, sum, P.V) then the blocks folded in order, 16 or pv_rows rows at a time
+                    const int pst = tiles ? pv_rows : 16;
+                    for (int c0 = 0; c0 < nc; c0 += pst) {
+                        const int nt = std::min(pst, nc - c0), p0 = qp + c0, nblk = (p0 + nt - 1) / fz::PVB + 1;
+                        const float *Pc = P + (size_t)c0 * nh * ldp;
+                        if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
+                                                                                nblk, kmask[il]));
+                        else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml, nblk,
+                                                                        kmask[il]));
+                        pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nblk, p0, nt, nh, hd, sc + (size_t)c0 * nh,
+                                                                  gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd));
+                    }
+                    continue;
+                }
                 if (fast || tsm) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv,
                                                                                                    pex ? pmaxb : nullptr));
                 else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sc, qp, nc, nh, win, P, ldp));

@@ -136,6 +136,12 @@
   2.46-2.50 J, of which decoding the 4-bit weights ~0.55 J and input loads ~0.40 J (overlapping), the multiply-add
   core 1.87 J; floor 17-22 pJ per lane multiply-add. Closed: score tiles 4 queries past 34K (faster alone, same
   energy, prompt level), code bytes by block read, chunk count fixed at compile time.
+- Nov 24 ~07:20: baseline v4 (new rounding, same math): the 8 full-attention layers take softmax and P.V per block of
+  128 keys with a running maximum (`src/attn_flash.hpp`), so a long prompt's scores never go to memory. Prompt
+  200K 403.9 -> 507.4 tok/s (card 4, +26 %), 100K 614.9 -> 691.6 (card 3), 31K +5.5 %, 3K level; writing level
+  (200K +5 %). All paths agree bit for bit (gate 11/11 against the new `baseline`; fused vs block-part prompts
+  identical at 3K and 100K); as accurate as v3 (high-precision reference: same top token 98.0 vs 97.0 %). Gate
+  prompts' ids unchanged; `INK_FLASH=0` = v3 (`baseline-v3`).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

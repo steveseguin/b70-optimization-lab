@@ -56,6 +56,9 @@ paragraphs named in the Evidence column (card in brackets). Re-open only under t
 | Score tiles with 4 queries per lane past 34K keys (attn_scores_tile<4,3,4>) | Alone 11-18 % faster (100K x 256: 17,982 -> 14,773 µs) but only 6 % less energy (5.10 -> 4.81 J); 100K prompt level on 4 cards (e.g. 575.2 -> 574.2 tok/s card 1) | 2026-11-24, README "Energy, not time" | Judge prompt kernels by J per launch (bench prints it) |
 | NVFP4 code bytes as one sub-group block read, scale bytes as uniform loads | gate\|up 2.50-2.54 J vs 2.47-2.53, down 1.23-1.24 vs 1.23-1.26; time level | bench_moe (card 3, 2026-11-24) | |
 | NVFP4 expert tiles with the chunk count fixed at compile time (72 gate\|up / 36 down, no loop-exit tests) | gate\|up 7,408-7,450 µs 2.457-2.468 J vs 7,415-7,508 µs 2.466-2.501 J; down level | bench_moe (card 3, 2026-11-24) | |
+| Score tiles with 2-4 keys per lane (each query value serves more keys) | 1.7-4.8x slower (<8,3,4,2> 30,922 µs, <4,3,4,4> 78,768 vs <8,3,4> 18,066 at 100K x 256); query reloads are only 7 % of the tile anyway | bench_attn (card 3, 2026-11-24) | Query reloads measured by ablation first |
+| Cache hints on the score stores (annotated_ptr write_hint) | uncached L1+L3 26,338 µs, streaming 18,018, L1 streaming 18,094 vs 17,963-18,032 | bench_attn (card 3, 2026-11-24) | |
+| Score stores as sub-group block writes (64 contiguous bytes) | 1.5-2.5 % on the tile (<8,3,8> 17,034 vs 17,424 µs): ~0.3 % of a 100K prompt | bench_attn (card 3, 2026-11-24) | Bank only with a bigger change to the tile |
 | Bigger work-groups for the layers 20-23 expert tiles (other formats, no tables) | `INK_TILE_SGW=32`: gate\|up 6,714 -> 6,675 µs, down 3,429 -> 3,455 (3K prompt, `INK_PROF`) | 2026-11-24 (card 3) | |
 
 Measurement cautions (not ideas, but they decide results):

@@ -424,6 +424,48 @@ without the input loads (each chunk reuses the first chunk's inputs) 6,344 µs /
 1.872 J. So the multiply-add core (broadcasts, sums, the butterfly) holds three quarters of the energy; decode and
 loads overlap with it. A compile-time chunk count (72 / 36 chunks, no loop-exit tests) was level (2.457-2.468 vs
 2.466-2.501 J). The `INK_ABL` switches were removed again after the measurement.
+Full-attention chain at 100K keys x 256 query rows (card 3, bench_attn BENCH_TILE/BENCH_WMAX/BENCH_PVEX): scores
+`attn_scores_tile<8,3,4>` 17,987 µs, softmax (maxima only) 4,326 µs (reads the 2.46 GB of scores at ~570 GB/s), P.V
+`attn_pv_tile_xs<4,3,2>` 12,272 µs: 34.6 ms. Score-tile budget (same bench-only `-DINK_ABL` method): full
+18,020-18,096 µs / 5.05-5.08 J; keys of the first 16 channels for all channels 14,762 µs / 4.26 J; queries likewise
+16,818 µs / 4.71 J; no score stores (maxima kept) 13,134 µs / 3.77 J; all three 10,679 µs / 3.07 J (7.4 TMAC/s). The
+stores of the 2.46 GB of scores are the largest part, and not through the caches: uncached stores 26,338 µs,
+streaming 18,018 µs, block writes of 64 contiguous bytes 1.5-2.5 % faster. Keeping the scores out of memory would
+need softmax and P.V fused with a running maximum, which changes rounding (a new baseline for every attention path,
+the writing steps included, since the prompt and writing paths give the same bits today).
+
+Running maximum, baseline v4 (2026-11-24, `src/attn_flash.hpp`; `INK_FLASH=0` gives baseline v3, kept as
+`baseline-v3`, bit for bit). The 8 full-attention layer applications now take softmax and P.V per block of 128 keys:
+the block's own maximum, its exponentials, their sum (lanes over keys, then a fixed xor-shuffle sum) and its P.V
+(keys ascending); the blocks fold in order into a state that starts from the sink (maximum = sink, total = 1):
+each block multiplies the state by exp(old maximum - new maximum) and its own parts by exp(block maximum - new
+maximum), and the output divides by the total at the end. A prompt step of >= 128 tokens never writes its scores:
+one work-group (8 queries x 3 heads x 128 channels, `attn_flash_tile<8,3,1>`) computes a block's scores into local
+memory, turns them into exponentials and block sums, does the block's P.V and moves on. Writing steps and short
+pieces keep the scores in P and run `attn_flash_part` (per block) and `attn_flash_sum` (the fold: the running
+maximum is a prefix maximum, exact in any order, so one work-group scan gives every block's two factors and the lanes
+compute them in parallel). Every path computes the same expressions in the same order, so they agree bit for bit:
+gate 11/11 against `baseline` (made by `make-baseline.sh` through the general kernels); the 3,127-token prompt read
+through the fused tiles, through scores + block parts (`INK_FLASH_MIN=100000`) and without tiles (`INK_ATT_TILE=0`)
+gives identical logits for all 16 following steps, and so do the fused and block-part prompts at 100K. Windowed
+layers are unchanged.
+Accuracy: against double precision (bench_attn `BENCH_FLASH=1`, random data, 12 rows) 3K keys max error 2.83e-08 vs
+v3 3.08e-08 (rms 4.42e-09 vs 4.07e-09), 100K keys 7.79e-09 vs 6.41e-09 (rms 1.27e-09 vs 1.02e-09); against the
+high-precision reference on the 300-token prompt (`oracle/p300`) final scores median 3.796e-03 -> 3.761e-03 (v4
+closer at 165 of 300 positions), the same top token as the reference at 98.0 vs 97.0 % of positions, layer 11's
+attention output 2.97e-03 -> 1.87e-04. The gate prompts' ids are unchanged (haiku, code, 3,127 + 16). After long
+prompts near-ties can go either way, as with every earlier baseline: the logits right after the 3,127-token prompt
+move by up to 7.44 (mean 1.05) between v3 and v4, as they did between v1 and v3 (8.15, mean 1.28) and v2 and v3
+(3.21, mean 0.50); after the 100K test prompt the first token changes (v3: 11 at p 0.246, 196975 at 0.148; v4:
+196975 at 0.356, 11 at 0.230), while a 5-token prompt's final scores move by at most 3.6e-04.
+Speed (bench_attn, card 3, 100K keys): 256 rows 33.5 -> 23.1 ms (scores + softmax + P.V vs the fused tile), 128 rows
+17.9 -> 14.9 (`<4,3,2>`); one-token step 499 -> 468 µs per layer, 4-token checks 879 -> 862. Prompts (same binary,
+same card, both orders): 200K 403.9 -> 507.4 tok/s (card 4), 397.2 -> 499.3 (card 5); 100K 614.9 -> 691.6 (card 3),
+581.1 -> 645.7 (card 4); 31K 743.9 -> 785.2 (card 1), 796.3 -> 839.8 (card 3); 3K level (803.4 / 802.4, 857.8 /
+862.6). Writing: at 200K 38.04 -> 39.96 tok/s, at 100K 52.75 -> 53.06, after the code prompt level (89.90-89.95 /
+89.51-90.01). Fused-tile shapes: `<8,3,1>` 23.1 ms at 100K x 256, `<4,3,2>` 25.4, `<8,3,2>` 49.2, `<4,3,4>` 46.8,
+`<2,3,4>` 67.4 (the last three spill or starve). Next for this path: fewer barriers per block (double-buffered local
+memory), and `prow` (the score rows P holds) can shrink now that long prompts no longer keep full-layer scores.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
