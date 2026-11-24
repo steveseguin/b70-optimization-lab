@@ -192,6 +192,13 @@ Long prompts and long writing (2026-11-23 evening):
   (`INK_DSP_AVAR=3`, default). Guessing kept the same guesses on code, haiku, 3K and 31K (ids identical); 31K writing
   97.1 -> 98.2-98.7 tok/s (card 4). After a 100K prompt (card 2): plain 52.46 tok/s, guessing 55.84 -> 57.61
   (drafting 0.871 -> 0.734 s per 256 tokens), ids identical to the plain run.
+- The drafter's full-context layer now runs on the matrix engines (`dsp_attn_span_x`, DPAS through `joint_matrix`, fp16
+  inputs and fp32 sums; `INK_DSP_AVAR=4`, default; the windowed layers keep variant 3). The block's 8 key / value rows
+  are written into the cache after the context (`dsp_block_to_cache`; the full layer's cache has 8 + 128 zeroed rows
+  of room), so every tile is a plain strided load. `bench_dsp 3 100000`: 2.59 -> 0.88 ms (463 GB/s; 31K 0.84 -> 0.29),
+  combined output within 1.2e-4 of the fp32 kernel (largest value 0.37). The same guesses are kept on code, haiku,
+  3K, 31K and 100K (ids identical); 31K writing 98.5 -> 100.5 tok/s (card 4); after a 100K prompt (card 2) 57.58 ->
+  60.59 tok/s (drafting 0.735 -> 0.488 s), plain 52.46. Short texts unchanged (the full layer there is tiny).
 - Step costs on card 3 (`INK_BENCH_REAL=1 INK_BENCH_STEP=1,1,2,3,4`), ms for 1 / 2 / 3 / 4 tokens: at 3,119 positions
   11.90 / 15.59 / 19.12 / 21.74; 7,992: 12.34 / 16.76 / 19.91 / 23.01; 31,262: 13.90 / 18.49 / 22.48 / 25.69; 99,992:
   18.80 / 24.56 / 28.40 / 33.09. The ratios to one token barely move with context, so the guess-count rule's fixed

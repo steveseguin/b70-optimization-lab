@@ -106,6 +106,8 @@
   keeps exponentials and 1 / total; same bits). The drafter's full-context attention is FP32-arithmetic bound; fused
   multiply-adds + staged values cut it 3.65 -> 2.58 ms at 100K: writing after a 100K prompt with guessing 55.8 ->
   57.6 tok/s (plain 52.5), 31K 97.1 -> 98.5, short texts unchanged, same guesses kept. Gate 11/11.
+- Nov 23 ~20:45: the drafter's full-context attention runs on the matrix engines (2.59 -> 0.88 ms at 100K): writing
+  after a 100K prompt 57.6 -> 60.6 tok/s (plain 52.5), 31K 98.5 -> 100.5, same guesses kept, ids identical. Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -146,6 +146,119 @@ inline sycl::event dsp_attn_span(sycl::queue &dq, const float *q_, const float *
         });
 }
 
+
+// the drafter's full-context layer (no window) on the matrix engines (DPAS, fp16 inputs, fp32 sums): the block's 8
+// key / value rows must sit in the cache at positions nctx .. nctx + 7 (dsp_block_to_cache), and the cache must hold
+// CH zeroed rows past them (the last pass reads whole 128-key tiles; masked keys get probability 0, the rows past
+// them are finite). Work-group (key head, span), 8 sub-groups: scores S^T = K Q^T (a sub-group = 16 keys, A = two
+// 8-key tiles from the cache, B = Q^T in local memory, rows padded to 32), the running max / sum per row as
+// dsp_attn_span, P (fp16, local memory) times V (B = 16 keys x 16 dims from the cache; a sub-group = 16 dims, the
+// 24 rows as three 8-row accumulators rescaled per row each pass). Same partial layout as dsp_attn_span
+inline sycl::event dsp_block_to_cache(sycl::queue &dq, const float *k_, const float *v_, sycl::half *K, sycl::half *Vv, int pos, int kd_) {
+    constexpr int B = 8;
+    return dq.parallel_for(sycl::range<1>((size_t)B * kd_), [=](sycl::id<1> i) {
+        const size_t r = i[0] / kd_, cc = i[0] % kd_;
+        K[(size_t)(pos + r) * kd_ + cc] = (sycl::half)k_[i[0]];
+        Vv[(size_t)(pos + r) * kd_ + cc] = (sycl::half)v_[i[0]];
+    });
+}
+inline sycl::event dsp_attn_span_x(sycl::queue &dq, const float *q_, const sycl::half *K, const sycl::half *Vv, int nk, int kd_,
+                                   int span, int nch, float *pO_, float *pM_, float *pL_) {
+    namespace jm = sycl::ext::oneapi::experimental::matrix;
+    namespace jmi = sycl::ext::intel::experimental::matrix;
+    using hf = sycl::half;
+    constexpr int HQ = 24, HKV = 8, HD = 128, CH = 128, NR = 24, G = 3, WG = 128, NSG = WG / 16, NP = 32;
+    const float scale = 1.0f / std::sqrt((float)HD);
+    return dq.submit([&](sycl::handler &h) {
+        sycl::local_accessor<hf, 1> qT(HD * NP, h), Ph(NR * CH, h);
+        sycl::local_accessor<float, 1> S(CH * NP, h), rs(3 * NR, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * nch * WG), sycl::range<1>(WG)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+            const int gi = (int)it.get_group(0), kvh = gi / nch, c = gi % nch, li = (int)it.get_local_id(0);
+            const auto sg = it.get_sub_group();
+            const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
+            auto lp = [](auto &acc, size_t off) { return acc.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+            auto gp = [](const hf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+            for (int i = li; i < HD * NP; i += WG) {
+                const int dd = i / NP, r = i % NP;
+                qT[i] = r < NR ? (hf)(q_[((size_t)(r / G) * HQ + kvh * G + r % G) * HD + dd] * scale) : (hf)0.0f;
+            }
+            if (li < NR) { rs[li] = -INFINITY; rs[NR + li] = 0.0f; }
+            jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16> acc[3];
+#pragma unroll
+            for (int mt = 0; mt < 3; ++mt) jm::joint_matrix_fill(sg, acc[mt], 0.0f);
+            const int j0 = c * span, j1 = sycl::min(nk, j0 + span);
+            for (int sb = j0; sb < j1; sb += CH) {
+                const int nkc = sycl::min(CH, j1 - sb);
+                sycl::group_barrier(it.get_group());
+#pragma unroll
+                for (int mt = 0; mt < 2; ++mt) { // keys sb + 16 sgi + 8 mt .. +7 against rows 0-15 and 16-31
+                    jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16> s0, s1;
+                    jm::joint_matrix_fill(sg, s0, 0.0f);
+                    jm::joint_matrix_fill(sg, s1, 0.0f);
+                    const hf *kr = K + (size_t)(sb + 16 * sgi + 8 * mt) * kd_ + kvh * HD;
+#pragma unroll
+                    for (int k = 0; k < HD / 16; ++k) {
+                        jm::joint_matrix<sycl::sub_group, hf, jm::use::a, 8, 16, jm::layout::row_major> a;
+                        jm::joint_matrix<sycl::sub_group, hf, jm::use::b, 16, 16, jm::layout::row_major> b0, b1;
+                        jm::joint_matrix_load(sg, a, gp(kr + 16 * k), kd_);
+                        jm::joint_matrix_load(sg, b0, lp(qT, (size_t)16 * k * NP), NP);
+                        jm::joint_matrix_load(sg, b1, lp(qT, (size_t)16 * k * NP + 16), NP);
+                        jm::joint_matrix_mad(sg, s0, a, b0, s0);
+                        jm::joint_matrix_mad(sg, s1, a, b1, s1);
+                    }
+                    jm::joint_matrix_store(sg, s0, lp(S, (size_t)(16 * sgi + 8 * mt) * NP), NP, jm::layout::row_major);
+                    jm::joint_matrix_store(sg, s1, lp(S, (size_t)(16 * sgi + 8 * mt) * NP + 16), NP, jm::layout::row_major);
+                }
+                sycl::group_barrier(it.get_group());
+                for (int r = sgi; r < NR; r += NSG) { // running max and sum per row (keys past nkc: probability 0)
+                    float m = -INFINITY;
+                    for (int i = ln; i < CH; i += 16) if (i < nkc) m = sycl::max(m, S[i * NP + r]);
+                    m = sycl::reduce_over_group(sg, m, sycl::maximum<float>());
+                    const float mo = rs[r], mn = sycl::max(mo, m);
+                    float su = 0.0f;
+                    for (int i = ln; i < CH; i += 16) {
+                        const hf pv = i < nkc ? (hf)sycl::exp(S[i * NP + r] - mn) : (hf)0.0f;
+                        Ph[r * CH + i] = pv;
+                        su += (float)pv;
+                    }
+                    su = sycl::reduce_over_group(sg, su, sycl::plus<float>());
+                    if (ln == 0) {
+                        const float f = sycl::exp(mo - mn);
+                        rs[r] = mn; rs[NR + r] = rs[NR + r] * f + su; rs[2 * NR + r] = f;
+                    }
+                }
+                sycl::group_barrier(it.get_group());
+#pragma unroll
+                for (int mt = 0; mt < 3; ++mt)
+                    jmi::joint_matrix_apply(sg, acc[mt], [&](float &x, size_t row, size_t) { x *= rs[2 * NR + mt * 8 + (int)row]; });
+                const hf *vr = Vv + (size_t)sb * kd_ + kvh * HD + 16 * sgi;
+#pragma unroll
+                for (int k0 = 0; k0 < CH; k0 += 16) {
+                    jm::joint_matrix<sycl::sub_group, hf, jm::use::b, 16, 16, jm::layout::row_major> vb;
+                    jm::joint_matrix_load(sg, vb, gp(vr + (size_t)k0 * kd_), kd_);
+#pragma unroll
+                    for (int mt = 0; mt < 3; ++mt) {
+                        jm::joint_matrix<sycl::sub_group, hf, jm::use::a, 8, 16, jm::layout::row_major> pa;
+                        jm::joint_matrix_load(sg, pa, lp(Ph, (size_t)mt * 8 * CH + k0), CH);
+                        jm::joint_matrix_mad(sg, acc[mt], pa, vb, acc[mt]);
+                    }
+                }
+            }
+#pragma unroll
+            for (int mt = 0; mt < 3; ++mt)
+                jm::joint_matrix_store(sg, acc[mt],
+                                       sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(
+                                           pO_ + (((size_t)kvh * NR + mt * 8) * nch + c) * HD + 16 * sgi),
+                                       (size_t)nch * HD, jm::layout::row_major);
+            if (li < NR) {
+                pM_[((size_t)kvh * NR + li) * nch + c] = rs[li];
+                pL_[((size_t)kvh * NR + li) * nch + c] = rs[NR + li];
+            }
+        });
+    });
+}
+
 struct Drafter {
     static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, AWG = 256;
     Engine &e;
@@ -175,7 +288,9 @@ struct Drafter {
     int split = 2; // 2: attend_split2, 1: attend_split, 0: one work-group per row
     static constexpr int NR = B * (HQ / HKV), CH = 128, NCH_MAX = 1024; // rows per key head; keys per pass
     int NCH = 64; // spans per head at most (INK_DSP_NCH, up to NCH_MAX)
-    int attn_var = 3; // dsp_attn_span variant (INK_DSP_AVAR; 3 = fma + staged values, bench_dsp card 3 100K: 3.65 -> 2.44 ms)
+    // INK_DSP_AVAR: 4 = the full layer on the matrix engines (dsp_attn_span_x; bench_dsp card 3 100K 2.59 -> 0.88 ms),
+    // the windowed layers as 3; 3 = fma + staged values (100K 3.65 -> 2.59 ms); 2 fma; 1 staged; 0 the first
+    int attn_var = 4;
     float *pO = nullptr, *pM = nullptr, *pL = nullptr;
     float *hl = nullptr, *attl = nullptr, *gl = nullptr; // the 8 slots' product inputs in lane order (xlane.hpp)
     bool fold = true;       // INK_DSP_FOLD=0: each guess passes y_i + Wh z + bh through W_lm (the reference's way)
@@ -238,10 +353,10 @@ struct Drafter {
             const bool win = swp.at(l) != 0;
             int ring = 1; // a power of two holding the window, a step and a block
             while (ring < WIN + T + B) ring *= 2;
-            const int slots = win ? ring : cap;
+            const int slots = win ? ring : cap + B + CH; // the full layer: room for the block rows and one pass past them
             kmask[l] = win ? ring - 1 : 0x7fffffff;
-            Kc[l] = d.alloc<sycl::half>((size_t)slots * kd);
-            Vc[l] = d.alloc<sycl::half>((size_t)slots * kd);
+            Kc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
+            Vc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
         }
         e.feat = d.alloc<float>((size_t)4 * T * E);
         cb = d.alloc<float>((size_t)3 * T * E);
@@ -621,9 +736,15 @@ struct Drafter {
         const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
         const int nctx = P0 - lo, nk = nctx + B;
         const int span = CH * std::max(1, (nk + CH * NCH - 1) / (CH * NCH)), nch = (nk + span - 1) / span;
+        if (attn_var == 4 && kmask[l] == 0x7fffffff) { // the matrix engines (the full layer)
+            e.pr("dsp_block_kv", dsp_block_to_cache(d.q, k, v, Kc[l], Vc[l], P0, kd));
+            e.pr("dsp_attn_full", dsp_attn_span_x(d.q, q, Kc[l], Vc[l], nk, kd, span, nch, pO, pM, pL));
+            attn_combine(nch);
+            return;
+        }
         auto go = [&](auto f) { return f(d.q, q, k, v, Kc[l], Vc[l], lo, nctx, kmask[l], kd, span, nch, pO, pM, pL); };
         e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn",
-             attn_var == 3 ? go(dsp_attn_span<3>) : attn_var == 2 ? go(dsp_attn_span<2>) : attn_var == 1 ? go(dsp_attn_span<1>)
+             attn_var >= 3 ? go(dsp_attn_span<3>) : attn_var == 2 ? go(dsp_attn_span<2>) : attn_var == 1 ? go(dsp_attn_span<1>)
                                                                                          : go(dsp_attn_span<0>));
         attn_combine(nch);
     }
