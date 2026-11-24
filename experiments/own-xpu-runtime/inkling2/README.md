@@ -199,6 +199,11 @@ Long prompts and long writing (2026-11-23 evening):
   combined output within 1.2e-4 of the fp32 kernel (largest value 0.37). The same guesses are kept on code, haiku,
   3K, 31K and 100K (ids identical); 31K writing 98.5 -> 100.5 tok/s (card 4); after a 100K prompt (card 2) 57.58 ->
   60.59 tok/s (drafting 0.735 -> 0.488 s), plain 52.46. Short texts unchanged (the full layer there is tiny).
+- The drafter's folded correction table (W_lm Wh)^T is int8 with one scale per vocabulary column (`INK_DSP_PT8`,
+  default 1; 103 -> 51 MB, read once per guess): `dsp_corr` 187.6 -> 97.9 µs (card 3). Card 2, same guesses kept,
+  ids identical: code 118.3 -> 119.8 tok/s, haiku 106.2 -> 107.4, 3K 105.0 -> 106.1; 31K (card 4) 100.4 -> 101.3.
+  The drafter now costs ~2.45 ms per round at short contexts: the W_lm pass for the guess slots 0.75 (380 MB at
+  ~508 GB/s), the corrections 0.32, its FFN 0.80 and q/k/v/o 0.31 (8-row Q8_0 products at ~200-300 GB/s).
 - Step costs on card 3 (`INK_BENCH_REAL=1 INK_BENCH_STEP=1,1,2,3,4`), ms for 1 / 2 / 3 / 4 tokens: at 3,119 positions
   11.90 / 15.59 / 19.12 / 21.74; 7,992: 12.34 / 16.76 / 19.91 / 23.01; 31,262: 13.90 / 18.49 / 22.48 / 25.69; 99,992:
   18.80 / 24.56 / 28.40 / 33.09. The ratios to one token barely move with context, so the guess-count rule's fixed

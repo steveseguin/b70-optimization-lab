@@ -280,6 +280,11 @@ struct Drafter {
     float *base = nullptr;  // W_lm y_i of the guess slots [B - 1][Vp]
     float *cvec = nullptr;  // W_lm bh [Vp]
     sycl::ext::oneapi::bfloat16 *Pt = nullptr; // (W_lm Wh)^T [R][Vp]: the correction of latent z is sum_j z_j Pt[j]
+    // INK_DSP_PT8 (default 1): the table as int8 with one scale per vocabulary column (Pt8[j][r] * Ps[r]): half the
+    // bytes of the per-guess read (103 -> 51 MB); it only moves the drafter's guesses
+    bool pt8 = true;
+    int8_t *Pt8 = nullptr;
+    float *Ps = nullptr;
     int32_t *gids;
     float *yl = nullptr, *amv = nullptr, *ams = nullptr, *gp = nullptr; int32_t *ami = nullptr; // argmax scratch; guess probabilities
     std::vector<float> probs; // the last draft's guess probabilities (the drafter's own softmax)
@@ -403,15 +408,32 @@ struct Drafter {
             cols[(size_t)id[0] * E_ + id[1]] = (float)wh[(size_t)id[1] * R + id[0]];
         }).wait();
         for (int j0 = 0; j0 < R; j0 += e.T) e.mm(e.m.output, cols + (size_t)j0 * E, Y + (size_t)j0 * Vp, std::min(e.T, R - j0));
-        Pt = d.alloc<sycl::ext::oneapi::bfloat16>((size_t)R * Vp);
-        auto *pt = Pt;
-        d.q.parallel_for(sycl::range<1>((size_t)R * Vp), [=](sycl::id<1> i) { pt[i] = sycl::ext::oneapi::bfloat16(Y[i]); }).wait();
+        if (const char *ev = std::getenv("INK_DSP_PT8")) pt8 = std::atoi(ev) != 0;
+        if (pt8) {
+            Pt8 = d.alloc<int8_t>((size_t)R * Vp);
+            Ps = d.alloc<float>(Vp);
+            int8_t *q8 = Pt8;
+            float *ps = Ps;
+            const int Vp_ = Vp;
+            d.q.parallel_for(sycl::range<1>((size_t)Vp), [=](sycl::id<1> i) {
+                const size_t r = i[0];
+                float mx = 0.0f;
+                for (int j = 0; j < R; ++j) mx = sycl::fmax(mx, sycl::fabs(Y[(size_t)j * Vp_ + r]));
+                const float sc = mx > 0.0f ? mx / 127.0f : 1.0f;
+                ps[r] = sc;
+                for (int j = 0; j < R; ++j) q8[(size_t)j * Vp_ + r] = (int8_t)sycl::rint(Y[(size_t)j * Vp_ + r] / sc);
+            }).wait();
+        } else {
+            Pt = d.alloc<sycl::ext::oneapi::bfloat16>((size_t)R * Vp);
+            auto *pt = Pt;
+            d.q.parallel_for(sycl::range<1>((size_t)R * Vp), [=](sycl::id<1> i) { pt[i] = sycl::ext::oneapi::bfloat16(Y[i]); }).wait();
+        }
         cvec = d.alloc<float>(Vp);
         e.mm(e.m.output, f32(hob), cvec, 1);
         d.q.wait();
         d.release(Y); d.release(cols);
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
-        std::fprintf(stderr, "[dspark] folded head table (%.0f MB) in %.2f s\n", (double)R * Vp * 2 / 1e6, now_s() - t0);
+        std::fprintf(stderr, "[dspark] folded head table (%.0f MB%s) in %.2f s\n", (double)R * Vp * (pt8 ? 1 : 2) / 1e6, pt8 ? ", int8" : "", now_s() - t0);
     }
 
     // y[t] = W x[t] for the 8 slots, x in lane order (rows xlane_floats(cols) apart): blocks of 8 vectors per sub-group
@@ -603,7 +625,34 @@ struct Drafter {
                     s_[j] = ga * s_[j] + (1.0f - ga) * cand;
                 }));
             }
-            if (fold) {
+            if (fold && pt8) { // 4 columns per thread, one 4-byte read per latent
+                const float *b_ = base + (size_t)(i - 1) * Vp, *c_ = cvec, *z_ = z, *ps = Ps;
+                const int8_t *q8 = Pt8;
+                float *lg_ = lgd;
+                const int Vp_ = Vp, n4 = (Vp + 3) / 4;
+                e.pr("dsp_corr", d.q.submit([&](sycl::handler &hd) {
+                    sycl::local_accessor<float, 1> zs(R, hd);
+                    hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)(n4 + 255) / 256 * 256), sycl::range<1>(256)), [=](sycl::nd_item<1> it) {
+                        const int li = (int)it.get_local_id(0);
+                        zs[li] = z_[li];
+                        sycl::group_barrier(it.get_group());
+                        const int t4 = (int)it.get_global_id(0);
+                        if (t4 >= n4) return;
+                        float acc[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+#pragma unroll 8
+                        for (int j = 0; j < R; ++j) {
+                            const sycl::vec<int8_t, 4> qv = *reinterpret_cast<const sycl::vec<int8_t, 4> *>(q8 + (size_t)j * Vp_ + 4 * t4);
+#pragma unroll
+                            for (int k = 0; k < 4; ++k) acc[k] = sycl::fma(zs[j], (float)qv[k], acc[k]);
+                        }
+#pragma unroll
+                        for (int k = 0; k < 4; ++k) {
+                            const int r = 4 * t4 + k;
+                            if (r < Vp_) lg_[r] = sycl::tanh((b_[r] + (acc[k] * ps[r] + c_[r])) * (1.0f / 30.0f)) * 30.0f;
+                        }
+                    });
+                }));
+            } else if (fold) {
                 const float *b_ = base + (size_t)(i - 1) * Vp, *c_ = cvec, *z_ = z;
                 const sycl::ext::oneapi::bfloat16 *pt = Pt;
                 float *lg_ = lgd;
