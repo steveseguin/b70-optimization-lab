@@ -417,7 +417,12 @@ struct Engine {
     // dense token-parallel kernels for this matrix at ntok tokens? (tools/bench_gemv BENCH_M=16..512, card 3,
     // 2026-11-22: Q8_0 / Q6_K / F32 2.5-4x from 16 tokens; F32 rows of 2304 need >= 128 tokens; few rows lose)
     bool dense_tiles(const W &w, int ntok, DTune &dt) const {
-        if (!Xd || ntok < dense_min || w.t->ne[0] > XD_COLS || w.t->rows() < 64) return false;
+        // INK_DENSE_MINROWS (default 64): fewer rows go to the generic kernels; F32 / BF16 from INK_DENSE_MINROWS_F
+        // (default 16: the 24-row sink product 61.7 -> 22.5 us per 1,024 tokens, INK_PROF card 3; 64 = before)
+        static const int mrows = std::getenv("INK_DENSE_MINROWS") ? std::atoi(std::getenv("INK_DENSE_MINROWS")) : 64;
+        static const int mrows_f = std::getenv("INK_DENSE_MINROWS_F") ? std::atoi(std::getenv("INK_DENSE_MINROWS_F")) : 16;
+        const bool fb = w.kind == K_RAW && (w.t->type == G_F32 || w.t->type == G_BF16);
+        if (!Xd || ntok < dense_min || w.t->ne[0] > XD_COLS || w.t->rows() < (fb ? mrows_f : mrows)) return false;
         // INK_DENSE_R / INK_DENSE_SGW: rows and sub-groups per work-group of the Q8_0 / Q6_K tiles from 64 tokens
         // (default 4 rows, 32 sub-groups; the same values. INK_PROF 3K prompt, card 3: attn_output 1,323 -> 935 us per
         // launch; rows are the independent sums a lane keeps going, 2 = before)
@@ -435,7 +440,12 @@ struct Engine {
                     if (const char *e = std::getenv("INK_DENSE_RF")) std::sscanf(e, "%d,%d", &t.R, &t.sgw);
                     return t;
                 }();
-                dt = ntok >= 64 ? rf : DTune{1, 1};
+                static const DTune rs = [] { // fewer than 64 rows (INK_DENSE_RFS; 2,4 22.6 us, 1,4 24.6, 1,8 24.5)
+                    DTune t{2, 4};
+                    if (const char *e = std::getenv("INK_DENSE_RFS")) std::sscanf(e, "%d,%d", &t.R, &t.sgw);
+                    return t;
+                }();
+                dt = ntok < 64 ? DTune{1, 1} : w.t->rows() < 64 ? rs : rf;
                 return w.t->ne[0] <= 64 || ntok >= 128;
             }
             // Q5_K (attn_q of layer 22, file layout): ran the generic multi-vector kernel in prompt steps
@@ -589,8 +599,16 @@ struct Engine {
         DTune dt;
         if (n > 1 && dense_tiles(ga, n, dt)) {
             pr("dense_gather", dense_gather(d.q, ctl_z, h.gate_rank, n, h.gate_rank, Xd));
-            dt.R = std::min(dt.R, 2); // pairs: 2 x R rows per sub-group
-            pr("ctl_out", dense_pair_t(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, dt));
+            // INK_CTL_T=<row pairs>,<sub-groups> (default 1,8): the op after a local-memory transpose (DensePairTS:
+            // the op's reads and writes 16 consecutive rows per sub-group; the same values; INK_PROF 3K prompt, card 3:
+            // 199.2 -> 146.5 us per launch, 1,16 150.9, 1,32 159.1, 2,16 215.9); 0,0 = DensePairT, 1 x 1 (before)
+            static const DTune ct = [] {
+                DTune t{1, 8};
+                if (const char *e = std::getenv("INK_CTL_T")) std::sscanf(e, "%d,%d", &t.R, &t.sgw);
+                return t;
+            }();
+            if (ct.R > 0) pr("ctl_out", dense_pair_ts(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, ct));
+            else pr("ctl_out", dense_pair_t(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, DTune{1, 1}));
             return;
         }
         if (n == 1 && ctl_batch && ctl_multi_ok(ga.view(), fo.view())) {

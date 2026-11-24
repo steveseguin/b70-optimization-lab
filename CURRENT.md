@@ -175,6 +175,9 @@
   gate 12/12). Each attention input is now gathered once for the dense tiles, and the F32 products take 4 rows per
   sub-group (loop down products 2x faster, router 2.5x). Prompt budget (3K, card 3): experts 59 %, dense matrices
   21 %, windowed attention 6 %, small kernels 13 %.
+- Nov 24 ~16:55: prompts another +0.8-1.4 % (100K 673.2 -> 678.5 tok/s card 1, 668.2 -> 677.3 card 5; 31K +1.2 %;
+  3K +0.9 %; logits identical, gate 12/12): the loop controls' outputs go through local memory (199 -> 147 us per
+  launch) and the 24-row sink product takes the tiles (62 -> 23 us).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

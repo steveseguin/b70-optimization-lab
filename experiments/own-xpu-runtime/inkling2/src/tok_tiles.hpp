@@ -429,6 +429,44 @@ template <class D, class Op, int NP> struct DensePairT {
     }
 };
 
+// DensePairT with the op applied after a transpose through local memory: a lane's results are one token's, so op's
+// reads and writes at token * n + row touch 16 cache lines per instruction; here the work-group's sgw * NP rows x 16
+// tokens go through local memory and each sub-group then applies op to 16 consecutive rows of one token (the same
+// sums and the same op: the same values). For products whose op moves more bytes than the product reads (the loop
+// controls' gain|forget outputs: 64 columns, op reads two values and writes one per sum pair).
+template <class D, class Op, int NP> struct DensePairTS {
+    const uint8_t *A, *B; size_t rb; int rows, cols, M;
+    const float *Xd;
+    Op op;
+    int sgw;
+    sycl::local_accessor<float, 1> sm; // 2 x (16 tokens x sgw * NP rows)
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        auto sg = it.get_sub_group();
+        const int sgi = (int)sg.get_group_linear_id(), lane = (int)sg.get_local_linear_id(), RW = sgw * NP;
+        const int rw0 = (int)it.get_group(1) * RW, r0 = rw0 + sgi * NP;
+        if (r0 < rows) { // the same for the whole sub-group
+            const uint8_t *rp[2 * NP];
+            for (int j = 0; j < NP; ++j) {
+                int r = sycl::min(r0 + j, rows - 1);
+                rp[j] = A + (size_t)r * rb;
+                rp[NP + j] = B + (size_t)r * rb;
+            }
+            float res[2 * NP];
+            tile_dots<D, 2 * NP>(sg, rp, cols, Xd + (size_t)t * cols * MOE_TS, lane, res);
+            for (int j = 0; j < NP; ++j) {
+                sm[2 * (lane * RW + sgi * NP + j)] = res[j];
+                sm[2 * (lane * RW + sgi * NP + j) + 1] = res[NP + j];
+            }
+        }
+        sycl::group_barrier(it.get_group());
+        for (int i = (int)it.get_local_id(1); i < MOE_TS * RW; i += sgw * SG) {
+            const int tl = i / RW, rl = i - tl * RW, tok = t * MOE_TS + tl, r = rw0 + rl;
+            if (tok < M && r < rows) op(tok, r, sm[2 * i], sm[2 * i + 1]);
+        }
+    }
+};
+
 // ---- expert tiles for any decoder (moe_group.hpp's tiles and transposed inputs) ---------------------------------
 // gate|up rows of the tile's expert; TOUT: the activation goes to Ht[(t * rows + r) * 16 + lane], else op(...)
 template <class D, class Op, int NG, bool TOUT, bool LUT = false> struct SlotPairG {
@@ -731,6 +769,28 @@ inline sycl::event dense_pair_t(sycl::queue &q, const WView &a, const uint8_t *B
         case 1: go.template operator()<1>(); break;
         case 2: go.template operator()<2>(); break;
         default: throw std::runtime_error("dense_pair_t: R must be 1 or 2");
+        }
+    });
+    return e;
+}
+// dense_pair_t with the op after a local-memory transpose (DensePairTS)
+template <class Op>
+inline sycl::event dense_pair_ts(sycl::queue &q, const WView &a, const uint8_t *B, int rows, int M, const float *Xd, Op op, DTune dt) {
+    sycl::event e;
+    const int cols = (int)a.t->ne[0], tiles = (M + MOE_TS - 1) / MOE_TS;
+    with_decoder(a, [&]<class D>() {
+        auto go = [&]<int NP>() {
+            const int RW = dt.sgw * NP, ngr = (rows + RW - 1) / RW;
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * dt.sgw * SG), sycl::range<2>(1, (size_t)dt.sgw * SG));
+            e = q.submit([&](sycl::handler &h) {
+                sycl::local_accessor<float, 1> sm(2 * MOE_TS * RW, h);
+                h.parallel_for(nr, DensePairTS<D, Op, NP>{a.p, B, a.rb, rows, cols, M, Xd, op, dt.sgw, sm});
+            });
+        };
+        switch (dt.R) {
+        case 1: go.template operator()<1>(); break;
+        case 2: go.template operator()<2>(); break;
+        default: throw std::runtime_error("dense_pair_ts: R must be 1 or 2");
         }
     });
     return e;

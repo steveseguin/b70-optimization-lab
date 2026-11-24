@@ -582,6 +582,14 @@ dense matrices ~715, windowed attention 203, the rest ~460):
 Prompts (same card, both orders, the prompt's logits row identical): 100K 666.8 -> 671.6 tok/s (card 1) and 661.6 ->
 670.8 (card 5); 31K 862.5 / 858.4 -> 867.8 / 867.6 (card 3) and 806.8 / 801.7 -> 820.3 / 812.7 (card 4); 3K 802.9-813.0
 -> 818.9-822.2 (card 2). Gate 12/12.
+- The loop controls' gain|forget outputs (`ctl_out`, 64 columns, the op reads two values and writes one per pair of sums)
+  go through local memory first, so each sub-group applies the op to 16 consecutive rows of one token
+  (`DensePairTS`, `INK_CTL_T`, `0,0` = before): 199.2 -> 146.5 us per launch.
+- F32 / BF16 products from 16 rows take the tiles (`INK_DENSE_MINROWS_F`, 64 = before; 2 rows x 4 sub-groups under 64
+  rows, `INK_DENSE_RFS`): the 24-row sink product 61.7 -> 22.5 us. Its input is already gathered for the others.
+Prompts (same card, both orders, logits identical): 100K 673.2 -> 678.5 tok/s (card 1) and 668.2 -> 677.3 (card 5); 31K
+867.7 / 867.9 -> 878.7 / 877.5 (card 3) and 814.7 / 811.0 -> 825.9 / 819.6 (card 4); 3K 820.8-822.5 -> 827.1-830.4
+(card 2). Gate 12/12.
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
