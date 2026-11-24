@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
         std::ofstream gen_out;
         std::vector<float> gen_row;
         if (const char *gp = std::getenv("INK_SAVE_GEN")) { gen_out.open(gp, std::ios::binary); gen_row.resize(e.m.hp.vocab); }
-        // INK_SPEC=<k> (1-3): guess up to k tokens by prompt lookup (the most recent earlier occurrence of the last
+        // INK_SPEC=<k> (1-7): guess up to k tokens by prompt lookup (the most recent earlier occurrence of the last
         // INK_SPEC_MAXN .. INK_SPEC_MINN tokens of the text so far; the tokens that followed it) and check them in one
         // step with the chosen token (Engine::check / accept). The text is the one-token text: each row's scores are
         // bit-identical to a one-token step's.
@@ -133,13 +133,18 @@ int main(int argc, char **argv) {
             // INK_SPEC_ADAPT (default 1 with the drafter): draft INK_SPEC guesses, then check the count k (0..INK_SPEC)
             // with the most expected tokens per ms: keep chance of guess j from the drafter's probability (tenths;
             // measured 2026-11-23 on code, haiku and a 3K prompt: 0.9+ kept 283 of 304, 0.8+ 35 of 57, ...), step costs
-            // INK_SPEC_COST (ms, steps of 1..4 tokens; card 2 bench 11.4 / 14.9 / 17.4 / 20.4)
+            // INK_SPEC_COST (ms, steps of 1..8 tokens at a short context) plus, per position of context, INK_SPEC_KV
+            // (ms; the cache read of a step) and INK_SPEC_KVX (ms, each further token's attention), so long contexts
+            // check more guesses (2026-11-24, card 3 profile at 200K: 1 token 12.5 ms of attention, 4 tokens 14.8)
             const bool adapt = dr && (!std::getenv("INK_SPEC_ADAPT") || std::atoi(std::getenv("INK_SPEC_ADAPT")));
-            const float qk[10] = {0.10f, 0.10f, 0.12f, 0.20f, 0.33f, 0.36f, 0.44f, 0.53f, 0.61f, 0.93f};
-            double cost[4] = {11.4, 14.9, 17.4, 20.4};
+            const float *qk = Drafter::QK.v; // (dspark.hpp)
+            double cost0[8] = {11.4, 14.9, 17.4, 20.4, 23.9, 27.5, 30.5, 33.1}, cost[8]; // (5-8: card 3 2026-11-24 + 4 tokens)
             if (const char *ce = std::getenv("INK_SPEC_COST"))
-                std::sscanf(ce, "%lf,%lf,%lf,%lf", &cost[0], &cost[1], &cost[2], &cost[3]);
-            long kchose[4] = {};
+                std::sscanf(ce, "%lf,%lf,%lf,%lf,%lf,%lf,%lf,%lf", &cost0[0], &cost0[1], &cost0[2], &cost0[3], &cost0[4], &cost0[5], &cost0[6],
+                            &cost0[7]);
+            const double kv1 = std::getenv("INK_SPEC_KV") ? std::atof(std::getenv("INK_SPEC_KV")) : 6.2e-5,
+                         kvx = std::getenv("INK_SPEC_KVX") ? std::atof(std::getenv("INK_SPEC_KVX")) : 3.85e-6;
+            long kchose[8] = {};
             long pb_n[10] = {}, pb_k[10] = {}; // guesses and kept guesses by the drafter's probability (tenths), first rejection ends a check
             double tdraft = 0;
             // INK_DRAFT_LOG=<file> with INK_ORACLE=<ids of the plain run>: draft 7 guesses each round and log their
@@ -152,11 +157,21 @@ int main(int argc, char **argv) {
                 of >> w; // "ids:"
                 for (int v; of >> v;) oracle.push_back(v);
                 dlog = std::fopen(std::getenv("INK_DRAFT_LOG"), "w");
+                dr->stop_thr = 0.0f; // every guess computed for the study
             }
             while (x != e.m.hp.eos && (int)out.size() < n_gen) {
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
                 const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
+                if (adapt) {
+                    for (int k = 0; k < 8; ++k) // (a check of more rows than the engine's dec_rows reads the cache again)
+                        cost[k] = cost0[k] + e.n_past * (kv1 * ((k + e.dec_rows) / e.dec_rows) + kvx * k);
+                    // the drafter's slots 4-7 are worth reading only if a 4th guess could be checked: with r the 5-token
+                    // step's extra cost over 4 tokens, that needs the chain c of guesses 1-3 above r / (0.93 - 3 r)
+                    // (0.93 c > (1 + 3 c) r: the 4th guess adds at most 0.93 c expected tokens, the 3 before at least c each)
+                    const double r = cost[4] / cost[3] - 1.0, den = 0.93 - 3.0 * r;
+                    if (!dlog) dr->stop_hi = den > 0.0 ? (float)(r / den) : 1.0f;
+                }
                 if (dr) {
                     if (room > 0) {
                         const double td = now_s();
@@ -226,7 +241,11 @@ int main(int argc, char **argv) {
             std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps; %.2f tokens per check; drafting %.3f s\n",
                          checks, guessed, kept, guessed ? 100.0 * kept / guessed : 0.0, plain, checks ? 1.0 + (double)kept / checks : 0.0, tdraft);
             if (dr) {
-                if (adapt) std::fprintf(stderr, "[spec] guesses checked per round: 0 x%ld, 1 x%ld, 2 x%ld, 3 x%ld\n", kchose[0], kchose[1], kchose[2], kchose[3]);
+                if (adapt) {
+                    std::fprintf(stderr, "[spec] guesses checked per round:");
+                    for (int k = 0; k <= std::min(7, spec); ++k) std::fprintf(stderr, " %d x%ld", k, kchose[k]);
+                    std::fprintf(stderr, "\n");
+                }
                 std::fprintf(stderr, "[spec] kept by the drafter's probability:");
                 for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
                 std::fprintf(stderr, "\n");

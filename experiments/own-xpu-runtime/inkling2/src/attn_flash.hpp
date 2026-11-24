@@ -433,7 +433,11 @@ inline sycl::event attn_flash_part(sycl::queue &q, const float *P, int ldp, cons
 // tab null, the same term from Rc and rel_bias as attn_flash_tile / attn_scores_tile compute it). P is
 // then neither written nor read (keys and values each read once per block; the same values). Sub-group s computes the
 // scores of keys kb + 16 s + lane for the NT x G rows, then every sub-group runs attn_flash_part's code on them.
-template <int G, int NT>
+// VAR 1: sub-group s also takes its keys' share of each row's block maximum (local memory, a maximum is the same in any
+// order) and their exponentials, once, into local memory; the P.V loop reads them (was: every sub-group computed all
+// NT x G x 128 exponentials and maxima itself). The same values (bench_attn card 3, 200K keys + attn_flash_sum: 4 rows
+// 1,618-1,628 -> 1,579-1,595 us, 8 rows 2,854-2,876 -> 2,348-2,360, where two 4-row launches took 3,590-3,650).
+template <int G, int NT, int VAR = 0>
 inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const float *Rc,
                                   const float *rel_bias, int nr, const sycl::half *Vt, int vld,
                                   int pos0, int ntok, int nh, int nkvh, int hd, int ext, float scale, float *part, float *pml, int nblk,
@@ -445,11 +449,12 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
         throw std::runtime_error("attn_flash_dec: unsupported shape");
     const int nrg = (ntok + NT - 1) / NT;
     return q.submit([&](sycl::handler &h) {
-        sycl::local_accessor<float, 1> sx(NR * PVB, h);
+        sycl::local_accessor<float, 1> sx(NR * PVB, h), smx(VAR & 1 ? NR * KG : 1, h);
         h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nrg * nkvh * nblk, (size_t)HD), sycl::range<2>(1, (size_t)HD)),
                        [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
             auto sg = it.get_sub_group();
             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id(), c = (int)it.get_local_id(1);
+            float vv[NT][G]; // VAR 1: this lane's key's scores, kept for its exponentials
             const int gid = (int)it.get_group(0), b = gid % nblk, kvh = (gid / nblk) % nkvh, rg = gid / nblk / nkvh;
             const int kb = b * PVB, pmax = pos0 + ntok - 1;
             int pp[NT];
@@ -460,6 +465,10 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
             }
             { // the scores of this sub-group's 16 keys (attn_scores_gt's expressions)
                 const int g0 = kb + sgi * PW, j = g0 + lane;
+                if constexpr ((VAR & 1) != 0)
+                    if (g0 > pmax && lane == 0)
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) smx[a * KG + sgi] = -INFINITY;
                 if (g0 <= pmax) {
                     const int jc = sycl::min(j, pmax);
                     const sycl::half *kr = K + (size_t)(jc & km) * nkvh * HD + kvh * HD;
@@ -509,7 +518,11 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
                                     v = v + tb;
                                 }
                             }
-                            sx[(t * G + gi) * PVB + sgi * PW + lane] = v; // read only where j <= pp[t]
+                            if constexpr ((VAR & 1) != 0) {
+                                vv[t][gi] = v;
+                                const float mg = sycl::reduce_over_group(sg, j <= pp[t] ? v : -INFINITY, sycl::maximum<float>());
+                                if (lane == 0) smx[(t * G + gi) * KG + sgi] = mg;
+                            } else sx[(t * G + gi) * PVB + sgi * PW + lane] = v; // read only where j <= pp[t]
                         }
                     }
                 }
@@ -517,6 +530,25 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
             sycl::group_barrier(it.get_group());
             const sycl::half *vrow = Vt + (size_t)(kvh * HD + c) * vld;
             float mb[NT][G], ls[NT][G], acc[NT][G];
+            if constexpr ((VAR & 1) != 0) {
+                // each row's block maximum from the 8 key groups' shares (lanes 8-15 repeat lanes 0-7)
+#pragma unroll
+                for (int t = 0; t < NT; ++t)
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) {
+                        mb[t][gi] = sycl::reduce_over_group(sg, smx[(t * G + gi) * KG + (lane & (KG - 1))], sycl::maximum<float>());
+                        ls[t][gi] = 0.0f;
+                        acc[t][gi] = 0.0f;
+                    }
+                const int g0 = kb + sgi * PW, j = g0 + lane;
+                if (g0 <= pmax) // this sub-group's keys: their exponentials, once
+#pragma unroll
+                    for (int t = 0; t < NT; ++t)
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi)
+                            sx[(t * G + gi) * PVB + sgi * PW + lane] = j <= pp[t] ? sycl::exp(vv[t][gi] - mb[t][gi]) : 0.0f;
+                sycl::group_barrier(it.get_group());
+            } else
 #pragma unroll
             for (int t = 0; t < NT; ++t)
 #pragma unroll
@@ -539,7 +571,8 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
                 for (int t = 0; t < NT; ++t)
 #pragma unroll
                     for (int gi = 0; gi < G; ++gi) {
-                        const float e = j <= pp[t] ? sycl::exp(sx[(t * G + gi) * PVB + g * PW + lane] - mb[t][gi]) : 0.0f;
+                        const float e = (VAR & 1) ? sx[(t * G + gi) * PVB + g * PW + lane]
+                                                  : j <= pp[t] ? sycl::exp(sx[(t * G + gi) * PVB + g * PW + lane] - mb[t][gi]) : 0.0f;
                         ev[t][gi] = e;
                         ls[t][gi] = ls[t][gi] + e;
                     }

@@ -113,15 +113,15 @@ struct Engine {
     int warm_on = 1;
     bool route_stats = std::getenv("INK_ROUTE_STATS") && std::atoi(std::getenv("INK_ROUTE_STATS"));
     float *fxl = nullptr; // the feed-forward input of one token in lane order
-    // steps of 2-4 tokens (INK_SB=0 off): the attention inputs in lane order (3 inputs x SB_MAX tokens), read by one
+    // steps of 2-8 tokens (INK_SB=0 off): the attention inputs in lane order (3 inputs x SB_MAX tokens), read by one
     // multi-matrix launch for all tokens (multi.hpp gemv_multi_m)
-    static constexpr int SB_MAX = 4;
+    static constexpr int SB_MAX = 8;
     bool sb_on = true;
     int sb_r = 2, sb_sgw = 2; // rows per sub-group (INK_SB_R), sub-groups per work-group (INK_SB_SGW)
     float *ainl = nullptr;
-    bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-4 tokens use the 8-slot grouped expert kernels
+    bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-8 tokens use the 8-slot grouped expert kernels
     int sb_np = 1, sb_dr = 2; // NVFP4 small steps: gate|up row pairs (INK_SB_NP), down rows (INK_SB_DR) per sub-group
-    float *fxls = nullptr;  // the feed-forward input of 2-4 tokens in lane order (SB_MAX rows)
+    float *fxls = nullptr;  // the feed-forward input of 2-8 tokens in lane order (SB_MAX rows)
     // checking guesses (check / accept): every token but the last of the step also writes its convolution states,
     // token t at cst + t * n_app * conv_n (all applications); the choice after each row goes to cids
     float *cst = nullptr;
@@ -130,7 +130,7 @@ struct Engine {
     // rows of every step; on_step(pos0, ntok) runs after each step's launches
     float *feat = nullptr;
     int feat_vis[3] = {-1, -1, -1};
-    // steps of 1-4 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
+    // steps of 1-8 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
     // (INK_OUT_LANE=0 off); argmax scratch of the two-launch argmax (ops::argmax_rows2)
     bool out_lane = true, att_share = true, tile_sm = true;
     // prompt tiles of layers without a window: the softmax writes only each row's maximum and 1 / total, P.V computes the
@@ -230,7 +230,9 @@ struct Engine {
         if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
         if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_FLASH_LEAN")) flash_lean = std::atoi(e) != 0;
-        dec_rows = cap <= 131072 ? 16 : 4; // long contexts: 4 rows (a 16-row check takes 4 launches; 1.5 -> 0.4 KB per position)
+        // long contexts: 8 rows (a check of 5-8 tokens reads the keys and values once; 0.75 KB per position), past 480K
+        // positions 4 (0.4 KB; a 5-8 token check takes two launches)
+        dec_rows = cap <= 131072 ? 16 : cap <= 491520 ? 8 : 4;
         if (const char *e = std::getenv("INK_DEC_ROWS")) dec_rows = std::max(1, std::min(16, std::atoi(e)));
         // P's row stride: the window (the windowed kernels store column j - lo of each row) when the layers without a
         // window keep their scores in local memory, else the context (their rows store column j)
@@ -688,7 +690,7 @@ struct Engine {
             // attention inputs (inkling2.cpp:418-444)
             const float *in[3] = {cur, cur, cur};
             bool normed = false;
-            // a step of 2-4 tokens: the norms also write their outputs in lane order (inl), for gemv_multi_m
+            // a step of 2-8 tokens: the norms also write their outputs in lane order (inl), for gemv_multi_m
             const bool sb = sb_on && multi_proj && ntok >= 2 && ntok <= SB_MAX;
             const size_t sbs = (size_t)SB_MAX * xlane_floats(E);
             const float *inl[3] = {nullptr, nullptr, nullptr};
@@ -755,7 +757,7 @@ struct Engine {
                 } else {
                     for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], xs[k], ys[k], ntok);
                 }
-            } else if (sb && inl[0] && multi_proj) { // 2-4 tokens: the same matrices in one launch, inputs in lane order
+            } else if (sb && inl[0] && multi_proj) { // 2-8 tokens: the same matrices in one launch, inputs in lane order
                 MultiJobs mj;
                 const W *ws[8] = {&l.wq, &l.wk, &l.wv, swa ? nullptr : &l.k_conv_proj, swa ? nullptr : &l.v_conv_proj, &l.rel, &l.sink, &l.wgate};
                 const float *xs[8] = {inl[0], inl[1], inl[2], inl[1], inl[2], inl[0], inl[0], inl[0]};
@@ -765,7 +767,7 @@ struct Engine {
                 if (ok) {
                     const int lx = (int)xlane_floats(E);
                     for (int k = 0; k < 8; ++k)
-                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], std::min(tune(*ws[k]).R, sb_r), lx, (int)ws[k]->t->rows());
+                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], ntok > 4 ? 1 : std::min(tune(*ws[k]).R, sb_r), lx, (int)ws[k]->t->rows());
                     pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw));
                 } else {
                     for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
@@ -806,10 +808,10 @@ struct Engine {
             const bool share = fast && att_share && ntok >= 2 && ntok <= 4 && pos0 + ntok > att_share_min;
             // in chunks of prow query tokens: the score buffer P holds prow rows of the whole context (each row's
             // values do not depend on the other rows of its step)
-            // windowed layers, steps of 1-4 tokens: the four kernels below in one launch (fused.hpp attn_win_fused, the same
+            // windowed layers, steps of 1-8 tokens: the four kernels below in one launch (fused.hpp attn_win_fused, the same
             // values; INK_ATT_WINF=0 off). 2 work-groups per KV head split the channels for 1-2 tokens (bench_attn card 3,
             // full window: 1 token 16.0 -> 15.2 us, 4 tokens 22.3 -> 18.1; 400 keys 10.4 -> 7.5, 12.0 -> 8.4)
-            const bool winf = fast && win > 0 && win <= 1024 && ntok <= 4 && fz::att_win_fused_on();
+            const bool winf = fast && win > 0 && win <= 1024 && ntok <= SB_MAX && fz::att_win_fused_on();
             if (winf) {
                 if (ntok <= 2)
                     pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
@@ -874,9 +876,12 @@ struct Engine {
                         if (fdec && nt == 1)
                             pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
                                                                        nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
+                        else if (fdec && nt <= 4) // (VAR 1: each key's exponentials computed once, the same values)
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0,
+                                                                          nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
                         else if (fdec)
-                            pr("attn_pv_full", fz::attn_flash_dec<3, 4>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
-                                                                       nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0,
+                                                                          nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
                         else if (nt == 1) pr("attn_pv_full", fz::attn_flash_part<3, 1>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml,
                                                                                 nblk, kmask[il]));
                         else pr("attn_pv_full", fz::attn_flash_part<3, 4>(d.q, Pc, ldp, Vc[il], kvl[il], p0, nt, nh, nkvh, hd, pvpart, pml, nblk,
@@ -947,7 +952,7 @@ struct Engine {
             // MoE (inkling2.cpp:609-634)
             // one token: the norm writes the input only in lane order (fxl), which the router and gate|up read
             float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
-            // 2-4 tokens: the norm writes the input in lane order too (fxls), for the small-step expert kernels
+            // 2-8 tokens: the norm writes the input in lane order too (fxls), for the small-step expert kernels
             const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
             if (mg[3]) {
@@ -989,7 +994,7 @@ struct Engine {
                 } else if (ntok == 1) {
                     pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fx, E, h.n_used, so, gu_sgw));
                     pr("moe_down", gemv_routed_v(d.q, dv, eids, K, hb, h.n_ff, 1, yk, E, tune_routed(dv)));
-                } else if (sbm) { // 2-4 tokens: each chosen expert decoded once for its slots, inputs in lane order
+                } else if (sbm) { // 2-8 tokens (5-8: passes of 4 slots): each chosen expert decoded once for its slots, inputs in lane order
                     const int amax = std::min(h.n_expert, K);
                     SituOp sl = so;
                     sl.ldo = (int)xlane_floats(h.n_ff);
@@ -1104,7 +1109,7 @@ struct Engine {
     void step_next() { step(nullptr, 1); }
     // checking guesses: one step of tok[0..n) (the last chosen token, then n - 1 guesses; n <= SB_MAX) that scores
     // every row and keeps every token's convolution states. Returns the greedy choice after each token (row i: the
-    // token that follows tok[i]); steps of 1-4 tokens give each row the one-token values, so the choices are the
+    // token that follows tok[i]); steps of 1-8 tokens give each row the one-token values, so the choices are the
     // one-token text's. Then accept(a).
     std::vector<int32_t> check(const int32_t *tok, int n) {
         if (n < 1 || n > SB_MAX || n > T) throw std::runtime_error("check: 1 to " + std::to_string(SB_MAX) + " tokens");

@@ -11,7 +11,9 @@
 #     then the same with the drafter's guesses and the checks' shared key reads at any length (INK_ATT_SHARE_MIN=0)
 #   card A, then: haiku 64 and code 128 with guesses checked in steps of 2-4 tokens (INK_SPEC=3, prompt lookup):
 #     ids and every chosen logits row must equal the one-token baseline's; then haiku 64 with the DSpark drafter's
-#     guesses (INK_DRAFT, INK_SPEC=3): ids and every chosen logits row
+#     7 guesses checked every round (INK_DRAFT, INK_SPEC=7, INK_SPEC_ADAPT=0, INK_DSP_STOP=0: steps of 8 tokens): ids and every chosen
+#     logits row
+#   card C, then: code 128 with the drafter choosing 0-7 guesses per round (INK_SPEC=7, steps of 1-8 tokens): ids
 # Prints PASS or FAIL lines and the writing speed. Cards: INK_CHECK_CARDS (default "1 2 3 4 5"). The results folder
 # (~1.2 GB) is removed when everything passes, kept on a failure.
 set -u
@@ -30,9 +32,10 @@ INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /de
 { INK_DUMP=$out/s5 "$S" "$cA" "$bin" "$M" "$cA" "$W/ref-dumps/smoke5.tokens" 1 > /dev/null 2> "$out/s5.err"
   INK_SPEC=3 INK_SAVE_GEN=$out/spec-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/spec-haiku.ids" 2> "$out/spec-haiku.err"
   INK_SPEC=3 "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/code.tokens" 128 > "$out/spec-code.ids" 2> "$out/spec-code.err"
-  INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/dspark-haiku.ids" 2> "$out/dspark-haiku.err"; } &
+  INK_DRAFT=$DR INK_SPEC=7 INK_SPEC_ADAPT=0 INK_DSP_STOP=0 INK_SAVE_GEN=$out/dspark-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/dspark-haiku.ids" 2> "$out/dspark-haiku.err"; } &
 INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
-"$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err" &
+{ "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err"
+  INK_DRAFT=$DR INK_SPEC=7 "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/dspark-code.ids" 2> "$out/dspark-code.err"; } &
 { INK_SAVE_GEN=$out/long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/long16.ids" 2> "$out/long16.err"
   INK_ATT_SHARE_MIN=0 INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/dspark-long16.ids" 2> "$out/dspark-long16.err"; } &
 wait
@@ -70,6 +73,9 @@ PY
     if cmp -s "$base/haiku.ids" "$out/dspark-haiku.ids" && cmp -s "$base/haiku.gen" "$out/dspark-haiku.gen"; then
         echo "PASS dspark haiku: ids and every chosen logits row identical ($(grep -h '\[spec\] [0-9]* checks' "$out/dspark-haiku.err" | cut -d' ' -f2-8 | tr -d '()'))"
     else echo "FAIL dspark haiku: ids or chosen logits rows differ"; rc=1; fi
+    if cmp -s "$base/code.ids" "$out/dspark-code.ids"; then
+        echo "PASS dspark code: ids identical, 0-7 guesses per round ($(grep -h '\[spec\] [0-9]* checks' "$out/dspark-code.err" | cut -d' ' -f2-8 | tr -d '()'))"
+    else echo "FAIL dspark code: ids differ"; rc=1; fi
     if [ -f "$base/haiku.gen" ]; then
         if cmp -s "$base/haiku.gen" "$out/spec-haiku.gen"; then echo "PASS spec haiku: every chosen logits row bit-identical"
         else echo "FAIL spec haiku: chosen logits rows differ ($(cmp "$base/haiku.gen" "$out/spec-haiku.gen" | head -1))"; rc=1; fi

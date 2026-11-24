@@ -642,6 +642,8 @@ inline sycl::event launch_rows_p(sycl::queue &q, const WView &w, MoeGroups g, in
 // the group's count repeat its last slot and are not stored (no branch around the reads). Per (row, slot) the sums
 // are gemv_pair_row's / GemvRoutedR's (chunks l, l+16, ... per lane in order, the same butterfly), and the epilogue
 // is GemvPair's (op.pre / op.post), so every slot gets the one-token values bit for bit.
+// Steps of 5-8 tokens take the MB = 4 kernels: a group of more than MB slots runs in passes of MB (the weights read
+// again, from the cache), each slot's sums the same.
 template <class D, class Op, int MB> struct GroupedPairS {
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     MoeGroups g;
@@ -654,10 +656,13 @@ template <class D, class Op, int MB> struct GroupedPairS {
         auto sg = it.get_sub_group();
         const int r = (int)it.get_group(1) * sgw + (int)sg.get_group_linear_id();
         if (r >= rows) return;
+        const int sa = g.off[a], na = g.off[a + 1] - sa;
+        for (int o = 0; o < na; o += MB) pass(sg, a, r, sa + o, sycl::min(MB, na - o));
+    }
+    void pass(sycl::sub_group sg, int a, int r, int s0, int cnt) const {
         const int lane = (int)sg.get_local_linear_id();
         const size_t eo = (size_t)g.exp[a] * estride;
         const uint8_t *ra = A + eo + (size_t)r * rb, *rbp = B + eo + (size_t)r * rb;
-        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
         int sl[MB];
         const float *xv[MB];
 #pragma unroll
@@ -714,9 +719,12 @@ template <class D, int MB> struct GroupedRowsS {
         auto sg = it.get_sub_group();
         const int r = (int)it.get_group(1) * sgw + (int)sg.get_group_linear_id();
         if (r >= rows) return;
+        const int sa = g.off[a], na = g.off[a + 1] - sa;
+        for (int o = 0; o < na; o += MB) pass(sg, a, r, sa + o, sycl::min(MB, na - o));
+    }
+    void pass(sycl::sub_group sg, int a, int r, int s0, int cnt) const {
         const int lane = (int)sg.get_local_linear_id();
         const uint8_t *row = W + (size_t)g.exp[a] * estride + (size_t)r * rb;
-        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
         int sl[MB];
         const float *xv[MB];
 #pragma unroll
@@ -807,11 +815,22 @@ template <class Op, int MAXS, int NP> struct GroupedPairT {
         auto sg = it.get_sub_group();
         const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * NP;
         if (r0 >= rows) return;
-        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
-        if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
-        else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
-        else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
-        else body<MAXS>(sg, a, r0, s0, cnt);
+        const int sa = g.off[a], na = g.off[a + 1] - sa;
+        if constexpr (MAXS > 4) { // steps of 5-8 tokens: passes of up to 4 slots (the weights read again, from the cache)
+            for (int o = 0; o < na; o += 4) {
+                const int s0 = sa + o, cnt = sycl::min(4, na - o);
+                if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+                else if (cnt == 2) body<2>(sg, a, r0, s0, cnt);
+                else if (cnt == 3) body<3>(sg, a, r0, s0, cnt);
+                else body<4>(sg, a, r0, s0, cnt);
+            }
+        } else {
+            const int s0 = sa, cnt = na;
+            if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+            else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
+            else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
+            else body<MAXS>(sg, a, r0, s0, cnt);
+        }
     }
     template <int MB> void body(sycl::sub_group sg, int a, int r0, int s0, int cnt) const {
         const int lane = (int)sg.get_local_linear_id();
@@ -868,11 +887,22 @@ template <int MAXS, int R> struct GroupedRowsT {
         auto sg = it.get_sub_group();
         const int r0 = ((int)it.get_group(1) * sgw + (int)sg.get_group_linear_id()) * R;
         if (r0 >= rows) return;
-        const int s0 = g.off[a], cnt = g.off[a + 1] - s0;
-        if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
-        else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
-        else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
-        else body<MAXS>(sg, a, r0, s0, cnt);
+        const int sa = g.off[a], na = g.off[a + 1] - sa;
+        if constexpr (MAXS > 4) { // steps of 5-8 tokens: passes of up to 4 slots (the weights read again, from the cache)
+            for (int o = 0; o < na; o += 4) {
+                const int s0 = sa + o, cnt = sycl::min(4, na - o);
+                if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+                else if (cnt == 2) body<2>(sg, a, r0, s0, cnt);
+                else if (cnt == 3) body<3>(sg, a, r0, s0, cnt);
+                else body<4>(sg, a, r0, s0, cnt);
+            }
+        } else {
+            const int s0 = sa, cnt = na;
+            if (cnt <= 1) body<1>(sg, a, r0, s0, cnt);
+            else if (MAXS == 2 || cnt == 2) body<(2 < MAXS ? 2 : MAXS)>(sg, a, r0, s0, cnt);
+            else if (MAXS == 3 || cnt == 3) body<(3 < MAXS ? 3 : MAXS)>(sg, a, r0, s0, cnt);
+            else body<MAXS>(sg, a, r0, s0, cnt);
+        }
     }
     template <int MB> void body(sycl::sub_group sg, int a, int r0, int s0, int cnt) const {
         const int lane = (int)sg.get_local_linear_id();
@@ -916,7 +946,11 @@ template <class Op> inline sycl::event grouped_pair_t(sycl::queue &q, const WVie
     if (MB == MM && NP == PP) return q.parallel_for(nr, GroupedPairT<Op, MM, PP>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw});
     INK_GPT(2, 1) INK_GPT(2, 2) INK_GPT(3, 1) INK_GPT(3, 2) INK_GPT(4, 1) INK_GPT(4, 2)
 #undef INK_GPT
-    throw std::runtime_error("grouped_pair_t: 2-4 slots, 1-2 row pairs");
+    if (MB >= 5 && MB <= 8) { // passes of up to 4 slots
+        if (NP == 1) return q.parallel_for(nr, GroupedPairT<Op, 8, 1>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw});
+        if (NP == 2) return q.parallel_for(nr, GroupedPairT<Op, 8, 2>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw});
+    }
+    throw std::runtime_error("grouped_pair_t: 2-8 slots, 1-2 row pairs");
 }
 inline sycl::event grouped_rows_t(sycl::queue &q, const WView &w, MoeGroups g, int amax, const float *xl, int ldx, float *y, int ldy,
                                   int MB, int R, int sgw = 1) {
@@ -928,7 +962,11 @@ inline sycl::event grouped_rows_t(sycl::queue &q, const WView &w, MoeGroups g, i
     if (MB == MM && R == RR) return q.parallel_for(nr, GroupedRowsT<MM, RR>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw});
     INK_GRT(2, 1) INK_GRT(2, 2) INK_GRT(2, 4) INK_GRT(3, 2) INK_GRT(3, 4) INK_GRT(4, 2) INK_GRT(4, 4)
 #undef INK_GRT
-    throw std::runtime_error("grouped_rows_t: 2-4 slots, 1-4 rows");
+    if (MB >= 5 && MB <= 8) { // passes of up to 4 slots
+        if (R == 2) return q.parallel_for(nr, GroupedRowsT<8, 2>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw});
+        if (R == 4) return q.parallel_for(nr, GroupedRowsT<8, 4>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw});
+    }
+    throw std::runtime_error("grouped_rows_t: 2-8 slots, 1-4 rows");
 }
 
 template <class Op> inline sycl::event grouped_pair_s(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows,
@@ -941,8 +979,9 @@ template <class Op> inline sycl::event grouped_pair_s(sycl::queue &q, const WVie
         switch (MB) {
         case 2: e = q.parallel_for(nr, GroupedPairS<D, Op, 2>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
         case 3: e = q.parallel_for(nr, GroupedPairS<D, Op, 3>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
-        case 4: e = q.parallel_for(nr, GroupedPairS<D, Op, 4>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
-        default: throw std::runtime_error("grouped_pair_s: 2 to 4 slots per expert");
+        case 4: case 5: case 6: case 7: case 8: // 5-8: passes of 4
+            e = q.parallel_for(nr, GroupedPairS<D, Op, 4>{a.p, B, a.rb, estride, rows, cols, g, xl, ldx, xdiv, op, sgw}); break;
+        default: throw std::runtime_error("grouped_pair_s: 2 to 8 slots per expert");
         }
     });
     return e;
@@ -957,8 +996,9 @@ inline sycl::event grouped_rows_s(sycl::queue &q, const WView &w, MoeGroups g, i
         switch (MB) {
         case 2: e = q.parallel_for(nr, GroupedRowsS<D, 2>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
         case 3: e = q.parallel_for(nr, GroupedRowsS<D, 3>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
-        case 4: e = q.parallel_for(nr, GroupedRowsS<D, 4>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
-        default: throw std::runtime_error("grouped_rows_s: 2 to 4 slots per expert");
+        case 4: case 5: case 6: case 7: case 8: // 5-8: passes of 4
+            e = q.parallel_for(nr, GroupedRowsS<D, 4>{w.p, w.rb, estride, rows, cols, g, xl, ldx, y, ldy, sgw}); break;
+        default: throw std::runtime_error("grouped_rows_s: 2 to 8 slots per expert");
         }
     });
     return e;

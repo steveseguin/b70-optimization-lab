@@ -164,6 +164,13 @@
   (card 1), 649.9 -> 661.6 (card 5); logits rows identical. Budget of that kernel: score products and P.V products
   ~8.8 ms each of 20.7 (each ~79 % of peak alone), the rest 4.0. Closed: 256 registers, Q in local memory, rescale
   lane loads (more energy), far-block mask skip, 8-row / paired dense Q8_0 tiles (DO-NOT-REPEAT).
+- Nov 24 ~16:00: writing with guesses after a 200K prompt +8.1-8.5 % on code and +4.4-4.5 % on prose (same cards,
+  both orders, ids identical, gate 12/12). Checks now take up to 8 tokens, at 24.8-34.0 ms for 5-8 tokens (were
+  34.7-48.1), with each token's values unchanged. The checking attention computes each key's exponentials once (8
+  rows read the cache once: 2.35 ms vs 3.6 at 200K). The guess-count rule's costs grow with context. The drafter
+  reads its slots 4-7 and drafts guesses 4-7 only after a strong 3-guess chain, which the host decides. `INK_SPEC=7`.
+  Short prompts: code +4.3-4.9 %, prose +3.0-3.2 %, 3K prompt -0.8 %. Closed: the drafter seeing all 200K positions
+  (slower), value prefetch in the check kernel, 2 rows per sub-group at 5-8 vectors.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

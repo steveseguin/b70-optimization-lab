@@ -92,6 +92,7 @@ Prompt reading and long context (3,127-token prompt, then 32 tokens; ids identic
 | gate|up tiles decode NVFP4 through tables; prompt steps of 1,024 tokens (card 3) | 8K 641.6-645.7 -> 683.3-685.4 tok/s; 3K 670.6 (was 643); 31K 599.0 -> 616.8 (card 2 with the drafter: 570.6, was ~539) | | same bits (below) |
 | drafter attention by key spans; checks read long-range keys once for all tokens (card 2) | | after 31K: 97.25 tok/s with guesses (plain 70.48; before 59.97); after 8K 113.75 (plain 80.05); 3K 105.32 | below |
 | control modules batched for 2-4 tokens (card 2) | | steps of 2 / 3 / 4 tokens 14.92-14.93 / 17.36-17.38 / 20.39-20.40 ms (were 15.69-15.73 / 18.27-18.30 / 21.42-21.52) | norms, down products and gain\|forget outputs of all modules and tokens in 3 launches (below) |
+| checks of up to 8 tokens; the drafter's guesses 4-7 only after strong chains (cards 1, 3, 4, 5) | level | after 200K: code 70.04 -> 75.96 tok/s, haiku 62.63 -> 65.40; short code 128.5 -> 134.0, haiku 104.7 -> 108.1 | `INK_SPEC=7` (below) |
 
 Attention tiles (`src/attn_tiles.hpp`, bench `BENCH_TILE=1 bench_attn <card> <pos> <win> <ntok>`, card 2, 1024
 tokens at position 4096, every value equal to the one-token kernels'): windowed scores 2249 -> 966 µs and P.V 3003 ->
@@ -534,6 +535,44 @@ tokens, same card both orders: the default ring 2.61 tokens per check vs 2.59, w
 and 101.57 -> 104.60 (card 5), text identical.
 With the ring, guessing fits beside a 471K context (drafter +0.55 GiB): the 470,949-token needle on card 3 writes
 at 41.00 tok/s against 24.64 without guesses (2.34 tokens per check), ids identical to the plain run.
+
+Checks of up to 8 tokens (2026-11-24; `INK_SPEC` up to 7). Steps of 5-8 tokens used to fall back to the general
+kernels: 34.7 / 40.5 / 45.5 / 48.1 ms at 3K against 21.3 for 4 tokens (card 3). The small-step paths now take up to
+8 tokens (`Engine::SB_MAX` 8). The attention inputs go in one launch (`gemv_multi_m`, 5-8 vectors at one row per
+sub-group). The experts run in passes of up to 4 slots per chosen expert (`GroupedPairT` / `GroupedRowsT` / `...S`),
+along with the fused windowed attention, the batched control modules and the lane-order output rows. The result is
+24.8 / 28.4 / 31.4 / 34.0 ms, and each token keeps its one-token values.
+The checking attention (`attn_flash_dec` VAR 1) now has each sub-group take its own 16 keys' share of every row's
+block maximum (through local memory; a maximum is the same in any order) and their exponentials once. Before, all 8
+sub-groups computed all of them. bench_attn card 3, 200K keys + `attn_flash_sum`: 4 rows 1,618-1,628 -> 1,579-1,595
+us; 8 rows in one launch 2,348-2,360, against 2,854-2,876 without VAR 1 and 3,590-3,650 as two 4-row launches (the
+cache read twice); vs ref same. `dec_rows` is 8 up to 480K positions (0.75 KB per position) and 4 past that, so the
+longest context is unchanged.
+Choosing the guess count (`ink_run`): step costs for 5-8 tokens are 23.9 / 27.5 / 30.5 / 33.1 ms. Every cost grows
+with the context: 6.2e-5 ms per position for the cache read (`INK_SPEC_KV`; a second read when a check has more rows
+than `dec_rows`) plus 3.85e-6 ms per position for each further token (`INK_SPEC_KVX`, card 3 profile at 200K: 1-token
+attention 12.5 ms, 4 tokens 14.8).
+Drafting 7 guesses cost more than the checks gained at short contexts (3K prompt + 256 tokens 107.1 -> 100.2 tok/s).
+The drafter's output-layer read for 7 slots takes 1,219 us against 776 for 3, and each guess runs its own chain of
+kernels. Three changes fix this:
+- Slots 1-3 are read first. The host then reads guesses 1-3's probabilities and submits slots 4-7 (a second read,
+  855 us) and guesses 4-7 only when their chain of keep chances is at least r / (0.93 - 3 r), where r is a 5-token
+  step's extra cost over 4 (`Drafter::stop_hi`, set each round). Below that, a 4th guess can never be worth its check.
+- A guess whose chain fell below 0.1 skips its 51 MB correction read (`INK_DSP_STOP`; draft() returns only the
+  guesses before it).
+- Skipping the stopped guesses' kernels on the card did not help (their ~20 launches cost ~0.25 ms per round), and
+  neither did one 7-slot read with a skip flag. The host decision did.
+Writing with the drafter (same card, both orders, ids identical; `INK_SPEC=7` against the build before with
+`INK_SPEC=3`):
+- 200K prompt ending in the code request, 256 tokens: 70.04 -> 75.96 tok/s (card 3) and 68.35 -> 73.92 (card 4);
+  3.14 tokens per check, was 2.67.
+- The same prompt ending in the haiku request, 128 tokens: 62.63 -> 65.40 (card 1) and 62.35 -> 65.15 (card 5).
+- Short prompts (cards 3 / 4, two runs each): code 256 128.5 -> 134.0 / 123.4 -> 129.5; haiku 128 104.7 -> 108.1 /
+  100.4 -> 103.4; the 3K prompt + 256 107.2 -> 106.4 / 103.4 -> 102.5 (-0.8 %: few of its chains reach a 4th guess).
+- Prompts level (200K: 566.4 vs 565.8 tok/s on card 3).
+Gate 12/12; new checks: haiku with 7 guesses checked every round (steps of 8 tokens, every chosen logits row), and
+code with 0-7 guesses.
+The drafter seeing all 200K positions (`INK_DSP_WIN=0`) kept a few more guesses but wrote slower (DO-NOT-REPEAT).
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

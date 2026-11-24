@@ -96,7 +96,9 @@ template <class D, int R, int M, bool XL>
             if (lane == 0 && r0 + k < rows) y[(size_t)m * ldy + r0 + k] = v;
         }
 }
-// GemvMulti for M vectors (2..4): the attention input matrices of a step of a few tokens in one launch. The job's
+// GemvMulti for M vectors (2..8; 5-8 one row per sub-group: two rows were level for the output layer at 7 vectors,
+// bench_gemv card 3 1,224-1,285 vs 1,219-1,336 us, and spill): the attention input matrices of a step of a few tokens
+// in one launch. The job's
 // pointers come from an array chosen at run time, so the compiler sees them as generic; gptr (gemv.hpp) makes the
 // loads global (without it M = 4, R 2 took 26.4 us, with it 20.7)
 template <int M, bool XL> struct GemvMultiM {
@@ -106,7 +108,8 @@ template <int M, bool XL> struct GemvMultiM {
         const uint8_t *W = gptr(g.W);
         const float *x = gptr(g.x);
         float *y = gptr(g.y);
-        if (g.R == 1) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+        if constexpr (M > 4) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+        else if (g.R == 1) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
         else gemvM_rows<D, 2, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
     }
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<1> it) const {
@@ -126,6 +129,9 @@ template <int M, bool XL> struct GemvMultiM {
     }
 };
 inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool xl, int sgw = 2) {
+    if (M > 4)
+        for (int j = 0; j < m.nj; ++j)
+            if (m.j[j].R != 1) throw std::runtime_error("gemv_multi_m: 5-8 vectors take one row per sub-group");
     const int ngr = (m.nsg + sgw - 1) / sgw;
     const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
     switch (M * 2 + (xl ? 1 : 0)) {
@@ -135,7 +141,15 @@ inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool 
     case 7: return q.parallel_for(nr, GemvMultiM<3, true>{m, sgw});
     case 8: return q.parallel_for(nr, GemvMultiM<4, false>{m, sgw});
     case 9: return q.parallel_for(nr, GemvMultiM<4, true>{m, sgw});
-    default: throw std::runtime_error("gemv_multi_m: 2 to 4 vectors");
+    case 10: return q.parallel_for(nr, GemvMultiM<5, false>{m, sgw});
+    case 11: return q.parallel_for(nr, GemvMultiM<5, true>{m, sgw});
+    case 12: return q.parallel_for(nr, GemvMultiM<6, false>{m, sgw});
+    case 13: return q.parallel_for(nr, GemvMultiM<6, true>{m, sgw});
+    case 14: return q.parallel_for(nr, GemvMultiM<7, false>{m, sgw});
+    case 15: return q.parallel_for(nr, GemvMultiM<7, true>{m, sgw});
+    case 16: return q.parallel_for(nr, GemvMultiM<8, false>{m, sgw});
+    case 17: return q.parallel_for(nr, GemvMultiM<8, true>{m, sgw});
+    default: throw std::runtime_error("gemv_multi_m: 2 to 8 vectors");
     }
 }
 

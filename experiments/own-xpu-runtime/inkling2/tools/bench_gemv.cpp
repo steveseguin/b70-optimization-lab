@@ -193,9 +193,10 @@ int main(int argc, char **argv) {
                                             bytes / ul / 1e3, bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
                             }
                         }
-                    if (K <= 4 && multi_ok(vp)) { // the multi-matrix kernel (multi.hpp gemv_multi_m) with this matrix alone
+                    if (K <= 8 && multi_ok(vp)) { // the multi-matrix kernel (multi.hpp gemv_multi_m) with this matrix alone
                         for (int rep = 0; rep < 2; ++rep)
                             for (int R : {1, 2}) for (int sgw : {1, 2}) {
+                                if (K > 4 && R > 1) continue; // (one row per sub-group past 4 vectors)
                                 d.q.memset(y1, 0, h1.size() * 4).wait();
                                 double ul = timeit([&](int i) {
                                     WView u = vp; u.p = pl_copies[i % pl_copies.size()];

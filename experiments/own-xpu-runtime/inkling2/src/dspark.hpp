@@ -406,6 +406,15 @@ inline sycl::event dsp_mm_x(sycl::queue &dq, const uint8_t *Wx, int N, int K, co
     });
 }
 
+// a guess's keep chance by its probability in tenths (Drafter::QK)
+struct KeepTable { float v[10]; };
+// the chain's keep chance before guess n0 + 1 is below thr: the products of qk over gp[0..n0) in order from 1.0f
+inline bool keep_chain_below(const float *gp, int n0, float thr, const KeepTable &qk) {
+    float pr = 1.0f;
+    for (int j = 0; j < n0; ++j) { const int b = (int)(gp[j] * 10.0f); pr *= qk.v[b < 9 ? b : 9]; }
+    return pr < thr;
+}
+
 struct Drafter {
     static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, AWG = 256;
     Engine &e;
@@ -449,6 +458,20 @@ struct Drafter {
     int32_t *gids;
     float *yl = nullptr, *amv = nullptr, *ams = nullptr, *gp = nullptr; int32_t *ami = nullptr; // argmax scratch; guess probabilities
     std::vector<float> probs; // the last draft's guess probabilities (the drafter's own softmax)
+    // keep chance of a guess by its probability in tenths (measured 2026-11-23 on code, haiku and a 3K prompt: 0.9+
+    // kept 283 of 304, 0.8+ 35 of 57, ...): ink_run's choice of how many guesses to check, and the stop below
+    static constexpr KeepTable QK{{0.10f, 0.10f, 0.12f, 0.20f, 0.33f, 0.36f, 0.44f, 0.53f, 0.61f, 0.93f}};
+    // INK_DSP_STOP (default 0.1; 0 = never): guess i's correction pass (its 51 MB table read) is skipped once the
+    // product of the keep chances of guesses 1..i-1 is below this, and draft() returns only the guesses before that
+    // (each guess costs ~0.2 ms; a check past such a chain is never worth its cost)
+    float stop_thr = 0.1f;
+    // stop_hi > 0 and n >= 5: slots 1-3 take one read of the output layer (bench_gemv card 3: 776 us); the host then
+    // reads guesses 1-3's probabilities and submits slots 4..n (a second read, 4 slots 855 us) and guesses 4..n only
+    // when their chain is at least stop_hi (one read of 7 slots took 1,219 us every round, and the ~20 launches of 4
+    // skipped guesses ~0.25 ms). ink_run sets it each round from its step costs.
+    float stop_hi = 0.0f;
+    float stop_at(int i, bool late) const { return late && i >= 4 && stop_hi > stop_thr ? stop_hi : stop_thr; }
+    static int keep_bucket(float p) { const int b = (int)(p * 10.0f); return b < 9 ? b : 9; }
     // split attention (INK_DSP_SPLIT=0: one work-group per query row): work-groups of (key head, key span) for all
     // 24 rows of a key head, partial softmax sums combined by a second launch
     int split = 2; // 2: attend_split2, 1: attend_split, 0: one work-group per row
@@ -592,6 +615,7 @@ struct Drafter {
         amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G); ams = d.alloc<float>(ops::ARGMAX_G);
         gp = d.alloc<float>(B);
         if (const char *ev = std::getenv("INK_DSP_FOLD")) fold = std::atoi(ev) != 0;
+        if (const char *ev = std::getenv("INK_DSP_STOP")) stop_thr = (float)std::atof(ev);
         if (const char *ev = std::getenv("INK_DSP_SPLIT")) split = std::atoi(ev);
         if (const char *ev = std::getenv("INK_DSP_AVAR")) attn_var = std::atoi(ev);
         if (const char *ev = std::getenv("INK_DSP_NCH")) NCH = std::max(1, std::min(NCH_MAX, std::atoi(ev)));
@@ -823,10 +847,15 @@ struct Drafter {
         // the chained head
         d.q.memset(s, 0, sizeof(float) * R);
         const float *ctx = rrows + (size_t)r_last * E;
-        if (fold) { // W_lm y_i of slots 1..n, one read of W_lm (lane-order rows: multi_m, bench_gemv card 3 3 rows 777 us)
-            const int lx = (int)xlane_floats(E);
-            for (int i0 = 0; i0 < n; i0 += 4) { // up to 4 rows per read (gemv_multi_m)
-                const int ni = std::min(4, n - i0);
+        const bool late = fold && pt8 && stop_hi > 0.0f && n >= 5; // slots 4..n read later, if the chain holds
+        const int lx = (int)xlane_floats(E);
+        if (late) {
+            MultiJobs mj;
+            multi_add(mj, e.m.output.view(), yl + (size_t)1 * lx, base, 1, lx, Vp);
+            e.pr("dsp_base", gemv_multi_m(d.q, mj, 3, true, 1));
+        } else if (fold) { // W_lm y_i of slots 1..n, one read of W_lm (lane-order rows: multi_m, bench_gemv card 3 3 rows 777 us)
+            for (int i0 = 0; i0 < n; i0 += 8) { // up to 8 rows per read (gemv_multi_m)
+                const int ni = std::min(8, n - i0);
                 const float *xi = yl + (size_t)(1 + i0) * lx;
                 float *bi = base + (size_t)i0 * Vp;
                 if (ni == 1) e.pr("dsp_base", gemv_v(d.q, e.m.output.view(), xi, lx, bi, Vp, 1, Tune{1, 1}, true));
@@ -837,7 +866,16 @@ struct Drafter {
                 }
             }
         }
-        for (int i = 1; i <= n; ++i) {
+        int nd = n; // guesses submitted
+        for (int i = 1; i <= nd; ++i) {
+            if (late && i == 4) { // guesses 4..n only if the chain of guesses 1-3 holds (read on the host)
+                float p3[3];
+                d.get(p3, gp, 3);
+                if (keep_chain_below(p3, 3, stop_at(4, true), QK)) { nd = 3; break; }
+                MultiJobs mj;
+                multi_add(mj, e.m.output.view(), yl + (size_t)4 * lx, base + (size_t)3 * Vp, 1, lx, Vp);
+                e.pr("dsp_base_late", gemv_multi_m(d.q, mj, n - 3, true, 1));
+            }
             {
                 float *c = cat;
                 const float *s_ = s, *yi = y + (size_t)i * E, *cx = ctx;
@@ -865,6 +903,11 @@ struct Drafter {
                     s_[j] = ga * s_[j] + (1.0f - ga) * cand;
                 }));
             }
+            const float *gp_ = gp, thr = stop_at(i, late);
+            const int ii = i;
+            const KeepTable qk = QK;
+            // the chain's keep chance before guess i (the same float products as draft()'s count at the end)
+            auto stopped = [=]() { return keep_chain_below(gp_, ii - 1, thr, qk); };
             if (fold && pt8) { // 4 columns per thread, one 4-byte read per latent
                 const float *b_ = base + (size_t)(i - 1) * Vp, *c_ = cvec, *z_ = z, *ps = Ps;
                 const int8_t *q8 = Pt8;
@@ -873,6 +916,7 @@ struct Drafter {
                 e.pr("dsp_corr", d.q.submit([&](sycl::handler &hd) {
                     sycl::local_accessor<float, 1> zs(R, hd);
                     hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)(n4 + 255) / 256 * 256), sycl::range<1>(256)), [=](sycl::nd_item<1> it) {
+                        if (ii > 1 && stopped()) return; // the whole work-group (before its barrier)
                         const int li = (int)it.get_local_id(0);
                         zs[li] = z_[li];
                         sycl::group_barrier(it.get_group());
@@ -922,10 +966,17 @@ struct Drafter {
             }
             e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vp, V, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams));
         }
-        std::vector<int32_t> r(n);
-        d.get(r.data(), gids, n);
-        probs.resize(n);
-        d.get(probs.data(), gp, n);
+        std::vector<int32_t> r(nd);
+        d.get(r.data(), gids, nd);
+        probs.resize(nd);
+        d.get(probs.data(), gp, nd);
+        if (fold && pt8) { // the guesses computed (stop_at: guess m + 1 needs the chain of guesses 1..m)
+            float pr = 1.0f;
+            int m = 0;
+            for (; m < nd && !(pr < stop_at(m + 1, late)); ++m) pr *= QK.v[keep_bucket(probs[m])];
+            r.resize(m);
+            probs.resize(m);
+        }
         return r;
     }
 

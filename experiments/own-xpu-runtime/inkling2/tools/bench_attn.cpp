@@ -186,6 +186,26 @@ int main(int argc, char **argv) {
                     std::printf("  %-28s %9.1f us %7.3f J %4.0f W  vs ref %s\n", name, us, ej, ej / us * 1e6,
                                 ref ? same(orf, o1, hg.size()).c_str() : "-");
                 };
+                if (std::getenv("BENCH_DEC")) { // the writing / checking kernel (attn_flash_dec + attn_flash_sum), all rows in one piece
+                    const int nbk = (pos + ntok - 1) / fz::PVB + 1;
+                    float *dpart = d.alloc<float>((size_t)ntok * nh * nbk * hd), *dpml = d.alloc<float>((size_t)ntok * nh * nbk * 2);
+                    const double kvb = (double)(pos + ntok) * nkvh * hd * 2 * 2; // keys + values, each read once
+                    auto dc = [&](const char *name, auto fdec) {
+                        d.q.memset(o1, 0, hg.size() * 4).wait();
+                        double us = tm([&] { fdec(); fz::attn_flash_sum(d.q, dpart, dpml, nbk, pos, ntok, nh, hd, Sk, Gt, o1); });
+                        std::printf("  %-28s %9.1f us %7.3f J %4.0f W %6.1f GB/s  vs ref %s\n", name, us, ej, ej / us * 1e6, kvb / us / 1e3,
+                                    ref ? same(orf, o1, hg.size()).c_str() : "-");
+                    };
+#define INK_DEC(NT, V) [&] { fz::attn_flash_dec<3, NT, V>(d.q, Q, K, nullptr, Rc, Rb, nr, Vt, vld, pos, ntok, nh, nkvh, hd, ext, scale, dpart, dpml, nbk); }
+                    for (int r = 0; r < 2; ++r) {
+                        if (ntok == 1) { dc("dec<3,1>", INK_DEC(1, 0)); dc("dec<3,1> exps once", INK_DEC(1, 1)); }
+                        dc("dec<3,4>", INK_DEC(4, 0));
+                        dc("dec<3,4> exps once", INK_DEC(4, 1));
+                        if (ntok > 4) { dc("dec<3,8>", INK_DEC(8, 0)); dc("dec<3,8> exps once", INK_DEC(8, 1)); }
+                    }
+#undef INK_DEC
+                    return 0;
+                }
                 fl("flash<4,3,2>", fz::attn_flash_tile<4, 3, 2>);
                 d.q.memcpy(ofl, o1, hg.size() * 4).wait();
                 fl("flash<8,3,2>", fz::attn_flash_tile<8, 3, 2>);
