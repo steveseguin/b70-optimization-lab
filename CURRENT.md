@@ -178,6 +178,11 @@
 - Nov 24 ~16:55: prompts another +0.8-1.4 % (100K 673.2 -> 678.5 tok/s card 1, 668.2 -> 677.3 card 5; 31K +1.2 %;
   3K +0.9 %; logits identical, gate 12/12): the loop controls' outputs go through local memory (199 -> 147 us per
   launch) and the 24-row sink product takes the tiles (62 -> 23 us).
+- Nov 24 ~17:50: prompts another +1.2-2.1 % (100K 679.5 -> 688.5 tok/s card 1, 672.9 -> 687.7 card 5; 31K 878.9 ->
+  894.2 card 3; 3K +1.5 %; logits identical, gate 12/12): expert input copy 401 -> 201 us, attention prep 209 -> 88
+  us, feed-forward tail 242 -> 173 us per launch. Dense products and prompt attention run at ~85 % of the cards'
+  32-bit rate at the clock they hold under load (2.2-2.45 GHz), the experts at ~70 % (part of it half-empty tiles).
+  Cache packing studied and closed (DO-NOT-REPEAT).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

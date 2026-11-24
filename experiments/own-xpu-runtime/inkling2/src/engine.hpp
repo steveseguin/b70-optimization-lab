@@ -830,7 +830,8 @@ struct Engine {
                 a.st_in = st_in; a.st_out = st_out; a.st_tok = st_tok; a.sst = sst; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = kvl[il]; a.km = kmask[il];
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
-                pr("attn_prep", fz::attn_prep(d.q, a));
+                if (!a.tab && a.nr == SG && fz::prep_sg_sgw() > 0) pr("attn_prep", fz::attn_prep_sg(d.q, a, fz::prep_sg_sgw()));
+                else pr("attn_prep", fz::attn_prep(d.q, a));
             }
             dump.put(d, nm("Qcur", il), Q, hd, nh, ntok);
             dump.put(d, nm("Kcur", il), Kx, hd, nkvh, ntok);
@@ -1055,7 +1056,9 @@ struct Engine {
                     // layout) gate|up 25-42 -> 8.2-8.9, down 17-19 -> 3.9-4.1)
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
-                    pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
+                    if (tile_gather_sgw() > 0 && E % 128 == 0 && E % 4 == 0)
+                        pr("moe_tiles", tile_gather_l(d.q, grp, tiles, fx, E, h.n_used, E, Xt, tile_gather_sgw()));
+                    else pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
                     // NVFP4 (INK_TILE_V2, default on; the same values): 32 sub-groups per work-group (tile_sgw2), so the
                     // lookup tables are filled once per 32 sub-groups; gate|up 4 rows and down 4 rows (through the tables
                     // too) per sub-group, two tiles one after another (bench_moe 1,024 tokens, card 3: gate|up 11,730 ->
@@ -1075,8 +1078,13 @@ struct Engine {
                 }
             }
             float *lo = lbuf[il + 1];
-            pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                        f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst));
+            if (ntok >= 64 && fz::ffn_tail_tt() > 0)
+                pr("ffn_tail", fz::ffn_tail_s(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
+                                              f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, fz::ffn_tail_tt(),
+                                              st_tok, sst));
+            else
+                pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
+                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst));
             dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;

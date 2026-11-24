@@ -590,6 +590,17 @@ Prompts (same card, both orders, the prompt's logits row identical): 100K 666.8 
 Prompts (same card, both orders, logits identical): 100K 673.2 -> 678.5 tok/s (card 1) and 668.2 -> 677.3 (card 5); 31K
 867.7 / 867.9 -> 878.7 / 877.5 (card 3) and 814.7 / 811.0 -> 825.9 / 819.6 (card 4); 3K 820.8-822.5 -> 827.1-830.4
 (card 2). Gate 12/12.
+- The expert tiles' input copy (`moe_tiles`) takes one slot per lane: 16-byte loads of the slot's row, each column's
+  store the 16 lanes' 64 consecutive bytes (`tile_gather_l`, `INK_TG`, 0 = before): 401.5 -> 200.8 us per launch.
+- Attention prep at prompt steps takes one sub-group per row (`attn_prep_sg`, `INK_PREP_SG`, 0 = before): lane l holds
+  channels l + 16 k, so the 8 partial sums are the old sub-groups' sums in the old order; no local memory or
+  barriers, and a 16-value R row takes one sub-group instead of 8. 209.5 -> 88.3 us.
+- The feed-forward tail slides along 8 tokens per thread (`ffn_tail_s`, `INK_FT`, 0 = before): each token's
+  combine of the 8 expert outputs is computed about once instead of 4 times. 242.0 -> 172.7 us.
+Prompts (same card, both orders, logits identical), gather + prep: 100K 679.5 -> 685.6 tok/s (card 1) and 672.9 ->
+683.3 (card 5); 31K 878.9 / 878.0 -> 890.0 / 887.7 (card 3) and 821.9 / 819.9 -> 835.9 / 829.9 (card 4); 3K 828.1-829.9
+-> 835.4-840.8 (card 2). Then the tail: 100K 686.4 -> 688.5 and 680.6 -> 687.7; 31K 895.2 / 890.4 -> 894.2 / 892.2
+(card 3) and 835.9 / 830.1 -> 843.0 / 835.9 (card 4); 3K 839.2-840.8 -> 842.0-844.9. Gate 12/12 each.
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

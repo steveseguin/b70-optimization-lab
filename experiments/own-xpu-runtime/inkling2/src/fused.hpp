@@ -137,6 +137,97 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
     });
 }
 
+// attn_prep without the bias table (a.tab null: prompt tiles) with one sub-group per row: lane l holds channels l + 16 k
+// (k = 0..7), i.e. lane l of attn_prep's sub-group k, so each k's sg_sum is that sub-group's and the 8 partial sums are
+// added in wg_sum's order (the R rows: sub-group 0's sum, then 7 zeros): the same values without local memory or
+// barriers, and an R row (16 values) takes one sub-group instead of 8. sgw sub-groups (rows) per work-group.
+inline sycl::event attn_prep_sg(sycl::queue &q, const PrepArgs a, int sgw) {
+    if (a.hd != PREP_WG || a.nr != SG || a.tab) throw std::runtime_error("attn_prep_sg: unsupported shape");
+    constexpr int NK = PREP_WG / SG;
+    const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nrows = 2 * nq + 2 * nk, ngr = (nrows + sgw - 1) / sgw;
+    return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)),
+                          [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+        auto sg = it.get_sub_group();
+        const int l = (int)sg.get_local_linear_id();
+        int g = (int)it.get_group(0) * sgw + (int)sg.get_group_linear_id();
+        if (g >= nrows) return;
+        const int hd = a.hd, kd = a.nkvh * a.hd;
+        if (g < nq) {
+            int t = g / a.nh, hh = g % a.nh;
+            float *row = a.Q + (size_t)g * hd;
+            float v[NK], tot = 0.0f;
+#pragma unroll
+            for (int k = 0; k < NK; ++k) v[k] = row[l + SG * k] * a.q_clip[(size_t)hh * hd + l + SG * k];
+#pragma unroll
+            for (int k = 0; k < NK; ++k) tot += sg_sum(sg, v[k] * v[k]);
+            float norm = sycl::sqrt(tot) * 1.0f + 1e-6f;
+            float f = sycl::clamp(a.qk_clip / norm, 0.0f, 1.0f);
+#pragma unroll
+            for (int k = 0; k < NK; ++k) {
+                float x = v[k] * f;
+                if (a.full) x = x * a.tau[t];
+                row[l + SG * k] = x;
+            }
+            return;
+        }
+        g -= nq;
+        if (g < 2 * nk) {
+            const bool isv = g >= nk;
+            if (isv) g -= nk;
+            int t = g / a.nkvh, hh = g % a.nkvh;
+            const float *xr = isv ? a.Vr : a.Kr;
+            const float *dyn = a.full ? (isv ? a.dynV : a.dynK) : nullptr;
+            const int off = isv ? kd : 0;
+            float win[NK][4], v[NK], tot = 0.0f;
+#pragma unroll
+            for (int k = 0; k < NK; ++k) {
+                const int c = hh * hd + l + SG * k;
+                conv_win(xr, kd, a.st_in, off, c, t, win[k]);
+                v[k] = conv_out(win[k], isv ? a.v_conv : a.k_conv, c, dyn ? dyn + (size_t)t * a.nkvh * 4 + hh * 4 : nullptr, a.kv_scale);
+            }
+#pragma unroll
+            for (int k = 0; k < NK; ++k) tot += sg_sum(sg, v[k] * v[k]);
+            float f;
+            if (!isv) {
+                float norm = sycl::sqrt(tot) * 1.0f + 1e-6f;
+                f = sycl::clamp(a.qk_clip / norm, 0.0f, 1.0f);
+            } else f = 1.0f / sycl::sqrt(tot / hd + a.eps);
+            const int slot = (a.pos0 + t) & a.km;
+#pragma unroll
+            for (int k = 0; k < NK; ++k) {
+                const int c = hh * hd + l + SG * k;
+                const float x = v[k] * f;
+                size_t i = (size_t)t * kd + c;
+                (isv ? a.Vx : a.Kx)[i] = x;
+                if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + slot] = sycl::half(x);
+                else (isv ? a.Vc : a.Kc)[(size_t)slot * kd + c] = sycl::half(x);
+                if (t == a.ntok - 1) conv_save(a.st_out, off, c, win[k]);
+                else if (a.st_tok) conv_save(a.st_tok + (size_t)t * a.sst, off, c, win[k]);
+            }
+            return;
+        }
+        g -= 2 * nk;
+        { // R (16 values = one per lane): wg_sum's total is sub-group 0's sum plus 7 zeros
+            int t = g / a.nh, hh = g % a.nh;
+            const float *row = a.R + (size_t)g * a.nr;
+            float v = row[l] * a.rel_clip[(size_t)hh * a.nr + l];
+            float tot = 0.0f;
+            tot += sg_sum(sg, v * v);
+#pragma unroll
+            for (int k = 1; k < NK; ++k) tot += 0.0f;
+            float norm = sycl::sqrt(tot) * 1.0f + 1e-6f;
+            float f = sycl::clamp(a.rel_clip_thr / norm, 0.0f, 1.0f);
+            float x = v * f;
+            if (a.full) x = x * a.tau[t];
+            a.Rc[(size_t)g * a.nr + l] = x;
+        }
+    });
+}
+inline int prep_sg_sgw() { // INK_PREP_SG=<rows per work-group> (default 8; 0 = attn_prep)
+    static const int v = std::getenv("INK_PREP_SG") ? std::atoi(std::getenv("INK_PREP_SG")) : 8;
+    return v;
+}
+
 // attn_out = convolution of ob (ops::convolve, no dynamic taps); ffn_inp = inpSA + attn_out (if inpSA)
 inline sycl::event attn_tail(sycl::queue &q, const float *ob, const float *st_in, float *st_out, int off, const float *w,
                              float scale, float *attn_out, const float *inpSA, float *ffn_inp, int E, int ntok,
@@ -209,6 +300,38 @@ inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale,
         if (t == ntok - 1) conv_save(st_out, off, c, win);
         else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
     });
+}
+
+// ffn_tail with each thread sliding along tt consecutive tokens of one channel: the window's combines are computed
+// once per token (+ 3 before the first) instead of 4 times; the same combine, convolution and stores (the same values)
+inline sycl::event ffn_tail_s(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w, int nu,
+                              const float *st_in, float *st_out, int off, const float *cw, float scale, float *ffn_out,
+                              const float *fi, float *out, int E, int ntok, int tt, float *st_tok = nullptr, size_t sst = 0) {
+    const int nb = (ntok + tt - 1) / tt;
+    return q.parallel_for(sycl::range<2>((size_t)nb, (size_t)E), [=](sycl::id<2> id) {
+        const int t0 = (int)id[0] * tt, c = (int)id[1], t1 = sycl::min(t0 + tt, ntok);
+        float win[4];
+        for (int i = 0; i < 3; ++i) {
+            int u = t0 - 3 + i;
+            win[i + 1] = u >= 0 ? combine(y, escale, ids, w, nu, E, u, c) : st_in[(size_t)(off + c) * 3 + (3 + u)];
+        }
+        for (int t = t0; t < t1; ++t) {
+            win[0] = win[1]; win[1] = win[2]; win[2] = win[3];
+            win[3] = combine(y, escale, ids, w, nu, E, t, c);
+            float o = conv_out(win, cw, c, nullptr, scale);
+            size_t i = (size_t)t * E + c;
+            ffn_out[i] = o;
+            out[i] = fi[i] + o;
+            if (t == ntok - 1) conv_save(st_out, off, c, win);
+            else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
+        }
+    });
+}
+// INK_FT=<tokens per thread> (default 8; 0 = ffn_tail). INK_PROF 3K prompt, card 3: 242.0 -> 172.7 us per launch (16:
+// 186.1, 32: 197.6, 64: 169.9); the expert outputs (75 MB per 1,024 tokens) are then read about once
+inline int ffn_tail_tt() {
+    static const int v = std::getenv("INK_FT") ? std::atoi(std::getenv("INK_FT")) : 8;
+    return v;
 }
 
 // ops::attn_pv, then the output gate (ops::mul_sigmoid): out = acc * (1 / (1 + exp(-gate)))

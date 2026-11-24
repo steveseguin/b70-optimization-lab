@@ -465,6 +465,44 @@ inline sycl::event tile_gather(sycl::queue &q, MoeGroups g, int tiles, const flo
         Xt[((size_t)t * cols + col) * MOE_TS + lane] = v;
     });
 }
+// tile_gather with one slot per lane (INK_TG=<sub-groups per work-group>, default 4; 0 = tile_gather): each lane
+// copies 128 columns of its slot's row with 16-byte loads (32 loads, 8 in flight) and the stores of one column are
+// the 16 lanes' 64 consecutive bytes. The same copy (cols % 128 == 0, else tile_gather).
+inline sycl::event tile_gather_l(sycl::queue &q, MoeGroups g, int tiles, const float *x, int ldx, int xdiv, int cols, float *Xt, int sgw) {
+    constexpr int CB = 128;
+    const int ncb = cols / CB, ngr = (ncb + sgw - 1) / sgw;
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG)),
+                          [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(SG)]] {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        auto sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id(), cb = (int)it.get_group(1) * sgw + (int)sg.get_group_linear_id();
+        if (cb >= ncb) return;
+        const int cnt = g.tile_n[t], c0 = cb * CB;
+        const float *xr = nullptr;
+        if (lane < cnt) {
+            const int s = g.slots[g.tile_s0[t] + lane];
+            xr = x + (size_t)(xdiv ? s / xdiv : s) * ldx + c0;
+        }
+        float *o = Xt + ((size_t)t * cols + c0) * MOE_TS + lane;
+        for (int c = 0; c < CB; c += 32) {
+            sycl::float4 v[8];
+#pragma unroll
+            for (int k = 0; k < 8; ++k) v[k] = xr ? *reinterpret_cast<const sycl::float4 *>(xr + c + 4 * k) : sycl::float4(0.0f);
+#pragma unroll
+            for (int k = 0; k < 8; ++k) {
+                o[(size_t)(c + 4 * k) * MOE_TS] = v[k].x();
+                o[(size_t)(c + 4 * k + 1) * MOE_TS] = v[k].y();
+                o[(size_t)(c + 4 * k + 2) * MOE_TS] = v[k].z();
+                o[(size_t)(c + 4 * k + 3) * MOE_TS] = v[k].w();
+            }
+        }
+    });
+}
+inline int tile_gather_sgw() {
+    static const int v = std::getenv("INK_TG") ? std::atoi(std::getenv("INK_TG")) : 4;
+    return v;
+}
 template <int NR, bool IL>
 inline void slot_dots_t(sycl::sub_group sg, const uint8_t *const *rp, int cols, const float *xt, int lane, float *res) {
     const int nc = cols / 32;
