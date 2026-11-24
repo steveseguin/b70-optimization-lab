@@ -297,6 +297,28 @@ int main(int argc, char **argv) {
                 std::printf("  gate_up  generic tiles %d rows  to tiles %9.1f us  x%.2f  %s\n", 2 * ng, us, us0 / us,
                             badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
             }
+            for (int cmb = 0; cmb < 12; ++cmb) { // pairs of tiles (tok_tiles.hpp slot_pair_g2): ng x pair x big
+                const int ng = cmb / 4 == 0 ? 1 : cmb / 4 == 1 ? 2 : 4;
+                const bool pair = cmb & 1, big = cmb & 2;
+                d.q.memset(Ht, 0, (size_t)tiles * NFF * MOE_TS * 4).wait();
+                double us = timeit([&](int i) {
+                    const WView &v = gu[i % NL];
+                    SituOp so{nullptr, ids, 8.0f, 4.0f, nullptr, NFF};
+                    slot_pair_g2(d.q, v, v.p + (size_t)NFF * v.rb, gub, NFF, grp, tiles, Xt, so, Ht, ng, pair, big);
+                });
+                std::vector<float> ht((size_t)nt * NFF * MOE_TS);
+                d.get(ht.data(), Ht, ht.size());
+                long badt = -1;
+                for (int t = 0; t < nt && badt < 0; ++t)
+                    for (int l = 0; l < htn[t] && badt < 0; ++l) {
+                        int sl = hsl[hts[t] + l];
+                        for (int r = 0; r < NFF; ++r)
+                            if (std::memcmp(&ht[((size_t)t * NFF + r) * MOE_TS + l], &h0[(size_t)sl * NFF + r], 4)) { badt = (long)sl * NFF + r; break; }
+                    }
+                std::printf("  gate_up  %s %d rows %s to tiles %9.1f us  x%.2f  %s\n", pair ? "tile pairs" : "two tiles ", 2 * ng,
+                            big ? "grf256" : "grf128", us, us0 / us,
+                            badt < 0 ? "same" : ("DIFF at " + std::to_string(badt)).c_str());
+            }
             if (std::getenv("BENCH_ALL")) {
 #define INK_B(NP, MB, BIG) for (int sgw : {1, 2, 4}) gp(NP, MB, BIG, sgw);
             INK_GP_COMBOS(INK_B)
@@ -346,6 +368,17 @@ int main(int argc, char **argv) {
                 d.get(z1.data(), y1, z1.size());
                 long bad = cmp(z0, z1);
                 std::printf("  down     generic tiles %d rows           %9.1f us  x%.2f  %s\n", r, us, ud0 / us,
+                            bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
+            }
+            for (int cmb = 0; cmb < 12; ++cmb) {
+                const int r = cmb / 4 == 0 ? 1 : cmb / 4 == 1 ? 2 : 4;
+                const bool pair = cmb & 1, big = cmb & 2;
+                d.q.memset(y1, 0, z1.size() * 4).wait();
+                double us = timeit([&](int i) { slot_rows_g2(d.q, dn[i % NL], grp, tiles, Ht, y1, E, r, pair, big); });
+                d.get(z1.data(), y1, z1.size());
+                long bad = cmp(z0, z1);
+                std::printf("  down     %s %d rows %s        %9.1f us  x%.2f  %s\n", pair ? "tile pairs" : "two tiles ", r,
+                            big ? "grf256" : "grf128", us, ud0 / us,
                             bad < 0 ? "same" : ("DIFF at " + std::to_string(bad)).c_str());
             }
             // layers 20-23 (file-layout formats): first kernels vs generic tiles

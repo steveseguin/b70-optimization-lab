@@ -62,7 +62,10 @@ struct Engine {
     // (16 tokens x heads) the sub-group maxima of the scores, nsgmax per row; pinv: per row 1 / softmax total
     bool dec_attn = true;
     float *wmax = nullptr, *pinv = nullptr;
-    float *pvpart = nullptr; // attn_pv_bo_part's block sums: 16 tokens x heads x (cap / PVB + 2) blocks x head_dim
+    float *pvpart = nullptr; // attn_pv_bo_part's block sums: pv_rows tokens x heads x (cap / PVB + 2) blocks x head_dim
+    // prompt chunks past 32K keys: the block-split P.V tiles take up to 64 score rows per launch (INK_PV_ROWS; 16 = one
+    // launch per 16 rows as before). Each row's block sums do not depend on the other rows: the same values.
+    int pv_rows = 16;
     int nsgmax = 0;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
     // decode copies (gemv2.hpp dec_kind) of the expert weights in formats without a planar layout (layers 20-23), used
@@ -207,7 +210,9 @@ struct Engine {
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
         pinv = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
-        pvpart = d.alloc<float>((size_t)16 * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
+        pv_rows = cap > 32768 ? std::max(16, std::min(prow, 64)) : 16;
+        if (const char *e = std::getenv("INK_PV_ROWS")) pv_rows = std::max(16, std::min(prow, std::atoi(e))) / 16 * 16;
+        pvpart = d.alloc<float>((size_t)std::max(16, pv_rows) * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
         if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
             throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
         ob = d.alloc<float>(E); attn_out = d.alloc<float>(E); ffn_inp = d.alloc<float>(E); fx = d.alloc<float>(E);
@@ -725,7 +730,13 @@ struct Engine {
                 // keys, the softmax keeps exponentials and 1 / total, P.V multiplies as it reads: P is read and written
                 // twice instead of five times (the same values as the normalizing softmax)
                 const bool tsm = tiles && tile_sm && win == 0;
-                if (tiles)
+                // prompt score tiles: 4 sub-groups per work-group for layers without a window, 8 for the windowed ones
+                // (bench_attn card 3: full 100K x 64 3,323 -> 3,209 us, 3K x 512 856 -> 818; windowed 464 vs 558 with 4)
+                if (tiles && win == 0)
+                    pr("attn_scores_full", fz::attn_scores_tile<8, 3, 4>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel, f32(l.rel_bias),
+                                                                        h.n_rel, qp, nc, nh, nkvh, hd, h.rel_extent, win, kscale, P, ldp,
+                                                                        kmask[il], tsm ? wmax : nullptr, nsgmax));
+                else if (tiles)
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel,
                                                                                              f32(l.rel_bias), h.n_rel, qp, nc, nh, nkvh, hd,
                                                                                              h.rel_extent, win, kscale, P, ldp, kmask[il],
@@ -746,17 +757,22 @@ struct Engine {
                 // through the tiles split by key blocks (prompt steps; 100K x 16: 6.6 -> 1.4 ms) or the block kernels
                 // (writing steps), then the blocks' sum
                 if (tiles && nc >= 64 && (nc >= 128 || win > 0 || qp + nc <= 32768)) {
-                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc, ac,
-                                                                                kmask[il], tsm ? pinv : nullptr));
+                    // 4 queries x 3 heads per work-group, 2 channels per lane (bench_attn card 3, the same bits: 31K x 176
+                    // 5,530 -> 3,273 us, 3K x 512 1,132 -> 802, windowed 31K x 512 497 -> 355)
+                    pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<4, 3, 2>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc,
+                                                                                   ac, kmask[il], tsm ? pinv : nullptr));
                     continue;
                 }
-                for (int c0 = 0; c0 < nc; c0 += 16) {
-                    const int nt = std::min(16, nc - c0), p0 = qp + c0;
+                const int pstep = tiles ? pv_rows : 16;
+                for (int c0 = 0; c0 < nc; c0 += pstep) {
+                    const int nt = std::min(pstep, nc - c0), p0 = qp + c0;
                     const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
                     if (tiles)
-                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<8, 3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
-                                                                                       nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il],
-                                                                                       tsm ? pinv + (size_t)c0 * nh : nullptr));
+                        // 4 channels per lane (100K x 16: 1,687 -> 1,474 us, the same bits); pv_rows rows per launch (100K: 48
+                        // rows in one launch 4 x 1,474 -> 4,870 us per 64 rows)
+                        pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<4, 3, 4>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il],
+                                                                                          p0, nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il],
+                                                                                          tsm ? pinv + (size_t)c0 * nh : nullptr));
                     else if (share && nt >= 2 && win == 0) // windowed: too few blocks per launch (31K checks 15 -> 29 us)
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part_t<3, 4>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
                                                                                        nt, nh, nkvh, hd, win, pvpart, nblk,
@@ -849,8 +865,15 @@ struct Engine {
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
-                    pr("moe_gate_up", slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
-                    pr("moe_down", slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
+                    // NVFP4 (INK_TILE_V2, default on; the same values): gate|up as pairs of tiles of one expert, every decoded
+                    // weight serving 32 slots; down 4 rows per sub-group, two tiles one after another (bench_moe 1,024
+                    // tokens, card 3: gate|up 11,730 -> 11,289 us, down 6,448 -> 5,723)
+                    if (tile_v2 && gv.kind == K_NVFP4P && tile_lut)
+                        pr("moe_gate_up", slot_pair_g2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2, true, false));
+                    else
+                        pr("moe_gate_up", slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
+                    if (tile_v2 && dv.kind == K_NVFP4P) pr("moe_down", slot_rows_g2(d.q, dv, grp, tiles, Ht, yk, E, 4, false, false));
+                    else pr("moe_down", slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));

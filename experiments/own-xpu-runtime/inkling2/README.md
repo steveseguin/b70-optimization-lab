@@ -329,6 +329,26 @@ reads (no change). Steps (`INK_BENCH_STEP`, card 3, 3,119 positions) 1 / 2 / 3 /
 tok/s, haiku 109.28-109.40 -> 111.25-111.48 (card 2), 3K 107.54-108.29 -> 110.45-110.73 (card 4), 31K 101.79-101.86
 -> 103.74-103.95 (card 5); after a 100K prompt 60.51 -> 62.11 tok/s (card 2), plain 53.50 (card 4). Gate 11/11.
 
+Prompt attention and expert tiles, more work per register (2026-11-23 night; every value the same, gate 11/11):
+- P.V tiles: a lane now keeps 2 channels (`attn_pv_tile<4,3,2>`, 4 queries x 3 heads; each loaded P value serves both
+  channels' sums, keys ascending as before) and the block-split tiles 4 channels (`attn_pv_tile_part<4,3,4>`).
+  `BENCH_TILE=1 bench_attn 3 <pos> <win> <ntok>` (card 3): 31K x 176 tokens 5,530 -> 3,273 µs, 3K x 512 1,132 -> 802,
+  windowed 31K x 512 497 -> 355; block-split 100K x 16 1,687 -> 1,474. Full layers' score tiles take 4 sub-groups per
+  work-group (`attn_scores_tile<8,3,4>`; 100K x 64 3,323 -> 3,209 µs, 3K x 512 856 -> 818; the windowed layers keep 8).
+- Past 32K keys the block-split P.V takes up to 64 score rows per launch (`INK_PV_ROWS`, default min(score rows, 64);
+  16 = before): 100K x 64 rows in one launch 4,870 µs vs 4 x 1,474. The block sums buffer grows with it (100K: card
+  memory 20.99 -> 21.28 GiB; at 420K the score rows are 16, so nothing changes there). After a 100K prompt the logits
+  rows of 8 steps are bit-identical to the build before.
+- NVFP4 prompt expert tiles (`INK_TILE_V2`, default on; layers 0-19): gate|up runs pairs of tiles of one expert per
+  sub-group (`slot_pair_g2`, `tile_dots2`: every decoded weight serves 32 slots, each slot's sums in tile_dots' order),
+  down 4 rows per sub-group with two tiles one after another (`slot_rows_g2`). `bench_moe` 1,024 tokens (card 3):
+  gate|up 11,730 -> 11,289 µs, down 6,448 -> 5,723. Pairs gain only 4 %: decoding the weights is not what holds the
+  tiles at ~34 % of the multiply-add rate. Not better: pairs for down (2 rows 7,602, 4 rows 6,734), 8 gate|up rows
+  (11,943-12,182), 256 registers (every variant slower, e.g. down 4 rows 9,865).
+- Prompt reading, the same card before -> after (ids identical): 3K 659.5 -> 681.1 tok/s (card 3), 618.9 -> 638.2
+  (card 1); 31K 591.6 -> 623.5 (card 3), 555.3 -> 591.3 (card 1); 100K 419.5 -> 440.6 (card 4), 411.8 -> 421.9 (card
+  5, attention changes only).
+
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
 (unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,

@@ -157,14 +157,22 @@ int main(int argc, char **argv) {
             };
             pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
             pvt("pv_tile<8,3>", fz::attn_pv_tile<8, 3>);
-            {
+            pvt("pv_tile<4,3,2>", fz::attn_pv_tile<4, 3, 2>);
+            pvt("pv_tile<8,3,2>", fz::attn_pv_tile<8, 3, 2>);
+            pvt("pv_tile<4,3,4>", fz::attn_pv_tile<4, 3, 4>);
+            auto pvp = [&](const char *name, auto f) {
                 d.q.memset(o1, 0, hg.size() * 4).wait();
                 double us = tm([&] {
-                    fz::attn_pv_tile_part<8, 3>(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk);
+                    f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, part, nblk, 0x7fffffff, nullptr);
                     fz::attn_pv_bo_sum(d.q, part, nblk, pos, ntok, nh, hd, win, Gt, o1);
                 });
-                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", "pv_tile_part<8,3>+sum", us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
-            }
+                std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
+            };
+            pvp("pv_tile_part<8,3>+sum", fz::attn_pv_tile_part<8, 3>);
+            pvp("pv_tile_part<8,3,2>+sum", fz::attn_pv_tile_part<8, 3, 2>);
+            pvp("pv_tile_part<4,3,2>+sum", fz::attn_pv_tile_part<4, 3, 2>);
+            pvp("pv_tile_part<4,3,4>+sum", fz::attn_pv_tile_part<4, 3, 4>);
+            pvp("pv_tile_part<16,3,1>+sum", fz::attn_pv_tile_part<16, 3, 1>);
             { // unnormalized P + inv (the writing-step softmax) through the block kernels: P0 / total * total
                 std::vector<float> hinv((size_t)ntok * nh, 1.0f);
                 float *inv = d.alloc<float>(hinv.size());

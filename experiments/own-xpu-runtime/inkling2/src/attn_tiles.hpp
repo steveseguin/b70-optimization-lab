@@ -115,22 +115,26 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
 // out = acc * (1 / (1 + exp(-gate))) as attn_pv_t
 // inv: P holds exponentials and inv[row] = 1 / total (attn_softmax_sum); each value is P * inv as read (the normalized
 // value attn_softmax_norm would store: the same product)
-template <int MT, int G>
+// CPL: channels per lane (c and c + hd / CPL ...): every P value a lane loads and selects serves CPL channels' sums;
+// each (row, channel) sum still takes its keys ascending, so the values are CPL 1's
+template <int MT, int G, int CPL = 1>
 inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok, int nh,
                                 int nkvh, int hd, int win, const float *gate, float *out, int km = 0x7fffffff, const float *inv = nullptr) {
     constexpr int PW = 16, NR = MT * G;
     using HV = sycl::vec<sycl::half, 8>;
-    if (nh != nkvh * G || hd % PW || vld % 16) throw std::runtime_error("attn_pv_tile: unsupported shape");
-    const int nqb = (ntok + MT - 1) / MT;
-    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nqb * nkvh, (size_t)hd), sycl::range<2>(1, (size_t)hd)),
+    if (nh != nkvh * G || hd % (PW * CPL) || vld % 16) throw std::runtime_error("attn_pv_tile: unsupported shape");
+    const int nqb = (ntok + MT - 1) / MT, nl = hd / CPL;
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nqb * nkvh, (size_t)nl), sycl::range<2>(1, (size_t)nl)),
                           [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
         auto sg = it.get_sub_group();
         const int lane = (int)sg.get_local_linear_id();
-        const int qb = (int)it.get_group(0) / nkvh, kvh = (int)it.get_group(0) % nkvh, c = (int)it.get_local_id(1);
+        const int qb = (int)it.get_group(0) / nkvh, kvh = (int)it.get_group(0) % nkvh, c0 = (int)it.get_local_id(1);
         const int t0 = qb * MT, tn = sycl::min(MT, ntok - t0);
         const int pf = pos0 + t0, pl = pf + tn - 1;
         const int lof = win > 0 ? sycl::max(0, pf - win + 1) : 0;
-        const sycl::half *row = Vt + (size_t)(kvh * hd + c) * vld;
+        const sycl::half *rows[CPL];
+#pragma unroll
+        for (int k = 0; k < CPL; ++k) rows[k] = Vt + (size_t)(kvh * hd + c0 + k * nl) * vld;
         int lo[MT], pp[MT];
 #pragma unroll
         for (int m = 0; m < MT; ++m) {
@@ -140,12 +144,16 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
         float iv[NR];
 #pragma unroll
         for (int a = 0; a < NR; ++a) iv[a] = inv ? inv[(size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G] : 1.0f;
-        float acc[NR], tot[NR]; // acc: the current block of PVB positions; tot: the blocks so far, in order
+        float acc[CPL][NR], tot[CPL][NR]; // acc: the current block of PVB positions; tot: the blocks so far, in order
 #pragma unroll
-        for (int a = 0; a < NR; ++a) { acc[a] = 0.0f; tot[a] = 0.0f; }
+        for (int k = 0; k < CPL; ++k)
+#pragma unroll
+            for (int a = 0; a < NR; ++a) { acc[k][a] = 0.0f; tot[k][a] = 0.0f; }
         auto flush = [&] {
 #pragma unroll
-            for (int a = 0; a < NR; ++a) { tot[a] += acc[a]; acc[a] = 0.0f; }
+            for (int k = 0; k < CPL; ++k)
+#pragma unroll
+                for (int a = 0; a < NR; ++a) { tot[k][a] += acc[k][a]; acc[k][a] = 0.0f; }
         };
         int j = lof & ~15;
         for (; j + 15 <= pl; j += 16) {
@@ -161,24 +169,32 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
                     pv[m * G + gi] = ok ? (inv ? pr[jj - lo[m]] * iv[m * G + gi] : pr[jj - lo[m]]) : 0.0f;
                 }
             }
-            const HV v0 = *(const HV *)(row + (j & km)), v1 = *(const HV *)(row + (j & km) + 8);
+            HV v0[CPL], v1[CPL];
+#pragma unroll
+            for (int k = 0; k < CPL; ++k) { v0[k] = *(const HV *)(rows[k] + (j & km)); v1[k] = *(const HV *)(rows[k] + (j & km) + 8); }
 #pragma unroll
             for (int u = 0; u < PW; ++u) {
-                const float vf = (float)(u < 8 ? v0[u] : v1[u - 8]);
 #pragma unroll
-                for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, pv[a], u), vf);
+                for (int k = 0; k < CPL; ++k) {
+                    const float vf = (float)(u < 8 ? v0[k][u] : v1[k][u - 8]);
+#pragma unroll
+                    for (int a = 0; a < NR; ++a) acc[k][a] = mac(acc[k][a], sycl::select_from_group(sg, pv[a], u), vf);
+                }
             }
         }
         for (; j <= pl; ++j) {
             if ((j & (PVB - 1)) == 0) flush();
-            const float vf = (float)row[j & km];
 #pragma unroll
-            for (int m = 0; m < MT; ++m) {
-                const bool ok = j >= lo[m] && j <= pp[m];
+            for (int k = 0; k < CPL; ++k) {
+                const float vf = (float)rows[k][j & km];
 #pragma unroll
-                for (int gi = 0; gi < G; ++gi) {
-                    const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
+                for (int m = 0; m < MT; ++m) {
+                    const bool ok = j >= lo[m] && j <= pp[m];
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) {
+                        const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
+                        acc[k][m * G + gi] = mac(acc[k][m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
+                    }
                 }
             }
         }
@@ -187,10 +203,12 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
         for (int m = 0; m < MT; ++m) {
             if (m >= tn) break;
 #pragma unroll
-            for (int gi = 0; gi < G; ++gi) {
-                const size_t i = ((size_t)(t0 + m) * nh + kvh * G + gi) * hd + c;
-                out[i] = tot[m * G + gi] * (1.0f / (1.0f + sycl::exp(-gate[i])));
-            }
+            for (int gi = 0; gi < G; ++gi)
+#pragma unroll
+                for (int k = 0; k < CPL; ++k) {
+                    const size_t i = ((size_t)(t0 + m) * nh + kvh * G + gi) * hd + c0 + k * nl;
+                    out[i] = tot[k][m * G + gi] * (1.0f / (1.0f + sycl::exp(-gate[i])));
+                }
         }
     });
 }
@@ -201,27 +219,29 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
 // attn_pv_bo_part's layout, part[((t*nh + h)*nblk + b)*hd + c] with b counted from the step's first row's lo / PVB;
 // attn_pv_bo_sum then adds the blocks and applies the gate. Query blocks run fastest, so a value block is read from
 // memory once for all of them. Same values as attn_pv_bo_part.
-template <int MT, int G>
+template <int MT, int G, int CPL = 1>
 inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok,
                                      int nh, int nkvh, int hd, int win, float *part, int nblk, int km = 0x7fffffff,
                                      const float *inv = nullptr) {
     constexpr int PW = 16, NR = MT * G;
     using HV = sycl::vec<sycl::half, 8>;
-    if (nh != nkvh * G || hd % PW || vld % 16) throw std::runtime_error("attn_pv_tile_part: unsupported shape");
-    const int nqb = (ntok + MT - 1) / MT;
+    if (nh != nkvh * G || hd % (PW * CPL) || vld % 16) throw std::runtime_error("attn_pv_tile_part: unsupported shape");
+    const int nqb = (ntok + MT - 1) / MT, nl = hd / CPL;
     const int b0 = (win > 0 ? std::max(0, pos0 - win + 1) : 0) / PVB;
-    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nqb * nkvh * nblk, (size_t)hd), sycl::range<2>(1, (size_t)hd)),
+    return q.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nqb * nkvh * nblk, (size_t)nl), sycl::range<2>(1, (size_t)nl)),
                           [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
         auto sg = it.get_sub_group();
         const int lane = (int)sg.get_local_linear_id();
         const int gid = (int)it.get_group(0), qb = gid % nqb, kvh = (gid / nqb) % nkvh, b = gid / (nqb * nkvh);
-        const int c = (int)it.get_local_id(1);
+        const int c0 = (int)it.get_local_id(1);
         const int t0 = qb * MT, tn = sycl::min(MT, ntok - t0);
         const int pf = pos0 + t0, pl = pf + tn - 1;
         const int lof = win > 0 ? sycl::max(0, pf - win + 1) : 0;
         const int kb = (b0 + b) * PVB;
         const int js = sycl::max(kb, lof & ~15), je = sycl::min(kb + PVB - 1, pl);
-        const sycl::half *row = Vt + (size_t)(kvh * hd + c) * vld;
+        const sycl::half *rows[CPL];
+#pragma unroll
+        for (int k = 0; k < CPL; ++k) rows[k] = Vt + (size_t)(kvh * hd + c0 + k * nl) * vld;
         int lo[MT], pp[MT];
 #pragma unroll
         for (int m = 0; m < MT; ++m) {
@@ -231,9 +251,11 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
         float iv[NR];
 #pragma unroll
         for (int a = 0; a < NR; ++a) iv[a] = inv ? inv[(size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G] : 1.0f;
-        float acc[NR];
+        float acc[CPL][NR];
 #pragma unroll
-        for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
+        for (int k = 0; k < CPL; ++k)
+#pragma unroll
+            for (int a = 0; a < NR; ++a) acc[k][a] = 0.0f;
         int j = js;
         for (; j + 15 <= je; j += 16) {
             float pv[NR];
@@ -247,23 +269,31 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
                     pv[m * G + gi] = ok ? (inv ? pr[jj - lo[m]] * iv[m * G + gi] : pr[jj - lo[m]]) : 0.0f;
                 }
             }
-            const HV v0 = *(const HV *)(row + (j & km)), v1 = *(const HV *)(row + (j & km) + 8);
+            HV v0[CPL], v1[CPL];
+#pragma unroll
+            for (int k = 0; k < CPL; ++k) { v0[k] = *(const HV *)(rows[k] + (j & km)); v1[k] = *(const HV *)(rows[k] + (j & km) + 8); }
 #pragma unroll
             for (int u = 0; u < PW; ++u) {
-                const float vf = (float)(u < 8 ? v0[u] : v1[u - 8]);
 #pragma unroll
-                for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, pv[a], u), vf);
+                for (int k = 0; k < CPL; ++k) {
+                    const float vf = (float)(u < 8 ? v0[k][u] : v1[k][u - 8]);
+#pragma unroll
+                    for (int a = 0; a < NR; ++a) acc[k][a] = mac(acc[k][a], sycl::select_from_group(sg, pv[a], u), vf);
+                }
             }
         }
         for (; j <= je; ++j) {
-            const float vf = (float)row[j & km];
 #pragma unroll
-            for (int m = 0; m < MT; ++m) {
-                const bool ok = j >= lo[m] && j <= pp[m];
+            for (int k = 0; k < CPL; ++k) {
+                const float vf = (float)rows[k][j & km];
 #pragma unroll
-                for (int gi = 0; gi < G; ++gi) {
-                    const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
+                for (int m = 0; m < MT; ++m) {
+                    const bool ok = j >= lo[m] && j <= pp[m];
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) {
+                        const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
+                        acc[k][m * G + gi] = mac(acc[k][m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
+                    }
                 }
             }
         }
@@ -272,7 +302,9 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
             if (m >= tn) break;
 #pragma unroll
             for (int gi = 0; gi < G; ++gi)
-                part[(((size_t)(t0 + m) * nh + kvh * G + gi) * nblk + b) * hd + c] = acc[m * G + gi];
+#pragma unroll
+                for (int k = 0; k < CPL; ++k)
+                    part[(((size_t)(t0 + m) * nh + kvh * G + gi) * nblk + b) * hd + c0 + k * nl] = acc[k][m * G + gi];
         }
     });
 }

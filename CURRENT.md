@@ -116,6 +116,9 @@
   P.V blocks: one-token step 11.88 -> 11.54 ms; code 123.8 tok/s, haiku 111.4, 3K 110.6, 31K 103.9, 100K 62.1;
   ids identical.
   Gate 11/11.
+- Nov 23 ~23:57: prompt reading +3-5 % (same values): attention tiles keep 2-4 channels per lane, long-context P.V
+  takes up to 64 rows per launch, NVFP4 expert tiles share decoded weights across two tiles. 3K 659.5 -> 681.1 tok/s
+  (card 3), 31K 591.6 -> 623.5, 100K 419.5 -> 440.6 (card 4); 100K logits rows bit-identical. Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,
