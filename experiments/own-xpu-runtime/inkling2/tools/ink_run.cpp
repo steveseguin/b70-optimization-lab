@@ -45,7 +45,8 @@ int main(int argc, char **argv) {
         if (const char *dp = std::getenv("INK_DRAFT")) {
             const double tl = now_s();
             dr = std::make_unique<Drafter>(e, dp);
-            std::fprintf(stderr, "[ink] DSpark drafter loaded in %.2f s\n", now_s() - tl);
+            std::fprintf(stderr, "[ink] DSpark drafter loaded in %.2f s, card memory in use %.2f GiB\n", now_s() - tl,
+                         d.allocated / 1073741824.0);
         }
         double t0 = now_s();
         e.feed(tok);

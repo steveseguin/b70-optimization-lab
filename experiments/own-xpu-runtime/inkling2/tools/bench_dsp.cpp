@@ -8,7 +8,7 @@ int main(int argc, char **argv) {
     if (argc < 2) { std::fprintf(stderr, "usage: bench_dsp <card> [nctx] [nch_max]\n"); return 2; }
     try {
         Device d(std::atoi(argv[1]));
-        const int nctx = argc > 2 ? std::atoi(argv[2]) : 100000, NCH = argc > 3 ? std::atoi(argv[3]) : 64;
+        const int nctx = std::getenv("BENCH_MM") ? 1000 : argc > 2 ? std::atoi(argv[2]) : 100000, NCH = argc > 3 ? std::atoi(argv[3]) : 64;
         const int iters = std::getenv("BENCH_ITERS") ? std::atoi(std::getenv("BENCH_ITERS")) : 20;
         const int ncopy = std::getenv("BENCH_NCOPY") ? std::atoi(std::getenv("BENCH_NCOPY")) : 8;
         constexpr int B = 8, HQ = 24, HKV = 8, HD = 128, CH = 128, NR = 24, kd = HKV * HD;
@@ -97,6 +97,67 @@ int main(int argc, char **argv) {
                     if (t == 12345.678f) sk[g & 1023] = t;
                 });
             }, 1);
+        }
+        if (std::getenv("BENCH_MM")) { // the 8-slot products: gemv_v-shaped reference in fp64 on the host vs dsp_mm_x
+            const int shapes[][2] = {{9216, 2304}, {2304, 9216}, {3072, 2304}, {1024, 2304}, {2304, 3072}};
+            for (auto &sh : shapes) {
+                const int N = sh[0], Kd = sh[1], KB = Kd / 32;
+                std::vector<uint8_t> raw((size_t)N * KB * 34);
+                std::uniform_int_distribution<int> qd(-127, 127);
+                std::vector<float> wf((size_t)N * Kd);
+                for (int n = 0; n < N; ++n)
+                    for (int b = 0; b < KB; ++b) {
+                        uint8_t *blk = raw.data() + ((size_t)n * KB + b) * 34;
+                        const sycl::half dh = (sycl::half)(0.001f + 0.0001f * (float)((n + b) % 7));
+                        std::memcpy(blk, &dh, 2);
+                        for (int i = 0; i < 32; ++i) { const int8_t qv = (int8_t)qd(rng); blk[2 + i] = (uint8_t)qv; wf[(size_t)n * Kd + b * 32 + i] = (float)dh * qv; }
+                    }
+                const std::vector<uint8_t> rp = dsp_x8_repack(raw.data(), N, Kd);
+                const int nc = std::max(2, (int)(256e6 / rp.size()));
+                std::vector<uint8_t *> Wd;
+                for (int c = 0; c < nc; ++c) { Wd.push_back(d.alloc<uint8_t>(rp.size())); d.put(Wd.back(), rp.data(), rp.size()); }
+                const size_t ldx = xlane_floats(Kd);
+                std::vector<float> xp((size_t)8 * Kd), xl((size_t)8 * ldx, 0.0f);
+                std::vector<sycl::half> xh((size_t)8 * Kd);
+                for (int t = 0; t < 8; ++t) for (int i = 0; i < Kd; ++i) {
+                    const float vv = nd(rng); xp[(size_t)t * Kd + i] = vv; xl[(size_t)t * ldx + xlane_at(i)] = vv; xh[(size_t)t * Kd + i] = (sycl::half)vv; }
+                float *xd = d.alloc<float>(xl.size()), *yd = d.alloc<float>((size_t)8 * N);
+                sycl::half *xhd = d.alloc<sycl::half>(xh.size());
+                d.put(xd, xl.data(), xl.size()); d.put(xhd, xh.data(), xh.size());
+                std::vector<double> yr((size_t)8 * N);
+                double big = 0;
+                for (int t = 0; t < 8; ++t) for (int n = 0; n < N; ++n) {
+                    double a2 = 0; for (int i = 0; i < Kd; ++i) a2 += (double)wf[(size_t)n * Kd + i] * xp[(size_t)t * Kd + i];
+                    yr[(size_t)t * N + n] = a2; big = std::max(big, std::fabs(a2)); }
+                auto mm = [&](const char *name, auto f) {
+                    for (int i = 0; i < 3; ++i) f(i);
+                    d.q.wait();
+                    double t0 = now_s();
+                    for (int i = 0; i < iters * 5; ++i) f(i + 1);
+                    d.q.wait();
+                    const double us = (now_s() - t0) / (iters * 5) * 1e6;
+                    f(0); d.q.wait();
+                    std::vector<float> yo((size_t)8 * N);
+                    d.get(yo.data(), yd, yo.size());
+                    double err = 0; for (size_t i = 0; i < yo.size(); ++i) err = std::max(err, std::fabs(yo[i] - yr[i]));
+                    std::printf("  %5d x %5d %-22s %8.2f us %6.1f GB/s  max diff %.3g of %.3g\n", N, Kd, name, us, rp.size() / us * 1e-3, err, big);
+                };
+                if (Kd <= 4096 && std::getenv("BENCH_MM_LANE")) {
+                    mm("KS1 x fp32 lane", [&](int i) { dsp_mm_x<1, false>(d.q, Wd[i % nc], N, Kd, xd, (int)ldx, yd); });
+                    mm("KS2 x fp32 lane", [&](int i) { dsp_mm_x<2, false>(d.q, Wd[i % nc], N, Kd, xd, (int)ldx, yd); });
+                    mm("KS4 x fp32 lane", [&](int i) { dsp_mm_x<4, false>(d.q, Wd[i % nc], N, Kd, xd, (int)ldx, yd); });
+                    mm("KS8 x fp32 lane", [&](int i) { dsp_mm_x<8, false>(d.q, Wd[i % nc], N, Kd, xd, (int)ldx, yd); });
+                }
+                mm("KS1 x fp16", [&](int i) { dsp_mm_x<1, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                mm("KS4 x fp16", [&](int i) { dsp_mm_x<4, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                mm("KS8 x fp16", [&](int i) { dsp_mm_x<8, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                mm("KS4 x fp16 packed", [&](int i) { dsp_mm_x<4, true, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                mm("KS8 x fp16 packed", [&](int i) { dsp_mm_x<8, true, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                mm("KS2 x fp16 packed", [&](int i) { dsp_mm_x<2, true, true>(d.q, Wd[i % nc], N, Kd, xhd, 0, yd); });
+                for (auto *p : Wd) d.release(p);
+                d.release(xd); d.release(yd); d.release(xhd);
+            }
+            return 0;
         }
     } catch (const std::exception &ex) {
         std::fprintf(stderr, "error: %s\n", ex.what());

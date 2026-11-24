@@ -636,12 +636,17 @@ inline sycl::event dec_repack(sycl::queue &q, const Tensor &t, const uint8_t *sr
 }
 // regroup every Q8_0 / NVFP4 / Q6_K weight used by the products into its planar layout (not the token embedding,
 // which get_rows reads in the file layout). Q8_0 and NVFP4 in place (through a scratch copy on the card); Q6_K into a
-// new buffer with a padded row stride (its file copy stays in the arena). Returns every tensor's view.
-inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights &w, bool verbose = true) {
+// new buffer with a padded row stride (its file copy stays in the arena). Returns every tensor's view. own: tensors the
+// caller left out of the upload and lays out itself (their view has no data, only the tensor's shape)
+inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights &w, bool verbose = true,
+                                              const std::function<bool(const Tensor &)> &own = {}) {
     std::map<std::string, WView> v;
     size_t scratch_bytes = 0;
     for (auto &t : g.tensors) {
-        if (!w.has(t.name)) continue; // left in the file: decode copy below
+        if (!w.has(t.name)) { // left in the file: decode copy below, or the caller's own layout
+            if (own && own(t)) v[t.name] = WView{&t, nullptr, t.row_bytes(), K_RAW};
+            continue;
+        }
         v[t.name] = WView{&t, w[t.name], t.row_bytes(), K_RAW};
         if (t.name != "token_embd.weight" && planar_kind(t) != K_RAW && t.type != G_Q6_K)
             scratch_bytes = std::max<size_t>(scratch_bytes, t.bytes);
@@ -651,7 +656,7 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
     size_t n = 0, extra = 0;
     for (auto &t : g.tensors) {
         int k = planar_kind(t);
-        if (k == K_RAW || t.name == "token_embd.weight") continue;
+        if (k == K_RAW || t.name == "token_embd.weight" || !w.has(t.name)) continue;
         uint8_t *p = w[t.name];
         WView &e = v[t.name];
         if (t.type == G_Q6_K) {
@@ -671,14 +676,14 @@ inline std::map<std::string, WView> planarize(Device &d, const GGUF &g, Weights 
     // tensors the upload left in the file (Weights::upload skip = dec_target): only their decode copy goes on the card
     size_t fb = 0, nd = 0, dec_bytes = 0;
     for (auto &t : g.tensors)
-        if (!w.has(t.name)) {
+        if (!w.has(t.name) && !(own && own(t))) {
             if (!dec_target(t)) throw std::runtime_error("planarize: " + t.name + " is not on the card and has no decode copy");
             fb = std::max<size_t>(fb, t.bytes);
         }
     if (fb) {
         uint8_t *file = d.alloc<uint8_t>(fb);
         for (auto &t : g.tensors) {
-            if (w.has(t.name)) continue;
+            if (w.has(t.name) || (own && own(t))) continue;
             const size_t rb = dec_stride(t);
             uint8_t *dst = d.alloc<uint8_t>(rb * (size_t)t.rows());
             w.fetch(d, g, t, file);

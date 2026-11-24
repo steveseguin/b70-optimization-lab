@@ -11,6 +11,7 @@
 //     real tokens of 30 tanh(W_lm (y_i + Wh z + bh) / 30)
 #pragma once
 #include "engine.hpp"
+#include <set>
 
 namespace ink {
 
@@ -259,6 +260,150 @@ inline sycl::event dsp_attn_span_x(sycl::queue &dq, const float *q_, const sycl:
     });
 }
 
+
+// The drafter's 8-slot products on the matrix engines: y[t][n] = sum_k W[n][k] x[t][k] for the 8 slots, W in Q8_0
+// repacked by dsp_x8_repack into tiles of 16 rows x 32 columns (544 bytes: the 16 rows' 32 int8 values, then their 16
+// fp16 scales), so a sub-group's reads are contiguous. A sub-group = 16 output rows; lane r decodes row r's 32 values
+// (int8 x scale, fp16) into local memory as two 16 x 16 B tiles, the 8 x 16 A tiles are the slots' inputs in fp16.
+// KS sub-groups of a work-group split the column blocks of one 16-row tile range and add their 8 x 16 sums in order.
+// XG = false: x is fp32 in lane order (xlane.hpp, rows ldx apart) and is converted into local memory (K <= 4096);
+// XG = true: x is fp16, row-major [8][K], read directly. Only the drafter's guesses depend on these numbers.
+inline std::vector<uint8_t> dsp_x8_repack(const uint8_t *raw, int N, int K) {
+    const int KB = K / 32;
+    std::vector<uint8_t> out((size_t)N / 16 * KB * 544);
+    for (int nt = 0; nt < N / 16; ++nt)
+        for (int b = 0; b < KB; ++b) {
+            uint8_t *o = out.data() + ((size_t)nt * KB + b) * 544;
+            for (int r = 0; r < 16; ++r) {
+                const uint8_t *blk = raw + ((size_t)(nt * 16 + r) * KB + b) * 34;
+                std::memcpy(o + r * 32, blk + 2, 32);
+                std::memcpy(o + 512 + 2 * r, blk, 2);
+            }
+        }
+    return out;
+}
+// PK: the decoded weights go to local memory as fp16 pairs in the engines' packed order (one 32-bit write per pair,
+// tiles double-buffered so one sub-group barrier per block; the next block's bytes are read before this one's math)
+template <int KS, bool XG, bool PK = false>
+inline sycl::event dsp_mm_x(sycl::queue &dq, const uint8_t *Wx, int N, int K, const void *xin, int ldx, float *y) {
+    namespace jm = sycl::ext::oneapi::experimental::matrix;
+    using hf = sycl::half;
+    constexpr int T = 8, NSG = 8, NTW = NSG / KS; // slots, sub-groups per work-group, 16-row tiles per work-group
+    const int KB = K / 32, ntiles = N / 16, nwg = (ntiles + NTW - 1) / NTW, kbs = KB / KS;
+    if (N % 16 || K % 32 || KB % KS || (!XG && K > 4096)) throw std::runtime_error("dsp_mm_x: unsupported shape");
+    return dq.submit([&](sycl::handler &h) {
+        sycl::local_accessor<hf, 1> xs(XG ? 1 : T * K, h), bs(NSG * 512 * (PK ? 2 : 1), h);
+        sycl::local_accessor<float, 1> red(KS > 1 ? NSG * 128 : 1, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nwg * NSG * 16), sycl::range<1>(NSG * 16)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
+            const auto sg = it.get_sub_group();
+            const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), li = (int)it.get_local_id(0);
+            const int nt = (int)it.get_group(0) * NTW + sgi / KS, ks = sgi % KS;
+            auto lp = [](auto &acc, size_t off) { return acc.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+            if constexpr (!XG) {
+                const float *xf = (const float *)xin;
+                for (int i = li; i < T * K; i += NSG * 16) {
+                    const int t = i / K, kk = i % K;
+                    xs[i] = (hf)xf[(size_t)t * ldx + xlane_at(kk)];
+                }
+                sycl::group_barrier(it.get_group());
+            }
+            jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16> acc;
+            jm::joint_matrix_fill(sg, acc, 0.0f);
+            if (PK && nt < ntiles) {
+                const uint8_t *wt = Wx + ((size_t)nt * KB + (size_t)ks * kbs) * 544;
+                const int b0 = ks * kbs;
+                uint32_t *bw = reinterpret_cast<uint32_t *>(&bs[0]) + sgi * 512; // 2 buffers x 2 tiles x 128 words
+                sycl::vec<int8_t, 16> q0 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(wt + ln * 32);
+                sycl::vec<int8_t, 16> q1 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(wt + ln * 32 + 16);
+                float dsc = (float)*reinterpret_cast<const hf *>(wt + 512 + 2 * ln);
+                for (int b = 0; b < kbs; ++b) {
+                    const int bb = b + 1 < kbs ? b + 1 : b; // the next block's bytes first
+                    const uint8_t *nx = wt + (size_t)bb * 544;
+                    const sycl::vec<int8_t, 16> n0 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(nx + ln * 32);
+                    const sycl::vec<int8_t, 16> n1 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(nx + ln * 32 + 16);
+                    const float nd = (float)*reinterpret_cast<const hf *>(nx + 512 + 2 * ln);
+                    uint32_t *buf = bw + (b & 1) * 256;
+#pragma unroll
+                    for (int kk = 0; kk < 16; kk += 2) { // element (k, n) of a packed 16 x 16 tile: word (k / 2) * 16 + n
+                        const sycl::vec<hf, 2> p0((hf)((float)q0[kk] * dsc), (hf)((float)q0[kk + 1] * dsc));
+                        const sycl::vec<hf, 2> p1((hf)((float)q1[kk] * dsc), (hf)((float)q1[kk + 1] * dsc));
+                        buf[(kk / 2) * 16 + ln] = sycl::bit_cast<uint32_t>(p0);
+                        buf[128 + (kk / 2) * 16 + ln] = sycl::bit_cast<uint32_t>(p1);
+                    }
+                    sycl::group_barrier(sg);
+                    jm::joint_matrix<sycl::sub_group, hf, jm::use::b, 16, 16, jm::layout::ext_intel_packed> w0, w1;
+                    jm::joint_matrix<sycl::sub_group, hf, jm::use::a, 8, 16, jm::layout::row_major> a0, a1;
+                    jm::joint_matrix_load(sg, w0, lp(bs, (size_t)sgi * 1024 + (b & 1) * 512), 32);
+                    jm::joint_matrix_load(sg, w1, lp(bs, (size_t)sgi * 1024 + (b & 1) * 512 + 256), 32);
+                    const int kc = 32 * (b0 + b);
+                    if constexpr (XG) {
+                        const hf *xh = (const hf *)xin;
+                        auto gp = sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(xh + kc);
+                        jm::joint_matrix_load(sg, a0, gp, K);
+                        jm::joint_matrix_load(sg, a1, gp + 16, K);
+                    } else {
+                        jm::joint_matrix_load(sg, a0, lp(xs, (size_t)kc), K);
+                        jm::joint_matrix_load(sg, a1, lp(xs, (size_t)kc + 16), K);
+                    }
+                    jm::joint_matrix_mad(sg, acc, a0, w0, acc);
+                    jm::joint_matrix_mad(sg, acc, a1, w1, acc);
+                    q0 = n0; q1 = n1; dsc = nd;
+                }
+            } else if (!PK && nt < ntiles) {
+                const uint8_t *wt = Wx + ((size_t)nt * KB + (size_t)ks * kbs) * 544;
+                const int b0 = ks * kbs;
+                for (int b = 0; b < kbs; ++b) {
+                    const uint8_t *ch = wt + (size_t)b * 544;
+                    const sycl::vec<int8_t, 16> q0 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(ch + ln * 32);
+                    const sycl::vec<int8_t, 16> q1 = *reinterpret_cast<const sycl::vec<int8_t, 16> *>(ch + ln * 32 + 16);
+                    const float dsc = (float)*reinterpret_cast<const hf *>(ch + 512 + 2 * ln);
+                    sycl::group_barrier(sg); // the previous block's tiles are read
+#pragma unroll
+                    for (int kk = 0; kk < 16; ++kk) {
+                        bs[sgi * 512 + kk * 16 + ln] = (hf)((float)q0[kk] * dsc);
+                        bs[sgi * 512 + 256 + kk * 16 + ln] = (hf)((float)q1[kk] * dsc);
+                    }
+                    sycl::group_barrier(sg);
+                    jm::joint_matrix<sycl::sub_group, hf, jm::use::b, 16, 16, jm::layout::row_major> w0, w1;
+                    jm::joint_matrix<sycl::sub_group, hf, jm::use::a, 8, 16, jm::layout::row_major> a0, a1;
+                    jm::joint_matrix_load(sg, w0, lp(bs, (size_t)sgi * 512), 16);
+                    jm::joint_matrix_load(sg, w1, lp(bs, (size_t)sgi * 512 + 256), 16);
+                    const int kc = 32 * (b0 + b);
+                    if constexpr (XG) {
+                        const hf *xh = (const hf *)xin;
+                        auto gp = sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(xh + kc);
+                        jm::joint_matrix_load(sg, a0, gp, K);
+                        jm::joint_matrix_load(sg, a1, gp + 16, K);
+                    } else {
+                        jm::joint_matrix_load(sg, a0, lp(xs, (size_t)kc), K);
+                        jm::joint_matrix_load(sg, a1, lp(xs, (size_t)kc + 16), K);
+                    }
+                    jm::joint_matrix_mad(sg, acc, a0, w0, acc);
+                    jm::joint_matrix_mad(sg, acc, a1, w1, acc);
+                }
+            }
+            if constexpr (KS == 1) {
+                if (nt < ntiles)
+                    jm::joint_matrix_store(sg, acc, sycl::address_space_cast<sycl::access::address_space::global_space,
+                                                                                sycl::access::decorated::no>(y + (size_t)nt * 16),
+                                           (size_t)N, jm::layout::row_major);
+            } else {
+                jm::joint_matrix_store(sg, acc, lp(red, (size_t)sgi * 128), 16, jm::layout::row_major);
+                sycl::group_barrier(it.get_group());
+                // thread li: tile li / 128 of this work-group, element li % 128 (slot e / 16, row e % 16); slices in order
+                for (int e = li; e < NTW * 128; e += NSG * 16) {
+                    const int tw = e / 128, el = e % 128, ntt = (int)it.get_group(0) * NTW + tw;
+                    if (ntt >= ntiles) continue;
+                    float v = 0.0f;
+                    for (int k2 = 0; k2 < KS; ++k2) v += red[(tw * KS + k2) * 128 + el];
+                    y[(size_t)(el / 16) * N + ntt * 16 + el % 16] = v;
+                }
+            }
+        });
+    });
+}
+
 struct Drafter {
     static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, AWG = 256;
     Engine &e;
@@ -284,6 +429,11 @@ struct Drafter {
     // bytes of the per-guess read (103 -> 51 MB); it only moves the drafter's guesses
     bool pt8 = true;
     int8_t *Pt8 = nullptr;
+    // INK_DSP_MMX (default 1): the 8-slot products (q, k, v, o, gate, up, down) on the matrix engines (dsp_mm_x) from
+    // repacked copies X8 of the Q8_0 weights; their inputs as fp16 rows (xh16: the norms, ah: the attention, gh: SiLU)
+    bool mmx = true;
+    uint8_t *X8[NL][7] = {};
+    sycl::half *xh16 = nullptr, *ah = nullptr, *gh = nullptr;
     float *Ps = nullptr;
     int32_t *gids;
     float *yl = nullptr, *amv = nullptr, *ams = nullptr, *gp = nullptr; int32_t *ami = nullptr; // argmax scratch; guess probabilities
@@ -324,8 +474,20 @@ struct Drafter {
         const auto &tl = g.arr<std::vector<int64_t>>("dflash.target_layers");
         if (tl.size() != 4 || tl[3] != h.n_app) throw std::runtime_error("dspark: target layers");
         for (int j = 0; j < 3; ++j) e.feat_vis[j] = (int)tl[j];
-        w.upload(d, g, false);
-        views = planarize(d, g, w, false);
+        // the 8-slot products' weights go on the card only as dsp_mm_x's repacked copies (INK_DSP_MMX)
+        if (const char *ev = std::getenv("INK_DSP_MMX")) mmx = std::atoi(ev) != 0;
+        if (const char *ev = std::getenv("INK_DSP_SPLIT")) split = std::atoi(ev);
+        static const char *const pw[7] = {"attn_q", "attn_k", "attn_v", "attn_output", "ffn_gate", "ffn_up", "ffn_down"};
+        std::set<std::string> mine;
+        for (int l = 0; l < NL; ++l)
+            for (int m = 0; m < 7; ++m) mine.insert("blk." + std::to_string(l) + "." + pw[m] + ".weight");
+        for (auto &t : g.tensors)
+            if (mine.count(t.name) && (t.type != G_Q8_0 || t.rows() % 16 || t.ne[0] % 256)) mmx = false;
+        auto own = [&](const Tensor &t) { // the output product stays in the file layout too for splits 0/1 (lmm)
+            return mmx && mine.count(t.name) && !(split != 2 && t.name.find(".attn_output.") != std::string::npos);
+        };
+        w.upload(d, g, false, own);
+        views = planarize(d, g, w, false, own);
         for (int l = 0; l < NL; ++l) {
             const std::string p = "blk." + std::to_string(l) + ".";
             DL &a = L[l];
@@ -335,6 +497,23 @@ struct Drafter {
             a.k_ctx_norm = get(p + "attn_k_ctx_norm.weight"); a.dflare_norm = get(p + "dflare_norm.weight");
             a.ffn_norm = get(p + "ffn_norm.weight"); a.gate = get(p + "ffn_gate.weight"); a.up = get(p + "ffn_up.weight");
             a.down = get(p + "ffn_down.weight");
+        }
+        if (mmx) {
+            size_t tot = 0;
+            for (int l = 0; l < NL; ++l) {
+                const W *ws[7] = {&L[l].wq, &L[l].wk, &L[l].wv, &L[l].wo, &L[l].gate, &L[l].up, &L[l].down};
+                for (int m = 0; m < 7; ++m) {
+                    if (m == 3 && !o_mx()) continue; // splits 0/1: the output product reads the uploaded copy
+                    const Tensor &t = *ws[m]->t;
+                    std::vector<uint8_t> raw(t.bytes);
+                    g.read_at(raw.data(), t.bytes, g.data_off + t.off);
+                    const std::vector<uint8_t> rp = dsp_x8_repack(raw.data(), (int)t.rows(), (int)t.ne[0]);
+                    X8[l][m] = d.alloc<uint8_t>(rp.size());
+                    d.put(X8[l][m], rp.data(), rp.size());
+                    tot += rp.size();
+                }
+            }
+            std::fprintf(stderr, "[dspark] 8-slot products on the matrix engines (%.0f MB of repacked weights)\n", tot / 1e6);
         }
         dnorm = get("dspark_norm.weight"); mask = get("mask_embd.weight"); onorm = get("output_norm.weight");
         w1 = get("markov_w1.weight"); jp = get("joint_proj.weight"); jpb = get("joint_proj.bias");
@@ -385,6 +564,11 @@ struct Drafter {
         hl = d.alloc<float>((size_t)B * xlane_floats(E));
         attl = d.alloc<float>((size_t)B * xlane_floats(HQ * HD));
         gl = d.alloc<float>((size_t)B * xlane_floats((int)L[0].gate.t->rows()));
+        if (mmx) {
+            xh16 = d.alloc<sycl::half>((size_t)B * E);
+            ah = d.alloc<sycl::half>((size_t)B * HQ * HD);
+            gh = d.alloc<sycl::half>((size_t)B * L[0].gate.t->rows());
+        }
         amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G); ams = d.alloc<float>(ops::ARGMAX_G);
         gp = d.alloc<float>(B);
         if (const char *ev = std::getenv("INK_DSP_FOLD")) fold = std::atoi(ev) != 0;
@@ -438,6 +622,31 @@ struct Drafter {
 
     // y[t] = W x[t] for the 8 slots, x in lane order (rows xlane_floats(cols) apart): blocks of 8 vectors per sub-group
     // (bench_gemv card 3, 8 vectors: ffn_gate 75 us, ffn_down 88; the tile kernels 123 and 225)
+    // the output product on the matrix engines (its input from attn_combine as fp16 rows): split 2 only; splits 0/1
+    // write attl themselves (split 1 also through attn_combine, which then writes attl too)
+    bool o_mx() const { return mmx && split == 2; }
+    // product m of layer l (0 q, 1 k, 2 v, 3 o, 4 gate, 5 up, 6 down): the matrix engines from the fp16 rows xh, else lmm
+    void mm(int l, int m, const W &wt, const float *xl, const sycl::half *xh, float *yout, const char *label) {
+        if (!mmx || (m == 3 && !o_mx())) { lmm(wt, xl, yout, label); return; }
+        const int N = (int)wt.t->rows(), K = (int)wt.t->ne[0];
+        if (N >= 8192) e.pr(label, dsp_mm_x<2, true, true>(d.q, X8[l][m], N, K, xh, 0, yout));
+        else e.pr(label, dsp_mm_x<8, true, true>(d.q, X8[l][m], N, K, xh, 0, yout));
+    }
+    // RMSNorm of the 8 slots into fp16 rows (the matrix-engine products' input; only the guesses depend on it)
+    void norm_h(const float *xin, const W &wn, sycl::half *out) {
+        const float *w_ = f32(wn);
+        const int E_ = E;
+        const float ep = eps;
+        e.pr("dsp_norm", d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)B * 256), sycl::range<1>(256)), [=](sycl::nd_item<1> it) {
+            const int t = (int)it.get_group(0), li = (int)it.get_local_id(0);
+            const float *xr = xin + (size_t)t * E_;
+            float ss = 0.0f;
+            for (int i = li; i < E_; i += 256) ss += xr[i] * xr[i];
+            ss = sycl::reduce_over_group(it.get_group(), ss, sycl::plus<float>());
+            const float rs = 1.0f / sycl::sqrt(ss / E_ + ep);
+            for (int i = li; i < E_; i += 256) out[(size_t)t * E_ + i] = (sycl::half)(xr[i] * rs * w_[i]);
+        }));
+    }
     void lmm(const W &wt, const float *xin, float *yout, const char *label) {
         const int cols = (int)wt.t->ne[0], rows = (int)wt.t->rows();
         e.pr(label, gemv_v(d.q, wt.view(), xin, (int)xlane_floats(cols), yout, rows, B, Tune{1, 1, false, 8, false}, true));
@@ -536,10 +745,11 @@ struct Drafter {
         }
         for (int l = 0; l < NL; ++l) {
             const DL &a = L[l];
-            e.pr("dsp_norm", ops::rms_norm(d.q, x, nullptr, f32(a.attn_norm), E, B, eps, -1, -1, hl));
-            lmm(a.wq, hl, q, "dsp_q");
-            lmm(a.wk, hl, k, "dsp_k");
-            lmm(a.wv, hl, v, "dsp_v");
+            if (mmx) norm_h(x, a.attn_norm, xh16);
+            else e.pr("dsp_norm", ops::rms_norm(d.q, x, nullptr, f32(a.attn_norm), E, B, eps, -1, -1, hl));
+            mm(l, 0, a.wq, hl, xh16, q, "dsp_q");
+            mm(l, 1, a.wk, hl, xh16, k, "dsp_k");
+            mm(l, 2, a.wv, hl, xh16, v, "dsp_v");
             { // q and k: per-head norm and RoPE at P0 + slot
                 float *q_ = q, *k_ = k;
                 const float *qn = f32(a.q_norm), *kn = f32(a.k_norm);
@@ -561,22 +771,27 @@ struct Drafter {
                 }));
             }
             attend(l, P0);
-            lmm(a.wo, attl, ao, "dsp_o");
+            mm(l, 3, a.wo, attl, ah, ao, "dsp_o");
             add(x, ao, (size_t)B * E);
-            e.pr("dsp_norm", ops::rms_norm(d.q, x, nullptr, f32(a.ffn_norm), E, B, eps, -1, -1, hl));
-            lmm(a.gate, hl, gt, "dsp_gate_w");
-            lmm(a.up, hl, upb, "dsp_up_w");
+            if (mmx) norm_h(x, a.ffn_norm, xh16);
+            else e.pr("dsp_norm", ops::rms_norm(d.q, x, nullptr, f32(a.ffn_norm), E, B, eps, -1, -1, hl));
+            mm(l, 4, a.gate, hl, xh16, gt, "dsp_gate_w");
+            mm(l, 5, a.up, hl, xh16, upb, "dsp_up_w");
             {
                 const float *g_ = gt, *u_ = upb;
                 float *gl_ = gl;
+                sycl::half *gh_ = gh;
+                const bool toh = mmx;
                 const size_t lf = xlane_floats(F);
                 e.pr("dsp_silu", d.q.parallel_for(sycl::range<2>(B, (size_t)F), [=](sycl::id<2> id) {
                     const size_t i = id[0] * (size_t)F + id[1];
                     const float gv = g_[i];
-                    gl_[id[0] * lf + xlane_at((int)id[1])] = gv / (1.0f + sycl::exp(-gv)) * u_[i];
+                    const float o = gv / (1.0f + sycl::exp(-gv)) * u_[i];
+                    if (toh) gh_[i] = (sycl::half)o;
+                    else gl_[id[0] * lf + xlane_at((int)id[1])] = o;
                 }));
             }
-            lmm(a.down, gl, ao, "dsp_down_w");
+            mm(l, 6, a.down, gl, gh, ao, "dsp_down_w");
             add(x, ao, (size_t)B * E);
         }
         e.pr("dsp_norm", ops::rms_norm(d.q, x, y, f32(onorm), E, B, eps, -1, -1, yl));
@@ -760,6 +975,7 @@ struct Drafter {
         constexpr int G = HQ / HKV;
         const float *pO_ = pO, *pM_ = pM, *pL_ = pL;
         float *att_ = attl;
+        sycl::half *ah_ = o_mx() ? ah : nullptr;
         const size_t la = xlane_floats(HQ * HD);
         e.pr("dsp_attn_comb", d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * NR * HD), sycl::range<1>(HD)),
                                                 [=](sycl::nd_item<1> it) {
@@ -773,7 +989,8 @@ struct Drafter {
                 su += lsum[cc] * f;
                 ov += o[(size_t)cc * HD + dd] * f;
             }
-            att_[(size_t)(r / G) * la + xlane_at((kvh * G + r % G) * HD + dd)] = ov / su;
+            if (ah_) ah_[(size_t)(r / G) * HQ * HD + (kvh * G + r % G) * HD + dd] = (sycl::half)(ov / su);
+            else att_[(size_t)(r / G) * la + xlane_at((kvh * G + r % G) * HD + dd)] = ov / su;
         }));
     }
 

@@ -110,6 +110,8 @@
   after a 100K prompt 57.6 -> 60.6 tok/s (plain 52.5), 31K 98.5 -> 100.5, same guesses kept, ids identical. Gate 11/11.
 - Nov 23 ~20:57: the drafter's correction table in int8 (half the bytes per guess): guessing +1 % (code 119.8 tok/s,
   haiku 107.4, 3K 106.1, 31K 101.3), same guesses kept, ids identical. Gate 11/11.
+- Nov 23 ~21:45: the drafter's 8-slot products on the matrix engines (no extra card memory): code 122.0 tok/s
+  (card 2), haiku 108.9, 3K 107.3, 31K 102.9, 100K 61.6; same guesses kept, ids identical. Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

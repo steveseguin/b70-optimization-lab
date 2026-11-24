@@ -204,6 +204,17 @@ Long prompts and long writing (2026-11-23 evening):
   ids identical: code 118.3 -> 119.8 tok/s, haiku 106.2 -> 107.4, 3K 105.0 -> 106.1; 31K (card 4) 100.4 -> 101.3.
   The drafter now costs ~2.45 ms per round at short contexts: the W_lm pass for the guess slots 0.75 (380 MB at
   ~508 GB/s), the corrections 0.32, its FFN 0.80 and q/k/v/o 0.31 (8-row Q8_0 products at ~200-300 GB/s).
+- The drafter's 8-slot products (q, k, v, o, gate, up, down) on the matrix engines (`dsp_mm_x`, `INK_DSP_MMX`,
+  default 1): the Q8_0 weights repacked at load into tiles of 16 rows x 32 columns (int8 values, then the 16 scales),
+  each lane decodes one row's 32 values to fp16 pairs in the engines' packed order (two local buffers, the next
+  block's bytes read first), the slots' inputs are fp16 rows (the norms, the attention combine and SiLU write them),
+  fp32 sums; 2 sub-groups split a row range's columns for the 9,216-row products, 8 for the others. `bench_dsp`
+  (`BENCH_MM=1`, card 3): 9216 x 2304 48.9 µs (461 GB/s), 2304 x 9216 47.1, 3072 x 2304 16.4, 2304 x 3072 17.3,
+  1024 x 2304 8.2; in the drafter gate / up / down 74.7 / 73.3 / 93.6 -> 51.2 / 49.5 / 47.3 µs, q 34 -> 17.5, o 33 ->
+  18.7. Only the repacked copies go on the card (`Weights::upload` skip + `planarize` own): card memory 18.42 GiB
+  with or without. Same guesses kept everywhere (code 155, haiku 145, 3K 147, 31K 156), ids identical; card 2 code
+  119.6 -> 122.0 tok/s, haiku 107.1 -> 108.9, 3K (card 1) 106.0 -> 107.3, 31K (card 4) 101.3 -> 102.9; 100K
+  60.51 (card 2, off) / 61.58 (card 4, on). Drafting per run 0.249 -> 0.203 s (code).
 - Step costs on card 3 (`INK_BENCH_REAL=1 INK_BENCH_STEP=1,1,2,3,4`), ms for 1 / 2 / 3 / 4 tokens: at 3,119 positions
   11.90 / 15.59 / 19.12 / 21.74; 7,992: 12.34 / 16.76 / 19.91 / 23.01; 31,262: 13.90 / 18.49 / 22.48 / 25.69; 99,992:
   18.80 / 24.56 / 28.40 / 33.09. The ratios to one token barely move with context, so the guess-count rule's fixed
