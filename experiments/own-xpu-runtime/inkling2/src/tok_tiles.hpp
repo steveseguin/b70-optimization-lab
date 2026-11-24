@@ -522,13 +522,16 @@ template <class D, int R> struct SlotRowsG {
     }
 };
 // SlotRowsG with a sub-group per pair of tiles (as SlotPairG2). The same values.
-template <class D, int R, bool PAIR = true, bool BIG = false> struct SlotRowsG2 : GrfProps<BIG> {
+template <class D, int R, bool PAIR = true, bool BIG = false, bool LUT = false> struct SlotRowsG2 : GrfProps<BIG> {
     const uint8_t *W; size_t rb, estride; int rows, cols;
     MoeGroups g;
     const float *Xt;
     float *y; int ldy;
     int sgw;
+    sycl::local_accessor<float, 1> lut;
     [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        LocalF lp{};
+        if constexpr (LUT) { lp = lut.get_multi_ptr<sycl::access::decorated::yes>(); nv4_lut_fill(it, lp); }
         const int t0 = 2 * (int)it.get_group(0), ntl = g.ntiles[0];
         if (t0 >= ntl) return;
         auto sg = it.get_sub_group();
@@ -552,18 +555,24 @@ template <class D, int R, bool PAIR = true, bool BIG = false> struct SlotRowsG2 
         float res0[R], res1[R];
         if (PAIR && t0 + 1 < ntl && g.tile_exp[t0 + 1] == g.tile_exp[t0]) {
             rows_of(t0);
-            tile_dots2<D, R>(sg, rp, cols, Xt + (size_t)t0 * cols * MOE_TS, Xt + (size_t)(t0 + 1) * cols * MOE_TS, lane, res0, res1);
+            tile_dots2<D, R, LUT>(sg, rp, cols, Xt + (size_t)t0 * cols * MOE_TS, Xt + (size_t)(t0 + 1) * cols * MOE_TS, lane, res0, res1, lp);
             put(t0, res0);
             put(t0 + 1, res1);
             return;
         }
         for (int t = t0; t < sycl::min(t0 + 2, ntl); ++t) {
             rows_of(t);
-            tile_dots<D, R>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0);
+            tile_dots<D, R, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
             put(t, res0);
         }
     }
 };
+// sub-groups per work-group of the prompt expert tiles (INK_TILE_SGW, default 1; the NVFP4 v2 tiles INK_TILE_SGW2,
+// default 32); each takes its own rows of the tile. The lookup tables are filled once per work-group, so with one
+// sub-group per work-group the fill and its barrier came every 16 tokens x 2-4 rows (bench_moe 1,024 tokens, card 3:
+// gate|up 11,275 -> 7,594 us with 32 sub-groups, down with the tables 5,723 -> 3,989)
+inline int tile_sgw = [] { const char *e = std::getenv("INK_TILE_SGW"); return e ? std::max(1, std::atoi(e)) : 1; }();
+inline int tile_sgw2 = [] { const char *e = std::getenv("INK_TILE_SGW2"); return e ? std::max(1, std::atoi(e)) : 32; }();
 // INK_TILE_LUT=0: NVFP4 gate|up tiles decode without the tables
 inline bool tile_lut = [] { const char *e = std::getenv("INK_TILE_LUT"); return !e || std::atoi(e) != 0; }();
 // INK_TILE_V2=0: the NVFP4 prompt expert tiles one tile per sub-group (slot_pair_g, slot_rows_g 2 rows) as before
@@ -572,12 +581,12 @@ inline bool tile_v2 = [] { const char *e = std::getenv("INK_TILE_V2"); return !e
 template <class Op>
 inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
                                const float *Xt, Op op, float *Ht, int ng = 2) {
-    const int cols = (int)a.t->ne[0], sgw = 1;
+    const int cols = (int)a.t->ne[0], sgw = tile_sgw;
     sycl::event e;
     with_decoder(a, [&]<class D>() {
         auto go = [&]<int NG>() {
             int ngr = (rows + NG - 1) / NG;
-            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
             constexpr bool L = std::is_same_v<D, pl::NVFP4P>;
             const bool lut = L && tile_lut;
             e = q.submit([&](sycl::handler &h) {
@@ -598,13 +607,13 @@ inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B,
 template <class Op>
 inline sycl::event slot_pair_g2(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
                                 const float *Xt, Op op, float *Ht, int ng = 2, bool pair = true, bool big = false) {
-    const int cols = (int)a.t->ne[0], sgw = 1;
+    const int cols = (int)a.t->ne[0], sgw = tile_sgw2;
     if (a.kind != K_NVFP4P || !Ht || !tile_lut) throw std::runtime_error("slot_pair_g2: NVFP4 tiles to Ht only");
     using D = pl::NVFP4P;
     sycl::event e;
     auto go = [&]<int NG, bool P, bool BG>() {
         int ngr = (rows + NG - 1) / NG;
-        sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+        sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
         e = q.submit([&](sycl::handler &h) {
             sycl::local_accessor<float, 1> la(NV4_LUT, h);
             h.parallel_for(nr, SlotPairG2<D, Op, NG, true, true, P, BG>{{}, a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
@@ -618,13 +627,13 @@ inline sycl::event slot_pair_g2(sycl::queue &q, const WView &a, const uint8_t *B
     return e;
 }
 inline sycl::event slot_rows_g(sycl::queue &q, const WView &w, MoeGroups g, int tiles, const float *Xt, float *y, int ldy, int r = 2) {
-    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = 1;
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = tile_sgw;
     const size_t estride = w.rb * (size_t)rows;
     sycl::event e;
     with_decoder(w, [&]<class D>() {
         auto go = [&]<int R>() {
             int ngr = (rows + R - 1) / R;
-            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)tiles, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
             e = q.parallel_for(nr, SlotRowsG<D, R>{w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw});
         };
         if (r == 1) go.template operator()<1>(); else go.template operator()<2>();
@@ -634,16 +643,20 @@ inline sycl::event slot_rows_g(sycl::queue &q, const WView &w, MoeGroups g, int 
 
 // NVFP4 only: r 1, 2 or 4 rows, pair / big as slot_pair_g2
 inline sycl::event slot_rows_g2(sycl::queue &q, const WView &w, MoeGroups g, int tiles, const float *Xt, float *y, int ldy, int r = 2,
-                                bool pair = true, bool big = false) {
-    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = 1;
+                                bool pair = true, bool big = false, bool lut = false) {
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = tile_sgw2;
     const size_t estride = w.rb * (size_t)rows;
     if (w.kind != K_NVFP4P) throw std::runtime_error("slot_rows_g2: NVFP4 only");
     using D = pl::NVFP4P;
     sycl::event e;
     auto go = [&]<int R, bool P, bool BG>() {
         int ngr = (rows + R - 1) / R;
-        sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)ngr * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
-        e = q.parallel_for(nr, SlotRowsG2<D, R, P, BG>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw});
+        sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+        e = q.submit([&](sycl::handler &h) {
+            sycl::local_accessor<float, 1> la(lut ? NV4_LUT : 1, h);
+            if (lut) h.parallel_for(nr, SlotRowsG2<D, R, P, BG, true>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
+            else h.parallel_for(nr, SlotRowsG2<D, R, P, BG, false>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
+        });
     };
     auto gp = [&]<int R>() {
         if (pair) { if (big) go.template operator()<R, true, true>(); else go.template operator()<R, true, false>(); }

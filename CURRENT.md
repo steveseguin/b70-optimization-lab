@@ -119,6 +119,12 @@
 - Nov 23 ~23:57: prompt reading +3-5 % (same values): attention tiles keep 2-4 channels per lane, long-context P.V
   takes up to 64 rows per launch, NVFP4 expert tiles share decoded weights across two tiles. 3K 659.5 -> 681.1 tok/s
   (card 3), 31K 591.6 -> 623.5, 100K 419.5 -> 440.6 (card 4); 100K logits rows bit-identical. Gate 11/11.
+- Nov 24 ~00:35: prompt reading +12-19 % (same values): the 4-bit expert kernels rebuilt their decode table for every
+  16 tokens; 32 sub-groups per work-group share it. 3K 680.5 -> 812.5 tok/s (card 3), 31K 627.1 -> 735.2, 100K
+  440.6 -> 495.9 (card 4); 100K logits rows bit-identical. Found with a multiply-add rate test and the machine code
+  (README). The B70 inference cookbook's PR 95 (vLLM, same model) was read for ideas: its writing is slower than
+  ours (54.5 plain, 80-95 drafted), its prompt reading much faster (BF16 on the matrix engines: not bit-identical,
+  not adopted); its graph-replay idea is not needed here (card busy 99 % of a step). Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

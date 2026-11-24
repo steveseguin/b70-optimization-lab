@@ -349,6 +349,28 @@ Prompt attention and expert tiles, more work per register (2026-11-23 night; eve
   (card 1); 31K 591.6 -> 623.5 (card 3), 555.3 -> 591.3 (card 1); 100K 419.5 -> 440.6 (card 4), 411.8 -> 421.9 (card
   5, attention changes only).
 
+What holds the FP32 tile kernels back (2026-11-24, `tools/bench_fma.cpp`, `tools/isa_tiles.cpp`):
+- `bench_fma <card>`: K independent multiply-add chains per lane, the multiplier broadcast from another lane as in the
+  tiles. Card 3, TMAC/s for work-groups of 16 / 128 / 256 lanes: K 1 5.19 / 5.22 / 5.20, K 4 6.19 / 6.18 / 6.17, K 8
+  6.44 / 11.21 / 11.21, K 16 11.30 at every size (the card's peak, 32 cores x 8 x 16 lanes at 2.8 GHz). A lane needs
+  16 chains in flight (8 with work-groups of >= 128 lanes) or the multiply-adds run at half speed.
+- `IGC_ShaderDumpEnable=1 IGC_DumpToCustomDir=<dir> scripts/build.sh isa_tiles <out>` dumps the machine code of the
+  hot prompt kernels (2.5 GB for every kernel the headers instantiate; find them by name in the `.asm` files). The
+  share of multiply-adds in a kernel matches its speed: expert down 36 %, gate|up 38 %, P.V block tiles 34 % (each
+  ~34-35 % of peak); score tiles 53 % (53-64 %). The gate|up tile keeps 4 chains (acc0-acc3, one per row).
+- The NVFP4 expert tiles ran one sub-group per work-group, and every work-group first fills the decode tables (272
+  values) behind a barrier: one fill per 16 tokens x 2 rows. 32 sub-groups per work-group (`INK_TILE_SGW2`, default
+  32; each takes its own rows of the tile) and the tables for down too: `bench_moe` 1,024 tokens (card 3) gate|up
+  11,275 -> 7,594 µs (4 rows, two tiles one after another; 8 sub-groups 7,798, 16 7,724), down 5,723 -> 3,989 (4 rows
+  with the tables; without 5,432); 512 tokens gate|up 6,369 -> 4,194, down 3,230 -> 2,195. Same values (bench and gate
+  11/11; logits rows after a 100K prompt bit-identical). Tile pairs lose once the tables are shared (gate|up 9,884 at
+  32 sub-groups), so gate|up no longer pairs.
+- Prompt reading, the same card before -> after (ids identical): 3K 680.5 -> 812.5 tok/s (card 3), 643.6 -> 756.1
+  (card 1); 31K 627.1 -> 735.2 (card 3), 588.8 -> 693.0 (card 1), 586.1 -> 684.9 (card 2); 100K 440.6 -> 495.9
+  (card 4).
+- Writing steps need no graph replay: the host submits a one-token step in 1.99 ms while it runs 12.22 ms (card 5),
+  and the card is busy 11.456 of 11.570 ms per step (`INK_PROF`).
+
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
 (unrolled, clamped indexes past the end), then the same operations in the same order: norms 5.1-5.6 -> 2.1-3.0 µs,

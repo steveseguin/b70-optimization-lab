@@ -865,14 +865,16 @@ struct Engine {
                     const int tiles = MoeGroups::max_tiles(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
                     pr("moe_tiles", tile_gather(d.q, grp, tiles, fx, E, h.n_used, E, Xt));
-                    // NVFP4 (INK_TILE_V2, default on; the same values): gate|up as pairs of tiles of one expert, every decoded
-                    // weight serving 32 slots; down 4 rows per sub-group, two tiles one after another (bench_moe 1,024
-                    // tokens, card 3: gate|up 11,730 -> 11,289 us, down 6,448 -> 5,723)
+                    // NVFP4 (INK_TILE_V2, default on; the same values): 32 sub-groups per work-group (tile_sgw2), so the
+                    // lookup tables are filled once per 32 sub-groups; gate|up 4 rows and down 4 rows (through the tables
+                    // too) per sub-group, two tiles one after another (bench_moe 1,024 tokens, card 3: gate|up 11,730 ->
+                    // 7,594 us, down 6,448 -> 3,989; 512 tokens 6,369 -> 4,194 and 3,526 -> 2,195)
                     if (tile_v2 && gv.kind == K_NVFP4P && tile_lut)
-                        pr("moe_gate_up", slot_pair_g2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2, true, false));
+                        pr("moe_gate_up", slot_pair_g2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2, false, false));
                     else
                         pr("moe_gate_up", slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
-                    if (tile_v2 && dv.kind == K_NVFP4P) pr("moe_down", slot_rows_g2(d.q, dv, grp, tiles, Ht, yk, E, 4, false, false));
+                    if (tile_v2 && dv.kind == K_NVFP4P)
+                        pr("moe_down", slot_rows_g2(d.q, dv, grp, tiles, Ht, yk, E, 4, false, false, tile_lut));
                     else pr("moe_down", slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
