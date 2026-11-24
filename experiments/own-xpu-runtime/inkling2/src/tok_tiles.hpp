@@ -287,6 +287,81 @@ inline void tile_dots(sycl::sub_group sg, const uint8_t *const *rp, int cols, co
     }
 }
 
+// tile_dots with two chunks of a virtual lane at a time (c and c + 16): their products are independent sums (each from
+// 0.0f in index order), so a lane keeps 2 NR sums going instead of NR; the chunk sums still join the virtual lane's
+// sum one after another (acc + s_c, then + s_{c+16}) and the butterfly is tile_dots'. The same values.
+template <class D, int NR, bool LUT = false>
+inline void tile_dots_c2(sycl::sub_group sg, const uint8_t *const *rp, int cols, const float *xt, int lane, float *res, LocalF lut = {}) {
+    using LD = LaneDec<D>;
+    const int nc = cols / 32;
+    float st[NR][4];
+    auto mp = [&](int c, int q) {
+        return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(
+            const_cast<float *>(xt + (size_t)32 * MOE_TS * c + 128 * q));
+    };
+#pragma unroll
+    for (int vi = 0; vi < 16; ++vi) {
+        const int v = br4(vi);
+        float acc[NR];
+#pragma unroll
+        for (int j = 0; j < NR; ++j) acc[j] = 0.0f;
+        int c = v;
+        for (; c + SG < nc; c += 2 * SG) {
+            float lo0[NR], hi0[NR], lo1[NR], hi1[NR], s0[NR], s1[NR];
+#pragma unroll
+            for (int j = 0; j < NR; ++j) {
+                if constexpr (LUT) { LaneDecLut::get(rp[j], cols, c, lane, lo0[j], hi0[j], lut); LaneDecLut::get(rp[j], cols, c + SG, lane, lo1[j], hi1[j], lut); }
+                else { LD::get(rp[j], cols, c, lane, lo0[j], hi0[j]); LD::get(rp[j], cols, c + SG, lane, lo1[j], hi1[j]); }
+                s0[j] = 0.0f; s1[j] = 0.0f;
+            }
+#pragma unroll
+            for (int q = 0; q < 4; ++q) {
+                const sycl::vec<float, 8> a = sg.load<8>(mp(c, q)), b = sg.load<8>(mp(c + SG, q));
+#pragma unroll
+                for (int k = 0; k < 8; ++k) {
+                    const int i = 8 * q + k;
+#pragma unroll
+                    for (int j = 0; j < NR; ++j) {
+                        s0[j] = mac(s0[j], sycl::select_from_group(sg, LD::hi(i) ? hi0[j] : lo0[j], LD::src(i)), a[k]);
+                        s1[j] = mac(s1[j], sycl::select_from_group(sg, LD::hi(i) ? hi1[j] : lo1[j], LD::src(i)), b[k]);
+                    }
+                }
+            }
+#pragma unroll
+            for (int j = 0; j < NR; ++j) { acc[j] += s0[j]; acc[j] += s1[j]; }
+        }
+        if (c < nc) {
+            float lo[NR], hi[NR], s[NR];
+#pragma unroll
+            for (int j = 0; j < NR; ++j) {
+                if constexpr (LUT) LaneDecLut::get(rp[j], cols, c, lane, lo[j], hi[j], lut);
+                else LD::get(rp[j], cols, c, lane, lo[j], hi[j]);
+                s[j] = 0.0f;
+            }
+#pragma unroll
+            for (int q = 0; q < 4; ++q) {
+                const sycl::vec<float, 8> a = sg.load<8>(mp(c, q));
+#pragma unroll
+                for (int k = 0; k < 8; ++k) {
+                    const int i = 8 * q + k;
+#pragma unroll
+                    for (int j = 0; j < NR; ++j) s[j] = mac(s[j], sycl::select_from_group(sg, LD::hi(i) ? hi[j] : lo[j], LD::src(i)), a[k]);
+                }
+            }
+#pragma unroll
+            for (int j = 0; j < NR; ++j) acc[j] += s[j];
+        }
+#pragma unroll
+        for (int j = 0; j < NR; ++j) {
+            float val = acc[j];
+            int lev = 0;
+            for (int tt = vi; tt & 1; tt >>= 1) val = st[j][lev++] + val;
+            if (lev < 4) st[j][lev] = val;
+            else res[j] = val;
+        }
+    }
+}
+
 // tile_dots for two tiles of the same expert at once (32 slots, two per lane): every decoded weight value serves 32
 // tokens. Each token's sums are tile_dots' (chunk products in index order, chunk sums in order, the same butterfly), so
 // the values are the same.
@@ -442,7 +517,7 @@ template <class D, class Op, int NG, bool TOUT, bool LUT = false> struct SlotPai
 };
 // SlotPairG with a sub-group per pair of tiles (2p, 2p + 1): tiles of the same expert go through tile_dots2, others one
 // after another through tile_dots. The same values.
-template <class D, class Op, int NG, bool TOUT, bool LUT = false, bool PAIR = true, bool BIG = false> struct SlotPairG2 : GrfProps<BIG> {
+template <class D, class Op, int NG, bool TOUT, bool LUT = false, bool PAIR = true, bool BIG = false, bool C2 = false> struct SlotPairG2 : GrfProps<BIG> {
     const uint8_t *A, *B; size_t rb, estride; int rows, cols;
     MoeGroups g;
     const float *Xt;
@@ -490,7 +565,8 @@ template <class D, class Op, int NG, bool TOUT, bool LUT = false, bool PAIR = tr
         }
         for (int t = t0; t < sycl::min(t0 + 2, ntl); ++t) {
             rows_of(t);
-            tile_dots<D, 2 * NG, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
+            if constexpr (C2) tile_dots_c2<D, 2 * NG, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
+            else tile_dots<D, 2 * NG, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
             put(t, res0);
         }
     }
@@ -522,7 +598,7 @@ template <class D, int R> struct SlotRowsG {
     }
 };
 // SlotRowsG with a sub-group per pair of tiles (as SlotPairG2). The same values.
-template <class D, int R, bool PAIR = true, bool BIG = false, bool LUT = false> struct SlotRowsG2 : GrfProps<BIG> {
+template <class D, int R, bool PAIR = true, bool BIG = false, bool LUT = false, bool C2 = false> struct SlotRowsG2 : GrfProps<BIG> {
     const uint8_t *W; size_t rb, estride; int rows, cols;
     MoeGroups g;
     const float *Xt;
@@ -562,7 +638,8 @@ template <class D, int R, bool PAIR = true, bool BIG = false, bool LUT = false> 
         }
         for (int t = t0; t < sycl::min(t0 + 2, ntl); ++t) {
             rows_of(t);
-            tile_dots<D, R, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
+            if constexpr (C2) tile_dots_c2<D, R, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
+            else tile_dots<D, R, LUT>(sg, rp, cols, Xt + (size_t)t * cols * MOE_TS, lane, res0, lp);
             put(t, res0);
         }
     }
@@ -606,21 +683,22 @@ inline sycl::event slot_pair_g(sycl::queue &q, const WView &a, const uint8_t *B,
 // tables on, the activation to the tiles): ng 1, 2 or 4 gate rows, big = 256 registers
 template <class Op>
 inline sycl::event slot_pair_g2(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
-                                const float *Xt, Op op, float *Ht, int ng = 2, bool pair = true, bool big = false) {
+                                const float *Xt, Op op, float *Ht, int ng = 2, bool pair = true, bool big = false, bool c2 = false) {
     const int cols = (int)a.t->ne[0], sgw = tile_sgw2;
     if (a.kind != K_NVFP4P || !Ht || !tile_lut) throw std::runtime_error("slot_pair_g2: NVFP4 tiles to Ht only");
     using D = pl::NVFP4P;
     sycl::event e;
-    auto go = [&]<int NG, bool P, bool BG>() {
+    auto go = [&]<int NG, bool P, bool BG, bool CC = false>() {
         int ngr = (rows + NG - 1) / NG;
         sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
         e = q.submit([&](sycl::handler &h) {
             sycl::local_accessor<float, 1> la(NV4_LUT, h);
-            h.parallel_for(nr, SlotPairG2<D, Op, NG, true, true, P, BG>{{}, a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+            h.parallel_for(nr, SlotPairG2<D, Op, NG, true, true, P, BG, CC>{{}, a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
         });
     };
     auto gp = [&]<int NG>() {
         if (pair) { if (big) go.template operator()<NG, true, true>(); else go.template operator()<NG, true, false>(); }
+        else if (c2) { if (big) go.template operator()<NG, false, true, true>(); else go.template operator()<NG, false, false, true>(); }
         else { if (big) go.template operator()<NG, false, true>(); else go.template operator()<NG, false, false>(); }
     };
     if (ng == 1) gp.template operator()<1>(); else if (ng == 4) gp.template operator()<4>(); else gp.template operator()<2>();
@@ -643,23 +721,24 @@ inline sycl::event slot_rows_g(sycl::queue &q, const WView &w, MoeGroups g, int 
 
 // NVFP4 only: r 1, 2 or 4 rows, pair / big as slot_pair_g2
 inline sycl::event slot_rows_g2(sycl::queue &q, const WView &w, MoeGroups g, int tiles, const float *Xt, float *y, int ldy, int r = 2,
-                                bool pair = true, bool big = false, bool lut = false) {
+                                bool pair = true, bool big = false, bool lut = false, bool c2 = false) {
     const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1], sgw = tile_sgw2;
     const size_t estride = w.rb * (size_t)rows;
     if (w.kind != K_NVFP4P) throw std::runtime_error("slot_rows_g2: NVFP4 only");
     using D = pl::NVFP4P;
     sycl::event e;
-    auto go = [&]<int R, bool P, bool BG>() {
+    auto go = [&]<int R, bool P, bool BG, bool CC = false>() {
         int ngr = (rows + R - 1) / R;
         sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
         e = q.submit([&](sycl::handler &h) {
             sycl::local_accessor<float, 1> la(lut ? NV4_LUT : 1, h);
-            if (lut) h.parallel_for(nr, SlotRowsG2<D, R, P, BG, true>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
-            else h.parallel_for(nr, SlotRowsG2<D, R, P, BG, false>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
+            if (lut) h.parallel_for(nr, SlotRowsG2<D, R, P, BG, true, CC>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
+            else h.parallel_for(nr, SlotRowsG2<D, R, P, BG, false, CC>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
         });
     };
     auto gp = [&]<int R>() {
         if (pair) { if (big) go.template operator()<R, true, true>(); else go.template operator()<R, true, false>(); }
+        else if (c2) { if (big) go.template operator()<R, false, true, true>(); else go.template operator()<R, false, false, true>(); }
         else { if (big) go.template operator()<R, false, true>(); else go.template operator()<R, false, false>(); }
     };
     if (r == 1) gp.template operator()<1>(); else if (r == 4) gp.template operator()<4>(); else gp.template operator()<2>();

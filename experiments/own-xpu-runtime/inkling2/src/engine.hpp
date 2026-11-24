@@ -354,9 +354,14 @@ struct Engine {
     // 2026-11-22: Q8_0 / Q6_K / F32 2.5-4x from 16 tokens; F32 rows of 2304 need >= 128 tokens; few rows lose)
     bool dense_tiles(const W &w, int ntok, DTune &dt) const {
         if (!Xd || ntok < dense_min || w.t->ne[0] > XD_COLS || w.t->rows() < 64) return false;
+        // INK_DENSE_R / INK_DENSE_SGW: rows and sub-groups per work-group of the Q8_0 / Q6_K tiles from 64 tokens
+        // (default 4 rows, 32 sub-groups; the same values. INK_PROF 3K prompt, card 3: attn_output 1,323 -> 935 us per
+        // launch; rows are the independent sums a lane keeps going, 2 = before)
+        static const int dr = std::getenv("INK_DENSE_R") ? std::atoi(std::getenv("INK_DENSE_R")) : 4;
+        static const int dsg = std::getenv("INK_DENSE_SGW") ? std::max(1, std::atoi(std::getenv("INK_DENSE_SGW"))) : 32;
         switch (w.kind) {
-        case K_Q8_0P: dt = DTune{ntok >= 64 ? 2 : 1, 1}; return true;
-        case K_Q6_KP: dt = DTune{ntok >= 64 ? 2 : 1, 1}; return true;
+        case K_Q8_0P: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
+        case K_Q6_KP: dt = ntok >= 64 ? DTune{dr, dsg} : DTune{1, 1}; return true;
         case K_RAW:
             if (w.t->type == G_F32) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
             if (w.t->type == G_BF16) { dt = DTune{1, 1}; return w.t->ne[0] <= 64 || ntok >= 128; }
@@ -478,6 +483,7 @@ struct Engine {
         DTune dt;
         if (n > 1 && dense_tiles(ga, n, dt)) {
             pr("dense_gather", dense_gather(d.q, ctl_z, h.gate_rank, n, h.gate_rank, Xd));
+            dt.R = std::min(dt.R, 2); // pairs: 2 x R rows per sub-group
             pr("ctl_out", dense_pair_t(d.q, ga.view(), fo.p, E, n, Xd, CtlOp{cur, mg, y, E}, dt));
             return;
         }

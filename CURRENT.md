@@ -125,6 +125,8 @@
   (README). The B70 inference cookbook's PR 95 (vLLM, same model) was read for ideas: its writing is slower than
   ours (54.5 plain, 80-95 drafted), its prompt reading much faster (BF16 on the matrix engines: not bit-identical,
   not adopted); its graph-replay idea is not needed here (card busy 99 % of a step). Gate 11/11.
+- Nov 24 ~01:12: dense prompt products 4 rows x 32 sub-groups (same values): prompt +3-6 %, 3K 811.4 -> 858.4 tok/s
+  (card 3), 31K 739.4 -> 770.3, 100K 495.9 -> 513.0 (card 4); 100K logits rows bit-identical. Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

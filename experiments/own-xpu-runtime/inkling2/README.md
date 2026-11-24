@@ -370,6 +370,17 @@ What holds the FP32 tile kernels back (2026-11-24, `tools/bench_fma.cpp`, `tools
   (card 4).
 - Writing steps need no graph replay: the host submits a one-token step in 1.99 ms while it runs 12.22 ms (card 5),
   and the card is busy 11.456 of 11.570 ms per step (`INK_PROF`).
+- Dense prompt products (Q8_0 / Q6_K tiles from 64 tokens: attn_q, k, v, gate, rel, output) the same way: 4 rows per
+  sub-group (4 sums going, was 2) and 32 sub-groups per work-group (`INK_DENSE_R`, `INK_DENSE_SGW`). `INK_PROF` 3K
+  prompt (card 3): attn_output 1,323 -> 999 µs per launch with 4 rows, 935 with 32 sub-groups too; the whole prompt
+  3,811 -> 3,613 ms. Prompt reading, the same card (ids identical; logits rows after 100K bit-identical): 3K 811.4 ->
+  858.4 tok/s (card 3), 763.1 -> 798.9 (card 1); 31K 739.4 -> 770.3 (card 3); 100K 495.9 -> 513.0 (card 4). The
+  layers 20-23 expert tiles (other formats, no tables) gain nothing from bigger work-groups (`INK_TILE_SGW=32`: gate|up
+  6,714 -> 6,675 µs, down 3,429 -> 3,455).
+- More than 4 sums per lane in the expert tiles is slower in every form tried with 32 sub-groups (1,024 tokens, card
+  3; best 4 rows 7,448 / 3,940 µs): two chunks at a time 10,075 / 6,108 (8 sums, no spills, 59 % multiply-adds),
+  8 rows with 256 registers 9,515, two chunks with 256 registers 9,834 / 5,672. With 128 registers the compiler has
+  4 accumulator registers (`numAcc=4`; 8 with 256) and chains the 4 rows' sums through them.
 
 Writing step, small kernels (2026-11-23): a latency-bound kernel with a branch around each read and its use (a loop
 of unknown trip count, or `if (s < count) { read; add }` per state) waits for each read before the next. Reads first
