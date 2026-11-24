@@ -183,6 +183,10 @@
   us, feed-forward tail 242 -> 173 us per launch. Dense products and prompt attention run at ~85 % of the cards'
   32-bit rate at the clock they hold under load (2.2-2.45 GHz), the experts at ~70 % (part of it half-empty tiles).
   Cache packing studied and closed (DO-NOT-REPEAT).
+- Nov 24 ~19:00: prompts another +1.1-1.9 % (100K 689.6 -> 697.7 tok/s card 1, 683.3 -> 696.2 card 5; 31K 897.8 ->
+  907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
+  decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
+  20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

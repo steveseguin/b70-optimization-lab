@@ -49,6 +49,15 @@ template <> struct LaneDec<pl::Q6_KP> { // o[v] = (d * sc[v / 16]) * (code - 32)
         hi = (d * (float)sc[1]) * ((float)q1 - 32.0f);
     }
 };
+template <> struct LaneDec<pl::Q6_KU> { // s[2c + i/16] * (float)q[32c + i], the values of LaneDec<Q6_KP>
+    static constexpr int src(int i) { return i & 15; }
+    static constexpr bool hi(int i) { return i >= 16; }
+    static void get(const uint8_t *row, int cols, int c, int lane, float &lo, float &hi) {
+        const float *s = reinterpret_cast<const float *>(row + cols);
+        lo = s[2 * c] * (float)(int8_t)row[32 * c + lane];
+        hi = s[2 * c + 1] * (float)(int8_t)row[32 * c + 16 + lane];
+    }
+};
 template <> struct LaneDec<pl::Raw<fmt::F<G_F32>>> { // the floats themselves
     static constexpr int src(int i) { return i & 15; }
     static constexpr bool hi(int i) { return i >= 16; }
@@ -730,11 +739,82 @@ inline sycl::event slot_rows_g2(sycl::queue &q, const WView &w, MoeGroups g, int
     else gp.template operator()<2>();
     return e;
 }
+// the other expert formats (layers 20-23: Q5_K, Q4_K, IQ4_XS gate|up; Q5_0, IQ4_NL down) through SlotPairG2 /
+// SlotRowsG2 without tables: pair = two tiles of the same expert per sub-group (tile_dots2: each decoded weight serves
+// 32 tokens), else two tiles one after another; the same sums as slot_pair_g / slot_rows_g (INK_TILE_X2)
+template <class Fn> inline bool with_exp_decoder(const WView &w, Fn &&f) {
+    switch (w.kind) {
+    case K_Q5_0P: f.template operator()<pl::Q5_0P>(); return true;
+    case K_IQ4_NLP: f.template operator()<pl::IQ4_NLP>(); return true;
+    case K_IQ4_XSP: f.template operator()<pl::IQ4_XSP>(); return true;
+    case K_Q4_KP: f.template operator()<pl::Q4_KP>(); return true;
+    case K_Q5_KP: f.template operator()<pl::Q5_KP>(); return true;
+    default: return false;
+    }
+}
+inline bool exp_x2_kind(const WView &w) {
+    return w.kind == K_Q5_0P || w.kind == K_IQ4_NLP || w.kind == K_IQ4_XSP || w.kind == K_Q4_KP || w.kind == K_Q5_KP;
+}
+template <class Op>
+inline sycl::event slot_pair_x2(sycl::queue &q, const WView &a, const uint8_t *B, size_t estride, int rows, MoeGroups g, int tiles,
+                                const float *Xt, Op op, float *Ht, int ng, bool pair, int sgw) {
+    const int cols = (int)a.t->ne[0];
+    sycl::event e;
+    with_exp_decoder(a, [&]<class D>() {
+        auto go = [&]<int NG, bool P>() {
+            int ngr = (rows + NG - 1) / NG;
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            e = q.submit([&](sycl::handler &h) {
+                sycl::local_accessor<float, 1> la(1, h);
+                h.parallel_for(nr, SlotPairG2<D, Op, NG, true, false, P, false>{{}, a.p, B, a.rb, estride, rows, cols, g, Xt, op, Ht, sgw, la});
+            });
+        };
+        if (ng == 4) { if (pair) go.template operator()<4, true>(); else go.template operator()<4, false>(); }
+        else if (ng == 1) { if (pair) go.template operator()<1, true>(); else go.template operator()<1, false>(); }
+        else { if (pair) go.template operator()<2, true>(); else go.template operator()<2, false>(); }
+    });
+    return e;
+}
+inline sycl::event slot_rows_x2(sycl::queue &q, const WView &w, MoeGroups g, int tiles, const float *Xt, float *y, int ldy, int r,
+                                bool pair, int sgw) {
+    const int cols = (int)w.t->ne[0], rows = (int)w.t->ne[1];
+    const size_t estride = w.rb * (size_t)rows;
+    sycl::event e;
+    with_exp_decoder(w, [&]<class D>() {
+        auto go = [&]<int R, bool P>() {
+            int ngr = (rows + R - 1) / R;
+            sycl::nd_range<2> nr(sycl::range<2>((size_t)(tiles + 1) / 2, (size_t)((ngr + sgw - 1) / sgw) * sgw * SG), sycl::range<2>(1, (size_t)sgw * SG));
+            e = q.submit([&](sycl::handler &h) {
+                sycl::local_accessor<float, 1> la(1, h);
+                h.parallel_for(nr, SlotRowsG2<D, R, P, false, false>{{}, w.p, w.rb, estride, rows, cols, g, Xt, y, ldy, sgw, la});
+            });
+        };
+        if (r == 4) { if (pair) go.template operator()<4, true>(); else go.template operator()<4, false>(); }
+        else { if (pair) go.template operator()<2, true>(); else go.template operator()<2, false>(); }
+    });
+    return e;
+}
+// INK_TILE_X2=<gate|up rows>,<down rows>,<pair 0/1>,<sub-groups>; rows 0 = slot_pair_g / slot_rows_g (one tile per
+// sub-group, 2 rows). Default 0,4,0,8: gate|up as before, down 4 rows, two tiles one after another. INK_PROF 3K
+// prompt, card 1, us per launch: down Q5_0 6,638 -> 4,979, IQ4_NL 6,265 -> 4,698; pairs (tile_dots2) were slower
+// everywhere (gate|up IQ4_XS 10,984 -> 17,792, Q4_K 9,815 -> 12,846; down IQ4_NL -> 8,145), gate|up 4 rows too
+// (Q5_K 13,894 -> 17,234 with pairs, 21,883 without)
+struct TileX2 { int ng = 0, r = 4, pair = 0, sgw = 8; }; // sub-groups 1 / 2 / 4 / 8: Q5_0 4,991 / 5,000 / 4,925 / 4,853 us
+inline const TileX2 &tile_x2() {
+    static const TileX2 t = [] {
+        TileX2 v;
+        if (const char *e = std::getenv("INK_TILE_X2")) std::sscanf(e, "%d,%d,%d,%d", &v.ng, &v.r, &v.pair, &v.sgw);
+        v.sgw = std::max(1, v.sgw);
+        return v;
+    }();
+    return t;
+}
+
 struct DTune { int R = 2, sgw = 1; bool pair = false; }; // pair: two tiles per sub-group (DenseT2)
 inline sycl::event dense_t(sycl::queue &q, const WView &w, int M, const float *Xd, float *y, int ldy, DTune dt = {}) {
     sycl::event e;
     const int rows = (int)w.t->rows(), cols = (int)w.t->ne[0], tiles = (M + MOE_TS - 1) / MOE_TS;
-    with_decoder(w, [&]<class D>() {
+    auto body = [&]<class D>() {
         auto go = [&]<int R>() {
             int nsg = (rows + R - 1) / R, ngr = (nsg + dt.sgw - 1) / dt.sgw;
             if (dt.pair) {
@@ -752,7 +832,9 @@ inline sycl::event dense_t(sycl::queue &q, const WView &w, int M, const float *X
         case 8: go.template operator()<8>(); break;
         default: throw std::runtime_error("dense_t: R must be 1, 2, 4 or 8");
         }
-    });
+    };
+    if (w.kind == K_Q6_KU) body.template operator()<pl::Q6_KU>(); // the prompt copy (dense_t only)
+    else with_decoder(w, body);
     return e;
 }
 template <class Op>

@@ -601,6 +601,21 @@ Prompts (same card, both orders, logits identical), gather + prep: 100K 679.5 ->
 683.3 (card 5); 31K 878.9 / 878.0 -> 890.0 / 887.7 (card 3) and 821.9 / 819.9 -> 835.9 / 829.9 (card 4); 3K 828.1-829.9
 -> 835.4-840.8 (card 2). Then the tail: 100K 686.4 -> 688.5 and 680.6 -> 687.7; 31K 895.2 / 890.4 -> 894.2 / 892.2
 (card 3) and 835.9 / 830.1 -> 843.0 / 835.9 (card 4); 3K 839.2-840.8 -> 842.0-844.9. Gate 12/12 each.
+- The 18 dense Q6_K matrices (layers 2-23: some attn_q / attn_gate / attn_k / attn_rel) ran 1.8x slower than Q8_0 in
+  the prompt tiles (6 loads and the bit extraction per row and chunk). They now get a prompt copy (`pl::Q6_KU`, built
+  on the card from the Q6_KP copy: the codes - 32 as bytes, each 16 values' d * sc as a float, the same multiply), read
+  only by `dense_t` (`INK_Q6KU=0` off, none past `INK_Q6KU_CAP` = 500,000 positions, so the longest context is
+  unchanged): 97.0 MB. INK_PROF 3K prompt, card 3, us per launch: attn_q 1,708 -> 923, attn_gate 1,700 -> 898, attn_k
+  568 -> 320, attn_rel 217 -> 124 (Q8_0: 928 / 904 / 311 / 126); kernels 3,249.7 -> 3,210.9 ms.
+- Layers 20-23's down experts (Q5_0, IQ4_NL) take 4 rows per sub-group, two tiles one after another, 8 sub-groups
+  (`slot_rows_x2`, `INK_TILE_X2`; the same sums): Q5_0 6,638 -> 4,853 us, IQ4_NL 6,265 -> 4,593 (card 1). Pairs of
+  tiles and 4-row gate|up were slower (DO-NOT-REPEAT). `INK_PROF_TYPES` now splits the expert kernels by format:
+  per 1,024-token launch (card 1) gate|up NVFP4 8,529 us, Q5_K 13,926, IQ4_XS 11,026, Q4_K 9,854; down NVFP4 4,305.
+Prompts (same card, both orders, logits identical): 100K 689.6 -> 697.7 tok/s (card 1) and 683.3 -> 696.2 (card 5); 31K
+897.8 / 894.1 -> 907.3 / 906.0 (card 3) and 837.9 / 832.8 -> 852.9 / 847.3 (card 4); 3K 834.2-845.7 -> 854.2-856.6
+(card 2). Gate 12/12.
+At 403K positions 512-token steps stay faster than 1,024 (410.9 vs 405.0 tok/s card 3, 383.0 vs 377.8 card 4; at 200K
+1,024 is +1.3-1.9 %), so the 300K switch stays (DO-NOT-REPEAT).
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

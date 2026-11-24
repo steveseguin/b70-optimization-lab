@@ -99,6 +99,10 @@ struct Engine {
     float *Xd = nullptr;       // transposed tiles of the dense token-parallel kernels (tok_tiles.hpp)
     // INK_XD_KEEP (default 1): products of one input in a row gather it into Xd once (the attention inputs of a prompt
     // step: 8 products of 3 inputs, or of 1 in the windowed layers); xd_src is the input Xd holds while xd_keep is set
+    // Q6_KU prompt copies of the dense Q6_K matrices (not the output layer), read only by the prompt tiles: the codes
+    // as bytes and the 16-value scales as floats, so a lane decodes them like Q8_0 (INK_Q6KU=0 off; none past
+    // INK_Q6KU_CAP positions, default 500,000: ~97 MB)
+    std::map<const Tensor *, WView> q6u;
     bool xd_keep_on = true, xd_keep = false;
     const float *xd_src = nullptr; int xd_n = 0, xd_cols = 0;
     int dense_min = 16;        // steps of at least this many tokens use them for the dense matrices (INK_DENSE_MIN)
@@ -327,6 +331,24 @@ struct Engine {
             };
             for (const Layer &l : m.L) { gu_dec.push_back(mk(l.gate_up)); dn_dec.push_back(mk(l.down)); }
         }
+        {
+            const bool on = !std::getenv("INK_Q6KU") || std::atoi(std::getenv("INK_Q6KU"));
+            const long ucap = std::getenv("INK_Q6KU_CAP") ? std::atol(std::getenv("INK_Q6KU_CAP")) : 500000L;
+            if (on && T >= dense_min && cap <= ucap) {
+                size_t bytes = 0;
+                for (const Layer &l : m.L)
+                    for (const W *w : {&l.wq, &l.wk, &l.wv, &l.wo, &l.wgate, &l.rel}) {
+                        if (!*w || w->kind != K_Q6_KP || q6u.count(w->t) || w->t->ne[0] > XD_COLS || w->t->rows() < 64) continue;
+                        const int cols = (int)w->t->ne[0];
+                        const size_t rb = pl::Q6_KU::stride(cols), nr = (size_t)w->t->rows();
+                        uint8_t *b = d.alloc<uint8_t>(rb * nr);
+                        pl::q6ku_from_p(d.q, w->p, w->rb, b, rb, cols, nr).wait();
+                        q6u[w->t] = WView{w->t, b, rb, K_Q6_KU};
+                        bytes += rb * nr;
+                    }
+                if (!q6u.empty()) std::fprintf(stderr, "[ink] Q6_K prompt copies: %zu matrices, %.1f MB\n", q6u.size(), bytes / 1e6);
+            }
+        }
         if (h.passes > 1 && m.loop_res_query && m.loop_kv_res_query) {
             const int nr = (int)m.loop_res_query.t->rows();
             if (nr != 2 * h.loop_len() || (int)m.loop_kv_res_query.t->rows() != nr) loop_pre = false;
@@ -472,7 +494,9 @@ struct Engine {
                 pr("dense_gather", dense_gather(d.q, x, cols, ntok, cols, Xd));
                 xd_src = xd_keep ? x : nullptr; xd_n = ntok; xd_cols = cols;
             }
-            pr(wlabel(w), dense_t(d.q, w.view(), ntok, Xd, y, rows, dt));
+            WView v = w.view();
+            if (v.kind == K_Q6_KP && !q6u.empty()) { auto it = q6u.find(w.t); if (it != q6u.end()) v = it->second; }
+            pr(wlabel(w), dense_t(d.q, v, ntok, Xd, y, rows, dt));
             return;
         }
         Tune tm = tune_m(w);
@@ -527,6 +551,11 @@ struct Engine {
         return types ? "w:" + s + ":" + type_name(w.t->type) : "w:" + s;
     }
     std::string nm(const char *s, int il) const { return std::string(s) + "-" + std::to_string(il); }
+    // an expert kernel's profile label, with the weight format under INK_PROF_TYPES
+    static std::string mlabel(const char *b, const WView &v) {
+        static const bool types = std::getenv("INK_PROF_TYPES") != nullptr;
+        return types ? std::string(b) + ":" + type_name(v.t->type) : std::string(b);
+    }
 
     // the table form of a mix (fz::mix_fused) when every block has a table slot and the query has a table index;
     // mk >= 0: also save cur at table slot mk
@@ -1064,12 +1093,17 @@ struct Engine {
                     // too) per sub-group, two tiles one after another (bench_moe 1,024 tokens, card 3: gate|up 11,730 ->
                     // 7,594 us, down 6,448 -> 3,989; 512 tokens 6,369 -> 4,194 and 3,526 -> 2,195)
                     if (tile_v2 && gv.kind == K_NVFP4P && tile_lut)
-                        pr("moe_gate_up", slot_pair_g2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2, false, false));
+                        pr(mlabel("moe_gate_up", gv), slot_pair_g2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2, false, false));
+                    else if (tile_x2().ng > 0 && exp_x2_kind(gv))
+                        pr(mlabel("moe_gate_up", gv), slot_pair_x2(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht,
+                                                                   tile_x2().ng, tile_x2().pair != 0, tile_x2().sgw));
                     else
-                        pr("moe_gate_up", slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
+                        pr(mlabel("moe_gate_up", gv), slot_pair_g(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, grp, tiles, Xt, so, Ht, 2));
                     if (tile_v2 && dv.kind == K_NVFP4P)
-                        pr("moe_down", slot_rows_g2(d.q, dv, grp, tiles, Ht, yk, E, 4, false, false, tile_lut));
-                    else pr("moe_down", slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
+                        pr(mlabel("moe_down", dv), slot_rows_g2(d.q, dv, grp, tiles, Ht, yk, E, 4, false, false, tile_lut));
+                    else if (tile_x2().r > 0 && exp_x2_kind(dv))
+                        pr(mlabel("moe_down", dv), slot_rows_x2(d.q, dv, grp, tiles, Ht, yk, E, tile_x2().r, tile_x2().pair != 0, tile_x2().sgw));
+                    else pr(mlabel("moe_down", dv), slot_rows_g(d.q, dv, grp, tiles, Ht, yk, E, 2));
                 } else { // several tokens: each chosen expert decoded once per 8 slots
                     const int amax = std::min(h.n_expert, K);
                     pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));

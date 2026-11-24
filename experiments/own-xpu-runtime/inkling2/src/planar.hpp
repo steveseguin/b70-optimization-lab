@@ -225,6 +225,41 @@ inline void put_nib(uint8_t *dst, const int *code) { // 32 codes -> 16 bytes
 }
 inline size_t round16(size_t b) { return (b + 15) / 16 * 16; }
 
+// Q6_KU: a prompt-tile copy of a Q6_K matrix (engine.hpp q6u; only dense_t reads it). A row: q[cols] (int8, code - 32)
+// | s[cols/16] (float, d * sc of each 16 values) | pad to 16 bytes. Value i of chunk c = s[2c + i/16] * (float)q[32c + i]:
+// Q6_KP's (d * sc) * (code - 32.0f) with the product d * sc made once (the same multiply) and code - 32 exact
+struct Q6_KU {
+    static constexpr uint32_t TYPE = G_Q6_K;
+    static size_t stride(int cols) { return round16((size_t)cols + (size_t)cols / 4); }
+    static void decode32(const uint8_t *row, int cols, int c, float *o) {
+        const float *s = reinterpret_cast<const float *>(row + cols);
+        for (int i = 0; i < 32; ++i) o[i] = s[2 * c + (i >> 4)] * (float)(int8_t)row[32 * c + i];
+    }
+};
+// Q6_KU rows from Q6_KP rows (LaneDec<Q6_KP>'s extraction and scale product, per chunk)
+inline sycl::event q6ku_from_p(sycl::queue &q, const uint8_t *src, size_t srb, uint8_t *dst, size_t drb, int cols, size_t nrows) {
+    const int nc = cols / 32;
+    return q.parallel_for(sycl::range<2>(nrows, (size_t)nc), [=](sycl::id<2> id) {
+        const size_t r = id[0];
+        const int c = (int)id[1];
+        const uint8_t *row = src + r * srb;
+        uint8_t *out = dst + r * drb;
+        const int sb = c >> 3, ib = c & 7, n = ib >> 2, w = ib & 3;
+        const uint8_t *ql = row + 128 * sb + 64 * n + 32 * (w & 1);
+        const uint8_t *qh = row + cols / 2 + 64 * sb + 32 * n;
+        const int8_t *sc = (const int8_t *)(row + cols / 2 + cols / 4) + 16 * sb + 8 * n + 2 * w;
+        const float d = fmt::h2f(row + cols / 2 + cols / 4 + cols / 16 + 2 * sb);
+        const int lo_shift = (w >> 1) * 4, hi_shift = 2 * w;
+        for (int i = 0; i < 32; ++i) {
+            const uint32_t q6 = ((ql[i] >> lo_shift) & 0xFu) | (((qh[i] >> hi_shift) & 3u) << 4);
+            out[32 * c + i] = (uint8_t)(int8_t)((int)q6 - 32);
+        }
+        float *s = reinterpret_cast<float *>(out + cols);
+        s[2 * c] = d * (float)sc[0];
+        s[2 * c + 1] = d * (float)sc[1];
+    });
+}
+
 struct Q5_0P {
     static constexpr uint32_t TYPE = G_Q5_0;
     static void decode32(const uint8_t *row, int cols, int c, float *o) {
