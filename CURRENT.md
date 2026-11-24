@@ -102,6 +102,10 @@
   4-bit weights through small tables, and prompt steps are 1,024 tokens up to 300,000 positions. Measured and closed:
   checks of 5+ tokens (more guesses; at most +4-6 % on code, losses elsewhere), one weight row per lane in the prompt
   expert kernels (2x slower), loading weights first (slower).
+- Nov 23 ~20:10: long contexts. 100K-token prompt 394.5 -> 429.7 tok/s on card 3 (the full layers' prompt softmax
+  keeps exponentials and 1 / total; same bits). The drafter's full-context attention is FP32-arithmetic bound; fused
+  multiply-adds + staged values cut it 3.65 -> 2.58 ms at 100K: writing after a 100K prompt with guessing 55.8 ->
+  57.6 tok/s (plain 52.5), 31K 97.1 -> 98.5, short texts unchanged, same guesses kept. Gate 11/11.
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

@@ -111,7 +111,7 @@ struct Engine {
     int feat_vis[3] = {-1, -1, -1};
     // steps of 1-4 tokens: the final norm also writes lane-order rows (finl) for the lane-order output kernels
     // (INK_OUT_LANE=0 off); argmax scratch of the two-launch argmax (ops::argmax_rows2)
-    bool out_lane = true, att_share = true;
+    bool out_lane = true, att_share = true, tile_sm = true;
     int att_share_min = 4096; // INK_ATT_SHARE_MIN: keys from which checks share key reads
     float *finl = nullptr, *amx_v = nullptr;
     int32_t *amx_i = nullptr;
@@ -204,8 +204,9 @@ struct Engine {
         }
         P = d.alloc<float>((size_t)ldp * h.n_head * prow);
         nsgmax = cap / 16 + 2;
-        wmax = d.alloc<float>((size_t)16 * h.n_head * nsgmax);
-        pinv = d.alloc<float>((size_t)16 * h.n_head);
+        // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
+        wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
+        pinv = d.alloc<float>((size_t)std::max(16, prow) * h.n_head);
         pvpart = d.alloc<float>((size_t)16 * h.n_head * (cap / fz::PVB + 2) * h.head_dim);
         if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
             throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
@@ -289,6 +290,7 @@ struct Engine {
         amx_v = d.alloc<float>((size_t)SB_MAX * ops::ARGMAX_G); amx_i = d.alloc<int32_t>((size_t)SB_MAX * ops::ARGMAX_G);
         if (const char *e = std::getenv("INK_OUT_LANE")) out_lane = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE")) att_share = std::atoi(e) != 0;
+        if (const char *e = std::getenv("INK_TILE_SM")) tile_sm = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ATT_SHARE_MIN")) att_share_min = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_MOE")) sb_moe = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_NP")) sb_np = std::atoi(e);
@@ -707,10 +709,15 @@ struct Engine {
                 const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
                 const float *tc = tab + (size_t)q0 * nh * h.rel_extent;
                 float *ac = att + (size_t)q0 * nh * hd;
+                // prompt tiles of layers without a window (INK_TILE_SM=0 off): the scores also give their maxima per 16
+                // keys, the softmax keeps exponentials and 1 / total, P.V multiplies as it reads: P is read and written
+                // twice instead of five times (the same values as the normalizing softmax)
+                const bool tsm = tiles && tile_sm && win == 0;
                 if (tiles)
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores_tile<8, 3, 8>(d.q, Qc, Kc[il], Rc + (size_t)q0 * nh * h.n_rel,
                                                                                              f32(l.rel_bias), h.n_rel, qp, nc, nh, nkvh, hd,
-                                                                                             h.rel_extent, win, kscale, P, ldp, kmask[il]));
+                                                                                             h.rel_extent, win, kscale, P, ldp, kmask[il],
+                                                                                             tsm ? wmax : nullptr, nsgmax));
                 else if (share && win == 0 && q0 == 0 && nc == ntok)
                     pr("attn_scores_full", fz::attn_scores_gt<3, 4>(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, kscale, P, ldp,
                                                                     wmax, nsgmax, kmask[il]));
@@ -720,7 +727,7 @@ struct Engine {
                 else
                     pr(swa ? "attn_scores" : "attn_scores_full", fz::attn_scores(d.q, Qc, Kc[il], tc, qp, nc, nh, nkvh, hd, h.rel_extent, win,
                                                                                  kscale, P, ldp, kmask[il]));
-                if (fast) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv));
+                if (fast || tsm) pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_sum(d.q, sc, wmax, nsgmax, qp, nc, nh, win, P, ldp, pinv));
                 else pr(swa ? "attn_softmax" : "attn_softmax_full", fz::attn_softmax_norm(d.q, sc, qp, nc, nh, win, P, ldp));
                 // P.V in the block order (fused.hpp attn_pv_bo_part): the tiles for chunks of >= 64 tokens (but past 32K keys
                 // only from 128, bench_attn 100K x 64 tokens: tiles 6.4 ms, split by blocks 4.6); else 16 tokens at a time,
@@ -728,7 +735,7 @@ struct Engine {
                 // (writing steps), then the blocks' sum
                 if (tiles && nc >= 64 && (nc >= 128 || win > 0 || qp + nc <= 32768)) {
                     pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile<8, 3>(d.q, P, ldp, Vc[il], kvl[il], qp, nc, nh, nkvh, hd, win, gc, ac,
-                                                                                kmask[il]));
+                                                                                kmask[il], tsm ? pinv : nullptr));
                     continue;
                 }
                 for (int c0 = 0; c0 < nc; c0 += 16) {
@@ -736,7 +743,8 @@ struct Engine {
                     const int lo0 = win > 0 ? std::max(0, p0 - win + 1) : 0, nblk = (p0 + nt - 1) / fz::PVB - lo0 / fz::PVB + 1;
                     if (tiles)
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_tile_part<8, 3>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
-                                                                                       nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il]));
+                                                                                       nt, nh, nkvh, hd, win, pvpart, nblk, kmask[il],
+                                                                                       tsm ? pinv + (size_t)c0 * nh : nullptr));
                     else if (share && nt >= 2 && win == 0) // windowed: too few blocks per launch (31K checks 15 -> 29 us)
                         pr(swa ? "attn_pv" : "attn_pv_full", fz::attn_pv_bo_part_t<3, 4>(d.q, P + (size_t)c0 * nh * ldp, ldp, Vc[il], kvl[il], p0,
                                                                                        nt, nh, nkvh, hd, win, pvpart, nblk,

@@ -14,6 +14,138 @@
 
 namespace ink {
 
+// the drafter's attention of its 24 rows per key head (8 block slots x 3 query heads) by key spans, register tiles:
+// a work-group of 128 threads per (key head, span); scores: lane = key (16 per sub-group), the 24 rows' queries come
+// in as 16-lane reads per 16 dimensions and each product takes its value with a constant-index select; P.V: thread =
+// dimension for all 24 rows, the rows' probabilities come in 16 keys at a time the same way. Keys j < nctx are cache
+// positions lo + j (& km), the 8 after them the block's own rows (k, v). Writes each span's running max / sum / P.V
+// to pM / pL / pO for the combine. VAR bit 1: the pass's cache values are staged in local memory before its scores
+// (their reads overlap the score products); VAR bit 2: fused multiply-adds (the build turns contraction off). The
+// drafter's numbers only pick guesses, so its arithmetic may change; the variant is fixed per run (deterministic)
+template <int VAR>
+inline sycl::event dsp_attn_span(sycl::queue &dq, const float *q_, const float *k_, const float *v_, const sycl::half *K,
+                                 const sycl::half *Vv, int lo, int nctx, int km, int kd_, int span, int nch, float *pO_, float *pM_,
+                                 float *pL_) {
+    constexpr int B = 8, HQ = 24, HKV = 8, HD = 128, CH = 128, NR = B * (HQ / HKV);
+    constexpr int G = HQ / HKV, WG = 128, NSG = WG / SG;
+    static_assert(WG == HD && CH == NSG * SG);
+    const int nk = nctx + B;
+    const float scale = 1.0f / std::sqrt((float)HD);
+    return dq.submit([&](sycl::handler &hd) {
+            sycl::local_accessor<float, 1> qs(NR * HD, hd), ps(NR * CH, hd), rs(3 * NR, hd);
+            sycl::local_accessor<sycl::half, 1> vs((VAR & 1) ? CH * HD : 1, hd);
+            hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * nch * WG), sycl::range<1>(WG)),
+                            [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+                const int gi = (int)it.get_group(0), kvh = gi / nch, c = gi % nch, li = (int)it.get_local_id(0);
+                const auto sg = it.get_sub_group();
+                const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
+                for (int i = li; i < NR * HD; i += WG) {
+                    const int r = i / HD, dd = i % HD;
+                    qs[i] = q_[((size_t)(r / G) * HQ + kvh * G + r % G) * HD + dd] * scale;
+                }
+                if (li < NR) { rs[li] = -INFINITY; rs[NR + li] = 0.0f; }
+                float acc[NR];
+#pragma unroll
+                for (int r = 0; r < NR; ++r) acc[r] = 0.0f;
+                const int j0 = c * span, j1 = sycl::min(nk, j0 + span);
+                for (int sb = j0; sb < j1; sb += CH) {
+                    const int nkc = sycl::min(CH, j1 - sb);
+                    sycl::group_barrier(it.get_group());
+                    if constexpr ((VAR & 1) != 0) { // thread li stages key sb + li's 128 values (16-byte reads)
+                        const int j = sb + sycl::min(li, nkc - 1);
+                        using HV = sycl::vec<sycl::half, 8>;
+                        HV vv[HD / 8];
+                        if (j < nctx) { // the block's own rows are read in fp32 by the P.V loop
+                            const sycl::half *vp = Vv + (size_t)((lo + j) & km) * kd_ + kvh * HD;
+#pragma unroll
+                            for (int u = 0; u < HD / 8; ++u) vv[u] = *reinterpret_cast<const HV *>(vp + 8 * u);
+#pragma unroll
+                            for (int u = 0; u < HD / 8; ++u) *reinterpret_cast<HV *>(&vs[li * HD + 8 * u]) = vv[u];
+                        }
+                    }
+                    { // scores: this lane's key sb + 16 sgi + ln for the 24 rows
+                        const int kk = SG * sgi + ln, j = sb + sycl::min(kk, nkc - 1);
+                        const bool cache = j < nctx;
+                        const sycl::half *kp = K + (size_t)((lo + j) & km) * kd_ + kvh * HD;
+                        const float *kf = k_ + ((size_t)(cache ? 0 : j - nctx) * HKV + kvh) * HD;
+                        float sv[NR];
+#pragma unroll
+                        for (int r = 0; r < NR; ++r) sv[r] = 0.0f;
+#pragma unroll
+                        for (int d0 = 0; d0 < HD; d0 += SG) {
+                            float kv[SG];
+                            if (cache) {
+                                const sycl::vec<sycl::half, 8> h0 = *reinterpret_cast<const sycl::vec<sycl::half, 8> *>(kp + d0);
+                                const sycl::vec<sycl::half, 8> h1 = *reinterpret_cast<const sycl::vec<sycl::half, 8> *>(kp + d0 + 8);
+#pragma unroll
+                                for (int w = 0; w < 8; ++w) { kv[w] = (float)h0[w]; kv[8 + w] = (float)h1[w]; }
+                            } else {
+#pragma unroll
+                                for (int w = 0; w < SG; ++w) kv[w] = kf[d0 + w];
+                            }
+                            float qv[NR];
+#pragma unroll
+                            for (int r = 0; r < NR; ++r) qv[r] = qs[r * HD + d0 + ln];
+#pragma unroll
+                            for (int u = 0; u < SG; ++u)
+#pragma unroll
+                                for (int r = 0; r < NR; ++r) {
+                                    if constexpr ((VAR & 2) != 0) sv[r] = sycl::fma(sycl::select_from_group(sg, qv[r], u), kv[u], sv[r]);
+                                    else sv[r] += sycl::select_from_group(sg, qv[r], u) * kv[u];
+                                }
+                        }
+#pragma unroll
+                        for (int r = 0; r < NR; ++r) ps[r * CH + kk] = kk < nkc ? sv[r] : -INFINITY;
+                    }
+                    sycl::group_barrier(it.get_group());
+                    for (int r = sgi; r < NR; r += NSG) { // running max and sum per row
+                        float m = -INFINITY;
+                        for (int i = ln; i < CH; i += SG) m = sycl::max(m, ps[r * CH + i]);
+                        m = sycl::reduce_over_group(sg, m, sycl::maximum<float>());
+                        const float mo = rs[r], mn = sycl::max(mo, m);
+                        float su = 0.0f;
+                        for (int i = ln; i < CH; i += SG) {
+                            const float pv = sycl::exp(ps[r * CH + i] - mn);
+                            ps[r * CH + i] = pv;
+                            su += pv;
+                        }
+                        su = sycl::reduce_over_group(sg, su, sycl::plus<float>());
+                        if (ln == 0) {
+                            const float f = sycl::exp(mo - mn);
+                            rs[r] = mn; rs[NR + r] = rs[NR + r] * f + su; rs[2 * NR + r] = f;
+                        }
+                    }
+                    sycl::group_barrier(it.get_group());
+                    // P.V: dimension li for the 24 rows
+#pragma unroll
+                    for (int r = 0; r < NR; ++r) acc[r] *= rs[2 * NR + r];
+                    for (int k0 = 0; k0 < nkc; k0 += SG) {
+                        float pv[NR];
+#pragma unroll
+                        for (int r = 0; r < NR; ++r) pv[r] = ps[r * CH + k0 + ln];
+#pragma unroll
+                        for (int u = 0; u < SG; ++u) {
+                            const int j = sb + sycl::min(k0 + u, nkc - 1);
+                            float vv;
+                            if constexpr ((VAR & 1) != 0)
+                                vv = j < nctx ? (float)vs[sycl::min(k0 + u, nkc - 1) * HD + li] : v_[((size_t)(j - nctx) * HKV + kvh) * HD + li];
+                            else vv = j < nctx ? (float)Vv[(size_t)((lo + j) & km) * kd_ + kvh * HD + li]
+                                               : v_[((size_t)(j - nctx) * HKV + kvh) * HD + li];
+#pragma unroll
+                            for (int r = 0; r < NR; ++r) {
+                                if constexpr ((VAR & 2) != 0) acc[r] = sycl::fma(sycl::select_from_group(sg, pv[r], u), vv, acc[r]);
+                                else acc[r] += sycl::select_from_group(sg, pv[r], u) * vv;
+                            }
+                        }
+                    }
+                }
+#pragma unroll
+                for (int r = 0; r < NR; ++r) pO_[(((size_t)kvh * NR + r) * nch + c) * HD + li] = acc[r];
+                if (li < NR) { pM_[((size_t)kvh * NR + li) * nch + c] = rs[li]; pL_[((size_t)kvh * NR + li) * nch + c] = rs[NR + li]; }
+            });
+        });
+}
+
 struct Drafter {
     static constexpr int B = 8, NL = 3, R = 256, HQ = 24, HKV = 8, HD = 128, WIN = 1024, AWG = 256;
     Engine &e;
@@ -40,8 +172,10 @@ struct Drafter {
     std::vector<float> probs; // the last draft's guess probabilities (the drafter's own softmax)
     // split attention (INK_DSP_SPLIT=0: one work-group per query row): work-groups of (key head, key span) for all
     // 24 rows of a key head, partial softmax sums combined by a second launch
-    bool split = true;
-    static constexpr int NR = B * (HQ / HKV), CH = 128, NCH = 64; // rows per key head; keys per pass; spans per head
+    int split = 2; // 2: attend_split2, 1: attend_split, 0: one work-group per row
+    static constexpr int NR = B * (HQ / HKV), CH = 128, NCH_MAX = 1024; // rows per key head; keys per pass
+    int NCH = 64; // spans per head at most (INK_DSP_NCH, up to NCH_MAX)
+    int attn_var = 3; // dsp_attn_span variant (INK_DSP_AVAR; 3 = fma + staged values, bench_dsp card 3 100K: 3.65 -> 2.44 ms)
     float *pO = nullptr, *pM = nullptr, *pL = nullptr;
     float *hl = nullptr, *attl = nullptr, *gl = nullptr; // the 8 slots' product inputs in lane order (xlane.hpp)
     bool fold = true;       // INK_DSP_FOLD=0: each guess passes y_i + Wh z + bh through W_lm (the reference's way)
@@ -134,7 +268,9 @@ struct Drafter {
         amv = d.alloc<float>(ops::ARGMAX_G); ami = d.alloc<int32_t>(ops::ARGMAX_G); ams = d.alloc<float>(ops::ARGMAX_G);
         gp = d.alloc<float>(B);
         if (const char *ev = std::getenv("INK_DSP_FOLD")) fold = std::atoi(ev) != 0;
-        if (const char *ev = std::getenv("INK_DSP_SPLIT")) split = std::atoi(ev) != 0;
+        if (const char *ev = std::getenv("INK_DSP_SPLIT")) split = std::atoi(ev);
+        if (const char *ev = std::getenv("INK_DSP_AVAR")) attn_var = std::atoi(ev);
+        if (const char *ev = std::getenv("INK_DSP_NCH")) NCH = std::max(1, std::min(NCH_MAX, std::atoi(ev)));
         pO = d.alloc<float>((size_t)HKV * NR * (NCH + 1) * HD);
         pM = d.alloc<float>((size_t)HKV * NR * (NCH + 1)); pL = d.alloc<float>((size_t)HKV * NR * (NCH + 1));
         if (fold) make_fold();
@@ -395,7 +531,8 @@ struct Drafter {
 
     // non-causal attention of the 8 block slots of layer l: context keys lo..P0-1 (cache) then the 8 block keys
     void attend(int l, int P0) {
-        if (split) { attend_split(l, P0); return; }
+        if (split == 2) { attend_split2(l, P0); return; }
+        if (split == 1) { attend_split(l, P0); return; }
         const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
         const int nctx = P0 - lo, nk = nctx + B;
         const sycl::half *K = Kc[l], *Vv = Vc[l];
@@ -405,7 +542,7 @@ struct Drafter {
         const size_t sk = sc_keys;
         const int km = kmask[l], kd_ = kd;
         const float scale = 1.0f / std::sqrt((float)HD);
-        e.pr("dsp_attn", d.q.submit([&](sycl::handler &hd) {
+        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
             sycl::local_accessor<float, 1> slm(HD, hd);
             hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)B * HQ * AWG), sycl::range<1>(AWG)),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
@@ -454,6 +591,43 @@ struct Drafter {
         }));
     }
 
+    // merge the spans per row into attl (lane order)
+    void attn_combine(int nch) {
+        constexpr int G = HQ / HKV;
+        const float *pO_ = pO, *pM_ = pM, *pL_ = pL;
+        float *att_ = attl;
+        const size_t la = xlane_floats(HQ * HD);
+        e.pr("dsp_attn_comb", d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * NR * HD), sycl::range<1>(HD)),
+                                                [=](sycl::nd_item<1> it) {
+            const int gi = (int)it.get_group(0), kvh = gi / NR, r = gi % NR, dd = (int)it.get_local_id(0);
+            const float *m = pM_ + (size_t)gi * nch, *lsum = pL_ + (size_t)gi * nch, *o = pO_ + (size_t)gi * nch * HD;
+            float mx = -INFINITY;
+            for (int cc = 0; cc < nch; ++cc) mx = sycl::max(mx, m[cc]);
+            float su = 0.0f, ov = 0.0f;
+            for (int cc = 0; cc < nch; ++cc) {
+                const float f = sycl::exp(m[cc] - mx);
+                su += lsum[cc] * f;
+                ov += o[(size_t)cc * HD + dd] * f;
+            }
+            att_[(size_t)(r / G) * la + xlane_at((kvh * G + r % G) * HD + dd)] = ov / su;
+        }));
+    }
+
+    // attend_split with register tiles (as the model's attention kernels): a work-group of 128 threads per (key head,
+    // span); scores: lane = key (16 per sub-group), the 24 rows' queries come in as 16-lane reads per 16 dimensions and
+    // each product takes its value with a constant-index select; P.V: thread = dimension for all 24 rows, the rows'
+    // probabilities come in 16 keys at a time the same way. Running max / sum per row as attend_split, same combine
+    void attend_split2(int l, int P0) {
+        const int lo = kmask[l] == 0x7fffffff ? 0 : std::max(0, P0 - WIN);
+        const int nctx = P0 - lo, nk = nctx + B;
+        const int span = CH * std::max(1, (nk + CH * NCH - 1) / (CH * NCH)), nch = (nk + span - 1) / span;
+        auto go = [&](auto f) { return f(d.q, q, k, v, Kc[l], Vc[l], lo, nctx, kmask[l], kd, span, nch, pO, pM, pL); };
+        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn",
+             attn_var == 3 ? go(dsp_attn_span<3>) : attn_var == 2 ? go(dsp_attn_span<2>) : attn_var == 1 ? go(dsp_attn_span<1>)
+                                                                                         : go(dsp_attn_span<0>));
+        attn_combine(nch);
+    }
+
     // attend() by key spans: work-group (key head kvh, span c) scores the NR = 24 rows of kvh (row r = slot r / 3,
     // query head kvh * 3 + r % 3) against its keys in passes of CH, keeping a running max / sum / P.V per row; thread
     // (key or dimension li % 128, rows 12 * (li / 128) ..+12). The combine launch merges the spans per row.
@@ -468,7 +642,7 @@ struct Drafter {
         const size_t la = xlane_floats(HQ * HD);
         const int km = kmask[l], kd_ = kd;
         const float scale = 1.0f / std::sqrt((float)HD);
-        e.pr("dsp_attn", d.q.submit([&](sycl::handler &hd) {
+        e.pr(kmask[l] == 0x7fffffff ? "dsp_attn_full" : "dsp_attn", d.q.submit([&](sycl::handler &hd) {
             sycl::local_accessor<float, 1> qs(NR * HD, hd), ps(NR * CH, hd), rs(3 * NR, hd);
             hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * nch * WG), sycl::range<1>(WG)),
                             [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
@@ -558,20 +732,7 @@ struct Drafter {
                 if (li < NR) { pM_[((size_t)kvh * NR + li) * nch + c] = rs[li]; pL_[((size_t)kvh * NR + li) * nch + c] = rs[NR + li]; }
             });
         }));
-        e.pr("dsp_attn_comb", d.q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)HKV * NR * HD), sycl::range<1>(HD)),
-                                                [=](sycl::nd_item<1> it) {
-            const int gi = (int)it.get_group(0), kvh = gi / NR, r = gi % NR, dd = (int)it.get_local_id(0);
-            const float *m = pM_ + (size_t)gi * nch, *lsum = pL_ + (size_t)gi * nch, *o = pO_ + (size_t)gi * nch * HD;
-            float mx = -INFINITY;
-            for (int cc = 0; cc < nch; ++cc) mx = sycl::max(mx, m[cc]);
-            float su = 0.0f, ov = 0.0f;
-            for (int cc = 0; cc < nch; ++cc) {
-                const float f = sycl::exp(m[cc] - mx);
-                su += lsum[cc] * f;
-                ov += o[(size_t)cc * HD + dd] * f;
-            }
-            att_[(size_t)(r / G) * la + xlane_at((kvh * G + r % G) * HD + dd)] = ov / su;
-        }));
+        attn_combine(nch);
     }
 };
 

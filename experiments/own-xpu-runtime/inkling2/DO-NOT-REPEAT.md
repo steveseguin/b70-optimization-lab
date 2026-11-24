@@ -40,6 +40,8 @@ paragraphs named in the Evidence column (card in brackets). Re-open only under t
 | DSpark head with a full output-layer pass per guess (the reference's way), or its guess slots' output rows through the tile kernels | Per guess ~0.7 ms (380 MB) vs 189 µs with the folded (W_lm Wh)^T table; 3 slots through tiles 2,140 µs vs 793 with `gemv_multi_m` | 2026-11-23 `INK_PROF`, `INK_DSP_FOLD=0` (card 2) | |
 | Small-step NVFP4 expert kernels with every weight load of a lane issued first (3 or 5 chunks per lane, clamped) | 2 tokens: gate\|up 77.9 -> 94.8 µs, down 46.6 -> 50.1 (4 down rows 57.3); 4 tokens 126.3 -> 150.1 and 79.0 -> 85.1 | 2026-11-23 `INK_SB_PRE` (card 2) | |
 | Small-step experts with one code path for every token count; two gate\|up row pairs or four down rows per sub-group | 4 tokens: gate\|up 149.0 / down 92.1 µs vs 124.3 / 79.3 with per-count code; 2 tokens: two pairs 82.6 vs 76.1, four down rows 49.3 vs 46.7 | 2026-11-23 `INK_PROF` (card 2) | |
+| Drafter full-context attention with more key spans (64 -> 256 or 1,024 per KV head), or as register tiles without fused multiply-adds | 31K: 1.20 -> 0.99-1.02 ms with more spans; the register-tile version took the old kernel's time (452 µs per launch both): the kernel is bound by FP32 arithmetic (24 rows per key), not by how the keys are split (2026-11-23, bench_dsp / INK_PROF) |
+| Writing-step P.V parts with 2, 4 or 8 value blocks per work-group (longer contiguous reads per channel row) | 100K, one token: 450 -> 515 / 541 / 588 µs; 4 tokens 653 -> 667 / 702 / 702 (bench_attn, card 3, same parts) |
 
 Measurement cautions (not ideas, but they decide results):
 - A card under continuous big reads boosts to 2,800 MHz, then the short power limit (PL2) pulls it to ~2,333 MHz within

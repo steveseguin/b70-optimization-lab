@@ -134,7 +134,7 @@ int main(int argc, char **argv) {
             std::printf("  scores (table)         %9.1f us %6.2f TMAC/s\n", us0, gmac / us0 * 1e3);
             auto sct = [&](const char *name, auto f) {
                 d.q.memset(P1, 0x7f, np * 4).wait();
-                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff); });
+                double us = tm([&] { f(d.q, Q, K, Rc, Rb, nr, pos, ntok, nh, nkvh, hd, ext, win, scale, P1, ldp, 0x7fffffff, nullptr, 0); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(P0, P1, np).c_str());
             };
             sct("scores_tile<4,3,4>", fz::attn_scores_tile<4, 3, 4>);
@@ -152,7 +152,7 @@ int main(int argc, char **argv) {
             std::printf("  pv block kernels       %9.1f us %6.2f TMAC/s\n", u1, gmac / u1 * 1e3);
             auto pvt = [&](const char *name, auto f) {
                 d.q.memset(o1, 0, hg.size() * 4).wait();
-                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff); });
+                double us = tm([&] { f(d.q, P0, ldp, Vt, vld, pos, ntok, nh, nkvh, hd, win, Gt, o1, 0x7fffffff, nullptr); });
                 std::printf("  %-22s %9.1f us %6.2f TMAC/s  %s\n", name, us, gmac / us * 1e3, same(o0, o1, hg.size()).c_str());
             };
             pvt("pv_tile<4,3>", fz::attn_pv_tile<4, 3>);
@@ -203,6 +203,48 @@ int main(int argc, char **argv) {
             return 0;
         }
         const int ncopy = std::getenv("BENCH_NCOPY") ? std::atoi(std::getenv("BENCH_NCOPY")) : 16; // V caches cycled so reads come from memory
+        if (std::getenv("BENCH_KVF")) { // writing-step scores (attn_scores_g<3>, attn_scores_gt<3,4>): work-group order kvh-outer vs kvh-fastest
+            const int ext = 1024, nsgmax = cap / 16 + 2;
+            std::mt19937 rq(7);
+            std::normal_distribution<float> nq(0.0f, 0.3f);
+            std::vector<float> hq((size_t)4 * nh * hd), htb((size_t)4 * nh * ext);
+            for (auto &x : hq) x = nq(rq);
+            for (auto &x : htb) x = nq(rq);
+            std::vector<sycl::half> hk((size_t)cap * kd);
+            for (auto &x : hk) x = (sycl::half)nq(rq);
+            float *Qd = d.alloc<float>(hq.size()), *Tb = d.alloc<float>(htb.size());
+            d.put(Qd, hq.data(), hq.size()); d.put(Tb, htb.data(), htb.size());
+            std::vector<sycl::half *> Kx;
+            for (int c = 0; c < ncopy; ++c) { Kx.push_back(d.alloc<sycl::half>(hk.size())); d.put(Kx.back(), hk.data(), hk.size()); }
+            const size_t np = (size_t)4 * nh * ldp, nw = (size_t)4 * nh * nsgmax;
+            float *S[2] = {d.alloc<float>(np), d.alloc<float>(np)}, *W[2] = {d.alloc<float>(nw), d.alloc<float>(nw)};
+            const float scale = 1.0f / std::sqrt((float)hd);
+            const double mbk = (double)(pos + 1) * kd * 2 / 1e6;
+            for (int nt : {1, 2, 3, 4}) {
+                double us[2];
+                for (int o = 0; o < 2; ++o) {
+                    d.q.memset(S[o], 0, np * 4).wait(); d.q.memset(W[o], 0, nw * 4).wait();
+                    auto f = [&](int i) {
+                        if (nt == 1) fz::attn_scores_g<3>(d.q, Qd, Kx[i % ncopy], Tb, pos, 1, nh, nkvh, hd, ext, 0, scale, S[o], ldp, W[o], nsgmax, 0x7fffffff, o == 1);
+                        else fz::attn_scores_gt<3, 4>(d.q, Qd, Kx[i % ncopy], Tb, pos, nt, nh, nkvh, hd, ext, scale, S[o], ldp, W[o], nsgmax, 0x7fffffff, o == 1);
+                    };
+                    for (int i = 0; i < 4; ++i) f(i);
+                    d.q.wait();
+                    double t0 = now_s();
+                    for (int i = 0; i < iters; ++i) f(i + 1);
+                    d.q.wait();
+                    us[o] = (now_s() - t0) / iters * 1e6;
+                    f(0);
+                    d.q.wait();
+                }
+                std::vector<float> a(np), b(np), wa(nw), wb(nw);
+                d.get(a.data(), S[0], np); d.get(b.data(), S[1], np); d.get(wa.data(), W[0], nw); d.get(wb.data(), W[1], nw);
+                const bool same = !std::memcmp(a.data(), b.data(), np * 4) && !std::memcmp(wa.data(), wb.data(), nw * 4);
+                std::printf("scores %d token(s), %d keys: kvh-outer %8.2f us (%5.1f GB/s)  kvh-fastest %8.2f us (%5.1f GB/s)  %s\n", nt, pos + 1,
+                            us[0], mbk / us[0] * 1e3, us[1], mbk / us[1] * 1e3, same ? "same" : "DIFF");
+            }
+            return 0;
+        }
         std::mt19937 rng(3);
         std::normal_distribution<float> nd(0.0f, 1.0f);
         std::uniform_real_distribution<float> ud(0.0f, 1.0f);

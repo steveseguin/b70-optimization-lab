@@ -19,11 +19,13 @@ namespace ink::fz {
 // scores with the relative bias computed in place: P[(t*nh + h)*ldp + j - lo] = (q . k_j) * scale (+ the bias when
 // p - j < ext), the bias = sum over i of rel_bias[(p - j)*nr + i] * Rc[(t*nh + h)*nr + i], i ascending from 0.0f (the
 // table attn_prep builds, entry for entry). A work-group: one block of MT queries, one KV head, 16*SGW keys (a lane
-// per key).
+// per key). wmax (layers without a window): also each row's maximum per 16 keys, wmax[row * nsgmax + j / 16], as
+// attn_scores_g writes it for attn_softmax_sum (every row's keys start at 0, so a sub-group is one group of 16)
 template <int MT, int G, int SGW>
 inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias,
                                     int nr, int pos0, int ntok, int nh, int nkvh, int hd, int ext, int win, float scale, float *P,
-                                    int ldp, int km = 0x7fffffff) {
+                                    int ldp, int km = 0x7fffffff, float *wmax = nullptr, int nsgmax = 0) {
+    if (wmax && win > 0) throw std::runtime_error("attn_scores_tile: group maxima only without a window");
     constexpr int PW = 16, NR = MT * G, KB = PW * SGW, NRL = 16;
     using HV = sycl::vec<sycl::half, 8>;
     if (hd != 128 || nh != nkvh * G || nr != NRL) throw std::runtime_error("attn_scores_tile: unsupported shape");
@@ -73,9 +75,10 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
         for (int m = 0; m < MT; ++m) {
             if (m >= tn) break;
             const int t = t0 + m, p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
-            if (j < lo || j > p) continue;
+            const bool in = j >= lo && j <= p;
+            if (!wmax && !in) continue;
             const int dist = p - j;
-            const bool rel = dist < ext;
+            const bool rel = in && dist < ext;
             sycl::vec<float, 4> b[NRL / 4];
             if (rel) {
                 const float *br = rel_bias + (size_t)dist * NRL;
@@ -97,7 +100,11 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
                     }
                     s = s + tb;
                 }
-                P[g * ldp + j - lo] = s;
+                if (in) P[g * ldp + j - lo] = s;
+                if (wmax) {
+                    const float mxg = sycl::reduce_over_group(sg, in ? s : -INFINITY, sycl::maximum<float>());
+                    if (lane == 0 && jb <= p) wmax[g * nsgmax + jb / PW] = mxg;
+                }
             }
         }
     });
@@ -106,9 +113,11 @@ inline sycl::event attn_scores_tile(sycl::queue &q, const float *Q, const sycl::
 // P.V and the output gate on the transposed value cache Vt[(kvh*hd + c) * vld + j]: a work-group = one block of MT
 // queries, one KV head, hd channels (lane = channel); keys in blocks of 16 ascending, the last ones one at a time.
 // out = acc * (1 / (1 + exp(-gate))) as attn_pv_t
+// inv: P holds exponentials and inv[row] = 1 / total (attn_softmax_sum); each value is P * inv as read (the normalized
+// value attn_softmax_norm would store: the same product)
 template <int MT, int G>
 inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok, int nh,
-                                int nkvh, int hd, int win, const float *gate, float *out, int km = 0x7fffffff) {
+                                int nkvh, int hd, int win, const float *gate, float *out, int km = 0x7fffffff, const float *inv = nullptr) {
     constexpr int PW = 16, NR = MT * G;
     using HV = sycl::vec<sycl::half, 8>;
     if (nh != nkvh * G || hd % PW || vld % 16) throw std::runtime_error("attn_pv_tile: unsupported shape");
@@ -128,6 +137,9 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
             pp[m] = m < tn ? pf + m : -1; // rows past the step take nothing
             lo[m] = win > 0 ? sycl::max(0, pf + m - win + 1) : 0;
         }
+        float iv[NR];
+#pragma unroll
+        for (int a = 0; a < NR; ++a) iv[a] = inv ? inv[(size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G] : 1.0f;
         float acc[NR], tot[NR]; // acc: the current block of PVB positions; tot: the blocks so far, in order
 #pragma unroll
         for (int a = 0; a < NR; ++a) { acc[a] = 0.0f; tot[a] = 0.0f; }
@@ -146,7 +158,7 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
 #pragma unroll
                 for (int gi = 0; gi < G; ++gi) {
                     const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    pv[m * G + gi] = ok ? pr[jj - lo[m]] : 0.0f;
+                    pv[m * G + gi] = ok ? (inv ? pr[jj - lo[m]] * iv[m * G + gi] : pr[jj - lo[m]]) : 0.0f;
                 }
             }
             const HV v0 = *(const HV *)(row + (j & km)), v1 = *(const HV *)(row + (j & km) + 8);
@@ -166,7 +178,7 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
 #pragma unroll
                 for (int gi = 0; gi < G; ++gi) {
                     const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? pr[j - lo[m]] : 0.0f), vf);
+                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
                 }
             }
         }
@@ -191,7 +203,8 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
 // memory once for all of them. Same values as attn_pv_bo_part.
 template <int MT, int G>
 inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, const sycl::half *Vt, int vld, int pos0, int ntok,
-                                     int nh, int nkvh, int hd, int win, float *part, int nblk, int km = 0x7fffffff) {
+                                     int nh, int nkvh, int hd, int win, float *part, int nblk, int km = 0x7fffffff,
+                                     const float *inv = nullptr) {
     constexpr int PW = 16, NR = MT * G;
     using HV = sycl::vec<sycl::half, 8>;
     if (nh != nkvh * G || hd % PW || vld % 16) throw std::runtime_error("attn_pv_tile_part: unsupported shape");
@@ -215,6 +228,9 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
             pp[m] = m < tn ? pf + m : -1;
             lo[m] = win > 0 ? sycl::max(0, pf + m - win + 1) : 0;
         }
+        float iv[NR];
+#pragma unroll
+        for (int a = 0; a < NR; ++a) iv[a] = inv ? inv[(size_t)(t0 + sycl::min(a / G, tn - 1)) * nh + kvh * G + a % G] : 1.0f;
         float acc[NR];
 #pragma unroll
         for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
@@ -228,7 +244,7 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
 #pragma unroll
                 for (int gi = 0; gi < G; ++gi) {
                     const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    pv[m * G + gi] = ok ? pr[jj - lo[m]] : 0.0f;
+                    pv[m * G + gi] = ok ? (inv ? pr[jj - lo[m]] * iv[m * G + gi] : pr[jj - lo[m]]) : 0.0f;
                 }
             }
             const HV v0 = *(const HV *)(row + (j & km)), v1 = *(const HV *)(row + (j & km) + 8);
@@ -247,7 +263,7 @@ inline sycl::event attn_pv_tile_part(sycl::queue &q, const float *P, int ldp, co
 #pragma unroll
                 for (int gi = 0; gi < G; ++gi) {
                     const float *pr = P + ((size_t)(t0 + m) * nh + kvh * G + gi) * ldp;
-                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? pr[j - lo[m]] : 0.0f), vf);
+                    acc[m * G + gi] = mac(acc[m * G + gi], (ok ? (inv ? pr[j - lo[m]] * iv[m * G + gi] : pr[j - lo[m]]) : 0.0f), vf);
                 }
             }
         }

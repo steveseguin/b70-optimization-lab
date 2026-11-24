@@ -257,13 +257,17 @@ inline sycl::event attn_scores(sycl::queue &q, const float *Q, const sycl::half 
         P[(size_t)g * ldp + j - lo] = s;
     });
 }
+// work-group order of the writing-step score kernels (INK_ATT_KVF, default on): the KV heads of one block of keys run
+// one after another, so a key's row (all KV heads, nkvh * hd halves) is read from memory in one stretch instead of in
+// nkvh pieces far apart in time. Only the order of the work-groups changes, not a value
+inline bool att_kvh_fast() { static const bool on = !std::getenv("INK_ATT_KVF") || std::atoi(std::getenv("INK_ATT_KVF")); return on; }
 // attn_scores with the G query heads of a KV head in one thread: the key's row is read once for all G heads (not G
 // times); q comes in 16-lane reads that each product takes with a constant-index select. Each dot product keeps
 // attn_scores' order (d ascending from 0.0f, then the scale, then the table entry): the same values
 template <int G>
 inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
                                  int nkvh, int hd, int ext, int win, float scale, float *P, int ldp, float *wmax = nullptr,
-                                 int nsgmax = 0, int km = 0x7fffffff) {
+                                 int nsgmax = 0, int km = 0x7fffffff, bool kvf = att_kvh_fast()) {
     constexpr int PW = 16, WG = 64;
     using HV = sycl::vec<sycl::half, 8>;
     if (hd != 128 || nh != nkvh * G) throw std::runtime_error("attn_scores_g: unsupported shape");
@@ -273,9 +277,11 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
                           [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
         auto sg = it.get_sub_group();
         const int lane = (int)sg.get_local_linear_id();
-        const int g = (int)it.get_group(0), t = g / nkvh, kvh = g % nkvh;
+        const int lin = (int)(it.get_group(0) * nb + it.get_group(1));
+        const int t = kvf ? lin / (nkvh * nb) : lin / (nkvh * nb), kvh = kvf ? lin % nkvh : (lin / nb) % nkvh;
+        const int kb = kvf ? (lin / nkvh) % nb : lin % nb;
         const int p = pos0 + t, lo = win > 0 ? sycl::max(0, p - win + 1) : 0;
-        const int j = lo + (int)it.get_global_id(1);
+        const int j = lo + kb * WG + (int)it.get_local_id(1);
         if (j - lane > p) return; // the whole sub-group is past the position
         const int jc = sycl::min(j, p);
         const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
@@ -316,7 +322,7 @@ inline sycl::event attn_scores_g(sycl::queue &q, const float *Q, const sycl::hal
 template <int G, int NT>
 inline sycl::event attn_scores_gt(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, int pos0, int ntok, int nh,
                                   int nkvh, int hd, int ext, float scale, float *P, int ldp, float *wmax, int nsgmax,
-                                  int km = 0x7fffffff) {
+                                  int km = 0x7fffffff, bool kvf = att_kvh_fast()) {
     constexpr int PW = 16, WG = 64;
     using HV = sycl::vec<sycl::half, 8>;
     if (hd != 128 || nh != nkvh * G || ntok < 1 || ntok > NT) throw std::runtime_error("attn_scores_gt: unsupported shape");
@@ -326,8 +332,9 @@ inline sycl::event attn_scores_gt(sycl::queue &q, const float *Q, const sycl::ha
                           [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(PW)]] {
         auto sg = it.get_sub_group();
         const int lane = (int)sg.get_local_linear_id();
-        const int kvh = (int)it.get_group(0);
-        const int j = (int)it.get_global_id(1);
+        const int lin = (int)(it.get_group(0) * nb + it.get_group(1));
+        const int kvh = kvf ? lin % nkvh : lin / nb, kb = kvf ? lin / nkvh : lin % nb;
+        const int j = kb * WG + (int)it.get_local_id(1);
         if (j - lane > pl) return; // the whole sub-group is past the last position
         const int jc = sycl::min(j, pl);
         const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;

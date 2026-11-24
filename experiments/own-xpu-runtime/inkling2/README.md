@@ -176,6 +176,27 @@ block sum 64.1 -> 37.2 per full layer, step 21.24 -> 20.78 ms; the 32 written to
 (card 5): writing 23.53 -> 24.87 tok/s, prompt 173.0 -> 173.3, the 258-token answer identical. Short rows (the
 windowed layers) keep 8 per round and the one-by-one tail: bigger rounds or a predicated last round made them slower.
 
+Long prompts and long writing (2026-11-23 evening):
+- Prompt tiles of the full-attention layers now write each row's maximum per 16 keys while scoring, the softmax keeps
+  the exponentials and 1 / total (`attn_softmax_sum`, as the writing step), and the P.V tiles multiply as they read
+  (`INK_TILE_SM`, default on). P is read and written twice instead of five times; the values are the normalizing
+  softmax's (product P * inv as read). Card 3, back to back, last-row logits identical: 100K prompt 394.5 -> 429.7
+  tok/s, 31K 585.5 -> 594.0, 8K unchanged.
+- Writing-step score kernels run the 8 KV heads of a key block one after another (`INK_ATT_KVF`, default on; same
+  values): `BENCH_KVF=1 bench_attn 3 100000 0 4` 1 token 404.8 -> 401.2 µs (506 -> 511 GB/s, 84 % of a plain read),
+  4 tokens 564.3 -> 545.8. One-token P.V parts are at 501 GB/s (408.5 µs): little is left in the one-token attention.
+- The drafter's full-context attention (24 rows per KV head: 8 slots x 3 heads) is limited by FP32 arithmetic, not
+  memory: `bench_dsp 3 100000` (tools/bench_dsp.cpp, the engine's own kernel `dsp_attn_span`) 3.65 ms vs a plain read
+  of its keys and values in 0.68 ms. Fused multiply-adds (the build turns contraction off; the drafter only picks
+  guesses, so its arithmetic may change) and the pass's cache values staged in local memory: 2.58 ms
+  (`INK_DSP_AVAR=3`, default). Guessing kept the same guesses on code, haiku, 3K and 31K (ids identical); 31K writing
+  97.1 -> 98.2-98.7 tok/s (card 4). After a 100K prompt (card 2): plain 52.46 tok/s, guessing 55.84 -> 57.61
+  (drafting 0.871 -> 0.734 s per 256 tokens), ids identical to the plain run.
+- Step costs on card 3 (`INK_BENCH_REAL=1 INK_BENCH_STEP=1,1,2,3,4`), ms for 1 / 2 / 3 / 4 tokens: at 3,119 positions
+  11.90 / 15.59 / 19.12 / 21.74; 7,992: 12.34 / 16.76 / 19.91 / 23.01; 31,262: 13.90 / 18.49 / 22.48 / 25.69; 99,992:
+  18.80 / 24.56 / 28.40 / 33.09. The ratios to one token barely move with context, so the guess-count rule's fixed
+  table still ranks the counts right; drafting costs 2.7 ms per round at short contexts, 3.7 at 31K, ~5.6 at 100K.
+
 Plain reads (`bench_read <card>`, card 2, back-to-back launches over different buffers): 8 MB 14.2 µs (564 GB/s),
 12 MB 21.1, 21 MB 36.2, 24 MB 41.2 (583 GB/s), 380 MB 631 (602 GB/s). Against these the one-token products are at
 gate|up 54.4 µs for 23.9 MB, down 29.2 for 11.9 MB, attention input 43.6 for 21.1 MB, attention output 17.2 for 7.5 MB
