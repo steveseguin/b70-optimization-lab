@@ -37,14 +37,25 @@ struct Prof {
         uint64_t first = UINT64_MAX, last = 0;
         // INK_PROF_GAPS=<n>: print this collect's n longest idle gaps between launches (with the labels on each side)
         static const int ngaps = std::getenv("INK_PROF_GAPS") ? std::atoi(std::getenv("INK_PROF_GAPS")) : 0;
+        // INK_PROF_SEQ=<k>: print the k-th collect's launches in order (label, us, idle before)
+        static const long seq = std::getenv("INK_PROF_SEQ") ? std::atol(std::getenv("INK_PROF_SEQ")) : -1;
         std::vector<std::tuple<uint64_t, uint64_t, const std::string *>> tl;
         for (auto &[l, e] : ev) {
             uint64_t a = e.get_profiling_info<sycl::info::event_profiling::command_start>();
             uint64_t b = e.get_profiling_info<sycl::info::event_profiling::command_end>();
+            if (b < a) b = a; // a copy that the runtime timed as empty (the writing steps' embedding rows) reports junk
             rows[l].ms += (b - a) * 1e-6; rows[l].n++;
             busy_ms += (b - a) * 1e-6;
-            first = std::min(first, a); last = std::max(last, b);
-            if (ngaps > 0) tl.emplace_back(a, b, &l);
+            if (b > a) { first = std::min(first, a); last = std::max(last, b); }
+            if ((ngaps > 0 || seq == steps) && b > a) tl.emplace_back(a, b, &l);
+        }
+        if (seq == steps && !tl.empty()) {
+            std::sort(tl.begin(), tl.end());
+            uint64_t end = std::get<0>(tl[0]);
+            for (auto &[a, b, l] : tl) {
+                std::fprintf(stderr, "[seq] %-24s %9.2f us  idle %7.2f\n", l->c_str(), (b - a) * 1e-3, a > end ? (a - end) * 1e-3 : 0.0);
+                end = std::max(end, b);
+            }
         }
         if (ngaps > 0 && tl.size() > 1) {
             std::sort(tl.begin(), tl.end());

@@ -692,6 +692,16 @@ use): idle 8.8 ms. Card memory the same (11.85 vs 11.84 GiB free), host peak +53
 orders, logits identical, gate 12/12): 3K 958.6-963.1 -> 1,015.1-1,018.7 tok/s, 5K 965.0-966.6 -> 997.4-1,000.1 (card
 2), a 39-token prompt 0.32-0.35 -> 0.16 s; 31K 970.0-977.3 -> 976.2-979.2 (card 3), 910.3-915.9 -> 912.5-922.8 (card
 4); 100K level (713.7-717.0 vs 716.9-718.1, cards 1 and 5).
+Longest contexts again on this build (6a816734d9, 2026-11-25; the same answers, ids identical to the earlier runs):
+514,670-token needle on card 2 read at 332.9 tok/s (was 313.0), writing 23.20 tok/s (22.98), 0.47 GiB free at the end;
+470,949 tokens with the drafter (`INK_SPEC=7`) on card 3 read at 383.2 tok/s (359.3), writing 43.57 tok/s (41.00
+with guesses, 2.72 tokens per check). At 520K positions the card holds the weights (15.0 GiB: the file without the
+host-side embedding table, rows padded to 16 bytes), the full layers' keys and values (15.9 GiB) and ~0.9 GiB of step
+buffers (`INK_MEM_LOG=16`): one card is at its limit there.
+`INK_PROF_SEQ=<k>` prints the k-th profiled step's launches in order with their time and the idle before each. One-token
+step after 3K (card 1): a layer is mix_norm 9-11 us, attention inputs 40, attn_prep 3.3, attn_win 19, attention output
+16, attn_tail 1.6, mix_norm 10, router 5.2, moe_route 4.7, gate|up 53, down 28.5, ffn_tail 4.4, with 0.1-0.2 us
+between launches.
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
