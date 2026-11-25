@@ -617,6 +617,23 @@ Prompts (same card, both orders, logits identical): 100K 689.6 -> 697.7 tok/s (c
 At 403K positions 512-token steps stay faster than 1,024 (410.9 vs 405.0 tok/s card 3, 383.0 vs 377.8 card 4; at 200K
 1,024 is +1.3-1.9 %), so the 300K switch stays (DO-NOT-REPEAT).
 
+Windowed prompt attention in one launch (2026-11-24, `attn_win_tile`, `INK_WIN_TILE=0` = the three kernels before).
+The 40 windowed layers ran scores (`attn_scores_tile<8,3,8>`), softmax (`attn_softmax_norm`) and P.V
+(`attn_pv_tile<4,3,2>`), with 102 MB of scores written and read back between them per layer-step. Now one work-group of
+128 threads takes 4 queries x the 3 heads of one KV head and does all three in turn, with each value computed by the
+same expression in the same order: the scores as the score tile; the row maximum taken in the score loop (a maximum is
+the same in any order); the exponentials and their total as the softmax's 128 threads (one sub-group per row, lane l
+playing threads l, 16 + l, ... in the same order); P.V per channel with keys ascending inside 128-key blocks. P.V
+multiplies each exponential by 1 / total as it reads it, the same product the softmax stored, so two passes over the
+rows are gone. The rows live in the work-group's own slice of `P` (mostly served from the cache); in local memory they
+take 50 KB per work-group and run 2.7x slower (too few work-groups per core). INK_PROF 3K prompt, card 3, per
+layer-step: three kernels 1,269 us -> 827 (2 queries 1,205, 5 850, 6 906, 8 883); windowed attention 203 -> 132 ms per
+prompt. By the multiply-add count (about 3.3 billion each for scores and P.V per layer-step) 827 us is ~85 % of the
+card's FP32 peak at its loaded clock. `P` grows 3 MB.
+Prompts (same card, both orders, logits identical): 100K 697.9 -> 706.9 tok/s (card 1) and 692.1 -> 707.8 (card 5); 31K
+911.2 / 907.5 -> 926.8 / 922.4 (card 3) and 852.2 / 846.2 -> 869.9 / 866.0 (card 4); 3K 825.0-855.4 -> 868.3-870.6
+(card 2). Gate 12/12.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

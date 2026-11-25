@@ -226,6 +226,197 @@ inline sycl::event attn_pv_tile(sycl::queue &q, const float *P, int ldp, const s
     });
 }
 
+// windowed layers, prompt steps: attn_scores_tile + attn_softmax_norm + attn_pv_tile<MT, G, 1> in one work-group of
+// 128 threads per MT queries x the G heads of one KV head. The rows' window scores go to the work-group's slice of
+// scr (NR * span floats; query blocks [qb0, qb0 + nqbl)), written and read back by the same work-group, so mostly from
+// the cache. (Keeping them in local memory instead: 50 KB per work-group at 4 queries, too few work-groups per core,
+// 2,263 vs 621 us; 3K prompt profile, card 3.)
+// Every value has those kernels' expression and order: a score = (q . k, d ascending from 0.0f) * scale + the bias
+// (i ascending from 0.0f); the row maximum (any order) with the sink; the exponentials and their sum as
+// attn_softmax_norm's 128 threads (thread l = 16 s + lane: keys lo + l + 128 k ascending from 0.0f; sg_sum over the
+// 16 lanes; the 8 sums ascending from 0.0f; + exp(sink - maximum)) - here one sub-group per row, lane `lane` playing
+// threads 16 s + lane; p = e * (1 / total); P.V per channel with the keys ascending within blocks of PVB positions
+// and the blocks ascending from 0.0f (keys outside a row's window add 0 * v, as attn_pv_tile does), then the gate.
+// The row maxima come from the score loop (any order gives the same maximum) and P.V multiplies each exponential by
+// 1 / total as it reads it (the product attn_softmax_norm stores), so two passes over the rows are not needed.
+// The same bits as the three kernels. span: floats per row (>= window + MT + 14, a multiple of 16).
+template <int MT, int G>
+inline sycl::event attn_win_tile(sycl::queue &q, const float *Q, const sycl::half *K, const float *Rc, const float *rel_bias, int nr,
+                                 const float *sink, const sycl::half *Vt, int vld, int pos0, int ntok, int nh, int nkvh, int hd,
+                                 int ext, int win, float scale, const float *gate, float *out, int km, int span, float *scr,
+                                 int qb0, int nqbl) {
+    constexpr int PW = 16, NR = MT * G, WG = 128, NSG = WG / PW, NRL = 16, AW = ops::ATT_WG;
+    static_assert(AW == WG, "attn_win_tile: the softmax's work-group size");
+    using HV = sycl::vec<sycl::half, 8>;
+    if (hd != 128 || nh != nkvh * G || nr != NRL || win <= 0 || vld % 16 || span % 16 || span < win + MT + 14)
+        throw std::runtime_error("attn_win_tile: unsupported shape");
+    const int nqb = nqbl;
+    if (!scr || qb0 < 0 || nqb <= 0) throw std::runtime_error("attn_win_tile: no scratch or no query blocks");
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> Ml((size_t)NSG * NR + NR, h); // sub-group row maxima, then the rows' 1 / total
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nqb * nkvh * WG), sycl::range<1>(WG)),
+                       [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(PW)]] {
+            auto sg = it.get_sub_group();
+            const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+            const int qb = qb0 + (int)it.get_group(0) / nkvh, kvh = (int)it.get_group(0) % nkvh;
+            float *gS = scr + (size_t)it.get_group(0) * NR * span;
+            auto S = [&](size_t i) -> float & { return gS[i]; };
+            const int t0 = qb * MT, tn = sycl::min(MT, ntok - t0);
+            const int pf = pos0 + t0, pl = pf + tn - 1;
+            const int lof = sycl::max(0, pf - win + 1), jb0 = lof & ~15;
+            const int ngr = (pl - jb0) / PW + 1; // 16-key groups from jb0 to pl
+            int lo[MT], pp[MT];
+#pragma unroll
+            for (int m = 0; m < MT; ++m) {
+                pp[m] = m < tn ? pf + m : -1;
+                lo[m] = sycl::max(0, pf + m - win + 1);
+            }
+            // scores (attn_scores_tile's lane-per-key sums); entries outside a row's window hold 0. Each lane keeps its
+            // rows' maxima (a maximum is the same in any order), the sub-group's go to local memory
+            float rmx[NR];
+#pragma unroll
+            for (int a = 0; a < NR; ++a) rmx[a] = -INFINITY;
+            for (int gr = sgi; gr < ngr; gr += NSG) {
+                const int j = jb0 + gr * PW + lane, jc = sycl::min(j, pl);
+                const sycl::half *kr = K + (size_t)(jc & km) * nkvh * hd + kvh * hd;
+                float acc[NR];
+#pragma unroll
+                for (int a = 0; a < NR; ++a) acc[a] = 0.0f;
+#pragma unroll
+                for (int d0 = 0; d0 < 128; d0 += PW) {
+                    const HV k0 = *(const HV *)(kr + d0), k1 = *(const HV *)(kr + d0 + 8);
+                    float ql[NR];
+#pragma unroll
+                    for (int m = 0; m < MT; ++m) {
+                        const int t = t0 + sycl::min(m, tn - 1);
+#pragma unroll
+                        for (int gi = 0; gi < G; ++gi) ql[m * G + gi] = Q[((size_t)t * nh + kvh * G + gi) * hd + d0 + lane];
+                    }
+#pragma unroll
+                    for (int u = 0; u < PW; ++u) {
+                        const float kf = (float)(u < 8 ? k0[u] : k1[u - 8]);
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, ql[a], u), kf);
+                    }
+                }
+#pragma unroll
+                for (int m = 0; m < MT; ++m) {
+                    const int t = t0 + sycl::min(m, tn - 1), p = pos0 + t;
+                    const bool in = m < tn && j >= lo[m] && j <= p;
+                    const int dist = p - j;
+                    const bool rel = in && dist < ext;
+                    sycl::vec<float, 4> b[NRL / 4];
+                    if (rel) {
+                        const float *br = rel_bias + (size_t)dist * NRL;
+#pragma unroll
+                        for (int i = 0; i < NRL / 4; ++i) b[i] = *(const sycl::vec<float, 4> *)(br + 4 * i);
+                    }
+#pragma unroll
+                    for (int gi = 0; gi < G; ++gi) {
+                        const size_t g = (size_t)t * nh + kvh * G + gi;
+                        float s = acc[m * G + gi] * scale;
+                        if (rel) {
+                            const float *rc = Rc + g * NRL;
+                            float tb = 0.0f;
+#pragma unroll
+                            for (int i = 0; i < NRL / 4; ++i) {
+                                const sycl::vec<float, 4> r = *(const sycl::vec<float, 4> *)(rc + 4 * i);
+#pragma unroll
+                                for (int k = 0; k < 4; ++k) tb = mac(tb, b[i][k], r[k]);
+                            }
+                            s = s + tb;
+                        }
+                        S((size_t)(m * G + gi) * span + (j - jb0)) = in ? s : 0.0f;
+                        if (in) rmx[m * G + gi] = sycl::fmax(rmx[m * G + gi], s);
+                    }
+                }
+            }
+#pragma unroll
+            for (int a = 0; a < NR; ++a) {
+                const float v = sycl::reduce_over_group(sg, rmx[a], sycl::maximum<float>());
+                if (lane == 0) Ml[sgi * NR + a] = v;
+            }
+            sycl::group_barrier(it.get_group());
+            // softmax (attn_softmax_norm): one sub-group per row; the exponentials stay in S, P.V multiplies them by
+            // 1 / total as it reads them (the same products as attn_softmax_norm stores)
+            for (int a = sgi; a < NR; a += NSG) {
+                const int m = a / G;
+                if (m >= tn) {
+                    if (lane == 0) Ml[NSG * NR + a] = 0.0f;
+                    continue;
+                }
+                const int t = t0 + m, p = pp[m], l0 = lo[m];
+                const int base = a * span - jb0; // S(base + j) = key j of row a
+                float mx = -INFINITY;
+#pragma unroll
+                for (int s8 = 0; s8 < NSG; ++s8) mx = sycl::fmax(mx, Ml[s8 * NR + a]);
+                const float sk = sink[(size_t)t * nh + kvh * G + a % G];
+                mx = sycl::fmax(mx, sk);
+                float tot = 0.0f;
+#pragma unroll
+                for (int s8 = 0; s8 < AW / PW; ++s8) { // threads 16 s8 + lane of attn_softmax_norm
+                    float acc = 0.0f;
+                    for (int j = l0 + PW * s8 + lane; j <= p; j += AW) {
+                        const float e = sycl::exp(S(base + j) - mx);
+                        S(base + j) = e;
+                        acc += e;
+                    }
+                    tot += sg_sum(sg, acc);
+                }
+                tot = tot + sycl::exp(sk - mx);
+                if (lane == 0) Ml[NSG * NR + a] = 1.0f / tot;
+            }
+            sycl::group_barrier(it.get_group());
+            // P.V (attn_pv_tile<MT, G, 1>): thread = channel
+            const int c = (int)it.get_local_id(0);
+            const sycl::half *vrow = Vt + (size_t)(kvh * hd + c) * vld;
+            float acc[NR], tt[NR];
+#pragma unroll
+            for (int a = 0; a < NR; ++a) { acc[a] = 0.0f; tt[a] = 0.0f; }
+            auto flush = [&] {
+#pragma unroll
+                for (int a = 0; a < NR; ++a) { tt[a] += acc[a]; acc[a] = 0.0f; }
+            };
+            int j = jb0;
+            for (; j + 15 <= pl; j += PW) {
+                if ((j & (PVB - 1)) == 0) flush();
+                float pv[NR];
+#pragma unroll
+                for (int a = 0; a < NR; ++a) pv[a] = S((size_t)a * span + (j - jb0) + lane) * Ml[NSG * NR + a];
+                const HV v0 = *(const HV *)(vrow + (j & km)), v1 = *(const HV *)(vrow + (j & km) + 8);
+#pragma unroll
+                for (int u = 0; u < PW; ++u) {
+                    const float vf = (float)(u < 8 ? v0[u] : v1[u - 8]);
+#pragma unroll
+                    for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], sycl::select_from_group(sg, pv[a], u), vf);
+                }
+            }
+            for (; j <= pl; ++j) {
+                if ((j & (PVB - 1)) == 0) flush();
+                const float vf = (float)vrow[j & km];
+#pragma unroll
+                for (int a = 0; a < NR; ++a) acc[a] = mac(acc[a], S((size_t)a * span + (j - jb0)) * Ml[NSG * NR + a], vf);
+            }
+            flush();
+#pragma unroll
+            for (int m = 0; m < MT; ++m) {
+                if (m >= tn) break;
+#pragma unroll
+                for (int gi = 0; gi < G; ++gi) {
+                    const size_t i = ((size_t)(t0 + m) * nh + kvh * G + gi) * hd + c;
+                    out[i] = tt[m * G + gi] * (1.0f / (1.0f + sycl::exp(-gate[i])));
+                }
+            }
+        });
+    });
+}
+// INK_WIN_TILE=<queries per work-group>: 4 (default) or 8; 0 = the three kernels. 3K prompt profile (card 3), per
+// layer-step: the three kernels 1,269 us, 2 queries 1,205, 4 827, 5 850, 6 906, 8 883
+inline int win_tile_mt() {
+    static const int v = std::getenv("INK_WIN_TILE") ? std::atoi(std::getenv("INK_WIN_TILE")) : 4;
+    return v == 8 ? 8 : v > 0 ? 4 : 0;
+}
+
 // attn_pv_tile EX whose sub-groups share the exponentials: in each 16-key step sub-group s computes rows
 // [s RS, (s + 1) RS) for its lane's key into local memory (two buffers, one barrier per step) and every sub-group reads
 // all NR rows from there, so each exponential is computed once per work-group instead of once per sub-group. The same

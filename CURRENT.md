@@ -187,6 +187,10 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 24 ~20:15: prompts another +1.3-2.3 % (100K 697.9 -> 706.9 tok/s card 1, 692.1 -> 707.8 card 5; 31K 911.2 ->
+  926.8 card 3, 852.2 -> 869.9 card 4; 3K 855 -> 870; logits identical, gate 12/12): the windowed layers' scores,
+  softmax and P.V now run in one launch (`attn_win_tile`, same values; 203 -> 132 ms per 3K prompt, ~85 % of the
+  card's multiply-add peak).
 
 **November 22, 2026 EST — DeepSeek V4.1 Flash server published as its own repo; engine sources tp124-tp136 on main.**
 - Deployable kit: https://github.com/steveseguin/deepseek-v4.1-flash-b70 (engine = tp135 sources, commit 702af143ee,

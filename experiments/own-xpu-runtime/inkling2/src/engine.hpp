@@ -47,6 +47,7 @@ struct Engine {
     float *hb = nullptr, *yk = nullptr, *moe = nullptr, *ffn_out = nullptr, *tau = nullptr, *fin = nullptr, *lg = nullptr;
     int32_t *eids = nullptr;
     int ldp = 0;
+    size_t p_floats = 0; // P's size (the score rows, or attn_win_tile's slices if more)
     int prow = 0; // score rows (tokens) P holds; a step's attention runs in chunks of prow tokens
     float *mix_inv = nullptr, *mix_sc = nullptr;
     // the loop mixes of a whole pass at its start (their states are fixed for the pass): INK_LOOP_PRE=0 one per layer
@@ -261,7 +262,12 @@ struct Engine {
             }
             prow = (int)std::min<long>(T, std::max<long>(16, rows / 16 * 16));
         }
-        P = d.alloc<float>((size_t)ldp * h.n_head * prow);
+        p_floats = (size_t)ldp * h.n_head * prow;
+        if (h.n_swa > 0 && T >= 16 && fz::win_tile_mt() > 0) { // attn_win_tile's slices: one launch per step
+            const int mt = fz::win_tile_mt(), span = (h.n_swa + mt + 14 + 15) / 16 * 16;
+            p_floats = std::max(p_floats, (size_t)((T + mt - 1) / mt) * mt * h.n_head * span);
+        }
+        P = d.alloc<float>(p_floats);
         nsgmax = ldp / 16 + 2;
         // rows: 16 (writing steps) or the score rows (prompt tiles of layers without a window, INK_TILE_SM)
         wmax = d.alloc<float>((size_t)std::max(16, prow) * h.n_head * nsgmax);
@@ -901,7 +907,26 @@ struct Engine {
             else if (fl_tile)
                 pr("attn_flash_full", fz::attn_flash_tile<8, 3, 1, 4>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il], kvl[il], pos0,
                                                                   ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
-            for (int q0 = 0; q0 < (winf || fl_tile ? 0 : ntok); q0 += prow) {
+            // windowed layers, prompt tiles: scores, softmax and P.V in one launch, the scores in local memory (attn_win_tile,
+            // the three kernels' values; INK_WIN_TILE=0: those kernels)
+            const bool wtile = tiles && win > 0 && !winf && fz::win_tile_mt() > 0;
+            if (wtile) {
+                const int mt = fz::win_tile_mt(), span = (win + mt + 14 + 15) / 16 * 16;
+                auto go = [&]<int MT>() {
+                    // the scores in P: as many query blocks per launch as P holds slices for
+                    const int nqb = (ntok + MT - 1) / MT;
+                    const size_t slice = (size_t)MT * 3 * span * nkvh, pfl = p_floats;
+                    const int per = (int)std::max<size_t>(1, pfl / slice);
+                    if (pfl < slice) throw std::runtime_error("engine: P too small for attn_win_tile");
+                    for (int qb0 = 0; qb0 < nqb; qb0 += per)
+                        pr("attn_win_tile", fz::attn_win_tile<MT, 3>(d.q, Q, Kc[il], Rc, f32(l.rel_bias), h.n_rel, sinks, Vc[il],
+                                                                           kvl[il], pos0, ntok, nh, nkvh, hd, h.rel_extent, win, kscale,
+                                                                           gate, att, kmask[il], span, P, qb0, std::min(per, nqb - qb0)));
+                };
+                if (mt == 8) go.template operator()<8>();
+                else go.template operator()<4>();
+            }
+            for (int q0 = 0; q0 < (winf || fl_tile || wtile ? 0 : ntok); q0 += prow) {
                 const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
                 const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
                 const float *tc = tab + (size_t)q0 * nh * h.rel_extent;
