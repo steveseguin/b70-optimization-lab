@@ -9,6 +9,9 @@
 #include <sstream>
 #include <unordered_map>
 #include <thread>
+#include <deque>
+#include <poll.h>
+#include <unistd.h>
 
 // prompt lookup through an index: for n = 2..4, each n-gram's most recent start among the n-grams that end before the
 // newest token (the guesses are the tokens after it). The same choice as scanning back from the end.
@@ -152,7 +155,8 @@ int main(int argc, char **argv) {
         // start with the file's, and only the rest is read. INK_SAVE_CACHE=<file>: save the state after the prompt
         const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]);
         size_t loaded = 0;
-        if (const char *lc = std::getenv("INK_LOAD_CACHE")) {
+        const bool serve = std::getenv("INK_SERVE") && std::atoi(std::getenv("INK_SERVE"));
+        if (const char *lc = std::getenv("INK_LOAD_CACHE"); lc && !serve) {
             const double tl = now_s();
             size_t fb = 0;
             loaded = load_cache(lc, e, dr.get(), tok, model_id, &fb);
@@ -161,6 +165,7 @@ int main(int argc, char **argv) {
         }
         double t0 = now_s();
         if (loaded < tok.size()) e.feed(std::vector<int32_t>(tok.begin() + (long)loaded, tok.end()));
+        d.q.wait(); // (feed returns once its launches are queued; the prompt's time ends when the card is done)
         double t1 = now_s();
         if (const char *sc = std::getenv("INK_SAVE_CACHE")) {
             const double ts = now_s();
@@ -214,13 +219,170 @@ int main(int argc, char **argv) {
         std::vector<int32_t> conv = tok; // the conversation so far: every token fed, then each answer
         const int n_gen0 = n_gen;
         size_t fed_n = tok.size() - loaded;
+        // INK_SERVE=1: requests on stdin, answers on stdout (the DeepSeek server's protocol; /home/steve/inkling-serve)
+        //   in  G <id> <max_new> <nstop> <stop ids...> <n> <ids...>   the whole conversation so far as token ids
+        //   in  S <id>                                               stop that request after the current round
+        //   in  W <id> <file>                                        save the conversation read so far (src/cache_file.hpp)
+        //   in  Q (or end of input)                                  quit
+        //   out @@READY <context>; @@P <id> <read> <secs>; @@T <id> <tok>...; @@R <id> (a new conversation);
+        //       @@D <id> <eos|max|stop> <read> <gen> <read_s> <gen_s> <rounds> <guessed> <kept> <context>;
+        //       @@E <id> <reason> (refused, the state unchanged); @@W <id> <bytes> <secs>
+        // The engine keeps the conversation it has read (the answer's last token is decided, not read). A request that
+        // extends what was read is read from there; any other is a new conversation: the cache starts over, from the
+        // longest saved prompt in INK_SERVE_CACHES=<dir> (*.inkc) that the request starts with, if any (a long document
+        // loads in seconds instead of being read again). Stop tokens: the end token (the only one the engine stops at).
+        // INK_LOAD_CACHE=<file> with INK_SERVE: start holding that saved prompt.
+        std::string ibuf, rid;
+        bool in_eof = false, stop_req = false;
+        std::deque<std::string> lines;
+        auto pump = [&](int ms) { // input bytes into lines; waits up to ms (-1: until something arrives)
+            for (;;) {
+                const size_t nl = ibuf.find('\n');
+                if (nl != std::string::npos) { lines.push_back(ibuf.substr(0, nl)); ibuf.erase(0, nl + 1); continue; }
+                if (in_eof) return;
+                pollfd pf{0, POLLIN, 0};
+                const int r = poll(&pf, 1, ms);
+                if (r < 0 && errno == EINTR) continue;
+                if (r <= 0) return;
+                char b[65536];
+                const ssize_t n = read(0, b, sizeof b);
+                if (n <= 0) { in_eof = true; continue; }
+                ibuf.append(b, (size_t)n);
+                ms = 0;
+            }
+        };
+        auto sout = [](const std::string &l) { std::fputs(l.c_str(), stdout); std::fputc('\n', stdout); std::fflush(stdout); };
+        auto poll_stop = [&]() -> bool { // "S <rid>" among the lines that arrived (others stay queued)
+            pump(0);
+            for (auto it = lines.begin(); it != lines.end();) {
+                std::istringstream is(*it);
+                std::string c, id;
+                is >> c >> id;
+                if (c == "S" && id == rid) { stop_req = true; it = lines.erase(it); } else ++it;
+            }
+            return stop_req;
+        };
+        int pend_row = 0; // the logits row of the last decided token (W saves it)
+        long req_rounds = 0, req_guessed = 0, req_kept = 0;
+        auto emit = [&](const std::vector<int> &o, size_t from) {
+            if (!serve || from >= o.size()) return;
+            std::string l = "@@T " + rid;
+            for (size_t i = from; i < o.size(); ++i) l += " " + std::to_string(o[i]);
+            sout(l);
+        };
+        if (serve) {
+            if (const char *lc = std::getenv("INK_LOAD_CACHE")) {
+                const double tl = now_s();
+                size_t fb = 0;
+                std::vector<int32_t> ft;
+                load_cache(lc, e, dr.get(), {}, model_id, &fb, &ft);
+                conv = ft;
+                std::fprintf(stderr, "[serve] holding %zu tokens from %s (%.3f s)\n", ft.size(), lc, now_s() - tl);
+            }
+            sout("@@READY " + std::to_string(e.cap));
+        }
+        const char *lib_dir = std::getenv("INK_SERVE_CACHES");
         for (int turn = 0;; ++turn) {
-        if (turn > 0) { // the previous answer's last token (chosen, not yet fed) and the next turn, as a prompt step
+        if (serve) {
+            std::vector<int32_t> ids;
+            int max_new = 0;
+            bool got = false, quit = false;
+            for (std::string ln; !got && !quit;) {
+                if (lines.empty()) pump(-1);
+                if (lines.empty()) { if (in_eof) quit = true; continue; }
+                ln = lines.front(); lines.pop_front();
+                std::istringstream is(ln);
+                std::string cmd, id;
+                is >> cmd >> id;
+                if (cmd == "Q") { quit = true; break; }
+                if (cmd == "S" || cmd.empty()) continue;
+                if (cmd == "W") {
+                    std::string path;
+                    is >> path;
+                    try {
+                        const double ts = now_s();
+                        const std::vector<int32_t> fed(conv.begin(), conv.begin() + e.n_past);
+                        const size_t fb = save_cache(path, e, dr.get(), fed, model_id, pend_row);
+                        char b[160];
+                        std::snprintf(b, sizeof b, "@@W %s %zu %.3f", id.c_str(), fb, now_s() - ts);
+                        sout(b);
+                    } catch (std::exception &ex) { sout("@@E " + id + " save " + std::string(ex.what()).substr(0, 200)); }
+                    continue;
+                }
+                if (cmd != "G") { sout("@@E - unknown-command"); continue; }
+                long mx = 0, nstop = 0, n = 0;
+                is >> mx >> nstop;
+                for (long i = 0; i < nstop && is; ++i) { long v; is >> v; }
+                is >> n;
+                ids.clear();
+                for (long i = 0; i < n && is; ++i) { long v; is >> v; ids.push_back((int32_t)v); }
+                bool bad = !is || (long)ids.size() != n || n < 1 || mx < 1;
+                for (int32_t v : ids) bad |= v < 0 || v >= e.m.hp.vocab;
+                if (bad) { sout("@@E " + id + " bad-request"); continue; }
+                if ((long)ids.size() + mx + 8 > e.cap) { sout("@@E " + id + " context " + std::to_string(e.cap)); continue; }
+                rid = id; max_new = (int)mx; got = true;
+            }
+            if (!got) break;
+            const size_t h = (size_t)e.n_past;
+            const bool ext = h > 0 && ids.size() > h && std::equal(conv.begin(), conv.begin() + (long)h, ids.begin());
+            if (!ext) { // a new conversation: from the longest saved prompt it starts with, else from position 0
+                if (h > 0 || conv.size() > 0) sout("@@R " + rid);
+                const double tz = now_s();
+                e.reset();
+                if (dr) dr->r_last = -1;
+                ngi = NgramIndex();
+                conv.clear();
+                std::string best;
+                size_t best_n = 0;
+                if (lib_dir) {
+                    std::error_code ec;
+                    for (const auto &f : std::filesystem::directory_iterator(lib_dir, ec)) {
+                        if (f.path().extension() != ".inkc") continue;
+                        try {
+                            const std::vector<int32_t> ft = cache_tokens(f.path().string(), d.q, model_id);
+                            if (ft.size() > best_n && ft.size() < ids.size() && std::equal(ft.begin(), ft.end(), ids.begin())) {
+                                best = f.path().string(); best_n = ft.size();
+                            }
+                        } catch (std::exception &) {}
+                    }
+                }
+                if (!best.empty()) {
+                    try {
+                        std::vector<int32_t> ft;
+                        load_cache(best, e, dr.get(), ids, model_id, nullptr, &ft);
+                        conv = ft;
+                        std::fprintf(stderr, "[serve] new conversation: %zu tokens loaded from %s in %.3f s\n", ft.size(), best.c_str(), now_s() - tz);
+                    } catch (std::exception &ex) {
+                        std::fprintf(stderr, "[serve] %s not loaded (%s): reading from position 0\n", best.c_str(), ex.what());
+                        e.reset();
+                        if (dr) dr->r_last = -1;
+                    }
+                }
+            } else if (conv.size() > h && ids[h] != conv[h])
+                ngi = NgramIndex(); // (n-grams through the old last token)
+            const std::vector<int32_t> rest(ids.begin() + e.n_past, ids.end());
+            stop_req = false;
+            n_gen = max_new;
+            t0 = now_s();
+            e.feed(rest);
+            d.q.wait();
+            t1 = now_s();
+            pend_row = e.n_logit_rows - 1;
+            conv = ids;
+            fed_n = rest.size();
+            {
+                char b[160];
+                std::snprintf(b, sizeof b, "@@P %s %zu %.3f", rid.c_str(), fed_n, t1 - t0);
+                sout(b);
+            }
+            e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+        } else if (turn > 0) { // the previous answer's last token (chosen, not yet fed) and the next turn, as a prompt step
             std::vector<int32_t> tt(1, conv.back());
             tt.insert(tt.end(), turns[turn - 1].begin(), turns[turn - 1].end());
             n_gen = n_gen0;
             t0 = now_s();
             e.feed(tt);
+            d.q.wait();
             t1 = now_s();
             conv.insert(conv.end(), turns[turn - 1].begin(), turns[turn - 1].end());
             fed_n = tt.size();
@@ -255,6 +417,7 @@ int main(int argc, char **argv) {
             int x = e.next_token();
             const int32_t *xdev = e.ids; // the last chosen token on the card (the drafter's anchor)
             out.push_back(x); hist.push_back(x);
+            emit(out, 0);
             long checks = 0, plain = 0, guessed = 0, kept = 0;
             // INK_SPEC_ADAPT (default 1 with the drafter): draft INK_SPEC guesses, then check the count k (0..INK_SPEC)
             // with the most expected tokens per ms: keep chance of guess j from the drafter's probability (tenths;
@@ -302,7 +465,7 @@ int main(int argc, char **argv) {
                 if (const char *l2 = std::getenv("INK_DRAFT_LOG2")) dlog2 = std::fopen(l2, "w");
                 dr->stop_thr = 0.0f; // every guess computed for the study
             }
-            while (x != e.m.hp.eos && (int)out.size() < n_gen) {
+            while (x != e.m.hp.eos && (int)out.size() < n_gen && !(serve && poll_stop())) {
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
                 const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
@@ -429,6 +592,8 @@ int main(int argc, char **argv) {
                     }
                     xdev = e.ids;
                     out.push_back(x); hist.push_back(x);
+                    pend_row = e.n_logit_rows - 1;
+                    emit(out, out.size() - 1);
                     ++plain;
                     continue;
                 }
@@ -462,7 +627,10 @@ int main(int argc, char **argv) {
                 if (dr) dr->r_last = a; // r(P0') = the row of the last kept token
                 xdev = e.cids + a;
                 if (gen_out.is_open()) save_rows(a + 1);
+                const size_t o0 = out.size();
                 for (int r = 0; r <= a && (int)out.size() < n_gen; ++r) { out.push_back(y[r]); hist.push_back(y[r]); }
+                pend_row = a;
+                emit(out, o0);
                 x = out.back();
                 ++checks; guessed += (long)g.size(); kept += a;
                 e.prof.collect(); // one profile step per round (INK_PROF)
@@ -484,6 +652,7 @@ int main(int argc, char **argv) {
             }
             if (dlog) std::fclose(dlog);
             if (dlog2) std::fclose(dlog2);
+            req_rounds = checks + plain; req_guessed = guessed; req_kept = kept;
             n_gen = 0; // done: the loop below does nothing
         }
         for (int i = 0; i < n_gen; ++i) {
@@ -494,14 +663,31 @@ int main(int argc, char **argv) {
             }
             int b = host_argmax ? e.argmax_last() : e.next_token();
             out.push_back(b);
+            pend_row = e.n_logit_rows - 1;
+            emit(out, out.size() - 1);
+            req_rounds = (long)out.size();
             if (b == e.m.hp.eos) break;
             if (i + 1 == n_gen) break;
+            if (serve && poll_stop()) break;
             e.all_logits = false;
             if (host_argmax) e.feed({b});
             else e.step_next();
             e.prof.collect();
         }
         double t2 = now_s();
+        if (serve) {
+            const char *why = !out.empty() && out.back() == e.m.hp.eos ? "eos" : stop_req ? "stop" : "max";
+            char b[256];
+            std::snprintf(b, sizeof b, "@@D %s %s %zu %zu %.3f %.3f %ld %ld %ld %d", rid.c_str(), why, fed_n, out.size(), t1 - t0, t2 - t1,
+                          req_rounds, req_guessed, req_kept, e.n_past + 1);
+            sout(b);
+            std::fprintf(stderr, "[serve] %s: read %zu tokens in %.3f s, answered %zu in %.3f s (%.2f tok/s), %s, context %d\n", rid.c_str(),
+                         fed_n, t1 - t0, out.size(), t2 - t1, out.size() > 1 ? (out.size() - 1) / (t2 - t1) : 0.0, why, e.n_past + 1);
+            conv.insert(conv.end(), out.begin(), out.end());
+            req_rounds = req_guessed = req_kept = 0;
+            e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+            continue;
+        }
         std::printf("ids:");
         for (int t : out) std::printf(" %d", t);
         std::printf("\n");

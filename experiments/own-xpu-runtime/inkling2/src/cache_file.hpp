@@ -156,8 +156,10 @@ inline void load_t(CacheIO &io, sycl::half *c, int64_t w, int64_t ld, int64_t ma
 inline int64_t room_of(int mask, int64_t n) { return mask == 0x7fffffff ? n : std::min<int64_t>(n, (int64_t)mask + 1); }
 } // namespace cache_detail
 
-// the state after the prompt tok (n_past == tok.size(), its logits row last)
-inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const std::vector<int32_t> &tok, uint64_t model_id) {
+// the state after the prompt tok (n_past == tok.size()); lg_row: the logits row of its last token (default: the last
+// row the last step left, a prompt's; after a check of guesses, the kept row)
+inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const std::vector<int32_t> &tok, uint64_t model_id,
+                         int lg_row = -1) {
     using namespace cache_detail;
     const HParams &h = e.m.hp;
     if ((size_t)e.n_past != tok.size()) throw std::runtime_error("save_cache: the cache does not hold exactly the prompt");
@@ -177,7 +179,9 @@ inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const 
     CacheIO io(path, true, e.d.q);
     io.put(&hd, sizeof(hd));
     io.put(tok.data(), sizeof(int32_t) * tok.size());
-    io.put_dev(e.lg + (size_t)(e.n_logit_rows - 1) * h.vocab_padded, sizeof(float) * h.vocab_padded);
+    if (lg_row < 0) lg_row = e.n_logit_rows - 1;
+    if (lg_row >= e.n_logit_rows) throw std::runtime_error("save_cache: no such logits row");
+    io.put_dev(e.lg + (size_t)lg_row * h.vocab_padded, sizeof(float) * h.vocab_padded);
     io.put_dev(e.conv + (size_t)e.cpar * h.n_app * e.conv_n, sizeof(float) * (size_t)h.n_app * e.conv_n);
     for (int a = 0; a < h.n_app; ++a) {
         const int64_t cnt = (int64_t)hd.eng_cnt[a];
@@ -196,10 +200,22 @@ inline size_t save_cache(const std::string &path, Engine &e, Drafter *dr, const 
     return io.bytes;
 }
 
+// the tokens of a saved prompt (empty if the file is not one of this model's)
+inline std::vector<int32_t> cache_tokens(const std::string &path, sycl::queue &q, uint64_t model_id) {
+    CacheIO io(path, false, q);
+    CacheHdr hd{};
+    io.get(&hd, sizeof(hd));
+    if (std::memcmp(hd.magic, "INKC0001", 8) || hd.model_id != model_id) return {};
+    std::vector<int32_t> t(hd.n_tok);
+    io.get(t.data(), sizeof(int32_t) * t.size());
+    return t;
+}
+
 // loads a file whose prompt is tok or a prefix of it into a fresh engine (and drafter); returns the positions loaded.
-// With the whole prompt loaded, its logits row is restored (next_token() works); else the caller feeds the rest
+// With the whole prompt loaded, its logits row is restored (next_token() works); else the caller feeds the rest.
+// file_tok: the file's tokens (and tok may then be empty: any saved prompt is taken)
 inline size_t load_cache(const std::string &path, Engine &e, Drafter *dr, const std::vector<int32_t> &tok, uint64_t model_id,
-                         size_t *file_bytes = nullptr) {
+                         size_t *file_bytes = nullptr, std::vector<int32_t> *file_tok = nullptr) {
     using namespace cache_detail;
     const HParams &h = e.m.hp;
     if (e.n_past != 0) throw std::runtime_error("load_cache: the engine has read something already");
@@ -211,11 +227,13 @@ inline size_t load_cache(const std::string &path, Engine &e, Drafter *dr, const 
         hd.conv_n != (uint64_t)e.conv_n || hd.vocab_padded != (uint64_t)h.vocab_padded || hd.model_id != model_id)
         throw std::runtime_error("load_cache: " + path + " was saved by another model or engine");
     const int64_t n = (int64_t)hd.n_tok;
-    if (n > (int64_t)tok.size()) throw std::runtime_error("load_cache: the file's prompt is longer than this run's");
+    const bool any = file_tok && tok.empty();
+    if (!any && n > (int64_t)tok.size()) throw std::runtime_error("load_cache: the file's prompt is longer than this run's");
     if (n + 1 > e.cap) throw std::runtime_error("load_cache: the context is too small for the file");
     std::vector<int32_t> ft(n);
     io.get(ft.data(), sizeof(int32_t) * (size_t)n);
-    if (!std::equal(ft.begin(), ft.end(), tok.begin())) throw std::runtime_error("load_cache: this run's prompt does not start with the file's");
+    if (!any && !std::equal(ft.begin(), ft.end(), tok.begin())) throw std::runtime_error("load_cache: this run's prompt does not start with the file's");
+    if (file_tok) *file_tok = ft;
     if (dr && !hd.has_dr) throw std::runtime_error("load_cache: the file has no drafter state (save it with INK_DRAFT, or load without)");
     if (dr && (hd.dr_nl != (uint64_t)Drafter::NL || hd.dr_kd != (uint64_t)dr->kd || hd.dr_E != (uint64_t)dr->E))
         throw std::runtime_error("load_cache: the file's drafter is another one");

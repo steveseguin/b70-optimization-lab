@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inkling Chat</title>
+<style>
+:root { --bg:#f6f6f4; --fg:#1d1d1b; --muted:#6b6b66; --card:#ffffff; --line:#deded8; --accent:#2f5d8a; --think:#f0efe9; }
+@media (prefers-color-scheme: dark) { :root { --bg:#161615; --fg:#e8e8e3; --muted:#9a9a93; --card:#1f1f1d; --line:#33332f; --accent:#7fb0e0; --think:#252522; } }
+* { box-sizing: border-box; }
+body { margin:0; background:var(--bg); color:var(--fg); font:15px/1.5 system-ui, sans-serif; }
+header { display:flex; gap:12px; align-items:center; flex-wrap:wrap; padding:10px 16px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; }
+header h1 { font-size:16px; margin:0 8px 0 0; }
+header label { color:var(--muted); font-size:13px; display:flex; gap:4px; align-items:center; }
+#status { margin-left:auto; font-size:13px; color:var(--muted); }
+main { max-width:860px; margin:0 auto; padding:16px; }
+.msg { background:var(--card); border:1px solid var(--line); border-radius:8px; padding:10px 14px; margin:10px 0; white-space:pre-wrap; word-wrap:break-word; }
+.user { border-left:3px solid var(--accent); }
+.who { font-size:12px; color:var(--muted); margin-bottom:4px; }
+details { background:var(--think); border-radius:6px; padding:6px 10px; margin-bottom:8px; color:var(--muted); font-size:14px; }
+.stats { font-size:12px; color:var(--muted); margin-top:6px; }
+form { max-width:860px; margin:0 auto; padding:0 16px 24px; display:flex; gap:8px; }
+textarea { flex:1; min-height:70px; padding:10px; font:inherit; color:var(--fg); background:var(--card); border:1px solid var(--line); border-radius:8px; resize:vertical; }
+button { padding:8px 14px; font:inherit; border:1px solid var(--line); border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
+button.secondary { background:var(--card); color:var(--fg); }
+button:disabled { opacity:.5; cursor:default; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Inkling-2-Mini</h1>
+  <label><input type="checkbox" id="think" checked> thinking</label>
+  <label>effort <select id="effort"><option>low</option><option>medium</option><option selected>high</option><option>max</option></select></label>
+  <button class="secondary" id="newchat" type="button">New chat</button>
+  <span id="status">…</span>
+</header>
+<main id="log"></main>
+<form id="f">
+  <textarea id="inp" placeholder="Message (Ctrl+Enter to send)"></textarea>
+  <div style="display:flex;flex-direction:column;gap:6px">
+    <button id="send" type="submit">Send</button>
+    <button id="stop" class="secondary" type="button" disabled>Stop</button>
+  </div>
+</form>
+<script>
+const log = document.getElementById('log'), inp = document.getElementById('inp');
+let msgs = [], ctrl = null;
+function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
+async function health() {
+  try { const h = await (await fetch('/health')).json();
+    document.getElementById('status').textContent = h.status === 'ready' ? `ready · context ${h.context.toLocaleString()} tokens · held ${h.held_conversation_tokens.toLocaleString()}` + (h.busy ? ' · busy' : '') : `${h.status}${h.detail ? ': ' + h.detail : ''}`;
+  } catch (e) { document.getElementById('status').textContent = 'server unreachable'; }
+}
+setInterval(health, 3000); health();
+document.getElementById('newchat').onclick = () => { msgs = []; log.innerHTML = ''; };
+document.getElementById('stop').onclick = () => { if (ctrl) ctrl.abort(); };
+inp.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) document.getElementById('f').requestSubmit(); });
+document.getElementById('f').onsubmit = async (ev) => {
+  ev.preventDefault();
+  const text = inp.value.trim(); if (!text || ctrl) return;
+  inp.value = '';
+  msgs.push({role: 'user', content: text});
+  const u = el('div', 'msg user'); u.append(el('div', 'who', 'You'), el('div', null, text)); log.append(u);
+  const a = el('div', 'msg'); const who = el('div', 'who', 'Inkling');
+  const det = el('details'); const sum = el('summary', null, 'thinking…'); const th = el('div'); det.append(sum, th);
+  const body = el('div'); const stats = el('div', 'stats');
+  a.append(who); if (document.getElementById('think').checked) a.append(det); a.append(body, stats); log.append(a);
+  a.scrollIntoView({block: 'end'});
+  ctrl = new AbortController();
+  document.getElementById('send').disabled = true; document.getElementById('stop').disabled = false;
+  let content = '', reasoning = '', t0 = performance.now(), usage = null, timings = null;
+  try {
+    const r = await fetch('/v1/chat/completions', {method: 'POST', headers: {'Content-Type': 'application/json'}, signal: ctrl.signal,
+      body: JSON.stringify({model: 'inkling-2-mini', messages: msgs, stream: true, stream_options: {include_usage: true},
+        enable_thinking: document.getElementById('think').checked, reasoning_effort: document.getElementById('effort').value})});
+    if (!r.ok) throw new Error(await r.text());
+    const rd = r.body.getReader(), dec = new TextDecoder(); let buf = '';
+    for (;;) {
+      const {done, value} = await rd.read(); if (done) break;
+      buf += dec.decode(value, {stream: true});
+      let i; while ((i = buf.indexOf('\n\n')) >= 0) {
+        const line = buf.slice(0, i); buf = buf.slice(i + 2);
+        if (!line.startsWith('data: ')) continue; const d = line.slice(6); if (d === '[DONE]') continue;
+        const j = JSON.parse(d);
+        if (j.error) { body.textContent += '\n[error] ' + j.error.message; continue; }
+        if (j.usage) { usage = j.usage; timings = j.timings; }
+        for (const c of j.choices || []) {
+          if (c.delta.reasoning_content) { reasoning += c.delta.reasoning_content; th.textContent = reasoning; }
+          if (c.delta.content) { content += c.delta.content; body.textContent = content; sum.textContent = 'thinking (done)'; }
+        }
+      }
+    }
+  } catch (e) { if (e.name !== 'AbortError') body.textContent += '\n[error] ' + e.message; else body.textContent += ' [stopped]'; }
+  msgs.push({role: 'assistant', content: content, reasoning_content: reasoning});
+  if (timings) stats.textContent = `read ${timings.read_tokens} new tokens in ${timings.read_s.toFixed(1)} s · ${timings.answer_tokens} tokens at ${timings.answer_tok_per_s} tok/s · conversation ${timings.context_used.toLocaleString()} tokens`;
+  ctrl = null; document.getElementById('send').disabled = false; document.getElementById('stop').disabled = true;
+};
+</script>
+</body>
+</html>

@@ -187,11 +187,15 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~08:40: **a LAN server for this engine is ready (not running)**: `serve/` in the lane, installed in
+  `/home/steve/inkling-serve` (OpenAI API, port 8001, one card; the DeepSeek server's design: one held conversation,
+  follow-ups read only the new words). A library of saved prompts: a long document is read once
+  (`/admin/prefill`) and later conversations about it load in seconds (22K tokens: 0.34 s vs 23.3 s; 515K: 3.2 s vs
+  1,533 s, 17.2 GB at 5.4 GB/s). Every answer checked equal to a fresh run of its whole conversation; gate 12/12.
 - Nov 25 ~08:00: a conversation continues from the cache (`INK_TURNS`: later questions start in 3-5 ms instead of
   re-reading everything) and a read prompt can be saved to disk and loaded back (`INK_SAVE_CACHE` / `INK_LOAD_CACHE`,
   `src/cache_file.hpp`): 3K prompt loaded in 0.14-0.21 s instead of a 2.84 s read, answers and drafter guesses
-  identical, loads into any context size; each turn = a fresh read of the whole conversation; gate 12/12. 515K
-  save/load timing running (unit ink-cf515).
+  identical, loads into any context size; each turn = a fresh read of the whole conversation; gate 12/12.
 - Nov 25 ~07:30: card memory at the longest contexts (README "Card memory at the longest contexts"): unused step
   buffers trimmed, 5-8 token checks read the cache once through a one-row buffer: one card now holds **530,000
   positions** (was 521,000; 529K needle answered right, 331.5 tok/s read, writing 34.2 lookup / 22.8 plain), and the

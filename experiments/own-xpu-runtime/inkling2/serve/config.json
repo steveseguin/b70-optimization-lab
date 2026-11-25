@@ -1,0 +1,21 @@
+{
+ "model_name": "inkling-2-mini",
+ "host": "0.0.0.0",
+ "port": 8001,
+ "card": 1,
+ "max_ctx": 131072,
+ "default_max_tokens": 32768,
+ "on_card": "/home/steve/b70-optimization-lab/experiments/own-xpu-runtime/inkling2/scripts/on-card.sh",
+ "engine_bin": "/home/steve/inkling-serve/bin/ink_run",
+ "gguf": "/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/Inkling-2-Mini-UD-IQ4_XS.gguf",
+ "library": "/mnt/fast-ai/inkling-cache/lib",
+ "load_at_start": true,
+ "load_timeout_s": 300,
+ "max_starts_15min": 4,
+ "engine_env": {
+  "INK_SERVE": "1",
+  "INK_SERVE_CACHES": "/mnt/fast-ai/inkling-cache/lib",
+  "INK_DRAFT": "/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/dspark-Inkling-2-Mini-Q8_0.gguf",
+  "INK_SPEC": "7"
+ }
+}

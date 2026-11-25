@@ -809,6 +809,26 @@ Written and read with O_DIRECT in 64 MiB pieces (no page cache, 64 MiB of host m
 0.14-0.21 s (3.1-4.6 GB/s) instead of a 2.84 s read; loaded with the drafter: ids and every guess count identical to
 the run that saved it (107 checks, 134 kept); loaded and continued with 273 more tokens: ids = a fresh read of all
 3,400; loaded into a 300,001-position engine (512-token steps, another ring size and V stride): ids identical.
+515K needle (514,670 tokens, drafter + lookup, card 1): saved 17.24 GB in 3.52 s (4.9 GB/s) after the 1,532.8 s read;
+loaded on card 2 in 3.19 s (5.4 GB/s): writing 46.50 tok/s with every guess count identical (58 checks, 137 kept),
+ids = plain; loaded on card 3 into a 520,000-position engine without the drafter: 23.49 tok/s, ids = plain.
+
+Serving (2026-11-25, `ink_run` `INK_SERVE=1`, `serve/`): requests on stdin and answers on stdout in the DeepSeek
+server's protocol (G / S / Q, `@@READY` / `@@P` / `@@T` / `@@D` / `@@R` / `@@E`) plus `W <id> <file>` (save what has
+been read; the kept row's logits go with it). The engine keeps the conversation it has read: a request that extends
+it is read from there; any other starts over (reset in milliseconds), from the longest saved prompt in
+`INK_SERVE_CACHES=<dir>` that the request starts with. `serve/server.py` is the DeepSeek server adapted to this model
+(its chat template, its message parts by special token: thinking, text, tool calls; reasoning effort; a library of
+saved prompts: `/admin/prefill`, `/admin/save`, `/admin/library`); `serve/install.sh` installs it in
+`/home/steve/inkling-serve`. Checks (card 4, drafter + lookup): a 3K prompt with two follow-ups (each read 18-20
+tokens), a new conversation, a conversation saved by `W` and reloaded from the library after another one (3,930
+tokens in 0.24 s, then 18 read), and a stop after the first answer line: every answer = a fresh run of its whole
+conversation (a stopped one = the fresh run's start). Through the API (card 5): follow-ups keep the cache when the
+client drops the thinking (turn 2: 514 of 524 tokens cached, turn 3: 1,716 of 1,732); a 22K-token document saved by
+`/admin/prefill` loads in 0.34-0.43 s (read: 23.3 s) after other conversations, and its answer equals the full read's.
+The prompt's time in `ink_run` now ends with a wait for the card (`feed` returns once its launches are queued; a
+1,261-token piece in serving showed 0.008 s); the 3K and 1K prompts time the same as before (3.032 vs 3.033 s, 0.975
+vs 0.973 s, card 4).
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

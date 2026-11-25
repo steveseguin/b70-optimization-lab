@@ -1,0 +1,24 @@
+[Unit]
+Description=Inkling-2-Mini LAN server (own engine on one B70 card; OpenAI API on port 8001)
+After=network-online.target local-fs.target b70-gen4-boot.service
+Wants=network-online.target
+RequiresMountsFor=/mnt/fast-ai
+StartLimitIntervalSec=1800
+StartLimitBurst=6
+
+[Service]
+Type=simple
+User=steve
+Group=steve
+WorkingDirectory=/home/steve/inkling-serve
+Environment=PYTHONUNBUFFERED=1
+ExecStart=/home/steve/dsv41-serve/venv/bin/python -I /home/steve/inkling-serve/server.py
+KillMode=mixed
+TimeoutStopSec=120
+Restart=always
+RestartSec=30
+StandardOutput=append:/home/steve/inkling-serve/logs/service.log
+StandardError=append:/home/steve/inkling-serve/logs/service.log
+
+[Install]
+WantedBy=multi-user.target
