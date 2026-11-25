@@ -10,7 +10,8 @@
 #     (INK_SAVE_GEN) must equal the baseline's bit for bit (long context: windowed and full attention past 1024 keys);
 #     then the same with the drafter's guesses and the checks' shared key reads at any length (INK_ATT_SHARE_MIN=0),
 #     the prompt in steps of 1,024 tokens (the first run takes it in one step: the windowed caches across steps)
-#   card A, then: haiku 64 and code 128 with guesses checked in steps of 2-4 tokens (INK_SPEC=3, prompt lookup):
+#   card A, then: haiku 64 and code 128 with guesses checked in steps of 2-4 tokens (INK_SPEC=3, prompt lookup,
+#     INK_SPEC_LOOKUP=0: every match checked, so the steps of 2-4 tokens happen; the learned rule checks few):
 #     ids and every chosen logits row must equal the one-token baseline's; then haiku 64 with the DSpark drafter's
 #     7 guesses checked every round (INK_DRAFT, INK_SPEC=7, INK_SPEC_ADAPT=0, INK_DSP_STOP=0: steps of 8 tokens): ids and every chosen
 #     logits row
@@ -31,8 +32,8 @@ out=$(mktemp -d "$W/check.XXXXXX")
 mkdir -p "$out/s5" "$out/p300"
 INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /dev/null 2> "$out/p300.err" &
 { INK_DUMP=$out/s5 "$S" "$cA" "$bin" "$M" "$cA" "$W/ref-dumps/smoke5.tokens" 1 > /dev/null 2> "$out/s5.err"
-  INK_SPEC=3 INK_SAVE_GEN=$out/spec-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/spec-haiku.ids" 2> "$out/spec-haiku.err"
-  INK_SPEC=3 "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/code.tokens" 128 > "$out/spec-code.ids" 2> "$out/spec-code.err"
+  INK_SPEC=3 INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/spec-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/spec-haiku.ids" 2> "$out/spec-haiku.err"
+  INK_SPEC=3 INK_SPEC_LOOKUP=0 "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/code.tokens" 128 > "$out/spec-code.ids" 2> "$out/spec-code.err"
   INK_DRAFT=$DR INK_SPEC=7 INK_SPEC_ADAPT=0 INK_DSP_STOP=0 INK_SAVE_GEN=$out/dspark-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/dspark-haiku.ids" 2> "$out/dspark-haiku.err"; } &
 INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
 { "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err"

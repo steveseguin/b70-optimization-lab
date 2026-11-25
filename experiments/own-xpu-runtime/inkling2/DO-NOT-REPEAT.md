@@ -89,3 +89,4 @@ Measurement cautions (not ideas, but they decide results):
 - `INK_PROF` (profiled queue) and unprofiled timings can disagree by ~1 %; decide with `INK_BENCH_STEP` alternations.
 - `INK_SAVE_GEN` copies a 201,024-value row per step to the host: never time one arm with it and the other without.
 - Cards differ by up to ~8 %: compare on one card.
+| The 2-8 token matrix kernel (`gemv_multi_m`) with the job's input vectors copied once per work-group into local memory (each job padded to whole work-groups), so sub-groups stop re-reading M x 9 KB of vectors from the cache | Bit-identical but slower: one 3072 x 2304 Q8_0 matrix at 4 vectors 20.5 us -> 22.6 (16 sub-groups, R2; 4 or 8 sub-groups 35-70 us); attn_output 19.3 -> 22.5. The vector re-reads are not what holds 4-token products at ~370 GB/s (1 token: 470) | bench_gemv `multi_ms` rows (card 5, 2026-11-25) | |

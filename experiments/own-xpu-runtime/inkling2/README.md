@@ -723,6 +723,16 @@ is checked. Same card, ids identical in every pair:
 The first version learned lookup's chance only from checked guesses (from 1 of 2): +19 % on the needle, but 0.1-1.5 %
 slower on every other task (lookup gambled before it had evidence). `INK_DRAFT_LOG2=<file>` (with `INK_DRAFT_LOG` and
 `INK_ORACLE`) logs each round's output index, lead count, guesses and probabilities for replaying such rules offline.
+Without the drafter (`INK_SPEC` alone, e.g. at 515K where the drafter does not fit) lookup's guesses go through the
+same learned rule against a plain step (2026-11-25; `INK_SPEC_LOOKUP=0` = every lookup match checked, as before). Same
+card, ids identical to plain writing in every run: 515K needle (card 2) 23.20 -> 34.23 tok/s (+48 %, 82 of 114 lookup
+guesses kept); 200K + haiku (card 4) 41.99 -> 48.13; 200K + code (card 3) 42.43 -> 43.31; 31K (card 1) 73.27 -> 73.91;
+code (card 5) 90.81 / 90.13 -> 91.87 / 91.12; haiku 91.22 / 90.26 -> 90.04 / 89.20; 3K 84.85 / 84.17 -> 84.04 / 83.54.
+The old rule (every match checked) lost up to 27 % on the same tasks (31K 56.73, 3K 62.48 / 62.07). The gate keeps
+its two lookup checks on the old rule (`INK_SPEC_LOOKUP=0`), so steps of 2-4 tokens are still exercised there.
+Lookup guesses from the text itself are "n-gram/history acceleration" under the lab's realistic-gate rules
+(AGENTS.md, Quality Rules): any public headline speed is measured with `INK_SPEC_LOOKUP=0`; the numbers above are
+lane measurements.
 
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked

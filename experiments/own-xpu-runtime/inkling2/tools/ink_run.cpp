@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
         // the lookup index of the prompt (INK_SPEC_LOOKUP below) is built on a host thread while the card reads the prompt
         NgramIndex ngi;
         std::thread ngt;
-        if (std::getenv("INK_DRAFT") && std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
+        if (std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
             (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP"))))
             ngt = std::thread([&] { ngi.extend(tok, (int)tok.size() + 1); });
         double t0 = now_s();
@@ -224,7 +224,9 @@ int main(int argc, char **argv) {
             // above). Lookup's keep chance per match length is learned from every round whether or not its guesses were
             // checked: the round's tokens y[0..a] are the model's, so lookup's guesses are scored against them (kept up
             // to the first difference); counts decay by INK_SPEC_LK_DECAY (default 0.9) a round, from 1 kept of 4.
-            const bool lk = dr && adapt && (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP")));
+            // Without the drafter (INK_SPEC alone) lookup's guesses are checked by the same rule against a plain step
+            // (INK_SPEC_LOOKUP=0 there: every lookup match checked, as before).
+            const bool lk = (!dr || adapt) && (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP")));
             const double lk_decay = std::getenv("INK_SPEC_LK_DECAY") ? std::atof(std::getenv("INK_SPEC_LK_DECAY")) : 0.9;
             double lk_n[5] = {4, 4, 4, 4, 4}, lk_k[5] = {1, 1, 1, 1, 1};
             std::vector<int32_t> gl_round; int lnn_round = 0; // this round's lookup guesses (scored after the check)
@@ -251,9 +253,11 @@ int main(int argc, char **argv) {
                 std::vector<int32_t> g;
                 const int H = (int)hist.size();
                 const int room = n_gen - (int)out.size() - 1; // guesses past the end would never be shown
-                if (adapt) {
+                if (adapt || lk) {
                     for (int k = 0; k < 8; ++k) // (a check of more rows than the engine's dec_rows reads the cache again)
                         cost[k] = cost0[k] + e.n_past * (kv1 * ((k + e.dec_rows) / e.dec_rows) + kvx * k);
+                }
+                if (adapt) {
                     // the drafter's slots 4-7 are worth reading only if a 4th guess could be checked: with r the 5-token
                     // step's extra cost over 4 tokens, that needs the chain c of guesses 1-3 above r / (0.93 - 3 r)
                     // (0.93 c > (1 + 3 c) r: the 4th guess adds at most 0.93 c expected tokens, the 3 before at least c each)
@@ -267,7 +271,7 @@ int main(int argc, char **argv) {
                 int lnn = 0;
                 float ql = 0.0f;
                 bool skipd = false;
-                if (lk && adapt) {
+                if (lk) {
                     for (int nn = 4; nn >= 2 && gl.empty(); --nn) {
                         const int st = ngi.find(hist, H, nn);
                         if (st < 0) continue;
@@ -276,7 +280,7 @@ int main(int argc, char **argv) {
                     }
                     ql = lnn ? (float)(lk_k[lnn] / lk_n[lnn]) : 0.0f;
                     gl_round = gl; lnn_round = lnn;
-                    skipd = !dlog && lnn == 4 && (int)gl.size() >= 4 && ql >= lk_skip;
+                    skipd = dr && !dlog && lnn == 4 && (int)gl.size() >= 4 && ql >= lk_skip;
                     if (skipd) ++lk_skipped;
                 }
                 if (dr) {
@@ -304,7 +308,7 @@ int main(int argc, char **argv) {
                             g = dr->draft(e.n_past, xdev, std::min(spec, room), x);
                         tdraft += now_s() - td;
                     }
-                } else
+                } else if (!lk)
                     for (int nn = std::min(maxn, H - 1); nn >= minn && g.empty(); --nn)
                         for (int st = H - nn - 1; st >= 0; --st) {
                             if (!std::equal(hist.begin() + st, hist.begin() + st + nn, hist.end() - nn)) continue;
@@ -314,7 +318,7 @@ int main(int argc, char **argv) {
                 if ((int)g.size() > room) g.resize(std::max(0, room));
                 int lsrc = 0; // guesses from lookup start at index lsrc of g (lsrc = g.size(): none)
                 std::vector<float> gch; // the chosen guesses' keep chances
-                if (adapt && lk) {
+                if (lk) {
                     lsrc = (int)g.size();
                     // a candidate's best count and its tokens per ms (the rule above)
                     auto rate = [&](const std::vector<float> &ch, int &bk) {
@@ -380,6 +384,8 @@ int main(int argc, char **argv) {
                 const std::vector<int32_t> y = e.check(tk.data(), (int)tk.size());
                 int a = 0; // guesses that match the model's choices
                 while (a < (int)g.size() && g[a] == y[a] && y[a] != e.m.hp.eos) ++a;
+                if (!dr && lk)
+                    for (int j = 0; j <= a && j < (int)g.size(); ++j) { ++lk_used; if (j < a) ++lk_kept; }
                 if (dr)
                     for (int j = 0; j <= a && j < (int)g.size(); ++j) { // guesses the check decided (up to the first rejection)
                         if (lk && j >= lsrc) { // a lookup guess
@@ -410,15 +416,15 @@ int main(int argc, char **argv) {
             }
             std::fprintf(stderr, "[spec] %ld checks (%ld guesses, %ld kept: %.1f %%), %ld plain steps; %.2f tokens per check; drafting %.3f s\n",
                          checks, guessed, kept, guessed ? 100.0 * kept / guessed : 0.0, plain, checks ? 1.0 + (double)kept / checks : 0.0, tdraft);
+            if (lk)
+                std::fprintf(stderr, "[spec] lookup: rounds checking the drafter's (or no) / lookup's / merged guesses %ld / %ld / %ld (%ld without drafting); lookup guesses kept %ld of %ld\n",
+                             lk_rounds[0], lk_rounds[1], lk_rounds[2], lk_skipped, lk_kept, lk_used);
             if (dr) {
                 if (adapt) {
                     std::fprintf(stderr, "[spec] guesses checked per round:");
                     for (int k = 0; k <= std::min(7, spec); ++k) std::fprintf(stderr, " %d x%ld", k, kchose[k]);
                     std::fprintf(stderr, "\n");
                 }
-                if (lk)
-                    std::fprintf(stderr, "[spec] lookup: rounds checking the drafter's / lookup's / merged guesses %ld / %ld / %ld (%ld without drafting); lookup guesses kept %ld of %ld\n",
-                                 lk_rounds[0], lk_rounds[1], lk_rounds[2], lk_skipped, lk_kept, lk_used);
                 std::fprintf(stderr, "[spec] kept by the drafter's probability:");
                 for (int b = 0; b < 10; ++b) if (pb_n[b]) std::fprintf(stderr, " 0.%d+ %ld/%ld", b, pb_k[b], pb_n[b]);
                 std::fprintf(stderr, "\n");
