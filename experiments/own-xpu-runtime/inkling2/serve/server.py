@@ -16,12 +16,14 @@ Config: config.json next to this file. Logs: logs/. Health: GET /health. Library
 saves what the engine has read; GET /admin/library lists the saved prompts.
 """
 import asyncio
+import hashlib
 import json
 import os
 import re
 import threading
 import time
 import uuid
+from collections import OrderedDict
 from pathlib import Path
 
 import jinja2
@@ -215,7 +217,8 @@ class EngineError(Exception):
 
 
 class Engine:
-    def __init__(self):
+    def __init__(self, card):
+        self.card = int(card)
         self.proc = None
         self.state = "stopped"  # stopped | loading | ready | fault
         self.detail = ""
@@ -242,15 +245,15 @@ class Engine:
         env = dict(os.environ)
         env.update({k: str(v) for k, v in CFG["engine_env"].items()})
         ts = time.strftime("%Y%m%dT%H%M%S")
-        for old in sorted(LOG_DIR.glob("engine-*.log"))[:-30]:
+        for old in sorted(LOG_DIR.glob(f"engine-c{self.card}-*.log"))[:-30]:
             old.unlink(missing_ok=True)
         if self.errlog:
             self.errlog.close()
-        self.errlog = open(LOG_DIR / f"engine-{ts}.log", "w")
+        self.errlog = open(LOG_DIR / f"engine-c{self.card}-{ts}.log", "w")
         self.state, self.detail = "loading", "loading the model"
         t0 = time.time()
-        card = str(CFG["card"])
-        log(f"engine start (card {card}, context {self.ctx}), log engine-{ts}.log")
+        card = str(self.card)
+        log(f"engine start (card {card}, context {self.ctx}), log engine-c{card}-{ts}.log")
         self.proc = await asyncio.create_subprocess_exec(
             CFG["on_card"], card, CFG["engine_bin"], CFG["gguf"], card, "/dev/null", "0", str(self.ctx),
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=self.errlog, env=env, cwd=str(HERE),
@@ -267,18 +270,18 @@ class Engine:
                 self.proc = None
                 self.errlog.flush()
                 try:
-                    txt = (LOG_DIR / f"engine-{ts}.log").read_text(errors="replace").splitlines()
+                    txt = (LOG_DIR / f"engine-c{self.card}-{ts}.log").read_text(errors="replace").splitlines()
                     fat = [l for l in txt if l.startswith("error:") or l.startswith("on-card:")]
                     self.last_fatal = fat[-1] if fat else ""
                 except OSError:
                     self.last_fatal = ""
-                self.state, self.detail = "stopped", f"the engine exited while loading (code {rc}): {self.last_fatal or 'see logs/engine-' + ts + '.log'}"
+                self.state, self.detail = "stopped", f"the engine exited while loading (code {rc}): {self.last_fatal or f'see logs/engine-c{self.card}-{ts}.log'}"
                 raise EngineError(self.detail)
             if line.startswith(b"@@READY"):
                 break
         self.load_s = time.time() - t0
         self.state, self.detail = "ready", ""
-        log(f"engine ready in {self.load_s:.1f} s")
+        log(f"engine on card {self.card} ready in {self.load_s:.1f} s")
         self.reader = asyncio.create_task(self._read(self.proc))
 
     async def _read(self, proc):
@@ -298,7 +301,7 @@ class Engine:
             self.proc = None
             if self.state != "fault":
                 self.state, self.detail = "stopped", f"the engine exited (code {rc})"
-            log(f"engine exited with code {rc}; see the newest logs/engine-*.log")
+            log(f"engine on card {self.card} exited with code {rc}; see the newest logs/engine-c{self.card}-*.log")
             for q in self.queues.values():
                 q.put_nowait(("X", [str(rc)]))
 
@@ -319,7 +322,7 @@ class Engine:
             log("engine did not quit in 60 s: terminating it")
             await self._kill_proc(proc)
         self.state = "stopped"
-        log("engine stopped")
+        log(f"engine on card {self.card} stopped")
 
     async def _kill_proc(self, proc):
         try:
@@ -344,9 +347,7 @@ class Engine:
         await self.proc.stdin.drain()
 
 
-ENGINE = Engine()
 TOK = None
-LOCK = asyncio.Lock()
 STATS = {"waiting": 0, "requests": 0, "new_conversations": 0, "context_changes": 0}
 
 
@@ -359,11 +360,44 @@ class Session:
     def clear(self):
         self.ids = []
         self.raw = b""
-        self.msgs = []  # the last request's messages + our answer (exact thinking and text)
         self.mode = None
 
 
-SESSION = Session()
+class Slot:
+    """One card: its engine, the conversation it holds, and a lock (one request at a time per card)."""
+
+    def __init__(self, card):
+        self.engine = Engine(card)
+        self.session = Session()
+        self.lock = asyncio.Lock()
+        self.last_used = 0.0
+        self.requests = 0
+        self.pending = 0  # requests routed here that have not taken the lock yet
+
+
+SLOTS = [Slot(c) for c in (CFG.get("cards") or [CFG["card"]])]
+MAX_CTX = SLOTS[0].engine.max_ctx
+
+
+def pick_slot(raw_msgs, mode, make_prompt):
+    """The card for a request: the one whose held conversation this one extends (the longest), else a free card
+    (an empty one first, then the one used least recently), else the least recently used. Returns (slot, messages,
+    prompt) with our exact earlier answers merged in for that card's conversation."""
+    msgs = merge_known(raw_msgs, mode) if raw_msgs is not None else None
+    prompt = make_prompt(msgs)
+    pb = prompt.encode()
+    best = None
+    for sl in SLOTS:
+        ss = sl.session
+        if ss.mode != mode or not ss.ids or sl.engine.state == "fault":
+            continue
+        if pb.startswith(ss.raw) and len(pb) > len(ss.raw) and (best is None or len(ss.raw) > len(best.session.raw)):
+            best = sl
+    if best is None:
+        ok = [sl for sl in SLOTS if sl.engine.state != "fault"] or SLOTS
+        best = min(ok, key=lambda x: (x.pending + x.lock.locked(), bool(x.session.ids), x.last_used))
+    best.pending += 1
+    return best, msgs, prompt
 
 
 def _text_of(c):
@@ -386,38 +420,66 @@ def _calls_key(tcs):
     return out
 
 
-def merge_known(msgs, mode):
-    """The request's messages with our exact earlier answers put back (clients often drop the thinking, trim the
-    text, or re-encode tool calls), so the rendered conversation extends what the engine holds."""
-    if SESSION.mode != mode or not SESSION.msgs:
-        return msgs
-    out = list(msgs)
-    for i, ours in enumerate(SESSION.msgs[:len(msgs)]):
-        if ours.get("role") != "assistant" or "visible" not in ours:
-            continue
-        m = msgs[i]
+# Our recent answers, exact (thinking, text, tool calls), keyed by the conversation before them as the client sends it
+# and the part of the answer the client saw. Clients often drop the thinking, trim the text or re-encode tool calls;
+# putting ours back makes a follow-up render the same on any card, whether or not a card still holds the conversation,
+# so an answer depends only on its conversation, never on the order requests came in.
+KNOWN = OrderedDict()
+KNOWN_CHARS = [0]
+KNOWN_MAX_CHARS = int(CFG.get("known_answers_max_chars", 64_000_000))
+
+
+def _msg_key(m):
+    return [m.get("role"), _text_of(m.get("content")).strip(), _calls_key(m.get("tool_calls")), m.get("name") or ""]
+
+
+def _known_key(mode, before, visible, calls):
+    h = hashlib.sha256(json.dumps([list(mode), [_msg_key(m) for m in before], (visible or "").strip(),
+                                   _calls_key(calls)], ensure_ascii=False, default=str).encode())
+    return h.hexdigest()
+
+
+def remember_answer(mode, raw_msgs, ours):
+    k = _known_key(mode, raw_msgs, ours["visible"], ours.get("visible_calls"))
+    size = len(ours.get("content") or "") + len(ours.get("reasoning_content") or "") + 200
+    old = KNOWN.pop(k, None)
+    if old is not None:
+        KNOWN_CHARS[0] -= old[1]
+    KNOWN[k] = (ours, size)
+    KNOWN_CHARS[0] += size
+    while KNOWN and KNOWN_CHARS[0] > KNOWN_MAX_CHARS:
+        _, (_, sz) = KNOWN.popitem(last=False)
+        KNOWN_CHARS[0] -= sz
+
+
+def merge_known(raw_msgs, mode):
+    """The request's messages with our exact earlier answers put back."""
+    out = list(raw_msgs)
+    for i, m in enumerate(raw_msgs):
         if m.get("role") != "assistant":
-            return msgs  # (another conversation)
-        if _text_of(m.get("content")).strip() != (ours["visible"] or "").strip():
             continue
-        if _calls_key(m.get("tool_calls")) != _calls_key(ours.get("visible_calls")):
-            continue
-        out[i] = ours  # (the template reads only role, content, reasoning_content and tool_calls)
+        hit = KNOWN.get(_known_key(mode, raw_msgs[:i], _text_of(m.get("content")), m.get("tool_calls")))
+        if hit is not None:
+            out[i] = hit[0]  # (the template reads only role, content, reasoning_content and tool_calls)
     return out
 
 
-async def _engine_job(prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
+async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
+    ENGINE, SESSION, LOCK = slot.engine, slot.session, slot.lock
     STATS["waiting"] += 1
     try:
         await LOCK.acquire()
     finally:
         STATS["waiting"] -= 1
+        slot.pending = max(0, slot.pending - 1)
     try:
         if not ctl["alive"]():
             raise EngineError("the client left before its turn")
         if ENGINE.state == "fault":
             raise EngineError(ENGINE.detail)
         STATS["requests"] += 1
+        slot.requests += 1
+        slot.last_used = time.time()
         loop = asyncio.get_running_loop()
         extend = bool(SESSION.mode == mode and SESSION.ids and ENGINE.state == "ready" and
                       prompt_bytes.startswith(SESSION.raw) and len(prompt_bytes) > len(SESSION.raw))
@@ -435,18 +497,18 @@ async def _engine_job(prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
         if ENGINE.state == "ready" and tier > ENGINE.ctx:
             t_g = time.time()
             if extend:  # keep what the engine has read: the restarted engine loads it as the longest saved prompt
-                kind, data = await _engine_save(LIB / "_held.inkc")
+                kind, data = await _engine_save(slot, LIB / f"_held-c{ENGINE.card}.inkc")
                 if kind != "W":
                     log("could not save the held conversation before growing: " + " ".join(data))
             await ENGINE.stop()
-            log(f"context {ENGINE.ctx} -> {tier} for a conversation of {len(ids)} + {max_new} tokens")
+            log(f"card {ENGINE.card}: context {ENGINE.ctx} -> {tier} for a conversation of {len(ids)} + {max_new} tokens")
             ENGINE.ctx = tier
             await ENGINE.start()
             STATS["context_changes"] += 1
             log(f"context change took {time.time() - t_g:.1f} s before the request")
         elif ENGINE.state == "ready" and not extend and tier < ENGINE.ctx and len(ids) >= CFG.get("shrink_min_prompt", 8192):
             await ENGINE.stop()
-            log(f"context {ENGINE.ctx} -> {tier} for a new conversation of {len(ids)} tokens")
+            log(f"card {ENGINE.card}: context {ENGINE.ctx} -> {tier} for a new conversation of {len(ids)} tokens")
             ENGINE.ctx = tier
             STATS["context_changes"] += 1
         if not extend:
@@ -494,24 +556,23 @@ async def _engine_job(prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
         SESSION.ids = ids + gen
         SESSION.raw = TOK.bytes_of(SESSION.ids)
         SESSION.mode = mode
-        SESSION.msgs = []
         tm = {"prompt_tokens": len(ids), "read_tokens": int(done[1]), "read_s": float(done[3]), "answer_tokens": len(gen),
               "answer_s": float(done[4]), "rounds": int(done[5]), "guesses": int(done[6]), "kept_guesses": int(done[7]),
               "context_used": int(done[8]), "total_s": round(time.time() - t0, 3)}
         tm["answer_tok_per_s"] = round(max(0, len(gen) - 1) / max(1e-6, tm["answer_s"]), 2)
         tm["read_tok_per_s"] = round(tm["read_tokens"] / max(1e-6, tm["read_s"]), 1)
-        log(f"request: conversation {len(ids)} tokens, read {tm['read_tokens']} in {tm['read_s']:.2f} s, "
+        log(f"card {ENGINE.card}: conversation {len(ids)} tokens, read {tm['read_tokens']} in {tm['read_s']:.2f} s, "
             f"answered {len(gen)} in {tm['answer_s']:.2f} s ({tm['answer_tok_per_s']} tok/s), end {done[0]}")
         return done[0], gen, tm
     finally:
         LOCK.release()
 
 
-async def run_request(request, prompt_bytes: bytes, mode, max_new: int, on_event):
+async def run_request(request, slot, prompt_bytes: bytes, mode, max_new: int, on_event):
     """Runs the engine job as its own task: a client that leaves stops the answer at the next round, and the
     conversation the engine holds stays consistent."""
     ctl = {"alive": lambda: request.transport is not None and not request.transport.is_closing()}
-    job = asyncio.create_task(_engine_job(prompt_bytes, mode, max_new, on_event, ctl))
+    job = asyncio.create_task(_engine_job(slot, prompt_bytes, mode, max_new, on_event, ctl))
     try:
         return await asyncio.shield(job)
     except asyncio.CancelledError:
@@ -596,9 +657,8 @@ async def chat_completions(request: web.Request):
         tools = None
     mode = (str(effort), json.dumps(tools, sort_keys=True))
     raw_msgs = norm_messages(msgs)
-    msgs = merge_known(raw_msgs, mode)
     try:
-        prompt = render(msgs, effort, tools)
+        slot, msgs, prompt = pick_slot(raw_msgs, mode, lambda m: render(m, effort, tools))
     except jinja2.exceptions.TemplateError as e:
         raise jerr(web.HTTPBadRequest, f"template: {e}")
     max_new = int(body.get("max_completion_tokens") or body.get("max_tokens") or CFG.get("default_max_tokens", 32768))
@@ -654,7 +714,7 @@ async def chat_completions(request: web.Request):
         await resp.prepare(request)
         await resp.write(sse(chunk({"role": "assistant", "content": ""})))
     try:
-        reason, gen, tm = await run_request(request, prompt.encode(), mode, max_new, on_event)
+        reason, gen, tm = await run_request(request, slot, prompt.encode(), mode, max_new, on_event)
     except EngineError as e:
         log(f"error: {e}")
         if stream:
@@ -684,7 +744,7 @@ async def chat_completions(request: web.Request):
         if calls:
             ours["tool_calls"] = [dict(c, function=dict(c["function"], arguments=json.loads(c["function"]["arguments"])))
                                   for c in calls]
-        SESSION.msgs = list(msgs) + [ours]
+        remember_answer(mode, raw_msgs, ours)
     usage = {"prompt_tokens": tm["prompt_tokens"], "completion_tokens": len(gen),
              "total_tokens": tm["prompt_tokens"] + len(gen),
              "prompt_tokens_details": {"cached_tokens": tm["prompt_tokens"] - tm["read_tokens"]}}
@@ -744,7 +804,8 @@ async def completions(request: web.Request):
         return False
 
     try:
-        reason, gen, tm = await run_request(request, prompt.encode(), ("raw",), max_new, on_event)
+        slot, _, _ = pick_slot(None, ("raw",), lambda m: prompt)
+        reason, gen, tm = await run_request(request, slot, prompt.encode(), ("raw",), max_new, on_event)
     except EngineError as e:
         if stream:
             await resp.write(sse({"error": {"message": str(e), "type": "server_error"}}))
@@ -769,47 +830,64 @@ def _lib_path(body):
     return LIB / (name + ".inkc")
 
 
-async def _engine_save(path):
-    """W (the caller holds LOCK): the engine saves what it has read (the held conversation without its last token,
-    which is decided but not read)."""
+async def _engine_save(slot, path):
+    """W (the caller holds slot.lock): the engine saves what it has read (the held conversation without its last
+    token, which is decided but not read). Written beside the library and renamed when complete, so the other cards'
+    engines (which pick saved prompts from the same folder) never see a half-written file."""
     LIB.mkdir(parents=True, exist_ok=True)
+    part = path.parent / (path.name + ".part")
     rid = uuid.uuid4().hex[:12]
     q = asyncio.Queue()
-    ENGINE.queues[rid] = q
+    slot.engine.queues[rid] = q
     try:
-        await ENGINE.send(f"W {rid} {path}")
-        return await q.get()
+        await slot.engine.send(f"W {rid} {part}")
+        kind, data = await q.get()
     finally:
-        ENGINE.queues.pop(rid, None)
+        slot.engine.queues.pop(rid, None)
+    if kind == "W":
+        os.replace(part, path)
+    else:
+        part.unlink(missing_ok=True)
+    return kind, data
 
 
-async def _save_held(path, expect_ids=None):
-    async with LOCK:
-        if ENGINE.state != "ready" or not SESSION.ids:
+async def _save_held(slot, path, expect_ids=None):
+    async with slot.lock:
+        sess = slot.session
+        if slot.engine.state != "ready" or not sess.ids:
             raise jerr(web.HTTPConflict, "the engine holds no conversation")
-        if expect_ids is not None and SESSION.ids[:len(expect_ids)] != expect_ids:
+        if expect_ids is not None and sess.ids[:len(expect_ids)] != expect_ids:
             raise jerr(web.HTTPConflict, "another conversation came in first; try again")
-        kind, data = await _engine_save(path)
-        n = len(SESSION.ids) - 1
+        kind, data = await _engine_save(slot, path)
+        n = len(sess.ids) - 1
     if kind != "W":
         raise jerr(web.HTTPInternalServerError, "save failed: " + " ".join(data), "server_error")
-    log(f"saved {n} tokens to {path} ({int(data[0]) / 1e9:.2f} GB in {float(data[1]):.1f} s)")
-    return web.json_response({"path": str(path), "tokens": n, "bytes": int(data[0]), "seconds": float(data[1])})
+    log(f"card {slot.engine.card}: saved {n} tokens to {path} ({int(data[0]) / 1e9:.2f} GB in {float(data[1]):.1f} s)")
+    return web.json_response({"path": str(path), "tokens": n, "bytes": int(data[0]), "seconds": float(data[1]),
+                              "card": slot.engine.card})
 
 
 async def admin_save(request):
-    """Saves the held conversation as a library prompt: a later conversation that starts with it loads in seconds."""
+    """Saves a held conversation as a library prompt: a later conversation that starts with it loads in seconds.
+    Body: {"name", ["card"]} (default: the card used last)."""
     try:
         body = await request.json()
     except Exception:
         body = {}
-    return await _save_held(_lib_path(body))
+    if body.get("card") is not None:
+        cand = [sl for sl in SLOTS if sl.engine.card == int(body["card"])]
+        if not cand:
+            raise jerr(web.HTTPBadRequest, f"no engine on card {body['card']}")
+        slot = cand[0]
+    else:
+        slot = max(SLOTS, key=lambda x: x.last_used)
+    return await _save_held(slot, _lib_path(body))
 
 
 async def admin_prefill(request):
     """Reads messages (e.g. a system message holding a long document) and saves the result as a library prompt, so
     every later conversation that starts with the same messages (and the same reasoning_effort / tools) reads only
-    what follows them. Body: {"name", "messages", ["reasoning_effort" | "model", "tools"]}."""
+    what follows them, on any card. Body: {"name", "messages", ["reasoning_effort" | "model", "tools"]}."""
     try:
         body = await request.json()
     except Exception:
@@ -821,7 +899,7 @@ async def admin_prefill(request):
     tools = body.get("tools") or None
     mode = (str(effort), json.dumps(tools, sort_keys=True))
     try:
-        prompt = render(norm_messages(msgs), effort, tools)
+        slot, _, prompt = pick_slot(norm_messages(msgs), mode, lambda m: render(m, effort, tools))
     except jinja2.exceptions.TemplateError as e:
         raise jerr(web.HTTPBadRequest, f"template: {e}")
 
@@ -829,11 +907,10 @@ async def admin_prefill(request):
         return False
 
     try:
-        _, gen, tm = await run_request(request, prompt.encode(), mode, 1, on_event)
+        _, gen, tm = await run_request(request, slot, prompt.encode(), mode, 1, on_event)
     except EngineError as e:
         raise jerr(web.HTTPServiceUnavailable, str(e), "server_error")
-    SESSION.msgs = []
-    r = await _save_held(_lib_path(body), SESSION.ids[:tm["prompt_tokens"]])
+    r = await _save_held(slot, _lib_path(body), slot.session.ids[:tm["prompt_tokens"]])
     log(f"prefill: read {tm['read_tokens']} of {tm['prompt_tokens']} tokens in {tm['read_s']:.1f} s")
     return r
 
@@ -859,16 +936,20 @@ async def tokenize(request):
 
 async def models(request):
     return web.json_response({"object": "list", "data": [
-        {"id": MODEL, "object": "model", "owned_by": "local", "context_length": ENGINE.max_ctx},
-        {"id": MODEL + "-chat", "object": "model", "owned_by": "local", "context_length": ENGINE.max_ctx}]})
+        {"id": MODEL, "object": "model", "owned_by": "local", "context_length": MAX_CTX},
+        {"id": MODEL + "-chat", "object": "model", "owned_by": "local", "context_length": MAX_CTX}]})
 
 
 async def health(request):
-    return web.json_response({"status": ENGINE.state, "detail": ENGINE.detail, "model": MODEL, "context": ENGINE.ctx,
-                              "max_context": ENGINE.max_ctx, "context_changes": STATS["context_changes"],
-                              "card": CFG["card"], "held_conversation_tokens": len(SESSION.ids), "busy": LOCK.locked(),
+    cards = [{"card": sl.engine.card, "status": sl.engine.state, "detail": sl.engine.detail, "context": sl.engine.ctx,
+              "held_conversation_tokens": len(sl.session.ids), "busy": sl.lock.locked(), "requests": sl.requests,
+              "last_load_s": sl.engine.load_s} for sl in SLOTS]
+    sts = {c["status"] for c in cards}
+    status = "ready" if "ready" in sts else ("fault" if sts == {"fault"} else cards[0]["status"])
+    return web.json_response({"status": status, "model": MODEL, "max_context": MAX_CTX, "cards": cards,
                               "waiting": STATS["waiting"], "requests": STATS["requests"],
-                              "new_conversations": STATS["new_conversations"], "last_load_s": ENGINE.load_s})
+                              "new_conversations": STATS["new_conversations"],
+                              "context_changes": STATS["context_changes"]})
 
 
 async def index(request):
@@ -878,20 +959,21 @@ async def index(request):
 async def on_startup(app):
     global TOK
     TOK = Tokenizer()
-    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, card {CFG['card']}, contexts {ENGINE.tiers}")
+    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, cards {[sl.engine.card for sl in SLOTS]}, contexts {SLOTS[0].engine.tiers}")
     if CFG.get("load_at_start", True):
-        async def first():
-            async with LOCK:
-                try:
-                    await ENGINE.start()
-                except EngineError as e:
-                    log(f"engine start failed: {e}")
+        async def first():  # one engine at a time (host memory and disk reads at load)
+            for sl in SLOTS:
+                async with sl.lock:
+                    try:
+                        await sl.engine.start()
+                    except EngineError as e:
+                        log(f"engine start on card {sl.engine.card} failed: {e}")
         app["first"] = asyncio.create_task(first())
 
 
 async def on_shutdown(app):
     log("server stopping")
-    await ENGINE.stop()
+    await asyncio.gather(*(sl.engine.stop() for sl in SLOTS))
 
 
 def main():

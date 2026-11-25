@@ -1,6 +1,7 @@
 # Inkling-2-Mini LAN server
 
-Inkling-2-Mini runs on one B70 card with our own engine. It speaks the OpenAI API on port 8001. Not installed as a
+Inkling-2-Mini runs with our own engine, one copy per card (cards 1-5 by default; the model fits on one card). It
+speaks the OpenAI API on port 8001. Not installed as a
 service yet: start it by hand (below) or install `systemd/inkling-server.service`.
 
 - API base URL: `http://<this machine>:8001/v1`. Any API key works.
@@ -14,13 +15,20 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
 - Answers are the model's own best (greedy) text. Guessing only makes them faster; the answers are exactly the same
   as without it. Sampling settings are ignored.
 
-## One conversation at a time
+## One conversation per card
 
-The engine keeps the latest conversation on the card:
-- A follow-up turn only reads the new words, even after hundreds of thousands of tokens.
-- A different conversation starts over in a few milliseconds and is read from the start (about 1,000 tokens/s
-  short, ~330 tokens/s past 500K), unless the library has a saved start for it.
-- A second client waits until the first answer is done.
+Each card's engine keeps the latest conversation it answered:
+- A follow-up goes back to the card holding its conversation and only reads the new words, even after hundreds of
+  thousands of tokens.
+- A new conversation goes to a free card (an empty one first, then the one used least recently). It is read from
+  the start (about 1,000 tokens/s short, ~330 tokens/s past 500K), unless the library has a saved start for it.
+- Five cards answer five conversations at the same time; a sixth waits for a card.
+- The server remembers its recent answers in full (thinking included; `known_answers_max_chars`, 64 MB) and puts
+  them back when a client sends the conversation again without the thinking, so a follow-up reads the same on any
+  card. An answer depends only on its conversation, not on which card ran it or what else was asked meanwhile
+  (checked: two cards at once, and one card switching between two conversations, gave the same thinking and
+  answers as one conversation at a time).
+- Host memory: about 1.3 GB per engine at any context size.
 
 ## The library: long documents read once
 
@@ -29,7 +37,8 @@ messages and saves the result to `/mnt/fast-ai/inkling-cache/lib/mydoc.inkc`. Ev
 with exactly those messages (same `reasoning_effort` / model name) then loads it in seconds and reads only what
 follows. A 22K-token document: read 23 s, loaded 0.3-0.4 s. A 515K-token prompt: read 25.5 minutes, loaded 3.2 s
 (17.2 GB at 5.4 GB/s).
-- `POST /admin/save {"name": ...}` saves the conversation the engine holds right now.
+- `POST /admin/save {"name": ..., "card": n}` saves the conversation a card holds right now (default: the card used
+  last).
 - `GET /admin/library` lists the saved prompts. Delete a file there to forget it.
 - Saved prompts belong to this engine build's model file; one loads into any context size.
 
@@ -39,10 +48,11 @@ follows. A 22K-token document: read 23 s, loaded 0.3-0.4 s. A 515K-token prompt:
   server's Python environment: aiohttp + jinja2). The model loads in ~4 s.
 - As a service: `sudo cp systemd/inkling-server.service /etc/systemd/system/ && sudo systemctl daemon-reload &&
   sudo systemctl enable --now inkling-server`.
-- `GET /health` shows the state and the held conversation's length.
-- The server runs on the card in `config.json` (`card`, default 1) through the lab's `on-card.sh`, which holds that
-  card's lock: research jobs cannot use the card meanwhile, and the server does not start while the DeepSeek server
-  holds the cards.
+- `GET /health` shows each card's state, context size and held conversation length.
+- The server runs on the cards in `config.json` (`cards`, default 1-5; fewer leaves cards free for other work),
+  each through the lab's `on-card.sh`, which holds that card's lock: research jobs cannot use the card meanwhile,
+  and the server does not start while the DeepSeek server holds the cards. The engines load one after another
+  (~4 s each).
 - Context size: `ctx_tiers` in `config.json` (default 65,536 / 131,072 / 300,000 / 515,000). The engine runs at the
   smallest size that holds the conversation plus its answer (`max_tokens`, default 32,768): smaller sizes read
   prompts in bigger steps (faster; 31K: ~970 vs ~816 tokens/s at the largest). A conversation that outgrows the size
@@ -56,4 +66,4 @@ Files:
 - `bin/ink_run`: the engine (built from `b70-optimization-lab/experiments/own-xpu-runtime/inkling2`, `INK_SERVE=1`).
 - `bin/tokhelper`: the tokenizer (llama.cpp Unsloth release b12588-mix, vocabulary only).
 - `chat_template.jinja`: the model's template, taken from the GGUF.
-- `logs/`: the logs.
+- `logs/`: the logs (`engine-c<card>-*.log` per engine).

@@ -830,6 +830,13 @@ The server runs the engine at the smallest of `ctx_tiers` (64K / 128K / 300K / 5
 its answer, so short conversations get the big prompt steps; a conversation that outgrows it is saved (`W`), the
 engine restarted larger and the save loaded back (8,192 -> 65,536 mid-conversation: 4.1 s, then 514 tokens loaded and
 10,811 read; thinking and answer identical to a server that never changed size).
+The server runs one engine per card (`cards`, default 1-5; ~1.3 GB host memory each at any context size): a
+follow-up goes to the card that holds its conversation, a new one to a free card, and the server remembers its recent
+answers in full (thinking included) to put them back when a client resends a conversation without them, so a
+follow-up renders the same on any card. Checked: two conversations at once on cards 4 and 5 (both answers overlap in
+time) and the same turns on one card switching between the conversations both equal one conversation at a time on a
+third card (thinking and answers, 5 of 5 turns each, incl. a 7K-token document saved by one card and loaded by the
+other).
 The prompt's time in `ink_run` now ends with a wait for the card (`feed` returns once its launches are queued; a
 1,261-token piece in serving showed 0.008 s); the 3K and 1K prompts time the same as before (3.032 vs 3.033 s, 0.975
 vs 0.973 s, card 4).
