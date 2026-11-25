@@ -24,6 +24,11 @@ textarea { flex:1; min-height:70px; padding:10px; font:inherit; color:var(--fg);
 button { padding:8px 14px; font:inherit; border:1px solid var(--line); border-radius:8px; background:var(--accent); color:#fff; cursor:pointer; }
 button.secondary { background:var(--card); color:var(--fg); }
 button:disabled { opacity:.5; cursor:default; }
+.pics { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:6px; }
+.pics img { max-height:120px; max-width:200px; border-radius:6px; border:1px solid var(--line); }
+#pend { max-width:860px; margin:0 auto; padding:0 16px; }
+#pend img { cursor:pointer; }
+#pend .hint { font-size:12px; color:var(--muted); }
 </style>
 </head>
 <body>
@@ -35,32 +40,59 @@ button:disabled { opacity:.5; cursor:default; }
   <span id="status">…</span>
 </header>
 <main id="log"></main>
+<div id="pend"></div>
 <form id="f">
-  <textarea id="inp" placeholder="Message (Ctrl+Enter to send)"></textarea>
+  <textarea id="inp" placeholder="Message (Ctrl+Enter to send; paste or drop pictures here)"></textarea>
   <div style="display:flex;flex-direction:column;gap:6px">
     <button id="send" type="submit">Send</button>
+    <button id="attach" class="secondary" type="button">Picture…</button>
+    <input id="file" type="file" accept="image/*" multiple hidden>
     <button id="stop" class="secondary" type="button" disabled>Stop</button>
   </div>
 </form>
 <script>
 const log = document.getElementById('log'), inp = document.getElementById('inp');
-let msgs = [], ctrl = null;
+let msgs = [], ctrl = null, pending = [];
+function showPending() {
+  const p = document.getElementById('pend'); p.innerHTML = '';
+  if (!pending.length) return;
+  const row = el('div', 'pics');
+  pending.forEach((u, i) => { const im = el('img'); im.src = u; im.title = 'click to remove'; im.onclick = () => { pending.splice(i, 1); showPending(); }; row.append(im); });
+  p.append(row, el('div', 'hint', 'click a picture to remove it'));
+}
+function addFiles(files) {
+  for (const f of files) {
+    if (!f.type.startsWith('image/')) continue;
+    const r = new FileReader(); r.onload = () => { pending.push(r.result); showPending(); }; r.readAsDataURL(f);
+  }
+}
+document.getElementById('attach').onclick = () => document.getElementById('file').click();
+document.getElementById('file').onchange = e => { addFiles(e.target.files); e.target.value = ''; };
+inp.addEventListener('paste', e => { const fs = [...(e.clipboardData?.files || [])]; if (fs.length) { e.preventDefault(); addFiles(fs); } });
+inp.addEventListener('dragover', e => e.preventDefault());
+inp.addEventListener('drop', e => { if (e.dataTransfer?.files?.length) { e.preventDefault(); addFiles(e.dataTransfer.files); } });
 function el(tag, cls, text) { const e = document.createElement(tag); if (cls) e.className = cls; if (text != null) e.textContent = text; return e; }
 async function health() {
   try { const h = await (await fetch('/health')).json();
-    document.getElementById('status').textContent = h.status === 'ready' ? `ready · context ${h.context.toLocaleString()} tokens · held ${h.held_conversation_tokens.toLocaleString()}` + (h.busy ? ' · busy' : '') : `${h.status}${h.detail ? ': ' + h.detail : ''}`;
+    const cs = h.cards || [], up = cs.filter(c => c.status === 'ready'), busy = cs.filter(c => c.busy).length;
+    document.getElementById('status').textContent = h.status === 'ready'
+      ? `ready · ${up.length} of ${cs.length} card(s) · up to ${(h.max_context || 0).toLocaleString()} tokens` + (busy ? ` · ${busy} busy` : '') + (h.waiting ? ` · ${h.waiting} waiting` : '')
+      : `${h.status}${cs[0] && cs[0].detail ? ': ' + cs[0].detail : ''}`;
   } catch (e) { document.getElementById('status').textContent = 'server unreachable'; }
 }
 setInterval(health, 3000); health();
-document.getElementById('newchat').onclick = () => { msgs = []; log.innerHTML = ''; };
+document.getElementById('newchat').onclick = () => { msgs = []; log.innerHTML = ''; pending = []; showPending(); };
 document.getElementById('stop').onclick = () => { if (ctrl) ctrl.abort(); };
 inp.addEventListener('keydown', e => { if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) document.getElementById('f').requestSubmit(); });
 document.getElementById('f').onsubmit = async (ev) => {
   ev.preventDefault();
-  const text = inp.value.trim(); if (!text || ctrl) return;
+  const text = inp.value.trim(); if ((!text && !pending.length) || ctrl) return;
   inp.value = '';
-  msgs.push({role: 'user', content: text});
-  const u = el('div', 'msg user'); u.append(el('div', 'who', 'You'), el('div', null, text)); log.append(u);
+  const pics = pending; pending = []; showPending();
+  msgs.push({role: 'user', content: pics.length ? [...pics.map(u => ({type: 'image_url', image_url: {url: u}})), {type: 'text', text: text}] : text});
+  const u = el('div', 'msg user'); u.append(el('div', 'who', 'You'));
+  if (pics.length) { const row = el('div', 'pics'); for (const p of pics) { const im = el('img'); im.src = p; row.append(im); } u.append(row); }
+  u.append(el('div', null, text)); log.append(u);
   const a = el('div', 'msg'); const who = el('div', 'who', 'Inkling');
   const det = el('details'); const sum = el('summary', null, 'thinking…'); const th = el('div'); det.append(sum, th);
   const body = el('div'); const stats = el('div', 'stats');
@@ -92,7 +124,7 @@ document.getElementById('f').onsubmit = async (ev) => {
     }
   } catch (e) { if (e.name !== 'AbortError') body.textContent += '\n[error] ' + e.message; else body.textContent += ' [stopped]'; }
   msgs.push({role: 'assistant', content: content, reasoning_content: reasoning});
-  if (timings) stats.textContent = `read ${timings.read_tokens} new tokens in ${timings.read_s.toFixed(1)} s · ${timings.answer_tokens} tokens at ${timings.answer_tok_per_s} tok/s · conversation ${timings.context_used.toLocaleString()} tokens`;
+  if (timings) stats.textContent = (timings.pictures_encoded ? `${timings.pictures_encoded} picture(s) in ${timings.picture_s.toFixed(2)} s · ` : '') + `read ${timings.read_tokens} new tokens in ${timings.read_s.toFixed(1)} s · ${timings.answer_tokens} tokens at ${timings.answer_tok_per_s} tok/s · conversation ${timings.context_used.toLocaleString()} tokens`;
   ctrl = null; document.getElementById('send').disabled = false; document.getElementById('stop').disabled = true;
 };
 </script>

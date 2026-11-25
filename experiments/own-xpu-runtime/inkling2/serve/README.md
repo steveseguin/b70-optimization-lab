@@ -22,7 +22,7 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   its high-precision mode, 100/100 greedy tokens on a test card) and as a server without state copies (8/8: card,
   follow-up, Anthropic format, photo, two pictures, a 4000 x 3000 photo, sampled, web address refused). The image
   encoder takes 1.07 GiB of card memory and is left out when the context tier leaves no room (515K): pictures are
-  then refused with a message. Timings add `pictures_encoded` and `picture_s` (0.04 s for a 640 x 360 picture,
+  then refused with a message. The chat page takes pictures by paste, drop or its Picture button. Timings add `pictures_encoded` and `picture_s` (0.04 s for a 640 x 360 picture,
   3.3 s for the largest).
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
