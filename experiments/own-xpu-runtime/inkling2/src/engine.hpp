@@ -128,6 +128,7 @@ struct Engine {
     bool xmx = false;
     uint16_t *xP = nullptr, *xHp = nullptr;
     float *xS = nullptr;
+    size_t xpp = 0, xhpp = 0; // part strides of xP / xHp for steps of 1-8 tokens (rows by sorted position + 8)
     xm::Super xst;
     MoeGroups x1;
     int tile_bound = 0;
@@ -406,12 +407,15 @@ struct Engine {
             xHp = d.alloc<uint16_t>((size_t)tb * 3 * MOE_TS * h.n_ff);
             const int km = SB_MAX * h.n_used, ngu = (h.n_embd / 16 + xm::SEG - 1) / xm::SEG, ndn = (h.n_ff / 16 + xm::SEG - 1) / xm::SEG;
             xS = d.alloc<float>(std::max((size_t)km * ngu * SB_MAX * 2 * h.n_ff, (size_t)km * ndn * SB_MAX * h.n_embd));
+            xpp = (size_t)(km + 8) * h.n_embd; xhpp = (size_t)(km + 8) * h.n_ff;
+            grp.sloc = d.alloc<int32_t>((size_t)T * h.n_used);
             xst.alloc(d, h.n_expert, tx * h.n_used, 4);
-            std::vector<int32_t> iota(h.n_used), ones(h.n_used, 1);
-            for (int i = 0; i < h.n_used; ++i) iota[i] = i;
+            std::vector<int32_t> iota(h.n_used), ones(h.n_used, 1), loc(h.n_used);
+            for (int i = 0; i < h.n_used; ++i) { iota[i] = i; loc[i] = i << 4; }
             x1.slots = d.alloc<int32_t>(h.n_used); x1.tile_s0 = d.alloc<int32_t>(h.n_used); x1.tile_n = d.alloc<int32_t>(h.n_used);
-            x1.ntiles = d.alloc<int32_t>(1);
+            x1.ntiles = d.alloc<int32_t>(1); x1.sloc = d.alloc<int32_t>(h.n_used);
             d.put(x1.slots, iota.data(), h.n_used); d.put(x1.tile_s0, iota.data(), h.n_used); d.put(x1.tile_n, ones.data(), h.n_used);
+            d.put(x1.sloc, loc.data(), h.n_used);
             d.put(x1.ntiles, &h.n_used, 1);
         }
         if (T >= tile_min) {
@@ -1396,6 +1400,9 @@ struct Engine {
             // MoE (inkling2.cpp:609-634)
             // one token: the norm writes the input only in lane order (fxl), which the router and gate|up read
             float *fxl1 = ntok == 1 && xl_on ? fxl : nullptr;
+            fz::YSeg yseg{}; // set when the expert outputs are left as segment sums (INK_XMX, steps of 1-8 tokens)
+            // INK_XMX, one token: the norm writes the experts' input parts too (xP, part stride E)
+            uint16_t *xp1 = xmx && ntok == 1 && gu_dec[ip].kind == K_NVFP4P && dn_dec[ip].kind == K_NVFP4P ? xP : nullptr;
             // 2-8 tokens: the norm writes the input in lane order too (fxls), for the small-step expert kernels
             const bool sbm = sb_on && sb_moe && ntok >= 2 && ntok <= SB_MAX;
             float *fyl = fxl1 ? fxl1 : (sbm ? fxls : nullptr);
@@ -1406,10 +1413,10 @@ struct Engine {
                 float *cy1[1] = {ctl_y};
                 if (!(ntok > 1 && ctl_batch && control_multi(1, m3, fx1, mg3, cy1, l))) control(fx, mg[3], l, 3, ctl_y);
                 dump.put(d, nm("loop_ffn_inp", il), ctl_y, E, ntok);
-                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fyl));
+                pr("rms_norm", ops::rms_norm(d.q, ctl_y, fxl1 ? nullptr : fx, f32(l.ffn_norm), E, ntok, h.eps, -1, -1, fyl, xp1));
             } else {
                 fz::NormOut no{};
-                no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fyl;
+                no.y[0] = fxl1 ? nullptr : fx; no.w[0] = f32(l.ffn_norm); no.yl[0] = fyl; no.yp[0] = xp1;
                 mix_norm(blocks, fi, f32(l.ffn_res_query), 1, no, E, qi_ffn.empty() ? -1 : qi_ffn[ip]);
             }
             if (fxl1) pr(wlabel(l.gate_inp), gemv_v(d.q, l.gate_inp.view(), fxl1, E, rlog, (int)l.gate_inp.t->rows(), 1, tune(l.gate_inp), true));
@@ -1433,30 +1440,27 @@ struct Engine {
                     const xm::ActOp aop{f32(l.gate_up_s), h.situ_beta, h.situ_linear_beta};
                     const int nff = h.n_ff, ngu = (E / 16 + xm::SEG - 1) / xm::SEG, ndn = (nff / 16 + xm::SEG - 1) / xm::SEG;
                     const size_t ds = dv.rb * (size_t)l.down.t->ne[1];
-                    if (ntok <= SB_MAX) { // a sub-group per (tile, row block, segment), the segments added in order
-                        const int M = ntok <= 1 ? 1 : ntok <= 2 ? 2 : ntok <= 4 ? 4 : 8;
+                    if (ntok <= SB_MAX) { // a sub-group per (tile, 16 rows, segment); segments added in order by the folds
+                        const bool one1 = ntok == 1;
                         MoeGroups gg = grp;
-                        size_t pt, pp;
-                        if (ntok == 1) { // tile k = slot k
+                        if (one1) { // tile k = slot k, its input row split once
                             gg = x1;
                             gg.tile_exp = eids;
-                            pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
-                            pt = 0; pp = (size_t)E;
+                            if (!xp1) pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
                         } else {
                             pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
-                            pr("moe_tiles", xm::split_gather8(d.q, grp, K, fx, E, h.n_used, E, xP));
-                            pt = (size_t)3 * MOE_TS * E; pp = (size_t)MOE_TS * E;
+                            pr("moe_tiles", xm::split_gather_c(d.q, grp, K, fx, E, h.n_used, E, xP, xpp));
                         }
-                        auto sp = [&]<int MODE>(const uint8_t *W, size_t es, int cols, int ncol, int nrb, const uint16_t *Pin, size_t ptt, size_t ppp) {
-                            if (M == 1) return xm::small_prod<1, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
-                            if (M == 2) return xm::small_prod<2, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
-                            if (M == 4) return xm::small_prod<4, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
-                            return xm::small_prod<8, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
-                        };
-                        pr("moe_gate_up", sp.template operator()<0>(gv.p, gs, E, 2 * nff, nff / 16, xP, pt, pp));
-                        pr("moe_fold", xm::small_fold_act(d.q, gg, K, ngu, M, xS, nff, aop, M, xHp));
-                        pr("moe_down", sp.template operator()<1>(dv.p, ds, nff, E, E / 32, xHp, (size_t)3 * M * nff, (size_t)M * nff));
-                        pr("moe_fold", xm::small_fold_out(d.q, gg, K, ndn, M, xS, E, yk, E));
+                        const int tl = one1 ? h.n_used : K, mm = one1 ? 1 : SB_MAX;
+                        if (one1) { // a sub-group per (expert, 16 rows) over all inputs (1,152 sub-groups: one wave)
+                            pr("moe_gate_up", xm::full_prod<1, 0, 4, 2>(d.q, gv.p, gs, E, nff, 2 * nff, gg, tl, xP, (size_t)E, true, aop, xHp, xhpp, nullptr, 0));
+                            pr("moe_down", xm::full_prod<1, 1, 4, 2>(d.q, dv.p, ds, nff, nff, E, gg, tl, xHp, xhpp, false, aop, nullptr, 0, yk, E));
+                        } else { // segments in parallel, added in order by the fold and by ffn_tail
+                            pr("moe_gate_up", xm::small3<SB_MAX, 0, 4, 1, 0, 2>(d.q, gv.p, gs, E, nff, 2 * nff, nff / 16, gg, tl, xP, xpp, false, xS));
+                            pr("moe_fold", xm::small_fold_act_c(d.q, gg, tl, ngu, mm, xS, nff, aop, xHp, xhpp));
+                            pr("moe_down", xm::small3<SB_MAX, 1, 4, 1, 0, 2>(d.q, dv.p, ds, nff, nff, E, E / 32, gg, tl, xHp, xhpp, false, xS));
+                            yseg = fz::YSeg{xS, gg.sloc, ndn, mm}; // ffn_tail adds the down product's segments
+                        }
                     } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group
                         const int tiles = MoeGroups::max_tiles(h.n_expert, K), stb = xm::Super::bound(h.n_expert, K, 4);
                         pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
@@ -1529,7 +1533,7 @@ struct Engine {
                                               st_tok, sst));
             else
                 pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst, mr));
+                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst, mr, yseg));
             dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;

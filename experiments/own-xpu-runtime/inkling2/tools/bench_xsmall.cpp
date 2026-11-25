@@ -118,6 +118,11 @@ int main(int argc, char **argv) {
         float *S = d.alloc<float>((size_t)tiles * ngu * 8 * 2 * NFF), *S2 = d.alloc<float>((size_t)tiles * ndn * 8 * E);
         float *R = d.alloc<float>((size_t)KM * 2 * NFF), *R2 = d.alloc<float>((size_t)KM * 2 * NFF), *Y2 = d.alloc<float>((size_t)KM * E);
         const xm::ActOp op{nullptr, 8.0f, 4.0f};
+        const size_t pcp = (size_t)(KM + 8) * E, hcp = (size_t)(KM + 8) * NFF;
+        uint16_t *Pc = d.alloc<uint16_t>(3 * pcp), *Hc = d.alloc<uint16_t>(3 * hcp);
+        d.q.memset(Pc, 0, 3 * pcp * 2); d.q.memset(Hc, 0, 3 * hcp * 2).wait();
+        int32_t *ctr = d.alloc<int32_t>(4096), *ctr2 = d.alloc<int32_t>(4096);
+        d.q.memset(ctr, 0, 4096 * 4); d.q.memset(ctr2, 0, 4096 * 4).wait();
         xm::Super st;
         st.alloc(d, NE, KM, 4);
         const int stb = xm::Super::bound(NE, KM, 4);
@@ -165,6 +170,134 @@ int main(int argc, char **argv) {
             for (size_t i = 0; i < ya.size(); ++i) dy += std::memcmp(&ya[i], &yb[i], 4) != 0;
             std::printf("    vs the prompt kernel: gate|up sums %s (%ld of %zu differ), down %s (%ld of %zu differ)\n", da ? "DIFF" : "same", da, a.size(),
                         dy ? "DIFF" : "same", dy, ya.size());
+            // second form (XSmall2): in-kernel split (one token) or compact gather, rows per tile by count, in-group fold
+            const int tl = c.ntok == 1 ? KU : K;
+            auto v2 = [&]<int PF, int GRF, int ABL = 0>(const char *name) {
+                auto gather = [&]() { if (c.ntok > 1) xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
+                auto gup = [&](int l) {
+                    if (c.ntok == 1) xm::small2<1, 0, true, PF, GRF, ABL>(d.q, gu[l].p, gub, E, NFF, NFF / 16, one, tl, nullptr, 0, xl, true, op, Hc, hcp, nullptr, 0);
+                    else xm::small2<8, 0, false, PF, GRF, ABL>(d.q, gu[l].p, gub, E, NFF, NFF / 16, grp, tl, Pc, pcp, nullptr, false, op, Hc, hcp, nullptr, 0);
+                };
+                auto dnp = [&](int l) {
+                    if (c.ntok == 1) xm::small2<1, 1, false, PF, GRF, ABL>(d.q, dn[l].p, dnb, NFF, NFF, E / 32, one, tl, Hc, hcp, nullptr, false, op, nullptr, 0, y, E);
+                    else xm::small2<8, 1, false, PF, GRF, ABL>(d.q, dn[l].p, dnb, NFF, NFF, E / 32, grp, tl, Hc, hcp, nullptr, false, op, nullptr, 0, y, E);
+                };
+                const double tg = c.ntok > 1 ? timeit([&](int) { gather(); }) : 0.0;
+                const double t1 = timeit([&](int i) { gup(i % NL); });
+                const double t2 = timeit([&](int i) { dnp(i % NL); });
+                d.q.memset(y, 0xff, (size_t)KM * E * 4).wait();
+                gather(); gup(0); dnp(0);
+                d.q.wait();
+                std::vector<float> yc((size_t)K * E);
+                d.get(yc.data(), y, yc.size());
+                long dd = 0;
+                for (size_t i = 0; i < yc.size(); ++i) dd += std::memcmp(&yc[i], &yb[i], 4) != 0;
+                std::printf("  %d tokens, XSmall2 %-12s gather %.1f  gate|up %.1f  down %.1f  (sum %.1f; today %.1f)  down vs the prompt kernel: %s (%ld of %zu differ)\n",
+                            c.ntok, name, tg, t1, t2, tg + t1 + t2, c.today_gu + c.today_dn, dd ? "DIFF" : "same", dd, yc.size());
+            };
+            v2.template operator()<2, 128>("PF2");
+            // third form (XSmall3): XSmall's groups + passes + rows by count + compact rows, separate in-order folds
+            auto v3 = [&]<int SR, int PF>(const char *name) {
+                constexpr int MX = 8;
+                const bool one1 = c.ntok == 1;
+                const MoeGroups &g3 = one1 ? one : grp;
+                const uint16_t *Pin = one1 ? P : Pc;
+                const size_t ppi = one1 ? (size_t)E : pcp;
+                auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
+                auto gup = [&](int l) {
+                    if (one1) xm::small3<1, 0, SR, PF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, NFF / 16, g3, tl, Pin, ppi, true, S);
+                    else xm::small3<MX, 0, SR, PF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, NFF / 16, g3, tl, Pin, ppi, false, S);
+                };
+                const int mm = one1 ? 1 : MX;
+                auto fa = [&]() { xm::small_fold_act_c(d.q, g3, tl, ngu, mm, S, NFF, op, Hc, hcp); };
+                auto dnp = [&](int l) {
+                    if (one1) xm::small3<1, 1, SR, PF>(d.q, dn[l].p, dnb, NFF, NFF, E, E / 32, g3, tl, Hc, hcp, false, S2);
+                    else xm::small3<MX, 1, SR, PF>(d.q, dn[l].p, dnb, NFF, NFF, E, E / 32, g3, tl, Hc, hcp, false, S2);
+                };
+                auto fo = [&]() { xm::small_fold_out_c(d.q, g3, tl, ndn, mm, S2, E, y, E); };
+                const double t0 = timeit([&](int) { split(); });
+                const double t1 = timeit([&](int i) { gup(i % NL); });
+                const double t2 = timeit([&](int) { fa(); });
+                const double t3 = timeit([&](int i) { dnp(i % NL); });
+                const double t4 = timeit([&](int) { fo(); });
+                d.q.memset(y, 0xff, (size_t)KM * E * 4).wait();
+                split(); gup(0); fa(); dnp(0); fo();
+                d.q.wait();
+                std::vector<float> yc((size_t)K * E);
+                d.get(yc.data(), y, yc.size());
+                long dd = 0;
+                for (size_t i = 0; i < yc.size(); ++i) dd += std::memcmp(&yc[i], &yb[i], 4) != 0;
+                std::printf("  %d tokens, XSmall3 %-8s split %.1f  gate|up %.1f  fold %.1f  down %.1f  fold %.1f  (sum %.1f; today %.1f)  down vs the prompt kernel: %s (%ld of %zu differ)\n",
+                            c.ntok, name, t0, t1, t2, t3, t4, t0 + t1 + t2 + t3 + t4, c.today_gu + c.today_dn, dd ? "DIFF" : "same", dd, yc.size());
+            };
+            v3.template operator()<4, 1>("SR4 PF1");
+            // decode variant and the gate|up fold inside the down kernel (no fold launch)
+            auto v4 = [&]<int DV, bool HIN, int SRD>(const char *name) {
+                constexpr int MX = 8;
+                const bool one1 = c.ntok == 1;
+                const MoeGroups &g3 = one1 ? one : grp;
+                const uint16_t *Pin = one1 ? P : Pc;
+                const size_t ppi = one1 ? (size_t)E : pcp;
+                const int mm = one1 ? 1 : MX;
+                auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
+                auto gup = [&](int l) {
+                    if (one1) xm::small3<1, 0, 4, 1, 0, DV>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, NFF / 16, g3, tl, Pin, ppi, true, S);
+                    else xm::small3<MX, 0, 4, 1, 0, DV>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, NFF / 16, g3, tl, Pin, ppi, false, S);
+                };
+                auto fa = [&]() { if (!HIN) xm::small_fold_act_c(d.q, g3, tl, ngu, mm, S, NFF, op, Hc, hcp); };
+                auto dnp = [&](int l) {
+                    if (one1) xm::small3<1, 1, SRD, 1, 0, DV, HIN>(d.q, dn[l].p, dnb, NFF, NFF, E, E / 32, g3, tl, Hc, hcp, false, S2, nullptr, op, nullptr, 0, nullptr, 0, S, ngu);
+                    else xm::small3<MX, 1, SRD, 1, 0, DV, HIN>(d.q, dn[l].p, dnb, NFF, NFF, E, E / 32, g3, tl, Hc, hcp, false, S2, nullptr, op, nullptr, 0, nullptr, 0, S, ngu);
+                };
+                auto fo = [&]() { xm::small_fold_out_c(d.q, g3, tl, ndn, mm, S2, E, y, E); };
+                const double t1 = timeit([&](int i) { gup(i % NL); });
+                const double t2 = HIN ? 0.0 : timeit([&](int) { fa(); });
+                if (HIN) gup(0);
+                const double t3 = timeit([&](int i) { dnp(i % NL); });
+                d.q.memset(y, 0xff, (size_t)KM * E * 4).wait();
+                split(); gup(0); fa(); dnp(0); fo();
+                d.q.wait();
+                std::vector<float> yc((size_t)K * E);
+                d.get(yc.data(), y, yc.size());
+                long dd = 0;
+                for (size_t i = 0; i < yc.size(); ++i) dd += std::memcmp(&yc[i], &yb[i], 4) != 0;
+                std::printf("  %d tokens, XSmall3 %-14s gate|up %.1f  fold %.1f  down %.1f  (gate|up + fold + down %.1f)  down vs the prompt kernel: %s (%ld differ)\n",
+                            c.ntok, name, t1, t2, t3, t1 + t2 + t3, dd ? "DIFF" : "same", dd);
+            };
+            v4.template operator()<2, false, 4>("regB SR4");
+            // fourth form: all inputs per sub-group, no folds (ffn_tail reads y as today)
+            auto v5 = [&]<int PF, int SRF, int GRF>(const char *name) {
+                constexpr int MX = 8;
+                const bool one1 = c.ntok == 1;
+                const MoeGroups &g3 = one1 ? one : grp;
+                const uint16_t *Pin = one1 ? P : Pc;
+                const size_t ppi = one1 ? (size_t)E : pcp;
+                auto split = [&]() { if (one1) xm::split_row(d.q, x, E, P); else xm::split_gather_c(d.q, grp, K, x, E, KU, E, Pc, pcp); };
+                auto gup = [&](int l) {
+                    if (one1) xm::full_prod<1, 0, PF, SRF, GRF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, true, op, Hc, hcp, nullptr, 0);
+                    else xm::full_prod<MX, 0, PF, SRF, GRF>(d.q, gu[l].p, gub, E, NFF, 2 * NFF, g3, tl, Pin, ppi, false, op, Hc, hcp, nullptr, 0);
+                };
+                auto dnp = [&](int l) {
+                    if (one1) xm::full_prod<1, 1, PF, SRF, GRF>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                    else xm::full_prod<MX, 1, PF, SRF, GRF>(d.q, dn[l].p, dnb, NFF, NFF, E, g3, tl, Hc, hcp, false, op, nullptr, 0, y, E);
+                };
+                const double t1 = timeit([&](int i) { gup(i % NL); });
+                const double t3 = timeit([&](int i) { dnp(i % NL); });
+                d.q.memset(y, 0xff, (size_t)KM * E * 4).wait();
+                split(); gup(0); dnp(0);
+                d.q.wait();
+                std::vector<float> yc((size_t)K * E);
+                d.get(yc.data(), y, yc.size());
+                long dd = 0;
+                for (size_t i = 0; i < yc.size(); ++i) dd += std::memcmp(&yc[i], &yb[i], 4) != 0;
+                std::printf("  %d tokens, XFull %-14s gate|up %.1f  down %.1f  (sum %.1f)  down vs the prompt kernel: %s (%ld differ)\n",
+                            c.ntok, name, t1, t3, t1 + t3, dd ? "DIFF" : "same", dd);
+            };
+            v5.template operator()<2, 4, 128>("PF2");
+            v5.template operator()<4, 4, 128>("PF4");
+            v5.template operator()<8, 4, 128>("PF8");
+            v5.template operator()<8, 4, 256>("PF8 GRF256");
+            v5.template operator()<4, 2, 128>("PF4 SRF2");
         }
     } catch (const std::exception &ex) {
         std::fprintf(stderr, "error: %s\n", ex.what());

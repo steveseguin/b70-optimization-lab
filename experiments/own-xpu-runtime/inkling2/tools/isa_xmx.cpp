@@ -11,5 +11,8 @@ int main(int argc, char **argv) {
     st.sm = 4;
     xm::prod2<4, 4, 4, 0>(q, nullptr, 0, 2304, 1152, 72, g, st, 1, nullptr, xm::ActOp{}, nullptr, nullptr, 0);
     xm::prod2<4, 4, 8, 0>(q, nullptr, 0, 2304, 1152, 72, g, st, 1, nullptr, xm::ActOp{}, nullptr, nullptr, 0);
+    // small steps (XSmall3, one row): gate|up and down
+    xm::small3<1, 0>(q, nullptr, 0, 2304, 1152, 2304, 72, g, 8, nullptr, 2304, true, nullptr);
+    xm::small3<1, 1>(q, nullptr, 0, 1152, 1152, 2304, 72, g, 8, nullptr, 1152, false, nullptr);
     return 0;
 }

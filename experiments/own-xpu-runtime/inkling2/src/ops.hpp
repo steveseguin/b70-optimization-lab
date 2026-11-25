@@ -6,6 +6,7 @@
 #pragma once
 #include "gemv.hpp"
 #include "xlane.hpp"
+#include "bfsplit.hpp"
 
 namespace ink::ops {
 
@@ -30,8 +31,9 @@ inline sycl::nd_range<1> rows_range(int nrows) {
 // y = x / sqrt(mean(x^2) + eps) [* w]   (ggml_rms_norm, then build_norm's multiply by the weight)
 // rows of n floats; x and y may be the same buffer; w may be null
 // yl: also each row in lane order (xlane.hpp) at yl + r * xlane_floats(n); y null: only that copy
+// yp (one row): also its three bf16 parts (bfsplit.hpp) at yp[p n + i]
 inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const float *w, int n, int nrows, float eps,
-                            int ldx = -1, int ldy = -1, float *yl = nullptr) {
+                            int ldx = -1, int ldy = -1, float *yl = nullptr, uint16_t *yp = nullptr) {
     if (ldx < 0) ldx = n;
     if (ldy < 0) ldy = n;
     const size_t lxl = xlane_floats(n);
@@ -63,6 +65,7 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
                         const float v = w ? (xv[u] * scale) * wv[u] : xv[u] * scale;
                         if (yr) yr[i] = v;
                         if (ylr) ylr[xlane_at(i)] = v;
+                        if (yp) split3_store(v, yp + i, (size_t)n);
                     }
                 }
                 return;
@@ -75,6 +78,7 @@ inline sycl::event rms_norm(sycl::queue &q, const float *x, float *y, const floa
                 const float v = w ? (xr[i] * scale) * w[i] : xr[i] * scale;
                 if (yr) yr[i] = v;
                 if (ylr) ylr[xlane_at(i)] = v;
+                if (yp) split3_store(v, yp + i, (size_t)n);
             }
         });
     });

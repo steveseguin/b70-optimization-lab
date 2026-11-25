@@ -298,22 +298,68 @@ inline float combine(const float *y, const float *escale, const int32_t *ids, co
     }
     return acc;
 }
+// The expert outputs as segment sums (xmx_moe.hpp XSmall3): slot s's row r of tile tl (sloc[s] = tl << 4 | r) is
+// ys[((tl nseg + g) mmax + r) n + c] for segments g, added in order from 0 (as small_fold_out_c), then as combine.
+struct YSeg { const float *ys = nullptr; const int32_t *sloc = nullptr; int nseg = 0, mmax = 0; };
+inline float combine_seg(YSeg sg, const float *escale, const int32_t *ids, const float *w, int nu, int n, int t, int c) {
+    constexpr int NU = 8, NS = 5; // 8 experts, down of 1,152 inputs: the reads first (unrolled), the same operations
+    if (nu == NU && sg.nseg == NS) {
+        int loc[NU];
+        float wv[NU], ev[NU], v[NU][NS];
+#pragma unroll
+        for (int k = 0; k < NU; ++k) {
+            const int s = t * NU + k;
+            loc[k] = sg.sloc[s];
+            wv[k] = w[s];
+            ev[k] = escale ? escale[ids[s]] : 1.0f;
+        }
+#pragma unroll
+        for (int k = 0; k < NU; ++k) {
+            const int tl = loc[k] >> 4, r = loc[k] & 15;
+#pragma unroll
+            for (int g = 0; g < NS; ++g) v[k][g] = sg.ys[((size_t)(tl * NS + g) * sg.mmax + r) * n + c];
+        }
+        float acc = 0.0f;
+#pragma unroll
+        for (int k = 0; k < NU; ++k) {
+            float y = 0.0f;
+#pragma unroll
+            for (int g = 0; g < NS; ++g) y = y + v[k][g];
+            if (escale) y = y * ev[k];
+            y = y * wv[k];
+            acc = k == 0 ? y : acc + y;
+        }
+        return acc;
+    }
+    float acc = 0.0f;
+    for (int k = 0; k < nu; ++k) {
+        int s = t * nu + k;
+        const int tl = sg.sloc[s] >> 4, r = sg.sloc[s] & 15;
+        float v = 0.0f;
+        for (int g = 0; g < sg.nseg; ++g) v = v + sg.ys[((size_t)(tl * sg.nseg + g) * sg.mmax + r) * n + c];
+        if (escale) v = v * escale[ids[s]];
+        v = v * w[s];
+        acc = k == 0 ? v : acc + v;
+    }
+    return acc;
+}
 // moe = combine of the expert outputs; ffn_out = convolution of moe; out = fi + ffn_out. The window's earlier tokens
-// are combined again by each thread (the same values), so tokens need no second pass.
+// are combined again by each thread (the same values), so tokens need no second pass. ys.ys: the outputs as segment sums.
 inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w, int nu,
                             const float *st_in, float *st_out, int off, const float *cw, float scale, float *ffn_out,
                             const float *fi, float *out, int E, int ntok, float *st_tok = nullptr, size_t sst = 0,
-                            const SeqRow *mr = nullptr) {
+                            const SeqRow *mr = nullptr, YSeg ys = {}) {
     return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)E), [=](sycl::id<2> id) {
         int t = (int)id[0], c = (int)id[1];
         float win[4];
+        auto comb = [&](int tt) { return ys.ys ? combine_seg(ys, escale, ids, w, nu, E, tt, c) : combine(y, escale, ids, w, nu, E, tt, c); };
         if (mr) { // each row its own sequence's state: its earlier inputs from the state, then its own combine
             for (int i = 0; i < 3; ++i) win[i] = mr[t].st_in[(size_t)(off + c) * 3 + i];
-            win[3] = combine(y, escale, ids, w, nu, E, t, c);
+            win[3] = comb(t);
         } else
             for (int i = 0; i < 4; ++i) {
                 int tt = t - 3 + i;
-                win[i] = tt >= 0 ? combine(y, escale, ids, w, nu, E, tt, c) : st_in[(size_t)(off + c) * 3 + (3 + tt)];
+                win[i] = tt >= 0 ? comb(tt) : st_in[(size_t)(off + c) * 3 + (3 + tt)];
             }
         float o = conv_out(win, cw, c, nullptr, scale);
         size_t i = (size_t)t * E + c;
@@ -1427,7 +1473,9 @@ inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float 
 // ops::mix_out for a whole row per work-group, then ops::rms_norm of the row (the same strided sums, the same weight
 // multiply): yn[j] (token-major, ntok rows of n) = rms_norm(mix row) * w[j]; out (if not null) gets the mix itself
 // (query-major as ops::mix_out). Rows up to 12 * 256 values.
-struct NormOut { float *y[3]; const float *w[3]; float *yl[3]; }; // yl[j]: output j in lane order (xlane.hpp) too (y[j] null: only)
+// yl[j]: output j in lane order (xlane.hpp) too (y[j] null: only); yp[j]: its three bf16 parts too (bfsplit.hpp; one
+// row: part stride n), the matrix-engine experts' input (xmx_moe.hpp)
+struct NormOut { float *y[3]; const float *w[3]; float *yl[3]; uint16_t *yp[3]; };
 inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, const float *inv, const float *sc, float *out,
                                 NormOut no, float eps, int n, int ntok) {
     constexpr int MAXV = 12;
@@ -1466,6 +1514,7 @@ inline sycl::event mix_out_norm(sycl::queue &q, MixArgs a, size_t ld, int nq, co
                 const float v = w ? (xv[u] * rs) * w[i] : xv[u] * rs;
                 if (yr) yr[i] = v;
                 if (ylr) ylr[xlane_at(i)] = v;
+                if (no.yp[j]) split3_store(v, no.yp[j] + i, (size_t)n);
             }
         });
     });
@@ -1666,6 +1715,7 @@ inline sycl::event mix_fused_v(sycl::queue &q, MixF a, size_t ld, float *out, co
                     const float v = w ? (ov[u] * rs) * wv[u] : ov[u] * rs;
                     if (yr) yr[i] = v;
                     if (ylr) ylr[xlane_at(i)] = v;
+                    if (no.yp[j]) split3_store(v, no.yp[j] + i, (size_t)n);
                 }
             }
         });

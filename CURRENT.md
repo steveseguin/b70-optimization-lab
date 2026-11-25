@@ -191,6 +191,11 @@
   3K prompt 1,095 -> 1,460 tok/s (card 3); every path bit-identical (gate 15/15 against new baseline v5; prompt in
   steps of 8 = one step); layer outputs closer to the high-precision reference at 74 of 88 tensors. Writing with the
   drafter -5 % until the 1-8 token kernels are faster; next: those, then default; then Q8_0/Q6_K and attention.
+- Nov 25 ~18:15: Inkling: matrix-engine experts, small steps closer: weight tiles built in registers (plain
+  `joint_matrix_apply`, after the coordinate form hung), one sub-group over all inputs for one token, the norm writes
+  the input split and `ffn_tail` adds the down segments. Writing with the drafter now level (141.2 vs 141.5 tok/s,
+  same text), plain -2.7 % (88.9 vs 91.3; was -6.8 %); gate 15/15 both paths. Still off by default; next: the
+  one-token gate|up kernel (+4.5 µs per layer).
 - Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row

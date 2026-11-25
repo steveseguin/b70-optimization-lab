@@ -970,9 +970,11 @@ bytes; 0.11 s for 20 layers), which only these kernels read.
   made the compiler copy the accumulators around it (1,557 instructions per 48 matrix instructions, 492 of them
   register moves); with the loop split so that no branch sits between matrix instructions, 716. Fetching the weights
   further ahead (two chunks, or loads before the math and decodes after) changed nothing before that.
-- Closed: building the weight operand in registers (`joint_matrix_apply` with coordinates on a B matrix,
-  `tools/bench_xm2.cpp`) hung the card twice (engine reset on card 3, which then checked fine); the local-memory route
-  stays.
+- Building the weight operand in registers: `joint_matrix_apply` with coordinates on a B matrix that was never loaded
+  (`tools/bench_xm2.cpp`) hung the card twice (engine reset on card 3, which then checked fine). The plain apply (no
+  coordinates) on a B loaded once from a zero tile works (`tools/bench_xm3.cpp`): lane n holds column n and visits
+  k = 0..15 in order, so each lane writes its own decoded column; D = A x B identical to the local-memory route (0 of
+  65,536 differ), 538 vs 563 µs. Used by the small kernels below (`DV = 2`); the prompt kernel keeps local memory.
 - Steps of 1-8 tokens (`XSmall`, `tools/bench_xsmall.cpp`, card 3, µs per layer, gate|up + down): one sub-group per
   (tile, block of 16 rows, segment), its segment sum stored, then a pass that adds the segments in order (and for
   gate|up applies SITU and splits H). Every row equals the prompt kernel's (0 of 18,432 to 147,456 values differ).
@@ -988,6 +990,24 @@ bytes; 0.11 s for 20 layers), which only these kernels read.
   300 positions, the same top token as the reference at 97.7 vs 98.0 % (one position). Gate texts haiku, code and
   3K + 16 unchanged; the drafter tests' haiku and 3K texts change. Writing with the drafter (code, same text):
   141.6 -> 135.0 tok/s, so the small kernels must get faster before this becomes the default.
+- Small steps, later forms (all rows equal the prompt kernel's; µs per layer, gate|up + fold + down):
+  `XSmall3` = XSmall's shape, weights fetched one pass ahead, rows per tile by its count (1/2/4/8), inputs and H
+  packed by sorted position (no empty rows), the norm writes the one-token input split itself and `ffn_tail` adds
+  the down product's segments in order (no down fold): 1 token 91.2, 8 tokens 533.8 (card 5; today 88.4 / 533.1).
+  With the weight tiles built in registers (`DV = 2`): 1 token 86.8, 2: 151.8, 4: 299.0, 8: 501.9 (today 88.4,
+  141.9, 295.0, 533.1). `XFull` (one sub-group per expert and 16 rows over all inputs, the segments added in
+  registers in the same order, so no fold and no segment sums): 1 token 85.5 (gate|up 56.3, down 29.2) but 2-8
+  tokens slower (196 / 339 / 491). The engine uses XFull for one token and XSmall3 for 2-8.
+  Closed (same bits, not faster): a work-group per row block's segments (XSmall2), fetching 2 or 4 passes ahead,
+  16-bit decode (half pairs), gate|up's fold computed inside the down kernel (down 39.7-49.7 vs 34.2), 8 or 2 row
+  blocks per work-group, the last-arriving work-group doing the fold with device fences (correct, slower), XFull
+  with 8 steps ahead or the large register file (fewer threads: 1 token 144 µs).
+- Engine, card 3, code 64 tokens, `INK_PROF` (ms per plain step): XSmall3 11.73 vs default 10.97; + registers-built
+  tiles 11.48 vs 10.95; + XFull for one token 11.23 vs 10.99 (gate|up 57.1 vs 52.6 µs, down 29.1 vs 28.3, ffn_tail
+  4.9 vs 4.9). Gate 15/15 against v5 (`INK_XMX=1`) and 15/15 against v4 (default). Writing, card 3, both orders:
+  with the drafter, code 141.2 vs 141.5 tok/s (same text); plain code 256: 88.9 vs 91.3 (-2.7 %). The remaining
+  gap is the one-token gate|up kernel: 1,152 sub-groups (about half the card's threads) each with 4 steps of weights
+  in flight read ~420 GB/s; today's scalar kernel ~455.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement

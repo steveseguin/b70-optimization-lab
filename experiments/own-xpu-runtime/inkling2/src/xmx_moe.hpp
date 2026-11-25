@@ -17,6 +17,7 @@
 #include "moe_group.hpp"
 #include "planar.hpp"
 #include "xlane.hpp"
+#include "bfsplit.hpp"
 #include <sycl/ext/oneapi/matrix/matrix.hpp>
 #include <sycl/ext/intel/experimental/grf_size_properties.hpp>
 
@@ -25,17 +26,7 @@ namespace jm = sycl::ext::oneapi::experimental::matrix;
 using bf = sycl::ext::oneapi::bfloat16;
 constexpr int SEG = 16; // steps of 16 inputs per segment
 
-inline uint16_t bf_rn(float f) {
-    const uint32_t u = sycl::bit_cast<uint32_t>(f);
-    return (uint16_t)((u + 0x7fffu + ((u >> 16) & 1u)) >> 16);
-}
-inline float bf_f(uint16_t b) { return sycl::bit_cast<float>((uint32_t)b << 16); }
-inline void split3(float x, uint16_t &a, uint16_t &b, uint16_t &c) {
-    a = bf_rn(x);
-    const float r1 = x - bf_f(a);
-    b = bf_rn(r1);
-    c = bf_rn(r1 - bf_f(b));
-}
+// bf_rn, bf_f, split3: bfsplit.hpp
 
 // super-tiles: up to SM consecutive tiles of one expert (moe_group's tiles are in ascending expert order)
 struct Super {
@@ -178,6 +169,45 @@ inline void decode_raw(const Raw &r, uint32_t *o, int os) {
 #pragma unroll
     for (int j = 0; j < 8; ++j)
         o[j * os] = (sycl::bit_cast<uint32_t>(v[2 * j]) >> 16) | (sycl::bit_cast<uint32_t>(v[2 * j + 1]) & 0xFFFF0000u);
+}
+// decode_raw with each half converted from its place in the word (no unpacking moves); the same values
+inline void pair16(uint32_t w, int sh, float d, float &a, float &b) {
+    const uint32_t m = sh >= 0 ? (w << sh) : (w >> -sh);
+    const uint32_t s = sh + 3 >= 0 ? (w << (sh + 3)) : (w >> -(sh + 3));
+    const uint32_t bits = (m & 0x0E000E00u) | (s & 0x80008000u);
+    a = (float)sycl::bit_cast<sycl::half>((uint16_t)bits) * d;
+    b = (float)sycl::bit_cast<sycl::half>((uint16_t)(bits >> 16)) * d;
+}
+inline void decode_raw16(const Raw &r, uint32_t *o, int os) {
+    const uint32_t cw[2] = {(uint32_t)r.cw, (uint32_t)(r.cw >> 32)};
+    const float d = pl::ue4m3_bits((uint8_t)r.sc) * 32768.0f;
+    float v[16];
+#pragma unroll
+    for (int hh = 0; hh < 2; ++hh) {
+        const uint32_t x = cw[hh];
+        const int j0 = 4 * hh;
+        pair16(x, 9, d, v[j0 + 0], v[j0 + 2]);
+        pair16(x, 5, d, v[8 + j0 + 0], v[8 + j0 + 2]);
+        pair16(x, 1, d, v[j0 + 1], v[j0 + 3]);
+        pair16(x, -3, d, v[8 + j0 + 1], v[8 + j0 + 3]);
+    }
+#pragma unroll
+    for (int j = 0; j < 8; ++j)
+        o[j * os] = (sycl::bit_cast<uint32_t>(v[2 * j]) >> 16) | (sycl::bit_cast<uint32_t>(v[2 * j + 1]) & 0xFFFF0000u);
+}
+// decode_raw's 16 values in k order (lane n = column n of the B tile), not packed
+inline void decode_vals(const Raw &r, float *v) {
+    const uint32_t cw[2] = {(uint32_t)r.cw, (uint32_t)(r.cw >> 32)};
+    const float d = pl::ue4m3_bits((uint8_t)r.sc) * 32768.0f;
+#pragma unroll
+    for (int hh = 0; hh < 2; ++hh) {
+        const uint32_t x = cw[hh];
+        const int j0 = 4 * hh;
+        pl::NVFP4P::pair(x, 9, d, v[j0 + 0], v[j0 + 2]);
+        pl::NVFP4P::pair(x, 5, d, v[8 + j0 + 0], v[8 + j0 + 2]);
+        pl::NVFP4P::pair(x, 1, d, v[j0 + 1], v[j0 + 3]);
+        pl::NVFP4P::pair(x, -3, d, v[8 + j0 + 1], v[8 + j0 + 3]);
+    }
 }
 inline void decode16t(const uint8_t *tp, int ln, uint32_t *o, int os) { // decode16 from the tile layout
     const sycl::vec<uint32_t, 2> cw = *reinterpret_cast<const sycl::vec<uint32_t, 2> *>(tp + 8 * ln);
@@ -643,6 +673,567 @@ inline sycl::event small_fold_out(sycl::queue &q, MoeGroups g, int tiles, int ns
         float tot = 0.0f;
         for (int s = 0; s < nseg; ++s) tot = tot + S[((size_t)(t * nseg + s) * m + r) * ncol + c];
         Y[(size_t)g.slots[g.tile_s0[t] + r] * ldy + c] = tot;
+    });
+}
+// Steps of 1-8 tokens, second form: one work-group per (tile, block of 16 rows), one sub-group per segment. Each
+// sub-group fetches its segment's weights for both B tiles PF steps ahead into registers, decodes step by step into
+// local memory, runs the tile's rows with 1, 2, 4 or 8-row tiles by the tile's count (rows are independent: the bits
+// do not depend on it) and stores its segment sum in local memory; then the work-group adds the segments in order (as
+// small_fold_*: from 0) and writes H in parts (MODE 0: act, split) or y (MODE 1).
+// Inputs: rows by the group's sorted position, P[p][tile_s0[t] + r][cols] (part stride pp; rows past a tile's count
+// belong to the next tile or the padding and only feed rows that are not stored), or with XIN (one token) the one row
+// x (lane order when xlo) split in the kernel. H goes to Hp[p][tile_s0[t] + r][nff] (part stride hpp).
+// ABL (measurements only, wrong values): 1 no fold (no work-group barrier), 2 no weight decode, 4 no DPAS, 8 no input split
+template <int MMAX, int MODE, bool XIN, int PF, int GRF, int ABL = 0> struct XSmall2 {
+    const uint8_t *W; size_t estride; int cols, nff;
+    MoeGroups g; const uint16_t *P; size_t pp; const float *x; bool xlo;
+    ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
+    sycl::local_accessor<bf, 1> bs, as;
+    sycl::local_accessor<float, 1> st;
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<GRF>};
+    }
+    // PF steps per pass (unrolled), a runtime loop over the segment's ns / PF passes; the next pass's weights are
+    // fetched before this pass's work (the last pass fetches its own again: no branch near the accumulators)
+    template <int M>
+    void body(sycl::sub_group sg, int sgi, int ln, const uint8_t *w0, const uint8_t *w1, int k0, int ns, size_t row0) const {
+        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, M, 16>;
+        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
+        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
+        Raw r0[PF], r1[PF];
+#pragma unroll
+        for (int i = 0; i < PF; ++i) { r0[i] = fetch16t(w0 + (size_t)(k0 + i) * TB, ln); r1[i] = fetch16t(w1 + (size_t)(k0 + i) * TB, ln); }
+        C c1[2], c23[2];
+#pragma unroll
+        for (int j = 0; j < 2; ++j) { jm::joint_matrix_fill(sg, c1[j], 0.0f); jm::joint_matrix_fill(sg, c23[j], 0.0f); }
+        uint32_t *bw = reinterpret_cast<uint32_t *>(&bs[0]) + sgi * 512;
+        auto lb = [&](size_t off) { return bs.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+        auto la = [&](size_t off) { return as.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+        const bf *pa = XIN ? nullptr : reinterpret_cast<const bf *>(P) + row0 * cols + (size_t)k0 * 16;
+        for (int b = 0; b < ns; b += PF) {
+            Raw n0[PF], n1[PF];
+            const int kn = k0 + sycl::min(b + PF, ns - PF);
+#pragma unroll
+            for (int i = 0; i < PF; ++i) { n0[i] = fetch16t(w0 + (size_t)(kn + i) * TB, ln); n1[i] = fetch16t(w1 + (size_t)(kn + i) * TB, ln); }
+#pragma unroll
+            for (int i = 0; i < PF; ++i) {
+                const int buf = i & 1, kk = b + i;
+                if constexpr (ABL & 2) {
+                    bw[buf * 256 + ln] = (uint32_t)r0[i].cw ^ r0[i].sc;
+                    bw[buf * 256 + 128 + ln] = (uint32_t)r1[i].cw ^ r1[i].sc;
+                } else {
+                    decode_raw(r0[i], bw + buf * 256 + ln, 16);
+                    decode_raw(r1[i], bw + buf * 256 + 128 + ln, 16);
+                }
+                sycl::group_barrier(sg);
+                B b0, b1;
+                jm::joint_matrix_load(sg, b0, lb((size_t)sgi * 1024 + buf * 512), 32);
+                jm::joint_matrix_load(sg, b1, lb((size_t)sgi * 1024 + buf * 512 + 256), 32);
+                A x0, x1, x2;
+                if constexpr (XIN) {
+                    jm::joint_matrix_load(sg, x0, la((size_t)sgi * 768 + kk * 16), 16);
+                    jm::joint_matrix_load(sg, x1, la((size_t)sgi * 768 + 256 + kk * 16), 16);
+                    jm::joint_matrix_load(sg, x2, la((size_t)sgi * 768 + 512 + kk * 16), 16);
+                } else {
+                    jm::joint_matrix_load(sg, x0, gp(pa + kk * 16), cols);
+                    jm::joint_matrix_load(sg, x1, gp(pa + pp + kk * 16), cols);
+                    jm::joint_matrix_load(sg, x2, gp(pa + 2 * pp + kk * 16), cols);
+                }
+                if constexpr (!(ABL & 4)) {
+                    jm::joint_matrix_mad(sg, c1[0], x0, b0, c1[0]);
+                    jm::joint_matrix_mad(sg, c23[0], x1, b0, c23[0]);
+                    jm::joint_matrix_mad(sg, c23[0], x2, b0, c23[0]);
+                    jm::joint_matrix_mad(sg, c1[1], x0, b1, c1[1]);
+                    jm::joint_matrix_mad(sg, c23[1], x1, b1, c23[1]);
+                    jm::joint_matrix_mad(sg, c23[1], x2, b1, c23[1]);
+                }
+            }
+#pragma unroll
+            for (int i = 0; i < PF; ++i) { r0[i] = n0[i]; r1[i] = n1[i]; }
+        }
+#pragma unroll
+        for (int j = 0; j < 2; ++j) {
+            jm::joint_matrix_apply(sg, c1[j], c23[j], [](float &u, float &v) { u = u + v; });
+            jm::joint_matrix_store(sg, c1[j], st.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)(sgi * 2 + j) * MMAX * 16, 16,
+                                   jm::layout::row_major);
+        }
+    }
+    void rows(sycl::sub_group sg, int sgi, int ln, const uint8_t *w0, const uint8_t *w1, int k0, int ns, size_t row0, int cnt) const {
+        if constexpr (MMAX == 1) body<1>(sg, sgi, ln, w0, w1, k0, ns, row0);
+        else {
+            if (cnt <= 1) body<1>(sg, sgi, ln, w0, w1, k0, ns, row0);
+            else if (cnt <= 2) body<2>(sg, sgi, ln, w0, w1, k0, ns, row0);
+            else if (cnt <= 4) body<4>(sg, sgi, ln, w0, w1, k0, ns, row0);
+            else body<8>(sg, sgi, ln, w0, w1, k0, ns, row0);
+        }
+    }
+    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        const auto sg = it.get_sub_group();
+        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), rbk = (int)it.get_group(1);
+        const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG, k0 = sgi * SEG, ns = sycl::min(SEG, steps - k0);
+        const int cnt = g.tile_n[t], s0 = g.tile_s0[t];
+        const uint8_t *We = W + (size_t)g.tile_exp[t] * estride;
+        const int bl0 = MODE == 1 ? rbk * 2 : rbk, bl1 = MODE == 1 ? rbk * 2 + 1 : nff / 16 + rbk;
+        const uint8_t *w0 = We + (size_t)bl0 * steps * TB, *w1 = We + (size_t)bl1 * steps * TB;
+        if constexpr (XIN && !(ABL & 8)) { // the one row's segment in parts (reads first; past the segment's end a repeat)
+            uint16_t *ap = reinterpret_cast<uint16_t *>(&as[0]) + sgi * 768;
+            float xv[SEG];
+#pragma unroll
+            for (int i = 0; i < SEG; ++i) {
+                const int idx = (k0 + sycl::min(i, ns - 1)) * 16 + ln;
+                xv[i] = x[xlo ? xlane_at(idx) : (size_t)idx];
+            }
+#pragma unroll
+            for (int i = 0; i < SEG; ++i) {
+                uint16_t a, b, c;
+                split3(xv[i], a, b, c);
+                ap[i * 16 + ln] = a; ap[256 + i * 16 + ln] = b; ap[512 + i * 16 + ln] = c;
+            }
+            sycl::group_barrier(sg);
+        }
+        rows(sg, sgi, ln, w0, w1, k0, ns, XIN ? 0 : (size_t)s0, cnt);
+        if constexpr ((ABL & 1) != 0) return;
+        sycl::group_barrier(it.get_group());
+        const int lid = (int)it.get_local_linear_id(), wg = nseg * 16;
+        const float *sp = &st[0];
+        if constexpr (MODE == 0) {
+            const bool sc = op.escale != nullptr;
+            const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+            for (int id = lid; id < cnt * 16; id += wg) {
+                const int r = id / 16, c = id % 16;
+                float tg = 0.0f, tu = 0.0f;
+                for (int s = 0; s < nseg; ++s) {
+                    tg = tg + sp[(size_t)(s * 2) * MMAX * 16 + r * 16 + c];
+                    tu = tu + sp[(size_t)(s * 2 + 1) * MMAX * 16 + r * 16 + c];
+                }
+                uint16_t a, b, d;
+                split3(act(tg, tu, es, sc, op.beta, op.lb), a, b, d);
+                uint16_t *o = Hp + (size_t)(s0 + r) * nff + rbk * 16 + c;
+                o[0] = a; o[hpp] = b; o[2 * hpp] = d;
+            }
+        } else {
+            for (int id = lid; id < cnt * 32; id += wg) {
+                const int r = id / 32, cc = id % 32, j = cc / 16, c = cc % 16;
+                float tot = 0.0f;
+                for (int s = 0; s < nseg; ++s) tot = tot + sp[(size_t)(s * 2 + j) * MMAX * 16 + r * 16 + c];
+                Y[(size_t)g.slots[s0 + r] * ldy + rbk * 32 + cc] = tot;
+            }
+        }
+    }
+};
+// MODE 0: gate|up (nrb = nff / 16), MODE 1: down (nrb = rows / 32). Segments of 16 steps, the last one 16 or 8.
+template <int MMAX, int MODE, bool XIN, int PF = 2, int GRF = 128, int ABL = 0>
+inline sycl::event small2(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int nrb, MoeGroups g, int tiles,
+                          const uint16_t *P, size_t pp, const float *x, bool xlo, ActOp op, uint16_t *Hp, size_t hpp, float *Y, int ldy) {
+    const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG;
+    if (cols % 16 || (steps % SEG) % PF || SEG % PF || (XIN && (MODE != 0 || MMAX != 1)))
+        throw std::runtime_error("xm::small2: shapes");
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<bf, 1> bs((size_t)nseg * 1024, h), as(XIN ? (size_t)nseg * 768 : 1, h);
+        sycl::local_accessor<float, 1> st((size_t)nseg * 2 * MMAX * 16, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)nrb * nseg * 16), sycl::range<2>(1, (size_t)nseg * 16)),
+                       XSmall2<MMAX, MODE, XIN, PF, GRF, ABL>{W, estride, cols, nff, g, P, pp, x, xlo, op, Hp, hpp, Y, ldy, bs, as, st});
+    });
+}
+// Steps of 1-8 tokens, third form: XSmall's work-groups (SR blocks of 16 rows x one segment of one tile, so the SR
+// sub-groups read the same inputs) with XSmall2's passes of PF steps (the next pass's weights fetched first) and rows
+// per tile by its count; inputs and outputs by sorted position (compact: P[p][tile_s0[t] + r][cols], or row 0 for
+// every tile with one); the segment sums go to S[(t nseg + seg) MMAX + r][ncol], added in order by small_fold_*_c.
+// FUSE: the work-group that finishes a (tile, SR row blocks) last (a counter per pair, reset by it) adds the segments
+// in order and writes H in parts (MODE 0, act, split: Hp[p][tile_s0[t] + r][i]) or y (MODE 1), as small_fold_*_c.
+// DV 1: decode_raw16. HIN (MODE 1): the inputs from the gate|up segment sums Sg (not Hp): each work-group adds the
+// 256 H values of its segment for the tile's rows in order, applies SITU and splits them into local memory (as
+// small_fold_act_c), then reads its A tiles from there.
+// DV 2: the B tiles built in registers by joint_matrix_apply from each lane's own decoded column (element e = k e,
+// bench_xm3; the plain apply, after one load of zeros), no local memory for the weights.
+template <int MMAX, int MODE, int SR, int PF, int FUSE, int DV = 0, bool HIN = false> struct XSmall3 {
+    const uint8_t *W; size_t estride; int cols, nff, ncol;
+    MoeGroups g; const uint16_t *P; size_t pp; bool one; float *S; int gridrb;
+    int32_t *ctr; ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
+    const float *Sg; int ngu;
+    sycl::local_accessor<bf, 1> bs, hs;
+    int blkof(int rbk, int j) const { return MODE == 1 ? rbk * 2 + j : j * (nff / 16) + rbk; }
+    int colof(int rbk, int j) const { return MODE == 1 ? rbk * 32 + j * 16 : j * nff + rbk * 16; }
+    template <int M>
+    void body(sycl::sub_group sg, int sgi, int ln, const uint8_t *w0, const uint8_t *w1, int k0, int ns, size_t row0, float *so, float *so1) const {
+        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, M, 16>;
+        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
+        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
+        Raw r0[PF], r1[PF];
+#pragma unroll
+        for (int i = 0; i < PF; ++i) { r0[i] = fetch16t(w0 + (size_t)(k0 + i) * TB, ln); r1[i] = fetch16t(w1 + (size_t)(k0 + i) * TB, ln); }
+        C c1[2], c23[2];
+#pragma unroll
+        for (int j = 0; j < 2; ++j) { jm::joint_matrix_fill(sg, c1[j], 0.0f); jm::joint_matrix_fill(sg, c23[j], 0.0f); }
+        uint32_t *bw = reinterpret_cast<uint32_t *>(&bs[0]) + sgi * 512;
+        auto lb = [&](size_t off) { return bs.template get_multi_ptr<sycl::access::decorated::no>() + off; };
+        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+        const bf *pa = HIN ? nullptr : reinterpret_cast<const bf *>(P) + row0 * cols + (size_t)k0 * 16;
+        B rb0, rb1; // DV 2: defined once (zeros), then every element written each step
+        if constexpr (DV == 2) {
+#pragma unroll
+            for (int j = 0; j < 8; ++j) bw[j * 16 + ln] = 0u;
+            sycl::group_barrier(sg);
+            jm::joint_matrix_load(sg, rb0, lb((size_t)sgi * 1024), 32);
+            jm::joint_matrix_load(sg, rb1, lb((size_t)sgi * 1024), 32);
+        }
+        for (int b = 0; b < ns; b += PF) {
+            Raw n0[PF], n1[PF];
+            const int kn = k0 + sycl::min(b + PF, ns - PF);
+#pragma unroll
+            for (int i = 0; i < PF; ++i) { n0[i] = fetch16t(w0 + (size_t)(kn + i) * TB, ln); n1[i] = fetch16t(w1 + (size_t)(kn + i) * TB, ln); }
+#pragma unroll
+            for (int i = 0; i < PF; ++i) {
+                const int buf = i & 1, kk = b + i;
+                B b0, b1;
+                if constexpr (DV == 2) {
+                    float v0[16], v1[16];
+                    decode_vals(r0[i], v0);
+                    decode_vals(r1[i], v1);
+                    int e0 = 0, e1 = 0;
+                    jm::joint_matrix_apply(sg, rb0, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v0[e0]) >> 16)); ++e0; });
+                    jm::joint_matrix_apply(sg, rb1, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v1[e1]) >> 16)); ++e1; });
+                } else {
+                    if constexpr (DV == 1) {
+                        decode_raw16(r0[i], bw + buf * 256 + ln, 16);
+                        decode_raw16(r1[i], bw + buf * 256 + 128 + ln, 16);
+                    } else {
+                        decode_raw(r0[i], bw + buf * 256 + ln, 16);
+                        decode_raw(r1[i], bw + buf * 256 + 128 + ln, 16);
+                    }
+                    sycl::group_barrier(sg);
+                    jm::joint_matrix_load(sg, b0, lb((size_t)sgi * 1024 + buf * 512), 32);
+                    jm::joint_matrix_load(sg, b1, lb((size_t)sgi * 1024 + buf * 512 + 256), 32);
+                }
+                const B &bb0 = DV == 2 ? rb0 : b0, &bb1 = DV == 2 ? rb1 : b1;
+                A x0, x1, x2;
+                if constexpr (HIN) {
+                    auto lh = hs.template get_multi_ptr<sycl::access::decorated::no>();
+                    jm::joint_matrix_load(sg, x0, lh + kk * 16, 256);
+                    jm::joint_matrix_load(sg, x1, lh + MMAX * 256 + kk * 16, 256);
+                    jm::joint_matrix_load(sg, x2, lh + 2 * MMAX * 256 + kk * 16, 256);
+                } else {
+                    jm::joint_matrix_load(sg, x0, gp(pa + kk * 16), cols);
+                    jm::joint_matrix_load(sg, x1, gp(pa + pp + kk * 16), cols);
+                    jm::joint_matrix_load(sg, x2, gp(pa + 2 * pp + kk * 16), cols);
+                }
+                jm::joint_matrix_mad(sg, c1[0], x0, bb0, c1[0]);
+                jm::joint_matrix_mad(sg, c23[0], x1, bb0, c23[0]);
+                jm::joint_matrix_mad(sg, c23[0], x2, bb0, c23[0]);
+                jm::joint_matrix_mad(sg, c1[1], x0, bb1, c1[1]);
+                jm::joint_matrix_mad(sg, c23[1], x1, bb1, c23[1]);
+                jm::joint_matrix_mad(sg, c23[1], x2, bb1, c23[1]);
+            }
+#pragma unroll
+            for (int i = 0; i < PF; ++i) { r0[i] = n0[i]; r1[i] = n1[i]; }
+        }
+#pragma unroll
+        for (int j = 0; j < 2; ++j) {
+            jm::joint_matrix_apply(sg, c1[j], c23[j], [](float &u, float &v) { u = u + v; });
+            jm::joint_matrix_store(sg, c1[j], sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(j ? so1 : so),
+                                   ncol, jm::layout::row_major);
+        }
+    }
+    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        const auto sg = it.get_sub_group();
+        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id();
+        const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG;
+        const int gi = (int)it.get_group(1), seg = gi % nseg, rbk = (gi / nseg) * SR + sgi;
+        const int k0 = seg * SEG, ns = sycl::min(SEG, steps - k0), cnt = g.tile_n[t];
+        const uint8_t *We = W + (size_t)g.tile_exp[t] * estride;
+        const uint8_t *w0 = We + (size_t)blkof(rbk, 0) * steps * TB, *w1 = We + (size_t)blkof(rbk, 1) * steps * TB;
+        const size_t row0 = one ? 0 : (size_t)g.tile_s0[t];
+        float *sb = S + (size_t)(t * nseg + seg) * MMAX * ncol, *so = sb + colof(rbk, 0), *so1 = sb + colof(rbk, 1);
+        if constexpr (HIN) { // this segment's H values (nff inputs at k0 * 16) for rows r < cnt, in parts
+            uint16_t *hp = reinterpret_cast<uint16_t *>(&hs[0]);
+            const int lid = (int)it.get_local_linear_id(), n16 = ns * 16;
+            const bool sc = op.escale != nullptr;
+            const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+            constexpr int NS = 9;
+            for (int id = lid; id < cnt * n16; id += SR * 16) {
+                const int r = id / n16, i = id % n16, hi = k0 * 16 + i;
+                float tg = 0.0f, tu = 0.0f;
+                if (ngu == NS) {
+                    float vg[NS], vu[NS];
+#pragma unroll
+                    for (int s = 0; s < NS; ++s) {
+                        const float *row = Sg + ((size_t)(t * NS + s) * MMAX + r) * 2 * nff;
+                        vg[s] = row[hi]; vu[s] = row[nff + hi];
+                    }
+#pragma unroll
+                    for (int s = 0; s < NS; ++s) { tg = tg + vg[s]; tu = tu + vu[s]; }
+                } else
+                    for (int s = 0; s < ngu; ++s) {
+                        const float *row = Sg + ((size_t)(t * ngu + s) * MMAX + r) * 2 * nff;
+                        tg = tg + row[hi];
+                        tu = tu + row[nff + hi];
+                    }
+                split3_store(act(tg, tu, es, sc, op.beta, op.lb), hp + r * 256 + i, (size_t)MMAX * 256);
+            }
+            sycl::group_barrier(it.get_group());
+        }
+        if constexpr (MMAX == 1) body<1>(sg, sgi, ln, w0, w1, k0, ns, row0, so, so1);
+        else {
+            if (cnt <= 1) body<1>(sg, sgi, ln, w0, w1, k0, ns, row0, so, so1);
+            else if (cnt <= 2) body<2>(sg, sgi, ln, w0, w1, k0, ns, row0, so, so1);
+            else if (cnt <= 4) body<4>(sg, sgi, ln, w0, w1, k0, ns, row0, so, so1);
+            else body<8>(sg, sgi, ln, w0, w1, k0, ns, row0, so, so1);
+        }
+        if constexpr (FUSE != 0) {
+            // 1: release fence by every work-item, acq_rel counter, acquire fence, plain reads. 2: release fences, a
+            // release counter, the sums read by device-scope atomic loads (from the shared cache). 3: as 2 with one
+            // release fence per work-group, after its barrier
+            if constexpr (FUSE != 3) sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
+            const auto wg = it.get_group();
+            sycl::group_barrier(wg);
+            const int lid = (int)it.get_local_linear_id(), rbg = gi / nseg;
+            int last = 0;
+            if (lid == 0) {
+                if constexpr (FUSE == 3) sycl::atomic_fence(sycl::memory_order::release, sycl::memory_scope::device);
+                if constexpr (FUSE == 1) {
+                    sycl::atomic_ref<int32_t, sycl::memory_order::acq_rel, sycl::memory_scope::device, sycl::access::address_space::global_space> a(
+                        ctr[(size_t)t * gridrb + rbg]);
+                    last = a.fetch_add(1) == nseg - 1;
+                    if (last) a.store(0);
+                } else {
+                    sycl::atomic_ref<int32_t, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space> a(
+                        ctr[(size_t)t * gridrb + rbg]);
+                    last = a.fetch_add(1, sycl::memory_order::release) == nseg - 1;
+                    if (last) a.store(0);
+                }
+            }
+            last = sycl::group_broadcast(wg, last, 0);
+            if (!last) return;
+            if constexpr (FUSE == 1) sycl::atomic_fence(sycl::memory_order::acquire, sycl::memory_scope::device);
+            auto ld = [](const float *p) {
+                if constexpr (FUSE == 1) return *p;
+                else return sycl::atomic_ref<float, sycl::memory_order::relaxed, sycl::memory_scope::device, sycl::access::address_space::global_space>(
+                                *const_cast<float *>(p)).load();
+            };
+            const int rb = rbg * SR + lid / 16, c = lid % 16, s0 = g.tile_s0[t];
+            if constexpr (MODE == 0) {
+                const bool sc = op.escale != nullptr;
+                const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+                const int i = rb * 16 + c;
+                for (int r = 0; r < cnt; ++r) {
+                    float tg = 0.0f, tu = 0.0f;
+                    for (int s = 0; s < nseg; ++s) {
+                        const float *row = S + ((size_t)(t * nseg + s) * MMAX + r) * ncol;
+                        tg = tg + ld(row + i);
+                        tu = tu + ld(row + nff + i);
+                    }
+                    uint16_t a, b, d;
+                    split3(act(tg, tu, es, sc, op.beta, op.lb), a, b, d);
+                    uint16_t *o = Hp + (size_t)(s0 + r) * nff + i;
+                    o[0] = a; o[hpp] = b; o[2 * hpp] = d;
+                }
+            } else {
+                for (int r = 0; r < cnt; ++r) {
+                    float *yo = Y + (size_t)g.slots[s0 + r] * ldy + rb * 32 + c;
+#pragma unroll
+                    for (int j = 0; j < 2; ++j) {
+                        float tot = 0.0f;
+                        for (int s = 0; s < nseg; ++s) tot = tot + ld(S + ((size_t)(t * nseg + s) * MMAX + r) * ncol + rb * 32 + j * 16 + c);
+                        yo[j * 16] = tot;
+                    }
+                }
+            }
+        }
+    }
+};
+// ctr (FUSE): tiles x nrb / SR counters, zero before the first launch (each launch leaves them zero)
+template <int MMAX, int MODE, int SR = 4, int PF = 1, int FUSE = 0, int DV = 0, bool HIN = false>
+inline sycl::event small3(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int ncol, int nrb, MoeGroups g, int tiles,
+                          const uint16_t *P, size_t pp, bool one, float *S, int32_t *ctr = nullptr, ActOp op = {}, uint16_t *Hp = nullptr,
+                          size_t hpp = 0, float *Y = nullptr, int ldy = 0, const float *Sg = nullptr, int ngu = 0) {
+    const int steps = cols / 16, nseg = (steps + SEG - 1) / SEG;
+    if (cols % 16 || nrb % SR || (steps % SEG) % PF || SEG % PF) throw std::runtime_error("xm::small3: shapes");
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<bf, 1> bs(SR * 1024, h), hs(HIN ? (size_t)3 * MMAX * 256 : 1, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)(nrb / SR) * nseg * SR * 16), sycl::range<2>(1, SR * 16)),
+                       XSmall3<MMAX, MODE, SR, PF, FUSE, DV, HIN>{W, estride, cols, nff, ncol, g, P, pp, one, S, nrb / SR, ctr, op, Hp, hpp, Y, ldy,
+                                                             Sg, ngu, bs, hs});
+    });
+}
+// Steps of 1-8 tokens, fourth form: one sub-group per (tile, B tile of 16 rows) over all its inputs: per segment c1 and
+// c23 from zero, then tot = tot + (c1 + c23) in registers (as XProd2 and the folds: the same additions in the same
+// order); the weights PF steps ahead (across segments), the B tiles built in registers (bench_xm3). Rows per tile by
+// its count. MODE 0: work-group = the gate and up tiles of 16 rows: SITU and split there, Hp[p][tile_s0[t] + r][i].
+// MODE 1: work-group = SRF tiles of 16 rows; y[slots[tile_s0[t] + r]][row].
+template <int MMAX, int MODE, int PF, int SRF, int GRF> struct XFull {
+    const uint8_t *W; size_t estride; int cols, nff;
+    MoeGroups g; const uint16_t *P; size_t pp; bool one;
+    ActOp op; uint16_t *Hp; size_t hpp; float *Y; int ldy;
+    sycl::local_accessor<float, 1> st;
+    sycl::local_accessor<bf, 1> zb;
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<GRF>};
+    }
+    template <int M> void body(sycl::sub_group sg, int sgi, int ln, const uint8_t *w, size_t row0) const {
+        using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, M, 16>;
+        using A = jm::joint_matrix<sycl::sub_group, bf, jm::use::a, M, 16, jm::layout::row_major>;
+        using B = jm::joint_matrix<sycl::sub_group, bf, jm::use::b, 16, 16, jm::layout::ext_intel_packed>;
+        auto gp = [](const bf *p) { return sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::no>(p); };
+        const int steps = cols / 16;
+        Raw r[PF];
+#pragma unroll
+        for (int i = 0; i < PF; ++i) r[i] = fetch16t(w + (size_t)i * TB, ln);
+        C c1, c23, tot;
+        jm::joint_matrix_fill(sg, tot, 0.0f);
+        B rb;
+        jm::joint_matrix_load(sg, rb, zb.template get_multi_ptr<sycl::access::decorated::no>(), 32);
+        const bf *pa = reinterpret_cast<const bf *>(P) + row0 * cols;
+        for (int k0 = 0; k0 < steps; k0 += SEG) {
+            const int ns = sycl::min(SEG, steps - k0);
+            jm::joint_matrix_fill(sg, c1, 0.0f);
+            jm::joint_matrix_fill(sg, c23, 0.0f);
+            for (int b = 0; b < ns; b += PF) {
+                const int kb = k0 + b, kn = sycl::min(kb + PF, steps - PF);
+                Raw n[PF];
+#pragma unroll
+                for (int i = 0; i < PF; ++i) n[i] = fetch16t(w + (size_t)(kn + i) * TB, ln);
+#pragma unroll
+                for (int i = 0; i < PF; ++i) {
+                    float v[16];
+                    decode_vals(r[i], v);
+                    int e = 0;
+                    jm::joint_matrix_apply(sg, rb, [&](bf &x) { x = sycl::bit_cast<bf>((uint16_t)(sycl::bit_cast<uint32_t>(v[e]) >> 16)); ++e; });
+                    A x0, x1, x2;
+                    const bf *pk = pa + (size_t)(kb + i) * 16;
+                    jm::joint_matrix_load(sg, x0, gp(pk), cols);
+                    jm::joint_matrix_load(sg, x1, gp(pk + pp), cols);
+                    jm::joint_matrix_load(sg, x2, gp(pk + 2 * pp), cols);
+                    jm::joint_matrix_mad(sg, c1, x0, rb, c1);
+                    jm::joint_matrix_mad(sg, c23, x1, rb, c23);
+                    jm::joint_matrix_mad(sg, c23, x2, rb, c23);
+                }
+#pragma unroll
+                for (int i = 0; i < PF; ++i) r[i] = n[i];
+            }
+            jm::joint_matrix_apply(sg, c1, c23, [](float &u, float &v) { u = u + v; });
+            jm::joint_matrix_apply(sg, tot, c1, [](float &u, float &v) { u = u + v; });
+        }
+        jm::joint_matrix_store(sg, tot, st.template get_multi_ptr<sycl::access::decorated::no>() + (size_t)sgi * MMAX * 16, 16, jm::layout::row_major);
+    }
+    [[sycl::reqd_sub_group_size(16)]] void operator()(sycl::nd_item<2> it) const {
+        const int t = (int)it.get_group(0);
+        if (t >= g.ntiles[0]) return;
+        const auto sg = it.get_sub_group();
+        const int sgi = (int)sg.get_group_linear_id(), ln = (int)sg.get_local_linear_id(), gi = (int)it.get_group(1);
+        const int steps = cols / 16, cnt = g.tile_n[t], s0 = g.tile_s0[t];
+        const int blk = MODE == 0 ? sgi * (nff / 16) + gi : gi * SRF + sgi; // tile layout block (16 rows)
+        const uint8_t *w = W + (size_t)g.tile_exp[t] * estride + (size_t)blk * steps * TB;
+        const size_t row0 = one ? 0 : (size_t)s0;
+        { // the zero tile that defines B before its first apply
+            const int lid = (int)it.get_local_linear_id();
+            if (lid < 128) reinterpret_cast<uint32_t *>(&zb[0])[lid] = 0u;
+            sycl::group_barrier(it.get_group());
+        }
+        if constexpr (MMAX == 1) body<1>(sg, sgi, ln, w, row0);
+        else {
+            if (cnt <= 1) body<1>(sg, sgi, ln, w, row0);
+            else if (cnt <= 2) body<2>(sg, sgi, ln, w, row0);
+            else if (cnt <= 4) body<4>(sg, sgi, ln, w, row0);
+            else body<8>(sg, sgi, ln, w, row0);
+        }
+        const float *sp = &st[0];
+        if constexpr (MODE == 0) {
+            sycl::group_barrier(it.get_group());
+            const int lid = (int)it.get_local_linear_id();
+            const bool sc = op.escale != nullptr;
+            const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+            for (int id = lid; id < cnt * 16; id += 32) {
+                const int r = id / 16, c = id % 16;
+                split3_store(act(sp[r * 16 + c], sp[MMAX * 16 + r * 16 + c], es, sc, op.beta, op.lb), Hp + (size_t)(s0 + r) * nff + gi * 16 + c, hpp);
+            }
+        } else {
+            sycl::group_barrier(sg);
+            for (int r = 0; r < cnt; ++r) Y[(size_t)g.slots[s0 + r] * ldy + blk * 16 + ln] = sp[(size_t)sgi * MMAX * 16 + r * 16 + ln];
+        }
+    }
+};
+// MODE 0: gate|up (cols inputs, nff rows each), MODE 1: down (cols = nff inputs, rows outputs)
+template <int MMAX, int MODE, int PF = 4, int SRF = 4, int GRF = 128>
+inline sycl::event full_prod(sycl::queue &q, const uint8_t *W, size_t estride, int cols, int nff, int rows, MoeGroups g, int tiles,
+                             const uint16_t *P, size_t pp, bool one, ActOp op, uint16_t *Hp, size_t hpp, float *Y, int ldy) {
+    const int steps = cols / 16;
+    if (cols % 16 || steps % PF || SEG % PF || (steps % SEG) % PF || (MODE == 1 && (rows / 16) % SRF)) throw std::runtime_error("xm::full_prod: shapes");
+    const int sgw = MODE == 0 ? 2 : SRF, ngr = MODE == 0 ? nff / 16 : rows / 16 / SRF;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> st((size_t)sgw * MMAX * 16, h);
+        sycl::local_accessor<bf, 1> zb(256, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * sgw * 16), sycl::range<2>(1, (size_t)sgw * 16)),
+                       XFull<MMAX, MODE, PF, SRF, GRF>{W, estride, cols, nff, g, P, pp, one, op, Hp, hpp, Y, ldy, st, zb});
+    });
+}
+// gate|up: H in parts for each tile's rows r < count by sorted position: Hp[p][tile_s0[t] + r][i]
+inline sycl::event small_fold_act_c(sycl::queue &q, MoeGroups g, int tiles, int nseg, int mmax, const float *S, int nff, ActOp op, uint16_t *Hp, size_t hpp) {
+    return q.parallel_for(sycl::range<2>((size_t)tiles, (size_t)nff), [=](sycl::id<2> id) {
+        const int t = (int)id[0], i = (int)id[1];
+        if (t >= g.ntiles[0]) return;
+        const int cnt = g.tile_n[t], s0 = g.tile_s0[t];
+        const bool sc = op.escale != nullptr;
+        const float es = sc ? op.escale[g.tile_exp[t]] : 1.0f;
+        constexpr int NS = 9; // gate|up of 2,304 inputs: the reads first (unrolled), then the same additions in order
+        for (int r = 0; r < cnt; ++r) {
+            float tg = 0.0f, tu = 0.0f;
+            if (nseg == NS) {
+                float vg[NS], vu[NS];
+#pragma unroll
+                for (int s = 0; s < NS; ++s) {
+                    const float *row = S + ((size_t)(t * NS + s) * mmax + r) * 2 * nff;
+                    vg[s] = row[i]; vu[s] = row[nff + i];
+                }
+#pragma unroll
+                for (int s = 0; s < NS; ++s) { tg = tg + vg[s]; tu = tu + vu[s]; }
+            } else
+                for (int s = 0; s < nseg; ++s) {
+                    const float *row = S + ((size_t)(t * nseg + s) * mmax + r) * 2 * nff;
+                    tg = tg + row[i];
+                    tu = tu + row[nff + i];
+                }
+            uint16_t a, b, d;
+            split3(act(tg, tu, es, sc, op.beta, op.lb), a, b, d);
+            uint16_t *o = Hp + (size_t)(s0 + r) * nff + i;
+            o[0] = a; o[hpp] = b; o[2 * hpp] = d;
+        }
+    });
+}
+// y[slot][col] = the sum of a tile's segments in order, rows r < count
+inline sycl::event small_fold_out_c(sycl::queue &q, MoeGroups g, int tiles, int nseg, int mmax, const float *S, int ncol, float *Y, int ldy) {
+    return q.parallel_for(sycl::range<2>((size_t)tiles, (size_t)ncol), [=](sycl::id<2> id) {
+        const int t = (int)id[0], c = (int)id[1];
+        if (t >= g.ntiles[0]) return;
+        const int cnt = g.tile_n[t], s0 = g.tile_s0[t];
+        for (int r = 0; r < cnt; ++r) {
+            float tot = 0.0f;
+            for (int s = 0; s < nseg; ++s) tot = tot + S[((size_t)(t * nseg + s) * mmax + r) * ncol + c];
+            Y[(size_t)g.slots[s0 + r] * ldy + c] = tot;
+        }
+    });
+}
+// P[p][s][cols] for the group's sorted positions s < k (slot slots[s], token slot / ku), 8 columns per work-item
+inline sycl::event split_gather_c(sycl::queue &q, MoeGroups g, int k, const float *x, int cols, int ku, int ldx, uint16_t *P, size_t pp) {
+    return q.parallel_for(sycl::range<2>((size_t)k, (size_t)cols / 8), [=](sycl::id<2> id) {
+        const int s = (int)id[0], c8 = (int)id[1] * 8;
+        const float *row = x + (size_t)(g.slots[s] / ku) * ldx + c8;
+        const sycl::float4 v0 = *reinterpret_cast<const sycl::float4 *>(row), v1 = *reinterpret_cast<const sycl::float4 *>(row + 4);
+        sycl::vec<uint16_t, 8> a, b, c;
+#pragma unroll
+        for (int i = 0; i < 8; ++i) {
+            uint16_t p0, p1, p2;
+            split3(i < 4 ? v0[i] : v1[i - 4], p0, p1, p2);
+            a[i] = p0; b[i] = p1; c[i] = p2;
+        }
+        uint16_t *o = P + (size_t)s * cols + c8;
+        *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o) = a;
+        *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o + pp) = b;
+        *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o + 2 * pp) = c;
     });
 }
 // P for one token from its lane-order row (xlane.hpp)

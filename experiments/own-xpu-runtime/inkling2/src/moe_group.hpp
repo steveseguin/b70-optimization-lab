@@ -18,6 +18,7 @@ struct MoeGroups {
     int32_t *ecount = nullptr;                                    // [ne] slots per expert (scratch)
     int32_t *ntiles = nullptr;                                    // [1] tiles T
     int32_t *tile_exp = nullptr, *tile_s0 = nullptr, *tile_n = nullptr; // [ne + K / 16] expert, first slot index, slots
+    int32_t *sloc = nullptr; // [K] optional (when allocated): slot s's tile << 4 | its row in the tile
     void alloc(Device &d, int ne, int kmax) {
         count = d.alloc<int32_t>(1); exp = d.alloc<int32_t>(ne); off = d.alloc<int32_t>(ne + 1); slots = d.alloc<int32_t>(kmax);
         ecount = d.alloc<int32_t>(ne);
@@ -64,7 +65,10 @@ inline sycl::event moe_group(sycl::queue &q, const int32_t *ids, int K, int ne, 
             const int s = s0 + l;
             const int m = (s < K && ids[s] == e) ? 1 : 0;
             const int r = sycl::exclusive_scan_over_group(grp, m, sycl::plus<int>());
-            if (m) g.slots[base + r] = s;
+            if (m) {
+                g.slots[base + r] = s;
+                if (g.sloc) g.sloc[s] = ((t0 + (base + r - start) / MOE_TS) << 4) | ((base + r - start) % MOE_TS);
+            }
             base += sycl::reduce_over_group(grp, m, sycl::plus<int>());
         }
         const int nt = (cnt + MOE_TS - 1) / MOE_TS;
