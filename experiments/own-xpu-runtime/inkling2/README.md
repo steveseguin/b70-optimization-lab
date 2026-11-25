@@ -844,7 +844,8 @@ question then loaded the save (2.6 s) and read ~30 tokens. 17 of 21 right: every
 "not found"; the 4 misses (2, 12, 22, 27 %) are thinking loops to the 3,000-token limit, not retrieval: a miss's
 thinking lists 17 of the 20 facts with the right codes and documents, then repeats its list. The model file names
 temperature 1.0 sampling (`general.sampling.temp 1.0`, top_k 0, top_p 1.0, min_p 0.0) and its card warns about
-reasoning loops.
+reasoning loops. The same 21 questions with temperature 1.0 (seed 1000 + question number, sampling below): **21 of 21
+right**, every answer in 5-20 s (the "not found" 52 s).
 
 Sampling (2026-11-25, `ops::sample_rows`, `INK_SAMPLE="<T> <top_p> <top_k> <min_p> <seed>"`, serving `P` lines):
 one token per row from softmax(x / T) over the kept tokens (min_p, top_k and top_p as thresholds on the row's values,

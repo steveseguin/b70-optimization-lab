@@ -1,6 +1,7 @@
 # prefill the haystack once (saved as a library prompt), then ask for each fact; every question loads the saved prompt
 import json, sys, time, urllib.request, urllib.error
 B = sys.argv[1]; MODEL = sys.argv[2] if len(sys.argv) > 2 else 'inkling-2-mini-chat'; TAG = sys.argv[3] if len(sys.argv) > 3 else 'chat'
+TEMP = float(sys.argv[4]) if len(sys.argv) > 4 else 0.0  # 0: the most likely token; else sampled with seed 1000 + question
 D = '/home/steve/inkling-work/recall'
 def post(path, body, timeout=7200):
     req = urllib.request.Request(B + path, data=json.dumps(body).encode(), headers={'Content-Type': 'application/json'})
@@ -18,7 +19,8 @@ res = []
 for name, code, depth in qs:
     q = f'What is the vault combination for project {name}? Reply with the five-digit number only, or "not found".'
     t0 = time.time()
-    r = post('/v1/chat/completions', {'model': MODEL, 'messages': [sysm, {'role': 'user', 'content': q}], 'max_tokens': 3000})
+    r = post('/v1/chat/completions', {'model': MODEL, 'messages': [sysm, {'role': 'user', 'content': q}], 'max_tokens': 3000,
+                                      'temperature': TEMP, 'seed': 1000 + len(res)})
     m = r['choices'][0]['message']; t = r['timings']; a = (m['content'] or '').strip()
     ok = (str(code) in a) if code else ('not found' in a.lower())
     res.append({'name': name, 'code': code, 'depth': depth, 'answer': a, 'ok': ok, 'think_chars': len(m.get('reasoning_content') or ''),

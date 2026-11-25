@@ -191,7 +191,8 @@
   temperature 1.0): the same text with or without guessing (8/8), 99-129 tok/s with guessing. **State copies**: a
   regenerated answer, an edited last message, a new question about the same document or a new chat with the same
   system prompt starts in ~0.07 s instead of re-reading (8.7K tokens: 8.8 s), 13/13 answers identical to no copies.
-  Recall at 480K: 17/21; the 4 misses are greedy thinking loops (the model found the facts), which sampling addresses.
+  Recall at 480K: 17/21 with the most likely token (the 4 misses are thinking loops; the model found the facts),
+  **21/21 with the model file's temperature 1.0**. Drafter guesses tied to the same random numbers: no gain, closed.
   Reviewed another B70 Inkling project (lossy: EXL3 weights, 16-bit matrix math, FP8 cache): their prompt reading
   3-4x ours, our writing faster on comparable tasks (lane README). Gate 12/12.
 - Nov 25 ~08:52: the Inkling server runs one engine per card (cards 1-5 by default): five conversations at once,
