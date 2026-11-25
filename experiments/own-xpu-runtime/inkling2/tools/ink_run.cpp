@@ -2,10 +2,11 @@
 //   ink_run <model.gguf> <card> <tokens.txt> [n_gen] [ctx]
 // Prints "ids: ..." (generated ids, stops at the end-of-turn token) like tools/ref_gen.cpp, timings on stderr.
 // INK_DUMP=<dir> saves the reference's named tensors for the prompt (one step: prompt <= INK_UBATCH tokens).
-#include "../src/dspark.hpp"
+#include "../src/cache_file.hpp"
 #include <memory>
 #include <cstring>
 #include <fstream>
+#include <sstream>
 #include <unordered_map>
 #include <thread>
 
@@ -48,7 +49,26 @@ int main(int argc, char **argv) {
         std::vector<int32_t> tok;
         { std::ifstream f(argv[3]); long v; while (f >> v) tok.push_back((int32_t)v); }
         int n_gen = argc > 4 ? std::atoi(argv[4]) : 0;
-        int ctx = argc > 5 ? std::atoi(argv[5]) : (int)(tok.size() + n_gen + 16);
+        // INK_TURNS=<file>: follow-up turns, one per line (token ids, e.g. <|message_user|><|content_text|>...<|end_message|>).
+        // After an answer, its last token (the end token <|content_model_end_sampling|>, which the chat template keeps at
+        // the end of the model's message, thinking included) and the next turn go through the cache as a prompt step,
+        // then the turn is answered (n_gen tokens at most); one "ids:" line per turn. A fresh run of the whole
+        // conversation as one prompt gives the same ids (every path computes the same values)
+        std::vector<std::vector<int32_t>> turns;
+        if (const char *tf = std::getenv("INK_TURNS")) {
+            std::ifstream f(tf);
+            if (!f) throw std::runtime_error(std::string("INK_TURNS: cannot read ") + tf);
+            std::string line;
+            while (std::getline(f, line)) {
+                std::istringstream ls(line);
+                std::vector<int32_t> t;
+                for (long v; ls >> v;) t.push_back((int32_t)v);
+                if (!t.empty()) turns.push_back(t);
+            }
+        }
+        size_t turn_tok = 0;
+        for (const auto &t : turns) turn_tok += t.size() + 1 + n_gen;
+        int ctx = argc > 5 ? std::atoi(argv[5]) : (int)(tok.size() + n_gen + 16 + turn_tok);
         // prompt step size (the same bits for every size), by context. Bigger steps fill the expert tiles better; at long
         // contexts the attention takes most of the time and they stop paying (2026-11-25, logits identical; tok/s for
         // steps of 1,024 / 2,048 / 4,096 tokens: 3K 869-884 / 941-945 / 965-967 on card 2, 31K 935-943 / 956-966 /
@@ -128,9 +148,27 @@ int main(int argc, char **argv) {
         if (std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
             (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP"))))
             ngt = std::thread([&] { ngi.extend(tok, (int)tok.size() + 1); });
+        // INK_LOAD_CACHE=<file>: start from a prompt saved by INK_SAVE_CACHE (src/cache_file.hpp); this run's prompt must
+        // start with the file's, and only the rest is read. INK_SAVE_CACHE=<file>: save the state after the prompt
+        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]);
+        size_t loaded = 0;
+        if (const char *lc = std::getenv("INK_LOAD_CACHE")) {
+            const double tl = now_s();
+            size_t fb = 0;
+            loaded = load_cache(lc, e, dr.get(), tok, model_id, &fb);
+            const double dt = now_s() - tl;
+            std::fprintf(stderr, "[ink] cache: %zu positions loaded from %s in %.3f s (%.2f GB/s)\n", loaded, lc, dt, fb / dt / 1e9);
+        }
         double t0 = now_s();
-        e.feed(tok);
+        if (loaded < tok.size()) e.feed(std::vector<int32_t>(tok.begin() + (long)loaded, tok.end()));
         double t1 = now_s();
+        if (const char *sc = std::getenv("INK_SAVE_CACHE")) {
+            const double ts = now_s();
+            const size_t fb = save_cache(sc, e, dr.get(), tok, model_id);
+            const double dt = now_s() - ts;
+            std::fprintf(stderr, "[ink] cache: %zu positions saved to %s in %.3f s (%.2f GB/s)\n", tok.size(), sc, dt, fb / dt / 1e9);
+            t0 += now_s() - ts; t1 += now_s() - ts; // (the save is in neither the prompt's time nor the writing's)
+        }
         if (ngt.joinable()) ngt.join(); // (every path past here; an index of 471K tokens takes ~0.2 s, the prompt minutes)
         if (const char *sp = std::getenv("INK_SAVE_LOGITS")) { // the prompt's last logits row, F32
             std::ofstream o(sp, std::ios::binary);
@@ -173,6 +211,21 @@ int main(int argc, char **argv) {
             }
             return 0;
         }
+        std::vector<int32_t> conv = tok; // the conversation so far: every token fed, then each answer
+        const int n_gen0 = n_gen;
+        size_t fed_n = tok.size() - loaded;
+        for (int turn = 0;; ++turn) {
+        if (turn > 0) { // the previous answer's last token (chosen, not yet fed) and the next turn, as a prompt step
+            std::vector<int32_t> tt(1, conv.back());
+            tt.insert(tt.end(), turns[turn - 1].begin(), turns[turn - 1].end());
+            n_gen = n_gen0;
+            t0 = now_s();
+            e.feed(tt);
+            t1 = now_s();
+            conv.insert(conv.end(), turns[turn - 1].begin(), turns[turn - 1].end());
+            fed_n = tt.size();
+            e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+        }
         std::vector<int> out;
         // INK_HOST_ARGMAX=1: copy every step's logits to the host and choose there (the first version's loop)
         const bool host_argmax = std::getenv("INK_HOST_ARGMAX") && std::atoi(std::getenv("INK_HOST_ARGMAX"));
@@ -190,7 +243,7 @@ int main(int argc, char **argv) {
             if (spec > Engine::SB_MAX - 1) throw std::runtime_error("INK_SPEC: at most " + std::to_string(Engine::SB_MAX - 1));
             const int maxn = std::getenv("INK_SPEC_MAXN") ? std::atoi(std::getenv("INK_SPEC_MAXN")) : 4;
             const int minn = std::getenv("INK_SPEC_MINN") ? std::atoi(std::getenv("INK_SPEC_MINN")) : 2;
-            std::vector<int32_t> hist = tok; // prompt, then every chosen token
+            std::vector<int32_t> hist = conv; // the conversation, then every chosen token
             auto save_rows = [&](int nrows) {
                 for (int r = 0; r < nrows; ++r) {
                     d.get(gen_row.data(), e.lg + (size_t)r * e.m.hp.vocab_padded, gen_row.size());
@@ -452,9 +505,16 @@ int main(int argc, char **argv) {
         std::printf("ids:");
         for (int t : out) std::printf(" %d", t);
         std::printf("\n");
-        std::fprintf(stderr, "[ink] prompt %zu tokens %.3f s (%.1f tok/s); generated %zu in %.3f s (%.2f tok/s)\n", tok.size(),
-                     t1 - t0, tok.size() / (t1 - t0), out.size(), t2 - t1, out.size() > 1 ? (out.size() - 1) / (t2 - t1) : 0.0);
+        std::fflush(stdout);
+        if (turn > 0) std::fprintf(stderr, "[ink] turn %d (from position %zu): ", turn, conv.size() - turns[turn - 1].size() - 1);
+        else std::fprintf(stderr, "[ink] ");
+        std::fprintf(stderr, "prompt %zu tokens %.3f s (%.1f tok/s); generated %zu in %.3f s (%.2f tok/s)\n", fed_n,
+                     t1 - t0, fed_n ? fed_n / (t1 - t0) : 0.0, out.size(), t2 - t1, out.size() > 1 ? (out.size() - 1) / (t2 - t1) : 0.0);
         e.prof.report(stderr);
+        conv.insert(conv.end(), out.begin(), out.end());
+        if (turn >= (int)turns.size() || out.empty()) break;
+        e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
+        } // turns
         std::fprintf(stderr, "[ink] at the end: driver reports %.2f GiB free (card memory in use %.2f GiB)\n", d.free_mem() / 1073741824.0,
                      d.allocated / 1073741824.0);
     } catch (std::exception &ex) {

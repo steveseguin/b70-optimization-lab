@@ -43,7 +43,7 @@ struct Engine {
     float *Q = nullptr, *Kr = nullptr, *Vr = nullptr, *Kx = nullptr, *Vx = nullptr, *dynK = nullptr, *dynV = nullptr;
     float *R = nullptr, *Rc = nullptr, *sinks = nullptr, *tab = nullptr, *P = nullptr, *att = nullptr, *gate = nullptr;
     float *ob = nullptr, *attn_out = nullptr, *ffn_inp = nullptr, *fx = nullptr, *ctl_h = nullptr, *ctl_z = nullptr;
-    float *ctl_g = nullptr, *ctl_f = nullptr, *ctl_y = nullptr, *rlog = nullptr, *wts = nullptr, *gu = nullptr;
+    float *ctl_g = nullptr, *ctl_f = nullptr, *ctl_y = nullptr, *rlog = nullptr, *wts = nullptr;
     float *hb = nullptr, *yk = nullptr, *moe = nullptr, *ffn_out = nullptr, *tau = nullptr, *fin = nullptr, *lg = nullptr;
     int32_t *eids = nullptr;
     int ldp = 0;
@@ -87,7 +87,10 @@ struct Engine {
     bool flash = true;
     bool flash_dec = true; // INK_FLASH_DEC=0: steps below flash_min keep scores in P (attn_scores_* + attn_flash_part)
     bool flash_lean = true; // INK_FLASH_LEAN=0: the prompt kernel without constant Q offsets, local block loads, rows' maxima
-    int dec_rows = 16;     // rows per attn_flash_dec launch (its parts buffer holds this many rows of the whole context)
+    int dec_rows = 16;     // rows per attn_flash_dec launch, i.e. per read of the keys and values
+    int dec_mem = 16;      // rows of the whole context the parts buffer holds (more rows go through it in chunks)
+    size_t dec_cap = 0;    // the parts buffer's (row, block) entries per head
+    float *fst = nullptr;  // the fold's state between chunks (dec_rows x heads x (head_dim + 2))
     int flash_min = 128;
     float *pml = nullptr;
     int pv_u = 64;             // attention P*V keys per batch (INK_PV_U: 16 = attn_pv_gate2, 32, 64, 128)
@@ -238,7 +241,13 @@ struct Engine {
         dynK = d.alloc<float>((size_t)T * h.n_head_kv * h.n_conv); dynV = d.alloc<float>((size_t)T * h.n_head_kv * h.n_conv);
         R = d.alloc<float>((size_t)h.n_rel * h.n_head * T); Rc = d.alloc<float>((size_t)h.n_rel * h.n_head * T);
         sinks = d.alloc<float>((size_t)h.n_head * T);
-        tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * T);
+        // the relative-bias table: only steps below the attention tiles (att_tile) write and read it (the tiles compute
+        // the bias in place), so it holds att_tile - 1 tokens (at least SB_MAX) when the tiles can run (48 MiB less at
+        // 512-token steps)
+        if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
+        const bool tile_shape = att_tile > 0 && vld > 0 && h.n_head == 3 * h.n_head_kv && h.n_rel == 16;
+        const size_t tab_tok = tile_shape ? (size_t)std::min(T, std::max(att_tile - 1, SB_MAX)) : (size_t)T;
+        tab = d.alloc<float>((size_t)h.rel_extent * h.n_head * tab_tok);
         if (const char *e = std::getenv("INK_FLASH")) flash = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_FLASH_MIN")) flash_min = std::atoi(e);
         if (const char *e = std::getenv("INK_FLASH_DEC")) flash_dec = std::atoi(e) != 0;
@@ -247,6 +256,16 @@ struct Engine {
         // positions 4 (0.4 KB; a 5-8 token check takes two launches)
         dec_rows = cap <= 131072 ? 16 : cap <= 491520 ? 8 : 4;
         if (const char *e = std::getenv("INK_DEC_ROWS")) dec_rows = std::max(1, std::min(16, std::atoi(e)));
+        // past 491,520 positions the buffer holds one row of the context (INK_DEC_MEM rows; 0.1 KB per position), but a
+        // check of 2-8 tokens still reads the keys and values once: it goes through the buffer in chunks of whole
+        // 128-block groups, the fold's state carried between them (attn_flash_sum b0 / st), the same values
+        // (INK_DEC_CHUNK=0: 4 rows of the context, a 5-8 token check in two launches of 4 rows, as before)
+        dec_mem = dec_rows;
+        if (dec_rows < 8 && (!std::getenv("INK_DEC_CHUNK") || std::atoi(std::getenv("INK_DEC_CHUNK")))) {
+            dec_rows = 8;
+            if (!std::getenv("INK_DEC_ROWS")) dec_mem = 1;
+            if (const char *e = std::getenv("INK_DEC_MEM")) dec_mem = std::max(1, std::min(8, std::atoi(e)));
+        }
         // P's row stride: the window (the windowed kernels store column j - lo of each row) when the layers without a
         // window keep their scores in local memory, else the context (their rows store column j)
         const bool p_win = flash && flash_dec && h.n_swa > 0;
@@ -282,10 +301,16 @@ struct Engine {
         { // block parts: rows x heads x blocks (attn_flash_dec: dec_rows rows of the whole context; the windowed layers'
             // P.V: pv_rows or 16 rows of a window's blocks); without p_win every path may take pv_rows of the context
             const size_t r16 = (size_t)std::max(16, pv_rows), ctx_b = (size_t)(cap / fz::PVB + 2);
-            const size_t pr_n = p_win ? std::max((size_t)dec_rows * ctx_b, r16 * ((ldp + r16) / fz::PVB + 3)) : r16 * ctx_b;
-            const size_t ml_n = p_win ? (size_t)dec_rows * ctx_b : r16 * ctx_b;
+            // chunked checks: the buffer rounded up to whole pieces of dec_rows rows x 128 blocks, so a check of
+            // dec_rows tokens takes ceil(context / piece) pieces (515K, 8 tokens: 8 pieces of 512 blocks, not 11 of 384)
+            size_t dm_b = (size_t)dec_mem * ctx_b;
+            if (dec_rows > dec_mem) dm_b = (dm_b + (size_t)dec_rows * 128 - 1) / ((size_t)dec_rows * 128) * ((size_t)dec_rows * 128);
+            const size_t pr_n = p_win ? std::max(dm_b, r16 * ((ldp + r16) / fz::PVB + 3)) : r16 * ctx_b;
+            const size_t ml_n = p_win ? dm_b : r16 * ctx_b;
             pvpart = d.alloc<float>(pr_n * h.n_head * h.head_dim);
             pml = d.alloc<float>(ml_n * h.n_head * 2);
+            dec_cap = std::min(pr_n, ml_n);
+            if (dec_rows > dec_mem) fst = d.alloc<float>((size_t)dec_rows * h.n_head * (h.head_dim + 2));
         }
         if (vld == 0 || h.n_head != 3 * h.n_head_kv) // the block-order P.V reads the transposed cache, 3 heads per KV head
             throw std::runtime_error("engine: INK_VT=0 and head groups other than 3 are not supported");
@@ -294,7 +319,11 @@ struct Engine {
         ctl_g = d.alloc<float>(E); ctl_f = d.alloc<float>(E); ctl_y = d.alloc<float>(E);
         rlog = d.alloc<float>((size_t)h.n_expert * T);
         eids = d.alloc<int32_t>((size_t)h.n_used * T); wts = d.alloc<float>((size_t)h.n_used * T);
-        gu = d.alloc<float>((size_t)h.n_used * T * 2 * h.n_ff); hb = d.alloc<float>((size_t)h.n_used * T * std::max((size_t)h.n_ff, xlane_floats(h.n_ff)));
+        // the SITU outputs of steps below the expert tiles (the tiles keep theirs in Ht): tile_min - 1 tokens (at least
+        // SB_MAX) when the tiles can run (18 MiB less at 512-token steps)
+        if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
+        const size_t hb_tok = T >= tile_min ? (size_t)std::min(T, std::max(tile_min - 1, SB_MAX)) : (size_t)T;
+        hb = d.alloc<float>((size_t)h.n_used * hb_tok * std::max((size_t)h.n_ff, xlane_floats(h.n_ff)));
         yk = d.alloc<float>((size_t)h.n_used * T * h.n_embd);
         moe = d.alloc<float>(E); ffn_out = d.alloc<float>(E);
         fin = d.alloc<float>(E);
@@ -311,7 +340,6 @@ struct Engine {
         }
         next_id = d.alloc<int32_t>(1);
         grp.alloc(d, h.n_expert, T * h.n_used);
-        if (const char *e = std::getenv("INK_TILE_MIN")) tile_min = std::atoi(e);
         if (T >= tile_min) {
             tile_bound = MoeGroups::max_tiles(h.n_expert, T * h.n_used);
             Xt = d.alloc<float>((size_t)tile_bound * h.n_embd * MOE_TS);
@@ -325,7 +353,6 @@ struct Engine {
         if (const char *e = std::getenv("INK_CTL_BATCH")) ctl_batch = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_ROUTE_SG")) route_sg = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_PV_U")) pv_u = std::atoi(e);
-        if (const char *e = std::getenv("INK_ATT_TILE")) att_tile = std::atoi(e);
         if (const char *e = std::getenv("INK_DEC_ATTN")) dec_attn = std::atoi(e) != 0;
         {
             const bool dec = dec_on();
@@ -1005,6 +1032,25 @@ struct Engine {
                         const float *Pc = P + (size_t)c0 * nh * ldp;
                         const float *Qd = Qc + (size_t)c0 * nh * hd, *td = tiles ? nullptr : tc + (size_t)c0 * nh * h.rel_extent;
                         const float *Rd = Rc + (size_t)(q0 + c0) * nh * h.n_rel;
+                        if (fdec && (size_t)nt * nblk > dec_cap) { // chunks of whole 128-block groups (dec_mem above)
+                            const int cb = (int)(dec_cap / nt / 128 * 128);
+                            if (cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
+                            for (int b0 = 0; b0 < nblk; b0 += cb) {
+                                const int nbc = std::min(cb, nblk - b0);
+                                if (nt <= 4)
+                                    pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il],
+                                                                                  p0, nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc,
+                                                                                  kmask[il], b0));
+                                else
+                                    pr("attn_pv_full", fz::attn_flash_dec<3, 8, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il],
+                                                                                  p0, nt, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc,
+                                                                                  kmask[il], b0));
+                                pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nbc, p0, nt, nh, hd, sc + (size_t)c0 * nh,
+                                                                          gc + (size_t)c0 * nh * hd, ac + (size_t)c0 * nh * hd, b0, fst, b0 > 0,
+                                                                          b0 + nbc < nblk));
+                            }
+                            continue;
+                        }
                         if (fdec && nt == 1)
                             pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qd, Kc[il], td, Rd, f32(l.rel_bias), h.n_rel, Vc[il], kvl[il], p0, nt,
                                                                        nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));

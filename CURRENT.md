@@ -187,6 +187,16 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~08:00: a conversation continues from the cache (`INK_TURNS`: later questions start in 3-5 ms instead of
+  re-reading everything) and a read prompt can be saved to disk and loaded back (`INK_SAVE_CACHE` / `INK_LOAD_CACHE`,
+  `src/cache_file.hpp`): 3K prompt loaded in 0.14-0.21 s instead of a 2.84 s read, answers and drafter guesses
+  identical, loads into any context size; each turn = a fresh read of the whole conversation; gate 12/12. 515K
+  save/load timing running (unit ink-cf515).
+- Nov 25 ~07:30: card memory at the longest contexts (README "Card memory at the longest contexts"): unused step
+  buffers trimmed, 5-8 token checks read the cache once through a one-row buffer: one card now holds **530,000
+  positions** (was 521,000; 529K needle answered right, 331.5 tok/s read, writing 34.2 lookup / 22.8 plain), and the
+  drafter now fits beside the 515K needle (its big table in host memory, ring sized to fit): writing **45.8 tok/s**
+  vs 34.6 with lookup alone (+32 %, cards 1 and 2, ids = plain).
 - Nov 25 ~06:15: the drafter's head reads only a built-in list of 47,912 common tokens plus the prompt's own: writing
   +5.0-5.6 % on short tasks, +4.6 % after 31K, +2.5-3.7 % after 200K, +2.2 % on a French/German/Spanish answer; text
   identical everywhere, gate 12/12 (`INK_DSP_VOCAB=0` = full vocabulary).

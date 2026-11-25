@@ -752,6 +752,64 @@ answer 101.08 / 100.94 -> 106.29 / 105.93 (+5.0 %), a French / German / Spanish 
 time per answer: code 0.109 -> 0.061 s, the 256-token answer 0.279 -> 0.166 s. The 32,768 most frequent tokens only:
 haiku 103.4 -> 101.9 (tokens per check 2.30 -> 2.00), so the whole list stays.
 
+Card memory at the longest contexts (2026-11-25). At 520K positions the card held 14,624 MiB of weights, 16,250 MiB
+of full-layer keys and values, 280 MiB of windowed rings and 898 MiB of step buffers (`INK_MEM_LOG`); several of
+those buffers were sized for a whole 512-token step although only small steps, or nothing, use them:
+- `gu` (36 MiB at 512-token steps, 288 MiB at 4,096) was never read: removed.
+- The relative-bias table `tab` (48 MiB) is written and read only by steps below the attention tiles (`att_tile`, 16
+  tokens; the tiles compute the bias in place): it now holds `att_tile - 1` tokens (at least `SB_MAX`).
+- The SITU outputs `hb` (24 MiB) are used only below the expert tiles (`tile_min`, 128 tokens; the tiles keep theirs
+  in `Ht`): `tile_min - 1` tokens.
+- The checking attention's block parts past 491,520 positions held 4 rows of the context (190.5 MiB at 520K); a
+  check of 5-8 tokens went through them as two 4-row launches, reading the keys and values twice. Checks of 2-8
+  tokens now go through a buffer of one context row (`INK_DEC_MEM`, 0.1 KB per position, rounded up to whole pieces
+  of 8 rows x 128 blocks) in pieces of whole 128-block groups, the fold's state carried from piece to piece
+  (`attn_flash_dec` b0, `attn_flash_sum` st / from / to), so the keys and values are read once and every value is the
+  same (`INK_DEC_CHUNK=0` = before). 31K prompt + 64 tokens with an 8-token check every round, contexts of 40K
+  (4 rows) and 140K (1 row): ids and all 64 logits rows identical to the unchunked run.
+  515K needle with lookup (`INK_SPEC=7`), same card, both orders, ids = plain: pieces of 4 rows vs two launches 34.28
+  -> 34.97 tok/s (card 2), 34.55 -> 36.02 (card 3); the count rule now sees 5-8 token checks as one read (61 checks
+  of 2.34 tokens -> 52 of 2.79). One row vs four rows: 34.61 vs 35.25 (card 2), 35.35 vs 35.98 (card 3), -1.8 %: each
+  extra piece costs ~40 us (200K profile with one row forced: 13 pieces per 8-token check +1.59 ms per step, 7
+  pieces after the rounding +0.98 ms; at 515K 11 -> 8 pieces). The one-row buffer is what lets the drafter fit there.
+520K now takes 31.06 GiB (was 31.30); one card holds **530,000 positions** (was 521,000; 531,000 refused; 0.24 GiB free
+at the end). Needle at the new length: the 515K needle plus 42,467 characters of other lab notes before the question
+(528,996 tokens, `prompts/needle530.tokens` in the work directory) on card 4 read in 1,595.7 s (331.5 tok/s), writing
+34.18 tok/s with lookup and 22.81 plain (card 5), ids identical, answer "Vault code: 7351-QX-4829; meeting room:
+Juniper-12.", 0.25 GiB free at the end.
+The drafter beside the longest contexts. It needed ~614 MiB at 512-token steps and did not fit past ~500K. Now:
+- `markov_w1` (103 MB, one 256-value row per token) stays in host memory. The card holds the list's rows (23 MiB, a
+  guess's row found by its head column) and the round's anchor row, copied from the host each round.
+- The load-time head product runs over the list's rows only (the temporary 196 -> 47 MiB).
+- A step's rows are taken 128 at a time (`INK_DSP_INJ`; -16.5 MiB).
+- The full layer's ring is allocated last and halved while it does not fit (16,384 slots normally; 4,096 beside the
+  515K needle, 3,320 positions; `INK_DSP_WIN` fixes it).
+Guesses and text are identical to before at short contexts (code / haiku / 256-token / French answers, both orders),
+prompts level (3K 1,016.5-1,020.3 vs 1,017.2-1,018.4 tok/s, 31K 907.3-911.6 vs 907.2-907.3). The 515K needle with
+the drafter + lookup (card 1): 45.80 tok/s, 3.36 tokens per check, ids = plain, 0.22 GiB free at the end, read at
+335.8 tok/s.
+
+Follow-up turns (2026-11-25, `ink_run`, `INK_TURNS=<file>`: one turn per line of token ids). After an answer its last
+token (the chat template keeps the end token `<|content_model_end_sampling|>` at the end of the model's message, so an
+answer that ended there is complete as written) and the next turn go through the cache as one small prompt step and
+the turn is answered from there: one `ids:` line per turn. 3K prompt + two questions of 17 and 19 tokens, 256-token
+answers: each later turn's prompt step 3-5 ms (a fresh run of the conversation as one prompt: 3.1-3.6 s at 3.4-3.7K);
+plain, lookup only and drafter + lookup give the same ids; each turn's ids equal a fresh run of the whole conversation
+(3,400 and 3,675 tokens) on another card. The drafter carries on from the cache too (turns 1 and 2 109.6 / 113.8 tok/s
+vs 83.3 / 83.0 plain). At 515K the first read takes ~25 minutes; every later question then costs only its own tokens.
+
+A read prompt saved to a file (2026-11-25, `ink_run`, `src/cache_file.hpp`): `INK_SAVE_CACHE=<file>` writes the state
+after the prompt, `INK_LOAD_CACHE=<file>` starts a later run from it (that run's prompt must start with the file's; only
+the rest is read; with the whole prompt loaded the answer starts at once). The file holds the prompt's tokens, its last
+logits row, the convolution states, every full layer's keys and values, the windowed layers' last ring of positions and,
+with the drafter, its three layers' cached positions and last context row, all copied as they are and stored by
+position, so a run with another context size (another step size, ring size or V row length) loads the same file.
+Written and read with O_DIRECT in 64 MiB pieces (no page cache, 64 MiB of host memory). 3K prompt (3,127 tokens,
+658 MB file; 32 KiB per full-layer position plus the windowed rings, ~16.4 GB at 515K): saved in 0.63 s, loaded in
+0.14-0.21 s (3.1-4.6 GB/s) instead of a 2.84 s read; loaded with the drafter: ids and every guess count identical to
+the run that saved it (107 checks, 134 kept); loaded and continued with 273 more tokens: ids = a fresh read of all
+3,400; loaded into a 300,001-position engine (512-token steps, another ring size and V stride): ids identical.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

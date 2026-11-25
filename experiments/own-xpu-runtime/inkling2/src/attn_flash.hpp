@@ -441,7 +441,7 @@ template <int G, int NT, int VAR = 0>
 inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const float *Rc,
                                   const float *rel_bias, int nr, const sycl::half *Vt, int vld,
                                   int pos0, int ntok, int nh, int nkvh, int hd, int ext, float scale, float *part, float *pml, int nblk,
-                                  int km = 0x7fffffff) {
+                                  int km = 0x7fffffff, int b0 = 0) { // b0: the first block (blocks b0..b0+nblk-1, parts at 0..nblk-1)
     constexpr int PW = 16, KG = PVB / PW, NR = NT * G, HD = 128, NRL = 16;
     using HV8 = sycl::vec<sycl::half, 8>;
     using HV = sycl::vec<sycl::half, 16>;
@@ -456,7 +456,7 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id(), c = (int)it.get_local_id(1);
             float vv[NT][G]; // VAR 1: this lane's key's scores, kept for its exponentials
             const int gid = (int)it.get_group(0), b = gid % nblk, kvh = (gid / nblk) % nkvh, rg = gid / nblk / nkvh;
-            const int kb = b * PVB, pmax = pos0 + ntok - 1;
+            const int kb = (b0 + b) * PVB, pmax = pos0 + ntok - 1;
             int pp[NT];
 #pragma unroll
             for (int t = 0; t < NT; ++t) {
@@ -625,18 +625,29 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
 // U 32 + SGS; 8 = before; 1xx = xx with SGS). INK_PROF 100K + 16 steps, us per launch: 8 46.1-46.2, 108 42.8-43.6,
 // 116 39.1-39.2, 132 36.4-38.9 (values the same). Two passes (all factors first, then one fold with the next loads
 // ahead) were slower: 68-90 us.
+// Chunks (b0 > 0 or a state buffer): the parts hold blocks b0..b0+nblk-1; st (rows x (128 + 2) floats: the partial
+// sum A of each channel, then M and L) carries the fold from one chunk to the next: from = 1 starts from st instead of
+// the sink, to = 1 saves the state there instead of writing out. b0 is a multiple of 128 blocks, so every group of 128
+// blocks (one scan, one run of folds) is the one the whole fold takes, and the values are the same.
 template <int U, bool SGS>
 inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
-                                    const float *sink, const float *gate, float *out) {
+                                    const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
+                                    int to = 0) {
     constexpr int NB = 128;
     if (hd != NB) throw std::runtime_error("attn_flash_sum: head_dim 128 only");
+    if (b0 % NB) throw std::runtime_error("attn_flash_sum: chunks start at a multiple of 128 blocks");
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<float, 1> sl(NB, h), sal(NB, h), sbe(NB, h), sgm(NB / 16, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * NB), sycl::range<1>((size_t)NB)),
                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
-            const int row = (int)it.get_group(0), c = (int)it.get_local_id(0), t = row / nh, p = pos0 + t, nb = p / PVB + 1;
+            const int row = (int)it.get_group(0), c = (int)it.get_local_id(0), t = row / nh, p = pos0 + t;
+            const int nb = sycl::min(p / PVB + 1 - b0, nblk); // this row's blocks in the chunk (b0 relative)
             const float *pr = part + (size_t)row * nblk * NB + c, *pm = pml + (size_t)row * nblk * 2;
             float M = sink[row], L = 1.0f, A = 0.0f;
+            if (from) {
+                const float *sr = st + (size_t)row * (NB + 2);
+                A = sr[c]; M = sr[NB]; L = sr[NB + 1];
+            }
             for (int c0 = 0; c0 < nb; c0 += NB) {
                 const int cnt = sycl::min(NB, nb - c0);
                 const bool ok = c < cnt;
@@ -694,6 +705,12 @@ inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const flo
                 M = mlast;
                 sycl::group_barrier(it.get_group());
             }
+            if (to) {
+                float *sr = st + (size_t)row * (NB + 2);
+                sr[c] = A;
+                if (c == 0) { sr[NB] = M; sr[NB + 1] = L; }
+                return;
+            }
             const size_t o = (size_t)row * NB + c;
             out[o] = (A * (1.0f / L)) * (1.0f / (1.0f + sycl::exp(-gate[o])));
         });
@@ -704,14 +721,15 @@ inline int flash_sum_u() {
     return v;
 }
 inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
-                                  const float *sink, const float *gate, float *out) {
+                                  const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
+                                  int to = 0) {
     switch (flash_sum_u()) {
-    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
-    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
-    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
-    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
-    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
-    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
     }
 }
 

@@ -443,6 +443,12 @@ struct Drafter {
     Tensor hsub_t;               // the list's output-layer rows (shape of output.weight with Vh rows)
     uint8_t *hsub = nullptr;
     WView hv;                    // the head's output-layer view (e.m.output's, or the list's rows)
+    // markov_w1 (bf16 [V][R], 103 MB) stays in host memory (w1h); the card holds only the list's rows (w1s, in head
+    // column order: a guess's row is found by its column, gcol) and the round's anchor row (w1a, copied from the host
+    // each round). Without a list (or with the embedding table on the card) the whole table goes on the card (w1.p)
+    std::vector<uint16_t> w1h;
+    sycl::ext::oneapi::bfloat16 *w1s = nullptr, *w1a = nullptr;
+    int32_t *gcol = nullptr;
     float eps, theta;
     sycl::half *Kc[NL] = {}, *Vc[NL] = {};
     int kmask[NL];
@@ -500,6 +506,7 @@ struct Drafter {
     float *hl = nullptr, *attl = nullptr, *gl = nullptr; // the 8 slots' product inputs in lane order (xlane.hpp)
     bool fold = true;       // INK_DSP_FOLD=0: each guess passes y_i + Wh z + bh through W_lm (the reference's way)
     int r_last = -1; // the row of rrows that holds r(P0 - 1)
+    int inj = 128;   // rows per piece of a step in inject()
     size_t sc_keys;  // score scratch per (slot, head)
 
     static W wof(const WView &v) { W r; r.t = v.t; r.p = v.p; r.rb = v.rb; r.kind = v.kind; return r; }
@@ -536,6 +543,7 @@ struct Drafter {
         for (auto &t : g.tensors)
             if (mine.count(t.name) && (t.type != G_Q8_0 || t.rows() % 16 || t.ne[0] % 256)) mmx = false;
         auto own = [&](const Tensor &t) { // the output product stays in the file layout too for splits 0/1 (lmm)
+            if (t.name == "markov_w1.weight") return true; // laid out after the head's list (w1h / w1s)
             return mmx && mine.count(t.name) && !(split != 2 && t.name.find(".attn_output.") != std::string::npos);
         };
         w.upload(d, g, false, own);
@@ -591,22 +599,24 @@ struct Drafter {
         win_full = cap + B + CH > 16384 ? 16384 - (128 + T + B + CH) : 0;
         if (const char *ev = std::getenv("INK_DSP_WIN")) win_full = std::max(0, std::atoi(ev));
         if (win_full >= cap) win_full = 0;
-        for (int l = 0; l < NL; ++l) {
+        for (int l = 0; l < NL; ++l) { // the windowed layers' rings here; the full layer's cache at the end (full_cache)
             const bool win = swp.at(l) != 0;
             full_l[l] = !win;
+            if (!win) continue;
             int ring = 1; // a power of two holding the window, a step and a block
             while (ring < WIN + T + B) ring *= 2;
-            int ringf = 128; // the full layer's ring: the window from a multiple of 128, a step, a block and one pass past
-            while (ringf < win_full + 128 + T + B + CH) ringf *= 2;
-            const int slots = win ? ring : win_full ? ringf : cap + B + CH; // the full layer: room for the block rows and one pass past them
-            kmask[l] = win ? ring - 1 : win_full ? ringf - 1 : 0x7fffffff;
-            Kc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
-            Vc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
+            kmask[l] = ring - 1;
+            Kc[l] = d.alloc_zero<sycl::half>((size_t)ring * kd);
+            Vc[l] = d.alloc_zero<sycl::half>((size_t)ring * kd);
         }
         e.feat = d.alloc<float>((size_t)4 * T * E);
-        cb = d.alloc<float>((size_t)3 * T * E);
-        kc = d.alloc<float>((size_t)T * kd); vc = d.alloc<float>((size_t)T * kd);
-        rrows = d.alloc<float>((size_t)T * E);
+        // a step's rows are taken INK_DSP_INJ (default 128) at a time (inject): the mixed rows, their context K/V and the
+        // head-context rows hold that many rows instead of a step's (16.5 MiB less at 512-token steps)
+        inj = std::getenv("INK_DSP_INJ") ? std::max(1, std::atoi(std::getenv("INK_DSP_INJ"))) : 128;
+        inj = std::min(inj, T);
+        cb = d.alloc<float>((size_t)3 * inj * E);
+        kc = d.alloc<float>((size_t)inj * kd); vc = d.alloc<float>((size_t)inj * kd);
+        rrows = d.alloc<float>((size_t)inj * E);
         x = d.alloc<float>((size_t)B * E); hh = d.alloc<float>((size_t)B * E); y = d.alloc<float>((size_t)B * E);
         q = d.alloc<float>((size_t)B * HQ * HD); k = d.alloc<float>((size_t)B * kd); v = d.alloc<float>((size_t)B * kd);
         att = d.alloc<float>((size_t)B * HQ * HD); ao = d.alloc<float>((size_t)B * E);
@@ -615,12 +625,11 @@ struct Drafter {
         sc_keys = (size_t)cap + B; // (attend(): INK_DSP_SPLIT=0 only)
         sc = split == 0 ? d.alloc<float>((size_t)B * HQ * sc_keys) : nullptr;
         cat = d.alloc<float>((size_t)2 * R + 2 * E); uu = d.alloc<float>(3 * R); s = d.alloc<float>(R); z = d.alloc<float>(R);
-        eh = d.alloc<float>(E); hs = d.alloc<float>(E); lgd = d.alloc<float>(Vp);
+        eh = d.alloc<float>(E); hs = d.alloc<float>(E);
         gids = d.alloc<int32_t>(B);
         int widest = 0;
         for (int l = 0; l < NL; ++l) for (const W *t : {&L[l].wq, &L[l].wo, &L[l].gate, &L[l].down}) widest = std::max(widest, (int)t->t->ne[0]);
         Xt = d.alloc<float>((size_t)widest * MOE_TS);
-        base = d.alloc<float>((size_t)(B - 1) * Vp);
         yl = d.alloc<float>((size_t)B * xlane_floats(E));
         hl = d.alloc<float>((size_t)B * xlane_floats(E));
         attl = d.alloc<float>((size_t)B * xlane_floats(HQ * HD));
@@ -640,7 +649,55 @@ struct Drafter {
         pO = d.alloc<float>((size_t)HKV * NR * (NCH + 1) * HD);
         pM = d.alloc<float>((size_t)HKV * NR * (NCH + 1)); pL = d.alloc<float>((size_t)HKV * NR * (NCH + 1));
         if (fold) make_fold();
+        base = d.alloc<float>((size_t)(B - 1) * Vh); lgd = d.alloc<float>(Vh);
+        { // markov_w1: the list's rows on the card, the table in host memory; or the whole table on the card
+            const Tensor &t = *w1.t;
+            if (t.type != G_BF16 || t.ne[0] != R || t.rows() < V) throw std::runtime_error("dspark: markov_w1 shape");
+            w1h.resize((size_t)t.nel());
+            g.read_at(w1h.data(), t.bytes, g.data_off + t.off);
+            if (hmap && !e.m.tok_embd.p) {
+                std::vector<int32_t> hs(Vh);
+                d.get(hs.data(), hmap, Vh);
+                std::vector<uint16_t> rows((size_t)Vh * R);
+                for (int c = 0; c < Vh; ++c) std::memcpy(&rows[(size_t)c * R], &w1h[(size_t)hs[c] * R], 2 * (size_t)R);
+                w1s = d.alloc<sycl::ext::oneapi::bfloat16>((size_t)Vh * R);
+                d.put((uint16_t *)w1s, rows.data(), rows.size());
+                w1a = d.alloc<sycl::ext::oneapi::bfloat16>(R);
+                gcol = d.alloc<int32_t>(B);
+            } else {
+                uint8_t *p = d.alloc<uint8_t>(t.bytes);
+                d.put(p, (const uint8_t *)w1h.data(), t.bytes);
+                w1.p = p;
+                std::vector<uint16_t>().swap(w1h);
+            }
+        }
+        full_cache();
         e.on_step = [this](int pos0, int n) { inject(pos0, n); };
+    }
+
+    // the full layer's cache, allocated last: every position (short contexts), else a ring of 16,384 slots, halved
+    // (down to 2,048) while it does not fit the card memory left beside a long context (INK_DSP_WIN fixed: no halving).
+    // Only the guesses depend on it (100K: 2.54 tokens per check with every position, 2.53 with 8K)
+    void full_cache() {
+        const bool fixed = std::getenv("INK_DSP_WIN") != nullptr;
+        for (int l = 0; l < NL; ++l) {
+            if (!full_l[l]) continue;
+            int slots = cap + B + CH; // room for the block rows and one pass past them
+            if (win_full) {
+                int ringf = 128; // the window from a multiple of 128, a step, a block and one pass past
+                while (ringf < win_full + 128 + T + B + CH) ringf *= 2;
+                const double room = (double)d.limit() - (double)d.allocated - 16.0 * 1048576.0;
+                while (!fixed && ringf > 2048 && 2.0 * ringf * kd * sizeof(sycl::half) > room) ringf /= 2;
+                if (ringf - (128 + T + B + CH) < win_full) {
+                    win_full = ringf - (128 + T + B + CH);
+                    std::fprintf(stderr, "[dspark] full layer ring %d slots (%d positions) to fit the card\n", ringf, win_full);
+                }
+                slots = ringf;
+            }
+            kmask[l] = win_full ? slots - 1 : 0x7fffffff;
+            Kc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
+            Vc[l] = d.alloc_zero<sycl::half>((size_t)slots * kd);
+        }
     }
 
     // the head's correction through W_lm, folded: W_lm (y + Wh z + bh) = W_lm y + (W_lm Wh) z + W_lm bh. (W_lm Wh)^T is
@@ -648,16 +705,9 @@ struct Drafter {
     void make_fold() {
         const double t0 = now_s();
         const int E_ = E;
-        float *cols = d.alloc<float>((size_t)R * E), *Y = d.alloc<float>((size_t)R * Vp);
-        const sycl::ext::oneapi::bfloat16 *wh = (const sycl::ext::oneapi::bfloat16 *)ho.p; // [E rows][R]
-        d.q.parallel_for(sycl::range<2>(R, (size_t)E), [=](sycl::id<2> id) {
-            cols[(size_t)id[0] * E_ + id[1]] = (float)wh[(size_t)id[1] * R + id[0]];
-        }).wait();
-        for (int j0 = 0; j0 < R; j0 += e.T) e.mm(e.m.output, cols + (size_t)j0 * E, Y + (size_t)j0 * Vp, std::min(e.T, R - j0));
         if (const char *ev = std::getenv("INK_DSP_PT8")) pt8 = std::atoi(ev) != 0;
-        const int32_t *sel = nullptr; // the list's token ids (device), or null
         const char *vf = std::getenv("INK_DSP_VOCAB");
-        if (pt8 && !(vf && !std::strcmp(vf, "0"))) {
+        if (pt8 && !(vf && !std::strcmp(vf, "0"))) { // the head's list: hmap, its output rows hsub, hv
             std::set<int32_t> ids;
             if (vf && std::strcmp(vf, "1")) {
                 const int K = std::getenv("INK_DSP_VOCAB_K") ? std::atoi(std::getenv("INK_DSP_VOCAB_K")) : V;
@@ -695,37 +745,39 @@ struct Drafter {
             hsub_t.name = "output.weight.dsp_subset";
             hsub_t.ne = {ov.t->ne[0], (int64_t)Vh, 1, 1};
             hv = WView{&hsub_t, hsub, ov.rb, ov.kind};
-            sel = hmap;
         }
-        if (pt8) { // column i of the table is token sel[i] (or i)
+        const W hw{hv.t, hv.p, hv.rb, hv.kind}; // the head's rows (the output layer itself without a list)
+        float *cols = d.alloc<float>((size_t)R * E), *Y = d.alloc<float>((size_t)R * Vh); // Y: only the head's columns
+        const sycl::ext::oneapi::bfloat16 *wh = (const sycl::ext::oneapi::bfloat16 *)ho.p; // [E rows][R]
+        d.q.parallel_for(sycl::range<2>(R, (size_t)E), [=](sycl::id<2> id) {
+            cols[(size_t)id[0] * E_ + id[1]] = (float)wh[(size_t)id[1] * R + id[0]];
+        }).wait();
+        for (int j0 = 0; j0 < R; j0 += e.T) e.mm(hw, cols + (size_t)j0 * E, Y + (size_t)j0 * Vh, std::min(e.T, R - j0));
+        if (pt8) {
             Pt8 = d.alloc<int8_t>((size_t)R * Vh);
             Ps = d.alloc<float>(Vh);
             int8_t *q8 = Pt8;
             float *ps = Ps;
-            const int Vp_ = Vp, Vh_ = Vh;
+            const int Vh_ = Vh;
             d.q.parallel_for(sycl::range<1>((size_t)Vh), [=](sycl::id<1> i) {
-                const size_t c = i[0], r = sel ? (size_t)sel[c] : c;
+                const size_t c = i[0];
                 float mx = 0.0f;
-                for (int j = 0; j < R; ++j) mx = sycl::fmax(mx, sycl::fabs(Y[(size_t)j * Vp_ + r]));
+                for (int j = 0; j < R; ++j) mx = sycl::fmax(mx, sycl::fabs(Y[(size_t)j * Vh_ + c]));
                 const float sc = mx > 0.0f ? mx / 127.0f : 1.0f;
                 ps[c] = sc;
-                for (int j = 0; j < R; ++j) q8[(size_t)j * Vh_ + c] = (int8_t)sycl::rint(Y[(size_t)j * Vp_ + r] / sc);
+                for (int j = 0; j < R; ++j) q8[(size_t)j * Vh_ + c] = (int8_t)sycl::rint(Y[(size_t)j * Vh_ + c] / sc);
             }).wait();
         } else {
             Pt = d.alloc<sycl::ext::oneapi::bfloat16>((size_t)R * Vp);
             auto *pt = Pt;
             d.q.parallel_for(sycl::range<1>((size_t)R * Vp), [=](sycl::id<1> i) { pt[i] = sycl::ext::oneapi::bfloat16(Y[i]); }).wait();
         }
-        cvec = d.alloc<float>(Vp);
-        e.mm(e.m.output, f32(hob), cvec, 1);
+        cvec = d.alloc<float>(Vh);
+        e.mm(hw, f32(hob), cvec, 1);
         d.q.wait();
-        if (sel) { // the list's entries, in column order (Vh <= Vp: in place, ascending ids never overtake their column)
-            float *cv = cvec;
-            const int Vh_ = Vh;
-            d.q.single_task([=]() { for (int c = 0; c < Vh_; ++c) cv[c] = cv[sel[c]]; }).wait();
+        if (hmap)
             std::fprintf(stderr, "[dspark] head over %d tokens (%d columns; list %s, %zu from the prompt): %.0f MB of output rows\n",
                          Vs, Vh, vf && std::strcmp(vf, "1") ? vf : "built-in", head_nx, (double)Vh * hv.rb / 1e6);
-        }
         d.release(Y); d.release(cols);
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
         std::fprintf(stderr, "[dspark] folded head table (%.0f MB%s) in %.2f s\n", (double)R * Vh * (pt8 ? 1 : 2) / 1e6, pt8 ? ", int8" : "", now_s() - t0);
@@ -787,54 +839,57 @@ struct Drafter {
     // after every target step: the rows' context K/V (3 layers) and head-context rows r(p)
     void inject(int pos0, int n) {
         const float *feat = e.feat;
-        const int E_ = E, T_ = T;
+        const int E_ = E, T_ = T, C_ = inj;
         float Am[16];
         std::memcpy(Am, A, sizeof(Am));
         struct NW { const float *p[4]; } nw{{f32(L[0].dflare_norm), f32(L[1].dflare_norm), f32(L[2].dflare_norm), f32(dnorm)}};
         float *cb_ = cb, *rr = rrows;
         const float ep = eps;
-        e.pr("dsp_mix", d.q.submit([&](sycl::handler &hd) {
-            sycl::local_accessor<float, 1> slm(ops::OPS_WG / SG, hd);
-            hd.parallel_for(ops::rows_range(4 * n), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
-                const int gi = (int)it.get_group(0), l = gi / n, t = gi % n, li = (int)it.get_local_id(0);
-                float mv[(2304 + ops::OPS_WG - 1) / ops::OPS_WG];
-                float ss = 0.0f;
-                int u = 0;
-                for (int i = li; i < E_; i += ops::OPS_WG, ++u) {
-                    float m = 0.0f;
-                    for (int j = 0; j < 4; ++j) m += Am[4 * l + j] * feat[((size_t)j * T_ + t) * E_ + i];
-                    mv[u] = m;
-                    ss += m * m;
-                }
-                const float tot = ops::wg_sum<ops::OPS_WG>(it, ss, &slm[0]);
-                const float scale = 1.0f / sycl::sqrt(tot / E_ + ep);
-                float *out = l < 3 ? cb_ + ((size_t)l * T_ + t) * E_ : rr + (size_t)t * E_;
-                u = 0;
-                for (int i = li; i < E_; i += ops::OPS_WG, ++u) out[i] = mv[u] * scale * nw.p[l][i];
-            });
-        }));
-        for (int l = 0; l < NL; ++l) {
-            e.mm(L[l].k_ctx, cb + (size_t)l * T * E, kc, n);
-            e.mm(L[l].v_ctx, cb + (size_t)l * T * E, vc, n);
-            sycl::half *K = Kc[l], *Vv = Vc[l];
-            const float *kn = f32(L[l].k_ctx_norm), *kc_ = kc, *vc_ = vc;
-            const int km = kmask[l], kd_ = kd;
-            const float th = theta;
-            e.pr("dsp_ctx_kv", d.q.submit([&](sycl::handler &hd) {
-                sycl::local_accessor<float, 1> slm(HD / SG + HD, hd);
-                hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)n * HKV * HD), sycl::range<1>(HD)),
-                                [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
-                    const int gi = (int)it.get_group(0), t = gi / HKV, hh_ = gi % HKV, dd = (int)it.get_local_id(0);
-                    const size_t i = (size_t)t * kd_ + hh_ * HD + dd;
-                    float ko;
-                    head_norm_rope(it, kc_[i], kn, pos0 + t, th, ep, &slm[0], ko);
-                    const size_t o = (size_t)((pos0 + t) & km) * kd_ + hh_ * HD + dd;
-                    K[o] = sycl::half(ko);
-                    Vv[o] = sycl::half(vc_[i]);
+        for (int c0 = 0; c0 < n; c0 += C_) {
+            const int nc = std::min(C_, n - c0);
+            e.pr("dsp_mix", d.q.submit([&](sycl::handler &hd) {
+                sycl::local_accessor<float, 1> slm(ops::OPS_WG / SG, hd);
+                hd.parallel_for(ops::rows_range(4 * nc), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+                    const int gi = (int)it.get_group(0), l = gi / nc, t = gi % nc, li = (int)it.get_local_id(0);
+                    float mv[(2304 + ops::OPS_WG - 1) / ops::OPS_WG];
+                    float ss = 0.0f;
+                    int u = 0;
+                    for (int i = li; i < E_; i += ops::OPS_WG, ++u) {
+                        float m = 0.0f;
+                        for (int j = 0; j < 4; ++j) m += Am[4 * l + j] * feat[((size_t)j * T_ + c0 + t) * E_ + i];
+                        mv[u] = m;
+                        ss += m * m;
+                    }
+                    const float tot = ops::wg_sum<ops::OPS_WG>(it, ss, &slm[0]);
+                    const float scale = 1.0f / sycl::sqrt(tot / E_ + ep);
+                    float *out = l < 3 ? cb_ + ((size_t)l * C_ + t) * E_ : rr + (size_t)t * E_;
+                    u = 0;
+                    for (int i = li; i < E_; i += ops::OPS_WG, ++u) out[i] = mv[u] * scale * nw.p[l][i];
                 });
             }));
+            for (int l = 0; l < NL; ++l) {
+                e.mm(L[l].k_ctx, cb + (size_t)l * C_ * E, kc, nc);
+                e.mm(L[l].v_ctx, cb + (size_t)l * C_ * E, vc, nc);
+                sycl::half *K = Kc[l], *Vv = Vc[l];
+                const float *kn = f32(L[l].k_ctx_norm), *kc_ = kc, *vc_ = vc;
+                const int km = kmask[l], kd_ = kd, p0 = pos0 + c0;
+                const float th = theta;
+                e.pr("dsp_ctx_kv", d.q.submit([&](sycl::handler &hd) {
+                    sycl::local_accessor<float, 1> slm(HD / SG + HD, hd);
+                    hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nc * HKV * HD), sycl::range<1>(HD)),
+                                    [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+                        const int gi = (int)it.get_group(0), t = gi / HKV, hh_ = gi % HKV, dd = (int)it.get_local_id(0);
+                        const size_t i = (size_t)t * kd_ + hh_ * HD + dd;
+                        float ko;
+                        head_norm_rope(it, kc_[i], kn, p0 + t, th, ep, &slm[0], ko);
+                        const size_t o = (size_t)((p0 + t) & km) * kd_ + hh_ * HD + dd;
+                        K[o] = sycl::half(ko);
+                        Vv[o] = sycl::half(vc_[i]);
+                    });
+                }));
+            }
+            r_last = nc - 1;
         }
-        r_last = n - 1;
     }
 
     // n guesses (n <= B - 1) for positions P0 + 1.. after the token t0 (on the card) at P0; returns them
@@ -852,6 +907,10 @@ struct Drafter {
             e.embed(&t0h, 1, x);
         }
         e.pr("dsp_embd", ops::rms_norm(d.q, x, x, e.f32(e.m.tok_norm), E, 1, h.eps));
+        if (w1s) { // the anchor's w1 row (w1s holds only the list's rows)
+            if (t0h < 0 || t0h >= V) throw std::runtime_error("dspark: the anchor token on the host is needed for w1");
+            d.q.memcpy(w1a, &w1h[(size_t)t0h * R], 2 * (size_t)R);
+        }
         {
             float *x_ = x;
             const float *me = f32(mask);
@@ -946,13 +1005,15 @@ struct Drafter {
             {
                 float *c = cat;
                 const float *s_ = s, *yi = y + (size_t)i * E, *cx = ctx;
-                const sycl::ext::oneapi::bfloat16 *w1p = (const sycl::ext::oneapi::bfloat16 *)w1.p;
-                const int32_t *prev = i == 1 ? t0 : gids + (i - 2);
+                // the previous token's w1 row: the anchor's from w1a, a guess's by its head column (w1s); or the table
+                const bool sub = w1s != nullptr;
+                const sycl::ext::oneapi::bfloat16 *w1p = sub ? (i == 1 ? w1a : w1s) : (const sycl::ext::oneapi::bfloat16 *)w1.p;
+                const int32_t *prev = i == 1 ? (sub ? nullptr : t0) : (sub ? gcol : gids) + (i - 2);
                 e.pr("dsp_cat", d.q.parallel_for(sycl::range<1>((size_t)2 * R + 2 * E_), [=](sycl::id<1> id) {
                     const int j = (int)id[0];
                     float vv;
                     if (j < R) vv = s_[j];
-                    else if (j < 2 * R) vv = (float)w1p[(size_t)prev[0] * R + (j - R)];
+                    else if (j < 2 * R) vv = (float)w1p[(prev ? (size_t)prev[0] * R : 0) + (j - R)];
                     else if (j < 2 * R + E_) vv = yi[j - 2 * R];
                     else vv = cx[j - 2 * R - E_];
                     c[j] = vv;
@@ -1031,7 +1092,8 @@ struct Drafter {
                 e.mm(e.m.output, hs, lgd, 1);
                 e.pr("dsp_softcap", ops::softcap(d.q, lgd, (size_t)Vp, 30.0f));
             }
-            e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vh, Vs, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams, hmap));
+            e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vh, Vs, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams, hmap,
+                                                  gcol ? gcol + (i - 1) : nullptr));
         }
         std::vector<int32_t> r(nd);
         d.get(r.data(), gids, nd);
