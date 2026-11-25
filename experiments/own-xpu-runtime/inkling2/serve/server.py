@@ -753,11 +753,8 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
             st["stopped"] = stopped
             return done
 
-        # a thinking budget: the first part stops after the budget's thinking tokens (the answer's head <|message_model|>
-        # <|content_thinking|> is 2 more); still thinking there, the end of the thinking part and the head of a text
-        # part are added and the answer goes on (the engine reads those 3 tokens). Parts of any size give the same
-        # tokens as one, so below the budget nothing changes
         # the conversation's pictures, registered on this engine (encoded unless it holds them)
+        pic_s, pic_n = 0.0, 0
         for sha in pictures_in(prompt_bytes):
             info = IMAGES[sha]
             vid = uuid.uuid4().hex[:12]
@@ -777,6 +774,12 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
                 raise EngineError(f"picture: unexpected engine reply {kind} {data[:3]}")
             if len(data) < 3:
                 STATS["pictures_encoded"] = STATS.get("pictures_encoded", 0) + 1
+                pic_s += float(data[1])
+                pic_n += 1
+        # a thinking budget: the first part stops after the budget's thinking tokens (the answer's head <|message_model|>
+        # <|content_thinking|> is 2 more); still thinking there, the end of the thinking part and the head of a text
+        # part are added and the answer goes on (the engine reads those 3 tokens). Parts of any size give the same
+        # tokens as one, so below the budget nothing changes
         cut = think_budget is not None and think_budget + 2 < max_new
         done = await one_g(ids, think_budget + 2 if cut else max_new)
         thinking_cut = False
@@ -815,6 +818,8 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
             tm["thinking_cut"] = thinking_cut
         tm["answer_tok_per_s"] = round(max(0, len(gen) - 1) / max(1e-6, tm["answer_s"]), 2)
         tm["read_tok_per_s"] = round(tm["read_tokens"] / max(1e-6, tm["read_s"]), 1)
+        if pic_n:
+            tm["pictures_encoded"], tm["picture_s"] = pic_n, round(pic_s, 3)
         log(f"card {ENGINE.card}: conversation {len(ids)} tokens, read {tm['read_tokens']} in {tm['read_s']:.2f} s, "
             f"answered {len(gen)} in {tm['answer_s']:.2f} s ({tm['answer_tok_per_s']} tok/s), end {done[0]}")
         return done[0], gen, tm

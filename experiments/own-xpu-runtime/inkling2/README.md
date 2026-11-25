@@ -878,7 +878,11 @@ against the reference in its high-precision mode (`tools/ref_vision.cpp`, `GGML_
 test card (144 rows) within 2.1e-6 relative L2 (worst row 9.5e-6), a 1024 x 640 photo (416 rows, padded, both
 table axes resized) within 3.4e-6; identical across processes and cards (2, 3); the card's question answered with
 the reference's 100 greedy tokens exactly (`tools/vision/engine_e2e.py`, card 2: it reads "CODE 4729-K", the green
-circle and the yellow square). Encoding: 0.078 s for 144 rows, 0.35 s for 416 (the reference: 1.1 s on the CPU);
+circle and the yellow square). Encoding: 0.038 s for 144 rows, 0.13 s for 416, 3.3 s for the largest picture (2920 x 2200, 4,015 rows: 16,061
+patches; attention is 90 % of it) with the attention as register tiles in one launch (`attention_rt`, the layout of
+`attn_flash.hpp`: 16 query rows per sub-group, 32-key blocks, running maximum); separate launches took 23.8 s and a
+first one-launch version 7.6 s (`INK_VISION_ATTN=split` / `fused1` keep them). A 1290 x 810 picture (both position
+table axes enlarged) matches the reference within 4.7e-6 (the reference: 1.1 s on the CPU for the card);
 1.07 GiB on the card (weights + buffers for 4,096 rows), loaded only when it fits after the state copies. Gate 12/12.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU

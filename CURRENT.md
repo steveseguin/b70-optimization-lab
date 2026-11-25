@@ -187,6 +187,9 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~12:05: Inkling picture encoding 7x faster for big pictures (attention as register tiles: 4,015-row
+  picture 23.8 -> 3.3 s, small card 0.08 -> 0.04 s); same match to the reference, identical across cards, 100/100
+  greedy tokens, gate 12/12, server 8/8 identical; deployed build in /home/steve/inkling-serve/bin.
 - Nov 25 ~11:15: Inkling engine and server read **pictures** (OpenAI / Anthropic base64 image parts): Unsloth's image
   encoder runs on the card (0.08 s for a 640 x 360 card, 0.35 s for a 1024 x 640 photo), matching the reference's
   high-precision rows to ~3e-6; a picture question gives the reference's 100 greedy tokens exactly; 8/8 picture

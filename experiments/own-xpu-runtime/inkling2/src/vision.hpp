@@ -24,7 +24,7 @@ struct Vision {
     W patch, pos, cls, clsp, prew, preb, mm1, mm2;
     int max_rows = 4096, max_np = 0, max_side = 0, qb = 1024, rb = 0;
     float *X = nullptr, *H = nullptr, *QKV = nullptr, *A = nullptr, *F = nullptr, *S = nullptr, *rc = nullptr, *rs = nullptr;
-    bool ok = false;
+    bool ok = false, attn_split = false, attn_v1 = false;
     size_t bytes = 0;
     double last_s = 0;
 
@@ -34,6 +34,7 @@ struct Vision {
     // INK_VISION_MAX_ROWS (default 4096, the reference's cap) sizes the buffers
     void init(const std::string &path) {
         if (const char *s = std::getenv("INK_VISION_MAX_ROWS")) max_rows = std::max(1, std::atoi(s));
+        if (const char *s = std::getenv("INK_VISION_ATTN")) attn_split = std::string(s) == "split", attn_v1 = std::string(s) == "fused1";
         g = std::make_unique<GGUF>(path);
         auto it = g->kv.find("clip.vision.projector_type");
         if (it == g->kv.end() || !std::holds_alternative<std::string>(it->second) || std::get<std::string>(it->second) != "inkling2v")
@@ -269,6 +270,197 @@ struct Vision {
         }));
     }
 
+    // attention of all rows and heads in one launch (V3.6, bidirectional, scale 0.125): a work-group per (64 query rows,
+    // head), key tiles of KT in order, a running row max (the scores of a tile, then each row's new max and the factor
+    // for the sums so far, then exp, then the row sums and P.V); fixed orders throughout, so the same values every run
+    void attention(const float *q, const float *k, const float *v, int np) {
+        constexpr int QT = 64, KT = 32;
+        float *A_ = A;
+        const int nblk = (np + QT - 1) / QT;
+        e.pr("v_attn", d.q.submit([&](sycl::handler &h) {
+            sycl::local_accessor<float, 2> qs(sycl::range<2>(QT, HD + 1), h), ks(sycl::range<2>(KT, HD + 1), h),
+                vs(sycl::range<2>(KT, HD + 1), h), ps(sycl::range<2>(QT, KT + 1), h);
+            sycl::local_accessor<float, 1> mrow(QT, h), lrow(QT, h), alpha(QT, h);
+            h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nblk * NH * 16, 16), sycl::range<2>(16, 16)),
+                           [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(SG)]] {
+                const int ti = (int)it.get_local_id(0), tj = (int)it.get_local_id(1), t = ti * 16 + tj;
+                const int g = (int)it.get_group(0), blk = g / NH, hh = g % NH, i0 = blk * QT;
+                for (int e2 = t; e2 < QT * HD; e2 += 256) {
+                    const int r = e2 / HD, c = e2 % HD;
+                    qs[r][c] = i0 + r < np ? q[(size_t)(i0 + r) * C + hh * HD + c] : 0.0f;
+                }
+                if (t < QT) { mrow[t] = -INFINITY; lrow[t] = 0.0f; }
+                float o[4][4] = {};
+                for (int k0 = 0; k0 < np; k0 += KT) {
+                    for (int e2 = t; e2 < KT * HD; e2 += 256) {
+                        const int r = e2 / HD, c = e2 % HD;
+                        const bool in = k0 + r < np;
+                        ks[r][c] = in ? k[(size_t)(k0 + r) * C + hh * HD + c] : 0.0f;
+                        vs[r][c] = in ? v[(size_t)(k0 + r) * C + hh * HD + c] : 0.0f;
+                    }
+                    sycl::group_barrier(it.get_group());
+                    { // scores: rows ti + 16u, keys tj + 16w
+                        float sc[4][2] = {};
+                        for (int c = 0; c < HD; ++c) {
+                            float a[4], b[2];
+#pragma unroll
+                            for (int u = 0; u < 4; ++u) a[u] = qs[ti + 16 * u][c];
+#pragma unroll
+                            for (int w = 0; w < 2; ++w) b[w] = ks[tj + 16 * w][c];
+#pragma unroll
+                            for (int u = 0; u < 4; ++u)
+#pragma unroll
+                                for (int w = 0; w < 2; ++w) sc[u][w] = mac(sc[u][w], a[u], b[w]);
+                        }
+#pragma unroll
+                        for (int u = 0; u < 4; ++u)
+#pragma unroll
+                            for (int w = 0; w < 2; ++w)
+                                ps[ti + 16 * u][tj + 16 * w] = k0 + tj + 16 * w < np ? sc[u][w] * 0.125f : -INFINITY;
+                    }
+                    sycl::group_barrier(it.get_group());
+                    if (t < QT) { // the row's new max and the factor for what it has summed so far
+                        float mx = mrow[t];
+                        for (int j = 0; j < KT; ++j) mx = sycl::fmax(mx, ps[t][j]);
+                        alpha[t] = sycl::exp(mrow[t] - mx);
+                        mrow[t] = mx;
+                    }
+                    sycl::group_barrier(it.get_group());
+#pragma unroll
+                    for (int u = 0; u < 4; ++u)
+#pragma unroll
+                        for (int w = 0; w < 2; ++w) {
+                            const int r = ti + 16 * u, j = tj + 16 * w;
+                            ps[r][j] = sycl::exp(ps[r][j] - mrow[r]);
+                        }
+                    sycl::group_barrier(it.get_group());
+                    if (t < QT) {
+                        float s = 0.0f;
+                        for (int j = 0; j < KT; ++j) s += ps[t][j];
+                        lrow[t] = lrow[t] * alpha[t] + s;
+                    }
+#pragma unroll
+                    for (int u = 0; u < 4; ++u) {
+                        const int r = ti + 16 * u;
+                        const float al = alpha[r];
+#pragma unroll
+                        for (int w = 0; w < 4; ++w) o[u][w] = o[u][w] * al;
+                        for (int jj = 0; jj < KT; ++jj) {
+                            const float p = ps[r][jj];
+#pragma unroll
+                            for (int w = 0; w < 4; ++w) o[u][w] = mac(o[u][w], p, vs[jj][tj + 16 * w]);
+                        }
+                    }
+                    sycl::group_barrier(it.get_group());
+                }
+#pragma unroll
+                for (int u = 0; u < 4; ++u) {
+                    const int r = ti + 16 * u;
+                    if (i0 + r < np) {
+                        const float inv = 1.0f / lrow[r];
+#pragma unroll
+                        for (int w = 0; w < 4; ++w) A_[(size_t)(i0 + r) * C + hh * HD + tj + 16 * w] = o[u][w] * inv;
+                    }
+                }
+            });
+        }));
+    }
+
+    // attention as register tiles (the layout of attn_flash.hpp): a work-group = NSG sub-groups of NR query rows each,
+    // one head, key blocks of 32 (two groups of 16) staged in local memory. Per block and row: the scores with lane =
+    // key (mac over c ascending of q[c], a register region, and k[c]; then x 0.125; keys past np: -inf), the block's
+    // maximum (sub-group maximum), Mn = fmax(M, m), al = exp(M - Mn), p = exp(s - Mn), l = p(group 0) + p(group 1)
+    // then + xor-shuffles 8, 4, 2, 1, L = L * al + l; P.V with lane = channel: o = o * al, then mac over the block's
+    // keys ascending of p and v. out = o * (1 / L). Fixed orders: the same bits every run.
+    void attention_rt(const float *q, const float *k, const float *v, int np) {
+        constexpr int NR = 16, NSG = 8, KB = 32, QT = NR * NSG;
+        float *A_ = A;
+        const int nblk = (np + QT - 1) / QT;
+        e.pr("v_attn", d.q.submit([&](sycl::handler &h) {
+            sycl::local_accessor<float, 2> ks(sycl::range<2>(KB, HD + 1), h), vs(sycl::range<2>(KB, HD), h);
+            auto body = [=](sycl::nd_item<2> it) {
+                auto sg = it.get_sub_group();
+                const int sgi = (int)it.get_local_id(0), lane = (int)it.get_local_id(1), t = sgi * 16 + lane;
+                const int g = (int)it.get_group(0), hh = g % NH, r0 = (g / NH) * QT + sgi * NR;
+                float ql[NR][4], o[NR][4], M[NR], L[NR];
+#pragma unroll
+                for (int a = 0; a < NR; ++a) {
+#pragma unroll
+                    for (int m = 0; m < 4; ++m) {
+                        ql[a][m] = r0 + a < np ? q[(size_t)(r0 + a) * C + hh * HD + lane + 16 * m] : 0.0f;
+                        o[a][m] = 0.0f;
+                    }
+                    M[a] = -INFINITY;
+                    L[a] = 0.0f;
+                }
+                for (int k0 = 0; k0 < np; k0 += KB) {
+                    for (int e2 = t; e2 < KB * HD; e2 += NSG * 16) {
+                        const int rr = e2 / HD, c = e2 % HD;
+                        const bool in = k0 + rr < np;
+                        ks[rr][c] = in ? k[(size_t)(k0 + rr) * C + hh * HD + c] : 0.0f;
+                        vs[rr][c] = in ? v[(size_t)(k0 + rr) * C + hh * HD + c] : 0.0f;
+                    }
+                    sycl::group_barrier(it.get_group());
+                    float sc[2][NR];
+#pragma unroll
+                    for (int gq = 0; gq < 2; ++gq) {
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) sc[gq][a] = 0.0f;
+#pragma unroll
+                        for (int c = 0; c < HD; ++c) {
+                            const float kf = ks[16 * gq + lane][c];
+#pragma unroll
+                            for (int a = 0; a < NR; ++a) sc[gq][a] = mac(sc[gq][a], sycl::select_from_group(sg, ql[a][c / 16], c % 16), kf);
+                        }
+                        const bool in = k0 + 16 * gq + lane < np;
+#pragma unroll
+                        for (int a = 0; a < NR; ++a) sc[gq][a] = in ? sc[gq][a] * 0.125f : -INFINITY;
+                    }
+#pragma unroll
+                    for (int a = 0; a < NR; ++a) {
+                        const float mb = sycl::reduce_over_group(sg, sycl::fmax(sc[0][a], sc[1][a]), sycl::maximum<float>());
+                        const float mn = sycl::fmax(M[a], mb), al = sycl::exp(M[a] - mn);
+                        M[a] = mn;
+                        sc[0][a] = sycl::exp(sc[0][a] - mn);
+                        sc[1][a] = sycl::exp(sc[1][a] - mn);
+                        float ls = sc[0][a] + sc[1][a];
+                        ls = ls + sycl::permute_group_by_xor(sg, ls, 8);
+                        ls = ls + sycl::permute_group_by_xor(sg, ls, 4);
+                        ls = ls + sycl::permute_group_by_xor(sg, ls, 2);
+                        ls = ls + sycl::permute_group_by_xor(sg, ls, 1);
+                        L[a] = L[a] * al + ls;
+#pragma unroll
+                        for (int m = 0; m < 4; ++m) o[a][m] = o[a][m] * al;
+                    }
+#pragma unroll
+                    for (int gq = 0; gq < 2; ++gq)
+#pragma unroll
+                        for (int u = 0; u < 16; ++u) {
+                            float vf[4];
+#pragma unroll
+                            for (int m = 0; m < 4; ++m) vf[m] = vs[16 * gq + u][lane + 16 * m];
+#pragma unroll
+                            for (int a = 0; a < NR; ++a) {
+                                const float pb = sycl::select_from_group(sg, sc[gq][a], u);
+#pragma unroll
+                                for (int m = 0; m < 4; ++m) o[a][m] = mac(o[a][m], pb, vf[m]);
+                            }
+                        }
+                    sycl::group_barrier(it.get_group());
+                }
+#pragma unroll
+                for (int a = 0; a < NR; ++a)
+                    if (r0 + a < np) {
+                        const float inv = 1.0f / L[a];
+#pragma unroll
+                        for (int m = 0; m < 4; ++m) A_[(size_t)(r0 + a) * C + hh * HD + lane + 16 * m] = o[a][m] * inv;
+                    }
+            };
+            h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)nblk * NH * NSG, 16), sycl::range<2>(NSG, 16)),
+                           fz::FlashK<decltype(body), true>{body});
+        }));
+    }
+
     // rows (M x 2304) for an RGB picture (w x h, 8 bits per channel, rows top first); throws when it gives more rows
     // than the buffers hold
     std::vector<float> encode(const uint8_t *rgb, int w, int h, int &M) {
@@ -351,13 +543,16 @@ struct Vision {
             mm(b.v, H, V, np); add_bias(V, b.vb, C, np);
             rope(Q, np, wp);
             rope(K, np, wp);
-            for (int hh = 0; hh < NH; ++hh)
-                for (int i0 = 0; i0 < np; i0 += qb) {
-                    const int nq = std::min(qb, np - i0);
-                    scores(Q, K, hh, i0, nq, np);
-                    softmax(nq, np);
-                    pv(V, hh, i0, nq, np);
-                }
+            if (attn_split) // (the first version: scores, softmax and P.V in separate launches, INK_VISION_ATTN=split)
+                for (int hh = 0; hh < NH; ++hh)
+                    for (int i0 = 0; i0 < np; i0 += qb) {
+                        const int nq = std::min(qb, np - i0);
+                        scores(Q, K, hh, i0, nq, np);
+                        softmax(nq, np);
+                        pv(V, hh, i0, nq, np);
+                    }
+            else if (attn_v1) attention(Q, K, V, np); // (INK_VISION_ATTN=fused1: one launch, all threads on 64 x 32 tiles)
+            else attention_rt(Q, K, V, np);
             mm(b.o, A, H, np);
             residual(X, H, b.ob, b.ls1, np);
             layer_norm(X, H, b.ln2w, b.ln2b, np);
