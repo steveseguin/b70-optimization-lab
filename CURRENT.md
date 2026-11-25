@@ -187,7 +187,10 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 24 ~20:15: prompts another +1.3-2.3 % (100K 697.9 -> 706.9 tok/s card 1, 692.1 -> 707.8 card 5; 31K 911.2 ->
+- Nov 24 ~22:00: prompts +0.6-1.3 % (100K 708.4 -> 713.2 tok/s card 1, 703.1 -> 712.2 card 5; 31K 926.9 -> 932.2
+  card 3, 868.3 -> 877.9 card 4; 3K ~870 -> ~877; logits identical, gate 12/12): the loop controls' outputs have their
+  own kernel (146.5 -> 119.4 us) and their norms write the product input directly (no gather).
+- Nov 24 ~20:07: prompts another +1.3-2.3 % (100K 697.9 -> 706.9 tok/s card 1, 692.1 -> 707.8 card 5; 31K 911.2 ->
   926.8 card 3, 852.2 -> 869.9 card 4; 3K 855 -> 870; logits identical, gate 12/12): the windowed layers' scores,
   softmax and P.V now run in one launch (`attn_win_tile`, same values; 203 -> 132 ms per 3K prompt, ~85 % of the
   card's multiply-add peak).

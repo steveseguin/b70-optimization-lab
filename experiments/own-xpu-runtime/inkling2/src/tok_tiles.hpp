@@ -363,6 +363,61 @@ inline sycl::event dense_gather(sycl::queue &q, const float *x, int ldx, int M, 
     });
 }
 
+// the loop controls' two norms (rms_norm_multi of cur and msg, no weight) written straight into the dense tiles' input
+// layout: Xd[(tile * 2E + col) * 16 + lane] = (col < E ? cur : msg)[token][col % E] * scale (zeros past M), what
+// rms_norm_multi + dense_gather give. A work-group per (tile, input): sub-group k takes token 16 tile + k and replays
+// rms_norm_multi's sum (thread l = 16 i + lane of its 256: x[l + 256 u]^2 for u ascending from 0.0f; sg_sum, the same
+// xor butterfly on the same 16 values; the 16 sub-group sums ascending from 0.0f) with lane `lane` holding threads
+// 16 i + lane's sums; then each sub-group writes 1/16 of the columns, 16 tokens per store. One read of the inputs for
+// the sums and one (mostly from the cache) for the values, instead of the norm's write + the gather's read and write.
+inline sycl::event ctl_norm_tiles(sycl::queue &q, const float *a, const float *b, int E, int M, float eps, float *Xd) {
+    constexpr int WG = 256, NSG = WG / SG, MV = 9;
+    if (E != MV * WG) throw std::runtime_error("ctl_norm_tiles: rows of 9 x 256 values only");
+    const int tiles = (M + MOE_TS - 1) / MOE_TS, cps = E / NSG; // columns per sub-group (144)
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> sc(MOE_TS, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)2 * WG), sycl::range<2>(1, WG)),
+                       [=](sycl::nd_item<2> it) [[sycl::reqd_sub_group_size(SG)]] {
+            auto sg = it.get_sub_group();
+            const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id(), jb = (int)it.get_group(1);
+            const int t0 = (int)it.get_group(0) * MOE_TS;
+            const float *x = jb ? b : a;
+            { // token t0 + sgi's scale
+                const float *xr = x + (size_t)sycl::min(t0 + sgi, M - 1) * E;
+                float p[NSG];
+#pragma unroll
+                for (int i = 0; i < NSG; ++i) p[i] = 0.0f;
+#pragma unroll
+                for (int u = 0; u < MV; ++u)
+#pragma unroll
+                    for (int i = 0; i < NSG; ++i) {
+                        const float v = xr[WG * u + SG * i + lane];
+                        p[i] = mac(p[i], v, v);
+                    }
+                float tot = 0.0f;
+#pragma unroll
+                for (int i = 0; i < NSG; ++i) tot += sg_sum(sg, p[i]);
+                if (lane == 0) sc[sgi] = 1.0f / sycl::sqrt(tot / E + eps);
+            }
+            sycl::group_barrier(it.get_group());
+            const int tok = t0 + lane;
+            const bool in = tok < M;
+            const float s = sc[lane];
+            const float *xr = x + (size_t)sycl::min(tok, M - 1) * E;
+            float *xo = Xd + ((size_t)it.get_group(0) * 2 * E + (size_t)jb * E) * MOE_TS + lane;
+            for (int c = sgi * cps; c < (sgi + 1) * cps; c += 4) {
+                const sycl::vec<float, 4> v = *(const sycl::vec<float, 4> *)(xr + c);
+#pragma unroll
+                for (int k = 0; k < 4; ++k) xo[(size_t)(c + k) * MOE_TS] = in ? v[k] * s : 0.0f;
+            }
+        });
+    });
+}
+inline bool ctl_nt_on() { // INK_CTL_NT=0: rms_norm_multi + the gather (before)
+    static const bool v = !std::getenv("INK_CTL_NT") || std::atoi(std::getenv("INK_CTL_NT"));
+    return v;
+}
+
 // y[token * ldy + r] = W[r] . x[token]
 template <class D, int R> struct DenseT {
     const uint8_t *W; size_t rb; int rows, cols, M;
@@ -475,6 +530,98 @@ template <class D, class Op, int NP> struct DensePairTS {
         }
     }
 };
+
+// the loop controls' gain|forget outputs for 64-column F32 rows (the gate rank): CtlOp's y = (tanh(forget) * -1 + 1)
+// * cur + tanh(gain) * msg with gain = Wg[r] . z[tok], forget = Wf[r] . z[tok] (z token-major, 64 per token), in
+// tile_dots' order for 64 columns: each 32-value chunk's products in index order from +0 (s0, s1), the chunk sums added
+// to +0, then the butterfly of the 16 virtual lanes, of which only lanes 0 and 1 hold a chunk: (0 + s0) + (0 + s1)
+// (the other terms add +0, which changes nothing that is not -0, and 0 + s is never -0). A sub-group takes 16 tokens
+// (lane = token, its 64 inputs in registers, read once) and 16 rows; a row's weights come in as 4 sub-group block reads
+// per matrix (one row ahead) and each product takes its weight with a constant-index select; the 16 x 16 results go
+// through local memory so the op reads and writes 16 consecutive rows of one token per access. The same values as
+// dense_pair_ts (gather + DensePairTS: 146.6 -> 119.4 us per 1,024 tokens, INK_PROF 3K prompt, card 3).
+// Not faster (DO-NOT-REPEAT): 2 rows per pass, the op's reads first, its loop unrolled, 32 rows per sub-group, 256
+// registers, the tanh arguments sorted by branch.
+// ABL (tools/bench_ctl only, wrong values): 1 no tanh, 2 no products, 4 no op reads
+template <int ABL = 0> struct CtlOutR64 {
+    static constexpr int K = 64, NSG = 8, LS = 17; // LS: padded row of the local transpose
+    const float *Wg, *Wf; int rows; const float *z; int M;
+    CtlOp op;
+    sycl::local_accessor<float, 1> sm; // NSG x 2 x 16 x LS
+    static void wload(sycl::sub_group sg, const float *w, float *a) {
+#pragma unroll
+        for (int c = 0; c < 4; ++c) {
+            auto p = sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(const_cast<float *>(w + 16 * c));
+            a[c] = sg.load(p);
+        }
+    }
+    [[sycl::reqd_sub_group_size(SG)]] void operator()(sycl::nd_item<2> it) const {
+        auto sg = it.get_sub_group();
+        const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
+        const int t0 = (int)it.get_group(0) * 16, tok = sycl::min(t0 + lane, M - 1), n = op.n;
+        const int rb = ((int)it.get_group(1) * NSG + sgi) * 16;
+        if (rb >= rows) return; // the same for the whole sub-group (no work-group barriers below)
+        float x[K];
+#pragma unroll
+        for (int i = 0; i < K / 4; ++i) {
+            const sycl::vec<float, 4> v = *(const sycl::vec<float, 4> *)(z + (size_t)tok * K + 4 * i);
+#pragma unroll
+            for (int k = 0; k < 4; ++k) x[4 * i + k] = v[k];
+        }
+        const int mo = sgi * 2 * 16 * LS;
+        float ag[4], af[4];
+        wload(sg, Wg + (size_t)rb * K, ag);
+        wload(sg, Wf + (size_t)rb * K, af);
+        for (int j = 0; j < 16; ++j) {
+            float ng[4], nf[4];
+            const int jn = sycl::min(j + 1, 15);
+            wload(sg, Wg + (size_t)(rb + jn) * K, ng);
+            wload(sg, Wf + (size_t)(rb + jn) * K, nf);
+            float g0 = 0.0f, g1 = 0.0f, f0 = 0.0f, f1 = 0.0f;
+            if constexpr ((ABL & 2) != 0) { g0 = ag[0] * x[0]; f0 = af[0] * x[1]; g1 = ag[3] * x[63]; f1 = af[3] * x[62]; }
+            else {
+#pragma unroll
+                for (int i = 0; i < 32; ++i) {
+                    g0 = mac(g0, sycl::select_from_group(sg, ag[i / 16], i % 16), x[i]);
+                    f0 = mac(f0, sycl::select_from_group(sg, af[i / 16], i % 16), x[i]);
+                    g1 = mac(g1, sycl::select_from_group(sg, ag[2 + i / 16], i % 16), x[32 + i]);
+                    f1 = mac(f1, sycl::select_from_group(sg, af[2 + i / 16], i % 16), x[32 + i]);
+                }
+            }
+            sm[mo + j * LS + lane] = (0.0f + g0) + (0.0f + g1);
+            sm[mo + 16 * LS + j * LS + lane] = (0.0f + f0) + (0.0f + f1);
+#pragma unroll
+            for (int c = 0; c < 4; ++c) { ag[c] = ng[c]; af[c] = nf[c]; }
+        }
+        sycl::group_barrier(sg);
+        const int tn = sycl::min(16, M - t0);
+#pragma unroll 1
+        for (int tl = 0; tl < tn; ++tl) { // CtlOp's expression, lane = row rb + lane
+            const size_t jx = (size_t)(t0 + tl) * n + rb + lane;
+            const float g = sm[mo + lane * LS + tl], f = sm[mo + 16 * LS + lane * LS + tl];
+            float c, m;
+            if constexpr ((ABL & 4) != 0) { c = 1.0f; m = (float)tl; }
+            else { c = op.cur[jx]; m = op.msg[jx]; }
+            const float fo = (ABL & 1) ? f : sycl::tanh(f), ga = (ABL & 1) ? g : sycl::tanh(g);
+            op.y[jx] = (fo * -1.0f + 1.0f) * c + ga * m;
+        }
+    }
+};
+template <int ABL = 0>
+inline sycl::event ctl_out_r64(sycl::queue &q, const float *Wg, const float *Wf, int rows, const float *z, int M, CtlOp op) {
+    using KS = CtlOutR64<ABL>;
+    if (rows % 16 || M < 1 || op.n != rows) throw std::runtime_error("ctl_out_r64: rows must be a multiple of 16");
+    const int tiles = (M + 15) / 16, ngr = (rows + 16 * KS::NSG - 1) / (16 * KS::NSG);
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> sm((size_t)KS::NSG * 2 * 16 * KS::LS, h);
+        h.parallel_for(sycl::nd_range<2>(sycl::range<2>((size_t)tiles, (size_t)ngr * KS::NSG * SG), sycl::range<2>(1, (size_t)KS::NSG * SG)),
+                       KS{Wg, Wf, rows, z, M, op, sm});
+    });
+}
+inline bool ctl64_on() { // INK_CTL64=0: gather + dense_pair_ts (before)
+    static const bool v = !std::getenv("INK_CTL64") || std::atoi(std::getenv("INK_CTL64"));
+    return v;
+}
 
 // ---- expert tiles for any decoder (moe_group.hpp's tiles and transposed inputs) ---------------------------------
 // gate|up rows of the tile's expert; TOUT: the activation goes to Ht[(t * rows + r) * 16 + lane], else op(...)

@@ -634,6 +634,21 @@ Prompts (same card, both orders, logits identical): 100K 697.9 -> 706.9 tok/s (c
 911.2 / 907.5 -> 926.8 / 922.4 (card 3) and 852.2 / 846.2 -> 869.9 / 866.0 (card 4); 3K 825.0-855.4 -> 868.3-870.6
 (card 2). Gate 12/12.
 
+Loop controls at prompt steps (2026-11-24; same values, INK_PROF 3K prompt, card 3):
+- The gain|forget outputs (64-column F32 rows) have their own kernel (`ctl_out_r64`, `INK_CTL64=0` = before). A
+  sub-group takes 16 tokens (lane = token, its 64 inputs read once into registers) and 16 rows. Each weight row arrives
+  as 4 sub-group block reads per matrix, one row ahead, and each product takes its weight with a constant-index select.
+  The 64-column sum is the tile order, (0 + s0) + (0 + s1), and the op goes through local memory as before. The
+  gather of the inputs is gone. 146.5 -> 119.4 us per launch. Two rows per pass, op reads first, the op loop
+  unrolled, 32 rows per sub-group, 256 registers and branch-sorted tanh arguments were all slower (DO-NOT-REPEAT).
+- The two control norms write the down product's tile input directly (`ctl_norm_tiles`, `INK_CTL_NT=0` = before).
+  Each of 16 sub-groups takes one token and replays the norm's sum order, then the work-group writes 16 tokens per
+  store. That removes the norm's write and the gather's read and write: 48.1 + 2 gathers -> 56.1 us per launch, 1,040
+  -> 752 gathers per prompt, kernels 3,144 -> 3,122 ms.
+Prompts against the commit before (both orders, logits identical): 100K 708.4 -> 713.2 tok/s (card 1) and 703.1 -> 712.2
+(card 5); 31K 926.9 / 922.3 -> 932.2 / 929.0 (card 3) and 868.3 / 863.9 -> 877.9 / 872.3 (card 4); 3K 869.1-870.2 ->
+876.0-878.8 (card 2). Gate 12/12.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

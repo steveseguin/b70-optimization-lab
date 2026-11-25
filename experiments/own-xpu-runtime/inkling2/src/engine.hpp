@@ -626,13 +626,29 @@ struct Engine {
     void control(const float *cur, const float *mg, const Layer &l, int mod, float *y) {
         const HParams &h = m.hp;
         int n = n_tok, E = h.n_embd;
-        const fz::NormJob jobs[2] = {{cur, ctl_h, nullptr, E, 2 * E}, {mg, ctl_h + E, nullptr, E, 2 * E}};
-        pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2, E, n, 1e-6f));
-        mm(l.loop_down[mod], ctl_h, ctl_z, n);
+        DTune dd;
+        const W &ld = l.loop_down[mod];
+        if (n > 1 && ctl_nt_on() && E == 2304 && (int)ld.t->ne[0] == 2 * E && dense_tiles(ld, n, dd)) {
+            // the norms straight into the tiles' input layout (ctl_norm_tiles: rms_norm_multi + dense_gather's values)
+            pr("ctl_norm", ctl_norm_tiles(d.q, cur, mg, E, n, 1e-6f, Xd));
+            xd_src = nullptr;
+            WView v = ld.view();
+            if (v.kind == K_Q6_KP && !q6u.empty()) { auto it = q6u.find(ld.t); if (it != q6u.end()) v = it->second; }
+            pr(wlabel(ld), dense_t(d.q, v, n, Xd, ctl_z, (int)ld.t->rows(), dd));
+        } else {
+            const fz::NormJob jobs[2] = {{cur, ctl_h, nullptr, E, 2 * E}, {mg, ctl_h + E, nullptr, E, 2 * E}};
+            pr("ctl_norm", fz::rms_norm_multi(d.q, jobs, 2, E, n, 1e-6f));
+            mm(ld, ctl_h, ctl_z, n);
+        }
         const W &ga = l.loop_gain[mod], &fo = l.loop_forget[mod];
         if (ga.t->type != fo.t->type || ga.rb != fo.rb || ga.kind != fo.kind) throw std::runtime_error("engine: gain/forget layouts differ");
         DTune dt;
         if (n > 1 && dense_tiles(ga, n, dt)) {
+            // 64-column F32 rows: ctl_out_r64 reads ctl_z as it is (the same values; INK_CTL64=0: the tiles below)
+            if (ctl64_on() && h.gate_rank == 64 && ga.kind == K_RAW && ga.t->type == G_F32 && ga.rb == 256 && fo.rb == 256 && E % 16 == 0) {
+                pr("ctl_out", ctl_out_r64(d.q, (const float *)ga.p, (const float *)fo.p, E, ctl_z, n, CtlOp{cur, mg, y, E}));
+                return;
+            }
             pr("dense_gather", dense_gather(d.q, ctl_z, h.gate_rank, n, h.gate_rank, Xd));
             // INK_CTL_T=<row pairs>,<sub-groups> (default 1,8): the op after a local-memory transpose (DensePairTS:
             // the op's reads and writes 16 consecutive rows per sub-group; the same values; INK_PROF 3K prompt, card 3:
