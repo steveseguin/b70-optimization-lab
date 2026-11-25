@@ -187,6 +187,13 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~10:10: Inkling serving: **sampling** (temperature / top_p / top_k / min_p / seed; default the model file's
+  temperature 1.0): the same text with or without guessing (8/8), 99-129 tok/s with guessing. **State copies**: a
+  regenerated answer, an edited last message, a new question about the same document or a new chat with the same
+  system prompt starts in ~0.07 s instead of re-reading (8.7K tokens: 8.8 s), 13/13 answers identical to no copies.
+  Recall at 480K: 17/21; the 4 misses are greedy thinking loops (the model found the facts), which sampling addresses.
+  Reviewed another B70 Inkling project (lossy: EXL3 weights, 16-bit matrix math, FP8 cache): their prompt reading
+  3-4x ours, our writing faster on comparable tasks (lane README). Gate 12/12.
 - Nov 25 ~08:52: the Inkling server runs one engine per card (cards 1-5 by default): five conversations at once,
   follow-ups go back to their card, and an answer is the same whichever card runs it (checked against one card, 10 of
   10 turns identical). Context grows by need (64K -> 128K -> 300K -> 515K per card, the conversation kept). Under

@@ -1297,9 +1297,18 @@ struct Engine {
     }
     // greedy choice on the card from the last step's last logits row (the first index of the largest value, as
     // argmax_last()); it becomes ids[0] for step(nullptr, 1) and is returned to the host
+    // sampling instead (serving: ops::sample_rows) while samp.T > 0; the token at position p takes the uniform number
+    // ops::sample_u(samp_seed, p), so a text depends on the seed and the conversation only (not on guessing)
+    ops::SampleArgs samp;
+    uint64_t samp_seed = 0;
     int next_token() {
         const float *row = lg + (size_t)(n_logit_rows - 1) * m.hp.vocab_padded;
-        pr("argmax", ops::argmax_rows2(d.q, row, m.hp.vocab_padded, m.hp.vocab, 1, ids, amx_v, amx_i));
+        if (samp.T > 0.0f) {
+            ops::SampleArgs a = samp;
+            a.u[0] = ops::sample_u(samp_seed, n_past); // (the chosen token goes at position n_past)
+            pr("sample", ops::sample_rows(d.q, row, m.hp.vocab_padded, m.hp.vocab, 1, a, ids));
+        } else
+            pr("argmax", ops::argmax_rows2(d.q, row, m.hp.vocab_padded, m.hp.vocab, 1, ids, amx_v, amx_i));
         int32_t v;
         d.get(&v, ids, 1);
         last_tok = v;
@@ -1314,9 +1323,15 @@ struct Engine {
         if (n < 1 || n > SB_MAX || n > T) throw std::runtime_error("check: 1 to " + std::to_string(SB_MAX) + " tokens");
         const bool al = all_logits, hl = host_logits;
         all_logits = true; host_logits = false; keep_states = true;
+        const int p0 = n_past; // tok[0] goes at p0; row i chooses the token at p0 + 1 + i
         step(tok, n);
         all_logits = al; host_logits = hl; keep_states = false;
-        pr("argmax", ops::argmax_rows2(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, cids, amx_v, amx_i));
+        if (samp.T > 0.0f) {
+            ops::SampleArgs a = samp;
+            for (int i = 0; i < n; ++i) a.u[i] = ops::sample_u(samp_seed, p0 + 1 + i);
+            pr("sample", ops::sample_rows(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, a, cids));
+        } else
+            pr("argmax", ops::argmax_rows2(d.q, lg, m.hp.vocab_padded, m.hp.vocab, n, cids, amx_v, amx_i));
         std::vector<int32_t> r(n);
         d.get(r.data(), cids, n);
         chk_n = n;

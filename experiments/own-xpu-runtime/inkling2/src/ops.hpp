@@ -511,6 +511,109 @@ inline sycl::event argmax_rows2(sycl::queue &q, const float *x, size_t ld, int n
         if (l == 0) out[r] = idx;
     });
 }
+// Sampling (serving): one token per row from softmax(x / T) over the kept tokens. Kept: x >= the largest of the
+// thresholds min_p (exp((x - max) / T) >= min_p), top_k (the k-th largest value, found by bisection on the values) and
+// top_p (the highest value whose kept mass reaches top_p of the total, bisection), each off at its neutral setting
+// (min_p 0, top_k 0, top_p 1). The token is the first index whose running sum, in index order, passes u[r] times the
+// kept sum: each lane sums a contiguous slice of the row in order, lane 0 adds the slices up in lane order, and the
+// lane whose slice holds the target walks it again in the same order. Every sum has a fixed order, so the same row
+// and u give the same token on every run, whatever else ran in the step (a check row equals a one-token step's row,
+// so guessing does not change a sampled text either).
+struct SampleArgs { float T = 0.0f, topp = 1.0f, minp = 0.0f; int topk = 0; float u[8] = {}; };
+inline sycl::event sample_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, SampleArgs a, int32_t *out) {
+    constexpr int W = 1024, IT = 32;
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> pre(W + 1, h);
+        sycl::local_accessor<int, 1> pick(1, h);
+        h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * W), sycl::range<1>(W)), [=](sycl::nd_item<1> it) {
+            const int r = (int)it.get_group(0), l = (int)it.get_local_id(0);
+            const auto grp = it.get_group();
+            const float *xr = x + (size_t)r * ld;
+            const float invT = 1.0f / a.T;
+            float mx = -INFINITY, mn = INFINITY;
+            for (int i = l; i < n; i += W) { const float v = xr[i]; mx = sycl::fmax(mx, v); mn = sycl::fmin(mn, v); }
+            mx = sycl::reduce_over_group(grp, mx, sycl::maximum<float>());
+            mn = sycl::reduce_over_group(grp, mn, sycl::minimum<float>());
+            float th = mn;
+            if (a.minp > 0.0f) th = sycl::fmax(th, mx + a.T * sycl::log(a.minp));
+            if (a.topk > 0 && a.topk < n) { // count(x >= lo) >= k > count(x >= hi)
+                float lo = mn, hi = mx;
+                int cm = 0;
+                for (int i = l; i < n; i += W) cm += xr[i] >= mx;
+                if (sycl::reduce_over_group(grp, cm, sycl::plus<int>()) >= a.topk) lo = mx;
+                else
+                    for (int k = 0; k < IT; ++k) {
+                        const float mid = lo + 0.5f * (hi - lo);
+                        int c = 0;
+                        for (int i = l; i < n; i += W) c += xr[i] >= mid;
+                        if (sycl::reduce_over_group(grp, c, sycl::plus<int>()) >= a.topk) lo = mid; else hi = mid;
+                    }
+                th = sycl::fmax(th, lo);
+            }
+            if (a.topp < 1.0f) { // mass(x >= lo) >= top_p * mass(x >= th) > mass(x >= hi)
+                auto mass = [&](float t) {
+                    float s = 0.0f;
+                    for (int i = l; i < n; i += W) { const float v = xr[i]; if (v >= t) s += sycl::exp((v - mx) * invT); }
+                    return sycl::reduce_over_group(grp, s, sycl::plus<float>());
+                };
+                const float goal = a.topp * mass(th);
+                float lo = th, hi = mx;
+                if (mass(mx) >= goal) lo = mx;
+                else
+                    for (int k = 0; k < IT; ++k) {
+                        const float mid = lo + 0.5f * (hi - lo);
+                        if (mass(mid) >= goal) lo = mid; else hi = mid;
+                    }
+                th = sycl::fmax(th, lo);
+            }
+            // each lane's contiguous slice, summed in index order
+            const int span = (n + W - 1) / W, i0 = sycl::min(n, l * span), i1 = sycl::min(n, i0 + span);
+            float c = 0.0f;
+            for (int i = i0; i < i1; ++i) { const float v = xr[i]; if (v >= th) c += sycl::exp((v - mx) * invT); }
+            pre[l] = c;
+            if (l == 0) pick[0] = -1;
+            sycl::group_barrier(grp);
+            if (l == 0) { // starts of the slices, in lane order
+                float s = 0.0f;
+                for (int j = 0; j < W; ++j) { const float t = pre[j]; pre[j] = s; s += t; }
+                pre[W] = s;
+            }
+            sycl::group_barrier(grp);
+            const float tot = pre[W];
+            float target = a.u[r] * tot;
+            if (!(target < tot)) target = sycl::nextafter(tot, 0.0f);
+            const float s0 = pre[l], s1 = l + 1 < W ? pre[l + 1] : tot;
+            if (s0 <= target && target < s1) { // exactly one lane (slices without mass have s0 == s1)
+                const float dd = target - s0;
+                float acc = 0.0f;
+                int p = -1, last = -1;
+                for (int i = i0; i < i1 && p < 0; ++i) {
+                    const float v = xr[i];
+                    if (v < th) continue;
+                    acc += sycl::exp((v - mx) * invT);
+                    last = i;
+                    if (acc > dd) p = i;
+                }
+                pick[0] = p >= 0 ? p : last;
+            }
+            sycl::group_barrier(grp);
+            if (l == 0) {
+                int p = pick[0];
+                if (p < 0) // (not reached) the first index of the largest value
+                    for (int i = 0; i < n; ++i) if (xr[i] == mx) { p = i; break; }
+                out[r] = p;
+            }
+        });
+    });
+}
+// the uniform number of the token at position pos (sampling with this seed): 24 random bits, exact in float
+inline float sample_u(uint64_t seed, int64_t pos) {
+    uint64_t z = seed + 0x9E3779B97F4A7C15ull * (uint64_t)(pos + 1);
+    z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9ull;
+    z = (z ^ (z >> 27)) * 0x94D049BB133111EBull;
+    z ^= z >> 31;
+    return (float)(z >> 40) * (1.0f / 16777216.0f);
+}
 // argmax_rows2 that also gives the chosen value's softmax probability (1 / sum_i exp(x_i - max)) per row;
 // ps: nrows * ARGMAX_G scratch sums. For guessers: how sure the guess is
 // map (optional): out[r] = map[index] (a guesser's head over a vocabulary subset: index -> token id); col (optional):

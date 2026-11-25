@@ -3,6 +3,7 @@
 // Prints "ids: ..." (generated ids, stops at the end-of-turn token) like tools/ref_gen.cpp, timings on stderr.
 // INK_DUMP=<dir> saves the reference's named tensors for the prompt (one step: prompt <= INK_UBATCH tokens).
 #include "../src/cache_file.hpp"
+#include "../src/snapshot.hpp"
 #include <memory>
 #include <cstring>
 #include <fstream>
@@ -50,7 +51,15 @@ int main(int argc, char **argv) {
         GGUF g(argv[1]);
         Device d(std::atoi(argv[2]));
         std::vector<int32_t> tok;
-        { std::ifstream f(argv[3]); long v; while (f >> v) tok.push_back((int32_t)v); }
+        {
+            std::ifstream f(argv[3]);
+            if (!f) throw std::runtime_error(std::string("cannot read the prompt file ") + argv[3]);
+            long v;
+            while (f >> v) tok.push_back((int32_t)v);
+            // (a missing or misnamed token file used to run an empty prompt; serving reads its prompts from stdin)
+            if (tok.empty() && !std::getenv("INK_SERVE") && !std::getenv("INK_LOAD_CACHE"))
+                throw std::runtime_error(std::string("no token ids in ") + argv[3]);
+        }
         int n_gen = argc > 4 ? std::atoi(argv[4]) : 0;
         // INK_TURNS=<file>: follow-up turns, one per line (token ids, e.g. <|message_user|><|content_text|>...<|end_message|>).
         // After an answer, its last token (the end token <|content_model_end_sampling|>, which the chat template keeps at
@@ -263,6 +272,18 @@ int main(int argc, char **argv) {
             return stop_req;
         };
         int pend_row = 0; // the logits row of the last decided token (W saves it)
+        // INK_SAMPLE="<temperature> <top_p> <top_k> <min_p> <seed>" (runs outside serving): sample instead of choosing the
+        // most likely token (ops::sample_rows; the same text with or without guessing)
+        if (const char *sv = std::getenv("INK_SAMPLE"); sv && !serve) {
+            std::istringstream ss(sv);
+            unsigned long long sd = 0;
+            ss >> e.samp.T >> e.samp.topp >> e.samp.topk >> e.samp.minp >> sd;
+            if (!ss) throw std::runtime_error("INK_SAMPLE: <temperature> <top_p> <top_k> <min_p> <seed>");
+            e.samp_seed = sd;
+        }
+        std::string samp_id; // the request id of the last P line (sampling settings), and those settings
+        ops::SampleArgs samp_next;
+        unsigned long long samp_seed_next = 0;
         long req_rounds = 0, req_guessed = 0, req_kept = 0;
         auto emit = [&](const std::vector<int> &o, size_t from) {
             if (!serve || from >= o.size()) return;
@@ -270,6 +291,15 @@ int main(int argc, char **argv) {
             for (size_t i = from; i < o.size(); ++i) l += " " + std::to_string(o[i]);
             sout(l);
         };
+        // serving: a copy of the state at each request's start (src/snapshot.hpp), when it fits on the card
+        // snap: at the start of the last request's last message; snapb (when a second copy fits): at the start of the
+        // conversation's first message after the system messages, so a new conversation with the same system prompt
+        // (and tools and effort) or another question after the same document continues from there
+        Snapshot snap, snapb;
+        if (serve) snap.init(e, dr.get());
+        if (serve && snap.ok) snapb.init(e, dr.get());
+        const bool lk_serve = serve && std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
+                              (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP")));
         if (serve) {
             if (const char *lc = std::getenv("INK_LOAD_CACHE")) {
                 const double tl = now_s();
@@ -309,6 +339,15 @@ int main(int argc, char **argv) {
                     } catch (std::exception &ex) { sout("@@E " + id + " save " + std::string(ex.what()).substr(0, 200)); }
                     continue;
                 }
+                if (cmd == "P") { // P <id> <temperature> <top_p> <top_k> <min_p> <seed>: sampling for the G of that id
+                    ops::SampleArgs a;
+                    unsigned long long sd = 0;
+                    is >> a.T >> a.topp >> a.topk >> a.minp >> sd;
+                    if (!is || !(a.T >= 0.0f && a.T <= 100.0f) || !(a.topp > 0.0f && a.topp <= 1.0f) || a.topk < 0 ||
+                        !(a.minp >= 0.0f && a.minp < 1.0f)) { sout("@@E " + id + " bad-sampling"); continue; }
+                    samp_id = id; samp_next = a; samp_seed_next = sd;
+                    continue;
+                }
                 if (cmd != "G") { sout("@@E - unknown-command"); continue; }
                 long mx = 0, nstop = 0, n = 0;
                 is >> mx >> nstop;
@@ -321,17 +360,18 @@ int main(int argc, char **argv) {
                 if (bad) { sout("@@E " + id + " bad-request"); continue; }
                 if ((long)ids.size() + mx + 8 > e.cap) { sout("@@E " + id + " context " + std::to_string(e.cap)); continue; }
                 rid = id; max_new = (int)mx; got = true;
+                // sampling when a P line for this id came first, else the most likely token
+                e.samp = samp_id == id ? samp_next : ops::SampleArgs{};
+                e.samp_seed = samp_id == id ? samp_seed_next : 0;
+                samp_id.clear();
             }
             if (!got) break;
             const size_t h = (size_t)e.n_past;
             const bool ext = h > 0 && ids.size() > h && std::equal(conv.begin(), conv.begin() + (long)h, ids.begin());
-            if (!ext) { // a new conversation: from the longest saved prompt it starts with, else from position 0
-                if (h > 0 || conv.size() > 0) sout("@@R " + rid);
+            bool restored = false;
+            if (!ext) { // a new conversation: from the copy of a request's start (src/snapshot.hpp) when this one continues
+                // from it, else from the longest saved prompt it starts with, else from position 0
                 const double tz = now_s();
-                e.reset();
-                if (dr) dr->r_last = -1;
-                ngi = NgramIndex();
-                conv.clear();
                 std::string best;
                 size_t best_n = 0;
                 if (lib_dir) {
@@ -346,16 +386,35 @@ int main(int argc, char **argv) {
                         } catch (std::exception &) {}
                     }
                 }
-                if (!best.empty()) {
-                    try {
-                        std::vector<int32_t> ft;
-                        load_cache(best, e, dr.get(), ids, model_id, nullptr, &ft);
-                        conv = ft;
-                        std::fprintf(stderr, "[serve] new conversation: %zu tokens loaded from %s in %.3f s\n", ft.size(), best.c_str(), now_s() - tz);
-                    } catch (std::exception &ex) {
-                        std::fprintf(stderr, "[serve] %s not loaded (%s): reading from position 0\n", best.c_str(), ex.what());
-                        e.reset();
-                        if (dr) dr->r_last = -1;
+                ngi = NgramIndex();
+                // the copy unless a saved prompt holds 4,096 or more tokens past it (a load takes ~0.2-3 s, a copy ~ms)
+                Snapshot *from = snap.fits(ids) ? &snap : (snapb.fits(ids) ? &snapb : nullptr);
+                if (from && best_n < (size_t)from->pos + 4096) {
+                    from->restore(e, dr.get());
+                    d.q.wait();
+                    conv = from->tok;
+                    restored = true;
+                    if (from == &snapb) snap.pos = -1; // (the positions past it are written again)
+                    std::fprintf(stderr, "[serve] continuing from the %s copy at %ld tokens (%.3f s)\n",
+                                 from == &snap ? "last-message" : "first-message", (long)from->pos, now_s() - tz);
+                } else {
+                    if (h > 0 || conv.size() > 0) sout("@@R " + rid);
+                    snap.pos = -1;
+                    snapb.pos = -1;
+                    e.reset();
+                    if (dr) dr->r_last = -1;
+                    conv.clear();
+                    if (!best.empty()) {
+                        try {
+                            std::vector<int32_t> ft;
+                            load_cache(best, e, dr.get(), ids, model_id, nullptr, &ft);
+                            conv = ft;
+                            std::fprintf(stderr, "[serve] new conversation: %zu tokens loaded from %s in %.3f s\n", ft.size(), best.c_str(), now_s() - tz);
+                        } catch (std::exception &ex) {
+                            std::fprintf(stderr, "[serve] %s not loaded (%s): reading from position 0\n", best.c_str(), ex.what());
+                            e.reset();
+                            if (dr) dr->r_last = -1;
+                        }
                     }
                 }
             } else if (conv.size() > h && ids[h] != conv[h])
@@ -363,8 +422,29 @@ int main(int argc, char **argv) {
             const std::vector<int32_t> rest(ids.begin() + e.n_past, ids.end());
             stop_req = false;
             n_gen = max_new;
+            // the copy (src/snapshot.hpp) is taken at the start of the request's last message (<|message_user|>,
+            // <|message_model|>, <|message_system|> or <|message_tool|>), so a regenerated answer, an edited last message
+            // or another question after the same messages continues from it; the read goes in two parts around it
+            // (steps of any size give the same values)
+            size_t mark = (size_t)e.n_past;
+            for (size_t i = ids.size(); i-- > (size_t)e.n_past + 1;)
+                if (ids[i] >= 200000 && ids[i] <= 200003) { mark = i; break; }
+            // the first message after the system messages (<|message_user|>, <|message_model|> or <|message_tool|>)
+            size_t markb = ids.size();
+            for (size_t i = 0; i < ids.size(); ++i)
+                if (ids[i] == 200000 || ids[i] == 200001 || ids[i] == 200003) { markb = i; break; }
             t0 = now_s();
-            e.feed(rest);
+            bool took_b = false;
+            if (snapb.ok && markb >= (size_t)e.n_past && markb <= mark && markb > 0) {
+                if (markb > (size_t)e.n_past) e.feed(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)markb));
+                if (!(restored && (size_t)snapb.pos == markb)) snapb.take(e, dr.get(), ids);
+                took_b = true;
+            }
+            if (mark > (size_t)e.n_past) e.feed(std::vector<int32_t>(ids.begin() + e.n_past, ids.begin() + (long)mark));
+            if (took_b && mark == markb) snap.pos = -1; // (the same state: the first-message copy serves)
+            else if (!(restored && (size_t)snap.pos == mark)) snap.take(e, dr.get(), ids); // (queued before the next feed)
+            e.feed(std::vector<int32_t>(ids.begin() + (long)mark, ids.end()));
+            if (lk_serve) ngi.extend(ids, (int)ids.size()); // (on the host while the card reads)
             d.q.wait();
             t1 = now_s();
             pend_row = e.n_logit_rows - 1;

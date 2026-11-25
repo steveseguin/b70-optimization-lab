@@ -12,8 +12,14 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
 - `"reasoning_effort"`: none, minimal, low, medium, high, xhigh, max, or a number 0-0.99.
 - The thinking text arrives as `reasoning_content`; the answer as `content`. Tool calls, streaming, `stop`
   strings and `/v1/completions` work.
-- Answers are the model's own best (greedy) text. Guessing only makes them faster; the answers are exactly the same
-  as without it. Sampling settings are ignored.
+- Sampling: `temperature`, `top_p`, `top_k`, `min_p`, `seed`. Unset ones take the model file's recommended values
+  (`general.sampling.*`: temperature 1.0, top_p 1.0, top_k 0, min_p 0.0; `"sampling"` in `config.json` overrides).
+  `temperature: 0` gives the most likely token at every step. The engine samples from the model's exact scores with a
+  random number taken from (seed, position): the same conversation, settings and seed give the same answer every
+  time, and guessing only makes it faster (checked: identical text with and without guessing). Without a `seed` each
+  request draws one; `timings.sampling` returns it. Temperature 1.0 matters with this model: always taking the most
+  likely token sometimes makes it think in circles until `max_tokens` (the model card warns about reasoning loops;
+  in a 480K-token recall test 4 of 21 questions ended that way although the model had found the answers).
 
 ## One conversation per card
 
@@ -28,6 +34,14 @@ Each card's engine keeps the latest conversation it answered:
   card. An answer depends only on its conversation, not on which card ran it or what else was asked meanwhile
   (checked: two cards at once, and one card switching between two conversations, gave the same thinking and
   answers as one conversation at a time).
+- Each engine also keeps two copies of the state that later text overwrites (the windowed attention rings, short
+  convolutions and drafter state, ~1.4 GiB each at the 64K size, ~0.3 GiB at 300K, none at 515K where the card is
+  full): one at the start of the last request's last message and one at the start of the conversation's first
+  message after the system messages. A regenerated answer, an edited last message, another question after the same
+  document or a new conversation with the same system prompt (and tools and effort) continues from a copy in ~0.02 s
+  and reads only what follows it (checked against an engine without copies: 13 of 13 answers identical; an
+  8,719-token document's next question read 11 tokens in 0.07 s instead of 8.8 s). Requests go to the card whose
+  conversation shares the longest start with them (`share_min_bytes`, `share_wait_bytes`).
 - Host memory: about 1.3 GB per engine at any context size (five engines up: 7.6 GB of 15 GB still available).
 - Checked under load: 8 clients x 3 turns on 5 cards (streaming and not, a stop string, the default thinking effort,
   a client that dropped its stream mid-answer and asked again): 12.1 s instead of 37.3 s one at a time, and all 24

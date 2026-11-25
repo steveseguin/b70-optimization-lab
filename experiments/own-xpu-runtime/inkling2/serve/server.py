@@ -379,6 +379,19 @@ SLOTS = [Slot(c) for c in (CFG.get("cards") or [CFG["card"]])]
 MAX_CTX = SLOTS[0].engine.max_ctx
 
 
+def _common_len(a: bytes, b: bytes) -> int:
+    """Length of the longest common start of a and b (binary search over memcmp-speed slice compares)."""
+    lo, hi = 0, min(len(a), len(b))
+    ma, mb = memoryview(a), memoryview(b)
+    while lo < hi:
+        mid = (lo + hi + 1) // 2
+        if ma[:mid] == mb[:mid]:
+            lo = mid
+        else:
+            hi = mid - 1
+    return lo
+
+
 def pick_slot(raw_msgs, mode, make_prompt):
     """The card for a request: the one whose held conversation this one extends (the longest), else a free card
     (an empty one first, then the one used least recently), else the least recently used. Returns (slot, messages,
@@ -394,7 +407,18 @@ def pick_slot(raw_msgs, mode, make_prompt):
         if pb.startswith(ss.raw) and len(pb) > len(ss.raw) and (best is None or len(ss.raw) > len(best.session.raw)):
             best = sl
     if best is None:
+        # no card holds a conversation this one extends. The engine keeps a copy of its state at its last request's
+        # start, so a request that shares a long start with a card's conversation (a regenerated answer, an edited last
+        # message, another question after the same document) reads only the rest there: the card with the longest
+        # shared start when it is free and the start is worth ~5 s of reading, or even busy when it is worth minutes
         ok = [sl for sl in SLOTS if sl.engine.state != "fault"] or SLOTS
+        share, cand = max(((_common_len(pb, sl.session.raw), sl) for sl in ok if sl.session.ids),
+                          key=lambda x: x[0], default=(0, None))
+        busy = cand is not None and (cand.pending + cand.lock.locked()) > 0
+        if cand is not None and share >= CFG.get("share_min_bytes", 16384) and (
+                not busy or share >= CFG.get("share_wait_bytes", 262144)):
+            best = cand
+    if best is None:
         best = min(ok, key=lambda x: (x.pending + x.lock.locked(), bool(x.session.ids), x.last_used))
     best.pending += 1
     return best, msgs, prompt
@@ -464,7 +488,7 @@ def merge_known(raw_msgs, mode):
     return out
 
 
-async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
+async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, ctl, samp=None):
     ENGINE, SESSION, LOCK = slot.engine, slot.session, slot.lock
     STATS["waiting"] += 1
     try:
@@ -523,6 +547,8 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         t0 = time.time()
         stopped = False
         try:
+            if samp and samp["temperature"] > 0:
+                await ENGINE.send(f"P {rid} {samp['temperature']!r} {samp['top_p']!r} {samp['top_k']} {samp['min_p']!r} {samp['seed']}")
             await ENGINE.send(f"G {rid} {max_new} 1 {EOS} {len(ids)} " + " ".join(map(str, ids)))
             done = None
             while done is None:
@@ -559,6 +585,7 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         tm = {"prompt_tokens": len(ids), "read_tokens": int(done[1]), "read_s": float(done[3]), "answer_tokens": len(gen),
               "answer_s": float(done[4]), "rounds": int(done[5]), "guesses": int(done[6]), "kept_guesses": int(done[7]),
               "context_used": int(done[8]), "total_s": round(time.time() - t0, 3)}
+        tm["sampling"] = dict(samp) if samp and samp["temperature"] > 0 else {"temperature": 0}
         tm["answer_tok_per_s"] = round(max(0, len(gen) - 1) / max(1e-6, tm["answer_s"]), 2)
         tm["read_tok_per_s"] = round(tm["read_tokens"] / max(1e-6, tm["read_s"]), 1)
         log(f"card {ENGINE.card}: conversation {len(ids)} tokens, read {tm['read_tokens']} in {tm['read_s']:.2f} s, "
@@ -568,11 +595,11 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         LOCK.release()
 
 
-async def run_request(request, slot, prompt_bytes: bytes, mode, max_new: int, on_event):
+async def run_request(request, slot, prompt_bytes: bytes, mode, max_new: int, on_event, samp=None):
     """Runs the engine job as its own task: a client that leaves stops the answer at the next round, and the
     conversation the engine holds stays consistent."""
     ctl = {"alive": lambda: request.transport is not None and not request.transport.is_closing()}
-    job = asyncio.create_task(_engine_job(slot, prompt_bytes, mode, max_new, on_event, ctl))
+    job = asyncio.create_task(_engine_job(slot, prompt_bytes, mode, max_new, on_event, ctl, samp))
     try:
         return await asyncio.shield(job)
     except asyncio.CancelledError:
@@ -584,6 +611,29 @@ def finish_reason(r, has_calls=False):
     if has_calls:
         return "tool_calls"
     return {"eos": "stop", "max": "length", "stop": "stop"}.get(r, "stop")
+
+
+def parse_sampling(body):
+    """temperature / top_p / top_k / min_p / seed of a request; unset ones take config.json "sampling" (default: the
+    model file's general.sampling values, temperature 1.0, top_p 1.0, top_k 0, min_p 0.0). temperature 0: the most
+    likely token. The engine samples token by token from the exact scores, with a number drawn from (seed, position),
+    so the same conversation, settings and seed give the same answer, with or without guessing; without a seed each
+    request gets a random one (returned in timings.sampling)."""
+    d = {"temperature": 1.0, "top_p": 1.0, "top_k": 0, "min_p": 0.0}
+    d.update(CFG.get("sampling") or {})
+    try:
+        t = float(body["temperature"]) if body.get("temperature") is not None else float(d["temperature"])
+        tp = float(body["top_p"]) if body.get("top_p") is not None else float(d["top_p"])
+        tk = int(body["top_k"]) if body.get("top_k") is not None else int(d["top_k"])
+        mp = float(body["min_p"]) if body.get("min_p") is not None else float(d["min_p"])
+        seed = int(body["seed"]) & ((1 << 63) - 1) if body.get("seed") is not None else int.from_bytes(os.urandom(8), "little") >> 1
+    except (TypeError, ValueError):
+        raise jerr(web.HTTPBadRequest, "temperature, top_p, top_k, min_p and seed must be numbers")
+    if not (0.0 <= t <= 100.0) or not (0.0 < tp <= 1.0) or tk < 0 or not (0.0 <= mp < 1.0):
+        raise jerr(web.HTTPBadRequest, "need 0 <= temperature <= 100, 0 < top_p <= 1, top_k >= 0, 0 <= min_p < 1")
+    if t < 1e-3:
+        t = 0.0
+    return {"temperature": t, "top_p": tp, "top_k": tk if tk < 201024 else 0, "min_p": mp, "seed": seed}
 
 
 def parse_effort(body):
@@ -662,6 +712,7 @@ async def chat_completions(request: web.Request):
     except jinja2.exceptions.TemplateError as e:
         raise jerr(web.HTTPBadRequest, f"template: {e}")
     max_new = int(body.get("max_completion_tokens") or body.get("max_tokens") or CFG.get("default_max_tokens", 32768))
+    samp = parse_sampling(body)
     stops = body.get("stop") or []
     if isinstance(stops, str):
         stops = [stops]
@@ -714,7 +765,7 @@ async def chat_completions(request: web.Request):
         await resp.prepare(request)
         await resp.write(sse(chunk({"role": "assistant", "content": ""})))
     try:
-        reason, gen, tm = await run_request(request, slot, prompt.encode(), mode, max_new, on_event)
+        reason, gen, tm = await run_request(request, slot, prompt.encode(), mode, max_new, on_event, samp)
     except EngineError as e:
         log(f"error: {e}")
         if stream:
@@ -805,7 +856,7 @@ async def completions(request: web.Request):
 
     try:
         slot, _, _ = pick_slot(None, ("raw",), lambda m: prompt)
-        reason, gen, tm = await run_request(request, slot, prompt.encode(), ("raw",), max_new, on_event)
+        reason, gen, tm = await run_request(request, slot, prompt.encode(), ("raw",), max_new, on_event, parse_sampling(body))
     except EngineError as e:
         if stream:
             await resp.write(sse({"error": {"message": str(e), "type": "server_error"}}))

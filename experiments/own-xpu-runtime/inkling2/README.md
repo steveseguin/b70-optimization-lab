@@ -837,6 +837,42 @@ follow-up renders the same on any card. Checked: two conversations at once on ca
 time) and the same turns on one card switching between the conversations both equal one conversation at a time on a
 third card (thinking and answers, 5 of 5 turns each, incl. a 7K-token document saved by one card and loaded by the
 other).
+Recall at 480K (2026-11-25, `tools/recall/`, card 1, the API server, most likely token, effort "none"): 20 facts ("the
+vault combination for project <name> is <5 digits>") at 2-97 % depth of a 480,641-token haystack of this repository's
+notes, plus one project that is not there. Read once in 1,376.5 s (349 tok/s) and saved (16.1 GB, 3.3 s); each
+question then loaded the save (2.6 s) and read ~30 tokens. 17 of 21 right: every fact from 32 % to 97 % and the
+"not found"; the 4 misses (2, 12, 22, 27 %) are thinking loops to the 3,000-token limit, not retrieval: a miss's
+thinking lists 17 of the 20 facts with the right codes and documents, then repeats its list. The model file names
+temperature 1.0 sampling (`general.sampling.temp 1.0`, top_k 0, top_p 1.0, min_p 0.0) and its card warns about
+reasoning loops.
+
+Sampling (2026-11-25, `ops::sample_rows`, `INK_SAMPLE="<T> <top_p> <top_k> <min_p> <seed>"`, serving `P` lines):
+one token per row from softmax(x / T) over the kept tokens (min_p, top_k and top_p as thresholds on the row's values,
+top_k and top_p by 32-step bisection), with the uniform number `sample_u(seed, position)` of the token's position:
+the first index whose running sum in index order passes u times the kept sum (each of 1,024 lanes sums a contiguous
+slice in order, lane 0 adds the slices in lane order, the lane holding the target walks its slice again). A check row
+equals a one-token step's row, so a sampled text is the same with or without guessing. Checked (card 2, code and 3K
+prompts, 256 tokens, T 1.0 with seeds 11 / 12, T 1.0 min_p 0.05, T 0.7 top_p 0.95 top_k 20): 8 of 8 texts identical
+plain / guessing / guessing again; seeds give different texts. Speed: plain 82.6-89.5 tok/s (top_p + top_k ~0.9 ms
+per token; T alone ~0), guessing 109-129 on code, 99-118 after 3K. Greedy unchanged (gate 12/12).
+
+State copies for serving (2026-11-25, `src/snapshot.hpp`): before a request's last message (and, when a second copy
+fits, before the conversation's first message after the system messages) the engine copies on the card what later
+positions overwrite: the 40 windowed rings, the short convolutions' state, the drafter's rings and context row (1,415
+MiB at 64K / 4,096-token steps; full-context caches need no copy, nothing writes below the copy's position). A request
+that starts with a copy's tokens restores it (~0.02 s) and reads only the rest; a copy that does not fit is skipped
+(none at 515K). Checked against `INK_SNAP=0` through the API (cards 4/5 vs 3): regenerate, edited last message,
+follow-up, new question after the same 8.7K-token document, a short new conversation, seeded sampling: 13 of 13
+answers identical, those reads 7-15 tokens in 0.04-0.08 s instead of 8.3-8.8 s.
+
+Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
+kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
+with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic
+speculative sampling (texts differ at a matched seed), their faster prompt path 29 of 30 top tokens against their own
+reference. Published: prompt 3,281 tok/s at 8K, 2,822 at 77K, 1,843 at 240K; writing 82.8 tok/s at 4K with DSpark
+(58.5 without), 74.5 at 77K, 51.1 at 231K, all sampled; peaks 166.7 / 199.9 tok/s on copy tasks (97 % of guesses kept).
+Longest context 262K; up to 4 requests per card. Against this engine: their prompt reading is 3-4x faster (16-bit
+matrix engines; ours is exact FP32 at ~85 % of the card's FP32 rate), our writing is faster on comparable tasks.
 The prompt's time in `ink_run` now ends with a wait for the card (`feed` returns once its launches are queued; a
 1,261-token piece in serving showed 0.008 s); the 3K and 1K prompts time the same as before (3.032 vs 3.033 s, 0.975
 vs 0.973 s, card 4).
