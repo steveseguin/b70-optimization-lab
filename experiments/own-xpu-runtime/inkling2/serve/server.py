@@ -942,7 +942,8 @@ async def models(request):
 
 async def health(request):
     cards = [{"card": sl.engine.card, "status": sl.engine.state, "detail": sl.engine.detail, "context": sl.engine.ctx,
-              "held_conversation_tokens": len(sl.session.ids), "busy": sl.lock.locked(), "requests": sl.requests,
+              "held_conversation_tokens": len(sl.session.ids), "busy": sl.lock.locked(), "routed": sl.pending,
+              "requests": sl.requests,
               "last_load_s": sl.engine.load_s} for sl in SLOTS]
     sts = {c["status"] for c in cards}
     status = "ready" if "ready" in sts else ("fault" if sts == {"fault"} else cards[0]["status"])

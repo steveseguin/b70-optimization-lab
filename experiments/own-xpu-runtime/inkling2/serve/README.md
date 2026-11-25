@@ -28,7 +28,13 @@ Each card's engine keeps the latest conversation it answered:
   card. An answer depends only on its conversation, not on which card ran it or what else was asked meanwhile
   (checked: two cards at once, and one card switching between two conversations, gave the same thinking and
   answers as one conversation at a time).
-- Host memory: about 1.3 GB per engine at any context size.
+- Host memory: about 1.3 GB per engine at any context size (five engines up: 7.6 GB of 15 GB still available).
+- Checked under load: 8 clients x 3 turns on 5 cards (streaming and not, a stop string, the default thinking effort,
+  a client that dropped its stream mid-answer and asked again): 12.1 s instead of 37.3 s one at a time, and all 24
+  answers identical to a fresh one-card server answering each conversation alone.
+- Tool calls (checked, streamed and not, same results): asked for the weather in two cities with two tools offered,
+  the model called `get_weather` twice in one answer (`finish_reason` "tool_calls"), then answered from the results;
+  the second request read only the tool results (387 of 456 tokens cached).
 
 ## The library: long documents read once
 

@@ -187,10 +187,12 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 25 ~09:05: the Inkling server runs one engine per card (cards 1-5 by default): five conversations at once,
+- Nov 25 ~08:52: the Inkling server runs one engine per card (cards 1-5 by default): five conversations at once,
   follow-ups go back to their card, and an answer is the same whichever card runs it (checked against one card, 10 of
-  10 turns identical). Context grows by need (64K -> 128K -> 300K -> 515K per card, the conversation kept). Still
-  not running: hosting it is the owner's call.
+  10 turns identical). Context grows by need (64K -> 128K -> 300K -> 515K per card, the conversation kept). Under
+  load (8 clients x 3 turns on 5 cards, streams, a stop string, a dropped stream): 12.1 s vs 37.3 s one at a time,
+  24/24 answers identical to one conversation at a time; ~1.3 GB host memory per engine. Still not running: hosting
+  it is the owner's call.
 - Nov 25 ~08:40: **a LAN server for this engine is ready (not running)**: `serve/` in the lane, installed in
   `/home/steve/inkling-serve` (OpenAI API, port 8001, one card; the DeepSeek server's design: one held conversation,
   follow-ups read only the new words). A library of saved prompts: a long document is read once
