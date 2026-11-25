@@ -187,7 +187,10 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 25 ~10:50: Inkling server: optional **thinking budget** (`thinking_budget`, `max_thinking_tokens` or Anthropic
+- Nov 25 ~11:10: Inkling engine reads **pictures**: Unsloth's image encoder runs on the card (0.08 s for a 640 x 360
+  card, 0.35 s for a 1024 x 640 photo), matching the reference's high-precision rows to ~3e-6; a picture question
+  gives the reference's 100 greedy tokens exactly. Server support next.
+- Nov 25 ~10:30: Inkling server: optional **thinking budget** (`thinking_budget`, `max_thinking_tokens` or Anthropic
   `thinking.budget_tokens`): after N thinking tokens it ends the thinking and starts the answer (reads 3 tokens);
   below the budget answers are unchanged (7/7 identical on a second server). Unsloth re-laid the model files for
   standard llama.cpp on Nov 23 (same tensors; drafter same weights) and added image-input files (mmproj).

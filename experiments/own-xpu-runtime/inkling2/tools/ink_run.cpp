@@ -4,6 +4,7 @@
 // INK_DUMP=<dir> saves the reference's named tensors for the prompt (one step: prompt <= INK_UBATCH tokens).
 #include "../src/cache_file.hpp"
 #include "../src/snapshot.hpp"
+#include "../src/vision.hpp"
 #include <memory>
 #include <cstring>
 #include <fstream>
@@ -298,6 +299,32 @@ int main(int argc, char **argv) {
         Snapshot snap, snapb;
         if (serve) snap.init(e, dr.get());
         if (serve && snap.ok) snapb.init(e, dr.get());
+        // INK_VISION=<mmproj.gguf>: the image encoder (src/vision.hpp), when it fits after the copies
+        Vision vis(e);
+        if (const char *vp = std::getenv("INK_VISION")) vis.init(vp);
+        // INK_IMAGE_TEST=<rgb file>:<width>:<height>:<out file>: encode one picture (8-bit RGB rows), save its rows
+        // (rows x 2304 floats) and stop
+        if (const char *it = std::getenv("INK_IMAGE_TEST")) {
+            std::string a(it);
+            const size_t c1 = a.find(':'), c2 = a.find(':', c1 + 1), c3 = a.find(':', c2 + 1);
+            if (c1 == std::string::npos || c2 == std::string::npos || c3 == std::string::npos)
+                throw std::runtime_error("INK_IMAGE_TEST=<rgb file>:<width>:<height>:<out file>");
+            const int w = std::atoi(a.substr(c1 + 1, c2 - c1 - 1).c_str()), hh = std::atoi(a.substr(c2 + 1, c3 - c2 - 1).c_str());
+            std::ifstream f(a.substr(0, c1), std::ios::binary);
+            std::vector<uint8_t> rgb((size_t)w * hh * 3);
+            if (!f.read((char *)rgb.data(), (std::streamsize)rgb.size())) throw std::runtime_error("INK_IMAGE_TEST: short rgb file");
+            int M = 0;
+            for (int rep = 0; rep < 3; ++rep) {
+                std::vector<float> rows = vis.encode(rgb.data(), w, hh, M);
+                std::fprintf(stderr, "[vision] %d x %d -> %d rows in %.3f s\n", w, hh, M, vis.last_s);
+                if (rep == 0) {
+                    std::ofstream o(a.substr(c3 + 1), std::ios::binary);
+                    o.write((const char *)rows.data(), (std::streamsize)(rows.size() * sizeof(float)));
+                }
+            }
+            if (e.prof.on) { e.prof.collect(); e.prof.report(stderr); }
+            return 0;
+        }
         const bool lk_serve = serve && std::getenv("INK_SPEC") && std::atoi(std::getenv("INK_SPEC")) > 0 &&
                               (!std::getenv("INK_SPEC_LOOKUP") || std::atoi(std::getenv("INK_SPEC_LOOKUP")));
         if (serve) {
@@ -312,6 +339,16 @@ int main(int argc, char **argv) {
             sout("@@READY " + std::to_string(e.cap));
         }
         const char *lib_dir = std::getenv("INK_SERVE_CACHES");
+        // pictures (serving): V lines register a picture's rows under ids from Engine::XID0 + key (the server's 30-bit
+        // hash of the picture), kept in host memory up to INK_VISION_HOST_MB (default 256) MiB; the least recently
+        // used ones go first, never one registered since the last G line
+        struct Pic { std::vector<float> rows; int M = 0, w = 0, h = 0; uint64_t used = 0; };
+        std::map<uint32_t, Pic> pics;
+        uint64_t pic_gen = 1;
+        size_t pic_bytes = 0;
+        const size_t pic_cap = (size_t)(std::getenv("INK_VISION_HOST_MB") ? std::atol(std::getenv("INK_VISION_HOST_MB")) : 256) << 20;
+        constexpr uint32_t XSPAN = (1u << 30) - 1;
+        auto pic_ids = [&](uint32_t key, int r) { return (int32_t)(Engine::XID0 + (int32_t)((key + (uint32_t)r) % XSPAN)); };
         for (int turn = 0;; ++turn) {
         if (serve) {
             std::vector<int32_t> ids;
@@ -339,6 +376,50 @@ int main(int argc, char **argv) {
                     } catch (std::exception &ex) { sout("@@E " + id + " save " + std::string(ex.what()).substr(0, 200)); }
                     continue;
                 }
+                if (cmd == "V") { // V <id> <key> <width> <height> <rgb file>: a picture's rows for the next G lines
+                    unsigned long key = 0;
+                    int w = 0, hh = 0;
+                    std::string path;
+                    is >> key >> w >> hh >> path;
+                    try {
+                        if (!is || w < 1 || hh < 1) throw std::runtime_error("bad-V-line");
+                        if (!vis.ok) throw std::runtime_error("no-image-encoder");
+                        const uint32_t k = (uint32_t)(key & ((1ul << 30) - 1));
+                        auto it = pics.find(k);
+                        char b[160];
+                        if (it != pics.end()) {
+                            if (it->second.w != w || it->second.h != hh) throw std::runtime_error("image-id-collision");
+                            it->second.used = pic_gen;
+                            std::snprintf(b, sizeof b, "@@V %s %d 0.000 cached", id.c_str(), it->second.M);
+                            sout(b);
+                            continue;
+                        }
+                        std::ifstream f(path, std::ios::binary);
+                        std::vector<uint8_t> rgb((size_t)w * hh * 3);
+                        if (!f.read((char *)rgb.data(), (std::streamsize)rgb.size())) throw std::runtime_error("short-rgb-file");
+                        Pic pc;
+                        pc.w = w; pc.h = hh; pc.used = pic_gen;
+                        pc.rows = vis.encode(rgb.data(), w, hh, pc.M);
+                        for (int r = 0; r < pc.M; ++r)
+                            if (e.xrow.count(pic_ids(k, r))) throw std::runtime_error("image-id-collision");
+                        const size_t nb = pc.rows.size() * sizeof(float);
+                        while (pic_bytes + nb > pic_cap) { // least recently used first, never one of this request
+                            auto lru = pics.end();
+                            for (auto jt = pics.begin(); jt != pics.end(); ++jt)
+                                if (jt->second.used < pic_gen && (lru == pics.end() || jt->second.used < lru->second.used)) lru = jt;
+                            if (lru == pics.end()) break;
+                            for (int r = 0; r < lru->second.M; ++r) e.xrow.erase(pic_ids(lru->first, r));
+                            pic_bytes -= lru->second.rows.size() * sizeof(float);
+                            pics.erase(lru);
+                        }
+                        Pic &st = pics[k] = std::move(pc);
+                        for (int r = 0; r < st.M; ++r) e.xrow[pic_ids(k, r)] = st.rows.data() + (size_t)r * Vision::OUT;
+                        pic_bytes += nb;
+                        std::snprintf(b, sizeof b, "@@V %s %d %.3f", id.c_str(), st.M, vis.last_s);
+                        sout(b);
+                    } catch (std::exception &ex) { sout("@@E " + id + " image " + std::string(ex.what()).substr(0, 200)); }
+                    continue;
+                }
                 if (cmd == "P") { // P <id> <temperature> <top_p> <top_k> <min_p> <seed>: sampling for the G of that id
                     ops::SampleArgs a;
                     unsigned long long sd = 0;
@@ -356,10 +437,11 @@ int main(int argc, char **argv) {
                 ids.clear();
                 for (long i = 0; i < n && is; ++i) { long v; is >> v; ids.push_back((int32_t)v); }
                 bool bad = !is || (long)ids.size() != n || n < 1 || mx < 1;
-                for (int32_t v : ids) bad |= v < 0 || v >= e.m.hp.vocab;
+                for (int32_t v : ids) bad |= v < 0 || (v >= e.m.hp.vocab && !(v >= Engine::XID0 && e.xrow.count(v)));
                 if (bad) { sout("@@E " + id + " bad-request"); continue; }
                 if ((long)ids.size() + mx + 8 > e.cap) { sout("@@E " + id + " context " + std::to_string(e.cap)); continue; }
                 rid = id; max_new = (int)mx; got = true;
+                ++pic_gen;
                 // sampling when a P line for this id came first, else the most likely token
                 e.samp = samp_id == id ? samp_next : ops::SampleArgs{};
                 e.samp_seed = samp_id == id ? samp_seed_next : 0;

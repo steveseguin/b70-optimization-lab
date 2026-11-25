@@ -10,6 +10,7 @@
 #include "fused.hpp"
 #include "tok_tiles.hpp"
 #include "multi.hpp"
+#include <unordered_map>
 #include "warm.hpp"
 #include "ops.hpp"
 #include <cmath>
@@ -562,6 +563,11 @@ struct Engine {
     sycl::event embd_ev[2];
     int embd_k = 0;
     int32_t last_tok = -1; // the host's copy of next_token()'s choice (ids[0] for step(nullptr, 1))
+    // picture rows (src/vision.hpp) by their ids: ids from XID0 up stand for rows the caller registered here (2304
+    // floats in host memory each), read in place of a token's embedding and without the token norm
+    // (notes/inkling2-vision.md 4.2)
+    static constexpr int32_t XID0 = 1 << 30;
+    std::unordered_map<int32_t, const float *> xrow;
     void embed(const int32_t *tok, int ntok, float *dst) {
         const Tensor &t = *m.tok_embd.t;
         const int n = (int)t.ne[0], nc = n / 32;
@@ -572,6 +578,12 @@ struct Engine {
         st.resize((size_t)ntok * n);
         fmt::dispatch(t.type, [&]<class FT>() {
             for (int i = 0; i < ntok; ++i) {
+                if (tok[i] >= XID0) {
+                    auto it = xrow.find(tok[i]);
+                    if (it == xrow.end()) throw std::runtime_error("engine: picture row " + std::to_string(tok[i]) + " is not loaded");
+                    std::memcpy(st.data() + (size_t)i * n, it->second, sizeof(float) * n);
+                    continue;
+                }
                 if (tok[i] < 0 || tok[i] >= rows) throw std::runtime_error("engine: token id " + std::to_string(tok[i]) + " out of range");
                 const uint8_t *row = embd_tab.data() + (size_t)tok[i] * rb;
                 for (int c = 0; c < nc; ++c) FT::decode32(row, c, st.data() + (size_t)i * n + 32 * c);
@@ -747,12 +759,24 @@ struct Engine {
         if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
         tau = tau_all + pos0;
         // embedding and token norm (inkling2.cpp:347-352)
-        if (m.tok_embd.p) pr("get_rows", ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok));
-        else {
+        bool pics = false;
+        if (tok) for (int i = 0; i < ntok; ++i) pics |= tok[i] >= XID0;
+        if (m.tok_embd.p) {
+            if (pics) throw std::runtime_error("engine: picture rows need the host embedding table (INK_EMBD_HOST)");
+            pr("get_rows", ops::get_rows(d.q, *m.tok_embd.t, m.tok_embd.p, ids, lbuf[0], ntok));
+        } else {
             if (!tok && (ntok != 1 || last_tok < 0)) throw std::runtime_error("engine: step(nullptr) needs next_token() first");
             embed(tok ? tok : &last_tok, ntok, lbuf[0]);
         }
-        pr("rms_norm", ops::rms_norm(d.q, lbuf[0], lbuf[0], f32(m.tok_norm), E, ntok, h.eps));
+        if (!pics) pr("rms_norm", ops::rms_norm(d.q, lbuf[0], lbuf[0], f32(m.tok_norm), E, ntok, h.eps));
+        else // the token rows' norm, run by run (a row's norm does not depend on the others); picture rows stay as they are
+            for (int i = 0; i < ntok;) {
+                if (tok[i] >= XID0) { ++i; continue; }
+                int j = i;
+                while (j < ntok && tok[j] < XID0) ++j;
+                pr("rms_norm", ops::rms_norm(d.q, lbuf[0] + (size_t)i * E, lbuf[0] + (size_t)i * E, f32(m.tok_norm), E, j - i, h.eps));
+                i = j;
+            }
 
         std::vector<const float *> blocks, prelude_blocks, bank;
         const float *cur = lbuf[0], *prelude_cur = nullptr, *bank_last = nullptr;

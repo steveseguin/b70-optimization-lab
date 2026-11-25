@@ -866,6 +866,21 @@ that starts with a copy's tokens restores it (~0.02 s) and reads only the rest; 
 follow-up, new question after the same 8.7K-token document, a short new conversation, seeded sampling: 13 of 13
 answers identical, those reads 7-15 tokens in 0.04-0.08 s instead of 8.3-8.8 s.
 
+Pictures (2026-11-25, `src/vision.hpp`, `INK_VISION=<mmproj-BF16.gguf>`; the reference's math in
+`notes/inkling2-vision.md`): Unsloth's image encoder (`mmproj-BF16.gguf`, 318M parameters, sha256 2c165c78...)
+runs on the target's card in F32 with fixed summation orders: pad to multiples of 40 pixels, normalize, F16 pixels
+as the reference's im2col, 20-pixel patches + the bilinear-resized 32 x 32 position table, a CLS row, 23 LayerNorm /
+2D-RoPE attention / GELU blocks with layer scales, 2 x 2 merge, the 4096 -> 4096 -> 2304 projector. Each 40 x 40
+pixel block becomes one row the text model reads without the token norm, between `<|message_user|><|content_image|>`
+and `<|end_message|>`. Ids from 2^30 stand for picture rows (`Engine::xrow`); serving registers a picture with a
+`V <id> <key> <w> <h> <rgb file>` line (the 30-bit key from the server's hash of the pixels picks its ids). Checked
+against the reference in its high-precision mode (`tools/ref_vision.cpp`, `GGML_CPU_F32_ACT=1 REF_FA=0`): a 640 x 360
+test card (144 rows) within 2.1e-6 relative L2 (worst row 9.5e-6), a 1024 x 640 photo (416 rows, padded, both
+table axes resized) within 3.4e-6; identical across processes and cards (2, 3); the card's question answered with
+the reference's 100 greedy tokens exactly (`tools/vision/engine_e2e.py`, card 2: it reads "CODE 4729-K", the green
+circle and the yellow square). Encoding: 0.078 s for 144 rows, 0.35 s for 416 (the reference: 1.1 s on the CPU);
+1.07 GiB on the card (weights + buffers for 4,096 rows), loaded only when it fits after the state copies. Gate 12/12.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic
