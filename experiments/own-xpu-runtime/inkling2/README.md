@@ -883,7 +883,9 @@ patches; attention is 90 % of it) with the attention as register tiles in one la
 `attn_flash.hpp`: 16 query rows per sub-group, 32-key blocks, running maximum); separate launches took 23.8 s and a
 first one-launch version 7.6 s (`INK_VISION_ATTN=split` / `fused1` keep them). A 1290 x 810 picture (both position
 table axes enlarged) matches the reference within 4.7e-6 (the reference: 1.1 s on the CPU for the card);
-1.07 GiB on the card (weights + buffers for 4,096 rows), loaded only when it fits after the state copies. Gate 12/12.
+1.07 GiB on the card (weights + buffers for 4,096 rows), loaded only when it fits after the state copies. The gate
+(`scripts/check-exact.sh`) now has 14 checks: the test card's 144 rows bit-identical to the baseline's
+(`baseline/vision/rows.f32`, made with `attention_rt`) and its 100 greedy ids equal to the reference's.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement

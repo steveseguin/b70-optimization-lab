@@ -16,6 +16,9 @@
 #     7 guesses checked every round (INK_DRAFT, INK_SPEC=7, INK_SPEC_ADAPT=0, INK_DSP_STOP=0: steps of 8 tokens): ids and every chosen
 #     logits row
 #   card C, then: code 128 with the drafter choosing 0-7 guesses per round (INK_SPEC=7, steps of 1-8 tokens): ids
+#   card B, then (when the baseline has vision/): the 640 x 360 test card (tools/vision/card.png) through the image
+#     encoder: its 144 rows must equal the baseline's bit for bit; then the card's question with those rows in a
+#     serving engine (tools/vision/engine_e2e.py): 100 greedy ids must equal the reference's (llama.cpp's image path)
 # Prints PASS or FAIL lines and the writing speed. Cards: INK_CHECK_CARDS (default "1 2 3 4 5"). The results folder
 # (~1.2 GB) is removed when everything passes, kept on a failure.
 set -u
@@ -24,6 +27,7 @@ base=${2:-/home/steve/inkling-work/baseline}
 W=/home/steve/inkling-work
 M=${INK_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/Inkling-2-Mini-UD-IQ4_XS.gguf}
 DR=${INK_DRAFT_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/dspark-Inkling-2-Mini-Q8_0.gguf}
+MP=${INK_VISION_MODEL:-/mnt/fast-ai/llm-models/Inkling-2-Mini-GGUF/mmproj-BF16.gguf}
 S=$(cd "$(dirname "$0")" && pwd)/on-card.sh
 read -r cA cB cC cD cE <<< "${INK_CHECK_CARDS:-1 2 3 4 5}"
 # five distinct cards (a missing one would run its checks on card 0)
@@ -35,7 +39,11 @@ INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /de
   INK_SPEC=3 INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/spec-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/spec-haiku.ids" 2> "$out/spec-haiku.err"
   INK_SPEC=3 INK_SPEC_LOOKUP=0 "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/code.tokens" 128 > "$out/spec-code.ids" 2> "$out/spec-code.err"
   INK_DRAFT=$DR INK_SPEC=7 INK_SPEC_ADAPT=0 INK_DSP_STOP=0 INK_SAVE_GEN=$out/dspark-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/dspark-haiku.ids" 2> "$out/dspark-haiku.err"; } &
-INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err" &
+{ INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 64 > "$out/haiku.ids" 2> "$out/haiku.err"
+  if [ -d "$base/vision" ]; then
+    INK_VISION=$MP INK_IMAGE_TEST=$base/vision/card.rgb:640:360:$out/vision-rows.f32 "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.tokens" 8 > /dev/null 2> "$out/vision.err"
+    python3 -I "$(dirname "$S")/../tools/vision/engine_e2e.py" "$cB" "$base/vision/card.rgb" 640 360 "$base/vision/chunks.txt" 100 "$out/vision-gen.ids" "$bin" > "$out/vision-e2e.out" 2>&1
+  fi; } &
 { "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err"
   INK_DRAFT=$DR INK_SPEC=7 "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/dspark-code.ids" 2> "$out/dspark-code.err"; } &
 { INK_SAVE_GEN=$out/long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/long16.ids" 2> "$out/long16.err"
@@ -81,6 +89,12 @@ PY
     if [ -f "$base/haiku.gen" ]; then
         if cmp -s "$base/haiku.gen" "$out/spec-haiku.gen"; then echo "PASS spec haiku: every chosen logits row bit-identical"
         else echo "FAIL spec haiku: chosen logits rows differ ($(cmp "$base/haiku.gen" "$out/spec-haiku.gen" | head -1))"; rc=1; fi
+    fi
+    if [ -d "$base/vision" ]; then
+        if cmp -s "$base/vision/rows.f32" "$out/vision-rows.f32"; then echo "PASS picture rows: 144 rows of the test card bit-identical ($(grep -h '\[vision\] 640' "$out/vision.err" | tail -1 | sed 's/.* in //'))"
+        else echo "FAIL picture rows: differ from the baseline"; rc=1; fi
+        if [ -s "$out/vision-gen.ids" ] && cmp -s <(tr -s ' \n' '\n' < "$base/vision/gen.ids") <(tr -s ' \n' '\n' < "$out/vision-gen.ids"); then echo "PASS picture answer: 100 greedy ids equal the reference's"
+        else echo "FAIL picture answer: ids differ from the reference's (see $out/vision-e2e.out)"; rc=1; fi
     fi
     if [ -f "$base/haiku.gen" ]; then
         if cmp -s "$base/haiku.gen" "$out/haiku.gen"; then echo "PASS haiku: logits rows of all 64 steps bit-identical ($(stat -c %s "$out/haiku.gen") bytes)"

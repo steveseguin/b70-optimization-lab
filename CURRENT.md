@@ -187,6 +187,8 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~12:00: Inkling gate has 14 checks (adds the test card's picture rows and its 100-token answer vs the
+  reference); 14/14 on the deployed build. Next: several conversations per card.
 - Nov 25 ~11:55: Inkling picture encoding 7x faster for big pictures (attention as register tiles: 4,015-row
   picture 23.8 -> 3.3 s, small card 0.08 -> 0.04 s); same match to the reference, identical across cards, 100/100
   greedy tokens, gate 12/12, server 8/8 identical; deployed build in /home/steve/inkling-serve/bin.
