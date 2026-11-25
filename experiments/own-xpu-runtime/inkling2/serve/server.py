@@ -488,7 +488,7 @@ def merge_known(raw_msgs, mode):
     return out
 
 
-async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, ctl, samp=None):
+async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, ctl, samp=None, think_budget=None):
     ENGINE, SESSION, LOCK = slot.engine, slot.session, slot.lock
     STATS["waiting"] += 1
     try:
@@ -540,13 +540,24 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         if ENGINE.state != "ready":
             SESSION.clear()
             await ENGINE.start()
-        rid = uuid.uuid4().hex[:12]
-        q = asyncio.Queue()
-        ENGINE.queues[rid] = q
         gen = []
         t0 = time.time()
-        stopped = False
-        try:
+        st = {"stopped": False}
+
+        async def one_g(ids_g, mx):
+            """One G line: the answer's tokens go to gen and on_event; returns the engine's D fields."""
+            rid = uuid.uuid4().hex[:12]
+            q = asyncio.Queue()
+            ENGINE.queues[rid] = q
+            try:
+                return await _one_g(rid, q, ids_g, mx)
+            finally:
+                ENGINE.queues.pop(rid, None)
+
+        async def _one_g(rid, q, ids_g, mx):
+            ids = ids_g
+            max_new = mx
+            stopped = st["stopped"]
             if samp and samp["temperature"] > 0:
                 await ENGINE.send(f"P {rid} {samp['temperature']!r} {samp['top_p']!r} {samp['top_k']} {samp['min_p']!r} {samp['seed']}")
             await ENGINE.send(f"G {rid} {max_new} 1 {EOS} {len(ids)} " + " ".join(map(str, ids)))
@@ -577,8 +588,39 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
                 elif kind == "X":
                     SESSION.clear()
                     raise EngineError("the engine stopped during the request (code " + data[0] + "); it restarts with the next request")
-        finally:
-            ENGINE.queues.pop(rid, None)
+            st["stopped"] = stopped
+            return done
+
+        # a thinking budget: the first part stops after the budget's thinking tokens (the answer's head <|message_model|>
+        # <|content_thinking|> is 2 more); still thinking there, the end of the thinking part and the head of a text
+        # part are added and the answer goes on (the engine reads those 3 tokens). Parts of any size give the same
+        # tokens as one, so below the budget nothing changes
+        cut = think_budget is not None and think_budget + 2 < max_new
+        done = await one_g(ids, think_budget + 2 if cut else max_new)
+        thinking_cut = False
+        if cut and done[0] == "max" and not st["stopped"]:
+            in_think = False
+            for t in gen:
+                if t == C_THINK:
+                    in_think = True
+                elif t in (END_MSG, MSG_MODEL, EOS):
+                    in_think = False
+            if in_think:
+                inject = [END_MSG, MSG_MODEL, C_TEXT]
+                gen.extend(inject)
+                thinking_cut = True
+                try:
+                    if await on_event("T", inject):
+                        st["stopped"] = True
+                except (ConnectionResetError, RuntimeError, asyncio.CancelledError):
+                    st["stopped"] = True
+            rest = max_new - len(gen)
+            if rest >= 1 and not st["stopped"]:
+                d1 = done
+                done = await one_g(ids + gen, rest)
+                done = [done[0], str(int(d1[1]) + int(done[1])), done[2], str(float(d1[3]) + float(done[3])),
+                        str(float(d1[4]) + float(done[4])), str(int(d1[5]) + int(done[5])), str(int(d1[6]) + int(done[6])),
+                        str(int(d1[7]) + int(done[7]))] + list(done[8:])
         SESSION.ids = ids + gen
         SESSION.raw = TOK.bytes_of(SESSION.ids)
         SESSION.mode = mode
@@ -586,6 +628,9 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
               "answer_s": float(done[4]), "rounds": int(done[5]), "guesses": int(done[6]), "kept_guesses": int(done[7]),
               "context_used": int(done[8]), "total_s": round(time.time() - t0, 3)}
         tm["sampling"] = dict(samp) if samp and samp["temperature"] > 0 else {"temperature": 0}
+        if think_budget is not None:
+            tm["thinking_budget"] = think_budget
+            tm["thinking_cut"] = thinking_cut
         tm["answer_tok_per_s"] = round(max(0, len(gen) - 1) / max(1e-6, tm["answer_s"]), 2)
         tm["read_tok_per_s"] = round(tm["read_tokens"] / max(1e-6, tm["read_s"]), 1)
         log(f"card {ENGINE.card}: conversation {len(ids)} tokens, read {tm['read_tokens']} in {tm['read_s']:.2f} s, "
@@ -595,11 +640,11 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         LOCK.release()
 
 
-async def run_request(request, slot, prompt_bytes: bytes, mode, max_new: int, on_event, samp=None):
+async def run_request(request, slot, prompt_bytes: bytes, mode, max_new: int, on_event, samp=None, think_budget=None):
     """Runs the engine job as its own task: a client that leaves stops the answer at the next round, and the
     conversation the engine holds stays consistent."""
     ctl = {"alive": lambda: request.transport is not None and not request.transport.is_closing()}
-    job = asyncio.create_task(_engine_job(slot, prompt_bytes, mode, max_new, on_event, ctl, samp))
+    job = asyncio.create_task(_engine_job(slot, prompt_bytes, mode, max_new, on_event, ctl, samp, think_budget))
     try:
         return await asyncio.shield(job)
     except asyncio.CancelledError:
@@ -634,6 +679,28 @@ def parse_sampling(body):
     if t < 1e-3:
         t = 0.0
     return {"temperature": t, "top_p": tp, "top_k": tk if tk < 201024 else 0, "min_p": mp, "seed": seed}
+
+
+def parse_think_budget(body):
+    """At most this many thinking tokens, then the answer: "thinking_budget" (also in chat_template_kwargs),
+    "max_thinking_tokens", or Anthropic-style "thinking": {"type": "enabled", "budget_tokens": N}; default config.json
+    "thinking_budget" (none: the model decides)."""
+    kw = body.get("chat_template_kwargs") or {}
+    v = body.get("thinking_budget", kw.get("thinking_budget", body.get("max_thinking_tokens")))
+    th = body.get("thinking")
+    if v is None and isinstance(th, dict) and th.get("budget_tokens") is not None:
+        v = th["budget_tokens"]
+    if v is None:
+        v = CFG.get("thinking_budget")
+    if v is None:
+        return None
+    try:
+        v = int(v)
+    except (TypeError, ValueError):
+        raise jerr(web.HTTPBadRequest, "thinking_budget must be a whole number of tokens")
+    if v < 0:
+        raise jerr(web.HTTPBadRequest, "thinking_budget must be 0 or more")
+    return v
 
 
 def parse_effort(body):
@@ -713,6 +780,7 @@ async def chat_completions(request: web.Request):
         raise jerr(web.HTTPBadRequest, f"template: {e}")
     max_new = int(body.get("max_completion_tokens") or body.get("max_tokens") or CFG.get("default_max_tokens", 32768))
     samp = parse_sampling(body)
+    think_budget = parse_think_budget(body)
     stops = body.get("stop") or []
     if isinstance(stops, str):
         stops = [stops]
@@ -765,7 +833,7 @@ async def chat_completions(request: web.Request):
         await resp.prepare(request)
         await resp.write(sse(chunk({"role": "assistant", "content": ""})))
     try:
-        reason, gen, tm = await run_request(request, slot, prompt.encode(), mode, max_new, on_event, samp)
+        reason, gen, tm = await run_request(request, slot, prompt.encode(), mode, max_new, on_event, samp, think_budget)
     except EngineError as e:
         log(f"error: {e}")
         if stream:

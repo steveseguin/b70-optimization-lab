@@ -12,6 +12,12 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
 - `"reasoning_effort"`: none, minimal, low, medium, high, xhigh, max, or a number 0-0.99.
 - The thinking text arrives as `reasoning_content`; the answer as `content`. Tool calls, streaming, `stop`
   strings and `/v1/completions` work.
+- Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
+  Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
+  none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>
+  <|message_model|><|content_text|>`; the engine reads those 3 tokens and goes on), so a long or looping think cannot
+  use up `max_tokens`. `timings.thinking_cut` says whether it cut. Below the budget the answer is the same as without
+  one (checked; and a cut answer is the same on a second server).
 - Sampling: `temperature`, `top_p`, `top_k`, `min_p`, `seed`. Unset ones take the model file's recommended values
   (`general.sampling.*`: temperature 1.0, top_p 1.0, top_k 0, min_p 0.0; `"sampling"` in `config.json` overrides).
   `temperature: 0` gives the most likely token at every step. The engine samples from the model's exact scores with a
