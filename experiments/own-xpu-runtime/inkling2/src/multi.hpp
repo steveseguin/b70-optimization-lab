@@ -101,14 +101,25 @@ template <class D, int R, int M, bool XL>
 // in one launch. The job's
 // pointers come from an array chosen at run time, so the compiler sees them as generic; gptr (gemv.hpp) makes the
 // loads global (without it M = 4, R 2 took 26.4 us, with it 20.7)
-template <int M, bool XL> struct GemvMultiM {
+// BIG: the large register file (256 registers per thread, half the threads per core) and 1, 2 or 4 rows per sub-group
+// for any M: each x chunk loaded once serves R rows (5-8 vectors at one row per sub-group load 8 floats of x per
+// weight). The (row, vector) sums are gemvM_rows' for any R, so the values do not change.
+template <int M, bool XL, bool BIG = false> struct GemvMultiM {
     MultiJobs m;
     int sgw;
+    auto get(sycl::ext::oneapi::experimental::properties_tag) const {
+        if constexpr (BIG) return sycl::ext::oneapi::experimental::properties{sycl::ext::intel::experimental::grf_size<256>};
+        else return sycl::ext::oneapi::experimental::properties{};
+    }
     template <class D> static void run(sycl::sub_group sg, const GJob &g, int r0) {
         const uint8_t *W = gptr(g.W);
         const float *x = gptr(g.x);
         float *y = gptr(g.y);
-        if constexpr (M > 4) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+        if constexpr (BIG) {
+            if (g.R == 4) gemvM_rows<D, 4, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+            else if (g.R == 2) gemvM_rows<D, 2, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+            else gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
+        } else if constexpr (M > 4) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
         else if (g.R == 1) gemvM_rows<D, 1, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
         else gemvM_rows<D, 2, M, XL>(sg, W, g.rb, g.rows, g.cols, x, g.ldx, y, g.ldy, r0);
     }
@@ -128,12 +139,29 @@ template <int M, bool XL> struct GemvMultiM {
         }
     }
 };
-inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool xl, int sgw = 2) {
-    if (M > 4)
-        for (int j = 0; j < m.nj; ++j)
-            if (m.j[j].R != 1) throw std::runtime_error("gemv_multi_m: 5-8 vectors take one row per sub-group");
+inline sycl::event gemv_multi_m(sycl::queue &q, const MultiJobs &m, int M, bool xl, int sgw = 2, bool big = false) {
+    for (int j = 0; j < m.nj; ++j)
+        if (big ? (m.j[j].R != 1 && m.j[j].R != 2 && m.j[j].R != 4) : (M > 4 && m.j[j].R != 1))
+            throw std::runtime_error(big ? "gemv_multi_m: 1, 2 or 4 rows per sub-group" : "gemv_multi_m: 5-8 vectors take one row per sub-group");
     const int ngr = (m.nsg + sgw - 1) / sgw;
     const sycl::nd_range<1> nr(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG));
+    if (big) switch (M * 2 + (xl ? 1 : 0)) {
+    case 4: return q.parallel_for(nr, GemvMultiM<2, false, true>{m, sgw});
+    case 5: return q.parallel_for(nr, GemvMultiM<2, true, true>{m, sgw});
+    case 6: return q.parallel_for(nr, GemvMultiM<3, false, true>{m, sgw});
+    case 7: return q.parallel_for(nr, GemvMultiM<3, true, true>{m, sgw});
+    case 8: return q.parallel_for(nr, GemvMultiM<4, false, true>{m, sgw});
+    case 9: return q.parallel_for(nr, GemvMultiM<4, true, true>{m, sgw});
+    case 10: return q.parallel_for(nr, GemvMultiM<5, false, true>{m, sgw});
+    case 11: return q.parallel_for(nr, GemvMultiM<5, true, true>{m, sgw});
+    case 12: return q.parallel_for(nr, GemvMultiM<6, false, true>{m, sgw});
+    case 13: return q.parallel_for(nr, GemvMultiM<6, true, true>{m, sgw});
+    case 14: return q.parallel_for(nr, GemvMultiM<7, false, true>{m, sgw});
+    case 15: return q.parallel_for(nr, GemvMultiM<7, true, true>{m, sgw});
+    case 16: return q.parallel_for(nr, GemvMultiM<8, false, true>{m, sgw});
+    case 17: return q.parallel_for(nr, GemvMultiM<8, true, true>{m, sgw});
+    default: throw std::runtime_error("gemv_multi_m: 2 to 8 vectors");
+    }
     switch (M * 2 + (xl ? 1 : 0)) {
     case 4: return q.parallel_for(nr, GemvMultiM<2, false>{m, sgw});
     case 5: return q.parallel_for(nr, GemvMultiM<2, true>{m, sgw});

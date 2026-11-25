@@ -152,6 +152,18 @@ struct Engine {
     static constexpr int SB_MAX = 8;
     bool sb_on = true;
     int sb_r = 2, sb_sgw = 2; // rows per sub-group (INK_SB_R), sub-groups per work-group (INK_SB_SGW)
+    // 2-8 tokens, the large register file for the attention inputs and the output layer (multi.hpp GemvMultiM BIG):
+    // rows per sub-group INK_MM_R (attention inputs, 5-8 tokens), INK_MM_R4 (2-4 tokens), INK_MM_OUT_R (output layer);
+    // INK_MM_BIG=0 = before (the same values)
+    int mm_big = 1; // 2: only steps of 5-8 tokens
+    int mm_r = 2, mm_r4 = 2, mm_out_r = 2;
+    // INK_MM_MULTI=<rows per sub-group>: mm() of 2-8 tokens through gemv_multi_m (one job, plain inputs) for matrices of
+    // >= INK_MM_MULTI_MINROWS (256) rows instead of gemv_v's blocks of vectors (0 = before; the same values)
+    int mm_multi = 0, mm_multi_minrows = 256;
+    // INK_MM_WO=<rows per sub-group>: the attention output product of 2-8 tokens from a lane-order copy of its input
+    // (attl, one small relayout launch) through gemv_multi_m (0 = gemv_v's blocks of vectors as before; the same values)
+    int mm_wo = 2;
+    float *attl = nullptr;
     float *ainl = nullptr;
     bool sb_moe = true;     // INK_SB_MOE=0: steps of 2-8 tokens use the 8-slot grouped expert kernels
     int sb_np = 1, sb_dr = 2; // NVFP4 small steps: gate|up row pairs (INK_SB_NP), down rows (INK_SB_DR) per sub-group
@@ -447,6 +459,14 @@ struct Engine {
         if (const char *e = std::getenv("INK_SB")) sb_on = std::atoi(e) != 0;
         if (const char *e = std::getenv("INK_SB_R")) sb_r = std::atoi(e);
         if (const char *e = std::getenv("INK_SB_SGW")) sb_sgw = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_BIG")) mm_big = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_R")) mm_r = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_R4")) mm_r4 = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_OUT_R")) mm_out_r = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_MULTI")) mm_multi = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_MULTI_MINROWS")) mm_multi_minrows = std::atoi(e);
+        if (const char *e = std::getenv("INK_MM_WO")) mm_wo = std::atoi(e);
+        attl = d.alloc<float>(SB_MAX * xlane_floats(h.n_head * h.head_dim));
         ainl = d.alloc<float>(3 * SB_MAX * xlane_floats(h.n_embd));
         fxls = d.alloc<float>(SB_MAX * xlane_floats(h.n_embd));
         cst = d.alloc<float>((size_t)(SB_MAX - 1) * h.n_app * conv_n);
@@ -649,6 +669,12 @@ struct Engine {
             WView v = w.view();
             if (v.kind == K_Q6_KP && !q6u.empty()) { auto it = q6u.find(w.t); if (it != q6u.end()) v = it->second; }
             pr(wlabel(w), dense_t(d.q, v, ntok, Xd, y, rows, dt));
+            return;
+        }
+        if (mm_multi > 0 && ntok <= 8 && rows >= mm_multi_minrows && multi_ok(w.view())) {
+            MultiJobs mj;
+            multi_add(mj, w.view(), x, y, mm_multi, cols, rows);
+            pr(wlabel(w), gemv_multi_m(d.q, mj, ntok, false, 2, true));
             return;
         }
         Tune tm = tune_m(w);
@@ -1037,9 +1063,12 @@ struct Engine {
                 for (int k = 0; k < 8; ++k) if (ws[k] && !multi_ok(ws[k]->view())) ok = false;
                 if (ok) {
                     const int lx = (int)xlane_floats(E);
+                    const bool big = mm_big == 1 || (mm_big == 2 && ntok > 4);
                     for (int k = 0; k < 8; ++k)
-                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k], ntok > 4 ? 1 : std::min(tune(*ws[k]).R, sb_r), lx, (int)ws[k]->t->rows());
-                    pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw));
+                        if (ws[k]) multi_add(mj, ws[k]->view(), xs[k], ys[k],
+                                             big ? (ntok > 4 ? mm_r : mm_r4) : ntok > 4 ? 1 : std::min(tune(*ws[k]).R, sb_r), lx,
+                                             (int)ws[k]->t->rows());
+                    pr("w:attn_in", gemv_multi_m(d.q, mj, ntok, true, sb_sgw, big));
                 } else {
                     for (int k = 0; k < 8; ++k) if (ws[k]) mm(*ws[k], in[k < 3 ? k : (k < 5 ? k - 2 : 0)], ys[k], ntok);
                 }
@@ -1300,7 +1329,17 @@ struct Engine {
                 }
             }
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
-            mm(l.wo, att, ob, ntok);
+            if (mm_wo > 0 && ntok >= 2 && ntok <= SB_MAX && multi_ok(l.wo.view()) && (int)l.wo.t->ne[0] == h.n_head * h.head_dim) {
+                const int cols = (int)l.wo.t->ne[0], rows = (int)l.wo.t->rows(), lx = (int)xlane_floats(cols);
+                float *al = attl;
+                const float *as = att;
+                pr("wo_lane", d.q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)cols), [=](sycl::id<2> i) {
+                    al[i[0] * lx + xlane_at((int)i[1])] = as[i[0] * cols + i[1]];
+                }));
+                MultiJobs mj;
+                multi_add(mj, l.wo.view(), attl, ob, mm_wo, lx, rows);
+                pr(wlabel(l.wo), gemv_multi_m(d.q, mj, ntok, true, 2, true));
+            } else mm(l.wo, att, ob, ntok);
             const bool bstart = ip % h.res_block == 0;
             const fz::SeqRow *mr = mrows ? mrow_dev + (size_t)il * ntok : nullptr;
             pr("attn_tail", fz::attn_tail(d.q, ob, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
@@ -1435,8 +1474,9 @@ struct Engine {
             if (nl == 1) pr(wlabel(m.output), gemv_v(d.q, m.output.view(), x1, lx, lg, h.vocab_padded, 1, Tune{1, 1}, true));
             else {
                 MultiJobs mj;
-                multi_add(mj, m.output.view(), x1, lg, 1, lx, h.vocab_padded);
-                pr(wlabel(m.output), gemv_multi_m(d.q, mj, nl, true, 1));
+                const bool big = mm_big == 1 || (mm_big == 2 && nl > 4);
+                multi_add(mj, m.output.view(), x1, lg, big ? mm_out_r : 1, lx, h.vocab_padded);
+                pr(wlabel(m.output), gemv_multi_m(d.q, mj, nl, true, 1, big));
             }
         } else
             mm(m.output, xl, lg, nl);

@@ -187,7 +187,12 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 25 ~13:20: Inkling several conversations: all rows' attention in one launch (same values, gate 15/15): 4 at once
+- Nov 25 ~15:45: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
+  Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
+  exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row
+  tiles give identical rows, so writing, checks and prompts can share one arithmetic. Next: NVFP4 experts on the
+  matrix engines for every step size (new baseline v5), then dense products, then attention.
+- Nov 25 ~13:05: Inkling several conversations: all rows' attention in one launch (same values, gate 15/15): 4 at once
   148.3 tok/s, 8 at once 183.7 (were 144.4 / 175.8). Deployed build updated.
 - Nov 25 ~12:35: Inkling: **several conversations per card**, exact: up to 8 conversations share each step (every
   token and logits row identical to each alone); 8 at once 183 tok/s in total vs 88 for one; server option

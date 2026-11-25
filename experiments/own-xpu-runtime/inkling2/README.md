@@ -905,12 +905,51 @@ step makes 842 launches instead of 1,234 with 8 rows; the same values (gate chec
 up to 2,500-token prompts identical). Card 3, 256 shared steps, both orders: 4 conversations 144.4 -> 148.3 tok/s, 8
 conversations 175.8 -> 183.7 (profiled 8-row step 44.3 -> 42.2 ms: the experts 22.2 ms, 39 different experts per layer
 on average against 8 for one token; the expert kernels already run each expert's own number of rows).
+Steps of 2-8 tokens, dense products (2026-11-25, the same values; guess checks and several conversations): the
+attention input matrices and the output layer through `gemv_multi_m` with the large register file and 2 rows per
+sub-group (`INK_MM_BIG`, `INK_MM_R`, `INK_MM_R4`, `INK_MM_OUT_R`; 1 x 8 vectors loaded 8 floats of x per weight), and
+the attention output product from a lane-order copy of its input (`INK_MM_WO=2`, one 2 µs relayout launch; it took
+gemv_v's blocks of vectors with plain inputs). 8-row step (profiled, card 3): attention inputs 78.6 -> 72.8 µs, output
+layer 1,238 -> 1,020, attention output 50.1 -> 31.1; step 41.8 -> 40.9 ms. Drafter writing (256 tokens, cards 4 and 5,
+both orders, ids identical): code 137.0 -> 138.1 / 135.0 -> 136.5 tok/s, haiku 117.7 -> 118.8 / 116.6 -> 117.3, 3K
+level (107.7 -> 107.9 / 106.3 -> 106.3). Variants that lost: 4 rows per sub-group (8 rows: 75.3 µs; 2-4 rows: -0.5 to
+-0.8 % writing), the old kernels for 2-4 rows (`INK_MM_BIG=2`: -0.4 to -1.2 %), any 2-8 row product through
+`gemv_multi_m` with plain inputs (`INK_MM_MULTI`: attention output 50 -> 67-84 µs).
 Serving (`INK_SERVE=1` with `INK_SEQS`): `C <id> <s>` before a G line puts the request on sequence s; a prompt is read in
 pieces of `INK_SEQS_CHUNK` (512) tokens between shared steps while others write; no guessing, state copies, saved
 prompts or W lines there. Engine serving test: 4 requests at once (two sampled, one 3,127-token prompt) and a
 follow-up gave the same tokens as one at a time (5/5). Server: `seqs_per_card` (and `seq_ctx`, `seq_ubatch`) in
 config.json; 2 cards x 4 places, 8 chat requests at once 6.4 s against 13.5 s one by one, 12/12 answers identical
 (first round and follow-ups, one picture, two sampled).
+
+## Matrix engines with exact products (study, 2026-11-25)
+
+The prompt runs at the card's power limit in FP32 (~57 pJ per expert multiply-add, ~65 per attention score). The
+matrix engines (DPAS through `joint_matrix`, bf16 inputs, fp32 sums) cost ~6.5 pJ per multiply-add. Splitting each
+fp32 input into three bf16 parts (x1 = bf16(x), x2 = bf16(x - x1), x3 = bf16(x - x1 - x2); x = x1 + x2 + x3 exactly)
+against weights that are exactly bf16 (NVFP4: an E2M1 value times an E4M3 scale has at most 6 significant bits) makes
+every product exact; only the order and rounding of the sums change. Measured (card 3):
+- `tools/bench_xmx.cpp`: the card offers bf16 tiles of 1-8 x 16 x 16 (also fp16, tf32 8 deep). One instruction
+  D = C + 16 products is deterministic and does not depend on the other rows of its tile; its sum matches the exact
+  sum rounded once at 93.6 % / 80.0 % of elements (exponents within +-6 / +-20), not an fp32 chain (51-62 %) nor any
+  alignment model tried. Error against the exact sum: mean 0.76-0.78 ulp (fp32 chain 1.25-3.6). The split was exact
+  for 2,000,000 values (exponents +-60). A plain bf16 product 4096 x 4608 x 2304 ran at 44-47 T multiply-adds/s,
+  6.0-6.9 pJ each.
+- `tools/bench_xdot.cpp`: 65,536 dot products of 2,304 (NVFP4-like weights, inputs N(0,1) with 1 in 64 x20), error
+  relative to 2^-24 x sum |w x| (mean / max): FP32 order today 0.148 / 1.59; one accumulator over all K 0.372 / 6.30
+  (worse: 432 roundings in a row); one per part 0.203 / 3.12; segments of 256 inputs added in order into a total
+  0.159 / 1.76; segments of 144 0.144 / 1.50; segments of 256 with one accumulator per part 0.110 / 1.21; the same with
+  parts 2 and 3 sharing an accumulator ("segp23") 0.105 / 1.22; segments of 256, one accumulator, all third parts
+  first, then second, then first ("segr16") 0.101 / 1.21. In ulps of the exact value: today mean 8.3 / median 1.30,
+  segp23 4.7 / 0.91, segr16 4.3 / 0.87. Segmented sums on the matrix engines are more accurate than today's order.
+- `tools/bench_xm1.cpp`: tiles of 1, 2 and 4 rows give exactly the 8-row tile's rows (16 steps x 3 parts, 65,536
+  values); the accumulator holds one column per lane; the two-matrix `joint_matrix_apply` adds element by element.
+So one arithmetic can serve writing (1-row tiles), checks and several conversations (2-8) and prompts (8-row tiles)
+with identical results: guesses stay equal to plain writing and a continued conversation to a fresh read. Prompt time
+by kernel (3,127 tokens, 2.83 s, card 3): expert products 60 %, other matrix products 28 %, attention 6 %, the rest
+4 %; 31K: 54 / 24 / 16 / 4 %. Plan: the NVFP4 layers' experts first (all step sizes), then the Q8_0 / Q6_K products
+(int8 / 6-bit values exact in bf16, their block scales applied between blocks), then attention; each a new baseline
+checked against the high-precision reference as v2-v4 were.
 
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
