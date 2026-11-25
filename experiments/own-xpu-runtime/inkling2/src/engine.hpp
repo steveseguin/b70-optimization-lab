@@ -37,6 +37,22 @@ struct Engine {
     float *conv = nullptr;            // two copies (previous call, this call) of [n_app][6656*3], channel-major
     int conv_n = 0;                   // floats per application
     int cpar = 0;                     // which copy holds the state of the previous call
+    // several sequences on one card (INK_SEQS, at most SB_MAX): the members above (Kc, Vc, conv, cpar) with n_past,
+    // last_tok, samp and samp_seed are the bound sequence's; seqs[s] holds sequence s's while another is bound (bind()).
+    // step_rows() runs one token of each of several sequences in one step (notes in README: several conversations)
+    struct SeqState {
+        std::vector<sycl::half *> Kc, Vc;
+        float *conv = nullptr;
+        int cpar = 0, n_past = 0;
+        int32_t last_tok = -1;
+        ops::SampleArgs samp;
+        uint64_t samp_seed = 0;
+    };
+    std::vector<SeqState> seqs;
+    int bound = 0;
+    fz::SeqRow *mrow_dev = nullptr;   // step_rows: [n_app][rows] on the card
+    std::vector<fz::SeqRow> mrow_host;
+    bool mrows = false;               // the step's rows are of different sequences (mrow_host / mrow_dev)
     // per-step buffers
     int32_t *ids = nullptr;
     std::vector<float *> lbuf;        // lbuf[0] = normed embedding, lbuf[il+1] = l_out of application il
@@ -230,6 +246,25 @@ struct Engine {
         }
         conv_n = (2 * kd + 2 * h.n_embd) * (h.n_conv - 1);
         conv = d.alloc_zero<float>((size_t)2 * conv_n * h.n_app);
+        {   // the other sequences' state (INK_SEQS), sized as the engine's own, before the buffers that take what is left
+            const int ns = std::getenv("INK_SEQS") ? std::max(1, std::atoi(std::getenv("INK_SEQS"))) : 1;
+            if (ns > SB_MAX) throw std::runtime_error("engine: INK_SEQS is at most " + std::to_string(SB_MAX));
+            seqs.resize(ns);
+            for (int s = 1; s < ns; ++s) {
+                SeqState &q = seqs[s];
+                q.Kc.resize(h.n_app); q.Vc.resize(h.n_app);
+                for (int a = 0; a < h.n_app; ++a) {
+                    const bool r = kmask[a] != 0x7fffffff;
+                    q.Kc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : cap) * kd);
+                    q.Vc[a] = d.alloc<sycl::half>((size_t)(r ? ring_w : (vld ? vld : cap)) * kd);
+                }
+                q.conv = d.alloc_zero<float>((size_t)2 * conv_n * h.n_app);
+            }
+            if (ns > 1) {
+                mrow_dev = d.alloc<fz::SeqRow>((size_t)h.n_app * SB_MAX);
+                mrow_host.resize((size_t)h.n_app * SB_MAX);
+            }
+        }
         ids = d.alloc<int32_t>(T);
         lbuf.resize(h.n_app + 1);
         for (auto &p : lbuf) p = d.alloc<float>(E);
@@ -451,6 +486,81 @@ struct Engine {
         n_past = 0;
         d.q.memset(conv, 0, sizeof(float) * (size_t)2 * conv_n * m.hp.n_app).wait();
         cpar = 0;
+    }
+
+    // sequence s becomes the bound one (its state in the members; the one bound before goes to seqs[]): step(), feed(),
+    // next_token() and reset() then work on it
+    void swap_state(SeqState &s) {
+        std::swap(Kc, s.Kc); std::swap(Vc, s.Vc); std::swap(conv, s.conv); std::swap(cpar, s.cpar);
+        std::swap(n_past, s.n_past); std::swap(last_tok, s.last_tok); std::swap(samp, s.samp); std::swap(samp_seed, s.samp_seed);
+    }
+    void bind(int s) {
+        if (s < 0 || s >= (int)seqs.size()) throw std::runtime_error("engine: no sequence " + std::to_string(s));
+        if (s == bound) return;
+        swap_state(seqs[bound]); // the bound state goes home; the members hold seqs[bound]'s empty one
+        swap_state(seqs[s]);
+        bound = s;
+    }
+    int seq_past(int s) const { return s == bound ? n_past : seqs[s].n_past; }
+    // one token of each of n distinct sequences in one step: row t = tok[t] at the next position of sequence seq[t]. The
+    // row-wise parts run as for n tokens (steps of 2-8 tokens give every row its one-token values, as the checks); the
+    // convolutions and cache stores take each row's own state (fz::SeqRow tables), and each row's attention runs the
+    // one-token kernels against its own caches. So every row gets the values of a one-token step of its sequence.
+    // Logits of all rows stay on the card (next_rows()).
+    void step_rows(const int32_t *tok, const int *seq, int n) {
+        const HParams &h = m.hp;
+        if (n < 1 || n > SB_MAX || n > T || !mrow_dev) throw std::runtime_error("step_rows: 1 to " + std::to_string(SB_MAX) + " rows with INK_SEQS > 1");
+        if (!(flash && flash_dec && dec_attn && fz::att_win_fused_on()))
+            throw std::runtime_error("step_rows: needs the default attention paths (INK_FLASH, INK_FLASH_DEC, INK_DEC_ATTN, INK_ATT_WINF)");
+        for (int t = 0; t < n; ++t) {
+            if (seq[t] < 0 || seq[t] >= (int)seqs.size()) throw std::runtime_error("step_rows: no sequence " + std::to_string(seq[t]));
+            for (int u = 0; u < t; ++u) if (seq[u] == seq[t]) throw std::runtime_error("step_rows: a sequence twice");
+            if (seq_past(seq[t]) + 1 > cap) throw std::runtime_error("engine: context full");
+        }
+        for (int il = 0; il < h.n_app; ++il)
+            for (int t = 0; t < n; ++t) {
+                const int s = seq[t];
+                float *cv = s == bound ? conv : seqs[s].conv;
+                const int cp = s == bound ? cpar : seqs[s].cpar, pos = seq_past(s);
+                fz::SeqRow &r = mrow_host[(size_t)il * n + t];
+                r.st_in = cv + ((size_t)cp * h.n_app + il) * conv_n;
+                r.st_out = cv + ((size_t)(cp ^ 1) * h.n_app + il) * conv_n;
+                r.Kc = (s == bound ? Kc : seqs[s].Kc)[il];
+                r.Vc = (s == bound ? Vc : seqs[s].Vc)[il];
+                r.tau = tau_all + pos;
+                r.pos = pos;
+                r.pad = 0;
+            }
+        d.put(mrow_dev, mrow_host.data(), (size_t)h.n_app * n);
+        float *ft = feat;
+        auto os = std::move(on_step);
+        const bool al = all_logits, hl = host_logits, ks = keep_states;
+        feat = nullptr; on_step = nullptr; all_logits = true; host_logits = false; keep_states = false; mrows = true;
+        try { step(tok, n); } catch (...) { feat = ft; on_step = std::move(os); all_logits = al; host_logits = hl; keep_states = ks; mrows = false; throw; }
+        feat = ft; on_step = std::move(os); all_logits = al; host_logits = hl; keep_states = ks; mrows = false;
+        for (int t = 0; t < n; ++t) {
+            const int s = seq[t];
+            if (s == bound) { n_past += 1; cpar ^= 1; }
+            else { seqs[s].n_past += 1; seqs[s].cpar ^= 1; }
+        }
+    }
+    // the next token of each row of the last step_rows (each sequence's sampling, else greedy), as next_token() would
+    // choose it for that sequence alone; out[t] for row t, which also becomes the sequence's last_tok
+    void next_rows(const int *seq, int n, int32_t *out) {
+        const HParams &h = m.hp;
+        for (int t = 0; t < n; ++t) {
+            const int s = seq[t];
+            const ops::SampleArgs &sa = s == bound ? samp : seqs[s].samp;
+            const float *row = lg + (size_t)t * h.vocab_padded;
+            if (sa.T > 0.0f) {
+                ops::SampleArgs a = sa;
+                a.u[0] = ops::sample_u(s == bound ? samp_seed : seqs[s].samp_seed, seq_past(s));
+                pr("sample", ops::sample_rows(d.q, row, h.vocab_padded, h.vocab, 1, a, ids + t));
+            } else
+                pr("argmax", ops::argmax_rows2(d.q, row, h.vocab_padded, h.vocab, 1, ids + t, amx_v, amx_i));
+        }
+        d.get(out, ids, n);
+        for (int t = 0; t < n; ++t) (seq[t] == bound ? last_tok : seqs[seq[t]].last_tok) = out[t];
     }
 
     // launch shapes per layout (tools/bench_gemv, card 3, 2026-11-22): rows per sub-group R, sub-groups per group
@@ -751,9 +861,9 @@ struct Engine {
     void step(const int32_t *tok, int ntok) {
         const HParams &h = m.hp;
         const int E = h.n_embd, hd = h.head_dim, nh = h.n_head, nkvh = h.n_head_kv, kd = nkvh * hd;
-        const int pos0 = n_past;
+        const int pos0 = n_past; // (rows of different sequences: their own positions, mrow_host)
         n_tok = ntok;
-        if (pos0 + ntok > cap) throw std::runtime_error("engine: context full");
+        if (!mrows && pos0 + ntok > cap) throw std::runtime_error("engine: context full");
         if (ntok < 1 || ntok > T) // the buffers hold T tokens: a bigger step writes past them (a card page fault)
             throw std::runtime_error("engine: step of " + std::to_string(ntok) + " tokens, buffers hold " + std::to_string(T));
         if (tok) d.put(ids, tok, ntok); // else ids[0..ntok) are on the card already (next_token())
@@ -944,7 +1054,7 @@ struct Engine {
                 if (!swa) mm(l.v_conv_proj, in[2], dynV, ntok);
                 xd_keep = false; xd_src = nullptr;
             }
-            const bool tiles = att_tile > 0 && ntok >= att_tile && vld > 0 && nh == 3 * nkvh && h.n_rel == 16;
+            const bool tiles = !mrows && att_tile > 0 && ntok >= att_tile && vld > 0 && nh == 3 * nkvh && h.n_rel == 16;
             {   // convolutions, clips, positions, cache store, bias table (one launch)
                 fz::PrepArgs a{};
                 a.ntok = ntok; a.pos0 = pos0; a.nh = nh; a.nkvh = nkvh; a.hd = hd; a.nr = h.n_rel; a.ext = h.rel_extent;
@@ -954,6 +1064,7 @@ struct Engine {
                 a.st_in = st_in; a.st_out = st_out; a.st_tok = st_tok; a.sst = sst; a.Kx = Kx; a.Vx = Vx; a.Kc = Kc[il]; a.Vc = Vc[il]; a.vld = kvl[il]; a.km = kmask[il];
                 a.eps = h.eps; a.kv_scale = fz::conv_scale(!swa);
                 a.R = R; a.Rc = Rc; a.rel_clip = f32(l.rel_clip); a.rel_clip_thr = h.rel_clip; a.rel_bias = f32(l.rel_bias); a.tab = tiles ? nullptr : tab;
+                if (mrows) a.mr = mrow_dev + (size_t)il * ntok;
                 if (!a.tab && a.nr == SG && fz::prep_sg_sgw() > 0) pr("attn_prep", fz::attn_prep_sg(d.q, a, fz::prep_sg_sgw()));
                 else pr("attn_prep", fz::attn_prep(d.q, a));
             }
@@ -975,7 +1086,37 @@ struct Engine {
             // windowed layers, steps of 1-8 tokens: the four kernels below in one launch (fused.hpp attn_win_fused, the same
             // values; INK_ATT_WINF=0 off). 2 work-groups per KV head split the channels for 1-2 tokens (bench_attn card 3,
             // full window: 1 token 16.0 -> 15.2 us, 4 tokens 22.3 -> 18.1; 400 keys 10.4 -> 7.5, 12.0 -> 8.4)
-            const bool winf = fast && win > 0 && win <= 1024 && ntok <= SB_MAX && fz::att_win_fused_on();
+            const bool winf = !mrows && fast && win > 0 && win <= 1024 && ntok <= SB_MAX && fz::att_win_fused_on();
+            if (mrows) // rows of different sequences: each row's attention as a one-token step of its sequence (the same calls)
+                for (int t = 0; t < ntok; ++t) {
+                    const fz::SeqRow &sr = mrow_host[(size_t)il * ntok + t];
+                    const int p = sr.pos;
+                    const float *Qt = Q + (size_t)t * nh * hd, *tt = tab + (size_t)t * nh * h.rel_extent, *sct = sinks + (size_t)t * nh;
+                    const float *gt = gate + (size_t)t * nh * hd, *Rt = Rc + (size_t)t * nh * h.n_rel;
+                    float *at = att + (size_t)t * nh * hd;
+                    if (win > 0) {
+                        pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Qt, sr.Kc, tt, sr.Vc, kvl[il], sct, gt, p, 1, nh, nkvh, hd,
+                                                                  h.rel_extent, win, kscale, kmask[il], at));
+                        continue;
+                    }
+                    const int nblk = p / fz::PVB + 1;
+                    if ((size_t)nblk > dec_cap) { // as a one-token step past the parts buffer: whole 128-block groups
+                        const int cb = (int)(dec_cap / 128 * 128);
+                        if (cb < 128) throw std::runtime_error("engine: the parts buffer holds less than 128 blocks a row");
+                        for (int b0 = 0; b0 < nblk; b0 += cb) {
+                            const int nbc = std::min(cb, nblk - b0);
+                            pr("attn_pv_full", fz::attn_flash_dec<3, 4, 1>(d.q, Qt, sr.Kc, tt, Rt, f32(l.rel_bias), h.n_rel, sr.Vc, kvl[il],
+                                                                          p, 1, nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nbc,
+                                                                          kmask[il], b0));
+                            pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nbc, p, 1, nh, hd, sct, gt, at, b0, fst, b0 > 0,
+                                                                      b0 + nbc < nblk));
+                        }
+                        continue;
+                    }
+                    pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Qt, sr.Kc, tt, Rt, f32(l.rel_bias), h.n_rel, sr.Vc, kvl[il], p, 1,
+                                                               nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, nblk, kmask[il]));
+                    pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, nblk, p, 1, nh, hd, sct, gt, at));
+                }
             if (winf) {
                 if (ntok <= 2)
                     pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, Kc[il], tab, Vc[il], kvl[il], sinks, gate, pos0, ntok, nh, nkvh, hd,
@@ -986,7 +1127,7 @@ struct Engine {
             }
             // baseline v4, layers without a window: steps of >= flash_min tokens in one launch (bench_attn card 3, 100K keys
             // x 256 rows: 33.5 -> 23.1 ms against scores + softmax + P.V; 128 rows 17.9 -> 14.9 with <4,3,2>)
-            const bool fl = flash && win == 0, fl_tile = fl && tiles && ntok >= flash_min;
+            const bool fl = flash && win == 0, fl_tile = !mrows && fl && tiles && ntok >= flash_min;
             // lean (VAR 1052; bench_attn card 3, 100K keys x 256 rows: 20.46-21.05 -> 20.06-20.12 ms, 5.86-6.21 -> 5.53-5.60
             // J, values the same): Q rows at constant offsets, the exponentials as local block loads, each sub-group the
             // block maximum of its own 3 rows (3 reductions, not 24)
@@ -998,7 +1139,7 @@ struct Engine {
                                                                   ntok, nh, nkvh, hd, h.rel_extent, kscale, gate, att, kmask[il]));
             // windowed layers, prompt tiles: scores, softmax and P.V in one launch, the scores in local memory (attn_win_tile,
             // the three kernels' values; INK_WIN_TILE=0: those kernels)
-            const bool wtile = tiles && win > 0 && !winf && fz::win_tile_mt() > 0;
+            const bool wtile = !mrows && tiles && win > 0 && !winf && fz::win_tile_mt() > 0;
             if (wtile) {
                 const int mt = fz::win_tile_mt(), span = (win + mt + 14 + 15) / 16 * 16;
                 auto go = [&]<int MT>() {
@@ -1015,7 +1156,7 @@ struct Engine {
                 if (mt == 8) go.template operator()<8>();
                 else go.template operator()<4>();
             }
-            for (int q0 = 0; q0 < (winf || fl_tile || wtile ? 0 : ntok); q0 += prow) {
+            for (int q0 = 0; q0 < (mrows || winf || fl_tile || wtile ? 0 : ntok); q0 += prow) {
                 const int nc = std::min(prow, ntok - q0), qp = pos0 + q0;
                 const float *Qc = Q + (size_t)q0 * nh * hd, *gc = gate + (size_t)q0 * nh * hd, *sc = sinks + (size_t)q0 * nh;
                 const float *tc = tab + (size_t)q0 * nh * h.rel_extent;
@@ -1142,8 +1283,9 @@ struct Engine {
             // wo, post conv (inkling2.cpp:595-597), then block start or residual (inkling2.cpp:600-605)
             mm(l.wo, att, ob, ntok);
             const bool bstart = ip % h.res_block == 0;
+            const fz::SeqRow *mr = mrows ? mrow_dev + (size_t)il * ntok : nullptr;
             pr("attn_tail", fz::attn_tail(d.q, ob, st_in, st_out, 2 * kd, f32(l.attn_post_conv), fz::conv_scale(false),
-                                          attn_out, bstart ? nullptr : inpSA, ffn_inp, E, ntok, st_tok, sst));
+                                          attn_out, bstart ? nullptr : inpSA, ffn_inp, E, ntok, st_tok, sst, mr));
             const float *fi;
             if (bstart) { blocks.push_back(inpSA); fi = attn_out; }
             else {
@@ -1245,13 +1387,13 @@ struct Engine {
                 }
             }
             float *lo = lbuf[il + 1];
-            if (ntok >= 64 && fz::ffn_tail_tt() > 0)
+            if (!mrows && ntok >= 64 && fz::ffn_tail_tt() > 0)
                 pr("ffn_tail", fz::ffn_tail_s(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
                                               f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, fz::ffn_tail_tt(),
                                               st_tok, sst));
             else
                 pr("ffn_tail", fz::ffn_tail(d.q, yk, f32(l.down_s), eids, wts, h.n_used, st_in, st_out, 2 * kd + E,
-                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst));
+                                            f32(l.ffn_post_conv), fz::conv_scale(false), ffn_out, fi, lo, E, ntok, st_tok, sst, mr));
             dump.put(d, nm("ffn_out", il), ffn_out, E, ntok);
             dump.put(d, nm("l_out", il), lo, E, ntok);
             cur = lo;
@@ -1283,6 +1425,7 @@ struct Engine {
         if (feat) d.q.memcpy(feat + (size_t)3 * T * E, fin, sizeof(float) * (size_t)ntok * E);
         if (on_step) on_step(pos0, ntok);
         n_logit_rows = nl;
+        if (mrows) return; // (step_rows moves each sequence on)
         if (!host_logits && !dump.want("result_output")) {
             n_past += ntok;
             cpar ^= 1;

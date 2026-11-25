@@ -297,11 +297,107 @@ int main(int argc, char **argv) {
         // conversation's first message after the system messages, so a new conversation with the same system prompt
         // (and tools and effort) or another question after the same document continues from there
         Snapshot snap, snapb;
-        if (serve) snap.init(e, dr.get());
+        if (serve && e.seqs.size() == 1) snap.init(e, dr.get()); // (several sequences: no copies)
         if (serve && snap.ok) snapb.init(e, dr.get());
         // INK_VISION=<mmproj.gguf>: the image encoder (src/vision.hpp), when it fits after the copies
         Vision vis(e);
         if (const char *vp = std::getenv("INK_VISION")) vis.init(vp);
+        // INK_SEQS_TEST=<n>: several conversations in shared steps (Engine::step_rows) against each alone. INK_SEQS_PROMPTS
+        // = token files, comma-separated, one per sequence (INK_SEQS of them); sequence s writes n - s * n / (2 * count)
+        // tokens (so the shared steps shrink from all rows to one). Each prompt alone first (plain greedy writing), then
+        // all prompts read on their own sequences and written together, the rows in turn in forward and reverse order.
+        // Prints per sequence whether the ids and the logits row of every step are bit-identical, and the speeds
+        if (const char *stv = std::getenv("INK_SEQS_TEST")) {
+            const int ng = std::atoi(stv);
+            std::vector<std::vector<int32_t>> pp;
+            {
+                std::string all = std::getenv("INK_SEQS_PROMPTS") ? std::getenv("INK_SEQS_PROMPTS") : "", f;
+                std::istringstream ls(all);
+                while (std::getline(ls, f, ',')) {
+                    std::ifstream in(f);
+                    if (!in) throw std::runtime_error("INK_SEQS_PROMPTS: cannot read " + f);
+                    std::vector<int32_t> t;
+                    for (long v; in >> v;) t.push_back((int32_t)v);
+                    pp.push_back(t);
+                }
+            }
+            const int ns = (int)pp.size();
+            if (ns < 1 || ns != (int)e.seqs.size()) throw std::runtime_error("INK_SEQS_TEST: INK_SEQS must equal the number of prompts");
+            const int V = e.m.hp.vocab, VP = e.m.hp.vocab_padded;
+            std::vector<int> want(ns);
+            for (int s = 0; s < ns; ++s) want[s] = std::max(1, ng - s * ng / (2 * ns));
+            std::vector<std::vector<int32_t>> ia(ns), ib(ns);
+            std::vector<std::vector<float>> ra(ns), rb(ns);
+            e.host_logits = false;
+            double alone_s = 0;
+            long alone_tok = 0;
+            for (int s = 0; s < ns; ++s) {
+                e.bind(s); e.reset(); e.all_logits = false;
+                e.feed(pp[s]);
+                d.q.wait();
+                const double t0 = now_s();
+                for (int i = 0; i < want[s]; ++i) {
+                    ra[s].resize((size_t)(i + 1) * V);
+                    d.get(ra[s].data() + (size_t)i * V, e.lg + (size_t)(e.n_logit_rows - 1) * VP, V);
+                    ia[s].push_back(e.next_token());
+                    if (i + 1 < want[s]) e.step_next();
+                }
+                d.q.wait();
+                alone_s += now_s() - t0; alone_tok += want[s] - 1;
+            }
+            for (int s = 0; s < ns; ++s) {
+                e.bind(s); e.reset(); e.all_logits = false;
+                e.feed(pp[s]);
+                d.q.wait();
+                rb[s].resize(V);
+                d.get(rb[s].data(), e.lg + (size_t)(e.n_logit_rows - 1) * VP, V);
+                ib[s].push_back(e.next_token());
+            }
+            const double t0 = now_s();
+            long tok_b = 0, steps = 0;
+            std::vector<long> by_rows(Engine::SB_MAX + 1);
+            for (;;) {
+                std::vector<int> rs;
+                std::vector<int32_t> tk;
+                for (int k = 0; k < ns; ++k) {
+                    const int s = steps % 2 ? ns - 1 - k : k;
+                    if ((int)ib[s].size() < want[s]) { rs.push_back(s); tk.push_back(ib[s].back()); }
+                }
+                if (rs.empty()) break;
+                const int n = (int)rs.size();
+                e.step_rows(tk.data(), rs.data(), n);
+                d.q.wait();
+                for (int t = 0; t < n; ++t) {
+                    std::vector<float> &r = rb[rs[t]];
+                    r.resize(r.size() + V);
+                    d.get(r.data() + r.size() - V, e.lg + (size_t)t * VP, V);
+                }
+                std::vector<int32_t> nx(n);
+                e.next_rows(rs.data(), n, nx.data());
+                for (int t = 0; t < n; ++t) ib[rs[t]].push_back(nx[t]);
+                tok_b += n; ++steps; ++by_rows[n];
+            }
+            const double tb = now_s() - t0;
+            bool all = true;
+            for (int s = 0; s < ns; ++s) {
+                int same = 0;
+                while (same < want[s] && ia[s][same] == ib[s][same]) ++same;
+                int rsame = 0;
+                while (rsame < want[s] && std::memcmp(ra[s].data() + (size_t)rsame * V, rb[s].data() + (size_t)rsame * V, sizeof(float) * V) == 0) ++rsame;
+                const bool ok = same == want[s] && rsame == want[s];
+                all &= ok;
+                std::fprintf(stderr, "[seqs] sequence %d (prompt %zu tokens, %d written): ids %s (%d of %d), logits rows %s (%d of %d)\n", s,
+                             pp[s].size(), want[s], same == want[s] ? "identical" : "DIFFER", same, want[s], rsame == want[s] ? "identical" : "DIFFER",
+                             rsame, want[s]);
+            }
+            std::string hist;
+            for (int k = 1; k <= Engine::SB_MAX; ++k) if (by_rows[k]) hist += " " + std::to_string(k) + ":" + std::to_string(by_rows[k]);
+            std::fprintf(stderr, "[seqs] alone %.1f tok/s (%ld tokens, %.3f s); together %.1f tok/s (%ld tokens in %ld steps, %.3f s; steps by rows%s)\n",
+                         alone_tok / alone_s, alone_tok, alone_s, tok_b / tb, tok_b, steps, tb, hist.c_str());
+            std::fprintf(stderr, "[seqs] %s\n", all ? "ALL IDENTICAL" : "DIFFERENCES");
+            if (e.prof.on) { e.prof.collect(); e.prof.report(stderr); }
+            return all ? 0 : 1;
+        }
         // INK_IMAGE_TEST=<rgb file>:<width>:<height>:<out file>: encode one picture (8-bit RGB rows), save its rows
         // (rows x 2304 floats) and stop
         if (const char *it = std::getenv("INK_IMAGE_TEST")) {
@@ -349,6 +445,216 @@ int main(int argc, char **argv) {
         const size_t pic_cap = (size_t)(std::getenv("INK_VISION_HOST_MB") ? std::atol(std::getenv("INK_VISION_HOST_MB")) : 256) << 20;
         constexpr uint32_t XSPAN = (1u << 30) - 1;
         auto pic_ids = [&](uint32_t key, int r) { return (int32_t)(Engine::XID0 + (int32_t)((key + (uint32_t)r) % XSPAN)); };
+        std::function<bool(uint32_t)> pic_busy = [](uint32_t) { return false; }; // (a picture a request still has to read)
+        auto handle_v = [&](std::istringstream &is, const std::string &id) {
+            unsigned long key = 0;
+            int w = 0, hh = 0;
+            std::string path;
+            is >> key >> w >> hh >> path;
+            try {
+                if (!is || w < 1 || hh < 1) throw std::runtime_error("bad-V-line");
+                if (!vis.ok) throw std::runtime_error("no-image-encoder");
+                const uint32_t k = (uint32_t)(key & ((1ul << 30) - 1));
+                auto it = pics.find(k);
+                char b[160];
+                if (it != pics.end()) {
+                    if (it->second.w != w || it->second.h != hh) throw std::runtime_error("image-id-collision");
+                    it->second.used = pic_gen;
+                    std::snprintf(b, sizeof b, "@@V %s %d 0.000 cached", id.c_str(), it->second.M);
+                    sout(b);
+                    return;
+                }
+                std::ifstream f(path, std::ios::binary);
+                std::vector<uint8_t> rgb((size_t)w * hh * 3);
+                if (!f.read((char *)rgb.data(), (std::streamsize)rgb.size())) throw std::runtime_error("short-rgb-file");
+                Pic pc;
+                pc.w = w; pc.h = hh; pc.used = pic_gen;
+                pc.rows = vis.encode(rgb.data(), w, hh, pc.M);
+                for (int r = 0; r < pc.M; ++r)
+                    if (e.xrow.count(pic_ids(k, r))) throw std::runtime_error("image-id-collision");
+                const size_t nb = pc.rows.size() * sizeof(float);
+                while (pic_bytes + nb > pic_cap) { // least recently used first, never one of this request
+                    auto lru = pics.end();
+                    for (auto jt = pics.begin(); jt != pics.end(); ++jt)
+                        if (jt->second.used < pic_gen && !pic_busy(jt->first) && (lru == pics.end() || jt->second.used < lru->second.used)) lru = jt;
+                    if (lru == pics.end()) break;
+                    for (int r = 0; r < lru->second.M; ++r) e.xrow.erase(pic_ids(lru->first, r));
+                    pic_bytes -= lru->second.rows.size() * sizeof(float);
+                    pics.erase(lru);
+                }
+                Pic &st = pics[k] = std::move(pc);
+                for (int r = 0; r < st.M; ++r) e.xrow[pic_ids(k, r)] = st.rows.data() + (size_t)r * Vision::OUT;
+                pic_bytes += nb;
+                std::snprintf(b, sizeof b, "@@V %s %d %.3f", id.c_str(), st.M, vis.last_s);
+                sout(b);
+            } catch (std::exception &ex) { sout("@@E " + id + " image " + std::string(ex.what()).substr(0, 200)); }
+        };
+        // several conversations (INK_SEQS = n > 1): sequence s holds conversation s. "C <id> <s>" before a G line puts
+        // that request on sequence s (default 0); a sequence takes one request at a time (else @@E <id> busy). A prompt
+        // is read in steps of INK_SEQS_CHUNK tokens (default 512) while other sequences write, of the engine's step size
+        // when none does; every writing sequence gets one token per shared step (Engine::step_rows: each row's values
+        // are those of its sequence alone). No guessing, state copies, saved prompts or W lines here. Replies as above;
+        // @@D's rounds = tokens written, guessed and kept 0
+        if (serve && e.seqs.size() > 1) {
+            const int ns = (int)e.seqs.size(), eos = e.m.hp.eos;
+            const int chunk = std::getenv("INK_SEQS_CHUNK") ? std::max(16, std::atoi(std::getenv("INK_SEQS_CHUNK"))) : 512;
+            struct Job {
+                std::string rid;
+                std::vector<int32_t> ids, out;
+                size_t at = 0, fed = 0; // the next prompt token to read; tokens this request reads
+                int max_new = 0;
+                double t0 = 0, t1 = 0;
+                bool live = false, reading = true, stop = false;
+            };
+            std::vector<Job> jobs(ns);
+            std::vector<std::vector<int32_t>> convs(ns);
+            std::map<std::string, int> seq_of;
+            std::map<std::string, std::pair<ops::SampleArgs, uint64_t>> samp_of;
+            int rr = 0;
+            pic_busy = [&](uint32_t k) {
+                const int32_t first = pic_ids(k, 0);
+                for (const Job &j : jobs)
+                    if (j.live && j.reading && std::find(j.ids.begin() + (long)j.at, j.ids.end(), first) != j.ids.end()) return true;
+                return false;
+            };
+            auto tok_line = [&](const Job &j, int32_t t) { sout("@@T " + j.rid + " " + std::to_string(t)); };
+            auto finish = [&](int s, const char *why) {
+                Job &j = jobs[s];
+                const double t2 = now_s();
+                if (j.reading) { j.t1 = t2; convs[s].assign(j.ids.begin(), j.ids.begin() + (long)j.at); } // (stopped while reading)
+                else { convs[s] = j.ids; convs[s].insert(convs[s].end(), j.out.begin(), j.out.end()); }
+                char b[256];
+                std::snprintf(b, sizeof b, "@@D %s %s %zu %zu %.3f %.3f %zu 0 0 %d", j.rid.c_str(), why, j.fed, j.out.size(), j.t1 - j.t0,
+                              t2 - j.t1, j.out.size(), e.seq_past(s) + (j.reading ? 0 : 1));
+                sout(b);
+                std::fprintf(stderr, "[serve] %s (sequence %d): read %zu tokens in %.3f s, answered %zu in %.3f s (%.2f tok/s), %s, context %d\n",
+                             j.rid.c_str(), s, j.fed, j.t1 - j.t0, j.out.size(), t2 - j.t1, j.out.size() > 1 ? (j.out.size() - 1) / (t2 - j.t1) : 0.0,
+                             why, e.seq_past(s) + (j.reading ? 0 : 1));
+                j = Job{};
+            };
+            bool quit = false;
+            while (!quit) {
+                bool busy = false;
+                for (const Job &j : jobs) busy |= j.live;
+                pump(busy ? 0 : -1);
+                if (!busy && lines.empty() && in_eof) break;
+                while (!lines.empty() && !quit) {
+                    const std::string ln = lines.front();
+                    lines.pop_front();
+                    std::istringstream is(ln);
+                    std::string cmd, id;
+                    is >> cmd >> id;
+                    if (cmd == "Q") { quit = true; break; }
+                    if (cmd.empty()) continue;
+                    if (cmd == "S") { for (Job &j : jobs) if (j.live && j.rid == id) j.stop = true; continue; }
+                    if (cmd == "C") {
+                        int sq = -1;
+                        is >> sq;
+                        if (!is || sq < 0 || sq >= ns) sout("@@E " + id + " no-sequence");
+                        else seq_of[id] = sq;
+                        continue;
+                    }
+                    if (cmd == "V") { handle_v(is, id); continue; }
+                    if (cmd == "P") {
+                        ops::SampleArgs a;
+                        unsigned long long sd = 0;
+                        is >> a.T >> a.topp >> a.topk >> a.minp >> sd;
+                        if (!is || !(a.T >= 0.0f && a.T <= 100.0f) || !(a.topp > 0.0f && a.topp <= 1.0f) || a.topk < 0 ||
+                            !(a.minp >= 0.0f && a.minp < 1.0f)) { sout("@@E " + id + " bad-sampling"); continue; }
+                        samp_of[id] = {a, (uint64_t)sd};
+                        continue;
+                    }
+                    if (cmd == "W") { sout("@@E " + id + " unsupported-with-several-sequences"); continue; }
+                    if (cmd != "G") { sout("@@E - unknown-command"); continue; }
+                    long mx = 0, nstop = 0, n = 0;
+                    is >> mx >> nstop;
+                    for (long i = 0; i < nstop && is; ++i) { long v; is >> v; }
+                    is >> n;
+                    std::vector<int32_t> ids;
+                    for (long i = 0; i < n && is; ++i) { long v; is >> v; ids.push_back((int32_t)v); }
+                    const int sq = seq_of.count(id) ? seq_of[id] : 0;
+                    seq_of.erase(id);
+                    auto sp = samp_of.find(id);
+                    const ops::SampleArgs sa = sp != samp_of.end() ? sp->second.first : ops::SampleArgs{};
+                    const uint64_t sseed = sp != samp_of.end() ? sp->second.second : 0;
+                    if (sp != samp_of.end()) samp_of.erase(sp);
+                    bool bad = !is || (long)ids.size() != n || n < 1 || mx < 1;
+                    for (int32_t v : ids) bad |= v < 0 || (v >= e.m.hp.vocab && !(v >= Engine::XID0 && e.xrow.count(v)));
+                    if (bad) { sout("@@E " + id + " bad-request"); continue; }
+                    if ((long)ids.size() + mx + 8 > e.cap) { sout("@@E " + id + " context " + std::to_string(e.cap)); continue; }
+                    if (jobs[sq].live) { sout("@@E " + id + " busy"); continue; }
+                    ++pic_gen;
+                    Job &j = jobs[sq];
+                    j = Job{};
+                    j.live = true; j.rid = id; j.ids = ids; j.max_new = (int)mx; j.t0 = now_s();
+                    e.bind(sq);
+                    e.samp = sa; e.samp_seed = sseed;
+                    const size_t h = (size_t)e.n_past;
+                    const bool ext = h > 0 && ids.size() > h && convs[sq].size() >= h && std::equal(convs[sq].begin(), convs[sq].begin() + (long)h, ids.begin());
+                    if (!ext) {
+                        if (h > 0 || !convs[sq].empty()) sout("@@R " + id);
+                        e.reset();
+                        convs[sq].clear();
+                    }
+                    j.at = (size_t)e.n_past;
+                    j.fed = ids.size() - j.at;
+                }
+                if (quit) break;
+                bool writers = false;
+                for (const Job &j : jobs) writers |= j.live && !j.reading;
+                int rd = -1; // reading: one piece of one sequence's prompt (in turn)
+                for (int k = 0; k < ns && rd < 0; ++k) {
+                    const int sq = (rr + k) % ns;
+                    if (jobs[sq].live && jobs[sq].reading) rd = sq;
+                }
+                if (rd >= 0) {
+                    rr = (rd + 1) % ns;
+                    Job &j = jobs[rd];
+                    if (j.stop) finish(rd, "stop");
+                    else {
+                        e.bind(rd);
+                        e.all_logits = false; e.host_logits = false;
+                        const size_t n = std::min(j.ids.size() - j.at, (size_t)(writers ? std::min(chunk, e.T) : e.T));
+                        e.step(j.ids.data() + j.at, (int)n);
+                        j.at += n;
+                        if (j.at == j.ids.size()) {
+                            d.q.wait();
+                            j.t1 = now_s();
+                            char b[160];
+                            std::snprintf(b, sizeof b, "@@P %s %zu %.3f", j.rid.c_str(), j.fed, j.t1 - j.t0);
+                            sout(b);
+                            j.reading = false;
+                            const int32_t x = e.next_token();
+                            j.out.push_back(x);
+                            tok_line(j, x);
+                            if (x == eos || (int)j.out.size() >= j.max_new || j.stop) finish(rd, x == eos ? "eos" : j.stop ? "stop" : "max");
+                        }
+                    }
+                }
+                std::vector<int> wr; // writing: one token of every writing sequence
+                std::vector<int32_t> tk;
+                for (int sq = 0; sq < ns; ++sq) {
+                    Job &j = jobs[sq];
+                    if (!j.live || j.reading) continue;
+                    if (j.stop) { finish(sq, "stop"); continue; }
+                    wr.push_back(sq);
+                    tk.push_back(j.out.back());
+                }
+                if (!wr.empty()) {
+                    const int n = (int)wr.size();
+                    e.step_rows(tk.data(), wr.data(), n);
+                    std::vector<int32_t> nx(n);
+                    e.next_rows(wr.data(), n, nx.data());
+                    for (int t = 0; t < n; ++t) {
+                        Job &j = jobs[wr[t]];
+                        j.out.push_back(nx[t]);
+                        tok_line(j, nx[t]);
+                        if (nx[t] == eos || (int)j.out.size() >= j.max_new) finish(wr[t], nx[t] == eos ? "eos" : "max");
+                    }
+                }
+            }
+            return 0;
+        }
         for (int turn = 0;; ++turn) {
         if (serve) {
             std::vector<int32_t> ids;
@@ -376,50 +682,7 @@ int main(int argc, char **argv) {
                     } catch (std::exception &ex) { sout("@@E " + id + " save " + std::string(ex.what()).substr(0, 200)); }
                     continue;
                 }
-                if (cmd == "V") { // V <id> <key> <width> <height> <rgb file>: a picture's rows for the next G lines
-                    unsigned long key = 0;
-                    int w = 0, hh = 0;
-                    std::string path;
-                    is >> key >> w >> hh >> path;
-                    try {
-                        if (!is || w < 1 || hh < 1) throw std::runtime_error("bad-V-line");
-                        if (!vis.ok) throw std::runtime_error("no-image-encoder");
-                        const uint32_t k = (uint32_t)(key & ((1ul << 30) - 1));
-                        auto it = pics.find(k);
-                        char b[160];
-                        if (it != pics.end()) {
-                            if (it->second.w != w || it->second.h != hh) throw std::runtime_error("image-id-collision");
-                            it->second.used = pic_gen;
-                            std::snprintf(b, sizeof b, "@@V %s %d 0.000 cached", id.c_str(), it->second.M);
-                            sout(b);
-                            continue;
-                        }
-                        std::ifstream f(path, std::ios::binary);
-                        std::vector<uint8_t> rgb((size_t)w * hh * 3);
-                        if (!f.read((char *)rgb.data(), (std::streamsize)rgb.size())) throw std::runtime_error("short-rgb-file");
-                        Pic pc;
-                        pc.w = w; pc.h = hh; pc.used = pic_gen;
-                        pc.rows = vis.encode(rgb.data(), w, hh, pc.M);
-                        for (int r = 0; r < pc.M; ++r)
-                            if (e.xrow.count(pic_ids(k, r))) throw std::runtime_error("image-id-collision");
-                        const size_t nb = pc.rows.size() * sizeof(float);
-                        while (pic_bytes + nb > pic_cap) { // least recently used first, never one of this request
-                            auto lru = pics.end();
-                            for (auto jt = pics.begin(); jt != pics.end(); ++jt)
-                                if (jt->second.used < pic_gen && (lru == pics.end() || jt->second.used < lru->second.used)) lru = jt;
-                            if (lru == pics.end()) break;
-                            for (int r = 0; r < lru->second.M; ++r) e.xrow.erase(pic_ids(lru->first, r));
-                            pic_bytes -= lru->second.rows.size() * sizeof(float);
-                            pics.erase(lru);
-                        }
-                        Pic &st = pics[k] = std::move(pc);
-                        for (int r = 0; r < st.M; ++r) e.xrow[pic_ids(k, r)] = st.rows.data() + (size_t)r * Vision::OUT;
-                        pic_bytes += nb;
-                        std::snprintf(b, sizeof b, "@@V %s %d %.3f", id.c_str(), st.M, vis.last_s);
-                        sout(b);
-                    } catch (std::exception &ex) { sout("@@E " + id + " image " + std::string(ex.what()).substr(0, 200)); }
-                    continue;
-                }
+                if (cmd == "V") { handle_v(is, id); continue; } // V <id> <key> <width> <height> <rgb file>
                 if (cmd == "P") { // P <id> <temperature> <top_p> <top_k> <min_p> <seed>: sampling for the G of that id
                     ops::SampleArgs a;
                     unsigned long long sd = 0;

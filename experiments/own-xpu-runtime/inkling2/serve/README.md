@@ -24,6 +24,12 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
   encoder takes 1.07 GiB of card memory and is left out when the context tier leaves no room (515K): pictures are
   then refused with a message. The chat page takes pictures by paste, drop or its Picture button. Timings add `pictures_encoded` and `picture_s` (0.04 s for a 640 x 360 picture,
   3.3 s for the largest).
+- Several conversations per card: `"seqs_per_card": 4` in config.json runs one engine per card holding 4
+  conversations (each card then serves up to 4 requests at once; answers are the same as one at a time). They share
+  one context size, `seq_ctx` (default the smallest of `ctx_tiers`), which does not grow; prompts are read in steps of
+  `seq_ubatch` (896) tokens. Guessing, the drafter, saved prompts and /admin/save are off in this mode. A card holds 4
+  conversations of 16K in 18.6 GiB; 8 requests on 2 cards x 4 took 6.4 s against 13.5 s one by one. Default 1 (one
+  conversation per card, with guessing and context growth up to 515K).
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>

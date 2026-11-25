@@ -887,6 +887,24 @@ table axes enlarged) matches the reference within 4.7e-6 (the reference: 1.1 s o
 (`scripts/check-exact.sh`) now has 14 checks: the test card's 144 rows bit-identical to the baseline's
 (`baseline/vision/rows.f32`, made with `attention_rt`) and its 100 greedy ids equal to the reference's.
 
+Several conversations per card (2026-11-25, `INK_SEQS=<n>`, n <= 8; `Engine::bind`, `step_rows`, `next_rows`): the
+engine holds n sequences (caches, convolution states, position, sampling); a shared step takes one token of each
+writing sequence. The row-wise parts run as a step of n tokens (steps of 2-8 tokens give each row its one-token values,
+as the guess checks); the convolutions and cache stores read each row's own state through a per-row table
+(`fz::SeqRow`: every row is the only token of its own step), and each row's attention runs the one-token kernels
+against its own caches. Checked: every id and every step's logits row bit-identical to each conversation written alone
+(`INK_SEQS_TEST`: 4 conversations card 2, 8 conversations card 3 with the 3,127- and 1,000-token prompts; now gate check
+15). Speed of the shared steps (greedy, 8K context): 4 conversations 143.2 tok/s in total against 87.3 for one; 8
+conversations 183.4 against 87.6 (71 of 127 steps with all 8 rows); the steps are GPU-bound (kernels busy 97 %), mostly
+the extra experts the rows choose. Memory: with prompt steps of 896 tokens (`INK_UBATCH=896`, windowed rings of 2,048
+positions) 8 conversations of 8K took 19.87 GiB, 4 of 16K 18.60 GiB (one of 8K with 4,096-token steps: 20.02).
+Serving (`INK_SERVE=1` with `INK_SEQS`): `C <id> <s>` before a G line puts the request on sequence s; a prompt is read in
+pieces of `INK_SEQS_CHUNK` (512) tokens between shared steps while others write; no guessing, state copies, saved
+prompts or W lines there. Engine serving test: 4 requests at once (two sampled, one 3,127-token prompt) and a
+follow-up gave the same tokens as one at a time (5/5). Server: `seqs_per_card` (and `seq_ctx`, `seq_ubatch`) in
+config.json; 2 cards x 4 places, 8 chat requests at once 6.4 s against 13.5 s one by one, 12/12 answers identical
+(first round and follow-ups, one picture, two sampled).
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic

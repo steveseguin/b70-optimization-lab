@@ -41,6 +41,16 @@ inline float conv_scale(bool dyn) { return 1.0f / std::sqrt((float)((dyn ? 2 : 1
 
 constexpr int PREP_WG = 128;
 
+// steps whose rows belong to different sequences (Engine::step_rows: one token of each): row t's convolution states,
+// caches and position. A kernel given these tables treats every row as the only token of its own step (the window's
+// earlier inputs from the row's state, the state saved after it), so each row gets the values of a one-token step
+struct SeqRow {
+    const float *st_in; float *st_out; // this application's states of the row's sequence
+    sycl::half *Kc, *Vc;               // its caches of this application
+    const float *tau;                  // tau_all + its position
+    int pos, pad;
+};
+
 struct PrepArgs {
     int ntok, pos0, nh, nkvh, hd, nr, ext;
     bool full;            // full attention: dynamic K/V taps and log-scaled positions
@@ -55,6 +65,7 @@ struct PrepArgs {
     float eps, kv_scale;
     const float *R; float *Rc; const float *rel_clip; float rel_clip_thr; const float *rel_bias; float *tab; // R clipped into Rc
     // tab null: Rc only (attn_scores_tile computes the bias itself)
+    const SeqRow *mr = nullptr; // rows of different sequences (ntok rows): states, caches and positions per row
 };
 
 inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
@@ -75,7 +86,7 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 float norm = sycl::sqrt(wg_sum<PREP_WG>(it, v * v, &slm[0])) * 1.0f + 1e-6f;
                 float f = sycl::clamp(a.qk_clip / norm, 0.0f, 1.0f);
                 float x = v * f;
-                if (a.full) x = x * a.tau[t];
+                if (a.full) x = x * (a.mr ? *a.mr[t].tau : a.tau[t]);
                 row[l] = x;
                 return;
             }
@@ -88,7 +99,9 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 const float *dyn = a.full ? (isv ? a.dynV : a.dynK) : nullptr;
                 const int off = isv ? kd : 0;
                 float win[4];
-                conv_win(xr, kd, a.st_in, off, c, t, win);
+                const SeqRow *sr = a.mr ? a.mr + t : nullptr;
+                if (sr) conv_win(xr + (size_t)t * kd, kd, sr->st_in, off, c, 0, win);
+                else conv_win(xr, kd, a.st_in, off, c, t, win);
                 float v = conv_out(win, isv ? a.v_conv : a.k_conv, c, dyn ? dyn + (size_t)t * a.nkvh * 4 + hh * 4 : nullptr,
                                    a.kv_scale);
                 float tot = wg_sum<PREP_WG>(it, v * v, &slm[0]);
@@ -103,10 +116,12 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 }
                 size_t i = (size_t)t * kd + c;
                 (isv ? a.Vx : a.Kx)[i] = x;
-                const int slot = (a.pos0 + t) & a.km;
-                if (isv && a.vld > 0) a.Vc[(size_t)c * a.vld + slot] = sycl::half(x);
-                else (isv ? a.Vc : a.Kc)[(size_t)slot * kd + c] = sycl::half(x);
-                if (t == a.ntok - 1) conv_save(a.st_out, off, c, win);
+                const int slot = (sr ? sr->pos : a.pos0 + t) & a.km;
+                sycl::half *Kc = sr ? sr->Kc : a.Kc, *Vc = sr ? sr->Vc : a.Vc;
+                if (isv && a.vld > 0) Vc[(size_t)c * a.vld + slot] = sycl::half(x);
+                else (isv ? Vc : Kc)[(size_t)slot * kd + c] = sycl::half(x);
+                if (sr) conv_save(sr->st_out, off, c, win);
+                else if (t == a.ntok - 1) conv_save(a.st_out, off, c, win);
                 else if (a.st_tok) conv_save(a.st_tok + (size_t)t * a.sst, off, c, win);
                 return;
             }
@@ -121,7 +136,7 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
                 float f = sycl::clamp(a.rel_clip_thr / norm, 0.0f, 1.0f);
                 if (l < a.nr) {
                     float x = v * f;
-                    if (a.full) x = x * a.tau[t];
+                    if (a.full) x = x * (a.mr ? *a.mr[t].tau : a.tau[t]);
                     if (ch == 0) a.Rc[(size_t)g * a.nr + l] = x;
                     rs[l] = x;
                 }
@@ -142,7 +157,7 @@ inline sycl::event attn_prep(sycl::queue &q, const PrepArgs a) {
 // added in wg_sum's order (the R rows: sub-group 0's sum, then 7 zeros): the same values without local memory or
 // barriers, and an R row (16 values) takes one sub-group instead of 8. sgw sub-groups (rows) per work-group.
 inline sycl::event attn_prep_sg(sycl::queue &q, const PrepArgs a, int sgw) {
-    if (a.hd != PREP_WG || a.nr != SG || a.tab) throw std::runtime_error("attn_prep_sg: unsupported shape");
+    if (a.hd != PREP_WG || a.nr != SG || a.tab || a.mr) throw std::runtime_error("attn_prep_sg: unsupported shape");
     constexpr int NK = PREP_WG / SG;
     const int nq = a.ntok * a.nh, nk = a.ntok * a.nkvh, nrows = 2 * nq + 2 * nk, ngr = (nrows + sgw - 1) / sgw;
     return q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ngr * sgw * SG), sycl::range<1>((size_t)sgw * SG)),
@@ -231,16 +246,18 @@ inline int prep_sg_sgw() { // INK_PREP_SG=<rows per work-group> (default 8; 0 = 
 // attn_out = convolution of ob (ops::convolve, no dynamic taps); ffn_inp = inpSA + attn_out (if inpSA)
 inline sycl::event attn_tail(sycl::queue &q, const float *ob, const float *st_in, float *st_out, int off, const float *w,
                              float scale, float *attn_out, const float *inpSA, float *ffn_inp, int E, int ntok,
-                             float *st_tok = nullptr, size_t sst = 0) {
+                             float *st_tok = nullptr, size_t sst = 0, const SeqRow *mr = nullptr) {
     return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)E), [=](sycl::id<2> id) {
         int t = (int)id[0], c = (int)id[1];
         float win[4];
-        conv_win(ob, E, st_in, off, c, t, win);
+        if (mr) conv_win(ob + (size_t)t * E, E, mr[t].st_in, off, c, 0, win); // (each row its own sequence's state)
+        else conv_win(ob, E, st_in, off, c, t, win);
         float o = conv_out(win, w, c, nullptr, scale);
         size_t i = (size_t)t * E + c;
         attn_out[i] = o;
         if (inpSA) ffn_inp[i] = inpSA[i] + o;
-        if (t == ntok - 1) conv_save(st_out, off, c, win);
+        if (mr) conv_save(mr[t].st_out, off, c, win);
+        else if (t == ntok - 1) conv_save(st_out, off, c, win);
         else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
     });
 }
@@ -285,19 +302,25 @@ inline float combine(const float *y, const float *escale, const int32_t *ids, co
 // are combined again by each thread (the same values), so tokens need no second pass.
 inline sycl::event ffn_tail(sycl::queue &q, const float *y, const float *escale, const int32_t *ids, const float *w, int nu,
                             const float *st_in, float *st_out, int off, const float *cw, float scale, float *ffn_out,
-                            const float *fi, float *out, int E, int ntok, float *st_tok = nullptr, size_t sst = 0) {
+                            const float *fi, float *out, int E, int ntok, float *st_tok = nullptr, size_t sst = 0,
+                            const SeqRow *mr = nullptr) {
     return q.parallel_for(sycl::range<2>((size_t)ntok, (size_t)E), [=](sycl::id<2> id) {
         int t = (int)id[0], c = (int)id[1];
         float win[4];
-        for (int i = 0; i < 4; ++i) {
-            int tt = t - 3 + i;
-            win[i] = tt >= 0 ? combine(y, escale, ids, w, nu, E, tt, c) : st_in[(size_t)(off + c) * 3 + (3 + tt)];
-        }
+        if (mr) { // each row its own sequence's state: its earlier inputs from the state, then its own combine
+            for (int i = 0; i < 3; ++i) win[i] = mr[t].st_in[(size_t)(off + c) * 3 + i];
+            win[3] = combine(y, escale, ids, w, nu, E, t, c);
+        } else
+            for (int i = 0; i < 4; ++i) {
+                int tt = t - 3 + i;
+                win[i] = tt >= 0 ? combine(y, escale, ids, w, nu, E, tt, c) : st_in[(size_t)(off + c) * 3 + (3 + tt)];
+            }
         float o = conv_out(win, cw, c, nullptr, scale);
         size_t i = (size_t)t * E + c;
         ffn_out[i] = o;
         out[i] = fi[i] + o;
-        if (t == ntok - 1) conv_save(st_out, off, c, win);
+        if (mr) conv_save(mr[t].st_out, off, c, win);
+        else if (t == ntok - 1) conv_save(st_out, off, c, win);
         else if (st_tok) conv_save(st_tok + (size_t)t * sst, off, c, win);
     });
 }

@@ -16,6 +16,9 @@
 #     7 guesses checked every round (INK_DRAFT, INK_SPEC=7, INK_SPEC_ADAPT=0, INK_DSP_STOP=0: steps of 8 tokens): ids and every chosen
 #     logits row
 #   card C, then: code 128 with the drafter choosing 0-7 guesses per round (INK_SPEC=7, steps of 1-8 tokens): ids
+#   card D, then: four conversations (haiku, code, fr, p300) written together in shared steps (INK_SEQS=4,
+#     INK_SEQS_TEST: Engine::step_rows, steps of 4 down to 1 rows) against each written alone in the same process: ids
+#     and every step's logits row bit-identical
 #   card B, then (when the baseline has vision/): the 640 x 360 test card (tools/vision/card.png) through the image
 #     encoder: its 144 rows must equal the baseline's bit for bit; then the card's question with those rows in a
 #     serving engine (tools/vision/engine_e2e.py): 100 greedy ids must equal the reference's (llama.cpp's image path)
@@ -34,7 +37,9 @@ read -r cA cB cC cD cE <<< "${INK_CHECK_CARDS:-1 2 3 4 5}"
 [ -n "$cE" ] && [ $(printf '%s\n' $cA $cB $cC $cD $cE | sort -u | wc -l) -eq 5 ] || { echo "check-exact: INK_CHECK_CARDS needs five distinct cards"; exit 2; }
 out=$(mktemp -d "$W/check.XXXXXX")
 mkdir -p "$out/s5" "$out/p300"
-INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /dev/null 2> "$out/p300.err" &
+{ INK_DUMP=$out/p300 "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/p300.tokens" 1 > /dev/null 2> "$out/p300.err"
+  INK_UBATCH=896 INK_SEQS=4 INK_SEQS_TEST=64 INK_SEQS_PROMPTS=$W/prompts/haiku.tokens,$W/prompts/code.tokens,$W/prompts/fr.tokens,$W/prompts/p300.tokens \
+    "$S" "$cD" "$bin" "$M" "$cD" "$W/prompts/haiku.tokens" 0 8192 > /dev/null 2> "$out/seqs.err"; } &
 { INK_DUMP=$out/s5 "$S" "$cA" "$bin" "$M" "$cA" "$W/ref-dumps/smoke5.tokens" 1 > /dev/null 2> "$out/s5.err"
   INK_SPEC=3 INK_SPEC_LOOKUP=0 INK_SAVE_GEN=$out/spec-haiku.gen "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/haiku.tokens" 64 > "$out/spec-haiku.ids" 2> "$out/spec-haiku.err"
   INK_SPEC=3 INK_SPEC_LOOKUP=0 "$S" "$cA" "$bin" "$M" "$cA" "$W/prompts/code.tokens" 128 > "$out/spec-code.ids" 2> "$out/spec-code.err"
@@ -90,6 +95,8 @@ PY
         if cmp -s "$base/haiku.gen" "$out/spec-haiku.gen"; then echo "PASS spec haiku: every chosen logits row bit-identical"
         else echo "FAIL spec haiku: chosen logits rows differ ($(cmp "$base/haiku.gen" "$out/spec-haiku.gen" | head -1))"; rc=1; fi
     fi
+    if grep -q "^\[seqs\] ALL IDENTICAL" "$out/seqs.err"; then echo "PASS several conversations: 4 written together, ids and every logits row identical to each alone ($(grep -h '^\[seqs\] alone' "$out/seqs.err" | sed 's/^\[seqs\] //; s/ (.*together/, together/; s/ (.*//'))"
+    else echo "FAIL several conversations: $(grep -h '^\[seqs\]' "$out/seqs.err" | grep -v identical | head -2 | tr '\n' ' ')"; rc=1; fi
     if [ -d "$base/vision" ]; then
         if cmp -s "$base/vision/rows.f32" "$out/vision-rows.f32"; then echo "PASS picture rows: 144 rows of the test card bit-identical ($(grep -h '\[vision\] 640' "$out/vision.err" | tail -1 | sed 's/.* in //'))"
         else echo "FAIL picture rows: differ from the baseline"; rc=1; fi

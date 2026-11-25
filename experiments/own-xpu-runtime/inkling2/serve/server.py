@@ -391,8 +391,15 @@ class Engine:
         # smaller context takes bigger prompt steps (4,096 tokens up to 64K, 2,048 to 128K, 1,024 to 300K, else 512);
         # a conversation that outgrows the size is saved, the engine restarted larger, and the save loaded back
         self.tiers = sorted(int(t) for t in (CFG.get("ctx_tiers") or [CFG["max_ctx"]]))
+        # several conversations per card (seqs_per_card > 1): one engine (INK_SEQS) holds them all at one context size
+        # (seq_ctx, default the smallest tier), so it never grows; prompts in steps of seq_ubatch (default 896) tokens
+        self.seqs = max(1, int(CFG.get("seqs_per_card", 1)))
+        if self.seqs > 1:
+            self.tiers = [int(CFG.get("seq_ctx", self.tiers[0]))]
         self.max_ctx = self.tiers[-1]
         self.ctx = self.tiers[0]
+        self.gen = 0  # starts so far: a conversation held by an earlier start is gone
+        self.start_lock = asyncio.Lock()
         self.load_s = None
         self.errlog = None
         self.last_fatal = ""
@@ -406,6 +413,11 @@ class Engine:
             raise EngineError(self.detail)
         env = dict(os.environ)
         env.update({k: str(v) for k, v in CFG["engine_env"].items()})
+        if self.seqs > 1:  # (no guessing, drafter or saved prompts with several conversations)
+            for k in ("INK_DRAFT", "INK_SPEC", "INK_SERVE_CACHES", "INK_LOAD_CACHE"):
+                env.pop(k, None)
+            env["INK_SEQS"] = str(self.seqs)
+            env.setdefault("INK_UBATCH", str(CFG.get("seq_ubatch", 896)))
         ts = time.strftime("%Y%m%dT%H%M%S")
         for old in sorted(LOG_DIR.glob(f"engine-c{self.card}-*.log"))[:-30]:
             old.unlink(missing_ok=True)
@@ -442,6 +454,7 @@ class Engine:
             if line.startswith(b"@@READY"):
                 break
         self.load_s = time.time() - t0
+        self.gen += 1
         self.state, self.detail = "ready", ""
         log(f"engine on card {self.card} ready in {self.load_s:.1f} s")
         self.reader = asyncio.create_task(self._read(self.proc))
@@ -523,13 +536,16 @@ class Session:
         self.ids = []
         self.raw = b""
         self.mode = None
+        self.gen = -1  # the engine start that holds it
 
 
 class Slot:
-    """One card: its engine, the conversation it holds, and a lock (one request at a time per card)."""
+    """One conversation place: a card's engine (or one of its sequences, seqs_per_card > 1), the conversation it
+    holds, and a lock (one request at a time per place)."""
 
-    def __init__(self, card):
-        self.engine = Engine(card)
+    def __init__(self, engine, seq=0):
+        self.engine = engine
+        self.seq = seq
         self.session = Session()
         self.lock = asyncio.Lock()
         self.last_used = 0.0
@@ -537,7 +553,8 @@ class Slot:
         self.pending = 0  # requests routed here that have not taken the lock yet
 
 
-SLOTS = [Slot(c) for c in (CFG.get("cards") or [CFG["card"]])]
+ENGINES = [Engine(c) for c in (CFG.get("cards") or [CFG["card"]])]
+SLOTS = [Slot(en, s) for s in range(ENGINES[0].seqs) for en in ENGINES]  # (sequence 0 of every card first)
 MAX_CTX = SLOTS[0].engine.max_ctx
 
 
@@ -564,7 +581,7 @@ def pick_slot(raw_msgs, mode, make_prompt):
     best = None
     for sl in SLOTS:
         ss = sl.session
-        if ss.mode != mode or not ss.ids or sl.engine.state == "fault":
+        if ss.mode != mode or not ss.ids or sl.engine.state == "fault" or ss.gen != sl.engine.gen:
             continue
         if pb.startswith(ss.raw) and len(pb) > len(ss.raw) and (best is None or len(ss.raw) > len(best.session.raw)):
             best = sl
@@ -667,7 +684,7 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         slot.requests += 1
         slot.last_used = time.time()
         loop = asyncio.get_running_loop()
-        extend = bool(SESSION.mode == mode and SESSION.ids and ENGINE.state == "ready" and
+        extend = bool(SESSION.mode == mode and SESSION.ids and ENGINE.state == "ready" and SESSION.gen == ENGINE.gen and
                       prompt_bytes.startswith(SESSION.raw) and len(prompt_bytes) > len(SESSION.raw))
         if extend:
             tail = await loop.run_in_executor(None, encode_marked, prompt_bytes[len(SESSION.raw):])
@@ -701,7 +718,9 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
             SESSION.clear()
         if ENGINE.state != "ready":
             SESSION.clear()
-            await ENGINE.start()
+            async with ENGINE.start_lock:  # (shared by the card's conversation places)
+                if ENGINE.state != "ready":
+                    await ENGINE.start()
         gen = []
         t0 = time.time()
         st = {"stopped": False}
@@ -720,6 +739,8 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
             ids = ids_g
             max_new = mx
             stopped = st["stopped"]
+            if ENGINE.seqs > 1:
+                await ENGINE.send(f"C {rid} {slot.seq}")
             if samp and samp["temperature"] > 0:
                 await ENGINE.send(f"P {rid} {samp['temperature']!r} {samp['top_p']!r} {samp['top_k']} {samp['min_p']!r} {samp['seed']}")
             await ENGINE.send(f"G {rid} {max_new} 1 {EOS} {len(ids)} " + " ".join(map(str, ids)))
@@ -809,6 +830,7 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         SESSION.ids = ids + gen
         SESSION.raw = bytes_of_marked(SESSION.ids)
         SESSION.mode = mode
+        SESSION.gen = ENGINE.gen
         tm = {"prompt_tokens": len(ids), "read_tokens": int(done[1]), "read_s": float(done[3]), "answer_tokens": len(gen),
               "answer_s": float(done[4]), "rounds": int(done[5]), "guesses": int(done[6]), "kept_guesses": int(done[7]),
               "context_used": int(done[8]), "total_s": round(time.time() - t0, 3)}
@@ -1159,6 +1181,8 @@ async def _engine_save(slot, path):
         slot.engine.queues.pop(rid, None)
     if kind == "W":
         os.replace(part, path)
+    elif slot.engine.seqs > 1:
+        data = ["saving is not available with several conversations per card (seqs_per_card)"]
     else:
         part.unlink(missing_ok=True)
     return kind, data
@@ -1254,7 +1278,7 @@ async def models(request):
 
 
 async def health(request):
-    cards = [{"card": sl.engine.card, "status": sl.engine.state, "detail": sl.engine.detail, "context": sl.engine.ctx,
+    cards = [{"card": sl.engine.card, "seq": sl.seq, "status": sl.engine.state, "detail": sl.engine.detail, "context": sl.engine.ctx,
               "held_conversation_tokens": len(sl.session.ids), "busy": sl.lock.locked(), "routed": sl.pending,
               "requests": sl.requests,
               "last_load_s": sl.engine.load_s} for sl in SLOTS]
@@ -1273,21 +1297,23 @@ async def index(request):
 async def on_startup(app):
     global TOK
     TOK = Tokenizer()
-    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, cards {[sl.engine.card for sl in SLOTS]}, contexts {SLOTS[0].engine.tiers}")
+    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, cards {[en.card for en in ENGINES]}, {ENGINES[0].seqs} conversation(s) per card, contexts {ENGINES[0].tiers}")
     if CFG.get("load_at_start", True):
         async def first():  # one engine at a time (host memory and disk reads at load)
-            for sl in SLOTS:
-                async with sl.lock:
+            for en in ENGINES:
+                async with en.start_lock:
+                    if en.state == "ready":
+                        continue
                     try:
-                        await sl.engine.start()
+                        await en.start()
                     except EngineError as e:
-                        log(f"engine start on card {sl.engine.card} failed: {e}")
+                        log(f"engine start on card {en.card} failed: {e}")
         app["first"] = asyncio.create_task(first())
 
 
 async def on_shutdown(app):
     log("server stopping")
-    await asyncio.gather(*(sl.engine.stop() for sl in SLOTS))
+    await asyncio.gather(*(en.stop() for en in ENGINES))
 
 
 def main():
