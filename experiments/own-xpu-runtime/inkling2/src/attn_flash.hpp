@@ -441,8 +441,11 @@ template <int G, int NT, int VAR = 0>
 inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const float *Rc,
                                   const float *rel_bias, int nr, const sycl::half *Vt, int vld,
                                   int pos0, int ntok, int nh, int nkvh, int hd, int ext, float scale, float *part, float *pml, int nblk,
-                                  int km = 0x7fffffff, int b0 = 0) { // b0: the first block (blocks b0..b0+nblk-1, parts at 0..nblk-1)
+                                  int km = 0x7fffffff, int b0 = 0, const SeqRow *mr = nullptr) { // b0: the first block (blocks b0..b0+nblk-1, parts at 0..nblk-1)
+    // mr (NT = 1): rows of different sequences, row t at mr[t].pos with mr[t].Kc / Vc (K, Vt and pos0 unused); nblk = the
+    // most blocks of any row (a row's blocks past its position write nothing), each row's parts those of a one-token launch
     constexpr int PW = 16, KG = PVB / PW, NR = NT * G, HD = 128, NRL = 16;
+    if (mr && NT != 1) throw std::runtime_error("attn_flash_dec: rows of different sequences need NT = 1");
     using HV8 = sycl::vec<sycl::half, 8>;
     using HV = sycl::vec<sycl::half, 16>;
     if (hd != HD || nh != nkvh * G || vld % 16 || HD / PW != KG || (!tab && (nr != NRL || !Rc || !rel_bias)))
@@ -456,12 +459,13 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id(), c = (int)it.get_local_id(1);
             float vv[NT][G]; // VAR 1: this lane's key's scores, kept for its exponentials
             const int gid = (int)it.get_group(0), b = gid % nblk, kvh = (gid / nblk) % nkvh, rg = gid / nblk / nkvh;
-            const int kb = (b0 + b) * PVB, pmax = pos0 + ntok - 1;
+            const int kb = (b0 + b) * PVB, pmax = mr ? mr[rg].pos : pos0 + ntok - 1;
+            const sycl::half *Kb = mr ? mr[rg].Kc : K, *Vb = mr ? mr[rg].Vc : Vt;
             int pp[NT];
 #pragma unroll
             for (int t = 0; t < NT; ++t) {
                 const int tt = rg * NT + t;
-                pp[t] = tt < ntok ? pos0 + tt : -1;
+                pp[t] = tt < ntok ? (mr ? mr[tt].pos : pos0 + tt) : -1;
             }
             { // the scores of this sub-group's 16 keys (attn_scores_gt's expressions)
                 const int g0 = kb + sgi * PW, j = g0 + lane;
@@ -471,7 +475,7 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
                         for (int a = 0; a < NR; ++a) smx[a * KG + sgi] = -INFINITY;
                 if (g0 <= pmax) {
                     const int jc = sycl::min(j, pmax);
-                    const sycl::half *kr = K + (size_t)(jc & km) * nkvh * HD + kvh * HD;
+                    const sycl::half *kr = Kb + (size_t)(jc & km) * nkvh * HD + kvh * HD;
                     float s[NT][G];
 #pragma unroll
                     for (int t = 0; t < NT; ++t)
@@ -528,7 +532,7 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
                 }
             }
             sycl::group_barrier(it.get_group());
-            const sycl::half *vrow = Vt + (size_t)(kvh * HD + c) * vld;
+            const sycl::half *vrow = Vb + (size_t)(kvh * HD + c) * vld;
             float mb[NT][G], ls[NT][G], acc[NT][G];
             if constexpr ((VAR & 1) != 0) {
                 // each row's block maximum from the 8 key groups' shares (lanes 8-15 repeat lanes 0-7)
@@ -632,7 +636,7 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
 template <int U, bool SGS>
 inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
                                     const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
-                                    int to = 0) {
+                                    int to = 0, const SeqRow *mr = nullptr) { // mr: row t at mr[t].pos (pos0 unused)
     constexpr int NB = 128;
     if (hd != NB) throw std::runtime_error("attn_flash_sum: head_dim 128 only");
     if (b0 % NB) throw std::runtime_error("attn_flash_sum: chunks start at a multiple of 128 blocks");
@@ -640,7 +644,7 @@ inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const flo
         sycl::local_accessor<float, 1> sl(NB, h), sal(NB, h), sbe(NB, h), sgm(NB / 16, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * NB), sycl::range<1>((size_t)NB)),
                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
-            const int row = (int)it.get_group(0), c = (int)it.get_local_id(0), t = row / nh, p = pos0 + t;
+            const int row = (int)it.get_group(0), c = (int)it.get_local_id(0), t = row / nh, p = mr ? mr[t].pos : pos0 + t;
             const int nb = sycl::min(p / PVB + 1 - b0, nblk); // this row's blocks in the chunk (b0 relative)
             const float *pr = part + (size_t)row * nblk * NB + c, *pm = pml + (size_t)row * nblk * 2;
             float M = sink[row], L = 1.0f, A = 0.0f;
@@ -722,14 +726,14 @@ inline int flash_sum_u() {
 }
 inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
                                   const float *sink, const float *gate, float *out, int b0 = 0, float *st = nullptr, int from = 0,
-                                  int to = 0) {
+                                  int to = 0, const SeqRow *mr = nullptr) {
     switch (flash_sum_u()) {
-    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
-    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
-    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
-    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
-    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
-    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to);
+    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
+    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out, b0, st, from, to, mr);
     }
 }
 

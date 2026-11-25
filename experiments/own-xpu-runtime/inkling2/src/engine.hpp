@@ -53,6 +53,7 @@ struct Engine {
     fz::SeqRow *mrow_dev = nullptr;   // step_rows: [n_app][rows] on the card
     std::vector<fz::SeqRow> mrow_host;
     bool mrows = false;               // the step's rows are of different sequences (mrow_host / mrow_dev)
+    bool mr_batch = !std::getenv("INK_MR_BATCH") || std::atoi(std::getenv("INK_MR_BATCH")); // their attention in one launch
     // per-step buffers
     int32_t *ids = nullptr;
     std::vector<float *> lbuf;        // lbuf[0] = normed embedding, lbuf[il+1] = l_out of application il
@@ -531,7 +532,8 @@ struct Engine {
                 r.pos = pos;
                 r.pad = 0;
             }
-        d.put(mrow_dev, mrow_host.data(), (size_t)h.n_app * n);
+        // (no wait: the queue runs in order, and mrow_host is not written again before next_rows() has waited)
+        d.q.memcpy(mrow_dev, mrow_host.data(), sizeof(fz::SeqRow) * (size_t)h.n_app * n);
         float *ft = feat;
         auto os = std::move(on_step);
         const bool al = all_logits, hl = host_logits, ks = keep_states;
@@ -1087,7 +1089,24 @@ struct Engine {
             // values; INK_ATT_WINF=0 off). 2 work-groups per KV head split the channels for 1-2 tokens (bench_attn card 3,
             // full window: 1 token 16.0 -> 15.2 us, 4 tokens 22.3 -> 18.1; 400 keys 10.4 -> 7.5, 12.0 -> 8.4)
             const bool winf = !mrows && fast && win > 0 && win <= 1024 && ntok <= SB_MAX && fz::att_win_fused_on();
-            if (mrows) // rows of different sequences: each row's attention as a one-token step of its sequence (the same calls)
+            // rows of different sequences: every row's attention in one launch with the per-row table (the one-token
+            // kernels' values: windowed attn_win_fused<3, 3, 2>, else attn_flash_dec<3, 1> over the most blocks of any row
+            // + attn_flash_sum); rows past the parts buffer (very long contexts) one by one as one-token steps
+            int mr_nblk = 0;
+            if (mrows && win == 0)
+                for (int t = 0; t < ntok; ++t) mr_nblk = std::max(mr_nblk, mrow_host[(size_t)il * ntok + t].pos / fz::PVB + 1);
+            const bool mr_one = mrows && mr_batch && (win > 0 || (size_t)ntok * mr_nblk <= dec_cap);
+            if (mr_one) {
+                const fz::SeqRow *mr = mrow_dev + (size_t)il * ntok;
+                if (win > 0)
+                    pr("attn_win", fz::attn_win_fused<3, 3, 2>(d.q, Q, nullptr, tab, nullptr, kvl[il], sinks, gate, 0, ntok, nh, nkvh, hd,
+                                                              h.rel_extent, win, kscale, kmask[il], att, 0, mr));
+                else {
+                    pr("attn_pv_full", fz::attn_flash_dec<3, 1>(d.q, Q, nullptr, tab, Rc, f32(l.rel_bias), h.n_rel, nullptr, kvl[il], 0, ntok,
+                                                               nh, nkvh, hd, h.rel_extent, kscale, pvpart, pml, mr_nblk, kmask[il], 0, mr));
+                    pr("attn_pv_sum_full", fz::attn_flash_sum(d.q, pvpart, pml, mr_nblk, 0, ntok, nh, hd, sinks, gate, att, 0, nullptr, 0, 0, mr));
+                }
+            } else if (mrows) // (INK_MR_BATCH=0, or past the parts buffer) each row's attention as a one-token step of its sequence
                 for (int t = 0; t < ntok; ++t) {
                     const fz::SeqRow &sr = mrow_host[(size_t)il * ntok + t];
                     const int p = sr.pos;

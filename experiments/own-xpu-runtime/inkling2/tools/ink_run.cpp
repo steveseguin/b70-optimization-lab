@@ -325,7 +325,8 @@ int main(int argc, char **argv) {
             if (ns < 1 || ns != (int)e.seqs.size()) throw std::runtime_error("INK_SEQS_TEST: INK_SEQS must equal the number of prompts");
             const int V = e.m.hp.vocab, VP = e.m.hp.vocab_padded;
             std::vector<int> want(ns);
-            for (int s = 0; s < ns; ++s) want[s] = std::max(1, ng - s * ng / (2 * ns));
+            const bool same_n = std::getenv("INK_SEQS_SAME") && std::atoi(std::getenv("INK_SEQS_SAME")); // every sequence n tokens
+            for (int s = 0; s < ns; ++s) want[s] = same_n ? ng : std::max(1, ng - s * ng / (2 * ns));
             std::vector<std::vector<int32_t>> ia(ns), ib(ns);
             std::vector<std::vector<float>> ra(ns), rb(ns);
             e.host_logits = false;
@@ -353,6 +354,7 @@ int main(int argc, char **argv) {
                 d.get(rb[s].data(), e.lg + (size_t)(e.n_logit_rows - 1) * VP, V);
                 ib[s].push_back(e.next_token());
             }
+            e.prof.collect(); e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0; // (the shared steps only)
             const double t0 = now_s();
             long tok_b = 0, steps = 0;
             std::vector<long> by_rows(Engine::SB_MAX + 1);
@@ -376,6 +378,7 @@ int main(int argc, char **argv) {
                 e.next_rows(rs.data(), n, nx.data());
                 for (int t = 0; t < n; ++t) ib[rs[t]].push_back(nx[t]);
                 tok_b += n; ++steps; ++by_rows[n];
+                if (e.prof.on) e.prof.collect();
             }
             const double tb = now_s() - t0;
             bool all = true;

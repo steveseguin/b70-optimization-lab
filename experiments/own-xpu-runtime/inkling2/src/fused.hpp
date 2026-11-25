@@ -725,7 +725,9 @@ inline bool att_win_fused_on() { static const bool on = !std::getenv("INK_ATT_WI
 template <int G, int GH = 3, int CS = 1>
 inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::half *K, const float *tab, const sycl::half *Vt,
                                   int vld, const float *sink, const float *gate, int pos0, int ntok, int nh, int nkvh, int hd,
-                                  int ext, int win, float scale, int km, float *out, int dbg = 0) {
+                                  int ext, int win, float scale, int km, float *out, int dbg = 0, const SeqRow *mr = nullptr) {
+    // mr: rows of different sequences (row t at mr[t].pos with mr[t].Kc / Vc; K, Vt and pos0 unused), each row's values
+    // those of a one-token launch of its sequence
     constexpr int WG = 1024, AW = ops::ATT_WG, HD = 128, NB = WG / PVB + 1, NS = WG / SG;
     constexpr int NHS = G / GH, CH = HD / CS;
     static_assert(G % GH == 0 && AW % SG == 0 && GH * AW <= WG && GH * HD <= WG && CH % SG == 0 && 8 * CH <= WG,
@@ -741,14 +743,15 @@ inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::ha
             const int t = grp / (nkvh * NHS), kvh = (grp / NHS) % nkvh, hs = grp % NHS;
             const int l = (int)it.get_local_id(0);
             const int lane = (int)sg.get_local_linear_id(), sgi = (int)sg.get_group_linear_id();
-            const int p = pos0 + t, lo = sycl::max(0, p - win + 1), nk = p - lo + 1;
+            const int p = mr ? mr[t].pos : pos0 + t, lo = sycl::max(0, p - win + 1), nk = p - lo + 1;
+            const sycl::half *Kb = mr ? mr[t].Kc : K, *Vb = mr ? mr[t].Vc : Vt;
             const size_t row0 = (size_t)t * nh + kvh * G + hs * GH;
             if (l < GH * HD) qs[l] = Q[row0 * HD + l];
             sycl::group_barrier(it.get_group());
             if (!(dbg & 2)) { // scores: thread l = key lo + l (attn_scores_g)
                 const int j = lo + l;
                 const bool in = l < nk;
-                const sycl::half *kr = K + (size_t)((in ? j : p) & km) * nkvh * HD + kvh * HD;
+                const sycl::half *kr = Kb + (size_t)((in ? j : p) & km) * nkvh * HD + kvh * HD;
                 float sc[GH];
 #pragma unroll
                 for (int g = 0; g < GH; ++g) sc[g] = 0.0f;
@@ -809,7 +812,7 @@ inline sycl::event attn_win_fused(sycl::queue &q, const float *Q, const sycl::ha
             for (int g = 0; g < GH; ++g) iv[g] = st[GH + g];
             auto block = [&](int bi, int c) { // block bi's part of channel c, keys ascending from 0.0f
                 const int kb = (lo / PVB + bi) * PVB, ja = sycl::max(lo, kb), jb = sycl::min(p, kb + PVB - 1);
-                const sycl::half *vr = Vt + (size_t)(kvh * HD + c) * vld;
+                const sycl::half *vr = Vb + (size_t)(kvh * HD + c) * vld;
                 float acc[GH];
 #pragma unroll
                 for (int g = 0; g < GH; ++g) acc[g] = 0.0f;

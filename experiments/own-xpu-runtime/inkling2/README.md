@@ -898,6 +898,13 @@ against its own caches. Checked: every id and every step's logits row bit-identi
 conversations 183.4 against 87.6 (71 of 127 steps with all 8 rows); the steps are GPU-bound (kernels busy 97 %), mostly
 the extra experts the rows choose. Memory: with prompt steps of 896 tokens (`INK_UBATCH=896`, windowed rings of 2,048
 positions) 8 conversations of 8K took 19.87 GiB, 4 of 16K 18.60 GiB (one of 8K with 4,096-token steps: 20.02).
+One launch for all rows' attention (2026-11-25, `INK_MR_BATCH=0` keeps one launch per row): `attn_win_fused` and
+`attn_flash_dec` / `attn_flash_sum` take the per-row table too (each row's position and caches; the full layers run
+over the most blocks of any row, a row's blocks past its position write nothing and its sum reads only its own), so a
+step makes 842 launches instead of 1,234 with 8 rows; the same values (gate check 15, `INK_SEQS_TEST` 8 conversations
+up to 2,500-token prompts identical). Card 3, 256 shared steps, both orders: 4 conversations 144.4 -> 148.3 tok/s, 8
+conversations 175.8 -> 183.7 (profiled 8-row step 44.3 -> 42.2 ms: the experts 22.2 ms, 39 different experts per layer
+on average against 8 for one token; the expert kernels already run each expert's own number of rows).
 Serving (`INK_SERVE=1` with `INK_SEQS`): `C <id> <s>` before a G line puts the request on sequence s; a prompt is read in
 pieces of `INK_SEQS_CHUNK` (512) tokens between shared steps while others write; no guessing, state copies, saved
 prompts or W lines there. Engine serving test: 4 requests at once (two sampled, one 3,127-token prompt) and a
