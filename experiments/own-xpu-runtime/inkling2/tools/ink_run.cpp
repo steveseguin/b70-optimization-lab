@@ -62,6 +62,15 @@ int main(int argc, char **argv) {
         }
         d.hold = 0;
         Engine &e = *ep;
+        // every kernel program loaded now (INK_PRELOAD=0: each on its first launch, as before). The runtime otherwise
+        // loads them inside the first prompt step: the card waited 145 ms before the first attention-input product and
+        // 25 ms after the first embedding copy (INK_PROF_GAPS). 2026-11-25, card 2: 0.2 s at load, 3K prompt 3.23 -> 3.06 s
+        // (968 -> 1,021 tok/s), same values; card memory the same, host peak +53 MB
+        if (!std::getenv("INK_PRELOAD") || std::atoi(std::getenv("INK_PRELOAD"))) {
+            const double tp = now_s();
+            auto kb = sycl::get_kernel_bundle<sycl::bundle_state::executable>(d.ctx, {d.dev});
+            std::fprintf(stderr, "[ink] kernel programs loaded in %.3f s (%zu kernels)\n", now_s() - tp, kb.get_kernel_ids().size());
+        }
         std::fprintf(stderr, "[ink] context %d positions, steps of %d tokens, card memory in use %.2f of %.2f GiB (score rows %d; driver: %.2f GiB free)\n",
                      ctx, ub, d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow, d.free_mem() / 1073741824.0);
         // INK_BENCH_REAL=1 with INK_BENCH_STEP: the steps take the prompt's last 8 tokens (fed without them), each repeat

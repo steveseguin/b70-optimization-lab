@@ -15,6 +15,7 @@
 #include <sycl/sycl.hpp>
 #include <algorithm>
 #include <map>
+#include <tuple>
 #include <unistd.h>
 #include <vector>
 
@@ -34,12 +35,34 @@ struct Prof {
     void collect() {
         if (!on || ev.empty()) return;
         uint64_t first = UINT64_MAX, last = 0;
+        // INK_PROF_GAPS=<n>: print this collect's n longest idle gaps between launches (with the labels on each side)
+        static const int ngaps = std::getenv("INK_PROF_GAPS") ? std::atoi(std::getenv("INK_PROF_GAPS")) : 0;
+        std::vector<std::tuple<uint64_t, uint64_t, const std::string *>> tl;
         for (auto &[l, e] : ev) {
             uint64_t a = e.get_profiling_info<sycl::info::event_profiling::command_start>();
             uint64_t b = e.get_profiling_info<sycl::info::event_profiling::command_end>();
             rows[l].ms += (b - a) * 1e-6; rows[l].n++;
             busy_ms += (b - a) * 1e-6;
             first = std::min(first, a); last = std::max(last, b);
+            if (ngaps > 0) tl.emplace_back(a, b, &l);
+        }
+        if (ngaps > 0 && tl.size() > 1) {
+            std::sort(tl.begin(), tl.end());
+            std::vector<std::tuple<double, size_t>> gaps; // (us, index of the launch after the gap)
+            uint64_t end = std::get<1>(tl[0]);
+            double total = 0;
+            for (size_t i = 1; i < tl.size(); ++i) {
+                const uint64_t a = std::get<0>(tl[i]);
+                if (a > end) { gaps.emplace_back((a - end) * 1e-3, i); total += (a - end) * 1e-3; }
+                end = std::max(end, std::get<1>(tl[i]));
+            }
+            std::sort(gaps.begin(), gaps.end(), [](auto &x, auto &y) { return std::get<0>(x) > std::get<0>(y); });
+            std::fprintf(stderr, "[gaps] %zu launches, %zu gaps, %.1f us idle in all\n", tl.size(), gaps.size(), total);
+            for (int k = 0; k < ngaps && k < (int)gaps.size(); ++k) {
+                const size_t i = std::get<1>(gaps[k]);
+                std::fprintf(stderr, "[gaps] %10.1f us  #%zu  %s -> %s\n", std::get<0>(gaps[k]), i,
+                             std::get<2>(tl[i - 1])->c_str(), std::get<2>(tl[i])->c_str());
+            }
         }
         span_ms += (last - first) * 1e-6;
         steps++;

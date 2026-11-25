@@ -684,6 +684,15 @@ Against the commit before (both orders, logits identical, gate 12/12): 3K 866.7-
 5K 929.4-933.9 -> 962.5-971.4 (card 2), 31K 934.4-940.2 -> 969.5 (card 3) and 872.7-874.8 -> 905.1-915.4 (card 4),
 100K 716.3 -> 716.1 (card 1) and 708.5 -> 716.0 (card 5); writing after 100K level (55.04-55.16 vs 55.15-55.34).
 
+Kernel programs loaded before the prompt (2026-11-25): the runtime loads a kernel's program on its first launch, so
+the first prompt step waited 145 ms before the first attention-input product and 25 ms after the first embedding copy
+(card idle 171 of 3,229 ms at 3K; `INK_PROF_GAPS=<n>` lists a step's n longest idle gaps between launches). `ink_run`
+now loads all 2,978 kernels at model load (`sycl::get_kernel_bundle<executable>`, 0.2 s; `INK_PRELOAD=0` = on first
+use): idle 8.8 ms. Card memory the same (11.85 vs 11.84 GiB free), host peak +53 MB. Against the commit before (both
+orders, logits identical, gate 12/12): 3K 958.6-963.1 -> 1,015.1-1,018.7 tok/s, 5K 965.0-966.6 -> 997.4-1,000.1 (card
+2), a 39-token prompt 0.32-0.35 -> 0.16 s; 31K 970.0-977.3 -> 976.2-979.2 (card 3), 910.3-915.9 -> 912.5-922.8 (card
+4); 100K level (713.7-717.0 vs 716.9-718.1, cards 1 and 5).
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

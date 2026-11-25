@@ -187,6 +187,8 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~01:25: kernel programs loaded at model load (0.2 s) instead of inside the first prompt step: 3K prompt
+  959-963 -> 1,015-1,019 tok/s, 5K +3.4 %, a short prompt's first token 0.33 -> 0.16 s; same values, gate 12/12.
 - Nov 25 ~00:50: prompt step size by context (4,096 tokens up to 64K positions, 2,048 to 128K, 1,024 to 300K, 512
   past): 3K 867-883 -> 965-967 tok/s (+9.5 %), 31K +3-5 %, 100K level to +1 %, same bits, gate 12/12; longest
   context unchanged (smaller steps if a size does not fit).
