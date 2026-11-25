@@ -12,6 +12,17 @@ service yet: start it by hand (below) or install `systemd/inkling-server.service
 - `"reasoning_effort"`: none, minimal, low, medium, high, xhigh, max, or a number 0-0.99.
 - The thinking text arrives as `reasoning_content`; the answer as `content`. Tool calls, streaming, `stop`
   strings and `/v1/completions` work.
+- Pictures: image parts in user (or tool) messages, as base64: OpenAI `{"type": "image_url", "image_url": {"url":
+  "data:image/png;base64,..."}}`, Responses `input_image`, or Anthropic `{"type": "image", "source": {"type":
+  "base64", ...}}` (web addresses are not fetched). The server decodes them (Pillow: RGB, alpha dropped), resizes a
+  picture only if it would give more than 4,096 rows (the reference's rule: about 6.5 million pixels), and the
+  engine encodes it on the card (Unsloth's `mmproj-BF16.gguf`, `INK_VISION` in `engine_env`): one row per 40 x 40
+  pixel block (a 1024 x 768 photo is 520 rows of context). A card keeps a picture's rows while it is in use, so a
+  follow-up question reads only the new text. Checked: the same answers as the reference (llama.cpp's image path in
+  its high-precision mode, 100/100 greedy tokens on a test card) and as a server without state copies (8/8: card,
+  follow-up, Anthropic format, photo, two pictures, a 4000 x 3000 photo, sampled, web address refused). The image
+  encoder takes 1.07 GiB of card memory and is left out when the context tier leaves no room (515K): pictures are
+  then refused with a message.
 - Thinking budget: `"thinking_budget": N` (also `max_thinking_tokens`, `chat_template_kwargs.thinking_budget`, or
   Anthropic-style `"thinking": {"type": "enabled", "budget_tokens": N}`; default `"thinking_budget"` in `config.json`,
   none). After N thinking tokens the server ends the thinking part and starts the answer (it adds `<|end_message|>

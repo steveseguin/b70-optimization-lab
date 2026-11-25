@@ -87,6 +87,168 @@ class Tokenizer:
         return b"".join(self.pieces[i] for i in ids)
 
 
+# ---------------------------------------------------------------------------------------------- pictures
+# A picture in a message is decoded here (Pillow: RGB, alpha dropped, like the reference's stb_image), resized only
+# when it would give more than image_max_rows rows (the reference's size rule and Pillow's bicubic filter), saved as
+# raw RGB under image_dir, and stands in the rendered prompt as <|image:<sha256>|> in place of the template's
+# <|unused_200054|>. Tokenized, it becomes its rows' ids: 2^30 + (key + r) mod (2^30 - 1), key = 30 bits of the
+# hash (the engine registers the rows under those ids from a V line). (notes/inkling2-vision.md)
+IMG_DIR = Path(CFG.get("image_dir", "/mnt/fast-ai/inkling-cache/img"))
+IMG_MAX_ROWS = int(CFG.get("image_max_rows", 4096))
+IMG_MAX_BYTES = int(CFG.get("image_max_bytes", 32 << 20))
+IMAGES = {}      # sha -> {"w", "h", "key", "rows", "path"}
+FIRST_ROW = {}   # the first row id of each picture -> sha
+XID0, XSPAN = 1 << 30, (1 << 30) - 1
+PLACEHOLDER = "<|unused_200054|>"
+IMG_MARK = re.compile(rb"<\|image:([0-9a-f]{64})\|>")
+
+
+def _f32(x):
+    import struct
+    return struct.unpack("f", struct.pack("f", x))[0]
+
+
+def _align40(v):
+    return (v + 39) // 40 * 40
+
+
+def picture_rows(w, h):
+    return (_align40(w) // 40) * (_align40(h) // 40)
+
+
+def _fit_size(w, h):
+    """The reference's size for a picture above the cap (mtmd-image.cpp calc_size_preserved_ratio, float math)."""
+    import math
+    maxp = IMG_MAX_ROWS * 1600
+
+    def rnd(x):  # std::round: half away from zero
+        return int(math.floor(x + 0.5)) if x >= 0 else -int(math.floor(-x + 0.5))
+    wb = max(40, rnd(_f32(_f32(float(w)) / 40.0)) * 40)
+    hb = max(40, rnd(_f32(_f32(float(h)) / 40.0)) * 40)
+    if hb * wb > maxp:
+        beta = _f32(math.sqrt(_f32(_f32(_f32(float(h)) * _f32(float(w))) / _f32(float(maxp)))))
+        hb = max(40, int(math.floor(_f32(_f32(_f32(float(h)) / beta) / 40.0))) * 40)
+        wb = max(40, int(math.floor(_f32(_f32(_f32(float(w)) / beta) / 40.0))) * 40)
+    return wb, hb
+
+
+def load_picture(data: bytes):
+    """Picture file bytes -> its sha (registered in IMAGES, RGB file written)."""
+    import io
+    from PIL import Image
+    if len(data) > IMG_MAX_BYTES:
+        raise jerr(web.HTTPBadRequest, f"picture too large ({len(data)} bytes, at most {IMG_MAX_BYTES})")
+    Image.MAX_IMAGE_PIXELS = 64_000_000
+    try:
+        im = Image.open(io.BytesIO(data))
+        im.load()
+        if im.mode in ("I;16", "I;16B", "I;16L", "I"):
+            im = im.point(lambda v: v * (1 / 256)).convert("L")
+        im = im.convert("RGB")
+    except Exception as ex:
+        raise jerr(web.HTTPBadRequest, f"cannot read the picture: {str(ex)[:200]}")
+    w, h = im.size
+    if _align40(w) * _align40(h) > IMG_MAX_ROWS * 1600:
+        im = im.resize(_fit_size(w, h), Image.BICUBIC)
+        w, h = im.size
+    rgb = im.tobytes()
+    dg = hashlib.sha256(rgb + f"{w}x{h}".encode()).digest()
+    sha = dg.hex()
+    path = IMG_DIR / f"{sha}.rgb"
+    if not path.exists():
+        IMG_DIR.mkdir(parents=True, exist_ok=True)
+        tmp = path.with_suffix(".part")
+        tmp.write_bytes(rgb)
+        os.replace(tmp, path)
+    key = int.from_bytes(dg[:4], "little") & ((1 << 30) - 1)
+    IMAGES[sha] = {"w": w, "h": h, "key": key, "rows": picture_rows(w, h), "path": str(path)}
+    FIRST_ROW[XID0 + key % XSPAN] = sha
+    return sha
+
+
+def picture_bytes(part):
+    """The bytes of an image content part: OpenAI image_url (data: URL), Responses input_image, Anthropic base64."""
+    import base64
+    url = None
+    if part.get("type") == "image" and isinstance(part.get("source"), dict):
+        src = part["source"]
+        if src.get("type") == "base64":
+            return base64.b64decode(src.get("data", ""), validate=False)
+        url = src.get("url")
+    iu = part.get("image_url")
+    if isinstance(iu, dict):
+        url = iu.get("url")
+    elif isinstance(iu, str):
+        url = iu
+    if not url and isinstance(part.get("url"), str):
+        url = part["url"]
+    if isinstance(url, str) and url.startswith("data:"):
+        head, _, body = url.partition(",")
+        if ";base64" not in head:
+            raise jerr(web.HTTPBadRequest, "picture data: URLs must be base64")
+        return base64.b64decode(body, validate=False)
+    raise jerr(web.HTTPBadRequest, "pictures must come as base64 data (a data: URL or a base64 source); web addresses are not fetched")
+
+
+def picture_ids(sha):
+    info = IMAGES.get(sha)
+    if info is None:
+        raise jerr(web.HTTPBadRequest, "unknown picture " + sha[:12])
+    return [XID0 + (info["key"] + r) % XSPAN for r in range(info["rows"])]
+
+
+def encode_marked(b: bytes):
+    """Prompt bytes (with picture marks) -> ids."""
+    out, pos = [], 0
+    for m in IMG_MARK.finditer(b):
+        if m.start() > pos:
+            out += TOK.encode(b[pos:m.start()])
+        out += picture_ids(m.group(1).decode())
+        pos = m.end()
+    if pos < len(b):
+        out += TOK.encode(b[pos:])
+    return out
+
+
+def bytes_of_marked(ids):
+    out, i = [], 0
+    while i < len(ids):
+        t = ids[i]
+        if t >= XID0:
+            sha = FIRST_ROW.get(t)
+            if sha is None:
+                raise RuntimeError("picture rows without their picture")
+            out.append(f"<|image:{sha}|>".encode())
+            i += IMAGES[sha]["rows"]
+        else:
+            out.append(TOK.pieces[t])
+            i += 1
+    return b"".join(out)
+
+
+def pictures_in(b: bytes):
+    seen = []
+    for m in IMG_MARK.finditer(b):
+        sha = m.group(1).decode()
+        if sha not in seen:
+            seen.append(sha)
+    return seen
+
+
+def render_marked(messages, effort, tools=None) -> str:
+    """render() with each picture's mark in place of the template's placeholder, in message order."""
+    text = render(messages, effort, tools)
+    shas = [p["sha"] for m in messages if isinstance(m.get("content"), list)
+            for p in m["content"] if isinstance(p, dict) and p.get("type") == "image"]
+    pieces = text.split(PLACEHOLDER)
+    if len(pieces) != len(shas) + 1:
+        raise jerr(web.HTTPBadRequest, "the pictures and the template's picture places do not match")
+    out = [pieces[0]]
+    for sha, rest in zip(shas, pieces[1:]):
+        out += [f"<|image:{sha}|>", rest]
+    return "".join(out)
+
+
 class StreamText:
     """Token bytes in, whole UTF-8 text out (a character split over tokens waits for its last byte)."""
 
@@ -508,10 +670,10 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         extend = bool(SESSION.mode == mode and SESSION.ids and ENGINE.state == "ready" and
                       prompt_bytes.startswith(SESSION.raw) and len(prompt_bytes) > len(SESSION.raw))
         if extend:
-            tail = await loop.run_in_executor(None, TOK.encode, prompt_bytes[len(SESSION.raw):])
+            tail = await loop.run_in_executor(None, encode_marked, prompt_bytes[len(SESSION.raw):])
             ids = SESSION.ids + tail
         else:
-            ids = await loop.run_in_executor(None, TOK.encode, prompt_bytes)
+            ids = await loop.run_in_executor(None, encode_marked, prompt_bytes)
         room = ENGINE.max_ctx - 16 - len(ids)
         if room < 1:
             raise jerr(web.HTTPBadRequest, f"the conversation ({len(ids)} tokens) does not fit the context "
@@ -595,6 +757,26 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
         # <|content_thinking|> is 2 more); still thinking there, the end of the thinking part and the head of a text
         # part are added and the answer goes on (the engine reads those 3 tokens). Parts of any size give the same
         # tokens as one, so below the budget nothing changes
+        # the conversation's pictures, registered on this engine (encoded unless it holds them)
+        for sha in pictures_in(prompt_bytes):
+            info = IMAGES[sha]
+            vid = uuid.uuid4().hex[:12]
+            vq = asyncio.Queue()
+            ENGINE.queues[vid] = vq
+            try:
+                await ENGINE.send(f"V {vid} {info['key']} {info['w']} {info['h']} {info['path']}")
+                kind, data = await vq.get()
+            finally:
+                ENGINE.queues.pop(vid, None)
+            if kind == "E":
+                why = " ".join(data[1:]) if data and data[0] == "image" else " ".join(data)
+                if "no-image-encoder" in why:
+                    why = f"no room for the image encoder beside a {ENGINE.ctx}-token context"
+                raise jerr(web.HTTPBadRequest, "picture: " + why)
+            if kind != "V" or int(data[0]) != info["rows"]:
+                raise EngineError(f"picture: unexpected engine reply {kind} {data[:3]}")
+            if len(data) < 3:
+                STATS["pictures_encoded"] = STATS.get("pictures_encoded", 0) + 1
         cut = think_budget is not None and think_budget + 2 < max_new
         done = await one_g(ids, think_budget + 2 if cut else max_new)
         thinking_cut = False
@@ -622,7 +804,7 @@ async def _engine_job(slot, prompt_bytes: bytes, mode, max_new: int, on_event, c
                         str(float(d1[4]) + float(done[4])), str(int(d1[5]) + int(done[5])), str(int(d1[6]) + int(done[6])),
                         str(int(d1[7]) + int(done[7]))] + list(done[8:])
         SESSION.ids = ids + gen
-        SESSION.raw = TOK.bytes_of(SESSION.ids)
+        SESSION.raw = bytes_of_marked(SESSION.ids)
         SESSION.mode = mode
         tm = {"prompt_tokens": len(ids), "read_tokens": int(done[1]), "read_s": float(done[3]), "answer_tokens": len(gen),
               "answer_s": float(done[4]), "rounds": int(done[5]), "guesses": int(done[6]), "kept_guesses": int(done[7]),
@@ -727,15 +909,19 @@ def norm_messages(msgs):
         m = dict(m)
         c = m.get("content")
         if isinstance(c, list):
+            pics = any(isinstance(b, dict) and b.get("type") in ("image_url", "image", "input_image") for b in c)
             parts = []
             for b in c:
                 if isinstance(b, dict) and b.get("type") in ("image_url", "image", "input_image"):
-                    raise jerr(web.HTTPBadRequest, "images are not supported by this server")
-                if isinstance(b, dict) and b.get("type") in ("text", "input_text", "output_text"):
-                    parts.append(b.get("text", ""))
+                    if m.get("role") not in ("user", "tool"):
+                        raise jerr(web.HTTPBadRequest, "pictures go in user or tool messages")
+                    parts.append({"type": "image", "sha": load_picture(picture_bytes(b))})
+                elif isinstance(b, dict) and b.get("type") in ("text", "input_text", "output_text"):
+                    parts.append({"type": "text", "text": b.get("text", "")} if pics else b.get("text", ""))
                 elif isinstance(b, str):
-                    parts.append(b)
-            m["content"] = "\n\n".join(parts)
+                    parts.append({"type": "text", "text": b} if pics else b)
+            # (text only: one text part, as before; with pictures each part keeps its place)
+            m["content"] = parts if pics else "\n\n".join(parts)
         if m.get("role") == "developer":
             m["role"] = "system"
         if m.get("role") == "assistant" and m.get("tool_calls"):
@@ -773,9 +959,12 @@ async def chat_completions(request: web.Request):
     if body.get("tool_choice") == "none":
         tools = None
     mode = (str(effort), json.dumps(tools, sort_keys=True))
-    raw_msgs = norm_messages(msgs)
+    if any(isinstance(m, dict) and isinstance(m.get("content"), list) for m in msgs):
+        raw_msgs = await asyncio.get_running_loop().run_in_executor(None, norm_messages, msgs)  # (pictures decode here)
+    else:
+        raw_msgs = norm_messages(msgs)
     try:
-        slot, msgs, prompt = pick_slot(raw_msgs, mode, lambda m: render(m, effort, tools))
+        slot, msgs, prompt = pick_slot(raw_msgs, mode, lambda m: render_marked(m, effort, tools))
     except jinja2.exceptions.TemplateError as e:
         raise jerr(web.HTTPBadRequest, f"template: {e}")
     max_new = int(body.get("max_completion_tokens") or body.get("max_tokens") or CFG.get("default_max_tokens", 32768))
@@ -1018,7 +1207,7 @@ async def admin_prefill(request):
     tools = body.get("tools") or None
     mode = (str(effort), json.dumps(tools, sort_keys=True))
     try:
-        slot, _, prompt = pick_slot(norm_messages(msgs), mode, lambda m: render(m, effort, tools))
+        slot, _, prompt = pick_slot(norm_messages(msgs), mode, lambda m: render_marked(m, effort, tools))
     except jinja2.exceptions.TemplateError as e:
         raise jerr(web.HTTPBadRequest, f"template: {e}")
 

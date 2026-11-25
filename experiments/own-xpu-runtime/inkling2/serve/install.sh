@@ -34,4 +34,6 @@ for _ in range(nkv):
         else: f.read(SZ[at] * n)
     else: f.read(SZ[t])
 PY
+# pictures: Pillow in the server's Python (decoding and the reference's resize filter)
+/home/steve/dsv41-serve/venv/bin/pip install -q "pillow>=10,<13"
 echo "installed in $dst"
