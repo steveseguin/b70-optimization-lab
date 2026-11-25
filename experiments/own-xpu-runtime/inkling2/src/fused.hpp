@@ -1305,6 +1305,64 @@ inline sycl::event mix_scores_many(sycl::queue &q, MixArgs a, size_t ld, const f
         });
     });
 }
+// a looping layer's two loop mixes (2 + 2 queries) from mix_scores_many's table in one pass over the bank: ops::mix_out's
+// values (each query's softmax of its scores by the same expressions, then acc = mac(acc, st * inv, p) over the states
+// in order), the softmax once per (token, query) instead of once per output value, and each state value read once for
+// the four outputs. Query k's scores at sc[(t * NQ + qi[k]) * MIX_MAX + s], its output at out[k / 2] + ((k % 2) ntok + t) n.
+inline sycl::event mix_out4(sycl::queue &q, MixArgs a, size_t ld, const float *inv, const float *sc, int NQ, sycl::int4 qi,
+                            float *out0, float *out1, int n, int ntok) {
+    constexpr int MV = 9;
+    if (n > MV * OPS_WG || a.ns > MIX_MAX) throw std::runtime_error("mix_out4: unsupported shape");
+    return q.submit([&](sycl::handler &h) {
+        sycl::local_accessor<float, 1> sp(4 * MIX_MAX, h);
+        h.parallel_for(ops::rows_range(ntok), [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(SG)]] {
+            const int t = (int)it.get_group(0), l = (int)it.get_local_id(0);
+            if (l < 4) {
+                const float *scr = sc + ((size_t)t * NQ + qi[l]) * MIX_MAX;
+                float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
+                for (int s = 0; s < a.ns; ++s) mx = sycl::fmax(mx, scr[s] * scale);
+                float p[MIX_MAX], sum = 0.0f;
+                for (int s = 0; s < a.ns; ++s) { p[s] = sycl::exp(scr[s] * scale - mx); sum += p[s]; }
+                float isum = 1.0f / sum;
+                for (int s = 0; s < a.ns; ++s) sp[l * MIX_MAX + s] = p[s] * isum;
+            }
+            sycl::group_barrier(it.get_group());
+            const float *iv = inv + (size_t)t * MIX_MAX;
+            float acc[4][MV];
+#pragma unroll
+            for (int k = 0; k < 4; ++k)
+#pragma unroll
+                for (int u = 0; u < MV; ++u) acc[k][u] = 0.0f;
+            for (int s = 0; s < a.ns; ++s) {
+                const float *x = a.st[s] + (size_t)t * ld;
+                const float is = iv[s], p0 = sp[s], p1 = sp[MIX_MAX + s], p2 = sp[2 * MIX_MAX + s], p3 = sp[3 * MIX_MAX + s];
+#pragma unroll
+                for (int u = 0; u < MV; ++u) {
+                    const int i = l + OPS_WG * u;
+                    if (i < n) {
+                        const float xv = x[i] * is;
+                        acc[0][u] = mac(acc[0][u], xv, p0);
+                        acc[1][u] = mac(acc[1][u], xv, p1);
+                        acc[2][u] = mac(acc[2][u], xv, p2);
+                        acc[3][u] = mac(acc[3][u], xv, p3);
+                    }
+                }
+            }
+#pragma unroll
+            for (int u = 0; u < MV; ++u) {
+                const int i = l + OPS_WG * u;
+                if (i < n) {
+                    out0[(size_t)t * n + i] = acc[0][u];
+                    out0[((size_t)ntok + t) * n + i] = acc[1][u];
+                    out1[(size_t)t * n + i] = acc[2][u];
+                    out1[((size_t)ntok + t) * n + i] = acc[3][u];
+                }
+            }
+        });
+    });
+}
+inline bool mix_out4_on() { static const bool v = !std::getenv("INK_MIX4") || std::atoi(std::getenv("INK_MIX4")); return v; }
+
 inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float *query, int nq, float *inv, float *sc,
                               int n, int ntok) {
     if (nq > 3) throw std::runtime_error("mix_scores: at most 3 queries");

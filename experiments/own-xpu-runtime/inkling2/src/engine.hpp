@@ -56,6 +56,10 @@ struct Engine {
     // launches); longer steps mix per layer into mm2 (the same values), so lmix_out holds 48 x lp_tok tokens, not 48 x T
     // (216 MiB at 512-token steps; INK_LOOP_PRE_TOK)
     int lp_tok = 16;
+    // longer steps: the pass's loop mix scores still in one launch at its start (mix_scores_many: the bank is read once
+    // for all 48 queries instead of once per layer call; the same scores), each layer's outputs from them
+    // (ops::mix_out with the table's stride); INK_LOOP_SC=0: mix() per layer call (before)
+    bool loop_sc = true;
     int loop_nq = 0;
     float *lmix_inv = nullptr, *lmix_sc = nullptr, *lmix_out = nullptr;
     // one-token steps: the three attention controls of a layer in three launches instead of nine (INK_CTL_BATCH=0)
@@ -362,8 +366,10 @@ struct Engine {
                 loop_nq = 2 * nr;
                 if (const char *e = std::getenv("INK_LOOP_PRE_TOK")) lp_tok = std::atoi(e);
                 lp_tok = std::max(1, std::min(T, lp_tok));
-                lmix_inv = d.alloc<float>((size_t)lp_tok * ops::MIX_MAX);
-                lmix_sc = d.alloc<float>((size_t)lp_tok * loop_nq * ops::MIX_MAX);
+                if (const char *e = std::getenv("INK_LOOP_SC")) loop_sc = std::atoi(e) != 0;
+                const size_t sct = loop_sc ? (size_t)T : (size_t)lp_tok;
+                lmix_inv = d.alloc<float>(sct * ops::MIX_MAX);
+                lmix_sc = d.alloc<float>(sct * loop_nq * ops::MIX_MAX);
                 lmix_out = d.alloc<float>((size_t)loop_nq * lp_tok * h.n_embd);
             }
         } else loop_pre = false;
@@ -740,7 +746,7 @@ struct Engine {
                         bank_last = cur;
                         blocks = prelude_blocks;
                         cur = prelude_cur;
-                        if (loop_pre && ntok <= lp_tok) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
+                        if (loop_pre && (ntok <= lp_tok || loop_sc)) { // every loop mix of this pass (12 layers x 2 calls x 2 queries) in two launches
                             ops::MixArgs a;
                             const int nb = (int)bank.size();
                             if (nb + 1 > ops::MIX_MAX) throw std::runtime_error("engine: too many blocks");
@@ -750,7 +756,7 @@ struct Engine {
                             const int nr = loop_nq / 2;
                             pr("loop_mix_scores", fz::mix_scores_many(d.q, a, E, f32(m.loop_res_query), nr, f32(m.loop_kv_res_query), nr,
                                                                       lmix_inv, lmix_sc, E, ntok));
-                            pr("loop_mix_out", ops::mix_out(d.q, a, E, loop_nq, lmix_inv, lmix_sc, lmix_out, E, ntok));
+                            if (ntok <= lp_tok) pr("loop_mix_out", ops::mix_out(d.q, a, E, loop_nq, lmix_inv, lmix_sc, lmix_out, E, ntok));
                         }
                     }
                 }
@@ -761,8 +767,24 @@ struct Engine {
                         const float *res = lmix_out + (size_t)row * S, *kv = lmix_out + (size_t)(loop_nq / 2 + row) * S;
                         mg[0] = res; mg[3] = res + S; mg[1] = kv; mg[2] = kv + S;
                     } else {
-                        mix(bank, bank_last, f32(m.loop_res_query) + (size_t)row * E, 2, mm2[0], E);
-                        mix(bank, bank_last, f32(m.loop_kv_res_query) + (size_t)row * E, 2, mm2[1], E);
+                        if (loop_pre && loop_sc) {
+                            ops::MixArgs a;
+                            const int nb = (int)bank.size();
+                            for (int s = 0; s < nb; ++s) a.st[s] = bank[nb - 1 - s];
+                            a.st[nb] = bank_last;
+                            a.ns = nb + 1;
+                            if (fz::mix_out4_on()) // both mixes in one pass over the bank (INK_MIX4=0: two ops::mix_out)
+                                pr("loop_mix_out", fz::mix_out4(d.q, a, E, lmix_inv, lmix_sc, loop_nq,
+                                                                sycl::int4{row, row + 1, loop_nq / 2 + row, loop_nq / 2 + row + 1},
+                                                                mm2[0], mm2[1], E, ntok));
+                            else {
+                                pr("mix_out", ops::mix_out(d.q, a, E, 2, lmix_inv, lmix_sc, mm2[0], E, ntok, loop_nq, row));
+                                pr("mix_out", ops::mix_out(d.q, a, E, 2, lmix_inv, lmix_sc, mm2[1], E, ntok, loop_nq, loop_nq / 2 + row));
+                            }
+                        } else {
+                            mix(bank, bank_last, f32(m.loop_res_query) + (size_t)row * E, 2, mm2[0], E);
+                            mix(bank, bank_last, f32(m.loop_kv_res_query) + (size_t)row * E, 2, mm2[1], E);
+                        }
                         mg[0] = mm2[0]; mg[3] = mm2[0] + S; mg[1] = mm2[1]; mg[2] = mm2[1] + S;
                     }
                 }

@@ -187,6 +187,9 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 24 ~23:50: prompts +0.2-1.0 %, writing after 100K +0.3-0.6 % (100K 711.9 -> 714.4 card 1, 705.6 -> 712.9 card 5;
+  writing 54.89 -> 55.20; logits identical, gate 12/12): loop mix scores once per pass, both loop mixes in one pass,
+  the attention block fold without 128-wide scans. A 200K prompt runs at the card's power limit (230 W, 2.2 GHz).
 - Nov 24 ~22:00: prompts +0.6-1.3 % (100K 708.4 -> 713.2 tok/s card 1, 703.1 -> 712.2 card 5; 31K 926.9 -> 932.2
   card 3, 868.3 -> 877.9 card 4; 3K ~870 -> ~877; logits identical, gate 12/12): the loop controls' outputs have their
   own kernel (146.5 -> 119.4 us) and their norms write the product input directly (no gather).

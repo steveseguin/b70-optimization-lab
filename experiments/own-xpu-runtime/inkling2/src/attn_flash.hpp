@@ -619,12 +619,19 @@ inline sycl::event attn_flash_dec(sycl::queue &q, const float *Q, const sycl::ha
 // 128 blocks, a work-group scan gives each block the state's maximum before and after it (a maximum is exact in any
 // order, so these are the values the blocks one after another give), lane b computes block b's two factors, then every
 // lane folds the chunk's blocks in order (L the same in every lane)
-inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
-                                  const float *sink, const float *gate, float *out) {
+// U: blocks whose partial values a thread loads together before folding them (in order; the same values for every U).
+// SGS: each chunk's prefix maxima from 16-lane scans and the 8 sub-group maxima through local memory instead of two
+// 128-wide scans and a broadcast (a maximum is the same in any order, so the same factors). INK_SUM_U (default 132 =
+// U 32 + SGS; 8 = before; 1xx = xx with SGS). INK_PROF 100K + 16 steps, us per launch: 8 46.1-46.2, 108 42.8-43.6,
+// 116 39.1-39.2, 132 36.4-38.9 (values the same). Two passes (all factors first, then one fold with the next loads
+// ahead) were slower: 68-90 us.
+template <int U, bool SGS>
+inline sycl::event attn_flash_sum_u(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
+                                    const float *sink, const float *gate, float *out) {
     constexpr int NB = 128;
     if (hd != NB) throw std::runtime_error("attn_flash_sum: head_dim 128 only");
     return q.submit([&](sycl::handler &h) {
-        sycl::local_accessor<float, 1> sl(NB, h), sal(NB, h), sbe(NB, h);
+        sycl::local_accessor<float, 1> sl(NB, h), sal(NB, h), sbe(NB, h), sgm(NB / 16, h);
         h.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)ntok * nh * NB), sycl::range<1>((size_t)NB)),
                        [=](sycl::nd_item<1> it) [[sycl::reqd_sub_group_size(16)]] {
             const int row = (int)it.get_group(0), c = (int)it.get_local_id(0), t = row / nh, p = pos0 + t, nb = p / PVB + 1;
@@ -635,27 +642,54 @@ inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float
                 const bool ok = c < cnt;
                 const float mb = ok ? pm[2 * (c0 + c)] : -INFINITY;
                 if (ok) sl[c] = pm[2 * (c0 + c) + 1];
-                const float mn = sycl::fmax(M, sycl::inclusive_scan_over_group(it.get_group(), mb, sycl::maximum<float>()));
-                const float mp = sycl::fmax(M, sycl::exclusive_scan_over_group(it.get_group(), mb, sycl::maximum<float>()));
+                float mn, mp, mlast;
+                if constexpr (SGS) {
+                    auto sg = it.get_sub_group();
+                    const int sid = (int)sg.get_group_linear_id();
+                    const float si = sycl::inclusive_scan_over_group(sg, mb, sycl::maximum<float>());
+                    const float se = sycl::exclusive_scan_over_group(sg, mb, sycl::maximum<float>());
+                    if (sg.get_local_linear_id() == 15) sgm[sid] = si;
+                    sycl::group_barrier(it.get_group());
+                    float pre = -INFINITY, all = -INFINITY;
+#pragma unroll
+                    for (int k = 0; k < NB / 16; ++k) {
+                        const float v = sgm[k];
+                        if (k < sid) pre = sycl::fmax(pre, v);
+                        all = sycl::fmax(all, v);
+                    }
+                    mn = sycl::fmax(M, sycl::fmax(pre, si));
+                    mp = sycl::fmax(M, sycl::fmax(pre, se));
+                    mlast = sycl::fmax(M, all);
+                } else {
+                    mn = sycl::fmax(M, sycl::inclusive_scan_over_group(it.get_group(), mb, sycl::maximum<float>()));
+                    mp = sycl::fmax(M, sycl::exclusive_scan_over_group(it.get_group(), mb, sycl::maximum<float>()));
+                    mlast = sycl::group_broadcast(it.get_group(), mn, cnt - 1);
+                }
                 if (ok) { sal[c] = sycl::exp(mp - mn); sbe[c] = sycl::exp(mb - mn); }
-                const float mlast = sycl::group_broadcast(it.get_group(), mn, cnt - 1);
                 sycl::group_barrier(it.get_group());
                 int i = 0;
-                for (; i + 7 < cnt; i += 8) {
-                    float v[8];
+                for (; i + U - 1 < cnt; i += U) {
+                    float v[U];
 #pragma unroll
-                    for (int u = 0; u < 8; ++u) v[u] = pr[(size_t)(c0 + i + u) * NB];
+                    for (int u = 0; u < U; ++u) v[u] = pr[(size_t)(c0 + i + u) * NB];
 #pragma unroll
-                    for (int u = 0; u < 8; ++u) {
+                    for (int u = 0; u < U; ++u) {
                         const float al = sal[i + u], be = sbe[i + u];
                         L = mac(L * al, sl[i + u], be);
                         A = mac(A * al, v[u], be);
                     }
                 }
-                for (; i < cnt; ++i) {
-                    const float al = sal[i], be = sbe[i];
-                    L = mac(L * al, sl[i], be);
-                    A = mac(A * al, pr[(size_t)(c0 + i) * NB], be);
+                if (i < cnt) { // the rest: loads together as well, folds only of blocks that exist
+                    float v[U];
+#pragma unroll
+                    for (int u = 0; u < U; ++u) v[u] = i + u < cnt ? pr[(size_t)(c0 + i + u) * NB] : 0.0f;
+#pragma unroll
+                    for (int u = 0; u < U; ++u)
+                        if (i + u < cnt) {
+                            const float al = sal[i + u], be = sbe[i + u];
+                            L = mac(L * al, sl[i + u], be);
+                            A = mac(A * al, v[u], be);
+                        }
                 }
                 M = mlast;
                 sycl::group_barrier(it.get_group());
@@ -664,6 +698,21 @@ inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float
             out[o] = (A * (1.0f / L)) * (1.0f / (1.0f + sycl::exp(-gate[o])));
         });
     });
+}
+inline int flash_sum_u() {
+    static const int v = std::getenv("INK_SUM_U") ? std::atoi(std::getenv("INK_SUM_U")) : 132;
+    return v;
+}
+inline sycl::event attn_flash_sum(sycl::queue &q, const float *part, const float *pml, int nblk, int pos0, int ntok, int nh, int hd,
+                                  const float *sink, const float *gate, float *out) {
+    switch (flash_sum_u()) {
+    case 8: return attn_flash_sum_u<8, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    case 16: return attn_flash_sum_u<16, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    case 32: return attn_flash_sum_u<32, false>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    case 108: return attn_flash_sum_u<8, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    case 116: return attn_flash_sum_u<16, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    default: return attn_flash_sum_u<32, true>(q, part, pml, nblk, pos0, ntok, nh, hd, sink, gate, out);
+    }
 }
 
 // the definition computed plainly (one sub-group per row, every key and channel in order): the reference attn_flash_tile

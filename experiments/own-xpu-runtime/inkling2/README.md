@@ -649,6 +649,27 @@ Prompts against the commit before (both orders, logits identical): 100K 708.4 ->
 (card 5); 31K 926.9 / 922.3 -> 932.2 / 929.0 (card 3) and 868.3 / 863.9 -> 877.9 / 872.3 (card 4); 3K 869.1-870.2 ->
 876.0-878.8 (card 2). Gate 12/12.
 
+Loop mixes and the block fold (2026-11-24; same values):
+- Prompt steps now score the pass's loop bank once at the pass start (`mix_scores_many`, as writing steps already did;
+  `INK_LOOP_SC=0` = per layer call). A looping layer's two loop mixes (2 + 2 queries) then come from that table in one
+  pass over the bank (`mix_out4`, `INK_MIX4=0` = two `ops::mix_out`). Each (token, query) softmax is computed once
+  instead of once per output value, and each state value is read once for the four outputs. 3K prompt (INK_PROF): 192
+  mix_scores (12.7 ms) -> 8 loop_mix_scores (7.3 ms), 192 loop mix_out (23.8 ms) -> 96 loop_mix_out (7.5 ms).
+- The fold of a writing step's full-attention blocks (`attn_flash_sum`, one work-group per row: 24 at a one-token
+  step) takes each 128-block chunk's prefix maxima from 16-lane scans and the 8 sub-group maxima through local memory
+  instead of two 128-wide scans and a broadcast (a maximum is the same in any order), and loads 32 blocks' partial
+  values together (`INK_SUM_U`, 8 = before). At 100K, us per launch: 46.1-46.2 -> 36.4-38.9.
+Against the commit before (both orders, logits identical): 100K 711.9 -> 714.4 tok/s (card 1), 705.6 -> 712.9 (card 5),
+writing the next 256 tokens 54.89 -> 55.20 and 54.94 -> 55.08 tok/s; 31K 937.5 / 931.4 -> 939.0 / 935.3 (card 3), 872.8 /
+870.9 -> 882.4 / 873.4 (card 4); 3K 876.3-878.7 -> 878.7-883.8 (card 2). Gate 12/12.
+Power (2026-11-24, `powlog` of every card's energy counter, clock and throttle reasons, read-only): a 200K prompt holds
+the card at 230 W with `pl2` set and 2,217-2,250 MHz of 2,800 for its whole 6 minutes (200K profile: full attention
+154.7 s of 357.9, experts 125.3, dense products ~46, the rest ~32). One-token writing after 200K: 23.9 ms of kernels,
+of which the full layers' keys and values 11.9 ms (6.55 GB at 551 GB/s). The windowed layers' one-token attention
+(`attn_win_fused`, 16 work-groups of 1,024 threads) is 15-20 us per layer although it reads 4 MB: scores ~7.7 us, P.V
+~9.4, the rest ~3 (bench_attn `BENCH_WINF`). Each work-group must read all of its KV head's window for the exact
+maximum and total, so only a key split across work-groups (waits between them) would use more cores.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

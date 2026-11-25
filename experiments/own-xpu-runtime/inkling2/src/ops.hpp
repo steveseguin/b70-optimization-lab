@@ -181,11 +181,13 @@ inline sycl::event mix_scores(sycl::queue &q, MixArgs a, size_t ld, const float 
         });
     });
 }
+// scores of query j at sc[((t * NQ + q0 + j) * MIX_MAX + s] (NQ 0: nq; a part of mix_scores_many's table)
 inline sycl::event mix_out(sycl::queue &q, MixArgs a, size_t ld, int nq, const float *inv, const float *sc, float *out,
-                           int n, int ntok) {
+                           int n, int ntok, int NQ = 0, int q0 = 0) {
+    if (NQ <= 0) NQ = nq;
     return q.parallel_for(sycl::range<3>((size_t)nq, (size_t)ntok, (size_t)n), [=](sycl::id<3> id) {
         int j = (int)id[0], t = (int)id[1], i = (int)id[2];
-        const float *scr = sc + ((size_t)t * nq + j) * MIX_MAX;
+        const float *scr = sc + ((size_t)t * NQ + q0 + j) * MIX_MAX;
         const float *iv = inv + (size_t)t * MIX_MAX;
         float scale = 1.0f / sycl::sqrt((float)n), mx = -INFINITY;
         for (int s = 0; s < a.ns; ++s) mx = sycl::fmax(mx, scr[s] * scale);
