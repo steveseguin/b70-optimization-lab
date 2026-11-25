@@ -43,8 +43,12 @@ follows. A 22K-token document: read 23 s, loaded 0.3-0.4 s. A 515K-token prompt:
 - The server runs on the card in `config.json` (`card`, default 1) through the lab's `on-card.sh`, which holds that
   card's lock: research jobs cannot use the card meanwhile, and the server does not start while the DeepSeek server
   holds the cards.
-- `max_ctx` in `config.json` sets the context (default 131,072; one card holds 530,000 positions without the drafter,
-  515,000 with it).
+- Context size: `ctx_tiers` in `config.json` (default 65,536 / 131,072 / 300,000 / 515,000). The engine runs at the
+  smallest size that holds the conversation plus its answer (`max_tokens`, default 32,768): smaller sizes read
+  prompts in bigger steps (faster; 31K: ~970 vs ~816 tokens/s at the largest). A conversation that outgrows the size
+  is saved, the engine restarts larger (~4 s) and loads it back, so only the new words are read; the answer is the
+  same as without the change (checked). A new conversation of 8,192+ tokens that fits a smaller size restarts the
+  engine smaller (`shrink_min_prompt`). 515,000 is the largest with the drafter (one card holds 530,000 without).
 
 Files:
 - `config.json`: engine settings, card, context, port.

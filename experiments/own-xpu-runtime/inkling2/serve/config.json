@@ -3,7 +3,13 @@
  "host": "0.0.0.0",
  "port": 8001,
  "card": 1,
- "max_ctx": 131072,
+ "ctx_tiers": [
+  65536,
+  131072,
+  300000,
+  515000
+ ],
+ "shrink_min_prompt": 8192,
  "default_max_tokens": 32768,
  "on_card": "/home/steve/b70-optimization-lab/experiments/own-xpu-runtime/inkling2/scripts/on-card.sh",
  "engine_bin": "/home/steve/inkling-serve/bin/ink_run",

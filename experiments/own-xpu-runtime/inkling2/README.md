@@ -826,6 +826,10 @@ tokens in 0.24 s, then 18 read), and a stop after the first answer line: every a
 conversation (a stopped one = the fresh run's start). Through the API (card 5): follow-ups keep the cache when the
 client drops the thinking (turn 2: 514 of 524 tokens cached, turn 3: 1,716 of 1,732); a 22K-token document saved by
 `/admin/prefill` loads in 0.34-0.43 s (read: 23.3 s) after other conversations, and its answer equals the full read's.
+The server runs the engine at the smallest of `ctx_tiers` (64K / 128K / 300K / 515K) that holds the conversation and
+its answer, so short conversations get the big prompt steps; a conversation that outgrows it is saved (`W`), the
+engine restarted larger and the save loaded back (8,192 -> 65,536 mid-conversation: 4.1 s, then 514 tokens loaded and
+10,811 read; thinking and answer identical to a server that never changed size).
 The prompt's time in `ink_run` now ends with a wait for the card (`feed` returns once its launches are queued; a
 1,261-token piece in serving showed 0.008 s); the 3K and 1K prompts time the same as before (3.032 vs 3.033 s, 0.975
 vs 0.973 s, card 4).

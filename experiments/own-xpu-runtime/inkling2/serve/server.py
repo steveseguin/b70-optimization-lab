@@ -222,7 +222,12 @@ class Engine:
         self.queues = {}
         self.reader = None
         self.starts = []
-        self.max_ctx = int(CFG["max_ctx"])
+        # context sizes the engine runs at (ctx_tiers): the smallest that holds the conversation and its answer. A
+        # smaller context takes bigger prompt steps (4,096 tokens up to 64K, 2,048 to 128K, 1,024 to 300K, else 512);
+        # a conversation that outgrows the size is saved, the engine restarted larger, and the save loaded back
+        self.tiers = sorted(int(t) for t in (CFG.get("ctx_tiers") or [CFG["max_ctx"]]))
+        self.max_ctx = self.tiers[-1]
+        self.ctx = self.tiers[0]
         self.load_s = None
         self.errlog = None
         self.last_fatal = ""
@@ -245,9 +250,9 @@ class Engine:
         self.state, self.detail = "loading", "loading the model"
         t0 = time.time()
         card = str(CFG["card"])
-        log(f"engine start (card {card}, context {self.max_ctx}), log engine-{ts}.log")
+        log(f"engine start (card {card}, context {self.ctx}), log engine-{ts}.log")
         self.proc = await asyncio.create_subprocess_exec(
-            CFG["on_card"], card, CFG["engine_bin"], CFG["gguf"], card, "/dev/null", "0", str(self.max_ctx),
+            CFG["on_card"], card, CFG["engine_bin"], CFG["gguf"], card, "/dev/null", "0", str(self.ctx),
             stdin=asyncio.subprocess.PIPE, stdout=asyncio.subprocess.PIPE, stderr=self.errlog, env=env, cwd=str(HERE),
             limit=1 << 24)
         while True:
@@ -342,7 +347,7 @@ class Engine:
 ENGINE = Engine()
 TOK = None
 LOCK = asyncio.Lock()
-STATS = {"waiting": 0, "requests": 0, "new_conversations": 0, "library_loads": 0}
+STATS = {"waiting": 0, "requests": 0, "new_conversations": 0, "context_changes": 0}
 
 
 class Session:
@@ -426,6 +431,24 @@ async def _engine_job(prompt_bytes: bytes, mode, max_new: int, on_event, ctl):
             raise jerr(web.HTTPBadRequest, f"the conversation ({len(ids)} tokens) does not fit the context "
                        f"({ENGINE.max_ctx} tokens)", code="context_length_exceeded")
         max_new = max(1, min(max_new, room))
+        tier = next(t for t in ENGINE.tiers if t >= len(ids) + max_new + 16)
+        if ENGINE.state == "ready" and tier > ENGINE.ctx:
+            t_g = time.time()
+            if extend:  # keep what the engine has read: the restarted engine loads it as the longest saved prompt
+                kind, data = await _engine_save(LIB / "_held.inkc")
+                if kind != "W":
+                    log("could not save the held conversation before growing: " + " ".join(data))
+            await ENGINE.stop()
+            log(f"context {ENGINE.ctx} -> {tier} for a conversation of {len(ids)} + {max_new} tokens")
+            ENGINE.ctx = tier
+            await ENGINE.start()
+            STATS["context_changes"] += 1
+            log(f"context change took {time.time() - t_g:.1f} s before the request")
+        elif ENGINE.state == "ready" and not extend and tier < ENGINE.ctx and len(ids) >= CFG.get("shrink_min_prompt", 8192):
+            await ENGINE.stop()
+            log(f"context {ENGINE.ctx} -> {tier} for a new conversation of {len(ids)} tokens")
+            ENGINE.ctx = tier
+            STATS["context_changes"] += 1
         if not extend:
             SESSION.clear()
         if ENGINE.state != "ready":
@@ -746,22 +769,27 @@ def _lib_path(body):
     return LIB / (name + ".inkc")
 
 
+async def _engine_save(path):
+    """W (the caller holds LOCK): the engine saves what it has read (the held conversation without its last token,
+    which is decided but not read)."""
+    LIB.mkdir(parents=True, exist_ok=True)
+    rid = uuid.uuid4().hex[:12]
+    q = asyncio.Queue()
+    ENGINE.queues[rid] = q
+    try:
+        await ENGINE.send(f"W {rid} {path}")
+        return await q.get()
+    finally:
+        ENGINE.queues.pop(rid, None)
+
+
 async def _save_held(path, expect_ids=None):
-    """W: the engine saves what it has read (the held conversation without its last, undecided-to-read token)."""
     async with LOCK:
         if ENGINE.state != "ready" or not SESSION.ids:
             raise jerr(web.HTTPConflict, "the engine holds no conversation")
         if expect_ids is not None and SESSION.ids[:len(expect_ids)] != expect_ids:
             raise jerr(web.HTTPConflict, "another conversation came in first; try again")
-        LIB.mkdir(parents=True, exist_ok=True)
-        rid = uuid.uuid4().hex[:12]
-        q = asyncio.Queue()
-        ENGINE.queues[rid] = q
-        try:
-            await ENGINE.send(f"W {rid} {path}")
-            kind, data = await q.get()
-        finally:
-            ENGINE.queues.pop(rid, None)
+        kind, data = await _engine_save(path)
         n = len(SESSION.ids) - 1
     if kind != "W":
         raise jerr(web.HTTPInternalServerError, "save failed: " + " ".join(data), "server_error")
@@ -836,7 +864,8 @@ async def models(request):
 
 
 async def health(request):
-    return web.json_response({"status": ENGINE.state, "detail": ENGINE.detail, "model": MODEL, "context": ENGINE.max_ctx,
+    return web.json_response({"status": ENGINE.state, "detail": ENGINE.detail, "model": MODEL, "context": ENGINE.ctx,
+                              "max_context": ENGINE.max_ctx, "context_changes": STATS["context_changes"],
                               "card": CFG["card"], "held_conversation_tokens": len(SESSION.ids), "busy": LOCK.locked(),
                               "waiting": STATS["waiting"], "requests": STATS["requests"],
                               "new_conversations": STATS["new_conversations"], "last_load_s": ENGINE.load_s})
@@ -849,7 +878,7 @@ async def index(request):
 async def on_startup(app):
     global TOK
     TOK = Tokenizer()
-    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, card {CFG['card']}, context {ENGINE.max_ctx}")
+    log(f"server up on {CFG.get('host', '0.0.0.0')}:{CFG.get('port', 8001)}, model {MODEL}, card {CFG['card']}, contexts {ENGINE.tiers}")
     if CFG.get("load_at_start", True):
         async def first():
             async with LOCK:
