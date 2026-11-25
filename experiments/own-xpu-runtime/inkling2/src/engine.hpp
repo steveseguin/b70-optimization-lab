@@ -1236,8 +1236,17 @@ struct Engine {
 
     // feed tokens (any number) in steps of T; returns the logits of the last token (or of every token of the last
     // step when all_logits)
+    // a prompt in steps of T tokens and the rest; when the rest would be under 512 tokens, in steps of one size (a
+    // multiple of 16) instead: 4,150 tokens with T 4,096 as 2,080 + 2,070, not 4,096 + 54 (a short step leaves the
+    // expert tiles mostly empty). The step size does not change any value. Card 2, 2026-11-25: 4,150 tokens 937.6-941.4
+    // -> 955.5-958.3 tok/s; 5,000 (rest 904) and 31,270 (rest 2,598) level either way, so only a short rest is spread.
+    // INK_FEED_EVEN=0: steps of T and the rest always
     const std::vector<float> &feed(const std::vector<int32_t> &tok) {
-        for (size_t p = 0; p < tok.size(); p += T) step(tok.data() + p, (int)std::min<size_t>(T, tok.size() - p));
+        static const bool even = !std::getenv("INK_FEED_EVEN") || std::atoi(std::getenv("INK_FEED_EVEN"));
+        const size_t N = tok.size(), ns = (N + T - 1) / T;
+        size_t s = (size_t)T;
+        if (even && ns > 1 && N - (ns - 1) * (size_t)T < 512) s = std::min<size_t>((size_t)T, ((N + ns - 1) / ns + 15) / 16 * 16);
+        for (size_t p = 0; p < N; p += s) step(tok.data() + p, (int)std::min<size_t>(s, N - p));
         return logits;
     }
     // greedy choice on the card from the last step's last logits row (the first index of the largest value, as

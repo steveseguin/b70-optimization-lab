@@ -4,6 +4,7 @@
 // INK_DUMP=<dir> saves the reference's named tensors for the prompt (one step: prompt <= INK_UBATCH tokens).
 #include "../src/dspark.hpp"
 #include <memory>
+#include <cstring>
 #include <fstream>
 
 int main(int argc, char **argv) {
@@ -16,9 +17,15 @@ int main(int argc, char **argv) {
         { std::ifstream f(argv[3]); long v; while (f >> v) tok.push_back((int32_t)v); }
         int n_gen = argc > 4 ? std::atoi(argv[4]) : 0;
         int ctx = argc > 5 ? std::atoi(argv[5]) : (int)(tok.size() + n_gen + 16);
-        // prompt steps of 1,024 tokens up to 300,000 positions (fuller expert tiles: 31K prompt 599 -> 617 tok/s on card 3,
-        // 8K +4.7 %, the same bits; +1.09 GiB, so the longest contexts keep 512: one card holds 420K positions)
-        int ub = std::getenv("INK_UBATCH") ? std::atoi(std::getenv("INK_UBATCH")) : (ctx <= 300000 ? 1024 : 512);
+        // prompt step size (the same bits for every size), by context. Bigger steps fill the expert tiles better; at long
+        // contexts the attention takes most of the time and they stop paying (2026-11-25, logits identical; tok/s for
+        // steps of 1,024 / 2,048 / 4,096 tokens: 3K 869-884 / 941-945 / 965-967 on card 2, 31K 935-943 / 956-966 /
+        // 969-971 on card 3, 100K 712-718 / 719-723 / 717-718 on cards 1 and 5, 200K 559-563 / 553-554 / - on cards 1
+        // and 5). Card memory at 100K: 19.46 / 20.70 / 23.79 GiB; past 300K positions 512 (one card holds 521K; 1,024
+        // was slower at 403K). INK_UBATCH=<n>: that size only.
+        const bool ub_fixed = std::getenv("INK_UBATCH") != nullptr;
+        int ub = ub_fixed ? std::atoi(std::getenv("INK_UBATCH"))
+                          : ctx <= 65536 ? 4096 : ctx <= 131072 ? 2048 : ctx <= 300000 ? 1024 : 512;
         Weights w;
         // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
         bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
@@ -36,9 +43,27 @@ int main(int argc, char **argv) {
         bool dumping = std::getenv("INK_DUMP") != nullptr;
         std::map<std::string, WView> views;
         if (planar) views = planarize(d, g, w, true, host_t);
-        Engine e(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
-        std::fprintf(stderr, "[ink] context %d positions, card memory in use %.2f of %.2f GiB (score rows %d; driver: %.2f GiB free)\n",
-                     ctx, d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow, d.free_mem() / 1073741824.0);
+        // a step size that does not fit is halved down to 512; above 512 it must leave 1 GiB for the drafter (which takes
+        // ~0.55 GiB), so a context that fits only with 512 keeps it as before
+        const bool drafting = std::getenv("INK_DRAFT") != nullptr;
+        std::unique_ptr<Engine> ep;
+        for (;;) {
+            const size_t mk = d.mark();
+            d.hold = drafting && ub > 512 ? (size_t)1 << 30 : 0;
+            try {
+                ep = std::make_unique<Engine>(d, g, w, ctx, ub, dumping, planar ? &views : nullptr);
+                break;
+            } catch (const std::runtime_error &ex) {
+                if (ub_fixed || ub <= 512 || !std::strstr(ex.what(), "would pass the card's memory")) throw;
+                d.release_to(mk);
+                std::fprintf(stderr, "[ink] steps of %d tokens do not fit beside %d positions: %d\n", ub, ctx, ub / 2);
+                ub /= 2;
+            }
+        }
+        d.hold = 0;
+        Engine &e = *ep;
+        std::fprintf(stderr, "[ink] context %d positions, steps of %d tokens, card memory in use %.2f of %.2f GiB (score rows %d; driver: %.2f GiB free)\n",
+                     ctx, ub, d.allocated / 1073741824.0, d.total_mem() / 1073741824.0, e.prow, d.free_mem() / 1073741824.0);
         // INK_BENCH_REAL=1 with INK_BENCH_STEP: the steps take the prompt's last 8 tokens (fed without them), each repeat
         // at the same positions: consecutive real tokens choose their experts as in a check of guesses
         const bool bench_real = std::getenv("INK_BENCH_STEP") && std::getenv("INK_BENCH_REAL") && std::atoi(std::getenv("INK_BENCH_REAL"));

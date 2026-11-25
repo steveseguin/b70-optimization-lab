@@ -187,6 +187,9 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~00:50: prompt step size by context (4,096 tokens up to 64K positions, 2,048 to 128K, 1,024 to 300K, 512
+  past): 3K 867-883 -> 965-967 tok/s (+9.5 %), 31K +3-5 %, 100K level to +1 %, same bits, gate 12/12; longest
+  context unchanged (smaller steps if a size does not fit).
 - Nov 24 ~23:50: prompts +0.2-1.0 %, writing after 100K +0.3-0.6 % (100K 711.9 -> 714.4 card 1, 705.6 -> 712.9 card 5;
   writing 54.89 -> 55.20; logits identical, gate 12/12): loop mix scores once per pass, both loop mixes in one pass,
   the attention block fold without 128-wide scans. A 200K prompt runs at the card's power limit (230 W, 2.2 GHz).

@@ -670,6 +670,20 @@ of which the full layers' keys and values 11.9 ms (6.55 GB at 551 GB/s). The win
 ~9.4, the rest ~3 (bench_attn `BENCH_WINF`). Each work-group must read all of its KV head's window for the exact
 maximum and total, so only a key split across work-groups (waits between them) would use more cores.
 
+Prompt step size by context (2026-11-25; every size gives the same bits, logits compared at each): `ink_run` takes
+steps of 4,096 tokens up to 65,536 positions, 2,048 up to 131,072, 1,024 up to 300,000 and 512 past that
+(`INK_UBATCH=<n>`: that size only). Bigger steps fill the expert tiles better; at long contexts the attention takes
+most of the time and they stop paying. tok/s for steps of 1,024 / 2,048 / 4,096 (`INK_UBATCH`): 3K 869-884 / 941-945 /
+965-967 (card 2), 31K 935-943 / 956-966 / 969-971 (card 3), 100K 712-718 / 719-723 / 717-718 (cards 1, 5), 200K
+559-563 / 553-554 / - (cards 1, 5). Card memory at 100K: 19.46 / 20.70 / 23.79 GiB. If a size does not fit beside the
+context, the engine is built again with half the steps (down to 512; above 512 it must leave 1 GiB for the drafter),
+so the longest context is unchanged. When the last step would be under 512 tokens the prompt goes in steps of one size
+(4,150 tokens as 2,080 + 2,070, not 4,096 + 54: 937.6-941.4 -> 955.5-961.3 tok/s, card 2). The gate's drafter run on
+the 3K prompt keeps steps of 1,024 (`INK_UBATCH=1024`) so the windowed caches across steps stay covered.
+Against the commit before (both orders, logits identical, gate 12/12): 3K 866.7-882.8 -> 964.9-967.4 tok/s (card 2),
+5K 929.4-933.9 -> 962.5-971.4 (card 2), 31K 934.4-940.2 -> 969.5 (card 3) and 872.7-874.8 -> 905.1-915.4 (card 4),
+100K 716.3 -> 716.1 (card 1) and 708.5 -> 716.0 (card 5); writing after 100K level (55.04-55.16 vs 55.15-55.34).
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).

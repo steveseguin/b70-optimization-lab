@@ -8,7 +8,8 @@
 #     (made with INK_TILE_MIN=100000, i.e. the grouped kernels)
 #   card E: the 3127-token prompt (prompts/long) and 16 greedy tokens (context 4200): the logits rows of all 16 steps
 #     (INK_SAVE_GEN) must equal the baseline's bit for bit (long context: windowed and full attention past 1024 keys);
-#     then the same with the drafter's guesses and the checks' shared key reads at any length (INK_ATT_SHARE_MIN=0)
+#     then the same with the drafter's guesses and the checks' shared key reads at any length (INK_ATT_SHARE_MIN=0),
+#     the prompt in steps of 1,024 tokens (the first run takes it in one step: the windowed caches across steps)
 #   card A, then: haiku 64 and code 128 with guesses checked in steps of 2-4 tokens (INK_SPEC=3, prompt lookup):
 #     ids and every chosen logits row must equal the one-token baseline's; then haiku 64 with the DSpark drafter's
 #     7 guesses checked every round (INK_DRAFT, INK_SPEC=7, INK_SPEC_ADAPT=0, INK_DSP_STOP=0: steps of 8 tokens): ids and every chosen
@@ -37,7 +38,7 @@ INK_SAVE_GEN=$out/haiku.gen "$S" "$cB" "$bin" "$M" "$cB" "$W/prompts/haiku.token
 { "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/code.ids" 2> "$out/code.err"
   INK_DRAFT=$DR INK_SPEC=7 "$S" "$cC" "$bin" "$M" "$cC" "$W/prompts/code.tokens" 128 > "$out/dspark-code.ids" 2> "$out/dspark-code.err"; } &
 { INK_SAVE_GEN=$out/long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/long16.ids" 2> "$out/long16.err"
-  INK_ATT_SHARE_MIN=0 INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/dspark-long16.ids" 2> "$out/dspark-long16.err"; } &
+  INK_UBATCH=1024 INK_ATT_SHARE_MIN=0 INK_DRAFT=$DR INK_SPEC=3 INK_SAVE_GEN=$out/dspark-long16.gen "$S" "$cE" "$bin" "$M" "$cE" "$W/prompts/long.tokens" 16 4200 > "$out/dspark-long16.ids" 2> "$out/dspark-long16.err"; } &
 wait
 rc=0
 if [ ! -d "$base" ]; then

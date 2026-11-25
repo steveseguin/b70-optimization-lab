@@ -132,12 +132,21 @@ struct Device {
         static const size_t reserve = (size_t)(std::getenv("INK_MEM_RESERVE_MB") ? std::atol(std::getenv("INK_MEM_RESERVE_MB")) : 512) << 20;
         return total_mem() > reserve ? total_mem() - reserve : 0;
     }
+    // hold: bytes alloc() keeps free as well while something is sized to what fits (ink_run: the drafter's room while
+    // the engine tries a step size above 512); limit() (the engine's score-row sizing) does not count it
+    size_t hold = 0;
+    // the allocations made since mark() (the number of owned allocations then), freed newest first
+    size_t mark() const { return owned.size(); }
+    void release_to(size_t m) {
+        while (owned.size() > m) release(owned.back());
+    }
     template <class T = uint8_t> T *alloc(size_t count) {
         size_t bytes = count * sizeof(T);
         const size_t limit = this->limit();
-        if (allocated + bytes > limit)
+        if (allocated + bytes + hold > limit)
             throw std::runtime_error("device: " + std::to_string(bytes >> 20) + " MiB more would pass the card's memory (" +
-                                     std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) + " MiB)");
+                                     std::to_string(allocated >> 20) + " MiB in use, limit " + std::to_string(limit >> 20) +
+                                     " MiB" + (hold ? ", " + std::to_string(hold >> 20) + " MiB held" : std::string()) + ")");
         void *p = sycl::malloc_device(bytes ? bytes : 1, dev, ctx);
         if (!p) throw std::runtime_error("device: allocation of " + std::to_string(bytes) + " bytes failed");
         static const long log_mib = std::getenv("INK_MEM_LOG") ? std::atol(std::getenv("INK_MEM_LOG")) : -1; // allocations >= this many MiB
