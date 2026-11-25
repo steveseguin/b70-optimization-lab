@@ -10,7 +10,9 @@
 #include "fused.hpp"
 #include "tok_tiles.hpp"
 #include "multi.hpp"
+#include "xmx_moe.hpp"
 #include <unordered_map>
+#include <set>
 #include "warm.hpp"
 #include "ops.hpp"
 #include <cmath>
@@ -120,6 +122,14 @@ struct Engine {
     int32_t *next_id = nullptr;
     MoeGroups grp;             // slots grouped by expert (steps of several tokens)
     float *Xt = nullptr, *Ht = nullptr; // transposed tiles of the token-parallel expert kernels (moe_group.hpp)
+    // INK_XMX=1: the NVFP4 layers' experts on the matrix engines with exact products for every step size (xmx_moe.hpp,
+    // README "Matrix engines with exact products"): inputs in parts (xP), activations in parts (xHp, Xt / Ht share
+    // their memory), segment sums of steps of 1-8 tokens (xS), super-tiles (xst), the one-token tiles (x1)
+    bool xmx = false;
+    uint16_t *xP = nullptr, *xHp = nullptr;
+    float *xS = nullptr;
+    xm::Super xst;
+    MoeGroups x1;
     int tile_bound = 0;
     int tile_min = 128;        // steps of at least this many tokens use the token-parallel kernels (INK_TILE_MIN)
     float *Xd = nullptr;       // transposed tiles of the dense token-parallel kernels (tok_tiles.hpp)
@@ -389,10 +399,28 @@ struct Engine {
         }
         next_id = d.alloc<int32_t>(1);
         grp.alloc(d, h.n_expert, T * h.n_used);
+        if (const char *e = std::getenv("INK_XMX")) xmx = std::atoi(e) != 0;
+        if (xmx) {
+            const int tx = std::max(T, SB_MAX), tb = MoeGroups::max_tiles(h.n_expert, tx * h.n_used);
+            xP = d.alloc<uint16_t>((size_t)tb * 3 * MOE_TS * h.n_embd);
+            xHp = d.alloc<uint16_t>((size_t)tb * 3 * MOE_TS * h.n_ff);
+            const int km = SB_MAX * h.n_used, ngu = (h.n_embd / 16 + xm::SEG - 1) / xm::SEG, ndn = (h.n_ff / 16 + xm::SEG - 1) / xm::SEG;
+            xS = d.alloc<float>(std::max((size_t)km * ngu * SB_MAX * 2 * h.n_ff, (size_t)km * ndn * SB_MAX * h.n_embd));
+            xst.alloc(d, h.n_expert, tx * h.n_used, 4);
+            std::vector<int32_t> iota(h.n_used), ones(h.n_used, 1);
+            for (int i = 0; i < h.n_used; ++i) iota[i] = i;
+            x1.slots = d.alloc<int32_t>(h.n_used); x1.tile_s0 = d.alloc<int32_t>(h.n_used); x1.tile_n = d.alloc<int32_t>(h.n_used);
+            x1.ntiles = d.alloc<int32_t>(1);
+            d.put(x1.slots, iota.data(), h.n_used); d.put(x1.tile_s0, iota.data(), h.n_used); d.put(x1.tile_n, ones.data(), h.n_used);
+            d.put(x1.ntiles, &h.n_used, 1);
+        }
         if (T >= tile_min) {
             tile_bound = MoeGroups::max_tiles(h.n_expert, T * h.n_used);
-            Xt = d.alloc<float>((size_t)tile_bound * h.n_embd * MOE_TS);
-            Ht = d.alloc<float>((size_t)tile_bound * h.n_ff * MOE_TS);
+            if (xmx) { Xt = reinterpret_cast<float *>(xP); Ht = reinterpret_cast<float *>(xHp); } // 6 bytes per value there
+            else {
+                Xt = d.alloc<float>((size_t)tile_bound * h.n_embd * MOE_TS);
+                Ht = d.alloc<float>((size_t)tile_bound * h.n_ff * MOE_TS);
+            }
         }
         if (const char *e = std::getenv("INK_DENSE_MIN")) dense_min = std::atoi(e);
         if (const char *e = std::getenv("INK_MULTI")) multi_proj = std::atoi(e) != 0;
@@ -416,6 +444,20 @@ struct Engine {
                 return v;
             };
             for (const Layer &l : m.L) { gu_dec.push_back(mk(l.gate_up)); dn_dec.push_back(mk(l.down)); }
+        }
+        if (xmx) { // the NVFP4 expert tensors in the tile layout (xmx_moe.hpp), once each
+            std::set<const uint8_t *> done;
+            uint8_t *tmp = nullptr;
+            int nrep = 0;
+            for (size_t i = 0; i < gu_dec.size(); ++i) {
+                const WView &g = gu_dec[i], &dn = dn_dec[i];
+                if (g.kind != K_NVFP4P || dn.kind != K_NVFP4P) continue;
+                if (!tmp) tmp = d.alloc<uint8_t>(std::max(g.rb * (size_t)g.t->ne[1], dn.rb * (size_t)dn.t->ne[1]));
+                if (done.insert(g.p).second) { xm::repack_tiles(d.q, const_cast<uint8_t *>(g.p), g.rb, 2 * h.n_ff, h.n_embd, h.n_expert, tmp); ++nrep; }
+                if (done.insert(dn.p).second) { xm::repack_tiles(d.q, const_cast<uint8_t *>(dn.p), dn.rb, h.n_embd, h.n_ff, h.n_expert, tmp); ++nrep; }
+            }
+            if (tmp) sycl::free(tmp, d.q);
+            std::fprintf(stderr, "[xmx] %d NVFP4 expert tensors in the tile layout\n", nrep);
         }
         {
             const bool on = !std::getenv("INK_Q6KU") || std::atoi(std::getenv("INK_Q6KU"));
@@ -1387,7 +1429,43 @@ struct Engine {
                 const SituOp so{f32(l.gate_up_s), eids, h.situ_beta, h.situ_linear_beta, hb, h.n_ff};
                 const WView &gv = gu_dec[ip], &dv = dn_dec[ip];
                 const size_t gs = gv.rb * (size_t)gw.t->ne[1];
-                if (ntok == 1 && xl_on) { // SITU writes the down product's inputs in lane order (gemv2.hpp xlane_at)
+                if (xmx && gv.kind == K_NVFP4P && dv.kind == K_NVFP4P) { // matrix engines, every step size the same bits
+                    const xm::ActOp aop{f32(l.gate_up_s), h.situ_beta, h.situ_linear_beta};
+                    const int nff = h.n_ff, ngu = (E / 16 + xm::SEG - 1) / xm::SEG, ndn = (nff / 16 + xm::SEG - 1) / xm::SEG;
+                    const size_t ds = dv.rb * (size_t)l.down.t->ne[1];
+                    if (ntok <= SB_MAX) { // a sub-group per (tile, row block, segment), the segments added in order
+                        const int M = ntok <= 1 ? 1 : ntok <= 2 ? 2 : ntok <= 4 ? 4 : 8;
+                        MoeGroups gg = grp;
+                        size_t pt, pp;
+                        if (ntok == 1) { // tile k = slot k
+                            gg = x1;
+                            gg.tile_exp = eids;
+                            pr("moe_tiles", fxl1 ? xm::split_row_l(d.q, fxl1, E, xP) : xm::split_row(d.q, fx, E, xP));
+                            pt = 0; pp = (size_t)E;
+                        } else {
+                            pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                            pr("moe_tiles", xm::split_gather8(d.q, grp, K, fx, E, h.n_used, E, xP));
+                            pt = (size_t)3 * MOE_TS * E; pp = (size_t)MOE_TS * E;
+                        }
+                        auto sp = [&]<int MODE>(const uint8_t *W, size_t es, int cols, int ncol, int nrb, const uint16_t *Pin, size_t ptt, size_t ppp) {
+                            if (M == 1) return xm::small_prod<1, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
+                            if (M == 2) return xm::small_prod<2, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
+                            if (M == 4) return xm::small_prod<4, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
+                            return xm::small_prod<8, MODE>(d.q, W, es, cols, nff, ncol, nrb, gg, K, Pin, ptt, ppp, xS);
+                        };
+                        pr("moe_gate_up", sp.template operator()<0>(gv.p, gs, E, 2 * nff, nff / 16, xP, pt, pp));
+                        pr("moe_fold", xm::small_fold_act(d.q, gg, K, ngu, M, xS, nff, aop, M, xHp));
+                        pr("moe_down", sp.template operator()<1>(dv.p, ds, nff, E, E / 32, xHp, (size_t)3 * M * nff, (size_t)M * nff));
+                        pr("moe_fold", xm::small_fold_out(d.q, gg, K, ndn, M, xS, E, yk, E));
+                    } else { // super-tiles of up to 4 tiles of 16 slots x 4 blocks of 16 rows per work-group
+                        const int tiles = MoeGroups::max_tiles(h.n_expert, K), stb = xm::Super::bound(h.n_expert, K, 4);
+                        pr("moe_group", moe_group(d.q, eids, K, h.n_expert, grp));
+                        pr("moe_group", xm::super_tiles(d.q, grp, h.n_expert, xst));
+                        pr("moe_tiles", xm::split_gather8(d.q, grp, tiles, fx, E, h.n_used, E, xP));
+                        pr("moe_gate_up", xm::prod2<4, 4, 4, 0>(d.q, gv.p, gs, E, nff, nff / 16, grp, xst, stb, xP, aop, xHp, nullptr, 0));
+                        pr("moe_down", xm::prod2<4, 4, 4, 1>(d.q, dv.p, ds, nff, nff, E / 32, grp, xst, stb, xHp, aop, nullptr, yk, E));
+                    }
+                } else if (ntok == 1 && xl_on) { // SITU writes the down product's inputs in lane order (gemv2.hpp xlane_at)
                     SituOp sl = so;
                     sl.ldo = (int)xlane_floats(h.n_ff);
                     pr("moe_gate_up", gemv_pair(d.q, gv, gv.p + (size_t)h.n_ff * gv.rb, gs, h.n_ff, eids, K, fxl, (int)xlane_floats(E),

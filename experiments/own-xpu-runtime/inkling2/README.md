@@ -951,6 +951,44 @@ by kernel (3,127 tokens, 2.83 s, card 3): expert products 60 %, other matrix pro
 (int8 / 6-bit values exact in bf16, their block scales applied between blocks), then attention; each a new baseline
 checked against the high-precision reference as v2-v4 were.
 
+NVFP4 experts on the matrix engines (`src/xmx_moe.hpp`, `INK_XMX=1`, off by default; baseline v5, 2026-11-25).
+Arithmetic, the same for every step size: each input row in three bf16 parts; per segment of 256 inputs (16 steps of
+16) one accumulator takes part 1, a second takes parts 2 then 3 at each step; the segment's sum is the two added
+(two-matrix apply), and the segments are added in order into a total that starts at 0. The decoded weight (E2M1 x
+E4M3, exact in bf16) is its top 16 bits. At load the 40 NVFP4 expert tensors are rewritten in place into a tile layout
+(same bytes: per expert, per block of 16 rows, per step of 16 inputs, the 16 rows' 8 code bytes then their 16 scale
+bytes; 0.11 s for 20 layers), which only these kernels read.
+- Prompt kernel (`XProd2`, `tools/bench_xmoe.cpp`, real weights of layers 0-19, 3,127 tokens, 1,627 tiles of 16
+  slots, card 3): a work-group of 16 sub-groups takes up to 4 consecutive tiles of one expert ("super-tile") x 4
+  blocks of 16 rows; per chunk of 4 steps each sub-group decodes 2 of the 32 weight tiles into local memory (double
+  buffered) and runs 4 x 2 x 3 x 2 instructions. gate|up 21.57 ms -> 10.83 ms (6.16 -> 12.26 T exact multiply-adds/s,
+  48.1 -> 24.3 pJ each, ~296 W both), down 11.09 -> 5.16 ms; the input split and gather 0.79 -> 1.05 ms. Error against
+  double (2^-24 x sum |w x|, 3,000 samples): gate|up mean 0.063 / max 0.44, down 0.014 / 0.18. All variants give the
+  same bits (sub-groups per tile 1/2/4, row blocks 2/4, chunks 4/8). Slower: one sub-group decoding for one tile
+  (SM1 33.1 ms, SM2 14.3), chunks of 8 steps (64 KB of local memory per work-group: 17.0 ms).
+- What made it fast: a branch on "is there a next chunk" or "is this the segment's last step" inside the step loop
+  made the compiler copy the accumulators around it (1,557 instructions per 48 matrix instructions, 492 of them
+  register moves); with the loop split so that no branch sits between matrix instructions, 716. Fetching the weights
+  further ahead (two chunks, or loads before the math and decodes after) changed nothing before that.
+- Closed: building the weight operand in registers (`joint_matrix_apply` with coordinates on a B matrix,
+  `tools/bench_xm2.cpp`) hung the card twice (engine reset on card 3, which then checked fine); the local-memory route
+  stays.
+- Steps of 1-8 tokens (`XSmall`, `tools/bench_xsmall.cpp`, card 3, µs per layer, gate|up + down): one sub-group per
+  (tile, block of 16 rows, segment), its segment sum stored, then a pass that adds the segments in order (and for
+  gate|up applies SITU and splits H). Every row equals the prompt kernel's (0 of 18,432 to 147,456 values differ).
+  1 token 92.0 (today 88.4), 2 tokens 156.3 (142.9), 4: 325.0 (292.4), 8: 604.7 (521.3), so not yet faster.
+- Engine (`INK_XMX=1`): 1 token: tile k = the token's expert k, its input split once; 2-8 tokens: tiles of the groups
+  and the small kernels; 9 and more: super-tiles and `XProd2` (the old tile buffers share the new buffers' memory).
+  3,127-token prompt 2.855 -> 2.142 s (1,095 -> 1,460 tok/s, card 3). The same prompt in steps of 8 tokens (the
+  small kernels) and in one step give identical logits for the 16 following steps; `make-baseline.sh` now reads its
+  3K prompt in steps of 8, so the gate (one step) checks the two kernel families against each other. Gate 15/15 against
+  baseline v5 with `INK_XMX=1`; the default path 15/15 against v4. Against the high-precision reference on the 300-token
+  prompt (`oracle/p300`): layer outputs closer than v4's at 74 of 88 tensors (error ratio geometric mean 0.913; layer
+  47 3.42e-02 -> 3.02e-02); final scores median 1.662e-02 -> 1.683e-02, mean 5.91e-02 -> 4.57e-02, closer at 132 of
+  300 positions, the same top token as the reference at 97.7 vs 98.0 % (one position). Gate texts haiku, code and
+  3K + 16 unchanged; the drafter tests' haiku and 3K texts change. Writing with the drafter (code, same text):
+  141.6 -> 135.0 tok/s, so the small kernels must get faster before this becomes the default.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic

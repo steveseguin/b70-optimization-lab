@@ -187,7 +187,11 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 25 ~15:45: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
+- Nov 25 ~16:00: Inkling: **experts of layers 0-19 on the matrix engines, exact** (`INK_XMX=1`, not default yet):
+  3K prompt 1,095 -> 1,460 tok/s (card 3); every path bit-identical (gate 15/15 against new baseline v5; prompt in
+  steps of 8 = one step); layer outputs closer to the high-precision reference at 74 of 88 tensors. Writing with the
+  drafter -5 % until the 1-8 token kernels are faster; next: those, then default; then Q8_0/Q6_K and attention.
+- Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row
   tiles give identical rows, so writing, checks and prompts can share one arithmetic. Next: NVFP4 experts on the
