@@ -11,6 +11,9 @@
 //     real tokens of 30 tanh(W_lm (y_i + Wh z + bh) / 30)
 #pragma once
 #include "engine.hpp"
+#include "dsp_vocab.hpp"
+#include <cstring>
+#include <fstream>
 #include <set>
 
 namespace ink {
@@ -427,6 +430,19 @@ struct Drafter {
     W dnorm, mask, onorm, w1, jp, jpb, ho, hob;
     float A[16];  // softmax of each dspark_fuse row (row l < 3: drafter layer l's context, row 3: the head context)
     int E, Vp, V, cap, T, kd;
+    // The head computes only a token list (default: dsp_vocab.hpp's 47,912 tokens seen in ~18M tokens of local text),
+    // the prompt's own tokens (the constructor's `extra`) and the ids >= 199,990 (special tokens): its output-layer rows
+    // and correction columns are copied at load, so each head read is ~1/4 of the full vocabulary's. Only the guesses
+    // can change (a token outside the list is never guessed); every guess is still checked. INK_DSP_VOCAB=0: the full
+    // vocabulary; =<file>: token ids from a file (a line's first number, most frequent first), the first
+    // INK_DSP_VOCAB_K (default all) of them. Needs the folded int8 table (the default).
+    std::vector<int32_t> extra_ids;
+    size_t head_nx = 0;          // tokens the prompt added to the list
+    int Vh = 0, Vs = 0;          // the head's columns (padded) and real entries (Vp and V without a list)
+    int32_t *hmap = nullptr;     // head column -> token id (null: the identity)
+    Tensor hsub_t;               // the list's output-layer rows (shape of output.weight with Vh rows)
+    uint8_t *hsub = nullptr;
+    WView hv;                    // the head's output-layer view (e.m.output's, or the list's rows)
     float eps, theta;
     sycl::half *Kc[NL] = {}, *Vc[NL] = {};
     int kmask[NL];
@@ -494,10 +510,12 @@ struct Drafter {
     }
     const float *f32(const W &t) const { return e.f32(t); }
 
-    Drafter(Engine &eng, const std::string &path) : e(eng), d(eng.d), g(path) {
+    Drafter(Engine &eng, const std::string &path, const std::vector<int32_t> *extra = nullptr) : e(eng), d(eng.d), g(path) {
+        if (extra) extra_ids = *extra;
         if (g.s("general.architecture") != "dflash") throw std::runtime_error("dspark: not a dflash file");
         const HParams &h = e.m.hp;
         E = h.n_embd; Vp = h.vocab_padded; V = h.vocab; cap = e.cap; T = e.T; kd = HKV * HD;
+        Vh = Vp; Vs = V; hv = e.m.output.view();
         if (E > 2304) throw std::runtime_error("dspark: the mixture kernel holds 2304 values per row");
         if (g.i("dflash.embedding_length") != E || g.i("dflash.block_count") != NL || g.i("dflash.block_size") != B ||
             g.i("dflash.attention.head_count") != HQ || g.i("dflash.attention.head_count_kv") != HKV ||
@@ -637,19 +655,61 @@ struct Drafter {
         }).wait();
         for (int j0 = 0; j0 < R; j0 += e.T) e.mm(e.m.output, cols + (size_t)j0 * E, Y + (size_t)j0 * Vp, std::min(e.T, R - j0));
         if (const char *ev = std::getenv("INK_DSP_PT8")) pt8 = std::atoi(ev) != 0;
-        if (pt8) {
-            Pt8 = d.alloc<int8_t>((size_t)R * Vp);
-            Ps = d.alloc<float>(Vp);
+        const int32_t *sel = nullptr; // the list's token ids (device), or null
+        const char *vf = std::getenv("INK_DSP_VOCAB");
+        if (pt8 && !(vf && !std::strcmp(vf, "0"))) {
+            std::set<int32_t> ids;
+            if (vf && std::strcmp(vf, "1")) {
+                const int K = std::getenv("INK_DSP_VOCAB_K") ? std::atoi(std::getenv("INK_DSP_VOCAB_K")) : V;
+                std::ifstream f(vf);
+                if (!f) throw std::runtime_error(std::string("dspark: cannot read ") + vf);
+                std::string line;
+                while ((int)ids.size() < K && std::getline(f, line)) {
+                    const long v = std::strtol(line.c_str(), nullptr, 10);
+                    if (v >= 0 && v < V) ids.insert((int32_t)v);
+                }
+            } else {
+                if (DSP_VOCAB_BITS < V) throw std::runtime_error("dspark: built-in token list is for a smaller vocabulary");
+                for (int v = 0; v < V; ++v) if (dsp_vocab_bits[v >> 5] >> (v & 31) & 1u) ids.insert(v);
+            }
+            const size_t nl = ids.size();
+            for (const int32_t v : extra_ids) if (v >= 0 && v < V) ids.insert(v);
+            head_nx = ids.size() - nl;
+            for (int v = 199990; v < V; ++v) ids.insert(v);
+            std::vector<int32_t> hs(ids.begin(), ids.end()); // ascending: ties go to the lower id, as over the full vocabulary
+            Vs = (int)hs.size(); Vh = (Vs + 63) / 64 * 64;
+            hs.resize(Vh, hs.back()); // padding columns (never chosen: the argmax reads Vs)
+            hmap = d.alloc<int32_t>(Vh);
+            d.put(hmap, hs.data(), hs.size());
+            const WView ov = e.m.output.view();
+            if (ov.rb % 4) throw std::runtime_error("dspark: output rows not a multiple of 4 bytes");
+            hsub = d.alloc<uint8_t>((size_t)Vh * ov.rb);
+            const uint32_t *src = (const uint32_t *)ov.p;
+            uint32_t *dst = (uint32_t *)hsub;
+            const int32_t *hm = hmap;
+            const size_t rw = ov.rb / 4;
+            d.q.parallel_for(sycl::range<2>((size_t)Vh, rw), [=](sycl::id<2> id) {
+                dst[id[0] * rw + id[1]] = src[(size_t)hm[id[0]] * rw + id[1]];
+            }).wait();
+            hsub_t = *ov.t;
+            hsub_t.name = "output.weight.dsp_subset";
+            hsub_t.ne = {ov.t->ne[0], (int64_t)Vh, 1, 1};
+            hv = WView{&hsub_t, hsub, ov.rb, ov.kind};
+            sel = hmap;
+        }
+        if (pt8) { // column i of the table is token sel[i] (or i)
+            Pt8 = d.alloc<int8_t>((size_t)R * Vh);
+            Ps = d.alloc<float>(Vh);
             int8_t *q8 = Pt8;
             float *ps = Ps;
-            const int Vp_ = Vp;
-            d.q.parallel_for(sycl::range<1>((size_t)Vp), [=](sycl::id<1> i) {
-                const size_t r = i[0];
+            const int Vp_ = Vp, Vh_ = Vh;
+            d.q.parallel_for(sycl::range<1>((size_t)Vh), [=](sycl::id<1> i) {
+                const size_t c = i[0], r = sel ? (size_t)sel[c] : c;
                 float mx = 0.0f;
                 for (int j = 0; j < R; ++j) mx = sycl::fmax(mx, sycl::fabs(Y[(size_t)j * Vp_ + r]));
                 const float sc = mx > 0.0f ? mx / 127.0f : 1.0f;
-                ps[r] = sc;
-                for (int j = 0; j < R; ++j) q8[(size_t)j * Vp_ + r] = (int8_t)sycl::rint(Y[(size_t)j * Vp_ + r] / sc);
+                ps[c] = sc;
+                for (int j = 0; j < R; ++j) q8[(size_t)j * Vh_ + c] = (int8_t)sycl::rint(Y[(size_t)j * Vp_ + r] / sc);
             }).wait();
         } else {
             Pt = d.alloc<sycl::ext::oneapi::bfloat16>((size_t)R * Vp);
@@ -659,9 +719,16 @@ struct Drafter {
         cvec = d.alloc<float>(Vp);
         e.mm(e.m.output, f32(hob), cvec, 1);
         d.q.wait();
+        if (sel) { // the list's entries, in column order (Vh <= Vp: in place, ascending ids never overtake their column)
+            float *cv = cvec;
+            const int Vh_ = Vh;
+            d.q.single_task([=]() { for (int c = 0; c < Vh_; ++c) cv[c] = cv[sel[c]]; }).wait();
+            std::fprintf(stderr, "[dspark] head over %d tokens (%d columns; list %s, %zu from the prompt): %.0f MB of output rows\n",
+                         Vs, Vh, vf && std::strcmp(vf, "1") ? vf : "built-in", head_nx, (double)Vh * hv.rb / 1e6);
+        }
         d.release(Y); d.release(cols);
         e.prof.rows.clear(); e.prof.busy_ms = e.prof.span_ms = 0; e.prof.steps = 0;
-        std::fprintf(stderr, "[dspark] folded head table (%.0f MB%s) in %.2f s\n", (double)R * Vp * (pt8 ? 1 : 2) / 1e6, pt8 ? ", int8" : "", now_s() - t0);
+        std::fprintf(stderr, "[dspark] folded head table (%.0f MB%s) in %.2f s\n", (double)R * Vh * (pt8 ? 1 : 2) / 1e6, pt8 ? ", int8" : "", now_s() - t0);
     }
 
     // y[t] = W x[t] for the 8 slots, x in lane order (rows xlane_floats(cols) apart): blocks of 8 vectors per sub-group
@@ -851,17 +918,17 @@ struct Drafter {
         const int lx = (int)xlane_floats(E);
         if (late) {
             MultiJobs mj;
-            multi_add(mj, e.m.output.view(), yl + (size_t)1 * lx, base, 1, lx, Vp);
+            multi_add(mj, hv, yl + (size_t)1 * lx, base, 1, lx, Vh);
             e.pr("dsp_base", gemv_multi_m(d.q, mj, 3, true, 1));
         } else if (fold) { // W_lm y_i of slots 1..n, one read of W_lm (lane-order rows: multi_m, bench_gemv card 3 3 rows 777 us)
             for (int i0 = 0; i0 < n; i0 += 8) { // up to 8 rows per read (gemv_multi_m)
                 const int ni = std::min(8, n - i0);
                 const float *xi = yl + (size_t)(1 + i0) * lx;
-                float *bi = base + (size_t)i0 * Vp;
-                if (ni == 1) e.pr("dsp_base", gemv_v(d.q, e.m.output.view(), xi, lx, bi, Vp, 1, Tune{1, 1}, true));
+                float *bi = base + (size_t)i0 * Vh;
+                if (ni == 1) e.pr("dsp_base", gemv_v(d.q, hv, xi, lx, bi, Vh, 1, Tune{1, 1}, true));
                 else {
                     MultiJobs mj;
-                    multi_add(mj, e.m.output.view(), xi, bi, 1, lx, Vp);
+                    multi_add(mj, hv, xi, bi, 1, lx, Vh);
                     e.pr("dsp_base", gemv_multi_m(d.q, mj, ni, true, 1));
                 }
             }
@@ -873,7 +940,7 @@ struct Drafter {
                 d.get(p3, gp, 3);
                 if (keep_chain_below(p3, 3, stop_at(4, true), QK)) { nd = 3; break; }
                 MultiJobs mj;
-                multi_add(mj, e.m.output.view(), yl + (size_t)4 * lx, base + (size_t)3 * Vp, 1, lx, Vp);
+                multi_add(mj, hv, yl + (size_t)4 * lx, base + (size_t)3 * Vh, 1, lx, Vh);
                 e.pr("dsp_base_late", gemv_multi_m(d.q, mj, n - 3, true, 1));
             }
             {
@@ -909,10 +976,10 @@ struct Drafter {
             // the chain's keep chance before guess i (the same float products as draft()'s count at the end)
             auto stopped = [=]() { return keep_chain_below(gp_, ii - 1, thr, qk); };
             if (fold && pt8) { // 4 columns per thread, one 4-byte read per latent
-                const float *b_ = base + (size_t)(i - 1) * Vp, *c_ = cvec, *z_ = z, *ps = Ps;
+                const float *b_ = base + (size_t)(i - 1) * Vh, *c_ = cvec, *z_ = z, *ps = Ps;
                 const int8_t *q8 = Pt8;
                 float *lg_ = lgd;
-                const int Vp_ = Vp, n4 = (Vp + 3) / 4;
+                const int Vp_ = Vh, n4 = (Vh + 3) / 4;
                 e.pr("dsp_corr", d.q.submit([&](sycl::handler &hd) {
                     sycl::local_accessor<float, 1> zs(R, hd);
                     hd.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)(n4 + 255) / 256 * 256), sycl::range<1>(256)), [=](sycl::nd_item<1> it) {
@@ -964,7 +1031,7 @@ struct Drafter {
                 e.mm(e.m.output, hs, lgd, 1);
                 e.pr("dsp_softcap", ops::softcap(d.q, lgd, (size_t)Vp, 30.0f));
             }
-            e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vp, V, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams));
+            e.pr("dsp_argmax", ops::argmax_p_rows(d.q, lgd, Vh, Vs, 1, gids + (i - 1), gp + (i - 1), amv, ami, ams, hmap));
         }
         std::vector<int32_t> r(nd);
         d.get(r.data(), gids, nd);

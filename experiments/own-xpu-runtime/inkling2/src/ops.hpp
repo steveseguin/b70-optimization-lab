@@ -513,8 +513,9 @@ inline sycl::event argmax_rows2(sycl::queue &q, const float *x, size_t ld, int n
 }
 // argmax_rows2 that also gives the chosen value's softmax probability (1 / sum_i exp(x_i - max)) per row;
 // ps: nrows * ARGMAX_G scratch sums. For guessers: how sure the guess is
+// map (optional): out[r] = map[index] (a guesser's head over a vocabulary subset: index -> token id)
 inline sycl::event argmax_p_rows(sycl::queue &q, const float *x, size_t ld, int n, int nrows, int32_t *out, float *prob, float *pv,
-                                 int32_t *pi, float *ps) {
+                                 int32_t *pi, float *ps, const int32_t *map = nullptr) {
     constexpr int AW = 256, AG = ARGMAX_G;
     const int span = (n + AG - 1) / AG;
     q.parallel_for(sycl::nd_range<1>(sycl::range<1>((size_t)nrows * AG * AW), sycl::range<1>(AW)), [=](sycl::nd_item<1> it) {
@@ -540,7 +541,7 @@ inline sycl::event argmax_p_rows(sycl::queue &q, const float *x, size_t ld, int 
         const float m = sycl::reduce_over_group(it.get_group(), bv, sycl::maximum<float>());
         const int idx = sycl::reduce_over_group(it.get_group(), (bi < n && bv == m) ? bi : n, sycl::minimum<int>());
         const float sm = sycl::reduce_over_group(it.get_group(), bi < n ? ps[g] * sycl::exp(bv - m) : 0.0f, sycl::plus<float>());
-        if (l == 0) { out[r] = idx; prob[r] = 1.0f / sm; }
+        if (l == 0) { out[r] = map && idx < n ? map[idx] : idx; prob[r] = 1.0f / sm; }
     });
 }
 // argmax() of each of nrows rows (row r at x + r * ld), one work-group per row: the same choice per row

@@ -187,6 +187,9 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
+- Nov 25 ~06:15: the drafter's head reads only a built-in list of 47,912 common tokens plus the prompt's own: writing
+  +5.0-5.6 % on short tasks, +4.6 % after 31K, +2.5-3.7 % after 200K, +2.2 % on a French/German/Spanish answer; text
+  identical everywhere, gate 12/12 (`INK_DSP_VOCAB=0` = full vocabulary).
 - Nov 25 ~05:05: lookup without the drafter now uses the same learned rule: writing after the 515K needle 23.2 -> 34.2
   tok/s, 200K haiku +15 %, short tasks within 1.3 %; text identical, gate 12/12. Lookup speeds are lane numbers only
   (n-gram acceleration is off for public headlines).

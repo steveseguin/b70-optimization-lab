@@ -734,6 +734,24 @@ Lookup guesses from the text itself are "n-gram/history acceleration" under the 
 (AGENTS.md, Quality Rules): any public headline speed is measured with `INK_SPEC_LOOKUP=0`; the numbers above are
 lane measurements.
 
+The drafter's head over a token list (2026-11-25, `Drafter::make_fold`, `INK_DSP_VOCAB=0` = the full vocabulary). Each
+round the drafter reads the output layer's rows for every candidate token (~800 µs for the 201,024 rows) and a
+correction table per guess. It now reads only the rows of a built-in list of 47,912 tokens (`src/dsp_vocab.hpp`,
+from `data/dsp-vocab-freq.txt`: every token the model's tokenizer produced over ~18M tokens of local text - lab
+notes, man pages, package READMEs, the Python standard library, llama.cpp sources, site text, JSON records and a word
+list; `tools/dsp_vocab_hdr.py`), plus the prompt's own tokens and the special tokens (ids >= 199,990). The rows are
+copied at load (91 MB; the correction table drops from 51 to 12 MB, so +52 MB in all); the argmax maps a column back
+to its token id. A token outside the list is never guessed; every guess is still checked, so the text cannot change.
+99.6 % of 3,269 tokens from earlier answers are in the list. `INK_DSP_VOCAB=<file>` takes a list from a file (first
+number per line, most frequent first) and `INK_DSP_VOCAB_K` its first K entries.
+Same card, both orders, text identical in every comparison (drafter + lookup, `INK_SPEC=7`), writing tok/s: code
+(card 5) 124.08 / 123.78 -> 130.57 / 129.88 (+5.2 %), haiku 103.66 / 103.25 -> 109.59 / 108.76 (+5.6 %), a 256-token
+answer 101.08 / 100.94 -> 106.29 / 105.93 (+5.0 %), a French / German / Spanish answer 89.82 / 89.73 -> 91.86 /
+91.48 (+2.2 %; 9 of its tokens came from the prompt, tokens per check 1.85 -> 1.82); after 31K (card 1) 104.25 /
+103.70 -> 108.78 / 108.73 (+4.6 %); after 200K (card 4, one order) haiku 67.12 -> 68.83, code 74.11 -> 76.88. Drafting
+time per answer: code 0.109 -> 0.061 s, the 256-token answer 0.279 -> 0.166 s. The 32,768 most frequent tokens only:
+haiku 103.4 -> 101.9 (tokens per check 2.30 -> 2.00), so the whole list stays.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).
