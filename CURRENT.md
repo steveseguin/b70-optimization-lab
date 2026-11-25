@@ -187,7 +187,9 @@
   907.3 card 3; 3K +1.2 %; logits identical, gate 12/12): the 18 dense Q6_K matrices get a 97 MB prompt copy that
   decodes like Q8_0 (1.8x faster tiles; none past 500K positions, so the longest context is unchanged), and layers
   20-23's down experts take 4 rows (-25 %). 1,024-token steps past 300K measured slower at 403K: switch stays.
-- Nov 25 ~02:00: longest contexts re-checked on the head build: 515K needle read at 332.9 tok/s (was 313.0), 471K with
+- Nov 25 ~04:25: prompt lookup beside the drafter (self-tuning, scored on every round): writing after the 471K needle
+  43.73 -> 53.44 tok/s (+22 %), 200K haiku +1.7 %, other tasks level; text identical, gate 12/12.
+- Nov 25 ~01:50: longest contexts re-checked on the head build: 515K needle read at 332.9 tok/s (was 313.0), 471K with
   guessing 383.2 (359.3), writing 43.6 tok/s; both answer right, ids identical. One card is at its memory limit at 520K.
 - Nov 25 ~01:25: kernel programs loaded at model load (0.2 s) instead of inside the first prompt step: 3K prompt
   959-963 -> 1,015-1,019 tok/s, 5K +3.4 %, a short prompt's first token 0.33 -> 0.16 s; same values, gate 12/12.

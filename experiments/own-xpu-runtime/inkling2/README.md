@@ -703,6 +703,27 @@ step after 3K (card 1): a layer is mix_norm 9-11 us, attention inputs 40, attn_p
 16, attn_tail 1.6, mix_norm 10, router 5.2, moe_route 4.7, gate|up 53, down 28.5, ffn_tail 4.4, with 0.1-0.2 us
 between launches.
 
+Prompt lookup beside the drafter (2026-11-25, `ink_run`, `INK_SPEC_LOOKUP=0` = the drafter alone). At long contexts a
+check costs mostly the read of the keys and values, so writing speed follows the tokens kept per check. The drafter
+sees only its 16K ring, while an answer often quotes the context (the needle answers quote the notes they found).
+Each round now also takes prompt lookup's guesses (the tokens after the most recent earlier occurrence of the last 4,
+3 or 2 tokens, through an n-gram index built on a host thread while the card reads the prompt) and checks whichever
+of the drafter's guesses or lookup's promises more tokens per ms under the existing count rule. Lookup's keep chance
+per match length is learned from every round, checked or not (the round's tokens are the model's, so lookup's guesses
+are scored against them; counts decay by 0.9 a round, from 1 kept of 4). Where lookup and the drafter guess the same
+token the better chance counts; at their first difference lookup's chance is at most 1 - the drafter's. With a
+4-token match, at least 4 guesses and a learned chance of 0.8 or more the drafter is not run that round
+(`INK_SPEC_LK_SKIP`; its context rows come from every step, not from drafting). The text cannot change: every guess
+is checked. Same card, ids identical in every pair:
+- 470,949-token needle (card 3): writing 43.73 -> 53.44 tok/s (+22 %), 2.72 -> 3.57 tokens per check; 14 rounds
+  checked lookup's guesses (13 without drafting), 61 of 69 lookup guesses kept.
+- 200K prompt + haiku (card 4, its thinking quotes the document): 66.02 -> 67.13 tok/s.
+- Level (within 0.3 %): code 124.16 / 124.16 -> 124.23 / 124.14, haiku 103.42 / 103.30 -> 103.59 / 103.32, 3K 101.69 /
+  101.48 -> 101.38 / 101.17 (card 5); 31K 104.35 -> 104.00 (card 1); 200K code 73.87 -> 73.73 (card 2). Gate 12/12.
+The first version learned lookup's chance only from checked guesses (from 1 of 2): +19 % on the needle, but 0.1-1.5 %
+slower on every other task (lookup gambled before it had evidence). `INK_DRAFT_LOG2=<file>` (with `INK_DRAFT_LOG` and
+`INK_ORACLE`) logs each round's output index, lead count, guesses and probabilities for replaying such rules offline.
+
 `check-exact.sh` now refuses fewer than five distinct cards and `on-card.sh` refuses an empty card or card 0
 (`INK_ALLOW_CARD0=1`): with four cards listed the gate gave its 3K-prompt checks an empty card, which locked
 `card.lock` and ran them on card 0 (twice on 2026-11-24; they passed).
