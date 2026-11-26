@@ -1108,6 +1108,41 @@ Q8_0 attention matrices on the matrix engines, exact (`INK_XMX_DENSE=1`, 2026-11
   old path 15/15 against v5; the picture answer equals the reference's 100 ids both ways. Saved prompt files carry the
   arithmetic in their model id (bit 62).
 
+Q6_K attention matrices on the matrix engines, exact (`INK_XMX_Q6`, default since 2026-11-26, baseline v7;
+`INK_XMX_Q6=0` = v6; `src/xmx_esimd.hpp` Q6E, `tools/bench_xq6.cpp`). 18 attention inputs are Q6_K (attn_q of layers 1,
+18-21, 23; attn_gate 20, 22, 23; attn_k 20-23; attn_rel 2, 5, 7, 13, 23); they ran the FP32 tile kernels in prompt
+steps (~2x the Q8E time: attn_q of layers 18-21 3.3-3.5 ms per 3K prompt against 1.6) and 15 separate launches per
+writing step.
+- Arithmetic: the weight (d x sc) x (q - 32) is exact (d x sc at most 18 bits, a float made once at load as Q6_KU does;
+  the code exact in bf16). Per step of 16 inputs one DPAS chain from 0 (parts 1, 2, 3), group sum = fma(scale, step
+  sum, group sum) over the 16 steps of a group of 256, groups added in order into a total from 0: Q8E's with blocks
+  of 16. Layout Q6E: Q8E's code places, a float per (step, row) at 4096 + 64 s + 4 n (5,120 bytes per 16 rows x 256
+  inputs; 10 bits per weight), made at load from the Q6_KU rows; the Q6_K planar copies are freed and no Q6_KU prompt
+  copy is kept for them (card memory 18.93 -> 18.87 GiB at 3K; +33 MB past 500K positions, where no prompt copy was
+  made).
+- Kernels: XDense's `Q6` variant (prompts) and a third job kind in `dgroupej` (1-8 tokens, `EK_Q6`), so these matrices
+  join the one ESIMD launch of a writing step's attention inputs. `bench_xq6` (card 3, 3,127 tokens): the same bits for
+  1, 2, 3, 4, 5, 8 tokens and the prompt kernel, also in one launch with a Q8E job; prompt attn_gate 3,509 -> 1,653 us,
+  attn_k 1,214 -> 608, attn_rel 479 -> 271 (plus the shared input split).
+- Accuracy: error against double per product (units 2^-24 x sum |w x|, 2,000 samples): random inputs 0.087-0.090 (max
+  0.63-0.80) against today's 0.108-0.110 (0.55-0.63); the model's own hidden states (`BENCH_X`: rows of l_out-1 / 17 /
+  41 of the 300-token dump at unit RMS) lower mean error in all 12 cases (e.g. attn_q from l_out-17 0.1115 -> 0.0772,
+  max 1.40 -> 0.61), lower max in 8. Against the high-precision reference: 300 tokens even (layer errors ratio 1.005,
+  same top token 97.33 %, final scores closer at 159 of 300 positions); 1,000 tokens equal through layer 12 (ratio
+  1.00), then one position (442) takes another branch at application 13 where v6 matched the reference, and the
+  later layers sit further (ratio 1.035, top token 95.6 vs 96.0 %). By position v6 is the closer one slightly more
+  often (51-58 %) at every layer; the per-product measurements decide it.
+- Speed (same card, both orders, same ids): 3K prompt 1,743.1 / 1,742.7 -> 1,770.1 / 1,771.5 tok/s (card 3), writing
+  after it 81.3 -> 81.9. Gate: default 15/15 against v7, `INK_XMX_Q6=0` 15/15 against v6, `INK_XMX_DENSE=0` 15/15
+  against v5. Saved prompt files carry it in their model id (bit 61). Not done: attn_q of layer 22 (Q5_K, the scale
+  has a minimum term), still on its FP32 tiles (10.0 ms per 3K prompt).
+
+Same values, faster (2026-11-26): `xd::split` (the prompt input parts) loads 16 bytes and stores 16 bytes per part
+(it stored 2 bytes at a time, ~250 GB/s): 3K prompt 1,764.8 / 1,769.4 -> 1,797.2 / 1,796.7 tok/s (card 3), 31K
+1,457.8 / 1,441.6 -> 1,463.6 / 1,457.8 (card 1). Prompt steps again by context with the matrix-engine kernels
+(`tools/ink_run.cpp`; logits identical): 8,192 tokens up to 64K positions (31K +1.4-2.1 %, 25.75 vs 20.60 GiB), 4,096
+up to 128K (100K +0.2-0.9 %), 1,024 up to 300K (200K: 2,048 was 0.6 % slower), never more than the context needs.
+
 Another B70 Inkling-2 project (github.com/Danmoreng/intel-b70-inkling2-mini-vllm, read 2026-11-25; vLLM + own XPU
 kernels, one card at 180 W, peaks at 230 W): third-party EXL3 4-bit experts (its maker: 97.47 % next-token agreement
 with the original on code), BF16 dense weights and activations on the matrix engines, FP8 K/V, probabilistic

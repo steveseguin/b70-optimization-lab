@@ -210,6 +210,13 @@
   Closer to the high-precision reference on a new 1,000-token check (81 of 88 layer outputs, errors -38 %; mixed on the
   300-token one). Gate: default 15/15 against new baseline v6, `INK_XMX_DENSE=0` 15/15 against v5. Open: the kernels
   after the new ones run ~2 % slower in writing steps (not the clock, buffer placement, cache warming or cache hints).
+- Nov 26 ~04:40: Inkling: **the 18 Q6_K attention matrices on the matrix engines too, exact (baseline v7)**
+  (`INK_XMX_Q6=0` = v6): one exact float scale per 16 inputs; more accurate per product on the model's own hidden
+  states (mean error -12 to -31 %), even against the reference on 300 tokens, one near-tie branch on 1,000. Plus the
+  prompt input split with 16-byte stores and bigger prompt steps (8,192 up to 64K, 4,096 up to 128K; same answers).
+  3K prompt 1,743 -> 1,797 tok/s (card 3), 31K 1,409.7 / 1,397.1 -> 1,463.6 / 1,457.8 (card 1, separate runs, +4 %). The card sits at its 275 W limit
+  through a long prompt (throttle flag on, 2,450-2,600 MHz), so prompt speed now follows energy per token. Gate 15/15
+  three ways (v7, v6 with `INK_XMX_Q6=0`, v5 with `INK_XMX_DENSE=0`).
 - Nov 25 ~14:15: Inkling: 2-8 token steps' dense products faster (same values, gate 15/15; drafter code +1 %).
   Owner: prompt speed next, lossless. Matrix-engine study: inputs split into three bf16 parts make every product
   exact; segmented sums on the engines are MORE accurate than today's FP32 order (mean error 0.10 vs 0.15); 1-8 row

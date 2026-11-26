@@ -87,10 +87,19 @@ int main(int argc, char **argv) {
         // steps of 1,024 / 2,048 / 4,096 tokens: 3K 869-884 / 941-945 / 965-967 on card 2, 31K 935-943 / 956-966 /
         // 969-971 on card 3, 100K 712-718 / 719-723 / 717-718 on cards 1 and 5, 200K 559-563 / 553-554 / - on cards 1
         // and 5). Card memory at 100K: 19.46 / 20.70 / 23.79 GiB; past 300K positions 512 (one card holds 521K; 1,024
-        // was slower at 403K). INK_UBATCH=<n>: that size only.
+        // was slower at 403K). Again with the matrix-engine kernels (2026-11-26, ink_run_xd11, same card both orders,
+        // ids identical): 31K 4,096 -> 8,192 1,487.1 / 1,483.0 -> 1,521.5 / 1,509.8 (card 3), 1,409.7 / 1,397.1 ->
+        // 1,426.0 / 1,421.6 (card 1), card memory 20.60 -> 25.75 GiB; 100K 2,048 -> 4,096 978.8 / 978.6 -> 992.0 / 985.6
+        // (card 5), 984.3 / 981.4 -> 986.2 / 984.7 (card 2), 20.21 -> 22.80 GiB; 200K 1,024 706.8 / 702.6, 2,048 700.1 /
+        // 699.7 (card 4). Never more than the context needs (the next power of two from 512). INK_UBATCH=<n>: that size.
         const bool ub_fixed = std::getenv("INK_UBATCH") != nullptr;
         int ub = ub_fixed ? std::atoi(std::getenv("INK_UBATCH"))
-                          : ctx <= 65536 ? 4096 : ctx <= 131072 ? 2048 : ctx <= 300000 ? 1024 : 512;
+                          : ctx <= 65536 ? 8192 : ctx <= 131072 ? 4096 : ctx <= 300000 ? 1024 : 512;
+        if (!ub_fixed) {
+            int need = 512;
+            while (need < ctx && need < ub) need *= 2;
+            ub = std::min(ub, need);
+        }
         Weights w;
         // INK_PLANAR=0: keep every weight in the file layout (the first version's kernels)
         bool planar = !std::getenv("INK_PLANAR") || std::atoi(std::getenv("INK_PLANAR"));
@@ -164,10 +173,11 @@ int main(int argc, char **argv) {
         // INK_LOAD_CACHE=<file>: start from a prompt saved by INK_SAVE_CACHE (src/cache_file.hpp); this run's prompt must
         // start with the file's, and only the rest is read. INK_SAVE_CACHE=<file>: save the state after the prompt
         // the model file's size, with the top bit set for the matrix-engine experts' arithmetic (INK_XMX, baseline v5) and bit
-        // 62 for the dense matrices' (INK_XMX_DENSE, baseline v6; both on by default): a
+        // 62 for the dense matrices' (INK_XMX_DENSE, baseline v6), bit 61 for the Q6_K ones' (INK_XMX_Q6, baseline v7; all on
+        // by default): a
         // file saved with the other arithmetic is refused ("saved by another model or engine"), as its continuation would
         // not equal a fresh read
-        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]) | (e.xmx ? 1ull << 63 : 0) | (e.xdense ? 1ull << 62 : 0);
+        const uint64_t model_id = (uint64_t)std::filesystem::file_size(argv[1]) | (e.xmx ? 1ull << 63 : 0) | (e.xdense ? 1ull << 62 : 0) | (e.xq6 ? 1ull << 61 : 0);
         size_t loaded = 0;
         const bool serve = std::getenv("INK_SERVE") && std::atoi(std::getenv("INK_SERVE"));
         if (const char *lc = std::getenv("INK_LOAD_CACHE"); lc && !serve) {

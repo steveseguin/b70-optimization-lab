@@ -49,9 +49,35 @@ inline void q8_pairs(sycl::vec<uint32_t, 4> c, uint32_t *o, int os) {
 }
 inline float half_f(uint16_t b) { sycl::half h = sycl::bit_cast<sycl::half>(b); return (float)h; }
 
-// split: P[p][t][cols] from x[t][ldx] for t < M, zeros for M <= t < Mpad (8 columns per work-item)
+// split: P[p][t][cols] from x[t][ldx] for t < M, zeros for M <= t < Mpad (8 columns per work-item). With x, ldx, P
+// and pp aligned: two 16-byte loads and three 16-byte stores per work-item (split_gather8's form; the same values. 3K
+// prompt, card 3: the old form's 2-byte stores moved ~250 GB/s, 44 ms per prompt)
 inline sycl::event split(sycl::queue &q, const float *x, int ldx, int M, int Mpad, int cols, uint16_t *P, size_t pp) {
     const int c8 = cols / 8;
+    const bool wide = cols % 8 == 0 && ldx % 4 == 0 && pp % 8 == 0 && reinterpret_cast<uintptr_t>(x) % 16 == 0 &&
+                      reinterpret_cast<uintptr_t>(P) % 16 == 0;
+    if (wide)
+        return q.parallel_for(sycl::range<1>((size_t)Mpad * c8), [=](sycl::id<1> id) {
+            const int t = (int)(id[0] / c8), c = (int)(id[0] % c8) * 8;
+            sycl::float4 v0(0.0f), v1(0.0f);
+            if (t < M) {
+                const float *xr = x + (size_t)t * ldx + c;
+                v0 = *reinterpret_cast<const sycl::float4 *>(xr);
+                v1 = *reinterpret_cast<const sycl::float4 *>(xr + 4);
+            }
+            const float v[8] = {v0.x(), v0.y(), v0.z(), v0.w(), v1.x(), v1.y(), v1.z(), v1.w()};
+            sycl::vec<uint16_t, 8> a, b, d;
+#pragma unroll
+            for (int j = 0; j < 8; ++j) {
+                uint16_t p0, p1, p2;
+                split3(v[j], p0, p1, p2);
+                a[j] = p0; b[j] = p1; d[j] = p2;
+            }
+            uint16_t *o = P + (size_t)t * cols + c;
+            *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o) = a;
+            *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o + pp) = b;
+            *reinterpret_cast<sycl::vec<uint16_t, 8> *>(o + 2 * pp) = d;
+        });
     return q.parallel_for(sycl::range<1>((size_t)Mpad * c8), [=](sycl::id<1> id) {
         const int t = (int)(id[0] / c8), c = (int)(id[0] % c8) * 8;
         uint16_t *o = P + (size_t)t * cols + c;
@@ -83,13 +109,16 @@ template <int MR, class A> inline void a_split(sycl::sub_group sg, const float *
 // stored for tokens < Mst.
 // LE: weights in the Q8E layout (xmx_esimd.hpp); a sub-group block read gives each lane its row's 16 codes of a step.
 // BF: bf16 weights in the BFE layout (xmx_esimd.hpp; each step's 512 bytes are the operand), scale 1, rows >= rv not stored
-template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bool XS = false, bool LE = false, bool BF = false> struct XDense {
+// Q6 (with LE): the Q6E layout (xmx_esimd.hpp): Q8E's codes, a float scale per step of 16 inputs, a chain per step
+template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bool XS = false, bool LE = false, bool BF = false, bool Q6 = false> struct XDense {
     static_assert(KC % 2 == 0, "XDense: whole blocks per chunk");
+    static_assert(!Q6 || (LE && !C23 && G == 8), "XDense: Q6E is LE, one chain, groups of 256");
+    static constexpr int GB = Q6 ? 5120 : 4352; // bytes per (16 rows, 256 inputs) group
     static_assert(G == 0 || (2 * G) % KC == 0, "XDense: whole chunks per group");
-    static constexpr int NSG = SM * SR, U = SR * NB * KC, US = SR * NB * KC / 2;
+    static constexpr int NSG = SM * SR, U = SR * NB * KC, US = Q6 ? SR * NB * KC : SR * NB * KC / 2;
     static_assert(U % NSG == 0, "XDense: decode units");
     static constexpr int NU = U / NSG, NUS = (US + NSG - 1) / NSG;
-    static constexpr int TILE = 128, BUF = SR * NB * KC * TILE, SBUF = SR * NB * (KC / 2) * 16;
+    static constexpr int TILE = 128, BUF = SR * NB * KC * TILE, SBUF = US * 16;
     const uint8_t *W; int cols; const uint16_t *P; size_t pp; int Mst; float *Y; int ldy; const float *xs; int ldx;
     sycl::local_accessor<bf, 1> bs; sycl::local_accessor<float, 1> ss; sycl::local_accessor<float, 1> stg;
     int rv = 1 << 30;
@@ -105,7 +134,7 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
         const int t0 = ((int)it.get_group(0) * SM + mi) * NM * 8;
         uint32_t *bw = reinterpret_cast<uint32_t *>(&bs[0]);
         sycl::vec<uint32_t, BF ? 8 : 4> raw[NU];
-        uint16_t rs[NUS];
+        std::conditional_t<Q6, float, uint16_t> rs[NUS];
         auto fetch = [&](int c) {
 #pragma unroll
             for (int i = 0; i < NU; ++i) {
@@ -115,7 +144,7 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
                         const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(W + ((size_t)(r16w + tile) * steps + k) * 512))));
                 else if constexpr (LE)
                     raw[i] = sg.load<4>(sycl::address_space_cast<sycl::access::address_space::global_space, sycl::access::decorated::yes>(
-                        const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(W + ((size_t)(r16w + tile) * (nb / 8) + k / 16) * 4352 + 512 * ((k / 2) % 8) + 256 * (k & 1)))));
+                        const_cast<uint32_t *>(reinterpret_cast<const uint32_t *>(W + ((size_t)(r16w + tile) * (nb / 8) + k / 16) * GB + 256 * (k % 16)))));
                 else
                     raw[i] = *reinterpret_cast<const sycl::vec<uint32_t, 4> *>(W + ((size_t)(r16w + tile) * nb + k / 2) * TQ + (k & 1) * 256 + ln * 16);
             }
@@ -124,7 +153,10 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
                 const int u = sgi + i * NSG;
                 if (!BF && u < US) {
                     const int tile = u / (KC / 2), bb = u % (KC / 2), b = c * (KC / 2) + bb;
-                    if constexpr (LE) rs[i] = *reinterpret_cast<const uint16_t *>(W + ((size_t)(r16w + tile) * (nb / 8) + b / 8) * 4352 + 4096 + 32 * (b % 8) + 2 * ln);
+                    if constexpr (Q6) {
+                        const int t6 = u / KC, k = c * KC + u % KC;
+                        rs[i] = *reinterpret_cast<const float *>(W + ((size_t)(r16w + t6) * (nb / 8) + k / 16) * GB + 4096 + 64 * (k % 16) + 4 * ln);
+                    } else if constexpr (LE) rs[i] = *reinterpret_cast<const uint16_t *>(W + ((size_t)(r16w + tile) * (nb / 8) + b / 8) * 4352 + 4096 + 32 * (b % 8) + 2 * ln);
                     else rs[i] = *reinterpret_cast<const uint16_t *>(W + ((size_t)(r16w + tile) * nb + c * (KC / 2) + bb) * TQ + 512 + 2 * ln);
                 }
             }
@@ -142,7 +174,10 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
 #pragma unroll
             for (int i = 0; i < NUS; ++i) {
                 const int u = sgi + i * NSG;
-                if (u < US) ss[buf * SBUF + u * 16 + ln] = BF ? 1.0f : half_f(rs[i]);
+                if (u < US) {
+                    if constexpr (Q6) ss[buf * SBUF + u * 16 + ln] = rs[i];
+                    else ss[buf * SBUF + u * 16 + ln] = BF ? 1.0f : half_f(rs[i]);
+                }
             }
         };
         using C = jm::joint_matrix<sycl::sub_group, float, jm::use::accumulator, 8, 16>;
@@ -194,18 +229,18 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
                                 jm::joint_matrix_mad(sg, c23[j][m], a1, b[j], c23[j][m]);
                             }
                             jm::joint_matrix_mad(sg, c23[j][m], a2, b[j], c23[j][m]);
-                        } else { // one chain: x1, x2, x3 per step
-                            if (kk % 2 == 0) jm::joint_matrix_mad(sg, c1[j][m], a0, b[j], cz);
+                        } else { // one chain: x1, x2, x3 per step (Q6: from 0 at every step)
+                            if (Q6 || kk % 2 == 0) jm::joint_matrix_mad(sg, c1[j][m], a0, b[j], cz);
                             else jm::joint_matrix_mad(sg, c1[j][m], a0, b[j], c1[j][m]);
                             jm::joint_matrix_mad(sg, c1[j][m], a1, b[j], c1[j][m]);
                             jm::joint_matrix_mad(sg, c1[j][m], a2, b[j], c1[j][m]);
                         }
                     }
                 }
-                if (kk % 2 == 1) {
+                if (Q6 || kk % 2 == 1) {
 #pragma unroll
                     for (int j = 0; j < NB; ++j) {
-                        const float dj = ss[buf * SBUF + ((ri * NB + j) * (KC / 2) + kk / 2) * 16 + ln];
+                        const float dj = Q6 ? ss[buf * SBUF + ((ri * NB + j) * KC + kk) * 16 + ln] : ss[buf * SBUF + ((ri * NB + j) * (KC / 2) + kk / 2) * 16 + ln];
 #pragma unroll
                         for (int m = 0; m < NM; ++m) {
                             if constexpr (C23) jm::joint_matrix_apply(sg, c1[j][m], c23[j][m], [](float &x, float &y) { x = x + y; });
@@ -253,11 +288,11 @@ template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bo
     }
 };
 // BF: rows = the padded rows of the BFE copy, rv = the rows stored
-template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bool XS = false, bool LE = false, bool BF = false>
+template <int SM, int SR, int NM, int NB, int KC, bool C23 = true, int G = 0, bool XS = false, bool LE = false, bool BF = false, bool Q6 = false>
 inline sycl::event dense(sycl::queue &q, const uint8_t *W, int rows, int cols, const uint16_t *P, size_t pp, int Mpad, int Mst, float *Y, int ldy,
                          const float *xs = nullptr, int ldx = 0, int rv = 1 << 30) {
     if (cols % (16 * KC) || rows % (16 * NB * SR) || Mpad % (8 * NM * SM) || ((LE || BF) && cols % 256)) throw std::runtime_error("xd::dense: shapes");
-    using K = XDense<SM, SR, NM, NB, KC, C23, G, XS, LE, BF>;
+    using K = XDense<SM, SR, NM, NB, KC, C23, G, XS, LE, BF, Q6>;
     return q.submit([&](sycl::handler &h) {
         sycl::local_accessor<bf, 1> bs(2 * K::BUF * 2, h);
         sycl::local_accessor<float, 1> ss(2 * K::SBUF, h);

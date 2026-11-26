@@ -34,6 +34,28 @@ inline void repack_q8e(sycl::queue &q, const uint8_t *src, size_t rb, int rows, 
     }).wait();
 }
 
+// Layout "Q6E" of a Q6_K matrix (INK_XMX_Q6): the codes q - 32 as int8 at Q8E's places, and one float scale d * sc per
+// 16 inputs: [block of 16 rows][group of 256 inputs][5120 bytes: the code of input k (0-15) of step s (0-15) and row n
+// at 256 s + 64 (k / 4) + 4 n + k % 4; step s's 16 row scales (floats) at 4096 + 64 s + 4 n]. Arithmetic: per step of
+// 16 inputs one DPAS chain from 0 (parts 1, 2, 3), group sum = fma(scale, step sum, group sum) over the group's 16
+// steps, the groups added in order into a total from 0 (Q8E's with blocks of 16). The weight (d * sc) * (q - 32) is
+// exact (d * sc: at most 18 bits, q - 32: 5), so are the scale and the codes.
+constexpr int TG6 = 5120;
+// from Q6_KU rows (planar.hpp: q[cols] int8 codes | s[cols / 16] floats, row stride srb)
+inline void repack_q6e(sycl::queue &q, const uint8_t *src, size_t srb, int rows, int cols, uint8_t *dst) {
+    if (rows % 16 || cols % 256) throw std::runtime_error("xd::repack_q6e: shapes");
+    const int ng = cols / 256;
+    q.parallel_for(sycl::range<2>((size_t)(rows / 16) * ng, 16), [=](sycl::item<2> it) {
+        const int u = (int)it[0], n = (int)it[1], r16 = u / ng, g = u % ng;
+        const uint8_t *row = src + (size_t)(r16 * 16 + n) * srb;
+        uint8_t *o = dst + (size_t)u * TG6;
+        for (int s = 0; s < 16; ++s)
+            for (int k = 0; k < 16; ++k) o[256 * s + 64 * (k / 4) + 4 * n + k % 4] = row[g * 256 + 16 * s + k];
+        for (int s = 0; s < 16; ++s)
+            for (int b = 0; b < 4; ++b) o[4096 + 64 * s + 4 * n + b] = row[cols + 4 * (g * 16 + s) + b];
+    }).wait();
+}
+
 template <int MR> struct XDGroupE {
     const uint8_t *W; int cols; const uint16_t *P; int ldx; size_t pp; int Mst; float *Y; int ldy;
     void operator()(sycl::nd_item<1> it) const SYCL_ESIMD_KERNEL {
@@ -189,13 +211,15 @@ inline sycl::event dgroupe2(sycl::queue &q, const uint8_t *W, int rows, int cols
 // Several matrices with the same input width in one launch (the attention inputs of a step): work-group w belongs to
 // the job whose first row block rb0 <= w. Inputs as PE parts per job (MR rows), outputs y + t ldy + row.
 constexpr int EJ_MAX = 8;
-// lk = ldy | rows << 14 | bf16 << 28 (bf16: the weights are bf16 in the BFE layout, scale 1; rows % 8 == 0, the last
-// block of 16 may hold 8)
+// lk = ldy | rows << 14 | kind << 28; kind EK_Q8 (Q8E), EK_BF (bf16 in the BFE layout, scale 1; rows % 8 == 0, the last
+// block of 16 may hold 8), EK_Q6 (Q6E)
+enum { EK_Q8 = 0, EK_BF = 1, EK_Q6 = 2 };
 struct EJob { const uint8_t *W; const uint16_t *P; float *y; int lk; int rb0; };
 struct EJobs { EJob j[EJ_MAX]; int nj = 0, nrb = 0; };
-inline void ejob_add(EJobs &m, const uint8_t *W, int rows, const uint16_t *P, float *y, int ldy, bool bf = false) {
-    if (m.nj == EJ_MAX || rows % (bf ? 8 : 16) || ldy >= (1 << 14) || rows >= (1 << 14)) throw std::runtime_error("xd::ejob_add: too many jobs or rows");
-    m.j[m.nj++] = EJob{W, P, y, ldy | rows << 14 | (bf ? 1 << 28 : 0), m.nrb};
+inline void ejob_add(EJobs &m, const uint8_t *W, int rows, const uint16_t *P, float *y, int ldy, int kind = EK_Q8) {
+    if (m.nj == EJ_MAX || rows % (kind == EK_BF ? 8 : 16) || ldy >= (1 << 14) || rows >= (1 << 14))
+        throw std::runtime_error("xd::ejob_add: too many jobs or rows");
+    m.j[m.nj++] = EJob{W, P, y, ldy | rows << 14 | kind << 28, m.nrb};
     m.nrb += (rows + 15) / 16;
 }
 // Layout "BFE" of a bf16 matrix [rows][cols] (rows padded with zeros to rows_pad, a multiple of 16; cols % 256 == 0):
@@ -235,18 +259,23 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         es::simd<uint32_t, 16> u2 = r2.template bit_cast_view<uint32_t>();
         c = (u2 + 0x7fffu + ((u2 >> 16) & 1u)) >> 16;
     }
-    // one group's sum g (MR x 16), BF: bf16 weights (BFE), else Q8E codes and scales; the two are separate code so
-    // that neither carries the other's registers (mixing them in one loop cost the Q8 path ~10 %, 2026-11-26)
+    // one group's sum g (MR x 16) of a job of kind K: EK_BF bf16 weights (BFE), EK_Q8 Q8E codes and scales, EK_Q6 Q6E;
+    // separate code so that none carries another's registers (mixing two in one loop cost the Q8 path ~10 %, 2026-11-26)
     // XS: xp = the group's 256 fp32 inputs
-    template <bool BF> SYCL_ESIMD_FUNCTION es::simd<float, MR * 16> group(const uint8_t *wp, const uint16_t *pg, size_t ps, const float *xp) const {
+    template <int K> SYCL_ESIMD_FUNCTION es::simd<float, MR * 16> group(const uint8_t *wp, const uint16_t *pg, size_t ps, const float *xp) const {
+        constexpr bool BF = K == EK_BF, Q6 = K == EK_Q6;
         constexpr auto al = es::properties{es::alignment<16>};
         es::simd<uint32_t, (BF ? 16 : 1024)> cw;
-        es::simd<uint16_t, (BF ? 16 : 128)> sh;
+        es::simd<uint16_t, (BF || Q6 ? 16 : 128)> sh;
+        es::simd<float, (Q6 ? 256 : 16)> s6;
         if constexpr (!BF) {
 #pragma unroll
             for (int j = 0; j < 8; ++j)
                 cw.template select<128, 1>(128 * j) = es::block_load<uint32_t, 128>(reinterpret_cast<const uint32_t *>(wp + 512 * j), al);
-            sh = es::block_load<uint16_t, 128>(reinterpret_cast<const uint16_t *>(wp + 4096), al);
+            if constexpr (Q6) {
+                s6.template select<128, 1>(0) = es::block_load<float, 128>(reinterpret_cast<const float *>(wp + 4096), al);
+                s6.template select<128, 1>(128) = es::block_load<float, 128>(reinterpret_cast<const float *>(wp + 4096 + 512), al);
+            } else sh = es::block_load<uint16_t, 128>(reinterpret_cast<const uint16_t *>(wp + 4096), al);
         }
         es::simd<uint16_t, (UP && !XS ? 256 * MR : 16)> pall[3];
         es::simd<float, (XS ? 256 : 16)> xv;
@@ -304,10 +333,17 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
                 for (int p = 0; p < 3; ++p) {
                     es::simd<uint16_t, MR * 16> a = pa[p].template select<MR * 16, 1>(s * MR * 16);
                     const es::simd<sycl::ext::oneapi::bfloat16, MR * 16> ab = a.template bit_cast_view<sycl::ext::oneapi::bfloat16>();
-                    c = ex::dpas<8, MR, float, float>(s == 0 && p == 0 ? zero : c, B, ab);
+                    c = ex::dpas<8, MR, float, float>((Q6 || s == 0) && p == 0 ? zero : c, B, ab);
+                }
+                if constexpr (Q6) { // a chain per step: its scale now
+                    const es::simd<float, 16> ds = s6.template select<16, 1>(16 * (2 * j + s));
+#pragma unroll
+                    for (int t = 0; t < MR; ++t)
+                        g.template select<16, 1>(16 * t) = esx::fma(ds, es::simd<float, 16>(c.template select<16, 1>(16 * t)), es::simd<float, 16>(g.template select<16, 1>(16 * t)));
                 }
             }
-            if constexpr (BF) { // bf16 weights: fma(1, block sum, group sum) = their sum, rounded once
+            if constexpr (Q6) {
+            } else if constexpr (BF) { // bf16 weights: fma(1, block sum, group sum) = their sum, rounded once
 #pragma unroll
                 for (int t = 0; t < MR; ++t)
                     g.template select<16, 1>(16 * t) = esx::fma(es::simd<float, 16>(1.0f), es::simd<float, 16>(c.template select<16, 1>(16 * t)),
@@ -333,13 +369,14 @@ template <int MR, int GRF, bool UP, bool XS = false> struct XDGroupEJ {
         const EJob &J = jb.j[jn];
         const int r16 = w - J.rb0;
         const int ldy = J.lk & 0x3fff, rv = (J.lk >> 14) & 0x3fff;
-        const bool bfj = (J.lk >> 28) & 1;
+        const int kj = (J.lk >> 28) & 3;
         const size_t ps = (size_t)cols * MR;
         const uint16_t *pg = J.P + (size_t)gi * 8 * 2 * MR * 16;
         const float *xp = reinterpret_cast<const float *>(J.P) + (size_t)gi * 256;
         es::simd<float, MR * 16> g;
-        if (bfj) g = group<true>(J.W + ((size_t)r16 * ng + gi) * 8192, pg, ps, xp);
-        else g = group<false>(J.W + ((size_t)r16 * ng + gi) * TG, pg, ps, xp);
+        if (kj == EK_BF) g = group<EK_BF>(J.W + ((size_t)r16 * ng + gi) * 8192, pg, ps, xp);
+        else if (kj == EK_Q6) g = group<EK_Q6>(J.W + ((size_t)r16 * ng + gi) * TG6, pg, ps, xp);
+        else g = group<EK_Q8>(J.W + ((size_t)r16 * ng + gi) * TG, pg, ps, xp);
         es::slm_block_store<float, MR * 16>((uint32_t)(gi * MR * 16 * 4), g);
         es::barrier();
         if (gi == 0) {
