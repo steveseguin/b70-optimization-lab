@@ -16,7 +16,9 @@ the same card. Prints PASS / FAIL per request.
 SERVE_CHECK_PROMPT=<tokens file> replaces prompts/long, SERVE_CHECK_CTX the serving context (default 8192).
 SERVE_CHECK_SHARD=1 (a split engine with INK_SHARD_SERVE=1 and low INK_SHARD_MIN / INK_SHARD_AFTER): after request 2,
 also W of that conversation to <out>/long.inkc (a save while shared), 2b: it, its answer and a 300-token user turn (a
-read past INK_SHARD_FEED), 2c: that, its answer and a short follow-up (a shared read); request 5 then loads long.inkc."""
+read past INK_SHARD_FEED), 2c: that, its answer and a short follow-up (a shared read); request 5 then loads long.inkc.
+SERVE_CHECK_GROW=1 (with SERVE_CHECK_SHARD, a context of ~56K): 2d: 2c, its answer and an 18,500-token turn (shared again
+larger)."""
 import os, subprocess, sys
 
 W = "/home/steve/inkling-work"
@@ -75,7 +77,10 @@ def main():
         print("  " + read_until("@@W", "w0")[1], flush=True)
         c2b = c2 + a2 + turn(haiku[:4] + long_p[1000:1300])
         a2b = g("r2b", c2b, 48)
-        g("r2c", c2b + a2b + f1, 48)
+        c2c = c2b + a2b + f1
+        a2c = g("r2c", c2c, 48)
+        if os.environ.get("SERVE_CHECK_GROW") == "1":  # an 18,500-token turn: past 1.5x the shared context (copies grow)
+            g("r2d", c2c + a2c + turn(long_p[2000:20500]), 48)
     a3 = g("r3", haiku, 32)
     p.stdin.write(f"W w1 {out}/haiku.inkc\n")
     print("  " + read_until("@@W", "w1")[1], flush=True)

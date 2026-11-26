@@ -586,6 +586,7 @@ int main(int argc, char **argv) {
             if (shard_copy_fits) {
                 int s = (e.n_past / N + Q / 2) / Q * Q;
                 while (s >= Q && (long)(N - 1) * s + ext > e.n_past) s -= Q;
+                if (e.shard_S && (s <= e.shard_s || e.shard_copy_room(s) >= 0)) return; // (not larger, or no room: the current ones stay)
                 if (s >= Q) {
                     const bool again = e.shard_S > 0;
                     if (again) e.shard_end();

@@ -237,7 +237,9 @@
   order (same bits). Checked on one card with two and three engines, with the drafter, and in serving (10/10
   identical); four engines only fit on four cards. A forced host-memory hand-over test showed hand-overs cost almost
   nothing (0.8 ms a token in all on one card), so two cards should write ~1.3x faster at 200K, ~1.5x at 500K, ~1.7x
-  at 1M; four cards more. The two-card runner tests both layouts. Still waiting for the owner's OK for multi-card runs.
+  at 1M; four cards more. The two-card runner tests both layouts. Copies grow with the conversation (checked: an
+  18,500-token follow-up doubled them, 11/11 identical). Run plan with times in the two-card note. Still waiting for
+  the owner's OK for multi-card runs.
 - Nov 26 ~15:05: Inkling: shared caches also in **serving** (`INK_SHARD_SERVE=1`, split engines of two cards, off by
   default until timed): past 300K positions, after 448 answer tokens, the cards share the reading of each other's
   oldest text and keep it shared across turns; short follow-ups read through it, long reads / saves / early copies move

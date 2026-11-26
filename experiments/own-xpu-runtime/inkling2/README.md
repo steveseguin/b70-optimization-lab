@@ -1417,8 +1417,10 @@ four of the eight full-attention caches (16 GiB at 1M) and only the weights of t
   the drafter and a one-row parts buffer (`INK_DEC_ROWS=4 INK_DEC_MEM=1`: 8-row checks fold each slice in pieces),
   128 rows identical (moved too). Four engines do not fit on one card (each loads its own copy of the middle layers it
   runs). Serving (`INK_SHARD_SERVE=1`, `INK_SHARD_MODE=auto` by default: copies of n_past / n positions each when they
-  fit, shared again once the context has grown by half, else moved with two engines): `serve_check.py` with
-  `INK_SHARD_MODE=copy`, 10 of 10 identical to fresh runs with and without the drafter.
+  fit, shared again with larger slices once the context has grown by half and there is room, else moved with two
+  engines): `serve_check.py` with `INK_SHARD_MODE=copy` and `SERVE_CHECK_GROW=1` (a follow-up of 18,500 tokens: the
+  copies grow from 16,384 to 32,768 positions each at 50,313), 11 of 11 identical to fresh runs with and without the
+  drafter; the moved layout (`INK_SHARD_MODE=move`, drafter) 11 of 11 too.
 - Shared caches in serving (`INK_SHARD_SERVE=1` with a two-engine split; `tools/ink_run.cpp`): once an answer has
   `INK_SHARD_AFTER` (448) tokens and the context `INK_SHARD_MIN` (300,000) positions, the oldest half of each
   engine's full-context positions (the nearest multiple of 16,384) is shared; it stays shared across turns. Follow-ups

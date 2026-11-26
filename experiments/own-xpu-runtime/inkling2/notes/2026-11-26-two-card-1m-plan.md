@@ -34,6 +34,16 @@ K and V x 8 heads x 128 x 2 bytes), so 1M = 32 GiB: more than one card, whatever
 2. Two cards (owner's OK): gate on cards 1+2 against the one-card baselines, then 700K and 1M needles, prompt speed.
 3. Server: the LAN server with two cards (owner's call).
 
+The runs, once the owner says yes (each one unattended, stopping at the first card fault line; host-staged
+transfers only, no card-to-card reads):
+- Two cards, ~1 h 15 min: `systemd-run --user --unit=tcr2 scripts/two-card-run.sh /home/steve/inkling-work/bin/ink_run_shard10 1 2 <out>`
+  (gate checks ~5 min; 100K / 200K prompts against one card, both orders ~25 min; 200K writing plain / moved / copies,
+  both orders ~12 min; the 1M needle roughly 45 min, an estimate from the one-card prompt speeds).
+- Four cards, ~45 min: the same with `INK_RUN_CARDS="1 2 3 4" INK_RUN_SPLIT=12,24,36` (copies only; the needle's
+  copies ~6 GB a card).
+- Expected: prompts ~2x (two cards) and ~3.8x (four) by the halves' timings; writing with shared caches ~1.3x at
+  200K, ~1.5x at 500K, ~1.7x at 1M on two cards, more on four.
+
 ## Step 1 done (2026-11-26, one card)
 
 `Engine(..., app_lo, app_hi)` runs applications app_lo .. app_hi - 1 with only their physical layers' weights

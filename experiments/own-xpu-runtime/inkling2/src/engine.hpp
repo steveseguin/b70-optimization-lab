@@ -2263,6 +2263,23 @@ struct Engine {
         for (Engine *x = this; x; x = x->prev) ch.insert(ch.begin(), x);
         return ch;
     }
+    // the card that has no room for copies of slices of s positions (their buffers replacing the ones held now), or -1
+    int shard_copy_room(int s) {
+        std::vector<Engine *> ch = chain_engines();
+        const int N = (int)ch.size(), kd = kdim(), cpos = (N - 1) * s;
+        const size_t cvld = ((size_t)cpos + 15) / 16 * 16;
+        size_t f = 0;
+        for (Engine *x : ch) f = std::max(f, x->full_apps().size());
+        const size_t need = f * ((size_t)cpos * kd + (size_t)kd * cvld) * sizeof(sycl::half);
+        const size_t spare = (size_t)(std::getenv("INK_SHARD_ROOM_MB") ? std::atol(std::getenv("INK_SHARD_ROOM_MB")) : 256) << 20;
+        std::map<const void *, long long> add; // (engines sharing a card: all of theirs)
+        for (Engine *x : ch)
+            if (x->shard_cpos != cpos || x->shard_cK.size() != f)
+                add[&x->d] += (long long)need - (long long)(x->shard_cK.size() * ((size_t)x->shard_cpos * kd + (size_t)kd * x->shard_cvld) * sizeof(sycl::half));
+        for (Engine *x : ch)
+            if (add.count(&x->d) && (long long)(x->d.allocated + x->d.hold + spare) + add[&x->d] > (long long)x->d.limit()) return x->d.index;
+        return -1;
+    }
     // INK_SHARD_COPY=<s> (a chain of any number of engines, called on the last one): engine k's positions r*s .. (r+1)*s - 1
     // of each full-context application copied to engine (k + 1 + r) mod n (r = 0 .. n - 2), into that engine's copy buffer
     // for the same application index at the same offset; nothing moves. Throws when the copies do not fit
@@ -2286,13 +2303,7 @@ struct Engine {
         if (!f) throw std::runtime_error("INK_SHARD_COPY: no full-context application");
         const int kd = kdim(), nh = h.n_head, hd = h.head_dim, cpos = (N - 1) * s;
         const size_t cvld = ((size_t)cpos + 15) / 16 * 16;
-        const size_t need = f * ((size_t)cpos * kd + (size_t)kd * cvld) * sizeof(sycl::half);
-        const size_t spare = (size_t)(std::getenv("INK_SHARD_ROOM_MB") ? std::atol(std::getenv("INK_SHARD_ROOM_MB")) : 256) << 20;
-        std::map<const void *, size_t> add; // (engines sharing a card)
-        for (Engine *x : ch) if (x->shard_cpos != cpos || x->shard_cK.size() != f) add[&x->d] += need;
-        for (Engine *x : ch)
-            if (add.count(&x->d) && x->d.allocated + x->d.hold + add[&x->d] + spare > x->d.limit())
-                throw std::runtime_error("INK_SHARD_COPY: the copies do not fit on card " + std::to_string(x->d.index));
+        if (const int c = shard_copy_room(s); c >= 0) throw std::runtime_error("INK_SHARD_COPY: the copies do not fit on card " + std::to_string(c));
         for (Engine *x : ch) {
             if (x->shard_cpos != cpos || x->shard_cK.size() != f) {
                 for (auto *p : x->shard_cK) x->d.release(p);
